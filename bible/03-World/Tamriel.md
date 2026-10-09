@@ -181,9 +181,9 @@ towns, roads, dungeons or regions - the later use.
   own online), `scenes/shared.js` `tamrielLandOn` on the enhanced skin, `?tamrielland=off` the kill door, read once as
   the world mounts. Off - and on the classic skin - the edge of the world is DFU's: empty.
 - **Readings, honest.** The region past the Bay reads as `getRegionIndexAt`'s clamp (0, the Alik'r Desert) - DFU's own
-  clamp, kept; weather, quests and factions key on it and see the Alik'r. The relay carries no pose past the map
-  (`net/wire.js` holds the Bay's bounds), so online a player beyond the Bay walks unseen by the room until they come
-  back. The sea past the Bay is the kernel's own water tiles (Deep Waters' bathymetry is the Bay's). The Wrothgarians
+  clamp, kept; weather, quests and factions key on it and see the Alik'r. Online a player beyond the Bay is seen by
+  whoever stands near, and the Overworld routes over the land there (TV-BEYOND, `01-Overview/Field-Bugs-2026-10-09.md`:
+  the wire and the planner held the Bay's bounds, and the field found both). The sea past the Bay is the kernel's own water tiles (Deep Waters' bathymetry is the Bay's). The Wrothgarians
   and the Dragontails begin in WOODS' bytes and continue in the authored law past the edge; the seam band and the
   blend join them, and the probe's seam report says where the data and the authored shape disagree.
 - **Performance.** A pixel's ground past the Bay costs a point-in-province test, a coast distance over ~100 edges and a

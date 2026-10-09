@@ -25,6 +25,7 @@ import { registerCustomFaction } from '../formats/factionFile.js';
 import { registerMerchantService } from './guildServices.js';
 import { LOCATION_TYPES } from '../formats/mapsFile.js';
 import { CAPITAL_MAP_IDS, LARGE_DOCK_MAP_IDS, DOCK_PIXEL_IDS } from './immersiveTravelTables.js';
+import { setFlatFaceOverride } from '../characters/staticNpc.js';   // DRIVER-FACE: FLATS.CFG's dictionary, as Roleplay & Realism writes it
 
 export { CAPITAL_MAP_IDS, LARGE_DOCK_MAP_IDS, DOCK_PIXEL_IDS };
 
@@ -366,6 +367,16 @@ export const immersiveTravelLoaded = () => modLatchedOn(IMMERSIVE_TRAVEL_VENDOR)
  * The window-type registrations (IL_03bf-03f9: CarriageMap for DFU's travel map while Travel Options is off,
  * ImmersiveTravelPopUp for its popup with DisableNormalTravel) are the hosts' and ui/ - an IT kind on the map's bag.
  */
+/** DRIVER-FACE (FIELD BUGS 2026-10-09b, "NPC Shrarton in Tasoparet face sprite missing."): THE ONE DRIVER WITH NO
+ *  FACE. The mod stands a carriage driver at each of the four city gates (WorldDataPatches WALLAA08-11); WALLAA09's is
+ *  the flat TEXTURE.357 record 3, a bearded man, which FLATS.CFG has no row for (it lists 357's princes and queen
+ *  alone), and the Carriage Drivers' faction carries no flat of its own (IL_040f clears the record). So
+ *  GetPortraitIndexFromStaticNPCBillboard stood its starting record - 410, TFAC00I0's grey "OOPS! Tell Mack NOW!" - on
+ *  every walled city's WALLAA09 driver, in DFU with the mod as here. A departure from DFU and the mod: the flat is given
+ *  the face FLATS.CFG gives classic's own bearded man (182.3, 429), as a mod writes the dictionary (staticNpc.js
+ *  setFlatFaceOverride, rrVariants.js's own). The other three drivers' flats have rows, and keep them. */
+export const IT_DRIVER_FACE = Object.freeze({ archive: 357, record: 3, faceIndex: 429 });
+
 export function installImmersiveTravel() {
   if (_installed) return false;
   _installed = true;
@@ -377,6 +388,7 @@ export function installImmersiveTravel() {
     console.warn('[ImmersiveTravel] Error: could not register custom factions!');
     return true;
   }
+  setFlatFaceOverride(IT_DRIVER_FACE.archive, IT_DRIVER_FACE.record, IT_DRIVER_FACE.faceIndex);   // DRIVER-FACE
   registerMerchantService(CARRIAGE_DRIVERS_FACTION_ID, (door) => immersiveTravelService(door, IT_POPUP.carriage), IT_SERVICE_LABEL, immersiveTravelLoaded);
   registerMerchantService(SAILORS_FACTION_ID, (door) => immersiveTravelService(door, IT_POPUP.seafarer), IT_SERVICE_LABEL, immersiveTravelLoaded);
   return true;

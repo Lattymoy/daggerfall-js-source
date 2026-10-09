@@ -251,3 +251,36 @@ test('WAYPOINTS host: both maps take the right click as the store\'s - the Overw
   assert.match(w, /setWaypointSender\(\(ch, text\) => socialLink\(\)\?\.sendChat\(text, \{ ch \}\) \?\? false\);/, 'the hub\'s own channels - no relay change');
   assert.match(w, /if \(socialLink\(\)\?\.status === 'open' && social\) syncWaypointGroups\(\{ party: social\.party\?\.id \?\? null, guild: myGuildTag\(\) \}\);/, 'GROUP-LEAVE: told only while the hub is open, so a dropped link removes nothing');
 });
+
+test('WILD-WAYPOINT: my remains in the open zone plant one followed red flag, kept with its end on this device - gone at its time, when the room says the remains are gone, at the next death\'s flag, or when removed by hand; and the book hears its room before its word (WILD-SEEN)', async () => {
+  fresh();
+  const W = await import('../src/systems/wildRemainsWaypoint.js');
+  const id = W.markRemains({ mx: 640.5, my: 120.25, until: 10_000, r: 'abc' });
+  const wp = waypointById(id);
+  assert.equal(wp.name, W.WILD_WP_NAME);
+  assert.equal(wp.color, 'red');
+  assert.equal(wp.kind, 'personal', 'mine alone - never said to a party');
+  assert.ok(isWaypointFollowed(id), 'followed: the Overworld keeps it at the screen\'s edge with its distance');
+  assert.deepEqual([wp.mx, wp.my], [640.5, 120.25]);
+  assert.equal(W.remainsMarkTick(9_999), false, 'still in its time');
+  assert.equal(W.remainsGone('other'), false, 'another remains gone: not mine');
+  assert.equal(W.remainsMark()?.id, id, 'remembered on this device');
+  assert.equal(W.remainsMarkTick(10_000), true, 'its time up: gone');
+  assert.equal(waypointById(id), null);
+  const a = W.markRemains({ mx: 1, my: 1, until: 50, r: 'r1' });
+  const b = W.markRemains({ mx: 2, my: 2, until: 60, r: 'r2' });
+  assert.equal(waypointById(a), null, 'the next death\'s flag takes the last one down');
+  assert.equal(W.remainsGone('r2'), true, 'the room says they are gone: the flag goes');
+  assert.equal(waypointById(b), null);
+  const c = W.markRemains({ mx: 3, my: 3, until: 1e15, r: 'r3' });
+  removeWaypoint(c);
+  assert.equal(W.remainsMarkTick(0), true, 'removed by hand: the record goes too');
+  assert.equal(W.remainsMark(), null);
+  assert.equal(W.markRemains({ mx: -5, my: 3, until: 1e15 }), null, 'off the map: no flag');
+  // the host
+  const src = rd('src/scenes/world.js');
+  assert.match(src, /online\.onWildRoom = \(w, room\) => \{\n\s*if \(room !== online\.room\) return;\n\s*wildRemains\.setRoom\(room\);\n\s*wildRemains\.onWord\(w\);\n\s*if \(w\?\.k === 'gone'\) remainsGone\(w\.r\);/, 'WILD-SEEN: the room first, so a near relay\'s hello is never cleared as another room\'s by the frame after it');
+  assert.match(src, /if \(at\) markRemains\(\{ mx: at\.mx, my: at\.my, until: _wildMine\.until, r \}\);/, 'the death plants it where they lie');
+  assert.match(src, /remainsMarkTick\(Date\.now\(\)\);/, 'and the frame takes it down at its time');
+  fresh();
+});

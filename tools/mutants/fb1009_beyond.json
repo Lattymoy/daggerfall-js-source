@@ -1,0 +1,254 @@
+[
+  {
+    "name": "TV-BEYOND-box-clamped-to-the-map",
+    "file": "src/systems/travelRoute.js",
+    "old": "const bounds = { x0: Math.min(0, from.x, to.x), x1: Math.max(width - 1, from.x, to.x), y0: Math.min(0, from.y, to.y), y1: Math.max(height - 1, from.y, to.y) };",
+    "new": "const bounds = { x0: 0, x1: width - 1, y0: 0, y1: height - 1 };",
+    "tests": [
+      "test/fb1009_beyond.test.js"
+    ]
+  },
+  {
+    "name": "TV-BEYOND-box-held-west-alone",
+    "file": "src/systems/travelRoute.js",
+    "old": "y0: Math.min(0, from.y, to.y), y1: Math.max(height - 1, from.y, to.y) };",
+    "new": "y0: 0, y1: height - 1 };",
+    "tests": [
+      "test/fb1009_beyond.test.js"
+    ]
+  },
+  {
+    "name": "TV-BEYOND-road-byte-read-past-the-table",
+    "file": "src/systems/travelRoute.js",
+    "old": "const kind = off ? 2 : edgeKindAt(ay * width + ax, by * width + bx, bit, roads, tracks);",
+    "new": "const kind = edgeKindAt(ay * width + ax, by * width + bx, bit, roads, tracks);",
+    "tests": [
+      "test/fb1009_beyond.test.js"
+    ]
+  },
+  {
+    "name": "TV-BEYOND-west-edge-only-unguarded",
+    "file": "src/systems/travelRoute.js",
+    "old": "const off = ax < 0 || ay < 0 || bx < 0 || by < 0 || ax >= width",
+    "new": "const off = ay < 0 || by < 0 || ax >= width",
+    "tests": [
+      "test/fb1009_beyond.test.js"
+    ]
+  },
+  {
+    "name": "TV-BEYOND-beyond-never-asked",
+    "file": "src/systems/travelRoute.js",
+    "old": "? !beyondDry(x, y) : heights[y * width + x] <= waterByte);",
+    "new": "? true : heights[y * width + x] <= waterByte);",
+    "tests": [
+      "test/fb1009_beyond.test.js"
+    ]
+  },
+  {
+    "name": "TV-BEYOND-beyond-asked-every-time",
+    "file": "src/systems/travelRoute.js",
+    "old": "if (dry === undefined) {",
+    "new": "if (true) {",
+    "tests": [
+      "test/fb1009_beyond.test.js"
+    ]
+  },
+  {
+    "name": "TV-BEYOND-keep-never-dropped",
+    "file": "src/systems/travelRoute.js",
+    "old": "if (dryBeyond.size >= BEYOND_CACHE_MAX) dryBeyond.clear();",
+    "new": "",
+    "tests": [
+      "test/fb1009_beyond.test.js"
+    ]
+  },
+  {
+    "name": "TV-BEYOND-apart-folds-the-land-past-the-table",
+    "file": "src/systems/travelRoute.js",
+    "old": "if (!onTable(from) || !onTable(to)) return false;",
+    "new": "",
+    "tests": [
+      "test/fb1009_beyond.test.js"
+    ]
+  },
+  {
+    "name": "TV-BEYOND-host-sea-past-the-bay",
+    "file": "src/scenes/world.js",
+    "old": "const tvWater = (px, py) => (!woods.isTamrielGround && (px < 0 || py < 0 || px >= 1000 || py >= 500)) || woods.getHeightMapValue(px, py) <= WATER_BYTE;",
+    "new": "const tvWater = (px, py) => px < 0 || py < 0 || px >= 1000 || py >= 500 || woods.getHeightMapValue(px, py) <= WATER_BYTE;",
+    "tests": [
+      "test/fb1009_beyond.test.js"
+    ]
+  },
+  {
+    "name": "TV-BEYOND-host-believes-the-clamp",
+    "file": "src/scenes/world.js",
+    "old": "const tvWater = (px, py) => (!woods.isTamrielGround && (px < 0 || py < 0 || px >= 1000 || py >= 500)) || woods.getHeightMapValue(px, py) <= WATER_BYTE;",
+    "new": "const tvWater = (px, py) => woods.getHeightMapValue(px, py) <= WATER_BYTE;",
+    "tests": [
+      "test/fb1009_beyond.test.js"
+    ]
+  },
+  {
+    "name": "TV-BEYOND-planner-handed-no-beyond",
+    "file": "src/scenes/world.js",
+    "old": "WATER_BYTE, 1000, 500, (x, y) => !tvWater(x, y))).setRocks(tvWodRocks());",
+    "new": "WATER_BYTE, 1000, 500, null)).setRocks(tvWodRocks());",
+    "tests": [
+      "test/fb1009_beyond.test.js"
+    ]
+  },
+  {
+    "name": "TV-BEYOND-pose-bound-the-bays",
+    "file": "src/net/wire.js",
+    "old": "export const POSE_BOUND = WORLD_PIXEL_BOUND * PIXEL_UNITS;",
+    "new": "export const POSE_BOUND = 1024 * PIXEL_UNITS;",
+    "tests": [
+      "test/fb1009_beyond.test.js"
+    ]
+  },
+  {
+    "name": "TV-BEYOND-world-too-small-for-the-widest-fit",
+    "file": "src/net/wire.js",
+    "old": "export const WORLD_PIXEL_BOUND = 8192;",
+    "new": "export const WORLD_PIXEL_BOUND = 4096;",
+    "tests": [
+      "test/fb1009_beyond.test.js"
+    ]
+  },
+  {
+    "name": "TV-BEYOND-world-pixel-bound-inclusive",
+    "file": "src/net/wire.js",
+    "old": "export const worldPixelOk = (v) => Number.isInteger(v) && Math.abs(v) < WORLD_PIXEL_BOUND;",
+    "new": "export const worldPixelOk = (v) => Number.isInteger(v) && Math.abs(v) <= WORLD_PIXEL_BOUND;",
+    "tests": [
+      "test/fb1009_beyond.test.js"
+    ]
+  },
+  {
+    "name": "TV-BEYOND-cell-key-unsigned",
+    "file": "src/net/wire.js",
+    "old": "const CELL_ROOM = /^world:-?\\d{1,3},-?\\d{1,3}$/;",
+    "new": "const CELL_ROOM = /^world:\\d{1,3},\\d{1,3}$/;",
+    "tests": [
+      "test/fb1009_beyond.test.js"
+    ]
+  },
+  {
+    "name": "TV-BEYOND-cell-key-any-sign",
+    "file": "src/net/wire.js",
+    "old": "const CELL_ROOM = /^world:-?\\d{1,3},-?\\d{1,3}$/;",
+    "new": "const CELL_ROOM = /^world:-*\\d{1,3},-*\\d{1,3}$/;",
+    "tests": [
+      "test/fb1009_beyond.test.js"
+    ]
+  },
+  {
+    "name": "TV-BEYOND-halo-walled-at-the-edge",
+    "file": "src/net/wire.js",
+    "old": "if (Math.abs(nx) > 999 || Math.abs(ny) > 999) continue;",
+    "new": "if (nx < 0 || ny < 0 || nx > 999 || ny > 999) continue;",
+    "tests": [
+      "test/fb1009_beyond.test.js"
+    ]
+  },
+  {
+    "name": "TV-BEYOND-mark-clamped-onto-the-bay",
+    "file": "src/systems/travellerMarks.js",
+    "old": "const cx = Math.max((1 - WORLD_PIXEL_BOUND) * NATIVE_PIXEL, Math.min(WORLD_PIXEL_BOUND * NATIVE_PIXEL - 1, x));",
+    "new": "const cx = Math.max(0, Math.min(1000 * NATIVE_PIXEL - 1, x));",
+    "tests": [
+      "test/fb1009_beyond.test.js"
+    ]
+  },
+  {
+    "name": "TV-BEYOND-mark-truncated",
+    "file": "src/systems/travellerMarks.js",
+    "old": "const px = Math.floor(cx / NATIVE_PIXEL), pzRow = Math.floor(cz / NATIVE_PIXEL);",
+    "new": "const px = Math.trunc(cx / NATIVE_PIXEL), pzRow = Math.trunc(cz / NATIVE_PIXEL);",
+    "tests": [
+      "test/fb1009_beyond.test.js"
+    ]
+  },
+  {
+    "name": "TV-BEYOND-mark-law-the-bays",
+    "file": "src/net/wire.js",
+    "old": "const px = worldPixelOk(p.px) ? p.px : null, py = worldPixelOk(p.py) ? p.py : null;",
+    "new": "const px = whole(p.px, MAP_PIXELS_X - 1), py = whole(p.py, MAP_PIXELS_Y - 1);",
+    "tests": [
+      "test/fb1009_beyond.test.js"
+    ]
+  },
+  {
+    "name": "TV-BEYOND-party-pixel-unsigned",
+    "file": "src/net/wire.js",
+    "old": "const px = worldPixelIn(p.px), py = worldPixelIn(p.py);",
+    "new": "const px = uint(p.px, MAP_PIXELS_X - 1), py = uint(p.py, MAP_PIXELS_Y - 1);",
+    "tests": [
+      "test/fb1009_beyond.test.js"
+    ]
+  },
+  {
+    "name": "TV-BEYOND-party-pixel-clamp-one-way",
+    "file": "src/net/wire.js",
+    "old": "const worldPixelIn = (v) => (finite(v) ? Math.max(1 - WORLD_PIXEL_BOUND, Math.min(WORLD_PIXEL_BOUND - 1, Math.floor(v))) : null);",
+    "new": "const worldPixelIn = (v) => (finite(v) ? Math.min(WORLD_PIXEL_BOUND - 1, Math.floor(v)) : null);",
+    "tests": [
+      "test/fb1009_beyond.test.js"
+    ]
+  },
+  {
+    "name": "TV-BEYOND-party-trip-on-the-bay",
+    "file": "src/net/wire.js",
+    "old": "  if (tv && worldPixelOk(tv.x) && worldPixelOk(tv.y)\n",
+    "new": "  if (tv && Number.isInteger(tv.x) && tv.x >= 0 && Number.isInteger(tv.y) && tv.y >= 0\n",
+    "tests": [
+      "test/fb1009_beyond.test.js"
+    ]
+  },
+  {
+    "name": "TV-BEYOND-party-walk-spot-on-the-bay",
+    "file": "src/net/wire.js",
+    "old": "&& Math.abs(tw.sx) <= POSE_BOUND && Math.abs(tw.sz) <= POSE_BOUND));",
+    "new": "&& tw.sx >= 0 && tw.sz >= 0 && tw.sx <= POSE_BOUND && tw.sz <= POSE_BOUND));",
+    "tests": [
+      "test/fb1009_beyond.test.js"
+    ]
+  },
+  {
+    "name": "TV-BEYOND-party-walk-on-the-bay",
+    "file": "src/net/wire.js",
+    "old": "  if (tw && spotOk && worldPixelOk(tw.x) && worldPixelOk(tw.y)\n",
+    "new": "  if (tw && spotOk && Number.isInteger(tw.x) && tw.x >= 0 && Number.isInteger(tw.y) && tw.y >= 0\n",
+    "tests": [
+      "test/fb1009_beyond.test.js"
+    ]
+  },
+  {
+    "name": "TV-BEYOND-party-feet-on-the-bay",
+    "file": "src/net/wire.js",
+    "old": "  if (out.in === 0 && finite(p.wx) && finite(p.wy) && finite(p.wz) && Math.abs(p.wx) <= POSE_BOUND\n    && Math.abs(p.wz) <= POSE_BOUND",
+    "new": "  if (out.in === 0 && finite(p.wx) && finite(p.wy) && finite(p.wz) && p.wx >= 0 && p.wx <= POSE_BOUND\n    && p.wz >= 0 && p.wz <= POSE_BOUND",
+    "tests": [
+      "test/fb1009_beyond.test.js"
+    ]
+  },
+  {
+    "name": "TV-BEYOND-park-anchor-one-way",
+    "file": "src/net/wire.js",
+    "old": "a.some((v) => Math.abs(v) > POSE_BOUND)) return null;",
+    "new": "a.some((v) => v < 0 || v > POSE_BOUND)) return null;",
+    "tests": [
+      "test/fb1009_beyond.test.js"
+    ]
+  },
+  {
+    "name": "TV-BEYOND-duel-ring-one-way",
+    "file": "src/net/wire.js",
+    "old": "  if (Math.abs(p[0]) > POSE_BOUND || Math.abs(p[2]) > POSE_BOUND || Math.abs(p[1]) > POSE_Y_BOUND) return null;   // TV-BEYOND: either way",
+    "new": "  if (p[0] < 0 || p[0] > POSE_BOUND || p[2] < 0 || p[2] > POSE_BOUND || Math.abs(p[1]) > POSE_Y_BOUND) return null;",
+    "tests": [
+      "test/fb1009_beyond.test.js"
+    ]
+  }
+]

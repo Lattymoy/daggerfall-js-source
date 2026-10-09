@@ -48,6 +48,19 @@ export const WOD_ROCK_SITES = Object.freeze(['Rocks', 'Mountains']);
 /** WOD-BUSH, ROCK-SUNK: is this piece the camps' shrub (stood on the drawn ground), never a rock field's boulder? */
 export const isWodShrub = (modelId, siteName) => modelId === WOD_BUSH_MODEL && !WOD_ROCK_SITES.includes(siteName);
 
+/** ROCK-SEAT (2026-10-09, the owner of the "open textures" in the rock fields: dark sheets in the air, the trees seen
+ *  through a boulder): a rock field's piece is SET INTO the ground - the mod stands every one tens to hundreds of metres
+ *  under the site's average (posY -62 to -423 in WOD_Rocks_Large), so only its crown shows - and on the ground the mod
+ *  laid it out on, its open underside never shows. The landforms roll the land under a site (hills, LANDFORM8's
+ *  peaks), and where it falls away further than a piece is sunk the piece's bottom hung over the slope: a pebble has no
+ *  floor, so its inside stood open to the eye. Such a piece is lowered until its lowest point is this far under the
+ *  lowest ground beneath it; one already in the ground (the rule, and every piece on level land) is left exactly where
+ *  the mod put it, and none is ever raised (ROCK-SUNK's lesson). Metres. */
+export const WOD_ROCK_SEAT_M = 0.5;
+/** ROCK-SEAT: how far to lower a rock field's piece whose lowest point is `bottom`, over ground whose lowest point under
+ *  it is `ground` - zero for a piece already in the ground, never positive. */
+export const rockSeatDrop = (ground, bottom) => (Number.isFinite(ground) && Number.isFinite(bottom) && bottom > ground - WOD_ROCK_SEAT_M ? ground - WOD_ROCK_SEAT_M - bottom : 0);
+
 /** LocationEnemySpawner.SpawnType (LocationEnemySpawner.cs:28-35). */
 export const WOD_SPAWN_TYPE = Object.freeze({ Quest: 0, BillboardPerson: 1, Enemy: 2, Loot: 3, Good: 4 });
 /** LocationEnemySpawner.enemyID (:37-40). */

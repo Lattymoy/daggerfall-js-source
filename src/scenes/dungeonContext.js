@@ -211,6 +211,7 @@ import { calculateCastCost } from '../systems/spellcost.js';
 import { snapshotPlayer, restorePlayer, composeSessionState, restoreSessionState , copyEffectEntry } from '../systems/save.js';   // B4: the ONE quest+talk composer
 import { saveSlot, loadSlot, quickLoadSlot, QUICK_SAVE_NAME, requestScreenshot, slotLoaded } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave; SS1: the shot arms here, the HOST loop delivers it
 import { bindQuestFoeHost, placeFoeEnv, entityOccupancy } from './questFoeHost.js';
+import { puppetLead } from './puppetLead.js';   // DESYNC-ZERO: a moving puppet leads its last word
 import { validQuestTags, questMarkerYields, QUEST_PUPPETS_MAX, validLooseSeqs, companionNames } from './exteriorFoes.js';   // QUEST-PARTY phase 3c: the party's quest words and the marker's law, one home   // B1: quest foes ride this pool   // RE1: the placement ring's env over this host's collider
 import { placeFoeFreely, PLACE_FOE_DEFAULTS, sceneMarkerMover } from '../systems/quest/sceneMount.js';   // RE1: FoeSpawner.PlaceFoeFreely, the one home; AUDIT III E1: its numbers, a joiner's spot held to them; TOTEM-CAGE: GetDaggerfallMarker's motion
 import { dungeonQuestSpawnSpots } from '../systems/quest/place.js';   // FIELD BUGS 29h (BOUNTY-LAIR)
@@ -290,6 +291,12 @@ import { getPref } from '../systems/uiPrefs.js';   // ENHANCED AI 3b: the Enhanc
 import { raiseEnemyDeath, playRareDrop, pileBody, sayEnemyDied } from './corpseMarker.js';   // UL1: OnEnemyDeath; LR3: the drop chime; LOOT-STACK: a body as the loot window's tab; LOOT7-CHECK DUNGEON-DIED: the kill notice
 import { rollCorpseKit, capFoeLoot } from '../systems/foeLootCap.js';   // KIT-ROLL: a foe's kit, laddered at its death by every body door; AUDIT 625 L5: a copy's cap
 import { FOE_LEVEL_MAX, CELL_LOOSE_PUPPETS, sharedClassicMinutes, hitClassField, hitClassOf } from '../net/wire.js';   // TELL8: a blow's class on a hit   // SEARCH1: a room's search stamp, read as the world minute it was searched at   // AUDIT RENOWN1 GAME-3: the stream's bound on a class foe's level; SUMMON-SYNC: an owner's loose stands a reader stands, the cell's allowance
+/** DESYNC-ZERO: a reader's allowance for one owner's loose stands in a room (a Greater Giant's call of ten, summons, Mark's
+ *  stands) - CELL_LOOSE_PUPPETS (four) left most of a call unseen by the rest of the room. Reader-side only: the relay never
+ *  reads it. */
+const LOOSE_PUPPETS_MAX = Math.max(24, CELL_LOOSE_PUPPETS);
+/** DESYNC-ZERO: what a player whose dungeon the host builds otherwise is told (once a dungeon). */
+export const LAYOUT_MISMATCH_TEXT = 'This dungeon is laid out differently for another player here - one of you may be on an older version. Reload the page so you all see the same monsters.';
 import { partyFoeLoses, partyFoeHits, partyFoeHeals, noteFighter, foeFighters, takeWholeBlow, PARTY_ME } from '../systems/partyScale.js';   // PSCALE1: a shared foe weighs whoever fights it
 import { renownFoeStruck, renownFoeDied, renownFoeCarry, renownFoeRevived } from '../net/renownTracker.js';   // RENOWN1: a foe the player fought pays its Renown XP when it dies, by any hand   // AUDIT RENOWN1 GAME-10: a rebuilt foe keeps my blows, a revived one forgets them
 import { reportPlayerKill } from '../systems/playerKills.js';   // SET2: my own kills, told
@@ -1623,7 +1630,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const _sharedById = new Map();   // REST-SYNC: id -> foe - the host's live encounters, and each joiner's puppets of them
   const _sharedPending = new Map();   // REST-SYNC: id -> the newest record while its puppet builds
   /** REST-SYNC: a foe the room shares - the layout's run, or a shared encounter. */
-  const isRoomFoe = (f, i = foes.indexOf(f)) => (i >= 0 && i < _layoutFoes) || (f != null && f._encId != null);
+  // DESYNC-ZERO: and a host's layout foe past my own run (_surI) - a surplus puppet is the room's
+  const isRoomFoe = (f, i = foes.indexOf(f)) => (i >= 0 && i < _layoutFoes) || (f != null && (f._encId != null || f._surI != null));
   /** AUDIT PRE-MERGE 0928 M1: A REBUILT BODY KEEPS ITS PLACE IN THE ROOM. retypeFoe stands the new body in the old
    *  record's slot of the pool, and the layout's run is known by that slot alone - but a shared encounter is known by its
    *  number (`_encId`, and the room's map to it) and my loose stand by its mark and its lane's number, and they stayed on
@@ -4862,7 +4870,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     f._castPending = false;
     f._pupTarget = null; f._pupMine = false;
     if (p) {
-      const feet = f.ai.feet, t = p.feet;
+      const feet = f.ai.feet, t = puppetLead(p, p.feet, performance.now() / 1000);   // DESYNC-ZERO: led along its way while its record ages (scenes/puppetLead.js)
       const dx = t[0] - feet[0], dy = t[1] - feet[1], dz = t[2] - feet[2];
       const d2 = dx * dx + dy * dy + dz * dz;
       if (d2 > PUPPET_SNAP * PUPPET_SNAP) { feet[0] = t[0]; feet[1] = t[1]; feet[2] = t[2]; }
@@ -4919,6 +4927,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // reads it), and a layout with no foes to say left every joiner flipping to its own authority six seconds in
     if (!out.length && !shared.length && !full) return null;
     const frame = { n: ++_foesSeq, k: _locationKey, f: out };   // k: the dungeon (AUDIT WORLD2 C8: never another dungeon's foes by index)
+    if (full) frame.lc = _layoutFoes;   // DESYNC-ZERO: the host's layout count - a joiner whose layout ran longer hides the rest
     // REST-SYNC: the encounters ride the room the layout's run leaves under the wire's one cap - a frame over
     // FOES_FRAME_MAX is refused WHOLE (net/online.js sendFoes), and the largest elite layout's worst case all but fills
     // it (test/elitepscale.test.js). What does not fit waits for a later frame (its key forgotten, so it goes again),
@@ -5016,14 +5025,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (_authority || !data || !Array.isArray(data.f)) return false;
     // AUDIT WORLD2 A1/B2: a new host's counter starts over, and its attack counts are its own - every puppet
     // re-latches (no phantom strike, no frame judged stale by the old host's high-water mark)
-    if (from !== _foesFrom) { _foesFrom = from; _foesSeqIn = -1; for (let i = 0; i < _layoutFoes; i++) { const f = foes[i]; if (f) { f._pup = null; f._pupMismatch = false; } } for (const f of _sharedById.values()) f._pup = null; }   // REST-SYNC: the room's encounters re-latch too
+    if (from !== _foesFrom) { clearSurplus(); _foesFrom = from; _foesSeqIn = -1; for (let i = 0; i < _layoutFoes; i++) { const f = foes[i]; if (f) { f._pup = null; f._pupMismatch = false; } } for (const f of _sharedById.values()) f._pup = null; }   // REST-SYNC: the room's encounters re-latch too
     if (Number.isFinite(data.n)) { if (data.n <= _foesSeqIn) return false; _foesSeqIn = data.n; }
     if (data.k != null && data.k !== _locationKey) { if (!_keyMismatchSaid) { _keyMismatchSaid = true; console.warn(`[online] the host streams ${data.k}, this dungeon is ${_locationKey} - the stream is refused`); } return false; }   // C8: another dungeon's stream; AUDIT WORLD34 B2: said once
+    if (Number.isInteger(data.lc) && data.lc >= 0) hideBeyondHostLayout(data.lc);   // DESYNC-ZERO: my layout foes the host has none of
+    const listed = data.full === 1 || Number.isInteger(data.lc) ? new Set() : null;
     for (const r of data.f) {
       if (!r || typeof r !== 'object') continue;
       const i = r.i | 0;
       const f = foes[i];
-      if (!f || i >= _layoutFoes) continue;
+      listed?.add(i);
+      if (!f || i >= _layoutFoes) { surplusRecord(i, r); continue; }   // DESYNC-ZERO: a host's foe my layout never built - stood as a puppet, never dropped
       if (r.t != null && r.t !== f.mobileType) {   // another species at this index - REBUILT as the room's (WORLD3); the blow goes meanwhile (AUDIT FOES FOE4)
         f._pupMismatch = true;
         // AUDIT WORLD3 E2: the record that triggered the rebuild lands ON the rebuilt foe. The build stands a FRESH
@@ -5052,7 +5064,80 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       applyFoeRecord(f, r);
     }
     applySharedRecords(Array.isArray(data.x) ? data.x : [], data.xf === 1);   // REST-SYNC
+    if (listed) for (const [i, f] of [..._surplus]) if (!listed.has(i) && !_surplusPending.has(i)) dropSurplus(i, f);   // DESYNC-ZERO: a host's surplus foe it no longer lists
     return true;
+  }
+
+  // DESYNC-ZERO (2026-10-09, the owner: "monster desyncs should never happen in dungeons and outside"): TWO LAYOUTS OF
+  // ONE ROOM. The host's index names the same marker on every client while every client builds the same run - and a
+  // client on another build, or with a mod or setting that stands foes differently, builds another: the host's foes past
+  // my run were DROPPED (a foe hunting me that I could not see), and my foes past the host's stood here for me alone (I
+  // struck the air the host had nothing at). Now the host's full frame says its count (`lc`): mine past it go, and every
+  // host record past mine stands as a puppet of the room (`_surI`, its index on the host), struck through the host by
+  // that index. A seat that changes hands takes them down - they were the old host's layout.
+  const FOE_SEQ_MAX_SURPLUS = 4096;   // a layout index past this is no layout's
+  const _surplus = new Map();   // host index -> its puppet here
+  const _surplusPending = new Map();   // host index -> the newest record while it builds
+  let _hiddenFrom = Infinity;   // my layout foes from this index on are hidden (the host has none of them)
+  let _layoutMismatchSaid = false;
+  /** DESYNC-ZERO: said to the PLAYER once a dungeon - the console line alone reached nobody who could act on it. The
+   *  usual cause is one of the two on an older build (BUILD_TAG); the room still plays as the host has it. */
+  function sayLayoutMismatch() {
+    if (_layoutMismatchSaid) return;
+    _layoutMismatchSaid = true;
+    hudText.add(LAYOUT_MISMATCH_TEXT);
+  }
+  function hideBeyondHostLayout(lc) {
+    if (lc >= _layoutFoes || lc >= _hiddenFrom) return;
+    for (let i = lc; i < Math.min(_hiddenFrom, _layoutFoes); i++) {
+      const f = foes[i];
+      if (!f || f.dead) continue;
+      if (f.batch) { renderer.destroyBillboardBatch(f.batch); f.batch = null; }
+      freeCorpse(f);
+      f.dead = true; f._gone = true; f._absentHere = true;
+      dropCandidate(f);
+    }
+    _hiddenFrom = lc;
+    sayLayoutMismatch();
+    console.warn(`[online] this dungeon's host builds ${lc} foes, this client ${_layoutFoes} - the ${_layoutFoes - lc} past the host's are not the room's and are hidden (a different game build or foe setting?)`);
+  }
+  function surplusRecord(i, raw) {
+    const r = validFoeRecord(raw);   // the wire's one door, as every streamed record
+    if (!r || i < 0 || i > FOE_SEQ_MAX_SURPLUS) return;
+    const f = _surplus.get(i);
+    if (f) {
+      if (r.t == null || r.t === f.mobileType) { applyFoeRecord(f, r); return; }
+      dropSurplus(i, f);
+    }
+    if (_surplusPending.has(i)) { _surplusPending.set(i, r); return; }
+    if (r.d === 1 || r.t == null || !Array.isArray(r.f) || !canStandFoe(r.t)) return;
+    if (_surplus.size + _surplusPending.size >= CELL_FRAME_RECORDS_MAX) return;   // a bound on a forged stream: a frame's records
+    _surplusPending.set(i, r);
+    sayLayoutMismatch();
+    (async () => {
+      const nf = await buildFoeAt({ mobileType: r.t, gender: GENDER_BIT[r.x === 1 ? 1 : 0], x: r.f[0], y: r.f[1], z: r.f[2], spawnDistanceType: 0 }, false, { puppet: true, feetGiven: true });
+      const newest = _surplusPending.get(i) ?? r;
+      _surplusPending.delete(i);
+      if (!nf) return;
+      if (_ctxDead || _authority || _surplus.has(i)) { dropSurplus(null, nf); return; }
+      nf._surI = i;
+      _surplus.set(i, nf);
+      applyFoeRecord(nf, newest);
+    })().catch((e) => { _surplusPending.delete(i); console.error('[online] a host foe past this layout could not stand here:', e); });
+  }
+  function dropSurplus(i, f) {
+    if (i != null) _surplus.delete(i);
+    if (!f) return;
+    if (f.batch) { renderer.destroyBillboardBatch(f.batch); f.batch = null; }
+    freeCorpse(f);
+    f.dead = true; f._gone = true;
+    dropCandidate(f);
+    const at = foes.indexOf(f);
+    if (at >= _layoutFoes) foes.splice(at, 1);
+  }
+  function clearSurplus() {
+    for (const [i, f] of [..._surplus]) dropSurplus(i, f);
+    _surplusPending.clear();
   }
 
   /** REST-SYNC: the host's word on the room's encounters - each record onto its puppet (the layout's door), a new id
@@ -5169,7 +5254,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const i = out[k].i;
       if (!qt && f.companion != null && !f.dead) { cp.push(i); cn.push(f.entity?.name ?? ''); }   // AUDIT CC-E1: my companions - the room stands them as my allies; WK-U3: and their names
       if (!qt) { lf.push(i); return; }   // SUMMON-SYNC: a loose stand's number
-      const fl = (f._questMarker ? 1 : 0) | (!f.dead && questTouched(f) ? 2 : 0);
+      const fl = (f._questMarker && !qt.pv ? 1 : 0) | (!f.dead && questTouched(f) ? 2 : 0) | (qt.pv ? 4 : 0);   // DESYNC-ZERO: a private quest's foe (4), never a party marker
       qf.push(fl ? [i, qt.q, qt.s, fl] : [i, qt.q, qt.s]);
     });
     const frame = { n: ++_ownFrameSeq, k: _locationKey, full: whole ? 1 : 0, f: out, ...(qf.length ? { qf } : {}), ...(lf.length ? { lf } : {}), ...(cp.length ? { cp, cn } : {}) };
@@ -5224,7 +5309,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (took) { _ownAdopted.delete(key); if (r.d !== 1 && !took.dead && !took._gone) letGoOwn(took); }
       if (f) { applyOwnRecord(f, r, share); if ((lo && comp.has(r.i)) || f.companion != null) companionPuppet(f, lo && comp.has(r.i), compNames.get(r.i)); f._heirElse = ownHeirElse(r); if (ownHeirIsMe(r) && f.companion == null) adoptOwn(from, f, share); continue; }
       if (_ownPending.has(key)) { _ownPending.set(key, r); continue; }
-      if (r.d === 1 || r.t == null || !r.f || !canStandFoe(r.t) || ownPuppetsOf(from, lo) >= (lo ? CELL_LOOSE_PUPPETS : QUEST_PUPPETS_MAX)) continue;
+      if (r.d === 1 || r.t == null || !r.f || !canStandFoe(r.t) || ownPuppetsOf(from, lo) >= (lo ? LOOSE_PUPPETS_MAX : QUEST_PUPPETS_MAX)) continue;
       _ownPending.set(key, { ...r, _comp: lo && comp.has(r.i), _compName: compNames.get(r.i) ?? null });
       if (lo) _ownPendLoose.add(key);
       standOwnPuppet(from, r, qt, o.gen, lo).catch((e) => { _ownPending.delete(key); _ownPendLoose.delete(key); console.error('[online] another player\'s foe could not stand here:', e); });
@@ -5292,7 +5377,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const wasDead = f.dead, h0 = f._pupH;
     applyFoeRecord(f, r);
     if (Number.isFinite(r.h)) f._pupH = r.h;
-    if (f._pupQuest && !f._qHurt && Number.isFinite(h0) && Number.isFinite(r.h) && r.h < h0) { f._qHurt = true; share?.onPuppetHurt?.(f._pupQuest); }
+    if (f._pupQuest && !f._qHurt && Number.isFinite(h0) && Number.isFinite(r.h) && r.h < h0) { f._qHurt = true; share?.onPuppetHurt?.(f._pupQuest, f._ownFrom); }
     if (f._pupQuest && !wasDead && f.dead) share?.onPuppetDied?.(f._pupQuest, f._ownFrom, f._ownI);   // KEPT-KILL: whose foe, by its number - the kill the owner's pose may say too counts once
   }
   /** KEPT-KILL (2026-10-01): a foe I keep on a partner's word (AUDIT DISC28 QS-J's `_keptTag` - my copy holds no such
@@ -5301,9 +5386,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  holds the quest counts it, wherever its member stands. A foe let go (its owner's again, a room change) fell to
    *  nobody. */
   function keptKillTick(f) {
-    if (!f._keptTag || f._keptSaid || f._ownFrom != null || !(f.entity?.health <= 0)) return false;
+    // DESYNC-ZERO: and MY OWN quest foe's fall on the lane - my party pose says it, so a member holding the same quest
+    // counts it wherever that member stands (the ledger dedupes it against the fall their puppet showed them)
+    const tag = f._keptTag ?? (f.questBehaviour && f._ownSeq != null ? ownQuestTag(f) : null);
+    if (!tag || f._keptSaid || f._ownFrom != null || !(f.entity?.health <= 0)) return false;
     f._keptSaid = true;
-    ownShare()?.onKeptDied?.(f._keptTag, f._ownSeq);
+    ownShare()?.onKeptDied?.({ q: tag.q, s: tag.s }, f._ownSeq);
     return true;
   }
   /** CREW-COMPANIONS: a loose stand of mine gone with no corpse (a companion lifted out to the next place, knocked out,
@@ -5382,7 +5470,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // (QUEST_PUPPETS_MAX + CELL_LOOSE_PUPPETS) are the most a room hands one player at once
     let live = 0;
     for (const x of _ownAdopted.values()) if (!x.dead && !x._gone) live++;
-    if (live >= QUEST_PUPPETS_MAX + CELL_LOOSE_PUPPETS) return 0;
+    if (live >= QUEST_PUPPETS_MAX + LOOSE_PUPPETS_MAX) return 0;
     const b = qt ? (share?.behaviourFor?.(qt) ?? null) : null;   // SUMMON-SYNC: a loose stand binds no quest - its heir takes it as it stands
     _ownPups.delete(key);
     const p = f._pup;
@@ -5445,7 +5533,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   /** AUDIT (pre-merge) Q3: a peer's blow on my shared quest foe - the party's (the quest law's peerMayHit), or on one I keep
    *  a partner's word for, that word's party (no quest of mine to ask). AUDIT DISC28 QS-J: the party's own word
    *  (partyPeer) - accepts is DISC28-J's linked-copy law, which a kept foe is kept exactly for lacking. */
-  const ownPeerMayHit = (id, f) => (f._keptTag ? !!ownShare()?.partyPeer?.(id) : !!ownShare()?.peerMayHit?.(id, f));
+  const ownPeerMayHit = (id, f) => (f._keptTag ? f.entity?.team !== 'PlayerAlly' : !!ownShare()?.peerMayHit?.(id, f));   // DESYNC-ZERO: anyone's blow lands on a quest foe everyone in the room sees
   function applyOwnHit(id, data) {
     if (!data || typeof data !== 'object' || (data.k != null && data.k !== _locationKey)) return false;
     const i = data.i | 0, dmg = Number(data.dmg);
@@ -5663,6 +5751,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       f._sentKey = null;
     }
     if (!on) _foesFrom = null;   // AUDIT WORLD2 A1: the next stream, whoever's, starts its count over
+    clearSurplus();   // DESYNC-ZERO: the old host's layout foes past mine were its own
   }
 
   // S12: the dungeon world snapshot. Foes persist by SPAWN ORDER
@@ -6357,7 +6446,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   /** AUDIT CC-E1: my companion's blow on the room's foe while another hosts it - to the host as an ally's (its foe turns on him). */
   function roomCoop(foe, pi, damage, knockDir, kind, striker) {
     const coop = coopHit(foe, damage, knockDir, kind, striker);
-    if (coop?.al === 1) opts.onFoeHit?.({ ...(foe._encId != null ? { i: foe._encId, xs: 1 } : { i: pi }), ...coop });
+    if (coop?.al === 1) opts.onFoeHit?.({ ...(foe._encId != null ? { i: foe._encId, xs: 1 } : { i: foe._surI ?? pi }), ...coop });
   }
   function damageFoe(foe, damage, playerFeet = null, knockDir = null, { fromPlayer = true, bypassShield = false, kind = 'melee', peer = false, peerId = null, whole = false, spell = null, striker = null, weapon = null, round = false, wc = null, element = null } = {}) {   // TELL8: `wc` a joiner's blow's class (net/wire.js hitClassOf); RVN3: `element` a spell landing's (its weakness's weight)   // AUDIT CC-E1: `striker` the foe whose blow it is (hurtFromFoe's); TELL1: `weapon` the player's striking item, `round` a spell's later round (the poise meter's weight)
     // AUDIT 68 S19-damagefoe-dead-reentry: a corpse takes no blow. EnemyDeath runs once; the round sinks tick on
@@ -6452,7 +6541,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // disagree at 758 of 760 markers - so every index depended on an async,
         // fallible rebuild clearing the flag, and any rebuild that refused left that
         // foe invulnerable to that client for the life of the context.
-        if (fromPlayer && damage >= 0) opts.onFoeHit?.({ ...(foe._encId != null ? { i: foe._encId, xs: 1 } : { i: pi }), dmg: damage, kind,
+        // DESYNC-ZERO: a host foe past my own layout run (a surplus puppet) is struck by the host's number for it
+        if (fromPlayer && damage >= 0) opts.onFoeHit?.({ ...(foe._encId != null ? { i: foe._encId, xs: 1 } : { i: foe._surI ?? pi }), dmg: damage, kind,
           ...(_pAt ? { p: [q2(_pAt[0]), q2(_pAt[1]), q2(_pAt[2])] } : {}),
           ...(knockDir ? { d: [q3(knockDir[0]), q3(knockDir[1]), q3(knockDir[2])] } : {}),
           ...(_pt != null ? { pt: _pt } : {}),   // WORLD6b-iii(e): the striker's poison rides to the host's foe; AUDIT WORLD6b-iii(e) A3: the calc's word, whatever the number (the Strikes payload can zero it after the dose)
@@ -7096,7 +7186,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // B1: QuestResourceBehaviour.Update every frame the object lives
     // (dead included - a corpse's component still runs in DFU, and the
     // kill credit lands the update AFTER health hit zero).
-    for (const f of foes) { f.questBehaviour?.update(); if (f._keptTag) keptKillTick(f); }   // KEPT-KILL: and a foe kept on a partner's word says its fall
+    for (const f of foes) { f.questBehaviour?.update(); if (f._keptTag || (f.questBehaviour && f._ownFrom == null)) keptKillTick(f); }   // DESYNC-ZERO: and my own quest foe's fall is said to the party   // KEPT-KILL: and a foe kept on a partner's word says its fall
     // AUDIT 18 F5: the rest clock USED to tick here, which made it
     // unreachable - drawFoes only runs when NO overlay is up, and the
     // rest window IS an overlay. It ticks from tickOverlay now, called

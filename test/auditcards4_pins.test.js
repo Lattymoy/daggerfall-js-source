@@ -201,7 +201,8 @@ test('AUDIT CARDS-4 M device: the void timer runs from the order, said again aft
 
 test('AUDIT CARDS-4 M host: a game closed while the realm answered sits nobody; the purse read again at the press; the panel\'s word for a closed realm; the wallet banks into the region\'s account', () => {
   const wm = read('src/scenes/worldModes.js'), w = read('src/scenes/world.js');
-  assert.match(wm, /g\.staking = false;\n\s+if \(g !== cardGame \|\| !cardSeat\) return;\n\s+if \(!r\.ok\) \{ say\(\(r\.unknown/);
+  // PIN MOVED (CARDS-SAID, Tavern-Cards section 31): the refusal is the panel's line too - said from there
+  assert.match(wm, /g\.staking = false;\n\s+if \(g !== cardGame \|\| !cardSeat\) return;\n(?:\s+\/\/[^\n]*\n)*\s+if \(!r\.ok\) \{ g\.refused = \(r\.unknown/);
   assert.match(wm, /if \(game\.goldOnline\) \{   \/\/ CARDS6: the relay's gold table - no regulars, the stake the service's\n\s+game\.buyIn = buyInRange\(host\.cardStakes\.purse\(\) \?\? 0, game\.stakes\);/);
   assert.match(wm, /'cards-closed': 'The realm is not holding stakes right now\.'/);
   assert.match(w, /bank: \(n\) => \{ if \(account\) account\.accountGold = \(Number\.isFinite\(account\.accountGold\) \? account\.accountGold : 0\) \+ n; else addGold\(playerEntity, n\); \},/);

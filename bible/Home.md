@@ -212,6 +212,16 @@ A description fixed after its release was cut reaches it on its own:
 editing a merged pull request's description has
 `.github/workflows/release-notes.yml` rewrite that release's notes (REL7).
 
+UPDATES ARE NUMBERED, AND NOBODY BUMPS THEM (REL8, 2026-10-09, Mac:
+"Let's officially start numbering updates beginning with 0.0.1"). Every
+merge to main is the player's next update, MAJOR.MINOR.PATCH: the line is
+`scripts/updateLine.mjs` (`0.0`), the patch is counted from git
+(`scripts/updateNumber.mjs`) - so no pull request writes a number, and the
+merge that carries a new line is its `.1`. It is not the installer's
+version (`app-v0.1.<count>`, which the updater compares): the release is
+named `Update <n>` and the game shows it beside the commit
+(`01-Overview/Desktop-App.md` REL8).
+
 ## Sections
 
 - `01-Overview/` - vision, port doctrine, phase plan, Port-Ledger (departures/quirks/unported)

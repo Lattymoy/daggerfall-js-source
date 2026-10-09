@@ -1,0 +1,29 @@
+[
+  {
+    "name": "PARK-HELLO-the-park-unwelcomed",
+    "file": "src/net/online.js",
+    "old": "    const primaryOpen = this.status === 'open' && this._ws && this._welcomed.has(this._ws);",
+    "new": "    const primaryOpen = this.status === 'open' && this._ws;",
+    "tests": [
+      "test/fb1009b_parkhello.test.js"
+    ]
+  },
+  {
+    "name": "PARK-HELLO-the-look-unwelcomed",
+    "file": "src/net/online.js",
+    "old": "    if (this.status === 'open' && this._ws) { if (!this._welcomed.has(this._ws)) return; if (this.lookOk) socks.push(this._ws); }",
+    "new": "    if (this.status === 'open' && this._ws) { if (this.lookOk) socks.push(this._ws); }",
+    "tests": [
+      "test/fb1009b_parkhello.test.js"
+    ]
+  },
+  {
+    "name": "PARK-HELLO-the-owed-look-forgotten",
+    "file": "src/net/online.js",
+    "old": "    if (this.status === 'open' && this._ws) { if (!this._welcomed.has(this._ws)) return; if (this.lookOk) socks.push(this._ws); }",
+    "new": "    if (this.status === 'open' && this._ws) { if (!this._welcomed.has(this._ws)) { this._lookDirty = false; return; } if (this.lookOk) socks.push(this._ws); }",
+    "tests": [
+      "test/fb1009b_parkhello.test.js"
+    ]
+  }
+]

@@ -480,7 +480,7 @@ test('AUDIT CC-E2 (major): underground my companion rides the room\'s own lane (
   assert.match(d, /comp = validLooseSeqs\(data\.cp\);/);
   assert.match(d, /companionPuppet\(f, lo && comp\.has\(r\.i\), compNames\.get\(r\.i\)\); f\._heirElse/);   // PIN MOVED (AUDIT WK-U3): and named
   assert.match(d, /if \(coop\) opts\.onFoeHit\?\.\(\{ own: 1, to: foe\._ownFrom, k: _locationKey, i: foe\._ownI, \.\.\.coop \}\);/, 'own-lane bodies');
-  assert.match(d, /if \(coop\?\.al === 1\) opts\.onFoeHit\?\.\(\{ \.\.\.\(foe\._encId != null \? \{ i: foe\._encId, xs: 1 \} : \{ i: pi \}\), \.\.\.coop \}\);/, 'the room\'s foes, as a joiner');
+  assert.match(d, /if \(coop\?\.al === 1\) opts\.onFoeHit\?\.\(\{ \.\.\.\(foe\._encId != null \? \{ i: foe\._encId, xs: 1 \} : \{ i: foe\._surI \?\? pi \}\), \.\.\.coop \}\);/, 'the room\'s foes, as a joiner');
   assert.match(d, /if \(data\.fb === 1\) \{\n\s*if \(!f \|\| f\.dead \|\| f\.companion == null/, 'the foe\'s blow lands on my companion');
   assert.match(d, /rec\.hurtFromFoe = \(dmg, dir, striker = null\) => damageFoe\(rec, dmg, null, dir \?\? null, \{ fromPlayer: false, striker \}\);/);
   assert.match(d, /dealDamage: \(tt, d\) => tt\.hurtFromFoe\?\.\(blowScaled\(f\.ai, d\), fwd, f\),/);   // PIN MOVED (AUDIT ARENA-LADDER): a telegraphed blow's weight on it

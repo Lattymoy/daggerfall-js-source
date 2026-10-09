@@ -997,6 +997,10 @@ export class OnlineSession {
    *  'cell' (it went down the cell's own socket), 'room' (the anchor alone, down mine) or false (not sent). */
   sendPark(data, cell = null) {
     if (!this.parkOk || !data || typeof data !== 'object' || typeof data.c !== 'string' || (data.a !== undefined && !Array.isArray(data.a))) return false;
+    // FIELD BUGS 2026-10-09b PARK-HELLO: a socket says its hello and nothing more until its room welcomes it (SD-HELLO's
+    // law, _send). `parkOk` is the LAST welcome's, so the park went one frame behind every new room's hello - and a room
+    // whose hello awaits (the Shattered Hour's: the hub's word on the Hollow) closed on it ('park before hello'), and the
+    // Rift cast its player out at the Hollow's door
     // AUDIT SD IV (0): a welcomed socket alone (SD-HELLO). The word is said again in every room joined (world.js
     // hccParkTick), so it went on the first frame after the realm's hello - a park before hello, refused for good
     const primaryOpen = this.status === 'open' && this._ws && this._welcomed.has(this._ws);
@@ -1031,6 +1035,7 @@ export class OnlineSession {
   _flushLook() {
     if (!this._lookDirty) return;
     const socks = [];
+    // PARK-HELLO (FIELD BUGS 2026-10-09b): never ahead of a welcome - a socket whose hello is still out is waited for
     // AUDIT SD IV (0): a socket open and not yet welcomed said its hello with the look before this one, and a look down it
     // now is a look before hello (SD-HELLO) - held, the tick tries again, until every open socket is welcomed
     if (this.status === 'open' && this._ws) { if (!this._welcomed.has(this._ws)) return; if (this.lookOk) socks.push(this._ws); }

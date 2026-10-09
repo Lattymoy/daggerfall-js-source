@@ -853,7 +853,8 @@ export function landformsOn(search) {
 }
 
 /** TAMRIEL2: THE LAND BEYOND THE BAY'S SWITCH - the Features row (`tamrielLand`) on the enhanced skin, and online as
- *  the player's own (the relay carries no pose past the map, so a room never has to agree on ground nobody shares):
+ *  the player's own (TV-BEYOND: the relay carries a pose past the map - net/wire.js WORLD_PIXEL_BOUND - and a player
+ *  there is seen by whoever stands near, the ground under each the player's own, as every other enhanced ground is):
  *  the streamed world goes on past the Bay's edge over the authored continent (world/tamrielGround.js). `?tamrielland=off`
  *  the kill door. The world host reads it once, at its mount (a flip reaches the next world). Off - and on the classic
  *  skin - the edge of the world is DFU's: empty. */
