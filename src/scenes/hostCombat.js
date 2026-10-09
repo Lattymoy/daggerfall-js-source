@@ -31,6 +31,7 @@ import { isHumanoid } from '../systems/survival/loot.js';   // MOD: the same hum
 import { rollCorpseLoot, lootRarityOn, rarityRank, RARITIES, rarityEligible, applyRarity, lastPass } from '../systems/lootRarity.js';   // RF2: and the port's, after it; LOOT7: a champion's guarantee
 import { championOf } from '../systems/champions.js';   // LOOT7: the champions' traits register at import
 import { isGoldPieces } from '../systems/inventory.js';   // PLAIN-LOOT: a plain foe's gold all of it
+import { wildFoeLoot } from '../systems/wildZone.js';   // WILD1: the open zone's gold (wildLootAfter)
 import { liveStat, FATIGUE_DRAIN_SCALE } from '../systems/statMods.js';   // RF2: the player's live luck for the roll   // AUDIT 58: ItemHelper's EquipItem half - a foe's equip table is what DamageEquipment's struck side reads
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { swingSoundFor, hitSoundFor, ENEMY_HIT_VOLUME, SOUND } from '../systems/soundClips.js';
@@ -164,6 +165,14 @@ export function spawnEnemyLoot(entity, mobileType, basics, player, { rolls = Mat
   rollCorpseLoot(entity, basics, { rolls, luck: liveStat(player, 'luck'), qualityMult: lootQualityMult, weights: plain?.plainLadder ? plainFoeRarityWeights(ease) : null });
   capFoeLoot(entity);
   return entity.items;
+}
+
+/** WILD1 (systems/wildZone.js, the owner's "twice gold" - WILD2: at its ring's multiplier): a foe of the open zone's coin - after its chain
+ *  (spawnEnemyLoot, given wildLootOpts), so the cap, which folds and keeps the gold whole, has had its word. */
+export function wildLootAfter(entity) {
+  const m = wildFoeLoot(entity);   // WILD2: its ring's - x1.25 the outer to x2 the heart
+  if (m === 1) return;
+  for (const it of entity?.items ?? []) if (isGoldPieces(it)) it.stackCount = Math.max(1, Math.round(Math.max(1, it.stackCount ?? 1) * m));
 }
 
 // ---- EnemyEntity.SetEnemyCareer, the equipment chain (EnemyEntity.cs:330-347) ----

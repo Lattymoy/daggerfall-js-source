@@ -1436,6 +1436,19 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
     }
   }
 
+  /** AUDIT LW-ROOMS (scenes/livingIndoors.js): `fn`'s answer with every
+   *  door shut as the build hung it - each solid at its base, where a
+   *  door open (its bucket gone: _settleDoorBucket) or carried off by its
+   *  Move is no wall - and each bucket after as its live swing has it.
+   *  The living world measures its room so: a door the player, a load or
+   *  a peer left open laid the room out anew, its every drinker elsewhere.
+   *  @template T @param {() => T} fn @returns {T} */
+  withDoorsShut(fn) {
+    const doors = [...this.objects.values()].filter((o) => o.kind === 'door');
+    for (const o of doors) { this.collider.removeBucket(o.key); this.collider.addMesh(o.key, o.cpu.positions, o.cpu.indices, o.base); }
+    try { return fn(); } finally { for (const o of doors) this._settleDoorBucket(o); }
+  }
+
   /** A door is a solid obstacle only while the hinge is fully closed
    *  (MakeTrigger); its bucket must sit at the LIVE matrix, since a
    *  Move record can carry the closed door away from its base. */

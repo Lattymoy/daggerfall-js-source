@@ -5,7 +5,7 @@
 // (server-account/src/post.js only reads, claims and throws away), so a piece is written here, by hand, through
 // .github/workflows/server-post.yml:
 //   1. a dry run reads the accounts the names find, and whether each already holds this send - and nothing is written;
-//   2. the run with apply on writes one piece to each, INSERT OR IGNORE over the one-a-send index (0092's
+//   2. the run with apply on writes one piece to each, INSERT OR IGNORE over the one-a-send index (0093's
 //      ux_server_post_batch), so a send run twice sends once.
 //
 //   node tools/sendServerPost.mjs --names <handles>                                        the names, one a line
@@ -18,7 +18,7 @@
 //
 // HOURS-FIRST (2026-10-08, Mac: "for all the accounts here I want to grant them ... each the gilded gun"): the post's
 // first use - HOURS_FIRST, the thirteen of the first clear (server-account/wrangler.toml HOURS_FIRST_HANDLES), each
-// sent the Hourlock. That send is migration 0093 (`--migration hours-first` prints it), so it lands with the deploy that
+// sent the Hourlock. That send is migration 0094 (`--migration hours-first` prints it), so it lands with the deploy that
 // ships the mailbox; test/serverpost_send.test.js holds the migration to this file's statement.
 
 import { readFileSync } from 'node:fs';
@@ -96,7 +96,7 @@ export function lookSql(handles, batch) {
 }
 
 /**
- * THE SEND: one piece to each registered account the names find - once a send an account (INSERT OR IGNORE over 0092's
+ * THE SEND: one piece to each registered account the names find - once a send an account (INSERT OR IGNORE over 0093's
  * index), its id the database's own random, its moment the database's own clock. RETURNING names the pieces it wrote
  * (a migration's copy leaves it off).
  * @param {{ handles: string, batch: string, item: string, subject: string, body: string }} o
@@ -114,7 +114,7 @@ export function hoursFirstHandles(toml = readFileSync(new URL('../server-account
   if (!m) throw new Error('server-account/wrangler.toml holds no HOURS_FIRST_HANDLES');
   return m[1];
 }
-/** HOURS-FIRST: the first send's statement, as migration 0093 holds it. */
+/** HOURS-FIRST: the first send's statement, as migration 0094 holds it. */
 export const hoursFirstSql = (toml) => sendSql({ ...HOURS_FIRST, handles: hoursFirstHandles(toml) }, { returning: false });
 
 function main(argv) {

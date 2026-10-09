@@ -92,6 +92,7 @@ import { raidRunnerOf, validRaidWords, RAID_WORD_STALE_MS, RAID_WORDS_MAX } from
 import { RAID_WORD_MS, RAID_WORD_KILLS_MAX, raidSig, rollRaidTowns, raidDayRandom, raidsPerDay, raidTownsCanon, raidTownsHash } from '../net/raidLaw.js';   // RAID3: the relay's ledger's law; RAID-ROLL: the day's roll, the relay's too
 import { readRaidReceipt } from '../net/raidReceipt.js';
 import { worldRoom, isCellRoom } from '../net/wire.js';
+import { isWildRegion } from './wildZone.js';   // PVPDUNGEONS: no world event in the open zone
 
 export const RAIDING_PARTIES_VENDOR = 'world-events-raiding-parties';
 export const raidingPartiesOn = () => modSetting(RAIDING_PARTIES_VENDOR, 'Enabled') === true;
@@ -509,7 +510,7 @@ export function raidFrame(dt = 0) {
     expire(now, region);
     for (const r of state.raids) routRaid(r);
     state.lastSelectedDay = day;
-    state.raids = raidsForDay(day, regions);
+    state.raids = raidsForDay(day, regions).filter((r) => !isWildRegion(r.regionIndex));   // PVPDUNGEONS (the owner: "Do not spawn world events in the PVP zone!"): every client drops the zone's towns from the day's roll alike
     cancelPending();
     scheduleNextSpawn(-1);
     scheduleNextDefender();

@@ -37,3 +37,12 @@ const dungeonMapUrlFlat = () => {
   try { return pageParam('dungeonmap') === 'flat'; } catch { return false; }   // PERF-URL
 };
 export const dungeonMap3dOn = () => getPref('dungeonMap3d') !== false && !dungeonMapUrlFlat();
+
+/** TAMRIEL1 (2026-10-08, Mac: "the entirety of tamriel ... seen by players ingame"): the held map's world sheet zooms
+ *  out past the Bay onto the whole continent (ui/tamrielInk.js), the Features row `tamriel-map` (prefs `tamrielMap`,
+ *  on by default). Read where the window is built, so a change takes the next map opened. `?tamriel=off` is the kill
+ *  door. */
+const tamrielUrlOff = () => {
+  try { return pageParam('tamriel') === 'off'; } catch { return false; }
+};
+export const tamrielMapOn = () => getPref('tamrielMap') !== false && !tamrielUrlOff();

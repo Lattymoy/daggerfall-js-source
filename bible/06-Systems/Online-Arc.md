@@ -4463,6 +4463,12 @@ over the shared world minute, no offset subtracted, since AUDIT
 WORLD7/8 B1; null offline, so nothing is ever due offline and a save
 keeps its dead, DFU's own).
 
+DUNGEON-RESPAWN (2026-10-08, the owner, in the Wrothgarian zone's merge):
+a dungeon's hour is its own now - a normal dungeon's twenty minutes, an
+elite one's forty, the open zone's halls and a Super dungeon keeping
+`RESPAWN_MS`; each foe and container still on its own clock
+(`src/systems/dungeonRespawn.js`, `11-Multiplayer/Wild-Zone.md` section 21).
+
 - **A foe.** The one corpse door stamps `_diedAt`; the memory's record
   carries it as `died`; a record applied keeps the ROOM's stamp, not
   this client's arrival. A memory that arrives with a foe dead past
@@ -15227,6 +15233,33 @@ Of every location in the world, the start cell holds one: Daggerfall's Privateer
 - **Pinned**: `test/fb1007b_holdsolo.test.js` (9; one gated on ARENA2); `tools/mutants/fb1007b.json` (its
   FB1007B-HOLD / START-CELL / PH1 records and the audit's H records). Record: `01-Overview/Field-Bugs-2026-10-07b.md`.
 
+## CARDS5 (2026-10-08, Mac: "Do 3 4 and 5") - the relay deals
+
+The relay's newest authority, beside the gate's boss and the arena's bout: a building's room keeps its card tables
+(`net/holdemTable.js`, with `net/cardLaw.js` in the bundle - `world178` at the merge, world176 on its branch). The `holdem`
+frame asks (sit, stand, act, look - `validHoldemIn`, `holdemGate`, `HOLDEM_RELAY_MIN`); the relay shuffles from its own
+CSPRNG, keeps the deck, tells each seat its own cards alone and the room the public hand, runs the seat clock on the alarm
+and folds a leaver out of turn; the tables checkpointed to storage. Friendly - no gold moves. The whole record is
+`11-Multiplayer/Tavern-Cards.md` section 17.
+
+AUDIT CARDS-3 (2026-10-08, `01-Overview/Audit-Cards-3.md`; the same row, re-hashed in place): one seat an account in a
+room; a refused sit moves nothing elsewhere; seats with no socket in the room stood up on the alarm and by an empty
+room's sweep; the room's sits on `holdemSitRoomGate`; a table of other chairs refused; a dropped player's own chair back.
+On the client, the frames restamped on the cloth's clock, and the chair found by the player's own id.
+
+CARDS-TIDY (2026-10-08, Tavern-Cards section 22; the same row, re-hashed in place): a table's room frame names only the
+fields that changed since the room was last told (`net/holdemTable.js` `stateDelta`, `STATE_KEYS`; the relay keeps the
+last said per table, `_holdemSaid`) - a wake, a table's first frame and a look say it whole; a client with no table under
+a delta asks for it (`look`). AUDIT CARDS-4 D1: the room frames are numbered per table (`n`), and a delta is laid only on
+the frame just before it - a socket that missed one asks for the table whole.
+
+CARDS6 (2026-10-08; the same row, re-hashed in place): GOLD TABLES. A sit may carry the service's stake order (`net/identityToken.js` kind `stake`), which the room checks with the key it holds and spends once; a staked seat's leaving is signed back as a cash-out receipt (`net/cardReceipt.js`, `c1`, GATE_SIGNING_KEY), owed to its account in the room till its `ack`; a stake never sat is `void`ed back. The service holds the stakes (`server-account/src/cards.js`). The whole record is `11-Multiplayer/Tavern-Cards.md` section 23.
+
+AUDIT CARDS-4 and CARDS6b (2026-10-08, `01-Overview/Audit-Cards-4.md`, Tavern-Cards section 24; the same row, re-hashed
+in place): another room's stake order is left unspent with nothing handed back; the table is read again after an
+order's await; a room that cannot sign a cash-out seats and voids no stake; a cash-out leaves the queue only once kept;
+a void reaches a receipt's life. And the `topup` word: a gold seat adds a stake of its own between hands, checked before
+it is spent, settled at once in a `joined` receipt.
 ## HALL-FOLK (2026-10-07, FIELD BUGS 2026-10-07, a player's report "NPCs in purchased guild halls") - a player's room keeps its residents out after a rest
 
 "Sometimes there are NPCs in the player guild halls. It's ok that you can't remove everything or decorate from scratch,

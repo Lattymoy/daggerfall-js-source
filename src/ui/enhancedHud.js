@@ -1250,6 +1250,8 @@ function drawStatus(vitals, opts) {
   const needs = survivalOn() ? survivalHudChips(vitals, Math.floor(ownMinutes()), { vampire: !!liveVampirism(vitals), endurance: liveStat(vitals, 'endurance') }) : [];   // AUDIT SURV C: the vampire's strip, the page's drunk bands
   const rested = sharedClockOn() ? { minutes: nightRealMinutesLeft(vitals, ownMinutes()) } : null;   // REST1: the night interval, online
   const all = statusTiles({ spells, powers, afflictions: afflictionRows(vitals), needs, rested });
+  const zone = zoneTile();
+  if (zone) all.unshift(...statusTiles({ zone }));   // WILD1: the open zone's tile, first
   // a new window size or HUD scale is a new band at once (AUDIT UI C: a rotation left the old band for half a second)
   const vp = `${globalThis.innerWidth}x${globalThis.innerHeight}x${last.scale ?? 1}`;
   if (last.statVp !== vp) { last.statVp = vp; last.statTick = -1; }
@@ -1537,6 +1539,10 @@ function drawSpellChip(view, tag) {
  *  surface importing them closed a cycle. `fn(entity) -> [{ key, set, name, text, state }]`. */
 let _setChips = null;
 export function setHudSetChips(fn) { _setChips = typeof fn === 'function' ? fn : null; }
+/** WILD1: the host's word on the open zone - `{ name }` while the player stands in it, else null (systems/wildZone.js). */
+let _zone = null;
+export function setHudZone(fn) { _zone = typeof fn === 'function' ? fn : null; }
+const zoneTile = () => { try { return _zone?.() ?? null; } catch { return null; } };
 const setPowerChips = (vitals) => { try { return _setChips?.(vitals) ?? []; } catch { return []; } };
 
 function quickCell(part, slot, s) {

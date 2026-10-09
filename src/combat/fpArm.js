@@ -42,6 +42,7 @@
 import { lookAt, multiply, ortho, perspective, transformPoint, trs, wrapAngle } from '../world/mat4.js';
 import { ClimbPose } from '../player/climbPose.js';   // CLIMB6: the climb's limbs, in the world
 import { climbRequestToRig, climbRequestToFirstPerson } from './climbRig.js';   // CLIMB6: ...and in each rig's space
+import { seatRequestFor } from '../player/seatPose.js';   // CARDS2b: the seat in the rig's space
 import { fieldOfView } from '../ui/viewSettings.js';   // CLIMB6: the world lens the arm's hands are matched to
 import { MW_ARM_PIXEL, CHAR_SPRITE_RT_SIZE } from '../render/renderer.js';
 import {
@@ -99,6 +100,7 @@ import { vfxOf, createVfx, vfxCapacity, vfxTextures } from '../formats/mwVfx.js'
 import { spellFxPlan } from '../formats/mwSpellFx.js';   // MW-SPELLFX1: which visuals a spell wears
 import { effectSchool } from '../systems/spellcost.js';   // MW-SPELLFX1: a family the mapping does not name is drawn as its school
 import { createVfxGpu } from '../render/vfxGpu.js';   // MW-SPELLFX1: an effect's streams on the GPU
+import { validCastRate } from '../systems/castSpeed.js';   // CAST-SPEED: the rate a cast is handed, made safe
 
 // MW-LOAD (2026-09-08, Mac: "improve the load time when Morrowind assets
 // are enabled"): THE ARCHIVE IS OPENED, NOT READ, AND THIS FILE IS ITS
@@ -2839,6 +2841,7 @@ export function createFpArm() {
   let spellReady = false;        // MW-D39: a spell is readied (the stance)
   let unreadyAfterCast = false;  // MW-CAST1: the spell went (its ready cleared) mid-cast - the stance drops when the cast ends
   let castReleased = false;      // MW-CAST1: the cast crossed its "<type> release" - consumed by takeCastRelease
+  let castRate = 1;              // CAST-SPEED: the rate this cast's spellcast group plays at (systems/castSpeed.js)
   // MW-D51: THE HELD TORCH. `torchLit` is the game's word (a lit
   // Daggerfall torch in PlayerEntity.LightSource, handed over per frame
   // by weaponRig's setTorch); the state/source/group triple is the
@@ -3379,7 +3382,16 @@ export function createFpArm() {
   /** CLIMB6: the climb's request in the THIRD-PERSON body's space - the snapshot's body feet and yaw are the ones the
    *  hosts draw it at (drawThird: bodyFeetAt, bodyYawFor), the race's scales its own. Off the wall the last request
    *  fades with the law's weight, held where it was on the body (the hands leave the stone with it). */
+  /** CARDS2b: the SEAT's request in the rig - the climb rig's own solver over player/seatPose.js's world request
+   *  (`cam.seat`: { feet, yaw, top }), the hips on the chair and the hands on the table. A seated body never climbs, so
+   *  the seat rides the climb's slot - and it wins it: a climb still easing out (climbLast, for up to its OUT_TAU tail)
+   *  never holds a body that has sat down (AUDIT CARDS D5). */
+  function thirdSeat(cam) {
+    const rs = (built && built.raceScale) || { weight: 1, height: 1 };
+    return seatRequestFor(cam && cam.seat, { unitsPerMetre: MW_UNITS_PER_METER, weight: rs.weight, height: rs.height });   // AUDIT CARDS D2: at this body's race
+  }
   function thirdClimb(cw, cam) {
+    if (cam && cam.seat) { climbLast = null; return thirdSeat(cam); }   // CARDS2b: seated - the seat, over any climb's tail
     if (!(cw && cw.w > 0)) { climbLast = null; return null; }
     const snap = cam && cam.climb;
     if (snap && snap.feet) {
@@ -4718,8 +4730,11 @@ export function createFpArm() {
      *  SELF, ByTouch is TOUCH, SingleTargetAtRange and AreaAtRange are
      *  TARGET. Lands back in the stance through the upper-body machine.
      *  Never a gate: a missing clip is a note on the card and the spell
-     *  still flies. */
-    castSpell(rangeType = 2) {
+     *  still flies.
+     *
+     *  CAST-SPEED: `rate` is the cast's own (systems/castSpeed.js - the live Speed and the castSpeed loot line), the
+     *  speed its spellcast group plays at from "<type> start" to "<type> stop", as the classic frames step at it. */
+    castSpell(rangeType = 2, rate = 1) {
       // WEREWOLF1 (AUDIT E6): nor casts one - the turn back is cast in beast form, and on the wolf it latched a spell
       // stance the next frame's readySpell(false) tore down again
       if (!built || !built.ok || built.werewolf) return false;
@@ -4743,6 +4758,7 @@ export function createFpArm() {
       const type = spellAttackType(rangeType);
       attackType = type;
       castReleased = false;   // MW-CAST1: this cast's own release, not a stale one
+      castRate = validCastRate(rate);
       unreadyAfterCast = false;
       attackReversed = false;   // MS1: a cast has no side
       attackStrength = 1;
@@ -4853,7 +4869,9 @@ export function createFpArm() {
         // blow's own clock advanced beside it (blowPace). The record's pace is the fallback, unchanged.
         const paced = attacking && blowPlan;
         if (paced) blowPlan.clock += dt;
-        advanceClip(actionState, (actionSource || rig()).keys, dt * (paced ? blowPlan.rate : weapSpeed), onActionKey);
+        // CAST-SPEED: a cast plays at its own rate, where OpenMW plays the spellcast group at 1
+        const speed = paced ? blowPlan.rate : upper === UPPER_BODY.Casting ? castRate : weapSpeed;
+        advanceClip(actionState, (actionSource || rig()).keys, dt * speed, onActionKey);
         stepUpper();
       }
       // MW-D39: jump refreshes BEFORE movement, the reference's own

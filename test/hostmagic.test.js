@@ -10,7 +10,8 @@ import { SPELL_ABSORPTION } from '../src/systems/absorption.js';
 import { calculateCastCost } from '../src/systems/spellcost.js';
 import { SKILLS } from '../src/systems/skills.js';
 import { MISSILE_SPEED, MISSILE_LIFESPAN_S } from '../src/systems/spellcast.js';
-import { SpellCastAnim, RELEASE_FRAME, ANIM_SPEED } from '../src/combat/fpsSpellCasting.js';
+import { SpellCastAnim, RELEASE_FRAME, CAST_FRAME_PERIOD } from '../src/combat/fpsSpellCasting.js';
+import { SPELLBOOK_TEMPLATE_INDEX } from '../src/systems/spellMaker.js';   // CAST-SPEED: RecastSpell's book
 
 const damageEffect = (mag = 20) => ({
   type: 4, subType: 0,
@@ -90,6 +91,7 @@ function rig({ player = mkPlayer(), foes = [], raycast = () => Infinity, hands =
     absorbCtx: () => ({ inside: true, day: false }),
     rolls: () => 0.99,   // deterministic: saves fail, magnitudes roll high-end
     startCastAnim: hands ? (sp, onRelease) => hands.playOneShot(sp.element, onRelease) : null,
+    castBusy: hands ? () => hands.isPlayingAnim || hands.releaseHeld : undefined,   // CAST-SPEED: these hands' motion, as a host's are the singleton's
   });
   return { magic, world };
 }
@@ -324,13 +326,13 @@ test('ROAD-E6: the cast SPENDS and starts the hands; the spell leaves them five 
   assert.deepEqual(world.sounds, [], 'no cast sound before the release frame');
   assert.equal(magic.readied(), sp, 'the ready survives the hand motion (:2135 clears it, not :434)');
 
-  // Four steps of 0.04s - frame 4 of 7 - and the spell is still in hand.
-  for (let i = 0; i < RELEASE_FRAME - 1; i++) hands.tick(ANIM_SPEED);
+  // Four steps of the hands' period (CAST-SPEED: 0.1s, DFU's 0.04s) - frame 4 of 7 - and the spell is still in hand.
+  for (let i = 0; i < RELEASE_FRAME - 1; i++) hands.tick(CAST_FRAME_PERIOD);
   assert.equal(magic.missileCount(), 0, 'frame 4 is not the release frame');
   assert.equal(world.player.magicka, 500 - cost, 'and nothing spends twice');
 
   // The fifth step IS releaseFrame (:46 = 5).
-  assert.equal(hands.tick(ANIM_SPEED), true, 'the step that crosses releaseFrame');
+  assert.equal(hands.tick(CAST_FRAME_PERIOD), true, 'the step that crosses releaseFrame');
   assert.equal(magic.missileCount(), 1, 'the missile leaves the hands on frame 5');
   assert.equal(world.player.skillUses[SKILLS.Destruction], 1, "the tally is the release frame's (:2109)");
   assert.equal(world.sounds.length, 1, 'and so is the cast sound (:2112-2115)');
@@ -355,7 +357,7 @@ test('ROAD-E6: castInProgress refuses a second cast and a new ready for the whol
   assert.equal(magic.readied(), sp, 'no new ready while the hands are in motion');
   assert.equal(world.player.health, 20, 'and the CasterOnly instant did not fire');
 
-  for (let i = 0; i < RELEASE_FRAME; i++) hands.tick(ANIM_SPEED);
+  for (let i = 0; i < RELEASE_FRAME; i++) hands.tick(CAST_FRAME_PERIOD);
   assert.equal(magic.castInProgress(), false, 'the window closes on the release frame');
   assert.equal(magic.missileCount(), 1);
 });
@@ -369,7 +371,7 @@ test('ROAD-E6: a spell aborted inside the window never reaches the release - and
   magic.castInput([0, 0.9, 0], [0, 0, 1]);
   // AbortReadySpell (:361-365) nulls readySpell and nothing else.
   magic.setReadied(null);
-  for (let i = 0; i < RELEASE_FRAME; i++) hands.tick(ANIM_SPEED);
+  for (let i = 0; i < RELEASE_FRAME; i++) hands.tick(CAST_FRAME_PERIOD);
   // :2102-2104 "Must have a ready spell" - DFU's own comment at :2107
   // is "Cancelled spells do not reach this point".
   assert.equal(magic.missileCount(), 0, 'nothing launched');
@@ -377,6 +379,34 @@ test('ROAD-E6: a spell aborted inside the window never reaches the release - and
   assert.deepEqual(world.sounds, [], 'nothing sounded');
   assert.equal(world.player.magicka, 500 - cost, 'the magicka stays spent - there is no refund');
   assert.equal(magic.castInProgress(), false, 'the flag still clears (:2100 runs first)');
+});
+
+test('CAST-SPEED: the hands own their WHOLE motion - a click or a recast in the tail past the release waits, nothing spent, and the spell stays readied', () => {
+  // castInProgress closes on the release; the hands come down for two more steps. A click there found PlayOneShot
+  // refusing and took the no-animation arm below - a free cast on the spot. FPSSpellCasting.IsPlayingAnim gates it.
+  const hands = new SpellCastAnim();
+  const { magic, world } = rig({ player: mkPlayer({ items: [{ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX }] }), hands });
+  const sp = spellOf(2, [damageEffect()]);
+  const cost = calculateCastCost(sp, world.player).sp;
+  magic.setReadied(sp);
+  assert.equal(magic.castInput([0, 0.9, 0], [0, 0, 1]), true);
+  for (let i = 0; i < RELEASE_FRAME; i++) hands.tick(CAST_FRAME_PERIOD);
+  assert.equal(magic.missileCount(), 1, 'released on frame 5');
+  assert.equal(magic.castInProgress(), false, 'castInProgress closed at the release');
+  assert.equal(hands.isPlayingAnim, true, 'and the hands still come down');
+  assert.equal(magic.recastSpell(), false, 'no recast while they move (RecastSpell reads IsPlayingAnim)');
+  magic.setReadied(sp);
+  assert.equal(magic.castInput([0, 0.9, 0], [0, 0, 1]), false, 'the click in the tail does nothing');
+  assert.equal(magic.missileCount(), 1, 'no free cast on the spot');
+  assert.equal(world.player.magicka, 500 - cost, 'nothing spent');
+  assert.equal(magic.readied(), sp, 'the spell stays readied for the click after');
+  hands.tick(CAST_FRAME_PERIOD);
+  hands.tick(CAST_FRAME_PERIOD);
+  assert.equal(hands.isPlayingAnim, false, 'down');
+  assert.equal(magic.castInput([0, 0.9, 0], [0, 0, 1]), true, 'and the click casts');
+  assert.equal(world.player.magicka, 500 - 2 * cost);
+  for (let i = 0; i < 7; i++) hands.tick(CAST_FRAME_PERIOD);
+  assert.equal(magic.recastSpell(), true, 'a recast with the hands at rest readies the last spell');
 });
 
 test("ROAD-E6: no animation means the release is NOW - DFU's own no-anim arm", () => {
@@ -411,7 +441,7 @@ test('ROAD-E6: ByTouch picks TWICE - the pre-spend gate, then DoTouch on the liv
   one.magic.setReadied(spellOf(1, [damageEffect()]));
   assert.equal(one.magic.castInput([0, 0.9, 0], [0, 0, 1]), true, 'the pre-spend gate found it');
   gone.ai.feet = [0, 0, 30];   // out of reach before the hands open
-  for (let i = 0; i < RELEASE_FRAME; i++) hands.tick(ANIM_SPEED);
+  for (let i = 0; i < RELEASE_FRAME; i++) hands.tick(CAST_FRAME_PERIOD);
   assert.equal(one.world.foeHurt.get(gone), undefined, 'DoTouch found nothing on the release frame');
 
   // ...and the aim is the LIVE one: every host feeds the engine its
@@ -424,7 +454,7 @@ test('ROAD-E6: ByTouch picks TWICE - the pre-spend gate, then DoTouch on the liv
   two.magic.setReadied(spellOf(1, [damageEffect()]));
   two.magic.castInput([0, 0.9, 0], [0, 0, 1]);
   two.magic.firePending([0, 0.9, 0], [1, 0, 0]);   // the host's next frame, turned
-  for (let i = 0; i < RELEASE_FRAME; i++) h2.tick(ANIM_SPEED);
+  for (let i = 0; i < RELEASE_FRAME; i++) h2.tick(CAST_FRAME_PERIOD);
   assert.equal(two.world.foeHurt.get(ahead), undefined, 'the cast-time target is not the one touched');
   assert.ok(two.world.foeHurt.get(aside) > 0, 'the release touched what the live aim points at');
 });

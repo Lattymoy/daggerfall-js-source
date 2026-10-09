@@ -23,6 +23,7 @@ function host({ safe = true, target = true, failBuild = false, boat = false, own
   const no = () => {};
   const deps = {
     worldMoveBusy: () => false, _traveling: false, walkMode: true,
+    wildTravelGate: () => ({ ok: true, fee: 0 }), wildTravelPaid: no,   // WILD3: the open zone off (wildJourney's answer with no mask) - every journey goes, no fee
     playerTravelPixel: () => ({ ...state.current }), state, player, cam,
     csaBoatUnderMe: () => originBoat, csaLocalOf: () => [2, 3, 4], csaDeckPose: (b) => b,
     _partyTravelOriginBoat: null, _partyArrivalPending: false,

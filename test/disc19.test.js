@@ -219,7 +219,7 @@ test('DISC19-C: an online page\'s death screen counts its respawn in the hint\'s
     assert.equal(ds.online, false);
     assert.equal(ds.hint, 'ENTER end   F11 load');
   });
-  assert.match(rd('src/ui/deathScreen.js'), /const hint = this\.online \? `RISING IN \$\{this\.respawnIn\}   ENTER now` : this\.hint;/, 'no dead key drawn online');
+  assert.match(rd('src/ui/deathScreen.js'), /const hint = this\.online \? (?:\(this\.wild \? `RISING IN \$\{this\.respawnIn\}` : )?`RISING IN \$\{this\.respawnIn\}   ENTER now`\)? : this\.hint;/, 'no dead key drawn online');
 });
 
 // ═══ F: the watch and the town ════════════════════════════════════════════════════════════════════════════════════

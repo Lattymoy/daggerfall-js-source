@@ -418,7 +418,7 @@ test('PROF2 hosts: the streaming world stands every kind through the one host, i
   assert.match(w, /nodes: professionMarks\(\),/);   // PROF7 moved it: a Tracker's animals beside a Prospector's veins; NODE-MARKS: every node beside them
   assert.match(w, /const near = nodeMarksAt\(feet\), far = motherlodeMarks\(\);\n\s*return nodeCompassPoints\(far\.length \? \[\.\.\.\(near \?\? \[\]\), \.\.\.far\] : near, trackerAnimals\(\)\);/);   // PIN MOVED (PROF2b): and the far Motherlodes
   assert.match(src('src/scenes/mineHost.js'), /return \(specs\('mining'\)\[50\] === 'prospector' && PROSPECTOR_MARKS\[n\.what\]\) \|\| MINE_MARKS\[n\.what\] \|\| MINE_MARKS\.vein;/, 'NODE-MARKS: the Prospector\'s veins marked from PROSPECT_M off, in the mine kind\'s own mark');
-  assert.match(w, /onDungeonLeave: \(\) => \{ const n = handOverRoomFoes\(\);[^\n]*gatherHost\?\.leaveDungeon\(\); worldPublish\(performance\.now\(\), true\); \},/, 'the veins dropped while the dungeon still stands');
+  assert.match(w, /onDungeonLeave: \(\) => \{ if \(_wdunInside\) wdunLeft\(false\); const n = handOverRoomFoes\(\);[^\n]*gatherHost\?\.leaveDungeon\(\); worldPublish\(performance\.now\(\), true\); \},/, 'the veins dropped while the dungeon still stands');   // PVPDUNGEONS: a zone hall's leaving said first (wdunLeft)
   assert.match(w, /profPress: \(\) => gatherHost\?\.press\(\) \?\? false,/);
   assert.match(src('src/world/worldOfDaggerfall.js'), /name: session\.name\[pick\.index\], prefabName: session\.prefab\[pick\.index\] \}\)\);/);   // FOREST1: and the prefab's name - a site or a rock field
   const m = src('src/scenes/worldModes.js');

@@ -1,6 +1,6 @@
 // SERVER-POST (2026-10-08, Mac: "Let's develop an ingame server mailbox that goes next to the hourglass in the pause
 // menu. It should show notifications whenever players have a message. First use is to utilize it for players being
-// granted items."): THE SERVICE'S SIDE - migration 0092 (server_post), server-account/src/post.js and its four routes,
+// granted items."): THE SERVICE'S SIDE - migration 0093 (server_post), server-account/src/post.js and its four routes,
 // the heartbeat's `post` part. A piece is the developers' to one registered account; its item is claimed into the
 // realm character being played, written into the record by the service in the claim's own batch.
 import { test } from 'node:test';
@@ -34,8 +34,8 @@ const recordOf = (env, id) => {
   return JSON.parse(new TextDecoder().decode(env.SAVES._map.get(row.obj)));
 };
 
-test('SERVER-POST the table and the doors: 0092 lays server_post - one piece a batch an account; four routes behind a session, none open; a guest refused every one (post-needs-account, 403); the box a GET; every word the routes answer has a sentence (mutants: a batch sent twice; the wall dropped)', async () => {
-  const mig = src('server-account/migrations/0092_server_post.sql');
+test('SERVER-POST the table and the doors: 0093 lays server_post - one piece a batch an account; four routes behind a session, none open; a guest refused every one (post-needs-account, 403); the box a GET; every word the routes answer has a sentence (mutants: a batch sent twice; the wall dropped)', async () => {
+  const mig = src('server-account/migrations/0093_server_post.sql');
   assert.match(mig, /CREATE TABLE IF NOT EXISTS server_post \(/);
   assert.match(mig, /CREATE UNIQUE INDEX IF NOT EXISTS ux_server_post_batch ON server_post \(to_id, batch\);/);
   assert.match(mig, /FOREIGN KEY \(to_id\) REFERENCES players\(id\) ON DELETE CASCADE/);

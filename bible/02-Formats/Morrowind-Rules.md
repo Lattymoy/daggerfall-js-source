@@ -7165,3 +7165,69 @@ bolt's light, a looping hit (ContinuousVfx), an actor's facing,
 VFX_Multiple's dummies, and the creatures' and other players' VFX_Hands.
 `test/mwspellfx1.test.js` (16), `test/mwload_records.test.js` (the
 records), `tools/mutants/mwspellfx1.json` (38, all dead).
+
+## DECLARED DIVERGENCE (CAST-SPEED, 2026-10-08): one cast clock, both lanes
+
+A player's post on the Discord, "Morrowind magic anims nerf you": *"since you
+cant cast instantly/constantly, it is putting you at a disadvantage over
+players without it"*. It was true. Daggerfall's hands
+(FPSSpellCasting.animSpeed, 0.04 s a step) release on frame 5 at 0.2 s and
+are down at 0.28 s; the Morrowind hands (MW-CAST1) hold the release for
+their own "<type> release". A classic caster cast about three times for
+every Morrowind caster's one. Mac: *"I think we nerf the animation of the
+regular sprite spellcasting to fall in line with the morrowind model. Also
+have casting speed a new rarity affix along with scaling with speed"*.
+
+- **The classic hands step at `CAST_FRAME_PERIOD`** (0.1 s,
+  `src/combat/fpsSpellCasting.js`), two and a half times DFU's animSpeed:
+  the release at 0.5 s, the hands down at 0.7 s. `ANIM_SPEED` stays as
+  DFU's record and nothing steps at it. **The number is the port's own.**
+  The spellcast group's real key times are in the player's
+  base_anim.1st.kf, and no committed file carries them
+  (`test/fixtures/mw/castClip.mjs` uses made-up times a pin can step to).
+  If Mac's eye on a Morrowind cast says the classic lane is still quick or
+  now slow, change this one constant.
+- **The hands own their whole motion.** castInProgress closes at the
+  release, and the hands play on for two more steps. A click in that tail
+  found PlayOneShot refusing ("Do nothing if already playing anim"), and
+  `castInput` took the no-animation arm, a free cast on the spot with no
+  motion. At DFU's clock that window was 0.08 s; at the new one it is
+  0.2 s. `scenes/hostMagic.js` now refuses the click (`castBusy`:
+  FPSSpellCasting.IsPlayingAnim, or a release still held for the arm)
+  before anything is spent, and the spell stays readied. RecastSpell reads
+  the same gate: it is DFU's own (EntityEffectManager.cs:257-266), where
+  the port had used castInProgress in its place.
+- **One rate for both lanes** (`src/systems/castSpeed.js`, a leaf).
+  `castRate(entity)` is the live Speed's share (1 at 50, 0.75 at 0, 1.25
+  at 100, the attribute clamped to its range) plus each registered
+  modifier's percent, clamped to [0.5, 2]. `combat/weaponRig.js`
+  castSpellAnim reads it once a cast and passes it to both lanes: the
+  classic frames step at CAST_FRAME_PERIOD over it, and the Morrowind arm
+  plays its spellcast group from "<type> start" to "<type> stop" at it
+  (`fpArm.castSpell(rangeType, rate)`). OpenMW plays that group at 1.
+- **The castSpeed loot line** (`systems/lootRarity.js`, a proc kind after
+  every kind before it, so the numbers' pass draws as it did - the LAST
+  pass moved all the same: a jewel's proc pool was empty before it, a
+  weapon's one narrower, so a seeded hoard holding such a piece rolls on
+  from a moved stream; CAST-SPEED-PINS re-aimed the serpent hoard pins
+  that found this, `test/serpent1_client.test.js` and
+  `test/serpentset.test.js`): "+N% casting
+  speed" on jewellery and weapons, 3-6 / 6-10 / 10-15, worth 60 a point,
+  suffix words *of Quickening*, *of Alacrity*, *of the Swift Hand*.
+  `systems/lootPowers.js` lootCastSpeed sums every worn line, the weapons
+  in hand included, up to CAST_SPEED_CAP (30%), for my entity only, and
+  registers it on the rate (`registerCastSpeedMod`). Jewellery carries it,
+  so a class that may not wear the armour still finds it.
+- **The four hosts.** The cast reaches the rig through one door in all four
+  of them. exterior.js and dungeonContext.js call
+  `weaponRig.castSpellAnim`. world.js calls the live rig's. worldModes.js
+  (interiors) shares its parent host's cast engine and its rig. The tail
+  gate sits in the one cast engine every host builds and reads the one
+  pair of hands, so no host file changed.
+- **What it leaves alone:** a foe's cast (`characters/enemyCasting.js` has
+  its own clock), and a peer's view of my cast. The wire carries the cast
+  and not its rate, so another player's copy of my arm plays it at 1. That
+  is only how it looks.
+
+`test/castspeed.test.js` (5), `test/hostmagic.test.js` (the tail gate),
+`tools/mutants/castspeed.json` (17, all dead).

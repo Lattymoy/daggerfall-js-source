@@ -1,7 +1,7 @@
 // SERVER-POST (2026-10-08, Mac: "... First use is to utilize it for players being granted items.") and HOURS-FIRST
 // ("... and each the gilded gun"): THE POST, SENT BY THE OPERATOR - tools/sendServerPost.mjs writes the statements,
 // .github/workflows/server-post.yml runs them by hand (a dry run, then the send), and the post's first send, the
-// Hourlock to the thirteen of the first clear, is migration 0093 - this file's statement, held to the tool's.
+// Hourlock to the thirteen of the first clear, is migration 0094 - this file's statement, held to the tool's.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync, mkdtempSync, chmodSync } from 'node:fs';
@@ -77,8 +77,8 @@ test('SERVER-POST the send, over the real schema: one piece to each registered a
   assert.equal(rows(db, "SELECT COUNT(*) AS n FROM server_post WHERE to_id = 'p-guest'")[0].n, 0, 'never a guest');
 });
 
-test('HOURS-FIRST THE FIRST SEND, migration 0093: the tool\'s own statement to the config\'s thirteen, holding the Hourlock; applied over the live accounts it sends each of the thirteen one piece and no one else, the box shows the gift by name, and applied again it sends nothing (mutants: a name missing from the send; the gun swapped; the send not once)', async () => {
-  const mig = src('server-account/migrations/0093_hours_first_post.sql');
+test('HOURS-FIRST THE FIRST SEND, migration 0094: the tool\'s own statement to the config\'s thirteen, holding the Hourlock; applied over the live accounts it sends each of the thirteen one piece and no one else, the box shows the gift by name, and applied again it sends nothing (mutants: a name missing from the send; the gun swapped; the send not once)', async () => {
+  const mig = src('server-account/migrations/0094_hours_first_post.sql');
   const statement = mig.split('\n').filter((l) => !l.startsWith('--')).join('\n').trim();
   assert.equal(statement, hoursFirstSql(), 'the tool\'s statement, as it prints it');
   assert.equal(hoursFirstHandles().split(',').length, 13);
@@ -86,7 +86,7 @@ test('HOURS-FIRST THE FIRST SEND, migration 0093: the tool\'s own statement to t
   assert.equal(HOURS_FIRST.item, 'hourlock');
   assert.equal(HOURS_FIRST.subject, "Hour's First");
   assert.ok(HOURS_FIRST.body.length <= POST_BODY_MAX);
-  assert.match(src('server-account/migrations/0092_server_post.sql'), /CREATE TABLE IF NOT EXISTS server_post/, '0092 lays the table it writes into');
+  assert.match(src('server-account/migrations/0093_server_post.sql'), /CREATE TABLE IF NOT EXISTS server_post/, '0093 lays the table it writes into');
 
   const svc = await standService();
   const thirteen = [];

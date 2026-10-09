@@ -72,6 +72,7 @@ import { blowTaken } from '../systems/blowTaken.js';   // TELL1: what a spell's 
 import { noteFeudHarm, elementFeudClass } from '../systems/feudLedger.js';   // RVN1: my spell, in its fight's ledger (a leaf)
 import { sandSpellRefusal } from '../systems/arenaKit.js';   // AUDIT ARENA-LADDER: the sand's kit law
 import { createMwMagicFx } from './mwMagicFx.js';   // MW-SPELLFX1: Morrowind's spell effects, drawn by every host through this engine
+import { fpsSpellCasting } from '../combat/fpsSpellCasting.js';   // CAST-SPEED: the ONE pair of hands, whose motion gates the click
 
 /** SUNBABY2: a sky fireball (skyFire) is drawn this many times its flat's size, its flash too - a ball a sun throws,
  *  seen falling from far up - and heard this far (metres) from where it lands. */
@@ -130,6 +131,9 @@ export function createPlayerMagic({
   // both resolve inline, without ever touching FPSSpellCasting).
   // @type {?(sp:object, onRelease:Function) => boolean}
   startCastAnim = null,
+  // CAST-SPEED: are the hands still in motion - FPSSpellCasting.IsPlayingAnim, the ONE pair every host's rig plays
+  // (combat/fpsSpellCasting.js), or a release still held for the Morrowind arm. A test hands in its own.
+  castBusy = () => fpsSpellCasting.isPlayingAnim || fpsSpellCasting.releaseHeld,
   // ALLY-CAST (2026-09-23): the party mate under the crosshair within `reach`, as {id, name} or null - the host's own
   // pick (player/socialPick.js pickPeerInFront over its peers, party membership and the link's reach); and the door
   // the cast leaves through (online.sendCast), answering whether it went. A host with neither casts as before.
@@ -1098,6 +1102,12 @@ export function createPlayerMagic({
     // :408 - "a previous cast must not be in progress". The hands own
     // the 0.2s and a second click inside it does nothing at all.
     if (castInProgress) return false;
+    // CAST-SPEED: NOR WHILE THE HANDS STILL MOVE. castInProgress ends at the release, and the hands play on past it; a
+    // click in that tail found PlayOneShot refusing ("Do nothing if already playing anim") and resolved the spell on the
+    // spot below, with no motion at all - at DFU's 0.08 s tail a sliver, at the port's slower clock (CAST_FRAME_PERIOD)
+    // a fifth of a second of free casts. IsPlayingAnim is the gate DFU's own RecastSpell reads; the click reads it too,
+    // before anything is spent, and the spell stays readied for the click after.
+    if (castBusy()) return false;
     // AUDIT 58: the cost is the one CAPTURED AT READY, not a fresh
     // pricing. CastReadySpell has exactly THREE gates - SilenceCheck
     // (:403-405), the ready/castInProgress pair (:407-409) and the
@@ -1427,12 +1437,13 @@ export function createPlayerMagic({
     readySpell,
     /** FIX-F: RecastSpell (EntityEffectManager.cs:257-266) - the last
      *  spell cast is readied again, through SetReadySpell's own gates,
-     *  if there was one, no cast animation is playing (castInProgress
-     *  is PlayerSpellCasting.IsPlayingAnim's stand-in) and the pack
+     *  if there was one, no cast animation is playing (CAST-SPEED:
+     *  PlayerSpellCasting.IsPlayingAnim itself now, castBusy, beside
+     *  castInProgress, which used to stand in for it) and the pack
      *  holds a spellbook; without the book, the localized noSpellbook
      *  line. Answers whether it readied. */
     recastSpell() {
-      if (!lastSpell || castInProgress) return false;
+      if (!lastSpell || castInProgress || castBusy()) return false;
       if (!hasSpellbook(playerEntity)) { say(NO_SPELLBOOK_TEXT); return false; }
       readySpell(lastSpell);
       return readiedSpell === lastSpell;

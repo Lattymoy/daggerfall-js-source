@@ -54,6 +54,7 @@ import { isAmmunition } from './itemTemplates.js';   // THUNDERLOCK-ART: a stack
 
 import { expandRowValues } from './quest/questMacros.js';   // MACROS1: a used item's record through its own context (%map)
 import { racialSuppressInventory, LYCANTHROPY_SPELL_TAG } from './lycanthropy.js';   // DISC10-E L3: the pack's refusal, at the two doors that reach into it; HB-LYCFREE: the curse's free spell
+import { BOOK_TEMPLATE } from './books.js';   // AUDIT CARDS-5 C3: a book keyed by its text
 import { hotbarInForce } from './uiSkin.js';   // AUDIT CONTRIB H1: the diamond put away while the hotbar is
 /** The slots a player fills. The two consumables are what the diamond's
  *  top and bottom cells show; `swap` is the second weapon the off-hand
@@ -147,7 +148,9 @@ function computeKey(item) {
   return [item.group ?? '', item.templateIndex ?? '', item.material ?? '', item.potionRecipeKey ?? '',
     item.legendary ?? '', ench, custom, affixes, item.aetheric ?? ''].join('|')   // SET6: an Aetheric piece's record, as a Legendary's
     + (item.gilded ? `|g${item.gilded}` : '')   // GILDED1: a Gilded piece's record - only when set, so a save's keys still resolve
-    + (item.potent ? `|p${item.potent}` : '');   // AUDIT PROF12 A2: a Potent potion's share (set at the mint - the cache holds), so a slot and its count keep Potent and plain apart; AUDIT PROF-541 Q1: only when set, so a save's plain keys still resolve
+    + (item.potent ? `|p${item.potent}` : '')   // AUDIT PROF12 A2: a Potent potion's share (set at the mint - the cache holds), so a slot and its count keep Potent and plain apart; AUDIT PROF-541 Q1: only when set, so a save's plain keys still resolve
+    + (typeof item.card === 'string' ? `|c${item.card}` : '')
+    + (item.templateIndex === BOOK_TEMPLATE && item.message != null ? `|m${item.message}` : '');   // AUDIT CARDS-5 C3: a book's own text (books.js `message = id`) - two titles are two books on the bar   // AUDIT CARDS-5 C3: a card's own card - a Rat and a Lamia are two kinds (only when set, so every other key stands)
 }
 
 /** What a consumable slot takes: a potion or a drug - the two arms of
@@ -919,6 +922,7 @@ export function restoreQuickslotSaveData(data) {
       if (e.type === 'spell' && Number.isFinite(e.index)) hotbar[i] = { type: 'spell', index: e.index, name: e.name, ...iconOf(e) };   // UI2: and its icon
       else if (e.type === 'item' && typeof e.key === 'string' && HOTBAR_KINDS.includes(e.kind)) {
         hotbar[i] = { type: 'item', kind: e.kind, key: e.key, name: e.name };
+        if (OLD_BOOK_KEY.test(e.key)) _oldBookKeys = true;
       }
     });
   }
@@ -1045,7 +1049,7 @@ export function setHotbarSlot(i, entry) {
 }
 
 export function clearHotbarSlot(i) { assertHot(i); if (hotbar[i]) { hotbar[i] = null; hotbarRev++; } }
-export function clearHotbar() { hotbar.fill(null); hotbarRev++; }
+export function clearHotbar() { hotbar.fill(null); hotbarRev++; _oldBookKeys = false; }
 
 /** Two slots trade places - the drag from one filled slot onto another. */
 export function swapHotbarSlots(a, b) {
@@ -1073,7 +1077,23 @@ export const firstFreeHotbarSlot = (size = HOTBAR_SIZE) => { const i = hotbar.fi
  *  in hand (an equipped weapon, the lit light). A SPELL slot carries the
  *  live record and `active` when it is the readied one. `ghost` is a
  *  kind the pack or the book no longer holds. */
+/** AUDIT CARDS-5 C3: A BOOK SLOTTED BEFORE ITS KEY CARRIED ITS TEXT (`|m`): a save's bare book key, found again by the
+ *  title it was slotted under - once, the first pack it can be read against (a title not carried stays a ghost). */
+const OLD_BOOK_KEY = new RegExp(`^[^|]*\\|${BOOK_TEMPLATE}\\|{7}$`);
+let _oldBookKeys = false;
+function rekeyOldBooks(entity) {
+  const pack = packOf(entity);
+  if (!pack.length) return;
+  _oldBookKeys = false;
+  for (const e of hotbar) {
+    if (e?.type !== 'item' || !OLD_BOOK_KEY.test(e.key)) continue;
+    const it = pack.find((x) => x?.templateIndex === BOOK_TEMPLATE && itemLongName(x) === e.name && quickslotKey({ ...x, message: undefined }) === e.key);
+    if (it) { e.key = quickslotKey(it); hotbarRev++; }
+  }
+}
+
 export function hotbarView(entity, { readiedIndex = null, size = HOTBAR_CAPACITY } = {}) {
+  if (_oldBookKeys) rekeyOldBooks(entity);
   const pack = packOf(entity);
   const book = bookOf(entity);
   const lit = entity?.lightSource ?? null;
@@ -1168,6 +1188,7 @@ export function hotbarReady(entity, i) {
  */
 export function hotbarPress(i, { entity = null, doors = {}, say = null } = {}) {
   assertHot(i);
+  if (_oldBookKeys) rekeyOldBooks(entity);
   const e = hotbar[i];
   if (!e) { say?.(HOTBAR_TEXT.emptySlot); return { kind: 'empty' }; }
   // AUDIT CONTRIB H3: each arm answers what its PERFORMER did, not that the door was reached - the doors answer

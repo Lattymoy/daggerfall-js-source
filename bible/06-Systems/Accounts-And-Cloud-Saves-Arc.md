@@ -3906,7 +3906,7 @@ names are this service's: one `sd_kills` row a (slot, account) the kill's receip
 - Pins: `test/sdclears.test.js` (3). One drives the service's own claim end to end and reads the names back; another
   runs the workflow's own steps in bash over D1's answer. `tools/mutants/sdclears.json` has 9 mutants, all dead.
 
-## SERVER-POST — the server's post, a mailbox beside the hourglass (2026-10-08, acct96)
+## SERVER-POST — the server's post, a mailbox beside the hourglass (2026-10-08, acct97)
 
 Mac: "Let's develop an ingame server mailbox that goes next to the hourglass in the pause menu. It should show
 notifications whenever players have a message. First use is to utilize it for players being granted items."
@@ -3915,7 +3915,7 @@ A piece of the server's post is the developers' to ONE registered account: a sub
 is not a letter (MAIL1, 0007): a letter is a player's and carries words alone; nothing a player can do writes a piece -
 the operator's workflow is its only sender.
 
-- **The table** (0092, `server_post`): one row a piece - `to_id` (CASCADE with the account), `batch` (the operator's name
+- **The table** (0093, `server_post`): one row a piece - `to_id` (CASCADE with the account), `batch` (the operator's name
   for the send; UNIQUE with `to_id`, so a send run twice sends once), `sender`, `subject`, `body`, `item` (the record as
   the game keeps one, JSON, or NULL), `sent_at`, `read_at`, `claimed_at`, `claimed_by`.
 - **The law** (`src/net/postLaw.js`, read by both ends and the tool): the id's shape, a send's name, the bounds (80 and
@@ -3952,7 +3952,7 @@ the operator's workflow is its only sender.
 - Pins: `test/serverpost_service.test.js` (4), `test/serverpost_client.test.js` (5), `test/serverpost_send.test.js`
   (4). `tools/mutants/serverpost.json` has 21 mutants, all dead.
 
-## HOURS-FIRST — the first clear's title, aura and gun (2026-10-08, acct96, world177)
+## HOURS-FIRST — the first clear's title, aura and gun (2026-10-08, acct97, world179)
 
 Mac, of the thirteen the first clear's claims named (SD-CLEARS, above): "for all the accounts here I want to grant them a
 unique different version of the aura, a title named Hour's First, and each the gilded gun".
@@ -3968,12 +3968,12 @@ unique different version of the aura, a title named Hour's First, and each the g
   wheel, dial and measures in the dawn's colours (`FIRST_RGB`), its dial turning FORWARD where the Remnant's turns back
   (`firstDialAngle` - the Hour's hands set going again by the first to break it), and the Hour's own mark ablaze
   (`FIRST_BLAZE`).
-- **The gun** is the post's first send: migration 0093 writes each of the thirteen one piece holding the Hourlock (the
+- **The gun** is the post's first send: migration 0094 writes each of the thirteen one piece holding the Hourlock (the
   gilded gun, `src/systems/gilded.js` `mintHourlock`, as its drop mints it) - the tool's own statement
   (`node tools/sendServerPost.mjs --migration hours-first`), once a send an account. It lands with the deploy that ships
   the mailbox; each claims it into the online character they are playing.
-- **The relay first**: the token's vocabulary (`identityToken.js` TITLES, AURAS) is in the relay's bundle, so world177
-  deploys before acct96 mints either (a relay without them refuses the token).
+- **The relay first**: the token's vocabulary (`identityToken.js` TITLES, AURAS) is in the relay's bundle, so world179
+  deploys before acct97 mints either (a relay without them refuses the token).
 - Pins: `test/hoursfirst.test.js` (4), and the first send in `test/serverpost_send.test.js`. `tools/mutants/hoursfirst.json`
   has 10 mutants, all dead.
 

@@ -1,14 +1,14 @@
 -- HOURS-FIRST (2026-10-08, Mac: "for all the accounts here I want to grant them a unique different version of the aura,
 -- a title named Hour's First, and each the gilded gun"): THE POST'S FIRST SEND - the thirteen accounts of the first
 -- clear of an Abyss Dungeon (server-account/wrangler.toml HOURS_FIRST_HANDLES, read off the first clear's claims by
--- .github/workflows/sd-clears.yml), each sent a piece of the server's post (0092) holding the Hourlock, the gilded gun,
+-- .github/workflows/sd-clears.yml), each sent a piece of the server's post (0093) holding the Hourlock, the gilded gun,
 -- as its drop mints it (src/systems/gilded.js). Each claims it into the online character they are playing, from the
 -- mailbox beside the hourglass in the pause menu. Their title and aura are the config's list (titles.js isHoursFirst).
 --
 --   npx wrangler d1 migrations apply daggerfall-accounts --remote
 --
--- Applied exactly once through the `d1_migrations` ledger, which the deploy runs (ACC1-CI), after 0092 lays the table.
--- And once a send an account besides: INSERT OR IGNORE over 0092's ux_server_post_batch. The statement is
+-- Applied exactly once through the `d1_migrations` ledger, which the deploy runs (ACC1-CI), after 0093 lays the table.
+-- And once a send an account besides: INSERT OR IGNORE over 0093's ux_server_post_batch. The statement is
 -- tools/sendServerPost.mjs's own (`--migration hours-first` prints it), held to it by test/serverpost_send.test.js.
 INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)
 SELECT lower(hex(randomblob(12))), p.id, 'hours-first-hourlock', 'The Developers', 'Hour''s First', 'You were among the first to break an Abyss Dungeon. The Hour remembers.

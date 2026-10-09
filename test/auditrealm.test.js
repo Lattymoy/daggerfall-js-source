@@ -11,6 +11,7 @@ import worker from '../server-account/src/index.js';
 import { _resetKeyForTests } from '../server-account/src/signing.js';
 import { SESSION_KEY } from '../src/net/accountClient.js';
 import { tradeableRecord, BOUND_TEMPLATES, boundRecord } from '../src/net/realmTradeLaw.js';
+import { ILIAC_CARD_ROW, CARD_BINDER_ROW } from '../src/systems/iliacItems.js';   // CARDS8
 import { isBound } from '../src/systems/itemBound.js';
 import { ITEM_TEMPLATES } from '../src/systems/itemTemplates.js';
 import { SURVIVAL_TEMPLATES } from '../src/systems/survival/items.js';
@@ -158,12 +159,14 @@ test('AUDIT REALM F1: BOUND_TEMPLATES is every row the game registers with `boun
     KEEPSAKE_ROW,   // LW6c: a keepsake of the fallen of a dive - not bound: it changes hands
     REMAINS_ROW,   // LEGACY4: an ancestor's remains - not bound: worth nothing, and only their own line can lay them to rest
     WALLET_ROW,   // WALLET1: the wallet - bound (and pack-only): it never changes hands
+    ILIAC_CARD_ROW, CARD_BINDER_ROW,   // CARDS8: a card changes hands; the binder - bound (and pack-only), as the wallet
     ...AYLEID_STONE_TEMPLATES,   // LOOT21: the Welkynd and Varla Stones - neither bound: a stone changes hands, as the Thunderlock does
   ];
   assert.deepEqual(rows.filter((t) => t.bound === true).map((t) => t.index).sort((a, b) => a - b), [...BOUND_TEMPLATES]);
   assert.ok(BOUND_TEMPLATES.includes(SIGIL_STONE_TEMPLATE));
   // PIN MOVED (SEA-REPAIR): the carpenter's stores the ninth registrar - a tenth must join the list above, or its bound rows would pass the service unseen
   // PIN MOVED (LOOT21): the Ayleid stones the fourteenth (systems/ayleidStones.js), their rows joined above
+  // PIN MOVED (CARDS8): the cards and the Card Binder the fifteenth (systems/iliacItems.js), their rows joined above
   const registrars = [];
   const walk = (dir) => {
     for (const e of readdirSync(new URL(`../${dir}`, import.meta.url), { withFileTypes: true })) {
@@ -173,7 +176,7 @@ test('AUDIT REALM F1: BOUND_TEMPLATES is every row the game registers with `boun
     }
   };
   walk('src');
-  assert.deepEqual(registrars.sort(), ['src/systems/ayleidStones.js', 'src/systems/comeSailAwayItems.js', 'src/systems/deepWatersFishItems.js', 'src/systems/foragingInstall.js', 'src/systems/gateSpoils.js', 'src/systems/legacy/heirloom.js', 'src/systems/livingWorld/keepsake.js', 'src/systems/naval/navalStores.js', 'src/systems/profTemplates.js', 'src/systems/restItems.js', 'src/systems/rriInstall.js', 'src/systems/survival/items.js', 'src/systems/thunderlock.js', 'src/systems/walletItem.js']);   // SEA-REPAIR: the ninth, the carpenter's stores; REST6: the tenth, the rest supplies; LW6c: the eleventh, the keepsake; LEGACY4: the twelfth, an ancestor's remains; LOOT21: the fourteenth, the Ayleid stones
+  assert.deepEqual(registrars.sort(), ['src/systems/ayleidStones.js', 'src/systems/comeSailAwayItems.js', 'src/systems/deepWatersFishItems.js', 'src/systems/foragingInstall.js', 'src/systems/gateSpoils.js', 'src/systems/iliacItems.js', 'src/systems/legacy/heirloom.js', 'src/systems/livingWorld/keepsake.js', 'src/systems/naval/navalStores.js', 'src/systems/profTemplates.js', 'src/systems/restItems.js', 'src/systems/rriInstall.js', 'src/systems/survival/items.js', 'src/systems/thunderlock.js', 'src/systems/walletItem.js']);   // SEA-REPAIR: the ninth, the carpenter's stores; REST6: the tenth, the rest supplies; LW6c: the eleventh, the keepsake; LEGACY4: the twelfth, an ancestor's remains; LOOT21: the fourteenth, the Ayleid stones
   // and the honest client never offers one: the window's pack refuses it before a half is ever written
   const holder = { items: [{ ...sigilStone(), stackCount: 2 }], goldPieces: 0 };
   assert.equal(createTradePack(holder).offerable(holder.items[0]), tradeRefusal(holder.items[0]));

@@ -301,8 +301,8 @@
   {
     "name": "IT1-31-sheet-remembers",
     "file": "src/ui/heldMap.js",
-    "old": "    if (o && !this._panelState.it) setTravelMapPopUpState(o);",
-    "new": "    if (o) setTravelMapPopUpState(o);",
+    "old": "    if (o && !this._panelState.it && !this._zoneMap) setTravelMapPopUpState(o);",
+    "new": "    if (o && !this._zoneMap) setTravelMapPopUpState(o);",
     "tests": [
       "test/it1_heldmap.test.js"
     ],

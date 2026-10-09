@@ -61,7 +61,7 @@
   },
   {
     "name": "SERVERPOST-a-send-twice",
-    "file": "server-account/migrations/0092_server_post.sql",
+    "file": "server-account/migrations/0093_server_post.sql",
     "old": "CREATE UNIQUE INDEX IF NOT EXISTS ux_server_post_batch",
     "new": "CREATE INDEX IF NOT EXISTS ux_server_post_batch",
     "tests": [
@@ -168,11 +168,11 @@
     "tests": [
       "test/serverpost_send.test.js"
     ],
-    "note": "Not the Hourlock as its drop mints it - and migration 0093 no longer the tool's statement."
+    "note": "Not the Hourlock as its drop mints it - and migration 0094 no longer the tool's statement."
   },
   {
     "name": "SERVERPOST-a-name-missing-from-the-first-send",
-    "file": "server-account/migrations/0093_hours_first_post.sql",
+    "file": "server-account/migrations/0094_hours_first_post.sql",
     "old": "'temegast', 'terra');",
     "new": "'temegast');",
     "tests": [
