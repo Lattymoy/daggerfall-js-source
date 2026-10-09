@@ -1,0 +1,299 @@
+[
+  {
+    "name": "ACQUIRE1-the-baseline-announcing",
+    "file": "src/systems/acquireWatch.js",
+    "old": "        item[ACQUIRED_FIELD] = true;\n        if (prime) continue;\n",
+    "new": "        item[ACQUIRED_FIELD] = true;\n",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "ACQUIRE1-the-mark-never-written",
+    "file": "src/systems/acquireWatch.js",
+    "old": "        if (isAcquired(item)) continue;\n        item[ACQUIRED_FIELD] = true;\n",
+    "new": "        if (isAcquired(item)) continue;\n",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "ACQUIRE1-a-magic-piece-announced",
+    "file": "src/systems/acquireWatch.js",
+    "old": "export const BANNER_MIN_TIER = 'rare';",
+    "new": "export const BANNER_MIN_TIER = 'magic';",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "ACQUIRE1-the-card-merge-missed",
+    "file": "src/systems/acquireWatch.js",
+    "old": "if (!held.has(item) && isAcquired(item)) movedIn",
+    "new": "if (isAcquired(item)) movedIn",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "ACQUIRE1-my-own-stack-an-arrival",
+    "file": "src/systems/acquireWatch.js",
+    "old": "const rose = total - (totals.get(id) ?? 0) - (movedIn.get(id) ?? 0);",
+    "new": "const rose = total - (totals.get(id) ?? 0);",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "ACQUIRE1-the-wagon-not-watched",
+    "file": "src/systems/acquireWatch.js",
+    "old": "[entity?.items, entity?.wagonItems, entity?.bagItems].filter(Array.isArray)",
+    "new": "[entity?.items].filter(Array.isArray)",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "ACQUIRE1-no-baseline-at-a-load",
+    "file": "src/systems/acquireWatch.js",
+    "old": "entity !== lastEntity || entity.items !== lastItems || !done",
+    "new": "entity !== lastEntity || !done",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "ACQUIRE1-the-creations-end-announced",
+    "file": "src/systems/acquireWatch.js",
+    "old": "|| !done || lastDone !== done;",
+    "new": "|| !done;",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "ACQUIRE1-a-cards-tier-the-ladders",
+    "file": "src/systems/acquireWatch.js",
+    "old": "    const t = cardById(item.card)?.tier;",
+    "new": "    const t = rarityAttr(item);",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "ACQUIRE1-the-wire-keeps-the-mark",
+    "file": "src/systems/loot.js",
+    "old": "  delete out.acquired;\n",
+    "new": "",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "ACQUIRE1-the-zone-record-keeps-the-mark",
+    "file": "src/systems/wildDeath.js",
+    "old": "  delete copy.acquired;",
+    "new": "",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-BANNER-no-waiting-cap",
+    "file": "src/ui/lootBanner.js",
+    "old": ".map(([e]) => e).slice(0, Math.max(0, pendingMax));",
+    "new": ".map(([e]) => e);",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-BANNER-waiting-in-arrival-order",
+    "file": "src/ui/lootBanner.js",
+    "old": ".sort((a, b) => tierRank(b[0].tier) - tierRank(a[0].tier) || a[1] - b[1])",
+    "new": ".sort((a, b) => a[1] - b[1])",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-BANNER-a-second-card-a-second-banner",
+    "file": "src/ui/lootBanner.js",
+    "old": "        if (s) { s.count += e.count;",
+    "new": "        if (false) { s.count += e.count;",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-BANNER-one-hold-for-all",
+    "file": "src/ui/lootBanner.js",
+    "old": "const holdOf = (e) => (e.big ? bigHold : hold);",
+    "new": "const holdOf = (e) => hold;",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-BANNER-the-held-check-skipped",
+    "file": "src/ui/lootBanner.js",
+    "old": "        if (!canEnter(e)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-BANNER-the-stack-never-built",
+    "file": "src/ui/lootBanner.js",
+    "old": "  d.body.append(_stack);\n  _lastTop = null;",
+    "new": "  _lastTop = null;",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-BANNER-the-clock-runs-hidden",
+    "file": "src/ui/lootBanner.js",
+    "old": "    if (hidden) return queue.size;\n",
+    "new": "",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-BANNER-a-classic-node",
+    "file": "src/ui/lootBanner.js",
+    "old": "      if (arrivals.length && doc?.body && isEnhanced()) {",
+    "new": "      if (arrivals.length && doc?.body) {",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-BANNER-the-name-uncoloured",
+    "file": "src/ui/lootBanner.js",
+    "old": ".lb-name { font-size: 16px; line-height: 19px; color: var(--rar, #e9e4d9);",
+    "new": ".lb-name { font-size: 16px; line-height: 19px; color: #e9e4d9;",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-BANNER-no-big-banner",
+    "file": "src/ui/lootBanner.js",
+    "old": "el(d, 'div', e.big ? 'lootbanner lb-big' : 'lootbanner')",
+    "new": "el(d, 'div', 'lootbanner')",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-BANNER-no-fanfare",
+    "file": "src/ui/lootBanner.js",
+    "old": "  if (entered.some((e) => e.big) && enhancedSoundsOn()) { _play(SOUND.ArenaFanfareLevelUp); return; }\n",
+    "new": "",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-BANNER-the-fanfare-past-the-switch",
+    "file": "src/ui/lootBanner.js",
+    "old": "if (entered.some((e) => e.big) && enhancedSoundsOn())",
+    "new": "if (entered.some((e) => e.big))",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-BANNER-a-card-uncounted",
+    "file": "src/ui/lootBanner.js",
+    "old": "const num = el(d, 'span', 'lb-count', countText(e.count));",
+    "new": "const num = el(d, 'span', 'lb-count', '');",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-BANNER-the-codex-silenced-with-no-banner",
+    "file": "src/ui/lootBanner.js",
+    "old": "if (isAcquired(item) || !_entity || !bannerStillHeld(_entity, { item, card: null })) return false;",
+    "new": "if (isAcquired(item)) return false;",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-BANNER-the-codex-line-said-twice",
+    "file": "src/systems/lootCodex.js",
+    "old": "if (!quiet && !presentCodexFind(item, key.kind)) {",
+    "new": "if (!quiet) {",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-BANNER-the-codex-chime-lost",
+    "file": "src/ui/lootBanner.js",
+    "old": "  if (entered.some((e) => e.codex)) _play(SOUND.LevelUp);\n",
+    "new": "",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-BANNER-drawHud-never-reads",
+    "file": "src/ui/hud.js",
+    "old": "  drawLootBanners({ entity: vitals, hidden: cursorActive || !hudRenderEnabled(), dt });\n",
+    "new": "",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-BANNER-the-hide-door-forgotten",
+    "file": "src/ui/hud.js",
+    "old": "  drawLootBanners({ hidden: true });   // LOOT-BANNER: the same door\n",
+    "new": "",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-BANNER-no-hud-piece",
+    "file": "src/ui/hudLayout.js",
+    "old": "  { id: 'loot', sel: '.lootbanner-stack', name: 'Loot banners', dummy: true, ghost: 'loot' },   // LOOT-BANNER\n",
+    "new": "",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-BANNER-the-layout-over-the-notices",
+    "file": "src/ui/lootBanner.js",
+    "old": "  if (notice && Number.isFinite(notice.top)",
+    "new": "  if (false && notice && Number.isFinite(notice.top)",
+    "tests": [
+      "test/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-BANNER-the-feed-cards-the-banners-piece",
+    "file": "src/ui/pickupFeed.js",
+    "old": ".filter((m) => !fresh(m)).map(",
+    "new": ".filter(() => true).map(",
+    "tests": [
+      "test/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-BANNER-the-take-says-a-line-for-the-banners-piece",
+    "file": "src/ui/pickupFeed.js",
+    "old": "    if (!entries.length) return banners;\n",
+    "new": "    if (!entries.length) return false;\n",
+    "tests": [
+      "test/pickupfeed.test.js"
+    ]
+  }
+]
