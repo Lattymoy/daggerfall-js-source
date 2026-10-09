@@ -250,6 +250,7 @@ import { dungeonEndOf } from '../world/dungeonEnd.js';   // SD4b: RVN7d's lair l
 import { createSdEnd, SD_HOME_TEXT } from './sdEnd.js';   // SD4b: a Super dungeon's Rift and Return; SD10: the Hour's way home
 import { createSdHall } from './sdHall.js';   // SD6c: the Orrery's hall in the Shattered Hour
 import { createSdSteps } from './sdSteps.js';   // SD7b: the Unmoored Steps in the Shattered Hour
+import { createSdHang } from './sdHang.js';   // SD-LOOK S11: what hangs under the Hour's islands, the far islands, the Works
 import { createSdRemnant } from './sdRemnant.js';   // SD8c: the Brass Remnant in the Shattered Hour
 import { sdMarksOf } from '../net/sdMarks.js';   // SD18c: its Hollow's Ending - the light it burns with
 import { SD_NO_RIFT } from '../net/sdLaw.js';   // SD4b: the Rift's word when nobody can answer it
@@ -1858,6 +1859,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // three seams below (gateBossBody, gateHostBodies, gateCrystalBodies) - my blows on it out to the realm, not the court
   const sdRemnant = _sdRealm ? createSdRemnant({ renderer, link: () => opts.sdFight?.() ?? null, sendIn: () => !!opts.sdFightIn?.(), sendBlow: (k, f) => !!opts.sdBlow?.(k, f), alive: () => playerEntity.health > 0, ending: sdMarksOf(dfLocation.sdRealm)[0] }) : null;
   let _sdRemnantStood = false;
+  // SD-LOOK S11 (Super-Dungeons-Look.md section 6): THE HANG in the Shattered Hour (scenes/sdHang.js) - the islands' strata
+  // spires, gear rims and chains, the far islands, the Works - stood the first frame the Hour is posed, swung and turned
+  // on the realm's anchored seconds; all noShadow, none of it law
+  const sdHang = _sdRealm ? createSdHang({ renderer, clock: sdEndClock }) : null;
   /** One frame of the arena: stood once I stand here, then my `in` and the bodies. */
   function sdRemnantFrame(dt, playerFeet) {
     if (playerFeet && !_sdRemnantStood) { _sdRemnantStood = true; sdRemnant.stand({ dynamicDraws }); }
@@ -10014,6 +10019,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     sdPose(dt, playerFeet) {
       if (sdHall) sdHallFrame(dt, playerFeet);
       if (sdRemnant) sdRemnantFrame(dt, playerFeet);
+      if (sdHang) { sdHang.stand({ dynamicDraws }); sdHang.frame(); }   // SD-LOOK S11: stood once, then its chains and gears
     },
     /** SD5a: where a player back from the Shattered Hour is stood - beside this Hollow's Rift (stood with the level, AUDIT
      *  SD IV S1; stood now if it was not); null in any other dungeon. */
@@ -10286,6 +10292,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       sdHall?.clear();   // SD6c: the hall's meshes
       sdSteps?.clear();   // SD7b: the Steps' meshes
       sdRemnant?.clear();   // SD8c: the Remnant's
+      sdHang?.clear();   // SD-LOOK S11: the hang's
       // NT1 (F214): the context minted its own cast engine; a spell in
       // flight at the exit owned a batch nothing else can reach.
       magic.handReadyTo(opts.outerCastEngine?.() ?? null);   // CAST-USE (AUDIT part five CU1): a ready held at the way out (the door, a Recall, a load) goes with the player

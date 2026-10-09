@@ -524,7 +524,8 @@ test('AUDIT SD II L2 F10, F11: THE HOUR POSED BEFORE THE WORLD PASS, AND A HIDDE
   assert.match(read('src/render/renderer.js'), /if \(!wire && !noShadow && this\._casting\) this\._shadows\.recordMesh\(/, 'a drawMesh is what records a shadow');
   const D = read('src/scenes/dungeonContext.js');
   assert.deepEqual([D.match(/\bsdHallFrame\(dt, playerFeet\);/g)?.length, D.match(/\bsdRemnantFrame\(dt, playerFeet\);/g)?.length], [1, 1], 'framed in one place');
-  assert.match(D, /sdPose\(dt, playerFeet\) \{\n\s+if \(sdHall\) sdHallFrame\(dt, playerFeet\);\n\s+if \(sdRemnant\) sdRemnantFrame\(dt, playerFeet\);\n\s+\},/);
+  // PIN MOVED (SD-LOOK S11): and the hang after them - its chains and gears posed with the Hall and the arena, before the draws
+  assert.match(D, /sdPose\(dt, playerFeet\) \{\n\s+if \(sdHall\) sdHallFrame\(dt, playerFeet\);\n\s+if \(sdRemnant\) sdRemnantFrame\(dt, playerFeet\);\n\s+if \(sdHang\) \{ sdHang\.stand\(\{ dynamicDraws \}\); sdHang\.frame\(\); \}[^\n]*\n\s+\},/);
   // the sets
   const steps = createSdSteps({ renderer: fakeRenderer() }), list = [];
   steps.stand({ dynamicDraws: list, collider: null });

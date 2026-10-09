@@ -323,7 +323,7 @@ export function buildVaneModel(ending = null) {
 /** THE CHECKPOINTS B and C, one mesh in the dungeon's frame: islands at their heights. */
 export function buildChecksModel() {
   const f = faces();
-  for (const [k, c] of SD_CHECKPOINTS.entries()) if (k > 0) realmIsland(f, c.x, c.z, c.r, SD_REALM_FLOOR_RECORD, { y: c.y, lean: k === 1 ? 1 : -1.5 });
+  for (const [k, c] of SD_CHECKPOINTS.entries()) if (k > 0) realmIsland(f, c.x, c.z, c.r, SD_REALM_FLOOR_RECORD, { y: c.y });
   return packRealmFaces(f);
 }
 /** Their floors, for the collider (the dungeon's frame): a disc each, at its height. */

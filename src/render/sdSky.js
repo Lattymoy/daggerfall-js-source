@@ -64,6 +64,9 @@ export const SD_CLOCK_TOP = SD_CLOCK_FACE.elev + SD_CLOCK_FACE.r * (1 + SD_CLOCK
 export const SD_SHARD_CLEAR = 0.05;
 export const SD_SHARD_TOP = SD_CLOCK_TOP + SD_SHARD_CLEAR + Math.max(...SD_SKY_SHARDS.map((s) => s.depth));
 export const SD_AURORA = Object.freeze({ low: 0.62, high: 1.3, turns: 3 });
+/** SD-LOOK S11: THE FURNACE at the nadir - it rises from `from` radians under the horizon to its full glow at `full`:
+ *  the band the course looks down through onto the Works (world/sdWorksModel.js), so they stand black against it. */
+export const SD_FURNACE = Object.freeze({ from: 0.6, full: 1.3 });
 /** SD-LOOK: the map's side (texels), and the steps the pixel law posterizes its brightness to on the lane and the classic set. */
 export const SD_SKY_MAP = 512;
 export const SD_SKY_STEPS = Object.freeze({ lane: 10, classic: 8 });
@@ -284,9 +287,10 @@ vec3 vramp(float k) {
   return f < 4.0 ? mix(V3, V4, t) : V4;
 }
 // THE VOID: eight dithered bands from the black overhead to the brass haze at the horizon (V3, the fog's own colour);
-// below, the mist deepening to black, then the furnace at the nadir
+// below, the mist deepening to black, then the furnace at the nadir - SD-LOOK S11: rising from 34 degrees down (it rose
+// from 54), so the Works and the islands' undersides stand black against it wherever the course looks down on them
 vec3 voidAt(float e, vec2 cell) {
-  float k = e >= 0.0 ? 0.75 * exp(-e * 3.2) : 0.75 * exp(e * 6.0) + 0.95 * smoothstep(0.95, 1.55, -e);
+  float k = e >= 0.0 ? 0.75 * exp(-e * 3.2) : 0.75 * exp(e * 6.0) + 0.95 * smoothstep(${f4(SD_FURNACE.from)}, ${f4(SD_FURNACE.full)}, -e);
   vec3 c = vramp(floor(k * 8.0 + bayer4(cell)) / 8.0);
   return mix(c, uHaze, 0.45 * exp(-abs(e) * 14.0));
 }

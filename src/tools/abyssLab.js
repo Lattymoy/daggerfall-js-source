@@ -34,6 +34,11 @@
 //                    of its wind-up> its tell | stun&st=<s into its 8> the dial's ember hand | reset&hearts=<n>&broke=<k> the rib
 //                    lamps | fell&age=<s> the heart torn out, the dial rolling | break[&down=0|1&et=<s into the window>] the
 //                    Echoes, the living one's dial on its partner's window; views remnant, remnant-back, remnant-side
+//   SD-LOOK S11, the hang and the Works (scenes/sdHang.js): ?view=works (from a Drift step, pitch -60: the Works against
+//                    the nadir's glow) | hang (under the Orrery's rim, its strata spires, gear rims and chains) | hang-far
+//                    (from the arena's rim back along the course, the far islands in the haze); ?touch=on its phones'
+//                    tier (one spire a root, no far islands, two gears, still chains); ?law the realm's colliders too
+//                    (world/sdRealm.js realmColliderTris - the floors, pillars and lamp posts): no root, tooth or chain in them
 // `window.__frame` counts drawn frames (the probes frame-sync on it - bible/Home.md's Process); `window.__lab` moves the
 // camera and the clock from a probe.
 import { Renderer, WORLD_FRAME, INTERIOR_CLEAR } from '../render/renderer.js';
@@ -49,7 +54,7 @@ import { SdStompWallRenderer, sdStompWalls, sdStompWallRecords, SD_HOLD_WALL, sd
 import { SD_BLOWS, SD_REM_START, SD_ECHO_SPOTS } from '../net/sdRemnant.js';
 import { SD_FIGHT_EMPTY } from '../net/sdFightLink.js';
 import { veilAt, VEIL_OPEN_S } from '../render/gateVeil.js';
-import { buildRealmModel, realmLighting, realmLightsWith, packRealmFaces, SD_REALM_ARCHIVE, SD_REALM_BRASS_RECORD, SD_REALM_FOG, SD_WAY_BACK_Z, SD_WAY_BACK_SIZE, SD_ARRIVE_Z } from '../world/sdRealm.js';
+import { buildRealmModel, realmLighting, realmLightsWith, realmColliderTris, packRealmFaces, SD_REALM_ARCHIVE, SD_REALM_BRASS_RECORD, SD_REALM_FOG, SD_WAY_BACK_Z, SD_WAY_BACK_SIZE, SD_ARRIVE_Z } from '../world/sdRealm.js';
 import { realmArt } from '../world/sdRealmArt.js';
 import { faces } from '../world/gateModel.js';
 import { createSdHall, sdStoneKey, SD_CONCORD_MS, SD_BRIDGE_LAY_MS } from '../scenes/sdHall.js';
@@ -59,6 +64,7 @@ import { createSdFx } from '../scenes/sdFx.js';
 import { SD_STEPS_COURSE, SD_BEAT_CYCLE } from '../world/sdSteps.js';
 import { createSdRemnant } from '../scenes/sdRemnant.js';
 import { createSdEnd, SD_RETURN_KEY } from '../scenes/sdEnd.js';
+import { createSdHang } from '../scenes/sdHang.js';
 import { sdRiftFace, SD_RIFT_OPEN_LOOK, SD_RIFT_NOT_YET, SD_RIFT_CLOSED, SD_RIFT_REFUSED } from '../world/sdDungeon.js';
 import { SdRiftRenderer } from '../render/sdRiftPass.js';
 import { SdHaloRenderer, SD_HALO_GAIN } from '../render/sdHalo.js';
@@ -101,6 +107,10 @@ const VIEWS = {
   remnant: { at: [0, 4.2, SD_ARENA.z + SD_REM_START[1] - 13], yaw: 0, pitch: 6 },
   'remnant-back': { at: [0, 6, SD_ARENA.z + SD_REM_START[1] + 11], yaw: 180, pitch: 2 },
   'remnant-side': { at: [-12, 4.5, SD_ARENA.z + SD_REM_START[1] - 4], yaw: 70, pitch: 4 },
+  // SD-LOOK S11: the Works from a Drift step looking down; the Orrery's underside from beside the walk; the course back
+  works: { at: [0, 1.7, 80], yaw: 0, pitch: -60 },
+  hang: { at: [-30, -4, 18], yaw: 50, pitch: 4 },
+  'hang-far': { at: [0, 6, SD_ARENA.z - SD_ARENA.r + 2], yaw: 160, pitch: -6 },
 };
 const viewSel = $('view');
 for (const k of Object.keys(VIEWS)) { const o = document.createElement('option'); o.value = o.textContent = k; viewSel.append(o); }
@@ -183,12 +193,17 @@ hall.stand({ dynamicDraws, collider: null });
     hall.frame(ms / 1000, null, null);
   }
 })();
-/** ?law: the hall's solids (the collider's, world/sdHall.js hallSolidTris) as one mesh, drawn as wire over the frame. */
+/** ?law: the hall's solids (the collider's, world/sdHall.js hallSolidTris) and (SD-LOOK S11) the realm's - its floors,
+ *  pillars and lamp posts (world/sdRealm.js realmColliderTris) - as one mesh, drawn as wire over the frame. */
 const lawMesh = params.has('law') ? (() => {
-  const tris = hallSolidTris(), n = tris.length / 3;
+  const hallTris = hallSolidTris(), realmTris = realmColliderTris(), tris = new Float32Array(hallTris.length + realmTris.length);
+  tris.set(hallTris); tris.set(realmTris, hallTris.length);
+  const n = tris.length / 3;
   return renderer.createMesh({ positions: tris, normals: new Float32Array(n * 3).fill(0).map((_, i) => (i % 3 === 1 ? 1 : 0)), uvs: new Float32Array(n * 2), indices: Uint32Array.from({ length: n }, (_, i) => i), subMeshes: [{ textureArchive: SD_REALM_ARCHIVE, textureRecord: SD_REALM_BRASS_RECORD, startIndex: 0, primitiveCount: n / 3 }] });
 })() : null;
 const steps = createSdSteps({ renderer, ending: sdMarksOf(LAB_SLOT)[0] });   // SD-LOOK S9: the Hollow's Ending on the vane
+const hang = createSdHang({ renderer, clock: () => clock });   // SD-LOOK S11: the roots, the chains, the far islands, the Works
+hang.stand({ dynamicDraws });
 steps.stand({ dynamicDraws, collider: null });
 /** SD-LOOK S9: the Steps' knobs - every Crumble pin touched ?crumble= ago, the waystone ?span= lit, the rewind on ?on=. */
 const CRUMBLES = SD_STEPS_COURSE.filter((s) => s.kind === 'crumble').map((s) => s.i);
@@ -355,7 +370,7 @@ canvas.addEventListener('pointerup', () => { drag = null; });
 let last = performance.now();
 window.__frame = 0;
 /** The lab's parts, for a probe's questions. */
-window.__labParts = { renderer, sky, riftPass, halo, hollowEnd, wayBack };
+window.__labParts = { renderer, sky, riftPass, halo, hollowEnd, wayBack, hang };
 window.__lab = {
   view: (name) => { viewSel.value = name; setView(name); },
   eye: (x, y, z, yawDeg, pitchDeg) => { cam.pos = [x, y, z]; cam.yaw = yawDeg * Math.PI / 180; cam.pitch = pitchDeg * Math.PI / 180; },
@@ -422,6 +437,7 @@ function frame(now) {
     if (params.has('span')) steps.standOn(Number(params.get('span')));
     steps.ride(clock, dt, null, true);
     remnant.frame(dt, null);
+    hang.frame();   // SD-LOOK S11: the chains swung, the Works turned, the far set drifting
     if (params.has('plate')) wayBack.hoverName(SD_RETURN_KEY);
     wayBack.frame(null);
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);

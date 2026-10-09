@@ -24,6 +24,7 @@
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
 import { SD_RAMP } from './sdLook.js';
 import { rng, noiseField, image, putTexel, blendRgb, scale, ramp, step, bevel, rivet, paletteOf, quantize } from './sdPixelKit.js';
+import { hangArt } from './sdHangArt.js';   // SD-LOOK S11: the Works' brass and the chains, records 80-81
 
 /** The tiles' side, texels (SD-LOOK: a tile is two metres - 32 texels a metre); the dial's (one image over the whole
  *  hall); the root's strip, its height (top to tip). */
@@ -202,9 +203,9 @@ export function realmEdgeArt() {
 }
 
 /** Every texture the realm wears, by record: `[record, { albedo, emission }]` (records as world/sdRealm.js names them -
- *  SD-LOOK's two after the Remnant's, 31 and 32). */
+ *  SD-LOOK's two after the Remnant's, 31 and 32; S11's hang, 80 and 81 - world/sdHangArt.js). */
 /** @returns {Array<[number, { albedo: import('./sdPixelKit.js').Img, emission: import('./sdPixelKit.js').Img }]>} */
 export const realmArt = () => [
   [0, realmFloorArt()], [1, realmBrassArt()], [2, realmRootArt()], [3, realmDialArt()], [4, realmArenaArt()],
-  [31, realmCobbleArt()], [32, realmEdgeArt()],
+  [31, realmCobbleArt()], [32, realmEdgeArt()], ...hangArt(),
 ];

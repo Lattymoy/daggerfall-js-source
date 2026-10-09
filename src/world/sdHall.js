@@ -385,7 +385,7 @@ export function buildHallModel() {
   }
   for (let k = 0; k < SD_PLAQUE.bearings.length; k++) emit(f, lecternQuads(k));
   emit(f, dialFloorQuads());
-  realmIsland(f, SD_FIRST_STEP.x, SD_FIRST_STEP.z, SD_FIRST_STEP.r, SD_REALM_FLOOR_RECORD, { lean: -1 });
+  realmIsland(f, SD_FIRST_STEP.x, SD_FIRST_STEP.z, SD_FIRST_STEP.r, SD_REALM_FLOOR_RECORD);
   return packRealmFaces(f);
 }
 /** A plaque's face's bottom middle (the realm's frame): on its post's top, a little before it. */
