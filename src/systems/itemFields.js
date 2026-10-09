@@ -173,6 +173,10 @@ export const ITEM_FIELDS = Object.freeze({
   // ACQUIRE1 (bible/10-UI/Loot-Banner.md): the piece has stood in the player's own keeping (systems/acquireWatch.js) - true,
   // or absent. The RECEIVER's mark, as equipSlot and questItem are: loot.js validLootItem strips it off the wire
   acquired: bool(),
+  // WAGONS1/WAGONS2 (bible/06-Systems/Wagons.md): which wagon a Small Cart item is (systems/wagonKinds.js - absent, the
+  // cart) and its paint (systems/wagonLooks.js: `{ o, w, f, c }`, each one of six - absent, as built)
+  wagonKind: oneOf(['cart', 'openWagon', 'caravan']),
+  wagonLook: rec((l) => Object.keys(l).every((k) => ['o', 'w', 'f', 'c'].includes(k) && Number.isInteger(l[k]) && l[k] >= 0 && l[k] < 6)),
 });
 
 /** The declared names, and those of one kind. */

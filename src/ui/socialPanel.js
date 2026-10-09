@@ -1340,7 +1340,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
     // a bound piece, gold, a boat's or the Materials Bag)
     if (vaultMayPut(st) && g.pack) {
       // AUDIT2 GUILD2 U4: and never a locked piece - a lock closes every way out of the pack a trade is (itemLock.js)
-      const offers = (g.pack.items?.() ?? []).filter((it) => it && tradeRefusal(it) == null && !isLocked(it));
+      const offers = (g.pack.items?.() ?? []).filter((it) => it && tradeRefusal(it) == null && !g.pack.refuses?.(it) && !isLocked(it));   // WAGONS2 (AUDIT): nor the loaded wagon (the pack's own refusal)
       out.push(el('div', 'dfsocial-sec', 'Put in'));
       // AUDIT2 GUILD2 U10: the pick is a piece, not a place in the list - a put-in shifted the list under an index, and
       // the next Put in offered the piece after it; and it is this guild's (another guild's tab starts again)

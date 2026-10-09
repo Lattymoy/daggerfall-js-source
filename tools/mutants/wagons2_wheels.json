@@ -146,7 +146,7 @@
   {
     "name": "WAGONS2-the-kingpin-laid-fresh-every-frame",
     "file": "src/systems/horseFollow.js",
-    "old": "const kingpinFrom = two && w.active ?",
+    "old": "const kingpinFrom = two && bodyFrom ?",
     "new": "const kingpinFrom = false ?",
     "tests": [
       "test/wagons2_wheels.test.js"
@@ -218,8 +218,8 @@
   {
     "name": "WAGONS2-the-bogie-not-handed-to-the-shafts",
     "file": "src/systems/horseCart.js",
-    "old": "hitchZ(), dt, seed, wagonVisual.parts?.bogie ?? null);",
-    "new": "hitchZ(), dt, seed, null);",
+    "old": "hitchZ(), dt, seed, wagonVisual.parts?.bogie ?? null, seedForward);",
+    "new": "hitchZ(), dt, seed, null, seedForward);",
     "tests": [
       "test/wagons2_wheels.test.js"
     ]
@@ -400,6 +400,42 @@
     "file": "src/scenes/horseCartPool.js",
     "old": "turn.angles ? turn.angles.map((a, i) => step(i, a)) : null",
     "new": "turn.angles ? turn.angles.map((a) => step('angle', a)) : null",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-AUDIT-the-seeds-heading-unread",
+    "file": "src/systems/horseFollow.js",
+    "old": "const bodyFrom = w.active ? quatForward(w.rotation) : seed && seedForward ? seedForward : null;",
+    "new": "const bodyFrom = w.active ? quatForward(w.rotation) : null;",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-AUDIT-the-parts-kept",
+    "file": "src/systems/horseCart.js",
+    "old": "if (wagonVisual && wagonVisual.parts !== parts) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-AUDIT-the-parked-peer-rolled",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "if (p.wagon.kind === HCC_WIRE_KIND.Deployed) { t.contacts = contacts; return; }",
+    "new": "if (false) { t.contacts = contacts; return; }",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-AUDIT-the-peers-old-turn-kept",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "if (p.turn && p.turn.model !== p.wagon.model) { p.turn = null; p.steer = 0; }",
+    "new": "if (false) { p.turn = null; p.steer = 0; }",
     "tests": [
       "test/wagons2_wheels.test.js"
     ]

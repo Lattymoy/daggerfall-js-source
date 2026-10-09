@@ -368,3 +368,58 @@ test('WAGONS2 (AUDIT) THE TEAM MOUNTED AGAIN: each of Mac\'s wagons parked with 
     assert.equal(rt.canAccessWagonInventory().allowed, false, `${kind}: 6 m behind its rear, out of reach`);
   }
 });
+
+test('WAGONS2 (AUDIT) DRIVEN OFF AS IT STOOD, AND ANOTHER KIND: a four-wheeler parked at its lock is driven off at its rest steer - its body unturned, its bogie not snapped straight; the kind driven changed under a standing team swaps the new kind\'s parts in where it stands (its bogie steering, a wheel each), and a parked one is grounded again with no old rest; another player\'s parked wagon re-stood on the ground does not roll, and their kind changed starts its wheels afresh from their word (mutants: the seed\'s heading unread, the parts kept, the parked peer rolled, the peer\'s old turn kept)', async () => {
+  // driven off at the lock
+  const { w, rt, step } = await wagonWorld('openWagon');
+  step(2); rt.tryUseTransport(TRANSPORT.Cart); step(2);
+  for (let i = 0; i < 60; i++) rideOn(w, step, 0.1);
+  for (let i = 0; i < 200; i++) rideOn(w, step, 0.1, 0.1 / 8);
+  const steer = rt.view().moving.pose.steer;
+  assert.ok(steer > 6, `at the lock: ${steer}`);
+  w.mode = TRANSPORT.Foot; step(3);
+  const v = rt.view(), dep = v.deployed, depFwd = quatForward(dep.rotation);
+  w.pos = [...v.horse.position]; w.pos[1] = 0.9; w.yaw = Math.atan2(v.horse.forward[0], v.horse.forward[2]);
+  assert.equal(rt.tryUseTransport(TRANSPORT.Cart).succeeded, true);
+  step(1);
+  const m = rt.view().moving;
+  close(yawBetween(depFwd, quatForward(m.pose.rotation)), 0, 1e-6, 'the body as it stood');
+  close(m.pose.steer, steer, 1e-6, 'the bogie at its rest steer');
+  // another kind under a standing team
+  let kind = 'cart';
+  const k = await wagonWorld('cart', { wagonKind: () => kind });
+  k.pool.partsOf('openWagon'); await flush();
+  k.step(2); k.rt.tryUseTransport(TRANSPORT.Cart); k.step(2);
+  for (let i = 0; i < 30; i++) rideOn(k.w, k.step, 0.1);
+  assert.equal(k.rt.view().moving.wheel.angles.length, 2, 'the cart\'s pair');
+  kind = 'openWagon';
+  for (let i = 0; i < 30; i++) rideOn(k.w, k.step, 0.1);
+  for (let i = 0; i < 40; i++) rideOn(k.w, k.step, 0.1, 0.01);
+  const mk = k.rt.view().moving;
+  assert.equal(mk.parts, k.pool.partsOf('openWagon'), 'the open wagon\'s parts');
+  assert.equal(mk.wheel.angles.length, 4, 'a wheel each');
+  assert.ok(mk.pose.steer > 1, `its bogie steering: ${mk.pose.steer}`);
+  // another player's parked wagon re-stood (the ground under it not yet loaded, then come - DISC20-C); and their kind changed
+  let ground = null, t = 0;
+  const K = Math.tan((10 * Math.PI) / 180), N = [0, Math.cos((10 * Math.PI) / 180), -Math.sin((10 * Math.PI) / 180)];   // a 10 degree slope rising along +z
+  const col = { surfaceHit: (o, d, max) => { if (ground == null || !(d[1] < 0)) return { dist: Infinity }; const dist = o[1] - (ground + K * o[2]); return dist > 0 && dist <= max ? { dist, key: null, normal: N } : { dist: Infinity }; } };
+  const r = fakeRenderer();
+  const pool = createHorseCartPool({ renderer: r, meshes: null, collider: () => col, now: () => t, selfId: () => 'me', bakedWagon: async (x) => bakeOf(x), fetchFn: async () => ({ ok: false, status: 404 }), log: QUIET });
+  pool.attach({ view: () => ({ state: { HorseName: '' }, moving: null, deployed: null, horse: null, teamFollowing: false, horseFollowing: false, persistence: true, rest: null }), lateUpdate() {} });
+  pool.partsOf('openWagon'); pool.partsOf('cart'); await flush();
+  const q = quatAngleAxis(-10, [1, 0, 0]);   // parked nose up the slope
+  pool.applyOwner('p1', { w: [HCC_WIRE_KIND.Deployed, 0, 31, 0, q[0], q[1], q[2], q[3], 0, 42], wk: 1 }, (x) => x, 1);
+  for (let i = 0; i < 5; i++) { t += 1 / 30; pool.frame(1 / 30, [0, 2, 0]); }
+  const p = pool.peers.get('p1');
+  const held = [...p.turn.angles], high = p.shownWagon[1];
+  ground = 0; pool.groundMoved(-100, -100, 100, 100); t += 10;
+  for (let i = 0; i < 10; i++) { t += 1 / 30; pool.frame(1 / 30, [0, 2, 0]); }
+  assert.ok(high - p.shownWagon[1] > 20, `re-stood on the ground come: ${high} -> ${p.shownWagon[1]}`);
+  closeAll(p.turn.angles, held, 1e-9, 'parked: as they stood');
+  pool.applyOwner('p2', { w: [HCC_WIRE_KIND.Trailing, 0, NORMAL_GROUND_OFFSET, 0, 0, 0, 0, 1, 0, 42], wk: 1 }, (q) => q, 3);
+  for (let i = 0; i < 3; i++) pool.frame(1 / 30, [0, 2, 5]);
+  assert.equal(pool.peers.get('p2').turn.angles.length, 4);
+  pool.applyOwner('p2', { w: [HCC_WIRE_KIND.Trailing, 0, NORMAL_GROUND_OFFSET, 0, 0, 0, 0, 1, 0, 17] }, (q) => q, 4);
+  pool.frame(1 / 30, [0, 2, 5]);
+  assert.deepEqual(pool.peers.get('p2').turn.angles, [17, 17], 'the cart\'s pair, from their word');
+});

@@ -11,8 +11,8 @@
   {
     "name": "WAGON-HITCH-the-mod-trail-length",
     "file": "src/systems/horseCart.js",
-    "old": "    const next = hitchedPoseStep(phys, wagonVisual.pose, hitchPoint, forward, hitchZ(), dt, seed, wagonVisual.parts?.bogie ?? null);",
-    "new": "    const next = hitchedPoseStep(phys, wagonVisual.pose, hitchPoint, forward, WAGON_FOLLOW_DISTANCE, dt, seed, wagonVisual.parts?.bogie ?? null);",
+    "old": "    const next = hitchedPoseStep(phys, wagonVisual.pose, hitchPoint, forward, hitchZ(), dt, seed, wagonVisual.parts?.bogie ?? null, seedForward);",
+    "new": "    const next = hitchedPoseStep(phys, wagonVisual.pose, hitchPoint, forward, WAGON_FOLLOW_DISTANCE, dt, seed, wagonVisual.parts?.bogie ?? null, seedForward);",
     "tests": [
       "test/wagonhitch.test.js"
     ]

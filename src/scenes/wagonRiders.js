@@ -16,9 +16,10 @@
 //    who sits where is my word's `ps`. A fast travel of mine with riders aboard says `go` first and waits a moment
 //    (GO_LEAD_MS) for them to hear it.
 //
-// deps = { selfId(), name(id) -> string, now() -> ms, say(text), changed() (my word moved), pool: the cart's pool (peerRide, peerSeat, mySeatCount),
-//          pin(feet, yaw) (stand me there, the motor held), unpin(feet) (stand me down beside the wagon), jumpPressed(),
-//          travel({x, y}, besideAt, ownerName) (the party's journey), canTravel() (outdoors, not busy), prompt: { open, render },
+// deps = { selfId(), name(id) -> string, now() -> ms, say(text), changed() (my word moved), pool: the cart's pool (peerRide, peerSeat,
+//          mySeatCount, mySeatsKnown), pin(feet, yaw) (stand me there, the motor held), unpin(feet) (stand me down beside the
+//          wagon), feet() (where my body stands now - WAGONS2 AUDIT), jumpPressed(), travel({x, y}, besideAt, ownerName) ->
+//          Promise<boolean> (the party's journey, no fare), canTravel() (outdoors, not busy), prompt: { open, render },
 //          drawAt(feet | null) (WAGONS2: where my body is DRAWN while I sit - the seat of a wagon drawn grown, or null) }
 // Not a DFU member. Ledger A (WAGONS1).
 import { createRideBook, validRideWord, rideWord, RIDE_TEXT, RIDE_ASK_TTL_MS, RIDE_ASK_REACH, companionSeats } from '../systems/wagonSeats.js';
@@ -35,6 +36,9 @@ export const ARRIVE_WAIT_MS = 15_000;
 export const RIDE_LOST_GRACE_MS = 2000;
 /** How far beside the wagon a rider stands when they get down (m). */
 export const GET_DOWN_STEP = 1.6;
+/** WAGONS2 (AUDIT): how far from their seat a rider may be and still be stood down beside the wagon (m) - further, the
+ *  body was moved by something else (a load, a respawn, a teleport) and stays where it is. */
+export const GET_DOWN_REACH = 6;
 /** The plaque rows' ids (the pool hands a press back with one). */
 export const RIDE_ROW = Object.freeze({ ask: 'wagon:ride', down: 'wagon:down' });
 
@@ -53,6 +57,7 @@ export function createWagonRiders(deps) {
     if (id === RIDE_ROW.down) { if (ride?.owner === owner) getDown(); return true; }
     if (id !== RIDE_ROW.ask) return false;
     if (!(distance <= RIDE_ASK_REACH)) { deps.say(RIDE_TEXT.noSeats); return true; }
+    if (ride?.seat != null) getDown();   // WAGONS2 (AUDIT): seated in one wagon and asking another - down from the first, over its side
     const r = deps.pool.peerRide(owner);
     const seats = WAGON_KINDS[r?.model]?.seats ?? 0;
     if (!seats) { deps.say(RIDE_TEXT.noSeats); return true; }
@@ -71,9 +76,19 @@ export function createWagonRiders(deps) {
     if (was) deps.changed?.();
     if (was?.seat != null) {
       const at = deps.pool.peerSeat(was.owner, was.seat);
-      deps.unpin?.(at ? [at.feet[0] - Math.sin(at.yaw) * GET_DOWN_STEP, at.feet[1], at.feet[2] - Math.cos(at.yaw) * GET_DOWN_STEP] : null);   // over the side behind them (a seat faces across the bed)
+      const body = deps.feet?.() ?? null;
+      const near = at && (!body || Math.hypot(body[0] - at.feet[0], body[2] - at.feet[2]) <= GET_DOWN_REACH);   // WAGONS2 (AUDIT): a body moved off the seat by something else stays where it is
+      deps.unpin?.(near ? [at.feet[0] - Math.sin(at.yaw) * GET_DOWN_STEP, at.feet[1], at.feet[2] - Math.cos(at.yaw) * GET_DOWN_STEP] : null);   // over the side behind them (a seat faces across the bed)
       if (text) deps.say(text);
     }
+  }
+  /** WAGONS2 (AUDIT): out of the ride where I stand - the host left the outdoors, died or loaded: no seat held, no step
+   *  beside the wagon (the body is not on its seat), no line. */
+  function leave() {
+    const was = ride;
+    ride = null;
+    deps.drawAt?.(null);
+    if (was) deps.changed?.();
   }
   /** The plaque's rows over another player's wagon: ask while it has a seat for me, get down from the one I sit in. */
   function acts(owner, kind, kept) {
@@ -115,8 +130,9 @@ export function createWagonRiders(deps) {
   /** One frame (after the cart's pool stepped): my riders kept to my seats, my ride kept to its seat. */
   function frame() {
     const now = deps.now();
-    // the owner's end
-    book.fit(deps.pool.mySeatCount());
+    // the owner's end - the seats fitted to my wagon's only while it stands here to count them (WAGONS2 AUDIT: on the
+    // road, or its model not yet up, it counted none and every rider lost their seat)
+    if (deps.pool.mySeatsKnown?.() ?? true) book.fit(deps.pool.mySeatCount());
     if (go && now - goAt > GO_HOLD_MS) go = null;   // the journey said long enough
     book.lapse(now);   // an ask unanswered goes - the rider hears it lapse on their own clock
     for (const [r, until] of [...declinedUntil]) if (until <= now) declinedUntil.delete(r);
@@ -125,15 +141,18 @@ export function createWagonRiders(deps) {
     if (ride?.seat == null) deps.drawAt?.(null);   // WAGONS2: no seat, the body drawn where it stands
     if (!ride) return;
     if (deps.traveling?.() && ride.go != null) ride.wait = now + ARRIVE_WAIT_MS;   // the far end's wait runs from the arrival
+    if (ride.seat != null && !deps.traveling?.() && deps.jumpPressed?.()) { getDown(); return; }   // WAGONS2 (AUDIT): Jump gets me down whatever the owner's word - waiting at a journey's end too
     const r = deps.pool.peerRide(ride.owner);
     if (!r || r.model == null) {
+      deps.drawAt?.(null);   // WAGONS2 (AUDIT): no wagon heard to draw me in - where my body stands
       ride.lost ??= now;   // WAGONS2 (AUDIT): unheard from here
       if (ride.seat != null) { if (!deps.traveling?.() && !((ride.wait ?? 0) > now) && now - ride.lost >= RIDE_LOST_GRACE_MS) getDown(RIDE_TEXT.ownerGone); }   // on the road, or waiting at its end for the owner's word - or the word a moment missing
       else if (now - ride.at > RIDE_ASK_TTL_MS) { const o = ride.owner; ride = null; deps.changed?.(); deps.say(RIDE_TEXT.noAnswer(name(o))); }
       return;
     }
     ride.lost = null;
-    const mine = r.passengers.find((e) => e[0] === me());
+    const seats = WAGON_KINDS[r.model]?.seats ?? 0;
+    const mine = r.passengers.find((e) => e[0] === me() && e[1] < seats);   // WAGONS2 (AUDIT): a seat the wagon has
     if (ride.seat == null) {
       if (r.declined.includes(me())) { const o = ride.owner; ride = null; deps.changed?.(); deps.say(RIDE_TEXT.declined(name(o))); return; }
       if (!mine) { if (now - ride.at > RIDE_ASK_TTL_MS) { const o = ride.owner; ride = null; deps.changed?.(); deps.say(RIDE_TEXT.noAnswer(name(o))); } return; }
@@ -142,13 +161,19 @@ export function createWagonRiders(deps) {
       deps.say(RIDE_TEXT.accepted(name(ride.owner)));
     } else if (!mine) { getDown(RIDE_TEXT.gotOff); return; }
     else ride.seat = mine[1];
-    if (deps.jumpPressed?.()) { getDown(); return; }
     // the owner sets out: I go with them (once a journey), landing beside their wagon at the far end
     if (r.go && r.go[2] !== ride.go) {
       ride.go = r.go[2];
-      ride.wait = now + ARRIVE_WAIT_MS;
       const owner = ride.owner;
-      if (deps.canTravel?.()) deps.travel({ x: r.go[0], y: r.go[1] }, () => { const w = deps.pool.peerRide(owner)?.wire; return w ? { x: w[0], y: w[1], z: w[2] } : null; }, name(owner));   // beside their wagon, in natives (partyTravelLaw.js besideTargetOf's shape)
+      // WAGONS2 (AUDIT): a journey I cannot go on (a foe near, the sun) stands me down here, told - the seat held for a
+      // journey never taken held my motor till the far end's wait ran out
+      if (!deps.canTravel?.()) { getDown(RIDE_TEXT.leftBehind(name(owner))); return; }
+      ride.wait = now + ARRIVE_WAIT_MS;
+      deps.drawAt?.(null);   // the journey re-stands everything: no grown seat of this place drawn at the far end
+      const n = ride.go;
+      const went = deps.travel({ x: r.go[0], y: r.go[1] }, () => { const w = deps.pool.peerRide(owner)?.wire; return w ? { x: w[0], y: w[1], z: w[2] } : null; }, name(owner));   // beside their wagon, in natives (partyTravelLaw.js besideTargetOf's shape)
+      // and one that did not go stands me down where I am, told
+      Promise.resolve(went).then((ok) => { if (ok === false && ride?.owner === owner && ride.go === n) { ride.wait = 0; getDown(RIDE_TEXT.leftBehind(name(owner))); } }, () => {});
       return;
     }
     const at = deps.pool.peerSeat(ride.owner, ride.seat);
@@ -188,6 +213,7 @@ export function createWagonRiders(deps) {
     seatedIn: () => (ride?.seat != null ? { owner: ride.owner, seat: ride.seat } : null),
     /** A journey's word said long enough: quiet again. */
     quietGo() { go = null; },
-    clear() { book.clear(); ride = null; go = null; declinedUntil.clear(); },
+    leave,
+    clear() { book.clear(); ride = null; go = null; declinedUntil.clear(); deps.drawAt?.(null); },
   };
 }

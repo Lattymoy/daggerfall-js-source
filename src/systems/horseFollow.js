@@ -567,8 +567,10 @@ export function steerToward(axle, forward, hitch, bogie) {
  *  WAGONS2: `bogie` (a four-wheeler's - world/wagonModels.js: `{ wheelbase, steerLimit }`) makes it two bars
  *  (`bogieAxle`): the axle is the REAR axle, the facing the body's, and the state carries `steer` (degrees) - its
  *  kingpin is a wheelbase ahead of the axle along the body. Without one - the Small Cart, the classic wagon - the one
- *  bar, as before, its `steer` 0. */
-export function hitchedPoseStep(phys, w, hitch, hitchForward, length, dt, seed = null, bogie = null) {
+ *  bar, as before, its `steer` 0. WAGONS2 (AUDIT): `seedForward` the way the seeded wagon's body faced (a parked one's)
+ *  - its kingpin pulled from a wheelbase ahead along it, so the bogie is driven off at the steer it rested at, not
+ *  snapped straight with the body swung. */
+export function hitchedPoseStep(phys, w, hitch, hitchForward, length, dt, seed = null, bogie = null, seedForward = null) {
   const next = { ...w, hitch: [...hitch] };
   // AUDIT WAGON-HITCH A1: the shafts pull from where the WHEELS stood (`axle`), never from the drawn position - that
   // stands a metre up the ground's normal, which on a slope leans downhill, and fed back it swung the wagon round its
@@ -578,7 +580,8 @@ export function hitchedPoseStep(phys, w, hitch, hitchForward, length, dt, seed =
   const two = bogie && length > bogie.wheelbase;
   // WAGONS2: the kingpin pulls from where it stood - a wheelbase ahead of the axle along the body (where the two bars
   // left it); an unplaced wagon is laid straight
-  const kingpinFrom = two && w.active ? vadd(from, vscale(horizontalForward(quatForward(w.rotation)), bogie.wheelbase)) : null;
+  const bodyFrom = w.active ? quatForward(w.rotation) : seed && seedForward ? seedForward : null;
+  const kingpinFrom = two && bodyFrom ? vadd(from, vscale(horizontalForward(bodyFrom), bogie.wheelbase)) : null;
   const turn = two ? bogieAxle(from, kingpinFrom, hitch, length, bogie, hitchForward) : null;
   const { axle, dir } = turn ?? hitchAxle(from, hitch, length, hitchForward);
   next.steer = turn?.steer ?? 0;

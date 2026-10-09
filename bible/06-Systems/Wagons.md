@@ -305,17 +305,65 @@ now measure to the wagon's run, from its anchor forward by `hitch - 3.1`
 (`src/systems/horseCart.js` nearestOnWagon). The store's reach is measured
 the same way.
 
-### The caravan sold (audit)
+### The room waits for its caravan (audit)
 
-The last caravan gone from the pack takes its room with it, as a sold ship
-takes her cabin's (decorSold):
+The room is the character's. It is kept for good in the save whether or not
+a caravan is owned, and the next caravan opens onto it.
 
-- its placed pieces are sold back;
-- the owner's own things go to the pack;
-- its scene is no longer kept for good.
+An earlier audit sold the room back (`decorSold`) when the last caravan left
+the pack. That was retired: the pack is not a sale. Staging a caravan at a
+shop's Sell and taking it back emptied the room, and so did a trade or a
+market listing that was cancelled - and what the room's storage held was
+lost.
 
-This never happens while the player stands in the room, nor for a room never
-made. A load is never a sale.
+### The second audit (four lenses)
+
+Items and economy, motion and drawing, the caravan's room, and online.
+
+- **The loaded wagon stays.** The wagon a player drives while it holds
+  anything cannot change hands. A trade, the market, the guild vault and the
+  keyed shop refuse it and say why (`src/systems/tradePack.js`
+  packTradeRefusal), as the counter's Sell already drops it. A loaded caravan
+  traded away had left 2000 kg on a 750 kg cart.
+- **The item law reads a wagon's mark.** `wagonKind` and `wagonLook` are
+  declared fields (`src/systems/itemFields.js`). A mark on anything but the
+  Small Cart, or a marked kind below its own price, is a `wagon` finding
+  (`src/systems/itemLaw.js`).
+- **A room only onto its caravan.** A room is restored only while the
+  caravan stands parked where it was entered (`CARAVAN_STANDS_NATIVES`): the
+  runtime's place at a Recall, the save's own record at a load. It is never
+  entered from a seat in another's wagon.
+- **Travelling rooms' layout copies folded back.** A ship's cabin visited in
+  a town of another layout mod had been kept apart per layout. Those copies
+  are folded into the room at its next visit (`src/systems/sceneCache.js`
+  foldLayoutCopies).
+- **The riders' ways out.**
+  - An owner on the road, or with the model not yet up, keeps the riders'
+    seats. The seats were being emptied on every journey.
+  - Jump gets a rider down even while the owner is unheard.
+  - A journey the rider cannot go on, or one that did not go, stands them
+    down and says so (`RIDE_TEXT.leftBehind`).
+  - A seat the wagon does not have seats nobody.
+  - Asking another wagon from a seat gets down first.
+  - A body moved off its seat by a load, a respawn or a teleport is never
+    stood back beside the wagon (`GET_DOWN_REACH`).
+  - Leaving the outdoors, dying or loading ends the ride.
+  - The rider pays no fare.
+  - A journey names a pixel of the travel map.
+  - An owner's `ps` draws only a player who stands on that seat
+    (`SEAT_GLUE_REACH`).
+- **The drawing.**
+  - A grown seated companion casts no shadow.
+  - A peer's companion is taken for seated only at the seat's height, and
+    only if it is a companion.
+  - My body is never drawn at a stale grown seat.
+- **The wheels.**
+  - A four-wheeler parked at its lock is driven off at its rest steer
+    (`hitchedPoseStep`'s `seedForward`). Before, it snapped straight and
+    swung its body.
+  - A change of kind under a standing team swaps the new kind's parts in.
+  - A parked peer's wheels do not roll when the ground re-stands it.
+  - A peer's change of kind starts its wheels afresh.
 
 ## The relay
 

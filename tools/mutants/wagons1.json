@@ -233,8 +233,8 @@
   {
     "name": "WAGONS1-seated-without-the-owners-word",
     "file": "src/scenes/wagonRiders.js",
-    "old": "const mine = r.passengers.find((e) => e[0] === me());",
-    "new": "const mine = r.passengers.find((e) => e[0] === me()) ?? [me(), 0];",
+    "old": "const mine = r.passengers.find((e) => e[0] === me() && e[1] < seats);",
+    "new": "const mine = r.passengers.find((e) => e[0] === me() && e[1] < seats) ?? [me(), 0];",
     "tests": ["test/wagons1_seats.test.js"]
   },
   {
@@ -247,7 +247,7 @@
   {
     "name": "WAGONS1-jump-ignored",
     "file": "src/scenes/wagonRiders.js",
-    "old": "    if (deps.jumpPressed?.()) { getDown(); return; }",
+    "old": "    if (ride.seat != null && !deps.traveling?.() && deps.jumpPressed?.()) { getDown(); return; }",
     "new": "    void deps.jumpPressed;",
     "tests": ["test/wagons1_seats.test.js"]
   },

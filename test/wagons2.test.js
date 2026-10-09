@@ -24,13 +24,20 @@ import { caravanRoomEntry, caravanRoomRecords, caravanRoomPictures, paintCaravan
 import { buildInteriorContext } from '../src/scenes/interiorContext.js';
 import { interiorLightProperties } from '../src/world/interiorLights.js';
 import { billboardSize } from '../src/world/rmbFlats.js';
-import { createHorseCartPool, PUPPET_SEAT_REACH } from '../src/scenes/horseCartPool.js';
+import { createHorseCartPool, PUPPET_SEAT_REACH, PUPPET_SEAT_RISE, SEAT_GLUE_REACH } from '../src/scenes/horseCartPool.js';
 import { hccWireRecord, validHccRecord, HCC_WIRE_KIND } from '../src/systems/horseCartWire.js';
 import { validParkData, PARK_WAGON_LOOK_MAX } from '../src/net/wire.js';
 import { stableProviderFor } from '../src/ui/holdingsPages.js';
 import { createDecorPanel } from '../src/ui/decorPanel.js';
 import { toolRig, fakeDoc, fakeWin, all, one } from './decorFakes.mjs';
-import { createWagonRiders, RIDE_LOST_GRACE_MS } from '../src/scenes/wagonRiders.js';
+import { createWagonRiders, RIDE_LOST_GRACE_MS, GET_DOWN_REACH } from '../src/scenes/wagonRiders.js';
+import { RIDE_TEXT } from '../src/systems/wagonSeats.js';
+import { packTradeRefusal, createTradePack, createMarketGoods, WAGON_LOADED_TRADE_TEXT, WAGON_LOADED_MARKET_WORDS } from '../src/systems/tradePack.js';
+import { GuildBook } from '../src/net/guildBook.js';
+import { createCaravanAccess, parkedCaravanAt, CARAVAN_STANDS_NATIVES } from '../src/scenes/caravanRoom.js';
+import { WAGON_MODE } from '../src/systems/horseCartLaw.js';
+import { createSceneCache, cacheScene, layoutSceneName, addPermanentScene, containsPermanentScene, foldLayoutCopies } from '../src/systems/sceneCache.js';
+import { itemFindings } from '../src/systems/itemLaw.js';
 
 const src = (p) => readFileSync(new URL(`../src/${p}`, import.meta.url), 'utf8');
 const bakeOf = (kind) => JSON.parse(readFileSync(new URL(`../src/assets/wagons/${kind}.json`, import.meta.url), 'utf8'));
@@ -384,13 +391,20 @@ test('WAGONS2 THE OVERWORLD\'S SEATS: a wagon is drawn grown with its rider unde
   const want = [0, 1, 2].map((k) => body[k] * seat.feet[0] + body[4 + k] * seat.feet[1] + body[8 + k] * seat.feet[2] + body[12 + k]);
   assert.ok(s.feet.every((v, k) => near(v, want[k], 1e-4)), `the seat where the grown body puts it: ${s.feet} vs ${want}`);
   assert.ok(Math.abs(s.feet[2] - pool.mySeat(1).feet[2]) > 10, 'and far from the true seat a grown wagon is drawn past');
-  const list = [{ id: 'bob', shown: { x: 0, y: 0, z: 0, n: 'Bob' } }, { id: 'ann', shown: { x: 5, y: 0, z: 5 } }];
+  const t1 = pool.mySeat(1).feet.map((v) => v + 1000);   // bob's own client pins him on the true seat
+  const list = [{ id: 'bob', shown: { x: t1[0] + 0.5, y: t1[1], z: t1[2], n: 'Bob' } }, { id: 'ann', shown: { x: 5, y: 0, z: 5 } }];
   const theirs = list[0];
   pool.seatGlue(list, { toWire: (q) => q.map((v) => v + 1000) });
   assert.deepEqual([list[0].shown.x, list[0].shown.y, list[0].shown.z], s.feet.map((v) => v + 1000));
   assert.deepEqual([list[0].shown.deckKey, list[0].shown.n], ['wagon::1', 'Bob'], 'its seat for its pace; the rest of its pose kept');
-  assert.equal(theirs.shown.x, 0, 'the online list\'s own entry untouched');
+  assert.equal(theirs.shown.x, t1[0] + 0.5, 'the online list\'s own entry untouched');
   assert.deepEqual(list[1].shown, { x: 5, y: 0, z: 5 }, 'nobody else moved');
+  // WAGONS2 (AUDIT): a word seating a player who stands elsewhere draws nobody on the seat - an owner's `ps` names
+  // whoever it likes; only a player standing within SEAT_GLUE_REACH of the seat as it truly stands is drawn on it
+  const away = [{ id: 'bob', shown: { x: t1[0], y: t1[1], z: t1[2] + SEAT_GLUE_REACH + 0.5 } }];
+  pool.seatGlue(away, { toWire: (q) => q.map((v) => v + 1000) });
+  assert.deepEqual(away[0].shown, { x: t1[0], y: t1[1], z: t1[2] + SEAT_GLUE_REACH + 0.5 }, 'not on the seat: drawn where they stand');
+  assert.equal(SEAT_GLUE_REACH, 3);
   // a peer's companion seated in their grown wagon: taken for seated by where it stands, drawn on the grown seat
   const peerPool = createHorseCartPool({ renderer: r, meshes: null, collider: () => null, now: () => 0, wagonKind: () => 'cart', bakedWagon: async (k) => bakeOf(k), peerAnchor: () => [40, 1, 47.1] });
   peerPool.partsOf('openWagon'); await flush();
@@ -402,6 +416,7 @@ test('WAGONS2 THE OVERWORLD\'S SEATS: a wagon is drawn grown with its rider unde
   const sd = peerPool.puppetSeatDrawn('ann', [k0.feet[0] + 0.3, k0.feet[1], k0.feet[2]]);
   assert.ok(sd && sd.g === 8 && sd.feet.every((v, k) => near(v, peerPool.seatDrawn('ann', 0).feet[k])), 'its seat as drawn');
   assert.equal(peerPool.puppetSeatDrawn('ann', [k0.feet[0], k0.feet[1], k0.feet[2] - 4]), null, 'standing off every seat (behind the wagon): where it stands');
+  assert.equal(peerPool.puppetSeatDrawn('ann', [k0.feet[0], k0.feet[1] - PUPPET_SEAT_RISE - 0.1, k0.feet[2]]), null, 'WAGONS2 (AUDIT): under the seat, not on it - where it stands');
   assert.equal(PUPPET_SEAT_REACH, 0.75);
   peerPool.draw(r, null);
   assert.equal(peerPool.puppetSeatDrawn('ann', k0.feet), null, 'off the Overworld: where it stands');
@@ -423,41 +438,146 @@ test('WAGONS2 THE OVERWORLD\'S SEATS: a wagon is drawn grown with its rider unde
   const ef = src('scenes/exteriorFoes.js');
   const w0 = () => src('scenes/world.js');
   assert.match(ef, /const _sd = f\.ai\?\.seatDraw\?\.\(\) \?\? \(f\.puppet && _puppetSeatDraw \? _puppetSeatDraw\(f\) : null\), _sg = _sd\?\.g > 1 \? _sd\.g : 1;/);
-  assert.match(w0(), /exteriorFoes\.setPuppetSeatDraw\(\(f\) => \(hccOn\(\) \? hcc\.puppetSeatDrawn\(f\.puppet, f\.ai\?\.feet\) : null\)\);/);
+  assert.match(w0(), /exteriorFoes\.setPuppetSeatDraw\(\(f\) => \(hccOn\(\) && \(f\.companion != null \|\| f\.shipmate\) \? hcc\.puppetSeatDrawn\(f\.puppet, f\.ai\?\.feet\) : null\)\);/, 'WAGONS2 (AUDIT): a companion of theirs alone - never a foe passing through the bed');
   assert.match(ef, /f\.batch\.size = \{ w: \(o\.flip \? -sz\.w : sz\.w\) \* _sg, h: sz\.h \* _sg \};/);
+  assert.match(ef, /if \(_sg > 1\) \{ f\.batch\.noShadow = true; f\._seatShadow = true; \} else if \(f\._seatShadow\) \{ f\._seatShadow = false; if \(!f\.batch\.dissolve\?\.\[4\]\) f\.batch\.noShadow = undefined; \}/, 'WAGONS2 (AUDIT): grown, no shadow - OW-BIG\'s law; let go when it ends, unless the dissolve holds it');
   assert.match(ef, /\} else f\.batch\.origin = _sg > 1 \? _sd\.feet : f\.ai\.feet;/);
   const w = src('scenes/world.js');
   assert.match(w, /: online\.drawable\(\); if \(hccOn\(\)\) hcc\.seatGlue\(drawable, \{ toWire: campToWire \}\);/);
   assert.equal((w.match(/seatDraw: \(i\) => wagonRiders\?\.companionSeatDrawn\(/g) ?? []).length, 2, 'both companion layers');
 });
 
-test('WAGONS2 (AUDIT) THE CARAVAN SOLD: the last caravan gone from the pack takes its room with it, as a sold ship takes her cabin\'s - its placed pieces sold back, the owner\'s own things to the pack, its scene no longer kept for good - never while the player stands in it, never for a room never made; a load is never a sale (run on the hosts\' own code) (mutants: the room kept, the sale under the player\'s feet, a load taken for a sale)', () => {
-  const wm = src('scenes/worldModes.js'), w = src('scenes/world.js');
-  const body = /\n {2}(function caravanGone\(\) \{\n[\s\S]*?\n {2}\})\n/.exec(wm)?.[1];
-  assert.ok(body, 'lifted from scenes/worldModes.js');
-  const run = (over = {}) => {
-    const calls = [];
-    const d = { isCaravanRoom: (r) => r?.kind === 'caravan', interiorCabin: null, containsPermanentScene: () => true, sceneCache: () => 'cache',
-      decorSold: (n, r) => calls.push(['sold', n, r]), removePermanentScene: (c, n) => calls.push(['kept no more', n]), CARAVAN_SCENE_NAME: 'Caravan [WAGONS1]',
-      buildingDirectory: () => ({ regionIndex: 17 }), ...over };
-    const fn = new Function('d', `const { ${Object.keys(d).join(', ')} } = d;\n${body}\nreturn caravanGone();`);
-    return { went: fn(d), calls };
-  };
-  assert.deepEqual(run(), { went: true, calls: [['sold', 'Caravan [WAGONS1]', 17], ['kept no more', 'Caravan [WAGONS1]']] });
-  assert.deepEqual(run({ interiorCabin: { kind: 'caravan' } }), { went: false, calls: [] }, 'never under the player\'s feet');
-  assert.deepEqual(run({ containsPermanentScene: () => false }), { went: false, calls: [] }, 'no room was ever made');
-  assert.match(wm, /\n {4}caravanGone,   \/\/ WAGONS2 \(AUDIT\)/, 'the host\'s door');
-  // the world host's latch: owned last frame, owned no more - the room goes; a load re-latches without a sale
-  const latch = /\n(\s*const ownsCaravan = activeWagonKind\(playerEntity\.items \?\? \[\]\) === 'caravan';[^\n]*\n\s*if \(_ownedCaravan && !ownsCaravan && playerSpawned\) modes\?\.caravanGone\?\.\(\);\n\s*_ownedCaravan = ownsCaravan;)/.exec(w)?.[1];
-  assert.ok(latch, 'lifted from scenes/world.js hccTick');
-  const tick = new Function('s', `let { _ownedCaravan, playerEntity, playerSpawned, modes } = s; const activeWagonKind = (items) => (items.some((i) => i.k === 'caravan') ? 'caravan' : items.length ? 'cart' : null);\n${latch}\nreturn _ownedCaravan;`);
-  let gone = 0;
-  const modes = { caravanGone: () => { gone++; } };
-  let owned = tick({ _ownedCaravan: false, playerEntity: { items: [{ k: 'caravan' }] }, playerSpawned: true, modes });
-  assert.equal(owned, true);
-  owned = tick({ _ownedCaravan: owned, playerEntity: { items: [{ k: 'cart' }] }, playerSpawned: true, modes });
-  assert.deepEqual([owned, gone], [false, 1], 'sold: the room goes');
-  tick({ _ownedCaravan: false, playerEntity: { items: [] }, playerSpawned: true, modes });
-  assert.equal(gone, 1, 'none owned before: nothing goes');
-  assert.equal((w.match(/_ownedCaravan = activeWagonKind\(playerEntity\.items \?\? \[\]\) === 'caravan';   \/\/ WAGONS2 \(AUDIT\): a load is never a sale/g) ?? []).length, 2, 'both loads re-latch');
+test('WAGONS2 (AUDIT) THE RIDERS\' WAYS OUT: an owner on the road keeps their riders\' seats (their wagon not standing to count them); Jump gets a rider down while the owner is unheard; a journey the rider cannot go on, or one that did not go, stands them down and says so; a seat the wagon does not have seats nobody; asking another wagon from a seat gets down first; a body moved off its seat is never stood back beside the wagon, and leaving the ride (a door, a death, a load) stands it nowhere; the rider pays no fare; a journey names a pixel of the travel map (mutants: the seats fitted on the road, Jump after the owner\'s word, the refused journey ridden on, the failed journey ridden on, the far body stood back, the fare charged, the load\'s clear gone, the door\'s leave gone, the map bound loosened)', async () => {
+  let now = 0, jump = false, can = true, travelled = null, mine = 4;
+  const word = () => ({ model: 'openWagon', kind: 1, passengers: [['me', 0]], go: null, declined: [], position: [0, 0, 0], wire: [0, 0, 0] });
+  let ownerWord = word();
+  const said = [], unpinned = [], drawn = [];
+  const book = createWagonRiders({
+    selfId: () => 'me', name: (id) => id, now: () => now, say: (t) => said.push(t), changed() {},
+    pool: { peerRide: () => ownerWord, peerSeat: () => ({ feet: [10, 0, 10], yaw: 0 }), mySeatCount: () => mine, mySeatsKnown: () => mine > 0, seatDrawn: () => grown },
+    pin() {}, unpin: (f) => unpinned.push(f), feet: () => body, jumpPressed: () => jump, travel: (to) => { travelled = to; return Promise.resolve(false); }, canTravel: () => can, traveling: () => false,
+    prompt: { open() {}, render() {} }, drawAt: (f) => drawn.push(f),
+  });
+  let body = [10, 0, 10], grown = null;
+  // the owner's end: riders kept while my wagon is not standing to count its seats
+  book.hear('bob', { a: 'me' }); book.accept('bob');
+  assert.deepEqual(book.passengers(), [['bob', 0]]);
+  mine = 0; book.frame();
+  assert.deepEqual(book.passengers(), [['bob', 0]], 'on the road: the seat kept');
+  // the rider's end: Jump while the owner is unheard
+  book.press('ann', 'wagon:ride', 1); book.frame();
+  assert.ok(book.seated());
+  ownerWord = null; jump = true; now = 10; book.frame(); jump = false;
+  assert.equal(book.seated(), false, 'Jump: down, the owner unheard');
+  // drawn on a grown seat, and the owner unheard: drawn where I stand (no stale seat of a wagon not heard)
+  ownerWord = word(); book.press('ann', 'wagon:ride', 1); grown = { feet: [9, 9, 9], yaw: 0, g: 6 }; book.frame();
+  assert.deepEqual(drawn.at(-1), [9, 9, 9]);
+  ownerWord = null; now = 20; book.frame();
+  assert.equal(drawn.at(-1), null, 'unheard: where I stand');
+  ownerWord = word(); book.frame(); assert.deepEqual(drawn.at(-1), [9, 9, 9]);
+  ownerWord = { ...word(), go: [5, 6, 9] }; book.frame();
+  assert.equal(drawn.at(-1), null, 'setting out: no grown seat of this place drawn at the far end');
+  await flush(); grown = null; book.leave();
+  // a journey I cannot go on
+  ownerWord = word(); book.press('ann', 'wagon:ride', 1); book.frame();
+  can = false; ownerWord = { ...word(), go: [5, 6, 1] }; travelled = null; book.frame();
+  assert.equal(book.seated(), false, 'refused: down'); assert.equal(travelled, null, 'and not set out');
+  assert.equal(said.at(-1), RIDE_TEXT.leftBehind('ann'));
+  // a journey that did not go
+  can = true; ownerWord = word(); book.press('ann', 'wagon:ride', 1); book.frame();
+  ownerWord = { ...word(), go: [5, 6, 2] }; book.frame();
+  assert.deepEqual(travelled, { x: 5, y: 6 }, 'set out');
+  await flush();
+  assert.equal(book.seated(), false, 'it did not go: down'); assert.equal(said.at(-1), RIDE_TEXT.leftBehind('ann'));
+  // a seat the wagon does not have
+  ownerWord = word(); book.press('ann', 'wagon:ride', 1);
+  ownerWord = { ...word(), model: 'cart' }; book.frame();
+  assert.equal(book.seated(), false, 'seat 0 of a cart, which has none: nobody seated');
+  // asking another wagon from a seat
+  ownerWord = word(); book.frame();
+  assert.ok(book.seated());
+  unpinned.length = 0; book.press('cid', 'wagon:ride', 1);
+  assert.equal(unpinned.length, 1, 'down over the first wagon\'s side'); assert.equal(book.seated(), false);
+  // a body moved off its seat stays where it is
+  book.press('ann', 'wagon:ride', 1); book.frame(); assert.ok(book.seated());
+  body = [10 + GET_DOWN_REACH + 1, 0, 10]; unpinned.length = 0; book.getDown();
+  assert.deepEqual(unpinned, [null], 'far from the seat: not stood beside the wagon');
+  body = [10, 0, 10]; book.press('ann', 'wagon:ride', 1); book.frame(); unpinned.length = 0; drawn.length = 0;
+  book.leave();
+  assert.equal(book.seated(), false); assert.deepEqual(unpinned, [], 'leave: stood nowhere'); assert.deepEqual(drawn, [null]);
+  assert.equal(GET_DOWN_REACH, 6);
+  // the hosts
+  const w = src('scenes/world.js');
+  assert.match(w, /fare\.opts, \{ \.\.\.fare\.computed, totalCost: 0, piecesCost: 0 \}\);/);
+  assert.match(w, /hccRuntime\.handleStartLoad\(\);[^\n]*\n {6}wagonRiders\?\.clear\(\);/);
+  assert.match(w, /if \(_mode\(\) !== 'exterior' \|\| !\(playerEntity\.health > 0\)\) wagonRiders\?\.leave\(\);/);
+  assert.match(w, /_respawning = true;\n {4}wagonRiders\?\.leave\(\);/);
+  // the journey's pixel: the travel map's
+  const rec = (go) => validHccRecord({ w: [HCC_WIRE_KIND.Trailing, 0, 0, 0, 0, 0, 0, 1, 0, 0], wk: 1, go });
+  assert.deepEqual(rec([999, 499, 1]).go, [999, 499, 1]);
+  assert.equal(rec([1000, 10, 1]).go, undefined, 'off the map east');
+  assert.equal(rec([10, 500, 1]).go, undefined, 'off the map south');
+});
+
+test('WAGONS2 (AUDIT) THE CARAVAN KEPT: the wagon a player drives while it holds anything never changes hands - a trade, the market, the vault and the keyed shop refuse it, said, as the counter\'s Sell drops it; a spare wagon still goes; the caravan\'s room is never judged sold by the pack (a sale staged and taken back wrecked it) - it waits for its owner\'s next caravan; a room comes back only onto the caravan where it stands (a Recall after it was parked elsewhere, a save\'s own parked place at a load); never entered from a seat in another\'s wagon; a travelling room\'s visits once kept apart by a town\'s layout folded back into it; the item law reads a wagon\'s mark (mutants: the loaded wagon traded, the vault\'s refusal unread, the keyed shop selling it, the room on an empty spot, the save\'s place unread, the seat\'s door open, the layouts\' copies left apart, a cheap caravan lawful)', async () => {
+  const caravan = newWagonItem('caravan'), cart = newWagonItem('cart'), sword = { group: 'Weapons', templateIndex: 113, name: 'Longsword', value: 10 };
+  const entity = { items: [cart, caravan, sword], wagonItems: [{ group: 'Ingredients', templateIndex: 1, name: 'Root' }], goldPieces: 0 };
+  assert.equal(packTradeRefusal(caravan, entity), WAGON_LOADED_TRADE_TEXT, 'the driven caravan, loaded');
+  assert.equal(packTradeRefusal(cart, entity), null, 'a spare cart goes');
+  assert.equal(packTradeRefusal(sword, entity), null);
+  const pack = createTradePack(entity);
+  assert.equal(pack.offerable(caravan), WAGON_LOADED_TRADE_TEXT);
+  assert.equal(pack.take([{ item: caravan, count: 1 }], 0), null, 'the trade\'s reserve refuses it');
+  const goods = createMarketGoods(entity);
+  assert.equal(goods.goods().find((g) => g.item === caravan).why, WAGON_LOADED_MARKET_WORDS, 'the market says why');
+  assert.equal(goods.good(caravan).take(), null, 'and its take refuses it');
+  entity.wagonItems = [];
+  assert.equal(packTradeRefusal(caravan, entity), null, 'emptied, it goes');
+  entity.wagonItems = [{ group: 'Ingredients', templateIndex: 1 }];
+  // the vault: its book asks the pack's own refusal, and the host's pack says it
+  const book = new GuildBook({ door: {}, character: () => 'c', wallet: {}, realm: { act: async () => ({ ok: true }) }, pack: { items: () => entity.items, add() {}, changed() {}, refuses: (it) => packTradeRefusal(it, entity) } });
+  assert.deepEqual(await book.vaultPut(caravan), { ok: false, error: 'vault-goods' });
+  const w = src('scenes/world.js'), wm = src('scenes/worldModes.js'), sp = readFileSync(new URL('../src/ui/socialPanel.js', import.meta.url), 'utf8');
+  assert.match(w, /reach: \(\) => _storesReached\(\), refuses: \(it\) => packTradeRefusal\(it, playerEntity\) \}/);
+  assert.match(sp, /tradeRefusal\(it\) == null && !g\.pack\.refuses\?\.\(it\) && !isLocked\(it\)/);
+  // the keyed shop
+  assert.match(wm, /\n {4}if \(loadedWagonHeld\(it\)\) return 0;   \/\/ WAGONS2 \(AUDIT\)/);
+  assert.match(wm, /for \(let i = sellable\.length - 1; i >= 0; i--\) if \(loadedWagonHeld\(sellable\[i\]\)\) sellable\.splice\(i, 1\);/);
+  // the room: never judged sold by the pack
+  assert.doesNotMatch(w, /caravanGone|_ownedCaravan/);
+  assert.doesNotMatch(wm, /removePermanentScene\(sceneCache\(\), CARAVAN_SCENE_NAME\)/);
+  // the room only onto the caravan where it stands
+  const room = { v: 2, kind: 'caravan', origin: [4000, 10, 8000], turn: 30, step: [4000, 10, 7900], yaw: 0 };
+  let parked = { Mode: WAGON_MODE.Deployed, WorldX: 4010, WorldZ: 8020 };
+  const access = createCaravanAccess({ available: () => true, mode: () => 'exterior', busy: () => false, say() {}, toNative: (p) => p, fromNative: (p) => p, parked: () => null, ownsCaravan: () => true, parkedAt: () => parkedCaravanAt(parked), enterInterior: async () => true });
+  assert.equal(access.canRestore(room), true, 'its caravan where it was entered');
+  parked = { Mode: WAGON_MODE.Deployed, WorldX: 4000 + CARAVAN_STANDS_NATIVES + 1, WorldZ: 8000 };
+  assert.equal(access.canRestore(room), false, 'parked elsewhere since: not here');
+  parked = { Mode: WAGON_MODE.WithPlayer, WorldX: 4000, WorldZ: 8000 };
+  assert.equal(access.canRestore(room), false, 'driven, parked nowhere');
+  assert.equal(access.canRestore(room, [4000, 8000]), true, 'a save\'s own place, given');
+  assert.match(w, /caravanAt: parkedCaravanAt\(extras\.modData\?\.\[HCC_VENDOR\] \?\? null\),/);
+  assert.match(wm, /!host\.caravanRoom\?\.canRestore\(saved\.caravanRoom, caravanAt\)\) return false;/);
+  assert.match(w, /parkedAt: \(\) => parkedCaravanAt\(hccRuntime\.view\(\)\.state\),/);
+  assert.match(w, /busy: \(\) => worldMoveBusy\(\) \|\| !!wagonRiders\?\.seated\(\),/);
+  // a travelling room's other layouts folded back
+  const cache = createSceneCache();
+  cacheScene(cache, 'Cabin', { decor: [{ id: 'a', pos: [0, 0, 0], rot: [0, 0, 0] }], decorItems: { a: [{ name: 'x' }] } });
+  cacheScene(cache, layoutSceneName('Cabin', 'mod1'), { decor: [{ id: 'b', pos: [1, 0, 0], rot: [0, 0, 0] }, { id: 'a', pos: [9, 9, 9], rot: [0, 0, 0] }], decorItems: { b: [{ name: 'y' }], a: [{ name: 'dup' }] }, decorOwn: { b: { name: 'own' } }, droppedPiles: [{ pos: [2, 0, 0], items: [{ name: 'z' }] }] });
+  addPermanentScene(cache, layoutSceneName('Cabin', 'mod1'));
+  assert.equal(foldLayoutCopies(cache, 'Cabin'), 1);
+  const folded = cache.scenes.get('Cabin');
+  assert.deepEqual(folded.decor.map((p) => p.id), ['a', 'b'], 'each piece once');
+  assert.deepEqual(folded.decorItems, { a: [{ name: 'x' }], b: [{ name: 'y' }] }, 'what each holds, with it');
+  assert.deepEqual([folded.decorOwn.b.name, folded.droppedPiles.length], ['own', 1]);
+  assert.equal(cache.scenes.has(layoutSceneName('Cabin', 'mod1')), false, 'the copy forgotten');
+  assert.equal(containsPermanentScene(cache, layoutSceneName('Cabin', 'mod1')), false);
+  assert.match(wm, /if \(interiorCabin\) foldLayoutCopies\(sceneCache\(\), name\);/);
+  // the item law: a wagon's mark
+  assert.deepEqual(itemFindings(caravan), [], 'a shelf\'s caravan is lawful');
+  assert.deepEqual(itemFindings({ ...caravan, wagonLook: { o: 2, w: 5 } }), [], 'painted too');
+  assert.ok(itemFindings({ ...caravan, value: 150 }).includes('wagon'), 'a caravan at the cart\'s price');
+  assert.ok(itemFindings({ ...sword, wagonKind: 'cart' }).includes('wagon'), 'a mark on anything but the cart');
+  assert.ok(itemFindings({ ...sword, wagonLook: { o: 1 } }).includes('wagon'), 'a paint on anything but the cart');
+  assert.ok(itemFindings({ ...caravan, wagonLook: { o: 6 } }).includes('shape'), 'a paint the law does not know');
 });

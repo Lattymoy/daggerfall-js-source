@@ -44,6 +44,7 @@ export const RIDE_TEXT = Object.freeze({
   left: (rider) => `${rider} climbs down from your wagon.`,
   gotOff: 'You climb down from the wagon.',
   ownerGone: 'The wagon you rode in is gone; you climb down.',
+  leftBehind: (owner) => `You could not go with ${owner}; you climb down.`,   // WAGONS2 (AUDIT)
 });
 
 /** A rider's word (`wr` on their foes frame) through the door, or null. */

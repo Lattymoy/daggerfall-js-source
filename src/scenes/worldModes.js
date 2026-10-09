@@ -66,6 +66,7 @@ import { sailingCabinEntry } from './sailingCabin.js';
 import { cabinSceneName, readSailingCabin } from '../systems/sailingCabin.js';
 import { caravanRoomEntry, serveRoomModels, paintCaravanRoom } from './caravanRoom.js';   // WAGONS1: the caravan's room, on the cabin's door - WAGONS2: its own model
 import { CARAVAN_SCENE_NAME, CARAVAN_TEXT, readCaravanRoom, isCaravanRoom, turnCaravanScene } from '../systems/caravanRoom.js';
+import { activeWagonItem } from '../systems/wagonKinds.js';   // WAGONS2 (AUDIT): the wagon a loaded store hangs on
 import { caravanPaintRows } from '../systems/wagonLooks.js';   // WAGONS2: the caravan's inside, painted from the decorator
 import { INTERIOR_SHELL_BUCKET } from './decorBase.js';   // HOME-DOORS: a doorway is an opening in the shell's walls   // AUDIT 63 F22: AddFlats' RandomTreasure arm lives with the walk that finds its markers
 import { advanceMachinery, mountMachineryChild, machineryChildPos, MILL_SOUND } from '../world/windmills.js';   // WM4b: the machinery's moving parts; WM4c: its hum
@@ -376,6 +377,7 @@ import {
   takeSceneOwn,     // DECOR2a: and the owner's own things that stood in it
   clearSceneHidden, // BASE-HIDE: and what its owner took out of its own furniture comes back
   layoutSceneName,  // WD3 (AUDIT WD3 R1): a permanent scene's visit in another layout, kept beside it
+  foldLayoutCopies, // WAGONS2 (AUDIT): and a travelling room's, folded back into it
 } from '../systems/sceneCache.js';
 import { keptOffArenaGround } from '../systems/arenaGround.js';   // CURSE-OFF-SAND: the curse's dead keep off the arena's own levels
 import { arenaGatePersonOf, arenaGatePersonName, arenaRecordDisplaced, isUndercroftDoor, isArenaUndercroft } from '../world/arenaCity.js';   // ARENA1: the gate's people; a save made in a building the arena took; ARENA2: the Herald's way down to the fighters' hall
@@ -3633,8 +3635,12 @@ export function createWorldModes(host) {
     surfacePlayer();
     return price;
   }
+  /** WAGONS2 (AUDIT): the wagon the player drives while it holds anything - the counter's Sell drops its click
+   *  (systems/tradeModes.js "Are we trying to sell the non empty wagon?"); the keyed list neither lists nor sells it. */
+  const loadedWagonHeld = (it) => it === activeWagonItem(playerEntity.items ?? []) && (playerEntity.wagonItems?.length ?? 0) > 0;
   function doSell(shelf, it) {
     if (isBound(it) || lockRefuses(it, 'sell')) return 0;   // AUDIT SS: the keyed shelf sells no bound piece (systems/itemBound.js) and no locked one (LOCK1), as neither counter stages one
+    if (loadedWagonHeld(it)) return 0;   // WAGONS2 (AUDIT): nor the loaded wagon
     const price = sellPrice(it);
     // AUDIT 17e F4: selling a WORN item left equip.slots pointing at
     // it - a permanent armor bonus and an FP rig still swinging the
@@ -4456,6 +4462,7 @@ export function createWorldModes(host) {
     if (privateVisitRoom) return;   // do not load the visitor's own belongings into someone else's room
     const name = currentInteriorScene();
     if (!name || !interiorCtx) return;
+    if (interiorCabin) foldLayoutCopies(sceneCache(), name);   // WAGONS2 (AUDIT): its visits once kept apart in other towns' layouts, folded back
     let data = restoreCachedScene(sceneCache(), name);
     if (!data) return;
     if (isCaravanRoom(interiorCabin)) data = turnCaravanScene(data, -interiorCabin.turn);   // WAGONS2: the save's, unturned, turned with the caravan as it stands
@@ -4832,16 +4839,6 @@ export function createWorldModes(host) {
     // AUDIT HOME-PRICE E4: the account the half went into, said as it is - online the Empire's (EMPIRE-ACCOUNT)
     say(`Its ${pieces.length} placed piece${pieces.length === 1 ? '' : 's'} went with it: ${goldSum(back)} gold to ${accountWords(goldRegion(playerEntity.bankAccounts, region) !== region)}.`);
     return back;
-  }
-  /** WAGONS2 (AUDIT): A CARAVAN NO LONGER OWNED - the last of them sold - takes its room with it, as a sold ship takes
-   *  her cabin's and a sold house its own (decorSold: the owner's own things back to the pack, half of what each placed
-   *  piece cost back into the account, what the room's storage held gone with it), and the room's scene is no longer
-   *  kept for good. Never while the player stands in it. Answers whether it went. */
-  function caravanGone() {
-    if (isCaravanRoom(interiorCabin) || !containsPermanentScene(sceneCache(), CARAVAN_SCENE_NAME)) return false;
-    decorSold(CARAVAN_SCENE_NAME, buildingDirectory?.()?.regionIndex ?? 0);
-    removePermanentScene(sceneCache(), CARAVAN_SCENE_NAME);
-    return true;
   }
   /** DECOR2a: ONE OF THE PLAYER'S OWN THINGS OUT OF THE PACK, to stand in a room - one of a stack, moved as a drop
    *  moves it (itemTransfer.js applyTransfer: a lit torch stops lighting the player, a stack splits one off) - or null
@@ -6546,7 +6543,8 @@ export function createWorldModes(host) {
     showShelfList(shelf, 0);
   }
   function showSellList(shelf, page) {
-    const sellable = (playerEntity.items ?? []).filter((it) => shopBuysItem(interiorBuilding.buildingType, it) && !isEquipped(it) && !isBound(it) && !lockRefuses(it, 'sell'));   // AUDIT 17e F4   // AUDIT SS: nor a bound or a locked piece - the classic counter's own refusals, on the keyed shelf its missing art falls back to
+    const sellable = (playerEntity.items ?? []).filter((it) => shopBuysItem(interiorBuilding.buildingType, it) && !isEquipped(it) && !isBound(it) && !lockRefuses(it, 'sell'));   // AUDIT 17e F4
+    for (let i = sellable.length - 1; i >= 0; i--) if (loadedWagonHeld(sellable[i])) sellable.splice(i, 1);   // WAGONS2 (AUDIT): nor the loaded wagon   // AUDIT SS: nor a bound or a locked piece - the classic counter's own refusals, on the keyed shelf its missing art falls back to
     const per = 8;
     const slice = sellable.slice(page * per, (page + 1) * per);
     const options = slice.map((it, j) => ({
@@ -12246,7 +12244,6 @@ export function createWorldModes(host) {
     get sailingCabin() { return mode === 'interior' && !isCaravanRoom(interiorCabin) ? interiorCabin : null; },
     /** WAGONS1: the caravan's room while the player stands in it. */
     get caravanRoom() { return mode === 'interior' && isCaravanRoom(interiorCabin) ? interiorCabin : null; },
-    caravanGone,   // WAGONS2 (AUDIT): the last caravan sold - its room goes with it
     get cabinOwner() { return mode === 'interior' ? privateVisitOwner : null; },
     // WD3 (AUDIT WD3 R7): the room's layouts of the homes' towns have landed - a home's room the player stands in, its
     // pieces unasked while they were unheard, asked now (loadHomeDecor: once a visit, the visit's own)
@@ -13341,10 +13338,11 @@ export function createWorldModes(host) {
      *  discovery record and position. False when the door cannot be
      *  found or the entry fails; the no-door reposition arm
      *  (RestorePositionHelper :615-621) belongs to the caller. */
-    async restoreInterior(saved, pos = null, { fromNative = null, yOffset = 0, strictDoor = false, sailingBoat = undefined } = {}) {
-      // WAGONS1: a save made in the caravan comes back into it while the player still drives one; else outside
+    async restoreInterior(saved, pos = null, { fromNative = null, yOffset = 0, strictDoor = false, sailingBoat = undefined, caravanAt = undefined } = {}) {
+      // WAGONS1: a save made in the caravan comes back into it while the player still drives one; else outside -
+      // WAGONS2 (AUDIT): and while it stands where the room was (`caravanAt`, the save's own parked place; the live one unsaid)
       if (saved?.caravanRoom) {
-        if (mode !== 'exterior' || !host.caravanRoom?.canRestore(saved.caravanRoom)) return false;
+        if (mode !== 'exterior' || !host.caravanRoom?.canRestore(saved.caravanRoom, caravanAt)) return false;
         try { await enterCaravanRoom(readCaravanRoom(saved.caravanRoom), pos); } catch (e) { console.error('[worldModes] restoreInterior (caravan) failed:', e); return false; }
         return mode === 'interior';
       }

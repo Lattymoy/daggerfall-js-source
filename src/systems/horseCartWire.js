@@ -30,7 +30,7 @@
 // record's top, where an older reader drops what it does not know (validHccRecord rebuilds its record from w, h and n),
 // so an older client still draws the wagon, as the classic one; the reader here folds them into `w` (`model`,
 // `hitched`), where every copy of the word carries them.
-import { POSE_BOUND, POSE_Y_BOUND, sanitizeLabel } from '../net/wire.js';
+import { POSE_BOUND, POSE_Y_BOUND, sanitizeLabel, MAP_PIXELS_X, MAP_PIXELS_Y } from '../net/wire.js';
 import { HORSE_NAME_MAX, CARGO_TIERS } from './horseCartLaw.js';
 import { wagonKindCode, wagonKindOfCode } from './wagonKinds.js';
 import { validPassengers, validPeerId, MAX_SEATS } from './wagonSeats.js';
@@ -44,8 +44,8 @@ import { wagonLookCode, wagonLookOfCode, WAGON_LOOK_CODE_MAX } from './wagonLook
 // wagon's back (`ps`, `[[peer, seat], ...]`), who they turned away this moment (`pn`, peer ids - the rider's client says
 // so at once rather than waiting out the ask), and a journey their riders go on with them (`go`, `[x, y, n]`: the map
 // pixel of a fast travel the owner is setting out on, `n` counting the owner's journeys, so one is followed once).
-/** The highest map pixel a journey may name (the world's - TAMRIEL2's 1024 a side, net/wire.js's bound). */
-const GO_PIXEL_MAX = 4096;
+/** A journey names a pixel of the travel map, the only place one sets out from (the Bay's, MapsFile's 1000 x 500 -
+ *  WAGONS2 AUDIT: 4096 a side let a word send its riders off the map). */
 
 /** What the wagon shown is: the team's trailing wagon behind the cart, the parked wagon, the following team's. */
 export const HCC_WIRE_KIND = Object.freeze({ Trailing: 1, Deployed: 2, Following: 3 });
@@ -112,7 +112,7 @@ export function validHccRecord(raw) {
     out.w = { kind: w[0], position: p, rotation: q.map((v) => v / len), tier: w[8], angle: ((w[9] % 360) + 360) % 360, model: wagonKindOfCode(raw.wk ?? 0), hitched: raw.wh === 1, look: wagonLookOfCode(Number.isInteger(raw.wl) && raw.wl > 0 && raw.wl <= WAGON_LOOK_CODE_MAX ? raw.wl : 0), passengers: validPassengers(raw.ps) ?? [] };   // WAGONS1: an unknown kind is drawn as the cart; a passenger list that is not one seats nobody
   }
   // WAGONS1: a journey the owner's riders go on, and who was turned away - each dropped alone when it is not one
-  if (Array.isArray(raw.go) && raw.go.length === 3 && raw.go.every(Number.isInteger) && raw.go[0] >= 0 && raw.go[0] < GO_PIXEL_MAX && raw.go[1] >= 0 && raw.go[1] < GO_PIXEL_MAX && raw.go[2] >= 0) out.go = [...raw.go];
+  if (Array.isArray(raw.go) && raw.go.length === 3 && raw.go.every(Number.isInteger) && raw.go[0] >= 0 && raw.go[0] < MAP_PIXELS_X && raw.go[1] >= 0 && raw.go[1] < MAP_PIXELS_Y && raw.go[2] >= 0) out.go = [...raw.go];
   if (Array.isArray(raw.pn) && raw.pn.length <= MAX_SEATS * 2) out.pn = raw.pn.filter(validPeerId);
   if (raw.h !== undefined) {
     const h = raw.h;

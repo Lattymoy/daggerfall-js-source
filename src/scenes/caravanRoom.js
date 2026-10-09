@@ -15,6 +15,16 @@ import { wagonArt, wagonLookArt, isGlassRecord, lookRecord, LOOK_RECORDS, LOOK_R
 import { readWagonLook, CARAVAN_INSIDE_LOOKS, CARAVAN_INSIDE_PARTS } from '../systems/wagonLooks.js';
 import { toColor32 } from '../formats/color32Order.js';
 import { quatRotate } from '../world/quat.js';
+import { WAGON_MODE } from '../systems/horseCartLaw.js';
+
+/** WAGONS2 (AUDIT): how far (natives - 40 a metre) the parked caravan may stand from where its room was entered and the
+ *  room still be its: its grounding's lean, never a caravan driven off and parked elsewhere. */
+export const CARAVAN_STANDS_NATIVES = 80;
+/** Where a Horse Cart and Cargo record (the runtime's state, or a save's) has its wagon parked - `[WorldX, WorldZ]` in
+ *  natives - or null when it stands nowhere. */
+export const parkedCaravanAt = (st) => (st && st.Mode === WAGON_MODE.Deployed && Number.isFinite(st.WorldX) && Number.isFinite(st.WorldZ) ? [st.WorldX, st.WorldZ] : null);
+/** Whether a room (its descriptor, read) stands on the caravan parked at `at` (parkedCaravanAt's). */
+export const caravanStandsAt = (room, at) => !!room && Array.isArray(at) && Math.hypot(room.origin[0] - at[0], room.origin[2] - at[1]) <= CARAVAN_STANDS_NATIVES;
 
 /** WAGONS2: the room's faces wear its LIVE records - the built room records' as if a ninth choice
  *  (world/wagonArt.js lookRecord(rec, 9)), never a paint's own - and whatever paint the room wears is painted INTO them
@@ -87,8 +97,10 @@ export function createCaravanAccess(deps) {
     look: () => deps.look?.() ?? null,
     /** WAGONS2: my caravan's inside painted (`part` walls, floor or ceiling, `i` its choice) - `{ ok, text }`, or null. */
     paint: (part, i) => deps.paint?.(part, i) ?? null,
-    /** A saved room comes back while the player still drives a caravan (the save's own). */
-    canRestore: (saved) => deps.available() && !!readCaravanRoom(saved) && !!deps.ownsCaravan?.(),
+    /** A saved room comes back while the player still drives a caravan (the save's own) - WAGONS2 (AUDIT): and it still
+     *  stands where the room was entered (`at` its parked place, parkedCaravanAt's: a save's own record at a load, the
+     *  runtime's now at a Recall - a room rebuilt where no caravan stands let the player out onto empty ground). */
+    canRestore: (saved, at = deps.parkedAt?.()) => { const room = readCaravanRoom(saved); return deps.available() && !!room && !!deps.ownsCaravan?.() && (at === undefined || caravanStandsAt(room, at)); },
     async enter() {
       if (entering || deps.mode() !== 'exterior' || deps.busy()) return false;
       const at = deps.parked();

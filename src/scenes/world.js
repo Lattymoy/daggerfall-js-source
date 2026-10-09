@@ -561,7 +561,7 @@ import { boatTriggers, boatMenuRows, boatMenuStart, pressBoatVerb, BOAT_VERB } f
 import { linkBankCabin, readBankCabinLink, bankCabinCandidates } from '../systems/boatCabinOwnership.js';
 import { hasSailingCabin, savedCabinBoat, cabinSceneName } from '../systems/sailingCabin.js';
 import { createSailingCabinAccess } from './sailingCabin.js';
-import { createCaravanAccess } from './caravanRoom.js';   // WAGONS1: the caravan's room
+import { createCaravanAccess, parkedCaravanAt } from './caravanRoom.js';   // WAGONS1: the caravan's room
 import { createWagonRiders, GO_LEAD_MS } from './wagonRiders.js';   // WAGONS1: the seats in the back
 import { HCC_WIRE_KIND } from '../systems/horseCartWire.js';   // WAGONS1: which way my wagon goes (my companions ride while it goes with me)
 import { RIDE_TEXT, RIDE_ASK_TTL_MS } from '../systems/wagonSeats.js';
@@ -779,7 +779,7 @@ import { composePartyFx } from '../net/partyBuffs.js';   // PARTY-BUFFS: my effe
 import { stampItemIds, tradeHeldNotice } from '../systems/itemIds.js';   // INT4: a valuable piece's id, minted at a realm checkpoint; INT3: the hold, said
 import { checkpointAllowed, checkpointDue, checkpointedTradePack, createSaveSoon } from '../systems/onlineCheckpoint.js';   // REALM P0.5: the character saved as it plays online; PROF-SAVE: and at once after a professions act
 import { createTradeManager, TRADE_RANGE_M, inTradeRange, tradeDistance } from '../net/tradeSession.js';   // TRADE1: the player-to-player trade's state machine (pure)
-import { createTradePack, tradeRefusal, createMarketGoods } from '../systems/tradePack.js';   // TRADE1: the trade's door into the real pack; PROF5: what may not be sold; MARKET-ANY: the pack's side of a piece from the pack
+import { createTradePack, tradeRefusal, packTradeRefusal, createMarketGoods } from '../systems/tradePack.js';   // TRADE1: the trade's door into the real pack; PROF5: what may not be sold; MARKET-ANY: the pack's side of a piece from the pack
 import { isLocked } from '../systems/itemLock.js';   // PROF5: a locked piece is not listed
 import { createPlayerTradeWindow, playerTradeReady } from '../ui/playerTradeDoor.js';   // TRADE1: the enhanced window two players share
 import { createPeerMenuReader } from '../systems/peerMenuBind.js';   // PEERMENU1: the player menu opens on a bind (hold E / hold A)
@@ -7622,13 +7622,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     selfId: () => online?.id ?? null, name: (id) => peerName(id) ?? 'Someone', now: () => performance.now(), say: (l) => townTalk.say(l), pool: hcc,
     pin: (feet) => player.pinFeet(feet[0], feet[1], feet[2]),
     unpin: (feet) => { if (feet) player.pinFeet(feet[0], repositionFeetY(player.collider.heightAt(feet[0], feet[2]), feet[1]), feet[2]); },
+    feet: () => player.pos,   // WAGONS2 (AUDIT): a body moved off its seat (a load, a respawn, a teleport) is not stood back beside the wagon
     changed: () => { _hccDirty = true; },   // my `wr` moved: the next foes frame carries it
     jumpPressed: () => !gamePaused() && !pointerSurfaces.size && pressed(latch.edge, keys, 'Jump'),
     traveling: () => _traveling, canTravel: () => !partyTravelRefusal(),
     travel: (to, besideAt, ownerName) => {
       const fare = partyTripFare(to, travelMapPopUpState());
       const where = partyPlaceName(to);
-      void partyTravelJourney({ pixel: { x: to.x, y: to.y }, name: where, besideAt, besideText: `You ride with ${ownerName} to ${where}.` }, fare.opts, fare.computed);
+      return partyTravelJourney({ pixel: { x: to.x, y: to.y }, name: where, besideAt, besideText: `You ride with ${ownerName} to ${where}.` }, fare.opts, { ...fare.computed, totalCost: 0, piecesCost: 0 });   // WAGONS2 (AUDIT): the owner's wagon carries me - no fare (the party's journey charged the rider the map's); its time is the map's
     },
     prompt: { render: () => ridePrompt?.render() },
     drawAt: (feet) => { player.drawFeet = feet; },   // WAGONS2: my body drawn on my seat in a wagon drawn grown under the Overworld
@@ -8080,8 +8081,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   });
   /** WAGONS1: my parked caravan's room (scenes/caravanRoom.js) - the cabin's door law, the caravan's pose its anchor. */
   const caravanRooms = createCaravanAccess({
-    available: () => !!modes && hccOn(), mode: () => modes?.mode ?? 'exterior', busy: () => worldMoveBusy(),
+    available: () => !!modes && hccOn(), mode: () => modes?.mode ?? 'exterior', busy: () => worldMoveBusy() || !!wagonRiders?.seated(),   // WAGONS2 (AUDIT): never from a seat in another's wagon
     parked: () => hcc.parkedDoor(), ownsCaravan: () => activeWagonKind(playerEntity.items ?? []) === 'caravan',
+    parkedAt: () => parkedCaravanAt(hccRuntime.view().state),   // WAGONS2 (AUDIT): where my caravan stands parked now - a Recall's room only on it
     look: () => wagonLookOf(activeWagonItem(playerEntity.items ?? [])),   // WAGONS2: the room in my caravan's paint
     paint: (part, i) => { const r = paintDrivenWagon(playerEntity.items ?? [], part, i); if (r.ok) _hccDirty = true; return r; },   // WAGONS2: its inside painted from the decorator
     toNative: (p) => { const w = state.worldCoords(p); return [w.x, p[1] - state.compensation[1], w.z]; },
@@ -10090,11 +10092,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     const tipOn = hcc.enabled && walkMode && _mode() === 'exterior' && !worldPlaqueOn() && !gamePaused() && !pointerSurfaces.size;
     horseNameTooltip.set(tipOn ? hcc.tooltipText(cam.pos, [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)], collider) : '');
     if (_mode() === 'exterior') wagonRiders?.frame();   // WAGONS1: my riders kept to my seats, and me to my seat in another's wagon, as the pool just stood them
-    const ownsCaravan = activeWagonKind(playerEntity.items ?? []) === 'caravan';   // WAGONS2 (AUDIT): the last caravan sold - its room goes with it
-    if (_ownedCaravan && !ownsCaravan && playerSpawned) modes?.caravanGone?.();
-    _ownedCaravan = ownsCaravan;
+    if (_mode() !== 'exterior' || !(playerEntity.health > 0)) wagonRiders?.leave();   // WAGONS2 (AUDIT): a door, a death - out of the ride where I stand (the outdoors again would pin me back on the seat)
   };
-  let _ownedCaravan = false;   // WAGONS2 (AUDIT): whether I owned a caravan last frame (a load starts it at what the save holds - never a sale)
   /** The mod's ModSettingsChanged: the shelf has no event, so the eight keys are re-read once a second. */
   const hccPollSettings = (nowMs) => {
     if (nowMs - _hccSettingsAt < 1000) return;
@@ -14098,6 +14097,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // clear the overlay, all synchronous). This is that order.
     if (_respawning) return;   // and a second death mid-flight cannot start a second respawn
     _respawning = true;
+    wagonRiders?.leave();   // WAGONS2 (AUDIT): a death ends a ride in another's wagon - the risen body is never pinned back on its seat
     endPlayerFights();   // RVN10 (Feud-Arc.md 21.2): the death ended every fight - the respawn's jump routs nobody (a death no hurt told)
     // WILD1: a death in the open zone rises OUT of it - the nearest town beyond the mountains - its body's offer over and
     // its cell let go (the ghost), the team brought along whatever its settings say
@@ -14948,10 +14948,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       await modes?.transitionSettled?.();
       if (csaRuntime) csaCall(() => csaRuntime.OnStartLoad());   // CSA-D: ComeSailAway.OnStartLoad - the riders dropped, the helm left; CSA-J (the audit): AHEAD of the save's player (SaveLoadManager.cs:1378, the restore at :1497) - its StopSailing hands a lent ship back, and after restorePlayer it took the loaded character's own
       const extras = restorePlayer(playerEntity, snap, spellsByIndex);
-      _ownedCaravan = activeWagonKind(playerEntity.items ?? []) === 'caravan';   // WAGONS2 (AUDIT): a load is never a sale - its caravan's room is the save's
       if (!extras) { townTalk.say('Save version mismatch.'); return; }
       autoBuildArms(playerEntity);   // MWA1: the loaded character's arms (a boot into ?load has no chargenDone until here)
       hccRuntime.handleStartLoad();   // AUDIT HCC H3: SaveLoadManager.OnStartLoad [IL_a714] - the old character's horse, name and parked wagon end HERE, before any await, on every branch below
+      wagonRiders?.clear();   // WAGONS2 (AUDIT): a load ends every ride - mine in another's wagon, and my riders' seats (the loaded character's wagon is the save's)
       // CameraRecoiler's SaveLoadManager_OnStartLoad (:185-191): the
       // incoming character does not inherit the old one's reel.
       cameraRecoiler.reset();
@@ -15019,6 +15019,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           ? await (modes?.restoreInterior?.(extras.interior, [lx, ly, lz], {
             fromNative: (nx, nz) => state.localFromWorld(nx, nz), yOffset: state.compensation[1],
             sailingBoat: savedCabinBoat(extras.interior.sailingCabin, extras.modData?.[COME_SAIL_AWAY_VENDOR]),
+            caravanAt: parkedCaravanAt(extras.modData?.[HCC_VENDOR] ?? null),   // WAGONS2 (AUDIT): the save's caravan where it was parked (the runtime's is restored after)
           }) ?? false)
           : false;
         if (!inside) _wodInside = false;
@@ -15273,7 +15274,6 @@ export async function bootWorld(canvas, renderer, params, status) {
       return false;
     }
     const extras = restorePlayer(playerEntity, bundle.snap, spellsByIndex);
-    _ownedCaravan = activeWagonKind(playerEntity.items ?? []) === 'caravan';   // WAGONS2 (AUDIT): a load is never a sale - its caravan's room is the save's
     if (!extras) return false;
     autoBuildArms(playerEntity);   // MWA1: the classic save's character too
     // AUDIT 58: StartFromClassicSave.cs:616 -
@@ -20231,7 +20231,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     exteriorFoes.setOnCamps((from, c, at) => camps.applyOwner(from, c, campToScene, at));   // SURV3: a peer's camps, off their foes frame past the pool's own room test, through validCampRecord
     exteriorFoes.setOnHcc((from, hv, at) => hcc.applyOwner(from, hv, campToScene, at), () => hcc.clearPeers());
     exteriorFoes.setOnRide((from, wr) => wagonRiders?.hear(from, wr));   // WAGONS1: a rider's ask, or the seat they sit in
-    exteriorFoes.setPuppetSeatDraw((f) => (hccOn() ? hcc.puppetSeatDrawn(f.puppet, f.ai?.feet) : null));   // WAGONS2: a peer's seated companion drawn in their grown wagon
+    exteriorFoes.setPuppetSeatDraw((f) => (hccOn() && (f.companion != null || f.shipmate) ? hcc.puppetSeatDrawn(f.puppet, f.ai?.feet) : null));   // WAGONS2: a peer's seated companion drawn in their grown wagon
     exteriorFoes.setOnBands((from, bd) => bandHear(from, bd));   // TV7b: a peer's band chases, off their foes frame past the room test
     exteriorFoes.setOnSeaRaiders((from, sr) => seaRaidHear(from, sr));   // OW6: and their raider chases at sea, the same way
     exteriorFoes.setOnCsa((from, sa, at) => csaPeers.applyOwner(from, sa, campToScene, at), () => csaPeers.clearPeers());   // CSA-J: a peer's boats, off their foes frame past the room test, through validCsaRecord
@@ -20873,7 +20873,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // GUILD2b (bible/11-Multiplayer/Guild-Overhaul.md): the pack a vault's piece leaves and arrives in - the item made
       // whole as the save's loader makes one (setItemFields), added as DFU's AddItem adds; the one checkpoint asked
       pack: { items: () => (playerEntity.items ??= []), add: (rec) => { addItem((playerEntity.items ??= []), setItemFields(rec), 'back'); }, changed: () => { saveSoon.changed(); },
-        reach: () => _storesReached() },   // GUILD2b: the vault is reached in a town, as the Stores are (BAG1)
+        reach: () => _storesReached(), refuses: (it) => packTradeRefusal(it, playerEntity) },   // GUILD2b: the vault is reached in a town, as the Stores are (BAG1); WAGONS2 (AUDIT): what the pack keeps - the loaded wagon
       marks: marksBook,   // MARKS1: the guild's Marks treasury moves through the account's Marks
       // PROF6: the guild Stores and the Officers' writ budget, through the writs' book, while the professions are this
       // account's

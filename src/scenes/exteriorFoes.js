@@ -2030,6 +2030,9 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const _sd = f.ai?.seatDraw?.() ?? (f.puppet && _puppetSeatDraw ? _puppetSeatDraw(f) : null), _sg = _sd?.g > 1 ? _sd.g : 1;   // and a peer's, on their wagon as drawn here
       f.batch.record = rkey;
       f.batch.size = { w: (o.flip ? -sz.w : sz.w) * _sg, h: sz.h * _sg };
+      // WAGONS2 (AUDIT): grown, it casts no shadow - OW-BIG's law for every grown figure (a 16 m companion's shadow lay
+      // over the view); the flag the grow set let go when it ends, unless the dissolve holds it (systems/dissolve.js [4])
+      if (_sg > 1) { f.batch.noShadow = true; f._seatShadow = true; } else if (f._seatShadow) { f._seatShadow = false; if (!f.batch.dissolve?.[4]) f.batch.noShadow = undefined; }
       // INCIDENT 2026-09-04: a flyer or swimmer keeps its CENTRE across
       // records (DaggerfallMobileUnit.cs:407-410); a walker its feet.
       const _bh = f.mobile.basics.behaviour ?? 'General';
