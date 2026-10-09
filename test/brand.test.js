@@ -258,12 +258,13 @@ test('BR4: what the rebrand deliberately did NOT touch, and why', () => {
     'exported class files keep importing');
   // THE ADDRESSES OTHER PEOPLE HOLD. The Patreon page and the Discord
   // invite are accounts outside the tree, as the domain was for BR1: the
-  // tree follows them and never leads. The invite has since followed the
-  // name on Discord's side - discord.gg/dfenhanced stopped resolving and
-  // the server's invite is discord.gg/daggerfallonline (2026-09-28) - so
-  // the pin moved with it. The Patreon page keeps the old spelling.
+  // tree follows them and never leads. The invite has since moved twice
+  // on Discord's side - discord.gg/dfenhanced stopped resolving and the
+  // server's invite was discord.gg/daggerfallonline (2026-09-28), then Mac
+  // gave discord.gg/jM2JdwSM8w (2026-10-09) - and the pin moved with it
+  // each time. The Patreon page keeps the old spelling.
   assert.ok(read('index.html').includes('https://www.patreon.com/c/dfenhanced'), 'the Patreon page is where it is');
-  assert.ok(read('index.html').includes('https://discord.gg/daggerfallonline'), 'and so is the Discord');
+  assert.ok(read('index.html').includes('https://discord.gg/jM2JdwSM8w'), 'and so is the Discord');
   // The desktop shell's install identity and storage root, as BR1 left them.
   assert.match(read('app/package.json'), /"appId": "dev\.daggerfalljs\.app"/, 'an update installs over the copy that is there');
   assert.match(read('app/main.cjs'), /app\.setPath\('userData', path\.join\(app\.getPath\('appData'\), 'Daggerfall JavaScript'\)\)/,
