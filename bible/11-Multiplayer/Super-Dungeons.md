@@ -827,7 +827,9 @@ stands the Hollow and says the find.
 
 Sections 2-4 on every client. `scenes/sdHost.js` (`createSdHost`): the hub's record in (`heard` - an older slot's word
 is no word; the first word, the welcome's, is no news), the Hollow it names found once a slot over this client's own
-map files - the gate's scan, warmed if it is not ready, and the game's own rows - and stood in the location index at its
+map files - the gate's scan, warmed if it is not ready (AUDIT SD IV F39: and asked a row at a time by the world host's
+seam - unbudgeted, the first frame after the hub's word ran every row left, the hitch AUDIT WB C7 removed, and the
+warm never ran), and the game's own rows - and stood in the location index at its
 pixel while the record's phase stands it (`frame`), then taken down - never from under a player standing in it, and the
 next slot's not before; the find said at its mouth - within SD_FOUND_NEAR_M of the dungeon entrance its pixel's blocks
 stood - to the cell its pixel is in while the record says `risen`, again every SD_FOUND_RESEND_MS until the hub's word

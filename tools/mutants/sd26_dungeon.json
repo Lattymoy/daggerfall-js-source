@@ -268,5 +268,23 @@
     "tests": [
       "test/sd26_dungeon.test.js"
     ]
+  },
+  {
+    "name": "SD26-F39-the-scan-unbudgeted",
+    "file": "src/scenes/world.js",
+    "old": "    scan: () => gateScanOf(_sdScanRow),",
+    "new": "    scan: () => gateScanOf(),",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "SD26-F39-the-row-a-whole-scan",
+    "file": "src/scenes/world.js",
+    "old": "  const _sdScanRow = () => false;",
+    "new": "  const _sdScanRow = () => true;",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
   }
 ]

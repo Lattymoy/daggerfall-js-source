@@ -17,11 +17,13 @@ import { SD_REALM_TEXT } from '../src/world/sdRealm.js';
 import { createSdEnd, SD_STEP_GAP_MS, SD_STEP_JUMP_M, SD_RIFT_KEY, SD_RIFT_PRESS_M } from '../src/scenes/sdEnd.js';
 import { riftCentreY } from '../src/world/sdRiftModel.js';
 import { pickActivatableHit, RAY_DISTANCE } from '../src/player/activate.js';
-import { sdCities, findSdSite } from '../src/systems/sdSite.js';
-import { scanGatePixels } from '../src/systems/gateSite.js';
+import { sdCities, findSdSite, sdTemplates } from '../src/systems/sdSite.js';
+import { scanGatePixels, gateScanner } from '../src/systems/gateSite.js';
+import { createSdHost } from '../src/scenes/sdHost.js';
+import { isMainStoryDungeon } from '../src/world/dungeonTextures.js';
 import { LOCATION_TYPES } from '../src/formats/mapsFile.js';
-import { createSpawnGround } from '../src/world/spawnedDungeons.js';
-import { sdRoll } from '../src/net/sdLaw.js';
+import { createSpawnGround, WORLD_SALT } from '../src/world/spawnedDungeons.js';
+import { sdRoll, sdRise, sdFirst } from '../src/net/sdLaw.js';
 import { collectDungeonEnemies } from '../src/characters/dungeonEnemies.js';
 import { dungeonEndOf } from '../src/world/dungeonEnd.js';
 import { RDB_SIDE } from '../src/world/rdbLayout.js';
@@ -367,4 +369,44 @@ test('SD26 THE END STANDS OUT OF THE WATER (AUDIT SD IV F38): a random marker un
   assert.ok(Math.abs(end3.x - (2 * RDB_SIDE + 45)) < 1e-9, 'all under: the farthest, as ever');
   // the dungeon host hands the floor the collider finds under each (test/sd4b_rift.test.js holds its line)
   assert.match(read('src/scenes/dungeonContext.js'), /sdEndMarks\(_layoutEnemies, dungeon\.blocks, \(m\) => floorLanding\(collider, \[m\.x, m\.y \+ 0\.2, m\.z\]\)\[1\]\)/);
+});
+
+// ── F39: the Hollow host's scan in slices ─────────────────────────────
+
+/** A property of world.js's Hollow host (createSdHost's own arguments), its one line's arrow. */
+function hostProp(name) {
+  const from = W.indexOf('const sdHost = params.has(\'online\') ? createSdHost({');
+  assert.ok(from > 0, 'the Hollow host');
+  const at = W.indexOf(`\n    ${name}: `, from);
+  assert.ok(at > 0, name);
+  return W.slice(at + 6 + name.length, W.indexOf('\n', at + 1)).replace(/\s*\/\/.*$/, '').replace(/,\s*$/, '');
+}
+
+test('SD26 THE HOLLOW HOST\'S SCAN IS SLICED (AUDIT SD IV F39): its scan seam handed the gate\'s scanner no budget, so the first frame after the hub\'s word ran every row left of the half-million-pixel scan (the 40-75 ms hitch AUDIT WB C7 removed) and its own warm never ran. Now a row an ask, the rest the idle warm\'s: run from the world host\'s own text over the real scanner, the first frame leaves the scan unfinished and asks the warm, and the Hollow stands where the whole scan would have stood it (mutants: the scan unbudgeted)', () => {
+  const at = W.indexOf('\n  const gateScanOf = (more) => {');
+  assert.ok(at > 0, 'gateScanOf');
+  const text = W.slice(at + 1, W.indexOf('\n  };\n', at) + 5);
+  const city = place(0, 0, 300, 200, T.TownCity, { w: 3, h: 3, buildings: 80 });
+  const lab = { ...place(0, 1, 450, 400, T.DungeonLabyrinth, { name: 'The Old Maze' }), hasDungeon: true, dungeon: { blocks: Array.from({ length: 14 }, (_, i) => ({ blockName: `${i % 3 ? 'N' : 'B'}0000${i}.RDB`, x: i, z: 0, isStartingBlock: !i })), recordElement: { header: { locationId: 400450 } } } };
+  const maps = mapsOf([city, lab]);
+  const world = evalIn(`(() => { let _gateScan = null, _gateScanner = null;\n${text}\nreturn { gateScanOf, scanner: () => _gateScanner }; })()`, { maps, gateScanner, _spawnSalt: WORLD_SALT, woods: { getHeightMapValue: () => 90 } });
+  const rowText = /\n {2}const _sdScanRow = (.*);\n/.exec(W);
+  assert.ok(rowText, 'the row an ask');
+  const scan = evalIn(hostProp('scan'), { gateScanOf: world.gateScanOf, _sdScanRow: evalIn(rowText[1], {}) });
+  let warmed = 0;
+  const T0 = 1_800_000_000_000, H = 3_600_000;
+  const host = createSdHost({
+    now: () => T0, scan, warmScan: () => { warmed += 1; }, cities: (r) => sdCities([city], r, { regionNameOf: () => 'Nowhere' }), templates: () => sdTemplates([lab], isMainStoryDungeon),
+    where: () => ({ regionIndex: 0, regionName: 'Nowhere' }), stand: () => {}, unstand: () => {}, inside: () => false, door: () => null, feet: () => null, sendFound: () => true, say: () => {},
+  });
+  host.heard(sdRise(sdFirst(T0 - 3 * H), T0 - 600_000, 0));
+  host.frame();
+  assert.ok(world.scanner().progress() < 0.05, `the first frame ran a row, not the scan (${world.scanner().progress()})`);
+  assert.equal(host.hollow(), null, 'not yet');
+  assert.ok(warmed >= 1, 'and asked the warm');
+  let frames = 1;
+  while (!host.hollow() && frames < 2000) { host.frame(); frames += 1; }
+  assert.ok(host.hollow(), `stood after ${frames} frames`);
+  const whole = findSdSite(host.record(), scanGatePixels(maps, { spawnSalt: WORLD_SALT, heightAt: () => 90 }), sdCities([city], 0, { regionNameOf: () => 'Nowhere' }));
+  assert.deepEqual([host.hollow().site.px, host.hollow().site.py], [whole.px, whole.py], 'where the whole scan stands it');
 });

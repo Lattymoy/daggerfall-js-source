@@ -23088,9 +23088,13 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  rises or goes on ground that stands (sweepSdLate) - the find said at its mouth to the cell its pixel is in, and the
    *  chat's lines for its find, its kill and its fading. */
   let _sdDoorAt = null;
+  /** AUDIT SD IV (F39): the Hollow host's scan, a row an ask - the rest the idle warm's (`warmScan`, AUDIT WB C7's
+   *  slices): unbudgeted, the first frame after the hub's word paid the whole scan's remainder, and the warm never ran. A
+   *  row an ask still gets there on a page with no idle callback (warmGateScan asks for one). */
+  const _sdScanRow = () => false;
   const sdHost = params.has('online') ? createSdHost({
     now: () => Date.now() + _sharedOffsetMs,
-    scan: () => gateScanOf(),
+    scan: () => gateScanOf(_sdScanRow),
     warmScan: () => warmGateScan(),
     ground: (px, py) => _spawnGround(px, py),   // AUDIT SD IV (F37): a Hollow on dry ground, as every spawn (SPAWN-SHORE)
     cities: (r) => sdCities(_sdCityRows, r, { regionNameOf: (i) => maps.getRegionName(i) }),
