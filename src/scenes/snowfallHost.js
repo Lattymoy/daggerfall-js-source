@@ -241,8 +241,14 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
     const enabled = s.enabled && snowfallOn();
     bodiesOf(typeof f.corpses === 'function' ? f.corpses() : f.corpses);
     const npcs = f.npcs;
+    // TV-SNOW (FIELD BUGS 2026-10-09, Shabalako: "after traveling for a while I get low framerates"): UNDER THE OVERWORLD
+    // (`overworld`, world.js's travel view) no snow is drawn, so the controller is handed no player - its own law for a
+    // frame with none, the switch's: the tiers stand down, and the snowpack and the refill keep the event clock frame by
+    // frame - and the GPU's share waits for the first frame that draws (below). It sampled, committed and uploaded the
+    // window and the ring round a traveller crossing the land at the journey's x60, for a picture nobody saw.
+    const overworld = !!f.overworld;
     const frame = {
-      now: f.now, inside, enabled, player: enabled ? f.player ?? null : null,   // the switch off: the surfaces hidden, the snowpack still kept
+      now: f.now, inside, enabled, player: enabled && !overworld ? f.player ?? null : null,   // the switch off: the surfaces hidden, the snowpack still kept
       rawPlayer: f.player ?? null,   // the motor's, for snow_status
       winter: !!f.winter, desert: desertNow, snowing: weatherFlags(f.weather).snowing, gameSeconds: gameSecondsNow,
       get npcs() { return (typeof npcs === 'function' ? npcs() : npcs) ?? []; },   // asked at the NPC sample's pace (every 0.1 s)
@@ -253,8 +259,9 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
     runtime.frame(frame);
     flushPromotions(f.now);
     // the GPU's share outdoors alone, where the hosts call this before their world frame opens (beginFrame forgets
-    // every shadow of the renderer's an upload could move); indoors nothing is drawn, and the uploads wait for the door
-    if (!inside) surface?.sync(runtime, f.now);
+    // every shadow of the renderer's an upload could move); indoors nothing is drawn, and the uploads wait for the door -
+    // TV-SNOW: and under the Overworld, for the view to come down (what changed meanwhile stays marked, and goes up then)
+    if (!inside && !overworld) surface?.sync(runtime, f.now);
     if (f.now >= nextPrune) {   // a map pixel left far behind can no longer be replaced: its last tile let go
       nextPrune = f.now + 5;
       const near = new Set(world.terrainsNear(Math.max(4, (world.terrainDistance ?? 3) + 1)).map((t) => `${t.mapX},${t.mapY}`));
@@ -270,7 +277,8 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
     /**
      * The frame. `f` { now (real seconds), inside, player { x, y, z, grounded, swimming, levitating } (scene, feet) or
      * null, weather (the port's word), seconds (the event clock's game seconds - the snow's pace, as the weather's),
-     * winter (the sky's season), climate (the map's climate index at the player), npcs, corpses }.
+     * winter (the sky's season), climate (the map's climate index at the player), overworld (TV-SNOW: the travel view
+     * is up - no snow is drawn: the clocks alone, the GPU's share held), npcs, corpses }.
      */
     frame(f) {
       if (!enhanced || !world || disposed || broken) return;

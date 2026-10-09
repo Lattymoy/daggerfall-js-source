@@ -290,8 +290,8 @@
   {
     "name": "OWD-host-the-climate-unworn",
     "file": "src/scenes/world.js",
-    "old": "(a, r) => applyClimate(a, r, climate, season), pipeline);\n      if (_tvDngModel.get(g.key) !== e) return;",
-    "new": "(a, r) => applyClimate(a, r, 2, season), pipeline);\n      if (_tvDngModel.get(g.key) !== e) return;",
+    "old": "(a, r) => applyClimate(a, r, climate, season), { getTexture: pipeline.getTexture, uploadRecord: e.hold.uploadRecord });\n      if (_tvDngModel.get(g.key) !== e) return;",
+    "new": "(a, r) => applyClimate(a, r, 2, season), { getTexture: pipeline.getTexture, uploadRecord: e.hold.uploadRecord });\n      if (_tvDngModel.get(g.key) !== e) return;",
     "tests": [
       "test/owdungeons.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "OWD-host-the-season-unread",
     "file": "src/scenes/world.js",
-    "old": "(a, r) => applyClimate(a, r, climate, season), pipeline);\n      if (_tvDngModel.get(g.key) !== e) return;",
-    "new": "(a, r) => applyClimate(a, r, climate, 0), pipeline);\n      if (_tvDngModel.get(g.key) !== e) return;",
+    "old": "(a, r) => applyClimate(a, r, climate, season), { getTexture: pipeline.getTexture, uploadRecord: e.hold.uploadRecord });\n      if (_tvDngModel.get(g.key) !== e) return;",
+    "new": "(a, r) => applyClimate(a, r, climate, 0), { getTexture: pipeline.getTexture, uploadRecord: e.hold.uploadRecord });\n      if (_tvDngModel.get(g.key) !== e) return;",
     "tests": [
       "test/owdungeons.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "OWD-host-the-colosseum-swapped",
     "file": "src/scenes/world.js",
-    "old": "      if (!free) await remapSubMeshes(gpu.subMeshes, texRemap, (a, r) => applyClimate(a, r, climate, season), pipeline);",
-    "new": "      await remapSubMeshes(gpu.subMeshes, texRemap, (a, r) => applyClimate(a, r, climate, season), pipeline);",
+    "old": "      if (!free) await remapSubMeshes(gpu.subMeshes, texRemap, (a, r) => applyClimate(a, r, climate, season), { getTexture: pipeline.getTexture, uploadRecord: e.hold.uploadRecord });",
+    "new": "      await remapSubMeshes(gpu.subMeshes, texRemap, (a, r) => applyClimate(a, r, climate, season), { getTexture: pipeline.getTexture, uploadRecord: e.hold.uploadRecord });",
     "tests": [
       "test/owdungeons.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "OWD-host-drawn-in-play",
     "file": "src/scenes/world.js",
-    "old": "    if (tvf) drawTvDungeonModels(travelView?.eye ?? null);",
-    "new": "    drawTvDungeonModels(travelView?.eye ?? null);",
+    "old": "    if (tvf) drawTvDungeonModels(travelView?.eye ?? null, tvf.fullyUp);",
+    "new": "    if (true) drawTvDungeonModels(travelView?.eye ?? null, tvf?.fullyUp);",
     "tests": [
       "test/owdungeons.test.js"
     ]

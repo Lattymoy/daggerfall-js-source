@@ -6,8 +6,8 @@ Seven threads from the Discord's bug-reports, handed over by Mac as screenshots.
 |---|---|---|---|
 | 1 | snow in desert and swamp towns with snow turned off for them (Toomgis) | Snowless Swamps and Jungles greened the tiles alone: Snowfall and the enhanced weather asked the climate and season, laid snow on the green ground and dropped it from every winter rain; and snow systems drifted over the desert kept snowing | fixed (SNOWLESS1) |
 | 2 | casting again adds to the effect's timer instead of resetting it - Light at 613 (Doctor Bill) | DFU's own law: an incumbent effect's `AddState` stacks the new cast's rounds onto it (audit F12, `systems/effects.js`) | not a port bug - kept |
-| 3 | the first open of overworld travel freezes, and frames fall the longer one travels (Shabalako) | under investigation | open |
-| 4 | the game freezes opening chat, the wagon (EvoAva) | under investigation | open |
+| 3 | the first open of overworld travel freezes, and frames fall the longer one travels (Shabalako) | the Overworld's first frame started all twelve dungeon-model loads at once; their climate pictures were uploaded pinned and never freed; Snowfall sampled and uploaded its snow round the traveller under a view that draws none | fixed (TV-BURST, TV-PIN, TV-SNOW) |
+| 4 | the game freezes opening chat, the wagon (EvoAva) | nothing in opening chat or the wagon is heavy; the likeliest hitch found is every save re-packing Snowfall's whole track field (80-90 ms at its limit), online every two minutes, plus clean snow masks swept twice a second | partly fixed (TV-SAVE, TV-REFILL) - the windows' own freeze not reproduced |
 | 5 | Knightspire's tavern sign hangs on a residence (DarkScorpyon) | the game's own data: block TVRNAM00 record 0 is a tavern's model with a tavern's interior and sign, typed House2 in the block's building list, which is where DFU reads a building's type | not a port bug - kept (SIGN-HOUSE) |
 | 6 | a torch cannot be placed before my own door, but can before a stranger's (Shiki_Eternal) | the yard measured a house as the box round its models; Hammerfell's houses are L-shaped or stand an outside stair, and their doors open onto open ground inside that box | fixed (HOME-FOOT) |
 | 7 | `TypeError: Cannot read properties of undefined (reading 'velocity')` at `poseAhead`, on a ship's deck (Cruor) | a peer's word dropped a boat between two frames; the peek read the place it no longer names | fixed (PEEK-WORD) |
@@ -62,6 +62,37 @@ let through (11,701 of 11,701). A stranger's door within the owner's lot may sti
 
 `test/fb1009_yardfoot.test.js` (5, one over ARENA2, skipped without it); `tools/mutants/fb1009_yardfoot.json` (14, all
 dead), and FB1001's three YARD-CORNER and HOUSING's two HOME-YARD records re-aimed.
+
+## TV-BURST, TV-PIN, TV-SNOW, TV-SAVE, TV-REFILL: the Overworld's freeze, its falling frames, the saves' hitch (3, 4)
+
+Read from the code and measured in node over synthetic data - no browser, no ARENA2 here, so the freezes' lengths in
+the game are not measured. The Overworld is the Travel View (`06-Systems/Travel-View.md`), the eye raised over the
+streamed world.
+
+- **TV-BURST (3, the first open).** OW-DUNGEONS (2026-10-08, pull request #690) stands each nearby dungeon's own model
+  under the view, and the view's first frame started all twelve loads inside its draw - each one's blocks laid and its
+  ARCH3D meshes read on that frame, its model built and its pictures uploaded straight after. They start one a frame
+  now, the nearest first, none until the view is fully up (`systems/travelDungeonModels.js` startDungeonLoads), and the
+  view coming down lets every model go to its shelf (they were held, undrawn, until a load).
+- **TV-PIN (3, "past map pixels don't get unloaded").** Those models' climate pictures went up through the host's
+  pinned door, so every climate and season picture of every dungeon the view ever stood stayed on the GPU for the
+  session, growing with the land travelled. They go through the dungeon's own hold now and are freed with it.
+- **TV-SNOW (3, the frames while travelling).** Snowfall (2026-10-08, #692) sampled, committed and uploaded its window
+  and ring round a traveller crossing the land at the journey's x60, under a view that draws no snow. Under the view it
+  is handed no player now - its tiers stand down - while its snowpack and refill keep their clocks, as in play.
+- **TV-SAVE (4, the freezes).** Nothing in opening chat or the wagon is heavy (`ui/chatPanel.js` unchanged since
+  2026-10-06). The likeliest hitch found is the save: Snowfall's track field fills to its 65,536 cells within minutes of
+  a winter town's walkers, and every save packed it again - 80-90 ms on the page's thread, online every two minutes,
+  whatever the player was doing. A field unchanged since the last record writes that record's text again now,
+  character for character.
+- **TV-REFILL.** The refill swept the 256 x 256 window and the 641 x 641 far mask twice a second whenever any tier
+  held a track, clean or not; a clean one is skipped now.
+
+Not fixed, leads only: the pad cursor's per-frame hit tests while a window is up (controller players), the Overworld's
+town rects never pruned (memory), TAMRIEL3's fit at boot (one-off). If EvoAva's freezes outlast this, the next step is a
+profile from their machine - whether they play with a controller, and whether it is every open or now and then.
+`test/fb1009_travelperf.test.js` (8); `tools/mutants/fb1009_travelperf.json` (32, all dead). Recorded on
+`06-Systems/Travel-View.md` and `03-World/Snowfall.md`.
 
 ## STACK: a re-cast stacks its rounds (2)
 

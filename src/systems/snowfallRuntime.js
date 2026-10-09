@@ -485,11 +485,19 @@ export class SnowfallRuntime {
     if (step <= 0) return;
     this.refillRemainder = f32(this.refillRemainder - step);
     if (deformed) {
-      let any = false;
-      const px = L.dynamic;
-      for (let k = 0; k < px.length; k += 4) { const r = px[k]; if (r === 255) continue; const v = r + step; if (v >= 255) px[k] = 255; else { px[k] = v; any = true; } }   // a full pixel stays full: skipped
-      this.rects.local.all();
-      L.hasDeformation = any;
+      // TV-REFILL (FIELD BUGS 2026-10-09, the port's own): A TIER WITH NOTHING IN IT IS NOT SWEPT. `deformed` is any of
+      // the three, and the mod sweeps the window's mask (and marks it for a whole upload) twice a second whichever holds
+      // the track - a world-wide field far from the player swept a clean 256 x 256 window and uploaded it, and the far
+      // mask's 641 x 641 (`_farRefill`'s own flag). The window's flag is the mod's own (hasDeformation): every write of its
+      // red sets it, and false is a mask with no pixel under 255 - so its sweep would change nothing. The ring's was
+      // always so guarded (RefillHistory), the field's (Refill) returns when it is empty.
+      if (L.hasDeformation) {
+        let any = false;
+        const px = L.dynamic;
+        for (let k = 0; k < px.length; k += 4) { const r = px[k]; if (r === 255) continue; const v = r + step; if (v >= 255) px[k] = 255; else { px[k] = v; any = true; } }   // a full pixel stays full: skipped
+        this.rects.local.all();
+        L.hasDeformation = any;
+      }
       this._midRefill(step);
       this.tracks.refill(step);
       this._farRefill(step);
@@ -1089,7 +1097,9 @@ export class SnowfallRuntime {
   }
 
   // ---- the far track mask (FarTrackMask) ----
-  _newFar() { return { pixels: fullSnowMask(FAR.res), scroll: fullSnowMask(FAR.res), center: [0, 0], lattice: [0, 0], ready: false, rebuilds: 0, lastChanged: 0 }; }
+  /** TV-REFILL (the port's own): `deformed` - whether the mask may hold a track (its red under 255): set by every write of
+   *  its red, kept through a scroll (which only moves what was there), false once a refill finds none or a clear. */
+  _newFar() { return { pixels: fullSnowMask(FAR.res), scroll: fullSnowMask(FAR.res), center: [0, 0], lattice: [0, 0], ready: false, rebuilds: 0, lastChanged: 0, deformed: false }; }
   _farTick(active, px, pz) {
     const F = this.far;
     if (!active) return;
@@ -1097,6 +1107,7 @@ export class SnowfallRuntime {
       F.center = snapToGrid(px, pz, FAR.snap, F.lattice[0], F.lattice[1]);
       F.pixels.fill(255);
       F.lastChanged = this.tracks.applyToMask(F.pixels, 641, F.center[0], F.center[1], 640);
+      F.deformed = F.lastChanged > 0;   // TV-REFILL
       F.ready = true;
       this._farProjectCorpses();
       F.rebuilds++;
@@ -1110,6 +1121,7 @@ export class SnowfallRuntime {
       if (!out) F.pixels.fill(255);
       else { F.scroll = F.pixels; F.pixels = out; p = [Math.max(0, -dx), Math.min(640, 640 - dx), Math.max(0, -dz), Math.min(640, 640 - dz)]; }
       F.lastChanged = this.tracks.applyToMask(F.pixels, 641, F.center[0], F.center[1], 640, p[0], p[1], p[2], p[3]);
+      F.deformed = (!!out && F.deformed) || F.lastChanged > 0;   // TV-REFILL: what the scroll kept, and what the field laid
       this._farProjectCorpses();
       F.rebuilds++;
       this.rects.far.all();
@@ -1122,17 +1134,18 @@ export class SnowfallRuntime {
     if (!(Math.max(sx, ex) >= c[0] - reach && Math.min(sx, ex) <= c[0] + reach && Math.max(sz, ez) >= c[1] - reach && Math.min(sz, ez) <= c[1] + reach)) return;
     const rect = this.rects.far;
     const n = rasterizeTrack(F.pixels, 641, f32(c[0] - 320), f32(c[1] - 320), 1, 0.75, sx, sz, ex, ez, width, remaining, (x, z) => rect.add(x, z));
-    if (n > 0) F.lastChanged = n;
+    if (n > 0) { F.lastChanged = n; F.deformed = true; }   // TV-REFILL
   }
   _farRefill(step) {
     const F = this.far;
-    if (!F.ready || step <= 0) return;
+    if (!F.ready || step <= 0 || !F.deformed) return;   // TV-REFILL: a clean mask has nothing to fill
     let any = false;
     const p = F.pixels;
     for (let k = 0; k < p.length; k += 4) { const r = p[k]; if (r !== 255) { p[k] = r + step >= 255 ? 255 : r + step; any = true; } }
     if (any) this.rects.far.all();
+    F.deformed = any;   // TV-REFILL: none found, none left
   }
-  _farClear() { this.far.pixels.fill(255); this.far.lastChanged = 0; this.rects.far.all(); }
+  _farClear() { this.far.pixels.fill(255); this.far.lastChanged = 0; this.far.deformed = false; this.rects.far.all(); }
   _farProjectCorpses() {
     const F = this.far;
     if (F.ready && this.corpses.project(F.pixels, 641, F.center[0], F.center[1], 640)) this.rects.far.all();

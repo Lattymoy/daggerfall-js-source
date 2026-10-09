@@ -174,7 +174,31 @@ the mod indoors, and no snow lies there.
 - **THE RIDE OF THE STRIDE.** The far pixels' tiers read the surface drawn at
   their stride (Unity's Terrain.SampleHeight reads its full heightmap).
 - **THE TRAVEL VIEW** draws no snow - its eye is the traveller's, raised over
-  the land, the tiers the walker's.
+  the land, the tiers the walker's. TV-SNOW (FIELD BUGS 2026-10-09, Shabalako:
+  "after traveling for a while I get low framerates"): and while it is up the
+  host hands the controller no player (`overworld`, scenes/snowfallHost.js -
+  the switch's own law: the tiers stand down, the snowpack and the refill keep
+  the event clock frame by frame) and holds the GPU's share until the view is
+  down. The window, the ring and the blanket were sampled, committed and
+  uploaded round a traveller crossing the land at the journey's x60, for a
+  picture nobody saw. Held to the frame in play's every clock by
+  `test/fb1009_travelperf.test.js`.
+- **A SAVE PACKS ONCE A CHANGE** (TV-SAVE, the port's own). The track field's
+  record (`PersistentTrackField.writeSaveData`) is packed again only when the
+  field has changed since the last one (`revision`: a cell made or deepened,
+  a refill) and otherwise writes that record's text again, character for
+  character. A full field (65,536 cells - a winter town's walkers fill it in
+  minutes) packed in 80-90 ms on the page's thread, on every save: online, the
+  checkpoint every two minutes.
+- **A CLEAN TIER IS NOT REFILLED** (TV-REFILL, the port's own). ProcessRefill
+  sweeps the window's mask (and marks it for a whole upload) and the far mask
+  twice a second whenever any tier holds a track; here the window's is swept
+  only under its own HasDeformation (every write of its red raises it) and the
+  far mask's only under a flag of the port's (`far.deformed`: raised by every
+  write of its red, kept through a scroll, lowered by a clear or a sweep that
+  finds nothing). The pixels are the mod's either way; a track the field keeps
+  behind a far walker cost a 256 x 256 and a 641 x 641 sweep and a full upload
+  twice a second.
 - **THE PORT'S PACE.** The progressive builds - the window's recentre, the
   ring's, a blanket tile's - stop for the frame once the frame's snow has
   spent `SNOW_FRAME_BUDGET_MS` (2), under the mod's own sample counts: those
@@ -198,4 +222,5 @@ dead). The shader's variants compile and draw in Chromium's WebGL2 on both
 lanes (a synthetic hill through the real renderer, the mod's masks and
 albedo: the snow on the ground, the track in it, no GL error). AUDIT ENVIRONS
 (`01-Overview/Audit-Environs.md`): `test/audit_environs.test.js` (21),
-`tools/mutants/audit_environs.json`.
+`tools/mutants/audit_environs.json`. TV-SNOW, TV-SAVE and TV-REFILL (FIELD BUGS
+2026-10-09): `test/fb1009_travelperf.test.js`, `tools/mutants/fb1009_travelperf.json`.
