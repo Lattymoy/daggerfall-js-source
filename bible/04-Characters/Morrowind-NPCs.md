@@ -102,7 +102,7 @@ Each line is a slice's acceptance, not an aspiration:
 | MWNPC5 FOES | class foes in their rolled equipment, a stable race and face per foe (not one Breton), the effects parity: hit flash, glint, elite glow, dissolve, concealment (5a SHIPPED, section 10: the glint, the elite's glow, outline and embers and the dissolve on the body's quad - the hit flash and the concealment it already drew); 5b SHIPPED (section 10b): the dungeon's foes, the cast-only billboard, the Features row; 5c SHIPPED (section 10c): the encounter pool - the exterior, the interiors, exterior.js; shadows kept (the billboard casts) | dungeonContext.js, world.js (exteriorFoes), worldModes.js (interior foes), exterior.js |
 | MWNPC6 THE WATCH | cityGuards' two instances (SHIPPED, section 11: a lane of its own under WATCH_BODY_TIERS) | world.js, worldModes.js, exterior.js; dungeonContext.js stands none (named) |
 | MWNPC7 TOWNSFOLK | walkers and living residents, a wardrobe by FACTION sgroup that actually varies (distinct records and dyes per persona) (the WALKERS SHIPPED, section 12: a wardrobe per outfit variant, dyed per spawn - the living residents indoors are MWNPC8's standing people) | world.js, exterior.js, worldModes.js (living residents indoors) |
-| MWNPC8 STANDING PEOPLE | street, interior, dungeon and quest StaticNPCs; children and vampires keep their sprite; `drawnFlat`'s nudity law honoured (8a SHIPPED, section 13a: the buildings' people; 8b SHIPPED, section 13b: the dungeons' and the street's - exterior.js and the quest stands are 8c's) | all four |
+| MWNPC8 STANDING PEOPLE | street, interior, dungeon and quest StaticNPCs; children and vampires keep their sprite; `drawnFlat`'s nudity law honoured (8a SHIPPED, section 13a: the buildings' people; 8b SHIPPED, section 13b: the dungeons' and the street's; 8c SHIPPED, section 13c: exterior.js's and the quests' stands) | all four |
 | MWNPC9 CREATURES | CREA records, creature skeletons and their own .kf, the match table with its declared misses | dungeonContext.js, world.js, worldModes.js, exterior.js |
 | MWNPC10 THE REST | crews, road parties, siege, gate court, the broker | their hosts |
 
@@ -804,9 +804,45 @@ billboards named, wired or flagged; and an editor marker and the
 immortals standing no body. `tools/mutants/mwnpc8b.json`: 24 mutants, 24
 dead.
 
-NOT HERE (MWNPC8c): exterior.js's standalone location still batches its
-people with its scenery (flagged in the enumeration); the quest-placed
-stands (worldModes.js `standQuestFlatIn` - Azura summoned, a questor at a
-marker) are a batch each already but are read off a marker and a faction
-id, not an RDB record, and keep their billboards.
+NOT HERE (MWNPC8c, section 13c): exterior.js's standalone location still
+batched its people with its scenery (flagged in the enumeration); the
+quest-placed stands (worldModes.js `standQuestFlatIn` - Azura summoned, a
+questor at a marker) are a batch each already but are read off a marker
+and a faction id, not an RDB record, and kept their billboards.
+
+### 13c. The location's people and the quests' (SHIPPED 2026-10-09)
+
+- THE LOCATION (exterior.js, the standalone route). Its one batch per
+  archive/record held every street person with the scenery; a person now
+  leaves the groups and stands in a batch of their own, minted in the NPC
+  pass as the group's plain picture was (the record uploaded, its box, its
+  animation) - none for an editor flat, which this host never drew. Read
+  as the buildings' are (their StaticNPC data with the location's region
+  race, their faction's row; never before the faction table), every person
+  is offered on the 'people' lane before the flats are walked, and drawn
+  there; their billboard cast-only where a body stands. A person was never
+  cover here (AUDIT TACT B3) and their own batch makes none. The host never
+  unloads its location, so the lane lasts the scene, as the walkers' does.
+- THE QUESTS' STANDS (worldModes.js). A stood quest PERSON is read as
+  their click reads them (`clickQuestFlat`: the Person's gender, faction
+  and name seed through the bridge's SetLayoutData, the marker's hash),
+  with their born billboard pair for the child's law; an item's or a foe's
+  stand is no one, and nobody is read before the faction table and the
+  bridge. Offered where the marker they ride has carried them
+  (questStandBox's base), only while stood and active: in a building on
+  the room's lane beside its people, in a dungeon on the dungeon's through
+  `drawPeople`'s `also` - before the billboards draw either way.
+- So the standing people are WIRED in every host that stands them: the
+  buildings (8a), the dungeons and the street (8b), the location and the
+  quests (8c). A Daedra prince summoned keeps the sprite (section 13b).
+
+PROVEN. `test/mwnpc8c_location.test.js` (2), by source: the location (a
+person out of the groups, their own batch and none for an editor flat, the
+reading, the offer and the draw before the flats) and the quests' stands
+(the reading, an item or a foe no one, never before the table; the offer
+at the rider's feet, only while stood; the room's lane and the dungeon's
+`also`, before the billboards). `tools/mutants/mwnpc8c.json`: 17 mutants,
+17 dead. Pins moved: AUDIT TACT B3's exterior.js pin (no person reaches
+the groups' cover now), MWNPC8b's enumeration (exterior.js wired) and its
+dungeon pins (drawPeople's `also`, read by prefix).
 

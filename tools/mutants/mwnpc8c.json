@@ -1,0 +1,155 @@
+[
+ {
+  "name": "MWNPC8c-location-person-grouped",
+  "file": "src/scenes/exterior.js",
+  "old": "      if (!_people.has(flat)) {\n        const key",
+  "new": "      if (true) {\n        const key",
+  "tests": [
+   "test/mwnpc8c_location.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8c-location-marker-drawn",
+  "file": "src/scenes/exterior.js",
+  "old": "    if (!flat.editor) {\n      uploadRecord(da, dr);",
+  "new": "    if (true) {\n      uploadRecord(da, dr);",
+  "tests": [
+   "test/mwnpc8c_location.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8c-location-batch-undrawn",
+  "file": "src/scenes/exterior.js",
+  "old": "      billboardBatches.push(batch);\n      flatCount++;\n      person.standBatch = batch;\n",
+  "new": "      flatCount++;\n      person.standBatch = batch;\n",
+  "tests": [
+   "test/mwnpc8c_location.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8c-location-batch-unowned",
+  "file": "src/scenes/exterior.js",
+  "old": "      person.standBatch = batch;\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc8c_location.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8c-location-before-table",
+  "file": "src/scenes/exterior.js",
+  "old": "    if (!dict) return null;   // never before the faction table: asked again\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc8c_location.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8c-location-cast-only-stale",
+  "file": "src/scenes/exterior.js",
+  "old": "      else pn.standBatch.castOnly = false;\n    }\n    standPeople.draw",
+  "new": "    }\n    standPeople.draw",
+  "tests": [
+   "test/mwnpc8c_location.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8c-location-bodies-undrawn",
+  "file": "src/scenes/exterior.js",
+  "old": "    standPeople.draw(canvas, proj, view, eye, townTalk.overlayActive ? 0 : dt);\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc8c_location.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8c-location-region-race-lost",
+  "file": "src/scenes/exterior.js",
+  "old": "raceOfCurrentRegion: () => REGION_RACES[dfLocation.regionIndex] + 1 }), dict.get(pn.factionID)",
+  "new": "raceOfCurrentRegion: () => 0 }), dict.get(pn.factionID)",
+  "tests": [
+   "test/mwnpc8c_location.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8c-quest-item-bodied",
+  "file": "src/scenes/worldModes.js",
+  "old": "    if (person.isPerson !== true) return (s._mwLook = null);\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc8c_location.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8c-quest-before-table",
+  "file": "src/scenes/worldModes.js",
+  "old": "    if (!dict || !questBridge) return null;   // never before the faction table\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc8c_location.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8c-quest-inactive-offered",
+  "file": "src/scenes/worldModes.js",
+  "old": "on && s.active !== false && !s.dead ? questStandLook(s, buildingKey) : null",
+  "new": "on ? questStandLook(s, buildingKey) : null",
+  "tests": [
+   "test/mwnpc8c_location.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8c-quest-rider-left",
+  "file": "src/scenes/worldModes.js",
+  "old": "f[0] = o ? s.x + o[0] : s.x; f[1] = o ? s.y + o[1] : s.y; f[2] = o ? s.z + o[2] : s.z;",
+  "new": "f[0] = s.x; f[1] = s.y; f[2] = s.z;",
+  "tests": [
+   "test/mwnpc8c_location.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8c-quest-cast-only-stale",
+  "file": "src/scenes/worldModes.js",
+  "old": "      if (!look) { s.batch.castOnly = false; continue; }\n      const f = s._mwFeet",
+  "new": "      if (!look) continue;\n      const f = s._mwFeet",
+  "tests": [
+   "test/mwnpc8c_location.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8c-quest-room-unoffered",
+  "file": "src/scenes/worldModes.js",
+  "old": "    offerQuestStands(questFlats, peopleBodies, _peopleOn, interiorBuilding?.buildingKey ?? 0, mwv.eye, dt);   // MWNPC8c: and the quest's\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc8c_location.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8c-quest-dungeon-unoffered",
+  "file": "src/scenes/worldModes.js",
+  "old": "dt, offerDungeonQuestStands);",
+  "new": "dt);",
+  "tests": [
+   "test/mwnpc8c_location.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8c-quest-child-unread",
+  "file": "src/scenes/worldModes.js",
+  "old": ", billboardArchiveIndex: s.archive, billboardRecordIndex: s.record });",
+  "new": " });",
+  "tests": [
+   "test/mwnpc8c_location.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8c-dungeon-also-ignored",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "      also?.(_peopleLane, on, eye, dt);\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc8c_location.test.js"
+  ]
+ }
+]

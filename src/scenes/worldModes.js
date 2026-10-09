@@ -1676,6 +1676,33 @@ export function createWorldModes(host) {
     if (!dict) return null;
     return personLook(pn, staticNpcData(pn, staticNpcSceneCtx(pn)), dict.get(pn.factionID) ?? null);
   };
+  /** MWNPC8c (section 13c): A QUEST'S STOOD PERSON (standQuestFlatIn - Azura summoned, a questor at a marker) read as
+   *  the click reads them (clickQuestFlat: the Person's gender, faction and name seed through the bridge's SetLayoutData,
+   *  the marker's hash), their born billboard pair for the child's law. An item's or a foe's stand is no one. */
+  const questStandLook = (s, buildingKey) => {
+    if (s._mwLook !== undefined) return s._mwLook;
+    const person = s.behaviour?.targetResource ?? null;
+    if (!person) return null;   // asked again
+    if (person.isPerson !== true) return (s._mwLook = null);
+    const dict = townTalk?.factionDict ?? null;
+    if (!dict || !questBridge) return null;   // never before the faction table
+    const hash = positionHash(Math.trunc(s.marker.x), Math.trunc(s.marker.y), Math.trunc(s.marker.z));
+    const data = questBridge.layoutNpcData({ hash, gender: person.gender, factionID: person.factionId ?? 0, nameSeed: person.nameSeed ?? -1, buildingKey, mapID: 0, billboardArchiveIndex: s.archive, billboardRecordIndex: s.record });
+    return personLook(s, data, dict.get(person.factionId ?? 0) ?? null);
+  };
+  /** MWNPC8c: a list of quest stands offered on `lane` - a stood, active person at their base where the marker they ride
+   *  has carried them (questStandBox's base); every other stand's billboard drawn. */
+  const offerQuestStands = (list, lane, on, buildingKey, eye, dt) => {
+    for (const s of list) {
+      if (!s.batch) continue;
+      const look = on && s.active !== false && !s.dead ? questStandLook(s, buildingKey) : null;
+      if (!look) { s.batch.castOnly = false; continue; }
+      const f = s._mwFeet ??= [0, 0, 0], o = s.off;
+      f[0] = o ? s.x + o[0] : s.x; f[1] = o ? s.y + o[1] : s.y; f[2] = o ? s.z + o[2] : s.z;
+      lane.offer(personActor(s, look, f, eye, dt), s.batch);
+    }
+  };
+  const offerDungeonQuestStands = (lane, on, eye, dt) => offerQuestStands(dungeonQuestFlats, lane, on, 0, eye, dt);   // MWNPC8c: drawPeople's `also`
   /**
    * IF: CreateFoeSpawner's punishment wave - the summoning window's
    * refusal (DaggerfallDaedraSummonedWindow.cs:125) and the coven
@@ -10087,7 +10114,7 @@ export function createWorldModes(host) {
       dungeonCtx.flatAnims.tick(dt);   // FA1
       renderer.drawFoeTelegraphs?.(drawableBlows(tacticsNow(), player.pos));   // TACT4: a foe's wind-up on the ground
       dungeonCtx.bloodMarks?.draw?.(camRight, UP_Y);   // BLOOD1a: the dungeon's own marks, on this host's pass   // BLOOD1b: and its chunks, on this host's own basis
-      dungeonCtx.drawPeople?.(canvas, proj, view, mwv.eye, dt);   // MWNPC8b: the people in their bodies - before the level's billboards draw
+      dungeonCtx.drawPeople?.(canvas, proj, view, mwv.eye, dt, offerDungeonQuestStands);   // MWNPC8b: the people in their bodies - before the level's billboards draw; MWNPC8c: and the quest's
       renderer.drawBillboards([...dungeonCtx.billboardBatches, ...dungeonCtx.campBatches(), ...dungeonCtx.torchBatches(), ...(host.extraBillboards?.() ?? [])], camRight, UP_Y);   // ONLINE1: the peers on the dungeon's own pass; HT1 the dropped torches; SURV3 the campfires
       host.drawLootLines?.({ proj, view, eye: mwv.eye, finds: () => dungeonCtx.lootFinds?.() ?? [] });   // LOOT11: the lines of light over the dungeon's finds
       if (isGateArena(dungeonLoc)) host.drawGateCourt?.({ proj, view, eye: mwv.eye });
@@ -10304,6 +10331,7 @@ export function createWorldModes(host) {
       if (look) peopleBodies.offer(personActor(pn, look, pn._mwFeet ??= [pn.x, pn.y, pn.z], mwv.eye, dt), pn.standBatch);
       else pn.standBatch.castOnly = false;
     }
+    offerQuestStands(questFlats, peopleBodies, _peopleOn, interiorBuilding?.buildingKey ?? 0, mwv.eye, dt);   // MWNPC8c: and the quest's
     peopleBodies.draw(canvas, proj, view, mwv.eye, dt);
     // BLOOD1 AUDIT (2026-09-20): THE INTERIOR'S OWN MARKS, and they
     // were missing. This host builds a pool like the other three,

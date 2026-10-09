@@ -30,13 +30,14 @@ test('MWNPC8b-a the dungeon: a person\'s flat out of the shared groups into a ba
   ordered(d, ['for (const [key, centers] of flatGroups) {', "collider.cover.add('tact1:flats', coverItems);", 'for (const pn of people) {\n    const at = pn._flatAt;', 'const [archive, record] = drawnFlat(pn.textureArchive, pn.textureRecord);',
     'pn.standBatch = renderer.createBillboardBatch(archive, record, billboardSize(t, record), [Object.assign([at[0], at[1] - bornSize.h / 2, at[2]], { noCover: true })]);',
     'billboardBatches.push(pn.standBatch);'], 'the person\'s batch, base-centred off the born sprite, drawn as the clothed stand-in, after the groups and their cover (a person is none)');
-  ordered(d, ['drawPeople(canvas, proj, view, eye, dt) {', 'const read = opts.standingLook ?? null;', 'const on = !!read && _peopleLane.frame();',
+  // PIN MOVED (MWNPC8c): drawPeople takes the host's `also` and the world's dungeon passes its quest stands - read by prefix
+  ordered(d, ['drawPeople(canvas, proj, view, eye, dt', 'const read = opts.standingLook ?? null;', 'const on = !!read && _peopleLane.frame();',
     'const look = on && pn.active !== false ? read(pn) : null;', 'if (look) _peopleLane.offer(personActor(pn, look, pn._mwFeet ??= [pn.x, pn.y, pn.z], eye, dt), pn.standBatch);',
     'else pn.standBatch.castOnly = false;', '_peopleLane.draw(canvas, proj, view, eye, dt);'], 'drawPeople');
   assert.ok(d.includes('_peopleLane.destroy();   // MWNPC8b'), 'gone with the context');
   const m = rd('src/scenes/worldModes.js');
   assert.ok(m.includes('          standingLook,   // MWNPC8b'), 'the world\'s dungeon reads its people as its buildings do');
-  ordered(m, ['dungeonCtx.drawPeople?.(canvas, proj, view, mwv.eye, dt);', 'renderer.drawBillboards([...dungeonCtx.billboardBatches,'], 'before the level\'s billboards');
+  ordered(m, ['dungeonCtx.drawPeople?.(canvas, proj, view, mwv.eye, dt', 'renderer.drawBillboards([...dungeonCtx.billboardBatches,'], 'before the level\'s billboards');
 });
 
 test('MWNPC8b-b the street: one batch a person in standPixelNpcs (the away arm and the quest pass still first); the near rings\' people offered as the pixels are walked, at their scene feet; the bodies drawn before the flats; let go indoors, moved with the origin', () => {
@@ -60,7 +61,8 @@ test('MWNPC8b-c THE STANDING-PEOPLE HOSTS, enumerated: every scene that stands S
     'src/scenes/world.js': 'wired',            // the street's people (8b)
     'src/scenes/interiorContext.js': 'wired',  // the buildings' (8a), through worldModes.js
     'src/scenes/dungeonContext.js': 'wired',   // the dungeons' (8b), through worldModes.js
-    'src/scenes/exterior.js': 'MWNPC8c',       // the standalone location: its people still batch with its scenery
+    // PIN MOVED (MWNPC8c, section 13c): the standalone location's people stand alone and in their bodies now
+    'src/scenes/exterior.js': 'wired',         // the standalone location's (8c)
   };
   const found = readdirSync(new URL('../src/scenes', import.meta.url)).filter((f) => f.endsWith('.js'))
     .map((f) => `src/scenes/${f}`).filter((p) => /collectExteriorNpcs\(|collectInteriorPeople\(|context: NPC_CONTEXT\.Dungeon/.test(rd(p)));

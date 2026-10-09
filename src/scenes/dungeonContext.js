@@ -10028,8 +10028,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     /** MWNPC8b (bible/04-Characters/Morrowind-NPCs.md section 13b): THE DUNGEON'S STANDING PEOPLE IN THEIR BODIES - a host
      *  that reads a person's look (`opts.standingLook`, worldModes.js's - the building's own reading) calls this BEFORE it
      *  draws billboardBatches: each active person with a look offered (their own batch cast-only where the body stands),
-     *  the rest drawn as ever. A host that reads none (dungeon.js) leaves every person their billboard. */
-    drawPeople(canvas, proj, view, eye, dt) {
+     *  the rest drawn as ever. A host that reads none (dungeon.js) leaves every person their billboard. MWNPC8c: `also`
+     *  (lane, on, eye, dt) offers the host's own people on the same lane before it draws - the quest's stands. */
+    drawPeople(canvas, proj, view, eye, dt, also = null) {
       const read = opts.standingLook ?? null;
       const on = !!read && _peopleLane.frame();
       for (const pn of people) {
@@ -10038,6 +10039,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (look) _peopleLane.offer(personActor(pn, look, pn._mwFeet ??= [pn.x, pn.y, pn.z], eye, dt), pn.standBatch);
         else pn.standBatch.castOnly = false;
       }
+      also?.(_peopleLane, on, eye, dt);
       _peopleLane.draw(canvas, proj, view, eye, dt);
     },
     /** AUDIT DELVE E6: a foe's quest behaviour - its own, or a puppet's (a shared quest's foe a party mate's client owns:

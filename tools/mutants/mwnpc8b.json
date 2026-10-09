@@ -38,8 +38,8 @@
  {
   "name": "MWNPC8b-dungeon-cast-only-stale",
   "file": "src/scenes/dungeonContext.js",
-  "old": "        else pn.standBatch.castOnly = false;\n      }\n      _peopleLane.draw",
-  "new": "      }\n      _peopleLane.draw",
+  "old": "        else pn.standBatch.castOnly = false;\n      }\n      also?.(_peopleLane, on, eye, dt);\n",
+  "new": "      }\n      also?.(_peopleLane, on, eye, dt);\n",
   "tests": [
    "test/mwnpc8b_streetdungeon.test.js"
   ]
@@ -74,7 +74,7 @@
  {
   "name": "MWNPC8b-dungeon-host-undrawn",
   "file": "src/scenes/worldModes.js",
-  "old": "      dungeonCtx.drawPeople?.(canvas, proj, view, mwv.eye, dt);   // MWNPC8b: the people in their bodies - before the level's billboards draw\n",
+  "old": "      dungeonCtx.drawPeople?.(canvas, proj, view, mwv.eye, dt, offerDungeonQuestStands);   // MWNPC8b: the people in their bodies - before the level's billboards draw; MWNPC8c: and the quest's\n",
   "new": "",
   "tests": [
    "test/mwnpc8b_streetdungeon.test.js"

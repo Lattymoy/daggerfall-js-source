@@ -162,6 +162,7 @@ import { createCityGuards } from './cityGuards.js';   // G1
 // below for what stands foes in it on this route.
 import { createExteriorFoes } from './exteriorFoes.js';
 import { createPopulationLane } from '../characters/npcBodies.js'; import { folkActor } from '../characters/folkBodies.js';   // MWNPC7: the walkers in Morrowind bodies
+import { personLook, personActor } from '../characters/peopleBodies.js'; import { staticNpcData } from '../characters/staticNpc.js';   // MWNPC8c: and its standing people
 import { createArrestFlow } from './arrestFlow.js';   // G2
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatableHit, pickQuestFoe, pickFoe, peacefulFoePass } from '../player/activate.js';   // G3: corpse loot; QG1/ROAD-G G2: the foe-click door; TI1: the lock-on pick
@@ -630,6 +631,15 @@ export async function bootExterior(canvas, renderer, params, status) {
   // over the flat ground floor.
   const collider = new Collider(() => GROUND_OFFSET * 0.025);
   const folkStreet = createPopulationLane({ laneName: 'folk', renderer, collider: () => collider });   // MWNPC7 (Morrowind-NPCs.md section 12): the location's walkers
+  // MWNPC8c (section 13c): AND ITS STANDING PEOPLE - each a batch of their own (the NPC pass), read as the buildings'
+  // are (their StaticNPC data with the location's region race, their faction's row)
+  const standPeople = createPopulationLane({ laneName: 'people', renderer, collider: () => collider });
+  const standLook = (pn) => {
+    if (pn._mwLook !== undefined) return pn._mwLook;
+    const dict = townTalk.factionDict ?? null;
+    if (!dict) return null;   // never before the faction table: asked again
+    return personLook(pn, staticNpcData(pn, { getFaction: (id) => dict.get(id) ?? null, raceOfCurrentRegion: () => REGION_RACES[dfLocation.regionIndex] + 1 }), dict.get(pn.factionID) ?? null);
+  };
   collider.cover = createCoverIndex();   // TACT1: the location's solid flats are cover, with the switch on
   let colliderTris = 0;
   const buildingDoors = []; // {door, dfBlock, recordIndex, climateBase, season (A1: INTERIOR_SEASON), dfLocation, group}
@@ -800,9 +810,14 @@ export async function bootExterior(canvas, renderer, params, status) {
       // FactionID its StaticNPC/QuestMachine hookup - only the renderer
       // is off.
       if (flat.editor) continue;
-      const key = drawnFlat(flat.archive, flat.record).join('_');   // NUDE-FLATS: base-anchored, so the stand-in stands where the figure did
-      if (!flatGroups.has(key)) flatGroups.set(key, []);
-      flatGroups.get(key).push(Object.assign([flat.x + b.originX, hillSeat && isNatureArchive(flat.archive) ? seatNatureFlat(hillSeat, flat.x, flat.z, NATURE_FLATS_Y) : flat.y, flat.z + b.originZ], _people.has(flat) ? { noCover: true } : null));   // TREES-SEATED: on the plane or a drawn mound (this host's ground is the plane)
+      // MWNPC8c: a PERSON stands ALONE - a batch of their own, minted with their identity in the NPC pass below - so their
+      // Morrowind body can take their place; every other flat groups as it did (AUDIT TACT B3: and a person is no cover,
+      // their batch making none)
+      if (!_people.has(flat)) {
+        const key = drawnFlat(flat.archive, flat.record).join('_');   // NUDE-FLATS: base-anchored, so the stand-in stands where the figure did
+        if (!flatGroups.has(key)) flatGroups.set(key, []);
+        flatGroups.get(key).push([flat.x + b.originX, hillSeat && isNatureArchive(flat.archive) ? seatNatureFlat(hillSeat, flat.x, flat.z, NATURE_FLATS_Y) : flat.y, flat.z + b.originZ]);   // TREES-SEATED: on the plane or a drawn mound (this host's ground is the plane)
+      }
       // A4: every archive-201 town animal is an audio source
       // (AddAnimalAudioSource on RMB flats, verbatim).
       if (flat.archive === ANIMALS_ARCHIVE && ANIMAL_SOUND_BY_RECORD[flat.record] != null) {
@@ -1160,19 +1175,18 @@ export async function bootExterior(canvas, renderer, params, status) {
   //     can only do that because it keeps the NPC flats OUT of the
   //     pixel's billboard batches on purpose (`if (npcFlatSet.has(flat))
   //     continue;`, world.js:"exactly the same reason") and stands them in batches of their
-  //     own over the ACTIVE set. THIS host builds one batch per
-  //     (archive, record) for the WHOLE city, up front, with every
-  //     street NPC's center already inside it (the batch loop above), and
-  //     the away arm's entire observable half is `SetActive(false)` -
-  //     the home copy of an individual a live quest has placed elsewhere
-  //     leaving the draw AND the activation ray. world.js's own sentence
-  //     for why it splits them is the reason this cannot be bolted on
-  //     here: "a center already inside a built batch cannot leave one."
-  //     So every street NPC stands and none carries a behaviour, which
-  //     is exactly C#'s answer with no individual placed away; closing
-  //     it is a change to this route's ONE location batch, not to the
-  //     quest layer. `scenes/world.js`'s standPixelNpcs is the pass with
-  //     a machine behind it.
+  //     own over the ACTIVE set. The away arm's entire observable half
+  //     is `SetActive(false)` - the home copy of an individual a live
+  //     quest has placed elsewhere leaving the draw AND the activation
+  //     ray. THIS host batched every street NPC into its one location
+  //     batch per (archive, record), where "a center already inside a
+  //     built batch cannot leave one"; MWNPC8c stands each in a batch of
+  //     their own (below), so the billboard could leave now - what is
+  //     still missing is the pass itself, run when the bridge lands. So
+  //     every street NPC stands and none carries a behaviour, which is
+  //     exactly C#'s answer with no individual placed away.
+  //     `scenes/world.js`'s standPixelNpcs is the pass with a machine
+  //     behind it.
   await pipeline.loadFlats();
   const exteriorNpcs = [];
   for (const flat of exteriorNpcFlats) {
@@ -1181,7 +1195,20 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (!t || dr >= t.recordCount) continue;
     const size = billboardSize(t, dr);
     const pn = exteriorNpcRecord(flat, pipeline.flatsFile()?.getFlatData(flat.archive, flat.record) ?? null);
-    exteriorNpcs.push({ ...pn, width: size.w, height: size.h });
+    const person = { ...pn, width: size.w, height: size.h, standBatch: null };
+    // MWNPC8c: their billboard, a batch of their own - minted as the group's plain picture was (the record uploaded, its
+    // box, its animation); an editor flat is never drawn (AUDIT 64 F12), so it has none
+    if (!flat.editor) {
+      uploadRecord(da, dr);
+      const centers = [[flat.x, flat.y, flat.z]];
+      const batch = renderer.createBillboardBatch(da, dr, size, centers);
+      batch._box = flatBatchAabb(centers, size);   // EV3
+      armFlatAnim(batch, t, da, dr, flatAnims, uploadRecordFrame);
+      billboardBatches.push(batch);
+      flatCount++;
+      person.standBatch = batch;
+    }
+    exteriorNpcs.push(person);
   }
 
   // Camera.
@@ -5845,6 +5872,16 @@ export async function bootExterior(canvas, renderer, params, status) {
         waterUniforms({ seconds: now / 1000, wind: sky.wind(), rain: precipMode === 'rain' || precipMode === 'storm' ? fx.intensity : 0, sky: sky.waterSky() }),
         tilemapDim);   // WATER-AUDIT: the town's own tilemap side, not 128
     }
+    // MWNPC8c (bible/04-Characters/Morrowind-NPCs.md section 13c): the standing people offered their bodies - each
+    // billboard cast-only where one stands - before the flats are walked
+    const _peopleOn = standPeople.frame();
+    for (const pn of exteriorNpcs) {
+      if (!pn.standBatch) continue;
+      const look = _peopleOn ? standLook(pn) : null;
+      if (look) standPeople.offer(personActor(pn, look, pn._mwFeet ??= [pn.x, pn.y, pn.z], eye, townTalk.overlayActive ? 0 : dt), pn.standBatch);
+      else pn.standBatch.castOnly = false;
+    }
+    standPeople.draw(canvas, proj, view, eye, townTalk.overlayActive ? 0 : dt);
     _visBatches.length = 0; _castBatches.length = 0;
     for (const b of billboardBatches) {
       if (cullOn && aabbOutside(_planes, b._box)) {

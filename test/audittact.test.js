@@ -337,7 +337,9 @@ test('AUDIT TACT B3: people are no cover - a person flat is skipped wherever it 
   assert.equal(idx.add('k', [coverProxy(person, { w: 1, h: 1.8 })]), 0);
   assert.equal(idx.hit([0, 1, 0], [0, 0, 1], 20), Infinity);
   assert.match(rd('src/scenes/dungeonContext.js'), /if \(pn\) at\.noCover = true;/);
-  assert.match(rd('src/scenes/exterior.js'), /_people\.has\(flat\) \? \{ noCover: true \} : null/);
+  // PIN MOVED (MWNPC8c, bible/04-Characters/Morrowind-NPCs.md section 13c): exterior.js's people no longer group with
+  // its scenery - each is a batch of their own, which makes no cover - so no person reaches the groups' cover to be marked
+  assert.match(rd('src/scenes/exterior.js'), /if \(!_people\.has\(flat\)\) \{\n\s*const key = drawnFlat/);
 });
 
 test('AUDIT TACT B5: an arrow meets cover by touch - at 20 fps it still strikes a player half a metre before a tree', () => {
