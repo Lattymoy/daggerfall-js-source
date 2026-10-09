@@ -25,6 +25,7 @@ import { courtToDungeon } from '../world/gateArena.js';
 import { TELEGRAPH_KIND, TELEGRAPH_STYLE, TELEGRAPH_FLASH_MS, TELEGRAPH_EDGE, TELEGRAPH_POOL } from '../render/gateTelegraph.js';
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 import { mobileBillboardSize } from '../world/rmbFlats.js';
+import { creatureLook } from '../characters/creatureBodies.js'; import { rosterActor } from '../characters/rosterBodies.js';   // MWNPC10: his host in its Morrowind bodies
 
 /** The words his host says that the bar and the blows do not. `boss` his name, `plural`/`name` the body's (its look's). */
 const an = (name) => `${/^[AEIOU]/i.test(name) ? 'An' : 'A'} ${name}`;
@@ -157,6 +158,7 @@ export function createGateHost({ renderer = null, getTexture = null, uploadRecor
   /** One body drawn: the frame its act shows to my eye, at its place (an Imp hovering; one rising or crumbling under the
    *  floor by its `sink`), facing `yaw`. WB13d: struck, it flashes - whole for my blow, lightly for the court's. */
   function draw(b, act, x, z, yaw, t) {
+    b.act = act.act;   // MWNPC10: what its body plays (offerBodies)
     const T = texture(b.look.mobile);
     if (!T || !renderer?.createBillboardBatch || act.act === 'gone') { b.shown = false; return; }
     const y = (act.sink > 0 ? -act.sink : 0) + (b.look.hover > 0 ? b.look.hover + 0.15 * Math.sin(t / 260 + b.seed) : 0);
@@ -202,7 +204,7 @@ export function createGateHost({ renderer = null, getTexture = null, uploadRecor
         live.add(a.i);
         let b = bodies.get(a.i);
         if (!b) {
-          b = { look: hostLookOf(a.k, P.aspect.id), batch: null, shown: false, hurtAt: -Infinity, courtAt: -Infinity, heardHurt: -Infinity, hp: a.h, wound: NaN, landed: NaN, judged: NaN, seed: (a.i * 0.6180339) % 1 * 6.283 };
+          b = { i: a.i, look: hostLookOf(a.k, P.aspect.id), batch: null, shown: false, hurtAt: -Infinity, courtAt: -Infinity, heardHurt: -Infinity, hp: a.h, wound: NaN, landed: NaN, judged: NaN, seed: (a.i * 0.6180339) % 1 * 6.283 };
           bodies.set(a.i, b);
           // its rising heard out of the fire, and its wave said once - while it is news
           if (Number.isFinite(a.rose) && t - a.rose <= HOST_LATE_MS && !s.fell && s.wrath == null) {
@@ -295,6 +297,22 @@ export function createGateHost({ renderer = null, getTexture = null, uploadRecor
     targets: () => _targets,
     /** Their bodies for the host's billboard pass, their lights, their shapes on the floor. */
     batches: () => _batches,
+    /**
+     * MWNPC10 (bible/04-Characters/Morrowind-NPCs.md section 15a): EACH SHOWN BODY OFFERED ITS MORROWIND CREATURE on `lane`
+     * (characters/npcBodies.js createPopulationLane) with the billboard it is drawn by - standing (walking, its blow a
+     * swing as the relay's attack time changes, a blow on it a recoil) and falling (dead, its fall the death); one its
+     * mobile has no match for keeps its sprite.
+     */
+    offerBodies(lane) {
+      const one = (b, dead) => {
+        const look = b.shown && b.batch ? creatureLook({ mobileType: b.look.mobile }) : null;
+        if (!look) return;   // never offered, so never cast-only - its sprite draws
+        lane.offer(rosterActor(b, { id: `host:${b.i}`, look, feet: b.batch.origin, yaw: b.yaw ?? 0, moving: b.act === 'walk',
+          swingKey: dead ? null : b.wound, hitKey: dead ? null : Math.max(b.hurtAt ?? -Infinity, b.courtAt ?? -Infinity), dead: dead ? 1 + ((b.i | 0) % 3) : 0 }), b.batch);
+      };
+      for (const b of bodies.values()) one(b, false);
+      for (const b of falling.values()) one(b, true);
+    },
     lights: () => _lights,
     shapes: () => _shapes,
     /**

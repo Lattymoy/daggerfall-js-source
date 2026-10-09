@@ -38,6 +38,7 @@ import { groundViewModel, drawGateGround } from '../ui/gateGroundView.js';   // 
 import { damageChartModel, drawGateDamageChart } from '../ui/gateDamageChart.js';   // GATE-UX: every challenger's damage, ranked, once he has fallen
 import { readReceipt } from '../net/gateReceipt.js';
 import { createGateHost } from './gateHost.js';   // WB11c: the Legion-Lord's host - its bodies, blows, words and sounds
+import { createPopulationLane } from '../characters/npcBodies.js'; import { creatureLook } from '../characters/creatureBodies.js'; import { rosterActor } from '../characters/rosterBodies.js';   // MWNPC10: the court's creatures in their Morrowind bodies
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 import { mobileBillboardSize, billboardSize } from '../world/rmbFlats.js';
 
@@ -240,6 +241,8 @@ export const HEAL_SEND_MS = 1000;
  *   me?: () => (string|null),
  *   yaw?: () => (number|null),
  *   shake?: (amount: number) => void,
+ *   wantBodies?: () => boolean,
+ *   makeBodies?: (() => any) | null,
  * }} deps
  *   WB13d: `shake` the camera's (systems/betterAmbience.js weaponKick, under the player's own maxShake) - his landings near
  *   me felt.
@@ -259,7 +262,12 @@ export function createGateCourt({
   link, spoils = null, now, cam = () => null, feet = () => null, player = () => null, save = () => 100,
   strike = () => {}, say = () => {}, hudHidden = () => false, veiled = () => false, send = () => false, sendCrystal = () => false, sendHost = () => false, sendHeal = () => false, rng = Math.random,
   portalDoor: layPortalDoor = () => {}, soulTrap = () => {}, me = () => null, yaw = () => null, shake = () => {},
+  wantBodies = undefined, makeBodies = null,   // MWNPC10: the body lane's seams (a test's own)
 }) {
+  // MWNPC10 (bible/04-Characters/Morrowind-NPCs.md section 15a): HIM AND HIS HOST IN THEIR MORROWIND BODIES, on a lane of
+  // the court's own (drawBodies) - the host's billboard pass draws after it
+  const bodiesLane = createPopulationLane({ laneName: 'gate', renderer, ...(wantBodies ? { want: wantBodies } : {}), make: makeBodies });
+  const bossRec = {};
   let pass = null;
   try { if (gl) pass = new GateTelegraphRenderer(gl); } catch (e) { console.warn('[gate] the telegraph would not build', e?.message ?? e); pass = null; }
   /** WB11c: HIS HOST (scenes/gateHost.js) - its blows land on me through the door his own do (`land`), each its share,
@@ -1050,8 +1058,30 @@ export function createGateCourt({
     }),
     /** WBX2: the portal home, while it stands - where (the court's frame) and how far it has risen - or null. */
     portal: () => (portal ? { at: [...portal.at], rise: portal.rise } : null),
+    /**
+     * MWNPC10: THE BODIES, before the billboard pass the court's batches draw in (worldModes.js's dungeon pass): him -
+     * standing, his blow a swing as the relay's attack changes, struck a recoil, three times a man as his sprite is; fallen,
+     * dead on his corpse's flat - and his host (gateHost.js offerBodies). A billboard whose body stands casts alone.
+     */
+    drawBodies(canvas, proj, view, eye, dt) {
+      bodiesLane.frame();
+      const s = link.state();
+      if (s && s.day !== null && body?.tex) {
+        const look = creatureLook({ mobileType: bossLookOf(s.boss).mobile });
+        const shown = batch && batchShown ? batch : (s.fell && corpse ? corpse : null);
+        if (shown && look) {
+          const t = now(), act = bossAct(s, t, hurtAt);
+          bodiesLane.offer(rosterActor(bossRec, { id: 'boss', look, feet: shown.origin, yaw: s.yaw, moving: act.act === 'walk' || act.act === 'run', running: act.act === 'run',
+            swingKey: s.fell ? null : (s.atk?.at ?? null), hitKey: s.fell ? null : Math.max(hurtAt, courtFlashAt), dead: s.fell ? 2 : 0,
+            scale: (body.scale ?? 1) * (profileOf(s).size ?? 1) }), shown);
+        }
+        host.offerBodies(bodiesLane);
+      }
+      bodiesLane.draw(canvas, proj, view, eye, dt);
+    },
     /** Out of the court: the body put away, the bar hidden, the fight forgotten (the texture is kept - the next court wears it). */
     leave() {
+      bodiesLane.destroy();   // MWNPC10: and the bodies
       if (healOwed.size) sendOwed(now());   // GATE-HEAL: what my mates healed in me goes before the court is put away
       spoils?.gather();   // WB5: whatever is still on the floor goes into the pack - never lost to a door, a death or the day's end
       if (batch) { renderer?.destroyBillboardBatch?.(batch); batch = null; batchShown = false; }

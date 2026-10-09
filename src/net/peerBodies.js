@@ -365,7 +365,10 @@ export class PeerBodies {
   has(id) { return this._standing(this._bodies.get(id)); }
 
   /** The body's height over its feet - the capsule scaled by the race's own (MW-D34) - or 0 without a standing body: the name pass's head. */
-  heightOf(id) { const b = this._bodies.get(id); return this._standing(b) ? (b.rig.bodyHeight?.() ?? CAPSULE_HEIGHT * (b.rig.raceHeightScale?.() ?? 1)) * (this._cam?.grow && b.feet ? Math.max(1, this._cam.grow(b.feet)) : 1) : 0; }   // OW-PEERS: a grown body's head, for its name
+  heightOf(id) { const b = this._bodies.get(id); return this._standing(b) ? (b.rig.bodyHeight?.() ?? CAPSULE_HEIGHT * (b.rig.raceHeightScale?.() ?? 1)) * (this._cam?.grow && b.feet ? Math.max(1, this._cam.grow(b.feet)) : 1) * this._scaleOf(b) : 0; }
+
+  /** MWNPC10: a body's own scale (the lane's `scaleOf`), 1 without one. */
+  _scaleOf(b) { const s = this._cam?.scaleOf ? this._cam.scaleOf(b.id) : 1; return s > 0 ? s : 1; }   // OW-PEERS: a grown body's head, for its name
 
   /** Why a look has no body - a person's, or (AUDIT E7) a wolf's by the pose and glyphs it is keyed on - or null. */
   failureOf(look, shown = null, glyphs = null) {
@@ -736,8 +739,9 @@ export class PeerBodies {
 
   /** The bodies, after the local one (the same pass, MW-D24) - the standing ones. INVIS-LOOK: not a CONCEALED peer's -
    *  that one is drawn translucent after the world's opaque draws (drawVeiled), with the camera kept here. */
-  draw(canvas, { proj, view, eye, flashOf = null, grow = null, up = null, fxOf = null }) {
-    const c = this._cam ?? (this._cam = { canvas: null, proj: null, view: null, eye: null, flashOf: null, grow: null, up: null, fxOf: null });
+  draw(canvas, { proj, view, eye, flashOf = null, grow = null, up = null, fxOf = null, scaleOf = null }) {
+    const c = this._cam ?? (this._cam = { canvas: null, proj: null, view: null, eye: null, flashOf: null, grow: null, up: null, fxOf: null, scaleOf: null });
+    c.scaleOf = scaleOf;   // MWNPC10: a body drawn larger than itself, by its id (the lane's actor `scale`)
     c.canvas = canvas; c.proj = proj; c.view = view; c.eye = eye; c.flashOf = flashOf;
     c.fxOf = fxOf;   // MWNPC5: a body's tells by its id (a foe's glint, elite glow, dissolve - characters/npcBodies.js)
     c.grow = grow; c.up = up;   // OW-PEERS (FIELD BUGS 2026-10-01 #11): under the Overworld each body drawn its grow times about its feet, leaned as the traveller's own is (drawThird's OW-BIG and AUDIT OW3 J6)
@@ -769,7 +773,7 @@ export class PeerBodies {
       if (!this._standing(b) || !b.veil !== !veiled) continue;
       // WB9h: out of the view (the frustum's sides and near, the body's own reach): nothing to draw - the sprite pass
       // has no such test. A view that is no lens (a stub's) keeps the old test alone: behind the eye.
-      const g = this._cam?.grow ? Math.max(1, this._cam.grow(b.feet)) : 1;   // OW-PEERS
+      const g = (this._cam?.grow ? Math.max(1, this._cam.grow(b.feet)) : 1) * this._scaleOf(b);   // OW-PEERS; MWNPC10: and its own scale
       if (this._planesOk) { if (!this._sees(b, 0, g)) continue; }
       else if (view && view.length === 16) {
         const f = b.feet, vz = view[2] * f[0] + view[6] * f[1] + view[10] * f[2] + view[14];

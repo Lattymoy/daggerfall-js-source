@@ -27134,6 +27134,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     },
     // WB4: the telegraph on the court's floor, in the dungeon arm's world pass - fogged as the floor is; WB6b: and the
     // air's life after it (the embers and the ash, render/deadlands.js drawLife), in the same air and the sky's light
+    drawGateBodies: (canvas, proj, view, eye, dt) => { gateCourt?.drawBodies(canvas, proj, view, eye, dt); },   // MWNPC10: the court's creatures in their Morrowind bodies
     drawGateCourt: ({ proj, view, eye }) => {
       const fog = courtFogNow();
       const told = gateCourt?.drawPass(proj, view, eye, performance.now() / 1000, fog);

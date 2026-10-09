@@ -89,14 +89,15 @@ export function createNpcBodies({ renderer, enabled = () => true, generation = (
   // MWNPC5b: what a host knows of an actor beyond its pose, by its lane id - the concealment its billboard would have
   // drawn (ECV1), its hit flash, its tells (characters/foeBodies.js foeFx) and whether it is dead (the living stand
   // first: PeerBodies' priority) - one record an actor, rewritten each frame
-  /** @type {Map<string, { conceal: any, flash: number, fx: any, dead: boolean, frame: number }>} */
+  /** @type {Map<string, { conceal: any, flash: number, fx: any, dead: boolean, scale: number, frame: number }>} */
   const info = new Map();
   let frame = 0;
   const seen = (id) => info.get(id);   // read for the actors offered this frame (the sync's) and the bodies standing (the draw's) - a lingering body is not drawn
   const syncOpts = { priority: (id) => !seen(id)?.dead, conceal: (id) => seen(id)?.conceal ?? null };
   const flashOf = (id) => seen(id)?.flash ?? 0;
   const fxOf = (id) => seen(id)?.fx ?? null;
-  const drawOpts = { proj: null, view: null, eye: null, flashOf, fxOf };
+  const scaleOf = (id) => seen(id)?.scale ?? 1;   // MWNPC10: an actor drawn larger than itself (the gate's boss)
+  const drawOpts = { proj: null, view: null, eye: null, flashOf, fxOf, scaleOf };
   const lane = () => {
     const t = tier();
     const want = Object.prototype.hasOwnProperty.call(tiers, t) ? t : NPC_BODIES_DEFAULT;   // an unknown tier stands under the default
@@ -117,7 +118,8 @@ export function createNpcBodies({ renderer, enabled = () => true, generation = (
     },
     /**
      * One actor offered: `lane` its population ('foe', 'watch', 'folk', ...), `actor` { id, look, feet, yaw, moving,
-     * running, drawn, swings, strike, casts, castRange, hits, dead }. An actor with no look or no feet is not offered.
+     * running, drawn, swings, strike, casts, castRange, hits, dead } - and MWNPC10 `scale`, drawn that many times its
+     * size about its feet (1 when absent). An actor with no look or no feet is not offered.
      * MWNPC5b: `conceal` the ECV1 visual its billboard would draw concealed (null: plain), `flash` its hit flash, `fx`
      * its tells (the quad's).
      * @param {string} laneName @param {any} actor @param {any} [conceal] @param {number} [flash] @param {any} [fx]
@@ -127,8 +129,9 @@ export function createNpcBodies({ renderer, enabled = () => true, generation = (
       const id = npcPeerId(laneName, actor.id);
       peers.push({ id, name: '', told: true, look: actor.look, shown: npcShown(actor) });
       let r = info.get(id);
-      if (!r) info.set(id, (r = { conceal: null, flash: 0, fx: null, dead: false, frame: 0 }));
+      if (!r) info.set(id, (r = { conceal: null, flash: 0, fx: null, dead: false, scale: 1, frame: 0 }));
       r.conceal = conceal; r.flash = flash > 0 ? flash : 0; r.fx = fx; r.dead = !!actor.dead; r.frame = frame;
+      r.scale = actor.scale > 0 ? actor.scale : 1;   // MWNPC10
     },
     /** The frame's actors to their bodies. @param {number} dt @param {number[]|null} eye */
     end(dt, eye) { lane()?.sync(peers, sceneOf, dt, eye, syncOpts); },

@@ -104,7 +104,7 @@ Each line is a slice's acceptance, not an aspiration:
 | MWNPC7 TOWNSFOLK | walkers and living residents, a wardrobe by FACTION sgroup that actually varies (distinct records and dyes per persona) (the WALKERS SHIPPED, section 12: a wardrobe per outfit variant, dyed per spawn - the living residents indoors are MWNPC8's standing people) | world.js, exterior.js, worldModes.js (living residents indoors) |
 | MWNPC8 STANDING PEOPLE | street, interior, dungeon and quest StaticNPCs; children and vampires keep their sprite; `drawnFlat`'s nudity law honoured (8a SHIPPED, section 13a: the buildings' people; 8b SHIPPED, section 13b: the dungeons' and the street's; 8c SHIPPED, section 13c: exterior.js's and the quests' stands) | all four |
 | MWNPC9 CREATURES | CREA records, creature skeletons and their own .kf, the match table with its declared misses (9a SHIPPED, section 14a: the body; 9b SHIPPED, section 14b: the rig, the match, the hosts) | dungeonContext.js, world.js, worldModes.js, exterior.js |
-| MWNPC10 THE REST | crews, road parties, siege, gate court, the broker | their hosts |
+| MWNPC10 THE REST | crews, road parties, siege, gate court, the broker (10a SHIPPED, section 15a: the gate court; the broker keeps her guise) | their hosts |
 
 Click and talk boxes keep the billboard's size (they are the classic
 game's); the arena crowd stays flats.
@@ -1005,3 +1005,44 @@ pinned in mwnpc5_foes.
 THE FOUR HOSTS for the creatures: dungeonContext.js, exteriorFoes.js
 (world.js's and worldModes.js's interiors), and exterior.js (its pool is
 exteriorFoes.js) - WIRED, through the foe lane they already run.
+
+## 15. MWNPC10 - THE REST
+
+The populations no foe pool drives: the gate's boss and host (a relay's),
+a ship's crew, the roads' parties, the siege's people, the broker. They
+keep no foe record - no attack count, no hit marks, no entity - so their
+actors are `characters/rosterBodies.js` rosterActor's: the look the
+caller's, and a swing or a recoil counted on the record each time a key
+the host already changes moves to a new value (the relay's attack time,
+the time a blow met them; a NaN or a held value counts nothing).
+
+### 15a. The gate's boss and his host (SHIPPED 2026-10-09)
+
+- THE COURT'S LANE (`scenes/gateCourt.js` drawBodies, a 'gate'
+  population lane of its own). Him: offered while his sprite stands, on
+  his billboard - walking or running as his act says, his blow a swing as
+  the relay's attack changes, struck a recoil (his hurt and the court's
+  flash), and SCALED: three times a man, his sprite's own scale times the
+  fight's size, through the lane's new per-actor `scale` (PeerBodies
+  draws a body that many times its size about its feet - drawThird's
+  `grow` - and heads it that much higher). Fallen, dead, on his corpse's
+  flat. His host (`scenes/gateHost.js` offerBodies): each shown body its
+  creature off its mobile, standing or falling (dead), on its own
+  billboard; one its mobile has no match for (the Flesh Atronach) keeps
+  its sprite. The dungeon pass (worldModes.js) draws them before the
+  billboards their batches ride (`extraBillboards`); the court's leave
+  lets the lane go. Him: the Daedra Lord's match, dremora_lord.
+- THE BROKER (`scenes/sigilBrokerPool.js`) keeps her sprite: she is the
+  Seducer IN HER MORTAL GUISE, and the match would stand her as the
+  winged twilight she is hiding.
+
+PROVEN. `test/mwnpc10_gate.test.js` (4): rosterActor's counts (a held
+key one swing, NaN none, a recoil each new blow), its dead, scale and run;
+a real court over a recording lane - him and the Imp offered their
+creatures, him at his sprite's scale, the Flesh Atronach not offered, his
+billboard cast-only under his body, the Imp's swing and recoil, the
+fallen offered dead and then not, the lane let go at leaving; the scale
+reaching drawThird on a lane of stub rigs; and by source the dungeon
+pass's order and the broker's guise. `tools/mutants/mwnpc10a.json`: 18
+mutants, 18 dead. Two mutant records re-aimed by content (OW-PEERS'
+grow, INVISLOOK's camera record).
