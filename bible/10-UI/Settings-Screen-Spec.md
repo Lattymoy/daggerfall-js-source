@@ -977,8 +977,8 @@ Settings > Video and the grass under Features > Sight; "the graphics" were behin
 This supersedes section 1's category map and section 10.
 
 - **One map, tabs by subject** (`ui/settingsMap.js` `CATEGORIES`): Graphics, Gameplay, Combat, World, Interface,
-  Audio, Controls, Accessibility, Mods & files - each a title, a line, and SECTIONS (a title, a line, its items in the
-  order they draw). An item is one of DFU's keys (`Section/Key`), a Features row (`feat:<id>`), one of the port's own
+  Audio, Controls, Accessibility, Mods & files - each a title and SECTIONS (a title and its items in the order they
+  draw). An item is one of DFU's keys (`Section/Key`), a Features row (`feat:<id>`), one of the port's own
   rows (`port:<id>`, the id each row carries as `dataset.opt`), a card (`card:morrowind`, `card:packs`,
   `card:peerSprites`, `card:nightSounds`) or one of the screen's own pieces (`preset:graphics`, `link:overhauls`,
   `bindings`, `mods-index`). THE MAP IS TOTAL AND DISJOINT over all three kinds of option: every DFU key, every
@@ -987,8 +987,8 @@ This supersedes section 1's category map and section 10.
   in that row's own section and draws nothing (FT13). `keysOf`/`categoryOf`/`orderOf` still answer DFU's keys alone.
 - **Every option is a row of one shape** - its name, its line, its control on the right - whichever store keeps it: DFU's
   `settingRow`, the port's rows, and a Features row as `featureTile` (its name, its labels, its note's first sentence,
-  its bar, its drawer under it). A press on a Features row's name picks it for the help pane (`featureCard`: the whole
-  note, when it takes effect, where it lives, which store keeps it, a mod's shown settings and keys).
+  its bar, its drawer under it). A press on a Features row's name picks it for the help pane (`featureCard`: where it
+  lives, its note, when it takes effect, a mod's keys).
 - **The toolbar over the rows**: one SEARCH over every tab - its finds under "Tab > Section" heads, the rail lighting
   no tab while it reads them all; FILTERS - All, Changed (a count of what stands off how the game ships), and the
   Features home's three kinds (Enhanced, Mods, Daggerfall Unity); and the actions on everything - All off and its
@@ -1001,8 +1001,8 @@ This supersedes section 1's category map and section 10.
   (`applyGraphicsPreset` over `tileStates`), so land view's second store, DFU's `Experimental/TerrainDistance`, moves
   with it and a row the room decides is left; the bar reads Custom when the rows stand at no preset. Render scale is
   its own choice under Display.
-- **The help pane with nothing picked is the tab's card**: its line, its sections (each a press that brings it into
-  view), "N options here, M changed", and Restore <Tab> defaults (`restoreTabDefaults`, asked): the tab's DFU keys,
+- **The help pane with nothing picked is the tab's card**: "N options · M changed" and Restore defaults
+  (`restoreTabDefaults`, asked): the tab's DFU keys,
   its Features rows with their parts and a mod's modules and dials, and its port rows' prefs - the other tabs, the
   room's rows and the All off keep left as they are.
 - **Mods & files**: Your files (the Morrowind card, the packs), Daggerfall Unity's mod system (its keys as rows), and
@@ -1025,3 +1025,11 @@ Gone with the doors: `paneFeatures`, `FEATURE_SECTIONS`/`featureSections`/`secti
 still named `features` (an old link, a probe) lands on Settings. Pins: `test/org2_options.test.js` (7) and the
 settings, features, controls and online pins re-aimed at the one screen; mutants `tools/mutants/org2.json` (18, all
 dead) and the re-aimed records in `audit27d`, `disc28e`, `ft18`, `modsonline1` and `mwa4`.
+
+**ORG2b - the copy cut (2026-10-09, Mac: "Reduce the amount of AI text bloat. Wayyyy too much overexplaining going
+on").** A tab and a section are their titles (`test/org2_options.test.js` holds the map to `id`/`title` and
+`id`/`title`/`sections`|`items`); no head over the page, no line under a section head; a DFU row is its label (ORG1's
+help line under it is gone - the help pane has it); a Features row is its name, labels and bar; the preset one short
+line; the tab card its count and Restore. The port's rows, the cards and the confirms are one short line each, the
+facts the pins hold kept (rest within 15 m at a fire, a tent or a bed; nothing shared from indoors).
+

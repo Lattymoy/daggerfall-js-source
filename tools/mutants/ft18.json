@@ -356,8 +356,8 @@
   {
     "name": "FT18-an-empty-search-says-nothing",
     "file": "src/ui/enhancedMenu.js",
-    "old": "    if (!found) body.append(empty('Nothing matches that'",
-    "new": "    if (false) body.append(empty('Nothing matches that'",
+    "old": "    if (!found) body.append(empty('No matches'));",
+    "new": "    if (false) body.append(empty('No matches'));",
     "tests": [
       "test/ft18_features.test.js"
     ]

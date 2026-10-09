@@ -818,10 +818,10 @@ function acts(list) {
 }
 
 /** A section that is set up but not yet backed. Shown, never hidden. */
-function empty(title, line) {
+function empty(title, line = null) {
   const e = el('div', 'empty');
   e.append(el('h3', null, title));
-  e.append(el('p', null, line));
+  if (line) e.append(el('p', null, line));
   return e;
 }
 
@@ -1674,7 +1674,7 @@ function itemNodes(item, ctx) {
   return [];
 }
 
-/** ORG2: a section's head - its title, how many rows it drew, and its line. Its id is the jump strip's anchor. */
+/** ORG2: a section's head - its title and how many rows it drew. Its id is the jump strip's anchor. */
 function sectionHead(tab, s, n, { path = false } = {}) {
   const head = el('div', 'sec-head');
   head.id = `sec-${tab.id}-${s.id}`;
@@ -1682,7 +1682,6 @@ function sectionHead(tab, s, n, { path = false } = {}) {
   t.append(el('h3', null, path ? `${tab.title} \u203a ${s.title}` : s.title));
   if (n) t.append(el('span', 'count', String(n)));
   head.append(t);
-  if (s.blurb && !path) head.append(el('p', 'sec-blurb', s.blurb));
   return head;
 }
 
@@ -1735,16 +1734,10 @@ function paintOptionsBody(body, { pause = false } = {}) {
         found += nodes.length;
       }
     }
-    if (!found) body.append(empty('Nothing matches that', 'Try a shorter word, a mod\u2019s author, or another filter.'));
+    if (!found) body.append(empty('No matches'));
     return;
   }
   const tab = CATEGORIES.find((c) => c.id === category) ?? CATEGORIES[0];
-  // the pause window is a third of the screen: the tab strip names the tab, so no head and no jump strip there
-  if (!pause) {
-    const head = el('div', 'opt-head');
-    head.append(el('h2', null, tab.title), el('p', null, tab.blurb));
-    body.append(head);
-  }
   if (tab.id === 'mods' && isOnlinePage()) body.append(el('p', 'meta opt-note', ONLINE_MODS_NOTE));   // MODS-ONLINE-2: said once, over the mods
   const { sections, fold } = tabSections(tab, ctx);
   if (sections.length >= 3 && !pause) {
@@ -1764,8 +1757,8 @@ function paintOptionsBody(body, { pause = false } = {}) {
     if (many) body.append(sectionHead(tab, s, n));
     body.append(...nodes);
   }
-  if (!sections.length) body.append(empty(optFilter === 'changed' ? 'Nothing changed here' : 'Nothing here', optFilter === 'all' ? 'This tab has nothing to show here.' : 'Nothing on this tab passes the filter.'));
-  if (pause) body.append(el('p', 'meta opt-note', 'In a game this shows what takes effect while you play; the main menu\u2019s Settings holds every option.'));   // PX10: the closing line says so
+  if (!sections.length) body.append(empty(optFilter === 'changed' ? 'Nothing changed' : 'Nothing here'));
+  if (pause) body.append(el('p', 'meta opt-note', 'More options in the main menu\u2019s Settings.'));   // PX10: the closing line says so
   // the tiers a tab folds: SAVED FOR LATER and NOT AVAILABLE HERE (SO1), counted and remembered per tab
   if (!pause) {
     for (const [tier, title, blurb] of TIER_GROUPS) {
@@ -1781,8 +1774,8 @@ function optionsToolbar(body, { pause = false } = {}) {
   const search = el('input', 'opt-search');
   search.type = 'search';
   search.id = 'opt-search';   // AUDIT 32 P3: a repaint gives the caret back by id
-  search.placeholder = 'Search every setting';
-  search.setAttribute('aria-label', 'Search every setting');
+  search.placeholder = 'Search settings';
+  search.setAttribute('aria-label', 'Search settings');
   search.value = optQuery;
   search.oninput = () => {
     discardControlsStaging();   // FIX-F: a search repaints the page - a walk away from the bindings, which drops what they staged
@@ -1817,8 +1810,7 @@ function optionsToolbar(body, { pause = false } = {}) {
 /** ORG2: the one reset of everything - DFU's settings as Daggerfall Unity ships them, and every Features row, part, mod
  *  module and dial as the game ships them (FEATURES-DEFAULTS). Your interface, text size and key bindings are not
  *  options here, and are left alone. */
-export const RESET_ALL_ASK = 'Every setting, enhancement and mod goes back to how the game ships it - on every tab. '
-  + 'Your UI Overhaul, text size and key bindings are left alone. Online, the rows the room decides stay as they are.';
+export const RESET_ALL_ASK = 'Every setting and mod goes back to its default. Your interface, text size and key bindings are kept.';
 function resetEverything() {
   resetToDefaults(); _eff = null;
   featuresDefaults();
@@ -1908,38 +1900,19 @@ function paneSettings(pane, { pause = false } = {}) {
  * Settings row "Interface Style" and its help. Plain Enhanced went with PLUS-ONLY; the interface is chosen on the
  * Overhauls page's UI Overhaul card alone (Classic, Enhanced Plus, GrimoireUI - systems/overhauls.js uiChoiceUrl, the
  * SKIN-CARRY law's one home now), which both skins' boot rails and the pause menu carry. */
-/** ORG2: THE TAB'S CARD, the help pane with no row picked - what the tab holds, its sections (each a press that brings
- *  it into view), how many of its options you changed, and a Restore of its own defaults. */
+/** ORG2: THE TAB'S CARD, the help pane with no row picked - how many options it holds, how many you changed, and a
+ *  Restore of its own defaults. */
 function categoryCard({ pool = portPool(), pause = false } = {}) {
   const cat = CATEGORIES.find((c) => c.id === category) ?? CATEGORIES[0];
   const d = el('div', 'dcard');
   d.append(el('h3', null, cat.title));
-  d.append(el('p', null, cat.blurb));
   const ctx = { pool, pause };
-  const drawn = cat.sections.filter((s) => s.items.some((item) => {
-    if (isSettingItem(item)) return !featureForControl('settings', item) && drawsHere(item, pause);
-    if (item.startsWith('port:')) return pool.has(item.slice(5));
-    return !(pause && item === 'link:overhauls');
-  }));
-  if (drawn.length > 1) {
-    const dl = el('dl', 'sec-index');
-    for (const s of drawn) {
-      const dt = el('dt');
-      const b = el('button', 'sec-indexbtn', s.title);
-      b.type = 'button';
-      b.onclick = () => { sheetOpen = false; render(); globalThis.requestAnimationFrame?.(() => document.getElementById(`sec-${cat.id}-${s.id}`)?.scrollIntoView({ block: 'start' })); };
-      dt.append(b);
-      dl.append(dt, el('dd', null, s.blurb));
-    }
-    d.append(dl);
-  }
   const changed = cat.sections.reduce((n, s) => n + s.items.filter((i) => !(isSettingItem(i) && featureForControl('settings', i)) && itemChanged(i, ctx.pool)).length, 0);
-  d.append(el('p', 'status', `${tabCount(cat, ctx)} options here, ${changed} changed from how the game ships.`));
-  const b = el('button', 'act', `Restore ${cat.title} defaults`);
+  d.append(el('p', 'status', `${tabCount(cat, ctx)} options \u00b7 ${changed} changed`));
+  const b = el('button', 'act', 'Restore defaults');
   b.onclick = () => ask(
     `Restore ${cat.title} Defaults`,
-    `Every option on the ${cat.title} tab goes back to how the game ships it. The other tabs are left alone. `
-    + 'Online, the rows the room decides stay as they are.',
+    'Every option on this tab goes back to its default.',
     'Restore',
     () => { restoreTabDefaults(cat); },
   );
@@ -1958,7 +1931,7 @@ function graphicsPresetRow() {
   row.dataset.opt = 'graphicsPreset';
   const main = el('div', 'row-main');
   main.append(el('div', 'row-name', 'Quality preset'));
-  main.append(el('div', 'row-note', now ? now.note : 'Custom: your own mix below. A preset sets View distance, Grass, Cloud quality, Ground sharpness and Water quality at once.'));
+  main.append(el('div', 'row-note', 'View distance, grass, clouds, ground sharpness and water.'));
   row.append(main);
   const ctl = el('div', 'ctl');
   const seg = el('div', 'ft-seg');
@@ -2022,8 +1995,7 @@ function modsIndexRows() {
   });
 }
 
-/** ORG2: A FEATURES ROW'S CARD in the help pane - what it does in full, when it takes effect, where it stands, which
- *  store keeps it, and for a mod how many of its settings show and its keys. */
+/** ORG2: A FEATURES ROW'S CARD in the help pane - where it lives, what it does, when it takes effect, a mod's keys. */
 function featureCard(f) {
   const c = resolveControl(f);
   const d = el('div', 'dcard ft-card');
@@ -2034,20 +2006,14 @@ function featureCard(f) {
   if (f.effect) d.append(el('p', 'ft-rail-effect', f.effect));
   const kv = el('dl', 'ft-rail-kv');
   const pair = (k, v) => { kv.append(el('dt', null, k), el('dd', null, v)); };
-  pair('Stored', c.store === 'prefs' ? 'Port preferences'
-    : c.store === 'mods' ? `${MOD_SETTINGS[c.vendor].title}\u2019s own modsettings`
-      : 'Daggerfall Unity settings.ini');
   const rv = c.store === 'mods' ? c.vendor
     : (Array.isArray(c.also) ? c.also.find((a) => a.store === 'mods')?.vendor : null) ?? null;
   if (rv) {
-    const n = Object.keys(MOD_SETTINGS[rv].keys).length;
-    const shown = 1 + modModules(rv).length + modDials(rv).length;
-    pair('Settings', `${shown} of ${n} shown \u2013 the rest keep the mod\u2019s own values`);
-    // UXB1-F: and its keys, where a player reading about the mod is already looking
+    // UXB1-F: a mod's keys, where a player reading about the mod is already looking
     const keys = modKeyRows(rv, bindings());
     if (keys.length) pair('Keys', `${keys.map((k) => `${k.label}: ${k.key}`).join(' · ')} \u2013 ${FEATURE_KEYS_NOTE}`);
   }
-  d.append(kv);
+  if (kv.children?.length) d.append(kv);
   return d;
 }
 
@@ -2113,17 +2079,12 @@ function settingRow(key, { compact = false, home = false } = {}) {
   const blocked = widget === 'blocked';
 
   const row = el('div', `row${key === pickedKey ? ' on' : ''}${blocked ? ' blocked' : ''}`);
-  row.dataset.key = key;   // ORG1: the section a page files it under reads it
 
   // The raw `Section/Key` used to sit under every label. It appears in
   // exactly ONE place now - the help panel - which is where it was
   // always meant to be and where the player who wants it will look.
   const main = el('button', 'row-main');
   main.append(el('div', 'row-name', labelOf(key)));
-  // ORG1 ("proper organization and detail"): the setting's own line under its name, as the port's rows have always
-  // carried theirs - a player scanning a section reads what each row does without opening it. The help panel keeps the
-  // whole of it, the tier and the `[Section] Key`.
-  if (!compact) { const help = helpOf(key); if (help && help !== labelOf(key)) main.append(el('div', 'row-note', help)); }
   main.onclick = () => { pickedKey = key; sheetOpen = true; render(); };
   row.append(main);
 
@@ -2399,7 +2360,7 @@ function hudScaleRow() {
   const row = el('div', 'row');
   row.dataset.opt = 'hudScale'; row.dataset.pref = 'hudScale';   // ORG2
   const main = el('div', 'row-main');
-  main.append(el('div', 'row-name', 'Gameplay HUD scale'), el('div', 'row-note', 'The size of the compass, health bars and effect icons. Takes effect at once.'));
+  main.append(el('div', 'row-name', 'Gameplay HUD scale'), el('div', 'row-note', 'Compass, bars and effect icons.'));
   row.append(main);
   const ctl = el('div', 'ctl');
   const val = el('span', 'val', `${hudScaleNow().toFixed(2)}\u00d7`);
@@ -2426,8 +2387,8 @@ function hudLayoutRows() {
   const main = el('button', 'row-main');
   const locked = hudLocked();
   main.append(el('div', 'row-name', 'Lock UI'), el('div', 'row-note', locked
-    ? 'On: the HUD stays where it is. Turn it off (or press Alt+U in game) to move the health bars, hotbar, chat, compass, Overworld panel and the rest.'
-    : 'Off: in play, free the mouse and drag any outlined piece. Double-click a piece to put it back. Lock it again (or press Alt+U) when you are done.'));
+    ? 'Turn off (or press Alt+U) to move HUD pieces.'
+    : 'In play, drag a piece to move it; double-click to put it back.'));
   const flip = () => { setHudLocked(!hudLocked()); render(); };
   main.onclick = flip;
   lockRow.append(main);
@@ -2444,8 +2405,8 @@ function hudLayoutRows() {
   const bmain = el('button', 'row-main');
   const split = hudBarsSplit();
   bmain.append(el('div', 'row-name', 'Move bars separately'), el('div', 'row-note', split
-    ? 'On: the health, magicka and fatigue bars each move on their own while the UI is unlocked.'
-    : 'Off: the health, magicka and fatigue bars move together as one piece.'));
+    ? 'Each bar moves on its own.'
+    : 'The three bars move as one.'));
   const bflip = () => { setHudBarsSplit(!hudBarsSplit()); render(); };
   bmain.onclick = bflip;
   barsRow.append(bmain);
@@ -2508,17 +2469,14 @@ function portRowsControls() {
   const out = [];
   // PAD-CURSOR: a controller's, on every device and both skins - the touch knobs below stay a finger's device's
   out.push(prefRow('padCursorAssist', 'Controller cursor assist',
-    'On: the controller\u2019s menu cursor eases in, speeds up on a long push, slows over a button and settles on it '
-    + 'when you let go. Off: Daggerfall\u2019s own cursor, one steady speed.'));
+    'Eases the controller\u2019s menu cursor onto buttons.'));
   if (!isTouchDevice()) return out;
   const times = (v) => `${v.toFixed(2)}\u00d7`;
   out.push(stepRow('touchLookSensitivity', 'Look sensitivity',
-    'How far a thumb\u2019s drag turns the camera, on top of the mouse sensitivity in Controls. '
-    + 'A drag is measured against the screen\u2019s height, so the same sweep turns the same on any phone.',
+    'How far a drag turns the camera.',
     { min: 0.25, max: 4, step: 0.25, fmt: times }));
   out.push(prefRow('touchAnalogStick', 'Analog stick',
-    'The stick\u2019s throw is your speed: a little is a walk, most of the way is a run. '
-    + 'Off is the eight-way stick - any push is a full step.'));
+    'Push farther to run. Off: any push is a full step.'));
   // the anchor is a two-way choice, not a switch: a row whose button names the OTHER option
   {
     const fixed = getPref('touchStickAnchor') === 'fixed';
@@ -2527,8 +2485,8 @@ function portRowsControls() {
     const main = el('button', 'row-main');
     main.append(el('div', 'row-name', 'Stick position'));
     main.append(el('div', 'row-note', fixed
-      ? 'Fixed: the stick sits bottom-left and waits for your thumb.'
-      : 'Floating: the stick appears wherever your thumb lands on the left half.'));
+      ? 'Bottom-left.'
+      : 'Wherever your thumb lands.'));
     const flip = () => { setPref('touchStickAnchor', fixed ? 'float' : 'fixed'); render(); };
     main.onclick = flip;
     row.append(main);
@@ -2540,8 +2498,7 @@ function portRowsControls() {
     out.push(row);
   }
   out.push(prefRow('touchGyroLook', 'Gyro aim',
-    'Turn the phone to turn the camera, a degree for a degree, on top of the drag - fine aim without lifting a thumb. '
-    + 'iPhones ask permission for motion the first time.', {
+    'Tilt the phone to aim.', {
     // iOS grants motion only from a user gesture - this click is one.
     onChange: (on) => { if (on) { try { globalThis.DeviceMotionEvent?.requestPermission?.()?.catch?.(() => {}); } catch { /* not iOS */ } } },
   }));
@@ -2549,7 +2506,7 @@ function portRowsControls() {
     'Degrees of camera per degree of phone.',
     { min: 0.25, max: 4, step: 0.25, fmt: times }));
   out.push(prefRow('touchHaptics', 'Haptics',
-    'A short pulse on a button, when a held finger arms a swing, and when a lock lands. Phones that can.'));
+    'A short buzz on presses, swings and locks.'));
   // TOUCH-BUTTONS (2026-09-27, Discord: "I haven't been able to remap the android "buttons" on the bottom right of the
   // screen. I would much rather use a button to attack"): the corner's three slots, right to left. Changed here while
   // playing, the corner is re-laid as soon as no finger holds one of its buttons.
@@ -2558,13 +2515,12 @@ function portRowsControls() {
     const slotNames = ['Corner button', 'Second button', 'Third button'];
     TOUCH_BUTTON_SLOTS.forEach((slot, i) => {
       out.push(slotChoiceRow(slot, slotNames[i],
-        i === 0 ? 'The bottom-right buttons, from the corner in. Attack swings (or casts a readied spell) with one press - the swipe still works too.' : null,
+        i === 0 ? 'The bottom-right buttons, from the corner in.' : null,
         choices, () => touchButtonSlots(getPref)[i].id));
     });
   }
   out.push(prefRow('touchFullscreen', 'Fullscreen on touch',
-    'The first touch asks the browser for fullscreen and a landscape lock. Where the browser will not '
-    + '(Safari on iPhone), add the game to the home screen instead - it opens fullscreen from there.'));
+    'Fullscreen on the first touch. On iPhone, add the game to the home screen.'));
   return out.filter(Boolean);   // FT13: a pref that lives on the home draws nothing
 }
 
@@ -2584,8 +2540,8 @@ function portRowsInterface({ pause = false } = {}) {
     const main = el('button', 'row-main');
     main.append(el('div', 'row-name', 'Target bar'));
     main.append(el('div', 'row-note', blade
-      ? 'Blade: the twin blades under the compass recede toward their hub as the foe\u2019s health falls.'
-      : 'Bar: the plain track under the compass. Takes effect at once.'));
+      ? 'Twin blades under the compass.'
+      : 'A plain bar under the compass.'));
     const flip = () => { setPref('foeBarStyle', blade ? 'bar' : 'blade'); render(); };
     main.onclick = flip;
     row.append(main);
@@ -2597,8 +2553,7 @@ function portRowsInterface({ pause = false } = {}) {
     out.push(row);
   }
   out.push(prefRow('showFps', 'FPS counter',
-    'Frames a second in the top-right corner, with the frame\u2019s milliseconds and the slowest frame of the '
-    + 'last second. Takes effect at once. ?fps in the address bar forces it on for a probe.'));
+    'Frame rate in the top-right corner.'));
   if (!pause) out.push(prefRow('skipStartVideo', SKIP_START_VIDEO_NAME, SKIP_START_VIDEO_NOTE));   // UXB1-A: read at launch, so the front door's alone - as the skin's
   return out.filter(Boolean);   // FT13
 }
@@ -2606,9 +2561,7 @@ function portRowsInterface({ pause = false } = {}) {
 /** UXB1-A (2026-09-25, the UX backlog: '"Skip Start Video" in the options ... Disabled by default, of course.'):
  *  the row's words. The switch is uiPrefs' skipStartVideo, read by main.js at the front door. */
 export const SKIP_START_VIDEO_NAME = 'Skip start video';
-export const SKIP_START_VIDEO_NOTE = 'Open straight onto the main menu, without the opening film (on the classic skin, '
-  + 'without the splash video before the title too). The menu\u2019s music still plays. Takes effect the next time '
-  + 'the game starts.';
+export const SKIP_START_VIDEO_NOTE = 'Open straight onto the main menu. Applies next launch.';
 
 /** QREPAIR (2026-09-24, Mac: "Add a quest refresh option to settings" - "Repair active quests"): THE GAME CATEGORY'S
  *  PORT ROW. The repair runs over a game in play, so its door is the PAUSE's settings (the host hands
@@ -2616,10 +2569,9 @@ export const SKIP_START_VIDEO_NOTE = 'Open straight onto the main menu, without 
  *  lives - nothing hidden. The confirm is the one sheet every destructive-looking press here takes (`ask`), and the
  *  repair's own line replaces the row's note until the menu is mounted again. */
 let questRepairSaid = null;
-export const QUEST_REPAIR_NOTE = 'Puts back the people, items, foes and map marks your active quests are missing. Your progress is kept.';
+export const QUEST_REPAIR_NOTE = 'Restores missing quest people, items, foes and map marks. Progress is kept.';
 export const QUEST_REPAIR_AWAY = 'In a game: open Settings from the pause menu.';
-export const QUEST_REPAIR_ASK = 'Puts back the people, items, foes and map marks your active quests are missing. '
-  + 'Nothing a quest did on purpose is undone, and your progress is kept.';
+export const QUEST_REPAIR_ASK = 'Restores missing quest people, items, foes and map marks. Progress is kept.';
 function portRowsGame({ pause = false } = {}) {
   const can = pause && typeof hooks?.repairQuests === 'function';
   const row = el('div', 'row');
@@ -2680,8 +2632,7 @@ function tierGroup(catId, tier, title, blurb, keys) {
 
 
 /** MWA4: what the Morrowind files do, in the card's one line. */
-export const MW_CARD_LINE = 'Your own Morrowind files (Morrowind.bsa and Morrowind.esm, with Tribunal and Bloodmoon if you have them) '
-  + 'draw your character in 3D. They stay in this browser.';
+export const MW_CARD_LINE = 'Your Morrowind.bsa and Morrowind.esm draw your character in 3D. They stay in this browser.';
 /** MWA4: the arms' state in words - the one row the card keeps beside the data count. */
 export function morrowindArmsLine(armState) {
   if (armState?.active) return 'On';
@@ -2760,28 +2711,23 @@ export function morrowindCard({ count = morrowindDataCount(), armState = fpArm.s
 function peerSpritesCard() {
   const c = el('div', 'card');
   c.append(el('h3', null, 'Other players'));
-  c.append(el('p', 'meta',
-    'Players without a Morrowind body are drawn as the Eye of the Beholder sprite they picked, or, without one, '
-    + 'as their class (a Warrior looks like a Warrior, a Mage like a Mage), moving as they move.'));   // DISC23-B: the chosen set first, the class only for a player without one
+  c.append(el('p', 'meta', 'Players without a Morrowind body show as their chosen sprite, or their class.'));   // DISC23-B: the chosen set first, the class only for a player without one
   c.append(prefRow('peerClassSprites', 'Animated sprite', 'On: the sprite above. Off: the paperdoll.', { home: true }));
-  c.append(prefRow('peerAttackSounds', 'Attack sounds', 'On: hear other players\u2019 weapon swings. Off: silent, no matter how close.', { home: true }));   // PEER-FS1: the two peer-sound switches, beside the sprite one
-  c.append(prefRow('peerFootsteps', 'Footstep sounds', 'On: hear other players\u2019 footsteps as they walk. Off: silent, no matter how close.', { home: true }));
+  c.append(prefRow('peerAttackSounds', 'Attack sounds', 'Hear other players\u2019 weapon swings.', { home: true }));   // PEER-FS1: the two peer-sound switches, beside the sprite one
+  c.append(prefRow('peerFootsteps', 'Footstep sounds', 'Hear other players\u2019 footsteps.', { home: true }));
   // GATE-CROWD (2026-10-07, Mac: "some type of filter when there are too many people"): a crowded court, thinned
   c.append(choiceRow('gateCrowd', 'Crowd in the Burning Court',
-    'In the Burning Court, draw every other player, or only the nearest 12 or 24 - your party always. The fight is the same either way.',
+    'How many players the Burning Court draws. Your party always shows.',
     GATE_CROWD_TIERS.map((n) => [n, n ? `Nearest ${n}` : 'Everyone']), { home: true }));
   // SPELL-GIFT (2026-09-27, Tabitha: "Allow casting of buffs on players outside party"): the receiver's say
   c.append(prefRow('acceptStrangerSpells', 'Spells from strangers',
-    'On: players outside your party can cast healing and protective spells on you - Heal, Regenerate, Cure, Fortify, '
-    + 'Shield, Spell Absorption, the resistances, Jumping and Water Breathing, nothing else. Off: only your party can.', { home: true }));
+    'Let players outside your party cast healing and protective spells on you.', { home: true }));
   // REST-OPT (2026-09-27, Tabitha: "Allow party members to choose not to rest with their party")
   c.append(prefRow('restWithParty', 'Rest with my party',
-    'On: when a party member within 15 m sleeps a night at a fire, a tent or a bed, you sleep it too, with your own '
-    + 'healing. Off: you rest on your own, and the party rests without you.', { home: true }));   // AUDIT REST: REST5's night, no vote
+    'Sleep when a party member within 15 m sleeps at a fire, a tent or a bed.', { home: true }));   // AUDIT REST: REST5's night, no vote
   // TV3 (2026-09-28, bible/06-Systems/Travel-View.md): being SEEN - the region's travellers see where you are
   c.append(prefRow('showToTravellers', 'Show me to travellers in my region',
-    'On: when you are outdoors, players in your region see you on the overworld and the map, and you see them. '
-    + 'Off: only your party and players nearby know where you are, and you still see those who show themselves. '
+    'Outdoors, players in your region see you on the overworld and the map. '
     + 'Nothing is shared from indoors except with your party. Kept on this device.', { home: true }));   // AUDIT DEEP2 C5: the party pose rides from indoors too
   return c;
 }
@@ -2806,7 +2752,7 @@ function packsCard() {
   installVanillaEnhancedPack();   // VE4: the shipped mods are listed even before a host has registered the store
   const c = el('div', 'card');
   c.append(el('h3', null, 'Replacement packs'));
-  c.append(el('p', 'meta', 'Your own music (a folder of tracks named as DFU\u2019s replacement music expects), sounds, texture packs and Daggerfall Unity texture mods (.dfmod), stored in this browser like ARENA2. Nothing uploads.'));
+  c.append(el('p', 'meta', 'Your own music, sounds and texture packs (.dfmod), kept in this browser.'));
   let mods = attachedDfmods();
   const attached = mods.filter((m) => !m.shipped);   // VE4: what the player attached - the shipped mods are never removed
   const builtIn = mods.length - attached.length;
@@ -2835,7 +2781,7 @@ function packsCard() {
   const lighting = mods.filter(isIilMod);
   mods = mods.filter((m) => !isIilMod(m));
   c.append(el('h3', null, 'Lighting mod'));
-  c.append(el('p', 'meta', 'Improved Interior Lighting (ShortBeard, or BlazeBlue32\u2019s fixed version): warm, flickering lights in buildings and dungeons, fireplace lights and a warm torch - with shadows if you choose. Pick its .dfmod file (inside the download\u2019s Mods folder). Switch it on Modded lighting, in ' + optionPath('feat:modded-lighting') + '.'));   // ORG2
+  c.append(el('p', 'meta', `Improved Interior Lighting: warm lights in buildings and dungeons. Pick its .dfmod, then turn it on in ${optionPath('feat:modded-lighting')}.`));   // ORG2
   for (const m of lighting) {
     const row = el('div', 'card');
     row.append(el('p', null, `${m.title}${m.version ? ` ${m.version}` : ''}${m.author ? ` \u00b7 ${m.author}` : ''}`));
@@ -2898,8 +2844,8 @@ function packsCard() {
 function nightSoundsCard() {
   const c = el('div', 'card');
   c.append(el('h3', null, 'Night sounds'));
-  c.append(prefRow('nightCrickets', 'Crickets', 'On: the crickets chirp outdoors on clear nights. Off: silent.', { home: true }));
-  c.append(prefRow('distantHowl', 'Distant howl', 'On: the far-off howl near graveyards. Off: silent.', { home: true }));
+  c.append(prefRow('nightCrickets', 'Crickets', 'Outdoors on clear nights.', { home: true }));
+  c.append(prefRow('distantHowl', 'Distant howl', 'Near graveyards.', { home: true }));
   return c;
 }
 
@@ -3153,18 +3099,8 @@ function segBar(st, label) {
  *  pressed it in. (ORG2: which row the help pane reads is `pickedFeature`.) */
 let featureOpen = null;
 
-/** ORG2: a Features row's line in the list - its note's first sentence; the help pane carries the whole. */
-export function shortNote(note, max = 170) {
-  const s = String(note ?? '').trim();
-  const m = /^(.+?[.!?])(\s|$)/.exec(s);
-  const first = m ? m[1] : s;
-  if (first.length <= max) return first;
-  const cut = first.slice(0, max);
-  return `${cut.slice(0, Math.max(cut.lastIndexOf(' '), 40))}\u2026`;
-}
-
-/** FT14: one feature. ORG2: AS A ROW of the one Settings screen - its name, its labels and its note's first sentence
- *  on the left (a press picks it for the help pane), its bar on the right, and its drawer beneath. (Exported for
+/** FT14: one feature. ORG2: AS A ROW of the one Settings screen - its name and labels on the left (a press picks it for
+ *  the help pane, which carries its words), its bar on the right, and its drawer beneath. (Exported for
  *  DISC23-C's pins, which press its bar against a fake document.) */
 export function featureTile(f) {
   const c = resolveControl(f);
@@ -3182,7 +3118,6 @@ export function featureTile(f) {
   for (const k of KIND_ORDER) if (f.kinds.includes(k)) meta.append(el('span', `kind ${k}`, KINDS[k].label));
   if (st?.locked) meta.append(el('span', 'ft-tile-lock', 'online'));
   main.append(meta);
-  if (f.note) main.append(el('div', 'ft-tile-note', shortNote(f.note)));
   main.onclick = () => { pickedFeature = f.id; pickedKey = null; sheetOpen = true; render(); };
   t.append(main);
 
@@ -3281,9 +3216,7 @@ function featurePartsDrawer(parts) {
 // who turns everything off, plays, and quits comes back to a Restore that still knows. A tile the online room
 // decides is not touched (its bar refuses the press too), and a CHOICE with neither Off nor a classic value stays.
 export const FEATURES_RESTORE_PREF = 'featuresRestore';
-export const ALL_OFF_ASK = 'Every mod and enhancement goes to Off, or to Daggerfall\u2019s own where a row has no Off. '
-  + 'Restore puts back what you had. Choices that are never off, like the grass\u2019s style, stay as they are, and '
-  + 'online the rows the room decides stay on.';
+export const ALL_OFF_ASK = 'Every mod and enhancement goes to Off. Restore puts back what you had.';
 /** The moves All off makes: every tile not already at its classic segment and not locked. */
 export function allOffPlan(list = FEATURES) {
   const plan = [];

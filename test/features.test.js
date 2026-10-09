@@ -332,8 +332,8 @@ test('FT16: every control on a tile is a thumb\'s target where there is a thumb'
   const at = css.indexOf('@media (pointer: coarse) {\n  .step { width: 44px; height: 44px; }');
   assert.ok(at > 0, 'the coarse-pointer law is where it was');
   const law = css.slice(at, css.indexOf('\n}', at));
-  for (const sel of ['.ft-segb', '.ft-mchip', '.ft-tile-more', '.opt-search', '.opt-filters .chip', '.sec-jumpbtn', '.sec-indexbtn']) {
+  for (const sel of ['.ft-segb', '.ft-mchip', '.ft-tile-more', '.opt-search', '.opt-filters .chip', '.sec-jumpbtn']) {
     assert.ok(law.includes(sel), `${sel} is sized by the law, not by its own component block`);
   }
-  assert.match(law, /\.ft-segb, \.ft-mchip, \.ft-tile-more, \.opt-search, \.opt-filters \.chip, \.sec-jumpbtn, \.sec-indexbtn \{ min-height: 44px; \}/, 'FT18: the search field is a thumb\'s target too (ORG2: the filters, the jumps and the tab card\'s sections)');
+  assert.match(law, /\.ft-segb, \.ft-mchip, \.ft-tile-more, \.opt-search, \.opt-filters \.chip, \.sec-jumpbtn \{ min-height: 44px; \}/, 'FT18: the search field is a thumb\'s target too (ORG2: the filters and the jumps)');
 });

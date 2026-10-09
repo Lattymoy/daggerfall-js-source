@@ -45,7 +45,6 @@ test('FT13: a moved key draws nothing - the seam answers null, every caller appe
   assert.match(menu, /return \[mark\(settingRow\(item\)\)\]\.filter\(Boolean\);/, 'a tab\'s rows (FPS-VSYNC: the live ones and the next-launch ones, drawsHere)');
   assert.match(menu, /if \(isSettingItem\(item\)\) \{ if \(!featureForControl\('settings', item\) && drawsHere\(item, ctx\.pause\)\) n\+\+; \}/, 'the rail count is what the pane shows');
   assert.match(menu, /const r = ctx\.pool\.get\(item\.slice\(5\)\); if \(r && r\.dataset\.live !== '0'\) n\+\+;/, 'QREPAIR: a port row greyed here (the quest repair on the front door) is not one that works here');
-  assert.match(menu, /if \(isSettingItem\(item\)\) return !featureForControl\('settings', item\) && drawsHere\(item, pause\);/, 'the tab card lists the sections that draw');
   assert.match(menu, /for \(const key of keys\) put\(body, settingRow\(key\)\);/, 'the folded tiers');
   // FT14: a mod's CARD is gone with the Mods pane. The seam it proved - `put` appends only what it is
   // handed, so a moved key draws nothing - is now proved by the tile's drawer, which calls modRow the

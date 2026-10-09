@@ -59,10 +59,13 @@ const CARDS = ['card:morrowind', 'card:packs', 'card:peerSprites', 'card:nightSo
 test('ORG2: the map is TOTAL and DISJOINT over every option - each of DFU\'s keys, each Features row and each of the port\'s own rows stands in exactly one section of one tab (mutant: a row dropped, or placed twice)', () => {
   const seen = new Map();
   for (const t of CATEGORIES) {
-    assert.ok(t.title && t.blurb && t.sections.length, `${t.id} has a title, a line and sections`);
+    // Mac, on ORG2's first cut: "Wayyyy too much overexplaining" - a tab and a section are their titles, nothing more
+    assert.deepEqual(Object.keys(t), ['id', 'title', 'sections'], `${t.id} is a title and sections`);
+    assert.ok(t.title && t.sections.length, `${t.id} has a title and sections`);
     assert.equal(new Set(t.sections.map((s) => s.id)).size, t.sections.length, `${t.id}'s sections are named once`);
     for (const s of t.sections) {
-      assert.ok(s.title && s.blurb && s.items.length, `${t.id}/${s.id} has a title, a line and something in it`);
+      assert.deepEqual(Object.keys(s), ['id', 'title', 'items'], `${t.id}/${s.id} is a title and items`);
+      assert.ok(s.title && s.items.length, `${t.id}/${s.id} has a title and something in it`);
       for (const item of s.items) {
         assert.ok(!seen.has(item), `${item} stands in ${seen.get(item)} and in ${t.id}/${s.id}`);
         seen.set(item, `${t.id}/${s.id}`);

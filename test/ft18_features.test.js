@@ -215,7 +215,6 @@ test('FT18: online, All off leaves the room\'s rows as the room has them (mutant
     featuresAllOff();
     assert.equal(getPref('lootRarity'), true, 'forced on online, and untouched');
     assert.ok(!Object.hasOwn(getPref(FEATURES_RESTORE_PREF) ?? {}, 'loot-rarity'), 'and not kept - nothing to restore');
-    assert.match(ALL_OFF_ASK, /online the rows the room decides stay on/);
   } finally { delete globalThis.location; fresh(); }
 });
 
@@ -267,7 +266,7 @@ test('FEATURES-DEFAULTS (issue #399): online the room\'s rows stay as the room h
     globalThis.location = { search: '' };
     assert.equal(label('enhanced-ai'), 'On', 'and its shelf untouched - offline it is still the player\'s own, not the Off it ships');
   } finally { delete globalThis.location; fresh(); }
-  assert.match(RESET_ALL_ASK, /Online, the rows the room decides stay as they are\./);
+  assert.match(RESET_ALL_ASK, /key bindings are kept\./, 'and it says what it leaves');
   // ORG2: the button is the Settings toolbar's one reset - beside All off, asked first - and it runs this
   const menu = read('src/ui/enhancedMenu.js');
   const bar = menu.slice(menu.indexOf('function optionsToolbar('), menu.indexOf('\n}', menu.indexOf('function optionsToolbar(')));
@@ -336,7 +335,7 @@ test('FT18 by source: the pane\'s search filters in place and All off asks first
   assert.doesNotMatch(typing, /\brender\(\)/, 'it does not repaint the screen - the field keeps its keys');
   assert.match(menu, /if \(item\.startsWith\('feat:'\)\) \{ const f = FEATURES\.find\(\(x\) => x\.id === item\.slice\(5\)\); return f \? featureSearchText\(f\) : ''; \}/, 'a row is found by the words the Features search read');
   assert.match(menu, /\.flatMap\(\(item\) => itemNodes\(item, \{ \.\.\.ctx, any: true \}\)\);\s*\n\s*if \(!nodes\.length\) continue;/, 'a section left with nothing goes too');
-  assert.match(menu, /if \(!found\) body\.append\(empty\('Nothing matches that'/, 'and an empty search says so');
+  assert.match(menu, /if \(!found\) body\.append\(empty\('No matches'\)\);/, 'and an empty search says so');
   assert.match(bar, /\{ label: 'All off', onClick: \(\) => ask\('Turn Everything Off', ALL_OFF_ASK, 'All off', \(\) => \{ featuresAllOff\(\); \}\) \}/, 'All off is asked first');
   assert.match(bar, /\.\.\.\(kept && typeof kept === 'object' \? \[\{ label: 'Restore',/, 'Restore only while there is something to restore');
   assert.match(menu, /optQuery = '';   \/\/ FT18: a fresh visit searches nothing/);

@@ -207,7 +207,7 @@ test('the destructive actions ask first', () => {
   assert.match(src.slice(resetAt, resetAt + 200), /onClick: \(\) => ask\('Reset Everything', RESET_ALL_ASK, 'Reset', /,
     'Reset must ask - the classic screen does');
   // ORG2: and so does one tab's restore, from its card
-  const tabAt = src.indexOf("const b = el('button', 'act', `Restore ${cat.title} defaults`);");
+  const tabAt = src.indexOf("const b = el('button', 'act', 'Restore defaults');");
   assert.ok(tabAt > 0, 'the tab card carries its restore');
   assert.match(src.slice(tabAt, tabAt + 400), /b\.onclick = \(\) => ask\(\s*\n\s*`Restore \$\{cat\.title\} Defaults`/, 'a tab\'s restore asks too');
   const delAt = src.indexOf("label: 'Delete'");

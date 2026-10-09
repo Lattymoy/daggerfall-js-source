@@ -53,7 +53,7 @@ test('MENU T2: no player ever reads a raw ini identifier', () => {
   // the words this screen must never say about the port's own gaps
   const banned = /unsupported|broken|missing|not implemented|n\/a/i;
   for (const s of [...Object.values(LABELS), ...Object.values(READOUT), ...Object.values(INSTEAD),
-    ...CATEGORIES.map((c) => c.blurb), ...CATEGORIES.map((c) => c.title)]) {
+    ...CATEGORIES.map((c) => c.title), ...CATEGORIES.flatMap((c) => c.sections.map((s) => s.title))]) {   // ORG2: titles only
     assert.ok(!banned.test(s), `discouraging word in copy: "${s}"`);
     assert.match(s, /^[\x20-\x7E]+$/, `non-ASCII in copy: "${s}"`);
   }

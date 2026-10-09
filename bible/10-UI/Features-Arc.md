@@ -1180,9 +1180,9 @@ Graphics beside the field of view and the frame cap, the dungeon sizes under Gam
 under Combat. `10-UI/Settings-Screen-Spec.md` section 11 is the screen's record; what changed for the rows:
 
 - **No Features door** on any rail or in the pause's System page; a request still named `features` lands on Settings.
-- **A tile is a row**: name, labels, the note's first sentence (`shortNote`), the bar on the right, the drawer under
-  it. The reading rail is the help pane, and a row is PRESSED to be read there (`featureCard`: the whole note, the
-  effect, where it lives, the store, a mod's shown settings and keys) - a hover is no gesture on a phone.
+- **A tile is a row**: name, labels, the bar on the right, the drawer under it - no note in the list (ORG2b, Mac:
+  "Wayyyy too much overexplaining"). The reading rail is the help pane, and a row is PRESSED to be read there
+  (`featureCard`: where it lives, its note, the effect, a mod's keys) - a hover is no gesture on a phone.
 - **The kind chips are the toolbar's filters** over every tab, beside All and Changed; the search is the toolbar's,
   over every tab, by the same words (`featureSearchText`). All off and Restore stand there; FEATURES-DEFAULTS'
   Defaults is "Reset everything to defaults", DFU's settings with it, and each tab's card restores that tab alone.

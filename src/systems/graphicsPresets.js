@@ -13,14 +13,10 @@
 export const PRESET_ROWS = Object.freeze(['land-view-distance', 'grass', 'cloud-quality', 'ground-sharpness', 'water-quality']);
 
 export const GRAPHICS_PRESETS = Object.freeze([
-  Object.freeze({ id: 'low', label: 'Low', note: 'For older machines: Daggerfall\u2019s own view distance, a quarter of the grass, light clouds, the ground blurred far off, simple water.',
-    values: Object.freeze({ 'land-view-distance': 3, grass: 0.25, 'cloud-quality': 'lo', 'ground-sharpness': 'off', 'water-quality': 'simple' }) }),
-  Object.freeze({ id: 'medium', label: 'Medium', note: 'Most of the look for less: a shorter view, half the grass, light clouds, simple water.',
-    values: Object.freeze({ 'land-view-distance': 4, grass: 0.5, 'cloud-quality': 'lo', 'ground-sharpness': 'default', 'water-quality': 'simple' }) }),
-  Object.freeze({ id: 'high', label: 'High', note: 'How the game ships.',
-    values: Object.freeze({ 'land-view-distance': 5, grass: 1, 'cloud-quality': 'default', 'ground-sharpness': 'default', 'water-quality': 'full' }) }),
-  Object.freeze({ id: 'ultra', label: 'Ultra', note: 'For a strong machine: the furthest view, the most detailed clouds and the sharpest ground.',
-    values: Object.freeze({ 'land-view-distance': 6, grass: 1, 'cloud-quality': 'hi', 'ground-sharpness': 'max', 'water-quality': 'full' }) }),
+  Object.freeze({ id: 'low', label: 'Low', values: Object.freeze({ 'land-view-distance': 3, grass: 0.25, 'cloud-quality': 'lo', 'ground-sharpness': 'off', 'water-quality': 'simple' }) }),
+  Object.freeze({ id: 'medium', label: 'Medium', values: Object.freeze({ 'land-view-distance': 4, grass: 0.5, 'cloud-quality': 'lo', 'ground-sharpness': 'default', 'water-quality': 'simple' }) }),
+  Object.freeze({ id: 'high', label: 'High', values: Object.freeze({ 'land-view-distance': 5, grass: 1, 'cloud-quality': 'default', 'ground-sharpness': 'default', 'water-quality': 'full' }) }),
+  Object.freeze({ id: 'ultra', label: 'Ultra', values: Object.freeze({ 'land-view-distance': 6, grass: 1, 'cloud-quality': 'hi', 'ground-sharpness': 'max', 'water-quality': 'full' }) }),
 ]);
 
 /** The preset the rows stand at, or null (Custom). `valueOf(id)` reads a row's current value. */

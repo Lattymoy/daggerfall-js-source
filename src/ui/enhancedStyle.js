@@ -3898,7 +3898,7 @@ ${paceControlsCss('tview')}
      tools/enhancedMenuProbe.mjs had been red since FT14 and so nobody
      saw it. Sized here rather than in the FT block below, because this
      is where the law lives and the next control added must find it. */
-  .ft-segb, .ft-mchip, .ft-tile-more, .opt-search, .opt-filters .chip, .sec-jumpbtn, .sec-indexbtn { min-height: 44px; }   /* FT18: the search is a thumb's target too (ORG2: and the filters, the jumps and the tab card's sections) */
+  .ft-segb, .ft-mchip, .ft-tile-more, .opt-search, .opt-filters .chip, .sec-jumpbtn { min-height: 44px; }   /* FT18: the search is a thumb's target too (ORG2: and the filters and the jumps) */
   .ft-keys-to { min-height: 44px; }   /* UXB1-F: the keys' door is a control too */
 }
 .shell .step { border: 2px solid rgba(125,116,96,0.55); border-radius: 0; background: none;
@@ -5478,9 +5478,6 @@ ${paceControlsCss('tview')}
 .opt-filters .chip { padding: 5px 9px; font-size: 11px; }
 .opt-tools .acts { margin: 0 0 0 auto; gap: 6px; }
 .opt-tools .act { min-height: 30px; padding: 5px 10px; font-size: 11px; letter-spacing: 0.08em; }
-.opt-head { padding: 18px 18px 6px; }
-.opt-head h2 { margin: 0; font-family: var(--display); font-size: 24px; color: var(--bone); letter-spacing: 0.04em; }
-.opt-head p { margin: 4px 0 0; font-size: 13px; line-height: 1.5; color: var(--dim); max-width: 72ch; }
 .opt-body > .card { margin: 12px 18px; }
 .opt-bindings { padding: 6px 18px 18px; }
 .sec-jump { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px 18px 12px; border-bottom: 1px solid #20262e; }
@@ -5492,11 +5489,6 @@ ${paceControlsCss('tview')}
 .sec-title { display: flex; align-items: baseline; gap: 8px; }
 .sec-head h3 { margin: 0; font-family: var(--data); font-size: 13px; letter-spacing: 0.08em; color: var(--brass); font-weight: 600; }
 .sec-head .count { font-size: 11px; color: #8b8578; font-variant-numeric: tabular-nums; }
-.sec-blurb { margin: 4px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--dim); max-width: 72ch; }
-.sec-index { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 14px 0; padding-top: 10px; border-top: 1px solid var(--iron); }
-.sec-index dd { margin: 0; font-size: 12px; line-height: 1.45; color: var(--dim); }
-.sec-indexbtn { font-family: var(--data); font-size: 12px; color: var(--brass); background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
-.sec-indexbtn:hover { color: var(--bone); }
 .row.changed .row-name::after, .ft-tile.changed .ft-tile-name::after { content: 'Changed'; margin-left: 8px; padding: 1px 5px;
   font-family: var(--data); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--brass);
   border: 1px solid rgba(201,162,39,0.6); vertical-align: 2px; }
@@ -5516,7 +5508,6 @@ ${paceControlsCss('tview')}
 .ft-tile-name { font-size: 14px; color: var(--bone); line-height: 1.25; letter-spacing: 0; }   /* AUDIT FONT3 L4: a mod's "X by Author" on one line where it fits */
 .ft-tile-meta { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; margin-top: 5px; }
 .ft-tile-meta .kind { font-size: 11px; padding: 1px 5px; }
-.ft-tile-note { margin-top: 5px; font-size: 12.5px; line-height: 1.45; color: var(--dim); }
 .ft-tile-lock { font-family: var(--data); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--brass); }
 .ft-tile-ctl { grid-column: 2; justify-self: end; max-width: 440px; }
 .ft-tile-more, .ft-tile-drawer { grid-column: 1 / -1; }
@@ -5574,7 +5565,6 @@ ${paceControlsCss('tview')}
   .sec-jump::-webkit-scrollbar { display: none; }
   .sec-jumpbtn { flex: none; white-space: nowrap; }
   .sec-head { scroll-margin-top: 60px; padding: 18px 14px 8px; }
-  .opt-head { padding: 14px 14px 4px; }
   /* the help pane is a SHEET over the rows on a phone: the shell's see-through scrim let the rows read through it */
   .shell .detail { background: rgb(10,12,17); border-left: 0; }
 }
@@ -5584,7 +5574,6 @@ ${paceControlsCss('tview')}
 .px-setwrap .opt-tools { background: rgba(10,12,17,0.97); }
 .px-setwrap .sec-head { padding: 14px 4px 6px; scroll-margin-top: 90px; }
 .px-setwrap .sec-head h3 { font-size: 13px; }
-.px-setwrap .sec-head p.sec-blurb, .px-setwrap .ft-tile-note { font-size: 13px; line-height: 1.4; }
 .px-setwrap .opt-tools { padding: 8px 4px; }
 .opt-note { padding: 8px 18px; font-size: 12.5px; color: var(--dim); }
 
@@ -5598,23 +5587,18 @@ ${paceControlsCss('tview')}
 .shell .ft-tile { border-bottom: 2px solid rgba(125,116,96,0.3); }
 .shell .ft-tile:hover { background: rgba(0,0,0,0.25); }
 .shell .ft-tile-name { text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
-.shell .ft-tile-note { text-shadow: 2px 2px 0 rgba(0,0,0,0.6); }
 .shell .ft-seg { background: rgba(0,0,0,0.3); border: 2px solid rgba(125,116,96,0.35); }
 .shell .ft-segb[aria-pressed="true"] { background: rgba(0,0,0,0.45); }
 .shell .ft-mchip { background: rgba(0,0,0,0.3); border: 2px solid rgba(125,116,96,0.35); }
 .shell .ft-mchip[aria-pressed="true"] { border-color: var(--verdigris); }
 .shell .opt-search { background: rgba(0,0,0,0.3); border: 2px solid rgba(125,116,96,0.35); }   /* FT18: the search, in the shell's paint */
 .shell .opt-tools { background: rgba(10,12,17,0.94); border-bottom: 2px solid rgba(125,116,96,0.35); }
-.shell .opt-head h2 { text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
-.shell .opt-head p { text-shadow: 2px 2px 0 rgba(0,0,0,0.6); }
 .shell .ft-tile-drawer { border-top: 2px solid rgba(125,116,96,0.3); }
 .shell .ft-rail-kv { border-top: 2px solid rgba(125,116,96,0.3); }
 .shell .sec-jump { border-bottom: 2px solid rgba(125,116,96,0.35); }
 .shell .sec-jumpbtn { border: 2px solid rgba(125,116,96,0.35); text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 .shell .sec-head { border-bottom: 2px solid rgba(125,116,96,0.3); }
 .shell .sec-head h3 { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
-.shell .sec-blurb, .shell .sec-index dd { text-shadow: 2px 2px 0 rgba(0,0,0,0.6); }
-.shell .sec-index { border-top: 2px solid rgba(125,116,96,0.3); }
 
 /* ── OVH1: THE OVERHAULS (2026-09-24, Mac: "3 large panels ... directional arrows allowing you to switch being
    different feature sets") ─────────────────────────────────────────────────────────────────────────────────────
