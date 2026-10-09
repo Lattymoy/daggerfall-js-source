@@ -83,6 +83,7 @@ function restoreHarness(foes) {
     _wallNow: () => null,   // no shared clock: nothing is due back (WORLD8's hour is not this seam)
     liveStat: () => 50,
     rollCorpseKit: () => [], addCorpseFood: () => {}, stampWonWeapons: () => {}, capFoeLoot: () => [],   // the body's kit, food, sigils and cap (AUDIT 625 L5): rolled on the copy, not this seam
+    dropFoeCard: () => null,   // PIN MOVED (AUDIT CARDS-6 A3): and its card, the copy's own draw - not this seam either
     spawnCorpseNow: async () => {},   // the flat's mint; the corpse FLAG is spawnCorpse's own, raised before it
     applyCampMemory: () => {}, clearOwnPuppets: () => {}, respawnFoe: () => false, dropCandidate: () => {}, damageFoe: () => {}, settleLootFlat: () => {},
     forgetDelveRun: () => {},   // THE DELVE ARC (AUDIT DELVE B3/E8): the restore puts the delve's own state away first - not this seam

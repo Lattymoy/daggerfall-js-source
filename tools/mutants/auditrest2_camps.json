@@ -182,7 +182,7 @@
   },
   {
     "name": "AUDITREST2-H7-a-supply-recharged",
-    "file": "src/systems/restItems.js",
+    "file": "src/systems/restItemRows.js",
     "old": "  isNotRepairable: !stackable,",
     "new": "  isNotRepairable: false,",
     "tests": [

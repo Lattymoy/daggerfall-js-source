@@ -53,7 +53,7 @@ import { arenaReplaysRestore } from '../systems/arenaReplay.js';   // ARENA5: yo
 import { createArenaGate, nearArenaGate } from './arenaGate.js';   // ARENA3; ARENA4b: the Herald's choice and the pause door's banner too
 import { createArenaOnline } from './arenaOnline.js';   // ARENA4: the arena online - the hall, a relay's bout, the boards and the receipts
 import { arenaFloorRoomOf } from '../net/arenaLaw.js';   // ARENA4: a bout's room (ARENA4b: or the hour's exhibition's)
-import { accountArena } from '../net/accountClient.js';   // ARENA4: the arena's records on the account service
+import { accountArena, accountIliac, iliacRefusalText } from '../net/accountClient.js';   // ARENA4: the arena's records on the account service; CARDS10: Iliac Hand's season board; AUDIT CARDS-6 E14: and its refusals' own words
 import { fighterIdentity } from '../systems/arenaFighters.js';   // ARENA4: the relay's fighters billed by the bout's seed
 import { bossStandIn } from '../world/gateBoss.js';   // ARENA4: my opponent's stand-in for the formulas
 import { closeArenaDoor, arenaDoorOpen } from '../ui/arenaDoor.js'; import { createArenaSessionButton } from '../ui/arenaSessionButton.js';   // HOTFIX 1003f: the session's button on the screen   // ARENA4: the window goes when a bout calls
@@ -291,12 +291,13 @@ import { isLefayTown, lefaySpotOf, carveLefay } from '../world/lefayMonument.js'
 import { HARBOUR_REACH } from '../systems/naval/shipLife.js';   // AUDIT HOLDINGS O1: the harbour's scan reach, its pixels built before it is sounded
 import { createHarbourBook } from '../systems/naval/harbourBook.js';   // HARBOUR-BOOK: the harbours near the player, the quays' and the sea's
 import { withdrawIntoPack, materialLabel, materialCountLabel } from '../systems/profItems.js';   // PROF1: a Stores material as DFU's own item
-import { heldOf as bagHeldOf, roomFor as bagRoomFor, mintCarried, takeCarried, giveCarried, bagTakesOf, bagWeight, hasBag, emptyBagIntoPack } from '../systems/materialsBag.js';   // BAG1: the Materials Bag and the pack, the book's hands
+import { heldOf as bagHeldOf, heldKeysOf as bagHeldKeysOf, roomFor as bagRoomFor, mintCarried, takeCarried, giveCarried, bagTakesOf, bagWeight, hasBag, emptyBagIntoPack } from '../systems/materialsBag.js';   // BAG1: the Materials Bag and the pack, the book's hands; UNCOUNTED: every material they hold
 import { BAG_KG_LIMIT, madeWhere, movedFirstText } from '../net/bagLaw.js';   // AUDIT BAG1 B9: where a station's work went; AUDIT2 K8: what went in before a refusal
 import { smeltRecipe, stockOf, WEAVERS_STOCK, APOTHECARY_STOCK, professionName } from '../net/professionLaw.js';   // PROF2: a smelt's product, for its word; PROF4: a counter's; PROF5: the Weavers'
 import { refinedText, chainStopText } from '../net/chainLaw.js';   // CRAFT1: what a craft's chain refined first, said with it; AUDIT CRAFT1 F4: where it stopped
 import { createMarketBook } from '../net/marketBook.js';   // PROF5: the market's book
 import { createCardStakes } from '../net/cardStakes.js';   // CARDS6: a realm character's card stakes
+import { createIliacClaims } from '../net/iliacClaims.js';   // CARDS10: the ranked games' results carried to the service
 import { createWritBook } from '../net/writBook.js';   // PROF6: guild writs, commissions, the guild Stores
 import { wearCondition, wearOf, WEAR_WHOLE } from '../net/marketLaw.js';   // PROF5: a bought piece's wear; PROF6: a commission's piece unworn
 import { commissionFilledBy } from '../net/writLaw.js';   // AUDIT 31 L8: a piece that answers a commission, the law's own test
@@ -571,7 +572,7 @@ import { createNavalHost, hullBoxOf as navalHullBoxOf, NAVAL_SAVE_VENDOR, NAVAL_
 import { draftOf as navalDraftOf } from '../systems/naval/shipLife.js';   // AUDIT GN2-PF6: a hull's draft, hull 2's off her keel as she stands
 import { createNavalFlames } from './navalFlames.js';   // NAV-B: a burning ship's deck fires
 import { NavalRenderer } from '../render/navalRender.js';   // NAV-B: the smoke, the spray, the balls in flight and the aim
-import { drawNavalHud, navalTouchBrace, navalPadPrompts, drawNavalTags, drawCrewBars, CREW_BAR_RANGE, drawCrewLines, CREW_SAY_RANGE } from '../ui/navalHud.js';   // AUDIT NAV1 (#14): and the ships' tags - SHIPMATES: and the crew's bars - LIVING CREW: and their lines
+import { drawNavalHud, navalTouchBrace, navalPadPrompts, drawNavalTags, drawCrewBars, CREW_BAR_RANGE, crewBarPoint, drawCrewLines, CREW_SAY_RANGE } from '../ui/navalHud.js';   // AUDIT NAV1 (#14): and the ships' tags - SHIPMATES: and the crew's bars (CEIL-GHOST: where they stand) - LIVING CREW: and their lines
 import { createNavalCrew, CREW_RANGE, CREW_KEEP } from './navalCrew.js';   // LIVING CREW: the crews on the decks near the eye
 import { asleepHour } from '../systems/naval/shipWatch.js';   // SHIP-WATCH: the crews' sleeping hours
 import { crewRoster, crewCount } from '../systems/naval/crewLife.js';
@@ -661,6 +662,8 @@ import { createWeaponRig, autoBuildArms, armIdentityOf, armBuiltFor, armsReady, 
 import { weaponPoseOf, applyWeaponPose, mergeWeaponPose, playerMeleeCanHit, registerPlayerSwingListener, WEAPON_REACH } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
 import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible exterior arrows; AUDIT 39 (#64): and the shaft that LANDS
 import { addItem, addGoldPieces, isGoldPieces, spendAmmoFor, carriedWeight } from '../systems/inventory.js';
+import { guildCardRoll, guildNameOfFaction } from '../systems/cardSources.js';   // CARDS9: a guild quest's card
+import { mintIliacCard, iliacCardName } from '../systems/iliacItems.js';   // CARDS9: the card minted, and named as it is said
 import { storesIn, spendStore, mintStores } from '../systems/naval/navalStores.js';
 import { orderRows } from '../systems/naval/shipCrew.js';   // SHIP-CREW: the orders list   // SEA-REPAIR: carpenter's stores in a hold   // E4: PlayerEntity.CarriedWeight carries the gold counter's own term
 import { calculateAttackDamage } from '../combat/formulas.js';   // X2-slice: enemy-arrow impacts
@@ -766,6 +769,7 @@ import { pickPeerInFront, SOCIAL_REACH, peerRayPick, peerIdOfKey, peerRelationTe
 import { openPeers } from '../player/socialPick.js';   // CONCEAL-MATE: who a concealed player stays open to - their party
 import { allyCastSpell, allyCastable, strangerCastable, allyReachFor, allyCastTargetLine, allyCastPlaqueLine, createGiftLineGate } from '../systems/allyCast.js';
 import { composePartyFx } from '../net/partyBuffs.js';   // PARTY-BUFFS: my effects on the party pose   // ALLY-CAST: a beneficial spell at a party mate; SPELL-GIFT: and the stranger's list
+import { stampItemIds, tradeHeldNotice } from '../systems/itemIds.js';   // INT4: a valuable piece's id, minted at a realm checkpoint; INT3: the hold, said
 import { checkpointAllowed, checkpointDue, checkpointedTradePack, createSaveSoon } from '../systems/onlineCheckpoint.js';   // REALM P0.5: the character saved as it plays online; PROF-SAVE: and at once after a professions act
 import { createTradeManager, TRADE_RANGE_M, inTradeRange, tradeDistance } from '../net/tradeSession.js';   // TRADE1: the player-to-player trade's state machine (pure)
 import { createTradePack, tradeRefusal, createMarketGoods } from '../systems/tradePack.js';   // TRADE1: the trade's door into the real pack; PROF5: what may not be sold; MARKET-ANY: the pack's side of a piece from the pack
@@ -785,7 +789,7 @@ import { wildRing, wildRingAt, wildRingName, wildRingBonus, setWildMask, wildMas
 import { takeWildDrop, takeWildGold, wornOffer, wildRecord, wildChunks, wildSpawnSpot } from '../systems/wildDeath.js';
 import { createWildFight } from '../net/wildFight.js';
 import { createWildRemains, WILD_PILE_ICON, WILD_NO_STORE } from '../net/wildRemains.js';   // WILD-WAYPOINT: my remains' flag on both maps (below)
-import { markRemains, remainsMarkTick, remainsGone } from '../systems/wildRemainsWaypoint.js';
+import { markRemains, remainsMarkTick, remainsGone, keepMine, keptMine, forgetMine } from '../systems/wildRemainsWaypoint.js';   // WILD-KEEP: and my remains' record, kept on the device
 import { setLootMarksLive } from './lootLines.js';   // WILD1: my remains' line with the rarity row off
 import { WILD_REMAINS_MS, WDUN_SALT, WDUN_DAY_MS, WDUN_LOCK_MS, WDUN_HERE_MS, spawnedHallMapId } from '../net/wire.js';
 import { validLootList } from '../systems/loot.js';
@@ -1777,6 +1781,18 @@ export async function bootWorld(canvas, renderer, params, status) {
     ? createCardStakes({ door: accountCards({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }), storage: appStorage(),
       realm: { act: (o) => realmGoldAct({ ...o, session: realmSession, checkpoint: () => onlineCheckpoint() }) }, wallet: realmWallet,
       character: () => characterIdOf(playerEntity), region: () => _questRegionIndex(), now: () => Date.now() + _sharedOffsetMs })
+    : null;
+  // CARDS10 (bible/11-Multiplayer/Tavern-Cards.md section 33): ILIAC HAND'S SEASON BOARD - the service's door, and the
+  // ranked games' signed results this device carries to it (net/iliacClaims.js), offered at once and again while kept
+  const iliacDoor = accountIliac({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });
+  const iliacClaims = params.has('online')
+    ? createIliacClaims({ claim: (r) => iliacDoor.claim(r), store: { get: (k) => _spoilsStore.get(k), set: (k, v) => _spoilsStore.set(k, v) }, me: () => iliacDoor.me(),   // the one store (AUDIT WB A6): its memory every reader's
+      // AUDIT CARDS-6 D9 (E17): A RECEIPT'S LIFE IS THE RELAY'S (AUDIT ONLINE2 F2's law, the gate's and the serpent's carriers'
+      // relayNowS - declared far below, so said here as the seats' book says it): the device's clock let a receipt go on
+      // add, eight days fast; and the retry's clock the shared one (it was written inside that line's comment, never passed)
+      nowS: () => (_sharedClockHeard ? Math.floor((Date.now() + _sharedOffsetMs) / 1000) : null), nowMs: () => Date.now() + _sharedOffsetMs,
+      onCounted: (a) => townTalk?.say?.(a.rated ? `Iliac Hand: the game is on the season's board - your rating ${a.rating} (${a.delta >= 0 ? '+' : ''}${a.delta}).` : 'Iliac Hand: the game is kept, but not counted - you have played that opponent often enough today.'),
+      onGuest: () => townTalk?.say?.('Iliac Hand: register your account to keep your ranked games on the board.') })
     : null;
   // PROF6 (bible/06-Systems/Professions-Arc.md 28): the writs' book - a guild writ posted, supplied, withdrawn; a
   // commission posted, filled (the piece KEPT before it is asked), cancelled, declined; the guild Stores (net/writBook.js).
@@ -5585,7 +5601,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const borderNature = new Map();   // ECOTONE1: a neighbour climate's nature archive the border stood here -> its summer archive
     for (const f of nature) {
       // GATE-CLEAR (AUDIT FOREST1 F5): the day's Oblivion Gate keeps its clearing of nature as it keeps it of World of
-      // Daggerfall's flats - a tree no longer stands through the plinth or the Sigil Broker (the sweep builds the
+      // Daggerfall's flats - a tree no longer stands through the gate's stone or the Sigil Broker (the sweep builds the
       // pixel again when the gate's day turns). FOREST1 (F1): and a wood's flats keep out of the rock pieces it grows
       // round - DFU's own scatter, with the switch off, is left as DFU lays it
       if (pointNearGate(gateClear, px, py, f.x, f.z, WOD_FLAT_GATE_CLEAR_M)) continue;
@@ -9454,7 +9470,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (!isShipmate(f) || !feet || !f.entity) continue;
         const d = Math.hypot(feet[0] - eye[0], feet[1] - eye[1], feet[2] - eye[2]);
         if (d > CREW_BAR_RANGE) continue;
-        const head = [feet[0], feet[1] + (f.ai.height ?? CAPSULE_HEIGHT) + 0.3, feet[2]];
+        const head = crewBarPoint(feet, f.ai.height ?? CAPSULE_HEIGHT, player.collider);   // CEIL-GHOST: under the ceiling
         const at = projectToScreen(head, w, h, proj, view, rect);
         if (!at.front || at.x < -40 || at.x > w + 40 || at.y < -20 || at.y > h + 20) continue;
         let key = _crewKeys.get(f);
@@ -11025,6 +11041,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         inTown: () => _storesReached(),
         room: (k) => bagRoomFor(playerEntity, k),
         carriedHeld: (k) => bagHeldOf(playerEntity, k),
+        heldKeys: () => bagHeldKeysOf(playerEntity),   // UNCOUNTED: what is held that the Stores will not take, named
         bag: () => ({ has: hasBag(playerEntity.items), kg: bagWeight(playerEntity), max: BAG_KG_LIMIT, count: playerEntity.bagItems?.length ?? 0 }),
         // AUDIT2 BAG1 H1/U2: the bag emptied into the pack, from the Stores page - anywhere, on either skin
         emptyBag: () => { const r = emptyBagIntoPack(playerEntity); if (r.moved > 0) saveSoon.changed(); return r; },
@@ -11233,7 +11250,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           // at a time, and the book one ask an id
           if (f.fee > 0) { deductGold(playerEntity, f.fee); saveSoon.changed(); }
           const out = smeltRecipe(r.data.recipe)?.out ?? recipe;
-          const made = (Number(r.data.own) || 0) + (Number(r.data.bought) || 0) || r.data.count;
+          const made = (Number(r.data.own) || 0) + (Number(r.data.bought) || 0) + (Number(r.data.loose) || 0) || r.data.count;   // AUDIT BAG-CRAFT A1: its loose products too
           const id = String(r.data.recipe);
           const verb = bench ? 'Sawed' : id.startsWith('burn:') ? 'Burnt' : id.startsWith('cure:') ? 'Cured' : id.startsWith('weave:') ? 'Wove'
             : id.startsWith('cut:') ? 'Cut' : id.startsWith('mix:') ? 'Mixed' : alch ? 'Transmuted into' : 'Smelted';   // PROF7: the loom's; PROF11: the mason's; PROF12: the Transmuter's
@@ -14426,6 +14443,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (naval?.saveRefused?.()) { if (!quiet) townTalk.say('You cannot save now.'); return false; }
     // AUDIT CARDS-2 H1: nor with chips on a card table - the purse is short the buy-in and the chips are in no save
     if (modes?.cardTableLive?.()) { if (!quiet) townTalk.say('You cannot save with chips on the table.'); return false; }
+    // CARDS10: nor with a card staked on a game of Iliac Hand - the card it may cost is in no save
+    if (modes?.iliacStaked?.()) { if (!quiet) townTalk.say('You cannot save with a card staked on the table.'); return false; }
     const pf = walkMode && playerSpawned ? player.pos : cam.pos;
     const wc = state.worldCoords(pf);
     // IS1 (AUDIT 26 F221): the inside-building half (SerializablePlayer
@@ -16346,7 +16365,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     quickSave: worldQuickSave,
     quickLoad: worldQuickLoad,
     relock: () => requestLook(canvas),   // MAC1: the pointer comes back with the resume gesture (ui/pauseDoor.js)
-    savingPrevented: () => !!naval?.saveRefused?.() || !!modes?.cardTableLive?.(),   // AUDIT NAV1 (B14): the pause's Save says why, as worldQuickSave refuses it; AUDIT CARDS-2 H1: and chips on a card table
+    savingPrevented: () => !!naval?.saveRefused?.() || !!modes?.cardTableLive?.() || !!modes?.iliacStaked?.(),   // AUDIT NAV1 (B14): the pause's Save says why, as worldQuickSave refuses it; AUDIT CARDS-2 H1: and chips on a card table
     // ONLINE-LOAD1: this host's own live-session flag (`online`,
     // not `onlineOn` - see worldQuickLoad's own header for why),
     // for the enhanced Load pane (enhancedMenu.js paneLoad) to
@@ -17078,6 +17097,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (townTalk.overlay instanceof DeathScreen || modes?.deathUp?.() || !(playerEntity.health > 0)) return false;
     // AUDIT REALM2 M5: the composer's own answer - a save it refused (the court, the Ocean Holes descent) is no checkpoint,
     // and a trade's hold (realmTradeEscrow's `=== false`) must not begin over the older record the service holds
+    stampItemIds(playerEntity);   // INT4: every valuable piece in the character's own lists carries its id into the realm's save
     const opts = sink ? { quiet: true, sink } : { quiet: true };   // AUDIT PRE-MERGE 1003 O10: a caller's sink, to hear the put's answer
     return !!(modes ? modes?.quickSaveNow(QUICK_SAVE_NAME, opts) : worldQuickSave(QUICK_SAVE_NAME, opts));   // `?.` even inside the ternary: audit24 wave37's gate above the declaration is all-or-nothing
   }
@@ -17298,6 +17318,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // window frees, the RMB swing tests `!townTalk.overlayActive`).
     paused: () => gamePaused(),
     cardTable: () => !!modes?.cardSeated?.(),   // CARDS-TOUCH: seated at a card table, the finger is the table's (ui/touch.js)
+    cardHeld: () => !!modes?.cardPressHeld?.(),   // AUDIT CARDS-6 E1: a finger the cards took is never the stick (ui/touch.js)
   };
   const touch = attachTouch(canvas, inputHooks);
   const gamepad = attachGamepad(canvas, inputHooks);   // GP1: null without the Gamepad API
@@ -18768,6 +18789,30 @@ export async function bootWorld(canvas, renderer, params, status) {
   // RENOWN1: a quest that ENDED IN SUCCESS pays its Renown XP online - the tracker is built with the online session
   // below, so the bridge's hook reaches it through this door (null until then, and offline for good)
   let renownQuestEnded = null;
+  // CARDS9 (bible/11-Multiplayer/Tavern-Cards.md section 32; section 6.3: "A guild's quest can pay a card of that guild"):
+  // a guild quest done pays one of its guild's cards one time in three - the best its quester's rank in that guild
+  // reaches (systems/cardSources.js guildCardRoll) - once a quest, however its end is heard again. Offline and online
+  // alike: a card is an item, and the realm bounds what crosses (net/cardWorthLaw.js customs).
+  // AUDIT CARDS-6 (the lane's latent): THE ONCE IS A CHARACTER'S. The set lives as long as the host, and an offline load
+  // restores another character in place (save.js restorePlayer) with its quests at their own saved uids - so the bare uid
+  // a first character was paid for stopped a second's restored quest of the same uid from paying. Keyed by the
+  // character's id with the quest's. AUDIT CARDS-6 A4: and a temple's hall walked to its divine (the faction table).
+  const cardQuestPaid = new Set();
+  const cardQuestEnded = (q) => {
+    if (!q?.questSuccess || !(q.factionId > 0)) return;
+    const quest = String(q.uid ?? q.questName ?? '');
+    const key = `${playerEntity.characterId ?? ''}|${quest}`;
+    if (!quest || cardQuestPaid.has(key)) return;
+    cardQuestPaid.add(key);
+    const dict = townTalk.factionDict ?? null;
+    const name = guildNameOfFaction(q.factionId, dict);
+    const rank = Object.values(activeMemberships(playerEntity)).find((m) => m?.guild === name)?.rank ?? 0;
+    const id = guildCardRoll(q.factionId, rank, Math.random, dict);
+    const card = id ? mintIliacCard(id) : null;
+    if (!card) return;
+    addItem(playerEntity.items, card);
+    try { townTalk.say(`The guild adds a card to your reward: ${iliacCardName(card).replace(/^Card: /, '')}.`); } catch { /* no talk host yet: the card is in the pack */ }
+  };
   const _heldItemIndex = (dfItem) => {
     const items = playerEntity.items ?? [];
     const direct = items.indexOf(dfItem);
@@ -18835,6 +18880,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (initiated.length) revealMemberGuildHalls();
       escortQuestEnded(q);
       renownQuestEnded?.(q);   // RENOWN1: a quest done online pays its Renown XP
+      cardQuestEnded(q);   // CARDS9: and a guild's quest, now and then, one of its guild's cards
       naval?.raidEnded(q);   // NAV-D: a raid the sea fight started - won (its leader down) or run out - ends its boarding
     },
     // TK-i: the six rumor seams land in the mill (TalkManager's own
@@ -20207,7 +20253,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (room !== online.room) return;
       wildRemains.setRoom(room);
       wildRemains.onWord(w);
-      if (w?.k === 'gone') remainsGone(w.r);   // WILD-WAYPOINT: all taken, or let go - the flag goes with them
+      if (w?.k === 'gone') { remainsGone(w.r); forgetMine(w.r); }   // WILD-WAYPOINT: all taken, or let go - the flag goes with them; WILD-KEEP: and the kept record
     };
     online.onWed = (id, d, sub = null, sc = null) => { wedMgr.onFrame(id, d, sub, sc); };   // LEGACY7 part three: a wed frame at me - the wedding's law decides; AUDIT LEGACY III O1: `sc` their realm character as the relay stamped it
     online.onGate = (g) => gateLink?.word(g);   // WB3b: the court's room's word about its boss
@@ -20346,6 +20392,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Local is not a private channel: the relay's reach is the room's, and the earshot is each hearer's own.
     online.onChat = (line) => { if (localLineHeard(line, peersNear(), player.feetAt())) chatLog.push('local', line); };
     online.onRoll = (line) => { if (localLineHeard(line, peersNear(), player.feetAt())) chatLog.push('local', line); };   // DICE1: a roll at the table is heard as a line is
+    online.onIliac = (f) => modes?.iliacOnlineFrame?.(f);   // CARDS10: the relay's Iliac table, to the room's host
     online.onHoldem = (f) => modes?.cardOnlineFrame?.({ ...f, at: performance.now() });   // CARDS5: the relay's card table, to the room's host - AUDIT CARDS-3 D1: on the cloth's clock (the session's own `now` is the epoch's)
     for (const tab of chatLog.tabs) {
       if (!tab.link) continue;   // CHAT-CHAN: the Party and Local tabs ride the hub's link and the presence session's room
@@ -20444,6 +20491,10 @@ export async function bootWorld(canvas, renderer, params, status) {
           // AUDIT SD III (H10): in the Shattered Hour, the Hour's own way out - under its veil, in its words, as every other
           // way out of it is; refused there (the dead's is the death's), nothing more said
           if (modes?.sdRealmSlot?.() != null) { if (sdWayHome()) say('You find your way back outside.'); return true; }
+          // AUDIT GATE-FBX C2: and in a gate's Burning Court, none - its ways out are the portal where he fell, a death and
+          // the Wrath (a court gone silent casts its fighters out itself: gateCourt.silent); /unstuck walked out mid-fight
+          // with no veil, no toll and no cooldown spent on a death
+          if (modes?.gateArenaDay?.() != null) { say(COURT_TEXT.noUnstuck); return true; }
           const inZone = wildHere() && !(TEST_GODMODE && staffPowers().god);   // TESTBUILD: god mode - /unstuck at once, no cooldown
           const _godU = TEST_GODMODE && staffPowers().god;
           if (inZone && (modes?.mode ?? 'exterior') === 'exterior') { say('/unstuck does not work outdoors in the mountains.'); return true; }   // PVPDUNGEONS
@@ -21963,6 +22014,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   let _wildOffer = null;   // { worn: [items], killerName } - my body's worn pieces, offered to my killer
   let _wildGhost = false;  // my socket stays in the street's cell while my body lies (my killer's pick reaches me)
   let _wildMine = null;    // my remains: { r, room, p, until } - for the world map's mark
+  // WILD-KEEP (FIELD BUGS 2026-10-09c): kept on the device for the character that fell, and read back once - a game that
+  // crashed or closed inside the remains' ten minutes knows them again (systems/wildRemainsWaypoint.js)
+  const wildWho = () => (realmSession?.id != null ? `realm:${realmSession.id}` : playerEntity?.name ? `name:${playerEntity.name}` : null);
+  let _wildMineRead = false;
   const wildMint = () => { let x = ''; while (x.length < 10) x += Math.random().toString(36).slice(2); return x.slice(0, 10).padEnd(10, '0'); };
   /** THE ZONE'S DEATH CHECKPOINT. A dead character is never the realm's save (realmCheckpoint), and a death in the zone
    *  takes things out of the pack that the room then holds for anyone - so a game closed on the death screen must not
@@ -22006,6 +22061,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       for (const it of lost.slice(sent)) { if (isGoldPieces(it)) addGoldPieces(playerEntity, it.stackCount ?? 1); else addItem(playerEntity.items, it); }
       if (sent < lost.length) wildDeathCheckpoint();
       if (sent) _wildMine = { r, room: online.room, p, until: Date.now() + WILD_REMAINS_MS, dungeon: (modes?.mode === 'dungeon') ? (_wdunInside?.h ?? wdKey()) : null };   // PVPDUNGEONS: a death in a hall locks it for the hour, my remains my way back in, and the crows circle it for everyone   // PVPDUNGEONS: a death underground locks the hall for the hour; my pile's life is the key back in
+      if (sent) keepMine(_wildMine, wildWho());   // WILD-KEEP: on the device, for a game that does not live to the pick
       if (sent) {   // WILD-WAYPOINT: a followed flag where they lie - the street's point, or a building's or a dungeon's door
         const at = isCellRoom(online.room) ? nativeToMapPoint(p[0], p[2]) : ((px) => (px ? { mx: px.x + 0.5, my: px.y + 0.5 } : null))(playerTravelPixel());
         if (at) markRemains({ mx: at.mx, my: at.my, until: _wildMine.until, r });
@@ -22128,7 +22184,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     wildRemains.setPool(wildOutdoors() ? droppedLoot : (modes?.droppedPool?.() ?? null));
     wildRemains.tick();
     setLootMarksLive(wildRemains.hasMine());   // my remains' red line stands with the rarity row off too
-    if (_wildMine && Date.now() > _wildMine.until) _wildMine = null;
+    if (!_wildMineRead) { _wildMineRead = true; _wildMine ??= keptMine(Date.now(), wildWho()); }   // WILD-KEEP: back from a crash or a close
+    if (_wildMine && Date.now() > _wildMine.until) { _wildMine = null; keepMine(null); }
     remainsMarkTick(Date.now());   // WILD-WAYPOINT: the flag goes with its remains' time
   };
   // WILD3: THE STRANGERS - every other player in the zone with me, outside my party and my guild, within WILD_STRANGER_M
@@ -22633,6 +22690,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   // REALM P1.3: a realm checkpoint's spoils. AUDIT REALM2 C1: a town's thanks with them - RAID4b's own pool was cleared by a
   // slot's save alone (onSlotSaved, below), which a realm character never writes, so every join handed the thanks back
   _realmSaveHooks.held = (who) => { try { return [...(spoilsPool?.heldIds?.(who) ?? []), ...(raidSpoils?.heldIds?.(who) ?? []), ...(serpentSpoils?.heldIds?.(who) ?? []), ...(sdSpoilsPool?.heldIds?.(who) ?? [])]; } catch { return null; } };   // SERPENT1: and the Old Coil's hoard; SD9e: and the Brass Remnant's spoils
+  // INT3: the judge's hold, said to the player each time a landed checkpoint moves it (systems/realmSaves.js)
+  if (realmSession) realmSession.onTradeHeld = (prev, now, why) => { const t = tradeHeldNotice(prev, now, why); if (t) townTalk.say(t); };
   _realmSaveHooks.landed = (who, ids) => { try { spoilsPool?.saved(who, ids); } catch (e) { console.warn('[gate] spoils', e?.message ?? e); } try { raidSpoils?.saved(who, ids); } catch (e) { console.warn('[raid] spoils', e?.message ?? e); } try { serpentSpoils?.saved(who, ids); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); } try { sdSpoilsPool?.saved(who, ids); } catch (e) { console.warn('[sd] spoils', e?.message ?? e); } };
   onSlotSaved((characterId) => { try { raidSpoils.saved(characterId); } catch (e) { console.warn('[raid] spoils', e?.message ?? e); } });   // RAID4b
   /** SERPENT1: THE OLD COIL'S HOARD (systems/serpentSpoils.js) - the raids' door, under keys of its own: no floor, no word
@@ -22918,6 +22977,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       ejectFromCourt(COURT_TEXT.collapse);
     }
     else if (courtDay != null && online?.terminal) ejectFromCourt(GATE_NO_TEXT[online.error] ?? COURT_TEXT.lost);   // AUDIT WB B5: a socket closed for good (a hello refused - its own words - or replaced) holds no fight: its boss would stand frozen
+    else if (courtDay != null && gateCourt?.silent()) ejectFromCourt(COURT_TEXT.lost);   // AUDIT GATE-FBX C1: a court gone silent (a stalled relay, a room that never answered, a socket still retrying) - no door stands in it until he falls
     else if (courtDay == null && gateLink && gateLink.state().day != null) gateLink.leave();
     try { gateCourt?.frame(); } catch (e) { console.warn('[gate] court', e?.message ?? e); }   // WB4: the fight on this screen (out of the court it puts itself away)
     courtAloneFrame();   // GATE-ALONE: my companions wait outside - said as I step in
@@ -23020,6 +23080,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     try { const a = serpentOmen?.ahead?.(); if (a) socialLink()?.sendSerpentSite?.(a.day, a.site.sx, a.site.sz, a.site.near); } catch (e) { console.warn('[serpent] site word', e?.message ?? e); }
     serpentClaims?.tick();
     sdClaims?.tick();   // SD9b: what the account service has not counted yet, offered again on its own clock
+    iliacClaims?.tick();   // CARDS10: and the ranked Iliac games', on theirs
     if (!serpentHost) return;
     const street = (modes?.mode ?? 'exterior') === 'exterior' && playerSpawned && playerEntity.health > 0 && !modes?.deathUp?.();
     let fight = false;
@@ -23155,7 +23216,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     banner: (text) => { _gateBannerWish = text; },   // AUDIT WB C5: never over the step's fire - SD19: shared with a Hollow's door (presenceFrame)
     marks: (card) => { _gateMarksWish = card; },   // WB9a: tonight's marks beside the countdown - never over the step's fire (SD19: presenceFrame)
     ready: () => !!online?.gateOk,   // WB3b: a relay that runs a gate's boss room (net/wire.js relaySupportsGate)
-    landBefore: (g) => landBeforeGate(g),   // AUDIT WBX W1: a player sealed in a rising horn's root, set down before the gate
+    landBefore: (g) => landBeforeGate(g),   // AUDIT WBX W1: a player sealed in the stone as it stands whole, set down before the gate
     enter: (g) => { modes?.enterGateArena?.(g); },   // WB3b: into the Burning Court (scenes/worldModes.js)
   }) : null;
   /** WB12d: THE FAITHFUL'S RITE (scenes/riteHost.js) - online alone, as the gate is: each breach's circle from the omen to
@@ -26951,6 +27012,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (const d of drawable) if (d?.shown) _peerMapPoses.set(d.id, d.shown);
     const visiblePeers = gateCrowd.cut(cabin ? drawable : drawable.filter((d) => !csaPeers.isBelowDeck(d.id)), { on: modes?.gateArenaDay?.() != null, me: player.pos, at: (d) => onlineToScene(d.shown), max: gateCrowdMax(getPref('gateCrowd')), mate: (id) => !!social?.isPartyPeer(id) });   // GATE-CROWD (2026-10-07, Mac: "some type of filter when there are too many people"): in a gate's court, past the count on the Other players card only the nearest are drawn, my party always (net/gateCrowd.js) - the rest stand nowhere on this screen this frame: no body, sprite, name, light, cast or step (their map marks, above, are kept)
     peerCastVisuals(visiblePeers);   // SPELLFX1: a peer's new cast, drawn once
+    if (modes?.gateArenaDay?.() != null) gateCourt?.stepsIn(drawable, (d) => (d?.shown ? onlineToScene(d.shown) : null));   // AUDIT GATE-FBX C3: a player stepping out of the court's way in opens it - every one in the room, the crowd's cut or not (the fire is the court's, not a body this screen draws)
     _veilT += dt > 0 ? dt : 0;
     _veils.clear(); _hiddenPeers.clear();
     for (const d of drawable) if (!cabin && csaPeers.isBelowDeck(d.id)) _hiddenPeers.add(d.id);
@@ -27144,6 +27206,24 @@ export async function bootWorld(canvas, renderer, params, status) {
     seatedPeers: () => seatedPeerFeet(),   // CARDS2b (AUDIT CARDS B3): the others' seated feet, in this room's scene - their seats are taken
     cardOnline: { ok: () => !!online?.holdemOk, send: (w) => !!online?.sendHoldem(w), id: () => online?.id ?? null, welcomes: () => online?.holdemWelcomes ?? 0, room: () => online?.room ?? null },   // CARDS5: the relay that deals - a word to the room's card table, and who I am at it; CARDS6: the room a stake names
     cardStakes,   // CARDS6: a realm character's stakes at a relay's gold table (null off the realm)
+    // CARDS10: the relay that deals Iliac Hand - a word to the room's Iliac table, who I am at it; a ranked seat's deck
+    // vouched for by the service (a realm character's own cards, the record checkpointed first); the results carried
+    iliacOnline: { ok: () => !!online?.iliacOk, send: (w) => !!online?.sendIliac(w), id: () => online?.id ?? null, now: () => Date.now() + _sharedOffsetMs, welcomes: () => online?.holdemWelcomes ?? 0 },   // AUDIT CARDS-6 E5: my socket's welcomes (the card tables' one count)
+    iliacRanked: {
+      // AUDIT CARDS-6 E14: a guest's account is offered no ranked seat - it was, and every vouch it asked failed
+      why: () => (!realmSession ? 'Ranked games are a realm character\'s - its cards are the ones the realm keeps.' : !iliacDoor.me() ? 'Sign in to play ranked.' : iliacDoor.guest() ? iliacRefusalText('ranked-needs-account') : null),
+      vouch: async (deck) => {
+        if (!realmSession) return { ok: false, why: 'Ranked games are a realm character\'s.' };
+        // AUDIT CARDS-6 E6: A READ (realmGoldAct's `read`) - the order moves nothing on the record, so an answer lost is
+        // "not answering", never the session's end; asked as an act (`needsAnswer`) a lost answer or a `seq` was
+        // `unknown`, and the player was thrown to the title menu for asking to play cards
+        const r = await realmGoldAct({ session: realmSession, checkpoint: () => onlineCheckpoint(), read: true, call: (realm) => iliacDoor.deck({ character: characterIdOf(playerEntity), realm, deck }) });
+        if (r?.ok && typeof r.data?.order === 'string') return { ok: true, order: r.data.order };
+        return { ok: false, why: iliacRefusalText(r?.error, r?.card) };   // AUDIT CARDS-6 E14/D7: in Iliac Hand's words, a short deck's card named
+      },
+      board: () => iliacDoor.board(),   // the season's board (iliac.js iliacBoardOf)
+    },
+    iliacClaims,
     sailingCabin: sailingCabins,
     linkedBankCabin: () => readBankCabinLink(playerEntity.boatCabinLink),
     enterLinkedBankCabin: () => enterLinkedBankCabin(),
@@ -32788,7 +32868,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       }
     }
     // WB2: THE GATE'S FIRE AND BEACON - after the duel wall, the same eye and fog; the stone went in the world pass, so
-    // the horns in front of the fire hide it
+    // the pillars in front of the fire hide it
     if (gatePool?.stands() && gatePool.drawPass(proj, view, new Float32Array(mwv.eye), now / 1000,   // AUDIT WB C7: its arguments built only when a gate stands
       { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos, focus: renderer._focus })) renderer.markForeignPass();   // AUDIT DEEP R-1: the travel view's focus
     // WB12d: the rite's pillar of smoke, the gate's fire's eye and fog - from the omen, before the gate stands

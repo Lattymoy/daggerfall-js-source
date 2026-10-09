@@ -23,10 +23,11 @@
 // and both are asked here in the shape that would actually break.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { tmpdir } from 'node:os';
 import { graph } from './importGraph.mjs';   // ACC4: the deploy filter is held to the Worker's real import graph
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -588,4 +589,19 @@ test('AUDIT pre-merge S3: the service check\'s ask survives a timeout or a reset
   const wf = readFileSync(new URL('../.github/workflows/account-deploy.yml', import.meta.url), 'utf8');
   assert.match(wf, /claim\(\) \{\n\s*curl -sS --max-time 15 -o \/tmp\/gate\.json -w '%\{http_code\}' -X POST "\$base\/v1\/gate\/claim" \\\n[^\n]*\|\| true\n\s*\}/, 'the one ask, never the step\'s end');
   assert.match(wf, /for i in \$\(seq 1 12\); do\n\s*code=\$\(claim\); code=\$\{code:-000\}/, 'an empty answer is 000 - asked again');
+});
+
+test('INT1 (its audit): THE ACCOUNT WORKER LOADS WHERE A MODULE\'S URL IS NO URL - bundled as wrangler bundles it, `import.meta.url` undefined (a Worker need not have one), and imported: nothing the item law carries into the Worker reads it as it loads (the audit: comeSailAwayModels.js made its model URLs so, through the boats\' items - "TypeError: Invalid URL", the deploy\'s start refused)', async () => {
+  const { build } = await import('esbuild');
+  const r = await build({
+    entryPoints: [fileURLToPath(new URL('../server-account/src/index.js', import.meta.url))], bundle: true, format: 'esm', write: false,
+    platform: 'neutral', define: { 'import.meta.url': 'undefined' }, logLevel: 'silent',
+  });
+  const dir = mkdtempSync(join(tmpdir(), 'worker-'));
+  const file = join(dir, 'worker.mjs');
+  writeFileSync(file, r.outputFiles[0].text);
+  try {
+    const m = await import(pathToFileURL(file).href);
+    assert.equal(typeof m.default?.fetch, 'function', 'the Worker\'s fetch, loaded');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
 });

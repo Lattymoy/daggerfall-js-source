@@ -681,7 +681,7 @@ export async function fulfilCommission(ctx, player, env, { character, region, co
         AND COALESCE((SELECT balance FROM marks WHERE account = ?2), 0) + ?10 <= ?11`)
       .bind(id, me, nowS, provenance, character, tax, rid, nonce, region, pay, MARKS_MAX),
     // the piece the poster's, on its way to them at once (a delivery, PROF5's)
-    db.prepare(`UPDATE products SET owner = (SELECT poster FROM commissions WHERE id = ?1 AND fn = ?2), listed = 0, bought_with = 'marks'
+    db.prepare(`UPDATE products SET credited = 0, owner = (SELECT poster FROM commissions WHERE id = ?1 AND fn = ?2), listed = 0, bought_with = 'marks'
       WHERE provenance = (SELECT provenance FROM commissions WHERE id = ?1 AND fn = ?2)`).bind(id, nonce),   // GOLD-MARKET: bought with Drakes
     db.prepare(`INSERT OR IGNORE INTO market_deliveries (id, player, char_id, provenance, wear, why, from_region, arrives_at, at)
       SELECT id, poster, poster_char, provenance, ?3, 'bought', region, ?4, ?4 FROM commissions WHERE id = ?1 AND fn = ?2`).bind(id, nonce, WEAR_WHOLE, nowS),

@@ -25,6 +25,7 @@ import { mintCondition, rollPaintingMessage, templateByIndex, isAmmunition } fro
 import { ammoTemplateFor } from '../characters/thunderlockIds.js';   // what a ranged weapon spends - a leaf, so no cycle (see the file)
 import { isRriStackable } from './rriRealism.js';   // RRI2: the IsItemStackable override - an added yes (FormulaHelper.cs:2100-2102)
 import { noteShot } from './shotTally.js';   // ARENA-ARROWS: the shots a bout loosed - a leaf, so no cycle
+import { cardWorth } from '../net/cardWorthLaw.js';   // AUDIT CARDS-6 A6: a card split off is worth its card (the law imports nothing of systems/)
 
 /** DaggerfallUnityItem.IsEnchanted verbatim
  *  (DaggerfallUnityItem.cs:266-269): DERIVED from the enchantment
@@ -374,7 +375,13 @@ export function splitStack(list, stack, numberToPick, { rolls = Math.random } = 
   if (priced && stack.worldTextureRecord != null) picked.worldTextureRecord = stack.worldTextureRecord;
   if (stack.timeForItemToDisappear) picked.timeForItemToDisappear = stack.timeForItemToDisappear;
   if (stack.locked === true) picked.locked = true;   // AUDIT MERGE-PLUS C4: the part split off keeps the stack's lock
-  if (typeof stack.card === 'string') picked.card = stack.card;   // CARDS8: the card split off is the card it was
+  if (typeof stack.card === 'string') {   // CARDS8: the card split off is the card it was
+    picked.card = stack.card;
+    // AUDIT CARDS-6 A6: and worth its card's worth (net/cardWorthLaw.js CARD_WORTH, the mint's) - it took the template's
+    // coin, so a Lich split off its stack read 1 on its item card while the stack read 75
+    const w = cardWorth(stack.card);
+    if (w > 0) picked.value = w;
+  }
   if (stack.bound === true) picked.bound = true;   // AUDIT SS: and its binding (systems/itemBound.js) - never the Broker's price, which a dismantle pays out of
   list.push(picked);                              // AddItem(noStack: true)
   stack.stackCount = count - numberToPick;

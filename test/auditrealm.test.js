@@ -271,7 +271,7 @@ test('AUDIT REALM L1-F4 / L2-F1: a settle landing between the first side\'s read
   let armed = true;
   r.env.DB.prepare = (sql) => {
     const st = realPrepare(sql);
-    if (!/^SELECT seq, lease, bytes, obj, prev FROM realm_characters/.test(sql)) return st;
+    if (!/^SELECT seq, lease, bytes, obj, prev[a-z_, ]* FROM realm_characters/.test(sql)) return st;   // INT3 (PIN MOVED): the read asks the judge's hold beside
     let args = [];
     const wrap = { ...st, bind(...a) { args = a; st.bind(...a); return wrap; }, async first() {
       const row = await st.first();

@@ -314,7 +314,7 @@
   {
     "name": "CRAFT4-svc-gold-spends",
     "file": "server-account/src/professions.js",
-    "old": "      WHERE ${spendableSql('?1', '?2', '?7')} >= ?8 AND ${piece}`)",
+    "old": "      WHERE ${workableSql('?1', '?2', '?7')} >= ?8 AND ${piece}`)",
     "new": "      WHERE 1 AND ${piece}`)",
     "tests": [
       "test/craft4_temper.test.js"
@@ -332,8 +332,8 @@
   {
     "name": "CRAFT4-svc-row-same-q",
     "file": "server-account/src/professions.js",
-    "old": "UPDATE products SET quality = ?4, record = ?5 WHERE provenance = ?6 AND ${decided}`).bind(player.id, rid, nonce, quality + 1, record, provenance)",
-    "new": "UPDATE products SET record = ?5 WHERE provenance = ?6 AND ${decided}`).bind(player.id, rid, nonce, quality + 1, record, provenance)",
+    "old": "UPDATE products SET quality = ?4, record = ?5,",
+    "new": "UPDATE products SET record = ?5,",
     "tests": [
       "test/craft4_temper.test.js"
     ]
@@ -368,7 +368,7 @@
   {
     "name": "CRAFT4-svc-busy-unsaid",
     "file": "server-account/src/professions.js",
-    "old": "    if (st.own + st.bought >= cost.n) return { error: 'prof-piece-busy' };   // listed, on the road or standing in a home\n",
+    "old": "    if (workHeld(st) >= cost.n) return { error: 'prof-piece-busy' };   // listed, on the road or standing in a home\n",
     "new": "",
     "tests": [
       "test/craft4_temper.test.js"
@@ -388,7 +388,7 @@
   {
     "name": "CRAFT4-svc-gold-short",
     "file": "server-account/src/professions.js",
-    "old": "  return { error: st.own + st.bought + (st.gold ?? 0) >= cost.n ? 'stores-gold' : 'stores-short', material: cost.key };\n}",
+    "old": "  return { error: workHeld(st) + (st.gold ?? 0) >= cost.n ? 'stores-gold' : 'stores-short', material: cost.key };\n}",
     "new": "  return { error: 'stores-short', material: cost.key };\n}",
     "tests": [
       "test/craft4_temper.test.js"
@@ -586,8 +586,8 @@
   {
     "name": "CRAFT4-pages-temper-rank-open",
     "file": "src/ui/profPages.js",
-    "old": "    const open = rank >= r.rank, have = book.held(cost.key) >= cost.n;",
-    "new": "    const open = true, have = book.held(cost.key) >= cost.n;",
+    "old": "    const open = rank >= r.rank, have = workOf(book, cost.key) >= cost.n;",
+    "new": "    const open = true, have = workOf(book, cost.key) >= cost.n;",
     "tests": [
       "test/craft4_temper.test.js"
     ]
@@ -595,7 +595,7 @@
   {
     "name": "CRAFT4-pages-temper-short-open",
     "file": "src/ui/profPages.js",
-    "old": "    const open = rank >= r.rank, have = book.held(cost.key) >= cost.n;",
+    "old": "    const open = rank >= r.rank, have = workOf(book, cost.key) >= cost.n;",
     "new": "    const open = rank >= r.rank, have = true;",
     "tests": [
       "test/craft4_temper.test.js"

@@ -181,6 +181,17 @@ with the minutes left.
 - BESIDE THE BODY (PVPFIX, the owner: "place the pile next to the body not on top of it"): the pile stands a fixed
   step to the side of where they fell, the same on every client (`wildRemains.js:"- on top it was hidden"`) - on top
   it was inside the body and could not be aimed at.
+- KEPT THROUGH A CRASH (WILD-KEEP, FIELD BUGS 2026-10-09c, "Stuff pvp zone": "my game crashed before I could retrieve
+  it. When I logged back in, my gear was no longer visible on the map"). The room holds the pile its twelve minutes
+  whatever the client does; the client's one record of it (`world.js:"let _wildMine = null;"` - where it lies, the room,
+  its end, the hall) lived in memory, so a game crashed or closed came back with the world map's pulsing mark gone, the
+  pile not known for mine by its record, and a hall's lock refusing the hall my pile is my way back into (section 13).
+  It is kept on the device beside WILD-WAYPOINT's flag now, for the character that fell (`systems/wildRemainsWaypoint.js`
+  keepMine / keptMine / forgetMine, its own key: a flag removed by hand keeps it), read back once by the zone's frame and
+  forgotten at its end or at the room's "gone". CLIENT-ONLY; NOT DONE, and the owner's: a record the account keeps (a
+  second device, a cleared storage), a clock that waits for a disconnected owner, and a relay log of a fall's records
+  that a lost pile could be granted back from - today nothing keeps them past the twelve minutes. Pinned by
+  `test/fb1009c_wildkeep.test.js`; `tools/mutants/fb1009c_wildkeep.json` (7, all dead).
 
 ## 6. The maps
 
