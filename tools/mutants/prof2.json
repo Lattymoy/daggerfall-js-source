@@ -50,7 +50,7 @@
   {
     "name": "PROF2-6-unconfirmed-any-tier",
     "file": "src/net/nodeLaw.js",
-    "old": "  const d = drawFromTable(table, unit('vein', x, y, day, slot, 3), unit('vein', x, y, day, slot, 4), confirmed ? 7 : 2);",
+    "old": "  const d = drawFromTable(table, unit('vein', x, y, day, slot, 3), unit('vein', x, y, day, slot, 4), confirmed ? 7 : UNCONFIRMED_VEIN_TIER);",
     "new": "  const d = drawFromTable(table, unit('vein', x, y, day, slot, 3), unit('vein', x, y, day, slot, 4), 7);",
     "tests": [
       "test/prof2_law.test.js"
@@ -87,7 +87,7 @@
   {
     "name": "PROF2-10-unconfirmed-dungeon-deep",
     "file": "src/net/nodeLaw.js",
-    "old": "  const d = drawFromTable(table, unit('dvein', dungeon, 0, day, slot, 3), unit('dvein', dungeon, 0, day, slot, 4), confirmed ? 7 : 3);",
+    "old": "  const d = drawFromTable(table, unit('dvein', dungeon, 0, day, slot, 3), unit('dvein', dungeon, 0, day, slot, 4), confirmed ? 7 : UNCONFIRMED_VEIN_TIER);",
     "new": "  const d = drawFromTable(table, unit('dvein', dungeon, 0, day, slot, 3), unit('dvein', dungeon, 0, day, slot, 4), 7);",
     "tests": [
       "test/prof2_law.test.js"

@@ -553,7 +553,9 @@ test('WD3 with ARENA2: no stand-in walls up a door - every exterior door of both
   // AUDIT FB1005 T3: ONE door, and it is the pack's own - Beautiful Villages' TEMPASD1 stands its House2 #6 (model 159)
   // inside hills 52458 and 52713, and the pack's published meshes stand 10.5-11.2 m over the door's foot there (measured with the
   // clone; the stand-ins 10.1-10.4 m): DFU with the RMB Resource Pack buries it too. Carried, named, Mac's call (FIELD
-  // BUGS 2026-10-05's audit) - any other door a stand-in walls is still a failure here.
+  // BUGS 2026-10-05's audit) - any other door a stand-in walls is still a failure here. The PACK still walls it (this
+  // sweep reads the pack's own JSON); the block the door mints stands the house on clear ground since FIELD BUGS
+  // 2026-10-09e HILL-HOUSE (src/world/curatedPlacements.js, test/fb1009e_hillhouse.test.js) - a quest sent a player there.
   assert.deepEqual([...new Set(walled)].sort(), ['beautiful-villages TEMPASD1.RMB.json: 52458 at the door of record 6 (model 159)', 'beautiful-villages TEMPASD1.RMB.json: 52713 at the door of record 6 (model 159)']);
   resetAll();
 });

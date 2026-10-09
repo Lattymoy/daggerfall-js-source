@@ -449,6 +449,10 @@ export const GATHER_HOW = Object.freeze({
   mining: 'Press the use key at an ore vein or a boulder in the wilderness, or a vein in a dungeon. Needs a Pick-Axe in your pack. It also works from your hotbar or a quick slot. Used from your pack, a tool just tells you where it works.',
   logging: 'Press the use key at a tree in the wilderness. Needs a Wood-Axe in your pack. Only some trees in each area can be felled each day. It also works from your hotbar or a quick slot. Used from your pack, a tool just tells you where it works.',
 });
+/** UNWITNESSED-ORE (FIELD BUGS 2026-10-09e, "Mining veins": hundreds of Iron veins in the mountains and not one of
+ *  Silver, Gold, Platinum or Mithril, read as a bug): the ground's own law, said on the Mining page - a vein holds its
+ *  ground's rarer ores only where three players have gathered (net/nodeLaw.js witnessedFact, UNCONFIRMED_VEIN_TIER). */
+export const MINING_GROUND_LINE = 'Ground that fewer than three players have gathered on holds Silver at most. Gold, Platinum, Mithril and a region\'s own ore appear there once three different players (each account at least a week old) have gathered on it - the mountains hold them, and the dungeons\' deep veins hold Silver anywhere.';
 /** TOOL-SAID: the empty Stores say where their goods come from - a node's act (TOOL-USE: the key's, or the tool's Use
  *  there), never a tool used from the pack. */
 /** AUDIT (2026-10-04): the empty Stores on BAG1's page - a carrying book's harvest goes into the bag or the pack, never
@@ -539,6 +543,7 @@ export function drawProfessionsPage(detail, rerender, kit) {
     const today = book.state.today?.[_sel] ?? 0;   // CAP-OFF: the day's harvests, a count against no cap
     pane.append(el('p', 'prof-today', `Today: ${today} harvest${today === 1 ? '' : 's'}`));
     if (GATHER_HOW[_sel]) pane.append(el('p', 'px-note', GATHER_HOW[_sel]));   // TOOL-SAID
+    if (_sel === 'mining') pane.append(el('p', 'px-note', MINING_GROUND_LINE));   // UNWITNESSED-ORE
   }
   // THE SPECIALISATIONS: two cards a rank (CRAFT3: a merged craft's four, each its discipline's), the chosen one lit; a
   // change of mind pressed twice - free once where the five crafts' merge lost a choice (`free`)

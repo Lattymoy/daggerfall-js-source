@@ -191,8 +191,8 @@
   {
     "name": "TAMRIEL3-the-fit-wins-on-count",
     "file": "src/world/tamrielLand.js",
-    "old": "if (!best || score * best.cells > best.score * cols * rows) best = { ox, oy, ppu, score, cells: cols * rows };",
-    "new": "if (!best || score > best.score) best = { ox, oy, ppu, score, cells: cols * rows };",
+    "old": "        const value = seam / edge + (FIT_AREA_WEIGHT * score) / (cols * rows);",
+    "new": "        const value = seam / edge + FIT_AREA_WEIGHT * score;",
     "tests": [
       "test/tamriel3.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "TAMRIEL3-the-fit-scores-a-candidate-off-the-picture",
     "file": "src/world/tamrielLand.js",
-    "old": "if (ox < 0 || ox + cols > trace.w) continue;",
-    "new": "if (ox < 0) continue;",
+    "old": "if (ox < 1 || ox + cols + 1 > w) continue;",
+    "new": "if (ox < 1) continue;",
     "tests": [
       "test/tamriel3.test.js"
     ]
@@ -299,10 +299,10 @@
   {
     "name": "TAMRIEL3-the-coast-is-not-simplified",
     "file": "src/ui/tamrielInk.js",
-    "old": "const soften = (chain) => roundCorners(simplifyChain(chain, ppu * 0.75), ppu * 0.5);",
-    "new": "const soften = (chain) => chain;",
+    "old": ".map((c) => chaikinCapped(simplifyChain(c, COAST_SIMPLIFY_PX), SMOOTH_PASSES, COAST_CUT_PX));",
+    "new": ".map((c) => simplifyChain(c, COAST_SIMPLIFY_PX));",
     "tests": [
-      "test/tamriel3.test.js"
+      "test/tamriel3.test.js", "test/tamriel4.test.js"
     ]
   },
   {

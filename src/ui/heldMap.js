@@ -187,6 +187,8 @@ import { wildInk, paintWildZone, paintWildRemains, paintWildKeyChip, paintWildCr
 import { WILD_TEXT, wildInside, wildRingAt } from '../systems/wildZone.js';   // WILD1: the zone's words on the map
 import { zoneMapInk, paintWildRings, paintZoneMapStatic, zoneMapView, zoneMapLimits, buildZoneLegend } from './wildZoneMap.js';   // WILD2: the rings, and the zone's own map
 import { paintWaypointFlag, flagBox } from './waypointFlags.js';   // WAYPOINTS: the small flags
+import { mapUiScale } from './mapScale.js';   // FIELD BUGS 2026-10-09e MAP-SCALE: the map's interface at the screen's size
+import { getPref } from '../systems/uiPrefs.js';
 import { retroScreenRect } from '../systems/retroMode.js';   // DISC25-B: DFU's CustomScreenRect, the pillarbox's screen
 
 export const HELD_MAP_URL = new URL('art/held-map.png', APP_ROOT ?? globalThis.document?.baseURI ?? 'https://invalid.invalid/').href;
@@ -648,7 +650,7 @@ export class HeldMapWindow {
     this._staticKey = '';
     this._dirty = true;     // the canvas wants a repaint
     this._layoutKey = '';
-    this._paper = { w: 1, h: 1, dpr: 1 };
+    this._paper = { w: 1, h: 1, dpr: 1, k: 1 };
     this._view = { ox: 0, oy: 0, scale: 1 };
     this._goal = { ox: 0, oy: 0, scale: 1 };
 
@@ -1149,7 +1151,14 @@ export class HeldMapWindow {
     const vw = ui ? ui.w : (root.clientWidth || W);
     const vh = root.clientHeight || H;
     const dpr = globalThis.devicePixelRatio || 1;
-    const key = `${vw}x${vh}@${dpr}|${inset}|${this._lane}`;   // HOLD-CLOSE: the two lanes size the sheet differently
+    // FIELD BUGS 2026-10-09e MAP-SCALE ("icons and text too small on high resolutions", a 1440p monitor): THE MAP'S
+    // SCALE (ui/mapScale.js). The sheet is inked on a paper of the fitted size over `k` - every name, glyph and line at
+    // the size it was drawn for at 1080p - and laid back up at full device resolution (the backing keeps every device
+    // pixel: dpr x k a paper pixel); the chrome over it is zoomed by the same (`--hm-ui`, enhancedStyle.js). A pointer's
+    // client pixels come back through _paperPoint, over `k`.
+    const k = mapUiScale(vh, getPref('mapScale'));
+    root.style.setProperty?.('--hm-ui', String(k));
+    const key = `${vw}x${vh}@${dpr}|${inset}|${this._lane}|${k}`;   // HOLD-CLOSE: the two lanes size the sheet differently
     if (key === this._layoutKey) return;
     this._layoutKey = key;
     // HOLD-CLOSE: the PAPER is fitted to the screen and the painting follows from it (heldStageRect)
@@ -1161,7 +1170,7 @@ export class HeldMapWindow {
     c.ink.width = Math.max(1, Math.round(pw * dpr));
     c.ink.height = Math.max(1, Math.round(ph * dpr));
     const firstLayout = this._paper.w === 1;
-    this._paper = { w: pw, h: ph, dpr };
+    this._paper = { w: pw / k, h: ph / k, dpr: dpr * k, k };
     this._stage = { x: sx, y: sy, w: sw, h: sh };
     if (this._lane === 'hands') {
       // MAP3: the sheet keeps the size the 4:3 fit gives it, but sits at
@@ -1170,7 +1179,9 @@ export class HeldMapWindow {
       // re-asked (a hold repacks the whole arm mesh); the placement is
       // recomputed for the new sheet size on the next tick.
       Object.assign(c.stage.style, { left: '0px', top: '0px', width: '100%', height: '100%' });
-      Object.assign(c.ink.style, { left: '0px', top: '0px' });
+      // MAP-SCALE: the held paper's matrix maps the PAPER's own pixels onto the sheet's corners, so the canvas's box is
+      // the paper's (over k) here - the backing is the device's either way
+      Object.assign(c.ink.style, { left: '0px', top: '0px', width: `${pw / k}px`, height: `${ph / k}px` });
       this._cornersKey = null;
     }
     if (firstLayout) {
@@ -1935,7 +1946,8 @@ export class HeldMapWindow {
       return p && this._onSheet(p) ? p : OFF_SHEET;
     }
     const r = this._chrome.ink.getBoundingClientRect?.() ?? { left: 0, top: 0 };
-    return [clientX - r.left, clientY - r.top];
+    const k = this._paper.k || 1;   // MAP-SCALE: a client pixel is 1/k of a paper pixel
+    return [(clientX - r.left) / k, (clientY - r.top) / k];
   }
 
   // ── SOC6: THE PARTY ON THE MAP ─────────────────────────────────
@@ -2418,8 +2430,10 @@ export class HeldMapWindow {
     }
     const r = box.getBoundingClientRect?.() ?? { width: 0, height: 0 };
     const at = placeTip(cx, cy, r.width, r.height, globalThis.innerWidth ?? 0, globalThis.innerHeight ?? 0);
-    box.style.left = `${at.left}px`;
-    box.style.top = `${at.top}px`;
+    // MAP-SCALE: the card is zoomed with the chrome, and a zoomed box's offsets are its own pixels - k of the screen's
+    const k = this._paper?.k || 1;
+    box.style.left = `${at.left / k}px`;
+    box.style.top = `${at.top / k}px`;
   }
 
   /** WB13c (2026-10-01, Mac: "AAA grade polish"): A FINGER HAS NO HOVER, so a phone never saw the breach's card (nor a
