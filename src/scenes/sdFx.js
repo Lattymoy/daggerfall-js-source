@@ -79,7 +79,7 @@ export const SD_HAND_FLASH_OUT = 1.2;
  * @param {{ link: any, feet?: () => (number[] | null), shake?: (k: number) => void }} deps
  */
 export function createSdFx({ link, feet = () => null, shake = () => {} }) {
-  /** @type {Array<{ at: number[], at0: number, t: number, kind: any, color: ReadonlyArray<number>, floor: number }>} */
+  /** @type {Array<{ at: number[], at0: number, t: number, kind: any, color: ReadonlyArray<number>, floor: number, edge: ReadonlyArray<number> }>} */
   const bursts = [];
   let k = null, pass = null, passTried = false, flashAt = -Infinity;
   const live = [];
