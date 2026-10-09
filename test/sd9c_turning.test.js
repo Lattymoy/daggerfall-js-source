@@ -28,7 +28,7 @@ const row = (handle, over = {}) => ({ handle, created_at: AFTER, registered_at: 
 // ── the vocabulary and the grant ──────────────────────────────────────
 
 test('SD9c THE TURNING HOUR, held and worn: AURAS gains it last; its word and its paint the Hourbreaker\'s; held off the row\'s second grant - a registered account\'s alone, never off the title\'s bit; worn through the aura\'s door and signed into the token; the wire keeps it (mutants: held off any bit; held by a guest; another title\'s paint)', async () => {
-  assert.equal(AURAS.at(-1), 'turninghour', 'the vocabulary\'s newest');
+  assert.equal(AURAS.at(-2), 'turninghour', 'the vocabulary\'s newest when it came - HOURS-FIRST\'s First Hour after it (PIN MOVED)');
   assert.equal(AURA_TEXT.turninghour, 'The Turning Hour');
   assert.equal(AURA_PAINT.turninghour, 'hourbreaker', 'in the Hourbreaker\'s paint');
   assert.ok(badgeCss().includes(`.card button.acttitle.actaura.aura-turninghour { color: ${cssRgba(TITLE_RGBA.hourbreaker)}; }`), 'its button in the Hourbreaker\'s gold');

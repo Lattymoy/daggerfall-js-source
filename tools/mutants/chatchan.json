@@ -402,8 +402,8 @@
   {
     "name": "CC-parser-before-unstuck",
     "file": "src/scenes/world.js",
-    "old": "      onSend: (tabId, text) => {\n        if (/^\\/unstuck(\\s+cancel)?$/i.test(text.trim())) {",
-    "new": "      onSend: (tabId, text) => {\n        if (parseChatLine(text).kind === 'host') return false;\n        if (/^\\/unstuck(\\s+cancel)?$/i.test(text.trim())) {",
+    "old": "      onSend: (tabId, text) => {\n        // SERVER-POST (AUDIT SERVER-POST: the classic skin's",
+    "new": "      onSend: (tabId, text) => {\n        if (parseChatLine(text).kind === 'host') return false;\n        // SERVER-POST (AUDIT SERVER-POST: the classic skin's",
     "tests": [
       "test/chatchan.test.js",
       "test/chat1.test.js"

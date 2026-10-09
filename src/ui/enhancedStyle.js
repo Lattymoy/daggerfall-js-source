@@ -2547,6 +2547,65 @@ ${SUPPORT_MARKS_CSS}
   .px-win.px-timerswin .px-body { padding: 16px 14px 18px; }
   .px-timerswin .tm-count { font-size: 16px; }
 }
+/* SERVER-POST (Mac: "an ingame server mailbox that goes next to the hourglass in the pause menu. It should show
+   notifications whenever players have a message"): THE MAILBOX - an envelope beside the hourglass (ui/enhancedPost.js;
+   placed as the hourglass is, beside it - 360px off the edge stands in until it is measured), a count on it while
+   anything waits, and its window in the pause window's frame on the hourglass's own stage (.px-timersstage). */
+.px-postmark { position: absolute; top: 12px; right: 360px; z-index: 4; display: flex; align-items: center;
+  min-height: 44px; min-width: 44px; justify-content: center; padding: 0 6px; background: none; border: 0; cursor: pointer; }
+.px-postmark:focus-visible { outline: 2px solid #f3cf86; outline-offset: 2px; }
+.px-envelope { display: block; width: 30px; height: 24px; image-rendering: pixelated; filter: drop-shadow(2px 2px 0 rgba(0,0,0,0.8));
+  background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 8' shape-rendering='crispEdges'><rect x='0' y='0' width='10' height='8' fill='%23c08a3e'/><rect x='1' y='1' width='8' height='6' fill='%23d8cfae'/><rect x='1' y='1' width='1' height='1' fill='%23c08a3e'/><rect x='2' y='2' width='1' height='1' fill='%23c08a3e'/><rect x='3' y='3' width='1' height='1' fill='%23c08a3e'/><rect x='8' y='1' width='1' height='1' fill='%23c08a3e'/><rect x='7' y='2' width='1' height='1' fill='%23c08a3e'/><rect x='6' y='3' width='1' height='1' fill='%23c08a3e'/><rect x='4' y='4' width='2' height='1' fill='%23b8322b'/></svg>") center / contain no-repeat; }
+.px-postmark:hover .px-envelope, .px-postmark:focus-visible .px-envelope { transform: translateY(-2px); transition: transform 160ms steps(2); }
+.px-postbadge { position: absolute; top: 2px; right: -4px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px;
+  background: #b8322b; color: #fff4e0; font-size: 11px; line-height: 18px; text-align: center; letter-spacing: 0;
+  box-shadow: 0 0 0 2px #0a0c11; font-variant-numeric: tabular-nums; }
+.px-postbadge:empty { display: none; }
+@keyframes pm-nudge { 0%, 70%, 100% { transform: rotate(0deg); } 80% { transform: rotate(-8deg); } 90% { transform: rotate(8deg); } }
+.px-postmark.waiting .px-envelope { animation: pm-nudge 2.4s steps(6) infinite; }
+@media (prefers-reduced-motion: reduce) { .px-postmark.waiting .px-envelope { animation: none; } }
+.px-win.px-postwin { height: auto; max-height: min(680px, 86dvh); width: min(560px, 94vw); background: #0a0c11; }
+.px-win.px-postwin .px-body { padding: 20px 24px 22px; overflow-y: auto; }
+.px-postwin .pm-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.px-postwin .pm-title { margin: 0; font-size: 22px; letter-spacing: 0.18em; text-transform: uppercase; color: #efe8d6; }
+.px-postwin .pm-say { margin: 6px 0 4px; min-height: 16px; font-size: 12px; color: #e8a49c; }
+.px-postwin .pm-say.ok { color: #9fe8b4; }
+.px-postwin .pm-empty { color: var(--dim); font-size: 13px; }
+.px-postwin .pm-list { display: flex; flex-direction: column; }
+.px-postwin .pm-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 10px; text-align: left; cursor: pointer;
+  background: none; border: 0; border-bottom: 1px solid rgba(125,116,96,0.25); color: inherit; font: inherit; }
+.px-postwin .pm-row:hover { background: rgba(192,138,62,0.1); }
+.px-postwin .pm-row:focus-visible { background: rgba(192,138,62,0.14); outline: 2px solid #f3cf86; outline-offset: -2px; }   /* AUDIT SERVER-POST: the focus seen, not a tint alone */
+.px-postwin .pm-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.px-postwin .pm-dot { flex: 0 0 8px; width: 8px; height: 8px; background: transparent; }
+.px-postwin .pm-row.unread .pm-dot, .px-postwin .pm-row.gift .pm-dot { background: #f3cf86; box-shadow: 0 0 6px rgba(243,207,134,0.6); }
+.px-postwin .pm-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.px-postwin .pm-subject { font-size: 15px; color: #efe8d6; overflow-wrap: anywhere; margin: 0; }
+.px-postwin .pm-row.unread .pm-subject { color: #fff4e0; }
+.px-postwin .pm-from { font-size: 12px; color: var(--dim); margin: 0; }
+.px-postwin .pm-chip { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 13px; text-align: right; }
+.px-postwin .pm-state { font-size: 11px; color: var(--dim); }
+.px-postwin .pm-piece { display: flex; flex-direction: column; gap: 8px; padding-top: 6px; }
+.px-postwin .pm-piece .pm-subject { font-size: 18px; }
+.px-postwin .pm-body { margin: 6px 0; font-size: 14px; line-height: 1.5; color: #e2dccd; white-space: pre-wrap; overflow-wrap: anywhere; }
+.px-postwin .pm-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px;
+  border: 1px solid rgba(192,138,62,0.55); background: rgba(192,138,62,0.08); }
+.px-postwin .pm-itemname { font-size: 16px; letter-spacing: 0.04em; }
+.px-postwin .pm-foot { display: flex; justify-content: space-between; gap: 12px; margin-top: 8px; }
+.px-postwin [data-rarity="magic"] { color: #6f9ee8; } .px-postwin [data-rarity="rare"] { color: #e4c34f; } .px-postwin [data-rarity="legendary"] { color: #e07a2e; }
+.px-postwin [data-rarity="aetheric"] { color: #bfe8ff; } .px-postwin [data-rarity="artifact"] { color: #b57bee; } .px-postwin [data-rarity="gilded"] { color: #ffcf4d; }
+/* AUDIT SERVER-POST: the tiers above are LR1's own hexes (systems/lootRarity.js RARITIES, pinned against it - a stylesheet
+   never imports the loot ladder, which reaches the whole combat graph); on Stone's light panel the three darkest read
+   3.0-3.3:1 and are lifted past 4.5:1 there alone. */
+:root[data-plus-theme="stone"] .px-postwin [data-rarity="magic"] { color: #b4cdf7; }
+:root[data-plus-theme="stone"] .px-postwin [data-rarity="legendary"] { color: #f7b27a; }
+:root[data-plus-theme="stone"] .px-postwin [data-rarity="artifact"] { color: #dcbaf9; }
+:root[data-plus-theme="stone"] .px-postwin { --dim: #e2dccd; --brass: #ffd98a; text-shadow: 1px 1px 0 rgba(5,6,8,0.85); }
+@media (max-width: 560px) {
+  .px-win.px-postwin .px-body { padding: 16px 14px 18px; }
+  .px-postwin .pm-item { flex-direction: column; align-items: stretch; }
+}
+@media (max-height: 560px) { .px-win.px-postwin { max-height: calc(100dvh - 20px); } }   /* AUDIT SERVER-POST: a short screen's window, as the timers' */
 .px-over .px-win.px-acctwin { align-self: center; max-height: min(640px, 86dvh); }
 @media (max-width: 480px) {
   /* On a phone the wordmark owns the top, so the mark loses its caption

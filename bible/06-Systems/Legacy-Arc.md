@@ -543,7 +543,7 @@ than standing still.
 *Built: PERMADEATH-HOUSES (2026-10-09). The law is `systems/legacy/household.js` (`deedsDue`, `syncHouses`' `taken`,
 `heldByDead`); the host's half `scenes/legacyHost.js` (`takeDeeds`); the world's `scenes/world.js` (`legacyInheritHouse`);
 the scene handed on `systems/sceneCache.js` (`graftPermanentScene`); online `server-account/src/homes.js` (`inheritHome`,
-`/v1/homes/inherit`, acct97). Pinned in `test/permadeath_houses.test.js`, mutation-proven in
+`/v1/homes/inherit`, acct98 - acct97 on its branch, renumbered past SERVER-POST and HOURS-FIRST at the merge). Pinned in `test/permadeath_houses.test.js`, mutation-proven in
 `tools/mutants/permadeathhouses.json` (30, all dead).*
 
 The owner (2026-10-09): "now all that needs to be looked at is what happens to houses owned by dead permadeath
