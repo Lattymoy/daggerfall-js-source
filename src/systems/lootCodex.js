@@ -47,6 +47,7 @@ import { registerTakeListener } from './inventory.js';
 import { registerModSaveData } from './modSaveData.js';
 import { registerMagicRoundHook, worldMinutes } from './worldTick.js';
 import { hudText } from './notify.js';
+import { presentCodexFind } from './acquireWatch.js';   // LOOT-BANNER: the banner says a first find on Enhanced Plus
 import { audio } from './audio.js';
 import { SOUND } from './soundClips.js';
 import { isEquipped, equipTableOf } from './equip.js';
@@ -88,7 +89,8 @@ export function noteFind(item, { quiet = false } = {}) {
   const key = codexKey(item);
   if (!key || foundDay(key.kind, key.id) != null) return false;
   _codex[key.kind][key.id] = _day();
-  if (!quiet) {
+  // LOOT-BANNER: on Enhanced Plus the banner announcing the piece says it (systems/acquireWatch.js presentCodexFind)
+  if (!quiet && !presentCodexFind(item, key.kind)) {
     const rec = RECORD_OF[key.kind](key.id);
     hudText(CODEX_FIND(rec?.name ?? item.name ?? '', key.kind));
     audio.playOneShot?.(SOUND.LevelUp, 1);

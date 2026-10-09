@@ -204,8 +204,8 @@
   {
     "name": "PICKUP-FEED-the-classic-skin-dressed",
     "file": "src/ui/pickupFeed.js",
-    "old": "    if (!isEnhanced()) return false;\n    const d = doc();\n    if (!d?.body || !d.createElement) return false;\n    const entries",
-    "new": "    if (false) return false;\n    const d = doc();\n    if (!d?.body || !d.createElement) return false;\n    const entries",
+    "old": "    if (!isEnhanced()) return false;\n    const d = doc();\n    if (!d?.body || !d.createElement) return false;\n    // LOOT-BANNER",
+    "new": "    if (false) return false;\n    const d = doc();\n    if (!d?.body || !d.createElement) return false;\n    // LOOT-BANNER",
     "tests": [
       "test/pickupfeed.test.js"
     ],

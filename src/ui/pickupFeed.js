@@ -41,13 +41,14 @@
 import { isEnhanced } from '../systems/uiSkin.js';
 import { itemNameParts } from '../systems/itemInfo.js';   // RF6: the long name's name part - the word the plaque's row and the take's line both wear
 import { rarityAttr } from '../systems/lootRarity.js';   // LR1: the tier the plaque's row wears
+import { announces, isAcquired } from '../systems/acquireWatch.js';   // LOOT-BANNER: a new rare-or-better piece is the banner's
 import { isGoldPieces } from '../systems/inventory.js';
 import { inventoryItemImage } from '../systems/itemTemplates.js';
 import { requestFittedIcon, fittedImg } from './textureCanvas.js';   // UI1: the pack's own fitted, cached icon door - decoded once, never per frame
 import { screenDpr } from './iconFit.js';
 import { PIXEL_STACK, PIXEL_FONT_CSS, PIXELIFY_FIVE_FACE, PIXEL_TEXT_SHADOW } from './pixelifyFive.js';
 import { rarityVarsCss } from './enhancedPlusStyle.js';   // RARITY-UI: the tiers' colours, the one table
-import { FRAME_TONES, PLUS_THEMES } from './enhancedFrame.js';
+import { FRAME_TONES, PLUS_THEMES, hudVeil, HUD_VEIL_LIGHT } from './enhancedFrame.js';   // LOOT-BANNER: the veil's law, shared
 import { midScreenText } from './midScreenText.js';
 import { ENHANCED_MID_TEXT_ID, midTextTopPx } from './enhancedHudText.js';
 import { crosshairCentreY, CROSSHAIR_ARM } from './hudCrosshair.js';
@@ -207,17 +208,12 @@ export function pickupFeedLayout({ base, upper = 0, lower = Infinity, cardH = 0,
 // journey bar and the quest tracker read it). Each Plus theme tints the veil as it tints the plaque's.
 const T = FRAME_TONES;
 const rgbOf = (hex) => [1, 3, 5].map((i) => parseInt(String(hex).slice(i, i + 2), 16)).join(',');
-/** AUDIT HAUL-CARDS C4: a colour's relative luminance (WCAG) - a theme whose panel is light veils the feed in its ink. */
-const luminance = (hex) => {
-  const [r, g, b] = [1, 3, 5].map((i) => parseInt(String(hex).slice(i, i + 2), 16) / 255).map((v) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-};
 /** AUDIT HAUL-CARDS C4: the feed is words over the world, in brass, parchment and the tiers' colours - a veil lighter than
- *  this (Stone's panel, 0.10) dropped them to 2:1; such a theme's feed wears its ink, the rest their panel as before. */
-export const PICKUP_VEIL_LIGHT = 0.06;
-const veilOf = (th) => (th.ink && luminance(th.panel) > PICKUP_VEIL_LIGHT ? th.ink : th.panel);
+ *  HUD_VEIL_LIGHT (Stone's panel, 0.10) dropped them to 2:1; such a theme's feed wears its ink (ui/enhancedFrame.js hudVeil -
+ *  moved there at LOOT-BANNER, its second reader). */
+export const PICKUP_VEIL_LIGHT = HUD_VEIL_LIGHT;
 const THEME_TINTS = Object.entries(PLUS_THEMES).filter(([, th]) => th.panel)
-  .map(([id, th]) => `:root[data-plus-theme="${id}"] .pickfeed-card { background-color: rgba(${rgbOf(veilOf(th))}, 0.9); }`).join('\n');
+  .map(([id, th]) => `:root[data-plus-theme="${id}"] .pickfeed-card { background-color: rgba(${rgbOf(hudVeil(th))}, 0.9); }`).join('\n');
 
 export const PICKUP_FEED_CSS = `${PIXELIFY_FIVE_FACE}
 /* PICKUP-FEED: what a press put in the pack, under the crosshair (ui/pickupFeed.js) */
@@ -380,9 +376,13 @@ export function showPickups(moved, identity = undefined) {
     if (!isEnhanced()) return false;
     const d = doc();
     if (!d?.body || !d.createElement) return false;
-    const entries = (moved ?? []).map((m) => pickupEntry(m?.item, m?.count, identity)).filter(Boolean);
-    if (!entries.length) return false;
-    if (!queue.push(entries, _now())) return false;
+    // LOOT-BANNER: a piece new to the player in Rare or better is announced by its banner at the right edge
+    // (ui/lootBanner.js, the next frame) - it takes no card here, and the take still says no line for it
+    const fresh = (m) => !!m?.item && announces(m.item) && !isAcquired(m.item);
+    const banners = (moved ?? []).some(fresh);
+    const entries = (moved ?? []).filter((m) => !fresh(m)).map((m) => pickupEntry(m?.item, m?.count, identity)).filter(Boolean);
+    if (!entries.length) return banners;
+    if (!queue.push(entries, _now())) return banners;
     ensure(d);
     draw();
     return true;
