@@ -1,0 +1,434 @@
+[
+  {
+    "name": "A3-S1-GRACE",
+    "file": "server-account/src/npcChapters.js",
+    "old": "const current = meritWeekOf(nowS - CHAPTER_TURNING_GRACE_S);",
+    "new": "const current = meritWeekOf(nowS);",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-S2-OFF",
+    "file": "server-account/src/npcChapters.js",
+    "old": "  if (sw === 'off') {\n    if (last == null",
+    "new": "  if (false) {\n    if (last == null",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ],
+    "why": "A week settled under 'off' is refused by its own row: npc_chapter_weeks.open holds 'dev' or 'on' alone (its CHECK), so the batch rolls back whole and settleChaptersDue stops at that week - nothing is written, as the early return writes nothing; the return spares the reads.",
+    "note": "AUDIT CHAP4 S2: recorded equivalent while an 'off' week returned before anything was read; since S2 records the shut weeks, the branch is a law of its own, and it dies."
+  },
+  {
+    "name": "A3-S2-POST",
+    "file": "server-account/src/professions.js",
+    "old": "const hallDone = chaptersSwitchOf(open) === 'off' || !!(",
+    "new": "const hallDone = !!(",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-S2-LIST-OPEN",
+    "file": "server-account/src/professions.js",
+    "old": "await postWrits(db, day, region, nowS, zero, env?.CHAPTERS_OPEN);",
+    "new": "await postWrits(db, day, region, nowS, zero, 'on');",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-S2-RESET",
+    "file": "server-account/src/npcChapters.js",
+    "old": "  const opened = open === 'on' && last?.open === 'dev'\n",
+    "new": "  const opened = false\n",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ],
+    "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
+  },
+  {
+    "name": "A3-S2-STORED",
+    "file": "server-account/src/npcChapters.js",
+    "old": ".bind(week, active, target, rows.length, open, nowS),",
+    "new": ".bind(week, active, target, rows.length, 'on', nowS),",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-S2-DUE-SW",
+    "file": "server-account/src/npcChapters.js",
+    "old": "const r = await settleChapterWeek(db, w, nowS, zero, sw);",
+    "new": "const r = await settleChapterWeek(db, w, nowS, zero);",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-S2-SHEET-OPEN",
+    "file": "server-account/src/npcChapters.js",
+    "old": "seasonZeroOf(env?.SEASON_ZERO_WEEK), env?.CHAPTERS_OPEN);\n  const chapters = (await allChapters",
+    "new": "seasonZeroOf(env?.SEASON_ZERO_WEEK));\n  const chapters = (await allChapters",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-S2-BOARD-OPEN",
+    "file": "server-account/src/professions.js",
+    "old": "if (halls) await settleChaptersDue(db, nowS, zero, env?.CHAPTERS_OPEN);",
+    "new": "if (halls) await settleChaptersDue(db, nowS, zero);",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-S3-BUMP",
+    "file": "server-account/src/npcHalls.js",
+    "old": "    bumpRegions(db, 'key = ?1', key, nowS, 'changes() > 0'),\n",
+    "new": "",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-S3-BUMP-GUARD",
+    "file": "server-account/src/npcHalls.js",
+    "old": "bumpRegions(db, 'key = ?1', key, nowS, 'changes() > 0'),",
+    "new": "bumpRegions(db, 'key = ?1', key, nowS),",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-S3-STRIKE-BUMP",
+    "file": "server-account/src/npcHalls.js",
+    "old": "    bumpRegions(db, 'key LIKE ?1', `%:${key}`, nowS),\n",
+    "new": "",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-S3-STALE",
+    "file": "server-account/src/npcHalls.js",
+    "old": "const chapters = rowChapters(row) ?? await chaptersOf(db, g, nowS);",
+    "new": "const chapters = rowChapters(row) ?? [];",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-S3-WRITE-VER",
+    "file": "server-account/src/npcHalls.js",
+    "old": "WHERE region = ?4 AND ver = ?2')",
+    "new": "WHERE region = ?4')",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ],
+    "equivalent": true,
+    "why": "The row's `done` is written as the version READ, never the version that stands at the write: a change landing between the read and the write moves `ver` past it, so the row reads stale (done != ver) and is computed again either way - the guard spares one pointless write, it decides nothing."
+  },
+  {
+    "name": "A3-S4-JSON",
+    "file": "server-account/src/professions.js",
+    "old": "        FROM json_each(?4)`)",
+    "new": "        FROM json_each(?4) LIMIT 1`)",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-S5-STRIKE-IN-WRITE",
+    "file": "server-account/src/npcHalls.js",
+    "old": " WHERE NOT EXISTS (SELECT 1 FROM npc_hall_strikes WHERE map_id = ?6)`)",
+    "new": "`)",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-S5-ANSWER",
+    "file": "server-account/src/npcHalls.js",
+    "old": "  else if (await db.prepare('SELECT 1 FROM npc_hall_strikes WHERE map_id = ?').bind(h.key).first()) return { error: 'hall-struck' };\n",
+    "new": "",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-E1-WEEK",
+    "file": "server-account/src/npcReceipts.js",
+    "old": "(!Number.isSafeInteger(id) || meritWeekOf(Math.floor(gateTimes(Number(id)).riseAt / 1000)) !== meritWeekOf(nowS))",
+    "new": "(!Number.isSafeInteger(id))",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-E1-AGREED",
+    "file": "server-account/src/npcChapters.js",
+    "old": "const merits = lines.filter((r) => r.source !== 'gate' || agreed.get(/** @type {number} */ (gateDayOf(r.ref))) === Number(r.region));",
+    "new": "const merits = lines.filter(() => true);",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-E3-WRITE",
+    "file": "server-account/src/professions.js",
+    "old": "\n    WHERE NOT EXISTS (SELECT 1 FROM writs WHERE day = ?2 AND kind = 'member' AND owner = ?5 AND faction = ?4)`)",
+    "new": "`)",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-E3-READ",
+    "file": "server-account/src/professions.js",
+    "old": "\"SELECT faction FROM writs WHERE day = ?1 AND kind = 'member' AND owner = ?2\")\n    .bind(day, character)",
+    "new": "\"SELECT faction FROM writs WHERE day = ?1 AND kind = 'member' AND owner = ?2 AND region = ?3\")\n    .bind(day, character, region)",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ],
+    "equivalent": true,
+    "why": "The write asks the same question inside itself (NOT EXISTS a member writ of the guild that day, any region), so a read narrowed to the region posts nothing more - it only spends the region's ground read on a writ the write then refuses."
+  },
+  {
+    "name": "A3-C2-FORGET",
+    "file": "src/net/chapterSheet.js",
+    "old": "        stopped = true;\n        strengths = new Map();",
+    "new": "        stopped = true;",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-C3-WAIT",
+    "file": "src/scenes/world.js",
+    "old": "const GATE_SCAN_WAIT_MS = 90_000;",
+    "new": "const GATE_SCAN_WAIT_MS = 0;",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-C5-LATE",
+    "file": "src/scenes/world.js",
+    "old": "      sayLate: (text) => chatNotice(text),   // AUDIT CHAP3 C5: a writ filled after the board closed says its line in the chat\n",
+    "new": "",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-C7-RELOAD",
+    "file": "src/ui/noticeWindow.js",
+    "old": " || r?.error === 'no-writ' || r?.error === 'chapters-closed') loadWrits(true);",
+    "new": ") loadWrits(true);",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-C8-EARNS",
+    "file": "src/ui/noticeWindow.js",
+    "old": "const earns = !!m && m.from == null && !m.elsewhere && m.merit < m.max;",
+    "new": "const earns = !!m;",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-C8-LINE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "const m = Number.isSafeInteger(merit) && merit > 0 ?",
+    "new": "const m = false ?",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-C9-STOP",
+    "file": "src/scenes/world.js",
+    "old": "      if (error === 'roll-seed' || error === 'roll-claim') chatNotice(accountRefusalText(error));\n      else if",
+    "new": "      if",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-D2-BOUND",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "Math.min(Math.max(HALL_QUALITY_MAX, quality), quality + step)",
+    "new": "Math.min(HALL_QUALITY_MAX, quality + step)",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-D2-STEP0",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  if (!(quality > 0) || step === 0) return quality;",
+    "new": "  if (!(quality > 0)) return quality;",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ],
+    "equivalent": true,
+    "why": "With the move's bound max(20, quality), a step of 0 returns min(max(20, q), q) = q, then max(1, q) = q for any WHOLE quality of 1 or more (a building's quality is a whole number, DFU's 1 to 20 and a world-data pack's past it; AUDIT CHAP4 T: this said 'above 0', and a 0.5 would differ) - the same quality the early return gives; the check names the case, it changes no answer."
+  },
+  {
+    "name": "A3-T1-SHEET-ZERO",
+    "file": "server-account/src/npcChapters.js",
+    "old": "await settleChaptersDue(db, nowS, seasonZeroOf(env?.SEASON_ZERO_WEEK), env?.CHAPTERS_OPEN);\n  const chapters = (await allChapters",
+    "new": "await settleChaptersDue(db, nowS, null, env?.CHAPTERS_OPEN);\n  const chapters = (await allChapters",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-T1-BOARD-ZERO",
+    "file": "server-account/src/professions.js",
+    "old": "  const zero = seasonZeroOf(env?.SEASON_ZERO_WEEK);\n  if (halls)",
+    "new": "  const zero = null;\n  if (halls)",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-T2-DAY",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "gateHash(MEMBER_WRIT_SALT, day, region, faction, ...id, slot, k)",
+    "new": "gateHash(MEMBER_WRIT_SALT, region, faction, ...id, slot, k)",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-T2-REGION",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "gateHash(MEMBER_WRIT_SALT, day, region, faction, ...id, slot, k)",
+    "new": "gateHash(MEMBER_WRIT_SALT, day, faction, ...id, slot, k)",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-T3-DEAD",
+    "file": "server-account/src/npcReceipts.js",
+    "old": "WHERE char_id = ?1 AND player = ?4\n        AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?1 AND player = ?4 AND dead_at IS NULL)`).bind(character, tag, nowS, player.id),",
+    "new": "WHERE char_id = ?1 AND player = ?4`).bind(character, tag, nowS, player.id),",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-T5-DISPUTED",
+    "file": "server-account/src/npcHalls.js",
+    "old": " || f.state === 'disputed' });",
+    "new": " });",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "A3-T9-ORDER",
+    "file": "server-account/src/npcReceipts.js",
+    "old": " ORDER BY faction_id`).bind(character, player).all();",
+    "new": "`).bind(character, player).all();",
+    "tests": [
+      "test/audit_chap3.test.js"
+    ],
+    "equivalent": true,
+    "why": "npc_roll's primary key (char_id, faction_id) is the index SQLite reads a character's rows by, so today they come in faction order with or without the ORDER BY; it pins that order against an index added later, which no test can stand up now."
+  },
+  {
+    "name": "A3-E4-SHORT-NUMBER",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const STRENGTH_SHORT = 3;",
+    "new": "export const STRENGTH_SHORT = 2;",
+    "tests": [
+      "test/audit_chap3.test.js",
+      "test/chap3b_strength.test.js",
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "A3-E4-NO-SLIP",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "step > 0 ? s + step : s > STRENGTH_START ? Math.max(STRENGTH_START, s - STRENGTH_SHORT) : s;",
+    "new": "s + step;",
+    "tests": [
+      "test/audit_chap3.test.js",
+      "test/chap3b_strength.test.js",
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "A3-E4-SLIP-PAST-50",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "Math.max(STRENGTH_START, s - STRENGTH_SHORT)",
+    "new": "s - STRENGTH_SHORT",
+    "tests": [
+      "test/audit_chap3.test.js",
+      "test/chap3b_strength.test.js",
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "A3-E4-SLIP-UNDER-50",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "s > STRENGTH_START ? Math.max(",
+    "new": "true ? Math.max(",
+    "tests": [
+      "test/audit_chap3.test.js",
+      "test/chap3b_strength.test.js",
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "A3-E4-SLIP-AT-STEP",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "step > 0 ? s + step :",
+    "new": "step >= 0 ? s + step :",
+    "tests": [
+      "test/audit_chap3.test.js",
+      "test/chap3b_strength.test.js",
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "A3-E4-SHARE-WHOLE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "Math.floor(MERIT_RECEIPT / Math.max(1, Math.floor(Number(n)) || 1));",
+    "new": "MERIT_RECEIPT;",
+    "tests": [
+      "test/audit_chap3.test.js",
+      "test/chap3b_strength.test.js",
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "A3-E4-SHARE-CEIL",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "Math.floor(MERIT_RECEIPT / Math.max(1,",
+    "new": "Math.ceil(MERIT_RECEIPT / Math.max(1,",
+    "tests": [
+      "test/audit_chap3.test.js",
+      "test/chap3b_strength.test.js",
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "A3-E4-SHARE-UNREAD",
+    "file": "server-account/src/npcReceipts.js",
+    "old": "binds: [meritOfReceipt(own.length), tag],",
+    "new": "binds: [meritOfReceipt(1), tag],",
+    "tests": [
+      "test/audit_chap3.test.js",
+      "test/chap3b_strength.test.js",
+      "test/chap3a_merit.test.js"
+    ]
+  }
+]

@@ -1,0 +1,572 @@
+[
+  {
+    "name": "CHAP7A-MIN",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const CHAPTER_PATRON_MIN = 1000;",
+    "new": "export const CHAPTER_PATRON_MIN = 100;",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-OK-INT",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const patronBidOk = (/** @type {unknown} */ marks, prev = 0) => Number.isSafeInteger(marks) &&",
+    "new": "export const patronBidOk = (/** @type {unknown} */ marks, prev = 0) => Number.isFinite(marks) &&",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-OK-MIN",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "(marks) >= CHAPTER_PATRON_MIN\n",
+    "new": "(marks) > CHAPTER_PATRON_MIN\n",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-OK-MORE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "(marks) > prev && /** @type {number} */ (marks) <= MARKS_MAX;",
+    "new": "(marks) >= prev && /** @type {number} */ (marks) <= MARKS_MAX;",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-OK-CAP",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "(marks) > prev && /** @type {number} */ (marks) <= MARKS_MAX;",
+    "new": "(marks) > prev;",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-ESCROW-ID",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "=> `patron:${season}:${chapterTitleKey(f, region)}:${guild}`;",
+    "new": "=> `patron:${chapterTitleKey(f, region)}:${guild}`;",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-WIN-HIGH",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "if (!best || b.amount > best.amount ||",
+    "new": "if (!best || b.amount < best.amount ||",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-WIN-AT",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "(b.amount === best.amount && (b.at < best.at ||",
+    "new": "(b.amount === best.amount && (b.at > best.at ||",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-WIN-GUILD",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "(b.at === best.at && b.guild < best.guild))))",
+    "new": "(b.at === best.at && b.guild > best.guild))))",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-WIN-SHAPE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "if (!b || typeof b.guild !== 'string' || !Number.isSafeInteger(b.amount)) continue;",
+    "new": "if (!b) continue;",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-OF-ID",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "if (!p || typeof p.id !== 'string' || !GUILD_ID_RE.test(p.id) ||",
+    "new": "if (!p || typeof p.id !== 'string' ||",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-OF-NAME",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "|| typeof p.name !== 'string' || !p.name.trim()) return null;\n  return { id: p.id,",
+    "new": "|| typeof p.name !== 'string') return null;\n  return { id: p.id,",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-OF-CAP",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "name: p.name.trim().slice(0, GUILD_NAME_MAX), tag:",
+    "new": "name: p.name.trim(), tag:",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-OF-TAG",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "tag: typeof p.tag === 'string' && GUILD_TAG_RE.test(p.tag) ? p.tag : '' };",
+    "new": "tag: typeof p.tag === 'string' ? p.tag : '' };",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-LINE-HIDDEN",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "if (row?.kind !== 'patron' || !isRollFaction(row?.faction) || hallHidden(row.faction)) return null;",
+    "new": "if (row?.kind !== 'patron' || !isRollFaction(row?.faction)) return null;",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-LINE-GUARD",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  if (!season || !name) return null;\n  return `For",
+    "new": "  if (!season) return null;\n  return `For",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-LINE-WORDS",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "took the patronage of the ${hallPosterName(row.faction)}.`;",
+    "new": "became the patron of the ${hallPosterName(row.faction)}.`;",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-LINE-ROUTE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  if (row?.kind === 'patron') return chapterPatronLine(row);   // CHAP7a: a Season's patron\n",
+    "new": "",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-KINDS",
+    "file": "src/net/marksLaw.js",
+    "old": "  patron: 'burn',             // CHAP7a",
+    "new": "  patron: 'move',             // CHAP7a",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-DRAWN",
+    "file": "server-account/src/npcChapters.js",
+    "old": "    : next && next.start === week + 1 ? await patronsDrawn(db, next.n, keys) : null;",
+    "new": "    : null;",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ],
+    "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
+  },
+  {
+    "name": "CHAP7A-BATCH-ROWS",
+    "file": "server-account/src/npcChapters.js",
+    "old": "JSON.stringify([...seasonRows, ...(patrons?.rows ?? [])])",
+    "new": "JSON.stringify([...seasonRows])",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-BATCH-STMTS",
+    "file": "server-account/src/npcChapters.js",
+    "old": "      ...(patrons ? patronStatements(db, patrons, nowS) : []),\n",
+    "new": "",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-OPENED",
+    "file": "server-account/src/npcChapters.js",
+    "old": "doctrine_season = NULL, patron = NULL, patron_season = NULL WHERE true",
+    "new": "doctrine_season = NULL WHERE true",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-READ-EARLIER",
+    "file": "server-account/src/npcChapters.js",
+    "old": "WHERE b.season <= ?1 AND b.state = 'open'\n    ORDER BY",
+    "new": "WHERE b.season = ?1 AND b.state = 'open'\n    ORDER BY",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-STANDING-SEASON",
+    "file": "server-account/src/npcChapters.js",
+    "old": "const standing = season === n && keys.has(`${f}|${g}`)",
+    "new": "const standing = keys.has(`${f}|${g}`)",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-STANDING-KEY",
+    "file": "server-account/src/npcChapters.js",
+    "old": "const standing = season === n && keys.has(`${f}|${g}`) && !hallHidden(f)",
+    "new": "const standing = season === n && !hallHidden(f)",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-STANDING-GONE",
+    "file": "server-account/src/npcChapters.js",
+    "old": "? list.filter((b) => b.name != null) : [];",
+    "new": "? list : [];",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-WIN-BURN",
+    "file": "server-account/src/npcChapters.js",
+    "old": "lines.push([id, 'burn', null, 'patron', f, g, guild, season]);",
+    "new": "lines.push([id, 'guild', guild, 'patron-return', f, g, guild, season]);",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-WON",
+    "file": "server-account/src/npcChapters.js",
+    "old": "        won.push([f, g, guild]);\n",
+    "new": "",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-ROW",
+    "file": "server-account/src/npcChapters.js",
+    "old": "        rows.push([f, g, 'patron', '', JSON.stringify({ season: n, guild, name: String(b.name), tag: b.tag == null ? '' : String(b.tag) })]);\n",
+    "new": "",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-HOME-RUNNING",
+    "file": "server-account/src/npcChapters.js",
+    "old": "const left = home.has(guild) ? /** @type {number} */ (home.get(guild)) : Number(b.treasury ?? 0);",
+    "new": "const left = Number(b.treasury ?? 0);",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-HOME-GONE",
+    "file": "server-account/src/npcChapters.js",
+    "old": "const goes = b.name != null && left + Number(b.amount) <= MARKS_MAX;",
+    "new": "const goes = left + Number(b.amount) <= MARKS_MAX;",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-HOME-CAP",
+    "file": "server-account/src/npcChapters.js",
+    "old": "const goes = b.name != null && left + Number(b.amount) <= MARKS_MAX;",
+    "new": "const goes = b.name != null;",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-HOME-SET",
+    "file": "server-account/src/npcChapters.js",
+    "old": "      if (goes) home.set(guild, left + Number(b.amount));\n",
+    "new": "",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-STMT-SEASON",
+    "file": "server-account/src/npcChapters.js",
+    "old": "AND b.season = json_extract(v.value, '$[7]') AND b.state = 'open'`)",
+    "new": "AND b.state = 'open'`)",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-STMT-STATE",
+    "file": "server-account/src/npcChapters.js",
+    "old": "THEN 'won' ELSE 'lost' END",
+    "new": "THEN 'lost' ELSE 'lost' END",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-STMT-PATRON",
+    "file": "server-account/src/npcChapters.js",
+    "old": "UPDATE npc_chapters SET patron = w.guild, patron_season = ?2\n",
+    "new": "UPDATE npc_chapters SET patron = w.guild, patron_season = ?2 - 1\n",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ],
+    "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
+  },
+  {
+    "name": "CHAP7A-GUARD",
+    "file": "server-account/src/npcChapters.js",
+    "old": "    db.prepare(\"INSERT INTO realm_tx_guard (moved, expected) SELECT 1, 0 WHERE EXISTS (SELECT 1 FROM npc_chapter_patron_bids WHERE season <= ?1 AND state = 'open')\").bind(n),\n",
+    "new": "",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-BID-SEASON",
+    "file": "server-account/src/npcChapters.js",
+    "old": "  const season = now.n + 1;\n",
+    "new": "  const season = now.n;\n",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-BID-NOSEASON",
+    "file": "server-account/src/npcChapters.js",
+    "old": "  if (!now) return { error: 'no-season' };\n",
+    "new": "  if (!now) return { error: 'no-chapter' };\n",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-BID-HIDDEN",
+    "file": "server-account/src/npcChapters.js",
+    "old": "if (hallHidden(faction) || !(await allChapters(db, nowS))",
+    "new": "if (!(await allChapters(db, nowS))",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-BID-CONFIRMED",
+    "file": "server-account/src/npcChapters.js",
+    "old": "|| !(await allChapters(db, nowS)).some((c) => c.faction === faction && c.region === region)) return { error: 'no-chapter' };",
+    "new": ") return { error: 'no-chapter' };",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-BID-RANK",
+    "file": "server-account/src/npcChapters.js",
+    "old": "  if (!guildMay(a.me.rank, 'withdraw')) return { error: 'guild-rank' };\n",
+    "new": "",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-BID-SWITCH",
+    "file": "server-account/src/npcChapters.js",
+    "old": "  if (!marksOpenFor(player, env)) return { error: 'marks-closed' };\n  const guild",
+    "new": "  const guild",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-BID-PREV",
+    "file": "server-account/src/npcChapters.js",
+    "old": "    .bind(faction, region, season, guild).first())?.amount ?? 0);",
+    "new": "    .bind(faction, region, season, guild).first()) ? 0 : 0);",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-BID-MORE",
+    "file": "server-account/src/npcChapters.js",
+    "old": "  const more = marks - prev;\n",
+    "new": "  const more = marks;\n",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-BID-BALANCE",
+    "file": "server-account/src/npcChapters.js",
+    "old": "        WHERE COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?1), 0) >= ?3\n          AND EXISTS",
+    "new": "        WHERE true\n          AND EXISTS",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-BID-STOOD",
+    "file": "server-account/src/npcChapters.js",
+    "old": "AND guild_id = ?1), 0) = ?14\n",
+    "new": "AND guild_id = ?1), 0) >= 0\n",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-BID-OPENED",
+    "file": "server-account/src/npcChapters.js",
+    "old": "          AND NOT EXISTS (SELECT 1 FROM npc_chapter_weeks WHERE week >= ?15)`)",
+    "new": "          AND true`)",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-BID-MUST",
+    "file": "server-account/src/npcChapters.js",
+    "old": "      mustChange(db),\n      db.prepare(`INSERT INTO npc_chapter_patron_bids",
+    "new": "      db.prepare(`INSERT INTO npc_chapter_patron_bids",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-BID-CLOSED",
+    "file": "server-account/src/npcChapters.js",
+    "old": "    if (await db.prepare('SELECT 1 FROM npc_chapter_weeks WHERE week >= ?1').bind(now.end - 1).first()) return { error: 'closed' };\n",
+    "new": "",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-BID-SHORT",
+    "file": "server-account/src/npcChapters.js",
+    "old": "return { error: (await guildBalanceOf(db, guild)) < more ? 'guild-marks-short' : 'patron-low' };",
+    "new": "return { error: 'patron-low' };",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-BID-REPEAT",
+    "file": "server-account/src/npcChapters.js",
+    "old": "    if (prior.kind !== 'patron-escrow') return { error: 'marks-rid' };",
+    "new": "    if (prior.kind === 'nothing') return { error: 'marks-rid' };",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-BID-LOW",
+    "file": "server-account/src/npcChapters.js",
+    "old": "if (!patronBidOk(marks, prev)) return { error: marks > MARKS_MAX ? 'bad-marks' : 'patron-low' };",
+    "new": "if (!patronBidOk(marks, prev)) return { error: 'patron-low' };",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-BID-MOVE",
+    "file": "server-account/src/npcChapters.js",
+    "old": "if (!Number.isSafeInteger(marks) || marks < 1 || marks - prev > MARKS_MOVE_MAX) return { error: 'bad-marks' };",
+    "new": "if (!Number.isSafeInteger(marks) || marks < 1) return { error: 'bad-marks' };",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-PATRONS-SEASON",
+    "file": "server-account/src/npcChapters.js",
+    "old": "    : db.prepare(`${head} WHERE c.region = ?2 AND c.patron_season = ?1`).bind(n, region)).all();",
+    "new": "    : db.prepare(`${head} WHERE c.region = ?2`).bind(n, region)).all();",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ],
+    "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
+  },
+  {
+    "name": "CHAP7A-SHEET",
+    "file": "server-account/src/npcChapters.js",
+    "old": "        ...(patron ? { patron } : {}) };",
+    "new": "        };",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-BOARD-PATRON",
+    "file": "server-account/src/professions.js",
+    "old": "    ...(patrons.has(`${f}|${region}`) && !hallHidden(f) ? { patron: patrons.get(`${f}|${region}`) } : {}),\n",
+    "new": "",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-BOARD-GM",
+    "file": "server-account/src/professions.js",
+    "old": "WHERE player = ?1 AND char_id = ?2 AND rank = 0').bind(account, character)",
+    "new": "WHERE player = ?1 AND char_id = ?2').bind(account, character)",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-BOARD-NEXT",
+    "file": "server-account/src/professions.js",
+    "old": "guildPatronBids(db, region, /** @type {number} */ (n) + 1, String(gm.guild_id))",
+    "new": "guildPatronBids(db, region, /** @type {number} */ (n), String(gm.guild_id))",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-BOARD-BID",
+    "file": "server-account/src/professions.js",
+    "old": "    ...(bids && !hallHidden(f) ? { patronBid: { season: /** @type {number} */ (n) + 1, marks: bids.get(f) ?? 0 } } : {}),\n",
+    "new": "",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-ROUTE",
+    "file": "server-account/src/index.js",
+    "old": "          : path === '/v1/chapters/patron' ? await bidPatron(ctx, who.player, env, body)   // CHAP7a: a guild's bid for a chapter's patronage\n",
+    "new": "",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CHAP7A-STATUS-SHORT",
+    "file": "server-account/src/index.js",
+    "old": "'patron-low': 409, 'guild-marks-short': 409,",
+    "new": "'patron-low': 409,",
+    "tests": [
+      "test/chap7a_patrons.test.js"
+    ]
+  }
+]

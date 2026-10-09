@@ -541,6 +541,9 @@ export function createRealmSession({
     onTradeHeld: null,
     get lost() { return lost; },
     get waiting() { return !!pending; },
+    /** CHAP1: the lease this tab plays under - the Roll's acts ride it (net/npcRollTracker.js) - or null once the
+     *  session is lost. Read, never set: only `rejoin` moves it. */
+    get lease() { return lost ? null : lease; },
     /** A checkpoint of this save text; answers a promise of the outcome - the put that carried it, or a newer one's. */
     checkpoint(/** @type {string} */ text, /** @type {any} */ summary = null) {
       if (lost) return Promise.resolve({ ok: false, error: lost });

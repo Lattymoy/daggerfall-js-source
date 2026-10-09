@@ -410,7 +410,7 @@ export const REFUSALS = Object.freeze({
   'no-writ': 'That writ is no longer posted.',
   'writ-taken': 'Another has already filled that writ.',
   'writ-expired': 'That writ has run out.',
-  'writ-cap': `You have filled ${COURT_WRITS_PER_DAY} Court writs today - the most a day allows.`,
+  'writ-cap': `You have filled ${COURT_WRITS_PER_DAY} writs today - the most a day allows.`,   // CHAP2a: the Court's and the halls' one allowance
   'prof-spec': 'That specialisation is not one this craft offers.',
   'prof-respec-pending': `A change of specialisation is already on its way (${RESPEC.days} days).`,
   'prof-rate': 'You have done a great deal at your crafts this hour. Try again later.',
@@ -517,6 +517,7 @@ export const REFUSALS = Object.freeze({
   'guild-hall': 'Sell the guild\'s hall first.',
   'guild-seat': 'Give up the guild\'s Charters first, at each seat\'s Notice Board.',   // SEAT1c
   'guild-battle': 'The guild is named in a siege or a Tourney this week. It cannot go until the battle is over.',   // SEAT1c
+  'guild-patron': 'The guild has bid for a chapter\'s patronage. It cannot go until the Season opens and the bid is decided.',   // AUDIT CHAP5 E4
   'hall-item': 'A guild hall holds furniture from the catalogue alone - your own things stay yours.',
   'hall-yard': 'A palace\'s grounds cannot be furnished - only its Charter Room.',   // GUILD-YARD: a guild hall's yard is its keepers'; a palace's grounds stand none
   'bad-heraldry': 'Choose arms the law allows - a field and a border of different colours (Ash only as the border), one device that stands out from the field, and a divided field\'s second colour unlike the first and the border.',   // AUDIT2 GUILD2 G5: GUILD2c's divisions and device colour
@@ -614,6 +615,32 @@ export const REFUSALS = Object.freeze({
   // CUSTOMS-PASS: the developer's route (server-account/src/realm.js grantCustomsPass), said by tools/customsPass.mjs - its
   // `not-developer` is MARKS1's one word above (MERGE 2: both sides wrote it; the one refusal says both routes)
   ambiguous: 'More than one account goes by that name - name the account by its id instead.',
+  // CHAP1: the Roll (server-account/src/npcRoll.js) - said only where a player would read one; the tracker keeps
+  // the save's standing quietly while the Roll is shut (net/npcRollTracker.js)
+  'chapters-closed': 'The guilds do not keep your standing on the realm yet.',
+  'roll-seed': 'Your standing with the guilds could not be read. The game may need updating.',
+  'roll-claim': 'Your standing with the guilds could not be sent. The game may need updating.',
+  'roll-unseeded': 'The realm has not read your standing with the guilds yet. It will try again.',
+  'roll-busy': 'Your standing with the guilds was being written. It will try again.',
+  // CHAP2a: a town's guild halls, witnessed (server-account/src/npcHalls.js) - asked quietly, said only if ever shown
+  'halls-need-account': 'Only a registered account can vouch for a town\'s guild halls.',
+  'bad-hall': 'That town\'s guild halls could not be read. The game may need updating.',
+  'halls-rate': 'You have vouched for enough towns this hour.',
+  // AUDIT CHAP2: the claims' hour; a town a developer struck
+  'roll-rate': 'Your standing with the guilds has been sent often this hour. It will be sent again later.',
+  'hall-struck': 'That town\'s guild halls were struck from the record.',
+  // CHAP4d: a chapter's Focus - set by its Master alone, to a family its guild's own
+  'not-master': 'Only the chapter\'s Master sets its Focus.',
+  'no-focus': 'The guild asks for no such thing.',
+  // CHAP6b: a backing in a chapter's Season - its Schism's side, its Succession's candidate
+  'no-event': 'The chapter has nothing this Season to back.',
+  'no-side': 'There is no such side to back.',
+  closed: 'That has already been decided.',
+  'not-member': 'Only an active member of the guild may back its chapter.',
+  // CHAP7a: a guild's bid for a chapter's patronage - for the Season after this one, the guildmaster's, more than it stood at
+  'no-season': 'No Season is counted yet, so there is no patronage to bid for.',
+  'no-chapter': 'There is no chapter there whose patronage a guild may bid for.',
+  'patron-low': 'A bid for a patronage is at least 1,000 silver, and more than your guild bid before.',
   // CARDS6: a gold card table's stake and its cash-out (server-account/src/cards.js)
   'cards-realm': 'Only an online character of the realm can play a card table for gold.',
   'cards-closed': 'The realm is not holding stakes for card tables right now. Try again later.',
@@ -1378,6 +1405,35 @@ export function accountMarks({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     guildWithdraw: (character, marks, rid) => post('/v1/marks/guild/withdraw', { character, marks, rid }),
     report: () => post('/v1/marks/report', {}),
     find: (kind, rid, account = null) => post('/v1/marks/find', { kind, rid }, account),   // SILVER-FINDS: a loot find the device rolled - AUDIT 625 S4: under the account it was found by
+  };
+}
+
+/**
+ * CHAP1: THE ROLL (server-account/src/npcRoll.js) through the one door - a realm character's standing with Daggerfall's
+ * guilds read (and seeded, the first time), and what moved claimed, each under the playing tab's lease. Every answer is
+ * `call`'s shape; each is waited for ACCOUNT_ACT_WAIT_MS at most.
+ */
+export function accountRoll({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
+  const post = waitedPost({ fetch, storage }, waitMs);
+  // AUDIT CHAP C1/T1: no claim as the page goes - the realm session gives its lease up first and the service clears it,
+  // so one never landed; what was not claimed rides the save to the next page (net/npcRollTracker.js)
+  return {
+    read: (character, lease, seed = null) => post('/v1/chapters/roll', { character, lease, ...(seed ? { seed } : {}) }),
+    claim: (character, lease, rid, deltas, members) => post('/v1/chapters/claim', { character, lease, rid, deltas, members }),
+    /** CHAP2a: the town this client stands in, its guild halls read off its own buildings (npcHallBook.js) */
+    witness: (hall) => post('/v1/chapters/witness', { hall }),
+    /** AUDIT CHAP2 E1: a developer's - a region's towns and the audit list, and a false town struck */
+    halls: (region) => post('/v1/chapters/halls', { region }),
+    strike: (key) => post('/v1/chapters/strike', { key }),
+    /** CHAP3b: the chapter sheet - every chapter's Strength and band (the halls' prices read it, CHAP3c) */
+    list: () => post('/v1/chapters/list', {}),
+    /** CHAP4d: a chapter's Master names its Focus this week; and a region's Chronicle of its chapters' seats */
+    focus: (character, faction, region, focus) => post('/v1/chapters/focus', { character, faction, region, focus }),
+    history: (region) => post('/v1/chapters/history', { region }),
+    /** CHAP6b: a member backs a side of its chapter's Schism, or names a candidate of its Succession (CHAP6c's board) */
+    back: (character, faction, region, side) => post('/v1/chapters/back', { character, faction, region, side }),
+    /** CHAP7a: a guild's guildmaster bids its treasury's silver for a chapter's patronage in the Season after (CHAP7b's board) */
+    patron: (character, faction, region, marks, rid) => post('/v1/chapters/patron', { character, faction, region, marks, rid }),
   };
 }
 

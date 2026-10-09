@@ -45,10 +45,10 @@
 import { GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';
 import { customFactions, relinkChildren } from '../formats/factionFile.js';   // RR3: AddCustomFactions' registry and the relink
 import { restoreFactionRep } from './save.js';   // AUDIT 23 C1: the stashed-load replay
+import { MIN_REPUTATION, MAX_REPUTATION } from './guildFactions.js';   // CHAP1: the bounds' one home, the leaf the Roll reads
 
-/** Mathf.Clamp bounds (:32-35). */
-export const MIN_REPUTATION = -100;
-export const MAX_REPUTATION = 100;
+/** Mathf.Clamp bounds (:32-35) - the reputation's two live in the leaf guildFactions.js (CHAP1) and are handed on here. */
+export { MIN_REPUTATION, MAX_REPUTATION };
 export const MIN_POWER = 1;
 export const MAX_POWER = 100;
 

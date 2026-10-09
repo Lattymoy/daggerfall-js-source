@@ -1,0 +1,644 @@
+[
+  {
+    "name": "AUDIT-CHAP4-S1-CHAR-IDX",
+    "file": "server-account/migrations/0103_npc_seats.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_npc_chapter_history_char ON npc_chapter_history (char_id, week);\n",
+    "new": "",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-S1-REGION-IDX",
+    "file": "server-account/migrations/0103_npc_seats.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_npc_chapter_history_region ON npc_chapter_history (region, seq);",
+    "new": "",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-S2-OFF-RETURN",
+    "file": "server-account/src/npcChapters.js",
+    "old": "  if (sw === 'off') {\n    if (last == null || Number(last) + 1 >= current) return 0;",
+    "new": "  if (sw === 'off') {\n    return 0;",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-S2-OFF-ROW",
+    "file": "server-account/src/npcChapters.js",
+    "old": "SELECT value, 0, 0, 0, 'off', ?1 FROM json_each(?2)`)",
+    "new": "SELECT value, 0, 0, 0, 'on', ?1 FROM json_each(?2)`)",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-S2-OFF-NEVER-SETTLED",
+    "file": "server-account/src/npcChapters.js",
+    "old": "    if (last == null || Number(last) + 1 >= current) return 0;",
+    "new": "    if (Number(last) + 1 >= current) return 0;",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-S2-OPENED",
+    "file": "server-account/src/npcChapters.js",
+    "old": "WHERE week < ?1 AND open <> 'off' ORDER BY week DESC LIMIT 1\").bind(week).first();",
+    "new": "WHERE week < ?1 ORDER BY week DESC LIMIT 1\").bind(week).first();",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-S2-WINDOW",
+    "file": "server-account/src/npcChapters.js",
+    "old": "const from = Math.max(Math.min(week - SEAT_MERIT_WEEKS + 1, ...opens.map((/** @type {any} */ r) => Number(r.week))), dev",
+    "new": "const from = Math.max(week - SEAT_MERIT_WEEKS + 1, dev",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-S2-POST",
+    "file": "server-account/src/professions.js",
+    "old": "  if (chaptersSwitchOf(open) === 'off') await settleChaptersDue(db, nowS, zero, open);\n",
+    "new": "",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-S3-FILTER",
+    "file": "server-account/src/npcChapters.js",
+    "old": "WHERE h.region = ?1 AND h.faction NOT IN (SELECT value FROM json_each(?3))",
+    "new": "WHERE h.region = ?1",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-S3-HIDDEN-LIST",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const HIDDEN_HALL_FACTIONS = Object.freeze([GUILD_FACTION_IDS.ThievesGuild, GUILD_FACTION_IDS.DarkBrotherhood]);",
+    "new": "export const HIDDEN_HALL_FACTIONS = Object.freeze([GUILD_FACTION_IDS.ThievesGuild]);",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-S4-SETTLE",
+    "file": "server-account/src/npcChapters.js",
+    "old": "  await settleChaptersDue(db, nowS, seasonZeroOf(env?.SEASON_ZERO_WEEK), env?.CHAPTERS_OPEN);\n  const week = meritWeekOf(nowS);\n  const r = await db.prepare(`UPDATE npc_chapters SET focus",
+    "new": "  const week = meritWeekOf(nowS);\n  const r = await db.prepare(`UPDATE npc_chapters SET focus",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-S4-SEAT-WEEK",
+    "file": "server-account/src/npcChapters.js",
+    "old": "s.seat = 'master' AND s.week = ?7)`)",
+    "new": "s.seat = 'master')`)",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-S4-MASTERS-WEEK",
+    "file": "server-account/src/npcChapters.js",
+    "old": "AND seat = 'master' AND week = ?3\").bind(character, region, week - 1)",
+    "new": "AND seat = 'master'\").bind(character, region)",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-S5-SEATS",
+    "file": "server-account/src/npcChapters.js",
+    "old": "          WHERE EXISTS (SELECT 1 FROM realm_characters c WHERE c.id = json_extract(value, '$[2]'))`)   // AUDIT CHAP4 S5",
+    "new": "          WHERE true`)   // AUDIT CHAP4 S5",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-S5-HISTORY",
+    "file": "server-account/src/npcChapters.js",
+    "old": "          WHERE json_extract(value, '$[4]') IS NULL OR EXISTS (SELECT 1 FROM realm_characters c WHERE c.id = json_extract(value, '$[2]'))`)",
+    "new": "          WHERE true`)",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-S6-RESET",
+    "file": "server-account/src/npcChapters.js",
+    "old": "      ...(opened ? [db.prepare(\"UPDATE npc_chapters SET strength = ?1, event = NULL, event_season = NULL, event_data = '{}', shut_season = NULL, doctrine = NULL, doctrine_season = NULL, patron = NULL, patron_season = NULL WHERE true\").bind(STRENGTH_START)] : []),\n",
+    "new": "",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ],
+    "note": "CHAP6a: re-aimed by content (the Season's event beside it). CHAP6b: re-aimed by content (the doctrine and the backing beside it)."
+  },
+  {
+    "name": "AUDIT-CHAP4-E1-CARRY-BACK",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const seatScoreOf = (/** @type {number} */ merit) => Math.round(Math.max(0, whole(merit)) * 10);",
+    "new": "export const seatScoreOf = (/** @type {number} */ merit, sitting = false) => Math.round(Math.max(0, whole(merit)) * 10 * (sitting ? 1.2 : 1));",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-E1-TIE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": ".sort((a, b) => b.score - a.score || b.held - a.held || whole(a.joinedAt)",
+    "new": ".sort((a, b) => b.score - a.score || whole(a.joinedAt)",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-E3-SEATS",
+    "file": "server-account/src/npcChapters.js",
+    "old": "    if (!e || !chapters.has(`${r.faction}|${r.region}`)) continue;   // AUDIT CHAP4 E3",
+    "new": "    if (!e) continue;   // AUDIT CHAP4 E3",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-E3-TITLES",
+    "file": "server-account/src/npcChapters.js",
+    "old": "  const kept = (/** @type {any[]} */ rows) => rows.filter((r) => confirmed.has(`${r.faction}|${r.region}`));",
+    "new": "  const kept = (/** @type {any[]} */ rows) => rows;",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-D1-MARK",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "return [...ranks].sort((a, b) => a[0] - b[0]).map(([f, rank]) => (awake.has(f) ? { f, rank } : { f, rank, d: 1 }));",
+    "new": "return [...ranks].sort((a, b) => a[0] - b[0]).map(([f, rank]) => ({ f, rank }));",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-D1-ACTIVE-BOOK",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "const active = both ? (vampire ? store.vampire : store.mortal) : store;",
+    "new": "const active = both ? store.mortal : store;",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-D1-OK",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "    if (d !== undefined && d !== 1) return false;   // AUDIT CHAP4 D1: a dormant line's mark, and only that\n",
+    "new": "",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-D1-KEY",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "`${m.f}:${m.rank}${m.d === 1 ? 'd' : ''}`",
+    "new": "`${m.f}:${m.rank}`",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-D1-CLAIM",
+    "file": "server-account/src/npcRoll.js",
+    "old": "        dormant: member && asleep.has(f),   // AUDIT CHAP4 D1: the active book's or not, as the claim says it now",
+    "new": "        dormant: line.dormant,   // AUDIT CHAP4 D1: the active book's or not, as the claim says it now",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-D1-SEED",
+    "file": "server-account/src/npcRoll.js",
+    "old": "      dormant: member && asleep.has(f),\n    });",
+    "new": "      dormant: false,\n    });",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-D1-ANSWER",
+    "file": "server-account/src/npcRoll.js",
+    "old": "since: row.joinedAt, ...(row.dormant ? { d: 1 } : {}) });",
+    "new": "since: row.joinedAt });",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-D1-SAME",
+    "file": "server-account/src/npcRoll.js",
+    "old": " && a.joinedAt === b.joinedAt && a.dormant === b.dormant;",
+    "new": " && a.joinedAt === b.joinedAt;",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-D1-SEATS",
+    "file": "server-account/src/npcChapters.js",
+    "old": "WHERE r.member = 1 AND r.dormant = 0 AND r.char_id IN",
+    "new": "WHERE r.member = 1 AND r.char_id IN",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-D1-MERIT",
+    "file": "server-account/src/npcMerit.js",
+    "old": "faction_id = ?3 AND member = 1 AND dormant = 0 AND joined_at",
+    "new": "faction_id = ?3 AND member = 1 AND joined_at",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-D1-MEMBERS",
+    "file": "server-account/src/npcReceipts.js",
+    "old": "WHERE char_id = ?1 AND player = ?2 AND member = 1 AND dormant = 0\n",
+    "new": "WHERE char_id = ?1 AND player = ?2 AND member = 1\n",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-D1-TRACKER",
+    "file": "src/net/npcRollTracker.js",
+    "old": "members: () => rollMembersOf(entityOf()?.guildMemberships, rollVampireOf(entityOf())),",
+    "new": "members: () => rollMembersOf(entityOf()?.guildMemberships),",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-D1-VAMPIRE",
+    "file": "src/net/npcRollTracker.js",
+    "old": "&& !entity.racialOverride.ended && entity.racialOverride.racial === 'vampirism');",
+    "new": "&& entity.racialOverride.racial === 'vampirism');",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-C1-BEAT",
+    "file": "src/net/npcRollTracker.js",
+    "old": "&& (key === null || key === heldKey) && now() - heardAt < ROLL_SEATS_MS) return null;",
+    "new": "&& (key === null || key === heldKey)) return null;",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-C1-HEARD",
+    "file": "src/net/npcRollTracker.js",
+    "old": "    heardAt = now();\n    onSeats(seats, before);",
+    "new": "    onSeats(seats, before);",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-C1-NUMBER",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const ROLL_SEATS_MS = 10 * 60_000;",
+    "new": "export const ROLL_SEATS_MS = 60 * 60_000;",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-C2-PIXEL",
+    "file": "src/scenes/world.js",
+    "old": "chapterOf: chapterSheet ? (faction) => livingChapterOf(faction, px, py) : undefined,",
+    "new": "chapterOf: chapterSheet ? (faction) => livingChapterOf(faction, playerTravelPixel().x, playerTravelPixel().y) : undefined,",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-C3-CEILING",
+    "file": "src/scenes/world.js",
+    "old": "rollRankCeiling: () => (rollTracker && !rollTracker.stopped ? ROLL_BOOK_RANK_MAX : null),",
+    "new": "rollRankCeiling: () => (rollTracker?.held && !rollTracker.stopped ? ROLL_BOOK_RANK_MAX : null),",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-D-RESOLVE",
+    "file": "src/net/npcHallBook.js",
+    "old": "  const f = createGuildForGroup(guildGroupOfFaction(factionDict, id), id, factionDict)?.factionId;\n  return isRollFaction(f) && !HIDDEN.has(/** @type {number} */ (f)) ? /** @type {number} */ (f) : null;",
+    "new": "  return isRollFaction(id) ? id : null;",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-D-RESOLVE-HOST",
+    "file": "src/scenes/world.js",
+    "old": "    const f = chapterFactionOf(faction, townTalk?.factionDict ?? null) ?? faction;\n    const region = (() => { try { return maps.getRegionIndexAt(x, y);",
+    "new": "    const f = faction;\n    const region = (() => { try { return maps.getRegionIndexAt(x, y);",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-C4-LINE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "return `The chapter of the ${hallPosterName(c?.faction) ?? 'guild'} here is",
+    "new": "return `The ${hallPosterName(c?.faction) ?? 'guild'} here is",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-C4-NEWS",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "Object.freeze(['The chapter of {guild} here is doing well, they say.', 'Good for {town}.']),",
+    "new": "Object.freeze(['{guild} here is doing well, they say.', 'Good for {town}.']),",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-C5-BOARD",
+    "file": "src/scenes/world.js",
+    "old": "    const w = st && seatBook ? await hallOfRecordsRead(st) : null;",
+    "new": "    const w = st && seatBook ? await seatBook.records(st.key).then((r) => (r?.data ? hallOfRecordsWindow(st, r.data.rows, r.data.zero, seatArmsOf) : null)) : null;",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-C6-PARALLEL",
+    "file": "src/scenes/world.js",
+    "old": "    const [r, ch] = await Promise.all([\n      seatBook.records(seat.key),\n      hallDoor && rollTracker?.held ? hallDoor.history(seat.region).catch(() => null) : null,\n    ]);",
+    "new": "    const r = await seatBook.records(seat.key);\n    const ch = hallDoor && rollTracker?.held ? await hallDoor.history(seat.region).catch(() => null) : null;",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-D3-POPUP",
+    "file": "src/scenes/worldModes.js",
+    "old": "guildTitle: () => getTitle(membershipOf(seated(), guild), playerEntity, guild),",
+    "new": "guildTitle: () => getTitle(membershipOf(activeMemberships(playerEntity), guild), playerEntity, guild),",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-D3-COUNTER",
+    "file": "src/scenes/worldModes.js",
+    "old": "return g ? getTitle(membershipOf(seatedBook(activeMemberships(playerEntity), membershipKey(g), host.chapterSeatRank?.(g.factionId) ?? null), g), playerEntity, g) : null;",
+    "new": "return g ? getTitle(membershipOf(activeMemberships(playerEntity), g), playerEntity, g) : null;",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-D4-REFUSAL",
+    "file": "src/scenes/worldModes.js",
+    "old": "chapterRollWindow({ ...roll, lines: [...roll.lines, access.text] })",
+    "new": "chapterRollWindow(roll)",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-E2-KEPT",
+    "file": "src/scenes/worldModes.js",
+    "old": "    const kept = guild ? membershipOf(activeMemberships(playerEntity), guild) : null;",
+    "new": "    const kept = membership;",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-T1-SEASON-N",
+    "file": "server-account/src/npcChapters.js",
+    "old": "const season = counted ?? 0;",
+    "new": "const season = 0;",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-T1-SEASON-START",
+    "file": "server-account/src/npcChapters.js",
+    "old": "seasonOf(week, zero)?.start ?? Math.floor(week / SEASON_WEEKS) * SEASON_WEEKS",
+    "new": "Math.floor(week / SEASON_WEEKS) * SEASON_WEEKS",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-T1-WARDROBE-ZERO",
+    "file": "server-account/src/index.js",
+    "old": "ctx.nowS, seasonZeroOf(env.SEASON_ZERO_WEEK))).map((t) => t.title))]",
+    "new": "ctx.nowS, null)).map((t) => t.title))]",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-T1-MINT-ZERO",
+    "file": "server-account/src/index.js",
+    "old": "nowS, zero, body.character)).find",
+    "new": "nowS, null, body.character)).find",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-T2-CHRONICLE-ZERO",
+    "file": "server-account/src/npcChapters.js",
+    "old": "return { rows, zero: seasonZeroOf(env?.SEASON_ZERO_WEEK) };",
+    "new": "return { rows, zero: null };",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-T3-MASTERS-REGION",
+    "file": "server-account/src/npcChapters.js",
+    "old": "WHERE char_id = ?1 AND region = ?2 AND seat = 'master' AND week = ?3",
+    "new": "WHERE char_id = ?1 AND (region = ?2 OR 1) AND seat = 'master' AND week = ?3",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-T4-FOCUS-WORD",
+    "file": "src/ui/noticeWindow.js",
+    "old": "const said = r?.ok ? { ok: true, text: chapterFocusLineOf(faction, focus) ?? 'Focus set.' } : { ok: false, text: accountRefusalText(r?.error) };",
+    "new": "const said = { ok: true, text: 'Focus set.' };",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ],
+    "note": "AUDIT CHAP4 C: re-aimed at the Focus's word computed before the board's closing is asked (a late one said in the chat)."
+  },
+  {
+    "name": "AUDIT-CHAP4-T9-FOCUS-BUSY",
+    "file": "src/ui/noticeWindow.js",
+    "old": "if (busy || workBusy || !work.setFocus) return;",
+    "new": "if (!work.setFocus) return;",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-T5-SHEET-STAMP",
+    "file": "src/net/chapterSheet.js",
+    "old": "    readAt = nowMs();\n    Promise.resolve().then(() => door.list())",
+    "new": "    Promise.resolve().then(() => door.list())",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-T6-PLAN-KEY",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "|| (a.char < b.char ? -1 : a.char > b.char ? 1 : 0)\n      || a.faction - b.faction || a.region - b.region);",
+    "new": "|| (a.char < b.char ? -1 : a.char > b.char ? 1 : 0)\n      || b.faction - a.faction || b.region - a.region);",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-T8-CHANGES-CHAR",
+    "file": "src/net/npcChapterLaw.js",
+    "old": ".sort((a, b) => a.faction - b.faction || a.region - b.region || (a.char < b.char ? -1 : a.char > b.char ? 1 : 0));\n}",
+    "new": ".sort((a, b) => a.faction - b.faction || a.region - b.region);\n}",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-T8-SEATSOF-ORDER",
+    "file": "server-account/src/npcChapters.js",
+    "old": "WHERE char_id = ?1 ORDER BY faction, region",
+    "new": "WHERE char_id = ?1 ORDER BY faction DESC, region DESC",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-T8-CAP-SORT",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "return [...held].sort((a, b) => a - b);",
+    "new": "return [...held];",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-T8-SHEET-TIE",
+    "file": "server-account/src/npcChapters.js",
+    "old": "ORDER BY s.seat = 'master' DESC, s.since, s.char_id`",
+    "new": "ORDER BY s.seat = 'master' DESC, s.since, s.char_id DESC`",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-T8-TITLES-SORT",
+    "file": "server-account/src/npcChapters.js",
+    "old": "[...seatsHere, ...lostHere, ...whole].map((r) => String(r.char_id)))].sort();",
+    "new": "[...seatsHere, ...lostHere, ...whole].map((r) => String(r.char_id)))];",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-T7-NEWS-TOWN",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "lwSeed(this.o.town.mapId, f, 0x63686170)",
+    "new": "lwSeed(0, f, 0x63686170)",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-T7-NEWS-APART",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "GUILD_DAY_OFFSETS.slice(0, CHAPTER_NEWS_DAYS)",
+    "new": "GUILD_DAY_OFFSETS.slice(1, 1 + CHAPTER_NEWS_DAYS)",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-T7-READ-MINUTE",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "const t = Math.floor(this.o.clock());",
+    "new": "const t = this.o.clock();",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-T10-HALL-JUSTIFY",
+    "file": "src/ui/hallOfRecords.js",
+    "old": "text(hallOfRecordsChaptersTitle(seat)), nl(), nl(), { formatting: RSC.JustifyLeft });",
+    "new": "text(hallOfRecordsChaptersTitle(seat)), nl(), nl());",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-T10-ROLL-JUSTIFY",
+    "file": "src/ui/chapterRoll.js",
+    "old": "text(roll.title), nl(), nl(), { formatting: RSC.JustifyLeft }];",
+    "new": "text(roll.title), nl(), nl()];",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-T10-NEWS-SWAP",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "Object.freeze(['The hall of {guild} is half empty of an evening.', 'Hard times for them.']),",
+    "new": "Object.freeze(['Have you seen the hall of {guild} of an evening? Full to the door.', 'Hard times for them.']),",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-T10-SETFOCUS-FACTION",
+    "file": "server-account/src/npcChapters.js",
+    "old": "|| !Number.isSafeInteger(faction) || !regionOk(region)) return { error: 'body' };",
+    "new": "|| !regionOk(region)) return { error: 'body' };",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP4-C-FOCUS-LATE",
+    "file": "src/ui/noticeWindow.js",
+    "old": "const said = r?.ok ? { ok: true, text: chapterFocusLineOf(faction, focus) ?? 'Focus set.' } : { ok: false, text: accountRefusalText(r?.error) };\n    if (!alive) { work.sayLate?.(said.text); return; }",
+    "new": "const said = r?.ok ? { ok: true, text: chapterFocusLineOf(faction, focus) ?? 'Focus set.' } : { ok: false, text: accountRefusalText(r?.error) };\n    if (!alive) { return; }",
+    "tests": [
+      "test/audit_chap4.test.js"
+    ],
+    "note": "CHAP6c: re-aimed by content (the chapter's Season beside it)."
+  }
+]

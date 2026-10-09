@@ -1446,6 +1446,13 @@ export const PROF_CSS = `/* ── PROF1: THE PROFESSIONS ── */
 /* BOARD-UI: the day's count over the cards, on its own dark strip */
 .notice-worktoday { margin: 0 4px 12px; padding: 6px 10px; font-size: 13px; letter-spacing: 0.04em; color: #e9e1cf;
   background: rgba(12,10,8,0.72); border-left: 2px solid rgba(192,138,62,0.6); }
+/* CHAP3a: the account's Merit in a chapter here, under the day's count, on the guild seal's strip */
+.notice-merit { margin: -8px 4px 12px; padding: 4px 10px; font-size: 12px; letter-spacing: 0.03em; color: #e9e1cf;
+  background: rgba(12,10,8,0.6); border-left: 2px solid rgba(120,150,190,0.6); }
+/* CHAP3b: a chapter of the region, its band and Strength, under the Merit lines */
+.notice-merit + .notice-chapter, .notice-worktoday + .notice-chapter { margin-top: -8px; }
+.notice-chapter { margin: 0 4px 12px; padding: 4px 10px; font-size: 12px; letter-spacing: 0.03em; color: #d8cfbb;
+  background: rgba(12,10,8,0.5); border-left: 2px solid rgba(79,111,143,0.5); }
 .prof-cols { display: grid; grid-template-columns: minmax(180px, 0.9fr) 1.4fr; gap: 14px; }
 .prof-list { display: flex; flex-direction: column; gap: 4px; }
 .prof-row { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; padding: 4px 8px; text-align: left; font: inherit; font-size: 12px;

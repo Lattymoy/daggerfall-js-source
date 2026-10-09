@@ -46,14 +46,14 @@ import { POP_VISIBLE_RANGE, POP_RECYCLE_DISTANCE, maxPopulationFor } from '../to
 import { PERSON_MOVE_SPEED } from '../../characters/mobilePerson.js';
 import { townPlaces, exitToward, harbourDock, streetGeometry } from './places.js';
 import { townCensus, isHome, watchShiftSize } from './census.js';
-import { dayPlan, entryAt, isOutdoor, walkMinutes, DAY_START_MIN, DAY_MIN } from './dayPlan.js';
+import { dayPlan, entryAt, isOutdoor, walkMinutes, DAY_START_MIN, DAY_MIN, GUILD_DAY_OFFSETS } from './dayPlan.js';
 import { townClassOf, stillRoleOf, stillFlatOf } from './looks.js';
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
 import { NAV_CELL } from '../../world/cityNavigation.js';   // LW-DAWN: a berth's cell
 import { createPathBook, pointOnLine } from './townPaths.js';
 import { spotCircles, spotRound, circleLine, circlesStands, aloneStand, aloneStands, ROUND_S, GATHER_BEAT_S, lineMinutes, ALONE_FAR_M, SPACE_M } from './meetups.js';
 import { spotIncidents, stirLine, stirLoud, smallVoice, gateWord } from './stir.js';
-import { LIVING_GREETINGS, LIVING_KEEPSAKE, WATCH_GREETINGS, watchBand, fillLine, firstNameOf } from './lines.js';
+import { LIVING_GREETINGS, LIVING_KEEPSAKE, WATCH_GREETINGS, watchBand, fillLine, firstNameOf, CHAPTER_NEWS, CHAPTER_NEWS_DAYS, CHAPTER_EVENT_NEWS } from './lines.js';
 import { keepsakeFor } from './keepsake.js';
 import { lwSeed, textSeed } from './seed.js';
 import { placeKeyOf } from './lives.js';
@@ -224,6 +224,18 @@ export function besideDay(cur, day) {
   return o;
 }
 
+/** CHAP5b: the factions of a town's guild halls - its temples' too with `temples` - its chapters, each once, in order.
+ *  @param {import('./places.js').Places} places @param {boolean} [temples] @returns {number[]} */
+export function townChapters(places, temples = false) {
+  const out = new Set();
+  for (const [key, t] of places.types) {
+    if (t !== BUILDING_TYPES.GuildHall && !(temples && t === BUILDING_TYPES.Temple)) continue;
+    const f = places.factions?.get(key) ?? 0;
+    if (f) out.add(f);
+  }
+  return [...out].sort((a, b) => a - b);
+}
+
 /**
  * @typedef {import('./census.js').Resident} Resident
  * @typedef {import('./dayPlan.js').Entry} Entry
@@ -262,6 +274,7 @@ export class LivingTown {
    *   takeKeepsake?: (item: any) => void,
    *   extraPeople?: (day: number, town: LivingTown) => readonly Resident[],
    *   familyNews?: (t: number) => readonly any[] | null,
+   *   chapterOf?: (faction: number) => ({ band: string, name: string, event?: string | null, shut?: boolean } | null),
    *   dangers?: () => (readonly number[][] | null),
    * }} o - LW6c: `keepsakes()` what the player carries (a keepsake carried home), `takeKeepsake(item)` it handed over.
    *   `tripsOf(day)` the roads' word on the town for a day (trips.js through the host's book: who of it is away
@@ -281,12 +294,19 @@ export class LivingTown {
    *   residents beyond the census who live here (Project Legacy's bloodline, systems/legacy/household.js) - the same
    *   list while nothing about them changed, so the day's people are kept with it. LEGACY6: `familyNews(t)` what the
    *   town says of that house at the minute (systems/legacy/influence.js newsFor), told beside the roads' and the deeds'
-   *   news.
+   *   news. CHAP5b: `chapterOf(faction)` a guild's chapter here as the chapter sheet says it now - its band and its guild's
+   *   name ("the Fighters Guild") - or null (offline, a chapter the sheet does not name): its hall's evenings
+   *   (dayPlan.js hallGuildDays) and the town's talk of it (chapterNews).
    */
   constructor(nav, o) {
     this.nav = nav;
     this.o = o;
     this.places = townPlaces(nav, o.doors, o.buildings);
+    /** CHAP5b: a hall's chapter's band by its guild's faction, as the host's sheet said it this clock minute - null with no
+     *  sheet (dayPlan's bandOf): a plan is made of the bands its stamp names. */
+    this._bandOf = o.chapterOf ? (/** @type {number} */ f) => this._chapterRead().bands.get(f) ?? null : null;
+    /** @type {{ t: number, s: string, bands: Map<number, string> } | null} */
+    this._stamp = null;
     /** LW-STAND: the street a person stands and walks on - never in a wall nor over the water (places.js streetGeometry:
      *  the stands about a spot, the way to one) */
     this._street = streetGeometry(this.nav, this.places);
@@ -296,7 +316,7 @@ export class LivingTown {
     this.maxPopulation = maxPopulationFor(o.town.blocks);
     /** @type {Row[]} */
     this.pool = [];
-    /** @type {Map<string, { day: number, plan: Entry[], roads?: boolean, inT?: number, home?: number|null, other?: any }>} LW-DAWN `other`: the day kept beside it */
+    /** @type {Map<string, { day: number, plan: Entry[], roads?: boolean, inT?: number, home?: number|null, other?: any, sheet?: string }>} LW-DAWN `other`: the day kept beside it; CHAP5b `sheet` the halls' bands it was made under */
     this._plans = new Map();
     this._paths = createPathBook(nav);
     this._timer = Infinity;
@@ -403,6 +423,39 @@ export class LivingTown {
   /** The living day `t` falls in. @param {number} t */
   dayOf(t) { return Math.floor((t - DAY_START_MIN) / DAY_MIN); }
 
+  /** CHAP5b: the town's guild halls' chapters' bands as the host's sheet says them, read once a clock minute - and the
+   *  one string that names them all (a plan's stamp). Every reader of one sheet makes the same day of it. */
+  _chapterRead() {
+    const t = Math.floor(this.o.clock());
+    if (this._stamp?.t !== t) {
+      /** @type {Map<number, string>} */
+      const bands = new Map();
+      for (const f of townChapters(this.places)) { const c = this.o.chapterOf?.(f); const b = c?.shut ? 'shut' : c?.band; if (b) bands.set(f, b); }   // CHAP6d: a shut hall's own
+      this._stamp = { t, bands, s: [...bands].map(([f, b]) => `${f}:${b}`).join() };
+    }
+    return this._stamp;
+  }
+  /** CHAP5b: the stamp a day's plans are made under - '' with no sheet. */
+  _chapterStamp() { return this.o.chapterOf ? this._chapterRead().s : ''; }
+
+  /**
+   * CHAP5b (Chapters-Arc 9): WHAT THE TOWN SAYS OF ITS CHAPTERS on the day of minute `t` - a news item for each chapter of
+   * its guild halls and temples not Steady (lines.js CHAPTER_NEWS), on CHAPTER_NEWS_DAYS of the week - its own, drawn on
+   * the seed by the town and the guild, and three apart, as a member's guild days are; none offline. @param {number} t
+   */
+  chapterNews(t) {
+    if (!this.o.chapterOf) return [];
+    const d = ((this.dayOf(t) % 7) + 7) % 7;
+    return townChapters(this.places, true).flatMap((f) => {
+      const w = lwSeed(this.o.town.mapId, f, 0x63686170) % 7;   // 'chap'
+      if (!GUILD_DAY_OFFSETS.slice(0, CHAPTER_NEWS_DAYS).some((o) => d === (w + o) % 7)) return [];
+      const c = this.o.chapterOf?.(f);
+      // CHAP6c: its Season first - shut halls, then its event (Calm is none) - else its band
+      const kind = c?.shut ? 'shut' : c?.event && /** @type {Record<string, unknown>} */ (CHAPTER_EVENT_NEWS)[c.event] ? c.event : c?.band;
+      return c && kind && (/** @type {Record<string, unknown>} */ (CHAPTER_EVENT_NEWS)[kind] || /** @type {Record<string, unknown>} */ (CHAPTER_NEWS)[kind]) ? [{ kind, chapter: true, guild: c.name, who: '', foe: '', place: '' }] : [];
+    });
+  }
+
   /** A resident's day - a traveller's bent round its trips, a visitor's round its stay. @param {Resident} res @param {number} day */
   planOf(res, day) {
     let e = this._plans.get(res.id);
@@ -410,7 +463,8 @@ export class LivingTown {
     const crew = this._crewOf.get(res.id) ?? null;
     // AUDIT LEGACY II B3: a resident whose HOME changed (Project Legacy's line moved into a house bought, or to the home
     // the player marked) is planned again at once - kept by the day alone, they slept the rest of it in the old house
-    if (!e || e.day !== day || e.home !== res.home || (crew && !(Math.abs((e.inT ?? -Infinity) - crew.inT) <= CREW_REPLAN_MIN))) {   // LW5: a crew's arrival read off two clocks: replanned only when it moved
+    const sheet = this._chapterStamp();   // CHAP5b: the halls' chapters' bands - a day's plans made again when they move
+    if (!e || e.day !== day || e.home !== res.home || (e.sheet ?? '') !== sheet || (crew && !(Math.abs((e.inT ?? -Infinity) - crew.inT) <= CREW_REPLAN_MIN))) {   // LW5: a crew's arrival read off two clocks: replanned only when it moved
       const other = besideDay(e, day);   // LW-DAWN
       const roads = this._roadsOf(day);
       const visit = roads?.visitorOf.get(res.id) ?? null;
@@ -421,8 +475,8 @@ export class LivingTown {
         const dock = this.dockSpot() ?? this.places.square ?? null;
         const D0 = day * DAY_MIN + DAY_START_MIN;
         const away = [{ t0: D0 - DAY_MIN, t1: crew.inT, exit: dock, armed: false }, { t0: crew.outT, t1: D0 + 2 * DAY_MIN, exit: dock, armed: false }];
-        plan = dayPlan(res, this.places, day, { mpm: this.o.mpm, visitor: true, home: this._lodging(res), away });
-        e = { day, plan, roads: true, inT: crew.inT, home: res.home, other };
+        plan = dayPlan(res, this.places, day, { mpm: this.o.mpm, visitor: true, home: this._lodging(res), away, bandOf: this._bandOf });
+        e = { day, plan, roads: true, inT: crew.inT, home: res.home, other, sheet };
         this._planGen++;
         this._plans.set(res.id, e);
         return e.plan;
@@ -432,12 +486,12 @@ export class LivingTown {
         const D0 = day * DAY_MIN + DAY_START_MIN;
         const halt = visit.dock ? 0 : this._gateHalt(exit, visit.inT, day);   // LW-STIR: halted at a gate the watch keeps
         const away = [{ t0: D0 - DAY_MIN, t1: visit.inT, exit, armed: false, halt }, { t0: visit.outT, t1: D0 + 2 * DAY_MIN, exit, armed: false }];
-        plan = dayPlan(res, this.places, day, { mpm: this.o.mpm, visitor: true, home: this._lodging(res), away });
+        plan = dayPlan(res, this.places, day, { mpm: this.o.mpm, visitor: true, home: this._lodging(res), away, bandOf: this._bandOf });
       } else {
         const away = (roads?.away.get(res.id) ?? []).map((w) => ({ t0: w.t0, t1: w.t1, exit: w.dock ? (this.dockSpot() ?? exitToward(this.places, w.yaw)) : exitToward(this.places, w.yaw), armed: w.armed }));   // LW5b: a passage leaves by the dock
-        plan = dayPlan(res, this.places, day, { mpm: this.o.mpm, away, watch: this._watchSize });
+        plan = dayPlan(res, this.places, day, { mpm: this.o.mpm, away, watch: this._watchSize, bandOf: this._bandOf });
       }
-      e = { day, plan, roads: !!roads, home: res.home, other };
+      e = { day, plan, roads: !!roads, home: res.home, other, sheet };
       this._planGen++;
       this._plans.set(res.id, e);
     }
@@ -1366,6 +1420,8 @@ export class LivingTown {
     if (deeds.length) ctx.news = [...(ctx.news ?? []), ...deeds];
     const kin = this.o.familyNews?.(t) ?? [];   // LEGACY6: what the town says of Project Legacy's house (legacy/influence.js newsFor)
     if (kin.length) ctx.news = [...(ctx.news ?? []), ...kin];
+    const chapters = this.chapterNews(t);   // CHAP5b: and of its guilds' chapters
+    if (chapters.length) ctx.news = [...(ctx.news ?? []), ...chapters];
     ctx.player = this.o.playerName?.() ?? '';
     return ctx;
   }

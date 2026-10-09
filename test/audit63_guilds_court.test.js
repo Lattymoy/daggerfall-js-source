@@ -200,13 +200,13 @@ test('AUDIT 63 F9: a Thieves Guild member\'s hideout is revealed under its FACTI
 
 test('AUDIT 63 F9: BOTH exterior hosts drive the reveal, at DFU\'s own moments', () => {
   const world = read('../src/scenes/world.js');
-  assert.ok(/const revealMemberGuildHalls = \(\) =>/.test(world));
+  assert.ok(/const revealMemberGuildHalls = \(\{ witness = false \} = \{\}\) =>/.test(world));   // PIN MOVED (CHAP2a): and, at the entry edge online, the town's halls witnessed off the same buildings
   // Join (ThievesGuild.cs:168-173) - guildInitiationQuestEnded is the
   // port's only door into either guild
   assert.ok(/initiated\.length\) revealMemberGuildHalls\(\)/.test(world));
   // and the location-rect entry the same host already edges on (F062)
   const rect = world.slice(world.indexOf('_inRect && !_wasInLocationRect'));
-  assert.ok(rect.slice(0, 900).includes('revealMemberGuildHalls()'),
+  assert.ok(rect.slice(0, 900).includes('revealMemberGuildHalls({ witness: onlineOn })'),   // PIN MOVED (CHAP2a)
     'the enter-rect edge is where RegisterEvents subscribed (:200)');
   // review round: the name is GetAffiliation's FACTION.TXT read
   // (Guild.cs:170-176), whose "unknown-guild" fallback (:175) answers a
@@ -217,14 +217,14 @@ test('AUDIT 63 F9: BOTH exterior hosts drive the reveal, at DFU\'s own moments',
   assert.ok(/ensureFactions\?\.\(\)/.test(body),
     'the streaming host reveals before FACTION.TXT is read - the plate saves as unknown-guild');
   const ext = read('../src/scenes/exterior.js');
-  assert.ok(/revealGuildHallsOnMap\(activeMemberships\(playerEntity\)/.test(ext),
+  assert.ok(/revealGuildHallsOnMap\(revealingMemberships\(playerEntity\)/.test(ext),   // PIN MOVED (AUDIT CHAP2 D4): either book's registration
     'the fixed-city host arms it at load - its one location becomes available exactly once');
   // the pool is the FULL building set, not the talk directory
   assert.ok(/buildingSummaries\(dfLocation\.exterior\?\.buildings/.test(ext));
   // the streaming host's pool is the FULL set too, resolved inside the
   // one reveal (the wait between the two is a microtask, not a re-read)
   assert.ok(/buildingSummaries\(dfLoc\.exterior\?\.buildings/.test(reveal.slice(0, reveal.indexOf('};'))));
-  assert.ok(/revealGuildHallsOnMap\(activeMemberships\(playerEntity\)/.test(reveal.slice(0, reveal.indexOf('};'))));
+  assert.ok(/revealGuildHallsOnMap\(revealingMemberships\(playerEntity\)/.test(reveal.slice(0, reveal.indexOf('};'))));   // PIN MOVED (AUDIT CHAP2 D4)
 });
 
 // ── F33: PlayerActivate.cs:800-841 + :1611-1673 ───────────────────
