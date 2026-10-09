@@ -14097,8 +14097,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // clear the overlay, all synchronous). This is that order.
     if (_respawning) return;   // and a second death mid-flight cannot start a second respawn
     _respawning = true;
-    wagonRiders?.leave();   // WAGONS2 (AUDIT): a death ends a ride in another's wagon - the risen body is never pinned back on its seat
     endPlayerFights();   // RVN10 (Feud-Arc.md 21.2): the death ended every fight - the respawn's jump routs nobody (a death no hurt told)
+    wagonRiders?.leave();   // WAGONS2 (AUDIT): a death ends a ride in another's wagon - the risen body is never pinned back on its seat
     // WILD1: a death in the open zone rises OUT of it - the nearest town beyond the mountains - its body's offer over and
     // its cell let go (the ghost), the team brought along whatever its settings say
     const wildRise = !!wildDeath();
@@ -15015,11 +15015,11 @@ export async function bootWorld(canvas, renderer, params, status) {
         // too - it suppresses its own marker-foe walk while the record
         // is landing (GameObjectHelper.cs:1073-1076) and overlays the
         // saved pools once the fresh ones are minted.
+        if (extras.interior?.caravanRoom) extras.interior = { ...extras.interior, caravanAt: parkedCaravanAt(extras.modData?.[HCC_VENDOR] ?? null) };   // WAGONS2 (AUDIT): the save's caravan where it was parked (the runtime's is restored after)
         const inside = extras.interior
           ? await (modes?.restoreInterior?.(extras.interior, [lx, ly, lz], {
             fromNative: (nx, nz) => state.localFromWorld(nx, nz), yOffset: state.compensation[1],
             sailingBoat: savedCabinBoat(extras.interior.sailingCabin, extras.modData?.[COME_SAIL_AWAY_VENDOR]),
-            caravanAt: parkedCaravanAt(extras.modData?.[HCC_VENDOR] ?? null),   // WAGONS2 (AUDIT): the save's caravan where it was parked (the runtime's is restored after)
           }) ?? false)
           : false;
         if (!inside) _wodInside = false;

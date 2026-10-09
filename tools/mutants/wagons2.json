@@ -310,8 +310,8 @@
   {
     "name": "WAGONS2-AUDIT-the-respawns-leave-gone",
     "file": "src/scenes/world.js",
-    "old": "_respawning = true;\n    wagonRiders?.leave();",
-    "new": "_respawning = true;\n    void 0;",
+    "old": "\n    wagonRiders?.leave();   // WAGONS2 (AUDIT): a death ends",
+    "new": "\n    void 0;   // WAGONS2 (AUDIT): a death ends",
     "tests": ["test/wagons2.test.js"]
   },
   {
@@ -422,8 +422,8 @@
   {
     "name": "WAGONS2-AUDIT-the-saves-place-unread",
     "file": "src/scenes/world.js",
-    "old": "caravanAt: parkedCaravanAt(extras.modData?.[HCC_VENDOR] ?? null),",
-    "new": "caravanAt: undefined,",
+    "old": "caravanAt: parkedCaravanAt(extras.modData?.[HCC_VENDOR] ?? null) };",
+    "new": "caravanAt: undefined };",
     "tests": ["test/wagons2.test.js"]
   },
   {

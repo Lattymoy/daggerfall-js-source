@@ -2025,10 +2025,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const szE = eliteSize(f.entity) * lastStandSize(f.entity);   // ELITE FOES: a quarter larger (onto locals - the cache's object is shared); RVN4: phase two a tenth
       const szG = szE * wildGiantSize(f.entity);   // WILD3: a giant of the open zone, four times over
       const sz = szG === 1 ? sz0 : { w: sz0.w * szG, h: sz0.h * szG };
+      f.batch.record = rkey;
       // WAGONS2: a companion seated in my wagon's back is DRAWN where the wagon is drawn - grown with it under the
       // Overworld (scenes/crewAshore.js ai.seatDraw, the pool's seatDrawn); its body stays on the seat itself
       const _sd = f.ai?.seatDraw?.() ?? (f.puppet && _puppetSeatDraw ? _puppetSeatDraw(f) : null), _sg = _sd?.g > 1 ? _sd.g : 1;   // and a peer's, on their wagon as drawn here
-      f.batch.record = rkey;
       f.batch.size = { w: (o.flip ? -sz.w : sz.w) * _sg, h: sz.h * _sg };
       // WAGONS2 (AUDIT): grown, it casts no shadow - OW-BIG's law for every grown figure (a 16 m companion's shadow lay
       // over the view); the flag the grow set let go when it ends, unless the dissolve holds it (systems/dissolve.js [4])

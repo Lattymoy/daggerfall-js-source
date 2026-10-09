@@ -511,7 +511,7 @@ test('WAGONS2 (AUDIT) THE RIDERS\' WAYS OUT: an owner on the road keeps their ri
   assert.match(w, /fare\.opts, \{ \.\.\.fare\.computed, totalCost: 0, piecesCost: 0 \}\);/);
   assert.match(w, /hccRuntime\.handleStartLoad\(\);[^\n]*\n {6}wagonRiders\?\.clear\(\);/);
   assert.match(w, /if \(_mode\(\) !== 'exterior' \|\| !\(playerEntity\.health > 0\)\) wagonRiders\?\.leave\(\);/);
-  assert.match(w, /_respawning = true;\n {4}wagonRiders\?\.leave\(\);/);
+  assert.match(w, /_respawning = true;\n {4}endPlayerFights\(\);[^\n]*\n {4}wagonRiders\?\.leave\(\);/);
   // the journey's pixel: the travel map's
   const rec = (go) => validHccRecord({ w: [HCC_WIRE_KIND.Trailing, 0, 0, 0, 0, 0, 0, 1, 0, 0], wk: 1, go });
   assert.deepEqual(rec([999, 499, 1]).go, [999, 499, 1]);
@@ -556,8 +556,8 @@ test('WAGONS2 (AUDIT) THE CARAVAN KEPT: the wagon a player drives while it holds
   parked = { Mode: WAGON_MODE.WithPlayer, WorldX: 4000, WorldZ: 8000 };
   assert.equal(access.canRestore(room), false, 'driven, parked nowhere');
   assert.equal(access.canRestore(room, [4000, 8000]), true, 'a save\'s own place, given');
-  assert.match(w, /caravanAt: parkedCaravanAt\(extras\.modData\?\.\[HCC_VENDOR\] \?\? null\),/);
-  assert.match(wm, /!host\.caravanRoom\?\.canRestore\(saved\.caravanRoom, caravanAt\)\) return false;/);
+  assert.match(w, /if \(extras\.interior\?\.caravanRoom\) extras\.interior = \{ \.\.\.extras\.interior, caravanAt: parkedCaravanAt\(extras\.modData\?\.\[HCC_VENDOR\] \?\? null\) \};/);
+  assert.match(wm, /!host\.caravanRoom\?\.canRestore\(saved\.caravanRoom, saved\.caravanAt\)\) return false;/);
   assert.match(w, /parkedAt: \(\) => parkedCaravanAt\(hccRuntime\.view\(\)\.state\),/);
   assert.match(w, /busy: \(\) => worldMoveBusy\(\) \|\| !!wagonRiders\?\.seated\(\),/);
   // a travelling room's other layouts folded back

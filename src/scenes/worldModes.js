@@ -13338,11 +13338,11 @@ export function createWorldModes(host) {
      *  discovery record and position. False when the door cannot be
      *  found or the entry fails; the no-door reposition arm
      *  (RestorePositionHelper :615-621) belongs to the caller. */
-    async restoreInterior(saved, pos = null, { fromNative = null, yOffset = 0, strictDoor = false, sailingBoat = undefined, caravanAt = undefined } = {}) {
+    async restoreInterior(saved, pos = null, { fromNative = null, yOffset = 0, strictDoor = false, sailingBoat = undefined } = {}) {
       // WAGONS1: a save made in the caravan comes back into it while the player still drives one; else outside -
-      // WAGONS2 (AUDIT): and while it stands where the room was (`caravanAt`, the save's own parked place; the live one unsaid)
+      // WAGONS2 (AUDIT): and while it stands where the room was (`caravanAt`, a load's own parked place; a Recall's the live one)
       if (saved?.caravanRoom) {
-        if (mode !== 'exterior' || !host.caravanRoom?.canRestore(saved.caravanRoom, caravanAt)) return false;
+        if (mode !== 'exterior' || !host.caravanRoom?.canRestore(saved.caravanRoom, saved.caravanAt)) return false;
         try { await enterCaravanRoom(readCaravanRoom(saved.caravanRoom), pos); } catch (e) { console.error('[worldModes] restoreInterior (caravan) failed:', e); return false; }
         return mode === 'interior';
       }

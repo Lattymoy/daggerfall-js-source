@@ -228,7 +228,7 @@ test('WAGONS1 THE INTERIOR HOST: the caravan rides the cabin\'s private-room slo
   assert.match(wm, /isCaravanRoom\(interiorCabin\) \? \{ caravanRoom: readCaravanRoom\(interiorCabin\) \} : \{ sailingCabin: readSailingCabin\(interiorCabin\) \}/);
   assert.match(wm, /if \(isCaravanRoom\(interiorCabin\)\) return \{ kind: 'caravan', where: CARAVAN_TEXT\.where \};[^\n]*\n\s+if \(b\.buildingType === BUILDING_TYPES\.Ship\) return \{ kind: 'ship', where: 'Your ship' \};/);
   assert.match(wm, /caravanOut \? host\.caravanRoom\?\.returnToWagon\(interiorCabin\) : host\.sailingCabin\?\.returnToDeck\(interiorCabin, privateVisitOwner\)/);
-  assert.match(wm, /if \(saved\?\.caravanRoom\) \{\n\s+if \(mode !== 'exterior' \|\| !host\.caravanRoom\?\.canRestore\(saved\.caravanRoom, caravanAt\)\) return false;/);   // WAGONS2 (AUDIT): and on the caravan where it stands
+  assert.match(wm, /if \(saved\?\.caravanRoom\) \{\n\s+if \(mode !== 'exterior' \|\| !host\.caravanRoom\?\.canRestore\(saved\.caravanRoom, saved\.caravanAt\)\) return false;/);   // WAGONS2 (AUDIT): and on the caravan where it stands
   assert.match(wm, /get sailingCabin\(\) \{ return mode === 'interior' && !isCaravanRoom\(interiorCabin\) \? interiorCabin : null; \}/);
   const world = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
   assert.match(world, /caravanRoom: caravanRooms,   \/\/ WAGONS1/);
