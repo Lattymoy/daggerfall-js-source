@@ -2373,7 +2373,9 @@ card (WB13e); the Hour told neither - in first person at a colossus's feet the f
   silver - fell them within 15 seconds*), *III - The Last Moment* (*Break its Hearts before the Reset lands*), *The Hour
   - Ends in one minute*, and *The Brass Remnant - Undone*; each once a fight, a wake and a fall shown live alone, a late
   page taking the fight as it stands. The card's model is the Warden's own pure one (`titleCardModel`); its node is
-  made once and updated.
+  made once and updated. The wake, the Break and the Last Moment are drawn where the bar stands (`sdBarNear`), the
+  last minute and the fall for the whole Hour (AUDIT SD IV, SD26 T1: every turn was drawn over the Steps' jumps, the
+  voice having kept it from them - L6 F15's law; the beats still follow the fight far off, so none is drawn late).
 
 The world host reads the fight once a frame for the bar, the ground and the card, hides all three with the HUD, and
 puts them away with the bar.

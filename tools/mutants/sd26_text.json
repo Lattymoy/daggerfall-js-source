@@ -1,0 +1,38 @@
+[
+  {
+    "name": "SD26-T1-the-turns-to-the-whole-hour",
+    "file": "src/scenes/world.js",
+    "old": "card = beat && (near || beat.kind === 'last' || beat.kind === 'fell') ? titleCardModel(beat, now) : null;",
+    "new": "card = beat ? titleCardModel(beat, now) : null;",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T1-the-last-minute-withheld",
+    "file": "src/scenes/world.js",
+    "old": "card = beat && (near || beat.kind === 'last' || beat.kind === 'fell')",
+    "new": "card = beat && (near || beat.kind === 'fell')",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T1-the-fall-withheld",
+    "file": "src/scenes/world.js",
+    "old": "card = beat && (near || beat.kind === 'last' || beat.kind === 'fell')",
+    "new": "card = beat && (near || beat.kind === 'last')",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T1-the-beats-framed-near-alone",
+    "file": "src/scenes/world.js",
+    "old": "      const beat = sdBeats.frame(s, now);",
+    "new": "      const beat = near ? sdBeats.frame(s, now) : null;",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  }
+]

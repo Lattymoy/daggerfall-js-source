@@ -23478,13 +23478,16 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (inRealm) {
       const [x, , z] = sdDungeonToRealm(player.pos[0], player.pos[1], player.pos[2]);
       const s = sdFightLink.state(), now = sdFightLink.now();
-      if (sdBarNear(x, z)) bar = remnantBarModel(s, now);
+      const near = sdBarNear(x, z);
+      if (near) bar = remnantBarModel(s, now);
       // SD15: THE ARENA READ (scenes/sdArenaRead.js) - a blow still to land on my feet, and the burning brass under them,
       // on the gate's own rim and warning; the fight's turns on the Hour's own card
       const peril = playerEntity.health > 0 ? sdPerilAt(s, now, x - SD_ARENA.x, z - SD_ARENA.z, cam.yaw, !!sdBlows?.over?.()) : null;   // AUDIT SD III (F8): over a pillar's top, the Hand's shade gone
       ground = sdGroundModel({ burning: !!sdBlows?.burning?.(), el: sdBlows?.burningEl?.() ?? null, now, peril });   // SD18b: in its element
-      const beat = sdBeats.frame(s, now);
-      card = beat ? titleCardModel(beat, now) : null;
+      const beat = sdBeats.frame(s, now);   // framed wherever I stand, so a turn passed far off is never shown late
+      // AUDIT SD IV (T1): the fight's turns on the card where its bar stands (L6 F15, its voice's law) - the wake, the
+      // Dragon Break and the Last Moment stood over the Steps' jumps; its last minute and its fall are the whole Hour's
+      card = beat && (near || beat.kind === 'last' || beat.kind === 'fell') ? titleCardModel(beat, now) : null;
     } else sdBeats.leave();
     // SD18b: THE HOUR'S MARKS (ui/sdMarksView.js) - its Ending and its omens on the gate's own card as I step into the Hour
     let marks = null;
