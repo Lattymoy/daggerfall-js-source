@@ -840,6 +840,21 @@ export function essentialPrice(price, { online = isOnlinePage() } = {}) {
  *  stand. */
 export const ONLINE_HAGGLE_MAX = 100;
 
+/** MERC-SLOPE (FIELD BUGS 2026-10-08, EvoAva: "I leveled up 20 merc today, and i am being offered the same exact prices
+ *  at the same shop, even tho i fortify personality to 100"; Mac, of keeping the flat half or giving the skills back
+ *  their slope: "Whatever is most balanced"): THE SKILLS SELL AGAIN ONLINE, UNDER THE HALF. MERC-RISE's half of the
+ *  counter's least ask stood under nearly every seller's own offer, so online a sale was one figure per counter and
+ *  piece - no skill moved it. The half stays the CEILING: P0.4's loop (buy, sell back) and ESSENTIALS-HALF's (an
+ *  essential bought at half and sold back) are shut by it, and a sale over it re-opens both (measured). Under it the
+ *  seller now stands where their own Daggerfall offer stands against the best haggler's, felt at
+ *  ONLINE_SALE_SKILL_WEIGHT of its strength: the best haggler is paid the half, as now; the weakest three quarters of it;
+ *  a Mercantile 20, Personality 50 seller about four fifths; the skills worth a third more from the bottom to the top.
+ *  Never more than Daggerfall's own offer: its weakest seller is offered half what its best is, and the half is under
+ *  three fifths of the best's offer at every counter (pinned), so the weight's floor stands under every seller's own.
+ *  Daggerfall's whole slope under the half (weight 1) would have cut a typical seller's sale by two fifths, where online
+ *  money is short already. */
+export const ONLINE_SALE_SKILL_WEIGHT = 0.5;
+
 /** FormulaHelper.CalculateTradePrice, verbatim offline - the classic
  *  fixed-point haggle over the merchant's quality-derived levels vs
  *  the player's Mercantile + Personality. selling=false is the BUY
@@ -857,7 +872,14 @@ export function calculateTradePrice(cost, shopQuality, { mercantile = 0, persona
     const sale = ((((179 * dm) >> 8) + ((51 * dp) >> 8)) * cost) >> 8;
     if (!online) return sale;
     const best = { mercantile: ONLINE_HAGGLE_MAX, personality: ONLINE_HAGGLE_MAX };   // MERC-RISE: the best haggler this counter can meet
-    return Math.min(sale, Math.floor(calculateTradePrice(cost, shopQuality, best, false) * ONLINE_SALE_SHARE));   // REALM P0.4; MERC-RISE: half the least it asks
+    const half = Math.floor(calculateTradePrice(cost, shopQuality, best, false) * ONLINE_SALE_SHARE);   // REALM P0.4; MERC-RISE: half the least it asks
+    // MERC-SLOPE: under the half, where this seller's own offer stands against the best haggler's - at its weight
+    const top = calculateTradePrice(cost, shopQuality, best, true, { online: false });
+    if (!(top > 0)) return Math.min(sale, half);
+    const slope = Math.floor(half * (1 - ONLINE_SALE_SKILL_WEIGHT + (ONLINE_SALE_SKILL_WEIGHT * Math.min(sale, top)) / top));
+    // MERC-SLOPE's audit: the floor took a half of 1 to nothing for every seller but the best - a lot Daggerfall pays for,
+    // and MERC-RISE paid a gold for, handed over for none. A gold at least, where the half and the offer both reach one.
+    return Math.max(slope, Math.min(sale, half, 1));
   }
   dm = ((Math.trunc((merchantLevel << 8) / 200) + 128) * (Math.trunc(((100 - mercantile) << 8) / 200) + 128)) >> 8;
   dp = (((Math.trunc((merchantLevel << 8) / 200) + 128) * (Math.trunc(((100 - personality) << 8) / 200) + 128)) >> 8) << 6;

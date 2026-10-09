@@ -188,7 +188,14 @@ where the classic death would end the run - and the member is older by 6% of the
 Standard 6%, Heavy 10%). The years also pass as they live (the character's own clock, LIVED1: 360 days a year). At
 three quarters of the span the card names them an ELDER and the HUD says so, once a load. When the span is spent, the next death
 is the last: they die of their years, and the mantle passes exactly as in Bloodline - so an Enduring line still turns,
-at its own pace, roughly a dozen deaths a generation. And at any time an Elder may PASS THE MANTLE from the family
+at its own pace, roughly a dozen deaths a generation. AGELESS-CURSE (2026-10-09, the owner: "can you exclude vampires
+and werewolves of this please?"): a member with the curse in the blood at the death - a vampire, a werewolf or a
+wereboar, the curse taken (`liveVampirism`, `liveLycanthropy`), not one still incubating - pays no toll and always
+rises, their span spent or not, and the rise says so ("The curse in Ysolde's blood keeps Arkay at bay. No years are
+taken." - `payToll`'s `ageless`, `age.js:"if (ageless) return { final: false"`; asked at the door,
+`legacyHost.js:"const cursed = !!(deps.entity"`). Their own clock still ages them. Cured, the toll is theirs again
+from the next death - a spent member cured dies of their years at it. The sheet's "your next death is your last"
+(section 11) is still said to a spent member while the curse holds. And at any time an Elder may PASS THE MANTLE from the family
 window: they retire to keep the house (alive, at the family home - AUDIT LEGACY III F11d: never "to the seat" - kept
 on the tree, no longer played) and the player chooses an heir.
 The heirloom in Enduring is the elder's to hand down - always one: a retiring elder's BEQUEST (their best worn piece,
@@ -597,6 +604,23 @@ than standing still.
 | LEGACY-NAME | a house founded nameless named at its seat; a seat's house said once; the news's doubled surname (section 8) | built |
 | FAMILY-SEAT | the seat moved from the House page to the town the one played stands in; the later move stands in every merge, and the house's name with it (section 11; `01-Overview/Field-Bugs-2026-10-07b.md`, `01-Overview/Audit-FB1007b.md`) | built, audited |
 | LEGACY-CHOICE | the popup online: Enduring, Bloodline or no lineage at chargen, kept on the character; online a house founded at a birth alone - a character loaded with no house plays without one (section 6) | built |
+| AGELESS-CURSE | the cursed pay no toll: a vampire, a werewolf or a wereboar in an Enduring house rises from every death with no years taken, the span spent or not; cured, the toll again (section 6) | built |
 | LEGACY-HOME | the bloodline in the world: the family home, the seat's townsfolk, their day, Play as by talking (section 10b) | built |
 | AUDIT LEGACY II | the six-lens audit of LEGACY1-4 and LEGACY-HOME (`01-Overview/Audit-Legacy-II.md`) | built |
 | AUDIT LEGACY III | the six-lens audit of the whole arc, server side too (`01-Overview/Audit-Legacy-III.md`) - character-bound weddings, the line's own route bound, the write made from what it read, two copies' persons kept apart, the news on the reader's clock | built |
+
+## WED-GATE - a character who may wed, weds (FIELD BUGS 2026-10-08)
+
+Sahh: *"Characters that have chosen Enduring or Bloodlines as the Project Legacy option cannot seem to marry each
+other"* - two of either model, in a party or not, at a temple of theirs or not: Propose marriage grey every time. The
+world host's `wedCan` (`scenes/world.js`) read the house's answer as `legacyHost?.wedRefusal() ?? 'house'`, and
+`wedRefusal` answers NULL when the one played may wed - so `??` turned every "may" into "no house": the button grey with
+"Only a character of a house (Project Legacy) can wed in the realm.", and the same `can` refused every proposal sent,
+answered every one received `no` and refused every Yes (net/wedSession.js). Since LEGACY7 part three's first line; AUDIT
+LEGACY III's prefix (never lying dead) kept it. Now `legacyHost ? legacyHost.wedRefusal() : 'house'` - 'house' only
+with no house host. The model (Enduring or Bloodlines) was never read by either gate, the realm's included. THE FOUR
+HOSTS: the wedding is the world host's alone (`scenes/exterior.js`, `scenes/worldModes.js` and
+`scenes/dungeonContext.js` carry no realm session). `test/legacy7_wed.test.js` runs `wedCan` out of its own text (the
+null is null, each refusal the house's own, the dead, a death, a relay that cannot carry it, offline);
+`tools/mutants/legacy7wed.json` FB1008-wed-the-null-read-as-no-house, dead. Its standing survivor
+LEGACY7W-partner-dead-or-lineless survives on main as well - not this change's, recorded for its arc.

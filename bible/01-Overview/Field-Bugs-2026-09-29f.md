@@ -88,7 +88,9 @@ price is MERC-RISE's to the gold (pinned: inside the range nothing moves, over e
 steps of five and five Personalities), and past 100 it holds MERC-RISE's balance where it broke - there a sale fell with
 the skill and went under nothing, and a purchase went free and then paid the buyer. So yes: the reporter's counter pays
 every seller 235, whatever their Mercantile, as MERC-RISE set it, and 29d's "Say which" is answered - the flat half is
-the balance (marked there).
+the balance (marked there). SUPERSEDED 2026-10-08 by MERC-SLOPE (`06-Systems/Realm-Arc.md`): EvoAva's "the same exact
+prices ... no matter how many mercantile levels", and Mac, asked again: "Whatever is most balanced" - the half stays
+the ceiling, the best haggler's, and the skills move a sale under it.
 
 ## Ported, not this batch's
 

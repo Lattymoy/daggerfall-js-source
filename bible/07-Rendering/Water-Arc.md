@@ -1119,3 +1119,21 @@ bed over a pond of islands; and, with ARENA2, no record and turn the art paints 
 climate left dry, the corners and the saddles exactly the art's (36), and what BLOCKS.BSA lays. PIN MOVED:
 `test/grasspath.test.js`'s WATER-DRAW1 difference (SHALLOW_DRAWN and WATER-DRAW2's three, a saddle only half
 turned) and `test/puddledry.test.js`'s census. Mutants: `tools/mutants/waterdraw2.json` (9, all dead).
+
+## WATER-OFF - THE WATER IS THE PLAYER'S, ONLINE TOO (2026-10-08)
+
+FIELD BUGS 2026-10-08, SylviaBun: *"an option to disable Enhanced Water would be nice (I prefer the textured water over
+'realistic' water anyway and want to switch back if possible)"* - with the frame rate falling round Gothway Garden. The
+`enhanced-water` row (`systems/features.js`) was `online: true`: forced on online, its tile locked, so the switch that
+brings back Daggerfall's flat tile and the Deep Waters sea's own scrolling texture was out of reach where the reporter
+plays. It is `online: 'player'` now - OL-LIGHT's shape (`enhanced-lighting`): the water is what THIS screen draws. No
+wire field, relay law or shared roll reads it; swimming and feet read `WATER_MASK_TABLE` either way; its one other
+reader, the townsfolk's path weights (`world/cityNavigation.js tileWeight`), is this page's alone (the townsfolk ride no
+wire). Off takes effect when the world next loads, as it always did. `water-quality`'s Simple stays the cheaper middle.
+
+Not settled here, recorded for Mac: the falling frame rate itself was not profiled. The investigation found no leak in
+the water or Low Poly Trees (every GL object freed, the buffers reused) and named suspects that FILL rather than leak -
+Iliac Puddle No More's population near the sea (`MaxLiveFish` 720 by default, each fish an update and a ray), Low Poly
+Trees' 3D trees replacing their far pictures as atlases finish, and Full water's frame copy (two with the sea in view).
+Pins: `test/ft6_water.test.js`, `test/water.test.js`, `test/onlinelane.test.js` (the player's enhancements, by name),
+`test/uxb1e_onlinesync.test.js` (PIN MOVED: another forced switch stands in the sync's example).

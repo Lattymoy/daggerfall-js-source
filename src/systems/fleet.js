@@ -116,6 +116,9 @@ export function takeMaterials(lists, kind, n) {
 }
 
 // ── THE BANK'S CLAIM ─────────────────────────────────────────────────────────────────────────────────────────────────
+// SHIP-CREDIT WITHDRAWN (2026-10-08, Mac: "Remove ship buying loan from the bank"): no counter sells a boat on the bank's
+// credit any more, so no purchase stamps a claim. A ship bought on it before carries hers in the save (`credit`, read
+// back by restoreFleetSaveData) and keeps it - no refit while it stands - until that bank is owed nothing.
 /**
  * The loan she was bought on, while it stands: the bank of `credit.region` still owed, by the loan that bought her (its
  * due date the one her purchase set - a loan taken there since for something else is not hers). Answers
@@ -173,15 +176,14 @@ export const fleetBook = () => _book;
 export const titleOf = (uid) => _book.find((it) => it?.UID === uid) ?? null;
 /**
  * A DEED ENTERED: taken out of `from` (the list it lay in - the pack - or none), into the book, her record made or
- * kept; `credit` the bank's claim when she was bought on it ({ region, due }), `port` where she waits. A deed already in
- * the book is not entered twice. Answers her record, or null for an item that is no deed.
+ * kept; `port` where she waits. A deed already in the book is not entered twice. Answers her record, or null for an
+ * item that is no deed.
  */
-export function titleDeed(deed, { from = null, credit = null, port = null } = {}) {
+export function titleDeed(deed, { from = null, port = null } = {}) {
   if (deed?.templateIndex !== BOAT_DEED_TEMPLATE || !isUid(deed.UID) || !hullOk(hullOfItem(deed))) return null;
   if (from) { const i = from.indexOf(deed); if (i >= 0) from.splice(i, 1); }
   if (!titleOf(deed.UID)) _book.push(deed);
   const r = recordFor(deed.UID, hullOfItem(deed), variantOfItem(deed), deed.value);
-  if (credit && Number.isInteger(credit.region) && credit.region >= 0) r.credit = { region: credit.region, due: Number.isFinite(credit.due) ? credit.due : 0 };
   if (port) r.port = port;
   return r;
 }
@@ -205,13 +207,6 @@ export function knowShip(uid, hull, variant, value) {
     const t = titleOf(uid);
     if (t) { const fresh = mintDeed(r.hull, variant, uid, t.value); t.message = fresh.message; t.name = fresh.name; }
   }
-  return r;
-}
-/** AUDIT HOLDINGS F5: the bank's claim stamped on a boat bought as parts (a Rowboat off the shelf) - known to the
- *  ledger at once, as a deed is. */
-export function creditShip(uid, hull, variant, value, credit) {
-  const r = knowShip(uid, hull, variant, value);
-  if (r && credit && Number.isInteger(credit.region) && credit.region >= 0) r.credit = { region: credit.region, due: Number.isFinite(credit.due) ? credit.due : 0 };
   return r;
 }
 /** AUDIT HOLDINGS F8: a record no ship answers (a prize whose claim failed after her title was entered) forgotten. */

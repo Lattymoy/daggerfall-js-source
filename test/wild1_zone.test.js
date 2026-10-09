@@ -12,6 +12,9 @@ import { fogPixels } from '../src/ui/wildMapInk.js';
 import { DeathScreen, ONLINE_RESPAWN_SECONDS } from '../src/ui/deathScreen.js';
 import { TEMPLATES } from '../src/systems/useItem.js';
 import { REGION_NAMES } from '../src/formats/mapsTables.js';
+import { letterOfCredit } from '../src/systems/inventory.js';   // LETTERS-DROP / KEEP-WALLET: the pieces as their producers mint them
+import { mintWallet } from '../src/systems/walletItem.js';
+import { sigilStone, welkyndShards } from '../src/systems/gateSpoils.js';
 
 /** A 40 x 20 map whose zone is the 6 x 4 box at (10..15, 5..8) - the whole region (`cut: null`): the mask's laws over a
  *  plain shape. ZONE-CUT's own pin, the owner's cut over a region, is below. */
@@ -81,6 +84,18 @@ test('WILD1: a death keeps the consumables and what never changes hands, drops t
   const rec = wildRecord({ ...sword, questItem: true });
   assert.equal(rec.equipSlot, undefined); assert.equal(rec.questItem, undefined);
   assert.deepEqual(wildChunks([1, 2, 3, 4, 5], 2), [[1, 2], [3, 4], [5]]);
+});
+
+test('LETTERS-DROP and KEEP-WALLET (2026-10-09): a death in the zone drops a letter of credit at its whole value, from the bag and from the cart, never a quest\'s; the wallet and the Embers and Shards it holds stay with the fallen (mutants: the letter kept; the wallet\'s guard gone - equivalent, every piece it holds is bound by its row)', () => {
+  const wallet = mintWallet(), embers = Object.assign(sigilStone(), { stackCount: 4 }), shards = welkyndShards(3);
+  const letter = letterOfCredit(25000), carted = letterOfCredit(900), quests = { ...letterOfCredit(10), questItem: true };
+  for (const kept of [wallet, embers, shards, quests]) assert.equal(wildCanLose(kept), false, `${kept.name}: kept`);
+  assert.equal(wildCanLose(letter), true, '"letter of credits should be dropped"');
+  const items = [wallet, letter, embers, quests, shards], wagon = [carted];
+  const drop = takeWildDrop(items, wagon);
+  assert.deepEqual(drop, [letter, carted], 'the bag\'s letter, then the cart\'s');
+  assert.deepEqual(drop.map((l) => wildRecord(l).value), [25000, 900], 'each at its whole value');
+  assert.deepEqual(items, [wallet, embers, quests, shards], '"the wallet shouldnt drop in the zone" - nor what it holds');
 });
 
 test('WILD1: the rise\'s clear ground - off every other body, facing open ground for the team', () => {

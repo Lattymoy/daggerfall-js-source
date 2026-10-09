@@ -93,6 +93,10 @@ export function ensureUidAtLeast(uid) { if (uid > _uid) _uid = uid; }
 /** Test seam. */
 export function resetUid() { _uid = 0; }
 
+/** QUEST-SHELF (2026-10-08): whether a quest is set aside - abandoned, kept to be reclaimed (machine.js shelveQuest). It
+ *  stands in the machine untouched: no tick, no questor's door shut, no topics, no site links, nothing stood in a scene. */
+export const isShelved = (quest) => quest?.shelvedAt != null;
+
 export class Quest {
   constructor({ rolls = Math.random, nowSeconds = null, skySeconds = null, worldSeconds = null, raisedSeconds = null, hooks = null, actionFactory = null, questClockStepMax = null } = {}) {
     this.uid = nextUid();
@@ -153,6 +157,11 @@ export class Quest {
     this.pendingClickRearms = [];            // Quest.cs:48 - resources whose click clears after the current task
     this.questors = new Map();               // Quest.cs:47 - symbol name -> QuestorData { symbol, name }
     this.oneTime = false;                    // Quest.OneTime - QuestListsManager stamps it at load (Q2b-ii)
+    // QUEST-SHELF (2026-10-08, Mac: "All quests should be able to be abandoned and reclaimed"): ABANDONED, KEPT. The
+    // character-clock second it was set aside (null: not set aside - machine.js shelveQuest / reclaimQuest), and the
+    // Places whose site links it held then (their symbol names - the links stand again from them on its reclaim).
+    this.shelvedAt = null;
+    this.shelvedSites = null;
   }
 
   // ---- Q1 structure ----
@@ -515,6 +524,8 @@ export class Quest {
       tasks: [...this.tasks.values()].map((t) => t.getSaveData()),
       oneTimeDisplayedMessages: [...this.oneTimeDisplayedMessages],
       shareId: this.shareId ?? null,   // DISC22-F: the shared copy's identity - the port's own member, absent in DFU's saves
+      shelvedAt: this.shelvedAt ?? null,   // QUEST-SHELF: the port's own, absent in DFU's saves (an older envelope: not set aside)
+      shelvedSites: this.shelvedSites ? [...this.shelvedSites] : null,
       // TIME3: the clock its countdowns stand on - the holder's own, as it read when this was taken. A party member's copy
       // moves them onto theirs by the distance (quest/questStamps.js); an envelope without it is from before TIME3.
       ownSecondsAt: Number.isFinite(this.nowSeconds?.()) ? Math.floor(this.nowSeconds()) : null,
@@ -533,6 +544,8 @@ export class Quest {
     this.uid = data.uid;
     ensureUidAtLeast(data.uid);
     this.shareId = typeof data.shareId === 'string' && data.shareId ? data.shareId : null;   // DISC22-F
+    this.shelvedAt = Number.isFinite(data.shelvedAt) && data.shelvedAt !== 0 ? data.shelvedAt : null;   // QUEST-SHELF
+    this.shelvedSites = this.shelvedAt != null && Array.isArray(data.shelvedSites) ? data.shelvedSites.filter((n) => typeof n === 'string') : null;
     this.questComplete = data.questComplete;
     this.questSuccess = data.questSuccess;
     this.questName = data.questName;

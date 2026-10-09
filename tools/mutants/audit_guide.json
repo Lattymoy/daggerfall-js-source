@@ -103,8 +103,8 @@
   {
     "name": "AUDIT-GUIDE-T3-a-finished-quest-kept",
     "file": "src/scenes/questBridge.js",
-    "old": "      if (!q || q.questComplete) questTracker.pinned = null;",
-    "new": "      if (!q) questTracker.pinned = null;",
+    "old": "      if (!q || q.questComplete || isShelved(q)) questTracker.pinned = null;",
+    "new": "      if (!q || isShelved(q)) questTracker.pinned = null;",
     "tests": [
       "test/audit_guide.test.js"
     ]

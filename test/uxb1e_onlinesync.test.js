@@ -57,7 +57,7 @@ test('UXB1-E: the plan is the lane\'s tables, whole - every forced pref, every f
 test('UXB1-E: a sync writes only what differs, each into its own store, keeps what it replaced, and Undo puts it back', () => {
   fresh();
   setPref('enhancedAI', false);
-  setPref('enhancedWater', false);
+  setPref('enhancedClimbing', false);   // PIN MOVED (WATER-OFF, 2026-10-08): the water is the player's online now, so another forced switch stands in
   setValue('Controls', 'AllowMagicRepairs', 'False');
   setValue('Experimental', 'SmallerDungeons', 'True');
   setModSetting('pcaao', 'Enabled', false);
@@ -67,14 +67,14 @@ test('UXB1-E: a sync writes only what differs, each into its own store, keeps wh
   // SD-ONLINE (PIN MOVED): the world's sizes are forced on online and off by default, so a fresh profile differs there too
   assert.deepEqual(before.filter((r) => !r.same).map((r) => r.id).sort(), [
     'mods:pcaao/Enabled', 'mods:roads-hazelnut/RiversAndStreams', 'mods:roleplay-realism/RefinedTraining.intensiveTraining',
-    'prefs:enhancedAI', 'prefs:enhancedWater', 'prefs:worldDungeonSizes',
+    'prefs:enhancedAI', 'prefs:enhancedClimbing', 'prefs:worldDungeonSizes',
     'settings:Controls/AllowMagicRepairs', 'settings:Experimental/SmallerDungeons',
   ]);   // LANDFORM3: the room's rivers are on, past the mod's shipped off - so a fresh store differs there too
   const rec = applyOnlineSync(before, { now: 1234 });
   assert.equal(rec.at, 1234);
   assert.equal(rec.rows.length, 8);   // (the merge of main's LANDFORMS: its rivers and SD-ONLINE's sizes, both)
   assert.equal(getPref('enhancedAI'), true);
-  assert.equal(getPref('enhancedWater'), true);
+  assert.equal(getPref('enhancedClimbing'), true);
   assert.equal(getPref('worldDungeonSizes'), true, 'SD-ONLINE: offline play at the world\'s sizes');
   assert.equal(getBool('Controls', 'AllowMagicRepairs'), true);
   assert.equal(getBool('Experimental', 'SmallerDungeons'), false);
@@ -92,7 +92,7 @@ test('UXB1-E: a sync writes only what differs, each into its own store, keeps wh
 
   assert.equal(undoOnlineSync(), 8);   // (the merge of main's LANDFORMS: its rivers and SD-ONLINE's sizes, both)
   assert.equal(getPref('enhancedAI'), false);
-  assert.equal(getPref('enhancedWater'), false);
+  assert.equal(getPref('enhancedClimbing'), false);
   assert.equal(getPref('worldDungeonSizes'), false);
   assert.equal(getString('Controls', 'AllowMagicRepairs'), 'False');
   resetSettings();
@@ -110,15 +110,15 @@ test('AUDIT UXB1 F2: a second sync ADDS to the undo - the first sync\'s rows sta
   const first = applyOnlineSync(onlineSyncPlan({ search: '' }), { now: 1 });
   const id = (r) => `${r.store}:${r.section ?? r.vendor ?? ''}/${r.key}`;
   assert.ok(first.rows.some((r) => id(r) === 'prefs:/enhancedAI'));
-  setPref('enhancedWater', false);
+  setPref('enhancedClimbing', false);
   const second = applyOnlineSync(onlineSyncPlan({ search: '' }), { now: 2 });
-  const want = [...new Set([...first.rows.map(id), 'prefs:/enhancedWater'])].sort();
+  const want = [...new Set([...first.rows.map(id), 'prefs:/enhancedClimbing'])].sort();
   assert.deepEqual(second.rows.map(id).sort(), want, 'the first sync\'s rows kept beside the second\'s, one a rule');
   assert.equal(second.at, 2);
   assert.deepEqual(lastOnlineSync(), JSON.parse(JSON.stringify(second)), 'and that is the record stored');
   assert.equal(undoOnlineSync(), want.length);
   assert.equal(getPref('enhancedAI'), false, 'the FIRST sync is undone too - it was replaced, and beyond reach');
-  assert.equal(getPref('enhancedWater'), false);
+  assert.equal(getPref('enhancedClimbing'), false);
 
   fresh();
   const row = (offline) => ({ id: 'prefs:enhancedAI', store: 'prefs', key: 'enhancedAI', label: 'Enhanced AI', online: true, offline, same: false });

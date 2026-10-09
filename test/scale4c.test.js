@@ -44,7 +44,7 @@ const get = async (s, path, secret) => {
 test('SCALE4c A: /v1/heartbeat is a session\'s route, and each part it carries is answered EXACTLY as its own route answers it - the box as /v1/mail/inbox, a town\'s board as /v1/board/read, the knock as /v1/account/played - under one session, a guest\'s box refused in that route\'s word and its board and beat answered all the same (mutants: a part dropped, the guest\'s box opened, the board read for another town)', async () => {
   assert.ok(ROUTES.has('/v1/heartbeat'));
   assert.ok(!OPEN_ROUTES.has('/v1/heartbeat'), 'behind a session, as the three are');
-  assert.deepEqual([...HEARTBEAT_PARTS], ['beat', 'mail', 'board']);
+  assert.deepEqual([...HEARTBEAT_PARTS], ['beat', 'mail', 'board', 'post']);   // SERVER-POST: the server's post rides it too (PIN MOVED)
   const s = await standService({ BOARD_OPEN: 'on' });
   const ann = await s.registered('Ann'), bob = await s.registered('Bob');
   const map = 4242;

@@ -6,7 +6,7 @@ import { createPartyTravel } from '../src/systems/partyTravel.js';
 import { BESIDE_LEVEL } from '../src/systems/partyTravelLaw.js';
 import { partyArrivalBeside, waitForPartyArrival, PartyArrivalUnavailable } from '../src/systems/partyArrival.js';
 import { validPartyPose, PIXEL_UNITS } from '../src/net/wire.js';
-import { floorLanding } from '../src/player/enterExit.js';
+import { floorLanding, openGroundNear, heldInSolid } from '../src/player/enterExit.js';   // UNSTUCK-OUT (PIN MOVED): the landing's rock check rides the lifted block
 import { StreamingWorldState } from '../src/world/streamingWorld.js';
 import { rig, HULL_NAMES, boardPlaceOf, raycastColliders, FLOOR, SEA, FIXED_DT, IDLE } from './partyBoatTeleportRig.mjs';
 
@@ -28,7 +28,7 @@ state.init(X, Y);
 // collision may be ready, delayed, or at an older network position.
 function landingHost(r, onWait = () => {}) {
   const body = `
-    const { collider, player, cam, floorLanding, partyArrivalBeside, state, waitForPartyArrival, onWait } = deps;
+    const { collider, player, cam, floorLanding, openGroundNear, heldInSolid, partyArrivalBeside, state, waitForPartyArrival, onWait } = deps;
     const ARRIVAL_REACH = 240, ARRIVAL_LIFT = 40;
     const OBSTRUCTED_ABOVE = 3, TERRAIN_SIZE = 819.2, walkMode = true;
     const tvSeaY = () => 0;
@@ -45,7 +45,7 @@ function landingHost(r, onWait = () => {}) {
       return { final: [...player.pos], target: pick.besideAt(), beside: true };
     };`;
   return new Function('deps', body)({ collider: r.colliders.exterior, player: r.player, cam: r.cam,
-    floorLanding, partyArrivalBeside, state, waitForPartyArrival, onWait });
+    floorLanding, openGroundNear, heldInSolid, partyArrivalBeside, state, waitForPartyArrival, onWait });
 }
 
 function partyJourney(deck) {
