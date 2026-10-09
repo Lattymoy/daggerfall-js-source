@@ -145,15 +145,6 @@
     ]
   },
   {
-    "name": "AQP-Q3-dungeon-kept-word-anyone-hits",
-    "file": "src/scenes/dungeonContext.js",
-    "old": "(f._keptTag ? !!ownShare()?.partyPeer?.(id) :",
-    "new": "(f._keptTag ? true :",
-    "tests": [
-      "test/questparty3c.test.js"
-    ]
-  },
-  {
     "name": "AQP-D6-ally-takes-peer-blows",
     "file": "src/scenes/dungeonContext.js",
     "old": "if (!f || f.dead || f.entity?.team === 'PlayerAlly' || !(ownLoose(f)",
@@ -253,15 +244,6 @@
     ]
   },
   {
-    "name": "AQP-Q3-cell-kept-word-anyone-hits",
-    "file": "src/scenes/exteriorFoes.js",
-    "old": "(f._keptTag ? !!_questShare?.partyPeer?.(id) :",
-    "new": "(f._keptTag ? true :",
-    "tests": [
-      "test/questparty2.test.js"
-    ]
-  },
-  {
     "name": "AQP-F1-cell-marker-forgotten",
     "file": "src/scenes/exteriorFoes.js",
     "old": "      if (qt.mk) f._questMarker = true;\n      takeTouched(f, qt);",
@@ -336,7 +318,7 @@
   {
     "name": "AQP-D8-adoption-unbounded",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    if (live >= QUEST_PUPPETS_MAX + CELL_LOOSE_PUPPETS) return 0;",
+    "old": "    if (live >= QUEST_PUPPETS_MAX + LOOSE_PUPPETS_MAX) return 0;",
     "new": "    if (live >= Infinity) return 0;",
     "tests": [
       "test/questparty3c.test.js"

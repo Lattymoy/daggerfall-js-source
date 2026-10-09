@@ -14,6 +14,7 @@ import { readFileSync } from 'node:fs';
 import {
   validParkData, cellRoomOfWire, relaySupportsPark, validPose, poseChanged, parseClient, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PIXEL_UNITS,
   parkRegistryRoom, parkKeyOf, parkKey, POSE_RIDE,
+  POSE_BOUND,
 } from '../src/net/wire.js';
 import { lerpPose } from '../src/net/online.js';
 import { fakeRooms, fakeRoom } from './fakeRoom.mjs';
@@ -45,7 +46,7 @@ test('HCC-PARK wire: the frame names its CHARACTER; the anchor names the cell (M
   assert.equal(validParkData({ c: CA, a: [AX, AZ], r: { h: [AX, 1, AZ, 0, 1, 1] } }), null, 'a walking horse is not parked');
   assert.equal(validParkData({ c: CA, a: [AX, AZ], r: { w: W(AX + 20000) } }), null, 'a part far from its anchor is a second place');
   assert.deepEqual(validParkData({ c: CA, a: [AX, AZ], r: { h: [AX, 1, AZ, 0, 1e300, 0] } }).r.h, [AX, 1, AZ, 0, 1, 0], 'AUDIT D5: a facing is a unit one - 1e300 is not stored and fanned');
-  assert.equal(validParkData({ c: CA, a: [-1, AZ] }), null); assert.equal(validParkData({ c: CA, a: [AX] }), null);
+  assert.equal(validParkData({ c: CA, a: [-POSE_BOUND - 1, AZ] }), null);   // PIN MOVED (TV-BEYOND): an anchor west of the Bay is the world's - past the world is none assert.equal(validParkData({ c: CA, a: [AX] }), null);
   assert.equal(validParkData({ c: CA, a: [AX, AZ], r: { n: 'Bess' } }), null, 'a name with nothing parked');
   assert.deepEqual(parseClient(JSON.stringify({ t: 'park', data: { c: CA } }), { hasHello: true }), { t: 'park', data: { c: CA } });
   assert.equal(parseClient(JSON.stringify({ t: 'park', data: null }), { hasHello: true }).error, 'bad park', 'the old null word names no character');

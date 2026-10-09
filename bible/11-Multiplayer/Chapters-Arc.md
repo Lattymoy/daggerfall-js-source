@@ -17,7 +17,7 @@ the foot). CHAP4a BUILT (2026-10-08, Mac: "Your decision", on "Whats next"; the 
 rank stopped at 7 - sections 3.5 and 6, its record at the foot); CHAP4b BUILT (2026-10-08, the same word; the book
 held at 7 online, a seat's rank at its chapter's halls, the seats said - the same sections, its record at the foot);
 CHAP4c BUILT (2026-10-08, Mac: "Your call"; the seats' titles on the token, behind `CHAPTER_TITLES`, the relay's
-`world181` first - section 6, its record at the foot); CHAP4d BUILT (2026-10-09, Mac: "Continue"; the Master's Focus on
+`world182` first - section 6, its record at the foot); CHAP4d BUILT (2026-10-09, Mac: "Continue"; the Master's Focus on
 its chapter's hall writs, the Chronicle read in the Hall of Records - section 6, its record at the foot). CHAP5a BUILT
 (2026-10-09, the same word; the sheet carries the seats' holders, and each hall's shelf names them - sections 5.3 and 9,
 its record at the foot). CHAP5b BUILT (2026-10-09, the same word; the hall's people and the town's talk by the band -
@@ -28,7 +28,7 @@ foot); CHAP6a BUILT (2026-10-09, Mac: "continue"; the Season's event drawn, a De
 Succession's heir, the Master's vote - section 7, its record at the foot); CHAP6c (the events on the client and the
 titles) is next. Merged with main
 past the Super Dungeons arc, then past SCALE4 and TAVERN CARDS (2026-10-08), then past SERVER-POST and HOURS-FIRST
-(2026-10-09), then past PERMADEATH-HOUSES and TAVERN-TABLES (2026-10-09): the arc's migrations are `0095_npc_roll` to `0100_npc_seats`, its service `acct99` and its relay `world181` - the records below name each
+(2026-10-09), then past PERMADEATH-HOUSES and TAVERN-TABLES, then past TV-BEYOND (2026-10-09): the arc's migrations are `0095_npc_roll` to `0100_npc_seats`, its service `acct99` and its relay `world182` - the records below name each
 migration by its current number and the service by the version it was built under. AUDIT CHAP3 (2026-10-08, Mac:
 "Let's audit everything we have so far before we continue") read all of it through six lenses and fixed what they found
 (`01-Overview/Audit-Chapters-3.md`); the sections below say where it narrowed them.** CHAP0's claims about the code were read off the tree at `9ed5a681`, each slice's off its own
@@ -645,7 +645,7 @@ BUILT (CHAP4c, 2026-10-08, Mac: "Your call"), the seats' titles:
   `chapterofficer`, `formermaster` - each with the seats' bounded claim (`ts`, [the chapter's key, the Season]; the key
   its guild faction x 100 + its region, `chapterTitleKey`), refused without it and the claim refused beside any title
   that rides alone (`titleClaimed`). The relay stamps and reads the claim as a seat title's (`net/wire.js` badged,
-  readBadge) - a relay change: `world181`, NOT YET DEPLOYED.
+  readBadge) - a relay change: `world182`, NOT YET DEPLOYED.
 - **Worded without gender** (Seats-Arc 7.4) - "Master of the Fighters Guild, Anticlere", "Officer of the Mages Guild,
   Daggerfall", "Former Master of the Knights of the Dragon, Daggerfall" (`chapterTitleText`); NARROWED from the draft's
   "Former Master of the <Region> Chapter": a region keeps a chapter of every guild with a hall there, so the guild is
@@ -655,7 +655,7 @@ BUILT (CHAP4c, 2026-10-08, Mac: "Your call"), the seats' titles:
   one of its standing characters holds that seat, and a Master's seat it lost this Season (the Chronicle's rows from the
   Season's first week - the counted Season, or the eight-week block with none counted) while it does not hold that
   Master's seat again; a token signs it, with its claim, only for a character that holds it.
-- **The order of the deploy** (the SHADOW-FANG order): the relay `world181` first - deployed by
+- **The order of the deploy** (the SHADOW-FANG order): the relay `world182` first - deployed by
   `.github/workflows/relay-deploy.yml` on the merge to main, as the live relay's version differs (it drops every
   connected player; AUDIT CHAP4 R2: this said "by hand") - a token with a title the live relay does not know is refused
   at the hello - then `CHAPTER_TITLES = "on"` (`server-account/wrangler.toml`, shipped `"off"`; `chapterTitlesOpenFor`),
@@ -1309,7 +1309,7 @@ The fourth slice's client half; sections 3.5 and 6 carry the law and what buildi
 The fourth slice's titles; section 6 carries the law and what building it narrowed (BUILT, CHAP4c).
 
 - **The token and the relay.** `src/net/identityToken.js`: CHAPTER_TITLES, last in TITLES, and `titleClaimed` (a seat's
-  and a chapter's title ride with `ts`); `src/net/wire.js` badged and readBadge carry it. RELAY_VERSION `world181` (`world177`, `world178`, `world179` then `world180` on its branch, renumbered past main's Wrothgarian zone, Tavern Cards, Hour's First and Tavern Tables at the merges), its
+  and a chapter's title ride with `ts`); `src/net/wire.js` badged and readBadge carry it. RELAY_VERSION `world182` (`world177`, `world178`, `world179`, `world180` then `world181` on its branch, renumbered past main's Wrothgarian zone, Tavern Cards, Hour's First, Tavern Tables and TV-BEYOND at the merges), its
   law recorded in `test/relayversion.test.js`; forty-one tests' version pins moved with it (PIN MOVED).
 - **The law.** `src/net/npcChapterLaw.js`: the key (`chapterTitleKey`, `chapterOfTitleKey`), the words
   (`chapterTitleText`) and the titles a character's seats give it (`chapterTitlesOf`).

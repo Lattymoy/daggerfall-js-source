@@ -1,0 +1,93 @@
+[
+  {
+    "name": "WODPEAKS-spires-always",
+    "file": "src/world/worldOfDaggerfall.js",
+    "old": "    const prefabOf = this.mountains ? (name) => this.prefabs.get(name) ?? null : (name) => (WOD_MOUNTAIN_PREFAB.test(name ?? '') ? null : this.prefabs.get(name) ?? null);",
+    "new": "    const prefabOf = (name) => this.prefabs.get(name) ?? null;",
+    "tests": ["test/ow_wod.test.js"]
+  },
+  {
+    "name": "WODPEAKS-massifs-when-off",
+    "file": "src/world/worldOfDaggerfall.js",
+    "old": "      if (!this.mountains) break;   // WOD-PEAKS: no spires stood, none for the route to go round\n",
+    "new": "",
+    "tests": ["test/ow_wod.test.js"]
+  },
+  {
+    "name": "WODPEAKS-switch-on",
+    "file": "src/systems/modSettings.js",
+    "old": "      Mountains: Object.freeze({\n        default: false,",
+    "new": "      Mountains: Object.freeze({\n        default: true,",
+    "tests": ["test/wod1_vendor.test.js"]
+  },
+  {
+    "name": "WODPEAKS-room-leaves-it",
+    "file": "src/systems/onlineLane.js",
+    "old": "  'world-of-daggerfall': Object.freeze({ Enabled: true, Mountains: false }),",
+    "new": "  'world-of-daggerfall': Object.freeze({ Enabled: true }),",
+    "tests": ["test/wod1_vendor.test.js", "test/modsonline.test.js", "test/ow_wod.test.js"]
+  },
+  {
+    "name": "LANDFORM8-no-peaks",
+    "file": "src/world/landforms.js",
+    "old": "      sum += pa * (peakField(wx, wy, land.peaks.cell, land.peaks.fill) - land.peaks.fill * PEAK_MEAN);",
+    "new": "      void pa;",
+    "tests": ["test/landform6.test.js", "test/auditlandforms3.test.js", "test/landform.test.js"]
+  },
+  {
+    "name": "LANDFORM8-uncentred",
+    "file": "src/world/landforms.js",
+    "old": "      sum += pa * (peakField(wx, wy, land.peaks.cell, land.peaks.fill) - land.peaks.fill * PEAK_MEAN);",
+    "new": "      sum += pa * peakField(wx, wy, land.peaks.cell, land.peaks.fill);",
+    "tests": ["test/auditlandforms3.test.js", "test/landform6.test.js"]
+  },
+  {
+    "name": "LANDFORM8-pyramid",
+    "file": "src/world/landforms.js",
+    "old": "      const v = (0.45 + 0.55 * cellHash(ix, iy, 17)) * (0.5 + 0.5 * cosPi(q));",
+    "new": "      const v = (0.45 + 0.55 * cellHash(ix, iy, 17)) * (1 - q);",
+    "tests": ["test/landform6.test.js"]
+  },
+  {
+    "name": "LANDFORM8-narrow",
+    "file": "src/world/landforms.js",
+    "old": "      const r = cell * (0.24 + 0.18 * cellHash(ix, iy, 14));",
+    "new": "      const r = cell * (0.1 + 0.18 * cellHash(ix, iy, 14));",
+    "tests": ["test/landform6.test.js"]
+  },
+  {
+    "name": "LANDFORM8-ceiling-blind",
+    "file": "src/world/landforms.js",
+    "old": "const landTop = (land) => land.high * land.upland + (land.peaks ? land.peaks.high : 0);",
+    "new": "const landTop = (land) => land.high * land.upland;",
+    "tests": ["test/landform6.test.js", "test/landform.test.js"]
+  },
+  {
+    "name": "ROCKSEAT-never",
+    "file": "src/scenes/world.js",
+    "old": "{ const dy = rockSeatDrop(lowestGroundUnder(samples, box), box[1]); if (dy < 0) { m.matrix[13] += dy; box[1] += dy; box[4] += dy; } }",
+    "new": "{ void rockSeatDrop; }",
+    "tests": ["test/ow_wod.test.js"]
+  },
+  {
+    "name": "ROCKSEAT-stacked-too",
+    "file": "src/scenes/world.js",
+    "old": "        if (rockPick(m.pick) && box[1] < surfaceHeightAt(",
+    "new": "        if (rockPick(m.pick) || box[1] < surfaceHeightAt(",
+    "tests": ["test/ow_wod.test.js"]
+  },
+  {
+    "name": "ROCKSEAT-raises",
+    "file": "src/world/wodLocationObjects.js",
+    "old": "bottom > ground - WOD_ROCK_SEAT_M ? ground - WOD_ROCK_SEAT_M - bottom : 0);",
+    "new": "true ? ground - WOD_ROCK_SEAT_M - bottom : 0);",
+    "tests": ["test/ow_wod.test.js"]
+  },
+  {
+    "name": "ROCKSEAT-no-seat",
+    "file": "src/world/wodLocationObjects.js",
+    "old": "export const WOD_ROCK_SEAT_M = 0.5;",
+    "new": "export const WOD_ROCK_SEAT_M = 0;",
+    "tests": ["test/ow_wod.test.js"]
+  }
+]

@@ -23,7 +23,7 @@
 // PURE: numbers and maps. The host (scenes/world.js) reads the pose and
 // the pref; the session (net/online.js) holds the socket.
 // ═══════════════════════════════════════════════════════════════════
-import { TRAV_KEEPALIVE_MS, TRAV_STALE_MS, TRAV_MODES } from '../net/wire.js';
+import { TRAV_KEEPALIVE_MS, TRAV_STALE_MS, TRAV_MODES, WORLD_PIXEL_BOUND } from '../net/wire.js';
 
 /** Native world units per map pixel (MapsFile.WorldMapTerrainDim; world/streamingWorld.js NATIVE_PIXEL). */
 const NATIVE_PIXEL = 32768;
@@ -53,13 +53,15 @@ export const yawOfHeading = (h) => (h / 256) * 2 * Math.PI;
 
 /**
  * THE MARK OF ME: native `x`/`z` (world units, the pixel's south-west corner at mapPixelToWorldCoords), the yaw, the
- * way and the journey. The pixel is worldCoordToMapPixel's own (y counts south: 499 - z / pixel).
+ * way and the journey. The pixel is worldCoordToMapPixel's own (y counts south: 499 - z / pixel) on the Bay; TV-BEYOND
+ * (2026-10-09): past it the mark is the world's too (net/wire.js WORLD_PIXEL_BOUND) - it was clamped onto the Bay, a
+ * traveller beyond it marked at the edge - its pixel floored there, so its 256ths stay 0..255 either side of the corner.
  * @returns {{px:number, py:number, fx:number, fy:number, h:number, m:number, tv:number}}
  */
 export function travellerMarkOf({ x, z, yaw = 0, mode = 'Foot', journey = false }) {
-  const cx = Math.max(0, Math.min(1000 * NATIVE_PIXEL - 1, x));
-  const cz = Math.max(0, Math.min(500 * NATIVE_PIXEL - 1, z));
-  const px = Math.trunc(cx / NATIVE_PIXEL), pzRow = Math.trunc(cz / NATIVE_PIXEL);
+  const cx = Math.max((1 - WORLD_PIXEL_BOUND) * NATIVE_PIXEL, Math.min(WORLD_PIXEL_BOUND * NATIVE_PIXEL - 1, x));
+  const cz = Math.max((500 - WORLD_PIXEL_BOUND) * NATIVE_PIXEL, Math.min((499 + WORLD_PIXEL_BOUND) * NATIVE_PIXEL - 1, z));
+  const px = Math.floor(cx / NATIVE_PIXEL), pzRow = Math.floor(cz / NATIVE_PIXEL);
   const fx = Math.min(255, Math.floor((cx - px * NATIVE_PIXEL) / TRAV_FRACTION));
   const fy = Math.min(255, Math.floor((cz - pzRow * NATIVE_PIXEL) / TRAV_FRACTION));
   return { px, py: 499 - pzRow, fx, fy, h: headingByte(yaw), m: travelModeIndex(mode), tv: journey ? 1 : 0 };

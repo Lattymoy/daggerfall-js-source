@@ -108,6 +108,28 @@ export function basicRoadsPathsPoint(net, x, y) {
   return (net.roads[i] | net.tracks[i]) & 0xff;
 }
 
+/**
+ * CANAL-ARM (FIELD BUGS 2026-10-09b, "River/Stream Creation Turned Some Roads into Canals": "a lot of towns that usually
+ * have straight dirt roads to them now have canals"): A COMPASS ARM A ROAD OR A TRACK CARRIES IS THE PATH'S. His arrays
+ * share an arm between a path and a river or a stream at 32 arms of 30 pixels (a pixel's arm runs from its centre to
+ * its edge - a water and a path that both meet a town's centre from one side share it). The painter paints the water
+ * before the track (paintRoads, his order), so the whole arm was water where the track was, and a river along a road
+ * flanked it with its banks; LANDFORM3 cuts the painted water into the land, so the arm was a straight sunken channel -
+ * and since LANDFORM3 the room's rivers are on (onlineLane.js). Each such arm is the path's alone, once, as the arrays
+ * load: the painter, the channel's cut and the maps all read the arrays, so all three agree. A crossing shares no arm
+ * (the water and the path meet at the centre from different sides) - the fords and the causeways stand as they were.
+ * Answers `net`, its river and stream arrays written in place.
+ */
+export function waterOffPaths(net) {
+  for (let i = 0; i < net.roads.length; i++) {
+    const path = net.roads[i] | net.tracks[i];
+    if (!path) continue;
+    if (net.rivers) net.rivers[i] &= ~path;
+    if (net.streams) net.streams[i] &= ~path;
+  }
+  return net;
+}
+
 /** AUDIT LANDFORMS II G3: how long one of his files may take to arrive (each asked in turn) before the ask counts as
  *  failed. A fetch has no timeout of its own: one that never answered never settled, so the page stood roadless for the
  *  session - offline the port's own network never stood in, and online C3's retry never asked again. */
@@ -131,7 +153,7 @@ export async function loadModRoads(fetchFn = globalThis.fetch, urls = MOD_ROADS,
       } finally { clearTimeout(timer); }
     }
     let n = 0; for (const v of out.roads) if (v) n++;
-    return { ...out, source: 'basic-roads', stats: { source: 'basic-roads', roadPixels: n } };
+    return waterOffPaths({ ...out, source: 'basic-roads', stats: { source: 'basic-roads', roadPixels: n } });
   } catch { return null; }
 }
 

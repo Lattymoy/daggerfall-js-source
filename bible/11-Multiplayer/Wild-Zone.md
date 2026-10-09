@@ -647,6 +647,25 @@ each is a line here, findable by its tag.
   `saleRefused`). A death in the zone already kept it (section 4, `wildCanLose`). The player trade's table
   (`tradePack.js` `tradeRefusal`) is untouched: the hotfix closed the ground, the containers and the counters.
 
+## 21b. A party left is no fight for ten minutes (PARTY-TRUCE, FIELD BUGS 2026-10-09b)
+
+The Discord's "you can be teleported into a pvp zone and killed": a stranger invited a new player to his party, led the
+party's walk into the mountains and killed them there, and their pack lay on the ground. Nothing was broken - each
+door worked - but the doors made a trap: a party mate is never fair (`wildFair`), a kick or a leave ends a party in
+the instant, and the walk in (the one door into the zone no journey's gate asks, section 9) never named the zone.
+
+- A player who leaves my party, or whose party I leave, is no fight for `WILD_PARTY_TRUCE_MS` (ten minutes, a walk
+  out), both ways (`wildZone.js` `createPartyTruce`, read in `wildFair` beside the party; the zone frame reads
+  `social.partyPeers()` each frame and says `WILD_TEXT.truce` in the zone). Each client reads its own party, and the
+  defender's own client refuses an unfair blow (`wildFight.js` onFrame), so a doctored attacker gains nothing.
+- A party's walk that ends in the zone or within its band says so in its question (`world.js` `wildWalkRow`,
+  `WILD_TEXT.walkInto`), between the leader's line and "Travel with them?".
+- Not done, and the owner's to decide: a floor for new players (a level, a Renown, a first entry acknowledged), and
+  whether a guild's members - who already cannot take each other's remains and are never drawn as strangers - may
+  fight each other here.
+
+Pinned by `test/fb1009b_partytruce.test.js` and `test/tv8_party_walk.test.js`; `tools/mutants/fb1009b_partytruce.json`.
+
 ## 22. Known limits
 
 - A modified client can still refuse to give a picked piece or to deposit what it should drop - the realm's budgets
@@ -658,6 +677,9 @@ each is a line here, findable by its tag.
   halls by its own clock and keeps its own session's locks, and hears no one else's crows.
 - ZONE-WATCH's door reads a town's buildings too, but no player blow is struck indoors, so in practice it is the
   street's.
+
+- PARTY-TRUCE (FIELD BUGS 2026-10-09b) is held in memory: a player who reloads forgets the truces they stood in, and
+  the other side's client still holds its own (each side refuses an unfair blow on its own client).
 
 ## 23. What the suite caught (WILD-SUITE, 2026-10-08)
 

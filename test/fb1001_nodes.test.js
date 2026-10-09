@@ -145,8 +145,9 @@ test('NODE-CLEAR: a patch whose ground is inside a rock piece stands nowhere; a 
   assert.ok(moved.every((t) => !insideRocks([stone], t.local[0], t.local[2])), 'no tree inside');
   // and the kinds hand their pixel's rocks to both
   const read = (f) => readFileSync(new URL(`../src/scenes/${f}`, import.meta.url), 'utf8');
-  assert.match(read('herbHost.js'), /\n\s*rocks: entry\.rocks \?\? \[\],/, 'the patches are stood with the pixel\'s rocks');
-  assert.match(read('treeHost.js'), /standTrees\(\{ px, py, day, climate: info\.climate, confirmed, forest: entry\.forest \?\? null, rocks: entry\.rocks \?\? \[\] \}\)/, 'and the trees');
+  // (ROCK-NEAR, FIELD BUGS 2026-10-09b - PIN MOVED: and the pieces its built neighbours stand that reach in)
+  assert.match(read('herbHost.js'), /\n\s*rocks: \[\.\.\.\(entry\.rocks \?\? \[\]\), \.\.\.\(near \?\? \[\]\)\],/, 'the patches are stood with the pixel\'s rocks');
+  assert.match(read('treeHost.js'), /standTrees\(\{ px, py, day, climate: info\.climate, confirmed, forest: entry\.forest \?\? null, rocks: \[\.\.\.\(entry\.rocks \?\? \[\]\), \.\.\.\(near \?\? \[\]\)\] \}\)/, 'and the trees');
 });
 
 test('STEADY-SAID: the steady hand\'s meter names the key E\'s start must hold; started by the Sickle\'s Use, which holds it, it names none (mutants: the key never named)', async () => {

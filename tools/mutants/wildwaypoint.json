@@ -1,0 +1,37 @@
+[
+  {
+    "name": "WILDSEEN-room-late",
+    "file": "src/scenes/world.js",
+    "old": "      wildRemains.setRoom(room);\n      wildRemains.onWord(w);",
+    "new": "      wildRemains.onWord(w);",
+    "tests": ["test/waypoints.test.js"]
+  },
+  {
+    "name": "WILDWP-not-followed",
+    "file": "src/systems/wildRemainsWaypoint.js",
+    "old": "  setWaypointFollowed(got.waypoint.id, true);\n",
+    "new": "",
+    "tests": ["test/waypoints.test.js"]
+  },
+  {
+    "name": "WILDWP-outlives-its-time",
+    "file": "src/systems/wildRemainsWaypoint.js",
+    "old": "  if (now >= m.until || !waypointById(m.id)) { clearRemainsMark(); return true; }",
+    "new": "  if (!waypointById(m.id)) { clearRemainsMark(); return true; }",
+    "tests": ["test/waypoints.test.js"]
+  },
+  {
+    "name": "WILDWP-gone-ignored",
+    "file": "src/systems/wildRemainsWaypoint.js",
+    "old": "  return !!m && m.r != null && m.r === r ? clearRemainsMark() : false;",
+    "new": "  return false;",
+    "tests": ["test/waypoints.test.js"]
+  },
+  {
+    "name": "WILDWP-two-flags",
+    "file": "src/systems/wildRemainsWaypoint.js",
+    "old": "export function markRemains({ mx, my, until, r = null }) {\n  clearRemainsMark();",
+    "new": "export function markRemains({ mx, my, until, r = null }) {",
+    "tests": ["test/waypoints.test.js"]
+  }
+]

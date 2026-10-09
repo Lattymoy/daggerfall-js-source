@@ -1,6 +1,7 @@
-# FIELD BUGS 2026-10-09 - seven Discord threads
+# FIELD BUGS 2026-10-09 - seven Discord threads, and two from #general
 
-Seven threads from the Discord's bug-reports, handed over by Mac as screenshots.
+Seven threads from the Discord's bug-reports, handed over by Mac as screenshots; then two more from #general, the same
+way (8, 9).
 
 | | Report | What it was | Done |
 |---|---|---|---|
@@ -11,6 +12,8 @@ Seven threads from the Discord's bug-reports, handed over by Mac as screenshots.
 | 5 | Knightspire's tavern sign hangs on a residence (DarkScorpyon) | the game's own data: block TVRNAM00 record 0 is a tavern's model with a tavern's interior and sign, typed House2 in the block's building list, which is where DFU reads a building's type | not a port bug - kept (SIGN-HOUSE) |
 | 6 | a torch cannot be placed before my own door, but can before a stranger's (Shiki_Eternal) | the yard measured a house as the box round its models; Hammerfell's houses are L-shaped or stand an outside stair, and their doors open onto open ground inside that box | fixed (HOME-FOOT) |
 | 7 | `TypeError: Cannot read properties of undefined (reading 'velocity')` at `poseAhead`, on a ship's deck (Cruor) | a peer's word dropped a boat between two frames; the peek read the place it no longer names | fixed (PEEK-WORD) |
+| 8 | "if i bug the game outside of the bay i can become invisible to everyone and everyone becomes invisible to me" - "i relogged and im still invisible" (maya) | not a bug to find a way into: TAMRIEL2 streams the land past the Bay, and the wire still held the Bay - a pose past 1024 pixels refused and the socket closed on it, a cell west or north of the Bay no cell any halo reached | fixed (TV-BEYOND, world181 - the relay first) |
+| 9 | `CRASH (2) RangeError: invalid array length` up through `onPick`, a click on the Overworld in the wilds past the Alik'r (maya) | the route planner's box was clamped to the map: two ends past one edge clamped it inside out | fixed (TV-BEYOND) |
 
 ## SNOWLESS1: snow off means the snow too (1)
 
@@ -131,3 +134,49 @@ for that one frame, and the frame's realign matches the word as before (`scenes/
 `poseAhead`). `test/csa_together.test.js` (+1) drops a boat and changes a hull between frames and fails, with the
 reported error, without the guard; `tools/mutants/csa_together.json` +2 (the missing place, the other hull), and the
 `CSAK-peers-peek-late` record re-aimed at the guarded line.
+
+## TV-BEYOND: the land past the Bay is the world's (8, 9)
+
+maya's two screenshots came from the same place: the wilds past the Alik'r, the region reading the Alik'r Desert as
+`getRegionIndexAt`'s clamp reads every pixel past the Bay. Nothing there is a bug to get into - TAMRIEL2 streams the land
+beyond the edge on purpose, on by default and the player's own online (`03-World/Tamriel.md`). Two laws still ended at
+the edge.
+
+**The crash (9).** A click on the Overworld plans a route (`systems/travelRoute.js` `planRoute`), and its search box was
+clamped to the map's 1000 x 500. With the traveller and the spot both past one edge - two pixels apart west of the
+map, as the view's reach makes them - the clamp turned the box inside out, its width negative, and the typed arrays
+threw (`Invalid typed array length: -13` in Node, `invalid array length` in maya's browser; reproduced first). One end
+past the edge planned without throwing and was wrong: the traveller's pixel was indexed into the box's far side, so the
+route began where the traveller never stood. And the planner's ground (`routeGround`) called every pixel off the map
+the sea, so nothing past the Bay could be walked to, and its land pieces (`apart`) said "no way by land" for every
+pick there. Now the box's bounds are the map AND the two ends; `routeGround` takes the host's `beyond` (whether a pixel
+past its table is dry ground, asked once a pixel and kept, `BEYOND_CACHE_MAX`); `apart` leaves an end past the table to
+the search; and a step past the table reads no road's byte (a column west of the map read the row above's last bytes,
+a road a whole map away). The host's water law (`scenes/world.js` `tvWater`) is the ground's own where TAMRIEL2
+composed the reader (`woods.isTamrielGround`), and the sea off the map where it did not - DFU's empty edge, the classic
+skin and the switch off exactly as before - and the planner is handed it.
+
+**The invisibility (8).** The wire (`net/wire.js`, both ends' one law) held the Bay. A pose past 1024 pixels (`POSE_BOUND`)
+was refused, and the relay refuses a bad pose by closing the socket as a policy breach - the client takes that close
+as final, so every peer went at once and the rejoin was refused again; the save keeps the position, so a relog stood
+there again. Nearer, a cell west or north of the Bay was no cell (`CELL_ROOM` admitted no sign): the room was opened,
+but no halo reached it from the Bay (`cellHaloFor` stopped at cell 0) and none reached out of it - two players a pixel
+apart astride the edge never met. A traveller's mark and a party pose west or north of the Bay were withheld by the
+client's own check of the same law, and a mark east or south of it was clamped onto the Bay's edge
+(`systems/travellerMarks.js`). TAMRIEL2's record had said this honestly ("walks unseen by the room until they come
+back"); with the open zone's PvP, unseen is an exploit. Now the wire's pixels are the world's: `WORLD_PIXEL_BOUND`
+(8192 either way of the Bay's corner - every fit TAMRIEL3 reads, 16 to 21 pixels a picture unit, inside it; a fixed
+bound, because the relay knows no picture), `POSE_BOUND` from it, `worldPixelOk` for a pixel; the cell key takes a sign,
+the halo crosses the edge both ways; the traveller's mark is floored past the corner and its 256ths stay 0..255; a
+party pose's pixel, its trip (`tv`), its walk (`tw`) and its feet (`wx`/`wz`), a duel's ring and a park's anchor are
+taken either side of the corner. The widest hub attachment, the world's widest party pose, still fits its 2048 bytes.
+RELAY_VERSION world181 (`test/relayversion.test.js` row; world180 on the branch, renumbered past main's TAVERN-TABLES world180 at its merge): **deploy the relay before the clients** - a new client
+against the old relay is no worse than today (refused as before).
+
+Pins: `test/fb1009_beyond.test.js` (8) - the field's crash on four edges and the half-off route, the ground past the
+table and its keep, the land's pieces, the road byte across the west edge, the host's own water line lifted and run
+both ways, the frame's corners at three fits as poses the relay takes, the cells and the halo across the edge, the
+marks and the party past the Bay; `tools/mutants/fb1009_beyond.json` (28, all dead). PIN MOVED (TV-BEYOND), each to
+the world's edge from the Bay's: `duel_wire`, `hcc_park`, `partytravel` (and its widest attachment), `soc1_hub`,
+`tv3_travellers`, `tv8_party_walk`, `world6b`, `world6biiib`; the host's `tvRouteGround` text in `tv2_click_to_move`
+and `ow_wod`; the version pins to world181.

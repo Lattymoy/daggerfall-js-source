@@ -93,7 +93,8 @@ test('BR1: every surface the player reads carries the one name', () => {
   assert.match(ds, new RegExp(`document\\.title = '${NAME} - close other game tabs to continue'`), 'the second-tab title');
   assert.match(ds, new RegExp(`<h2 style="margin-top:0">${NAME}</h2>`), 'and the second-tab panel');
 
-  assert.match(read('src/ui/pauseWindow.js'), new RegExp(`const ver = \\\`${NAME} \\$\\{BUILD_TAG\\}\\\`;`),
+  // PIN MOVED (REL8): the update number leads where the build knows it (rel8_updates runs the line both ways)
+  assert.match(read('src/ui/pauseWindow.js'), new RegExp(`const ver = UPDATE \\? \\\`${NAME} \\$\\{UPDATE\\} \\(\\$\\{BUILD_TAG\\}\\)\\\` : \\\`${NAME} \\$\\{BUILD_TAG\\}\\\`;`),
     'the PAUSE SCREEN\'s version line - the whole of the branding surface a player reads in game, and the working name sat on it');
   assert.match(read('README.md'), new RegExp(`^# ${NAME}\\n`), 'the repository\'s own first line');
 });

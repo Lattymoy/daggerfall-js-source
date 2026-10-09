@@ -164,8 +164,11 @@ test('OW-WOD-PATH: the mod\'s massifs are the pixels a Mountains instance names 
   const session = new LocationSession();
   const dir = join(V, 'Locations');
   for (const f of readdirSync(dir).sort((a, b) => parseInt(a, 10) - parseInt(b, 10))) session.appendRegion(parseInt(f, 10), decodeRegionPack(new Uint8Array(readFileSync(join(dir, f)))));
+  const off = Object.create(WodWorld.prototype);
+  off.session = session; off.mountains = false;   // WOD-PEAKS: the spires off (the default) - no massif for a route to go round
+  assert.equal(off.mountainPixels().reduce((n, v) => n + v, 0), 0, 'with the Mountains layouts off no pixel is a massif');
   const w = Object.create(WodWorld.prototype);
-  w.session = session;
+  w.session = session; w.mountains = true;   // PIN MOVED (WOD-PEAKS): the switch on, as the mod ships it
   const t = w.mountainPixels();
   assert.equal(t.length, 1000 * 500);
   let n = 0; for (const v of t) n += v;
@@ -214,7 +217,8 @@ test('OW-WOD-PATH: the host hands its planner the massifs less every pixel a roa
   assert.match(w, /const src = wod \? wod\.mountainPixels\(\) : null;/);
   assert.match(w, /if \(src === _tvRocksFrom && net === _tvRocksRoads && wm === _tvRocksMask && _tvRocks\) return _tvRocks;/, 'kept for the list, the roads and the zone it was read with');
   assert.match(w, /const onRoad = \(i\) => \(\(net\?\.roads\?\.\[i\] \?\? 0\) \| \(net\?\.tracks\?\.\[i\] \?\? 0\)\);\n\s*if \(src\) for \(let i = 0; i < n; i\+\+\) if \(src\[i\] && !onRoad\(i\)\) out\[i\] = 1;/, 'a path\'s pixel is no massif');
-  assert.match(w, /WATER_BYTE\)\)\.setRocks\(tvWodRocks\(\)\);\n\s*return _tvRouteGround;\n {2}\};/);
+  // PIN MOVED (TV-BEYOND): the ground past the Bay handed in before the massifs (routeGround's `beyond`)
+  assert.match(w, /WATER_BYTE, 1000, 500, \(x, y\) => !tvWater\(x, y\)\)\)\.setRocks\(tvWodRocks\(\)\);[^\n]*\n\s*return _tvRouteGround;\n {2}\};/);
   assert.match(w, /if \(!door && !water && tvRouteGround\(\)\.peakAt\(pix\.x, pix\.y\)\) \{ tvSay\(TRAVEL_VIEW_TEXT\.mountains\); return false; \}/);
 });
 
@@ -283,4 +287,41 @@ test('OW-TOWN-RING: the host rings every location on the way (the build\'s own t
   assert.match(t, /if \(r\.legs\[best\]\?\.at && !r\.legs\[best\]\.ring && best \+ 1 < r\.legs\.length\) best\+\+;/, 'a ring point is no join');
   assert.match(t, /if \(!leg \|\| !prev \|\| leg\.kind === 'open' \|\| leg\.ring \|\| prev\.ring\) return null;/, 'and no road lane is rejoined between ring points');
   assert.match(t, /: leg\.at \? spotRect\(leg\.at\) :/, 'each leg with its own point is aimed at that point');
+});
+
+test('WOD-PEAKS: with the Mountains switch off (the default) a Mountains instance is no prefab - its pick stands nothing and levels nothing; on, it stands as the mod has it; a flip is a new world', async () => {
+  const prefabs = new Map([['WOD_Mountain_01r1', { width: 4, height: 4, obj: [] }], ['WOD_Rocks_Large_00', { width: 4, height: 4, obj: [] }]]);
+  const asked = [];
+  const mk = (mountains) => {
+    const w = Object.create(WodWorld.prototype);
+    w.mountains = mountains; w.prefabs = prefabs; w.session = new LocationSession();
+    return w;
+  };
+  // the pick's prefab door, as picksFor hands it to pickLocations
+  const src = readFileSync(new URL('../src/world/worldOfDaggerfall.js', import.meta.url), 'utf8');
+  assert.match(src, /const prefabOf = this\.mountains \? \(name\) => this\.prefabs\.get\(name\) \?\? null : \(name\) => \(WOD_MOUNTAIN_PREFAB\.test\(name \?\? ''\) \? null : this\.prefabs\.get\(name\) \?\? null\);\n\s*return pickLocations\(tile, session, prefabOf, pathsPoint, siteClear\)/);
+  const body = src.slice(src.indexOf('const prefabOf = '), src.indexOf('return pickLocations(tile, session, prefabOf'));
+  for (const on of [false, true]) {
+    const w = mk(on);
+    const prefabOf = new Function('WOD_MOUNTAIN_PREFAB', `${body}; return prefabOf;`).call(w, WOD_MOUNTAIN_PREFAB);
+    asked.push([on, prefabOf('WOD_Mountain_01r1') != null, prefabOf('WOD_Rocks_Large_00') != null]);
+  }
+  assert.deepEqual(asked, [[false, false, true], [true, true, true]], 'off: the spires are no prefab, the rock fields stand; on: both');
+  assert.match(src, /export function openWodWorld\(\{ online = false, sources = browserWodSources, mountains = wodMountainsOn\(\) \} = \{\}\) \{\n\s*if \(!_world \|\| _world\.online !== online \|\| _world\.mountains !== !!mountains\)/, 'the world is built for the switch it was opened with');
+  const lane = readFileSync(new URL('../src/systems/onlineLane.js', import.meta.url), 'utf8');
+  assert.match(lane, /'world-of-daggerfall': Object\.freeze\(\{ Enabled: true, Mountains: false \}\)/, 'online the room\'s - off');
+});
+
+test('ROCK-SEAT: a rock field\'s piece set into the ground but hanging over ground that falls away under it is lowered until its foot is WOD_ROCK_SEAT_M under the lowest ground beneath it - one already in the ground, or resting on another\'s crown, keeps the mod\'s height, and none is raised', async () => {
+  const { rockSeatDrop, WOD_ROCK_SEAT_M } = await import('../src/world/wodLocationObjects.js');
+  assert.equal(WOD_ROCK_SEAT_M, 0.5);
+  assert.equal(rockSeatDrop(100, 40), 0, 'its foot 60 under the lowest ground: in the ground, untouched');
+  assert.equal(rockSeatDrop(100, 99.5), 0, 'exactly the seat under it: untouched');
+  assert.equal(rockSeatDrop(20, 40), -20.5, 'the slope falls 20 under its foot: lowered 20.5');
+  assert.ok(rockSeatDrop(20, 40) < 0 && rockSeatDrop(-5, 10) === -15.5, 'never raised, whatever the ground');
+  assert.equal(rockSeatDrop(NaN, 10), 0, 'no ground read: untouched');
+  const W = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
+  assert.match(W, /if \(rockPick\(m\.pick\) && box\[1\] < surfaceHeightAt\(samples, [^\n]*\)\) \{ const dy = rockSeatDrop\(lowestGroundUnder\(samples, box\), box\[1\]\); if \(dy < 0\) \{ m\.matrix\[13\] \+= dy; box\[1\] \+= dy; box\[4\] \+= dy; \} \}/, 'the rock fields\' pieces set into the ground (foot under the ground at its middle) are seated, collider and all, before the roads and the gate ask of their box');
+  const at = W.indexOf('rockSeatDrop(lowestGroundUnder');
+  assert.ok(at > 0 && at < W.indexOf('if (boxNearPath(_roadsNow, px, py, box[0]', at), 'before the roads ask');
 });
