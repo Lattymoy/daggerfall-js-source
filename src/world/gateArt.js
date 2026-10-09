@@ -26,12 +26,15 @@ import { COURT_ARCHIVE, COURT_FLOOR_RECORD, COURT_RUNE_RECORD, COURT_LAVA_RECORD
 export { GATE_ARCHIVE, GATE_STONE_RECORD, GATE_PLINTH_RECORD, RITE_SIGIL_RECORD, GATE_SPINE_RECORD, GATE_RIM_RECORD, COURT_ARCHIVE };
 /** A texture's side, texels. */
 export const GATE_ART_SIZE = 64;
-/** The fire's veins down a tile of the horns' stone - few enough that the basalt still reads as stone. */
+/** The fire's veins down a tile of the gate's stone - few enough that the basalt still reads as stone. */
 export const GATE_VEINS = 4;
 /** GATE-FBX: the rim's veins - twice the stone's - and the ember its stone is banked toward, and how far. */
 export const RIM_VEINS = 8;
 export const RIM_EMBER = Object.freeze([92, 22, 8]);
 export const RIM_BANK = 0.3;
+/** AUDIT GATE-FBX G4: what the rim's stone between its veins gives off - an ember's two fifths, where a fifth of the bank
+ *  (6, 1, 0) burned at a fortieth of anything and could not be seen. */
+export const RIM_SMOULDER = 0.4;
 /** GATE-FBX: where along a spine (v, root 0 to point 1) its heat begins, and its growth rings' pitch (texels). */
 export const SPINE_HEAT_FROM = 0.62;
 export const SPINE_RING_TEXELS = 7;
@@ -120,8 +123,8 @@ export function gateStoneArt(seed = 0x0b1e, veins = GATE_VEINS) {
 
 /**
  * The plinth's carved flags: four by four stones on dark mortar, and one ring of runes cut round the tile's middle -
- * the ring spans the whole tile, so the plinth's top (one tile across two metres at its centre - world/gateModel.js)
- * wears it as a sigil under the threshold.
+ * the ring spans the whole tile, so WB2's plinth wore it as a sigil under the threshold. GATE-FBX: Mac's gate has no
+ * plinth; the Sigil Broker's cage wears the flags (world/cageModel.js).
  */
 export function gatePlinthArt(seed = 0x0f1a) {
   const S = GATE_ART_SIZE;
@@ -164,8 +167,8 @@ export function gatePlinthArt(seed = 0x0f1a) {
 
 /**
  * GATE-FBX: THE RIM - the basalt seared where it faces the opening (world/gateModel.js gateRimFace): RIM_VEINS of fire
- * where the stone has GATE_VEINS, the stone between them banked RIM_BANK toward RIM_EMBER and smouldering at a fifth of
- * that ember, so the frame round the portal glows by night and the gate's outside stays stone.
+ * where the stone has GATE_VEINS, the stone between them banked RIM_BANK toward RIM_EMBER and smouldering at RIM_SMOULDER
+ * of that ember, so the frame round the portal glows by night and the gate's outside stays stone.
  */
 export function gateRimArt(seed = 0x0b2e) {
   const { albedo, emission } = gateStoneArt(seed, RIM_VEINS);
@@ -173,7 +176,7 @@ export function gateRimArt(seed = 0x0b2e) {
     if (emission.colors[i] > 0) continue;   // a vein burns as it is
     const c = mix(albedo.colors.subarray(i, i + 3), RIM_EMBER, RIM_BANK);
     albedo.colors.set(c, i);
-    emission.colors.set(mix([0, 0, 0], RIM_EMBER, RIM_BANK * 0.2), i);
+    emission.colors.set(mix([0, 0, 0], RIM_EMBER, RIM_SMOULDER), i);
   }
   return { albedo, emission };
 }

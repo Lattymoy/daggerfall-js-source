@@ -141,7 +141,7 @@ export function cageTraps(at, rest, f) {
 /** AUDIT SET W1 (2026-09-27): would her post, stood at feet `at`, rise around a body whose feet are at `f` (the motor's
  *  capsule, CAPSULE_RADIUS x CAPSULE_HEIGHT)? The post wider than a hand but narrower than the capsule, four walls
  *  pushing a body centred in it cancel out - a player standing on her spot as the gate stood whole was SEALED IN (the
- *  WBX W1 seal the horns' roots had). The post's square, the capsule's radius about it, the heights overlapping. Pure. */
+ *  WBX W1 seal the gate's stone had). The post's square, the capsule's radius about it, the heights overlapping. Pure. */
 export function postTraps(at, f) {
   if (!at || !f) return false;
   const reach = BROKER_BODY_R + CAPSULE_RADIUS;
@@ -316,7 +316,7 @@ export function createSigilBroker({
     if (meshTried && foot === meshFoot && sill === meshSill) return;
     meshTried = true; meshFoot = foot; meshSill = sill;
     try {
-      if (!artUp) { for (const [rec, art] of gateArt()) { renderer.uploadTexture?.(GATE_ARCHIVE, rec, art.albedo); renderer.uploadEmissionTexture?.(GATE_ARCHIVE, rec, art.emission); } artUp = true; }
+      if (!artUp) { for (const [rec, art] of gateArt()) { renderer.uploadTexture?.(GATE_ARCHIVE, rec, art.albedo); renderer.uploadEmissionTexture?.(GATE_ARCHIVE, rec, art.emission, { white: true }); } artUp = true; }
       const nextCage = renderer.createMesh(buildCageModel({ foot })), nextDoor = renderer.createMesh(buildCageDoor({ sill }));
       if (cageMesh) renderer.destroyMesh?.(cageMesh);
       if (doorMesh) renderer.destroyMesh?.(doorMesh);

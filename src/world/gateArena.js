@@ -54,7 +54,8 @@ const UNITS_PER_M = 40;
 export const ARRIVE_Z = COURT_R - 4;
 /** GATE-FBX: THE WAY IN - the gate's fire at the floor's edge by the bridge, where WB3b's membrane stood: its place. */
 export const WAY_IN_Z = COURT_R - 0.6;
-/** The way home's door (portalDoor): its half-width and height - a body tall and the opening wide. */
+/** The way home's door (portalDoor): its half-width and height - a body tall and wide enough to be pressed from before
+ *  the fire (the opening is 2.6 m across at its foot, 7.1 at its widest - the press box need hold neither). */
 export const EXIT_HALF_W = 2.2;
 export const EXIT_H = 4.6;
 /** The floor: a disc of this many sides, its skirt this deep under the rim. */
@@ -87,7 +88,8 @@ export const COURT_TEXT = Object.freeze({
   noCompanions: 'Your companions cannot follow you into the Deadlands.',   // GATE-ALONE: said as a fighter steps in with any at their side
   castOut: 'You are cast out of the Burning Court.',
   collapse: 'The Burning Court collapses.',
-  lost: 'The way to the Burning Court is lost.',   // AUDIT WB B5: the relay's link gone for good
+  lost: 'The way to the Burning Court is lost.',   // AUDIT WB B5: the relay's link gone for good (AUDIT GATE-FBX C1: or silent)
+  noUnstuck: 'You cannot find a way free in the Deadlands.',   // AUDIT GATE-FBX C2: /unstuck - the refusals' shape
   portal: 'The way home tears open where he fell.',   // WBX2: said as the portal rises
 });
 /** A brazier's fire: its colour and reach. */
@@ -372,8 +374,8 @@ export const COURT_DOOR_DEPTH = 0.3;
  * and a press from INSIDE a box counts only where a collider surface meets the ray in it (player/activate.js, CASTLE1),
  * which a sheet of fire has not: from 0.6 to 2.4 m before the portal, looking at it, a press did nothing (and the same
  * before the bridge's membrane, while it stood). SS3 made the press the portal's only way through, so the box is the fire's own: the
- * opening's width and height, COURT_DOOR_DEPTH either side of its plane (both of the court's face along z - the
- * matrices carry no turn). A press looking at the fire from anywhere within reach takes it; one looking elsewhere does
+ * opening's width and height, COURT_DOOR_DEPTH either side of its plane (it faces along z - the matrix carries no
+ * turn). A press looking at the fire from anywhere within reach takes it; one looking elsewhere does
  * not, and a player walking the spoils about it is never inside a box of it but in the fire itself.
  */
 export function courtDoorAabb(door) {
@@ -511,9 +513,17 @@ export function portalFade(t, fellAt, endAt) {
   return Math.min(rise, close);
 }
 /** GATE-FBX: THE WAY IN stands open this long after a fighter steps out of it, and opens over this long for one stepping
- *  in while it stands closed. */
+ *  in while it stands closed. AUDIT GATE-FBX C3: another fighter is stepping out of it when this screen first sees them
+ *  within WAY_IN_NEAR_M of where the players arrive (ARRIVE_Z). */
 export const WAY_IN_HOLD_MS = 3000;
 export const WAY_IN_OPEN_MS = 600;
+export const WAY_IN_NEAR_M = 6;
+/** AUDIT GATE-FBX C1: A COURT GONE SILENT - no word of its fight heard for this long while it lives (the relay says the
+ *  whole state every STATE_SEND_MS, 5 s, while a fighter is there) - casts its fighters out before the gate: with no
+ *  door until he falls, a relay that stalled, a room that would not answer or a socket that never came back held them in
+ *  an empty court until the collapse. A frame this long after the last counts no silence (a screen asleep). */
+export const COURT_SILENT_MS = 20000;
+export const COURT_FRAME_GAP_MS = 2000;
 /**
  * GATE-FBX: THE WAY IN, ONE STEP OF ITS FIRE: how far it stands (`open`, 0 shut .. 1 whole) after `dtMs` more, opening
  * over WAY_IN_OPEN_MS while it is `held` (a fighter stepped out of it within WAY_IN_HOLD_MS) and closing over

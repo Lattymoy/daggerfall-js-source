@@ -119,7 +119,7 @@
   {
     "name": "WB2-it-never-rises",
     "file": "src/scenes/gatePool.js",
-    "old": "  return { day: g.day, phase, origin: [x, ground - (1 - eased) * GATE_HEIGHT, z],",
+    "old": "  return { day: g.day, phase, origin: [x, ground - (1 - eased) * sunk, z],",
     "new": "  return { day: g.day, phase, origin: [x, ground, z],",
     "tests": [
       "test/wb2_gate.test.js"

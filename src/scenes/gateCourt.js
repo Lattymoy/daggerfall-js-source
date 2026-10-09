@@ -20,7 +20,7 @@ import { ATTACK_BY_ID, ATTACKS, COURT_CENTRE, COURTS, COURT_R, HIT_KINDS, POOL_T
 import { strikeVerdict, blowOf, strikeDamage, savedShare, landingPools, poolUnder, inAttack, chargeHead, segmentDistance } from '../net/gateStrike.js';
 import { GATE_BOSSES, gateBossOf, gateTimes, GATE_COLLAPSE_MS } from '../net/gateLaw.js';   // GATE-FBX: and when the court comes apart
 import { bossAct, bossFrame, bossGlow, bossPlace, bossHop, bossLookOf, bossStandIn, bossCue, BOSS_CUES, BOSS_STRIDE_M, GROWL_EVERY_MS, HURT_GAP_MS, HURT_SHARE, QUAKE_ON, THUD_AT_MS, WARD_COLOR, EMBER_COLOR, poolColor, emberColor, attackColor, crystalStandIn, crystalColor, groundStepCue, hostPulseColor, gateHitFlash, GATE_FLASH_SHARE, RELEASE_LEAD_MS, landShake, LANDING_LIGHT_Y, CORPSE_SCALE, WAKE_LEAD_MS, LOW_HEALTH } from '../world/gateBoss.js';
-import { courtToDungeon, portalDoor, PORTAL_AFTER_MS, PORTAL_RISE_MS, PORTAL_DROP, COURT_TEXT, WAY_IN_Z, WAY_IN_HOLD_MS, wayInStep, portalFade } from '../world/gateArena.js';
+import { courtToDungeon, portalDoor, PORTAL_AFTER_MS, PORTAL_RISE_MS, PORTAL_DROP, COURT_TEXT, WAY_IN_Z, WAY_IN_HOLD_MS, WAY_IN_NEAR_M, ARRIVE_Z, COURT_SILENT_MS, COURT_FRAME_GAP_MS, wayInStep, portalFade } from '../world/gateArena.js';
 import { GateTelegraphRenderer, telegraphShape, markShape, poolShapes, telegraphEdge, TELEGRAPH_STYLE, TELEGRAPH_EDGE, TELEGRAPH_NOW_MS } from '../render/gateTelegraph.js';
 import { CourtCrystalRenderer, crystalGrowth, CRYSTAL_GROW_MS, CRYSTAL_SHATTER_MS, CRYSTAL_FLASH_MS, CRYSTALS_DRAW_MAX } from '../render/courtCrystals.js';   // WB9c: the crystals of Oblivion, drawn
 import { GateFxRenderer, fxBurstOf, meteorFall, FX_BURST_MS, FX_BURSTS_MAX, FX_KINDS, FX_LIGHT_MS } from '../render/gateFx.js';   // WB9e: his blows seen landing
@@ -328,9 +328,14 @@ export function createGateCourt({
    *  rising said */
   let portal = null, portalPass = null, portalTried = false, profile = null, spin = 0, portalLaid = false, portalSaid = false;
   /** GATE-FBX: THE WAY IN at the bridge's foot - how far its fire stands (0 shut .. 1 whole), until when it is held open
-   *  (a fighter just stepped out of it), whether my own step out of it has opened it on this entry, and the relay's count
-   *  of the fight's fighters last heard (a rise is another stepping in) */
-  let wayIn = 0, wayInHeld = -Infinity, wayInMine = false, fightersHeard = null;
+   *  (a fighter just stepped out of it), and whether my own step out of it has been counted on this fight's state */
+  let wayIn = 0, wayInHeld = -Infinity, wayInMine = false;
+  /** AUDIT GATE-FBX C1/C3/C4: THE COURT AS THIS SCREEN STANDS IN IT, state or none - when I stepped out of the fire, the
+   *  fight's last word a frame of mine saw (its `heardAt`) and when, my last frame; and the players seen in the court last
+   *  call and this one (stepsIn), and whether the first look has been taken */
+  let arrivedAt = null, heardSeen = null, wordAt = null, frameAt = null, peersPrimed = false;
+  let _peersWere = new Set(), _peersNow = new Set();
+  const ARRIVAL = courtToDungeon(0, 0, ARRIVE_Z);
   /** GATE-FBX: the court's fires this frame - the way home and the way in - one list, refilled (AUDIT WB D10's law) */
   const _fires = [], _portalFire = { origin: [0, 0, 0], yaw: 0, open: 1, fade: 0, spin: 0 };
   const _wayIn = { origin: courtToDungeon(0, -PORTAL_DROP, WAY_IN_Z), yaw: 0, open: 1, fade: 0, spin: 0, fireOnly: true };
@@ -374,7 +379,7 @@ export function createGateCourt({
     marksSaid = false; fedHeard = null; marksAt = null; chartAt = null;   // GATE-UX
     healOwed.clear();   // GATE-HEAL
     portal = null; spin = 0; portalLaid = false; portalSaid = false;
-    wayIn = 0; wayInHeld = -Infinity; wayInMine = false; fightersHeard = null;   // GATE-FBX
+    wayIn = 0; wayInHeld = -Infinity; wayInMine = false;   // GATE-FBX
     rk = null; rkDone = null; stunHeard = 0; crystalIns.length = 0; _targets.length = 0; _crystalDraw.length = 0;   // WB9c
     _bursts.length = 0; _fxLive.length = 0; meteorNow = null;   // WB9e
     groundName = ''; groundColor = null; biteAt = -Infinity; biteColor = null;   // WB9d
@@ -390,13 +395,13 @@ export function createGateCourt({
   }
 
   /** WBX2: THE PORTAL HOME - PORTAL_AFTER_MS into his fall it stands where he fell and rises; its door is laid into the
-   *  court's exit doors once (the ray, the plaque's name and the PRESS - the bridge membrane's own way home), and the
+   *  court's exit doors once (the ray, the plaque's name and the PRESS - the court's one door), and the
    *  rising is said once. SS3 (2026-09-27, a player through Mac, "Oblivion gate exit on touch prevents looting": "I was
    *  close to the guy when he died, got zoned out by touching the gate before I could pick up loot"): it is never WALKED
    *  through. It stands where he fell - where his spoils leave him and land - so a player going for them stepped through
    *  its fire and out of the court with the floor still full (gathered into the pack on the way out, never seen fall). */
   function portalFrame(s, t, dt) {
-    wayInFrame(s, t, dt);   // GATE-FBX: the way in, before and after his fall alike
+    wayInFrame(t, dt);   // GATE-FBX: the way in, before and after his fall alike
     if (wayIn > 0 || (s.fell && t >= s.fell.at + PORTAL_AFTER_MS)) firePass(dt);
     if (!s.fell || t < s.fell.at + PORTAL_AFTER_MS) { portal = null; return; }
     const at = bossPlace(s, s.fell.at);
@@ -418,15 +423,24 @@ export function createGateCourt({
 
   /** GATE-FBX (2026-10-09, Mac: "remove the portal that players walk through on the inside and just use a portal that
    *  opens and closes. Like at the end of the fight"): THE WAY IN - the gate's own fire at the bridge's foot, where WB3b's
-   *  membrane stood: whole as I step out of it (once the step's veil lifts - I came through it), held WAY_IN_HOLD_MS and
-   *  closing behind me (world/gateArena.js wayInStep); opened again as the relay's count of the fight's fighters rises -
-   *  another stepping in (the count comes with the state, STATE_SEND_MS apart, so theirs may open a breath late). No door:
-   *  it does not take anyone back. */
-  function wayInFrame(s, t, dt) {
-    if (!wayInMine && !veiled()) { wayInMine = true; wayIn = 1; wayInHeld = t + WAY_IN_HOLD_MS; }
-    if (fightersHeard !== null && s.fighters > fightersHeard) wayInHeld = t + WAY_IN_HOLD_MS;
-    fightersHeard = s.fighters;
+   *  membrane stood: whole as I step out of it, held WAY_IN_HOLD_MS from then and closing behind me (world/gateArena.js
+   *  wayInStep) - AUDIT GATE-FBX C4: from my arrival (courtWatch), however late the fight's first word comes; a word that
+   *  comes after the hold finds it shut. Opened again for another stepping out of it (stepsIn). No door: it does not
+   *  take anyone back. */
+  function wayInFrame(t, dt) {
+    if (!wayInMine && arrivedAt !== null) { wayInMine = true; wayInHeld = Math.max(wayInHeld, arrivedAt + WAY_IN_HOLD_MS); if (t < wayInHeld) wayIn = 1; }
     wayIn = wayInStep(wayIn, dt * 1000, t < wayInHeld);
+  }
+
+  /** AUDIT GATE-FBX C1/C4: THE COURT AS THIS SCREEN STANDS IN IT, before any state - my arrival is the frame the step's
+   *  veil lifts with my feet in the court; the fight's silence is counted on my own frames from the last word they saw
+   *  (a frame COURT_FRAME_GAP_MS after the last - a screen asleep - counts none). Out of the court, all forgotten. */
+  function courtWatch(s, t) {
+    if (!feet()) { arrivedAt = null; heardSeen = null; wordAt = null; frameAt = null; peersPrimed = false; _peersWere.clear(); return; }
+    if (arrivedAt === null) { if (veiled()) return; arrivedAt = t; wordAt = t; }
+    if (frameAt !== null && t - frameAt > COURT_FRAME_GAP_MS) wordAt = t;
+    frameAt = t;
+    if (s && s.day !== null && s.heardAt !== heardSeen) { heardSeen = s.heardAt; wordAt = t; }
   }
 
   function sound(cue, s, t, atk, point = null) {
@@ -845,8 +859,12 @@ export function createGateCourt({
     frame() {
       blowMet.clear();   // AUDIT WB11 W3: a frame ends my blow
       const s = link.state(), t = now();
+      courtWatch(s, t);   // AUDIT GATE-FBX C1/C4: my arrival and the fight's silence, state or none
       if (!s || s.day === null) { if (day !== null) this.leave(); return; }
       if (s.day !== day) reset(s.day);
+      // AUDIT GATE-FBX C5: the court's one door first - before any of the fight's own steps, whose throw (swallowed by
+      // the host each frame) would leave it never laid
+      portalFrame(s, t, Number.isFinite(prevT) ? Math.max(0, t - prevT) / 1000 : 0);   // WBX2: the way home, once he has fallen
       const P = profileOf(s);   // WB8b: the fight's marks, as law - the relay's word of them
       judge(s, t, P);
       judgeTrap(s);   // WBX7: a soul trap of mine on him, rolled at his fall
@@ -860,7 +878,6 @@ export function createGateCourt({
       drawBody(s, t, P);
       burst(s, t);
       spoils?.frame(onSpoilRest);   // WB9f: each piece's landing sparks
-      portalFrame(s, t, Number.isFinite(prevT) ? Math.max(0, t - prevT) / 1000 : 0);   // WBX2: the way home, once he has fallen
       shape = s.fell ? null : telegraphShape(s.atk, s.phase, t, P);
       // WBX4: his mark under him, while he stands; WBX5: the burning ground (WB8b: his aspect's)
       if (_markOf !== P) { _markOf = P; const ember = emberColor(P); markEmber = ember === EMBER_COLOR ? MARK_COLOR : markColorOf(ember); _mark = markShape([0, 0], 0, markEmber, P.bossR); }
@@ -1087,6 +1104,35 @@ export function createGateCourt({
     portal: () => (portal ? { at: [...portal.at], rise: portal.rise } : null),
     /** GATE-FBX: how far the way in stands (0 shut .. 1 whole). */
     wayIn: () => wayIn,
+    /**
+     * AUDIT GATE-FBX C3: THE PLAYERS THIS SCREEN SEES IN THE COURT (the online frame's list, `at` a player's place in the
+     * dungeon's frame): one here now and not last call, standing within WAY_IN_NEAR_M of where the players arrive, has
+     * just stepped out of the way in - it opens for them. The first look after my arrival only learns who is here. The
+     * relay's count of fighters it replaces came STATE_SEND_MS late, and never rose for a fighter walking back in.
+     * @param {Iterable<{id: string}>} list @param {(d: any) => (number[]|null)} at
+     */
+    stepsIn(list, at) {
+      if (arrivedAt === null) return;
+      const t = now();
+      _peersNow.clear();
+      for (const d of list) {
+        if (!d) continue;
+        _peersNow.add(d.id);
+        if (!peersPrimed || _peersWere.has(d.id)) continue;
+        const p = at(d);
+        if (p && Math.hypot(p[0] - ARRIVAL[0], p[2] - ARRIVAL[2]) <= WAY_IN_NEAR_M) wayInHeld = Math.max(wayInHeld, t + WAY_IN_HOLD_MS);
+      }
+      [_peersWere, _peersNow] = [_peersNow, _peersWere];
+      peersPrimed = true;
+    },
+    /** AUDIT GATE-FBX C1: whether the court has gone silent on this screen - I stand in it, its fight lives (or never said
+     *  a word), and my frames have seen no word of it for COURT_SILENT_MS. The host casts me out (scenes/world.js). */
+    silent() {
+      if (arrivedAt === null || wordAt === null || frameAt === null) return false;
+      const s = link.state();
+      if (s && s.day !== null && (s.fell || s.wrath != null)) return false;   // a fallen Warden's court says nothing more, and its portal stands
+      return frameAt - wordAt > COURT_SILENT_MS;
+    },
     /** Out of the court: the body put away, the bar hidden, the fight forgotten (the texture is kept - the next court wears it). */
     leave() {
       if (healOwed.size) sendOwed(now());   // GATE-HEAL: what my mates healed in me goes before the court is put away

@@ -2,12 +2,12 @@
 //
 // node holds the pass's law (test/wb2_gate.test.js drives it over a fake GL); what node cannot answer is whether the
 // GLSL COMPILES and LINKS in a real WebGL2 context, whether the arch's profile survives as a uniform the optimiser did
-// not drop, and whether the fire actually lands on the pixels between the horns - bright and hot when open, an ember
+// not drop, and whether the fire actually lands on the pixels between the pillars - bright and hot when open, an ember
 // when sealed - and the beacon on the sky over the crown. So: the repo's own modules served as they are (no bundler -
 // every import in this chain is relative), the stone drawn with its own art by a stand-in shader, the pass drawn by
 // its own class, and the frame read back.
 //
-//     node tools/gatePassProbe.mjs [--shots <dir>]     (writes open.png / sealed.png / far.png there when given)
+//     node tools/gatePassProbe.mjs [--shots <dir>]     (writes open.png / sealed.png / shoulder.png / far.png there when given)
 import { chromium } from 'playwright';
 import http from 'node:http';
 import { readFileSync, existsSync } from 'node:fs';
@@ -81,7 +81,7 @@ try {
   const open = await page.evaluate(() => window.draw([0, 6.5, 24], [0, 6.5, 0], 1));
   if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'open.png') });
   check('no GL error drawing it', open.error === 0, `error ${open.error}`);
-  check('the fire stands between the horns, hot and red', open.centre[0] > 150 && open.centre[0] > open.centre[2] * 2, JSON.stringify(open.centre));
+  check('the fire stands between the pillars, hot and red', open.centre[0] > 150 && open.centre[0] > open.centre[2] * 2, JSON.stringify(open.centre));
   check('and not where no gate is', lum(open.corner) < 60, JSON.stringify(open.corner));
   const sealed = await page.evaluate(() => window.draw([0, 6.5, 24], [0, 6.5, 0], 0));
   if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'sealed.png') });

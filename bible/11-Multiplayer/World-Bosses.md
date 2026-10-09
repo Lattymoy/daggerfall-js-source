@@ -2418,30 +2418,39 @@ graves, crypts, crystals, a spiked tower, six lesser arches, a walled yard - and
 declines is placed for its box alone (one of the others, `Cube.002`, is mirrored and has no faces, and a ship's bake
 would refuse the scene for it - the refusal still stands for every object a bake reads). Every other object stands
 wholly clear of the gate's box, and the bake says so of each (`assertAlone`): a piece of the gate exported as its own
-object is refused, never dropped. Its frame (`FRAME`): the object's own origin across x and through z (the middle of the
-cube Mac drew the lintel from; the spines stand 6 cm off it, as drawn), its feet on y 0, Blender's Z up the gate's +y -
-a turn, not a mirror, so every polygon keeps its corners' order - and SCALE 0.53: 16.19 m tall, WB2's 16.2, where Mac
-drew it 30.55 m, so the beacon, the light, the clearing and the court's fire keep their sense. The source is committed
-beside the bake (`src/assets/gate/source/Oblivion_Gate.fbx`, 8.2 MB - the whole scene, the way the ships' sources are)
-and `src/assets/gate/oblivionGate.json` re-bakes from it to the byte.
+object is refused, never dropped. Its frame (`FRAME`, `toGate`): the object's own origin across x and through z (the
+middle of the cube Mac drew the lintel from; the spines stand 6 cm off it, as drawn), its feet on y 0, Blender's Z up
+the gate's +y and its Y the world's z - a MIRROR in the numbers, as a ship's bake is: Blender's right hand into the
+world's left (`world/mat4.js` THE HANDEDNESS LAW), so the gate stands as Mac drew it and not front to back, every
+polygon and triangle reversed with it - and SCALE 0.53: 16.19 m tall, WB2's 16.2, where Mac drew it 30.55 m, so the
+beacon, the light, the clearing and the court's fire keep their sense. The source is committed beside the bake
+(`src/assets/gate/source/Oblivion_Gate.fbx`, 8.2 MiB - the whole scene, the way the ships' sources are) and
+`src/assets/gate/oblivionGate.json` re-bakes from it to the byte; both are on `test/doctrine.test.js`'s published
+assets allowlist.
 
 **The stone** (`world/gateModel.js`). `buildGateModel` lays the bake's triangles as baked (Blender 5.1's own cut,
 `fillFace`), flat-shaded, and runs each foot's sole GATE_FOOT_SINK (1.2 m) on under the ground on walls of its own, as
-WB2's plinth sank its foot - a slope never shows light under a claw. GATE_HEIGHT, GATE_HALF_W (7.73 m, the spines'
-points) and the pillars' roots (GATE_ROOT) are read off the bake. WB2's horns, plinth, claws and rim spires are gone
-with their numbers; `faces()` and `spike()` stay, the court's and the Deadlands' builders.
+WB2's plinth sank its foot - a slope never shows light under a foot. GATE_HEIGHT and GATE_HALF_W (7.73 m, the spines'
+points) are read off the bake; each spine's faces are a Spike of the model's `parts`, the rest Stone. WB2's horns,
+plinth, claws and rim spires are gone with their numbers; `faces()` and `spike()` stay, the court's and the Deadlands'
+builders.
 
 **The texturing.** The FBX embeds no texture - its materials are Blender's default grey, and its two materials split the
 left pillar from the right (a copy), not the stone from the spines. So every face is laid on the port's own art
-(`world/gateArt.js`, 64 texels, the gate's pseudo-archive):
+(`world/gateArt.js`, 64 texels, the gate's pseudo-archive), every emission uploaded WHITE - the fire its own colour,
+never the window light's tint (AUDIT SD II L2 F3's law):
 
-- THE STONE wears WB2's cracked basalt, PROJECTED along the axis each face looks down most (`gateFaceUv`, a box
-  projection - the bake has no seams to unwrap along): v climbs every standing face, so the fire's veins run up the
-  pillars, and a tile every GATE_TILE_M (5 m - a 3 m tile on Mac's broad flat faces read as a wallpaper of sparks).
-- THE RIM (`gateRimArt`, record 4): where a face looks into the opening - the pillars' and feet's inner faces, the cut
-  corners' and the lintel's undersides (`gateRimFace`), and the sunk walls under them - the same basalt seared: twice
-  the veins (RIM_VEINS 8), the stone between them banked toward an ember and smouldering faintly, so the fire's frame
-  reads round the portal by night and the gate's outside stays stone.
+- THE STONE wears WB2's cracked basalt, PROJECTED along the axis each triangle's own face looks down most (`gateFaceUv`,
+  a box projection - the bake has no seams to unwrap along; four of Mac's quads stand 0.3-0.4 m out of their plane, so
+  the quad's normal is not its triangles'): v climbs every standing face, so the fire's veins run up the pillars, and a
+  tile every GATE_TILE_M (5 m - a 3 m tile on Mac's broad flat faces read as a wallpaper of sparks).
+- THE RIM (`gateRimArt`, record 4): where a face looks into the opening (`gateRimFace`) - within the opening's widest
+  reach (GATE_OPEN_HALF_W 3.74 m, and RIM_REACH_M), a face turned in across the threshold (the pillars' and the feet's
+  inner faces, each sole's inner wall under the ground) or one looking down over it (the cut corners' and the lintel's
+  undersides): bake polygons 4, 15, 19, 22, 25, 42, 46, 49 and 52, never the flanks of a pillar's outer flange - the
+  same basalt seared: twice the veins (RIM_VEINS 8), the stone between them banked toward an ember and smouldering at
+  RIM_SMOULDER (two fifths of it), so the fire's frame glows round the portal by night and the gate's outside stays
+  stone.
 - THE SPINES (`gateSpineArt`, record 3): told apart by their shape (`gateSpines` - the pieces whose every face meets at
   one point), each wears the spine's horn laid root (v 0) to point (v 1): charred, ringed with growth every seven rows,
   and from SPINE_HEAT_FROM (0.62) heating through the veins' banked edge to their heart at the point, burning.
@@ -2449,55 +2458,116 @@ left pillar from the right (a copy), not the stone from the spines. So every fac
   `gateArt()` uploads them beside the gate's three.
 
 **The opening** (`gateArchProfile`, the membrane's mask) is SLICED now: WB2's read the horns' vertices in bands, and
-Mac's gate has 72 corners - most heights have none. Each of the 24 heights takes the least |x| of the stone over the
-band from the height below it to the height above (every triangle cut to the band), so the fire the pass interpolates
-between two heights is never wider than the stone allows anywhere between them: a point sample let it run 0.27 m into
-the cut corners' tips. ARCH_Y0 is the ground (the feet's inner edges meet it) and ARCH_Y1 the lintel's underside over
-the threshold's middle (13.90 m), read off the bake; the court's portals stand their fire on the floor with it
-(`PORTAL_DROP` is ARCH_Y0). WB2's root-band clamp (`out[0] = Math.min(out[0], out[1])`, for the horns' outer faces over
-the plinth's lip) is gone with the plinth.
+Mac's gate has 72 corners - most heights have none. Each of the 24 heights takes the stone's own clear there
+(`gateClearAt`, every triangle cut at that height; a millimetre inside the opening at its two ends, where the soles and
+the lintel's underside lie in those planes) less the 0.15 m margin; and where the stone narrows between two heights and
+widens again - the cut corners' tips, 13.08 m up, where a bare point sample let the fire run 0.27 m into the stone -
+the line the pass draws between them is measured against the stone at that corner's height and both lowered by what it
+overruns. Nowhere does a strip wider than 0.6 m stand between the fire and the stone. ARCH_Y0 is the ground (the feet's
+inner edges meet it) and ARCH_Y1 the lintel's underside over the threshold's middle (13.90 m), read off the bake
+(`gateArchTop` - a part with no stone over the middle is refused, never Infinity handed to the shader); the court's
+portals stand their fire on the floor with it (`PORTAL_DROP` is ARCH_Y0). The fire's FOOT runs on down between the
+sunk soles (`render/gatePass.js FIRE_FOOT_Y`, GATE_FOOT_SINK under the ground, the threshold's width), so on a slope
+across the arch the ground cuts it. WB2's root-band clamp is gone with the plinth.
 
-**The roots** (AUDIT WBX W1's trap, `scenes/gatePool.js ROOT_TRAP`): the ellipse about each pillar's feet - the middle
-and half-span of the stone's reach across x over its lowest GATE_ROOT_TOP (2.8 m), its depth, and a body's width more -
-read off the bake where WB2's was the horns' root radius.
+**A body sealed in** (AUDIT WBX W1's law, `scenes/gatePool.js inGateRoot`): asked of the stone itself - its closed
+pieces (`world/gateModel.js gateSolids`: the lintel, each pillar on its sunk feet, each spine capped at its root;
+`insideGateStone`, a ray's parity a piece at a time - the collider takes the gate as one part, and the open cones flip
+it) at the capsule's axis (`SEALED_AT`: its foot's sphere, its middle and its head's, `player/motor.js`) - wherever the
+stone stands, high in a pillar and in the lintel too; the threshold to its edge and the ground before a foot free.
+**The rise**: sunk whole before it rises - its crown RISE_SLACK_M (0.3 m) under the ground at the middle, and the ground
+at the lintel's two ends asked too, so on a slope across the arch its downhill end never stands out before it begins.
 
 **The court's fire** (`world/gateArena.js`, `scenes/gateCourt.js`, `render/gatePass.js`):
 
 - THE BRIDGE'S MEMBRANE IS GONE - its two posts, its lintel, its sheet of fire (and its art, `courtMembraneArt`,
   record 3 of the court's archive) and its exit door (`courtExitDoor`). The court lays no door of its own
   (`scenes/worldModes.js standCourt`); the portal's, laid at his fall, is its one door, still named *The way back to
-  Tamriel*.
+  Tamriel* - laid at the top of the court's frame, before any of the fight's own steps.
 - THE WAY IN: the gate's own fire (its arch's opening, the gate's pass) at the floor's edge by the bridge (WAY_IN_Z,
   where the membrane stood), its fire ALONE - `fireOnly`, no beacon over the bridge each time a fighter steps through.
-  Whole as I step out of it (once the step's veil lifts - I came through it), held WAY_IN_HOLD_MS (3 s), and closing
-  behind me over PORTAL_CLOSE_MS (1.5 s) (`wayInStep`). Opened again as the relay's count of the fight's fighters rises
-  - another stepping in - over WAY_IN_OPEN_MS; that count comes with the state (STATE_SEND_MS, 5 s apart), so another's
-  may open a breath late. Never a door: it takes nobody back.
+  Whole as I step out of it - my ARRIVAL, the frame the step's veil lifts with my feet in the court, however late the
+  fight's first word - held WAY_IN_HOLD_MS (3 s) from then, and closing behind me over PORTAL_CLOSE_MS (1.5 s)
+  (`wayInStep`); a first word after the hold finds it shut. Opened again over WAY_IN_OPEN_MS for another stepping out
+  of it: a player this screen sees in the court's room this look and not the last, standing within WAY_IN_NEAR_M
+  (6 m) of where the players arrive (`gateCourt.stepsIn`, from the host's online frame - every player in the room, the
+  crowd's cut or not); the first look after my arrival only learns who is here. A fighter walking back in opens it as a
+  newcomer does. Never a door: it takes nobody back.
 - THE WAY HOME where he fell (WBX2, SS3) rises as it did, and closes over the PORTAL_CLOSE_MS before the court comes
   apart (`portalFade`: net/gateLaw.js gateTimes' wrathAt and GATE_COLLAPSE_MS, the host's own collapse). Both fires go
   in the one pass, the way home's with its beacon.
-- No relay change and no wire change: the count of fighters is the state's `n`.
+- A COURT GONE SILENT casts its fighters out: with no door until he falls, a court whose fight has said nothing on this
+  screen's frames for COURT_SILENT_MS (20 s) - no state at all (a room that never answered, a socket retrying), or one
+  whose `heardAt` never moves (a stalled relay) - ejects by the lost way (`gateCourt.silent`, `scenes/world.js`; a
+  frame COURT_FRAME_GAP_MS after the last, a screen asleep, counts none; a fallen Warden's court and the Wrath's never).
+  `/unstuck` is refused in the court, in its own words (*You cannot find a way free in the Deadlands.*): until he falls,
+  death and the Wrath are the ways out.
+- No relay change and no wire change.
 
 **Seen** through `tools/gatePassProbe.mjs` (the stone with its own art and the pass, in a real WebGL2 - its server
 serves the bake as a JSON module now, and it shoots the stone from a player's eye beside its shoulder): the fire fits
 the new opening, narrow between the feet and notched under the lintel; the veins climb the pillars at the texel scale
 of the world round them; the spines' points burn. Not yet seen in the game over a real gate or a real court.
 
-Pinned: `test/gatefbx.test.js` (7) - the bake re-made to the byte (its frame a turn, its ground, its middle), the scene
-read for one object (the mirrored one asked nothing; read whole, still refused) and a piece in the gate's box refused,
-the roots off the bake and the trap built on them, the court's fire's two laws, the way in driven (shut under the veil,
-whole as it lifts, held and closed, opened by a rise in the fighters and not a fall, no door), the way home closing
-with the court, and the pass's `fireOnly`. `test/wb2_gate.test.js`'s four on the stone rewritten for Mac's gate: the
-bake's every triangle in the model as baked and the soles sunk; the faces out (the soles' walls, each spine about its
-own axis, `spike()` in three directions, and `gateSpines` on a cone and a box); the way in clear and the fire its margin
-clear of the stone at every 2 cm; the art and every face on its picture. Moved with it: `test/wb3b_gate_arena.test.js`
-(the clear floor has no posts by the bridge, the court's art three records, `standCourt` lays no door),
-`test/wbx_gate_fixes.test.js` (the press test's one door, the pass's one list of fires), `test/gateclear.test.js`
-(GATE_HALF_W for PLINTH_R), `test/wb12d_rite_world.test.js` (the art uploaded). Mutants `tools/mutants/gatefbx.json`
-(23, all dead) and `tools/mutants/wb2.json` re-run (25, all dead); six records retired with the code they guarded -
+Pinned: `test/gatefbx.test.js` (14) - the bake re-made to the byte (its frame a mirror and every polygon reversed, its
+ground, its middle), the scene read for one object (the mirrored one asked nothing; read whole, still refused) and a
+piece in the gate's box refused; the stone's solids closed and wound out, a body sealed in them and free beside them;
+the rise sunk whole on a slope; the court's fire's two laws; the way in driven (shut under the veil, whole as it lifts,
+held from my arrival and closed, a late first word never flashing it, opened for another stepping out of it and for a
+returner, not for the first look, one far off or one still standing, no door); the court gone silent; the door laid
+first; the way home closing with the court; the fires the court hands its pass, and the pass's `fireOnly`; the fire's
+foot; every emission white; the host's seams (/unstuck, stepsIn, the silent court's eject). `test/wb2_gate.test.js`'s
+five on the stone rewritten for Mac's gate: the bake's every triangle in the model as baked, the soles sunk, its reach
+and its parts; the faces out (the soles' walls, each spine about its own axis, `spike()` in three directions, and
+`gateSpines` on a cone and a box); the way in clear and the fire its margin clear of the stone at every 2 cm, at the
+stone's clear at 20 or more of its 24 heights and never a strip past 0.6 m; the opening's top on made-up parts; the art
+and every face on its picture (the rim by hand, its smoulder seen, every face laid with the least stretch its own normal
+allows). Moved with it: `test/wb3b_gate_arena.test.js` (the clear floor has no posts by the bridge, the court's art
+three records, `standCourt` lays no door), `test/wbx_gate_fixes.test.js` (the press test's one door, the pass's one list
+of fires), `test/gateclear.test.js` (GATE_HALF_W for PLINTH_R), `test/wb12d_rite_world.test.js` (the art uploaded),
+`test/auditwbx.test.js` and `test/auditwbx2.test.js` (the sealed-in points off the stone's solids),
+`test/doctrine.test.js`'s allowlist (the source and the bake). Mutants `tools/mutants/gatefbx.json` (58, all dead) and
+`tools/mutants/wb2.json` re-run (25, all dead); six records retired with the code they guarded -
 WB2-a-spire-in-the-way-in, WB2-the-right-horn-inside-out, WB2-the-root-band-unclamped (the horns, the rim spires, the
 plinth's lip), WB3b-the-membrane-dark, WB3b-the-way-home-faces-out and WB3b-the-way-home-no-exit-door (the bridge's
 membrane, its art and its door).
+
+### AUDIT GATE-FBX (2026-10-09, Mac: "Audit this")
+
+Four lanes read the change as pushed (f2d13738, ea661e52) - the stone, its bake and its art (G); the gate in the world
+(E); the court's fire at runtime (C); the pins, the mutants and the record (P) - each finding checked in the code before
+it was fixed, pinned red-then-green and its mutant recorded (`tools/mutants/gatefbx.json`, the `AUDIT-GATE-FBX-`
+records).
+
+| # | found | fixed |
+|---|---|---|
+| C1 | a court whose fight never said a word or stopped saying them (a full room's 503, a busy relay's retries, a stalled brain) had no way out until the collapse, up to twenty minutes - the bridge's membrane had been it | a court silent COURT_SILENT_MS on this screen's frames ejects by the lost way (`gateCourt.silent`) |
+| C2 | `/unstuck` in the court walked a fighter out mid-fight - no veil, no toll, no cooldown spent on a death | refused there in its own words |
+| C3 | the way in opened on a rise in the relay's count of fighters - a count that heard a newcomer up to STATE_SEND_MS late and never rose for a fighter walking back in or a seat changing hands | opened for a player this screen sees step out of it (`stepsIn`) |
+| C4 | a fight's first word arriving after my arrival popped the way in open whole behind a player already walking off | held from my arrival; a word after the hold finds it shut |
+| C5 | the court's one door after the fall was laid at the end of the court's frame - a throw in any step before it (the host swallows them) left no door | laid at the top of the frame |
+| C6, G7, E6, P10 | comments still naming the membrane, the horns, the plinth, the rim spires and the beacon's foot | rewritten - but `net/gateRite.js`'s, which rides the relay bundle and waits for the next relay slice's RELAY_VERSION |
+| G1 / P2 | the rim's rule took the flanks of each pillar's outer flange - faces looking out of the gate's front and back, 30% of the rim's area - and its pin restated the rule clause for clause, so it could not see them | the rule bounded by the opening's widest reach and turned across the threshold; pinned against the faces by hand |
+| G2 / E4 | the fire took the least clear over two bands at each height and stood up to 1.15 m short of the stone (a see-through strip 0.49 m wide up the feet) | the stone's own clear at each height, both heights lowered only where the line between them runs into a corner of it |
+| G3 / P6 | four of Mac's quads stand out of their plane; a triangle of each laid along its quad's axis stood its texels 4.5 times wide; the tops' and the x-faces' UVs had no pin | each triangle's own normal; every face's stretch the least its normal allows, pinned |
+| G4 | the rim's smoulder burned at (6, 1, 0) and every gate and court emission was tinted by the window light - the frame round the portal never glowed | RIM_SMOULDER two fifths of an ember; every emission uploaded white |
+| G5 | the bake's map turned Blender's numbers where the port's handedness law mirrors them - the gate stood front to back from Mac's | a mirror, every polygon reversed, as a ship's |
+| G8 | no stone over the threshold's middle made ARCH_Y1 Infinity, and the shader would not build | `gateArchTop` refuses it |
+| E1 | the root trap stopped 2.8 m up: a body in a pillar on a hillside, or held in one as it rose, was sealed in until the collapse | the stone's own closed pieces, asked at the capsule's axis |
+| E2 | the trap's ellipse took the threshold's free edge and the ground before a foot, and set those players down before the gate | the same: free wherever the stone is not |
+| E3 | sunk exactly its height, the lintel's top shimmered in the ground's plane and on a slope its downhill end stood out before the rise | RISE_SLACK_M under, the lintel's ends' ground asked |
+| E5 | on a slope across the arch the fire's foot floated over the downhill ground | down between the sunk soles |
+| P1 | the court's way-in drawing had no pin - the pass never built before his fall, or the list of fires never cleared, both survived | the court driven over a fake GL, its pass's list read |
+| P3, P4, P5, P9 | the Testing rows, test titles and Ledger rows kept the retired text with a GATE-FBX note after it; Mac's quote twice, once misquoted; the way in's reopening overstated; the allowlist rows unnamed | rewritten in place |
+| P7, P8 | GATE_HALF_W and the model's `parts` pinned by nothing | pinned against the bake |
+| P11 | the arch top's mutant died for the wrong reason; its two guards had no pin | made faithful; pinned on made-up parts |
+| P12 | WB3b-the-omen-deaf-to-the-kill survived, before this slice - `scenes/world.js` holds its line twice and the pin matched either | the pin names the omen's own |
+
+Measured, not changed: the beacon's ring stands 0.93 m out of the lintel's faces where it leaves the gate, at under a
+thirtieth of its light (its comment says so now); the two court fires are not sorted by depth (both on screen only to a
+fighter back in after his fall). Found and NOT fixed, outside the slice: `AUDWBX2-M3-the-mark-handed-over`
+(`tools/mutants/auditwbx2.json`, `server/src/index.js`) survives on the pushed head as before this change - a relay
+pin for the next relay slice.
 
 ## Shipped
 

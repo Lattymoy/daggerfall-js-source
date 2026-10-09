@@ -136,7 +136,7 @@ test('WBX2 the portal home: nothing while he stands or falls; PORTAL_AFTER_MS in
   at(late, 50000 + PORTAL_AFTER_MS + PORTAL_RISE_MS + 5000, fell);
   assert.deepEqual(late.said, [], 'a portal long risen is not announced');
   assert.equal(late.doors.length, 1, 'but its door stands');
-  // the door's record: at the fall in the dungeon's frame, a body tall; the fire stood on the floor (the plinth absent)
+  // the door's record: at the fall in the dungeon's frame, a body tall; the fire stood on the floor (the gate's opening starts on its ground)
   const door = portalDoor([6, -4]);
   assert.deepEqual([door.matrix[12], door.matrix[13], door.matrix[14]], courtToDungeon(6, 0, -4));
   assert.equal(door.size.y, EXIT_H);

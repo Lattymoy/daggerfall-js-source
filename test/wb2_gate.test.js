@@ -6,11 +6,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  buildGateModel, gateArchProfile, gateSpines, faces, spike, GATE_ARCHIVE, GATE_STONE_RECORD, GATE_PLINTH_RECORD, GATE_SPINE_RECORD, GATE_RIM_RECORD,
-  GATE_HEIGHT, GATE_HALF_W, GATE_FOOT_SINK, GATE_TILE_M, GATE_ROOT, ARCH_Y0, ARCH_Y1, ARCH_PROFILE_N, PORTAL_CENTRE_Y,
+  buildGateModel, gateArchProfile, gateArchTop, gateSpines, gateClearAt, faces, spike, GATE_ARCHIVE, GATE_STONE_RECORD, GATE_PLINTH_RECORD, GATE_SPINE_RECORD, GATE_RIM_RECORD,
+  GATE_HEIGHT, GATE_HALF_W, GATE_FOOT_SINK, GATE_TILE_M, GATE_PART, ARCH_Y0, ARCH_Y1, ARCH_PROFILE_N, PORTAL_CENTRE_Y,
 } from '../src/world/gateModel.js';
 import GATE_BAKE from '../src/assets/gate/oblivionGate.json' with { type: 'json' };
-import { gateStoneArt, gatePlinthArt, gateSpineArt, gateRimArt, gateArt, GATE_ART_SIZE, VEIN_HEART, RUNE_GLOW } from '../src/world/gateArt.js';
+import { gateStoneArt, gatePlinthArt, gateSpineArt, gateRimArt, gateArt, GATE_ART_SIZE, VEIN_HEART, RUNE_GLOW, RIM_EMBER, RIM_SMOULDER } from '../src/world/gateArt.js';
 import {
   GatePassRenderer, GATE_CLOCK_PERIOD, gateClock, MEMBRANE_TURN_SEALED_HZ, MEMBRANE_TURN_OPEN_HZ, MEMBRANE_FLOW_HZ, BEACON_CLIMB_HZ,
   GATE_PASS_MAX, MEMBRANE_VS, MEMBRANE_FS, BEACON_VS, BEACON_FS, BEACON_START_M, BEACON_WIDEN, membraneVertices, beaconVertices,
@@ -24,7 +24,7 @@ import { composeNamer } from '../src/systems/worldHover.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
-test('WB2 the stone - GATE-FBX: Mac\'s gate as baked (tools/bakeGate.mjs), renderer.createMesh\'s own shape, flat-shaded, three textures of the gate\'s pseudo-archive, WB2\'s height; every triangle of the bake stands in it corner for corner and wound as baked, its soles sunk under the ground on walls of their own (mutants: a face turned over; the soles left on the ground)', () => {
+test('WB2 the stone - GATE-FBX: Mac\'s gate as baked (tools/bakeGate.mjs), renderer.createMesh\'s own shape, flat-shaded, three textures of the gate\'s pseudo-archive, WB2\'s height; every triangle of the bake stands in it corner for corner and wound as baked, its soles sunk under the ground on walls of their own; AUDIT GATE-FBX P7/P8: its reach across x the spines\' points, and every spine\'s face a Spike of the model\'s parts, the rest Stone (mutants: a face turned over; the soles left on the ground; the reach read off z; the spines Stone)', () => {
   const m = buildGateModel();
   const n = m.positions.length / 3;
   assert.equal(m.normals.length, n * 3); assert.equal(m.uvs.length, n * 2); assert.equal(m.indices.length, n);
@@ -60,6 +60,17 @@ test('WB2 the stone - GATE-FBX: Mac\'s gate as baked (tools/bakeGate.mjs), rende
   let low = Infinity;
   for (let i = 1; i < m.positions.length; i += 3) low = Math.min(low, m.positions[i]);
   assert.ok(Math.abs(low + GATE_FOOT_SINK) < 1e-6, 'the feet run on under the ground');
+  // its reach across x: the spines' points, 7.73 m out
+  const tips = gateSpines().map((x) => Math.abs(B[x.tip * 3]));
+  assert.equal(GATE_HALF_W, Math.max(...tips), 'the spines\' points');
+  assert.ok(Math.abs(GATE_HALF_W - 7.7282) < 1e-4, `${GATE_HALF_W}`);
+  // its parts: a spine's every face a Spike, every other face Stone
+  assert.equal(m.parts.length, n / 3);
+  const spine = m.subMeshes.find((x) => x.textureRecord === GATE_SPINE_RECORD);
+  for (let t = 0; t < n / 3; t++) {
+    const inSpine = t * 3 >= spine.startIndex && t * 3 < spine.startIndex + spine.primitiveCount * 3;
+    assert.equal(m.parts[t], inSpine ? GATE_PART.Spike : GATE_PART.Stone, `triangle ${t}`);
+  }
 });
 
 test('WB2 the stone faces out - GATE-FBX: the soles\' walls away from their sole and the sunk soles down; every spine\'s three faces away from its own axis, its point the corner they share; and spike() (the court\'s spires\', the Deadlands\') wound outward whatever way it points (mutants: a spike wound inward)', () => {
@@ -67,13 +78,17 @@ test('WB2 the stone faces out - GATE-FBX: the soles\' walls away from their sole
   const tri = (i) => [0, 1, 2].map((v) => [P[i + v * 3], P[i + v * 3 + 1], P[i + v * 3 + 2]]);
   const normal = ([a, b, c]) => { const e1 = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], e2 = [c[0] - a[0], c[1] - a[1], c[2] - a[2]]; return [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]]; };
   const mid = (c) => [0, 1, 2].map((k) => (c[0][k] + c[1][k] + c[2][k]) / 3);
-  // the soles and their walls: below the ground, about each foot's middle
+  // the soles and their walls: below the ground, each wall facing away from its sole's middle (read off the bake)
+  const bake = GATE_BAKE.parts[0], BP = bake.positions;
+  const soleMids = bake.polygons.filter((poly) => poly.every((v) => Math.abs(BP[v * 3 + 1]) < 1e-3))
+    .map((poly) => [0, 1, 2].map((k) => poly.reduce((sum, v) => sum + BP[v * 3 + k], 0) / poly.length));
+  assert.equal(soleMids.length, 2, 'two feet');
   let walls = 0, sunk = 0;
   for (let i = 0; i < P.length; i += 9) {
     const c = tri(i), cen = mid(c), nr = normal(c);
     if (!(cen[1] < -1e-3)) continue;
     if (c.every((v) => Math.abs(v[1] + GATE_FOOT_SINK) < 1e-6)) { assert.ok(nr[1] < 0, 'a sunk sole faces down'); sunk++; continue; }
-    const foot = [Math.sign(cen[0]) * (GATE_ROOT.x - GATE_ROOT.halfX / 2), 0, 0];   // the sole's middle: between the feet's inner edge and the root's middle
+    const foot = soleMids.reduce((a, b) => (Math.hypot(b[0] - cen[0], b[2] - cen[2]) < Math.hypot(a[0] - cen[0], a[2] - cen[2]) ? b : a));   // its own sole's middle
     const out = [cen[0] - foot[0], 0, cen[2] - foot[2]];
     assert.ok(nr[0] * out[0] + nr[2] * out[2] > 0, `a sole's wall faces in at ${cen.map((x) => x.toFixed(2))}`);
     walls++;
@@ -145,16 +160,35 @@ test('WB2 the way in is clear - GATE-FBX: nothing of Mac\'s stone stands in the 
   assert.ok(openingHalfWidth(prof, 1.2) > 1.6 && openingHalfWidth(prof, 2) > 1.6, 'a body walks through with room either side');
   assert.ok(Math.max(...prof) > 3.3 && Math.max(...prof) < 3.6, 'as wide as the pillars stand apart, less the margin');
   assert.ok(Math.min(...prof.slice(-4)) < 0.4 * Math.max(...prof), 'the cut corners narrow it under the lintel');
-  // the fire never runs into the stone: at every height the stone stands clear of it by the margin
+  // the fire never runs into the stone: at every height the stone stands clear of it by the margin (to the millimetre
+  // the profile's two ends are measured inside the opening - the feet's inner faces widen 0.8 mm up it)
   for (let y = ARCH_Y0 + 0.01; y < ARCH_Y1; y += 0.02) {
     const fire = openingHalfWidth(prof, y);
-    assert.ok(sectionClear(P, y) >= fire + 0.15 - 1e-4, `the fire into the stone at y ${y.toFixed(2)}: ${fire.toFixed(3)} against ${sectionClear(P, y).toFixed(3)}`);
+    assert.ok(sectionClear(P, y) >= fire + 0.15 - 1e-3, `the fire into the stone at y ${y.toFixed(2)}: ${fire.toFixed(3)} against ${sectionClear(P, y).toFixed(3)}`);
   }
   assert.equal(openingHalfWidth(prof, ARCH_Y0 - 1), 0);
   assert.equal(openingHalfWidth(prof, ARCH_Y1 + 1), 0);
+  // AUDIT GATE-FBX G2: and it fits - each height the stone's own clear less the margin, but where the line between two
+  // runs into a corner of the stone between them; nowhere a strip of sky between the fire and the stone wider than 0.6 m
+  const band = (ARCH_Y1 - ARCH_Y0) / (ARCH_PROFILE_N - 1);
+  const tight = prof.filter((w, k) => Math.abs(w - Math.max(0, gateClearAt(P, Math.min(ARCH_Y1 - 1e-3, Math.max(ARCH_Y0 + 1e-3, ARCH_Y0 + k * band))) - 0.15)) < 1e-6).length;
+  assert.ok(tight >= 20, `${tight} of ${ARCH_PROFILE_N} heights at the stone's clear less the margin`);
+  let wide = 0;
+  for (let y = ARCH_Y0 + 0.01; y < ARCH_Y1; y += 0.01) wide = Math.max(wide, sectionClear(P, y) - openingHalfWidth(prof, y));
+  assert.ok(wide < 0.6, `the widest strip between the fire and the stone ${wide.toFixed(3)} m (1.15 m in the bands' days)`);
 });
 
-test('WB2 the art - GATE-FBX: sixty-four texels square, the same stone for every client, fire only in the veins and the runes; every face laid on its picture - a standing face\'s veins climbing it, the rim the faces looking into the opening, each spine its horn root to burning point (mutants: a wall of fire; the veins never burn; the spine laid point to root; the rim on the outside)', () => {
+test('AUDIT GATE-FBX G8 the opening\'s top: the least height over the threshold\'s middle of a face standing over it - the floor under half a metre and a face edge-on over the middle answer nothing - and a part with none refused, never Infinity handed to the fire\'s shader (mutants: the floor taken for the top; the crown taken for it)', () => {
+  const part = (...tris) => ({ positions: tris.flat(2), triangles: tris.flatMap((_, t) => [t * 3, t * 3 + 1, t * 3 + 2]) });
+  const flat = (y, r = 2) => [[-r, y, -r], [r, y, -r], [0, y, r]];
+  const edgeOn = [[-1, 1, 0], [1, 1, 0], [0, 3, 0]];
+  assert.equal(gateArchTop(part(flat(0.2), flat(9), flat(5), edgeOn)), 5, 'the lowest stone over the middle');
+  assert.equal(gateArchTop(part(flat(5), flat(3, 0.5).map(([x, y, z]) => [x + 4, y, z]))), 5, 'a face off the middle answers nothing');
+  assert.throws(() => gateArchTop(part(flat(0.2), edgeOn)), /no stone over its threshold/);
+  assert.equal(gateArchTop(), ARCH_Y1);
+});
+
+test('WB2 the art - GATE-FBX: sixty-four texels square, the same stone for every client, fire only in the veins and the runes; every face laid on its picture - a standing face\'s veins climbing it, the rim the faces looking into the opening, each spine its horn root to burning point; AUDIT GATE-FBX G1/G3/G4: the rim Mac\'s own faces round the opening by hand - never a pillar\'s outer flank - its stone smouldering where it can be seen; and no face\'s picture stretched, its own normal choosing how it is laid (mutants: a wall of fire; the veins never burn; the spine laid point to root; the rim on the outside; the rim on the flanks; the rim cold; a face laid by its quad\'s normal; the tops\' v up; a spine\'s root one corner)', () => {
   const s = gateStoneArt(), p = gatePlinthArt(), sp = gateSpineArt(), rim = gateRimArt();
   for (const a of [s, p, sp, rim]) {
     for (const img of [a.albedo, a.emission]) { assert.equal(img.width, GATE_ART_SIZE); assert.equal(img.height, GATE_ART_SIZE); assert.equal(img.colors.length, GATE_ART_SIZE * GATE_ART_SIZE * 4); }
@@ -171,8 +205,12 @@ test('WB2 the art - GATE-FBX: sixty-four texels square, the same stone for every
   assert.ok(darkest < 40, 'the basalt is near black');
   const heart = (img, rgb) => { for (let i = 0; i < img.colors.length; i += 4) if (img.colors[i] === rgb[0] && img.colors[i + 1] === rgb[1] && img.colors[i + 2] === rgb[2]) return true; return false; };
   assert.ok(heart(s.emission, VEIN_HEART) && heart(p.emission, RUNE_GLOW));
-  // the rim: more fire than the stone, and its stone smouldering where the stone's is dark
+  // the rim: more fire than the stone, and its stone smouldering where the stone's is dark - at an ember's two fifths,
+  // a glow the night shows (a fifth of the bank was (6, 1, 0))
   assert.ok(lit(rim.emission) > veins * 3, 'the rim smoulders');
+  let dimmest = 255;
+  for (let i = 0; i < rim.emission.colors.length; i += 4) dimmest = Math.min(dimmest, rim.emission.colors[i]);
+  assert.ok(dimmest >= Math.floor(RIM_EMBER[0] * RIM_SMOULDER) && dimmest >= 30, `its dimmest texel ${dimmest} red`);
   // the spine: dark from its root, burning toward its point - its first rows unlit, its last its hottest
   const row = (img, y) => { let sum = 0; for (let x = 0; x < GATE_ART_SIZE; x++) { const i = (y * GATE_ART_SIZE + x) * 4; sum += img.colors[i] + img.colors[i + 1] + img.colors[i + 2]; } return sum; };
   assert.equal(row(sp.emission, 0), 0, 'its root cold');
@@ -192,17 +230,43 @@ test('WB2 the art - GATE-FBX: sixty-four texels square, the same stone for every
   for (let i = stone.startIndex; i < stone.startIndex + stone.primitiveCount * 3; i++) {
     if (Math.abs(m.normals[i * 3 + 1]) < 0.5) assert.ok(Math.abs(m.uvs[i * 2 + 1] - m.positions[i * 3 + 1] / GATE_TILE_M) < 1e-5, 'v up a standing face');
   }
-  // the rim: the faces looking into the opening, and no other
+  // the rim: Mac's faces round the opening, BY HAND - each pillar's inner face, its foot's inner slope, the cut corners'
+  // two faces and the lintel's underside (bake polygons 4, 15, 19, 22, 25, 42, 46, 49, 52) - and each sole's inner
+  // wall under the ground; never the flanks of a pillar's outer flange (10, 14, 37, 41), which look out of its front and back
+  const RIM = [4, 15, 19, 22, 25, 42, 46, 49, 52];
+  const tkey = (c) => c.map((v) => v.map((x) => Math.fround(x)).join(',')).sort().join('|');
+  const want = new Set(), BB = part.positions, cAt = (v) => [BB[v * 3], BB[v * 3 + 1], BB[v * 3 + 2]];
+  part.triangleOf.forEach((k, t) => { if (RIM.includes(k)) want.add(tkey([0, 1, 2].map((e) => cAt(part.triangles[t * 3 + e])))); });
+  const rimSm = m.subMeshes.find((x) => x.textureRecord === GATE_RIM_RECORD), have = new Set();
+  let innerWalls = 0;
+  for (let i = rimSm.startIndex; i < rimSm.startIndex + rimSm.primitiveCount * 3; i += 3) {
+    const c = [0, 1, 2].map((v) => [...m.positions.subarray((i + v) * 3, (i + v) * 3 + 3)]);
+    if (c.some((v) => v[1] < -1e-3)) {   // under the ground: a sole's wall, its face turned to the threshold's middle
+      assert.ok(m.normals[i * 3] * Math.sign(c[0][0]) < -0.9, 'a sole\'s INNER wall');
+      innerWalls++;
+    } else have.add(tkey(c));
+  }
+  assert.deepEqual([...have].sort(), [...want].sort(), 'the rim, polygon for polygon');
+  assert.equal(innerWalls, 4, 'each sole\'s inner wall, two triangles');
+  // AUDIT GATE-FBX G3: no face's picture stretched past what a box projection must - each laid along the axis its OWN
+  // face looks down most, its picture's area its own times that largest share of its normal (never under 1/sqrt 3); a
+  // quad's normal laid a triangle of four of Mac's out-of-plane quads along another axis
   for (const sm of m.subMeshes) {
     if (sm.textureRecord === GATE_SPINE_RECORD) continue;
     for (let i = sm.startIndex; i < sm.startIndex + sm.primitiveCount * 3; i += 3) {
-      const c = [0, 1, 2].map((k) => (m.positions[i * 3 + k] + m.positions[(i + 1) * 3 + k] + m.positions[(i + 2) * 3 + k]) / 3);
-      const nr = [m.normals[i * 3], m.normals[i * 3 + 1], m.normals[i * 3 + 2]];
-      const inward = nr[0] * Math.sign(c[0]) < -0.5 || (nr[1] < -0.3 && c[1] > 1 && Math.abs(c[0]) < GATE_ROOT.x);
-      assert.equal(sm.textureRecord === GATE_RIM_RECORD, inward, `the rim where a face looks into the opening (${c.map((x) => x.toFixed(2))})`);
+      const p = (v) => [...m.positions.subarray((i + v) * 3, (i + v) * 3 + 3)], uv = (v) => [m.uvs[(i + v) * 2], m.uvs[(i + v) * 2 + 1]];
+      const [a, b, c] = [p(0), p(1), p(2)], e1 = b.map((x, k) => x - a[k]), e2 = c.map((x, k) => x - a[k]);
+      const area = Math.hypot(e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]) / 2;
+      const [ua, ub, uc] = [uv(0), uv(1), uv(2)], uvArea = Math.abs((ub[0] - ua[0]) * (uc[1] - ua[1]) - (uc[0] - ua[0]) * (ub[1] - ua[1])) / 2;
+      const nr = [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]].map((x) => Math.abs(x) / (2 * area));
+      assert.ok(Math.abs((uvArea * GATE_TILE_M * GATE_TILE_M) / area - Math.max(...nr)) < 1e-3 && Math.max(...nr) >= 1 / Math.sqrt(3) - 1e-9, `a face laid stretched at ${a.map((x) => x.toFixed(2))}`);
     }
   }
-  assert.ok(m.subMeshes.find((x) => x.textureRecord === GATE_RIM_RECORD).primitiveCount >= 8, 'both pillars\' inner faces and the lintel\'s underside at least');
+  // a spine's three corners three places on its picture
+  for (let i = spine.startIndex; i < spine.startIndex + spine.primitiveCount * 3; i += 3) {
+    const keys = new Set([0, 1, 2].map((v) => `${m.uvs[(i + v) * 2]},${m.uvs[(i + v) * 2 + 1]}`));
+    assert.equal(keys.size, 3, 'root, root and point');
+  }
 });
 
 test('WB2 the fire and the beacon: every rate whole cycles over the clock, the membrane masked to the arch, the beacon never a hair', () => {
@@ -373,7 +437,7 @@ test('WB2 the door: sealed says when, open without a relay says not yet, open wi
   assert.equal(r.pool.hoverName(7), null, 'a door\'s bare number is not the gate\'s (AUDIT-WH C1)');
 });
 
-test('WB2 the walk through: a step across the fire inside its opening enters; beside the horns it does not; the banner near it alone', () => {
+test('WB2 the walk through: a step across the fire inside its opening enters; beside the pillars it does not; the banner near it alone', () => {
   let feet = null;
   const w = world({ day: 730, ready: true, feet: () => feet });
   w.clock.now = w.t.openAt + 1000;
@@ -387,7 +451,7 @@ test('WB2 the walk through: a step across the fire inside its opening enters; be
   const p2 = w2.pool.frame(0.016);
   const at2 = (lx, lz) => { const c = Math.cos(p2.yaw), s = Math.sin(p2.yaw); return [p2.origin[0] + c * lx + s * lz, p2.origin[1] + 1, p2.origin[2] - s * lx + c * lz]; };
   for (const [lx, lz] of [[7, 1], [7, -1]]) { feet = at2(lx, lz); w2.pool.frame(0.016); }
-  assert.equal(w2.entered.length, 0, 'past the horns, not through the fire');
+  assert.equal(w2.entered.length, 0, 'past the pillars, not through the fire');
   assert.ok(w2.banners.at(-1)?.startsWith('Dagon\'s Breach - seals in'), 'near it, the countdown stands over the screen');
   // GATE-COLLAPSE: sealed for the night, the banner counts down to the collapse (it said "sealed" and nothing more)
   w2.clock.now = w2.t.sealAt + 2000;

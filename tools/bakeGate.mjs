@@ -16,9 +16,12 @@
 // (tools/shipBake.mjs): the bake is a DERIVATION, never a blob.
 //
 // ITS FRAME (`FRAME`): the gate's own (world/gateModel.js) - metres, the origin on the ground in the middle of the
-// threshold, +y up, the pillars across x, the opening facing +z and -z. Mac's scene is Z up, so a scene point (X, Y, Z)
-// is the gate's ( X - x, Z - ground, y - Y ) times SCALE - a turn, not a mirror, so every polygon keeps its corners'
-// order: each face's (b - a) x (c - a) still points out of the stone, as world/gateModel.js faces' do. `x` and `y` are the
+// threshold, +y up, the pillars across x, the opening facing +z and -z. Mac's scene is Z up and RIGHT-handed, the
+// world LEFT-handed (world/mat4.js THE HANDEDNESS LAW - x east, y up, z north, as Daggerfall Unity's data is), so a scene
+// point (X, Y, Z) is the gate's ( X - x, Z - ground, Y - y ) times SCALE: a MIRROR in the numbers, which is what keeps
+// his gate his own in the world (AUDIT GATE-FBX G5: the turn this bake first used, ( X, Z, -Y ), stood it mirrored front
+// to back), and every polygon's corners REVERSED on the way through, as tools/shipBake.mjs bakePart reverses a ship's -
+// so each face's (b - a) x (c - a) points out of the stone, as world/gateModel.js faces' do. `x` and `y` are the
 // object's own origin, to the bit - the middle of the cube Mac drew the lintel from (the spines stand 6 cm off it, as
 // drawn); `ground` the feet. SCALE 0.53 makes it 16.19 m tall, the 16.2 m of the gate it replaces (WB2's), so the
 // beacon, the light, the clearing and the court's fire keep their sense; Mac drew it 30.55 m.
@@ -44,7 +47,7 @@ export const BOX = Object.freeze([[-128.626, 58.597, -15.352], [-99.585, 63.727,
 export const FRAME = Object.freeze({ scale: 0.53, x: -114.166103515625, y: 61.1000537109375, ground: -15.352 });
 
 /** A scene point (metres, Z up) in the gate's frame. */
-export const toGate = ([x, y, z], frame = FRAME) => [(x - frame.x) * frame.scale, (z - frame.ground) * frame.scale, (frame.y - y) * frame.scale];
+export const toGate = ([x, y, z], frame = FRAME) => [(x - frame.x) * frame.scale, (z - frame.ground) * frame.scale, (y - frame.y) * frame.scale];
 
 /** Every other object of the scene stands wholly clear of the gate's box - or the bake refuses, naming it. */
 export function assertAlone(objects, gate) {
@@ -60,8 +63,8 @@ export function assertAlone(objects, gate) {
 
 /**
  * The bake: the FBX's bytes in, the gate out, in tools/shipBake.mjs's shape (one part, `gate`): its positions (the
- * source's corners and no others), its polygons as authored, each one's material, its triangles as Blender cuts them
- * and which polygon each is of. Pure.
+ * source's corners and no others), its polygons as authored (their corners reversed through the mirror), each one's
+ * material, its triangles as Blender cuts them and which polygon each is of. Pure.
  * @param {Uint8Array} fbxBytes
  */
 export function bakeGate(fbxBytes, tree = readFbx(fbxBytes), source = SOURCE_FBX) {
@@ -78,9 +81,9 @@ export function bakeGate(fbxBytes, tree = readFbx(fbxBytes), source = SOURCE_FBX
   const polygons = [], material = [], triangles = [], triangleOf = [];
   let split = 0;
   gate.polygons.forEach((poly, k) => {
-    polygons.push([...poly]);
+    polygons.push([...poly].reverse());   // the mirror: the port's winding
     material.push(gate.polyMaterial[k] >= 0 ? gate.materials[gate.polyMaterial[k]] ?? null : null);
-    for (const [a, b2, c] of fillFace(gate, k)) { triangles.push(poly[a], poly[b2], poly[c]); triangleOf.push(k); }
+    for (const [a, b2, c] of fillFace(gate, k)) { triangles.push(poly[a], poly[c], poly[b2]); triangleOf.push(k); }   // Blender's cut, carried through the mirror
     if (poly.length > 3) split++;
   });
   return {

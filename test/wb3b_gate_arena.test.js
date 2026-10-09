@@ -65,7 +65,7 @@ test('WB3b the made level: the court\'s location and its one block, laid by the 
   assert.ok(GATE_ARENA_LOCATION_ID > 0xffffff);
 });
 
-test('WB3b the court: renderer.createMesh\'s shape; the floor faces up and stands CLEAR - nothing of the court rises from it inside its edge but the way home\'s arch; the rune ring sits on BOSS_REACH_R; the rock it stands on goes down into the fire; the braziers light it, clear of the bridge; the way home is an exit door by the arrival, facing in; the collider\'s floor covers the disc and the motor\'s ring is its edge (mutants: a floor face wound down; a spire stood on the floor; the ring off the boss\'s reach)', () => {
+test('WB3b the court: renderer.createMesh\'s shape; the floor faces up and stands CLEAR - nothing of the court rises from it inside its edge (GATE-FBX: the way home\'s arch by the bridge gone with its membrane); the rune ring sits on BOSS_REACH_R; the rock it stands on goes down into the fire; the braziers light it, clear of the bridge; the collider\'s floor covers the disc and the motor\'s ring is its edge (mutants: a floor face wound down; a spire stood on the floor; the ring off the boss\'s reach)', () => {
   const m = buildCourtModel();
   const n = m.positions.length / 3;
   assert.equal(m.subMeshes.reduce((s, sm) => s + sm.primitiveCount * 3, 0), n, 'every vertex in a sub-mesh');
@@ -217,7 +217,7 @@ test('WB3b the link: the relay\'s words folded into one state - a whole state st
   assert.equal(fellLine({ near: 'X', boss: 'B', top: [] }), 'B has fallen at Dagon\'s Breach near X. The breach collapses.');
 });
 
-test('WB3b the seams, by source: the dungeon host enters the court through its own transition (the made level whole, its blocks file, the court stood before the marker is read, the way home its exit door and landing before the gate), wears the Deadlands\' air and braziers there, and names its room the gate\'s; the context refuses the map, the rest and the save; the world host opens the door at a relay that runs the room, keys the court\'s room, says the level claim once per welcome, holds the ring, casts a death out before the gate, refuses the mark, and ends the court with its day or with online (mutants: each seam removed)', () => {
+test('WB3b the seams, by source: the dungeon host enters the court through its own transition (the made level whole, its blocks file, the court stood before the marker is read, the way home landing before the gate - GATE-FBX: no exit door of its own, the portal\'s named the way home), wears the Deadlands\' air and braziers there, and names its room the gate\'s; the context refuses the map, the rest and the save; the world host opens the door at a relay that runs the room, keys the court\'s room, says the level claim once per welcome, holds the ring, casts a death out before the gate, refuses the mark, and ends the court with its day or with online (mutants: each seam removed)', () => {
   const wm = read('src/scenes/worldModes.js');
   assert.match(wm, /async function enterGateArena\(g\) \{[\s\S]{0,1500}return gatedTransition\(\(live\) => dungeonTransition\(hit, \[\], true, live\)\);/);   // AUDIT WB B3/B5: the door's two checks after the fire widened it
   assert.match(wm, /const sized = dungeonLocationFor\(hit\.dfLocation, /, 'the court\'s one block passes the sizing law whole');
@@ -257,7 +257,7 @@ test('WB3b the seams, by source: the dungeon host enters the court through its o
   assert.match(w, /if \(courtDay != null && Date\.now\(\) \+ _sharedOffsetMs >= gateTimes\(courtDay\)\.wrathAt \+ GATE_COLLAPSE_MS\) \{[\s\S]{0,400}?try \{ gateCourt\?\.frame\(\); \} catch[^\n]*\n\s*ejectFromCourt\(COURT_TEXT\.collapse\);/);
   assert.match(w, /const courtGate = modes\?\.gateArenaGate\?\.\(\) \?\? null;[\s\S]{0,200}if \(courtGate\) \{\n\s+modes\?\.forceExitToExterior\(\);\n\s+if \(landBeforeGate\(courtGate\)\) \{ gateVeil\?\.flash\(\); townTalk\.showOverlay\(new ActionTextBox\(\[COURT_TEXT\.castOut\]\)\); return; \}/, 'a death in the court is cast out before its gate');
   assert.match(w, /function setRecallAnchor\(\) \{\n\s+if \(modes\?\.gateArenaDay\?\.\(\) != null\) \{ setMidScreenText\(COURT_TEXT\.noMark\); return; \}/);
-  assert.match(w, /fellAt: \(day\) => gateLink\?\.fellAt\(day\) \?\? null,/, 'the omen hears the kill');
+  assert.match(w, /fellAt: \(day\) => gateLink\?\.fellAt\(day\) \?\? null, {3}\/\/ WB3b: the relay's word of the kill/, 'the omen hears the kill');   // AUDIT GATE-FBX P12: the omen's own line - the rite's (AUDIT WB12d R7) is its twin
   assert.equal(gateRoomKey(200), 'gate:200');
   assert.ok(Object.values(COURT_TEXT).every((t) => typeof t === 'string' && t.length > 8));
 });
