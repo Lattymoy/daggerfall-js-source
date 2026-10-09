@@ -12,7 +12,7 @@ import {
 } from '../src/net/sdBrain.js';
 import {
   stoneFrame, plaqueFrame, stoneQuads, lecternQuads, stoneSolids, hallSolidTris, buildHallModel, buildHandModel, handMatrix, buildBezelModel,
-  buildCrownGearModel, gearMatrix, bannerPose, buildBannerModel, buildLitModel, buildFrayModel, buildBandModel, bandMatrix,
+  buildCrownGearModel, crownGearMatrix, bannerPose, buildBannerModel, buildLitModel, buildFrayModel, buildBandModel, bandMatrix,
   buildBridgeModel, buildBridgePlateModel, plateMatrix, bridgePlateSpan, dialFloorQuads, numeralStrokes, frayTabBearing,
   SD_STONE_SIZE, SD_HANDLE, SD_PLAQUE, SD_LAW_MARGIN, SD_CROWN_GEAR, SD_BANNER, SD_BANNER_VERTS, SD_NUMERALS, SD_INNER_BEZEL, SD_LIT_RING,
   SD_FRAY_RING, SD_FRAY_TAB, SD_BRIDGE, SD_BRIDGE_PLATES, SD_BAND,
@@ -84,7 +84,7 @@ test('SD-LOOK S10 NO VISUAL LARGER THE LAW: every part of every stone - plinth, 
     const pts = [];
     for (const [, P] of stoneQuads(i)) pts.push(...P);
     pts.push(...vertsOf(buildBezelModel(i)));
-    for (const hr of [0, 1.5, 3, 6.25, 9, 11.9]) { pts.push(...vertsOf(hand, handMatrix(i, hr))); pts.push(...vertsOf(gear, gearMatrix(i, hr))); }
+    for (const hr of [0, 1.5, 3, 6.25, 9, 11.9]) { pts.push(...vertsOf(hand, handMatrix(i, hr))); pts.push(...vertsOf(gear, crownGearMatrix(i, hr))); }
     for (const age of [-1, 0.4, 1.1, 1.5, 2.2, 2.9, SD_BANNER.wind, 99]) {
       bannerPose(age, pos, nrm);
       for (let q = i * SD_BANNER_VERTS / SD_STONES.length; q < (i + 1) * SD_BANNER_VERTS / SD_STONES.length; q++) pts.push([pos[q * 3], pos[q * 3 + 1], pos[q * 3 + 2]]);

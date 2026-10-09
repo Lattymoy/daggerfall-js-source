@@ -19,7 +19,7 @@
 //
 // SD-LOOK S10 (2026-10-09; bible/11-Multiplayer/Super-Dungeons-Look.md section 7): THE ORRERY OF ENDINGS SEEN - every part
 // a dynamic draw that turns carries `noShadow`, and every frame makes nothing:
-//   CROWN GEARS - one mesh, six draws, each turned 2:1 with its own stone's shown hour (gearMatrix): it moves exactly when
+//   CROWN GEARS - one mesh, six draws, each turned 2:1 with its own stone's shown hour (crownGearMatrix): it moves exactly when
 //     its hand moves, so a partner's gear moves with that partner's hand and with nothing else.
 //   BEZELS - six meshes, each swapped by its draw's texRemap: gold while its stone's gear settles (SD_STONE_SETTLE_MS,
 //     dimming as it frees), the fray's ember when the realm refused MY turn of it (its word `w` to me alone).
@@ -40,7 +40,7 @@ import { SD_REALM_ARCHIVE, SD_REALM_BRASS_RECORD } from '../world/sdRealm.js';
 import { hallArt, gemGlow, SD_HALL_GLOW_RECORD, SD_HALL_GOLD_DIM_RECORD, SD_HALL_EMBER_DIM_RECORD, SD_HALL_GEM_RECORD, SD_HALL_FLASH_RECORD, SD_FLASH_COLOR } from '../world/sdHallArt.js';
 import {
   buildHallModel, buildHandModel, buildLitModel, buildFrayModel, buildBridgeModel, buildBridgePlateModel, buildBezelModel, buildCrownGearModel,
-  buildBannerModel, buildBandModel, bannerPose, bandMatrix, plateMatrix, gearMatrix, hallFloorTris, hallSolidTris, handMatrix, handleBox, plaqueBox,
+  buildBannerModel, buildBandModel, bannerPose, bandMatrix, plateMatrix, crownGearMatrix, hallFloorTris, hallSolidTris, handMatrix, handleBox, plaqueBox,
   dialCentre, beforeStone, stonePoint, SD_PLAQUE, SD_FRAY_RING, SD_BRIDGE_PLATES, SD_BANNER, SD_BANNER_VERTS, SD_DIAL, SD_BEZEL, SD_STONE_SIZE,
 } from '../world/sdHall.js';
 import { buildOrbitRing, buildOrreryHub, ringHang, ringPoseInto, ringMatrix, hubMatrix, ringTicks, gemCentre, SD_RING_SNAP_S, SD_ORRERY_RINGS } from '../world/sdOrreryModel.js';
@@ -187,7 +187,7 @@ export function createSdHall({ renderer = null, audio = null, s, now = () => per
     const old = frayMesh; frayMesh = make(buildFrayModel(f, tabs, { blaze })); frayDraw = swap(frayDraw, frayMesh); drop(old);
   };
   /** The crown gears where their hands are. */
-  const poseGear = (i) => { if (gears[i]) gearMatrix(i, shown[i], gears[i].object.matrix); };
+  const poseGear = (i) => { if (gears[i]) crownGearMatrix(i, shown[i], gears[i].object.matrix); };
   /** The Concord's last state, at once (a first word that says it holds; the end of its sequence). */
   function concordWhole() {
     concordDone = true; tocked = true;
@@ -262,7 +262,7 @@ export function createSdHall({ renderer = null, audio = null, s, now = () => per
       if (handMesh) for (let i = 0; i < SD_STONES.length; i++) { const d = drawOf(handMesh, handMatrix(i, shown[i])); hands.push(d); draws.push(d); }
       // SD-LOOK S10: the crown gears, the bezels, the banners, the rings and the hub with its gem
       gearMesh = make(buildCrownGearModel());
-      if (gearMesh) for (let i = 0; i < SD_STONES.length; i++) { const d = drawOf(gearMesh, gearMatrix(i, shown[i])); gears.push(d); draws.push(d); }
+      if (gearMesh) for (let i = 0; i < SD_STONES.length; i++) { const d = drawOf(gearMesh, crownGearMatrix(i, shown[i])); gears.push(d); draws.push(d); }
       for (let i = 0; i < SD_STONES.length; i++) { const m = make(buildBezelModel(i)); if (!m) continue; bezelMeshes.push(m); const d = drawOf(m); bezels[i] = d; draws.push(d); }
       bannerMesh = make(buildBannerModel());
       if (bannerMesh) { bannerDraw = drawOf(bannerMesh); draws.push(bannerDraw); }

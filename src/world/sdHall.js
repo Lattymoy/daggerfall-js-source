@@ -19,7 +19,7 @@
 // unchanged; over its crown, within its footprint): a two-step plinth and a chamfered shaft of dressed basalt, its
 // kingdom's heraldry in relief, a raised dial in a 16-gon brass BEZEL (its own mesh, so the scene swaps its state by
 // texRemap - cold, gold as its gear settles, ember when a turn is refused), the hand a spade, the handles cast levers
-// with chevrons; on its crown a 1.2 m brass gear that turns 2:1 with its hand (gearMatrix) and only with it; on its back
+// with chevrons; on its crown a 1.2 m brass gear that turns 2:1 with its hand (crownGearMatrix) and only with it; on its back
 // a banner in its kingdom's colours frozen mid-ripple (bannerPose - within the 5 cm too: a banner off an arm would hang
 // where a body walks through it). The plaques are brass lecterns, each an open bronze ledger at the tablet's own place.
 // The dial's floor is geometry: twelve raised numerals (XII toward +z), a rosette, a bezel round the inner ring, the six
@@ -493,7 +493,7 @@ export function buildBezelModel(i) {
   return packRealmFaces(f);
 }
 /** SD-LOOK S10: THE CROWN GEAR, in its own frame (its face +z, its axle the z axis, `SD_CROWN_GEAR.t` thick): a toothed
- *  rim, a hub and spokes - brass. One mesh, six draws (gearMatrix). */
+ *  rim, a hub and spokes - brass. One mesh, six draws (crownGearMatrix). */
 export function buildCrownGearModel() {
   const out = [], f = faces(), G = SD_CROWN_GEAR, rec = SD_REALM_BRASS_RECORD, z0 = -G.t / 2, z1 = G.t / 2, Z = [0, 0, 1], nZ = [0, 0, -1];
   const P = (r, a, z) => [r * Math.sin(a), r * Math.cos(a), z];
@@ -540,7 +540,7 @@ export function buildCrownGearModel() {
 /** SD-LOOK S10: THE CROWN GEAR's place on stone `i` while its hand shows `hour`: on its crown, its face toward the hall,
  *  turned SD_CROWN_GEAR.ratio times its hand's turn and against it (a gear the hand drives - it moves exactly when the
  *  hand moves, and more) - a proper turn, never a mirror. Into `out` (column-major, the dungeon's frame). */
-export function gearMatrix(i, hour, out = new Float32Array(16)) {
+export function crownGearMatrix(i, hour, out = new Float32Array(16)) {
   const { n, R } = stoneFrame(i);
   const t = -SD_CROWN_GEAR.ratio * ((hour % 12) / 12) * Math.PI * 2, c = Math.cos(t), s = Math.sin(t);
   const y0 = R[0] * s, y1 = c, y2 = R[2] * s;

@@ -155,8 +155,8 @@
   {
     "name": "SD6C-the-bridge-never-laid",
     "file": "src/scenes/sdHall.js",
-    "old": "      else { concordAt = now(); concordDone = false; tocked = false; bannerLive = !!bannerMesh; }",
-    "new": "      else { concordAt = now(); concordDone = true; tocked = false; bannerLive = !!bannerMesh; }",
+    "old": "      else { concordAt = now(); concordDone = false; tocked = false; bannerLive = !!bannerMesh; bannerKey = -1; }",
+    "new": "      else { concordAt = now(); concordDone = true; tocked = false; bannerLive = !!bannerMesh; bannerKey = -1; }",
     "tests": [
       "test/sd6c_hall.test.js"
     ]

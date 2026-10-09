@@ -74,8 +74,8 @@
   {
     "name": "SD25-S10-the-gear-ahead-of-its-hand",
     "file": "src/scenes/sdHall.js",
-    "old": "gearMatrix(i, shown[i], gears[i].object.matrix)",
-    "new": "gearMatrix(i, want[i], gears[i].object.matrix)",
+    "old": "crownGearMatrix(i, shown[i], gears[i].object.matrix)",
+    "new": "crownGearMatrix(i, want[i], gears[i].object.matrix)",
     "tests": [
       "test/sd25_orrery.test.js"
     ]
