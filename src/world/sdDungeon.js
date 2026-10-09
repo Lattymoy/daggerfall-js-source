@@ -164,12 +164,13 @@ function fitAt(at, probe) {
 }
 
 /** A spot `r` metres along `dir` from `from` on its own floor - a clear line at chest height to it and a floor within a
- *  step of `from`'s - or null. */
-function besideOn(from, dir, r, probe) {
+ *  step of `from`'s - or null. AUDIT SD IV (F34): `lower`, or on any floor the probe finds below that (a dais's foot,
+ *  down a stair or a ramp). */
+function besideOn(from, dir, r, probe, lower = false) {
   if (probe.ray([from[0], from[1] + SD_CHEST_M, from[2]], dir, r + SD_RIFT_AIR_M) != null) return null;
   const x = from[0] + dir[0] * r, z = from[2] + dir[2] * r;
   const y = probe.floor([x, from[1], z]);
-  return y != null && Math.abs(y - from[1]) <= SD_STEP_M ? [x, y, z] : null;
+  return y != null && (lower ? y - from[1] : Math.abs(y - from[1])) <= SD_STEP_M ? [x, y, z] : null;
 }
 
 /**
@@ -246,16 +247,20 @@ export function riftLook(rec, s, now, { entered = false, fallen = false } = {}) 
 
 /**
  * THE RETURN'S PLACE: beside the Rift - SD_RETURN_GAP_M past its rim on the first bearing (east, then round) whose line
- * is clear and whose floor is the ring's own; else a metre and a half out on the first such bearing; else on the ring's
- * own foot. Answers its foot [x, y, z].
+ * is clear and whose floor is the ring's own; else a metre and a half out on the first such bearing; else the same onto
+ * a lower floor (AUDIT SD IV F34 - a dais's foot, down a stair or a ramp: on the ring's own foot the Return stood inside
+ * its walk-in, a walk to it crossed the Rift's, and a small ring's walk-in was always the Return's); else, boxed in, on
+ * the ring's own foot. Answers its foot [x, y, z].
  * @param {{ at: number[], size: number }} rift
  * @param {SdProbe} probe
  */
 export function sdReturnPlace(rift, probe) {
-  for (const r of [rift.size / 2 + SD_RETURN_GAP_M, 1.5]) {
-    for (const dir of BEARINGS) {
-      const at = besideOn(rift.at, dir, r, probe);
-      if (at) return at;
+  for (const lower of [false, true]) {
+    for (const r of [rift.size / 2 + SD_RETURN_GAP_M, 1.5]) {
+      for (const dir of BEARINGS) {
+        const at = besideOn(rift.at, dir, r, probe, lower);
+        if (at) return at;
+      }
     }
   }
   return [rift.at[0], rift.at[1], rift.at[2]];

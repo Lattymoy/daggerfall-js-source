@@ -9,7 +9,9 @@ import './modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { SD_NO_MARK } from '../src/world/sdDungeon.js';
+import {
+  SD_NO_MARK, sdRiftPlace, sdReturnPlace, SD_RETURN_GAP_M, SD_RIFT_MIN_M, SD_RIFT_REACH_M, SD_RETURN_REACH_M, SD_STEP_M,
+} from '../src/world/sdDungeon.js';
 import { SD_REALM_TEXT } from '../src/world/sdRealm.js';
 import { createSdEnd, SD_STEP_GAP_MS, SD_STEP_JUMP_M, SD_RIFT_KEY, SD_RIFT_PRESS_M } from '../src/scenes/sdEnd.js';
 import { riftCentreY } from '../src/world/sdRiftModel.js';
@@ -123,4 +125,66 @@ test('SD26 THE RIFT IS PRESSED AT ITS RING (AUDIT SD IV F33): its press is a box
   assert.equal(pickActivatableHit([6, 1.6, 10], unit([6, 1.6, 10], [10, 3, 10]), [t2], col)?.key, SD_RIFT_KEY, 'face on, turned');
   assert.equal(pickActivatableHit([6, 1.6, 12.5], unit([6, 1.6, 12.5], [10, 2, 12.5]), [t2], col)?.key, SD_RIFT_KEY, 'at its arc, turned');
   assert.equal(pickActivatableHit([6, 1.6, 6], unit([6, 1.6, 6], [14, 1.6, 6]), [t2], col)?.key ?? null, null, 'past its rim, turned');
+});
+
+// ── F34, F35: the Return beside the Rift, the way back clear of both ──
+
+/** The ray's distance into a box { x0, x1, y0, y1, z0, z1 } from outside it (slabs), or Infinity. */
+function intoBox(o, d, b) {
+  let t0 = 0, t1 = Infinity;
+  for (const [ax, lo, hi] of [[0, b.x0, b.x1], [1, b.y0, b.y1], [2, b.z0, b.z1]]) {
+    if (Math.abs(d[ax]) < 1e-12) { if (o[ax] < lo || o[ax] > hi) return Infinity; continue; }
+    let a = (lo - o[ax]) / d[ax], c = (hi - o[ax]) / d[ax];
+    if (a > c) [a, c] = [c, a];
+    t0 = Math.max(t0, a); t1 = Math.min(t1, c);
+    if (t0 > t1) return Infinity;
+  }
+  return t0 > 1e-9 ? t0 : Infinity;
+}
+/** A hall the end's laws ask (world/sdDungeon.js SdProbe): x0..x1, z0..z1, its floor `floorAt(x, z)` (null outside), its
+ *  ceiling at `h`; `solids` boxes the rays meet; `slope` a ramp's floor (y = slope * (x - 10)) the rays meet too. */
+function probeHall({ x0 = 0, x1 = 20, z0 = 0, z1 = 20, h = 8, floorAt = () => 0, solids = [], slope = 0 } = {}) {
+  return {
+    floor: (at) => (at[0] >= x0 && at[0] <= x1 && at[2] >= z0 && at[2] <= z1 ? floorAt(at[0], at[2]) : null),
+    ray: (o, d, max) => {
+      let t = Infinity;
+      for (const [ax, at] of [[0, x0], [0, x1], [2, z0], [2, z1], [1, h]]) { if (Math.abs(d[ax]) < 1e-12) continue; const k = (at - o[ax]) / d[ax]; if (k > 1e-9) t = Math.min(t, k); }
+      for (const b of solids) t = Math.min(t, intoBox(o, d, b));
+      if (slope) { const den = d[1] - slope * d[0]; if (Math.abs(den) > 1e-12) { const k = (slope * (o[0] - 10) - o[1]) / den; if (k > 1e-9) t = Math.min(t, k); } }
+      return t <= max ? t : null;
+    },
+  };
+}
+const apart = (a, b) => Math.hypot(a[0] - b[0], a[2] - b[2]);
+const close = (a, b, eps = 1e-6) => Math.abs(a - b) <= eps;
+
+test('SD26 THE RETURN NEVER STANDS ON THE RIFT\'S FOOT WHILE A LOWER FLOOR IS NEAR (AUDIT SD IV F34): an end on a dais, or on a ramp in a narrow passage, had no bearing whose floor was the ring\'s own, and the Return stood on the ring\'s foot - inside its walk-in, a walk to it crossing the Rift\'s first, and a small ring\'s every walk-in the Return\'s (to the way in). Now the same bearings onto a lower floor (a dais\'s foot, down the ramp) before the foot; the ring\'s own floor first, never a higher one, and boxed in still its foot (mutants: never lower; lower first; a higher floor taken)', () => {
+  // a 2 x 2 m dais a metre high under the end, in a great hall
+  const dais = probeHall({ floorAt: (x, z) => (x >= 9 && x <= 11 && z >= 9 && z <= 11 ? 1 : 0), solids: [{ x0: 9, x1: 11, y0: 0, y1: 1, z0: 9, z1: 11 }] });
+  const r1 = sdRiftPlace([10, 1, 10], dais);
+  assert.deepEqual(r1.at, [10, 1, 10], 'the Rift on the dais');
+  const t1 = sdReturnPlace(r1, dais);
+  assert.ok(close(t1[0], 10 + r1.size / 2 + SD_RETURN_GAP_M) && t1[1] === 0 && close(t1[2], 10), `at the dais's foot, east: ${JSON.stringify(t1)}`);
+  // a narrow passage climbing east at 0.45: the least ring, the Return down the ramp, west
+  const ramp = probeHall({ x0: 0, x1: 30, z0: 8.8, z1: 11.2, h: 20, floorAt: (x) => 0.45 * (x - 10), slope: 0.45 });
+  const r2 = sdRiftPlace([10, 0, 10], ramp);
+  assert.equal(r2.size, SD_RIFT_MIN_M);
+  const t2 = sdReturnPlace(r2, ramp);
+  assert.ok(close(t2[0], 10 - (SD_RIFT_MIN_M / 2 + SD_RETURN_GAP_M)) && close(t2[1], -0.45 * (SD_RIFT_MIN_M / 2 + SD_RETURN_GAP_M)) && close(t2[2], 10), `down the ramp: ${JSON.stringify(t2)}`);
+  // a passage with a step up a metre east of the end and a drop a metre west: down, never up
+  const steps = probeHall({ x0: 0, x1: 30, z0: 8.8, z1: 11.2, h: 20, floorAt: (x) => (x >= 11.5 ? 1 : x < 9 ? -1 : 0), solids: [{ x0: 11.5, x1: 30, y0: 0, y1: 1, z0: 8.8, z1: 11.2 }] });
+  const t4 = sdReturnPlace({ at: [10, 0, 10], size: SD_RIFT_MIN_M }, steps);
+  assert.ok(close(t4[0], 10 - (SD_RIFT_MIN_M / 2 + SD_RETURN_GAP_M)) && t4[1] === -1, `down the step, never up the other: ${JSON.stringify(t4)}`);
+  // either way, out of the Rift's walk-in: apart across the floor by both reaches, or a floor below its foot's step
+  for (const [r, t] of [[r1, t1], [r2, t2]]) {
+    const clear = apart(r.at, t) >= Math.min(SD_RIFT_REACH_M, r.size / 4) + SD_RETURN_REACH_M || t[1] < r.at[1] - SD_STEP_M;
+    assert.ok(clear, `${JSON.stringify(r)} / ${JSON.stringify(t)}`);
+  }
+  // the ring's own floor first: a pit east of it, the next bearing round on its floor - never down into the pit
+  const pit = probeHall({ x1: 40, z1: 40, h: 12, floorAt: (x, z) => (x >= 24 && x <= 25.5 && z >= 19 && z <= 21 ? -1 : 0) });
+  const t3 = sdReturnPlace({ at: [20, 0, 20], size: 7 }, pit);
+  const s3 = 20 + (3.5 + SD_RETURN_GAP_M) * Math.SQRT1_2;
+  assert.ok(close(t3[0], s3) && t3[1] === 0 && close(t3[2], s3), `north-east, on its floor: ${JSON.stringify(t3)}`);
+  // boxed in: its foot, as ever (test/sd4b_rift.test.js)
+  assert.deepEqual(sdReturnPlace({ at: [1, 0, 1], size: 2.6 }, probeHall({ x1: 2, z1: 2 })), [1, 0, 1]);
 });

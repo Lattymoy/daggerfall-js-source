@@ -983,7 +983,9 @@ Section 6, in the dungeon host.
   sixth, its echo behind it and the bubbles faint beneath, darkened, wavering and looped at the ring's middle through
   the engine's own low-pass - made from the player's archive, as the Arena's crowd is.
 - **The Return** stands beside it (`sdReturnPlace`: 1.2 m past the ring's rim on the first clear bearing, east first;
-  else 1.5 m out; else on the ring's foot): a small oval of pale light. It carries the player back to the way in - the
+  else 1.5 m out; else the same onto a lower floor - a dais's foot, down a stair or a ramp (AUDIT SD IV F34: there it
+  stood on the ring's foot, inside the Rift's walk-in - a walk to it crossed the Rift's first, and a small ring's every
+  walk-in was the Return's); else, boxed in, on the ring's foot): a small oval of pale light. It carries the player back to the way in - the
   start marker's landing, through the dungeon's own teleport door (`actions.onTeleport`, DFU's teleport actions'
   handler). It goes out when the boss falls (`sdReturnStands`, asked once a second) and never stands again in that
   dungeon.

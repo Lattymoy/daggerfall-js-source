@@ -84,7 +84,7 @@
   {
     "name": "SD4B-onto-another-floor",
     "file": "src/world/sdDungeon.js",
-    "old": "  return y != null && Math.abs(y - from[1]) <= SD_STEP_M ? [x, y, z] : null;",
+    "old": "  return y != null && (lower ? y - from[1] : Math.abs(y - from[1])) <= SD_STEP_M ? [x, y, z] : null;",
     "new": "  return y != null ? [x, y, z] : null;",
     "tests": [
       "test/sd4b_rift.test.js"

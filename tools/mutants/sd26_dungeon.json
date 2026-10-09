@@ -52,5 +52,32 @@
     "tests": [
       "test/sd26_dungeon.test.js"
     ]
+  },
+  {
+    "name": "SD26-F34-never-lower",
+    "file": "src/world/sdDungeon.js",
+    "old": "  for (const lower of [false, true]) {",
+    "new": "  for (const lower of [false]) {",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "SD26-F34-lower-first",
+    "file": "src/world/sdDungeon.js",
+    "old": "  for (const lower of [false, true]) {",
+    "new": "  for (const lower of [true, false]) {",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "SD26-F34-a-higher-floor-taken",
+    "file": "src/world/sdDungeon.js",
+    "old": "(lower ? y - from[1] : Math.abs(y - from[1]))",
+    "new": "(lower ? -1 : Math.abs(y - from[1]))",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
   }
 ]
