@@ -36,6 +36,11 @@ export class RemoteIliacTable {
     if (typeof f.error === 'string') { this.error = f.error; return []; }
     if (typeof f.receipt === 'string') { this.receipts.push(f.receipt); return []; }
     if (f.mine) { this.mine = f.mine; this.error = null; return []; }
+    if (!f.state && Array.isArray(f.events)) {
+      // AUDIT CARDS-6 C8: a seat's commit said alone (net/iliacTable.js iliacCommit) - the table I was told, that seat committed
+      for (const e of f.events) { const pl = e.t === 'commit' ? this.state?.game?.players?.[e.seat] : null; if (pl) pl.committed = true; }
+      return f.events;
+    }
     if (f.state) {
       this.state = f.state;
       // a new game dealt takes my view of the old one with it; a game just ended keeps it (its last board - the relay
@@ -46,11 +51,12 @@ export class RemoteIliacTable {
     return Array.isArray(f.events) ? f.events : [];
   }
 
-  /** The game as this client shows it - my own view while I play it, the spectator's while I watch - with the seats'
-   *  names; null with no game on the cloth. */
+  /** The game as this client shows it - my own view while I play it, the spectator's while I watch (AUDIT CARDS-6 C9:
+   *  a watched game's last board after its end, the relay's `last`) - with the seats' names; null with no game on the
+   *  cloth. */
   view() {
     if (!this.state) return null;
-    const v = this.seat() >= 0 && this.mine?.gameNo === this.state.gameNo ? this.mine.view : this.state.game;
+    const v = this.seat() >= 0 ? (this.mine?.gameNo === this.state.gameNo ? this.mine.view : this.state.game) : this.state.game ?? this.state.last?.view ?? null;
     if (!v) return null;
     return { ...v, names: this.state.seats.map((s) => s?.name ?? null), forKeeps: false, ranked: !!(this.state.ranked || this.state.last?.ranked) };
   }

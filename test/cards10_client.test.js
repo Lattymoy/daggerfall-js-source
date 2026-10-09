@@ -65,7 +65,10 @@ test('CARDS10 the relay\'s table as this client sees it: my view while I play, t
   for (let turn = 1; turn <= ILIAC_TURNS; turn++) { feed(iliacCommit(t, { id: 'a', plays: [], now })); feed(iliacCommit(t, { id: 'b', plays: [], now: now + 1 })); now += 2; }
   assert.equal(me.state.game, null, 'the game is over');
   assert.equal(me.view()?.over, true, 'my last board kept');
-  assert.equal(watcher.view(), null, 'the watcher\'s gone with the game');
+  // PIN MOVED (AUDIT CARDS-6 C9): the watcher keeps the last board too (the relay's `last.view`, the spectator's) - it went
+  // with the game, so a watcher never saw the last reveal
+  assert.equal(watcher.view()?.over, true, 'the watcher\'s last board kept');
+  assert.equal(watcher.view().viewer, -1, 'a spectator\'s');
   feed(iliacTick(t, now + 60000, seeded(4)));
   assert.equal(me.view().over, false, 'the next game deals a new board');
   assert.equal(me.mine.gameNo, 2);
@@ -181,8 +184,11 @@ test('CARDS10 online on two fake pages over the relay\'s table: a look on openin
   assert.equal(R.t.seats[1], null);
   assert.equal(A.game.g.phase, 'over');
   assert.match(text(A.game.g.hud.root), /Your opponent stands up and concedes - the game is yours\./);
-  assert.match(text(A.game.g.hud.root), /The next game deals in a moment\./);
-  assert.equal(Z.game.g.phase, 'over');
+  // PIN MOVED (AUDIT CARDS-6 E10): alone, the next game deals for nobody - the winner is told he waits; and the watcher, a
+  // chair free, is back at the setup with the end said (he stood in 'over', nothing to press but Leave)
+  assert.match(text(A.game.g.hud.root), /Waiting for another player to sit down\./);
+  assert.doesNotMatch(text(A.game.g.hud.root), /The next game deals in a moment\./);
+  assert.equal(Z.game.g.phase, 'setup');
   assert.match(text(Z.game.g.hud.root), /B concedes - A wins\./);
   A.game.close(); Z.game.close();
   assert.equal(R.t.seats.every((s) => !s), true, 'every road off the seat stands at the relay');

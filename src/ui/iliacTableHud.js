@@ -86,6 +86,7 @@ export function resultLine(view, end) {
   const me = view?.viewer ?? 0;
   if (end === 'left') return 'You concede the game.';
   if (end === 'won-left') return 'Your opponent stands up and concedes - the game is yours.';   // CARDS10: the relay's concession
+  if (end === 'void') return 'No contest - the game is let go.';   // AUDIT CARDS-6 C7/E13: nobody's
   if (!r) return '';
   const held = r.held.filter((x) => x === me).length, theirs = r.held.filter((x) => x === 1 - me).length;
   if (r.winner === null) return `A draw - ${held} holdings each way and ${r.total[me]} power to ${r.total[1 - me]}.`;
@@ -116,7 +117,8 @@ export function iliacHudModel({ phase, view = null, staged = [], pick = null, se
       // CARDS10: online, the season's board - a deck the service vouches the realm character holds (the relay seats it ranked)
       ranked: online ? { on: !!online.rankedOn && !!online.rankedOk, enabled: !!online.rankedOk, why: online.rankedWhy ?? null } : null,
       board: online?.board ? boardLines(online.board) : null,
-      message: why ?? (!s.decks.length ? 'Your binder holds no deck - build one under Holdings, Collections.' : !deckOk ? 'Choose a lawful deck from your binder.' : !foeOk ? 'Choose a regular to play.' : online?.busy ? 'Asking the realm to vouch for your deck...' : online ? 'Sit down and wait for another player.' : 'Ready to deal.'),
+      message: why ?? (!s.decks.length ? 'Your binder holds no deck - build one under Holdings, Collections.' : !deckOk ? 'Choose a lawful deck from your binder.' : !foeOk ? 'Choose a regular to play.' : online?.busy ? 'Asking the realm to vouch for your deck...'
+        : online ? [online.lastLine, 'Sit down and wait for another player.'].filter(Boolean).join(' ') : 'Ready to deal.'),   // AUDIT CARDS-6 E10: a watched game's end said as its chair frees
       actions: [
         { id: 'deal', label: online ? 'Sit at the table' : 'Deal', enabled: !!(deckOk && foeOk) && !online?.busy },
         ...(online ? [{ id: 'regulars', label: 'Play a regular instead', enabled: !!online.regularsOk }] : []),   // CARDS10: alone in the room, the tavern's own
@@ -148,7 +150,8 @@ export function iliacHudModel({ phase, view = null, staged = [], pick = null, se
   const committed = !!mine?.committed;
   const actions = [];
   if (phase === 'playing') {
-    actions.push({ id: 'commit', label: committed ? 'Committed' : staged.length ? `Commit ${staged.length} ${staged.length === 1 ? 'play' : 'plays'}` : 'Pass this turn', enabled: !committed && stagedRefusal(view, staged) === null });
+    // AUDIT CARDS-6 E3: a commit in flight is pressed once
+    actions.push({ id: 'commit', label: committed ? 'Committed' : online?.committing ? 'Committing...' : staged.length ? `Commit ${staged.length} ${staged.length === 1 ? 'play' : 'plays'}` : 'Pass this turn', enabled: !committed && !online?.committing && stagedRefusal(view, staged) === null });
     actions.push({ id: 'clear', label: 'Clear', enabled: !committed && staged.length > 0 });
     actions.push({ id: 'stand', label: view?.forKeeps || (online && view && !online.watching) ? 'Concede and stand' : 'Stand up', enabled: true });
   } else if (online) {
@@ -161,9 +164,14 @@ export function iliacHudModel({ phase, view = null, staged = [], pick = null, se
     actions.push({ id: 'stand', label: 'Leave the table', enabled: true });
   }
   const other = view?.names?.[them] ?? (online ? 'Your opponent' : 'The regular');
+  // AUDIT CARDS-6 E10: the next game deals only while both chairs are filled - a winner left alone waits for a player
+  const next = !online ? '' : online.full ? 'The next game deals in a moment.' : 'Waiting for another player to sit down.';
   const message = phase === 'over'
-    ? [online?.watching === false && online?.lastLine ? online.lastLine : resultLine(view, end), prizeLine(prize, other), online?.rankedLine ?? '', online ? 'The next game deals in a moment.' : ''].filter(Boolean).join(' ')
-    : online?.waiting ? 'Waiting for another player to sit down.'
+    ? [online?.watching === false && online?.lastLine ? online.lastLine : resultLine(view, end), prizeLine(prize, other), online?.rankedLine ?? '', next].filter(Boolean).join(' ')
+    // AUDIT CARDS-6 E19: no game on the cloth yet - the wait said, never "Turn 1 of 6 - your magicka 0 of 0"
+    : online?.seating ? 'Sitting down at the table...'
+      : online?.waiting ? 'Waiting for another player to sit down.'
+      : online && !view ? 'Both chairs are filled - the game deals in a moment.'
       : online?.watching ? `You watch ${view?.names?.[0] ?? 'a player'} and ${view?.names?.[1] ?? 'a player'} play.`
       : view?.revealing ? 'The cards turn over...'
       : committed ? (view?.players?.[them]?.committed ? 'Both committed - the turn turns over.' : `${other} is thinking...`)
@@ -173,8 +181,9 @@ export function iliacHudModel({ phase, view = null, staged = [], pick = null, se
     them: { name: other, hand: view?.players?.[them]?.handCount ?? 0, deck: view?.players?.[them]?.deckCount ?? 0, committed: !!view?.players?.[them]?.committed },
     me: { deck: mine?.deckCount ?? 0, magicka: mine?.magicka ?? 0, spend },
     turn: view?.turn ?? 1, turns: view?.turns ?? 6,
-    sides: online?.watching ? [view?.names?.[0] ?? 'seat one', view?.names?.[1] ?? 'seat two'] : ['you', 'them'],
-    actions, message: online?.error ? `${message} (${online.error})` : message, log: log.slice(-6),
+    sides: online && view?.viewer === -1 ? [view?.names?.[0] ?? 'seat one', view?.names?.[1] ?? 'seat two'] : ['you', 'them'],   // AUDIT CARDS-6 C9: a watched game's last board too
+    // AUDIT CARDS-6 E9: and why a press did nothing (a refusal, the relay not answering) - said only in the setup before
+    actions, message: [online?.error ? `${message} (${online.error})` : message, why].filter(Boolean).join(' '), log: log.slice(-6),
   };
 }
 /**

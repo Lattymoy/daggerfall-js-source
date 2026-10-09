@@ -2346,8 +2346,8 @@
   {
     "name": "AC5-E-T-cashed-back",
     "file": "src/net/holdemTable.js",
-    "old": "if (t.seats[mine].cashed) return 'cashed out';",
-    "new": "/* mutant */",
+    "old": "t.seats[mine].cashed ? 'cashed out' : null;",
+    "new": "false ? 'cashed out' : null;",
     "tests": [
       "test/auditcards3_host.test.js",
       "test/auditcards3_pins.test.js",

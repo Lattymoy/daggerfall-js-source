@@ -281,8 +281,8 @@
   {
     "name": "CARDS10-relay-clock",
     "file": "src/net/iliacTable.js",
-    "old": "    if (now < t.clockAt) return [];",
-    "new": "    if (true) return [];",
+    "old": "    if (now < t.clockAt) return msgs;",
+    "new": "    if (true) return msgs;",
     "tests": [
       "test/cards10_relay.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "CARDS10-relay-two-accounts",
     "file": "src/net/iliacTable.js",
-    "old": "  const ranked = t.seats.every((s) => s.sub) && t.seats[0].sub !== t.seats[1].sub;",
-    "new": "  const ranked = t.seats.every((s) => s.sub);",
+    "old": "  const ranked = t.seats.every(vouched) && t.seats[0].sub !== t.seats[1].sub;",
+    "new": "  const ranked = t.seats.every(vouched);",
     "tests": [
       "test/cards10_relay.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "CARDS10-relay-concede",
     "file": "src/net/iliacTable.js",
-    "old": "    events.push(finish(t, now, p));",
-    "new": "    events.push(finish(t, now, 1 - p));",
+    "old": ": finish(t, now, p, idle ? 'idle' : null));",
+    "new": ": finish(t, now, 1 - p, idle ? 'idle' : null));",
     "tests": [
       "test/cards10_relay.test.js"
     ]
@@ -436,8 +436,8 @@
   {
     "name": "CARDS10-client-my-view",
     "file": "src/systems/iliacRemoteTable.js",
-    "old": "    const v = this.seat() >= 0 && this.mine?.gameNo === this.state.gameNo ? this.mine.view : this.state.game;",
-    "new": "    const v = this.state.game;",
+    "old": "const v = this.seat() >= 0 ? (this.mine?.gameNo === this.state.gameNo ? this.mine.view : this.state.game) :",
+    "new": "const v = this.seat() >= 0 ? this.state.game :",
     "tests": [
       "test/cards10_client.test.js"
     ]
@@ -481,8 +481,8 @@
   {
     "name": "CARDS10-client-commit",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "if (d.online.send({ op: 'commit', table: d.online.table, plays: g.staged }))",
-    "new": "if (d.online.send({ op: 'commit', table: d.online.table, plays: [] }))",
+    "old": "gameNo: at.gameNo, turn: at.turn, plays: g.staged }))",
+    "new": "gameNo: at.gameNo, turn: at.turn, plays: [] }))",
     "tests": [
       "test/cards10_client.test.js"
     ]
@@ -490,7 +490,7 @@
   {
     "name": "CARDS10-client-stand",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "      if (d.online && mySeat() >= 0) d.online.send({ op: 'stand', table: d.online.table });",
+    "old": "      if (d.online && (mySeat() >= 0 || g.sat)) d.online.send({ op: 'stand', table: d.online.table, gameNo: g.remote.state?.gameNo ?? 0 });",
     "new": "",
     "tests": [
       "test/cards10_client.test.js"
@@ -508,8 +508,8 @@
   {
     "name": "CARDS10-client-regulars",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "if (mySeat() < 0 && d.regulars.length) { g.mode = 'regulars'; g.why = null; }",
-    "new": "if (mySeat() < 0 && d.regulars.length) { g.why = null; }",
+    "old": "if (mySeat() < 0 && !g.sat && d.regulars.length) { g.mode = 'regulars'; g.why = null; }",
+    "new": "if (mySeat() < 0 && !g.sat && d.regulars.length) { g.why = null; }",
     "tests": [
       "test/cards10_client.test.js"
     ]

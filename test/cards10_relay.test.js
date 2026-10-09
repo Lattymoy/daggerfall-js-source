@@ -28,11 +28,13 @@ const seeded = (seed = 99) => { let x = seed >>> 0; return () => { x ^= x << 13;
 const ofRoom = (msgs) => msgs.filter((m) => m.to === null);
 const toId = (msgs, id) => msgs.filter((m) => m.to === id);
 const DECK = [...STARTER_DECK];
+// PIN MOVED (AUDIT CARDS-6 C5/D2): a ranked seat names its order's expiry (a minute from the sit), and two ranked seats'
+// first game waits the gap for their fresh orders (ILIAC_GAP_MS, a friendly pair's ILIAC_FIRST_MS)
 const ready = (opts = {}) => {
   const t = newIliacTable({ chairs: 4 });
-  iliacSit(t, { id: 'a', name: 'Ann', chair: 1, deck: DECK, now: 0, sub: opts.subA ?? null });
-  iliacSit(t, { id: 'b', name: 'Bob', chair: 3, deck: DECK, now: 0, sub: opts.subB ?? null });
-  const dealt = iliacTick(t, ILIAC_FIRST_MS, seeded(opts.seed ?? 7));
+  iliacSit(t, { id: 'a', name: 'Ann', chair: 1, deck: DECK, now: 0, sub: opts.subA ?? null, orderE: 60 });
+  iliacSit(t, { id: 'b', name: 'Bob', chair: 3, deck: DECK, now: 0, sub: opts.subB ?? null, orderE: 60 });
+  const dealt = iliacTick(t, opts.subA && opts.subB ? ILIAC_GAP_MS : ILIAC_FIRST_MS, seeded(opts.seed ?? 7));
   return { t, dealt };
 };
 
@@ -141,8 +143,9 @@ test('CARDS10 the words both ways: a sit carries thirty card ids and an order; a
   assert.equal(validIliacIn({ op: 'sit', table: 2, chair: 1, chairs: 4, deck: DECK.slice(1) }), null, 'thirty cards');
   assert.equal(validIliacIn({ op: 'sit', table: 2, chair: 1, chairs: 4, deck: DECK, order: 'x'.repeat(ILIAC_ORDER_MAX + 1) }), null);
   assert.equal(validIliacIn({ op: 'sit', table: 16, chair: 1, chairs: 4, deck: DECK }), null, 'the room\'s tables');
-  assert.deepEqual(validIliacIn({ op: 'commit', table: 0, plays: [{ card: 1, holding: 2, junk: 1 }] }), { op: 'commit', table: 0, plays: [{ card: 1, holding: 2 }] }, 'projected');
-  assert.equal(validIliacIn({ op: 'commit', table: 0, plays: [{ card: 1, holding: 3 }] }), null);
+  // PIN MOVED (AUDIT CARDS-6 C3): a commit names the game and the turn it is for
+  assert.deepEqual(validIliacIn({ op: 'commit', table: 0, gameNo: 1, turn: 1, plays: [{ card: 1, holding: 2, junk: 1 }] }), { op: 'commit', table: 0, gameNo: 1, turn: 1, plays: [{ card: 1, holding: 2 }] }, 'projected');
+  assert.equal(validIliacIn({ op: 'commit', table: 0, gameNo: 1, turn: 1, plays: [{ card: 1, holding: 3 }] }), null);
   assert.equal(validIliacIn({ op: 'deal', table: 0 }), null, 'the relay deals, never a client');
   const { t, dealt } = ready();
   for (const m of dealt) assert.ok(validIliacOut({ table: 0, now: 1, ...m.frame }), JSON.stringify(m.frame).slice(0, 80));
@@ -230,11 +233,11 @@ test('CARDS10 the relay: two seated in a tavern\'s room and a third watching, ea
   assert.equal(mineA[0].mine.view.players[0].hand.length, 4);
   for (const m of iliac(c)) assert.ok(validIliacOut(m), 'every frame the client\'s law takes');
   // a commit, and the other seat's clock runs out on the alarm
-  await word(r, a, { op: 'commit', table: 0, plays: [] });
+  await word(r, a, { op: 'commit', table: 0, gameNo: 1, turn: 1, plays: [] });   // PIN MOVED (AUDIT CARDS-6 C3): its game and turn named
   assert.ok(iliac(c).at(-1).events.some((e) => e.t === 'commit' && e.seat === 0));
   tick(ILIAC_TURN_MS); await r.fire();
   assert.ok(iliac(c).at(-1).events.some((e) => e.t === 'turn' && e.turn === 2), 'the clock turned it over');
-  await word(r, c, { op: 'commit', table: 0, plays: [] });
+  await word(r, c, { op: 'commit', table: 0, gameNo: 1, turn: 2, plays: [] });
   assert.equal(iliac(c).at(-1).error, 'not seated');
   // the third cannot sit at a full table; one gone concedes
   await sit(r, c, 1);
@@ -272,7 +275,7 @@ test('CARDS10 the relay: a ranked seat\'s deck order checked (its account, its d
   const c = await join(r, 'peer-c');
   _tick(300); await r.raw(c, JSON.stringify({ t: 'holdem', op: 'sit', table: 0, chair: 3, chairs: 4, bb: 10 }));
   assert.equal(c.sent.filter((m) => m.t === 'holdem').at(-1).error, 'other game');
-  tick(ILIAC_FIRST_MS); await r.fire();
+  tick(ILIAC_GAP_MS); await r.fire();   // PIN MOVED (AUDIT CARDS-6 C5/D2): two ranked seats' first game waits the gap
   assert.ok(iliac(a).some((m) => m.events?.some((e) => e.t === 'game' && e.ranked)), 'a ranked game');
   await word(r, b, { op: 'stand', table: 0 });
   const ra = iliac(a).filter((m) => m.receipt).map((m) => m.receipt), rb = iliac(b).filter((m) => m.receipt).map((m) => m.receipt);

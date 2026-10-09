@@ -218,6 +218,7 @@ import { RemoteCardTable } from '../systems/cardRemoteTable.js';   // CARDS5: th
 import { HOLDEM_STAKE_MAX_BB, HOLDEM_TOPUP_MIN_BB } from '../net/holdemTable.js';   // CARDS6 follow-up: a gold seat's top-up
 import { regularsToStand, regularBark, BARK_MS } from '../world/cardRegulars.js';   // CARDS4b: the regulars in their chairs
 import { openIliacTableGame } from './iliacTableGame.js';   // CARDS10: Iliac Hand on the seat
+import { readIliacReceipt } from '../net/iliacReceipt.js';   // AUDIT CARDS-6 C1: a ranked result kept, its game said back to the relay
 import { iliacGrade } from '../systems/iliacPatrons.js';   // CARDS10: the tavern's grade - its regulars' decks and play
 import { cardPackPrice, buyCardPack } from '../systems/cardSources.js';   // CARDS9: the house sells packs at its card table
 import { heldMatrices, heldLift, blendMatrix, HELD_EASE_S, tablePoint, onStack, onTable, inBetZone, dragBet, PEEK_RATE, DRAG_LIFT, handGesture, squeezeOf, squeezeMatrix } from '../world/cardHand.js';   // CARDS3b: the hand held, the chips dragged; CARDS3c: the squeeze, the click, the push
@@ -594,6 +595,7 @@ export function createWorldModes(host) {
         table: cardSeat.table, chairs: seats.length, chair: cardSeat.seat,
         rankedWhy: () => host.iliacRanked?.why?.() ?? 'Ranked games are closed here.', vouch: (deck) => host.iliacRanked?.vouch?.(deck) ?? Promise.resolve({ ok: false }),
         board: () => host.iliacRanked?.board?.() ?? Promise.resolve({ ok: false }),   // the season's board
+        welcomes: () => host.iliacOnline.welcomes?.() ?? 0,   // AUDIT CARDS-6 E5: a new socket, the table asked again
       } : null,
     });
     iliacGame.regulars = regs;   // CARDS4b's look for the regular in his chair (cardRegularsNow)
@@ -602,6 +604,8 @@ export function createWorldModes(host) {
    *  player is now; the rest is the open game's, at its table. */
   function iliacOnlineFrame(f) {
     if (typeof f?.receipt === 'string') host.iliacClaims?.add(f.receipt);   // a result on the board, from any room
+    // AUDIT CARDS-6 C1: kept on this device now (or settled, or never to count) - the relay owes it no longer
+    if (typeof f?.receipt === 'string' && host.iliacClaims) { const j = readIliacReceipt(f.receipt)?.j; if (j) host.iliacOnline?.send?.({ op: 'ack', table: f.table, j }); }
     if (mode !== 'interior' || !interiorCtx) return;
     iliacGame?.relay?.(f);
   }
