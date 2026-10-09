@@ -12,7 +12,7 @@ import {
 } from '../src/net/sdBrain.js';
 import {
   stoneFrame, plaqueFrame, stoneQuads, lecternQuads, stoneSolids, hallSolidTris, buildHallModel, buildHandModel, handMatrix, buildBezelModel,
-  buildCrownGearModel, gearMatrix, bannerPose, bannerPoint, buildBannerModel, buildLitModel, buildFrayModel, buildBandModel, bandMatrix,
+  buildCrownGearModel, gearMatrix, bannerPose, buildBannerModel, buildLitModel, buildFrayModel, buildBandModel, bandMatrix,
   buildBridgeModel, buildBridgePlateModel, plateMatrix, bridgePlateSpan, dialFloorQuads, numeralStrokes, frayTabBearing,
   SD_STONE_SIZE, SD_HANDLE, SD_PLAQUE, SD_LAW_MARGIN, SD_CROWN_GEAR, SD_BANNER, SD_BANNER_VERTS, SD_NUMERALS, SD_INNER_BEZEL, SD_LIT_RING,
   SD_FRAY_RING, SD_FRAY_TAB, SD_BRIDGE, SD_BRIDGE_PLATES, SD_BAND,

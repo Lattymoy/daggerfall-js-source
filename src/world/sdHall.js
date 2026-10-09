@@ -558,33 +558,28 @@ const BV = (SD_BANNER.cols + 1) * (SD_BANNER.rows + 1);
 export const SD_BANNER_VERTS = SD_STONES.length * 2 * BV;
 /** The banners' ripple: each stone's own phase (seeded by its index, never the clock). */
 const BANNER_PHASE = Object.freeze([0.4, 2.1, 3.7, 1.3, 5.0, 2.8]);
-/** One vertex of stone `i`'s banner at grid (s, t) - s 0..1 across as its face is seen (from behind the stone: -R), t
- *  0..1 down - `age` seconds into the Concord's wind (< 0: none; past SD_BANNER.wind: still again, mid-ripple anew):
- *  [r, y, o] in the stone's frame, into `out`. */
-export function bannerPoint(i, s, t, age, out = [0, 0, 0]) {
-  const Bn = SD_BANNER, w = age >= 0 ? Math.min(age, Bn.wind) : 0, e = Math.sin((Math.PI * w) / Bn.wind);
-  const hang = Math.min(1, t * 5), bottom = Bn.bottom + Bn.tail * (1 - Math.abs(2 * s - 1));
-  const phase = BANNER_PHASE[i] + 9 * w, amp = Math.min(Bn.ampWind, Bn.amp + (Bn.ampWind - Bn.amp) * e);
-  const ripple = amp * hang * Math.sin(Math.PI * 2 * 1.1 * s + 3.4 * t + phase);
-  const sway = (Bn.sway * t * t + 0.04 * hang * Math.sin(14 * w + 6 * t)) * e;
-  out[0] = Bn.w / 2 - Bn.w * s + sway; out[1] = Bn.top - t * (Bn.top - bottom); out[2] = -Bn.o + ripple;
-  return out;
-}
 /** The stones' frames, made once (the wind's pose reads them a frame). */
 const STONE_FRAMES = Object.freeze(SD_STONES.map((_, i) => stoneFrame(i)));
-const _bp = [0, 0, 0];
-/** Every banner's positions and normals (the dungeon's frame) at `age` into the wind, into `pos` and `nrm` (each
- *  SD_BANNER_VERTS x 3) - the same layout buildBannerModel makes. Allocates nothing: the Concord's three seconds write
- *  it a frame. */
+/** Every banner's positions and normals (the dungeon's frame) at `age` seconds into the Concord's wind (< 0: none - the
+ *  frozen ripple; past SD_BANNER.wind: still again, mid-ripple anew), into `pos` and `nrm` (each SD_BANNER_VERTS x 3) -
+ *  the same layout buildBannerModel makes. A vertex at grid (s, t) - s 0..1 across as its face is seen (from behind the
+ *  stone: -R), t 0..1 down - stands [r, y, o] in its stone's frame: its ripple through the cloth (pinned at the rod, its
+ *  reach the wind's), its sway in the back's own plane (never out of it), its swallowtail foot. All in place, no call
+ *  that boxes a number: the Concord's three seconds write it a frame and make nothing. */
 export function bannerPose(age, pos, nrm) {
-  const C = SD_BANNER.cols, Rw = SD_BANNER.rows, O = SD_REALM_ORIGIN;
+  const Bn = SD_BANNER, C = Bn.cols, Rw = Bn.rows, O = SD_REALM_ORIGIN;
+  const w = age >= 0 ? Math.min(age, Bn.wind) : 0, e = Math.sin((Math.PI * w) / Bn.wind);
+  const amp = Math.min(Bn.ampWind, Bn.amp + (Bn.ampWind - Bn.amp) * e);
   for (let i = 0; i < SD_STONES.length; i++) {
-    const { at, n, R } = STONE_FRAMES[i], base = i * 2 * BV;
+    const { at, n, R } = STONE_FRAMES[i], base = i * 2 * BV, phase = BANNER_PHASE[i] + 9 * w;
     for (let j = 0; j <= Rw; j++) for (let c = 0; c <= C; c++) {
-      const v = j * (C + 1) + c, p = bannerPoint(i, c / C, j / Rw, age, _bp), q = (base + v) * 3, qb = (base + BV + v) * 3;
-      pos[q] = pos[qb] = O[0] + at[0] + R[0] * p[0] + n[0] * p[2];
-      pos[q + 1] = pos[qb + 1] = O[1] + p[1];
-      pos[q + 2] = pos[qb + 2] = O[2] + at[2] + R[2] * p[0] + n[2] * p[2];
+      const s = c / C, t = j / Rw, hang = Math.min(1, t * 5), bottom = Bn.bottom + Bn.tail * (1 - Math.abs(2 * s - 1));
+      const r = Bn.w / 2 - Bn.w * s + (Bn.sway * t * t + 0.04 * hang * Math.sin(14 * w + 6 * t)) * e;
+      const y = Bn.top - t * (Bn.top - bottom), o = -Bn.o + amp * hang * Math.sin(Math.PI * 2 * 1.1 * s + 3.4 * t + phase);
+      const v = j * (C + 1) + c, q = (base + v) * 3, qb = (base + BV + v) * 3;
+      pos[q] = pos[qb] = O[0] + at[0] + R[0] * r + n[0] * o;
+      pos[q + 1] = pos[qb + 1] = O[1] + y;
+      pos[q + 2] = pos[qb + 2] = O[2] + at[2] + R[2] * r + n[2] * o;
     }
     // normals from the grid's neighbours: across x down faces out (behind the stone, -n), the reverse in
     for (let j = 0; j <= Rw; j++) for (let c = 0; c <= C; c++) {
@@ -593,7 +588,7 @@ export function bannerPose(age, pos, nrm) {
       const sx = pos[a] - pos[b], sy = pos[a + 1] - pos[b + 1], sz = pos[a + 2] - pos[b + 2];
       const tx = pos[u] - pos[d], ty = pos[u + 1] - pos[d + 1], tz = pos[u + 2] - pos[d + 2];
       let nx = sy * tz - sz * ty, ny = sz * tx - sx * tz, nz = sx * ty - sy * tx;
-      const l = Math.hypot(nx, ny, nz) || 1;
+      const l = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;   // never Math.hypot in a frame: it makes its arguments
       nx /= l; ny /= l; nz /= l;
       if (nx * n[0] + nz * n[2] > 0) { nx = -nx; ny = -ny; nz = -nz; }
       const q = (row + c) * 3, qb = q + BV * 3;
@@ -699,11 +694,13 @@ export function buildBridgePlateModel(j) {
   emit(f, out);
   return packRealmFaces(f);
 }
+/** Each plate's hinge, its near edge's z in the dungeon's frame - made once (a frame's flip asks it). */
+const PLATE_HINGE_Z = Object.freeze(Array.from({ length: SD_BRIDGE_PLATES.n }, (_, j) => realmToDungeon(0, 0, bridgePlateSpan(j)[0])[2]));
 /** SD-LOOK S10: plate `j`'s matrix `k` (0..1) of its flip: standing on its near edge's hinge (folded up), falling out
  *  into place - eased, laid at 1. Into `out` (column-major, the dungeon's frame). */
 export function plateMatrix(j, k, out = new Float32Array(16)) {
   const e = 1 - (1 - Math.max(0, Math.min(1, k))) ** 3, th = (1 - e) * (Math.PI / 2), c = Math.cos(th), s = Math.sin(th);
-  const h = realmToDungeon(0, SD_BRIDGE.y, bridgePlateSpan(j)[0]), yh = h[1], zh = h[2];
+  const yh = SD_REALM_ORIGIN[1] + SD_BRIDGE.y, zh = PLATE_HINGE_Z[j];
   out.fill(0); out[0] = 1; out[5] = c; out[6] = -s; out[9] = s; out[10] = c; out[15] = 1;
   out[13] = yh - c * yh - s * zh; out[14] = zh + s * yh - c * zh;
   return out;
