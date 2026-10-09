@@ -49,6 +49,7 @@ import { SD_REALM_ARCHIVE } from '../world/sdRealm.js';
 import { identity } from '../world/mat4.js';
 import { SdStepsPass, SD_GHOST_STEPS, SD_GHOST } from '../render/sdStepsPass.js';
 import { SD_SKY_STEPS } from '../render/sdSky.js';
+import { isTouchDevice } from '../ui/touchDevice.js';
 
 /** The Steps' words. */
 export const SD_STEPS_TEXT = Object.freeze({ cast: 'The Hour casts you back.' });
@@ -133,10 +134,11 @@ const hide = (d) => { if (d && !d.hidden) { d.object.matrix.fill(0); d.hidden = 
 
 /**
  * The Unmoored Steps.
- * @param {{ renderer?: any, audio?: any, ending?: string | null }} deps - SD-LOOK S9: `ending` the Hollow's Ending (net/sdMarks.js
- *   SD_ENDINGS' id), its sign on the vane's fin
+ * @param {{ renderer?: any, audio?: any, ending?: string | null, lite?: boolean }} deps - SD-LOOK S9: `ending` the Hollow's Ending
+ *   (net/sdMarks.js SD_ENDINGS' id), its sign on the vane's fin; `lite` the phone's tier (ui/touchDevice.js isTouchDevice -
+ *   its own by default): two chunks a Crumble step, not four, and the pendulums' gears without teeth
  */
-export function createSdSteps({ renderer = null, audio = null, ending = null } = {}) {
+export function createSdSteps({ renderer = null, audio = null, ending = null, lite = isTouchDevice() } = {}) {
   /** Each step: the law's record, its bucket's key and place (`T`, the dungeon's frame - the collider reads it at every
    *  query) and last frame's (`was`), whether it stands solid now and stood so then, its draw, and the realm's second my
    *  foot first stood on it (a Crumble step's - null untouched). SD-LOOK S9: its ghost's slot (render/sdStepsPass.js; -1
@@ -306,8 +308,8 @@ export function createSdSteps({ renderer = null, audio = null, ending = null } =
       if (breathMesh) { breathDraw = { gpu: breathMesh, object: { matrix: new Float32Array(16) }, hidden: true, noShadow: true }; draws.push(breathDraw); }
       // SD-LOOK S9: the parts that show what each step will do - every one that moves casting nothing
       dissolve = SD_BEAT_DISSOLVE.keep.map((k) => make(buildBeatDissolve(k)));
-      pendMesh = make(buildPendulum());
-      const chunks = buildCrumbleChunks();
+      pendMesh = make(buildPendulum({ teeth: !lite }));
+      const chunks = buildCrumbleChunks(lite ? 2 : 4);
       chunkMeshes = chunks.map((c) => make(c.model));
       chunkWays = chunks.map((c, j) => {
         const l = Math.hypot(c.at[0], c.at[2]) || 1, ox = c.at[0] / l, oz = c.at[2] / l;

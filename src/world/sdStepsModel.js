@@ -170,20 +170,21 @@ export const SD_PENDULUM = Object.freeze({ len: 18, into: 0.3, rod: 0.07, foot: 
 /** A pendulum's lean at a step's sideways offset `dx` from its rest (the law's stepAt): asin(dx / len) - turning +x up. */
 export const pendulumAngle = (dx) => Math.asin(Math.max(-1, Math.min(1, dx / SD_PENDULUM.len)));
 /** ONE PENDULUM, its own frame (its pivot the origin, the deck's rest SD_PENDULUM.len under it): the gear facing along z
- *  and its two rods down to the deck's eyelets. About 280 triangles; one mesh serves all eight. */
-export function buildPendulum() {
+ *  and its two rods down to the deck's eyelets. About 280 triangles; one mesh serves all eight. The lite tier (a phone):
+ *  its gear without teeth. */
+export function buildPendulum({ teeth = true } = {}) {
   const f = faces(), P = SD_PENDULUM, rec = SD_STEPS_RECORD.parts, A = SD_PARTS_ATLAS;
   const n = P.teeth * 2, root = P.gear * 0.86, hub = P.gear * 0.22, z0 = -P.gearD / 2, z1 = P.gearD / 2, g = cellUv(A, A.gear), r = cellUv(A, A.rim);
   const gu = (x, y) => [g[0] + (g[2] - g[0]) * (0.5 + x / (2 * P.gear)), g[1] + (g[3] - g[1]) * (0.5 + y / (2 * P.gear))];
   for (let i = 0; i < n; i++) {
-    const a0 = (i / n) * Math.PI * 2, a1 = ((i + 1) / n) * Math.PI * 2, R = i % 2 ? root : P.gear;
+    const a0 = (i / n) * Math.PI * 2, a1 = ((i + 1) / n) * Math.PI * 2, R = teeth && i % 2 ? root : P.gear;
     const p = (a, rr, z) => [Math.cos(a) * rr, Math.sin(a) * rr, z];
     const q = (a, rr) => gu(Math.cos(a) * rr, Math.sin(a) * rr);
     f.quad(rec, p(a0, hub, z0), p(a1, hub, z0), p(a1, R, z0), p(a0, R, z0), q(a0, hub), q(a1, hub), q(a1, R), q(a0, R));   // its face to -z
     f.quad(rec, p(a0, R, z1), p(a1, R, z1), p(a1, hub, z1), p(a0, hub, z1), q(a0, R), q(a1, R), q(a1, hub), q(a0, hub));   // and to +z
     f.quad(rec, p(a0, R, z0), p(a1, R, z0), p(a1, R, z1), p(a0, R, z1), [r[0], r[1]], [r[2], r[1]], [r[2], r[3]], [r[0], r[3]]);   // its rim
     const b = ((i + 1) / n) * Math.PI * 2, R0 = i % 2 ? root : P.gear, R1 = i % 2 ? P.gear : root;
-    f.quad(rec, p(b, R0, z0), p(b, R1, z0), p(b, R1, z1), p(b, R0, z1), [r[0], r[1]], [r[2], r[1]], [r[2], r[3]], [r[0], r[3]]);   // a tooth's flank
+    if (teeth) f.quad(rec, p(b, R0, z0), p(b, R1, z0), p(b, R1, z1), p(b, R0, z1), [r[0], r[1]], [r[2], r[1]], [r[2], r[3]], [r[0], r[3]]);   // a tooth's flank
   }
   for (const s of [-1, 1]) bar(f, rec, [s * P.head, 0, 0], [s * P.foot, -P.len - P.into, 0], P.rod, A.rod);
   return packRealmFaces(f);
@@ -192,17 +193,18 @@ export function buildPendulum() {
 /** THE CRUMBLE'S FOUR CHUNKS: each a prism of its box between its two main cracks (world/sdStepsArt.js SD_CRUMBLE_CRACKS)
  *  - `{ model, at, poly }`: its mesh in a frame of its own about `at` (its middle, the step's own frame), and its outline
  *  on the top (x, z). Its top wears the Crumble's widest stage where it lay; its outer sides the sides; its broken faces
- *  and its foot the underside. */
-export function buildCrumbleChunks() {
+ *  and its foot the underside. The lite tier (a phone, `n` 2): its two halves either side of the crack across it. */
+export function buildCrumbleChunks(n = 4) {
   const { at, across, along } = SD_CRUMBLE_CRACKS, W = SD_CRUMBLE_SIZE.w / 2, D = SD_CRUMBLE_SIZE.d / 2, H = SD_STEP_THICK;
   const k = across.findIndex((p) => p === at || (p[0] === at[0] && p[1] === at[1])), j = along.findIndex((p) => p[0] === at[0] && p[1] === at[1]);
   const xNeg = across.slice(0, k + 1).reverse(), xPos = across.slice(k), zNeg = along.slice(0, j + 1).reverse(), zPos = along.slice(j);
-  const regions = [[zPos, [W, D], xPos], [xNeg, [-W, D], zPos], [zNeg, [-W, -D], xNeg], [xPos, [W, -D], zNeg]];
+  const regions = n === 2 ? [[xNeg, [[-W, D], [W, D]], xPos], [xPos, [[W, -D], [-W, -D]], xNeg]]
+    : [[zPos, [[W, D]], xPos], [xNeg, [[-W, D]], zPos], [zNeg, [[-W, -D]], xNeg], [xPos, [[W, -D]], zNeg]];
   const rec = SD_STEPS_RECORD.crumble[3], A = SD_STEPS_ATLAS, T = cellUv(A, A.top), S = cellUv(A, A.side), U = cellUv(A, A.under);
   const tw = SD_CRUMBLE_SIZE.w - 2 * SD_STEP_BEVEL, td = SD_CRUMBLE_SIZE.d - 2 * SD_STEP_BEVEL, cl = (v) => Math.max(0, Math.min(1, v));
   const topUv = (x, z) => [T[0] + (T[2] - T[0]) * cl(x / tw + 0.5), T[1] + (T[3] - T[1]) * cl(z / td + 0.5)];
-  return regions.map(([a, corner, b]) => {
-    let poly = [...a, corner, ...b.slice(1).reverse()].map((p) => [p[0], p[1]]);
+  return regions.map(([a, corners, b]) => {
+    let poly = [...a, ...corners, ...b.slice(1).reverse()].map((p) => [p[0], p[1]]);
     // wound clockwise in (x, z) - so a fan's faces turn up (+y) under faces()' winding
     let area = 0;
     for (let i = 0; i < poly.length; i++) { const p = poly[i], q = poly[(i + 1) % poly.length]; area += p[0] * q[1] - q[0] * p[1]; }

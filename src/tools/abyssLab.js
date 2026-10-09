@@ -20,7 +20,8 @@
 //                    plate's 3.6 s cycle> (the clock put there - the next plate half a beat on); ?crumble=<s since a foot>
 //                    (every Crumble pin touched that long ago: 0-0.7 its crack stages, 0.7-5.1 its chunks falling, 5.1-5.7
 //                    flying back); ?span=0|1|2 (the waystone my cast-back would take me to); ?rewind=<s since>&on=0|1|2
-//                    (the cast-back's gold rewind burst on that checkpoint, scenes/sdFx.js); ?grey the frame in grey (a screenshot's)
+//                    (the cast-back's gold rewind burst on that checkpoint, scenes/sdFx.js); ?grey the frame in grey (a screenshot's);
+//                    ?touch=on the phone's tier (two chunks a Crumble pin, toothless pendulum gears - ui/touchDevice.js)
 // `window.__frame` counts drawn frames (the probes frame-sync on it - bible/Home.md's Process); `window.__lab` moves the
 // camera and the clock from a probe.
 import { Renderer, WORLD_FRAME, INTERIOR_CLEAR } from '../render/renderer.js';

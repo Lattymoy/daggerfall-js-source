@@ -301,6 +301,17 @@ test('S9 THE CRUMBLE, MINE: at rest its dim cracks; under my foot they flare in 
     for (let k = 0; k < P.length; k += 3) { const x = P[k] + C.at[0], y = P[k + 1] + C.at[1], z = P[k + 2] + C.at[2]; assert.ok(Math.abs(x) <= box.w / 2 + 1e-6 && y <= 1e-6 && y >= -box.h - 1e-6 && Math.abs(z) <= box.d / 2 + 1e-6, 'a chunk in its box'); }
   }
   assert.ok(near(-area / 2, box.w * box.d, 1e-6), 'the four tile its top (wound clockwise, faces up)');
+  // the phone's tier: two halves either side of the crack across it, and the pendulums' gears without teeth
+  const halves = buildCrumbleChunks(2);
+  let half = 0;
+  for (const C of halves) for (let k = 0; k < C.poly.length; k++) { const p = C.poly[k], q = C.poly[(k + 1) % C.poly.length]; half += p[0] * q[1] - q[0] * p[1]; }
+  assert.ok(halves.length === 2 && near(-half / 2, box.w * box.d, 1e-6), 'two halves tile its top');
+  const draws = [], lite = createSdSteps({ renderer: { createMesh: (m) => ({ m }), destroyMesh() {}, uploadTexture() {} }, lite: true });
+  lite.stand({ dynamicDraws: draws, collider: null });
+  lite.touch(i, t0);
+  lite.ride(t0 + SD_CRUMBLE_DELAY + 0.3, 1 / 60, null);
+  assert.equal(lite.steps[i].chunks.length, 2, 'two chunks fall');
+  assert.ok(draws.some((d) => d.gpu?.m?.indices?.length === buildPendulum({ teeth: false }).indices.length) && buildPendulum({ teeth: false }).indices.length < buildPendulum().indices.length, 'its gears toothless');
   assert.ok([SD_CRUMBLE_CRACKS.across, SD_CRUMBLE_CRACKS.along].every((p) => p.includes(SD_CRUMBLE_CRACKS.at)), 'split along the art\'s own two cracks');
 });
 
