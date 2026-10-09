@@ -1373,6 +1373,10 @@ export class ShadowPass {
   }
   /** EL7: a character rig (createCharacterMesh's bundle: vao, count, ranges) casts too. */
   recordCharacter(mesh, matrix) {
+    // MWNPC1: a GPU-skinned body never casts from here - this pass draws it through CHAR_VS, which has no skin, so
+    // it would cast its bind pose. It is drawn only through the sprite target (which records nothing) today; this is
+    // the door's own answer should a skinned body ever be drawn in the world pass.
+    if (mesh && mesh.skin) return;
     const r = this._rec(); if (!r) return;
     r.kind = REC_CHAR; r.mesh = mesh; r.matrix.set(matrix);
     r.dynamic = true;   // SC1: a rig is never still

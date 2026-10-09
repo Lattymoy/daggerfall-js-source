@@ -101,6 +101,8 @@ import { spellFxPlan } from '../formats/mwSpellFx.js';   // MW-SPELLFX1: which v
 import { effectSchool } from '../systems/spellcost.js';   // MW-SPELLFX1: a family the mapping does not name is drawn as its school
 import { createVfxGpu } from '../render/vfxGpu.js';   // MW-SPELLFX1: an effect's streams on the GPU
 import { validCastRate } from '../systems/castSpeed.js';   // CAST-SPEED: the rate a cast is handed, made safe
+import { skinLayout, skinSamePieces, packSkinStream, writeSkinPalette, skinnedVertex } from '../formats/mwGpuSkin.js';   // MWNPC1: the third body's skin, on the GPU
+import { pageParam } from '../systems/pageQuery.js';   // MWNPC1: the GPU skin's bisect door
 
 // MW-LOAD (2026-09-08, Mac: "improve the load time when Morrowind assets
 // are enabled"): THE ARCHIVE IS OPENED, NOT READ, AND THIS FILE IS ITS
@@ -678,7 +680,7 @@ export function packFpArm(pieces, out = null) {
  *  colour laws and kept on the piece until the arrays they were read from
  *  change identity (a rebuilt wardrobe hands the piece new ones). */
 const LANE_FLOATS = 8;
-function pieceLanes(p) {
+export function pieceLanes(p) {   // MWNPC1: exported - the GPU skin's stream reads its static floats through this one home
   const idx = p.indices, uvs = p.uvs || null, cols = p.colors || null, mat = p.material || null;
   const have = p._packLanes;
   if (have && have.idx === idx && have.uvs === uvs && have.cols === cols && have.mat === mat) return have.lanes;
@@ -2756,6 +2758,16 @@ export async function loadMwEffectTextures(cat, files) {
 /** MW-SPELLFX1: VFX_Hands' two bones (character.cpp :1606-1612). */
 export const VFX_HAND_BONES = Object.freeze(['bip01 l hand', 'bip01 r hand']);
 
+/**
+ * MWNPC1: THE GPU SKIN'S DOOR. On wherever the renderer carries the skinned character path (renderer.js
+ * createSkinnedCharacterMesh); `?gpuskin=off` is the bisect back to the CPU skin, the shape of `?ground=` - a body
+ * that draws wrong one way and right the other names its own culprit. A stand-in renderer without the path (the
+ * suite's counting renderers) keeps the CPU skin, so every pin written before this slice reads what it read.
+ */
+export function gpuSkinOn(renderer, search) {
+  return !!(renderer && typeof renderer.createSkinnedCharacterMesh === 'function') && pageParam('gpuskin', search) !== 'off';
+}
+
 export function createFpArm() {
   let renderer = null;
   let camera = null;
@@ -3010,6 +3022,8 @@ export function createFpArm() {
   let thirdBuilt = null;
   let thirdMesh = null;
   let thirdPacked = null;
+  let thirdSkin = null;          // MWNPC1: the third body's GPU skin layout (formats/mwGpuSkin.js), while it skins on the GPU
+  let thirdSkinRefused = null;   // MWNPC1: the piece list a layout refused - the CPU skin for it, asked again when the pieces change
   const thirdDrawBox = { minX: 0, minY: 0, minZ: 0, maxX: 0, maxY: 0, maxZ: 0 };   // PR-BOW1: drawThird's fold, owned by the rig - one object, rewritten per draw
   const thirdBodyBox = { minX: 0, minY: 0, minZ: 0, maxX: 0, maxY: 0, maxZ: 0 };   // PR-BOW1: the same fold less CARRIED_SLOTS - the body's own height
   const figureBodyBox = { minX: 0, minY: 0, minZ: 0, maxX: 0, maxY: 0, maxZ: 0 };   // PR-BOW1b: the portrait's body fold, owned by the rig
@@ -3055,6 +3069,7 @@ export function createFpArm() {
       for (const r of m.ranges || []) if (r.tex) { gl.deleteTexture(r.tex); r.tex = null; }
       for (const e of m.effects || []) renderer.releaseParticleEffect(e);   // MAC-Q: the flame's buffer and texture go with the mesh
       m.effects = null;
+      if (m.skin) renderer.releaseCharacterSkin(m);   // MWNPC1: and a skinned body's palette
     }
   }
   function releaseMesh() { releaseGpu(mesh); mesh = null; }
@@ -3254,7 +3269,7 @@ export function createFpArm() {
     })();
   }
 
-  function releaseThirdMesh() { releaseGpu(thirdMesh); thirdMesh = null; }
+  function releaseThirdMesh() { releaseGpu(thirdMesh); thirdMesh = null; thirdSkin = null; }   // MWNPC1: a rebuilt mesh lays its pieces out again
   /** Pack the posed third-person pieces and put them on the GPU - the
    *  ONE upload both the wheel (update) and the inventory figure use.
    *  AUDIT 33 F1: the figure used to gate on thirdActive(), which
@@ -3262,7 +3277,44 @@ export function createFpArm() {
    *  so in first person, the default, the inventory showed the classic
    *  doll and the model never appeared. The body's pieces are posed at
    *  build regardless of view; only the upload was view-gated. */
+  /**
+   * MWNPC1: DOES THE THIRD BODY SKIN ON THE GPU THIS POSE? Asked BEFORE the pose (update's third arm, figure), since
+   * the answer decides whether poseAssembly blends the pieces on the CPU at all. The body is laid out the first time
+   * it is asked for a set of pieces (a weapon or torch swap hands the rig a new list, and releases the mesh); a
+   * layout refused - a vertex past the shader's influences - answers false for that list, its sentence on the notes,
+   * and the CPU skin draws it as it always did. The door shut mid-session lets a skinned mesh go.
+   */
+  function thirdSkinReady(t) {
+    if (!gpuSkinOn(renderer)) { if (thirdMesh && thirdMesh.skin) releaseThirdMesh(); return false; }
+    if (thirdSkin && skinSamePieces(thirdSkin, t.arm.pieces)) return true;
+    if (thirdSkinRefused === t.arm.pieces) return false;
+    const layout = skinLayout(t.arm.pieces);
+    if (!layout.ok) {
+      thirdSkinRefused = t.arm.pieces;
+      const say = `third body: skinned on the CPU - ${layout.reason}`;
+      if (!notes.includes(say)) notes.push(say);
+      return false;
+    }
+    if (thirdMesh) releaseThirdMesh();   // a CPU mesh, or a GPU one laid out of other pieces
+    thirdSkin = layout;
+    return true;
+  }
+
   function uploadThirdMesh(t) {
+    // MWNPC1: THE GPU SKIN'S UPLOAD - the static stream once, the palette every pose, the ranges' boxes off it
+    if (thirdSkin && gpuSkinOn(renderer) && skinSamePieces(thirdSkin, t.arm.pieces)) {
+      if (!thirdMesh) {
+        const packed = packSkinStream(thirdSkin, pieceLanes);
+        thirdMesh = renderer.createSkinnedCharacterMesh(packed.stream, { floats: packed.floats, pairs: thirdSkin.pairs, width: thirdSkin.width, height: thirdSkin.height });
+        thirdMesh.ranges = packed.ranges;
+        hangRangeTextures(thirdMesh.ranges, t.textures, { skin: bodySkin() });   // SHADOW-FANG
+      }
+      writeSkinPalette(thirdSkin, t.arm);
+      renderer.updateSkinPalette(thirdMesh, thirdSkin.palette);
+      foldRangeBoxes(thirdMesh.ranges);   // PR-BOW1: off the palette's boxes (rule 42), or the CPU fold when it ran
+      return thirdMesh;
+    }
+    if (thirdMesh && thirdMesh.skin) releaseThirdMesh();   // MWNPC1: back to the CPU skin - its mesh is the packed one
     thirdPacked = packFpArm(t.arm.pieces, thirdPacked);
     if (!thirdMesh) {
       thirdMesh = renderer.createCharacterMesh(thirdPacked.packed, { uv: true, bounds: false });   // MW-CROWD: drawn only through the sprite target (drawRigSpriteBox), which casts nothing - no sphere to walk at every pose
@@ -4545,7 +4597,10 @@ export function createFpArm() {
         const t = thirdBuilt;
         const piece = t && t.ok ? t.arm.pieces.find((p) => p.slot === 'weapon') : null;
         if (!piece || !piece.positions || !piece.source || !lastThirdModel) return null;
-        return { world: worldPointOf(posedVertex(piece.positions, muzzleIndexOf(piece)), lastThirdModel) };
+        // MWNPC1: a GPU-skinned body has no posed vertices on the CPU - the one point is skinned by the shader's law
+        const at = thirdMesh && thirdMesh.skin && thirdSkin ? skinnedVertex(thirdSkin, piece, muzzleIndexOf(piece)) : posedVertex(piece.positions, muzzleIndexOf(piece));
+        if (!at) return null;
+        return { world: worldPointOf(at, lastThirdModel) };
       }
       const piece = built && built.ok ? built.arm.pieces.find((p) => p.slot === 'weapon') : null;
       if (!piece || !piece.positions || !piece.source || !lastFrame) return null;
@@ -4937,6 +4992,7 @@ export function createFpArm() {
             time: poseTime(state),   // MS1: a backhand's window runs backwards
             accumRoot: t.accumRoot,
             climb: thirdClimb(climbWorld, cam),   // CLIMB6
+            skin: !thirdSkinReady(t),   // MWNPC1: the skin in the vertex shader - the pose is the skeleton alone
           });
           uploadThirdMesh(t);
           // MAC-Q: the body's particle systems, on the clock its parts ride
@@ -5523,6 +5579,7 @@ export function createFpArm() {
       // Deterministic, so the panel's cache is exact and two renders of
       // one wardrobe are one picture.
       const pose = portraitPose(t);
+      thirdSkinReady(t);   // MWNPC1: posed on the CPU (its exact boxes frame it), drawn through the palette
       if (pose) {
         if (t.hipHang) t.hipHang.rot.set(PLUMB);   // HT-WAIST: a still portrait, a plumb lantern (stepHipSwing re-swings it)
         poseAssembly(t.arm, {
@@ -5646,7 +5703,8 @@ export function createFpArm() {
         third: thirdBuilt
           ? (thirdBuilt.ok
             ? { ok: true, pieces: thirdBuilt.pieces, skeletonPath: thirdBuilt.skeletonPath,
-                weapon: thirdBuilt.weapon, groups: thirdBuilt.groups ? thirdBuilt.groups.length : 0 }
+                weapon: thirdBuilt.weapon, groups: thirdBuilt.groups ? thirdBuilt.groups.length : 0,
+                skin: thirdMesh ? (thirdMesh.skin ? 'gpu' : 'cpu') : null }   // MWNPC1: where the body's skin runs
             : { ok: false, stage: thirdBuilt.stage, error: thirdBuilt.error })
           : null,
       };

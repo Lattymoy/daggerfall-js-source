@@ -166,6 +166,11 @@ directory by `test/audit18_bible_docs.test.js`:
   sticky slots by position, `?shadowcache=off` the old path
   (`Enhanced-Lighting-Arc.md`, SC1, CACHE-COPY).
 - `skyRenderer.js` - painted skies (R4) + the night sky.
+- `skinPalette.js` - MWNPC1 THE GPU SKIN'S PALETTE SHAPE (2026-10-09,
+  `04-Characters/Morrowind-NPCs.md` section 6): `SKIN_PAL_ROW` (341 entries a
+  row, three RGBA32F texels an entry) and `SKIN_PALETTE_UNIT` (21) - the one
+  home renderer.js's CHAR_SKIN_VS and updateSkinPalette and
+  formats/mwGpuSkin.js's writeSkinPalette agree on. No GL, no imports.
 - `cardTableDraw.js` - CARDS3 THE CARDS' BODIES (2026-10-07,
   `11-Multiplayer/Tavern-Cards.md` section 15): one atlas (52 faces, the back,
   the stock, five chips) painted on a canvas and uploaded once under a string

@@ -92,8 +92,8 @@
   {
     "name": "F2-third-person-answers-a-lens-offset",
     "file": "src/combat/fpArm.js",
-    "old": "        return { world: worldPointOf(posedVertex(piece.positions, muzzleIndexOf(piece)), lastThirdModel) };",
-    "new": "        return viewOffsetOf(posedVertex(piece.positions, muzzleIndexOf(piece)), lastThirdModel, lastFrame?.view ?? lastThirdModel, MW_UNITS_PER_METER);",
+    "old": "        return { world: worldPointOf(at, lastThirdModel) };",
+    "new": "        return viewOffsetOf(at, lastThirdModel, lastFrame?.view ?? lastThirdModel, MW_UNITS_PER_METER);",
     "tests": [
       "test/fieldgunmwaudit.test.js"
     ]

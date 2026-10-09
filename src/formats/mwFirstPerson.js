@@ -2528,7 +2528,7 @@ export function applyFirstPersonNeck(skeleton, pose, rootRef, skelMats, pitch, a
 }
 
 export function poseAssembly(assembly, { tracks = null, sampleTrack = null,
-  time = 0, accumRoot = null, neckPitch = 0, neckAim = 0, neckOffset = null, climb = null } = {}) {
+  time = 0, accumRoot = null, neckPitch = 0, neckAim = 0, neckOffset = null, climb = null, skin = true } = {}) {
   const { fns, skeleton, pieces } = assembly;
   if (!fns || !skeleton) return assembly;
   const pose = fns.poseSkeleton(skeleton, tracks, sampleTrack, time, { accumRoot });
@@ -2545,6 +2545,18 @@ export function poseAssembly(assembly, { tracks = null, sampleTrack = null,
   // own bones (combat/climbRig.js) in the same graph space, before any piece is placed on it
   assembly.climbFit = climb ? applyClimbRig(skeleton, pose, GRAPH_ROOT, fns.skelMats, climb) : null;
   const mats = fns.skelMats(skeleton, pose, GRAPH_ROOT);
+  // MWNPC1: `skin: false` - THE GPU SKIN'S POSE. The skeleton is posed and
+  // its matrices kept exactly as below, and the pieces are NOT: the vertex
+  // shader blends them from the palette (mwGpuSkin.js writeSkinPalette), so
+  // their CPU positions and the fold over them are left as they stood, and
+  // `cpuSkinned` says so - the palette's own boxes stand in for the fold.
+  assembly.cpuSkinned = skin !== false;
+  if (!assembly.cpuSkinned) {
+    assembly.pose = pose;
+    assembly.mats = mats;
+    assembly.time = time;
+    return assembly;
+  }
   for (const p of pieces) {
     if (p.kind === 'skinned') {
       fns.skinBatch(p.batch, skeleton, pose, mats, p.positions, null);

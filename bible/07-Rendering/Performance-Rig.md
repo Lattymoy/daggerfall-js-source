@@ -584,3 +584,13 @@ hundred-odd integers, no allocation - and the meshes, and then the
 queued ground, go down near to far. Same law as above, finished: the
 nearest thing enters the depth buffer first and everything behind it
 is rejected before its shader runs. 2 mutants, 2 dead.
+
+## MWNPC1 - the skin on the GPU (2026-10-09)
+
+The open item every section above ends on - "GPU skinning still removes the skin's cost outright" - is closed for
+the third-person body, the player's and every peer's: the stream is uploaded once, a pose writes a palette (an
+affine a bone, kilobytes), and the character vertex shader blends; `?gpuskin=off` is the bisect back. The
+first-person arm keeps the CPU skin. The record, the laws it keeps and its proof (the GLSL run beside the CPU skin in
+a real page, 0 texels apart) are `04-Characters/Morrowind-NPCs.md` section 6, the first slice of the MW-NPC arc. Still
+open from this page: the sprite render is one offscreen bind a body (MWNPC2), and the build is a long main-thread task
+(MWNPC3).

@@ -220,6 +220,148 @@ void main() {
   gl_Position = uProj * uView * world;
 }`;
 
+// MWNPC1 (2026-10-09, Mac: "I wanna do everything and ensure that performance isnt affected"): THE WORLD'S
+// CHARACTER VERTEX SHADER, AND THE SKIN IN IT. CHAR_VS above stays what it was and is the shadow pass's alone (its
+// depth program reads none of what this one adds, and a skinned body never casts - drawCharacter records none
+// under the sprite target). This is CHAR_VS line for line, plus:
+//   - the OPTIONAL skin channels 5-9, additive as aUV and aEmissive are: a VAO that never enables them reads
+//     constants, and `uSkin` 0 never looks at them - every voxel rig and every CPU-skinned mesh draws exactly what
+//     it drew;
+//   - uSkin 1 (one influence pair) or 2 (two): the position is BLENDED here off the palette (formats/mwGpuSkin.js -
+//     its skinPoint is this function in JS, and the pins hold the two together): the influences' rows accumulated
+//     in slot order, the post composed onto the sum once (MW-D31), the result applied to the stream position;
+//   - `vNormalV` and `vRel`: the authored normal under its old name's job, and the posed position in the model's
+//     own axes with no translation - the fragment shader takes the face normal off vRel's derivatives
+//     (skinFaceFs), which are the world's (a translation has none) and stay small however far the floating
+//     origin has drifted.
+// The palette is RGBA32F, three texels an entry, SKIN_PAL_ROW entries a row; texelFetch reads it unfiltered.
+const CHAR_SKIN_VS = `#version 300 es
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec3 aColor;
+layout(location=2) in vec3 aNormal;
+layout(location=3) in vec2 aUV;
+layout(location=4) in vec3 aEmissive;
+layout(location=5) in vec4 aSkinI0;
+layout(location=6) in vec4 aSkinW0;
+layout(location=7) in vec4 aSkinI1;
+layout(location=8) in vec4 aSkinW1;
+layout(location=9) in float aSkinPost;
+uniform mat4 uProj;
+uniform mat4 uView;
+uniform mat4 uModel;
+uniform float uSkin;
+uniform highp sampler2D uSkinPalette;
+out vec3 vColor;
+out vec3 vNormalV;
+out vec3 vRel;
+out vec3 vWorldPos;
+out vec2 vUV;
+out vec3 vEmissive;
+void skinEntry(float e, out vec4 r0, out vec4 r1, out vec4 r2) {
+  int g = int(e + 0.5);
+  int row = g / ${SKIN_PAL_ROW};
+  int col = (g - row * ${SKIN_PAL_ROW}) * 3;
+  r0 = texelFetch(uSkinPalette, ivec2(col, row), 0);
+  r1 = texelFetch(uSkinPalette, ivec2(col + 1, row), 0);
+  r2 = texelFetch(uSkinPalette, ivec2(col + 2, row), 0);
+}
+vec3 skinned(vec3 p) {
+  vec4 a0 = vec4(0.0);
+  vec4 a1 = vec4(0.0);
+  vec4 a2 = vec4(0.0);
+  vec4 r0; vec4 r1; vec4 r2;
+  for (int k = 0; k < 4; k++) {
+    float w = aSkinW0[k];
+    skinEntry(aSkinI0[k], r0, r1, r2);
+    a0 += r0 * w; a1 += r1 * w; a2 += r2 * w;
+  }
+  if (uSkin > 1.5) {
+    for (int k = 0; k < 4; k++) {
+      float w = aSkinW1[k];
+      skinEntry(aSkinI1[k], r0, r1, r2);
+      a0 += r0 * w; a1 += r1 * w; a2 += r2 * w;
+    }
+  }
+  vec4 q0; vec4 q1; vec4 q2;
+  skinEntry(aSkinPost, q0, q1, q2);
+  vec4 c0 = q0.x * a0 + q0.y * a1 + q0.z * a2 + vec4(0.0, 0.0, 0.0, q0.w);
+  vec4 c1 = q1.x * a0 + q1.y * a1 + q1.z * a2 + vec4(0.0, 0.0, 0.0, q1.w);
+  vec4 c2 = q2.x * a0 + q2.y * a1 + q2.z * a2 + vec4(0.0, 0.0, 0.0, q2.w);
+  return vec3(dot(c0.xyz, p) + c0.w, dot(c1.xyz, p) + c1.w, dot(c2.xyz, p) + c2.w);
+}
+void main() {
+  vec3 p = uSkin > 0.5 ? skinned(aPos) : aPos;
+  vColor = aColor;
+  vEmissive = aEmissive;
+  vNormalV = mat3(uModel) * aNormal;
+  vRel = mat3(uModel) * p;
+  vUV = aUV;
+  vec4 world = uModel * vec4(p, 1.0);
+  vWorldPos = world.xyz;
+  gl_Position = uProj * uView * world;
+}`;
+
+/**
+ * MWNPC1: the skinned body's normal matrix for a model matrix (column-major mat4): sign(det M) x M x M^T over its
+ * 3x3 - the matrix that takes the world's face normal back to the packed path's mat3(uModel) x n (skinFaceFs).
+ * Symmetric, so its column-major upload is its row-major one. Written into `out`.
+ */
+export function skinNormalMatrix(m, out = new Float32Array(9)) {
+  const a = m[0], b = m[4], c = m[8];    // row 0 of the 3x3
+  const d = m[1], e = m[5], f = m[9];    // row 1
+  const g = m[2], h = m[6], k = m[10];   // row 2
+  const det = a * (e * k - f * h) - b * (d * k - f * g) + c * (d * h - e * g);
+  const sg = det < 0 ? -1 : 1;
+  out[0] = sg * (a * a + b * b + c * c); out[3] = sg * (a * d + b * e + c * f); out[6] = sg * (a * g + b * h + c * k);
+  out[1] = out[3]; out[4] = sg * (d * d + e * e + f * f); out[7] = sg * (d * g + e * h + f * k);
+  out[2] = out[6]; out[5] = out[7]; out[8] = sg * (g * g + h * h + k * k);
+  return out;
+}
+
+/**
+ * MWNPC1: A LANE'S CHARACTER FRAGMENT SHADER, TAUGHT THE SKINNED BODY'S FACE NORMAL. packFpArm writes each
+ * triangle's normal as the cross product of its POSED corners (times the mirror's flip), and the vertex shader
+ * cannot know a triangle's other corners. The fragment can: vRel is linear across its triangle, so
+ * cross(dFdx(vRel), dFdy(vRel)) is that triangle's plane normal exactly - its SIGN set by the triangle's winding on
+ * the screen, which gl_FrontFacing reports against the renderer's front face (CW - the projection mirrors x). For a
+ * corner winding a, b, c counter-clockwise on the screen, cross(b - a, c - a) = 2 x area x the derivatives' cross,
+ * whatever the lens does, so `ccw ? d : -d` IS the posed corners' cross in the world's axes.
+ *
+ * The CPU path then drew mat3(uModel) x n_model, and the world cross is cof(M) x n_model = det(M) M^-T n_model - so
+ * n_model = M^T n_world / det(M), and the CPU's normal is sign(det M) x M M^T x n_world. `uSkinNrm` is exactly that
+ * matrix (drawCharacter, per draw) and `uSkinFlip` the range's mirror (rigid left-side parts, packFpArm's `flip`):
+ * with them the skinned body is lit as the packed one was, a race's unequal weight and height included.
+ *
+ * The edit is to the SOURCE, once per lane set: the vNormal input becomes a global the top of main() fills -
+ * before any discard, so the derivatives run in uniform control flow - and every line after reads it as it read
+ * the input. A lane without exactly one `in vec3 vNormal;` and one `void main() {` throws: a silent no-op here is a
+ * body lit by a zero normal.
+ */
+export function skinFaceFs(fs) {
+  const decl = 'in vec3 vNormal;';
+  const main = 'void main() {';
+  const n = (needle) => fs.split(needle).length - 1;
+  if (n(decl) !== 1 || n(main) !== 1) {
+    throw new Error(`MWNPC1: a character fragment shader needs one "${decl}" and one "${main}" (has ${n(decl)} and ${n(main)})`);
+  }
+  return fs.replace(decl, SKIN_FACE_DECL).replace(main, `${main}\n  vNormal = charFaceNormal();`);
+}
+const SKIN_FACE_DECL = `in vec3 vNormalV;
+in vec3 vRel;
+uniform float uSkin;
+uniform mat3 uSkinNrm;
+uniform float uSkinFlip;
+uniform float uFrontCW;
+vec3 vNormal;
+vec3 charFaceNormal() {
+  vec3 d = cross(dFdx(vRel), dFdy(vRel));
+  if (uSkin < 0.5) return vNormalV;
+  bool ccw = gl_FrontFacing != (uFrontCW > 0.5);
+  vec3 nw = ccw ? d : -d;
+  if (dot(nw, nw) < 1e-36) return vec3(0.0, 1.0, 0.0);
+  return normalize(uSkinFlip * (uSkinNrm * nw));
+}`;
+
 // MAC-Q (2026-09-17): THE PARTICLE QUAD, osgParticle's own (ParticleSystem
 // .cpp:360-403): a camera-facing quad of half-extent `size` on the view's
 // x and y axes, textured, times the particle's colour with its alpha. The
@@ -1279,6 +1421,7 @@ import { WATER_LAYER_UNITS, WATER_SCENE_UNIT, WATER_SCENE_DEPTH_UNIT, NO_BED_DEP
 import { WATER_BED_GLSL, waterBedMix } from './waterBedGlsl.js';   // WATER-NEXT 2: the ground under the water is a bed
 import { packWaterMask, WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';   // MAC2: the corner table's one home; WATER-DRAW1: the PASS takes the draw's table, not the feet's
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
+import { SKIN_PAL_ROW, SKIN_PALETTE_UNIT } from './skinPalette.js';   // MWNPC1: the GPU skin's palette shape
 import { ecotoneGlsl, ECO_UNITS } from './ecotoneGlsl.js';   // ECOTONE1: the ground's share of its neighbours - the chunk, and the units their tile sets bind on
 import { SNOW_VS, snowTerrainFs, SNOW_UNITS, SNOW_LAYER } from './snowfallGlsl.js';   // SNOWFALL1: the mod's snow surface, lit as the ground is
 const SNOW_UNIT_LIST = Object.entries(SNOW_UNITS);   // AUDIT ENVIRONS P1: the five pictures' units, listed once
@@ -1426,6 +1569,10 @@ export class Renderer {
     this.maxPointLights = CLASSIC_MAX_LIGHTS;
     this._decA = new Float32Array(3); this._decB = new Float32Array(3); this._decC = new Float32Array(3);   // AUDIT F4: three, because one site decodes the ambient, the moon AND the sun and holds all three   // EL1: the decode scratch (two, for the billboard tint's two terms)
     this._pointColorDec = new Float32Array(CLASSIC_MAX_LIGHTS * 3);
+    this.stats = { draws: 0, programBinds: 0, vaoBinds: 0, texBinds: 0, bbCulled: 0 };   // PERF-CROWD2: the billboards this frame did NOT submit   // MWNPC1: made before the first world set is built - its character program is bound through _use there
+    this._skinNrm = new Float32Array(9);   // MWNPC1: drawCharacter's normal-matrix scratch (skinNormalMatrix)
+    /** @type {WebGLTexture|null} */ this._skinIdentity = null;    // MWNPC1: the identity palette (_skinIdentityTex) - before the first set is built, which makes it
+    /** @type {WebGLTexture|null} */ this._skinUnitHolds = null;   // MWNPC1: what SKIN_PALETTE_UNIT holds, by our own binds
     this._classicSet = this._buildWorldSet({ key: 'classic', meshFs: FS, bbFs: BB_FS, terrainFs: TERRAIN_FS, charFs: CHAR_FS, decalFs: DECAL_FS });   // MAC-BUG W6: and the decal pass, its fifth
     this._installWorldSet(this._classicSet);
     this._ambientTri = null;
@@ -1481,7 +1628,6 @@ export class Renderer {
     // were invisible here, which made the counter blind to exactly the
     // terrain culling it exists to measure. texBinds counts the binds a
     // DRAW pays; upload-time binds are creation cost, not frame cost.
-    this.stats = { draws: 0, programBinds: 0, vaoBinds: 0, texBinds: 0, bbCulled: 0 };   // PERF-CROWD2: the billboards this frame did NOT submit
     this._perf = perfOn() ? setMeter(gl, new PerfMeter(gl, perfZones(), perfCpu())) : null;   // EL8: `?perf` - a GPU-timed line every PERF_EVERY world frames; VC6d: `?perf=zones` per pass, and the meter is findable by its context (the sky's march marks its own span); PERF-CPU: `?perf=cpu` tiles the same zones on the MAIN THREAD's clock, which is the one a script-bound frame is losing
     this._perfOpen = false;   // AUDIT 68 S16-perf-no-resolve-leak: a world frame's meter frame begun and not yet closed (_perfClose)
     this._frameStamp = 0;      // PERF3: bumped by beginFrame (and the state restores) - the terrain program's frame-constant block is uploaded once per stamp; LA-COST1: and the billboard's, the decal's and the character's, and bumped by every setter and seam that moves a value in any of the four (the law: test/la_cost.test.js)
@@ -1664,7 +1810,7 @@ export class Renderer {
     // the mirrored projection MUST bracket CULL_FACE off around its
     // draw - the screen-quad (2D UI) and sky passes learned that the
     // hard way (the sky-blue-screen regression; tools/cullProbe.mjs).
-    gl.frontFace(gl.CW);
+    gl.frontFace(gl.CW);   // MWNPC1: and the character program's uFrontCW says so (_charSkinProgram)
     gl.clearColor(0.53, 0.7, 0.92, 1.0); // pale Iliac Bay sky
     // EV6: the JS shadow of that clear colour - the sprite pass used
     // to gl.getParameter(COLOR_CLEAR_VALUE) it back, a synchronous
@@ -1929,7 +2075,7 @@ export class Renderer {
     return {
       key: src.key,
       mesh: this._buildProgram(VS, src.meshFs),
-      char: this._buildProgram(CHAR_VS, src.charFs),
+      char: this._charSkinProgram(src.charFs),   // MWNPC1: the skin in the world's character program
       bb: this._buildProgram(bbVertexShader(src.bbVs), src.bbFs),   // LA-COST3: a lane may add to the billboard VS (its flat's sun, once a quad)
       terrain: this._buildProgram(TERRAIN_VS, src.terrainFs),
       // FAR-CLIP1: and the terrain's CLIP variant (terrainClipFs, above), built from this set's own terrain shader the
@@ -1950,6 +2096,23 @@ export class Renderer {
       decalLights: src.decalFs ? (src.maxLights ?? CLASSIC_MAX_LIGHTS) : CLASSIC_MAX_LIGHTS,
       locate: null,   // LA-COST7: its programs' uniform locations, looked up once (_locations)
     };
+  }
+
+  /** MWNPC1: A SET'S CHARACTER PROGRAM - CHAR_SKIN_VS over the lane's shader taught the face normal (skinFaceFs) -
+   *  and its two constants, set ONCE at link and held by the program for its life: the palette's unit, and the front
+   *  face gl_FrontFacing is read against (1: the constructor's gl.frontFace(gl.CW), the renderer's for its life - the
+   *  projection mirrors x). Set here, so a draw sends neither (LA-COST1: a character call sends its own and nothing
+   *  of the frame's); and the identity palette goes onto its unit, where every unskinned draw leaves it. Bound through
+   *  _use (EV6: every program bind funnels through the shadow) - the stats it counts into are made before any set. */
+  _charSkinProgram(fs) {
+    const gl = this.gl;
+    const program = this._buildProgram(CHAR_SKIN_VS, skinFaceFs(fs));
+    this._use(program);
+    gl.uniform1i(gl.getUniformLocation(program, 'uSkinPalette'), SKIN_PALETTE_UNIT);
+    gl.uniform1f(gl.getUniformLocation(program, 'uFrontCW'), 1);
+    this._skinIdentityTex();
+    this._activeTexture(gl.TEXTURE0);
+    return program;
   }
 
   /** LA-COST7 (2026-09-27, Mac: "performance improvements"): THE SET'S LOCATIONS, LOOKED UP ONCE. _installWorldSet
@@ -2057,6 +2220,9 @@ export class Renderer {
       tex: gl.getUniformLocation(cp, 'uTex'),
       useTex: gl.getUniformLocation(cp, 'uUseTex'),
       alphaCut: gl.getUniformLocation(cp, 'uAlphaCut'),
+      skin: gl.getUniformLocation(cp, 'uSkin'),   // MWNPC1: the GPU skin's three a draw (the palette's unit and the front face are the program's, _charSkinProgram)
+      skinNrm: gl.getUniformLocation(cp, 'uSkinNrm'),
+      skinFlip: gl.getUniformLocation(cp, 'uSkinFlip'),
     };
     this._charFog = this._fogLocs(cp);
     this.bbProgram = set.bb;
@@ -2958,6 +3124,90 @@ export class Renderer {
   }
 
   /**
+   * MWNPC1: A GPU-SKINNED CHARACTER MESH - formats/mwGpuSkin.js packSkinStream's static stream, uploaded ONCE, and
+   * its palette texture (RGBA32F, `width` x `height`, three texels an entry). A pose re-uploads the palette alone
+   * (updateSkinPalette); drawCharacter blends the stream in CHAR_SKIN_VS. `pairs` is the influence pairs a corner
+   * carries (1 or 2). No sphere: the body is drawn only through the sprite target, which never casts (MW-CROWD).
+   */
+  createSkinnedCharacterMesh(stream, { floats, pairs, width, height }) {
+    const gl = this.gl;
+    const vao = gl.createVertexArray();
+    this._bindVao(vao);
+    const vbo = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+    gl.bufferData(gl.ARRAY_BUFFER, stream, gl.STATIC_DRAW);
+    const stride = floats * 4;
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, stride, 0);    // position
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, stride, 12);   // diffuse
+    gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 2, gl.FLOAT, false, stride, 24);   // UV
+    gl.enableVertexAttribArray(4); gl.vertexAttribPointer(4, 3, gl.FLOAT, false, stride, 32);   // emission
+    gl.enableVertexAttribArray(5); gl.vertexAttribPointer(5, 4, gl.FLOAT, false, stride, 44);   // the first pair's entries
+    gl.enableVertexAttribArray(6); gl.vertexAttribPointer(6, 4, gl.FLOAT, false, stride, 60);   // and weights
+    if (pairs > 1) {
+      gl.enableVertexAttribArray(7); gl.vertexAttribPointer(7, 4, gl.FLOAT, false, stride, 76);
+      gl.enableVertexAttribArray(8); gl.vertexAttribPointer(8, 4, gl.FLOAT, false, stride, 92);
+    }
+    gl.enableVertexAttribArray(9); gl.vertexAttribPointer(9, 1, gl.FLOAT, false, stride, (floats - 1) * 4);   // the post
+    this._bindVao(null);
+    const tex = gl.createTexture();
+    this._activeTexture(gl.TEXTURE0 + SKIN_PALETTE_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, width, height, 0, gl.RGBA, gl.FLOAT, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    this._skinUnitHolds = tex;
+    this._activeTexture(gl.TEXTURE0);
+    return { vao, count: stream.length / floats, buffers: [vbo], vbo, floats, bounds: null,
+      skin: { tex, pairs, width, height } };
+  }
+
+  /** MWNPC1: a pose - the palette re-uploaded, and nothing else (`data` is the layout's palette, width x height
+   *  texels of four floats). */
+  updateSkinPalette(mesh, data) {
+    const gl = this.gl;
+    const skin = mesh && mesh.skin;
+    if (!skin) return;
+    this._activeTexture(gl.TEXTURE0 + SKIN_PALETTE_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, skin.tex);
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, skin.width, skin.height, gl.RGBA, gl.FLOAT, data);
+    this._skinUnitHolds = skin.tex;
+    this._activeTexture(gl.TEXTURE0);
+  }
+
+  /** MWNPC1: the palette's owner lets it go - with the identity put back on the unit first, so no draw after it
+   *  reads a deleted texture. (The VAO, buffers and range textures go through the mesh's own release.) */
+  releaseCharacterSkin(mesh) {
+    const skin = mesh && mesh.skin;
+    if (!skin || !skin.tex) return;
+    const gl = this.gl;
+    if (this._skinUnitHolds === skin.tex) {
+      this._activeTexture(gl.TEXTURE0 + SKIN_PALETTE_UNIT);
+      gl.bindTexture(gl.TEXTURE_2D, this._skinIdentityTex());
+      this._skinUnitHolds = this._skinIdentity;
+      this._activeTexture(gl.TEXTURE0);
+    }
+    gl.deleteTexture(skin.tex);
+    skin.tex = null;
+  }
+
+  /** MWNPC1: the one-entry identity palette every unskinned character draw leaves on the unit. Lazy, kept. */
+  _skinIdentityTex() {
+    if (this._skinIdentity) return this._skinIdentity;
+    const gl = this.gl;
+    const tex = gl.createTexture();
+    this._activeTexture(gl.TEXTURE0 + SKIN_PALETTE_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, 3, 1, 0, gl.RGBA, gl.FLOAT, new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0]));
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    this._skinIdentity = tex;
+    this._skinUnitHolds = tex;
+    return tex;
+  }
+
+  /**
    * MW-D11: upload one decoded texture for the character path.
    * `mips` is decodeDds's output shape ({width, height, rgba}[]), and
    * the wrap mode is the NIF's own clamp mode, mapped by the caller.
@@ -3171,6 +3421,24 @@ export class Renderer {
     }
     gl.disable(gl.CULL_FACE);
     this._bindVao(mesh.vao);
+    // MWNPC1: THE SKIN, per skinned draw - and nothing for any other (LA-COST1). The palette sampler always reads a
+    // complete RGBA32F texture on its own unit - this body's palette for its draw, the identity every other draw finds
+    // there (put back after each skinned one) - because a sampler is used whether or not its branch runs (the MW-D11
+    // lesson below). `uSkin` is the program's, 0 until a skinned draw sets it and back to 0 after. A skinned body's
+    // normal matrix is sign(det M) M M^T (skinFaceFs: the packed path's mat3(uModel) x n, from the world's face normal).
+    const skin = mesh.skin || null;
+    if (skin) {
+      gl.uniform1f(c.skin, skin.pairs);
+      this._activeTexture(gl.TEXTURE0 + SKIN_PALETTE_UNIT);
+      gl.bindTexture(gl.TEXTURE_2D, skin.tex);
+      this._skinUnitHolds = skin.tex;
+      this.stats.texBinds++;
+      gl.uniformMatrix3fv(c.skinNrm, false, skinNormalMatrix(modelMatrix, this._skinNrm));
+    } else if (this._skinUnitHolds !== this._skinIdentity) {
+      this._activeTexture(gl.TEXTURE0 + SKIN_PALETTE_UNIT);   // never on a frame of ours: a skinned draw puts it back
+      gl.bindTexture(gl.TEXTURE_2D, this._skinIdentityTex());
+      this._skinUnitHolds = this._skinIdentity;
+    }
     // MW-D11: a textured mesh carries RANGES - one per piece, each with
     // its own texture - because a Morrowind arm is several meshes with
     // several textures and this path issues drawArrays. Without ranges
@@ -3189,6 +3457,7 @@ export class Renderer {
         // (rule 57), and a sheathed weapon has to come back without a
         // repack.
         if (r.hidden) continue;
+        if (skin) gl.uniform1f(c.skinFlip, r.piece && r.piece.mirrored ? -1 : 1);   // MWNPC1: packFpArm's flip, per piece
         gl.uniform1f(c.useTex, r.tex ? 1 : 0);
         gl.uniform1f(c.alphaCut, r.alphaCut || 0);
         gl.bindTexture(gl.TEXTURE_2D, r.tex || this._blackTex);
@@ -3208,6 +3477,14 @@ export class Renderer {
     this._tex0Bound = null;   // PERF-TEX3: this path owns unit 0 - the shadow may not speak for it
     gl.uniform1f(c.useTex, 0);
     gl.uniform1f(c.alphaCut, 0);
+    if (skin) {
+      // MWNPC1: the identity back on the unit - this body's palette may be deleted before the next character draws
+      gl.uniform1f(c.skin, 0);
+      this._activeTexture(gl.TEXTURE0 + SKIN_PALETTE_UNIT);
+      gl.bindTexture(gl.TEXTURE_2D, this._skinIdentityTex());
+      this._skinUnitHolds = this._skinIdentity;
+    }
+    this._activeTexture(gl.TEXTURE0);
     this._bindVao(null);
     // MAC-Q: the rig's particle effects, over the body, in the same pass -
     // never recorded for the shadows (a flame casts none in the reference
