@@ -23,6 +23,10 @@ import { planStore } from '../src/systems/itemTransfer.js';
 import { takeTradeGoods } from '../src/net/realmTradeLaw.js';
 import { validLootItem } from '../src/systems/loot.js';
 import { createWeapon } from '../src/combat/enemyEquipment.js';
+import { viewOutLight, clockFogColor, realWindowsGlsl, RW_SEED_GLSL } from '../src/render/realWindows.js';
+import { exteriorAmbient, sunScale } from '../src/world/worldClock.js';
+import { EMIT_MESH_FS } from '../src/render/airPass.js';
+import { ROOM_LIT_SHARE } from '../src/world/windowRoomArt.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const sources = new Map();
@@ -214,4 +218,57 @@ test('WAGONS2 (FINAL AUDIT) THE ACCOUNT SERVICE KEEPS THE LOADED WAGON: the real
   assert.equal(takeTradeGoods(s2, offer(cart), [0]).length, 1, 'the spare cart moves');
   const s3 = { ...save(), wagonItems: [] };
   assert.equal(takeTradeGoods(s3, offer(caravan), [1]).length, 1, 'an empty caravan moves');
+});
+
+// ─── the windows' render half ───────────────────────────────────────────────────────────────────────────────────────
+test('RW1 x WAGONS2 (FINAL AUDIT) THE VIEW OUT IN THE WEATHER: the street behind the glass is lit by the street frame\'s own terms - the clock\'s minute AND the weather\'s sun and the cloud\'s - so a rainy noon looked out on is the rainy street (it was a clear day\'s: five times the ambient, a storm\'s sixteen), and the clock\'s air compares a dimmed sun with a dimmed sun (no minute gone, the fog unchanged) (mutants: the weather unread, the cloud unread, a host\'s setup clear-skied)', () => {
+  const noon = 12 * 60, ns = 0.4;
+  const clear = viewOutLight(noon, ns);
+  assert.deepEqual([...clear.ambient], [...exteriorAmbient(noon, ns, 1)]);
+  assert.equal(clear.sun, sunScale(noon), 'a clear day: the clock\'s light alone');
+  const rain = viewOutLight(noon, ns, 0.45, 0.8);
+  assert.deepEqual([...rain.ambient], [...exteriorAmbient(noon, ns, 0.45)], 'the ambient at the weather\'s sun');
+  assert.ok(Math.abs(rain.sun - sunScale(noon) * 0.45 * 0.8) < 1e-9, 'the key: the clock\'s times the weather\'s and the cloud\'s');
+  assert.ok(rain.ambient[0] < clear.ambient[0] / 3, 'a rainy street is a dim one');
+  // the clock's air: the street kept at the rain's light, looked out on at once - unchanged
+  const kept = new Float32Array([0.4, 0.45, 0.5]);
+  assert.deepEqual([...clockFogColor(kept, rain.sun, rain.sun)], [...kept], 'no minute gone, no change');
+  assert.notDeepEqual([...clockFogColor(kept, rain.sun, clear.sun)], [...kept], 'the clear-sky light it was given brightened it');
+  assert.deepEqual(viewOutLight(noon, ns, NaN, undefined).sun, sunScale(noon), 'no word: a clear day');
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const src = read(f);
+    assert.match(src, /const light = viewOutLight\(clockMinute, getFloat\('Enhancements', 'NightAmbientLightScale', 0, 1\), weatherTerms\(\)\.sun, sky\.sunFactor\(\)\);\n\s+r\.setLighting\(withMoonAmbient\(light\.ambient, sky\.moonlight\(\)\), light\.sun, SUN_RIG_COLOR\);\n\s+r\.setFogColor\(clockFogColor\(keptFog, keptSun, r\._sunScale\)\);/, f);
+  }
+});
+
+test('RW1 x WAGONS2 (FINAL AUDIT) THE SEA IN THE VIEW OUT: Deep Waters (on by default) as the street frame draws it - a pure-ocean pixel kept for its seafloor (its ground and its water sheet hidden), the floors\' foreign programs told to the renderer, and the carved sea\'s top drawn last, culled by the pass\'s own pixels rather than the street frame\'s visibility (a harbour-front window showed the bed dry and the open sea as sky) (mutants: the ocean pixel dropped, the sea\'s top left out, the street\'s visibility read)', () => {
+  const w = read('src/scenes/world.js');
+  const street = w.slice(w.indexOf('const drawOutsideStreet = (r, planes) => {'), w.indexOf('const outsideView = (doorMatrix) => ({'));
+  assert.match(street, /\n\s+ground\.push\(p\);   \/\/ FINAL AUDIT/, 'every pixel the pass sees, a pure-ocean one too');
+  assert.match(street, /for \(const cell of ground\) if \(!cell\.deepWaters\?\.hide\) r\.drawTerrain\(/, 'its ground hidden');
+  assert.match(street, /if \(!p\.water \|\| p\.deepWaters\?\.hide\) continue;/, 'its water sheet with it');
+  assert.match(street, /if \(deepWaters\) \{ drawDeepWatersFloors\(ground\); r\.markForeignPass\(\); \}/, 'the seafloor, the mod\'s programs told');
+  assert.match(street, /if \(flats\.length\) r\.drawBillboards\([^\n]*\n(?:\s*\/\/[^\n]*\n)+\s*if \(deepWaters\) drawDeepWatersSurfaces\(performance\.now\(\), ground\);\n\s*\};/, 'the sea\'s top last, on the pass\'s own pixels');
+  const surf = lift('src/scenes/world.js', 'drawDeepWatersSurfaces');
+  assert.match(surf, /for \(const p of cells \?\? built\.values\(\)\) \{[^\n]*\n\s+const h = p\.deepWaters\?\.gpu;\n\s+if \(\(cells \|\| p\._visible\) && h\?\.surface\)/, 'the given cells, never the street frame\'s _visible');
+});
+
+test('RW1 x WAGONS2 (FINAL AUDIT) A DARK ROOM GLOWS NOWHERE: the room\'s lit seed is one text (RW_SEED_GLSL), read by the room behind the glass and by the air pass\'s emission replay - which blooms an exterior pane\'s mask only where its room is lit, so a room drawn dark at night wears no amber halo with Enhanced Lighting on (mutants: the replay\'s test, its uniform never set, the renderer\'s word)', () => {
+  const room = realWindowsGlsl('c');
+  assert.ok(room.includes(RW_SEED_GLSL), 'the room\'s seed is the shared text');
+  assert.match(room, /float s2 = rwLitSeed\(vn, vWorldPos, uModel\[3\]\.xyz, vUV\);/);
+  assert.match(room, /float lit = night \* step\(s2, RW_LIT_SHARE\);/);
+  assert.match(RW_SEED_GLSL, new RegExp(`const float RW_LIT_SHARE = ${ROOM_LIT_SHARE};`));
+  assert.ok(EMIT_MESH_FS.includes(RW_SEED_GLSL), 'and the replay\'s');
+  assert.match(EMIT_MESH_FS, /if \(uRoomsLit > 0\.5 && rwLitSeed\(normalize\(vNormal\), vWorldPos, uModel\[3\]\.xyz, vUV\) > RW_LIT_SHARE\) discard;/, 'unlit (s2 past the share, as step(s2, share) reads it): no bloom');
+  const ap = read('src/render/airPass.js');
+  assert.match(ap, /gl\.uniform1f\(P\.emitMesh\.uRoomsLit, f\.windowRooms && sm\._evWin === GLASS_EXTERIOR \? 1 : 0\);/, 'set for every sub-mesh - a room\'s glass alone');
+  assert.match(ap, /'uBloomSize', 'uRoomsLit'\]\),/, 'its location asked');
+  assert.match(read('src/render/renderer.js'), /windowRooms: !!this\._rw\?\.rooms,/, 'the renderer says whether rooms stand behind exterior glass');
+  // the JS twin of the hash: the share the shader keeps
+  const fr = (x) => x - Math.floor(x);
+  const hash = (p) => { let [x, y, z] = [fr(p[0] * 0.1031), fr(p[1] * 0.1030), fr(p[2] * 0.0973)]; const d = x * (y + 33.33) + y * (x + 33.33) + z * (z + 33.33); x += d; y += d; z += d; return fr((x + y) * z); };
+  let lit = 0, n = 0;
+  for (let tx = 0; tx < 40; tx++) for (let pl = 0; pl < 40; pl++) { n++; if (hash([3.1 * 0 + 0, pl * 0.37, tx + 11]) <= ROOM_LIT_SHARE) lit++; }
+  assert.ok(Math.abs(lit / n - ROOM_LIT_SHARE) < 0.08, `about the share lit (${lit}/${n})`);
 });

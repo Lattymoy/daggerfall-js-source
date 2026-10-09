@@ -410,11 +410,12 @@
   {
     "name": "HCC-fast-travel-never-relocates",
     "file": "src/systems/horseCart.js",
-    "old": "    fastTravelFollowingSuspended = true; pendingFastTravelHorseRelocation = true;\n  }\n  function convertFollowingTransportToWaitAtDeparture() {",
-    "new": "    fastTravelFollowingSuspended = false; pendingFastTravelHorseRelocation = false;\n  }\n  function convertFollowingTransportToWaitAtDeparture() {",
+    "old": "    fastTravelFollowingSuspended = true; pendingFastTravelHorseRelocation = true;\n  }\n  /** WAGONS2 (FINAL AUDIT): WHETHER THE WAGON GOES",
+    "new": "    fastTravelFollowingSuspended = false; pendingFastTravelHorseRelocation = false;\n  }\n  /** WAGONS2 (FINAL AUDIT): WHETHER THE WAGON GOES",
     "tests": [
       "test/hcc_runtime.test.js"
-    ]
+    ],
+    "note": "WAGONS2 (FINAL AUDIT, PIN MOVED): re-aimed by content - wagonGoesOnJourney stands between handlePostFastTravel and the departure's conversion now."
   },
   {
     "name": "HCC-rebase-forgets-hitch",

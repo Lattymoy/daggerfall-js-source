@@ -90,7 +90,10 @@ How the kinds are wired in:
   (`src/systems/shopStock.js`).
 - **Names**: a marked row keeps the template's name, as every minted row
   does; what it shows is the kind's name (`wagonItemName`, read first by
-  `src/systems/itemInfo.js` resolveItemName).
+  `src/systems/itemInfo.js` resolveItemName) - and, since the final audit,
+  the guild vault's Put in, its rows and its log line (the account service
+  names the row, `server-account/src/guildVault.js` pieceName) and the keyed
+  shelf (`src/scenes/worldModes.js` `_itemLabel`).
 - **Driving**: a player who owns more than one drives the best
   (`activeWagonItem`).
 - **Capacity**: the wagon store, both inventories and both counters read the
@@ -323,7 +326,11 @@ from its storage. They come in "to craft, rest, look around". Online only.
   owner is away.
 - A visitor's client reads it as a home's door is read (`homeMayEnter`): the
   owner by the relay's stamp, the party by its signed handles, the guild by
-  its tag. As with homes, the check is the client's.
+  its tag. As with homes, the check is the client's: the relay keeps no door
+  for `caravan:<k>` (it gates only `owned:` rooms), so a modified client can
+  join an "Only me" caravan's room and hear what its owner placed. That is
+  the homes' own law, kept on purpose (the final audit named it, and left
+  it).
 
 **The room** is the caravan's own on the relay: `caravan:<k>`, where `k` is
 the owner's park key, the key the cell's record carries
@@ -415,8 +422,11 @@ Items and economy, motion and drawing, the caravan's room, and online.
 
 - **The loaded wagon stays.** The wagon a player drives while it holds
   anything cannot change hands. A trade, the market, the guild vault and the
-  keyed shop refuse it and say why (`src/systems/tradePack.js`
-  packTradeRefusal), as the counter's Sell already drops it. A loaded caravan
+  keyed shop refuse it (`src/systems/tradePack.js` packTradeRefusal; the
+  trade and the market say why, the vault and the keyed shop leave it off
+  their lists), as the counter's Sell already drops it. Since the final
+  audit the account service refuses it too (`src/net/realmTradeLaw.js`
+  takeTradeGoods). A loaded caravan
   traded away had left 2000 kg on a 750 kg cart.
 - **The item law reads a wagon's mark.** `wagonKind` and `wagonLook` are
   declared fields (`src/systems/itemFields.js`). A mark on anything but the
@@ -458,6 +468,81 @@ Items and economy, motion and drawing, the caravan's room, and online.
   - A parked peer's wheels do not roll when the ground re-stands it.
   - A peer's change of kind starts its wheels afresh.
 
+### The final audit (five lenses, after the merge that renumbered world185)
+
+The relay and the visits, the riders and the wheels, the caravan's room as a
+house, the windows' render half, and the items with the docs and the pins.
+Each fix is pinned in `test/wagons2_final.test.js` (or beside its own law's
+tests) and has its mutants in `tools/mutants/wagons2_final.json`.
+
+- **The relay** (world185 re-hashed in place).
+  - The `caravan` frame's second is the room's, not a socket's
+    (`CARAVAN_DOC_MIN_MS`): one account's many sockets in its own room were
+    one second each.
+  - Its fan is charged to the room's act bytes after the sender's, as an
+    act's is.
+  - A fan refused while a bucket is in debt is owed, not dropped: the alarm
+    at the repay sends it (`_caravanFan`). Nothing said an unchanged document
+    again, so its visitors kept the old layout.
+- **The owner's own room after a load inside it.** A fresh session has had no
+  welcome to say its relay, and with no room it never has one; the world
+  channel's word stands for it (`caravanRelayOk`).
+- **A save or a Recall that cannot come back lands at the rear door.** A
+  visit's save, a caravan moved or sold, or the mod off: the player stands
+  behind the door it was made by, told "You stand outside the caravan."
+  (`caravanDoorLanding`). It fell to the building's no-door arm (the pixel's
+  centre, a town's roof) and a Recall stood inside the wagon's body.
+- **The room comes back onto its caravan as it faces.** A caravan re-parked
+  on its own spot facing another way is another room (`CARAVAN_STANDS_TURN`,
+  15 degrees; `parkedCaravanAt`'s heading).
+- **A hired trader in a home alone.** A caravan or a ship had it sold for
+  25,000 gold and never trading (`stationsOffered(trader)`, the view's
+  `trader`).
+- **The hosts' last seams.** The fixed city's windows show its wagons in the
+  street, and staff sent to a player in a caravan land behind its rear door.
+- **Names.** The Open Wagon and the Caravan by their own names in the guild
+  vault and on the keyed shelf (above, Names).
+- **One home each.** The counter's wagon guard (`sellGuardOf`, six copies in
+  two trade windows, pinned nowhere) and the loaded wagon's law
+  (`wagonLoadedHeld`, the pack's and the keyed shelf's). Every plan the two
+  inventories make reads the driven wagon's capacity (pinned by walking the
+  calls).
+- **The words.** "The floor is now red rug." (it said "are"); out of reach,
+  "You are too far away..." (it said there was no room); an Accept after the
+  ask lapsed says so; the ride's strip stands below the duel's.
+- **The riders.**
+  - A rider's own word (`wr`) seats them in the drawing however far their
+    pose lags at the Overworld's pace (`sitsIn`); an owner's word alone still
+    draws nobody. A peer's companion is read by its own record against the
+    wagon's own word (`wordSeat`).
+  - A teleport while seated ends the ride where the body landed (each frame's
+    pin undid it).
+  - A seated rider sets out on no journey of their own: the classic arm of a
+    journey and a fast travel of their own refuse it, as the Overworld did.
+  - The far end's wait runs for the journey this ride followed alone.
+  - Riders go only with the wagon: an owner whose wagon stays (parked, or a
+    following team left at the departure) gives up the seats before leaving
+    (`wagonGoesOnJourney`, `release`).
+  - A seat lost to another tab clears the book.
+- **The windows** (also in `07-Rendering/Real-Windows.md`).
+  - The view out is lit by the weather and the cloud as the street frame is
+    (`viewOutLight`): a rainy noon was a clear day's, the air brightened.
+  - Deep Waters' sea is in it: a pure-ocean pixel's seafloor and the carved
+    sea's top.
+  - A room drawn dark wears no amber bloom (`RW_SEED_GLSL`, one seed for the
+    room and the emission replay; compiled and linked in Chromium).
+  - The target keeps the larger side, is let go when the street is off, and
+    is sized by the world's own image, not the canvas.
+- **Pins that pinned less than they said**, made to bite: the bracket's frame
+  target, the release, the pictures' count (twenty), and the loaded wagon's
+  law on the keyed shelf.
+
+**Known limit (the final audit).** Glass counts as in view while it is in
+the camera's frustum: interiors are drawn whole, so a window in another room
+behind walls keeps the street pass running while the player moves. The cost
+is bounded (VIEW_SCALE, VIEW_MAX_SIDE, one pass a frame); an occlusion query
+on the glass is the fix, not made blind here.
+
 ## The relay
 
 A parked team's record (HCC-PARK) now keeps the wagon's kind and whether a
@@ -474,7 +559,8 @@ comes back as the Small Cart, as built.
   WAGONS2 the paint, the Overworld's seats, the visits (the plaque's rows and
   word, the visit's door, the room's key, the owner's pieces, the listener).
 - `src/scenes/exterior.js` (the fixed city) - wired for the models, the kinds,
-  the capacity, the stable and the paint. FLAGGED: no caravan room, no riders
+  the capacity, the stable and the paint, and (the final audit) its windows'
+  view out of the street's wagons. FLAGGED: no caravan room, no riders
   and no visits. It has no peers and no private-room path, so the plaque lists
   none of those rows.
 - `src/scenes/worldModes.js` - the caravan's room: its entry, save field,
@@ -495,9 +581,13 @@ comes back as the Small Cart, as built.
 
 - `test/wagons2.test.js`, `test/wagons2_wheels.test.js` - WAGONS2 and its audit.
 - `test/wagons2_visit.test.js`, `test/wagons2_visit_relay.test.js` - the visits.
+- `test/wagons2_final.test.js` - the final audit (and its riders' and
+  windows' pins beside their own, in `wagons2.test.js` and
+  `windows1_view.test.js`).
 
-The mutants are in `tools/mutants/wagons1.json`, `wagons2.json`, `wagons2_wheels.json` and `wagons2_visit.json`. Records re-aimed:
-`companionweight.json`, `disc8.json`, `hcc.json`, `prwagon1.json`,
-`soc1.json`, `wagonhitch.json`.
+The mutants are in `tools/mutants/wagons1.json`, `wagons2.json`, `wagons2_wheels.json`, `wagons2_visit.json` and `wagons2_final.json`. Records re-aimed:
+`audit29.json`, `companionweight.json`, `disc8.json`, `disc24.json`,
+`hcc.json`, `homevendor.json`, `prwagon1.json`, `soc1.json`,
+`wagonhitch.json`.
 
 Not seen in a browser: this container has no ARENA2 data.

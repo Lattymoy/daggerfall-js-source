@@ -2720,6 +2720,7 @@ export class Renderer {
         viewport: this._worldViewportPx ?? [0, 0, this.canvas.width, this.canvas.height],
         shadows: sp, textures: this.textures, emissionTextures: this.emissionTextures, blackTex: this._blackTex,
         windowEmission: this._windowEmission, isSpectral: isSpectralArchive, bindVao, clearColor: this._clearColor,
+        windowRooms: !!this._rw?.rooms,   // WAGONS2 (FINAL AUDIT): exterior glass shows its room (winModeFor) - the replay blooms a lit one's alone
         scatter: this._scatterGain(), exposure: this._exposure,   // VOL1: the glow's gain (the fog's) and the scene's exposure, for the march
         haze: this._lane ? this._lane.scatterDensity(this._fogMode, this._fogDensity, this._fogRange[0], this._fogRange[1]) : 0,   // VC7b: the fog's extinction, for the sun's march through the haze
       });
@@ -4842,7 +4843,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   _rwEnsureTarget(w, h) {
     let t = this._rwTarget;
     if (t && t.allocW >= w && t.allocH >= h) return t;   // RW1 (AUDIT): a pane that shrinks keeps the target it has (it reallocated at every 64 px step down, a pane sliding off-screen every few frames)
-    if (t) this.releaseOutsideView();
+    // WAGONS2 (FINAL AUDIT): and one that grows on one side keeps what it had on the other - a wide pane and a tall one
+    // looked between remade the texture, the depth and the framebuffer at every turn of the head
+    if (t) { w = Math.max(w, t.allocW); h = Math.max(h, t.allocH); this.releaseOutsideView(); }
     const gl = this.gl;
     const tex = gl.createTexture();
     this._bindTex0(tex);   // PERF-TEX3: unit 0 through its helper, the shadow kept true
@@ -4858,6 +4861,16 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.bindRenderbuffer(gl.RENDERBUFFER, null);
     t = this._rwTarget = { fbo: gl.createFramebuffer(), tex, rb, allocW: w, allocH: h, w, h, attached: false, proj: new Float32Array(16), pv: new Float32Array(16), planes: new Float32Array(24), fog: null };
     return t;
+  }
+
+  /** WAGONS2 (FINAL AUDIT): the pixels the world is drawn at - the retro or render-scale image's (the last frame's, the
+   *  view out being drawn before this frame's begin), else the canvas's share the world's viewport takes (a docked HUD's
+   *  shrunk rect). The view out is sized by these, never by the canvas. */
+  _worldImageSize() {
+    const img = this._retroFrame;
+    if (img?.width > 0 && img?.height > 0) return [img.width, img.height];
+    const v = this._worldViewportFrame;
+    return [this.canvas.width * (v?.w > 0 ? v.w : 1), this.canvas.height * (v?.h > 0 ? v.h : 1)];
   }
 
   /** RW1: the view out's target let go (EVERY ALLOCATION HAS AN OWNER - realWindows.js viewOutFrame frees it once no
@@ -4889,7 +4902,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // AUDIT RETRO1 B2's order: a world image still owed is shown before a framebuffer of this pass's own is bound
     if (this._retroOwed || this._air?.pending) { if (this._worldViewportPx) this.endWorldPass(); this._compositeAir(); }
     const gl = this.gl;
-    const size = viewTargetSize(rect, this.canvas.width, this.canvas.height);
+    const [iw, ih] = this._worldImageSize();   // WAGONS2 (FINAL AUDIT): the world's own image - a retro 320 x 200 world on a 1080p canvas drew one pane at up to 960 x 540, more than the frame
+    const size = viewTargetSize(rect, iw, ih);
     const t = this._rwEnsureTarget(size.allocW, size.allocH);
     t.w = size.w; t.h = size.h;
     const cropProj = cropProjection(proj, rect, t.proj);

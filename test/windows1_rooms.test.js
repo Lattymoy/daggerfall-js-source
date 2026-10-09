@@ -143,7 +143,8 @@ test('RW1 rooms R4: the rooms painted from numbers - every style eight byte colo
   assert.equal(Number(m[1]), want.length); assert.equal(vals.length, want.length);
   vals.forEach((v, i) => v.forEach((c, k) => assert.ok(Math.abs(c * 255 - want[i][k]) < 0.01, `colour ${i}.${k}`)));
   assert.match(glsl, new RegExp(`const float RW_NSTYLES = ${ROOM_STYLES.length}\\.0;`));
-  assert.match(glsl, /step\(s2, 0\.62\)/, 'the lit share the twin keeps');
+  assert.match(glsl, /step\(s2, RW_LIT_SHARE\)/, 'the lit share the twin keeps');
+  assert.match(glsl, /const float RW_LIT_SHARE = 0\.62;/, 'WAGONS2 (FINAL AUDIT): one constant, the bloom\'s replay reads it too');
 });
 
 test('RW1 rooms R5: the rooms are a frame\'s - an exterior frame that asks (after its beginFrame) draws its window sub-meshes as rooms, the next frame that does not draws the classic glass, a wall is never a room, and a panel bracket hands the world frame its rooms back (mutants: the frame not dropping them, \'off\' asking rooms, the panel losing them, the mode left on after the mesh)', () => {

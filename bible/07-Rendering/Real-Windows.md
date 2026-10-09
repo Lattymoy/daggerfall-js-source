@@ -55,7 +55,8 @@ Low Off, Medium Rooms only, High and Ultra Full (High is how the game ships). En
 kill door.
 
 ## THE FOUR HOSTS
-- `src/scenes/exterior.js` - WIRED: asks rooms after its beginFrame; hands the modes its town as the street.
+- `src/scenes/exterior.js` - WIRED: asks rooms after its beginFrame; hands the modes its town as the street (and,
+  since the WAGONS2 final audit, its wagons through `outsideViewDraws`).
 - `src/scenes/world.js` - WIRED: the same, its pixels out to VIEW_RINGS.
 - `src/scenes/worldModes.js` - WIRED (interior arm: the view out and the glass); its dungeon arm FLAGGED: none - no
   window to the street.
@@ -119,3 +120,35 @@ stands at HEAD, not the view out's).
   renderer's shadow): GL error 1282 in the probe's lane runs. The replay now
   forgets the shadow first (`src/render/airPass.js` _replayEmission).
 
+## The final audit (WAGONS2, after the merge of main)
+
+- **The weather.** The view out is lit by the street frame's own terms - the
+  clock's minute and the weather's sun and the cloud's (`viewOutLight`,
+  `src/render/realWindows.js`; the moon's ambient the host's). It was lit as a
+  clear day: a rainy noon looked out on at five times the street's ambient, a
+  storm's at sixteen, and `clockFogColor`, handed a clear sun against the
+  dimmed one the street was kept at, brightened the air with no minute gone.
+- **The sea.** Deep Waters (on by default) as the street frame draws it: a
+  pure-ocean pixel kept for its seafloor (its ground and its water sheet
+  hidden), the floors' own programs told to the renderer (`markForeignPass`),
+  and the carved sea's top drawn last over the pass's own pixels
+  (`drawDeepWatersSurfaces(nowMs, cells)`). A harbour-front window showed the
+  bed dry and the open sea as sky.
+- **A dark room glows nowhere.** The room's lit seed is one text
+  (`RW_SEED_GLSL`), read by the room and by the air pass's emission replay,
+  which blooms an exterior pane only where its room is lit (`uRoomsLit`). The
+  replay had bloomed every pane amber, the 38% drawn dark among them. The two
+  programs and both mesh lanes were compiled and linked in Chromium.
+- **The target.** Kept at the larger of each side (a wide pane and a tall one
+  looked between remade it at every turn), let go the moment the street is
+  off (a cutout's holes kept a Full target wanted), and sized by the world's
+  own image - the retro or render-scale picture, a docked HUD's rect - never
+  the canvas (a retro 320 x 200 world on a 1080p canvas drew one pane at up to
+  960 x 540).
+- **A pin made to bite.** The bracket's frame target is checked against a
+  lane's own target standing, not the null the test defaulted to.
+- **Known limit.** Glass counts as in view while it is in the frustum;
+  interiors are drawn whole, so a window in another room behind walls keeps
+  the pass running while the player moves. Bounded (VIEW_SCALE,
+  VIEW_MAX_SIDE, one pass a frame); an occlusion query on the glass is the
+  fix, not made blind here.

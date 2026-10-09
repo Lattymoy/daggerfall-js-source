@@ -331,5 +331,132 @@
     "tests": [
       "test/wagons2.test.js"
     ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-view-out-clear-skied",
+    "file": "src/render/realWindows.js",
+    "old": "  return { ambient: exteriorAmbient(minute, nightScale, w), sun: sunScale(minute) * w * c };",
+    "new": "  return { ambient: exteriorAmbient(minute, nightScale, 1), sun: sunScale(minute) * c };",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-cloud-unread",
+    "file": "src/render/realWindows.js",
+    "old": "sun: sunScale(minute) * w * c };",
+    "new": "sun: sunScale(minute) * w };",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-fixed-citys-view-clear-skied",
+    "file": "src/scenes/exterior.js",
+    "old": "getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), weatherTerms().sun, sky.sunFactor());",
+    "new": "getFloat('Enhancements', 'NightAmbientLightScale', 0, 1));",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-ocean-pixel-dropped",
+    "file": "src/scenes/world.js",
+    "old": "      ground.push(p);   // FINAL AUDIT",
+    "new": "      if (!p.deepWaters?.hide) ground.push(p);   // FINAL AUDIT",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-seas-top-left-out",
+    "file": "src/scenes/world.js",
+    "old": "    if (deepWaters) drawDeepWatersSurfaces(performance.now(), ground);\n",
+    "new": "",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-streets-visibility-read",
+    "file": "src/scenes/world.js",
+    "old": "      if ((cells || p._visible) && h?.surface)",
+    "new": "      if (p._visible && h?.surface)",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-floors-untold",
+    "file": "src/scenes/world.js",
+    "old": "    if (deepWaters) { drawDeepWatersFloors(ground); r.markForeignPass(); }",
+    "new": "    if (deepWaters) { drawDeepWatersFloors(ground); }",
+    "tests": [
+      "test/wagons2_final.test.js",
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-a-dark-room-blooms",
+    "file": "src/render/airPass.js",
+    "old": "  if (uRoomsLit > 0.5 && rwLitSeed(normalize(vNormal), vWorldPos, uModel[3].xyz, vUV) > RW_LIT_SHARE) discard;",
+    "new": "",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-replays-uniform-unset",
+    "file": "src/render/airPass.js",
+    "old": "          gl.uniform1f(P.emitMesh.uRoomsLit, f.windowRooms && sm._evWin === GLASS_EXTERIOR ? 1 : 0);",
+    "new": "",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-renderers-word-unsaid",
+    "file": "src/render/renderer.js",
+    "old": "        windowRooms: !!this._rw?.rooms,",
+    "new": "",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-target-remade-at-every-turn",
+    "file": "src/render/renderer.js",
+    "old": "    if (t) { w = Math.max(w, t.allocW); h = Math.max(h, t.allocH); this.releaseOutsideView(); }",
+    "new": "    if (t) this.releaseOutsideView();",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-target-held-with-the-street-off",
+    "file": "src/render/realWindows.js",
+    "old": "  if (!street) { if (state.drawn) { renderer.releaseOutsideView?.(); state.drawn = false; } return { rect, view: false }; }",
+    "new": "  if (!street) return { rect, view: false };",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-canvas-sizes-the-view",
+    "file": "src/render/renderer.js",
+    "old": "    const size = viewTargetSize(rect, iw, ih);",
+    "new": "    const size = viewTargetSize(rect, this.canvas.width, this.canvas.height);",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-frame-target-always-null",
+    "file": "src/render/renderer.js",
+    "old": "      gl.bindFramebuffer(gl.FRAMEBUFFER, was.frameTarget ?? null);",
+    "new": "      gl.bindFramebuffer(gl.FRAMEBUFFER, null);",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
   }
 ]

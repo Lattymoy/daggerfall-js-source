@@ -155,11 +155,12 @@
   {
     "name": "WAGONS2-VISIT-never-forgotten",
     "file": "server/src/index.js",
-    "old": "if (Date.now() >= due) { this._cvDoc = null; await this.state.storage.delete(CARAVAN_DECOR_KEY); }",
-    "new": "if (false) { this._cvDoc = null; await this.state.storage.delete(CARAVAN_DECOR_KEY); }",
+    "old": "if (now >= due) { this._cvDoc = null; this._cvOwed = null; await this.state.storage.delete(CARAVAN_DECOR_KEY); return; }",
+    "new": "if (false) { this._cvDoc = null; this._cvOwed = null; await this.state.storage.delete(CARAVAN_DECOR_KEY); return; }",
     "tests": [
       "test/wagons2_visit_relay.test.js"
-    ]
+    ],
+    "note": "WAGONS2 (FINAL AUDIT, PIN MOVED): re-aimed by content."
   },
   {
     "name": "WAGONS2-VISIT-null-forgets-nothing",
@@ -434,11 +435,12 @@
   {
     "name": "WAGONS2-VISIT-the-caravan-keyed-as-a-town-building",
     "file": "src/scenes/world.js",
-    "old": "      if (online?.caravanOk) return caravanRoomHere(identity);   // WAGONS2-VISIT: a caravan's own room",
-    "new": "      if (false) return caravanRoomHere(identity);   // WAGONS2-VISIT: a caravan's own room",
+    "old": "      if (caravanRelayOk()) return caravanRoomHere(identity);",
+    "new": "      if (false) return caravanRoomHere(identity);",
     "tests": [
       "test/wagons2_visit.test.js"
-    ]
+    ],
+    "note": "WAGONS2 (FINAL AUDIT, PIN MOVED): re-aimed by content."
   },
   {
     "name": "WAGONS2-VISIT-the-visits-room-ignored",
@@ -452,11 +454,12 @@
   {
     "name": "WAGONS2-VISIT-an-older-relay-asked",
     "file": "src/scenes/world.js",
-    "old": "  function caravanRoomHere(identity) {\n    if (!online?.caravanOk) return null;",
-    "new": "  function caravanRoomHere(identity) {\n    if (false) return null;",
+    "old": "const caravanRelayOk = () => !!(online?.caravanOk || chatLinks?.get('world')?.caravanOk);",
+    "new": "const caravanRelayOk = () => true;",
     "tests": [
       "test/wagons2_visit.test.js"
-    ]
+    ],
+    "note": "WAGONS2 (FINAL AUDIT, PIN MOVED): re-aimed by content - the relay's word is caravanRelayOk's now (caravanRoomHere's own gate was its caller's twice over, and went)."
   },
   {
     "name": "WAGONS2-VISIT-said-every-frame",
@@ -606,11 +609,12 @@
   {
     "name": "WAGONS2-VISIT-AUDIT-the-owned-room-lost",
     "file": "src/scenes/world.js",
-    "old": "      if (online?.caravanOk) return caravanRoomHere(identity);   // WAGONS2-VISIT: a caravan's own room",
-    "new": "      return caravanRoomHere(identity);   // WAGONS2-VISIT: a caravan's own room",
+    "old": "      if (caravanRelayOk()) return caravanRoomHere(identity);",
+    "new": "      return caravanRoomHere(identity);",
     "tests": [
       "test/wagons2_visit.test.js"
-    ]
+    ],
+    "note": "WAGONS2 (FINAL AUDIT, PIN MOVED): re-aimed by content."
   },
   {
     "name": "WAGONS2-VISIT-AUDIT-a-visit-from-a-seat",

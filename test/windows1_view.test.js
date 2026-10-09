@@ -12,6 +12,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { setFrameTarget, frameTarget } from '../src/render/renderTarget.js';
 import { Renderer } from '../src/render/renderer.js';
 import { ShadowPass, DEPTH_BB_FS, DEPTH_FS } from '../src/render/shadowPass.js';
 import { StaticBatchBuilder } from '../src/render/staticBatch.js';
@@ -136,11 +137,15 @@ test('RW1 view V3: when the street is drawn - no glass on screen draws nothing (
   assert.equal(viewOutFrame(st, { renderer: fake, mode: 'rooms', proj, view, now: 1000, scene }), null, 'glass alone, the street off: the room as it was');
   holes = true;
   assert.deepEqual(viewOutFrame(st, { renderer: fake, mode: 'rooms', proj, view, now: 1001, scene }), { rect: padRect(rect), view: false }, 'holes: their sky');
+  assert.equal(calls.at(-1), 'released', 'WAGONS2 (FINAL AUDIT): and the street off, its target let go at once - the holes kept it wanted, a Full target held till the player left');
   assert.deepEqual(viewOutFrame(st, { renderer: fake, mode: 'full', proj, view, now: 1002, scene: null }), { rect: padRect(rect), view: false }, 'a host with no street: the sky');
-  assert.equal(calls.length, 3, 'neither drew the street');
+  assert.equal(calls.filter((c) => c !== 'released').length, 3, 'neither drew the street');
+  assert.equal(calls.filter((c) => c === 'released').length, 1, 'and nothing let go twice');
   // unwanted long enough, the target is let go
+  viewOutFrame(st, { renderer: fake, mode: 'full', proj, view, now: 1003, scene });
+  assert.equal(calls.filter((c) => c !== 'released').length, 4, 'the street back: drawn again');
   rect = null;
-  viewOutFrame(st, { renderer: fake, mode: 'full', proj, view, now: 1002 + VIEW_RELEASE_MS + 1, scene });
+  viewOutFrame(st, { renderer: fake, mode: 'full', proj, view, now: 1003 + VIEW_RELEASE_MS + 1, scene });
   assert.equal(calls.at(-1), 'released');
 });
 
@@ -169,6 +174,8 @@ test('RW1 view V4: the view out\'s pass is a bracket - it draws into its own tar
   const hooked = [];
   r.outsideViewDraws.add((info) => hooked.push(info.renderer === r));
   let inside = null;
+  const laneFbo = { id: 'lanefbo' };   // WAGONS2 (FINAL AUDIT): a lane's frame target standing - the bracket must put THIS back (null was the test's default, so a restore that always bound null passed)
+  r._frameFbo = laneFbo; setFrameTarget(laneFbo);
   log.length = 0;
   const ok = r.outsideViewFrame([-0.5, -0.5, 0.5, 0.5], proj, view, {
     clip: [-3, 0, -3, 3, 4, 3],
@@ -195,7 +202,9 @@ test('RW1 view V4: the view out\'s pass is a bracket - it draws into its own tar
   const t = r._rwTarget;
   const binds = log.filter((c) => c[0] === 'bindFramebuffer');
   assert.equal(binds[0][2], t.fbo, 'its own target bound first');
-  assert.equal(binds.at(-1)[2], null, 'the frame target back after');
+  assert.equal(binds.at(-1)[2], laneFbo, 'the frame target back after - the lane\'s own');
+  assert.equal(frameTarget(), laneFbo); assert.equal(r._frameFbo, laneFbo);
+  setFrameTarget(null);
   assert.ok(log.some((c) => c[0] === 'framebufferRenderbuffer' && c[4] === t.rb), 'a depth of its own');
   const draws = log.filter((c) => c[0] === 'bindVertexArray').map((c) => c[1]?.id);
   assert.ok(draws.includes('wallvao') && !draws.includes('wagonvao'), 'the skipped mesh is left out of the pass');
@@ -441,6 +450,9 @@ test('RW1 (AUDIT) THE STREET AS IT STANDS NOW: its air re-lit by the clock (a ni
   const big = r._rwEnsureTarget(512, 256);
   assert.equal(r._rwEnsureTarget(256, 128), big, 'a smaller pane: the same target');
   assert.notEqual(r._rwEnsureTarget(1024, 256), big, 'a larger one: a new one');
+  const tall = r._rwEnsureTarget(256, 1024);
+  assert.deepEqual([tall.allocW, tall.allocH], [1024, 1024], 'WAGONS2 (FINAL AUDIT): a tall pane after a wide one keeps the wide side');
+  assert.equal(r._rwEnsureTarget(1024, 256), tall, 'and the wide one again: the same target - no remaking at every turn of the head');
   // the bracket after a throw: the baseline back
   r.setWindowRooms('full');
   log.length = 0;
@@ -463,9 +475,26 @@ test('RW1 (AUDIT) THE STREET AS IT STANDS NOW: its air re-lit by the clock (a ni
   for (const host of [w, ex]) assert.match(host, /r\.setFogColor\(clockFogColor\(keptFog, keptSun, r\._sunScale\)\);/);
   assert.match(w, /r\.setPointLights\(lightsOnAt\(clockMinute\) \? outsideLanterns\(r\) : new Float32Array\(0\), CITY_LIGHT_COLOR_F32\);/);
   assert.match(ex, /r\.setPointLights\(lightsOnAt\(clockMinute\) \? nearestLights\(cityLights, cam\.pos, r\.maxPointLights, lightAnimator\.ranges\) : new Float32Array\(0\), CITY_LIGHT_COLOR_F32\);/);
-  assert.match(w, /if \(deepWaters\) drawDeepWatersFloors\(ground\);\n\s+if \(waterOn && _waterU\) \{/);
+  assert.match(w, /if \(deepWaters\) \{ drawDeepWatersFloors\(ground\); r\.markForeignPass\(\); \}[^\n]*\n\s+if \(waterOn && _waterU\) \{/);   // WAGONS2 (FINAL AUDIT): and the mod's programs told
   assert.match(w, /r\.drawWaterSurfaces\(_waterRows, n, 6\.4, _waterU\);/);
   assert.equal((wm.match(/dropViewOut\(\);   \/\/ RW1 \(AUDIT\)/g) ?? []).length, 2, 'both ways out of a building');
   assert.match(wm, /const dropViewOut = \(\) => \{ renderer\.releaseOutsideView\?\.\(\); viewOut\.drawn = false; renderer\.takeGlassRect\?\.\(\); \};/, 'its target freed, its glass forgotten');
   assert.match(rr, /this\.beginFrame\(cropProj, view, [^\n]*\n\s+this\._frameFbo = t\.fbo; setFrameTarget\(t\.fbo\);/);
+});
+
+test('RW1 x WAGONS2 (FINAL AUDIT) THE VIEW OUT AT THE WORLD\'S OWN SIZE: the view out is sized by the pixels the world is drawn at - the retro or render-scale image, a docked HUD\'s shrunk rect - never by the canvas (a retro 320 x 200 world on a 1080p canvas drew one pane at up to 960 x 540, more than the whole frame) (mutant: the canvas\'s size)', () => {
+  const r = recordingRenderer([]);
+  r.setWindowRooms('full');
+  const full = [-1, -1, 1, 1];
+  r.outsideViewFrame(full, I, I, { draw() {} });
+  assert.deepEqual([r._rwTarget.w, r._rwTarget.h], [320, 200], 'the canvas\'s 640 x 400, at VIEW_SCALE');
+  r.releaseOutsideView();
+  r._retroFrame = { kind: 'retro', width: 320, height: 200 };
+  r.outsideViewFrame(full, I, I, { draw() {} });
+  assert.deepEqual([r._rwTarget.w, r._rwTarget.h], [160, 100], 'the retro image\'s 320 x 200, at VIEW_SCALE');
+  r.releaseOutsideView();
+  r._retroFrame = null;
+  r._worldViewportFrame = { x: 0, y: 0.25, w: 1, h: 0.75 };
+  r.outsideViewFrame(full, I, I, { draw() {} });
+  assert.deepEqual([r._rwTarget.w, r._rwTarget.h], [320, 150], 'a docked HUD\'s rect: the world\'s three quarters');
 });

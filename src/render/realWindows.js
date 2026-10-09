@@ -36,6 +36,7 @@ import {
   ROOM_TEXELS_PER_M, ROOM_STYLES, ROOM_PIECES, ROOM_FABRICS, ROOM_LIT_SHARE, ROOM_CURTAIN_SHARE, ROOM_HEARTH_GLOW,
   roomColorTable,
 } from '../world/windowRoomArt.js';
+import { exteriorAmbient, sunScale } from '../world/worldClock.js';   // WAGONS2 (FINAL AUDIT): the view out lit as the street frame lights
 
 // ---------------------------------------------------------------------------------------------------------------
 // THE SWITCH
@@ -151,6 +152,25 @@ const g = (x) => {
 };
 const v3 = (c) => `vec3(${g(c[0] / 255)}, ${g(c[1] / 255)}, ${g(c[2] / 255)})`;
 
+/** WAGONS2 (FINAL AUDIT): THE ROOM'S SEED, ONE TEXT - the hash and whether a room is lit (`rwLitSeed` under
+ *  ROOM_LIT_SHARE), read by the room itself and by the air pass's emission replay (render/airPass.js EMIT_MESH_FS), so
+ *  the glass of a room drawn dark is never bloomed amber at night. `n` the surface normal, `wp` the world point, `origin`
+ *  the model's own (uModel[3]), `uv` the picture's. */
+export const RW_SEED_GLSL = `
+float rwHash(vec3 p) {
+  p = fract(p * vec3(0.1031, 0.1030, 0.0973));
+  p += dot(p, p.yxz + 33.33);
+  return fract((p.x + p.y) * p.z);
+}
+float rwLitSeed(vec3 n, vec3 wp, vec3 origin, vec2 uv) {
+  vec3 nq = floor(n * 4.0 + 0.5);
+  float plane = floor(dot(n, wp - origin) * 40.0 + 0.5);
+  vec2 tile = floor(uv);
+  return rwHash(vec3(tile.y * 3.1 + nq.x, plane * 0.37, tile.x + 11.0));
+}
+const float RW_LIT_SHARE = ${g(ROOM_LIT_SHARE)};
+`;
+
 /** The block: uniforms, the tables, the room. `decode` is the lane's colour decode of an sRGB constant (`c` the
  *  classic lane's, `elDecode(c)` the Enhanced Lighting lane's). Interpolated after the lane's codec. */
 export function realWindowsGlsl(decode = 'c') {
@@ -174,11 +194,7 @@ const vec3 RW_FAB[${ROOM_FABRICS.length}] = vec3[${ROOM_FABRICS.length}](${ROOM_
 const float RW_NSTYLES = ${g(ROOM_STYLES.length)};
 const float RW_NPIECES = ${g(ROOM_PIECES.length)};
 const float RW_NFAB = ${g(ROOM_FABRICS.length)};
-float rwHash(vec3 p) {
-  p = fract(p * vec3(0.1031, 0.1030, 0.0973));
-  p += dot(p, p.yxz + 33.33);
-  return fract((p.x + p.y) * p.z);
-}
+${RW_SEED_GLSL}
 float rwBand(float x, float a, float b) { return step(a, x) * (1.0 - step(b, x)); }
 float rwRect(vec2 p, vec4 r) { return rwBand(p.x, r.x, r.z) * rwBand(p.y, r.y, r.w); }
 bool rwInRect(vec2 w) { return w.x >= uGlassRect.x && w.y >= uGlassRect.y && w.x < uGlassRect.z && w.y < uGlassRect.w; }
@@ -276,7 +292,7 @@ vec3 rwRoomOver(vec3 base, float glass, vec3 dp1, vec3 dp2, vec2 duv1, vec2 duv2
   vec2 tile = floor(vUV);
   float s0 = rwHash(vec3(tile.x + 17.0 * nq.x + 3.0 * nq.z, tile.y + 29.0 * nq.y, plane));
   float s1 = rwHash(vec3(plane * 0.731, tile.x * 1.7 + nq.z, tile.y + 5.0));
-  float s2 = rwHash(vec3(tile.y * 3.1 + nq.x, plane * 0.37, tile.x + 11.0));
+  float s2 = rwLitSeed(vn, vWorldPos, uModel[3].xyz, vUV);   // WAGONS2 (FINAL AUDIT): the seed the bloom's replay reads too
   int s = int(min(floor(s0 * RW_NSTYLES), RW_NSTYLES - 1.0));
   int piece = int(min(floor(s1 * RW_NPIECES), RW_NPIECES - 1.0));
   vec3 fab = RW_FAB[int(min(floor(fract(s1 * 7.0) * RW_NFAB), RW_NFAB - 1.0))];
@@ -325,7 +341,7 @@ vec3 rwRoomOver(vec3 base, float glass, vec3 dp1, vec3 dp2, vec2 duv1, vec2 duv2
     }
   }
   float night = uRoomLamp.a;
-  float lit = night * step(s2, ${g(ROOM_LIT_SHARE)});
+  float lit = night * step(s2, RW_LIT_SHARE);
   vec3 light = uRoomDay * (1.0 - ${g(ROOM_DAY_FALLOFF)} * hz) + uRoomLamp.rgb * (lit * (${g(ROOM_LAMP_NEAR)} - ${g(ROOM_LAMP_FALLOFF)} * hz));
   vec3 room = rwDecode(albedo) * light + rwDecode(${v3(ROOM_HEARTH_GLOW)}) * (glow * night);
   float F = pow(max(1.0 - nv, 0.0), 5.0);   // RW1 (AUDIT): head on, nv rounds past 1 - pow of a negative is undefined
@@ -362,6 +378,16 @@ export function clockFogColor(kept, keptSun, nowSun) {
   const day = (s) => 0.1 + 0.9 * Math.min(1, Math.max(0, (Number.isFinite(s) ? s : 0) / 0.6));
   const k = day(nowSun) / day(keptSun);
   return Float32Array.from([0, 1, 2], (i) => Math.min(1, Math.max(0, (kept?.[i] ?? 0) * k)));
+}
+/** WAGONS2 (FINAL AUDIT): THE STREET'S LIGHT BY THE CLOCK AND THE WEATHER - the street frame's own terms at the clock's
+ *  minute (world.js's and exterior.js's setLighting): the ambient at the weather's sun (exteriorAmbient squares it), the
+ *  key the clock's sun times the weather's and the cloud's (`sunFactor`, the sky's). The view out was lit as a clear
+ *  day - a rainy noon's street looked out on at five times its ambient, a storm's at sixteen, and clockFogColor, given
+ *  a clear sun against the weather-dimmed one the street was kept at, brightened the air with no minute gone. Both
+ *  terms 1 on a clear day; the moon's ambient is the host's (withMoonAmbient). */
+export function viewOutLight(minute, nightScale, weatherSun = 1, sunFactor = 1) {
+  const w = Number.isFinite(weatherSun) ? Math.max(0, weatherSun) : 1, c = Number.isFinite(sunFactor) ? Math.max(0, sunFactor) : 1;
+  return { ambient: exteriorAmbient(minute, nightScale, w), sun: sunScale(minute) * w * c };
 }
 export const VIEW_MAX_SIDE = 1024;
 export const VIEW_BUCKET = 64;
@@ -470,8 +496,11 @@ export function viewOutFrame(state, { renderer, mode, proj, view, now, scene }) 
     if (state.drawn && now - state.lastWanted > VIEW_RELEASE_MS) { renderer.releaseOutsideView?.(); state.drawn = false; }
     return null;
   }
+  // WAGONS2 (FINAL AUDIT): the street off (Rooms only, or Off) and only a cutout's holes on screen - its sky alone, which
+  // the target never holds: let it go now (the holes kept it wanted, and a target drawn under Full - up to 8 MB - stood
+  // until the player left the building)
+  if (!street) { if (state.drawn) { renderer.releaseOutsideView?.(); state.drawn = false; } return { rect, view: false }; }
   state.lastWanted = now;
-  if (!street) return { rect, view: false };
   if (viewOutDue(state, view, rect, now)) {
     const ok = renderer.outsideViewFrame?.(rect, viewOutProjection(proj, state.proj ??= new Float32Array(16)), view, scene);
     if (!ok) return { rect, view: false };
