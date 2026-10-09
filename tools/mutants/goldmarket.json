@@ -299,8 +299,8 @@
   {
     "name": "GOLDMARKET-stores-total-no-gold",
     "file": "src/ui/profPages.js",
-    "old": "total: s.own + s.bought + (s.gold | 0), carried: s.carried | 0 };",
-    "new": "total: s.own + s.bought, carried: s.carried | 0 };",
+    "old": "total: s.own + s.bought + (s.gold | 0), carried: s.carried | 0, uncounted: s.uncounted | 0 };",
+    "new": "total: s.own + s.bought, carried: s.carried | 0, uncounted: s.uncounted | 0 };",
     "tests": [
       "test/goldmarket_client.test.js"
     ]
