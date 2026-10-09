@@ -138,10 +138,10 @@ test('AUDIT SEATS-3 C4: the Watchtowers\' seats filtered once a list read and gu
   assert.equal(b[0].top[0], top0[0] + 100, 'its top where the scene has it now');
 
   const w = src('src/scenes/world.js');
-  const hungSrc = w.slice(w.indexOf('  const _hung = [];'), w.indexOf('  const yards = homeDecor'));
+  const hungSrc = w.slice(w.indexOf('  const _hung = [];'), w.indexOf('  const yards = homeDecor'));   // PIN MOVED (CHAP7b): a patron's banners on the same pass - none here (chapterBanners null)
   const mk = (n, x) => Array.from({ length: n }, (_, i) => ({ id: `${x}${i}`, top: [i * (x === 'h' ? 1 : 2), 0, 0] }));
   let halls = mk(2, 'h'), seatsB = mk(1, 's');
-  const run = new Function('S', `const { BANNERS_MAX, cam } = S; const hallBanners = { list: () => S.halls() }; const seatBanners = { list: () => S.seats() };\n${hungSrc}\n return bannersHung;`);
+  const run = new Function('S', `const { BANNERS_MAX, cam } = S; const hallBanners = { list: () => S.halls() }; const seatBanners = { list: () => S.seats() }; const chapterBanners = null;\n${hungSrc}\n return bannersHung;`);
   const hung = run({ BANNERS_MAX: 4, cam: { pos: [0, 0, 0] }, halls: () => halls, seats: () => seatsB });
   const x = hung();
   assert.deepEqual(x.map((o) => o.id), ['h0', 'h1', 's0']);

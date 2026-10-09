@@ -171,7 +171,9 @@ confirmation is on the audit list.
 BUILT (SEAT1a): the kind `seat` of the one witness table and law (`world_witness`, nodeLaw.js witnessedFact - as the
 professions' pixels, dungeons and hubs), keyed by the map id, its report the seat's canonical bytes
 (townSeatLaw.js seatReportText); the ignored accounts, the audit and the strike as written above
-(`server-account/src/townSeats.js`). As built: a witness's FIRST answer on a seat stands (the table's INSERT OR IGNORE,
+(`server-account/src/townSeats.js`). CHAP2a (Chapters-Arc 4): the kind `npchall`, a town's guild halls - the three, the age,
+the first answer and the hour; AUDIT CHAP2 E1 gave it this kind's ignored accounts, audit and strike too
+(`server-account/src/npcHalls.js`). As built: a witness's FIRST answer on a seat stands (the table's INSERT OR IGNORE,
 as every kind's); a struck key is never witnessed again (the strike's history row says so); "the audit" reads "a seat
 whose confirmation still rests on exactly three witnesses, whom nobody else has joined".
 

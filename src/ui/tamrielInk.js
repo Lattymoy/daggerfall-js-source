@@ -42,8 +42,10 @@ import { labelPoint } from './provinceMap.js';   // TAMRIEL3: a province's name 
 /** @typedef {{ x: number, y: number }} Pt */
 
 /** How far along the Bay's edge a continent chain's cut end may be moved to meet the data's own coast end, Bay
- *  pixels (33 km). Past it the authored shape and the data disagree, and the chain ends where it was cut. */
-export const STITCH_REACH = 40;
+ *  pixels (52 km). Past it the authored shape and the data disagree, and the chain ends where it was cut. TAMRIEL4: 64,
+ *  four of the picture's own pixels at the fit's scale, where it was 40 - the picture cannot place a coast nearer than
+ *  its pixels, and on the freeware data Hammerfell's met the Bay's 49 pixels along the south edge and was left there. */
+export const STITCH_REACH = 64;
 /** The coast's fret: one point every FRET_STEP picture units, displaced across the line by up to FRET_AMP units of
  *  seeded noise, so an authored polygon reads as a shore and not a survey. Nothing within FRET_CALM units of the
  *  Bay's rectangle is displaced, so the cut and the stitch meet a straight line. */
@@ -137,6 +139,22 @@ export function clipOutsideRect(chain, r = BAY_RECT) {
       out.pop(); out[0] = [...last, ...first.slice(1)];
     }
   }
+  return out;
+}
+
+/** TAMRIEL4: a clipped chain without the runs that lie ALONG the rectangle's edge - where the picture's own coast
+ *  happens to fall on the Bay's frame (the trace's land just outside it, the picture's sea just inside), the line is
+ *  the frame's, not a shore's, and the Bay's own data says what is inside. The chain is cut there; a piece of one
+ *  point is dropped. */
+/** @param {Pt[]} chain @param {{x0:number,y0:number,x1:number,y1:number}} [r] */
+export function dropEdgeRuns(chain, r = BAY_RECT) {
+  const onEdge = (a, b) => (a.x === r.x0 && b.x === r.x0) || (a.x === r.x1 && b.x === r.x1) || (a.y === r.y0 && b.y === r.y0) || (a.y === r.y1 && b.y === r.y1);
+  const out = [];
+  let run = [chain[0]];
+  for (let i = 1; i < chain.length; i++) {
+    if (onEdge(chain[i - 1], chain[i])) { if (run.length > 1) out.push(run); run = [chain[i]]; } else run.push(chain[i]);
+  }
+  if (run.length > 1) out.push(run);
   return out;
 }
 
@@ -252,16 +270,112 @@ function rangeCarets(range, noise) {
  *  is left off the sheet: a town the picture puts in the sea is not drawn in the sea. */
 export const CITY_SNAP_PX = 10;
 
-/** TAMRIEL3: the picture's coast and borders as chains in Bay coordinates - the pixel edges of the land mask
- *  (inkMap boundarySegments, the Bay's own shore law) linked, the staircase of a 15 km pixel simplified and the
- *  corners cut at the picture's own scale - and each province's name at its clearest point (provinceMap labelPoint).
+/** TAMRIEL4: the smoothing's passes - Chaikin's corner cut, each quartering every corner - so the contour's steps round
+ *  to the painted shore they quantise. */
+export const SMOOTH_PASSES = 3;
+/** TAMRIEL4: a chain's own steps straightened before the cut (picture pixels), and the most a corner is cut - the shore
+ *  and the border stay within about half a picture pixel of the traced land (one pixel is 15 km). */
+export const COAST_SIMPLIFY_PX = 0.4;
+export const COAST_CUT_PX = 0.75;
+/** TAMRIEL4: how far a border's end is moved onto the coast, picture pixels. */
+export const BORDER_SNAP_PX = 1.5;
+
+/**
+ * TAMRIEL4 - THE COAST AT THE PICTURE'S OWN RESOLUTION, NOT ITS STAIRCASE. The land mask's 0.5 contour over its pixel
+ * centres (marching squares, the sea round the picture's edge): every edge between a land and a sea centre crossed at
+ * its middle, a saddle's two lands kept apart (the trace's land is 4-connected - its pieces are). Segments in picture
+ * units, for linkSegments. TAMRIEL3 linked the pixels' own edges and simplified the staircase at three quarters of a
+ * pixel: a 15 km tooth on every diagonal shore, and a cape of one pixel a square.
+ * @param {(x: number, y: number) => boolean} inside @returns {number[][]}
+ */
+export function contourSegments(inside, w, h) {
+  const v = (x, y) => (x >= 0 && y >= 0 && x < w && y < h && inside(x, y) ? 1 : 0);
+  const segs = [];
+  for (let y = -1; y < h; y++) {
+    for (let x = -1; x < w; x++) {
+      const a = v(x, y), b = v(x + 1, y), c = v(x + 1, y + 1), d = v(x, y + 1);
+      const k = a * 8 + b * 4 + c * 2 + d;
+      if (k === 0 || k === 15) continue;
+      const T = [x + 1, y + 0.5], R = [x + 1.5, y + 1], B = [x + 1, y + 1.5], L = [x + 0.5, y + 1];
+      const seg = (p, q) => segs.push([p[0], p[1], q[0], q[1]]);
+      switch (k) {
+        case 1: case 14: seg(L, B); break;
+        case 2: case 13: seg(B, R); break;
+        case 3: case 12: seg(L, R); break;
+        case 4: case 11: seg(T, R); break;
+        case 6: case 9: seg(T, B); break;
+        case 7: case 8: seg(T, L); break;
+        case 5: seg(T, R); seg(L, B); break;   // b and d land, a saddle: each its own
+        case 10: seg(T, L); seg(B, R); break;   // a and c land
+        default: break;
+      }
+    }
+  }
+  return segs;
+}
+
+/** Chaikin's corner cut, `passes` times: a closed chain (its first point repeated last) all round, an open one with
+ *  its two ends kept where they are (a border's ends meet the coast and each other). Each cut a quarter of its segment,
+ *  never more than `maxCut` along it (a simplified chain's long run would otherwise lose a corner by a quarter of it). */
+export function chaikinCapped(chain, passes = SMOOTH_PASSES, maxCut = Infinity) {
+  let pts = chain;
+  for (let n = 0; n < passes && pts.length > 2; n++) {
+    const closed = pts[0].x === pts[pts.length - 1].x && pts[0].y === pts[pts.length - 1].y;
+    const src = closed ? pts.slice(0, -1) : pts;
+    const m = src.length;
+    const q = (a, b) => { const len = Math.hypot(b.x - a.x, b.y - a.y), t = len > 0 ? Math.min(0.25, maxCut / len) : 0.25; return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }; };
+    const out = [];
+    if (closed) {
+      for (let i = 0; i < m; i++) { const a = src[i], b = src[(i + 1) % m]; out.push(q(a, b), q(b, a)); }
+      out.push({ ...out[0] });
+    } else {
+      out.push(src[0]);
+      for (let i = 0; i < m - 1; i++) {
+        const a = src[i], b = src[i + 1];
+        if (i > 0) out.push(q(a, b));
+        if (i < m - 2) out.push(q(b, a));
+      }
+      out.push(src[m - 1]);
+    }
+    pts = out;
+  }
+  return pts;
+}
+
+/** A border's open ends moved onto the nearest point of the coast's line within BORDER_SNAP_PX (picture units in and
+ *  out) - its nearest point on any of the coast's segments, so a straight shore with no vertex near still takes it. */
+function snapEnds(chain, coast) {
+  if (chain.length < 2 || (chain[0].x === chain[chain.length - 1].x && chain[0].y === chain[chain.length - 1].y)) return chain;
+  const near = (p) => {
+    let best = null, bd = BORDER_SNAP_PX;
+    for (const c of coast) {
+      for (let i = 0; i + 1 < c.length; i++) {
+        const a = c[i], b = c[i + 1], dx = b.x - a.x, dy = b.y - a.y, l2 = dx * dx + dy * dy;
+        const t = l2 > 0 ? Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / l2)) : 0;
+        const q = { x: a.x + dx * t, y: a.y + dy * t }, d = Math.hypot(q.x - p.x, q.y - p.y);
+        if (d < bd) { bd = d; best = q; }
+      }
+    }
+    return best ?? p;
+  };
+  const out = chain.slice();
+  out[0] = near(out[0]);
+  out[out.length - 1] = near(out[out.length - 1]);
+  return out;
+}
+
+/** TAMRIEL3: the picture's coast and borders as chains in Bay coordinates, and each province's name at its clearest
+ *  point (provinceMap labelPoint). TAMRIEL4: the coast is the land's contour (contourSegments) linked and smoothed
+ *  (chaikinCapped) - a shore at the picture's own resolution, no staircase; a border runs where two land pixels change
+ *  province, its staircase simplified at a third of a pixel and smoothed with its ends kept, and each end that reaches
+ *  the sea moved onto the coast's own line (snapEnds) - so the dashed border meets the shore it divides.
  *  @param {{ w: number, h: number, land: Uint8Array, province: Uint8Array }} trace */
 export function tracedChains(trace) {
   const { w, h, land, province } = trace;
   const ppu = tamrielFit().ppu;
-  const soften = (chain) => roundCorners(simplifyChain(chain, ppu * 0.75), ppu * 0.5);
   const toBay = (seg) => seg.map((p) => { const [x, y] = pictureToBay(p.x, p.y); return { x, y }; });
-  const coast = linkSegments(boundarySegments((x, y) => land[y * w + x] === 1, w, h)).map((c) => soften(toBay(c)));
+  const coastPic = linkSegments(contourSegments((x, y) => land[y * w + x] === 1, w, h)).map((c) => chaikinCapped(simplifyChain(c, COAST_SIMPLIFY_PX), SMOOTH_PASSES, COAST_CUT_PX));
+  const coast = coastPic.map((c) => simplifyChain(toBay(c), ppu * 0.05));
   const segs = [];
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
@@ -271,7 +385,7 @@ export function tracedChains(trace) {
       if (y + 1 < h && land[i + w] && province[i + w] !== province[i]) segs.push([x, y + 1, x + 1, y + 1]);
     }
   }
-  const borders = linkSegments(segs).map((c) => soften(toBay(c)));
+  const borders = linkSegments(segs).map((c) => simplifyChain(toBay(chaikinCapped(snapEnds(simplifyChain(c, COAST_SIMPLIFY_PX), coastPic), SMOOTH_PASSES, COAST_CUT_PX)), ppu * 0.05));
   const labels = [];
   for (const [id, key] of Object.entries(PROVINCE_OF_ID)) {
     const mask = new Uint8Array(w * h);
@@ -315,7 +429,7 @@ export function buildTamrielInk({ bayCoast = [] } = {}) {
   /** @type {Pt[][]} */
   let coast = [];
   if (traced) {
-    for (const c of traced.coast) for (const piece of clipOutsideRect(c, rect)) coast.push(piece);
+    for (const c of traced.coast) for (const piece of clipOutsideRect(c, rect)) coast.push(...dropEdgeRuns(piece, rect));
   } else {
     const rings = [closedRing(COAST), ...Object.values(ISLANDS).map((r) => closedRing(r))];
     for (const r of rings) for (const c of clipOutsideRect(chainToBay(fretRing(r, calm, noise)), rect)) coast.push(roundCorners(c, 6));
@@ -327,7 +441,10 @@ export function buildTamrielInk({ bayCoast = [] } = {}) {
   if (traced) for (const c of traced.borders) for (const piece of clipOutsideRect(c, rect)) borders.push(piece);
   else for (const b of Object.values(BORDERS)) for (const c of clipOutsideRect(chainToBay(pts(b.run)), rect)) borders.push(roundCorners(c, 12));
   const rivers = [];
-  for (const rv of RIVERS) for (const c of clipOutsideRect(chainToBay(rv.pts.map(([x, y]) => ({ x, y }))), rect)) rivers.push(roundCorners(c, 12));
+  // TAMRIEL4: on the trace the rivers are the picture's own - the Niben, Lake Rumare and the rest it paints are its
+  // water, inked as its coast. The lore map's six (TAMRIEL1) were drawn from memory as straight runs, and on the
+  // picture half of them ran out across the sea; they stand on the authored shape alone.
+  if (!traced) for (const rv of RIVERS) for (const c of clipOutsideRect(chainToBay(rv.pts.map(([x, y]) => ({ x, y }))), rect)) rivers.push(roundCorners(c, 12));
   const carets = [];
   // the ranges are authored; on the trace a caret stands only where the picture has land
   for (const rg of MOUNTAIN_RANGES) for (const c of rangeCarets(rg, noise)) { if (traced && !provinceKeyAt(c.x, c.y)) continue; const q = toBay(c); if (!inBay(q.x, q.y)) carets.push({ ...c, x: q.x, y: q.y }); }

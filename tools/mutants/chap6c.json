@@ -1,0 +1,565 @@
+[
+  {
+    "name": "CHAP6C-DOCTRINE-WORDS",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "(chapterDoctrineOk(d) ? DOCTRINE_WORDS[/** @type {'training' | 'shelf' | 'writs'} */ (d)] : null)",
+    "new": "(DOCTRINE_WORDS[/** @type {'training' | 'shelf' | 'writs'} */ (d)] ?? null)",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-OF-EVENT",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "const event = chapterEventOk(c?.event) ? String(c.event) : null;\n  return {",
+    "new": "const event = c?.event ?? null;\n  return {",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-OF-SEASON",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "season: Number.isSafeInteger(c?.season) && c.season >= 0 ? c.season : null,",
+    "new": "season: Number.isSafeInteger(c?.season) ? c.season : null,",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-OF-RIVAL-EVENT",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "rival: event === 'rivalry' && isRollFaction(c?.rival) ? c.rival : null,",
+    "new": "rival: isRollFaction(c?.rival) ? c.rival : null,",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-OF-RIVAL-FACTION",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "rival: event === 'rivalry' && isRollFaction(c?.rival) ? c.rival : null,",
+    "new": "rival: event === 'rivalry' ? c.rival ?? null : null,",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-OF-SHUT",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "    shut: c?.shut === true,\n    doctrine: chapterDoctrineOk(c?.doctrine)",
+    "new": "    shut: !!c?.shut,\n    doctrine: chapterDoctrineOk(c?.doctrine)",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-OF-DOCTRINE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "doctrine: chapterDoctrineOk(c?.doctrine) ? String(c.doctrine) : null,",
+    "new": "doctrine: c?.doctrine ? String(c.doctrine) : null,",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-OF-SIDES-EVENT",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "sides: event === 'schism' && Array.isArray(c?.sides)",
+    "new": "sides: Array.isArray(c?.sides)",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-OF-SIDES-LEN",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "&& c.sides.length === 2 && c.sides.every(chapterDoctrineOk)",
+    "new": "&& c.sides.every(chapterDoctrineOk)",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-OF-SIDES-OK",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "&& c.sides.length === 2 && c.sides.every(chapterDoctrineOk)",
+    "new": "&& c.sides.length === 2",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-OF-SIDES-COPY",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "? [String(c.sides[0]), String(c.sides[1])] : null,",
+    "new": "? c.sides : null,",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-OF-HEIR",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "heir: event === 'succession' && chapterBackOk('succession', c?.heir) ? c.heir : null,",
+    "new": "heir: chapterBackOk('succession', c?.heir) ? c.heir : null,",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-OF-HEIR-OK",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "heir: event === 'succession' && chapterBackOk('succession', c?.heir) ? c.heir : null,",
+    "new": "heir: event === 'succession' ? c?.heir ?? null : null,",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-NAME-SALT",
+    "file": "src/net/chapterEvents.js",
+    "old": "const h = gateHash(CHAPTER_CANDIDATE_SALT, season, chapterTitleKey(faction, region), index);",
+    "new": "const h = gateHash(season, chapterTitleKey(faction, region), index);",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-NAME-SEASON",
+    "file": "src/net/chapterEvents.js",
+    "old": "const h = gateHash(CHAPTER_CANDIDATE_SALT, season, chapterTitleKey(faction, region), index);",
+    "new": "const h = gateHash(CHAPTER_CANDIDATE_SALT, chapterTitleKey(faction, region), index);",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-NAME-KEY",
+    "file": "src/net/chapterEvents.js",
+    "old": "const h = gateHash(CHAPTER_CANDIDATE_SALT, season, chapterTitleKey(faction, region), index);",
+    "new": "const h = gateHash(CHAPTER_CANDIDATE_SALT, season, faction, index);",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-NAME-INDEX",
+    "file": "src/net/chapterEvents.js",
+    "old": "const h = gateHash(CHAPTER_CANDIDATE_SALT, season, chapterTitleKey(faction, region), index);",
+    "new": "const h = gateHash(CHAPTER_CANDIDATE_SALT, season, chapterTitleKey(faction, region));",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-NAME-BANK",
+    "file": "src/net/chapterEvents.js",
+    "old": "return residentName(h, getNameBankOfRegion(region),",
+    "new": "return residentName(h, getNameBankOfRegion(0),",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-NAME-GENDER",
+    "file": "src/net/chapterEvents.js",
+    "old": "(h >>> 16) & 1 ? GENDERS.Female : GENDERS.Male);",
+    "new": "GENDERS.Male);",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-RIVAL-HIDDEN",
+    "file": "src/net/chapterEvents.js",
+    "old": "isRollFaction(f) && !hallHidden(f) ? `the ${hallPosterName(f)}`",
+    "new": "isRollFaction(f) ? `the ${hallPosterName(f)}`",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-RIVAL-NONE",
+    "file": "src/net/chapterEvents.js",
+    "old": "(f === null ? 'a rival chapter' : isRollFaction(f)",
+    "new": "(isRollFaction(f)",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-LINE-SCHISM",
+    "file": "src/net/chapterEvents.js",
+    "old": "`The chapter is split this Season: ${a} stands for ${chapterDoctrineWords(s.sides[0])}, ${b} for ${chapterDoctrineWords(s.sides[1])}.`",
+    "new": "`The chapter is split this Season: ${a} stands for ${chapterDoctrineWords(s.sides[1])}, ${b} for ${chapterDoctrineWords(s.sides[0])}.`",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-LINE-SCHISM-NAMES",
+    "file": "src/net/chapterEvents.js",
+    "old": "out.push(s.sides && a && b ?",
+    "new": "out.push(s.sides ?",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-LINE-HEIR",
+    "file": "src/net/chapterEvents.js",
+    "old": "    if (s.heir !== null && names[s.heir]) out.push(`${names[s.heir]} is the hall's new head.`);\n",
+    "new": "    if (false) out.push(`${names[s.heir]} is the hall's new head.`);\n",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-LINE-HEIRS",
+    "file": "src/net/chapterEvents.js",
+    "old": "`The hall's head steps down this Season: ${listed(/** @type {string[]} */ (names))} stand to follow.`",
+    "new": "`The hall's head steps down this Season.`",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-LINE-LISTED",
+    "file": "src/net/chapterEvents.js",
+    "old": "(n.length < 2 ? n.join('') : `${n.slice(0, -1).join(', ')} and ${n[n.length - 1]}`)",
+    "new": "n.join(', ')",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-LINE-CRACKDOWN",
+    "file": "src/net/chapterEvents.js",
+    "old": "  } else if (s.event === 'crackdown') out.push('The watch hunts the chapter this Season: its members\\' own writs earn half again Merit.');   // AUDIT CHAP5 E1\n",
+    "new": "  }\n",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ],
+    "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
+  },
+  {
+    "name": "CHAP6C-LINE-RIVALRY",
+    "file": "src/net/chapterEvents.js",
+    "old": "  else if (s.event === 'rivalry') out.push(`The chapter races ${rivalOf(s.rival)} for Merit this Season.`);\n",
+    "new": "",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-LINE-DECLINE",
+    "file": "src/net/chapterEvents.js",
+    "old": "  else if (s.event === 'decline') out.push(",
+    "new": "  else if (false) out.push(",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-LINE-ASCENDANCY",
+    "file": "src/net/chapterEvents.js",
+    "old": "  else if (s.event === 'ascendancy') out.push('The chapter is ascendant this Season.');\n",
+    "new": "",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-LINE-DOCTRINE",
+    "file": "src/net/chapterEvents.js",
+    "old": "  if (s.doctrine) out.push(`The chapter holds to ${chapterDoctrineWords(s.doctrine)} this Season.`);\n",
+    "new": "",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-LINE-SHUT",
+    "file": "src/net/chapterEvents.js",
+    "old": "  if (s.shut) out.push('The chapter\\'s halls are shut this Season, by the watch\\'s order.');\n",
+    "new": "",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-CHOICES-SEASON",
+    "file": "src/net/chapterEvents.js",
+    "old": "  if (s.season === null) return [];\n  if (s.event === 'schism'",
+    "new": "  if (s.event === 'schism'",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-CHOICES-SCHISM",
+    "file": "src/net/chapterEvents.js",
+    "old": "if (s.event === 'schism' && s.sides) return s.sides.map(",
+    "new": "if (false && s.sides) return s.sides.map(",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-CHOICES-HEIR",
+    "file": "src/net/chapterEvents.js",
+    "old": "if (s.event === 'succession' && s.heir === null) return",
+    "new": "if (s.event === 'succession') return",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-CHOICES-LABEL",
+    "file": "src/net/chapterEvents.js",
+    "old": "label: `${chapterCandidateName(/** @type {number} */ (s.season), faction, region, side)}, for ${chapterDoctrineWords(d)}`",
+    "new": "label: `${chapterCandidateName(/** @type {number} */ (s.season), faction, region, side)}`",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-BACKED-NONE",
+    "file": "src/net/chapterEvents.js",
+    "old": "  if (!choice) return null;\n",
+    "new": "  if (!choice) return 'You back no one.';\n",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-BACKED-WORDS",
+    "file": "src/net/chapterEvents.js",
+    "old": "return chapterSeasonOf(c).event === 'schism' ? `You back ${choice.label}.`",
+    "new": "return chapterSeasonOf(c).event !== 'schism' ? `You back ${choice.label}.`",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-SHEET-SEASON",
+    "file": "src/net/chapterSheet.js",
+    "old": "seats: chapterRollSeatsOf(c.seats), season: chapterSeasonOf(c), patron:",
+    "new": "seats: chapterRollSeatsOf(c.seats), season: chapterSeasonOf(null), patron:",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-SHEET-COPY",
+    "file": "src/net/chapterSheet.js",
+    "old": "sides: s.season.sides ? [...s.season.sides] : null,\n",
+    "new": "sides: s.season.sides,\n",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-BOARD-LINES",
+    "file": "src/ui/noticeWindow.js",
+    "old": "      for (const line of chapterSeasonLines(c.faction, work.region, c)) body.append(el('p', 'notice-chapter notice-season', line));\n",
+    "new": "",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-BOARD-MEMBER",
+    "file": "src/ui/noticeWindow.js",
+    "old": "work.back && (writs?.merit ?? []).some((m) => m.faction === c.faction) ? chapterBackChoices(",
+    "new": "work.back ? chapterBackChoices(",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-BOARD-DOOR",
+    "file": "src/ui/noticeWindow.js",
+    "old": "work.back && (writs?.merit ?? []).some((m) => m.faction === c.faction) ? chapterBackChoices(",
+    "new": "(writs?.merit ?? []).some((m) => m.faction === c.faction) ? chapterBackChoices(",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-BOARD-MARK",
+    "file": "src/ui/noticeWindow.js",
+    "old": "row.append(button(ch.side === c.backed ? 'on' : '', ch.label,",
+    "new": "row.append(button('', ch.label,",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-BOARD-HEADING",
+    "file": "src/ui/noticeWindow.js",
+    "old": "c.event === 'schism' ? 'Back a side: ' : 'Name who follows: '",
+    "new": "'Back a side: '",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-BACK-SIDE",
+    "file": "src/ui/noticeWindow.js",
+    "old": "    const r = await work.back(c.faction, side);\n",
+    "new": "    const r = await work.back(c.faction, 0);\n",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-BACK-WORD",
+    "file": "src/ui/noticeWindow.js",
+    "old": "text: chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' }",
+    "new": "text: 'Done.' }",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-BACK-REFUSAL",
+    "file": "src/ui/noticeWindow.js",
+    "old": "text: chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' } : { ok: false, text: accountRefusalText(r?.error) };",
+    "new": "text: chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' } : { ok: false, text: 'No.' };",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-BACK-LATE",
+    "file": "src/ui/noticeWindow.js",
+    "old": "chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' } : { ok: false, text: accountRefusalText(r?.error) };\n    if (!alive) { work.sayLate?.(said.text); return; }",
+    "new": "chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' } : { ok: false, text: accountRefusalText(r?.error) };\n    if (!alive) { return; }",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ],
+    "note": "AUDIT CHAP5 T1-T3: re-aimed - the old text ran on into the next door (bidPatron's)."
+  },
+  {
+    "name": "CHAP6C-BACK-RELOAD",
+    "file": "src/ui/noticeWindow.js",
+    "old": "chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' } : { ok: false, text: accountRefusalText(r?.error) };\n    if (!alive) { work.sayLate?.(said.text); return; }\n    busy = false;\n    word = said;\n    loadWrits(true);",
+    "new": "chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' } : { ok: false, text: accountRefusalText(r?.error) };\n    if (!alive) { work.sayLate?.(said.text); return; }\n    busy = false;\n    word = said;\n    render();",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ],
+    "note": "AUDIT CHAP5 T1-T3: re-aimed - the old text ran on into the next door (bidPatron's)."
+  },
+  {
+    "name": "CHAP6C-DOOR",
+    "file": "src/net/accountClient.js",
+    "old": "back: (character, faction, region, side) => post('/v1/chapters/back', { character, faction, region, side }),",
+    "new": "back: (character, faction, region, side) => post('/v1/chapters/focus', { character, faction, region, side }),",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-HOST-BACK",
+    "file": "src/scenes/world.js",
+    "old": "back: hallDoor && realmSession ? (faction, side) => hallDoor.back(realmSession.id, faction, region, side) : null,",
+    "new": "back: null,",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-HOST-ROLL",
+    "file": "src/scenes/world.js",
+    "old": "lines: [...chapterRollLines(faction, c), ...chapterSeasonLines(faction, /** @type {number} */ (region), c)] }",
+    "new": "lines: chapterRollLines(faction, c) }",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-HOST-EVENT",
+    "file": "src/scenes/world.js",
+    "old": "event: c.event ?? null, shut: c.shut === true };",
+    "new": "event: null, shut: c.shut === true };",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-HOST-SHUT",
+    "file": "src/scenes/world.js",
+    "old": "event: c.event ?? null, shut: c.shut === true };",
+    "new": "event: c.event ?? null, shut: false };",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-NEWS-SHUT-FIRST",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "const kind = c?.shut ? 'shut' : c?.event &&",
+    "new": "const kind = c?.event &&",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-NEWS-EVENT",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "const kind = c?.shut ? 'shut' : c?.event && /** @type {Record<string, unknown>} */ (CHAPTER_EVENT_NEWS)[c.event] ? c.event : c?.band;",
+    "new": "const kind = c?.shut ? 'shut' : c?.band;",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-NEWS-EVENT-KNOWN",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "c?.event && /** @type {Record<string, unknown>} */ (CHAPTER_EVENT_NEWS)[c.event] ? c.event : c?.band;",
+    "new": "c?.event && c.event !== 'calm' ? c.event : c?.band;",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-POOL",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "(/** @type {Record<string, any>} */ (CHAPTER_EVENT_NEWS)[item.kind] ?? CHAPTER_NEWS[",
+    "new": "(CHAPTER_NEWS[",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-POOL-SHUT",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "  shut: Object.freeze([\n",
+    "new": "  closed: Object.freeze([\n",
+    "tests": [
+      "test/chap6c_words.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-SVC-SEASON",
+    "file": "server-account/src/npcChapters.js",
+    "old": "    ...(event === 'schism' || event === 'succession' ? { season: n } : {}),\n",
+    "new": "    ...(event ? { season: n } : {}),\n",
+    "tests": [
+      "test/chap6a_events.test.js",
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6C-SVC-SEASON-NONE",
+    "file": "server-account/src/npcChapters.js",
+    "old": "    ...(event === 'schism' || event === 'succession' ? { season: n } : {}),\n",
+    "new": "",
+    "tests": [
+      "test/chap6a_events.test.js",
+      "test/chap6b_backing.test.js"
+    ]
+  }
+]

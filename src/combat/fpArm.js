@@ -89,6 +89,8 @@ import { diffuseAt, emissiveAt } from '../formats/mwNifMesh.js';   // MWT2: the 
 import { fpLightingOn } from './fpsWeapon.js';   // MAC-P: the first-person lighting switch, shared with the classic sprite it stands in for
 import { createParticleSystem, packParticleQuads, particleDrawState, affineOfTransform, affineMul, affineApply, affineScale } from '../formats/mwParticles.js';   // MAC-Q: the torch's flame, and any other particle system a part carries
 import { boneSourcesFor, resolveHolsterParts, holsterPartPaths, holsterHidden, HOLSTER_SLOTS } from '../systems/weaponSheathing.js';   // WS1
+import { fitCloakOver, fitStowedGear, followCloak, seatCloak, HIP_PITCH_LIMIT, CLOAK_PUSH_LIMIT, SLUNG_MOVE_LIMIT } from '../formats/mwCloakFit.js';   // MW-CLOAK1: the cloak over what the body wears, stowed gear against it; AUDIT MW-CLOAK: and going with it
+import { isCloakSlot, ownCloakFor } from '../characters/ownClothingModels.js';   // MW-CLOAK1; AUDIT MW-CLOAK: and its picture
 import { injectSkeletonNodes } from '../formats/mwSkin.js';   // WS1: the dry injection the holster's bone probe runs
 // MAP3: THE HELD SHEET - the pose deltas over the idle, the paper piece
 // the hands hold, and where its corners land on the composite
@@ -1551,6 +1553,28 @@ export function hangHipLight(arm) {
   return hang;
 }
 
+/** MW-CLOAK1: THE CLOAK'S FITS on a third-person assembly (formats/mwCloakFit.js) - the cloak eased back over every
+ *  piece whose slot `underSlots` names (the body's skin parts and what it wears; null: the cloak is fitted already, as
+ *  on a weapon swap), held over CLOAK_FIT_POSES; then each holster bone's pieces against it, slung gear over it and hip
+ *  gear pitched under it; and (AUDIT MW-CLOAK) the gear tied to the cloak, every pose after (the assembly's afterPose).
+ *  A beast's TAIL and a carried SHIELD are no part of what the cloak covers - each swings on its own through the pose,
+ *  and a bulge fitted at rest round either would stand where it no longer is. A body with no cloak answers nulls and
+ *  is not touched. Answers `{ cloak, gear, follow, notes }`. */
+export function fitThirdPersonCloak(arm, underSlots) {
+  const isCloak = (p) => isCloakSlot(p.slot);
+  const isGear = (p) => HOLSTER_SLOTS.includes(p.slot);
+  const covered = (slot) => underSlots.has(slot) && slot !== 'tail' && !/^shield\b/.test(slot);
+  seatCloak(arm, false, isCloak);   // the fits measure the standing cloak, whatever a seat last swapped in
+  const cloak = underSlots ? fitCloakOver(arm, { isCloak, isUnder: (p) => covered(p.slot) }) : null;
+  const gear = fitStowedGear(arm, { isCloak, isGear });
+  const follow = followCloak(arm, { isCloak, isGear });
+  const notes = (gear ?? []).filter((r) => r.how === 'unresolved').map((r) => (r.slung
+    ? `holster @ ${r.bone}: over the cloak it would hang more than ${SLUNG_MOVE_LIMIT} units off the back - it hangs as it was`
+    : `holster @ ${r.bone}: no pitch within ${HIP_PITCH_LIMIT} degrees keeps it in front of the cloak - it hangs as it was`));
+  if (cloak?.deep) notes.push(`cloak: something under it stands more than ${CLOAK_PUSH_LIMIT} units through it (${cloak.deep} points) - left through, not chased`);
+  return { cloak, gear, follow, notes };
+}
+
 /** MW-D50: the archives' DIRECTORY - "is this path in any attached
  *  .bsa" - the one question pickWeaponRecord asks of them. Not
  *  findLoaded: that one throws for a path known but not yet read
@@ -1828,6 +1852,7 @@ async function buildTpBody({
       return { ok: false, stage: arm.stage || 'assembly', error: arm.error, notes: [...missing, ...(arm.notes || [])], rows };
     }
     hangHipLight(arm);   // HT-WAIST: the hook and the anchor, once, on the assembled skeleton
+    const cloakFit = fitThirdPersonCloak(arm, new Set([...skinRows, ...worn.adds].map((row) => row.slot)));   // MW-CLOAK1
     // MW-LOAD: covers collectArmTextures' synchronous reads - rule 36's
     // ladder over the names the assembled pieces carry, which are only
     // knowable now that the NIFs are parsed.
@@ -1892,12 +1917,13 @@ async function buildTpBody({
       hipLight: resolvedHip.hipInfo,   // HT-WAIST
       hipLightTried: !!hipLight,   // HT-WAIST: asked at the build - a refusal here is not asked again (MW-TORCH F3's law)
       holster: resolvedHolster.info,   // WS1
+      cloaked: !!cloakFit.follow || !!cloakFit.cloak,   // AUDIT MW-CLOAK: a cloak to seat (seatCloak)
       boneSources: boneSourcePaths,   // WS1: the addons this skeleton took
       sheathing,
       werewolf: !!werewolf,   // WEREWOLF1
       leftArm: blendMaskBones(arm.skeleton),   // MW-D51: rule 25's LeftArm mask on THIS skeleton
       rows,
-      notes: [...missing, ...resolvedWeapon.notes, ...resolvedTorch.notes, ...resolvedHip.notes, ...resolvedHolster.notes, ...(arm.notes || [])],
+      notes: [...missing, ...resolvedWeapon.notes, ...resolvedTorch.notes, ...resolvedHip.notes, ...resolvedHolster.notes, ...cloakFit.notes, ...(arm.notes || [])],   // MW-CLOAK1: and the cloak's
       pieces: armPieceRows(arm.pieces).length,
       // MW-D24: the live weapon swap re-resolves against THIS skeleton's
       // bones, exactly as the arm's swap does against its own.
@@ -3217,6 +3243,10 @@ export function createFpArm() {
         return mwArmorRecords(cat.armors, item.templateIndex, item.material ?? 0).records[0] ?? null;
       }
       if (item.group === 'MensClothing' || item.group === 'WomensClothing') {
+        // AUDIT MW-CLOAK: a cloak's picture is the cloak the body wears - the port's own, in its dye's painting - not the
+        // Morrowind robe its row once dressed it as
+        const cloak = ownCloakFor({ kind: 'clothing', name: CLOTHING_NAME[item.templateIndex], dye: item.dye ?? 0 });
+        if (cloak) return { id: `${cloak.id}_${cloak.painting}`, model: cloak.model };
         // AUDIT 34 F1: the icon measures through the same door the
         // build does, so the icon and the worn piece are ONE record.
         const colourOf = (c) => clothingColourOf(c, cat.parts, cat.archives, cat.gen);
@@ -3252,9 +3282,9 @@ export function createFpArm() {
     iconPending.add(key);
     (async () => {
       try {
-        if (item.group === 'MensClothing' || item.group === 'WomensClothing') {
+        if ((item.group === 'MensClothing' || item.group === 'WomensClothing') && !ownCloakFor({ kind: 'clothing', name: CLOTHING_NAME[item.templateIndex], dye: item.dye ?? 0 })) {
           // the dye pick measures textures; prepare its pool first, the
-          // same probe run the build uses.
+          // same probe run the build uses (a cloak picks no record: AUDIT MW-CLOAK)
           await prepareClothingColours(
             (probe) => mwClothingRecord(cat.clothes, CLOTHING_NAME[item.templateIndex], { dye: item.dye ?? 0, colourOf: probe }),
             cat.parts, cat.archives, cat.gen);
@@ -4328,8 +4358,9 @@ export function createFpArm() {
             const swapped = new Set(['weapon', 'arrow', ...HOLSTER_SLOTS]);
             t.arm.pieces = t.arm.pieces.filter((p) => !swapped.has(p.slot));
             bindPartsInto(t.arm, [...tResolved.parts, ...tHolster.parts]);
+            const tFit = fitThirdPersonCloak(t.arm, null);   // MW-CLOAK1: the new holster against the cloak already fitted
             t.holster = tHolster.info;
-            t.notes = [...(t.notes || []).filter((n) => !/^holster[ :@]/.test(n)), ...tHolster.notes];
+            t.notes = [...(t.notes || []).filter((n) => !/^holster[ :@]/.test(n)), ...tHolster.notes, ...tFit.notes];
             const tFresh = t.arm.pieces.filter((p) => swapped.has(p.slot));
             // MW-LOAD: same cover for the third-person rig's new pieces.
             await preloadArmTextures(tFresh, archives, gen);
@@ -4951,6 +4982,8 @@ export function createFpArm() {
         if (tOverlay) overlayClock = torchState.time;
         // HT-WAIST: the lantern at the waist swings on the frame's motion before the body is posed around it.
         if (hipVisible()) stepHipSwing(cam, dt);
+        // AUDIT MW-CLOAK: seated, the cloak's hem hangs behind the chair's sitter - a batch swapped, which the next pose skins.
+        if (t.cloaked) seatCloak(t.arm, !!(cam && cam.seat));
         // PEER-CADENCE: a frame that does not pose keeps last frame's
         // skin, upload and bounds; the clips above advanced all the
         // same, so the next posing frame lands where the clock is.

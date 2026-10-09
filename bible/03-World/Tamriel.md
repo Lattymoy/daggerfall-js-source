@@ -72,7 +72,7 @@ else (`test/tamriel.test.js` sweeps for a second copy), so the probe's correctio
   within FRET_CALM of the Bay's rectangle, every authored vertex kept exactly), CLIPPED to the outside of the Bay's
   rectangle (`clipOutsideRect`: cut exactly on the edge, a closed ring that never touches it kept closed, a ring's
   wrapping run joined) and STITCHED to the Bay's own coast (`stitchToBay`: a cut end on an edge is moved onto the
-  nearest free Bay coast end on the same edge within STITCH_REACH, 40 pixels, 33 km, once each) - so the shoreline the
+  nearest free Bay coast end on the same edge within STITCH_REACH, 40 pixels, 33 km - 64, 52 km, since TAMRIEL4 - once each) - so the shoreline the
   player follows out of the Bay is the data's where there is data and ours past it. Then the borders, the rivers, the
   ranges as a lattice of carets across each band (thinned by zoom at paint, by lattice index, so a caret never lands
   under its neighbour), the provinces' and seas' names, the cities.
@@ -240,18 +240,20 @@ the authored shape (no Features row: a door for a day the trace reads a picture 
   pixel, the authored 18.75 among them) and offset (24 picture pixels each way round the authored place), four samples
   a cell and the majority, and the pair with the greatest FRACTION of cells agreeing wins - a count would favour the
   smallest scale, which lays the most cells (the pin that found it: `test/tamriel3.test.js`). Deterministic; ~40M
-  compares, once, after the travel art, off the boot's critical path.
+  compares, once, after the travel art, off the boot's critical path. TAMRIEL4 scores the Bay's EDGE first and the
+  inside beside it, at every quarter scale from 15 to 21 (below).
 - **The live frame** (`world/tamrielFrame.js`): BAY_ORIGIN and PIXELS_PER_PICTURE_UNIT are the DEFAULTS now; every
   conversion reads `tamrielFit()` - the fit the host installs (`setTamrielFit`, null or a bad pair the defaults
   again) - and `tamrielSize()` the picture at the live scale. The raster, the ground, the ink and the held map's frame
   all move with it.
 - **The ink on the trace** (`ui/tamrielInk.js tracedChains`): the coast is the land mask's pixel edges linked (the
-  Bay's own shore law, `inkMap.js boundarySegments`), the staircase of a 15 km pixel simplified and its corners cut
+  Bay's own shore law, `inkMap.js boundarySegments`), the staircase of a 15 km pixel simplified and its corners cut (TAMRIEL4: the land's contour, smoothed - below)
   at the picture's own scale; a border runs where two land pixels change province; a province's name hangs at its
   clearest point (`provinceMap.js labelPoint`), and a province the picture has no land for is not named. The authored
   cities keep their places where the trace agrees, move up to CITY_SNAP_PX (10) onto their own province's land, and
   are left off past it (a town the picture puts in the sea is not drawn in the sea); a range's carets stand only on
-  the picture's land; a sea's name on the picture's land is dropped; the rivers stay authored. The model reports
+  the picture's land; a sea's name on the picture's land is dropped; the rivers stay authored (TAMRIEL4: not on the
+  trace - the picture's own water is its rivers). The model reports
   `traced` and `version`, and `tamrielInkFor` rebuilds when the version moves.
 - **The ground and the raster** read the land module (`world/tamrielGround.js authoredHeightByte`,
   `tamrielClimateAt`; `world/tamrielRaster.js` at the live scale) - so with the trace in, the streamed land past the
@@ -275,7 +277,8 @@ above is what the picture says: 26,423 land pixels of 64,000, the Imperial Provi
 shape the picker's. The fit lands the Bay at picture (45, 56) at 18.5 Bay pixels a picture pixel (the authored
 guess was (46, 52) at 18.75), with 77% of its cells agreeing - the painting's Iliac Bay is a cruder, more diagonal
 inlet than WOODS.WLD's, and the score surface round the best is flat within 4% over ±3 pixels. The seam between the
-Bay's own coast and the traced one disagrees along 516 edge pixels (the authored shape, tuned to the Bay's edges, 265):
+Bay's own coast and the traced one disagrees along 516 edge pixels (the authored shape, tuned to the Bay's edges, 265;
+TAMRIEL4's fit, which scores the seam first, 231 - below):
 the stitch joins what it can within STITCH_REACH and the rest meets at the Bay's rectangle, as TAMRIEL1 said it would.
 A reading for the chargen (OVH): `provinceMap.js`'s `seaIndices` and `inlandRemainder` read the same blue sea the
 picture has not; its inert ninth is held by INERT_REGION's fallback, not by the remainder. What the sheet shows
@@ -299,3 +302,72 @@ snapped on the authored shape; the built model on the trace and its rebuild; the
 the cache dropped), the worker's arm, the land module pure; the door; the host's seams by source. Mutants
 `tools/mutants/tamriel3.json` (45: 45 dead).
 
+
+## TAMRIEL4 - the continent, traced properly (2026-10-09)
+
+The owner, with the map in hand: *"Also increase the accuracy and fidelity of the tamerial ingame map. Its not properly
+traced"*. Rendered on the freeware CD's files (in the session's scratch, never the tree), TAMRIEL3's continent showed
+four faults, each a reading of the picture rather than the picture:
+
+1. **Every border was a strait.** The picker draws each border between two homelands as a one-pixel line no race claims
+   (the black between its masks); the trace read it as sea. Skyrim met Hammerfell, Skyrim Morrowind, Valenwood Elsweyr
+   and Morrowind Black Marsh across a 15 km channel - inked as a double coast on the sheet, and streamed as water in the
+   land beyond the Bay (TAMRIEL2 reads the same trace). `closeBorderLines` (`ui/tamrielTrace.js`): a pixel of no land
+   with land of two DIFFERENT provinces on opposite sides of it (west and east, or north and south) is the line - land,
+   of the province most of its neighbours hold, pass after pass until none is left (a line's corner on the pass after
+   its arms). A channel inside one province (the Inner Sea's narrows) has the same province on both sides and stays
+   sea; a diagonal is never asked, so a coast's inner corner where two provinces meet stays sea. Its one reading of a
+   strait one pixel wide between two provinces is their border; the picture has none past the Bay. 209 pixels on the
+   freeware data, and no strait left (`test/tamriel4.test.js` sweeps every pair).
+2. **The painting's dabs were lakes.** Its blue in the land - a river's dot, a road, a letter's fill - left 90-odd holes
+   of one to five pixels, each inked as a tiny lake. `fillSpecks`: a hole under HOLE_PX (6) is land, of its rim's
+   province; the painting's smallest lake is ten pixels. Six waters stand: Lake Rumare's two pieces (11, 49),
+   Hammerfell's two lakes (15, 20), the Niben (115), the Inner Sea (281). The land: 26,636 pixels (26,423 before).
+3. **The fit agreed inside the Bay, where the picture is never drawn.** TAMRIEL3 laid the Bay's land on the picture and
+   took the greatest fraction of cells agreeing INSIDE it - 77% at (45, 56) x18.5 - and the painting's Iliac Bay is a
+   cruder inlet than WOODS.WLD's: that fit left High Rock's and Hammerfell's painted west coasts 100-200 Bay pixels past
+   the data's, and the shore the player follows out of the Bay ran off its edge into nothing (516 edge pixels of 3,000
+   disagreeing). Inside the Bay the data is drawn, so what the fit owes the map is the JOIN. `fitBayToPicture`
+   (`world/tamrielLand.js`) scores THE SEAM FIRST: the Bay's edge cells (its own cells, four samples a cell and the
+   majority, as before) against the picture's pixels just beyond them, the fraction agreeing, and the inside's fraction
+   beside it at FIT_AREA_WEIGHT (0.25); the scales every quarter from 15 to 21 (FIT_PPUS - the seam's best lay outside
+   TAMRIEL3's 16-21); a candidate keeps a pixel of picture round it. On the freeware data: (38, 57) x15.5, 190 of its
+   192 edge cells agreeing, 75% inside; the probe's edge-pixel seam 231 (516 before), and the Bay's coast ends on the
+   north and south edges meet the continent's. The answer carries `seam` and `edge` beside `score` and `cells`; the
+   console says both. ~0.4 s, once, off the boot's path as before. Tried and refused: a scale a side (an x and a y)
+   gained 4% inside at a 47% stretch of the whole continent.
+4. **The coast was the pixels' staircase, and the lore map's rivers ran out to sea.** `tracedChains` (`ui/tamrielInk.js`)
+   now takes the land's 0.5 contour over its pixel centres (`contourSegments`, marching squares, a saddle's two lands
+   kept apart, the sea round the picture), straightens its steps (COAST_SIMPLIFY_PX, 0.4) and rounds them with
+   Chaikin's cut (`chaikinCapped`, SMOOTH_PASSES 3, each cut at most COAST_CUT_PX, 0.75, so a long run never loses a corner by
+   a quarter of itself): a shore within about half a picture pixel (one pixel is 15 km) of the traced land, drawn rather
+   than surveyed. The borders take the same, their ends moved onto the coast's own line within BORDER_SNAP_PX
+   (`snapEnds`, the nearest point of any coast segment), so a dashed border meets the shore it divides. A run of the
+   traced coast that lies ALONG the Bay's frame (the picture's land just outside it, its sea just inside) is the
+   frame's, not a shore (`dropEdgeRuns`). STITCH_REACH is 64 Bay pixels, four of the picture's at the fit's scale - the
+   picture cannot place a coast nearer than its pixels, and Hammerfell's met the Bay's 49 along the south edge. On the
+   trace the lore map's six rivers are not drawn: drawn from memory as straight runs, half of them ran across the sea;
+   the picture's own water (the Niben, Lake Rumare) is its rivers. The authored shape keeps its rivers.
+
+What it moves: the sheet (the coast, the borders, the joins, the rivers), the hover (a border's pixel names its
+province, not the sea), and the streamed land past the Bay (TAMRIEL2 reads the trace and the fit: no water down the
+borders, the coast at the Bay's edges continuing the Bay's). The Bay's own ground and ink are untouched. What it cannot:
+the picture is 320 x 200, so the continent's coast is the picture's to 15 km however it is drawn; the painted Bay still
+disagrees with WOODS.WLD's along part of the west edge (139 edge pixels where the painting's Hammerfell reaches past the
+frame), which the frame's dotted line carries alone now.
+
+### Pins
+
+`test/tamriel4.test.js` (9): the border lines (a line between two provinces land, a tie to the lower id, a channel in
+one province and a strait of two pixels sea, a strait of one the rule's reading, a T closed on the second pass, a
+diagonal step); the dabs (under HOLE_PX filled with the rim's province, HOLE_PX a lake, the edge's sea never); the trace
+running both after the remainder; THE SEAM FIRST (a Bay whose inside is a sea the picture has not is found where its
+edge agrees, where the inside alone would go elsewhere; the weight and the scales); the contour (a lone pixel's four
+middles, a saddle two closed coasts, the picture's edge closed); Chaikin (the ends kept, the cut capped, a ring
+closed); the ink on the trace (every coast point within half a pixel of the land, a corner a curve, a border's end on
+the coast's line - a stepped shore's too - the frame's runs dropped, no lore river on the trace and the authored
+shape's kept, the reach); by source; and on the player's own files where ARENA2_PATH names them (26,636 land pixels,
+the six waters, no strait anywhere, the fit to the cell). `test/tamriel3.test.js`: PIN MOVED, the fit's defaults
+(FIT_PPUS); `test/tamriel.test.js`: PIN MOVED, STITCH_REACH 64. Mutants `tools/mutants/tamriel4.json` (14, all dead);
+`tools/mutants/tamriel3.json`'s fit-on-count, off-the-picture and coast records re-aimed by content (the coast's now
+the smoothing's, with this file's pins beside it).

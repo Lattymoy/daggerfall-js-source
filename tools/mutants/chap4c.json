@@ -1,0 +1,256 @@
+[
+  {
+    "name": "CHAP4C-VOCAB-ID",
+    "file": "src/net/identityToken.js",
+    "old": "export const CHAPTER_TITLES = Object.freeze(['chaptermaster', 'chapterofficer', 'formermaster', 'highmaster', 'seasonmaster']);",
+    "new": "export const CHAPTER_TITLES = Object.freeze(['chaptermaster', 'chapterofficer', 'highmaster', 'seasonmaster']);",
+    "tests": [
+      "test/chap4c_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4C-CLAIMED",
+    "file": "src/net/identityToken.js",
+    "old": "export const titleClaimed = (t) => SEAT_TITLES.includes(t) || CHAPTER_TITLES.includes(t);",
+    "new": "export const titleClaimed = (t) => SEAT_TITLES.includes(t);",
+    "tests": [
+      "test/chap4c_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4C-RELAY-STAMP",
+    "file": "src/net/wire.js",
+    "old": "if (typeof t === 'string' && titleClaimed(t) && seatTitleClaimOk(from?.ts)) row.ts = from.ts;",
+    "new": "if (typeof t === 'string' && ['warden', 'protector', 'crowned', 'keeper', 'champion'].includes(t) && seatTitleClaimOk(from?.ts)) row.ts = from.ts;",
+    "tests": [
+      "test/chap4c_titles.test.js"
+    ],
+    "note": "AUDIT CHAP5 T1-T3: re-aimed - the mutant failed for its own reason (a name it does not import, a statement that does not parse), never the law's."
+  },
+  {
+    "name": "CHAP4C-RELAY-READ",
+    "file": "src/net/wire.js",
+    "old": "const ts = title && titleClaimed(title) && seatTitleClaimOk(row?.ts) ? [row.ts[0], row.ts[1]] : null;",
+    "new": "const ts = title && ['warden', 'protector', 'crowned', 'keeper', 'champion'].includes(title) && seatTitleClaimOk(row?.ts) ? [row.ts[0], row.ts[1]] : null;",
+    "tests": [
+      "test/chap4c_titles.test.js"
+    ],
+    "note": "AUDIT CHAP5 T1-T3: re-aimed - the mutant failed for its own reason (a name it does not import, a statement that does not parse), never the law's."
+  },
+  {
+    "name": "CHAP4C-KEY",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const chapterTitleKey = (/** @type {number} */ f, /** @type {number} */ region) => f * 100 + region;",
+    "new": "export const chapterTitleKey = (/** @type {number} */ f, /** @type {number} */ region) => f * 1000 + region;",
+    "tests": [
+      "test/chap4c_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4C-KEY-BACK",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "? { f: Math.floor(k / 100), region: k % 100 } : null);",
+    "new": "? { f: Math.round(k / 100), region: k % 100 } : null);",
+    "tests": [
+      "test/chap4c_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4C-KEY-SIGN",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "Number.isSafeInteger(k) && k >= 0 ? { f:",
+    "new": "Number.isSafeInteger(k) ? { f:",
+    "tests": [
+      "test/chap4c_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4C-WORDS",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "formermaster: 'Former Master', highmaster: 'High Master',",
+    "new": "formermaster: 'Master', highmaster: 'High Master',",
+    "tests": [
+      "test/chap4c_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4C-TEXT-HIDDEN",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "if (!words || !c || !isRollFaction(c.f) || hallHidden(c.f) || !regionOk(c.region)) return null;\n  if (title === 'seasonmaster')",
+    "new": "if (!words || !c || !isRollFaction(c.f) || !regionOk(c.region)) return null;\n  if (title === 'seasonmaster')",
+    "tests": [
+      "test/chap4c_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4C-TEXT-REGION",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "if (!words || !c || !isRollFaction(c.f) || hallHidden(c.f) || !regionOk(c.region)) return null;\n  if (title === 'seasonmaster')",
+    "new": "if (!words || !c || !isRollFaction(c.f) || hallHidden(c.f)) return null;\n  if (title === 'seasonmaster')",
+    "tests": [
+      "test/chap4c_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4C-OF-HIDDEN",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "const shown = (/** @type {any} */ s) => isRollFaction(s?.f) && !hallHidden(s.f) &&",
+    "new": "const shown = (/** @type {any} */ s) => isRollFaction(s?.f) &&",
+    "tests": [
+      "test/chap4c_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4C-OF-HELD-AGAIN",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "&& !masterAt.has(`${s.f}|${s.region}`));",
+    "new": "&& true);",
+    "tests": [
+      "test/chap4c_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4C-OF-ONCE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "...rows([...once.values()], 'formermaster'),",
+    "new": "...rows([...former], 'formermaster'),",
+    "tests": [
+      "test/chap4c_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4C-OF-ORDER",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "const by = (/** @type {any} */ a, /** @type {any} */ b) => a.f - b.f || a.region - b.region;",
+    "new": "const by = (/** @type {any} */ a, /** @type {any} */ b) => a.region - b.region || a.f - b.f;",
+    "tests": [
+      "test/chap4c_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4C-OF-RANK",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "...rows(masters.filter((s) => s.high !== true), 'chaptermaster'),\n    ...rows(held.filter((s) => s.seat === 'officer'), 'chapterofficer'),",
+    "new": "...rows(held.filter((s) => s.seat === 'officer'), 'chapterofficer'),\n    ...rows(masters.filter((s) => s.high !== true), 'chaptermaster'),",
+    "tests": [
+      "test/chap4c_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4C-BADGE-ARM",
+    "file": "src/ui/playerBadge.js",
+    "old": ": CHAPTER_TITLES.includes(key) ? chapterTitleText(key, peer?.ts) : null) ?? TITLE_TEXT[key];",
+    "new": ": null) ?? TITLE_TEXT[key];",
+    "tests": [
+      "test/chap4c_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4C-BADGE-WORD",
+    "file": "src/ui/playerBadge.js",
+    "old": "  chapterofficer: 'Chapter Officer',\n",
+    "new": "  chapterofficer: 'Officer',\n",
+    "tests": [
+      "test/chap4c_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4C-BADGE-RGBA",
+    "file": "src/ui/playerBadge.js",
+    "old": "  formermaster: Object.freeze([0.604, 0.627, 0.659, 1]),    // #9aa0a8",
+    "new": "  formermaster: Object.freeze([0.851, 0.867, 0.890, 1]),",
+    "tests": [
+      "test/chap4c_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4C-SVC-SWITCH",
+    "file": "server-account/src/npcChapters.js",
+    "old": "env?.CHAPTER_TITLES === 'on' && chaptersOpenFor(player, env);",
+    "new": "env?.CHAPTER_TITLES !== 'off' && chaptersOpenFor(player, env);",
+    "tests": [
+      "test/chap4c_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4C-SVC-SEASON",
+    "file": "server-account/src/npcChapters.js",
+    "old": "AND x.kind = 'seat' AND json_extract(x.data, '$.from') = 'master' AND x.week >= ?3`)",
+    "new": "AND x.kind = 'seat' AND json_extract(x.data, '$.from') = 'master' AND x.week >= ?3 - 8`)",
+    "tests": [
+      "test/chap4c_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4C-SVC-FROM",
+    "file": "server-account/src/npcChapters.js",
+    "old": "AND x.kind = 'seat' AND json_extract(x.data, '$.from') = 'master' AND x.week >= ?3`)",
+    "new": "AND x.kind = 'seat' AND json_extract(x.data, '$.from') IS NOT NULL AND x.week >= ?3`)",
+    "tests": [
+      "test/chap4c_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4C-SVC-DEAD",
+    "file": "server-account/src/npcChapters.js",
+    "old": "AND c.player = ?1 AND c.dead_at IS NULL WHERE (?2 IS NULL OR x.char_id = ?2)';",
+    "new": "AND c.player = ?1 WHERE (?2 IS NULL OR x.char_id = ?2)';",
+    "tests": [
+      "test/chap4c_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4C-SVC-ONE",
+    "file": "server-account/src/npcChapters.js",
+    "old": "WHERE (?2 IS NULL OR x.char_id = ?2)';",
+    "new": "WHERE (?2 IS NULL OR ?2 IS NOT NULL)';",
+    "tests": [
+      "test/chap4c_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4C-WARDROBE",
+    "file": "server-account/src/titles.js",
+    "old": "  if (Array.isArray(player?.chapterTitles)) for (const t of player.chapterTitles) if (CHAPTER_TITLES.includes(t) && !held.includes(t)) held.push(t);\n",
+    "new": "",
+    "tests": [
+      "test/chap4c_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4C-WITH",
+    "file": "server-account/src/index.js",
+    "old": "const withSeatTitles = async (ctx, player, env) => withChapterTitles(ctx, seatsOpenFor(player, env) ?",
+    "new": "const withSeatTitles = async (ctx, player, env) => ((x) => x)(seatsOpenFor(player, env) ?",
+    "tests": [
+      "test/chap4c_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4C-MINT-WORN",
+    "file": "server-account/src/index.js",
+    "old": "const worn = await withChapterTitles(ctx, seats ? { ...who.player, seatTitles: await seatTitlesOf(ctx.db, who.player.id) } : who.player, env);",
+    "new": "const worn = seats ? { ...who.player, seatTitles: await seatTitlesOf(ctx.db, who.player.id) } : who.player;",
+    "tests": [
+      "test/chap4c_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4C-MINT-CHAR",
+    "file": "server-account/src/index.js",
+    "old": "? (await chapterTitlesOfAccount(ctx.db, who.player.id, nowS, zero, body.character)).find((t) => t.title === wornT) ?? null : null;",
+    "new": "? (await chapterTitlesOfAccount(ctx.db, who.player.id, nowS, zero, null)).find((t) => t.title === wornT) ?? null : null;",
+    "tests": [
+      "test/chap4c_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4C-MINT-SIGN",
+    "file": "server-account/src/index.js",
+    "old": ": CHAPTER_TITLES.includes(wornT) ? (chapterT ? { t: chapterT.high ? 'highmaster' : wornT, ts: chapterT.ts } : {}) : (wornT ? { t: wornT } : {});",
+    "new": ": (wornT ? { t: wornT } : {});",
+    "tests": [
+      "test/chap4c_titles.test.js"
+    ]
+  }
+]

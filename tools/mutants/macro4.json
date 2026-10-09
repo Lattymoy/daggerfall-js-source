@@ -30,8 +30,8 @@
  {
   "name": "MACRO-4-the-popup-title-read-once-not-at-show",
   "file": "src/scenes/worldModes.js",
-  "old": "      guildTitle: () => getTitle(membershipOf(activeMemberships(playerEntity), guild), playerEntity, guild),",
-  "new": "      guildTitle: getTitle(membershipOf(activeMemberships(playerEntity), guild), playerEntity, guild),",
+  "old": "      guildTitle: () => getTitle(membershipOf(seated(), guild), playerEntity, guild),",
+  "new": "      guildTitle: getTitle(membershipOf(seated(), guild), playerEntity, guild),",
   "tests": ["test/macro4_guild.test.js"]
  },
  {
@@ -72,7 +72,7 @@
  {
   "name": "MACRO-4-the-counter-names-no-guild",
   "file": "src/scenes/worldModes.js",
-  "old": "        return g ? getTitle(membershipOf(activeMemberships(playerEntity), g), playerEntity, g) : null;",
+  "old": "        return g ? getTitle(membershipOf(seatedBook(activeMemberships(playerEntity), membershipKey(g), host.chapterSeatRank?.(g.factionId) ?? null), g), playerEntity, g) : null;",
   "new": "        return null;",
   "tests": ["test/macro4_guild.test.js"]
  }

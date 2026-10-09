@@ -260,7 +260,7 @@ renumbered past main's SUPER-DUNGEONS (world176) - its parts written on their br
 
 - `{t:'wild', data}` (`validWildData`), from a hello'd socket in a PLACE room (a cell or a world room), gated on
   `WILD_RELAY_MIN` (177, `wire.js:"export const WILD_RELAY_MIN"`): the blows, a fallen's gear, a remains' deposit and
-  its takes (section 3-5). INT9 (world183, `WILD_REF_RELAY_MIN`): the zone word (`zone`), the blows refereed and routed
+  its takes (section 3-5). INT9 (world184, `WILD_REF_RELAY_MIN`): the zone word (`zone`), the blows refereed and routed
   to nobody, the killer's `pick` the room's, a deposit carrying the service's order on every chunk; `gave` and
   `result` retired. The referee's own frame `{t:'wref', k}` (`validWildRefOut`): `hp`, `fell`, `rc` (the signed fall).
 - `{t:'wdun', k, ...}` (`validWdunIn`/`validWdunOut`, `wire.js:"export function validWdunIn"` and

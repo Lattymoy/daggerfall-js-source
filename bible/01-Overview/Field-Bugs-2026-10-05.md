@@ -89,7 +89,7 @@ leaves it 0.09 m over), a vertex of TEMPASH3's 40719 1.14 m under it, one foot o
 hill's foot meets the plane at a grazing angle over 4-81 m2 a hill, which may z-fight far off (the pack's mesh in DFU
 meets it the same way). A door: Beautiful Villages' TEMPASD1 stands its House2 #6 (model 159) inside hills 52458 and
 52713, under 10.1-10.4 m of the stand-ins and 10.5-11.2 m of the pack's own meshes - DFU with the pack buries it too;
-the old mound did not reach it (AUDIT FB1005 T3, carried in `test/wd3_standins.test.js`, Mac's call). 12 bearings by 8 rings left one prop 1.9 m
+the old mound did not reach it (AUDIT FB1005 T3, carried in `test/wd3_standins.test.js`, Mac's call; the house stood out of the hills since FIELD BUGS 2026-10-09e HILL-HOUSE). 12 bearings by 8 rings left one prop 1.9 m
 up, so 16 by 10. TREES-SEATED's seat reads the drawn triangles, so the 130 trees follow: 1 hangs more than 1.5 m, where
 121 did - and the dozen nature flats the author left on the plane under a hill, which the pack's hill buries, stand on
 its slope now (AUDIT FB1005 H4). **A peer-derived measurement - and a larger one than the docks' and the domes'**: nothing of the pack's file is carried,

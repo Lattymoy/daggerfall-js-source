@@ -278,7 +278,7 @@ resolves nothing any more, anywhere.
 
 Each checkpoint's verdict reads, off the judged pack, the most REACH any lawful weapon there has (`armsTop`: a weapon's
 top damage and its material's modifier, at most `ARMS_TOP_MAX` 32, a Daedric Thunderlock's) and whether a lawful bow is
-among them; migration 0098 keeps them on the row (`arms_top`, `arms_bow`), and the identity mint signs them as `wa` beside
+among them; migration 0104 keeps them on the row (`arms_top`, `arms_bow`), and the identity mint signs them as `wa` beside
 `rc` 1. The level the token signs (`cl`) is the judge's (`level_seen`; the tile's word only before a judged checkpoint).
 The relay stamps `wa` on the socket at the hello, and every referee - a siege's, a Royal Tourney's, the arena's
 (`arenaBlowCap`), a duel's and the zone's - clips a weapon's blow to the signed reach and takes a shaft only from a
@@ -294,7 +294,7 @@ and sets a bout only on a start it saw asked and answered, both fighters whole; 
 referee speaks in its own frame (`dref`: bout, hp, end, no), and a bout won names its winner in a `d1` receipt handed to
 both, which `/v1/duel/claim` counts once by its bout's id (`duel_results.rk`) inside DUEL1's bounds. DUEL1's loser's
 own report retires (`/v1/duel/loss` answers 410 `retired`), its gap and its mutual draw with it, and a duel never
-touches the save's health (no heal at its end). The client duels on a refereeing relay alone (world183); the referee's
+touches the save's health (no heal at its end). The client duels on a refereeing relay alone (world184); the referee's
 word is heard on any socket the client holds, and a bout's frames go to the room that referees it (5b).
 **THE FOUR HOSTS.** `scenes/world.js` WIRED (the challenge, the bout's frames, the referee's word and readout, the
 receipt's carrier); `scenes/dungeonContext.js` and `scenes/worldModes.js` NO DUEL on purpose - a duel is outdoors alone
@@ -429,8 +429,8 @@ DORMANT: no caller sets it since INT8, kept as it stands and pinned so (`test/in
 - A crafted piece the fallen takes back from its own remains is written down as its copy: it wears it, and never trades
   it (the craft's key cannot be minted afresh as an id is).
 - A pick at a piece the fallen no longer wears (it changed between the offer and the receipt) takes none.
-- A relay before world183 knows no `wref`, no `zone` and no `dref`: a client meets it fighting nobody and duelling
-  nobody. A client from before world183 still open in a tab sends the zone's retired words (WILD1's `result` and
+- A relay before world184 knows no `wref`, no `zone` and no `dref`: a client meets it fighting nobody and duelling
+  nobody. A client from before world184 still open in a tab sends the zone's retired words (WILD1's `result` and
   `gave`) and the duel's own resolve, which the new relay refuses - it is closed for them until it reloads. The deploy
   runs the relay first (`.github/workflows/account-deploy.yml` waits on it, `deploy.yml`'s site on the service), so a
   reload meets the new client.
@@ -440,9 +440,10 @@ DORMANT: no caller sets it since INT8, kept as it stands and pinned so (`test/in
 `test/int10_spells.test.js`; the pins they moved are marked PIN MOVED where they stand. Mutants:
 `tools/mutants/int_lane2.json`; the records INT7-INT10 moved re-aimed by content, and fifteen of DUEL1's
 (`tools/mutants/duel.json` and `auditduel1.json`) retired with the laws they checked - the defender's resolve, the
-loser's report, the mutual draw, the duel's heal - which are the referee's now. Migration `0098_referee`;
-`ACCOUNT_VERSION` acct102 (acct101 and migration 0097 on its branch, renumbered past main's BAG-CRAFT at the merge);
-`RELAY_VERSION` world183.
+loser's report, the mutual draw, the duel's heal - which are the referee's now. Migration `0104_referee`;
+`ACCOUNT_VERSION` acct104 (acct101 and migration 0097, then acct102 and 0098, on its branch - renumbered past main's
+BAG-CRAFT, then past the Chapters' acct103 and migrations 0098-0103, at the merges); `RELAY_VERSION` world184 (world183
+on its branch, renumbered past CHAP4c's at the merge).
 
 ## 6. Lane 3 - boss fights (planned)
 
@@ -468,13 +469,14 @@ the clock, and the legacy record held to its own law.
   template, a peer's piece in its group), the checkpoint's answer carrying `tradeHeld`, the last clean save kept past the
   rotation, the race pin's join moved to the checkpoint's batch, the version pins at acct100. The account Worker bundles the
   item law's graph (`.github/workflows/account-deploy.yml` lists it, `test/accountdeploy.test.js` holds the list).
-- **INT7-INT10 (2026-10-09): lane 2, PvP refereed everywhere - built, and audited (5b).** Migration `0098_referee` (the arms on the row, a
-  duel's receipt's bout id, a death's drop's falls); `ACCOUNT_VERSION` acct102 and `RELAY_VERSION` world183 (acct101 and
-  migration 0097 on its branch, renumbered past main's BAG-CRAFT at the merge). Pins: `test/int7_arms.test.js`,
+- **INT7-INT10 (2026-10-09): lane 2, PvP refereed everywhere - built, and audited (5b).** Migration `0104_referee` (the arms on the row, a
+  duel's receipt's bout id, a death's drop's falls); `ACCOUNT_VERSION` acct104 and `RELAY_VERSION` world184 (acct101 and
+  migration 0097 on its branch, renumbered past main's BAG-CRAFT at the merge; then acct102, migration 0098 and world183,
+  renumbered past the Chapters' acct103, migrations 0098-0103 and CHAP4c's world183 at the next). Pins: `test/int7_arms.test.js`,
   `int8_duel_ref.test.js`, `int9_wild_ref.test.js`, `int10_spells.test.js`. Mutants `tools/mutants/int_lane2.json`:
   122, 120 dead and 2 equivalent as recorded (a fallen struck - the referee refuses it itself; a coin put back that always
   fits) - its audit's (5b) among them, each survivor of the run pinned since; the records INT7-INT10 moved re-aimed by content (38 - 36 dead, 1 equivalent as recorded,
   `test/relayversion.test.js`'s own judged with its row), fifteen of DUEL1's retired with their laws. Pins moved (each
   marked PIN MOVED where it stands): DUEL1's and WILD1's defender, gift and loser's report, the duel's heal and trail,
   the deposit that needs the service's order, the token's `wa`, the order kinds, the hour's sweeps (twenty), the version
-  pins at acct102. The account Worker bundles the zone's drop law (`.github/workflows/account-deploy.yml`).
+  pins at acct104 and world184. The account Worker bundles the zone's drop law (`.github/workflows/account-deploy.yml`).

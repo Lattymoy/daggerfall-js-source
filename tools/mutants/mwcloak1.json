@@ -1,0 +1,138 @@
+[
+  {
+    "name": "MWCLOAK1-aquamarine-wears-green",
+    "file": "src/characters/ownClothingModels.js",
+    "old": "'white', 'blue', 'light_brown', 'green']);",
+    "new": "'white', 'green', 'light_brown', 'green']);",
+    "tests": ["test/mwcloak1.test.js"],
+    "note": "Aquamarine nearest the green painting, against what Mac was told."
+  },
+  {
+    "name": "MWCLOAK1-a-wild-dye-wears-nothing",
+    "file": "src/characters/ownClothingModels.js",
+    "old": "  const painting = CLOAK_DYE_PAINTING[piece.dye | 0] ?? CLOAK_DYE_PAINTING[0];",
+    "new": "  const painting = CLOAK_DYE_PAINTING[piece.dye | 0];",
+    "tests": ["test/mwcloak1.test.js"],
+    "note": "A dye out of range names a mesh that is not shipped."
+  },
+  {
+    "name": "MWCLOAK1-the-cloak-not-added",
+    "file": "src/formats/mwItemMap.js",
+    "old": "  if (cloakAdd) adds.push(cloakAdd);",
+    "new": "",
+    "tests": ["test/mwcloak1.test.js", "test/nudeflats.test.js"],
+    "note": "The cloak composed and never drawn."
+  },
+  {
+    "name": "MWCLOAK1-both-cloaks-drawn",
+    "file": "src/formats/mwItemMap.js",
+    "old": "        if (cloakAdd) { notes.push(`${name}: a second cloak - the first (${cloakName}) is the one drawn`); continue; }",
+    "new": "",
+    "tests": ["test/mwcloak1.test.js"],
+    "note": "A second cloak replaces the first, silently."
+  },
+  {
+    "name": "MWCLOAK1-the-cloak-a-robe-again",
+    "file": "src/formats/mwItemMap.js",
+    "old": "      const cloak = ownCloakFor({ ...piece, name });",
+    "new": "      const cloak = null;",
+    "tests": ["test/mwcloak1.test.js", "test/nudeflats.test.js"],
+    "note": "The Casual and Formal Cloak wear Morrowind's robe and hide the armour under eleven slots."
+  },
+  {
+    "name": "MWCLOAK1-the-hem-swings-half",
+    "file": "tools/bakeCloak.mjs",
+    "old": "top: 86, bottom: 29.28, share: 0.85, centre: 10 }",
+    "new": "top: 86, bottom: 29.28, share: 0.5, centre: 10 }",
+    "tests": ["test/mwcloak1.test.js"],
+    "note": "Half at the hem, the first try: the trailing calf comes through, and the shipped NIFs are not the bake's."
+  },
+  {
+    "name": "MWCLOAK1-no-clearance",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "export const CLOAK_CLEARANCE = 1;",
+    "new": "export const CLOAK_CLEARANCE = 0;",
+    "tests": ["test/mwcloak1.test.js"],
+    "note": "The cloak and the gear fitted to touch: the pauldrons' edges graze the sheet."
+  },
+  {
+    "name": "MWCLOAK1-the-cloak-fit-reads-the-back",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "          const over = cell.front - (u[v + 1] - clearance);",
+    "new": "          const over = cell.back - (u[v + 1] - clearance);",
+    "tests": ["test/mwcloak1.test.js"],
+    "note": "The armour measured against the sheet's back layer where it folds."
+  },
+  {
+    "name": "MWCLOAK1-the-parsed-batch-written-into",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "    const bind = Float32Array.from(cloak.batch.positions);",
+    "new": "    const bind = cloak.batch.positions;",
+    "tests": ["test/mwcloak1.test.js"],
+    "note": "The push written into the parsed batch: a rebuild over a cached parse pushes twice."
+  },
+  {
+    "name": "MWCLOAK1-everything-slung",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "export const SLUNG_UNDER = 'bip01 spine1';",
+    "new": "export const SLUNG_UNDER = 'bip01 pelvis';",
+    "tests": ["test/mwcloak1.test.js"],
+    "note": "The hip's longsword pushed back over the cloak, thirty units off the hip."
+  },
+  {
+    "name": "MWCLOAK1-pitched-backward",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "  return [1, 0, 0, 0, c, -s, 0, s, c];",
+    "new": "  return [1, 0, 0, 0, c, s, 0, -s, c];",
+    "tests": ["test/mwcloak1.test.js"],
+    "note": "The hip's gear swung further back through the cloak; no pitch clears it."
+  },
+  {
+    "name": "MWCLOAK1-slung-never-turned",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "      for (let k = 0; k <= 2 * slungLimit; k++) {",
+    "new": "      for (let k = 0; k <= 0; k++) {",
+    "tests": ["test/mwcloak1.test.js"],
+    "note": "The greatsword moved straight back, standing off the shoulders by the hem's flare."
+  },
+  {
+    "name": "MWCLOAK1-vertices-only",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "    const n = Math.floor(Math.hypot(dx, dy, dz) / step);",
+    "new": "    const n = 0;",
+    "tests": ["test/mwcloak1.test.js"],
+    "note": "Fit 1 samples what the cloak covers at its vertices alone: a pauldron's edges cross the sheet between vertices clear of it."
+  },
+  {
+    "name": "MWCLOAK1-not-re-placed",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "      if (assembly.mats) {\n        const live",
+    "new": "      if (false) {\n        const live",
+    "tests": ["test/mwcloak1.test.js"],
+    "note": "The live pose keeps the gear where it hung until the next pose."
+  },
+  {
+    "name": "MWCLOAK1-the-build-fits-nothing",
+    "file": "src/combat/fpArm.js",
+    "old": "    const cloakFit = fitThirdPersonCloak(arm, new Set([...skinRows, ...worn.adds].map((row) => row.slot)));   // MW-CLOAK1",
+    "new": "    const cloakFit = { notes: [] };   // MW-CLOAK1",
+    "tests": ["test/mwcloak1.test.js"],
+    "note": "The third-person body built with the cloak through the pauldrons and the gear through the cloak."
+  },
+  {
+    "name": "MWCLOAK1-a-swap-not-fitted",
+    "file": "src/combat/fpArm.js",
+    "old": "            const tFit = fitThirdPersonCloak(t.arm, null);",
+    "new": "            const tFit = { notes: [] };",
+    "tests": ["test/mwcloak1.test.js"],
+    "note": "A weapon drawn and sheathed anew hangs its holster through the cloak."
+  },
+  {
+    "name": "MWCLOAK1-any-slot-a-cloak",
+    "file": "src/characters/ownClothingModels.js",
+    "old": "export const isCloakSlot = (slot) => String(slot ?? '').startsWith('cloak (');",
+    "new": "export const isCloakSlot = (slot) => String(slot ?? '').includes('c');",
+    "tests": ["test/mwcloak1.test.js"],
+    "note": "The cuirass taken for the cloak."
+  }
+]

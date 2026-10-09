@@ -207,7 +207,7 @@ export function cureAllAttributes(entity) {
  *  argument list (the magicka one needs the entity's career). */
 export function onPushEffects(entity, guild, memberships, store, now, {
   freeHealing = false, freeMagickaRecharge = false, revealLocation = null,
-  ownsHouse = null,
+  ownsHouse = null, rankCeiling = null,
 } = {}) {
   const steps = [];
   // Check guild advancement. UpdateRank returns tokens only when the
@@ -216,7 +216,8 @@ export function onPushEffects(entity, guild, memberships, store, now, {
   // the TG rank-6/8 map gates and the DB every-promotion reveal.
   // F114: ownsHouse is the host's DaggerfallBankManager.OwnsHouse
   // read (current region), for the knightly rank-9 promotion text.
-  const moved = updateRank(memberships, guild, entity, store, now, { revealLocation, ownsHouse });
+  // CHAP4b: rankCeiling, the host's - online, while the Roll holds, 7 (ranks 8 and 9 are seats, Chapters-Arc 3.5)
+  const moved = updateRank(memberships, guild, entity, store, now, { revealLocation, ownsHouse, rankCeiling });
   if (moved) {
     // RR1: a mod's TokensExpulsion rides as the box's own rows (centred, %pcn the player's name - MacroHelper's), ahead of the record's
     const rows = moved.lines ? moved.lines.map((t) => ({ text: t.replaceAll('%pcn', entity?.name ?? ''), center: true })) : undefined;

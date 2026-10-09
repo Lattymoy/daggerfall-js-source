@@ -74,8 +74,8 @@ test('G8: the DarkBrotherhood reveals on EVERY promotion, whatever the rank', ()
 
 test('G8: the seam threads host-to-law', () => {
   const flow = readFileSync(new URL('../src/systems/guildServiceFlow.js', import.meta.url), 'utf8');
-  assert.ok(flow.includes('updateRank(memberships, guild, entity, store, now, { revealLocation, ownsHouse })'),
-    'onPushEffects hands the reveal seam to updateRank');
+  assert.ok(flow.includes('updateRank(memberships, guild, entity, store, now, { revealLocation, ownsHouse, rankCeiling })'),
+    'onPushEffects hands the reveal seam to updateRank');   // PIN MOVED (CHAP4b: and the host's rank ceiling beside it)
   const wm = readFileSync(new URL('../src/scenes/worldModes.js', import.meta.url), 'utf8');
   // MACRO-4: through the popup's own wrapper, which keeps the revealed name for %dng
   assert.ok(wm.includes('const name = host.revealLocation(noteKey); if (name) revealedDungeon = name; return name;'), 'the interior host threads it');

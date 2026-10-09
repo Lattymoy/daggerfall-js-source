@@ -84,11 +84,12 @@
   {
     "name": "BOARD-UI-the-day-at-the-foot",
     "file": "src/ui/noticeWindow.js",
-    "old": "    body.append(el('p', 'notice-worktoday', `Court writs today: ${today.filled} of ${today.max}${writsStale ? ' - the list may be out of date' : ''}`));\n    const grid = el('ul', 'notice-grid');",
-    "new": "    const grid = el('ul', 'notice-grid');",
+    "old": "    body.append(el('p', 'notice-worktoday', `Writs today: ${today.filled} of ${today.max}${writsStale ? ' - the list may be out of date' : ''}`));\n    for (const m of writs?.merit ?? [])",
+    "new": "    for (const m of writs?.merit ?? [])",
     "tests": [
       "test/board_ui.test.js"
-    ]
+    ],
+    "note": "CHAP2a: re-aimed by content - the day's line names the halls' writs too. AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
   },
   {
     "name": "BOARD-UI-news-unnamed",

@@ -209,6 +209,7 @@ export const SELECT_ICON_TIP = 'Select icon';                                  /
  *  tagged spells lives there now); imported and re-exported so this
  *  window's own laws and its consumers keep one spelling. */
 import { VAMPIRE_SPELL_TAG, LYCANTHROPY_SPELL_TAG } from '../systems/lycanthropy.js';
+import { chapterPriced } from '../net/npcChapterLaw.js';   // CHAP3c / AUDIT CHAP3 R12: a hall's band laid over a spell's price
 export { VAMPIRE_SPELL_TAG, LYCANTHROPY_SPELL_TAG };
 /** ListItem's desaturation toward grey when the spell is unaffordable
  *  (:276-279). */
@@ -515,8 +516,11 @@ export class SpellbookWindow {
    *  same pair every other trade surface does. */
   tradePrice() {
     this._updatePresentedCost();
-    return calculateTradePrice(this.presentedCost, this.deps.buildingQuality?.() ?? 0,
+    const price = calculateTradePrice(this.presentedCost, this.deps.buildingQuality?.() ?? 0,
       this.deps.skills?.() ?? {}, false);
+    // CHAP3c (Chapters-Arc 5.2): online, the hall's chapter's band laid over DFU's price (`priceFactor`, the host's) -
+    // DFU's own where it answers 1 or nothing
+    return chapterPriced(price, this.deps.priceFactor?.() ?? 1);   // AUDIT CHAP3 R12: the law's one rounding
   }
 
   /** SetEffectLabels (:624-649): the group and subgroup names of the
@@ -718,7 +722,9 @@ export class SpellbookWindow {
     // wrote the same comparison in the temple, the trade window and
     // here, and the port keeps ONE home (tradeModes.js already reuses
     // it for the trade records).
-    this._tradeOffset = cureOfferMessageOffset(this.presentedCost, price);
+    // AUDIT CHAP5 D6: against the cost the hall's chapter lists (its band laid over DFU's, as the price is) - the
+    // bargaining's own line; a Thriving hall's price against DFU's list said the player had haggled it down
+    this._tradeOffset = cureOfferMessageOffset(chapterPriced(this.presentedCost, this.deps.priceFactor?.() ?? 1), price);
     this.top = 'trade';
   }
 

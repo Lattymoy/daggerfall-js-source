@@ -221,7 +221,8 @@ test('TAMRIEL3 fit: laying the Bay\'s land over the picture finds the offset and
   assert.equal(edge, null, 'no candidate fits on the picture there');
   assert.equal(fitBayToPicture({ bayLand, trace, around: { ox: 100, oy: 190 }, span: 2, ppus: [18] }), null);
   const src = read('src/world/tamrielLand.js');
-  assert.match(src, /around = \{ ox: 46, oy: 52 \}, span = 24, ppus = \[16, 16\.5, 17, 17\.5, 18, 18\.5, 18\.75, 19, 19\.5, 20, 20\.5, 21\]/, 'the defaults round the authored place (862 / 18.75, 975 / 18.75)');
+  // PIN MOVED (TAMRIEL4): the scales every quarter from 15 to 21 (FIT_PPUS) - the seam's best, 15.5, lay outside 16-21
+  assert.match(src, /around = \{ ox: 46, oy: 52 \}, span = 24, ppus = FIT_PPUS \}/, 'the defaults round the authored place (862 / 18.75, 975 / 18.75)');
   assert.ok(Math.abs(BAY_ORIGIN.x / PIXELS_PER_PICTURE_UNIT - 46) < 0.1 && Math.abs(BAY_ORIGIN.y / PIXELS_PER_PICTURE_UNIT - 52) < 0.1);
 });
 

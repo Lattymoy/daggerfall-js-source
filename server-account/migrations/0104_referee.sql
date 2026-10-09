@@ -1,6 +1,7 @@
 -- INT7-INT10 (2026-10-09, the INTEGRITY arc's lane 2 - bible/06-Systems/Integrity-Arc.md; Mac: "I want to do everything
 -- and do it properly"): PVP REFEREED EVERYWHERE - the arms the judge signs (INT7), a duel's result the relay signs
--- (INT8), a death in the open zone's drop taken off the record (INT9).
+-- (INT8), a death in the open zone's drop taken off the record (INT9). 0097, then 0098, on its branch - renumbered past
+-- BAG-CRAFT's 0097 and then the Chapters' 0098-0103 at the merges of main.
 --
 -- INT7, THE ARMS: what the most a realm character can strike with is, off its judged pack, for the identity token to
 -- carry (net/identityToken.js `wa`) and every referee to clip a blow between players to.

@@ -58,6 +58,8 @@ on:
       - "src/net/moderation.js"
       - "src/net/playClock.js"
       - "src/net/renown.js"
+      - "src/net/npcChapterLaw.js"
+      - "src/systems/guildFactions.js"
       - "src/net/homeLaw.js"
       - "src/net/decorLaw.js"
       - "src/net/guildLaw.js"
