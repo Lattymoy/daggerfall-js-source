@@ -2,8 +2,8 @@
   {
     "name": "MWSTEEL1-silver-wears-the-plate",
     "file": "src/characters/ownArmorModels.js",
-    "old": "  id, name, templateIndex, material: ARMOR_MATERIAL.Steel, parts: Object.freeze(parts),\n",
-    "new": "  id, name, templateIndex, material: ARMOR_MATERIAL.Silver, parts: Object.freeze(parts),\n",
+    "old": "const steel = plate(ARMOR_MATERIAL.Steel);",
+    "new": "const steel = plate(ARMOR_MATERIAL.Silver);",
     "tests": [
       "test/mwsteel1.test.js"
     ]

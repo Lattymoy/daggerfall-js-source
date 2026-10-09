@@ -55,7 +55,7 @@ function rng(seed) {
  * gib (dynamic); a flat whose origin is NaN; meshes with sub-mesh spheres in and out of reach; a dozen and more
  * lanterns. `frame()` runs one frame and answers its draws.
  */
-function town(seed, { sun, steady, prepass, nanLight = false }) {
+function town(seed, { sun, steady, prepass, nanLight = false, crowd = 0 }) {
   const rand = rng(seed);
   const g = recordingGl();
   const r = new Renderer(g.canvas);
@@ -115,6 +115,11 @@ function town(seed, { sun, steady, prepass, nanLight = false }) {
   const lights = new Float32Array(nL * 4);
   for (let i = 0; i < nL; i++) lights.set([(rand() * 2 - 1) * 80, 1 + rand() * 4, (rand() * 2 - 1) * 80, 6 + rand() * 22], i * 4);
   if (nanLight) lights[0] = NaN;   // a lantern placed by a NaN still ranks (pickShadowCasters keeps a NaN distance first): its faces walk everything
+  // AUDIT PERF-ON4 (sun lens 1, of PERF-SHADOW1's half): `crowd` small meshes about the nearest lantern - its list past the
+  // 64 it starts with, so the growth is walked (a real tavern's or town's grows on its first frame)
+  let hub = 0;   // the lantern nearest the eye - one the pass surely casts from
+  for (let i = 1; i < nL; i++) if (Math.hypot(lights[i * 4], lights[i * 4 + 1], lights[i * 4 + 2]) < Math.hypot(lights[hub * 4], lights[hub * 4 + 1], lights[hub * 4 + 2])) hub = i;
+  const crowdMeshes = Array.from({ length: crowd }, (_, k) => ({ vao: { id: `vao-c${k}` }, buffers: [], off: [(rand() * 2 - 1) * 2, rand() * 2 - 1, (rand() * 2 - 1) * 2], bounds: new Float32Array(4), subMeshes: [{ textureArchive: 300, textureRecord: 0, startIndex: 0, primitiveCount: 2, _bounds: new Float32Array(4) }] }));
   const wind = [9 * (rand() * 2 - 1), 9 * (rand() * 2 - 1), 3.7, 1];
   let t = 0;
   const frame = () => {
@@ -134,6 +139,7 @@ function town(seed, { sun, steady, prepass, nanLight = false }) {
       for (const m of meshes) r.drawMesh(m, I, null);
       r.drawMesh(loose, I, null); r.drawMesh(meshes[1], nanAt, null);
       r.drawBillboards(batches, RIGHT, UP);
+      for (const m of crowdMeshes) { const c = [lights[hub * 4] + m.off[0], lights[hub * 4 + 1] + m.off[1], lights[hub * 4 + 2] + m.off[2], 0.4]; m.bounds.set(c); m.subMeshes[0]._bounds.set(c); r.drawMesh(m, I, null); }
       r.drawScreenQuad({ id: 'ui' }, { x: 0, y: 0, w: 10, h: 10 });
       return { shadow, st };
     } finally { SHADOW_TUNING.override = false; SHADOW_TUNING.facePrepass = undefined; }
@@ -141,12 +147,12 @@ function town(seed, { sun, steady, prepass, nanLight = false }) {
   return { r, frame, batches, lights };
 }
 
-test('PERF-SHADOW1: a lantern\'s faces draw EXACTLY what they drew - every draw of every frame (program, VAO, framebuffer, count, offset), its order included, over random towns of woods still and swaying, walkers, a gib, flats placed by a NaN, a width not a number, meshes with sub-spheres in and out of reach and sixteen lanterns, by night and by day, steady and not, against the same pass with the pre-pass off (mutants: the cube\'s reach without its 1 + sqrt 2, without its slack, a placed batch asked by the far alone, a NaN sphere culled - wholly, or on one axis by another - a NaN placed batch or a NaN radius asked of its quads, an unbounded record left out, a lantern placed by a NaN given candidates, a record moved without its list, a list not cut to the flats it kept, a flat under a second lantern left out of its list, the dynamic scan or a face walking past its candidates)', () => {
-  let compared = 0, pointDraws = 0;
+test('PERF-SHADOW1: a lantern\'s faces draw EXACTLY what they drew - every draw of every frame (program, VAO, framebuffer, count, offset), its order included, over random towns of woods still and swaying, walkers, a gib, flats placed by a NaN, a width not a number, meshes with sub-spheres in and out of reach and sixteen lanterns, by night and by day, steady and not, against the same pass with the pre-pass off (mutants: the cube\'s reach without its 1 + sqrt 2, without its slack, a placed batch asked by the far alone, a NaN sphere culled - wholly, or on one axis by another - a NaN placed batch or a NaN radius asked of its quads, an unbounded record left out, a lantern placed by a NaN given candidates, a record moved without its list, a list not cut to the flats it kept, a flat under a second lantern left out of its list, the dynamic scan or a face walking past its candidates; AUDIT PERF-ON4: a grown list losing what it held)', () => {
+  let compared = 0, pointDraws = 0, grown = 0;
   for (const seed of [11, 12, 13, 14]) {
     for (const sun of [false, true]) {
       for (const steady of [true, false]) {
-        const odd = { nanLight: seed === 12 };   // a lantern placed by a NaN
+        const odd = { nanLight: seed === 12, crowd: seed >= 13 ? 80 : 0 };   // a lantern placed by a NaN; AUDIT PERF-ON4: a lantern's list grown past 64
         const a = town(seed, { sun, steady, prepass: true, ...odd }), b = town(seed, { sun, steady, prepass: false, ...odd });
         for (let f = 0; f < 6; f++) {
           const x = a.frame(), y = b.frame();
@@ -155,10 +161,12 @@ test('PERF-SHADOW1: a lantern\'s faces draw EXACTLY what they drew - every draw 
           assert.deepEqual(keep(x.st), keep(y.st), `seed ${seed} frame ${f}: the same faces, slots, blits and draws counted`);
           compared += x.shadow.length; pointDraws += x.st.pointDraws;
         }
+        if (odd.crowd) { grown++; assert.ok(a.r.shadows._cands.some((c) => c.rec.length > 64), `a lantern's list grew past 64 (${a.r.shadows._cands.map((c) => c.rec.length)})`); }
       }
     }
   }
   assert.ok(compared > 5000 && pointDraws > 1000, `the comparison drew something (${compared} draws, ${pointDraws} in lantern faces)`);
+  assert.equal(grown, 8, 'the crowded towns grew a list');
 });
 
 test('PERF-SHADOW1: a flat no lantern can reach is asked by NO lantern face and by no lantern\'s dynamic scan - a moving wood 2,000 units from every lantern is looked at by the main pass and the air pass alone, where the base looked at it from every face and every lantern\'s scan (mutants: the faces or the scan walking every flat again; no candidates at all)', () => {

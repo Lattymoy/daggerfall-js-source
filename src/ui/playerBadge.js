@@ -49,7 +49,8 @@
 // SOC4's party green already crosses that seam.
 // ═══════════════════════════════════════════════════════════════════
 
-import { TITLES, GLYPHS, SEAT_TITLES } from '../net/identityToken.js';
+import { TITLES, GLYPHS, SEAT_TITLES, CHAPTER_TITLES } from '../net/identityToken.js';
+import { chapterTitleText } from '../net/npcChapterLaw.js';   // CHAP4c: a chapter's seat's title, worded off its claim
 import { seatTitleText } from '../net/townSeatLaw.js';   // SEAT1c: a seat title in words, off its claim
 
 /** SEAT1c: THE PLACE A SEAT TITLE NAMES - the client's own seat by key (`{ name, region }`), or null. The host sets it
@@ -98,6 +99,13 @@ export const TITLE_TEXT = Object.freeze({
   hourbreaker: 'Hourbreaker',        // SD9b (2026-10-07, the Super Dungeons arc): one Brass Remnant's kill in four grants it
   hoursfirst: "Hour's First",       // HOURS-FIRST (2026-10-08, Mac: "a title named Hour's First"): the first group to break an Abyss Dungeon, by name
   iliacchampion: 'Iliac Champion',   // CARDS10 (2026-10-08, Tavern-Cards section 6.4: "a title for the top of it"): Iliac Hand's season #1, while they hold the top
+  // CHAP4c (2026-10-08, the Chapters arc): a chapter's seats' - worded off their claim (npcChapterLaw.js chapterTitleText,
+  // "Master of the Fighters Guild, Anticlere"); these where the claim names no chapter this client knows
+  chaptermaster: 'Chapter Master',
+  chapterofficer: 'Chapter Officer',
+  formermaster: 'Former Master',
+  highmaster: 'High Master',      // CHAP6e: a Master's in its chapter's Ascendancy
+  seasonmaster: 'Season Master',  // CHAP6e: a Season's Master's, kept for good
 });
 
 /** WB9g (2026-09-30, Mac: "an animated burning ground aura that circles the ground where your character stands"): AN
@@ -242,6 +250,15 @@ export const TITLE_RGBA = Object.freeze({
   // CARDS10: the ILIAC CHAMPION in the Bay's own sea-blue - the water the game is named for, bluer and brighter than the
   // Apostle's periwinkle, no gold (the Founder's) and no green (the Arena Champion's laurel)
   iliacchampion: Object.freeze([0.239, 0.608, 0.820, 1]),   // #3d9bd1
+  // CHAP4c: a chapter's seats' - a guild banner's steel blue for its Master, paler for an officer, weathered grey for a
+  // Master who lost the seat; lighter and greyer than the Herald's azure, darker than the Champion's silver
+  chaptermaster: Object.freeze([0.498, 0.698, 0.898, 1]),   // #7fb2e5
+  chapterofficer: Object.freeze([0.659, 0.769, 0.867, 1]),  // #a8c4dd
+  formermaster: Object.freeze([0.604, 0.627, 0.659, 1]),    // #9aa0a8
+  // CHAP6e: a High Master's the banner's blue made bright and deep in an Ascendancy; a Season's Master's the same blue
+  // aged to slate, the colour of a banner kept on a hall's wall
+  highmaster: Object.freeze([0.365, 0.612, 0.925, 1]),      // #5d9cec
+  seasonmaster: Object.freeze([0.435, 0.561, 0.722, 1]),    // #6f8fb8
 });
 
 /** SHADOW-FANG: A TITLE DRAWN AS A GRADIENT - its stops, RGBA 0..1, left
@@ -437,8 +454,9 @@ export const GLYPH_STROKE = Object.freeze({ sprout: true, dev: true, mod: true, 
 export function titleBadge(peer) {
   const key = peer?.title;
   if (typeof key !== 'string' || !TITLES.includes(key)) return null;
-  // SEAT1c: a seat title worded off its claim where this client knows the place, else its plain word
-  const text = (SEAT_TITLES.includes(key) ? seatTitleText(key, peer?.ts, _seatPlace) : null) ?? TITLE_TEXT[key];
+  // SEAT1c: a seat title worded off its claim where this client knows the place, else its plain word; CHAP4c: and a
+  // chapter's seat's
+  const text = (SEAT_TITLES.includes(key) ? seatTitleText(key, peer?.ts, _seatPlace) : CHAPTER_TITLES.includes(key) ? chapterTitleText(key, peer?.ts) : null) ?? TITLE_TEXT[key];
   if (!text) return null;
   return { key, text, rgba: TITLE_RGBA[key] ?? null, gradient: TITLE_GRADIENT[key] ?? null, edge: TITLE_EDGE[key] ?? null };   // PENITENT: `edge`
 }

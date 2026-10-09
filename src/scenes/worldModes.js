@@ -185,6 +185,7 @@ import { BAG_WORDS, isBagItem, holdsOtherBag } from '../net/bagLaw.js';   // ONE
 import { identifySpellPass, identifiedTallyText, NOT_ENOUGH_SPELL_POINTS_TEXT, tradeCost, getTradePrice } from '../systems/tradeModes.js';   // X7: the Identify SPELL's per-item roll; F067: its magicka refusal; FB0929: the keyed rows' prices are the counter's
 import { liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // X10: the Dispel Magic picker
 import { ListPickerWindow, listPickerArtLoaded } from '../ui/listPicker.js';   // X10
+import { chapterRollWindow } from '../ui/chapterRoll.js';   // CHAP5a: the hall's roll, the shelf's first book
 import { createItemLabels, grantCreatedItem, lastCreateItemIndex, setLastCreateItemIndex } from '../systems/createItem.js';   // X11b
 import { announceLevelUp, levelOwed } from '../ui/levelNotice.js';   // LV2: the level-up notification, and the skin fork over whether the window opens itself
 import { createCharSheetWindow } from '../ui/charSheetDoor.js';   // AUDIT 21 hosts F3: levelling in a building; LV1: through the ONE seam, so this host wears the skin's face like the other three
@@ -213,7 +214,7 @@ import {
 import { mintCondition, setItemFields, itemValueOf } from '../systems/itemTemplates.js';   // G6: the gift's pieces mint like any other item; MAC-N1: with SetItem's name and value
 import { npcServiceKind, freeHealing, freeMagickaRecharge, avoidDeath, AVOID_DEATH_TEXT, DEITY_DESCRIPTIONS } from '../systems/guildServices.js';   // MACRO-4: %gdd
 import { createGuildForGroup, ORDERS } from '../systems/guildVariants.js';
-import { membershipOf, joinGuild, joinDecision, activeMemberships } from '../systems/guilds.js';   // V2e: GuildManager.Memberships, the per-read vampire book pick
+import { membershipOf, joinGuild, joinDecision, activeMemberships, membershipKey } from '../systems/guilds.js';   // V2e: GuildManager.Memberships, the per-read vampire book pick; CHAP4b: a row's key, for the seated book
 import { ensureFactionRep } from '../systems/factionRep.js';
 import { dateFromClassicMinutes, dateString, dayOfYearFromMinutes, MINUTES_PER_DAY, DAYS_PER_MONTH, isDayFromMinutes } from '../systems/gameDate.js';   // RR1: WorldTime.Now.IsDay   // B2: the loan due date   // H1: the month the houses-for-sale list turns over on
 import { serviceDestination } from '../systems/guildServiceFlow.js';
@@ -433,6 +434,7 @@ import { createSwimMovement } from './deepWatersSwimMove.js';   // DW-D: Iliac P
 import { deepWatersOn, deepWatersSwimSettings } from './deepWatersHost.js';
 import { loadGraceActive as dwLoadGraceActive } from '../world/deepWaterRuntime.js';
 import { livingWorldOn } from '../systems/livingWorld/livingSwitch.js';   // HALT-ONE: the living watch's lane, for a watch called into a building
+import { chapterHallFactor, chapterHallShelf, chapterHallShut, CHAPTER_HALL_SHUT_LINE, seatedBook } from '../net/npcChapterLaw.js';   // CHAP3c: a hall's chapter's band on its training, spells and shelf; CHAP4b: a seat's rank at its halls
 /** BOUNTY1: the plaque over a town's bounty board. */
 const BOUNTY_BOARD_TEXT = 'Bounty Board';
 const NOTICE_BOARD_TEXT = 'Notice Board';   // ONE-BOARD: a town's Notice Board, while it is open to this account
@@ -3191,6 +3193,10 @@ export function createWorldModes(host) {
    *  ten draws, minted lazily per shelf - the same lazy-per-activation
    *  idiom the shop shelves stock by - and a pick opens the reader on
    *  the id (BookShelf_OnItemPicked, :91-96). */
+  /** CHAP5a (Chapters-Arc 9: "the hall's roll: the seats' holders, named on a board inside each hall" - a DFU hall has
+   *  no board; its shelf is its reading): online, the hall's chapter's roll, off the chapter sheet (the host's) - its
+   *  title and lines, or null offline, for a chapter the sheet does not name, a hidden guild's, no guild. */
+  const chapterRollOf = (/** @type {any} */ guild) => (guild ? host.chapterRoll?.(guild.factionId) ?? null : null);
   function openBookshelf(shelf, b) {
     const dict = townTalk?.factionDict ?? null;
     const bf = b.factionId ? (dict?.get(b.factionId) ?? null) : null;
@@ -3202,19 +3208,22 @@ export function createWorldModes(host) {
     const membership = guild ? membershipOf(activeMemberships(playerEntity), guild) : null;
     const access = bookshelfAccess({ buildingType: b.buildingType, guild, membership });
     if (!access.allowed) {
-      interiorOverlay = new ActionTextBox([access.text]);   // DaggerfallUI.MessageBox(accessMembersOnly)
+      const roll = chapterRollOf(guild);   // CHAP5a: refused the shelf, a stranger to the guild reads its roll alone
+      interiorOverlay = roll ? chapterRollWindow({ ...roll, lines: [...roll.lines, access.text] }) : new ActionTextBox([access.text]);   // DaggerfallUI.MessageBox(accessMembersOnly) - AUDIT CHAP4 D4: said under the roll, not dropped
       return;
     }
+    const roll = chapterRollOf(guild);   // CHAP5a: the shelf's first book
     shelf.books ??= populateBookshelf();
     if (!listPickerArtLoaded()) return;   // no art, no window (the U8 idiom)
     let picker = null;
     picker = new ListPickerWindow({
-      items: bookshelfTitles(shelf.books),
+      items: roll ? [roll.title, ...bookshelfTitles(shelf.books)] : bookshelfTitles(shelf.books),
       onPick: (i) => {
         // PopWindow then OpenBook + the reader push (:93-95): the
         // picker yields, the reader arrives on the fetch.
         if (interiorOverlay === picker) interiorOverlay = null;
-        _openBookById({ message: shelf.books[i] });
+        if (roll && i === 0) { interiorOverlay = chapterRollWindow(roll); return; }   // CHAP5a
+        _openBookById({ message: shelf.books[roll ? i - 1 : i] });
       },
       onCancel: () => { if (interiorOverlay === picker) interiorOverlay = null; },
     });
@@ -3488,7 +3497,8 @@ export function createWorldModes(host) {
       guildTitle: () => {
         const dict = townTalk?.factionDict ?? null;
         const g = guildFactionId != null ? guildOfFaction(guildFactionId, resolveVariantGuild(dict), dict) : null;
-        return g ? getTitle(membershipOf(activeMemberships(playerEntity), g), playerEntity, g) : null;
+        // AUDIT CHAP4 D3: the counter of a chapter's hall names a seat's title, as the hall's popup does
+        return g ? getTitle(membershipOf(seatedBook(activeMemberships(playerEntity), membershipKey(g), host.chapterSeatRank?.(g.factionId) ?? null), g), playerEntity, g) : null;
       },
     });
   }
@@ -5503,8 +5513,17 @@ export function createWorldModes(host) {
     const dict = townTalk?.factionDict ?? null;
     const guild = createGuildForGroup(route.guildGroup, route.buildingFactionId, dict);
     if (!guild) { townTalk?.say?.('You get no response.'); return; }
+    // CHAP6d (Chapters-Arc 7): online, a hall whose chapter's halls a Crackdown shut serves nothing this Season. AUDIT CHAP5
+    // D2: what it sells alone (its services, its quests, the Reforge's and the temple's rows) - DFU's popup stands, and
+    // with it OnPush's rank review, a temple's free healing, the Mages' free recharge, Talk and the join
+    const shutBox = () => (chapterHallShut(host.chapterHere?.(guild.factionId) ?? null) ? { rows: [CHAPTER_HALL_SHUT_LINE] } : null);
+    shutBox();   // AUDIT CHAP5 C1: asked as the popup opens - a patron's hall has the guild book look before a price reads it
     if (!guildServiceArtLoaded() || !_shopFont) return;   // no art, no window (the U8 idiom)
     const memberships = activeMemberships(playerEntity);   // V2e: the vampire-aware book
+    // CHAP4b (Chapters-Arc 6): a seat's rank at its own chapter's halls - the hall's services read the book SEATED (the
+    // host's chapterSeatRank: the playing character's seat at this guild in this region, online), while the review, the
+    // join and the title read the book itself (rank 7, while the Roll holds)
+    const seated = () => seatedBook(memberships, membershipKey(guild), host.chapterSeatRank?.(guild.factionId) ?? null);
     // THE ONE CONSTRUCTION SEAM (5th), RECORDED and not a gap: DFU's
     // PlayerEntity is BUILT with its faction store - PlayerEntity.cs
     // :65 field-initializes `factionData = new PersistentFactionData()`
@@ -5535,7 +5554,7 @@ export function createWorldModes(host) {
     const guildMacros = {
       playerName: playerEntity.name,
       factionName: guild?.divine ?? orderName,
-      guildTitle: () => getTitle(membershipOf(activeMemberships(playerEntity), guild), playerEntity, guild),
+      guildTitle: () => getTitle(membershipOf(seated(), guild), playerEntity, guild),   // AUDIT CHAP4 D3: a seat's title at its chapter's halls, as their services and quests say it (Chapters-Arc 3.5)
       god: guild?.divine ?? null,
       godDesc: guild?.divine ? (DEITY_DESCRIPTIONS[guild.divine] ?? null) : null,
       dungeon: () => revealedDungeon,
@@ -5553,11 +5572,12 @@ export function createWorldModes(host) {
       rows,
       // OnPush (:158-205) runs once, on construction.
       steps: () => onPushEffects(playerEntity, guild, memberships, store, ownDate(), {
-        freeHealing: freeHealing(guild, membershipOf(memberships, guild)),
-        freeMagickaRecharge: freeMagickaRecharge(guild, membershipOf(memberships, guild), playerEntity),
+        freeHealing: freeHealing(guild, membershipOf(seated(), guild)),
+        freeMagickaRecharge: freeMagickaRecharge(guild, membershipOf(seated(), guild), playerEntity),
         revealLocation,   // G8: the TG/DB map reveals - MACRO-4: through the popup's own wrapper, which keeps the name for %dng
         // F114: OwnsHouse per CURRENT region (DaggerfallBankManager.cs:136).
         ownsHouse: () => ownsHouse(playerEntity.houses ?? [], interiorBuilding?.regionIndex ?? 0),
+        rankCeiling: host.rollRankCeiling?.() ?? null,   // CHAP4b: 7 online while the Roll holds - 8 and 9 are seats
       }),
       onJoin: () => {
         // JoinButton_OnMouseClick (:497-525). joinDecision is null for
@@ -5586,7 +5606,9 @@ export function createWorldModes(host) {
        *  the same engine doors, then the window push. */
       onTalk: () => talkToStaticNpcHere({ isSpyMaster: false, returnTo: win }),
       onService: () => {
-        const access = serviceAccess(guild, membershipOf(memberships, guild), service);
+        const shut = shutBox();   // AUDIT CHAP5 D2
+        if (shut) return shut;
+        const access = serviceAccess(guild, membershipOf(seated(), guild), service);   // CHAP4b: a seat's rank here
         if (!access.allowed) {
           return { rows: access.textId ? rows(access.textId) : [access.text] };
         }
@@ -5594,7 +5616,7 @@ export function createWorldModes(host) {
         // the twenty, so guildServiceFlow.SERVICE_DESTINATION maps
         // every arm and there is no null left to name.
         const flow = openServiceFlow(serviceDestination(service), {
-          guild, memberships, store, rows, route,
+          guild, memberships: seated(), store, rows, route,   // CHAP4b: the service at a seat's rank here
           // G6: the greeting's dismissal IS the service - the same
           // talk door the popup's own Talk button opens, with
           // isSpyMaster TRUE (:713), which is the one thing that
@@ -5620,13 +5642,13 @@ export function createWorldModes(host) {
       onClose: () => closeSpellWindow(win),
       // LOOT9 (the Loot arc, bible/06-Systems/Loot-Arc.md section 11): the Mages Guild's Identify NPC keeps the Reforge
       // too - the popup's fourth row on either skin; a dispatch, as a service's is
-      reforge: route.guildGroup === GUILD_GROUPS.MagesGuild && service === 'Identify' && lootRarityOn() ? () => (openReforge() ? { dispatched: true } : null) : null,
+      reforge: route.guildGroup === GUILD_GROUPS.MagesGuild && service === 'Identify' && lootRarityOn() ? () => shutBox() ?? (openReforge() ? { dispatched: true } : null) : null,
       // LOOT16 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 8): a temple's Cure Disease priest lifts a curse
       // too - the popup's row in the Reforge's place, on either skin; a dispatch, as a service's is
-      lift: route.guildGroup === GUILD_GROUPS.HolyOrder && service === 'CureDisease' && lootRarityOn() ? () => (openLift() ? { dispatched: true } : null) : null,
+      lift: route.guildGroup === GUILD_GROUPS.HolyOrder && service === 'CureDisease' && lootRarityOn() ? () => shutBox() ?? (openLift() ? { dispatched: true } : null) : null,
       // HEAL-CURSE (the owner: "Add a button to the temple services under heal disease named heal curse"): the Cure
       // Disease priest's second row - the curse's offer as a Yes/No box, its rite paid and done on the Yes
-      healCurse: service === 'CureDisease' ? () => healCurseBox() : null,
+      healCurse: service === 'CureDisease' ? () => shutBox() ?? healCurseBox() : null,
     });  win = enhancedWindow(win, 'guild');   // PORT4: the enhanced skin's face; the classic window unchanged
     mountServiceWindow(win);
   }
@@ -5745,7 +5767,17 @@ export function createWorldModes(host) {
   function openServiceFlow(destination, { guild, memberships, store, rows, route, talkAsSpymaster = null, summonerFactionId = null }) {
     if (!destination) return null;
     const membership = guild ? membershipOf(memberships, guild) : null;
+    // AUDIT CHAP4 E2: what DFU GIVES at a rank and the character KEEPS - a knightly order's armour and its house - is the
+    // book's rank's, never a seat's (`memberships` the seated book, CHAP4b): one week as a chapter's Master was a rank-9
+    // house held for good, and a ring passing the seat round housed every one of it. Offline the two are one book.
+    const kept = guild ? membershipOf(activeMemberships(playerEntity), guild) : null;
     const b = interiorBuilding;
+    // CHAP3c (Chapters-Arc 5.2): online, this hall's chapter's Strength from the chapter sheet (the host's - none
+    // offline, nor for a chapter the sheet does not name): its band on the training, spells and shelf below
+    // CHAP6d: the whole chapter - its band, and its Season's: an Ascendancy's tenth, the doctrines' tenth and two qualities
+    const chapterHere = () => host.chapterHere?.(guild?.factionId ?? null) ?? null;   // AUDIT CHAP3 C6: the host's region, the chapters' own
+    const chapterFactor = (/** @type {string} */ service) => chapterHallFactor(chapterHere(), service, host.guildId?.() ?? null);   // CHAP7b: a patron's members the Thriving price
+    const shelfQuality = () => chapterHallShelf(b?.quality ?? 0, chapterHere());
     const closeSelf = () => closeSpellWindow(flow);
     const now = () => interiorTicker.ownMinutes;   // already CLASSIC minutes (AUDIT 21 F2); LIVED1: a service's clock (training's cooldown, a blessing) is the character's own
     const godName = guild?.divine ?? '';
@@ -5790,7 +5822,7 @@ export function createWorldModes(host) {
     // everything just bought; the players found it as an endless shop.
     if (destination === 'guildServiceBuySoulgems' && tradeDoorReady()) {
       const shelf = guildShelf('BuySoulgems', () => stockSoulGems(
-        { quality: b?.quality ?? 0, gameMinutes: Math.floor(worldMinutes()) },
+        { quality: shelfQuality(), gameMinutes: Math.floor(worldMinutes()) },   // CHAP3c: the chapter's band on the shelf
         { soulPointsOf: (t) => ENEMY_BASICS[t]?.soulPts ?? 0 }));
       // The slot is freed by the frame's own `done` sweep (:2450,
       // :2517), which is how EVERY trade window is dismissed -
@@ -5815,7 +5847,7 @@ export function createWorldModes(host) {
       return flow ?? DOOR_REFUSED;   // DISC10-E L3
     }
     if (destination === 'guildServiceBuyPotions' && tradeDoorReady()) {
-      const shelf = guildShelf('BuyPotions', () => stockGuildPotions({ quality: b?.quality ?? 0, gameMinutes: Math.floor(worldMinutes()) }));   // GUILD-SHELF: the day's, as the soul gems'
+      const shelf = guildShelf('BuyPotions', () => stockGuildPotions({ quality: shelfQuality(), gameMinutes: Math.floor(worldMinutes()) }));   // GUILD-SHELF: the day's, as the soul gems'; CHAP3c: the band's
       flow = openTradeWindow(shelf, b ?? {}, 'Buy', { guildFactionId: guild?.factionId ?? null });
       return flow ?? DOOR_REFUSED;   // DISC10-E L3
     }
@@ -5829,7 +5861,7 @@ export function createWorldModes(host) {
       const sellsSoulGems = canAccessService(guild, membership, 'BuySoulgems');
       const playerLevel = playerEntity.level ?? 1, gender = playerEntity.gender ?? 0;
       const shelf = guildShelf(`BuyMagicItems|${sellsSoulGems ? 1 : 0}|${playerLevel}|${gender}`, () => stockGuildMagicItems({   // GUILD-SHELF: the day's, as the soul gems'
-        quality: b?.quality ?? 0,
+        quality: shelfQuality(),   // CHAP3c: the chapter's band on the shelf
         gameMinutes: Math.floor(worldMinutes()),
         sellsSoulGems,
       }, {
@@ -5872,7 +5904,7 @@ export function createWorldModes(host) {
     // over the reward pile, and taking a piece is what claims the
     // rank (systems/knightlyGifts.js).
     if (destination === 'guildServiceReceiveArmor') {
-      const decision = receiveArmorDecision(membership, {
+      const decision = receiveArmorDecision(kept, {   // AUDIT CHAP4 E2: the book's rank
         makeArmor: (templateIndex, material) => mintCondition(setItemFields({ group: 'Armor', templateIndex, material })),   // MAC-N1: a gifted cuirass had no value either - the corpse's shape at a second site
       });
       if (decision.kind === 'refuse') {
@@ -5882,7 +5914,7 @@ export function createWorldModes(host) {
       const win = interiorInventory({
         chooseOne: {
           items: decision.pieces,
-          onChoose: () => { claimArmor(membership, decision.mask); surfacePlayer(); },
+          onChoose: () => { claimArmor(kept, decision.mask); surfacePlayer(); },
         },
       });
       // DISC10-E: the smith's gift opens the PACK, so a transformed beast is
@@ -6061,7 +6093,7 @@ export function createWorldModes(host) {
         void homes.ensure(dir?.mapId ?? 0);
         return { rows: [{ text: accountRefusalText('home-layout'), center: true }] };
       }
-      const decision = receiveHouseDecision(membership, {
+      const decision = receiveHouseDecision(kept, {   // AUDIT CHAP4 E2: the book's rank
         ownsHouse: ownsHouse(playerEntity.houses, region),
         housesForSale: homes ? currentHousesForSale().filter((h) => !homes.homeAt(dir?.mapId ?? 0, h.buildingKey)) : currentHousesForSale(),
         alreadyOwnResult: TRANSACTION_RESULT.ALREADY_OWN_HOUSE,
@@ -6086,9 +6118,9 @@ export function createWorldModes(host) {
         playerName: playerEntity.name ?? '',
         regionName: dir?.regionName ?? '',
       });
-      claimHouse(membership);
+      claimHouse(kept);
       surfacePlayer();
-      if (host.holdRealmDeed) holdGrantedHouse(region, membership);
+      if (host.holdRealmDeed) holdGrantedHouse(region, kept);
       return { rows: rows?.(decision.textId) ?? [{ text: 'I have a house for you.', center: true }] };
     }
     if (destination === 'guildServiceTeleport') {
@@ -6220,12 +6252,14 @@ export function createWorldModes(host) {
       const sbi = typeof spellsByIndex === 'function' ? spellsByIndex() : spellsByIndex;
       if (!sbi) return null;
       let bookWin = null;
+      const bookFactor = chapterFactor('spells');   // AUDIT CHAP3 C1: read once a window - the price shown is the price charged
       bookWin = new SpellbookWindow({
         spells: () => (playerEntity.spells ??= []),
         entity: playerEntity,
         castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
         offered: () => [...sbi.values(), ...(isOnlinePage() ? [resurrectionSpell(), sharedCartographySpell()] : [])],   // RESURRECT1: online, the ready-made Resurrection is on the shelf; PARTY-MAP: and Shared Cartography beside it
         buildingQuality: () => b?.quality ?? 0,
+        priceFactor: () => bookFactor,   // CHAP3c: the hall's chapter's band on a spell's price
         shopName: () => b?.name ?? '',
         skills: () => ({
           mercantile: skillValue(playerEntity, SKILLS.Mercantile),
@@ -6257,9 +6291,11 @@ export function createWorldModes(host) {
         return { rows: [{ text: 'You have no spellbook!', center: true }], closesWindow: true };
       }
       let makerWin = null;
+      const makerFactor = chapterFactor('spells');   // AUDIT CHAP3 C1: read once a window, as training's and the spellbook's
       makerWin = new SpellMakerWindow({
         entity: playerEntity,
         rows,
+        priceFactor: () => makerFactor,   // CHAP3c: the hall's chapter's band on a spell's making
         onClose: () => closeSpellWindow(makerWin),
       });  makerWin = enhancedWindow(makerWin, 'spellMaker');   // PORT4: the enhanced skin's face; the classic window unchanged
       mountServiceWindow(makerWin);
@@ -6273,6 +6309,7 @@ export function createWorldModes(host) {
       const refined = rrRefinedTrainingOn();
       flow = (refined ? buildRefinedTrainingFlow : buildTrainingFlow)(playerEntity, guild, membership, {
         rows, now, onClose: () => closeSelf(),
+        priceFactor: chapterFactor('training'),   // CHAP3c: the hall's chapter's band on the training's price; CHAP6d: and its Season's
         variablePrice: rrSetting('RefinedTraining.variableTrainingPrice') === true, intensive: rrSetting('RefinedTraining.intensiveTraining') === true,
         // TrainSkillIntense (GuildServiceTrainingRR.cs:130-134): four days off the clock and four permanent points, before the fifth session
         applyIntensive: (skill, days, points) => {

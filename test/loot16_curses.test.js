@@ -341,7 +341,7 @@ test('LOOT16: the temple\'s row - a Cure Disease priest\'s, in the Reforge\'s pl
   assert.deepEqual([served, lifted], [1, 2], 'DFU\'s own L (Teleport\'s) first');
   assert.equal(LIFT_ROW, 'Lift Curse');
   assert.match(read('src/ui/enhancedPorts.js'), /\.\.\.\(!w\.hooks\.reforge && w\.hooks\.lift \? \[\{ label: LIFT_ROW, act: \(\) => w\._lift\(\) \}\] : \[\]\)/, 'the Plus face lists it beside the service');
-  assert.match(read('src/scenes/worldModes.js'), /lift: route\.guildGroup === GUILD_GROUPS\.HolyOrder && service === 'CureDisease' && lootRarityOn\(\) \? \(\) => \(openLift\(\) \? \{ dispatched: true \} : null\) : null,/, 'a temple\'s Cure Disease priest');
+  assert.match(read('src/scenes/worldModes.js'), /lift: route\.guildGroup === GUILD_GROUPS\.HolyOrder && service === 'CureDisease' && lootRarityOn\(\) \? \(\) => shutBox\(\) \?\? \(openLift\(\) \? \{ dispatched: true \} : null\) : null,/, 'a temple\'s Cure Disease priest');   // PIN MOVED (AUDIT CHAP5 D2): a shut hall's row refused on the popup
   assert.match(read('src/scenes/worldModes.js'), /const done = liftCurse\(item, playerEntity\);[\s\S]{0,200}pages: \['lift'\], page: 'lift',/, 'the law\'s, on the player\'s own pack, its one page');
   _setGuildServiceArtForTests(null);
   // the page

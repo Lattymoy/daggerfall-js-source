@@ -938,7 +938,7 @@
  {
   "name": "PVPREF-relay-step-unjudged",
   "file": "server/src/index.js",
-  "old": "      if (battle && !step) return;\n",
+  "old": "    if (battle && !step) return;\n",
   "new": "",
   "tests": [
    "test/pvpref_relay.test.js"

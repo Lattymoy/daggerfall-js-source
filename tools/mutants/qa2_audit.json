@@ -43,8 +43,8 @@
   {
     "name": "QA2A-pinned-curation",
     "file": "src/formats/worldDataReplacement.js",
-    "old": "    curateBlockPeople(dfBlock, liveAsset(blockReplacementFilename(blockName, variant))?.vendor);   // QUEST-AUDIT II TEMPLE-SUMMONER\n    return dfBlock;",
-    "new": "    return dfBlock;",
+    "old": "    curateBlockPeople(dfBlock, liveAsset(blockReplacementFilename(blockName, variant))?.vendor);   // QUEST-AUDIT II TEMPLE-SUMMONER\n    curateBlockPlacements",
+    "new": "    curateBlockPlacements",
     "tests": [
       "test/qa2_summoners.test.js"
     ],

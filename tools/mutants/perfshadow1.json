@@ -176,5 +176,15 @@
     "tests": [
       "test/perfshadow1.test.js"
     ]
+  },
+  {
+    "name": "PERF-SHADOW1-a-grown-list-losing-what-it-held",
+    "file": "src/render/shadowPass.js",
+    "old": "      if (c.n === c.rec.length) { const g = new Int32Array(c.rec.length * 2); g.set(c.rec); c.rec = g; }",
+    "new": "      if (c.n === c.rec.length) { const g = new Int32Array(c.rec.length * 2); c.rec = g; }",
+    "tests": [
+      "test/perfshadow1.test.js"
+    ],
+    "note": "AUDIT PERF-ON4 (sun lens 1): the list's growth was never walked - the pins' towns held about twenty records; a crowd of 80 about the nearest lantern now grows it"
   }
 ]

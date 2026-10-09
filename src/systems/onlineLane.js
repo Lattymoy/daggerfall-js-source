@@ -162,6 +162,7 @@ export const ONLINE_PLAYERS_OWN_PREFS = [
   'gentleActs',   // PROF1: Gentle acts - an accessibility choice; every act plain is never an edge over another player
   'acceptStrangerSpells',   // SPELL-GIFT: whether a stranger's healing and protective spells land on THIS player - their own say
   'showToTravellers',   // TV3: whether the region's travellers see where THIS player is - their own say
+  'standingAll',   // EVERY-STANDING: whether THIS player's Standing page lists every faction's number - a page they read, nothing the room agrees on
 ];   // (RF4: grown by declareOnlinePrefs with the registry's 'player' answers - the dials)
 
 /** DISC22-A (2026-09-24, Mac: "repair magical items should be enabled by default and required online"): THE DFU

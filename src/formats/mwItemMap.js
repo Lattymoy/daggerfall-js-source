@@ -46,6 +46,7 @@
 import { WEAPONS, WEAPON_MATERIALS } from '../characters/weapons.js';
 import { OWN_MW_MODELS } from '../characters/ownWeaponModels.js';   // FIELD-GUN-MW2: the weapons Morrowind does not have
 import { OWN_MW_ARMOR, ownArmorModelFor, ownArmorParts } from '../characters/ownArmorModels.js';   // MW-BRIG1: the armour Morrowind does not have; MW-STEEL1: and its styles
+import { CLOAK_NAMES, CLOAK_PAINTINGS, cloakModel, ownCloakFor } from '../characters/ownClothingModels.js';   // MW-CLOAK1: and the clothing
 import { ARMOR_MATERIAL } from '../systems/armorMaterials.js';
 import { ARMOR_ENUM } from '../combat/enemyEquipment.js';
 import templates from '../characters/itemTemplates.json' with { type: 'json' };
@@ -104,6 +105,8 @@ export const DF_CLOTHING_ROWS = Object.freeze({
   'Plain Robes': { type: MW_CLOTHING_TYPE.Robe, reserve: 'robe' },
   'Priest Robes': { type: MW_CLOTHING_TYPE.Robe, reserve: 'robe' },
   'Priestess Robes': { type: MW_CLOTHING_TYPE.Robe, reserve: 'robe' },
+  // MW-CLOAK1: a cloak is WORN as the port's own (ownClothingModels.js, composeWornArmor) - the robe row is the item's
+  // icon's record now, nothing on the body
   'Casual Cloak': { type: MW_CLOTHING_TYPE.Robe, reserve: 'robe' },
   'Formal Cloak': { type: MW_CLOTHING_TYPE.Robe, reserve: 'robe' },
   'Dwynnen Surcoat': { type: MW_CLOTHING_TYPE.Robe, reserve: 'robe' },
@@ -370,6 +373,8 @@ export function itemMapCoverage() {
   // wardrobe has no dye channel, so every colour of a Short Shirt
   // wears the one shirt the type resolves to.
   for (const [idx, name] of Object.entries(CLOTHING_NAME)) {
+    // MW-CLOAK1: a cloak answers with the port's own meshes, every dye's
+    if (CLOAK_NAMES.includes(name)) { out.push({ kind: 'own', item: `${name} (${idx})`, material: 'any dye', via: 'clothing', own: 'ownClothingModels', index: Number(idx), model: CLOAK_PAINTINGS.map(cloakModel).join(' + ') }); continue; }
     if (name in DF_CLOTHING_ROWS) out.push({ kind: 'mapped', item: `${name} (${idx})`, material: 'any dye', via: 'clothing' });
     else out.push({ kind: 'UNMAPPED', item: `${name} (${idx})`, material: 'any dye' });
   }
@@ -438,10 +443,19 @@ export function mwItemReport(armorRecords, { weapons = null, clothes = null, col
   if (clothes) {
     for (const [name, row] of Object.entries(DF_CLOTHING_ROWS)) {
       for (let dye = 0; dye < DF_CLOTHING_DYE_RGB.length; dye++) {
+        const dyeName = ['Blue', 'Grey', 'Red', 'Dark Brown', 'Purple', 'Light Brown', 'White', 'Aquamarine', 'Yellow', 'Green'][dye];
+        // MW-CLOAK1: a cloak wears the port's own painting - the archives are not asked
+        const cloak = ownCloakFor({ kind: 'clothing', name, dye });
+        if (cloak) {
+          rows.push({ family: 'clothing', item: `${dyeName} ${name}`, found: [cloak.model],
+            note: `the port's own cloak (characters/ownClothingModels.js), the ${cloak.painting.replace('_', ' ')} painting - no record of the archives is asked`,
+            dfColour: hex(DF_CLOTHING_DYE_RGB[dye]), mwColour: null, reserve: null });
+          continue;
+        }
         const res = mwClothingRecord(clothes, name, { dye, colourOf });
         rows.push({
           family: 'clothing',
-          item: `${['Blue', 'Grey', 'Red', 'Dark Brown', 'Purple', 'Light Brown', 'White', 'Aquamarine', 'Yellow', 'Green'][dye]} ${name}`,
+          item: `${dyeName} ${name}`,
           found: res.record ? [res.record.id] : [],
           note: res.note,
           dfColour: hex(DF_CLOTHING_DYE_RGB[dye]),
@@ -565,6 +579,7 @@ export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = f
   };
   const ordered = [...(pieces ?? [])].sort((a, b) => wornOrder(a) - wornOrder(b));
   let hairHidden = 0;
+  let cloakAdd = null; let cloakName = null;   // MW-CLOAK1: the cloak, which no slot holds
   for (const piece of ordered) {
     // WEREWOLF1: A CLOT RECORD HANDED IN WHOLE - the one garment no Daggerfall item names, the werewolf's robe
     // (MechanicsManager::setWerewolf equips "werewolfrobe" in Slot_Robe, mechanicsmanagerimp.cpp:1896-1901). It is
@@ -589,6 +604,16 @@ export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = f
     }
     if (piece.kind === 'clothing') {
       const name = piece.name ?? CLOTHING_NAME[piece.templateIndex];
+      // MW-CLOAK1: A CLOAK IS THE PORT'S OWN (characters/ownClothingModels.js) - one skinned mesh hung down the back,
+      // claiming NO slot and reserving none: the armour and the clothes under it stay drawn. Daggerfall wears two
+      // (Cloak1, Cloak2); one cloak is drawn, the first, and the second says so - two of one mesh would be one.
+      const cloak = ownCloakFor({ ...piece, name });
+      if (cloak) {
+        if (cloakAdd) { notes.push(`${name}: a second cloak - the first (${cloakName}) is the one drawn`); continue; }
+        cloakAdd = { slot: `cloak (${cloak.id})`, partName: 'cloak', bones: [], model: cloak.model, recordId: cloak.id, piece };
+        cloakName = name;
+        continue;
+      }
       const res = mwClothingRecord(clothes, name, { dye: piece.dye ?? null, colourOf });
       if (!res.record) { notes.push(`${name ?? piece.templateIndex}: ${res.note}`); continue; }
       const base = res.row.reserve === 'robe' ? 11 : res.row.reserve === 'skirt' ? 3 : 0;
@@ -654,6 +679,7 @@ export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = f
     const key = ARMO_PART[i2].shadows;
     if (key) shadows.add(key);
   }
+  if (cloakAdd) adds.push(cloakAdd);
   return { adds, shadows: [...shadows], notes };
 }
 
@@ -661,8 +687,9 @@ export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = f
  *  classic doll's in ui/paperDoll.js) for the one body that would be bare. Morrowind's own female chest is bare where
  *  its groin wears underwear, so a woman whose composition leaves the chest skin showing wears the plainest shirt
  *  while Show Nudity is off - resolved as a worn Short Shirt is (mwClothingRecord with no dye: the id-sorted first,
- *  retail's common_shirt_01). A man, and a chest anything already covers - a shirt, a dress, a cloak's robe, a
- *  cuirass - compose as they always did. `show` is Show Nudity (ChildGuard/PlayerNudity). */
+ *  retail's common_shirt_01). A man, and a chest anything already covers - a shirt, a dress, a robe, a
+ *  cuirass - compose as they always did; a cloak hangs down the back and covers none of it (MW-CLOAK1). `show` is
+ *  Show Nudity (ChildGuard/PlayerNudity). */
 export const MODESTY_SHIRT = Object.freeze({ kind: 'clothing', name: 'Short Shirt' });
 export function composeWornModest(args, show) {
   const worn = composeWornArmor(args);

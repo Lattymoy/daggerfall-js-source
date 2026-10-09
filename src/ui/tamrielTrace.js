@@ -31,6 +31,10 @@ import { IMPERIAL_ID } from '../world/tamrielLand.js';
 
 /** A land piece smaller than this (picture pixels) is a painted word over the sea, not an island. */
 export const SPECK_PX = 12;
+/** TAMRIEL4: a hole in the land smaller than this (picture pixels) is a dab of the painting's blue - a road, a river's
+ *  dot, a letter's fill - not a lake. The painting's smallest lake is ten pixels (Hammerfell's under the Bay, twenty;
+ *  Lake Rumare's pieces eleven and forty-nine); its dabs are one to five. */
+export const HOLE_PX = 6;
 
 const n4 = (i, w, h) => { const x = i % w, y = (i / w) | 0; return [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, y > 0 ? i - w : -1, y < h - 1 ? i + w : -1]; };
 
@@ -94,6 +98,67 @@ export function enclosedRemainder(claimed, coast, w, h) {
   return mask;
 }
 
+const n8 = (i, w) => [i - 1, i + 1, i - w, i + w, i - w - 1, i - w + 1, i + w - 1, i + w + 1];
+/** The province most of a pixel's eight neighbours of land hold (the lower id on a tie), or 0. */
+function neighbourProvince(i, w, land, province) {
+  const count = new Map();
+  for (const k of n8(i, w)) if (land[k]) count.set(province[k], (count.get(province[k]) ?? 0) + 1);
+  let best = 0, bn = 0;
+  for (const [p, n] of count) if (n > bn || (n === bn && p < best)) { best = p; bn = n; }
+  return best;
+}
+
+/**
+ * TAMRIEL4 - A BORDER IS LAND. The picker draws every border between two homelands as a one-pixel line no race claims
+ * (the black between its masks - Skyrim's from Hammerfell's, Valenwood's from Elsweyr's, Morrowind's from Skyrim's and
+ * from Black Marsh's), and TAMRIEL3 read the line as sea: a strait 15 km wide down every border, on the map and in the
+ * streamed land. A pixel that is no land, with land of two DIFFERENT provinces on opposite sides of it (west and east,
+ * or north and south), is the line: it is land, of the province most of its neighbours hold. Passes until none is left
+ * (a line's corner is closed by the pass after its arms). A channel within one province (the Inner Sea's narrows) has
+ * the same province on both sides and stays sea; and a coast's inner corner where two provinces meet it has sea on one
+ * side of each pair, so a diagonal is never asked (it would fill that corner). Mutates `land` and `province`; answers
+ * how many.
+ */
+export function closeBorderLines(land, province, w, h) {
+  let filled = 0;
+  for (let pass = 0; pass < 4; pass++) {
+    const add = [];
+    for (let y = 1; y < h - 1; y++) {
+      for (let x = 1; x < w - 1; x++) {
+        const i = y * w + x;
+        if (land[i]) continue;
+        if (!((land[i - 1] && land[i + 1] && province[i - 1] !== province[i + 1]) || (land[i - w] && land[i + w] && province[i - w] !== province[i + w]))) continue;
+        add.push([i, neighbourProvince(i, w, land, province)]);
+      }
+    }
+    if (!add.length) break;
+    for (const [i, p] of add) { land[i] = 1; province[i] = p; }
+    filled += add.length;
+  }
+  return filled;
+}
+
+/**
+ * TAMRIEL4 - A DAB IS NOT A LAKE. Every hole in the land (a piece of not-land touching no edge of the picture) smaller
+ * than HOLE_PX is land, of the province most of its rim holds. Mutates `land` and `province`; answers how many pixels.
+ */
+export function fillSpecks(land, province, w, h, maxPx = HOLE_PX) {
+  const water = new Uint8Array(w * h);
+  for (let i = 0; i < water.length; i++) water[i] = land[i] ? 0 : 1;
+  let filled = 0;
+  for (const p of pieces(water, w, h)) {
+    if (p.edge || p.cells.length >= maxPx) continue;
+    const prov = new Map();
+    for (const i of p.cells) { const q = neighbourProvince(i, w, land, province); if (q) prov.set(q, (prov.get(q) ?? 0) + 1); }
+    let best = 0, bn = 0;
+    for (const [q, n] of prov) if (n > bn || (n === bn && q < best)) { best = q; bn = n; }
+    if (!best) continue;
+    for (const i of p.cells) { land[i] = 1; province[i] = best; }
+    filled += p.cells.length;
+  }
+  return filled;
+}
+
 /**
  * The trace over the two bitmaps (ImgFile.getDFBitmap's shape) and the painting's palette ((i) => [r, g, b]).
  * Answers { w, h, land, province } - province 1..8 the race ids, IMPERIAL_ID the remainder, 0 at sea - or null
@@ -120,6 +185,8 @@ export function traceTamrielPicture(picker, picture, palette) {
   for (let i = 0; i < coast.length; i++) if (blue[picture.data[i]]) coast[i] = 1;
   const rem = enclosedRemainder(data, coast, w, h);
   if (rem) for (let i = 0; i < rem.length; i++) if (rem[i] && !land[i]) { land[i] = 1; province[i] = IMPERIAL_ID; }
+  closeBorderLines(land, province, w, h);   // TAMRIEL4: the picker's border lines are land, not straits
+  fillSpecks(land, province, w, h);   // TAMRIEL4: and the painting's dabs of blue in the land are not lakes
   return { w, h, land, province };
 }
 

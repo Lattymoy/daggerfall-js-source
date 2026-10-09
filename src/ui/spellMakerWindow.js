@@ -104,6 +104,7 @@ import {
 } from '../systems/spellMaker.js';
 import { goldAmount } from '../systems/court.js';
 import { firstHotkey, shortcutBinding, sequenceString, normalizeCode } from '../systems/dialogShortcuts.js';
+import { chapterPriced } from '../net/npcChapterLaw.js';   // CHAP3c / AUDIT CHAP3 R12: a hall's band laid over a spell's making
 
 // TargetTypes / ElementTypes in DFU's declaration order, which IS the
 // classic rangeType / element index order the record stores.
@@ -423,10 +424,12 @@ export class EffectSettingsEditorWindow {
  * deps: { entity, rows(id) -> [{text, center}], onClose }
  */
 export class SpellMakerWindow {
-  constructor({ entity, rows = null, onClose = null } = {}) {
+  constructor({ entity, rows = null, onClose = null, priceFactor = null } = {}) {
     this.entity = entity;
     this.rows = rows;
     this.onClose = onClose;
+    /** @type {(() => number) | null} CHAP3c: the hall's chapter's price factor, the host's (none offline) */
+    this.priceFactor = priceFactor;
     this.done = false;
     this.isChoiceWindow = true;
     this.iconPicker = null;
@@ -497,7 +500,8 @@ export class SpellMakerWindow {
       return;
     }
     const { gold, sp } = spellMakerCost(this._spell(), this.entity);
-    this.totalGoldCost = gold;
+    // CHAP3c (Chapters-Arc 5.2): online, the hall's chapter's band laid over DFU's gold cost - DFU's own at 1 or none
+    this.totalGoldCost = chapterPriced(gold, this.priceFactor?.() ?? 1);   // AUDIT CHAP3 R12: the law's one rounding
     this.totalSpellPointCost = sp;
   }
 

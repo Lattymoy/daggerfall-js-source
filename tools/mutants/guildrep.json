@@ -1,6 +1,6 @@
 [
  {"name": "GUILD-REP-the-page-draws-no-guilds", "file": "src/ui/enhancedMenu.js",
-  "old": "  statsGuilds(detail, playerEntity);\n}", "new": "}", "tests": ["test/guildrep.test.js"]},
+  "old": "  statsGuilds(detail, playerEntity);\n  if (getPref", "new": "  if (getPref", "tests": ["test/guildrep.test.js"]},
  {"name": "GUILD-REP-the-rep-drops-off-the-row", "file": "src/ui/enhancedMenu.js",
   "old": "el('span', 'v px-rank', a.probation ? `${a.title} - on probation` : a.title), signedRep(a.rep));", "new": "el('span', 'v px-rank', a.probation ? `${a.title} - on probation` : a.title));", "tests": ["test/guildrep.test.js"]},
  {"name": "GUILD-REP-the-rank-drops-off-the-row", "file": "src/ui/enhancedMenu.js",

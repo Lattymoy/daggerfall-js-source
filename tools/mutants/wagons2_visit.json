@@ -119,8 +119,8 @@
   {
     "name": "WAGONS2-VISIT-an-older-relay-sent-the-frame",
     "file": "src/net/wire.js",
-    "old": "export const CARAVAN_RELAY_MIN = 183;",
-    "new": "export const CARAVAN_RELAY_MIN = 182;",
+    "old": "export const CARAVAN_RELAY_MIN = 185;",
+    "new": "export const CARAVAN_RELAY_MIN = 184;",
     "tests": [
       "test/wagons2_visit_relay.test.js"
     ]

@@ -255,7 +255,7 @@ import { isOnlinePage, ONLINE_LAND_TRAVEL_REFUSAL } from '../systems/onlineLane.
 import { readImmersiveTravelSettings, immersiveTravelLoaded, IT_POPUP } from '../systems/immersiveTravel.js';   // IT1: Immersive Travel - a driver's map and its fast travel; AUDIT IT1 W4: the mod loaded for the game
 // SOFTCAP1: mentor mode, the party's overlay
 import { createForagingWait } from './foragingWait.js';
-import { createMarksBook } from '../net/marksBook.js';   // MARKS1: the account's Marks - the balance, the Bank's sale, a guild's treasury   // FORAGE4: online, Foraging's quest time is a wait on the wait page
+import { createMarksBook, mintMarksRid } from '../net/marksBook.js';   // MARKS1: the account's Marks - the balance, the Bank's sale, a guild's treasury   // FORAGE4: online, Foraging's quest time is a wait on the wait page
 import { createNoticeBook, parseNoteCommand, planNoteAnswer, NOTE_LETTER_LOST } from '../net/noticeBook.js';   // NOTICE1: this device's Notice Boards - a town's board read, a note pinned
 import { createNoticeOverlay, closeNoticeDoor, noticeDoorOpen } from '../ui/noticeDoor.js';   // NOTICE1: the board's window, through its one door
 import { createProfBook } from '../net/profBook.js';   // PROF1: this character's professions - its Stores, its day, its harvests kept until answered
@@ -688,13 +688,19 @@ import { createSeatLock, SEAT_NOTICE, SEAT_MID_TEXT, PLAY_HERE_LABEL } from '../
 import { readAccount, buyInsignia, equipTitle, equipAura, adoptIdentity as adoptSessionIdentity } from '../net/accountClient.js';   // WB9g: the Broker's insignia - the account's wardrobe, its sale and its wearing, and my own screen's word of it
 import { ownAura } from '../systems/ownGlyphs.js';   // WB9g: the aura at my own feet - the service's last word, kept on the stored session
 import { INSIGNIA, insigniaRefusal } from '../net/insignia.js';   // WB9g
-import { accountTokenMinter, storedSession, muteAccount, serviceBase, accountRefusalText, accountDuels, accountRenown, accountHomes, accountDecor, accountGuilds, accountGates, accountMarks, accountCards, accountBoard, accountProf, accountRaids, accountMarket, accountWrits, accountSeats, accountSerpents, accountSds } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4's beat knocks through the tab's heartbeat (SCALE4c), not from here
+import { accountTokenMinter, storedSession, muteAccount, serviceBase, accountRefusalText, accountDuels, accountRenown, accountRoll, accountHomes, accountDecor, accountGuilds, accountGates, accountMarks, accountCards, accountBoard, accountProf, accountRaids, accountMarket, accountWrits, accountSeats, accountSerpents, accountSds } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4's beat knocks through the tab's heartbeat (SCALE4c), not from here
 import { parseModCommand, runModCommand, mutedText, mutedNotices } from '../net/moderation.js';   // MOD1: /mute and /unmute, and the line a muted player reads
 import { createHeartbeat, whileLive } from '../net/heartbeat.js';   // SCALE4c: the beat, the letterbox and the town's board in one request
 import { startPlayClock } from '../net/playClock.js';   // ACC4: time played, knocked from here and measured by the account service's clock
 import { renownKillXp, renownQuestXp, renownPartyXp, renownText } from '../net/renown.js';   // RENOWN1: what a kill and a quest are worth, and the party's bonus (RENOWN3: read against my Renown)
 import { createRenownTracker, setRenownKillHandler, renownFoeLevel, renownAnswer, renownFoeCarry, renownStruckAt } from '../net/renownTracker.js';   // RENOWN1: what this character earns online, carried to the account service
 import { setRenownLayer } from '../systems/renownLayer.js';   // RENOWN1: the level's health and magicka, on top of Daggerfall's while online
+import { createHallBook, hallFactionsOf, chapterFactionOf, parseHallCommand, hallAuditLines } from '../net/npcHallBook.js';   // CHAP2a: a town's guild halls, witnessed as I walk in; AUDIT CHAP2 E1: a developer's /hall
+import { createChapterSheet } from '../net/chapterSheet.js';   // CHAP3c: the chapter sheet, for the halls' prices and shelves
+import { createChapterBanners } from './chapterBanners.js';   // CHAP7b: a patron's banners at its chapter's halls
+import { createRollTracker, rollEntityDoors } from '../net/npcRollTracker.js';   // CHAP1: the Roll - this realm character's standing with Daggerfall's guilds, the account service's
+import { rollCeilingLine, rollKeptOf, ROLL_KEPT_VENDOR, hallPosterName, hallRememberLine, isChapterWrit, bookCappedLine, seatLinesOf, seatRankAt, ROLL_BOOK_RANK_MAX, chapterRollTitle, chapterRollLines, chapterBandOf } from '../net/npcChapterLaw.js';   // AUDIT CHAP: the pace's line; the last adoption, kept in the save; CHAP2a: a hall writ's guild, named; CHAP3a: a member's own writ too; CHAP5a: the hall's roll; CHAP5b: a chapter's band, the living town's
+import { chapterSeasonLines } from '../net/chapterEvents.js';   // CHAP6c: a chapter's Season in words, its candidates named
 import { setHudRenown } from '../ui/hudRenown.js';   // RENOWN4: my own Renown and its bar, under the vitals
 import { pickRegionHubs, hubAtMapId, hubArrivalLine, hubClaim } from '../systems/regionHubs.js';   // HUB1: every region's main city, its hub; SD2b: a populated place's claim (the Hollow's cities)
 import { dungeonTier, tierPhrase } from '../systems/dungeonTier.js';   // TIER1: a dungeon's tier, said online...
@@ -842,10 +848,11 @@ import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 import { makeItemPermanent } from '../systems/quest/item.js';
 import { isShelved } from '../systems/quest/quest.js';   // QUEST-SHELF: a quest set aside
 import { guildOfFaction, membershipOf, guildFactionIdOfGroup, joinedGuildOfGroup, activeMemberships, guildInitiationQuestEnded } from '../systems/guilds.js';   // V2e: the per-read vampire book pick; F96: the TG/DB initiation listener
+import { GUILD_FACTION_IDS } from '../systems/guildFactions.js';   // CHAP4b: the Mages Guild's faction, for its seat's teleport
 import { GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';   // the membership book's key - the travel popup's free-ship read   // AUDIT 39 (#23): GetRegionFaction's Province filter
 import { freeShipTravel, freeTavernRooms, avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // KnightlyOrder.FreeShipTravel, the second half of hasShip; FreeTavernRooms, the trip cost's inn nights
 import { resolveVariantGuild, orderOf, getDivine } from '../systems/guildVariants.js';   // TN1: GetFactionName's HolyOrder arm
-import { revealGuildHallsOnMap } from '../systems/guildHallReveal.js';   // AUDIT 63 F9: ThievesGuild/DarkBrotherhood RevealGuildHallOnMap
+import { revealGuildHallsOnMap, revealingMemberships } from '../systems/guildHallReveal.js';   // AUDIT 63 F9: ThievesGuild/DarkBrotherhood RevealGuildHallOnMap; AUDIT CHAP2 D4: either book's
 // TK-i: THE RUMOR MILL - the quest machine's rumor seams stop being silent.
 import { RumorMill, tokensToString } from '../systems/rumorMill.js';
 import { HolidayTextTimer, holidayTextPrimesFor } from '../systems/holidays.js';   // AUDIT 64 F10: PlayerEnterExit.ShowHolidayText and its prime/drain
@@ -1650,6 +1657,25 @@ export async function bootWorld(canvas, renderer, params, status) {
       onRed: (line) => (redChat ? redChat(line) : false),
     })
     : null;
+  // CHAP2a (Chapters-Arc 4): the guild halls of the towns this client walks into, reported once a UTC day a town while
+  // the Chapters are open to this account (net/npcHallBook.js; the entry edge is revealMemberGuildHalls'). Online only -
+  // offline a town is DFU's.
+  const hallDoor = params.has('online') ? accountRoll({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }) : null;
+  const hallBook = hallDoor ? createHallBook({ door: hallDoor, storage: appStorage() }) : null;
+  // CHAP3c (Chapters-Arc 5.2, 5.3): the chapter sheet - every chapter's Strength - held for the halls' prices and shelves
+  // (net/chapterSheet.js), asked at a town's entry and again when it grows old. Online only - offline a hall is DFU's.
+  const chapterSheet = hallDoor ? createChapterSheet({ door: hallDoor }) : null;
+  /** CHAP5b (Chapters-Arc 9): a guild's chapter in the town at pixel (x, y) - AUDIT CHAP4 C2: the TOWN'S politic region,
+   *  as the sheet keys it, never the player's (every built town was planned by the region the player stood in) - as the
+   *  living town reads it: `{ band, name }`, or null (no sheet, a chapter it does not name). The hall building's faction
+   *  is read as its chapter's (npcHallBook.js chapterFactionOf - a temple's templar order its divine's). */
+  const livingChapterOf = (/** @type {number} */ faction, /** @type {number} */ x, /** @type {number} */ y) => {
+    const f = chapterFactionOf(faction, townTalk?.factionDict ?? null) ?? faction;
+    const region = (() => { try { return maps.getRegionIndexAt(x, y); } catch { return null; } })();
+    const c = Number.isInteger(region) ? chapterSheet?.chapterOf(f, region) ?? null : null;
+    // CHAP6c: and its Season's event and shut halls, for the town's talk
+    return c == null ? null : { band: chapterBandOf(c.strength).band, name: `the ${hallPosterName(f)}`, event: c.event ?? null, shut: c.shut === true };
+  };
   /** CROWN2: where the seats' red lines are said - set once the chat is (it is made later in the scene). */
   let redChat = null;
   /** SEAT2a part four: the siege this client is in, made with the online session (net/siegeSession.js) - null offline. */
@@ -2624,6 +2650,15 @@ export async function bootWorld(canvas, renderer, params, status) {
   let _legacyMade = () => {};
   /** LEGACY1: the host, once made - a birth's chargen (`?legacyborn=`) waits for it, since the flow's files can land first. */
   const legacyReady = new Promise((res) => { _legacyMade = res; });
+  // AUDIT CHAP C1/C2/C4 (bible/01-Overview/Audit-Chapters.md): THE ROLL'S LAST ADOPTION, KEPT IN THE SAVE - the Roll's
+  // sequence and its twenty-two as this character last adopted them online (net/npcRollTracker.js keeps it at every
+  // adoption), so the next page claims whatever moved after it and was never claimed. Offline nothing writes it.
+  let rollKept = null;
+  registerModSaveData(ROLL_KEPT_VENDOR, {
+    newSaveData: () => null,
+    getSaveData: () => rollKept,
+    restoreSaveData: (rec) => { rollKept = rollKeptOf(rec); },
+  });
   registerModSaveData(LIVING_WORLD_VENDOR, {
     newSaveData: () => null,
     getSaveData: () => livingRelations.snapshot(),
@@ -5456,6 +5491,9 @@ export async function bootWorld(canvas, renderer, params, status) {
           townName: dfLocation.name, regionName: dfLocation.regionName ?? '',
           tripsOf: (day) => livingTripsOf(livingTown, day), armOf: livingArmOf, flatOf: livingFlatOf,   // LW3: its travellers away and armed, its visitors - LW-LOOKS: its still pictures
           familyNews: (t) => legacyHost?.newsFor(livingTown.mapId, t) ?? null,   // LEGACY6: what the town says of the line
+          // CHAP5b (Chapters-Arc 9): a guild's chapter here off the sheet the tab holds - its band, its guild named - for
+          // its hall's evenings and the town's talk of it; none offline (no sheet: the living world is today's)
+          chapterOf: chapterSheet ? (faction) => livingChapterOf(faction, px, py) : undefined,   // AUDIT CHAP4 C2: this town's own pixel
           extraPeople: (day, town) => legacyHost?.residentsOf(livingTown.mapId, (seed) => town.homeFor(seed), (id) => town.residents.find((r) => r.id === id) ?? null) ?? null,   // LEGACY-HOME: Project Legacy's line, at home here (LEGACY5: a spouse, the census's own)
           ashore: (res) => livingAshore(livingTown, res), crews: () => livingCrews(livingTown),   // LW5: its sailors by their ships' clock; the crews lying here
           // LW7: a townsperson's place by the lives, a hand's death, the player's, and the town's own lines of sight
@@ -5849,6 +5887,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // before every banner the town flies, measured here; hung and lit while a Festival rules (scenes/seatFestival.js)
     const festivalAnchors = pixelBoardSplit ? festivalBannerAnchors({ frames: pixelHomeFrames, tavernKeys: buildingKeysOfType(locBlocks, makeBuildingKey, TALK_BUILDING_TYPES.Tavern), boards: pixelBoards, bounty: pixelBoardSplit }) : null;
     const festivalLanterns = festivalAnchors ? festivalLanternsOf([...(seatAnchors ?? []), ...festivalAnchors]) : null;
+    // CHAP7b (Chapters-Arc 8): the town's guild halls and temples, by their guild - a chapter's patron's banners hang at them.
+    // AUDIT CHAP5 C5: online alone (the sheet's) - offline no banner hangs, and the buildings' names are drawn for nothing
+    const pixelChapterHalls = new Map(chapterSheet && dfLocation && locBlocks ? buildingSummaries(dfLocation.exterior?.buildings ?? [], locBlocks, { locationIndex: dfLocation.locationIndex ?? 0, locationName: dfLocation.name })
+      .filter((b) => (b.buildingType === TALK_BUILDING_TYPES.GuildHall || b.buildingType === TALK_BUILDING_TYPES.Temple) && b.factionId > 0)
+      .map((b) => [b.buildingKey, b.factionId]) : []);
     // SEAT2a part four (Seats-Arc 6.2): the battlefield the town's own records give - the banners, the Throne, the camps
     // (systems/siegeField.js), the same on every machine; sent for a battle's pass from the Seat tab
     const siegeField = pixelBoardSplit ? siegeFieldOf({
@@ -5874,6 +5917,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       _lookV: homeLookRead,   // HOME-LOOK (AUDIT)
       homeFrames: pixelHomeFrames, homeRegion: dfLocation?.regionIndex ?? 0,   // HOME-YARD: each building's frame, and the town's region (a yard's pieces are paid there)
       seatAnchors, _boardSplit: pixelBoardSplit, festivalAnchors, festivalLanterns,   // SEAT1a (above); FESTIVAL-STAGE (above)
+      chapterHalls: pixelChapterHalls,   // CHAP7b (above)
       beach: beach ?? null,   // AUDIT LANDFORMS II H2: DFU's own blend in a location's pixel with the row on - where a gathering node asks the beach line
       px, py, terrain, water, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, hearths: pixelHearths, animals: pixelAnimals, springs: pixelSprings, skyBase: climate.skyBase, samples, natureCount: nature.length,
       tilemapBytes, season,   // GR1: the placer reads the tiles and the season
@@ -7025,7 +7069,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const fitPx = fit ? { ox: fit.ox * fit.ppu, oy: fit.oy * fit.ppu, ppu: fit.ppu } : null;
       terrainGen.setTamriel({ trace, fit: fitPx });
       StreamingWorldState.frame = tamrielLand ? tamrielFrameInBay() : null;
-      console.log(`[tamriel] the picture traced: ${trace.land.reduce((n, v) => n + v, 0)} land pixels; the Bay fitted at picture (${fit?.ox}, ${fit?.oy}) x${fit?.ppu}, ${fit ? Math.round((100 * fit.score) / fit.cells) : 0}% of its cells agreeing`);
+      console.log(`[tamriel] the picture traced: ${trace.land.reduce((n, v) => n + v, 0)} land pixels; the Bay fitted at picture (${fit?.ox}, ${fit?.oy}) x${fit?.ppu}, ${fit ? Math.round((100 * fit.score) / fit.cells) : 0}% of its cells and ${fit ? Math.round((100 * fit.seam) / fit.edge) : 0}% of its edge agreeing`);   // TAMRIEL4: the seam the fit is made for
     }).catch((e) => console.warn('[tamriel] TMAP00I0/TAMRIEL2 unavailable; the authored continent stands:', e?.message ?? e));
   }
   // TO1: the mod's own control strip, beside it. Its own loader
@@ -11934,6 +11978,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     built: () => built, seatAt: (mapId) => seatHere(mapId), translation: (px, py) => state.pixelTranslation(px, py), eye: () => cam.pos,
     version: () => (seatBook.open === true ? 1 : 0),
   }) : null;
+  // CHAP7b (Chapters-Arc 8): a patron's banners at its chapter's halls (scenes/chapterBanners.js), on the same pass, off the
+  // chapter sheet - the hall's guild in the pixel's politic region, as its prices read it. AUDIT CHAP5 C2: the building's
+  // faction read as its chapter's (a temple's templar order its divine's - livingChapterOf's law)
+  const chapterBanners = chapterSheet && bannerPass ? createChapterBanners({
+    built: () => built, regionAt: (px, py) => { try { return maps.getRegionIndexAt(px, py); } catch { return null; } },
+    chapterOf: (faction, region) => chapterSheet.chapterOf(chapterFactionOf(faction, townTalk?.factionDict ?? null) ?? faction, region),
+    translation: (px, py) => state.pixelTranslation(px, py), eye: () => cam.pos,
+  }) : null;
   // FESTIVAL-STAGE (Seats-Arc 7.6): whether a Festival rules at a town - its streets' music, its lanterns lit
   const festivalStage = seatBook ? createFestivalStage({ seatAt: (mapId) => seatHere(mapId), version: () => (seatBook.open === true ? 1 : 0) }) : null;
   /** GUILD1d + SEAT1a: this frame's banners - the halls' and the seats', the nearest BANNERS_MAX of them. */
@@ -11947,6 +11999,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     all.length = 0;
     for (const b of hallBanners?.list() ?? []) all.push(b);
     for (const b of seatBanners?.list() ?? []) all.push(b);
+    for (const b of chapterBanners?.list() ?? []) all.push(b);   // CHAP7b
     if (all.length <= BANNERS_MAX) return all;
     _hungEye = cam.pos;
     all.sort(_hungByEye);
@@ -16161,7 +16214,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       // own question, because that is the function that would refuse.
       coordsAllowed: () => !!travelOptions,
       // TravelOptionsMapWindow.cs:472 - `GuildManager.GetGuild(MagesGuild).Rank`.
-      magesGuildRank: () => joinedGuildOfGroup(activeMemberships(playerEntity), GUILD_GROUPS.MagesGuild)?.rank ?? 0,
+      // CHAP4b: and a seat's rank at its own chapter's hall - the paid teleport is the hall's service, pushed from there
+      magesGuildRank: () => Math.max(joinedGuildOfGroup(activeMemberships(playerEntity), GUILD_GROUPS.MagesGuild)?.rank ?? 0, seatRankHere(GUILD_FACTION_IDS.MagesGuild) ?? 0),
       payTeleport: (cost) => { deductGold(playerEntity, cost); },
       // :384-388 - the place's OWN discovered buildings, the port's
       // discovery store keyed the same way (systems/discovery.js).
@@ -16208,7 +16262,8 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  (BuildingDirectory.GetBuildingsOfFaction, :147-154), which is the
    *  summaries walk the town map builds from, not the talk directory's
    *  doors. */
-  const revealMemberGuildHalls = () => {
+  const revealMemberGuildHalls = ({ witness = false } = {}) => {
+    if (witness) chapterSheet?.refresh();   // CHAP3c: the chapter sheet asked at a town's entry, for its halls' prices
     const px = playerTravelPixel();
     const key = `${px.x},${px.y}`;
     const dfLoc = locationIndex.get(key);
@@ -16231,8 +16286,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     // true` into the discovery record snapshotDiscovery saves - a
     // placeholder plate on the town map that outlives the load.
     Promise.resolve(townTalk.ensureFactions?.()).then(() => {
-      revealGuildHallsOnMap(activeMemberships(playerEntity), locationId, buildings,
+      revealGuildHallsOnMap(revealingMemberships(playerEntity), locationId, buildings,   // AUDIT CHAP2 D4: either book's
         { factionName: (id) => townTalk.factionDict?.get(id)?.name ?? '' });
+      // CHAP2a (Chapters-Arc 4): and online, at the entry edge, the town's guild halls read off these same buildings are
+      // reported - once a UTC day a town, the Chapters' witnesses (net/npcHallBook.js). A town with none reports nothing.
+      // AUDIT CHAP2 U1: only off the layout every client stands in - the homes' own gate (WD3): a town whose pinned layout
+      // is not heard yet, or whose pack did not load, is another town's buildings, and an account's first answer stands.
+      // U2: the region the town's own board reads (openNoticeBoard - the politic map at its pixel), so its chapter's writs
+      // post where its board asks for them
+      if (witness && hallBook && (!homeLayoutsOnline || (_homeLayoutsApplied && !worldDataPacksMissing().length))) {
+        const factions = hallFactionsOf(buildings, townTalk.factionDict ?? null);
+        const region = (() => { try { return maps.getRegionIndexAt(px.x, px.y); } catch { return null; } })();
+        if (factions.length && Number.isInteger(region)) hallBook.witness({ key: dfLoc.mapTableData.mapId >>> 0, region, factions });
+      }
     }).catch(() => {});
   };
   // A2: the exterior automap's own dispatch half (DaggerfallUI.cs
@@ -20110,6 +20176,39 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT RENOWN1 UI-4: a refusal that ends reporting is SAID - the sentences were written and nothing ever showed them
     onStop: (error) => tradeSay(`${accountRefusalText(error)} This character is earning no Renown.`),
   }) : null;
+  // CHAP1 (bible/11-Multiplayer/Chapters-Arc.md 3; Mac: "Server-owned"): THE ROLL - online, this realm character's
+  // standing with Daggerfall's guilds (the twenty-two guild factions and its memberships) is the account service's. Read
+  // as it comes online - the save's standing its seed, taken once - and written over the save's; then what DFU's own law
+  // moves here is claimed back, and the service's answer adopted (net/npcRollTracker.js). Built only online and only for
+  // a realm character, as the Renown tracker is; offline, and while CHAPTERS_OPEN keeps the account out, the save keeps
+  // it exactly as DFU does.
+  // AUDIT CHAP: the glue is the tracker module's own (rollEntityDoors), so it is pinned there; what was never claimed
+  // rides the save (`rollKept`, above) - the page's going sends nothing (C1/T1: the lease is given up first)
+  const rollTracker = onlineOn && realmSession ? createRollTracker({
+    io: accountRoll({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }),
+    character: () => realmSession.id,
+    lease: () => realmSession.lease,
+    ...rollEntityDoors(() => playerEntity),
+    kept: () => rollKept,
+    keep: (k) => { rollKept = k; },
+    onCeiling: (factions) => { for (const f of factions) townTalk.say(rollCeilingLine(playerEntity?.factionRep?.dict?.get(f)?.name)); },
+    // CHAP4b: ranks 8 and 9 are seats - the book held at 7 said once a hold, the seats as they stand and as they move
+    onCapped: (factions) => { const line = bookCappedLine(factions); if (line) chatNotice(line); },
+    onSeats: (seats, before) => { for (const line of seatLinesOf(before, seats)) chatNotice(line); },
+    // shut: the save keeps it, quietly - AUDIT CHAP3 C9: a build too old for the service says so, as Renown's stop does
+    onStop: (error) => {
+      if (error === 'roll-seed' || error === 'roll-claim') chatNotice(accountRefusalText(error));
+      else if (error !== 'chapters-closed') console.warn('[roll] the Roll stopped:', error);
+    },
+  }) : null;
+  // CHAP4b: the rank the playing character's seat gives it at a hall of `faction` where it stands - the politic region,
+  // as the chapter sheet's (AUDIT CHAP3 C6) - null offline, before the Roll's first word, or with no seat here
+  const seatRankHere = (/** @type {number} */ faction) => {
+    if (!rollTracker?.held || rollTracker.stopped) return null;
+    const px = playerTravelPixel();
+    const region = (() => { try { return maps.getRegionIndexAt(px.x, px.y); } catch { return null; } })();
+    return seatRankAt(rollTracker.seats, faction, region);
+  };
   // SIGIL1: THE DRINK - the weapon in my hand takes every point of Renown XP I earn with it (a kill, a quest), and a
   // rise to a new stage is said (systems/sigil.js drinkSigil: nothing while my Renown is unknown). Past the hour's cap
   // the service keeps nothing, and the sigil drinks nothing either - as the page last heard it.
@@ -20714,6 +20813,26 @@ export async function bootWorld(canvas, renderer, params, status) {
           if ('error' in seatCmd) { say(seatCmd.error); return true; }
           if (!seatBook) { say(accountRefusalText('seats-closed')); return true; }
           seatBook.strike(seatCmd.key).then((r) => say(r.text), () => say(accountRefusalText('server')));
+          return true;
+        }
+        // AUDIT CHAP2 E1: `/hall audit` and `/hall strike <map id>` - the halls' audit list for the region this player
+        // stands in, and a false town struck. NOT GUARDED HERE (RED1's law): the service asks whether this player may.
+        const hallCmd = parseHallCommand(text);
+        if (hallCmd) {
+          const say = (line) => chatLog.push(tabId, { text: line, system: true });
+          if ('error' in hallCmd) { say(hallCmd.error); return true; }
+          if (!hallDoor) { say(accountRefusalText('chapters-closed')); return true; }
+          if (hallCmd.op === 'strike') {
+            hallDoor.strike(hallCmd.key).then((r) => say(r?.ok ? `Town ${hallCmd.key}'s guild halls are struck (${r.data?.reports ?? 0} reports).` : accountRefusalText(r?.error)),
+              () => say(accountRefusalText('server')));
+          } else {
+            const px = playerTravelPixel();
+            const region = (() => { try { return maps.getRegionIndexAt(px.x, px.y); } catch { return null; } })();
+            hallDoor.halls(region).then((r) => {
+              if (!r?.ok) { say(accountRefusalText(r?.error)); return; }
+              for (const line of hallAuditLines(r.data, (f) => hallPosterName(f) ?? String(f))) say(line);
+            }, () => say(accountRefusalText('server')));
+          }
           return true;
         }
         // VOID (Seats-Arc 18): `/siege void <key>` - a moderator's void of the seat's battle this week, won by an exploit.
@@ -22656,8 +22775,31 @@ export async function bootWorld(canvas, renderer, params, status) {
     // SILVER-WAYS: the claiming character always - its guild's deed asks it, where the scan has not found the region
     return site ? { region: site.region, character } : character ? { character } : null;
   };
+  /** CHAP2b (Chapters-Arc 3.3, 4): a receipt the service credited to the character's chapters moved its Roll on the
+   *  service - the tab asks the Roll's word at once (npcRollTracker.js refresh) and the guilds' memory is said. */
+  const rollHeard = (/** @type {any} */ a) => {
+    const c = a?.ok ? a.data?.chapters : null;
+    if (c?.counted) {
+      rollTracker?.refresh();
+      // AUDIT CHAP3 C8: and the Merit its chapters counted it, as a member's own writ's line says its own
+      const merit = (c.merit ?? []).reduce((n, /** @type {any} */ x) => n + (Number(x?.amount) || 0), 0);
+      const line = hallRememberLine((c.credited ?? []).map((x) => x.f), merit);
+      if (line) chatNotice(line);
+    }
+    return a;
+  };
+  /** AUDIT CHAP3 C3: a kept receipt's claim, offered as the page comes up, waits for the gate's scan - its region is the
+   *  seats' and the chapters' word, and a claim without one counts for neither - GATE_SCAN_WAIT_MS at most; past it the
+   *  claim goes as before, with no region. */
+  const GATE_SCAN_WAIT_MS = 90_000;
+  const _gateClaimsFrom = Date.now();
+  const gateClaimReady = () => {
+    if (_gateScan || Date.now() - _gateClaimsFrom >= GATE_SCAN_WAIT_MS) return true;
+    warmGateScan();
+    return false;
+  };
   const gateClaims = params.has('online') ? createGateClaims({
-    claim: (r) => _accountGates.claim(r, gateSeatWord(r)),
+    claim: (r) => (gateClaimReady() ? _accountGates.claim(r, gateSeatWord(r)).then(rollHeard) : Promise.resolve({ ok: false, error: 'offline' })),
     me: _accountGates.me,
     nowS: relayNowS,
     store: _spoilsStore,
@@ -22735,7 +22877,9 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  standing here (another's track moved, not this one's - RENOWN-CHAR: as before RENOWN-ACCOUNT). */
   const _accountRaids = accountRaids({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });
   const raidClaims = params.has('online') ? createRaidClaims({
-    claim: _accountRaids.claim,
+    // CHAP2b: and the town defended remembered by its chapters - AUDIT CHAP3 C4: said, and the Roll refreshed, on the page
+    // of the character that fought (a kept claim lands under whichever plays)
+    claim: (r, ch, ...a) => _accountRaids.claim(r, ch, ...a).then((x) => (ch === characterIdOf(playerEntity) ? rollHeard(x) : x)),
     me: _accountRaids.me,
     nowS: relayNowS,
     store: _spoilsStore,
@@ -25754,6 +25898,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     const work = profBook?.state.open === true && Number.isInteger(region) ? {
       book: profBook, region, regionName: REGION_NAMES[region] ?? 'the region', countName: materialCountLabel,
       onTaken: (r) => profWritTaken(r),
+      sayLate: (text) => chatNotice(text),   // AUDIT CHAP3 C5: a writ filled after the board closed says its line in the chat
+      // CHAP4d: a chapter's Master names its Focus here, for the character playing
+      setFocus: hallDoor && realmSession ? (faction, focus) => hallDoor.focus(realmSession.id, faction, region, focus) : null,
+      // CHAP6c: and a member backs its chapter's Season's side here, for the character playing
+      back: hallDoor && realmSession ? (faction, side) => hallDoor.back(realmSession.id, faction, region, side) : null,
+      // CHAP7b: and its guild's guildmaster bids for a chapter's patronage here, for the Season after
+      patron: hallDoor && realmSession ? (faction, marks) => hallDoor.patron(realmSession.id, faction, region, marks, mintMarksRid()) : null,
       // PROF6: the guild writs and commissions beside the Court's, while the Marks are this account's too
       ...(writBook && marksBook?.state?.open !== false ? {
         writs: writBook, regionNameOf: (r) => REGION_NAMES[r] ?? 'another region', pieces: commissionPieces,
@@ -25799,11 +25950,22 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  board; false where it cannot be read. */
   const openRecordsFromBoard = async (st) => {
     const board = townTalk.overlay;   // AUDIT SEATS-2 C5: the board that asked - a book read after it closed is shown over nothing else
-    const r = st && seatBook ? await seatBook.records(st.key) : null;
-    if (townTalk.overlay !== board) return false;
-    if (!r?.data) return false;
-    townTalk.showOverlay(hallOfRecordsWindow(st, r.data.rows, r.data.zero, seatArmsOf));   // HERALDRY-SHOWN: its Roll of Arms
+    const w = st && seatBook ? await hallOfRecordsRead(st) : null;   // AUDIT CHAP4 C5: the palace's own read - its chapters too
+    if (townTalk.overlay !== board) { try { w?.dispose?.(); } catch { /* already gone */ } return false; }
+    if (!w) return false;
+    townTalk.showOverlay(w);
     return true;
+  };
+  /** AUDIT CHAP4 C5, C6: A SEAT'S HALL OF RECORDS, READ - the one read both its doors make (the palace's shelf, the seat's
+   *  board): the seat's Chronicle and, where the Chapters are this account's, its region's chapters' (CHAP4d), asked
+   *  TOGETHER (the book waited a second round trip on every press); the book's window, or null where the seat's own
+   *  cannot be read - a refusal of the chapters' leaves the seat's book as it was. */
+  const hallOfRecordsRead = async (seat) => {
+    const [r, ch] = await Promise.all([
+      seatBook.records(seat.key),
+      hallDoor && rollTracker?.held ? hallDoor.history(seat.region).catch(() => null) : null,
+    ]);
+    return r?.data ? hallOfRecordsWindow(seat, r.data.rows, r.data.zero, seatArmsOf, ch?.ok ? ch.data : null) : null;   // HERALDRY-SHOWN: its Roll of Arms
   };
   /** THE ONE CONSTRUCTION SEAM (PROF0 17.2): every Notice Board window this host opens - a town's, and (GUILD1e) the
    *  board in a guild's hall - is built here, with the book, the character and the shared clock the service keeps. */
@@ -25940,7 +26102,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     // PROF6 (FOUND): the XP is the writ's material's profession's - a metal writ's Mining, a wood writ's Logging - never
     // always Herbalism's, as this line said since PROF2 (the answer's track names it)
     const prof = professionName(d.track?.profession) || 'profession';
-    return `Writ filled: ${Number(d.pay ?? 0).toLocaleString('en-US')} silver struck to your account, ${Number(d.renown?.credited ?? 0).toLocaleString('en-US')} Renown and ${Number(d.pay ?? 0) * 2} ${prof} XP.${rose}`;
+    // CHAP2a (Chapters-Arc 4): a hall writ's guild remembers it - the service moved the Roll, and the tracker asks for its
+    // word at once (net/npcRollTracker.js refresh), so the standing on this page is the Roll's before the next claim
+    // AUDIT CHAP2 C1: a repeat too - it is the answer of a delivery whose first answer was lost, so nobody asked then;
+    // C7: the guild's memory said only to a character the Roll holds (one without is paid, and nothing more)
+    // CHAP3a: a member's own writ as a hall writ, and the Merit its chapter counted it
+    if (isChapterWrit(d.writ?.kind)) rollTracker?.refresh();
+    const hall = isChapterWrit(d.writ?.kind) && !d.repeat && rollTracker?.held ? hallPosterName(d.writ.faction) : null;
+    const merit = hall && Number(d.merit) > 0 ? `, ${Number(d.merit).toLocaleString('en-US')} Merit to its chapter here` : '';
+    return `Writ filled: ${Number(d.pay ?? 0).toLocaleString('en-US')} silver struck to your account, ${Number(d.renown?.credited ?? 0).toLocaleString('en-US')} Renown and ${Number(d.pay ?? 0) * 2} ${prof} XP.${hall ? ` The ${hall} will remember it${merit}.` : ''}${rose}`;
   };
   /** SD2c: the server's word on a found Super dungeon while it stands - the map's own mark, under the red seal. */
   const noticeSdCard = () => sdNoticeCard(sdHost?.mapMark() ?? null, sdHost?.hollow()?.site?.cityName ?? '');
@@ -26932,6 +27102,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     serpentFrame();   // SERPENT1: the sea serpent's sighting (to the dead too), and on the street its fight and its bar
     sdFrame();   // SD2b: the Hollow stood or taken down, its find, its lines - SD2d: in every mode, so its end reaches a player inside it
     renownTracker?.tick();   // RENOWN1: what this character earned, to the account service when a report is due
+    rollTracker?.tick();   // CHAP1: this character's standing with the guilds - read once, then what moved claimed when due
     peerMenuFrame();   // PEERMENU1: the bind's hold timer
     peerFxFrame();   // PEERFX1: the others' blows and hurts, played
     // REALM-DOOR: the relay shut its door on this tab's token as naming no realm character of its account - the character
@@ -27916,6 +28087,35 @@ export async function bootWorld(canvas, renderer, params, status) {
     // again, without waiting, when the guild book's look is old), the hall bought and opened through the book, and the
     // hall's chest: the guild Stores on the Guild tab
     seatShopFactor: (b) => seatEdicts.shopFactor(b),   // SEAT1d (Seats-Arc 7.2, 7.6): a seat town's shops - its holder's members, Market Day
+    // CHAP7b (Chapters-Arc 8): the playing account's player guild - a chapter's patron's members pay the Thriving prices.
+    // AUDIT CHAP5 C1: asked again, without waiting, when the book's look is old (the seats' own guildId's way) - the book
+    // looks first at the Guild tab, so a fresh page's member paid the band's price until it was opened
+    guildId: () => { const g = guildBook; if (g?.stale?.()) g.refresh().catch(() => {}); return g?.guild?.id ?? null; },
+    // CHAP3c: a hall's chapter's Strength, its band on the hall - AUDIT CHAP3 C6: in the region the chapters are keyed by
+    // (the politic map's, as the hall's witness and the board read it), never the location record's. CHAP6d: the whole
+    // chapter (chapterSheet.js chapterOf) - its band and its Season on the hall
+    chapterHere: (faction) => {
+      const px = playerTravelPixel();
+      const region = (() => { try { return maps.getRegionIndexAt(px.x, px.y); } catch { return null; } })();
+      const c = Number.isInteger(region) ? chapterSheet?.chapterOf(faction, region) ?? null : null;
+      // AUDIT CHAP5 C1: a hall with a patron has the guild book look at once - the hall's popup asks this first (its shut
+      // halls), so the book has its guild before a window's price reads it
+      if (c?.patron && guildBook?.stale?.()) guildBook.refresh().catch(() => {});
+      return c;
+    },
+    // CHAP4b: the rank the playing character's seat gives it at a hall of this guild here (the politic region, as the
+    // sheet's); and the highest rank DFU's review gives while the Roll holds - 8 and 9 are seats (Chapters-Arc 3.5)
+    chapterSeatRank: (faction) => seatRankHere(faction),
+    // CHAP5a (Chapters-Arc 9): the hall's roll - its chapter here (the politic region, as the sheet's), its title and
+    // lines off the sheet; null offline, for a chapter the sheet does not name, for a hidden guild
+    chapterRoll: (faction) => {
+      const px = playerTravelPixel();
+      const region = (() => { try { return maps.getRegionIndexAt(px.x, px.y); } catch { return null; } })();
+      const c = Number.isInteger(region) ? chapterSheet?.chapterOf(faction, region) ?? null : null;
+      const title = c ? chapterRollTitle(faction, region) : null;
+      return title ? { title, lines: [...chapterRollLines(faction, c), ...chapterSeasonLines(faction, /** @type {number} */ (region), c)] } : null;   // CHAP6c: and its Season
+    },
+    rollRankCeiling: () => (rollTracker && !rollTracker.stopped ? ROLL_BOOK_RANK_MAX : null),   // AUDIT CHAP4 C3: from the page's first frame - before the Roll's first word DFU's review promoted to 8 and 9
     // SEASON1 part three (Seats-Arc 9.2): a seat's Hall of Records - whether a town is a seat while the seats are open, and
     // its Chronicle read as a book's window (null where it cannot be read)
     hallOfRecords: {
@@ -27923,8 +28123,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       read: async (mapId) => {
         const seat = seatHere(mapId);
         if (!seat || !seatBook) return null;
-        const r = await seatBook.records(seat.key);
-        return r.data ? hallOfRecordsWindow(seat, r.data.rows, r.data.zero, seatArmsOf) : null;   // HERALDRY-SHOWN: its Roll of Arms
+        return hallOfRecordsRead(seat);   // CHAP4d: and the region's chapters' Chronicle; AUDIT CHAP4 C5, C6: the one read, both together
       },
     },
     // SEAT-HALL (Seats-Arc 7.2: "the palace interior is the holder's guild hall"): a palace seat's palace, as its visitor
@@ -32654,7 +32853,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // or Dark Brotherhood member's RegisterEvents subscribes to
         // (ThievesGuild.cs:197-206, handler :227-229), so the hall
         // reveal follows the member into every town.
-        revealMemberGuildHalls();
+        revealMemberGuildHalls({ witness: onlineOn });   // CHAP2a: and the town's halls witnessed, online
         // HUB1: walking into a region's hub says so, online - "Daggerfall, capital of the Kingdom of Daggerfall."
         // SEAT1a (Seats-Arc 3.3): a seat town says its Charter instead - "Anticlere. Its Charter is unheld." - and this
         // client, standing in it, reports the seat it derived (once a day; net/townSeatBook.js witness)

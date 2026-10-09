@@ -270,7 +270,7 @@ import { mintArenaReceipt } from '../../src/net/arenaReceipt.js';
 import { owIdInCell, owRowInCell, owRowSane, owFoldSpent, owFoldRows, owRowsBehind, owPrune, owLedgerOf, owLedgerEmpty, toWelcome } from '../../src/net/overworldLaw.js';
 
 import { serpentGate, validSerpentOut, SERPENT_INTERNAL_FELL, SERPENT_TELL_RETRY_MS, SERPENT_FIGHT_KEY, SERPENT_FIGHTS_KEY, SERPENT_SITES_MAX, serpentFightId, SERPENT_FELLS_KEY, SERPENT_FELLS_MAX, SERPENT_RC_PREFIX } from './relay.js';   // SERPENT1: the serpent's frame and its doors (the wire's, through relay.js - walked last, as ever)
-import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, OWN_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, amapShareGate, AMAP_ROOM_HZ_MAX, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, CARAVAN_DECOR_KEY, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, CARAVAN_DOC_MIN_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, wedGate, WED_HZ_MAX, renownGate, renownRoomGate, lookGate, eventGate, EVENT_KEY, validLiveEvent, gateGate, siegeGate, SIEGE_IN_MS, GATE_INTERNAL_FELL, SOCIAL_ROOM, validGateOut, HELLO_WAIT_MS, GATE_TELL_RETRY_MS, gateReceiptKey, GATE_BRAIN_MIN, GATE_HERE_HOLD_MS, guildGate, guildRoomGate, GUILD_CHAT_ROOM_HZ_MAX, SEAT_ELSEWHERE, raidGate, RAID_INTERNAL_CLEAN, RAID_INTERNAL_DAY, RAID_DAY_ASK_MS, raidTownsGate, RAID_TELL_RETRY_MS, RAID_CLEANS_MAX, RAID_LEDGER_PREFIX, raidLedgerKey, RAID_RC_PREFIX, raidReceiptKeyOf, RAID_RC_KEEP, RAID_RC_KEEP_MS, mapPixelOfWire, validRaidOut, worldRoom, sharedClassicMinutes, wallMsForClassicMinutes, isRegionRoom, travHubGate, travRoomGate, TRAV_STALE_MS, TRAV_WELCOME_MAX, owGate, owRoomGate, OW_LEDGER_KEY, REALM_DOOR_WORD, riteRelayGate, validRiteOut, sanitizeName, RITE_INTERNAL_BROKEN, RITE_INTERNAL_DAY, RITE_TELL_RETRY_MS, RITE_KEY, RITE_BY_MAX, RITE_CIRCLES_MAX, RITE_HUB_CIRCLES_MAX, RITE_ASK_EVERY_MS, RITE_ASK_TIMEOUT_MS, arenaGate } from './relay.js';
+import { roomOf, parseClient, inRange, inRangeOf, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, OWN_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, amapShareGate, AMAP_ROOM_HZ_MAX, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, CARAVAN_DECOR_KEY, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, CARAVAN_DOC_MIN_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, wedGate, WED_HZ_MAX, renownGate, renownRoomGate, lookGate, eventGate, EVENT_KEY, validLiveEvent, gateGate, siegeGate, SIEGE_IN_MS, GATE_INTERNAL_FELL, SOCIAL_ROOM, validGateOut, HELLO_WAIT_MS, GATE_TELL_RETRY_MS, gateReceiptKey, GATE_BRAIN_MIN, GATE_HERE_HOLD_MS, guildGate, guildRoomGate, GUILD_CHAT_ROOM_HZ_MAX, SEAT_ELSEWHERE, raidGate, RAID_INTERNAL_CLEAN, RAID_INTERNAL_DAY, RAID_DAY_ASK_MS, raidTownsGate, RAID_TELL_RETRY_MS, RAID_CLEANS_MAX, RAID_LEDGER_PREFIX, raidLedgerKey, RAID_RC_PREFIX, raidReceiptKeyOf, RAID_RC_KEEP, RAID_RC_KEEP_MS, mapPixelOfWire, validRaidOut, worldRoom, sharedClassicMinutes, wallMsForClassicMinutes, isRegionRoom, travHubGate, travRoomGate, TRAV_STALE_MS, TRAV_WELCOME_MAX, owGate, owRoomGate, OW_LEDGER_KEY, REALM_DOOR_WORD, riteRelayGate, validRiteOut, sanitizeName, RITE_INTERNAL_BROKEN, RITE_INTERNAL_DAY, RITE_TELL_RETRY_MS, RITE_KEY, RITE_BY_MAX, RITE_CIRCLES_MAX, RITE_HUB_CIRCLES_MAX, RITE_ASK_EVERY_MS, RITE_ASK_TIMEOUT_MS, arenaGate } from './relay.js';
 import { holdemGate, holdemSitRoomGate } from './relay.js';   // CARDS5: the card table's gate; AUDIT CARDS-3 A4: the room's sits
 import { newTable, topUp as holdemTopUp, sit as holdemSit, sitRefusal as holdemSitRefusal, stand as holdemStand, actAt as holdemAct, tick as holdemTick, nextAt as holdemNextAt, emptyTable as holdemEmpty, tableLook as holdemLook, stateDelta as holdemDelta, holdemGoldTable } from '../../src/net/holdemTable.js';   // CARDS5: THE RELAY DEALS - the room's card tables (holdemTable.js imports only cardLaw.js, which imports only dice.js)
 // WILD1 (2026-10-07, the owner: "Wrothgarian mountains need to be turned into a open pvp zone"): ONE FILE JOINS THE
@@ -1434,6 +1434,115 @@ export class Room {
     }
   }
 
+  /**
+   * PERF-RELAY1 (2026-10-09, Mac: "Yes and audit everything", of PERF-NEXT item 15 - bible/07-Rendering/Performance-Next.md;
+   * bible/11-Multiplayer/Scale-Arc.md PERF-RELAY1): A POSE AND A PING, IN A METHOD OF THEIR OWN. They were an arm of
+   * `_message`, and `_message` is past V8's ceiling for an optimized function (--max-optimized-bytecode-size): it runs
+   * in the interpreter and the baseline compiler for the life of the object, and so did the room's hottest path - every
+   * pose of every player, fanned to everyone in range. Here, under the ceiling, it is optimized like any small method;
+   * the arm's every line is the arm's, in its order, but the fan's walk and its range test (below), and `_message`
+   * hands it the frame as the arm took it.
+   * @param {any} ws @param {any} a  the socket's attachment as `_message` read it @param {any} m  the parsed frame
+   */
+  async _poseFrame(ws, a, m) {
+    // the frame gate (A8): a pose and a ping share the socket's bucket, and a channel's pose is gated and counted
+    // BEFORE it is declined (AUDIT CHAT A3: the early return sat above the gate, so a channel took frames unmetered)
+    const chat = isChatRoom(a.key);
+    const posed = m.t === 'pose' && !chat;
+    // SLAM8 (AUDIT SLAM): a KEEPALIVE is a pose the sender did not move (net/wire.js poseChanged, the client's own
+    // law for not sending one). Read BEFORE the meter, because the meter overwrites `a.pose` with this very frame.
+    // SLAM13 (AUDIT SLAM A2): AND THE WHOLE FAN HAS A FLOOR. The port's client sends an unmoved pose every
+    // HEARTBEAT_MS and no sooner; a modified one sends them at the pose gate's ceiling, and each went to the whole
+    // room - 20 x 199 sends a second from one socket, beyond what the tier bounds a MOVER to. A keepalive is heard
+    // whole only when the sender's last whole fan (`kept`, on the PASS patch as `turn` is) is KEEPALIVE_FAN_MS
+    // old; inside the floor it is tiered like a move. An honest heartbeat always clears half its own period.
+    const now = Date.now();
+    // SLAM15 (AUDIT SLAM FINAL A6): AND A STOP IS HEARD WHOLE TOO. The pose that ends a walk - the first with `mv`
+    // 0 after one that moved - carries the place the player actually stopped, and under the tier three far slices
+    // in four never heard it: they eased to the last pose they were served, up to a second of walking short of
+    // where the player stands, and stood there wrong until the next heartbeat corrected it five seconds on. A
+    // stop is one frame per walk, so it is fanned whole like a keepalive, under the same floor: a client toggling
+    // `mv` at the gate's ceiling buys the same two whole fans a second a keepalive flood does, and no more.
+    const unmoved = posed && !!a.pose && !poseChanged(a.pose, m.p);
+    const stopped = posed && !!a.pose && (a.pose.mv | 0) !== 0 && (m.p.mv | 0) === 0;
+    const still = (unmoved || stopped) && now - (a.kept ?? 0) >= KEEPALIVE_FAN_MS;
+    // SLAM6: `turn` is the sender's own pose counter, and the only state the far tier needs - which slice of the
+    // listeners past POSE_FAN_MAX this pose serves. Masked, so an attachment a socket carries for a day stays small.
+    // SLAM8: and it rides the PASS patch. `_meter` writes its ordinary patch back whether or not the gate passed, so
+    // a counter put there counted poses RECEIVED while the fan below serves poses RELAYED. Any drop pattern sharing
+    // a factor with POSE_FAR_SHARE then pinned the served slice to one parity and starved the rest - at exactly
+    // twice the gate the bucket settles into pass/fail alternation, so two of the four slices were never served and
+    // half the far tier heard that sender no more. The port's own client cannot reach that rate; a modified one can,
+    // and an event is where those turn up.
+    // PVP-REF (Seats-Arc 6.1): A FIGHTER'S STEP IS JUDGED - faster than the referee's ceiling, it is neither kept nor
+    // relayed, and the fighter is pulled back to its last good pose
+    // AUDIT-SEATS R2/R4: AND THE POSE GATE IS SPENT FIRST, in a battle room. The step was judged BEFORE the meter, so a
+    // pose the 20 Hz gate then dropped had already moved the referee's fighter (a burst outran the ceiling it never
+    // reached the gate with), and a refused step returned before the meter - 5,000 refused poses in a millisecond bought
+    // 5,000 `back` frames and never a strike. Over the rate a fighter's pose is dropped WHOLE now - neither judged, kept
+    // nor relayed - and struck; under it, judged, and a refusal has spent its token like any pose.
+    const battle = posed && isBattleRoom(a.key) && a.sub;
+    if (battle && !this._spend(ws, now, poseGate, 'bucket', 'drops', 'too many poses')) return;
+    const step = battle ? await this._siegeStep(ws, a, m.p, now) : null;
+    if (battle && !step) return;
+    const turned = posed ? { turn: ((a.turn | 0) + 1) & 0xffff, ...(still ? { kept: now } : {}), ...(isSdRoom(a.key) ? { pAt: now } : {}) } : {};   // AUDIT SD III (F3): an Hour's pose, stamped - the fight's census reads its age
+    const met = battle ? this._metered(ws, a, true, { pose: m.p }, turned) : this._meter(ws, a, now, { pose: posed ? m.p : a.pose }, turned, posed && !stopped);   // SCALE2b: a pose's write is lazy - a stop's is not, it is where the player stands
+    if (!met) return;   // over the rate: kept as the latest, not relayed
+    if (m.t === 'ping') { this._send(ws, '{"t":"pong"}'); return; }   // a ping that reached the object (the runtime answers the exact one in its sleep)
+    if (chat) return;   // a channel is no place: a pose there is kept by no one and reaches no one
+    if (posed) this._metrics.c.poses++;   // SCALE2b: a pose taken - the one a room fans
+    // AUDIT-SEATS T2 (Seats-Arc 6.6: "no body drawn to fighters, no collider, excluded from every banner count, a free
+    // camera over the town"): A SPECTATOR IS NO BODY - in a battle room a socket that is no fighter (a spectator's pass,
+    // or a fighter's before its `in`) keeps its camera on its own attachment and is drawn to nobody: the fan below said
+    // its every pose, and the fighters drew sixty spectators among them
+    if (step === 'eye') return;
+    // ARENA4: a bout's room - a fighter's pose is the referee's (its speed checked, its place the reach's); HOTFIX 1003f: a
+    // spectator's is fanned as anyone's - the stands are bodies (a private session's stranger's reaches nobody, below)
+    if (posed && m.p?.dd && typeof a.sub === 'string' && a.sub && isSdRoom(a.key)) await this._sdMarkFallen(a.key, a.sub);   // SD-ONELIFE: a death in the Hour, kept
+    if (isArenaFloorRoom(a.key) && m.t === 'pose') {   // ARENA4b: in an exhibition's room no socket is ever on the sand
+      const cur = this._attach(ws);
+      if (cur.af) { try { const st = await this._boutOf(); if (st && cur.afid) poseOf(st, cur.afid, m.p.x, m.p.z, now); } catch (e) { console.warn('[arena] pose', e?.message ?? e); } }
+    }
+    const out = JSON.stringify({ t: 'pose', id: a.id, p: m.p });
+    // SLAM1: the fan is BOUNDED. A room's cost was N senders times N listeners, and the range cull does not help
+    // the one case that matters - an event, where everybody stands in one place and every range test passes.
+    // Measured on the fake object: 91k sends a second at 96 players (SLAM13 struck a claim here about where a real
+    // one stops; nothing has measured it - AUDIT SLAM C1).
+    // SLAM6: the nearest POSE_FAN_MAX hear every pose and THE REST HEAR ONE IN POSE_FAR_SHARE, by turns. SLAM1
+    // sent the rest nothing at all, so the silence law HID every sender from every listener past the bound -
+    // measured at 200 in one town block, each player was seen by 32 and erased for 167. The bound is a rank, so
+    // the loss fell hardest on the most crowded player in the room, which at an event is the one everybody came
+    // to see.
+    // SLAM8: AND A KEEPALIVE IS NEVER TIERED. A standing player sends only on the heartbeat, so a far listener under
+    // SLAM6 heard one in POSE_FAR_SHARE of those - HEARTBEAT_MS * POSE_FAR_SHARE = 20000ms, which is
+    // PEER_TIMEOUT_MS TO THE MILLISECOND (at the day's 5000/20000; RELAY-H1 moved the pair to 20000/80000 and
+    // derived the timeout from the heartbeat, so the ratio is the law and this arm is what keeps it from mattering). Zero margin: the silence law hid every standing peer past the bound at
+    // the exact moment its next pose was due, so a crowd standing still to listen to somebody - which is what an
+    // event IS - watched itself blink in and out, and one late heartbeat hid a peer for a full twenty seconds.
+    // The tier is a bandwidth saving for MOTION; a keepalive is the one frame whose whole job is to be heard, and
+    // a pose nobody has to ease is the cheapest frame in the room. At 200 standing that is 200 * 199 / 5s = 7,960
+    // sends a second, beside the 59,000 the moving case already pays.
+    const heard = [];
+    const S = isArenaPrivateRoom(a.key) ? await this._sessionOf() : null;   // AUDIT PRE-MERGE 1003b R4: a session's sand moves for its members alone
+    if (isArenaPrivateRoom(a.key) && !S?.members?.[a.sub]) return;   // HOTFIX 1003f: and its stands - a stranger's pose reaches nobody
+    // PERF-RELAY1: the index walked in place - nothing below sends, closes or adopts a socket until the fan, so the copy
+    // a spread made of it (two hundred pairs at two hundred players, every pose) guarded nothing - and the sender's map
+    // pixel derived once for the whole room (wire.js inRangeOf, inRange's own answer), not once a listener
+    const reach = inRangeOf(a.key ?? '', m.p);
+    for (const [other, b] of this._all()) {
+      if (other === ws || !b.id || (S && !S.members[b.sub])) continue;
+      if (reach(b.pose)) heard.push([other, b]);
+    }
+    for (const [other] of (still ? heard : poseFan(heard, m.p, (e) => e[1].pose, met.turn, (e) => e[1].id))) this._send(other, out);   // SLAM10: the far tier bucketed by the listener's ID, so a moving crowd cannot shuffle who is served
+    // SEAT1b (Seats-Arc 4.2): THE WATCH - a verified account standing in a cell, having moved, is ticked every
+    // WATCH_TICK_MS with a receipt only the account service counts, and only in a seat's own pixel (net/watchReceipt.js)
+    // AUDIT-SEATS R7: in the pose's OWN cell alone - every cell room ticked whatever pixel the pose claimed, a halo's too
+    // (the client keeps a halo's `watch` for nothing - net/online.js: "the relay ticks the socket that stands there,
+    // never a halo's"), so one player stood in up to four rooms each minting its k1 receipts
+    if (isCellRoom(a.key) && cellRoomOfWire(m.p.x, m.p.z) === a.key && typeof met.sub === 'string' && met.sub) await this._watchTick(ws, met.sub, m.p, !unmoved, now);
+    return;
+  }
+
   async _message(ws, message) {
     let a = this._attach(ws);
     this._kind ??= a.key ? roomKindOf(a.key) : null;   // SCALE2b: a metric names the room's kind, never the room
@@ -2496,100 +2605,7 @@ export class Room {
       this._send(ws, JSON.stringify(badged({ t: 'join', id: b.id, name: b.name, look, pose: inRange(a.key ?? '', a.pose, b.pose) ? (this._drawn(b, a.key).pose ?? null) : null }, b)));
       return;
     }
-    if (m.t === 'pose' || m.t === 'ping') {
-      // the frame gate (A8): a pose and a ping share the socket's bucket, and a channel's pose is gated and counted
-      // BEFORE it is declined (AUDIT CHAT A3: the early return sat above the gate, so a channel took frames unmetered)
-      const chat = isChatRoom(a.key);
-      const posed = m.t === 'pose' && !chat;
-      // SLAM8 (AUDIT SLAM): a KEEPALIVE is a pose the sender did not move (net/wire.js poseChanged, the client's own
-      // law for not sending one). Read BEFORE the meter, because the meter overwrites `a.pose` with this very frame.
-      // SLAM13 (AUDIT SLAM A2): AND THE WHOLE FAN HAS A FLOOR. The port's client sends an unmoved pose every
-      // HEARTBEAT_MS and no sooner; a modified one sends them at the pose gate's ceiling, and each went to the whole
-      // room - 20 x 199 sends a second from one socket, beyond what the tier bounds a MOVER to. A keepalive is heard
-      // whole only when the sender's last whole fan (`kept`, on the PASS patch as `turn` is) is KEEPALIVE_FAN_MS
-      // old; inside the floor it is tiered like a move. An honest heartbeat always clears half its own period.
-      const now = Date.now();
-      // SLAM15 (AUDIT SLAM FINAL A6): AND A STOP IS HEARD WHOLE TOO. The pose that ends a walk - the first with `mv`
-      // 0 after one that moved - carries the place the player actually stopped, and under the tier three far slices
-      // in four never heard it: they eased to the last pose they were served, up to a second of walking short of
-      // where the player stands, and stood there wrong until the next heartbeat corrected it five seconds on. A
-      // stop is one frame per walk, so it is fanned whole like a keepalive, under the same floor: a client toggling
-      // `mv` at the gate's ceiling buys the same two whole fans a second a keepalive flood does, and no more.
-      const unmoved = posed && !!a.pose && !poseChanged(a.pose, m.p);
-      const stopped = posed && !!a.pose && (a.pose.mv | 0) !== 0 && (m.p.mv | 0) === 0;
-      const still = (unmoved || stopped) && now - (a.kept ?? 0) >= KEEPALIVE_FAN_MS;
-      // SLAM6: `turn` is the sender's own pose counter, and the only state the far tier needs - which slice of the
-      // listeners past POSE_FAN_MAX this pose serves. Masked, so an attachment a socket carries for a day stays small.
-      // SLAM8: and it rides the PASS patch. `_meter` writes its ordinary patch back whether or not the gate passed, so
-      // a counter put there counted poses RECEIVED while the fan below serves poses RELAYED. Any drop pattern sharing
-      // a factor with POSE_FAR_SHARE then pinned the served slice to one parity and starved the rest - at exactly
-      // twice the gate the bucket settles into pass/fail alternation, so two of the four slices were never served and
-      // half the far tier heard that sender no more. The port's own client cannot reach that rate; a modified one can,
-      // and an event is where those turn up.
-      // PVP-REF (Seats-Arc 6.1): A FIGHTER'S STEP IS JUDGED - faster than the referee's ceiling, it is neither kept nor
-      // relayed, and the fighter is pulled back to its last good pose
-      // AUDIT-SEATS R2/R4: AND THE POSE GATE IS SPENT FIRST, in a battle room. The step was judged BEFORE the meter, so a
-      // pose the 20 Hz gate then dropped had already moved the referee's fighter (a burst outran the ceiling it never
-      // reached the gate with), and a refused step returned before the meter - 5,000 refused poses in a millisecond bought
-      // 5,000 `back` frames and never a strike. Over the rate a fighter's pose is dropped WHOLE now - neither judged, kept
-      // nor relayed - and struck; under it, judged, and a refusal has spent its token like any pose.
-      const battle = posed && isBattleRoom(a.key) && a.sub;
-      if (battle && !this._spend(ws, now, poseGate, 'bucket', 'drops', 'too many poses')) return;
-      const step = battle ? await this._siegeStep(ws, a, m.p, now) : null;
-      if (battle && !step) return;
-      const turned = posed ? { turn: ((a.turn | 0) + 1) & 0xffff, ...(still ? { kept: now } : {}), ...(isSdRoom(a.key) ? { pAt: now } : {}) } : {};   // AUDIT SD III (F3): an Hour's pose, stamped - the fight's census reads its age
-      const met = battle ? this._metered(ws, a, true, { pose: m.p }, turned) : this._meter(ws, a, now, { pose: posed ? m.p : a.pose }, turned, posed && !stopped);   // SCALE2b: a pose's write is lazy - a stop's is not, it is where the player stands
-      if (!met) return;   // over the rate: kept as the latest, not relayed
-      if (m.t === 'ping') { this._send(ws, '{"t":"pong"}'); return; }   // a ping that reached the object (the runtime answers the exact one in its sleep)
-      if (chat) return;   // a channel is no place: a pose there is kept by no one and reaches no one
-      if (posed) this._metrics.c.poses++;   // SCALE2b: a pose taken - the one a room fans
-      // AUDIT-SEATS T2 (Seats-Arc 6.6: "no body drawn to fighters, no collider, excluded from every banner count, a free
-      // camera over the town"): A SPECTATOR IS NO BODY - in a battle room a socket that is no fighter (a spectator's pass,
-      // or a fighter's before its `in`) keeps its camera on its own attachment and is drawn to nobody: the fan below said
-      // its every pose, and the fighters drew sixty spectators among them
-      if (step === 'eye') return;
-      // ARENA4: a bout's room - a fighter's pose is the referee's (its speed checked, its place the reach's); HOTFIX 1003f: a
-      // spectator's is fanned as anyone's - the stands are bodies (a private session's stranger's reaches nobody, below)
-      if (posed && m.p?.dd && typeof a.sub === 'string' && a.sub && isSdRoom(a.key)) await this._sdMarkFallen(a.key, a.sub);   // SD-ONELIFE: a death in the Hour, kept
-      if (isArenaFloorRoom(a.key) && m.t === 'pose') {   // ARENA4b: in an exhibition's room no socket is ever on the sand
-        const cur = this._attach(ws);
-        if (cur.af) { try { const st = await this._boutOf(); if (st && cur.afid) poseOf(st, cur.afid, m.p.x, m.p.z, now); } catch (e) { console.warn('[arena] pose', e?.message ?? e); } }
-      }
-      const out = JSON.stringify({ t: 'pose', id: a.id, p: m.p });
-      // SLAM1: the fan is BOUNDED. A room's cost was N senders times N listeners, and the range cull does not help
-      // the one case that matters - an event, where everybody stands in one place and every range test passes.
-      // Measured on the fake object: 91k sends a second at 96 players (SLAM13 struck a claim here about where a real
-      // one stops; nothing has measured it - AUDIT SLAM C1).
-      // SLAM6: the nearest POSE_FAN_MAX hear every pose and THE REST HEAR ONE IN POSE_FAR_SHARE, by turns. SLAM1
-      // sent the rest nothing at all, so the silence law HID every sender from every listener past the bound -
-      // measured at 200 in one town block, each player was seen by 32 and erased for 167. The bound is a rank, so
-      // the loss fell hardest on the most crowded player in the room, which at an event is the one everybody came
-      // to see.
-      // SLAM8: AND A KEEPALIVE IS NEVER TIERED. A standing player sends only on the heartbeat, so a far listener under
-      // SLAM6 heard one in POSE_FAR_SHARE of those - HEARTBEAT_MS * POSE_FAR_SHARE = 20000ms, which is
-      // PEER_TIMEOUT_MS TO THE MILLISECOND (at the day's 5000/20000; RELAY-H1 moved the pair to 20000/80000 and
-      // derived the timeout from the heartbeat, so the ratio is the law and this arm is what keeps it from mattering). Zero margin: the silence law hid every standing peer past the bound at
-      // the exact moment its next pose was due, so a crowd standing still to listen to somebody - which is what an
-      // event IS - watched itself blink in and out, and one late heartbeat hid a peer for a full twenty seconds.
-      // The tier is a bandwidth saving for MOTION; a keepalive is the one frame whose whole job is to be heard, and
-      // a pose nobody has to ease is the cheapest frame in the room. At 200 standing that is 200 * 199 / 5s = 7,960
-      // sends a second, beside the 59,000 the moving case already pays.
-      const heard = [];
-      const S = isArenaPrivateRoom(a.key) ? await this._sessionOf() : null;   // AUDIT PRE-MERGE 1003b R4: a session's sand moves for its members alone
-      if (isArenaPrivateRoom(a.key) && !S?.members?.[a.sub]) return;   // HOTFIX 1003f: and its stands - a stranger's pose reaches nobody
-      for (const [other, b] of [...this._all()]) {
-        if (other === ws || !b.id || (S && !S.members[b.sub])) continue;
-        if (inRange(a.key ?? '', m.p, b.pose)) heard.push([other, b]);
-      }
-      for (const [other] of (still ? heard : poseFan(heard, m.p, (e) => e[1].pose, met.turn, (e) => e[1].id))) this._send(other, out);   // SLAM10: the far tier bucketed by the listener's ID, so a moving crowd cannot shuffle who is served
-      // SEAT1b (Seats-Arc 4.2): THE WATCH - a verified account standing in a cell, having moved, is ticked every
-      // WATCH_TICK_MS with a receipt only the account service counts, and only in a seat's own pixel (net/watchReceipt.js)
-      // AUDIT-SEATS R7: in the pose's OWN cell alone - every cell room ticked whatever pixel the pose claimed, a halo's too
-      // (the client keeps a halo's `watch` for nothing - net/online.js: "the relay ticks the socket that stands there,
-      // never a halo's"), so one player stood in up to four rooms each minting its k1 receipts
-      if (isCellRoom(a.key) && cellRoomOfWire(m.p.x, m.p.z) === a.key && typeof met.sub === 'string' && met.sub) await this._watchTick(ws, met.sub, m.p, !unmoved, now);
-      return;
-    }
+    if (m.t === 'pose' || m.t === 'ping') return this._poseFrame(ws, a, m);   // PERF-RELAY1: the room's hottest path, a method of its own
     if (m.t === 'chat') {
       // CHAT1: the chat gate, its own bucket and strikes (a talker is not a mover)
       const now = Date.now();
