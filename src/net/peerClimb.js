@@ -33,7 +33,7 @@ export function peerBodyYaw(shown) {
   return peerClimbing(shown) && Number.isFinite(shown.cw) ? shown.cw : shown?.yaw;
 }
 /** Is the peer walking - the move bit, never on the wall (a shimmy moves the feet along the lip, and is no stride). */
-export const peerMoving = (shown) => !!shown?.mv && !peerClimbing(shown);
+export const peerMoving = (shown) => !!shown?.mv && !peerClimbing(shown) && !shown?.st;   // CARDS2b (AUDIT CARDS C5): nor is a sitter - one law for every body, sound and sprite stride
 
 /**
  * What a change of a peer's climb sounds - `[sound, volume]` pairs, from the state they were in to the one they are in

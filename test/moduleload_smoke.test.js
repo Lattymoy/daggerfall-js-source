@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 //     transform and simply absent outside the bundler;
 //   - eight are browser tools that touch `document`/`location` at module
 //     scope.
-// For those eleven, tdz_selfreference.test.js is the standing guard.
+// For those twelve, tdz_selfreference.test.js is the standing guard.
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const walk = (d, out = []) => {
@@ -29,7 +29,7 @@ const walk = (d, out = []) => {
   return out;
 };
 
-/** The known-unimportable ELEVEN, with the reason each is excluded. */
+/** The known-unimportable TWELVE, with the reason each is excluded. */
 export const NOT_IMPORTABLE = Object.freeze({
   'src/main.js': 'addEventListener/document at module scope',   // BOOT1: it used to reject at LINK time, through world.js's import.meta.glob - the hosts are behind doors now, its body runs, and the crash listeners at its module scope are what node lacks
   'src/scenes/questData.js': 'import.meta.glob',
@@ -42,6 +42,7 @@ export const NOT_IMPORTABLE = Object.freeze({
   'src/tools/skyLab.js': 'location at module scope',
   'src/tools/waterLab.js': 'location at module scope',   // WATER1: the water lab
   'src/tools/levelUpLab.js': 'document at module scope',   // LV1: the level-up lab
+  'src/tools/cardsLab.js': 'location at module scope',   // CARDS3: the cards' lab
 });
 
 test('every module under src/ loads - its body RUNS, not just parses', async () => {
@@ -65,12 +66,12 @@ test('every module under src/ loads - its body RUNS, not just parses', async () 
   assert.deepEqual(unexpectedlyFine, [], `these import fine now - remove them from NOT_IMPORTABLE:\n  ${unexpectedlyFine.join('\n  ')}`);
 });
 
-test('the blind spot is exactly eleven modules, each with a reason', () => {
+test('the blind spot is exactly twelve modules, each with a reason', () => {
   const files = walk(join(root, 'src')).map((f) => relative(root, f).split('\\').join('/'));
   for (const f of Object.keys(NOT_IMPORTABLE)) {
     assert.ok(files.includes(f), `${f} is on the exclusion list and no longer exists`);
   }
-  assert.equal(Object.keys(NOT_IMPORTABLE).length, 11);   // WATER1: the water lab joined the sky lab; LV1: the level-up lab joined both
+  assert.equal(Object.keys(NOT_IMPORTABLE).length, 12);   // WATER1: the water lab joined the sky lab; LV1: the level-up lab joined both; CARDS3: the cards' lab
   // The three that matter are the hosts: they carry the most edits and
   // the least coverage, which is exactly the combination that produced
   // the boot failure. Recorded here so the next reader sees the cost.

@@ -395,8 +395,8 @@ test('CHAP1 the wiring: built online for a realm character alone, ticked in the 
   assert.doesNotMatch(world, /rollTracker\.leave/, 'PIN MOVED (AUDIT CHAP C1/T1): no claim as the page goes');
   assert.match(src('src/systems/realmSaves.js'), /get lease\(\) \{ return lost \? null : lease; \},/);
   assert.match(src('server-account/wrangler.toml'), /^CHAPTERS_OPEN = "dev"$/m);
-  assert.match(src('server-account/src/service.js'), /export const ACCOUNT_VERSION = 'acct96';/);   // PIN MOVED: acct96, the Chapters past SCALE4's acct95 at the merge; PIN MOVED: acct95, the Chapters past SD9b at the merge; PIN MOVED: CHAP2a's acct94
-  assert.match(src('server-account/migrations/0092_npc_roll.sql'), /CREATE TABLE IF NOT EXISTS npc_roll \(/);
+  assert.match(src('server-account/src/service.js'), /export const ACCOUNT_VERSION = 'acct97';/);   // PIN MOVED: acct97, the Chapters past TAVERN CARDS' acct96 at the merge; PIN MOVED: acct96, the Chapters past SCALE4's acct95 at the merge; PIN MOVED: acct95, the Chapters past SD9b at the merge; PIN MOVED: CHAP2a's acct94
+  assert.match(src('server-account/migrations/0093_npc_roll.sql'), /CREATE TABLE IF NOT EXISTS npc_roll \(/);
   const realm = src('server-account/src/realm.js');
   for (const t of ['npc_roll', 'npc_roll_heads', 'npc_rep_events']) assert.match(realm, new RegExp(`DELETE FROM ${t} WHERE player = \\? AND char_id = \\?`));
 });

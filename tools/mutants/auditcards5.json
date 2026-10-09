@@ -1,0 +1,4147 @@
+[
+  {
+    "name": "AC5-A-order-counts-down",
+    "file": "src/net/iliacHand.js",
+    "old": "sidePower(state, pw, h, p, (inst) => !inst.down), 0));",
+    "new": "sidePower(state, pw, h, p), 0));",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-powers-no-floor",
+    "file": "src/net/iliacHand.js",
+    "old": "for (const k of Object.keys(pw)) pw[k] = Math.max(0, pw[k]);",
+    "new": "",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-cost-no-floor",
+    "file": "src/net/iliacHand.js",
+    "old": "return Math.max(0, card.cost - off);",
+    "new": "return card.cost - off;",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-cost-down-discounts",
+    "file": "src/net/iliacHand.js",
+    "old": "    if (inst.down) continue;\n    for (const fx of cardOf(inst).fx) if (fx.on === 'ongoing' && fx.do === 'discount'",
+    "new": "    for (const fx of cardOf(inst).fx) if (fx.on === 'ongoing' && fx.do === 'discount'",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-cost-holding-any-kind",
+    "file": "src/net/iliacHand.js",
+    "old": "for (const fx of holdingCard(state, h).fx) if (fx.on === 'ongoing' && fx.do === 'discount' && fx.kind === card.kind) off += fx.n;",
+    "new": "for (const fx of holdingCard(state, h).fx) if (fx.on === 'ongoing' && fx.do === 'discount') off += fx.n;",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-cost-other-players-discount",
+    "file": "src/net/iliacHand.js",
+    "old": "for (const inst of state.holdings[hh].sides[p]) {",
+    "new": "for (const inst of [...state.holdings[hh].sides[0], ...state.holdings[hh].sides[1]]) {",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-select-down-target",
+    "file": "src/net/iliacHand.js",
+    "old": "    if (inst.down) return false;\n",
+    "new": "",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-pick-weakest-last",
+    "file": "src/net/iliacHand.js",
+    "old": "fx.pick === 'weakest' ? pw[r.inst.uid] < pw[best.inst.uid]",
+    "new": "fx.pick === 'weakest' ? pw[r.inst.uid] <= pw[best.inst.uid]",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-pick-strongest-last",
+    "file": "src/net/iliacHand.js",
+    "old": ": pw[r.inst.uid] > pw[best.inst.uid]) best = r;",
+    "new": ": pw[r.inst.uid] >= pw[best.inst.uid]) best = r;",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-here-all-theirs-first",
+    "file": "src/net/iliacHand.js",
+    "old": "'here.all': () => [[...sideRefs(state, h, p), ...sideRefs(state, h, 1 - p)]],",
+    "new": "'here.all': () => [[...sideRefs(state, h, 1 - p), ...sideRefs(state, h, p)]],",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-here-one-pick",
+    "file": "src/net/iliacHand.js",
+    "old": "here: () => [sideRefs(state, h, 0), sideRefs(state, h, 1)],",
+    "new": "here: () => [[...sideRefs(state, h, 0), ...sideRefs(state, h, 1)]],",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-hand-max-8",
+    "file": "src/net/iliacHand.js",
+    "old": "while (k < n && pl.deck.length && pl.hand.length < ILIAC_HAND_MAX)",
+    "new": "while (k < n && pl.deck.length && pl.hand.length <= ILIAC_HAND_MAX)",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-token-uid-collide",
+    "file": "src/net/iliacHand.js",
+    "old": "turn: 1, over: false, nextUid: 2 * ILIAC_DECK_SIZE,",
+    "new": "turn: 1, over: false, nextUid: ILIAC_DECK_SIZE,",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-uid-tells-card",
+    "file": "src/net/iliacHand.js",
+    "old": ".map((i, k) => ({ uid: p * ILIAC_DECK_SIZE + k, id: d[i] }))",
+    "new": ".map((i, k) => ({ uid: p * ILIAC_DECK_SIZE + i, id: d[i] }))",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-locations-dupes",
+    "file": "src/net/iliacHand.js",
+    "old": "new Set(locations).size !== ILIAC_HOLDINGS || ",
+    "new": "",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-shape-len-room",
+    "file": "src/net/iliacHand.js",
+    "old": "plays.length > ILIAC_HAND_MAX) return 'shape';",
+    "new": "plays.length > ILIAC_ROOM) return 'shape';",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-room-off-by-one",
+    "file": "src/net/iliacHand.js",
+    "old": "if (units[h] > freeRoom(state, null, player, h)) return 'room';",
+    "new": "if (units[h] >= freeRoom(state, null, player, h) && units[h]) return 'room';",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-magicka-off-by-one",
+    "file": "src/net/iliacHand.js",
+    "old": "if (spend > pl.magicka) return 'magicka';",
+    "new": "if (spend >= pl.magicka && spend) return 'magicka';",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-hand-dupe-ok",
+    "file": "src/net/iliacHand.js",
+    "old": "|| seen.has(x.card)) return 'hand';",
+    "new": ") return 'hand';",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-spell-takes-room",
+    "file": "src/net/iliacHand.js",
+    "old": "if (card.kind === 'spell') { if (noSpells(state, x.holding)) return 'spell'; } else units[x.holding]++;",
+    "new": "if (card.kind === 'spell') { if (noSpells(state, x.holding)) return 'spell'; } units[x.holding]++;",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-commit-aliases",
+    "file": "src/net/iliacHand.js",
+    "old": "state.players[player].plays = plays.map((x) => ({ card: x.card, holding: x.holding }));",
+    "new": "state.players[player].plays = plays;",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-token-to-discard",
+    "file": "src/net/iliacHand.js",
+    "old": "if (!r.inst.token) state.players[r.p].discard.push",
+    "new": "state.players[r.p].discard.push",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-discard-as-form",
+    "file": "src/net/iliacHand.js",
+    "old": "discard.push({ uid: r.inst.uid, id: r.inst.id });",
+    "new": "discard.push({ uid: r.inst.uid, id: r.inst.form ?? r.inst.id });",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-move-no-wrap",
+    "file": "src/net/iliacHand.js",
+    "old": "for (let k = 1; k < ILIAC_HOLDINGS && to < 0; k++)",
+    "new": "for (let k = 1; k < ILIAC_HOLDINGS - 1 && to < 0; k++)",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-move-ignores-reserve",
+    "file": "src/net/iliacHand.js",
+    "old": "if (freeRoom(state, T, r.p, (r.h + k) % ILIAC_HOLDINGS) > 0)",
+    "new": "if (freeRoom(state, null, r.p, (r.h + k) % ILIAC_HOLDINGS) > 0)",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-summon-ignores-reserve",
+    "file": "src/net/iliacHand.js",
+    "old": "k < n && freeRoom(state, T, ctx.p, ctx.h) > 0",
+    "new": "k < n && freeRoom(state, null, ctx.p, ctx.h) > 0",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-transform-keeps-mod",
+    "file": "src/net/iliacHand.js",
+    "old": "        r.inst.mod = 0;\n",
+    "new": "",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-magicka-overwrites",
+    "file": "src/net/iliacHand.js",
+    "old": "state.players[ctx.p].bonus += n;",
+    "new": "state.players[ctx.p].bonus = n;",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-spell-no-holding-reveal",
+    "file": "src/net/iliacHand.js",
+    "old": "    holdingReveal(state, T, p, h);\n    state.players[p].discard.push(inst);",
+    "new": "    state.players[p].discard.push(inst);",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-down-event-names",
+    "file": "src/net/iliacHand.js",
+    "old": "ev.push({ t: 'play', p, uid: b.uid, holding: h, down: true }); return; }",
+    "new": "ev.push({ t: 'play', p, uid: b.uid, id: b.id, holding: h, down: true }); return; }",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-down-reveals",
+    "file": "src/net/iliacHand.js",
+    "old": "ev.push({ t: 'play', p, uid: b.uid, holding: h, down: true }); return; }",
+    "new": "ev.push({ t: 'play', p, uid: b.uid, holding: h, down: true }); }",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-end-order-seat",
+    "file": "src/net/iliacHand.js",
+    "old": "for (const p of order) for (const inst of state.holdings[h].sides[p]) uids.push(inst.uid);",
+    "new": "for (const p of [0, 1]) for (const inst of state.holdings[h].sides[p]) uids.push(inst.uid);",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-magicka-uncapped",
+    "file": "src/net/iliacHand.js",
+    "old": "pl.magicka = Math.min(ILIAC_MAGICKA_MAX, state.turn + pl.bonus);",
+    "new": "pl.magicka = state.turn + pl.bonus;",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-bonus-kept",
+    "file": "src/net/iliacHand.js",
+    "old": "pl.bonus = 0; }",
+    "new": "}",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-draw-order-seat",
+    "file": "src/net/iliacHand.js",
+    "old": "for (const p of order) T.events.push({ t: 'drew'",
+    "new": "for (const p of [0, 1]) T.events.push({ t: 'drew'",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-result-one-holding",
+    "file": "src/net/iliacHand.js",
+    "old": "if (count[0] >= 2) { winner = 0;",
+    "new": "if (count[0] >= 1 && count[1] === 0) { winner = 0;",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-result-no-power-tiebreak",
+    "file": "src/net/iliacHand.js",
+    "old": "} else if (total[0] !== total[1]) {",
+    "new": "} else if (false) {",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-view-shows-down",
+    "file": "src/net/iliacHand.js",
+    "old": "const seen = (p) => (inst) => !inst.down || p === viewer;",
+    "new": "const seen = (p) => (inst) => true || p === viewer;",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-view-power-leak",
+    "file": "src/net/iliacHand.js",
+    "old": "power: [0, 1].map((p) => sidePower(state, pw, h, p, seen(p))),",
+    "new": "power: [0, 1].map((p) => sidePower(state, pw, h, p)),",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-view-spectator-hands",
+    "file": "src/net/iliacHand.js",
+    "old": "...(p === viewer ? { hand:",
+    "new": "...(p === viewer || viewer === -1 ? { hand:",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-view-bonus-hidden",
+    "file": "src/net/iliacHand.js",
+    "old": "magicka: pl.magicka, bonus: pl.bonus, committed: !!pl.plays,",
+    "new": "magicka: pl.magicka, committed: !!pl.plays,",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-deck-legendary-rank",
+    "file": "src/net/iliacHand.js",
+    "old": ">= LEGENDARY_RANK && k > ILIAC_LEGENDARY_COPIES_MAX",
+    "new": "> LEGENDARY_RANK && k > ILIAC_LEGENDARY_COPIES_MAX",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-fx-move-any",
+    "file": "src/net/iliacHand.js",
+    "old": "if (fx.do === 'move' && !OWN_TARGETS.includes(fx.to)) return 'target';",
+    "new": "",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-fx-loc-end-draw",
+    "file": "src/net/iliacHand.js",
+    "old": "if (loc && fx.on === 'end' && (fx.do === 'draw' || fx.do === 'magicka')) return 'verb';",
+    "new": "",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-fx-n-zero",
+    "file": "src/net/iliacHand.js",
+    "old": "fx.n >= 1 && fx.n <= ILIAC_MAGICKA_MAX",
+    "new": "fx.n >= 0 && fx.n <= ILIAC_MAGICKA_MAX",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-legal-no-early",
+    "file": "src/net/iliacHand.js",
+    "old": "  if (playsRefusal(state, player, []) !== null) return [];\n",
+    "new": "",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-reveal-one-commit",
+    "file": "src/net/iliacHand.js",
+    "old": "if (!state || state.over || !state.players[0].plays || !state.players[1].plays) return [];",
+    "new": "if (!state || state.over || !state.players[0].plays) return [];",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-unveil-silent",
+    "file": "src/net/iliacHand.js",
+    "old": "if (cards.length) T.events.push({ t: 'unveil', cards });",
+    "new": "",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-res-not-released",
+    "file": "src/net/iliacHand.js",
+    "old": "  T.res[p][h]--;\n",
+    "new": "",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-cat-giant-9",
+    "file": "src/net/iliacCards.js",
+    "old": "kind: 'unit', cost: 6, power: 10, tier: 'rare', tags: ['giant']",
+    "new": "kind: 'unit', cost: 6, power: 9, tier: 'rare', tags: ['giant']",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-cat-rat-cost-2",
+    "file": "src/net/iliacCards.js",
+    "old": "{ id: 'rat', name: 'Rat', kind: 'unit', cost: 1, power: 1,",
+    "new": "{ id: 'rat', name: 'Rat', kind: 'unit', cost: 2, power: 1,",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-cat-rose-no-knight",
+    "file": "src/net/iliacCards.js",
+    "old": "kind: 'unit', cost: 3, power: 4, tier: 'magic', tags: ['human', 'knight'], emblem: 'knight',\n    fx: [{ on: 'reveal', do: 'draw', n: 1 }]",
+    "new": "kind: 'unit', cost: 3, power: 4, tier: 'magic', tags: ['human'], emblem: 'knight',\n    fx: [{ on: 'reveal', do: 'draw', n: 1 }]",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-cat-lich-not-undead",
+    "file": "src/net/iliacCards.js",
+    "old": "tier: 'rare', tags: ['undead', 'mage'], emblem: 'lich',",
+    "new": "tier: 'rare', tags: ['mage'], emblem: 'lich',",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-cat-wayrest-2",
+    "file": "src/net/iliacCards.js",
+    "old": "fx: [{ on: 'ongoing', do: 'room', n: 3 }], text: 'Each side holds only 3 cards here.'",
+    "new": "fx: [{ on: 'ongoing', do: 'room', n: 2 }], text: 'Each side holds only 2 cards here.'",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-cat-rose-daedra-lord",
+    "file": "src/net/iliacCards.js",
+    "old": "fx: [{ on: 'reveal', do: 'summon', card: 'daedroth' }], text: 'Summon a Daedroth here.'",
+    "new": "fx: [{ on: 'reveal', do: 'summon', card: 'daedra-lord' }], text: 'Summon a Daedra Lord here.'",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-cat-clavicus-2",
+    "file": "src/net/iliacCards.js",
+    "old": "fx: [{ on: 'ongoing', do: 'discount', kind: 'spell', n: 1 }], text: 'Ongoing: your spells cost 1 less.'",
+    "new": "fx: [{ on: 'ongoing', do: 'discount', kind: 'spell', n: 2 }], text: 'Ongoing: your spells cost 2 less.'",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-cat-frostbite-1",
+    "file": "src/net/iliacCards.js",
+    "old": "fx: [{ on: 'reveal', do: 'weaken', to: 'here.theirs', pick: 'weakest', n: 2 }], text: 'The weakest enemy unit here loses 2 power.'",
+    "new": "fx: [{ on: 'reveal', do: 'weaken', to: 'here.theirs', pick: 'weakest', n: 1 }], text: 'The weakest enemy unit here loses 1 power.'",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-cat-sentinel-1-3",
+    "file": "src/net/iliacCards.js",
+    "old": "fx: [{ on: 'ongoing', do: 'buff', to: 'here', cost: [1, 2], n: 1 }], text: 'Units here that cost 1 or 2 have +1 power.'",
+    "new": "fx: [{ on: 'ongoing', do: 'buff', to: 'here', cost: [1, 3], n: 1 }], text: 'Units here that cost 1 to 3 have +1 power.'",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-cat-dagon-power-7",
+    "file": "src/net/iliacCards.js",
+    "old": "kind: 'prince', cost: 6, power: 6, tier: 'aetheric'",
+    "new": "kind: 'prince', cost: 6, power: 7, tier: 'aetheric'",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-cat-imp-cost-0",
+    "file": "src/net/iliacCards.js",
+    "old": "{ id: 'imp', name: 'Imp', kind: 'unit', cost: 1, power: 1,",
+    "new": "{ id: 'imp', name: 'Imp', kind: 'unit', cost: 0, power: 1,",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-cat-starter-swap",
+    "file": "src/net/iliacCards.js",
+    "old": "'host-of-the-horn', 'host-of-the-horn', 'lamia', 'priest-of-akatosh',\n]);",
+    "new": "'host-of-the-horn', 'host-of-the-horn', 'lamia', 'priest-of-mara',\n]);",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-cat-byid-undefined",
+    "file": "src/net/iliacCards.js",
+    "old": "export const cardById = (id) => BY_ID.get(id) ?? null;",
+    "new": "export const cardById = (id) => BY_ID.get(id);",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-cat-tags-unfrozen",
+    "file": "src/net/iliacCards.js",
+    "old": "const deepFreeze = (c) => Object.freeze({ ...c, tags: Object.freeze(c.tags.slice()),",
+    "new": "const deepFreeze = (c) => Object.freeze({ ...c, tags: c.tags.slice(),",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-cat-ancient-lich-all",
+    "file": "src/net/iliacCards.js",
+    "old": "{ on: 'ongoing', do: 'buff', to: 'all.mine', tag: 'undead', n: 1 }], text: 'Reveal: destroy the weakest enemy unit here. Ongoing: your undead units have +1 power.'",
+    "new": "{ on: 'ongoing', do: 'buff', to: 'here.mine', tag: 'undead', n: 1 }], text: 'Reveal: destroy the weakest enemy unit here. Ongoing: your undead units here have +1 power.'",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-cat-hold-spells-ok",
+    "file": "src/net/iliacCards.js",
+    "old": "fx: [{ on: 'ongoing', do: 'veil' }, { on: 'ongoing', do: 'nospell' }], text: 'Cards here are played face down and unveiled when the game ends. Spells cannot be played here.'",
+    "new": "fx: [{ on: 'ongoing', do: 'veil' }], text: 'Cards here are played face down and unveiled when the game ends.'",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M1",
+    "file": "src/systems/iliacItems.js",
+    "old": "item?.group === GROUP && typeof item?.card === 'string';",
+    "new": "item?.group === GROUP;",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M3",
+    "file": "src/systems/iliacItems.js",
+    "old": "return c ? `Card: ${c.name}` : 'Card';",
+    "new": "return c ? c.name : 'Card';",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M4",
+    "file": "src/systems/iliacItems.js",
+    "old": "if (!c) return ['A card this build does not know.'];",
+    "new": "if (!c) return [];",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M6",
+    "file": "src/systems/iliacItems.js",
+    "old": "c.kind === 'unit' || c.kind === 'prince' ? `, power",
+    "new": "c.kind === 'unit' ? `, power",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M7",
+    "file": "src/systems/iliacItems.js",
+    "old": ", c.text, ...(c.flavor ? [c.flavor] : [])];",
+    "new": ", c.text];",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M8",
+    "file": "src/systems/iliacItems.js",
+    "old": "index: ILIAC_CARD_TEMPLATE, name: 'Card', baseWeight: 0, hitPoints: 0, capacityOrTarget: 0, basePrice: 1,",
+    "new": "index: ILIAC_CARD_TEMPLATE, name: 'Card', baseWeight: 0, hitPoints: 0, capacityOrTarget: 0, basePrice: 50,",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M9",
+    "file": "src/systems/iliacItems.js",
+    "old": "isOneHanded: false, isIngredient: false, worldTextureArchive: 209, worldTextureRecord: 8,\n  playerTextureArchive: 0, playerTextureRecord: 0, stackable: true, hasNoEncumbrance: true,",
+    "new": "isOneHanded: false, isIngredient: false, worldTextureArchive: 209, worldTextureRecord: 8,\n  playerTextureArchive: 0, playerTextureRecord: 0, stackable: true, hasNoEncumbrance: false,",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M11",
+    "file": "src/systems/iliacItems.js",
+    "old": "if (!cardById(id) || !(Number.isInteger(count) && count >= 1)) return null;",
+    "new": "if (!cardById(id)) return null;",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M12",
+    "file": "src/systems/iliacItems.js",
+    "old": "  it.stackCount = count;\n",
+    "new": "  it.stackCount = 1;\n",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M13",
+    "file": "src/systems/iliacItems.js",
+    "old": "name: String(d.name).slice(0, DECK_NAME_MAX), cards: d.cards.slice() }));",
+    "new": "name: String(d.name), cards: d.cards }));",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M14",
+    "file": "src/systems/iliacItems.js",
+    "old": "(out.get(it.card) ?? 0) + Math.max(1, it.stackCount ?? 1));",
+    "new": "(out.get(it.card) ?? 0) + 1);",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M15",
+    "file": "src/systems/iliacItems.js",
+    "old": "if ((have.get(id) ?? 0) < n) return 'not held';",
+    "new": "if ((have.get(id) ?? 0) < 1) return 'not held';",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M16",
+    "file": "src/systems/iliacItems.js",
+    "old": "name: String(deck.name || 'Deck').slice(0, DECK_NAME_MAX), cards: deck.cards.slice() };",
+    "new": "name: String(deck.name || 'Deck'), cards: deck.cards.slice() };",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M17",
+    "file": "src/systems/iliacItems.js",
+    "old": "name: String(deck.name || 'Deck').slice(0, DECK_NAME_MAX), cards: deck.cards.slice() };",
+    "new": "name: String(deck.name || 'Deck').slice(0, DECK_NAME_MAX), cards: deck.cards };",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M18",
+    "file": "src/systems/iliacItems.js",
+    "old": "if (!(Number.isInteger(i) && i >= 0 && i <= decks.length) ||",
+    "new": "if (!(Number.isInteger(i) && i >= 0) ||",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M21",
+    "file": "src/systems/iliacItems.js",
+    "old": "  if (!Array.isArray(entity.items)) entity.items = [];\n  if (binderOf(entity.items)) return 0;",
+    "new": "  if (binderOf(entity.items)) return 0;",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M22",
+    "file": "src/systems/iliacItems.js",
+    "old": "const c = mintIliacCard(id, count); if (c) addItem(entity.items, c);",
+    "new": "const c = mintIliacCard(id, count); if (c) entity.items.push(c);",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M27",
+    "file": "src/systems/itemInfo.js",
+    "old": "text: isIliacCard(item) ? iliacCardName(item) : shownItemName(item)",
+    "new": "text: false ? iliacCardName(item) : shownItemName(item)",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M28",
+    "file": "src/systems/itemInfo.js",
+    "old": "  else if (isCardBinder(item)) for (const text of BINDER_CARD_LINES) out.push({ text, center: true });   // CARDS8\n",
+    "new": "",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M31",
+    "file": "src/systems/itemFields.js",
+    "old": "Array.isArray(d.cards) && d.cards.length <= 40",
+    "new": "Array.isArray(d.cards)",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M32",
+    "file": "src/systems/itemFields.js",
+    "old": "d.cards.every((c) => typeof c === 'string' && c.length > 0 && c.length <= 40);",
+    "new": "d.cards.every((c) => typeof c === 'string');",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M34",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "const binderItem = items.find(isCardBinder) ?? null;",
+    "new": "const binderItem = null;",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M36",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    for (const it of b.held) rows.append(itemRow(it));\n",
+    "new": "",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M37",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "b.onclick = () => { picked = binder; side = 'local'; notice = null; render(); };",
+    "new": "b.onclick = () => { render(); };",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M38",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    row.append(el('span', 'wallet-k', d.name), el('span', 'wallet-v', `${d.cards.length} cards`));\n",
+    "new": "",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M39",
+    "file": "src/ui/cardBinderPage.js",
+    "old": "return deckValid(cards) ?? deckHeldRefusal(cards, items);",
+    "new": "return deckValid(cards);",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M40",
+    "file": "src/systems/save.js",
+    "old": "  giveBinderGift(entity);   // CARDS8: and the Card Binder and its starter deck, once - at the pack's end too\n",
+    "new": "  void 0;\n  giveBinderGift(entity);   // CARDS8: and the Card Binder and its starter deck, once - at the pack's end too\n  entity.binderGift = 0;\n",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M42",
+    "file": "src/systems/inventory.js",
+    "old": "  if (typeof stack.card === 'string') picked.card = stack.card;   // CARDS8: the card split off is the card it was\n",
+    "new": "  if (typeof stack.card === 'string' && numberToPick > 1) picked.card = stack.card;   // CARDS8: the card split off is the card it was\n",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-C01-shown-and",
+    "file": "src/ui/collectionsPage.js",
+    "old": "lootRarityOn() || cardsPartShown(player);",
+    "new": "lootRarityOn() && cardsPartShown(player);",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-C02-codex-part-always",
+    "file": "src/ui/collectionsPage.js",
+    "old": "(id === 'codex' ? lootRarityOn() : cardsPartShown(player))",
+    "new": "(id === 'codex' ? true : cardsPartShown(player))",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-C04-reset-keeps-part",
+    "file": "src/ui/collectionsPage.js",
+    "old": "{ _part = 'codex'; _picked = null; resetCardsPart(); }",
+    "new": "{ _picked = null; resetCardsPart(); }",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-C07-switch-never",
+    "file": "src/ui/collectionsPage.js",
+    "old": "if (parts.length > 1) {",
+    "new": "if (parts.length > 2) {",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-C09-switch-on-class",
+    "file": "src/ui/collectionsPage.js",
+    "old": "`coll-part${id === _part ? ' on' : ''}`",
+    "new": "'coll-part'",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-C10-leg-count-swap",
+    "file": "src/ui/collectionsPage.js",
+    "old": "`Legendaries - ${n.legendary} of ${n.legendaries} found`",
+    "new": "`Legendaries - ${n.legendaries} of ${n.legendary} found`",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-C11-unfound-name-leak",
+    "file": "src/ui/collectionsPage.js",
+    "old": "r.found ? r.name : 'Unfound'",
+    "new": "r.found ? r.name : r.id",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-C13-no-day",
+    "file": "src/ui/collectionsPage.js",
+    "old": "`${r.group} · found on day ${r.day}`",
+    "new": "`${r.group}`",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-C14-no-toggle",
+    "file": "src/ui/collectionsPage.js",
+    "old": "_picked = _picked === r.id ? null : r.id;",
+    "new": "_picked = r.id;",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-C15-never-whole",
+    "file": "src/ui/collectionsPage.js",
+    "old": "if (_picked === r.id) list.append(codexWhole(el, r));",
+    "new": "",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-C16-whole-no-day",
+    "file": "src/ui/collectionsPage.js",
+    "old": "ul.append(el('li', null, `First found on day ${r.day}`));",
+    "new": "",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-C17-whole-no-lore",
+    "file": "src/ui/collectionsPage.js",
+    "old": "if (r.lore) ul.append(el('li', null, r.lore));",
+    "new": "",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-C20-aeth-count-swap",
+    "file": "src/ui/collectionsPage.js",
+    "old": "`Aetheric - ${n.aetheric} of ${n.aetherics} found`",
+    "new": "`Aetheric - ${n.aetherics} found`",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-C21-found-class",
+    "file": "src/ui/collectionsPage.js",
+    "old": "`codex-line${r.found ? ' found' : ''}",
+    "new": "`codex-line${''}",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-B01-shown-always",
+    "file": "src/ui/cardBinderPage.js",
+    "old": "!!binderOf(player?.items);",
+    "new": "true;",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-B03-refusal-no-held",
+    "file": "src/ui/cardBinderPage.js",
+    "old": "return deckValid(cards) ?? deckHeldRefusal(cards, items);",
+    "new": "return deckValid(cards);",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-B06-no-unheld-dim",
+    "file": "src/ui/cardBinderPage.js",
+    "old": "${n ? '' : ' unheld'}",
+    "new": "",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-B07-no-filter",
+    "file": "src/ui/cardBinderPage.js",
+    "old": "_filter === 'all' || x.kind === _filter",
+    "new": "true",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-B09-no-count-badge",
+    "file": "src/ui/cardBinderPage.js",
+    "old": "if (n) tile.append(el('span', 'binder-count', `×${n}`));",
+    "new": "",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-B16-armed-outlives-drop",
+    "file": "src/ui/cardBinderPage.js",
+    "old": "dropBinderDeck(binder, i); _dropArmed = null;",
+    "new": "dropBinderDeck(binder, i);",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-B19-new-deck-overwrites",
+    "file": "src/ui/cardBinderPage.js",
+    "old": "_editing = { i: decks.length,",
+    "new": "_editing = { i: 0,",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-B20-no-maxlength",
+    "file": "src/ui/cardBinderPage.js",
+    "old": "name.maxLength = DECK_NAME_MAX;",
+    "new": "",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-B24-keep-enabled",
+    "file": "src/ui/cardBinderPage.js",
+    "old": "keep.disabled = !!why;",
+    "new": "keep.disabled = false;",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-B26-cancel-dead",
+    "file": "src/ui/cardBinderPage.js",
+    "old": "cancel.onclick = () => { _editing = null; _said = null; rerender();",
+    "new": "cancel.onclick = () => { _said = null; rerender();",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-B30-kept-stays-open",
+    "file": "src/ui/cardBinderPage.js",
+    "old": "kept in your binder.`; _editing = null; }",
+    "new": "kept in your binder.`; }",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-B32-no-picked",
+    "file": "src/ui/cardBinderPage.js",
+    "old": "  _picked = id;\n",
+    "new": "\n",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-B33-words-not-held",
+    "file": "src/ui/cardBinderPage.js",
+    "old": "'not held': 'Your binder does not hold every card this deck names.'",
+    "new": "'not held': ''",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-E01-no-player",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "collections: (d) => drawCollectionsPage(d, render, { ...kit, player: playerEntity }),",
+    "new": "collections: (d) => drawCollectionsPage(d, render, { ...kit }),",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/enhancedPause.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-E02-no-visit-reset",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "resetHoldingsPages(); resetFleetPage(); resetCollectionsPage();",
+    "new": "resetHoldingsPages(); resetFleetPage();",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/enhancedPause.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-E03-no-rerender",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "collections: (d) => drawCollectionsPage(d, render,",
+    "new": "collections: (d) => drawCollectionsPage(d, () => {},",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/enhancedPause.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-E04-rail-first",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "...(profPagesShown() ? PROF_HOLD_SECTIONS : []), ...(collectionsPageShown(playerEntity) ? COLLECTION_PAGE_SECTIONS : [])];",
+    "new": "...(collectionsPageShown(playerEntity) ? COLLECTION_PAGE_SECTIONS : []), ...(profPagesShown() ? PROF_HOLD_SECTIONS : [])];",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/enhancedPause.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-S-C1-repeat-pays",
+    "file": "src/net/cardStakes.js",
+    "old": "apply: (/** @type {any} */ a) => { if (!a?.data?.repeat) wallet(x.reg).pay(x.amount); }",
+    "new": "apply: (/** @type {any} */ a) => { wallet(x.reg).pay(x.amount); }",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-S-C1-no-apply",
+    "file": "src/net/cardStakes.js",
+    "old": "...(first ? { reserve: () => wallet(x.reg).pay(x.amount) } : { apply: (/** @type {any} */ a) => { if (!a?.data?.repeat) wallet(x.reg).pay(x.amount); } }),",
+    "new": "...(first ? { reserve: () => wallet(x.reg).pay(x.amount) } : {}),",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-S-C2-any-word",
+    "file": "src/net/cardStakes.js",
+    "old": "if (r && !r.ok && cardStakeRefused(r.error))",
+    "new": "if (r && !r.ok && !r.unknown)",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-S-C2-offline-refusal",
+    "file": "src/net/cardStakes.js",
+    "old": "|| e === 'realm-gold');",
+    "new": "|| e === 'realm-gold' || e === 'lease');",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-S-C3-ack-unkept",
+    "file": "src/net/cardStakes.js",
+    "old": "      if (!read(CARD_RECEIPTS_KEY).some((x) => x.j === c.j)) return null;\n",
+    "new": "",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-S-C4-file-to-player",
+    "file": "src/net/cardStakes.js",
+    "old": "c: stake?.c ?? null,",
+    "new": "c: stake?.c ?? character(),",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-S-E2-latch",
+    "file": "src/net/cardStakes.js",
+    "old": "claiming ??= (async () => {",
+    "new": "claiming = (async () => {",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-S-C8-one-round",
+    "file": "src/net/cardStakes.js",
+    "old": "&& !tried.has(x.j))).length;)",
+    "new": "&& !tried.size)).length;)",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-S-A4-signature-dead",
+    "file": "src/net/cardStakes.js",
+    "old": "'shape', 'version', 'unsigned',",
+    "new": "'shape', 'version', 'unsigned', 'signature',",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-S-A4-any-receipt-refusal",
+    "file": "src/net/cardStakes.js",
+    "old": "(r?.error === 'cards-receipt' && CARD_RECEIPT_DEAD.includes(r?.why))",
+    "new": "(r?.error === 'cards-receipt')",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-S-claim-bank-repeat",
+    "file": "src/net/cardStakes.js",
+    "old": "if (!a?.data?.repeat && Number.isSafeInteger(g) && g > 0) wallet(k.reg).bank(g);",
+    "new": "if (Number.isSafeInteger(g) && g > 0) wallet(k.reg).bank(g);",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-S-C6-fit-oldest",
+    "file": "src/net/cardStakes.js",
+    "old": "const i = out.findIndex((x) => x.sat);",
+    "new": "const i = -1;",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-S-C6-kept-full-off",
+    "file": "src/net/cardStakes.js",
+    "old": "if (read(CARD_STAKES_KEY).filter((x) => !x.sat).length >= CARD_KEPT_MAX) return { ok: false, error: 'cards-kept-full' };",
+    "new": "",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-S-void-at-once",
+    "file": "src/net/cardStakes.js",
+    "old": "t - x.at >= CARD_VOID_AFTER_MS",
+    "new": "t - x.at >= 0",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-S-void-sat",
+    "file": "src/net/cardStakes.js",
+    "old": "x.room === room && x.order && !x.sat &&",
+    "new": "x.room === room && x.order &&",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-S-prune-early",
+    "file": "src/net/cardStakes.js",
+    "old": "!(t - x.at > CARD_STAKE_KEEP_MS)",
+    "new": "!(t - x.at > CARD_VOID_AFTER_MS)",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-S-elsewhere-here",
+    "file": "src/net/cardStakes.js",
+    "old": "filter((x) => x.room !== room && x.c === character()",
+    "new": "filter((x) => x.c === character()",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-S-recover-other-char",
+    "file": "src/net/cardStakes.js",
+    "old": "filter((y) => !y.order && y.c === character())",
+    "new": "filter((y) => !y.order)",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-S-topup-flag-lost",
+    "file": "src/net/cardStakes.js",
+    "old": "...(x.topup ? { topup: true } : {}) }),",
+    "new": "}),",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-S-voiding-noop",
+    "file": "src/net/cardStakes.js",
+    "old": "seated(id) { write(CARD_STAKES_KEY, read(CARD_STAKES_KEY).map((x) => (x.id === id ? { ...x, sat: true } : x))); },",
+    "new": "seated(id) { void id; },",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-T-in-hand",
+    "file": "src/net/holdemTable.js",
+    "old": "  if (t.hand && t.handSeats.includes(chair)) return 'in hand';\n",
+    "new": "",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-T-min",
+    "file": "src/net/holdemTable.js",
+    "old": "stake.amount >= HOLDEM_TOPUP_MIN_BB * t.bb &&",
+    "new": "stake.amount >= 0 &&",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-T-max",
+    "file": "src/net/holdemTable.js",
+    "old": "seat.stack + stake.amount <= HOLDEM_STAKE_MAX_BB * t.bb",
+    "new": "stake.amount <= HOLDEM_STAKE_MAX_BB * t.bb",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-T-check-moves",
+    "file": "src/net/holdemTable.js",
+    "old": "  if (check) return null;\n",
+    "new": "",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-T-replace-stack",
+    "file": "src/net/holdemTable.js",
+    "old": "seat.stack += stake.amount;",
+    "new": "seat.stack = stake.amount;",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-T-cashout-twice",
+    "file": "src/net/holdemTable.js",
+    "old": "if (!seat?.stake || seat.cashed) return;\n  (t.cashouts ??= []).push({ to: seat.id, j: seat.stake, s: seat.sub, r: seat.stack,",
+    "new": "if (!seat?.stake) return;\n  (t.cashouts ??= []).push({ to: seat.id, j: seat.stake, s: seat.sub, r: seat.stack,",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-T-cashed-back",
+    "file": "src/net/holdemTable.js",
+    "old": "if (t.seats[mine].cashed) return 'cashed out';",
+    "new": "/* mutant */",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-R-topup-no-check",
+    "file": "server/src/index.js",
+    "old": "    const no = holdemTopUp(t, { id: a.id, stake, now }, true);\n    if (no) { refuse(no); return; }\n",
+    "new": "",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-R-topup-respend",
+    "file": "server/src/index.js",
+    "old": "    if (await this.state.storage.get(stakeKeyOf(c.cj))) { refuse('stake spent'); return; }\n    await this.state.storage.put(stakeKeyOf(c.cj), Math.floor(now / 1000));\n    const msgs = holdemTopUp",
+    "new": "    await this.state.storage.put(stakeKeyOf(c.cj), Math.floor(now / 1000));\n    const msgs = holdemTopUp",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-R-topup-room",
+    "file": "server/src/index.js",
+    "old": "if (c.cr !== a.key || c.ct !== m.table || !t || c.cb !== t.bb) { refuse('stake elsewhere'); return; }",
+    "new": "if (c.ct !== m.table || !t || c.cb !== t.bb) { refuse('stake elsewhere'); return; }",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-R-topup-table",
+    "file": "server/src/index.js",
+    "old": "if (c.cr !== a.key || c.ct !== m.table || !t || c.cb !== t.bb) { refuse('stake elsewhere'); return; }",
+    "new": "if (c.cr !== a.key || !t || c.cb !== t.bb) { refuse('stake elsewhere'); return; }",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-R-topup-bb",
+    "file": "server/src/index.js",
+    "old": "if (c.cr !== a.key || c.ct !== m.table || !t || c.cb !== t.bb) { refuse('stake elsewhere'); return; }",
+    "new": "if (c.cr !== a.key || c.ct !== m.table || !t) { refuse('stake elsewhere'); return; }",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-R-topup-joined-refund",
+    "file": "server/src/index.js",
+    "old": "{ j: c.cj, s: c.s, r: 0, w: 'joined' }",
+    "new": "{ j: c.cj, s: c.s, r: c.ca, w: 'refused' }",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-R-topup-no-joined",
+    "file": "server/src/index.js",
+    "old": "    await this._holdemReceipt(m.table, a.id, { j: c.cj, s: c.s, r: 0, w: 'joined' });\n",
+    "new": "",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-R-topup-B3",
+    "file": "server/src/index.js",
+    "old": "    if (!this._verifyKey || !a.sub || !(await this._receiptKeyOf())) { refuse('stakes closed'); return; }\n    const v = await verifyOrder(m.stake, this._verifyKey, { subtle: crypto.subtle, nowS: Math.floor(now / 1000), kind: 'stake' });\n    if (!v.ok || v.claims.s !== a.sub) { refuse('stake refused'); return; }",
+    "new": "    if (!this._verifyKey || !a.sub) { refuse('stakes closed'); return; }\n    const v = await verifyOrder(m.stake, this._verifyKey, { subtle: crypto.subtle, nowS: Math.floor(now / 1000), kind: 'stake' });\n    if (!v.ok || v.claims.s !== a.sub) { refuse('stake refused'); return; }",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-R-A2-refund-elsewhere",
+    "file": "server/src/index.js",
+    "old": "if (c.cr !== a.key) return { no: 'stake elsewhere' };",
+    "new": "if (c.cr !== a.key) return { no: 'stake elsewhere', back: { j: c.cj, s: c.s, r: c.ca } };",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-R-B2-stale-table",
+    "file": "server/src/index.js",
+    "old": "      t = tables.get(m.table);\n      const no = async (why)",
+    "new": "      const no = async (why)",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-R-B3-stake",
+    "file": "server/src/index.js",
+    "old": "if (!this._verifyKey || !a.sub || !(await this._receiptKeyOf())) return { no: 'stakes closed' };",
+    "new": "if (!this._verifyKey || !a.sub) return { no: 'stakes closed' };",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-R-B4-drop-unsigned",
+    "file": "server/src/index.js",
+    "old": "        if (!done) break;",
+    "new": "        if (!done) { t.cashouts.shift(); break; }",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-R-B4-forget-table",
+    "file": "server/src/index.js",
+    "old": "if (holdemEmpty(t) && !t.cashouts?.length) {",
+    "new": "if (holdemEmpty(t)) {",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-R-C6-week",
+    "file": "server/src/index.js",
+    "old": "const HOLDEM_STAKE_VOID_S = CARD_RECEIPT_TTL_S;",
+    "new": "const HOLDEM_STAKE_VOID_S = 7 * 24 * 3600;",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-R-void-room",
+    "file": "server/src/index.js",
+    "old": "if (!v.ok || v.claims.s !== a.sub || v.claims.cr !== a.key) { refuse('stake refused'); return; }",
+    "new": "if (!v.ok || v.claims.s !== a.sub) { refuse('stake refused'); return; }",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-R-void-respend",
+    "file": "server/src/index.js",
+    "old": "    if (await this.state.storage.get(stakeKeyOf(c.cj))) { refuse('stake spent'); return; }\n    await this.state.storage.put(stakeKeyOf(c.cj), nowS);",
+    "new": "    await this.state.storage.put(stakeKeyOf(c.cj), nowS);",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-R-ack-all",
+    "file": "server/src/index.js",
+    "old": "const left = kept.filter((x) => x?.j !== j);",
+    "new": "const left = [];",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-R-B5-newest-dropped",
+    "file": "server/src/index.js",
+    "old": "kept.slice(-HOLDEM_OWED_MAX)",
+    "new": "kept.slice(0, HOLDEM_OWED_MAX)",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-R-sweep-all-spends",
+    "file": "server/src/index.js",
+    "old": "if (!((await this.state.storage.get(k)) > old)) dead.push(k);",
+    "new": "dead.push(k);",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-R-owed-on-sit",
+    "file": "server/src/index.js",
+    "old": "      await this._holdemOwed(ws, a, m.table);   // a returning player hears what he is owed first\n",
+    "new": "",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-A-A1-fresh-minute",
+    "file": "server-account/src/cards.js",
+    "old": "stake: await orderOf(prior, player, signingKey, subtle, Number(prior.at)) }",
+    "new": "stake: await orderOf(prior, player, signingKey, subtle, nowS) }",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-A-topup-min-for-sits",
+    "file": "server-account/src/cards.js",
+    "old": "(topup === true ? HOLDEM_TOPUP_MIN_BB : HOLDEM_STAKE_MIN_BB)",
+    "new": "HOLDEM_TOPUP_MIN_BB",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-A-E6-paid-first",
+    "file": "server-account/src/cards.js",
+    "old": "  if (row.char_id !== character) return { error: 'cards-other-character' };   // the gold goes home to the character that staked it\n",
+    "new": "  if (row.char_id !== character) return { error: 'cards-other-character' };   // the gold goes home to the character that staked it\n  if (row.status === 'paid') return { ok: true, repeat: true, gold: Number(row.paid ?? 0) };\n",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-A-A3-expiry",
+    "file": "server-account/src/cards.js",
+    "old": "anyAge: true",
+    "new": "anyAge: false",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-A-whole-back",
+    "file": "server-account/src/cards.js",
+    "old": "if ((c.w === 'refused' || c.w === 'void') && c.r !== Number(row.amount)) return { error: 'cards-receipt', why: 'sum' };",
+    "new": "",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-A-A6-failed-paid",
+    "file": "server-account/src/cards.js",
+    "old": "    if (done) return { ok: true, gold: 0 };\n",
+    "new": "    return { ok: true, gold: 0 };\n",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-A-A4-no-why",
+    "file": "server-account/src/cards.js",
+    "old": "if (!v.ok) return { error: 'cards-receipt', why: v.why };",
+    "new": "if (!v.ok) return { error: 'cards-receipt' };",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F01-shield-floats-up",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "shield = { x: w - p - 1.8 * u - hw, y: h - p - 1.6 * u - hh, hw, hh }",
+    "new": "shield = { x: w - p - 1.8 * u - hw, y: h - p - 30 * u - hh, hw, hh }",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F01b-tile-shield-on-banner",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "shield = { x: w - p - 1.2 * u - hw, y: banner.y - 0.8 * u - hh, hw, hh }",
+    "new": "shield = { x: w - p - 1.2 * u - hw, y: banner.y + 3 * u - hh, hw, hh }",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F01c-shield-tip-cut-by-edge",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "shield = { x: w - p - 1.8 * u - hw, y: h - p - 1.6 * u - hh",
+    "new": "shield = { x: w - p - 1.8 * u - hw, y: h - p - 1.5 * u",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F02-shield-to-the-left",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "shield = { x: w - p - 1.8 * u - hw,",
+    "new": "shield = { x: p + 1.8 * u + hw,",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F03-gem-bottom-left",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "gem = { x: p + 0.87 * r + 1.2 * u, y: p + r + 1 * u, r }",
+    "new": "gem = { x: p + 0.87 * r + 1.2 * u, y: h - p - r - 1 * u, r }",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F03b-tile-gem-off-panel",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "gem = { x: p + 0.87 * r + 0.6 * u, y: p + r + 0.6 * u, r }",
+    "new": "gem = { x: p + 0.87 * r - 4 * u, y: p + r + 0.6 * u, r }",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F04-name-in-tier-colour",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "ctx.fillStyle = TEXT_INK; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';",
+    "new": "ctx.fillStyle = colour; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F05-rules-in-box-colour",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "ctx.font = `${pick.px}${FACE}`; ctx.fillStyle = TEXT_INK;",
+    "new": "ctx.font = `${pick.px}${FACE}`; ctx.fillStyle = TEXT_BOX;",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F06-cost-in-gem-colour",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "fitFont(ctx, t, g.r * 1.3, g.r * 1.05, g.r * 0.6, 'bold ');",
+    "new": "ctx.fillStyle = COST_GEM; fitFont(ctx, t, g.r * 1.3, g.r * 1.05, g.r * 0.6, 'bold ');",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F07-power-in-shield-colour",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "fitFont(ctx, t, s.hw * 1.5, s.hh * 1.05, s.hh * 0.5, 'bold ');",
+    "new": "ctx.fillStyle = POWER_SHIELD; fitFont(ctx, t, s.hw * 1.5, s.hh * 1.05, s.hh * 0.5, 'bold ');",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F08-emblem-in-ground-ink",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "EMBLEM_PAINTERS[emblem](ctx, cx, cy, size, art.ink);",
+    "new": "EMBLEM_PAINTERS[emblem](ctx, cx, cy, size, art.ground);",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F09-emblem-tiny",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "(landscape ? 0.86 : tile ? 0.8 : 0.78)",
+    "new": "(landscape ? 0.86 : tile ? 0.8 : 0.08)",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F10-emblem-off-centre",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "cx: win.x + win.w / 2,",
+    "new": "cx: win.x + win.w * 2,",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F11-name-dropped-low",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "y0 = b.y + b.h / 2 + 0.03 * px",
+    "new": "y0 = b.y + b.h / 2 + 3 * px",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F12-name-never-shrinks",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "  const set = (px) => { ctx.font = `bold ${px}${FACE}`; };\n",
+    "new": "  const set = (px) => { ctx.font = `bold ${px}${FACE}`; };\n  set(f.one); if (text) return { px: f.one, lines: [text] };\n",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F12b-name-never-squeezed",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "if (wide) ctx.fillText(t, nb.x + nb.w / 2, y0 + i * lh, nb.w);",
+    "new": "if (wide) ctx.fillText(t, nb.x + nb.w / 2, y0 + i * lh);",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F12c-name-box-over-notches",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "const nameBox = { x: banner.x + notch + nameMargin, y: banner.y, w: banner.w - 2 * notch - 2 * nameMargin,",
+    "new": "const nameBox = { x: banner.x + nameMargin, y: banner.y, w: banner.w - 2 * nameMargin,",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F12d-name-split-uneven",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "if (!best || m < best.m) best = { m, pair };",
+    "new": "if (!best) best = { m, pair };",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F12e-tile-name-floor-low",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "two: 7.6 * u, twoMin: 7.2 * u,",
+    "new": "two: 7.6 * u, twoMin: 5 * u,",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F13-rules-run-wide",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "right = box.x + box.w - pad;",
+    "new": "right = box.x + box.w * 1.6;",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F14-rules-lines-stacked",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "pick.lines.forEach((t, i) => { const y = top + i * lh,",
+    "new": "pick.lines.forEach((t, i) => { const y = top + 0 * i * lh,",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F15-flavor-at-top",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "fl.forEach((t, i) => { const y = y0 + i * flh,",
+    "new": "fl.forEach((t, i) => { const y = top + i * flh,",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F16-flavor-never",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "if (f) { pick = { px, lines, f }; break; }",
+    "new": "if (f && !f) { pick = { px, lines, f }; break; }",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F16b-flavor-never-shrinks",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "fpx >= 3.0 * u - 1e-9; fpx -= 0.2 * u",
+    "new": "fpx >= Math.min(px * 0.9, 4.6 * u) - 1e-9; fpx -= 0.2 * u",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F16c-rules-never-yield-to-flavor",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "if (px < 3.8 * u - 1e-9) break;",
+    "new": "if (px < 5.2 * u - 1e-9) break;",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F17-box-to-card-edge",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "box.h = h - p - 1.6 * u - box.y;",
+    "new": "box.h = h - box.y;",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F17b-text-past-box-foot",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "bottom = box.y + box.h - pad * 0.6, gap = 0.8 * u;",
+    "new": "bottom = box.y + box.h + 5 * u, gap = 0.8 * u;",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F18-arch-painted-square",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "else if (L.shape === 'arch') {",
+    "new": "else if (L.shape === 'archX') {",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F19-window-colour-edge-lost",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "ctx.beginPath(); windowPath(ctx, L); ctx.stroke();\n  ctx.strokeStyle = colour; ctx.lineWidth = 0.5 * u; ctx.stroke();",
+    "new": "ctx.beginPath(); windowPath(ctx, L); ctx.stroke();\n  ctx.lineWidth = 0.5 * u;",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F20-side-studs-at-centre",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "[w / 2, mid], [w / 2, h - mid], [mid, h / 2], [w - mid, h / 2]]",
+    "new": "[w / 2, h / 2], [w / 2, h / 2], [w / 2, h / 2], [w / 2, h / 2]]",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F21-double-rule-misplaced",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "roundRect(ctx, p + 1.1 * u, p + 1.1 * u, w - 2 * p - 2.2 * u, h - 2 * p - 2.2 * u, 2 * u);",
+    "new": "roundRect(ctx, p + 20 * u, p + 20 * u, w - 2 * p - 2.2 * u, h - 2 * p - 2.2 * u, 2 * u);",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F22-panel-dark",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "ctx.fillStyle = STOCK; ctx.beginPath();",
+    "new": "ctx.fillStyle = FRAME_DARK; ctx.beginPath();",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F23-tier-colour-ignored",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "const colour = RARITIES[tier].colour;",
+    "new": "const colour = RARITIES.common.colour;",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F24-card-emblem-ignored",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "const emblem = EMBLEM_PAINTERS[card?.emblem] ? card.emblem : KIND_EMBLEM[kind];",
+    "new": "const emblem = KIND_EMBLEM[kind];",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F25-skull-sockets-lost",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "circ(ctx, -0.14, -0.04, 0.1); circ(ctx, 0.14, -0.04, 0.1);",
+    "new": "",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F26-crescent-a-full-moon",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "crescent(ctx, -0.06, 0, 0.42, 0.1, -0.06, 0.34); part(ctx);",
+    "new": "circ(ctx, -0.06, 0, 0.42); part(ctx);",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F27-back-N-off-card",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "ctx.fillText('N', 0, -R - 4 * u);",
+    "new": "ctx.fillText('N', 0, R * 3);",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F28-back-no-rose",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "for (let k = 0; k < 4; k++) {\n      const a = from",
+    "new": "for (let k = 0; k < 0; k++) {\n      const a = from",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F29-back-rose-tiny",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "R = Math.min(w, h) * 0.36;",
+    "new": "R = Math.min(w, h) * 0.036;",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F30-unit-window-small",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "const s = Math.min(43 * u, innerW - 4 * u);",
+    "new": "const s = Math.min(43 * u, innerW - 4 * u) * 0.3;",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F31-shield-tip-long",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "s.y + s.hh * 0.7, s.x, s.y + s.hh);",
+    "new": "s.y + s.hh * 0.7, s.x, s.y + s.hh * 5);",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F32-gem-lit-all-over",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "poly(ctx, [pts[5], pts[0], pts[1], [g.x, g.y - g.r * 0.62]]);",
+    "new": "poly(ctx, pts);",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F33-text-box-dark",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "ctx.fillStyle = TEXT_BOX; ctx.strokeStyle = FRAME_DARK;",
+    "new": "ctx.fillStyle = FRAME_DARK; ctx.strokeStyle = FRAME_DARK;",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-F34-landscape-shrunk",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "win = { x: p + 1.5 * u, y: banner.y + banner.h + 2.5 * u, w: innerW - 3 * u, h: 36 * u };",
+    "new": "win = { x: p + 1.5 * u, y: banner.y + banner.h + 2.5 * u, w: (innerW - 3 * u) * 0.5, h: 20 * u };",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-N01-tile-mode-off",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "const tile = h <= ILIAC_TILE_MAX_H;",
+    "new": "const tile = h < 0;",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-N02-tile-writes-rules",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "if (L.box) paintText(ctx, L, card?.text ?? '', card?.flavor ?? '');",
+    "new": "paintText(ctx, L.box ? L : { ...L, box: { x: L.p, y: h * 0.8, w: w - 2 * L.p, h: h * 0.15 } }, card?.text ?? '', card?.flavor ?? '');",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-N03-shield-not-cleared",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "if (s && y + lh > s.y - s.hh - 0.6 * u)",
+    "new": "if (s && y + lh > 1e9)",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-N04-shield-clears-whole-box",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "if (s && y + lh > s.y - s.hh - 0.6 * u)",
+    "new": "if (s)",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-N05-keyline-hairline",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "const KEYLINE = 1.3;",
+    "new": "const KEYLINE = 0.3;",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-N06-glow-halo-opaque",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "ctx.save(); ctx.globalAlpha = 0.55; ctx.strokeStyle = colour; ctx.lineWidth = 2.4 * u;",
+    "new": "ctx.save(); ctx.globalAlpha = 1; ctx.strokeStyle = colour; ctx.lineWidth = 2.4 * u;",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-N07-rim-shine-lost",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "if (frame.glow) { ctx.strokeStyle = GLOW_CORE; ctx.lineWidth = 0.35 * u; ctx.stroke(); }",
+    "new": "",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-N08-double-rule-not-edged",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "ctx.strokeStyle = FRAME_DARK; ctx.lineWidth = 0.9 * u; ctx.stroke();",
+    "new": "",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-N09-cost-on-lit-facet",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "ctx.fillText(t, g.x, g.y + g.r * 0.16);",
+    "new": "ctx.fillText(t, g.x, g.y - g.r * 0.3);",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-N10-cost-digit-oversize",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "fitFont(ctx, t, g.r * 1.3, g.r * 1.05, g.r * 0.6, 'bold ');",
+    "new": "fitFont(ctx, t, g.r * 1.3, g.r * 1.8, g.r * 0.6, 'bold ');",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-N11-prince-gap-is-azura",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "prince: 'daedric', location: 'city' }",
+    "new": "prince: 'prince', location: 'city' }",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-N12-harpy-one-winged",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "poly(ctx, wing); part(ctx); poly(ctx, flipX(wing)); part(ctx);",
+    "new": "poly(ctx, wing); part(ctx);",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-N13-flavor-ignores-rules",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "if (y0 < above + gap) return null;",
+    "new": "if (y0 < top) return null;",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-N14-wrap-width-fn-ignored",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "const limit = typeof maxWidth === 'function' ? maxWidth : () => maxWidth;",
+    "new": "const limit = typeof maxWidth === 'function' ? () => 1e9 : () => maxWidth;",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-N15-tile-banner-short",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "const bh = 18 * u;",
+    "new": "const bh = 9 * u;",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-N16-tile-arch-emblem-low",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "if (tile && art.window === 'arch') emblem.cy = win.y + win.h * 0.56;",
+    "new": "if (tile && art.window === 'arch') emblem.cy = win.y + win.h * 0.9;",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-N17-name-margin-into-notch",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "const notch = 2.2 * u, nameMargin = 1 * u;",
+    "new": "const notch = 2.2 * u, nameMargin = -1 * u;",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-N18-tile-shield-small",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "if (art.power) { const hw = 7 * u, hh = 8 * u;",
+    "new": "if (art.power) { const hw = 5 * u, hh = 8 * u;",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-N19-tile-gem-small",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "if (art.cost) { const r = 8 * u;",
+    "new": "if (art.cost) { const r = 5 * u;",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-N20-ellipsis-dropped",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "lines[room - 1] = `${last}…`;",
+    "new": "lines[room - 1] = last;",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-N21-second-name-line-on-first",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "const lh = px * L.nameFont.lh, y0",
+    "new": "const lh = 0 * px * L.nameFont.lh, y0",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-N22-studs-off-the-rim",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "const studR = (frame.band * 0.7 + 0.8) * u;\n  const studs = [[mid, mid],",
+    "new": "const studR = (frame.band * 0.7 + 0.8) * u;\n  const studs = [[mid * 3, mid],",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-N23-glow-halo-inside",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "ctx.beginPath(); roundRect(ctx, p, p, w - 2 * p, h - 2 * p, 2.5 * u); ctx.stroke(); ctx.restore();",
+    "new": "ctx.beginPath(); roundRect(ctx, p + 6 * u, p, w - 2 * p, h - 2 * p, 2.5 * u); ctx.stroke(); ctx.restore();",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "faces5-N24-new-emblem-detail-lost",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "circ(ctx, 0, 0, 0.21); circ(ctx, 0, 0, 0.165); circ(ctx, 0, 0, 0.12); part(ctx, 'evenodd');",
+    "new": "circ(ctx, 0, 0, 0.21); part(ctx, 'evenodd');",
+    "tests": [
+      "test/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M2",
+    "file": "src/systems/iliacItems.js",
+    "old": "item?.templateIndex === CARD_BINDER_TEMPLATE && item?.group === GROUP;",
+    "new": "item?.templateIndex === CARD_BINDER_TEMPLATE;",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M5",
+    "file": "src/systems/iliacItems.js",
+    "old": "${c.kind === 'location' ? '' : ` - costs ${c.cost}`}",
+    "new": "${` - costs ${c.cost}`}",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M10",
+    "file": "src/systems/iliacItems.js",
+    "old": "worldTextureArchive: 209, worldTextureRecord: 4,",
+    "new": "worldTextureArchive: 209, worldTextureRecord: 8,",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M23",
+    "file": "src/systems/iliacItems.js",
+    "old": "export const BINDER_DECKS_MAX = 12;",
+    "new": "export const BINDER_DECKS_MAX = 13;",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M26",
+    "file": "src/systems/inventory.js",
+    "old": "(a.card ?? null) === (b.card ?? null);",
+    "new": "(a.card ?? 0) === (b.card ?? null);",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M29",
+    "file": "src/systems/itemInfo.js",
+    "old": "if (isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item)) record = survivalInfoTokens(item);",
+    "new": "if (isPortalStone(item) || isWalletItem(item)) record = survivalInfoTokens(item);",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M30",
+    "file": "src/systems/itemInfo.js",
+    "old": "isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item);   // CARDS8",
+    "new": "isPortalStone(item) || isWalletItem(item);   // CARDS8",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M33",
+    "file": "src/systems/itemFields.js",
+    "old": "export const validBinderDeck = (d) => !!d && typeof d === 'object' && !Array.isArray(d)",
+    "new": "export const validBinderDeck = (d) => !!d && typeof d === 'object'",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-C-M35",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "const n = b.held.reduce((s, it) => s + Math.max(1, it.stackCount ?? 1), 0);",
+    "new": "const n = b.held.length;",
+    "tests": [
+      "test/auditcards5_items.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/wallet1.test.js",
+      "test/rf5_itemfields.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js",
+      "test/auditrealm.test.js",
+      "test/auditworld4.test.js",
+      "test/auditrealm2_client.test.js",
+      "test/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-C03-reset-keeps-cards",
+    "file": "src/ui/collectionsPage.js",
+    "old": "{ _part = 'codex'; _picked = null; resetCardsPart(); }",
+    "new": "{ _part = 'codex'; _picked = null; }",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-C05-reset-keeps-picked",
+    "file": "src/ui/collectionsPage.js",
+    "old": "{ _part = 'codex'; _picked = null; resetCardsPart(); }",
+    "new": "{ _part = 'codex'; resetCardsPart(); }",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-C06-part-no-fallback",
+    "file": "src/ui/collectionsPage.js",
+    "old": "if (!parts.some(([id]) => id === _part)) _part = parts[0][0];",
+    "new": "",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-C12-no-hint",
+    "file": "src/ui/collectionsPage.js",
+    "old": "`${r.group} · ${r.hint}`",
+    "new": "`${r.group}`",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-C18-whole-no-power",
+    "file": "src/ui/collectionsPage.js",
+    "old": "if (r.power) ul.append(el('li', null, powerLine(r.power)));",
+    "new": "",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-C19-aeth-name-leak",
+    "file": "src/ui/collectionsPage.js",
+    "old": "x.found ? x.name : '?'",
+    "new": "x.name ?? x.id",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-B02-dpr-one",
+    "file": "src/ui/cardBinderPage.js",
+    "old": "Math.min(2, Number(globalThis.devicePixelRatio) || 1)",
+    "new": "1",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-B04-reset-keeps-editing",
+    "file": "src/ui/cardBinderPage.js",
+    "old": "_picked = null; _editing = null; _dropArmed = null; _said = null; }",
+    "new": "_picked = null; _dropArmed = null; _said = null; }",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-B05-reset-keeps-armed",
+    "file": "src/ui/cardBinderPage.js",
+    "old": "_picked = null; _editing = null; _dropArmed = null; _said = null; }",
+    "new": "_picked = null; _editing = null; _said = null; }",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-B10-past-held-by-one",
+    "file": "src/ui/cardBinderPage.js",
+    "old": "else if (inDeck >= held)",
+    "new": "else if (inDeck > held)",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-B11-unheld-goes-in",
+    "file": "src/ui/cardBinderPage.js",
+    "old": "if (!held) _said = `Your binder holds no ${c.name}.`;\n    else if",
+    "new": "if",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-B14-decks-head",
+    "file": "src/ui/cardBinderPage.js",
+    "old": "`Decks - ${decks.length} of ${BINDER_DECKS_MAX}`",
+    "new": "`Decks - ${decks.length}`",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-B17-no-deck-cap",
+    "file": "src/ui/cardBinderPage.js",
+    "old": "if (decks.length < BINDER_DECKS_MAX) {",
+    "new": "if (true) {",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-B18-new-deck-noname",
+    "file": "src/ui/cardBinderPage.js",
+    "old": "name: `Deck ${decks.length + 1}`, cards: [] }",
+    "new": "name: '', cards: [] }",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-B21-name-uncut",
+    "file": "src/ui/cardBinderPage.js",
+    "old": "e.name = String(name.value ?? '').slice(0, DECK_NAME_MAX);",
+    "new": "e.name = String(name.value ?? '');",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-B29-ready-no-count",
+    "file": "src/ui/cardBinderPage.js",
+    "old": "`${d.cards.length} cards - ready`",
+    "new": "'ready'",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-D-B34-chip-unsorted",
+    "file": "src/ui/cardBinderPage.js",
+    "old": "[...counts].sort((a, b) => (cardById(a[0])?.cost ?? 0) - (cardById(b[0])?.cost ?? 0))",
+    "new": "[...counts]",
+    "tests": [
+      "test/auditcards5_ui.test.js",
+      "test/cards8_binder.test.js",
+      "test/holdings.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-order-tie-p1",
+    "file": "src/net/iliacHand.js",
+    "old": "return total[1] > total[0] ? [1, 0] : [0, 1];",
+    "new": "return total[1] >= total[0] ? [1, 0] : [0, 1];",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ],
+    "equivalent": true,
+    "why": "the line runs only after `if (total[0] !== total[1])`, so > and >= agree on every input it sees"
+  },
+  {
+    "name": "AC5-A-select-self-down",
+    "file": "src/net/iliacHand.js",
+    "old": "return r && !r.inst.down ? [r] : [];",
+    "new": "return r ? [r] : [];",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ],
+    "equivalent": true,
+    "why": "a face-down card never fires its own text - powers() and the reveal skip it, and the unveil clears `down` only as the game ends - so `self` never finds one down"
+  },
+  {
+    "name": "AC5-A-down-end-text",
+    "file": "src/net/iliacHand.js",
+    "old": "if (!at || at.inst.down) continue;",
+    "new": "if (!at) continue;",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AC5-A-end-pick-ctx-stale",
+    "file": "src/net/iliacHand.js",
+    "old": "      const r = find(state, uid);\n      if (!r) break;\n      act(state, T, { p: r.p, h: r.h, uid }, fx, { uid });",
+    "new": "      act(state, T, { p: at.p, h: at.h, uid }, fx, { uid });",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ],
+    "equivalent": true,
+    "why": "no card's end text moves or removes the card before a second end record of its own (the Giant Bat's move is its only one; the catalog's digest pin holds that), so the place found before the records is the place found between them"
+  },
+  {
+    "name": "AC5-A-holding-reveal-for-down",
+    "file": "src/net/iliacHand.js",
+    "old": "if (down) { ev.push({ t: 'play', p, uid: b.uid, holding: h, down: true }); return; }",
+    "new": "if (down) { ev.push({ t: 'play', p, uid: b.uid, holding: h, down: true }); holdingReveal(state, T, p, h); return; }",
+    "tests": [
+      "test/cards7_rules.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_faces.test.js",
+      "test/auditcards5_ui.test.js"
+    ],
+    "equivalent": true,
+    "why": "a card lies face down only at a holding with the veil (Privateer's Hold alone), and that holding has no reveal text for holdingReveal to fire"
+  },
+  {
+    "name": "AC5-E-S-C4-region-now",
+    "file": "src/net/cardStakes.js",
+    "old": "reg: stake?.reg ?? region() }",
+    "new": "reg: region() }",
+    "tests": [
+      "test/auditcards5_gold.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-T-leaving",
+    "file": "src/net/holdemTable.js",
+    "old": "if (!seat || seat.leaving) return 'not seated';",
+    "new": "if (!seat) return 'not seated';",
+    "tests": [
+      "test/auditcards5_gold.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-T-friendly-seat",
+    "file": "src/net/holdemTable.js",
+    "old": "if (!t.gold || !seat.stake) return 'friendly table';",
+    "new": "if (!t.gold) return 'friendly table';",
+    "tests": [
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/auditcards5_gold.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/auditrealm2_service.test.js"
+    ],
+    "equivalent": true,
+    "why": "A seat at a gold table always holds a stake: sit() seats a gold table only with one (`if (!!t.gold !== !!stake) return ...`), t.gold is fixed at newTable and no path deletes seat.stake - and a seat without one has no sub, so the next line refuses it anyway"
+  },
+  {
+    "name": "AC5-E-T-sub",
+    "file": "src/net/holdemTable.js",
+    "old": "  if (stake.sub !== seat.sub) return 'stake refused';\n",
+    "new": "",
+    "tests": [
+      "test/auditcards5_gold.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-R-topup-no-refund",
+    "file": "server/src/index.js",
+    "old": "if (typeof msgs === 'string') { await this._holdemReceipt(m.table, a.id, { j: c.cj, s: c.s, r: c.ca, w: 'refused' }); refuse(msgs); return; }",
+    "new": "if (typeof msgs === 'string') { refuse(msgs); return; }",
+    "tests": [
+      "test/auditcards5_gold.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-R-topup-sub",
+    "file": "server/src/index.js",
+    "old": "if (!v.ok || v.claims.s !== a.sub) { refuse('stake refused'); return; }\n    const c = v.claims;\n    const t = (await this._holdemOf())",
+    "new": "if (!v.ok) { refuse('stake refused'); return; }\n    const c = v.claims;\n    const t = (await this._holdemOf())",
+    "tests": [
+      "test/auditcards5_gold.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-A-repeat-paid",
+    "file": "server-account/src/cards.js",
+    "old": "if (prior) return prior.status === 'held' ?",
+    "new": "if (prior) return true ?",
+    "tests": [
+      "test/auditcards5_gold.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-A-topup-truthy",
+    "file": "server-account/src/cards.js",
+    "old": "(topup === true ? HOLDEM_TOPUP_MIN_BB",
+    "new": "(topup ? HOLDEM_TOPUP_MIN_BB",
+    "tests": [
+      "test/auditcards5_gold.test.js"
+    ]
+  },
+  {
+    "name": "AC5-E-A-settle-held-only",
+    "file": "server-account/src/cards.js",
+    "old": "WHERE id = ?1 AND player = ?2 AND status = 'held'`",
+    "new": "WHERE id = ?1 AND player = ?2`",
+    "tests": [
+      "test/auditcards5_gold.test.js"
+    ]
+  }
+]

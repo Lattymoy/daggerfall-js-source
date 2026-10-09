@@ -269,6 +269,7 @@ alone, flagged at its new site inside calculateAttackDamage.
 
 - `src/combat/fpsSpellCasting.js` - * FLAGGED: TextureReplacement.TryImportCifRci (:179) - the loose-file
 - `src/net/professionLaw.js` - *  metal's, and a twig's picture is neither's (unverified without the player's data - FLAGGED to Mac's eye). */
+- `src/player/seatPose.js` - FLAGGED (Tavern-Cards.md section 12, CARDS2c): the seat poses the Morrowind body alone - Eye Of The Beholder has no sitting art, so a sprite body (a peer's walker, their paperdoll) stands at its seat facing the table.
 - `src/scenes/dungeonContext.js` - FLAGGED (bible/12-Enhanced-AI/Feud-Arc.md 10.1, section 32): this stream carries none of the street record's z, nm, yd, ex or sp - FEUD adds its own fields alone (RVN13: so no band follower's rt either)
 - `src/scenes/exterior.js` - TP2 INTERIM - THE ONE ARM THIS HOST CANNOT TAKE: a jump to an anchor on ANOTHER map pixel. Teleport.cs:145-163 respawns at the anchor's world position, which is StreamingWorld's job (scenes/world.js's `_teleportToPixel`, the door `teleportPrompt -> teleportTo` opens); `?exterior` loads ONE fixed city and runs no streamer, so there is no arrival to build - and it says so instead of eating the cast, the way the standalone dungeon says so about its two windows.
 - `src/scenes/seatBanners.js` - and dungeonContext.js stand no street; exterior.js (the bench) FLAGGED -

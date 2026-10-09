@@ -1,0 +1,252 @@
+[
+  {
+    "name": "C5-hole-to-room",
+    "file": "src/net/holdemTable.js",
+    "old": "t.hand.seats.map((s, k) => ({ to: t.seats[live[k]].id, frame: { hole:",
+    "new": "t.hand.seats.map((s, k) => ({ to: null, frame: { hole:",
+    "tests": [
+      "test/cards5_relay.test.js",
+      "test/cards5_client.test.js"
+    ]
+  },
+  {
+    "name": "C5-room-sees-hands",
+    "file": "src/net/holdemTable.js",
+    "old": "hand: t.hand ? viewFor(t.hand, -1) : null, clockAt:",
+    "new": "hand: t.hand ? viewFor(t.hand, 0) : null, clockAt:",
+    "tests": [
+      "test/cards5_relay.test.js",
+      "test/cards5_client.test.js"
+    ]
+  },
+  {
+    "name": "C5-anyone-acts",
+    "file": "src/net/holdemTable.js",
+    "old": "  if (t.seats[t.handSeats[k]]?.id !== id) return 'not your turn';\n",
+    "new": "\n",
+    "tests": [
+      "test/cards5_relay.test.js",
+      "test/cards5_client.test.js"
+    ]
+  },
+  {
+    "name": "C5-no-clock",
+    "file": "src/net/holdemTable.js",
+    "old": "    if (t.hand.toAct < 0 || now < t.clockAt) return [];",
+    "new": "    if (t.hand.toAct < 0 || true) return [];",
+    "tests": [
+      "test/cards5_relay.test.js",
+      "test/cards5_client.test.js"
+    ]
+  },
+  {
+    "name": "C5-leaver-stays",
+    "file": "src/net/holdemTable.js",
+    "old": "    if (s && (s.leaving || s.stack <= 0)) {",
+    "new": "    if (s && s.stack <= 0) {",
+    "tests": [
+      "test/cards5_relay.test.js",
+      "test/cards5_client.test.js"
+    ]
+  },
+  {
+    "name": "C5-stand-no-fold",
+    "file": "src/net/holdemTable.js",
+    "old": "  t.hand = foldSeat(prev, k);\n",
+    "new": "  t.hand = prev;\n",
+    "tests": [
+      "test/cards5_relay.test.js",
+      "test/cards5_client.test.js"
+    ]
+  },
+  {
+    "name": "C5-taken-sat",
+    "file": "src/net/holdemTable.js",
+    "old": "  if (t.seats[chair]) return 'taken';\n",
+    "new": "\n",
+    "tests": [
+      "test/cards5_relay.test.js",
+      "test/cards5_client.test.js"
+    ]
+  },
+  {
+    "name": "C5-first-deal-now",
+    "file": "src/net/holdemTable.js",
+    "old": "t.nextDealAt = Math.max(t.nextDealAt, now + HOLDEM_FIRST_MS);\n  return [room(t, [{ t: 'sit', seat: chair,",
+    "new": "t.nextDealAt = now;\n  return [room(t, [{ t: 'sit', seat: chair,",
+    "tests": [
+      "test/cards5_relay.test.js",
+      "test/cards5_client.test.js"
+    ]
+  },
+  {
+    "name": "C5-no-seed",
+    "file": "src/net/holdemTable.js",
+    "old": "  t.seed = rand32() >>> 0;\n",
+    "new": "  t.seed = 0;\n",
+    "tests": [
+      "test/cards5_relay.test.js",
+      "test/cards5_client.test.js"
+    ]
+  },
+  {
+    "name": "C5-wire-no-chair-bound",
+    "file": "src/net/holdemTable.js",
+    "old": "|| m.chair >= m.chairs) return null;",
+    "new": ") return null;",
+    "tests": [
+      "test/cards5_relay.test.js",
+      "test/cards5_client.test.js"
+    ]
+  },
+  {
+    "name": "C5-wire-raise-unchecked",
+    "file": "src/net/holdemTable.js",
+    "old": "    if (a.type === 'raise' && !chipsOk(a.to)) return null;\n",
+    "new": "\n",
+    "tests": [
+      "test/cards5_relay.test.js",
+      "test/cards5_client.test.js"
+    ]
+  },
+  {
+    "name": "C5-out-bad-card",
+    "file": "src/net/holdemTable.js",
+    "old": "m.hole.cards.every((c) => Number.isInteger(c) && c >= 0 && c < 52)",
+    "new": "m.hole.cards.every((c) => Number.isInteger(c))",
+    "tests": [
+      "test/cards5_relay.test.js",
+      "test/cards5_client.test.js"
+    ]
+  },
+  {
+    "name": "C5-relay-any-room",
+    "file": "server/src/index.js",
+    "old": "      if (!String(a.key ?? '').startsWith('interior:')) return;\n      if (!this._spend(ws, now, holdemGate,",
+    "new": "      if (!this._spend(ws, now, holdemGate,",
+    "tests": [
+      "test/cards5_relay.test.js",
+      "test/cards5_client.test.js"
+    ]
+  },
+  {
+    "name": "C5-relay-leave-kept",
+    "file": "server/src/index.js",
+    "old": "    if (a.id && String(a.key ?? '').startsWith('interior:')) { try { await this._holdemLeave(a, Date.now()); }",
+    "new": "    if (false) { try { await this._holdemLeave(a, Date.now()); }",
+    "tests": [
+      "test/cards5_relay.test.js",
+      "test/cards5_client.test.js"
+    ]
+  },
+  {
+    "name": "C5-relay-no-tick",
+    "file": "server/src/index.js",
+    "old": "    const held = await this._holdemTick();   // CARDS5:",
+    "new": "    const held = false;   // CARDS5:",
+    "tests": [
+      "test/cards5_relay.test.js",
+      "test/cards5_client.test.js"
+    ]
+  },
+  {
+    "name": "C5-relay-to-all",
+    "file": "server/src/index.js",
+    "old": "if (b.id && (to == null || b.id === to)) this._send(w, out);",
+    "new": "if (b.id) this._send(w, out);",
+    "tests": [
+      "test/cards5_relay.test.js",
+      "test/cards5_client.test.js"
+    ]
+  },
+  {
+    "name": "C5-relay-not-kept",
+    "file": "server/src/index.js",
+    "old": "    if (tables.size) await this.state.storage.put('holdem', Object.fromEntries(tables));",
+    "new": "    if (false) await this.state.storage.put('holdem', Object.fromEntries(tables));",
+    "tests": [
+      "test/cards5_relay.test.js",
+      "test/cards5_client.test.js"
+    ]
+  },
+  {
+    "name": "C5-client-wrong-room",
+    "file": "src/net/online.js",
+    "old": "      if (!validHoldemOut(m) || (!primary && m.cashout === undefined)) return;",
+    "new": "      if (!validHoldemOut(m)) return;",
+    "tests": [
+      "test/cards5_relay.test.js",
+      "test/cards5_client.test.js"
+    ]
+  },
+  {
+    "name": "C5-remote-no-shift",
+    "file": "src/systems/cardRemoteTable.js",
+    "old": "    const shift = (t) => (Number.isFinite(t) && Number.isFinite(f.now) ? t - f.now + local : local);",
+    "new": "    const shift = (t) => t;",
+    "tests": [
+      "test/cards5_relay.test.js",
+      "test/cards5_client.test.js"
+    ]
+  },
+  {
+    "name": "C5-remote-turn-always",
+    "file": "src/systems/cardRemoteTable.js",
+    "old": "    return h.toAct >= 0 && st.handSeats[h.toAct] === this.chair ? this.turn.legal : null;",
+    "new": "    return this.turn.legal;",
+    "tests": [
+      "test/cards5_relay.test.js",
+      "test/cards5_client.test.js"
+    ]
+  },
+  {
+    "name": "C5-remote-no-catchup",
+    "file": "src/systems/cardRemoteTable.js",
+    "old": "    else if (st.hand && st.handNo !== this.seenHand) {",
+    "new": "    else if (false) {",
+    "tests": [
+      "test/cards5_relay.test.js",
+      "test/cards5_client.test.js"
+    ]
+  },
+  {
+    "name": "C5-remote-holes-all",
+    "file": "src/systems/cardRemoteTable.js",
+    "old": "    if (chair !== this.chair || !this.hole || this.hole.handNo !== this.state?.handNo) return -1;",
+    "new": "    if (!this.hole) return -1;",
+    "tests": [
+      "test/cards5_relay.test.js",
+      "test/cards5_client.test.js"
+    ]
+  },
+  {
+    "name": "C5-host-stand-unsaid",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (g.remote) cardStand(g.table);",
+    "new": "    if (false) cardStand(g.table);",
+    "tests": [
+      "test/cards5_relay.test.js",
+      "test/cards5_client.test.js"
+    ]
+  },
+  {
+    "name": "C5-host-watch-kept",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (w.remote.state && w.remote.seated === 0 && !w.remote.state.hand) closeCardWatch(i);",
+    "new": "      if (false) closeCardWatch(i);",
+    "tests": [
+      "test/cards5_relay.test.js",
+      "test/cards5_client.test.js"
+    ]
+  },
+  {
+    "name": "C5-host-regulars-unstood",
+    "file": "src/scenes/worldModes.js",
+    "old": "        cardStand(game.table);\n        game.remote = null;",
+    "new": "        game.remote = null;",
+    "tests": [
+      "test/cards5_relay.test.js",
+      "test/cards5_client.test.js"
+    ]
+  }
+]

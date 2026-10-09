@@ -270,9 +270,9 @@ test('CHAP3b the wiring: the sheet\'s route, the client\'s door, the board\'s ch
   assert.match(src('server-account/src/index.js'), /path === '\/v1\/chapters\/list' \? await chapterSheet\(ctx, who\.player, env\)/);
   assert.match(src('src/net/accountClient.js'), /list: \(\) => post\('\/v1\/chapters\/list', \{\}\),/);
   assert.match(src('src/ui/noticeWindow.js'), /for \(const c of writs\?\.chapters \?\? \[\]\) body\.append\(el\('p', 'notice-chapter', chapterLineOf\(c\)\)\);/);
-  const mig = src('server-account/migrations/0096_npc_chapters.sql');
+  const mig = src('server-account/migrations/0097_npc_chapters.sql');
   assert.match(mig, /week\s+INTEGER PRIMARY KEY/);
   assert.match(mig, /strength\s+INTEGER NOT NULL CHECK \(strength BETWEEN 0 AND 100\)/);
   assert.match(mig, /PRIMARY KEY \(faction, region\)/);
-  assert.match(src('server-account/src/service.js'), /CHAP3b \(Mac: "Continue"; migration 0096_npc_chapters/);
+  assert.match(src('server-account/src/service.js'), /CHAP3b \(Mac: "Continue"; migration 0097_npc_chapters/);
 });

@@ -17,9 +17,9 @@ the foot). CHAP4a BUILT (2026-10-08, Mac: "Your decision", on "Whats next"; the 
 rank stopped at 7 - sections 3.5 and 6, its record at the foot); CHAP4b BUILT (2026-10-08, the same word; the book
 held at 7 online, a seat's rank at its chapter's halls, the seats said - the same sections, its record at the foot);
 CHAP4c BUILT (2026-10-08, Mac: "Your call"; the seats' titles on the token, behind `CHAPTER_TITLES`, the relay's
-`world178` first - section 6, its record at the foot); CHAP4d (the Chronicle's reader, the Focus) is next. Merged with main
-past the Super Dungeons arc and then past SCALE4 (2026-10-08): the arc's migrations are `0092_npc_roll` to
-`0097_npc_seats` and its service `acct96` - the records below name each
+`world179` first - section 6, its record at the foot); CHAP4d (the Chronicle's reader, the Focus) is next. Merged with main
+past the Super Dungeons arc, then past SCALE4 and TAVERN CARDS (2026-10-08): the arc's migrations are `0093_npc_roll`
+to `0098_npc_seats` and its service `acct97` - the records below name each
 migration by its current number and the service by the version it was built under. AUDIT CHAP3 (2026-10-08, Mac:
 "Let's audit everything we have so far before we continue") read all of it through six lenses and fixed what they found
 (`01-Overview/Audit-Chapters-3.md`); the sections below say where it narrowed them.** CHAP0's claims about the code were read off the tree at `9ed5a681`, each slice's off its own
@@ -325,7 +325,7 @@ BUILT, CHAP2a (2026-10-07, Mac: "Do it") - the delivery half, and where it narro
   no two chapters could). AUDIT CHAP2 E5: a chapter's writs are the Court's law's slots AFTER its first, which is the
   table's top tier - two a chapter had made every other hall writ that one, a quarter richer than a Court writ. A writ's
   id is `h:day:region:faction:slot`; it rides the Court's `writs` table (kind `hall`, its `faction`) and its day's
-  posting is `hall_writ_days` (migration `0093_npc_halls`). Receipt writs (a gate, a raid, the serpent, a camp) and the
+  posting is `hall_writ_days` (migration `0094_npc_halls`). Receipt writs (a gate, a raid, the serpent, a camp) and the
   Thieves Guild's fence in another town are CHAP2b's.
 - **Widened** (AUDIT CHAP2 R3): every chapter posts delivery writs in its own families - the Fighters, the Brotherhood
   and the orders too, whose rows in the table above name receipt writs alone - and the Thieves Guild's are ordinary
@@ -379,7 +379,7 @@ BUILT, CHAP2b (2026-10-08, Mac: "Keep going with the arc/slices") - the receipt 
 - **After the receipt, never instead of it** (`server-account/src/npcReceipts.js` creditReceipt): the claim's own row
   first, the credit after it in the claim's answer (`chapters`), as the seats' gate influence is; a credit that fails is
   answered `counted: false` and the claim stands. Each line is kept once by its id (`npc_receipt_credits`, migration
-  `0094_npc_receipts`: a receipt's `gate:<day>` or `raid:<key>`, a member's day's writ `wgate:<day>`, `wraid:<day>`), so
+  `0095_npc_receipts`: a receipt's `gate:<day>` or `raid:<key>`, a member's day's writ `wgate:<day>`, `wraid:<day>`), so
   a receipt claimed again credits nothing. The Roll's head moves under the credit's own tag (a claim that read it
   before is refused its write), the claim sequence untouched (AUDIT CHAP2 C1); never past 100, what is owed trimmed; only
   while the character stands; the tab refreshes and says "The Fighters Guild will remember it." (`hallRememberLine`).
@@ -566,7 +566,7 @@ BUILT (CHAP4a, 2026-10-08), and where building it asked, narrowed here:
   then the lower character id. Every chapter's Master's seat first, realm-wide, then its officers: so a character the
   Master of one chapter may sit as another guild's officer, never two Masters; an account's characters hold one seat a
   guild between them, in every region (an alt in the Master's chapter sits nowhere).
-- **The seats' table** (`npc_chapter_seats`, migration `0097_npc_seats`) is written whole again each Turning; a seat
+- **The seats' table** (`npc_chapter_seats`, migration `0098_npc_seats`) is written whole again each Turning; a seat
   keeps its `since` - the week its character first sat at the chapter without a break, through a move between Master and
   officer. A character deleted takes its seats with it (`realm.js` deleteRealm, undoCustoms); one that dies keeps its
   seat until the next Turning places it nowhere.
@@ -583,7 +583,7 @@ BUILT (CHAP4c, 2026-10-08, Mac: "Your call"), the seats' titles:
   `chapterofficer`, `formermaster` - each with the seats' bounded claim (`ts`, [the chapter's key, the Season]; the key
   its guild faction x 100 + its region, `chapterTitleKey`), refused without it and the claim refused beside any title
   that rides alone (`titleClaimed`). The relay stamps and reads the claim as a seat title's (`net/wire.js` badged,
-  readBadge) - a relay change: `world178`, NOT YET DEPLOYED.
+  readBadge) - a relay change: `world179`, NOT YET DEPLOYED.
 - **Worded without gender** (Seats-Arc 7.4) - "Master of the Fighters Guild, Anticlere", "Officer of the Mages Guild,
   Daggerfall", "Former Master of the Knights of the Dragon, Daggerfall" (`chapterTitleText`); NARROWED from the draft's
   "Former Master of the <Region> Chapter": a region keeps a chapter of every guild with a hall there, so the guild is
@@ -593,7 +593,7 @@ BUILT (CHAP4c, 2026-10-08, Mac: "Your call"), the seats' titles:
   one of its standing characters holds that seat, and a Master's seat it lost this Season (the Chronicle's rows from the
   Season's first week - the counted Season, or the eight-week block with none counted) while it does not hold that
   Master's seat again; a token signs it, with its claim, only for a character that holds it.
-- **The order of the deploy** (the SHADOW-FANG order): the relay `world178` first, by hand - a token with a title the
+- **The order of the deploy** (the SHADOW-FANG order): the relay `world179` first, by hand - a token with a title the
   live relay does not know is refused at the hello - then `CHAPTER_TITLES = "on"` (`server-account/wrangler.toml`,
   shipped `"off"`; `chapterTitlesOpenFor`).
 
@@ -696,22 +696,22 @@ classic skin, the row off, the service unreachable - the living world is exactly
 
 DECIDED.
 
-- **Account service (D1)**: BUILT (CHAP1, migration `0092_npc_roll`): `npc_roll_heads` (char_id, player, cap, seq,
+- **Account service (D1)**: BUILT (CHAP1, migration `0093_npc_roll`): `npc_roll_heads` (char_id, player, cap, seq,
   last_rid, tag, seeded_at, updated_at - every write moves `seq` on under its own `tag`, a claim names `last_rid`);
   `npc_roll` (char_id, faction_id, player, rep, gained_day, gained, owed, member, rank, joined_at); `npc_rep_events` (seq,
   char_id, player, faction_id, asked, credited, rid, at - AUDIT CHAP2 S6: a claim with no reputation line leaves a line
-  of faction 0, its id). BUILT (CHAP2a, migration `0093_npc_halls`): `world_witness` kind `npchall`; `writs` rebuilt
+  of faction 0, its id). BUILT (CHAP2a, migration `0094_npc_halls`): `world_witness` kind `npchall`; `writs` rebuilt
   with `kind` ('court', 'hall'; CHAP3a: 'member'), `faction` and (CHAP3a) `owner`, `UNIQUE (day, region, kind,
   faction, owner, slot)`; `hall_writ_days` (day,
   region, posted, at); AUDIT CHAP2: `npc_hall_strikes` (map_id, by, at) and `npc_roll_heads.kseq`, the claim sequence
-  (C1). BUILT (CHAP2b, migration `0094_npc_receipts`): `npc_receipt_credits` (char_id, faction_id, ref, player, amount,
+  (C1). BUILT (CHAP2b, migration `0095_npc_receipts`): `npc_receipt_credits` (char_id, faction_id, ref, player, amount,
   tag, at - one line a guild a receipt, one a guild a member a day for its writ). BUILT (CHAP3a, migration
-  `0095_npc_merit`): `npc_chapter_merit` (week, faction, region, account, char_id, source - 'writ', 'gate', 'raid' -
+  `0096_npc_merit`): `npc_chapter_merit` (week, faction, region, account, char_id, source - 'writ', 'gate', 'raid' -
   amount, ref, at; `UNIQUE (char_id, faction, source, ref)`, the draft's `(source, ref)` narrowed to one line a
-  character an act a guild). BUILT (CHAP3b, migration `0096_npc_chapters`): `npc_chapters` (faction, region, strength,
-  week, merit, at) and `npc_chapter_weeks` (week, active, target, chapters, open, at). BUILT (AUDIT CHAP3 S3, `0093`
+  character an act a guild). BUILT (CHAP3b, migration `0097_npc_chapters`): `npc_chapters` (faction, region, strength,
+  week, merit, at) and `npc_chapter_weeks` (week, active, target, chapters, open, at). BUILT (AUDIT CHAP3 S3, `0094`
   grown in place): `npc_hall_regions` (region, chapters, ver, done, at) - a region's chapters computed once a change.
-  BUILT (CHAP4a, migration `0097_npc_seats`): `npc_chapter_seats` (faction, region, char_id, account, seat, since, week,
+  BUILT (CHAP4a, migration `0098_npc_seats`): `npc_chapter_seats` (faction, region, char_id, account, seat, since, week,
   at - the draft's `key` the chapter's own pair) and `npc_chapter_history` (seq, faction, region, week, kind, char_id,
   data JSON). Still drawn: a chapter's event, event_state JSON, doctrine and focus (CHAP4c, CHAP6).
 - **Endpoints** (`/v1/chapters/...`): `roll` and `claim` BUILT (CHAP1, behind `CHAPTERS_OPEN`, shipped `dev`; each
@@ -720,7 +720,7 @@ DECIDED.
   ride the board's own writ endpoints, and (CHAP3a) a member's own writ and the account's Merit lines ride its list.
 - **The settle**: inside `settleWeek`, after the seats' steps - Merit summed, Strength moved, seats placed, and at a
   Season's boundary the events resolved and drawn. NARROWED (CHAP3b): the Chapters' own Turning on the seats' week,
-  keyed on its own row (`npc_chapter_weeks`, migration `0096_npc_chapters`), beside `settleWeek` rather than in it -
+  keyed on its own row (`npc_chapter_weeks`, migration `0097_npc_chapters`), beside `settleWeek` rather than in it -
   5.2. BUILT (CHAP3b): `npc_chapters` (faction, region, strength, week, merit, at - the draft's event, doctrine and
   focus are CHAP4's and CHAP6's to add) and `npc_chapter_weeks` (week, active, target, chapters, at).
 - **The relay**: AUDIT CHAP R5 - this said "no change: the gate, raid and serpent receipts already name an account and a
@@ -869,7 +869,7 @@ the law and every place this slice narrowed it (BUILT, CHAP1).
   whatever moved while the claim was out) and the memberships off both books (`rollMembersOf`). AUDIT CHAP moved the
   credit to a pace with what it leaves owed (`rollDrain`), the cap to a customs crossing's and a member's rank's need,
   and the adoption to the factions the client holds; it added `rollRankCapOf` and `rollKeptOf`.
-- **The service.** `server-account/src/npcRoll.js` over migration `0092_npc_roll`: `POST /v1/chapters/roll` reads the
+- **The service.** `server-account/src/npcRoll.js` over migration `0093_npc_roll`: `POST /v1/chapters/roll` reads the
   Roll, seeding it the first time from the save's standing (twenty-two rows and a head, one batch, each INSERT OR
   IGNORE); `POST /v1/chapters/claim` credits what moved, in one batch whose first statement moves the head's `seq` on
   and whose every other write stands only at that `seq` under the claim's id - a lost race writes nothing and says
@@ -923,7 +923,7 @@ The second slice's delivery half; section 4 carries the law and every narrowing 
   town read over all its reports, kept by the isolate a minute). `professions.js`: the day's hall writs written down
   beside the Court's (`hall_writ_days`), listed to an account the Chapters are open to (a hidden guild's to its
   members on the Roll), delivered as a Court writ is
-  with the Roll's +2 in the same batch. `npcRoll.js`: the join's floor. Migration `0093_npc_halls` rebuilds
+  with the Roll's +2 in the same batch. `npcRoll.js`: the join's floor. Migration `0094_npc_halls` rebuilds
   `world_witness` (the kind) and `writs` (the kind and the faction). The service is `acct94`; deploy it before the
   site.
 - **The client.** `src/net/npcHallBook.js` (a town's halls off `buildingSummaries`' rows, reported once a day a town),
@@ -970,7 +970,7 @@ The second slice's receipt half; section 4 carries the law and its calls (BUILT,
 - **The law.** `src/net/npcChapterLaw.js`: the kinds (`RECEIPT_KINDS`), a guild's asks (`hallReceiptKindsOf`), a
   receipt's own and its writ's ids (`receiptRef`, `receiptWritRef`), what one receipt credits (`receiptCreditsOf`) and
   the line it says (`hallRememberLine`).
-- **The service.** `server-account/src/npcReceipts.js` over migration `0094_npc_receipts`: `creditReceipt`, run by the
+- **The service.** `server-account/src/npcReceipts.js` over migration `0095_npc_receipts`: `creditReceipt`, run by the
   gate and raid claim routes after the receipt's own row (`server-account/src/index.js`), and `receiptAsks`, the board's
   asks beside its writs (`professions.js` listWrits). A realm character's delete and an undone customs take its lines.
   Still `acct94` - nothing of the arc has shipped.
@@ -992,7 +992,7 @@ The third slice's first half; section 5.1 carries the law and what building it n
 - **The law.** `src/net/npcChapterLaw.js`: Merit's numbers (`MERIT_WRIT`, `MERIT_RECEIPT`, `MERIT_TENURE_S`,
   `MERIT_CAP_WEEK`, `MERIT_SOURCES`), its week (`meritWeekOf`), a writ's own share (`meritOfWrit`), a member's own writ
   (`memberWrit`, `memberWritId`), a chapter's writ (`isChapterWrit`) and the board's line (`meritLineOf`).
-- **The service.** `server-account/src/npcMerit.js` over migration `0095_npc_merit` (and 0093's writs rebuild, grown in
+- **The service.** `server-account/src/npcMerit.js` over migration `0096_npc_merit` (and 0094's writs rebuild, grown in
   place - nothing of it shipped - by the kind `member` and its `owner`): `meritStatement`, the Merit line with its every
   bound, in the act's own batch; `meritOfAct`, an act's lines; `meritAsks`, the board's. `professions.js` posts, lists
   and delivers a member's own writ (postMemberWrits, listWrits, deliverWrit); `npcReceipts.js` creditReceipt adds a
@@ -1018,7 +1018,7 @@ The third slice's second half; sections 5.2 and 5.3 carry the law and what build
   `STRENGTH_STEP_MAX`, `STRENGTH_IDLE`, `STRENGTH_TARGET`), a week's target and step (`strengthTarget`, `strengthAfter`),
   a Season's end (`strengthSeasonEnd`), the bands (`CHAPTER_BANDS`, `chapterBandOf`), a chapter's writs by its band
   (`hallWritCountIn`) and the board's line (`chapterLineOf`).
-- **The service.** `server-account/src/npcChapters.js` over migration `0096_npc_chapters`: every region's chapters in one
+- **The service.** `server-account/src/npcChapters.js` over migration `0097_npc_chapters`: every region's chapters in one
   read (`allChapters`), a week's Turning (`settleChapterWeek` - one batch, the week's key first, every chapter in one
   statement over a bound JSON array), the Turnings due (`settleChaptersDue`), a region's Strengths (`regionStrengths`)
   and the sheet (`chapterSheet`, `/v1/chapters/list` in `server-account/src/index.js`). `professions.js` settles before a
@@ -1074,7 +1074,7 @@ book's key and bound).
   the strike asked inside a witness's write. `npcChapters.js`: the grace, the switch and its column, the agreed gate
   region at the Turning. `professions.js`: hall writs only while the Chapters are open, in one statement and their own
   batch; a member's own writ once a guild a day. `npcReceipts.js`: a gate of another week refused; a character's guilds in
-  order. Migrations `0093`-`0096` grown in place (nothing shipped): `npc_hall_regions`, two indexes, the `open` column.
+  order. Migrations `0094`-`0097` grown in place (nothing shipped): `npc_hall_regions`, two indexes, the `open` column.
 - **The client.** `world.js`: a kept gate claim waits for the scan (90 s at most); a raid's line on its fighter's page;
   a late writ said in the chat; a stale build's Roll stop said; the hall's chapter by the politic region. `worldModes.js`:
   a window's factor read once. `chapterSheet.js`: a stop forgets. `noticeWindow.js`: a refused Take reads the list again,
@@ -1098,8 +1098,8 @@ The fourth slice's service half; sections 3.5 and 6 carry the law and what build
   changed (`seatChangesOf`).
 - **The service.** `server-account/src/npcChapters.js`: the Turning's seats (`seatsPlaced`, in settleChapterWeek's
   batch) and a character's (`chapterSeatsOf`, on the Roll's answer - `index.js`); `npcRoll.js`: the recorded rank
-  through `rollBookRankOf`; `realm.js`: a deleted character's seats; migration `0097_npc_seats`. Still `acct95` (`acct96`
-  since the merge of main past SCALE4's).
+  through `rollBookRankOf`; `realm.js`: a deleted character's seats; migration `0098_npc_seats`. Still `acct95` (`acct97`
+  since the merges of main past SCALE4's and TAVERN CARDS').
 - **Pins.** `test/chap4a_seats.test.js`, 13 tests: the law against literals (the numbers, the cap, Eligible at each
   edge, the standing, the plan's order, vacancy, ties, carry and limits, the changes); the Turning through the real
   migrations (who is placed and who never - under the line, a second short, an account too new, dead, gone; the window;
@@ -1130,13 +1130,13 @@ The fourth slice's client half; sections 3.5 and 6 carry the law and what buildi
 The fourth slice's titles; section 6 carries the law and what building it narrowed (BUILT, CHAP4c).
 
 - **The token and the relay.** `src/net/identityToken.js`: CHAPTER_TITLES, last in TITLES, and `titleClaimed` (a seat's
-  and a chapter's title ride with `ts`); `src/net/wire.js` badged and readBadge carry it. RELAY_VERSION `world178` (`world177` on its branch, renumbered past main's Wrothgarian zone at the merge), its
+  and a chapter's title ride with `ts`); `src/net/wire.js` badged and readBadge carry it. RELAY_VERSION `world179` (`world177` then `world178` on its branch, renumbered past main's Wrothgarian zone and Tavern Cards at the merges), its
   law recorded in `test/relayversion.test.js`; forty-one tests' version pins moved with it (PIN MOVED).
 - **The law.** `src/net/npcChapterLaw.js`: the key (`chapterTitleKey`, `chapterOfTitleKey`), the words
   (`chapterTitleText`) and the titles a character's seats give it (`chapterTitlesOf`).
 - **The service.** `server-account/src/npcChapters.js` (`chapterTitlesOpenFor`, `chapterTitlesOfAccount`);
   `titles.js` holds them off the row's `chapterTitles`; `index.js` lays them on the wardrobe's and the mint's row and
-  signs one only for its character. `wrangler.toml`: `CHAPTER_TITLES = "off"`. Still `acct96`.
+  signs one only for its character. `wrangler.toml`: `CHAPTER_TITLES = "off"`. Still `acct96` (`acct97` since the merge of main past TAVERN CARDS').
 - **The client.** `src/ui/playerBadge.js`: the words off the claim, the plain words, three colours.
 - **Pins.** `test/chap4c_titles.test.js`, 7 tests: the vocabulary and the claim's law, the relay's stamp and read; the
   key and the words (and none for a hidden guild, no guild, no region); the titles a character's seats give it (the

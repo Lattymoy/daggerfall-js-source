@@ -87,7 +87,7 @@ crons = ["* * * * *", "41 * * * *"]
 [vars]
 # Answered by /health so a deploy that did not happen cannot look like
 # one that did. Kept in step with ACCOUNT_VERSION in src/service.js.
-ACCOUNT_VERSION = "acct96"
+ACCOUNT_VERSION = "acct97"
 # WB5b: THE RELAY'S PUBLIC HALF, GATE_PUBLIC_KEY - the key an Oblivion
 # Gate's kill receipts verify with (src/net/gateReceipt.js) - is NOT a
 # var here. GATE-KEYS (2026-09-26): the account deploy mints the pair
@@ -206,8 +206,8 @@ SEATS_OPEN = "on"
 CHAPTERS_OPEN = "dev"
 # CHAP4c (Chapters-Arc 6): THE CHAPTERS' TITLES - a seat's Master, officer and Former Master signed on the token - by
 # this switch, "on" or anything else for off. Shipped OFF: the relay must carry the three ids first (RELAY_VERSION
-# world178, deployed by hand) - a token with a title the relay does not know is refused at the hello, so turning this
-# on before that relay is live keeps every seated player who wears one out of the world. Deploy world178, then "on".
+# world179, deployed by hand) - a token with a title the relay does not know is refused at the hello, so turning this
+# on before that relay is live keeps every seated player who wears one out of the world. Deploy world179, then "on".
 CHAPTER_TITLES = "off"
 # SEASON1 (SEAT0 9.1, 18): the seat week Season 0 - the four-week open beta - begins (townSeatLaw.js seasonOf); 8-week
 # Seasons follow, each ending at its last Turning with its titles and the soft reset, and Season 0's end wipes the seats.

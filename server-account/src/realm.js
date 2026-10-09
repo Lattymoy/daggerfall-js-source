@@ -644,6 +644,8 @@ export async function deleteRealm({ db, bucket, nowS = Math.floor(Date.now() / 1
   // out, kept from going by them (guildKeepsSql), its name and tag held for good (guilds.js disband and leave ask it too)
   if (master?.vault) return { error: 'guild-vault' };
   if (Number((await db.prepare(REALM_MARKET_OPEN_SQL).bind(playerId, id).first())?.n ?? 0) > 0) return { error: 'realm-market-open' };
+  // AUDIT CARDS-4 A3: a card table's stake still held comes home to this character first (cards.js cashoutCards)
+  if (await db.prepare(`SELECT 1 FROM card_stakes WHERE player = ? AND char_id = ? AND status = 'held' LIMIT 1`).bind(playerId, id).first()) return { error: 'cards-held' };
   // HOME-RENT: a room another player is renting in its home waits for its days to run out, and rent held for it waits to
   // be collected - the delete takes the home with it. AUDIT: then no room of it is offered any more, and both are asked
   // again - a rent landing between the first asking and the delete's batch was deleted with the home (a rent needs its

@@ -166,6 +166,27 @@ directory by `test/audit18_bible_docs.test.js`:
   sticky slots by position, `?shadowcache=off` the old path
   (`Enhanced-Lighting-Arc.md`, SC1, CACHE-COPY).
 - `skyRenderer.js` - painted skies (R4) + the night sky.
+- `cardTableDraw.js` - CARDS3 THE CARDS' BODIES (2026-10-07,
+  `11-Multiplayer/Tavern-Cards.md` section 15): one atlas (52 faces, the back,
+  the stock, five chips) painted on a canvas and uploaded once under a string
+  key; 52 face plates, a back plate and five chip drums made at the first card,
+  each drawn with its own matrix in the interior's pass after the decor, all
+  freed with the table. The plates wound counter-clockwise about their normals
+  and the faces laid unmirrored for the mirrored world - both found by eye.
+- `cardFaces.js` - CARDS-BAY THE DECK OF THE ILIAC BAY (2026-10-08,
+  `11-Multiplayer/Tavern-Cards.md` section 21): the four crowns as the suits
+  (Orsinium's axe, Sentinel's sun, Wayrest's rose, Daggerfall's dagger, four
+  inks), their royals as the courts, their seals as the aces, the Bay's
+  medallion on the back - every face painted from canvas paths in code (no
+  ARENA2 pixel, no font glyph); one painter for the cloth's atlas and the
+  panel's little cards.
+- `iliacCardFaces.js` - CARDS8 THE COLLECTIBLE CARDS' FACES (2026-10-08,
+  `11-Multiplayer/Tavern-Cards.md` section 26; Mac: "Painted in code"): each
+  Iliac Hand card framed in its loot tier's colour (studs, a double rule, an
+  aetheric glow up the tiers), its kind by its window (a unit's square, a
+  spell's rounded, a prince's arch, a location's landscape), a magicka gem and
+  a power shield, one of 35 emblems drawn from paths, the name banner and the
+  rules box; the back a compass rose of the Bay - no ARENA2 pixel, no raster.
 - `lightClusters.js` - LC1 CLUSTERED LIGHTS (2026-09-23): the frustum cut into
   16 x 9 x 24 cells once a frame on the CPU, each light written into the cells
   its view-space box touches, uploaded as two integer textures (the grid's

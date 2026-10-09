@@ -7,7 +7,7 @@ told to prove what it reported, and none edited the tree while any of them was r
 VERIFIER IS READING):
 
 - **the service** (S): `server-account/src/npcRoll.js`, `npcHalls.js`, `npcReceipts.js`, `npcMerit.js`,
-  `npcChapters.js`, the Chapters' parts of `professions.js`, the routes, migrations `0091` to `0095` (today's `0092` to `0096`, renumbered past SCALE4's `0091` at the merge of main);
+  `npcChapters.js`, the Chapters' parts of `professions.js`, the routes, migrations `0091` to `0095` (today's `0093` to `0097`, renumbered past SCALE4's `0091` and TAVERN CARDS' `0092` at the merges of main);
 - **the economy and its abuse** (E): a modified client, alts and rings, the bounds of Merit and Strength, the bands;
 - **the client** (C): `src/net/chapterSheet.js`, `npcRollTracker.js`, `npcHallBook.js`, the board, the hosts' wiring,
   CHAP3c's prices in the hall;
@@ -20,7 +20,7 @@ Every finding was re-read here before a line moved. Each fix carries an `AUDIT C
 `test/audit_chap3.test.js` (18), and is mutated in `tools/mutants/audit_chap3.json`: **45 records, 40 dead, 5 equivalent
 as recorded** (each with its reason). Thirty older records the fixes moved were re-aimed by content and run again: all
 dead - AUDIT CHAP2's `T-LAW-ADOPT-BASE-HAS` and CHAP3c's `CHAP3C-SHEET-BUSY` among them, no longer called equivalent (T6,
-T7). The service stayed `acct95` (`acct96` since, renumbered past SCALE4's at the merge of main): none of the arc has shipped, so migrations `0092` to `0095` (today's `0093` to `0096`) grew in place.
+T7). The service stayed `acct95` (`acct97` since, renumbered past SCALE4's and TAVERN CARDS' at the merges of main): none of the arc has shipped, so migrations `0092` to `0095` (today's `0094` to `0097`) grew in place.
 
 Decided at Mac's standing word ("You make the best decisions"; "You can decide whatever is best"), each his to overrule:
 E1's gate agreement, E3's one writ a guild a day, S2's forgetting of the developers' weeks, S3's computed regions. E4,
