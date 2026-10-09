@@ -978,7 +978,11 @@ Section 6, in the dungeon host.
   widest (`sdRiftPlace`: the end itself, then eight bearings at 1.5 m and 3 m, each on the end's own floor and reached
   by a clear line at chest height). It is as wide and as tall as that hall lets it stand (`sdRiftFit`): 7 m at most,
   the hall's own height and twice its nearest wall less 0.3 m of air, never under 2.6 m - a 7 m ring would be cut by
-  the ceiling of most of Daggerfall's halls. Its look (`scenes/sdEnd.js riftFrame`): a ring of brass light in eight
+  the ceiling of most of Daggerfall's halls. AUDIT SD IV F36: the height is its top's (it hovers a hand's breadth,
+  `SD_RIFT_TOP`), and its disc is then swept as it stands, in its face's plane (`sdRiftSweep`: from its centre, across
+  and up between, never below it nor along its face, shrunk by halving until each reaches its rim and its air) - the
+  measure asked the ceiling straight up and the walls at chest height alone, so a raised bay or a shaft over the end
+  stood a 7 m ring through a 5 m ceiling; each spot's ring is the swept one. Its look (`scenes/sdEnd.js riftFrame`): a ring of brass light in eight
   teeth, turning an eighth of a turn every sixteen frames, about a near-black membrane with slow gold swirling in it.
   It is made once per renderer, as the companion's portal is, and is self-lit, so it glows the same underground. Its
   sound (`systems/sdRiftSound.js`) is a bell heard under water: DAGGER.SND's ship's bell slowed and pitched down near a

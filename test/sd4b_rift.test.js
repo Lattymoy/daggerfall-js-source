@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 import { dungeonEndOf } from '../src/world/dungeonEnd.js';
 import {
   sdEndMarks, sdRiftFit, sdRiftPlace, sdReturnPlace, sdRiftWord, sdReturnStands, inSdPortal,
-  SD_RIFT_SIZE_M, SD_RIFT_MIN_M, SD_RIFT_AIR_M, SD_RETURN_GAP_M, SD_RETURN_SIZE, SD_RIFT_REACH_M, SD_RETURN_REACH_M, SD_END_TEXT,
+  SD_RIFT_SIZE_M, SD_RIFT_MIN_M, SD_RIFT_AIR_M, SD_RETURN_GAP_M, SD_RETURN_SIZE, SD_RIFT_REACH_M, SD_RETURN_REACH_M, SD_END_TEXT, SD_RIFT_TOP,
 } from '../src/world/sdDungeon.js';
 import { createSdEnd, ensureSdEndArt, SD_RIFT_KEY, SD_RETURN_KEY, SD_RIFT_PRESS_M } from '../src/scenes/sdEnd.js';
 import { sdRiftArt, SD_RIFT_RECORD, SD_RIFT_ATLAS } from '../src/world/sdRiftArt.js';   // SD-LOOK: the astrolabe's art (its billboard frames retired)
@@ -70,7 +70,9 @@ test('SD4b the end: the marker farthest from the entrance across the floor plan 
 
 test('SD4b the Rift\'s size: 7 m at most, the hall\'s own less its air, never under 2.6 m - and in a cramped corner it moves a step or two to the widest hall on the end\'s own floor (mutants: the ring never fitted; never moved; moved through a wall; moved onto another floor)', () => {
   assert.equal(sdRiftFit(20, 20), SD_RIFT_SIZE_M);
-  assert.equal(sdRiftFit(5, 20), 5 - SD_RIFT_AIR_M, 'a low hall: its ceiling');
+  // PIN MOVED (AUDIT SD IV F36): its top's air, not its size's - it hovers a hand's breadth (SD_RIFT_TOP), and its swept
+  // disc asks the hall beside its axis too (test/sd26_dungeon.test.js)
+  assert.equal(sdRiftFit(5, 20), (5 - SD_RIFT_AIR_M) / SD_RIFT_TOP, 'a low hall: its ceiling');
   assert.equal(sdRiftFit(20, 2), 2 * (2 - SD_RIFT_AIR_M), 'a narrow one: its nearest wall either side');
   assert.equal(sdRiftFit(1, 1), SD_RIFT_MIN_M, 'never under the least');
   assert.equal(sdRiftFit(undefined, Infinity), SD_RIFT_SIZE_M, 'an unmeasured side asks nothing');

@@ -115,5 +115,68 @@
     "tests": [
       "test/sd26_dungeon.test.js"
     ]
+  },
+  {
+    "name": "SD26-F36-unswept",
+    "file": "src/world/sdDungeon.js",
+    "old": "  return { at, size: sdRiftSweep(at, fit, face, probe), face };",
+    "new": "  return { at, size: fit, face };",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "SD26-F36-the-hover-unasked",
+    "file": "src/world/sdDungeon.js",
+    "old": "export const SD_RIFT_TOP = riftCentreY(1) + 0.5;",
+    "new": "export const SD_RIFT_TOP = 1;",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "SD26-F36-only-across",
+    "file": "src/world/sdDungeon.js",
+    "old": "[0, 1, 2, 3, 5, 6, 7, 8].map((k) => (k * Math.PI) / 8)",
+    "new": "[0, 8].map((k) => (k * Math.PI) / 8)",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "SD26-F36-the-lower-half-asked",
+    "file": "src/world/sdDungeon.js",
+    "old": "[0, 1, 2, 3, 5, 6, 7, 8].map((k) => (k * Math.PI) / 8)",
+    "new": "[-3, -2, -1, 0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11].map((k) => (k * Math.PI) / 8)",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "SD26-F36-along-its-face",
+    "file": "src/world/sdDungeon.js",
+    "old": "dir = [-face[2] * across, Math.sin(a), face[0] * across];",
+    "new": "dir = [face[0] * across, Math.sin(a), face[2] * across];",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "SD26-F36-never-halved",
+    "file": "src/world/sdDungeon.js",
+    "old": "export const SD_SWEEP_HALVINGS = 8;",
+    "new": "export const SD_SWEEP_HALVINGS = 0;",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "SD26-F36-the-centre-on-the-floor",
+    "file": "src/world/sdDungeon.js",
+    "old": "const R = size / 2, c = [at[0], at[1] + riftCentreY(size), at[2]];",
+    "new": "const R = size / 2, c = [at[0], at[1] + R, at[2]];",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
   }
 ]

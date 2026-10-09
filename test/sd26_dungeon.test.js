@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   SD_NO_MARK, sdRiftPlace, sdReturnPlace, sdLandingPlace, SD_RETURN_GAP_M, SD_RIFT_MIN_M, SD_RIFT_REACH_M, SD_RETURN_REACH_M, SD_STEP_M,
-  SD_LANDING_PAST_M, SD_LANDING_CLEAR_M,
+  SD_LANDING_PAST_M, SD_LANDING_CLEAR_M, sdRiftFit, sdRiftSweep, SD_RIFT_SIZE_M, SD_RIFT_AIR_M,
 } from '../src/world/sdDungeon.js';
 import { SD_REALM_TEXT } from '../src/world/sdRealm.js';
 import { createSdEnd, SD_STEP_GAP_MS, SD_STEP_JUMP_M, SD_RIFT_KEY, SD_RIFT_PRESS_M } from '../src/scenes/sdEnd.js';
@@ -221,4 +221,55 @@ test('SD26 THE WAY BACK STANDS CLEAR OF BOTH PORTALS (AUDIT SD IV F35): a Return
   end.frame(null);
   for (const dx of [0, -0.25, -0.5, -0.75, -1, -0.75, -0.5, -0.25, 0, 0.25]) { clock += 16; end.frame([land[0] + dx, 0, land[2]]); }
   assert.deepEqual(got, [], 'neither carried me');
+});
+
+// ── F36: the ring sized by the disc it is ─────────────────────────────
+
+/** A volume of air - a union of boxes, less `solid` - its rays marched a centimetre a step. */
+function airProbe(boxes, solid = () => false) {
+  const inside = (q) => !solid(q) && boxes.some((b) => q[0] >= b.x0 && q[0] <= b.x1 && q[1] >= b.y0 && q[1] <= b.y1 && q[2] >= b.z0 && q[2] <= b.z1);
+  return {
+    inside,
+    floor: (at) => (inside([at[0], at[1] + 0.05, at[2]]) ? at[1] : null),
+    ray: (o, d, max) => { for (let t = 0.01; t <= max; t += 0.01) if (!inside([o[0] + d[0] * t, o[1] + d[1] * t, o[2] + d[2] * t])) return t; return null; },
+  };
+}
+/** Whether the ring as it stands (its disc in its face's plane, about its hovering centre) is all in the air, and
+ *  `air` beyond its upper rim. */
+function ringInAir(rift, p, air = 0) {
+  const R = rift.size / 2 + air, cy = riftCentreY(rift.size), ax = [-rift.face[2], 0, rift.face[0]];
+  for (let k = 0; k <= 180; k++) {
+    const a = (k / 180) * Math.PI, u = Math.cos(a) * R, v = Math.sin(a) * R;
+    if (!p.inside([rift.at[0] + ax[0] * u, rift.at[1] + cy + v, rift.at[2] + ax[2] * u])) return false;
+  }
+  return true;
+}
+
+test('SD26 THE RING IS SIZED BY THE DISC IT IS (AUDIT SD IV F36): the hall\'s measure asks the ceiling straight up from the foot and the walls at chest height - a ceiling beside the axis (a raised bay, a shaft over the end) went unseen and a 7 m ring stood through a 5 m ceiling, and its own hover put its top past its air. Now its disc is swept in its face\'s plane from its hovering centre - across and up between, never below (a step beside its foot is no wall), never along its face - and the measure\'s height is its top\'s; a great hall still stands the whole ring, and every client the same (mutants: unswept; the hover unasked; only across; the lower half asked; along its face; never halved)', () => {
+  // a 5 m hall with a 3 x 3 m bay rising to 9 m over the end
+  const bay = airProbe([{ x0: 0, x1: 30, y0: 0, y1: 5, z0: 0, z1: 30 }, { x0: 13.5, x1: 16.5, y0: 0, y1: 9, z0: 13.5, z1: 16.5 }]);
+  const r1 = sdRiftPlace([15, 0, 15], bay);
+  assert.ok(r1.size < SD_RIFT_SIZE_M && r1.size > sdRiftFit(5, Infinity), `under the bay: ${JSON.stringify(r1)}`);
+  assert.ok(ringInAir(r1, bay, 0.2), 'its disc in the air, and its air past its rim');
+  assert.ok(sdRiftSweep(r1.at, r1.size + 0.05, r1.face, bay) < r1.size + 0.05, 'and as large as it stands');
+  // a 3.5 m hall with a 2 x 2 m shaft over the end
+  const shaft = airProbe([{ x0: 0, x1: 30, y0: 0, y1: 3.5, z0: 0, z1: 30 }, { x0: 14, x1: 16, y0: 0, y1: 12, z0: 14, z1: 16 }]);
+  const r2 = sdRiftPlace([15, 0, 15], shaft);
+  assert.ok(r2.size < 4 && ringInAir(r2, shaft, 0.2), JSON.stringify(r2));
+  // its hover: a flat ceiling at 7.3 m - its top and its air under it, never its size and its air
+  const flat = airProbe([{ x0: 0, x1: 30, y0: 0, y1: 7.3, z0: 0, z1: 30 }]);
+  const r3 = sdRiftPlace([15, 0, 15], flat);
+  assert.ok(riftCentreY(r3.size) + r3.size / 2 + SD_RIFT_AIR_M <= 7.3 + 0.02 && r3.size > 6.7, JSON.stringify(r3));
+  // a great hall: the whole ring, at the end
+  const great = airProbe([{ x0: 0, x1: 40, y0: 0, y1: 12, z0: 0, z1: 40 }]);
+  assert.equal(sdRiftPlace([20, 0, 20], great).size, SD_RIFT_SIZE_M);
+  // swept in its own plane (across x for a face along z): a step a hand high beside its foot is no wall, nor a column
+  // before its face
+  const step = airProbe([{ x0: 0, x1: 30, y0: 0, y1: 12, z0: 0, z1: 30 }], (q) => q[0] >= 16.45 && q[1] < 0.3);
+  assert.equal(sdRiftSweep([15, 0, 15], 7, [0, 0, 1], step), 7, 'a step beside its foot');
+  const column = airProbe([{ x0: 0, x1: 30, y0: 0, y1: 12, z0: 0, z1: 30 }], (q) => Math.abs(q[0] - 15) < 0.2 && Math.abs(q[2] - 17.5) < 0.2);
+  assert.equal(sdRiftSweep([15, 0, 15], 7, [0, 0, 1], column), 7, 'a column before its face');
+  assert.ok(sdRiftSweep([15, 0, 15], 7, [1, 0, 0], column) < 7, 'the same column in its plane');
+  // the same answer every time
+  assert.deepEqual(sdRiftPlace([15, 0, 15], bay), r1);
 });

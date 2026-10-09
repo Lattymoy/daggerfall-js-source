@@ -26,6 +26,7 @@
 import { sdPhase, SD_NO_RIFT, SD_NO_CLOSED, SD_NO_FALLEN, SD_COLLAPSE_MS } from '../net/sdLaw.js';
 import { timerText } from '../systems/eventTimers.js';
 import { RDB_SIDE } from './rdbLayout.js';   // SD-REACH: a dungeon block's side - which block's square holds a marker
+import { riftCentreY } from './sdRiftModel.js';   // AUDIT SD IV (F36): the ring's centre as it stands - it hovers
 
 /** Health and damage multipliers for a Super dungeon's foes (the Elite's x2 and x2). */
 export const SUPER_HEALTH_SCALE = 4;
@@ -137,9 +138,12 @@ export function sdEndMarks(enemies, blocks) {
 }
 
 /** The ring's size in a hall `headroom` metres high (floor to ceiling) whose nearest wall is `clear` metres off its axis:
- *  SD_RIFT_SIZE_M at most, the hall's own less its air, never under SD_RIFT_MIN_M. An unmeasured side asks nothing. */
+ *  SD_RIFT_SIZE_M at most, the hall's own less its air, never under SD_RIFT_MIN_M. An unmeasured side asks nothing.
+ *  AUDIT SD IV (F36): its top over its foot is SD_RIFT_TOP of its size - it hovers a hand's breadth off the floor - so
+ *  the hall's height less its air is its top's, not its size. */
+export const SD_RIFT_TOP = riftCentreY(1) + 0.5;
 export function sdRiftFit(headroom, clear) {
-  const h = Number.isFinite(headroom) ? headroom - SD_RIFT_AIR_M : SD_RIFT_SIZE_M;
+  const h = Number.isFinite(headroom) ? (headroom - SD_RIFT_AIR_M) / SD_RIFT_TOP : SD_RIFT_SIZE_M;
   const w = Number.isFinite(clear) ? 2 * (clear - SD_RIFT_AIR_M) : SD_RIFT_SIZE_M;
   return Math.max(SD_RIFT_MIN_M, Math.min(SD_RIFT_SIZE_M, h, w));
 }
@@ -176,23 +180,70 @@ function besideOn(from, dir, r, probe, lower = false) {
 /**
  * THE RIFT'S PLACE: about the end's `foot` ([x, y, z], the floor under the end's marker), the spot whose hall stands the
  * widest ring - the end itself, then eight bearings at SD_RIFT_SHIFT_M and at twice it, on the end's own floor (the first
- * of a tie, so every client stands the same). Answers { at: the ring's foot, size }.
+ * of a tie, so every client stands the same). Answers { at: the ring's foot, size, face }. AUDIT SD IV (F36): each
+ * spot's ring is its hall's measure swept by the disc it stands as (`sdRiftSweep`, in its face's plane) - a spot whose
+ * measure cannot beat the best is never asked further.
  * @param {number[]} foot
  * @param {SdProbe} probe
  */
 export function sdRiftPlace(foot, probe) {
-  let best = { at: [foot[0], foot[1], foot[2]], size: fitAt(foot, probe) };
+  let best = ringAt([foot[0], foot[1], foot[2]], probe, -Infinity);
   for (const r of [SD_RIFT_SHIFT_M, 2 * SD_RIFT_SHIFT_M]) {
     for (const dir of BEARINGS) {
-      if (best.size >= SD_RIFT_SIZE_M) return { ...best, face: sdRiftFace(best.at, best.size, probe) };
+      if (best.size >= SD_RIFT_SIZE_M) return best;
       const at = besideOn(foot, dir, r, probe);
       if (!at) continue;
-      const size = fitAt(at, probe);
-      if (size > best.size) best = { at, size };
+      const ring = ringAt(at, probe, best.size);
+      if (ring && ring.size > best.size) best = ring;
     }
   }
-  return { ...best, face: sdRiftFace(best.at, best.size, probe) };
+  return best;
 }
+/** A spot's ring - its hall's measure (fitAt), its face, its disc swept clear - or null when the measure cannot beat
+ *  `floor` (the sweep only ever shrinks it). */
+function ringAt(at, probe, floor) {
+  const fit = fitAt(at, probe);
+  if (fit <= floor) return null;
+  const face = sdRiftFace(at, fit, probe);
+  return { at, size: sdRiftSweep(at, fit, face, probe), face };
+}
+
+/** AUDIT SD IV (F36): the directions the disc is asked along from its centre, in its plane - across and up between, the
+ *  upper half alone (below its centre a step or a floor seam is never a wall: its foot stands on the floor), never
+ *  straight up (the hall's measure asks the ceiling over its axis - fitAt). */
+const SD_DISC_ANGLES = Object.freeze([0, 1, 2, 3, 5, 6, 7, 8].map((k) => (k * Math.PI) / 8));
+/** Whether the ring's disc at `size` stands clear in its face's plane: from its centre (world/sdRiftModel.js
+ *  riftCentreY - it hovers), each direction reaching its rim and its air. */
+function discClear(at, size, face, probe) {
+  const R = size / 2, c = [at[0], at[1] + riftCentreY(size), at[2]];
+  for (const a of SD_DISC_ANGLES) {
+    const across = Math.cos(a), dir = [-face[2] * across, Math.sin(a), face[0] * across];
+    if (probe.ray(c, dir, R + SD_RIFT_AIR_M) != null) return false;
+  }
+  return true;
+}
+/**
+ * AUDIT SD IV (F36): THE RING SWEPT - the largest size up to `size` whose disc stands clear in its face's plane
+ * (`discClear`), found by halving - never under SD_RIFT_MIN_M, as the measure never is. The hall's measure (fitAt) asks the ceiling straight up from the
+ * foot and the walls at chest height: a ceiling beside the axis (a raised bay, a shaft over the end), a beam across the
+ * ring's plane, and the ring's own hover went unseen, and a 7 m ring stood through a 5 m ceiling. Pure: the law's rays,
+ * the law's order - every client the same.
+ * @param {number[]} at
+ * @param {number} size
+ * @param {number[]} face
+ * @param {SdProbe} probe
+ */
+export function sdRiftSweep(at, size, face, probe) {
+  if (discClear(at, size, face, probe)) return size;
+  let lo = SD_RIFT_MIN_M, hi = size;
+  for (let k = 0; k < SD_SWEEP_HALVINGS; k++) {
+    const mid = (lo + hi) / 2;
+    if (discClear(at, mid, face, probe)) lo = mid; else hi = mid;
+  }
+  return lo;
+}
+/** How many halvings the sweep takes - 4.4 m to under 2 cm. */
+export const SD_SWEEP_HALVINGS = 8;
 
 /**
  * SD-LOOK (2026-10-08, bible/11-Multiplayer/Super-Dungeons-Look.md section 1): THE RIFT'S FACE - square to its hall's
