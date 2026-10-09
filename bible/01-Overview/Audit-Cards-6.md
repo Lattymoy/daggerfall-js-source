@@ -80,7 +80,28 @@ first was already fixed on main as CARDS-TOUCH, found live and shipped on its ow
 | D14 | INFO | Both seats leaving at once, the sweep stood seat 0 first, so seat 0 conceded | SUPERSEDED by C7: both seats gone together, or a drained room, is no contest |
 | D15 | INFO | A receipt issued in season N and claimed in N+1 counts in N, on a board no longer shown | RECORDED: the season is the receipt's; D5's `played` keeps the game's own second |
 | D16 | INFO | A deck order vouches for the latest checkpoint, and checkpoints after the first are the client's | RECORDED: the realm's general rule for items, not new with Iliac Hand |
-<!-- LANE E -->
+| E1 | HIGH | On a phone a tap on the held cards - the click that checks - was also the touch layer's tap, the activate press, and seated the press stands the player up: folded, conceded or cashed out | FIXED ON MAIN first, found live: CARDS-TOUCH (section 31, #720) - seated, the layer's tap, look, swing, gyro and the stick's tap stand down. One door stayed open and is shut here: on an upright phone the hand reaches into the stick's half, and a squeeze or a push begun there was the stick (W or S and Run) that stands him up. A finger the cards took is never the stick (`ui/touch.js` `cardHeld` over `worldModes` `cardPressHeld`; the cards' `pointerdown` runs before the layer's `touchstart`, seen in Chromium); a finger on the cloth the cards do not take still walks him off |
+| E2 | HIGH | A press on the hand the window never heard let go (a cancelled touch, a mouse released outside) left the press set, and the next chip drag into the pot read as a push: "You fold." A second finger took the first one's press | FIXED: a press and a drag keep their `pointerId`, other pointers ignored; `pointercancel` and `lostpointercapture` let go unread; the same pointer pressing again drops a stale press; the pointer captured on down; the panel judged by its box under capture |
+| E3 | HIGH | Pressing Commit twice committed a pass for the next turn | FIXED with C3: Commit latched once a (game, turn), "Committing..." until the table answers |
+| E4 | HIGH | "Play a regular instead" pressed while the realm vouched left a stuck panel and a ghost seat the relay dealt games to - ranked ones counted | FIXED: the setup frozen while the realm vouches (the board apart), the regulars greyed; a sit only from the online setup; the relay's table kept in every mode; close stands a sit that was sent |
+| E5 | HIGH | After a reconnect the client never asked the relay for the table again | FIXED: a `look` on each welcome of the socket; a seat or a sit lost is said, and a game dealt while frames were lost becomes the panel's |
+| E6 | HIGH | The ranked vouch went through a gold act: four transient errors, or a `seq`, came back unknown and the realm session ended to the title menu | FIXED: `realmGoldAct`'s `read` - a lost answer or a `seq` is "The realm is not answering - try again." and the session stands |
+| E7 | MED | Online, the Hold'em panel goes straight to play, and only the buy-in offered "Play Iliac Hand" and the pack: a non-realm character online never saw them | FIXED: offered whenever he is not in a hand (at a gold seat between hands the press cashes him out as Stand up does) |
+| E8 | MED | A Hold'em sit at a cloth playing Iliac Hand drew the relay's 'other game', in neither refusal list: re-sent every 1.5 s for as long as the game went on | FIXED: the chair let go, "Iliac Hand is being played at this table." said, and the panel offers Iliac Hand, the pack and Leave |
+| E9 | MED | The panel never showed `why` during or after a game | FIXED |
+| E10 | MED | After a concession the lone winner read "the next game deals in a moment" for ever, and a watcher was stuck in 'over' with a chair free | FIXED: said only with both chairs filled; a watcher back to setup, the result said |
+| E11 | MED | A sit pressed, then the seat left before the relay echoed it: a ghost seat | FIXED with E4: close stands a sit in flight |
+| E12 | MED | The other setup presses during the vouch were not blocked either | FIXED with E4 |
+| E13 | MED | "Leave the table" pressed as the next game dealt conceded the new game | FIXED: the stand names the game shown; one naming the last game, within `ILIAC_LATE_MS` (3 s) of the deal and before a commit, concedes nothing and the new game is no contest. Residual: a scripted client may leave in those 3 s having seen its opening hand - for its seat, as a stand in the gap costs |
+| E14 | MED | The vouch's refusals never named a short deck's card; a guest with a realm character was offered Ranked and told "The realm could not vouch for that deck." | FIXED with D7/D8: a guest offered no Ranked ('Ranked games need a registered account.'), every refusal in Iliac Hand's own words |
+| E15 | MED | Section 34's frame cost ("the cost is the HELD HAND ... the cloth's own cards are cheap") did not reproduce: the hand alone a third of it; its "no chips" row had counted 40 chips outside the draw | FIXED: the lab counts what the frame drew and times each part alone (`&split`, interleaved, medians), the probe seven runs with the load printed; section 34 measured again - the cloth's cards most of the cost |
+| E16 | MED | Section 34's "legs below the floor and behind the table, which hide them": the table hides the sunk sprite only from a chair with the table between | FIXED (words): section 34 and `remotePlayers.js` say where the table hides it and where the floor alone cuts it off. No code moved - a sink only where the table hides it leaves the head 0.48 m above the seated heads everywhere else |
+| E17 | LOW | `createIliacClaims`' shared clock sat after a `//` | FIXED with D9 |
+| E18 | LOW | Only the first carrier of a ranked result heard the new rating | FIXED: both told |
+| E19 | LOW | Waiting, the panel read "Turn 1 of 6 - your magicka 0 of 0" | FIXED: "Sitting down at the table...", "Waiting for another player to sit down.", "Both chairs are filled - the game deals in a moment." |
+| E20 | LOW | Stale records: (a) the version constants' section cites; (b) `HOLDEM_RELAY_MIN` 176 and the ledger's world176 after the merge renumbered TAVERN CARDS to world178; (c) two pins' "Driven:" headers over text pins; (d) section 33's "alone in the room, 'Play a regular instead'" | (a) ALREADY FIXED at the merge. (b) FIXED: 178, the ledger too. (c) FIXED: the headers say "read", and the host's check and fold and the class sprite's sink are driven in `auditcards6_e`. (d) FIXED (words): the button is offered while he holds no seat there, whoever else sits |
+| E21 | LOW | On an upright phone the peeked hand ran off the right edge and stayed under the panel (the lift's 0.08 m about 216 px; the panel 376) | FIXED: below `HELD_FIT_ASPECT` (0.8) the hand is held `heldFit` times farther off and nearer the middle, its lift reaching as far again; at 390x844 inside both edges and above the panel, the desktop's unchanged |
+| E22 | LOW | The squeeze drew the front card UP the screen while the finger pulled DOWN | FIXED: toward its foot, with the finger |
 
 ## What held
 
@@ -99,17 +120,20 @@ first was already fixed on main as CARDS-TOUCH, found live and shipped on its ow
 - **The board:** eight concurrent claims of one account inside a second chain whole; draws' Elo exact; the pair's caps
   hold when claimed promptly; a deleted account's sides go NULL and the board survives; reads write nothing on cold
   Workers for an hour; the deploy filter's list is the bundle's.
-<!-- HELD E -->
+- **The client:** the room frame always reaches a socket before its `mine`; a watcher never sees a hand; the clock
+  reads through the skew; a refused sit returns the panel to setup with its words; a receipt from any room is carried;
+  staging survives a turn passed by the clock; a click checks only when a check is legal and a push folds only on his
+  turn; a seated sprite's pose snaps whole and its name comes down with it; `cards9.json` and `cards10.json` all dead.
 
 ## Pins
 
 `test/auditcards6_a.test.js` 10, `test/auditcards6_b.test.js` 11, `test/auditcards6_c.test.js` 17,
-`test/auditcards6_d.test.js` 11<!-- PINS E -->. Pins moved with their fixes, each with a PIN MOVED note: the copy doors'
+`test/auditcards6_d.test.js` 11, `test/auditcards6_e.test.js` 10. Pins moved with their fixes, each with a PIN MOVED note: the copy doors'
 harnesses (`audit625_loot`, `sigil1`, `survtiers3`, `audit68_dungeonctx`, `corpsegold`, `loot7check`, `seatheal`), the
 quest block's (`cards9_sources`), the hoard's look (`sd9e_spoils`) (A3, A8, A-); the deal's line, a loss's stake, the
 think cap (`cards10_table`) and the poison's minute (`cards2b_seated`) (B1, B4, B11); the commit's game and turn, the
 order's expiry, the ranked first deal (`cards10_relay`), the watcher's last board and setup (`cards10_client`) (C3, C5,
-C9, E10); the foe's registration (`cards10_service`, D11). `tools/mutants/auditcards6_a.json` (21), `_b` (24), `_c`
-(81), `_d` (33, one equivalent recorded)<!-- MUT E -->, every one dead; the records of `cards10`, `cards9`, `cards2b`,
-`cards8`, `cards6`, `auditcards5`, `auditcards4`, `audit625`, `sigil1`, `sd9e`, `stormshed2`, `arena4`, `realm5` and
+C9, E10); the foe's registration (`cards10_service`, D11); the hooks' header (`audit39_uicore`, E1), the press's pointer and the squeeze's way (`cards3c_gestures`, E2, E22), the hand's fit (`cards3b_hand`, E21), the Hold'em relay's floor (`cards5_relay`, E20). `tools/mutants/auditcards6_a.json` (21), `_b` (24), `_c`
+(81), `_d` (33, one equivalent recorded), `_e` (26), every one dead; the records of `cards10`, `cards9`, `cards2b`,
+`cards8`, `cards6`, `auditcards5`, `auditcards4`, `auditcards3`, `audit625`, `sigil1`, `sd9e`, `stormshed2`, `arena4`, `realm5` and
 `realm6` the fixes moved re-aimed by content and run again.

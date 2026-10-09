@@ -121,7 +121,7 @@ export function iliacHudModel({ phase, view = null, staged = [], pick = null, se
         : online ? [online.lastLine, 'Sit down and wait for another player.'].filter(Boolean).join(' ') : 'Ready to deal.'),   // AUDIT CARDS-6 E10: a watched game's end said as its chair frees
       actions: [
         { id: 'deal', label: online ? 'Sit at the table' : 'Deal', enabled: !!(deckOk && foeOk) && !online?.busy },
-        ...(online ? [{ id: 'regulars', label: 'Play a regular instead', enabled: !!online.regularsOk }] : []),   // CARDS10: alone in the room, the tavern's own
+        ...(online ? [{ id: 'regulars', label: 'Play a regular instead', enabled: !!online.regularsOk }] : []),   // CARDS10: the tavern's own, while he holds no seat at the relay's (AUDIT CARDS-6 E20: not "alone in the room")
         ...(online ? [{ id: 'board', label: online.board ? 'Hide the season board' : 'Season board', enabled: !online.boardBusy }] : []),   // CARDS10: the ladder
         { id: 'holdem', label: 'Play Hold\'em instead', enabled: true },
         ...pack,
