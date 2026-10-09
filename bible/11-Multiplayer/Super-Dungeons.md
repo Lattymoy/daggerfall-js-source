@@ -61,8 +61,9 @@ So, as decided here (each decision is argued in its section):
   phasing and crumbling platforms over the void (section 9); **a fight that tests a build** - the Brass Remnant, three
   phases, a damage race, a coordination check and a timer (section 10).
 - **The chance, not the promise.** The kill pays gold and gear to everyone who earned it; a piece of the new set, THE
-  BRASS OF NUMIDIUM, one time in three; the title *Hourbreaker* one time in four and the aura *The Turning Hour* one time
-  in eight, each rolled once by the account service from the relay's own seed (section 11).
+  BRASS OF NUMIDIUM, one time in three; the Hourlock, the one Gilded piece, one time in fifty (GILDED1); the title
+  *Hourbreaker* one time in four and the aura *The Turning Hour* one time in eight, each rolled once by the account
+  service from the relay's own seed (section 11).
 - **Regular, Elite, Super - one word, everywhere a dungeon is named** (section 12).
 - **The world's dungeon sizes are the online law** - small, medium or large by each dungeon's map id, the same for
   everyone (section 13).
@@ -471,7 +472,8 @@ throw never came, as I leave the Hour). A fighter who dealt and one who stood ar
 | gold | 400 x level, +-20% |
 | one piece | Legendary or better 25% of the time, else Rare |
 | two pieces | Rare or better (source tier 24, luck 70) |
-| THE BRASS OF NUMIDIUM | one piece, one time in three (rolled last, so the other rolls never move) |
+| THE BRASS OF NUMIDIUM | one piece, one time in three (rolled after the pieces, so their rolls never move) |
+| the Hourlock | one time in fifty - a Gilded Thunderlock (GILDED1, `06-Systems/Gilded.md` section 4): one draw every time, rolled after the Brass, last of all, so it never moves an earlier roll; online alone, as the Hour is |
 
 **THE BRASS OF NUMIDIUM** - a new Aetheric set (`systems/aetheric.js`, `systems/sigilSets.js`): Dwarven pieces, the
 Dwemer's brass, nine records in the places' order - the seven body pieces, a round shield and a ONE-HANDED Longsword,
