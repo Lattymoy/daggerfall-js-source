@@ -232,7 +232,8 @@ container's CPU, or node/Chromium micro-benchmarks over the real modules where n
 **Online - the relay (each a deploy that drops every player once - batched, announced).**
 15. **`_message` under the ceiling and the pose arm tightened** - 108.5 -> 39.3 us a moving pose at 200 in one pixel,
     measured on a prototype in this pass's scratch, no behaviour change. Not committed: its own pull request, in an
-    announced window.
+    announced window. BUILT 2026-10-09 as PERF-RELAY1 (`11-Multiplayer/Scale-Arc.md`; relay world183 on its own branch,
+    NOT YET DEPLOYED): the arm a method of its own and the index walked in place - the arm itself left as it was.
 16. **The foes lane** fan-bounded, and no full frame with no foes - tiering far listeners as poses are tiered changes
     what they see: a design call.
 17. **Slimmer poses** - quantised, defaults omitted, -35% bytes measured; binary later. SCALE5.
@@ -243,7 +244,7 @@ container's CPU, or node/Chromium micro-benchmarks over the real modules where n
     fake, the client session over a fake socket) stay its microscope.
 19. **`net/wire.js`'s POSE_FAR_SHARE doc** says the far interval is clamped at GAP_MAX_MS - true for an arrival
     interval, no longer for a timed one (AUDIT 637 C2). The file's bytes are the relay's version (SLAM8), so its
-    correction rides the next relay deploy, with no behaviour of its own.
+    correction rides the next relay deploy, with no behaviour of its own. Written with PERF-RELAY1 (world183).
 
 **Tooling.**
 20. `npm run perf`'s dungeon row (`/play/?shot&class=0&fps`) now stands on the New Character window and never readies;

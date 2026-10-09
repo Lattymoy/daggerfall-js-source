@@ -69,8 +69,8 @@
   {
     "name": "AUDIT1003b-R4-POSES-TO-ALL",
     "file": "server/src/index.js",
-    "old": "        if (other === ws || !b.id || (S && !S.members[b.sub])) continue;",
-    "new": "        if (other === ws || !b.id) continue;",
+    "old": "      if (other === ws || !b.id || (S && !S.members[b.sub])) continue;",
+    "new": "      if (other === ws || !b.id) continue;",
     "tests": [
       "test/audit1003b_relay.test.js"
     ]
