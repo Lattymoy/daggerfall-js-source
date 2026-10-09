@@ -443,14 +443,19 @@ export function createSdRemnant({ renderer = null, link = () => null, sendIn = (
       limbs(partDraws[0], remDraw, -1, s, t);   // SD17: its body moved
       decor(0, s, t);   // SD-LOOK S8: its tells, its dial, its lamps, its fall
       for (let e = 0; e < echoDraws.length; e++) { place(echoDraws[e], turn(echoPose(s, e, t, _echoPose), 1 + e, dt), ECHO_SCALE); limbs(partDraws[1 + e], echoDraws[e], e, s, t); decor(1 + e, s, t); }
-      // SD17: the Volley's gears in flight - SD-LOOK S8: and after them, those forming in its hands as it gathers
-      const gears = live(s) ? sdGearsAt(s, t, _gears) : NONE, forming = live(s) ? sdGatherGearsAt(s, t, _forming) : NONE;
+      // SD17: the Volley's gears in flight
+      const gears = live(s) ? sdGearsAt(s, t, _gears) : NONE;
       for (let g = 0; g < gearDraws.length; g++) {
-        const d = gearDraws[g], q = gears[g], f = q ? null : forming[g - gears.length];
+        const d = gearDraws[g], q = gears[g];
         if (!d) continue;
-        if (q) { gearMatrix(q.x, q.y, q.z, q.spin, d.object.matrix, q.yaw); d.hidden = false; d.texRemap = null; }   // AUDIT SD III (V12): on edge along its flight
-        else if (f && formAt(f)) { gatherGearMatrix(f, d.object.matrix); d.texRemap = gatherMap; d.hidden = false; }   // forming at its drawn hand, hot in the Volley's colour
-        else hide(d);
+        if (!q) { hide(d); continue; }
+        gearMatrix(q.x, q.y, q.z, q.spin, d.object.matrix, q.yaw); d.hidden = false; d.texRemap = null;   // AUDIT SD III (V12): on edge along its flight
+      }
+      // SD-LOOK S8: after them, the gears forming in its hands as it gathers - at its drawn hands, hot in the Volley's colour
+      const forming = live(s) ? sdGatherGearsAt(s, t, _forming) : NONE;
+      for (let i = 0, g = gears.length; i < forming.length && g < gearDraws.length; i++) {
+        const d = gearDraws[g], f = forming[i];
+        if (d && formAt(f)) { gatherGearMatrix(f, d.object.matrix); d.texRemap = gatherMap; d.hidden = false; g++; }
       }
       const cx = live(s) && !s.fell ? sdHeartsOf(s, t) : null;   // standing while the Reset winds up - gone as it lands
       for (let c = 0; c < heartDraws.length; c++) {
