@@ -119,8 +119,8 @@
   {
     "name": "SD9B-not-in-the-vocabulary",
     "file": "src/net/identityToken.js",
-    "old": "'crystalfist', 'hourbreaker', 'hoursfirst']);",
-    "new": "'crystalfist', 'hoursfirst']);",
+    "old": "'crystalfist', 'hourbreaker', 'hoursfirst', 'iliacchampion']);",
+    "new": "'crystalfist', 'hoursfirst', 'iliacchampion']);",
     "tests": [
       "test/sd9b_claim.test.js"
     ]

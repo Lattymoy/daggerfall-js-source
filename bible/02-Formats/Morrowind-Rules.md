@@ -958,11 +958,33 @@ in hand, in the stance the drawn weapon composes, running the equip,
 attack and sheathe sections of that weapon's own group. The three
 sentences that stood here - "untextured", "no weapon", "bare Idle
 forever" - are retired with the flags they described (MW-D11, MW-D12).
-Flat shading still comes from a face normal computed per triangle at pack
-time, and for a MIRRORED piece that normal is NEGATED, because rule 13's
-X negation reverses the winding and without it the left arm lights
-inside-out. That is rule 13's rendering consequence, which MW8 also
-lacked.
+SHADING (MW-SMOOTH, 2026-10-09, Mac: "Can we also enable smooth shading
+for the morrowind models? Not sure what type of shading is used now"):
+every Morrowind mesh - the arms, the third-person and peer bodies, worn
+armour, held weapons, item pictures - is lit per pixel by the character
+program's N.L, and until MW-SMOOTH it was fed ONE NORMAL A TRIANGLE, its
+face's, computed at pack time: flattenNif kept each NIF's per-vertex
+normals and poseAssembly posed positions alone, so every surface came
+out faceted, the smooth normals of our own baked armour (the steel
+plate's, the brigandine's) thrown away. The reference lights a NIF by
+the normals the file authors and makes none ("[C] Vertex/normal/colour
+arrays are set from array EMPTINESS, never from mNumVertices, and OpenMW
+generates nothing", below). So a piece
+now carries its mesh's normals through the pose (`p.normals`): a skinned
+piece's skinned by skinBatch's normal path, a rigid part's mirrored and
+turned with it (`placeNormalsAtBone`, after the part's pre-transform),
+a brigandine's solved through its transferred skin as its positions are
+(`transferSkin`); and packFpArm writes each corner its vertex's normal.
+A surface the modeller smoothed is lit smooth; an edge kept hard (the
+Thunderlock's faces, split per face in its file) stays hard. A PORT
+DECISION: a mesh that authors NO normals is lit by its faces as before,
+and so is a corner whose normal is ZERO (rule 40's collapse, or a file's
+own) where the reference would hand the shader a normal it cannot
+normalise - one cross product a triangle, NEGATED on a MIRRORED piece because rule
+13's X negation reverses the winding and the left arm would light
+inside-out (rule 13's rendering consequence, which MW8 also lacked); a
+posed vertex normal was mirrored with its vertex and takes no flip. Pins
+`test/mwsmooth.test.js`, `tools/mutants/mwsmooth.json`.
 
 THE PORT MAPPER IS RETIRED (MW-D10), AND RULE 54 IS THE PLACEMENT. The
 mapper solved a uniform scale from the arm's clip bounds, pushed it a

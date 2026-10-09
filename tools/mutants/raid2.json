@@ -100,8 +100,8 @@
   {
     "name": "RAID2-raid-under-the-old-allowance",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "raidKey ? livePuppetsOf(from, false, false, false, false, true) >= RAID_PUPPETS_MAX : livePuppetsOf(from) >= CELL_PUPPETS_MAX",
-    "new": "livePuppetsOf(from) >= CELL_PUPPETS_MAX",
+    "old": "raidKey ? livePuppetsOf(from, false, false, false, false, true) >= RAID_PUPPETS_MAX : livePuppetsOf(from) >= ENCOUNTER_PUPPETS_MAX",
+    "new": "livePuppetsOf(from) >= ENCOUNTER_PUPPETS_MAX",
     "tests": ["test/raid2_raidsOnline.test.js"]
   },
   {

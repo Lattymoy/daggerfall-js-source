@@ -665,7 +665,7 @@ An `unavailable` row draws **no box, no trough, no well, no pill**. Where its co
 | `Daggerfall/MyDaggerfallUnitySavePath` | `this browser` | Saves live in this browser and survive a reload. |
 | `Daggerfall/MyDaggerfallUnityScreenshotsPath` | `downloads` | Pictures go wherever your browser puts downloads. |
 | `Video/ResolutionWidth` / `Height` | `your window` | The picture already fills the window you give it. (dialog shows the live canvas size) |
-| `Video/ExclusiveFullscreen` | `browser` | Use your browser's own fullscreen - F11 on a desktop. |
+| `Video/ExclusiveFullscreen` | `browser` | Use your browser's own fullscreen, from its menu - F11 is the game's Quick Load. In the desktop app: View > Toggle Full Screen (Alt+Enter on Windows and Linux). (issue #642: F11 is the game's QuickLoad, in the page and the desktop shell alike) |
 
 The words *unsupported*, *broken*, *missing* and *not implemented* appear nowhere on this screen — pinned (T2).
 
@@ -935,3 +935,101 @@ The **seven categories, their order, titles, blurbs and the whole key→category
 * **`GUI/InteractionModeIcon` and the other un‑vendored enums.** Extend `scripts/bakeSettingsText.mjs` to emit a `SETTINGS_VALUES` table from `vendor/dfu-settings/GameSettings.txt` and, where that file is silent, vendor the lists from `DaggerfallAdvancedSettingsWindow.cs`. Until a list is vendored the key stays `blocked('novalues')`. **Never guess an option name.**
 * **`index.html`'s `user-scalable=no`.** It removes the only text‑size escape hatch a low‑vision player has on a WebGL canvas. Removing it is a one‑token change with whole‑port consequences (the game canvas wants it) and belongs in its own row; the in‑screen `Text Size` row is this slice's answer.
 * **Safe‑area insets.** `viewport-fit=cover` is set with no `env(safe-area-inset-*)` anywhere in the tree, so on a notched phone the footer sits under the home‑indicator strip. A whole‑port row; note that this screen's `oy` letterbox partly absorbs it in comfort mode but not in portrait, where `oy = 0`.
+## 10. ORG1 - SECTIONS (2026-10-09)
+
+> **SUPERSEDED the same day by ORG2 (section 11):** the categories and their sections are one map of tabs now, and
+> `CATEGORY_SECTIONS`, `sectionedRows` and the pause's condensed list are gone with them.
+
+Mac: "I want to reorganize settings and features to not be horrible to scroll through. Proper organization and
+detail." The categories were the only structure a page had. Interface drew forty rows in one run - the crosshair, a
+tooltip's colour, a shop's sign and five map colours in the map's storage order - and Video's nine live rows sat over
+fifty-one folded ones with nothing to say which belonged together.
+
+- **Each category is cut into sections** (`ui/settingsMap.js` `CATEGORY_SECTIONS`): a title, a line of what it holds,
+  and its keys in the order they draw. The map is total and disjoint over every category's keys - stored, unavailable
+  and moved keys keep a place for the day they draw flat - and `test/org1_sections.test.js` pinned both ways (DELETED by ORG2, section 11 - `test/org2_options.test.js` holds the one map).
+  Interface: HUD, Tooltips, Inventory talk & shops, Messages & prompts, Travel map, Town map, Dungeon map. Video:
+  Display, Brightness & light, Retro look, Shadows, Textures & detail, Post effects. Game: Quests, Play, Starting a new
+  game, Advanced. Controls: Mouse & looking, Attacking, Moving, Game controller, Touchscreen. Accessibility: Motion,
+  Readability, Large status bar. Audio and Data & Mods are one section each.
+- **A page draws a head per section it fills** (`ui/enhancedMenu.js` `sectionedRows`): the title, how many rows, the
+  line. A page that fills one section is its own heading and draws none. The port's own rows stand first in their
+  section - a row says its section (`inSection`), else its category's `PORT_SECTION` (the quest repair under Quests,
+  the pad's cursor under Game controller, the HUD's rows) - then the store keys in the section's order.
+- **Three sections or more get a strip of their names** at the top of the list that stays in view while it scrolls;
+  a press lands the section's head clear of it (`scroll-margin-top`). On a narrow screen the strip is one row that
+  scrolls sideways.
+- **The category card indexes its sections**, each title with its line, under the category's own blurb.
+- **The pause's condensed list is one pass per category**: its divider, then the rows under small heads. The port's
+  rows used to follow every category's keys in a second run of the same dividers, so Game, Controls and Interface
+  each stood twice.
+- **A DFU row carries its own line** under its name (`helpOf`, the help panel's first paragraph), as the port's rows
+  always have; the help panel keeps the whole of it, the tier and the `[Section] Key`.
+
+The tiers' folds (Saved for later, Not available here) and the sub-rail's counts are unchanged.
+
+## 11. ORG2 - ONE SCREEN FOR EVERY OPTION, TABS BY SUBJECT (2026-10-09)
+
+Mac, on ORG1: "You can do better than this. Graphic settings needs its own tab, etc. I really need you to go all in."
+ORG1 cut both pages into sections and left the two DOORS: DFU's 171 keys under Settings in seven storage-shaped
+categories, the port's rows and the mods under Features in seven groups of their own. The field of view was under
+Settings > Video and the grass under Features > Sight; "the graphics" were behind two doors and a long scroll each.
+This supersedes section 1's category map and section 10.
+
+- **One map, tabs by subject** (`ui/settingsMap.js` `CATEGORIES`): Graphics, Gameplay, Combat, World, Interface,
+  Audio, Controls, Accessibility, Mods & files - each a title and SECTIONS (a title and its items in the order they
+  draw). An item is one of DFU's keys (`Section/Key`), a Features row (`feat:<id>`), one of the port's own
+  rows (`port:<id>`, the id each row carries as `dataset.opt`), a card (`card:morrowind`, `card:packs`,
+  `card:peerSprites`, `card:nightSounds`) or one of the screen's own pieces (`preset:graphics`, `link:overhauls`,
+  `bindings`, `mods-index`). THE MAP IS TOTAL AND DISJOINT over all three kinds of option: every DFU key, every
+  registry row and every port row the builders draw stands in exactly one section (`test/org2_options.test.js`, which
+  builds the port's rows on a fake touch device so the touch knobs are counted too). A key a Features row owns stands
+  in that row's own section and draws nothing (FT13). `keysOf`/`categoryOf`/`orderOf` still answer DFU's keys alone.
+- **Every option is a row of one shape** - its name, its line, its control on the right - whichever store keeps it: DFU's
+  `settingRow`, the port's rows, and a Features row as `featureTile` (its name, its labels, its note's first sentence,
+  its bar, its drawer under it). A press on a Features row's name picks it for the help pane (`featureCard`: where it
+  lives, its note, when it takes effect, a mod's keys).
+- **The toolbar over the rows**: one SEARCH over every tab - its finds under "Tab > Section" heads, the rail lighting
+  no tab while it reads them all; FILTERS - All, Changed (a count of what stands off how the game ships), and the
+  Features home's three kinds (Enhanced, Mods, Daggerfall Unity); and the actions on everything - All off and its
+  Restore (FT18) and Reset everything to defaults (`resetEverything`: DFU's settings and `featuresDefaults`, the
+  FEATURES-DEFAULTS button of issue #399; asked first, `RESET_ALL_ASK`). A row off its default wears a Changed mark.
+  A search or a filter repaints the page without the bindings, so it drops their staging as a tab change does (FIX-F).
+- **Graphics opens on a quality preset** (`systems/graphicsPresets.js`): Low, Medium, High and Ultra over the five
+  rows that cost the most - view distance, grass, clouds, ground sharpness and water. HIGH IS HOW THE GAME SHIPS (every
+  value its row's default, so an untouched shelf reads High). A press writes each row through its own states
+  (`applyGraphicsPreset` over `tileStates`), so land view's second store, DFU's `Experimental/TerrainDistance`, moves
+  with it and a row the room decides is left; the bar reads Custom when the rows stand at no preset. Render scale is
+  its own choice under Display.
+- **The help pane with nothing picked is the tab's card**: "N options · M changed" and Restore defaults
+  (`restoreTabDefaults`, asked): the tab's DFU keys,
+  its Features rows with their parts and a mod's modules and dials, and its port rows' prefs - the other tabs, the
+  room's rows and the All off keep left as they are.
+- **Mods & files**: Your files (the Morrowind card, the packs), Daggerfall Unity's mod system (its keys as rows), and
+  Every mod - each mod in the game, where its options live and its switch; a press on its name goes to its row.
+  Online, the mods' note stands once over it (MODS-ONLINE-2). The Other players card is Gameplay's (Other players).
+- **Every message that sends a player to a switch reads the map** (`optionPath(item)` - "Settings > World > Travel"):
+  the rest-alone line, the horse and wagon, the loading screens' shots, the family pages, the shipwrights, the lighting
+  mod's attach, Vanilla Enhanced's packs card. A move in the map moves the words.
+- **The rail counts what a tab draws** (`tabCount`): its rows, its Features rows, the mods' list and the preset - not a
+  row greyed here (QREPAIR's repair on the front door) and not the Overhauls door. `tools/featuresProbe.mjs` holds each
+  tab's count to the rows it drew, in Chromium.
+- **The pause window draws the same screen**, condensed as PX10 had it: the keys that act at once, no tab head, no
+  jump strip, the closing line that the main menu's holds every option.
+- The tiers' folds (Saved for later, Not available here) are each tab's own, remembered per tab.
+- **On a phone the help pane is an opaque sheet** over the rows (the shell's see-through scrim let the rows read through
+  the tab card's words); a second press on the open tab raises it, as AUDIT F8 made it.
+
+Gone with the doors: `paneFeatures`, `FEATURE_SECTIONS`/`featureSections`/`sectionOfFeature`, `CATEGORY_SECTIONS`,
+`sectionedRows`, `modsFooter`, `paneQuickSettings`, `portRows` and `DEFAULTS_ASK`. Every rail drops Features; a request
+still named `features` (an old link, a probe) lands on Settings. Pins: `test/org2_options.test.js` (7) and the
+settings, features, controls and online pins re-aimed at the one screen; mutants `tools/mutants/org2.json` (18, all
+dead) and the re-aimed records in `audit27d`, `disc28e`, `ft18`, `modsonline1` and `mwa4`.
+
+**ORG2b - the copy cut (2026-10-09, Mac: "Reduce the amount of AI text bloat. Wayyyy too much overexplaining going
+on").** A tab and a section are their titles (`test/org2_options.test.js` holds the map to `id`/`title` and
+`id`/`title`/`sections`|`items`); no head over the page, no line under a section head; a DFU row is its label (ORG1's
+help line under it is gone - the help pane has it); a Features row is its name, labels and bar; the preset one short
+line; the tab card its count and Restore. The port's rows, the cards and the confirms are one short line each, the
+facts the pins hold kept (rest within 15 m at a fire, a tent or a bed; nothing shared from indoors).
+

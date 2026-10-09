@@ -10,7 +10,7 @@ import { SPELL_ABSORPTION } from '../src/systems/absorption.js';
 import { calculateCastCost } from '../src/systems/spellcost.js';
 import { SKILLS } from '../src/systems/skills.js';
 import { MISSILE_SPEED, MISSILE_LIFESPAN_S } from '../src/systems/spellcast.js';
-import { SpellCastAnim, RELEASE_FRAME, CAST_FRAME_PERIOD } from '../src/combat/fpsSpellCasting.js';
+import { SpellCastAnim, RELEASE_FRAME, CAST_FRAME_PERIOD, CAST_RECOVER_S } from '../src/combat/fpsSpellCasting.js';
 import { SPELLBOOK_TEMPLATE_INDEX } from '../src/systems/spellMaker.js';   // CAST-SPEED: RecastSpell's book
 
 const damageEffect = (mag = 20) => ({
@@ -91,7 +91,7 @@ function rig({ player = mkPlayer(), foes = [], raycast = () => Infinity, hands =
     absorbCtx: () => ({ inside: true, day: false }),
     rolls: () => 0.99,   // deterministic: saves fail, magnitudes roll high-end
     startCastAnim: hands ? (sp, onRelease) => hands.playOneShot(sp.element, onRelease) : null,
-    castBusy: hands ? () => hands.isPlayingAnim || hands.releaseHeld : undefined,   // CAST-SPEED: these hands' motion, as a host's are the singleton's
+    castBusy: hands ? () => hands.isPlayingAnim || hands.releaseHeld || hands.recovering : undefined,   // CAST-SPEED: these hands' motion, as a host's are the singleton's
   });
   return { magic, world };
 }
@@ -403,9 +403,17 @@ test('CAST-SPEED: the hands own their WHOLE motion - a click or a recast in the 
   hands.tick(CAST_FRAME_PERIOD);
   hands.tick(CAST_FRAME_PERIOD);
   assert.equal(hands.isPlayingAnim, false, 'down');
+  // CAST-RECOVER: the hands are down at DFU's quick clock, and the next cast still waits out the recovery from the click
+  assert.equal(hands.recovering, true, 'the last cast still recovers');
+  assert.equal(magic.castInput([0, 0.9, 0], [0, 0, 1]), false, 'a click inside the recovery waits');
+  assert.equal(world.player.magicka, 500 - cost, 'nothing spent');
+  assert.equal(magic.readied(), sp, 'and the spell stays readied');
+  hands.tick(CAST_RECOVER_S);
+  assert.equal(hands.recovering, false);
   assert.equal(magic.castInput([0, 0.9, 0], [0, 0, 1]), true, 'and the click casts');
   assert.equal(world.player.magicka, 500 - 2 * cost);
   for (let i = 0; i < 7; i++) hands.tick(CAST_FRAME_PERIOD);
+  hands.tick(CAST_RECOVER_S);   // CAST-RECOVER
   assert.equal(magic.recastSpell(), true, 'a recast with the hands at rest readies the last spell');
 });
 

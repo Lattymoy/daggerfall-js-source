@@ -288,13 +288,13 @@ the clock, and the legacy record held to its own law.
 
 ## Progress
 
-- **INT1-INT6 (2026-10-09): lane 1, the economy - built, and audited (4b).** Migration `0095_integrity`;
-  `ACCOUNT_VERSION` acct99. Pins: `test/int1_itemlaw.test.js`, `int2_judge.test.js`, `int4_itemids.test.js`,
+- **INT1-INT6 (2026-10-09): lane 1, the economy - built, and audited (4b).** Migration `0096_integrity`;
+  `ACCOUNT_VERSION` acct100 (acct99 and migration 0095 on its branch, renumbered past main's CARDS9 and CARDS10 at the merge). Pins: `test/int1_itemlaw.test.js`, `int2_judge.test.js`, `int4_itemids.test.js`,
   `int5_budget.test.js`, `int6_review.test.js`, and `accountdeploy.test.js`'s Worker load; the honest sweep
   `test/honestItems.mjs` over DFU's own magic table (`test/dfuMagicItems.mjs`). Mutants `tools/mutants/int1.json`,
   `int2.json`, `int4_int5.json` and `int_audit.json`: 111, all dead (the arc's two that first survived - a weapon's row on
   armour, a soul's set without its soul - held since by cases the one rule refuses and controls the maker lays). Pins moved (each marked PIN MOVED where it stands): saves the judge reads honest in the realm
   pins (a level in every save, a tile claiming the save's own level, crafted pieces' `products` rows of their own
   template, a peer's piece in its group), the checkpoint's answer carrying `tradeHeld`, the last clean save kept past the
-  rotation, the race pin's join moved to the checkpoint's batch, the version pins at acct99. The account Worker bundles the
+  rotation, the race pin's join moved to the checkpoint's batch, the version pins at acct100. The account Worker bundles the
   item law's graph (`.github/workflows/account-deploy.yml` lists it, `test/accountdeploy.test.js` holds the list).

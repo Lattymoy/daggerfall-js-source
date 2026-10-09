@@ -311,7 +311,7 @@ export const ONLINE_ROOM_MOD_KEYS = Object.freeze({
   // rock in it, so two players who disagree walk two terrains and pass
   // through each other's boulders - the roads' own reason, word for
   // word. Its one switch is the room's.
-  'world-of-daggerfall': Object.freeze({ Enabled: true }),
+  'world-of-daggerfall': Object.freeze({ Enabled: true, Mountains: false }),   // WOD-PEAKS: and its spires the room's too - they level the ground and stand rock
   // DS1 (2026-09-25): the third floor. Every owner's ship stands at the SAME
   // map pixel - (2,2) for the small, (5,5) for the large (banking.js
   // SHIP_COORDS) - so a room's sailors share one deck, and Detailed Ships

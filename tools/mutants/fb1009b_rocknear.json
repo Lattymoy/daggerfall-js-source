@@ -1,0 +1,56 @@
+[
+  {
+    "name": "ROCK-NEAR-the-heart-unasked",
+    "file": "src/scenes/mineHost.js",
+    "old": "VEIN_STONE_REACH, solid, stone, beach) ?? free(natureStandsAt(samples, tilemap, locationRect, t, t, stone, beach))",
+    "new": "VEIN_STONE_REACH, solid, stone, beach) ?? natureStandsAt(samples, tilemap, locationRect, t, t, stone, beach)",
+    "tests": [
+      "test/fb1009b_rocknear.test.js"
+    ]
+  },
+  {
+    "name": "ROCK-NEAR-the-lode-asks-its-own-pieces-alone",
+    "file": "src/scenes/mineHost.js",
+    "old": "  const solid = near?.length ? [...pieces, ...near] : pieces;   // ROCK-NEAR: a neighbour's piece reaching in is rock too",
+    "new": "  const solid = pieces;   // ROCK-NEAR: a neighbour's piece reaching in is rock too",
+    "tests": [
+      "test/fb1009b_rocknear.test.js"
+    ]
+  },
+  {
+    "name": "ROCK-NEAR-the-stone-asks-its-own-pieces-alone",
+    "file": "src/scenes/mineHost.js",
+    "old": "  const solid = near?.length ? [...pieces, ...near] : pieces;\n",
+    "new": "  const solid = pieces;\n",
+    "tests": [
+      "test/fb1009b_rocknear.test.js"
+    ]
+  },
+  {
+    "name": "ROCK-NEAR-never-handed",
+    "file": "src/scenes/gatherHost.js",
+    "old": "specs, book, near: nearRocks(entry) };   // ROCK-NEAR",
+    "new": "specs, book, near: [] };   // ROCK-NEAR",
+    "tests": [
+      "test/fb1009b_rocknear.test.js"
+    ]
+  },
+  {
+    "name": "ROCK-NEAR-the-offset-unturned",
+    "file": "src/scenes/gatherHost.js",
+    "old": "        const ox = t[0] - me[0], oz = t[2] - me[2];\n        for (const b of n.rocks) {",
+    "new": "        const ox = t[0] - me[0], oz = me[2] - t[2];\n        for (const b of n.rocks) {",
+    "tests": [
+      "test/fb1009b_rocknear.test.js"
+    ]
+  },
+  {
+    "name": "ROCK-NEAR-the-neighbour-never-stood-again",
+    "file": "src/scenes/gatherHost.js",
+    "old": "&& reachesInto(entry, s.entry.px, s.entry.py)) stand(s.entry);",
+    "new": "&& false) stand(s.entry);",
+    "tests": [
+      "test/fb1009b_rocknear.test.js"
+    ]
+  }
+]

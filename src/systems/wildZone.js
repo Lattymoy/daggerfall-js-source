@@ -408,6 +408,34 @@ export function wildJourney({ from, to, mask, now = Date.now(), lastAt = null, g
   return { ok: true, fee };
 }
 
+// ── PARTY-TRUCE (FIELD BUGS 2026-10-09b) ────────────────────────────────────────────────────────────────────────────
+// The Discord's "you can be teleported into a pvp zone and killed": a stranger invited a new player to his party, led
+// the party's walk into the mountains, and killed them - a party mate is never fair (world.js wildFair), and a kick or a
+// leave ends the party in the instant, so the protection the walk in was taken under was dropped where it mattered.
+// A player who leaves my party, or whose party I leave, is held out of the fight both ways for WILD_PARTY_TRUCE_MS - a
+// walk out of the zone - before they are a stranger like any other. Each side reads its own party (the defender's own
+// client refuses an unfair blow, net/wildFight.js onFrame), so a doctored attacker gains nothing. Held in memory: a
+// reload forgets it (Wild-Zone.md's known limits).
+export const WILD_PARTY_TRUCE_MS = 10 * 60_000;
+/** The truce's clock. `frame(peers, now)` each frame with my party's peer ids as they stand (social.partyPeers - a Set)
+ *  answers the ones that just left it; `holds(id, now)` - is that player under truce with me. */
+export function createPartyTruce(ms = WILD_PARTY_TRUCE_MS) {
+  let was = new Set();
+  /** peer id -> when its truce ends */
+  const until = new Map();
+  return {
+    frame(peers, now) {
+      const gone = [];
+      for (const id of was) if (!peers.has(id)) { until.set(id, now + ms); gone.push(id); }
+      for (const id of peers) until.delete(id);   // a mate again: the party's own protection
+      for (const [id, t] of until) if (t <= now) until.delete(id);
+      was = new Set(peers);
+      return gone;
+    },
+    holds: (id, now) => (until.get(id) ?? 0) > now,
+  };
+}
+
 // ── the words ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 export const WILD_TEXT = Object.freeze({
   enter: `You enter the ${WILD_NAME} - an open PvP zone. Foes here are four times as strong; what you carry is at stake.`,
@@ -426,6 +454,9 @@ export const WILD_TEXT = Object.freeze({
   picked: (name, item) => `You take ${item} from ${name || 'the body'}.`,
   lostPiece: (name, item) => `${name || 'Your killer'} took your ${item}.`,
   noFight: 'You cannot attack a member of your party.',
+  // PARTY-TRUCE: a party left in the zone, and a walk that leads into it
+  truce: `No longer of your party - in the ${WILD_NAME} you and they cannot fight for ten minutes. Then you are strangers.`,
+  walkInto: `It leads into the ${WILD_NAME} - an open PvP zone: other players may kill you there and take what you carry.`,
   // WILD3: the strangers
   stranger: 'Stranger',
   strangerNear: (m) => `A stranger is near - ${Math.max(10, Math.round(m / 10) * 10)} m.`,

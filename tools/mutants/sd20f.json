@@ -110,8 +110,8 @@
   {
     "name": "SD20F-H6-the-walk-in-spent",
     "file": "src/scenes/sdEnd.js",
-    "old": "if (enteredRift) { if (onRift() === false) wasRift = false; return 'rift'; }",
-    "new": "if (enteredRift) { onRift(); return 'rift'; }",
+    "old": "if (enteredRift) { const took = onRift(); if (took === false) wasRift = false; seen(took); return 'rift'; }",
+    "new": "if (enteredRift) { const took = onRift(); seen(took); return 'rift'; }",
     "tests": [
       "test/sd20f_hosts.test.js"
     ]

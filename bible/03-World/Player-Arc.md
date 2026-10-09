@@ -424,7 +424,10 @@ dungeon geometry. All are fixed and rooted; the durable record:
 - **Per-commit build tag**: scripts/buildTag.mjs stamps
   `git rev-parse --short=12 HEAD` into src/buildTag.js on prebuild, so a
   screenshot self-identifies its bundle and stale-cache ambiguity
-  dies.
+  dies. BUILDTAG-CLEAN (issue #626): `postbuild` puts the committed
+  file back once the bundle has read it, so a build leaves no edit in
+  the tree for the next `git pull` to refuse, and no stamp gets
+  committed for the next merge to conflict on.
 - **`[spawn]` console line**: marker -> feet on every dungeon boot.
 
 ### Systems live-path hardening (post-arc audit)

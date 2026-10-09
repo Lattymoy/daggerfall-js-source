@@ -49,7 +49,7 @@ async function run(label, opts) {
   // AUDIT PLUS-MENU M2: a door's diamonds are drawing (aria-hidden) and stand at rest under Plus - the name is the words
   const doors = (await page.locator('.px-menu button').allInnerTexts()).map((t) => t.replace(/\u25c6/g, '').trim().toUpperCase());
   check(`${label}: the menu draws with no ARENA2`, doors.length > 0, `${doors.length} doors`);
-  for (const want of ['SETTINGS', 'FEATURES']) {
+  for (const want of ['SETTINGS', 'OVERHAULS']) {   // ORG2: Features is Settings' tabs; the Overhauls door is the one this file drives next to it
     check(`${label}: the ${want.toLowerCase()} door is on the rail`, doors.includes(want), doors.join(' / '));
   }
 
@@ -70,8 +70,8 @@ async function run(label, opts) {
   await page.waitForSelector('#enhanced-menu .row');
   // SO1 (2026-09-11) put the Enhanced category first, and FT8 (2026-09-14)
   // emptied it of switches (they are the Features home's now) - the rows
-  // this step reads and the one it presses are the GAME category's.
-  await page.locator('#enhanced-menu .subbtn').filter({ hasText: /^Game/ }).first().click();
+  // this step reads and the one it presses are the GAME category's (ORG2: the Gameplay tab's).
+  await page.locator('#enhanced-menu .subbtn').filter({ hasText: /^Gameplay/ }).first().click();
   await page.waitForTimeout(200);
   const rows = await page.locator('#enhanced-menu .row').count();
   check(`${label}: settings rows render`, rows > 10, `${rows} rows`);
@@ -120,10 +120,13 @@ async function run(label, opts) {
   //     the switch click timed out. Re-aimed at the tiles: the control
   //     is a SEGMENTED BAR now, not one cycling button, so a tier is
   //     pressed by name rather than stepped into.
+  //
+  //     ORG2 (2026-10-09): the Features home is the Settings screen's tabs - the outdoors row is on Graphics, the tab
+  //     Settings opens on.
   await page.goto(`${BASE}/play/?nointro`, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.px-menu', { timeout: 60000 });
   if (await page.locator('.px-acctstage').count()) await page.keyboard.press('Escape');
-  await page.locator('.px-menu button').filter({ hasText: /Features/ }).first().click();
+  await page.locator('.px-menu button').filter({ hasText: /Settings/ }).first().click();
   await page.waitForSelector('#enhanced-menu .ft-tile', { timeout: 10000 });
   const skyTile = page.locator('#enhanced-menu .ft-tile')
     .filter({ has: page.locator('.ft-tile-name', { hasText: /^Enhanced environments$/ }) });
@@ -138,7 +141,7 @@ async function run(label, opts) {
       labels: sky ? [...sky.querySelectorAll('.kind')].map((k) => k.textContent) : [],
     };
   });
-  check(`${label}: the Features home opens with its tiles`, pane.rows >= 21 && pane.sky !== null, JSON.stringify(pane));
+  check(`${label}: the Graphics tab opens with its Features rows`, pane.rows >= 15 && pane.sky !== null, JSON.stringify(pane));
   check(`${label}: the outdoors read Dynamic Skies by default, wearing both labels`,
     pane.sky === 'Dynamic Skies' && pane.labels.join('+') === 'Enhanced+Mod Authored', JSON.stringify(pane));
   if (label === 'phone') check("phone: the outdoors switch is a thumb's target", pane.skyTarget >= 38, `${pane.skyTarget}px`);
@@ -186,7 +189,7 @@ await run('phone', { ...devices['Pixel 5'] });
   // FT14 took Mods off this rail and FT16 took Controls into Settings;
   // this line still expected both, which is the third thing in this
   // file that had gone stale unnoticed.
-  check('classic: the enhanced door mounts with the classic rail', JSON.stringify(st.sections) === JSON.stringify(['begin', 'online', 'settings', 'features', 'overhauls', 'about']), JSON.stringify(st.sections));
+  check('classic: the enhanced door mounts with the classic rail', JSON.stringify(st.sections) === JSON.stringify(['begin', 'online', 'settings', 'overhauls', 'screenshots', 'about']), JSON.stringify(st.sections));
   if (await page.locator('.px-acctstage').count()) await page.keyboard.press('Escape');
   await page.locator('.px-menu .door-begin').click();
   await page.locator('#enhanced-menu .act.primary', { hasText: 'Begin' }).click();   // FD1: the door opens the Begin pane; its button starts

@@ -141,8 +141,13 @@ function liveQuestName(building, questSource) {
  *  record. DaggerfallBankManager.IsHouseOwned is DFU's own word for which houses those are (`ownsHouse` on the seam);
  *  a record flag of the port's own would have left every record saved before it unread. */
 function restampQuestName(rec, questSource) {
+  // FIELD BUGS 2026-10-09b HALL-STAMP: never a hideout's plate - RevealGuildHallOnMap's name for a member is shielded
+  // here as UndiscoverBuilding shields it (:1010-1012). Every Dark Brotherhood contract's questor stands at the hall,
+  // its Place there named '' (a House2 has no name of its own - buildingNames.js), and the re-stamp wrote that '' over
+  // "The Dark Brotherhood": the member's hall lost its plate on the town map and its name at the door.
+  if (rec.factionId === THIEVES_GUILD_FACTION || rec.factionId === DARK_BROTHERHOOD_FACTION) return false;
   const renamed = liveQuestName(rec, questSource);
-  if (renamed == null || renamed === rec.displayName) return false;
+  if (!renamed || renamed === rec.displayName) return false;   // HALL-STAMP: and a nameless Place names nothing
   if (questSource?.ownsHouse?.(rec.buildingKey)) return false;
   rec.oldDisplayName = rec.isOverrideName ? (rec.oldDisplayName ?? '') : rec.displayName;   // the building's own name
   rec.displayName = renamed;

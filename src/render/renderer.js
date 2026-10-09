@@ -1228,9 +1228,14 @@ const NO_LPT_LOCS = Object.freeze({ uMesh: null, uMeshScale: null, uMeshColor: n
 export const LPT_SUN_FULL = 0.25;
 
 export function textureParams(gl, opts = {}) {
-  return opts.smooth
-    ? { wrap: gl.CLAMP_TO_EDGE, filter: gl.LINEAR }
-    : { wrap: gl.REPEAT, filter: gl.NEAREST };
+  if (opts.smooth) return { wrap: gl.CLAMP_TO_EDGE, filter: gl.LINEAR };
+  // HAND-SEAM (2026-10-09, the owner: "the spellcasting still has the lines"): a classic sprite drawn as ONE screen quad
+  // that never tiles - the casting hands - stays pixel-exact (NEAREST) but does not wrap. Under REPEAT the column of
+  // fragments on the quad's u=1 edge (the left hand's inner edge, and the mirrored right hand's) sampled a hair past 1
+  // on some GPUs (ANGLE/D3D's interpolation, a large magnified quad) and wrapped onto the art's FIRST column - the glow
+  // strokes at the hands' outer edge - drawing a thin dotted line up the middle of the screen beside each hand.
+  if (opts.clamp) return { wrap: gl.CLAMP_TO_EDGE, filter: gl.NEAREST };
+  return { wrap: gl.REPEAT, filter: gl.NEAREST };
 }
 
 /**
@@ -1390,6 +1395,7 @@ export class Renderer {
     this._shadowPass = null; // ...built once and kept across swaps, like the lane's programs
     this._air = null;        // EL3: the AirPass while a lane that asks for it is installed AND the page's door is open
     this._airPass = null;
+    this._sceneGrade = null;   // SD-LOOK: the frame's grade, taken by its resolve (setSceneGrade)
     this._airWanted = false;
     this._frameFbo = null;   // EL4: the frame image the world pass draws into while the air is on (null = the canvas)
     // RETRO1: DFU's retro mode (render/retroPass.js, systems/retroMode.js). The source is a function answering the
@@ -2696,6 +2702,10 @@ export class Renderer {
    *  that opened its own beginFrame and draws no screen quad after it (the
    *  enhanced travel map's relief). A no-op with nothing owed. */
   resolveFrame() { this._compositeAir(); }
+  /** SD-LOOK (2026-10-08): THE SCENE'S GRADE for this frame - `{ adaptKey, adaptMax, bloom, vignette, contrast }` (render/
+   *  airPass.js setGrade); its resolve takes it, and a frame that does not call this gets the lane's defaults. Nothing on
+   *  the classic set: there is no resolve to grade - its contrast is the art's own. */
+  setSceneGrade(g) { this._sceneGrade = g ?? null; }
 
   /** GRASS-LIT: the ambient occlusion's depth taken NOW - the streaming host calls this just before the grass draws,
    *  so the AO reads the world without the field in it (AirPass.snapshotAoDepth says why). Changes the bound
@@ -2721,6 +2731,7 @@ export class Renderer {
     // only needs the baseline when it actually resolves.
     this._close2D();
     this._underWater = undefined;   // AUDIT WATER-NEXT G14: resolved - the frame's copy is no copy of what is drawn next
+    this._air.setGrade?.(this._sceneGrade); this._sceneGrade = null;   // SD-LOOK: the frame's grade, or the lane's defaults back
     const sc = this._scissor;   // AUDIT RETRO1 F3: a screen scissor live at the first quad is not the passes' - lifted for them and the present, and put back
     if (sc) this.gl.disable(this.gl.SCISSOR_TEST);
     if (this._perfOpen) this._perf?.mark('air');   // VC6d: the AO, the bloom, the shafts and the resolve - a WORLD frame's (AUDIT RETRO1 J8: a menu's resolve, the meter closed, opened a span nothing closed)
@@ -4189,7 +4200,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // hand back the wrong sampling silently. Only the logo asks for smooth
     // today and its key is unique, so nothing was broken - but a cache
     // that quietly ignores an argument is a trap, not a cache.
-    const key = `${archive}_${record}${opts.smooth ? '#smooth' : ''}${opts.opaque ? '#opaque' : ''}${opts.mips === false ? (opts.variant ?? '#ui') : ''}${opts.alpha ? '#alpha' : ''}`;   // INCIDENT 2026-09-04: DFU caches materials per alphaIndex; REVIEW 2026-09-05: the un-mipped UI variant of a world archive (item icons) keys apart too; AUDIT 61: `variant: ''` keeps the plain batch key for world art uploaded without a chain (a mod atlas built mipChain:false - SIB1)
+    const key = `${archive}_${record}${opts.smooth ? '#smooth' : ''}${opts.opaque ? '#opaque' : ''}${opts.mips === false ? (opts.variant ?? '#ui') : ''}${opts.alpha ? '#alpha' : ''}${opts.clamp && !opts.smooth ? '#clamp' : ''}`;   // INCIDENT 2026-09-04: DFU caches materials per alphaIndex; REVIEW 2026-09-05: the un-mipped UI variant of a world archive (item icons) keys apart too; AUDIT 61: `variant: ''` keeps the plain batch key for world art uploaded without a chain (a mod atlas built mipChain:false - SIB1)
     this._uploadSink?.(false, key);   // FIELD BUGS 2026-10-04d PLACE-LRU: a hit is asked for too - the place asking holds it
     if (this.textures.has(key)) {
       // WD3 (AUDIT WD3 T3): a stand-in's clear placeholder (no picture at the time - a fetch that failed, a gate shut) is

@@ -35,7 +35,8 @@ const env = { HOURS_FIRST_HANDLES: ' Duck , ArtemisGodfrey,terra ' };
 const FIRST_CLEAR = ['aether', 'ArtemisGodfrey', 'CycleD0se', 'Duck', 'Kobakk', 'MackyWackyDeeJew', 'mayaamano', 'Nirnroot', 'ofrizz', 'rosalina', 'ShikiX3', 'Temegast', 'Terra'];
 
 test('HOURS-FIRST the vocabulary: the title and the aura join the closed lists last; "Hour\'s First" and "The First Hour" in words; the title drawn rose gold into pearl into the dawn\'s white, edged in black, its one colour the rose gold and no other title\'s; the aura\'s button in its paint; no glyph (mutants: another title\'s paint; the gradient\'s order; the colour the Hourbreaker\'s)', () => {
-  assert.equal(TITLES.at(-1), 'hoursfirst');
+  assert.equal(TITLES.at(-2), 'hoursfirst');   // PIN MOVED (CARDS10, at the merge of main): Iliac Champion joined the list after it
+  assert.equal(TITLES.at(-1), 'iliacchampion');
   assert.equal(AURAS.at(-1), 'firsthour');
   assert.equal(TITLE_TEXT.hoursfirst, "Hour's First");
   assert.equal(AURA_TEXT.firsthour, 'The First Hour');

@@ -276,8 +276,8 @@
   {
     "name": "lane-trilight-unscaled",
     "file": "src/render/enhancedLighting.js",
-    "old": "  if (!on || !tri) return tri;\n  const k = (c) =>",
-    "new": "  if (!on || tri) return tri;\n  const k = (c) =>",
+    "old": "  if (!on || !tri) return tri;\n  if (into) {",
+    "new": "  if (!on || tri) return tri;\n  if (into) {",
     "tests": [
       "test/el4_frame.test.js"
     ]

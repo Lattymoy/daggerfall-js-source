@@ -33,9 +33,10 @@ test('MENU T1: the category map is TOTAL and DISJOINT over the store', () => {
   assert.equal(seen.size, 171);
   // the shape the design settled on, so a re-bake that renames a key
   // fails the build rather than quietly dropping a row
-  // SO1 gave ENHANCED a category with no store key; FT12 took it off the rail - seven categories over the 171
-  assert.deepEqual(CATEGORY_IDS.map((c) => keysOf(c).length), [21, 16, 5, 66, 37, 19, 7]);
-  assert.deepEqual(CATEGORY_IDS, ['game', 'controls', 'audio', 'video', 'interface', 'accessibility', 'mods']);   // FT12: the Enhanced category is gone - the Features home holds its switches
+  // SO1 gave ENHANCED a category with no store key; FT12 took it off the rail. ORG2: one screen for every option - nine
+  // TABS by subject over the 171 and the Features rows; World holds none of DFU's keys, only the port's and the mods'
+  assert.deepEqual(CATEGORY_IDS.map((c) => keysOf(c).length), [67, 16, 5, 0, 37, 5, 15, 19, 7]);
+  assert.deepEqual(CATEGORY_IDS, ['graphics', 'gameplay', 'combat', 'world', 'interface', 'audio', 'controls', 'accessibility', 'mods']);
 });
 
 test('MENU T2: no player ever reads a raw ini identifier', () => {
@@ -52,7 +53,7 @@ test('MENU T2: no player ever reads a raw ini identifier', () => {
   // the words this screen must never say about the port's own gaps
   const banned = /unsupported|broken|missing|not implemented|n\/a/i;
   for (const s of [...Object.values(LABELS), ...Object.values(READOUT), ...Object.values(INSTEAD),
-    ...CATEGORIES.map((c) => c.blurb), ...CATEGORIES.map((c) => c.title)]) {
+    ...CATEGORIES.map((c) => c.title), ...CATEGORIES.flatMap((c) => c.sections.map((s) => s.title))]) {   // ORG2: titles only
     assert.ok(!banned.test(s), `discouraging word in copy: "${s}"`);
     assert.match(s, /^[\x20-\x7E]+$/, `non-ASCII in copy: "${s}"`);
   }
@@ -137,8 +138,8 @@ test('FD1: the launcher and the keyed settings window are gone, nothing imports 
 
 test('FD1: both skins open on the enhanced door; classic collapses its game doors into BEGIN, which resolves into the classic sequence with the data gated first (mutant: Begin on the enhanced rail, or the classic rail keeping New Game)', () => {
   const menu = src('ui/enhancedMenu.js');
-  assert.match(menu, /const SECTIONS_CLASSIC = \['Begin', 'Online', 'Settings', 'Features', 'Overhauls', 'Screenshots', 'About'\];/);   // LOAD1: the gallery's door   // OVH1: the three looks   // FT16: Controls is a Settings category
-  assert.match(menu, /const SECTIONS_BOOT = \['Continue', 'New Game', 'Load Game', 'Online', 'Test Room', 'Settings', 'Features', 'Overhauls', 'Screenshots', 'About'\];/, 'the enhanced rail keeps its three doors and loses the Enhanced entry (SO1) and the Controls one (FT16)');
+  assert.match(menu, /const SECTIONS_CLASSIC = \['Begin', 'Online', 'Settings', 'Overhauls', 'Screenshots', 'About'\];/);   // LOAD1: the gallery's door   // OVH1: the three looks   // FT16: Controls is a Settings category   // ORG2: Features is Settings' tabs
+  assert.match(menu, /const SECTIONS_BOOT = \['Continue', 'New Game', 'Load Game', 'Online', 'Test Room', 'Settings', 'Overhauls', 'Screenshots', 'About'\];/, 'the enhanced rail keeps its three doors and loses the Enhanced entry (SO1), the Controls one (FT16) and the Features one (ORG2)');
   assert.match(menu, /sections = mode === 'pause' \? SECTIONS_PAUSE : isEnhanced\(\) \? SECTIONS_BOOT : SECTIONS_CLASSIC;/);
   assert.match(menu, /function paneBegin\(body\) \{[\s\S]*?onClick: \(\) => onAction\('begin'\)/);
   assert.match(menu, /begin: paneBegin,/, 'the dispatch knows it');
@@ -153,47 +154,54 @@ test('FD1: both skins open on the enhanced door; classic collapses its game door
   assert.ok(gate > 0 && gate < splash && splash < menuAt, 'data, then the splash, then Daggerfall\'s own start window');
 });
 
-test('SO1: the settings pane is organised - the port\'s rows sit in the categories a player looks in, the live store keys lie flat, the two other tiers fold under counted headings remembered per category, and the sub-rail counts what works (mutant: a tier hidden, or the count the file\'s row count)', () => {
+test('SO1: the settings pane is organised - the port\'s rows sit in the categories a player looks in, the live store keys lie flat, the two other tiers fold under counted headings remembered per category, and the sub-rail counts what works (mutant: a tier hidden, or the count the file\'s row count)', async () => {
+  const { whereIs } = await import('../src/ui/settingsMap.js');
   const menu = src('ui/enhancedMenu.js');
   assert.doesNotMatch(menu, /function paneEnhanced\(/, 'the Enhanced pane is gone');
   assert.doesNotMatch(menu, /inertRow\(/, 'and the row about a removed feature with it');
-  for (const fn of ['portRowsControls', 'portRowsInterface', 'morrowindCard', 'peerSpritesCard', 'packsCard', 'categoryRows', 'tierGroup']) {
+  for (const fn of ['portRowsGame', 'portRowsControls', 'portRowsInterface', 'portPool', 'morrowindCard', 'peerSpritesCard', 'packsCard', 'itemNodes', 'tabSections', 'tabCount', 'tierGroup']) {
     assert.match(menu, new RegExp(`function ${fn}\\(`), `${fn} exists`);
   }
-  assert.match(menu, /if \(catId === 'controls'\) return portRowsControls\(opts\);[^\n]*\n\s*if \(catId === 'interface'\) return portRowsInterface\(opts\);/);
-  // FT12: the Enhanced category is GONE from the settings rail - every switch it held is the Features home's, its test door the Test Room's
+  // ORG2: the port's rows are built once a paint and the MAP places each by the id it carries - no category switch
+  assert.match(menu, /for \(const r of \[\.\.\.portRowsGame\(\{ pause \}\), \.\.\.portRowsControls\(\{ pause \}\), \.\.\.portRowsInterface\(\{ pause \}\)\]\) \{\s*\n\s*if \(r\?\.dataset\?\.opt\) pool\.set\(r\.dataset\.opt, r\);/);
+  assert.doesNotMatch(menu, /function portRows\(/, 'the per-category switch went with the categories');
+  // FT12: the Enhanced category is GONE from the settings rail - every switch it held is a Features row now
   assert.ok(!/function portRowsEnhanced\(|function featuresPointerRow\(|catId === 'enhanced'/.test(menu), 'no Enhanced category, no pointer row');
   const test = menu.slice(menu.indexOf('function paneTest('), menu.indexOf('\n}', menu.indexOf('function paneTest(')));
   assert.match(test, /outdoors\.append\(outdoorsTestRow\(\)\);/, 'the outdoors test door is the Test Room\'s (boot only, as the Test Room is)');
-  // the touch knobs under Controls, where a finger's device looks; the HUD size and the FPS counter under Interface (MENU-TOGGLE: the skin is the Overhauls page's)
+  // the touch knobs under Controls, where a finger's device looks; the HUD under Interface; the FPS counter under Graphics, beside the frame rate (MENU-TOGGLE: the skin is the Overhauls page's)
   const ctl = menu.slice(menu.indexOf('function portRowsControls('), menu.indexOf('function portRowsInterface('));
   assert.match(ctl, /if \(!isTouchDevice\(\)\) return out;/);
-  for (const k of ['touchLookSensitivity', 'touchAnalogStick', 'touchGyroLook', 'touchHaptics', 'touchFullscreen']) assert.match(ctl, new RegExp(`'${k}'`), k);
-  const ui = menu.slice(menu.indexOf('function portRowsInterface('), menu.indexOf('function portRows('));
-  assert.match(ui, /const out = \[\];\n\s*out\.push\(hudScaleRow\(\)\);/, 'the HUD size heads Interface now'); assert.doesNotMatch(ui, /skinRow/); assert.match(ui, /prefRow\('showFps'/);
-  // FT14: the Mods page is gone; the assets and the packs stand under the feature tiles instead
-  const mods = menu.slice(menu.indexOf('function modsFooter('), menu.indexOf('\n}', menu.indexOf('function modsFooter(')));
-  // ONLINE-CLASS1 adds the peer-sprites card; the order is what this pins - the peers' look, then the packs' door.
-  // MWA4 moved the assets card that stood first to the head of the feature list (features.test.js FT14).
-  assert.match(mods, /body\.append\(peerSpritesCard\(\)\);[^\n]*\n\s*body\.append\(packsCard\(\)\);/);
-  assert.doesNotMatch(mods, /morrowindCard\(\)/);
+  for (const k of ['touchLookSensitivity', 'touchAnalogStick', 'touchGyroLook', 'touchHaptics', 'touchFullscreen']) {
+    assert.match(ctl, new RegExp(`'${k}'`), k);
+    assert.equal(whereIs(`port:${k}`)?.tab.id, 'controls', k);
+  }
+  const ui = menu.slice(menu.indexOf('function portRowsInterface('), menu.indexOf('function portRowsGame('));
+  assert.match(ui, /const out = \[\];\n\s*out\.push\(hudScaleRow\(\)\);/, 'the HUD size heads its builder'); assert.doesNotMatch(ui, /skinRow/); assert.match(ui, /prefRow\('showFps'/);
+  assert.equal(whereIs('port:hudScale')?.tab.id, 'interface');
+  assert.equal(whereIs('port:showFps')?.section.id, 'display', 'the FPS counter beside the frame rate cap');
+  // FT14: the Mods page is gone; ORG2: its cards are items on the map - the files under Mods & files, other players under Gameplay
+  assert.deepEqual(whereIs('card:morrowind') && [whereIs('card:morrowind').tab.id, whereIs('card:packs').tab.id, whereIs('card:peerSprites').tab.id], ['mods', 'mods', 'gameplay']);
+  assert.match(menu, /const make = \{ morrowind: \(\) => morrowindCard\(\), packs: \(\) => packsCard\(\), peerSprites: \(\) => peerSpritesCard\(\), nightSounds: \(\) => nightSoundsCard\(\) \}\[item\.slice\(5\)\];/);
   assert.match(menu, /await ds\.pickMusicFolder\(\); render\(\);/, 'the music pack is reachable without the launcher');
   assert.match(menu, /await ds\.pickTextureFolder\(\); render\(\);/);
   // tier is a group: live flat, the other two folded with a count, remembered on the shelf
-  assert.match(menu, /for \(const key of keys\) if \(drawsFlat\(key\)\) \{ const r = settingRow\(key\); if \(r\) out\.push\(r\); \}/);   // FT13: a moved key answers nothing; FPS-VSYNC: drawsFlat is live, or read at the app's next start
+  assert.match(menu, /if \(!drawsHere\(item, pause\)\) \{[^\n]*\n[^\n]*\n\s*fold\?\.push\(item\);\s*\n\s*return \[\];\s*\n\s*\}\s*\n\s*return \[mark\(settingRow\(item\)\)\]\.filter\(Boolean\);/);   // FT13: a moved key answers nothing; FPS-VSYNC: drawsFlat is live, or read at the app's next start
   assert.match(menu, /function drawsFlat\(key\) \{ const t = tierOf\(key\); return t === 'live' \|\| t === 'restart'; \}/);
   assert.match(menu, /const TIER_GROUPS = Object\.freeze\(\[\s*\n\s*\['stored', 'Saved for later'/);
   assert.match(menu, /\['unavailable', 'Not available here'/);
+  assert.match(menu, /const ks = fold\.filter\(\(k\) => tierOf\(k\) === tier\);\s*\n\s*if \(ks\.length\) body\.append\(tierGroup\(tab\.id, tier, title, blurb, ks\)\);/, 'each tab folds its own');
   assert.match(menu, /const open = isOpen\(catId, tier\);[\s\S]*?headBtn\.onclick = \(\) => \{ setOpen\(catId, tier, !open\); render\(\); \};/, 'the fold is the shelf\'s open map');
   assert.match(menu, /el\('span', 'count', String\(keys\.length\)\)/, 'the heading counts');
   assert.match(menu, /if \(open\) \{\s*\n\s*const body = el\('div', 'group-body'\);/, 'a folded group draws no rows - and its heading still says how many');
-  assert.match(menu, /b\.append\(el\('span', 'count', String\(liveCount\(cat\.id\)\)\)\);/, 'the sub-rail counts the rows that do something');
+  assert.match(menu, /b\.append\(el\('span', 'count', String\(tabCount\(cat, \{ pool, pause \}\)\)\)\);/, 'the sub-rail counts the rows that do something');
   assert.doesNotMatch(menu, /el\('div', 'legend'\)/, 'the dot legend went with the flat list');
-  // the pause's condensed pane carries the reload-free port rows too
-  assert.match(menu, /const port = portRows\(cat\.id, \{ pause: true \}\);/);
+  // the pause's condensed pane: the same screen, the live keys alone and the reload-free port rows (PX10)
+  assert.match(menu, /const drawsHere = \(key, pause\) => \(pause \? tierOf\(key\) === 'live' : drawsFlat\(key\)\);/);
+  assert.match(menu, /paneSettings\(detail, \{ pause: true \}\);/);
   assert.match(src('ui/enhancedStyle.js'), /\.group-head \{/);
-  // the category the port's departures live in is the first, with no store key
-  assert.equal(CATEGORIES[0].id, 'game');   // FT12: Game leads the rail again
+  // ORG2: Graphics leads the rail - the tab Mac asked for by name
+  assert.equal(CATEGORIES[0].id, 'graphics');
   assert.equal(keysOf('enhanced').length, 0, 'no such category');
-  assert.equal(CATEGORIES.find((c) => c.id === 'mods').title, 'Data & Mods');
+  assert.equal(CATEGORIES.find((c) => c.id === 'mods').title, 'Mods & files');
 });

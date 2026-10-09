@@ -46,6 +46,7 @@ import { survivalOn, survivalRules } from '../systems/survival/switch.js';   // 
 import { tavernMenu, tavernEat, tavernDrink, tavernOrder, tavernWater, blackout } from '../systems/survival/tavernMenu.js';   // INN-WATER: tavernWater, the fountain's law at the bar
 import { survivalOf } from '../systems/survival/needs.js';
 import { stiffen, REST_KIND } from '../systems/survival/rest.js';
+import { cardPackPrice, buyCardPack } from '../systems/cardSources.js';   // CARDS9: the keeper's packs
 
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
@@ -88,6 +89,16 @@ const rows = (id, ctx = {}) => macroRows(deps.rows ?? (() => []), id, {
 }).map((r) => (typeof r.text === 'string'
   ? { ...r, text: r.text.replace(/,?\s*%ra\b/, '') }
   : r));
+
+/** CARDS9: a pack's price at this counter - the tavern's quality, the buyer's haggle (systems/cardSources.js). */
+const packPrice = () => cardPackPrice(deps.quality?.() ?? 10, deps.skills?.() ?? {});
+/** CARDS9: a pack bought over the counter - the gold from the purse, the pack into it; short, DFU's own "not enough". */
+function buyPack() {
+  audio.playOneShot(SOUND.ButtonClick, 1);
+  const r = buyCardPack(deps.entity, { quality: deps.quality?.() ?? 10, skills: deps.skills?.() ?? {} });
+  if (!r.ok) { say(rows(NOT_ENOUGH_GOLD_ID, { amount: r.price })); return; }
+  say(line(`You buy a pack of Iliac Hand cards for ${r.price} gold. Use it from your pack to open it.`));
+}
 
 function say(rowList, opts = {}) {
   box = { rows: rowList, buttons: null, ...opts };
@@ -261,9 +272,14 @@ function mainButtons() {
   talkBtn.onclick = talk;
   const food = el('button', 'act tavern-act', 'Food & drink');
   food.onclick = openFood;
+  // CARDS9 (bible/11-Multiplayer/Tavern-Cards.md section 32; 6.3: "Tavern keepers sell packs"): the keeper's packs of
+  // Iliac Hand cards at this counter's price - the port's own row (DFU's tavern sells no cards), on this skin's panel;
+  // the classic window keeps DFU's four, and its players buy at the card table's panel (scenes/worldModes.js)
+  const pack = el('button', 'act tavern-act', `Card pack (${packPrice()} gold)`);
+  pack.onclick = buyPack;
   const exit = el('button', 'act tavern-act', 'Leave');
   exit.onclick = close;
-  wrap.append(room, talkBtn, food, exit);
+  wrap.append(room, talkBtn, food, pack, exit);
   return wrap;
 }
 

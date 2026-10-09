@@ -26,6 +26,8 @@
 //    sender - so a Stop from a tab younger than the last canceller's was ignored, and a reload of the resting
 //    player's tab (the mark back at zero) let a follower's old request end their next rest on its first tick.
 //    Compared per sender against the value seen when THIS rest began, the same law `restEnemyAt` already keeps.
+import { optionPath } from '../ui/settingsMap.js';   // ORG2: the rest message names the switch where the map puts it
+
 /** PARTY-REST2b, per-request (2026-09-22, "make this 60 seconds"): how long a vote stands - long enough to coordinate
  *  a round, short enough that a stale yes from an earlier attempt cannot approve a later one. Lived in world.js;
  *  here so the wire's reader and the voter's own expiry read ONE number. */
@@ -148,7 +150,7 @@ export function partyRestsTogether(mineOn, party, iLead) {
 /** REST-OPT: what a vote (`/ready`) is told while my rest is my own - my switch, or the leader's. */
 export function restAloneText(mineOn) {
   return mineOn ? 'Your leader rests on their own, so everyone rests for themselves.'
-    : 'You rest on your own. Turn on "Rest with my party" (Features, Other players) to rest with them.';
+    : `You rest on your own. Turn on "Rest with my party" (${optionPath('card:peerSprites')}) to rest with them.`;   // ORG2: where the map puts it
 }
 
 // AUDIT REST-PARTY (2026-10-03, the party rest under REST5): THE PARTY'S NIGHT, the pure half of world.js's

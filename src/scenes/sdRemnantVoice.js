@@ -11,8 +11,8 @@
 //     wake (the bark, the Hour's bell under it); its turn to the Dragon Break (the Rift's chime, low - it steps outside
 //     time) and to the Last Moment (its deepest bark, the storm's roll over it); its return from outside time (the
 //     gears grinding back together); a stun (its bark cut short, a ring) and its recovery (the gears again); once, the
-//     gears slipping as it falls under a fifth of its health; its cry at its fall; the ground's shock under its heavy
-//     landings; the Hour's bell, lowest, when the fight is lost.
+//     gears slipping as it falls under a fifth of its health; its cry at its fall; the Hour's bell, the lowest of its
+//     body's, when the fight is lost (AUDIT SD IV, A6: the End's toll and its knell are the same bell lower).
 //   ITS ECHOES - each its own pitch, gold's under silver's: rising (the chime), each stride, each hurt, broken (the
 //     shatter).
 //   ITS BLOWS' RELEASE - WB13d's law: SD_RELEASE_MS before each blow lands, the weight of it coming (the Stomp's body,
@@ -51,7 +51,6 @@ export const SD_VOICE_CUES = Object.freeze({
   slipBark: cue(SD_IRON.bark, 0.34, 1.6, 120),
   fallCry: cue(SD_IRON.bark, 0.3, 2.0, 160),
   lost: cue(TOLL, 0.38, 1.8, 200, 'arena'),
-  quake: cue(BODY_FALL, 0.3, 1.8, 70),
   echoRise: Object.freeze([cue(CHIME, 0.9, 1.4, 80), cue(CHIME, 1.2, 1.4, 80)]),
   echoFall: Object.freeze([cue(CRYSTAL_CLIPS.shatter, 0.8, 1.6, 90), cue(CRYSTAL_CLIPS.shatter, 1.05, 1.6, 90)]),
   echoStep: Object.freeze([cue(SD_IRON.move, 0.8, 0.7, 30), cue(SD_IRON.move, 0.95, 0.7, 30)]),
@@ -115,7 +114,7 @@ export function createSdRemnantVoice({ audio = null, link, feet = () => null }) 
     hp: frac(s.h, s.m), hurtHp: frac(s.h, s.m), hurtAt: -Infinity, slipped: frac(s.h, s.m) < SD_SLIP_FRAC,
     growlAt: t + SD_GROWL_MS, rng: lcg(s.fi), walked: 0, at: s.rem ? sdBodyAt(s.rem, t) : null,
     ec: (s.ec ?? []).map((E) => ({ up: E.h > 0, hp: frac(E.h, E.m), hurtAt: -Infinity, walked: 0, at: sdBodyAt(E, t) })),
-    blows: new Map(blowsOf(s).map(([, a]) => [a.i, { released: t >= a.at - SD_RELEASE_MS, landed: t >= a.at, stung: true }])),
+    blows: new Map(blowsOf(s).map(([, a]) => [a.i, { released: t >= a.at - SD_RELEASE_MS, stung: true }])),
   });
   /** A body's strides since the last frame - a step heard for each `stride` walked. */
   function strides(m, B, t, stride, c, y) {
@@ -155,6 +154,7 @@ export function createSdRemnantVoice({ audio = null, link, feet = () => null }) 
       const ou = t < s.ou;
       if (ou && !k.ou) play(SD_VOICE_CUES.back, rem(3));
       k.ou = ou;
+      const outside = s.ph === 2 || ou;
       // stunned, and up again
       const stun = t < s.su;
       if (stun && !k.stun) { play(SD_VOICE_CUES.stunned, rem(4)); play(SD_VOICE_CUES.stunRing, rem(3)); }
@@ -162,12 +162,14 @@ export function createSdRemnantVoice({ audio = null, link, feet = () => null }) 
       k.stun = stun;
       // hurt, and the gears slipping once
       const hp = frac(s.h, s.m);
-      if (k.hurtHp - hp >= SD_HURT_FRAC && t - k.hurtAt >= SD_HURT_GAP_MS) { play(SD_VOICE_CUES.hurt, rem(4)); k.hurtAt = t; k.hurtHp = hp; }
+      // AUDIT SD IV (A1): and none outside time - an Echo's blow comes off the whole, and nothing stands where it is
+      // heard; the count follows, so no grunt is banked for its return
+      if (outside) k.hurtHp = hp;
+      else if (k.hurtHp - hp >= SD_HURT_FRAC && t - k.hurtAt >= SD_HURT_GAP_MS) { play(SD_VOICE_CUES.hurt, rem(4)); k.hurtAt = t; k.hurtHp = hp; }
       if (hp > k.hurtHp) k.hurtHp = hp;   // a share joined: the count from where it stands
       if (hp < SD_SLIP_FRAC && !k.slipped) { k.slipped = true; play(SD_VOICE_CUES.slip, rem(3)); play(SD_VOICE_CUES.slipBark, rem(4)); }
       k.hp = hp;
       // its strides, and a growl while it does not strike
-      const outside = s.ph === 2 || ou;
       if (!outside) strides(k, s.rem, t, SD_STRIDE_M, SD_VOICE_CUES.step, 0.5);
       else k.at = null;
       const striking = !!s.rem?.atk && t < s.rem.atk.at + 1500;
@@ -188,14 +190,15 @@ export function createSdRemnantVoice({ audio = null, link, feet = () => null }) 
         strides(m, E, t, SD_ECHO_STRIDE_M, SD_VOICE_CUES.echoStep[i] ?? SD_VOICE_CUES.echoStep[0], 0.5);
       });
       if (!s.ec) k.ec = [];
-      // the blows: each one's release, the ground's shock under the heavy, a Volley's mark at my feet
+      // the blows: each one's release, a Volley's mark at my feet. AUDIT SD IV (A4): the ground's shock under the Stomp
+      // is its landing (scenes/sdRemnantBlows.js SD_BLOW_CUES.land.stomp) - a quake here was the same thud a second time
       const mine = feet(), me = mine ? dungeonToRealm(mine[0], mine[1], mine[2]) : null;
       for (const [b, a] of blowsOf(s)) {
         const A = SD_BLOW_BY_ID[a.a];
         if (!A) continue;
         let m = k.blows.get(a.i);
         if (!m) {
-          m = { released: t >= a.at - SD_RELEASE_MS, landed: t >= a.at, stung: false };
+          m = { released: t >= a.at - SD_RELEASE_MS, stung: false };
           k.blows.set(a.i, m);
           if (k.blows.size > 32) k.blows.delete(k.blows.keys().next().value);
         }
@@ -205,10 +208,6 @@ export function createSdRemnantVoice({ audio = null, link, feet = () => null }) 
           if (A === SD_BLOWS.volley && me && t < a.at && (a.tg ?? []).some((q) => Math.hypot(SD_ARENA.x + q[0] - me[0], SD_ARENA.z + q[1] - me[2]) <= SD_STING_M)) sound(SD_VOICE_CUES.sting);
         }
         if (!m.released && t >= a.at - SD_RELEASE_MS) { m.released = true; if (t < a.at) sound(sdEndAgain(a, s) ? SD_VOICE_CUES.knell : SD_VOICE_CUES.release[A.key], where); }
-        if (!m.landed && t >= a.at) {
-          m.landed = true;
-          if (b === SD_BODY.remnant && (A === SD_BLOWS.stomp || A === SD_BLOWS.end) && t - a.at < 400) play(SD_VOICE_CUES.quake, rem(0.5));
-        }
       }
       k.t = t;
     },

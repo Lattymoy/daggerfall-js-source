@@ -42,26 +42,36 @@ await page.goto(`${BASE}/play/?nointro`, { waitUntil: 'networkidle' });
   await page.waitForSelector('.px-menu');
   if (await page.locator('.px-acctstage').count()) await page.keyboard.press('Escape');
 await page.waitForSelector('.px-menu button');
-await page.locator('.px-menu button').filter({ hasText: /Features/ }).first().click();
-await page.waitForSelector('.ft-tile');
+// ORG2 (2026-10-09): the Features home is the Settings screen's tabs, and the reading rail is its help pane - a row's
+// name is PRESSED to pick it (a hover is no gesture on a phone). Every tab is walked, so every registry row is read.
+await page.locator('.px-menu button').filter({ hasText: /Settings/ }).first().click();
+await page.waitForSelector('#enhanced-menu .subbtn');
 
-const tiles = await page.locator('.ft-tile').count();
+const tabs = await page.locator('#enhanced-menu .subbtn').count();
+let tiles = 0;
 const rows = [];
-for (let i = 0; i < tiles; i++) {
-  await page.locator('.ft-tile').nth(i).hover();
-  await page.waitForTimeout(40);
-  rows.push(await page.evaluate(() => {
-    const rail = document.querySelector('.ft-rail');
-    const note = rail?.querySelector('.ft-rail-note');
-    const head = rail?.querySelector('h3, .ft-rail-title, strong');
-    return {
-      title: head?.textContent?.trim() ?? '',
-      chars: note?.textContent?.length ?? 0,
-      px: note ? Math.round(note.getBoundingClientRect().height) : 0,
-    };
-  }));
+for (let t = 0; t < tabs; t++) {
+  await page.locator('#enhanced-menu .subbtn').nth(t).click();
+  await page.waitForTimeout(60);
+  const n = await page.locator('#enhanced-menu .opt-body > .ft-tile').count();
+  tiles += n;
+  for (let i = 0; i < n; i++) {
+    await page.locator('#enhanced-menu .opt-body > .ft-tile').nth(i).locator('.ft-tile-main').click();
+    await page.waitForTimeout(40);
+    rows.push(await page.evaluate(() => {
+      const card = document.querySelector('#enhanced-menu .detail .ft-card');
+      const note = card?.querySelector('.ft-rail-note');
+      const head = card?.querySelector('h3');
+      return {
+        title: head?.textContent?.trim() ?? '',
+        chars: note?.textContent?.length ?? 0,
+        px: note ? Math.round(note.getBoundingClientRect().height) : 0,
+      };
+    }));
+  }
 }
-await page.locator('.ft-tile').nth(0).hover();
+await page.locator('#enhanced-menu .subbtn').first().click();
+await page.locator('#enhanced-menu .opt-body > .ft-tile').first().locator('.ft-tile-main').click();
 await page.screenshot({ path: `${SHOTS}/feature-rail.png` });
 
 rows.sort((a, b) => b.px - a.px);
@@ -70,8 +80,8 @@ const tall = rows.filter((r) => r.px > MAX_NOTE_PX);
 const total = rows.reduce((n, r) => n + r.chars, 0);
 console.log(`\n${tiles} tiles, ${total} characters of note, tallest ${rows[0]?.px ?? 0}px (${rows[0]?.title ?? '-'})`);
 
-check('every tile in the registry drew a tile', tiles === TILES, `${tiles} of ${TILES}`);
-check('every tile answered the rail', rows.every((r) => r.title && r.chars > 0),
+check('every row in the registry drew a row, on one tab', tiles === TILES, `${tiles} of ${TILES}`);
+check('every row answered the help pane', rows.every((r) => r.title && r.chars > 0),
   rows.filter((r) => !r.title || !r.chars).map((r) => r.title || '(no title)').join(', '));
 check(`no note is taller than ${MAX_NOTE_PX}px`, tall.length === 0,
   tall.map((r) => `${r.title} ${r.px}px`).join('; '));

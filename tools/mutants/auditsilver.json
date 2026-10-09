@@ -211,7 +211,7 @@
   {
     "name": "AUDIT-SILVER-WAYS-D4-fallback-unasked",
     "file": "src/scenes/mineHost.js",
-    "old": "        ?? standAnywhere(samples, tilemap, locationRect, pieces, stone, beach);",
+    "old": "        ?? standAnywhere(samples, tilemap, locationRect, solid, stone, beach);",
     "new": "        ?? (standAnywhere && null);",
     "tests": [
       "test/auditsilver_client.test.js"

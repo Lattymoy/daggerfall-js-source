@@ -157,7 +157,8 @@ test('SD19 THE WORDS: its marks said with its find - its Ending, its signature a
   const E = sdEndingOf(sdMarksOf(risen.s)), O = sdOmensOf(sdMarksOf(risen.s));
   // AUDIT SD III (T11, PIN MOVED): each mark's article small inside the line - it read "under The Quickened Gears and The
   // Hardened Hearts"
-  assert.equal(sdMarksLine({ name: 'The Stopped Bell', s: risen.s }), `The Stopped Bell keeps the Ending of ${E.stone} - ${sdNameIn(E.sig)} - under ${sdNameIn(O[0].name)} and ${sdNameIn(O[1].name)}.`);
+  // PIN MOVED (AUDIT SD IV T9): its signature the Ending's own, between commas - it hung between dashes (WB13b's aside)
+  assert.equal(sdMarksLine({ name: 'The Stopped Bell', s: risen.s }), `The Stopped Bell keeps the Ending of ${E.stone}, its ${E.sig.replace(/^The /, '')}, under ${sdNameIn(O[0].name)} and ${sdNameIn(O[1].name)}.`);
   assert.doesNotMatch(sdMarksLine({ name: 'The Stopped Bell', s: risen.s }).slice(1), /\bThe /, 'no capital article inside it');
   assert.match(sdMarksLine({ s: risen.s }), /^The Abyss Dungeon keeps the Ending of /);
   assert.equal(sdHourLine({ name: 'The Stopped Bell', near: 'Copperham' }), 'The Stopped Bell near Copperham will fade within the hour.');

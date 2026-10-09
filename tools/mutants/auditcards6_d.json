@@ -1,0 +1,338 @@
+[
+  {
+    "name": "AC6-D1-guard-by-second",
+    "file": "server-account/src/iliac.js",
+    "old": "    FROM (SELECT r FROM (${MY_GAMES_SQL(p, '?2')}) ORDER BY k DESC LIMIT 1)), ${ARENA_ELO_START})`;",
+    "new": "    FROM (SELECT r FROM (${MY_GAMES_SQL(p, '?2')}) ORDER BY at DESC, k DESC LIMIT 1)), ${ARENA_ELO_START})`;",
+    "tests": [
+      "test/auditcards6_d.test.js"
+    ],
+    "note": "the claim's guard asks the row of the latest second: the next claim of an account a race wrote under is busy for good"
+  },
+  {
+    "name": "AC6-D1-rating-by-second",
+    "file": "server-account/src/iliac.js",
+    "old": "  const t = await db.prepare(`SELECT (SELECT r FROM (${MY_GAMES_SQL('?2', '?1')}) ORDER BY k DESC LIMIT 1) AS last,",
+    "new": "  const t = await db.prepare(`SELECT (SELECT r FROM (${MY_GAMES_SQL('?2', '?1')}) ORDER BY at DESC, k DESC LIMIT 1) AS last,",
+    "tests": [
+      "test/auditcards6_d.test.js"
+    ],
+    "note": "the rating read off the row of the latest second: the later-landed game's change lost"
+  },
+  {
+    "name": "AC6-D1-board-by-second",
+    "file": "server-account/src/iliac.js",
+    "old": "  last AS (SELECT p, r, at, ROW_NUMBER() OVER (PARTITION BY p ORDER BY k DESC) AS rn FROM sides),",
+    "new": "  last AS (SELECT p, r, at, ROW_NUMBER() OVER (PARTITION BY p ORDER BY at DESC, k DESC) AS rn FROM sides),",
+    "tests": [
+      "test/auditcards6_d.test.js"
+    ],
+    "note": "the board's rating the row of the latest second"
+  },
+  {
+    "name": "AC6-D1-arena-guard-by-second",
+    "file": "server-account/src/arena.js",
+    "old": "    FROM (SELECT r FROM (${MY_BOUTS_SQL(p, '?2')}) ORDER BY k DESC LIMIT 1)), ${ARENA_ELO_START})`;",
+    "new": "    FROM (SELECT r FROM (${MY_BOUTS_SQL(p, '?2')}) ORDER BY at DESC, k DESC LIMIT 1)), ${ARENA_ELO_START})`;",
+    "tests": [
+      "test/auditcards6_d.test.js"
+    ],
+    "note": "the arena's guard by the claim's second (its rating read is STORMSHED2-B-last-tie-row, re-aimed)"
+  },
+  {
+    "name": "AC6-D1-arena-board-by-second",
+    "file": "server-account/src/arena.js",
+    "old": "  last AS (SELECT p, r, at, ROW_NUMBER() OVER (PARTITION BY p ORDER BY k DESC) AS rn FROM sides),",
+    "new": "  last AS (SELECT p, r, at, ROW_NUMBER() OVER (PARTITION BY p ORDER BY at DESC, k DESC) AS rn FROM sides),",
+    "tests": [
+      "test/auditcards6_d.test.js"
+    ],
+    "note": "the arena board's rating the row of the latest second"
+  },
+  {
+    "name": "AC6-D3-arena-honours-unread",
+    "file": "server-account/src/boardNames.js",
+    "old": "    if (!own.arena) rows = await withArenaHonoursAll(ctx, rows, nowS);\n",
+    "new": "",
+    "tests": [
+      "test/auditcards6_d.test.js"
+    ],
+    "note": "Iliac Hand's board badges no arena honour"
+  },
+  {
+    "name": "AC6-D3-iliac-honours-unread",
+    "file": "server-account/src/boardNames.js",
+    "old": "    if (!own.iliac) rows = await withIliacHonoursAll(ctx, rows, nowS);\n",
+    "new": "",
+    "tests": [
+      "test/auditcards6_d.test.js"
+    ],
+    "note": "the arena's board badges no Iliac Champion"
+  },
+  {
+    "name": "AC6-D6-ends-clock",
+    "file": "server-account/src/iliac.js",
+    "old": "ends: arenaSeasonEndsS(season) },",
+    "new": "ends: arenaSeasonEndsS(nowS) },",
+    "tests": [
+      "test/auditcards6_d.test.js"
+    ],
+    "note": "the season's end handed the clock"
+  },
+  {
+    "name": "AC6-D5-claims-clock",
+    "file": "server-account/src/iliac.js",
+    "old": ".bind(a, b, c.i).first();",
+    "new": ".bind(a, b, nowS).first();",
+    "tests": [
+      "test/auditcards6_d.test.js"
+    ],
+    "note": "the pair's day read on the claim's second"
+  },
+  {
+    "name": "AC6-D5-day-before-alone",
+    "file": "server-account/src/iliac.js",
+    "old": "PAIR_SQL('played > ?3 - 86400 AND played < ?3 + 86400')",
+    "new": "PAIR_SQL('played > ?3 - 86400 AND played <= ?3')",
+    "tests": [
+      "test/auditcards6_d.test.js"
+    ],
+    "note": "the day before a game alone: receipts carried last first all count"
+  },
+  {
+    "name": "AC6-D5-claim-second-stored",
+    "file": "server-account/src/iliac.js",
+    "old": "rated ? 1 : 0, c.i, nowS).run();",
+    "new": "rated ? 1 : 0, nowS, nowS).run();",
+    "tests": [
+      "test/auditcards6_d.test.js"
+    ],
+    "note": "the claim's second stored as the game's: games held two days count on the day they were carried"
+  },
+  {
+    "name": "AC6-D7-route-card",
+    "file": "server-account/src/index.js",
+    "old": "...(typeof r.card === 'string' ? { card: r.card } : {}) }, CARDS_STATUS[r.error] ?? JUDGE_STATUS[r.error] ?? 400, origin);",
+    "new": "}, CARDS_STATUS[r.error] ?? JUDGE_STATUS[r.error] ?? 400, origin);",
+    "tests": [
+      "test/auditcards6_d.test.js"
+    ],
+    "note": "the route drops the card a short deck lacks"
+  },
+  {
+    "name": "AC6-D7-door-card",
+    "file": "src/net/accountClient.js",
+    "old": "...(typeof data?.card === 'string' ? { card: data.card } : {}), status: res.status };",
+    "new": "status: res.status };",
+    "tests": [
+      "test/auditcards6_d.test.js"
+    ],
+    "note": "the door drops the card"
+  },
+  {
+    "name": "AC6-D7-card-name",
+    "file": "src/net/accountClient.js",
+    "old": "(${cardById(card)?.name ?? card})",
+    "new": "(${card})",
+    "tests": [
+      "test/auditcards6_d.test.js"
+    ],
+    "note": "the card said by its id"
+  },
+  {
+    "name": "AC6-D8-closed-503",
+    "file": "server-account/src/index.js",
+    "old": "'cards-closed': 503, ",
+    "new": "'cards-closed': 400, ",
+    "tests": [
+      "test/auditcards6_d.test.js"
+    ],
+    "note": "the service without its key a bad request"
+  },
+  {
+    "name": "AC6-D8-guest-403",
+    "file": "server-account/src/index.js",
+    "old": "'ranked-needs-account': 403 })",
+    "new": "'ranked-needs-account': 400 })",
+    "tests": [
+      "test/auditcards6_d.test.js"
+    ],
+    "note": "a guest's ranked seat a bad request"
+  },
+  {
+    "name": "AC6-D8-closed-sentence",
+    "file": "src/net/accountClient.js",
+    "old": "  'cards-closed': 'The realm is not vouching for decks right now. Try again later.',\n",
+    "new": "",
+    "tests": [
+      "test/auditcards6_d.test.js"
+    ],
+    "note": "the vouch says the gold tables' stakes"
+  },
+  {
+    "name": "AC6-D8-receipt-sentence",
+    "file": "src/net/accountClient.js",
+    "old": "  receipt: 'That game\\'s result was not signed by the table, or it has run out.',\n",
+    "new": "",
+    "tests": [
+      "test/auditcards6_d.test.js"
+    ],
+    "note": "a game's result refused in the gate's words"
+  },
+  {
+    "name": "AC6-D9-relay-clock-unpassed",
+    "file": "src/scenes/world.js",
+    "old": "      nowS: () => (_sharedClockHeard ? Math.floor((Date.now() + _sharedOffsetMs) / 1000) : null), nowMs:",
+    "new": "      nowMs:",
+    "tests": [
+      "test/auditcards6_d.test.js"
+    ],
+    "note": "the carrier on the device's clock: a fast device lets a receipt go on add"
+  },
+  {
+    "name": "AC6-D10-nobody-stamped",
+    "file": "server-account/src/iliac.js",
+    "old": "if (kept && kept.player != null && Number(last.at) < kept.at) {",
+    "new": "if (kept && Number(last.at) < kept.at) {",
+    "tests": [
+      "test/auditcards6_d.test.js"
+    ],
+    "note": "a kept word of nobody stamped: a deleted champion's title worn by nobody till the next game"
+  },
+  {
+    "name": "AC6-D11-foe-guest",
+    "file": "server-account/src/iliac.js",
+    "old": "return { recorded: false, why: 'foe-unregistered' };",
+    "new": "return { recorded: false, why: 'guest' };",
+    "tests": [
+      "test/auditcards6_d.test.js",
+      "test/cards10_service.test.js"
+    ],
+    "note": "the other seat unregistered told to register, kept a week"
+  },
+  {
+    "name": "AC6-D12-never-counted",
+    "file": "server-account/src/iliac.js",
+    "old": "  return na >= rating || nb >= rating;\n",
+    "new": "  return false;\n",
+    "tests": [
+      "test/auditcards6_d.test.js"
+    ],
+    "note": "a game that reaches the top never counts it"
+  },
+  {
+    "name": "AC6-D12-always-counted",
+    "file": "server-account/src/iliac.js",
+    "old": "if (rated) { try { if (await topMayMove(ctx, season, a, b, na, nb)) await storeIliacChampion(ctx, season, nowS);",
+    "new": "if (rated) { try { if (true) await storeIliacChampion(ctx, season, nowS);",
+    "tests": [
+      "test/auditcards6_d.test.js"
+    ],
+    "note": "every rated claim counts the season's board"
+  },
+  {
+    "name": "AC6-D12-top-a-side",
+    "file": "server-account/src/iliac.js",
+    "old": "  if (!top || top === a || top === b) return true;\n",
+    "new": "  if (!top) return true;\n",
+    "tests": [
+      "test/auditcards6_d.test.js"
+    ],
+    "equivalent": true,
+    "why": "the #1 a side of the game ends it at its own rating now, which the `>=` below counts - the side's test only spares that read"
+  },
+  {
+    "name": "AC6-D12-pair-index-unwritten",
+    "file": "server-account/migrations/0095_iliac_ladder.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_iliac_games_pair ON iliac_games (a, b, season);\n",
+    "new": "",
+    "tests": [
+      "test/auditcards6_d.test.js"
+    ],
+    "note": "the pair's counts walk the season"
+  },
+  {
+    "name": "AC6-D12-pair-or",
+    "file": "server-account/src/iliac.js",
+    "old": "const PAIR_SQL = (when) => `SELECT (SELECT COUNT(*) FROM iliac_games WHERE a = ?1 AND b = ?2 AND rated = 1 AND ${when})\n    + (SELECT COUNT(*) FROM iliac_games WHERE a = ?2 AND b = ?1 AND ?1 IS NOT ?2 AND rated = 1 AND ${when}) AS n`;",
+    "new": "const PAIR_SQL = (when) => `SELECT COUNT(*) AS n FROM iliac_games WHERE rated = 1 AND ${when} AND ((a = ?1 AND b = ?2) OR (a = ?2 AND b = ?1))`;",
+    "tests": [
+      "test/auditcards6_d.test.js"
+    ],
+    "note": "the pair asked as one OR - the season's index, every game"
+  },
+  {
+    "name": "AC6-E6-vouch-an-act",
+    "file": "src/scenes/world.js",
+    "old": "checkpoint: () => onlineCheckpoint(), read: true, call: (realm) => iliacDoor.deck(",
+    "new": "checkpoint: () => onlineCheckpoint(), needsAnswer: true, call: (realm) => iliacDoor.deck(",
+    "tests": [
+      "test/auditcards6_d.test.js"
+    ],
+    "note": "the vouch an act again: a lost answer ends the session"
+  },
+  {
+    "name": "AC6-E6-read-unknown",
+    "file": "src/systems/realmSaves.js",
+    "old": "  const unanswered = read ? { ok: false, error: 'offline', why: 'offline' } : { ok: false, error: 'offline', unknown: true };",
+    "new": "  const unanswered = { ok: false, error: 'offline', unknown: true };",
+    "tests": [
+      "test/auditcards6_d.test.js",
+      "test/realm5.test.js",
+      "test/realm6.test.js"
+    ],
+    "note": "a read's lost answer unknown"
+  },
+  {
+    "name": "AC6-E6-read-seq-landed",
+    "file": "src/systems/realmSaves.js",
+    "old": "&& !needsAnswer && !read ? { ok: true, landed: true, seq: r.seq }",
+    "new": "&& !needsAnswer ? { ok: true, landed: true, seq: r.seq }",
+    "tests": [
+      "test/auditcards6_d.test.js",
+      "test/realm5.test.js",
+      "test/realm6.test.js"
+    ],
+    "note": "a read's seq one on taken as the read landed - the tab adopts a move it never made"
+  },
+  {
+    "name": "AC6-E14-guest-offered",
+    "file": "src/scenes/world.js",
+    "old": ": iliacDoor.guest() ? iliacRefusalText('ranked-needs-account') : null),",
+    "new": ": null),",
+    "tests": [
+      "test/auditcards6_d.test.js"
+    ],
+    "note": "a guest's account offered a ranked seat"
+  },
+  {
+    "name": "AC6-E14-door-kind",
+    "file": "src/net/accountClient.js",
+    "old": "guest: () => storedSession(storage)?.kind === 'guest',",
+    "new": "guest: () => storedSession(storage)?.kind === 'linked',",
+    "tests": [
+      "test/auditcards6_d.test.js"
+    ],
+    "note": "the door's guest a registered account"
+  },
+  {
+    "name": "AC6-E14-words-generic",
+    "file": "src/scenes/world.js",
+    "old": "return { ok: false, why: iliacRefusalText(r?.error, r?.card) };",
+    "new": "return { ok: false, why: 'The realm could not vouch for that deck.' };",
+    "tests": [
+      "test/auditcards6_d.test.js"
+    ],
+    "note": "every refusal one generic sentence"
+  },
+  {
+    "name": "AC6-E18-second-unsaid",
+    "file": "src/net/iliacClaims.js",
+    "old": "      else if (answer?.ok && answer.data?.why === 'claimed' && Number.isFinite(answer.data?.rating)) onCounted(answer.data);\n",
+    "new": "",
+    "tests": [
+      "test/auditcards6_d.test.js"
+    ],
+    "note": "the second carrier never hears its rating"
+  }
+]

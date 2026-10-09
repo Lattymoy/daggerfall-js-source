@@ -29,7 +29,7 @@
   {
     "name": "NODE-CLEAR-the-patches-handed-no-rocks",
     "file": "src/scenes/herbHost.js",
-    "old": "        rocks: entry.rocks ?? [],   // NODE-CLEAR: and never inside a rock piece\n",
+    "old": "        rocks: [...(entry.rocks ?? []), ...(near ?? [])],   // NODE-CLEAR: and never inside a rock piece; ROCK-NEAR: a neighbour's reaching in too\n",
     "new": "",
     "tests": [
       "test/fb1001_nodes.test.js"
@@ -38,7 +38,7 @@
   {
     "name": "NODE-CLEAR-the-trees-handed-no-rocks",
     "file": "src/scenes/treeHost.js",
-    "old": "forest: entry.forest ?? null, rocks: entry.rocks ?? [] });",
+    "old": "forest: entry.forest ?? null, rocks: [...(entry.rocks ?? []), ...(near ?? [])] });",
     "new": "forest: entry.forest ?? null });",
     "tests": [
       "test/fb1001_nodes.test.js"

@@ -16,15 +16,15 @@
   {
     "name": "QP-tag-a-finished-quest",
     "file": "src/scenes/questFoeHost.js",
-    "old": "  if (!quest || quest.questTombstoned || typeof s !== 'string'",
-    "new": "  if (!quest || typeof s !== 'string'",
+    "old": "  if (!quest || quest.questTombstoned || typeof s !== 'string' || !machine.hasSharedQuestNamed",
+    "new": "  if (!quest || typeof s !== 'string' || !machine.hasSharedQuestNamed",
     "tests": ["test/questparty.test.js"]
   },
   {
     "name": "QP-credit-a-person",
     "file": "src/scenes/questFoeHost.js",
-    "old": "  for (const r of quest.resources.values()) if (r.isFoe && r.symbol?.name === tag.s) return r;",
-    "new": "  for (const r of quest.resources.values()) if (r.symbol?.name === tag.s) return r;",
+    "old": "  if (!quest) return null;\n  for (const r of quest.resources.values()) if (r.isFoe && r.symbol?.name === tag.s) return r;",
+    "new": "  if (!quest) return null;\n  for (const r of quest.resources.values()) if (r.symbol?.name === tag.s) return r;",
     "tests": ["test/questparty.test.js"]
   },
   {
@@ -121,7 +121,7 @@
   {
     "name": "QP-no-injury-credit",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "{ f._qHurt = true; _questShare?.onPuppetHurt?.(f._pupQuest); }",
+    "old": "{ f._qHurt = true; _questShare?.onPuppetHurt?.(f._pupQuest, f.puppet); }",
     "new": "{ f._qHurt = true; }",
     "tests": ["test/questparty.test.js"]
   },
@@ -179,13 +179,6 @@
     "file": "src/scenes/world.js",
     "old": "accountOfPeer: (id) => social?.accountOfPeer(id), myFeet: feet, foes: exteriorFoes.foes })) return true;",
     "new": "accountOfPeer: (id) => social?.accountOfPeer(id), myFeet: feet, foes: exteriorFoes.foes })) return false;",
-    "tests": ["test/questparty.test.js"]
-  },
-  {
-    "name": "QP-world-a-strangers-blow",
-    "file": "src/scenes/world.js",
-    "old": "    peerMayHit: (peerId, f) => !!social?.isPartyPeer(peerId) && f.entity?.team !== 'PlayerAlly'",
-    "new": "    peerMayHit: (peerId, f) => f.entity?.team !== 'PlayerAlly'",
     "tests": ["test/questparty.test.js"]
   }
 ]

@@ -16,7 +16,7 @@
   {
     "name": "C8-split-forgets-card",
     "file": "src/systems/inventory.js",
-    "old": "  if (typeof stack.card === 'string') picked.card = stack.card;   // CARDS8: the card split off is the card it was\n",
+    "old": "    picked.card = stack.card;\n",
     "new": "",
     "tests": [
       "test/auditrealm.test.js",

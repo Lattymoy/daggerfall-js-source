@@ -1,0 +1,245 @@
+[
+  {
+    "name": "SD26-0-directed-ungated",
+    "file": "src/net/online.js",
+    "old": "      if (ws && (said || this._welcomed.has(ws))) return ws;",
+    "new": "      if (ws) return ws;",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-0-reach-welcomed-only",
+    "file": "src/net/online.js",
+    "old": "  reachesPeer(id) { return this._socketFor(id, true) !== null; }",
+    "new": "  reachesPeer(id) { return this._socketFor(id) !== null; }",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-0-look-ungated",
+    "file": "src/net/online.js",
+    "old": "    if (this.status === 'open' && this._ws) { if (!this._welcomed.has(this._ws)) return; if (this.lookOk) socks.push(this._ws); }",
+    "new": "    if (this.status === 'open' && this._ws) { if (this.lookOk) socks.push(this._ws); }",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-0-look-dropped",
+    "file": "src/net/online.js",
+    "old": "    if (this.status === 'open' && this._ws) { if (!this._welcomed.has(this._ws)) return; if (this.lookOk) socks.push(this._ws); }",
+    "new": "    if (this.status === 'open' && this._ws) { if (!this._welcomed.has(this._ws)) { this._lookDirty = false; return; } if (this.lookOk) socks.push(this._ws); }",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-0-look-halo-ungated",
+    "file": "src/net/online.js",
+    "old": "    for (const [, h] of this._halo) if (h.status === 'open' && h.ws) { if (!this._welcomed.has(h.ws)) return; if (h.lookOk) socks.push(h.ws); }",
+    "new": "    for (const [, h] of this._halo) if (h.status === 'open' && h.ws) { if (h.lookOk) socks.push(h.ws); }",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-0-who-ungated",
+    "file": "src/net/online.js",
+    "old": "    if (!ws || !this._welcomed.has(ws)) return false;   // AUDIT SD IV (0): never ahead of its welcome (SD-HELLO)",
+    "new": "    if (!ws) return false;   // AUDIT SD IV (0): never ahead of its welcome (SD-HELLO)",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-0-park-ungated",
+    "file": "src/net/online.js",
+    "old": "    const primaryOpen = this.status === 'open' && this._ws && this._welcomed.has(this._ws);",
+    "new": "    const primaryOpen = this.status === 'open' && this._ws;",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-0-park-halo-ungated",
+    "file": "src/net/online.js",
+    "old": "    else if (halo?.status === 'open' && halo.ws && this._welcomed.has(halo.ws)) { ws = halo.ws; inCell = true; }",
+    "new": "    else if (halo?.status === 'open' && halo.ws) { ws = halo.ws; inCell = true; }",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-5-never-owed",
+    "file": "src/net/sdFightLink.js",
+    "old": "      owe(was, w);\n",
+    "new": "",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-5-driver-owes-nothing",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "      owedBlows(s, t, t0);   // AUDIT SD IV (5)",
+    "new": "      void owedBlows;   // AUDIT SD IV (5)",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-5-reset-not-owed",
+    "file": "src/net/sdFightLink.js",
+    "old": "      if (wholeArena(r) && !owed.some((o) => o.atk.i === r.i)) owed.push({ b: SD_BODY.remnant, atk: r });\n",
+    "new": "",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-5-never-paid",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "      if (marks.get(o.atk.i)?.done) link.paid(o.atk.i);\n",
+    "new": "",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-5-struck-dead",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "      if (!(e.health > 0)) return;\n      if (t < o.atk.at) continue;",
+    "new": "      if (t < o.atk.at) continue;",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-5-stun-ignored",
+    "file": "src/net/sdFightLink.js",
+    "old": "    const stun = state.su > 0 && state.su !== was.su ?",
+    "new": "    const stun = false ?",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-5-stun-by-its-end-ignored",
+    "file": "src/net/sdFightLink.js",
+    "old": "(w.k === 'stun' ? w.at : state.su - SD_STUN_MS)",
+    "new": "(w.k === 'stun' ? w.at : Infinity)",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-5-end-ignored",
+    "file": "src/net/sdFightLink.js",
+    "old": "    const end = state.ended > 0 && !was.ended ?",
+    "new": "    const end = false ?",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-5-fell-ignored",
+    "file": "src/net/sdFightLink.js",
+    "old": "Math.min(state.fell ? state.fell.at : Infinity, state.lost || Infinity)",
+    "new": "Math.min(Infinity, state.lost || Infinity)",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-5-lost-ignored",
+    "file": "src/net/sdFightLink.js",
+    "old": "Math.min(state.fell ? state.fell.at : Infinity, state.lost || Infinity)",
+    "new": "Math.min(state.fell ? state.fell.at : Infinity, Infinity)",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-5-uncounted-owed",
+    "file": "src/net/sdFightLink.js",
+    "old": "    if (state.fi > 0 && mine === state.fi) {\n      const c = state.clk",
+    "new": "    if (state.fi > 0) {\n      const c = state.clk",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-5-fight-carried",
+    "file": "src/net/sdFightLink.js",
+    "old": "    if (state.fi !== was.fi) owed = [];\n",
+    "new": "",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-5-unbounded",
+    "file": "src/net/sdFightLink.js",
+    "old": "      if (owed.length > SD_OWED_MAX) owed.shift();\n",
+    "new": "",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-8-silence-ignored",
+    "file": "src/net/sdFightLink.js",
+    "old": "(state.fell || ((state.ended || mine === state.fi) && !silent))",
+    "new": "(state.fell || state.ended || mine === state.fi)",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-8-span",
+    "file": "src/net/sdFightLink.js",
+    "old": "export const SD_FIGHT_HEARD_MS = 3 * STATE_SEND_MS;",
+    "new": "export const SD_FIGHT_HEARD_MS = STATE_SEND_MS;",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-8-refusal-holds",
+    "file": "src/net/sdFightLink.js",
+    "old": "refused.lost === state.lost && !silent))",
+    "new": "refused.lost === state.lost))",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-8-silent-before-any-fight",
+    "file": "src/net/sdFightLink.js",
+    "old": "const silent = state.fi > 0 && t - state.heardAt",
+    "new": "const silent = t - state.heardAt",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-8-ended-holds",
+    "file": "src/net/sdFightLink.js",
+    "old": "(state.fell || ((state.ended || mine === state.fi) && !silent))",
+    "new": "(state.fell || state.ended || (mine === state.fi && !silent))",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-8-fallen-silent-due",
+    "file": "src/net/sdFightLink.js",
+    "old": "(state.fell || ((state.ended || mine === state.fi) && !silent))",
+    "new": "(((state.ended || mine === state.fi) && !silent))",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  }
+]

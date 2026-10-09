@@ -27,6 +27,7 @@ import { MARK_WORTH_GOLD } from '../src/net/marksLaw.js';
 import { realmIo, createRealmSession, realmGoldAct } from '../src/systems/realmSaves.js';
 import { createMarketGoods } from '../src/systems/tradePack.js';
 import { createMarketTab } from '../src/ui/marketTab.js';
+import { createAcquireWatch } from '../src/systems/acquireWatch.js';
 import { generateRandomLoot, LOOT_MATRICES, validLootList, createRandomGem } from '../src/systems/loot.js';
 import { mintMaterialItem } from '../src/systems/profItems.js';
 import { MINED_KEYS, PLANT_GROUP_TEMPLATES } from '../src/net/professionLaw.js';
@@ -361,6 +362,10 @@ test('MARKET-ANY client: the pack side offers what may go and says why the rest 
   // checkpoint carries one (server-account/src/judge.js) - so it says its word above and leaves the pack before the act
   eve.entity.items.splice(4, 1);
   const sword = eve.entity.items[0];
+  // FIELD BUGS 2026-10-09b MARK-WIRE: the HUD's watcher marks every weapon in the pack `acquired` its first frame
+  // (ACQUIRE1), so the record the checkpoint carries has the mark and the offer (the wire's clamp) does not
+  createAcquireWatch().observe(eve.entity);
+  assert.equal(sword.acquired, true, 'the pack\'s weapon marked as the HUD marks it');
   const g = eve.goods.good(sword);
   assert.equal(g.pick, 0);
   // the piece leaves the pack only inside the hold: no checkpoint carries a pack without it while the record holds it

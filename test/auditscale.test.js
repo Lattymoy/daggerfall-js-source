@@ -212,18 +212,18 @@ test('AUDIT SCALE D2: the clock\'s moment in seconds - scheduled() hands runCron
   assert.equal(svc.env.DB._raw.prepare('SELECT COUNT(*) AS n FROM sessions WHERE player_id = ?').get(g.id).n, 1);
 });
 
-test('AUDIT SCALE D7: on a quiet world the clock is five statements a minute and nineteen an hour - each job asks once and, its page short, never again; the Motherlodes are not picked behind `dev`; a metrics write that throws costs no job', async () => {
+test('AUDIT SCALE D7: on a quiet world the clock is six statements a minute and nineteen an hour - each job asks once and, its page short, never again; the Motherlodes are not picked behind `dev`; a metrics write that throws costs no job', async () => {
   clock(T0);
   const svc = await standService({ SEATS_OPEN: 'on', PROFESSIONS_OPEN: 'on' });
   _resetCronForTests();
   await runCron(svc.env, { cron: CRON_MINUTE, nowS: T0, rand });   // the day's Motherlodes picked, the seats' week settled
   const minute = await runCron(svc.env, { cron: CRON_MINUTE, nowS: T0 + 60, rand });
-  assert.deepEqual(minute.map((j) => j.statements), [1, 1, 1, 1, 1, 0], JSON.stringify(minute.map((j) => [j.name, j.statements])));
+  assert.deepEqual(minute.map((j) => j.statements), [1, 1, 1, 1, 1, 1, 0], JSON.stringify(minute.map((j) => [j.name, j.statements])));   // PIN MOVED (CARDS10): Iliac Hand's season #1 asks once too
   const hour = await runCron(svc.env, { cron: CRON_HOUR, nowS: T0 + 120, rand });
   // PIN MOVED (INT2/INT5, 2026-10-09): the hour sweeps the judge's findings and the wealth-hours past their keep - one
   // statement each, its page short; seventeen became nineteen
   assert.deepEqual(hour.map((j) => [j.name, j.statements]), [['board', 2], ['guild-board', 1], ['harvests', 2], ['market-history', 9], ['rate-limits', 1], ['sessions', 1], ['guild-invites', 1], ['realm-findings', 1], ['realm-wealth-hours', 1]]);
-  assert.equal(minute.reduce((n, j) => n + j.statements, 0) + hour.reduce((n, j) => n + j.statements, 0), 5 + 19);
+  assert.equal(minute.reduce((n, j) => n + j.statements, 0) + hour.reduce((n, j) => n + j.statements, 0), 6 + 19);
   // behind `dev` the Motherlodes are a developer's: never picked by the clock
   const dev = await standService({ PROFESSIONS_OPEN: 'dev' });
   _resetCronForTests();

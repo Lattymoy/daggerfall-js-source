@@ -33,7 +33,7 @@ import {
   paneControls, discardControlsStaging, captureArmed, controlsStaging, controlsPromptOpen, dismissControlsPrompt,
   controlsDuplicates, shownGroups, MULTIPLE_ASSIGNMENTS, DEFAULTS_PROMPT, CONFIRM_LABEL, promptMarks,
 } from '../src/ui/enhancedControls.js';
-import { CATEGORY_IDS } from '../src/ui/settingsMap.js';   // AUDIT FT16 CTRL-a: the door the bindings live behind
+import { CATEGORY_IDS, whereIs as whereIsOption } from '../src/ui/settingsMap.js';   // AUDIT FT16 CTRL-a: the door the bindings live behind (ORG2: and where on it)
 import { SYSTEM_PANES } from '../src/ui/enhancedMenu.js';
 import { KEYBIND_ROWS } from '../src/ui/mouseControlsWindow.js';
 import { bindings, setBindings, isTextEntryTarget } from '../src/ui/input.js';
@@ -180,20 +180,20 @@ test('FT16: the key bindings live inside Settings, and both doors still reach th
   assert.equal(src.match(/controls: paneControlsPane/g), null, 'no dispatch entry survives the move');
   assert.doesNotMatch(src, /paneControlsPane/, 'and neither does the wrapper it pointed at');
 
-  // THE TWO RENDERERS. The full pane draws them under the Controls
-  // category; the condensed pause pane has no category rail, so they
-  // ride the end of its one scroll. Dropping either is FIX-F's bug.
-  const full = src.slice(src.indexOf('function paneSettings('), src.indexOf('function paneQuickSettings('));
-  assert.match(full, /if \(category === 'controls'\) \{[\s\S]{0,120}paneControls\(list, \{ render \}\)/,
-    'the full Settings pane draws the bindings in the Controls category');
-  const quick = src.slice(src.indexOf('function paneQuickSettings('));
-  assert.match(quick.slice(0, 2600), /paneControls\(list, \{ render \}\)/,
-    'and the condensed pause Settings draws them too');
+  // THE RENDERER. ORG2: one Settings screen draws every tab, the pause window's too, and the bindings are an item of the
+  // Controls tab's last section - drawn by the one function that draws every item. Dropping it is FIX-F's bug.
+  assert.equal(whereIsOption('bindings')?.tab.id, 'controls', 'the full Settings screen draws the bindings in the Controls tab');
+  assert.match(src, /if \(item === 'bindings'\) \{ const box = el\('div', 'opt-bindings'\); paneControls\(box, \{ render \}\); return \[box\]; \}/);
+  assert.match(src, /paneSettings\(detail, \{ pause: true \}\);/, 'and the pause window draws the same screen');
+  const full = src.slice(src.indexOf('function paneSettings('), src.indexOf('\n}\n', src.indexOf('function paneSettings(')));
 
   // AND THE STAGING FOLLOWS THE ADDRESS. "Leave this page and your
   // changes are dropped" was enforced by the section rail; the category
   // rail has to enforce it now, or a staged bind survives a hop to
   // Audio and back and lands on a Continue the player never meant.
+  // ORG2: and the search and the filters, which repaint the page without the bindings
+  assert.match(src, /search\.oninput = \(\) => \{\s*\n\s*discardControlsStaging\(\);/, 'a search is a walk away');
+  assert.match(src, /b\.onclick = \(\) => \{ discardControlsStaging\(\); optFilter = id;/, 'and so is a filter');
   assert.match(full, /else \{ discardControlsStaging\(\);/,
     'a category change drops the staged dicts');
 });
@@ -568,7 +568,7 @@ test('FIX-F: leaving without CONTINUE discards', () => {
     'and never unconditionally (AUDIT FT16 F10)');
   // the category tabs keep their own unconditional drop - THAT switch is
   // a walk away from the bindings even though the section does not change
-  const tabs = src.slice(src.indexOf('if (on) { pickedKey = null; sheetOpen = true; }'));
+  const tabs = src.slice(src.indexOf('if (on) { pickedKey = null; pickedFeature = null; sheetOpen = true; }'));
   assert.match(tabs.slice(0, 200), /discardControlsStaging\(\); category = cat\.id;/,
     'leaving the controls CATEGORY still discards');
 });

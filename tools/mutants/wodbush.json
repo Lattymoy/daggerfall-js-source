@@ -16,8 +16,8 @@
   {
     "name": "WODBUSH-mesh-left-behind",
     "file": "src/scenes/world.js",
-    "old": "m.matrix[13] += dy; box[1] += dy; box[4] += dy;",
-    "new": "box[1] += dy; box[4] += dy;",
+    "old": "lowestGroundUnder(samples, box) - box[1];\n          m.matrix[13] += dy; box[1] += dy; box[4] += dy;",
+    "new": "lowestGroundUnder(samples, box) - box[1];\n          box[1] += dy; box[4] += dy;",
     "tests": ["test/wodbush.test.js"]
   },
   {

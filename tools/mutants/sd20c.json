@@ -254,8 +254,8 @@
   {
     "name": "SD20C-V14-the-clock-ring-reversed",
     "file": "src/render/sdSky.js",
-    "old": "      float ring = (1.0 - smoothstep(0.0, ${f4(SD_CLOCK_RING_W)}, abs(r - 1.0))) * 0.5;",
-    "new": "      float ring = smoothstep(${f4(SD_CLOCK_RING_W)}, 0.0, abs(r - 1.0)) * 0.5;",
+    "old": "float r = length(p), seen = smoothstep(-0.06, 0.02, e);",
+    "new": "float r = length(p), seen = smoothstep(0.02, -0.06, e);",
     "tests": [
       "test/sd20c_render.test.js"
     ]

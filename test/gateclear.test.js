@@ -18,7 +18,7 @@ import { riteLocalOf } from '../src/net/gateRite.js';
 import { RITE_TENT_R, RITE_BRAZIER_R, RITE_FIRE_R } from '../src/world/riteModel.js';
 import { wodPiecewise, WOD_SITE_OBJECT_RADIUS_M } from '../src/world/roadClearance.js';
 import { PIXEL_M, gateSpotLocal, GATE_SPOT_SPREAD_M } from '../src/net/gateLaw.js';
-import { PLINTH_R } from '../src/world/gateModel.js';
+import { GATE_HALF_W } from '../src/world/gateModel.js';
 import { GATE_LANDING_M } from '../src/world/gateArena.js';
 import { CAGE_R, BROKER_BOX_HX, BROKER_BOX_HZ } from '../src/scenes/sigilBrokerPool.js';   // BROKER-CAGE: she stands caged at the faithful's circle
 import { LocationSession, pickLocations } from '../src/world/wodLocationLoader.js';
@@ -33,7 +33,7 @@ const site = (day, px, py, x, z) => ({ day, px, py, spot: [x, z] });
 
 test('GATE-CLEAR: the clearing holds the gate and its way home (BROKER-CAGE: the Broker\'s cage the circle\'s), and is a gate site\'s pixel and spot', () => {
   assert.equal(GATE_CLEAR_M, 24);
-  assert.ok(GATE_CLEAR_M >= PLINTH_R * 2, 'twice the plinth at least');
+  assert.ok(GATE_CLEAR_M >= GATE_HALF_W * 2, 'GATE-FBX: twice the stone\'s reach at least, its spines\' points and all');
   assert.ok(GATE_CLEAR_M > GATE_LANDING_M + 8, 'the way home lands on open ground');
   assert.ok(RITE_CLEAR_M > CAGE_R + Math.hypot(BROKER_BOX_HX, BROKER_BOX_HZ) + 4, 'BROKER-CAGE: the Broker\'s cage stands in the circle\'s clearing, clear of any rock');
   const c = gateClearFor(site(538, 412, 207, 300.5, 511.25));

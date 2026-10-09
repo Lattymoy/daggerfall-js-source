@@ -144,7 +144,8 @@ test('SD15 THE HOUR\'S CARD - in brass, never Dagon\'s red: one node made on the
   destroySdTitleCard();
   assert.match(W, /const peril = playerEntity\.health > 0 \? sdPerilAt\(s, now, x - SD_ARENA\.x, z - SD_ARENA\.z, cam\.yaw, !!sdBlows\?\.over\?\.\(\)\) : null;/);   // AUDIT SD III (F8, PIN MOVED): the read told whether I stand over a pillar's top
   assert.match(W, /ground = sdGroundModel\(\{ burning: !!sdBlows\?\.burning\?\.\(\), el: sdBlows\?\.burningEl\?\.\(\) \?\? null, now, peril \}\);/);   // SD18b (PIN MOVED): in its element
-  assert.match(W, /const beat = sdBeats\.frame\(s, now\);\n\s*card = beat \? titleCardModel\(beat, now\) : null;\n\s*\} else sdBeats\.leave\(\);/);
+  // PIN MOVED (AUDIT SD IV T1): the fight's turns on the card where its bar stands, its last minute and its fall the whole Hour's (sd26_text)
+  assert.match(W, /const beat = sdBeats\.frame\(s, now\);[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*card = beat && \(near \|\| beat\.kind === 'last' \|\| beat\.kind === 'fell'\) \? titleCardModel\(beat, now\) : null;\n\s*\} else sdBeats\.leave\(\);/);
   assert.match(W, /if \(ground \|\| _sdGroundUp\) \{ drawGateGround\(ground, \{ hidden \}\); _sdGroundUp = !!ground; \}/);
   assert.match(W, /if \(card \|\| _sdCardUp\) \{ drawSdTitleCard\(card, \{ hidden \}\); _sdCardUp = !!card; \}/);
   assert.match(W, /if \(_sdGroundUp\) \{ drawGateGround\(null\); _sdGroundUp = false; \}[^\n]*\n\s*if \(_sdCardUp\) \{ drawSdTitleCard\(null\); _sdCardUp = false; \}/);

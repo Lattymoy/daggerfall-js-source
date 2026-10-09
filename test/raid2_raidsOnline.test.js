@@ -27,7 +27,7 @@ import { renownFoeStruck, _resetRenownKillsForTests } from '../src/net/renownTra
 import { _resetModSettings } from '../src/systems/modSettings.js';
 import { ONLINE_ROOM_MOD_KEYS, ONLINE_PLAYERS_OWN_MODS } from '../src/systems/onlineLane.js';
 import { CELL_PUPPETS_MAX, CELL_WATCH_PUPPETS_MAX, CELL_LOOSE_PUPPETS, CELL_FRAME_RECORDS_MAX } from '../src/net/wire.js';
-import { createExteriorFoes } from '../src/scenes/exteriorFoes.js';
+import { createExteriorFoes, ENCOUNTER_PUPPETS_MAX } from '../src/scenes/exteriorFoes.js';
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 const tick = () => new Promise((r) => setImmediate(r));
@@ -268,7 +268,7 @@ test('RAID2 executed over two pools: a runner\'s twenty raiders ride named with 
   assert.equal(pf.rz, undefined, 'a foe of no raid is not named');
   reader3.applyFoes('ccc-0003', pf);
   for (let i = 0; i < 5; i++) await settle();
-  assert.equal(reader3.foes.filter((f) => f.puppet === 'ccc-0003' && !f.dead).length, CELL_PUPPETS_MAX, 'held to the owner\'s old allowance');
+  assert.equal(reader3.foes.filter((f) => f.puppet === 'ccc-0003' && !f.dead).length, Math.min(20, ENCOUNTER_PUPPETS_MAX), 'held to the owner\'s encounter allowance (DESYNC-ZERO: ENCOUNTER_PUPPETS_MAX)');
 });
 
 test('RAID2 the defenders\' side: a watchman who is the owner\'s ally rides named (`al`) and stands as the reader\'s ally; a later frame that no longer names him stands him as the watch again (mutants: al unwritten; the build\'s side ignored; the flip back ignored)', async () => {

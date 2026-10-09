@@ -47,7 +47,8 @@
 
 import { SAVE_MAX_BYTES } from './service.js';
 import { GUILD_RANK_MASTER } from '../../src/net/guildLaw.js';   // AUDIT REALM L1-F7: a deleted guildmaster hands the guild over first
-import { liquidWealthOf, customsAllowance, REALM_BIRTH_LEVEL, REALM_BIRTH_WEALTH_MAX } from '../../src/net/realmGoldLaw.js';   // AUDIT REALM2 S1: the first save, measured as customs measures it
+import { liquidWealthOf, customsAllowance, REALM_BIRTH_LEVEL, REALM_BIRTH_WEALTH_MAX } from '../../src/net/realmGoldLaw.js';
+import { cardWorthOf, cardPacksOf, customsCardAllowance, STARTER_DECK_WORTH } from '../../src/net/cardWorthLaw.js';   // CARDS9: the cards' customs - the client's law   // AUDIT REALM2 S1: the first save, measured as customs measures it
 import { ID_RE } from '../../src/net/identityToken.js';   // CUSTOMS-PASS: an account named by its id
 import { isGuestShaped, isHandleShaped } from '../../src/net/handleShape.js';   // CUSTOMS-PASS: a handle and a guest's name, told apart by their shape alone
 import { isDeveloper } from './titles.js';   // CUSTOMS-PASS: a developer grants one
@@ -443,14 +444,19 @@ export function firstSaveRefusal(text, row) {
   try { save = JSON.parse(text); } catch { save = null; }
   const shaped = !!save && typeof save === 'object' && !Array.isArray(save);
   if (!row.origin_id) {
-    return shaped && save.level === REALM_BIRTH_LEVEL && liquidWealthOf(save) <= REALM_BIRTH_WEALTH_MAX ? null : { error: 'realm-birth' };
+    // CARDS9: and no more cards than the binder's gift - the starter deck's worth (net/cardWorthLaw.js). AUDIT CARDS-6 A1:
+    // and no sealed pack - chargen hands none, and the first save lands before the world is played
+    return shaped && save.level === REALM_BIRTH_LEVEL && liquidWealthOf(save) <= REALM_BIRTH_WEALTH_MAX && cardWorthOf(save) <= STARTER_DECK_WORTH && cardPacksOf(save) === 0 ? null : { error: 'realm-birth' };
   }
   let level = null;
   try { level = JSON.parse(row.summary ?? 'null')?.level ?? null; } catch { level = null; }
-  return shaped && liquidWealthOf(save) <= customsAllowance(level) ? null : { error: 'customs-allowance' };
+  if (!(shaped && liquidWealthOf(save) <= customsAllowance(level))) return { error: 'customs-allowance' };
+  // CARDS9 (Tavern-Cards section 32): A CUSTOMS CHARACTER'S CARDS, at their worth, within the level's card allowance -
+  // customs' own bound (systems/realmCustoms.js cardCustoms takes the dearest past it on the client's copy)
+  return cardWorthOf(save) <= customsCardAllowance(level) ? null : { error: 'customs-cards' };
 }
 
-/** INT2-INT6: the judge's columns on a character's row (migration 0095), as verdict.js reads them. */
+/** INT2-INT6: the judge's columns on a character's row (migration 0096), as verdict.js reads them. */
 export const JUDGE_COLUMNS = 'judged_seq, held, held_at, strikes, review, wealth, witnessed, allowance, played_at, clean_obj, clean_seq,'
   + ' dupes, judge_rev, svc_seq, level_seen, level_at, law_sig, law_excused, wealth_v';
 

@@ -2,7 +2,7 @@
   {
     "name": "SD22-the-start-markers-beside",
     "file": "src/world/sdDungeon.js",
-    "old": "  if (inner.length) return inner;",
+    "old": "  if (inner.length) return dryFirst(inner);",
     "new": "  if (inner.length) return [...inner, ...(blocks ?? []).flatMap((b) => (b?.layout?.startMarkers ?? []).map((m) => ({ x: m.x + (b.originX ?? 0), y: m.y, z: m.z + (b.originZ ?? 0) })))];",
     "tests": [
       "test/sd22_reach.test.js"
@@ -65,7 +65,7 @@
   {
     "name": "SD22-the-interior-alone",
     "file": "src/world/sdDungeon.js",
-    "old": "  if (marks.length) return marks;",
+    "old": "  if (marks.length) return dryFirst(marks);",
     "new": "  if (false) return marks;",
     "tests": [
       "test/sd22_reach.test.js"

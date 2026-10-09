@@ -260,8 +260,8 @@
   {
     "name": "HT-WAIST-the-part-rides-the-bone",
     "file": "src/formats/mwFirstPerson.js",
-    "old": "placeAtBone(p.source, p.hang ? hangAffine(at, p.hang) : at, p.mirrored, p.positions, p.boneOffset);",
-    "new": "placeAtBone(p.source, at, p.mirrored, p.positions, p.boneOffset);",
+    "old": "      const placed = p.hang ? hangAffine(at, p.hang) : at;   // HT-WAIST",
+    "new": "      const placed = at;   // HT-WAIST",
     "tests": [
       "test/htwaist_mwbody.test.js"
     ]

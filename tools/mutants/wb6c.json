@@ -37,8 +37,8 @@
   {
     "name": "WB6c-the-promise-before-the-fire-has-closed",
     "file": "src/ui/gateVeil.js",
-    "old": "    if (phase === 'closing' && seconds(t) >= VEIL_CLOSE_S) { phase = 'shut'; at = t; settle(true); }",
-    "new": "    if (phase === 'closing' && seconds(t) >= 0) { phase = 'shut'; at = t; settle(true); }",
+    "old": "    if (phase === 'closing' && seconds(t) >= VEIL_CLOSE_S) { phase = 'shut'; at = t; quarters = 0; cue('shut'); settle(true); }",
+    "new": "    if (phase === 'closing' && seconds(t) >= 0) { phase = 'shut'; at = t; quarters = 0; cue('shut'); settle(true); }",
     "tests": ["test/wb6c_gate_veil.test.js"]
   },
   {
@@ -93,8 +93,8 @@
   {
     "name": "WB6c-the-door-before-the-fire-has-closed",
     "file": "src/scenes/worldModes.js",
-    "old": "      if (veil) await veil.cover(look);",
-    "new": "      if (veil) veil.cover(look);",
+    "old": "      if (veil) await veil.cover(look, opts);",
+    "new": "      if (veil) veil.cover(look, opts);",
     "tests": ["test/wb6c_gate_veil.test.js"]
   },
   {

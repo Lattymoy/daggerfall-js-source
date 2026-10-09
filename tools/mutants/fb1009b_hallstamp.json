@@ -1,0 +1,20 @@
+[
+  {
+    "name": "HALL-STAMP-the-hideouts-unshielded",
+    "file": "src/systems/discovery.js",
+    "old": "  if (rec.factionId === THIEVES_GUILD_FACTION || rec.factionId === DARK_BROTHERHOOD_FACTION) return false;\n  const renamed = liveQuestName(rec, questSource);",
+    "new": "  const renamed = liveQuestName(rec, questSource);",
+    "tests": [
+      "test/fb1009b_hallstamp.test.js"
+    ]
+  },
+  {
+    "name": "HALL-STAMP-a-nameless-place-stamped",
+    "file": "src/systems/discovery.js",
+    "old": "  if (!renamed || renamed === rec.displayName) return false;",
+    "new": "  if (renamed == null || renamed === rec.displayName) return false;",
+    "tests": [
+      "test/fb1009b_hallstamp.test.js"
+    ]
+  }
+]

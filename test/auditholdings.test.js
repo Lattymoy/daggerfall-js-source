@@ -225,7 +225,7 @@ test('AUDIT HOLDINGS C8: a Gunner past her guns stands beside one, never on its 
 
 // ── THE TAB AND THE STABLE ────────────────────────────────────────────────────────────────────────────────────────────
 
-test('AUDIT HOLDINGS C1: no note in FRAME_ROLES swallows a selector - every selector the source names is a selector the kit dresses (the Companions page\'s slots, faces and chips, the HUD\'s quick chips, the Features search, the cards)', () => {
+test('AUDIT HOLDINGS C1: no note in FRAME_ROLES swallows a selector - every selector the source names is a selector the kit dresses (the Companions page\'s slots, faces and chips, the HUD\'s quick chips, the Settings search, the cards)', () => {
   const src = read('src/ui/enhancedFrame.js');
   const a = src.indexOf('export const FRAME_ROLES'), b = src.indexOf('\n});', a);
   const text = src.slice(a, b);
@@ -233,7 +233,7 @@ test('AUDIT HOLDINGS C1: no note in FRAME_ROLES swallows a selector - every sele
     if (!line.includes('//')) continue;
     assert.doesNotMatch(line.slice(line.indexOf('//')), /'[.#a-z][^']*',/, `a selector inside a note: ${line.trim().slice(0, 100)}`);
   }
-  for (const [role, sel] of [['chip', '.hud-qspell'], ['chip', '.px-sys .cmp-mood'], ['well', '.px-sys .cmp-slot'], ['well', '.shell .ft-search'], ['panel', '.px-sys .card'], ['panel', '.hmcard'], ['panel', '.px-sys .hld-row']]) {
+  for (const [role, sel] of [['chip', '.hud-qspell'], ['chip', '.px-sys .cmp-mood'], ['well', '.px-sys .cmp-slot'], ['well', '.shell .opt-search'], ['panel', '.px-sys .card'], ['panel', '.hmcard'], ['panel', '.px-sys .hld-row']]) {
     assert.ok(FRAME_ROLES[role].includes(sel), `${role}: ${sel}`);
   }
 });

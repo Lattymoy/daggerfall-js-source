@@ -169,6 +169,7 @@ import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, PATREON_OPEN_ROUT
 import { listSaves, putCard, putBlob, getBlob, deleteSave, saveCardOf } from './saves.js';
 import { signingKey, gatePublicKey } from './signing.js';
 import { stakeCards, cashoutCards } from './cards.js';   // CARDS6: a card table's stakes, escrowed
+import { deckOrderOf, claimIliac, iliacBoardOf, withIliacHonours } from './iliac.js';   // CARDS10: a ranked seat's deck vouched for, Iliac Hand's season board and its title
 import { titleWorn, glyphsOf, glyphsHidden, auraWorn } from './titles.js';
 import { claimArena, arenaAttempt, arenaBoardOf, arenaTeam, withArenaHonours, arenaRatingOf, ARENA_HONOUR_PATHS, ARENA_RENOWN_REGION } from './arena.js';   // ARENA4: the arena's records, its board, its banners, and the honours the mint reads
 import { arenaSeasonOf } from '../../src/net/arenaLaw.js';
@@ -267,6 +268,9 @@ const RENT_STATUS = Object.freeze({
   'rent-taken': 409, 'rent-held': 409, 'rent-rooms': 409, 'rent-none': 409, 'rent-own': 403, 'realm-only': 403,
   'rent-rate': 429, 'no-rent-room': 404, 'no-home': 404,
 });
+/** AUDIT CARDS-6 D8: a card table's and a ranked deck's refusals that are not a bad request (400, the default): the service
+ *  with no key to sign with, a guest asking for a ranked seat. */
+const CARDS_STATUS = Object.freeze({ 'cards-closed': 503, 'ranked-needs-account': 403 });
 /** SERVER-POST: the post's own refusals; a claim's realm words are REALM_STATUS's. */
 const POST_STATUS = Object.freeze({ 'no-post': 404, 'post-no-item': 409, 'post-claimed': 409, 'post-unclaimed': 409, 'realm-only': 403, 'realm-needed': 409, server: 503 });   // AUDIT SERVER-POST: a batch D1 dropped is the service's failure, counted as one
 const REALM_STATUS = Object.freeze({
@@ -718,6 +722,7 @@ const service = {
       // season's #1 (server-account/src/arena.js arenaHonoursOf) - so titles.js derives `grandchampion`, `arenachampion`
       // and the laurel from the arena's rows as it derives the founder from a date. Only on the doors that read a badge.
       if (ARENA_HONOUR_PATHS.has(path)) who.player = await withArenaHonours(ctx, who.player, nowS);
+      if (ARENA_HONOUR_PATHS.has(path)) who.player = await withIliacHonours(ctx, who.player, nowS);   // CARDS10: and Iliac Hand's season #1 (iliac.js), on the same doors
 
       if (path === '/v1/auth/token' && request.method === 'POST') {
         const key = await signingKey(env, subtle);
@@ -1014,6 +1019,20 @@ const service = {
         // season's ratings and its #1, the climb, the fastest Grand Champions, the banners and the Hall of Champions - and
         // the caller's own (`me`).
         return json(await arenaBoardOf(ctx, who.player, env), 200, origin);
+      }
+
+      if (path === '/v1/iliac/claim' && request.method === 'POST') {
+        // CARDS10: A RANKED GAME'S RECEIPT, CARRIED HERE BY AN ACCOUNT IT NAMES - the arena players' bout's law for Iliac
+        // Hand (iliac.js claimIliac): the signature, the account, one row a game, both ratings. A refusal says its rung.
+        const r = await claimIliac(ctx, who.player, body.receipt, await gatePublicKey(env, subtle));
+        if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' || r.error === 'busy' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);
+        return json(r, 200, origin);
+      }
+
+      if (path === '/v1/iliac/board' && request.method === 'POST') {
+        // CARDS10: ILIAC HAND'S SEASON BOARD (Tavern-Cards section 6.4: "a season board, the Arena's way, with a title for
+        // the top of it"), counted from the rows, and the caller's own.
+        return json(await iliacBoardOf(ctx, who.player, env), 200, origin);
       }
 
       if (path === '/v1/arena/team' && request.method === 'POST') {
@@ -1358,12 +1377,16 @@ const service = {
         const act = {
           '/v1/cards/stake': async () => stakeCards(cctx, who.player, env, body, await signingKey(env, subtle)),
           '/v1/cards/cashout': async () => cashoutCards(cctx, who.player, env, body, await gatePublicKey(env, subtle)),
+          '/v1/cards/deck': async () => deckOrderOf(cctx, who.player, env, body, await signingKey(env, subtle)),   // CARDS10: a ranked seat's deck, vouched for
         }[path];
         if (!act) return no('not-found', 404, origin);
         const r = await act();
         if (r.error === 'seq') return json({ error: 'seq', seq: r.seq }, 409, origin);   // the record moved under the act, as a checkpoint's
         // AUDIT CARDS-4 A4: and why a receipt was refused - the device keeps one refused on its signature or clock
-        if ('error' in r) return r.why ? json({ error: r.error, why: r.why }, 400, origin) : no(r.error, JUDGE_STATUS[r.error] ?? 400, origin);   // INT3: a held stake's own
+        // AUDIT CARDS-6 D7: and the card a short deck lacks (iliac.js deckOrderOf) - said nowhere, the vouch's "(card)" never
+        // could be; D8: the service without its key is the service's 503 (the token's own no-signing-key), and a guest's
+        // ranked seat the account's 403 (the arena's ladder-needs-account) - neither a bad request
+        if ('error' in r) return json({ error: r.error, ...(r.why ? { why: r.why } : {}), ...(typeof r.card === 'string' ? { card: r.card } : {}) }, CARDS_STATUS[r.error] ?? JUDGE_STATUS[r.error] ?? 400, origin);   // INT3: a held stake's own
         return json(r, 200, origin);
       }
 

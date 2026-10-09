@@ -77,6 +77,7 @@ import { spewLaunches, spewPiece, flySpew, keepLaunch, floorRayAt } from '../wor
 import { SpoilsGlowRenderer, tierColour } from '../render/spoilsGlow.js';   // WBX3: the loot line
 import { RARITIES } from '../systems/lootRarity.js';
 import { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS, validLootItem } from '../systems/loot.js';
+import { isIliacCard, iliacCardName } from '../systems/iliacItems.js';   // AUDIT CARDS-6 A7: a boss's card taken, said by its own name
 import { billboardSize } from '../world/rmbFlats.js';
 import { SOUND } from '../systems/soundClips.js';
 import { CLIPS } from '../systems/handheldTorches.js';
@@ -138,11 +139,16 @@ export function spoilsList(seed, level, claims = null) {
   const s = rollSpoils(seed, level);
   const pieces = s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier, record: flat() }));
   const ember = { kind: 'item', item: s.sigil, tier: SIGIL_TIER, record: flat() };
+  const gold = { kind: 'gold', gold: s.gold, tier: 'common', record: flat() };
+  // AUDIT CARDS-6 A8: the card's picture is drawn LAST, after the gold's - drawn between the ember's and the gold's, it
+  // moved the gold pile's picture off what the seed gave it before CARDS9, in every hoard the card came in
+  const card = s.card ? [{ kind: 'item', item: s.card, tier: 'aetheric', record: flat() }] : [];
   return [
     ...pieces,
+    ...card,   // CARDS9: the Warden's card, after the pieces
     ember,
     ...(claims?.r === 1 ? [{ ...ember, item: sigilStone() }] : []),
-    { kind: 'gold', gold: s.gold, tier: 'common', record: flat() },
+    gold,
   ];
 }
 
@@ -390,7 +396,10 @@ export function createSpoilsPool({
     if (f.taken) return;
     f.taken = true;
     take(f.piece);
-    say(f.piece.kind === 'gold' ? SPOILS_TEXT.gold(f.piece.gold) : SPOILS_TEXT.item(f.piece.item.name, f.piece.tier));
+    // AUDIT CARDS-6 A7: a card by its catalog's name ("Card: Valkynaz Ruhn" - iliacItems.js iliacCardName, the plaque's
+    // and the pack's); its stored name is the template's, and the floor said "You take Card (Aetheric)."
+    const name = (/** @type {any} */ item) => (isIliacCard(item) ? iliacCardName(item) : item.name);
+    say(f.piece.kind === 'gold' ? SPOILS_TEXT.gold(f.piece.gold) : SPOILS_TEXT.item(name(f.piece.item), f.piece.tier));
     if (f.batch) { renderer?.destroyBillboardBatch?.(f.batch); f.batch = null; }
     if (spewId && floor.every((g) => g.taken)) { held.set(spewId, { who: who(), day: rec?.day }); spewId = null; }   // AUDIT WBX S3: all of it in the pack
   }
