@@ -126,9 +126,10 @@ export const fullNameOf = (given, sur) => (sur ? `${given} ${sur}` : given);
  *   parked?:{mapId:number, buildingKey:number}|null, courting?:Record<string, any>, wedAt?:number|null,
  *   childDay?:number|null, minor?:boolean, residentFace?:number|null, mapId?:number,
  *   standing?:import('./influence.js').Standing|null,
- *   realm?:{ sid:string, player:string, char:string, house:any }|null, look?:any
+ *   realm?:{ sid:string, player:string, char:string, house:any }|null, look?:any, deedsTaken?:string[]
  * }} Person - LEGACY7 part three: `kind: 'player'` another player's realm character wed to a member, `realm` the union.
  *   LEGACY7 part four: `look` what the member wore at their newest save (memberLook) - how the world draws them
+ *   PERMADEATH-HOUSES: `deedsTaken` the dead's deeds their save took up, by house key (household.js deedsDue)
  * @typedef {{ v:number, id:string, surname:string, model:string, seat:{region:string, loc:string, mapId?:number, at?:number}|null, rev:number,
  *   nextId:number, currentId:number, founded:number, ended:number|null, people:Person[], remains:any[], settings?:any,
  *   pending:Pending|null, houses?:any[], home?:{mapId:number, buildingKey:number}|null,
@@ -148,6 +149,7 @@ function blankPerson(id) {
     groups: { primary: [], major: [], minor: [] }, blood: {}, hearth: {}, estate: 0,
     parents: [], children: [], spouse: null, born: 0, died: null, heir: null, characterId: null, leveling: null,
     kind: 'member', residentId: null, startAge: 20, toll: 0, bornOwn: 0, lived: 0, retired: null, bequest: [], parked: null,
+    deedsTaken: [],
   });
 }
 
@@ -532,6 +534,8 @@ export function readFamily(rec) {
     p.hearth = raw.hearth && typeof raw.hearth === 'object' ? raw.hearth : {};
     p.estate = Math.max(0, Math.floor(Number(raw.estate) || 0));
     p.bequest = Array.isArray(raw.bequest) ? raw.bequest.filter((it) => it && typeof it === 'object') : [];
+    // PERMADEATH-HOUSES: the dead's deeds this member's save took up (household.js deedsDue), by house key
+    p.deedsTaken = Array.isArray(raw.deedsTaken) ? [...new Set(raw.deedsTaken.filter((k) => typeof k === 'string' && /^-?\d+:\d+$/.test(k)))] : [];
     p.died = raw.died && typeof raw.died === 'object' ? { at: Number(raw.died.at) || 0, cause: String(raw.died.cause ?? 'unknown'), place: raw.died.place ?? null, by: raw.died.by ?? null } : null;
     // LEGACY5: courtships, a wedding, children's clock, a minor, a spouse's own face - held to their shape
     p.courting = raw.courting && typeof raw.courting === 'object' && !Array.isArray(raw.courting)
@@ -582,7 +586,10 @@ export function readFamily(rec) {
     pending: readPending(rec.pending, people),
     // LEGACY-HOME: the family's houses (each its holder's deed) and the one marked its home
     houses: Array.isArray(rec.houses) ? rec.houses.filter((h) => h && Number.isInteger(h.mapId) && (h.buildingKey | 0) > 0)
-      .map((h) => ({ regionIndex: h.regionIndex | 0, mapId: h.mapId, buildingKey: h.buildingKey | 0, location: String(h.location ?? ''), by: Number.isInteger(h.by) ? h.by : null })) : [],
+      .map((h) => ({ regionIndex: h.regionIndex | 0, mapId: h.mapId, buildingKey: h.buildingKey | 0, location: String(h.location ?? ''),
+        ...(typeof h.layout === 'string' && h.layout ? { layout: h.layout } : {}),   // PERMADEATH-HOUSES: the layout its deed names the building in
+        by: Number.isInteger(h.by) ? h.by : null,
+        ...(Number.isInteger(h.from) ? { from: h.from } : {}) })) : [],   // PERMADEATH-HOUSES: left to its holder by one of the line's dead
     home: rec.home && Number.isInteger(rec.home.mapId) ? { mapId: rec.home.mapId, buildingKey: rec.home.buildingKey | 0 } : null,
     news: readNews(rec.news),   // LEGACY6: what the house's towns talk of (influence.js)
   };

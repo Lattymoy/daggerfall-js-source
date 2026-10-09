@@ -204,6 +204,9 @@ export function openPauseFlow(show, hooks = {}) {
   // LEGACY3: Project Legacy's Family tab (its key, the death's Succession) - the classic pause has no tabs, so the family's
   // pages open the enhanced pause on either skin, as the professions' do
   if (familyPageAt(hooks.at) && typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);
+  // SERVER-POST: the mailbox (`/mail`, ui/enhancedPost.js) is the enhanced face's - the classic pause window has no envelope - so
+  // its door opens the enhanced pause on either skin, as the family's pages do
+  if (hooks.at === 'mailbox' && typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);
   // `document` is the second half of the test for the reason
   // chargenSession's fork gives: a node test drives these hosts
   // headless, has no document, and must keep the canvas window rather
@@ -286,7 +289,9 @@ function enhancedPauseOverlay(show, base) {
   const tabIn = (/** @type {KeyboardEvent} */ e) => {
     if (fired) { document.removeEventListener?.('keydown', tabIn, true); return; }   // the window went (close, or a load that failed): gone with it
     if (e.key !== 'Tab' || host.contains?.(/** @type {any} */ (document.activeElement))) return;
-    const all = [...(host.querySelectorAll?.('button:not([disabled]), [href], select, input, [tabindex]:not([tabindex="-1"])') ?? [])];
+    // AUDIT SERVER-POST: never into what is out of reach - a window over the face makes the face inert, and a focus() on an
+    // inert button fails silently, the Tab already cancelled: the press went nowhere (the mailbox's and the timers' windows)
+    const all = [...(host.querySelectorAll?.('button:not([disabled]), [href], select, input, [tabindex]:not([tabindex="-1"])') ?? [])].filter((n) => !n.closest?.('[inert]'));
     const to = e.shiftKey ? all.at(-1) : all[0];
     if (!to) return;
     e.preventDefault();

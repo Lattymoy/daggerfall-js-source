@@ -12,9 +12,12 @@
 // THE FRAME a yard is laid out in is its building's own place in its town
 // (world/rmbLayout.js `recordAt` - the subrecord's origin, the same on every
 // client), in the world's axes as a room's pieces are: a piece's `pos` is
-// from there. THE LOT is the building's footprint (the box round its own
-// models) and YARD_MARGIN round it, never inside the house, never on
-// another building's footprint and (FB1001 ROAD-LOT) never on the town's
+// from there. THE LOT is the box round the building's own models and
+// YARD_MARGIN round it, never inside the house, never on another building's
+// ground - FB1009 HOME-FOOT: a building's ground is what its models' faces
+// cover seen from above (modelFootRects - its roofs, eaves and steps, never a
+// wall), not its box, so the open corner of an L or the forecourt a
+// Hammerfell house's door opens onto is its yard - and (FB1001 ROAD-LOT) never on the town's
 // road or a path - the pixel's own road tiles: the client measures it (the
 // service has no town to measure in) and the decorator refuses a piece off
 // it, its edges marked while a piece is placed (along the road's side where
@@ -68,6 +71,7 @@ import { applyClimate } from '../world/climateSwaps.js';
 import { isNatureArchive, BLOCK_FLATS_OFFSET_Y } from '../world/rmbFlats.js';   // AUDIT YARD-LIGHT: and how far the town's flats stand below their lights
 import { LIGHTS_ARCHIVE, CITY_LIGHT_RANGE, CITY_LIGHT_INTENSITY, CITY_LIGHT_COLOR } from '../world/cityLights.js';   // YARD-LIGHT: the town's lantern
 import { GLOBAL_SCALE } from '../world/meshReader.js';
+import { transformedAabb } from '../render/frustum.js';   // FB1009 HOME-FOOT: a model's ground where its placement stands it
 
 /** YARD-LIGHT: the light a yard's lamp gives - the town's lantern's (DaggerfallLight [City]: range 18, intensity 1,
  *  white). The world host lights it as it lights theirs: the town lanterns' colour (CITY_LIGHT_COLOR_F32) and their
@@ -166,17 +170,82 @@ export const YARD_ON_ROAD = 'That is the road - keep the street and its paths cl
 export const YARD_TOO_HIGH = DECOR_YARD_HIGH_WHY;
 /** How far into a wall's (or a road's) ground a piece may reach and still stand clear of it - touching is not in it. */
 export const YARD_EDGE_PAD = 0.05;
+/** FB1009 HOME-FOOT: the side of the cells a model's ground is measured in, metres (half Daggerfall's 0.8 m wall step). */
+export const YARD_FOOT_CELL = 0.4;
+
+/**
+ * FB1009 HOME-FOOT (the Discord, "Property Problem": "I can't place in front of my door but I can place in front of
+ * another's home"): THE GROUND A MODEL STANDS ON, seen from above - every face of it that covers ground (a roof, an
+ * eave, a stair's tread, a wall's top), in `cell`-metre cells, answered as rects [x0, z0, x1, z1] in the model's own
+ * frame (each row's runs, a run the row above shares one rect). A wall covers no ground: its face seen from above is a
+ * line. The box round the model was its ground, and Hammerfell's houses are L-shaped or stand an outside stair before
+ * their door - the door opens onto open ground inside the box (ARCH3D 600, 709 and their kin: 44% of the desert's
+ * houses), so the step before the owner's own door was "inside your house" while a neighbour whose door is in its box's
+ * side stood free. A face is sampled strictly inside itself, so a roof's edge on a cell's side never marks the next.
+ */
+export function modelFootRects(positions, indices, cell = YARD_FOOT_CELL) {
+  let x0 = Infinity, z0 = Infinity, x1 = -Infinity, z1 = -Infinity;
+  for (let i = 0; i < positions.length; i += 3) {
+    x0 = Math.min(x0, positions[i]); x1 = Math.max(x1, positions[i]);
+    z0 = Math.min(z0, positions[i + 2]); z1 = Math.max(z1, positions[i + 2]);
+  }
+  if (!(x1 > x0) || !(z1 > z0)) return [];
+  const W = Math.ceil((x1 - x0) / cell), H = Math.ceil((z1 - z0) / cell);
+  const hit = new Uint8Array(W * H);
+  for (let t = 0; t < indices.length; t += 3) {
+    const a = indices[t] * 3, b = indices[t + 1] * 3, c = indices[t + 2] * 3;
+    const ax = positions[a], az = positions[a + 2], bx = positions[b], bz = positions[b + 2], cx = positions[c], cz = positions[c + 2];
+    if (Math.abs((bx - ax) * (cz - az) - (cx - ax) * (bz - az)) < 2e-3) continue;   // a wall: no ground under it
+    const n = Math.max(1, Math.ceil(Math.max(Math.hypot(bx - ax, bz - az), Math.hypot(cx - ax, cz - az), Math.hypot(cx - bx, cz - bz)) / (cell / 2)));
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < n - i; j++) {
+        const u = (i + 1 / 3) / n, v = (j + 1 / 3) / n, w = 1 - u - v;   // inside the face, never on its edge
+        const x = ax * w + bx * u + cx * v, z = az * w + bz * u + cz * v;
+        hit[Math.min(H - 1, Math.floor((z - z0) / cell)) * W + Math.min(W - 1, Math.floor((x - x0) / cell))] = 1;
+      }
+    }
+  }
+  const out = [];
+  let open = new Map();
+  for (let r = 0; r < H; r++) {
+    const next = new Map();
+    for (let q = 0; q < W;) {
+      if (!hit[r * W + q]) { q++; continue; }
+      let e = q;
+      while (e < W && hit[r * W + e]) e++;
+      const k = q * 65536 + e;
+      const rect = open.get(k) ?? [x0 + q * cell, z0 + r * cell, Math.min(x1, x0 + e * cell), 0];
+      if (!open.has(k)) out.push(rect);
+      rect[3] = Math.min(z1, z0 + (r + 1) * cell);   // the run carried up a row
+      next.set(k, rect);
+      q = e;
+    }
+    open = next;
+  }
+  return out;
+}
+/** FB1009 HOME-FOOT: a model's ground (modelFootRects) where its placement `m` (column-major) stands it - each rect's box
+ *  in m's frame, exact for a quarter turn (every Daggerfall building's), the box round it for any other. */
+export function footRectsAt(rects, m) {
+  return (rects ?? []).map(([rx0, rz0, rx1, rz1]) => {
+    const b = transformedAabb([rx0, 0, rz0, rx1, 0, rz1], m);
+    return [b[0], b[2], b[3], b[5]];
+  });
+}
 
 /**
  * A LOT from a building's frame: `origin` its own place and `box` the box round its models ([minX, minY, minZ, maxX,
- * maxY, maxZ]), both in one frame - answered relative to the origin: `house` its footprint [x0, z0, x1, z1] and `lot`
- * that footprint grown by `margin` [x0, z0, x1, z1], and `y` the ground's height (the box's foot).
+ * maxY, maxZ]), both in one frame - answered relative to the origin: `house` that box's footprint [x0, z0, x1, z1] and
+ * `lot` the box grown by `margin` [x0, z0, x1, z1], and `y` the ground's height (the box's foot). FB1009 HOME-FOOT:
+ * `walls` the ground the house stands on - `rects` (its models' faces seen from above, world.js, in the box's frame)
+ * relative to the origin, or its box where none are known.
  */
-export function yardLot(origin, box, margin = YARD_MARGIN) {
+export function yardLot(origin, box, margin = YARD_MARGIN, rects = null) {
   if (!Array.isArray(origin) || !Array.isArray(box) || box.length < 6) return null;
   const house = [box[0] - origin[0], box[2] - origin[2], box[3] - origin[0], box[5] - origin[2]];
   if (!(house[2] > house[0]) || !(house[3] > house[1])) return null;
-  return { house, lot: [house[0] - margin, house[1] - margin, house[2] + margin, house[3] + margin], y: box[1] - origin[1] };
+  const walls = Array.isArray(rects) && rects.length ? rects.map((r) => [r[0] - origin[0], r[1] - origin[2], r[2] - origin[0], r[3] - origin[2]]) : [house];
+  return { house, walls, lot: [house[0] - margin, house[1] - margin, house[2] + margin, house[3] + margin], y: box[1] - origin[1] };
 }
 const inRect = (x, z, r, pad = 0) => x >= r[0] - pad && x <= r[2] + pad && z >= r[1] - pad && z <= r[3] + pad;
 /**
@@ -203,7 +272,9 @@ export function yardFootMeets(poly, r, pad = 0) {
 }
 /**
  * WHY A PIECE CANNOT STAND at `pos` (from the frame's origin), or null: off the lot, inside the house's footprint (a
- * piece on its roof too), or on another building's (`others`, their footprints in the same frame [x0, z0, x1, z1]).
+ * piece on its roof too - FB1009 HOME-FOOT: the lot's `walls`, the ground its faces cover), or on another building's
+ * (`others`, their ground's rects in the same frame [x0, z0, x1, z1]); a piece's middle on one of a building's rects is on
+ * it, so the seam the pad leaves between two of them lets nothing through.
  * AUDIT: `foot` - the ground it covers, offsets [dx, dz] from `pos` (decorTool.js footprintOf) - is asked too: all of
  * it on the lot, none of it in the house or on another building's ground (its middle alone let a long piece straddle a
  * wall). FB1001 YARD-CORNER: "none of it" is the ground it covers, not its corners (yardFootMeets). FB1001 ROAD-LOT:
@@ -217,8 +288,9 @@ export function yardWhyNot(pos, lot, others = [], foot = [], roads = []) {
   const points = [[x, z], ...corners];
   if (!points.every(([px, pz]) => inRect(px, pz, lot.lot))) return YARD_OFF_LOT;
   const ground = corners.length ? corners : [[x, z]];
-  if (yardFootMeets(ground, lot.house, YARD_EDGE_PAD)) return YARD_IN_HOUSE;
-  if ((others ?? []).some((r) => yardFootMeets(ground, r, YARD_EDGE_PAD))) return YARD_ON_OTHER;
+  const meets = (r) => inRect(x, z, r) || yardFootMeets(ground, r, YARD_EDGE_PAD);   // FB1009 HOME-FOOT: its middle, or its ground
+  if ((lot.walls ?? [lot.house]).some(meets)) return YARD_IN_HOUSE;
+  if ((others ?? []).some(meets)) return YARD_ON_OTHER;
   if ((roads ?? []).some((r) => yardFootMeets(ground, r, YARD_EDGE_PAD))) return YARD_ON_ROAD;
   if (!decorYardHighOk({ pos })) return YARD_TOO_HIGH;   // YARD-HEIGHT: never a tower - the service's own law
   return null;
@@ -321,8 +393,8 @@ export function yardLotQuads(lot, origin, high = YARD_MARK_HIGH, roads = []) {
  * THE TOWN'S YARDS, AND THE OWNER'S DECORATOR OUTSIDE. `deps` (the world host's - scenes/world.js):
  *   api          - net/accountClient.js accountDecor: yards(mapId), place (with `yard`), move, remove
  *   homes        - systems/onlineHomes.js: homeAt(mapId, key) - whose a home is, and whether it is the character's own
- *   built()      - the world's built pixels (each `{ px, py, homeTown, homeFrames }` - homeFrames: key -> { at, box },
- *                  pixel-local)
+ *   built()      - the world's built pixels (each `{ px, py, homeTown, homeFrames }` - homeFrames: key -> { at, box,
+ *                  rects }, pixel-local; FB1009 HOME-FOOT: `rects` the ground its models' faces cover, footRectsAt's)
  *   translation(px, py) - a pixel's place in the scene now
  *   feet()       - where the player stands (scene); outside() - whether the player walks the street (no building,
  *                  no dungeon, no saddle)
@@ -409,7 +481,7 @@ export function createHomeYards(deps) {
     return [t[0] + f.at[0], t[1] + f.at[1], t[2] + f.at[2]];
   };
   function makeYard(key, p, bk, frame) {
-    const y = { key, px: p.px, py: p.py, mapId: p.homeTown, bk, frame, t: [...deps.translation(p.px, p.py)], sig: '', lot: yardLot(frame.at, frame.box), pool: null, entry: p, trees: new Map(), treeSet: null };
+    const y = { key, px: p.px, py: p.py, mapId: p.homeTown, bk, frame, t: [...deps.translation(p.px, p.py)], sig: '', lot: yardLot(frame.at, frame.box, YARD_MARGIN, frame.rects), pool: null, entry: p, trees: new Map(), treeSet: null };
     y.pool = createDecorRoom({
       meshes: deps.meshes, renderer: deps.renderer, getTexture: deps.getTexture, uploadRecord: deps.uploadRecord, uploadRecordFrame: deps.uploadRecordFrame,
       collider: () => deps.collider?.() ?? null, origin: () => originOf(y),
@@ -505,7 +577,9 @@ export function createHomeYards(deps) {
     const p = deps.built?.()?.get?.(`${y.px},${y.py}`);
     for (const [bk, f] of p?.homeFrames ?? []) {
       if (bk === y.bk) continue;
-      others.push([f.box[0] - y.frame.at[0], f.box[2] - y.frame.at[2], f.box[3] - y.frame.at[0], f.box[5] - y.frame.at[2]]);
+      // FB1009 HOME-FOOT: a neighbour's ground is what its faces cover too (its box, where none are known)
+      const ground = f.rects?.length ? f.rects : [[f.box[0], f.box[2], f.box[3], f.box[5]]];
+      for (const r of ground) others.push([r[0] - y.frame.at[0], r[1] - y.frame.at[2], r[2] - y.frame.at[0], r[3] - y.frame.at[2]]);
     }
     return { yard: y, others, roads: yardRoadsOf(p, y.frame.at, y.lot), hall: !!home.hall };   // FB1001 ROAD-LOT: the road under the lot; GUILD-YARD: a hall's
   }

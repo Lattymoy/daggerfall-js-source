@@ -157,6 +157,25 @@ test('CSA-K: each boat\'s frame keeps the pose before it - moveOf: none the fram
   assert.equal(peers.moveOf(fresh), null, 'built this frame: no pose before it');
 });
 
+test('FIELD BUGS 2026-10-09 #7: a word that drops a boat (or changes its hull) before the frame realigns it - poseAhead answers null for the place it no longer names, never "reading \'velocity\' of undefined"', async () => {
+  const pool = await readyPool();
+  const peers = createComeSailAwayPeers({ pool, selfId: () => 'me' });
+  peers.applyOwner('ann', { b: [word({ hull: 0 }), word({ x: 10 })], m: [[0, 0, 0], [5, 0, 0]] }, (p) => p, 0);
+  peers.frame(0.1); peers.frame(0.1);
+  const second = peers.boatAt('ann', 1);
+  assert.ok(second && peers.poseAhead(second, 0.1), 'stood and led');
+  // her word now names one boat: the second place still stands until the next frame's realign
+  peers.applyOwner('ann', { b: [word({ hull: 0 })] }, (p) => p, 100);
+  assert.equal(peers.boatAt('ann', 1), second, 'still standing, unmatched');
+  assert.equal(peers.poseAhead(second, 0.1), null, 'no place in her word: no pose ahead');
+  // her word names the first place for another hull
+  const first = peers.boatAt('ann', 0);
+  peers.applyOwner('ann', { b: [word({ hull: 1 })] }, (p) => p, 200);
+  assert.equal(peers.poseAhead(first, 0.1), null, 'another hull: no pose ahead');
+  peers.frame(0.1);
+  assert.equal(peers.boatAt('ann', 1), null, 'the frame matched her word');
+});
+
 // ── aboard ─────────────────────────────────────────────────────────────────────
 
 /** A peer's Large Boat standing at (10, 34, 20), its deck found under its ladder's place, and an aboard machine. */

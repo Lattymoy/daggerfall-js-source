@@ -1,0 +1,295 @@
+[
+  {
+    "name": "TVB-law-rising-loads",
+    "file": "src/systems/travelDungeonModels.js",
+    "old": "  if (!up) return 0;\n  let n = 0;",
+    "new": "  let n = 0;",
+    "tests": [
+      "test/fb1009_travelperf.test.js"
+    ]
+  },
+  {
+    "name": "TVB-law-held-asked-again",
+    "file": "src/systems/travelDungeonModels.js",
+    "old": "    if (held.has(g.key)) continue;\n    start(g);",
+    "new": "    start(g);",
+    "tests": [
+      "test/fb1009_travelperf.test.js"
+    ]
+  },
+  {
+    "name": "TVB-law-budget-overrun",
+    "file": "src/systems/travelDungeonModels.js",
+    "old": "    if (n >= max) break;",
+    "new": "    if (n > max) break;",
+    "tests": [
+      "test/fb1009_travelperf.test.js"
+    ]
+  },
+  {
+    "name": "TVB-law-two-a-frame",
+    "file": "src/systems/travelDungeonModels.js",
+    "old": "export const TV_DUNGEON_LOADS_PER_FRAME = 1;",
+    "new": "export const TV_DUNGEON_LOADS_PER_FRAME = 2;",
+    "tests": [
+      "test/fb1009_travelperf.test.js"
+    ]
+  },
+  {
+    "name": "TVB-law-farthest-first",
+    "file": "src/systems/travelDungeonModels.js",
+    "old": "  for (const g of list ?? []) {\n    if (n >= max) break;",
+    "new": "  for (const g of [...(list ?? [])].reverse()) {\n    if (n >= max) break;",
+    "tests": [
+      "test/fb1009_travelperf.test.js"
+    ]
+  },
+  {
+    "name": "TVB-host-every-load-at-once",
+    "file": "src/scenes/world.js",
+    "old": "    startDungeonLoads(list, _tvDngModel, up, tvDungeonModelLoad);",
+    "new": "    startDungeonLoads(list, _tvDngModel, up, tvDungeonModelLoad, Infinity);",
+    "tests": [
+      "test/fb1009_travelperf.test.js",
+      "test/owdungeons.test.js"
+    ]
+  },
+  {
+    "name": "TVB-host-rising-loads",
+    "file": "src/scenes/world.js",
+    "old": "    startDungeonLoads(list, _tvDngModel, up, tvDungeonModelLoad);",
+    "new": "    startDungeonLoads(list, _tvDngModel, true, tvDungeonModelLoad);",
+    "tests": [
+      "test/fb1009_travelperf.test.js",
+      "test/owdungeons.test.js"
+    ]
+  },
+  {
+    "name": "TVB-host-fullyUp-unread",
+    "file": "src/scenes/world.js",
+    "old": "    if (tvf) drawTvDungeonModels(travelView?.eye ?? null, tvf.fullyUp);",
+    "new": "    if (tvf) drawTvDungeonModels(travelView?.eye ?? null, true);",
+    "tests": [
+      "test/fb1009_travelperf.test.js",
+      "test/owdungeons.test.js"
+    ]
+  },
+  {
+    "name": "TVB-host-view-down-kept",
+    "file": "src/scenes/world.js",
+    "old": "    else if (_tvDngModel.size) dropTvDungeonModels();",
+    "new": "    else if (false) dropTvDungeonModels();",
+    "tests": [
+      "test/fb1009_travelperf.test.js"
+    ]
+  },
+  {
+    "name": "TVB-host-drop-releases-nothing",
+    "file": "src/scenes/world.js",
+    "old": "    for (const e of _tvDngModel.values()) e.hold.release();\n    _tvDngModel.clear();",
+    "new": "    _tvDngModel.clear();",
+    "tests": [
+      "test/fb1009_travelperf.test.js"
+    ]
+  },
+  {
+    "name": "TVB-host-drop-keeps-the-map",
+    "file": "src/scenes/world.js",
+    "old": "    for (const e of _tvDngModel.values()) e.hold.release();\n    _tvDngModel.clear();",
+    "new": "    for (const e of _tvDngModel.values()) e.hold.release();",
+    "tests": [
+      "test/fb1009_travelperf.test.js"
+    ]
+  },
+  {
+    "name": "TVP-the-pinned-door-again",
+    "file": "src/scenes/world.js",
+    "old": "(a, r) => applyClimate(a, r, climate, season), { getTexture: pipeline.getTexture, uploadRecord: e.hold.uploadRecord });",
+    "new": "(a, r) => applyClimate(a, r, climate, season), pipeline);",
+    "tests": [
+      "test/fb1009_travelperf.test.js",
+      "test/owdungeons.test.js"
+    ]
+  },
+  {
+    "name": "TVP-the-holds-door-unasked",
+    "file": "src/scenes/world.js",
+    "old": "{ getTexture: pipeline.getTexture, uploadRecord: e.hold.uploadRecord });",
+    "new": "{ getTexture: pipeline.getTexture, uploadRecord: pipeline.uploadRecord });",
+    "tests": [
+      "test/fb1009_travelperf.test.js",
+      "test/owdungeons.test.js"
+    ]
+  },
+  {
+    "name": "TVS-the-player-handed",
+    "file": "src/scenes/snowfallHost.js",
+    "old": "player: enabled && !overworld ? f.player ?? null : null",
+    "new": "player: enabled ? f.player ?? null : null",
+    "tests": [
+      "test/fb1009_travelperf.test.js"
+    ]
+  },
+  {
+    "name": "TVS-the-sync-unheld",
+    "file": "src/scenes/snowfallHost.js",
+    "old": "    if (!inside && !overworld) surface?.sync(runtime, f.now);",
+    "new": "    if (!inside) surface?.sync(runtime, f.now);",
+    "tests": [
+      "test/fb1009_travelperf.test.js"
+    ]
+  },
+  {
+    "name": "TVS-the-frame-not-run",
+    "file": "src/scenes/snowfallHost.js",
+    "old": "    runtime.frame(frame);\n    flushPromotions(f.now);",
+    "new": "    if (!overworld) runtime.frame(frame);\n    flushPromotions(f.now);",
+    "tests": [
+      "test/fb1009_travelperf.test.js"
+    ]
+  },
+  {
+    "name": "TVS-the-word-unread",
+    "file": "src/scenes/snowfallHost.js",
+    "old": "    const overworld = !!f.overworld;",
+    "new": "    const overworld = false;",
+    "tests": [
+      "test/fb1009_travelperf.test.js"
+    ]
+  },
+  {
+    "name": "TVS-the-host-hands-nothing",
+    "file": "src/scenes/world.js",
+    "old": "climate: maps.getClimateIndex(_wfPx.x, _wfPx.y), overworld: !!tvf, npcs: snowNpcs",
+    "new": "climate: maps.getClimateIndex(_wfPx.x, _wfPx.y), npcs: snowNpcs",
+    "tests": [
+      "test/fb1009_travelperf.test.js"
+    ]
+  },
+  {
+    "name": "TVSV-the-cache-unasked",
+    "file": "src/systems/snowfall.js",
+    "old": "    if (this._packed?.revision !== this.revision) {",
+    "new": "    if (true) {",
+    "tests": [
+      "test/fb1009_travelperf.test.js"
+    ]
+  },
+  {
+    "name": "TVSV-a-refill-unmarked",
+    "file": "src/systems/snowfall.js",
+    "old": "    this.revision++;   // TV-SAVE: every cell rises or goes\n",
+    "new": "",
+    "tests": [
+      "test/fb1009_travelperf.test.js"
+    ]
+  },
+  {
+    "name": "TVSV-a-deepening-unmarked",
+    "file": "src/systems/snowfall.js",
+    "old": "        this.revision++;   // TV-SAVE: deepened\n",
+    "new": "",
+    "tests": [
+      "test/fb1009_travelperf.test.js"
+    ]
+  },
+  {
+    "name": "TVSV-a-new-cell-unmarked",
+    "file": "src/systems/snowfall.js",
+    "old": "    this.revision++;   // TV-SAVE: made\n",
+    "new": "",
+    "tests": [
+      "test/fb1009_travelperf.test.js"
+    ]
+  },
+  {
+    "name": "TVSV-the-text-kept-past-a-clear",
+    "file": "src/systems/snowfall.js",
+    "old": "    this._packed = null;   // TV-SAVE: the last record's text goes with the field (an empty field packs none)\n",
+    "new": "",
+    "tests": [
+      "test/fb1009_travelperf.test.js"
+    ]
+  },
+  {
+    "name": "TVSV-the-size-unsaid",
+    "file": "src/systems/snowfall.js",
+    "old": "    this.lastSaveCompressedBytes = this._packed.compressed;",
+    "new": "    this.lastSaveCompressedBytes = 0;",
+    "tests": [
+      "test/fb1009_travelperf.test.js"
+    ]
+  },
+  {
+    "name": "TVR-the-clean-window-swept",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "      if (L.hasDeformation) {\n        let any = false;",
+    "new": "      if (true) {\n        let any = false;",
+    "tests": [
+      "test/fb1009_travelperf.test.js"
+    ]
+  },
+  {
+    "name": "TVR-the-far-flag-unread",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "    if (!F.ready || step <= 0 || !F.deformed) return;",
+    "new": "    if (!F.ready || step <= 0) return;",
+    "tests": [
+      "test/fb1009_travelperf.test.js"
+    ]
+  },
+  {
+    "name": "TVR-a-far-stamp-unflagged",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "    if (n > 0) { F.lastChanged = n; F.deformed = true; }",
+    "new": "    if (n > 0) { F.lastChanged = n; }",
+    "tests": [
+      "test/fb1009_travelperf.test.js"
+    ]
+  },
+  {
+    "name": "TVR-a-scroll-forgets",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "      F.deformed = (!!out && F.deformed) || F.lastChanged > 0;",
+    "new": "      F.deformed = F.lastChanged > 0;",
+    "tests": [
+      "test/fb1009_travelperf.test.js"
+    ]
+  },
+  {
+    "name": "TVR-a-recentres-restore-unflagged",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "      F.deformed = (!!out && F.deformed) || F.lastChanged > 0;",
+    "new": "      F.deformed = !!out && F.deformed;",
+    "tests": [
+      "test/fb1009_travelperf.test.js"
+    ]
+  },
+  {
+    "name": "TVR-a-stand-unflagged",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "      F.deformed = F.lastChanged > 0;   // TV-REFILL",
+    "new": "      F.deformed = false;   // TV-REFILL",
+    "tests": [
+      "test/fb1009_travelperf.test.js"
+    ]
+  },
+  {
+    "name": "TVR-the-flag-left-up",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "    F.deformed = any;   // TV-REFILL: none found, none left",
+    "new": "    F.deformed = true;   // TV-REFILL: none found, none left",
+    "tests": [
+      "test/fb1009_travelperf.test.js"
+    ]
+  },
+  {
+    "name": "TVR-a-clear-leaves-it-up",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "this.far.lastChanged = 0; this.far.deformed = false; this.rects.far.all();",
+    "new": "this.far.lastChanged = 0; this.rects.far.all();",
+    "tests": [
+      "test/fb1009_travelperf.test.js"
+    ]
+  }
+]

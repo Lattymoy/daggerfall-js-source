@@ -234,7 +234,9 @@ test('SD20g A QUEST SHARED ONLINE IS LAID ON THIS PAGE\'S SIZES, AND NO LINK RE-
   assert.equal(quest.smallerDungeonsState, ONLINE_DUNGEONS_STATE, 'stamped the world\'s');
   assert.equal(relayQuestOnline(quest), false, 'the world\'s already: nothing');
   const share = read('src/systems/questShare.js');
-  assert.match(share, /const relay = \(q\) => \{ if \(ctx\.online \?\? isOnlinePage\(\)\) relayQuestOnline\(q, \{ carriesQuestItem: ctx\.carriesQuestItem \?\? null \}\); \};/);
+  // PIN MOVED (MEDIUM-DISTINCT's audit, 2026-10-08): the relay lays the copy on the world's sizes online, and on this page's
+  // medium layout where the copy's dungeon moved, online and off
+  assert.match(share, /const relay = \(q\) => \{\n\s*const online = ctx\.online \?\? isOnlinePage\(\);\n\s*if \(online\) relayQuestOnline\(q, \{ carriesQuestItem: ctx\.carriesQuestItem \?\? null \}\);\n\s*relayQuestMovedLayout\(q, machine, \{ carriesQuestItem: ctx\.carriesQuestItem \?\? null \}, online\);\n\s*\};/);
   assert.match(share, /if \(quest\) \{ relay\(quest\); return \{ ok: true, quest, resync: true \}; \}/, 'kept in step: laid');
   assert.match(share, /if \(!quest\) return \{ ok: false, reason: 'restore' \};[^\n]*\n\s*relay\(quest\);/, 'arrived: laid');
   assert.match(read('src/scenes/world.js'), /carriesQuestItem: \(res\) => \(playerEntity\.items \?\? \[\]\)\.some\(\(it\) => it\.questItem && it\.questUID === res\.parentQuest\?\.uid && it\.questSymbol\?\.name === res\.symbol\?\.name\),\n\s*\}\);/, 'a quest item I carry never laid again');

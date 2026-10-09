@@ -126,7 +126,7 @@ test('SD-CLEARS the workflow: run by hand only, its one input read once as envir
   assert.match(on, /\n {6}slot:\n(?: {8}.*\n)*? {8}required: false\n/, 'the first broken unless a slot is asked');
   assert.equal(wf.match(/\$\{\{ inputs\./g)?.length, 1, 'the one input, read once');
   assert.match(wf, /\n {6}SLOT: \$\{\{ inputs\.slot \}\}\n/);
-  assert.match(wf, /\nconcurrency:\n {2}group: account-deploy\n {2}cancel-in-progress: false\n/);
+  assert.match(wf, /\nconcurrency:\n {2}group: sd-clears\n {2}cancel-in-progress: false\n/);
   assert.match(wf, /\npermissions:\n {2}contents: read\n/);
   assert.doesNotMatch(wf, /d1 create|migrations apply|wrangler deploy|--file/, 'it creates, migrates, deploys and runs no file of its own');
 

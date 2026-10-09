@@ -91,7 +91,8 @@ test('OL1 - THE FUTURE HALF: every boolean switch the port declares is either fo
   // lighting is what this screen draws, and nothing the room agrees on reads it (features.js's row says why)
   // PLUS1 left Enhanced Plus's switch to the player here too; PLUS-ONLY (2026-09-26) retired the switch whole - Plus
   // IS the enhanced skin - so the key is on neither list and on no shelf (the pins above hold both directions)
-  const PLAYERS_ENHANCEMENTS = ['enhancedLighting'];
+  // WATER-OFF (FIELD BUGS 2026-10-08): the water is what this screen draws too - the player's online (features.js's row)
+  const PLAYERS_ENHANCEMENTS = ['enhancedLighting', 'enhancedWater'];
   assert.equal(Object.hasOwn(PREF_DEFAULTS, 'enhancedPlus'), false, 'PLUS-ONLY: the retired key is no uiPrefs key');
   for (const k of booleans.filter((k) => /^enhanced/.test(k) && !PLAYERS_ENHANCEMENTS.includes(k))) assert.equal(ONLINE_FORCED_PREFS[k], true, `${k} is an enhancement and the lane forces it`);
   for (const k of PLAYERS_ENHANCEMENTS) {

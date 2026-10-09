@@ -62,7 +62,7 @@
   {
     "name": "QT-LIVE1-walk-reads-the-stale-field",
     "file": "src/scenes/questBridge.js",
-    "old": "            const left = r.liveRemainingSeconds(q);",
+    "old": "            const left = isShelved(q) ? r.remainingTimeInSeconds : r.liveRemainingSeconds(q);",
     "new": "            const left = r.remainingTimeInSeconds;",
     "tests": [
       "test/questbridge.test.js",

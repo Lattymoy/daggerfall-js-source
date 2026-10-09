@@ -27,7 +27,9 @@
 //
 // Not a DFU member: DFU has no such pass (its quest debugger is a developer's console). Ledger A (QREPAIR).
 import { MARKER_PREFERENCE, SITE_TYPES } from './place.js';
-import { ONLINE_DUNGEONS_STATE } from '../../world/smallerDungeons.js';   // AUDIT DELVE E1 / SD-ONLINE: the sizes the room builds online
+import { ONLINE_DUNGEONS_STATE, portSize } from '../../world/smallerDungeons.js';   // AUDIT DELVE E1 / SD-ONLINE: the sizes the room builds online; MEDIUM-DISTINCT: the two stamps whose builds are medium
+import { isOnlinePage } from '../onlineLane.js';   // MEDIUM-DISTINCT's audit: offline a dungeon no link holds is built by the settings
+import { isShelved } from './quest.js';   // QUEST-SHELF's audit: the repair mends no quest set aside
 
 const PLACEMENTS = Object.freeze({ PlaceNpc: 'npcSymbol', PlaceItem: 'itemSymbol', PlaceFoe: 'foeSymbol' });
 
@@ -149,6 +151,18 @@ export function relayOnlineDungeons(machine, env = {}) {
  *  time this player loaded online. */
 export function relayQuestOnline(quest, env = {}) {
   if (!quest || quest.smallerDungeonsState === ONLINE_DUNGEONS_STATE) return false;
+  const { moved, unread } = relayDungeonPlaces(quest);
+  if (!unread) quest.smallerDungeonsState = ONLINE_DUNGEONS_STATE;
+  if (!moved) return false;
+  putBackPlacements(quest, env);
+  return true;
+}
+
+/** A quest's dungeon Places, each compared with the dungeon its world builds now: a Place whose markers come out
+ *  otherwise has them enumerated again there and its targets let go (putBackPlacements stands them again). Answers
+ *  whether any moved, and whether a dungeon could not be read (no world, no such location, a throw). The two re-lays'
+ *  one body (relayQuestOnline, relayMovedLayouts). */
+function relayDungeonPlaces(quest, { only = null } = {}) {
   const world = quest.hooks?.world ?? null;
   let moved = false, unread = false;
   for (const r of quest.resources?.values?.() ?? []) {
@@ -157,6 +171,7 @@ export function relayQuestOnline(quest, env = {}) {
     const index = world?.maps?.getRegion?.(sd.regionIndex)?.mapNameLookup?.get?.(sd.locationName);
     const location = index == null ? null : world.maps.getLocation(sd.regionIndex, index);
     if (!location?.dungeon?.blocks) { unread = true; continue; }
+    if (only && !only(sd, location)) continue;
     let markers;
     try { markers = r._enumerateDungeonQuestMarkers(world, location); } catch { unread = true; continue; }
     if (markerAddresses(markers.questSpawnMarkers) === markerAddresses(sd.questSpawnMarkers)
@@ -164,8 +179,38 @@ export function relayQuestOnline(quest, env = {}) {
     r.siteDetails = { ...sd, questSpawnMarkers: markers.questSpawnMarkers, questItemMarkers: markers.questItemMarkers, selectedMarker: { targetResources: null } };
     moved = true;
   }
-  if (!unread) quest.smallerDungeonsState = ONLINE_DUNGEONS_STATE;
-  if (!moved) return false;
+  return { moved, unread };
+}
+
+/**
+ * MEDIUM-DISTINCT (2026-10-08, Mac: "Medium dungeons just copy and paste 2 layouts together"): A LAYOUT THE LAW MOVED.
+ * A medium build no longer lays one interior block twice (world/smallerDungeons.js distinctInterior), so a dungeon whose
+ * draws repeated is another layout now, and a running quest that chose its markers on the old one holds a marker in
+ * its second interior block that addresses a block no longer there - its item in rock, its foe in the void. At every
+ * load, online and off (after relayOnlineDungeons), a running quest stamped at one of the two sizes whose builds are
+ * medium - MEDIUM_DUNGEONS_STATE and the world's sizes, ONLINE_DUNGEONS_STATE - has each dungeon Place compared with
+ * the dungeon its world builds now and enumerated again where it differs, its placements put back; its stamp is
+ * untouched (the size is the same size). DFU's stamps are left alone: neither of their builds moved. Answers the count
+ * of quests re-laid. Not a DFU member.
+ */
+export function relayMovedLayouts(machine, env = {}, online = isOnlinePage()) {
+  let relaid = 0;
+  for (const quest of machine?.quests?.values?.() ?? []) if (relayQuestMovedLayout(quest, machine, env, online)) relaid++;
+  return relaid;
+}
+/**
+ * One quest's half of relayMovedLayouts - and a shared copy's on arrival (systems/questShare.js: a party member on an
+ * older page lays the old layout, and their copy's markers point into it). MEDIUM-DISTINCT's audit: only a dungeon
+ * whose build MOVED (`distinct` - the clone says it took a block again) is compared, so a load reads no block of a
+ * dungeon the law never touched; and offline only a dungeon a link holds - with none, the build is the settings' (the
+ * quest's frozen size reaches a build through its link), and re-laying on it stood the quest's later placement in
+ * another size's blocks. Online the build is the world's either way. Answers whether its markers moved.
+ */
+export function relayQuestMovedLayout(quest, machine, env = {}, online = isOnlinePage()) {
+  if (!questRunning(quest) || !portSize(quest.smallerDungeonsState)) return false;
+  const only = (sd, location) => location.dungeon?.distinct === true
+    && (online || (machine?.getSiteLinks?.(SITE_TYPES.Dungeon, sd.mapId) ?? []).length > 0);
+  if (!relayDungeonPlaces(quest, { only }).moved) return false;
   putBackPlacements(quest, env);
   return true;
 }
@@ -178,7 +223,9 @@ export function relayQuestOnline(quest, env = {}) {
  */
 export function repairActiveQuests(machine, env = {}) {
   const report = { quests: 0, people: 0, items: 0, foes: 0, relinked: 0, revealed: 0, topics: 0, failed: 0 };
-  const quests = [...(machine?.quests?.values?.() ?? [])].filter(questRunning);
+  // QUEST-SHELF's audit: nor one set aside - its links stood again, its things went back, while it was away. Its markers
+  // still follow a moved layout (the relays above), so a reclaim finds them true.
+  const quests = [...(machine?.quests?.values?.() ?? [])].filter((q) => questRunning(q) && !isShelved(q));
   report.quests = quests.length;
   const was = !!machine?.mountByName;
   if (machine) machine.mountByName = true;   // every mount the pass runs matches by name (sceneMount.js)

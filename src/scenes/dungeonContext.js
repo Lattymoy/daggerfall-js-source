@@ -8728,6 +8728,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // the standalone ?dungeon probe never sets, so it stays open there.
         loadingPrevented: () => !!opts.dungeonOnline?.(),
         timers: (o) => opts.timers?.(o) ?? null,   // TIMERS1: the world host's source, through worldModes
+        post: () => opts.post?.() ?? null,   // SERVER-POST: the mailbox's box, the world host's through worldModes
         savingPrevented: () => isGateArena(dfLocation) || isArenaFloor(dfLocation) || _sdRealm,   // ARENA2: nor on the arena's sand   // WB3b: the pause's Save says why, in the court
         // SAV4: the slot window's seams over the same two verbs.
         playerName: () => playerEntity.name, playerId: () => playerEntity.characterId ?? null,

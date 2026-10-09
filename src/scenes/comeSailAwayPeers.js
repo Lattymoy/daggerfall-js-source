@@ -332,7 +332,11 @@ export function createComeSailAwayPeers({ pool, selfId = () => null, log = conso
         for (let i = 0; i < list.length; i++) {
           const s = list[i];
           if (s?.boat !== boat) continue;
-          const p = nextPose(s, l.boats[i], l.toScene, dt, l.age + Math.max(0, dt));
+          // FIELD BUGS 2026-10-09 #7: a word that came since the last frame is not yet matched to what stands (the frame's
+          // realign does that) - a place it no longer names, or names for another hull, has no pose ahead: she stands where she is
+          const w = l.boats[i];
+          if (!w || w.hull !== s.hull) return null;
+          const p = nextPose(s, w, l.toScene, dt, l.age + Math.max(0, dt));
           return { position: p.position, rotation: p.rotation };
         }
       }

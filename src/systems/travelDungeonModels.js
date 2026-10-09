@@ -35,6 +35,36 @@ export function dungeonModelSet(list, max = TV_DUNGEON_MODELS_MAX) {
   return [...(list ?? [])].sort((a, b) => a.d - b.d || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0)).slice(0, Math.max(0, max));
 }
 
+/** TV-BURST (FIELD BUGS 2026-10-09, Shabalako: "The first time I open the overworld travel the game has a big freeze"):
+ *  how many dungeons' models START loading in one frame. A load lays its location's blocks and reads their ARCH3D meshes
+ *  on the frame it starts, then builds its model and uploads its pictures and its climate's - and the view's first frame
+ *  started all twelve at once, inside its draw. */
+export const TV_DUNGEON_LOADS_PER_FRAME = 1;
+
+/**
+ * TV-BURST: THE LOADS THIS FRAME STARTS - the nearest of the set (`list`, dungeonModelSet's, nearest first) that `held`
+ * (the host's loads by key: a Map, or anything with `has`) does not hold yet, handed to `start` one by one, at most
+ * `max`; none while the view is not fully up (`up` false - rising, when the land is first drawn, or coming down). The
+ * set itself is untouched: what is held is drawn and what left it is let go, every frame. Answers how many it started.
+ * @template {{ key: string }} T
+ * @param {Iterable<T>} list
+ * @param {{ has: (key: string) => boolean }} held
+ * @param {boolean} up
+ * @param {(g: T) => void} start
+ * @param {number} [max]
+ */
+export function startDungeonLoads(list, held, up, start, max = TV_DUNGEON_LOADS_PER_FRAME) {
+  if (!up) return 0;
+  let n = 0;
+  for (const g of list ?? []) {
+    if (n >= max) break;
+    if (held.has(g.key)) continue;
+    start(g);
+    n++;
+  }
+  return n;
+}
+
 /**
  * Whether an ARCH3D mesh (Arch3dFile.getMesh) carries a dungeon entrance - DFU's own door law (world/meshReader.js
  * subMeshDoorType: archive 56, or 331 past its stone record), on a submesh with a plane to be the door.

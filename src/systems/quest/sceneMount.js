@@ -52,6 +52,7 @@
 // killCount < spawnCount.
 
 import { QuestResourceBehaviour } from './resourceBehaviour.js';
+import { isShelved } from './quest.js';   // QUEST-SHELF: a quest set aside
 import { GENDERS } from '../../characters/nameHelper.js';
 import { RDB_SIDE } from '../../world/rdbLayout.js';
 import { MARKER_TYPES } from './place.js';   // TOTEM-CAGE: the two records that carry a DaggerfallMarker
@@ -94,6 +95,7 @@ export function addQuestResourceObjects(machine, adapter, siteType, buildingKey 
   for (const link of siteLinks) {
     const quest = machine.getQuest(link.questUID);
     if (!quest) throw new Error(`Could not find active quest for UID ${link.questUID}`);
+    if (isShelved(quest)) continue;   // QUEST-SHELF: a quest set aside mounts nothing (its links are set aside with it)
     const place = quest.getPlace(link.placeSymbol);
     if (!place) throw new Error(`Could not find Place symbol ${link.placeSymbol?.name} in quest UID ${link.questUID}`);
     // One snapshot per link guards the double-inject (slightly

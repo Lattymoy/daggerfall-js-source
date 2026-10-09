@@ -548,5 +548,14 @@
     "tests": [
       "test/legacy7_wed.test.js"
     ]
+  },
+  {
+    "name": "FB1008-wed-the-null-read-as-no-house",
+    "file": "src/scenes/world.js",
+    "old": "(legacyHost ? legacyHost.wedRefusal() : 'house')",
+    "new": "(legacyHost?.wedRefusal() ?? 'house')",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
   }
 ]

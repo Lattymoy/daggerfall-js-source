@@ -1579,31 +1579,33 @@ Built on the branch for Mac's *"make ship prices more reasonable"* ("About a qua
 withdrawn at the review before the merge, never shipped: *"Remove the changes to ship reduction cost."* Come Sail
 Away's own prices stand - 4,000 (Rowboat), 8,000 (Large Boat), 100,000 (Small Ship), 200,000 (Large Galley) and
 150,000 (Carrack) (`systems/comeSailAwayBoat.js HULL_PRICES`). Its pin and its two mutants went with it;
-`test/csa_items.test.js` reads the shelf's literal prices again. SHIP-CREDIT and SHIP-CLAIM stand on the mod's prices.
+`test/csa_items.test.js` reads the shelf's literal prices again. SHIP-CLAIM stands on the mod's prices (SHIP-CREDIT
+did, until it was withdrawn).
 
-## SHIP-CREDIT (2026-10-01) - a boat bought on the bank's credit - DECLARED
+## SHIP-CREDIT (2026-10-01) - a boat bought on the bank's credit - WITHDRAWN 2026-10-08
 
-Mac's second pick of the same ask: *"Buy on credit - Pay part now; the bank lends you the rest under Daggerfall's own
-loan rules."* At a shop's counter a lot of boats and nothing else (Come Sail Away's parts or deeds - `tradeModes.js
-lotAllBoats`) that the purse falls short of is offered on credit, in both trade skins (`ui/nativeTrade.js`,
-`ui/enhancedTrade.js`):
-the purse pays what it holds - `CREDIT_DOWN_SHARE` (a fifth) of the price at least - and the bank of the shop's region
-lends the rest under BorrowLoan's own law (`banking.js creditDecision`): borrowDecision's refusals (a loan or a
-default standing there; online the Empire's one loan a character, in its own words), `LOAN_MINIMUM` at least (a
-shortfall under it borrows the minimum and the purse pays the less), CalculateMaxBankLoan at most (level x 50,000;
-online a tenth); repaid with its 10% within the year, LoanChecker's reminders and default as for any loan
-(`takeCredit`). The lent gold goes to the shop, never into the account. The box: what the purse holds against the
-price, what the bank lends, what is paid now and owed within the year, and "Buy on credit?"; a refusal says why under
-the gold's own. The host asks the bank again at the Yes (`worldModes.js commitTrade`) and buys nothing on a credit no
-longer given.
+Shipped 2026-10-01 for Mac's *"Buy on credit - Pay part now; the bank lends you the rest under Daggerfall's own loan
+rules"*: at a shop's counter a lot of boats alone that the purse fell short of was offered on credit, the purse a fifth
+at least and the shop region's bank the rest under BorrowLoan's law. Withdrawn whole on Mac's word, 2026-10-08:
+*"Remove ship buying loan from the bank."*
 
-THE BOAT ALONE (the review before the merge, 2026-10-01): a basket that held a boat put the whole basket on the bank's
-credit - a sword and a cask of wine lent on beside the hull. The bank lends on boats bought by themselves: a lot that
-holds a boat among other goods is refused under the gold's own refusal ("The bank lends on a boat bought by itself.",
-`CREDIT_BOAT_ALONE`), and the Yes buys nothing on credit for more than boats.
+- **The counter** (`ui/nativeTrade.js`, `ui/enhancedTrade.js`): a purse short of a boat is refused as any purchase is,
+  the gold's own records and no Yes; a Buy's Yes hands the commit no proceeds.
+- **The host** (`scenes/worldModes.js`): hands the trade window no credit hook, and its Buy commit (`commitTrade`) pays
+  the whole price from the purse. A deed bought goes to the Fleet's book with the port she waits at and never a claim.
+- **The laws** are gone: `banking.js` `creditDecision`, `takeCredit`, `CREDIT_DOWN_SHARE`; `tradeModes.js`'s lot and
+  box laws (`CREDIT_ITEM_TEMPLATES`, `lotHasBoat`, `lotAllBoats`, `CREDIT_BOAT_ALONE`, `creditRows`,
+  `creditRefusalRows`, `CREDIT_REFUSALS`); the Fleet's two stamps at a purchase (`fleet.js` `titleDeed` takes no
+  `credit`, and `creditShip`, AUDIT HOLDINGS F5's parts stamp, went with it). The bank's own window lends as ever.
+- **A ship bought on credit before** keeps her claim from the save (`fleet.js restoreFleetSaveData`): no refit while her
+  bank is owed anything, cleared for good once it is owed nothing (`03-World/Holdings.md` THE BANK'S CLAIM). The loan
+  is an ordinary loan on that bank's books, repaid at its window.
+- **THE FOUR HOSTS RULE**: the offer stood in `scenes/worldModes.js` alone. `scenes/dungeonContext.js` opens a trade
+  window and never handed it a credit hook; `scenes/exterior.js` and `scenes/world.js` open no counter.
 
-Pins: `test/shipcredit.test.js` (5). `tools/mutants/shipcredit.json`: 33 mutants, all dead (SHIP-PRICE's two withdrawn
-with it; five for the boat alone).
+Pins: `test/shipcredit.test.js` (3) pins the withdrawal - the bank never asked whatever hook a host hands, the commit
+given no credit, the laws' exports gone, the bank's own loan standing. `tools/mutants/shipcredit.json`: 7 mutants, all
+dead (the feature's 33 went with it; `tools/mutants/auditholdings.json`'s two F5 records too).
 
 ## SHIP-CLAIM (2026-10-01) - a prize claimed as the captor's own boat - DECLARED
 

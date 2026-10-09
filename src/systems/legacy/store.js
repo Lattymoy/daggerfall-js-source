@@ -71,7 +71,7 @@ export function storeFamily(storage, family, base = seenRevOf(family)) {
 /** AUDIT LEGACY III P5: what a member's own save writes of them (legacyHost.js writeCurrent - writePlayer, their
  *  standing, their look, where they were saved) - kept, as a whole, from the copy that saved that member LAST. */
 export const MEMBER_SAVE_FIELDS = Object.freeze(['given', 'surname', 'gender', 'race', 'raceId', 'face', 'careerIndex', 'className', 'career', 'groups',
-  'level', 'stats', 'skills', 'leveling', 'standing', 'look', 'parked']);
+  'level', 'stats', 'skills', 'leveling', 'standing', 'look', 'parked', 'deedsTaken']);   // PERMADEATH-HOUSES: the dead's deeds their save took up
 
 /** AUDIT LEGACY III A3/P3: whether two copies' persons of one id are ONE person. Ids are minted by each copy's own
  *  counter (nextId), so two copies that each minted someone - a child here, a spouse there - gave two people one id. One
@@ -113,7 +113,7 @@ export function rekeyClashes(mine, other) {
     if (Number.isInteger(r.of) && moved.has(r.of)) { r.of = to(r.of); r.id = `r${r.of}`; }
     if (Number.isInteger(r.by)) r.by = to(r.by);
   }
-  for (const h of mine.houses ?? []) if (Number.isInteger(h.by)) h.by = to(h.by);
+  for (const h of mine.houses ?? []) { if (Number.isInteger(h.by)) h.by = to(h.by); if (Number.isInteger(h.from)) h.from = to(h.from); }   // PERMADEATH-HOUSES: and who left it
   mine.nextId = next;
   return moved;
 }

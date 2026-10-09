@@ -148,7 +148,7 @@ test('STAFF-TP session: old servers are never sent an unknown frame; updated hub
     assert.equal(s.sendStaffTeleport(ask), false);
   }
   assert.equal(ws.sent.map(JSON.parse).some((m) => m.t === 'stp'), false, 'unsupported relays receive no teleport frame');
-  for (const version of ['world159', 'world160', 'world161', 'world162', 'world163', 'world164', 'world165', 'world166', 'world167', 'world168', 'world169', 'world170', 'world171', 'world172', 'world173', 'world174', 'world175', 'world176']) {   // the FEUD merge: and its own; CRYSTAL-FIST: and its own; WATCH-FIX: and its own; SERPENT3: and its own; LEGACY7: and its own; TEXT-F1: and its own; SUPER-DUNGEONS: and its own (world171 on its branch, then world172 and world175, renumbered past TEXT-F1's world175 to world176)
+  for (const version of ['world159', 'world160', 'world161', 'world162', 'world163', 'world164', 'world165', 'world166', 'world167', 'world168', 'world169', 'world170', 'world171', 'world172', 'world173', 'world174', 'world175', 'world177']) {   // the FEUD merge: and its own; CRYSTAL-FIST: and its own; WATCH-FIX: and its own; SERPENT3: and its own; LEGACY7: and its own; TEXT-F1: and its own; SUPER-DUNGEONS: and its own (world171 on its branch, then world172 and world175, renumbered past TEXT-F1's world175 to world176)
     welcome(version);
     assert.equal(staffTeleportSupported(version), true, `${version}: combined relay law supported`);
     assert.equal(s.staffTeleportOk, true);

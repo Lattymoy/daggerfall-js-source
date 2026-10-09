@@ -47,7 +47,7 @@ import { rollStats, rollSkills, spendPoolLowest, STAT_KEYS_ORDER } from '../syst
 import { LEVELING_CLASSIC } from '../systems/oblivionLeveling.js';
 import { pickHeirloom, markHeirloom, mintRemainsItem, isRemainsItem, isHeirloom, attuneHeirloom, blessingOf, blessedIn, remainsGoldOf, REMAINS_LIST, BLESSING_POINTS } from '../systems/legacy/heirloom.js';
 import { SKILL_NAMES } from '../systems/skills.js';
-import { syncHouses, householdOf, residentOf, familyResOf, kinGreeting, setFamilyHome, familyHome, sameHouse } from '../systems/legacy/household.js';
+import { syncHouses, householdOf, residentOf, familyResOf, kinGreeting, setFamilyHome, familyHome, sameHouse, deedsDue, houseKeyOf } from '../systems/legacy/household.js';
 import { goldStack } from '../systems/inventory.js';
 import {
   topicsFor, topicLabel, topicQuestion, court, propose, betrothalOf, wed, childStep, childLine, spouseOf, childrenTogether,
@@ -82,6 +82,9 @@ export const LEGACY_TEXT = Object.freeze({
   notSaved: 'Your journey could not be saved here - not now.',
   estate: (n) => `The estate left you a letter of credit for ${n} gold.`,
   bequest: (item) => `Your elder's bequest is yours: ${item}.`,
+  // PERMADEATH-HOUSES: a house of the line's dead, taken up by whoever carries the line - or waiting on a bank's one deed a region
+  deed: (loc, given) => `${given}'s house${loc ? ` in ${loc}` : ''} passes to you. Its deed is yours now.`,
+  deedWaits: (loc, given) => `${given}'s house${loc ? ` in ${loc}` : ''} waits for you - you keep a house in that region already, and the bank deeds one a region. Sell yours there to take it up.`,
   remainsFound: (name) => `You have found the remains of ${name}.`,
   remainsTaken: (name) => `You carry the remains of ${name}. Lay them to rest at a temple, or at the family's seat.`,
   remainsReturned: (name) => `The remains of ${name} are no longer with you. They lie where ${name} fell.`,
@@ -142,6 +145,8 @@ export function mergeFamily(stored, saved, cid) {
   const was = saved.people.find((p) => p.characterId === cid) ?? saved.people.find((p) => p.id === me.id);
   me.estatePaid = Math.max(0, Math.floor(Number(was?.estatePaid) || 0));
   me.bequestPaid = Math.max(0, Math.floor(Number(was?.bequestPaid) || 0));
+  // PERMADEATH-HOUSES: the dead's deeds taken up are the save's too - a reload before the save that holds one hands it again
+  me.deedsTaken = Array.isArray(was?.deedsTaken) ? was.deedsTaken.filter((k) => typeof k === 'string') : [];
   for (const r of out.remains ?? []) {
     if (r.by !== me.id) continue;   // nobody's, or another member's: the store's
     const s = (saved.remains ?? []).find((x) => x.id === r.id);
@@ -162,6 +167,7 @@ export function mergeFamily(stored, saved, cid) {
  *   boot:(search:string) => void, search:() => string, loadCharacter:(characterId:string) => boolean,
  *   saveNow:() => boolean, inFight:() => boolean, payEstate?:(gold:number) => void, rng?:() => number,
  *   heldHouses?:() => any[], houseHere?:() => ({mapId:number, buildingKey:number}|null),
+ *   inheritHouse?:(row:any, fallen:any) => ('given'|'waits'|'gone'|'asking'|null),
  *   hasSave?:(characterId:string) => boolean, livingWorld?:() => boolean,
  *   templeOf?:() => (number|null), askWed?:(name:string, house:string, done:(takeName:boolean) => void) => boolean,
  *   regards?:() => any, regardDay?:() => number, sky?:() => number,
@@ -177,7 +183,8 @@ export function mergeFamily(stored, saved, cid) {
  *   fallen for good (realmSaves.js session die) - `why` 'retired' for an elder's mantle passed; part three: `realmId()` the
  *   realm character this tab plays (two players wed: wedRefusal); part four: `look()` what the one played wears (the
  *   hello's recipe, net/remotePlayers.js composeLook), written on them at every write. AUDIT LEGACY III P5: `wall()` the
- *   wall clock (Date.now by default) - when a member's own save last wrote them
+ *   wall clock (Date.now by default) - when a member's own save last wrote them. PERMADEATH-HOUSES: `inheritHouse(row,
+ *   fallen)` a house of the line's dead handed to the one played (takeDeeds)
  */
 export function createLegacyHost(deps) {
   const rng = deps.rng ?? Math.random;
@@ -262,7 +269,7 @@ export function createLegacyHost(deps) {
   function syncHousesNow(p) {
     const held = deps.heldHouses?.() ?? null;
     if (held == null) return false;
-    return syncHouses(family, p.id, held);
+    return syncHouses(family, p.id, held, p.deedsTaken ?? []);   // PERMADEATH-HOUSES: the dead's deeds their save took up
   }
   /** AUDIT LEGACY II A1: whether the character in the world IS the one the record plays - after a choice hands the line
    *  to another (the Succession, a switch) the page runs on under the old character until the boot lands, and the slow
@@ -316,7 +323,7 @@ export function createLegacyHost(deps) {
   /** A save's copy beside the store's (mergeFamily); the played character is the one this save is of. */
   function adopt(rec) {
     past = null; outcome = null; deathSeen = false; elderSaid = false; bornShare = null;
-    openedThisVisit.clear(); restAskedThisVisit.clear(); remainsSig = ''; residentsKept.clear(); openedSig.clear();
+    openedThisVisit.clear(); restAskedThisVisit.clear(); remainsSig = ''; residentsKept.clear(); openedSig.clear(); deedsSaid.clear();
     const cid = cidOf();
     const saved = readFamily(rec);
     const stored = saved ? loadFamily(deps.storage(), saved.id) : familyOfCharacter(cid);
@@ -392,6 +399,41 @@ export function createLegacyHost(deps) {
     if (write) store();
   }
 
+  /**
+   * PERMADEATH-HOUSES (2026-10-09, the owner: "what happens to houses owned by dead permadeath characters" - the heir
+   * inherits): THE DEAD'S DEEDS TAKEN UP by the one who carries the line (household.js deedsDue) - the Succession's heir
+   * once they land, or the one played when one of the line dies in the street - each handed to the world
+   * (`inheritHouse`: offline the bank's deed and the house's things out of the dead's own save, online the account
+   * service's home and its cupboards out of the dead's realm record):
+   *   - 'given': theirs - `deedsTaken`, the save's, so a reload before the save that holds it hands it again;
+   *   - 'waits': a house of theirs stands in that region already (the bank deeds one a region) - said once a page, and
+   *     taken up the first tick the region is free;
+   *   - 'gone': the dead hold it no more (online, a home sold after their last save reached the line) - the row goes;
+   *   - anything else (online, the service still asked): asked again next tick.
+   */
+  const deedsSaid = new Set();
+  function takeDeeds(p) {
+    if (!deps.inheritHouse) return;
+    let changed = false;
+    for (const h of deedsDue(family, p)) {
+      const fallen = personOf(family, h.by);
+      const key = houseKeyOf(h);
+      const r = deps.inheritHouse(h, fallen);
+      if (r === 'given') {
+        (p.deedsTaken ??= []).push(key);
+        changed = true;
+        deps.say(LEGACY_TEXT.deed(h.location, fallen.given));
+      } else if (r === 'gone') {
+        family.houses = (family.houses ?? []).filter((x) => !sameHouse(x, h));
+        changed = true;
+      } else if (r === 'waits' && !deedsSaid.has(key)) {
+        deedsSaid.add(key);
+        deps.say(LEGACY_TEXT.deedWaits(h.location, fallen.given));
+      }
+    }
+    if (changed) { touch(family); store(); }
+  }
+
   /** The waiting Succession answered by `heir` - the estate and the bequest theirs, the mantle theirs. */
   function settlePending(heir) {
     const pend = family.pending;
@@ -455,6 +497,9 @@ export function createLegacyHost(deps) {
       if (!paid.final) { outcome = { kind: 'rise', line: tollLine(p.given, paid) }; return outcome; }
       d.cause = 'years';
     }
+    // PERMADEATH-HOUSES: the deeds they die holding are the line's to hand on, as their purse is - the live ones (a house
+    // bought since their last save is theirs too: the gold it cost left the estate with it)
+    syncHousesNow(p);
     recordDeath(family, p.id, { at: d.at, cause: d.cause, place: d.place, by: d.by });
     tellNews('died', fullNameOf(p.given, p.surname), d.place?.mapId);
     layDeathRemains(p, d);
@@ -902,6 +947,7 @@ export function createLegacyHost(deps) {
     // AUDIT LEGACY III A8: the house's news heard on the one played's own clock - its week is theirs
     if (hearNews(family, p, deps.sky?.() ?? deps.now())) store();
     payEstateOf(p);
+    takeDeeds(p);
     remainsStep();
     weddingStep(p);
     childrenStep(p);

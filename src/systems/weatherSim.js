@@ -44,7 +44,7 @@ import { WEATHER_TYPES } from '../world/weather.js';
 import { seededRng } from './wind.js';   // CLK2: the evolution's own generator - never the classic lane's sequence
 import { isEnhanced } from './uiSkin.js';   // CLK2: the evolution is the enhanced lane's
 import { getPref } from './uiPrefs.js';
-import { groundIsSnowy, climateSeasonFromMinutes } from '../world/climateSwaps.js';   // WEATHER2a: the terrain's own snow law
+import { groundWearsSnow, climateSeasonFromMinutes } from '../world/climateSwaps.js';   // WEATHER2a: the terrain's own snow law
 import { fieldAt, FIELD_RANGE_M, pixelOfField } from './weatherField.js';   // WEATHER2b: the day's words as places
 import { systemsNear, wornAmong, skyCells, approachAt, insideClip } from './weatherMap.js';   // WEATHER3b: the world weather map - systems on the land; WEATHER3c: its sky and its wind
 
@@ -261,7 +261,7 @@ function sampleWeatherMap(nowMinutes, climateIndex, at, climateAt, how) {
  *  a ground that wears snow is snow). One law, so no reader says "Rain" where the player standing there gets snow. */
 export function mapGround(climateAt) {
   return (word, x, z, minutes) => {
-    if (word !== 'rain' && word !== 'thunder') return word;
+    if (word !== 'rain' && word !== 'thunder' && word !== 'snow') return word;
     const px = pixelOfField(x, z);
     return WEATHER_TYPES[overGround(WEATHER_ENUM[word], climateAt(px.x, px.y), minutes)];
   };
@@ -311,9 +311,11 @@ export function snowGroundLawOn() {
 /** The word the sky may wear over THIS ground now: rain or a storm on a
  *  ground that wears snow is snow. Pure over the lane's answer. */
 export function overGround(word, climateIndex, nowMinutes) {
-  if (!snowGroundLawOn() || (word !== WEATHER_ENUM.rain && word !== WEATHER_ENUM.thunder)) return word;
+  if (!snowGroundLawOn() || (word !== WEATHER_ENUM.rain && word !== WEATHER_ENUM.thunder && word !== WEATHER_ENUM.snow)) return word;
   if (nowMinutes == null || !Number.isFinite(nowMinutes)) return word;
-  return groundIsSnowy(getWorldClimateSettings(climateIndex), climateSeasonFromMinutes(skyMinuteOfEvent(nowMinutes))) ? WEATHER_ENUM.snow : word;   // TIME1: the ground the sky's season dresses   // an unknown climate takes the default's ground, as the terrain does
+  const snowy = groundWearsSnow(getWorldClimateSettings(climateIndex), climateSeasonFromMinutes(skyMinuteOfEvent(nowMinutes)));
+  if (word === WEATHER_ENUM.snow) return snowy ? word : WEATHER_ENUM.rain;   // SNOWLESS1: no snow falls on a ground that wears none
+  return snowy ? WEATHER_ENUM.snow : word;   // TIME1: the ground the sky's season dresses   // an unknown climate takes the default's ground, as the terrain does
 }
 /** The ONE write of the sim's word from a roll or the array: the raw word
  *  kept, the ground law applied. Answers true when the worn word changed. */

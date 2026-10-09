@@ -18,9 +18,10 @@ on:
 permissions:
   contents: read
 
-# Never beside a deploy's migrations, a recovery or a restore: the deploy's own group, queued.
+# AUDIT SERVER-POST: its own group, never the deploy's - a group keeps ONE pending run, and a read dispatched while a
+# deploy waited behind another would have cancelled that deploy. It only reads.
 concurrency:
-  group: account-deploy
+  group: sd-clears
   cancel-in-progress: false
 
 jobs:

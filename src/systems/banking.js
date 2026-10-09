@@ -545,7 +545,7 @@ export function registerMaxBankLoan(fn) { _maxLoanOverride = typeof fn === 'func
  *  is (DFU's level x 50,000, or Roleplay & Realism's per-level choice, which the lane keeps on online), rounded down.
  *  The interest and the year to repay are the classic ones; offline the law is untouched. A departure (Port-Ledger A). */
 export const EMPIRE_LOAN_DIVISOR = 10;
-export const calculateMaxBankLoan = (level, online = isOnlinePage()) => {   // SHIP-CREDIT: `online` a caller's own word, as borrowDecision's
+export const calculateMaxBankLoan = (level, online = isOnlinePage()) => {
   const cap = _maxLoanOverride?.(level) ?? level * LOAN_MAX_PER_LEVEL;
   return online ? Math.floor(cap / EMPIRE_LOAN_DIVISOR) : cap;
 };
@@ -917,45 +917,6 @@ export function borrowDecision(accounts, regionIndex, { online = isOnlinePage() 
   const empire = online ? empireRefusal(accounts) : null;
   if (empire) return { kind: 'refuse', ...empire };
   return { kind: 'input', transactionType: TRANSACTION_TYPE.Borrowing_loan };
-}
-
-/**
- * SHIP-CREDIT (2026-10-01, Mac: "make ship prices more reasonable and provide more accessibility options to acquiring";
- * his pick, "Buy on credit - Pay part now; the bank lends you the rest under Daggerfall's own loan rules") - A BOAT
- * BOUGHT ON CREDIT at a shop's counter (the shelf's Come Sail Away deed or parts). The purse pays what it holds - at
- * least CREDIT_DOWN_SHARE of the price - and the bank of the shop's region lends the rest under BorrowLoan's own law:
- * borrowDecision's refusals (a loan or a default standing there; online the Empire's one loan a character), the loan
- * LOAN_MINIMUM at least (a shortfall under it borrows the minimum and the purse pays the less) and CalculateMaxBankLoan
- * at most, repaid with its 10% within LOAN_REPAY_MINUTES - LoanChecker's reminders and default as for any loan. The
- * lent gold goes to the shop: never into the account (`takeCredit`).
- */
-export const CREDIT_DOWN_SHARE = 0.2;
-/**
- * SHIP-CREDIT: what a purchase of `price` with `purse` in hand can be on credit - `{ kind: 'none' }` (the purse pays
- * it), `{ kind: 'credit', loan, pay, owed }` (the purse pays `pay`, the bank lends `loan`, `owed` repaid), or
- * `{ kind: 'refuse', result, ... }` - borrowDecision's refusal (with `empireRegion` online), NOT_ENOUGH_GOLD with the
- * `down` payment the purse lacks, or LOAN_REQUEST_TOO_HIGH with the `max` the bank lends.
- */
-export function creditDecision(accounts, regionIndex, { price = 0, purse = 0, level = 1, online = isOnlinePage() } = {}) {
-  mustValidate(accounts, regionIndex);
-  const cost = Math.max(0, Math.trunc(price)), have = Math.max(0, Math.trunc(purse));
-  if (have >= cost) return { kind: 'none' };
-  const gate = borrowDecision(accounts, regionIndex, { online });
-  if (gate.kind === 'refuse') return { ...gate };
-  const down = Math.ceil(cost * CREDIT_DOWN_SHARE);
-  if (have < down) return { kind: 'refuse', result: TRANSACTION_RESULT.NOT_ENOUGH_GOLD, down };
-  const loan = Math.max(LOAN_MINIMUM, cost - have);
-  const max = calculateMaxBankLoan(level, online);
-  if (loan > max) return { kind: 'refuse', result: TRANSACTION_RESULT.LOAN_REQUEST_TOO_HIGH, max };
-  return { kind: 'credit', loan, pay: cost - loan, owed: calculateBankLoanRepayment(loan) };
-}
-/** SHIP-CREDIT: the loan a credit purchase takes - BorrowLoan's debt and its year (:542-556), with no gold into the
- *  account: the bank paid the shop. */
-export function takeCredit(accounts, regionIndex, loan, { nowMinutes = 0 } = {}) {
-  mustValidate(accounts, regionIndex);
-  const account = accounts[regionIndex];
-  account.loanTotal += calculateBankLoanRepayment(loan);
-  account.loanDueDate = nowMinutes + LOAN_REPAY_MINUTES;
 }
 
 /** BuyHouseButton (:417-436) and BuyShipButton (:453-464). Both refuse
