@@ -268,6 +268,7 @@ function riftHost({ rec, hollow, storage = memStorage(), entered = true } = {}) 
     sdHost: { record: () => h.rec, hollow: () => hollow }, _sharedOffsetMs: 0, sdRiftWord, sdReturnStands, sdRiftCount, riftLook, modes, playerEntity: { health: 10 },
     INTERIOR_SEASON: 3, SD_REALM_TEXT, setMidScreenText: (t) => log.push(['said', t]), sdSay: (t) => log.push(['said', t]), _sdEntered: enteredOf(storage), _sdFallen: new Set(),   // SD-ONELIFE (PIN MOVED)
     _teleportToPixel: async () => { log.push('pixel'); if (h.onWalk) h.rec = h.onWalk; },
+    sdVeilCentre: () => null, standBeforeHollowDoor: () => true,   // SD-LOOK S5: the veil's centre; AUDIT SD IV (F40): before its door
   };
   const body = `${constOf('sdRiftOf')}\n${fnOf('sdEnterRealm')}\nreturn { sdRiftOf, sdEnterRealm };`;
   const api = new Function(...Object.keys(env), body)(...Object.values(env));

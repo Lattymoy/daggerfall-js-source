@@ -1064,12 +1064,15 @@ dungeon host with a level made in code - never a fifth host.
 - **The way in** (`scenes/world.js sdEnterRealm`, the Rift's door - SD4b's `enter`): under the veil (the gate's, the
   design's - in the Hour's own brass, its toll and its chime, AUDIT SD II), the Rift's word asked once more (the Hour
   can close while the veil does), the Hollow left as a teleport leaves a dungeon, the player put at its pixel outside
-  (the staff teleport's way - the street streamed, so the way out has a door to land before), then the realm built and
+  (the staff teleport's way - the street streamed, so the way out has a door to land before) and stood before its door
+  (AUDIT SD IV F40: the pixel's middle is where the Hollow itself stands, its keep's roof - a late refusal or a realm that
+  would not build left the player there, and the way out's `from` was read there), then the realm built and
   entered (`scenes/worldModes.js enterSdRealm`), facing the Orrery. Its room is the relay's realm, `sd:<s>`, whose hello
   asks the Rift's law again (SD3's `_sdAdmit`).
 - **The way back** (`sdWayBack`): the Hollow's own Rift at the Threshold's back (*The Rift - To the Abyss Dungeon*), pressed or
   walked into - under the veil, out of the Hour, to the Hollow's pixel, into the Hollow by its door, stood beside its
-  Rift (the Return's place, `dungeonContext.js sdRiftLanding`). A Hollow gone meanwhile: outside, at its pixel.
+  Rift (the Return's place, `dungeonContext.js sdRiftLanding`). A Hollow gone meanwhile: outside, at its pixel; its door
+  that would not open: before it (AUDIT SD IV F40).
 - **Out by force**: a death, or the Hour's end (SD2d's cast-out reaches the Hour now - the Hollow counts a player in its
   Hour as inside it), lands before the Hollow's door: the Hour's end by the mode machine's landing (`returnLanding`, which
   reads `sdHollow`'s doors - `sdHollowDoors` - and `dungeonReturn.from` with none), a death by the death's own door, as

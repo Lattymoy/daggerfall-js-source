@@ -286,5 +286,41 @@
     "tests": [
       "test/sd26_dungeon.test.js"
     ]
+  },
+  {
+    "name": "SD26-F40-the-step-at-the-pixels-middle",
+    "file": "src/scenes/world.js",
+    "old": "      standBeforeHollowDoor(hollow.key);   // AUDIT SD IV (F40): before its door, never its pixel's middle\n",
+    "new": "",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "SD26-F40-the-way-back-at-the-pixels-middle",
+    "file": "src/scenes/world.js",
+    "old": "if (!(await modes?.startInDungeon?.())) { standBeforeHollowDoor(back.key); return true; }",
+    "new": "if (!(await modes?.startInDungeon?.())) return true;",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "SD26-F40-the-doors-raw",
+    "file": "src/scenes/world.js",
+    "old": "DOOR_TYPE.DUNGEON_ENTRANCE).map(shiftedDoor);",
+    "new": "DOOR_TYPE.DUNGEON_ENTRANCE).map((d) => d.door);",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "SD26-F40-the-feet-at-the-doors-centre",
+    "file": "src/scenes/world.js",
+    "old": "player.spawn(at.pos[0], repositionFeetY(collider.heightAt(at.pos[0], at.pos[2]), at.pos[1]), at.pos[2]);",
+    "new": "player.spawn(at.pos[0], at.pos[1], at.pos[2]);",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
   }
 ]

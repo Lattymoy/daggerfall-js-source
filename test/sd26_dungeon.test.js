@@ -27,6 +27,9 @@ import { sdRoll, sdRise, sdFirst } from '../src/net/sdLaw.js';
 import { collectDungeonEnemies } from '../src/characters/dungeonEnemies.js';
 import { dungeonEndOf } from '../src/world/dungeonEnd.js';
 import { RDB_SIDE } from '../src/world/rdbLayout.js';
+import { getStaticDoors } from '../src/world/staticDoors.js';
+import { DOOR_TYPE } from '../src/world/meshReader.js';
+import { dungeonEntranceLanding, repositionFeetY } from '../src/player/enterExit.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const W = read('src/scenes/world.js');
@@ -409,4 +412,61 @@ test('SD26 THE HOLLOW HOST\'S SCAN IS SLICED (AUDIT SD IV F39): its scan seam ha
   assert.ok(host.hollow(), `stood after ${frames} frames`);
   const whole = findSdSite(host.record(), scanGatePixels(maps, { spawnSalt: WORLD_SALT, heightAt: () => 90 }), sdCities([city], 0, { regionNameOf: () => 'Nowhere' }));
   assert.deepEqual([host.hollow().site.px, host.hollow().site.py], [whole.px, whole.py], 'where the whole scan stands it');
+});
+
+// ── F40: the step out to the Hour before the Hollow's door ────────────
+
+test('SD26 THE STEP OUT TO THE HOUR STANDS BEFORE THE HOLLOW\'S DOOR (AUDIT SD IV F40): the step through the Rift left the Hollow for its pixel\'s middle - where the Hollow itself stands (spawnedLocationCentreLocal), its keep\'s roof, TL2\'s guard never asked - and a late refusal or a realm that would not build left the player there; the way back whose door would not open did the same, and the way out\'s `from` was that roof. Now, the pixel built (its door streamed in), the player is stood before its door in the scene\'s frame (the mode machine\'s own landing off the same list) before the Hour is asked; no door streamed, where the pixel put them (mutants: the step at the pixel\'s middle; the way back at it; the doors raw; the feet at the door\'s centre)', async () => {
+  const sd = /\n {2}(const shiftedDoor = \(entry\) => \{\n[\s\S]*?\n {2}\};)\n/.exec(W);
+  const hd = /\n {2}(const sdHollowDoorsOf = \(h\) => .*?;)\n/.exec(W);
+  assert.ok(sd && hd, 'the world host\'s door list');
+  // the Hollow on a hill 412 m up, the streamer's vertical shift at -560 (test/sd23_sky.test.js's case)
+  const NATIVE_Y = 412, SHIFT_Y = -560, GROUND = NATIVE_Y + SHIFT_Y, KEY = '5,5';
+  const model = { doors: [{ type: DOOR_TYPE.DUNGEON_ENTRANCE, index: 0, vert0: { x: -1, y: 0, z: 0 }, vert2: { x: 1, y: 2.5, z: 0 }, normal: { x: 0, y: 0, z: 1 } }] };
+  const entry = (key) => ({ door: getStaticDoors(model, 7, 3, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 300, NATIVE_Y, 500, 1])[0], pixelKey: key, dfBlock: null, blockX: 0, blockY: 0, recordIndex: 3, climateBase: 2, season: 0 });
+  const steps = ({ doors = [entry(KEY)], word = null, late = null, entered = true, inDoor = true, realm = null } = {}) => {
+    const log = [];
+    let step = null, asked = 0;
+    const modes = {
+      mode: 'dungeon', dungeonLocation: realm, stepThroughFire: (go) => { step = go; },
+      forceExitToExterior: () => { log.push('out'); modes.mode = 'exterior'; },
+      enterSdRealm: async (r) => { log.push(['realm', r.s]); return entered; },
+      startInDungeon: async () => { log.push('hollow'); return inDoor; },
+      dungeonCtx: { sdRiftLanding: () => [5, 0, 6] }, setPlayerLocalPosition: (p) => log.push(['stood', ...p]),
+    };
+    const hollow = { s: 7, key: KEY, site: { px: 5, py: 5 }, loc: { name: 'The Stopped Bell', climate: { climateType: 2 }, regionIndex: 3, regionName: 'Daggerfall' } };
+    const env = {
+      state: { pixelTranslation: (px, py) => (`${px},${py}` === KEY ? [0, SHIFT_Y, 0] : [0, 0, 0]) }, buildingDoors: doors, DOOR_TYPE, dungeonEntranceLanding, repositionFeetY,
+      walkMode: true, playerSpawned: false, player: { spawn: (x, y, z) => log.push(['spawn', x, y, z]), eyeAt: () => [0, 0, 0] }, collider: { heightAt: () => GROUND }, cam: { yaw: 0, pitch: 0.3, pos: null },
+      sdHost: { hollow: () => hollow }, modes, playerEntity: { health: 10 }, INTERIOR_SEASON: 3, SD_REALM_TEXT, isSdRealm: (loc) => loc?.sdRealm != null,
+      sdRiftOf: () => ({ word: asked++ === 0 ? word : late }), sdSay: (t) => log.push(['said', t]), _sdEntered: new Set(), sdVeilCentre: () => null,
+      _teleportToPixel: async (x, y) => log.push(['pixel', x, y]),
+    };
+    const body = `${sd[1]}\n${hd[1]}\n${fnIn(W, 'standBeforeHollowDoor')}\n${fnIn(W, 'sdEnterRealm')}\n${fnIn(W, 'sdWayBack')}\nreturn { sdEnterRealm, sdWayBack, cam };`;
+    return { ...new Function(...Object.keys(env), body)(...Object.values(env)), log, run: () => step?.() };
+  };
+  const landing = dungeonEntranceLanding([{ ...entry(KEY).door, matrix: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 300, GROUND, 500, 1] }]);
+  const spawn = ['spawn', landing.pos[0], repositionFeetY(GROUND, landing.pos[1]), landing.pos[2]];
+  assert.ok(spawn[2] >= GROUND && spawn[2] - GROUND < 1, `its feet on the ground before its door: ${spawn[2]}`);
+  // into the Hour: before its door, then the realm
+  const a = steps();
+  a.sdEnterRealm(7);
+  assert.equal(await a.run(), true);
+  assert.deepEqual(a.log, ['out', ['pixel', 5, 5], spawn, ['realm', 7]]);
+  assert.ok(Math.abs(a.cam.yaw - Math.atan2(landing.normal[0], landing.normal[2])) < 1e-9 && a.cam.pitch === 0, 'facing out of its door');
+  // a late refusal: left before its door, not on its roof
+  const b = steps({ late: 'The Hour has closed.' });
+  b.sdEnterRealm(7);
+  assert.equal(await b.run(), false);
+  assert.deepEqual(b.log, ['out', ['pixel', 5, 5], spawn, ['said', 'The Hour has closed.']]);
+  // back from the Hour, its door shut: before it
+  const c = steps({ realm: { sdRealm: 7, sdHollow: { key: KEY, px: 5, py: 5 } }, inDoor: false });
+  c.sdWayBack();
+  await c.run();
+  assert.deepEqual(c.log, ['out', ['pixel', 5, 5], 'hollow', spawn]);
+  // no door streamed: where the pixel put me
+  const d = steps({ doors: [entry('9,9')] });
+  d.sdEnterRealm(7);
+  await d.run();
+  assert.deepEqual(d.log, ['out', ['pixel', 5, 5], ['realm', 7]]);
 });

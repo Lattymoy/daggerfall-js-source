@@ -250,6 +250,8 @@ function worldSteps({ hollow = { s: 7, key: HOLLOW.key, site: { px: 303, py: 202
     sdHost, modes, playerEntity: { health: 10 }, INTERIOR_SEASON: 3, SD_REALM_TEXT, isSdRealm, _sdEntered: new Set(), _sdFallen: new Set(),   // AUDIT SD: the slots gone through (PIN MOVED); SD-ONELIFE: and died in (PIN MOVED)
     sdRiftOf: () => ({ word }), setMidScreenText: (t) => log.push(['said', t]), _teleportToPixel: async (x, y) => log.push(['pixel', x, y]),
     sdSay: (t) => log.push(['said', t]),   // AUDIT SD II (SD11d, PIN MOVED): through the Hour's voice
+    sdVeilCentre: () => null,   // SD-LOOK S5: where the Hour's veil closes (the screen's middle here)
+    standBeforeHollowDoor: (k) => { log.push(['door', k]); return true; },   // AUDIT SD IV (F40, PIN MOVED): before its door
   };
   const body = `${fn('sdEnterRealm')}\n${fn('sdWayBack')}\nreturn { sdEnterRealm, sdWayBack };`;
   const api = new Function(...Object.keys(env), body)(...Object.values(env));
@@ -261,7 +263,7 @@ test('SD5a the world host\'s steps, run from its own text: through the Rift - un
   assert.equal(a.sdEnterRealm(7), true);
   assert.deepEqual(a.log, [], 'nothing before the veil has closed');
   assert.equal(await a.run(), true);
-  assert.deepEqual(a.log, ['out', ['pixel', 303, 202], ['realm', 7, HOLLOW.key, 'Daggerfall']]);
+  assert.deepEqual(a.log, ['out', ['pixel', 303, 202], ['door', HOLLOW.key], ['realm', 7, HOLLOW.key, 'Daggerfall']]);   // AUDIT SD IV (F40, PIN MOVED): stood before its door, never its pixel's middle
   assert.equal(worldSteps().sdEnterRealm(8), false, 'another slot\'s Rift is no door of this Hollow\'s');
   const shut = worldSteps({ word: SD_NO_CLOSED });
   shut.sdEnterRealm(7);
@@ -277,6 +279,10 @@ test('SD5a the world host\'s steps, run from its own text: through the Rift - un
   assert.equal(b.sdWayBack(), true);
   assert.equal(await b.run(), true);
   assert.deepEqual(b.log, ['out', ['pixel', 303, 202], 'hollow', ['stood', 5, 0, 6]]);
+  const shutDoor = worldSteps({ realm, inDoor: false });   // AUDIT SD IV (F40): its door would not open - before it, outside
+  shutDoor.sdWayBack();
+  await shutDoor.run();
+  assert.deepEqual(shutDoor.log, ['out', ['pixel', 303, 202], 'hollow', ['door', HOLLOW.key]]);
   const gone = worldSteps({ realm, hollow: null });
   gone.sdWayBack();
   await gone.run();
@@ -288,7 +294,8 @@ test('SD5a the world host by source: the Rift\'s door; the doors out of the Hour
   const w = read('src/scenes/world.js');
   assert.match(w, /enter: \(\) => sdEnterRealm\(s\) \};/);
   assert.match(w, /sdWayBack: \(\) => sdWayBack\(\),/);
-  assert.match(w, /sdHollowDoors: \(h\) => buildingDoors\.filter\(\(d\) => d\.pixelKey === h\?\.key && d\.door\?\.doorType === DOOR_TYPE\.DUNGEON_ENTRANCE\)\.map\(shiftedDoor\),/);   // SD-SKY (PIN MOVED): in the scene's frame - the raw list's doors are their pixels' (test/sd23_sky.test.js)
+  assert.match(w, /const sdHollowDoorsOf = \(h\) => buildingDoors\.filter\(\(d\) => d\.pixelKey === h\?\.key && d\.door\?\.doorType === DOOR_TYPE\.DUNGEON_ENTRANCE\)\.map\(shiftedDoor\);/);   // AUDIT SD IV (F40, PIN MOVED): one list, the mode machine's and the step's
+  assert.match(w, /sdHollowDoors: \(h\) => sdHollowDoorsOf\(h\),/);   // SD-SKY (PIN MOVED): in the scene's frame - the raw list's doors are their pixels' (test/sd23_sky.test.js)
   assert.match(w, /else if \(modes\?\.roomIdentity\?\.\(\)\?\.kind === 'sd'\) key = sdRoomKey\(modes\?\.roomIdentity\?\.\(\)\?\.s\);/);
   assert.match(w, /if \(modes\?\.gateArenaDay\?\.\(\) != null\) \{ setMidScreenText\(COURT_TEXT\.noMark\); return; \}[^\n]*\n\s+if \(modes\?\.sdRealmSlot\?\.\(\) != null\) \{ sdSay\(SD_REALM_TEXT\.noMark\); return; \}/);   // AUDIT SD II (SD11d, PIN MOVED): through the Hour's voice
   assert.match(w, /if \(modes\?\.sdRealmSlot\?\.\(\) != null\) \{ sdSay\(SD_REALM_TEXT\.noRecall\); return; \}/);

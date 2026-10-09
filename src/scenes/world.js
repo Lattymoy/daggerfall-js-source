@@ -648,7 +648,7 @@ import { travelDriveForward, travelLookaheadFor } from '../systems/travelAutopil
 import { createTravelSteer, createColliderProbe, steerDrive } from '../systems/travelSteer.js';   // TRAVEL-NAV1: the journey goes round what is in its way, and stops short of what it cannot
 import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER, exteriorSwimming, feetWaterCoverage, SWIM_COVERAGE } from '../player/exteriorSurface.js';   // ROAD-B (b3): PlayerMotor's three exterior surface methods; OT1: IsPlayerSwimming above ground
 import { isOnFoot } from '../systems/transport.js';   // TransportManager.IsOnFoot - the raycast's reach and the mounted footstep gate
-import { floorLanding, doorWorldPosition } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27); SD2b: where a Hollow's mouth stands, to find it at
+import { floorLanding, doorWorldPosition, dungeonEntranceLanding, repositionFeetY } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27); SD2b: where a Hollow's mouth stands, to find it at
 import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../systems/skills.js';   // TO1: the avoid-encounter roll reads skillValue live (imported above) Stealth   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
 import { playerEntity, surfacePlayer, hurtPlayer, playerBlowCameToNothing, setDeathPresenter, presentPlayerDeath, setDeathListener, setAvoidDeathHook, registerDuelFell, duelSpare, setStaffPowers, staffPowers, registerLevitateWard, registerFreeFlight } from '../characters/playerEntity.js';   // AUDIT-SEATS G5: a siege's ward on Levitate   // AUDIT-SEATS G4: a spectator's flight
 import { SOUND } from '../systems/soundClips.js';
@@ -17725,6 +17725,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     matrix[14] = m[14] + t[2];
     return { ...entry.door, matrix };
   };
+  /** SD5a: a Hollow's entrance doors in the scene's frame (SD-SKY: the list keeps each in its pixel's) - the way out of
+   *  the Hour lands before them (the mode machine's `sdHollowDoors`), and AUDIT SD IV (F40) the step out to its pixel. */
+  const sdHollowDoorsOf = (h) => buildingDoors.filter((d) => d.pixelKey === h?.key && d.door?.doorType === DOOR_TYPE.DUNGEON_ENTRANCE).map(shiftedDoor);
   // ---- Q4-v: THE QUEST BRIDGE - the machine goes live in this host ----
   // The world seam is composed from the host's REAL objects (MapsFile,
   // BlocksFile, the faction store, the one clock, the inventory, the
@@ -23265,7 +23268,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** SD5a (Super-Dungeons.md section 7): THROUGH THE RIFT - out of the Hollow and into the Shattered Hour, under the veil
    *  (scenes/worldModes.js stepThroughFire): the Hollow left as a teleport leaves a dungeon, the player at its pixel
    *  outside (the staff teleport's way - the street streamed under them, so the way out of the Hour has a door to land
-   *  before), then the realm built and entered (enterSdRealm) - its room the relay's `sd:<s>`, whose hello asks the Rift's
+   *  before) and stood before that door (AUDIT SD IV F40), then the realm built and entered (enterSdRealm) - its room the relay's `sd:<s>`, whose hello asks the Rift's
    *  law again (SD3). The Rift's word is asked once more under the veil: the Hour can close while it does. Answers whether
    *  the step began - AUDIT SD III (H6): null while another step is under way (the way back's landing, still under its
    *  veil): not refused, not yet. The step refused it in silence, and its walk-in was spent. */
@@ -23281,13 +23284,27 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (word) { sdSay(word); return false; }
       modes?.forceExitToExterior();
       await _teleportToPixel(hollow.px, hollow.py);
-      // AUDIT SD II (L1 F3): its word asked again after the walk - the end may have overtaken the step (outside, at its pixel)
+      standBeforeHollowDoor(hollow.key);   // AUDIT SD IV (F40): before its door, never its pixel's middle
+      // AUDIT SD II (L1 F3): its word asked again after the walk - the end may have overtaken the step (outside, before its door)
       const late = sdRiftOf(s)?.word;
       if (late) { sdSay(late); return false; }
       if (await modes?.enterSdRealm?.({ s, hollow, site })) { _sdEntered.add(s); return true; }   // AUDIT SD: through - its Rift admits me again in its collapse
-      sdSay(SD_REALM_TEXT.lost);   // the realm would not build: outside, at the Hollow's pixel
+      sdSay(SD_REALM_TEXT.lost);   // the realm would not build: outside, before the Hollow's door
       return false;
     }, 'hourIn');   // AUDIT SD II (L6 F8): through the Hour's own veil - SD-LOOK: its blades closing on the Rift
+    return true;
+  }
+  /** AUDIT SD IV (F40): BEFORE THE HOLLOW'S DOOR, outside - after a step out to its pixel (into the Hour, or back when its
+   *  door would not open): the mode machine's own landing for it (exitDungeonNow's, off the same doors), so a step refused
+   *  there, a realm that would not build and the way out's `from` stand on the street. The pixel's middle is where the
+   *  Hollow stands (spawnedLocationCentreLocal) - its keep's roof, TL2's guard never asked. Answers whether it stood me. */
+  function standBeforeHollowDoor(key) {
+    const at = walkMode ? dungeonEntranceLanding(sdHollowDoorsOf({ key })) : null;
+    if (!at) return false;
+    player.spawn(at.pos[0], repositionFeetY(collider.heightAt(at.pos[0], at.pos[2]), at.pos[1]), at.pos[2]);
+    playerSpawned = true;
+    cam.yaw = Math.atan2(at.normal[0], at.normal[2]); cam.pitch = 0;
+    cam.pos = player.eyeAt();
     return true;
   }
   /** SD10 (Super-Dungeons.md section 11's collapse): WHERE THE WAY HOME STANDS - where the Remnant fell, once its body has
@@ -23329,8 +23346,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   }
   /** SD5a: BACK THROUGH THE RIFT - out of the Hour and into its Hollow, beside its Rift, under the veil: the realm left,
    *  the player at the Hollow's pixel outside, the Hollow entered by its own door (startInDungeon - the door at this
-   *  pixel) and stood beside its Rift (the Return's place - dungeonContext.js sdRiftLanding). A Hollow gone meanwhile, or
-   *  a door that would not open: outside, at its pixel. AUDIT SD III (H6): null while another step is under way. */
+   *  pixel) and stood beside its Rift (the Return's place - dungeonContext.js sdRiftLanding). A Hollow gone meanwhile:
+   *  outside, at its pixel; a door that would not open: before it (AUDIT SD IV F40). AUDIT SD III (H6): null while
+   *  another step is under way. */
   function sdWayBack() {
     const loc = modes?.dungeonLocation;
     if (!isSdRealm(loc) || !modes?.stepThroughFire) return false;
@@ -23342,7 +23360,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (!back) return true;
       await _teleportToPixel(back.px, back.py);
       if (sdHost?.hollow()?.key !== back.key) return true;   // its end overtook the step: outside, where it stood
-      if (!(await modes?.startInDungeon?.())) return true;
+      if (!(await modes?.startInDungeon?.())) { standBeforeHollowDoor(back.key); return true; }   // AUDIT SD IV (F40): before its door
       const at = modes?.dungeonCtx?.sdRiftLanding?.();
       if (at) modes?.setPlayerLocalPosition?.(at);
       return true;
@@ -27134,7 +27152,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     sdFight: () => sdFightLink,   // SD8c: the Last Moment's fight as the page holds it, for the arena's set
     sdFightIn: () => !!online?.sendSdIn?.(playerEntity.level),   // SD8c: my `in` - my level, my game's brain
     sdBlow: (k, f) => !!online?.sendSdBlow?.(k, f),   // SD8c: a blow of mine on the Remnant, an Echo or a Heart, out to the realm
-    sdHollowDoors: (h) => buildingDoors.filter((d) => d.pixelKey === h?.key && d.door?.doorType === DOOR_TYPE.DUNGEON_ENTRANCE).map(shiftedDoor),   // SD5a: out of the Hour - its end, the way home - before the Hollow's door (AUDIT SD IV F4: a death wakes by the death's own door, SD2d); SD-SKY: in the scene's frame, as doorTargets hands every door (the list's own is its pixel's: the way out stood the player the streamer's vertical shift over the Hollow, in the sky)
+    sdHollowDoors: (h) => sdHollowDoorsOf(h),   // SD5a: out of the Hour - its end, the way home - before the Hollow's door (AUDIT SD IV F4: a death wakes by the death's own door, SD2d); SD-SKY: in the scene's frame, as doorTargets hands every door (the list's own is its pixel's: the way out stood the player the streamer's vertical shift over the Hollow, in the sky)
     // D-ONLINE1: the death screen's door for the deaths this host does
     // not present itself (a dungeon's, a building interior's -
     // worldModes.js). False (not handled) when this session is not
