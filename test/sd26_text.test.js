@@ -199,3 +199,13 @@ test('SD26 THE MESSAGE LINE OVER THE CARDS (T4): the marks card as I arrive (gat
   // the selector's word is the cards' own hide
   for (const f of ['src/ui/gateMarksView.js', 'src/ui/gateDamageChart.js']) assert.match(read(f), /root\.style\.display = want \? '' : 'none';/, f);
 });
+
+test('SD26 THE MESSAGE LINE ITS OWN WIDTH, ON THE SCREEN AT EVERY HUD SCALE (T5): `.hudmid` is fixed at left 50% with no width, so it shrank to the half of the screen right of it and its 86vw cap never held - a 390 px phone wrapped every line at 195 px, the Hour\'s longest into four rows over the ground\'s warning (enhancedHelm.js\'s bar had the same cause). Its width is its content\'s, to the cap - and the cap is divided by the HUD scale, which grows the box after it is laid out: the cap alone put a scale-2 line off both sides (in headless Chromium: 27-363 px on a 390 px phone and 300-980 on a 1280 px screen at every scale 0.5-2). The prison\'s line, never scaled, keeps the cap whole (mutants: the half-screen squeeze; the cap unscaled; the prison\'s cap scaled)', () => {
+  const rule = (sel) => new RegExp(`\\n${sel.replace(/\./g, '\\.')} \\{([^}]*)\\}`).exec(ENHANCED_CSS)?.[1] ?? '';
+  const mid = rule('.hudmid'), prison = rule('.hudmid.hudprison');
+  assert.match(mid, /transform: translateX\(-50%\) scale\(var\(--hud-scale, 1\)\);/, 'grown by the HUD scale after layout');
+  assert.match(mid, /left: 50%;/);
+  assert.match(mid, /width: max-content; max-width: calc\(min\(680px, 86vw\) \/ var\(--hud-scale, 1\)\);/, 'its content\'s width, to the cap over the scale');
+  assert.doesNotMatch(prison, /scale\(/, 'the prison\'s line is never scaled');
+  assert.match(prison, /max-width: min\(680px, 86vw\);/, 'so its cap is whole');
+});

@@ -3445,17 +3445,22 @@ ${paceControlsCss('tview')}
    (112 + 146*4)/1024 = 68%, not 73%. So the module WRITES the real
    number: ui/enhancedHudText.js sets --hudmid-top in CSS pixels from
    the same floored arithmetic, off the same canvas, and 73% is the
-   fallback for a frame that has not been drawn yet. */
+   fallback for a frame that has not been drawn yet.
+
+   AUDIT SD IV (T5): ITS WIDTH ITS OWN - a fixed box at left 50% with no width shrinks to the half of the screen right of
+   it, so the 86vw cap never held: a phone wrapped every line at 195 px, the Hour's longest into four rows over the
+   ground's warning. max-content to the cap - divided by the HUD scale, which grows the box after it is laid out (a
+   line at scale 2 ran off both sides). The prison's line, never scaled, keeps the cap whole. */
 .hudmid { position: fixed; left: 50%; top: var(--hudmid-top, 73%); transform: translateX(-50%) scale(var(--hud-scale, 1));
   transform-origin: top center; z-index: 4; pointer-events: none; text-align: center;
-  max-width: min(680px, 86vw); font-size: 15px; letter-spacing: 0.04em;
+  width: max-content; max-width: calc(min(680px, 86vw) / var(--hud-scale, 1)); font-size: 15px; letter-spacing: 0.04em;
   font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;
   font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
   color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
 /* AUDIT FONT3 F4: THE PRISON'S LINE is the prison screen's, not the HUD's - it rides the native panel (its size is the
    panel's 7-row cell at the panel's scale, ui/prisonScreen.js), never the HUD scale (which takes it to 7.5px at 0.5),
    in DaggerfallCourtWindow's own colour and shadow (DAYS_LABEL_COLOR / DAYS_LABEL_SHADOW). */
-.hudmid.hudprison { transform: translateX(-50%); font-size: var(--prison-px, 22px); letter-spacing: 0.06em;
+.hudmid.hudprison { transform: translateX(-50%); max-width: min(680px, 86vw); font-size: var(--prison-px, 22px); letter-spacing: 0.06em;
   color: rgb(232,196,76); text-shadow: 2px 2px 0 rgb(48,36,20); }
 
 /* FONT1: THE ONLINE STATUS LINE - the socket's own word (connecting,

@@ -187,5 +187,32 @@
     "tests": [
       "test/sd26_text.test.js"
     ]
+  },
+  {
+    "name": "SD26-T5-the-half-screen-squeeze",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  width: max-content; max-width: calc(min(680px, 86vw) / var(--hud-scale, 1)); font-size: 15px;",
+    "new": "  max-width: calc(min(680px, 86vw) / var(--hud-scale, 1)); font-size: 15px;",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T5-the-cap-unscaled",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  width: max-content; max-width: calc(min(680px, 86vw) / var(--hud-scale, 1)); font-size: 15px;",
+    "new": "  width: max-content; max-width: min(680px, 86vw); font-size: 15px;",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T5-the-prisons-cap-scaled",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".hudmid.hudprison { transform: translateX(-50%); max-width: min(680px, 86vw); font-size:",
+    "new": ".hudmid.hudprison { transform: translateX(-50%); font-size:",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
   }
 ]
