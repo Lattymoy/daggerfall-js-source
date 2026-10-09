@@ -91,7 +91,7 @@
 
 import { fpArm, hasDaggerfallArrows } from '../combat/fpArm.js';
 import { dressStanding } from '../systems/clothingStanding.js';   // DRESS1 (2026-09-30, Discord): the Standing page's Dress line
-import { questRail, journalLines, questTitleOf, QUEST_URGENT_SECONDS, remainWords } from './questRail.js';
+import { questRail, shelvedRail, journalLines, questTitleOf, QUEST_URGENT_SECONDS, remainWords } from './questRail.js';
 import { entryTarget, targetWords, WHERE_TEXT } from './questLens.js';   // GUIDE2: where a quest points, and the way there   // MAC-K2: the ONE quest walk, shared with the chronicle
 import { questTracker, followOn, trackButton } from './questTracker.js';   // GUIDE4: the HUD's card - the Track toggle, and the quest the journal opens on
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1: a tap on the scrim resumes
@@ -4408,7 +4408,9 @@ function pauseQuests(body) {
   // MAC-K2: THE WALK IS ui/questRail.js's now, because the chronicle
   // needs the same one - the L key's window had no quests in it at all
   // and a second copy of this here is how the two would drift.
-  const { active, finished, hidden, shelved = [] } = questRail(hooks.questLog() ?? { active: [], finished: [] });   // QUEST-SHELF: and the quests set aside
+  const log = hooks.questLog() ?? { active: [], finished: [] };
+  const { active, finished, hidden } = questRail(log);
+  const shelved = shelvedRail(log);   // QUEST-SHELF: and the quests set aside
   // JOURNAL-CLEAN (2026-09-30, Discord: "Should there be a way to clean both finished and unfinished quests from your
   // journal for a cleaner look?"): the host's tidy-ups (scenes/questBridge.js journalClean - remove / clear the
   // archive, hide / unhide an active quest). A host that hands none draws no buttons rather than buttons that do
@@ -4574,7 +4576,8 @@ function pauseQuests(body) {
       // it goes) - where the quest may be set aside (scenes/questBridge.js canAbandon); one set aside RECLAIMS in one press
       if (isShelvedRow && sel.id != null && clean.reclaim) {
         const rc = el('button', 'act', 'Reclaim quest');
-        rc.onclick = () => { questShelfSaid = clean.reclaim(sel.id)?.text ?? null; questSel = `a:${sel.id}`; render(); };
+        // its audit: the selection follows the quest only where it went - a refusal is said under the quest it refused
+        rc.onclick = () => { const out = clean.reclaim(sel.id); questShelfSaid = out?.text ?? null; if (out?.ok) questSel = `a:${sel.id}`; render(); };
         acts.append(rc);
       } else if (sel.entries && sel.id != null && clean.abandon && clean.canAbandon?.(sel.id)) {
         const armed = journalCleanArmed === `ab:${sel.id}`;
@@ -4582,8 +4585,9 @@ function pauseQuests(body) {
         ab.onclick = () => {
           if (journalCleanArmed !== `ab:${sel.id}`) { journalCleanArmed = `ab:${sel.id}`; render(); return; }
           journalCleanArmed = null;
-          questShelfSaid = clean.abandon(sel.id)?.text ?? null;
-          questSel = `s:${sel.id}`;
+          const out = clean.abandon(sel.id);
+          questShelfSaid = out?.text ?? null;
+          if (out?.ok) questSel = `s:${sel.id}`;
           render();
         };
         acts.append(ab);

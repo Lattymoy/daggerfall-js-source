@@ -6589,5 +6589,11 @@ as it was. A DEPARTURE (Port-Ledger A), the port's own.
   The classic skin's logbook is DFU's native window and draws no button (THE NATIVE-WINDOW RULE: no DFU geometry to cite
   for one); a quest set aside leaves its active page. The chronicle (the L key) is read-only and leaves it out.
 
-`test/questshelf.test.js` (4); `tools/mutants/questshelf.json` (36), all dead. PINS MOVED: `test/questbridge.test.js`,
+AUDIT QUEST-SHELF (`01-Overview/Audit-Log.md`, 2026-10-09): a copy RUNNING answers for its name before one set aside
+(`sharedCandidateNamed`), so the same quest taken again is never shadowed, and the copy set aside is not reclaimed while
+it runs (`twin`); a reclaim relinks at once what stands of it and its topics; a named NPC's home copy stands
+(`individualHome`); a partner's envelope carries no shelf (`NO_SHELF`); the Settings repair, the rumor mill
+(`questAway`) and the lens leave a quest set aside alone; the button asks the press's own ladder (`shelveRefusal`).
+
+`test/questshelf.test.js` (5); `tools/mutants/questshelf.json` (58), all dead. PINS MOVED: `test/questbridge.test.js`,
 `test/rest8_questwaits.test.js`, `test/journal_clean.test.js`, `test/time3_quests.test.js`, `test/enhancedPause.test.js`.

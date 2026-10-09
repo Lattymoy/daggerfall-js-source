@@ -74,6 +74,7 @@ import { QUEST_FRAME_MAX } from '../net/wire.js';
 import { BUILD_TAG } from '../buildTag.js';   // SHARE-MEND: the sender's build rides the envelope, so a refusal can name a skew
 import { relayQuestOnline, relayQuestMovedLayout } from './quest/questRepair.js';   // AUDIT SD III (D5): a shared copy laid on this page's world sizes
 import { isOnlinePage } from './onlineLane.js';
+import { isShelved } from './quest/quest.js';   // QUEST-SHELF: a copy set aside
 
 /** The relay's own frame cap for a quest-share envelope (net/wire.js's
  *  QUEST_FRAME_MAX - its own oversized-frame arm, the same scale
@@ -219,7 +220,7 @@ export function canReceiveSharedQuest(machine, questLists, questName, { membersh
   // client, and a hand-built envelope is not bound by it.
   if (isMainQuestName(questName)) return { ok: false, reason: 'mainQuest' };
   // QUEST-SHELF (2026-10-08): a copy I set aside takes no partner's share or step - reclaimed, it is as I left it
-  if (machine.sharedCandidateNamed?.(questName)?.shelvedAt != null) return { ok: false, reason: 'shelved' };
+  if (isShelved(machine.sharedCandidateNamed?.(questName))) return { ok: false, reason: 'shelved' };
   if (machine.hasActiveQuestNamed(questName)) {
     // QUEST1 LIVE SYNC: a resync of a quest ALREADY kept in sync with the
     // party (shared out earlier, or received before) updates the existing
@@ -414,6 +415,7 @@ export const RECEIVER_REFUSAL_TEXT = Object.freeze({
   tooLarge: 'were sent a quest too large to read.',
   mainQuest: 'cannot be given the main quest.',
   restore: 'could not rebuild it in your world.',
+  shelved: 'have abandoned it - reclaim it from your journal to take it up again.',   // QUEST-SHELF's audit: a deliberate share is answered
 });
 
 /** SHARE-MEND: the refusals that say the two copies disagree - most often two BUILDS of the game: before SHARE-COPY

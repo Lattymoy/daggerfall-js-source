@@ -29,6 +29,7 @@
 import { MARKER_PREFERENCE, SITE_TYPES } from './place.js';
 import { ONLINE_DUNGEONS_STATE, portSize } from '../../world/smallerDungeons.js';   // AUDIT DELVE E1 / SD-ONLINE: the sizes the room builds online; MEDIUM-DISTINCT: the two stamps whose builds are medium
 import { isOnlinePage } from '../onlineLane.js';   // MEDIUM-DISTINCT's audit: offline a dungeon no link holds is built by the settings
+import { isShelved } from './quest.js';   // QUEST-SHELF's audit: the repair mends no quest set aside
 
 const PLACEMENTS = Object.freeze({ PlaceNpc: 'npcSymbol', PlaceItem: 'itemSymbol', PlaceFoe: 'foeSymbol' });
 
@@ -222,7 +223,9 @@ export function relayQuestMovedLayout(quest, machine, env = {}, online = isOnlin
  */
 export function repairActiveQuests(machine, env = {}) {
   const report = { quests: 0, people: 0, items: 0, foes: 0, relinked: 0, revealed: 0, topics: 0, failed: 0 };
-  const quests = [...(machine?.quests?.values?.() ?? [])].filter(questRunning);
+  // QUEST-SHELF's audit: nor one set aside - its links stood again, its things went back, while it was away. Its markers
+  // still follow a moved layout (the relays above), so a reclaim finds them true.
+  const quests = [...(machine?.quests?.values?.() ?? [])].filter((q) => questRunning(q) && !isShelved(q));
   report.quests = quests.length;
   const was = !!machine?.mountByName;
   if (machine) machine.mountByName = true;   // every mount the pass runs matches by name (sceneMount.js)

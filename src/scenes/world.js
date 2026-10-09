@@ -781,6 +781,7 @@ import { changeLegalRep, legalRepOf, CRIMES, setCrimeCommitted, lowerRepForCrime
 import { isEquipped, unequipSlot, unequipItem } from '../systems/equip.js';
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 import { makeItemPermanent } from '../systems/quest/item.js';
+import { isShelved } from '../systems/quest/quest.js';   // QUEST-SHELF: a quest set aside
 import { guildOfFaction, membershipOf, guildFactionIdOfGroup, joinedGuildOfGroup, activeMemberships, guildInitiationQuestEnded } from '../systems/guilds.js';   // V2e: the per-read vampire book pick; F96: the TG/DB initiation listener
 import { GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';   // the membership book's key - the travel popup's free-ship read   // AUDIT 39 (#23): GetRegionFaction's Province filter
 import { freeShipTravel, freeTavernRooms, avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // KnightlyOrder.FreeShipTravel, the second half of hasShip; FreeTavernRooms, the trip cost's inn nights
@@ -18103,6 +18104,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     currentRegionIndex: () => _questRegionIndex(),
     getRandomTokens: (textId) => townTalk.variantTokens(textId),
     expandQuestTokens,
+    questAway: (uid) => isShelved(questBridge?.machine.getQuest(uid)),   // QUEST-SHELF's audit: its rumors told by no one while it is away
     // AUDIT 39 (#109): THE COMMON-RUMOR MACRO PASS, which no host
     // ever supplied - so every regional-conditions rumor the sim
     // files (TEXT.RSC 1400-1483, all of them naming %fx1/%fx2/%fl1/
@@ -18143,7 +18145,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // topic tree reads it, and so does the exterior automap's
   // residence-plate arm (ExteriorAutomap.cs:686), which walks the same
   // set.
-  const activeQuestIds = () => [...(questBridge?.machine.quests.values() ?? [])].filter((q) => !q.questTombstoned && q.shelvedAt == null).map((q) => q.uid);   // QUEST-SHELF: a quest set aside is no live one
+  const activeQuestIds = () => [...(questBridge?.machine.quests.values() ?? [])].filter((q) => !q.questTombstoned && !isShelved(q)).map((q) => q.uid);   // QUEST-SHELF: a quest set aside is no live one
   const topicTree = new TopicTree({
     getQuest: (questID) => questBridge?.machine.getQuest(questID) ?? null,
     getAllActiveQuestIds: activeQuestIds,
@@ -20377,7 +20379,9 @@ export async function bootWorld(canvas, renderer, params, status) {
         return;
       }
       if (result.reason === 'finished') return;   // DISC28-I: a partner's finish of a quest I never had - nothing to say
-      if (result.reason === 'shelved') return;   // QUEST-SHELF: a copy I set aside - the party's step is not mine while it is away
+      // QUEST-SHELF: a copy I set aside - the party's step is not mine while it is away; its audit: a DELIBERATE share is
+      // answered (RECEIVER_REFUSAL_TEXT 'shelved', below), only the background sync is quiet
+      if (result.reason === 'shelved' && quest.data?.sync === 1) return;
       // AUDIT DISC28 QS-3: nor any refusal of a FINAL - a partner's finish is no offer: to a member who ended the copy
       // already (both delivered; a timer that ran out in every world on the same tick), holds one of their own, or never
       // took it, it is news of nothing - and a sync's 'done' is a copy I finished myself. Said, it told a party that had

@@ -61,7 +61,7 @@
 // than ^, the famous precedence, kept; gender is flags & 32; the
 // billboard indices ride along for the questor flat-pick (Q4-iii).
 
-import { QuestMachine, TICKS_PER_SECOND, PROTECTED_QUESTS, questNameIn } from '../systems/quest/machine.js';
+import { QuestMachine, TICKS_PER_SECOND } from '../systems/quest/machine.js';
 import { clockCounts } from '../systems/quest/clock.js';   // DEAD-CLOCK: a clock whose end changes nothing is no deadline
 import { repairActiveQuests, relayOnlineDungeons, relayMovedLayouts } from '../systems/quest/questRepair.js';   // QREPAIR: the Settings' repair (AUDIT DELVE E1: and a frozen size, crossing online)
 import { isOnlinePage } from '../systems/onlineLane.js';   // AUDIT DELVE E1: online, every dungeon is whole
@@ -218,9 +218,9 @@ export const QUEST_CTX_REQUIRED = Object.freeze(['data']);
  *  host declines it - so its absence is not worth a word. */
 export const QUEST_CTX_OPTIONAL_BY_DESIGN = Object.freeze(['onQuestStarted', 'hasQuestTopics']);   // QREPAIR: only a host with a topic tree can say whether a quest has its topics
 
-/** QUEST-SHELF: the protected quests' test (machine.js PROTECTED_QUESTS - the main quest's backbone, the curse, the
- *  tutorial: the world's own quests, never set aside). */
-const isProtectedQuestName = (name) => questNameIn(PROTECTED_QUESTS, name);
+/** QUEST-SHELF: the bridge's own refusal beside the machine's ladder (machine.js shelveRefusal) - a raid the world runs
+ *  (WA_RAID_QUESTS - the sea's own, ended by its fight). One word for the press and the button alike. */
+const refuseRaid = (q) => (WA_RAID_QUESTS.includes(q.questName) ? 'raid' : null);
 /** QUEST-SHELF: why a quest could not be set aside or reclaimed, in words. */
 export function shelfRefusalText(reason) {
   switch (reason) {
@@ -230,6 +230,7 @@ export function shelfRefusalText(reason) {
     case 'ending': return 'That quest is ending.';
     case 'protected': return 'That quest cannot be abandoned.';
     case 'raid': return 'Not while the raid is on.';
+    case 'twin': return 'You have taken that quest up again - finish or abandon it first.';
     default: return 'That cannot be done now.';
   }
 }
@@ -578,20 +579,20 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
        * sea's own, ended by its fight) and for one that is not running. Answers `{ ok, reason?, text }`.
        */
       abandon(id) {
-        const r = machine.shelveQuest(Number(id), { refuse: (q) => (WA_RAID_QUESTS.includes(q.questName) ? 'raid' : null) });
+        const r = machine.shelveQuest(Number(id), { refuse: refuseRaid });
         if (r.ok && questTracker.pinned != null && Number(questTracker.pinned) === Number(id)) questTracker.pinned = null;
         return { ...r, quest: undefined, text: r.ok ? `Abandoned: ${r.quest.displayName || r.quest.questName}. Reclaim it from your journal.` : shelfRefusalText(r.reason) };
       },
-      /** QUEST-SHELF: RECLAIM - the quest back as it was (machine.js reclaimQuest). Answers `{ ok, reason?, text }`. */
+      /** QUEST-SHELF: RECLAIM - the quest back as it was (machine.js reclaimQuest), on the journal's page: one the player
+       *  had hidden is shown again (its audit - taken up again, it was put where no row showed it). Answers
+       *  `{ ok, reason?, text }`. */
       reclaim(id) {
         const r = machine.reclaimQuest(Number(id));
+        if (r.ok) notebook?.unhideQuest?.(id);
         return { ...r, quest: undefined, text: r.ok ? `Reclaimed: ${r.quest.displayName || r.quest.questName}.` : shelfRefusalText(r.reason) };
       },
       /** QUEST-SHELF: whether the quest may be abandoned now - the journal draws the button only where it is. */
-      canAbandon(id) {
-        const q = machine.quests.get(Number(id));
-        return !!q && !q.questComplete && !q.questTombstoned && !isShelved(q) && !(q.ticksToEnd > 0) && !isProtectedQuestName(q.questName) && !WA_RAID_QUESTS.includes(q.questName);
-      },
+      canAbandon: (id) => machine.shelveRefusal(Number(id), { refuse: refuseRaid }) === null,
     },
 
     /** SetLayoutData's direct overload for a host that has a quest

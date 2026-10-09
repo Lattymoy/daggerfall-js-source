@@ -328,6 +328,9 @@ export const PROTECTED_QUESTS = Object.freeze(['S0000999', 'S0000977', '_BRISIEN
  *  case-insensitive as C#'s. scenes/questFoeHost.js's WORLD_QUESTS reads the same test. */
 export const questNameIn = (list, name) => { const n = (name ?? '').toLowerCase(); return list.some((x) => x.toLowerCase() === n); };
 const isProtectedQuest = (quest) => questNameIn(PROTECTED_QUESTS, quest.questName);
+/** QUEST-SHELF (its audit): a partner's envelope never carries a shelf - THE ENVELOPE IS NOT TRUSTED (AUDIT DROPS A1), and
+ *  a copy set aside is never handed on (getShareableQuestData), so the fields are the receiver's alone. */
+const NO_SHELF = Object.freeze({ shelvedAt: null, shelvedSites: null });
 
 /** QUEST1 "COUNTS AS ACCEPT/ADVANCE": restoreSaveData deliberately
  *  never replays an action - a LOAD must not refire a reward, reset a
@@ -899,6 +902,7 @@ export class QuestMachine {
         return false;
       }
       const behaviour = new QuestResourceBehaviour(this, host);
+      behaviour.individualHome = true;   // QUEST-SHELF (its audit): the home copy - a quest set aside never hides it
       const activePersonResources = this.activeFactionPersons(factionID);
       if (activePersonResources && activePersonResources.length > 0) {
         const person = activePersonResources[0];
@@ -1092,8 +1096,15 @@ export class QuestMachine {
    *  A tombstoned copy stays on the table for a week and a repeatable quest can be taken again inside it, so the
    *  first by name was the dead one: every resync was refused as 'gone' and a fresh share as 'active'. */
   sharedCandidateNamed(questName) {
-    for (const quest of this.quests.values()) if (quest.questName === questName && !quest.questTombstoned) return quest;
-    return null;
+    // QUEST-SHELF (its audit): and a copy RUNNING before one set aside - the questor's door opens on abandon, so the same
+    // quest may be taken again, and the older copy set aside shadowed it (its syncs, a partner's step, the share's reward)
+    let away = null;
+    for (const quest of this.quests.values()) {
+      if (quest.questName !== questName || quest.questTombstoned) continue;
+      if (!isShelved(quest)) return quest;
+      away ??= quest;
+    }
+    return away;
   }
 
   /** SENDER side: one quest's own envelope, in the exact shape
@@ -1176,7 +1187,7 @@ export class QuestMachine {
    *  this quest has its final local UID, reaches the exact link a
    *  fresh accept would have made. */
   receiveSharedQuest(questData) {
-    questData = this._onThisClock(questData);   // TIME3: the sender's countdowns, on this character's clock
+    questData = { ...this._onThisClock(questData), ...NO_SHELF };   // TIME3: the sender's countdowns, on this character's clock
     const quest = this._newQuest();
     const uid = nextUid();
     // AUDIT DROPS A3: an envelope the restore chokes on is REFUSED (null), never half a quest on the live table
@@ -1307,7 +1318,7 @@ export class QuestMachine {
     // every reward still unpaid (a complete quest never updates).
     const finishing = questData.questComplete === true;
     if (finishing) questData = { ...questData, questComplete: false, questTombstoned: false };
-    questData = this._onThisClock(questData);   // TIME3: the sender's countdowns, on this character's clock
+    questData = { ...this._onThisClock(questData), ...NO_SHELF };   // TIME3: the sender's countdowns, on this character's clock
     const scratch = this._newQuest();
     const uid = quest.uid;
     try { scratch.restoreSaveData({ ...questData, uid }, this._saveResolvers()); } catch (e) { console.warn(`[quest] shared quest resync refused: ${e?.message ?? e}`); return null; }
@@ -1536,13 +1547,11 @@ export class QuestMachine {
    * and whatever the host's `refuse` names. Answers `{ ok, reason?, quest? }`.
    */
   shelveQuest(uid, { refuse = null } = {}) {
-    const quest = this.quests.get(Number(uid));
-    if (!quest || quest.questComplete || quest.questTombstoned) return { ok: false, reason: 'gone' };
-    if (isShelved(quest)) return { ok: false, reason: 'shelved' };
-    if (quest.ticksToEnd > 0) return { ok: false, reason: 'ending' };
-    if (isProtectedQuest(quest)) return { ok: false, reason: 'protected' };
-    const why = refuse?.(quest) ?? null;
+    const why = this.shelveRefusal(uid, { refuse });
     if (why) return { ok: false, reason: why };
+    const quest = this.quests.get(Number(uid));
+    // the party's step is this copy's only where this copy is the one a share by its name speaks to
+    if (this.sharedCandidateNamed(quest.questName) === quest) this.sharedQuestNames.delete(quest.questName);
     const now = Math.floor(this.deps.nowSeconds?.() ?? 0);
     quest.shelvedAt = now !== 0 ? now : 1;   // 0 reads as never set aside
     quest.shelvedSites = [...new Set(this.siteLinks.filter((l) => l.questUID === quest.uid).map((l) => l.placeSymbol?.name).filter(Boolean))];
@@ -1551,9 +1560,19 @@ export class QuestMachine {
     for (const task of quest.tasks.values()) {
       for (const action of task.actions) if (action?.typeName === 'CreateFoe') { action.pendingFoes = null; action.spawnInProgress = false; }
     }
-    this.sharedQuestNames.delete(quest.questName);
     this.deps.forceTopicListsUpdate?.();
     return { ok: true, quest };
+  }
+
+  /** QUEST-SHELF: why the quest may not be set aside now, or null - shelveQuest's ladder, and the journal's button
+   *  (questBridge.js canAbandon) asks the same one. */
+  shelveRefusal(uid, { refuse = null } = {}) {
+    const quest = this.quests.get(Number(uid));
+    if (!quest || quest.questComplete || quest.questTombstoned) return 'gone';
+    if (isShelved(quest)) return 'shelved';
+    if (quest.ticksToEnd > 0) return 'ending';
+    if (isProtectedQuest(quest)) return 'protected';
+    return refuse?.(quest) ?? null;
   }
 
   /**
@@ -1567,6 +1586,8 @@ export class QuestMachine {
     const quest = this.quests.get(Number(uid));
     if (!quest || quest.questTombstoned) return { ok: false, reason: 'gone' };
     if (!isShelved(quest)) return { ok: false, reason: 'running' };
+    // its audit: the same quest taken again while this one was away - two running copies of one name are never made
+    if (!isShelved(this.sharedCandidateNamed(quest.questName))) return { ok: false, reason: 'twin' };
     const now = Math.floor(this.deps.nowSeconds?.() ?? 0);
     const away = Math.max(0, now - quest.shelvedAt);
     const sites = quest.shelvedSites ?? [];
@@ -1574,11 +1595,14 @@ export class QuestMachine {
     data.shelvedAt = null;
     data.shelvedSites = null;
     shiftQuestStamps(data, away, { own: true });
+    const standing = this._liveBehaviours(quest.uid);   // its audit: relinked at once, as a resync's are (AUDIT DISC7 C2)
     quest.restoreSaveData({ ...data, uid: quest.uid }, this._saveResolvers());
     for (const name of sites) {
       const place = quest.getPlace?.({ name });
       if (place?.siteDetails && !this.siteLinks.some((l) => l.questUID === quest.uid && l.placeSymbol?.name === name)) this.createSiteLink(quest, place.symbol);
     }
+    for (const b of standing) b.relinkToLiveQuest?.();
+    this.deps.relinkQuestTopics?.(quest);   // and its talk topics (AUDIT 68 S29-share-topics): 'where is' reads the live Person
     this.deps.forceTopicListsUpdate?.();
     return { ok: true, quest };
   }

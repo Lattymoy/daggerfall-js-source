@@ -410,9 +410,14 @@ export class QuestLens {
 
     const events = this._last ? this._diff(quests, log.ended ?? []) : [];
     for (const q of quests) this._known.add(q.id);
+    // QUEST-SHELF's audit: a quest set aside is AWAY, not gone - what the lens last knew of it is kept, so its reclaim is
+    // no news (its whole journal again) and a deadline it told stays told
+    const away = new Set((log.shelved ?? []).map((q) => q.id));
     const live = new Set(quests.map((q) => q.id));
-    for (const id of this._namedBy.keys()) if (!live.has(id)) this._namedBy.delete(id);
-    this._last = new Map(quests.map((q) => [q.id, { title: q.title, main: q.main, clockSeconds: q.clockSeconds, newsKeys: q.entries.map((e) => newsKey(q.id, e)) }]));
+    for (const id of this._namedBy.keys()) if (!live.has(id) && !away.has(id)) this._namedBy.delete(id);
+    const last = new Map(quests.map((q) => [q.id, { title: q.title, main: q.main, clockSeconds: q.clockSeconds, newsKeys: q.entries.map((e) => newsKey(q.id, e)) }]));
+    for (const [id, was] of this._last ?? []) if (away.has(id) && !last.has(id)) last.set(id, was);
+    this._last = last;
     return { quests, events };
   }
 

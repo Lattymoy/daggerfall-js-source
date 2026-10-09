@@ -289,6 +289,7 @@ import { FACTION_TYPES } from '../formats/factionFile.js';   // QX1 review: GetR
 import { liveVampirism } from '../systems/racialLive.js';   // QX1 review: the PC's clan, off the curse entry
 import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender, heldSpots, holdSpotWhile, questBoxHoldsFoes } from './questFoeHost.js';   // QX1 review/B1: the data side of CreateFoeGameObjects; ROAD-G G2: and the placement side
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // ROAD-G G2: CreateFoe's raycast ring
+import { isShelved } from '../systems/quest/quest.js';   // QUEST-SHELF: a quest set aside
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // ROAD-G G2: FinalizeFoe's Flying lift reads the behaviour flag
 import { isHouseOwned } from '../systems/banking.js';   // QX1/H1: Place.SetupSites' residence filter
 import { generateBuildingName } from '../world/buildingNames.js';   // QX1/IH1: %cbd regenerates the current building's name
@@ -3255,7 +3256,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // empty answer, not a plate this host raises.
       stampResidenceQuestNames(summaries, discoveredBuildings(locId), {
         getAllActiveQuestIds: () => [...(questBridge?.machine.quests.values() ?? [])]
-          .filter((q) => !q.questTombstoned && q.shelvedAt == null).map((q) => q.uid),   // QUEST-SHELF: a quest set aside is no live one
+          .filter((q) => !q.questTombstoned && !isShelved(q)).map((q) => q.uid),   // QUEST-SHELF: a quest set aside is no live one
         getQuest: (questID) => questBridge?.machine.getQuest(questID) ?? null,
       }, dfLocation.mapTableData?.mapId ?? 0);
       if (!townMapDoorReady()) return;   // EM4: the skin fork's gate
