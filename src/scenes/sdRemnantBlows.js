@@ -254,6 +254,24 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
     m.done = v.done;
     for (const h of v.hits) land(A.name, h.pct, h.base, bodysBlow(A), h.el ?? null);
   }
+  /** AUDIT SD IV (5): THE WHOLE ARENA'S BLOWS OWED (net/sdFightLink.js `owed` - kept only while the realm counts me in
+   *  their fight) - each one landed judged once, however late, though the state let it go before a frame of mine saw it
+   *  land (a hidden tab draws none), then paid. One still winding up waits: the loop below judges it in flight. */
+  function owedBlows(s, t, t0) {
+    const list = link.owed?.() ?? NONE;   // a link that keeps no such list owes nothing
+    if (!list.length) return;
+    const f = feet(), e = player();
+    if (!f || !e) return;
+    let at = null;
+    for (let k = 0; k < list.length; k++) {
+      const o = list[k];
+      if (!(e.health > 0)) return;
+      if (t < o.atk.at) continue;
+      if (!at) { const r = dungeonToRealm(f[0], f[1], f[2]); at = arenaOf(r[0], r[2]); }
+      blow(s, o.b, o.atk, t, t0, at);
+      if (marks.get(o.atk.i)?.done) link.paid(o.atk.i);
+    }
+  }
   /** THE BURNING BRASS - a bite each POOL_TICK_MS I stand in it, the first a tick after I stepped in (the gate's law: a
    *  step out shorter than a tick keeps the count it had). */
   function burn(t, at, alive) {
@@ -328,6 +346,7 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
       const t0 = prevT ?? t;
       prevT = t;
       hearts(s, t);   // AUDIT SD II (SD11d): before the idle return - the stun that breaks the last Heart ends every blow in flight
+      owedBlows(s, t, t0);   // AUDIT SD IV (5): and before it too - a blow the state let go is owed all the same
       // AUDIT SD II (L2 F9): no blow in flight and no brass burning - nothing to judge or show, and nothing made for it
       if (!sdAnyInFlight(s) && !pools.length) { inFire = false; shapes = NONE; fall(s, t); return; }
       const f = feet(), e = player(), alive = !!f && !!e && e.health > 0;
