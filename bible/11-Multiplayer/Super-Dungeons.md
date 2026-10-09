@@ -221,9 +221,9 @@ first (SD-REACH: never a block's start markers, its maker's data set down anywhe
 layout and so held the farthest point - the Rift stood in pockets no walk reaches); every enemy marker with none there,
 and the start markers only with no enemy marker at all. Out of the water where any is (AUDIT SD IV F38): a candidate
 whose floor stands under its block's own water level is the end only when none of its kind is dry - a flooded block's
-marker stood the Rift, the Return and the way back from the Hour at the bottom of the water. The Rift, the Return and the landing back from the Hour are
-stood as the level is built, every door shut and every platform home, before a save or the room can open one - a door
-open when they were stood moved all three, a client apart (AUDIT SD IV S1).
+marker stood the Rift, the Return and the way back from the Hour at the bottom of the water. The Rift, the Return and
+the landing back from the Hour are stood as the level is built, every door shut and every platform home, before a save
+or the room can open one - a door open when they were stood moved all three, a client apart (AUDIT SD IV S1).
 
 - **The Rift** - the large otherworldly portal: a ring of brass light up to 7 m across - as large as its hall allows,
   never under 2.6 m (`world/sdDungeon.js` `sdRiftFit`) - turning slowly about a black-gold membrane, its sound a bell
@@ -680,6 +680,8 @@ gate's, a battle's, an arena's) write their own socket and never run in `sd:<s>`
 | SD-REACH, SD-LAND | the Rift where a walk reaches; never out in the Hour's sky |
 | SD-SKY | the way out of the Hour, and the find's door, in the street's own frame |
 | SD-HELLO | a socket says nothing past its hello until the realm welcomes it (the page's half) |
+| SD25 (SD-LOOK) | the look rebuilt, the lore kept (`Super-Dungeons-Look.md`): the flash law, the grade and the floors, the painted sky, the Rift and the Return, the Hour's own veil, the way back's window, the arena's reads, the Brass Remnant's body |
+| SD26 | AUDIT SD IV |
 
 Each slice records below what it shipped, what it pins and what it leaves.
 
@@ -3076,3 +3078,106 @@ welcome; still dead).
 
 THE FOUR HOSTS: none touched - the session is the hosts' one (`net/online.js`); `scenes/world.js`'s `sdRealmFrame` casts
 out on a terminal close as before, and no longer meets one of its own page's making.
+
+### SD25 - SD-LOOK (the Abyss Dungeon's look rebuilt, the lore kept) - shipped 2026-10-08/09 in slices
+
+Mac, 2026-10-08: *"I want to do a detailed pass on all the visuals for the inside of the Rift, the portal that leads to
+the rift, mechanics, etc. I really want to go all in and make this something special."* Decided with Mac: keep the lore,
+rebuild the fidelity; one pull request at the end. The plan is `Super-Dungeons-Look.md` (three art directors' sets
+scored and synthesized, its build order S0-S11); this records what shipped of it, slice by slice, and wins where the two
+differ. Mac's three rulings were taken at their law-safe defaults: the Orrery's rings in mode A, no safe wedges, the
+Return where it stands.
+
+| slice | what shipped |
+|---|---|
+| S0 | THE FLASH LAW: the Beat step's warning blinked at 8 Hz, past the project's ceiling (`TELEGRAPH_THROB_MAX_HZ`); now `SD_BEAT_BLINK_HZ` 2.5, timed from the warning's own start |
+| S1 | THE AMBER SOUP ENDED: the look in one place (`world/sdLook.js` - the ramps, the five lights, the escapement `sdTick`), the paint box every picture is painted with (`world/sdPixelKit.js`: an ordered dither, bevels, rivets, a last quantize into its ramps), the pixel law in the shaders (`SD_PIXEL_GLSL`); the Hour's own grade on the lane (`setSceneGrade` - the eye held down); the trilight and key reset (the void dimmer, the furnace below); the floors repainted with no light of their own - the Threshold the Bay's cobbles and a compass rose, toothed rims and gold edge lines, the inlays as geometry, the arena's dark plate bands |
+| S2 | THE PLUMBING: the dungeon arm's dynamic draws carry their own remap, shadow and cull (`texRemap`, `noShadow`, `culled`); the halo pass (`render/sdHalo.js`, the classic set's bloom) |
+| S3 | THE HOUR'S SKY PAINTED (`render/sdSky.js` rewritten): an octahedral map at Daggerfall's own sky density, painted a quadrant a frame - dithered void bands, single-texel stars with glints, banded aurorae, the lowered clock-face in stars (its Roman numerals and the six Endings as constellations), six of the Bay's cities hanging upside down - and one fetch over it with the live hands on the escapement and the fight's word on its face (`uClock`) |
+| S4 | THE RIFT AND THE RETURN REBUILT (the billboards retired): the Rift an astrolabe of brass (`world/sdRiftModel.js`, `world/sdRiftArt.js`) standing in a crater square to its hall's long line (`sdRiftFace`): a toothed gear, an hour-ring of twelve numeral blocks that ratchets back on each toll, an iris of eight leaves whose aperture IS its state (`riftLook`), studs counting the hours left (the collapse's 3:00 one by one), and through the iris a window on the Hour's own painted sky in true parallax (`render/sdRiftPass.js`), its light on the floor a gobo of the gear's teeth; the Return a lancet arch of pale stone and silver whose window shows the Bay's sky at the world's own hour over the Hollow's city |
+| S5 | THE STEP THROUGH THE HOUR (`render/sdVeil.js`, chosen by theme in `ui/gateVeil.js` beside Dagon's fire): twelve brass blades closing on the Rift's place on the screen (the host hands the veil its aim each frame the Rift is drawn) into a dial whose spade hand sweeps backwards; past its first turn the Dragon Break's ghost hands and its crack; the face breaking into shards as it opens. Out by the way back or the Return the same iris in silver, cracked, its hand forward; home, the crack MENDS; forced (a death in the Hour, the cast-out, the eject), the face shatters into falling pieces. The blades ratchet in, the bell tolls as they shut, the broken quarters strike as the hand passes (the mended going home); reduced motion a still face and a dither wipe. A canvas a third of the device's pixels, drawn pixelated |
+| S6 (in part) | THE WAY BACK'S WINDOW: the Hollow's hall behind the ring, interior-mapped - coursed stone, a far doorway, lit from the front in gold, the Return's silver on its right wall (the code's own stone, never a live view). Not yet: its look handed by `sdEnd` in the game (the lab stands it), the moon light, the dais, the arrival exhale, the assembling Return, the beacon, the hand-plate |
+| S7 (in part) | THE ARENA READS THE CLOCK: one pass over the bronze (`render/sdArenaGlow.js`) - eight fissures (a baked distance field) that flood green from each Mantella Pulse's landing, twelve rim numerals that count the Reset's wind-up (soul-white, the last two ember), red when the Hour ends; the sky's `uClock` from the same state (`sdHourClockOf`); the Stomp's ring stood up as a low wall of brass light at the very front the law strikes, and the hold's curtain the same wall in gold at the rim (`render/sdStompWall.js`). Not yet: their wiring in the world host's telegraph pass (the lab draws them), the pillars' faces and lanterns, the Remnant's mark, the Reset's dimming |
+| S8 (in part) | THE BRASS REMNANT IN PLATES (`world/sdRemnantModel.js` rebuilt on the same seven parts, the rig untouched): sabatons, greaves and knee gears, thighs under tassets; a girdle; a spine, a back plate and an open cage of eight curved ribs about a faceted heart; a gorget, a yoke and organ-pipe vents; a domed helm with a slotted face-plate crowned with seven broken clock-hands; bell pauldrons and elbow gears, the left a fist with gear knuckles, the right forearm THE HOUR-HAND's blade, its spade's tip the hand point - nothing under 2 m past the law's radius, its height the law's. Its heart a light (`sdRemnant.lights`: the Ending's light, the Echoes' in their metal, beating as a metronome - slow after each Pulse, quickening to the next, never over 3 Hz - flaring on the Pulse and the Reset). Not yet: the host's light channel taking it, the tells, the rib lamps, the back-dial, the after-images, the Hearts as crystals, the fall |
+| S9-S11 | not built in this pull request: the Steps, the Orrery, the hang and the Works |
+
+THE LAB: `abyss.html` (`src/tools/abyssLab.js`, `tools/abyssLabProbe.mjs`) stands the Hour, the Hollow's Rift and Return
+with no game data, through the game's own renderer: every view, the Rift's states (`?rift=`), the sky's fight words
+(`?fight=`, `?collapse=`), the veil at any moment (`?veil=`), the arena's reads (`?fight=pulse|reset|end|stomp|held`), an
+exact eye in the realm's frame (`?rx=`).
+
+Pins: `test/sd25_look.test.js` (S0-S8, every slice's law run from its own code - the shaders through `test/glsl.mjs`);
+`tools/mutants/sd25_look.json` (all dead). The pins each slice moved are marked PIN MOVED where they stand (the hosts'
+foreign-pass counts, the veil's looks, the Rift's stand and art, the sky's paint).
+
+THE FOUR HOSTS: `scenes/world.js` WIRED (the sky's paint and fetch, the Rift's pass and halos, the veil's looks and aim);
+`scenes/worldModes.js` WIRED (the grade, the dynamic draws' fields, the Rift's hook, the Hour's light); `scenes/dungeonContext.js`
+WIRED (the end stood with its art, its look, halos and lights); `scenes/exterior.js` FLAGGED - the `?exterior` bench is
+offline, and there is no Hour offline.
+
+### SD26 - AUDIT SD IV (the arc audited a fourth time) - 2026-10-09
+
+Mac, 2026-10-08: *"I want to do another audit on the entire abyss dungeons."* Eight lenses (the lifecycle, the laws,
+the relay, the sync, the render, the audio, the text, the dungeon) over the arc; every finding reproduced by its lens's
+own script and then adversarially verified before it was fixed; 41 confirmed, one refuted. Client only (Mac's call):
+nothing under `server/` and nothing in the relay's bundle moved - where a fix needs the relay, its page half stands
+alone or the finding is OPEN below. Ids as the code tags them (`AUDIT SD IV (<id>)`).
+
+| | what was wrong | now |
+|---|---|---|
+| 0 | SD-HELLO LEAKED: a look change, a directed frame (a cast, a trade, a card, a duel ask) or the parked team's word went down a realm socket before its welcome - the parked word on EVERY entry into the Hour - and the relay's refusal closed the socket for good and cast the fighter out | the look, the directed frames, `who` and `park` wait for the socket's welcome, as `_send` does; section 14's SD-HELLO paragraph names all that waits |
+| 1 | a death while the realm's socket was down or unwelcomed was never told: one life a Hollow, lost | OPEN (relay): it needs the relay to acknowledge the death; no page half stands alone |
+| 2 (F2) | a Mark set in a Hollow and recalled after it faded dropped the player into a later Hollow at the old layout's place | no Mark in a Hollow ("You cannot set a Mark in an Abyss Dungeon.") |
+| 3 (F3) | the Rift's walk-in was never taken under four frames a second, nor across one long frame | a step is forgotten across a host held for seconds (`SD_STEP_GAP_MS` 2000), never a slow frame |
+| 4 (F4) | the records said a death in the Hour wakes "before the Hollow's door" by the mode machine's landing | it wakes by the death's own door (SD2d); the records and the comments say so |
+| 5 | hiding the tab across a Pulse's, a Reset's or the End's landing skipped it (SD20a F3 open again) | the link owes every whole-arena blow heard while counted and the page judges each once, however late; a stun, the End called off or the fall drops it |
+| 6 | a Reset called with no living fighter counted raised Hearts of nought health | OPEN (relay): the Hearts are sized in `net/sdRemnant.js`, the relay's |
+| 7 | section 11's spoils left out the Hourlock and called the Brass the last roll | the Hourlock's row (1 in 50, after the Brass, last of all) |
+| 8 | a reconnect into a lost fight heard nothing: counted in a dead fight, the Last Moment soft-locked | the page half: a fight unheard for `SD_FIGHT_HEARD_MS` releases a counted page - its `in` due again; the relay's half (the lost fight told at the hello) OPEN |
+| 9 | world176 was live but the code called it undeployed | marked deployed in its row's note and section 14 |
+| S1 | the Rift, the Return and the landing read door and mover buckets, so a door open when they were stood moved them per client | stood as the level is built, every door shut, before any save or room can open one |
+| S2 | the Hollow's city was ranked over rows the town packs replace: a client whose packs failed placed it by another city | ranked over MAPS.BSA's own rows (HUB1's hubs and SEAT1a's seats still read the served rows - OPEN, Mac's: they move persistent state) |
+| R1 | the flats and portals drawn after the Hour's additive light covered it | the Hour's light drawn in `drawFoes`' late slot, after the last flat |
+| R2 | holes in the Rift's billboard frame | moot: SD-LOOK S4 retired the billboard |
+| R3 | past the arena's rim the Hour's sparks rested on air | the ring dust kept inside the disc; the spark pass takes a floor's edge - past it a spark falls |
+| R4 | the lamps' heads and the stones' caps open underneath | shut |
+| R5 | the arm's Hour fog and trilight lines made garbage every frame | made in place on both lanes, under the L2 F9 measure |
+| R6 | section 7 named records 0-24 of the Hour's archive; and the large boat's pictures (SHIPS-2) went up under the Hour's own archive, 38151, so whichever went up first stood for both | section 7 names 0-35; the large boat's archive is 38171 |
+| A1 | the Remnant grunted from an empty spot all through the Dragon Break | no grunt outside time, none banked for its return |
+| A2 | a page back from a hidden tab heard every Heart broken while away, at once | re-read in silence past the voice's away rule |
+| A3 | the Brass's powers played the hall's record indexes through the sound-ID door | through the index door |
+| A4 | every Stomp landed as the same thud twice | one thud: the quake gone |
+| A5 | the Hour's far events outlived it, sounding in the street | faded as the Hour is left (`audio.js` `fadeFar`) |
+| A6 | the SD13, SD14a and SD14b records gave counts and pitches the code had changed | brought to the code |
+| T1 | the fight's turns on the title card for players on the Steps and in the hall | on the card where its bar stands; the last minute and the fall to the whole Hour |
+| T2 | the collapse's first readout cut after half a second by the way home's line | a line cut is said again at the head of its rank |
+| T3 | the Hour's voice ran on under an open window | it stands still under a window; a readout past its moment is let go |
+| T4 | the arrival marks card and the kill's chart over the message line | the line over the cards while one stands |
+| T5 | the message line capped at half the screen | its own width, on screen at every HUD scale |
+| T6 | the Remnant's bar on Dagon's red plate and the gate's orange | the Hour's brass and its own colours |
+| T7 | a Hollow found in its last hour said it would fade before it was found | found first |
+| T8 | after the Concord a plaque still offered a turn | "The Concord holds." |
+| T9 | WB13b's no-dash-aside rule was never checked past SD11, and the marks line broke it | every line since SD11 read; the marks line and three tips rewritten |
+| F33 | the Rift's press box, its whole sweep's cube, took the presses meant for bodies and the floor | pressed at its ring: a box turned with it, its gear's width across |
+| F34 | with no clear bearing the Return stood on the Rift's own foot | a lower floor near is tried first (its place otherwise unchanged - Mac's ruling) |
+| F35 | the landing back from the Hour fell back to the Return's foot in ordinary rooms | the first spot clear of both portals' reach |
+| F36 | the ring was sized at chest height, straight up, and stood through pillars and ceilings | sized by the disc it is (`sdRiftSweep`) |
+| F37 | a Hollow's site skipped SPAWN-SHORE's dry-ground test | the first dry pixel of its city |
+| F38 | the end could be an underwater marker | a dry one first |
+| F39 | the Hollow host ran the gate's whole scan in one frame | a row an ask; the idle warm does the rest |
+| F40 | the step through the Rift dropped the player at the Hollow's pixel's centre, and a refusal left them there | stood before the Hollow's door |
+
+OPEN, for Mac: 1 and 6 and 8's relay half (each moves `RELAY_VERSION`, and a deploy drops every connected player once);
+S2's hubs and seats. Deploy notes: S2 and F37 can move a live Hollow's pixel once at the deploy (old and new clients
+disagree during the rollout). Also seen and left: the Rift's and the Return's windows draw before `drawFoes`, so a flat
+behind a window can draw over it.
+
+Pins: `test/sd26_net.test.js`, `test/sd26_render.test.js`, `test/sd26_dungeon.test.js`, `test/sd26_audio.test.js`,
+`test/sd26_text.test.js`; `tools/mutants/sd26_net.json`, `sd26_render.json`, `sd26_dungeon.json`, `sd26_audio.json`,
+`sd26_text.json` (all dead). The pins each fix moved are marked PIN MOVED (AUDIT SD IV) where they stand, and every
+mutant record a fix moved was re-aimed by content and run again (all dead).
+
+THE FOUR HOSTS: `scenes/world.js` WIRED (the Mark, the steps before the door, the scan, the voice's window, the card, the
+powers' sounds, the cities' rows); `scenes/worldModes.js` WIRED (the Hour's light in the late slot, its fog and trilight
+in place, the doors' seam); `scenes/dungeonContext.js` WIRED (the end stood as the level is built, out of the water);
+`scenes/exterior.js` FLAGGED - offline, no Hour.

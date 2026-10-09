@@ -292,3 +292,12 @@ test('AUDIT SD IV (S2): THE HOLLOW\'S CITIES AND TEMPLATES ARE MAPS.BSA\'S - the
     assert.deepEqual(out._sdTemplateRows.map((l) => l.name), ['Castle Hollowmere'], `the pack ${loaded ? 'loaded' : 'failed'}: the keep MAPS.BSA holds`);
   }
 });
+
+import { LARGE_BOAT_ARCHIVE } from '../src/world/largeBoatArt.js';
+import { SD_REALM_ARCHIVE } from '../src/world/sdRealm.js';
+import { PI_ICON_ARCHIVE } from '../src/scenes/physicalItemsLayer.js';
+
+test('AUDIT SD IV (R6) ONE ARCHIVE, ONE OWNER: the large boat\'s pictures went up under the Shattered Hour\'s own pseudo-archive (38151) - a picture is kept by archive and record, so after a large boat the Hour\'s floors and the Rift\'s brass could wear the boat\'s (and the boat the Hour\'s); now each its own number (mutants: the boat back on the Hour\'s)', () => {
+  assert.notEqual(LARGE_BOAT_ARCHIVE, SD_REALM_ARCHIVE);
+  assert.notEqual(LARGE_BOAT_ARCHIVE, PI_ICON_ARCHIVE);
+});

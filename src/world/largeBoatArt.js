@@ -22,7 +22,7 @@ import {
 } from './galleonArt.js';
 
 /** Her pseudo-archive: past the carrack's 38141. */
-export const LARGE_BOAT_ARCHIVE = 38151;
+export const LARGE_BOAT_ARCHIVE = 38171;   // AUDIT SD IV (R6): it was 38151, the Shattered Hour's own (world/sdRealm.js SD_REALM_ARCHIVE) - a picture is kept by archive and record, so whichever went up first stood for both
 /** The records: the galleon's numbers for every picture the fleet shares, and hers - her side's livery and her
  *  transom's. */
 export const TEX = Object.freeze({

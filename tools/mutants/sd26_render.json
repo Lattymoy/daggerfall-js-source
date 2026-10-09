@@ -187,5 +187,14 @@
     "tests": [
       "test/sd26_render.test.js"
     ]
+  },
+  {
+    "name": "SD26-R6-the-boat-on-the-hours-archive",
+    "file": "src/world/largeBoatArt.js",
+    "old": "export const LARGE_BOAT_ARCHIVE = 38171;",
+    "new": "export const LARGE_BOAT_ARCHIVE = 38151;",
+    "tests": [
+      "test/sd26_render.test.js"
+    ]
   }
 ]
