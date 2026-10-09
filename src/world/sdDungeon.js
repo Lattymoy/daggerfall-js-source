@@ -27,6 +27,7 @@ import { sdPhase, SD_NO_RIFT, SD_NO_CLOSED, SD_NO_FALLEN, SD_COLLAPSE_MS } from 
 import { timerText } from '../systems/eventTimers.js';
 import { RDB_SIDE } from './rdbLayout.js';   // SD-REACH: a dungeon block's side - which block's square holds a marker
 import { riftCentreY } from './sdRiftModel.js';   // AUDIT SD IV (F36): the ring's centre as it stands - it hovers
+import { GLOBAL_SCALE } from './meshReader.js';   // AUDIT SD IV (F38): a block's water level, in metres
 
 /** Health and damage multipliers for a Super dungeon's foes (the Elite's x2 and x2). */
 export const SUPER_HEALTH_SCALE = 4;
@@ -114,27 +115,34 @@ export const SD_BORDER_BLOCK_RE = /^b/i;
  * begins B) is a cap DFU closes the layout with, and the caps ring it, so the point farthest from the way in all but
  * always stood in one. A marker is a block's whose square (its origin, RDB_SIDE a side) holds it. With no interior
  * enemy marker, every enemy marker; with no enemy marker at all, every block's start markers, as SD4b had it - a Rift
- * somewhere, never none.
+ * somewhere, never none. AUDIT SD IV (F38): OUT OF THE WATER where any is - a candidate whose foot (`floorOf`, the floor
+ * the collider finds under it; its own height without one) stands under its block's water (the layout's own level,
+ * never a runtime override - every client the same; DFU's no-water 10000 stands 250 m under every floor, as its own
+ * UpdateFog reads it) is taken only when none of its kind is dry: a flooded block's
+ * marker stood the Rift, the Return and the way back from the Hour at the bottom of the water.
  * @param {Array<{ x: number, y: number, z: number, eliteCopy?: boolean }> | null | undefined} enemies
- * @param {Array<{ name?: string, originX?: number, originZ?: number, layout?: { startMarkers?: Array<{ x: number, y: number, z: number }> } }> | null | undefined} blocks
+ * @param {Array<{ name?: string, originX?: number, originZ?: number, layout?: { startMarkers?: Array<{ x: number, y: number, z: number }>, waterLevel?: number } }> | null | undefined} blocks
+ * @param {((m: { x: number, y: number, z: number }) => number) | null} [floorOf]
  */
-export function sdEndMarks(enemies, blocks) {
+export function sdEndMarks(enemies, blocks, floorOf = null) {
   const marks = [];
   for (const e of enemies ?? []) if (e && !e.eliteCopy && Number.isFinite(e.x) && Number.isFinite(e.z)) marks.push({ x: e.x, y: e.y, z: e.z });
   const blockOf = (m) => (blocks ?? []).find((b) => {
     const ox = b?.originX ?? 0, oz = b?.originZ ?? 0;
     return m.x >= ox && m.x < ox + RDB_SIDE && m.z >= oz && m.z < oz + RDB_SIDE;
   });
+  const wet = (m) => { const level = blockOf(m)?.layout?.waterLevel; return level != null && (floorOf ? floorOf(m) : m.y) < -level * GLOBAL_SCALE; };
+  const dryFirst = (list) => { const dry = list.filter((m) => !wet(m)); return dry.length ? dry : list; };
   const inner = marks.filter((m) => !SD_BORDER_BLOCK_RE.test(blockOf(m)?.name ?? ''));
-  if (inner.length) return inner;
-  if (marks.length) return marks;
+  if (inner.length) return dryFirst(inner);
+  if (marks.length) return dryFirst(marks);
   const out = [];
   for (const b of blocks ?? []) {
     for (const m of b?.layout?.startMarkers ?? []) {
       if (Number.isFinite(m?.x) && Number.isFinite(m?.z)) out.push({ x: m.x + (b.originX ?? 0), y: m.y, z: m.z + (b.originZ ?? 0) });
     }
   }
-  return out;
+  return dryFirst(out);
 }
 
 /** The ring's size in a hall `headroom` metres high (floor to ceiling) whose nearest wall is `clear` metres off its axis:

@@ -218,7 +218,9 @@ The difficulty word is the location's (`loc.superTier`), read by one law (`dunge
 both the Rift and the Return read), on a floor the collider finds, the same on every client - an interior block's
 first (SD-REACH: never a block's start markers, its maker's data set down anywhere, nor a border cap's, which ring the
 layout and so held the farthest point - the Rift stood in pockets no walk reaches); every enemy marker with none there,
-and the start markers only with no enemy marker at all. The Rift, the Return and the landing back from the Hour are
+and the start markers only with no enemy marker at all. Out of the water where any is (AUDIT SD IV F38): a candidate
+whose floor stands under its block's own water level is the end only when none of its kind is dry - a flooded block's
+marker stood the Rift, the Return and the way back from the Hour at the bottom of the water. The Rift, the Return and the landing back from the Hour are
 stood as the level is built, every door shut and every platform home, before a save or the room can open one - a door
 open when they were stood moved all three, a client apart (AUDIT SD IV S1).
 

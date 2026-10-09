@@ -10,7 +10,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  SD_NO_MARK, sdRiftPlace, sdReturnPlace, sdLandingPlace, SD_RETURN_GAP_M, SD_RIFT_MIN_M, SD_RIFT_REACH_M, SD_RETURN_REACH_M, SD_STEP_M,
+  SD_NO_MARK, sdEndMarks, sdRiftPlace, sdReturnPlace, sdLandingPlace, SD_RETURN_GAP_M, SD_RIFT_MIN_M, SD_RIFT_REACH_M, SD_RETURN_REACH_M, SD_STEP_M,
   SD_LANDING_PAST_M, SD_LANDING_CLEAR_M, sdRiftFit, sdRiftSweep, SD_RIFT_SIZE_M, SD_RIFT_AIR_M,
 } from '../src/world/sdDungeon.js';
 import { SD_REALM_TEXT } from '../src/world/sdRealm.js';
@@ -22,6 +22,9 @@ import { scanGatePixels } from '../src/systems/gateSite.js';
 import { LOCATION_TYPES } from '../src/formats/mapsFile.js';
 import { createSpawnGround } from '../src/world/spawnedDungeons.js';
 import { sdRoll } from '../src/net/sdLaw.js';
+import { collectDungeonEnemies } from '../src/characters/dungeonEnemies.js';
+import { dungeonEndOf } from '../src/world/dungeonEnd.js';
+import { RDB_SIDE } from '../src/world/rdbLayout.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const W = read('src/scenes/world.js');
@@ -333,4 +336,35 @@ test('SD26 A HOLLOW STANDS ON DRY GROUND (AUDIT SD IV F37): every spawned dungeo
   // the world host hands the spawns' own test through
   assert.match(W, /\n {4}ground: \(px, py\) => _spawnGround\(px, py\),/);
   assert.match(read('src/scenes/sdHost.js'), /findSdSite\(r, sc, cities\(r\.r\), ground\)/);
+});
+
+// ── F38: the end out of the water ─────────────────────────────────────
+
+test('SD26 THE END STANDS OUT OF THE WATER (AUDIT SD IV F38): a random marker under its block\'s water is kept (drawn from the underwater table), and when the farthest was in a flooded block the Rift, the Return and the way back from the Hour stood at the bottom of it - the player back from the Hour on their breath. Now a candidate whose foot (the floor the collider finds under it) stands under its block\'s own water level is taken only when none of its kind is dry; a marker over a pool whose floor is under the water is wet; the dungeon host hands the floor through (mutants: the water unasked; the marker\'s own height for its floor; every wet one dropped; the surface upside down; the host unasked)', () => {
+  const mk = (x, z, rawY) => ({ archive: 199, record: 15, x, y: -rawY * 0.025, z, rawY, flags: 1, factionOrMobileId: 0, soundIndex: 0, actionByte: 0 });
+  // three interior blocks in a row, the third flooded (its surface 2.4 m up): its far marker 6.4 m under it, its near one
+  // 0.6 m over it
+  const blocks = [
+    { name: 'N0000001.RDB', originX: 0, originZ: 0, layout: { markers: [mk(10, 10, -40)], waterLevel: 10000, startMarkers: [] } },
+    { name: 'N0000002.RDB', originX: RDB_SIDE, originZ: 0, layout: { markers: [mk(20, 20, -40)], waterLevel: 10000, startMarkers: [] } },
+    { name: 'W0000003.RDB', originX: 2 * RDB_SIDE, originZ: 0, layout: { markers: [mk(30, 30, -120), mk(45, 40, 160)], waterLevel: -96, startMarkers: [] } },
+  ];
+  const enemies = collectDungeonEnemies(blocks.map((b) => ({ markers: b.layout.markers, waterLevel: b.layout.waterLevel, originX: b.originX, originZ: b.originZ })), { locationId: 1234, dungeonType: 0, playerLevel: 24, alternate: false });
+  assert.equal(enemies.length, 4, 'the drowned marker is kept by the collection');
+  const from = { x: 1, z: 1 };
+  const deep = enemies.find((e) => e.y < -3);
+  assert.ok(deep && dungeonEndOf(from, enemies).x === deep.x, 'it was the farthest');
+  assert.equal(dungeonEndOf(from, sdEndMarks(enemies, blocks.map((b) => ({ ...b, layout: { ...b.layout, waterLevel: 10000 } })))).x, deep.x, 'and dry, the end');
+  const end = dungeonEndOf(from, sdEndMarks(enemies, blocks));
+  assert.ok(Math.abs(end.x - (2 * RDB_SIDE + 30)) < 1e-9, `the flooded block's marker above its water: ${JSON.stringify(end)}`);
+  // its floor asked: that marker stands over a pool, its floor under the water - wet: the far N block's then
+  const pool = (m) => (m.x > 2 * RDB_SIDE ? 0 : m.y);
+  const end2 = dungeonEndOf(from, sdEndMarks(enemies, blocks, pool));
+  assert.ok(Math.abs(end2.x - (RDB_SIDE + 20)) < 1e-9, `out of the pool: ${JSON.stringify(end2)}`);
+  // every candidate wet: the end is still the farthest - a Rift somewhere, never none
+  const flooded = blocks.map((b) => ({ ...b, layout: { ...b.layout, waterLevel: -400 } }));
+  const end3 = dungeonEndOf(from, sdEndMarks(enemies, flooded));
+  assert.ok(Math.abs(end3.x - (2 * RDB_SIDE + 45)) < 1e-9, 'all under: the farthest, as ever');
+  // the dungeon host hands the floor the collider finds under each (test/sd4b_rift.test.js holds its line)
+  assert.match(read('src/scenes/dungeonContext.js'), /sdEndMarks\(_layoutEnemies, dungeon\.blocks, \(m\) => floorLanding\(collider, \[m\.x, m\.y \+ 0\.2, m\.z\]\)\[1\]\)/);
 });

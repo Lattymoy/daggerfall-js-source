@@ -223,5 +223,50 @@
     "tests": [
       "test/sd26_dungeon.test.js"
     ]
+  },
+  {
+    "name": "SD26-F38-the-water-unasked",
+    "file": "src/world/sdDungeon.js",
+    "old": "  if (inner.length) return dryFirst(inner);",
+    "new": "  if (inner.length) return inner;",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "SD26-F38-the-markers-own-height",
+    "file": "src/world/sdDungeon.js",
+    "old": "(floorOf ? floorOf(m) : m.y) < -level * GLOBAL_SCALE",
+    "new": "m.y < -level * GLOBAL_SCALE",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "SD26-F38-every-wet-one-dropped",
+    "file": "src/world/sdDungeon.js",
+    "old": "return dry.length ? dry : list; };",
+    "new": "return dry; };",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "SD26-F38-the-surface-upside-down",
+    "file": "src/world/sdDungeon.js",
+    "old": "(floorOf ? floorOf(m) : m.y) < -level * GLOBAL_SCALE",
+    "new": "(floorOf ? floorOf(m) : m.y) < level * GLOBAL_SCALE",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "SD26-F38-the-host-unasked",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "sdEndMarks(_layoutEnemies, dungeon.blocks, (m) => floorLanding(collider, [m.x, m.y + 0.2, m.z])[1])",
+    "new": "sdEndMarks(_layoutEnemies, dungeon.blocks)",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
   }
 ]

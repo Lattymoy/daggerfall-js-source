@@ -1864,7 +1864,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   function standSdEnd() {
     if (!sdEnd || !collider) return;
     if (_sdRealm) { sdEnd.stand({ rift: { at: realmToDungeon(0, 0, SD_WAY_BACK_Z), size: SD_WAY_BACK_SIZE }, retAt: null, dynamicDraws }); return; }   // SD5a: the way back, at the Threshold's back
-    const end = dungeonEndOf(dungeon.enterMarker ?? dungeon.startMarker ?? null, sdEndMarks(_layoutEnemies, dungeon.blocks));
+    const end = dungeonEndOf(dungeon.enterMarker ?? dungeon.startMarker ?? null, sdEndMarks(_layoutEnemies, dungeon.blocks, (m) => floorLanding(collider, [m.x, m.y + 0.2, m.z])[1]));   // AUDIT SD IV (F38): out of the water where any is
     if (!end) return;
     const probe = {
       floor: (at) => { const d = collider.raycast([at[0], at[1] + 1, at[2]], [0, -1, 0], 3); return Number.isFinite(d) ? at[1] + 1 - d : null; },
