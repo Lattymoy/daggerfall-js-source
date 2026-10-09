@@ -29,11 +29,12 @@
   {
     "name": "SD7B-the-wrong-wear",
     "file": "src/world/sdStepsModel.js",
-    "old": "crumble: Object.freeze({ top: SD_STEPS_CRACKED_RECORD,",
-    "new": "crumble: Object.freeze({ top: SD_REALM_FLOOR_RECORD,",
+    "old": "crumble: Object.freeze({ atlas: SD_STEPS_RECORD.crumble[0] }),",
+    "new": "crumble: Object.freeze({ atlas: SD_STEPS_RECORD.riser }),",
     "tests": [
       "test/sd7b_steps.test.js"
-    ]
+    ],
+    "why": "Re-aimed by content (SD-LOOK S9)."
   },
   {
     "name": "SD7B-the-collider-wound-wrong",
@@ -65,20 +66,22 @@
   {
     "name": "SD7B-the-cracks-unlit",
     "file": "src/world/sdStepsArt.js",
-    "old": "if (d < 0.035) return [EMBER, EMBER_GLOW];",
-    "new": "if (d < 0.035) return [EMBER, [0, 0, 0]];",
+    "old": "return d < S.core ? scale(col, k)",
+    "new": "return d < S.core ? BLACK",
     "tests": [
       "test/sd7b_steps.test.js"
-    ]
+    ],
+    "why": "Re-aimed by content (SD-LOOK S9)."
   },
   {
     "name": "SD7B-the-hub-alight",
     "file": "src/world/sdStepsArt.js",
-    "old": "if (r < 0.18) return [STONE_DARK, [0, 0, 0]];",
-    "new": "if (r < 0.18) return [STONE_DARK, BRASS_BRIGHT];",
+    "old": "if (r < D.hub) return BLACK;   // the hub",
+    "new": "if (r < D.hub) return scale(col, 1);   // the hub",
     "tests": [
       "test/sd7b_steps.test.js"
-    ]
+    ],
+    "why": "Re-aimed by content (SD-LOOK S9)."
   },
   {
     "name": "SD7B-a-bucket-that-does-not-move",
@@ -101,11 +104,12 @@
   {
     "name": "SD7B-no-blink",
     "file": "src/scenes/sdSteps.js",
-    "old": "seen = solid && !(beatBlinks(s, t) && Math.floor(warned * 2 * SD_BEAT_BLINK_HZ) % 2 === 1);",
-    "new": "seen = solid;",
+    "old": "const falter = beatBlinks(s, t) && Math.floor(warned * 2 * SD_BEAT_BLINK_HZ) % 2 === 1;",
+    "new": "const falter = false;",
     "tests": [
       "test/sd7b_steps.test.js"
-    ]
+    ],
+    "why": "Re-aimed by content (SD-LOOK S9)."
   },
   {
     "name": "SD7B-the-swing-not-followed",

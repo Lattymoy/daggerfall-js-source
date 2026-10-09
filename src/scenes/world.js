@@ -23492,22 +23492,24 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** SD-LOOK S7 (Super-Dungeons-Look.md section 9): THE ARENA'S READS, in the Hour's telegraph pass - its floor telling
    *  the clock's blows (render/sdArenaGlow.js), the Stomp's walls and, while it holds me, the hold's curtain
    *  (render/sdStompWall.js) - built once, lazily (a failure costs the reads, never the game), off the fight this page
-   *  holds; and the sky's word for the same fight (`uClock`). Nothing made a frame. */
+   *  holds; and the sky's word for the same fight (`uClock`). Nothing made a frame. SD-LOOK S9: and the Steps' read - their
+   *  ghosts where a Beat plate or my Crumble pin will return (scenes/sdSteps.js drawPass, the dungeon host's door). */
   let _sdGlowPass = null, _sdWallPass = null, _sdReadsBroken = false;
   const _sdGlowMemo = { flood: -1, floodK: 0, reset: -1, end: 0, pulseAt: -Infinity }, _sdWalls = sdStompWallRecords(), SD_HELD_WALLS = Object.freeze([SD_HOLD_WALL]);
   const _sdSkyClock = new Float32Array(4);
   const _sdArenaModel = (() => { const m = identity(), c = sdRealmToDungeon(SD_ARENA.x, 0, SD_ARENA.z); m[12] = c[0]; m[13] = c[1]; m[14] = c[2]; return m; })();
   function drawSdArenaReads(proj, view, fog) {
-    if (!sdFightLink || _sdReadsBroken || modes?.sdRealmSlot?.() == null) return false;
+    const ghosts = !!modes?.dungeonCtx?.sdStepsDraw?.(proj, view, fog);   // SD-LOOK S9: the Steps' ghosts, the fight or none
+    if (!sdFightLink || _sdReadsBroken || modes?.sdRealmSlot?.() == null) return ghosts;
     if (!_sdGlowPass) {
-      try { _sdGlowPass = new SdArenaGlowRenderer(renderer.gl); _sdWallPass = new SdStompWallRenderer(renderer.gl); } catch (e) { _sdReadsBroken = true; console.warn('[sd] the arena\'s reads would not build', e?.message ?? e); return false; }
+      try { _sdGlowPass = new SdArenaGlowRenderer(renderer.gl); _sdWallPass = new SdStompWallRenderer(renderer.gl); } catch (e) { _sdReadsBroken = true; console.warn('[sd] the arena\'s reads would not build', e?.message ?? e); return ghosts; }
     }
     const s = sdFightLink.state(), t = sdFightLink.now();
     let drew = _sdGlowPass.draw(proj, view, _sdArenaModel, sdArenaGlowAt(s, t, _sdGlowMemo), fog, renderer.lightingLane ? SD_SKY_STEPS.lane : SD_SKY_STEPS.classic);
     const n = sdStompWalls(s, t, _sdWalls);
     if (n > 0 && _sdWallPass.draw(_sdWalls, n, proj, view, fog)) drew = true;
     if (sdArenaHeld() && _sdWallPass.draw(SD_HELD_WALLS, 1, proj, view, fog)) drew = true;
-    return drew;
+    return drew || ghosts;
   }
   /** The sky's word for the fight this page holds (render/sdSky.js uClock), or none. */
   const sdSkyClockNow = () => (sdFightLink ? sdHourClockOf(sdFightLink.state(), sdFightLink.now(), _sdSkyClock) : null);

@@ -16,7 +16,15 @@
 //
 // Read off the fight this page holds, each turn as it happens (a page that comes late takes the fight as it stands - the
 // voice's law, scenes/sdRemnantVoice.js). Not a DFU member. Ledger A (SUPER-DUNGEONS).
-import { SD_ARENA, realmToDungeon, dungeonToRealm } from '../net/sdBrain.js';
+//
+// SD-LOOK S9 (2026-10-09, bible/11-Multiplayer/Super-Dungeons-Look.md sections 3 and 8): THE REWIND - where the Hour
+// casts me back from the Steps' void, a gold burst plays BACKWARDS where I land: its sparks gather up off the stone (and
+// up from under its rim) and converge on me, white-hot as they arrive, its light swelling to them (`SD_FX_REWIND`, a kind
+// of its own beside the blows' - time runs back inside the Hour). No veil, the words as they were (scenes/world.js
+// sdCastBack). Seen from my own feet: fallen to the void's floor one frame, standing on a checkpoint's landing the next
+// (world/sdSteps.js castBackTo - nothing else moves a body so), so no host is asked.
+import { SD_ARENA, SD_REALM_ORIGIN, realmToDungeon, dungeonToRealm } from '../net/sdBrain.js';
+import { SD_CHECKPOINTS, SD_VOID_Y } from '../world/sdSteps.js';
 import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_REM, SD_ECHO, SD_ARENA_SLACK, stompFrontAt, handAngleAt, inArena } from '../net/sdRemnant.js';
 import { sdBodyAt } from '../net/sdFightLink.js';
 import { GateFxRenderer, FX_BURST_MS, FX_BURSTS_MAX, FX_LIGHT_MS } from '../render/gateFx.js';
@@ -36,6 +44,21 @@ export const SD_FX_KINDS = Object.freeze({
   echoRise: kind(0.6, 0.9, false, [1.0, 8]), echoFall: kind(0.9, 1.3, true, [1.5, 10]), heartRise: kind(0.3, 0.45, false), heartBreak: kind(0.5, 0.8, false, [1.0, 6]),
   stun: kind(0.6, 0.9, false, [1.2, 12]), wake: kind(0.7, 0.9, true), slip: kind(0.45, 0.7, true), fall: kind(1, 2, false), column: kind(0.7, 1.2, true), home: kind(0.5, 0.7, false, [1.0, 8]),
 });
+/** SD-LOOK S9: THE REWIND's kind - its sparks' share, their power, gold (never the grit), its light swelling to the end; and
+ *  how near the void's floor my feet were the frame before (m above it), how near a checkpoint's landing they stand now
+ *  (m), and how high over my feet its sparks gather (m). */
+export const SD_FX_REWIND = kind(0.75, 0.55, false, [1.4, 7]);
+export const SD_REWIND_SEEN = Object.freeze({ fell: 1.5, landed: 0.6, chest: 1.0, gap: 500 });
+/** Each checkpoint's island as a burst's floor's edge ([x, z, radius], the dungeon's frame): where the rewind's sparks
+ *  rest, and past which they rise from under its rim. */
+const SD_REWIND_EDGES = Object.freeze(SD_CHECKPOINTS.map((C) => { const at = realmToDungeon(C.x, C.y, C.z); return Object.freeze([at[0], at[2], C.r]); }));
+/** SD-LOOK S9: whether my feet, realm y `wasY` the frame before and realm (x, y, z) now, were cast back - fallen to the void's
+ *  floor and standing on a checkpoint's landing: its index, else -1. Pure. */
+export function sdCastBackSeen(wasY, x, y, z) {
+  if (!(wasY < SD_VOID_Y + SD_REWIND_SEEN.fell)) return -1;
+  for (let k = 0; k < SD_CHECKPOINTS.length; k++) { const c = SD_CHECKPOINTS[k]; if (Math.abs(x - c.x) < SD_REWIND_SEEN.landed && Math.abs(z - c.z) < SD_REWIND_SEEN.landed && Math.abs(y - c.y) < SD_REWIND_SEEN.landed) return k; }
+  return -1;
+}
 /** Their colours (linear rgb): the brass, its gold and silver Echoes, the Mantella's green, the Reset's white-green, the
  *  End's red, the Hearts' light, the way home's pale. */
 export const SD_FX_COLOR = Object.freeze({
@@ -81,7 +104,7 @@ export const SD_HAND_FLASH_OUT = 1.2;
 export function createSdFx({ link, feet = () => null, shake = () => {} }) {
   /** @type {Array<{ at: number[], at0: number, t: number, kind: any, color: ReadonlyArray<number>, floor: number, edge: ReadonlyArray<number> }>} */
   const bursts = [];
-  let k = null, pass = null, passTried = false, flashAt = -Infinity;
+  let k = null, pass = null, passTried = false, flashAt = -Infinity, wasY = NaN, wasAt = -Infinity;
   const live = [];
   /** AUDIT SD III (V5): the lights a frame reads, kept and filled in place - each a pooled `{ x, y, z, range, color }`
    *  (a caller reads them that frame, never later) */
@@ -98,7 +121,12 @@ export function createSdFx({ link, feet = () => null, shake = () => {} }) {
     let b = bursts.length < FX_BURSTS_MAX ? null : bursts.reduce((o, q) => (q.at0 < o.at0 ? q : o));
     if (!b) { b = { at: [0, 0, 0], at0: 0, t: 0, kind: kd, color, floor: NaN, edge: SD_FX_EDGE }; bursts.push(b); }   // AUDIT SD IV (R3): the arena's edge
     b.at[0] = p[0]; b.at[1] = p[1]; b.at[2] = p[2]; b.at0 = at0; b.kind = kd; b.color = color; b.floor = floor;
+    b.edge = SD_FX_EDGE;   // SD-LOOK S9: the arena's, unless the caller says (the rewind: its checkpoint's)
+    return b;
   };
+  /** SD-LOOK S9: THE REWIND where my feet (the dungeon's frame) landed on checkpoint `c` at `t` - its sparks gathering over
+   *  my feet, resting on its stone and falling past its rim. */
+  const rewound = (f, c, t) => { add([f[0], f[1] + SD_REWIND_SEEN.chest, f[2]], t, SD_FX_REWIND, SD_FX_COLOR.gold, f[1]).edge = SD_REWIND_EDGES[c]; };
   /** My feet in the arena's frame, or null. */
   const mine = () => { const f = feet(); if (!f) return null; const r = dungeonToRealm(f[0], f[1], f[2]); return [r[0] - SD_ARENA.x, r[2] - SD_ARENA.z]; };
   // AUDIT SD III (V4): the whole arena's shakes (a reach of nought) are felt in the arena alone - the Hall and the Steps
@@ -163,6 +191,14 @@ export function createSdFx({ link, feet = () => null, shake = () => {} }) {
     frame() {
       const s = link?.state?.(), t = link?.now?.();
       for (let i = bursts.length - 1; i >= 0; i--) if (Number.isFinite(t) && t - bursts[i].at0 > FX_BURST_MS + 200) bursts.splice(i, 1);
+      // SD-LOOK S9: my feet cast back from the Steps' void - the rewind where they land (the realm's frame by
+      // net/sdBrain.js dungeonToRealm's own sum: a frame makes nothing)
+      const f = feet();
+      if (f) {
+        const rx = f[0] - SD_REALM_ORIGIN[0], ry = f[1] - SD_REALM_ORIGIN[1], rz = f[2] - SD_REALM_ORIGIN[2], c = t - wasAt < SD_REWIND_SEEN.gap ? sdCastBackSeen(wasY, rx, ry, rz) : -1;   // the frame before, and only just before
+        if (c >= 0) rewound(f, c, t);
+        wasY = ry; wasAt = Number.isFinite(t) ? t : -Infinity;
+      } else wasY = NaN;
       if (!s || !(s.fi > 0) || !Number.isFinite(t)) { k = null; return; }
       if (!k || k.fi !== s.fi) { k = seen(s, t); return; }
       // its fall: the burst out of its chest and the flash, then the column as it sinks, then the way home's light
@@ -220,7 +256,11 @@ export function createSdFx({ link, feet = () => null, shake = () => {} }) {
     /** The bursts standing at `t` (the fight's clock), as the spark pass takes them. */
     bursts(t) {
       live.length = 0;
-      for (const b of bursts) { b.t = (t - b.at0) / 1000; if (b.t >= 0 && b.t < FX_BURST_MS / 1000) live.push(b); }
+      for (const b of bursts) {
+        b.t = (t - b.at0) / 1000;
+        if (b.kind === SD_FX_REWIND) b.t = b.t >= 0 ? FX_BURST_MS / 1000 - b.t : -1;   // SD-LOOK S9: the rewind runs its burst backwards
+        if (b.t >= 0 && b.t < FX_BURST_MS / 1000) live.push(b);
+      }
       return live;
     },
     /** The light the landings throw at `t`: each lit burst's flash where it fell, fading over FX_LIGHT_MS, and the fall's
@@ -231,7 +271,8 @@ export function createSdFx({ link, feet = () => null, shake = () => {} }) {
         const b = bursts[i], L = b.kind?.light, dt = t - b.at0;
         if (!L || !(dt >= 0 && dt < FX_LIGHT_MS)) continue;
         const f = L[0] * (1 - dt / FX_LIGHT_MS);
-        putLight(b.at[0], b.at[1] + 1, b.at[2], L[1], b.color[0] * f, b.color[1] * f, b.color[2] * f);
+        const rw = b.kind === SD_FX_REWIND, g = rw ? L[0] - f : f;   // SD-LOOK S9: the rewind's swells to its end, where its sparks gather
+        putLight(b.at[0], b.at[1] + (rw ? 0 : 1), b.at[2], L[1], b.color[0] * g, b.color[1] * g, b.color[2] * g);
       }
       if (t >= flashAt && t - flashAt < SD_FX_FLASH_MS) { const f = 4 * (1 - (t - flashAt) / SD_FX_FLASH_MS); putLight(FLASH_AT[0], FLASH_AT[1], FLASH_AT[2], 40, f, f * 0.9, f * 0.7); }
       lit.length = nLit;
@@ -252,5 +293,8 @@ export function createSdFx({ link, feet = () => null, shake = () => {} }) {
     },
     /** Out of the Hour: forgotten. */
     leave() { k = null; bursts.length = 0; flashAt = -Infinity; },
+    /** SD-LOOK S9 (the lab, src/tools/abyssLab.js): the rewind on checkpoint `c` at `t` (the fight's clock), my feet on its
+     *  landing. */
+    rewind(c, t) { const C = SD_CHECKPOINTS[c]; if (C) rewound(realmToDungeon(C.x, C.y, C.z), c, t); },
   };
 }

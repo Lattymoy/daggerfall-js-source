@@ -1834,7 +1834,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // SD7b (Super-Dungeons.md section 9): THE UNMOORED STEPS in the Shattered Hour (scenes/sdSteps.js) - the course's steps,
   // stood the first frame the outer host asks, each moved on the realm's clock (the outer host's) and ridden BEFORE the
   // motor: the outer host asks every frame, beside the action movers' ride, and stands a body the void took back
-  const sdSteps = _sdRealm ? createSdSteps({ renderer, audio }) : null;
+  const sdSteps = _sdRealm ? createSdSteps({ ending: sdMarksOf(dfLocation.sdRealm)[0], renderer, audio }) : null;   // SD-LOOK S9: its Hollow's Ending on the vane
   let _sdStepsStood = false;
   /** One frame of the Steps, before the motor: the landing of a cast-back, or null. */
   function sdStepsRide(dt, body, live) {
@@ -9993,6 +9993,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     sdEndHalos: sdEnd ? () => sdEnd.halos() : undefined,
     sdEndLights: sdEnd ? () => sdEnd.lights() : undefined,
     sdRemnantLights: sdRemnant ? () => sdRemnant.lights() : undefined,   // SD-LOOK S8: the hearts' lights, for the Hour's channel (the world host's sdRealmLights)
+    sdStepsDraw: sdSteps ? (proj, view, fog) => sdSteps.drawPass(proj, view, fog) : undefined,   // SD-LOOK S9: the Steps' ghosts, for the world host's Hour pass
     /** SD7b: the Unmoored Steps' frame, BEFORE the motor (the mode machine's, beside the movers' ride): the steps moved and
      *  `body` carried; while `live`, the breath, the touch and the void - the landing of a cast-back, or null. */
     sdStepsRide(dt, body, live = true) { return sdStepsRide(dt, body, live); },
