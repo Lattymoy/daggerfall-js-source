@@ -33,6 +33,7 @@ const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const RATE = CLASSIC_MINUTES_PER_SECOND;
 const MPM = PERSON_MOVE_SPEED / RATE;
 const SYNTH = Object.freeze({ mapId: 12345, blocks: 9, region: 17, people: 3, port: false });
+const SYNTH4 = Object.freeze({ mapId: 24680, blocks: 16, region: 17, people: 3, port: false });
 const CLOSE = Object.freeze({ mapId: 777, blocks: 16, region: 17, people: 3, port: false });
 
 function makeTown(fx, rec, minute, { relations = createRelations(), places = null } = {}) {
@@ -71,15 +72,18 @@ test('LW-TALK the facing: a resident standing keeps the way they face - the walk
   const frames = new Set();
   for (let i = 0; i < 8; i++) frames.add(w.update(0.25, eye, false).frame);
   assert.ok(frames.size > 1, 'walking: the cycle');
-  // on the street, those standing in a circle on the wheel, each toward the circle's middle
-  const t = makeTown(synthTown(), SYNTH, 100 * DAY_MIN + 18 * 60);
+  // on the street, those standing in a circle on the wheel, each toward the circle's middle - LW-ROOMS: PIN MOVED, at half
+  // past six: a long gap at one place is spent at home now, and the late afternoon's stand-ins at the square went
+  const t = makeTown(synthTown(), SYNTH, 100 * DAY_MIN + 18.5 * 60);
   const seats = run(t, 20);
   let checked = 0;
   for (const s of seats) {
-    const c = t.town._inCircle.get(s.person.living.id);
+    // LW-STIR: PIN MOVED - and the two of an incident, toward each other (an evening's quarrel takes its two out of
+    // their circles: at half past six, three in circles stood in view)
+    const c = t.town._inCircle.get(s.person.living.id) ?? t.town._inStir.get(s.person.living.id);
     if (!c || s.person.moving) continue;
     const o = mobileOrientation(s.person.yaw, s.person.pos, t.eye);
-    assert.deepEqual([s.out.record, s.out.flip], [MOVE_RECORDS[o], MOVE_FLIPS[o]], `${s.person.living.id}: toward their circle`);
+    assert.deepEqual([s.out.record, s.out.flip], [MOVE_RECORDS[o], MOVE_FLIPS[o]], `${s.person.living.id}: toward their circle (or the other of their incident)`);
     checked++;
   }
   assert.ok(checked >= 4, `circles standing (${checked})`);
@@ -267,7 +271,7 @@ test('LW-TALK on the street: a circle\'s talk waits for its people to gather - f
     const two = { k: 'two' }, of2 = (id) => (id === 'h' || id === 'i' ? two : undefined);
     assert.deepEqual([4.5, 6].map((at) => [...keepUnits([{ res: g, d: 2 }, { res: h, d: at }, { res: i, d: at + 1 }], of2, 2)].map((r) => r.id).sort().join('')), ['hi', 'g'],
       'a circle within the ring of one alone before them; beyond it, after');
-    assert.match(rd('src/systems/livingWorld/livingTown.js'), /const keep = keepUnits\(wanted, \(id\) => this\._inCircle\.get\(id\)\?\.circle, this\.maxPopulation\);/, 'the census keeps by it');
+    assert.match(rd('src/systems/livingWorld/livingTown.js'), /const keep = keepUnits\(wanted, \(id\) => this\._inCircle\.get\(id\)\?\.circle \?\? this\._inStir\.get\(id\)\?\.pair, this\.maxPopulation\);/, 'the census keeps by it');   // LW-STIR: PIN MOVED - an incident's two kept whole too
   }
   // stepped past them (no arrival), out of the player's sight: their rows to the nearer
   {
@@ -314,9 +318,12 @@ test('LW-TALK on the street: a circle\'s talk waits for its people to gather - f
 });
 
 test('LW-TALK every reader deals alike: the deal is the plans\' - one taken off this street alone (the trample) is dealt and left out after, the spot\'s other circles as every reader has them, their partner left to their own counsel; two readers come at different minutes keep the same circles, gatherings and words (mutants: the deal from the street, the drop)', () => {
-  const a = makeTown(synthTown(), SYNTH, 100 * DAY_MIN + 10 * 60);   // LW-SPREAD: PIN MOVED - the morning's market (from half past seven to half past ten): the evening's people are over the town's spots now
+  // LW-SPREAD: PIN MOVED - the morning's market (from half past seven to half past ten): the evening's people are over the
+  // town's spots now; LW-ROOMS: PIN MOVED - in the town of sixteen blocks: a long gap at one place spent at home, the
+  // small town has no pair in the square's sight at a spot of three circles, at any ten minutes from seven to nine
+  const a = makeTown(synthTown({ blocksW: 4, blocksH: 4 }), SYNTH4, 100 * DAY_MIN + 10 * 60);
   run(a, 30);
-  const b = makeTown(synthTown(), SYNTH, a.clock.t);
+  const b = makeTown(synthTown({ blocksW: 4, blocksH: 4 }), SYNTH4, a.clock.t);
   for (let i = 0; i < 30 * 20; i++) { step(a); b.clock.t = a.clock.t; b.town.update(1 / 30, b.at, Math.PI, b.eye, true, () => false); }
   const view = (t) => [...t.town._inCircle.entries()].map(([id, c]) => `${id}:${c.circle.members.map((x) => x.id).join(',')}@${c.circle.from.toFixed(6)}`).sort();
   assert.deepEqual(view(b), view(a), 'the same circles and gatherings for every reader');

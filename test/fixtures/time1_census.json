@@ -642,6 +642,12 @@
   },
   {
    "file": "src/scenes/worldModes.js",
+   "has": "const cardDay = () => Math.floor(worldMinutes() / MINUTES_PER_DAY);",
+   "clock": "event",
+   "why": "the card table regulars' day - their purses kept till the day turns (AUDIT CARDS-2 H2)"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
    "has": "worldNow: () => Math.floor(skyMinutes()),",
    "clock": "sky",
    "why": "the tavern's calendar and kitchen hours"

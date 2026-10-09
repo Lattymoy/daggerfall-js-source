@@ -109,6 +109,7 @@ test('GUIDE5 ONLY WHAT THE MAP HOLDS - a place the entry names but the map does 
   _resetQuestTrackerForTests();
   try {
     questTracker.hear({ quests: [view('2', { title: 'Not On The Map', where: `Llugwych in ${REGION} province`, note: 'Not on your map yet. Ask around for directions.' })], events: [] });
+    questTracker.toggle('2');   // TRACK-ONLY: the card shows a tracked quest alone
     assert.equal(questTracker.frame().note, 'Not on your map yet. Ask around for directions.');
     assert.deepEqual(questMapMarks(questTracker.views, '2', pixelOf), [], 'no mark');
     // the card says it: its quiet row under the place
@@ -125,6 +126,7 @@ test('GUIDE5 ONLY WHAT THE MAP HOLDS - a place the entry names but the map does 
       assert.equal(note.style.display, '');
     } finally { if (hadDoc === undefined) delete globalThis.document; else globalThis.document = hadDoc; }
     questTracker.hear({ quests: [view('1', { find: find('Bigtown'), where: `Bigtown in ${REGION} province` })], events: [] });
+    questTracker.toggle('1');   // TRACK-ONLY
     assert.equal(questTracker.frame().note, '', 'a place on the map needs no note');
     const hadPage = globalThis.document;
     globalThis.document ??= page;   // a page, so the skin is the only answer
@@ -353,8 +355,8 @@ test('GUIDE5 THE COMPASS - one mark, the tracker\'s quest\'s place: a hollow dia
 test('GUIDE5 ONE HOST, ITS LAWS - the street resolves a place with the held map\'s goto law, hands the held map every quest\'s place while the marks are on, and hands the compass the tracker\'s quest\'s place (the pixel\'s middle, the party marks\' own sum) on the street alone; drawHud forwards it and the enhanced HUD draws it; the classic map is DFU\'s and gets none; the switch is a Features row beside the tracker\'s; the module stays light (mutants: the marks off the switch; the compass indoors; the point off the pixel\'s middle; the forward dropped)', () => {
   const W = rd('src/scenes/world.js');
   assert.match(W, /const questPixel = \(find\) => questPlacePixel\(maps, find\?\.regionName \?\? '', find\?\.locationName \?\? ''\);/, 'AUDIT GUIDE O3: the host\'s memo - the held map\'s goto law (placePixelOf), read once a place');
-  assert.match(W, /quests: \(\) => \(marksOn\(\) \? questMapMarks\(questTracker\.views, questTracker\.tracked\(\)\?\.id \?\? null, questPixel\) : \[\]\),/);
-  assert.match(W, /const questCompassMark = \(\) => \{\n\s*if \(!marksOn\(\) \|\| \(modes\?\.mode \?\? 'exterior'\) !== 'exterior'\) return null;\n\s*const find = questTracker\.tracked\(\)\?\.target\?\.find;\n\s*const p = find \? questPixel\(find\) : null;\n\s*if \(!p\) return null;\n\s*const t = state\.pixelTranslation\(p\.x, p\.y\);\n\s*return \[t\[0\] \+ TERRAIN_SIZE \/ 2, t\[2\] \+ TERRAIN_SIZE \/ 2\];/);
+  assert.match(W, /quests: \(\) => \(marksOn\(\) \? questMapMarks\(questTracker\.views, questTracker\.shown\(\)\?\.id \?\? null, questPixel\) : \[\]\),/);
+  assert.match(W, /const questCompassMark = \(\) => \{\n\s*if \(!marksOn\(\) \|\| \(modes\?\.mode \?\? 'exterior'\) !== 'exterior'\) return null;\n\s*const find = questTracker\.shown\(\)\?\.target\?\.find;\n\s*const p = find \? questPixel\(find\) : null;\n\s*if \(!p\) return null;\n\s*const t = state\.pixelTranslation\(p\.x, p\.y\);\n\s*return \[t\[0\] \+ TERRAIN_SIZE \/ 2, t\[2\] \+ TERRAIN_SIZE \/ 2\];/);
   assert.match(W, /quest: (?:vendorCompassMark\(\) \?\? )?(?:townQuestCompassMark\(\) \?\? )?questCompassMark\(\),   \/\/ GUIDE5/);   // HOME-VENDOR: a trader's waypoint first, while it is set
   assert.match(rd('src/ui/hud.js'), /quest: quest \?\? null,   \/\/ GUIDE5/);
   assert.match(rd('src/ui/enhancedHud.js'), /drawQuestMark\(opts\.quest \?\? null, opts\.playerXZ \?\? null, heading01\);   \/\/ GUIDE5/);

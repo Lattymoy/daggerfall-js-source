@@ -126,6 +126,8 @@ import { tallySwingSkills, SWING_FATIGUE_COST, playerPainVoice, playPlayerVoice,
 import { exhaustionOutcome } from '../systems/rest.js';   // AUDIT 23 (C5); SWIM-SPENT: the water's line is the outcome's
 import { preloadRestArt } from '../ui/restWindow.js';   // S40: rest above ground   // D3: REST00I0/01I0/02I0
 import { createRestWindow } from '../ui/restDoor.js';   // RESTDOOR1: the enhanced/native fork, same law as ui/tradeDoor.js
+import { DecisionBoxWindow } from '../ui/decisionBox.js';   // REST-WARN2: the Plus decision box
+import { restAilmentLines } from '../systems/restWarning.js';   // REST-WARN: the fourth host's rest asks too
 import { setEnemyAlert, areEnemiesNearby, intermittentEnemySpawn } from '../systems/encounters.js';
 import { revenantToReturn, revenantSpawnOptions, revenantPresence, takeRevenantNotice, revenantSay, releaseRevenantStand, revenantRoutSweep, revenantRoutedEvent } from '../systems/revenant.js';   // REVENANT: the world host's twin - who comes back, and what the player is told
 import { createStandingWatch, installLegalNotices } from './standingHost.js';   // REP1: the watch's stop; REP5: the law's notices
@@ -148,6 +150,7 @@ import { getNameBankOfRegion } from '../characters/nameHelper.js';   // AUDIT 23
 import { createHitEffects } from './hitEffects.js';
 import { createTownScratch, createPersonTextureKeys } from './townScratch.js';   // PERF-TOWN1: the town loop's per-frame seats, and the memoised texture key
 import { createDroppedTorches } from './droppedTorches.js';
+import { createLefayMonument } from './lefayMonumentHost.js'; import { isLefayTown, lefaySpotOf, carveLefay } from '../world/lefayMonument.js';   // LEFAY1: the monument to Julian LeFay, when the city on the bench is Gothway Garden
 import { createCamps } from './camps.js'; import { PORTAL_TEXT } from '../systems/portalStone.js';   // SURV3: the camps this host stands; PORTAL1: the street's own refusal
 import { drinkAtSource, isWaterSourceFlat, isDrySourceFlat, WATER_SOURCE_MODELS, DRY_SOURCE_TEXT } from '../systems/survival/items.js';   // SURV3: the mod's water sources
 import { survivalOn } from '../systems/survival/switch.js';   // HT1: Handheld Torches' dropped lights, thrown torches and burning foes   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
@@ -189,7 +192,8 @@ import { preloadTransportArt } from '../ui/transportWindow.js';   // MAC-K3: MOV
 import { createLockOn, LOCK_PICK_DISTANCE } from '../player/lockOn.js';   // TI1: touch lock-on
 import { rayDirFromScreen, projectToScreen, ndcFromScreen } from '../player/tapRay.js';   // TI1: the finger's ray and the dot
 import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
-import { getInteractionMode } from '../player/interactionMode.js';   // U45: the mode panel's cycle reads it
+import { getInteractionMode, MODE_ACTIONS } from '../player/interactionMode.js';   // U45: the mode panel's cycle reads it; MODE-WHEEL: the pad's unbound mode actions
+import { modeWheel } from '../ui/modeWheel.js';   // MODE-WHEEL: the mouse steers it while it is open
 import { randomEpitaph } from '../systems/gravestoneLore.js';   // GRAVE1: Info mode's graveyard flavour line
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
 import { preloadInventoryArt } from '../ui/nativeInventory.js';   // U8d: the native inventory
@@ -649,6 +653,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const staticBuildings = [];
   const animalAmbience = createAnimalAmbience(audio, () => ambientAnimals);
   const cityNav = new CityNavigation(loc.width, loc.height);   // T1 towns
+  const lefaySpot = isLefayTown(dfLocation) ? lefaySpotOf(loc) : null;   // LEFAY1: world.js's spot - this host's frame is the location's own
   for (const b of loc.blocks) {
     const originMatrix = trs(b.originX, 0, b.originZ, 0, 0, 0);
     if (b.blockName === ARENA_BLOCK && isArenaCity(dfLocation)) arenaCityOrigin = [b.originX, 0, b.originZ];   // ARENA-FIX 12
@@ -1629,6 +1634,18 @@ export async function bootExterior(canvas, renderer, params, status) {
     say: (l) => townTalk.say(l), showOverlay: (w) => townTalk.showOverlay(w), openRest: () => { townTalk.closeOverlay(); toggleRest(); },
     advanceMinutes: (n) => { playerTicker.advance(n); runEncounterTick(walkMode ? player.pos : cam.pos, true); },   // CAMP-REST: a camp meal is a skip - no group roll on the replay
   });
+  // LEFAY1: THE MONUMENT TO JULIAN LEFAY (scenes/lefayMonumentHost.js) - world.js's twin: on the bench the location's
+  // frame is the scene's, so its spot stands still and the ground is the one plane
+  const _lefaySite = lefaySpot ? [lefaySpot.x, lefaySpot.z] : null;
+  const lefay = createLefayMonument({
+    renderer, getTexture, uploadRecord, billboardSize, collider: () => collider,
+    site: () => (_mode() === 'exterior' ? _lefaySite : null),
+    groundAt: () => GROUND_OFFSET * 0.025,
+    eye: () => cam.pos, feet: () => (walkMode ? player.pos : null),
+    tribute: () => playerEntity.lefayTribute, keep: (next) => { playerEntity.lefayTribute = next; },
+    say: (text) => townTalk.say(text), midText: (text) => setMidScreenText(text),
+    sound: () => audio.playOneShot(SOUND.SwingHighPitch, 0.4),
+  });
   // HCC - HORSE CART AND CARGO on the fixed city: world.js's wiring, minus what this host has none of (a streaming
   // world - the one pixel is the location's; a save envelope; an online room; a ship; fast travel). The runtime's
   // scene<->world conversions run on the location rect's native frame (_anchorNative, below), which is the frame
@@ -1738,6 +1755,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       ? waterSourceHoverName(!!springAt(key)?.dry) : null),
     (key) => wagonHoverName(key),
     (key) => hcc.hoverName(key),   // HCC
+    (key) => lefay.hoverName(key),   // LEFAY1: the monument to Julian LeFay - last, as world.js's twin
   ];
   /**
    * WORLD-HOVER H2: THE MOD'S MOBILE BAND (.cs:297-320), IN ITS OWN
@@ -2415,7 +2433,12 @@ export async function bootExterior(canvas, renderer, params, status) {
       if (lines) townTalk.showOverlay(new ActionTextBox(lines));
       return;
     }
-    townTalk.showOverlay(createRestWindow(outdoorRestDeps));
+    // REST-WARN: poisoned or diseased, the rest asks first (systems/restWarning.js) - the window opens on its Yes, once
+    // the box has left the slot (the world host's own order; THE FOUR HOSTS RULE: this host had been left out)
+    const restNow = () => townTalk.showOverlay(createRestWindow(outdoorRestDeps));
+    const ail = restAilmentLines(playerEntity);
+    if (ail) { let yes = false; townTalk.showOverlay(new DecisionBoxWindow({ rows: ail, onYes: () => { yes = true; } }), () => { if (yes) restNow(); }); return; }
+    restNow();
   };
   // G2: arrest + court through the townTalk overlay seam.
   //
@@ -3658,6 +3681,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // HOVER before the look gate refuses the unlocked pointer.
     if (townTalk.hover(e) || modes?.hover?.(e)) return;
     if (document.pointerLockElement !== canvas) return;
+    if (modeWheel.isOpen()) return;   // MODE-WHEEL: while it is open the mouse steers it (its own listener), not the view
     // AUDIT 24 (wave 45): RMB in walk mode ALWAYS ends here - it is a
     // weapon control, and whether this host or worldModes owns the
     // swing, it is never a look. The old line gated the whole thing on
@@ -3727,6 +3751,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     dial: isEnhanced(),
     enhanced: isEnhanced(),   // AUDIT FONT F5: the layer's text in the pixel face under the enhanced skin - FONT1 wired this in scenes/world.js alone, so every OTHER host's touch buttons stayed system-ui
     cycleMode: () => townTalk.nextMode(),   // T3-touch: the phone's F1-F4
+    padAction: (act) => (MODE_ACTIONS[act] ? townTalk.pickMode(MODE_ACTIONS[act]) : false),   // MODE-WHEEL: PAD-BINDS' door for an action on no key - the four mode actions ship unbound, so the pad's NextMode lands here
     overlayActive: () => townTalk.overlayActive,
     // AUDIT 62 F7: the finger's pause gate - the same predicate the
     // mouse arms carry (the mousemove look needs the pointer lock a
@@ -4344,6 +4369,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     // alone - which is the arm C# itself takes when the mill has
     // nothing fit for a sign (:727 guards only the second half).
     boardTargets: () => bulletinBoards,
+    monumentTargets: () => lefay.targets(),   // LEFAY1: the monument to Julian LeFay, in the street's one ray
+    activateMonument: (key, mode, verb) => lefay.activate(key, mode, verb),   // LEFAY1: read it, or throw it a flower
     // ...and that name is not free: the heading is PlayerGPS
     // .CurrentLocalizedLocationName (PlayerActivate.cs:721), which
     // worldModes reads off `buildingDirectory` (:1649) and nowhere
@@ -4731,6 +4758,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const personTex = new Map();
   if (populated) await Promise.all(personArchives.map(async (a) => personTex.set(a, await getTexture(a))));
   const personBatchOf = new Map();   // person -> batch
+  if (lefaySpot) carveLefay(cityNav, lefaySpot);   // LEFAY1: the people walk round the monument, never through it
   const population = !populated ? null : new TownPopulation(cityNav, {
           suppressSpawns: () => racialSuppressPopulationSpawns(playerEntity),   // V4: the transformed lycanthrope empties the streets
     totalBlocks: loc.width * loc.height,
@@ -4974,7 +5002,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // (0x7d1), not a frame-tail chore.
     noteLocalPlayer(walkMode ? player.pos : cam.pos, [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)]);   // TACT2: where I stand and face - AUDIT TACT D2: before the building's and the dungeon's frames too
     tickTactics(foeFrameDt(_questBoxHoldsFoes() || (_mode() === 'dungeon' && !!modes?.dungeonCtx?.uiOverlayActive) ? 0 : dt));   // AUDIT TACT D10/A3: the brain's clock is the foes' own step; AUDIT TELL H1: a dungeon's window holds its foes, and their wind-ups with them
-    if (_mode() !== _torchesMode) { droppedTorches.destroyAll(); weaponRig.silenceTorch();   /* DISC6: the street's rig leaves (or retakes) the frame - its torch loop falls silent, and the rig that ticks starts its own */ _torchesMode = _mode(); }   // HT1
+    if (_mode() !== _torchesMode) { droppedTorches.destroyAll(); weaponRig.silenceTorch();   /* DISC6: the street's rig leaves (or retakes) the frame - its torch loop falls silent, and the rig that ticks starts its own */ if (_torchesMode === 'exterior') lefay.destroyAll();   /* LEFAY1: its collider down, never carried in */ _torchesMode = _mode(); }   // HT1
     if (modes.frame(dt, now)) {
       if (!skyInside) { skyInside = true; sky.setInside(true); }   // DS1: InteriorTransitionEvent
       // WM4c: inside a building or a dungeon the exterior parent is
@@ -5617,6 +5645,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     mwViewDrawWagon(renderer, texRemap);   // EOTB-IL: the cart, when the transport is the cart
     camps.draw(renderer, texRemap);   // SURV3: the tents
     hcc.draw(renderer, texRemap);   // HCC: the wagon and its cargo
+    try { lefay.frame(); } catch (e) { console.warn('[lefay] monument', e?.message ?? e); }   // LEFAY1: stood, its flowers in flight and laid
+    lefay.draw(renderer);   // LEFAY1: the monument to Julian LeFay
     // GROUND-LAST (2026-09-21): the ground is drawn AFTER every opaque
     // mesh - the buildings, the mills, the rig, the arrows - below, just
     // before the sky. See world.js's note at its ground queue.
@@ -5898,6 +5928,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       personBatches.push(...hitEffects.batches());
       droppedTorches.tick(dt); personBatches.push(...droppedTorches.batches());   // HT1
       camps.tick(dt); personBatches.push(...camps.batches());   // SURV3
+      personBatches.push(...lefay.batches());   // LEFAY1: the flowers laid at the monument, and the ones in flight
       if (hcc.enabled) personBatches.push(...hcc.batches());   // HCC: the horse on the flats' axis (the runtime ticked above, hccTick - AUDIT HCC H1)
       if (personBatches.length) renderer.drawBillboards(personBatches, camRight, UP_Y);
     }
@@ -6000,7 +6031,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         const swing = {};   // AUDIT DISC19: one swing, one attack grunt, however many pools it is offered to
         if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound, { swing })) {
           // ROAD-G G2: encounter foes resolve AFTER the watch and
-          // BEFORE civilians - world.js:"for (let i = 0; i < n; i++)"'s order, and the order
+          // BEFORE civilians - world.js:"// X-slice: encounter foes resolve after the watch, before civilians"'s order, and the order
           // matters because a watchman standing over a quest foe must
           // still be the one the swing finds.
           if (exteriorFoes.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound, { swing })) {

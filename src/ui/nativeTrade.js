@@ -36,6 +36,7 @@ import { getBool } from '../systems/settings.js';   // AUDIT 64 F53: InstantRepa
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from './text.js';
 import { planTake, applyTransfer, clearLightSourceOnLeave, CANNOT_CARRY_TEXT } from '../systems/itemTransfer.js';   // AUDIT 26 F157/F158
+import { isKeptSpellbook, SPELLBOOK_KEPT_TEXT } from '../systems/itemTransfer.js';   // KEEP-SPELLBOOK: never sold
 import { HOW_MANY_ITEMS, SPLIT_INPUT_MAX, parseSplitAmount, splitRequired } from '../systems/itemTransfer.js';   // DISC25-F: TransferItem's split popup, inherited
 import { InputMessageBoxWindow } from './inputMessageBox.js';   // DISC25-F: ...pushed as CM5 pushes it for the pack
 import { audio } from '../systems/audio.js';
@@ -550,6 +551,12 @@ export class NativeTradeWindow {
     // takes it, because it comes back
     if ((this.mode === 'Sell' || this.mode === 'SellMagic') && isBound(item)) {
       this.box = { rows: [{ text: boundText(itemLongName(item, { getQuest: this.hooks.getQuest ?? null })), center: true }], buttons: null };
+      return true;
+    }
+    // KEEP-SPELLBOOK: the spellbook is never put up for sale (systems/itemTransfer.js isKeptSpellbook); a repair or an
+    // identify still takes it, because it comes back
+    if ((this.mode === 'Sell' || this.mode === 'SellMagic') && isKeptSpellbook(item)) {
+      this.box = { rows: [{ text: SPELLBOOK_KEPT_TEXT, center: true }], buttons: null };
       return true;
     }
     const refused = isSummoned(item) || questTransferRefused(item, {

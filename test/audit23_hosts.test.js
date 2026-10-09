@@ -168,7 +168,7 @@ test('AUDIT 23 hosts-6 + hosts-9: the dungeon host swallows F5/F6 and feeds musi
   // shared call, and the list still holds all three.
   assert.ok(DUNGEON.includes('swallowBrowserKey(e);'), 'the dungeon host swallows');
   assert.match(readFileSync(join(root, 'src/ui/input.js'), 'utf8'),
-    /BROWSER_STEALS = Object\.freeze\(\['F5', 'F6', 'F11'\]\)/, 'and the list is all three');
+    /BROWSER_STEALS = Object\.freeze\(\['F1', 'F3', 'F5', 'F6', 'F11'\]\)/, 'and the list is all three - MODE-WHEEL: with F1 and F3, unbound');
   const feed = DUNGEON.indexOf('musicDirector.update({');
   // the FRAME-loop gate is the one whose branch draws the overlay (the
   // pointer handler also gates on uiOverlayActive, earlier in the file)

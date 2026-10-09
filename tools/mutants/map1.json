@@ -83,8 +83,8 @@
   {
     "name": "clamp-no-centre",
     "file": "src/ui/inkMap.js",
-    "old": "    if (visible >= map) return (map - visible) / 2;",
-    "new": "    if (visible >= map) return 0;",
+    "old": "    if (visible >= map) return lo + (map - visible) / 2;",
+    "new": "    if (visible >= map) return lo;",
     "tests": [
       "test/heldmap.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "clamp-lets-edge-in",
     "file": "src/ui/inkMap.js",
-    "old": "    return Math.min(map - visible, Math.max(0, o));",
-    "new": "    return Math.max(0, o);",
+    "old": "    return Math.min(lo + map - visible, Math.max(lo, o));",
+    "new": "    return Math.max(lo, o);",
     "tests": [
       "test/heldmap.test.js"
     ]
@@ -553,8 +553,8 @@
   {
     "name": "MAPFIELD6-the-halo-is-drawn-per-mark-not-per-pass",
     "file": "src/ui/inkMap.js",
-    "old": "  for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);\n  for (const [m, x, y] of inked) {\n    paintGlyph(ctx, m.kind, x, y, false, opts.inks?.[m.kind]);",
-    "new": "  for (const [m, x, y] of inked) {\n    paintGlyph(ctx, m.kind, x, y, true);\n    paintGlyph(ctx, m.kind, x, y, false, opts.inks?.[m.kind]);",
+    "old": "  for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);\n  for (const [m, x, y] of inked) {\n    paintGlyph(ctx, m.kind, x, y, false, opts.inks?.[m.kind]",
+    "new": "  for (const [m, x, y] of inked) {\n    paintGlyph(ctx, m.kind, x, y, true);\n    paintGlyph(ctx, m.kind, x, y, false, opts.inks?.[m.kind]",
     "tests": [
       "test/heldmap.test.js"
     ]

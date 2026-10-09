@@ -82,8 +82,8 @@
   {
     "name": "FB0929D-MAPKEY-the-paint-drops-the-inks",
     "file": "src/ui/inkMap.js",
-    "old": "    paintGlyph(ctx, m.kind, x, y, false, opts.inks?.[m.kind]);",
-    "new": "    paintGlyph(ctx, m.kind, x, y, false);",
+    "old": "    paintGlyph(ctx, m.kind, x, y, false, opts.inks?.[m.kind] ?? (m.kind === 'hall' ? HALL_INK : undefined));",
+    "new": "    paintGlyph(ctx, m.kind, x, y, false, (m.kind === 'hall' ? HALL_INK : undefined));",
     "tests": ["test/fb0929d_mapkey.test.js"]
   },
   {

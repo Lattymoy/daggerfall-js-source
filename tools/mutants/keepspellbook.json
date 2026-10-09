@@ -1,0 +1,83 @@
+[
+  {
+    "name": "KEEP-SPELLBOOK-the-store-rung-gone",
+    "file": "src/systems/itemTransfer.js",
+    "old": "  if (isKeptSpellbook(item) && !usingWagon) return { ok: false, refusal: REFUSAL.spellbook };",
+    "new": "",
+    "tests": [
+      "test/pvpdungeons_game.test.js"
+    ]
+  },
+  {
+    "name": "KEEP-SPELLBOOK-the-wagon-refused",
+    "file": "src/systems/itemTransfer.js",
+    "old": "  if (isKeptSpellbook(item) && !usingWagon) return { ok: false, refusal: REFUSAL.spellbook };",
+    "new": "  if (isKeptSpellbook(item)) return { ok: false, refusal: REFUSAL.spellbook };",
+    "tests": [
+      "test/pvpdungeons_game.test.js"
+    ]
+  },
+  {
+    "name": "KEEP-SPELLBOOK-the-quests-book-kept",
+    "file": "src/systems/itemTransfer.js",
+    "old": "export const isKeptSpellbook = (item) => isSpellbook(item) && item.group === 'MiscItems' && !item.questItem;",
+    "new": "export const isKeptSpellbook = (item) => isSpellbook(item) && item.group === 'MiscItems';",
+    "tests": [
+      "test/pvpdungeons_game.test.js"
+    ]
+  },
+  {
+    "name": "KEEP-SPELLBOOK-the-shift-drop-unguarded",
+    "file": "src/systems/physicalItems.js",
+    "old": "  : isKeptSpellbook(item) ? { text: SPELLBOOK_KEPT_TEXT } : null);",
+    "new": "  : null);",
+    "tests": [
+      "test/pvpdungeons_game.test.js"
+    ]
+  },
+  {
+    "name": "KEEP-SPELLBOOK-the-classic-counter-sells-it",
+    "file": "src/ui/nativeTrade.js",
+    "old": "    if ((this.mode === 'Sell' || this.mode === 'SellMagic') && isKeptSpellbook(item)) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/pvpdungeons_game.test.js"
+    ]
+  },
+  {
+    "name": "KEEP-SPELLBOOK-the-classic-sell-magic-sells-it",
+    "file": "src/ui/nativeTrade.js",
+    "old": "    if ((this.mode === 'Sell' || this.mode === 'SellMagic') && isKeptSpellbook(item)) {",
+    "new": "    if (this.mode === 'Sell' && isKeptSpellbook(item)) {",
+    "tests": [
+      "test/pvpdungeons_game.test.js"
+    ]
+  },
+  {
+    "name": "KEEP-SPELLBOOK-the-enhanced-counter-sells-it",
+    "file": "src/ui/enhancedTrade.js",
+    "old": "  if (selling() && isKeptSpellbook(item)) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/pvpdungeons_game.test.js"
+    ]
+  },
+  {
+    "name": "KEEP-SPELLBOOK-the-enhanced-counter-quotes-it",
+    "file": "src/ui/enhancedTrade.js",
+    "old": "const saleRefused = (item) => selling() && (lockRefuses(item, 'sell') || isBound(item) || isKeptSpellbook(item));",
+    "new": "const saleRefused = (item) => selling() && (lockRefuses(item, 'sell') || isBound(item));",
+    "tests": [
+      "test/pvpdungeons_game.test.js"
+    ]
+  },
+  {
+    "name": "KEEP-SPELLBOOK-the-words-changed",
+    "file": "src/systems/itemTransfer.js",
+    "old": "export const SPELLBOOK_KEPT_TEXT = 'Your spellbook never leaves you.';",
+    "new": "export const SPELLBOOK_KEPT_TEXT = 'You cannot remove this item.';",
+    "tests": [
+      "test/pvpdungeons_game.test.js"
+    ]
+  }
+]

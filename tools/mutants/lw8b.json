@@ -20,7 +20,7 @@
   {
     "name": "LW8b-every-one",
     "file": "src/scenes/livingIndoors.js",
-    "old": "      if (!table.every((k) => apart(j, k) <= TABLE_M)) continue;",
+    "old": "      if (!table.every((k) => apart(j, k) <= TABLE_M && sees(j, k))) continue;",
     "new": "      void 0;",
     "tests": [
       "test/lw8b_talk.test.js"
@@ -74,8 +74,8 @@
   {
     "name": "LW8b-fill-deal",
     "file": "src/scenes/livingIndoors.js",
-    "old": "order: groups.flat(), tableOf, beds };",
-    "new": "order: dealOf(b.key, spots.length), tableOf, beds };",
+    "old": "order: groups.flat(), tableOf, beds, holds };",
+    "new": "order: dealOf(b.key, spots.length), tableOf, beds, holds };",
     "tests": [
       "test/lw8b_talk.test.js"
     ]
@@ -169,8 +169,8 @@
   {
     "name": "LW8b-greet-circle",
     "file": "src/scenes/livingIndoors.js",
-    "old": "        if (inCircle.has(id) || dist > GREET_RANGE) continue;",
-    "new": "        if (dist > GREET_RANGE) continue;",
+    "old": "        if (inCircle.has(id) || dist > GREET_RANGE ||",
+    "new": "        if (dist > GREET_RANGE ||",
     "tests": [
       "test/lw8b_talk.test.js"
     ],
@@ -179,8 +179,8 @@
   {
     "name": "LW8b-greet-range",
     "file": "src/scenes/livingIndoors.js",
-    "old": "        if (inCircle.has(id) || dist > GREET_RANGE) continue;",
-    "new": "        if (inCircle.has(id)) continue;",
+    "old": "        if (inCircle.has(id) || dist > GREET_RANGE ||",
+    "new": "        if (inCircle.has(id) ||",
     "tests": [
       "test/lw8b_talk.test.js"
     ],
@@ -385,8 +385,8 @@
   {
     "name": "LW8b-host-unstood",
     "file": "src/scenes/world.js",
-    "old": "    if (!livingIndoors || typeof document === 'undefined') return;",
-    "new": "    if (typeof document === 'undefined') return;",
+    "old": "      for (const l of livingIndoors.speech(eye)) {",
+    "new": "      for (const l of []) {",
     "tests": [
       "test/lw8b_talk.test.js"
     ]
@@ -394,8 +394,8 @@
   {
     "name": "LW8b-host-cover",
     "file": "src/scenes/world.js",
-    "old": " || !!townTalk.hudHidden || _mode() !== 'interior';",
-    "new": " || !!townTalk.hudHidden;",
+    "old": "    if (!livingIndoors || typeof document === 'undefined') return;\n    const covered = townTalk.overlayActive || gamePaused() || !!townTalk.hudHidden || _mode() !== 'interior';",
+    "new": "    if (!livingIndoors || typeof document === 'undefined') return;\n    const covered = townTalk.overlayActive || gamePaused() || !!townTalk.hudHidden;",
     "tests": [
       "test/lw8b_talk.test.js"
     ]

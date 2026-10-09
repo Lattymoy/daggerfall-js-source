@@ -21,6 +21,9 @@
 //      stay valid for the exit landing math.
 //   baseCollider() - the collider to restore on exit.
 
+import { DecisionBoxWindow } from '../ui/decisionBox.js';   // REST-WARN2: the Plus decision box
+import { restAilmentLines } from '../systems/restWarning.js';   // REST-WARN
+import { healCurseOffer, healCursePaid, healCurseText } from '../systems/healCurse.js';   // HEAL-CURSE: the temple's second row
 import { walkModeOn } from '../player/walkMode.js';   // PADWALK
 import { privateInteriorOf, privateInteriorMatches } from '../net/privateInterior.js';
 import { iilActive, iilInteriorLights, iilDungeonLights, iilTorch, iilSyncLane } from '../systems/improvedInteriorLighting.js';   // IIL1: Improved Interior Lighting on the classic lane
@@ -208,6 +211,20 @@ import { buildTrainingFlow, buildRefinedTrainingFlow, buildDonationFlow, buildCu
 import { preloadListPickerArt } from '../ui/listPicker.js';
 import { getTitle } from '../systems/guilds.js';
 import { getDivine, DIVINES } from '../systems/guildVariants.js';
+import { cardTableSeats, nearestFreeSeat, takenSeats, seatFloorOk, leavesSeat, SEAT_FLOOR_PROBE, tableFrame } from '../world/cardTables.js';   // CARDS2: the tavern's card table and its seats
+import { seatTopByte } from '../player/seatPose.js';   // CARDS2b: the seat on the pose
+import { CardTableSession, stakesFor, buyInRange, seatPatrons, regularsFor, regularsAfter } from '../systems/cardTableSession.js';   // CARDS4: the table's evening
+import { RemoteCardTable } from '../systems/cardRemoteTable.js';   // CARDS5: the relay's table as this client sees it
+import { HOLDEM_STAKE_MAX_BB, HOLDEM_TOPUP_MIN_BB } from '../net/holdemTable.js';   // CARDS6 follow-up: a gold seat's top-up
+import { regularsToStand, regularBark, BARK_MS } from '../world/cardRegulars.js';   // CARDS4b: the regulars in their chairs
+import { heldMatrices, heldLift, blendMatrix, HELD_EASE_S, tablePoint, onStack, onTable, inBetZone, dragBet, PEEK_RATE, DRAG_LIFT } from '../world/cardHand.js';   // CARDS3b: the hand held, the chips dragged
+import { rayDirFromScreen, projectToScreen } from '../player/tapRay.js';   // CARDS3b: the cursor's ray, and the hand on the screen
+import { createCardTableHud, cardHudModel, eventLine, showdownWinners, HOLDEM_REFUSALS } from '../ui/cardTableHud.js';   // CARDS4: its panel
+import { tablePlaces, CardScene } from '../world/cardScene.js';   // CARDS3: the cards on the cloth
+import { hashSeed, chipDiscs, CARD_W, CARD_L } from '../world/cardMotion.js';   // CARDS3: and its throws' seeds (AUDIT CARDS-2 L9: the town's too)
+import { createCardTableDraw, cardMatrix } from '../render/cardTableDraw.js';   // CARDS3: and their bodies on the GL
+import { residentName } from '../systems/livingWorld/census.js';   // CARDS4: the tavern's regulars, named as the living world names its people
+import { registerPlayerHurtListener } from '../characters/playerEntity.js';   // CARDS2b: a hit stands you up
 import { BUILDING_TYPES, isResidence, isTavern } from '../world/buildingNames.js';   // ROAD-B B4: IsTavern joins IsResidence at the door latch
 import { getInteractionMode, setInteractionMode } from '../player/interactionMode.js';   // R1: PlayerActivate.currentMode, the one home
 import { buildingIsUnlocked, buildingLockValue, isBuildingOpen, LOCKED_EXTERIOR_DOOR_TEXT, buildingClosedText } from '../systems/buildingLocks.js';   // R1: opening hours + the unlocked ladder   // P1: the people gate reads the same hours   // WORLD-HOVER: the closed sentence, not the two tables it is built from
@@ -336,7 +353,7 @@ import { decorScanDeps } from '../systems/decorScan.js';   // DECOR-DUNGEON: the
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { loadIcon } from '../ui/textureCanvas.js';
 import { isTouchDevice } from '../ui/touchDevice.js';
-import { setCursorActive } from '../player/pointerLock.js';
+import { setCursorActive, holdCursor } from '../player/pointerLock.js';
 import { decorKey } from '../systems/decorCatalogue.js';
 import { BULLETIN_BOARD_MODEL_ID } from '../world/rmbLayout.js';   // GUILD1e: Daggerfall's own board, placed in a guild's hall
 import { accountRefusalText } from '../net/accountClient.js';
@@ -458,6 +475,568 @@ export function createWorldModes(host) {
    *  offer rung, and the window told the bed is the one clicked (`new DaggerfallRestWindow(uiManager, true)`). */
   let _restFromBed = false;
   const restFromInteriorBed = () => { _restFromBed = true; try { interiorKeyCtx.toggleRest({ ignoreAllocatedBed: true }); } finally { _restFromBed = false; } };
+  // CARDS2 (bible/11-Multiplayer/Tavern-Cards.md section 2; Mac: "needing to be in a tavern and being set up in a sort of
+  // table enviroment"): THE SEAT AT A TAVERN'S CARD TABLE. A press on a card table (world/cardTables.js - one of the
+  // room's own tables, seats round it the room's walls allow) seats the player at the nearest free seat: the eye moves
+  // to a seated eye looking at the table's middle and the view stays first person. The body is given nothing to walk
+  // with: whatever would move it - a press, a move key, a jump, the stick, the autorun latch - stands them up first,
+  // and the motor runs on unheld (gravity and the crouch edge stay DFU's). The room's end empties the seat.
+  // CARDS2b: the pose the others read is the SEAT's - its feet, its facing, and the wire's `st` (`modes.seatPose`) - so
+  // their Morrowind bodies draw this player seated (player/seatPose.js through the climb rig's solver); the seat's own
+  // view stays first person (the design's fixed seat view), so this host draws no seated body of its own, and the
+  // capsule stays where it stood - a chair is no floor to stand a capsule in. A hit or Escape stands you up too.
+  // THE FOUR HOSTS: this host only. A tavern is an interior; exterior.js, world.js and dungeonContext.js stand no
+  // tavern table, and the ?interior viewer (interior.js) has no body to seat.
+  let cardSeat = null;   // { table, seat, eye, feet, yaw, top } while seated
+  const inTavern = () => isTavern(interiorBuilding?.buildingType ?? BUILDING_TYPES.None);
+  /** The host's probe for cardTableSeats: nothing of the room between the table's middle and the seat's eye, and
+   *  something to sit over under it. */
+  const seatProbe = (from, to) => {
+    const c = interiorCtx?.collider;
+    if (!c?.raycast) return false;
+    const d = [to[0] - from[0], to[1] - from[1], to[2] - from[2]];
+    const len = Math.hypot(d[0], d[1], d[2]);
+    if (!(len > 0) || c.raycast(from, [d[0] / len, d[1] / len, d[2] / len], len) < len) return false;
+    return seatFloorOk(c.raycast(to, [0, -1, 0], SEAT_FLOOR_PROBE));
+  };
+  const cardSeatsOf = (i) => {
+    const t = interiorCtx?.tables?.[i];
+    return t ? (t.seats ??= cardTableSeats(t, seatProbe)) : [];   // the room never moves: probed once a visit (AUDIT CARDS B6: round the table's own box, turned by its matrix)
+  };
+  function sitAtCardTable(i) {
+    const seats = cardSeatsOf(i);
+    const k = nearestFreeSeat(seats, player.pos[0], player.pos[2], takenSeats(seats, host.seatedPeers?.() ?? []));   // AUDIT CARDS B3: another player's seat is theirs
+    if (k < 0) { say('Every seat at this table is taken.'); return; }
+    const st = seats[k];
+    // AUDIT CARDS-2 L7: the regulars take only the chairs nobody else sits in (a peer's chair is theirs, as the
+    // player's own pick already knew)
+    const taken = takenSeats(seats, host.seatedPeers?.() ?? []);
+    cardSeat = { table: i, seat: k, eye: st.eye.slice(), feet: st.feet.slice(), yaw: st.yaw, top: st.top, free: seats.map((_, j) => j).filter((j) => j !== k && !taken.includes(j)) };
+    closeCardWatch(i);   // AUDIT CARDS-4 D4: seated at it, its frames are the game's (or the regulars' cloth's) - a watch kept froze, then took the room's changes over a stale table
+    cam.yaw = seats[k].yaw;
+    cam.pitch = seats[k].pitch;
+    mwViewFirstPerson();   // AUDIT CARDS-2 L11: the seat's view is the head's (section 12) - the frame's head-hold keeps it there
+    say('You take a seat at the card table.');
+    if (cardSeat.free.length || host.cardOnline?.ok?.()) openCardGame(cardSeat.free.length + 1);   // CARDS5: online, the relay's table needs no regular's chair
+    else say('There is no chair left at this table for a regular.');
+  }
+  /** `cashOut` false: a load's road - the save's purse is already the character's, and the chips were bought in the
+   *  game the load threw away (AUDIT CARDS-2 H1). */
+  function standFromCardTable({ cashOut = true } = {}) {
+    if (!cardSeat) return;
+    cardSeat = null;
+    cam.pos = player.eyeAt();   // EV1: back to the body's own eye
+    closeCardGame({ cashOut });   // CARDS4: every road off the seat cashes the table out
+  }
+  // CARDS4 (bible/11-Multiplayer/Tavern-Cards.md section 14; Mac: "Hold'em first", "Real gold", "Yes, patrons play"):
+  // THE TABLE'S EVENING ON THE SEAT. Sitting down opens the table's panel (ui/cardTableHud.js - the port's own, not a
+  // pausing window: the patrons play on); dealing in takes the buy-in from the purse and seats the tavern's regulars
+  // (systems/cardTableSession.js over the cards' law, systems/cardPatrons.js for their play); the frame runs their
+  // thought and the deal; every road off the seat (standFromCardTable) folds the hand out of turn and turns the chips
+  // back into gold. ONLINE IT IS A FRIENDLY GAME: a patron's gold paid on the client is a faucet the realm service never
+  // sees (Tavern-Cards section 5: a table the service does not keep plays for no gold), so a realm character - or any
+  // online page - plays for chips, and no purse is touched.
+  let cardGame = null;   // { hud, releaseCursor, stakes, friendly, buyIn, names, session, log, phase, why, scene, draw } while the panel stands
+  const cardRand32 = () => globalThis.crypto.getRandomValues(new Uint32Array(1))[0];   // the table's own source - DFU's one stream is never stirred
+  /** CARDS4: the tavern's regulars - the same names every evening at this building (the living world's own namer, on a
+   *  seed of the town and the building's key: AUDIT CARDS-2 L9, a building key is its block's, alike in every town), as
+   *  many as the table's free chairs. */
+  const cardTableKey = () => `${homeTownOf(interiorBuilding) >>> 0}:${(interiorBuilding?.buildingKey ?? 0) >>> 0}:${cardSeat?.table ?? 0}`;
+  const tavernRegulars = (n) => regularSeeds(n).map((r) => residentName(r.seed, r.bank, r.gender));
+  /** CARDS4b: each regular's seed, bank and gender - the namer's own, so the same seed dresses him (world/cardRegulars.js). */
+  const regularSeeds = (n) => {
+    const b = interiorBuilding, bank = getNameBankOfRegion(b?.regionIndex ?? 0);
+    const town = Math.imul(homeTownOf(b) >>> 0, 0x9E3779B1) >>> 0;
+    return Array.from({ length: n }, (_, i) => ({ seed: (((b?.buildingKey ?? 1) * 31 + i * 7919 + 1) ^ town) >>> 0, bank, gender: i % 2 }));
+  };
+  const cardDay = () => Math.floor(worldMinutes() / MINUTES_PER_DAY);
+  /** CARDS4: the friendly game's chips - a stake to play with, never gold. */
+  const FRIENDLY_CHIPS_BB = 100;
+  /** AUDIT CARDS-3 C4: the beat the settled cloth is left to be read before the next hand is dealt. */
+  const CARD_CLOTH_REST_MS = 1200;
+  /** CARDS6: the service's refusals of a stake, said. */
+  const CARD_STAKE_REFUSALS = Object.freeze({ 'realm-gold': 'Your purse cannot cover that stake.', 'bad-buy-in': 'That stake is outside the table\'s buy-in.', 'cards-closed': 'The realm is not holding stakes right now.', unknown: 'The realm did not answer - your stake will be settled when it does.', offline: 'The realm could not be reached - try again.', busy: 'The realm is settling something else - try again in a moment.', 'cards-kept-full': 'You have too many stakes waiting to be settled - visit the tables they were staked at first.' });   // AUDIT CARDS-4 C7: a lost answer (`unknown`) is not a stake never asked
+  /** CARDS-TIDY: a look asked for a table the client lost track of, at most this often. */
+  const CARD_LOOK_AGAIN_MS = 2000;
+  /** AUDIT CARDS-3 B1: a sit still pending is said again this often (a new socket, the client's gate, the relay's 'busy'). */
+  const CARD_SIT_AGAIN_MS = 1500;
+  function openCardGame(seatCount) {
+    if (cardGame) closeCardGame();
+    const stakes = stakesFor(interiorBuilding?.quality ?? 10);
+    // CARDS6: online, a realm character plays for gold at the relay's table - its stake held by the service (net/cardStakes.js)
+    const goldOnline = !!host.cardOnline?.ok?.() && !!host.cardStakes?.goldOk?.();
+    const friendly = !goldOnline && (!!host.realmAct || isOnlinePage());
+    const buyIn = buyInRange(goldOnline ? host.cardStakes.purse() ?? 0 : friendly ? FRIENDLY_CHIPS_BB * stakes.bb : goldAmount(playerEntity), stakes);
+    const game = { hud: null, releaseCursor: holdCursor(), stakes, friendly, buyIn, names: tavernRegulars(Math.max(1, Math.min(5, seatCount - 1))), regulars: null, barks: new Map(), key: cardTableKey(), day: cardDay(), session: null, remote: null, log: [], phase: 'buyin', why: null, scene: null, draw: createCardTableDraw(renderer), paintedAt: 0 };   // CARDS3: the draw makes nothing until the first card
+    cardGame = game;
+    game.hud = createCardTableHud({ onPress: (id, v) => cardPress(game, id, v) });
+    game.regulars = new Map(regularSeeds(game.names.length).map((r, i) => [game.names[i], r]));   // CARDS4b: who each regular is, to draw him
+    game.unlisten = cardPointerListen(game);   // CARDS3b: the cursor on the hand and the chips - its listeners the game's, gone with it
+    // CARDS5: online, a relay that deals runs this table - the player sits at it with the friendly chips, the room sees
+    // it, and the other players at it play him; alone, he may play the regulars instead (the friendly game, below)
+    game.goldOnline = goldOnline;
+    if (host.cardOnline?.ok?.() && !goldOnline) {
+      // the game's table first, the word after - the relay's answer may come before the next line runs
+      closeCardWatch(cardSeat.table);   // the cloth is the game's now, not a watcher's
+      game.remote = new RemoteCardTable({ myId: host.cardOnline.id(), chair: cardSeat.seat });
+      game.table = cardSeat.table;
+      game.welcomes = host.cardOnline.welcomes?.() ?? 0;
+      game.scene = cardSceneFor(game.remote);
+      game.phase = 'playing';
+      if (!cardSit(game, performance.now())) { game.remote = null; game.scene = null; game.phase = 'buyin'; }
+      else if (!cardSeat.free.length) game.noRegulars = true;   // AUDIT CARDS-3 B11: no chair for a regular - the relay's table or nothing
+    }
+    paintCardGame();
+  }
+  /** CARDS5: my sit at the relay's table, said (again, while the chair is pending: AUDIT CARDS-3 B1 a new socket, the
+   *  relay's 'busy'); false when the word did not go. */
+  function cardSit(g, now) {
+    g.sitAt = now + CARD_SIT_AGAIN_MS;
+    return !!host.cardOnline?.send({ op: 'sit', table: g.table, chair: cardSeat.seat, chairs: cardSeatsOf(g.table).length, bb: g.stakes.bb, ...(g.stakeWord ? { stake: g.stakeWord } : {}) });   // CARDS6: a gold table's sit carries its stake
+  }
+  /** CARDS6: THE GOLD BUY-IN - the stake asked of the service (the record's act: the purse checkpointed, the gold held out
+   *  of it while asked), then the relay's table sat with the service's order. A game closed while the service answered
+   *  leaves its stake on the device, voided back when this room is next seen (net/cardStakes.js voidable). */
+  async function cardGoldSit(g, amount) {
+    if (g.staking) return;
+    g.staking = true;
+    g.why = null;
+    paintCardGame();
+    const r = await host.cardStakes.stake({ room: host.cardOnline.room(), table: cardSeat.table, bb: g.stakes.bb, amount, place: cardPlaceName() });
+    g.staking = false;
+    if (g !== cardGame || !cardSeat) return;
+    if (!r.ok) { say((r.unknown ? CARD_STAKE_REFUSALS.unknown : CARD_STAKE_REFUSALS[r.error]) ?? 'The realm could not hold your stake - try again.'); paintCardGame(); return; }
+    g.stakeWord = r.stake;
+    g.stakeId = r.id;
+    closeCardWatch(cardSeat.table);
+    g.remote = new RemoteCardTable({ myId: host.cardOnline.id(), chair: cardSeat.seat });
+    g.table = cardSeat.table;
+    g.welcomes = host.cardOnline.welcomes?.() ?? 0;
+    g.scene = cardSceneFor(g.remote);
+    g.phase = 'playing';
+    cardSit(g, performance.now());   // a word the gate kept is said again (cardRemoteFrame), its stake with it
+    say(`You stake ${amount} gold at the table.`);
+    paintCardGame();
+  }
+  /** CARDS6 follow-up (Tavern-Cards section 24): GOLD OWED ELSEWHERE - a seat's cash-out, or a stake never sat, only
+   *  the room it was staked in hands over (each room keeps its own); said on each visit to a card room. */
+  function cardElsewhereSay() {
+    const room = host.cardOnline?.room?.();
+    const far = room ? host.cardStakes?.elsewhere?.(room) ?? [] : [];
+    if (!far.length) return;
+    const by = new Map();
+    for (const x of far) by.set(x.place || 'another tavern', (by.get(x.place || 'another tavern') ?? 0) + x.amount);
+    say(`Gold you staked waits at card tables elsewhere - ${[...by].map(([p, n]) => `${n} at ${p}`).join('; ')}. Each table hands it over when you return.`);
+  }
+  /** CARDS6 follow-up (Tavern-Cards section 24): the words for where a stake was staked - the building and its town. */
+  function cardPlaceName() { return [interiorBuilding?.name, buildingDirectory?.()?.locationName].filter(Boolean).join(', '); }
+  /** CARDS6 follow-up: the most a gold seat can top up by now - between hands, to the table's most, from the purse; null
+   *  when it cannot (in a hand, at the most already, a purse short of HOLDEM_TOPUP_MIN_BB). */
+  function cardTopUpAmount(g) {
+    if (!g?.goldOnline || !g.remote?.confirmed || g.staking || g.topWord) return null;
+    const st = g.remote.state, me = g.remote.playerSeat;
+    const seat = st?.seats?.[me];
+    if (!seat || seat.leaving || (st.hand && st.handSeats.includes(me))) return null;
+    const most = Math.min(HOLDEM_STAKE_MAX_BB * st.bb - seat.stack, host.cardStakes?.purse?.() ?? 0);
+    return most >= HOLDEM_TOPUP_MIN_BB * st.bb ? most : null;
+  }
+  /** CARDS6 follow-up: A TOP-UP - the stake asked of the service as a buy-in's is, its order shown to the room in a
+   *  `topup` word (said again each frame until the client's gate lets it go: cardRemoteFrame); a refusal leaves the stake
+   *  on the device, voided back here after its minute; taken, the room's 'joined' receipt settles it. */
+  async function cardTopUp(g) {
+    const amount = cardTopUpAmount(g);
+    if (!amount) return;
+    g.staking = true;
+    paintCardGame();
+    const r = await host.cardStakes.stake({ room: host.cardOnline.room(), table: g.table, bb: g.stakes.bb, amount, topup: true, place: cardPlaceName() });
+    g.staking = false;
+    if (g !== cardGame || !g.remote) return;
+    if (!r.ok) { say((r.unknown ? CARD_STAKE_REFUSALS.unknown : CARD_STAKE_REFUSALS[r.error]) ?? 'The realm could not hold your stake - try again.'); paintCardGame(); return; }
+    g.topWord = r.stake;
+    if (host.cardOnline?.send({ op: 'topup', table: g.table, stake: g.topWord })) g.topWord = null;
+    paintCardGame();
+  }
+  function paintCardGame() {
+    const g = cardGame;
+    if (!g) return;
+    const table = g.remote ?? g.session;
+    g.paintedAt = performance.now();
+    g.hud.render(cardHudModel({ phase: g.phase, view: table?.view() ?? null, legal: table?.legal() ?? null, buyIn: g.buyIn, stakes: g.stakes, friendly: g.friendly, log: g.log, why: g.why,
+      online: g.remote ? { waiting: g.remote.seated < 2 && !g.remote.state?.hand, clock: Math.ceil(g.remote.clockLeft(g.paintedAt) / 1000), error: g.remote.error, regulars: !!cardSeat?.free.length && !g.goldOnline } : null,
+      gold: !!g.goldOnline, staking: !!g.staking, topUp: cardTopUpAmount(g) }));   // CARDS6; section 24: the top-up
+  }
+  function cardPress(game, id, value) {
+    if (game !== cardGame) return;   // a press from a panel already gone
+    const now = performance.now();
+    if (id === 'stand') { standFromCardTable(); return; }
+    if (game.remote) {
+      // CARDS5: the relay's table - an action is a word to it, and the relay answers with the table; alone, the regulars
+      if (id === 'regulars') {
+        if (!cardSeat.free.length) return;   // AUDIT CARDS-3 B11: no chair for one
+        cardStand(game.table);
+        game.remote = null; game.scene = null; game.phase = 'buyin'; game.log = [];
+      } else if (id === 'topup') { cardTopUp(game); return; }   // CARDS6 follow-up
+      else if (['fold', 'check', 'call', 'raise'].includes(id)) {
+        host.cardOnline?.send({ op: 'act', table: cardSeat.table, action: id === 'raise' ? { type: 'raise', to: Math.floor(Number(value) || 0) } : { type: id } });
+        game.hud.resetSlider();
+      }
+      paintCardGame();
+      return;
+    }
+    if (id === 'deal') {
+      if (game.phase !== 'buyin' || !game.buyIn) return;
+      if (game.goldOnline) {   // CARDS6: the relay's gold table - no regulars, the stake the service's
+        game.buyIn = buyInRange(host.cardStakes.purse() ?? 0, game.stakes);
+        if (!game.buyIn) { paintCardGame(); return; }
+        cardGoldSit(game, Math.min(game.buyIn.max, Math.max(game.buyIn.min, Math.floor(Number(value) || 0))));
+        return;
+      }
+      if (!cardSeat?.free.length) { say('There is no chair left at this table for a regular.'); return; }   // AUDIT CARDS-3 B11: a regular with no chair
+      // AUDIT CARDS-2 M2: the purse read again at the press - deductGold never refuses (it empties the purse and the
+      // letters of credit, and answers the shortfall), so a purse that shrank since the seat is asked first
+      if (!game.friendly) game.buyIn = buyInRange(goldAmount(playerEntity), game.stakes);
+      if (!game.buyIn) { paintCardGame(); return; }
+      const amount = Math.min(game.buyIn.max, Math.max(game.buyIn.min, Math.floor(Number(value) || 0)));
+      if (!game.friendly && amount > goldAmount(playerEntity)) { paintCardGame(); return; }
+      // AUDIT CARDS-2 H2: today's regulars from the book - their purses as the last evening left them; a friendly game's
+      // are its own and never written
+      const patrons = game.friendly ? seatPatrons(game.names, game.stakes, cardRand32) : regularsFor(playerEntity.cardRegulars, game.key, game.day, game.names, game.stakes, cardRand32);
+      if (!patrons.length) { say('The regulars have lost their purses for tonight. Come back tomorrow.'); return; }
+      if (!game.friendly) deductGold(playerEntity, amount);
+      game.session = new CardTableSession({ player: { id: 'you', name: playerEntity.name || 'You', stack: amount }, patrons, stakes: game.stakes, rand32: cardRand32, now });
+      game.scene = cardSceneFor(game.session);
+      game.phase = 'playing';
+      game.hud.resetSlider();
+      say(game.friendly ? `You sit in for ${amount} chips.` : `You buy in for ${amount} gold.`);
+    } else if (game.session) {
+      game.session.playerAct(id === 'raise' ? { type: 'raise', to: Math.floor(Number(value) || 0) } : { type: id }, now);
+      game.hud.resetSlider();
+    }
+    cardGameFrame(now);
+    paintCardGame();
+  }
+  /** CARDS4: the frame's turn of the table - the patrons' thought and the deal, the events into the log. */
+  function cardGameFrame(now) {
+    if (cardSeat && !(playerEntity.health > 0)) { standFromCardTable(); return; }   // AUDIT CARDS-2: the exhaustion's collapse sets health to 0 past every hurt listener - the dead do not sit at cards
+    cardWatchFrame();
+    cardStandsFrame();
+    const g = cardGame;
+    if (g?.remote) { cardRemoteFrame(g, now); return; }
+    if (!g?.session) return;
+    // AUDIT CARDS-3 C4: the next hand waits for the cloth - a run-out's streets, the hands shown and the pot pushed home
+    // took longer than the session's fixed pause, and the deal swept them off mid-motion
+    if (!g.session.hand && g.scene) g.session.nextDealAt = Math.max(g.session.nextDealAt, g.scene.settledAt() * 1000 + CARD_CLOTH_REST_MS);
+    g.session.tick(now);
+    const events = g.session.drain();
+    if (!events.length) return;
+    const names = g.session.seats.map((x) => x.name);
+    const holeOf = cardHoleOf(g.session);
+    for (const e of events) { g.scene?.onEvent(e, holeOf); const line = eventLine(e, names, g.session.playerSeat); if (line) g.log.push(line); cardBark(g, e, now); }
+    g.log = g.log.slice(-12);
+    if (g.session.over && g.phase !== 'over') { g.phase = 'over'; g.why = g.session.over; }
+    if (!g.friendly && events.some((e) => e.t === 'showdown')) playerEntity.cardRegulars = regularsAfter(playerEntity.cardRegulars, g.key, g.day, g.names, g.stakes, g.session.seats);   // the book after every hand: a save mid-evening is refused, but the purses are the table's
+    paintCardGame();
+  }
+  /** CARDS4: the table closes - the hand folded out of turn, the chips back into gold, the panel and the cursor let go.
+   *  The slot is emptied first: the panel's last press may ask for it. */
+  function closeCardGame({ cashOut = true } = {}) {
+    const g = cardGame;
+    if (!g) return;
+    cardGame = null;
+    if (g.remote) cardStand(g.table);   // CARDS5: up from the relay's table - folded out of turn there if a hand holds him (the game's own table: the seat is already empty)
+    const chips = g.session ? g.session.leave(performance.now()) : 0;
+    if (!cashOut) { /* a load's road: the table belonged to the game the load threw away - its chips and its book with it */ }
+    else if (chips > 0 && !g.friendly) { addGold(playerEntity, chips); say(`You leave the table with ${chips} gold.`); }
+    else if (g.session) say(g.friendly ? 'You leave the friendly game.' : 'You leave the table with nothing.');
+    if (cashOut && g.session && !g.friendly) playerEntity.cardRegulars = regularsAfter(playerEntity.cardRegulars, g.key, g.day, g.names, g.stakes, g.session.seats);
+    g.hud?.destroy();
+    g.draw?.destroy();   // CARDS3: the atlas and the meshes go with the table (EVERY ALLOCATION HAS AN OWNER)
+    g.unlisten?.();   // CARDS3b: and the cursor's listeners
+    if (g.releaseCursor?.()) host.relock?.();
+  }
+  /** CARDS3: the cloth's picture for a session - the player in the seat they took, the regulars round the others in
+   *  order; seeded by the building and the table, so a throw's small differences are this table's. */
+  function cardSceneFor(session) {
+    const t = cardSeat && interiorCtx?.tables?.[cardSeat.table];
+    if (!t) return null;
+    if (session instanceof RemoteCardTable) return cardSceneForTable(cardSeat.table, null, cardSeat.seat);   // CARDS5: the relay's table - every chair a seat
+    const seats = cardSeatsOf(cardSeat.table);
+    const others = cardSeat.free ?? [];
+    const seatOf = session.seats.map((s, i) => (s.kind === 'player' ? cardSeat.seat : others[i - 1]));
+    if (seatOf.some((k) => k === undefined)) return null;
+    return new CardScene({ places: tablePlaces(tableFrame(t), seats, seatOf), playerSeat: session.playerSeat, tableSeed: hashSeed(homeTownOf(interiorBuilding) >>> 0, (interiorBuilding?.buildingKey ?? 0) >>> 0, cardSeat.table) });
+  }
+  /** CARDS4b: a regular says his play - over his head for BARK_MS (world/cardRegulars.js regularBark); a showdown's
+   *  winner his win. */
+  function cardBark(g, e, now) {
+    const roll = (cardRand32() >>> 0) / 2 ** 32;
+    const seatsOf = (e.t === 'act' || e.t === 'leave') ? [e.seat] : e.t === 'showdown' ? showdownWinners(e).flatMap((w) => w.seats) : [];
+    for (const i of seatsOf) {
+      if (g.session?.seats[i]?.kind !== 'patron') continue;
+      const text = regularBark(e.t === 'showdown' ? { t: 'won' } : e, roll);
+      if (text) g.barks.set(i, { text, until: now + BARK_MS });
+    }
+  }
+  /** CARDS4b: the regulars at this table to stand this frame - none at a relay's table or a game not dealt. */
+  function cardRegularsNow(now) {
+    const g = cardGame;
+    if (!g?.session || g.remote || !cardSeat) return [];
+    const seats = cardSeatsOf(cardSeat.table);
+    const seatOf = g.session.seats.map((s, i) => (s.kind === 'player' ? cardSeat.seat : cardSeat.free[i - 1]));
+    const peers = takenSeats(seats, host.seatedPeers?.() ?? []);   // AUDIT CARDS-3 E-N3: a player sat down in a regular's chair - the chair is his
+    return regularsToStand({ session: g.session, seats, seatOf, regulars: g.regulars, key: g.key }).filter((r) => !peers.includes(seatOf[Number(r.key.split(':').pop())])).map((r) => {
+      const i = Number(r.key.split(':').pop());
+      const b = g.barks.get(i);
+      return { ...r, say: b && now < b.until ? b.text : null };
+    });
+  }
+  // CARDS3b (bible/11-Multiplayer/Tavern-Cards.md section 19): THE HAND HELD AND THE CHIPS UNDER THE CURSOR. The
+  // player's two, landed and turned, are drawn held before the eye (world/cardHand.js heldMatrices) - peeked, they come
+  // up and spread, when the cursor is over them or a press is held on them; a press on his own stack picks up the
+  // panel's bet (dragBet), carried on the cloth under the cursor (tablePoint), let go in the betting ground (inBetZone)
+  // as the bet. The press is taken at the capture phase, before the seat's "a swing stands you up" ever hears it; a
+  // press on the panel is the panel's.
+  const cardMouseAt = (e) => { const r = canvas.getBoundingClientRect?.() ?? { left: 0, top: 0 }; return [e.clientX - r.left, e.clientY - r.top]; };
+  /** The cloth's point under the cursor at the last drawn frame, or null. */
+  function cardTableAt(g, mouse) {
+    const f = g.frame, place = g.scene?.places;
+    if (!f || !mouse || !place) return null;
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    return tablePoint(f.eye, rayDirFromScreen(mouse[0], mouse[1], w, h, f.proj, f.view, f.eye, worldViewportRect(w, h)), place.board[0][1]);
+  }
+  /** True when the cursor is over the held hand (near either card's middle on the screen). */
+  function cardHandHovered(g) {
+    const f = g.frame;
+    if (!f || !g.mouse || !g.heldAt?.length || g.overPanel) return false;
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    return g.heldAt.some((p) => { const s = projectToScreen(p, w, h, f.proj, f.view, worldViewportRect(w, h)); return s.front && Math.hypot(s.x - g.mouse[0], s.y - g.mouse[1]) < h * 0.09; });
+  }
+  function cardPointerListen(g) {
+    if (typeof window === 'undefined' || !window.addEventListener) return null;
+    const mine = () => g === cardGame && !!cardSeat;
+    const onPanel = (e) => !!e.target?.closest?.('.dfcards');
+    // AUDIT CARDS-3 C5: POINTER events - a touch is a pointer too (the touch layer's preventDefault on touchstart kept
+    // every mouse event from the cards); a pointerdown taken here is cancelled, so no mouse press follows it to the seat
+    const move = (e) => {
+      if (!mine()) return;
+      g.mouse = cardMouseAt(e);
+      g.overPanel = onPanel(e);   // AUDIT CARDS-3 C10: the panel over the hand is the panel's - no peek through it
+      if (!g.drag) return;
+      const q = cardTableAt(g, g.mouse);
+      g.drag.off = !onTable(q, g.scene?.places.table);   // AUDIT CARDS-3 C6: off the table, the chips wait where they last were on it
+      if (!g.drag.off) g.drag.point = q;
+    };
+    const down = (e) => {
+      if (!mine() || onPanel(e) || (e.button ?? 0) !== 0) return;   // AUDIT CARDS-3 C10: the primary button (a touch's contact) alone
+      g.mouse = cardMouseAt(e);
+      const place = g.scene?.places.seats[g.scene.playerSeat];
+      const table = g.remote ?? g.session;
+      const p = cardTableAt(g, g.mouse);
+      const view = table?.view?.();
+      const myBet = view?.hand ? view.hand.seats[view.handSeats.indexOf(g.scene.playerSeat)]?.bet ?? 0 : 0;
+      const grabbed = !!place && onStack(p, place);
+      const bet = grabbed ? dragBet(table?.legal?.(), g.hud.sliderValue?.() ?? null, myBet) : null;
+      if (bet) g.drag = { bet, point: p, off: false };
+      else if (!grabbed && cardHandHovered(g)) g.peekHeld = true;
+      else if (!grabbed) return;   // AUDIT CARDS-3 C2: a press on his own stack is his chips' - never the swing that stands him up, his turn or not
+      g.swallowMouse = true;
+      e.stopImmediatePropagation?.(); e.preventDefault?.();
+    };
+    // the mouse press a taken pointerdown leaves behind, where a browser still sends one
+    const mouseDown = (e) => { if (!g.swallowMouse) return; g.swallowMouse = false; e.stopImmediatePropagation?.(); e.preventDefault?.(); };
+    const up = (e) => {
+      g.swallowMouse = false;   // a browser that sent no mouse press after the taken pointerdown never eats the next one
+      if (!mine()) return;
+      g.peekHeld = false;
+      const d = g.drag;
+      if (!d) return;
+      g.drag = null;
+      e.stopImmediatePropagation?.();
+      const place = g.scene?.places.seats[g.scene.playerSeat];
+      if (!place || d.off || onPanel(e) || !inBetZone(d.point, place, g.scene.places.table)) return;   // AUDIT CARDS-3 C6: let go on the table's betting ground, never over the panel
+      // AUDIT CARDS-3 C10: the bet as the table stands at the letting go - a turn that passed while it was carried carries nothing
+      const table = g.remote ?? g.session;
+      const view = table?.view?.();
+      const myBet = view?.hand ? view.hand.seats[view.handSeats.indexOf(g.scene.playerSeat)]?.bet ?? 0 : 0;
+      const still = dragBet(table?.legal?.(), g.hud.sliderValue?.() ?? null, myBet);
+      if (still && still.id === d.bet.id && still.value === d.bet.value) cardPress(g, d.bet.id, d.bet.value);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerdown', down, true);
+    window.addEventListener('mousedown', mouseDown, true);
+    window.addEventListener('pointerup', up, true);
+    return () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerdown', down, true); window.removeEventListener('mousedown', mouseDown, true); window.removeEventListener('pointerup', up, true); };
+  }
+  /** The table's picture this frame: the cloth, the player's settled two held before the eye (peeked as the cursor asks),
+   *  and a bet being carried under the cursor. */
+  function cardDrawGame(g, proj, view, eye) {
+    const now = performance.now();
+    const p = g.scene.poses(now / 1000, (g.remote ?? g.session).view(), g.drag ? { seat: g.scene.playerSeat, amount: g.drag.bet.amount } : null);   // AUDIT CARDS-3 C8: the chips carried are off the stack
+    const dt = Math.min(0.1, Math.max(0, (now - (g.drawnAt ?? now)) / 1000));
+    g.drawnAt = now;
+    g.frame = { proj, view: Float32Array.from(view), eye: eye.slice() };
+    const mine = g.scene.playerSeat;
+    const held = mine >= 0 ? p.cards.filter((c) => c.seat === mine && c.settled && Math.cos(c.roll) > 0.5).sort((a, b) => (a.id < b.id ? -1 : 1)) : [];
+    g.peek = (g.peek ?? 0) + (((g.peekHeld || cardHandHovered(g)) ? 1 : 0) - (g.peek ?? 0)) * Math.min(1, dt * PEEK_RATE);
+    // AUDIT CARDS-3 C3: the fan laid for the whole hand (each card at its own index), so the second card coming up never
+    // jolts the first; each card eases from the cloth into the hand and back out of it (a fold leaves from the hand)
+    const ofHand = mine >= 0 ? p.cards.filter((c) => c.seat === mine).length : 0;
+    const fan = Math.max(held.length, ofHand);
+    const slot = (c) => Number(String(c.id).split(':')[2] ?? 0);
+    const mats0 = heldMatrices(view, fan, g.peek);
+    const lift = cardHeldLift(g, held.map((c) => mats0[slot(c)] ?? mats0[0]), proj, view);
+    g.lift = (g.lift ?? lift) + (lift - (g.lift ?? lift)) * Math.min(1, dt * PEEK_RATE);   // eased - a panel that grows lifts the hand, never jumps it
+    const mats = g.lift > 1e-4 ? heldMatrices(view, fan, g.peek, g.lift) : mats0;
+    g.hold ??= new Map();   // card id -> { k: 0..1 into the hand, m: its last held matrix }
+    const step = dt / HELD_EASE_S;
+    const ids = new Set(p.cards.map((c) => c.id));
+    for (const id of [...g.hold.keys()]) if (!ids.has(id)) g.hold.delete(id);
+    for (const c of held) { const h = g.hold.get(c.id) ?? { k: 0, m: null }; h.m = mats[slot(c)] ?? mats[0]; h.k = Math.min(1, h.k + step); g.hold.set(c.id, h); }
+    for (const [id, h] of g.hold) if (!held.some((c) => c.id === id)) { h.k -= step; if (h.k <= 0) g.hold.delete(id); }
+    const ease = (k) => k * k * (3 - 2 * k);
+    g.heldAt = held.map((c) => { const m = g.hold.get(c.id).m; return [m[12], m[13], m[14]]; });
+    const cards = p.cards.map((c) => {
+      const h = g.hold.get(c.id);
+      if (!h) return c;
+      return { card: c.card, matrix: h.k >= 1 ? h.m : blendMatrix(cardMatrix(c.pos, c.yaw, c.roll), h.m, ease(h.k)) };
+    });
+    const place = g.scene.places.seats[mine];
+    const chips = g.drag?.point && place ? [...p.chips, ...chipDiscs(g.drag.bet.amount, [g.drag.point[0], g.drag.point[1] + DRAG_LIFT, g.drag.point[2]], place.yaw)] : p.chips;
+    g.draw.draw({ cards, chips });
+  }
+  /** AUDIT CARDS-3 C1: the lift that keeps the held hand clear of the panel - its cards' lowest corner on the screen
+   *  against the panel's top (the panel covered the hand at the bottom of the screen, where both stood). */
+  function cardHeldLift(g, mats, proj, view) {
+    const box = mats.length ? g.hud.root?.getBoundingClientRect?.() : null;
+    if (!box || !(box.height > 0)) return 0;
+    const w = canvas.clientWidth, h = canvas.clientHeight, rect = worldViewportRect(w, h), at = canvas.getBoundingClientRect?.() ?? { left: 0, top: 0 };
+    let bottom = -Infinity;
+    for (const m of mats) for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+      const x = sx * CARD_W / 2, z = sz * CARD_L / 2;   // the plate's corners (face +Y, length along Z)
+      const s = projectToScreen([m[0] * x + m[8] * z + m[12], m[1] * x + m[9] * z + m[13], m[2] * x + m[10] * z + m[14]], w, h, proj, view, rect);
+      if (s.front && s.x + at.left >= box.left && s.x + at.left <= box.right) bottom = Math.max(bottom, s.y);
+    }
+    return Number.isFinite(bottom) ? heldLift(bottom, box.top - at.top, h, proj) : 0;
+  }
+  /** CARDS5: the relay's table's turn of the frame - its events onto the cloth and into the log, the panel repainted
+   *  as they come and once a second while my clock runs. */
+  function cardRemoteFrame(g, now) {
+    const r = g.remote;
+    // AUDIT CARDS-3 B1: a new socket - the relay stood the old one up (and told it, not me): my sit asked again, my
+    // chair pending, the old socket's turn gone
+    const welcomes = host.cardOnline?.welcomes?.() ?? 0;
+    if (welcomes !== g.welcomes) { g.welcomes = welcomes; r.resit(); g.sitAt = now; }
+    if (!r.confirmed && !r.lost && now >= (g.sitAt ?? 0)) cardSit(g, now);   // pending: said again (a word the gate or a 'busy' kept)
+    if (r.confirmed && g.stakeId && !g.stakeSeated) { g.stakeSeated = true; host.cardStakes?.seated(g.stakeId); }   // CARDS6: the stake sat
+    if (g.topWord && host.cardOnline?.send({ op: 'topup', table: g.table, stake: g.topWord })) g.topWord = null;   // section 24: a top-up the gate kept
+    if (r.needLook && now >= (g.lookAt ?? 0)) { g.lookAt = now + CARD_LOOK_AGAIN_MS; if (host.cardOnline?.send({ op: 'look', table: g.table })) r.needLook = false; }   // CARDS-TIDY: a delta with no table under it
+    const events = r.drain();
+    const names = r.state ? r.state.seats.map((x) => x?.name ?? '') : [];
+    const you = r.lost?.chair ?? r.playerSeat;   // AUDIT CARDS-3 B7: the drain that stood me up said to me
+    if (g.scene && r.state && r.state.chairs !== g.scene.places.seats.length) g.scene = null;   // AUDIT CARDS-3 B9: a table of other chairs is no cloth of this room's
+    for (const e of events) { g.scene?.onEvent(e, (seat, k) => r.holeOf(seat, k)); const line = eventLine(e, names, you); if (line) g.log.push(line); }
+    g.log = g.log.slice(-12);
+    if (r.lost) {
+      const { why } = r.lost;
+      r.lost = null;
+      if (why === 'refused') {
+        // AUDIT CARDS-3 B2/D2: the chair I sit in is another's at the relay (or the relay will not seat me) - up
+        say(HOLDEM_REFUSALS[r.error] ?? 'Another player took that chair.');
+        standFromCardTable();
+        return;
+      }
+      g.phase = 'over'; g.why = why;   // AUDIT CARDS-3 B7/D6: out of chips, or stood up - the panel says so
+      g.remote = null;
+      paintCardGame();
+      return;
+    }
+    if (events.length || r.said !== g.saidShown || (r.legal() && now - g.paintedAt > 1000)) { g.saidShown = r.said; paintCardGame(); }   // AUDIT CARDS-3 B3: a refusal repaints
+  }
+  // AUDIT CARDS-3 B4: A STAND THAT DID NOT GO (the client's gate, four words a second) is said again each frame until it
+  // goes - the panel closed and the relay kept him seated, clocking him out every hand. A stand belongs to the room it
+  // was said in: another room's relay never sat him.
+  const cardStandsDue = new Map();   // table index -> the interior it was said in
+  function cardStand(i) { if (!host.cardOnline?.send({ op: 'stand', table: i })) cardStandsDue.set(i, interiorCtx); }
+  function cardStandsFrame() {
+    for (const [i, ctx] of cardStandsDue) if (ctx !== interiorCtx || host.cardOnline?.send({ op: 'stand', table: i })) cardStandsDue.delete(i);
+  }
+  // CARDS5: THE ROOM'S OTHER TABLES, WATCHED (section 2: a player standing near a table sees the community cards and
+  // the pot, never a hand). The relay tells the whole room every table's events; a table this player does not sit at is
+  // laid on its cloth all the same - a scene and a draw of its own, freed when its last seat stands, the room changes or
+  // the interior is left (EVERY ALLOCATION HAS AN OWNER: the watch map, closeCardWatch).
+  const cardWatches = new Map();   // table index -> { remote, scene, draw, ctx }
+  function closeCardWatch(i) { const w = cardWatches.get(i); if (!w) return; cardWatches.delete(i); w.draw.destroy(); }
+  function closeCardWatches() { for (const i of [...cardWatches.keys()]) closeCardWatch(i); }
+  /** A frame from the relay's card table: the seated game's, or a watched one's. */
+  function cardOnlineFrame(f) {
+    // CARDS6: a cash-out is gold - kept and claimed wherever the player is now, and the room told it is held
+    if (typeof f?.cashout === 'string') {
+      const j = host.cardStakes?.receive(f.cashout);
+      if (j) { host.cardOnline?.send({ op: 'ack', table: f.table, j }); host.cardStakes.claim(); }
+      return;
+    }
+    if (mode !== 'interior' || !interiorCtx || !Number.isInteger(f?.table)) return;
+    if (cardGame?.remote && f.table === cardSeat?.table) { cardGame.remote.ingest(f); return; }
+    if (cardSeat && f.table === cardSeat.table) return;   // AUDIT CARDS-3 B6/D5: the regulars' game is on this cloth - never a second laid over it
+    if (f.delta && !cardWatches.has(f.table)) { if (!cardLooksDue.includes(f.table) && cardTableNear(f.table, CARD_WATCH_M)) cardLooksDue.push(f.table); return; }   // CARDS-TIDY: a table's change, and no table to lay it on - asked for whole; AUDIT CARDS-4 D2: a NEAR one's (a table across the room is not laid out, so its whole was asked for and dropped, again at each change)
+    if (!f.state && !cardWatches.has(f.table)) return;   // a hole or a turn is a seat's - nothing to watch
+    if (!cardWatches.has(f.table) && !cardTableNear(f.table, CARD_WATCH_M)) return;   // CARDS-TIDY: a table across the room is not laid out (section 2: a player NEAR a table sees it)
+    let w = cardWatches.get(f.table);
+    if (!w) {
+      const remote = new RemoteCardTable({ myId: null });   // AUDIT CARDS-3 B2: a watcher takes no chair, whoever sits there
+      const scene = cardSceneForTable(f.table, f.state?.chairs, -1);
+      if (!scene) return;
+      w = { remote, scene, draw: createCardTableDraw(renderer), ctx: interiorCtx };
+      cardWatches.set(f.table, w);
+    }
+    w.remote.ingest(f);
+  }
+  // AUDIT CARDS-3 D7: A ROOM COME INTO ASKS FOR ITS TABLES - the relay tells the room a table's events as they come, so a
+  // player who walked in mid-hand saw nothing till the next one (up to a seat's clock); each of the room's tables is
+  // asked once a visit (`look`), as many a frame as the gate lets go. AUDIT CARDS-4 D2: each NEAR one (the rest are asked
+  // as they come near) - and one at least, whose look hands over the cash-outs this room owes the player
+  let cardLookedCtx = null, cardLooksDue = [];
+  // CARDS-TIDY: A TABLE IS WATCHED FROM NEAR IT (section 2) - within CARD_WATCH_M of its middle, let go past a little more
+  const CARD_WATCH_M = 6, CARD_WATCH_SLACK_M = 1;
+  const cardNearTables = new Set();
+  function cardTableNear(i, m) {
+    const t = interiorCtx?.tables?.[i];
+    if (!t) return false;
+    const c = tableFrame(t).centre;
+    return Math.hypot(player.pos[0] - c[0], player.pos[2] - c[2]) <= m;
+  }
+  /** The watched tables' turn of the frame: their events onto their cloths; a table emptied, or of another room, let go. */
+  function cardWatchFrame() {
+    if (interiorCtx && cardLookedCtx !== interiorCtx && host.cardOnline?.ok?.()) { cardLookedCtx = interiorCtx; cardLooksDue = (interiorCtx.tables ?? []).map((_, i) => i).slice(0, 16).filter((i) => cardTableNear(i, CARD_WATCH_M)); if (!cardLooksDue.length && (interiorCtx.tables?.length || inTavern())) cardLooksDue.push(0); host.cardStakes?.recover().then(() => host.cardStakes.claim()).catch(() => {}); cardElsewhereSay(); }   // CARDS6: a lost stake's answer asked again, the kept receipts claimed; section 24: gold owed elsewhere said; AUDIT TAVERN-TABLE M2: a tavern whose table found no floor still looks once - the relay hands what it owes here on a look, table or none
+    // CARDS6: a stake of this room the relay never sat - voided back, a word at a time as the gate lets go
+    const room = host.cardStakes && host.cardOnline?.ok?.() ? host.cardOnline.room?.() : null;
+    if (room) for (const v of host.cardStakes.voidable(room)) { if (!host.cardOnline.send({ op: 'void', table: v.table, stake: v.order })) break; host.cardStakes.voiding(v.id); }
+    // CARDS-TIDY: a table come near is asked for once each approach
+    if (interiorCtx && host.cardOnline?.ok?.()) (interiorCtx.tables ?? []).forEach((_, i) => { const near = cardTableNear(i, CARD_WATCH_M); if (near && !cardNearTables.has(i) && !cardLooksDue.includes(i)) cardLooksDue.push(i); if (near) cardNearTables.add(i); else if (!cardTableNear(i, CARD_WATCH_M + CARD_WATCH_SLACK_M)) cardNearTables.delete(i); });   // AUDIT CARDS-4 D3: forgotten past the watch's own slack - a player at the line asked once
+    while (cardLooksDue.length && host.cardOnline?.send({ op: 'look', table: cardLooksDue[0] })) cardLooksDue.shift();
+    for (const [i, w] of cardWatches) {
+      if (w.ctx !== interiorCtx || !cardTableNear(i, CARD_WATCH_M + CARD_WATCH_SLACK_M)) { closeCardWatch(i); continue; }   // CARDS-TIDY: walked away, let go
+      if (w.remote.needLook && !cardLooksDue.includes(i)) { w.remote.needLook = false; cardLooksDue.push(i); }   // CARDS-TIDY
+      for (const e of w.remote.drain()) w.scene.onEvent(e, () => -1);
+      if (w.remote.state && w.remote.seated === 0 && !w.remote.state.hand) closeCardWatch(i);
+    }
+  }
+  /** CARDS5: a cloth for table `i` with every chair its own seat (the relay's seats ARE the chairs), `mine` the chair I
+   *  sit in (-1 watching) - or null when this room's chairs are not the relay's table's. */
+  function cardSceneForTable(i, chairs, mine) {
+    const t = interiorCtx?.tables?.[i];
+    const seats = t ? cardSeatsOf(i) : [];
+    if (!t || !seats.length || (chairs != null && chairs !== seats.length)) return null;
+    return new CardScene({ places: tablePlaces(tableFrame(t), seats, seats.map((_, k) => k)), playerSeat: mine, tableSeed: 0 });
+  }
+  /** CARDS3: the hole cards the player may see - their own; the rest are backs (-1) until a showdown says them. */
+  const cardHoleOf = (session) => (seat, r) => {
+    const v = session.view(), i = v.handSeats.indexOf(seat);
+    return v.hand && i >= 0 && v.hand.seats[i].hole ? v.hand.seats[i].hole[r] : -1;
+  };
+  // CARDS2b: a blow, a fall, a spell - anything that costs health - stands you up (one listener, by name: a second
+  // host's would replace it, and only a seated player is moved by it)
+  registerPlayerHurtListener('cards-seat', (_e, hurt) => { if (cardSeat && hurt.after < hurt.before) standFromCardTable(); });
   // AUDIT LIVED1b K1: DFU's popup guard, online (world.js onExhaustedExterior's twin says why)
   let _exhaustedBox = null;
   const exhaustedShowing = () => !!_exhaustedBox && !_exhaustedBox.done && interiorWindows.containsWindow(_exhaustedBox);
@@ -2259,6 +2838,9 @@ export function createWorldModes(host) {
       if (bd.hidden) return;   // BASE-HIDE
       targets.push({ key: `bed:${i}`, aabb: worldAabb(bd.cpu.positions, bd.matrix), distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE, surface: true });   // WHERE-ROBES: the mattress, not the air under the headboard
     });
+    if (!cardSeat && inTavern()) interiorCtx.tables?.forEach((t, i) => {   // CARDS2: a tavern's card table, while it seats two
+      if (cardSeatsOf(i).length) targets.push({ key: `cardtable:${i}`, aabb: t.aabb, distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE, surface: true });   // struck at its top, as a bed is
+    });
     // WHERE-ROBES: a shelf that does nothing is geometry, not a target
     if (shelvesAct(interiorBuilding)) interiorCtx.shelves.forEach((s, i) => {
       if (s.hidden) return;   // BASE-HIDE
@@ -2353,11 +2935,12 @@ export function createWorldModes(host) {
       // party would use, and the one key already in the tree that is
       // not a string is the exterior door's bare number.
       if (typeof key !== 'string') return null;
-      if (key.startsWith('droppedLoot:')) return { title: lootPileName(interiorDropped.contents?.(key) ?? null) };   // .cs:534-548
+      if (key.startsWith('droppedLoot:')) return { title: interiorDropped.labelFor?.(key) ?? lootPileName(interiorDropped.contents?.(key) ?? null) };   // .cs:534-548; WILD1: a body's remains by its own name
       return null;
     },
     (key) => interiorTorches.hoverName?.(key) ?? null,   // HT1, through the mod's extension API
     (key) => interiorCamps.hoverName?.(key) ?? null,     // HEARTH1, likewise
+    (key) => (typeof key === 'string' && key.startsWith('cardtable:') ? { title: 'Card table' } : null),   // CARDS2: the port's own family, ungated
     // INTERIOR-BODIES: "<who> (dead)" for a body killed in this room -
     // `.cs:526`, the mod's own word, answered by the pool that STANDS
     // it exactly as both street hosts answer theirs. These sit with the
@@ -4207,6 +4790,7 @@ export function createWorldModes(host) {
    *  they ride the save with everything else; the array is minted on
    *  first use at the map reader's region count. */
   function openBank() {
+    if (host.wildNoBank?.()) return false;   // PVPDUNGEONS: no banks in the zone
     if (!bankArtLoaded() || !_shopFont) return false;
     // MapFileReader.RegionCount (:237-246). The host has no map
     // reader in scope, so the count comes from the accounts already
@@ -4859,6 +5443,9 @@ export function createWorldModes(host) {
       // LOOT16 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 8): a temple's Cure Disease priest lifts a curse
       // too - the popup's row in the Reforge's place, on either skin; a dispatch, as a service's is
       lift: route.guildGroup === GUILD_GROUPS.HolyOrder && service === 'CureDisease' && lootRarityOn() ? () => (openLift() ? { dispatched: true } : null) : null,
+      // HEAL-CURSE (the owner: "Add a button to the temple services under heal disease named heal curse"): the Cure
+      // Disease priest's second row - the curse's offer as a Yes/No box, its rite paid and done on the Yes
+      healCurse: service === 'CureDisease' ? () => healCurseBox() : null,
     });  win = enhancedWindow(win, 'guild');   // PORT4: the enhanced skin's face; the classic window unchanged
     mountServiceWindow(win);
   }
@@ -4955,6 +5542,25 @@ export function createWorldModes(host) {
   // overrides the building faction for that arm: the coven summons by
   // the WITCH NPC's own factionID (:186), the one summoner whose id is
   // not the hall it stands in.
+  /** HEAL-CURSE: the temple's offer to lift a curse, at this temple's price (systems/healCurse.js) - a box for the popup. */
+  function healCurseBox() {
+    const b = interiorBuilding;
+    const deps = { priceAdjustment: regionPriceAdjustment(playerEntity, b?.regionIndex ?? 0), quality: b?.quality ?? 10 };
+    const offer = healCurseOffer(playerEntity, deps);
+    const box = (lines, extra = {}) => ({ rows: (Array.isArray(lines) ? lines : [lines]).map((text) => ({ text, center: true })), ...extra });
+    if (offer.kind !== 'offer') return box(healCurseText.none);
+    return box(healCurseText.offer(offer.cost, offer.curse), {
+      buttons: 'YesNo',
+      onYes: () => {
+        const r = healCursePaid(playerEntity, { ...deps, nowMinutes: interiorTicker.ownMinutes, advanceMinutes: (n) => interiorTicker.advance(n) });
+        if (r.kind === 'notEnoughGold') return box(healCurseText.poor(r.cost));
+        if (r.kind !== 'lifted') return box(healCurseText.none);
+        surfacePlayer();
+        host.onCurseLifted?.(r.went);   // the world's own refresh of what the curse changed (the head, the HUD)
+        return box(healCurseText.lifted);
+      },
+    });
+  }
   function openServiceFlow(destination, { guild, memberships, store, rows, route, talkAsSpymaster = null, summonerFactionId = null }) {
     if (!destination) return null;
     const membership = guild ? membershipOf(memberships, guild) : null;
@@ -5892,7 +6498,7 @@ export function createWorldModes(host) {
    * the next line - so the sixth mode turns the suite red rather than
    * leaking a street.
    */
-  const setMode = (next) => { dropDoorCache(); if (next !== mode) interiorWeapon.silenceTorch();   /* DISC6: the building's rig leaves the frame - its torch loop with it */ mode = next; if (next !== 'interior') { privateVisitRoom = null; privateVisitOwner = null; } };
+  const setMode = (next) => { dropDoorCache(); if (next !== mode) interiorWeapon.silenceTorch();   /* DISC6: the building's rig leaves the frame - its torch loop with it */ if (next !== 'interior') closeCardWatches();   /* CARDS5: the watched tables' cloths go with the interior */ mode = next; if (next !== 'interior') { privateVisitRoom = null; privateVisitOwner = null; } };
   function exteriorDoorTargets() {
     const gen = doorGeneration?.();
     if (gen !== undefined && _doorCache && _doorCache.gen === gen) return _doorCache;
@@ -5968,6 +6574,9 @@ export function createWorldModes(host) {
     // the bench host stands none. The ray's distance, half a door's reach carried beside it.
     const graves = host.graveTargets?.() ?? [];
     graves.forEach((aabb, i) => targets.push({ key: `grave:${i}`, aabb, distance: RAY_DISTANCE, reach: SEARCH_REACH }));
+    // LEFAY1 (scenes/lefayMonumentHost.js): Gothway Garden's monument to Julian LeFay - both exterior hosts stand it
+    // (their `monumentTargets`), its steps' box and its column's met at its stone, its reach a static NPC's beside the ray's
+    for (const t of host.monumentTargets?.() ?? []) targets.push(t);
     _extList = { entries, npcs, boards, graves, targets };
     _extMark = mark;
     return _extList;
@@ -6447,6 +7056,10 @@ export function createWorldModes(host) {
       if (_hitDist > _hitReach) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }
       return host.activateGrave?.(graves[Number(key.split(':')[1])], getInteractionMode()) ?? true;
     }
+    if (typeof key === 'string' && key.startsWith('lefay:')) {   // LEFAY1: the monument - too far speaks the refusal; the plaque's lit row is the verb
+      if (_hitDist > _hitReach) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }
+      return host.activateMonument?.(key, getInteractionMode(), plaqueActionFor(key)) ?? true;
+    }
     if (_hitDist > _hitReach) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }   // AUDIT 65 MC-2: ActivateStaticDoor's OWN first statement (:501-504), before the bash sound and the lock ladder; the board arm keeps its gate inside activateBulletinBoard (:709-712), as C# does
     return activateStaticDoor(entries[key], entries, false, { verb: plaqueActionFor(key) });   // HOME2: the verb the door's plaque lit, if it listed any
   }
@@ -6764,6 +7377,7 @@ export function createWorldModes(host) {
   async function buyHomeAt(bd, price) {
     const homes = host.onlineHomes;
     if (!homes) return;
+    if (host.wildNoHouse?.()) return;   // PVPDUNGEONS (the owner: "Players cant use banks in zone and cant buy houses")
     // WD3 (AUDIT WD3 O1/O2): a home is a building key, which names a building only in its town's layout - none is bought
     // before the room's layouts of the homes' towns are heard, and a claim refused for its town's layout hears them again
     if (host.homeTownsMissing?.()) { townTalk?.say?.(accountRefusalText('home-towns')); return; }   // AUDIT WD3 B1: a town mod's pack did not load here
@@ -7191,6 +7805,9 @@ export function createWorldModes(host) {
         hit.dfBlock, hit.dfBlock.index, hit.recordIndex, hit.climateBase, hit.season,
         hit.door.matrix, {
           voxelfolk, piece, paint, setupStaticNpc, houseOwned, peopleVisible, baseEditable,
+          // TAVERN-TABLE (world/cardTableProp.js; the owner: "Lets instead place a specific table in each inn"): every
+          // tavern stands the card table's own prop - its one card table
+          placeCardTable: isTavern(building?.buildingType ?? BUILDING_TYPES.None),
           // RR2: Roleplay & Realism's variant keepers and residents (RoleplayRealism.cs:775-932) - the decision per person, with StaticNPC's own name seed and the location's climate
           variantPerson: (pn) => rrVariantPerson(pn, {
             buildingType: building?.buildingType ?? -1, quality: building?.quality ?? 0,
@@ -7236,6 +7853,7 @@ export function createWorldModes(host) {
       // AUDIT 68 S23-failed-entry-stale-building: the identity and the
       // three PlayerActivate.cs:1120-1122 latches, committed with the
       // context and not before it.
+      standFromCardTable();   // CARDS2b (AUDIT CARDS B1): a new room seats nobody yet - CARDS4: and an old table's chips come home
       interiorBuilding = building;
       privateVisitRoom = restore?.privateRoom ?? null;
       privateVisitOwner = restore?.cabinOwner ?? null;
@@ -7359,6 +7977,7 @@ export function createWorldModes(host) {
   }
 
   function tryExit({ pressCast = false, interact = false, actClick = false } = {}) {
+    if (cardSeat) { standFromCardTable(); return true; }   // CARDS2: seated, the press stands you up and does nothing else
     const eye = player.eye;
     const dir = eyeDir();
     // FIELD BUGS 2026-10-07 INDOOR-SKIN: a profession node under the look takes the press first - a body of this
@@ -7495,6 +8114,10 @@ export function createWorldModes(host) {
       }
       if (key.startsWith('shelf:')) {
         openShelf(Number(key.split(':')[1]));   // E2: the browse/buy window (no-op outside shops)
+        return true;
+      }
+      if (key.startsWith('cardtable:')) {
+        sitAtCardTable(Number(key.split(':')[1]));   // CARDS2
         return true;
       }
       if (key.startsWith('bed:')) {
@@ -7716,6 +8339,7 @@ export function createWorldModes(host) {
     interiorCamps.destroyAll(); interiorHearths.length = 0;   // HEARTH1: this room's fires are this room's - one building's hearth is not the next one's
     interiorCtx = null;
     interiorBuilding = null;   // E2: the identity + overlay leave with the interior
+    standFromCardTable();   // CARDS2: and nobody stays seated in a room they left - CARDS4: the table cashed out
     interiorCabin = null;
     interiorHome = null;   // HOME1: and the visit's home with it
     interiorSeatHall = null;   // SEAT-HALL
@@ -8041,7 +8665,14 @@ export function createWorldModes(host) {
     dungeon: loc.dungeon && { ...loc.dungeon, blocks: loc.dungeon.blocks?.map((b) => ({ ...b })) },
   });
   async function tryEnterDungeon(hit, entries, { preferEnterMarker = false, fromLoad = false } = {}) {
-    return gatedTransition((live) => dungeonTransition(hit, entries, preferEnterMarker, live, fromLoad));   // AUDIT 68 X3-transition-build-race
+    return gatedTransition(async (live) => {   // AUDIT 68 X3-transition-build-race
+      // PVPDUNGEONS: the zone's tier rules - the hub's word on my lock is awaited INSIDE the gate (AUDIT 68 X3: awaited
+      // before it, a teleport, a recall or a load during the hub's four seconds did not stale the door, and the dungeon
+      // was built from wherever the world had moved to; a second press now waits its turn instead of racing the first)
+      if (host.wildDungeonGate && !(await host.wildDungeonGate(hit, fromLoad))) return false;
+      if (!live()) return false;   // the world moved during the hub's word: no build at all
+      return dungeonTransition(hit, entries, preferEnterMarker, live, fromLoad);
+    });
   }
   async function dungeonTransition(hit, entries, preferEnterMarker, live, fromLoad = false) {
     // AUDIT 28 W4: SMALLER DUNGEONS - the location that gets BUILT is
@@ -8055,6 +8686,7 @@ export function createWorldModes(host) {
     // Hole in the Bottom of the Ocean's RenameDungeon and WaterizeDungeon, on a Recall into its template) never renames
     // the cache's location or floods its block records.
     const dfLocation = ownDungeonLocation(sized);
+    if (host.wildDungeonElite?.(hit)) { dfLocation.elite = true; dfLocation.wildRing = host.wildHallRing?.() ?? 0; dfLocation.wildEpoch = host.wildHallEpoch?.() ?? 0; }   // PVPDUNGEONS: every open hall of the zone is an elite dungeon - its tier (its foes' strength) and its epoch (its chests) on it
     let _hccLanded = false;   // HCC
     host.onPreTransition?.();   // AUDIT PSCALE1 NET-3: my foes to the players outside, before the door takes me
     host.horseCart?.()?.handlePreTransition({ type: 'ToDungeonInterior', door: hccDoorOf(hit) });   // HCC: OnPreTransition [IL_98f0], before the dismount
@@ -8252,6 +8884,7 @@ export function createWorldModes(host) {
           gateHost: () => host.gateHost?.() ?? null,   // WB11c: the Legion-Lord's host as bodies my blows meet (none but under the trial)
           onHostHit: (hit) => !!host.onHostHit?.(hit),   // WB11c: and the door a blow's number on one leaves through
           arenaRival: () => host.arenaRival?.() ?? null,   // ARENA4: my opponent on a relay's sand as a body my blows meet (none outside such a bout)
+          wildBodies: () => host.wildBodies?.() ?? null, wildStrike: (id, w, sw) => !!host.wildStrike?.(id, w, sw), wildSpellMarks: () => host.wildSpellMarks?.() ?? null, wildSpellOut: (id, sp) => !!host.wildSpellOut?.(id, sp),   // PVPDUNGEON: a fair player of the zone, struck in its dungeons
           onArenaHit: (hit) => !!host.onArenaHit?.(hit),   // ARENA4: and the door a blow's number on them leaves through - to the referee
           spoilContents: (key) => host.spoilContents?.(key) ?? null,   // WB9f: a piece of his spoils, listed on the plaque
           onActions: (data) => host.onActions?.(data), peers: () => host.peers?.() ?? null, selfId: () => host.selfId?.() ?? null, party: () => host.partyNear?.() ?? [], nodeMarks: (feet) => host.professionMarks?.(feet) ?? null, questMarks: () => dungeonQuestMarksHere(),   // GUIDE8: the Exact tier's quest resources, on the dungeon's map and compass; NODE-MARKS: the dungeon's nodes on its compass, at its own feet; WORLD3: a door moved goes out; the peers the foes see; whose blow a puppet's is
@@ -8944,6 +9577,8 @@ export function createWorldModes(host) {
     if (mode === 'interior') interiorLootSettle();   // WORLD6a: a container's window gone (the stack reconciled above) is the close's word
     seatHallsFrame(performance.now());   // AUDIT SEATS-2 C1: the seat halls, known late
     decorTool.frame({ dt, cam, overlayUp: overlayHeld, interior: mode === 'interior' });   // DECOR1d: the button, the panel's scan, the free camera
+    if (mode === 'interior') cardGameFrame(performance.now());   // CARDS4: the card table's patrons think and deal on, under any window
+    host.cardRegulars?.(mode === 'interior' ? cardRegularsNow(performance.now()) : [], dt, cam.pos);   // CARDS4b: the regulars in their chairs, drawn as peers are (world.js) - none outside a building
     // Q4-v: the quest layer's modal frame. Behaviours update every
     // frame (Unity Update runs whatever Time.timeScale is); the
     // machine's OWN tick freezes under a paused window - PauseGame
@@ -8999,6 +9634,7 @@ export function createWorldModes(host) {
     // applyFallLanding charged the damage, a swimmer kept sinking, and
     // the crouch edge still toggled. dungeon.js:"${JSON.stringify(ctx.startMarker)}," is this same gate
     // ("no movers, no motor").
+    if (cardSeat && !overlayHeld && leavesSeat(mv, jumpHeld || !!player.toggleAutorun || swingKey)) standFromCardTable();   // CARDS2: a step, a jump, the stick or the autorun latch stands you up - so a seated body has nothing to walk with
     playerBlowFrame({ motor: player, entity: playerEntity, shake: (k) => betterAmbience.weaponKick(k), hurt: (n) => { hurtPlayer(playerEntity, n); flashPlayerDamage(n); surfacePlayer(); } });   // TELL6e: a landing's push, rattle, knockdown and bleed; AUDIT TELL L6: under a window too, as the street's hosts run it - a building's foes keep their clock there (WINFOE1), and a bleed its ticks, never all at once on the close
     if (!overlayHeld) {
       // Audit F3: crouch stays live while paralyzed (DFU gates movement/jump only)
@@ -9208,6 +9844,7 @@ export function createWorldModes(host) {
     if (interiorOverlay instanceof DeathScreen) interiorOverlay.tiltView(cam);
     if (mode === 'dungeon') dungeonCtx?.deathTilt?.(cam);
     if (mode === 'interior') decorTool.cameraOverride(cam);   // DECOR1d: the free camera's eye, while a piece is placed
+    if (mode === 'interior' && cardSeat && !(interiorOverlay instanceof DeathScreen)) cam.pos = cardSeat.eye.slice();   // CARDS2: the seated eye - never over a death's sink and tilt (AUDIT CARDS B2): the dead fall from the body's own eye
     host.climbFeel?.frame(dt, overlayHeld);   // CLIMB4: the climb's camera, off this frame's motor (the world host's handle - one body) - AUDIT CLIMB-ARC F2/F4: held while the motor is
     // A8 - POINTER PARITY, THE FLAG AT THIS LINE RETIRED. Mouse0 is
     // DFU's ActivateCenterObject: the readied spell fires on its
@@ -9303,11 +9940,12 @@ export function createWorldModes(host) {
     // the walk hosts - one eye law, this context's own collider.
     const mwv = mwViewFrame({
       fpEye: cam.pos, feet: player.feetAt(), yaw: cam.yaw, pitch: cam.pitch,
-      dt, riding: !!player.riding,   // AUDIT-EOTB F3/F4: the host's own clock, and the one state only it has
+      dt, riding: !!player.riding || !!cardSeat,   // AUDIT CARDS-2 L11: a seat holds the head as the saddle does; AUDIT-EOTB F3/F4: the host's own clock, and the one state only it has
       raycast: (o, d, m) => player.collider?.raycast?.(o, d, m) ?? null,
       spherecast: (o, r, d, m) => { const h = player.collider?.sphereCast?.(o, r, d, m)?.dist; return Number.isFinite(h) ? h : null; },   // MAC-A: castSphere's seam beside the ray - the camera's two obstacle guards are sphere casts (camera.cpp:186, :200)
     });
     if (decorTool.flying()) mwv.eye = cam.pos;   // DECOR1d: the free camera looks from its own eye, never over the body's shoulder
+    if (cardSeat) mwv.eye = cam.pos;   // CARDS2: seated, the seat's own view - first person (Tavern-Cards.md section 2)
     const view = betterAmbience.view(lookAt(mwv.eye, [mwv.eye[0] + fwd[0], mwv.eye[1] + fwd[1], mwv.eye[2] + fwd[2]], [0, 1, 0]));   // BA1: the shaker sits between the follower and the camera
     const aimView = view.slice();   // AUDIT CLIMB-ARC F10: the view the player aims with, before the climb's feel
     host.climbFeel?.view(view, !decorTool.flying() && !mwv.thirdPerson);   // CLIMB4: the climb's pitch, roll and eye - first person, never the decorator's free camera
@@ -9521,6 +10159,7 @@ export function createWorldModes(host) {
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);   // AUDIT-EL F5: a WORLD frame - the lane replays its records for this one
     mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });   // MW-D24; DISC18: the body at the capsule's own feet, not the camera's smoothed ones
     host.drawPeerBodies?.({ proj, view, eye: mwv.eye });   // MWBODY1: the others' bodies, after the player's own
+    host.drawCardRegulars?.({ proj, view, eye: mwv.eye });   // CARDS4b: the card table's regulars, in their chairs
     if (interiorCtx.staticBatch) renderer.drawMesh(interiorCtx.staticBatch, BATCH_IDENTITY, null);   // PERF6: the room's static models, one call per texture
     for (const d of interiorCtx.drawList) if (!d._batched) renderer.drawMesh(d.mesh, d.matrix, interiorCtx.texRemap);
     // WM4b: the mill's machinery turns at Kamer's rate, in here too.
@@ -9619,6 +10258,8 @@ export function createWorldModes(host) {
     if (mwStamp !== _decorMwStamp) { _decorMwStamp = mwStamp; interiorDecor.refreshMounts(); }
     interiorDecor.drawMounts(renderer);   // DECOR2c: the hung weapons and shields, on the decal pass, after the solid room
     decorTool.drawMounts(renderer);   // DECOR2c: and the one being hung
+    if (cardGame?.scene) cardDrawGame(cardGame, proj, view, mwv.eye);   // CARDS3: the cards and chips on the cloth - CARDS3b: the player's own two held before the eye
+    for (const w of cardWatches.values()) if (w.remote.state) w.draw.draw(w.scene.poses(performance.now() / 1000, w.remote.view()));   // CARDS5: and the tables this player watches
     interiorCtx.flatAnims.tick(dt);   // FA1
     // BLOOD1 AUDIT (2026-09-20): THE INTERIOR'S OWN MARKS, and they
     // were missing. This host builds a pool like the other three,
@@ -9633,6 +10274,8 @@ export function createWorldModes(host) {
     renderer.drawBillboards([...interiorCtx.billboardBatches, ...(host.extraBillboards?.() ?? [])], camRight, UP_Y);   // ONLINE1: the peers on the interior's own pass
     const livingInside = host.livingBillboards?.() ?? [];   // LW8: the residents the day has in this building
     if (livingInside.length) renderer.drawBillboards(livingInside, camRight, UP_Y);
+    const regularsInside = host.cardRegularBillboards?.() ?? [];   // CARDS4b: the card table's regulars as sprites (no Morrowind body)
+    if (regularsInside.length) renderer.drawBillboards(regularsInside, camRight, UP_Y);
     // HE1: the blood, on the same axis and the same call the exterior
     // host makes for its own pool.
     interiorHitEffects.tick(dt);
@@ -10535,6 +11178,7 @@ export function createWorldModes(host) {
     // (UserInterfaceManager.cs:179-185), so the click never reaches
     // WeaponManager - and here it reached interceptAttack first, so a
     // readied spell was CAST by a right-click meant to remove an item.
+    if (cardSeat && isSwingButton(e.button) && !modalWindowUp()) { standFromCardTable(); return; }   // CARDS2b (AUDIT CARDS B5): seated, the swing stands you up - a blow from the capsule's eye, not the seat's, is no blow
     if (isSwingButton(e.button) && !modalWindowUp()) modalAttackSink()?.(0, 0, true);
   });
 
@@ -11051,8 +11695,15 @@ export function createWorldModes(host) {
       // PARTY-REST28: shared with world.js's own outdoor toggleRest and dungeonContext.js's - see
       // world.js's markPartyRestSpent doc comment for the bug this closes (a rest granted indoors used to
       // leave the granting player's own ready flag stuck true forever, since nothing here ever reset it).
-      host.markPartyRestSpent?.();
-      mountInterior(createRestWindow(interiorRestDeps, ignoreAllocatedBed));
+      // REST-WARN: poisoned or diseased, the rest asks first (systems/restWarning.js)
+      const restNow = () => {
+        if (interiorOverlay?.done) { interiorOverlay = null; interiorWindows.reconcile(null); }
+        host.markPartyRestSpent?.();
+        mountInterior(createRestWindow(interiorRestDeps, ignoreAllocatedBed));
+      };
+      const ail = restAilmentLines(playerEntity);
+      if (ail) { mountInterior(new DecisionBoxWindow({ rows: ail, onYes: restNow })); return; }
+      restNow();
     },
   };
 
@@ -11086,6 +11737,9 @@ export function createWorldModes(host) {
     if (townTalk?.overlayActive) return;
     // AUDIT 29 D1: an Escape the outer host spent ending a gathering act (world.js marks it) - underground it also paused
     if (e.profActEnded) return;
+    // CARDS2b: seated at a card table with no window up, Escape stands you up and is spent there - as a gathering act's
+    // end spends it above - so the pause menu opens on the next one, standing
+    if (mode === 'interior' && cardSeat && actionOf(e, keys) === 'Escape' && !interiorKeyCtx.uiOverlayActive) { standFromCardTable(); e.preventDefault(); return; }
     // U43: THE ONE DISPATCH. GameManager.Update (:509-557) is a single
     // flat chain with no scene gate at all - the window a key opens
     // does not care where the player is standing. The port had three
@@ -11954,6 +12608,7 @@ export function createWorldModes(host) {
         // the stack holds (ROAD-B B1).
         interiorWindows.reconcile(interiorOverlay);
         interiorWindows.clear((w) => w.dispose?.());
+        standFromCardTable({ cashOut: !load });   // CARDS2b (AUDIT CARDS B1): the forced road out - a load, a quest teleport, Recall, a respawn, a sail - empties the seat as the door does; CARDS4: and cashes the table out
         interiorCtx = null; interiorBuilding = null; interiorCabin = null; interiorHome = null; interiorSeatHall = null; interiorOverlay = null; exteriorDoor = null; _seatHallVisit = false;   // HOME1: the visit's home with the identity
         _insideTavern = false;   // ROAD-B B4: PlayerEnterExit.cs:874, the same latch on the teleport/load arm
         _insidePartyRestExempt = false;   // TAVERN-REST1/GUILD-REST1: cleared on the same teleport/load arm as the tavern latch above
@@ -12096,6 +12751,11 @@ export function createWorldModes(host) {
     get hudCovered() { return modeHudCovered(); },
     /** AUDIT DROPS E2: the surface underfoot in this mode, as PEER-FS1's kind - what the pose says peers hear. */
     get footstepKind() { return _modeFootstepKind; },
+    cardTableLive: () => !!cardGame?.session && !cardGame.friendly,   // AUDIT CARDS-2 H1: chips on the table - the save refuses (world.js worldQuickSave); AUDIT CARDS-3 E-N5: a friendly game's chips are no gold
+    cardOnlineFrame,   // CARDS5: the relay's card table's frames (world.js online.onHoldem)
+    /** CARDS2b: the seat the pose says (scenes/world.js's sender): the feet and the facing the body is drawn at, and the
+     *  wire's `st` - the table's top above them - or null off a seat. On the returned object, as footstepKind is. */
+    seatPose: () => (mode === 'interior' && cardSeat ? { feet: cardSeat.feet, yaw: cardSeat.yaw, st: seatTopByte(cardSeat.top) } : null),   // AUDIT CARDS B1: and never outside a building, whatever road left it
     // PARTY-REST DROP (AUDIT DROPS D1, kept): world.js reads `modes?.restState` - THIS object. The party-rest
     // drop wrote the getter below onto interiorKeyCtx, the interior KEY table's own ctx, which this factory
     // never returns, so from a tavern it read `undefined` and broadcast `rest: null` - the very hole D1 had
@@ -12375,6 +13035,9 @@ export function createWorldModes(host) {
     /** AUDIT WORLD B6: is the death screen up in the mode's own slot - the dungeon context's (it borrows the
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
+    /** WILD1 (net/wildRemains.js): the ground pool of the mode I stand in - a dungeon's or a building's - where a body's
+     *  remains in the open zone stand as piles; null outdoors (the street's is the world host's own). */
+    droppedPool() { return mode === 'dungeon' ? (dungeonCtx?.droppedPool?.() ?? null) : mode === 'interior' ? interiorDropped : null; },
     /** RESURRECT1: the mode's death screen closed IN PLACE - the fallen player rises where they fell, no exit. */
     clearDeath() {
       if (mode === 'dungeon') { dungeonCtx?.clearDeathOverlay?.(); return; }

@@ -225,7 +225,10 @@ export const HALO_PEN = 1.6;
 export const GLYPH_R = Object.freeze({
   city: 6.5, hamlet: 3.5, village: 2.8, temple: 5, cult: 4.5,
   dungeon: 5, graveyard: 3.8, coven: 5, tavern: 3.2, home: 3.2,
+  hall: 5,   // PVPDUNGEONS: a zone hall's arched door, the dungeon's own room
 });
+/** PVPDUNGEONS: a zone hall's ink - an elite hall's deep oxblood, apart from every classic dot's hue. */
+export const HALL_INK = '#7a1f14';
 /** The hand-lettered face the names are inked in. The enhanced skin's
  *  display face (ui/enhancedStyle.js --display), so the map and the
  *  card beside it agree. */
@@ -301,6 +304,15 @@ export const BAND_MARKS = Object.freeze({
   mid: new Set([0, 1, 2, 8, 9, 10, 11, 12, 13]),
   near: new Set([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]),
 });
+/** TAMRIEL1: THE CONTINENT - the sheet zoomed out beyond the Bay's own fit (ui/tamrielInk.js onContinent). Not a
+ *  band: ZOOM_BANDS are pure on the scale and the Bay's fit depends on the paper, so the world sheet decides it and
+ *  hands the painter `continent: true` beside the band (far, at any real paper). The Bay's ink thins for it: the
+ *  carets at CARET_STEP.continent (the highBands key of that name), and no region names - the continent's province
+ *  names stand in for them. */
+export const CONTINENT_BAND = 'continent';
+/** A province's name as the sheet letters it: capitals, a thin space between - ONE spelling, so the continent's
+ *  provinces (ui/tamrielInk.js) and the Bay's regions are set in the same hand. */
+export const spacedName = (name) => name.toUpperCase().split('').join('\u2009');
 /** Which buckets each band NAMES (a subset of what it inks). */
 export const BAND_NAMES = Object.freeze({
   far: new Set([11]),
@@ -310,7 +322,7 @@ export const BAND_NAMES = Object.freeze({
 /** The order names compete for room: a city's name beats a farm's. */
 export const NAME_RANK = Object.freeze([11, 12, 13, 8, 9, 10, 0, 1, 2, 3, 4, 5, 6, 7]);
 /** How many map pixels apart the high-ground carets sit, per band. */
-export const CARET_STEP = Object.freeze({ far: 6, mid: 3, near: 2 });
+export const CARET_STEP = Object.freeze({ continent: 12, far: 6, mid: 3, near: 2 });
 
 // ── THE CHAINS ───────────────────────────────────────────────────
 
@@ -566,6 +578,7 @@ export function buildInkModel(deps) {
     // paint - the far band iterated a hundred thousand pixels a frame to
     // draw three thousand carets
     highBands: {
+      continent: high.filter((h) => h.x % CARET_STEP.continent === 0 && h.y % CARET_STEP.continent === 0),   // TAMRIEL1
       far: high.filter((h) => h.x % CARET_STEP.far === 0 && h.y % CARET_STEP.far === 0),
       mid: high.filter((h) => h.x % CARET_STEP.mid === 0 && h.y % CARET_STEP.mid === 0),
       near: high.filter((h) => h.x % CARET_STEP.near === 0 && h.y % CARET_STEP.near === 0),
@@ -624,16 +637,19 @@ export const SCALE_MAX = 14;
  */
 /** ME-PAN fix: how much of the paper a drag may leave blank past the edge of what a sheet has drawn. */
 export const PAN_SLACK = 0.5;
-export function clampView(view, { mapW, mapH, paperW, paperH, pan = null, prev = null }) {
+/** TAMRIEL1: a sheet whose map does not start at (0, 0) - the world sheet with the continent round the Bay
+ *  (ui/tamrielInk.js; world/tamrielFrame.js tamrielFrameInBay) - hands the clamp `mapX0`/`mapY0`, the map's own
+ *  top-left in its coordinates. Absent they are 0 and nothing moves. */
+export function clampView(view, { mapW, mapH, paperW, paperH, pan = null, prev = null, mapX0 = 0, mapY0 = 0 }) {
   const scaleMin = Math.min(paperW / mapW, paperH / mapH);
-  if (!Number.isFinite(view.scale)) view = { ox: 0, oy: 0, scale: scaleMin };   // a total function: a NaN view rests
+  if (!Number.isFinite(view.scale)) view = { ox: mapX0, oy: mapY0, scale: scaleMin };   // a total function: a NaN view rests
   // contain wins over the ceiling: a bay smaller than the sheet (a
   // probe's synthetic one) is never let shrink off it
   const scale = Math.max(scaleMin, Math.min(SCALE_MAX, view.scale));
-  const axis = (o, map, paper) => {
+  const axis = (o, lo, map, paper) => {
     const visible = paper / scale;
-    if (visible >= map) return (map - visible) / 2;
-    return Math.min(map - visible, Math.max(0, o));
+    if (visible >= map) return lo + (map - visible) / 2;
+    return Math.min(lo + map - visible, Math.max(lo, o));
   };
   // ME-PAN fix: a sheet's drawn box, where it hands one. What is drawn may leave at most PAN_SLACK of the paper
   // blank on a side (at 0.5: the paper's middle stays over the drawn box), wherever the sheet's own box would let
@@ -659,7 +675,7 @@ export function clampView(view, { mapW, mapH, paperW, paperH, pan = null, prev =
       scale,
     };
   }
-  return { ox: axis(view.ox, mapW, paperW), oy: axis(view.oy, mapH, paperH), scale };
+  return { ox: axis(view.ox, mapX0, mapW, paperW), oy: axis(view.oy, mapY0, mapH, paperH), scale };
 }
 export function scaleMinOf({ mapW, mapH, paperW, paperH }) {
   return Math.min(paperW / mapW, paperH / mapH);
@@ -910,8 +926,9 @@ export function paintInk(ctx, model, view, opts) {
   paintInkOverlay(ctx, view, { ...opts, clear: false });
 }
 
-/** The visible test and the chain stroke, shared by the two halves. */
-function penOf(ctx, view, paperW, paperH) {
+/** The visible test and the chain stroke, shared by the two halves - and by the continent's layer
+ *  (ui/tamrielInk.js), which is why it is exported: one pen, one cull. */
+export function penOf(ctx, view, paperW, paperH) {
   const s = view.scale;
   const visible = (x, y, pad = 2) => x >= view.ox - pad && y >= view.oy - pad
     && x <= view.ox + paperW / s + pad && y <= view.oy + paperH / s + pad;
@@ -975,8 +992,9 @@ export function paintInkStatic(ctx, model, view, opts) {
   ctx.lineWidth = 1;
   ctx.beginPath();
   const caret = Math.max(2.5, Math.min(7, s * 0.9));
-  const step = CARET_STEP[band] ?? 3;
-  const carets = model.highBands?.[band] ?? model.high.filter((h) => h.x % step === 0 && h.y % step === 0);
+  const caretBand = opts.continent ? CONTINENT_BAND : band;   // TAMRIEL1: on the continent the carets thin further
+  const step = CARET_STEP[caretBand] ?? 3;
+  const carets = model.highBands?.[caretBand] ?? model.high.filter((h) => h.x % step === 0 && h.y % step === 0);
   for (const h of carets) {
     if (!visible(h.x, h.y)) continue;
     const [x, y] = toPaper(view, h.x + 0.5, h.y + 0.5);
@@ -989,6 +1007,9 @@ export function paintInkStatic(ctx, model, view, opts) {
   // the roads and the tracks
   if (!opts.filters?.roads) stroke(model.roads, band === 'far' ? 1 : 1.5, PEN.line);
   if (band !== 'far' && !opts.filters?.tracks) stroke(model.tracks, 1, PEN.soft, [2, 3]);
+  // WILD1 (ui/wildMapInk.js): a sheet's own layer between the land and the marks - the open zone's fog and its red line,
+  // laid over the mountains and the roads and under every place, so a town in the fog still reads
+  if (typeof opts.underMarks === 'function') { ctx.save(); opts.underMarks(ctx); ctx.restore(); }
 
   // the marks - and MAP2's harbour glyph beside a port's, while the mod
   // restricts ship travel to ports (the classic page's ports button
@@ -1014,7 +1035,7 @@ export function paintInkStatic(ctx, model, view, opts) {
   for (const [m, x, y] of inked) if (m.seatMark) paintSeatRing(ctx, x, y, markReach(m), m.seatMark);
   for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);
   for (const [m, x, y] of inked) {
-    paintGlyph(ctx, m.kind, x, y, false, opts.inks?.[m.kind]);   // MAP-KEY: in its classic dot's hue, where there is a palette
+    paintGlyph(ctx, m.kind, x, y, false, opts.inks?.[m.kind] ?? (m.kind === 'hall' ? HALL_INK : undefined));   // MAP-KEY: in its classic dot's hue, where there is a palette (PVPDUNGEONS: a hall its own)
   }
   // PORT-MAP (2026-10-04, Mac: "Also ports don't show on my map"): a port's anchor at EVERY band - beside its mark where
   // the band inks the place, ON the place where it does not (far inks the cities alone, and the map opens far) - so the
@@ -1052,8 +1073,9 @@ export function paintInkStatic(ctx, model, view, opts) {
       ctx.fillText(n.mark.name, n.x, n.y);
     }
   }
-  // the provinces' names, far and mid
-  if (band !== 'near' && opts.regionNames) {
+  // the provinces' names, far and mid (TAMRIEL1: not on the continent, where the Bay is a hand's width and its
+  // sixty-two names would be a smudge - the continent's own province names stand there)
+  if (band !== 'near' && !opts.continent && opts.regionNames) {
     ctx.fillStyle = PEN.region;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -1062,7 +1084,7 @@ export function paintInkStatic(ctx, model, view, opts) {
       const name = opts.regionNames[r.region];
       if (!name || !visible(r.x, r.y, 30)) continue;
       const [x, y] = toPaper(view, r.x, r.y);
-      ctx.fillText(name.toUpperCase().split('').join(' '), x, y);
+      ctx.fillText(spacedName(name), x, y);
     }
   }
 }
@@ -1433,6 +1455,21 @@ export function paintGlyph(ctx, kind, x, y, halo = false, ink = PEN.line) {
       ctx.moveTo(x, y - 4); ctx.lineTo(x + 4, y); ctx.lineTo(x, y + 4); ctx.lineTo(x - 4, y); ctx.closePath(); ctx.stroke(); return;
     case 'dungeon':
       ctx.moveTo(x, y - 4.5); ctx.lineTo(x + 4, y + 3); ctx.lineTo(x - 4, y + 3); ctx.closePath(); ctx.stroke(); return;
+    case 'hall': {
+      // PVPDUNGEONS: an arched door in its frame - the dungeon's own footprint (GLYPH_R 5), stroked in the sheet's pen, its
+      // leaf filled light so it reads as a door and not a hole, two planks and a ring
+      const w = 3.4, top = y - 1.2, base = y + 4.2;
+      const arch = () => { ctx.beginPath(); ctx.moveTo(x - w, base); ctx.lineTo(x - w, top); ctx.arc(x, top, w, Math.PI, 0); ctx.lineTo(x + w, base); ctx.closePath(); };
+      arch();
+      if (halo) { ctx.fill(); ctx.stroke(); return; }
+      ctx.save(); ctx.globalAlpha = 0.28; ctx.fill(); ctx.restore();
+      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x - w * 0.36, top - w * 0.55); ctx.lineTo(x - w * 0.36, base); ctx.moveTo(x + w * 0.36, top - w * 0.55); ctx.lineTo(x + w * 0.36, base);
+      ctx.save(); ctx.lineWidth = Math.max(0.8, GLYPH_PEN * 0.6); ctx.stroke(); ctx.restore();
+      ctx.beginPath(); ctx.arc(x + w * 0.62, y + 1.6, 0.75, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(x - w - 1.1, base + 0.2); ctx.lineTo(x + w + 1.1, base + 0.2); ctx.stroke();   // the sill
+      return;
+    }
     case 'graveyard':
       ctx.moveTo(x - 3, y - 3); ctx.lineTo(x + 3, y + 3); ctx.moveTo(x + 3, y - 3); ctx.lineTo(x - 3, y + 3); ctx.stroke(); return;
     case 'coven':

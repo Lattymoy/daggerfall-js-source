@@ -1540,7 +1540,8 @@ test('INV1: a drag equips through the one act, and never crosses a side', () => 
   // INV2 opened the set by exactly ONE - a release off the panel is the
   // TRANSFER THE SCREEN ALREADY OFFERS (`stow` is the function behind the
   // STOW_LABEL button beside the item) - and closed it again.
-  assert.deepEqual(acts, ['dropOnBody', 'reorderPack', 'slotOnHotbar', 'stow'],   // HB1: a slot on the hotbar is a target too - it moves nothing, it names the kind
+  // HAND-DRAG (2026-10-08): a weapon onto a hand's own panel - the other hand, or the hand a pack piece is worn in
+  assert.deepEqual(acts, ['dropOnBody', 'dropOnHand', 'reorderPack', 'slotOnHotbar', 'stow'],   // HB1: a slot on the hotbar is a target too - it moves nothing, it names the kind
     `a drop performs the body act, the reorder or the screen's own transfer and NOTHING else (read: ${acts.join(', ')})`);
   assert.match(release, /if \(want\?\.kind === 'body'\) dropOnBody\(d\.item\);/, 'the body is the equip target');
 

@@ -36,6 +36,7 @@ import { EYE_HEIGHT } from '../player/motor.js';   // DEATH3: the standing eye t
 import { isOnlinePage } from '../systems/onlineLane.js';   // DEATH4: the online screen counts down, the offline one waits
 import { stateDeathLoss, deathGoldLoss, deathPenaltyLine } from '../systems/deathPenalty.js';   // DEATH-PENALTY: the screen says what the respawn is about to take
 import { goldPiecesOf } from '../systems/inventory.js';   // DEATH-PENALTY: the purse the loss is read off
+import { wildDeath, wildDeathLines, WILD_DEATH_HOLD_S } from '../systems/wildZone.js';   // WILD1: a death in the open zone holds two minutes, Enter or not
 
 /** DEATH4 (Discord, 2026-09-23: "don't let it fade away automatically in
  *  offline mode, only in online mode - and give it 10 seconds"). On the
@@ -151,7 +152,7 @@ export class DeathScreen {
     // HELD a hair short of its own reset - the reset is this screen's to
     // call: the online countdown, or the player's Enter (input below).
     this.clock += Math.max(0, Number(dt) || 0);
-    if (this.online && this.clock >= ONLINE_RESPAWN_SECONDS) { this.sequence.tick(DEATH_TIME_BEFORE_RESET + 1); return; }
+    if (this.online && this.clock >= this.holdSeconds) { this.sequence.tick(DEATH_TIME_BEFORE_RESET + 1); return; }
     const room = DEATH_TIME_BEFORE_RESET - 1e-3 - this.sequence.elapsed;
     this.sequence.tick(Math.max(0, Math.min(Number(dt) || 0, room)));
   }
@@ -160,14 +161,20 @@ export class DeathScreen {
     if (this._view) { this._view.cam.pitch = this._view.pitch; this._view = null; }
     removeEnhancedDeath();   // AUDIT CONTRIB A4: the veil goes with the screen, not STALE_MS after it - the risen see at once
   }
+  /** WILD1 (systems/wildZone.js): a death in the open zone - read live, since the world host says so the frame after the
+   *  screen goes up. The owner: "When a player dies by mobs he has to wait 2mins till respawn" - and at a player's hand
+   *  "the body ... disappears in 2 minutes and with it the player can only then respawn". */
+  get wild() { return this.online ? wildDeath() : null; }
+  /** DEATH6 / WILD1: the online wait - the body's minute, or the zone's two. */
+  get holdSeconds() { return this.wild ? WILD_DEATH_HOLD_S : ONLINE_RESPAWN_SECONDS; }
   /** DEATH4: whole seconds left before an online respawn, or null offline. */
   get respawnIn() {
     if (!this.online) return null;
-    return Math.max(0, Math.ceil(ONLINE_RESPAWN_SECONDS - this.clock));
+    return Math.max(0, Math.ceil(this.holdSeconds - this.clock));
   }
   input(action) {
-    // ENTER ends the run now; the sequence's own reset is the timer.
-    if (action === 'confirm') this.sequence.tick(DEATH_TIME_BEFORE_RESET + 1);
+    // ENTER ends the run now; the sequence's own reset is the timer. WILD1: not in the open zone - the dead wait there
+    if (action === 'confirm' && !this.wild) this.sequence.tick(DEATH_TIME_BEFORE_RESET + 1);
   }
   draw(renderer, canvas, font, s) {
     // FadeHUDToBlack over the death: the world dims to black behind
@@ -181,8 +188,15 @@ export class DeathScreen {
     if (isEnhanced() && typeof document !== 'undefined') { drawEnhancedDeath(this, fade); return; }
     const t = 'YOU HAVE DIED';
     drawText(renderer, font, t, (canvas.width - measureText(font.fnt, t) * s) / 2, canvas.height / 2 - 10 * s, s, [0.9, 0.2, 0.15, 1]);
-    const hint = this.online ? `RISING IN ${this.respawnIn}   ENTER now` : this.hint;   // AUDIT CONTRIB A5: the hold said out loud, as the enhanced face's "Rising in"
+    const hint = this.online ? (this.wild ? `RISING IN ${this.respawnIn}` : `RISING IN ${this.respawnIn}   ENTER now`) : this.hint;   // WILD1: no Enter in the zone   // AUDIT CONTRIB A5: the hold said out loud, as the enhanced face's "Rising in"
     drawText(renderer, font, hint, (canvas.width - measureText(font.fnt, hint) * s) / 2, canvas.height / 2 + 6 * s, s, DIM);
+    // WILD1: the zone's lines on the classic face, under the hold (the enhanced face draws its own)
+    let wy = canvas.height / 2 + (this.goldLoss > 0 ? 38 : 22) * s;
+    for (const l of wildDeathLines(this.wild)) {
+      const up = l.toUpperCase();
+      drawText(renderer, font, up, (canvas.width - measureText(font.fnt, up) * s) / 2, wy, s, [0.85, 0.35, 0.25, 1]);
+      wy += 12 * s;
+    }
     if (this.goldLoss > 0) {   // DEATH-PENALTY: the classic face says it too, one line under the hold
       const loss = `DEATH CLAIMS ${this.goldLoss} GOLD`;
       drawText(renderer, font, loss, (canvas.width - measureText(font.fnt, loss) * s) / 2, canvas.height / 2 + 22 * s, s, [0.9, 0.2, 0.15, 1]);

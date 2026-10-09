@@ -41,7 +41,7 @@ import {
   buildInkModel, buildInkMarks, paintInk, placeNames, zoomBand, clampView, scaleMinOf, zoomAt, viewCentredOn,
   toPaper, toMap, boundarySegments, linkSegments, landAt, roadChains, markKind, roundCorners,
   paintInkStatic, paintInkOverlay, nameFont, HARBOUR_PEN, HARBOUR_HALO,
-  BAND_MARKS, BAND_NAMES, SCALE_MAX, PEN, GLYPH_R, paintGlyph,
+  BAND_MARKS, BAND_NAMES, SCALE_MAX, PEN, GLYPH_R, paintGlyph, spacedName,   // TAMRIEL1: the region name's spelling
 } from '../src/ui/inkMap.js';
 import { PARTY_MARK_CSS } from '../src/ui/partyMapMarks.js';
 import { quadPlacement } from '../src/ui/quadMap.js';   // MAP3
@@ -55,7 +55,7 @@ import {
   travelMapFilters, travelMapPopUpState, setTravelMapPopUpState,
   travelMapSaveData, resetTravelMapState,
 } from '../src/systems/travelMapState.js';
-import { _resetForTests } from '../src/systems/uiPrefs.js';
+import { _resetForTests, setPref } from '../src/systems/uiPrefs.js';   // TAMRIEL1: the continent's switch, flipped Off
 // ENH-NOTICE3: the window's click-anywhere boxes ride the enhanced
 // notice panel now, so these pins read the stack the way
 // test/enhancedNotice.test.js does.
@@ -1383,11 +1383,17 @@ test('MAP1 window: pan, wheel and keys move the VIEW under a clamp, the search g
       const pw = sw * (PAPER.x1 - PAPER.x0), ph = sh * (PAPER.y1 - PAPER.y0);
       assert.ok(Math.abs(win._paper.w - pw) < 1e-9 && Math.abs(win._paper.h - ph) < 1e-9, 'the canvas is the paper\'s rectangle');
       assert.equal(win._chrome.ink.style.left, `${sw * PAPER.x0}px`);
-      assert.equal(win._view.scale, scaleMinOf(win._limits()), 'at rest the whole bay is on the sheet');
+      // TAMRIEL1: the rest is the BAY's own fit (the continent's frame round it is where the zoom goes), centred on
+      // the Bay; test/tamriel.test.js holds the frame's own laws and the switch's Off, where this is contain again
+      assert.equal(win._view.scale, win._bayFit(), 'at rest the whole bay is on the sheet');
+      assert.ok(win._view.scale > scaleMinOf(win._limits()), '...and the frame round it has room to zoom out into');
       const rest = { ...win._view };
-      // a nudge past the edge is clamped
+      // a nudge past the edge is clamped - TAMRIEL1: the edge is the continent's frame, not the Bay's
       win._nudge(-500, 0);
-      assert.equal(win._view.ox, rest.ox, 'the map cannot leave the paper westward');
+      assert.equal(win._view.ox, rest.ox - 500, 'the map pans west onto the continent');
+      win._nudge(-1e6, 0);
+      assert.equal(win._view.ox, win._limits().mapX0, 'the map cannot leave the paper westward past the frame');
+      win._setView(rest);
       // zoom about a paper point: the pixel under it holds (the paper's
       // centre, where the clamp has room on every side)
       const [hx, hy] = [win._paper.w / 2, win._paper.h / 2];
@@ -1399,7 +1405,10 @@ test('MAP1 window: pan, wheel and keys move the VIEW under a clamp, the search g
       win.input('Equal');
       assert.ok(win._view.scale > rest.scale * 2, '+ zooms');
       win.input('Minus'); win.input('Minus'); win.input('Minus'); win.input('Minus');
-      assert.equal(win._view.scale, rest.scale, '- bottoms out at contain');
+      assert.ok(win._view.scale < rest.scale, '- goes out past the Bay onto the continent (TAMRIEL1)');
+      for (let i = 0; i < 40; i++) win.input('Minus');
+      assert.equal(win._view.scale, scaleMinOf(win._limits()), '- bottoms out at contain - of the frame');
+      win._setView(rest);
       // a search pick glides: the GOAL is set at the focus scale, centred on the place, and the view follows
       win._searchPick({ name: 'Wayrest', regionName: 'Wayrest', pos: { x: 700, y: 300 }, summary: summaryOf(700, 300, LOCATION_TYPES.TownCity) });
       assert.equal(win._selected?.name, 'Wayrest');
@@ -3353,6 +3362,78 @@ test('MAP-FIT1: a sheet whose corners fall off the screen goes back to the paint
       assert.equal(w2._lane, 'sprite', 'and it is not asked again this open');
       assert.equal(bad.calls.filter((c) => c[0] === 'hold').length, 1);
       w2.dispose();
+    } finally { delete globalThis.innerWidth; delete globalThis.innerHeight; }
+  });
+});
+
+// ── TAMRIEL1 (2026-10-08, bible/03-World/Tamriel.md): THE CONTINENT ROUND THE BAY, through the window ──────────
+// Mac: "the entirety of tamriel that connects accurately to Daggerfall. Not actually traversalable but used and
+// connected as a gigantic map ... seen by players ingame", "Performance should also not be affected". The pure laws
+// are test/tamriel.test.js's; here the window: its limits carry the frame, its rest is the Bay's own fit, a pan goes
+// out onto the continent and no further, the continent is inked beyond the Bay and NOT inked while the view is on it,
+// a hover beyond the Bay names the continent and a press there picks nothing, and the switch's Off is the sheet as it
+// was - the clamp at the Bay's own edge.
+test('TAMRIEL1 window: the frame round the Bay - the rest at the Bay\'s fit, the pan out to the frame\'s edge, the continent inked only past the Bay, the hover beyond it, nothing picked there; Off is contain on the Bay', () => {
+  withDocument(() => {
+    globalThis.innerWidth = 1600; globalThis.innerHeight = 900;
+    try {
+      const bay = { mapSize: { width: 1000, height: 500 }, woods: { heightMapBuffer: new Uint8Array(500000).fill(10) } };
+      const win = open(mkWin(bay));
+      const lim = win._limits();
+      assert.equal(lim.mapW, 6000); assert.equal(lim.mapH, 3750);
+      assert.equal(lim.mapX0, -862); assert.equal(lim.mapY0, -975, 'the frame, in the Bay\'s coordinates');
+      assert.equal(win._view.scale, win._bayFit(), 'at rest, the Bay\'s own fit');
+      const mid = toMap(win._view, win._paper.w / 2, win._paper.h / 2);
+      assert.ok(Math.abs(mid[0] - 500) < 1e-6 && Math.abs(mid[1] - 250) < 1e-6, 'centred on the Bay');
+      // the static paint while the view is on the Bay: the Bay's own ink and not one stroke of the continent
+      const inkOf = () => {
+        const ctx = recordingCtx();
+        win._chrome.ink.getContext = () => ctx;
+        win._staticKey = ''; win._dirty = true; win._paint();
+        delete win._chrome.ink.getContext;
+        return ctx.calls;
+      };
+      const spaced = spacedName;
+      const names = (calls) => calls.filter((c) => c.fn === 'fillText').map((c) => c.args[0]);
+      win._setView({ ox: 100, oy: 50, scale: 3 });
+      const onBay = inkOf();
+      assert.ok(!names(onBay).includes(spaced('Skyrim')) && !names(onBay).includes('Solitude'), 'on the Bay the continent is not drawn');
+      // out past the Bay's fit: the continent, and the Bay's own region names give way to the provinces'
+      for (let i = 0; i < 40; i++) win.input('Minus');
+      assert.equal(win._view.scale, scaleMinOf(lim), 'zoomed out to the frame\'s contain');
+      const out = inkOf();
+      assert.ok(names(out).includes(spaced('Skyrim')) && names(out).includes('Solitude'), 'the continent is inked');
+      assert.ok(!names(out).some((n) => n === spaced('Daggerfall') || n === spaced('Wayrest')), 'the Bay\'s sixty-two names are not');
+      // a pan goes out onto the continent and stops at the frame
+      win._setView({ ox: 100, oy: 50, scale: 3 });
+      win._nudge(-600, -600);
+      assert.ok(win._view.ox < 0 && win._view.oy < 0, 'west and north of the Bay');
+      win._nudge(-1e6, -1e6);
+      assert.equal(win._view.ox, lim.mapX0); assert.equal(win._view.oy, lim.mapY0);
+      // a hover beyond the Bay names the continent; a press there picks nothing
+      win._setView({ ox: -1500, oy: -1200, scale: 0.4 });
+      const [sx, sy] = toPaper(win._view, -800, -600);
+      const label = win._hoverLabel(sx, sy);
+      assert.ok(label && /beyond the Bay|Ocean|Sea/.test(label.label), `the continent answers: ${label?.label}`);
+      assert.equal(label.cursor, '');
+      win._pickAt(sx, sy);
+      assert.equal(win._selected, null, 'not traversable: nothing picked');
+      win.dispose();
+      // Off: the sheet as it was - contain on the Bay, the clamp at its edge, the hover beyond it silent
+      setPref('tamrielMap', false);
+      try {
+        const off = open(mkWin(bay));
+        assert.equal(off._limits().mapX0, undefined);
+        assert.equal(off._view.scale, scaleMinOf(off._limits()), 'contain on the Bay');
+        const rest = { ...off._view };
+        off._nudge(-500, 0);
+        assert.equal(off._view.ox, rest.ox, 'held at the Bay\'s own edge');
+        off._setView({ ox: 0, oy: 0, scale: 2 });
+        assert.equal(off._hoverLabel(...toPaper(off._view, -5, 10)), null);
+        const calls = (() => { const ctx = recordingCtx(); off._chrome.ink.getContext = () => ctx; off._staticKey = ''; off._dirty = true; off._paint(); delete off._chrome.ink.getContext; return ctx.calls; })();
+        assert.ok(!names(calls).includes(spaced('Skyrim')), 'no continent');
+        off.dispose();
+      } finally { setPref('tamrielMap', true); }
     } finally { delete globalThis.innerWidth; delete globalThis.innerHeight; }
   });
 });

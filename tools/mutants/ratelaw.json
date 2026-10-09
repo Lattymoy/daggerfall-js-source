@@ -14,8 +14,8 @@
   {
     "name": "RATE-rates-swapped",
     "file": "src/systems/travelPace.js",
-    "old": "export const paceRateOn = (onRoad) => Math.min(onRoad ? ROAD_PACE_MAX : OPEN_PACE_MAX, travelPace().speed);",
-    "new": "export const paceRateOn = (onRoad) => Math.min(onRoad ? OPEN_PACE_MAX : ROAD_PACE_MAX, travelPace().speed);",
+    "old": "  const t = onRoad ? ROAD_PACE_MAX : OPEN_PACE_MAX;",
+    "new": "  const t = onRoad ? OPEN_PACE_MAX : ROAD_PACE_MAX;",
     "tests": [
       "test/travel_speed_preference.test.js",
       "test/to1_travelOptions.test.js",

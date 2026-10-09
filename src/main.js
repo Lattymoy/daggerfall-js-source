@@ -178,8 +178,12 @@ async function boot() {
     // PAD-DOOR (2026-09-27, Discord - an AYN Thor: "unable to select online, load game anything"): the intro, the menu
     // and its windows answer a controller - the d-pad moves, A presses, B backs out (ui/menuPad.js) - until a game is
     // chosen, when the scene's own pad layer takes over.
-    const { attachMenuPad } = await import('./ui/menuPad.js');
-    const detachMenuPad = attachMenuPad();
+    // PAD-CURSOR: and the stick is the game's own cursor here - its law and the gauntlet handed in, because the
+    // door's loop is a leaf the desktop launcher serves alone (DA12)
+    const [{ attachMenuPad }, { padDoorCursorLaw }, { GAUNTLET_POINT }] = await Promise.all([
+      import('./ui/menuPad.js'), import('./systems/padCursor.js'), import('./ui/plusCursor.js'),
+    ]);
+    const detachMenuPad = attachMenuPad({ cursor: { law: padDoorCursorLaw, art: GAUNTLET_POINT } });
     // INTRO2: the cinematic and menu share ONE music session. The final
     // splash holds for the player's tap; opening the menu ducks the track,
     // choosing a game closes it before any in-game or classic video audio.

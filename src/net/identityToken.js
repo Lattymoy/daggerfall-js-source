@@ -541,7 +541,7 @@ async function openSealed(token, publicKey, { subtle, nowS, skewS, valid }) {
  *  second: 'renown', a character's Renown that ROSE while its player was
  *  already in a room, carried in by that player's own client (the token
  *  that let them in said the Renown they had then). */
-export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege']);   // GUILD1c: a character's guild now, and a member or a guild gone   // SEAT2a: a battle's pass
+export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake']);   // GUILD1c: a character's guild now, and a member or a guild gone   // SEAT2a: a battle's pass
 /** An order lives a minute - long enough to be carried to every room
  *  the moderator holds, short enough that a leaked one is stale before
  *  anyone could use it for anything but what it already said. */
@@ -569,9 +569,58 @@ export function orderValid(c) {
   const noSiege = SIEGE_PASS_FIELDS.every((f) => c[f] === undefined);
   if (c.o !== 'siege' && !noSiege) return false;
   if (c.o === 'siege' && (!siegePassValid(c) || c.mu !== undefined || c.lv !== undefined || !noGuild)) return false;
+  // CARDS6: a card table's stake carries its own fields and no other kind's; no other kind carries a stake's
+  const noStake = STAKE_FIELDS.every((f) => c[f] === undefined);
+  if (c.o !== 'stake' && !noStake) return false;
+  if (c.o === 'stake' && (!stakeOrderValid(c) || c.mu !== undefined || c.lv !== undefined || !noGuild || !noSiege)) return false;
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i || c.e - c.i > ORDER_TTL_S) return false;
   return true;
+}
+
+/* ═══ CARDS6: THE STAKE (bible/11-Multiplayer/Tavern-Cards.md section 23) ═══════════════════════════════════════════
+ *
+ * Section 5, DECIDED: online stakes are escrowed by the service - sitting moves the buy-in from the character to the
+ * table. FACT: the relay has no door to the service. So the service takes the buy-in off the realm character's record
+ * and hands the client ITS WORD on it, an order the room checks with the key it already holds:
+ * `{o:'stake', s, cj, cr, ct, ca, cb, i, e}` - account `s` has `ca` gold held as stake `cj` for table `ct` of room
+ * `cr` at big blind `cb`. The room seats it with `ca` chips and marks `cj` spent (one stake, one seat, ever); what the
+ * seat leaves with comes back in the relay's receipt (net/cardReceipt.js), which the service pays once.
+ */
+/** A stake order's fields - no other order kind carries one. */
+export const STAKE_FIELDS = Object.freeze(['cj', 'cr', 'ct', 'ca', 'cb']);
+/** A stake's id (the service's), a room key it names (an interior's), and the most a stake may be (a 25/50 table's
+ *  deepest buy-in, with room to spare). */
+export const STAKE_ID_RE = /^[a-z0-9]{16,32}$/;
+export const STAKE_ROOM_RE = /^interior:[A-Za-z0-9._:-]{1,80}$/;
+export const STAKE_GOLD_MAX = 1_000_000;
+/** Whether a claim set's stake fields are a stake's. */
+export function stakeOrderValid(c) {
+  if (typeof c.cj !== 'string' || !STAKE_ID_RE.test(c.cj) || typeof c.cr !== 'string' || !STAKE_ROOM_RE.test(c.cr)) return false;
+  if (!Number.isInteger(c.ct) || c.ct < 0 || c.ct > 15) return false;
+  if (!Number.isSafeInteger(c.ca) || c.ca < 1 || c.ca > STAKE_GOLD_MAX || !Number.isSafeInteger(c.cb) || c.cb < 1) return false;
+  return true;
+}
+
+/** CARDS6: MINT A STAKE ORDER - the service's word that account `s` has `ca` gold held as stake `cj` for table `ct` of
+ *  room `cr` at big blind `cb`. */
+export async function mintStakeOrder({ s, cj, cr, ct, ca, cb }, privateKey, { subtle, nowS, ttlS = ORDER_TTL_S }) {
+  if (!Number.isSafeInteger(nowS)) throw new TypeError('mintStakeOrder needs an integer epoch-seconds clock');
+  const claims = { o: 'stake', s, cj, cr, ct, ca, cb, i: nowS, e: nowS + ttlS };
+  if (!orderValid(claims)) throw new TypeError('mintStakeOrder refused an order it could not verify');
+  return sealClaims(claims, privateKey, subtle);
+}
+
+/** CARDS6: VERIFY A STAKE ORDER WHATEVER ITS AGE - the room's void (net/cardReceipt.js): an order past its minute can
+ *  never be sat on, so a stake it names that the room never sat is the player's to have back. The signature and the
+ *  claims are checked as ever; only the clock is the order's own. */
+export async function verifyStakeOrderAnyAge(token, publicKey, { subtle }) {
+  if (!(typeof token === 'string' && token.length <= TOKEN_MAX_CHARS)) return { ok: false, why: 'shape' };
+  const raw = bytesFromB64url(token.split('.')[1] ?? '');
+  let i = null;
+  try { i = raw ? JSON.parse(dec.decode(raw))?.i : null; } catch { i = null; }
+  if (!Number.isSafeInteger(i)) return { ok: false, why: 'shape' };
+  return openSealed(token, publicKey, { subtle, nowS: i, skewS: 0, valid: (c) => orderValid(c) && c.o === 'stake' });
 }
 
 /* ═══ SEAT2a: THE SIEGE PASS (bible/11-Multiplayer/Seats-Arc.md 6.2, 6.4, 6.6) ═══════════════════════════════════

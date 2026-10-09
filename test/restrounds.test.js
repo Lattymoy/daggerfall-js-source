@@ -130,7 +130,7 @@ test('REST-ROUNDS: the rested window is fanned out to the foe pools too - one br
 });
 
 test('REST-ROUNDS by source (LIVED1): every rest the four hosts drive spends its minutes through the ticker (outdoors, the party mirror, a building, the fixed city) or the dungeon\'s own arm - and nothing hands a session counter over', () => {
-  const hosts = { 'src/scenes/world.js': 3, 'src/scenes/worldModes.js': 3, 'src/scenes/dungeonContext.js': 2, 'src/scenes/exterior.js': 2 };   // the rest, the party mirror, a camp's cooking, a meal (the hunt's retired, HUNT-OUT 2026-10-04)
+  const hosts = { 'src/scenes/world.js': 3, 'src/scenes/worldModes.js': 4, 'src/scenes/dungeonContext.js': 2, 'src/scenes/exterior.js': 2 };   // the rest, the party mirror, a camp's cooking, a meal (the hunt's retired, HUNT-OUT 2026-10-04); HEAL-CURSE: and the temple's Heal Curse (each cure's RaiseTime(60), its one minute, on the building's ticker too)
   for (const [f, want] of Object.entries(hosts)) {
     const s = src(f);
     const bodies = [...s.matchAll(/advanceMinutes: \(n\) => ([^\n]*)/g)].map((m) => m[1]);

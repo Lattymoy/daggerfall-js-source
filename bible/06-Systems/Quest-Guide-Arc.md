@@ -456,7 +456,12 @@ no card.
 
 **WHICH QUEST** (DECISIONS 2: on by default, but quiet). The one the
 player TRACKS; else the one the journal last changed (the lens's news:
-started, updated, urgent); else the one written last. An ending lets go
+started, updated, urgent); else the one written last. (TRACK-ONLY,
+2026-10-08, the owner, in the Wrothgarian zone's merge: "When you dont
+track a quest it should never appear on the screen!" - the card, the
+compass's mark and the map's filled diamond are the TRACKED quest's
+alone, `questTracker.shown`; the journal still opens on this one -
+`11-Multiplayer/Wild-Zone.md` section 21.) An ending lets go
 of both, and so does a tracked quest that is gone - checked every tick,
 faces on or off, so no save carries a uid a later quest could be minted
 under (AUDIT GUIDE T3). The choice is the journal's: one **Track** toggle

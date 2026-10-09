@@ -675,8 +675,8 @@
   {
     "name": "WORLD-HOVER-the-street-s-doors-outlive-the-street",
     "file": "src/scenes/worldModes.js",
-    "old": "  const setMode = (next) => { dropDoorCache(); if (next !== mode) interiorWeapon.silenceTorch();   /* DISC6: the building's rig leaves the frame - its torch loop with it */ mode = next; if (next !== 'interior') { privateVisitRoom = null; privateVisitOwner = null; } };",
-    "new": "  const setMode = (next) => { if (next !== mode) interiorWeapon.silenceTorch();   /* DISC6: the building's rig leaves the frame - its torch loop with it */ mode = next; if (next !== 'interior') { privateVisitRoom = null; privateVisitOwner = null; } };",
+    "old": "  const setMode = (next) => { dropDoorCache(); if (next !== mode) interiorWeapon.silenceTorch();   /* DISC6: the building's rig leaves the frame - its torch loop with it */ if (next !== 'interior') closeCardWatches();   /* CARDS5: the watched tables' cloths go with the interior */ mode = next; if (next !== 'interior') { privateVisitRoom = null; privateVisitOwner = null; } };",
+    "new": "  const setMode = (next) => { if (next !== mode) interiorWeapon.silenceTorch();   /* DISC6: the building's rig leaves the frame - its torch loop with it */ if (next !== 'interior') closeCardWatches();   /* CARDS5: the watched tables' cloths go with the interior */ mode = next; if (next !== 'interior') { privateVisitRoom = null; privateVisitOwner = null; } };",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -748,7 +748,7 @@
   {
     "name": "WORLD-HOVER-outdoors-a-dropped-pile-loses-its-word",
     "file": "src/scenes/world.js",
-    "old": "    (key) => (typeof key === 'string' && key.startsWith('droppedLoot:')\n      ? { title: lootPileName(droppedLoot.contents?.(key) ?? null) } : null),\n",
+    "old": "    (key) => (typeof key === 'string' && key.startsWith('droppedLoot:')\n      ? { title: droppedLoot.labelFor?.(key) ?? lootPileName(droppedLoot.contents?.(key) ?? null) } : null),   // WILD1: a body's remains by its own name\n",
     "new": "",
     "tests": [
       "test/worldhover.test.js"
@@ -1012,8 +1012,8 @@
   {
     "name": "AUDIT-WH2-the-mode-flip-forgets-the-door-cache",
     "file": "src/scenes/worldModes.js",
-    "old": "  const setMode = (next) => { dropDoorCache(); if (next !== mode) interiorWeapon.silenceTorch();   /* DISC6: the building's rig leaves the frame - its torch loop with it */ mode = next; if (next !== 'interior') { privateVisitRoom = null; privateVisitOwner = null; } };",
-    "new": "  const setMode = (next) => { if (next !== mode) interiorWeapon.silenceTorch();   /* DISC6: the building's rig leaves the frame - its torch loop with it */ mode = next; if (next !== 'interior') { privateVisitRoom = null; privateVisitOwner = null; } };",
+    "old": "  const setMode = (next) => { dropDoorCache(); if (next !== mode) interiorWeapon.silenceTorch();   /* DISC6: the building's rig leaves the frame - its torch loop with it */ if (next !== 'interior') closeCardWatches();   /* CARDS5: the watched tables' cloths go with the interior */ mode = next; if (next !== 'interior') { privateVisitRoom = null; privateVisitOwner = null; } };",
+    "new": "  const setMode = (next) => { if (next !== mode) interiorWeapon.silenceTorch();   /* DISC6: the building's rig leaves the frame - its torch loop with it */ if (next !== 'interior') closeCardWatches();   /* CARDS5: the watched tables' cloths go with the interior */ mode = next; if (next !== 'interior') { privateVisitRoom = null; privateVisitOwner = null; } };",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -1039,7 +1039,7 @@
   {
     "name": "AUDIT-WH2-the-interior-pile-gets-the-invented-word-back",
     "file": "src/scenes/worldModes.js",
-    "old": "      if (key.startsWith('droppedLoot:')) return { title: lootPileName(interiorDropped.contents?.(key) ?? null) };",
+    "old": "      if (key.startsWith('droppedLoot:')) return { title: interiorDropped.labelFor?.(key) ?? lootPileName(interiorDropped.contents?.(key) ?? null) };   // .cs:534-548; WILD1: a body's remains by its own name",
     "new": "      if (key.startsWith('droppedLoot:')) return { title: 'Loot' };",
     "tests": [
       "test/worldhover.test.js"

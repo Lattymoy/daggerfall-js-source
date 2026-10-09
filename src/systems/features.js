@@ -748,6 +748,34 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'dungeonMap3d', initial: true, online: 'player' }),   // the player's own, as the held map's is
   }),
+  // TAMRIEL1 (2026-10-08, Mac: "building the entirety of tamriel that connects accurately to Daggerfall. Not actually
+  // traversalable but used and connected as a gigantic map ... seen by players ingame"): the held map's world sheet
+  // zooms out past the Bay onto the whole continent, authored in the same hand (ui/tamrielInk.js,
+  // world/tamrielGeography.js, bible/03-World/Tamriel.md). Read where the window is built (ui/mapSkin.js
+  // tamrielMapOn), so a change takes the next map opened; `?tamriel=off` is the kill door.
+  Object.freeze({
+    id: 'tamriel-map',
+    group: 'interface',
+    title: 'Tamriel on the map',
+    note: 'The enhanced map zooms out past the Iliac Bay to the whole of Tamriel, hand-drawn: the provinces, their '
+      + 'capitals, the mountains and the seas, joined to Daggerfall’s own coast. Nothing beyond the Bay can be travelled to.',
+    effect: 'Takes effect the next time a map is opened.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'tamrielMap', initial: true, online: 'player' }),
+  }),
+  // TAMRIEL2 (2026-10-08, Mac: "only implement the land mass"): the streamed world goes on past the Bay's edge over the
+  // authored continent - its ground, its climate's textures and trees, nothing built on it (world/tamrielGround.js;
+  // scenes/shared.js tamrielLandOn, read once as the world mounts). `?tamrielland=off` the kill door.
+  Object.freeze({
+    id: 'tamriel-land',
+    group: 'world',
+    title: 'Land beyond the Bay',
+    note: 'Walk off the edge of the Iliac Bay and the land of Tamriel goes on: hills, mountains and coasts under each '
+      + 'province\u2019s own sky and trees. Empty ground for now - no towns, roads or dungeons stand there yet.',
+    effect: 'Takes effect when the world next loads.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'tamrielLand', initial: true, online: 'player' }),
+  }),
   // WEATHER2b (2026-09-14, Mac: "a dynamic world space event system where
   // weather can be traveled out of and into"): THE WEATHER FIELD - the
   // day's words as places (systems/weatherField.js), read by the sim

@@ -228,7 +228,7 @@ test('SD20f A RIFT STEP UNDER ANOTHER STEP\'S VEIL (H6): a step under way refuse
 
 test('SD20f THE VEIL AHEAD, AND /unstuck IN THE HOUR (H9, H10): a Hollow stood builds the Rift\'s veil ahead, as a gate does (a session no gate stood in paid for its program as the first step began); and /unstuck in the Shattered Hour is the Hour\'s own way out - under its veil, in its words, as every other way out of it is - with nothing more said if the Hour will not let me go now (mutants: the veil cold; /unstuck the dungeon\'s door in the Hour)', () => {
   assert.match(W, /stand: \(key, loc\) => \{ _locIndexGen \+= 1; locationIndex\.set\(key, loc\); _sdLate\.add\(key\); warmGateVeil\(\); \},/);
-  const at = W.indexOf('        if (/^\\/unstuck$/i.test(text.trim())) {');
+  const at = W.indexOf('        if (/^\\/unstuck(\\s+cancel)?$/i.test(text.trim())) {');   // PVPUNSTUCK (the Wrothgarian zone's merge): the command takes a cancel too
   assert.ok(at > 0, 'the /unstuck command');
   const block = W.slice(at, W.indexOf('          return true;\n        }', at) + '          return true;\n        }'.length);
   // PIN MOVED (UNSTUCK-OUT, FIELD BUGS 2026-10-08): outdoors - the door refusing - the body stands on open ground
@@ -237,16 +237,15 @@ test('SD20f THE VEIL AHEAD, AND /unstuck IN THE HOUR (H9, H10): a Hollow stood b
     const env = {
       modes: { sdRealmSlot: () => (hour ? 4 : null), unstuck: () => { log.push('unstuck'); return unstuck; } },
       sdWayHome: () => { log.push('wayHome'); return wayHome; }, chatLog: { push: (tab, m) => log.push(m.text) }, tabId: 'world', text: '/unstuck',
-      unstuckOutdoors: () => { log.push('outdoors'); return outdoors; },
-      UNSTUCK_OUT_WORDS: { none: 'There is no open ground near enough to send you to.' },
+      // PVPUNSTUCK: the zone's own laws, quiet out of it - no wait standing, no zone, no cooldown, no stranger near
+      _unstuckWait: null, unstuckCancel: () => {}, wildHere: () => false, TEST_GODMODE: false, staffPowers: () => ({}), UNSTUCK_COOLDOWN_ZONE_MS: 0, UNSTUCK_COOLDOWN_MS: 0,
+      _unstuckAt: 0, wildStrangerWithin: () => false, UNSTUCK_ENEMY_M: 600, unstuckBegin: () => {}, unstuckNow: () => { log.push('unstuck'); return unstuck; },
     };
     new Function(...Object.keys(env), `${block}\nreturn false;`)(...Object.values(env));
     return log;
   };
   assert.deepEqual(run(true, true, true), ['wayHome', 'You find your way back outside.'], 'in the Hour: its way home');
   assert.deepEqual(run(true, false, true), ['wayHome'], 'refused there: nothing more said');
-  assert.deepEqual(run(false, false, true), ['unstuck', 'You find your way back outside.'], 'anywhere else: the door I came in by');
-  assert.deepEqual(run(false, false, false, true), ['unstuck', 'outdoors', 'You find your footing on open ground.'], 'outdoors: open ground');
-  assert.deepEqual(run(false, false, false), ['unstuck', 'outdoors', 'There is no open ground near enough to send you to.']);
-  assert.deepEqual(run(true, false, false, true), ['wayHome'], 'in the Hour: never the open ground');
+  assert.deepEqual(run(false, false, true), ['unstuck', 'You find your way free.'], 'anywhere else: the door I came in by (PVPUNSTUCK: or, outdoors, the next town)');
+  assert.deepEqual(run(false, false, false), ['unstuck', 'There is nowhere to send you from out here.']);
 });

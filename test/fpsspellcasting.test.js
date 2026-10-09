@@ -18,7 +18,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  NATIVE_SPELL_W, NATIVE_SPELL_H, RELEASE_FRAME, SMALL_FRAME_ADJUST, ANIM_SPEED,
+  NATIVE_SPELL_W, NATIVE_SPELL_H, RELEASE_FRAME, SMALL_FRAME_ADJUST, ANIM_SPEED, CAST_FRAME_PERIOD,
   FRAME_INDICES, ELEMENT_TYPES, MAGIC_ANIM_FILE, magicAnimFilename,
   SpellCastAnim, fpsSpellCasting, spellHandRects, drawSpellCastHands, RIGHT_HAND_UV,
 } from '../src/combat/fpsSpellCasting.js';
@@ -63,6 +63,8 @@ test('fpsSpellCasting: the constants are FPSSpellCasting’s, and the surface is
   assert.equal(RELEASE_FRAME, 5);
   assert.equal(SMALL_FRAME_ADJUST, 0.134);
   assert.equal(ANIM_SPEED, 0.04);
+  // CAST-SPEED: the port's hands step at two and a half times it (Mac, 2026-10-08: in line with the Morrowind cast)
+  assert.equal(CAST_FRAME_PERIOD, 0.1);
   // "Animation starts and ends with frame 0" (:50).
   assert.deepEqual([...FRAME_INDICES], [0, 1, 2, 3, 4, 5, 0]);
   assert.equal(FRAME_INDICES.at(0), FRAME_INDICES.at(-1));
@@ -87,7 +89,7 @@ test('fpsSpellCasting: PlayOneShot is ONE shot - a second cast mid-animation is 
   assert.equal(b.isPlayingAnim, false);
 });
 
-test('fpsSpellCasting: AnimateSpellCast steps seven times at animSpeed and releases on frame 5', () => {
+test('fpsSpellCasting: AnimateSpellCast steps seven times at its period (CAST-SPEED: CAST_FRAME_PERIOD, not animSpeed) and releases on frame 5', () => {
   const a = new SpellCastAnim();
   a.playOneShot(ELEMENT_TYPES.Magic);
   // The frame shown is frameIndices[currentFrame], and step 0 is the
@@ -96,7 +98,7 @@ test('fpsSpellCasting: AnimateSpellCast steps seven times at animSpeed and relea
   const seen = [a.frameIndex];
   const releases = [];
   for (let i = 0; i < 7; i++) {
-    if (a.tick(ANIM_SPEED)) releases.push(i);
+    if (a.tick(CAST_FRAME_PERIOD)) releases.push(i);
     seen.push(a.frameIndex);
   }
   // Six steps walk 1..5 and back to the closing 0; the seventh ends it.
@@ -106,31 +108,31 @@ test('fpsSpellCasting: AnimateSpellCast steps seven times at animSpeed and relea
   assert.deepEqual(releases, [4], 'the release is raised ONCE, on the step that reaches frame 5');
   assert.equal(a.isPlayingAnim, false, ':277-278 - past the last index the animation ends');
   // And a finished animation is inert: no more releases, ever.
-  assert.equal(a.tick(ANIM_SPEED * 10), false);
+  assert.equal(a.tick(CAST_FRAME_PERIOD * 10), false);
   assert.equal(a.frameIndex, -1);
 });
 
-test('fpsSpellCasting: the clock is animSpeed, not the frame rate', () => {
+test('fpsSpellCasting: the clock is its period, not the frame rate', () => {
   const a = new SpellCastAnim();
   a.playOneShot(ELEMENT_TYPES.Cold);
   // Half a period advances nothing...
-  a.tick(ANIM_SPEED / 2);
+  a.tick(CAST_FRAME_PERIOD / 2);
   assert.equal(a.frameIndex, 0);
   // ...and the other half steps exactly once.
-  a.tick(ANIM_SPEED / 2);
+  a.tick(CAST_FRAME_PERIOD / 2);
   assert.equal(a.frameIndex, 1);
   // A long frame CATCHES UP rather than dropping steps: a stall worth
   // three and a half periods advances three frames, which is what a
   // coroutine yielding WaitForSeconds does when the frame is late. A
   // one-step-per-call stepper would answer 2 here.
-  a.tick(ANIM_SPEED * 3.5);
+  a.tick(CAST_FRAME_PERIOD * 3.5);
   assert.equal(a.frameIndex, 4);
-  // The whole cast is seven steps from PlayOneShot - 0.28s at 0.04.
+  // The whole cast is seven steps from PlayOneShot - 0.7s at the port's 0.1 (DFU's 0.28s at 0.04).
   const b = new SpellCastAnim();
   b.playOneShot(ELEMENT_TYPES.Cold);
-  for (let i = 0; i < 6; i++) b.tick(ANIM_SPEED);
+  for (let i = 0; i < 6; i++) b.tick(CAST_FRAME_PERIOD);
   assert.equal(b.isPlayingAnim, true, 'still playing one step short of the end');
-  b.tick(ANIM_SPEED);
+  b.tick(CAST_FRAME_PERIOD);
   assert.equal(b.isPlayingAnim, false);
 });
 
@@ -204,7 +206,7 @@ const CANVAS = { clientWidth: 1000, clientHeight: 800, width: 1000, height: 800 
 const rig = (over = {}) => createWeaponRig({
   renderer: {}, canvas: CANVAS, fetchBytes: () => { throw new Error('no art in tests'); },
   palette: null,   // spellArtFor answers null - the draw stays inert headlessly
-  audio: { playOneShot() {} }, entity: { items: [] }, ...over,
+  audio: { playOneShot() {} }, entity: { items: [], stats: { speed: 50 }, activeEffects: [] }, ...over,   // CAST-SPEED: Speed 50 casts at rate 1
 });
 
 test('fpsSpellCasting: the rig’s cast door starts the hands and its frame runs them', () => {
@@ -217,15 +219,15 @@ test('fpsSpellCasting: the rig’s cast door starts the hands and its frame runs
   assert.equal(fpsSpellCasting.element, ELEMENT_TYPES.Shock);
   assert.equal(fpsSpellCasting.frameIndex, 0);
   // The rig's own per-frame step is AnimateSpellCast's coroutine.
-  r.frame(ANIM_SPEED);
+  r.frame(CAST_FRAME_PERIOD);
   assert.equal(fpsSpellCasting.frameIndex, 1);
-  for (let i = 0; i < 6; i++) r.frame(ANIM_SPEED);
+  for (let i = 0; i < 6; i++) r.frame(CAST_FRAME_PERIOD);
   assert.equal(fpsSpellCasting.isPlayingAnim, false, 'seven steps end it, through the rig');
   // AND IT RUNS WHILE PARALYSED. FPSSpellCasting is its own component
   // in DFU - WeaponManager.ShowWeapons(false) never reached it - so a
   // cast already in flight finishes its motion.
   r.castSpellAnim(2, ELEMENT_TYPES.Fire);
-  r.frame(ANIM_SPEED, { paralyzed: true });
+  r.frame(CAST_FRAME_PERIOD, { paralyzed: true });
   assert.equal(fpsSpellCasting.frameIndex, 1, 'paralysis does not freeze the casting hands');
   fpsSpellCasting.currentFrame = -1;
   // A spell with no element leaves the hands alone, and does not throw.

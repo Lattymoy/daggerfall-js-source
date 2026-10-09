@@ -327,6 +327,7 @@ test('AUDIT OW5b D2 host run: A SPAWN PAST ITS TIME IS GONE FOR GOOD - the build
       const _spawnLedger = d.ledger, _spawnClock = () => d.now, _insideSpawn = () => d.inside, locationIndex = d.index;
       const _spawnCloneAt = (px, py) => ({ name: 'Old Keep', spawned: true, px, py });
       const owSayRow = (key) => d.owed.push(key);
+      const wildMaskOf = () => null, wildInside = () => false, wildHallStand = () => null;   // PVPDUNGEONS: no open zone here - the spawner's own pixel
       let _locIndexGen = 0;
       ${seen}
       ${spawned}

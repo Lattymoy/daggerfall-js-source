@@ -88,7 +88,7 @@ test('PAD-BINDS: the d-pad offers Quick dial and Overworld for a tap or a hold -
 test('PAD-BINDS: the world host answers a pad action on no key with the one TravelView toggle its key arm also calls', async () => {
   const { readFileSync } = await import('node:fs');
   const src = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
-  assert.match(src, /padAction: \(act\) => \{ if \(act !== 'TravelView' \|\| townTalk\.overlayActive\) return false; travelViewKey\(\); return true; \},/);
+  assert.match(src, /padAction: \(act\) => \{ if \(MODE_ACTIONS\[act\]\) return townTalk\.pickMode\(MODE_ACTIONS\[act\]\); if \(act !== 'TravelView' \|\| townTalk\.overlayActive\) return false; travelViewKey\(\); return true; \},/);   // MODE-WHEEL: an unbound mode action first
 });
 
 test('PAD-ARRANGE prompts: a window with a bar to arrange shows LT; in hand on the crossbar the bumpers place, never turn the tabs (mutants: no LT row; Tabs kept in hand)', () => {

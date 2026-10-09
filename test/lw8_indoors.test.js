@@ -14,7 +14,7 @@ import { isOutdoor, DAY_MIN } from '../src/systems/livingWorld/dayPlan.js';
 import { createRelations, EVENTS } from '../src/systems/livingWorld/relations.js';
 import { CLASSIC_MINUTES_PER_SECOND } from '../src/systems/worldTick.js';
 import { townClassOf } from '../src/systems/livingWorld/looks.js';
-import { createLivingIndoors, soundRoom, INDOOR_TICK_S, INDOOR_FAN, INDOOR_SPREAD_M, INDOOR_APART_M, INDOOR_CLEAR_M, INDOOR_DOOR_M, INDOOR_MAX, INDOOR_SEEN_M } from '../src/scenes/livingIndoors.js';
+import { createLivingIndoors, soundRoom, INDOOR_TICK_S, INDOOR_APART_M, INDOOR_CLEAR_M, INDOOR_DOOR_M, INDOOR_MAX, INDOOR_SEEN_M } from '../src/scenes/livingIndoors.js';
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const RATE = CLASSIC_MINUTES_PER_SECOND;
@@ -85,9 +85,7 @@ function room({ w = 12, d = 10, hole = () => false, low = () => false } = {}) {
   return { collider, floorAt };
 }
 
-test('LW8 the room sounded: from the way in, a fan of INDOOR_FAN directions walked out to INDOOR_SPREAD_M through the collider (never through a wall) and landed on its floor - each spot INDOOR_APART_M from every other, INDOOR_CLEAR_M from the static people and INDOOR_DOOR_M from the way in; no floor, or another floor (a stair\'s foot), no spot (mutants: the fan, the walls, the floor, the apart, the clear, the door, the other floor)', () => {
-  assert.equal(INDOOR_FAN, 12);
-  assert.deepEqual([...INDOOR_SPREAD_M], [2.4, 3.8, 5.2, 6.6]);
+test('LW8 the room sounded: from the way in - LW-ROOMS: PIN MOVED, its floor walked out cell by cell (test/lwrooms_tavern.test.js), where the first cut walked a fan out to 6.6 m - through the collider (never through a wall) and on its floor - each spot INDOOR_APART_M from every other, INDOOR_CLEAR_M from the static people and INDOOR_DOOR_M from the way in; no floor, or another floor (a stair\'s foot), no spot (mutants: the walls, the floor, the apart, the clear, the door, the other floor)', () => {
   assert.equal(INDOOR_APART_M, 1.3);
   assert.equal(INDOOR_CLEAR_M, 1.1);
   assert.equal(INDOOR_DOOR_M, 1.8);
@@ -100,7 +98,7 @@ test('LW8 the room sounded: from the way in, a fan of INDOOR_FAN directions walk
     assert.equal(p[1], 0, 'on the floor');
     assert.ok(Math.hypot(p[0], p[2]) >= INDOOR_DOOR_M, 'clear of the way in');
     for (const s of statics) assert.ok(Math.hypot(p[0] - s[0], p[2] - s[2]) >= INDOOR_CLEAR_M, 'clear of the static people');
-    for (const q of spots) if (q !== p) assert.ok(Math.hypot(p[0] - q[0], p[2] - q[2]) >= INDOOR_APART_M, 'apart');
+    for (const q of spots) if (q !== p) assert.ok(Math.hypot(p[0] - q[0], p[2] - q[2]) >= INDOOR_APART_M - 0.01, 'apart');   // LW-ROOMS: to a centimetre, the lattice's own step
   }
   const holed = room({ hole: (x) => x > 0 });
   assert.ok(soundRoom([0, 0, 0], holed.collider, holed.floorAt).every((p) => p[0] <= 0), 'no floor, no spot');
@@ -219,12 +217,12 @@ test('LW8 the hosts: the building\'s press offers a resident in the room before 
   assert.match(m, /const livingInside = host\.livingBillboards\?\.\(\) \?\? \[\];[^\n]*\n\s*if \(livingInside\.length\) renderer\.drawBillboards\(livingInside, camRight, UP_Y\);/);
   const w = rd('src/scenes/world.js');
   assert.match(w, /livingBillboards: \(\) => \(livingIndoors\?\.batches\(\) \?\? \[\]\),/);
-  assert.match(w, /livingPersonsAct: \(eye, dir, nearer\) => !!livingIndoors\?\.size && townTalk\.tryActivate\(eye, dir, livingIndoors\.seats\(\), nearer\),/);
+  assert.match(w, /livingPersonsAct: \(eye, dir, nearer\) => !!livingIndoors\?\.size && townTalk\.tryActivate\(eye, dir, livingIndoors\.seats\(\), Math\.min\(nearer, modes\?\.interiorCollider\?\.raycast\(eye, dir, 80\) \?\? Infinity\)\),/);   // AUDIT LW-ROOMS: PIN MOVED - never through the room's walls (test/auditlwrooms.test.js)
   assert.match(w, /if \(!livingWorldOn\(\) \|\| _mode\(\) !== 'interior'\) \{ if \(livingIndoors\?\.size \|\| livingIndoors\?\.spots\(\)\.length\) livingIndoors\.clear\(\); return; \}/);   // LW-FIX1: an empty room too
   // PIN MOVED (LEGACY-HOME): a house of Project Legacy's family holds the line only (test/legacyhome.test.js); every other room of the player's, none
   assert.match(w, /building: \(\) => \{\n\s*const b = modes\?\.interiorBuilding;\n\s*const town = b \? livingTownOfMap\(b\.townMapId \?\? 0\) : null;\n\s*if \(!b \|\| !town\) return null;\n[^\n]*\n[^\n]*isFamilyHouse[^\n]*\n\s*return modes\?\.interiorCtx\?\.ownedRoom \? null : \{ key: b\.buildingKey, town \};   \/\/ AUDIT-E1: never a player's own room\n\s*\},/);
   assert.match(w, /floorAt: \(x, y, z\) => \{ const d = modes\?\.interiorCollider\?\.raycast\(\[x, y, z\], \[0, -1, 0\], 3\); return Number\.isFinite\(d\) \? y - d : null; \},/);
-  assert.match(w, /staticFeet: \(\) => \(modes\?\.interiorCtx\?\.people \?\? \[\]\)\.filter\(\(p\) => p\.active !== false\)\.map\(\(p\) => \[p\.x, p\.y, p\.z\]\)\.concat\(modes\?\.interiorQuestFeet\?\.\(\) \?\? \[\]\),/);   // AUDIT-E7: and the quest's
+  assert.match(w, /staticFeet: \(\) => \(modes\?\.interiorCtx\?\.people \?\? \[\]\)\.map\(\(p\) => \[p\.x, p\.y, p\.z\]\),/);   // AUDIT LW-ROOMS: PIN MOVED - every one, at their post at the hour or not; the quest's apart (test/auditlwrooms.test.js)   // AUDIT-E7: and the quest's
   assert.match(w, /if \(p\.population instanceof LivingTown && \(p\.population\.o\.town\.mapId >>> 0\) === \(mapId >>> 0\)\) return p\.population;/);
   assert.match(w, /livingIndoorsStep\(townTalk\.overlayActive \? 0 : dt\);   \/\/ LW8/);   // AUDIT-E3: held under a talk
   assert.match(w, /if \(livingIndoors\?\.size \|\| livingIndoors\?\.spots\(\)\.length\) livingIndoors\.clear\(\);   \/\/ LW8: the street again/);   // LW-FIX1: an empty room too

@@ -3885,6 +3885,27 @@ REALM L1-F3) buys a hall or comes back out (HALL-GOLD). So an award is the opera
   realm character's withdrawal of it. Another runs the workflow's own steps in bash over D1's answer.
   `tools/mutants/guildgrant.json` has 11 mutants, all dead.
 
+## SD-CLEARS — who broke an Abyss Dungeon, read by the operator (2026-10-08)
+
+Mac: "The first group clear of the new abyss dungeon is done. Can you pull up all of their names?" The hub's record
+keeps only the top fighter's name and how many fought (`top`, `n`, `11-Multiplayer/Super-Dungeons.md` section 2). The
+names are this service's: one `sd_kills` row a (slot, account) the kill's receipt was claimed for (SD9b, migration
+0090). No route reads them back by slot, so the operator reads them by hand. It writes nothing.
+
+1. Actions, then "Abyss Dungeon clears" (`.github/workflows/sd-clears.yml`), then Run workflow. Leave the slot empty
+   for the first Abyss Dungeon ever broken, or type its slot (1, 2, 3 ...).
+2. The run's summary lists every Abyss Dungeon broken (its slot, how many accounts claimed it, the first claim's
+   moment), then the asked slot's names, oldest claim first: how each earned it (`dealt` or `stood`), the level the
+   fight admitted, and whether its first write granted Hourbreaker or The Turning Hour.
+
+- A row is a registered account's alone: a guest's receipt is answered `guest` and kept on its device until it
+  registers, and an account that is gone takes its rows with it. So the names can be fewer than the record's `n`, and
+  grow as late claims land. A name is the account's handle as it stands now.
+- The slot is digits only (`tools/sdClears.mjs` `sdSlot`), the input reaches the scripts as environment, and the run
+  shares the deploy's queue. It creates, migrates and deploys nothing, and a run that finds nothing fails.
+- Pins: `test/sdclears.test.js` (3). One drives the service's own claim end to end and reads the names back; another
+  runs the workflow's own steps in bash over D1's answer. `tools/mutants/sdclears.json` has 9 mutants, all dead.
+
 
 ## RAID4 — the towns defended (2026-09-28, acct17)
 

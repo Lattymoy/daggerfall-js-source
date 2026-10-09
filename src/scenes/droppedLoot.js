@@ -21,6 +21,9 @@
 // via restorePiles below (AUDIT 23).
 
 import { lootCrown } from './lootLines.js';   // LOOT11: a pile's line of light
+/** WILD1 (net/wildRemains.js): the line over MY remains in the open zone - the zone's red, tall, pulsing, seen from
+ *  twice a find's reach: "marked for you to get them back". */
+export const WILD_MINE_MARK = Object.freeze({ colour: Object.freeze([0.95, 0.24, 0.16]), h: 9, pulse: true, reach: 80 });
 import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1 slice 3
 import { billboardSize } from '../world/rmbFlats.js';
 import { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS } from '../systems/loot.js';
@@ -63,6 +66,9 @@ export const droppedLootHooks = (pile) => ({
   // would have given it.
   containerImage: () => CONTAINER_IMAGES.Chest,
   pos: [...pile.pos],
+  // WILD1: a body's remains in the open zone (net/wildRemains.js) take nothing - the room keeps them, and a piece put on
+  // them would be a piece no one else could ever see (COMPANION-WEIGHT's capacity door, at nothing)
+  ...(pile.noStore ? { capacity: () => pile.noStore } : {}),
 });
 
 /** OnPop's re-position (:710-714): a container minted to replace a
@@ -277,7 +283,7 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
    *  container's identity travels beside them, DFU's loadID
    *  (DaggerfallInterior.cs:885-889). */
   function snapshotScene() {
-    return piles.filter((p) => p.items.length || p.container).map((p) => ({
+    return piles.filter((p) => (p.items.length || p.container) && p.owner !== 'wild').map((p) => ({   // WILD1: a body's remains are the room's (net/wildRemains.js), never a scene cache's - a copy at every re-entry
       pos: [...p.pos], archive: p.archive, record: p.record,
       container: !!p.container, containerKey: p.containerKey ?? null,
       items: p.items.map((it) => ({ ...it })),
@@ -451,10 +457,13 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
   /** PX21c: what a pile HOLDS, by the same key lootTargets emits -
    *  read-only, for the hover plaque. */
   const contents = (key) => (physical.owns(key) ? physical.contents(key) : piles.find((p) => `droppedLoot:${p.id}` === key && !p.dead)?.items ?? null);   // PI1: a standing item is a pile of one
+  /** WILD1: a pile's own name, when one was given it (a body's remains in the open zone - net/wildRemains.js), else null
+   *  and the plaque's pile word stands. */
+  const labelFor = (key) => piles.find((p) => `droppedLoot:${p.id}` === key && !p.dead)?.label ?? null;
   /** DW-E5: a live, drawable-elsewhere pile (not emptied into its deactivation) - the other pass's draw list. */
   const undrawnPiles = () => piles.filter((p) => p.drawn === false && alive(p));
   /** LOOT11 (the Loot arc): the piles a line of light may stand over - a dropped pile, a house's or a camp's treasure - each
    *  its crown and its list, read live (scenes/lootLines.js picks the Rare-or-better). */
-  const lootFinds = () => [...piles.filter((p) => alive(p) && p.items?.length && !presented(p)).map((p) => ({ root: lootCrown(p.pos, p.size), items: p.items })), ...physical.finds()];   // PI1: and each standing item's own
-  return { contents, dropPile, dropPhysical, physical, seedPile, removePile, restorePiles, collectPixel, takePixel, snapshotWorld, restoreWorld, batches, tickFlats, lootTargets, pileFor, activePiles, undrawnPiles, containerSeeded, snapshotScene, releaseEmptied, offsetAll, groundMoved, lootFinds, _piles: piles };
+  const lootFinds = () => [...piles.filter((p) => alive(p) && p.items?.length && !presented(p)).map((p) => (p.wild?.mine ? { root: lootCrown(p.pos, p.size), items: p.items, mark: WILD_MINE_MARK } : { root: lootCrown(p.pos, p.size), items: p.items })), ...physical.finds()];   // PI1: and each standing item's own; WILD1: my remains, their own line
+  return { contents, labelFor, dropPile, dropPhysical, physical, seedPile, removePile, restorePiles, collectPixel, takePixel, snapshotWorld, restoreWorld, batches, tickFlats, lootTargets, pileFor, activePiles, undrawnPiles, containerSeeded, snapshotScene, releaseEmptied, offsetAll, groundMoved, lootFinds, _piles: piles };
 }

@@ -277,8 +277,8 @@
   {
     "name": "AD-D1-vote-not-spent-on-a-granted-rest",
     "file": "src/scenes/world.js",
-    "old": "    if (modes) markPartyRestSpent();",
-    "new": "",
+    "old": "const restNow = () => { if (modes) markPartyRestSpent(); ",
+    "new": "const restNow = () => { ",
     "tests": [
       "test/auditdrops.test.js",
       "test/partyrest1.test.js"

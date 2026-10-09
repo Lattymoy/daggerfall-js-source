@@ -227,8 +227,8 @@
   {
     "name": "GUIDE5-map-marks-off-the-switch",
     "file": "src/scenes/world.js",
-    "old": "      quests: () => (marksOn() ? questMapMarks(questTracker.views, questTracker.tracked()?.id ?? null, questPixel) : []),",
-    "new": "      quests: () => questMapMarks(questTracker.views, questTracker.tracked()?.id ?? null, questPixel),",
+    "old": "      quests: () => (marksOn() ? questMapMarks(questTracker.views, questTracker.shown()?.id ?? null, questPixel) : []),",
+    "new": "      quests: () => questMapMarks(questTracker.views, questTracker.shown()?.id ?? null, questPixel),",
     "tests": [
       "test/guide5_marks.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "GUIDE5-compass-indoors",
     "file": "src/scenes/world.js",
-    "old": "    if (!marksOn() || (modes?.mode ?? 'exterior') !== 'exterior') return null;\n    const find = questTracker.tracked()?.target?.find;",
-    "new": "    if (!marksOn()) return null;\n    const find = questTracker.tracked()?.target?.find;",
+    "old": "    if (!marksOn() || (modes?.mode ?? 'exterior') !== 'exterior') return null;\n    const find = questTracker.shown()?.target?.find;",
+    "new": "    if (!marksOn()) return null;\n    const find = questTracker.shown()?.target?.find;",
     "tests": [
       "test/guide5_marks.test.js"
     ]

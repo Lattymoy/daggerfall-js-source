@@ -107,6 +107,9 @@ The hub (`chat:world`, the room every online tab holds) keeps the Super dungeon'
 | `until` | when an unbeaten Hollow fades: `at + SD_LIFETIME_MS` |
 | `next` | when the next may rise: `fellAt + SD_COLLAPSE_MS + SD_COOLDOWN_MS` (or `until + SD_COOLDOWN_MS`) |
 
+Beyond the finder and the top fighter, the record names no one. Every fighter's name is the account service's, one `sd_kills` row a claimed receipt
+(section 11); the operator reads them by slot with SD-CLEARS (`06-Systems/Accounts-And-Cloud-Saves-Arc.md`).
+
 The director runs on the hub's one alarm (multiplexed after `_sweepHub`, re-armed through the hub's own arm), and on
 the internal doors below. Its law is pure (`net/sdLaw.js`, section 14) - the hub only stores and fans.
 

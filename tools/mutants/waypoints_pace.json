@@ -47,7 +47,7 @@
   {
     "name": "PACE-rise-past-the-ground",
     "file": "src/systems/travelPace.js",
-    "old": "  return paceNow(which) < (ground ? ROAD_PACE_MAX : OPEN_PACE_MAX);",
+    "old": "  return paceNow(which) < topOn(ground);",
     "new": "  return paceNow(which) < ROAD_PACE_MAX;",
     "tests": [
       "test/pacedials.test.js"

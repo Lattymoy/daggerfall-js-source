@@ -2,7 +2,7 @@
   {
     "name": "KB1-the-E-carry-skipped",
     "file": "src/systems/inputActions.js",
-    "old": "    if (store.primary.get(code) === was) { store.primary.delete(code); touched(store); report.moved.push(`${was} off ${code}`); }",
+    "old": "    if (fromVersion < by && store.primary.get(code) === was) { store.primary.delete(code); touched(store); report.moved.push(`${was} off ${code}`); }",
     "new": "    if (false) { store.primary.delete(code); touched(store); report.moved.push(`${was} off ${code}`); }",
     "tests": [
       "test/kb1_keybinds.test.js"

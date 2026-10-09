@@ -583,8 +583,8 @@
   {
     "name": "SEAT2b2b-host-no-work-swing",
     "file": "src/scenes/world.js",
-    "old": "if (!foes.length) return battle === siegeSession && siegeWorkHit();",
-    "new": "if (!foes.length) return false;",
+    "old": "if (!foes.length) return (battle === siegeSession && siegeWorkHit()) || wildMeleeHit(eye, inViewFn);",
+    "new": "if (!foes.length) return wildMeleeHit(eye, inViewFn);",
     "tests": [
       "test/seat2b_battle_client.test.js"
     ]
