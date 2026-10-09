@@ -13,7 +13,7 @@ import {
   SIEGE_BONUS_MAX, SIEGE_CRIT_MAX, siegeRoomKey, SIEGE_UNITS_PER_M,
 } from '../src/net/siegeRef.js';
 import { arenaBlowCap, arenaArmsOk, ARENA_ARMS_TOP_MAX, ARENA_HIT, ARENA_MOD_MAX, ARENA_TICK_MS, ARENA_FLOOR_CENTRE } from '../src/net/arenaLaw.js';
-import { ARMS_TOP_MAX as TOKEN_ARMS_TOP_MAX, armsIssuable, claimsValid, verifyToken } from '../src/net/identityToken.js';
+import { TOKEN_ARMS_TOP_MAX, armsIssuable, claimsValid, verifyToken } from '../src/net/identityToken.js';
 import { openBout, joinBout, stepBout, poseOf, refBlow } from '../src/net/arenaBrain.js';
 import { boutLive } from '../src/systems/arenaBout.js';
 import { weaponMaxDamage, weaponMaterialModifier } from '../src/characters/weapons.js';

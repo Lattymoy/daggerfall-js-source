@@ -138,7 +138,7 @@ export function armsTop(w, m) {
   if (!top) return null;
   return top + (Number.isInteger(m) && m >= 0 && m < SIEGE_MATERIAL_MOD.length ? SIEGE_MATERIAL_MOD[m] : 0);
 }
-/** The most reach a weapon has: a Daedric Thunderlock's (26 + 6) - net/identityToken.js ARMS_TOP_MAX, pinned equal. */
+/** The most reach a weapon has: a Daedric Thunderlock's (26 + 6) - net/identityToken.js TOKEN_ARMS_TOP_MAX, pinned equal. */
 export const ARMS_TOP_MAX = SIEGE_THUNDERLOCK.max + SIEGE_MATERIAL_MOD[SIEGE_MATERIAL_MOD.length - 1];
 /** A signed arms claim's shape (identityToken.js `wa`): `[reach, bow]` - the reach a whole number 0..ARMS_TOP_MAX (0: no
  *  weapon), the bow 0 or 1. */

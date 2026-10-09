@@ -443,7 +443,7 @@
  {
   "name": "SEAT2a4-claims-me",
   "file": "src/net/siegeClaims.js",
-  "old": "          if (read(r)?.s !== who) continue;",
+  "old": "          if (!mine(read(r), who)) continue;",
   "new": "          if (false) continue;",
   "tests": [
    "test/seat2a_siege_play.test.js"

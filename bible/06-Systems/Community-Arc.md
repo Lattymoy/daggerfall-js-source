@@ -795,6 +795,11 @@ outside of the duel space." Asked, Mac chose: weapons, bows and spells all count
 healed on duel end. Add a dueling K/D to the profile menu and player inspect profile"; outdoors only; the record per
 account, on the main menu's account card.
 
+**Since INT8 (2026-10-09, `06-Systems/Integrity-Arc.md` section 5) the duel is the RELAY's to referee**: the bout,
+every blow and cast, the ring and the end are its (`net/duelRef.js`), at the Royal Tourney's vitality rather than the
+save's health (so no one drops to 1 HP and nothing is healed at the end), and the record is its signed `d1` receipt
+claimed once (`/v1/duel/claim`) - the loser's own report retired. What follows is DUEL1 as it was built.
+
 **The one door through co-op's rule.** Co-op was never PvP (`11-Multiplayer/Multiplayer.md`): no peer stands in any
 melee, arrow or spell target list, a `hit` names foes alone and a `cast` lands a party mate's gift alone. The duel is the
 one way through that, and it is consensual and bounded - two players who both said yes, inside one ring, until one of
@@ -881,7 +886,8 @@ duel spell's reflection lands on nobody (the defender has no caster entity to se
 by a ring and can walk through it.
 
 **Pins.** `test/duel_session.test.js` (7), `test/duel_wire.test.js` (6), `test/duel_combat.test.js` (7),
-`test/duel_wall.test.js` (6), `test/duel_record.test.js` (7). `tools/mutants/duel.json`: 51, all dead (three survived the
+`test/duel_wall.test.js` (6), `test/duel_record.test.js` (7). `tools/mutants/duel.json`: 51, all dead (42 since INT8
+retired the nine whose laws - the defender's resolve, the loser's report - are the referee's now; three survived the
 first run - an exactly lethal blow, a weapon whose skill is not a long blade's, a faded ring under the draw's cap - and
 each found a test that did not look; the tests look now). The relay is world107's (`test/relayversion.test.js`'s row);
 the account service acct8's. Re-aimed: the version pins (world107, acct8), the foreign-pass counts (the wall is the
@@ -893,7 +899,8 @@ bag of acts, the card arm, the cast funnel), and seven older mutant records whos
 Four independent reviews read DUEL1 and DISC21 end to end: the duel's trust boundaries (the wire, the relay, the
 account service), its rules and combat, regressions outside it, and DISC21 with the tests and the records. Every
 finding below was verified against its code path before it was fixed. `test/auditduel1.test.js` (4) pins them, with
-`test/duel_record.test.js` (8) for the record's SQL; `tools/mutants/auditduel1.json` has 28 mutants, all dead.
+`test/duel_record.test.js` (8) for the record's SQL; `tools/mutants/auditduel1.json` has 28 mutants, all dead (22 since
+INT8 retired the six of the mutual draw, the duel's heal and its fatigue floor - the referee's bar touches no save).
 
 **Blocker.**
 - **A1: a record minted without a duel.** Any session could report a loss naming any account as the winner. Guest

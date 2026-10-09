@@ -168,10 +168,16 @@ any room is judged at its checkpoint - the item law over every piece, the
 ids' ledger, the wealth budget - and a breach holds its trade, so an
 impossible piece, or a copy that keeps its id, reaches no other player
 through the service. Lawful loot past what play earns is the budget's: it
-measures first, and holds once staff turn it on. The relay's rooms are
-unchanged by it; lanes 2 and 3 of
-that arc (duels, the wild zone and the bosses refereed) are this section's
-next exceptions.
+measures first, and holds once staff turn it on.
+
+INT7-INT10 (2026-10-09, the same arc's lane 2): a DUEL's room and the OPEN
+ZONE's are the next exceptions - there too the relay holds both fighters'
+vitality and judges every blow, cast and step against the arms the judged
+pack holds; a duel's result and a fall in the zone are its signed
+receipts, and a death's drop in the zone is taken by the account service
+off the fallen's judged record, never handed over by the fallen's game.
+Every spell between players is capped by a referee. The bosses (lane 3)
+are next.
 
 ### The state model is the save
 

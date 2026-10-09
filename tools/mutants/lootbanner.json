@@ -91,7 +91,7 @@
   },
   {
     "name": "ACQUIRE1-the-zone-record-keeps-the-mark",
-    "file": "src/systems/wildDeath.js",
+    "file": "src/systems/wildDropLaw.js",
     "old": "  for (const k of RECEIVER_MARKS) delete copy[k];",
     "new": "  for (const k of RECEIVER_MARKS) if (k !== 'acquired') delete copy[k];",
     "tests": [

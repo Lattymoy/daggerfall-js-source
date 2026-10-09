@@ -30,8 +30,8 @@
   {
     "name": "WB5b-no-key-no-refusal",
     "file": "server-account/src/accounts.js",
-    "old": "  if (!publicKey) return { error: 'no-gate-key' };\n",
-    "new": "",
+    "old": "{ strike = null, region = null, deeds = null } = {}) {\n  if (!publicKey) return { error: 'no-gate-key' };\n",
+    "new": "{ strike = null, region = null, deeds = null } = {}) {\n",
     "tests": [
       "test/wb5b_gate_claim.test.js"
     ]

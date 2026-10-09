@@ -111,7 +111,7 @@
   },
   {
     "name": "DECOR2a-the-spellbook-set-down",
-    "file": "src/systems/decorItems.js",
+    "file": "src/net/decorLaw.js",
     "old": "new Set([TEMPLATES.Spellbook, TEMPLATES.Letter_of_credit,",
     "new": "new Set([TEMPLATES.Letter_of_credit,",
     "tests": [

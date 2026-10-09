@@ -3228,7 +3228,8 @@ five guests gave one account fifty wins in a quarter of an hour, with no duel.
   only ever remove a win of its own.
 - A refused report says which bound: `why` is 'guest', 'draw', 'gap', 'pair' or 'winner', and the client's line says
   it (`net/duelRecord.js duelUncountedText`; a draw says nothing more, the duel said it).
-- Pinned in `test/duel_record.test.js` over the real migrations; `tools/mutants/auditduel1.json` A1/B5.
+- Pinned in `test/duel_record.test.js` over the real migrations; `tools/mutants/auditduel1.json` A1 (B5 retired with the
+  report itself at INT8: a duel's result is the relay's receipt, `06-Systems/Integrity-Arc.md` section 5).
 
 ## PROFILE1 — the profile mark is a portrait (2026-09-25)
 

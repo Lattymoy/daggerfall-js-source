@@ -63,42 +63,6 @@
     ]
   },
   {
-    "name": "DUEL1-a-replay-lands-twice",
-    "file": "src/net/duelSession.js",
-    "old": "          if (!dl || dl.peer !== from || dl.s !== d.s || counting(dl) || !(d.n > dl.seen)) return;",
-    "new": "          if (!dl || dl.peer !== from || dl.s !== d.s || counting(dl)) return;",
-    "tests": [
-      "test/duel_session.test.js"
-    ]
-  },
-  {
-    "name": "DUEL1-a-third-player-s-blow-lands",
-    "file": "src/net/duelSession.js",
-    "old": "          if (!dl || dl.peer !== from || dl.s !== d.s || counting(dl) || !(d.n > dl.seen)) return;",
-    "new": "          if (!dl || dl.s !== d.s || counting(dl) || !(d.n > dl.seen)) return;",
-    "tests": [
-      "test/duel_session.test.js"
-    ]
-  },
-  {
-    "name": "DUEL1-the-blow-budget-gone",
-    "file": "src/net/duelSession.js",
-    "old": "          if (!g.pass) return;\n          dl.seen = d.n;",
-    "new": "          dl.seen = d.n;",
-    "tests": [
-      "test/duel_session.test.js"
-    ]
-  },
-  {
-    "name": "DUEL1-the-winner-recorded-as-the-loser",
-    "file": "src/net/duelSession.js",
-    "old": "          finish(d.why, { won: theyLost, by: 'them' });",
-    "new": "          finish(d.why, { lost: theyLost, by: 'them' });",
-    "tests": [
-      "test/duel_session.test.js"
-    ]
-  },
-  {
     "name": "DUEL1-the-heal-at-once",
     "file": "src/net/duelSession.js",
     "old": "        if (t - duel.overAt >= DUEL_HEAL_HOLD_MS) {",
@@ -110,7 +74,7 @@
   {
     "name": "DUEL1-a-carried-off-duellist-loses",
     "file": "src/net/duelSession.js",
-    "old": "      if (me && worldGroundMetres(me, d.c) > DUEL_RADIUS_M + DUEL_OUT_SLACK_M) { post({ k: 'end', to: d.peer, s: d.s, why: 'left' }); finish('left'); return; }",
+    "old": "      if (me && worldGroundMetres(me, d.c) > DUEL_RADIUS_M + DUEL_OUT_SLACK_M) { post({ k: 'end', to: d.peer, s: d.s, why: 'left' }); finish('left', { lost: !counting(d) }); return; }",
     "new": "      if (me && worldGroundMetres(me, d.c) > DUEL_RADIUS_M + DUEL_OUT_SLACK_M) { post({ k: 'end', to: d.peer, s: d.s, why: 'fell' }); finish('fell', { lost: true }); return; }",
     "tests": [
       "test/duel_session.test.js"
@@ -119,7 +83,7 @@
   {
     "name": "DUEL1-the-opponent-s-stray-pose-a-verdict",
     "file": "src/net/duelSession.js",
-    "old": "        if (t - d.outSince > DUEL_OUT_MS) {",
+    "old": "        if (t - d.outSince > DUEL_OUT_MS + DUEL_REF_LATE_MS) {",
     "new": "        if (t - d.outSince >= 0) {",
     "tests": [
       "test/duel_session.test.js"
@@ -135,28 +99,10 @@
     ]
   },
   {
-    "name": "DUEL1-wire-a-strike-carries-damage",
-    "file": "src/net/wire.js",
-    "old": "      out.n = d.n; out.by = d.by; out.p = p; out.a = a;\n",
-    "new": "      out.n = d.n; out.by = d.by; out.p = p; out.a = a; if (d.dmg !== undefined) out.dmg = d.dmg;\n",
-    "tests": [
-      "test/duel_wire.test.js"
-    ]
-  },
-  {
     "name": "DUEL1-wire-an-end-with-no-reason",
     "file": "src/net/wire.js",
     "old": "      if (d.why === undefined) { if (d.k === 'end') return null; break; }",
     "new": "      if (d.why === undefined) break;",
-    "tests": [
-      "test/duel_wire.test.js"
-    ]
-  },
-  {
-    "name": "DUEL1-wire-the-level-uncapped",
-    "file": "src/net/wire.js",
-    "old": "  if (!intIn(a.lv, 1, DUEL_LEVEL_MAX) || !intIn(a.r, 0, DUEL_RACE_MAX)) return null;",
-    "new": "  if (!intIn(a.lv, 1, 999) || !intIn(a.r, 0, DUEL_RACE_MAX)) return null;",
     "tests": [
       "test/duel_wire.test.js"
     ]
@@ -369,37 +315,10 @@
     ]
   },
   {
-    "name": "DUEL1-record-gap-ignored",
-    "file": "server-account/src/accounts.js",
-    "old": "       AND NOT EXISTS (SELECT 1 FROM duel_results WHERE loser = ?1 AND at > ?3 - ?4)\n",
-    "new": "",
-    "tests": [
-      "test/duel_record.test.js"
-    ]
-  },
-  {
-    "name": "DUEL1-record-self-counted",
-    "file": "server-account/src/accounts.js",
-    "old": "  if (winner === loser.id) return { error: 'self' };\n",
-    "new": "",
-    "tests": [
-      "test/duel_record.test.js"
-    ]
-  },
-  {
     "name": "DUEL1-record-pair-bound-off-by-one",
     "file": "server-account/src/accounts.js",
     "old": "AND winner = ?2 AND at > ?3 - ?5) < ?6\n",
     "new": "AND winner = ?2 AND at > ?3 - ?5) <= ?6\n",
-    "tests": [
-      "test/duel_record.test.js"
-    ]
-  },
-  {
-    "name": "DUEL1-record-loser-read-off-the-body",
-    "file": "server-account/src/index.js",
-    "old": "        const r = await reportDuelLoss(ctx, who.player, body.winner);",
-    "new": "        const r = await reportDuelLoss(ctx, typeof body.loser === 'string' ? { id: body.loser } : who.player, body.winner);",
     "tests": [
       "test/duel_record.test.js"
     ]

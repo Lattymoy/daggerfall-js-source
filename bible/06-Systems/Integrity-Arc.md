@@ -5,8 +5,9 @@ authoritative ... you can download the source code and modify your client to ...
 points, or using fatigue; do infinite damage in PvE and max damage in PvP; spawn any items you want and as much gold as
 you want". Read against the code, then: "I want to do everything and do it properly".
 
-**Status: lane 1 (the economy, INT1-INT6) BUILT on its branch (2026-10-09), and AUDITED the same day (section 4b: five
-reviews, every fix pinned).** Lanes 2-4 are the plan below, each its own pull request (Mac: "A PR per lane").
+**Status: lane 1 (the economy, INT1-INT6) BUILT and AUDITED (2026-10-09, section 4b: five reviews, every fix pinned) and
+merged (#730); lane 2 (PvP refereed everywhere, INT7-INT10) BUILT on its branch the same day (section 5).** Lanes 3-4
+are the plan below, each its own pull request (Mac: "A PR per lane").
 
 ## 1. What the report found, read against the code
 
@@ -249,8 +250,8 @@ route's ids. Mutant records `tools/mutants/int_audit.json`; the arc's own record
 
 ### What lane 1 leaves open
 
-- Peer channels - a shared chest, a shop's shelf, a body's grant, the wild zone's remains - still move lawful pieces
-  between clients unwitnessed. What enters a realm character's record that way is charged to its budget, and the ledger
+- Peer channels - a shared chest, a shop's shelf, a body's grant - still move lawful pieces between clients
+  unwitnessed (the wild zone's remains are the account service's own records since INT9, section 5). What enters a realm character's record that way is charged to its budget, and the ledger
   catches a copy that keeps its key; a lawless piece no honest client takes (the wire's door drops it). Container locks
   (Realm-Arc phase 2) stand as planned.
 - **Customs** brings an offline character's items in whole (RESTORE, "Keep all"); its first judgement charges what they
@@ -262,17 +263,111 @@ route's ids. Mutant records `tools/mutants/int_audit.json`; the arc's own record
 - The online power rules (Realm-Arc section 5: the item maker's 25% side-effect cap, one Extra Spell Points per item, the
   rest) are balance, not integrity: the law takes what the live maker makes, and moves when those rules ship.
 
-## 5. Lane 2 - PvP refereed everywhere (planned)
+## 5. Lane 2 - PvP refereed everywhere (INT7-INT10)
 
-- **The gear in the token.** The account service signs the equipped weapon, its material and the worn armour - read off
-  the JUDGED record - into the identity token; the arena and the siege referee take a blow's cap from it, never the
-  look's claim (`net/arenaBrain.js`, `net/siegeRef.js`). The ladder's level is the judged save's.
-- **Duels under PVP-REF.** A duel is the Royal Tourney's ring without its title: the relay holds both fighters' health and
-  judges every blow, cast and step; the result is a relay-signed receipt, and `reportDuelLoss`'s self-report retires.
-- **The wild zone under PVP-REF.** The relay holds health in the zone; a fall is the relay's word; the dropped goods are
-  taken by the service from the fallen character's judged record against the receipt, never handed over by the fallen
-  client.
-- **Spells between players** capped by the referee, as the arena's are.
+**Built 2026-10-09** (Mac: "I want to do everything and do it properly"). One law under every fight between players,
+PVP-REF's (`net/siegeRef.js`, the sieges' since 2026-10-01): the relay holds both fighters' VITALITY - the Royal
+Tourney's, 300 + 2 x the Renown the token signs, never the save's health, which stays the foes' alone - and judges every
+blow from the weapon the striker's look holds, clipped to the arms its token signs, every cast to one cast's most and a
+rate, every reach from the places it believes at a run it allows. What a fight decides - a duel's winner, a fall in the
+open zone and the drop it costs - is a receipt the relay signs and the account service settles. The defender's machine
+resolves nothing any more, anywhere.
+
+### INT7 - the arms and the level signed (`net/siegeRef.js` armsOf, `server-account/src/judge.js`, `identityToken.js` `wa`)
+
+Each checkpoint's verdict reads, off the judged pack, the most REACH any lawful weapon there has (`armsTop`: a weapon's
+top damage and its material's modifier, at most `ARMS_TOP_MAX` 32, a Daedric Thunderlock's) and whether a lawful bow is
+among them; migration 0098 keeps them on the row (`arms_top`, `arms_bow`), and the identity mint signs them as `wa` beside
+`rc` 1. The level the token signs (`cl`) is the judge's (`level_seen`; the tile's word only before a judged checkpoint).
+The relay stamps `wa` on the socket at the hello, and every referee - a siege's, a Royal Tourney's, the arena's
+(`arenaBlowCap`), a duel's and the zone's - clips a weapon's blow to the signed reach and takes a shaft only from a
+signed bow; a fist is every fighter's own. A token with no `wa` (a character not judged since INT7) is clipped to the
+look's weapon alone, the law before it.
+
+### INT8 - the duel refereed (`net/duelRef.js`, `net/duelReceipt.js`)
+
+A duel is the Royal Tourney's ring without its title. The relay that routes it notes the ask and the yes as they pass
+and sets a bout only on a start it saw asked and answered, both fighters whole; every strike and spell is judged
+(`refereeBlow`, `refereeCast`) and routed to nobody; out of the ring `DUEL_REF.outMs` a fighter has left, gone
+`ROYAL_RING.goneMs` it has walked over, its own end once the count has run is its loss, and the clock is a draw. The
+referee speaks in its own frame (`dref`: bout, hp, end, no), and a bout won names its winner in a `d1` receipt handed to
+both, which `/v1/duel/claim` counts once by its bout's id (`duel_results.rk`) inside DUEL1's bounds. DUEL1's loser's
+own report retires (`/v1/duel/loss` answers 410 `retired`), its gap and its mutual draw with it, and a duel never
+touches the save's health (no heal at its end). The client duels on a refereeing relay alone (world183).
+
+### INT9 - the open zone refereed, a death's drop taken off the record (`net/wildRef.js`, `net/wildReceipt.js`, `server-account/src/wild.js`)
+
+- **Who fights.** The relay cannot see the map (the zone is the POLITIC map's region 16, cut by
+  `systems/wildZone.js` from the files every client holds), so a socket's zone is its own word: `zone` 1 where it stands
+  in it, alive and where it fights, 0 elsewhere - said on every socket it holds and again at each welcome. A blow lands
+  only where BOTH fighters said so, never on kin: a party member, one under the party's truce (the hub keeps the party a
+  record left, `partyWas`, for `WILD_REF.truceMs`, the client's `WILD_PARTY_TRUCE_MS`), or the fighter's own duel
+  opponent.
+- **The fight.** The Royal Tourney's vitality; a fighter no player has struck for `WILD_REF.mendMs` is whole again (its
+  vitality alone - INT10); every blow and cast the referee's; `wref hp` to both, `wref fell` to the room. A fallen rises
+  whole on its next word that it stands in the zone.
+- **The fall.** The striker is its killer. The fallen's game shows its killer its worn gear (`worn`, under the fall's
+  id); the killer's body window picks ONE (`pick`, to the room that refereed the fall) within `WILD_REF.pickMs`, and the
+  relay signs the fall - `f1` `{ f, c, k, r, w }`, the fallen, its realm character, the killer, the remains' id, the
+  piece's place - and hands it to both; one away hears it at its next zone word. Unpicked, it is signed without a piece.
+- **The drop.** `/v1/wild/fall` takes it off the fallen's JUDGED record: the killer's worn piece first, the bag's and the
+  cart's drop and half the purse, by ONE law at both ends (`systems/wildDropLaw.js` takeWildDeath, fitted to one remains,
+  the rest put back) - the fallen's own act at its tab's `at` (`realmGoldAct`: checkpointed as it will rise, the same
+  drop taken out of its pack, the service asked), or its killer's SEIZURE once `WILD_FALL_GRACE_S` (30 s) has gone by
+  (the record moved where it stands, its lease cleared: a tab that never says it fell plays a record that moved under
+  it). Once a fall (`wild_falls`, by the remains' id): a second asking is answered the first's records under a fresh
+  order. A death to a foe has no receipt: the fallen's own act on its tab's nonce, its remains' id a digest of the
+  character and the nonce (asked again it is the same fall, and never a relay's id). A piece the ledger bars from leaving
+  stays (`kept`); the drop is let go, so whoever takes it up takes it as their own.
+- **The room.** The service signs what it took for the room - a `remains` order (`wr`, the records' digest `wh` and count
+  `wn`, and `wk`/`wi`: the killer's piece, theirs alone) - and the relay keeps a deposit only on that order, its records
+  digesting to it; a second carrier's deposit of a vouched remains is nothing. The killer's game asks for its piece the
+  moment the room says the remains. The cron sweeps the falls after `WILD_FALLS_KEEP_S`.
+- **Lane 1's freeze.** A record the judge holds still loses its drop, and the room is given none of it (`burnt`, no
+  order): a held character hands no value to another player.
+- **THE FOUR HOSTS.** `scenes/world.js` WIRED (the zone word, the blows, the referee's readout, the fall, the drop, the
+  deposit, the seizure); `scenes/dungeonContext.js` (the zone's halls) WIRED through world.js's own `wildStrike` and
+  `wildSpellOut`, refereed alike, its pool holding the remains; `scenes/worldModes.js` (a building) no fight - the zone
+  word is 0 indoors - its pool holding the remains; `scenes/exterior.js`, the offline fixed city, NOT WIRED on purpose:
+  the zone is online's alone.
+
+### INT10 - every spell between players capped
+
+Every place one player's spell meets another's is a referee's: the caster's own machine counts the harm on a stand-in of
+its own sheet (`combat/siegeCombat.js` siegeSpellNumbers) and sends a number, and the relay clips it - a duel's, the
+zone's and a siege's on `refereeCast` (`SIEGE_CASTS`: three a five-second window, sixty at most), the arena's on its own
+law pinned equal. No target's machine applies a peer's harm: a peer's cast at a player is a gift's families alone
+(`systems/allyCast.js`). A Royal Tourney's bout is blows alone - the relay refused a heal between its two but refereed a
+crafted client's damaging cast as a siege's; it takes no cast now. Found while pinning: the zone's mend cleared a
+caster's cast window on every blow (the striker is unstruck), so a crafted client cast past the rate - mend restores
+vitality alone.
+
+### Decisions (2026-10-09)
+
+- **Customs** (Mac: "Your decision"): it stands as lane 1 left it - an offline character comes in whole, and its first
+  judgement charges what it adds past its level's allowance to the budget, which holds nothing until staff turn it on.
+- A fight between players never touches the save's health (the sieges' law since PVP-REF), and a spell between players is
+  its harm alone: a paralysis, a drain or a slow from another player does not land, as a siege's never did.
+- The zone's membership is each socket's own word, and its receipts are the relay's to sign and the service's to settle.
+
+### What lane 2 leaves open
+
+- A client may OPT OUT of the zone's fights (never say `zone`): it fights nobody and drops nothing to a player. It cannot
+  opt into another's fight, and an honest player outside the zone is nobody's target.
+- A death to a foe is the client's own word (the world is simulated on the player's machine): a client that never dies
+  to a foe drops nothing to one.
+- A fall the relay signed whose fallen's tab and killer both never carry its receipt within its hour drops nothing.
+- A room's referee is its memory: a relay object that restarts mid-fight forgets the fight (a fall already signed is the
+  service's to settle).
+- Boss fights are lane 3's.
+
+**Pins.** `test/int7_arms.test.js`, `test/int8_duel_ref.test.js`, `test/int9_wild_ref.test.js`,
+`test/int10_spells.test.js`; the pins they moved are marked PIN MOVED where they stand. Mutants:
+`tools/mutants/int_lane2.json`; the records INT7-INT10 moved re-aimed by content, and fifteen of DUEL1's
+(`tools/mutants/duel.json` and `auditduel1.json`) retired with the laws they checked - the defender's resolve, the
+loser's report, the mutual draw, the duel's heal - which are the referee's now. Migration `0098_referee`;
+`ACCOUNT_VERSION` acct102 (acct101 and migration 0097 on its branch, renumbered past main's BAG-CRAFT at the merge);
+`RELAY_VERSION` world183.
 
 ## 6. Lane 3 - boss fights (planned)
 
@@ -298,3 +393,12 @@ the clock, and the legacy record held to its own law.
   template, a peer's piece in its group), the checkpoint's answer carrying `tradeHeld`, the last clean save kept past the
   rotation, the race pin's join moved to the checkpoint's batch, the version pins at acct100. The account Worker bundles the
   item law's graph (`.github/workflows/account-deploy.yml` lists it, `test/accountdeploy.test.js` holds the list).
+- **INT7-INT10 (2026-10-09): lane 2, PvP refereed everywhere - built.** Migration `0098_referee` (the arms on the row, a
+  duel's receipt's bout id, a death's drop's falls); `ACCOUNT_VERSION` acct102 and `RELAY_VERSION` world183 (acct101 and
+  migration 0097 on its branch, renumbered past main's BAG-CRAFT at the merge). Pins: `test/int7_arms.test.js`,
+  `int8_duel_ref.test.js`, `int9_wild_ref.test.js`, `int10_spells.test.js`. Mutants `tools/mutants/int_lane2.json`:
+  MUTANT_COUNT; the records INT7-INT10 moved re-aimed by content (38 - 36 dead, 1 equivalent as recorded,
+  `test/relayversion.test.js`'s own judged with its row), fifteen of DUEL1's retired with their laws. Pins moved (each
+  marked PIN MOVED where it stands): DUEL1's and WILD1's defender, gift and loser's report, the duel's heal and trail,
+  the deposit that needs the service's order, the token's `wa`, the order kinds, the hour's sweeps (twenty), the version
+  pins at acct102. The account Worker bundles the zone's drop law (`.github/workflows/account-deploy.yml`).
