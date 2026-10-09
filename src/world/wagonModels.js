@@ -23,7 +23,7 @@
 // bottom). Hitched, a cart is borne level by the horse, so while a horse is in its shafts the presentation turns it
 // back about its axle (`hitchPitch`) - its bed level, its shafts at the horse's flank 0.7 m up.
 //
-// Each face wears its picture by `faceSkin` (world/largeBoatModel.js's law): the sides' liveries banded on their
+// Each face wears its picture by `wagonFaceSkin` (world/largeBoatModel.js faceSkin's law): the sides' liveries banded on their
 // height, everything else tiled planar (world/galleonMesh.js planarUv), the wheels' faces and the caravan's ends laid
 // whole on their pictures. Not a DFU member. Ledger A (WAGONS1).
 import { WAGON_ARCHIVE, TEX, WAGON_TILE, BANDS, wagonArt } from './wagonArt.js';
@@ -51,8 +51,8 @@ export const LIFT = NORMAL_GROUND_OFFSET;
  *  `innerX` inside, `bedZ` the bed's run (back to front), `frontZ` the wagon's foremost point. */
 export const MEASURED = Object.freeze({
   cart: Object.freeze({ axleY: 0.5445, floorY: 0.69, innerX: 1.0543, sideX: 1.1589, bedZ: Object.freeze([-0.37, 2.2]), frontZ: 3.14, bottomFront: Object.freeze([0.1452, 2.1778]), bottomBack: Object.freeze([0.6201, -0.4852]) }),
-  openWagon: Object.freeze({ axleY: 0.7811, floorY: 1.0098, innerX: 1.2, sideX: 1.36, bedZ: Object.freeze([-0.6, 5.0]), frontZ: 5.65, frontAxle: Object.freeze([0, 0.824, 3.8659]) }),
-  caravan: Object.freeze({ axleY: 0.7811, floorY: 0.9425, innerX: 1.2, sideX: 1.36, bedZ: Object.freeze([-0.71, 5.11]), frontZ: 6.25, frontAxle: Object.freeze([0, 0.824, 3.8659]), rearZ: -0.71, endTopY: 3.5166 }),
+  openWagon: Object.freeze({ axleY: 0.7811, floorY: 1.0142, innerX: 1.2, sideX: 1.36, bedZ: Object.freeze([-0.6, 5.0]), frontZ: 5.65, frontAxle: Object.freeze([0, 0.824, 3.8659]) }),
+  caravan: Object.freeze({ axleY: 0.7811, floorY: 0.9425, innerX: 1.2, sideX: 1.36, bedZ: Object.freeze([-0.7077, 5.1164]), frontZ: 6.25, frontAxle: Object.freeze([0, 0.824, 3.8659]), rearZ: -0.7077, endTopY: 3.5166 }),
 });
 
 /** THE CART'S REST: its bottom's fall from its back edge to its front (degrees) - as Mac drew it, unhitched. */
@@ -77,7 +77,7 @@ const endUv = (sign) => (p) => {
 /** Which picture a face of a wagon's baked part wears, and how it lies on it: `{ rec, uv(p) }`, or `{ band, u(p) }`
  *  a face of a livery (world/galleonModel.js benchPart's skins). `kind` the wagon, `role` the part, `n` the face's
  *  normal, `c` its centre, `pivot` / `R` a wheel's. */
-export function faceSkin(kind, role, n, c, pivot = null, R = 1) {
+export function wagonFaceSkin(kind, role, n, c, pivot = null, R = 1) {
   const tiled = (rec, key = keyOf(rec)) => ({ rec, uv: (p) => planarUv(p, n, WAGON_TILE[key]) });
   const banded = (name) => ({ band: BANDS[name], u: (p) => planarUv(p, n, [WAGON_TILE[name][0], 1])[0] });
   const up = n[1] > 0.7, down = n[1] < -0.7, side = Math.abs(n[0]) > 0.7, end = Math.abs(n[2]) > 0.7;
@@ -152,10 +152,10 @@ export function wagonGeometry(bake) {
       const pivot = part.origin;
       const R = rollRadius(part, pivot);
       const bench = new MeshBench(WAGON_ARCHIVE);
-      benchPart(bench, part, { offset: pivot, role: part.role, keep: null, skin: (role, n, c) => faceSkin(kind, role, n, c, pivot, R) });
+      benchPart(bench, part, { offset: pivot, role: part.role, keep: null, skin: (role, n, c) => wagonFaceSkin(kind, role, n, c, pivot, R) });
       wheels.push({ role: part.role, geometry: bench.finish(), pivot: [pivot[0], pivot[1] - LIFT, pivot[2]], radius: R });
       if (part.role.startsWith('wheelRear')) { radius += R; rear++; }
-    } else benchPart(statics, part, { offset: [0, 0, 0], role: part.role, keep: null, skin: (role, n, c) => faceSkin(kind, role, n, c) });
+    } else benchPart(statics, part, { offset: [0, 0, 0], role: part.role, keep: null, skin: (role, n, c) => wagonFaceSkin(kind, role, n, c) });
   }
   if (rear !== 2) throw new Error(`the ${kind} has ${rear} rear wheels`);
   if (kind !== 'cart') poleGeometry(statics, kind);

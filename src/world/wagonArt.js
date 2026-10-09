@@ -14,7 +14,7 @@
 // canvas over it, the hoops' shadows across it, and the tilt again over its roof, darker inside. THE CARAVAN wears a
 // travelling family's livery: bottle-green boards picked out in oxblood and gilt, a shuttered window down each side,
 // its front end a round window under a gilt sunburst, its rear end the DOOR it is entered by (world/wagonModels.js
-// lays it on the rear face; scenes/caravanInterior.js is what it opens) and a painted roof of boards.
+// lays it on the rear face; scenes/caravanRoom.js is what it opens) and a painted roof of boards.
 //
 // Each picture is `{ width, height, data }`, RGBA top-down. Not a DFU member. Ledger A (WAGONS1).
 import { C, picture, put, get, mix, shade, paintNoise as noise, paintBand as band, planks, GALLEON_TEX_SIZE, ironArt } from './galleonArt.js';

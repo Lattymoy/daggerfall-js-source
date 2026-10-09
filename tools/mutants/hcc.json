@@ -437,7 +437,7 @@
   {
     "name": "HCC-hitch-offset-dropped",
     "file": "src/systems/horseCart.js",
-    "old": "      pos = vadd(vadd(pos, vscale(horizontalRight(fwd), HITCHED_HORSE_LOCAL_X)), vscale(fwd, HITCHED_HORSE_LOCAL_Z));",
+    "old": "      pos = vadd(vadd(pos, vscale(horizontalRight(fwd), HITCHED_HORSE_LOCAL_X)), vscale(fwd, hitchZ()));",
     "new": "      pos = vadd(pos, vscale(horizontalRight(fwd), HITCHED_HORSE_LOCAL_X));",
     "tests": [
       "test/hcc_runtime.test.js"

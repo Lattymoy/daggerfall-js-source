@@ -2602,9 +2602,9 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (data.ab !== undefined) _onCsaAboard?.(from, data.ab, _now());   // CSA-K: the sender's place aboard a boat (null: aboard none) - the same law, the same test
     if (data.nv !== undefined) _onNaval?.(from, data.nv, _now());   // NAV-G: the owner's sea (null: none) - the ships they stand, their last volleys and barrels; past the same room test
     if (data.pg !== undefined) _onPortals?.(from, data.pg);   // PORTAL1: the owner's portal - a frame without it leaves the copy to run out on its own time; past the same room test
-    if (data.wr !== undefined) _onRide?.(from, data.wr);   // WAGONS1: their ask for a seat in my wagon, or the seat they sit in - the same room test
     if (data.hv !== undefined) _onHcc?.(from, data.hv, _now());   // HCC-ONLINE: the owner's horse and wagon (null: none stand) - a frame without the field leaves the last word standing; past the same room test the camps pass
     if (Array.isArray(data.c)) _onCamps?.(from, data.c, _now());   // SURV3: the owner's camps ride the same frame, past the same room test - the host's pool lands them
+    if (data.wr !== undefined) _onRide?.(from, data.wr);   // WAGONS1: their ask for a seat in my wagon, or the seat they sit in - the same room test
     return true;
   }
   /** One streamed record onto its puppet: the target pose - kept in the WORLD frame and converted every step (AUDIT
@@ -3172,6 +3172,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     setOnSeaRaiders,   // OW6
     setOnCsaAboard,   // CSA-K
     setOnNaval,   // NAV-G
+    setOnRide,   // WAGONS1: the seats' word
     setOnPortals,   // PORTAL1
-    setOnCamps, setOnHcc, setOnRide, setOnDuel };   // SURV3; HCC-ONLINE
+    setOnCamps, setOnHcc, setOnDuel };   // SURV3; HCC-ONLINE
 }

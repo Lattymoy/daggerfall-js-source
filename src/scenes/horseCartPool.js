@@ -21,7 +21,7 @@
 //          hosts' fetch; absent, the classic model 41214 stands for every kind, as before WAGONS1),
 //          enterCaravan() (WAGONS1: my parked caravan's "Step inside" row - scenes/caravanRoom.js; absent, no row),
 //          riders (WAGONS1: the seats in the back - scenes/wagonRiders.js: { passengers(), go(), declined() - my word's
-//          `ps`, `go` and `pn`; rows(owner, kind) -> plaque rows over another player's wagon; press(owner, id) }) }
+//          `ps`, `go` and `pn`; acts(owner, kind, kept) -> plaque rows over another player's wagon; press(owner, id, distance) }) }
 //
 // WAGONS1 (2026-10-09, Mac: "1. Is a replacement model for the current cart ingame 2. Theres an open wagon ... 3. Is a
 // closed wagon varient"): THE WAGON DRAWN IS MAC'S. With the hosts' `bakedWagon` the parts are his Wagon Cart, Open
@@ -519,14 +519,15 @@ export function createHorseCartPool({
   /** WAGONS1: the plaque's word for a wagon - the mod's "Wagon" for the Small Cart, each bigger one by its own name. */
   const wagonTitle = (kind) => (validWagonKind(kind) && kind !== 'cart' ? WAGON_KINDS[kind].name : WAGON_HOVER_TEXT);
   /** WAGONS1: my parked caravan's door - "Step inside" after the mod's own rows (its storage stays "Open the wagon"). */
-  const withCaravanRow = (named) => (enterCaravan && WAGON_KINDS[myKind()]?.enterable ? { ...named, actions: [...(named.actions ?? []), { id: CARAVAN_ENTER_ROW, label: CARAVAN_TEXT.enter }] } : named);
+  const withCaravanRow = (named, parked = true) => (parked && enterCaravan && WAGON_KINDS[myKind()]?.enterable ? { ...named, actions: [...(named.actions ?? []), { id: CARAVAN_ENTER_ROW, label: CARAVAN_TEXT.enter }] } : named);
   /** WORLD-HOVER: the plaque's word - the horse's name or "Horse" (HorseTargetLabel), "Wagon", and a peer's by whose it is. */
   function hoverName(key) {
     if (typeof key !== 'string') return null;
     // ACT-MENU: my own three carry the mod's verbs as the plaque's rows (horseCartLaw.js hccActionRows) - the wheel
     // lights one and the activate key presses it, in place of the interaction mode set beforehand
-    if (key === KEY_WAGON) return withCaravanRow(withActions({ title: wagonTitle(myKind()) }, 'deployedWagon'));
-    if (key === KEY_FOLLOWING_WAGON) return withActions({ title: wagonTitle(myKind()) }, 'followingWagon');
+    if ((key === KEY_WAGON || key === KEY_FOLLOWING_WAGON) && myKind() !== 'cart') return withCaravanRow(withActions({ title: wagonTitle(myKind()) }, key === KEY_WAGON ? 'deployedWagon' : 'followingWagon'), key === KEY_WAGON);   // WAGONS1: a bigger wagon by its own name, the caravan's door on the parked one
+    if (key === KEY_WAGON) return withActions({ title: WAGON_HOVER_TEXT }, 'deployedWagon');
+    if (key === KEY_FOLLOWING_WAGON) return withActions({ title: WAGON_HOVER_TEXT }, 'followingWagon');
     if (key === KEY_HORSE) return withActions({ title: runtime ? runtime.horseTargetLabel : horseTargetLabel('') }, 'horse');
     const pk = peerOfKey(key);
     if (!pk) return null;
@@ -539,7 +540,7 @@ export function createHorseCartPool({
     const who = peerName(p.ownerId ?? pk.owner) ?? (p.ownerName || null);
     const owned = ownedLine(who);
     if (pk.what === 'w') {
-      const rows = riders?.rows?.(p.ownerId ?? pk.owner, p.wagon?.model, p.kept) ?? [];   // WAGONS1: ask to ride, get down
+      const rows = riders?.acts?.(p.ownerId ?? pk.owner, p.wagon?.model, p.kept) ?? [];   // WAGONS1: ask to ride, get down
       return rows.length ? { title: wagonTitle(p.wagon?.model), subs: [owned], actions: rows } : { title: wagonTitle(p.wagon?.model), subs: [owned] };
     }
     return { title: horseTargetLabel(p.name ?? ''), subs: [owned] };
@@ -558,7 +559,7 @@ export function createHorseCartPool({
   function activate(key, distance, say = null, tooFar = null, mode = null) {
     if (!runtime) return false;
     if (key === KEY_WAGON && mode === CARAVAN_ENTER_ROW) {   // WAGONS1: into the caravan, at the mod's own reach
-      if (!(distance <= ACTIVATION_REACH)) { tooFar?.(); return true; }
+      if (!(distance <= ACTIVATION_REACH)) { tooFar?.(); return true; }   // the mod's own reach
       void enterCaravan?.();
       return true;
     }

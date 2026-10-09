@@ -7591,7 +7591,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** WAGONS1: the seats in the back (scenes/wagonRiders.js) - made just below the pool, which reads them through this. */
   let wagonRiders = null;
   const hcc = createHorseCartPool({
-    riders: { passengers: () => wagonRiders?.passengers() ?? [], go: () => wagonRiders?.go() ?? null, declined: () => wagonRiders?.declined() ?? [], rows: (o, k, kept) => wagonRiders?.rows(o, k, kept) ?? [], press: (o, id, d) => wagonRiders?.press(o, id, d) ?? false },   // WAGONS1
+    riders: { passengers: () => wagonRiders?.passengers() ?? [], go: () => wagonRiders?.go() ?? null, declined: () => wagonRiders?.declined() ?? [], acts: (o, k, kept) => wagonRiders?.acts(o, k, kept) ?? [], press: (o, id, d) => wagonRiders?.press(o, id, d) ?? false },   // WAGONS1
     renderer, meshes: { getGpuMesh, cpuModels }, collider: () => collider, now: () => performance.now() / 1000,
     threats: hccThreats, selfId: () => online?.id ?? null, peerName: (id) => peerName(id),
     onChanged: () => { _hccDirty = true; }, toWire: (p) => campToWire(p), log: console, ...wagonPoolDeps(() => playerEntity.items ?? []), enterCaravan: () => caravanRooms.enter(),   // WAGONS1: Mac's wagons, by the one the player drives; the caravan's door
@@ -8066,6 +8066,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     parked: () => hcc.parkedDoor(), ownsCaravan: () => activeWagonKind(playerEntity.items ?? []) === 'caravan',
     toNative: (p) => { const w = state.worldCoords(p); return [w.x, p[1] - state.compensation[1], w.z]; },
     fromNative: (p) => { const [x, z] = state.localFromWorld(p[0], p[2]); return [x, p[1] + state.compensation[1], z]; },
+    ground: (p) => [p[0], repositionFeetY(collider.heightAt(p[0], p[2]), p[1]), p[2]],   // the door's landing law, on the street's own collider
     enterInterior: (room) => modes?.enterCaravanRoom(room), say: (line) => townTalk.say(line), log: (e) => console.error('[caravan]', e),
   });
   /** BOAT-MENU: a boat of mine's boxes and its rows (systems/csaBoatMenu.js) - what the plaque lists and the picker. */
@@ -9838,12 +9839,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   const wagonCarriesCompanions = () => { const k = hcc.shown()?.wagon?.kind; return k === HCC_WIRE_KIND.Trailing || k === HCC_WIRE_KIND.Following; };
   const crewCount = () => (navalOn() ? naval?.companions?.party?.length ?? 0 : 0);
   const crewAshore = createCrewAshore({
-    seat: (i) => wagonRiders?.companionSeat(i, wagonCarriesCompanions()) ?? null,   // WAGONS1: the crew's hands take the seats first
     party: () => (navalOn() ? naval?.companions ?? null : null),
     place: companionPlace,
     leader: () => (playerSpawned ? { feet: [player.pos[0], player.pos[1], player.pos[2]], yaw: cam.yaw, grounded: !!player.grounded && !player.levitating && !player.swimming } : null),   // AUDIT CC-A3: on a floor or not
     now: () => Math.floor(playerTicker.ownMinutes),
     onKnocked: (c, by) => { naval?.companionKnocked?.(c); felledBy(by, c.name); },   // RVN10: a special foe's blow fells him - a deed on it
+    seat: (i) => wagonRiders?.companionSeat(i, wagonCarriesCompanions()) ?? null,   // WAGONS1: the crew's hands take the seats in my wagon's back first
   });
   // COMPANION-SLOTS: the crew's hands ashore take the player's side's slots with the sworn
   registerCompanionCount('crew', () => (navalOn() ? naval?.companions?.party?.length ?? 0 : 0));
@@ -9862,7 +9863,6 @@ export async function bootWorld(canvas, renderer, params, status) {
   };
   const _revenantParty = revenantParty({ onWake: (r) => townTalk.say(`${r.name} has recovered, and waits for your call.`) });
   const revenantAshore = createCrewAshore({
-    seat: (i) => wagonRiders?.companionSeat(crewCount() + i, wagonCarriesCompanions()) ?? null,   // WAGONS1: the sworn take the seats after the crew's
     party: () => (playerSpawned ? _revenantParty : null),
     place: () => companionPlace({ crew: false }),
     leader: () => (playerSpawned ? { feet: [player.pos[0], player.pos[1], player.pos[2]], yaw: cam.yaw, grounded: !!player.grounded && !player.levitating && !player.swimming } : null),
@@ -9877,6 +9877,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       rec.revenantCompanion = c.name;
       if (_revenantArrivals.delete(c.name)) revenantCompanionSay('arrive', c.name);
     },
+    seat: (i) => wagonRiders?.companionSeat(crewCount() + i, wagonCarriesCompanions()) ?? null,   // WAGONS1: the sworn take the seats after the crew's
   });
   /** REVENANT-COMPANION: a sworn one called to the player's side - it says so as it steps through. */
   const noteRevenantArrival = (id) => _revenantArrivals.add(id);
@@ -10066,6 +10067,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // IsPlayingGame (no window, no surface holding the mouse), and only where the enhanced plaque is not already naming it
     const tipOn = hcc.enabled && walkMode && _mode() === 'exterior' && !worldPlaqueOn() && !gamePaused() && !pointerSurfaces.size;
     horseNameTooltip.set(tipOn ? hcc.tooltipText(cam.pos, [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)], collider) : '');
+    if (_mode() === 'exterior') wagonRiders?.frame();   // WAGONS1: my riders kept to my seats, and me to my seat in another's wagon, as the pool just stood them
   };
   /** The mod's ModSettingsChanged: the shelf has no event, so the eight keys are re-read once a second. */
   const hccPollSettings = (nowMs) => {
@@ -19569,7 +19571,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     const seaRaidMoved = cell && seaRaidWord(null, full);   // OW6: and a raider's at sea
     const frame = cell ? ((modes?.mode ?? 'exterior') === 'exterior' ? exteriorFoes.foesFrame(full, _hccDirty || csaMoved || csaAboardMoved || bandMoved || navalMoved || seaRaidMoved) : null) : modes?.dungeonFoesFrame?.(full);
     if (!frame) return false;
-    if (cell && full) frame.c = camps.wireRecords(campToWire); if (cell && (full || _hccDirty)) { frame.hv = hcc.wireRecord(campToWire); frame.wr = wagonRiders?.word() ?? null; _hccDirty = false; } if (cell) duelRingWord(frame, full); if (cell) csaWord(frame, full); if (cell) csaAboardWord(frame, full); if (cell) bandWord(frame, full); if (cell) navalWord(frame, full); if (cell) seaRaidWord(frame, full); if (cell) { const rk = raidWireWord(); if (rk) frame.rk = rk; } if (cell) portalWord(frame, full);   // HCC-ONLINE: my horse and wagon as shown (null: none stand) ride beside the camps - on every full frame, and on a moved word between them   // AUDIT SURV B: an empty list says "none stand" - the last camp packed reaches the peers   // SURV3: my camps ride my full frame - a shared world object in the cell's own way; RAID2: my word on the raids I run or fought - my share of their deaths, and my claim; PORTAL1: my portal, on every full frame while it stands and I stand near it
+    if (cell && (full || _hccDirty)) frame.wr = wagonRiders?.word() ?? null;   // WAGONS1: my ask for a seat in another's wagon, or the seat I sit in - beside my team's word, on its clock
+    if (cell && full) frame.c = camps.wireRecords(campToWire); if (cell && (full || _hccDirty)) { frame.hv = hcc.wireRecord(campToWire); _hccDirty = false; } if (cell) duelRingWord(frame, full); if (cell) csaWord(frame, full); if (cell) csaAboardWord(frame, full); if (cell) bandWord(frame, full); if (cell) navalWord(frame, full); if (cell) seaRaidWord(frame, full); if (cell) { const rk = raidWireWord(); if (rk) frame.rk = rk; } if (cell) portalWord(frame, full);   // HCC-ONLINE: my horse and wagon as shown (null: none stand) ride beside the camps - on every full frame, and on a moved word between them   // AUDIT SURV B: an empty list says "none stand" - the last camp packed reaches the peers   // SURV3: my camps ride my full frame - a shared world object in the cell's own way; RAID2: my word on the raids I run or fought - my share of their deaths, and my claim; PORTAL1: my portal, on every full frame while it stands and I stand near it
     if (!online.sendFoes(frame)) { _foesFullAt = -Infinity; return false; }   // AUDIT WORLD2 A9: a refused frame's deltas were already committed - the next frame carries every foe
     if (full) _foesFullAt = now;
     return true;
@@ -26983,8 +26986,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     hccParkTick(now);   // HCC-PARK: my parked team's word to the cell it stands in, when it changed
     overworldLedgerFrame(now);   // OW6L: what I spent and my spawns' clocks, to the cell that keeps them
     if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) camps.sweepOwners(ids, now, FOES_STALE_MS); }   // PERF11: the same list   // SURV3: a peer's camps go as their puppets do - the same liveness, the same answer-gate   // AUDIT WORLD6b-iii(b) C3/B5: no answer (the socket not open) is not "nobody" - it pruned every owner while the halos kept feeding frames, a spawn-and-discard loop per frame   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
-    if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) { hcc.sweepOwners(ids, now, FOES_STALE_MS); wagonRiders?.sweep(ids); } }   // HCC-ONLINE: a peer's team goes as their puppets and camps do - the same memoised list, the same liveness   // PERF11: the same list   // SURV3: a peer's camps go as their puppets do - the same liveness, the same answer-gate   // AUDIT WORLD6b-iii(b) C3/B5: no answer (the socket not open) is not "nobody" - it pruned every owner while the halos kept feeding frames, a spawn-and-discard loop per frame   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
+    if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) hcc.sweepOwners(ids, now, FOES_STALE_MS); }   // HCC-ONLINE: a peer's team goes as their puppets and camps do - the same memoised list, the same liveness   // PERF11: the same list   // SURV3: a peer's camps go as their puppets do - the same liveness, the same answer-gate   // AUDIT WORLD6b-iii(b) C3/B5: no answer (the socket not open) is not "nobody" - it pruned every owner while the halos kept feeding frames, a spawn-and-discard loop per frame   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
     if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) csaPeers.sweepOwners(ids, now, FOES_STALE_MS); }   // CSA-J: a peer's boats go as their team does - the same memoised list, the same liveness
+    if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) wagonRiders?.sweep(ids); }   // WAGONS1: a rider of mine gone from the room gets down with them
     if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) csaAboard.sweepRiders(ids, now, FOES_STALE_MS); }   // CSA-K: and their place aboard a boat
     hcc.pruneKept(isCellRoom(online.room) ? [online.room, ...online.haloRooms()] : [], now);   // HCC-PARK: a kept team is its CELL's - it stands while I hold that cell's socket (mine or a halo's), and its welcome brings it back
     // INVIS-NET (2026-09-27, Mac relaying reports: "Other player's still see other players who are suppose to be
@@ -30722,6 +30726,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // through the half-built world onto a model collider or the terrain as each went in, and the frame billed it.
       // The landing re-anchors the fall (player.spawn), so a held body arrives with none.
       const _seasonHeld = _partyArrivalPending || _seasonHoldKey !== null || _seasonStraightening;
+      const _rideHeld = !!wagonRiders?.seated();   // WAGONS1: a rider in another's wagon goes where it goes (pinned to their seat each frame, scenes/wagonRiders.js)
       if (!playerSpawned && built.has(startKey)) {
         // FIX-C: THE FIRST STAND IS DFU'S. StartNewCharacter
         // (StartGameBehaviour.cs:404-409) puts an exterior start through
@@ -30977,7 +30982,6 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         _dwLastForward = paralyzed ? 0 : axes.forward;   // DW-D: the shore exit's InputManager.Vertical, for the next frame's driver
         _csaAxes = { h: axes.strafe, v: axes.forward };   // CSA-D: InputManager.Horizontal / Vertical for the helm's inputTarget - CSA-J (the audit): InputManager has no paralysis gate, only the motors do
         playerBlowFrame({ motor: player, entity: playerEntity, shake: (k) => betterAmbience.weaponKick(k), hurt: (n) => { hurtPlayer(playerEntity, n); flashPlayerDamage(n); surfacePlayer(); } });   // TELL6e: a landing's push, rattle, knockdown and bleed
-        const _rideHeld = !!wagonRiders?.seated();   // WAGONS1: a rider in another's wagon goes where it goes (pinned to their seat each frame)
         if (_overlayHeld || _seasonHeld || _rideHeld) player.holdFrame();   // DISC8-G: a held motor reports no landing and no jump
         if (!_overlayHeld && !_seasonHeld && !_rideHeld) player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: held(keys, 'Run'), autoRun: held(keys, 'AutoRun'), back: mv.backwards, sneak: held(keys, 'Sneak') || walkModeOn(), jump: false, up: false, down: false, crouch: crouchPress } : {
           forward: axes.forward,   // TO1: the autopilot's force while a journey runs, else the player's own   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
@@ -32009,7 +32013,6 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     crewAshoreTick();   // CREW-COMPANIONS: the party stood on the street
     revenantAshoreTick();   // REVENANT-COMPANION: and the sworn
     hccTick(dt, now);   // AUDIT HCC H1: LateUpdate - after the motor and the recentre, before the world pass draws the wagon
-    wagonRiders?.frame();   // WAGONS1: my riders kept to my seats, and me to my seat in another's wagon, as the pool just stood them
     renderer.setClearColor(SKY_CLEAR);   // INCIDENT 2026-09-04 / REVIEW 2026-09-05: this frame is the EXTERIOR's (the mode frames returned above and clear black in worldModes) - CameraClearManager.cs:51-57
     renderer.setFlashLight(sky.lightningLight() ?? boltFrame.flash);   // DS1: Dynamic Skies' LightningFlash, composed first on the point-light channel just stored; BOLT: else a near ground strike's own light, from where it struck
     renderer.setWorldViewport(worldViewportRect(canvas.clientWidth, canvas.clientHeight));   // E5: ViewportChanger.Update, every frame

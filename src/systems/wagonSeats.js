@@ -71,7 +71,7 @@ export function validPassengers(raw) {
 }
 
 /** The seat a newly accepted rider takes: the lowest no player holds (`taken` the players' seats), of `n`; -1 none. */
-export function freeSeat(n, taken) {
+export function freeWagonSeat(n, taken) {
   const held = new Set(taken);
   for (let k = 0; k < n; k++) if (!held.has(k)) return k;
   return -1;
@@ -108,7 +108,7 @@ export function createRideBook() {
     accept(rider, n) {
       if (!asks.has(rider)) return false;
       asks.delete(rider);
-      const k = freeSeat(n, [...seated.values()]);
+      const k = freeWagonSeat(n, [...seated.values()]);
       if (k < 0) return false;
       seated.set(rider, k);
       return true;

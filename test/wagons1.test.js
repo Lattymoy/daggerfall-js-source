@@ -13,7 +13,7 @@ import {
 } from '../src/systems/wagonKinds.js';
 import { wagonArt, TEX, WAGON_ARCHIVE, BANDS, SIDE_Y0, SIDE_Y1 } from '../src/world/wagonArt.js';
 import {
-  wagonGeometry, buildBakedWagonParts, faceSkin, MEASURED, LIFT, CART_REST_PITCH_DEG, cargoFor, seatsFor, doorFor, pitchedPoint,
+  wagonGeometry, buildBakedWagonParts, wagonFaceSkin, MEASURED, LIFT, CART_REST_PITCH_DEG, cargoFor, seatsFor, doorFor, pitchedPoint,
   wagonIconModel, wagonPoolDeps, WAGON_MODEL_URLS,
 } from '../src/world/wagonModels.js';
 import { createHorseCartPool, CARAVAN_ENTER_ROW, KEY_WAGON, peerKey } from '../src/scenes/horseCartPool.js';
@@ -23,6 +23,7 @@ import { HITCHED_HORSE_LOCAL_Z, NORMAL_GROUND_OFFSET } from '../src/systems/hors
 import { WAGON_KG_LIMIT, planStore } from '../src/systems/itemTransfer.js';
 import { TRANSPORT_SMALL_CART, inventoryItemModel } from '../src/systems/itemTemplates.js';
 import { CARGO_DEFINITIONS } from '../src/systems/wagon41214.js';
+import { resolveItemName } from '../src/systems/itemInfo.js';
 
 const bakeOf = (kind) => JSON.parse(readFileSync(new URL(`../src/assets/wagons/${kind}.json`, import.meta.url), 'utf8'));
 const geo = Object.fromEntries(WAGON_KIND_ORDER.map((k) => [k, wagonGeometry(bakeOf(k))]));
@@ -37,7 +38,8 @@ test('WAGONS1 THE KINDS: three, their names, capacities, values, hitches and sea
   assert.equal(SMALL_CART_KG, 750); assert.equal(WAGON_KG_LIMIT, SMALL_CART_KG, 'itemTransfer.js reads the one 750');
   const cart = newWagonItem('cart'), open = newWagonItem('openWagon'), caravan = newWagonItem('caravan');
   assert.deepEqual(cart, { group: 'Transportation', templateIndex: TRANSPORT_SMALL_CART });
-  assert.deepEqual([open.wagonKind, open.name, open.value, caravan.wagonKind, caravan.name, caravan.value], ['openWagon', 'Open Wagon', 900, 'caravan', 'Caravan', 2500]);
+  assert.deepEqual([open.wagonKind, open.value, caravan.wagonKind, caravan.value], ['openWagon', 900, 'caravan', 2500]);
+  assert.deepEqual([cart, open, caravan].map(resolveItemName), ['Small Cart', 'Open Wagon', 'Caravan'], 'each says its kind; the rows keep the template\'s ItemName');
   assert.ok([cart, open, caravan].every(isWagonItem));
   assert.deepEqual([cart, open, caravan, { templateIndex: TRANSPORT_SMALL_CART, wagonKind: 'barge' }].map(wagonKindOf), ['cart', 'openWagon', 'caravan', 'cart']);
   // the best owned is driven, whatever order the pack holds them in
@@ -119,19 +121,19 @@ test('WAGONS1 THE MEASURES: the floors, sides and fronts the seats, the cargo an
 });
 
 test('WAGONS1 THE FACES: the caravan\'s rear end wears its door and its front end its window, its sides the livery on their height; the open wagon\'s sides its box-and-tilt; a wheel\'s face its spokes, its tread its tyre (mutants: front and rear swapped, a side tiled)', () => {
-  assert.equal(faceSkin('caravan', 'body', [0, 0, -1], [0, 2, -0.71]).rec, TEX.caravanRear);
-  assert.equal(faceSkin('caravan', 'body', [0, 0, 1], [0, 2, 5.11]).rec, TEX.caravanFront);
-  assert.equal(faceSkin('caravan', 'body', [1, 0, 0], [1.36, 2, 2]).band, BANDS.caravanSide);
-  assert.equal(faceSkin('caravan', 'body', [0.13, 0.99, 0], [0.5, 3.45, 2]).rec, TEX.caravanRoof);
-  assert.equal(faceSkin('openWagon', 'body', [1, 0, 0], [1.36, 2, 2]).band, BANDS.openSide);
-  assert.equal(faceSkin('openWagon', 'body', [0, 1, 0], [0, 1.01, 2]).rec, TEX.floor);
-  assert.equal(faceSkin('cart', 'body', [-1, 0, 0], [1.05, 1, 1]).rec, TEX.inner, 'a wall looking into the bed');
-  assert.equal(faceSkin('cart', 'body', [1, 0, 0], [1.16, 1, 1]).rec, TEX.side);
-  assert.equal(faceSkin('cart', 'wheelRearLeft', [-1, 0, 0], [0, 0.5, 0], [0, 0.5, 0], 0.5).rec, TEX.wheel);
-  assert.equal(faceSkin('cart', 'wheelRearLeft', [0, -1, 0], [0, 0, 0]).rec, TEX.tyre);
-  assert.equal(faceSkin('cart', 'shaftLeft', [0, 1, 0], [0, 0, 3]).rec, TEX.beam);
+  assert.equal(wagonFaceSkin('caravan', 'body', [0, 0, -1], [0, 2, -0.71]).rec, TEX.caravanRear);
+  assert.equal(wagonFaceSkin('caravan', 'body', [0, 0, 1], [0, 2, 5.11]).rec, TEX.caravanFront);
+  assert.equal(wagonFaceSkin('caravan', 'body', [1, 0, 0], [1.36, 2, 2]).band, BANDS.caravanSide);
+  assert.equal(wagonFaceSkin('caravan', 'body', [0.13, 0.99, 0], [0.5, 3.45, 2]).rec, TEX.caravanRoof);
+  assert.equal(wagonFaceSkin('openWagon', 'body', [1, 0, 0], [1.36, 2, 2]).band, BANDS.openSide);
+  assert.equal(wagonFaceSkin('openWagon', 'body', [0, 1, 0], [0, 1.01, 2]).rec, TEX.floor);
+  assert.equal(wagonFaceSkin('cart', 'body', [-1, 0, 0], [1.05, 1, 1]).rec, TEX.inner, 'a wall looking into the bed');
+  assert.equal(wagonFaceSkin('cart', 'body', [1, 0, 0], [1.16, 1, 1]).rec, TEX.side);
+  assert.equal(wagonFaceSkin('cart', 'wheelRearLeft', [-1, 0, 0], [0, 0.5, 0], [0, 0.5, 0], 0.5).rec, TEX.wheel);
+  assert.equal(wagonFaceSkin('cart', 'wheelRearLeft', [0, -1, 0], [0, 0, 0]).rec, TEX.tyre);
+  assert.equal(wagonFaceSkin('cart', 'shaftLeft', [0, 1, 0], [0, 0, 3]).rec, TEX.beam);
   // the door reads the right way round from outside: its left edge (x +1.36 seen from behind) at u 0
-  const uv = faceSkin('caravan', 'body', [0, 0, -1], [0, 2, -0.71]).uv;
+  const uv = wagonFaceSkin('caravan', 'body', [0, 0, -1], [0, 2, -0.71]).uv;
   assert.deepEqual(uv([MEASURED.caravan.sideX, MEASURED.caravan.floorY, -0.71]).map((v) => +v.toFixed(6)), [1, 0]);
   assert.deepEqual(uv([-MEASURED.caravan.sideX, MEASURED.caravan.endTopY, -0.71]).map((v) => +v.toFixed(6)), [0, 1]);
 });

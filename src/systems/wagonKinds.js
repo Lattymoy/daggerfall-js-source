@@ -67,14 +67,18 @@ export const wagonKgFor = (entity) => wagonKgLimitOf(activeWagonKind(entity?.ite
 export const wagonHitchOf = (kind) => WAGON_KINDS[validWagonKind(kind) ?? 'cart'].hitch;
 
 /** A new wagon of a kind, as a shelf mints it (systems/shopStock.js add): the Small Cart DFU's own template item, the
- *  others that item marked, named and valued. */
+ *  others that item marked and valued - its name stays the template's (every minted row carries the template's
+ *  ItemName - test/audit18_systems_items.test.js), and the kind's is what the item SAYS (systems/itemInfo.js
+ *  resolveItemName, `wagonItemName`). */
 export function newWagonItem(kind) {
   const k = validWagonKind(kind) ?? 'cart';
   const base = { group: 'Transportation', templateIndex: TRANSPORT_SMALL_CART };
   if (k === 'cart') return base;
-  const w = WAGON_KINDS[k];
-  return { ...base, wagonKind: k, name: w.name, shortName: w.name, value: w.value };
+  return { ...base, wagonKind: k, value: WAGON_KINDS[k].value };
 }
+/** The name a marked wagon is shown by (the Open Wagon, the Caravan), or null for every other item - the Small Cart's
+ *  is its template's. */
+export const wagonItemName = (item) => (isWagonItem(item) && validWagonKind(item?.wagonKind) && item.wagonKind !== 'cart' ? WAGON_KINDS[item.wagonKind].name : null);
 
 /** The Stable card's name for a kind ("Your wagon" before WAGONS1 - the Small Cart's still). */
 export const stableWagonName = (kind) => (validWagonKind(kind) === 'openWagon' ? 'Your open wagon' : validWagonKind(kind) === 'caravan' ? 'Your caravan' : 'Your wagon');

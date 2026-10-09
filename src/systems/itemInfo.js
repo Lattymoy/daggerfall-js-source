@@ -21,6 +21,7 @@
 // line at all. MiscItems is four special templates before its
 // default. The final `default:` arm catches potions (a filled glass
 // bottle) before falling back to the misc record.
+import { wagonItemName } from './wagonKinds.js';   // WAGONS1: the Open Wagon's and the Caravan's names
 import { unitWeightInKg } from './inventory.js';   // AUDIT 23 (items-8)
 import { enemyDisplayName } from '../characters/enemyBasics.js';   // X5: %hs, the trapped soul's name
 import { itemIsIdentified } from './tradeModes.js';   // X7: the DERIVED identified state
@@ -526,6 +527,8 @@ export function shownItemName(item) {
 }
 export function resolveItemName(item) {
   const templateName = templateByIndex(item?.templateIndex)?.name ?? '';
+  const wagon = wagonItemName(item);   // WAGONS1: a marked wagon says its kind (systems/wagonKinds.js) - its row keeps the Small Cart's ItemName
+  if (wagon) return wagon;
   if (!itemIsIdentified(item)) return templateName;
   const short = shownItemName(item) ?? templateName;
   if (item?.artifact) return short;

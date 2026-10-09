@@ -48,10 +48,14 @@ export function createCaravanAccess(deps) {
         return entered;
       } catch (e) { deps.log?.(e); deps.say(CARAVAN_TEXT.unavailable); return false; } finally { entering = false; }
     },
-    /** Where the room's door lets the player out: the ground behind the caravan's rear door, facing away from it. */
+    /** Where the room's door lets the player out: the ground behind the caravan's rear door (`ground` stands a point
+     *  on what is there now, as a door's landing is - scenes/worldModes.js stands a private room's landing as given),
+     *  facing away from it. */
     returnToWagon(saved) {
       const room = readCaravanRoom(saved);
-      return room ? { position: deps.fromNative(room.step), yaw: room.yaw } : null;
+      if (!room) return null;
+      const at = deps.fromNative(room.step);
+      return { position: deps.ground ? deps.ground(at) : at, yaw: room.yaw };
     },
   };
 }

@@ -3,7 +3,7 @@
 // daggerfall"; asked, "Players and companions"): THE SEATS IN THE BACK, ON THE WORLD HOST. systems/wagonSeats.js is
 // the law (the seats, the asks, the words); this runs both ends of it for one client:
 //
-//  - AS A RIDER: another player's wagon with seats lists "Ask to ride" on its plaque (scenes/horseCartPool.js rows);
+//  - AS A RIDER: another player's wagon with seats lists "Ask to ride" on its plaque (scenes/horseCartPool.js `riders.acts`);
 //    the press says `wr: { a: owner }` on my foes frame until the owner answers or RIDE_ASK_TTL_MS passes. The owner's
 //    word naming me in its `ps` seats me: from then each frame my feet are that seat's on their wagon as drawn here
 //    (the pool's peerSeat - its ease, its hitch, its turn) and my motor holds (`seated()` - the host's holdFrame), and I
@@ -71,7 +71,7 @@ export function createWagonRiders(deps) {
     }
   }
   /** The plaque's rows over another player's wagon: ask while it has a seat for me, get down from the one I sit in. */
-  function rows(owner, kind, kept) {
+  function acts(owner, kind, kept) {
     if (kept || !(WAGON_KINDS[kind]?.seats > 0)) return [];
     if (ride?.owner === owner && ride.seat != null) return [{ id: RIDE_ROW.down, label: RIDE_TEXT.getOff }];
     return [{ id: RIDE_ROW.ask, label: RIDE_TEXT.ask }];
@@ -148,7 +148,7 @@ export function createWagonRiders(deps) {
   }
 
   return {
-    press, rows, hear, forget, sweep, accept, decline, asks, announce, frame, getDown,
+    press, acts, hear, forget, sweep, accept, decline, asks, announce, frame, getDown,
     /** Whether I sit in another's wagon (the host holds my motor). */
     seated: () => ride?.seat != null,
     /** My `wr`, for my foes frame. */

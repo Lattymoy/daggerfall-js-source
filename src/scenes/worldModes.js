@@ -7888,7 +7888,7 @@ export function createWorldModes(host) {
       privateVisitRoom = restore?.privateRoom ?? null;
       privateVisitOwner = restore?.cabinOwner ?? null;
       interiorCabin = hit.sailingCabin ?? null;
-      if (interiorCabin && !privateVisitRoom) addPermanentScene(sceneCache(), privateRoomSceneName(interiorCabin));   // WAGONS1: a ship's or the caravan's
+      if (interiorCabin && !privateVisitRoom) addPermanentScene(sceneCache(), privateRoomSceneName(interiorCabin));
       _insideTavern = insideTavern;
       _insideResidence = insideResidence;
       _insidePartyRestExempt = partyRestExempt;
@@ -8394,7 +8394,7 @@ export function createWorldModes(host) {
     // RepositionPlayer(Offset): the door centre is where DFU puts the
     // controller's CENTRE; the feet go a body-half lower, never below
     // the terrain's floor (enterExit.repositionFeetY).
-    player.spawn(landing[0], cabinLanding && !caravanOut ? landing[1] : repositionFeetY(player.collider.heightAt(landing[0], landing[2]), landing[1]), landing[2]);   // WAGONS1: the caravan's step is the ground's, found as a door's
+    player.spawn(landing[0], cabinLanding ? landing[1] : repositionFeetY(player.collider.heightAt(landing[0], landing[2]), landing[1]), landing[2]);
     if (cabinLanding) cam.yaw = cabinLanding.yaw;
     host.horseCart?.()?.handleExteriorTransition();   // HCC: OnTransitionExterior / OnTransitionDungeonExterior [IL_9ae4] - the interior access closes, the following horse resumes
     setMode('exterior');
@@ -12158,7 +12158,7 @@ export function createWorldModes(host) {
     // location, the interior's building; null in the exterior
     // ARENA4: the floor's instance standing a relay's bout is that bout's room (`arena:b<id>`)
     roomIdentity: () => (mode === 'dungeon' ? (isGateArena(dungeonLoc) ? { kind: 'gate', day: dungeonLoc.gate } : isSdRealm(dungeonLoc) ? { kind: 'sd', s: dungeonLoc.sdRealm } : isArenaFloor(dungeonLoc) && dungeonLoc.arenaBout ? { kind: 'arena', o: dungeonLoc.arenaBout } : { kind: 'dungeon', mapId: dungeonLoc?.mapTableData?.mapId ?? null, regionIndex: dungeonLoc?.regionIndex ?? -1, name: dungeonLoc?.name ?? '', size: builtDungeonSize(dungeonLoc), ...(isTutorialHold(dungeonLoc) ? { solo: true } : {}) })   // WB3b: the court's room is its gate's own; SD-ONLINE: a dungeon's room is its layout's (the size it was BUILT at); HOLD-SOLO (FIELD BUGS 2026-10-07b): the tutorial dungeon is every character's own - `solo`, which world.js keys no room (AUDIT FB1007b H1: the shipped start's, never a setting's)
-      : mode === 'interior' ? { kind: 'interior', buildingKey: interiorBuilding?.buildingKey ?? 0, layout: _visitLayout, ...(interiorCabin && !isCaravanRoom(interiorCabin) ? { boatUid: interiorCabin.uid } : {}), ...(_intShared?.owned ? { private: true, privateRoom: privateVisitRoom } : {}) } : null),   // personal interiors share presence in an owner-specific room, never world memory/loot
+      : mode === 'interior' ? { kind: 'interior', buildingKey: interiorBuilding?.buildingKey ?? 0, layout: _visitLayout, ...(interiorCabin ? { boatUid: interiorCabin.uid } : {}), ...(_intShared?.owned ? { private: true, privateRoom: privateVisitRoom } : {}) } : null),   // personal interiors share presence in an owner-specific room, never world memory/loot
     get dungeonLocation() { return dungeonLoc; },   // B2: playerInside's dungeon arm
     /** X7: the Identify SPELL's window (Identify.cs:71-76 pushes the
      *  trade window itself). The spell can be cast anywhere, but the
