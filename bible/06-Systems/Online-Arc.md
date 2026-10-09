@@ -37,7 +37,9 @@ told (the nearest `ROSTER_MAX`), the room's own gates (`HELLO_HZ_MAX`,
 `SOCKETS_MAX`, `DROP_STRIKES_MAX`). The relay (`server/src/relay.js`) re-exports it and the session
 imports it, so what the relay refuses the client never sends and what
 the relay sends the client checks by the same law. The pose bound is
-the map's extent (`POSE_BOUND`, 1024 pixels of `PIXEL_UNITS`).
+the world's extent (`POSE_BOUND`, `WORLD_PIXEL_BOUND` - 8192 - pixels of
+`PIXEL_UNITS` either way; TV-BEYOND widened it from the map's 1024 when
+TAMRIEL2 streamed the land past the Bay, `01-Overview/Field-Bugs-2026-10-09.md`).
 `test/online_relay.test.js` executes it.
 
 **The relay** - `server/` - is a Cloudflare Worker whose one Durable

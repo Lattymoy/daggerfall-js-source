@@ -1,0 +1,195 @@
+[
+  {
+    "name": "REL8-shallow-clone-counted",
+    "file": "scripts/updateNumber.mjs",
+    "old": "    if (run(['rev-parse', '--is-shallow-repository']) === 'true') return null;",
+    "new": "    if (false) return null;",
+    "tests": [
+      "test/rel8_updates.test.js"
+    ]
+  },
+  {
+    "name": "REL8-told-number-unchecked",
+    "file": "scripts/updateNumber.mjs",
+    "old": "  if (told) return UPDATE_RE.test(told) ? told : null;",
+    "new": "  if (told) return told;",
+    "tests": [
+      "test/rel8_updates.test.js"
+    ]
+  },
+  {
+    "name": "REL8-told-number-ignored",
+    "file": "scripts/updateNumber.mjs",
+    "old": "  if (told) return UPDATE_RE.test(told) ? told : null;",
+    "new": "",
+    "tests": [
+      "test/rel8_updates.test.js"
+    ]
+  },
+  {
+    "name": "REL8-every-ancestor-counted",
+    "file": "scripts/updateNumber.mjs",
+    "old": "const count = (rev) => Number(run(['rev-list', '--count', '--first-parent', rev]));",
+    "new": "const count = (rev) => Number(run(['rev-list', '--count', rev]));",
+    "tests": [
+      "test/rel8_updates.test.js"
+    ]
+  },
+  {
+    "name": "REL8-starts-at-zero",
+    "file": "scripts/updateNumber.mjs",
+    "old": "const patch = count(at) - count(since) + 1;",
+    "new": "const patch = count(at) - count(since);",
+    "tests": [
+      "test/rel8_updates.test.js"
+    ]
+  },
+  {
+    "name": "REL8-any-edit-starts-the-line",
+    "file": "scripts/updateNumber.mjs",
+    "old": "'--format=%H', `-G${UPDATE_LINE_DIFF_RE}`, at, '--', UPDATE_LINE_FILE]",
+    "new": "'--format=%H', at, '--', UPDATE_LINE_FILE]",
+    "tests": [
+      "test/rel8_updates.test.js"
+    ]
+  },
+  {
+    "name": "REL8-merge-patch-read-as-commit",
+    "file": "scripts/updateNumber.mjs",
+    "old": "'--diff-merges=first-parent', '--no-patch', '-1',",
+    "new": "'--diff-merges=first-parent', '-1',",
+    "tests": [
+      "test/rel8_updates.test.js"
+    ]
+  },
+  {
+    "name": "REL8-merge-diffed-against-both-parents",
+    "file": "scripts/updateNumber.mjs",
+    "old": "'--diff-merges=first-parent', '--no-patch', '-1',",
+    "new": "'--no-patch', '-1',",
+    "tests": [
+      "test/rel8_updates.test.js"
+    ],
+    "equivalent": true,
+    "why": "equivalent on git 2.31 and later, where --first-parent implies --diff-merges=first-parent; the flag says it for an older git, which would skip a merge's diff and miss the merge that brought the line"
+  },
+  {
+    "name": "REL8-since-any-output",
+    "file": "scripts/updateNumber.mjs",
+    "old": "    if (!/^[0-9a-f]{40,64}$/.test(since)) return null;",
+    "new": "    if (!since) return null;",
+    "tests": [
+      "test/rel8_updates.test.js"
+    ],
+    "equivalent": true,
+    "why": "equivalent: with --no-patch git prints the commit's hash alone or nothing, so the shape check never refuses an answer the emptiness check lets through - it guards a git that answers otherwise (REL8-merge-patch-read-as-commit is that answer, and dies)"
+  },
+  {
+    "name": "REL8-line-read-loosely",
+    "file": "scripts/updateNumber.mjs",
+    "old": "export const UPDATE_LINE_RE = /^export const UPDATE_LINE = '(\\d+\\.\\d+)';$/m;",
+    "new": "export const UPDATE_LINE_RE = /UPDATE_LINE = '(\\d+\\.\\d+)'/;",
+    "tests": [
+      "test/rel8_updates.test.js"
+    ]
+  },
+  {
+    "name": "REL8-stamp-without-the-number",
+    "file": "scripts/buildTag.mjs",
+    "old": "\\nexport const UPDATE = ${update ? `'${update}'` : 'null'};\\n`",
+    "new": "\\n`",
+    "tests": [
+      "test/rel8_updates.test.js"
+    ]
+  },
+  {
+    "name": "REL8-pause-line-the-commit-alone",
+    "file": "src/ui/pauseWindow.js",
+    "old": "const ver = UPDATE ? `Daggerfall Online ${UPDATE} (${BUILD_TAG})` : `Daggerfall Online ${BUILD_TAG}`;",
+    "new": "const ver = `Daggerfall Online ${BUILD_TAG}`;",
+    "tests": [
+      "test/rel8_updates.test.js"
+    ]
+  },
+  {
+    "name": "REL8-about-without-the-row",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "    ['Update', UPDATE ?? 'a development build'],   // REL8: the player's update number (scripts/updateNumber.mjs)\n",
+    "new": "",
+    "tests": [
+      "test/rel8_updates.test.js"
+    ]
+  },
+  {
+    "name": "REL8-site-built-shallow",
+    "file": ".github/workflows/deploy.yml",
+    "old": "          fetch-depth: 0\n",
+    "new": "          fetch-depth: 1\n",
+    "tests": [
+      "test/rel8_updates.test.js"
+    ]
+  },
+  {
+    "name": "REL8-legs-untold",
+    "file": ".github/workflows/release-desktop.yml",
+    "old": "          DFO_UPDATE: ${{ needs.version.outputs.update }}   # REL8: the version job's number, stamped into the game this leg packs\n",
+    "new": "",
+    "tests": [
+      "test/rel8_updates.test.js"
+    ]
+  },
+  {
+    "name": "REL8-release-named-by-its-tag",
+    "file": ".github/workflows/release-desktop.yml",
+    "old": "          name: ${{ needs.version.outputs.update != '' && format('Update {0}', needs.version.outputs.update) || needs.version.outputs.tag }}",
+    "new": "          name: ${{ needs.version.outputs.tag }}",
+    "tests": [
+      "test/rel8_updates.test.js"
+    ]
+  },
+  {
+    "name": "REL8-version-job-says-none",
+    "file": ".github/workflows/release-desktop.yml",
+    "old": "          echo \"update=$UPDATE\" >> \"$GITHUB_OUTPUT\"\n",
+    "new": "",
+    "tests": [
+      "test/rel8_updates.test.js"
+    ]
+  },
+  {
+    "name": "REL8-news-ignores-the-name",
+    "file": "app/lib/launcherState.cjs",
+    "old": "text: playerNotes(r.body), update: updateOfName(r.name) }))",
+    "new": "text: playerNotes(r.body), update: null }))",
+    "tests": [
+      "test/rel8_updates.test.js"
+    ]
+  },
+  {
+    "name": "REL8-news-name-unanchored",
+    "file": "app/lib/launcherState.cjs",
+    "old": "const UPDATE_NAME_RE = /^Update (\\d+\\.\\d+\\.\\d+)$/;",
+    "new": "const UPDATE_NAME_RE = /Update (\\d+\\.\\d+\\.\\d+)/;",
+    "tests": [
+      "test/rel8_updates.test.js"
+    ]
+  },
+  {
+    "name": "REL8-cache-keeps-anything",
+    "file": "app/lib/launcherState.cjs",
+    "old": "text: n.text, ...(UPDATE_NUMBER_RE.test(n.update) ? { update: n.update } : {}) }))",
+    "new": "text: n.text, ...(n.update ? { update: n.update } : {}) }))",
+    "tests": [
+      "test/rel8_updates.test.js"
+    ]
+  },
+  {
+    "name": "REL8-launcher-heads-the-installer",
+    "file": "app/launcher/launcher.js",
+    "old": "head.append(el('span', 'ver', note.update ? `Update ${note.update}` : `v${note.version}`));",
+    "new": "head.append(el('span', 'ver', `v${note.version}`));",
+    "tests": [
+      "test/rel8_updates.test.js"
+    ]
+  }
+]

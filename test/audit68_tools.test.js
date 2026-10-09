@@ -261,7 +261,8 @@ test('AUDIT 68 X5-verify-deploy-tag-length-bypasses-dirty: the build tag is twel
   mkdirSync(join(d, 'src'));
   const r = node([join(ROOT, 'scripts/buildTag.mjs')], { cwd: d });
   assert.equal(r.status, 0, r.stderr);
-  assert.equal(readFileSync(join(d, 'src/buildTag.js'), 'utf8'), `export const BUILD_TAG = '${git('rev-parse', 'HEAD').slice(0, 12)}';\n`,
+  // PIN MOVED (REL8): the stamp's second line is the player's update number - none in a repository with no line
+  assert.equal(readFileSync(join(d, 'src/buildTag.js'), 'utf8'), `export const BUILD_TAG = '${git('rev-parse', 'HEAD').slice(0, 12)}';\nexport const UPDATE = null;\n`,
     'bare --short sizes it by the object count: 7 in this repo and in CI\'s shallow clone, 9 in a full one');
 });
 

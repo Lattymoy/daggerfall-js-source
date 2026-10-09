@@ -32,7 +32,8 @@ const ofType = (ws, t) => ws.sent.filter((m) => m.t === t);
 
 test('WORLD6b: the wire - a cell is world:<x>,<y> alone (no dungeon, no building, no town, no fourth digit, no third number), at both ends; a room streams foes when it is a world room or a cell; a hit\'s owner is its `to`, a peer id of at most 64, or nothing', () => {
   for (const k of ['world:3,12', 'world:0,0', 'world:999,999']) { assert.equal(isCellRoom(k), true, k); assert.equal(streamsFoes(k), true, k); assert.equal(isWorldRoom(k), false, `${k} is no world room: no host, no memory`); }
-  for (const k of ['world:3', 'world:3,12,1', 'world:1234,1', 'world:1,1234', 'world:-1,1', 'world:a,1', 'dungeon:m187', 'interior:m187.4', 'town:m9', 'chat:global', '', null, undefined, 3]) assert.equal(isCellRoom(k), false, String(k));
+  // PIN MOVED (TV-BEYOND): 'world:-1,1' is the cell west of the Bay now (fb1009_beyond) - a sign twice, or four digits, still none
+  for (const k of ['world:3', 'world:3,12,1', 'world:1234,1', 'world:1,1234', 'world:--1,1', 'world:-1234,1', 'world:1,-1-', 'world:a,1', 'dungeon:m187', 'interior:m187.4', 'town:m9', 'chat:global', '', null, undefined, 3]) assert.equal(isCellRoom(k), false, String(k));
   assert.equal(streamsFoes('dungeon:m187'), true); assert.equal(streamsFoes('interior:m187.4'), true, 'a building is a world room (WORLD6a) and streams its foes by law, though its pool streams none yet'); assert.equal(streamsFoes('town:m9'), false);
   assert.equal(hitOwnerOf({ to: 'bbbb-0002' }), 'bbbb-0002'); assert.equal(hitOwnerOf({ to: 'x'.repeat(40) }), 'x'.repeat(40), 'the wire\'s own id law (AUDIT WORLD6b A5: ID_RE, 4 to 40 of [A-Za-z0-9_-])');
   for (const d of [{ to: '' }, { to: 'a' }, { to: 'x'.repeat(41) }, { to: 'bbbb 0002' }, { to: 7 }, { to: null }, {}, null, undefined, 'bbbb-0002', ['bbbb-0002']]) assert.equal(hitOwnerOf(d), null, JSON.stringify(d));
