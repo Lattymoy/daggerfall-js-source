@@ -8,6 +8,59 @@
 
 Newest first.
 
+**2026-10-09 - AUDIT QUEST-SHELF.** Mac: *"Audit this"* - QUEST-SHELF (`06-Systems/Quest-Arc.md`). One review over
+its commit (fifteen findings), every one read against the tree, the tree untouched while it read (17l's rule). FIXED:
+- **The same quest taken again** (the abandon opens its questor's door) was shadowed by the copy set aside: every
+  lookup by name (`machine.js sharedCandidateNamed` - the syncs, a partner's step, the share's reward) answers a running
+  copy first now, the abandon leaves the party's step only where the copy is the one a share speaks to, and the copy
+  set aside is not reclaimed while the other runs (`twin`, said).
+- **A reclaim** left the behaviours standing on the quest and its talk topics on the resources the restore threw away
+  (a Place mount stood a second copy; `where is` read the old Person): relinked at once, as a resync's are (AUDIT
+  DISC7 C2, AUDIT 68 S29-share-topics).
+- **A named NPC's HOME copy** bound to the quest's Person by the block was put out of sight, and a click on them skipped
+  the broadcast to the running quests: the home copy is marked (`individualHome`) and stands, and only the direct click
+  is the quest's.
+- **The Settings repair** mended quests set aside (their links stood again): it reads running quests only; their
+  markers still follow a moved layout. **The rumor mill** told their rumors: `questAway` keeps them, told by no one.
+- **The lens** forgot a quest set aside, so its reclaim announced its whole journal as news: kept while away. **The
+  Abandoned rows** listed entries as first logged: in the order written (`writtenOrder`), and built for the pause tab
+  alone (`shelvedRail` - the timer's refresh and the chronicle read none of their lines).
+- **The pause tab** moved its selection on a refused press (the words under another quest): it follows the quest only
+  where it went, and a reclaimed quest the player had hidden is on the page again. **A partner's deliberate share** to a
+  copy set aside was answered with silence: said (`RECEIVER_REFUSAL_TEXT.shelved`); only the background sync is quiet.
+- **A partner's envelope** could carry a shelf (THE ENVELOPE IS NOT TRUSTED): stripped on receipt and on a step
+  (`NO_SHELF`). **The button and the press** kept two refusal ladders: one (`machine.js shelveRefusal`), and one raid
+  word (`refuseRaid`). **The topic lists** asked the first info's resource whether its quest was set aside: the quest
+  itself, by id; `isShelved` is the one spelling where a module may import it (the guidance keeps its own light graph).
+Mutants: `questshelf.json` 58 (22 new), all dead; `guide1.json` and `time3.json` re-aimed by content, all dead.
+
+**2026-10-08 - AUDIT FIELD-BUGS 1008.** Mac: *"let's do an audit on everything"* - the branch's seven: SHIP-CREDIT
+WITHDRAWN, MEDIUM-DISTINCT, WED-GATE, KVAR-HOLD, UNSTUCK-OUT, WATER-OFF, MERC-SLOPE. One review over the whole diff
+(nineteen findings), every one read against the tree, the tree untouched while it read (17l's rule). FIXED:
+- **A crash on the boot's load** - the landing's rock check asked `tvSeaY`, a const declared after the boot's
+  `await worldQuickLoad` (its dead zone): declared beside `state` now, pinned before the load (`test/unstuckout.test.js`).
+- **MERC-SLOPE paid nothing** for a lot whose half is one gold - a gold at least where the half and Daggerfall's offer
+  both reach one, as MERC-RISE paid (`test/fb0929d_mercantile.test.js`); and P0.4's pins in `test/realm0.test.js`,
+  weakened to inequalities in the slope's own change, are the law exactly again.
+- **The moved-layout relay** read an unlinked dungeon offline on the settings' size, and every dungeon at every load:
+  only a build that MOVED (`distinct`) is read now, and offline only one a link holds (`questRepair.js
+  relayQuestMovedLayout`); a shared copy arriving is laid too (`questShare.js`); the size test is `portSize`, exported;
+  its pin builds on the producer's own moved build (`test/mediumdistinct.test.js`).
+- **KVAR-HOLD's re-seat** enumerated the new stronghold before its link stood there (the settings' size, then the
+  quest's): fitted after the link moves (`Place.fitSiteToBuild`, machine.js `_reseatMovedOf`); drew near this client's
+  player - every shared copy elsewhere: drawn among the nearest the Hold it leaves; left a `local dungeon` stuck:
+  rescued as the remote one it is; a reveal that throws left the link behind: the reveal is best-effort
+  (`test/kvarhold.test.js`, 3).
+- **`/unstuck` outdoors** moved a body at a helm, aboard, on a deck, mounted or mid-door, and said "no open ground" for
+  every refusal: refused by `playerAfloat`, `isOnFoot` and `modes.transitioning`, each in its own words
+  (`UNSTUCK_OUT_WORDS`); the ring search asks `heldInSolid`, the one probe law.
+LEFT, said: (1) a moved medium dungeon's ONLINE room is still `dungeon:m<id>.m` - its memory from before (30 days at
+most) is the old layout's, and a page from before shares the room until it reloads. A room of its own is a relay version
+(`net/wire.js` WORLD_ROOM, DUNGEON_ROOM_TAGS; ~40 pins of `world176` and a bundle row), so OPEN for Mac. (2) The
+landing's check reads any single skin overhead (an arch, an eave) as a rock - an arrival under one moves to the open
+ground beside it, metres at most where a street is open. (3) The ring search walks every static bucket (no broad phase)
+- one command, or one landing held in a rock, at a time. Mutants: `unstuckout.json` 17, `kvarhold.json` 12,
+`mediumdistinct.json` 18, `fb0929d_mercantile.json` 9 - all dead.
 **2026-10-08 - AUDIT LW-STIR.** Mac: *"Lets audit everything and ensure perfection"*, of LW-STIR - the watch's word at
 the gate and on its rounds, the town's quarrels, haggles and pleas, the street hushing and turning, its small voices.
 Taken up again on main after its lenses never reported: four independent adversarial lenses on the frozen merge (the

@@ -608,3 +608,19 @@ than standing still.
 | LEGACY-HOME | the bloodline in the world: the family home, the seat's townsfolk, their day, Play as by talking (section 10b) | built |
 | AUDIT LEGACY II | the six-lens audit of LEGACY1-4 and LEGACY-HOME (`01-Overview/Audit-Legacy-II.md`) | built |
 | AUDIT LEGACY III | the six-lens audit of the whole arc, server side too (`01-Overview/Audit-Legacy-III.md`) - character-bound weddings, the line's own route bound, the write made from what it read, two copies' persons kept apart, the news on the reader's clock | built |
+
+## WED-GATE - a character who may wed, weds (FIELD BUGS 2026-10-08)
+
+Sahh: *"Characters that have chosen Enduring or Bloodlines as the Project Legacy option cannot seem to marry each
+other"* - two of either model, in a party or not, at a temple of theirs or not: Propose marriage grey every time. The
+world host's `wedCan` (`scenes/world.js`) read the house's answer as `legacyHost?.wedRefusal() ?? 'house'`, and
+`wedRefusal` answers NULL when the one played may wed - so `??` turned every "may" into "no house": the button grey with
+"Only a character of a house (Project Legacy) can wed in the realm.", and the same `can` refused every proposal sent,
+answered every one received `no` and refused every Yes (net/wedSession.js). Since LEGACY7 part three's first line; AUDIT
+LEGACY III's prefix (never lying dead) kept it. Now `legacyHost ? legacyHost.wedRefusal() : 'house'` - 'house' only
+with no house host. The model (Enduring or Bloodlines) was never read by either gate, the realm's included. THE FOUR
+HOSTS: the wedding is the world host's alone (`scenes/exterior.js`, `scenes/worldModes.js` and
+`scenes/dungeonContext.js` carry no realm session). `test/legacy7_wed.test.js` runs `wedCan` out of its own text (the
+null is null, each refusal the house's own, the dead, a death, a relay that cannot carry it, offline);
+`tools/mutants/legacy7wed.json` FB1008-wed-the-null-read-as-no-house, dead. Its standing survivor
+LEGACY7W-partner-dead-or-lineless survives on main as well - not this change's, recorded for its arc.

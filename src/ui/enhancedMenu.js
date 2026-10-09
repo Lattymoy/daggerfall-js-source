@@ -91,7 +91,7 @@
 
 import { fpArm, hasDaggerfallArrows } from '../combat/fpArm.js';
 import { dressStanding } from '../systems/clothingStanding.js';   // DRESS1 (2026-09-30, Discord): the Standing page's Dress line
-import { questRail, journalLines, questTitleOf, QUEST_URGENT_SECONDS, remainWords } from './questRail.js';
+import { questRail, shelvedRail, journalLines, questTitleOf, QUEST_URGENT_SECONDS, remainWords } from './questRail.js';
 import { entryTarget, targetWords, WHERE_TEXT } from './questLens.js';   // GUIDE2: where a quest points, and the way there   // MAC-K2: the ONE quest walk, shared with the chronicle
 import { questTracker, followOn, trackButton } from './questTracker.js';   // GUIDE4: the HUD's card - the Track toggle, and the quest the journal opens on
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1: a tap on the scrim resumes
@@ -320,6 +320,7 @@ let questSel = null;        // PX4: the journal's selected row - 'a:<uid>' | 'f:
 let bountyAbandonArmed = null;   // BOUNTY1: the bounty whose Abandon was pressed once - the second press gives it up
 let journalCleanArmed = null;   // JOURNAL-CLEAN: 'f:<index>' (Remove) | 'clear' (Clear archive) pressed once - the second press acts
 let questShowHidden = false;    // JOURNAL-CLEAN: the rail's "Show hidden" - whether the hidden quests are drawn, in their own section
+let questShelfSaid = null;      // QUEST-SHELF: the last Abandon / Reclaim's words, said under the quest until the next press
 let statsSec = 'character'; // PX6: the Stats page's rail - character | attributes | skills | standing
 let famSec = 'tree';       // LEGACY3: the Family page's rail - tree | house | hall
 let holdSec = 'stable';     // HOLDINGS: the Holdings page's rail - stable | fleet | companions | revenants | stores | collections
@@ -4413,18 +4414,20 @@ function pauseQuests(body) {
   // MAC-K2: THE WALK IS ui/questRail.js's now, because the chronicle
   // needs the same one - the L key's window had no quests in it at all
   // and a second copy of this here is how the two would drift.
-  const { active, finished, hidden } = questRail(hooks.questLog() ?? { active: [], finished: [] });
+  const log = hooks.questLog() ?? { active: [], finished: [] };
+  const { active, finished, hidden } = questRail(log);
+  const shelved = shelvedRail(log);   // QUEST-SHELF: and the quests set aside
   // JOURNAL-CLEAN (2026-09-30, Discord: "Should there be a way to clean both finished and unfinished quests from your
   // journal for a cleaner look?"): the host's tidy-ups (scenes/questBridge.js journalClean - remove / clear the
   // archive, hide / unhide an active quest). A host that hands none draws no buttons rather than buttons that do
   // nothing.
   const clean = hooks.journalClean?.() ?? null;
-  if (!active.length && !finished.length && !hidden.length) {
+  if (!active.length && !finished.length && !hidden.length && !shelved.length) {
     body.append(el('p', 'px-note', 'No active quests.'));
     return;
   }
   const shown = questShowHidden ? hidden : [];
-  const rows = [...active, ...shown, ...finished];
+  const rows = [...active, ...shown, ...shelved, ...finished];
   // GUIDE4: THE JOURNAL OPENS ON THE QUEST THE HUD SHOWS - the tracker's (the one tracked, else the one the journal
   // last changed) - and only then on the first row.
   if (!rows.some((r) => r.key === questSel)) {
@@ -4472,6 +4475,9 @@ function pauseQuests(body) {
   // JOURNAL-CLEAN: the hidden quests, drawn only when asked for, under their own heading - and the toggle that asks,
   // which names how many are hidden so a tidied journal never looks like quests were lost.
   if (questShowHidden && hidden.length) section('Hidden', hidden, ' done');
+  // QUEST-SHELF (2026-10-08, Mac: "All quests should be able to be abandoned and reclaimed"): the quests set aside, each
+  // one press from coming back - a section only while there are any
+  if (shelved.length) section('Abandoned', shelved, ' done');
   section('Archived', finished, ' done');
   const railAct = (label, onclick) => {
     const b = el('button', 'px-qrow done', label);
@@ -4503,7 +4509,8 @@ function pauseQuests(body) {
     const head2 = el('div', 'px-qname');
     head2.append(el('span', 'px-qwing'), el('h3', null, questTitleOf(sel.name)), el('span', 'px-qwing px-flip'));   // PX28
     detail.append(head2);
-    if (sel.entries) {
+    const isShelvedRow = String(sel.key).startsWith('s:');   // QUEST-SHELF: a quest set aside - its clock stopped, nothing to track
+    if (sel.entries && !isShelvedRow) {
       // PX22: NO KIND TAG. PX5 put "Main Quest" / "Side Quest" beside
       // the timer; with the rail always showing three named sections
       // that is the same fact twice, and a quest is not TITLED by its
@@ -4571,7 +4578,27 @@ function pauseQuests(body) {
     if (clean) {
       const acts = el('div', 'px-qacts');
       acts.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;margin:6px 0 8px';
-      if (sel.entries && sel.id != null) {
+      // QUEST-SHELF: a running quest ABANDONS - twice, BOUNTY1's arming (its clocks stop and its questor is free the moment
+      // it goes) - where the quest may be set aside (scenes/questBridge.js canAbandon); one set aside RECLAIMS in one press
+      if (isShelvedRow && sel.id != null && clean.reclaim) {
+        const rc = el('button', 'act', 'Reclaim quest');
+        // its audit: the selection follows the quest only where it went - a refusal is said under the quest it refused
+        rc.onclick = () => { const out = clean.reclaim(sel.id); questShelfSaid = out?.text ?? null; if (out?.ok) questSel = `a:${sel.id}`; render(); };
+        acts.append(rc);
+      } else if (sel.entries && sel.id != null && clean.abandon && clean.canAbandon?.(sel.id)) {
+        const armed = journalCleanArmed === `ab:${sel.id}`;
+        const ab = el('button', 'act', armed ? 'Click again to abandon' : 'Abandon quest');
+        ab.onclick = () => {
+          if (journalCleanArmed !== `ab:${sel.id}`) { journalCleanArmed = `ab:${sel.id}`; render(); return; }
+          journalCleanArmed = null;
+          const out = clean.abandon(sel.id);
+          questShelfSaid = out?.text ?? null;
+          if (out?.ok) questSel = `s:${sel.id}`;
+          render();
+        };
+        acts.append(ab);
+      }
+      if (sel.entries && sel.id != null && !isShelvedRow) {
         const isHidden = hidden.some((q) => q.key === sel.key);
         const hb = el('button', 'act', isHidden ? 'Unhide' : 'Hide from journal');
         hb.onclick = () => {
@@ -4594,6 +4621,7 @@ function pauseQuests(body) {
         acts.append(rb);
       }
       if (acts.childNodes.length) detail.append(acts);
+      if (questShelfSaid) { detail.append(el('p', 'px-note', questShelfSaid)); questShelfSaid = null; }   // QUEST-SHELF: said once
     }
     if (sel.entries) {
       // Active: the LATEST entry is the state of the quest; the trail

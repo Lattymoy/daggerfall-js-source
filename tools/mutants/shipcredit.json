@@ -1,299 +1,65 @@
 [
   {
-    "name": "SC-down-share",
-    "file": "src/systems/banking.js",
-    "old": "export const CREDIT_DOWN_SHARE = 0.2;",
-    "new": "export const CREDIT_DOWN_SHARE = 0;",
-    "tests": [
-      "test/shipcredit.test.js"
-    ]
-  },
-  {
-    "name": "SC-credit-while-the-purse-pays",
-    "file": "src/systems/banking.js",
-    "old": "  if (have >= cost) return { kind: 'none' };\n",
-    "new": "",
-    "tests": [
-      "test/shipcredit.test.js"
-    ]
-  },
-  {
-    "name": "SC-gate-skipped",
-    "file": "src/systems/banking.js",
-    "old": "  if (gate.kind === 'refuse') return { ...gate };\n",
-    "new": "",
-    "tests": [
-      "test/shipcredit.test.js"
-    ]
-  },
-  {
-    "name": "SC-down-unasked",
-    "file": "src/systems/banking.js",
-    "old": "  if (have < down) return { kind: 'refuse', result: TRANSACTION_RESULT.NOT_ENOUGH_GOLD, down };\n",
-    "new": "",
-    "tests": [
-      "test/shipcredit.test.js"
-    ]
-  },
-  {
-    "name": "SC-loan-the-whole",
-    "file": "src/systems/banking.js",
-    "old": "  const loan = Math.max(LOAN_MINIMUM, cost - have);",
-    "new": "  const loan = Math.max(LOAN_MINIMUM, cost);",
-    "tests": [
-      "test/shipcredit.test.js"
-    ]
-  },
-  {
-    "name": "SC-minimum-dropped",
-    "file": "src/systems/banking.js",
-    "old": "  const loan = Math.max(LOAN_MINIMUM, cost - have);",
-    "new": "  const loan = cost - have;",
-    "tests": [
-      "test/shipcredit.test.js"
-    ]
-  },
-  {
-    "name": "SC-cap-unasked",
-    "file": "src/systems/banking.js",
-    "old": "  if (loan > max) return { kind: 'refuse', result: TRANSACTION_RESULT.LOAN_REQUEST_TOO_HIGH, max };\n",
-    "new": "",
-    "tests": [
-      "test/shipcredit.test.js"
-    ]
-  },
-  {
-    "name": "SC-cap-online-unread",
-    "file": "src/systems/banking.js",
-    "old": "  const max = calculateMaxBankLoan(level, online);",
-    "new": "  const max = calculateMaxBankLoan(level);",
-    "tests": [
-      "test/shipcredit.test.js"
-    ]
-  },
-  {
-    "name": "SC-cap-word-ignored",
-    "file": "src/systems/banking.js",
-    "old": "  return online ? Math.floor(cap / EMPIRE_LOAN_DIVISOR) : cap;",
-    "new": "  return isOnlinePage() ? Math.floor(cap / EMPIRE_LOAN_DIVISOR) : cap;",
-    "tests": [
-      "test/shipcredit.test.js"
-    ]
-  },
-  {
-    "name": "SC-no-interest",
-    "file": "src/systems/banking.js",
-    "old": "  account.loanTotal += calculateBankLoanRepayment(loan);\n  account.loanDueDate = nowMinutes + LOAN_REPAY_MINUTES;",
-    "new": "  account.loanTotal += loan;\n  account.loanDueDate = nowMinutes + LOAN_REPAY_MINUTES;",
-    "tests": [
-      "test/shipcredit.test.js"
-    ]
-  },
-  {
-    "name": "SC-no-year",
-    "file": "src/systems/banking.js",
-    "old": "  account.loanTotal += calculateBankLoanRepayment(loan);\n  account.loanDueDate = nowMinutes + LOAN_REPAY_MINUTES;",
-    "new": "  account.loanTotal += calculateBankLoanRepayment(loan);\n  account.loanDueDate = nowMinutes;",
-    "tests": [
-      "test/shipcredit.test.js"
-    ]
-  },
-  {
-    "name": "SC-gold-credited",
-    "file": "src/systems/banking.js",
-    "old": "  account.loanTotal += calculateBankLoanRepayment(loan);\n  account.loanDueDate = nowMinutes + LOAN_REPAY_MINUTES;",
-    "new": "  account.loanTotal += calculateBankLoanRepayment(loan);\n  account.accountGold += loan;\n  account.loanDueDate = nowMinutes + LOAN_REPAY_MINUTES;",
-    "tests": [
-      "test/shipcredit.test.js"
-    ]
-  },
-  {
-    "name": "SC-any-lot",
-    "file": "src/systems/tradeModes.js",
-    "old": "staged.some((it) => CREDIT_ITEM_TEMPLATES.includes(it?.templateIndex))",
-    "new": "staged.length > 0",
-    "tests": [
-      "test/shipcredit.test.js"
-    ]
-  },
-  {
-    "name": "SC-parts-missed",
-    "file": "src/systems/tradeModes.js",
-    "old": "export const CREDIT_ITEM_TEMPLATES = Object.freeze([1320, 1321]);",
-    "new": "export const CREDIT_ITEM_TEMPLATES = Object.freeze([1321]);",
-    "tests": [
-      "test/shipcredit.test.js"
-    ]
-  },
-  {
-    "name": "SC-question-dropped",
-    "file": "src/systems/tradeModes.js",
-    "old": "    { text: 'Buy on credit?', center: true },\n",
-    "new": "",
-    "tests": [
-      "test/shipcredit.test.js"
-    ]
-  },
-  {
-    "name": "SC-loan-unsaid",
-    "file": "src/systems/tradeModes.js",
-    "old": "The bank will lend you ${loan} gold for the boat.",
-    "new": "The bank will lend for the boat.",
-    "tests": [
-      "test/shipcredit.test.js"
-    ]
-  },
-  {
-    "name": "SC-refusal-loan-unnamed",
-    "file": "src/systems/tradeModes.js",
-    "old": "r?.result === CREDIT_REFUSALS.ALREADY_HAVE_LOAN ? 'The bank will not lend: a loan of yours stands here.'",
-    "new": "r?.result === CREDIT_REFUSALS.ALREADY_HAVE_LOAN ? null",
-    "tests": [
-      "test/shipcredit.test.js"
-    ]
-  },
-  {
-    "name": "SC-empire-words-dropped",
-    "file": "src/systems/tradeModes.js",
-    "old": "  if (Array.isArray(empireLines) && empireLines.length) return empireLines.map((text) => ({ text, center: true }));\n",
-    "new": "",
-    "tests": [
-      "test/shipcredit.test.js"
-    ]
-  },
-  {
-    "name": "SC-native-offer-unasked",
+    "name": "SCW-native-offer-back",
     "file": "src/ui/nativeTrade.js",
-    "old": "const credit = this.mode === 'Buy' ? this.hooks.credit?.([...this.stagedForCost], price) ?? null : null;",
-    "new": "const credit = null;",
+    "old": "this.box = { rows: d.textIds.flatMap((id) => this._rows(id, price)), buttons: null };",
+    "new": "this.box = this.hooks.credit?.([...this.stagedForCost], price)?.kind === 'credit' ? { rows: [], buttons: 'YesNo', price, cost, onYes: () => this._confirm(price) } : { rows: d.textIds.flatMap((id) => this._rows(id, price)), buttons: null };",
     "tests": [
       "test/shipcredit.test.js"
     ]
   },
   {
-    "name": "SC-native-credit-uncommitted",
+    "name": "SCW-native-credit-as-proceeds",
     "file": "src/ui/nativeTrade.js",
-    "old": "      : credit;   // SHIP-CREDIT: a purchase on the bank's credit",
-    "new": "      : null;   // SHIP-CREDIT: a purchase on the bank's credit",
+    "old": "? sellProceeds(price, this.hooks.weight?.() ?? {})\n      : null;",
+    "new": "? sellProceeds(price, this.hooks.weight?.() ?? {})\n      : this.hooks.credit?.([...this.stagedForCost], price) ?? null;",
     "tests": [
       "test/shipcredit.test.js"
     ]
   },
   {
-    "name": "SC-native-refusal-unsaid",
-    "file": "src/ui/nativeTrade.js",
-    "old": "...(credit?.kind === 'refuse' ? creditRefusalRows(credit, credit.lines) : [])",
-    "new": "...[]",
-    "tests": [
-      "test/shipcredit.test.js"
-    ]
-  },
-  {
-    "name": "SC-enhanced-offer-unasked",
+    "name": "SCW-enhanced-offer-back",
     "file": "src/ui/enhancedTrade.js",
-    "old": "const credit = mode === 'Buy' ? deps.credit?.([...stagedForCost()], price) ?? null : null;",
-    "new": "const credit = null;",
+    "old": "box = { rows: d.textIds.flatMap((id) => rowsFor(id, price)), buttons: null };",
+    "new": "box = deps.credit ? { rows: [], buttons: 'YesNo', onYes: () => confirmTrade(price) } : { rows: d.textIds.flatMap((id) => rowsFor(id, price)), buttons: null };",
     "tests": [
       "test/shipcredit.test.js"
     ]
   },
   {
-    "name": "SC-enhanced-credit-uncommitted",
+    "name": "SCW-enhanced-credit-as-proceeds",
     "file": "src/ui/enhancedTrade.js",
-    "old": "const proceeds = isSelling ? sellProceeds(price, deps.weight?.() ?? {}) : credit;",
-    "new": "const proceeds = isSelling ? sellProceeds(price, deps.weight?.() ?? {}) : null;",
+    "old": "const proceeds = isSelling ? sellProceeds(price, deps.weight?.() ?? {}) : null;",
+    "new": "const proceeds = isSelling ? sellProceeds(price, deps.weight?.() ?? {}) : deps.credit?.([...stagedForCost()], price) ?? null;",
     "tests": [
       "test/shipcredit.test.js"
     ]
   },
   {
-    "name": "SC-enhanced-refusal-unsaid",
-    "file": "src/ui/enhancedTrade.js",
-    "old": "...(credit?.kind === 'refuse' ? creditRefusalRows(credit, credit.lines) : [])",
-    "new": "...[]",
-    "tests": [
-      "test/shipcredit.test.js"
-    ]
-  },
-  {
-    "name": "SC-host-any-lot",
+    "name": "SCW-host-hook-back",
     "file": "src/scenes/worldModes.js",
-    "old": "credit: (staged, price) => (!lotHasBoat(staged) ? null : lotAllBoats(staged) ? shopCredit(b, price) : { kind: 'refuse', result: CREDIT_BOAT_ALONE }),",
-    "new": "credit: (staged, price) => shopCredit(b, price),",
+    "old": "      commit: (m, staged, price, proceeds) => commitTrade(shelf, m, staged, price, proceeds, identifySpell),\n",
+    "new": "      credit: (staged, price) => null,\n      commit: (m, staged, price, proceeds) => commitTrade(shelf, m, staged, price, proceeds, identifySpell),\n",
     "tests": [
       "test/shipcredit.test.js"
     ]
   },
   {
-    "name": "SC-host-not-asked-again",
+    "name": "SCW-the-purse-pays-a-share",
     "file": "src/scenes/worldModes.js",
-    "old": "      if (proceeds?.kind === 'credit' && (!lotAllBoats(staged) || credit?.kind !== 'credit' || credit.loan !== proceeds.loan)) return false;\n",
-    "new": "",
+    "old": "    if (mode === 'Buy') {\n      deductGold(playerEntity, price);\n",
+    "new": "    if (mode === 'Buy') {\n      deductGold(playerEntity, proceeds?.pay ?? price);\n",
     "tests": [
       "test/shipcredit.test.js"
     ]
   },
   {
-    "name": "SC-host-purse-pays-all",
-    "file": "src/scenes/worldModes.js",
-    "old": "deductGold(playerEntity, credit ? credit.pay : price);",
-    "new": "deductGold(playerEntity, price);",
+    "name": "SCW-a-claim-stamped-at-the-counter",
+    "file": "src/systems/fleet.js",
+    "old": "  if (port) r.port = port;\n  return r;\n}",
+    "new": "  if (port) r.port = port;\n  if (arguments[1]?.credit) r.credit = { ...arguments[1].credit };\n  return r;\n}",
     "tests": [
-      "test/shipcredit.test.js"
-    ]
-  },
-  {
-    "name": "SC-host-loan-untaken",
-    "file": "src/scenes/worldModes.js",
-    "old": "        takeCredit(playerEntity.bankAccounts, credit.region, credit.loan, { nowMinutes: Math.floor(ownMinutes()) });\n",
-    "new": "",
-    "tests": [
-      "test/shipcredit.test.js"
-    ]
-  },
-  {
-    "name": "SC-basket-lent",
-    "file": "src/scenes/worldModes.js",
-    "old": "lotAllBoats(staged) ? shopCredit(b, price) : { kind: 'refuse', result: CREDIT_BOAT_ALONE }",
-    "new": "shopCredit(b, price)",
-    "tests": [
-      "test/shipcredit.test.js"
-    ]
-  },
-  {
-    "name": "SC-commit-basket",
-    "file": "src/scenes/worldModes.js",
-    "old": "(!lotAllBoats(staged) || credit?.kind !== 'credit'",
-    "new": "(credit?.kind !== 'credit'",
-    "tests": [
-      "test/shipcredit.test.js"
-    ]
-  },
-  {
-    "name": "SC-all-boats-any",
-    "file": "src/systems/tradeModes.js",
-    "old": "staged.length > 0 && staged.every((it) => CREDIT_ITEM_TEMPLATES.includes(it?.templateIndex))",
-    "new": "staged.some((it) => CREDIT_ITEM_TEMPLATES.includes(it?.templateIndex))",
-    "tests": [
-      "test/shipcredit.test.js"
-    ]
-  },
-  {
-    "name": "SC-all-boats-empty",
-    "file": "src/systems/tradeModes.js",
-    "old": "staged.length > 0 && staged.every(",
-    "new": "staged.every(",
-    "tests": [
-      "test/shipcredit.test.js"
-    ]
-  },
-  {
-    "name": "SC-boat-alone-unsaid",
-    "file": "src/systems/tradeModes.js",
-    "old": "          : r?.result === CREDIT_BOAT_ALONE ? 'The bank lends on a boat bought by itself.' : null;",
-    "new": "          : null;",
-    "tests": [
-      "test/shipcredit.test.js"
+      "test/fleet.test.js"
     ]
   }
 ]

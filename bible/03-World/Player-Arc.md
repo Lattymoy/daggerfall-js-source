@@ -2254,3 +2254,38 @@ walking and not, 20 seconds each): before, 10 bodies out through a face (7 water
 W0000021, W0000024); after, none.
 PH1's own cases (a floor the body sank under, its head over it) are unchanged and pinned; PH1's source pin re-aimed to
 the renamed line, and DISC28-G's and AUDIT DISC28's `rising` mutants with it.
+
+## UNSTUCK-OUT - out of a mountain's rock (FIELD BUGS 2026-10-08)
+
+SaberGGaming: *"Invisible walls around mountains often gets you stuck. Using the overhead map and traveling around
+caused this ... I had to end up dying to respawn somewhere else cause unstuck didnt work"*; Sahh: *"I got stuck inside a
+mountain during fast travel"* (the shots: the slope drawn over the body). Not the terrain - `heightAt` is a floor, never
+a wall, and the motor's slope limit reads meshes alone. World of Daggerfall's mountain rocks are: meshes scaled by
+hundreds, reaching past their own pixel, added to the collider whole (`world.js` the WoD layouts' `collider.addMesh`),
+and the collider holds BOTH faces of a skin (winding-blind) while the renderer culls the back ones - so from inside a
+rock its walls cannot be seen and hold the body in, ROCK-FREE's own finding for ships, never answered for the player.
+The body gets in by a landing ray that starts inside a rock and stops on its inner face, by a neighbour pixel's rocks
+built round a body already standing there, and by the terrain floor's lift on steep landform ground. And `/unstuck` -
+UNSTUCK1, indoors and underground only - answered "There is nowhere to send you from out here."
+
+- **The nearest open ground** (`player/enterExit.js openGroundNear`, `heldInSolid`): the terrain's own floor at the point
+  and then on rings out (`OPEN_GROUND_RINGS`, 0 to 256 m, a spot every `OPEN_GROUND_STEP` 8 m along each), the first
+  spot where no static solid holds the body's feet or head (the collider's `insideSolid`, its parity law - a rock open
+  beneath holds what stands under its crown) and its torso's sphere touches no mesh (`sphereOverlaps`), above the sea
+  where the host asks (`dry` - the world's sea level, `tvSeaY`); null where nothing is built or no ring is open.
+- **The landing** (`world.js _teleportToPixel`, after TL2, before the arrival is committed): a fast-travel landing held
+  in a rock stands on the nearest open ground instead, said on the console.
+- **`/unstuck` outdoors** is PVPUNSTUCK's (`11-Multiplayer/Wild-Zone.md` section 17, the owner, 2026-10-08: *"3 m
+  forward wont help, to the next town will"* - the walk to the nearest town). UNSTUCK-OUT's own outdoor arm (the body
+  stood on the nearest open ground, refused afloat, mounted or mid-door in its own words) was WITHDRAWN at the merge with
+  main: two `/unstuck`s outdoors, and the owner's word is the later one. The landing's check above is UNSTUCK-OUT's still.
+- **THE FOUR HOSTS**: the streaming world's (`scenes/world.js`) alone - `scenes/exterior.js` is the fixed city (no WoD
+  mountains, no fast travel); `scenes/worldModes.js` and `scenes/dungeonContext.js` have no fast-travel landing.
+
+OPEN for Mac (the investigation's, not built here): a body a neighbour pixel's rocks are built round after it stands is
+not ejected on its own - `/unstuck` (PVPUNSTUCK's walk to the nearest town) is its way out; the Overworld route no
+longer marks rock at all (MOUNTAINS WALKABLE, `11-Multiplayer/Wild-Zone.md` section 19), so its travel can walk into a
+massif; and the collider's floor is the bilinear read where the drawn landform ground is triangles, a gap that can reach
+metres on the steepest ridges. `test/unstuckout.test.js` (2) - the real collider over real closed rock meshes;
+`tools/mutants/unstuckout.json` (7), all dead. AUDIT FIELD-BUGS 1008 (`01-Overview/Audit-Log.md`): `tvSeaY` declared
+beside `state`, before the boot's own load reads it (the outdoor arm's refusals that audit worded went with the arm).

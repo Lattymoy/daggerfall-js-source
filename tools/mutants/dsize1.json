@@ -86,7 +86,7 @@
   {
     "name": "DSIZE1-the-save-stamped-full",
     "file": "src/world/smallerDungeons.js",
-    "old": "  if (isMediumDungeon(dfLocation)) return MEDIUM_DUNGEONS_STATE;   // DSIZE1: the build, at its own value\n",
+    "old": "  if (isMediumDungeon(dfLocation)) return dfLocation.dungeon.distinct === true ? MEDIUM_DISTINCT_STAMP : MEDIUM_DUNGEONS_STATE;\n",
     "new": "",
     "tests": [
       "test/dsize1_mediumdungeons.test.js"
@@ -207,8 +207,8 @@
   {
     "name": "AUDIT-DELVE-E1-nothing-put-back",
     "file": "src/systems/quest/questRepair.js",
-    "old": "  putBackPlacements(quest, env);\n  return true;",
-    "new": "  return true;",
+    "old": "  if (!moved) return false;\n  putBackPlacements(quest, env);\n  return true;",
+    "new": "  if (!moved) return false;\n  return true;",
     "tests": [
       "test/dsize1_mediumdungeons.test.js"
     ]

@@ -75,9 +75,9 @@ collection of the same deed items by the same UIDs, and every one of the mod's l
 it there (`deedInPack` reads the book too):
 
 - **Bought** at a counter, a deed goes to the book (`worldModes.js` commitTrade, after the furnisher delivers), stamped
-  with the loan that bought her (her region's bank) and the port she waits at; the HUD says where, and where to look. A
-  boat bought as parts on credit (a Rowboat off the shelf) is known to the ledger with the same claim (`creditShip` -
-  AUDIT HOLDINGS F5), and a deed off the keyed shelf goes to the book as the counter's does (F8).
+  with the port she waits at; the HUD says where, and where to look. A deed off the keyed shelf goes to the book as the
+  counter's does (F8). (SHIP-CREDIT WITHDRAWN, 2026-10-08: no purchase is on the bank's credit, so none stamps her
+  claim - `titleDeed` takes none, and `creditShip`, F5's stamp on parts, is gone.)
 - **A prize** claimed at sea (`navalHost.js` claimPrize) has her title entered by the world host's `packDeed`; a claim that
   fails to place her forgets her record with her title (`forgetShip` - F8).
 - **An older save's deed** - or the console's - is entered the first time the Fleet page reads the pack (`titleDeedsIn`).
@@ -162,7 +162,9 @@ the bank's credit takes no refit while the loan that bought her stands - her reg
 (AUDIT HOLDINGS F4: the due date was read, and either lifted her claim with the loan unpaid). The claim is cleared for good
 once the Fleet sees that bank owed nothing (`settleCredit`, at each sweep of the page), so a later loan there is no claim
 of hers. Repaid, she is refitted. A boat bought as parts on credit carries it as a deed does (F5). A ship bought before
-the ledger carries no stamp and is free (nothing recorded which loan bought her).
+the ledger carries no stamp and is free (nothing recorded which loan bought her). SHIP-CREDIT WITHDRAWN (2026-10-08,
+Mac: *"Remove ship buying loan from the bank"*; `03-World/Naval-Combat.md`): no ship is bought on credit now, so the
+claim comes only from a save made while it stood (`restoreFleetSaveData`), and holds until that bank is owed nothing.
 
 ## 6. A ship's name
 

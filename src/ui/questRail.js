@@ -191,29 +191,7 @@ export function writtenOrder(q) {
  * more than the lines.
  */
 export function questRail(log, readLines = journalLines) {
-  const active = (log?.active ?? []).map((q, i) => {
-    // READ in the walk's order - the order DFU's logbook reads in, and a
-    // loud read latches the quest's last-referenced resource and place
-    // for the next entry's pronouns - and only then put them in the
-    // order they were written.
-    const read = (q.messages ?? []).map((message, j) => ({ step: q.steps?.[j] ?? null, message, lines: readLines(message, q.steps?.[j] ?? null, q) ?? [] }));
-    const written = writtenOrder(q).map((j) => read[j]).filter((e) => e.lines.length);
-    return {
-      key: `a:${q.id ?? i}`,
-      // QUEST1: the raw id, kept alongside `key` rather than folded only
-      // into that composite string - a consumer wanting to ACT on this
-      // quest (not just render/fold it) needs the id on its own, and
-      // `key`'s "a:" prefix makes it unusable as one without parsing the
-      // string back apart.
-      id: q.id ?? null,
-      name: q.name || `Quest ${i + 1}`,
-      questName: q.questName ?? '',
-      main: isMainQuest(q.questName),
-      clockSeconds: Number.isFinite(q.clockSeconds) ? q.clockSeconds : null,
-      entries: written.map((e) => e.lines),
-      written,
-    };
-  }).filter((q) => q.entries.length);
+  const active = (log?.active ?? []).map((q, i) => railRow(q, i, readLines, 'a')).filter((q) => q.entries.length);
   const finished = (log?.finished ?? []).map(parseFinished).filter((q) => q.lines.length || q.name);
   // JOURNAL-CLEAN (2026-09-30, Discord: "...clean both finished and unfinished quests from your journal"): a quest
   // the player HID (the walk's `hidden` uids, the notebook's list) leaves `active` for `hidden` - the journal faces
@@ -223,4 +201,38 @@ export function questRail(log, readLines = journalLines) {
   if (!hiddenIds.size) return { active, finished, hidden: [] };
   const isHidden = (q) => q.id != null && hiddenIds.has(String(q.id));
   return { active: active.filter((q) => !isHidden(q)), finished, hidden: active.filter(isHidden) };
+}
+
+/** One quest's row off the walk - an active quest's (`a:<id>`) or one set aside (`s:<id>`), its entries READ in the
+ *  walk's order and listed in the order they were written (writtenOrder). */
+function railRow(q, i, readLines, tag) {
+  // READ in the walk's order - the order DFU's logbook reads in, and a
+  // loud read latches the quest's last-referenced resource and place
+  // for the next entry's pronouns - and only then put them in the
+  // order they were written.
+  const read = (q.messages ?? []).map((message, j) => ({ step: q.steps?.[j] ?? null, message, lines: readLines(message, q.steps?.[j] ?? null, q) ?? [] }));
+  const written = writtenOrder(q).map((j) => read[j]).filter((e) => e.lines.length);
+  return {
+    key: `${tag}:${q.id ?? i}`,
+    // QUEST1: the raw id, kept alongside `key` rather than folded only
+    // into that composite string - a consumer wanting to ACT on this
+    // quest (not just render/fold it) needs the id on its own, and
+    // `key`'s "a:" prefix makes it unusable as one without parsing the
+    // string back apart.
+    id: q.id ?? null,
+    name: q.name || `Quest ${i + 1}`,
+    questName: q.questName ?? '',
+    main: isMainQuest(q.questName),
+    clockSeconds: Number.isFinite(q.clockSeconds) ? q.clockSeconds : null,
+    entries: written.map((e) => e.lines),
+    written,
+  };
+}
+
+/** QUEST-SHELF (2026-10-08): the quests set aside - the walk's `shelved` - each with its journal as it stood, for the
+ *  pause tab's Abandoned list and its Reclaim (key `s:<id>`; a quest set aside before it wrote a line still shows, by its
+ *  name). Its audit: the pause tab's alone to ask - the rail's other faces (the timer's refresh, the chronicle) read no
+ *  quest set aside, so they read none of its lines. */
+export function shelvedRail(log, readLines = journalLines) {
+  return (log?.shelved ?? []).map((q, i) => railRow(q, i, readLines, 's'));
 }
