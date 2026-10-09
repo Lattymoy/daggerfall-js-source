@@ -1,9 +1,10 @@
 # The Cloak - the port's own cloak, and what hangs around it
 
-`tools/bakeCloak.mjs` (the bake) on `tools/bakeSteelPlate.mjs`'s machinery + `tools/skinWeights.mjs` (the hang OVER
-its joints) + `src/characters/ownClothingModels.js` (the garments that wear it, the dye's painting) +
+`tools/bakeCloak.mjs` (the bake) on `tools/bakeSteelPlate.mjs`'s machinery + `tools/meshSubdivide.mjs` (Loop
+subdivision, MW-CLOAK2) + `tools/skinWeights.mjs` (the hang OVER its joints) + `src/characters/ownClothingModels.js` (the garments that wear it, the dye's painting) +
 `src/formats/mwItemMap.js` (composeWornArmor) + `src/formats/mwCloakFit.js` (the two fits) + `src/combat/fpArm.js`
-(fitThirdPersonCloak, where the third-person body takes them) (MW-CLOAK1, Mac, 2026-10-09)
+(fitThirdPersonCloak, where the third-person body takes them) (MW-CLOAK1, Mac, 2026-10-09; MW-CLOAK2, smoothed round
+the shoulders, the same day)
 
 > "2. The new cloak and its textures. Note: The new cloak will need bones to animate with the character movement.
 > Ensure theres no clipping with weapons that are stowed"
@@ -15,8 +16,9 @@ to sit outside it and stay visible.
 
 ## The mesh and its bones
 
-One object (`Cube.020 Remeshed.001`), 232 triangles: a single open sheet hung from the shoulders down the back to the
-calves, its normals facing out (the writer makes every shape two-sided, rule 65, so its inside draws too). It came out
+One object (`Cube.020 Remeshed.001`), 232 triangles as exported: a single open sheet hung from the shoulders down the
+back to the calves, two straps over the shoulders, its normals facing out (the writer makes every shape two-sided,
+rule 65, so its inside draws too). It ships smoothed, 3,712 triangles (MW-CLOAK2, below). It came out
 of the steel plate's scene, so it stands on retail's bind as the plate does. It is **skinned at bake time** on the steel
 breastplate's rig - the pelvis, the spine to the neck, the clavicles at its shoulders - and from the waist down it
 **hangs over** that (`jointWeights` mode 'over', MW-EBONY1): each thigh takes a growing share of its own side, from
@@ -24,7 +26,8 @@ nothing at z 86 to 0.85 at the hem, split across 10 units of the middle, so the 
 the leg stepping back goes back with it - without riding a leg outright and tearing at the middle. **Half at the hem
 was tried first and lost**: posed on retail's rig in a stride (the back thigh 30 degrees, its knee 45) the trailing
 greave came through the hem; at 0.85 it stays behind it in a walk, and in that full stride the trailing boot reaches no
-more than 1.3 units into the middle of the hem, where the two thighs split the cloak. No cloth law: the cloak follows
+more than 2.2 units into the middle of the hem, where the two thighs split the cloak (1.3 against the export's coarse
+hem, before MW-CLOAK2 smoothed it). No cloth law: the cloak follows
 the bones.
 
 **Eight paintings, a mesh each.** `cloak_<painting>.nif` names `cloak_<painting>.dds`, for blue, grey, red, dark brown,
@@ -52,8 +55,9 @@ for every pose after, because each moves the geometry where it is authored:
 
 1. **The cloak over what it covers** (`fitCloakOver`). Every point of the body and its clothes (vertices, and each
    edge's interior every unit) that stands behind the cloak's sheet - its front layer where it folds - eases the sheet
-   back past it by `CLOAK_CLEARANCE` (1): the triangle over it moves, its three corners, a welded seam as one, a pass
-   per fold uncovered, no vertex further than `CLOAK_PUSH_LIMIT` (10). The push is the rest pose's, carried into the
+   back past it by `CLOAK_CLEARANCE` (1): the triangle over it moves its whole way and the cloak round it less, to
+   nothing at `CLOAK_EASE_RADIUS` (8, MW-CLOAK2), a welded seam as one, a pass per shortfall or fold uncovered, no
+   vertex further than `CLOAK_PUSH_LIMIT` (10); its normals are then its new shape's. The push is the rest pose's, carried into the
    bind the cloak is skinned from through each vertex's own skin blend (measured by skinning unit steps), so it rides
    the bones. The ebony pauldrons stand 2.5 through the shoulders as baked; the steel ones 1.2.
 2. **Stowed gear against the cloak** (`fitStowedGear`), a holster bone's pieces as one - the scabbard, the weapon in it,
@@ -61,11 +65,11 @@ for every pose after, because each moves the geometry where it is authored:
    - **Slung** on the back (a bone under `Bip01 Spine1` - the greatswords and the bow): **worn over the cloak**, moved
      back until every point of it clears the sheet's back, after turning about its bone within 15 degrees to lie along
      the cloak's fall - the turn needing the least move. Moved straight back, a greatsword stood off the shoulders by
-     the hem's flare (about 9 units); turned, a greatsword rides the cloak 0 to 6 units back, a bow and quiver 7 to 8.
+     the hem's flare (about 9 units); turned, a greatsword rides the cloak 0 to 5 units back, a bow and quiver 7 to 8.
    - **Hung** at the hip (a bone under the pelvis alone - swords, short blades, crossbows): it stays **under** the cloak,
      pitched forward about its bone the least whole degree that keeps every point in front of the sheet. The addon
      hangs a longsword about forty degrees back, its tip through the cloak's side; under a cloak most swords hang 11 to
-     19 degrees nearer plumb (5 to 39 across the addon's blades; a dagger not at all, a crossbow 44 to 52). Pushed back over the cloak instead, it would hang
+     19 degrees nearer plumb (1 to 38 across the addon's blades; a dagger not at all, a crossbow 44 to 52). Pushed back over the cloak instead, it would hang
      some thirty units off the hip. A hip group no pitch within 60 degrees clears is left as it hangs, and the card says
      so.
 
@@ -76,6 +80,39 @@ for every pose after, because each moves the geometry where it is authored:
 **Measured on the addon's own scabbards** (all 71 under `vendor/weapon-sheathing/`, on the steel plate): before the
 fits 57 crossed the cloak - all but the daggers, the tantos, Keening, the goblin club and the crescent blade; after,
 none does - counted as gear edges through cloak triangles. Slung gear also leaves the plate it had been crossing (the cuirass, the pauldrons).
+
+## MW-CLOAK2: smooth round the shoulders
+
+Mac, of MW-CLOAK1's cloak: "I dont like how the cloak isnt smooth around the shoulders". It was not, and the lighting
+could not make it so: the export's 140 vertices stand about five units apart, and over the shoulders, where the sheet
+turns from the back over the top, neighbouring faces bent 14.8 degrees on average (54 creases past 20 over the whole
+cloak), a face stood up to 35 degrees off its own corners' normals, and the outline turned as sharply as 82 degrees at a
+vertex - the straps' ends a ragged run of small triangles. The fit then made it worse where armour came through: it
+moved a triangle's three corners, so each ebony pauldron left a facet in the cloak over its edge.
+
+**The bake smooths it**: two levels of Loop subdivision (`tools/meshSubdivide.mjs`, `CLOAK_SUBDIVISIONS`), 1,949
+vertices - every triangle in four a level, every vertex moved toward the smooth surface the mesh is the net of, the open
+edges relaxed along themselves (3/4 the vertex, 1/8 each rim neighbour) so a ragged edge becomes a curve and never pulls
+into the sheet; the normals the result's own, facing as the export's did; the UVs linear, the painting being cloth. The
+shoulders' mean bend falls to 3.0 degrees, the creases past 20 to six at the left strap's very tip (a fold a unit
+across in the export), the outline's sharpest turn to 24 degrees; the hem stays where it was and the top within a fifth
+of a unit. One level was tried and lost: it left the top corner angular. The weights are the smoothed cloak's own, by
+the same law. Each mesh is 110 KB (eight, one a painting), fetched by URL when worn.
+
+**The fit eases** (`CLOAK_EASE_RADIUS`): a point through the cloak still moves its own triangle the whole way, and now
+the cloak round it by (1 - (d / 8)^2)^2 of that, so the sheet bows over a pauldron's edge; the push's steepest slope
+over the ebony plate is 0.55 a unit, where the corners alone stepped 9.6. The fitted cloak's normals are recomputed from
+its new shape. Measured again on all 71 of the addon's scabbards over the steel and the ebony plate: 57 crossed the
+smoothed cloak as hung, none after, none unresolved.
+
+**What it costs**: the finer hem measures the sprint's back-kick more exactly - with the back thigh 30 degrees and its
+knee 45, the trailing boot reaches 2.2 units into the middle of the hem (1.3 against the coarse one); a walk's still
+does not touch it.
+
+**Proven by** `test/mwcloak2.test.js` (3): one level's arithmetic on a small net (its counts, a flat net staying flat, an
+edge's and an old vertex's rules on the rim and off it, Loop's beta on a bump, the normals and the UVs, a seam and an
+edge three faces share refused); the cloak's shoulders measured before and after; and the fit's push slope, eased and
+not, and its normals, whatever the winding. `tools/mutants/mwcloak2.json` (11, all dead).
 
 **What it does not do.** The cloak's hem swings with the thighs and hip gear rides the pelvis, so in a full stride a
 pitched hip tip and the hem can still meet; the rest fit keeps the standing body and the walk clean, as a skinned cloak

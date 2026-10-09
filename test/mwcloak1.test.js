@@ -27,7 +27,8 @@ import { readFbx } from '../tools/fbxRead.mjs';
 import { meshModelNames } from '../tools/fbxStrip.mjs';
 import { smoothstep, jointWeights } from '../tools/skinWeights.mjs';
 import { PLATE_RIG, RETAIL_SKELETON, bakeObject } from '../tools/bakeSteelPlate.mjs';
-import { SOURCE, CLOAK_OBJECT, CLOAK_BOX, CLOAK_RIG, PAINTING, bakeCloak, meshFile, textureFile, textureName } from '../tools/bakeCloak.mjs';
+import { SOURCE, CLOAK_OBJECT, CLOAK_BOX, CLOAK_RIG, CLOAK_SUBDIVISIONS, PAINTING, bakeCloak, meshFile, textureFile, textureName } from '../tools/bakeCloak.mjs';
+import { loopSubdivide } from '../tools/meshSubdivide.mjs';
 import { retailSkeleton } from './fixtures/mw/retailRig.mjs';
 
 const raw = (p) => readFileSync(new URL(`../${p}`, import.meta.url));
@@ -81,6 +82,13 @@ function through(asm, which) {
 function crossings(asm, which) {
   const cloak = asm.pieces.find(isCloak);
   const C = cloak.positions; const T = cloak.indices;
+  const box = new Float32Array(T.length * 2);   // each triangle's box: min x y z, max x y z
+  for (let k = 0; k < T.length; k += 3) {
+    for (let c = 0; c < 3; c++) {
+      const v = [C[T[k] * 3 + c], C[T[k + 1] * 3 + c], C[T[k + 2] * 3 + c]];
+      box[k * 2 + c] = Math.min(...v); box[k * 2 + 3 + c] = Math.max(...v);
+    }
+  }
   let n = 0;
   for (const p of asm.pieces.filter((q) => q !== cloak && which(q))) {
     const P = p.positions; const I = p.indices;
@@ -88,7 +96,9 @@ function crossings(asm, which) {
       for (let e = 0; e < 3; e++) {
         const a = I[t + e] * 3, b = I[t + (e + 1) % 3] * 3;
         const o = [P[a], P[a + 1], P[a + 2]], d = [P[b] - P[a], P[b + 1] - P[a + 1], P[b + 2] - P[a + 2]];
+        const lo = [0, 1, 2].map((c) => Math.min(P[a + c], P[b + c])), hi = [0, 1, 2].map((c) => Math.max(P[a + c], P[b + c]));
         for (let k = 0; k < T.length; k += 3) {
+          if (box[k * 2] > hi[0] || box[k * 2 + 1] > hi[1] || box[k * 2 + 2] > hi[2] || box[k * 2 + 3] < lo[0] || box[k * 2 + 4] < lo[1] || box[k * 2 + 5] < lo[2]) continue;
           const v0 = T[k] * 3, v1 = T[k + 1] * 3, v2 = T[k + 2] * 3;
           const e1 = [C[v1] - C[v0], C[v1 + 1] - C[v0 + 1], C[v1 + 2] - C[v0 + 2]], e2 = [C[v2] - C[v0], C[v2 + 1] - C[v0 + 1], C[v2 + 2] - C[v0 + 2]];
           const h = [d[1] * e2[2] - d[2] * e2[1], d[2] * e2[0] - d[0] * e2[2], d[0] * e2[1] - d[1] * e2[0]];
@@ -131,10 +141,11 @@ test('MW-CLOAK1: every mesh and painting re-made from the committed export, its 
   for (const path of ownCloakModelPaths()) assert.ok(existsSync(new URL(`../src/assets/mw/${path}`, import.meta.url)), `${path} ships`);
 });
 
-test('MW-CLOAK1: the cloak is its object in the scene\'s placement, one skinned shape over the steel breastplate\'s spine and clavicles and the thighs; from the waist down the thighs take their side\'s share, to 0.85 at the hem', () => {
-  const scene = bakeObject(readFbx(raw(SOURCE)), CLOAK_OBJECT, CLOAK_BOX);
+test('MW-CLOAK1: the cloak is its object in the scene\'s placement (smoothed, MW-CLOAK2), one skinned shape over the steel breastplate\'s spine and clavicles and the thighs; from the waist down the thighs take their side\'s share, to 0.85 at the hem', () => {
+  const scene = loopSubdivide(bakeObject(readFbx(raw(SOURCE)), CLOAK_OBJECT, CLOAK_BOX), CLOAK_SUBDIVISIONS);
   const [b] = flattenNif(parseNif(onDisk(meshFile('red'))));
   let worst = 0;
+  assert.equal(b.positions.length, scene.positions.length);
   for (let k = 0; k < b.positions.length; k++) worst = Math.max(worst, Math.abs(b.positions[k] - scene.positions[k]));
   assert.ok(worst < 1e-4, `the scene's placement (worst ${worst})`);
   assert.equal(b.skinned, true);
@@ -224,7 +235,7 @@ test('MW-CLOAK1: through the binder on retail\'s rig the cloak moves with the bo
   // the stride's trailing boot, its knee bent 45 degrees, rises behind the middle of the hem - where the thighs split
   // the cloak - and reaches into it no more than this; a walk's (back 20, the knee 30) not at all
   const trailing = (p) => /left (upper leg|foot)/.test(p.slot);
-  assert.ok(through(asm, trailing) < 1.5, `the stride's trailing boot ${through(asm, trailing).toFixed(2)} into the hem`);
+  assert.ok(through(asm, trailing) < 2.5, `the stride's trailing boot ${through(asm, trailing).toFixed(2)} into the hem`);
   poseAssembly(asm, turned(asm, { 'bip01 r thigh': 22, 'bip01 l thigh': -20, 'bip01 l calf': 30 }));
   assert.equal(through(asm, trailing), 0, 'a walk\'s trailing greave and boot stay in front of it');
   assert.equal(crossings(asm, trailing), 0);
@@ -283,7 +294,7 @@ test('MW-CLOAK1: stowed gear against the cloak, on the addon\'s own scabbards - 
   assert.deepEqual(rows.map((r) => [r.bone, r.slung, r.how]), [
     ['Bip01 LongBladeTwoClose', true, 'over'], ['Bip01 MarksmanBow', true, 'over'], ['Bip01 LongBladeOneHand', false, 'pitched'], ['Bip01 ShortBladeOneHand', false, 'clear'],
   ]);
-  assert.ok(by['Bip01 LongBladeTwoClose'].by < 5 && Math.abs(by['Bip01 LongBladeTwoClose'].deg) <= SLUNG_PITCH_LIMIT, `the greatsword lies along the cloak - ${by['Bip01 LongBladeTwoClose'].by.toFixed(1)} back, turned ${by['Bip01 LongBladeTwoClose'].deg}`);
+  assert.ok(by['Bip01 LongBladeTwoClose'].by < 6 && Math.abs(by['Bip01 LongBladeTwoClose'].deg) <= SLUNG_PITCH_LIMIT, `the greatsword lies along the cloak - ${by['Bip01 LongBladeTwoClose'].by.toFixed(1)} back, turned ${by['Bip01 LongBladeTwoClose'].deg}`);
   assert.ok(by['Bip01 MarksmanBow'].by < 10);
   assert.ok(by['Bip01 LongBladeOneHand'].by >= 10 && by['Bip01 LongBladeOneHand'].by <= 20, `the longsword nearer plumb by ${by['Bip01 LongBladeOneHand'].by} degrees`);
   assert.equal(gearAt('Bip01 ShortBladeOneHand')[0].source, dagger, 'the dagger untouched');

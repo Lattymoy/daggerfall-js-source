@@ -18,12 +18,19 @@
 //   the leg stepping back going back with it, without riding a leg outright and tearing at the middle. Half at the hem
 //   was tried first and lost: posed on retail's rig in a stride (the back thigh 30 degrees, its knee 45), the trailing
 //   calf came through the hem; at 0.85 the hem stays behind it.
+//
+//   SMOOTHED, TWO LEVELS (MW-CLOAK2, Mac: "I dont like how the cloak isnt smooth around the shoulders"). The export is
+//   140 vertices about five units apart - over the shoulders, where it turns from the back over the top, a face stood
+//   up to 35 degrees off its corners' normals, the silhouette the polygon and the straps' ends a ragged run of small
+//   triangles. Two levels of Loop subdivision (tools/meshSubdivide.mjs) round the turn and relax the open edges into
+//   curves, 1,949 vertices; the weights are the subdivided cloak's own, and so is every fit after (mwCloakFit.js).
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { readFbx } from './fbxRead.mjs';
 import { mipChain, writeDds } from './meshTexture.mjs';
 import { skinnedMeshesToNif } from './nifWrite.mjs';
 import { jointWeights } from './skinWeights.mjs';
+import { loopSubdivide } from './meshSubdivide.mjs';
 import { readPng } from './pngIO.mjs';
 import { isMain } from './lib/isMain.mjs';
 import { PLATE_RIG, RETAIL_SKELETON, plateBind, rigSegments, bakeObject } from './bakeSteelPlate.mjs';
@@ -34,6 +41,8 @@ export const SOURCE = 'src/assets/mw/source/Cloak.fbx';
 /** The cloak's object in it, and the scene box it was read at. */
 export const CLOAK_OBJECT = 'Cube.020 Remeshed.001';
 export const CLOAK_BOX = Object.freeze([Object.freeze([-23.64, -21.66, 29.28]), Object.freeze([25.85, -1.35, 117.56])]);
+/** MW-CLOAK2: the levels of Loop subdivision it is smoothed by (tools/meshSubdivide.mjs) - 140 vertices to 1,949. */
+export const CLOAK_SUBDIVISIONS = 2;
 
 /** Each painting, as committed. The export names one, `capthing\red.png` - Mac's red. */
 export const PAINTING = Object.freeze(Object.fromEntries(CLOAK_PAINTINGS.map((p) => [p, `src/assets/mw/source/Cloak_${p.split('_').map((w) => w[0].toUpperCase() + w.slice(1)).join('_')}.png`])));
@@ -50,9 +59,9 @@ export const CLOAK_RIG = Object.freeze({
   hang: Object.freeze({ mode: 'over', root: 'Bip01 Pelvis', legs: Object.freeze([LEFT_THIGH.name, RIGHT_THIGH.name]), top: 86, bottom: 29.28, share: 0.85, centre: 10 }),
 });
 
-/** The cloak's mesh in the scene's placement, its weights in `bind` (plateBind), and its bones at their binds. */
+/** The cloak's mesh in the scene's placement, smoothed, its weights in `bind` (plateBind), and its bones at their binds. */
 export function cloakRig(tree, bind) {
-  const mesh = bakeObject(tree, CLOAK_OBJECT, CLOAK_BOX);
+  const mesh = loopSubdivide(bakeObject(tree, CLOAK_OBJECT, CLOAK_BOX), CLOAK_SUBDIVISIONS);
   const weights = jointWeights(mesh.positions, rigSegments(CLOAK_RIG.bones, bind), { hang: CLOAK_RIG.hang });
   return { mesh, weights, bones: CLOAK_RIG.bones.map((b) => ({ name: b.name, bind: bind.get(b.name) })) };
 }

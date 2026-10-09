@@ -8,9 +8,11 @@
 // cloak's bind was taken in) and kept for every pose after, because each moves the geometry where it is AUTHORED:
 //
 //   1. THE CLOAK OVER WHAT IT COVERS (fitCloakOver). Every vertex of the body and its clothes that stands behind the
-//      cloak's sheet - through it - eases the sheet back past it by CLOAK_CLEARANCE: the triangle over it moves back,
-//      its three corners, a welded seam as one. The push is the rest pose's, carried into the bind the cloak is skinned
-//      from (the inverse of each vertex's own skin blend), so it rides the bones as the cloak does.
+//      cloak's sheet - through it - eases the sheet back past it by CLOAK_CLEARANCE: the cloak round it moves back,
+//      the whole at it and less out to CLOAK_EASE_RADIUS (MW-CLOAK2: a triangle's three corners alone left a facet
+//      over each pauldron's edge), a welded seam as one, and its normals are its new shape's. The push is the rest
+//      pose's, carried into the bind the cloak is skinned from (the inverse of each vertex's own skin blend), so it
+//      rides the bones as the cloak does.
 //
 //   2. STOWED GEAR AGAINST THE CLOAK (fitStowedGear), a holster bone's pieces as one - the scabbard, the weapon in it,
 //      the quiver's arrows:
@@ -35,6 +37,10 @@ import { placeAtBone, placeNormalsAtBone } from './mwFirstPerson.js';
 export const CLOAK_CLEARANCE = 1;
 /** The furthest a cloak vertex is eased back - past it, what is under the cloak is not a body. */
 export const CLOAK_PUSH_LIMIT = 10;
+/** MW-CLOAK2: how far round a point that comes through it the cloak eases back, in units - the push falls from the
+ *  whole at the point to nothing here, (1 - (d / r)^2)^2, so the sheet bows over a pauldron's edge rather than
+ *  creasing at a triangle's. */
+export const CLOAK_EASE_RADIUS = 8;
 /** The furthest hip-hung gear is pitched, in degrees. */
 export const HIP_PITCH_LIMIT = 60;
 /** The furthest slung gear is pitched to lie along the cloak's fall, either way, in degrees. */
@@ -138,7 +144,7 @@ function solve3(m, v) {
  * FIT 1: the cloak eased back over every piece `isUnder` names. Returns `{ pushed, most }` - how many of the cloak's
  * vertices moved and the furthest, in the rest pose's units - or null when the body wears no cloak.
  */
-export function fitCloakOver(assembly, { isCloak, isUnder, clearance = CLOAK_CLEARANCE, limit = CLOAK_PUSH_LIMIT }) {
+export function fitCloakOver(assembly, { isCloak, isUnder, clearance = CLOAK_CLEARANCE, limit = CLOAK_PUSH_LIMIT, radius = CLOAK_EASE_RADIUS }) {
   const cloaks = assembly.pieces.filter((p) => p.kind === 'skinned' && isCloak(p));
   if (!cloaks.length) return null;
   const rest = restPose(assembly);
@@ -151,18 +157,33 @@ export function fitCloakOver(assembly, { isCloak, isUnder, clearance = CLOAK_CLE
     const total = new Float64Array(n);
     // how a bind-space step moves each vertex in the rest pose: the skin blend's own linear part, measured
     const posedOf = (pos) => rest.place(cloak, { ...cloak.batch, positions: pos });
-    // a pass per fold uncovered: pushing the front layer back can leave a second layer in front
-    for (let pass = 0; pass < 4; pass++) {
+    // a pass per shortfall: the ease gives a point's own triangle a little under the whole (its corners stand off
+    // the point), and pushing the front layer back can leave a second layer in front
+    for (let pass = 0; pass < 12; pass++) {
       const posed = posedOf(bind);
       const sheet = cloakSheet(posed, cloak.indices);
       const need = new Float64Array(n);
+      const through = [];
       for (const u of under) {
         for (let v = 0; v < u.length; v += 3) {
           const cell = sheet.get(cellKey(u[v], u[v + 2]));
           if (!cell) continue;
           const over = cell.front - (u[v + 1] - clearance);
           if (over <= 1e-4) continue;
+          through.push(u[v], u[v + 2], over, cell.frontTri);
+          // its own triangle the whole way, so every pass makes headway
           for (let k = 0; k < 3; k++) { const w = rep[cloak.indices[cell.frontTri + k]]; if (over > need[w]) need[w] = over; }
+        }
+      }
+      // and the cloak round it eased, by the vertex's own distance in the rest pose's (x, z)
+      for (let v = 0; v < n; v++) {
+        if (rep[v] !== v) continue;
+        const x = posed[v * 3], z = posed[v * 3 + 2];
+        for (let k = 0; k < through.length; k += 4) {
+          const d2 = ((x - through[k]) ** 2 + (z - through[k + 1]) ** 2) / (radius * radius);
+          if (d2 >= 1) continue;
+          const ease = through[k + 2] * (1 - d2) ** 2;
+          if (ease > need[v]) need[v] = ease;
         }
       }
       let any = false;
@@ -181,11 +202,38 @@ export function fitCloakOver(assembly, { isCloak, isUnder, clearance = CLOAK_CLE
     }
     for (let v = 0; v < n; v++) if (rep[v] === v && total[v] > 0) { pushed += 1; most = Math.max(most, total[v]); }
     if (total.some((t) => t > 0)) {
-      cloak.batch = { ...cloak.batch, positions: bind };
+      // MW-CLOAK2: the normals its new shape has, turned as the old ones faced
+      const normals = cloak.batch.normals ? faceAs(vertexNormals(bind, cloak.indices, rep), cloak.batch.normals) : cloak.batch.normals;
+      cloak.batch = { ...cloak.batch, positions: bind, normals };
       if (assembly.pose && assembly.mats) assembly.fns.skinBatch(cloak.batch, assembly.skeleton, assembly.pose, assembly.mats, cloak.positions, cloak.normals ?? null);
     }
   }
   return { pushed, most };
+}
+
+/** Area-weighted vertex normals, a welded group one normal (`rep`, weldOf's), unit length, the winding's way. */
+function vertexNormals(positions, indices, rep) {
+  const N = new Float64Array(positions.length);
+  for (let t = 0; t < indices.length; t += 3) {
+    const a = indices[t] * 3, b = indices[t + 1] * 3, c = indices[t + 2] * 3;
+    const e1x = positions[b] - positions[a], e1y = positions[b + 1] - positions[a + 1], e1z = positions[b + 2] - positions[a + 2];
+    const e2x = positions[c] - positions[a], e2y = positions[c + 1] - positions[a + 1], e2z = positions[c + 2] - positions[a + 2];
+    const f = [e1y * e2z - e1z * e2y, e1z * e2x - e1x * e2z, e1x * e2y - e1y * e2x];
+    for (const v of [indices[t], indices[t + 1], indices[t + 2]]) { const w = rep[v] * 3; N[w] += f[0]; N[w + 1] += f[1]; N[w + 2] += f[2]; }
+  }
+  const out = new Float32Array(positions.length);
+  for (let v = 0; v < rep.length; v++) {
+    const w = rep[v] * 3; const l = Math.hypot(N[w], N[w + 1], N[w + 2]) || 1;
+    out[v * 3] = N[w] / l; out[v * 3 + 1] = N[w + 1] / l; out[v * 3 + 2] = N[w + 2] / l;
+  }
+  return out;
+}
+/** `fresh` turned to face as `old` does (the sum over the vertices decides - a mesh's normals face one way). */
+function faceAs(fresh, old) {
+  let s = 0;
+  for (let k = 0; k < fresh.length; k++) s += fresh[k] * old[k];
+  if (s < 0) for (let k = 0; k < fresh.length; k++) fresh[k] = -fresh[k];
+  return fresh;
 }
 
 /** Is `ref` under the node named `name` (lower case) in this skeleton? */
