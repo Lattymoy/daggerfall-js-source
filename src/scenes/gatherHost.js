@@ -312,6 +312,36 @@ export function createGatherHost(deps) {
     }
     s.batches = [];
   }
+  /** ROCK-NEAR (FIELD BUGS 2026-10-09b, "Motherlode ore veins can spawn inside rocks!"): the rock pieces the eight BUILT
+   *  neighbours stand (their `rocks`, world.js's pixelRocks) that reach into `entry`'s pixel, in its own frame. A World of
+   *  Daggerfall field's pieces are hills scaled by hundreds and reach far past their pixel's edge (FOOT_INSET_M); a node
+   *  was asked only of its own pixel's, so one stood under a neighbour's piece - lit, on the compass, and past every look
+   *  (its ray is the rock's). The frame's offset is the two pixels' own placements', whichever way the axes run. */
+  function nearRocks(entry) {
+    const out = [];
+    const built = deps.built();
+    const me = deps.pixelTranslation(entry.px, entry.py, [0, 0, 0]);
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const n = (dx || dy) ? built.get(`${entry.px + dx},${entry.py + dy}`) : null;
+        if (!n?.rocks?.length) continue;
+        const t = deps.pixelTranslation(n.px, n.py, [0, 0, 0]);
+        const ox = t[0] - me[0], oz = t[2] - me[2];
+        for (const b of n.rocks) {
+          const s = [b[0] + ox, b[1], b[2] + oz, b[3] + ox, b[4], b[5] + oz];
+          if (s[3] > 0 && s[0] < TERRAIN_SIZE && s[5] > 0 && s[2] < TERRAIN_SIZE) out.push(s);
+        }
+      }
+    }
+    return out;
+  }
+  /** ROCK-NEAR: does any of `entry`'s rock pieces reach into pixel (px, py) - its neighbour, stood again when so. */
+  function reachesInto(entry, px, py) {
+    if (!entry?.rocks?.length) return false;
+    const me = deps.pixelTranslation(px, py, [0, 0, 0]), t = deps.pixelTranslation(entry.px, entry.py, [0, 0, 0]);
+    const ox = t[0] - me[0], oz = t[2] - me[2];
+    return entry.rocks.some((b) => b[3] + ox > 0 && b[0] + ox < TERRAIN_SIZE && b[5] + oz > 0 && b[2] + oz < TERRAIN_SIZE);
+  }
   async function stand(entry) {
     if (!entry?.samples || !entry.tilemap) return;
     const key = `${entry.px},${entry.py}`;
@@ -327,7 +357,7 @@ export function createGatherHost(deps) {
     const confirmed = fact?.state === 'confirmed' || fact?.state === 'disputed';
     // a pixel the witnesses confirmed as something else stands nothing: nothing here could be gathered
     if (confirmed && (fact.climate !== info.climate || fact.region !== info.region)) { bare(); return; }
-    const ctx = { entry, px: entry.px, py: entry.py, day, info, confirmed, specs, book };
+    const ctx = { entry, px: entry.px, py: entry.py, day, info, confirmed, specs, book, near: nearRocks(entry) };   // ROCK-NEAR
     rec.nodes = kinds.flatMap((k) => k.nodesOf(ctx).map((n) => ({ ...n, kind: k.id })));
     // SETTLE-STAND (FIELD BUGS 2026-10-01): a node of the ground on a settlement's ground is never worked there - its act
     // refuses it, and SETTLE-SAID's prompt said why - so it stands nowhere: no picture, no glow, no compass mark
@@ -660,7 +690,17 @@ export function createGatherHost(deps) {
 
   return {
     /** A pixel built: its nodes stood. */
-    onBuilt(entry) { if (entry) stand(entry); },
+    onBuilt(entry) {
+      if (!entry) return;
+      stand(entry);
+      // ROCK-NEAR: a neighbour stood before this pixel was built never asked its pieces - stood again where they reach in
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const s = (dx || dy) ? stood.get(pixelKey(entry.px + dx, entry.py + dy)) : null;
+          if (s && deps.built().get(pixelKey(s.entry.px, s.entry.py)) === s.entry && reachesInto(entry, s.entry.px, s.entry.py)) stand(s.entry);
+        }
+      }
+    },
     /** PROF2b: a pixel's nodes stood again, where it is built - a Motherlode risen on it, gone or spent. */
     restandAt(px, py) { restandAt(px, py); },
     /** A pixel torn down: its batches went with it (they are in its list); forgotten here. */

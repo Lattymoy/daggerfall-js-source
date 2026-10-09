@@ -409,7 +409,7 @@
   {
     "name": "DISC28-K-early-return-again",
     "file": "src/systems/discovery.js",
-    "old": "  if (renamed == null || renamed === rec.displayName) return false;",
+    "old": "  if (!renamed || renamed === rec.displayName) return false;   // HALL-STAMP: and a nameless Place names nothing",
     "new": "  return false;",
     "tests": [
       "test/disc28_names.test.js"
