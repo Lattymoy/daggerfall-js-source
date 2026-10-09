@@ -423,6 +423,12 @@ test('INT9 THE RELAY, THE FIGHT: a strike in the zone is the referee\'s - routed
   const whole = siegeVitality(10), fist = siegeBlowMax(-1, 0);
   for (const ws of [a, b]) assert.deepEqual(refs(ws, 'hp').at(-1), { t: 'wref', k: 'hp', by: 'peer-0001', to: 'peer-0002', d: fist, r: SIEGE_HIT.Melee, h: [['peer-0001', whole, whole], ['peer-0002', whole - fist, whole]] });
   assert.equal(b.sent.filter((m) => m.t === 'wild' && m.data && (m.data.k === 'strike' || m.data.k === 'spell')).length, 0, 'routed to nobody: the defender resolves nothing');
+  // AUDIT INT7 (the pins' own): the zone's referee clips a weapon's blow to the arms the striker's token signs
+  const armed = await join('peer-0006', 0, { look: LOOK([{ templateIndex: 123, group: 'Weapons', equipSlot: 19, material: 9 }]), wa: [5, 0] });
+  await say(armed, { k: 'zone', z: 1 });
+  step(300);
+  await say(armed, { k: 'strike', to: 'peer-0002', n: 1, w: { t: 123, m: 9, c: 100 }, by: 'melee', p: W(0), d: 999 });
+  assert.equal(refs(armed, 'hp').at(-1)?.d, siegeBlowMax(123, 9, [5, 0]), 'a Daedric Dai-Katana, struck at the reach its pack signs');
   const f = await fell(a, 'peer-0002');
   assert.ok(f, 'B fell');
   assert.deepEqual([f.id, f.by], ['peer-0002', 'peer-0001']);
@@ -541,7 +547,7 @@ test('INT9 (AUDIT) THE RELAY, A FALL KEPT: a fall waiting on its pick is kept in
   const v = await verifyWildReceipt(refs(c, 'rc').at(-1).rc, relayKp.publicKey, { subtle, nowS: T + 600 });
   assert.deepEqual([v.claims.w, v.claims.wt], [1, [123, 9]]);
   // no realm character: no fighter
-  const n = await join('peer-0005', 2, { rc: 0, ci: undefined });
+  const n = await join('peer-0005', 2, { rc: undefined, ci: undefined });   // a token with no realm word at all (the door admits it)
   await say(n, { k: 'zone', z: 1 });
   assert.equal(r.room._wildRef.fighters.has('acct-peer-0005'), false);
   // a socket gone
@@ -610,8 +616,15 @@ test('INT9 THE SERVICE, THE FALLEN\'S OWN ACT: the drop taken off the judged rec
   assert.equal(R.at().seq, at.seq + 1, 'nothing moved twice');
   const row = svc.env.DB._raw.prepare('SELECT player, killer, wi, burnt, wm FROM wild_falls WHERE r = ?').get('0123456789ab');
   assert.deepEqual({ ...row }, { player: ria.id, killer: bo.id, wi: 0, burnt: 0, wm: CELL });
+  svc.env.DB._raw.prepare('UPDATE wild_falls SET oi = oi - 10').run();
+  const later = await verifyOrder((await fall(svc, ria, { receipt: rc, realm: R.at() })).body.order, svc.identityPublic, { subtle, nowS: nowS(), kind: 'remains' });
+  assert.equal(later.claims.i, v.claims.i - 10, 'asked later inside its minute: issued at its first minting, never now');
   svc.env.DB._raw.prepare('UPDATE wild_falls SET oi = oi - ?').run(ORDER_TTL_S);
   assert.equal((await fall(svc, ria, { receipt: rc, realm: R.at() })).body.order, null, 'its minute gone: no order at all');
+  // a receipt names its character: the fallen's act at another of its characters' records is refused
+  const R2 = await seatRealm(svc.env, ria.secret, 'Second', record());
+  const other = await fall(svc, ria, { receipt: await receipt({ r: 'aaaaaaaaaaaa' }), realm: R2.at() });
+  assert.deepEqual([other.status, other.body.error], [403, 'not-yours'], 'never another character\'s record');
 });
 
 test('INT9 (AUDIT) THE SERVICE, THE DROP\'S LEDGER: every valuable piece dropped lies in the remains under a FRESH id, and the id it had is written down as the fallen\'s own copy - a game that kept the piece holds a copy that moves by no route, and whoever takes it up holds it clean (it charged the taker); a crafted piece keeps its craft\'s key, written down the same; the save two back dropped (mutants: the old id in the remains; no copy written; the old save left)', async () => {
@@ -628,6 +641,20 @@ test('INT9 (AUDIT) THE SERVICE, THE DROP\'S LEDGER: every valuable piece dropped
   assert.equal(svc.env.DB._raw.prepare('SELECT COUNT(*) AS n FROM item_uids WHERE uid = ?').get(sword.uid).n, 0, 'the fresh id, nobody\'s yet');
   assert.ok(prevObj() == null || svc.env.SAVES._map.has(prevObj()), 'the row names no object that is gone');
   assert.ok(rd('server-account/src/wild.js').includes('await dropObjects(ctx.bucket, [moved.prev]);'), 'the save two back dropped, as every act drops it');
+});
+
+test('INT9 (AUDIT) THE SERVICE, EVERY CANDIDATE ASKED: the ledger is asked of every piece the death could take, never a dry run\'s fitted few - a barred piece in the fit lets in one past it, and that one is asked too (mutants: the fitted few asked)', async () => {
+  const svc = await standService();
+  const ria = await svc.registered('Riadne');
+  // ninety-seven magic blades, each worth less than the one before: the gold and ninety-five of them fit one remains
+  const blades = Array.from({ length: 97 }, (_, i) => weapon(113 + (i % 9), { uid: (0xb000 + i).toString(16).padStart(16, '0'), magic: true, value: 5000 - i }));
+  const R = await seatRealm(svc.env, ria.secret, 'Riadne', { name: 'Riadne', level: 9, goldPieces: 100, items: blades, wagonItems: [] });
+  const A = blades[0].uid, X = blades[95].uid;   // the most worth, and the first past the dry run's fit
+  for (const uid of [A, X]) svc.env.DB._raw.prepare("INSERT INTO item_uids (uid, player, char_id, seen_seq, state, fp, at) VALUES (?, 'someone', 'rffffffffffffffffffff', 1, 'held', ?, 1)").run(uid, `${blades[uid === A ? 0 : 95].templateIndex}:0`);
+  const res = await svc.call('/v1/wild/fall', { n: '00112233445566aa', realm: R.at(), room: CELL }, ria.secret);
+  assert.equal(res.status, 200, JSON.stringify(res.body));
+  assert.deepEqual([...res.body.kept].sort(), [A, X].sort(), 'both barred: the one in the fit, and the one it let in');
+  assert.equal(res.body.took.some((x) => x.u === X), false, 'the one past the fit never taken');
 });
 
 test('INT9 THE SERVICE, THE KILLER\'S SEIZURE: the killer carries the receipt only once WILD_FALL_GRACE_S has gone by - then the record is taken where it stands and its lease cleared (whatever tab held it plays a record that moved under it); a stranger carries nothing (mutants: the grace unread; the lease kept; a stranger\'s carry)', async () => {

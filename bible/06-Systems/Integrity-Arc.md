@@ -6,7 +6,8 @@ points, or using fatigue; do infinite damage in PvE and max damage in PvP; spawn
 you want". Read against the code, then: "I want to do everything and do it properly".
 
 **Status: lane 1 (the economy, INT1-INT6) BUILT and AUDITED (2026-10-09, section 4b: five reviews, every fix pinned) and
-merged (#730); lane 2 (PvP refereed everywhere, INT7-INT10) BUILT on its branch the same day (section 5).** Lanes 3-4
+merged (#730); lane 2 (PvP refereed everywhere, INT7-INT10) BUILT and AUDITED on its branch the same day (section 5,
+5b).** Lanes 3-4
 are the plan below, each its own pull request (Mac: "A PR per lane").
 
 ## 1. What the report found, read against the code
@@ -467,11 +468,12 @@ the clock, and the legacy record held to its own law.
   template, a peer's piece in its group), the checkpoint's answer carrying `tradeHeld`, the last clean save kept past the
   rotation, the race pin's join moved to the checkpoint's batch, the version pins at acct100. The account Worker bundles the
   item law's graph (`.github/workflows/account-deploy.yml` lists it, `test/accountdeploy.test.js` holds the list).
-- **INT7-INT10 (2026-10-09): lane 2, PvP refereed everywhere - built.** Migration `0098_referee` (the arms on the row, a
+- **INT7-INT10 (2026-10-09): lane 2, PvP refereed everywhere - built, and audited (5b).** Migration `0098_referee` (the arms on the row, a
   duel's receipt's bout id, a death's drop's falls); `ACCOUNT_VERSION` acct102 and `RELAY_VERSION` world183 (acct101 and
   migration 0097 on its branch, renumbered past main's BAG-CRAFT at the merge). Pins: `test/int7_arms.test.js`,
   `int8_duel_ref.test.js`, `int9_wild_ref.test.js`, `int10_spells.test.js`. Mutants `tools/mutants/int_lane2.json`:
-  MUTANT_COUNT; the records INT7-INT10 moved re-aimed by content (38 - 36 dead, 1 equivalent as recorded,
+  122, 120 dead and 2 equivalent as recorded (a fallen struck - the referee refuses it itself; a coin put back that always
+  fits) - its audit's (5b) among them, each survivor of the run pinned since; the records INT7-INT10 moved re-aimed by content (38 - 36 dead, 1 equivalent as recorded,
   `test/relayversion.test.js`'s own judged with its row), fifteen of DUEL1's retired with their laws. Pins moved (each
   marked PIN MOVED where it stands): DUEL1's and WILD1's defender, gift and loser's report, the duel's heal and trail,
   the deposit that needs the service's order, the token's `wa`, the order kinds, the hour's sweeps (twenty), the version

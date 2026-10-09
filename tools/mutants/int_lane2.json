@@ -564,6 +564,8 @@
     "file": "src/systems/wildDropLaw.js",
     "old": "      if (cartCoin) cartCoin.stackCount = Math.max(0, Math.floor(cartCoin.stackCount ?? 0)) + gold.cart;\n      gold.purse = 0; gold.cart = 0;",
     "new": "      entity.goldPieces += gold.cart;\n      gold.purse = 0; gold.cart = 0;",
+    "equivalent": true,
+    "why": "the gold is the second record a death takes, after one piece of at most WILD_RECORD_BYTES_MAX (4 KiB), and a remains holds WILD_REMAINS_ITEMS_MAX (96) records and WILD_REMAINS_BYTES_MAX (100 KiB): the gold always fits, so its put-back never runs - kept as the law's word on a coin that would not fit; the cart's share out of the cart is pinned where the gold is taken (test/int9_wild_ref.test.js, the poor pack).",
     "tests": [
       "test/int9_wild_ref.test.js"
     ]

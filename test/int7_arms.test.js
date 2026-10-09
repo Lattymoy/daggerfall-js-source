@@ -53,6 +53,7 @@ test('INT7 THE LAW: a weapon\'s reach is its DFU top and its material\'s modifie
 });
 
 test('INT7 THE CLIPS: a siege\'s blow and an arena\'s never past the striker\'s signed reach, a shaft only from a signed bow; a fist every fighter\'s own; a token from before the arms the old caps (mutants: the clip unread at either referee; the bow unread; a fist clipped)', () => {
+  assert.equal(siegeBlowMax(9999, 0), 0, 'AUDIT INT7 (the pins\' own): a template no table names reaches nothing');
   assert.equal(siegeBlowMax(123, 9, [16, 0]), (16 + SIEGE_BONUS_MAX) * SIEGE_CRIT_MAX, 'a Daedric Dai-Katana claimed from a Longsword\'s pack');
   assert.equal(siegeBlowMax(123, 9, null), siegeBlowMax(123, 9), 'no claim: as before');
   assert.equal(siegeBlowMax(113, 0, [27, 0]), siegeBlowMax(113, 0), 'a weaker weapon than the pack\'s best is its own');
@@ -121,6 +122,9 @@ test('INT7 THE MINT: a judged realm character\'s token signs its arms off the pa
   assert.equal('wa' in (await claimsOf({ character: R.id }, B.secret)), false, 'another account naming it');
   assert.equal(await realmArmsOf({ db: S.env.DB }, B.id, R.id), null);
   assert.equal('wa' in (await claimsOf({})), false, 'none named');
+  // AUDIT INT7 (the pins' own): the level signed is the one the judge trusts, over the tile's word
+  raw.prepare("UPDATE realm_characters SET level_seen = 9, summary = json_set(COALESCE(summary, '{}'), '$.level', 30) WHERE id = ?").run(R.id);
+  assert.equal((await claimsOf({ character: R.id })).cl, 9, 'the judge\'s level, never the tile\'s 30');
   // the claim's own law
   const base = { s: 'acct-1234', n: 'Aldric', k: 'linked', i: 100, e: 200 };
   assert.equal(claimsValid({ ...base, rc: 1, ci: R.id, wa: [27, 1] }), true);

@@ -311,6 +311,11 @@ test('DUEL1 THE RING HOLDS - INT8: AND LEAVING IT LOSES. My body carried past th
   assert.equal(r.P.a.ends.length, 0, 'a moment past the edge is a trailing pose, not a verdict');
   r.tick(200);
   assert.deepEqual(r.P.a.ends[0], { why: 'left', won: true, lost: false, by: 'them' });
+  // AUDIT INT8 (the pins' own): another bout's word on my duel is nothing - a third player's blow lands on no bar of mine
+  r = duelling();
+  const hps = r.P.a.hps.length, h = JSON.stringify(r.m.a.live?.h ?? null);
+  r.m.a.onRef({ k: 'hp', s: 'zzzzzzzzzz', by: 'peer-cccc', to: r.P.a.id, d: 50, r: 0, h: [['peer-cccc', 320, 320], [r.P.a.id, 270, 320]] });
+  assert.deepEqual([r.P.a.hps.length, JSON.stringify(r.m.a.live?.h ?? null)], [hps, h], 'another bout\'s blow: nothing');
   // gone from the room: a walkover
   r = duelling();
   r.P.b.here = false;

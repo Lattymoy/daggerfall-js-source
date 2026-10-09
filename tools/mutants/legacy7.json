@@ -76,6 +76,8 @@
     "file": "server-account/src/realm.js",
     "old": "'SELECT 1 FROM realm_characters WHERE id = ? AND player = ? AND dead_at IS NULL AND lease IS NOT NULL').bind(id, playerId).first());   // LEGACY7: never a tombstone",
     "new": "'SELECT 1 FROM realm_characters WHERE id = ? AND player = ? AND lease IS NOT NULL').bind(id, playerId).first());   // LEGACY7: never a tombstone",
+    "equivalent": true,
+    "why": "INT9's audit: the door asks for a lease too (realm.js realmCharacterHeld, `lease IS NOT NULL`), and a death clears it in the statement that marks it dead (legacy.js: `SET dead_at = ?, dead_why = ?, lease = NULL`) - no tombstone holds a lease; the dead's refusal is pinned by test/legacy7_service.test.js.",
     "tests": [
       "test/legacy7_service.test.js"
     ]
