@@ -168,11 +168,14 @@ async function championNow(ctx, nowS) {
  */
 export async function iliacChampionClock(ctx) {
   const season = arenaSeasonOf(ctx.nowS);
-  const kept = await ctx.db.prepare('SELECT at FROM iliac_champions WHERE season = ?1').bind(season).first();
-  if (kept && ctx.nowS - Number(kept.at) < ILIAC_CHAMPION_CLOCK_S) return 0;
-  const last = await ctx.db.prepare('SELECT MAX(at) AS at FROM iliac_games WHERE season = ?1 AND rated = 1').bind(season).first();
-  if (last?.at == null) return 0;
-  if (kept && Number(last.at) < Number(kept.at)) {
+  // ONE question a quiet minute (AUDIT SCALE D7's law): the kept word's age and the season's last rated game together
+  const q = await ctx.db.prepare(`SELECT (SELECT at FROM iliac_champions WHERE season = ?1) AS kept,
+      (SELECT MAX(at) FROM iliac_games WHERE season = ?1 AND rated = 1) AS last`).bind(season).first();
+  const kept = q?.kept == null ? null : { at: Number(q.kept) };
+  if (kept && ctx.nowS - kept.at < ILIAC_CHAMPION_CLOCK_S) return 0;
+  const last = { at: q?.last ?? null };
+  if (last.at == null) return 0;
+  if (kept && Number(last.at) < kept.at) {
     await ctx.db.prepare('UPDATE iliac_champions SET at = ?2 WHERE season = ?1').bind(season, ctx.nowS).run();
     return 0;
   }

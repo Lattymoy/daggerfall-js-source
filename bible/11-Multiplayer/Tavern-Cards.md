@@ -881,7 +881,7 @@ The same ask.
 - **Not verified in a live tavern** (no ARENA2 here), and the relay and the service are NOT YET DEPLOYED.
 - **Pins:** `test/cards10_table.test.js` 12, `test/cards10_relay.test.js` 7, `test/cards10_service.test.js` 3,
   `test/cards10_client.test.js` 5, and the host's road in `test/auditcards2_host.test.js`. `tools/mutants/cards10.json`
-  (with section 30's): 74, all dead - five survived the first pass, each a finding now pinned (the sly regular's hold,
+  (with section 30's): 75, all dead - five survived the first pass, each a finding now pinned (the sly regular's hold,
   the forfeit's payer, the book's bound, a full side's room, the draw's place); a Prince's own rule in a regular's deck
   was the same law said twice (every Prince costs four or more) and is gone.
 

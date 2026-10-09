@@ -665,5 +665,14 @@
     "tests": [
       "test/auditcards2_host.test.js"
     ]
+  },
+  {
+    "name": "CARDS10-service-clock",
+    "file": "server-account/src/iliac.js",
+    "old": "  await storeIliacChampion(ctx, season, ctx.nowS);\n  return 1;",
+    "new": "  return 0;",
+    "tests": [
+      "test/cards10_service.test.js"
+    ]
   }
 ]

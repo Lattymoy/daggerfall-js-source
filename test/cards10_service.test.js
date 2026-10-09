@@ -16,6 +16,7 @@ import { ILIAC_CARD_TEMPLATE, deckShortOf, cardCountsOf } from '../src/net/cardW
 import { ARENA_PAIR_DAY_MAX, ARENA_ELO_START } from '../src/net/arenaLaw.js';
 import { _resetIliacCache, iliacTitleWorthy, iliacChampionOfBoard, ILIAC_CHAMPION_MIN_GAMES, ILIAC_CHAMPION_MIN_FOES } from '../server-account/src/iliac.js';
 import { titlesHeld, equipRefusal } from '../server-account/src/titles.js';
+import { runCron, CRON_MINUTE, _resetCronForTests } from '../server-account/src/cron.js';
 import { TITLE_TEXT, TITLE_RGBA } from '../src/ui/playerBadge.js';
 
 const { subtle } = globalThis.crypto;
@@ -104,6 +105,12 @@ test('CARDS10 the board and its title: the season\'s #1 over ten games against f
   assert.ok(board.me && board.me.champion === false, 'the caller\'s own standing');
   assert.equal((await S.call('/v1/account/title', { title: 'iliacchampion' }, A.secret)).status, 200, 'the #1 may wear it');
   assert.equal((await tokenOf(S, A)).claims.t, 'iliacchampion', 'and it rides the token');
+  // the minute clock counts the #1 too: the kept word gone, a rated game since - counted and kept again, the arena's law
+  S.env.DB._raw.prepare('DELETE FROM iliac_champions').run();
+  _resetCronForTests();
+  const ran = await runCron(S.env, { cron: CRON_MINUTE, nowS: nowS() });
+  assert.equal(ran.find((j) => j.name === 'iliac-champion').changed, 1);
+  assert.equal(S.env.DB._raw.prepare('SELECT player FROM iliac_champions').get().player, A.id);
   // a newcomer takes the top: the title lapses by itself
   const Z = await S.registered('Zed');
   for (let i = 0; i < ARENA_PAIR_DAY_MAX; i++) await claimOf(S, Z, await receiptOf(S, Z, A, 0));
