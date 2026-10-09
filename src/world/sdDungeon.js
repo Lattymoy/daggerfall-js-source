@@ -96,6 +96,9 @@ export const SD_RETURN_SIZE = Object.freeze({ w: 1.3, h: 2.3 });
 export const SD_RETURN_GAP_M = 1.2;
 /** The plaque's words (World Tooltips' title and its row). */
 export const SD_END_TEXT = Object.freeze({ rift: 'The Rift', riftTo: 'To the Shattered Hour', ret: 'The Return', retTo: 'To the way in' });
+/** AUDIT SD IV (F2): no Mark in a Hollow - a place that ends, as the court and the Hour are: a later Hollow may stand on
+ *  its pixel in another layout, and a dungeon anchor knows its dungeon by the pixel alone. */
+export const SD_NO_MARK = 'You cannot set a Mark in an Abyss Dungeon.';
 
 /** SD-REACH: a border block - the caps DFU closes a dungeon's layout with - by its name, GetRandomBlock's own test
  *  (world/smallerDungeons.js getRandomBlock). */

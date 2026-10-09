@@ -326,7 +326,7 @@ import { SD_STEPS_TEXT } from './sdSteps.js';   // SD7b: the cast-back's line
 import { inOrreryHall, dungeonToRealm as sdDungeonToRealm, SD_FRAY_LASH, SD_ARENA, realmToDungeon as sdRealmToDungeon, SD_TURN_WAIT_LINE } from '../net/sdBrain.js';   // SD6c: the snap's lash, on whoever stands in the hall; SD10: the arena, where the way home stands; AUDIT SD II (L7 H2): a turn the stones refused
 import { SD_REM_SINK_MS } from './sdRemnant.js';   // SD10: the way home rises once the Remnant's body has sunk
 import { SD_HOME_TEXT, SD_HOME_SAY_MS } from './sdEnd.js';   // SD10: the way home's words; AUDIT SD II (L6 F16): said as it rises
-import { sdRiftWord, sdReturnStands, sdRiftCount, riftLook, SD_ENTERED_KEY, SD_ENTERED_MAX, SD_FALLEN_KEY } from '../world/sdDungeon.js';   // SD4b: a Super dungeon's Rift and Return, off the hub's record
+import { sdRiftWord, sdReturnStands, sdRiftCount, riftLook, SD_ENTERED_KEY, SD_ENTERED_MAX, SD_FALLEN_KEY, SD_NO_MARK } from '../world/sdDungeon.js';   // SD4b: a Super dungeon's Rift and Return, off the hub's record
 import { sdCities, sdTemplates } from '../systems/sdSite.js';   // SD2b: the Hollow's cities and templates, over the game's own rows
 import { RANDOM_TREASURE_ARCHIVE } from '../systems/lootDataTables.js';   // WB12d: the casket's pile, undrawn
 import { createSigilBroker } from './sigilBrokerPool.js';   // SET7: the Sigil Broker - her body, her box and name, her press; BROKER-CAGE: caged at the faithful's circle
@@ -13427,6 +13427,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   function setRecallAnchor() {
     if (modes?.gateArenaDay?.() != null) { setMidScreenText(COURT_TEXT.noMark); return; }   // WB3b: a mark in a place that ends with the day
     if (modes?.sdRealmSlot?.() != null) { sdSay(SD_REALM_TEXT.noMark); return; }   // SD5a: nor in the Shattered Hour
+    if (modes?.dungeonLocation?.superTier) { sdSay(SD_NO_MARK); return; }   // AUDIT SD IV (F2): nor in a Hollow - a later one may stand on its pixel
     const inside = modes?.anchorContext?.() ?? { worldContext: WORLD_CONTEXT.Exterior, local: null, buildingKey: 0, interior: null };
     const pf = walkMode && playerSpawned ? player.pos : cam.pos;
     // A DUNGEON's local frame is its own, so its world coordinates

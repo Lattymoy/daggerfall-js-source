@@ -1,0 +1,11 @@
+[
+  {
+    "name": "SD26-F2-the-hollows-mark-set",
+    "file": "src/scenes/world.js",
+    "old": "    if (modes?.dungeonLocation?.superTier) { sdSay(SD_NO_MARK); return; }",
+    "new": "",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
+  }
+]

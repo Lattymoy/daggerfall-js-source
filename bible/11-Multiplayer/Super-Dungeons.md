@@ -234,6 +234,9 @@ open when they were stood moved all three, a client apart (AUDIT SD IV S1).
   taken down at its end), where the player stood outside as they went in, never the Hour's own frame read in the
   street's (SD-LAND). The door is read in the street's own frame: the world host's door list keeps each door in its
   pixel's, and read raw it stood the player the streamer's vertical shift over the Hollow, in the sky (SD-SKY).
+- **No Mark in a Hollow** (AUDIT SD IV F2): *"You cannot set a Mark in an Abyss Dungeon."* - a place that ends, as the
+  court and the Hour are. A dungeon anchor knows its dungeon by its pixel alone, and a later Hollow may stand on that
+  pixel in another layout: a Recall took the old one's spot there, in rock or the void.
 
 ## 7. The Shattered Hour - the place the Warp left
 
