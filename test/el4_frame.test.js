@@ -117,7 +117,7 @@ test('EL4: the frame-target law - the helper and the clouds restore the frame, n
   const vc = read('src/render/volumetricClouds.js');
   assert.match(vc, /gl\.bindFramebuffer\(gl\.DRAW_FRAMEBUFFER, frameTarget\(\)\);/, 'the clouds\' blit restores the frame');
   assert.match(vc, /import \{[^}]*frameTarget[^}]*\} from '\.\/renderTarget\.js';/);
-  assert.equal((read('src/render/renderer.js').match(/gl\.bindFramebuffer\(gl\.FRAMEBUFFER, this\._frameFbo \?\? null\);/g) || []).length, 3, 'the sprite pass\'s three restores hand back the frame');
+  assert.equal((read('src/render/renderer.js').match(/gl\.bindFramebuffer\(gl\.FRAMEBUFFER, this\._frameFbo \?\? null\);/g) || []).length, 4, 'the sprite pass\'s three restores hand back the frame, and the body batch\'s one bind (MWNPC2) its fourth');   // PIN MOVED (MWNPC2)
   const others = ['src/render/enhancedSky.js', 'src/render/dynamicSkiesRenderer.js', 'src/render/precipitation.js', 'src/render/labGrass.js', 'src/render/skyRenderer.js', 'src/render/waterSurface.js', 'src/render/farRing.js'];
   for (const f of others) assert.ok(!/bindFramebuffer\(/.test(read(f)), `${f} binds no framebuffer of its own - it draws into whatever is bound`);
 });

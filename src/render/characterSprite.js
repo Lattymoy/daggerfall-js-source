@@ -106,7 +106,14 @@ export function drawRigSpriteBox(renderer, canvas, mesh, rigMat, { center, halfW
   // two - the 4 m that always stood; a body the travel view grows (OW-BIG, up to x12) was sliced by the fixed planes
   const reach = Math.max(4, halfW + boxH + 1);
   const miniEye = [center[0] - camDir[0] * reach, center[1] - camDir[1] * reach, center[2] - camDir[2] * reach];
-  const sTex = renderer.renderCharacterSprite(mesh, rigMat, ortho(halfW, halfH, 0.1, 2 * reach), lookAt(miniEye, center, [0, 1, 0]), pw, ph);
+  const sProj = ortho(halfW, halfH, 0.1, 2 * reach), sView = lookAt(miniEye, center, [0, 1, 0]);
+  // MWNPC2: an open batch (renderer.js beginCharacterSpriteBatch) takes the picture as measured, and the flush draws it
+  // in its own tile of the one bind; a lone call takes its own pass, as every call did
+  if (renderer.characterSpriteBatchOpen) {
+    renderer.queueCharacterSprite({ mesh, model: rigMat, proj: sProj, view: sView, pw, ph, tx: 0, ty: 0, quad: { at, halfW, halfH, right, hitFlash, conceal, up } });
+    return { center: at, halfW, halfH, pw, ph };
+  }
+  const sTex = renderer.renderCharacterSprite(mesh, rigMat, sProj, sView, pw, ph);
   renderer.drawCharacterSpriteQuad(sTex, at, halfW, halfH, right, pw / CHAR_SPRITE_RT_SIZE, ph / CHAR_SPRITE_RT_SIZE, hitFlash, conceal, up);   // HITFLASH1: a struck body's red; INVIS-LOOK: a concealed peer's body blends; AUDIT OW4 J6: leaned by `up`   // sample the sub-rect (fixed RT, audit fix)
   return { center: at, halfW, halfH, pw, ph };
 }

@@ -1,0 +1,101 @@
+[
+ {
+  "name": "MWNPC2-quad-ignores-tile",
+  "file": "src/render/renderer.js",
+  "old": "    gl.uniform2f(c.origin, origin ? origin[0] : 0, origin ? origin[1] : 0);",
+  "new": "    gl.uniform2f(c.origin, 0, 0);",
+  "tests": [
+   "test/mwnpc2_onepass.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC2-queue-ignored",
+  "file": "src/render/characterSprite.js",
+  "old": "  if (renderer.characterSpriteBatchOpen) {",
+  "new": "  if (false) {",
+  "tests": [
+   "test/mwnpc2_onepass.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC2-tiles-at-the-corner",
+  "file": "src/render/renderer.js",
+  "old": "        gl.viewport(it.tx, it.ty, it.pw, it.ph);",
+  "new": "        gl.viewport(0, 0, it.pw, it.ph);",
+  "tests": [
+   "test/mwnpc2_onepass.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC2-tile-uncleared",
+  "file": "src/render/renderer.js",
+  "old": "        gl.clearBufferfv(gl.COLOR, 0, SPRITE_CLEAR);   // transparent, by value: the clear colour (AUDIT 26 F034's borrow) is never touched\n",
+  "new": "\n",
+  "tests": [
+   "test/mwnpc2_onepass.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC2-no-gutter",
+  "file": "src/render/renderer.js",
+  "old": "    x += it.pw + gutter;",
+  "new": "    x += it.pw;",
+  "tests": [
+   "test/mwnpc2_onepass.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC2-never-full",
+  "file": "src/render/renderer.js",
+  "old": "    if (n > 0 && y + it.ph > size) break;",
+  "new": "    if (false) break;",
+  "tests": [
+   "test/mwnpc2_onepass.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC2-row-not-advanced",
+  "file": "src/render/renderer.js",
+  "old": "    if (x > 0 && x + it.pw > size) { x = 0; y += row + gutter; row = 0; }",
+  "new": "    if (x > 0 && x + it.pw > size) { x = 0; y += gutter; row = 0; }",
+  "tests": [
+   "test/mwnpc2_onepass.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC2-batch-left-open",
+  "file": "src/render/renderer.js",
+  "old": "    if (!b.open) return 0;\n    b.open = false;",
+  "new": "    if (!b.open) return 0;",
+  "tests": [
+   "test/mwnpc2_onepass.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC2-tile-keeps-last-block",
+  "file": "src/render/renderer.js",
+  "old": "        this._cFrameStamp = -1;   // LA-COST1: its own camera's block, as the lone pass sends it\n",
+  "new": "\n",
+  "tests": [
+   "test/la_cost.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC2-street-unbatched",
+  "file": "src/scenes/world.js",
+  "old": "    renderer.beginCharacterSpriteBatch?.();\n    try {\n      renderer.setCloudShadow(sky?.cloudShadow ?? null);",
+  "new": "    try {\n      renderer.setCloudShadow(sky?.cloudShadow ?? null);",
+  "tests": [
+   "test/mwnpc2_onepass.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC2-binds-uncounted",
+  "file": "src/render/renderer.js",
+  "old": "    this.stats.spriteBinds += binds;",
+  "new": "    this.stats.spriteBinds += 0;",
+  "tests": [
+   "test/mwnpc2_onepass.test.js"
+  ]
+ }
+]

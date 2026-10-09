@@ -302,6 +302,30 @@ void main() {
 }`;
 
 /**
+ * MWNPC2: THE TILES. Pack items[start..] - each `{ pw, ph }` - into a `size` x `size` target, writing each one's
+ * `tx`/`ty`: shelves left to right, a row as tall as its tallest, a texel of gutter between neighbours (a NEAREST
+ * sample at a tile's far edge reads its own last texel - the gutter is the margin that rounding never crosses).
+ * Answers how many fit, at least one: a picture is never larger than the target (drawRigSpriteBox clamps it there),
+ * so the first always fits, alone if it must. Pure.
+ */
+/** MWNPC2: a tile's clear, transparent black - the lone pass's clear colour, written by value (clearBufferfv). */
+const SPRITE_CLEAR = new Float32Array([0, 0, 0, 0]);
+
+export function packSpriteTiles(items, start, size, gutter = 1) {
+  let x = 0, y = 0, row = 0, n = 0;
+  for (let i = start; i < items.length; i++) {
+    const it = items[i];
+    if (x > 0 && x + it.pw > size) { x = 0; y += row + gutter; row = 0; }
+    if (n > 0 && y + it.ph > size) break;
+    it.tx = x; it.ty = y;
+    x += it.pw + gutter;
+    if (it.ph > row) row = it.ph;
+    n++;
+  }
+  return n;
+}
+
+/**
  * MWNPC1: the skinned body's normal matrix for a model matrix (column-major mat4): sign(det M) x M x M^T over its
  * 3x3 - the matrix that takes the world's face normal back to the packed path's mat3(uModel) x n (skinFaceFs).
  * Symmetric, so its column-major upload is its row-major one. Written into `out`.
@@ -1569,8 +1593,9 @@ export class Renderer {
     this.maxPointLights = CLASSIC_MAX_LIGHTS;
     this._decA = new Float32Array(3); this._decB = new Float32Array(3); this._decC = new Float32Array(3);   // AUDIT F4: three, because one site decodes the ambient, the moon AND the sun and holds all three   // EL1: the decode scratch (two, for the billboard tint's two terms)
     this._pointColorDec = new Float32Array(CLASSIC_MAX_LIGHTS * 3);
-    this.stats = { draws: 0, programBinds: 0, vaoBinds: 0, texBinds: 0, bbCulled: 0 };   // PERF-CROWD2: the billboards this frame did NOT submit   // MWNPC1: made before the first world set is built - its character program is bound through _use there
+    this.stats = { draws: 0, programBinds: 0, vaoBinds: 0, texBinds: 0, bbCulled: 0, spriteBinds: 0 };   // PERF-CROWD2: bbCulled, the billboards this frame did NOT submit; MWNPC2: spriteBinds, the body batch's binds of the sprite target; MWNPC1: made before the first world set is built - its character program is bound through _use there
     this._skinNrm = new Float32Array(9);   // MWNPC1: drawCharacter's normal-matrix scratch (skinNormalMatrix)
+    this._spriteBatch = { items: [], open: false };   // MWNPC2: the body pass's pictures, queued for one bind (beginCharacterSpriteBatch)
     /** @type {WebGLTexture|null} */ this._skinIdentity = null;    // MWNPC1: the identity palette (_skinIdentityTex) - before the first set is built, which makes it
     /** @type {WebGLTexture|null} */ this._skinUnitHolds = null;   // MWNPC1: what SKIN_PALETTE_UNIT holds, by our own binds
     this._classicSet = this._buildWorldSet({ key: 'classic', meshFs: FS, bbFs: BB_FS, terrainFs: TERRAIN_FS, charFs: CHAR_FS, decalFs: DECAL_FS });   // MAC-BUG W6: and the decal pass, its fifth
@@ -3673,6 +3698,94 @@ export class Renderer {
     return cs.tex;
   }
 
+  /**
+   * MWNPC2 (2026-10-09, the MW-NPC arc's second slice, `04-Characters/Morrowind-NPCs.md` section 7): ONE OFFSCREEN BIND
+   * FOR EVERY SEEN BODY. Every Morrowind body is a picture taken into the shared sprite target and composited as a
+   * quad (render/characterSprite.js drawRigSpriteBox) - and every one took its own pass: the target bound, a corner
+   * cleared, the body drawn, the frame's framebuffer and viewport put back, the character block re-sent. Two
+   * framebuffer switches a body a frame - on a tiler, each a resolve - which a crowd multiplies (WB9h, MW-CROWD:
+   * "batching every seen body into one bind of the target ... is the next slice").
+   *
+   * A host opens a batch around its body pass. While it is open, drawRigSpriteBox measures each body exactly as
+   * before and QUEUES its picture - its mesh and model, its camera, its size, its quad - and the flush takes them all
+   * in one bind: each body packed into its own tile of the target (packSpriteTiles, a shelf a row, a texel of gutter),
+   * cleared and drawn there under its own camera and its own character block (the lone pass's block, so each picture
+   * is the one it was), then the frame's framebuffer back ONCE, and every quad drawn sampling its own tile. A batch
+   * the target cannot hold is taken in as many binds as it needs. Nothing a body's picture reads can move between its
+   * queueing and the flush: each body's mesh, palette and range flags are its own rig's, set by its update before its
+   * draw. Answers the binds it took.
+   */
+  beginCharacterSpriteBatch() {
+    this._spriteBatch.items.length = 0;
+    this._spriteBatch.open = true;
+  }
+
+  /** MWNPC2: true between begin and flush - drawRigSpriteBox's question. */
+  get characterSpriteBatchOpen() { return this._spriteBatch.open; }
+
+  /** MWNPC2: one body's picture, measured: { mesh, model, proj, view, pw, ph, quad: { at, halfW, halfH, right,
+   *  hitFlash, conceal, up } }. Its tile is written by the flush. */
+  queueCharacterSprite(item) { this._spriteBatch.items.push(item); }
+
+  flushCharacterSpriteBatch() {
+    const b = this._spriteBatch;
+    if (!b.open) return 0;
+    b.open = false;
+    const items = b.items;
+    let at = 0, binds = 0;
+    try {
+      while (at < items.length) {
+        const n = packSpriteTiles(items, at, CHAR_SPRITE_RT_SIZE);
+        const tex = this._renderCharacterSpriteTiles(items, at, at + n);
+        binds++;
+        for (let i = at; i < at + n; i++) {
+          const it = items[i], q = it.quad;
+          this.drawCharacterSpriteQuad(tex, q.at, q.halfW, q.halfH, q.right, it.pw / CHAR_SPRITE_RT_SIZE, it.ph / CHAR_SPRITE_RT_SIZE,
+            q.hitFlash, q.conceal, q.up, [it.tx / CHAR_SPRITE_RT_SIZE, it.ty / CHAR_SPRITE_RT_SIZE]);
+        }
+        at += n;
+      }
+    } finally {
+      items.length = 0;
+    }
+    this.stats.spriteBinds += binds;
+    return binds;
+  }
+
+  /** MWNPC2: the tiles items[from..to) were packed into, drawn in ONE bind of the sprite target - each cleared and
+   *  drawn as _renderCharacterSprite draws its corner (the fog borrowed off, its own camera, its own block), every
+   *  borrow returned in one finally. The clear is by value (clearBufferfv), so the clear colour is not borrowed at all. */
+  _renderCharacterSpriteTiles(items, from, to) {
+    const gl = this.gl;
+    const cs = this._charSpriteRT();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, cs.fbo);
+    gl.enable(gl.SCISSOR_TEST);
+    const sp = this._proj, sv = this._view, sf = this._fogMode;
+    const sw = this._dwFog[0];
+    this._fogMode = 0; this._dwFog[0] = 0;
+    this._spriteDepth++;
+    try {
+      for (let i = from; i < to; i++) {
+        const it = items[i];
+        gl.viewport(it.tx, it.ty, it.pw, it.ph);
+        gl.scissor(it.tx, it.ty, it.pw, it.ph);
+        gl.clearBufferfv(gl.COLOR, 0, SPRITE_CLEAR);   // transparent, by value: the clear colour (AUDIT 26 F034's borrow) is never touched
+        gl.clear(gl.DEPTH_BUFFER_BIT);
+        this._proj = it.proj; this._view = it.view;
+        this._cFrameStamp = -1;   // LA-COST1: its own camera's block, as the lone pass sends it
+        this.drawCharacter(it.mesh, it.model);
+      }
+    } finally {
+      gl.disable(gl.SCISSOR_TEST);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this._frameFbo ?? null);
+      this._restoreWorldViewport();
+      this._proj = sp; this._view = sv; this._fogMode = sf; this._dwFog[0] = sw;
+      this._spriteDepth--;
+      this._cFrameStamp = -1;
+    }
+    return cs.tex;
+  }
+
   /** MW-D36: the same sprite render, READ BACK as pixels - the enhanced
    *  inventory's figure panel is DOM, not a world quad, so the body has
    *  to leave the GPU as an image. Y is flipped on the way out (GL rows
@@ -3739,7 +3852,7 @@ export class Renderer {
    *  phase draws a concealed foe. None, and the quad is the opaque cut-out it always was. */
   /** AUDIT OW4 J6: `up`, optional - the quad's vertical when it leans (the travel view's leaned up, characterSprite.js
    *  drawRigSpriteBox); none, world up - every vertex exactly where it stood. */
-  drawCharacterSpriteQuad(tex, center, halfW, halfH, right, u1 = 1, v1 = 1, hitFlash = 0, conceal = null, up = null) {
+  drawCharacterSpriteQuad(tex, center, halfW, halfH, right, u1 = 1, v1 = 1, hitFlash = 0, conceal = null, up = null, origin = null) {
     this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const gl = this.gl;
     this._ensureCharQuadProgram();
@@ -3761,6 +3874,7 @@ export class Renderer {
     this._uploadFog(this._charQuad);
     gl.uniform4f(c.conceal, conceal ? conceal.mode : 0, conceal ? conceal.alpha : 0, conceal ? conceal.t : 0, conceal ? conceal.phase : 0);   // INVIS-LOOK: plain unless a concealed body says otherwise
     gl.uniform2f(c.span, u1, v1);   // INVIS-LOOK: the RT's sub-rect, so the ripple is the sprite's own
+    gl.uniform2f(c.origin, origin ? origin[0] : 0, origin ? origin[1] : 0);   // MWNPC2: and where it starts
     this._bindVao(this._charQuadVAO);
     gl.bindBuffer(gl.ARRAY_BUFFER, this._charQuadVBO);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, v);
@@ -3796,6 +3910,7 @@ uniform vec2 uFogRange;
 uniform vec3 uCamPos;
 uniform vec4 uConceal;   // INVIS-LOOK: ECV1's record - the mode, the opacity, the clock, the phase (0: plain)
 uniform vec2 uSpan;      // INVIS-LOOK: the sub-rect of the RT the picture fills
+uniform vec2 uOrigin;    // MWNPC2: where that sub-rect starts - a batched body's tile (0,0 for the corner every lone pass draws in)
 uniform float uHitFlash;   // HITFLASH1: a Morrowind body struck
 out vec4 outColor;
 ${FOG_GLSL}
@@ -3808,7 +3923,7 @@ void main() {
     uv.x += sin(n.y * 28.0 + uConceal.z * 7.0 + uConceal.w) * 0.008 * uSpan.x;
     if (uv.x < 0.0 || uv.x > uSpan.x) discard;
   }
-  vec4 t = texture(uTex, uv);
+  vec4 t = texture(uTex, uOrigin + uv);
   if (t.a < (uConceal.x > 0.0 ? 0.1 : 0.5)) discard;
   vec3 rgb = t.rgb;
   if (uConceal.x == 2.0) rgb *= ${SHADE_DARK};   // INVIS-LOOK: a shade, ECV1's dark
@@ -3830,6 +3945,7 @@ void main() {
         dwFog: gl.getUniformLocation(P, 'uDwFog'),   // DW-C
         conceal: gl.getUniformLocation(P, 'uConceal'),   // INVIS-LOOK
         span: gl.getUniformLocation(P, 'uSpan'),   // INVIS-LOOK
+        origin: gl.getUniformLocation(P, 'uOrigin'),   // MWNPC2: the tile
         hitFlash: gl.getUniformLocation(P, 'uHitFlash'),   // HITFLASH1
       };
       const vao = gl.createVertexArray();

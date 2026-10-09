@@ -209,3 +209,49 @@ The pin MW-CROWD and PEER-CADENCE describe in
 names no live code: the dungeon's and the exterior foes' rigs are the
 shelved voxel path (`dungeonContext.js`, ON ICE), and every foe today is a
 classic billboard - the population MWNPC5 stands in a body.
+
+## 7. MWNPC2 - ONE PASS (SHIPPED 2026-10-09)
+
+THE COST IT REMOVES. Every Morrowind body is a picture taken into the
+renderer's one sprite target and composited as a camera-facing quad
+(`render/characterSprite.js` drawRigSpriteBox, MW-D24) - and every body
+took that pass on its own: the target bound, its corner cleared, the body
+drawn, the frame's framebuffer and viewport put back. Two framebuffer
+switches a body a frame, each a resolve on a tiling GPU, multiplied by
+the crowd (WB9h and MW-CROWD both left it open: "batching every seen body
+into one bind of the target ... is the next slice").
+
+WHAT IT IS NOW. A host opens a batch around its body pass
+(`renderer.beginCharacterSpriteBatch()` ... `flushCharacterSpriteBatch()`).
+While it is open, drawRigSpriteBox measures each body exactly as before -
+the window, the anchor, the resolution off the texel - and QUEUES the
+picture instead of taking it. The flush packs the queued pictures into
+tiles of the target (`packSpriteTiles`: shelves left to right, a texel of
+gutter), binds the target ONCE, clears each tile (its colour by value,
+`clearBufferfv`, so the clear colour is never borrowed) and draws it under its own
+camera and its own character block (the block the lone pass sends, so
+each picture is the one it was), puts the frame's framebuffer back once,
+and draws every quad sampling its own tile (the quad shader's `uOrigin`;
+0,0 for the lone pass's corner). A batch the target cannot hold takes as
+many binds as it needs. Nothing a picture reads moves between its queueing
+and the flush: each body's mesh, palette and range flags are its own rig's,
+written by its update before its draw.
+
+The street (world.js), the dungeon and the building (worldModes.js) open
+the batch around the player's body and every peer's, the family's and the
+card table's; exterior.js draws the player's body alone and keeps the lone
+pass. A renderer without the batch (every counting renderer in the suite)
+keeps the lone pass, so every earlier pin reads what it read.
+
+PROVEN. `test/mwnpc2_onepass.test.js` on the real Renderer over a recording
+GL: three bodies, two binds where alone they were six, each tile cleared
+and drawn under its own camera, each quad sampling its own tile, the
+packer's shelves inside the target and as many binds as a batch needs, the
+lone path untouched, and every body pass of the booted hosts batched -
+flushed in a finally, so a body that throws cannot leave a batch open;
+`tools/mutants/mwnpc2.json`: 11 mutants, 11 dead (one of them held by
+LA-COST1's law, which now names the tile pass among the borrows that forget
+the character block). And the picture: `tools/mwSpriteBatchProbe.mjs`
+draws three fixture bodies into one frame the old way and again through
+the batch - one bind, the two frames identical texel for texel; a quad
+that ignores its tile's origin differs by 1,149 texels.
