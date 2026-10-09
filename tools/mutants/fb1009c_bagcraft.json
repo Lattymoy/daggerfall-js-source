@@ -1,0 +1,191 @@
+[
+  {
+    "name": "BAGCRAFT-work-not-loose",
+    "file": "src/net/bagLaw.js",
+    "old": "export const looseOrder = (o) => o === 'work';",
+    "new": "export const looseOrder = (o) => o === 'none';",
+    "tests": [
+      "test/fb1009c_bagcraft.test.js"
+    ]
+  },
+  {
+    "name": "BAGCRAFT-spend-loose",
+    "file": "src/net/bagLaw.js",
+    "old": "export const looseOrder = (o) => o === 'work';",
+    "new": "export const looseOrder = (o) => o === 'work' || o === 'spend';",
+    "tests": [
+      "test/fb1009c_bagcraft.test.js"
+    ]
+  },
+  {
+    "name": "BAGCRAFT-the-loose-origin-own",
+    "file": "src/net/bagLaw.js",
+    "old": "export const LOOSE_ORIGIN = 'bought';",
+    "new": "export const LOOSE_ORIGIN = 'own';",
+    "tests": [
+      "test/fb1009c_bagcraft.test.js"
+    ]
+  },
+  {
+    "name": "BAGCRAFT-gold-worked",
+    "file": "src/net/bagLaw.js",
+    "old": "export const carriedWorkable = (c, held) => Math.max(0, Math.max(0, held | 0) - clampCarried(c, held).gold);",
+    "new": "export const carriedWorkable = (c, held) => Math.max(0, Math.max(0, held | 0));",
+    "tests": [
+      "test/fb1009c_bagcraft.test.js"
+    ]
+  },
+  {
+    "name": "BAGCRAFT-the-cut-skipped",
+    "file": "src/net/bagLaw.js",
+    "old": "Math.max(0, held | 0) - clampCarried(c, held).gold);",
+    "new": "Math.max(0, held | 0) - (c?.gold | 0));",
+    "tests": [
+      "test/fb1009c_bagcraft.test.js"
+    ]
+  },
+  {
+    "name": "BAGCRAFT-service-work-past-held",
+    "file": "server-account/src/professions.js",
+    "old": " + MAX(0, ?9 - COALESCE((SELECT SUM(qty) FROM prof_carried WHERE player = ?1 AND char_id = ?2 AND material = ?4), 0))",
+    "new": " + ?9",
+    "tests": [
+      "test/fb1009c_bagcraft.test.js"
+    ]
+  },
+  {
+    "name": "BAGCRAFT-service-no-loose",
+    "file": "server-account/src/professions.js",
+    "old": "  const loose = looseOrder(order);\n",
+    "new": "  const loose = false;\n",
+    "tests": [
+      "test/fb1009c_bagcraft.test.js"
+    ]
+  },
+  {
+    "name": "BAGCRAFT-service-loose-stored-nowhere",
+    "file": "server-account/src/professions.js",
+    "old": "  const into = (o) => (o === LOOSE_ORIGIN ? `qty - ${['own', 'bought', 'gold'].filter((x) => x !== o).join(' - ')}` : o);",
+    "new": "  const into = (o) => o;",
+    "tests": [
+      "test/fb1009c_bagcraft.test.js"
+    ]
+  },
+  {
+    "name": "BAGCRAFT-service-loose-refused-as-full",
+    "file": "server-account/src/professions.js",
+    "old": "(loose ? Math.max(0, held - ((c.own ?? 0) + (c.bought ?? 0) + (c.gold ?? 0))) : 0);",
+    "new": "0;",
+    "tests": [
+      "test/fb1009c_bagcraft.test.js"
+    ]
+  },
+  {
+    "name": "BAGCRAFT-book-station-by-spend",
+    "file": "src/net/profBook.js",
+    "old": "const r = await this.deposit(k, q, { order: work === true ? 'work' : 'spend' });",
+    "new": "const r = await this.deposit(k, q, { order: 'spend' });",
+    "tests": [
+      "test/fb1009c_bagcraft.test.js"
+    ]
+  },
+  {
+    "name": "BAGCRAFT-book-writ-by-work",
+    "file": "src/net/profBook.js",
+    "old": "const r = await this.deposit(k, q, { order: work === true ? 'work' : 'spend' });",
+    "new": "const r = await this.deposit(k, q, { order: 'work' });",
+    "tests": [
+      "test/fb1009c_bagcraft.test.js"
+    ]
+  },
+  {
+    "name": "BAGCRAFT-book-shortfall-against-the-count",
+    "file": "src/net/profBook.js",
+    "old": "const carriedFor = (k) => (work === true ? this.carriedWorkable(k) : this.carriedUsable(k));",
+    "new": "const carriedFor = (k) => this.carriedUsable(k);",
+    "tests": [
+      "test/fb1009c_bagcraft.test.js"
+    ]
+  },
+  {
+    "name": "BAGCRAFT-book-writ-shortfall-workable",
+    "file": "src/net/profBook.js",
+    "old": "const carriedFor = (k) => (work === true ? this.carriedWorkable(k) : this.carriedUsable(k));",
+    "new": "const carriedFor = (k) => this.carriedWorkable(k);",
+    "tests": [
+      "test/fb1009c_bagcraft.test.js"
+    ]
+  },
+  {
+    "name": "BAGCRAFT-book-workable-the-count",
+    "file": "src/net/profBook.js",
+    "old": "workable(material) { return this.storesHeld(material) + this.carriedWorkable(material); },",
+    "new": "workable(material) { return this.storesHeld(material) + this.carriedUsable(material); },",
+    "tests": [
+      "test/fb1009c_bagcraft.test.js"
+    ]
+  },
+  {
+    "name": "BAGCRAFT-book-craft-not-work",
+    "file": "src/net/profBook.js",
+    "old": "const ready = r0 ? await book.ensureInStores(inputs, { work: true }) : { ok: true };",
+    "new": "const ready = r0 ? await book.ensureInStores(inputs) : { ok: true };",
+    "tests": [
+      "test/fb1009c_bagcraft.test.js"
+    ]
+  },
+  {
+    "name": "BAGCRAFT-book-chain-plans-the-count",
+    "file": "src/net/profBook.js",
+    "old": "const plan = chainPlan(inputs, (k) => book.workable(k), { track:",
+    "new": "const plan = chainPlan(inputs, (k) => book.held(k), { track:",
+    "tests": [
+      "test/fb1009c_bagcraft.test.js"
+    ]
+  },
+  {
+    "name": "BAGCRAFT-book-brew-not-work",
+    "file": "src/net/profBook.js",
+    "old": "const ready = await book.ensureInStores(brewSpends(potionById(potion), keys), { work: true });",
+    "new": "const ready = await book.ensureInStores(brewSpends(potionById(potion), keys));",
+    "tests": [
+      "test/fb1009c_bagcraft.test.js"
+    ]
+  },
+  {
+    "name": "BAGCRAFT-book-temper-not-work",
+    "file": "src/net/profBook.js",
+    "old": "const ready = temperableRecipe(r0) ? await book.ensureInStores([temperCost(r0)], { work: true }) : { ok: true };",
+    "new": "const ready = temperableRecipe(r0) ? await book.ensureInStores([temperCost(r0)]) : { ok: true };",
+    "tests": [
+      "test/fb1009c_bagcraft.test.js"
+    ]
+  },
+  {
+    "name": "BAGCRAFT-book-smelt-not-work",
+    "file": "src/net/profBook.js",
+    "old": "n: i.n * count })), { work: true }) : { ok: true };",
+    "new": "n: i.n * count }))) : { ok: true };",
+    "tests": [
+      "test/fb1009c_bagcraft.test.js"
+    ]
+  },
+  {
+    "name": "BAGCRAFT-book-writ-work",
+    "file": "src/net/profBook.js",
+    "old": "const ready = asked ? await book.ensureInStores([{ key: asked.material, n: asked.qty }]) : { ok: true };",
+    "new": "const ready = asked ? await book.ensureInStores([{ key: asked.material, n: asked.qty }], { work: true }) : { ok: true };",
+    "tests": [
+      "test/fb1009c_bagcraft.test.js"
+    ]
+  },
+  {
+    "name": "BAGCRAFT-pages-read-held",
+    "file": "src/ui/profPages.js",
+    "old": "(typeof book?.workable === 'function' ? book.workable(k) : book.held(k));",
+    "new": "book.held(k);",
+    "tests": [
+      "test/fb1009c_bagcraft.test.js"
+    ]
+  }
+]

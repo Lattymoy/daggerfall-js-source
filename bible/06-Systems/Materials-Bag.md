@@ -112,9 +112,10 @@ reopens exactly that door - unless the service knows what it handed out. So it c
   the goods walled from every Marks act go first and a character's own (which raise a seat's influence) last. **It is
   never raised**: a pack holding more than the count adds nothing.
 - So a save-edited Red Rose, a looted one and a gathered one are one item in the pack - and **only the gathered one is
-  counted**. A deposit never moves more than the count; a station never uses more of what is carried than the count,
-  and never gold's. What enters the Stores from the bag is exactly what the service handed out: law 3's guarantee,
-  kept with the door open one way more.
+  counted**. A deposit by the Stores page, a writ or the market never moves more than the count, and never gold's to a
+  station. What enters the Stores from the bag by those doors is exactly what the service handed out: law 3's
+  guarantee, kept with the door open one way more. A station's own put-in is the exception, by the owner's word
+  (BAG-CRAFT, section 14): it moves what the pack holds past the count too, as bought.
 - A lie about `held` can only cut the count, never raise it. **What it bounds and what it does not**: a client may say
   it holds more than it does - a pack that sold three Red Roses saying it still holds them - and the count is then not
   cut; those units stay counted and may be deposited. That is not prevented. It is bounded: never past what the service
@@ -135,9 +136,10 @@ reopens exactly that door - unless the service knows what it handed out. So it c
 ## 6. Stations, writs and the potion maker
 
 A station spends the Stores, as it always has (the service's SQL is unchanged). What it lacks, the client puts in
-first from what is carried (`profBook.ensureInStores`): every input's shortfall covered before any moves, bought units
-before own, never gold's (`DEPOSIT_ORDERS.spend`); a shortfall nothing can cover moves nothing and says "You do not have
-that many - in your Stores, your Materials Bag and your pack together." (`materials-short`); a put-in whose answer has
+first from what is carried (`profBook.ensureInStores`): every input's shortfall covered before any moves, the counted
+units bought before own, then (BAG-CRAFT, section 14) what the count does not hold, never gold's (`DEPOSIT_ORDERS.work`;
+a writ's and the market's `spend`, the count alone); a shortfall nothing can cover moves nothing and says "You do not
+have that many - in your Stores, your Materials Bag and your pack together." (`materials-short`); a put-in whose answer has
 not come says so (`deposit-kept`) rather than that anything is short. Every craft and brew at a station does it
 (`craft`, `brew`), a smelt at the forge (`smelt`), a Court writ's delivery (`deliver`, the shortfall the writ's card
 names where the book's list has none) and a guild writ's (the host's `writBook.supply`). A smelt's product comes out
@@ -178,7 +180,7 @@ Stores"); a gold listing takes its Stores' own and gold's units alone.
 | Threat | Answer |
 |---|---|
 | A save-edited material deposited into the Stores | Only the carried count moves; it is cut to the pack and never raised (5) |
-| A looted DFU herb sold to a writ as a harvested one | It is held, never counted: a station uses the count, not the items (5) |
+| A looted DFU herb sold to a writ as a harvested one | It is held, never counted: a writ uses the count, not the items (5); a station works it as bought, never own (14) |
 | Gold's goods spent at a station through the bag | A station's shortfall moves bought and own alone (6) |
 | A client claims it holds more than it does | `held` only cuts the count; the units stay counted, bounded by what was handed out (5) |
 | A stale `held` (an answer lost, a twin request) cuts units the pack is about to get | The cut only against the count the client heard, once a request, never by a twin of a landed act (5, 10) |
@@ -285,3 +287,39 @@ refused by the take ladder (`systems/itemTransfer.js` planTake: a pickup, quick 
 windows' Buy basket) and the keyed shelf (`scenes/worldModes.js` doBuy) while another is held in the pack, a trade's
 basket or the wagon: "You already have a Materials Bag." One out of the character's own wagon is never refused, and the
 bag is no decor piece. Pinned by `test/fb1004_onebag.test.js`; the audit's findings in the field-bug record.
+
+## 14. From play - BAG-CRAFT (FIELD BUGS 2026-10-09c)
+
+"People cannot craft from their bag" - and, asked whether a station should spend what the service never counted, Mac:
+"I just want players to also be able to craft from their inventory, not just the store."
+
+A station read the Stores and the service's carried count (`book.held`): every unit the bag or the pack held that the
+service had not handed out - a log withdrawn before the bag (2026-10-03), a herb looted or bought at a DFU shop, a stack
+traded from a friend, an heir's inheritance, goods left in a house's chest while the same material was gathered again
+(the count is cut to what the pack holds, never raised) - read (0) at every station, and a press said `materials-short`.
+With the count's goods the path was whole (a Steel Longsword from a bag of counted raw goods, through the real Worker).
+
+- **A station works what is carried, counted or not** (`profBook.workable`, `bagLaw.js` carriedWorkable): the Stores
+  and every unit the bag, the pack and the wagon hold, but the gold-bought units the count still names (GOLD-MARKET's
+  wall). Every station's read is that (`ui/profPages.js` workOf - the anvil, the forge, the workbench, the loom, the
+  mason's bench, the cook fire, the jeweller's bench, the alchemy and enchanting stations, the temper), and a craft's
+  chain plans from it (CRAFT1).
+- **Its put-in is the deposit's `work` order** (`DEPOSIT_ORDERS.work`, `looseOrder`) - a craft, a brew, a smelt and a
+  temper: the counted units first, bought then own, as `spend` moves them, then the units the count does not hold, as
+  many as `held` names past the count once cut (`server-account/src/professions.js` depositStores). Those go into the
+  Stores as **bought** (`LOOSE_ORIGIN`) and the count is not touched for them; the answer says them (`loose`). The
+  stamp, the checkpoint before the ask and the give-back on a refusal are the deposit's own (section 7).
+- **Bought, never own**: no gatherer's word - it raises no seat's influence, and a piece made of it is bought (AUDIT
+  PROF-541 B7: listed for Marks, never for gold over the wall).
+- **A writ, the market and the Stores page's Put in are unchanged**: they move the service's count alone (`spend`,
+  `all`; `book.held`), and a writ whose count moved since it was heard is refused `carried-short`, its units given back.
+
+What this gives up, and the owner's call: law 3's guarantee was that nothing edited into a save reaches the economy. A
+station's put-in now takes the client's word for what the pack holds - bounded by `heldOk` and a deposit's 200, never
+own and never gold's - so a modified client can craft from goods it never had, and sell the pieces for Marks. Recorded
+here, and at `Professions-Arc.md` law 3, so the next reader does not read the old guarantee as standing.
+
+Pinned by `test/fb1009c_bagcraft.test.js` (the done-when: a Steel Longsword from raw goods the service never counted,
+in one press through the real Worker; the law; the service's `work`, `spend` and `all` and a full Store; the book's
+doors; the anvil and the forge over a real carrying book); `tools/mutants/fb1009c_bagcraft.json`. The record:
+`01-Overview/Field-Bugs-2026-10-09c.md`. ACCOUNT_VERSION `acct99`.

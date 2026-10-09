@@ -154,6 +154,10 @@ import { getPref, setPref } from '../systems/uiPrefs.js';
  *   as the pack carries - anywhere, on either skin
  */
 let _provider = /** @type {ProfPagesProvider|null} */ (null);
+/** BAG-CRAFT (FIELD BUGS 2026-10-09c, Mac: "I just want players to also be able to craft from their inventory, not just
+ *  the store"): WHAT A STATION MAY WORK OF A MATERIAL - every station's read, one home: the book's `workable` (the Stores,
+ *  and the bag, the pack and the wagon counted or not - net/profBook.js); a book that has none answers its `held`. */
+const workOf = (/** @type {any} */ book, /** @type {string} */ k) => (typeof book?.workable === 'function' ? book.workable(k) : book.held(k));
 /** The host's book, or null to take the pages down (offline, a closed switch, the host gone). */
 export function setProfessionsPages(p) { _provider = p ?? null; }
 /** What a locked specialisation's card says it waits for (professionLaw.js `later`). */
@@ -831,7 +835,7 @@ function workRows(detail, rerender, el, recipes, state, verb, busyVerb, go, shor
   hold = hold || chaining();   // AUDIT CRAFT1 F1: held under a craft running its chain
   const p = /** @type {ProfPagesProvider} */ (_provider);
   const book = p.book;
-  const held = (k) => book.held(k);
+  const held = (k) => workOf(book, k);
   for (const r of recipes) {
     const most = smeltable(r, held);
     const row = el('div', `prof-smelt${most ? '' : ' prof-locked'}`);
@@ -904,7 +908,7 @@ function drawForge(detail, rerender, { el, divider }) {
   if (short) detail.append(el('p', 'px-note prof-short', short));
   workRows(detail, rerender, el, SMELT_RECIPES, _forge, 'Smelt', 'Smelting...', (id, n) => p.smelt(id, n), short);
   // PROF4: the logs a forge burns - those the Stores hold (a log a Charcoal; a Charcoal Burner's two)
-  const burns = BURN_RECIPES.filter((r) => book.held(r.inputs[0].key) > 0);
+  const burns = BURN_RECIPES.filter((r) => workOf(book, r.inputs[0].key) > 0);
   if (burns.length) workRows(detail, rerender, el, burns, _forge, 'Burn', 'Burning...', (id, n) => p.smelt(id, n), short);
   if (r0Charcoal(book)) {
     const line = el('p', 'px-note', 'Steel wants Charcoal: a log burns to it here (Logging\'s), and the smith sells it.');
@@ -920,7 +924,7 @@ function drawForge(detail, rerender, { el, divider }) {
   if (_forge.word) detail.append(el('p', 'prof-word', _forge.word));
 }
 /** Whether the Steel line needs its word: no Charcoal held. */
-const r0Charcoal = (book) => book.held('wood:charcoal') < 1;
+const r0Charcoal = (book) => workOf(book, 'wood:charcoal') < 1;
 
 // ─── PROF3: THE ANVIL (bible/06-Systems/Professions-Arc.md 9, 24) ─────
 
@@ -940,7 +944,7 @@ export const craftable = (r, held, inputs = r.inputs) => inputs.every((inp) => h
 export function chainOf(inputs, book) {
   // AUDIT CRAFT1 F6: a carrying book's `held` reads the pack, the bag and the wagon each call - once a key a plan
   const seen = new Map();
-  const held = (k) => { if (!seen.has(k)) seen.set(k, book.held(k)); return seen.get(k); };
+  const held = (k) => { if (!seen.has(k)) seen.set(k, workOf(book, k)); return seen.get(k); };
   return chainNeeded(inputs, held) ? chainPlan(inputs, held, { track: (prof) => book.track(prof), room: (k) => storesRoom(book.store(k)) }) : null;
 }
 /** CRAFT1: whether inputs not held as they stand are made from what is (the craft runs the chain first, profBook craft). */
@@ -1145,7 +1149,7 @@ function drawAnvil(detail, rerender, { el, divider }) {
   if (_anvil.act && getPref('gentleActs') === true) { _anvil.act.cancel(); endHeat(); _anvil.word = 'You let the ingot cool; nothing is spent.'; }
   // AUDIT 30 A3: nothing else is picked while the heat is struck - the heat makes the recipe it began on
   const striking = !!_anvil.act;
-  const held = (k) => book.held(k);
+  const held = (k) => workOf(book, k);
   const fams = el('div', 'prof-families');
   for (const [id, word] of ANVIL_FAMILIES) {
     const b = el('button', `prof-family${_anvil.family === id ? ' on' : ''}`, word);
@@ -1244,7 +1248,7 @@ function drawAnvil(detail, rerender, { el, divider }) {
  *  recipe asks a plank and takes a quality, and the Stores hold one. */
 function heartwoodToggle(box, el, r, book, state, rerender, locked = false) {
   if (!takesHeartwood(r)) { state.heartwood = false; return; }
-  const have = book.held('wood:heartwood');
+  const have = workOf(book, 'wood:heartwood');
   if (have < 1) { state.heartwood = false; return; }
   const lab = el('label', 'prof-gentle');
   const cb = el('input');
@@ -1352,10 +1356,10 @@ function drawWorkbench(detail, rerender, { el, divider }) {
   if (_bench.act && getPref('gentleActs') === true) { _bench.act.cancel(); _bench.act = null; _bench.actRecipe = null; _bench.word = 'You set the plane down; nothing is spent.'; }
   const planing = !!_bench.act;   // AUDIT 30 A3: nothing else picked while the plane is drawn
   // THE SAW: the logs the Stores hold, to planks (a Timberwright's three)
-  const saws = SAW_RECIPES.filter((r) => book.held(r.inputs[0].key) > 0);
+  const saws = SAW_RECIPES.filter((r) => workOf(book, r.inputs[0].key) > 0);
   if (saws.length) workRows(detail, rerender, el, saws, _bench, 'Saw', 'Sawing...', (id, n) => p.smelt(id, n), short, !!_bench.act);   // AUDIT 32 P5: held while planing
   else detail.append(el('p', 'px-note', 'A log saws to two planks here. Logs come from the woods (Logging).'));
-  const held = (k) => book.held(k);
+  const held = (k) => workOf(book, k);
   const fams = el('div', 'prof-families');
   for (const [id, word] of BENCH_FAMILIES) {
     const b = el('button', `prof-family${_bench.family === id ? ' on' : ''}`, word);
@@ -1535,12 +1539,12 @@ function drawLoom(detail, rerender, { el, divider }) {
   if (_loom.act && getPref('gentleActs') === true) { _loom.act.cancel(); endStitch(); _loom.word = 'You set the needle down; nothing is spent.'; }
   const sewing = !!_loom.act;
   // THE TANNING RACK AND THE LOOM'S OWN WORK: the hides the Stores hold, cured; Spider Silk, woven
-  const cures = CURE_RECIPES.filter((r) => book.held(r.inputs[0].key) > 0);
+  const cures = CURE_RECIPES.filter((r) => workOf(book, r.inputs[0].key) > 0);
   if (cures.length) workRows(detail, rerender, el, cures, _loom, 'Cure', 'Curing...', (id, n) => p.smelt(id, n), short, sewing);   // AUDIT 32 P5: held while sewing
   else detail.append(el('p', 'px-note', 'Two hides cure to a leather here (a Tanner\'s one). Hides come from the bodies your own blow fells (Hunting).'));
-  const weaves = WEAVE_RECIPES.filter((r) => book.held(r.inputs[0].key) > 0);
+  const weaves = WEAVE_RECIPES.filter((r) => workOf(book, r.inputs[0].key) > 0);
   if (weaves.length) workRows(detail, rerender, el, weaves, _loom, 'Weave', 'Weaving...', (id, n) => p.smelt(id, n), short, sewing);
-  const held = (k) => book.held(k);
+  const held = (k) => workOf(book, k);
   const fams = el('div', 'prof-families');
   for (const [id, word] of LOOM_FAMILIES) {
     const b = el('button', `prof-family${_loom.family === id ? ' on' : ''}`, word);
@@ -1781,7 +1785,7 @@ function drawMasonBench(detail, rerender, { el, divider }) {
   const striking = !!_mason.act;
   const gentle = getPref('gentleActs') === true;
   const elsewhere = handsAt(_mason);   // AUDIT 32 P2: one act a page
-  const held = (k) => book.held(k);
+  const held = (k) => workOf(book, k);
   // WHAT THE CHISEL'S END ASKS (AUDIT 30 A3's law: the work it began on): a work its count, by the forge's route; a
   // carving its craft
   const finishFor = (what) => async (clean) => {
@@ -2012,7 +2016,7 @@ function drawCookFire(detail, rerender, { el, divider }) {
   if (_cook.act && getPref('gentleActs') === true) { _cook.act.cancel(); endPan(); _cook.word = PAN_DOWN_LINE; }
   const gentle = getPref('gentleActs') === true;
   const elsewhere = handsAt(_cook);   // AUDIT 32 P2: one act a page
-  const held = (k) => book.held(k);
+  const held = (k) => workOf(book, k);
   // WHAT THE PAN'S END ASKS (AUDIT 30 A3's law: the dish it began on)
   const finishFor = (id) => async (clean) => {
     _cook.crafting = true; rerender();
@@ -2200,7 +2204,7 @@ function drawJewellerBench(detail, rerender, { el, divider }) {
   const cutting = !!_jewel.act;
   const gentle = getPref('gentleActs') === true;
   const elsewhere = handsAt(_jewel);   // AUDIT 32 P2: one act a page
-  const held = (k) => book.held(k);
+  const held = (k) => workOf(book, k);
   // THE PIECES, then the piece's bases
   const pieces = el('div', 'prof-families');
   for (const pc of JEWEL_PIECES) {
@@ -2377,7 +2381,7 @@ function drawAlchemyStation(detail, rerender, { el, divider }) {
   detail.append(el('p', 'px-note', `${station.kind === 'shop' ? `The alchemist's station - ${station.fee} gold a brew.` : 'Your alchemy station.'} ${professionName('alchemy')} ${rank} (${rankName(rank)}): ${n === 1 ? 'a potion' : `${n} potions`} a brew; ${potentLine(rank, specs, 0, null, steps)}${steps > 0 ? ` (the Apothecary's +${POTENT.apothecary * steps}% with it)` : ''}, +${POTENT.unbruised}% for each herb you picked unbruised.${n > 1 ? ' A potion wholly of the Apothecaries\' goods brews one.' : ''}`));   // AUDIT PROF-541 R2-S1
   const short = purseShort(station, 'alchemist', 'a brew');
   if (short) detail.append(el('p', 'px-note prof-short', short));
-  const held = (k) => book.held(k);
+  const held = (k) => workOf(book, k);
   for (const potion of POTIONS) {
     const open = rank >= potion.rank;
     const keys = brewKeys(potion, held);
@@ -2461,7 +2465,7 @@ function drawEnchantingStation(detail, rerender, { el, divider }) {
   if (short) detail.append(el('p', 'px-note prof-short', short));
   const pieces = p.disenchantable();
   // AUDIT PROF-541 B8: the Essence's room - every origin counted, as the service counts it (storesFullIn's sum)
-  const ess = book.store?.(ARCANE_ESSENCE.key) ?? { own: book.held(ARCANE_ESSENCE.key) };
+  const ess = book.store?.(ARCANE_ESSENCE.key) ?? { own: workOf(book, ARCANE_ESSENCE.key) };
   const room = (book.state?.caps?.stores ?? STORES_MAX) - ((ess.own | 0) + (ess.bought | 0) + (ess.gold | 0));
   if (!pieces.length) detail.append(el('p', 'px-note', 'No crafted piece in your pack carries enough enchantment to give Essence. Only a piece a crafter made online comes apart - never loot.'));
   for (const pc of pieces) {
@@ -2526,7 +2530,7 @@ function drawTemper(detail, rerender, { el, divider }, where) {
     const r = recipeById(pc.recipe);
     if (!temperableRecipe(r)) continue;
     const cost = temperCost(r);
-    const open = rank >= r.rank, have = book.held(cost.key) >= cost.n;
+    const open = rank >= r.rank, have = workOf(book, cost.key) >= cost.n;
     const row = el('div', 'prof-smelt');
     row.append(el('b', null, pc.name), el('span', 'prof-split', `${QUALITY_NAMES[pc.quality]} to ${QUALITY_NAMES[pc.quality + 1]} - ${cost.n} ${p.name(cost.key)}, +${temperXp(r, rank)} ${professionName(craft)} XP`));
     if (open && !have) row.append(el('span', 'prof-short', `Needs ${cost.n} ${p.name(cost.key)}.`));
@@ -2562,7 +2566,7 @@ function drawEssenceReforge(detail, rerender, { el, divider }, rank, short) {
   detail.append(divider('Reforge with Essence'));
   if (rank < REFORGE_RANK) { detail.append(el('p', 'px-note', ESSENCE_REFORGE_RANK_LINE)); return; }
   detail.append(el('p', 'px-note', ESSENCE_REFORGE_HOW));
-  const ess = p.book.store?.(ARCANE_ESSENCE.key) ?? { own: p.book.held(ARCANE_ESSENCE.key) };
+  const ess = p.book.store?.(ARCANE_ESSENCE.key) ?? { own: workOf(p.book, ARCANE_ESSENCE.key) };
   const have = (ess.own | 0) + (ess.bought | 0);   // never gold's units, as the service spends
   const pieces = p.reforgeable();
   if (!pieces.length) detail.append(el('p', 'px-note', ESSENCE_REFORGE_NONE));

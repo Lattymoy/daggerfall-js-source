@@ -41,8 +41,11 @@ src/net/nodeLaw.js (the nodes). Appendix B lists them in one place.
    be laundered into the server's economy. **What may enter the Stores**, the whole list: a harvest the service
    rolled (section 6), a craft the service made (section 9), a market purchase or a buy order filled (10.2-10.3), a
    writ's return or refund (section 11), the Board's two counters - the Weavers' and the Apothecaries' (4.5) - a Siege
-   Honour's Spoils of War (4.7), and Disenchanting's Essence from a provenance item (9.3). Nothing else - no pack item,
-   however it was come by. **Every Stores unit carries its origin** (section 7): **own** (this character's harvest or
+   Honour's Spoils of War (4.7), and Disenchanting's Essence from a provenance item (9.3). BAG1 restated it over the
+   service's carried count (`Materials-Bag.md` 5); BAG-CRAFT (2026-10-09, Mac: "I just want players to also be able to
+   craft from their inventory, not just the store") opened one door past it: **a station's shortfall**, put in from the
+   bag and the pack counted or not, as bought (`Materials-Bag.md` 14) - so a station takes the client's word for what
+   its pack holds, and the guarantee above stands for every other door, not for that one. **Every Stores unit carries its origin** (section 7): **own** (this character's harvest or
    craft) or **bought** (everything else); only own units raise a seat's influence at their value (section 11).
    **RESTATED BY BAG1** (2026-10-03, `Materials-Bag.md`; Mac: "instead of the current go straight into your storage"):
    a harvest goes into the Materials Bag or the pack now, and what the service handed to a save may come BACK into the
@@ -490,8 +493,9 @@ GATHER-OW (2026-10-02, Mac: "allow them to appear in the overworld without being
   the code says **`profStores`** (tables `prof_stores`, `guild_prof_stores`) - FACT, `src/systems/features.js`
   already exports a `STORES` (the three preference stores), and one word must not name two things.
 - **The Stores tab** (section 8) is the only place a Stores material is seen. Moving to the pack is allowed (one-way, law 3);
-  a pack item never moves into the Stores. BAG1 (`Materials-Bag.md`): a unit the service handed out and still counts
-  as carried moves back (law 3, restated); the Stores are **kept in town** - put in and taken out in any town, read
+  a pack item moves into the Stores only by BAG1's and BAG-CRAFT's doors (`Materials-Bag.md` 5, 14): a unit the service
+  handed out and still counts as carried moves back (law 3, restated), and a station's shortfall moves what the pack
+  holds, counted or not, as bought; the Stores are **kept in town** - put in and taken out in any town, read
   anywhere - and a harvest goes into the Materials Bag or the pack, never straight into them.
 - **Origin.** Every unit is **own** or **bought** - or, GOLD-MARKET (10.8), **gold**: bought on the market with gold,
   which goes to the pack or back on the market for gold and to nothing else. Own: this character's harvest (section 6), a craft whose every input
@@ -1259,7 +1263,7 @@ of Makers; commissions; regional prices to haul between; and every seat on the m
 | A modified client fakes a craft | The service crafts; the client only receives (9.1) |
 | A modified client plays a perfect act | Capped at one quality step and +50% yield, never past the rank (5.1) |
 | A save-edited item enters the economy | The Stores are one-way (law 3); only a provenance id's owner lists it, one listing at a time (10.2, 18) |
-| A save-edited or looted material deposited from the Materials Bag | Only the service's carried count moves into the Stores, cut to what the pack holds and never raised (law 3 restated; `Materials-Bag.md` 5) |
+| A save-edited or looted material deposited from the Materials Bag | The Stores page, a writ and the market move only the service's carried count, cut to what the pack holds and never raised (law 3 restated; `Materials-Bag.md` 5). A station's shortfall moves the rest, as bought - never own, never gold's (BAG-CRAFT, the owner's call; `Materials-Bag.md` 14) |
 | Fake gold buys the market | The market is in Marks (10.5); a gold listing is a realm character's alone, bought off its record on the service in the sale's own batch, and what gold bought never becomes Marks (10.8) |
 | Marks inflate | Faucets from witnessed acts, each capped - SILVER-FINDS' two bounded by the day (30 and 20 an account, 10.5); the weekly report; the Bank's spread and every fee burn |
 | A modified client claims loot finds it never opened | SILVER-FINDS: bounded, not witnessed - the service's dice say what a find strikes, and 20 silver an account a UTC day is the most a lie is paid (10.5) |

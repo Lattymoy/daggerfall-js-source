@@ -86,7 +86,7 @@ import { stationSteps } from '../../src/net/fortLaw.js';   // SEAT2b part two (7
 import { fortTiersOf } from './seatForts.js';   // SEAT2b part two: the halls standing at the seat
 import { RAM_KIT } from '../../src/net/professionLaw.js';   // SEAT2b part two: a siege work's place in the Stores
 import { SIEGE_GEM } from '../../src/net/professionLaw.js';   // PROF10: a Lapidary's Siege-cracked Gem, spent for a piece's gem
-import { CARRIED_MAX, DEPOSIT_MAX, CLAMP_ORDER, DEPOSIT_ORDERS, CARRIED_ROW_DAYS, heldOk, seenOk, depositOrderOk } from '../../src/net/bagLaw.js';   // BAG1: what a character carries, counted
+import { CARRIED_MAX, DEPOSIT_MAX, CLAMP_ORDER, DEPOSIT_ORDERS, CARRIED_ROW_DAYS, heldOk, seenOk, depositOrderOk, looseOrder, LOOSE_ORIGIN } from '../../src/net/bagLaw.js';   // BAG1: what a character carries, counted
 
 const DAY_S = 86_400;
 /** The pixels one read may ask after - a streamed 5 x 5. */
@@ -879,15 +879,22 @@ export async function withdrawStores(ctx, player, env, { character, material: ke
 
 // ─── BAG1: A DEPOSIT - WHAT IS CARRIED, INTO THE STORES ─────────────
 
+/** BAG-CRAFT: a deposit row's units the carried count did not hold - its qty past its own, bought and gold. */
+const looseOf = (row) => Number(row.qty) - Number(row.own) - Number(row.bought) - Number(row.gold);
+
 /**
  * PUT IN: `{ character, material, qty, held, order, rid }` - `qty` carried units of a material into the Stores, each
  * origin as it was (bagLaw.js). The client takes the items out of its bag and pack before it asks, and gives them back
  * on a refusal. `held` is what it held of them BEFORE it took them out: the carried count is first cut to it (never
  * raised), so a pack that holds fewer than the count says - an herb brewed, a log sold to a shop - is believed at
  * once, and a pack that holds more than the count adds nothing: law 3's guarantee, the door open this one way.
- * `order` which origins move first: `all` (the Stores page - gold's, bought, own) or `spend` (a station's shortfall,
- * put in just before it spends - bought, own, never gold's). Refused `carried-short` past what the count holds after
+ * `order` which origins move first: `all` (the Stores page - gold's, bought, own) or `spend` (a writ's or the market's
+ * shortfall, put in just before it spends - bought, own, never gold's). Refused `carried-short` past what the count holds after
  * the cut, `stores-full` past the Stores' 5,000.
+ * BAG-CRAFT (FIELD BUGS 2026-10-09c, Mac: "I just want players to also be able to craft from their inventory, not just
+ * the store"): `work` - a station's shortfall - moves `spend`'s counted units and then units the count does not hold, as
+ * many as `held` names past the count once cut (bagLaw.js looseOrder), into the Stores as bought (LOOSE_ORIGIN); the
+ * count is not touched for them. Its row's `qty` past its own, bought and gold is that loose part.
  */
 export async function depositStores(ctx, player, env, { character, material: key, qty, held, order = 'all', rid, seen = null } = {}) {
   const { db, nowS, rand } = ctx;
@@ -895,6 +902,7 @@ export async function depositStores(ctx, player, env, { character, material: key
   if (refused) return refused;
   const answer = async (row, extra = {}) => ({
     ok: true, ...extra, material: row.material, qty: Number(row.qty), own: Number(row.own), bought: Number(row.bought), gold: Number(row.gold),
+    ...(looseOf(row) > 0 ? { loose: looseOf(row) } : {}),   // BAG-CRAFT: what the count did not hold - said where some moved
     store: await storeOf(db, player.id, row.char_id, row.material), carried: await carriedOf(db, player.id, row.char_id, row.material),
   });
   const prior = await db.prepare('SELECT * FROM prof_deposits WHERE player = ?1 AND rid = ?2').bind(player.id, rid).first();
@@ -917,7 +925,12 @@ export async function depositStores(ctx, player, env, { character, material: key
     before = `${before} + ${take[o]}`;
   }
   const of = (o) => take[o] ?? '0';
-  const movable = seq.map(cHeld).join(' + ');
+  // BAG-CRAFT: a station's deposit may move what the client holds past the count (read after the cut, in this batch) too
+  const loose = looseOrder(order);
+  const movable = `${seq.map(cHeld).join(' + ')}${loose ? ' + MAX(0, ?9 - COALESCE((SELECT SUM(qty) FROM prof_carried WHERE player = ?1 AND char_id = ?2 AND material = ?4), 0))' : ''}`;
+  // what each origin's Stores row is given: what left the count as it, and (BAG-CRAFT) the loose part as LOOSE_ORIGIN's -
+  // a row's qty is its three origins' whole for every order but `work`
+  const into = (o) => (o === LOOSE_ORIGIN ? `qty - ${['own', 'bought', 'gold'].filter((x) => x !== o).join(' - ')}` : o);
   const mine = 'EXISTS (SELECT 1 FROM prof_deposits WHERE player = ?1 AND rid = ?2 AND n = ?3)';
   await db.batch([
     // the count cut to what the client held - only while this request has made nothing (a racing twin of a landed deposit
@@ -929,13 +942,13 @@ export async function depositStores(ctx, player, env, { character, material: key
       SELECT ?1, ?3, ?2, ?4, ?5, ${of('own')}, ${of('bought')}, ${of('gold')}, ?6, ?7
       WHERE ${movable} >= ?5
         AND COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = ?4), 0) + ?5 <= ?8`)
-      .bind(player.id, character, rid, key, qty, nowS, nonce, STORES_MAX),
+      .bind(player.id, character, rid, key, qty, nowS, nonce, STORES_MAX, ...(loose ? [held] : [])),   // ?9 bound only where read
     // the units out of the count and into the Stores, each origin as the decision read it
     ...['own', 'bought', 'gold'].flatMap((o) => [
       db.prepare(`UPDATE prof_carried SET qty = qty - (SELECT ${o} FROM prof_deposits WHERE player = ?1 AND rid = ?2 AND n = ?3)
         WHERE player = ?1 AND char_id = ?4 AND material = ?5 AND origin = '${o}' AND ${mine}`).bind(player.id, rid, nonce, character, key),
       db.prepare(`INSERT INTO prof_stores (player, char_id, material, origin, qty)
-        SELECT player, char_id, material, '${o}', ${o} FROM prof_deposits WHERE player = ?1 AND rid = ?2 AND n = ?3 AND ${o} > 0
+        SELECT player, char_id, material, '${o}', ${into(o)} FROM prof_deposits WHERE player = ?1 AND rid = ?2 AND n = ?3 AND ${into(o)} > 0
         ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = prof_stores.qty + excluded.qty`).bind(player.id, rid, nonce),
     ]),
     db.prepare('DELETE FROM prof_carried WHERE player = ?1 AND char_id = ?2 AND qty = 0').bind(player.id, character),
@@ -944,7 +957,7 @@ export async function depositStores(ctx, player, env, { character, material: key
   if (made?.n === nonce) return answer(made);
   if (made) return answer(made, { repeat: true });
   const c = await carriedOf(db, player.id, character, key);
-  const could = seq.reduce((n, o) => n + (c[o] ?? 0), 0);
+  const could = seq.reduce((n, o) => n + (c[o] ?? 0), 0) + (loose ? Math.max(0, held - ((c.own ?? 0) + (c.bought ?? 0) + (c.gold ?? 0))) : 0);
   return could < qty ? { error: 'carried-short', material: key, carried: c } : { error: 'stores-full', material: key };
 }
 

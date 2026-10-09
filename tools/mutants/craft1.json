@@ -264,8 +264,8 @@
   {
     "name": "AUDIT-CRAFT1-R4-track-unhanded",
     "file": "src/net/profBook.js",
-    "old": "const plan = chainPlan(inputs, (k) => book.held(k), { track: (p) => book.track(p), room:",
-    "new": "const plan = chainPlan(inputs, (k) => book.held(k), { room:",
+    "old": "const plan = chainPlan(inputs, (k) => book.workable(k), { track: (p) => book.track(p), room:",
+    "new": "const plan = chainPlan(inputs, (k) => book.workable(k), { room:",
     "tests": [
       "test/craft1_chain.test.js"
     ]
@@ -461,7 +461,7 @@
   {
     "name": "AUDIT-CRAFT1-R7-chain-needed-guard",
     "file": "src/net/profBook.js",
-    "old": "&& chainNeeded(inputs, (k) => book.held(k))) {",
+    "old": "&& chainNeeded(inputs, (k) => book.workable(k))) {",
     "new": "&& true) {",
     "tests": [
       "test/craft1_chain.test.js"

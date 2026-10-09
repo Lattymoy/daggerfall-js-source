@@ -56,7 +56,7 @@
 // the pins drive it without a network.
 // ═══════════════════════════════════════════════════════════════════
 import { HARVEST_LATE_S, HIGH_HIDES_PER_DAY, WITHDRAW_MAX, smeltRecipe, trackOf } from './professionLaw.js';   // PROF7: the day's rare hides (CAP-OFF: no day's cap); BAG1: a work's inputs
-import { CARRIED_MAX, DEPOSIT_MAX, carriedUsable, carriedTotal, clampCarried } from './bagLaw.js';   // BAG1: what a character carries, counted
+import { CARRIED_MAX, DEPOSIT_MAX, carriedUsable, carriedWorkable, carriedTotal, clampCarried } from './bagLaw.js';   // BAG1: what a character carries, counted
 import { recipeById, recipeInputs, recipeOpen } from './recipeLaw.js';   // BAG1: a craft's inputs, moved in from the bag first; AUDIT CRAFT1: whether the rank opens it
 import { potionById, brewSpends } from './alchemyLaw.js';   // BAG1: a brew's
 import { chainPlan, chainNeeded, storesRoom } from './chainLaw.js';   // CRAFT1: the works a craft's inputs want first
@@ -361,10 +361,15 @@ export function createProfBook({ door, storage = null, character = () => null, n
     track(profession) { const p = trackOf(profession); return state.tracks.get(p) ?? { profession: p, xp: 0, rank: 0, specs: { 50: null, 100: null }, respec: null }; },
     /** One material's count in the Stores, own and bought (GOLD-MARKET: and `gold`, bought with gold, where held). */
     store(material) { return state.stores.get(material) ?? { material, own: 0, bought: 0 }; },
-    /** What a station, a craft or a writ may spend of it - never what gold bought (GOLD-MARKET's wall). BAG1: the Stores'
-     *  and, for a carrying book, what the character carries and still holds (bagLaw.js carriedUsable) - a craft puts the
-     *  shortfall in the Stores before it spends (`ensureInStores`). */
+    /** What a writ or the market may spend of it - never what gold bought (GOLD-MARKET's wall). BAG1: the Stores' and, for
+     *  a carrying book, what the character carries and still holds of the service's count (bagLaw.js carriedUsable) - the
+     *  shortfall put in the Stores before it spends (`ensureInStores`). A station reads `workable`. */
     held(material) { return this.storesHeld(material) + this.carriedUsable(material); },
+    /** BAG-CRAFT (FIELD BUGS 2026-10-09c, Mac: "I just want players to also be able to craft from their inventory, not
+     *  just the store"): WHAT A STATION MAY WORK OF IT - a craft, a brew, a smelt, a temper: the Stores' and everything the
+     *  bag, the pack and the wagon hold of it, counted or not, but gold's (bagLaw.js carriedWorkable) - the shortfall put
+     *  in first (`ensureInStores` with `work`). */
+    workable(material) { return this.storesHeld(material) + this.carriedWorkable(material); },
     /** BAG1: what the Stores alone may spend of it - the Stores page's, and every act that reads the Stores alone. */
     storesHeld(material) { const s = this.store(material); return s.own + s.bought; },
     /** BAG1: whether this book carries (a host handed it the bag and the pack) - every harvest and withdrawal is then
@@ -374,6 +379,8 @@ export function createProfBook({ door, storage = null, character = () => null, n
     carried(material) { return state.carried.get(material) ?? { material, own: 0, bought: 0 }; },
     /** BAG1: what of the carried count a station may use - as far as the bag and the pack still hold it, never gold's. */
     carriedUsable(material) { return carry ? carriedUsable(this.carried(material), carry.held(material)) : 0; },
+    /** BAG-CRAFT: what of what the character carries a station may work - every unit held but gold's, counted or not. */
+    carriedWorkable(material) { return carry ? carriedWorkable(this.carried(material), carry.held(material)) : 0; },
     /** BAG1: whether one more unit of a material has nowhere to go - neither the bag nor the pack has room, or the
      *  service's count of it is at its bound (professionLaw.js storesFullIn asks it of a carrying book). */
     carryFull(material) { return !carry || carry.room(material) < 1 || carriedTotal(clampedCarried(material)) >= CARRIED_MAX; },
@@ -590,9 +597,12 @@ export function createProfBook({ door, storage = null, character = () => null, n
      * key), what the Stores lack of `n` deposited from what is carried (`spend`: bought first, never gold's), so the act's
      * own route spends the Stores as it always has. A carried count that cannot cover a shortfall moves nothing and
      * answers `materials-short`; a deposit refused answers its refusal (one unanswered: `deposit-kept`). A book that does not carry answers `ok` at once.
+     * BAG-CRAFT: `work` - a station's (a craft, a brew, a smelt, a temper): what is carried counted or not (`carriedWorkable`),
+     * put in by the `work` order; a writ's and the market's move the service's count alone, as before.
      * @param {{ key: string, n: number }[]|null|undefined} inputs
+     * @param {{ work?: boolean }} [opts]
      */
-    async ensureInStores(inputs) {
+    async ensureInStores(inputs, { work = false } = {}) {
       if (!carry || !Array.isArray(inputs)) return { ok: true, moved: 0 };
       const need = new Map();
       for (const i of inputs) if (i && typeof i.key === 'string' && i.n > 0) need.set(i.key, (need.get(i.key) ?? 0) + i.n);
@@ -604,13 +614,14 @@ export function createProfBook({ door, storage = null, character = () => null, n
       // every shortfall CHECKED before any moves, so a craft that cannot be covered moves nothing. AUDIT2 BAG1 K8: a
       // refusal of a later input's put-in (its Stores full) leaves the earlier inputs in the Stores, where the next craft
       // spends them - said by the answer's `moved`
-      for (const [k, n] of need) if (n - this.storesHeld(k) > this.carriedUsable(k)) return { ok: false, error: 'materials-short', material: k };
+      const carriedFor = (k) => (work === true ? this.carriedWorkable(k) : this.carriedUsable(k));
+      for (const [k, n] of need) if (n - this.storesHeld(k) > carriedFor(k)) return { ok: false, error: 'materials-short', material: k };
       let moved = 0;
       for (const [k, n] of need) {
         let left = n - this.storesHeld(k);
         while (left > 0) {
           const q = Math.min(left, DEPOSIT_MAX);
-          const r = await this.deposit(k, q, { order: 'spend' });
+          const r = await this.deposit(k, q, { order: work === true ? 'work' : 'spend' });
           // AUDIT BAG1 B8: a put-in whose answer has not come is no shortfall - its items are on their way, and said so
           if (!r?.ok) return { ok: false, error: r?.kept === true ? 'deposit-kept' : (r?.error ?? 'offline'), material: k, kept: r?.kept === true, moved };
           left -= q;
@@ -649,8 +660,8 @@ export function createProfBook({ door, storage = null, character = () => null, n
         // AUDIT CRAFT1 (the review's aside): never a chain for a recipe the rank does not open - its works would run, and
         // the craft be refused `prof-rank` after them; the craft is asked as ever and the service says so
         const t0 = r0 ? book.track(r0.profession ?? 'smithing') : null;
-        if (r0 && chain !== false && recipeOpen(r0, t0?.rank ?? 0, t0?.specs) && chainNeeded(inputs, (k) => book.held(k))) {
-          const plan = chainPlan(inputs, (k) => book.held(k), { track: (p) => book.track(p), room: (k) => storesRoom(book.store(k)) });
+        if (r0 && chain !== false && recipeOpen(r0, t0?.rank ?? 0, t0?.specs) && chainNeeded(inputs, (k) => book.workable(k))) {
+          const plan = chainPlan(inputs, (k) => book.workable(k), { track: (p) => book.track(p), room: (k) => storesRoom(book.store(k)) });
           // a plan that cannot cover them asks no work - the craft is asked as ever, and the service says what is short
           if (plan.ok) for (const w of plan.works) {
             const s = await book.smelt(w.id, w.count, { stay: true });
@@ -663,7 +674,7 @@ export function createProfBook({ door, storage = null, character = () => null, n
             refined.push({ id: w.id, count: w.count, xp: Number(s.data?.xp) || 0, made: (Number(s.data?.own) || 0) + (Number(s.data?.bought) || 0) });   // AUDIT CRAFT1 F4: what the service made
           }
         }
-        const ready = r0 ? await book.ensureInStores(inputs) : { ok: true };
+        const ready = r0 ? await book.ensureInStores(inputs, { work: true }) : { ok: true };   // BAG-CRAFT: the bag and the pack, counted or not
         // AUDIT2 BAG1 K5: never `kept` - no craft was kept; an unanswered put-in is said as such (`deposit-kept`)
         if (!ready.ok) return { ok: false, error: ready.error ?? 'materials-short', material: ready.material, moved: ready.moved ?? 0, ...(refined.length ? { refined } : {}) };
         const w = { rid: rid(), recipe, clean: clean === true, name: typeof name === 'string' ? name : null, character: c, heartwood: heartwood === true,   // PROF4: a Heartwood for a plank
@@ -695,7 +706,7 @@ export function createProfBook({ door, storage = null, character = () => null, n
       if (!c || !account()) return { ok: false, error: 'no-session' };
       _craftBusy = (async () => {
         // BAG1: the cauldron's herbs the Stores lack, from the bag and the pack first
-        const ready = await book.ensureInStores(brewSpends(potionById(potion), keys));
+        const ready = await book.ensureInStores(brewSpends(potionById(potion), keys), { work: true });   // BAG-CRAFT
         // AUDIT2 BAG1 K5: never `kept` - no craft was kept; an unanswered put-in is said as such (`deposit-kept`)
         if (!ready.ok) return { ok: false, error: ready.error ?? 'materials-short', material: ready.material, moved: ready.moved ?? 0 };
         const w = { rid: rid(), brew: true, recipe: potion, keys: Array.isArray(keys) ? [...keys] : [], character: c,
@@ -747,7 +758,7 @@ export function createProfBook({ door, storage = null, character = () => null, n
       m.promise = (async () => {
         // BAG1: what the Stores lack, from the bag and the pack first - as a craft's
         const r0 = recipeById(recipe);
-        const ready = temperableRecipe(r0) ? await book.ensureInStores([temperCost(r0)]) : { ok: true };
+        const ready = temperableRecipe(r0) ? await book.ensureInStores([temperCost(r0)], { work: true }) : { ok: true };   // BAG-CRAFT
         if (!ready.ok) { m.promise = null; ids.delete(key); return { ok: false, error: ready.error ?? 'materials-short', material: ready.material, moved: ready.moved ?? 0 }; }
         const r = await ask(() => door.temper(c, recipe, quality, provenance, m.id), origin);
         m.promise = null;
@@ -878,7 +889,7 @@ export function createProfBook({ door, storage = null, character = () => null, n
       m.promise = (async () => {
         // BAG1: the work's inputs the Stores lack, from the bag and the pack first
         const work = smeltRecipe(recipe);
-        const ready = work ? await book.ensureInStores(work.inputs.map((i) => ({ key: i.key, n: i.n * count }))) : { ok: true };
+        const ready = work ? await book.ensureInStores(work.inputs.map((i) => ({ key: i.key, n: i.n * count })), { work: true }) : { ok: true };   // BAG-CRAFT
         if (!ready.ok) { m.promise = null; return { ok: false, error: ready.error ?? 'materials-short', material: ready.material, moved: ready.moved ?? 0 }; }   // AUDIT2 BAG1 K8
         const r = await ask(() => door.smelt(c, recipe, count, m.id, clean === true));
         m.promise = null;

@@ -586,8 +586,8 @@
   {
     "name": "CRAFT4-pages-temper-rank-open",
     "file": "src/ui/profPages.js",
-    "old": "    const open = rank >= r.rank, have = book.held(cost.key) >= cost.n;",
-    "new": "    const open = true, have = book.held(cost.key) >= cost.n;",
+    "old": "    const open = rank >= r.rank, have = workOf(book, cost.key) >= cost.n;",
+    "new": "    const open = true, have = workOf(book, cost.key) >= cost.n;",
     "tests": [
       "test/craft4_temper.test.js"
     ]
@@ -595,7 +595,7 @@
   {
     "name": "CRAFT4-pages-temper-short-open",
     "file": "src/ui/profPages.js",
-    "old": "    const open = rank >= r.rank, have = book.held(cost.key) >= cost.n;",
+    "old": "    const open = rank >= r.rank, have = workOf(book, cost.key) >= cost.n;",
     "new": "    const open = rank >= r.rank, have = true;",
     "tests": [
       "test/craft4_temper.test.js"
