@@ -166,8 +166,8 @@
   {
     "name": "SD5B-the-sky-on-the-wall-clock",
     "file": "src/scenes/world.js",
-    "old": "      if (p?.draw(proj, view, deadlandsSeconds(), courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color))) renderer.markForeignPass();",
-    "new": "      if (p?.draw(proj, view, performance.now() / 1000, courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color))) renderer.markForeignPass();",
+    "old": "      if (p?.draw(proj, view, deadlandsSeconds(), courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color), sdSkyClockNow())) renderer.markForeignPass();   // SD-LOOK S7: its face tells the fight",
+    "new": "      if (p?.draw(proj, view, performance.now() / 1000, courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color), sdSkyClockNow())) renderer.markForeignPass();   // SD-LOOK S7: its face tells the fight",
     "tests": [
       "test/sd5b_sky.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "SD5B-the-foreign-pass-unmarked",
     "file": "src/scenes/world.js",
-    "old": "      if (p?.draw(proj, view, deadlandsSeconds(), courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color))) renderer.markForeignPass();",
-    "new": "      p?.draw(proj, view, deadlandsSeconds(), courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color));",
+    "old": "      if (p?.draw(proj, view, deadlandsSeconds(), courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color), sdSkyClockNow())) renderer.markForeignPass();   // SD-LOOK S7: its face tells the fight",
+    "new": "      p?.draw(proj, view, deadlandsSeconds(), courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color), sdSkyClockNow());   // SD-LOOK S7: its face tells the fight",
     "tests": [
       "test/sd5b_sky.test.js",
       "test/glstate.test.js"
@@ -185,8 +185,8 @@
   {
     "name": "SD5B-the-sky-in-the-court's-light",
     "file": "src/scenes/world.js",
-    "old": "      if (p?.draw(proj, view, deadlandsSeconds(), courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color))) renderer.markForeignPass();",
-    "new": "      if (p?.draw(proj, view, deadlandsSeconds(), courtFogNow(), 1)) renderer.markForeignPass();",
+    "old": "      if (p?.draw(proj, view, deadlandsSeconds(), courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color), sdSkyClockNow())) renderer.markForeignPass();   // SD-LOOK S7: its face tells the fight",
+    "new": "      if (p?.draw(proj, view, deadlandsSeconds(), courtFogNow(), 1, sdSkyClockNow())) renderer.markForeignPass();   // SD-LOOK S7: its face tells the fight",
     "tests": [
       "test/sd5b_sky.test.js"
     ]

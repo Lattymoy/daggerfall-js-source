@@ -110,8 +110,8 @@
   {
     "name": "SD5A-the-way-back-unstood",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    if (_sdRealm) { sdEnd.stand({ rift: { at: realmToDungeon(0, 0, SD_WAY_BACK_Z), size: SD_WAY_BACK_SIZE }, retAt: null, dynamicDraws }); return; }",
-    "new": "    if (false) { sdEnd.stand({ rift: { at: realmToDungeon(0, 0, SD_WAY_BACK_Z), size: SD_WAY_BACK_SIZE }, retAt: null, dynamicDraws }); return; }",
+    "old": "    if (_sdRealm) { sdEnd.stand({ rift: { at: realmToDungeon(0, 0, SD_WAY_BACK_Z), size: SD_WAY_BACK_SIZE }, retAt: null, dynamicDraws, hollow: true }); return; }",
+    "new": "    if (false) { sdEnd.stand({ rift: { at: realmToDungeon(0, 0, SD_WAY_BACK_Z), size: SD_WAY_BACK_SIZE }, retAt: null, dynamicDraws, hollow: true }); return; }",
     "tests": [
       "test/sd5a_realm.test.js"
     ]

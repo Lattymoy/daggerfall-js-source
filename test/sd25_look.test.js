@@ -650,3 +650,67 @@ test('SD-LOOK THE HOLD IS SEEN (S7): the hold\'s curtain the same wall in gold, 
   assert.deepEqual(u('uColor').map((v) => [...v[0]]), [[...SD_STOMP_WALL.color], [...SD_HOLD_CURTAIN.color]], 'each in its own light');
   assert.equal(r.drawn, 2);
 });
+
+// ---------------------------------------------------------------------------------------------------------------------
+// S8 - THE BRASS REMNANT: its body in plates, its heart a light.
+// ---------------------------------------------------------------------------------------------------------------------
+import { buildRemnantParts as remParts, buildRemnantModel as remModel, SD_REMNANT_KIT, SD_REMNANT_BODY as REM_B, SD_REMNANT_PARTS as REM_PARTS } from '../src/world/sdRemnantModel.js';
+import { SD_REM as REM_LAW } from '../src/net/sdRemnant.js';
+import { SD_REM_HAND } from '../src/scenes/sdRemnantRig.js';
+import { createSdRemnant, sdHeartBeat, SD_HEART_LIGHT } from '../src/scenes/sdRemnant.js';
+import { SD_ENDINGS as ENDINGS } from '../src/net/sdMarks.js';
+
+const vertsOf = (m) => Array.from({ length: m.positions.length / 3 }, (_, i) => [m.positions[i * 3], m.positions[i * 3 + 1], m.positions[i * 3 + 2]]);
+
+test('SD-LOOK THE BRASS REMNANT IN PLATES (S8): rebuilt on the same seven parts - its height and its feet the law\'s, nothing under 2 m past the law\'s radius; a crown of broken clock-hands its tallest point; bell pauldrons riding the arms; knee and elbow gears; the right forearm the Hour-Hand\'s blade, its spade\'s tip the hand point the beam leaves from; every face facing out of its solid (mutants: the blade short of the hand; a bell past the body; the crown under the law\'s height)', () => {
+  const whole = remModel('brass'), V = vertsOf(whole);
+  const ys = V.map((v) => v[1]);
+  assert.ok(Math.abs(Math.min(...ys)) < 1e-6 && Math.abs(Math.max(...ys) - REM_LAW.h) < 1e-4, 'its feet at 0, its height the law\'s');
+  assert.equal(V.filter((v) => v[1] < 2 && Math.hypot(v[0], v[2]) > REM_LAW.r + 1e-6).length, 0, 'nothing under 2 m past its radius');
+  assert.ok(V.every((v) => Math.abs(v[0]) <= REM_LAW.r * 1.1 + 1e-6 && Math.abs(v[2]) <= REM_LAW.r * 1.1 + 1e-6), 'within its body');
+  const parts = remParts('brass'), P = Object.fromEntries(REM_PARTS.map((n, i) => [n, vertsOf(parts[i])]));
+  const top = P.head.reduce((o, v) => (v[1] > o[1] ? v : o));
+  assert.ok(Math.hypot(top[0], top[2]) > SD_REMNANT_KIT.crown.base, 'its tallest point a crown-hand\'s tip, out from the helm');
+  assert.ok(P.head.filter((v) => v[1] > SD_REMNANT_KIT.helm.top + 0.01).length >= SD_REMNANT_KIT.crown.n, 'seven hands over the helm');
+  // the blade's tip is the hand point
+  const low = Math.min(...P.armR.map((v) => v[1])), edge = P.armR.filter((v) => v[1] < low + 1e-6);
+  const tip = [0, 1, 2].map((k) => edge.reduce((a, v) => a + v[k], 0) / edge.length);
+  assert.ok(Math.abs(tip[0] - SD_REM_HAND[0][0]) < 1e-6 && Math.abs(tip[1] - SD_REM_HAND[0][1]) < 1e-6 && Math.abs(tip[2] - SD_REM_HAND[0][2]) < 1e-6, `the spade's tip the hand point: ${tip}`);
+  const K = SD_REMNANT_KIT.bell;
+  assert.ok(P.armR.filter((v) => Math.abs(v[1] - K.mouth) < 1e-6 && Math.abs(Math.hypot(v[0] - K.x, v[2]) - K.r) < 1e-5).length >= SD_REMNANT_KIT.sides, 'a bell at the shoulder, its mouth whole');
+  // gears at the knees and the elbows: points round each axis at its radius
+  for (const [list, G, x] of [[P.legR, SD_REMNANT_KIT.knee, REM_B.legX + SD_REMNANT_KIT.knee.out], [P.armR, SD_REMNANT_KIT.elbow, REM_B.armX + SD_REMNANT_KIT.elbow.out]]) {
+    const on = list.filter((v) => Math.abs(v[0] - x) <= G.d / 2 + 1e-6 && Math.abs(Math.hypot(v[1] - G.y, v[2]) - G.r) < 1e-5);
+    assert.ok(on.length >= G.teeth, `a gear of ${G.teeth} teeth at ${G.y}`);
+  }
+  // every face out of its own solid: the cage's ribs, the bells, the helm - each triangle's normal away from the body's axis on its outer shell
+  const n = whole.normals, out = [];
+  for (let i = 0; i < V.length; i += 3) { const c = V[i], r = Math.hypot(c[0], c[2]); if (c[1] > 4 && c[1] < 6 && r > 1.1 && r < 1.25) out.push(n[i * 3] * c[0] + n[i * 3 + 2] * c[2]); }
+  assert.ok(out.length > 0 && out.filter((d) => d > 0).length / out.length > 0.5, 'the cage\'s outer faces face out');
+});
+
+test('SD-LOOK THE HEART IS THE FIGHT\'S METRONOME (S8): its light in its Ending\'s (the Echoes\' in their metal), carried by its torso\'s turn; a beat every 1/0.6 s just after a Mantella Pulse, quickening toward the next - never over 3 Hz; flaring on the Pulse and through the Reset\'s wind-up; none with no body standing; the kept list, nothing made (mutants: the beat never quickening; the flare unread; the Ending\'s light unread)', () => {
+  const T = 30_000;
+  const beats = (from, to) => { let n = 0, prev = sdHeartBeat(null, from, 0); for (let t = from + 5; t <= to; t += 5) { const b = sdHeartBeat(null, t, 0); if (b >= 0.5 && prev < 0.5) n++; prev = b; } return n; };
+  const early = beats(0, 5000), late = beats(T - 5000, T);
+  assert.ok(early >= 2 && early <= 4, `slow after the Pulse: ${early} in its first 5 s`);
+  assert.ok(late >= 10 && late <= 13, `quick before the next: ${late} in its last 5 s`);
+  assert.ok(Math.max(...SD_HEART_LIGHT.hz) <= 3, 'the flash law');
+  const ending = ENDINGS[2];
+  let state = { op: 0, rem: { x: 0, z: 0, yw: 0, atk: null }, ec: null, clk: null, su: 0, ph: 1, fell: null, lost: 0, fi: 1, h: 100, m: 100 };
+  let now = 40_000;
+  const link = { state: () => state, now: () => now, joined: () => false, inDue: () => false };
+  const rem = createSdRemnant({ renderer: { createMesh: () => ({}), destroyMesh() {}, uploadTexture() {}, uploadEmissionTexture() {} }, link: () => link, ending: ending.id });
+  assert.deepEqual(rem.lights(), [], 'nothing stood: no light');
+  rem.stand({ dynamicDraws: [] });
+  rem.frame(1 / 60, null);
+  const L = rem.lights();
+  assert.equal(L.length, 1, 'the Remnant\'s heart');
+  const hue = (c) => c.map((v) => v / Math.max(...c));
+  assert.ok(hue(L[0].color).every((v, i) => Math.abs(v - hue(ending.light)[i]) < 1e-6), 'in its Ending\'s light');
+  assert.ok(L[0].y > REM_B.heartY - 0.5 && L[0].y < REM_B.heartY + 1, 'at the heart');
+  const rest = Math.max(...L[0].color);
+  state = { ...state, clk: { a: SD_BLOWS.pulse.id, at: now + 1000, i: 3 } };
+  assert.ok(Math.max(...rem.lights()[0].color) > rest * 1.8, 'flaring as the Pulse winds up');
+  assert.equal(rem.lights(), rem.lights(), 'one kept list');
+});

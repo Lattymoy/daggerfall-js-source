@@ -585,5 +585,87 @@
     "tests": [
       "test/sd25_look.test.js"
     ]
+  },
+  {
+    "name": "SD25-the-blade-short-of-the-hand",
+    "file": "src/world/sdRemnantModel.js",
+    "old": "[0, B.armBot], [-L.spadeW / 2,",
+    "new": "[0, B.armBot + 0.2], [-L.spadeW / 2,",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-a-bell-past-the-body",
+    "file": "src/world/sdRemnantModel.js",
+    "old": "bell: Object.freeze({ x: 1.8, top: 6.78, mouth: 5.85, r: 0.6 }),",
+    "new": "bell: Object.freeze({ x: 1.8, top: 6.78, mouth: 5.85, r: 0.75 }),",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-crown-under-the-law",
+    "file": "src/world/sdRemnantModel.js",
+    "old": "tipY = k % 2 ? K.crown.y + 0.12 : SD_REM.h;",
+    "new": "tipY = k % 2 ? K.crown.y + 0.12 : SD_REM.h - 0.1;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-beat-never-quickening",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "const [h0, h1] = SD_HEART_LIGHT.hz, T =",
+    "new": "const [h0] = SD_HEART_LIGHT.hz, h1 = h0, T =",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-flare-unread",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "!(s.su > t)) ? H.flare : 1;",
+    "new": "!(s.su > t)) ? 1 : 1;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-Endings-light-unread",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "const heartColor = SD_ENDINGS.find((E) => E.id === ending)?.light ?? MANTELLA_LIGHT;",
+    "new": "const heartColor = MANTELLA_LIGHT;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-arena-unread",
+    "file": "src/scenes/world.js",
+    "old": "const reads = drawSdArenaReads(proj, view, fog); if (blows",
+    "new": "const reads = false; if (blows",
+    "tests": [
+      "test/sd8d_remnant_blows.test.js",
+      "test/sd16_fx.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-sky-blind-to-the-fight",
+    "file": "src/scenes/world.js",
+    "old": "SD_REALM_FOG.color), sdSkyClockNow())) renderer.markForeignPass();",
+    "new": "SD_REALM_FOG.color), null)) renderer.markForeignPass();",
+    "tests": [
+      "test/sd5b_sky.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-hearts-unlit",
+    "file": "src/scenes/world.js",
+    "old": "      for (let i = 0; i < hearts.length; i++) _sdHourLights.push(hearts[i]);\n",
+    "new": "",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
   }
 ]

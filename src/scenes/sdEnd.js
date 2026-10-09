@@ -218,7 +218,7 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
     /** Stand the Rift (`rift` { at: its foot, size, face? }) and the Return (`retAt` its foot) - once; the bell with the
      *  Rift. SD-LOOK: `dynamicDraws` the host's (its meshes stand there), `probe` the collider's (its floor light's edge,
      *  its reveal), `floor` the hall's own floor texture ({ archive, record } - the crater's; the realm's cobbles without). */
-    stand({ rift: r, retAt, dynamicDraws = null, probe = null, floor = null }) {
+    stand({ rift: r, retAt, dynamicDraws = null, probe = null, floor = null, hollow = false }) {
       if (rift || !r?.at) return false;
       draws = dynamicDraws ?? draws ?? [];
       const size = r.size, R = size / 2, face = r.face ?? [0, 0, 1], yaw = Math.atan2(face[0], face[2]);
@@ -235,6 +235,10 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
         n: new Float64Array(9),   // AUDIT SD II (L2 F9): the frame's numbers in place - the gear's turn, the ring's, the iris's last ease, the last toll, the iris's aperture
         radii: new Float32Array(8), tolls: 0, revealAt: -Infinity, revealed: false, revealAskAt: 0,
         refusedAt: -Infinity, steppedAt: -Infinity, ripple: [0, 0, 0, 9], light: [0, 0, 0],
+        // SD-LOOK S6 (Super-Dungeons-Look.md section 4): THE WAY BACK, the same astrolabe seen from the Hour's side - its
+        // window the Hollow's hall behind it (render/sdRiftPass.js, interior-mapped), its rings turning FORWARD, back into
+        // time, its light the moon's (the Hour's one cool light on arrival)
+        hollow: hollow ? { floor: riftCentreY(size) } : null, turn: hollow ? -1 : 1,
       };
       rift.n[N_TOLL] = -Infinity; rift.n[N_IRIS] = SD_RIFT_OPEN_LOOK.aperture; rift.n[N_IRIS_T] = now(); rift.n[N_CY] = rift.cy; rift.n[N_R] = (SD_RIFT_PARTS.shardOrbit * size) / 2;
       rift.toned = [rift.statics, rift.gear, rift.ring, rift.iris, ...rift.shards].filter(Boolean);   // the parts the state's tone swaps, listed once
@@ -333,7 +337,7 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
         const ember = refused >= 0 && refused < SD_REFUSE_S ? 1 - refused / SD_REFUSE_S : L.tone === 'ember' ? 0.35 : 0;
         const stepped = (t - rift.steppedAt) / 1000;
         rift.ripple[2] = stepped >= 0 && stepped < SD_RIPPLE_S ? 1 : 0; rift.ripple[3] = stepped >= 0 && stepped < SD_RIPPLE_S ? stepped : SD_RIPPLE_S;   // never infinite: sin(-inf) is NaN, and a NaN ray blanks the window
-        if (L.aperture > 0.01 && sky?.map) out.window = { model: rift.centre, toLocal: rift.toLocal, radius: SD_RIFT_PARTS.window * R, eye, light, ember, ripple: rift.ripple, sky };
+        if (L.aperture > 0.01 && (sky?.map || rift.hollow)) out.window = { model: rift.centre, toLocal: rift.toLocal, radius: SD_RIFT_PARTS.window * R, eye, light, ember, ripple: rift.ripple, sky, hollow: rift.hollow };
         if (light > 0.01) {
           const col = L.tone === 'red' ? SD_LIGHT.red : L.tone === 'ember' ? SD_LIGHT.ember : SD_LIGHT.gold;
           rift.light[0] = col[0] * light; rift.light[1] = col[1] * light; rift.light[2] = col[2] * light;
@@ -365,7 +369,7 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
       if (rift) {
         const L = look() ?? SD_RIFT_OPEN_LOOK, k = lightNow(L, t);
         if (k > 0.01) {
-          const c = L.tone === 'red' ? SD_LIGHT.red : L.tone === 'ember' ? SD_LIGHT.ember : SD_LIGHT.gold, b = rift.base, a = -SD_RIFT_LIGHT.ahead * rift.size;
+          const c = L.tone === 'red' ? SD_LIGHT.red : L.tone === 'ember' ? SD_LIGHT.ember : rift.hollow ? SD_LIGHT.moon : SD_LIGHT.gold, b = rift.base, a = -SD_RIFT_LIGHT.ahead * rift.size;
           _rl.x = b[12] + b[8] * a; _rl.y = rift.at[1] + rift.cy; _rl.z = b[14] + b[10] * a;
           _rl.range = Math.min(SD_RIFT_LIGHT.maxReach, SD_RIFT_LIGHT.reach * rift.size); const g = k * SD_RIFT_LIGHT.gain; _rl.color = [c[0] * g, c[1] * g, c[2] * g];
           _lights.push(_rl);
@@ -403,7 +407,7 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
     const pitch = (Math.PI * 2) / SD_RIFT_PARTS.teeth, refused = (t - rift.refusedAt) / 1000;
     const jerk = refused >= 0 && refused < 0.3 ? -pitch * (1 - refused / 0.3) : 0;
     const sx = s * L.tickHz, si = Math.floor(sx), se = Math.min(1, (sx - si) / SD_TICK_EASE_S);
-    rift.n[N_GEAR] = L.tickHz > 0 ? (si + se * se * (3 - 2 * se)) * pitch + jerk : jerk;
+    rift.n[N_GEAR] = (L.tickHz > 0 ? (si + se * se * (3 - 2 * se)) * pitch + jerk : jerk) * rift.turn;
     if (rift.gear) about(rift.gear.object.matrix, rift.base, rift.n, N_CY, N_GEAR);
     // THE HOUR-RING: an hour BACK on each toll of its bell (its own loop's, so the toll and the jolt land together; the
     // realm's clock where no bell sounds), a jolt with a small overshoot and settle; still while it is not live
@@ -411,7 +415,7 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
     const tolls = Math.floor(since / period), into = since - tolls * period;
     if (L.tickHz > 0 && tolls !== rift.tolls) { rift.tolls = tolls; rift.n[N_TOLL] = t - into * 1000; }
     const e0 = into / SD_RATCHET_S, e = e0 < 0 ? 0 : e0 > 1 ? 1 : e0, jolt = e < 1 ? 1 - (1 - e) * (1 - e) * (1 + SD_RATCHET_OVER * 6 * e) : 1;
-    rift.n[N_RING] = L.tickHz > 0 ? -((tolls - 1) + jolt) * (Math.PI / 6) : rift.n[N_RING];
+    rift.n[N_RING] = L.tickHz > 0 ? -((tolls - 1) + jolt) * (Math.PI / 6) * rift.turn : rift.n[N_RING];
     if (rift.ring) about(rift.ring.object.matrix, rift.base, rift.n, N_CY, N_RING);
     // THE STUDS: rebuilt only as their count changes (at most every 7.5 s in the collapse) - AUDIT SD II (L2 F9): asked
     // by their two numbers, never a key minted a frame

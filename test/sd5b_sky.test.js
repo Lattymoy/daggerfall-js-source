@@ -92,7 +92,7 @@ test('SD5b the hosts by source: the dungeon arm paints it after the Hour\'s isla
   const flats = W.indexOf('renderer.drawBillboards([...dungeonCtx.billboardBatches,');
   assert.ok(back > 0 && sky > back && sky > statics && sky < flats, 'after the islands, before the flats');
   const w = read('src/scenes/world.js');
-  assert.match(w, /if \(p\?\.draw\(proj, view, deadlandsSeconds\(\), courtFogNow\(\), skyGain\(renderer\._fogColor, SD_REALM_FOG\.color\)\)\) renderer\.markForeignPass\(\);/);
+  assert.match(w, /if \(p\?\.draw\(proj, view, deadlandsSeconds\(\), courtFogNow\(\), skyGain\(renderer\._fogColor, SD_REALM_FOG\.color\), sdSkyClockNow\(\)\)\) renderer\.markForeignPass\(\);/);   // SD-LOOK S7/S8 (PIN MOVED): the arena's reads in the same pass, the sky told the fight, the hearts' lights first
   assert.match(w, /if \(_sdSkyPass === undefined\) \{ try \{ _sdSkyPass = new SdSkyRenderer\(renderer\.gl\); \}/);
   assert.match(w, /const deadlandsSeconds = anchoredClock\(\{ perf: \(\) => performance\.now\(\), wall: \(\) => Date\.now\(\) \+ _sharedOffsetMs \}\);/, 'the realm\'s clock is the Deadlands\' anchored one - the relay\'s');
   assert.match(read('bible/07-Rendering/Rendering.md'), /`sdSky\.js` - SD5b:/);

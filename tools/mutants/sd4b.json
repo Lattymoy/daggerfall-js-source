@@ -192,8 +192,8 @@
   {
     "name": "SD4B-the-teeth-still",
     "file": "src/scenes/sdEnd.js",
-    "old": "    rift.n[N_GEAR] = L.tickHz > 0 ? (si + se * se * (3 - 2 * se)) * pitch + jerk : jerk;",
-    "new": "    rift.n[N_GEAR] = jerk;",
+    "old": "    rift.n[N_GEAR] = (L.tickHz > 0 ? (si + se * se * (3 - 2 * se)) * pitch + jerk : jerk) * rift.turn;",
+    "new": "    rift.n[N_GEAR] = jerk * rift.turn;",
     "tests": [
       "test/sd25_look.test.js"
     ]

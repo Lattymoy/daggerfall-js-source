@@ -317,6 +317,8 @@ import { SdOmenPassRenderer } from '../render/sdOmenPass.js';   // SD2c: the Hol
 import { SD_CAST_OUT_LINE, sdRoomKey, isSdRoom, sdPhase } from '../net/sdLaw.js';   // SD2d: a Hollow's end said to whoever it casts out; SD5a: the Hour's room; SD9e: a receipt from my realm's
 import { isSdRealm, realmArena, SD_REALM_TEXT, SD_REALM_FOG, SD_REALM_FLOORS, SD_ARENA_FLOORS, arenaHolds } from '../world/sdRealm.js';   // SD5a: the Shattered Hour - its edge, its refusals
 import { SdSkyRenderer, SD_SKY_STEPS } from '../render/sdSky.js';   // SD5b: the Hour's sky
+import { SdArenaGlowRenderer, sdArenaGlowAt, sdHourClockOf } from '../render/sdArenaGlow.js';   // SD-LOOK S7: the arena's floor reads the clock, and the sky's word for the fight
+import { SdStompWallRenderer, sdStompWalls, sdStompWallRecords, SD_HOLD_WALL } from '../render/sdStompWall.js';   // SD-LOOK S7: the Stomp's wall, the hold's curtain
 import { SdRiftRenderer } from '../render/sdRiftPass.js';   // SD-LOOK: the Rift's window into the Hour, its floor light, the Return's window home
 import { SdHaloRenderer, SD_HALO_GAIN } from '../render/sdHalo.js';   // SD-LOOK: their hearts' halos
 import { SD_HALL_FLOORS } from '../world/sdHall.js';   // SD6c: the bridge and the first step, the Concord's floors
@@ -23431,6 +23433,28 @@ export async function bootWorld(canvas, renderer, params, status) {
   const sdRemVoice = sdFightLink ? createSdRemnantVoice({ audio, link: sdFightLink, feet: () => (playerSpawned && modes?.sdRealmSlot?.() != null ? player.feetAt() : null) }) : null;
   /** AUDIT SD III (V5): the Hour's light channel's kept list and its stone's kept light (sdRealmLights) - filled in place. */
   const NO_SD_LIGHTS = Object.freeze([]), _sdHourLights = [], _sdStoneLight = { x: 0, y: 0, z: 0, range: 0, color: [0, 0, 0], stone: -1 };
+  /** SD-LOOK S7 (Super-Dungeons-Look.md section 9): THE ARENA'S READS, in the Hour's telegraph pass - its floor telling
+   *  the clock's blows (render/sdArenaGlow.js), the Stomp's walls and, while it holds me, the hold's curtain
+   *  (render/sdStompWall.js) - built once, lazily (a failure costs the reads, never the game), off the fight this page
+   *  holds; and the sky's word for the same fight (`uClock`). Nothing made a frame. */
+  let _sdGlowPass = null, _sdWallPass = null, _sdReadsBroken = false;
+  const _sdGlowMemo = { flood: -1, floodK: 0, reset: -1, end: 0, pulseAt: -Infinity }, _sdWalls = sdStompWallRecords(), SD_HELD_WALLS = Object.freeze([SD_HOLD_WALL]);
+  const _sdSkyClock = new Float32Array(4);
+  const _sdArenaModel = (() => { const m = identity(), c = sdRealmToDungeon(SD_ARENA.x, 0, SD_ARENA.z); m[12] = c[0]; m[13] = c[1]; m[14] = c[2]; return m; })();
+  function drawSdArenaReads(proj, view, fog) {
+    if (!sdFightLink || _sdReadsBroken || modes?.sdRealmSlot?.() == null) return false;
+    if (!_sdGlowPass) {
+      try { _sdGlowPass = new SdArenaGlowRenderer(renderer.gl); _sdWallPass = new SdStompWallRenderer(renderer.gl); } catch (e) { _sdReadsBroken = true; console.warn('[sd] the arena\'s reads would not build', e?.message ?? e); return false; }
+    }
+    const s = sdFightLink.state(), t = sdFightLink.now();
+    let drew = _sdGlowPass.draw(proj, view, _sdArenaModel, sdArenaGlowAt(s, t, _sdGlowMemo), fog, renderer.lightingLane ? SD_SKY_STEPS.lane : SD_SKY_STEPS.classic);
+    const n = sdStompWalls(s, t, _sdWalls);
+    if (n > 0 && _sdWallPass.draw(_sdWalls, n, proj, view, fog)) drew = true;
+    if (sdArenaHeld() && _sdWallPass.draw(SD_HELD_WALLS, 1, proj, view, fog)) drew = true;
+    return drew;
+  }
+  /** The sky's word for the fight this page holds (render/sdSky.js uClock), or none. */
+  const sdSkyClockNow = () => (sdFightLink ? sdHourClockOf(sdFightLink.state(), sdFightLink.now(), _sdSkyClock) : null);
   /** SD16 (Super-Dungeons.md section 10): ITS BLOWS SEEN (scenes/sdFx.js) - each landing and turn a burst of sparks on the
    *  gate's own spark pass, the camera shaken by how near it fell, the floor lit. Online alone, beside the link. */
   const sdFx = sdFightLink ? createSdFx({
@@ -26994,9 +27018,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     sdRealmLights: () => {   // SD9e: its spoils' light, first in the Hour's channel; SD16: and its landings' flashes
       const lit = sdSpoilsPool?.lights() ?? NO_SD_LIGHTS, fx = sdFx && sdFightLink ? sdFx.lights(sdFightLink.now()) : NO_SD_LIGHTS;
       const stone = sdEndingStoneLight(modes?.sdRealmSlot?.() ?? null, deadlandsSeconds(), _sdStoneLight);   // SD18b: the Ending's stone in the hall
-      if (!fx.length && !stone) return lit;
+      const hearts = modes?.dungeonCtx?.sdRemnantLights?.() ?? NO_SD_LIGHTS;   // SD-LOOK S8: the hearts' lights first - never the ones dropped
+      if (!fx.length && !stone && !hearts.length) return lit;
       // AUDIT SD III (V5): one kept list, filled in place - three spreads and a light made every frame (1.4 KB)
       _sdHourLights.length = 0;
+      for (let i = 0; i < hearts.length; i++) _sdHourLights.push(hearts[i]);
       for (let i = 0; i < lit.length; i++) _sdHourLights.push(lit[i]);
       for (let i = 0; i < fx.length; i++) _sdHourLights.push(fx[i]);
       if (stone) _sdHourLights.push(stone);
@@ -27014,7 +27040,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     drawSdSky: ({ proj, view }) => {
       const p = sdSkyPassOf();
       p?.paint(deadlandsSeconds(), courtFogNow(), sdSkyLookNow(), renderer.worldViewportPx ?? [0, 0, renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight]);   // SD-LOOK: the map's next quadrant, before the fetch
-      if (p?.draw(proj, view, deadlandsSeconds(), courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color))) renderer.markForeignPass();
+      if (p?.draw(proj, view, deadlandsSeconds(), courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color), sdSkyClockNow())) renderer.markForeignPass();   // SD-LOOK S7: its face tells the fight
     },
     // SD-LOOK (Super-Dungeons-Look.md sections 1-2): THE RIFT'S WINDOW, ITS FLOOR LIGHT AND ITS HEART, THE RETURN'S WINDOW HOME -
     // after the flats, in the place's own air: the window reads the Hour's own painted sky (the very map, painted here a
@@ -27042,7 +27068,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // and its spoils' loot lines, in the same pass; SD14c: and the Hour's motes (render/sdMotes.js), in its fog and its sky's light;
     // SD16: and its blows' sparks (scenes/sdFx.js, the gate's spark pass) on the fight's clock; SD17: and the Hour-Hand's
     // beam (render/sdBeam.js) out of its pointing hand
-    drawSdTelegraph: ({ proj, view, eye }) => { const t = performance.now() / 1000, fog = courtFogNow(); const blows = !!sdBlows?.drawPass(proj, view, eye, t, fog), lines = !!sdSpoilsPool?.drawPass(proj, view, eye, t, fog); const motes = !!sdMotesPassOf()?.draw(proj, view, deadlandsSeconds(), fog, skyGain(renderer._fogColor, SD_REALM_FOG.color), renderer.worldViewportPx?.[3]); const sparks = !!(sdFx && sdFightLink && sdFx.draw(renderer.gl, proj, view, eye, sdFightLink.now(), fog, renderer.worldViewportPx?.[3])); const beams = sdFightLink ? sdBeamDraws(sdFightLink.state(), sdFightLink.now(), _sdBeamDraws) : NO_SD_BEAMS; const beam = beams.length > 0 && !!sdBeamPassOf()?.draw(beams, proj, view, eye, t, fog); if (blows || lines || motes || sparks || beam) renderer.markForeignPass(); },
+    drawSdTelegraph: ({ proj, view, eye }) => { const t = performance.now() / 1000, fog = courtFogNow(); const blows = !!sdBlows?.drawPass(proj, view, eye, t, fog), lines = !!sdSpoilsPool?.drawPass(proj, view, eye, t, fog); const motes = !!sdMotesPassOf()?.draw(proj, view, deadlandsSeconds(), fog, skyGain(renderer._fogColor, SD_REALM_FOG.color), renderer.worldViewportPx?.[3]); const sparks = !!(sdFx && sdFightLink && sdFx.draw(renderer.gl, proj, view, eye, sdFightLink.now(), fog, renderer.worldViewportPx?.[3])); const beams = sdFightLink ? sdBeamDraws(sdFightLink.state(), sdFightLink.now(), _sdBeamDraws) : NO_SD_BEAMS; const beam = beams.length > 0 && !!sdBeamPassOf()?.draw(beams, proj, view, eye, t, fog); const reads = drawSdArenaReads(proj, view, fog); if (blows || lines || motes || sparks || beam || reads) renderer.markForeignPass(); },   // SD-LOOK S7: and the arena's reads
     deadlandsSeconds: () => deadlandsSeconds(),   // WB6b: the court's flash and the shards' drift keep the sky's clock
     staffTeleportHeld: () => staffTeleportHeld,
     canVisitPrivateRoom: () => !seatOut() && isStaff(_staffGlyphs) && !!chatLinks.get('world')?.staffTeleportOk,

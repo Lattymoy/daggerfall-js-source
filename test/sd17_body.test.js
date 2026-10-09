@@ -266,6 +266,6 @@ test('SD17 THE SCENE AND THE WORLD: the parts stood after the Hearts and turned 
   // the world
   // AUDIT SD III (V5, PIN MOVED): into a list the world keeps - a frame of a sweep made 3.4 KB
   assert.match(W, /import \{ sdBeamDraws, sdKeptList \} from '\.\/sdRemnantRig\.js';[^\n]*\n[^\n]*\nconst _sdBeamDraws = sdKeptList\(\), NO_SD_BEAMS = Object\.freeze\(\[\]\);/);
-  assert.match(W, /const beams = sdFightLink \? sdBeamDraws\(sdFightLink\.state\(\), sdFightLink\.now\(\), _sdBeamDraws\) : NO_SD_BEAMS; const beam = beams\.length > 0 && !!sdBeamPassOf\(\)\?\.draw\(beams, proj, view, eye, t, fog\); if \(blows \|\| lines \|\| motes \|\| sparks \|\| beam\) renderer\.markForeignPass\(\);/);
+  assert.match(W, /const beams = sdFightLink \? sdBeamDraws\(sdFightLink\.state\(\), sdFightLink\.now\(\), _sdBeamDraws\) : NO_SD_BEAMS; const beam = beams\.length > 0 && !!sdBeamPassOf\(\)\?\.draw\(beams, proj, view, eye, t, fog\); const reads = drawSdArenaReads\(proj, view, fog\); if \(blows \|\| lines \|\| motes \|\| sparks \|\| beam \|\| reads\) renderer\.markForeignPass\(\);/);   // SD-LOOK S7/S8 (PIN MOVED): the arena's reads in the same pass, the sky told the fight, the hearts' lights first
   assert.match(W, /_sdBeamPass = new SdBeamRenderer\(renderer\.gl\);/);
 });

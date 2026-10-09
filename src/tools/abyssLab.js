@@ -37,7 +37,6 @@ import { createSdHall } from '../scenes/sdHall.js';
 import { createSdSteps } from '../scenes/sdSteps.js';
 import { createSdRemnant } from '../scenes/sdRemnant.js';
 import { createSdEnd } from '../scenes/sdEnd.js';
-import { riftCentreY } from '../world/sdRiftModel.js';
 import { sdRiftFace, SD_RIFT_OPEN_LOOK, SD_RIFT_NOT_YET, SD_RIFT_CLOSED, SD_RIFT_REFUSED } from '../world/sdDungeon.js';
 import { SdRiftRenderer } from '../render/sdRiftPass.js';
 import { SdHaloRenderer, SD_HALO_GAIN } from '../render/sdHalo.js';
@@ -114,12 +113,11 @@ const steps = createSdSteps({ renderer });
 steps.stand({ dynamicDraws, collider: null });
 const remnant = createSdRemnant({ renderer, link: () => null, ending: sdMarksOf(LAB_SLOT)[0] });
 remnant.stand({ dynamicDraws });
-const WAY_BACK_HOLLOW = { floor: riftCentreY(SD_WAY_BACK_SIZE) };
 const arenaGlow = new SdArenaGlowRenderer(gl);
 const stompWall = new SdStompWallRenderer(gl), _walls = sdStompWallRecords(), HELD = [SD_HOLD_WALL];
 const ARENA_MODEL = (() => { const m = identity(), c = realmToDungeon(SD_ARENA.x, 0, SD_ARENA.z); m[12] = c[0]; m[13] = c[1]; m[14] = c[2]; return m; })();
 const wayBack = createSdEnd({ renderer, riftTo: 'To the Abyss Dungeon', clock: () => clock });
-wayBack.stand({ rift: { at: realmToDungeon(0, 0, SD_WAY_BACK_Z), size: SD_WAY_BACK_SIZE }, retAt: null, dynamicDraws });
+wayBack.stand({ rift: { at: realmToDungeon(0, 0, SD_WAY_BACK_Z), size: SD_WAY_BACK_SIZE }, retAt: null, dynamicDraws, hollow: !params.has('nohollow') });
 const sky = new SdSkyRenderer(gl);
 const motes = new SdMotesRenderer(gl);
 
@@ -316,7 +314,6 @@ function frame(now) {
     sky.paint(clock, courtFogNow(), skyLook(lane), renderer.worldViewportPx ?? [0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight]);
     if (sky.draw(proj, view, clock, courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color), labClock())) renderer.markForeignPass();
     const look = wayBack.look(cam.pos, { map: sky.map.texture, seconds: clock, gain: skyGain(renderer._fogColor, SD_REALM_FOG.color), clock: labClock() });
-    if (look?.window && !params.has('nohollow')) look.window.hollow = WAY_BACK_HOLLOW;   // SD-LOOK S6: the Hollow behind it (until sdEnd says so itself)
     if (look && riftPass.draw(proj, view, look, courtFogNow(), lane ? SD_SKY_STEPS.lane : SD_SKY_STEPS.classic)) renderer.markForeignPass();
     if (halo.draw(proj, view, wayBack.halos(), courtFogNow(), lane ? SD_HALO_GAIN.lane : SD_HALO_GAIN.classic)) renderer.markForeignPass();
     if (arenaGlow.draw(proj, view, ARENA_MODEL, sdArenaGlowAt(labFight(), clock * 1000, _glowMemo), courtFogNow(), lane ? SD_SKY_STEPS.lane : SD_SKY_STEPS.classic)) renderer.markForeignPass();
