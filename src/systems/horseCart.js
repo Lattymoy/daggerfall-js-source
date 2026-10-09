@@ -34,7 +34,8 @@
 //     openInventoryWithWagon()                                     dfuiOpenInventoryWindow after the selection request
 //     openNamePrompt({ label, value, maxCharacters, onSubmit }) -> { isOpen() }   DaggerfallInputMessageBox
 //     phys: { raycastAll(origin, dir, max), sphereCastClear(origin, r, dir, d), threats() }   systems/horseFollow.js's seam
-//     presentation: scenes/horseCartPool.js - { wagonParts() -> { wheelLeftPivot, wheelRightPivot, wheelRadius, bounds } | null,
+//     presentation: scenes/horseCartPool.js - { wagonParts() -> { wheelLeftPivot, wheelRightPivot, wheelRadius, bounds,
+//                     wheels? (WAGONS2: each { pivot, radius, front }), bogie? ({ kingpin, wheelbase, steerLimit }) } | null,
 //                     hitchOf() -> metres (WAGONS1: how far ahead of the wagon's rear axle its horse stands - the mod's
 //                     HITCHED_HORSE_LOCAL_Z for the classic wagon, each of Mac's its own; absent, the mod's),
 //                     horseArt: { ensureStationary() -> bool, ensureWalk() -> void, hasWalk() -> bool },
@@ -59,6 +60,7 @@ import {
   stepHorseWalk, freshHorseWalk, hccActionRows,   // ACT-MENU: the plaque's rows over my three activators
 } from './horseCartLaw.js';
 import { HorseFollowController, WagonHitch, hitchedPoseStep, hitchJumpReach, tryFindGround } from './horseFollow.js';   // WAGON-HITCH: the moving wagon on its shafts (the IL's WagonTrail / groundedPoseStep stay in horseFollow.js as the record)
+import { yawed } from './horseFollow.js';   // WAGONS2: the bogie's turn
 import { quatLookRotation, quatForward, quatFromBasis, quatRotate, UNITY_QUAT_IDENTITY } from '../world/quat.js';
 
 /** KB1: the mod's two hotkeys are the port's keybinding registry's actions (systems/inputActions.js MOD_ACTIONS) -
@@ -159,6 +161,43 @@ export function solveTwoWheelPose(leftContact, rightContact, heading, wheelMidLo
   return { position, rotation };
 }
 
+// ─── WAGONS2: EACH WHEEL ROLLS ON ITS OWN (a departure, 2026-10-09) ─────────────────────────────────────────────
+
+/** WAGONS2 (2026-10-09, Mac: "Real wheel movement"): a wheel's place on its wagon - `parts.wheels` (Mac's wagons: each
+ *  with its pivot, its own radius, and whether it turns with the bogie), else the classic model's pair on its one
+ *  radius (systems/wagon41214.js buildWagonParts). */
+export const wheelsOf = (parts) => parts?.wheels ?? (parts?.wheelLeftPivot ? [{ pivot: parts.wheelLeftPivot, radius: parts.wheelRadius, front: false }, { pivot: parts.wheelRightPivot, radius: parts.wheelRadius, front: false }] : []);
+/** `local` (the wagon's frame) as it stands with the bogie turned `steer` degrees about its kingpin. Pure. */
+export function steeredLocal(kingpin, local, steer) {
+  if (!steer) return local;
+  const d = yawed([local[0] - kingpin[0], 0, local[2] - kingpin[2]], steer);
+  return [kingpin[0] + d[0], local[1], kingpin[2] + d[2]];
+}
+/** Where each wheel meets the ground and the way it rolls, in the world, for a wagon drawn at `position` / `rotation`
+ *  with its bogie at `steer` - its contact (a radius under its pivot) and its heading (the bogie's for a front wheel).
+ *  Pure. */
+export function wheelContacts(parts, position, rotation, steer = 0) {
+  const bogie = parts?.bogie ?? null;
+  return wheelsOf(parts).map((wh) => {
+    const turned = !!(wh.front && bogie);
+    const c = [wh.pivot[0], wh.pivot[1] - (wh.radius ?? parts.wheelRadius), wh.pivot[2]];
+    const local = turned ? steeredLocal(bogie.kingpin, c, steer) : c;
+    return { p: vadd(position, quatRotate(rotation, local)), h: quatRotate(rotation, turned ? yawed(V_FORWARD, steer) : V_FORWARD) };
+  });
+}
+/** Each wheel's next angle: the mod's own law (CalculateWheelRotationDegrees over signedLongitudinalTravel, wrapped)
+ *  read per wheel - its OWN contact's travel along its OWN heading over its OWN radius, so on a turn the outer wheels
+ *  turn further than the inner, a wagon backing turns them back, and a wheel with no contact last time keeps its
+ *  angle. Pure; answers a new list. */
+export function rolledAngles(angles, before, now, parts) {
+  const list = wheelsOf(parts);
+  return now.map((c, i) => {
+    const a = angles?.[i] ?? 0, b = before?.[i];
+    if (!b) return a;
+    return wrapWheelAngle(a + wheelRotationDegrees(signedLongitudinalTravel(vsub(c.p, b.p), b.h, c.h), list[i]?.radius ?? parts.wheelRadius));
+  });
+}
+
 // ─── StationaryHorseVisual [spec-visuals §3] + StationaryHorseBillboard's clock, as pure state ──────────────────
 
 export class StationaryHorseVisual {
@@ -250,6 +289,7 @@ export function createHorseCartRuntime(deps) {
   let settingsInitialized = false, pendingPersistenceSettingTransition = false, pendingPersistenceNormalization = false;
   // the moving (trailing / following) wagon's presentation
   let wagonVisual = null;   // { pose, wheel, cargoTier, interaction } - the port's stand-in for the Unity object
+  let restWheels = null;   // WAGONS2: { angle, angles, steer } - where the last moving wagon's wheels and bogie stood, kept for it parked and driven off again
   let hasLastValidGroundState = false;
   let movingWorldX = 0, movingWorldZ = 0, hasMovingWorldPose = false;
   let followingWagonFailureLogged = false, nextFollowingWagonSpawnRetryTime = 0, horseRecoveredThisFrame = false;
@@ -316,6 +356,17 @@ export function createHorseCartRuntime(deps) {
 
   /** WAGONS1: the wagon's own length ahead of its axle to its horse - the presentation's (its model's), else the mod's. */
   function hitchZ() { const z = deps.presentation?.hitchOf?.(); return Number.isFinite(z) && z > 0 ? z : HITCHED_HORSE_LOCAL_Z; }
+  /** WAGONS2: a parked four-wheeler's hitched horse stands at the end of its pole as its bogie rests - the mod's place
+   *  straight ahead of the body (`at`) swung about the kingpin by the steer the wagon stopped at (`restWheels`), facing
+   *  along the pole - so the horse comes to stand where the rider sat after a turn too. A wagon with no bogie, or one
+   *  resting straight, keeps the mod's place. */
+  function poleEnd(at, forward) {
+    const bogie = deps.presentation?.wagonParts?.()?.bogie ?? null, steer = restWheels?.steer ?? 0;
+    const pole = hitchZ() - (bogie?.wheelbase ?? 0);
+    if (!bogie || !steer || !(pole > 0)) return { at, forward };
+    const f = horizontalForward(forward), s = yawed(f, steer);
+    return { at: vadd(at, vscale(vsub(s, f), pole)), forward: s };
+  }
 
   // ── the moving wagon's presentation object (CreateWagonVisual [IL_5694] / ClearMovingPresentation [IL_a794])
   function createWagonVisual() {
@@ -327,7 +378,7 @@ export function createHorseCartRuntime(deps) {
     wagonVisual = {
       parts,
       pose: { position: [...V_ZERO], rotation: [...UNITY_QUAT_IDENTITY], active: false, lastValidPosition: [...V_ZERO], lastValidRotation: [...UNITY_QUAT_IDENTITY], hasLastValid: false, up: [0, 1, 0], hitch: null, axle: null },   // WAGON-HITCH: the eased ground normal, the point it hangs from, where its wheels stand
-      wheel: { has: false, prevPos: [...V_ZERO], prevFwd: [...V_FORWARD], angle: 0 },
+      wheel: { has: false, prevPos: [...V_ZERO], prevFwd: [...V_FORWARD], angle: 0, angles: [...(restWheels?.angles ?? [])], contacts: null },   // WAGONS2: each wheel driven off at the angle it stood at
       cargoTier: 0, interaction: false,
     };
     cargoFailureLogged = false;
@@ -337,6 +388,7 @@ export function createHorseCartRuntime(deps) {
   }
   function clearMovingPresentation() {
     const had = !!wagonVisual;
+    if (had) restWheels = { angle: wagonVisual.wheel.angle, angles: [...(wagonVisual.wheel.angles ?? [])], steer: wagonVisual.pose.steer ?? 0 };   // WAGONS2: the wheels and the bogie stay as they stood
     wagonVisual = null;
     hitch.clear(); hitchSeed = null;
     followingWagonFailureLogged = false; horseRecoveredThisFrame = false; nextFollowingWagonSpawnRetryTime = 0;
@@ -344,7 +396,9 @@ export function createHorseCartRuntime(deps) {
     spawnFailureLogged = false; cargoFailureLogged = false;
     if (had) changed();   // AUDIT 68 S27-hcc-changed-every-frame: only a teardown that tore something down is a word - lateUpdate runs this every frame no wagon trails
   }
-  function resetWheelMotionState() { if (wagonVisual) wagonVisual.wheel = { has: false, prevPos: [...V_ZERO], prevFwd: [...V_FORWARD], angle: 0 }; }
+  /** ResetWheelMotionState [IL_6028]: the mod's one angle back to 0. WAGONS2: each wheel's own angle stands (a jump is no
+   *  travel, and nothing snaps) - only where it last met the ground is forgotten. */
+  function resetWheelMotionState() { if (wagonVisual) wagonVisual.wheel = { has: false, prevPos: [...V_ZERO], prevFwd: [...V_FORWARD], angle: 0, angles: wagonVisual.wheel?.angles ?? [], contacts: null }; }
   const wagonActive = () => !!wagonVisual?.pose.active;
   const wagonPosition = () => wagonVisual.pose.position;
   /** AUDIT WAGON-HITCH A1: where the moving wagon's WHEELS stand - the point a parked one is stood again at, so the
@@ -483,7 +537,7 @@ export function createHorseCartRuntime(deps) {
       let pos = d.anchor, heading = d.heading;
       const gp = deployedVisual?.tryGetGroundedPose();
       if (gp) { pos = gp.position; heading = gp.forward; }
-      return vadd(vadd(pos, vscale(horizontalRight(heading), HITCHED_HORSE_LOCAL_X)), vscale(heading, hitchZ()));
+      return poleEnd(vadd(vadd(pos, vscale(horizontalRight(heading), HITCHED_HORSE_LOCAL_X)), vscale(heading, hitchZ())), heading).at;   // WAGONS2: at its pole's end
     }
     return null;
   }
@@ -1130,16 +1184,21 @@ export function createHorseCartRuntime(deps) {
     return !deps.fadeInProgress?.();
   }
   /** WAGON-HITCH: ApplyGroundedPose's place in the frame, on the shafts (horseFollow.js hitchedPoseStep) - the axle
-   *  HITCHED_HORSE_LOCAL_Z from the hitch, the mod's ground bookkeeping kept. */
+   *  HITCHED_HORSE_LOCAL_Z from the hitch, the mod's ground bookkeeping kept. WAGONS2: a four-wheeler (its parts'
+   *  `bogie`) trails as two bars - the kingpin on the pole, the body on the wheelbase - and steers. */
   function applyHitchedPose(hitchPoint, forward, dt, seed = null) {
-    const next = hitchedPoseStep(phys, wagonVisual.pose, hitchPoint, forward, hitchZ(), dt, seed);
+    const next = hitchedPoseStep(phys, wagonVisual.pose, hitchPoint, forward, hitchZ(), dt, seed, wagonVisual.parts?.bogie ?? null);
     wagonVisual.pose = next;
     if (next.hasLastValid) hasLastValidGroundState = true; else resetWheelMotionState();
   }
+  /** UpdateWheelAnimation [IL_5e1c]: the mod's one angle off the wagon's travel, kept (the wire carries it). WAGONS2:
+   *  and each wheel's own (`rolledAngles` over `wheelContacts`) - what is drawn. */
   function updateWheelAnimation() {
     if (!wagonVisual || !wagonActive() || !wagonVisual.parts) { resetWheelMotionState(); return; }
     const pos = wagonPosition(), fwd = wagonForward();
     const w = wagonVisual.wheel;
+    const contacts = wheelContacts(wagonVisual.parts, pos, wagonVisual.pose.rotation, wagonVisual.pose.steer ?? 0);
+    w.angles = rolledAngles(w.angles, w.contacts, contacts, wagonVisual.parts); w.contacts = contacts;
     if (!w.has) { w.prevPos = [...pos]; w.prevFwd = [...fwd]; w.has = true; return; }
     const deg = wheelRotationDegrees(signedLongitudinalTravel(vsub(pos, w.prevPos), w.prevFwd, fwd), wagonVisual.parts.wheelRadius);
     w.angle = wrapWheelAngle(w.angle + deg);
@@ -1236,6 +1295,7 @@ export function createHorseCartRuntime(deps) {
       const gp = deployedVisual?.tryGetGroundedPose();
       if (gp) { pos = gp.position; fwd = gp.forward; deployedWagon = deployedVisual; }
       pos = vadd(vadd(pos, vscale(horizontalRight(fwd), HITCHED_HORSE_LOCAL_X)), vscale(fwd, hitchZ()));
+      ({ at: pos, forward: fwd } = poleEnd(pos, fwd));   // WAGONS2: at its pole's end, along it
     } else { destroyStationaryHorsePresentation(); return; }
     if (!ensureHorseTextures()) { destroyStationaryHorsePresentation(); return; }
     ensureHorseWalkTextures();
@@ -1298,6 +1358,7 @@ export function createHorseCartRuntime(deps) {
     hasMovingWorldPose = false; hasObservedTransportMode = false; previousTransportMode = TRANSPORT.Foot; lastValidNonCartTransportMode = TRANSPORT.Foot;
     clearPendingTransportModeRefresh(); selectWagonOnNextInventoryOpen = false; followingTransitionSuspended = false; fastTravelFollowingSuspended = false;
     pendingFastTravelHorseRelocation = false; travelOptionsWasActive = false; horseFollower.resetTransient();
+    restWheels = null;   // WAGONS2: a load, a new game, the switch off - no wheel stands where it stood
   }
   /** FloatingOrigin.OnPositionUpdate's work, by hand: every scene point the machine holds moves with the origin
    *  (the mod's objects are Unity transforms, which the FloatingOrigin shifts; here they are numbers). The saved
@@ -1309,6 +1370,7 @@ export function createHorseCartRuntime(deps) {
       if (p.hitch) p.hitch = vadd(p.hitch, d);
       if (p.axle) p.axle = vadd(p.axle, d);
       if (wagonVisual.wheel.has) wagonVisual.wheel.prevPos = vadd(wagonVisual.wheel.prevPos, d);
+      for (const c of wagonVisual.wheel.contacts ?? []) c.p = vadd(c.p, d);   // WAGONS2: where each wheel last met the ground
     }
     deployedVisual?.offset(d); stationaryHorseVisual?.offset(d);
     hitch.offset(d); if (hitchSeed) hitchSeed = vadd(hitchSeed, d); horseFollower.offset(d);   // WAGON-HITCH: the shafts' last hitch and a pending drive-off
@@ -1358,6 +1420,7 @@ export function createHorseCartRuntime(deps) {
     view: () => ({
       state: wagonState, moving: wagonVisual, deployed: deployedVisual, horse: stationaryHorseVisual,
       teamFollowing: isTeamFollowing(), horseFollowing: isHorseFollowing(), persistence: physicalPersistenceEnabled,
+      rest: restWheels,   // WAGONS2: the parked wagon's wheels and bogie, as they stood
     }),
     // exposed for the pins
     _state: () => wagonState, _follower: () => horseFollower, _hitch: () => hitch,

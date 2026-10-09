@@ -192,7 +192,7 @@ test('WAGONS1 THE POOL: the wagon drawn is the kind driven - its statics and eve
   assert.ok([...r.textures.values()].every((t) => t.o?.opaque));
   r.draws.length = 0;
   assert.equal(pool.draw(r), 1);
-  assert.equal(r.draws.length, 5, 'the caravan: its body and four wheels, no cargo');
+  assert.equal(r.draws.length, 6, 'the caravan: its body, its bogie (WAGONS2) and four wheels, no cargo');
   assert.deepEqual(WAGON_KIND_ORDER.map((k) => pool.hitchOf(k)), [3.8, 7.1, 7.7]);
   assert.equal(pool.presentation.hitchOf(), 7.7, 'the runtime\'s hitch is the driven wagon\'s');
   // a peer's word naming the open wagon is drawn as one

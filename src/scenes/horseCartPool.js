@@ -31,6 +31,12 @@
 // horse is in its shafts and rests tipped on them when none is (`hitchPitch`), and every kind hangs its own length
 // behind its horse (`hitchOf`). A bake that will not load or build falls back to the classic wagon for that kind, as a
 // ship's does (systems/comeSailAwayModels.js).
+//
+// WAGONS2 (2026-10-09, Mac: "Real wheel movement"): EACH WHEEL ROLLS ON ITS OWN, AND THE FOUR-WHEELERS STEER. A wheel is
+// drawn at its own angle (`turn.angles`, systems/horseCart.js rolledAngles - its contact's travel along its heading over
+// its radius), the open wagon's and the caravan's front axle, pole and front pair turned on their kingpin by the steer
+// (`turn.steer`, horseFollow.js bogieAxle). Mine are the runtime's; a peer's are turned HERE off the pose this client
+// draws (`turnPeer`, `hitchPeerWagon`'s two bars); a parked wagon's stay as they stood. The wire is unchanged.
 import { GLOBAL_SCALE, RAY_DISTANCE, pickActivatableHit } from '../player/activate.js';
 import { localAabb, transformedAabb } from '../render/frustum.js';
 import { multiply } from '../world/mat4.js';
@@ -43,8 +49,8 @@ import {
   pickGround, STATIONARY_PROBE_HEIGHT, STATIONARY_PROBE_DISTANCE, GROUND_RETRY_SECONDS,   // DISC20-C: a peer's standing team, stood on my ground
   HITCHED_HORSE_LOCAL_Z, NORMAL_GROUND_OFFSET, GROUND_RAY_HEIGHT, GROUND_RAY_DISTANCE, TELEPORT_DISTANCE, ROTATION_SMOOTHING_RATE, POSITION_SMOOTHING_RATE,   // WAGON-HITCH
 } from '../systems/horseCartLaw.js';
-import { hitchAxle } from '../systems/horseFollow.js';   // WAGON-HITCH: the shafts' one law, for a peer's trailing wagon
-import { DeployedWagonVisual } from '../systems/horseCart.js';   // DISC20-C: the mod's own two-wheel solve, for a peer's parked wagon
+import { hitchAxle, bogieAxle, steerToward } from '../systems/horseFollow.js';   // WAGON-HITCH: the shafts' one law, for a peer's trailing wagon (WAGONS2: and a four-wheeler's two)
+import { DeployedWagonVisual, wheelContacts, rolledAngles } from '../systems/horseCart.js';   // DISC20-C: the mod's own two-wheel solve, for a peer's parked wagon (WAGONS2: and each wheel's roll)
 import { PARK_REACH, PARK_TTL_MS } from '../net/wire.js';   // HCC-PARK: how far a kept team's parts may stand from its anchor, and how long the relay keeps one
 import { WAGON_HOVER_TEXT } from '../player/eotbWagon.js';   // the hover word for a wagon - the noun of Eye Of The Beholder's Info line, so both carts read alike
 import { hccWireRecord, validHccRecord, hccRecordKey, easeToward, HCC_WIRE_KIND } from '../systems/horseCartWire.js';
@@ -85,6 +91,7 @@ const texturePath = (file) => new URL(`../../vendor/horse-cart-and-cargo/Texture
 const horseStillFile = (view) => `horse${view + 1}.png`;
 const horseWalkFile = (view, frame) => `Walk.${view}-${frame + 1}.png`;
 const WHEEL_AXIS = Object.freeze([1, 0, 0]);
+const STEER_AXIS = Object.freeze([0, 1, 0]);   // WAGONS2: the kingpin's
 const ZERO3 = Object.freeze([0, 0, 0]);
 const HORSE_LOCAL_BOX = Object.freeze([
   HORSE_BOX_CENTER[0] - HORSE_BOX_SIZE[0] / 2, HORSE_BOX_CENTER[1] - HORSE_BOX_SIZE[1] / 2, HORSE_BOX_CENTER[2] - HORSE_BOX_SIZE[2] / 2,
@@ -224,7 +231,7 @@ export function createHorseCartPool({
       const parts = buildBakedWagonParts(wagonGeometry(bake), rendererModelOf);
       const up = (m) => (m && renderer?.createMesh ? renderer.createMesh(m) : null);
       ensureWagonArt();
-      e.parts = { ...parts, gpu: { body: up(parts.body), wheels: parts.wheels.map((w) => ({ gpu: up(w.model), pivot: w.pivot })) }, box: [...parts.bounds.min, ...parts.bounds.max] };
+      e.parts = { ...parts, gpu: { body: up(parts.body), bogie: up(parts.bogie?.model), wheels: parts.wheels.map((w) => ({ gpu: up(w.model), pivot: w.pivot, front: w.front })) }, box: [...parts.bounds.min, ...parts.bounds.max] };   // WAGONS2: the bogie, and which wheels turn with it
       for (const d of parts.cargo) ensureCargo(d.modelId);
       onChanged?.();
     }).catch((err) => {
@@ -312,39 +319,66 @@ export function createHorseCartPool({
     const a = parts.axlePivot;
     return multiply(multiply(m, mat4FromQuatPos(quatAngleAxis(-pitch, WHEEL_AXIS), a)), mat4FromQuatPos(UNITY_QUAT_IDENTITY, [-a[0], -a[1], -a[2]]));
   };
+  /** WAGONS2: a four-wheeler's bogie turned `steer` degrees on its kingpin, in the wagon's frame - T(k) Ry(steer) T(-k). */
+  const steeredMatrix = (kingpin, steer) => multiply(mat4FromQuatPos(quatAngleAxis(steer, STEER_AXIS), kingpin), mat4FromQuatPos(UNITY_QUAT_IDENTITY, [-kingpin[0], -kingpin[1], -kingpin[2]]));
   /** One wagon - mine or a peer's - in the host's world pass. `scale` is WAGON-HITCH x OW-BIG's grown draw (1 off it);
    *  a grown wagon casts no shadow (AUDIT WAGON-HITCH B2 - OW-BIG's law for every grown figure). WAGONS1: `kind` the
-   *  wagon's (its parts), `hitched` whether a horse is in its shafts (the cart borne level). */
-  function drawWagon(r, texRemap, position, rotation, tier, angle, scale = 1, kind = myKind(), hitched = false) {
+   *  wagon's (its parts), `hitched` whether a horse is in its shafts (the cart borne level). WAGONS2: `turn` its wheels
+   *  and bogie - `{ angle, angles, steer }`: wheel i at `angles[i]` (the mod's one `angle` where it has none), a
+   *  four-wheeler's front axle, pole and front pair turned `steer` on the kingpin. */
+  function drawWagon(r, texRemap, position, rotation, tier, turn, scale = 1, kind = myKind(), hitched = false) {
     const parts = partsOf(kind);
     if (!parts?.gpu?.body || !r?.drawMesh) return false;
     const grown = scale > 1;
     const m = grown ? mat4FromQuatPosScale(rotation, position, [scale, scale, scale]) : wagonMatrix(position, rotation);
     const g = parts.gpu;
     const o = grown ? NO_SHADOW : undefined;
+    const angleOf = (i) => turn?.angles?.[i] ?? turn?.angle ?? 0;
     if (g.wheels) {
       const pitch = hitched ? parts.hitchPitch ?? 0 : 0;
       const body = pitchedMatrix(m, parts, pitch);
       r.drawMesh(g.body, body, texRemap, o);
-      for (const w of g.wheels) if (w.gpu) r.drawMesh(w.gpu, wheelMatrix(m, w.pivot, angle), texRemap, o);
+      const steered = parts.bogie ? steeredMatrix(parts.bogie.kingpin, turn?.steer ?? 0) : null;
+      if (g.bogie && steered) r.drawMesh(g.bogie, multiply(body, steered), texRemap, o);
+      const front = steered ? multiply(m, steered) : m;
+      g.wheels.forEach((w, i) => { if (w.gpu) r.drawMesh(w.gpu, wheelMatrix(w.front ? front : m, w.pivot, angleOf(i)), texRemap, o); });
       for (const def of parts.cargo) if (tier >= def.threshold) { const gpu = _cargo.get(def.modelId); if (gpu) r.drawMesh(gpu, cargoMatrix(body, def), texRemap, o); }
       return true;
     }
     r.drawMesh(g.body, m, texRemap, o);
     if (g.shaftLeft) r.drawMesh(g.shaftLeft, m, texRemap, o);
     if (g.shaftRight) r.drawMesh(g.shaftRight, m, texRemap, o);
-    if (g.wheelLeft) r.drawMesh(g.wheelLeft, wheelMatrix(m, parts.wheelLeftPivot, angle), texRemap, o);
-    if (g.wheelRight) r.drawMesh(g.wheelRight, wheelMatrix(m, parts.wheelRightPivot, angle), texRemap, o);
+    if (g.wheelLeft) r.drawMesh(g.wheelLeft, wheelMatrix(m, parts.wheelLeftPivot, angleOf(0)), texRemap, o);
+    if (g.wheelRight) r.drawMesh(g.wheelRight, wheelMatrix(m, parts.wheelRightPivot, angleOf(1)), texRemap, o);
     for (const def of cargoPiecesShown(tier)) { const gpu = _cargo.get(def.modelId); if (gpu) r.drawMesh(gpu, cargoMatrix(m, def), texRemap, o); }
     return true;
   }
-  /** AUDIT WAGON-HITCH B7: each grown wagon's wheel clock (owner, '' mine), dropped when it is no longer grown. */
+  /** AUDIT WAGON-HITCH B7: each grown wagon's wheel clocks (owner, '' mine), dropped when it is no longer grown.
+   *  WAGONS2: one clock per wheel - keyed by owner, then by wheel (the mod's one angle under 'angle'). */
   const _grownWheels = new Map();
-  function grownAngle(key, angle, g) {
-    if (!(g > 1)) { _grownWheels.delete(key); return angle; }
-    const next = grownWheelStep(_grownWheels.get(key) ?? null, angle, g);
-    _grownWheels.set(key, next);
-    return next.acc;
+  function grownTurn(owner, turn, g) {
+    if (!(g > 1) || !turn) { _grownWheels.delete(owner); return turn; }
+    const clocks = _grownWheels.get(owner) ?? new Map();
+    _grownWheels.set(owner, clocks);
+    const step = (wheel, angle) => { const next = grownWheelStep(clocks.get(wheel) ?? null, angle, g); clocks.set(wheel, next); return next.acc; };
+    return { ...turn, angle: step('angle', turn.angle ?? 0), angles: turn.angles ? turn.angles.map((a, i) => step(i, a)) : null };
+  }
+  /** WAGONS2: another player's wheels and bogie, turned HERE off the pose this client draws their wagon at (the wire's
+   *  one angle, eased at nothing, stepped at its word's cadence): each wheel rolls by its own contact's travel - a leap
+   *  past the mod's 20 m is no travel - and a following team's four-wheeler steers toward its horse as drawn here (a
+   *  trailing one is steered on its shafts, hitchPeerWagon; a parked one keeps its last). The word's angle is only the
+   *  first frame's. */
+  function turnPeer(p) {
+    const parts = p.wagon && p.shownWagon ? partsOf(p.wagon.model) : null;
+    if (!parts) return;
+    const rotation = p.shownRotation ?? p.wagon.rotation;
+    if (p.wagon.kind === HCC_WIRE_KIND.Following && parts.bogie && p.shownHorse) p.steer = steerToward(p.shownWagon, quatForward(rotation), p.shownHorse, parts.bogie);
+    const contacts = wheelContacts(parts, p.shownWagon, rotation, p.steer ?? 0);
+    const t = p.turn ?? (p.turn = { angle: p.wagon.angle ?? 0, angles: contacts.map(() => p.wagon.angle ?? 0), contacts: null, steer: 0 });
+    const was = t.contacts?.[0]?.p, at = contacts[0]?.p;
+    const leapt = !!was && !!at && Math.hypot(at[0] - was[0], at[2] - was[2]) > TELEPORT_DISTANCE;
+    t.angles = rolledAngles(t.angles, leapt ? null : t.contacts, contacts, parts);
+    t.contacts = contacts; t.steer = p.steer ?? 0;
   }
 
   /** What the runtime shows this frame, in one shape (the wire's, the draw's, the targets'). */
@@ -355,6 +389,9 @@ export function createHorseCartPool({
     if (v.deployed?.isGrounded) wagon = { kind: HCC_WIRE_KIND.Deployed, position: v.deployed.position, rotation: v.deployed.rotation, tier: v.deployed.cargoTier, angle: 0, hitched: v.state?.HorseMode === HORSE_MODE.HitchedToWagon };
     else if (v.moving?.pose?.active) wagon = { kind: v.teamFollowing ? HCC_WIRE_KIND.Following : HCC_WIRE_KIND.Trailing, position: v.moving.pose.position, rotation: v.moving.pose.rotation, tier: v.moving.cargoTier, angle: v.moving.wheel?.angle ?? 0, hitch: v.moving.pose.hitch ?? null, axle: v.moving.pose.axle ?? null, hitched: true };   // WAGON-HITCH: the point it hangs from and where its wheels stand (the draw's grow; the wire carries neither)
     if (wagon) { wagon.model = myKind(); wagon.passengers = riders?.passengers?.() ?? []; }   // WAGONS1: which of the three it is (the draw's parts, the wire's `wk`), and who rides in its back
+    // WAGONS2: what the draw turns its wheels and bogie by (the wire carries none of it): the moving wagon's own, the
+    // parked one's as they stood when it stopped (none: as the mod stands a parked wagon's, at 0)
+    if (wagon) wagon.turn = wagon.kind === HCC_WIRE_KIND.Deployed ? v.rest ?? null : { angle: v.moving.wheel?.angle ?? 0, angles: v.moving.wheel?.angles ?? null, steer: v.moving.pose.steer ?? 0 };
     const h = v.horse;
     const horse = h?.isInteractive ? { position: h.position, forward: h.forward, frame: h.walk?.animationFrame ?? 0, walking: !!h.walk?.walking } : null;
     return { wagon, horse, name: v.state?.HorseName ?? '', interaction: !!v.moving?.interaction, deployed: !!v.deployed?.isGrounded, go: riders?.go?.() ?? null, declined: riders?.declined?.() ?? [] };   // WAGONS1: a journey my riders go on, who I turned away
@@ -414,6 +451,7 @@ export function createHorseCartPool({
       const anchor = p.wagon?.kind === HCC_WIRE_KIND.Trailing && !p.hidden ? peerAnchor(p.ownerId ?? owner) : null;
       if (anchor) hitchPeerWagon(p, anchor, dt);   // WAGON-HITCH: their cart's wagon on its shafts from their rider as drawn HERE
       else if (p.wagon) { p.hitch = null; p.shownUp = null; p.shownWagon = easeToward(p.shownWagon, p.wagon.position, dt); p.shownRotation = p.shownRotation ? quatSlerp(p.shownRotation, p.wagon.rotation, 1 - Math.exp(-12 * dt)) : [...p.wagon.rotation]; }
+      turnPeer(p);   // WAGONS2: its wheels and bogie, off the pose drawn here
     }
     // HCC-ONLINE: a moved word asks for a frame (the host's stream reads `dirty`); a full frame carries it regardless.
     // AUDIT HCC O5: keyed in the WIRE frame, so my own rebase is not a word
@@ -429,7 +467,14 @@ export function createHorseCartPool({
     const word = p.wagon.position;
     const far = !p.shownWagon || Math.hypot(p.shownWagon[0] - anchor[0], p.shownWagon[2] - anchor[2]) > TELEPORT_DISTANCE;
     const from = far ? word : p.shownWagon;
-    const { axle, dir } = hitchAxle(from, anchor, hitchOf(p.wagon.model), quatForward(p.wagon.rotation));   // WAGONS1: their wagon's own length
+    // WAGONS2: a four-wheeler hangs on its two bars (horseFollow.js bogieAxle) - its kingpin pulled from where it was
+    // drawn here, a wheelbase ahead of its axle along it; a leap lays it straight
+    const length = hitchOf(p.wagon.model), bogie = partsOf(p.wagon.model)?.bogie ?? null;
+    const f0 = p.shownRotation ? quatForward(p.shownRotation) : null, fl0 = f0 ? Math.hypot(f0[0], f0[2]) : 0;
+    const kingpinFrom = far || !bogie || !(fl0 > 1e-6) ? null : [from[0] + (f0[0] / fl0) * bogie.wheelbase, from[1], from[2] + (f0[2] / fl0) * bogie.wheelbase];
+    const turn = bogie && length > bogie.wheelbase ? bogieAxle(from, kingpinFrom, anchor, length, bogie, quatForward(p.wagon.rotation)) : null;
+    p.steer = turn?.steer ?? 0;
+    const { axle, dir } = turn ?? hitchAxle(from, anchor, length, quatForward(p.wagon.rotation));   // WAGONS1: their wagon's own length
     const wordUp = quatRotate(p.wagon.rotation, [0, 1, 0]);
     // AUDIT WAGON-HITCH B4: the height of the ground the axle stands on HERE (the word's height belonged to where the
     // owner's wagon stood, which the shafts have moved it off), eased at the mod's 12 as the owner's is; no ground
@@ -466,12 +511,12 @@ export function createHorseCartPool({
       // AUDIT WAGON-HITCH A1 x B: grown from where its wheels stand (the drawn position leans downhill on a slope, and
       // grown that lean is g times as long)
       const at = g > 1 && s.wagon.axle ? grownHitchedPosition(s.wagon.axle, s.wagon.hitch, g, groundYAt, s.wagon.axle[1]) : grownHitchedPosition(s.wagon.position, s.wagon.hitch, g, groundYAt);
-      if (drawWagon(r, texRemap, at, s.wagon.rotation, s.wagon.tier, grownAngle('', s.wagon.angle, g), g, s.wagon.model, s.wagon.hitched)) n++;
+      if (drawWagon(r, texRemap, at, s.wagon.rotation, s.wagon.tier, grownTurn('', s.wagon.turn ?? { angle: s.wagon.angle }, g), g, s.wagon.model, s.wagon.hitched)) n++;
     } else _grownWheels.delete('');
     for (const [owner, p] of _peers) {
       if (!p.wagon || !p.shownWagon || (p.hidden && p.wagon.kind !== HCC_WIRE_KIND.Deployed)) continue;   // AUDIT (pre-merge) I-B: a hidden owner's trailing or following wagon rolls unseen with it; a parked one is a wagon in the world
       const g = p.hitch && grow ? grow(p.hitch) : 1;
-      if (drawWagon(r, texRemap, grownHitchedPosition(p.shownWagon, p.hitch, g, groundYAt), p.shownRotation ?? p.wagon.rotation, p.wagon.tier, grownAngle(owner, p.wagon.angle, g), g, p.wagon.model, p.wagon.kind !== HCC_WIRE_KIND.Deployed || p.wagon.hitched)) n++;
+      if (drawWagon(r, texRemap, grownHitchedPosition(p.shownWagon, p.hitch, g, groundYAt), p.shownRotation ?? p.wagon.rotation, p.wagon.tier, grownTurn(owner, p.turn ?? { angle: p.wagon.angle }, g), g, p.wagon.model, p.wagon.kind !== HCC_WIRE_KIND.Deployed || p.wagon.hitched)) n++;
     }
     return n;
   }
@@ -625,7 +670,7 @@ export function createHorseCartPool({
   function offsetAll(offset) {
     runtime?.rebase?.(offset);
     for (const p of _peers.values()) {
-      for (const v of [p.shownHorse, p.shownWagon]) if (v) { v[0] += offset[0]; v[1] += offset[1]; v[2] += offset[2]; }
+      for (const v of [p.shownHorse, p.shownWagon, ...(p.turn?.contacts ?? []).map((c) => c.p)]) if (v) { v[0] += offset[0]; v[1] += offset[1]; v[2] += offset[2]; }   // WAGONS2: and where each wheel last met the ground
     }
     // the collider box stands again at the shifted pose on the next frame. DISC20-C: and the box that stood goes NOW -
     // its matrix is the old frame's, and a crossing that also leaves the wagon's pixel shows no wagon to stand it
@@ -728,7 +773,7 @@ export function createHorseCartPool({
     p.ownerId = v.ownerId; p.ownerName = v.ownerName ?? ''; p.kept = !!v.kept;
     p.go = v.go ?? null; p.pn = v.pn ?? [];   // WAGONS1
     retarget(p);
-    if (!p.wagon) { p.shownWagon = null; p.shownRotation = null; }
+    if (!p.wagon) { p.shownWagon = null; p.shownRotation = null; p.turn = null; p.steer = 0; }   // WAGONS2: its wheels and bogie go with it
     if (!p.horse) p.shownHorse = null;
     if (p.horse) { ensureStationary(); ensureWalk(); }
     if (p.wagon) partsOf(p.wagon.model);
