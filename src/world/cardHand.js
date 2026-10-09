@@ -41,20 +41,34 @@ export const FACE_THE_EYE = trs(0, 0, 0, -90, 180, 0);
 export const HELD_LIFT_MAX = 0.08;
 export const HELD_PANEL_GAP_PX = 10;
 
+/** AUDIT CARDS-6 E21: THE HAND ON A NARROW SCREEN. The view's height is its field of view, so a screen narrower than it is
+ *  tall (a phone held upright) shows the hand as tall as a wide one does and its width as much wider as the screen is
+ *  narrower: at 390 x 844 the peeked front card ran off the right edge, and the lift that keeps it clear of the panel
+ *  (HELD_LIFT_MAX, some 216 px there) left the lower hand under a panel that needs some 376. Narrower than
+ *  HELD_FIT_ASPECT (MEASURE: width / height), the hand is held that much farther off (`heldFit`) - the same hand,
+ *  smaller on the screen, nearer the middle - spanning no more of the width than at that aspect, and its lift may go as
+ *  much farther (in the view's own measure, the same share of the screen per metre: heldLift). */
+export const HELD_FIT_ASPECT = 0.8;
+/** The hand's fit for a frame of `aspect` (width / height): 1 at HELD_FIT_ASPECT and wider, else how much farther off. */
+export const heldFit = (aspect) => (aspect > 0 && aspect < HELD_FIT_ASPECT ? HELD_FIT_ASPECT / aspect : 1);
+
 /**
  * The world matrices of a held hand of `n` cards (the cloth's order), `view` the frame's view matrix, `peek` 0..1,
- * `lift` metres up the view (AUDIT CARDS-3 C1: clear of the panel).
- * @param {ArrayLike<number>} view @param {number} n @param {number} [peek] @param {number} [lift]
+ * `lift` metres up the view (AUDIT CARDS-3 C1: clear of the panel), `fit` how much farther off it is held (AUDIT
+ * CARDS-6 E21: heldFit - its place on the screen kept, all but its sideways place, which comes nearer the middle).
+ * @param {ArrayLike<number>} view @param {number} n @param {number} [peek] @param {number} [lift] @param {number} [fit]
  */
-export function heldMatrices(view, n, peek = 0, lift = 0) {
+export function heldMatrices(view, n, peek = 0, lift = 0, fit = 1) {
   const p = Math.max(0, Math.min(1, peek));
+  const f = Math.max(1, fit);
   const camera = invert4(view);
   const lean = HELD_LEAN_DEG + (PEEK_LEAN_DEG - HELD_LEAN_DEG) * p;
   const gap = HELD_GAP + (PEEK_GAP - HELD_GAP) * p;
   return Array.from({ length: n }, (_, i) => {
     const k = i - (n - 1) / 2;
     // the screen's right-hand card in front (the view's -X is the screen's right), the fan opening upward
-    const local = trs(HELD_AT[0] + k * gap, HELD_AT[1] + PEEK_RISE * p + Math.max(0, Math.min(HELD_LIFT_MAX, lift)), HELD_AT[2] - k * 0.002, -lean, 0, -k * HELD_FAN_DEG);
+    const up = HELD_AT[1] + PEEK_RISE * p + Math.max(0, Math.min(HELD_LIFT_MAX * f, lift));
+    const local = trs(HELD_AT[0] + k * gap, f * up, f * HELD_AT[2] - k * 0.002, -lean, 0, -k * HELD_FAN_DEG);
     return multiply(camera, multiply(local, FACE_THE_EYE));
   });
 }
@@ -93,13 +107,14 @@ export function blendMatrix(a, b, u) {
 /**
  * AUDIT CARDS-3 C1: how far (metres, up the view) a held hand whose lowest point is at screen y `bottomPx` must rise to
  * clear a panel whose top is at `panelTopPx` (both CSS pixels down the canvas, `h` its height), `proj` the frame's
- * projection (its [5] is 1 / tan(fov / 2)) - 0 when it is clear already.
- * @param {number} bottomPx @param {number} panelTopPx @param {number} h @param {ArrayLike<number>} proj
+ * projection (its [5] is 1 / tan(fov / 2)) - 0 when it is clear already. AUDIT CARDS-6 E21: a hand held `fit` times
+ * farther off (heldFit) may rise `fit` times HELD_LIFT_MAX.
+ * @param {number} bottomPx @param {number} panelTopPx @param {number} h @param {ArrayLike<number>} proj @param {number} [fit]
  */
-export function heldLift(bottomPx, panelTopPx, h, proj) {
+export function heldLift(bottomPx, panelTopPx, h, proj, fit = 1) {
   const over = bottomPx - (panelTopPx - HELD_PANEL_GAP_PX);
   if (!(over > 0) || !(h > 0) || !(proj[5] > 0)) return 0;
-  return Math.min(HELD_LIFT_MAX, (over * 2 * -HELD_AT[2]) / (proj[5] * h));
+  return Math.min(HELD_LIFT_MAX * Math.max(1, fit), (over * 2 * -HELD_AT[2]) / (proj[5] * h));
 }
 
 /**
@@ -163,7 +178,8 @@ export function dragBet(legal, sliderValue, myBet = 0) {
 // ── CARDS3c: THE SQUEEZE, A CLICK ON THE CARDS AND A PUSH ─────────────────────────────────────────────────────────
 // Section 3, DECIDED: the hand "can be peeked (lifted at the corner) or squeezed ... a click on the cards checks, a push
 // folds". A press on the held hand peeks it (CARDS3b); pulled DOWN the screen while held it SQUEEZES - the front card
-// drawn up off the other along its own length and turned, as far as the pull - and let go, the press was a CLICK (short,
+// drawn down off the other along its own length, with the finger (AUDIT CARDS-6 E22: it was drawn UP the screen while the
+// finger pulled down), and turned, as far as the pull - and let go, the press was a CLICK (short,
 // barely moved: a check, when the law has one) or a PUSH (dragged up the screen, toward the cloth's middle across the
 // table, more up than across: a fold, on the player's turn). Anything else was a peek. The picture and the gesture
 // only: the act is the panel's own press, which the law still judges.
@@ -174,8 +190,8 @@ export const CLICK_SLOP = 0.012;
 export const CLICK_MS = 300;
 export const PUSH_FOLD = 0.1;
 export const SQUEEZE_PULL = 0.12;
-/** MEASURE (CARDS3c): the front card's draw up off the other at a full squeeze (metres along its own length) and its
- *  turn (degrees, about its face). */
+/** MEASURE (CARDS3c): the front card's draw off the other at a full squeeze (metres along its own length, toward its
+ *  foot - AUDIT CARDS-6 E22) and its turn (degrees, about its face). */
 export const SQUEEZE_RISE = CARD_W * 0.55;
 export const SQUEEZE_TURN_DEG = 12;
 
@@ -202,11 +218,13 @@ export function squeezeOf(from, to, h) {
   return pull > CLICK_SLOP ? Math.min(1, (pull - CLICK_SLOP) / SQUEEZE_PULL) : null;
 }
 /**
- * A held card's matrix squeezed `s` (0..1): drawn up along its own length (its top, +Z) and turned about its face (+Y),
- * in its own frame - the card that lies in front comes up off the one behind it.
+ * A held card's matrix squeezed `s` (0..1): drawn along its own length toward its foot (-Z, its top +Z) and turned about
+ * its face (+Y), in its own frame - the card that lies in front comes down off the one behind it. AUDIT CARDS-6 E22: the
+ * held card's top is up the screen, so the draw toward its top ran UP the screen while the finger pulled DOWN; toward
+ * its foot, the card follows the finger.
  * @param {ArrayLike<number>} m @param {number} s
  */
 export function squeezeMatrix(m, s) {
   const k = Math.max(0, Math.min(1, s));
-  return multiply(m, trs(0, 0, SQUEEZE_RISE * k, 0, SQUEEZE_TURN_DEG * k, 0));
+  return multiply(m, trs(0, 0, -SQUEEZE_RISE * k, 0, SQUEEZE_TURN_DEG * k, 0));
 }

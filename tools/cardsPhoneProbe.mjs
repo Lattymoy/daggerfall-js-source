@@ -6,9 +6,13 @@
 // never its device pixels - systems/renderScale.js), touch, and the CPU throttled four times. The GL is the probe's
 // software one (SwiftShader), so every pixel is the CPU's: a phone's GPU does that part faster than this does, which
 // makes the measure a ceiling, not a phone's own number. It reports; it fails only on an error or a frame it cannot time.
+// AUDIT CARDS-6 E15: the runs alternated REPS times and their medians kept (three runs moved the cost by more than its
+// size under a loaded machine - say the load beside a number), and from the seat each part timed alone (the lab's
+// `split`): the held hand, the cloth's cards, the chips, the cloth's cards and chips. The machine's load is printed.
 //     node tools/cardsPhoneProbe.mjs
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
+import { loadavg, cpus } from 'node:os';
 
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 const server = await createServer({ server: { port: 5242, strictPort: true }, logLevel: 'error' });
@@ -18,8 +22,10 @@ const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=sw
 const errors = [];
 let failed = 0;
 const rows = [];
-/** MEASURE: the frames a run times, and the CPU throttle that stands for a phone. */
-const FRAMES = 60, PHONE_THROTTLE = 4;
+/** MEASURE: the frames a run times, the runs alternated (AUDIT CARDS-6 E15), and the CPU throttle that stands for a phone. */
+const FRAMES = 30, REPS = 7, PHONE_THROTTLE = 4;
+const load = () => `load ${loadavg().map((x) => x.toFixed(1)).join(' ')} on ${cpus().length} cores`;
+console.log(`start: ${load()}`);
 for (const [label, viewport, throttle, mobile] of [['desktop 1100x640', { width: 1100, height: 640 }, 1, false], ['phone 390x844, CPU /4', { width: 390, height: 844 }, PHONE_THROTTLE, true]]) {
   const context = await browser.newContext({ viewport, isMobile: mobile, hasTouch: mobile, deviceScaleFactor: mobile ? 3 : 1 });
   const page = await context.newPage();
@@ -27,13 +33,14 @@ for (const [label, viewport, throttle, mobile] of [['desktop 1100x640', { width:
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
   const cdp = await context.newCDPSession(page);
   await cdp.send('Emulation.setCPUThrottlingRate', { rate: throttle });
-  for (const [game, q] of [['holdem', 't=14&cam=seat&nohud&patrons=5'], ['holdem, no chips', 't=14&cam=seat&nohud&patrons=5&chips=0'], ['holdem from above (no hand held)', 't=14&cam=over&nohud&patrons=5'], ['iliac', 't=30&cam=seat&nohud&game=iliac']]) {
-    await page.goto(`${BASE}/cards.html?${q}&bench=${FRAMES}`, { waitUntil: 'commit', timeout: 600000 });   // the bench runs in the page's own load
-    await page.waitForFunction(() => window.__cardsReady === true, null, { timeout: 600000 });
+  for (const [game, q] of [['holdem', 't=14&cam=seat&nohud&patrons=5&split'], ['holdem, no chips', 't=14&cam=seat&nohud&patrons=5&chips=0'], ['holdem from above (no hand held)', 't=14&cam=over&nohud&patrons=5'], ['iliac', 't=30&cam=seat&nohud&game=iliac']]) {
+    await page.goto(`${BASE}/cards.html?${q}&bench=${FRAMES}&reps=${REPS}`, { waitUntil: 'commit', timeout: 1800000 });   // the bench runs in the page's own load
+    await page.waitForFunction(() => window.__cardsReady === true, null, { timeout: 1800000, polling: 2000 });
     const b = await page.evaluate(() => window.__cardsBench);
     if (!b || !Number.isFinite(b.cardsMs) || !Number.isFinite(b.bareMs)) { failed++; console.log(`FAIL ${label} ${game}: no timing`); continue; }
     rows.push({ label, game, ...b });
-    console.log(`${label} ${game}: ${b.width}x${b.height}, ${b.plates} plates, ${b.chips} chips - the room ${b.bareMs.toFixed(2)} ms, with the cards ${b.cardsMs.toFixed(2)} ms: the cards cost ${b.costMs.toFixed(2)} ms a frame`);
+    console.log(`${label} ${game}: ${b.width}x${b.height}, ${b.plates} plates, ${b.chips} chips - the room ${b.bareMs.toFixed(2)} ms, with the cards ${b.cardsMs.toFixed(2)} ms: the cards cost ${b.costMs.toFixed(2)} ms a frame (${load()})`);
+    if (b.split) console.log(`   alone: the held hand ${b.split.held.toFixed(2)} ms, the cloth's cards ${b.split.clothcards.toFixed(2)} ms, the chips ${b.split.chips.toFixed(2)} ms, the cloth's cards and chips ${b.split.cloth.toFixed(2)} ms`);
   }
   await context.close();
 }

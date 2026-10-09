@@ -3,8 +3,9 @@
 // table"): THE SPRITE LANE SEATED (net/remotePlayers.js seatedSink). Driven: a pose that says a seat (`st`, CARDS2b's
 // table top) sinks its sprite by the seat's own hip drop - the Morrowind body's (player/seatPose.js SEAT_HIP_DROP), so
 // the sprite's head stands where the seated rig's eye does - and a standing pose not at all; the paperdoll's billboard
-// drawn sunk on a fake renderer, its name brought down with it; the class sprite's path the same; my own sprite needs
-// none (seated, my view is the seat's own, first person - CARDS2b).
+// drawn sunk on a fake renderer, its name brought down with it; my own sprite needs none (seated, my view is the seat's
+// own, first person - CARDS2b). READ, not driven (AUDIT CARDS-6 E20: this header said "Driven" of it): the class sprite's
+// path, its lines here - driven on a fake renderer in test/auditcards6_e.test.js.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';

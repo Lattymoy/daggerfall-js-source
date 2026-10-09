@@ -1933,7 +1933,7 @@
   {
     "name": "C1-hand-under-panel",
     "file": "src/scenes/worldModes.js",
-    "old": "    const mats = g.lift > 1e-4 ? heldMatrices(view, fan, g.peek, g.lift) : mats0;",
+    "old": "    const mats = g.lift > 1e-4 ? heldMatrices(view, fan, g.peek, g.lift, fit) : mats0;",
     "new": "    const mats = mats0;",
     "tests": [
       "test/auditcards2_cloth.test.js",
@@ -2175,8 +2175,8 @@
   {
     "name": "C1-lift-unscaled",
     "file": "src/world/cardHand.js",
-    "old": "  return Math.min(HELD_LIFT_MAX, (over * 2 * -HELD_AT[2]) / (proj[5] * h));",
-    "new": "  return Math.min(HELD_LIFT_MAX, over / h);",
+    "old": "  return Math.min(HELD_LIFT_MAX * Math.max(1, fit), (over * 2 * -HELD_AT[2]) / (proj[5] * h));",
+    "new": "  return Math.min(HELD_LIFT_MAX * Math.max(1, fit), over / h);",
     "tests": [
       "test/auditcards2_cloth.test.js",
       "test/auditcards2_host.test.js",

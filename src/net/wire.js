@@ -2889,8 +2889,10 @@ export const EMOTE_RELAY_MIN = 102;   // MERGE: world102, as ROLL_RELAY_MIN
 export const DM_RELAY_MIN = 104;
 export const relaySupportsDm = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= DM_RELAY_MIN; };
 export const relaySupportsEmote = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= EMOTE_RELAY_MIN; };
-/** CARDS5: the relay's card table - world176 (this branch's, undeployed). A relay before it closes on the frame. */
-export const HOLDEM_RELAY_MIN = 176;
+/** CARDS5: the relay's card table - TAVERN CARDS' world178 (world176 on its branch). A relay before it closes on the
+ *  frame. AUDIT CARDS-6 E20: it still read 176 after the merge renumbered TAVERN CARDS past main's SUPER-DUNGEONS world176
+ *  and THE WROTHGARIAN ZONE world177 - two relays that deal nothing, which it called able to. */
+export const HOLDEM_RELAY_MIN = 178;
 /** CARDS10: the relay that first deals Iliac Hand (an older one CLOSES the socket on an iliac frame). */
 export const ILIAC_RELAY_MIN = 181;   // world179 on its branch - renumbered at the merge past main's HOURS-FIRST world179 and TAVERN-TABLES world180, neither of which deals Iliac Hand (an `iliac` frame to them closes the socket)
 export const relaySupportsIliac = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= ILIAC_RELAY_MIN; };

@@ -221,7 +221,7 @@ import { openIliacTableGame } from './iliacTableGame.js';   // CARDS10: Iliac Ha
 import { readIliacReceipt } from '../net/iliacReceipt.js';   // AUDIT CARDS-6 C1: a ranked result kept, its game said back to the relay
 import { iliacGrade } from '../systems/iliacPatrons.js';   // CARDS10: the tavern's grade - its regulars' decks and play
 import { cardPackPrice, buyCardPack } from '../systems/cardSources.js';   // CARDS9: the house sells packs at its card table
-import { heldMatrices, heldLift, blendMatrix, HELD_EASE_S, tablePoint, onStack, onTable, inBetZone, dragBet, PEEK_RATE, DRAG_LIFT, handGesture, squeezeOf, squeezeMatrix } from '../world/cardHand.js';   // CARDS3b: the hand held, the chips dragged; CARDS3c: the squeeze, the click, the push
+import { heldMatrices, heldLift, heldFit, blendMatrix, HELD_EASE_S, tablePoint, onStack, onTable, inBetZone, dragBet, PEEK_RATE, DRAG_LIFT, handGesture, squeezeOf, squeezeMatrix } from '../world/cardHand.js';   // CARDS3b: the hand held, the chips dragged; CARDS3c: the squeeze, the click, the push
 import { rayDirFromScreen, projectToScreen } from '../player/tapRay.js';   // CARDS3b: the cursor's ray, and the hand on the screen
 import { createCardTableHud, cardHudModel, eventLine, showdownWinners, HOLDEM_REFUSALS } from '../ui/cardTableHud.js';   // CARDS4: its panel
 import { tablePlaces, CardScene } from '../world/cardScene.js';   // CARDS3: the cards on the cloth
@@ -898,11 +898,28 @@ export function createWorldModes(host) {
   function cardPointerListen(g) {
     if (typeof window === 'undefined' || !window.addEventListener) return null;
     const mine = () => g === cardGame && !!cardSeat;
-    const onPanel = (e) => !!e.target?.closest?.('.dfcards');
+    // AUDIT CARDS-6 E2: the panel is also the point inside its box - a pointer held on the canvas keeps the canvas as its
+    // target over the panel (the capture below; a touch always did, its capture implicit), and a chip let go over the
+    // panel is still never the bet (AUDIT CARDS-3 C6)
+    const onPanel = (e) => {
+      if (e.target?.closest?.('.dfcards')) return true;
+      const b = g.hud?.root?.getBoundingClientRect?.();
+      return !!b && b.width > 0 && e.clientX >= b.left && e.clientX <= b.right && e.clientY >= b.top && e.clientY <= b.bottom;
+    };
+    // AUDIT CARDS-6 E2: A PRESS IS ITS OWN POINTER'S. The press on the hand and the chips carried each keep the pointer
+    // that made them (`id`); another finger's move, letting go or cancel is not theirs (a second finger on the hand took
+    // the press's place, and the first lifting still folded the hand). A press let go where the window never heard it -
+    // the browser took the touch back (pointercancel), the canvas lost the pointer (lostpointercapture), a mouse let go
+    // outside the window - is let go UNREAD: nothing checked, folded or bet, and nothing of it left for the next press to
+    // be read against (a stale press read the next chip drag into the pot as a push from its old point: "You fold.").
+    const idOf = (e) => e.pointerId ?? null;
+    const held = () => g.handPress ?? g.drag ?? null;
+    const other = (e) => { const h = held(); return !!h && h.id !== idOf(e); };
+    const drop = () => { g.handPress = null; g.squeeze = null; g.peekHeld = false; g.drag = null; };
     // AUDIT CARDS-3 C5: POINTER events - a touch is a pointer too (the touch layer's preventDefault on touchstart kept
     // every mouse event from the cards); a pointerdown taken here is cancelled, so no mouse press follows it to the seat
     const move = (e) => {
-      if (!mine()) return;
+      if (!mine() || other(e)) return;   // AUDIT CARDS-6 E2: a second finger never pulls the first's press
       g.mouse = cardMouseAt(e);
       g.overPanel = onPanel(e);   // AUDIT CARDS-3 C10: the panel over the hand is the panel's - no peek through it
       if (g.handPress) g.squeeze = squeezeOf(g.handPress.at, g.mouse, canvas.clientHeight);   // CARDS3c: pulled down, squeezed
@@ -913,6 +930,12 @@ export function createWorldModes(host) {
     };
     const down = (e) => {
       if (!mine() || onPanel(e) || (e.button ?? 0) !== 0) return;   // AUDIT CARDS-3 C10: the primary button (a touch's contact) alone
+      if (held()) {
+        // AUDIT CARDS-6 E2: a second finger while one is held is no press - taken all the same, so never the seat's; the
+        // same pointer down again (or the only one: `isPrimary`) means the press it held was let go unheard - dropped
+        if (other(e) && e.isPrimary !== true) { e.stopImmediatePropagation?.(); e.preventDefault?.(); return; }
+        drop();
+      }
       g.mouse = cardMouseAt(e);
       const place = g.scene?.places.seats[g.scene.playerSeat];
       const table = g.remote ?? g.session;
@@ -921,9 +944,11 @@ export function createWorldModes(host) {
       const myBet = view?.hand ? view.hand.seats[view.handSeats.indexOf(g.scene.playerSeat)]?.bet ?? 0 : 0;
       const grabbed = !!place && onStack(p, place);
       const bet = grabbed ? dragBet(table?.legal?.(), g.hud.sliderValue?.() ?? null, myBet) : null;
-      if (bet) g.drag = { bet, point: p, off: false };
-      else if (!grabbed && cardHandHovered(g)) { g.peekHeld = true; g.handPress = { at: g.mouse.slice(), t: performance.now() }; }   // CARDS3c: and what the press means is told at its letting go
+      if (bet) g.drag = { bet, point: p, off: false, id: idOf(e) };   // AUDIT CARDS-6 E2: its pointer's
+      else if (!grabbed && cardHandHovered(g)) { g.peekHeld = true; g.handPress = { at: g.mouse.slice(), t: performance.now(), id: idOf(e) }; }   // CARDS3c: and what the press means is told at its letting go
       else if (!grabbed) return;   // AUDIT CARDS-3 C2: a press on his own stack is his chips' - never the swing that stands him up, his turn or not
+      // AUDIT CARDS-6 E2: the pointer captured - its letting go is heard wherever it lands, and a capture lost is told
+      try { if (e.pointerId != null) canvas.setPointerCapture?.(e.pointerId); } catch { /* a pointer the page no longer holds */ }
       g.swallowMouse = true;
       e.stopImmediatePropagation?.(); e.preventDefault?.();
     };
@@ -931,7 +956,7 @@ export function createWorldModes(host) {
     const mouseDown = (e) => { if (!g.swallowMouse) return; g.swallowMouse = false; e.stopImmediatePropagation?.(); e.preventDefault?.(); };
     const up = (e) => {
       g.swallowMouse = false;   // a browser that sent no mouse press after the taken pointerdown never eats the next one
-      if (!mine()) return;
+      if (!mine() || other(e)) return;   // AUDIT CARDS-6 E2: another finger's letting go is not the held press's
       g.peekHeld = false;
       // CARDS3c: a press on the hand let go - a click checks (when the law has a check), a push folds (on his turn)
       const hp = g.handPress;
@@ -957,11 +982,15 @@ export function createWorldModes(host) {
       const still = dragBet(table?.legal?.(), g.hud.sliderValue?.() ?? null, myBet);
       if (still && still.id === d.bet.id && still.value === d.bet.value) cardPress(g, d.bet.id, d.bet.value);
     };
+    // AUDIT CARDS-6 E2: the browser took the press back, or the canvas lost its pointer - let go unread
+    const cancel = (e) => { if (held() && !other(e)) drop(); };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerdown', down, true);
     window.addEventListener('mousedown', mouseDown, true);
     window.addEventListener('pointerup', up, true);
-    return () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerdown', down, true); window.removeEventListener('mousedown', mouseDown, true); window.removeEventListener('pointerup', up, true); };
+    window.addEventListener('pointercancel', cancel, true);
+    window.addEventListener('lostpointercapture', cancel, true);
+    return () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerdown', down, true); window.removeEventListener('mousedown', mouseDown, true); window.removeEventListener('pointerup', up, true); window.removeEventListener('pointercancel', cancel, true); window.removeEventListener('lostpointercapture', cancel, true); };
   }
   /** The table's picture this frame: the cloth, the player's settled two held before the eye (peeked as the cursor asks),
    *  and a bet being carried under the cursor. */
@@ -979,11 +1008,12 @@ export function createWorldModes(host) {
     const ofHand = mine >= 0 ? p.cards.filter((c) => c.seat === mine).length : 0;
     const fan = Math.max(held.length, ofHand);
     const slot = (c) => Number(String(c.id).split(':')[2] ?? 0);
-    const mats0 = heldMatrices(view, fan, g.peek);
-    const lift = cardHeldLift(g, held.map((c) => mats0[slot(c)] ?? mats0[0]), proj, view);
+    const fit = heldFit(Math.abs(proj[5] / proj[0]));   // AUDIT CARDS-6 E21: a narrow screen's hand held farther off, nearer the middle
+    const mats0 = heldMatrices(view, fan, g.peek, 0, fit);
+    const lift = cardHeldLift(g, held.map((c) => mats0[slot(c)] ?? mats0[0]), proj, view, fit);
     g.lift = (g.lift ?? lift) + (lift - (g.lift ?? lift)) * Math.min(1, dt * PEEK_RATE);   // eased - a panel that grows lifts the hand, never jumps it
-    const mats = g.lift > 1e-4 ? heldMatrices(view, fan, g.peek, g.lift) : mats0;
-    if (g.squeeze > 0 && mats.length > 1) mats[0] = squeezeMatrix(mats[0], g.squeeze);   // CARDS3c: the front card squeezed up off the other
+    const mats = g.lift > 1e-4 ? heldMatrices(view, fan, g.peek, g.lift, fit) : mats0;
+    if (g.squeeze > 0 && mats.length > 1) mats[0] = squeezeMatrix(mats[0], g.squeeze);   // CARDS3c: the front card squeezed off the other (AUDIT CARDS-6 E22: down, with the finger)
     g.hold ??= new Map();   // card id -> { k: 0..1 into the hand, m: its last held matrix }
     const step = dt / HELD_EASE_S;
     const ids = new Set(p.cards.map((c) => c.id));
@@ -1003,7 +1033,7 @@ export function createWorldModes(host) {
   }
   /** AUDIT CARDS-3 C1: the lift that keeps the held hand clear of the panel - its cards' lowest corner on the screen
    *  against the panel's top (the panel covered the hand at the bottom of the screen, where both stood). */
-  function cardHeldLift(g, mats, proj, view) {
+  function cardHeldLift(g, mats, proj, view, fit = 1) {
     const box = mats.length ? g.hud.root?.getBoundingClientRect?.() : null;
     if (!box || !(box.height > 0)) return 0;
     const w = canvas.clientWidth, h = canvas.clientHeight, rect = worldViewportRect(w, h), at = canvas.getBoundingClientRect?.() ?? { left: 0, top: 0 };
@@ -1013,7 +1043,7 @@ export function createWorldModes(host) {
       const s = projectToScreen([m[0] * x + m[8] * z + m[12], m[1] * x + m[9] * z + m[13], m[2] * x + m[10] * z + m[14]], w, h, proj, view, rect);
       if (s.front && s.x + at.left >= box.left && s.x + at.left <= box.right) bottom = Math.max(bottom, s.y);
     }
-    return Number.isFinite(bottom) ? heldLift(bottom, box.top - at.top, h, proj) : 0;
+    return Number.isFinite(bottom) ? heldLift(bottom, box.top - at.top, h, proj, fit) : 0;
   }
   /** CARDS5: the relay's table's turn of the frame - its events onto the cloth and into the log, the panel repainted
    *  as they come and once a second while my clock runs. */
@@ -1042,6 +1072,7 @@ export function createWorldModes(host) {
         standFromCardTable();
         return;
       }
+      if (why === 'other game') say(HOLDEM_REFUSALS[why]);   // AUDIT CARDS-6 E8: the cloth plays Iliac Hand - said, never sat again; the panel offers that game
       g.phase = 'over'; g.why = why;   // AUDIT CARDS-3 B7/D6: out of chips, or stood up - the panel says so
       g.remote = null;
       paintCardGame();
@@ -12841,6 +12872,9 @@ export function createWorldModes(host) {
     /** CARDS-TOUCH (Tavern-Cards section 31): the player sits at a card table - the hosts' touch layer stands its look,
      *  swing and tap down (ui/touch.js `cardTable`): the table's own listeners read the finger. */
     cardSeated: () => mode === 'interior' && !!cardSeat,
+    /** AUDIT CARDS-6 E1: the cards hold a press (the hand, the chips carried) - the finger put down is the table's even on
+     *  the touch layer's stick half (ui/touch.js `cardHeld`); the cards' pointerdown runs before the layer's touchstart. */
+    cardPressHeld: () => mode === 'interior' && !!cardSeat && !!(cardGame?.handPress || cardGame?.drag),
     hover,
     wheel,
     /** A mode-owned window is up (the hosts' look gate reads this

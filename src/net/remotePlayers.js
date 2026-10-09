@@ -493,7 +493,11 @@ export const PEER_RIDE_STALE_MS = 1000;
  * LANE SEATED. Eye Of The Beholder's walkers and the paperdoll have no sitting art, so a peer seated at a card table
  * (the pose's `st`, CARDS2b's table top) stood at the seat. A sprite cannot bend; it SINKS - its feet lowered by the
  * seat's own hip drop (player/seatPose.js SEAT_HIP_DROP, the Morrowind body's), so its hips stand where the seated rig's
- * do, its head at the seated eye, and what would be its legs lies below the floor and behind the table, which hide it.
+ * do and its head at the seated eye. AUDIT CARDS-6 E16 (measured on TAVERN-TABLE's prop and its six seats): the floor
+ * hides its lowest SEAT_HIP_DROP - the feet; the table hides more only from a chair with the table between: the far
+ * side's (from about 0.7 m over the floor down) or, for a long side's chair, the far end's (0.5 m). From a chair on its
+ * own side or at its near end, and from anyone standing, it shows from its shins up - a standing figure cut off by the
+ * floor. A sprite with no sitting art has no better pose; it was said to be hidden behind the table, and mostly it is not.
  * The name over it comes down with it. Answers how far a pose's sprite sinks (0 standing).
  * @param {any} shown
  */
