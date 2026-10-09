@@ -69,7 +69,7 @@ const MANTELLA_LIGHT = Object.freeze([0.45, 1.0, 0.6]);
  *  `pulseAt` (ms; else since the fight began), the beat a quick rise and a slow fall. Pure. */
 export function sdHeartBeat(s, t, pulseAt) {
   const from = Number.isFinite(pulseAt) && pulseAt <= t ? pulseAt : (s?.op ?? 0), tau = Math.max(0, (t - from) / 1000);
-  const [h0, h1] = SD_HEART_LIGHT.hz, T = SD_PULSE_EVERY_MS / 1000, k = Math.min(tau, T);
+  const h0 = SD_HEART_LIGHT.hz[0], h1 = SD_HEART_LIGHT.hz[1], T = SD_PULSE_EVERY_MS / 1000, k = Math.min(tau, T);   // SD-LOOK S8 (AUDIT SD II, L2 F9's law): no array taken apart a frame
   const phase = h0 * k + ((h1 - h0) * k * k) / (2 * T) + h1 * (tau - k);   // the rate rising h0 to h1 over a Pulse's span
   const f = phase - Math.floor(phase);
   return f < 0.15 ? f / 0.15 : Math.exp(-(f - 0.15) * 5);
@@ -117,34 +117,36 @@ export const SD_TELLS = Object.freeze(['stomp', 'hand', 'volley', 'pulse', 'rese
 export const SD_TELL_HEAT = Object.freeze([0.1, 0.6]);
 export const SD_TELL_AFTER_MS = Object.freeze({ stomp: 300, pulse: 600 });
 const T_STOMP = 0, T_HAND = 1, T_VOLLEY = 2, T_PULSE = 3, T_RESET = 4;
-/** A wind-up's share `k` as a heat. */
-export const tellHeat = (k) => (k >= SD_TELL_HEAT[1] ? 2 : k >= SD_TELL_HEAT[0] ? 1 : 0);
 /**
  * BODY `who`'s TELLS at `t` (-1 the Remnant, 0 or 1 an Echo), by SD_TELLS into `out` (five heats): none with no fight to
  * fight, past the fall, outside time, an Echo broken, or (the Remnant) while stunned - its blow broken. Pure.
  * @param {any} s @param {number} who @param {number} t @param {Uint8Array} [out]
  */
 export function sdTellsAt(s, who, t, out = new Uint8Array(SD_TELLS.length)) {
-  out.fill(0);
-  if (!live(s) || s.fell) return out;
-  const Bd = who < 0 ? s.rem : s.ec?.[who] ?? null;
-  if (!Bd || (who < 0 ? s.ph === 2 : !(Bd.h > 0))) return out;
-  const C = s.clk;
-  if (C && C.a === SD_BLOWS.pulse.id && Number.isFinite(C.at)) {
-    const w = SD_BLOWS.pulse.windup;
-    out[T_PULSE] = t < C.at ? (t >= C.at - w ? tellHeat((t - (C.at - w)) / w) : 0) : t < C.at + SD_TELL_AFTER_MS.pulse ? 2 : 0;
+  const k = _share;   // each tell's share of its wind-up (1 past it while it stays hot, -1 none) - AUDIT SD II (L2 F9)'s law: no number handed on a frame
+  k.fill(-1);
+  if (live(s) && !s.fell) {
+    const Bd = who < 0 ? s.rem : s.ec?.[who] ?? null;
+    if (Bd && (who < 0 ? s.ph !== 2 : Bd.h > 0)) {
+      const C = s.clk;
+      if (C && C.a === SD_BLOWS.pulse.id && Number.isFinite(C.at)) {
+        const w = SD_BLOWS.pulse.windup;
+        k[T_PULSE] = t < C.at ? (t >= C.at - w ? (t - (C.at - w)) / w : -1) : t < C.at + SD_TELL_AFTER_MS.pulse ? 1 : -1;
+      }
+      const a = Bd.atk, A = a ? SD_BLOW_BY_ID[a.a] : null;
+      if (A && Number.isFinite(a.at) && !(who < 0 && t < s.su)) {
+        const w = atkWindup(a, A, s.ph, who >= 0 ? SD_BODY.gold + who : SD_BODY.remnant), t0 = a.at - w, f = t < t0 ? -1 : w > 0 ? (t - t0) / w : 1;
+        if (A === SD_BLOWS.stomp) k[T_STOMP] = t < a.at ? f : t < a.at + SD_TELL_AFTER_MS.stomp ? 1 : -1;
+        else if (A === SD_BLOWS.hand) k[T_HAND] = t < a.at ? f : t < a.at + activeOf(a) ? 1 : -1;
+        else if (A === SD_BLOWS.volley) { const go = a.at - gearFlightOf(w); k[T_VOLLEY] = t < t0 || t >= go ? -1 : (t - t0) / Math.max(1, go - t0); }
+        else if (A === SD_BLOWS.reset) k[T_RESET] = t < a.at ? f : -1;
+      }
+    }
   }
-  const a = Bd.atk, A = a ? SD_BLOW_BY_ID[a.a] : null;
-  if (!A || !Number.isFinite(a.at) || (who < 0 && t < s.su)) return out;
-  const w = atkWindup(a, A, s.ph, who >= 0 ? SD_BODY.gold + who : SD_BODY.remnant), t0 = a.at - w;
-  if (t < t0) return out;
-  const k = w > 0 ? (t - t0) / w : 1;
-  if (A === SD_BLOWS.stomp) out[T_STOMP] = t < a.at ? tellHeat(k) : t < a.at + SD_TELL_AFTER_MS.stomp ? 2 : 0;
-  else if (A === SD_BLOWS.hand) out[T_HAND] = t < a.at ? tellHeat(k) : t < a.at + blowShape(a).active ? 2 : 0;
-  else if (A === SD_BLOWS.volley) { const go = a.at - gearFlightOf(w); out[T_VOLLEY] = t < go ? tellHeat((t - t0) / Math.max(1, go - t0)) : 0; }
-  else if (A === SD_BLOWS.reset) out[T_RESET] = t < a.at ? tellHeat(k) : 0;
+  for (let i = 0; i < out.length; i++) out[i] = k[i] >= SD_TELL_HEAT[1] ? 2 : k[i] >= SD_TELL_HEAT[0] ? 1 : 0;   // a share as a heat
   return out;
 }
+const _share = new Float64Array(SD_TELLS.length);
 /** THE BACK-DIAL'S HAND, by its look (world/sdRemnantArt.js SD_REMNANT_HAND_RECORD's): cold ticking, ember the stun, gold
  *  or silver the fallen Echo's window, white the Reset. Its turns: the Hour-Hand spins it up SD_DIAL_TURNS.hand whole
  *  turns over its wind-up and sweep (so it ends where its tick stands); the Reset spins it back SD_DIAL_TURNS.reset
@@ -155,6 +157,10 @@ const TAU = Math.PI * 2;
 /** AUDIT SD II (L2 F9)'s law: the Break's window by its fight's marks, asked once a fight (sdProfileOf keys by a string). */
 let _pairMk = /** @type {any} */ (undefined), _pairMs = SD_ECHO_PAIR_MS;
 const pairMsOf = (s) => { if (s.mk !== _pairMk) { _pairMk = s.mk; _pairMs = sdProfileOf(s).pairMs; } return _pairMs; };
+/** The same law: a blow's sweep as its frame says it (net/sdRemnant.js blowShape - which makes a little each call), asked
+ *  once a blow. */
+let _spanAtk = /** @type {any} */ (null), _spanMs = 0;
+const activeOf = (a) => { if (a !== _spanAtk) { _spanAtk = a; _spanMs = blowShape(a).active; } return _spanMs; };
 /**
  * WHERE BODY `who`'s DIAL HAND STANDS at `t` and how it looks, into `out` ([turn, look] - turn clockwise from XII as the
  * dial is seen from behind, look SD_DIAL_LOOK's index). The Hour's hands run BACK to twelve: at rest it ticks back a
@@ -165,8 +171,8 @@ const pairMsOf = (s) => { if (s.mk !== _pairMk) { _pairMk = s.mk; _pairMs = sdPr
  * @param {any} s @param {number} who @param {number} t @param {Float64Array} [out]
  */
 export function sdDialHandAt(s, who, t, out = new Float64Array(2)) {
-  const at = who < 0 && s.fell ? Math.min(t, s.fell.at) : t;
-  out[0] = (-TAU / 60) * sdTick(at / 1000); out[1] = 0;
+  const tk = who < 0 && s.fell && s.fell.at < t ? sdTick(s.fell.at / 1000) : sdTick(t / 1000);   // stood where it fell
+  out[0] = (-TAU / 60) * (tk % 60); out[1] = 0;   // a minute's sixty ticks (the clock's whole count would lose the turn's digits)
   if (!live(s) || (who < 0 && s.fell)) return out;
   const Bd = who < 0 ? s.rem : s.ec?.[who] ?? null;
   if (!Bd) return out;
@@ -178,7 +184,7 @@ export function sdDialHandAt(s, who, t, out = new Float64Array(2)) {
     if (P && !(P.h > 0) && P.dn > 0 && t < P.dn + ms) { out[0] = TAU * handToTwelve(P.dn + ms - t, ms); out[1] = who === 0 ? 3 : 2; return out; }
   }
   if (A === SD_BLOWS.hand && Number.isFinite(a.at)) {
-    const span = w + blowShape(a).active, k = (t - (a.at - w)) / span;
+    const span = w + activeOf(a), k = (t - (a.at - w)) / span;
     if (k > 0 && k < 1) out[0] -= TAU * SD_DIAL_TURNS.hand * k * k;
   }
   return out;
@@ -305,6 +311,8 @@ export function createSdRemnant({ renderer = null, link = () => null, sendIn = (
   const handMaps = SD_DIAL_LOOK.map((look) => remapOf(look === 'cold' ? [] : [[[SD_REMNANT_ARCHIVE, SD_REMNANT_HAND_RECORD.cold], [SD_REMNANT_ARCHIVE, SD_REMNANT_HAND_RECORD[look]]]]));
   const lampMaps = SD_REMNANT_LAMP_RECORD.map((rec, n) => remapOf(n ? [[[SD_REMNANT_ARCHIVE, SD_REMNANT_LAMP_RECORD[0]], [SD_REMNANT_ARCHIVE, rec]]] : []));
   const _tells = new Uint8Array(SD_TELLS.length), _hand = new Float64Array(2), _fellBase = new Float32Array(16);
+  let fellOf = null;
+  const _fellHand = new Float64Array(2);
   /** the stand-ins (made once), my blows' sequence and the bodies one blow of mine has met this frame */
   const standIn = bossStandIn({ mobile: SD_REMNANT_MOBILE }, SD_REMNANT_NAMES.remnant);
   const echoIns = [0, 1].map((e) => hostStandIn({ mobile: SD_REMNANT_MOBILE, name: SD_REMNANT_NAMES.echoes[e] }, e));
@@ -360,20 +368,22 @@ export function createSdRemnant({ renderer = null, link = () => null, sendIn = (
       if (list[5]) list[5].texRemap = T[tl[T_VOLLEY]];
       torso.texRemap = torsoMaps[b][tl[T_PULSE] * 4 + (fellNow ? 3 : tl[T_RESET])];
     }
-    sdDialHandAt(s, who, t, _hand);
+    const fallen = shown && b === 0 && !!s.fell;
+    if (shown && !fallen) sdDialHandAt(s, who, t, _hand);
     let on = null;
-    if (shown && b === 0 && s.fell) {
-      // the fall: the dial free on the body's own matrix where it fell (never sunk with it)
-      const B = s.rem;
-      remnantMatrix(SD_REALM_ORIGIN[0] + SD_ARENA.x + B.x, SD_REALM_ORIGIN[1], SD_REALM_ORIGIN[2] + SD_ARENA.z + B.z, facing[0] === facing[0] ? facing[0] : B.yw, 1, _fellBase);
-      on = dial ? dialFallMatrix(_fellBase, t - s.fell.at, dial.object.matrix) : null;
-      if (tornDraw) { if (heartFallMatrix(_fellBase, t - s.fell.at, tornDraw.object.matrix)) tornDraw.hidden = false; else hide(tornDraw); }
+    if (fallen) {
+      // the fall: the dial free on the body's own matrix where it fell (never sunk with it), and its hand as it stood -
+      // both found once a fall
+      if (s.fell !== fellOf) { const B = s.rem; fellOf = s.fell; remnantMatrix(SD_REALM_ORIGIN[0] + SD_ARENA.x + B.x, SD_REALM_ORIGIN[1], SD_REALM_ORIGIN[2] + SD_ARENA.z + B.z, B.yw, 1, _fellBase); sdDialHandAt(s, who, t, _fellHand); }
+      _hand.set(_fellHand);
+      on = dial ? dialFallMatrix(_fellBase, s.fell, t, dial.object.matrix) : null;
+      if (tornDraw) { if (heartFallMatrix(_fellBase, s.fell, t, tornDraw.object.matrix)) tornDraw.hidden = false; else hide(tornDraw); }
     } else {
       if (b === 0) hide(tornDraw);
       if (shown && dial) { dial.object.matrix.set(torso.object.matrix); on = dial.object.matrix; }
     }
     if (dial) { if (on) dial.hidden = false; else hide(dial); }
-    if (hand) { if (on) { dialHandMatrix(on, _hand[0], hand.object.matrix); hand.texRemap = handMaps[_hand[1]]; hand.hidden = false; } else hide(hand); }
+    if (hand) { if (on) { dialHandMatrix(on, _hand, hand.object.matrix); hand.texRemap = handMaps[_hand[1]]; hand.hidden = false; } else hide(hand); }
     if (b === 0 && lampDraw) {
       if (shown) { lampDraw.object.matrix.set(torso.object.matrix); lampDraw.texRemap = lampMaps[sdRibLampsLit(s, t)]; lampDraw.hidden = false; } else hide(lampDraw);
     }
@@ -502,8 +512,8 @@ export function createSdRemnant({ renderer = null, link = () => null, sendIn = (
      * wind-up. The renderer's light list's shape, kept records; none with no body standing.
      */
     lights() {
-      litList.length = 0;
-      if (!draws) return litList;
+      let n = 0;   // SD-LOOK S8 (AUDIT SD II, L2 F9's law): filled in place - a list's length set to nought lets its store go, and the next push makes one
+      if (!draws) { if (litList.length) litList.length = 0; return litList; }
       const L = link(), s = L ? L.state() : SD_FIGHT_EMPTY, t = L ? L.now() : 0, H = SD_HEART_LIGHT;
       const clk = s.clk;
       if (clk && clk.a === SD_BLOWS.pulse.id && clk.at <= t && clk.at > pulseAt) pulseAt = clk.at;
@@ -520,8 +530,9 @@ export function createSdRemnant({ renderer = null, link = () => null, sendIn = (
         o.x = m[4] * y + m[12]; o.y = m[5] * y + m[13]; o.z = m[6] * y + m[14];
         o.range = H.range * (b === 0 ? 1 : ECHO_SCALE);
         o.color[0] = c[0] * k; o.color[1] = c[1] * k; o.color[2] = c[2] * k;
-        litList.push(o);
+        litList[n++] = o;
       }
+      if (litList.length !== n) litList.length = n;
       return litList;
     },
     /** Gone with the dungeon: every mesh freed. */

@@ -215,12 +215,13 @@ export function remnantLampArt(n) {
   }
   return { albedo, emission };
 }
+/** @typedef {{ width: number, height: number, colors: Uint8Array }} RemnantImg */
 /** EVERY PICTURE OF THE REMNANT'S OWN ARCHIVE, by record (`colors` the blows' - SD_BLOW_COLOR's shape): the tell
  *  atlases, the white heart (mid the Reset's own soul-white, hot the moment's white-gold), the husk, the dials, the
- *  hands, the lamps.
- * @returns {Array<[number, ReturnType<typeof echoMetalArt>]>} */
+ *  hands, the lamps, the rim lines.
+ * @returns {Array<[number, { albedo: RemnantImg, emission: RemnantImg }]>} */
 export function remnantLookArt(colors) {
-  /** @type {Array<[number, ReturnType<typeof echoMetalArt>]>} */
+  /** @type {Array<[number, { albedo: RemnantImg, emission: RemnantImg }]>} */
   const out = [];
   for (const metal of /** @type {const} */ (['brass', 'gold', 'silver'])) SD_REMNANT_TELL_RECORD[metal].forEach((rec, heat) => out.push([rec, remnantTellArt(metal, heat, colors)]));
   out.push([SD_REMNANT_WHITE_RECORD[0], endingLightArt(colors.reset)], [SD_REMNANT_WHITE_RECORD[1], endingLightArt(SD_LIGHT.moment)], [SD_REMNANT_HUSK_RECORD, remnantHuskArt()]);
