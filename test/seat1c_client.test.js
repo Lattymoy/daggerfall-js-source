@@ -176,7 +176,7 @@ test('SEAT1c THE HOSTS BY SOURCE: the service settles the Turning before any sea
   assert.ok(rd('server-account/src/service.js').includes("'/v1/seats/relinquish',"));
   const gu = rd('server-account/src/guilds.js');
   assert.match(gu, /OR EXISTS \(SELECT 1 FROM town_seat_holds WHERE guild_id = \$\{p\}\)/);
-  assert.match(gu, /OR EXISTS \(SELECT 1 FROM town_seat_rights WHERE \(guild_id = \$\{p\} OR against = \$\{p\}\) AND \$\{SEAT_BATTLE_PENDING\}\)\)`;/);
+  assert.match(gu, /OR EXISTS \(SELECT 1 FROM town_seat_rights WHERE \(guild_id = \$\{p\} OR against = \$\{p\}\) AND \$\{SEAT_BATTLE_PENDING\}\)   -- SEAT1c/);   // PIN MOVED (AUDIT CHAP5 E4): no longer the list's last - a patron's bid kept after it
   assert.match(gu, /const SEAT_BATTLE_PENDING = 'week > COALESCE\(\(SELECT MAX\(week\) FROM town_seat_weeks\), -1\)';/);
   const si = rd('server-account/src/seatInfluence.js');
   assert.match(si, /const held = await db\.prepare\('SELECT key FROM town_seat_holds WHERE guild_id = \? AND region = \? ORDER BY key LIMIT 1'\)/);

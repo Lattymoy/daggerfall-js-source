@@ -2,8 +2,8 @@
   {
     "name": "QA2-summoner-door-unasked",
     "file": "src/formats/worldDataReplacement.js",
-    "old": "  curateBlockPeople(dfBlock, liveAsset(blockReplacementFilename(blockName, variant))?.vendor);\n  cacheBlock(blockKey, dfBlock);",
-    "new": "  cacheBlock(blockKey, dfBlock);",
+    "old": "  curateBlockPeople(dfBlock, liveAsset(blockReplacementFilename(blockName, variant))?.vendor);\n  // FIELD BUGS 2026-10-09e HILL-HOUSE",
+    "new": "  // FIELD BUGS 2026-10-09e HILL-HOUSE",
     "tests": ["test/qa2_summoners.test.js"]
   },
   {

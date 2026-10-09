@@ -58,7 +58,8 @@ they landed at `7f391f72`. Each fix carries an `AUDIT FB1005 <ID>` comment and i
 - **T3 - one door the hills wall.** Beautiful Villages' TEMPASD1 stands its House2 #6 inside hills 52458 and 52713:
   10.1-10.4 m of the stand-ins over its door, 10.5-11.2 m of the pack's own meshes - DFU with the pack buries it too;
   the old mound did not reach it. Carried by name in the WD3 test; Mac's call with H3 (a dent at the door would be the
-  port's own).
+  port's own). MOVED, FIELD BUGS 2026-10-09e HILL-HOUSE: a quest sent a player there (An Item On Loan), so the house,
+  not the hill, stands on the block's nearest clear ground, 24.8 m east (`world/curatedPlacements.js`).
 - **C1 - the service checks no room.** A tab opened before the deploy, or a desktop build not yet updated, can still
   claim a crypt until it reloads. A service-side refusal needs the 67 (mapId, buildingKey) pairs - the refund's list -
   and a service deploy; with the refund, Mac's call.

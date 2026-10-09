@@ -159,7 +159,7 @@ test('CARDS10 the words both ways: a sit carries thirty card ids and an order; a
   assert.deepEqual(parseClient(JSON.stringify({ t: 'iliac', op: 'sit', table: 0, chair: 0, chairs: 2, deck: DECK, order: 'x'.repeat(ILIAC_FRAME_MAX) }), { hasHello: true }), { error: 'frame too large' });
   // PIN MOVED (at the merges of main): world179 on its branch - main's HOURS-FIRST took world179, TAVERN-TABLES world180
   // and TV-BEYOND world181, none of which deals Iliac Hand, so the relay that first does is world182
-  assert.equal(RELAY_VERSION, 'world183');
+  assert.equal(RELAY_VERSION, 'world184');   // PIN MOVED (the Chapters' merge of main): CHAP4c and CHAP6e's titles moved it on past CARDS10's world182
   assert.equal(ILIAC_RELAY_MIN, 182);
   assert.ok(relaySupportsIliac('world182'));
   assert.ok(!relaySupportsIliac('world181'), 'an older relay closes the socket on the frame - TV-BEYOND\'s');
@@ -175,7 +175,12 @@ test('CARDS10 a ranked game\'s receipt (i1): minted, read and verified; the aren
   assert.ok(rc.startsWith(`${ILIAC_RECEIPT_V}.`));
   assert.deepEqual({ ...readIliacReceipt(rc), i: 0, e: 0 }, { ...what, i: 0, e: 0, signed: true });
   assert.equal((await verifyIliacReceipt(rc, kp.publicKey, { subtle, nowS })).ok, true);
-  assert.equal((await verifyIliacReceipt(rc.slice(0, -2) + 'AA', kp.publicKey, { subtle, nowS })).why, 'signature');
+  // a signature character changed, well inside it: the last two carry the signature's last byte - the top of
+  // Ed25519's S, always under 0x10 - which a fresh key leaves 0, 'AA' already, about one run in 16 (a deploy's
+  // shard did), and that receipt was never tampered
+  const at = rc.length - 10;
+  const tampered = rc.slice(0, at) + (rc[at] === 'A' ? 'B' : 'A') + rc.slice(at + 1);
+  assert.equal((await verifyIliacReceipt(tampered, kp.publicKey, { subtle, nowS })).why, 'signature');
   assert.equal((await verifyIliacReceipt(rc, kp.publicKey, { subtle, nowS: nowS + 8 * 86400 })).why, 'expired');
   const unsigned = await mintIliacReceipt(what, null, { subtle, nowS });
   assert.equal((await verifyIliacReceipt(unsigned, kp.publicKey, { subtle, nowS })).why, 'unsigned');

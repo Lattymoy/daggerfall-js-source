@@ -116,8 +116,8 @@
   {
     "name": "MWSTEEL4-the-hang-turned-round",
     "file": "tools/skinWeights.mjs",
-    "old": "      const right = smoothstep((p[0] + hang.centre) / (2 * hang.centre));",
-    "new": "      const right = smoothstep((hang.centre - p[0]) / (2 * hang.centre));",
+    "old": "    const right = smoothstep((p[0] + hang.centre) / (2 * hang.centre));",
+    "new": "    const right = smoothstep((hang.centre - p[0]) / (2 * hang.centre));",
     "tests": [
       "test/mwsteel4.test.js"
     ]

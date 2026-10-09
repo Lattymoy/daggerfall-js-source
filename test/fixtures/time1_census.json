@@ -660,7 +660,7 @@
   },
   {
    "file": "src/scenes/worldModes.js",
-   "has": "{ quality: b?.quality ?? 0, gameMinutes: Math.floor(worldMinutes()) },",
+   "has": "{ quality: shelfQuality(), gameMinutes: Math.floor(worldMinutes()) },",
    "clock": "event",
    "why": "a guild shelf's day"
   },

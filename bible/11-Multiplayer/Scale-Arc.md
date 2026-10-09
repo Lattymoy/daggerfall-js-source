@@ -459,11 +459,12 @@ moved scale4c's first knock (B1) and its street stamp (B7), and AUDIT WORLD7/8's
 - **The relay's pose path** (`07-Rendering/Performance-Next.md` 15): a relay deploy, in its own announced window -
   built as PERF-RELAY1, below.
 
-## PERF-RELAY1: built (2026-10-09, its own branch - world183, NOT YET DEPLOYED)
+## PERF-RELAY1: built (2026-10-09, its own branch - world184, NOT YET DEPLOYED)
 
 Mac, of `07-Rendering/Performance-Next.md` item 15 ("needs its own pull request in a window you announce. Want me to
 prepare it?"): "Yes and audit everything". Its own branch, `claude/relay-pose-path-ex6ce1`, so the deploy goes when Mac
-says: merged to main, `.github/workflows/relay-deploy.yml` deploys **world183**, and every player is dropped once.
+says: merged to main, `.github/workflows/relay-deploy.yml` deploys **world184** (world183 on its branch, renumbered past
+main's CHAP4c world183 at the merge), and every player is dropped once.
 
 **What a pose cost.** `Room._message` is one method for every frame the room takes, and V8 will not optimize a function
 past `--max-optimized-bytecode-size` (61,440 bytes of bytecode in node 22): `_message` is 76,752. So the room's hottest
@@ -509,7 +510,8 @@ NaN, infinite, a pixel edge, either side of zero); over a room of 60 past POSE_F
 listeners walking the range's edge and an id-less socket with a pose, every moving pose reaches exactly the listeners
 `poseFan` names over those inRange hears, and a keepalive exactly everyone in range; `_poseFrame`'s bytecode is under
 the ceiling and `_message`'s over it (a fold back leaves no `_poseFrame` to print). `tools/mutants/perfrelay1.json`:
-8 mutants, 8 dead. `test/relayversion.test.js` carries world183's law; PIN MOVED: the 35 files that pin RELAY_VERSION,
+8 mutants, 8 dead. `test/relayversion.test.js` carries world184's law; PIN MOVED: the files that pin RELAY_VERSION (35, 37 at
+the merge of main),
 `disc7`'s list of versions, `soc1.json`'s S38 record, and CHAT1's pin on the arm's order (`test/chat1.test.js`, read
 off `_poseFrame` now, with the dispatch pinned beside it). Re-aimed by content, the arm one indent shallower, all dead:
 ARENA4-STANDS-POSE-NOBODY, AUDIT1003b-R4-POSES-TO-ALL, AUDIT-SEATS-R2-gate-not-first, AUDIT-SEATS-T2-eye-fanned,
@@ -532,5 +534,5 @@ five alternating runs: 38.6 -> 27.4 us at 50, 57.1 -> 31.7 at 100, 87.4 -> 38.9 
 | L2 | The pin measured the first function the filter printed, and failed on a better relay (`_message` under the ceiling) | FIXED: exactly one `_poseFrame` in the graph, under the ceiling and an eighth of it; `_message`'s size said, not pinned |
 | L3 | The 50's frames sent, 36.3, reproduced as 36.2 | The bench's parameters: 36.3 at POSES=4000 (the record's), 36.2 at the default 3,000 - the record names them now |
 | L4 | The record credited the saving to the walk's two lines; the method of its own carries most of it | FIXED: above, with the audit's halves |
-| L5 | PERF-NEXT 15's note and `_poseFrame`'s doc said the arm's every line was its own (two changed); the Testing row's "an eighth" (under one); the bench's crowds and the base's copy unsaid | FIXED: the doc (re-hashed in place, world183 undeployed), the note, the row, the parameters |
+| L5 | PERF-NEXT 15's note and `_poseFrame`'s doc said the arm's every line was its own (two changed); the Testing row's "an eighth" (under one); the bench's crowds and the base's copy unsaid | FIXED: the doc (re-hashed in place, undeployed), the note, the row, the parameters |
 

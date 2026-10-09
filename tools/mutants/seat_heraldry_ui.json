@@ -479,8 +479,8 @@
   {
     "name": "HS-roll-unpassed",
     "file": "src/ui/hallOfRecords.js",
-    "old": "createBookReaderWindow(hallOfRecordsBook(seat, rows, zero, armsOf));",
-    "new": "createBookReaderWindow(hallOfRecordsBook(seat, rows, zero));",
+    "old": "createBookReaderWindow(hallOfRecordsBook(seat, rows, zero, armsOf, chapters));",
+    "new": "createBookReaderWindow(hallOfRecordsBook(seat, rows, zero, null, chapters));",
     "tests": [
       "test/seat_heraldry_ui.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "HS-world-board-roll",
     "file": "src/scenes/world.js",
-    "old": "hallOfRecordsWindow(st, r.data.rows, r.data.zero, seatArmsOf)",
-    "new": "hallOfRecordsWindow(st, r.data.rows, r.data.zero)",
+    "old": "hallOfRecordsWindow(seat, r.data.rows, r.data.zero, seatArmsOf, ch?.ok ? ch.data : null)",
+    "new": "hallOfRecordsWindow(seat, r.data.rows, r.data.zero, null, ch?.ok ? ch.data : null)",
     "tests": [
       "test/seat_heraldry_ui.test.js"
     ]

@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-SEATS2-C5-board",
     "file": "src/scenes/world.js",
-    "old": "    if (townTalk.overlay !== board) return false;\n    if (!r?.data) return false;\n",
-    "new": "    if (!r?.data) return false;\n",
+    "old": "    if (townTalk.overlay !== board) { try { w?.dispose?.(); } catch { /* already gone */ } return false; }\n    if (!w) return false;\n",
+    "new": "    if (!w) return false;\n",
     "tests": [
       "test/audit_seats2_client.test.js"
     ]

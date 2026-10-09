@@ -1,0 +1,537 @@
+[
+  {
+    "name": "CHAP3B-START",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const STRENGTH_START = 50;",
+    "new": "export const STRENGTH_START = 55;",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-STEP",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const STRENGTH_STEP_MAX = 10;",
+    "new": "export const STRENGTH_STEP_MAX = 12;",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-IDLE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const STRENGTH_IDLE = 3;",
+    "new": "export const STRENGTH_IDLE = 2;",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-TARGET",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const STRENGTH_TARGET = 60;",
+    "new": "export const STRENGTH_TARGET = 50;",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-TARGET-FLOOR",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "=> STRENGTH_TARGET * Math.max(1, Math.ceil(",
+    "new": "=> STRENGTH_TARGET * Math.max(0, Math.ceil(",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-TARGET-CEIL",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "=> STRENGTH_TARGET * Math.max(1, Math.ceil(",
+    "new": "=> STRENGTH_TARGET * Math.max(1, Math.floor(",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-AFTER-IDLE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "const moved = m <= 0 ? s - STRENGTH_IDLE",
+    "new": "const moved = m < 0 ? s - STRENGTH_IDLE",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-AFTER-ROUND",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "Math.min(STRENGTH_STEP_MAX, Math.floor(m / Math.max(1, target)))",
+    "new": "Math.min(STRENGTH_STEP_MAX, Math.round(m / Math.max(1, target)))",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-AFTER-CAP",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "Math.min(STRENGTH_STEP_MAX, Math.floor(m / Math.max(1, target)))",
+    "new": "Math.floor(m / Math.max(1, target))",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-AFTER-TOP",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "return Math.max(STRENGTH_MIN, Math.min(STRENGTH_MAX, moved));",
+    "new": "return Math.max(STRENGTH_MIN, moved);",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-AFTER-BOTTOM",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "return Math.max(STRENGTH_MIN, Math.min(STRENGTH_MAX, moved));",
+    "new": "return Math.min(STRENGTH_MAX, moved);",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-AFTER-PREV",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "const s = Number.isFinite(prev) ? Math.round(prev) : STRENGTH_START;",
+    "new": "const s = Number.isFinite(prev) ? Math.round(prev) : 0;",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-SEASON",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "STRENGTH_START + Math.trunc((Number(s) - STRENGTH_START) / 2);",
+    "new": "STRENGTH_START + Math.round((Number(s) - STRENGTH_START) / 2);",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-BAND-STEADY",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "band: 'steady', name: 'Steady', from: 20,",
+    "new": "band: 'steady', name: 'Steady', from: 25,",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-BAND-THRIVING",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "band: 'thriving', name: 'Thriving', from: 70,",
+    "new": "band: 'thriving', name: 'Thriving', from: 75,",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-BAND-ASCENDANT",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "band: 'ascendant', name: 'Ascendant', from: 90,",
+    "new": "band: 'ascendant', name: 'Ascendant', from: 85,",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-BAND-PRICE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "from: 0, price: 1.25, writs: 0.5",
+    "new": "from: 0, price: 1.2, writs: 0.5",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-BAND-THRIVING-PRICE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "from: 70, price: 0.9, writs: 1.5",
+    "new": "from: 70, price: 0.85, writs: 1.5",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-BAND-WRITS",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "from: 70, price: 0.9, writs: 1.5",
+    "new": "from: 70, price: 0.9, writs: 2",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-BAND-FAILWRITS",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "from: 0, price: 1.25, writs: 0.5",
+    "new": "from: 0, price: 1.25, writs: 1",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-BAND-NUMBER",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "if (typeof strength !== 'number' || !Number.isFinite(strength)) return CHAPTER_BANDS[1];",
+    "new": "if (!Number.isFinite(Number(strength))) return CHAPTER_BANDS[1];",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-BAND-ORDER",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "for (const b of CHAPTER_BANDS) if (strength >= b.from) at = b;",
+    "new": "for (const b of CHAPTER_BANDS) if (strength > b.from) at = b;",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-WRITS-BAND",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "Math.round(hallWritCount(active) * chapterBandOf(strength).writs)",
+    "new": "Math.round(hallWritCount(active))",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-LINE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "here is ${chapterBandOf(c?.strength).name} (Strength ${Number(c?.strength)})",
+    "new": "here is ${chapterBandOf(c?.strength).name}",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-ALL-CONFIRMED",
+    "file": "server-account/src/npcHalls.js",
+    "old": "if (factConfirmed(t.fact) && t.fact.region === region) for (const id of t.fact.factions) factions.add(id);\n  }\n  return",
+    "new": "if (t.fact.region === region) for (const id of t.fact.factions) factions.add(id);\n  }\n  return",
+    "tests": [
+      "test/chap3b_strength.test.js",
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-ALL-REGION",
+    "file": "server-account/src/npcHalls.js",
+    "old": "if (factConfirmed(t.fact) && t.fact.region === region) for (const id of t.fact.factions) factions.add(id);\n  }\n  return",
+    "new": "if (factConfirmed(t.fact)) for (const id of t.fact.factions) factions.add(id);\n  }\n  return",
+    "tests": [
+      "test/chap3b_strength.test.js",
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-ALL-KEPT",
+    "file": "server-account/src/npcHalls.js",
+    "old": "  if (!row || Number(row.done) !== Number(row.ver)) return null;",
+    "new": "  if (!row) return null;",
+    "tests": [
+      "test/chap3b_strength.test.js",
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-ALL-KEPTNUM",
+    "file": "server-account/src/npcChapters.js",
+    "old": "export const CHAPTER_TURNING_GRACE_S = 300;",
+    "new": "export const CHAPTER_TURNING_GRACE_S = 600;",
+    "tests": [
+      "test/chap3b_strength.test.js",
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-SETTLE-KEY",
+    "file": "server-account/src/npcChapters.js",
+    "old": "      db.prepare('INSERT INTO npc_chapter_weeks (week, active, target, chapters, open, at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)')",
+    "new": "      db.prepare('INSERT OR REPLACE INTO npc_chapter_weeks (week, active, target, chapters, open, at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)')",
+    "tests": [
+      "test/chap3b_strength.test.js",
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-SETTLE-WEEK",
+    "file": "server-account/src/npcChapters.js",
+    "old": "FROM npc_chapter_merit WHERE week = ?1\n    GROUP BY",
+    "new": "FROM npc_chapter_merit WHERE week >= ?1\n    GROUP BY",
+    "tests": [
+      "test/chap3b_strength.test.js",
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-SETTLE-UNION",
+    "file": "server-account/src/npcChapters.js",
+    "old": "  for (const r of merits) at(Number(r.faction), Number(r.region)).merit += Number(r.n);",
+    "new": "  for (const r of merits) { const c = all.get(`${r.faction}|${r.region}`); if (c) c.merit += Number(r.n); }",
+    "tests": [
+      "test/chap3b_strength.test.js",
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-SETTLE-PREV",
+    "file": "server-account/src/npcChapters.js",
+    "old": "  for (const r of held) Object.assign(at(Number(r.faction), Number(r.region)), heldEvent(r), { prev: Number(r.strength) });",
+    "new": "  for (const r of held) Object.assign(at(Number(r.faction), Number(r.region)), heldEvent(r));",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ],
+    "note": "CHAP6a: re-aimed by content (the Season's event beside it)."
+  },
+  {
+    "name": "CHAP3B-SETTLE-SEASON",
+    "file": "server-account/src/npcChapters.js",
+    "old": "[c.faction, c.region, ends ? strengthSeasonEnd(c.s) : c.s, c.merit,",
+    "new": "[c.faction, c.region, c.s, c.merit,",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ],
+    "note": "CHAP6a: re-aimed by content (the Season's event beside it)."
+  },
+  {
+    "name": "CHAP3B-SETTLE-GUESTS",
+    "file": "server-account/src/npcChapters.js",
+    "old": "FROM players WHERE handle IS NOT NULL AND played_at >= ?1')",
+    "new": "FROM players WHERE played_at >= ?1')",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-SETTLE-WINDOW",
+    "file": "server-account/src/npcChapters.js",
+    "old": ".bind(turning - SEAT_WEEK_MS / 1000).first())?.n ?? 0);",
+    "new": ".bind(turning).first())?.n ?? 0);",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-SETTLE-SCALE",
+    "file": "server-account/src/npcChapters.js",
+    "old": "  const target = strengthTarget(active);",
+    "new": "  const target = strengthTarget(0);",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-SETTLE-UPSERT",
+    "file": "server-account/src/npcChapters.js",
+    "old": "DO UPDATE SET strength = excluded.strength,",
+    "new": "DO UPDATE SET strength = npc_chapters.strength,",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-DUE-FIRST",
+    "file": "server-account/src/npcChapters.js",
+    "old": "last == null ? current - 1 :",
+    "new": "last == null ? current - 2 :",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-DUE-NEXT",
+    "file": "server-account/src/npcChapters.js",
+    "old": ": Number(last) + 1, current - CHAPTER_WEEKS_MAX);",
+    "new": ": Number(last), current - CHAPTER_WEEKS_MAX);",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-DUE-CAP",
+    "file": "server-account/src/npcChapters.js",
+    "old": "export const CHAPTER_WEEKS_MAX = 8;",
+    "new": "export const CHAPTER_WEEKS_MAX = 9;",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-DUE-BREAK",
+    "file": "server-account/src/npcChapters.js",
+    "old": "    if (!r.settled) break;",
+    "new": "    if (!r.settled) continue;",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-STRENGTHS-DEFAULT",
+    "file": "server-account/src/npcChapters.js",
+    "old": "const out = new Map(factions.map((f) => [f, STRENGTH_START]));",
+    "new": "const out = new Map(factions.map((f) => [f, 0]));",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-SHEET-HIDDEN",
+    "file": "server-account/src/npcChapters.js",
+    "old": "(await allChapters(db, nowS)).filter((c) => !hallHidden(c.faction));",
+    "new": "(await allChapters(db, nowS));",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-SHEET-SETTLE",
+    "file": "server-account/src/npcChapters.js",
+    "old": "  await settleChaptersDue(db, nowS, seasonZeroOf(env?.SEASON_ZERO_WEEK), env?.CHAPTERS_OPEN);\n  const chapters = (await allChapters",
+    "new": "  void seasonZeroOf;\n  const chapters = (await allChapters",
+    "tests": [
+      "test/chap3b_strength.test.js",
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-SHEET-DEFAULT",
+    "file": "server-account/src/npcChapters.js",
+    "old": "held.get(`${c.faction}|${c.region}`) ?? STRENGTH_START;",
+    "new": "held.get(`${c.faction}|${c.region}`) ?? 0;",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-SHEET-SWITCH",
+    "file": "server-account/src/npcChapters.js",
+    "old": "  if (!chaptersOpenFor(player, env)) return { error: 'chapters-closed' };\n  await settleChaptersDue",
+    "new": "  await settleChaptersDue",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-POST-BAND",
+    "file": "server-account/src/professions.js",
+    "old": "hallWritCountIn(active, strengths.get(f))",
+    "new": "hallWritCountIn(active, 50)",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-POST-SETTLE",
+    "file": "server-account/src/professions.js",
+    "old": "    await settleChaptersDue(db, nowS, zero, open);\n    const strengths",
+    "new": "    const strengths",
+    "tests": [
+      "test/chap3b_strength.test.js",
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-LIST-SETTLE",
+    "file": "server-account/src/professions.js",
+    "old": "  if (halls) await settleChaptersDue(db, nowS, zero, env?.CHAPTERS_OPEN);",
+    "new": "  void settleChaptersDue;",
+    "tests": [
+      "test/chap3b_strength.test.js",
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-LINES-HIDDEN",
+    "file": "server-account/src/professions.js",
+    "old": ".filter((f) => !hallHidden(f) || members.includes(f));",
+    "new": ".filter((f) => !hallHidden(f));",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-LINES-SHOWN",
+    "file": "server-account/src/professions.js",
+    "old": ".filter((f) => !hallHidden(f) || members.includes(f));",
+    "new": ".filter(() => true);",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-LINES-SWITCH",
+    "file": "server-account/src/professions.js",
+    "old": "chapters: halls ? await chapterLines(db, region, nowS, members, character, zero, player.id) : [],",
+    "new": "chapters: await chapterLines(db, region, nowS, members, character, zero, player.id),",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ],
+    "note": "CHAP6a: re-aimed by content (the Season's event beside it). CHAP6b: re-aimed by content (the doctrine and the backing beside it)."
+  },
+  {
+    "name": "CHAP3B-ROUTE",
+    "file": "server-account/src/index.js",
+    "old": "const r = path === '/v1/chapters/list' ? await chapterSheet(ctx, who.player, env)",
+    "new": "const r = path === '/v1/chapters/list' ? { error: 'not-developer' }",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-DOOR",
+    "file": "src/net/accountClient.js",
+    "old": "    list: () => post('/v1/chapters/list', {}),\n",
+    "new": "",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-BOARD-LINES",
+    "file": "src/ui/noticeWindow.js",
+    "old": "      body.append(el('p', 'notice-chapter', chapterLineOf(c)));   // CHAP3b: the chapters here, their Strength\n",
+    "new": "",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-MIG-WEEKKEY",
+    "file": "server-account/migrations/0102_npc_chapters.sql",
+    "old": "  week      INTEGER PRIMARY KEY,",
+    "new": "  week      INTEGER,",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-MIG-KEY",
+    "file": "server-account/migrations/0102_npc_chapters.sql",
+    "old": "  PRIMARY KEY (faction, region)\n",
+    "new": "  UNIQUE (faction, region, week)\n",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3B-MIG-CHECK",
+    "file": "server-account/migrations/0102_npc_chapters.sql",
+    "old": "CHECK (strength BETWEEN 0 AND 100)",
+    "new": "CHECK (strength >= 0)",
+    "tests": [
+      "test/chap3b_strength.test.js"
+    ]
+  }
+]
