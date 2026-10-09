@@ -540,5 +540,23 @@
     "tests": [
       "test/sd25_look.test.js"
     ]
+  },
+  {
+    "name": "SD25-the-wall-height-ignored",
+    "file": "src/render/sdStompWall.js",
+    "old": "gl.uniform1f(U.uH, w.h ?? SD_STOMP_WALL.h);",
+    "new": "gl.uniform1f(U.uH, SD_STOMP_WALL.h);",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-every-wall-in-brass",
+    "file": "src/render/sdStompWall.js",
+    "old": "gl.uniform3fv(U.uColor, w.color ?? SD_STOMP_WALL.color);",
+    "new": "gl.uniform3fv(U.uColor, SD_STOMP_WALL.color);",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
   }
 ]

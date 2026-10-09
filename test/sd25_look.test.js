@@ -620,3 +620,18 @@ test('SD-LOOK THE STOMP\'S RING STANDS AS A WALL (S7): while a Stomp rolls - the
   assert.equal(v.length, SD_STOMP_WALL.segs * 12);
   assert.ok(v.includes(0) && v.includes(1), 'all round');
 });
+
+import { SdStompWallRenderer, SD_HOLD_WALL, SD_HOLD_CURTAIN } from '../src/render/sdStompWall.js';
+
+test('SD-LOOK THE HOLD IS SEEN (S7): the hold\'s curtain the same wall in gold, taller, a hair outside the arena\'s rim - each wall drawn at its own height and colour, the Stomp\'s at its own (mutants: the height ignored; every wall in the Stomp\'s brass)', () => {
+  assert.ok(SD_HOLD_WALL.r > SD_ARENA_AT.r && SD_HOLD_WALL.r < SD_ARENA_AT.r + 0.5, 'a hair outside the rim');
+  assert.equal(SD_HOLD_WALL.h, SD_HOLD_CURTAIN.h);
+  const calls = [];
+  const gl = new Proxy({ ARRAY_BUFFER: 1, STATIC_DRAW: 2, FLOAT: 3, TRIANGLES: 4 }, { get: (t, k) => (k in t ? t[k] : (...a) => { calls.push([k, ...a]); if (k === 'getShaderParameter' || k === 'getProgramParameter') return true; if (k === 'getUniformLocation') return a[1]; return {}; }) });
+  const r = new SdStompWallRenderer(gl), I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+  r.draw([{ x: 0, z: 0, r: 9, k: 1 }, SD_HOLD_WALL], 2, I, I, null);
+  const u = (n) => calls.filter((c) => c[1] === n).map((c) => c.slice(2));
+  assert.deepEqual(u('uH').map((v) => v[0]), [SD_STOMP_WALL.h, SD_HOLD_CURTAIN.h], 'each at its own height');
+  assert.deepEqual(u('uColor').map((v) => [...v[0]]), [[...SD_STOMP_WALL.color], [...SD_HOLD_CURTAIN.color]], 'each in its own light');
+  assert.equal(r.drawn, 2);
+});
