@@ -38,8 +38,9 @@ export const SD_CHAIN_RECORD = 81;
  *  longer under a larger island, shorter under a small one - `spireDepth`). */
 export const SD_HANG = Object.freeze({ top: -SD_LIP, skirt: 2.2, foot: 0.84 });
 /** A spire: its sides and rings, its radius' seeded jitter (either way), how far it bends at its tip (a share of its
- *  length), its broken tip's radius (a share of its top's) - and the strata's v its tip fades to, at the least. */
-export const SD_SPIRE = Object.freeze({ sides: 7, rings: 6, jitter: 0.18, bend: 0.06, tip: 0.18, haze: 0.84 });
+ *  length), its broken tip's radius (a share of its top's), the strata's v its tip fades to at the least, and the cake's
+ *  step at each inner ring (a share of its radius - the band above ends that much wider, a ledge facing down between). */
+export const SD_SPIRE = Object.freeze({ sides: 7, rings: 6, jitter: 0.18, bend: 0.06, tip: 0.18, haze: 0.84, step: 0.14 });
 /** The chains: links a chain, a link's length about a link of the island's radius (`chainLink`), its width and its bar
  *  (shares of its length), and the swing on each tick (radians either way). */
 export const SD_CHAIN = Object.freeze({ links: 12, width: 0.58, bar: 0.13, swing: 0.035 });
@@ -159,13 +160,19 @@ export function islandRoot(f, isl, plan) {
         const dy = i === SD_SPIRE.rings - 1 ? c.R * 1.2 * (hash(plan.seed, j, 50 + i, k) - 0.5) : 0;   // the broken tip, jagged
         ring.push([c.x + Math.cos(a) * rr, c.y + dy, c.z + Math.sin(a) * rr]);
       }
-      rings.push({ c, ring, v: ring.map((p) => (i === SD_SPIRE.rings - 1 ? Math.max(SD_SPIRE.haze, vOf(p[1])) : vOf(p[1]))) });   // the strata by depth; the broken tip into the haze
+      // the cake's step: an inner ring stands proud of itself by SD_SPIRE.step (jittered) - the band above ends wider, and
+      // the ledge between faces down, into the furnace's light
+      const step = i > 0 && i < SD_SPIRE.rings - 1 ? 1 + SD_SPIRE.step * (0.6 + 0.8 * hash(plan.seed, j, 80 + i, 0)) : 1;
+      const outer = ring.map((p) => [c.x + (p[0] - c.x) * step, p[1], c.z + (p[2] - c.z) * step]);
+      rings.push({ c, ring, outer, v: ring.map((p) => (i === SD_SPIRE.rings - 1 ? Math.max(SD_SPIRE.haze, vOf(p[1])) : vOf(p[1]))) });   // the strata by depth; the broken tip into the haze
     }
     for (let i = 0; i + 1 < rings.length; i++) {
       const A = rings[i], B = rings[i + 1], mid = D(A.c.x * 0.5 + B.c.x * 0.5, (A.c.y + B.c.y) / 2, A.c.z * 0.5 + B.c.z * 0.5);
+      const ledge = i + 1 < rings.length - 1, ctr = D(B.c.x, B.c.y + 50, B.c.z);
       for (let k = 0; k < S; k++) {
         const k1 = (k + 1) % S, u0 = (k / S) * U, u1 = ((k + 1) / S) * U;
-        away(f, SD_REALM_ROOT_RECORD, D(...A.ring[k]), D(...A.ring[k1]), D(...B.ring[k1]), D(...B.ring[k]), [u0, A.v[k]], [u1, A.v[k1]], [u1, B.v[k1]], [u0, B.v[k]], mid);
+        away(f, SD_REALM_ROOT_RECORD, D(...A.ring[k]), D(...A.ring[k1]), D(...B.outer[k1]), D(...B.outer[k]), [u0, A.v[k]], [u1, A.v[k1]], [u1, B.v[k1]], [u0, B.v[k]], mid);
+        if (ledge) away(f, SD_REALM_ROOT_RECORD, D(...B.outer[k]), D(...B.outer[k1]), D(...B.ring[k1]), D(...B.ring[k]), [u0, B.v[k]], [u1, B.v[k1]], [u1, B.v[k1]], [u0, B.v[k]], ctr);
       }
     }
     // the tip closed to a point under its last ring

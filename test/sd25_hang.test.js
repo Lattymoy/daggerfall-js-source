@@ -109,10 +109,11 @@ test('SD-LOOK S11 THE ROOTS: 3-5 spires an island (one a root on the phones), ea
   const lip = trisOf(buildRealmModel()).filter((t) => t.rec === SD_REALM_ROOT_RECORD).flatMap((t) => t.P).filter((p) => near(p[1], -SD_LIP) && near(Math.hypot(p[0] - SD_THRESHOLD.x, p[2] - SD_THRESHOLD.z), SD_THRESHOLD.r, 1e-3));
   assert.ok(lip.length >= SD_ISLAND_SIDES, 'the static island keeps its lip, SD_LIP deep at its rim');
   const roots = trisOf(buildHangModel('threshold')), rootPts = roots.filter((t) => t.rec === SD_REALM_ROOT_RECORD).flatMap((t) => t.P);
-  for (let k = 0; k < SD_ISLAND_SIDES; k++) {
-    const a = (k / SD_ISLAND_SIDES) * Math.PI * 2, want = [SD_THRESHOLD.x + Math.cos(a) * SD_THRESHOLD.r, -SD_LIP, SD_THRESHOLD.z + Math.sin(a) * SD_THRESHOLD.r];
-    assert.ok(rootPts.some((p) => near(p[0], want[0], 1e-3) && near(p[1], want[1], 1e-3) && near(p[2], want[2], 1e-3)), `the skirt hangs from the lip's corner ${k}`);
-  }
+  const corners = Array.from({ length: SD_ISLAND_SIDES }, (_, k) => { const a = (k / SD_ISLAND_SIDES) * Math.PI * 2; return [SD_THRESHOLD.x + Math.cos(a) * SD_THRESHOLD.r, -SD_LIP, SD_THRESHOLD.z + Math.sin(a) * SD_THRESHOLD.r]; });
+  const atCorner = (p, c) => near(p[0], c[0], 1e-3) && near(p[1], c[1], 1e-3) && near(p[2], c[2], 1e-3);
+  corners.forEach((c, k) => assert.ok(rootPts.some((p) => atCorner(p, c)), `the skirt hangs from the lip's corner ${k}`));
+  const skirtTop = rootPts.filter((p) => near(p[1], -SD_LIP, 1e-3));
+  assert.ok(skirtTop.length >= SD_ISLAND_SIDES * 2 && skirtTop.every((p) => corners.some((c) => atCorner(p, c))), 'and from nowhere else');
   // the strata: v is the depth under the floor over the whole depth - level across spires - but at a tip, the haze
   for (const isl of SD_HANG_ISLANDS) {
     const plan = hangPlan(isl), depth = SD_LIP + SD_HANG.skirt + plan.L0, tips = new Set();
@@ -128,12 +129,22 @@ test('SD-LOOK S11 THE ROOTS: 3-5 spires an island (one a root on the phones), ea
       }
     }
     assert.ok(level > hazed * 2 && hazed > 0, `${isl.stage}: level strata, hazed tips`);
+    // every broken tip into the haze: about each spire's tip ring, nothing short of SD_SPIRE.haze
+    for (const sp of plan.spires) {
+      const tipY = plan.foot + 0.05 - sp.len, rt = sp.R * SD_SPIRE.tip * (1 + SD_SPIRE.jitter), tx = sp.x + Math.cos(sp.bendA) * sp.bend, tz = sp.z + Math.sin(sp.bendA) * sp.bend;
+      const around = tris.flatMap((t) => t.P.map((p, j) => [p, t.uv[j][1]])).filter(([p]) => Math.hypot(p[0] - tx, p[2] - tz) <= rt * 1.3 && Math.abs(p[1] - tipY) <= rt * 0.7);
+      assert.ok(around.length >= SD_SPIRE.sides && around.every(([, v]) => v >= SD_SPIRE.haze - 1e-6), `${isl.stage}: a tip into the haze`);
+    }
     assert.ok(deepest <= isl.y - SD_LIP - SD_HANG.skirt - plan.L0 * 0.9, `${isl.stage}: the main spire hangs its depth into the void`);
   }
   // each spire a ring sweep of SD_SPIRE.sides x SD_SPIRE.rings (the bands' quads and the tip's fan), the gear rims in brass
   const isl = SD_HANG_ISLANDS[0], plan = hangPlan(isl, { lite: true }), one = trisOf(buildHangModel('threshold', { lite: true }));
   const rootTris = one.filter((t) => t.rec === SD_REALM_ROOT_RECORD).length, skirt = SD_ISLAND_SIDES * 3;
-  assert.equal(rootTris - skirt, plan.spires.length * SD_SPIRE.sides * ((SD_SPIRE.rings - 1) * 2 + 1), 'a spire\'s rings and its tip');
+  assert.equal(rootTris - skirt, plan.spires.length * SD_SPIRE.sides * ((SD_SPIRE.rings - 1) * 2 + (SD_SPIRE.rings - 2) * 2 + 1), 'a spire\'s bands, its ledges and its tip');
+  // the cake's ledges face down, into the furnace's light
+  const ledges = one.filter((t) => t.rec === SD_REALM_ROOT_RECORD && near(t.P[0][1], t.P[1][1], 1e-4) && near(t.P[1][1], t.P[2][1], 1e-4) && t.P[0][1] < -SD_LIP - SD_HANG.skirt - 0.1);
+  assert.equal(ledges.length, plan.spires.length * SD_SPIRE.sides * (SD_SPIRE.rings - 2) * 2, 'a ledge at every inner ring');
+  for (const t of ledges) { const u = t.P[1].map((v, i) => v - t.P[0][i]), w = t.P[2].map((v, i) => v - t.P[0][i]); assert.ok(u[2] * w[0] - u[0] * w[2] < 0, 'facing down'); }
   assert.ok(one.some((t) => t.rec === SD_REALM_BRASS_RECORD), 'its gear rims in the realm\'s brass');
 });
 
@@ -302,6 +313,11 @@ test('SD-LOOK S11 THE SET: every draw noShadow and tagged with its stage; the de
     hang.frame();
     const moved = chains.some((d, i) => d.object.matrix.some((v, k) => !near(v, before[i][k], 1e-7)));
     assert.equal(moved, !lite, lite ? 'the phones\' chains hang still' : 'the chains swing on the tick');
+    // on the escapement: swung over the tick's ease and held till the next
+    const pose = () => chains.map((d) => [...d.object.matrix]);
+    t = 102.3; hang.frame(); const held0 = pose();
+    t = 102.9; hang.frame();
+    assert.ok(chains.every((d, i) => d.object.matrix.every((v, k) => near(v, held0[i][k], 1e-7))), 'held through the second');
     assert.ok(gears.every((d, i) => d.object.matrix.some((v, k) => !near(v, g0[i][k], 1e-7))), 'the gears turn');
     assert.ok(r.made.size > 0);
     hang.clear();

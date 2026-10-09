@@ -99,7 +99,7 @@ test('SD5a the Hour\'s mesh: its five records and its lamps\' glow, of its own a
   assert.ok(brass.some((p) => close(p[1], SD_PILLAR_H) && close(Math.hypot(p[0] - SD_ARENA.x, p[2] - SD_ARENA.z), SD_PILLAR_R, 1.2)), 'the pillars\' tops');
   // PIN MOVED (SD-LOOK S11): the island keeps its torn lip, SD_LIP of stone under its rim; what hangs under it is the hang's
   // (world/sdIslandModel.js - a noShadow mesh a stage, its main spire SD_ROOT_DEPTH under the Threshold: test/sd25_hang.test.js)
-  assert.ok(Math.min(...verts(SD_REALM_ROOT_RECORD).map((p) => p[1])) <= -SD_LIP + 1e-4, 'the islands\' lips under their rims');
+  for (const isl of [SD_THRESHOLD, SD_ORRERY, SD_ARENA]) assert.ok(verts(SD_REALM_ROOT_RECORD).filter((p) => close(p[1], -SD_LIP, 1e-4) && close(Math.hypot(p[0] - isl.x, p[2] - isl.z), isl.r, 1e-3)).length >= 48, 'each island\'s lip under its rim, all round');
   assert.ok(Math.min(...hangVerts().map((p) => p[1])) <= -SD_ROOT_DEPTH, 'the roots hang into the void');
   // the dial's uv: the whole image over the whole hall
   const s = m.subMeshes.find((x) => x.textureRecord === SD_REALM_DIAL_RECORD);
