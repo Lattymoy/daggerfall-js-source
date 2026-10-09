@@ -1028,6 +1028,18 @@
   },
   {
    "file": "src/scenes/world.js",
+   "has": "clock: () => skyMinutes(),",
+   "clock": "sky",
+   "why": "LW12: a band's hideout stood - its people by day or night, its chest's take and its rout on the living world's clock"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "livingHideoutsHostOf().marks(hereN.x, hereN.z, skyMinutes())",
+   "clock": "sky",
+   "why": "LW12: the Overworld's rumoured hideouts - the band standing at the living world's minute"
+  },
+  {
+   "file": "src/scenes/world.js",
    "has": "_livingRemainsList = here ? fallenIn(here, skyMinutes(), livingTripWorld,",
    "clock": "sky",
    "why": "LW6b: the dead of the dives into the player's dungeon at the sky's minute"

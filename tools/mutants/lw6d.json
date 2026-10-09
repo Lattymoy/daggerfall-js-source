@@ -2,8 +2,8 @@
   {
     "name": "LW6d-kinds",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "export const TALE_KINDS = Object.freeze(['home']);",
-    "new": "export const TALE_KINDS = Object.freeze([]);",
+    "old": "export const TALE_KINDS = Object.freeze(['home', 'routed']);",
+    "new": "export const TALE_KINDS = Object.freeze(['routed']);",
     "tests": [
       "test/lw6d_word.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "LW6d-early",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": " && !turns.died?.size && !turns.killed?.size && !turns.home?.size)) return [];",
-    "new": " && !turns.died?.size && !turns.killed?.size)) return [];",
+    "old": " && !turns.died?.size && !turns.killed?.size && !turns.home?.size && !turns.routed?.size)) return [];",
+    "new": " && !turns.died?.size && !turns.killed?.size && !turns.routed?.size)) return [];",
     "tests": [
       "test/lw6d_word.test.js"
     ],

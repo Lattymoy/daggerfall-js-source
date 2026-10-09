@@ -132,6 +132,8 @@ import { createWayBook } from '../systems/livingWorld/ways.js';   // LW3: the tr
 import { createLivingRoads } from './livingRoads.js';   // LW3: the parties on the road near the player
 import { createRoadTeams } from '../world/roadTeams.js';   // LW10: their horses and wagons
 import { createCaravanHost } from './caravanHost.js';   // LW11: the caravan's door
+import { createHideouts, BAND_LIVE_M } from './hideouts.js';   // LW12: a band's hideout, stood
+import { hideoutsOf, outlawBandAt, bandTrouble, takeOf as outlawTakeOf, TAKE_DAYS as OUTLAW_TAKE_DAYS } from '../systems/livingWorld/outlaws.js';   // LW12: the outlaws
 import { stockShopShelf } from '../systems/shopStock.js';   // LW11: a caravan's counter, the shops' own roll
 import { townTrips as tripsOfTown, partyAt as livingPartyAt } from '../systems/livingWorld/trips.js';   // LW11: a merchant's trip, and where a party is
 import { createRoadFights, LIVE_M } from './roadFights.js';   // LW4b: a beset party's fight, stood live
@@ -2715,6 +2717,15 @@ export async function bootWorld(canvas, renderer, params, status) {
   let _livingTowns = null;
   /** AUDIT LEGACY III W1: the game's rows let go once both indices that read them stand. */
   const releaseHubRows = () => { if (_livingTowns && _livingDungeons) _hubRows.length = 0; };
+  /** LW12: a region's towns (the index's, by region). @type {Map<number, any[]> | null} */
+  let _livingByRegion = null;
+  const livingTownsOfRegion = (region) => {
+    if (!_livingByRegion) {
+      _livingByRegion = new Map();
+      for (const t of livingTownsIndex().values()) { const k = t.region | 0; if (!_livingByRegion.has(k)) _livingByRegion.set(k, []); _livingByRegion.get(k)?.push(t); }
+    }
+    return _livingByRegion.get(region | 0) ?? [];
+  };
   const livingTownsIndex = () => {
     if (_livingTowns) return _livingTowns;
     _livingTowns = new Map();
@@ -2793,6 +2804,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     templeTown: (t) => t.type === LOCATION_TYPES.ReligionTemple || t.blocks >= 9,
     dungeonsNear: livingDungeonsNear,   // LW6: an adventurer's dives
     dryAt: (nx, nz) => (_livingDry ??= nativeDry(createDryGround(woods)))(nx, nz),   // LW-DRY: a party's camp, halt and fallen on dry ground
+    townsIn: (region) => livingTownsOfRegion(region),   // LW12: a region's towns, its bands' legs
   };
   const _livingTripMemo = new Map();
   let _livingWaysSeen = 0;
@@ -2868,6 +2880,24 @@ export async function bootWorld(canvas, renderer, params, status) {
     const place = roster.find((r) => r.slot === res.slot) ?? res;
     return livingPlaceOf(place, placeCycle(place, roster, Math.floor(trip.outT0 / 1440), livingScale()));
   };
+  // LW12 (bible/06-Systems/Living-World-II.md): THE OUTLAWS' HIDEOUTS - each region's, once its legs' roads are planned
+  // (kept for the network's generation), and the character's routs (relations.js `routed`)
+  const _livingHideouts = new Map();
+  let _livingHideoutsGen = -1;
+  const livingHideoutsOf = (region) => {
+    if (region == null || !Number.isFinite(region)) return [];
+    if (livingWays.generation !== _livingHideoutsGen) { _livingHideouts.clear(); _livingHideoutsGen = livingWays.generation; }
+    let got = _livingHideouts.get(region);
+    if (got === undefined) { got = hideoutsOf(region, livingTripWorld); if (got !== undefined) _livingHideouts.set(region, got); }
+    return got ?? [];
+  };
+  const livingRouts = () => livingRelations.turns().routed;
+  /** The hideouts about native (`x`, `z`): of the regions of the towns within eight pixels. */
+  const livingHideoutsNear = (x, z) => {
+    const px = Math.floor(x / 32768), py = 499 - Math.floor(z / 32768);
+    const regions = new Set(livingTripWorld.townsNear(px, py, 8).map((t) => t.region | 0));
+    return [...regions].flatMap((r) => livingHideoutsOf(r));
+  };
   const livingTroubleWorld = {
     climateAt: (px, py) => maps.getClimateIndex(px, py),
     foesOf: ({ climateIndex, dungeonType, minute, level, size, rolls }) => (dungeonType != null
@@ -2878,6 +2908,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     diced: (res, trip) => livingTripPlace(res, trip).diced,   // AUDIT-B1: the dice's own death - the trouble's shape, never a turn's
     turnOf: (id) => { const t = livingRelations.turns(); return t.won.has(id) ? 'won' : t.lost.has(id) ? 'lost' : null; },
     covered: (trip) => patrolCover(trip, livingTripWorld, { mpm: PERSON_MOVE_SPEED / livingBaseRate(), memo: _livingTripMemo }),   // LW9: a patrol keeps the road
+    // LW12: THE OUTLAWS - a band's hold-up, over the hideouts of the trip's two regions and the character's routs
+    bandAt: (trip, px, py, t) => bandTrouble(trip, px, py, t, [...livingHideoutsOf(trip.from?.region), ...(trip.to?.region != null && trip.to.region !== trip.from?.region ? livingHideoutsOf(trip.to.region) : [])], livingRouts()),
   };
   livingTripWorld.holderOf = (res, k) => livingPlaceOf(res, k).holder;
   livingTripWorld.fated = (res, k) => livingPlaceOf(res, k).diced;   // AUDIT-B1: the dice's - a trip a spare re-rolled was gone from the road
@@ -2922,7 +2954,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const told = [];
     for (let d = 0; d <= NEWS_DAYS; d++) { const tr = townTrips(town, noon - d * 1440, livingTripWorld, o); if (tr) told.push(...tr); }
     const won = livingRelations.turns().won;
-    const news = newsOf(told, noon).map((n) => ({ ...n, foe: n.foe != null ? livingFoeWord(n.foe, 2) : '', helped: won.has(n.enc) }));   // LW7: a fight the player turned
+    const news = newsOf(told, noon).map((n) => ({ ...n, foe: n.band ?? (n.foe != null ? livingFoeWord(n.foe, 2) : ''), helped: won.has(n.enc) }));   // LW7: a fight the player turned; LW12: a band by its name
     // LW-TALK: the towns of its road - where its people's trips of these days were bound - for its talk's {place}
     const places = [...new Set([...trips, ...told].map((tr) => tr.to?.name).filter(Boolean))].sort();
     return { away, visitors, holders, news, places };
@@ -3226,6 +3258,40 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (p?.living?.res) { caravanHostOf().caught(p.living.res, skyMinutes()); setCrimeCommitted(playerEntity, CRIMES.None); }
     return id;
   };
+  // LW12 (bible/06-Systems/Living-World-II.md): A BAND'S HIDEOUT STOOD (scenes/hideouts.js) - its tents and fire, its
+  // people as the encounter pool's foes, its chest a ground pile of its take; the rout the character's tale
+  let _livingHideoutsHost = null;
+  /** The chest of a band: its take (outlaws.js takeOf) over the troubled trips of its leg's two towns of late - goods off
+   *  a general store's roll (the band's own seed: the same chest each time it is stood) and the gold. */
+  const livingBandChest = (band, t) => {
+    const towns = [band.hideout.a, band.hideout.b].map((id) => livingTownOfId(id)).filter(Boolean);
+    const trips = [];
+    for (let d = 0; d <= OUTLAW_TAKE_DAYS; d++) for (const town of towns) trips.push(...(tripsOfTown(town, t - d * 1440, livingTripWorld, livingTripO()) ?? []));
+    const take = outlawTakeOf(band, trips, t);
+    const items = take.goods ? stockShopShelf({ buildingType: TALK_BUILDING_TYPES.GeneralStore, quality: 10 }, playerEntity, { rolls: lwRng(textSeed(band.key), 0x63687374) }).slice(0, take.goods) : [];   // 'chst'
+    if (take.gold > 0) items.push(goldStack(take.gold));
+    return { items, robbed: take.robbed };
+  };
+  /** The fights' own election: the lowest id of those within BAND_LIVE_M of it stands it (offline always). */
+  const livingHideoutOwner = (feet) => amGroupRollOwner(online?.id ?? null, player.feetAt(), (peersNear() ?? []).filter((p) => Math.hypot(p.feet[0] - feet[0], p.feet[2] - feet[2]) <= BAND_LIVE_M), Infinity);
+  const livingHideoutsHostOf = () => (_livingHideoutsHost ??= createHideouts({
+    hideoutsNear: livingHideoutsNear,
+    bandAt: (h, t) => outlawBandAt(h, t, livingRouts()),
+    clock: () => skyMinutes(),
+    here: () => (playerSpawned ? state.worldCoords(walkMode ? player.pos : cam.pos) : null),
+    ready: () => !!walkMode && !!playerSpawned && !_loading && !modes?.transitioning && _mode() === 'exterior' && !playerAfloat(),
+    owner: livingHideoutOwner,
+    sceneOf: (nx, nz) => tvSceneOf(nx, nz, 0),
+    spawn: (type, feet, o) => exteriorFoes.spawnFoe(type, feet, { yaw: o.yaw, gender: o.gender, level: o.level, allied: false, loose: true, transient: true }),
+    remove: (f) => exteriorFoes.removeFoe(f),
+    inPool: (f) => exteriorFoes.foes.includes(f),
+    relations: () => livingRelations,
+    say: (text) => townTalk.say(text),
+    chest: livingBandChest,
+    dropPile: (items, feet) => droppedLoot.seedPile(items, feet, { archive: TREASURE_PILE_ARCHIVE, record: 0 }, null, null, { unsaved: true, owner: 'lw-hideout' }),
+    removePile: (pile) => droppedLoot.removePile(pile),
+    renderer, meshes: { getGpuMesh, cpuModels }, getTexture, uploadRecordFrame,
+  }));
   const livingRoadsOf = () => (livingRoads ??= createLivingRoads({
     world: livingTripWorld, mpm: PERSON_MOVE_SPEED / livingBaseRate(), clock: skyMinutes, baseRate: livingBaseRate,
     sceneOf: (nx, nz) => tvSceneOf(nx, nz, 0),
@@ -3236,6 +3302,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     foeName: livingFoeWord,   // LW4: what besets a party, on its mark
     slay: livingRoadSlay,   // LW7: a traveller struck down - the hand's turn; LW11: and the road's report of it
     robbed: (tripId) => caravanHostOf().robbed(tripId),   // LW11: a caravan this character robbed carries a quarter
+    // LW12: a traveller's greeting warns of a band whose hideout lies near, and the character has heard of it
+    unheard: (t) => { const h = livingHideoutsHostOf(), here = playerSpawned ? state.worldCoords(player.pos) : null; return here ? h.unheardNear(here.x, here.z, t) : null; },
+    heard: (band) => livingHideoutsHostOf().heard(band),
     // LW4b: THE FIGHT STOOD - a beset party near the player on foot, its foes the encounter pool's own and its armed the
     // player's allies, when this player stands it (the camps' election, by the players' own feet)
     fights: createRoadFights({
@@ -29802,6 +29871,9 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // LW3: THE ROAD'S PARTIES - a caravan, pilgrims, a pedlar, each where it is and where it is bound (scenes/livingRoads.js)
     if (livingRoads && livingWorldOn()) {
       for (const m of livingRoads.marks()) if (markShown({ kind: m.kind })) marks.push({ key: m.key, at: [m.at[0], m.at[1] + 2, m.at[2]], label: m.label, kind: m.kind });
+      // LW12: the hideouts of bands the character has heard of - rumoured, a ring
+      const hereN = state.worldCoords(cam.pos);
+      for (const m of livingHideoutsHostOf().marks(hereN.x, hereN.z, skyMinutes())) if (markShown({ kind: m.kind })) marks.push({ key: m.key, at: [m.at[0], m.at[1] + 2, m.at[2]], label: m.label, kind: m.kind });
     }
     // TV7: THE BANDS - each with its kind and number where it walks; one chasing me held at the edge, pointing
     const bms = bandNowMs();
@@ -32124,6 +32196,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (tvf) drawTvDungeonModels(travelView?.eye ?? null, tvf.fullyUp);   // OW-DUNGEONS: each dungeon's own model, grown under the Overworld; TV-BURST: loaded once the view is up, one a frame
     else if (_tvDngModel.size) dropTvDungeonModels();   // TV-BURST: the view down, its models let go (kept warm on their shelf)
     if (livingRoads && livingWorldOn() && _mode() === 'exterior') livingRoads.drawTeams(renderer);   // LW10: the living world's wagons, in the cart's own pass
+    _livingHideoutsHost?.draw(renderer);   // LW12: a band's tents
     bountyFarms?.draw(renderer);   // BOUNTY-FARM: a held farm bounty's farmstead
     quays?.draw(renderer);   // QUAYS: the harbours' quays and the gangways to my ships made fast
     yards?.draw(renderer);   // HOME-YARD: the pieces outside the town's homes, and the one being placed
@@ -32579,6 +32652,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       livePersonBatches.push(...livingRoads.batches());
     } else if (livingRoads) livingRoads.clear();
     if (livingWorldOn() && (_caravanT -= dt) <= 0) { _caravanT = 1; caravanHostOf().step(); }   // LW11: the hold-ups, the reports carried in, the escort - anywhere (a report lands, an escort ends, indoors too)
+    if (livingWorldOn() && _mode() === 'exterior' && !tvf) { livingHideoutsHostOf().frame(dt); livePersonBatches.push(...livingHideoutsHostOf().batches()); }   // LW12: a band's hideout near, stood
+    else _livingHideoutsHost?.clear();
     if (livingWorldOn()) { livingWatchStep(); livingPeerWatchStep(); }   // LW7 / WATCH-FIX: the turned watch followed, mine and a peer's
     if (livingIndoors?.size || livingIndoors?.spots().length) livingIndoors.clear();   // LW8: the street again - the room's residents freed (LW-FIX1: and an empty room's sounding)
     if (livingRemains) { livingRemains.clear(); livingRemains = null; }   // LW6b: ...and the deep's layer let go with its dungeon

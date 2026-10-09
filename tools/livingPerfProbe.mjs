@@ -23,7 +23,8 @@
 // Usage: node tools/livingPerfProbe.mjs        (prints the table; exits 1 on a blown budget)
 import { readFileSync } from 'node:fs';
 import { synthTown } from '../test/lwTown.mjs';
-import { livingMap } from '../test/lwRoads.mjs';
+import { hideoutsOf, bandTrouble } from '../src/systems/livingWorld/outlaws.js';   // LW12
+import { livingMap, partiesOver } from '../test/lwRoads.mjs';
 import { LivingTown, ARRIVAL_SHOW_S } from '../src/systems/livingWorld/livingTown.js';
 import { travellerCounts } from '../src/systems/livingWorld/census.js';
 import { TownPopulation } from '../src/systems/townPopulation.js';
@@ -220,6 +221,34 @@ console.log('THE TRAFFIC (LW9: the parties on the road about a point - the first
   const f = stats(frames.slice(1));
   console.log(`  the roads' layer with the new traffic (${layer.parties().length} parties): the way in ${ms(frames[0])}, then mean ${ms(f.mean)} p99 ${ms(f.p99)} max ${ms(f.max)}`);
   check(f.max <= 6, `the roads' layer with the new traffic, any frame <= 6 ms (${ms(f.max)})`);
+}
+
+console.log('THE OUTLAWS (LW12: the bands of the map\'s region, their hideouts, the hold-ups on the dice)');
+{
+  const map = livingMap({ dives: true });
+  map.world.townsIn = (r) => map.towns.filter((t) => t.region === r);
+  let a = now();
+  const hs = hideoutsOf(17, map.world) ?? [];
+  console.log(`  the region's hideouts (${map.towns.length} towns, ${hs.length} bands): placed in ${ms(now() - a)}, once a network`);
+  map.trouble.bandAt = (trip, px, py, t) => bandTrouble(trip, px, py, t, hs);
+  const o = { mpm: CALENDAR_MPM, memo: new Map() };
+  a = now();
+  const trips = partiesOver(map, 300, 314, o);
+  const enc = trips.filter((tr) => tr.enc && !tr.enc.inside && !tr.enc.atSea);
+  const band = enc.filter((tr) => tr.enc.band), robbed = band.filter((tr) => tr.enc.kind === 'robbed');
+  console.log(`  a fortnight's troubles, the whole map: ${enc.length}, ${band.length} a band's (${robbed.length} robbed, no blood) - read in ${ms(now() - a)}`);
+  const h = hs[0];
+  if (h) {
+    const here = { x: h.x, z: h.z };
+    const clock = { t: 300 * DAY_MIN + 600 };
+    const sprites = { sync() {}, batches: () => [], persons: () => [], bodyOf: () => null, clear() {} };
+    const layer = createLivingRoads({ world: map.world, mpm: CALENDAR_MPM, clock: () => clock.t, baseRate: () => RATE, sceneOf: (x, z) => [x / NATIVE_PER_M, 0, z / NATIVE_PER_M], here: () => here, sprites, relations: () => createRelations(), memo: o.memo });
+    const eye = [here.x / NATIVE_PER_M, 1.6, here.z / NATIVE_PER_M], frames = [];
+    for (let i = 0; i < 1800; i++) { clock.t += RATE / 30; const b = now(); layer.frame(1 / 30, eye); layer.speech(eye); frames.push(now() - b); }
+    const f = stats(frames.slice(1));
+    console.log(`  the roads' layer at a hideout (${layer.parties().length} parties): the way in ${ms(frames[0])}, then mean ${ms(f.mean)} p99 ${ms(f.p99)} max ${ms(f.max)}`);
+    check(f.max <= 6, `the roads' layer at a hideout, any frame <= 6 ms (${ms(f.max)})`);
+  }
 }
 
 console.log('THE ROOM');

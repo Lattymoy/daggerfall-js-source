@@ -9,7 +9,7 @@ up decorations that can be used as shops" - HOME-VENDOR's hired trader. Asked wh
 dungeon, and in what order to build: "Your decision" to both (section 1, decisions 2 and 3). "I want this to be as
 detailed as possible."
 
-**Status: LW9, LW10 and LW11 BUILT 2026-10-09; LW12-LW16 designed.** Eight slices, LW9 to LW16, in the order of decision 2.
+**Status: LW9-LW12 BUILT 2026-10-09; LW13-LW16 designed.** Eight slices, LW9 to LW16, in the order of decision 2.
 As each one ships, its record is written on this page under its name, the way `06-Systems/Living-World.md` records
 LW1-LW8. That first page stays the record of LW0-LW8 and their fixes, and its LW0 decisions bind here except where
 section 1 says otherwise. Every constant below marked "proposed" is a starting number for the slice to measure. None
@@ -399,83 +399,98 @@ Moved pins: `lw3_roads` (the caught hand's door), `lw7_deeds` (the road's slay),
 
 Pins: `test/lw11_caravan.test.js` (14). Mutants: `tools/mutants/lw11.json` (60).
 
-## 5. LW12 - the outlaws
+## 5. LW12 - the outlaws (BUILT 2026-10-09)
 
-Overall improvement: the road's trouble has a face and a home. The climate tables can already roll human "bandit"
-groups (`mobileFactions.js FACTIONS.BANDIT`), but nothing remembers them.
+Overall improvement: the road's trouble has a face and a home. The law is `src/systems/livingWorld/outlaws.js` (pure:
+a region's towns, its roads, a seed and the clock); the hideout is stood by `src/scenes/hideouts.js`.
 
-### 5.1 The bands (`systems/livingWorld/outlaws.js`, pure)
+### 5.1 The bands (`outlaws.js`)
 
-- **HOW MANY.** A region keeps BANDS_OF(region) = 1 + its towns / 40 bands, to 4 (proposed).
-- **THE HIDEOUT.** A dry, open-ground point 1-2 px off a road leg between two of the region's towns, off any town's
-  rectangle. The leg is the seed's pick among the region's way pairs.
-- **THE NAME** is drawn off two lists ("the Black Hand", "the Reach Wolves"), or off the leader's own name ("Ysolde's
-  Knives").
-- **ITS PEOPLE** are minted as the census mints, with a band's own kind:
-  - 4-8 of them, ids `O<region>.<band>~<gen>.<i>`;
-  - classes from the thieves' run and the rough end of the fighters' (Thief, Rogue, Burglar, Nightblade, Barbarian,
-    Archer);
-  - levels by the size of the region's towns.
-- **ITS LIVES.** A band holds its hideout for a generation. Routed, by the character (5.3) or by a patrol on the dice
-  (5.2), the hideout stands empty BAND_VACANT_DAYS (20). Then a new band forms there: gen + 1, a new name. The routs on
-  the dice are read as `lives.js placeAt` reads a place, back to the world's first cycle.
+- **HOW MANY** (`bandCount`): 1 + a region's towns / BAND_TOWNS_PER (40), to BANDS_MAX (4); none for a lone town.
+- **THE HIDEOUT** (`hideoutsOf`): each band takes a LEG - two of the region's towns of BAND_TOWN_BLOCKS (4) or more,
+  BAND_LEG_PX (3 to 14 px) apart - the seed's pick, never two bands on one leg. The hideout stands HIDEOUT_OFF_PX (1-2
+  px) off the middle pixel of that leg's planned road, to the seed's side, on dry ground (`dryAt`) and on no town;
+  failing that, the next candidate along the road. Until a leg's road is planned the region answers none (asked again;
+  the host keeps a region's hideouts for the network's generation).
+- **THE NAME** (`outlawBandName`): "the <word> <band>" off two lists (BAND_WORDS, BAND_NOUNS), or one time in three the
+  leader's "<first name>'s <band>".
+- **ITS PEOPLE** (`bandPeople`): BAND_SIZE (4 to 8), ids `O<region>.<band>~<gen>.<i>` (a character's heir
+  `~<gen>h<heir>`), classes OUTLAW_CLASSES (Thief, Rogue, Burglar, Nightblade, Barbarian, Archer; the leader a
+  Nightblade, Barbarian or Rogue), levels 2 + the region's greatest town's blocks / 6 (2 to 14), the leader 3 above,
+  the rest -1 to +2. Names off the region's own bank (`census.js residentName`).
+- **ITS LIVES** (`genAt`, `outlawBandAt`): each BAND_ERA_DAYS (60) the dice may rout a band - ROUT_CHANCE 0.45 where its
+  region keeps a court's city (COURT_BLOCKS 16: its patrols out), else 0.15 - at a seeded minute of the era; its
+  hideout stands empty BAND_VACANT_DAYS (20), then the next generation forms. The eras are walked once from the
+  world's first and kept per hideout. A rout by the character's hand (`routed`, 5.3) empties it for them as long, then
+  its HEIR forms (new people, a new name).
+  - Built differently from the design: the design had a patrol's own loop roll against the band. Tying a band's lives
+    to every patrol trip back to the world's first cycle is too dear; the era's chance stands for it, the likelier
+    where patrols ride.
 
-### 5.2 The hold-up on the dice (`trouble.js`)
+### 5.2 The hold-up on the dice (`trouble.js`, `outlaws.js bandTrouble`)
 
-- **WHO TROUBLES THE ROAD.** A trip's leg passing within OUTLAW_REACH_PX (2) of a hideout takes its trouble's foes
-  from the band in BAND_SHARE (0.6) of such troubles, instead of from the climate's table: named, human, the band's
-  people at their own levels.
-- **A NEW END: ROBBED.** A party whose strength (`strengthOf`) is under ROB_RATIO (0.6) of the band's yields:
-  - no blood is spilled;
-  - the merchant's purse and half the cargo are taken (the tier falls);
-  - HALT_MIN.robbed (30) minutes;
-  - then the party walks on.
+- **WHO TROUBLES THE ROAD.** A trouble within OUTLAW_REACH_PX (2) of a hideout standing a band is the band's in
+  BAND_SHARE (0.6) of such troubles - the trip's own draw, never the trouble's stream, so every other trouble falls as
+  it did. Its foes are the band's people (to FOES_MAX), at their levels; the encounter carries the band's key and name
+  (`band`, `bandName`). The host's `bandAt` reads the hideouts of the trip's two regions and the character's routs.
+- **A NEW END: ROBBED.** A party whose strength (`strengthOf`) is under ROB_RATIO (0.6) of the band's yields - no
+  blood, held HALT_MIN.robbed (30) minutes (FIGHT_MIN.robbed 10: the outlaws standing over it, a fight the player can
+  stand), then walking on with `robbed` on its trip (`{ t, by }`): LW10's cargo a quarter, LW11's counter without its
+  purse ("The outlaws took every septim we had") and half its goods - the band's, never the character's gone.
+  A stronger party fights as any does. A fight the player won for it is won: nothing taken.
+- **THE BAND'S TAKE** (`takeOf`): the parties it robbed since it formed and within TAKE_DAYS (14) - each
+  TAKE_PURSE_SHARE (a quarter) of a counter's purse (else ROB_GOLD, 40) and TAKE_GOODS (2) of its goods, to
+  TAKE_GOODS_MAX (16). The host reads the troubled trips of its leg's two towns.
+- **THE NEWS.** A town's road news of a hold-up names the band (`newsOf`'s `band`; `ROAD_NEWS.robbed`), and a beset
+  party's Overworld mark says "beset by the Black Hand"; two parties passing warn of it by name.
 
-  Otherwise it fights as any trouble does (driven, won, fled, fell).
-- **A PATROL MEETS A BAND.** A patrol (LW9) whose loop takes a leg within OUTLAW_REACH_PX rolls against the band. A
-  win on the dice ROUTS it.
-- **THE BAND'S TAKE** is the robbed goods and gold of its generation: a pure count of its hold-ups since it formed,
-  each adding the merchant's purse and the cargo's worth by the tier lost. It is what the band's chest holds.
+### 5.3 The hideout stood (`scenes/hideouts.js`)
 
-### 5.3 The hideout stood
-
-- **STOOD LIVE.** A player on the ground within BAND_LIVE_M (200 m) of a hideout stands it (the camps' election
-  online):
-  - the tents (model 41606, `camps.js`' own) and a fire;
-  - the band's people about it as the pool's foes (loose and transient, never a save's): all of them by day, and by
-    night half, the rest out on the road;
-  - its CHEST, a `droppedLoot` pile minted from the take's count: goods off the merchants' tables, and gold.
-- **ROUTED.** When every member is dead, the band is routed.
-  - The character gets a `routed` mark, keyed by the band's region, index and generation. The hideout stands empty
-    for this character from then.
-  - The towns near tell it (LW16's word, ROUTED_NEWS).
-  - Every member of the caravans that band robbed this generation regards the player as having `helped`.
-- **ONLINE** every reader's band is the same. A rout is the character's own, as every LW deed is.
+- **STOOD LIVE** on foot within BAND_LIVE_M (200 m), by the one standing it (the road fights' own election online),
+  once a second:
+  - its tents (TENT_MODEL 41606, the camps' own, through the host's meshes) on a ring of TENT_RING_M about its fire
+    (FIRE_FLAT), one each three of its people, at least two;
+  - its people as the pool's foes (loose, transient), each its class, level and name, BAND_RING_M (3-9 m) about the
+    fire: all of them by day, by night (before 6, from 20) half - the rest out on the road (`standingAt`);
+  - its CHEST, a ground pile (`droppedLoot.seedPile`, unsaved) of its take: goods off a general store's roll on the
+    band's own seed, and the gold - none if the character took from it before (`looted`).
+- **AN EMPTY HIDEOUT** (a vacancy) stands its tents alone: a cold camp, nobody, no chest.
+- **ROUTED.** Every one of its people down: the character's `routed` tale (`<hideout>@<gen>.<heir>`, its name), `helped`
+  regard from every member of the parties it robbed of late, and "You have routed the Black Hand." Its region's towns
+  tell it (`livingTown.js deedNews`, ROUTED_NEWS).
+- **LET GO** past BAND_KEEP_M (280 m), under the Overworld or with the living world off: its living taken out, its
+  pile taken up - and a chest taken from is `looted` for the character. Indoors the open world waits as it stood (its
+  bodies the exterior pool's, as every foe left outside); the way back out finds the hideout stood, or lets it go.
+- **NOT KEPT:** the outlaws struck down before the player left. A hideout stood again stands all of them (the session
+  keeps no partial rout).
+- **ONLINE** every reader's band is the same; a rout is the character's own, as every LW deed is.
+- ROB_RATIO's one home is `trouble.js` (outlaws.js re-exports it); the duplicate-declaration ratchet holds.
 
 ### 5.4 Heard of
 
-- **THE NEWS.** A robbery's news names the band and the leg ("The Black Hand took Ada Lark's goods on the road to
-  Wayrest"), in the town's meetings and in the road's passing words.
-- **A HEARD MARK.** Once the character has heard of a band, its hideout's area is marked on the Overworld as "Hideout
-  of the Black Hand (rumoured)": a ring, not a point. Heard means a line naming it said within GREET_RANGE of the
-  player, or a talk's answer. It is kept as a `heard` mark per band generation.
-- **OPEN FOR MAC: A BAND ON THE BOUNTY BOARD.** The board (`bountyBoard.js`) posts beasts today, and every player reads
-  it alike. A band's head is a natural hunt, but the board is shared while a rout is the character's own. Proposed:
-  the board's law reads the bands (pure) and posts one; a hunt cleared pays as the board's hunts pay. Recorded as call
-  3 in section 11.
+- **A WARNING ON THE ROAD.** A traveller's greeting (never an enemy's) adds a warning - "Mind yourself - the Black
+  Hand keep a camp off this road." (BAND_WARNINGS) - of a band whose hideout lies within HEARD_PX (3 px) the character
+  has not heard of; the character has heard of it (`heard`, the band's key).
+- **A HEARD MARK.** Each band heard of, standing, is marked on the Overworld as "Hideout of the Black Hand (rumoured)":
+  a dashed ring (`wayfarer hideout`, `ui/travelViewHud.js` TV_HIDEOUT_R) about a point up to RUMOUR_OFF_N (half a
+  pixel) from it, never the point (`rumourAt`).
+- **NOT BUILT:** a talk's answer naming a band. **OPEN FOR MAC:** a band on the bounty board (section 11, call 3).
 
-### 5.5 The four hosts, and the pins
+### 5.5 The four hosts, the measure, the pins
 
-The four hosts are as LW9's.
+- `scenes/world.js`: WIRED (the trips' world's `townsIn`, the trouble world's `bandAt`, the hideouts kept, the host
+  stood in the open world and freed indoors, its tents in the world mesh pass, its fire in the billboards, its marks,
+  the greeting's warning, the news by the band's name).
+- `scenes/worldModes.js`, `scenes/dungeonContext.js`: none (no road). `scenes/exterior.js`: FLAGGED.
 
-Pins:
-- the bands' count, places and names;
-- generations after a rout;
-- the band's share of a leg's trouble;
-- robbed below the ratio;
-- the take's count;
-- the hideout stood, its chest and the rout's mark;
-- the heard mark's ring.
+Measure (`tools/livingPerfProbe.mjs`, THE OUTLAWS): the synthetic map's region of 81 towns places its 3 hideouts in
+about 1.2 ms, once a network; a fortnight's 341 troubles, 7 a band's (5 robbed); the roads' layer at a hideout stays at
+1.4 ms at its worst frame (the budget 6).
+
+Moved pins: `lw4_trouble` (HALT_MIN, FIGHT_MIN, ROAD_NEWS's ends), `lw6b_remains` and `lw6d_word` (MARK_KINDS,
+TALE_KINDS).
+
+Pins: `test/lw12_outlaws.test.js` (11). Mutants: `tools/mutants/lw12.json` (75).
 
 ## 6. LW13 - the companies
 
@@ -751,7 +766,7 @@ Overall improvement: what happens in one town is heard in the next.
 1. The traffic targets (2.6).
 2. The patrons' numbers (8.1): PATRON_PAY_SHARE, the town's hourly share and each seller's ceilings. And whether a
    private home's trader sells to the street (8.2).
-3. A band on the bounty board (5.4).
+3. A band on the bounty board (5.4): the board is shared, a rout the character's own. Still open after LW12.
 4. The escort's pay: gold (the client's word, as a counter's gold is) is proposed. Marks (the service's) is the
    alternative.
 5. Couriers on horseback (3.1), if the rider art serves.

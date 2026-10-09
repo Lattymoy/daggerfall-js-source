@@ -783,7 +783,7 @@ export const NEWS_DAYS = 3;
  * party came home (a party none of whom came home, from when it was due: `trip.backT1`), for NEWS_DAYS - newest
  * first. `who` the one it befell (the first of the fallen, else the leader), `foe` the first of the foes, `place`
  * the town they were bound for, `enc` the encounter's id (LW7: the character's turn of it). A hand's dead are not the
- * road's news (LW7).
+ * road's news (LW7). LW12: a band's trouble names it (`band`).
  * @param {Trip[]} trips - the town's own, about the minute (and the days before it) @param {number} t
  * @returns {{ id: string, enc: string, kind: string, who: string, foe: number|null, place: string, t: number, dive: boolean, sea: boolean }[]}
  */
@@ -798,7 +798,7 @@ export function newsOf(trips, t) {
     if (!(known <= t && t - known < NEWS_DAYS * DAY_MIN)) continue;
     const fell = tr.fallen?.filter((f) => !f.hand) ?? [];
     const who = fell[0]?.res ?? tr.leader;
-    out.push({ id: tr.id, enc: enc.id, kind: fell.length ? 'fell' : enc.kind, who: who.name, foe: enc.foes?.[0] ?? null, place: tr.to?.name ?? '', t: known, dive: !!tr.dive, sea: !!tr.sea });
+    out.push({ id: tr.id, enc: enc.id, kind: fell.length ? 'fell' : enc.kind, who: who.name, foe: enc.foes?.[0] ?? null, ...(enc.bandName ? { band: enc.bandName } : {}), place: tr.to?.name ?? '', t: known, dive: !!tr.dive, sea: !!tr.sea });
   }
   return out.sort((a, b) => b.t - a.t);
 }

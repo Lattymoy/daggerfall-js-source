@@ -1507,12 +1507,13 @@ export class LivingTown {
    * LW7: WHAT THE TOWN SAYS OF THE DEEDS - each of its own the player struck down (`slain`), known DEED_KNOWN_MIN after,
    * for NEWS_DAYS: `who` their name, `seen` whether anyone saw whose hand it was; each who died fighting at the
    * player's side (`died`); WATCH-FIX: each another hand cut down in its street (`killed`), `watch` one of the watch's.
+   * LW12: a band of its region the character routed (`routed`, `who` its name).
    * The character's own, read over the town's pure news (relations.js turns).
    * @returns {{ kind: string, who: string, foe: string, place: string, t: number, seen: boolean, watch?: boolean }[]}
    */
   deedNews(t = this._now) {
     const turns = this.o.relations?.()?.turns?.();
-    if (!turns || (!turns.slain?.size && !turns.died?.size && !turns.killed?.size && !turns.home?.size)) return [];
+    if (!turns || (!turns.slain?.size && !turns.died?.size && !turns.killed?.size && !turns.home?.size && !turns.routed?.size)) return [];
     const prefix = `L${this.o.town.mapId >>> 0}.`;
     const out = [];
     for (const kind of /** @type {const} */ (['slain', 'died', 'killed'])) {   // WATCH-FIX: and one of the watch another hand cut down
@@ -1530,6 +1531,13 @@ export class LivingTown {
       const known = h.t + DEED_KNOWN_MIN;
       if (!key.startsWith(prefix) || known > t || t - known >= NEWS_DAYS * DAY_MIN || !h.who) continue;
       out.push({ kind: 'home', who: h.who, foe: '', place: '', t: known, seen: true });
+    }
+    // LW12: a band the character routed - told in its region's towns (the hideout's key names its region), by its name
+    const region = `O${(this.o.town.region ?? -1) >>> 0}.`;
+    for (const [key, h] of turns.routed ?? []) {
+      const known = h.t + DEED_KNOWN_MIN;
+      if (!key.startsWith(region) || known > t || t - known >= NEWS_DAYS * DAY_MIN || !h.who) continue;
+      out.push({ kind: 'routed', who: h.who, foe: '', place: '', t: known, seen: true });
     }
     return out.sort((a, b) => b.t - a.t);
   }

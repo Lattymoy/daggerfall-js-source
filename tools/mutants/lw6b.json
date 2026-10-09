@@ -92,8 +92,8 @@
   {
     "name": "LW6b-mark-kinds",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "export const MARK_KINDS = Object.freeze(['laid']);",
-    "new": "export const MARK_KINDS = Object.freeze([]);",
+    "old": "export const MARK_KINDS = Object.freeze(['laid', 'heard', 'looted']);",
+    "new": "export const MARK_KINDS = Object.freeze(['heard', 'looted']);",
     "tests": [
       "test/lw6b_remains.test.js"
     ]

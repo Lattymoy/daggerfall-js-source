@@ -28,12 +28,17 @@ export const CARAVAN_LINES = Object.freeze({
   ask: (name) => `${name}: "What'll it be, traveller?"`,
   hired: (name, pay) => `${name}: "Good. ${pay} gold when we're in, more for every fight we win. Keep up."`,
   noCoin: (name) => `${name}: "I've no more coin this trip."`,
+  bandTook: (name) => `${name}: "Coin? The outlaws took every septim we had, and half the goods besides."`,   // LW12
   yield: (name) => `${name}: "Take it! Take what you want - just let us be!"`,
   paid: (name, gold) => `${name}: "We're in, and in one piece. ${gold} gold, as agreed."`,
   broken: (name) => `${name} hired you to keep up. The contract is broken.`,
   turned: (name) => `${name}'s caravan turned back. There is no pay for a road not finished.`,
   fell: (name) => `${name} did not live to pay you.`,
 });
+
+/** LW12: whether a band held the trip up by minute `t` (trouble.js `robbed`, `by` the band) - its purse and half its
+ *  goods gone. @param {any} trip @param {number} t */
+export const bandTook = (trip, t) => trip?.robbed?.by != null && t >= trip.robbed.t;
 
 /**
  * @param {{
@@ -47,7 +52,8 @@ export const CARAVAN_LINES = Object.freeze({
  * }} deps
  */
 export function createCaravanHost(deps) {
-  /** The counters this session: a trip's shelf, its first roll's items each with its place (`WARE_KEY`). @type {Map<string, { items: any[], all: any[] }>} */
+  /** The counters this session: a trip's shelf, its first roll's items each with its place (`WARE_KEY`); LW12 `lost` the
+   *  places a band took (never the character's). @type {Map<string, { items: any[], all: any[], lost: Set<number> }>} */
   const shelves = new Map();
   /** The parties already seen to yield this session (their robbery written), and the escort's last minute near. */
   const yielded = new Set();
@@ -61,12 +67,14 @@ export function createCaravanHost(deps) {
   };
 
   /** A trip's counter as this character left it: its roll, less what is gone. */
-  function shelfOf(trip, counter) {
+  function shelfOf(trip, counter, t = deps.clock()) {
     const w = rel()?.wares?.(trip.id);   // first: another character's records forget this session's shelves
     let s = shelves.get(trip.id);
     if (!s) {
       const all = deps.stock(counter, trip).map((it, i) => { it[WARE_KEY] = i; return it; });
-      s = { all, items: all.filter((it) => !w?.gone?.has(it[WARE_KEY])) };
+      // LW12: a band's hold-up took half the goods (every other place) - the band's, never the character's
+      const lost = new Set(bandTook(trip, t) ? all.filter((it) => it[WARE_KEY] % 2 === 1).map((it) => it[WARE_KEY]) : []);
+      s = { all, lost, items: all.filter((it) => !w?.gone?.has(it[WARE_KEY]) && !lost.has(it[WARE_KEY])) };
       if (shelves.size > 64) shelves.delete(/** @type {string} */ (shelves.keys().next().value));
       shelves.set(trip.id, s);
     }
@@ -76,7 +84,7 @@ export function createCaravanHost(deps) {
   function keep(trip, extraCoin = 0, robbed = undefined) {
     const s = shelves.get(trip.id);
     const w = rel()?.wares?.(trip.id) ?? null;
-    const gone = s ? s.all.filter((it) => !s.items.includes(it)).map((it) => it[WARE_KEY]) : [...(w?.gone ?? [])];
+    const gone = s ? s.all.filter((it) => !s.items.includes(it) && !s.lost.has(it[WARE_KEY])).map((it) => it[WARE_KEY]) : [...(w?.gone ?? [])];
     rel()?.setWares?.(trip.id, gone, (w?.coin ?? 0) + extraCoin, robbed === undefined ? (w?.robbed ?? null) : robbed);
   }
 
@@ -111,6 +119,7 @@ export function createCaravanHost(deps) {
       shelf: s, b, mode,
       /** before a deal is done: a sale past the purse refused (the goods go back to the pack) */
       allow: (mode, staged, price) => {
+        if ((mode === 'Sell' || mode === 'SellMagic') && bandTook(trip, deps.clock())) { deps.say(CARAVAN_LINES.bandTook(name)); return false; }   // LW12: its purse the band's
         if ((mode === 'Sell' || mode === 'SellMagic') && (rel()?.wares?.(trip.id)?.coin ?? 0) + price > counter.purse) { deps.say(CARAVAN_LINES.noCoin(name)); return false; }
         return true;
       },
@@ -186,7 +195,7 @@ export function createCaravanHost(deps) {
       if (!r) return;
       // THE COUNTERS: what left a shelf this session (bought, stolen, taken) kept in the character's record
       for (const [id, sh] of shelves) {
-        const gone = sh.all.filter((it) => !sh.items.includes(it)).map((it) => it[WARE_KEY]);
+        const gone = sh.all.filter((it) => !sh.items.includes(it) && !sh.lost.has(it[WARE_KEY])).map((it) => it[WARE_KEY]);
         const w = r.wares?.(id);
         if (gone.length !== (w?.gone?.size ?? 0) || gone.some((i) => !w?.gone?.has(i))) r.setWares?.(id, gone, w?.coin ?? 0, w?.robbed ?? null);
       }

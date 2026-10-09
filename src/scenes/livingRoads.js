@@ -25,7 +25,7 @@
 import { partiesOfTown, partyAt, wayAt, membersAt, remainsOfTown, NATIVE_PER_M, NATIVE_PIXEL, TRIP_REACH_PX } from '../systems/livingWorld/trips.js';
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 import { circleLine, lineMinutes, ROUND_S } from '../systems/livingWorld/meetups.js';
-import { ROAD_GREETINGS, ROAD_PASS_SCRIPTS, ROAD_PASS_WARNINGS, fillLine, firstNameOf } from '../systems/livingWorld/lines.js';
+import { ROAD_GREETINGS, ROAD_PASS_SCRIPTS, ROAD_PASS_WARNINGS, BAND_WARNINGS, fillLine, firstNameOf } from '../systems/livingWorld/lines.js';
 import { FIRE_FLAT } from '../systems/survival/camp.js';
 import { teamOf, trainOf, campTeam } from '../systems/livingWorld/wagons.js';   // LW10: the wagon trains
 import { lwSeed, textSeed } from '../systems/livingWorld/seed.js';
@@ -228,7 +228,7 @@ export function partyPlaces(trip, at, ring = null) {
  *   slay?: (res: any, t: number, seen: boolean) => void,
  *   stands?: ReturnType<typeof import('./roadStands.js').createRoadStands> | null,
  *   teams?: ReturnType<typeof import('../world/roadTeams.js').createRoadTeams> | null,
- *   robbed?: (tripId: string) => (number | null),
+ *   robbed?: (tripId: string) => (number | null), unheard?: (t: number) => any, heard?: (band: any) => any,
  * }} deps - `here` the player's native place (null: nowhere on the map - indoors, underground); `baseRate` the clock's
  *   minutes a real second at the walking pace's own rate (the rounds' and the lines' beat on the clock); `foeName` a
  *   foe's word for a mark ("Orcs"); LW7 `slay(res, t, seen)` the player struck a traveller down (the host's turn); LW7b
@@ -425,7 +425,10 @@ export function createLivingRoads(deps) {
       const standing = rel ? rel.standing(m.res.id, dayOf(t)) : 'neutral';
       const pool = standing === 'friend' ? ROAD_GREETINGS.friend : standing === 'enemy' || standing === 'hostile' ? ROAD_GREETINGS.enemy
         : rel?.known(m.res.id) ? ROAD_GREETINGS.known : ROAD_GREETINGS.stranger;
-      const text = fillLine(pool[lwSeed(textSeed(m.res.id), Math.floor(t / 7)) % pool.length], { player: deps.playerName?.() ?? '' });
+      let text = fillLine(pool[lwSeed(textSeed(m.res.id), Math.floor(t / 7)) % pool.length], { player: deps.playerName?.() ?? '' });
+      // LW12: and a warning of a band whose hideout lies near, the first time (never from one who will not speak to them)
+      const band = standing === 'enemy' || standing === 'hostile' ? null : deps.unheard?.(t) ?? null;
+      if (band) { text = `${text} ${fillLine(BAND_WARNINGS[lwSeed(textSeed(m.res.id), 0x7761726e) % BAND_WARNINGS.length], { band: band.name })}`; deps.heard?.(band); }   // 'warn'
       greetings = greetings.filter((g) => g.id !== m.res.id && g.until > realNow);
       greetings.push({ id: m.res.id, text, until: realNow + ROAD_GREET_S });
       rel?.seen(m.res.id, dayOf(t));
@@ -459,7 +462,7 @@ export function createLivingRoads(deps) {
       const k = Math.floor(t / lineMin) % pair.script.length;
       const who = membersAt((k % 2 ? pair.b : pair.a).trip, t)[0];
       const b = who ? deps.sprites.bodyOf(who.id) : null;
-      const foe = pair.warned ? (deps.foeName?.(pair.warned.trip.enc.foes[0], 2) ?? 'foes') : '';
+      const foe = pair.warned ? (pair.warned.trip.enc.bandName ?? deps.foeName?.(pair.warned.trip.enc.foes[0], 2) ?? 'foes') : '';   // LW12: a band by its name
       if (b && near(b.person) && !greetings.some((g) => g.id === who.id)) out.push({ person: b.person, text: fillLine(pair.script[k], { foe }), kind: /** @type {'talk'} */ ('talk') });
     }
     for (const p of parties) {
@@ -493,7 +496,7 @@ export function createLivingRoads(deps) {
       const members = membersAt(p.trip, t);
       if (!members.length) continue;   // LW7: nobody left of it on the road
       const foes = at.fight ? p.trip.enc?.foes ?? [] : [];
-      const beset = foes.length ? (deps.foeName?.(foes[0], foes.length) ?? 'foes') : '';   // LW4: what besets it, while it does
+      const beset = foes.length ? (p.trip.enc?.bandName ?? deps.foeName?.(foes[0], foes.length) ?? 'foes') : '';   // LW12: a band by its name   // LW4: what besets it, while it does
       out.push({ key: `party:${p.trip.id}`, at: deps.sceneOf(/** @type {number} */ (at.x), /** @type {number} */ (at.z)), label: partyLabel({ ...p.trip, party: members, robbed: deps.robbed?.(p.trip.id) != null }, '', beset),
         kind: `${p.trip.kind === 'merchant' ? 'wayfarer caravan' : 'wayfarer'}${beset ? ' fight' : ''}`, trip: p.trip });
     }

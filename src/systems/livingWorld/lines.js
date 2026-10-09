@@ -307,6 +307,12 @@ export const ROAD_PASS_WARNINGS = Object.freeze([
   S('Watch yourselves - {foe} back the way we came.', 'We\'ll keep our eyes open.'),
   S('{foe} on the road behind us. We lost time to them.', 'Then we\'ll go careful.'),
 ]);
+/** LW12: a traveller's warning of a band whose hideout lies near - `{band}` its name. */
+export const BAND_WARNINGS = Object.freeze([
+  'Mind yourself - {band} keep a camp off this road.',
+  'They say {band} hide out near here. Keep your purse close.',
+  'Watch the trees. {band} have a camp somewhere about.',
+]);
 /** LW9: a minstrel playing a tavern's common room - the song's line over them. */
 export const MINSTREL_SONGS = Object.freeze([
   '♪ The Lusty Argonian Maid, she sang it to the moon... ♪', '♪ Oh the road to {place} is long and the ale is thin... ♪',
@@ -388,6 +394,12 @@ export const ROAD_NEWS = Object.freeze({
     Object.freeze(['Have you heard about {who}? {foe}, near {place}.', 'Gods. I spoke with {who} only last week.', 'The road takes the best of us.']),
     Object.freeze(['They buried what they could find of {who}.', 'The road to {place}. Always that road.']),
   ]),
+  // LW12: held up by a band - {foe} its name
+  robbed: Object.freeze([
+    Object.freeze(['They say {foe} took {who}\'s goods on the road to {place}.', 'Again? Somebody should do something about them.']),
+    Object.freeze(['{who} came home with empty hands. {foe}, near {place}.', 'At least {who} came home.']),
+    Object.freeze(['Have you heard? {foe} held up {who} on the {place} road.', 'Not a drop of blood, they say. Just everything else.']),
+  ]),
 });
 /** LW6: what the town says of a DIVE - `{place}` the dungeon. */
 export const DIVE_NEWS = Object.freeze({
@@ -444,6 +456,11 @@ export const HOME_NEWS = Object.freeze([
   Object.freeze(['{who}\'s people have something of theirs back, thanks to {player}.', 'Not many would go down there for the dead.']),
   Object.freeze(['That {player} - went into the dark and came back with {who}\'s keepsake.', 'There is kindness in the world yet.']),
 ]);
+/** LW12: of a band of the region the PLAYER routed - `{who}` its name. */
+export const ROUTED_NEWS = Object.freeze([
+  Object.freeze(['{player} routed {who}, they say. Their camp off the road stands empty.', 'Then the road is safe for a while. A while.']),
+  Object.freeze(['Have you heard? {who} are finished. {player} saw to it.', 'Somebody had to. The watch never would.']),
+]);
 /** LW7: of a fight on the road the PLAYER turned for its party (the character's `won`) - `{player}` the one who came. */
 export const HELPED_NEWS = Object.freeze({
   won: Object.freeze([
@@ -495,6 +512,7 @@ const newsPool = (item) => (item.kin ? KIN_NEWS[/** @type {keyof typeof KIN_NEWS
   : item.kind === 'died' ? DIED_NEWS
   : item.kind === 'killed' ? KILLED_NEWS[item.watch ? 'watch' : 'town']
   : item.kind === 'home' ? HOME_NEWS   // LW6d: a keepsake carried home
+  : item.kind === 'routed' ? ROUTED_NEWS   // LW12: a band the player routed
     : item.helped && HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)] ? HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)]
       : item.sea ? SEA_NEWS[/** @type {keyof typeof SEA_NEWS} */ (item.kind)]   // LW5b: the sea's own words
         : (item.dive ? DIVE_NEWS : ROAD_NEWS)[/** @type {keyof typeof ROAD_NEWS} */ (item.kind)]);

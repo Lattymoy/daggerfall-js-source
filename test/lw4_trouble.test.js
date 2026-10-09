@@ -117,8 +117,9 @@ test('LW4 trouble on the road: at most one encounter a trip, its chance the walk
   assert.deepEqual({ ...GROUND_RISK }, { road: 0.6, track: 0.9, open: 1.4 });
   assert.equal(RISK_MAX, 0.55);
   assert.equal(FOES_MAX, 6);
-  assert.deepEqual({ ...HALT_MIN }, { driven: 25, won: 60, fled: 15, fell: 45 });
-  assert.deepEqual({ ...FIGHT_MIN }, { driven: 10, won: 25, fled: 8, fell: 20 });
+  // PIN MOVED (LW12): a band's hold-up, robbed
+  assert.deepEqual({ ...HALT_MIN }, { driven: 25, won: 60, fled: 15, fell: 45, robbed: 30 });
+  assert.deepEqual({ ...FIGHT_MIN }, { driven: 10, won: 25, fled: 8, fell: 20, robbed: 10 });
   assert.ok(strengthOf({ cls: 140, level: 10 }) > strengthOf({ job: 'merchant' }) && strengthOf({ job: 'merchant' }) > strengthOf({ job: 'pedlar' }));
   assert.ok(foeStrength(12) > foeStrength(2));
   const map = livingMap();
@@ -296,7 +297,7 @@ test('LW4 the towns see the trouble: a turned party never visits; one fallen on 
 test('LW4 what the town says: its own parties\' troubles, known from when they were home (none home: when they were due), for NEWS_DAYS, newest first - the fallen first named; a town meeting tells one NEWS_SHARE of the time, the news\'s own script by its end with `{who}`, `{foe}`, `{place}` filled; never on the road; a foe\'s word, many or one (mutants: the knowing, the days, the share, the tokens, the road, the plurals)', () => {
   assert.equal(NEWS_DAYS, 3);
   assert.equal(NEWS_SHARE, 0.4);
-  assert.deepEqual(Object.keys(ROAD_NEWS), ['driven', 'won', 'fled', 'fell']);
+  assert.deepEqual(Object.keys(ROAD_NEWS), ['driven', 'won', 'fled', 'fell', 'robbed']);   // PIN MOVED (LW12): a band's hold-up
   const base = { leader: { name: 'Ada Lark' }, to: { name: 'Far' }, party: [] };
   const trips = [
     { ...base, id: 'a', enc: { kind: 'won', foes: [7] }, fallen: [], backT1: 1000 },
@@ -440,7 +441,7 @@ test('LW4 the streaming host: the trouble\'s world (the climate at the place, th
   assert.match(w, /if \(w\.length\) away\.set\(h\.id, w\);/);
   assert.match(w, /return \{ away, visitors, holders, news, places \};/);   // LW-TALK: PIN MOVED - the towns of its road
   assert.match(w, /foeName: livingFoeWord,/);
-  assert.match(rd('src/ui/travelViewHud.js'), /look === 'wayfarer' \? \(\/\\bfight\\b\/\.test\(m\.kind \?\? ''\) \? C\.band : C\.wayfarer\)/);
+  assert.match(rd('src/ui/travelViewHud.js'), /look === 'wayfarer' \? \(\/\\b\(fight\|hideout\)\\b\/\.test\(m\.kind \?\? ''\) \? C\.band : C\.wayfarer\)/);   // PIN MOVED (LW12): a rumoured hideout in the bands' red too
   // the pace the trouble reads the lives at is the trips' own
   assert.equal(PERSON_MOVE_SPEED / 0.2, CALENDAR_MPM);
   assert.ok(TRIP_PACE.merchant > 0);

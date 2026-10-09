@@ -562,7 +562,7 @@
   {
     "name": "LW4-hud-fight-unred",
     "file": "src/ui/travelViewHud.js",
-    "old": "look === 'wayfarer' ? (/\\bfight\\b/.test(m.kind ?? '') ? C.band : C.wayfarer)",
+    "old": "look === 'wayfarer' ? (/\\b(fight|hideout)\\b/.test(m.kind ?? '') ? C.band : C.wayfarer)",
     "new": "look === 'wayfarer' ? C.wayfarer",
     "tests": [
       "test/lw4_trouble.test.js"

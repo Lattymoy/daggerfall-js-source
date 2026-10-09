@@ -209,8 +209,8 @@
   {
     "name": "LW5b-sea-turned",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": ".filter((f) => f.res), turned: false };\n  }\n  const shape = enc.shape ?? enc.kind;",
-    "new": ".filter((f) => f.res), turned: true };\n  }\n  const shape = enc.shape ?? enc.kind;",
+    "old": ".filter((f) => f.res), turned: false };\n  }\n  const shape = /** @type {any} */ (enc).shape ?? enc.kind;",
+    "new": ".filter((f) => f.res), turned: true };\n  }\n  const shape = /** @type {any} */ (enc).shape ?? enc.kind;",
     "tests": [
       "test/lw5b_sea.test.js"
     ]

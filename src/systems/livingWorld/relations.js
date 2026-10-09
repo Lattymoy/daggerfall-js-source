@@ -46,12 +46,14 @@ export const HAND_KINDS = Object.freeze(['slain', 'died', 'killed']);
 /** LW7: the longest name a hand death keeps. */
 export const HAND_NAME_MAX = 60;
 /** LW6b: the marks of what the living world has laid in this character's world - `laid`, the fallen of a dive left in
- *  its dungeon (`deep:<id>:<trip>`) - kept as the turns are, written only once there is one. */
-export const MARK_KINDS = Object.freeze(['laid']);
+ *  its dungeon (`deep:<id>:<trip>`) - kept as the turns are, written only once there is one. LW12: `heard`, a band the
+ *  character has heard of (its key, `<hideout>~<gen>[h<heir>]`: its hideout marked, rumoured), and `looted`, a band's
+ *  chest the character took from (its key: it stands empty for them). */
+export const MARK_KINDS = Object.freeze(['laid', 'heard', 'looted']);
 /** LW6d: the tales its towns tell of the character - `home`, a keepsake carried home to a household (`<the one it was>@home`)
  *  - each with its minute and the name it tells of, kept as the hand deaths are (never one of them), written only once
- *  there is one, as [key, t, who]. */
-export const TALE_KINDS = Object.freeze(['home']);
+ *  there is one, as [key, t, who]. LW12: `routed`, a band the character routed (`<hideout>@<gen>.<heir>`, its name). */
+export const TALE_KINDS = Object.freeze(['home', 'routed']);
 
 /** LW11 (bible/06-Systems/Living-World-II.md): THE ROAD'S RECORDS - a caravan's counter as this character left it
  *  (`wares`: the goods gone from its shelf and the coin its purse paid out, by trip, the WARES_MAX newest kept), the
@@ -101,7 +103,7 @@ export function createRelations(record = null) {
   const tales = Object.fromEntries(TALE_KINDS.map((k) => [k, new Map()]));
   const nameOk = (who) => (typeof who === 'string' ? who.slice(0, HAND_NAME_MAX) : '');
   /** The turns as one read - the same sets and maps `turn` writes into. */
-  const allTurns = /** @type {{ spared: Set<string>, fallen: Set<string>, won: Set<string>, lost: Set<string>, slain: Map<string, Hand>, died: Map<string, Hand>, killed: Map<string, Hand>, laid: Set<string>, home: Map<string, Hand> }} */ (/** @type {any} */ ({ ...turns, ...hands, ...marks, ...tales }));
+  const allTurns = /** @type {{ spared: Set<string>, fallen: Set<string>, won: Set<string>, lost: Set<string>, slain: Map<string, Hand>, died: Map<string, Hand>, killed: Map<string, Hand>, laid: Set<string>, heard: Set<string>, looted: Set<string>, home: Map<string, Hand>, routed: Map<string, Hand> }} */ (/** @type {any} */ ({ ...turns, ...hands, ...marks, ...tales }));
   let turnsVersion = 0;
   const turnOk = (key) => typeof key === 'string' && key.length > 0 && key.length <= 80;
   /** LW11: the road's records @type {Map<string, { gone: Set<number>, coin: number, robbed: number | null }>} */
@@ -232,7 +234,7 @@ export function createRelations(record = null) {
      * slain, whether it was `seen`. Answers whether it was new.
      * LW6b: or one of MARK_KINDS, a mark kept as a turn is.
      * LW6d: or one of TALE_KINDS, a tale with its minute and the name it tells of.
-     * @param {'spared'|'fallen'|'won'|'lost'|'slain'|'died'|'killed'|'laid'|'home'} kind @param {string} key @param {{ t: number, seen?: boolean, who?: string }} [at]
+     * @param {'spared'|'fallen'|'won'|'lost'|'slain'|'died'|'killed'|'laid'|'heard'|'looted'|'home'|'routed'} kind @param {string} key @param {{ t: number, seen?: boolean, who?: string }} [at]
      */
     turn(kind, key, at) {
       const tale = tales[kind];   // LW6d: a tale is kept as a hand death is - its minute, the name it tells of

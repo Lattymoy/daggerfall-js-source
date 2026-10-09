@@ -840,6 +840,8 @@ export function strangerHelm(g, x, y) {
   g.fillRect(x - 4, y - 6, 2.5, 1);       // the crown's light
   g.fillStyle = fill;
 }
+/** LW12: a rumoured hideout's ring (px). */
+export const TV_HIDEOUT_R = 11;
 /** OWS1: a mark at sea, by its kind. */
 export const isShipKind = (m) => /\bship\b/.test(m.kind ?? '');
 /** A mark's look, by its kind's first word. */
@@ -1119,7 +1121,7 @@ function drawMarks(marks, vw, vh, dpr, feet = null) {
   for (const q of placed) {
     const { m, held, x, y, look } = q;
     g.globalAlpha = q.fade ? TV_UNDER_HUD_ALPHA : 1;   // OW-EDGES: faint where it would lie over the compass or the hotbar
-    const color = look === 'gather' ? (m.color ?? C.brass) : look === 'party' ? C.party : look === 'traveller' ? C.traveller : look === 'lair' ? C.lair : look === 'band' ? C.band : look === 'raider' ? C.raider : look === 'stranger' ? C.stranger : look === 'camp' ? C.camp : look === 'bounty' ? C.bounty : look === 'waypoint' ? waypointCss(m.color) : look === 'wayfarer' ? (/\bfight\b/.test(m.kind ?? '') ? C.band : C.wayfarer) : C.brass;   // OWS3: a raider in the cinnabar; OW6: a camp in the ember; LW3: a party on the road in its dust (LW4: beset, in the bands' red)
+    const color = look === 'gather' ? (m.color ?? C.brass) : look === 'party' ? C.party : look === 'traveller' ? C.traveller : look === 'lair' ? C.lair : look === 'band' ? C.band : look === 'raider' ? C.raider : look === 'stranger' ? C.stranger : look === 'camp' ? C.camp : look === 'bounty' ? C.bounty : look === 'waypoint' ? waypointCss(m.color) : look === 'wayfarer' ? (/\b(fight|hideout)\b/.test(m.kind ?? '') ? C.band : C.wayfarer) : C.brass;   // OWS3: a raider in the cinnabar; OW6: a camp in the ember; LW3: a party on the road in its dust (LW4: beset, in the bands' red)
     g.fillStyle = color; g.strokeStyle = '#000'; g.lineWidth = 1;
     if (held) {   // the arrow, turned the way it lies (0 up, clockwise)
       g.save(); g.translate(x, y); g.rotate((held.angle * Math.PI) / 180);
@@ -1147,6 +1149,9 @@ function drawMarks(marks, vw, vh, dpr, feet = null) {
       wheelPath(g, x, y, TV_WHEEL_R);
       g.lineWidth = 3; g.strokeStyle = '#000'; g.stroke();
       g.lineWidth = 1.5; g.strokeStyle = C.brass; g.stroke();
+    } else if (look === 'wayfarer' && /\bhideout\b/.test(m.kind ?? '')) {   // LW12: a band's rumoured hideout - a ring, its area, never a point
+      g.beginPath(); g.arc(x, y, TV_HIDEOUT_R, 0, Math.PI * 2); g.lineWidth = 4; g.strokeStyle = '#000'; g.stroke();
+      g.lineWidth = 2; g.strokeStyle = color; g.setLineDash?.([4, 3]); g.stroke(); g.setLineDash?.([]);
     } else if (look === 'wayfarer') {   // LW3: a party on the road - a pack's square, a caravan's the larger
       const r = /\bcaravan\b/.test(m.kind ?? '') ? 5 : 3.5;
       if (/\bcaravan\b/.test(m.kind ?? '')) {   // LW10: a caravan's mark its wagon - the bed and two wheels under it
