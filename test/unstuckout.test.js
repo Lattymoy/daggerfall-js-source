@@ -67,7 +67,7 @@ test('UNSTUCK-OUT the nearest open ground: inside a mountain\'s rock (a real clo
   assert.equal(OPEN_GROUND_RINGS.at(-1), 256);
 });
 
-test('UNSTUCK-OUT the world host: a fast-travel landing held in a rock stands on the nearest open ground; /unstuck outdoors stands the body there, said, and says why not in its own words - busy (indoors, no body, dead, mid-journey, mid-door), afloat (a helm, a deck, aboard, the water), mounted, or no open ground; tvSeaY stands before the boot\'s load reads it (mutants: the landing unchecked, the outdoor arm unwired, each guard, the words)', () => {
+test('UNSTUCK-OUT the world host: a fast-travel landing held in a rock stands on the nearest open ground; tvSeaY stands before the boot\'s load reads it (mutants: the landing unchecked). `/unstuck` outdoors is PVPUNSTUCK\'s (bible/11-Multiplayer/Wild-Zone.md section 17: the nearest town) - UNSTUCK-OUT\'s own open-ground arm was withdrawn for it at the merge', () => {
   const w = src('src/scenes/world.js');
   assert.match(w, /import \{ floorLanding, doorWorldPosition, openGroundNear, heldInSolid \} from '\.\.\/player\/enterExit\.js';/);
   assert.match(w, /if \(walkMode && \(!local \|\| ground\) && heldInSolid\(collider, pos\)\) \{\n\s*const open = openGroundNear\(collider, pos\[0\], pos\[2\], \{ dry: \(floor\) => floor >= tvSeaY\(\) \}\);\n\s*if \(open\) \{\n[^\n]*\n\s*pos = open;/);
@@ -76,33 +76,5 @@ test('UNSTUCK-OUT the world host: a fast-travel landing held in a rock stands on
   // the audit's crash: the sea's surface is a const the boot's own load (its landing) reads - declared before that load
   assert.ok(w.indexOf('  const tvSeaY = () =>') > 0 && w.indexOf('  const tvSeaY = () =>') < w.indexOf('    await worldQuickLoad({ ...bootLoadPick, snap });'), 'tvSeaY before the boot load');
   assert.equal(w.split('\n').filter((l) => /^\s*const tvSeaY = /.test(l)).length, 1, 'one sea surface');
-  assert.match(w, /const freed = !hour && !moved \? unstuckOutdoors\(\) : false;/);
-  assert.match(w, /text: moved \? 'You find your way back outside\.' : freed === true \? 'You find your footing on open ground\.' : UNSTUCK_OUT_WORDS\[freed\] \?\? 'There is nowhere to send you from out here\.',/);
-  // the outdoor arm and its words, run out of their own text
-  const lines = w.split('\n');
-  const a = lines.findIndex((l) => l === '  function unstuckOutdoors() {');
-  assert.ok(a >= 0);
-  const b = lines.findIndex((l, i) => i > a && l === '  });');
-  const make = new Function('modes', 'walkMode', 'playerSpawned', 'worldMoveBusy', 'playerEntity', 'openGroundNear', 'collider', 'player', 'cam', 'tvSeaY', 'playerAfloat', 'isOnFoot',
-    `${lines.slice(a, b + 1).join('\n')}\nreturn { unstuckOutdoors, UNSTUCK_OUT_WORDS };`);
-  const col = new Collider(() => 0);
-  rock(col, 'mountain', [-20, 0, -20], [20, 400, 20]);
-  const run = (o = {}) => {
-    const player = { pos: [0, 0, 0], swimming: !!o.swimming, transportMode: o.mode ?? 0, spawn(x, y, z) { this.pos = [x, y, z]; } };
-    const cam = { pos: [0, 0, 0] };
-    const host = make(o.modes ?? { mode: 'exterior' }, o.walk ?? true, o.spawned ?? true, () => o.busy ?? false, { health: o.health ?? 10 }, openGroundNear, col, player, cam, () => o.sea ?? -1, () => !!o.afloat, (m) => m === 0);
-    return { ok: host.unstuckOutdoors(), words: host.UNSTUCK_OUT_WORDS, player, cam };
-  };
-  const r = run();
-  assert.equal(r.ok, true);
-  assert.equal(Math.hypot(r.player.pos[0], r.player.pos[2]), 32, 'stood on open ground');
-  assert.deepEqual(r.cam.pos, r.player.pos);
-  for (const [o, why, want] of [[{ modes: { mode: 'dungeon' } }, 'indoors is the door\'s', 'busy'], [{ walk: false }, 'no body walking', 'busy'], [{ spawned: false }, 'no body yet', 'busy'],
-    [{ busy: true }, 'mid-journey', 'busy'], [{ modes: { mode: 'exterior', transitioning: true } }, 'mid-door', 'busy'], [{ health: 0 }, 'dead', 'busy'],
-    [{ afloat: true }, 'at a helm, aboard or on a deck', 'afloat'], [{ swimming: true }, 'in the water', 'afloat'], [{ mode: 1 }, 'on a horse', 'mounted'], [{ sea: 1 }, 'all the ground under the sea', 'none']]) {
-    const x = run(o);
-    assert.equal(x.ok, want, why);
-    assert.deepEqual(x.player.pos, [0, 0, 0], `${why}: unmoved`);
-  }
-  assert.deepEqual(r.words, { busy: 'You cannot do that right now.', afloat: 'Not while you are afloat.', mounted: 'Not while you are mounted.', none: 'There is no open ground near enough to send you to.' });
+  assert.equal(w.split('\n').filter((l) => /^\s*(const|function) unstuckOutdoors\b/.test(l)).length, 1, 'one /unstuck outdoors - PVPUNSTUCK\'s');
 });

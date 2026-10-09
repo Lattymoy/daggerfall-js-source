@@ -2275,17 +2275,17 @@ UNSTUCK1, indoors and underground only - answered "There is nowhere to send you 
   where the host asks (`dry` - the world's sea level, `tvSeaY`); null where nothing is built or no ring is open.
 - **The landing** (`world.js _teleportToPixel`, after TL2, before the arrival is committed): a fast-travel landing held
   in a rock stands on the nearest open ground instead, said on the console.
-- **`/unstuck` outdoors** (`world.js unstuckOutdoors`, the chat's command after the mode machine's indoor arms): the body
-  stood on the nearest open ground - "You find your footing on open ground." - only on foot in the open world, alive,
-  out of the water, not mid-journey; none near: "There is no open ground near enough to send you to." Indoors and underground it is
-  UNSTUCK1's door, as it was.
+- **`/unstuck` outdoors** is PVPUNSTUCK's (`11-Multiplayer/Wild-Zone.md` section 17, the owner, 2026-10-08: *"3 m
+  forward wont help, to the next town will"* - the walk to the nearest town). UNSTUCK-OUT's own outdoor arm (the body
+  stood on the nearest open ground, refused afloat, mounted or mid-door in its own words) was WITHDRAWN at the merge with
+  main: two `/unstuck`s outdoors, and the owner's word is the later one. The landing's check above is UNSTUCK-OUT's still.
 - **THE FOUR HOSTS**: the streaming world's (`scenes/world.js`) alone - `scenes/exterior.js` is the fixed city (no WoD
-  mountains, no fast travel, no chat); `scenes/worldModes.js` and `scenes/dungeonContext.js` keep UNSTUCK1's doors.
+  mountains, no fast travel); `scenes/worldModes.js` and `scenes/dungeonContext.js` have no fast-travel landing.
 
 OPEN for Mac (the investigation's, not built here): a body a neighbour pixel's rocks are built round after it stands is
-not ejected on its own - `/unstuck` is its way out; the Overworld route marks only a mountain layout's own pixel as
-rock (`tvWodRocks`), so its travel walks into the spill; and the collider's floor is the bilinear read where the drawn
-landform ground is triangles, a gap that can reach metres on the steepest ridges. `test/unstuckout.test.js` (2) - the
-real collider over real closed rock meshes; `tools/mutants/unstuckout.json` (17), all dead. AUDIT FIELD-BUGS 1008 (`01-Overview/Audit-Log.md`): refused
-afloat (`playerAfloat`), mounted (`isOnFoot`) and mid-door, each refusal in its own words (`UNSTUCK_OUT_WORDS`);
-`tvSeaY` declared beside `state`, before the boot's own load reads it.
+not ejected on its own - `/unstuck` (PVPUNSTUCK's walk to the nearest town) is its way out; the Overworld route no
+longer marks rock at all (MOUNTAINS WALKABLE, `11-Multiplayer/Wild-Zone.md` section 19), so its travel can walk into a
+massif; and the collider's floor is the bilinear read where the drawn landform ground is triangles, a gap that can reach
+metres on the steepest ridges. `test/unstuckout.test.js` (2) - the real collider over real closed rock meshes;
+`tools/mutants/unstuckout.json` (7), all dead. AUDIT FIELD-BUGS 1008 (`01-Overview/Audit-Log.md`): `tvSeaY` declared
+beside `state`, before the boot's own load reads it (the outdoor arm's refusals that audit worded went with the arm).
