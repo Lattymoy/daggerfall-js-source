@@ -267,6 +267,7 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
         const d = probe?.ray?.([r.at[0], r.at[1] + 0.3, r.at[2]], dir, 3 * size) ?? null;
         rift.radii[k] = Math.max(R * 0.95, Math.min(3 * size, d == null ? 1.6 * size : d - 0.1));
       }
+      rift.reach = 0; for (let k = 0; k < 8; k++) rift.reach = Math.max(rift.reach, rift.radii[k]);   // AUDIT SD V (P1): once, at the stand
       if (retAt) ret = { ...standRet(retAt, yaw), risesAt: -Infinity, pressed: false, up: true };
       retarget();
       bell = startRiftBell(audio, [r.at[0], r.at[1] + rift.cy, r.at[2]]);
@@ -346,41 +347,49 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
      *  `sky` { map, seconds, gain, clock } the Hour's painted sky, `hour` the world's hour (the Return's), or null. */
     look(eye, sky, hour = 12) {
       if (!rift && !ret) return null;
-      const out = { window: null, floor: null, bay: null };
+      // AUDIT SD V (P1): kept records, filled - the pass reads them the frame they are handed (it made ~1.2 KB a frame)
+      const out = _look;
+      out.window = null; out.floor = null; out.bay = null;
       const t = now(), L = look() ?? SD_RIFT_OPEN_LOOK;
       if (rift) {
         const R = rift.size / 2, light = lightNow(L, t), refused = (t - rift.refusedAt) / 1000;
         const ember = refused >= 0 && refused < SD_REFUSE_S ? 1 - refused / SD_REFUSE_S : L.tone === 'ember' ? 0.35 : 0;
         const stepped = (t - rift.steppedAt) / 1000;
         rift.ripple[2] = stepped >= 0 && stepped < SD_RIPPLE_S ? 1 : 0; rift.ripple[3] = stepped >= 0 && stepped < SD_RIPPLE_S ? stepped : SD_RIPPLE_S;   // never infinite: sin(-inf) is NaN, and a NaN ray blanks the window
-        if (L.aperture > 0.01 && (sky?.map || rift.hollow)) out.window = { model: rift.centre, toLocal: rift.toLocal, radius: SD_RIFT_PARTS.window * R, eye, light, ember, ripple: rift.ripple, sky, hollow: rift.hollow };
+        if (L.aperture > 0.01 && (sky?.map || rift.hollow)) {
+          const w = (out.window = _win);
+          w.model = rift.centre; w.toLocal = rift.toLocal; w.radius = SD_RIFT_PARTS.window * R; w.eye = eye; w.light = light; w.ember = ember; w.ripple = rift.ripple; w.sky = sky; w.hollow = rift.hollow;
+        }
         if (light > 0.01) {
           const col = L.tone === 'red' ? SD_LIGHT.red : L.tone === 'ember' ? SD_LIGHT.ember : SD_LIGHT.gold;
           rift.light[0] = col[0] * light; rift.light[1] = col[1] * light; rift.light[2] = col[2] * light;
           const since = Number.isFinite(rift.n[N_TOLL]) ? (t - rift.n[N_TOLL]) / 1000 : Infinity;
-          out.floor = { model: rift.base, reach: Math.max(...rift.radii), radii: rift.radii, crater: SD_RIFT_PARTS.crater1 * R, gear: rift.n[N_GEAR], pulse: since < 3 ? since * 5 : -1, color: rift.light };
+          const fl = (out.floor = _floor);
+          fl.model = rift.base; fl.reach = rift.reach; fl.radii = rift.radii; fl.crater = SD_RIFT_PARTS.crater1 * R; fl.gear = rift.n[N_GEAR]; fl.pulse = since < 3 ? since * 5 : -1; fl.color = rift.light;
         }
       }
       if (ret && ret.up !== false) {
         const fade = Number.isFinite(ret.outAt) ? clamp01((t - ret.outAt) / 1500) : 0;
-        out.bay = { model: ret.window ?? ret.base, key: 'return', outline: RETURN_OUTLINE, half: RETURN_HALF, hour, clouds: t / 1000, fade };
+        const b = (out.bay = _bay);
+        b.model = ret.window ?? ret.base; b.hour = hour; b.clouds = t / 1000; b.fade = fade;
       }
       return out;
     },
     /** SD-LOOK: the halos the frame adds (render/sdHalo.js) - the Rift's heart, the Return's keystone. */
     halos() {
-      _halos.length = 0;
+      let n = 0;   // AUDIT SD V (P1): filled in place - a list's length set to nought lets its store go, and the next push makes one
       const t = now();
       if (rift) {
         const L = look() ?? SD_RIFT_OPEN_LOOK, k = lightNow(L, t) * Math.max(0.25, L.aperture);
-        if (k > 0.01) { const c = L.tone === 'red' ? SD_LIGHT.red : L.tone === 'ember' ? SD_LIGHT.ember : SD_LIGHT.gold; put3(_core.at, rift.at[0], rift.at[1] + rift.cy, rift.at[2]); _core.size = rift.size * 0.32; tint(_core.color, c, 0.55 * k); _halos.push(_core); }
+        if (k > 0.01) { const c = L.tone === 'red' ? SD_LIGHT.red : L.tone === 'ember' ? SD_LIGHT.ember : SD_LIGHT.gold; put3(_core.at, rift.at[0], rift.at[1] + rift.cy, rift.at[2]); _core.size = rift.size * 0.32; tint(_core.color, c, 0.55 * k); _halos[n++] = _core; }
       }
-      if (ret && ret.up !== false) { const d = RETURN_DIAL, b = ret.base; put3(_key.at, b[12] + b[8] * d[2], b[13] + d[1], b[14] + b[10] * d[2]); _key.size = 0.35; tint(_key.color, SD_LIGHT.moon, 0.35); _halos.push(_key); }
+      if (ret && ret.up !== false) { const d = RETURN_DIAL, b = ret.base; put3(_key.at, b[12] + b[8] * d[2], b[13] + d[1], b[14] + b[10] * d[2]); _key.size = 0.35; tint(_key.color, SD_LIGHT.moon, 0.35); _halos[n++] = _key; }
+      if (_halos.length !== n) _halos.length = n;
       return _halos;
     },
     /** SD-LOOK: the lights they cast - the Rift's before its face in its state's colour, the Return's moon. */
     lights() {
-      _lights.length = 0;
+      let n = 0;   // AUDIT SD V (P1): filled in place, as the halos
       const t = now();
       if (rift) {
         const L = look() ?? SD_RIFT_OPEN_LOOK, k = lightNow(L, t);
@@ -388,16 +397,19 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
           const c = L.tone === 'red' ? SD_LIGHT.red : L.tone === 'ember' ? SD_LIGHT.ember : rift.hollow ? SD_LIGHT.moon : SD_LIGHT.gold, b = rift.base, a = -SD_RIFT_LIGHT.ahead * rift.size;
           _rl.x = b[12] + b[8] * a; _rl.y = rift.at[1] + rift.cy; _rl.z = b[14] + b[10] * a;
           _rl.range = Math.min(SD_RIFT_LIGHT.maxReach, SD_RIFT_LIGHT.reach * rift.size); tint(_rl.color, c, k * SD_RIFT_LIGHT.gain);
-          _lights.push(_rl);
+          _lights[n++] = _rl;
         }
       }
       // the Return's moon; SD-LOOK S6: while it assembles, the column's - brighter, about its middle, so its parts read
-      if (ret) { const b = ret.base, up = ret.up !== false; _ml.x = b[12] - b[8] * 0.6; _ml.y = ret.at[1] + 1.4 * ret.scale; _ml.z = b[14] - b[10] * 0.6; _ml.range = SD_RIFT_LIGHT.retReach * (up ? 1 : ret.scale); tint(_ml.color, SD_LIGHT.moon, up ? SD_RIFT_LIGHT.ret : SD_RIFT_LIGHT.column); _lights.push(_ml); }
+      if (ret) { const b = ret.base, up = ret.up !== false; _ml.x = b[12] - b[8] * 0.6; _ml.y = ret.at[1] + 1.4 * ret.scale; _ml.z = b[14] - b[10] * 0.6; _ml.range = SD_RIFT_LIGHT.retReach * (up ? 1 : ret.scale); tint(_ml.color, SD_LIGHT.moon, up ? SD_RIFT_LIGHT.ret : SD_RIFT_LIGHT.column); _lights[n++] = _ml; }
+      if (_lights.length !== n) _lights.length = n;
       return _lights;
     },
     /** Where they stand (tests, the host's own questions). */
     get rift() { return rift ? { at: [...rift.at], size: rift.size, face: [...rift.face] } : null; },
     get ret() { return ret ? { at: [...ret.at], foot: ret.base[13] + (ret.lift ?? 0) * ret.scale } : null; },   // SD-LOOK: `foot` - as far as it has risen (S6: its jambs', while it assembles)
+    /** AUDIT SD V (P1): whether a Return stands - the frame's question, asked without `ret`'s copy. */
+    get hasRet() { return !!ret; },
     /** SD-LOOK: the parts as drawn (tests and the lab): the draws this end stood, its iris's aperture, its hour-ring's turn. */
     get parts() { return rift ? { draws: [...mine], aperture: rift.n[N_IRIS], ringAngle: rift.n[N_RING], gearAngle: rift.n[N_GEAR], studs: rift.studKey } : { draws: [...mine] }; },
     /** Gone with the dungeon: the meshes freed and taken out of the draws, the bell stopped - at once, mid-animation too. */
@@ -409,6 +421,11 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
     },
   };
   const _halos = [], _core = { at: [0, 0, 0], size: 1, color: [0, 0, 0] }, _key = { at: [0, 0, 0], size: 0.35, color: [0, 0, 0] };
+  /** AUDIT SD V (P1): the look's records, kept (`look`). */
+  const _look = { window: null, floor: null, bay: null };
+  const _win = { model: null, toLocal: null, radius: 0, eye: null, light: 0, ember: 0, ripple: null, sky: null, hollow: false };
+  const _floor = { model: null, reach: 0, radii: null, crater: 0, gear: 0, pulse: -1, color: null };
+  const _bay = { model: null, key: 'return', outline: RETURN_OUTLINE, half: RETURN_HALF, hour: 12, clouds: 0, fade: 0 };
   const _lights = [], _rl = { x: 0, y: 0, z: 0, range: 1, color: [0, 0, 0] }, _ml = { x: 0, y: 0, z: 0, range: 1, color: [0, 0, 0] };
 
   /** A step or a press the host refused - the Rift's state was not open: the hall sees it. */
@@ -469,8 +486,10 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
     const remap = L.tone === 'cold' ? REMAP.cold : L.tone === 'red' ? REMAP.red : null;
     if (remap !== rift.remap) { rift.remap = remap; for (const d of rift.toned) d.texRemap = remap; }
     if (rift.statics) rift.statics.object.matrix.set(rift.base);
-    // THE REVEAL: the first clear sight of it, once a visit - the bell tolled a fourth higher, the window flaring
-    if (!rift.revealed && eye && t >= rift.revealAskAt && L.state === 'open') {
+    // THE REVEAL: the first clear sight of it, once a visit - the bell tolled a fourth higher, the window flaring. The
+    // Hollow's Rift alone (AUDIT SD V S2): the realm's way back stands behind every arrival - its toll rang the way home's
+    // bell on every step into the Hour, under the veil's own chime
+    if (!rift.hollow && !rift.revealed && eye && t >= rift.revealAskAt && L.state === 'open') {
       rift.revealAskAt = t + SD_REVEAL_ASK_MS;
       const dx = rift.at[0] - eye[0], dy = rift.at[1] + rift.cy - eye[1], dz = rift.at[2] - eye[2], dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
       if (dist < SD_REVEAL_M && dist > 1) {

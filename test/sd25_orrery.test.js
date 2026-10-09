@@ -301,7 +301,7 @@ test('SD-LOOK S10 THE RINGS IN MODE A: hung from the slot (tilts within 12-40 de
   assert.ok(Math.abs(Math.min(...hubY) - (SD_ORRERY_HUB.gemY - SD_ORRERY_HUB.gemDown)) < 1e-6, 'the gem\'s point its foot');
 });
 
-test('SD-LOOK S10 THE CONCORD: the banners stream (uploaded each frame of SD_BANNER.wind, then still in a new ripple), the rings swing flat and lock with ONE tock as the gem flares and its band runs out from the hub, then the bridge\'s twelve plates flip into place from the rim out and fold into the one bridge - each step a function of when the word was heard; a Concord that held before I came stands whole at once, silent (mutants: the tock twice; the wind unending; the first word choreographed; the plates from the far end)', () => {
+test('SD-LOOK S10 THE CONCORD: the banners stream (uploaded each frame of SD_BANNER.wind, then still in a new ripple), the rings swing flat and lock with ONE tock as the gem flares and its band runs out from the hub, then the bridge\'s twelve plates flip into place from the rim out and fold into the one bridge - each step a function of when the word was heard; a Concord that held before I came stands whole at once, silent (mutants: the tock twice; the wind unending; the first word choreographed; the plates from the far end; AUDIT SD V (L2): the bridge walkable before it is drawn)', () => {
   const o = orreryOf(1), ups = [], r = rig({ updates: ups });
   r.hall.frame(0.016, null, word(1, [...o.start]));
   const { band, plates, bridge, hub, banner } = r.hall.parts;
@@ -316,6 +316,7 @@ test('SD-LOOK S10 THE CONCORD: the banners stream (uploaded each frame of SD_BAN
   assert.equal(hub.texRemap, SD_HALL_REMAP.flare, 'the gem flares');
   assert.ok(!band.hidden && band.object.matrix[10] > 0.2 && band.object.matrix[10] < 1, 'its band on its way to the rim');
   assert.ok(plates.every((p) => p.hidden) && bridge.hidden, 'no plate before the rings lock');
+  assert.equal(r.hall.bridgeLaid, false, 'AUDIT SD V (L2): and no floor to walk out on while none is drawn');
   assert.ok(ups.length > 0, 'the banners stream');
   const mid = ups.at(-1);
   assert.ok(mid.some((v, k) => Math.abs(v - rest[Math.floor(k / 3)][k % 3]) > 0.01), 'moved off their frozen ripple');
@@ -324,6 +325,7 @@ test('SD-LOOK S10 THE CONCORD: the banners stream (uploaded each frame of SD_BAN
   at(SD_CONCORD_MS.rings + 10); at(SD_CONCORD_MS.rings + 40);
   assert.equal(tocks(), 1, 'one great tock as they lock');
   at(SD_CONCORD_MS.bridgeFrom + SD_BRIDGE_LAY_MS * 0.35);
+  assert.equal(r.hall.bridgeLaid, false, 'nor while it is still being laid');
   const shown = plates.map((p) => !p.hidden);
   assert.ok(shown[0] && !shown[SD_BRIDGE_PLATES.n - 1], 'from the rim out');
   assert.ok(shown.every((v, j) => j === 0 || !v || shown[j - 1]), 'each after the one before it');
@@ -331,6 +333,7 @@ test('SD-LOOK S10 THE CONCORD: the banners stream (uploaded each frame of SD_BAN
   assert.ok(Math.abs(det3(k0) - 1) < 1e-6, 'a plate flips, never mirrors');
   at(SD_CONCORD_MS.bridgeFrom + SD_BRIDGE_LAY_MS + 5);
   assert.ok(plates.every((p) => p.hidden) && !bridge.hidden, 'folded into the one bridge');
+  assert.equal(r.hall.bridgeLaid, true, 'laid: the edge opens onto it');
   assert.equal(hub.texRemap, SD_HALL_REMAP.gem[6], 'the gem whole at six');
   const count = ups.length;
   at(SD_BANNER.wind * 1000 + 50); at(SD_BANNER.wind * 1000 + 500); at(SD_BANNER.wind * 1000 + 900);
@@ -345,6 +348,7 @@ test('SD-LOOK S10 THE CONCORD: the banners stream (uploaded each frame of SD_BAN
   const ups2 = [], late = rig({ updates: ups2 });
   late.hall.frame(0.016, null, word(1, [...o.truth], { f: 5, ok: true }));
   assert.ok(late.hall.parts.plates.every((p) => p.hidden) && !late.hall.parts.bridge.hidden && !late.hall.parts.band.hidden, 'the bridge and the band whole');
+  assert.equal(late.hall.bridgeLaid, true, 'AUDIT SD V (L2): its floor open at once');
   assert.deepEqual([...late.hall.parts.band.object.matrix], [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
   assert.ok(late.hall.parts.rings.every((d) => Math.abs(d.object.matrix[5] - 1) < 1e-9), 'the rings flat');
   assert.equal(ups2.length, 1, 'the banners stood in their last ripple once');

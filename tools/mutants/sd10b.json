@@ -182,7 +182,7 @@
   {
     "name": "AUDIT-SD-C6-a-hand-drawn-at-its-start",
     "file": "src/scenes/sdHall.js",
-    "old": "{ shown[i] = want[i]; if (hands[i]) hands[i].object.matrix = handMatrix(i, shown[i]); }",
+    "old": "{ shown[i] = want[i]; if (hands[i]) handMatrix(i, shown[i], hands[i].object.matrix); }",
     "new": "{ shown[i] = want[i]; }",
     "tests": [
       "test/sd10b_audit.test.js"

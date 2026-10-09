@@ -174,6 +174,11 @@ export function sdAirWindGain(seconds) {
 let _heard = null;
 /** AUDIT SD IV (A5): the name the Hour's far events are played under (audio.js fadeFar lets them go with it). */
 export const SD_AIR_FAR = 'sdAir';
+/** AUDIT SD V (P3): the period's events, read once - whole over SD_SKY_PERIOD (every kind's slots divide it), so each
+ *  period of the clock plays them again; the frame plays from this list, nothing read or made (a read a frame made
+ *  ~2.9 KB a frame for the rare one that lands). */
+let _period = null;
+const periodEvents = () => (_period ??= Object.freeze(sdAirEvents(0, SD_SKY_PERIOD)));
 
 /**
  * The Hour's air on the engine: `frame(seconds, ear)` once a frame while I stand in the Hour (`seconds` its clock, `ear`
@@ -216,7 +221,13 @@ export function createSdAir(engine = defaultAudio) {
         }
         on = true;
         if (last != null && seconds > last && seconds - last <= AIR_BACKLOG_S) {
-          for (const e of sdAirEvents(last, seconds)) engine.play3d(e.clip, airSourceAt(ear, e.az, e.lift), e.volume, { refDistance: THUNDER_SOURCE_M, pitch: e.pitch, far: SD_AIR_FAR });
+          // AUDIT SD V (P3): the events in (last, seconds] off the period's list - this period's, and the next's past its
+          // turn (the backlog is shorter than the period: none twice)
+          const E = periodEvents(), P = SD_SKY_PERIOD, from = last - Math.floor(last / P) * P, to = from + (seconds - last);
+          for (let i = 0; i < E.length; i++) {
+            const e = E[i];
+            if ((e.t > from && e.t <= to) || (e.t + P > from && e.t + P <= to)) engine.play3d(e.clip, airSourceAt(ear, e.az, e.lift), e.volume, { refDistance: THUNDER_SOURCE_M, pitch: e.pitch, far: SD_AIR_FAR });
+          }
         }
       } catch { /* a sound is never the fight */ }
       last = seconds;

@@ -18,7 +18,7 @@
 //   THE BEAT'S DISSOLVE (buildBeatDissolve): the plate cut into its own texel-sized cells and kept by the ordered dither -
 //     a stage a share, swapped in as the draw's mesh while it goes and comes (the mesh program has no screen-door a dynamic
 //     draw can ask for: the dither is the plate's own pixels).
-//   THE DRIFT'S PENDULUMS (buildPendulum): two rods from the deck's eyelets up SD_PENDULUM.len to a gear, in the
+//   THE DRIFT'S PENDULUMS (buildPendulum): two rods from brackets on the deck's sides up SD_PENDULUM.len to a gear's yoke, in the
 //     pendulum's own frame (its pivot the origin); the scene turns it by asin(dx / len) - the rods lean with the law's
 //     own swing - while the deck keeps the law's pure translation (an 18 m pendulum rises 0.1 m at full swing).
 //   THE CRUMBLE'S CHUNKS (buildCrumbleChunks): its box split into four prisms along the art's own two main cracks
@@ -164,13 +164,17 @@ function bar(f, rec, a, b, s, cell) {
 const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 const norm = (v) => { const l = Math.hypot(...v) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
 
-/** THE DRIFT'S PENDULUM: its rods' length to the deck's top, how far into the deck they reach, their section and where
- *  they meet the deck and the gear (m, either side of its middle), the gear's radius, its teeth and its thickness. */
-export const SD_PENDULUM = Object.freeze({ len: 18, into: 0.3, rod: 0.07, foot: 1.2, head: 0.5, gear: 1.4, teeth: 16, gearD: 0.2 });
+/** THE DRIFT'S PENDULUM: its rods' length to the deck's top, how far under the top they meet its brackets, their section,
+ *  where they hang (m either side of its middle - at the gear's yoke and at the deck's side) and where each bracket meets
+ *  the deck, the gear's radius, its teeth and its thickness. AUDIT SD V (L3): the rods hang OUTSIDE the deck, clear of a
+ *  body standing at its edge (its capsule 0.35 m) up a body's height at the widest swing the law has (2 m, asin(2 / 18)) -
+ *  they stood 0.3 m in from its edges, through anyone there (the plan: "from the platform's x edges, never over the
+ *  landing"). */
+export const SD_PENDULUM = Object.freeze({ len: 18, into: 0.41, rod: 0.07, foot: 2.15, head: 2.15, eye: 1.3, gear: 1.4, teeth: 16, gearD: 0.2 });
 /** A pendulum's lean at a step's sideways offset `dx` from its rest (the law's stepAt): asin(dx / len) - turning +x up. */
 export const pendulumAngle = (dx) => Math.asin(Math.max(-1, Math.min(1, dx / SD_PENDULUM.len)));
 /** ONE PENDULUM, its own frame (its pivot the origin, the deck's rest SD_PENDULUM.len under it): the gear facing along z
- *  and its two rods down to the deck's eyelets. About 280 triangles; one mesh serves all eight. The lite tier (a phone):
+ *  and its two rods down beside the deck, bracketed to its sides, joined by a yoke at the gear. About 280 triangles; one mesh serves all eight. The lite tier (a phone):
  *  its gear without teeth. */
 export function buildPendulum({ teeth = true } = {}) {
   const f = faces(), P = SD_PENDULUM, rec = SD_STEPS_RECORD.parts, A = SD_PARTS_ATLAS;
@@ -186,7 +190,11 @@ export function buildPendulum({ teeth = true } = {}) {
     const b = ((i + 1) / n) * Math.PI * 2, R0 = i % 2 ? root : P.gear, R1 = i % 2 ? P.gear : root;
     if (teeth) f.quad(rec, p(b, R0, z0), p(b, R1, z0), p(b, R1, z1), p(b, R0, z1), [r[0], r[1]], [r[2], r[1]], [r[2], r[3]], [r[0], r[3]]);   // a tooth's flank
   }
-  for (const s of [-1, 1]) bar(f, rec, [s * P.head, 0, 0], [s * P.foot, -P.len - P.into, 0], P.rod, A.rod);
+  for (const s of [-1, 1]) {
+    bar(f, rec, [s * P.head, 0, 0], [s * P.foot, -P.len - P.into, 0], P.rod, A.rod);   // a rod, down beside the deck
+    bar(f, rec, [s * P.eye, -P.len - P.into, 0], [s * P.foot, -P.len - P.into, 0], P.rod, A.rod);   // its bracket, out of the deck's side
+  }
+  bar(f, rec, [-P.head, 0, 0], [P.head, 0, 0], P.rod, A.rod);   // the yoke through the gear's hub
   return packRealmFaces(f);
 }
 

@@ -107,10 +107,11 @@ export const SD_HAND_FLASH_OUT = 1.2;
 /**
  * The Hour's blows seen on this screen. `link` the fight's (net/sdFightLink.js), `feet()` mine in the dungeon's frame
  * (null out of the Hour), `shake(k)` the camera's door, `arrived()` (SD-LOOK S6) told as my feet first stand on the
- * Threshold - the way back's ring turns once.
- * @param {{ link: any, feet?: () => (number[] | null), shake?: (k: number) => void, arrived?: () => void }} deps
+ * Threshold - the way back's ring turns once - and `ready()` whether the arrival can be seen yet (AUDIT SD V S5: the veil
+ * opened - the exhale was spent under it).
+ * @param {{ link: any, feet?: () => (number[] | null), shake?: (k: number) => void, arrived?: () => void, ready?: () => boolean }} deps
  */
-export function createSdFx({ link, feet = () => null, shake = () => {}, arrived = () => {} }) {
+export function createSdFx({ link, feet = () => null, shake = () => {}, arrived = () => {}, ready = () => true }) {
   /** @type {Array<{ at: number[], at0: number, t: number, kind: any, color: ReadonlyArray<number>, floor: number, edge: ReadonlyArray<number> }>} */
   const bursts = [];
   let k = null, pass = null, passTried = false, flashAt = -Infinity, wasY = NaN, wasAt = -Infinity, here = false;
@@ -208,9 +209,11 @@ export function createSdFx({ link, feet = () => null, shake = () => {}, arrived 
         const rx = f[0] - SD_REALM_ORIGIN[0], ry = f[1] - SD_REALM_ORIGIN[1], rz = f[2] - SD_REALM_ORIGIN[2], c = t - wasAt < SD_REWIND_SEEN.gap ? sdCastBackSeen(wasY, rx, ry, rz) : -1;   // the frame before, and only just before
         if (c >= 0) rewound(f, c, t);
         // SD-LOOK S6: my first frame in the Hour, on the Threshold - the way back exhales (once an arrival, never a late
-        // frame: `here` holds until I leave)
-        if (!here && Number.isFinite(t) && Math.hypot(rx - SD_THRESHOLD.x, rz - SD_THRESHOLD.z) < SD_THRESHOLD.r) { exhaled(t); arrived(); }
-        here = true;
+        // frame: `here` holds until I leave). AUDIT SD V (S5): once the arrival can be seen - the veil open - never under it
+        if (!here && ready()) {
+          if (Number.isFinite(t) && Math.hypot(rx - SD_THRESHOLD.x, rz - SD_THRESHOLD.z) < SD_THRESHOLD.r) { exhaled(t); arrived(); }
+          here = true;
+        }
         wasY = ry; wasAt = Number.isFinite(t) ? t : -Infinity;
       } else { wasY = NaN; here = false; }
       if (!s || !(s.fi > 0) || !Number.isFinite(t)) { k = null; return; }
@@ -307,6 +310,9 @@ export function createSdFx({ link, feet = () => null, shake = () => {}, arrived 
     },
     /** Out of the Hour: forgotten. */
     leave() { k = null; bursts.length = 0; flashAt = -Infinity; here = false; },
+    /** AUDIT SD V (L5): a frame out of the Hour, whatever was heard there - the next arrival exhales (the latch fell only
+     *  with a fight's leave, so an Hour whose arena nobody entered kept it for the session). */
+    away() { here = false; wasY = NaN; },
     /** SD-LOOK S9 (the lab, src/tools/abyssLab.js): the rewind on checkpoint `c` at `t` (the fight's clock), my feet on its
      *  landing. */
     rewind(c, t) { const C = SD_CHECKPOINTS[c]; if (C) rewound(realmToDungeon(C.x, C.y, C.z), c, t); },

@@ -91,7 +91,7 @@ const RESET = SD_BLOWS.reset, PULSE = SD_BLOWS.pulse, END = SD_BLOWS.end;
  */
 export function sdArenaGlowAt(s, t, memo) {
   memo.flood = -1; memo.floodK = 0; memo.reset = -1; memo.end = 0;
-  if (!s || s.fell) return memo;
+  if (!s || !(s.fi > 0) || s.fell) return memo;   // AUDIT SD V (S1): no fight heard (SD_FIGHT_EMPTY's ends 0) is no End
   const clk = s.clk;
   if (clk && clk.a === PULSE.id && clk.at > (memo.pulseAt ?? -Infinity)) memo.pulseAt = clk.at;   // its landing, before or after: the age says
   const age = (t - (memo.pulseAt ?? -Infinity)) / 1000;
@@ -114,7 +114,7 @@ export function sdArenaGlowAt(s, t, memo) {
  */
 export function sdHourClockOf(s, t, out) {
   out[0] = SD_SKY_MODE.none; out[1] = 0; out[2] = 0; out[3] = 0;
-  if (!s || s.fell || !(t >= s.op)) return out;
+  if (!s || !(s.fi > 0) || s.fell || !(t >= s.op)) return out;   // AUDIT SD V (S1): no fight heard is no End - the sky red over every fresh Hour
   const atk = s.rem?.atk;
   if (s.lost || s.clk?.a === END.id || (Number.isFinite(s.ends) && t >= s.ends - END.windup)) out[0] = SD_SKY_MODE.end;
   else if (atk && atk.a === RESET.id && t < atk.at && !(s.su > t)) { out[0] = SD_SKY_MODE.reset; out[1] = Math.max(0, Math.min(1, (t - (atk.at - RESET.windup)) / RESET.windup)); }

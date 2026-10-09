@@ -112,8 +112,8 @@
   {
     "name": "SD10-the-way-home-unstood",
     "file": "src/scenes/dungeonContext.js",
-    "old": "if (home && !sdEnd.ret) sdEnd.standReturn(home, opts.sdHomeAge?.() ?? Infinity, { dynamicDraws });",
-    "new": "if (home && !sdEnd.ret) void home;",
+    "old": "if (home && !sdEnd.hasRet) sdEnd.standReturn(home, opts.sdHomeAge?.() ?? Infinity, { dynamicDraws });",
+    "new": "if (home && !sdEnd.hasRet) void home;",
     "tests": [
       "test/sd10_collapse.test.js"
     ]
@@ -121,7 +121,7 @@
   {
     "name": "SD10-never-taken-down",
     "file": "src/scenes/dungeonContext.js",
-    "old": "else if (!home && sdEnd.ret) sdEnd.returnOut(); }",
+    "old": "else if (!home && sdEnd.hasRet) sdEnd.returnOut(); }",
     "new": "}",
     "tests": [
       "test/sd10_collapse.test.js"
@@ -130,8 +130,8 @@
   {
     "name": "SD10-the-hollows-check-in-the-hour",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    else if (sdEnd.ret && t >= _sdEndCheckAt) {",
-    "new": "    if (sdEnd.ret && t >= _sdEndCheckAt) {",
+    "old": "    else if (sdEnd.hasRet && t >= _sdEndCheckAt) {",
+    "new": "    if (sdEnd.hasRet && t >= _sdEndCheckAt) {",
     "tests": [
       "test/sd10_collapse.test.js"
     ]

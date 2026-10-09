@@ -275,7 +275,8 @@ great clock-face of stars behind the arena whose hands run backwards. The realm'
 the Deadlands' law) so every screen shows the same moment.
 
 The realm refuses what the Court refuses: rest, save, map, a Mark and a Recall, regeneration (`courtRules`) - and
-Levitate (SD7b: a Levitate running lifts nothing in the Hour, as in a siege's room; its Steps are walked, not flown).
+Levitate (SD7b: a Levitate running lifts nothing in the Hour, as in a siege's room; its Steps are walked, not flown -
+held on both arms since AUDIT SD V, SD27 L1: the dungeon arm, which draws the Hour, wrote its flag past the ward).
 And as the court does (GATE-ALONE), it takes no companion through the Rift: the crew's hands and the sworn wait outside
 the Hour, and come back to the player's side out of it (SD-ALONE, section 16).
 
@@ -689,8 +690,9 @@ gate's, a battle's, an arena's) write their own socket and never run in `sd:<s>`
 | SD-REACH, SD-LAND | the Rift where a walk reaches; never out in the Hour's sky |
 | SD-SKY | the way out of the Hour, and the find's door, in the street's own frame |
 | SD-HELLO | a socket says nothing past its hello until the realm welcomes it (the page's half) |
-| SD25 (SD-LOOK) | the look rebuilt, the lore kept (`Super-Dungeons-Look.md`): the flash law, the grade and the floors, the painted sky, the Rift and the Return, the Hour's own veil, the way back's window, the arena's reads, the Brass Remnant's body |
+| SD25 (SD-LOOK) | the look rebuilt, the lore kept (`Super-Dungeons-Look.md`): the flash law, the grade and the floors, the painted sky, the Rift and the Return, the Hour's own veil, the way back's window, the arena's reads, the Brass Remnant's body, the Unmoored Steps, the Orrery of Endings, the hang and the Works |
 | SD26 | AUDIT SD IV |
+| SD27 | AUDIT SD V (cut short) |
 
 Each slice records below what it shipped, what it pins and what it leaves.
 
@@ -3114,15 +3116,16 @@ Return where it stands.
 | S9 | THE UNMOORED STEPS (`world/sdStepsModel.js`, `world/sdStepsArt.js`, `scenes/sdSteps.js`, `render/sdStepsPass.js`): an atlas a kind (records 60-78), each step one bevelled draw inside its collider box with a gold line under its rim; the Drift's brass deck on two pendulum rods up 18 m to a gear, turned by the law's own swing; the risers on racks; the Beat's clock-plate in twelve frames (its hand back to XII, only the ticks ahead lit, ember from XII to II) with a falter frame that dims its light under the flash ceiling, and its dissolve as Bayer-kept cells; the Crumble's three crack stages under a foot, its grit, its four chunks falling at the law's gravity and flying back to land as the law brings it home; the vane swinging to the coming gust a second early (`gustAt`); a waystone on each checkpoint, the cast-back's lit; the ghosts; the rewind burst (`SD_FX_REWIND` in `scenes/sdFx.js`). The phones' tier: two chunks, toothless gears. Not built: the motes' wind (`uWind`) |
 | S10 | THE ORRERY OF ENDINGS (`world/sdHall.js`, `world/sdHallArt.js`, `scenes/sdHall.js`, `world/sdOrreryModel.js`): heraldic stones within 5 cm of the law's solids (plinth, chamfered shaft, relief slab, a dial in a bezel, a spade hand, cast levers); crown gears turning 2:1 on their own hands (`crownGearMatrix`); bezels swapped gold, cold and ember (a refused turn); frozen banners on the stones' backs that stream at the Concord; brass lecterns with the plaques' ledgers; the dial as geometry, its lit plates in soul-crystal; 48 fray tabs, one flipped a turn, pulsing at 2 Hz in the last eight, blazing at the snap; one 256 atlas for the hall (records 5-20 as before); six rings in mode A (Mac's ruling - they never move on a turn nor read a stone's hour), shivering late in the fray, a turn back on the snap, flat at the Concord; the gem's light by its count; the Concord's sequence and its bridge laid in twelve plates. Not built: the gear's sparks, the hall's dust, the lamps halved (each in a file the slice did not own) |
 | S11 | THE HANG AND THE WORKS (`world/sdIslandModel.js`, `world/sdWorksModel.js`, `world/sdHangArt.js`, `scenes/sdHang.js` - records 80-81): under every island a 2.2 m skirt and three to five jagged strata spires (seeded, bent, their strata level across all, each inner ring a ledge for the furnace to catch), `realmIsland`'s root cone become a 0.5 m torn lip (`SD_LIP`); gear rims half-sunk in the spires (`layGear`, shared with the Works); chains of alternating links swinging on the escapement tick about their anchors' line - a mesh an island, not a stage (the Steps' three islands share no anchor line); twelve far islands turning once a sky period, backwards, 159-482 m from every point of the course and below the clock-face's seen edge (tops at -54 to -104 m, not +-60: a set turning whole at a positive height would cross the face); THE WORKS - four blackened brass gears (96/48/72/64 teeth, 41-81 m) in two meshed pairs on two layers under the course's middle, a tooth a tick, neighbours turning opposite ways with their teeth interleaved at every moment, dim glints on the tips; the sky's furnace widened (`render/sdSky.js` `SD_FURNACE`, the nadir glow from 34 degrees down) so the Works stand black against it. Nothing in the law: every root, rim and chain at least 0.5 m under its island's floor and inside its disc; nothing within 0.5 m above any floor the law knows. 15 draws, ~17.3k triangles (12 and ~12.2k on phones - one spire a root, no far islands, two gears, still chains); a frame writes 11 matrices in place. On the lane the undersides read as silhouettes (its ambient on dark stone). Not built: the pipes as geometry, the stage cull (the draws carry their `stage` for it) |
-| S9-S11 | not built in this pull request: the Steps, the Orrery, the hang and the Works |
 
 THE LAB: `abyss.html` (`src/tools/abyssLab.js`, `tools/abyssLabProbe.mjs`) stands the Hour, the Hollow's Rift and Return
 with no game data, through the game's own renderer: every view, the Rift's states (`?rift=`), the sky's fight words
 (`?fight=`, `?collapse=`), the veil at any moment (`?veil=`), the arena's reads (`?fight=pulse|reset|end|stomp|held`), an
 exact eye in the realm's frame (`?rx=`).
 
-Pins: `test/sd25_look.test.js` (S0-S8, every slice's law run from its own code - the shaders through `test/glsl.mjs`);
-`tools/mutants/sd25_look.json` (all dead). The pins each slice moved are marked PIN MOVED where they stand (the hosts'
+Pins: `test/sd25_look.test.js` (S0-S6, every slice's law run from its own code - the shaders through `test/glsl.mjs`),
+`test/sd25_arena.test.js` (S7), `test/sd25_remnant.test.js` (S8), `test/sd25_steps.test.js` (S9),
+`test/sd25_orrery.test.js` (S10), `test/sd25_hang.test.js` (S11); `tools/mutants/sd25_look.json`, `sd25_arena.json`,
+`sd25_remnant.json`, `sd25_steps.json`, `sd25_orrery.json`, `sd25_hang.json` (all dead). The pins each slice moved are marked PIN MOVED where they stand (the hosts'
 foreign-pass counts, the veil's looks, the Rift's stand and art, the sky's paint).
 
 THE FOUR HOSTS: `scenes/world.js` WIRED (the sky's paint and fetch, the Rift's pass and halos, the veil's looks and aim);
@@ -3195,4 +3198,39 @@ mutant record a fix moved was re-aimed by content and run again (all dead).
 THE FOUR HOSTS: `scenes/world.js` WIRED (the Mark, the steps before the door, the scan, the voice's window, the card, the
 powers' sounds, the cities' rows); `scenes/worldModes.js` WIRED (the Hour's light in the late slot, its fog and trilight
 in place, the doors' seam); `scenes/dungeonContext.js` WIRED (the end stood as the level is built, out of the water);
+`scenes/exterior.js` FLAGGED - offline, no Hour.
+
+### SD27 - AUDIT SD V (the arc audited a fifth time, cut short) - 2026-10-09
+
+Mac, 2026-10-09: *"let's audit everything"* - the whole Abyss Dungeon, eight lenses, the fixes into SD-LOOK's pull
+request. Cut short (*"Let's cut this short"*) after six lenses had reported 55 findings unverified; what was fixed is
+what two or more lenses met and the highs, each reproduced before it was fixed - and Mac's own ask beside them, *"disable
+levitation inside the rift"*. Client only. Ids as the code tags them (`AUDIT SD V (<id>)`).
+
+| | what was wrong | now |
+|---|---|---|
+| L1 | a Levitate lifted a body over the Steps and the void: SD7b's ward reached the street's flags alone, and the dungeon arm draws the Hour (`dungeonCtx.playerLevitating`) | the ward holds on both arms (`levitateWarded`); the staff's /fly never warded |
+| L2 | the Concord's edge opened onto the bridge with the word, 1.2 s before S10 laid its plates: a body walked out over nothing | the edge waits for the bridge drawn (`sdHall.bridgeLaid`, the world host's `sdConcordHere`); a Concord that held before I came, at once |
+| L3 | the Drift's pendulum rods stood 0.3 m in from the deck's edges, through anyone standing there | the rods hang beside the deck on brackets, clear of a body at its edge up a body's height at the widest swing the law has |
+| S1 | a fresh Hour's sky, rim, fissures and dials read the empty fight's `ends` 0 as its End: all red while the Remnant waited | no fight heard is no End (`sdHourClockOf`, `sdArenaGlowAt`) |
+| S2 | the way back revealed itself on every arrival, tolling the way home's bell under the veil's chime | the Hollow's Rift alone has a reveal (`stand`'s `hollow`) |
+| R2 | the way back stood with no probe: its floor light reached 8 m about it, 5 m of it over the void behind the Threshold | its probe the Threshold's rim (`SD_THRESHOLD_RIM`) |
+| S5, L5 | the arrival exhale was spent under the veil, and its latch fell only with a fight's leave - one exhale a session where no arena was entered | it waits for the veil to open (`ready`); a frame out of the Hour frees it (`away`) |
+| P1 | the end's look, halos and lights, `riftLook`'s open record and the dungeon host's word made ~1.3 KB a frame | kept records filled; the open looks made once an hour of studs; the host asks the look door alone (`superRiftLook`) |
+| P2 | the Orrery's turning hands made ~9 KB a frame | into their kept matrices (`handMatrix`'s `out`) |
+| P3 | the Hour's air read its events a frame at a time, ~2.9 KB a frame | the period's events read once and played from that list |
+| P4, P6 | the sky map's key (two joins and a closure) and the halo pass's corners and defaults made 0.3-0.8 KB a frame | numbers compared in place; made once |
+| D1 | SD25's record said S9-S11 unbuilt and pinned one file of six | its rows, its index and its pins brought to what shipped |
+
+Measured as L2 F9 measures (a child, a 64 MB young space, the least of six windows): every path above under 2 bytes a
+frame (the air 0.3). Not fixed (the cut): the fight bar's and the voice's ~2.4 KB a frame, a hidden tab's Concord
+replayed whole on return, and the other unverified findings kept with the audit's notes.
+
+Pins: `test/sd27_audit.test.js`; `tools/mutants/sd27_audit.json` (23, all dead - with the moved killers in
+`sd25_look`, `sd25_orrery` and `sd25_steps`). The pins each fix moved are marked PIN MOVED (AUDIT SD V) where they stand,
+and the mutant records a fix moved were re-aimed by content and run again (all dead).
+
+THE FOUR HOSTS: `scenes/world.js` WIRED (the ward, the Concord's edge, the exhale's veil and its away, the look door,
+the sky's look kept); `scenes/worldModes.js` WIRED (unchanged: it reads `dungeonCtx.playerLevitating`);
+`scenes/dungeonContext.js` WIRED (the ward, the way back's probe, the bridge's word, the look door);
 `scenes/exterior.js` FLAGGED - offline, no Hour.

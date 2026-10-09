@@ -205,7 +205,7 @@ test('SD5a the dungeon host by source: the Hour\'s refusals beside the court\'s 
   assert.match(D, /let automapRec = isGateArena\(dfLocation\) \|\| isArenaFloor\(dfLocation\) \|\| _sdRealm \? detachedAutomapRecord\(\)/);
   assert.match(D, /cold: _superTier \|\| _sdRealm,/);
   assert.match(D, /: _sdRealm \? createSdEnd\(\{ renderer, audio, riftTo: SD_REALM_TEXT\.wayBack, onRift: \(\) => opts\.sdWayBack\?\.\(\), onReturn: \(\) => opts\.sdWayHome\?\.\(\), retTitle: SD_HOME_TEXT\.title, retTo: SD_HOME_TEXT\.to, clock: sdEndClock \}\) : null;/);   // SD10: and its way home (PIN MOVED)
-  assert.match(D, /if \(_sdRealm\) \{ sdEnd\.stand\(\{ rift: \{ at: realmToDungeon\(0, 0, SD_WAY_BACK_Z\), size: SD_WAY_BACK_SIZE \}, retAt: null, dynamicDraws, hollow: true \}\); return; \}/);   // SD-LOOK S6 (PIN MOVED): seen from the Hour's side, the Hollow behind it
+  assert.match(D, /if \(_sdRealm\) \{ sdEnd\.stand\(\{ rift: \{ at: realmToDungeon\(0, 0, SD_WAY_BACK_Z\), size: SD_WAY_BACK_SIZE \}, retAt: null, dynamicDraws, hollow: true, probe: SD_THRESHOLD_RIM \}\); return; \}/);   // SD-LOOK S6 (PIN MOVED): seen from the Hour's side, the Hollow behind it   // PIN MOVED (AUDIT SD V R2): its floor light's probe the Threshold's rim
   assert.match(D, /sdRiftLanding\(\) \{\n\s+if \(!_superTier \|\| !sdEnd\) return null;\n\s+if \(!_sdEndAsked\) \{ _sdEndAsked = true; standSdEnd\(\); \}\n\s+return _sdLanding \? \[_sdLanding\[0\], _sdLanding\[1\], _sdLanding\[2\]\] : null;/);
   assert.ok(SD_WAY_BACK_Z < 0 && Math.abs(SD_WAY_BACK_Z) < SD_THRESHOLD.r && SD_WAY_BACK_SIZE < 2 * SD_THRESHOLD.r, 'at the Threshold\'s back, on it');
   assert.deepEqual(SD_REALM_TEXT, {

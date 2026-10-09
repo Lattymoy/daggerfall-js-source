@@ -64,7 +64,7 @@ import { SD_ARENA_CENTRE, SD_TELEGRAPH_FLOOR } from '../scenes/sdRemnantBlows.js
 import { SD_BLOWS, SD_REM_START, SD_ECHO_SPOTS } from '../net/sdRemnant.js';
 import { SD_FIGHT_EMPTY } from '../net/sdFightLink.js';
 import { veilAt, VEIL_OPEN_S } from '../render/gateVeil.js';
-import { buildRealmModel, realmLighting, realmLightsWith, realmColliderTris, packRealmFaces, SD_REALM_ARCHIVE, SD_REALM_BRASS_RECORD, SD_REALM_FOG, SD_WAY_BACK_Z, SD_WAY_BACK_SIZE, SD_ARRIVE_Z } from '../world/sdRealm.js';
+import { buildRealmModel, realmLighting, realmLightsWith, realmColliderTris, packRealmFaces, SD_REALM_ARCHIVE, SD_REALM_BRASS_RECORD, SD_REALM_FOG, SD_WAY_BACK_Z, SD_WAY_BACK_SIZE, SD_ARRIVE_Z, SD_THRESHOLD_RIM } from '../world/sdRealm.js';
 import { realmArt } from '../world/sdRealmArt.js';
 import { faces } from '../world/gateModel.js';
 import { createSdHall, sdStoneKey, SD_CONCORD_MS, SD_BRIDGE_LAY_MS } from '../scenes/sdHall.js';
@@ -233,7 +233,7 @@ const stompWall = new SdStompWallRenderer(gl), _walls = sdStompWallRecords(), HE
 const pillarPass = new SdPillarPassRenderer(gl), _pillarLook = sdPillarLook(), _labDim = new Float64Array(1), telegraph = new GateTelegraphRenderer(gl);   // SD-LOOK S7
 const ARENA_MODEL = (() => { const m = identity(), c = realmToDungeon(SD_ARENA.x, 0, SD_ARENA.z); m[12] = c[0]; m[13] = c[1]; m[14] = c[2]; return m; })();
 const wayBack = createSdEnd({ renderer, riftTo: 'To the Abyss Dungeon', clock: () => clock, now: () => clock * 1000 });   // the lab's clock: a still frame holds the way home's rise
-wayBack.stand({ rift: { at: realmToDungeon(0, 0, SD_WAY_BACK_Z), size: SD_WAY_BACK_SIZE }, retAt: null, dynamicDraws, hollow: !params.has('nohollow') });
+wayBack.stand({ rift: { at: realmToDungeon(0, 0, SD_WAY_BACK_Z), size: SD_WAY_BACK_SIZE }, retAt: null, dynamicDraws, hollow: !params.has('nohollow'), probe: SD_THRESHOLD_RIM });   // AUDIT SD V (R2): as the dungeon host stands it
 // ?fight=fell&age=<s since it began to rise>: the way home assembling where the Remnant fell (scenes/sdEnd.js standReturn)
 if (params.get('fight') === 'fell') wayBack.standReturn(realmToDungeon(SD_ARENA.x, 0, SD_ARENA.z - 8), Number(params.get('age') ?? 3) * 1000, { dynamicDraws });
 if (params.has('arrive')) { const at = (clock - Number(params.get('arrive') || 0)) * 1000; labFx.exhale(at); wayBack.pulse('exhale', at); }   // SD-LOOK S6

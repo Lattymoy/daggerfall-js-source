@@ -616,6 +616,7 @@ test('AUDIT SD II L2 F17: THE HALL\'S WORD FORGOTTEN OUT OF THE REALM, run from 
     sdBeats: { frame: () => null, leave() {} }, titleCardModel: () => null, drawGateGround() {}, drawSdTitleCard() {},
     sdMarksCardModel: () => null, sdMarksOf: () => null, drawGateMarksCard() {}, performance: { now: () => 0 },   // SD18b (PIN MOVED): the Hour's marks card
     gateVeil: null,   // AUDIT SD III (T18, PIN MOVED): the veil the Hour's readouts wait under - none here
+    sdFx: null,   // AUDIT SD V (L5, PIN MOVED): the fight's frame tells the blows' sparks every frame out of the Hour
   };
   const h = new Function(...Object.keys(env), `let _sdHall = null, _sdFightHeld = false, _sdBarUp = false, _sdGroundUp = false, _sdCardUp = false, _sdMarksSince = null, _sdMarksUp = false, _sdPassesWarm = true;\n${text}\nreturn { sdHallHeard, sdFightFrame, sdHallWord, sdConcordHere };`)(...Object.values(env));   // AUDIT SD III (V13, PIN MOVED): the passes already warm
   const word = { k: 'pz', s: 3, st: [1, 2, 3, 4, 5, 6], f: 0, lit: 6, ok: true };

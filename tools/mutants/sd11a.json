@@ -2,8 +2,8 @@
   {
     "name": "SD11A-L2F1-the-hand-a-mirror",
     "file": "src/world/sdHall.js",
-    "old": "  const x = [y[1] * n[2] - y[2] * n[1], y[2] * n[0] - y[0] * n[2], y[0] * n[1] - y[1] * n[0]];",
-    "new": "  const x = [n[1] * y[2] - n[2] * y[1], n[2] * y[0] - n[0] * y[2], n[0] * y[1] - n[1] * y[0]];",
+    "old": "  const x0 = y1 * n[2] - y2 * n[1], x1 = y2 * n[0] - y0 * n[2], x2 = y0 * n[1] - y1 * n[0];   // its own +x: y x n",
+    "new": "  const x0 = n[1] * y2 - n[2] * y1, x1 = n[2] * y0 - n[0] * y2, x2 = n[0] * y1 - n[1] * y0;   // its own +x: y x n",
     "tests": [
       "test/sd11a_scenes.test.js"
     ],

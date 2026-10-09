@@ -839,7 +839,7 @@ import { createSdFx, SD_FX_EXHALE, SD_EXHALE_AT } from '../src/scenes/sdFx.js';
 import { SD_EXHALE_MS } from '../src/scenes/sdEnd.js';
 import { realmToDungeon as r2d, SD_ARENA as ARENA } from '../src/net/sdBrain.js';
 import { SD_WAY_BACK_Z as WB_Z } from '../src/world/sdRealm.js';
-test('SD-LOOK THE ARRIVAL EXHALE (S6): my first frame in the Hour on the Threshold breathes brass sparks from the way back\'s face (resting on the Threshold, falling past its rim) and turns its ring once, forward, eased over SD_EXHALE_MS - once an arrival, never while I stay, again after I leave and come back, never for feet first seen elsewhere; the hosts carry it (mutants: never exhaling; every frame; the ring never turning; the hosts unwired)', () => {
+test('SD-LOOK THE ARRIVAL EXHALE (S6): my first frame in the Hour on the Threshold breathes brass sparks from the way back\'s face (resting on the Threshold, falling past its rim) and turns its ring once, forward, eased over SD_EXHALE_MS - once an arrival, never while I stay, again after I leave and come back, never for feet first seen elsewhere; the hosts carry it; never under the veil, and after any frame out of the Hour (AUDIT SD V S5, L5) (mutants: never exhaling; every frame; the ring never turning; the hosts unwired; under the veil; the latch kept)', () => {
   let t = 10_000, f = null, told = 0;
   const fx = createSdFx({ link: { state: () => null, now: () => t }, feet: () => f, arrived: () => { told++; } });
   const exhales = () => fx.bursts(t + 1).filter((b) => b.kind === SD_FX_EXHALE);
@@ -857,6 +857,17 @@ test('SD-LOOK THE ARRIVAL EXHALE (S6): my first frame in the Hour on the Thresho
   assert.equal(told, 2, 'again after I leave and come back');
   f = null; fx.frame(); f = r2d(ARENA.x, 0, ARENA.z); t += 16; fx.frame();
   assert.equal(told, 2, 'never for feet first seen elsewhere');
+  // AUDIT SD V (S5, L5): never under the veil - it waits for the veil to open; and a frame out of the Hour (away) is
+  // enough for the next arrival, whatever the fight heard
+  let veil = true, told2 = 0, f2 = null, t2 = 50_000;
+  const fx2 = createSdFx({ link: { state: () => null, now: () => t2 }, feet: () => f2, arrived: () => { told2++; }, ready: () => !veil });
+  f2 = r2d(0, 0, 0); fx2.frame(); t2 += 16; fx2.frame();
+  assert.equal(told2, 0, 'not while the veil is up');
+  veil = false; t2 += 16; fx2.frame();
+  assert.equal(told2, 1, 'as it opens');
+  t2 += 16; fx2.frame();
+  fx2.away(); f2 = r2d(0, 0, 0); t2 += 16; fx2.frame();
+  assert.equal(told2, 2, 'the next arrival, after a frame away');
   // the ring: one whole turn forward over SD_EXHALE_MS
   let ms = 50_000;
   const end = createSdEnd({ renderer: { createMesh: (m) => ({ m }), destroyMesh() {}, uploadTexture() {}, uploadEmissionTexture() {} }, now: () => ms, clock: () => ms / 1000 });

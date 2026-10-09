@@ -76,8 +76,8 @@
   {
     "name": "SD5B-the-clock-handed-unwrapped",
     "file": "src/render/sdSky.js",
-    "old": "    gl.uniform1f(U.uTime, sdSkyClock(seconds));\n    gl.uniform3fv(U.uHaze, fog?.color ?? [0.2, 0.15, 0.07]);",
-    "new": "    gl.uniform1f(U.uTime, seconds);\n    gl.uniform3fv(U.uHaze, fog?.color ?? [0.2, 0.15, 0.07]);",
+    "old": "    gl.uniform1f(U.uTime, sdSkyClock(seconds));\n    gl.uniform3fv(U.uHaze, fog?.color ?? NO_HAZE);",
+    "new": "    gl.uniform1f(U.uTime, seconds);\n    gl.uniform3fv(U.uHaze, fog?.color ?? NO_HAZE);",
     "tests": [
       "test/sd5b_sky.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "SD5B-the-haze-not-the-frame's",
     "file": "src/render/sdSky.js",
-    "old": "    gl.uniform3fv(U.uHaze, fog?.color ?? [0.2, 0.15, 0.07]);",
-    "new": "    gl.uniform3fv(U.uHaze, [0.2, 0.15, 0.07]);",
+    "old": "    gl.uniform3fv(U.uHaze, fog?.color ?? NO_HAZE);",
+    "new": "    gl.uniform3fv(U.uHaze, NO_HAZE);",
     "tests": [
       "test/sd5b_sky.test.js"
     ]

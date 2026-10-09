@@ -574,7 +574,7 @@ function fightHost() {
     sdSpoilsBurst: { leave: () => log.push('floor.leave'), frame: () => log.push('floor.frame') }, saveSoon: { changed: () => log.push('save') },
     sdBlows: { leave: () => log.push('blows.leave'), frame: () => log.push('blows.frame') },
     sdRemVoice: { leave: () => log.push('voice.leave'), frame: () => log.push('voice.frame') },   // SD14a (PIN MOVED): its voice beside its blows
-    sdFx: { leave: () => log.push('fx.leave'), frame: () => log.push('fx.frame') },   // SD16 (PIN MOVED): its sparks beside its voice
+    sdFx: { leave: () => log.push('fx.leave'), frame: () => log.push('fx.frame'), away() {} },   // SD16 (PIN MOVED): its sparks beside its voice; AUDIT SD V (L5, PIN MOVED): told every frame out of the Hour
     sdDungeonToRealm: () => [0, 0, 0], player: { pos: [0, 0, 0] }, sdBarNear: () => false, remnantBarModel: () => null,
     drawGateBossBar: () => log.push('bar'), gamePaused: () => false, townTalk: {},
     // SD15 (PIN MOVED): the arena read beside the bar - nothing to read in an empty fight

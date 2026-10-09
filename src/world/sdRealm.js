@@ -47,6 +47,16 @@ export const SD_ARRIVE_Z = 1;
  *  is the Hollow's own art - scenes/sdEnd.js). */
 export const SD_WAY_BACK_Z = -5;
 export const SD_WAY_BACK_SIZE = 5;
+/** AUDIT SD V (R2): THE THRESHOLD'S RIM as the way back's floor-light probe (scenes/sdEnd.js `stand`'s `probe`) - a level
+ *  ray's distance, from inside the island, to its edge, never past the way back's own default reach (1.6 its size): the
+ *  realm's way back stood with no probe lit eight metres about it, five of them over the void behind the island. */
+export const SD_THRESHOLD_RIM = Object.freeze({
+  ray(o, d) {
+    const c = realmToDungeon(SD_THRESHOLD.x, 0, SD_THRESHOLD.z), ox = o[0] - c[0], oz = o[2] - c[2], b = ox * d[0] + oz * d[2];
+    const q = b * b - (ox * ox + oz * oz - SD_THRESHOLD.r * SD_THRESHOLD.r);
+    return q < 0 ? 0 : Math.min(1.6 * SD_WAY_BACK_SIZE, Math.max(0, -b + Math.sqrt(q)));
+  },
+});
 /** The islands: their discs' sides, how far their roots hang into the void, the rims' brass lip. SD-LOOK S11: the island's
  *  own lip - its torn edge, SD_LIP down from its floor - the rest of the root the hang's (world/sdIslandModel.js: the
  *  skirt, the spires, SD_ROOT_DEPTH a main spire at the Threshold's size). */

@@ -156,6 +156,7 @@ export function createSdHall({ renderer = null, audio = null, s, now = () => per
    *  flash and dim; the banners' kept arrays for the wind. */
   const tabs = o?.fray ?? SD_FRAY_MAX, hang = ringHang(s), pose = new Float64Array(2), ringState = new Float64Array(4);
   let frayWarn = false, snapAt = -Infinity, concordAt = -Infinity, concordDone = true, tocked = true, bannerLive = false, bannerKey = -1;
+  let laid = false;   // AUDIT SD V (L2): the bridge drawn whole - the edge opens onto it then, never before (world.js sdConcordHere)
   let pressedStone = -1, pressedAt = -Infinity, flashUntil = -Infinity, dimUntil = -Infinity;
   const emberUntil = SD_STONES.map(() => -Infinity);
   const bannerPos = new Float32Array(SD_BANNER_VERTS * 3), bannerNrm = new Float32Array(SD_BANNER_VERTS * 3);
@@ -190,7 +191,7 @@ export function createSdHall({ renderer = null, audio = null, s, now = () => per
   const poseGear = (i) => { if (gears[i]) crownGearMatrix(i, shown[i], gears[i].object.matrix); };
   /** The Concord's last state, at once (a first word that says it holds; the end of its sequence). */
   function concordWhole() {
-    concordDone = true; tocked = true;
+    concordDone = true; tocked = true; laid = true;
     if (bannerMesh && renderer?.updateMeshVertices) { bannerPose(SD_BANNER.wind, bannerPos, bannerNrm); renderer.updateMeshVertices(bannerMesh, bannerPos, bannerNrm); }
     bannerLive = false;
     if (bandDraw) { bandDraw.hidden = false; bandDraw.object.matrix = identity(); }
@@ -203,7 +204,7 @@ export function createSdHall({ renderer = null, audio = null, s, now = () => per
     const first = !heard;
     heard = true;
     for (let i = 0; i < want.length; i++) want[i] = w.st[i];
-    if (first) for (let i = 0; i < want.length; i++) { shown[i] = want[i]; if (hands[i]) hands[i].object.matrix = handMatrix(i, shown[i]); }   // where the stones ARE, not a turn to them (AUDIT SD: drawn there now - a hand at rest is never drawn again)
+    if (first) for (let i = 0; i < want.length; i++) { shown[i] = want[i]; if (hands[i]) handMatrix(i, shown[i], hands[i].object.matrix); }   // where the stones ARE, not a turn to them (AUDIT SD: drawn there now - a hand at rest is never drawn again)
     if (first) for (let i = 0; i < want.length; i++) poseGear(i);   // SD-LOOK S10: and their gears
     rate = w.x ? SD_SNAP_RATE : SD_HAND_RATE;
     if (!first && w.i != null && o) {
@@ -225,7 +226,7 @@ export function createSdHall({ renderer = null, audio = null, s, now = () => per
     if (w.ok && !ok) {
       ok = true;
       if (first) concordWhole();   // AUDIT SD III (V10) - SD-LOOK S10: one that held before I came stands whole
-      else { concordAt = now(); concordDone = false; tocked = false; bannerLive = !!bannerMesh; bannerKey = -1; }
+      else { concordAt = now(); concordDone = false; tocked = false; bannerLive = !!bannerMesh; bannerKey = -1; laid = false; }
       if (!first) { play(SD_HALL_SOUNDS.chime, dialCentre(0), 1, 1); say(SD_HALL_TEXT.concord); }
     }
   }
@@ -240,6 +241,7 @@ export function createSdHall({ renderer = null, audio = null, s, now = () => per
     if (!tocked && ms >= SD_CONCORD_MS.rings) { tocked = true; play(SD_HALL_SOUNDS.clunk, GEM_AT, 1, 0.45); }   // the rings lock: one great tock
     const kb = (ms - SD_CONCORD_MS.bridgeFrom) / SD_BRIDGE_LAY_MS, n = SD_BRIDGE_PLATES.n;
     if (kb >= 1) {
+      laid = true;
       for (const p of plates) p.hidden = true;
       if (bridgeDraw) { bridgeDraw.object.matrix = identity(); bridgeDraw.hidden = false; }
     } else for (let j = 0; j < plates.length; j++) {
@@ -303,7 +305,7 @@ export function createSdHall({ renderer = null, audio = null, s, now = () => per
         const d = way(shown[i], want[i]);
         if (d === 0) continue;   // AUDIT SD: a hand at rest keeps its matrix - none made a frame for nothing
         shown[i] = Math.abs(d) <= step ? want[i] : sdHour(shown[i] + Math.sign(d) * step);
-        hands[i].object.matrix = handMatrix(i, shown[i]);
+        handMatrix(i, shown[i], hands[i].object.matrix);   // AUDIT SD V (P2): into its kept matrix
         poseGear(i);   // SD-LOOK S10: its gear with it, and only with it
       }
       // SD-LOOK S10: the bezels' states, the dial's flash and dim, the last tabs' pulse, the gem's count, the rings
@@ -382,6 +384,9 @@ export function createSdHall({ renderer = null, audio = null, s, now = () => per
     },
     /** Whether the Concord holds (the outer host's edge widens with it). */
     get concord() { return ok; },
+    /** AUDIT SD V (L2): the Concord's bridge drawn whole - its plates laid, or a Concord that held before I came. The host's
+     *  edge opens onto the bridge's floor then: S10 laid the plates 1.2 s after the word, and the floor stood under nothing. */
+    get bridgeLaid() { return ok && laid; },
     /** Where the hands stand now (tests). */
     get shown() { return [...shown]; },
     get counts() { return { lit, fray }; },

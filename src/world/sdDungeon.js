@@ -285,6 +285,10 @@ export const SD_RIFT_OPEN_LOOK = Object.freeze({ state: 'open', aperture: 1, tic
 export const SD_RIFT_NOT_YET = Object.freeze({ state: 'notyet', aperture: 0.07, tickHz: 0, studs: 0, ember: 0, tone: 'gold', light: 0.3 });
 export const SD_RIFT_CLOSED = Object.freeze({ state: 'closed', aperture: 0, tickHz: 0, studs: 0, ember: 0, tone: 'cold', light: 0 });
 export const SD_RIFT_REFUSED = Object.freeze({ state: 'refused', aperture: 0, tickHz: 0, studs: 0, ember: 0, tone: 'red', light: 0.3 });
+/** AUDIT SD V (P1): the open Rift's look at each count of studs (1-24), made once; and the collapse's, one kept record. */
+const FOUND_LOOKS = Object.freeze(Array.from({ length: 25 }, (_, n) => Object.freeze({ ...SD_RIFT_OPEN_LOOK, studs: n })));
+const COLLAPSE_LOOK = { state: 'collapse', aperture: 0, tickHz: 2, studs: 0, ember: 0, tone: 'ember', light: 0.3 };
+
 /**
  * @param {import('../net/sdLaw.js').SdRecord | null | undefined} rec
  * @param {number} s the Hollow's slot
@@ -295,11 +299,13 @@ export function riftLook(rec, s, now, { entered = false, fallen = false } = {}) 
   if (rec.s !== s) return SD_RIFT_CLOSED;
   if (fallen) return SD_RIFT_REFUSED;
   const ph = sdPhase(rec, now);
-  if (ph === 'found') return { ...SD_RIFT_OPEN_LOOK, studs: Math.max(1, Math.min(24, Math.ceil((rec.until - now) / 3600000))) };
+  if (ph === 'found') return FOUND_LOOKS[Math.max(1, Math.min(24, Math.ceil((rec.until - now) / 3600000)))];   // AUDIT SD V (P1): one record an hour, made once
   if (ph === 'risen') return SD_RIFT_NOT_YET;
   if (ph === 'fell') {
-    const left = Math.max(0, Math.min(1, (rec.fellAt + SD_COLLAPSE_MS - now) / SD_COLLAPSE_MS)), lit = Math.ceil(left * 24);
-    return { state: 'collapse', aperture: entered ? 1 / 3 + (2 / 3) * left : 0, tickHz: 2, studs: lit, ember: 24 - lit, tone: entered ? 'gold' : 'ember', light: entered ? 0.5 + 0.5 * left : 0.3 };
+    const left = Math.max(0, Math.min(1, (rec.fellAt + SD_COLLAPSE_MS - now) / SD_COLLAPSE_MS)), lit = Math.ceil(left * 24), c = COLLAPSE_LOOK;
+    // AUDIT SD V (P1): one kept record, filled - a look is read the frame it is asked (scenes/sdEnd.js), never kept
+    c.aperture = entered ? 1 / 3 + (2 / 3) * left : 0; c.studs = lit; c.ember = 24 - lit; c.tone = entered ? 'gold' : 'ember'; c.light = entered ? 0.5 + 0.5 * left : 0.3;
+    return c;
   }
   return SD_RIFT_CLOSED;
 }

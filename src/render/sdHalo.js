@@ -53,6 +53,10 @@ void main() {
 }`;
 
 /** The halos, one foreign pass. */
+/** A halo's quad as two triangles' corners (x, y each), made once. */
+const CORNERS = new Float32Array([-1, -1, 1, -1, 1, 1, -1, -1, 1, 1, -1, 1]);
+const NO_RANGE = new Float32Array([0, 1]), NO_CAM = new Float32Array(3);
+
 export class SdHaloRenderer {
   /** @param {WebGL2RenderingContext} gl */
   constructor(gl) {
@@ -80,19 +84,18 @@ export class SdHaloRenderer {
     const n = Math.min(halos?.length ?? 0, SD_HALO_MAX);
     this.drawn = 0;
     if (!n) return false;
-    const corners = [[-1, -1], [1, -1], [1, 1], [-1, -1], [1, 1], [-1, 1]];
     let o = 0;
     for (let i = 0; i < n; i++) {
       const h = halos[i];
-      for (const c of corners) { d[o++] = h.at[0]; d[o++] = h.at[1]; d[o++] = h.at[2]; d[o++] = c[0]; d[o++] = c[1]; d[o++] = h.size; d[o++] = h.color[0]; d[o++] = h.color[1]; d[o++] = h.color[2]; }
+      for (let c = 0; c < 12; c += 2) { d[o++] = h.at[0]; d[o++] = h.at[1]; d[o++] = h.at[2]; d[o++] = CORNERS[c]; d[o++] = CORNERS[c + 1]; d[o++] = h.size; d[o++] = h.color[0]; d[o++] = h.color[1]; d[o++] = h.color[2]; }   // AUDIT SD V (P6): the corners made once
     }
     gl.useProgram(this.prog);
     gl.uniformMatrix4fv(U.uView, false, view); gl.uniformMatrix4fv(U.uProj, false, proj);
     gl.uniform1f(U.uGain, gain);
     gl.uniform1i(U.uFogMode, fog ? fog.mode : 0);
     gl.uniform1f(U.uFogDensity, fog?.density ?? 0);
-    gl.uniform2fv(U.uFogRange, fog?.range ?? [0, 1]);
-    gl.uniform3fv(U.uCamPos, fog?.camPos ?? [0, 0, 0]);
+    gl.uniform2fv(U.uFogRange, fog?.range ?? NO_RANGE);
+    gl.uniform3fv(U.uCamPos, fog?.camPos ?? NO_CAM);
     gl.bindVertexArray(this.vao);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, d, 0, n * 6 * FLOATS);

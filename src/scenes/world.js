@@ -23233,9 +23233,21 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** SD-LOOK: the Hour's sky's look - the pixel law's steps on this lane; in the Hour, its Hollow's own Ending burning in
    *  its light on the face (a Hollow's: its marks by its slot). */
   const sdSkyLookNow = () => {
-    const s = modes?.sdRealmSlot?.() ?? modes?.dungeonLocation?.sdSlot ?? null, E = s == null ? null : sdEndingOf(sdMarksOf(s));
-    return { steps: renderer.lightingLane ? SD_SKY_STEPS.lane : SD_SKY_STEPS.classic, ending: E?.light ?? null, endingIdx: E ? SD_ENDINGS.indexOf(E) : -1 };
+    // AUDIT SD V (P4): one kept record, made again only as the slot or the lane changes (it was made, and the Ending
+    // found, every frame)
+    const s = modes?.sdRealmSlot?.() ?? modes?.dungeonLocation?.sdSlot ?? null, lane = !!renderer.lightingLane;
+    if (s !== _sdSkyLookFor || lane !== _sdSkyLookLane) {
+      _sdSkyLookFor = s; _sdSkyLookLane = lane;
+      const E = s == null ? null : sdEndingOf(sdMarksOf(s));
+      _sdSkyLook.steps = lane ? SD_SKY_STEPS.lane : SD_SKY_STEPS.classic; _sdSkyLook.ending = E?.light ?? null; _sdSkyLook.endingIdx = E ? SD_ENDINGS.indexOf(E) : -1;
+    }
+    return _sdSkyLook;
   };
+  const _sdSkyLook = { steps: 0, ending: null, endingIdx: -1 };
+  let _sdSkyLookFor, _sdSkyLookLane = null;
+  /** AUDIT SD V (P1): the Hollow's sky haze and the Rift window's sky record, kept (drawSdRift made both every frame). */
+  const _sdHollowHaze = Object.freeze({ color: SD_REALM_FOG.color });
+  const _sdRiftSky = { map: null, seconds: 0, gain: 1, clock: null };
   /** SD17: the Hour-Hand's beam (render/sdBeam.js) - made the first time one sweeps, null where a context cannot. */
   let _sdBeamPass;
   const sdBeamPassOf = () => {
@@ -23326,6 +23338,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     const rec = sdHost.record(), now = Date.now() + _sharedOffsetMs;
     const seen = { entered: _sdEntered.has(s), fallen: _sdFallen.has(s) };
     return { word: sdRiftWord(rec, s, now, seen), returns: sdReturnStands(rec, s, now), count: sdRiftCount(rec, s, now), look: riftLook(rec, s, now, seen), enter: () => sdEnterRealm(s) };   // AUDIT SD II (L6 F5): and its count; SD-LOOK: and its look - its state, read off the same record
+  };
+  /** AUDIT SD V (P1): the Rift's look alone, every frame it is drawn - none of the word, the count or the step's door
+   *  sdRiftOf makes (it was made four times a frame for the look, ~2.4 KB); its `seen` kept. */
+  const _sdSeen = { entered: false, fallen: false };
+  const sdRiftLookOf = (s) => {
+    if (!sdHost) return null;
+    _sdSeen.entered = _sdEntered.has(s); _sdSeen.fallen = _sdFallen.has(s);
+    return riftLook(sdHost.record(), s, Date.now() + _sharedOffsetMs, _sdSeen);
   };
   /** SD-LOOK (Super-Dungeons-Look.md section 3): WHERE THE HOUR'S VEIL CLOSES - the Rift's window (or the Return's)
    *  on the screen each frame it is drawn, in screen radii (the corners at 1 - render/sdVeil.js uCentre), handed to the
@@ -23547,6 +23567,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     feet: () => (playerSpawned && modes?.sdRealmSlot?.() != null ? player.feetAt() : null),
     shake: (k) => betterAmbience.weaponKick(k),   // the gate's door (WB13d): under the player's own maxShake
     arrived: () => modes?.dungeonCtx?.sdEndPulse?.('exhale'),   // SD-LOOK S6: the way back's ring turns once as I arrive
+    ready: () => !gateVeil?.busy,   // AUDIT SD V (S5): once the Hour's veil has opened - seen, never spent under it
   }) : null;
   /** SD9e (Super-Dungeons.md section 11): ITS SPOILS ON THE ARENA'S FLOOR (scenes/sdSpoils.js) - SD_SPEW_AT_MS into its
    *  fall, off my receipt from my own realm (sdSpoilsReceipt), thrown from where it fell; leaving the Hour gathers the
@@ -23579,6 +23600,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Hour refuses every save, so what it gave stood on the device alone until the next one, two minutes on)
     if (!inRealm && _sdFightHeld) { sdSpoilsBurst?.leave(); saveSoon.changed(); }
     if (!inRealm && _sdFightHeld) { sdFightLink.leave(); sdBlows?.leave(); sdRemVoice?.leave(); sdFx?.leave(); _sdFightHeld = false; }
+    if (!inRealm) sdFx?.away();   // AUDIT SD V (L5): the next arrival exhales, whatever was heard
     if (!inRealm) _sdHall = null;   // AUDIT SD II (L2 F17): the hall's word forgotten out of the realm - kept, the next visit to the slot's Hour turned its stones from stale places and chimed a Concord reached meanwhile
     // AUDIT SD III (V13): the fight's passes built as the Hour is first stood in - the beam, the sparks and the floor's
     // telegraph each compiled on its first use, a stall in the frame its first blow landed in
@@ -23624,7 +23646,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   };
   /** The hall's word for the realm I stand in, or null; and whether its Concord holds (the edge widens with it). */
   const sdHallWord = () => (_sdHall && _sdHall.s === modes?.sdRealmSlot?.() ? _sdHall : null);
-  const sdConcordHere = () => !!sdHallWord()?.ok;
+  const sdConcordHere = () => !!sdHallWord()?.ok && modes?.dungeonCtx?.sdHallBridgeLaid?.() !== false;   // AUDIT SD V (L2): and its bridge drawn - the floor never stands under nothing
   /** SD2c: THE HOLLOW'S OMEN (render/sdOmenPass.js) - a column of brass-gold light over a Super dungeon's pixel from its
    *  rise to its end (sdHost omen: the record's own light), seen from SD_OMEN_PX map pixels round, outside alone. Its foot
    *  is the built ground under the Hollow's centre, or on a pixel not built yet the terrain sampler's own kernel there
@@ -27206,8 +27228,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // quadrant a frame in the Hollow - in the Hour the sky's own paint keeps it), the Return's the world's hour
     drawSdRift: ({ proj, view, eye, end }) => {
       const sky = sdSkyPassOf(), pass = sdRiftPassOf(), fog = courtFogNow(), inHour = modes?.sdRealmSlot?.() != null;
-      if (sky && !inHour) sky.paint(deadlandsSeconds(), { color: SD_REALM_FOG.color }, sdSkyLookNow(), renderer.worldViewportPx ?? [0, 0, renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight]);
-      const look = end.sdEndLook?.(eye, sky ? { map: sky.map.texture, seconds: deadlandsSeconds(), gain: inHour ? skyGain(renderer._fogColor, SD_REALM_FOG.color) : 1, clock: null } : null, minuteNow() / 60);
+      if (sky && !inHour) sky.paint(deadlandsSeconds(), _sdHollowHaze, sdSkyLookNow(), renderer.worldViewportPx ?? [0, 0, renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight]);
+      if (sky) { _sdRiftSky.map = sky.map.texture; _sdRiftSky.seconds = deadlandsSeconds(); _sdRiftSky.gain = inHour ? skyGain(renderer._fogColor, SD_REALM_FOG.color) : 1; }
+      const look = end.sdEndLook?.(eye, sky ? _sdRiftSky : null, minuteNow() / 60);
       sdVeilAim(proj, view, look?.window?.model ?? look?.bay?.model);
       let drew = !!sky && !inHour;
       if (look && pass?.draw(proj, view, look, fog, renderer.lightingLane ? SD_SKY_STEPS.lane : SD_SKY_STEPS.classic)) drew = true;
@@ -27334,7 +27357,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     legacyWillRise: () => legacyHost?.willRise() ?? false,   // AUDIT LEGACY B5: Project Legacy will raise this death - Privateer's Hold's start-marker arm takes it offline too
     legacyRiseLine: () => { const o = legacyHost?.deathOutcome(); return o?.kind === 'rise' ? o.line : null; },   // ...and presents the outcome there: the toll's word
     dungeonOnline: () => onlineOn,   // AUDIT WORLD34 B2: online, the dungeon that gets built is the ROOM's - one layout (SD-ONLINE: the world's size for it)
-    superRift: (s) => sdRiftOf(s),   // SD4b: a Super dungeon's Rift and Return - their word off the hub's record, the realm's door
+    superRift: (s) => sdRiftOf(s),
+    superRiftLook: (s) => sdRiftLookOf(s),   // AUDIT SD V (P1): its look alone, a frame's - nothing made   // SD4b: a Super dungeon's Rift and Return - their word off the hub's record, the realm's door
     sdWayBack: () => sdWayBack(),   // SD5a: the Shattered Hour's way back, through its Rift into the Hollow
     sdWayHome: () => sdWayHome(),   // SD10: the way home, out of the Hour to the Hollow's door
     sdHomeAt: () => sdHomeAt(),   // SD10: where it stands - where the Remnant fell, its body sunk

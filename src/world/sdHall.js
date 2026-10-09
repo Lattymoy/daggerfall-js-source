@@ -475,13 +475,16 @@ export function buildHandModel() {
  * right (column-major, the dungeon's frame). AUDIT SD II (L2 F1): a proper turn - its own +z the face's n, and its own +x
  * y x n, so x x y = n (with R the eye's right, R and up beside n are a mirror's three).
  */
-export function handMatrix(i, hour) {
-  const { n, R } = stoneFrame(i);
+export function handMatrix(i, hour, out = new Float32Array(16)) {
+  // AUDIT SD V (P2): into `out`, from the stones' frames and the hands' places made once - it made ~1.4 KB a call, six a
+  // frame while the hands turn
+  const F = STONE_FRAMES[i], n = F.n, R = F.R, o = HAND_AT[i];
   const t = ((hour % 12) / 12) * Math.PI * 2, c = Math.cos(t), s = Math.sin(t);
-  const y = [R[0] * s + UP[0] * c, R[1] * s + UP[1] * c, R[2] * s + UP[2] * c];   // its own +y: to its point, turned
-  const x = [y[1] * n[2] - y[2] * n[1], y[2] * n[0] - y[0] * n[2], y[0] * n[1] - y[1] * n[0]];   // its own +x: y x n
-  const o = realmToDungeon(...stonePoint(i, 0, SD_DIAL.y, SD_HAND.off));
-  return new Float32Array([x[0], x[1], x[2], 0, y[0], y[1], y[2], 0, n[0], n[1], n[2], 0, o[0], o[1], o[2], 1]);
+  const y0 = R[0] * s + UP[0] * c, y1 = R[1] * s + UP[1] * c, y2 = R[2] * s + UP[2] * c;   // its own +y: to its point, turned
+  const x0 = y1 * n[2] - y2 * n[1], x1 = y2 * n[0] - y0 * n[2], x2 = y0 * n[1] - y1 * n[0];   // its own +x: y x n
+  out[0] = x0; out[1] = x1; out[2] = x2; out[3] = 0; out[4] = y0; out[5] = y1; out[6] = y2; out[7] = 0;
+  out[8] = n[0]; out[9] = n[1]; out[10] = n[2]; out[11] = 0; out[12] = o[0]; out[13] = o[1]; out[14] = o[2]; out[15] = 1;
+  return out;
 }
 
 /** SD-LOOK S10: STONE `i`'s BEZEL, its own mesh (the scene swaps its state by texRemap - the brass record cold, the hands'
@@ -541,11 +544,11 @@ export function buildCrownGearModel() {
  *  turned SD_CROWN_GEAR.ratio times its hand's turn and against it (a gear the hand drives - it moves exactly when the
  *  hand moves, and more) - a proper turn, never a mirror. Into `out` (column-major, the dungeon's frame). */
 export function crownGearMatrix(i, hour, out = new Float32Array(16)) {
-  const { n, R } = stoneFrame(i);
+  const F = STONE_FRAMES[i], n = F.n, R = F.R;   // AUDIT SD V (P2): the frames made once
   const t = -SD_CROWN_GEAR.ratio * ((hour % 12) / 12) * Math.PI * 2, c = Math.cos(t), s = Math.sin(t);
   const y0 = R[0] * s, y1 = c, y2 = R[2] * s;
   const x0 = y1 * n[2] - y2 * n[1], x1 = y2 * n[0] - y0 * n[2], x2 = y0 * n[1] - y1 * n[0];
-  const p = SD_STONE_POS[i], o = realmToDungeon(p.x, SD_CROWN_GEAR.y, p.z);
+  const o = GEAR_AT[i];
   out[0] = x0; out[1] = x1; out[2] = x2; out[3] = 0; out[4] = y0; out[5] = y1; out[6] = y2; out[7] = 0;
   out[8] = n[0]; out[9] = n[1]; out[10] = n[2]; out[11] = 0; out[12] = o[0]; out[13] = o[1]; out[14] = o[2]; out[15] = 1;
   return out;
@@ -560,6 +563,9 @@ export const SD_BANNER_VERTS = SD_STONES.length * 2 * BV;
 const BANNER_PHASE = Object.freeze([0.4, 2.1, 3.7, 1.3, 5.0, 2.8]);
 /** The stones' frames, made once (the wind's pose reads them a frame). */
 const STONE_FRAMES = Object.freeze(SD_STONES.map((_, i) => stoneFrame(i)));
+/** AUDIT SD V (P2): each stone's hand's pivot and crown gear's centre in the dungeon's frame, made once. */
+const HAND_AT = Object.freeze(SD_STONES.map((_, i) => Object.freeze(realmToDungeon(...stonePoint(i, 0, SD_DIAL.y, SD_HAND.off)))));
+const GEAR_AT = Object.freeze(SD_STONES.map((_, i) => Object.freeze(realmToDungeon(SD_STONE_POS[i].x, SD_CROWN_GEAR.y, SD_STONE_POS[i].z))));
 /** Every banner's positions and normals (the dungeon's frame) at `age` seconds into the Concord's wind (< 0: none - the
  *  frozen ripple; past SD_BANNER.wind: still again, mid-ripple anew), into `pos` and `nrm` (each SD_BANNER_VERTS x 3) -
  *  the same layout buildBannerModel makes. A vertex at grid (s, t) - s 0..1 across as its face is seen (from behind the

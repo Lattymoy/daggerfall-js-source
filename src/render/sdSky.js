@@ -488,36 +488,41 @@ export class SdSkyMap {
     /** the next quadrant painted, and the look the map was last painted in (a change paints it whole) */
     this.next = 0;
     this.painted = 0;
-    this._key = '';
     this._quad = new Float32Array(4);
+    // AUDIT SD V (P4): the look it was painted in as numbers (steps, the Ending's index and light, the haze), and the
+    // quadrants' draw made once - the key a string of two joins and a closure each frame made ~0.8 KB a frame
+    this._was = new Float64Array(8).fill(NaN);
+    this._all = false;
+    this._quads = () => {
+      for (let k = 0; k < 4; k++) {
+        if (!this._all && k !== this.next) continue;
+        const qx = k & 1, qy = k >> 1, h = SD_SKY_MAP / 2;
+        this.gl.viewport(qx * h, qy * h, h, h);
+        this._quad[0] = qx * 0.5; this._quad[1] = qy * 0.5; this._quad[2] = 0.5; this._quad[3] = 0.5;
+        this.gl.uniform4fv(this.u.uQuad, this._quad);
+        this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+      }
+    };
   }
   /** Paint the map's next quadrant (the whole map when it has never been painted or its look changed): `seconds` the
    *  realm's clock, `haze` the fog's colour, `look` `{ steps, ending: [r, g, b] | null, endingIdx }`, `viewport` the
    *  world viewport handed back. A DRAW PATH: binds its target, and hands back the frame's (render/renderTarget.js). */
   paint(seconds, haze, look, viewport) {
     const gl = this.gl, U = this.u, steps = look?.steps ?? SD_SKY_STEPS.lane, idx = look?.endingIdx ?? -1, light = look?.ending ?? null;
-    const key = `${steps}|${idx}|${light?.join(',') ?? ''}|${haze?.join?.(',') ?? ''}`;
-    const all = this.painted === 0 || key !== this._key;
-    this._key = key;
+    const W = this._was, n0 = light ? light[0] : -1, n1 = light ? light[1] : -1, n2 = light ? light[2] : -1, h0 = haze ? haze[0] : -1, h1 = haze ? haze[1] : -1, h2 = haze ? haze[2] : -1;
+    const all = this.painted === 0 || W[0] !== steps || W[1] !== idx || W[2] !== n0 || W[3] !== n1 || W[4] !== n2 || W[5] !== h0 || W[6] !== h1 || W[7] !== h2;
+    W[0] = steps; W[1] = idx; W[2] = n0; W[3] = n1; W[4] = n2; W[5] = h0; W[6] = h1; W[7] = h2;
+    this._all = all;
     gl.disable(gl.BLEND); gl.disable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE);
     gl.useProgram(this.program);
     gl.uniform1f(U.uTime, sdSkyClock(seconds));
-    gl.uniform3fv(U.uHaze, haze ?? [0.2, 0.15, 0.07]);
+    gl.uniform3fv(U.uHaze, haze ?? NO_HAZE);
     gl.uniform1f(U.uSteps, steps);
-    gl.uniform3fv(U.uEnding, light ?? [0, 0, 0]);
+    gl.uniform3fv(U.uEnding, light ?? NO_LIGHT);
     gl.uniform1f(U.uEndingIdx, idx);
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.signs); gl.uniform1i(U.uSigns, 0);
     gl.bindVertexArray(this.vao);
-    withTarget(gl, this.target, viewport, () => {
-      for (let k = 0; k < 4; k++) {
-        if (!all && k !== this.next) continue;
-        const qx = k & 1, qy = k >> 1, h = SD_SKY_MAP / 2;
-        gl.viewport(qx * h, qy * h, h, h);
-        this._quad[0] = qx * 0.5; this._quad[1] = qy * 0.5; this._quad[2] = 0.5; this._quad[3] = 0.5;
-        gl.uniform4fv(U.uQuad, this._quad);
-        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-      }
-    });
+    withTarget(gl, this.target, viewport, this._quads);
     gl.bindVertexArray(null);
     gl.enable(gl.DEPTH_TEST); gl.enable(gl.CULL_FACE);
     this.next = (this.next + 1) & 3;
@@ -530,6 +535,9 @@ export class SdSkyMap {
     gl.deleteProgram(this.program); gl.deleteVertexArray(this.vao);
   }
 }
+
+/** A haze and an Ending's light for a look that names none, made once (AUDIT SD V P4). */
+const NO_HAZE = Object.freeze([0.2, 0.15, 0.07]), NO_LIGHT = Object.freeze([0, 0, 0]);
 
 /** The Hour's sky, one foreign pass - the fetch over the map it owns. */
 export class SdSkyRenderer {
@@ -567,7 +575,7 @@ export class SdSkyRenderer {
     gl.useProgram(this.program);
     gl.uniform3fv(U.uRight, b.right); gl.uniform3fv(U.uUp, b.up); gl.uniform3fv(U.uFwd, b.fwd); gl.uniform4fv(U.uProj, b.lens);
     gl.uniform1f(U.uTime, sdSkyClock(seconds));
-    gl.uniform3fv(U.uHaze, fog?.color ?? [0.2, 0.15, 0.07]);
+    gl.uniform3fv(U.uHaze, fog?.color ?? NO_HAZE);
     gl.uniform1f(U.uGain, gain);
     for (let k = 0; k < 4; k++) this.clock[k] = clock?.[k] ?? 0;
     gl.uniform4fv(U.uClock, this.clock);

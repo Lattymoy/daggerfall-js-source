@@ -138,7 +138,7 @@ test('SD11f THE WAY HOME SAID AS IT RISES (L6 F16), the world host from its own 
   h.set(null, T0);
   assert.equal(h.sdHomeAge(), null);
   const D = read('src/scenes/dungeonContext.js'), M2 = read('src/scenes/worldModes.js');
-  assert.match(D, /if \(home && !sdEnd\.ret\) sdEnd\.standReturn\(home, opts\.sdHomeAge\?\.\(\) \?\? Infinity, \{ dynamicDraws \}\);/);
+  assert.match(D, /if \(home && !sdEnd\.hasRet\) sdEnd\.standReturn\(home, opts\.sdHomeAge\?\.\(\) \?\? Infinity, \{ dynamicDraws \}\);/);   // PIN MOVED (AUDIT SD V P1): the end asked `hasRet`, its look off the host's look door
   assert.match(M2, /sdHomeAge: \(\) => host\.sdHomeAge\?\.\(\) \?\? null,/);
   assert.match(W, /sdHomeAge: \(\) => sdHomeAge\(\),/);
 });
@@ -174,7 +174,7 @@ test('SD11f THE RIFT COUNTS ITS HOUR (L6 F5): its plaque\'s second row - found o
   assert.deepEqual(createSdEnd({}).hoverName(SD_RIFT_KEY), null);
   // the hosts: the Hollow's Rift asks the world host's word for it; the Hour's own Rift counts nothing (its readouts do)
   const D = read('src/scenes/dungeonContext.js');
-  assert.match(D, /const sdEnd = _superTier \? createSdEnd\(\{ renderer, audio, onRift: \(\) => sdRiftStep\(\), onReturn: \(\) => sdReturnStep\(\), riftCount: \(\) => sdEndWord\(\)\?\.count \?\? null, look: \(\) => sdEndWord\(\)\?\.look \?\? null, clock: sdEndClock \}\)/);
+  assert.match(D, /const sdEnd = _superTier \? createSdEnd\(\{ renderer, audio, onRift: \(\) => sdRiftStep\(\), onReturn: \(\) => sdReturnStep\(\), riftCount: \(\) => sdEndWord\(\)\?\.count \?\? null, look: \(\) => \(opts\.superRiftLook \? opts\.superRiftLook\(dfLocation\?\.sdSlot\) : sdEndWord\(\)\?\.look\) \?\? null, clock: sdEndClock \}\)/);   // PIN MOVED (AUDIT SD V P1): the end asked `hasRet`, its look off the host's look door
   assert.match(W, /count: sdRiftCount\(rec, s, now\), look: riftLook\(rec, s, now, seen\), enter: \(\) => sdEnterRealm\(s\) \};/);
 });
 

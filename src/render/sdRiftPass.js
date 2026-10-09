@@ -320,6 +320,9 @@ function bindFog(gl, U, fog) {
 }
 
 /** The pass: the window, the floor light and the Return's window. */
+/** The fight's word to a window's sky when it has none (AUDIT SD V P1 - made once, never a frame's). */
+const NO_CLOCK = new Float32Array(4);
+
 export class SdRiftRenderer {
   /** @param {WebGL2RenderingContext} gl */
   constructor(gl) {
@@ -392,7 +395,7 @@ export class SdRiftRenderer {
       gl.uniform1f(U.uLight, w.light ?? 1); gl.uniform1f(U.uEmber, w.ember ?? 0);
       gl.uniform4fv(U.uRipple, w.ripple ?? [0, 0, 0, 9]);
       gl.uniform1f(U.uSteps, steps);
-      gl.uniform1f(U.uTime, sdSkyClock(w.sky.seconds)); gl.uniform1f(U.uGain, w.sky.gain ?? 1); gl.uniform4fv(U.uClock, w.sky.clock ?? [0, 0, 0, 0]);
+      gl.uniform1f(U.uTime, sdSkyClock(w.sky.seconds)); gl.uniform1f(U.uGain, w.sky.gain ?? 1); gl.uniform4fv(U.uClock, w.sky.clock ?? NO_CLOCK);   // AUDIT SD V (P1): none, made once
       gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, w.sky.map); gl.uniform1i(U.uSkyMap, 0);
       gl.bindVertexArray(this.disc.vao);
       gl.drawArrays(gl.TRIANGLES, 0, this.disc.count);

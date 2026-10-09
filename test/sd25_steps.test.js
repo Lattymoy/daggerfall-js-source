@@ -194,7 +194,7 @@ test('S9 THE DISSOLVE IS AN ORDERED DITHER OF THE PLATE\'S OWN CELLS: each stage
   }
 });
 
-test('S9 THE DRIFT\'S PENDULUMS: each step hangs from its own - a gear SD_PENDULUM.len over its rest, turned by asin(dx / len), dx the law\'s own swing at that second, so its rods lean with it (+x up through the camera\'s mirror, the deck carried the same way); its rods\' feet inside the deck\'s box at every swing the law has; nothing that turns casts (mutants: the lean the wrong way; the pivot riding the deck; a pendulum casting)', () => {
+test('S9 THE DRIFT\'S PENDULUMS: each step hangs from its own - a gear SD_PENDULUM.len over its rest, turned by asin(dx / len), dx the law\'s own swing at that second, so its rods lean with it (+x up through the camera\'s mirror, the deck carried the same way); its rods\' feet bracketed to the deck\'s sides at every swing the law has, and none of it over the deck where a body stands (AUDIT SD V L3); nothing that turns casts (mutants: the lean the wrong way; the pivot riding the deck; a pendulum casting; the rods over the deck)', () => {
   const r = rig(), P = buildPendulum(), drifts = SD_STEPS_COURSE.filter((s) => s.kind === 'drift');
   const pends = r.draws.filter((d) => d.gpu?.m?.positions?.length === P.positions.length && d.gpu.m.subMeshes[0].textureRecord === SD_STEPS_RECORD.parts && minY(d.gpu.m) < -SD_PENDULUM.len);
   assert.equal(pends.length, drifts.length, 'one a Drift step');
@@ -213,14 +213,22 @@ test('S9 THE DRIFT\'S PENDULUMS: each step hangs from its own - a gear SD_PENDUL
       const deck = realmToDungeon(...at), box = stepBox('drift');
       for (const f of feet) {
         const w = [M[0] * f[0] + M[4] * f[1] + M[8] * f[2] + M[12], M[1] * f[0] + M[5] * f[1] + M[9] * f[2] + M[13], M[2] * f[0] + M[6] * f[1] + M[10] * f[2] + M[14]];
-        assert.ok(Math.abs(w[0] - deck[0]) <= box.w / 2 && w[1] <= deck[1] && w[1] >= deck[1] - box.h && Math.abs(w[2] - deck[2]) <= box.d / 2, `step ${s.i}: a rod's foot in its deck`);
+        // PIN MOVED (AUDIT SD V L3): the rods hang beside the deck on brackets - every foot at the deck's own height, under
+        // its top, at its middle along z; the brackets reach into its side
+        assert.ok(Math.abs(w[0] - deck[0]) <= SD_PENDULUM.foot + 0.1 && w[1] <= deck[1] && w[1] >= deck[1] - box.h && Math.abs(w[2] - deck[2]) <= box.d / 2, `step ${s.i}: a rod's foot at its deck's side`);
       }
     }
   }
   // the widest swing, sideways in full: the feet still in the deck (the law's 2 m either way)
   for (const dx of [2, -2]) {
     const a = pendulumAngle(dx), c = Math.cos(a), sn = Math.sin(a);
-    for (const f of feet) { const x = c * f[0] - sn * f[1], y = sn * f[0] + c * f[1] + SD_PENDULUM.len; assert.ok(Math.abs(x - dx) <= 1.5 && y <= 0 && y >= -SD_STEP_THICK, `full swing ${dx}: foot (${x.toFixed(2)}, ${y.toFixed(2)})`); }
+    for (const f of feet) { const x = c * f[0] - sn * f[1], y = sn * f[0] + c * f[1] + SD_PENDULUM.len; assert.ok(Math.abs(x - dx) <= SD_PENDULUM.foot + 0.1 && y <= 0 && y >= -SD_STEP_THICK, `full swing ${dx}: foot (${x.toFixed(2)}, ${y.toFixed(2)})`); }   // PIN MOVED (AUDIT SD V L3)
+    // AUDIT SD V (L3): nothing of it over the deck where a body stands - no vertex from its top up a body's height within
+    // the deck's half-width and a capsule's reach of its middle (the rods stood 0.3 m in from its edges, through anyone there)
+    for (let k = 0; k < P.positions.length; k += 3) {
+      const px = P.positions[k], py = P.positions[k + 1], x = c * px - sn * py, y = sn * px + c * py + SD_PENDULUM.len;
+      if (y > 0 && y < 2.2) assert.ok(Math.abs(x - dx) >= 1.5 + 0.35, `full swing ${dx}: a rod over the deck at (${(x - dx).toFixed(2)}, ${y.toFixed(2)})`);
+    }
   }
 });
 
