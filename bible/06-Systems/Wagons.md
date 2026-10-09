@@ -49,7 +49,8 @@ under a spec: a part out of its box, an object no spec names, or a skipped
 station standing inside a wagon.
 
 None of the files carries a texture, so the art is painted.
-`src/world/wagonArt.js` paints fifteen 64 x 64 pictures from numbers, using the
+`src/world/wagonArt.js` paints fifteen 64 x 64 pictures from numbers (twenty
+since WAGONS2 added the caravan's room - below), using the
 fleet's tools (`src/world/galleonArt.js`) under the pseudo-archive 38181:
 
 - oak sideboards, pine floorboards, dark oak running gear;
@@ -169,9 +170,9 @@ client drops what it does not know.
 the door. A parked caravan's plaque lists "Step inside".
 
 The caravan is entered as a ship's cabin is (SAILING-CABINS): through the
-interior host's own transition, into a room Daggerfall already has. The room
-is the small ship's cabin, Warm Ashes' SHIPAA00.RMB, its door a logical anchor
-at the caravan.
+interior host's own transition, its door a logical anchor at the caravan.
+~~The room is the small ship's cabin, Warm Ashes' SHIPAA00.RMB.~~ Retired by
+WAGONS2: the room is the caravan's own, its shape, turned with it (below).
 
 The room is the player's own:
 
@@ -185,12 +186,144 @@ The room is the player's own:
 Leaving puts the player on the ground behind the caravan's rear door, grounded
 by the host.
 
+## WAGONS2 (2026-10-09)
+
+Mac, the next message: "1. Comprehensive audit and this needs to be perfect
+2. Overworld implementation 3. People should be able to use the interior just
+like.hoises, like crafting and such 4. The implementation of the real window
+overhaul, allowing players to see inside/outside of house windows + the new
+wagon. 5. Exterior and interior texture customization of the wagons 6. Real
+wheel movement".
+
+Asked, Mac chose:
+
+- **windows:** from outside, a fake room behind each house window (interior
+  mapping, lit at night); from inside, the real world;
+- **the caravan's room:** a room built from the caravan's own model, turned
+  with it, its windows on the caravan's;
+- **paint:** free, any time - the outside on the Stable's card, the inside in
+  the decorator's paint tab - and seen by other players;
+- **visitors:** like an online home - the owner sets private, party, guild or
+  public, and visitors cannot take from the storage.
+
+### The caravan's own room
+
+`src/world/caravanRoomModel.js` builds the room from the caravan's bake: a
+floor, two sides and two ends under a barrel ceiling (eight facets through
+both eaves and the peak), each face looking in, all of it `CARAVAN_WALL`
+inside the body. The sides and the front take the caravan's own u, so a point
+is glass in the room's picture exactly where it is glass in the caravan's -
+the windows meet.
+
+`src/systems/caravanRoom.js` gives the room its own block (`CARAVAN_BLOCK`)
+and model id (`CARAVAN_ROOM_MODEL_ID`, one no ARCH3D carries). The interior
+host reads the block as any record. `src/scenes/caravanRoom.js`
+serveRoomModels answers the model through the building's hold, so ARCH3D is
+never asked. The lantern flat is `hang`ed from the roof and lit.
+
+The room stands at the caravan's pose, turned with it: the descriptor is v2
+(`turn` added; a v1 descriptor reads as turn 0), and the door is
+`trs(origin, 0, turn, 0)`. Decor is kept translation-only, so the interior
+host turns the scene back at its cache and forward at its restore
+(`turnCaravanScene`). A caravan parked another way round keeps its furniture
+where it stood in the room.
+
+A travelling room (a caravan, a ship's cabin) is no town's layout: the WD3
+layout stamp skips it. Before this, a ship's cabin's decor was held back by a
+town's stamp - fixed with it.
+
+The owner uses the room as a house: the decorator, its crafting stations,
+rest, and the wagon's storage. Visitors: below.
+
+### The paint
+
+`src/systems/wagonLooks.js` is the law. A wagon's paint rides its item:
+`wagonLook` is `{ o, w, f, c }` - the outside (every kind), and the
+caravan's walls, floor and ceiling. Each list has six choices, the first the
+wagon as built. A look the law does not know reads as built; the built look
+keeps no field. Painting costs nothing.
+
+`src/world/wagonArt.js` paints each choice past the first to its own records,
+`LOOK_RECORD_STRIDE` (100) from the built ones. The caravan's glass is a hole
+(alpha 0, uploaded as a cut-out). The outside draw remaps the wagon's records
+to its paint's (`src/scenes/horseCartPool.js` lookRemap); the caravan's room
+inside its body is drawn in its inside paint, casting no shadow.
+
+The room's faces wear LIVE records (choice 9). A paint is painted into them
+(`paintCaravanRoom` - each let go, then uploaded again), so a paint chosen in
+the room is on its walls the next frame.
+
+The Stable's card lists the driven wagon's outside paints. The decorator's
+Paint tab in a caravan lists its walls, floor and ceiling.
+
+On the wire the look is one number, `wl` = o + 6w + 36f + 216c (at most 1295):
+on the hv word and on a parked team's record. A bad code reads as built.
+
+### The wheels
+
+Each wheel rolls on its own: `src/systems/horseCart.js` wheelContacts and
+rolledAngles turn each by its own contact's travel, along its own heading,
+over its own radius. A wheel with no contact last time keeps its angle.
+
+The open wagon's and the caravan's front axle, pole and front pair turn on
+their kingpin (`src/world/wagonModels.js` bogie). The lock is measured off
+the bake (steerLimitOf): **6.85 degrees** either way, since the front wheels
+stand outside the body's side. They trail as two bars
+(`src/systems/horseFollow.js` bogieAxle): the kingpin on the pole from the
+hitch, the body on the wheelbase from the kingpin.
+
+A dismount keeps each wheel's angle and the steer (`rest`); a load forgets
+them. Another player's wagon is turned here, off the pose drawn here, seeded
+by the word's angle. Under the Overworld each grown wheel keeps its own clock.
+
+### The Overworld
+
+A wagon is drawn grown with its rider under the Overworld (OW-BIG).
+`src/scenes/horseCartPool.js` drawnFrameOf is the one drawn frame for the
+wagon and what sits in it:
+
+- the others seated in my wagon are drawn on its grown seats (seatGlue);
+- my body is drawn on my seat (`src/player/motor.js` drawFeet);
+- a seated companion's sprite is stood and grown there (seatDraw);
+- a peer's companion in their wagon's back is drawn in their grown wagon
+  (puppetSeatDrawn) - taken for seated by where it stands, no wire change.
+
+The bodies themselves stay on the true seats.
+
+A rider seated in another's wagon sets out on no journey of their own. The
+Overworld refuses it, as it refuses a boat's passenger, and the party's walk
+never takes them. The owner's word unheard for a moment is not the owner
+gone: a rider sits on through `RIDE_LOST_GRACE_MS`. A journey telling its
+riders cannot be set out on twice.
+
+### The team mounted again (audit)
+
+Mac's wagons' hitches are longer than the mod's 3.1 m, so the mod's reaches
+(the player 5 m from the wagon, the horse 3.5 m) could not be met. A team
+parked with its horse in the shafts could not be mounted again. The reaches
+now measure to the wagon's run, from its anchor forward by `hitch - 3.1`
+(`src/systems/horseCart.js` nearestOnWagon). The store's reach is measured
+the same way.
+
+### The caravan sold (audit)
+
+The last caravan gone from the pack takes its room with it, as a sold ship
+takes her cabin's (decorSold):
+
+- its placed pieces are sold back;
+- the owner's own things go to the pack;
+- its scene is no longer kept for good.
+
+This never happens while the player stands in the room, nor for a room never
+made. A load is never a sale.
+
 ## The relay
 
 A parked team's record (HCC-PARK) now keeps the wagon's kind and whether a
-horse stands in it (`wk`, `wh`; `src/net/wire.js` validParkData). That is a
-relay change, so RELAY_VERSION is `world183`. Until the relay is deployed, a
-parked wagon the relay restores comes back as the Small Cart.
+horse stands in it (`wk`, `wh`; `src/net/wire.js` validParkData) - and, since
+WAGONS2, its paint (`wl`). That is a relay change, so RELAY_VERSION is
+`world183`. Until the relay is deployed, a parked wagon the relay restores
+comes back as the Small Cart, as built.
 
 ## THE FOUR HOSTS
 
