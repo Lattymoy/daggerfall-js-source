@@ -670,7 +670,7 @@ test('SD8c THE HOSTS, by source: the dungeon context makes the arena\'s set in t
   assert.match(W, /online\.onSdFight = \(w\) => sdFightHeard\(w\);/);
   assert.match(W, /if \(!sdFightLink \|\| slot == null \|\| \(w\.k === 'st' && w\.s !== slot\)\) return;/);
   assert.match(W, /if \(!inRealm && _sdFightHeld\) \{ sdFightLink\.leave\(\); sdBlows\?\.leave\(\); sdRemVoice\?\.leave\(\); sdFx\?\.leave\(\); _sdFightHeld = false; \}/);   // PIN MOVED (SD8d): its blows forgotten with it   // SD14a (PIN MOVED): its voice let go with it   // SD16 (PIN MOVED): its sparks
-  assert.match(W, /const s = sdFightLink\.state\(\), now = sdFightLink\.now\(\);\n\s*if \(sdBarNear\(x, z\)\) bar = remnantBarModel\(s, now\);/);   // SD15 (PIN MOVED): the fight read once a frame, for the bar and the arena read
+  assert.match(W, /const s = sdFightLink\.state\(\), now = sdFightLink\.now\(\);\n\s*const near = sdBarNear\(x, z\);\n\s*if \(near\) bar = remnantBarModel\(s, now\);/);   // SD15 (PIN MOVED): the fight read once a frame, for the bar and the arena read; PIN MOVED (AUDIT SD IV T1): its nearness kept, the title card's gate too
   assert.match(W, /const hidden = gamePaused\(\) \|\| !!townTalk\.hudHidden \|\| !!gateVeil\?\.busy;[^\n]*\n\s*if \(bar \|\| _sdBarUp\) \{ drawGateBossBar\(bar, \{ hidden \}\); _sdBarUp = !!bar; \}/);   // SD15 (PIN MOVED): one hide for the bar, the ground and the card; AUDIT SD III (T18, PIN MOVED): and under the veil, as the court's
   assert.match(W, /sdFightIn: \(\) => !!online\?\.sendSdIn\?\.\(playerEntity\.level\),/);
   assert.match(W, /sdBlow: \(k, f\) => !!online\?\.sendSdBlow\?\.\(k, f\),/);
