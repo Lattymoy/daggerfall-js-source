@@ -225,6 +225,6 @@ test('CHAP4d the wiring: the host\'s Focus door and the Hall\'s Chronicle read; 
   const ix = src('server-account/src/index.js');
   assert.match(ix, /: path === '\/v1\/chapters\/focus' \? await setChapterFocus\(ctx, who\.player, env, body\)/);
   assert.match(ix, /: path === '\/v1\/chapters\/history' \? await chapterChronicle\(ctx, who\.player, env, body\)/);
-  assert.match(src('server-account/src/professions.js'), /hallWrits\(day, region, f, hallWritCountIn\(active, strengths\.get\(f\)\), table, focuses\.get\(f\) \?\? null\)/);
+  assert.match(src('server-account/src/professions.js'), /hallWrits\(day, region, f, doctrineWritCount\(hallWritCountIn\(active, strengths\.get\(f\)\), events\.get\(f\)\?\.doctrine\), table, focuses\.get\(f\) \?\? null\)/);   // PIN MOVED (CHAP6b): the count a doctrine's "more writs" may raise
   assert.match(src('src/net/accountClient.js'), /focus: \(character, faction, region, focus\) => post\('\/v1\/chapters\/focus', \{ character, faction, region, focus \}\),\n\s+history: \(region\) => post\('\/v1\/chapters\/history', \{ region \}\),/);
 });

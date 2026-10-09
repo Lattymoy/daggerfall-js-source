@@ -1214,15 +1214,16 @@
   {
     "name": "T-POST-COUNT-ACTIVE",
     "file": "server-account/src/professions.js",
-    "old": "hallWrits(day, region, f, hallWritCountIn(active, strengths.get(f)), table, focuses.get(f) ?? null)",
-    "new": "hallWrits(day, region, f, hallWritCountIn(0, strengths.get(f)), table, focuses.get(f) ?? null)",
+    "old": "hallWrits(day, region, f, doctrineWritCount(hallWritCountIn(active, strengths.get(f)), events.get(f)?.doctrine), table, focuses.get(f) ?? null)",
+    "new": "hallWrits(day, region, f, doctrineWritCount(hallWritCountIn(0, strengths.get(f)), events.get(f)?.doctrine), table, focuses.get(f) ?? null)",
     "tests": [
       "test/audit_chap1.test.js",
       "test/audit_chap2.test.js",
       "test/chap1_roll.test.js",
       "test/chap2_halls.test.js",
       "test/prof1_service.test.js"
-    ]
+    ],
+    "note": "CHAP6b: re-aimed by content (the doctrine and the backing beside it)."
   },
   {
     "name": "T-POST-TIER-QTY",

@@ -626,6 +626,11 @@ export const REFUSALS = Object.freeze({
   // CHAP4d: a chapter's Focus - set by its Master alone, to a family its guild's own
   'not-master': 'Only the chapter\'s Master sets its Focus.',
   'no-focus': 'The guild asks for no such thing.',
+  // CHAP6b: a backing in a chapter's Season - its Schism's side, its Succession's candidate
+  'no-event': 'The chapter has nothing this Season to back.',
+  'no-side': 'There is no such side to back.',
+  closed: 'That has already been decided.',
+  'not-member': 'Only an active member of the guild may back its chapter.',
   // CARDS6: a gold card table's stake and its cash-out (server-account/src/cards.js)
   'cards-realm': 'Only an online character of the realm can play a card table for gold.',
   'cards-closed': 'The realm is not holding stakes for card tables right now. Try again later.',

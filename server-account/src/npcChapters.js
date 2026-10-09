@@ -44,6 +44,7 @@ import {
   STRENGTH_START, strengthAfter, strengthTarget, strengthSeasonEnd, chapterBandOf, meritWeekOf, hallHidden, chaptersSwitchOf,
   SEAT_MERIT_WEEKS, seatEligibleAt, chapterSeatPlan, seatChangesOf, chapterTitlesOf, chapterFocusOk, HIDDEN_HALL_FACTIONS,
   chapterEventWeights, chapterEventOf, chapterEventOk, chapterRivalsOf, chapterRivalPick, declineAfter, rivalryEnd, crackdownShuts,
+  schismDoctrinesOf, schismWinner, successionHeir, chapterBackOk, chapterDoctrineOk, SUCCESSION_TURNING,
 } from '../../src/net/npcChapterLaw.js';
 
 /** The most weeks one read settles - a service asleep for longer starts its count again from there (the seats' own). */
@@ -91,12 +92,12 @@ export async function settleChapterWeek(db, week, nowS, zero = null, open = 'on'
   // last week the Chapters were open at all ('dev' or 'on'), the weeks they were shut ('off') no week of either
   const last = await db.prepare("SELECT open FROM npc_chapter_weeks WHERE week < ?1 AND open <> 'off' ORDER BY week DESC LIMIT 1").bind(week).first();
   const opened = open === 'on' && last?.open === 'dev';
-  const { results: held = [] } = opened ? { results: [] } : await db.prepare('SELECT faction, region, strength, event, event_season, event_data, shut_season FROM npc_chapters').all();
+  const { results: held = [] } = opened ? { results: [] } : await db.prepare('SELECT faction, region, strength, event, event_season, event_data, shut_season, doctrine, doctrine_season FROM npc_chapters').all();
   /** @type {Map<string, Chapter>} */
   const all = new Map();
   const at = (/** @type {number} */ f, /** @type {number} */ g) => {
     const k = `${f}|${g}`;
-    if (!all.has(k)) all.set(k, { faction: f, region: g, prev: STRENGTH_START, merit: 0, s: STRENGTH_START, event: null, eventSeason: null, data: {}, shut: null });
+    if (!all.has(k)) all.set(k, { faction: f, region: g, prev: STRENGTH_START, merit: 0, s: STRENGTH_START, event: null, eventSeason: null, data: {}, shut: null, doctrine: null, doctrineSeason: null });
     return /** @type {Chapter} */ (all.get(k));
   };
   const confirmed = await allChapters(db, nowS);
@@ -116,11 +117,13 @@ export async function settleChapterWeek(db, week, nowS, zero = null, open = 'on'
       c.s = d;
     }
   }
+  // CHAP6b: a Succession named at the Season's third Turning (or the first after it a sleeping service settles)
+  if (season && week >= season.start + SUCCESSION_TURNING - 1) await successionNamed(db, season, week, all, live);
   /** @type {any[]} */
   const seasonRows = ends ? await seasonEnded(db, /** @type {{ n: number, start: number }} */ (season), week, all, keys, live, opened) : [];
   const next = seasonOf(week + 1, zero);
   if (next && next.start === week + 1) await seasonDrawn(db, next.n, week, season, all, keys);
-  const rows = [...all.values()].map((c) => [c.faction, c.region, ends ? strengthSeasonEnd(c.s) : c.s, c.merit, c.event, c.eventSeason, JSON.stringify(c.data), c.shut]);
+  const rows = [...all.values()].map((c) => [c.faction, c.region, ends ? strengthSeasonEnd(c.s) : c.s, c.merit, c.event, c.eventSeason, JSON.stringify(c.data), c.shut, c.doctrine, c.doctrineSeason]);
   const seats = await seatsPlaced(db, week, turning, open, opened, keys);
   try {
     await db.batch([
@@ -128,13 +131,15 @@ export async function settleChapterWeek(db, week, nowS, zero = null, open = 'on'
       // AUDIT CHAP4 S6: the opening week starts EVERY chapter from 50 - a chapter this week names no more than one it does not
       // (a developers' trial chapter whose town is confirmed again later read its trial Strength)
       // CHAP6a: and no developers' event, nor a shut hall, past the opening
-      ...(opened ? [db.prepare("UPDATE npc_chapters SET strength = ?1, event = NULL, event_season = NULL, event_data = '{}', shut_season = NULL WHERE true").bind(STRENGTH_START)] : []),
-      db.prepare(`INSERT INTO npc_chapters (faction, region, strength, week, merit, at, event, event_season, event_data, shut_season)
+      ...(opened ? [db.prepare("UPDATE npc_chapters SET strength = ?1, event = NULL, event_season = NULL, event_data = '{}', shut_season = NULL, doctrine = NULL, doctrine_season = NULL WHERE true").bind(STRENGTH_START)] : []),
+      db.prepare(`INSERT INTO npc_chapters (faction, region, strength, week, merit, at, event, event_season, event_data, shut_season, doctrine, doctrine_season)
         SELECT json_extract(value, '$[0]'), json_extract(value, '$[1]'), json_extract(value, '$[2]'), ?1, json_extract(value, '$[3]'), ?2,
-          json_extract(value, '$[4]'), json_extract(value, '$[5]'), json_extract(value, '$[6]'), json_extract(value, '$[7]')
+          json_extract(value, '$[4]'), json_extract(value, '$[5]'), json_extract(value, '$[6]'), json_extract(value, '$[7]'),
+          json_extract(value, '$[8]'), json_extract(value, '$[9]')
         FROM json_each(?3) WHERE true
         ON CONFLICT (faction, region) DO UPDATE SET strength = excluded.strength, week = excluded.week, merit = excluded.merit, at = excluded.at,
-          event = excluded.event, event_season = excluded.event_season, event_data = excluded.event_data, shut_season = excluded.shut_season`)
+          event = excluded.event, event_season = excluded.event_season, event_data = excluded.event_data, shut_season = excluded.shut_season,
+          doctrine = excluded.doctrine, doctrine_season = excluded.doctrine_season`)
         .bind(week, nowS, JSON.stringify(rows)),
       // CHAP4a: the seats, the whole table again; a Chronicle row a seat that moved
       db.prepare('DELETE FROM npc_chapter_seats WHERE true'),
@@ -160,7 +165,7 @@ export async function settleChapterWeek(db, week, nowS, zero = null, open = 'on'
   return { settled: true, chapters: rows.length };
 }
 
-/** @typedef {{ faction: number, region: number, prev: number, merit: number, s: number, event: string | null, eventSeason: number | null, data: any, shut: number | null }} Chapter */
+/** @typedef {{ faction: number, region: number, prev: number, merit: number, s: number, event: string | null, eventSeason: number | null, data: any, shut: number | null, doctrine: string | null, doctrineSeason: number | null }} Chapter */
 
 /** CHAP6a: a held row's event, as the Turning carries it. */
 function heldEvent(/** @type {any} */ r) {
@@ -169,7 +174,74 @@ function heldEvent(/** @type {any} */ r) {
   return {
     event: chapterEventOk(r.event) ? String(r.event) : null, eventSeason: r.event_season == null ? null : Number(r.event_season),
     data: typeof data === 'object' && !Array.isArray(data) ? data : {}, shut: r.shut_season == null ? null : Number(r.shut_season),
+    // CHAP6b: the doctrine a Schism carried, and the Season it holds for
+    doctrine: chapterDoctrineOk(r.doctrine) ? String(r.doctrine) : null, doctrineSeason: r.doctrine_season == null ? null : Number(r.doctrine_season),
   };
+}
+
+/**
+ * CHAP6b: EVERY ACCOUNT'S MERIT at every chapter from week `from` to week `to`, a Map of `faction|region|account` to its
+ * sum - a gate's where its day's claims agree (AUDIT CHAP3 E1), as every sum.
+ * @param {any} db @param {number} from @param {number} to
+ */
+async function accountMeritBetween(db, from, to) {
+  const { results: lines = [] } = await db.prepare(`SELECT faction, region, account, source, ref, SUM(amount) AS n FROM npc_chapter_merit WHERE week BETWEEN ?1 AND ?2
+    GROUP BY faction, region, account, source, CASE WHEN source = 'gate' THEN ref ELSE '' END`).bind(from, to).all();
+  const gateDays = [...new Set(lines.filter((r) => r.source === 'gate').map((r) => gateDayOf(r.ref)).filter((d) => d !== null))];
+  const agreed = await agreedGateRegions(db, gateDays);
+  /** @type {Map<string, number>} */
+  const out = new Map();
+  for (const r of lines) {
+    if (r.source === 'gate' && agreed.get(/** @type {number} */ (gateDayOf(r.ref))) !== Number(r.region)) continue;
+    const k = `${r.faction}|${r.region}|${r.account}`;
+    out.set(k, (out.get(k) ?? 0) + Number(r.n));
+  }
+  return out;
+}
+
+/**
+ * CHAP6b: A SEASON'S BACKING at every chapter whose event it decides - `{ backs, masters, merit }`: each chapter's
+ * backings `[{ account, char, side }]` (`faction|region` keyed), the character in each chapter's Master's seat as the
+ * seats stand before this Turning's placing, and every account's Merit there from the Season's first week to `week`.
+ * @param {any} db @param {{ n: number, start: number }} season @param {number} week
+ */
+async function seasonBacking(db, season, week) {
+  const { results = [] } = await db.prepare('SELECT faction, region, account, char_id, side FROM npc_chapter_backing WHERE season = ?1 ORDER BY account')
+    .bind(season.n).all();
+  /** @type {Map<string, { account: string, char: string, side: number }[]>} */
+  const backs = new Map();
+  for (const r of results) {
+    const k = `${r.faction}|${r.region}`;
+    if (!backs.has(k)) backs.set(k, []);
+    backs.get(k)?.push({ account: String(r.account), char: String(r.char_id), side: Number(r.side) });
+  }
+  const { results: seated = [] } = await db.prepare("SELECT faction, region, char_id FROM npc_chapter_seats WHERE seat = 'master'").all();
+  const masters = new Map(seated.map((m) => [`${m.faction}|${m.region}`, String(m.char_id)]));
+  return { backs, masters, merit: backs.size ? await accountMeritBetween(db, season.start, week) : new Map() };
+}
+
+/**
+ * CHAP6b: A SUCCESSION NAMED (Chapters-Arc 7) at its Season's third Turning - each chapter whose Season's Succession has no
+ * heir yet: the Master's naming (the backing of the character in its Master's seat), else the choice of the backer whose
+ * account earned the chapter the most Merit this Season (the lower account at a tie), else the hall's own first
+ * (successionHeir). The heir and who named it kept in the chapter's state.
+ * @param {any} db @param {{ n: number, start: number }} season @param {number} week @param {Map<string, Chapter>} all @param {(c: Chapter) => string | null} live
+ */
+async function successionNamed(db, season, week, all, live) {
+  const due = [...all.values()].filter((c) => live(c) === 'succession' && !Number.isSafeInteger(c.data.heir));
+  if (!due.length) return;
+  const { backs, masters, merit } = await seasonBacking(db, season, week);
+  for (const c of due) {
+    const k = `${c.faction}|${c.region}`;
+    const list = (backs.get(k) ?? []).filter((b) => chapterBackOk('succession', b.side));
+    const master = list.find((b) => b.char === masters.get(k))?.side ?? null;
+    const top = list.reduce((/** @type {{ account: string, side: number, n: number } | null} */ best, b) => {
+      const n = merit.get(`${k}|${b.account}`) ?? 0;
+      return n > 0 && (!best || n > best.n) ? { account: b.account, side: b.side, n } : best;
+    }, null);
+    const heir = successionHeir(master, top?.side ?? null);
+    c.data = { ...c.data, heir, named: master !== null ? 'master' : top ? 'member' : 'hall' };
+  }
 }
 
 /**
@@ -219,6 +291,23 @@ async function seasonEnded(db, season, week, all, keys, live, opened) {
     }
     const winner = raced.get(pair);
     c.data = { ...c.data, won: winner == null ? null : winner === k };
+  }
+  // CHAP6b: each Schism decided - its sides' backers' Merit this Season, a tie the Master's side, the winner's doctrine
+  // the next Season's
+  if ([...all.values()].some((c) => live(c) === 'schism')) {
+    const { backs, masters, merit: by } = await seasonBacking(db, season, week);
+    for (const c of all.values()) {
+      if (live(c) !== 'schism') continue;
+      const k = `${c.faction}|${c.region}`;
+      const list = (backs.get(k) ?? []).filter((b) => chapterBackOk('schism', b.side));
+      /** @type {[number, number]} */
+      const sums = [0, 0];
+      for (const b of list) sums[b.side] += by.get(`${k}|${b.account}`) ?? 0;
+      const won = schismWinner(sums, list.find((b) => b.char === masters.get(k))?.side ?? null);
+      const doctrine = won === null ? null : schismDoctrinesOf(season.n, c.faction, c.region)[won];
+      if (doctrine) { c.doctrine = doctrine; c.doctrineSeason = season.n + 1; }
+      c.data = { ...c.data, sums, doctrine };
+    }
   }
   /** @type {any[]} */
   const out = [];
@@ -408,14 +497,21 @@ function eventView(/** @type {any} */ r, /** @type {number | null} */ n, /** @ty
   const e = heldEvent(r);
   const event = e.eventSeason === n ? e.event : null;
   const shut = e.shut === n;
-  if (!event && !shut) return null;
+  const doctrine = e.doctrineSeason === n ? e.doctrine : null;   // CHAP6b: the doctrine last Season's Schism carried
+  if (!event && !shut && !doctrine) return null;
   const rival = event === 'rivalry' && Number.isSafeInteger(e.data.rival) && named(e.data.rival) ? e.data.rival : null;
-  return { event, ...(rival !== null ? { rival } : {}), ...(shut ? { shut: true } : {}) };
+  return {
+    event, ...(rival !== null ? { rival } : {}), ...(shut ? { shut: true } : {}), ...(doctrine ? { doctrine } : {}),
+    // CHAP6b: a Schism's two doctrines (side 0's, side 1's), a Succession's heir once named
+    ...(event === 'schism' ? { sides: schismDoctrinesOf(n, Number(r.faction), Number(r.region)) } : {}),
+    ...(event === 'succession' && Number.isSafeInteger(e.data.heir) ? { heir: e.data.heir } : {}),
+  };
 }
 
 /**
  * CHAP6a: A REGION'S CHAPTERS' EVENTS this Season `n` (null: none counted) - a Map of guild faction to eventView's
- * `{ event, rival?, shut? }`, for each chapter with an event drawn for this Season or its halls shut for it. `named`
+ * `{ event, rival?, shut?, doctrine?, sides?, heir? }`, for each chapter with an event drawn for this Season, its halls
+ * shut for it, or (CHAP6b) a doctrine holding in it. `named`
  * whether a rival guild may be named (a hidden one only to its members).
  * @param {any} db @param {number} region @param {number | null} n @param {(f: number) => boolean} [named]
  */
@@ -423,12 +519,53 @@ export async function regionEvents(db, region, n, named = (f) => !hallHidden(f))
   /** @type {Map<number, { event: string | null, rival?: number, shut?: boolean }>} */
   const out = new Map();
   if (n == null) return out;
-  const { results = [] } = await db.prepare('SELECT faction, event, event_season, event_data, shut_season FROM npc_chapters WHERE region = ?1').bind(region).all();
+  const { results = [] } = await db.prepare('SELECT faction, region, event, event_season, event_data, shut_season, doctrine, doctrine_season FROM npc_chapters WHERE region = ?1').bind(region).all();
   for (const r of results) {
     const v = eventView(r, n, named);
     if (v) out.set(Number(r.faction), v);
   }
   return out;
+}
+
+/** CHAP6b: an account's backings this Season `n` in a region's chapters - a Map of guild faction to the side it backs. */
+export async function regionBackings(/** @type {any} */ db, /** @type {number} */ region, /** @type {number | null} */ n, /** @type {string} */ account) {
+  if (n == null) return new Map();
+  const { results = [] } = await db.prepare('SELECT faction, side FROM npc_chapter_backing WHERE region = ?1 AND season = ?2 AND account = ?3').bind(region, n, account).all();
+  return new Map(results.map((/** @type {any} */ r) => [Number(r.faction), Number(r.side)]));
+}
+
+/**
+ * CHAP6b: A MEMBER'S BACKING (Chapters-Arc 7): `{ character, faction, region, side }` - the account's standing character,
+ * an active member of the guild on its Roll, backs side `side` of its chapter's Schism (0 or 1) or names candidate `side`
+ * of its Succession (0 to 2); a Master's naming is the backing of the character in its Master's seat. One backing an
+ * account a chapter a Season, changed until the event is decided. Answers `{ ok: true, event, side }` or `{ error }`:
+ * 'body'; 'no-event' (no Season counted, or the chapter's Season holds no Schism nor Succession); 'no-side'; 'closed' (a
+ * Succession named, or past its third Turning); 'not-member' (no active membership of the guild on that character,
+ * another account's character, or a dead one). The Turnings due settled first; the event and the membership asked
+ * inside the write.
+ * @param {{ db: any, nowS: number }} ctx @param {{ id: string }} player @param {any} env @param {any} body
+ */
+export async function backChapter({ db, nowS }, player, env, { character, faction, region, side } = {}) {
+  if (typeof character !== 'string' || !REALM_ID_RE.test(character) || !Number.isSafeInteger(faction) || !regionOk(region) || !Number.isSafeInteger(side)) return { error: 'body' };
+  const zero = seasonZeroOf(env?.SEASON_ZERO_WEEK);
+  await settleChaptersDue(db, nowS, zero, env?.CHAPTERS_OPEN);
+  const week = meritWeekOf(nowS);
+  const season = seasonOf(week, zero);
+  if (!season) return { error: 'no-event' };
+  const row = await db.prepare('SELECT event, event_season, event_data FROM npc_chapters WHERE faction = ?1 AND region = ?2').bind(faction, region).first();
+  const e = row ? heldEvent(row) : null;
+  const event = e && e.eventSeason === season.n ? e.event : null;
+  if (!e || (event !== 'schism' && event !== 'succession')) return { error: 'no-event' };
+  if (!chapterBackOk(event, side)) return { error: 'no-side' };
+  if (event === 'succession' && (Number.isSafeInteger(e.data.heir) || week >= season.start + SUCCESSION_TURNING)) return { error: 'closed' };
+  const r = await db.prepare(`INSERT INTO npc_chapter_backing (faction, region, season, account, char_id, side, at)
+    SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7
+    WHERE EXISTS (SELECT 1 FROM npc_roll WHERE char_id = ?5 AND player = ?4 AND faction_id = ?1 AND member = 1 AND dormant = 0)
+      AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?5 AND player = ?4 AND dead_at IS NULL)
+      AND EXISTS (SELECT 1 FROM npc_chapters WHERE faction = ?1 AND region = ?2 AND event = ?8 AND event_season = ?3)
+    ON CONFLICT (faction, region, season, account) DO UPDATE SET char_id = excluded.char_id, side = excluded.side, at = excluded.at`)
+    .bind(faction, region, season.n, player.id, character, side, nowS, event).run();
+  return Number(r?.meta?.changes ?? 0) > 0 ? { ok: true, event, side } : { error: 'not-member' };
 }
 
 /** A region's chapters' Strengths: a Map of guild faction to Strength (50 for one no Turning has settled yet). */
@@ -452,7 +589,7 @@ export async function chapterSheet({ db, nowS }, player, env) {
   if (!chaptersOpenFor(player, env)) return { error: 'chapters-closed' };
   await settleChaptersDue(db, nowS, seasonZeroOf(env?.SEASON_ZERO_WEEK), env?.CHAPTERS_OPEN);
   const chapters = (await allChapters(db, nowS)).filter((c) => !hallHidden(c.faction));
-  const { results = [] } = await db.prepare('SELECT faction, region, strength, event, event_season, event_data, shut_season FROM npc_chapters').all();
+  const { results = [] } = await db.prepare('SELECT faction, region, strength, event, event_season, event_data, shut_season, doctrine, doctrine_season FROM npc_chapters').all();
   const held = new Map(results.map((/** @type {any} */ r) => [`${r.faction}|${r.region}`, Number(r.strength)]));
   // CHAP6a: and each chapter's Season's event - its rival named where the rival is public, as the sheet itself is
   const n = seasonNumberAt(nowS, seasonZeroOf(env?.SEASON_ZERO_WEEK));

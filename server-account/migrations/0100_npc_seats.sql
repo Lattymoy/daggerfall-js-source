@@ -49,3 +49,19 @@ CREATE INDEX IF NOT EXISTS idx_npc_chapter_history_chapter ON npc_chapter_histor
 -- Records' chapterChronicle). Without them each read scanned every row the Chronicle ever kept.
 CREATE INDEX IF NOT EXISTS idx_npc_chapter_history_char ON npc_chapter_history (char_id, week);
 CREATE INDEX IF NOT EXISTS idx_npc_chapter_history_region ON npc_chapter_history (region, seq);
+-- CHAP6b (grown in place - nothing of it shipped): A SEASON'S BACKING. One
+-- row an account a chapter a Season: the side its member backs in the
+-- Season's Schism (0 or 1) or the candidate it names in its Succession (0
+-- to 2), and the character that backed - a Master's naming is the backing
+-- of the character in the Master's seat. Changed until the event is decided
+-- (the Succession at the Season's third Turning, the Schism at its end).
+CREATE TABLE IF NOT EXISTS npc_chapter_backing (
+  faction   INTEGER NOT NULL,
+  region    INTEGER NOT NULL,
+  season    INTEGER NOT NULL,
+  account   TEXT NOT NULL,
+  char_id   TEXT NOT NULL,
+  side      INTEGER NOT NULL CHECK (side BETWEEN 0 AND 2),
+  at        INTEGER NOT NULL,
+  PRIMARY KEY (faction, region, season, account)
+);

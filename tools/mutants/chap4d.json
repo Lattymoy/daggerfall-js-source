@@ -282,11 +282,12 @@
   {
     "name": "CHAP4D-POST-FOCUS",
     "file": "server-account/src/professions.js",
-    "old": "hallWrits(day, region, f, hallWritCountIn(active, strengths.get(f)), table, focuses.get(f) ?? null)",
-    "new": "hallWrits(day, region, f, hallWritCountIn(active, strengths.get(f)), table)",
+    "old": "hallWrits(day, region, f, doctrineWritCount(hallWritCountIn(active, strengths.get(f)), events.get(f)?.doctrine), table, focuses.get(f) ?? null)",
+    "new": "hallWrits(day, region, f, doctrineWritCount(hallWritCountIn(active, strengths.get(f)), events.get(f)?.doctrine), table)",
     "tests": [
       "test/chap4d_focus.test.js"
-    ]
+    ],
+    "note": "CHAP6b: re-aimed by content (the doctrine and the backing beside it)."
   },
   {
     "name": "CHAP4D-POST-WEEK",
@@ -318,12 +319,12 @@
   {
     "name": "CHAP4D-LINES-CHARACTER",
     "file": "server-account/src/professions.js",
-    "old": "chapters: halls ? await chapterLines(db, region, nowS, members, character, zero) : [],",
-    "new": "chapters: halls ? await chapterLines(db, region, nowS, members, null, zero) : [],",
+    "old": "chapters: halls ? await chapterLines(db, region, nowS, members, character, zero, player.id) : [],",
+    "new": "chapters: halls ? await chapterLines(db, region, nowS, members, null, zero, player.id) : [],",
     "tests": [
       "test/chap4d_focus.test.js"
     ],
-    "note": "CHAP6a: re-aimed by content (the Season's event beside it)."
+    "note": "CHAP6a: re-aimed by content (the Season's event beside it). CHAP6b: re-aimed by content (the doctrine and the backing beside it)."
   },
   {
     "name": "CHAP4D-HALL-SECTION",

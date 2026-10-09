@@ -1,0 +1,580 @@
+[
+  {
+    "name": "CHAP6B-DOCTRINES",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const CHAPTER_DOCTRINES = Object.freeze(['training', 'shelf', 'writs']);",
+    "new": "export const CHAPTER_DOCTRINES = Object.freeze(['training', 'shelf']);",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-EFFECTS",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const CHAPTER_DOCTRINE_EFFECTS = Object.freeze({ training: 0.9, shelf: 2, writs: 1 });",
+    "new": "export const CHAPTER_DOCTRINE_EFFECTS = Object.freeze({ training: 1, shelf: 2, writs: 1 });",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-DOCTRINE-OK",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "typeof v === 'string' && /** @type {string[]} */ (CHAPTER_DOCTRINES).includes(v);",
+    "new": "typeof v === 'string';",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-SCHISM-SALT",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "gateHash(CHAPTER_SCHISM_SALT, season, chapterTitleKey(faction, region)) % CHAPTER_DOCTRINES.length",
+    "new": "gateHash(CHAPTER_EVENT_SALT, season, chapterTitleKey(faction, region)) % CHAPTER_DOCTRINES.length",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-SCHISM-KEY",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "gateHash(CHAPTER_SCHISM_SALT, season, chapterTitleKey(faction, region)) % CHAPTER_DOCTRINES.length",
+    "new": "gateHash(CHAPTER_SCHISM_SALT, season, faction) % CHAPTER_DOCTRINES.length",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-SCHISM-SEASON",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "gateHash(CHAPTER_SCHISM_SALT, season, chapterTitleKey(faction, region)) % CHAPTER_DOCTRINES.length",
+    "new": "gateHash(CHAPTER_SCHISM_SALT, chapterTitleKey(faction, region)) % CHAPTER_DOCTRINES.length",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-SCHISM-OUT",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "return CHAPTER_DOCTRINES.filter((_, i) => i !== out);",
+    "new": "return CHAPTER_DOCTRINES.filter((_, i) => i !== 0);",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-CANDIDATES",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const SUCCESSION_CANDIDATES = 3;",
+    "new": "export const SUCCESSION_CANDIDATES = 2;",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-TURNING",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const SUCCESSION_TURNING = 3;",
+    "new": "export const SUCCESSION_TURNING = 4;",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-SIDES-SCHISM",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "(event === 'schism' ? 2 : event === 'succession' ? SUCCESSION_CANDIDATES : 0)",
+    "new": "(event === 'schism' ? 3 : event === 'succession' ? SUCCESSION_CANDIDATES : 0)",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-SIDES-OTHER",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "(event === 'schism' ? 2 : event === 'succession' ? SUCCESSION_CANDIDATES : 0)",
+    "new": "(event === 'schism' ? 2 : SUCCESSION_CANDIDATES)",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-BACK-LOW",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "Number.isSafeInteger(side) && /** @type {number} */ (side) >= 0 && /** @type {number} */ (side) < chapterSidesOf(event)",
+    "new": "Number.isSafeInteger(side) && /** @type {number} */ (side) < chapterSidesOf(event)",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-BACK-HIGH",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "Number.isSafeInteger(side) && /** @type {number} */ (side) >= 0 && /** @type {number} */ (side) < chapterSidesOf(event)",
+    "new": "Number.isSafeInteger(side) && /** @type {number} */ (side) >= 0 && /** @type {number} */ (side) <= chapterSidesOf(event)",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-BACK-WHOLE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "Number.isSafeInteger(side) && /** @type {number} */ (side) >= 0 && /** @type {number} */ (side) < chapterSidesOf(event)",
+    "new": "/** @type {number} */ (side) >= 0 && /** @type {number} */ (side) < chapterSidesOf(event)",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-WIN-MORE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  if (a > b) return 0;\n",
+    "new": "  if (a >= b) return 0;\n",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-WIN-TIE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  return master === 0 || master === 1 ? master : null;\n",
+    "new": "  return null;\n",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-WIN-MASTER-OK",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  return master === 0 || master === 1 ? master : null;\n",
+    "new": "  return master ?? null;\n",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-HEIR-MASTER",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "(Number.isSafeInteger(master) ? /** @type {number} */ (master) : Number.isSafeInteger(top)",
+    "new": "(master ? /** @type {number} */ (master) : Number.isSafeInteger(top)",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-HEIR-TOP",
+    "file": "src/net/npcChapterLaw.js",
+    "old": ": Number.isSafeInteger(top) ? /** @type {number} */ (top) : 0);",
+    "new": ": top ? /** @type {number} */ (top) : 0);",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ],
+    "equivalent": true,
+    "why": "`top` is a candidate's index, 0 to 2: where it is 0 the mutant falls to the hall's own first - candidate 0 as well - and where it is 1 or 2 both read it; a top that is no whole number (null) is the hall's first either way."
+  },
+  {
+    "name": "CHAP6B-WRIT-COUNT",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "count + (doctrine === 'writs' ? CHAPTER_DOCTRINE_EFFECTS.writs : 0);",
+    "new": "count;",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-LINE-DOCTRINE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "d.event === 'schism' ? (chapterDoctrineOk(d.doctrine) ?",
+    "new": "d.event === 'schism' ? (d.doctrine ?",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-LINE-HEIR",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "d.event === 'succession' && Number.isSafeInteger(d.heir) ?",
+    "new": "d.event === 'succession' ?",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-SVC-HELD-DOCTRINE",
+    "file": "server-account/src/npcChapters.js",
+    "old": "doctrine: chapterDoctrineOk(r.doctrine) ? String(r.doctrine) : null,",
+    "new": "doctrine: null,",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-SVC-NAMED-WHEN",
+    "file": "server-account/src/npcChapters.js",
+    "old": "if (season && week >= season.start + SUCCESSION_TURNING - 1) await successionNamed(",
+    "new": "if (season && week >= season.start + SUCCESSION_TURNING - 2) await successionNamed(",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-SVC-NAMED-ONCE",
+    "file": "server-account/src/npcChapters.js",
+    "old": "live(c) === 'succession' && !Number.isSafeInteger(c.data.heir));",
+    "new": "live(c) === 'succession');",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-SVC-BACK-MERIT-FROM",
+    "file": "server-account/src/npcChapters.js",
+    "old": "merit: backs.size ? await accountMeritBetween(db, season.start, week) : new Map()",
+    "new": "merit: backs.size ? await accountMeritBetween(db, season.start + 1, week) : new Map()",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-SVC-BACK-ORDER",
+    "file": "server-account/src/npcChapters.js",
+    "old": "FROM npc_chapter_backing WHERE season = ?1 ORDER BY account')",
+    "new": "FROM npc_chapter_backing WHERE season = ?1')",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-SVC-BACK-SEASON",
+    "file": "server-account/src/npcChapters.js",
+    "old": "FROM npc_chapter_backing WHERE season = ?1 ORDER BY account')\n    .bind(season.n).all();",
+    "new": "FROM npc_chapter_backing WHERE season = ?1 ORDER BY account')\n    .bind(season.n + 1).all();",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-SVC-MASTERS-SEAT",
+    "file": "server-account/src/npcChapters.js",
+    "old": "\"SELECT faction, region, char_id FROM npc_chapter_seats WHERE seat = 'master'\"",
+    "new": "\"SELECT faction, region, char_id FROM npc_chapter_seats\"",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-SVC-NAMED-MASTER",
+    "file": "server-account/src/npcChapters.js",
+    "old": "    const master = list.find((b) => b.char === masters.get(k))?.side ?? null;\n",
+    "new": "    const master = null;\n",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-SVC-TOP-MERIT",
+    "file": "server-account/src/npcChapters.js",
+    "old": "return n > 0 && (!best || n > best.n) ? { account: b.account, side: b.side, n } : best;",
+    "new": "return (!best || n > best.n) ? { account: b.account, side: b.side, n } : best;",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-SVC-TOP-TIE",
+    "file": "server-account/src/npcChapters.js",
+    "old": "return n > 0 && (!best || n > best.n) ? { account: b.account, side: b.side, n } : best;",
+    "new": "return n > 0 && (!best || n >= best.n) ? { account: b.account, side: b.side, n } : best;",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-SVC-TOP-CHAPTER",
+    "file": "server-account/src/npcChapters.js",
+    "old": "const n = merit.get(`${k}|${b.account}`) ?? 0;",
+    "new": "const n = merit.get(`${c.faction}|${b.account}`) ?? 0;",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-SVC-NAMED-LABEL",
+    "file": "server-account/src/npcChapters.js",
+    "old": "named: master !== null ? 'master' : top ? 'member' : 'hall'",
+    "new": "named: master !== null ? 'master' : 'member'",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-SVC-SCHISM-SUM",
+    "file": "server-account/src/npcChapters.js",
+    "old": "for (const b of list) sums[b.side] += by.get(`${k}|${b.account}`) ?? 0;",
+    "new": "for (const b of list) sums[b.side] = by.get(`${k}|${b.account}`) ?? 0;",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-SVC-SCHISM-MASTER",
+    "file": "server-account/src/npcChapters.js",
+    "old": "const won = schismWinner(sums, list.find((b) => b.char === masters.get(k))?.side ?? null);",
+    "new": "const won = schismWinner(sums, null);",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-SVC-SCHISM-DOCTRINE",
+    "file": "server-account/src/npcChapters.js",
+    "old": "schismDoctrinesOf(season.n, c.faction, c.region)[won];",
+    "new": "schismDoctrinesOf(season.n, c.faction, c.region)[1 - won];",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-SVC-SCHISM-SEASON",
+    "file": "server-account/src/npcChapters.js",
+    "old": "if (doctrine) { c.doctrine = doctrine; c.doctrineSeason = season.n + 1; }",
+    "new": "if (doctrine) { c.doctrine = doctrine; c.doctrineSeason = season.n; }",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-SVC-SCHISM-ONLY",
+    "file": "server-account/src/npcChapters.js",
+    "old": "if ([...all.values()].some((c) => live(c) === 'schism')) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-SVC-ROW-DOCTRINE",
+    "file": "server-account/src/npcChapters.js",
+    "old": "JSON.stringify(c.data), c.shut, c.doctrine, c.doctrineSeason]);",
+    "new": "JSON.stringify(c.data), c.shut, null, c.doctrineSeason]);",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-SVC-RESET-DOCTRINE",
+    "file": "server-account/src/npcChapters.js",
+    "old": "shut_season = NULL, doctrine = NULL, doctrine_season = NULL WHERE true",
+    "new": "shut_season = NULL WHERE true",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-VIEW-DOCTRINE-SEASON",
+    "file": "server-account/src/npcChapters.js",
+    "old": "const doctrine = e.doctrineSeason === n ? e.doctrine : null;",
+    "new": "const doctrine = e.doctrine;",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-VIEW-DOCTRINE-ONLY",
+    "file": "server-account/src/npcChapters.js",
+    "old": "if (!event && !shut && !doctrine) return null;",
+    "new": "if (!event && !shut) return null;",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-VIEW-SIDES",
+    "file": "server-account/src/npcChapters.js",
+    "old": "...(event === 'schism' ? { sides: schismDoctrinesOf(n, Number(r.faction), Number(r.region)) } : {}),",
+    "new": "",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-VIEW-HEIR",
+    "file": "server-account/src/npcChapters.js",
+    "old": "...(event === 'succession' && Number.isSafeInteger(e.data.heir) ? { heir: e.data.heir } : {}),",
+    "new": "",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-VIEW-DOCTRINE",
+    "file": "server-account/src/npcChapters.js",
+    "old": "...(shut ? { shut: true } : {}), ...(doctrine ? { doctrine } : {}),",
+    "new": "...(shut ? { shut: true } : {}),",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-BACK-BODY-SIDE",
+    "file": "server-account/src/npcChapters.js",
+    "old": "!regionOk(region) || !Number.isSafeInteger(side)) return { error: 'body' };",
+    "new": "!regionOk(region)) return { error: 'body' };",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-BACK-SEASON",
+    "file": "server-account/src/npcChapters.js",
+    "old": "  if (!season) return { error: 'no-event' };\n  const row",
+    "new": "  const row",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-BACK-EVENT",
+    "file": "server-account/src/npcChapters.js",
+    "old": "const event = e && e.eventSeason === season.n ? e.event : null;",
+    "new": "const event = e ? e.event : null;",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-BACK-SIDE",
+    "file": "server-account/src/npcChapters.js",
+    "old": "  if (!chapterBackOk(event, side)) return { error: 'no-side' };\n",
+    "new": "",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-BACK-CLOSED-HEIR",
+    "file": "server-account/src/npcChapters.js",
+    "old": "(Number.isSafeInteger(e.data.heir) || week >= season.start + SUCCESSION_TURNING)",
+    "new": "(week >= season.start + SUCCESSION_TURNING)",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-BACK-CLOSED-WEEK",
+    "file": "server-account/src/npcChapters.js",
+    "old": "(Number.isSafeInteger(e.data.heir) || week >= season.start + SUCCESSION_TURNING)",
+    "new": "(Number.isSafeInteger(e.data.heir) || week > season.start + SUCCESSION_TURNING)",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-BACK-MEMBER",
+    "file": "server-account/src/npcChapters.js",
+    "old": "faction_id = ?1 AND member = 1 AND dormant = 0)\n      AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?5",
+    "new": "faction_id = ?1 AND member = 1)\n      AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?5",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-BACK-GUILD",
+    "file": "server-account/src/npcChapters.js",
+    "old": "WHERE char_id = ?5 AND player = ?4 AND faction_id = ?1 AND member = 1 AND dormant = 0)",
+    "new": "WHERE char_id = ?5 AND player = ?4 AND member = 1 AND dormant = 0)",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-BACK-DEAD",
+    "file": "server-account/src/npcChapters.js",
+    "old": "AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?5 AND player = ?4 AND dead_at IS NULL)\n      AND EXISTS (SELECT 1 FROM npc_chapters",
+    "new": "AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?5 AND player = ?4)\n      AND EXISTS (SELECT 1 FROM npc_chapters",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-BACK-UPSERT-SIDE",
+    "file": "server-account/src/npcChapters.js",
+    "old": "DO UPDATE SET char_id = excluded.char_id, side = excluded.side, at = excluded.at",
+    "new": "DO UPDATE SET char_id = excluded.char_id, at = excluded.at",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-BACK-UPSERT-CHAR",
+    "file": "server-account/src/npcChapters.js",
+    "old": "DO UPDATE SET char_id = excluded.char_id, side = excluded.side, at = excluded.at",
+    "new": "DO UPDATE SET side = excluded.side, at = excluded.at",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-REGION-BACKINGS",
+    "file": "server-account/src/npcChapters.js",
+    "old": "'SELECT faction, side FROM npc_chapter_backing WHERE region = ?1 AND season = ?2 AND account = ?3').bind(region, n, account)",
+    "new": "'SELECT faction, side FROM npc_chapter_backing WHERE region = ?1 AND season = ?2').bind(region, n)",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-BOARD-BACKED",
+    "file": "server-account/src/professions.js",
+    "old": ", ...(backed.has(f) ? { backed: backed.get(f) } : {}),",
+    "new": ",",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-BOARD-ACCOUNT",
+    "file": "server-account/src/professions.js",
+    "old": "chapters: halls ? await chapterLines(db, region, nowS, members, character, zero, player.id) : [],",
+    "new": "chapters: halls ? await chapterLines(db, region, nowS, members, character, zero) : [],",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-POST-DOCTRINE",
+    "file": "server-account/src/professions.js",
+    "old": "doctrineWritCount(hallWritCountIn(active, strengths.get(f)), events.get(f)?.doctrine)",
+    "new": "doctrineWritCount(hallWritCountIn(active, strengths.get(f)), null)",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-ROUTE",
+    "file": "server-account/src/index.js",
+    "old": "|| path === '/v1/chapters/history' || path === '/v1/chapters/back') {",
+    "new": "|| path === '/v1/chapters/history') {",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-ROUTE-LIST",
+    "file": "server-account/src/service.js",
+    "old": "  '/v1/chapters/back',   // CHAP6b: a member's backing in its chapter's Season\n",
+    "new": "",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6B-STATUS",
+    "file": "server-account/src/index.js",
+    "old": "  'no-event': 409, closed: 409, 'not-member': 403,",
+    "new": "  closed: 409,",
+    "tests": [
+      "test/chap6b_backing.test.js"
+    ]
+  }
+]

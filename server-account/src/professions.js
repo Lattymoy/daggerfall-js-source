@@ -87,13 +87,13 @@ import { fortTiersOf } from './seatForts.js';   // SEAT2b part two: the halls st
 import { RAM_KIT } from '../../src/net/professionLaw.js';   // SEAT2b part two: a siege work's place in the Stores
 import { SIEGE_GEM } from '../../src/net/professionLaw.js';   // PROF10: a Lapidary's Siege-cracked Gem, spent for a piece's gem
 import { CARRIED_MAX, DEPOSIT_MAX, CLAMP_ORDER, DEPOSIT_ORDERS, CARRIED_ROW_DAYS, heldOk, seenOk, depositOrderOk } from '../../src/net/bagLaw.js';   // BAG1: what a character carries, counted
-import { hallWrits, hallWritCountIn, hallWritId, hallHidden, HALL_WRIT_REP, memberWrit, memberWritId, MERIT_WRIT, chapterBandOf, chaptersSwitchOf, meritWeekOf, chapterFocusesOf, crackdownPay } from '../../src/net/npcChapterLaw.js';   // CHAP2a: a chapter's hall writs and what one pays its guild; CHAP3a: a member's own
+import { hallWrits, hallWritCountIn, hallWritId, hallHidden, HALL_WRIT_REP, memberWrit, memberWritId, MERIT_WRIT, chapterBandOf, chaptersSwitchOf, meritWeekOf, chapterFocusesOf, crackdownPay, doctrineWritCount } from '../../src/net/npcChapterLaw.js';   // CHAP2a: a chapter's hall writs and what one pays its guild; CHAP3a: a member's own
 import { MAX_REPUTATION, GUILD_FACTION_IDS } from '../../src/systems/guildFactions.js';   // CHAP2a: a hall writ's reputation, inside DFU's bound; the hidden two
 import { regionChapters } from './npcHalls.js';   // CHAP2a: the region's chapters, witnessed
 import { chaptersOpenFor } from './npcRoll.js';   // CHAP2a: hall writs while the Roll is open to the account
 import { receiptAsks, membersOf } from './npcReceipts.js';   // CHAP2b: a chapter's receipt asks beside its writs; CHAP3a: the reader's guilds
 import { meritStatement, meritOfAct, meritAsks } from './npcMerit.js';   // CHAP3a: a member's own writ's Merit, the board's Merit lines
-import { settleChaptersDue, regionStrengths, regionFocuses, masterSeatsIn, regionEvents, seasonNumberAt } from './npcChapters.js';   // CHAP4d: the week's Focuses, a Master's chapters   // CHAP3b: the Turning before a chapter's writs, its band
+import { settleChaptersDue, regionStrengths, regionFocuses, masterSeatsIn, regionEvents, seasonNumberAt, regionBackings } from './npcChapters.js';   // CHAP4d: the week's Focuses, a Master's chapters   // CHAP3b: the Turning before a chapter's writs, its band
 
 const DAY_S = 86_400;
 /** The pixels one read may ask after - a streamed 5 x 5. */
@@ -1467,7 +1467,7 @@ async function postWrits(db, day, region, nowS, zero = null, open = 'off') {
     const focuses = await regionFocuses(db, region, meritWeekOf(nowS));   // CHAP4d: every other writ the Master's family
     // CHAP6a: a chapter whose halls a Crackdown shut posts none this Season; one under a Crackdown pays half again
     const events = await regionEvents(db, region, seasonNumberAt(nowS, zero));
-    const halls = chapters.filter((f) => !events.get(f)?.shut).flatMap((f) => hallWrits(day, region, f, hallWritCountIn(active, strengths.get(f)), table, focuses.get(f) ?? null)
+    const halls = chapters.filter((f) => !events.get(f)?.shut).flatMap((f) => hallWrits(day, region, f, doctrineWritCount(hallWritCountIn(active, strengths.get(f)), events.get(f)?.doctrine), table, focuses.get(f) ?? null)
       .map((w) => ({ ...w, faction: f, pay: events.get(f)?.event === 'crackdown' ? crackdownPay(w.pay) : w.pay })));
     // AUDIT CHAP3 S4: the region's hall writs in ONE statement over a bound JSON array (SCALE1's law - a region of many
     // chapters at a busy realm's scale was a statement a writ, over a thousand), in their own batch: the Court's stand
@@ -1511,17 +1511,19 @@ async function postMemberWrits(db, day, region, nowS, character, members, zero =
 
 /** CHAP3b: THE BOARD'S CHAPTER LINES - each chapter of the region, `{ faction, strength, band }`, a hidden guild's to its
  *  members alone (`members`, the reader's guilds on its Roll) as its writs are. CHAP6a: and its Season's event (`event`,
- *  a Rivalry's `rival` - a hidden rival named to its members alone - and `shut`). */
-async function chapterLines(db, region, nowS, members, character = null, zero = null) {
+ *  a Rivalry's `rival` - a hidden rival named to its members alone - and `shut`); CHAP6b: a Schism's `sides`, a
+ *  Succession's `heir`, the `doctrine` holding, and the side the reader's account backs (`backed`). */
+async function chapterLines(db, region, nowS, members, character = null, zero = null, account = null) {
   const chapters = (await regionChapters(db, region, nowS * 1000)).filter((f) => !hallHidden(f) || members.includes(f));
   const strengths = await regionStrengths(db, region, chapters);
   // CHAP4d: and each chapter's Focus this week, and the Focuses its Master may choose where the reader is its Master
   const focuses = await regionFocuses(db, region, meritWeekOf(nowS));
   const masters = await masterSeatsIn(db, character, region, meritWeekOf(nowS));   // AUDIT CHAP4 S4: last week's Turning's seats
   const events = await regionEvents(db, region, seasonNumberAt(nowS, zero), (f) => !hallHidden(f) || members.includes(f));
+  const backed = account ? await regionBackings(db, region, seasonNumberAt(nowS, zero), account) : new Map();   // CHAP6b: the reader's own
   return chapters.map((f) => ({
     faction: f, strength: strengths.get(f), band: chapterBandOf(strengths.get(f)).band, focus: focuses.get(f) ?? null,
-    ...(masters.has(f) ? { master: true, focuses: chapterFocusesOf(f) } : {}), ...events.get(f),
+    ...(masters.has(f) ? { master: true, focuses: chapterFocusesOf(f) } : {}), ...events.get(f), ...(backed.has(f) ? { backed: backed.get(f) } : {}),
   }));
 }
 
@@ -1561,7 +1563,7 @@ export async function listWrits({ db, nowS }, player, env, { character, region }
     writs: results.filter(shown).map((w) => writView(w, player.id)),
     receipts: await receiptAsks(db, player, env, character, region, nowS),   // CHAP2b: the region's chapters' receipt asks
     merit: await meritAsks(db, player.id, character, region, nowS, members),   // CHAP3a: the account's Merit in the chapters here
-    chapters: halls ? await chapterLines(db, region, nowS, members, character, zero) : [],   // CHAP3b: the chapters here, their Strength
+    chapters: halls ? await chapterLines(db, region, nowS, members, character, zero, player.id) : [],   // CHAP3b: the chapters here, their Strength
     today: { filled: await writsToday(db, player.id, day), max: COURT_WRITS_PER_DAY },
   };
 }

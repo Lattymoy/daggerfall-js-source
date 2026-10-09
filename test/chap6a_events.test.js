@@ -116,7 +116,7 @@ test('CHAP6a a Decline\'s week, a Rivalry\'s end, a Crackdown\'s pay and shut li
   assert.deepEqual([crackdownShuts(29), crackdownShuts(30), crackdownShuts(0)], [true, false, true]);
 });
 
-test('CHAP6a the Season\'s lines in words - each ending, a hidden rival named no guild, the Master who held it; none for a hidden guild, a Season that is none, an event CHAP6b words (mutants: each word)', () => {
+test('CHAP6a the Season\'s lines in words - each ending, a hidden rival named no guild, the Master who held it; none for a hidden guild, a Season that is none, a Succession with no heir (mutants: each word)', () => {
   const ev = (event, d = {}, f = FIGHTERS) => chapterSeasonLine({ kind: 'event', faction: f, data: { season: 1, event, ...d } });
   assert.equal(ev('decline', { fell: 6 }), 'At the end of the Season of Morning Star, the Fighters Guild\'s decline cost it 6 Strength.');
   assert.equal(ev('decline', { fell: 0 }), 'At the end of the Season of Morning Star, the Fighters Guild held against its decline.');
@@ -128,7 +128,8 @@ test('CHAP6a the Season\'s lines in words - each ending, a hidden rival named no
   assert.equal(ev('rivalry', { rival: THIEVES, won: true }), 'At the end of the Season of Morning Star, the Fighters Guild won its rivalry with its rival in the shadows.');
   assert.equal(ev('rivalry', { rival: JULIANOS, won: 'a' }, MAGES), 'At the end of the Season of Morning Star, the Mages Guild\'s rivalry with the Temple of Julianos ended even.', 'a won no yes nor no is no win');
   assert.equal(ev('ascendancy'), 'At the end of the Season of Morning Star, the Fighters Guild stood ascendant.');
-  assert.deepEqual([ev('schism'), ev('succession'), ev('calm'), ev('decline', {}, THIEVES)], [null, null, null, null]);
+  assert.deepEqual([ev('succession'), ev('calm'), ev('decline', {}, THIEVES)], [null, null, null]);
+  assert.equal(ev('schism'), 'At the end of the Season of Morning Star, the Fighters Guild\'s schism ended with neither side carried.');   // PIN MOVED (CHAP6b): the Schism worded
   assert.equal(chapterSeasonLine({ kind: 'event', faction: FIGHTERS, data: { season: -1, event: 'ascendancy' } }), null);
   assert.equal(chapterSeasonLine({ kind: 'event', faction: FIGHTERS, data: { season: 0, event: 'ascendancy' } }), 'At the end of Season 0, the Fighters Guild stood ascendant.');
   assert.equal(chapterChronicleLine({ kind: 'season', faction: MAGES, name: 'Alda', data: { season: 2 } }), 'Through the Season of Sun\'s Dawn, Alda held the Master\'s seat of the Mages Guild.');

@@ -473,12 +473,12 @@
   {
     "name": "CHAP3B-LINES-SWITCH",
     "file": "server-account/src/professions.js",
-    "old": "chapters: halls ? await chapterLines(db, region, nowS, members, character, zero) : [],",
-    "new": "chapters: await chapterLines(db, region, nowS, members, character, zero),",
+    "old": "chapters: halls ? await chapterLines(db, region, nowS, members, character, zero, player.id) : [],",
+    "new": "chapters: await chapterLines(db, region, nowS, members, character, zero, player.id),",
     "tests": [
       "test/chap3b_strength.test.js"
     ],
-    "note": "CHAP6a: re-aimed by content (the Season's event beside it)."
+    "note": "CHAP6a: re-aimed by content (the Season's event beside it). CHAP6b: re-aimed by content (the doctrine and the backing beside it)."
   },
   {
     "name": "CHAP3B-ROUTE",

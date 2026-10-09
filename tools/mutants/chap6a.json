@@ -380,8 +380,8 @@
   {
     "name": "CHAP6A-LINE-ASC",
     "file": "src/net/npcChapterLaw.js",
-    "old": ": d.event === 'ascendancy' ? `${guild} stood ascendant` : null;",
-    "new": ": null;",
+    "old": ": d.event === 'ascendancy' ? `${guild} stood ascendant`\n",
+    "new": ": d.event === 'ascendancy' ? null\n",
     "tests": [
       "test/chap6a_events.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "CHAP6A-SVC-ROW-SHUT",
     "file": "server-account/src/npcChapters.js",
-    "old": "c.event, c.eventSeason, JSON.stringify(c.data), c.shut]);",
-    "new": "c.event, c.eventSeason, JSON.stringify(c.data), null]);",
+    "old": "c.event, c.eventSeason, JSON.stringify(c.data), c.shut, c.doctrine, c.doctrineSeason]);",
+    "new": "c.event, c.eventSeason, JSON.stringify(c.data), null, c.doctrine, c.doctrineSeason]);",
     "tests": [
       "test/chap6a_events.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "CHAP6A-SVC-RESET-EVENTS",
     "file": "server-account/src/npcChapters.js",
-    "old": "UPDATE npc_chapters SET strength = ?1, event = NULL, event_season = NULL, event_data = '{}', shut_season = NULL WHERE true",
-    "new": "UPDATE npc_chapters SET strength = ?1 WHERE true",
+    "old": "UPDATE npc_chapters SET strength = ?1, event = NULL, event_season = NULL, event_data = '{}', shut_season = NULL, doctrine = NULL, doctrine_season = NULL WHERE true",
+    "new": "UPDATE npc_chapters SET strength = ?1, doctrine = NULL, doctrine_season = NULL WHERE true",
     "tests": [
       "test/chap6a_events.test.js"
     ]
@@ -677,8 +677,8 @@
   {
     "name": "CHAP6A-VIEW-SEASON",
     "file": "server-account/src/npcChapters.js",
-    "old": "const event = e.eventSeason === n ? e.event : null;\n  const shut = e.shut === n;\n  if (!event && !shut) return null;",
-    "new": "const event = e.event;\n  const shut = e.shut === n;\n  if (!event && !shut) return null;",
+    "old": "const event = e.eventSeason === n ? e.event : null;\n  const shut = e.shut === n;\n  const doctrine",
+    "new": "const event = e.event;\n  const shut = e.shut === n;\n  const doctrine",
     "tests": [
       "test/chap6a_events.test.js"
     ]
@@ -686,8 +686,8 @@
   {
     "name": "CHAP6A-VIEW-SHUT",
     "file": "server-account/src/npcChapters.js",
-    "old": "const event = e.eventSeason === n ? e.event : null;\n  const shut = e.shut === n;\n  if (!event && !shut) return null;",
-    "new": "const event = e.eventSeason === n ? e.event : null;\n  const shut = e.shut != null;\n  if (!event && !shut) return null;",
+    "old": "const event = e.eventSeason === n ? e.event : null;\n  const shut = e.shut === n;\n  const doctrine",
+    "new": "const event = e.eventSeason === n ? e.event : null;\n  const shut = e.shut != null;\n  const doctrine",
     "tests": [
       "test/chap6a_events.test.js"
     ]
@@ -740,8 +740,8 @@
   {
     "name": "CHAP6A-BOARD-ZERO",
     "file": "server-account/src/professions.js",
-    "old": "chapters: halls ? await chapterLines(db, region, nowS, members, character, zero) : [],",
-    "new": "chapters: halls ? await chapterLines(db, region, nowS, members, character) : [],",
+    "old": "chapters: halls ? await chapterLines(db, region, nowS, members, character, zero, player.id) : [],",
+    "new": "chapters: halls ? await chapterLines(db, region, nowS, members, character, null, player.id) : [],",
     "tests": [
       "test/chap6a_events.test.js"
     ]

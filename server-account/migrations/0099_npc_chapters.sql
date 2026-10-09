@@ -37,6 +37,8 @@ CREATE TABLE IF NOT EXISTS npc_chapter_weeks (
 -- event drawn at the Turning that opened Season `event_season`, its state
 -- (`event_data`: a Rivalry's rival, a Decline's Strength lost so far, an
 -- ending's outcome), and the Season a Crackdown shut its halls for.
+-- CHAP6b (grown in place): and the doctrine a Schism carried, and the
+-- Season it holds for.
 CREATE TABLE IF NOT EXISTS npc_chapters (
   faction   INTEGER NOT NULL,
   region    INTEGER NOT NULL,
@@ -50,6 +52,8 @@ CREATE TABLE IF NOT EXISTS npc_chapters (
   event_season INTEGER,
   event_data TEXT NOT NULL DEFAULT '{}',
   shut_season INTEGER,
+  doctrine  TEXT CHECK (doctrine IS NULL OR doctrine IN ('training', 'shelf', 'writs')),
+  doctrine_season INTEGER,
   PRIMARY KEY (faction, region)
 );
 CREATE INDEX IF NOT EXISTS idx_npc_chapters_region ON npc_chapters (region);

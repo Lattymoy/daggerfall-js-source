@@ -1075,7 +1075,8 @@ const rivalWords = (/** @type {unknown} */ f) => (isRollFaction(f) && !hallHidde
 /** CHAP6a: A SEASON'S LINE IN WORDS - an 'event' row `{ faction, data: { season, event, ... } }` ("At the end of the Season
  *  of Morning Star, the Fighters Guild won its rivalry with the Thieves Guild.") or a 'season' row, the Master who held the
  *  seat the whole Season ("Through the Season of Morning Star, Alda held the Master's seat of the Fighters Guild.") -
- *  null for a row it has no words for (CHAP6b words the Schism and the Succession) or a hidden guild's. */
+ *  null for a row it has no words for or a hidden guild's. CHAP6b: and the Schism's doctrine, the Succession's heir (the
+ *  heir's name is the hall's census's, read in its town - CHAP6c). */
 export function chapterSeasonLine(/** @type {any} */ row) {
   if (!isRollFaction(row?.faction) || hallHidden(row.faction)) return null;
   const season = seatSeasonName(row?.data?.season);
@@ -1090,6 +1091,55 @@ export function chapterSeasonLine(/** @type {any} */ row) {
     : d.event === 'crackdown' ? (d.shut ? `a crackdown shut the halls of ${guild} for the Season after` : `${guild} weathered a crackdown`)
       : d.event === 'rivalry' ? (d.won === true ? `${guild} won its rivalry with ${rivalWords(d.rival)}` : d.won === false ? `${guild} lost its rivalry with ${rivalWords(d.rival)}`
         : `${guild}'s rivalry with ${rivalWords(d.rival)} ended even`)
-        : d.event === 'ascendancy' ? `${guild} stood ascendant` : null;
+        : d.event === 'ascendancy' ? `${guild} stood ascendant`
+          : d.event === 'schism' ? (chapterDoctrineOk(d.doctrine) ? `${guild}'s schism ended, and it holds to ${DOCTRINE_WORDS[d.doctrine]} for the Season after`
+            : `${guild}'s schism ended with neither side carried`)
+            : d.event === 'succession' && Number.isSafeInteger(d.heir) ? `${guild}'s hall took a new head` : null;   // CHAP6b
   return did ? `At the end of ${season}, ${did}.` : null;
 }
+
+// ─── CHAP6b: THE SCHISM, THE SUCCESSION, THE DOCTRINE (Chapters-Arc 7) ─
+// A Schism's two candidates each stand for a doctrine - two of the three, drawn by the event's own roll - and members
+// back one with their Merit: at the Season's end the side whose backers earned the chapter more Merit that Season wins,
+// and its doctrine holds the next Season. A Succession's three candidates are the hall's residents (named by the client
+// off the hall's census - CHAP6c); the Master names the heir by the Season's third Turning, and with no Master's word
+// the choice of the backer who earned the chapter the most Merit stands - none named, the hall's own first. The
+// Master's backing is the chapter's VOTE (section 6): a Schism's tie goes to the Master's side.
+
+/** THE DOCTRINES a Schism stands for (section 7's "cheaper training, or a deeper shelf, or more writs"), in order. */
+export const CHAPTER_DOCTRINES = Object.freeze(['training', 'shelf', 'writs']);
+/** Whether `v` names a doctrine. */
+export const chapterDoctrineOk = (/** @type {unknown} */ v) => typeof v === 'string' && /** @type {string[]} */ (CHAPTER_DOCTRINES).includes(v);
+/** A doctrine in the Chronicle's words. */
+const DOCTRINE_WORDS = Object.freeze({ training: 'cheaper training', shelf: 'a deeper shelf', writs: 'more writs' });
+/** WHAT A DOCTRINE DOES for its Season: training a further tenth off the hall's training, two qualities deeper on its
+ *  shelf (both the client's - CHAP6c), one hall writ more a day (the service's). */
+export const CHAPTER_DOCTRINE_EFFECTS = Object.freeze({ training: 0.9, shelf: 2, writs: 1 });
+/** The Schism's own salt, beside the events'. */
+export const CHAPTER_SCHISM_SALT = 0x5c15;
+/** A SCHISM'S TWO DOCTRINES `[side 0's, side 1's]` for Season `season` at chapter `faction` of `region` - two of the
+ *  three, the one the roll leaves out the third; the two in the doctrines' order. */
+export function schismDoctrinesOf(/** @type {number} */ season, /** @type {number} */ faction, /** @type {number} */ region) {
+  const out = gateHash(CHAPTER_SCHISM_SALT, season, chapterTitleKey(faction, region)) % CHAPTER_DOCTRINES.length;
+  return CHAPTER_DOCTRINES.filter((_, i) => i !== out);
+}
+/** A Succession's candidates, the hall's residents its roll names. */
+export const SUCCESSION_CANDIDATES = 3;
+/** The Season's Turning a Succession is named at - its third (the Turning that closes the Season's third week). */
+export const SUCCESSION_TURNING = 3;
+/** The sides a member may back in `event`: a Schism's two, a Succession's three candidates - none in any other. */
+export const chapterSidesOf = (/** @type {unknown} */ event) => (event === 'schism' ? 2 : event === 'succession' ? SUCCESSION_CANDIDATES : 0);
+/** Whether `side` is one a member may back in `event`. */
+export const chapterBackOk = (/** @type {unknown} */ event, /** @type {unknown} */ side) => Number.isSafeInteger(side) && /** @type {number} */ (side) >= 0 && /** @type {number} */ (side) < chapterSidesOf(event);
+/** A SCHISM'S END: `sums` each side's backers' Merit that Season, `master` the Master's side (or null) - the side with more,
+ *  the Master's at a tie (its vote), none where neither is carried. */
+export function schismWinner(/** @type {[number, number]} */ sums, /** @type {number | null} */ master = null) {
+  const [a, b] = [Number(sums?.[0]) || 0, Number(sums?.[1]) || 0];
+  if (a > b) return 0;
+  if (b > a) return 1;
+  return master === 0 || master === 1 ? master : null;
+}
+/** A SUCCESSION'S HEIR: the Master's naming, else the most-Merit backer's, else the hall's own first. */
+export const successionHeir = (/** @type {number | null} */ master, /** @type {number | null} */ top) => (Number.isSafeInteger(master) ? /** @type {number} */ (master) : Number.isSafeInteger(top) ? /** @type {number} */ (top) : 0);
+/** A hall writ's day count under a doctrine: one more for "more writs". */
+export const doctrineWritCount = (/** @type {number} */ count, /** @type {unknown} */ doctrine) => count + (doctrine === 'writs' ? CHAPTER_DOCTRINE_EFFECTS.writs : 0);

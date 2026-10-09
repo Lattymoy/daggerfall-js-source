@@ -24,7 +24,9 @@ its record at the foot). CHAP5b BUILT (2026-10-09, the same word; the hall's peo
 section 9, its record at the foot). AUDIT CHAP4 (2026-10-09, Mac: "Lets do a deep audit on everything so far") read
 all of it again through six lenses and fixed what they found (`01-Overview/Audit-Chapters-4.md`, its record at the
 foot); CHAP6a BUILT (2026-10-09, Mac: "continue"; the Season's event drawn, a Decline's weeks, the Season's end - section
-7, its record at the foot); CHAP6b (the Schism, the Succession, the doctrine) is next. Merged with main
+7, its record at the foot); CHAP6b BUILT (2026-10-09, the same word; the Schism's backing and doctrine, the
+Succession's heir, the Master's vote - section 7, its record at the foot); CHAP6c (the events on the client and the
+titles) is next. Merged with main
 past the Super Dungeons arc, then past SCALE4 and TAVERN CARDS (2026-10-08), then past SERVER-POST and HOURS-FIRST
 (2026-10-09), then past PERMADEATH-HOUSES and TAVERN-TABLES (2026-10-09): the arc's migrations are `0095_npc_roll` to `0100_npc_seats`, its service `acct99` and its relay `world181` - the records below name each
 migration by its current number and the service by the version it was built under. AUDIT CHAP3 (2026-10-08, Mac:
@@ -611,7 +613,8 @@ BUILT (CHAP4a, 2026-10-08), and where building it asked, narrowed here:
   week's Turning placed, after the Turnings due.
 - **Still to build**: the titles on the token and "Former Master" (CHAP4c - a new title id and claim reach the relay
   first, Seats-Arc 7.4, worded without gender) - BUILT, below; the Focus and the Chronicle's reader (CHAP4d) - BUILT,
-  below; the Master's vote in its Season's event (CHAP6).
+  below; the Master's vote in its Season's event (CHAP6) - BUILT (CHAP6b, section 7: a Schism's tie, a Succession's
+  heir).
 
 BUILT (CHAP4d, 2026-10-09, Mac: "Continue"), the Focus and the Chronicle's reader:
 
@@ -728,9 +731,40 @@ BUILT (CHAP6a, 2026-10-09, Mac: "continue"), the roll and the weeks - `src/net/n
 - **The sheet and the board** carry each chapter's Season's event (`event`), a Rivalry's rival where it is public (a
   hidden rival to its members alone, on the board), and `shut`. The opening week ('on' after 'dev') clears every
   developers' event and shut hall with their Strength.
-- **Still to build**: the Schism's backing, the Succession's heir, the doctrine and the Master's vote (CHAP6b); every
-  event on the client - the board's and the roll's words, the town's talk, an Ascendancy's prices, the shut halls, the
-  titles (CHAP6c).
+- **Still to build**: the Schism's backing, the Succession's heir, the doctrine and the Master's vote (CHAP6b) - BUILT,
+  below; every event on the client - the board's and the roll's words, the town's talk, an Ascendancy's prices, the shut
+  halls, the doctrines' training and shelf, the candidates' names, the titles (CHAP6c).
+
+BUILT (CHAP6b, 2026-10-09, Mac: "continue"), the members' part - `src/net/npcChapterLaw.js` (`CHAPTER_DOCTRINES`,
+`CHAPTER_DOCTRINE_EFFECTS`, `schismDoctrinesOf`, `chapterBackOk`, `schismWinner`, `successionHeir`,
+`doctrineWritCount`), `server-account/src/npcChapters.js` (`backChapter`, `successionNamed`, the Schism in
+`seasonEnded`), migrations `0099` and `0100` grown in place:
+
+- **A Schism's two candidates** each stand for a doctrine - two of the three ("cheaper training, or a deeper shelf, or
+  more writs"), the third left out by the event's own roll (`schismDoctrinesOf`, on its own salt), side 0 the first in
+  the doctrines' order. **A Succession's candidates** are three of the hall's residents; the service knows them by
+  their index (0 to 2), the client names them off the hall's census (9, CHAP6c).
+- **The backing** (`POST /v1/chapters/back { character, faction, region, side }`): the account's standing character,
+  an ACTIVE member of the guild on its Roll (AUDIT CHAP4 D1's dormant lines refused), backs one side of its chapter's
+  Schism or names one candidate of its Succession - one backing an account a chapter a Season (an account's alts are
+  one voice), changed until the event is decided; the event and the membership asked inside the write. NARROWED: any
+  active member of the guild may back any of its chapters' events; only its Merit at that chapter weighs.
+- **The Schism, decided at the Season's end**: each side's weight is its backers' accounts' Merit at the chapter that
+  Season (a gate's where its day's claims agree, as every sum); the heavier side wins; at a tie the Master's side - the
+  Master's backing is the chapter's VOTE (section 6), the backing of the character in the Master's seat as the Season's
+  last Turning finds it; a tie with no Master's backing carries neither, and no doctrine follows. The winner's doctrine
+  holds the next Season: one hall writ more a day ("more writs", the service's, BUILT); a further tenth off the hall's
+  training and a shelf two qualities deeper (the client's, CHAP6c).
+- **The Succession, named at the Season's third Turning** (the one that closes its third week; a service asleep then
+  names at the first Turning after): the Master's naming (the backing of the character in its Master's seat then); else
+  - NARROWED, section 7 said "with no Master" - the choice of the backer whose account earned the chapter the most Merit
+  that Season so far (the lower account at a tie; a backer with none weighs nothing), so a Master's silence is no veto;
+  else the hall's own first. Named once; a backing after its third week is refused (`closed`).
+- **The board and the sheet** carry a Schism's two doctrines (`sides`), a Succession's `heir` once named and the
+  `doctrine` holding this Season; the board, the reader's own `backed` side. The Chronicle's lines: "the Fighters
+  Guild's schism ended, and it holds to more writs for the Season after" (or "with neither side carried"); "the
+  Fighters Guild's hall took a new head" (the heir's name is the census's, read in the hall's town). The opening week
+  clears a developers' doctrine with the rest.
 
 ## 8. Rivals and patrons (CHAP7)
 
@@ -769,7 +803,8 @@ classic skin, the row off, the service unreachable - the living world is exactly
   plans again when they move, so a reader whose sheet landed after it entered the town keeps the same hall as one whose
   sheet was there first. Shut halls wait for the Crackdown that shuts them (7, CHAP6).
 - **The Schism's candidates and the Succession's heir** are residents of the hall, drawn from the census by the event's
-  roll, and are known to every player by the same name.
+  roll, and are known to every player by the same name. CHAP6b: the service holds them by index - a Schism's side 0 and
+  1, a Succession's candidate 0 to 2 - and the census's names are the client's (CHAP6c).
 - **Their words**: `systems/livingWorld/lines.js` gains the chapter's lines, keyed by the event and its standing ("They say
   the Wayrest Mages are split over who leads them"); the rumour mill (`systems/rumorMill.js`) carries the Season's
   chapter news. BUILT (CHAP5b), the standing's: `CHAPTER_NEWS` by a chapter's band - Failing, Thriving, Ascendant; a
@@ -834,11 +869,13 @@ DECIDED.
   at - the draft's `key` the chapter's own pair) and `npc_chapter_history` (seq, faction, region, week, kind, char_id,
   data JSON, at). BUILT (CHAP4d, `0099` grown in place): `npc_chapters`' `focus` and `focus_week`; CHAP6a (grown in
   place): its `event`, `event_season`, `event_data` JSON and `shut_season`, and the Chronicle's 'event' and 'season'
-  rows; AUDIT CHAP4 S2: a week's `open` is 'dev', 'on' or 'off' (an off week recorded, nothing moved). Still drawn: a
-  chapter's doctrine (CHAP6b).
+  rows; AUDIT CHAP4 S2: a week's `open` is 'dev', 'on' or 'off' (an off week recorded, nothing moved). BUILT (CHAP6b,
+  grown in place): `npc_chapters`' `doctrine` and `doctrine_season`; `npc_chapter_backing` (faction, region, season,
+  account, char_id, side, at - one an account a chapter a Season).
 - **Endpoints** (`/v1/chapters/...`): `roll` and `claim` BUILT (CHAP1, behind `CHAPTERS_OPEN`, shipped `dev`; each
   names the realm character and the playing tab's lease); `witness` BUILT (CHAP2a); `halls` and `strike` BUILT (AUDIT
-  CHAP2 E1, a developer's); `list` BUILT (CHAP3b, the sheet; CHAP5a its seats' holders); `focus` and `history` BUILT (CHAP4d, a Master's Focus and a region's Chronicle); `standings` (a chapter's Merit) still drawn; the hall writs
+  CHAP2 E1, a developer's); `list` BUILT (CHAP3b, the sheet; CHAP5a its seats' holders); `focus` and `history` BUILT (CHAP4d, a Master's Focus and a region's Chronicle); `back` BUILT (CHAP6b, a member's
+  backing in its chapter's Season); `standings` (a chapter's Merit) still drawn; the hall writs
   ride the board's own writ endpoints, and (CHAP3a) a member's own writ and the account's Merit lines ride its list.
 - **The settle**: inside `settleWeek`, after the seats' steps - Merit summed, Strength moved, seats placed, and at a
   Season's boundary the events resolved and drawn. NARROWED (CHAP3b): the Chapters' own Turning on the seats' week,
@@ -878,7 +915,8 @@ DECIDED.
    talk by the band (9).
 6. **CHAP6 - the Seasons' events.** The roll, the seven events, their endings. CHAP6a BUILT (2026-10-09): the roll,
    the Decline's weeks, the Season's end (the Rivalries, the Crackdowns' shut halls, the Chronicle's lines), the events
-   on the sheet and the board (7).
+   on the sheet and the board (7). CHAP6b BUILT (2026-10-09): the Schism's backing and its doctrine, the Succession's
+   heir, the Master's vote (7).
 7. **CHAP7 - rivals and patrons.** Last, because it reads the Seats' guilds.
 
 CALL 1 retired the eighth slice the first draft carried (the other factions to the service): they wait on Realm phase 3.
@@ -984,6 +1022,8 @@ is Mac's to overrule.
 | Rivalry's swing | 10 Strength, the loser's whole, the winner's never past 100 (`rivalrySwing`) | 7 |
 | Crackdown's pay | half again, whole (`crackdownPay`) | 7 |
 | Crackdown's shut line | Strength 30 - under it, the halls shut for the next Season (`crackdownShut`) | 7 |
+| The doctrines | training a further tenth off, the shelf two qualities deeper, one hall writ more a day (`CHAPTER_DOCTRINE_EFFECTS`); a Schism two of the three (`schismDoctrinesOf`, `CHAPTER_SCHISM_SALT`) | 7 |
+| A Succession | three candidates, named at the Season's third Turning (`SUCCESSION_CANDIDATES`, `SUCCESSION_TURNING`) | 7 |
 | The Chronicle the Hall reads | a region's newest 60 rows, the hidden guilds' left out first (`CHAPTER_CHRONICLE_ROWS`, `server-account/src/npcChapters.js`; AUDIT CHAP4 S3) | 6 |
 | A name on the hall's roll | 32 characters at most, the realm's own cap (`CHAPTER_ROLL_NAME_MAX`) | 9 |
 | The hall's evenings by band | Failing 1, Steady 2, Thriving and Ascendant 3 a week, from the member's own day and three and five after it (`GUILD_DAYS_BY_BAND`, `GUILD_DAY_OFFSETS`, `src/systems/livingWorld/dayPlan.js` - the living world's own law module, as LW0 keeps it) | 9 |
@@ -1397,3 +1437,29 @@ The sixth slice's first; section 7 carries the law and what building it narrowed
   reset; the Chronicle's read; the board's and the sheet's events (a hidden rival unnamed, last Season's none); the
   shut halls and a Crackdown's pay. `tools/mutants/chap6a.json`: 89 mutants, all dead. Nine older records re-aimed by
   content (CHAP3a's, CHAP3b's, CHAP4d's, CHAP5a's, AUDIT CHAP4's S6), all dead.
+
+## CHAP6b - the Schism, the Succession and the doctrine, as built (2026-10-09, Mac: "continue")
+
+The sixth slice's second; section 7 carries the law and what building it narrowed (BUILT, CHAP6b).
+
+- **The law.** `src/net/npcChapterLaw.js`: `CHAPTER_DOCTRINES`, `chapterDoctrineOk`, `CHAPTER_DOCTRINE_EFFECTS`,
+  `CHAPTER_SCHISM_SALT`, `schismDoctrinesOf`, `SUCCESSION_CANDIDATES`, `SUCCESSION_TURNING`, `chapterSidesOf`,
+  `chapterBackOk`, `schismWinner`, `successionHeir`, `doctrineWritCount`; `chapterSeasonLine` words the Schism and the
+  Succession.
+- **The service.** `server-account/src/npcChapters.js`: `backChapter` (`/v1/chapters/back`), `regionBackings`,
+  `accountMeritBetween`, `seasonBacking`, `successionNamed` (at the Season's third Turning, or the first after), the
+  Schism decided in `seasonEnded`, the doctrine carried on the chapter's row and cleared at the opening; the sheet's
+  and the board's `sides`, `heir`, `doctrine`, the board's `backed`. `server-account/src/professions.js`: "more writs"
+  one hall writ more a day. `index.js` and `service.js`: the route and its refusals (`no-event` and `closed` 409,
+  `not-member` 403). Migrations `0099` (`doctrine`, `doctrine_season`) and `0100` (`npc_chapter_backing`) grown in place -
+  nothing shipped; still `acct99`.
+- **Pins.** `test/chap6b_backing.test.js`, 11 tests: the doctrines and their roll (golden); the sides; a Schism's winner
+  and a Succession's heir; the lines; a backing (one an account a chapter a Season, changed, the alt's the account's,
+  through the route); every refusal and its status (the grace before the third Turning settles among them); the
+  Succession named (the Master's, the richer backer's in the Season and the chapter alone, an officer's a member's, the
+  tie, the hall's, named once, a missed third Turning); the Schism decided (the sums, the Master's tie, none carried,
+  the doctrine's Season, the rows and the Chronicle's line); the opening's reset; the board and the sheet; "more
+  writs". `tools/mutants/chap6b.json`: 64 mutants, 63 dead, 1 equivalent as recorded. Eleven older records re-aimed by
+  content (AUDIT CHAP2's, CHAP3b's, CHAP4d's, AUDIT CHAP4's S6, CHAP6a's six), all dead; three older pins moved (PIN
+  MOVED: CHAP4d's writs' count, CHAP6a's Schism line, ACC1b's table list). `src/net/accountClient.js`: the four
+  refusals' words (ACC1e walks the service for every one).
