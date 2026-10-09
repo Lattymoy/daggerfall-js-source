@@ -64,6 +64,8 @@ import { triggerExteriorOpen, DOOR_SPELL_TEXT } from '../systems/mysticism.js'; 
 import { buildInteriorContext, seedInteriorTreasure } from './interiorContext.js';
 import { sailingCabinEntry } from './sailingCabin.js';
 import { cabinSceneName, readSailingCabin } from '../systems/sailingCabin.js';
+import { caravanRoomEntry } from './caravanRoom.js';   // WAGONS1: the caravan's room, on the cabin's door
+import { CARAVAN_SCENE_NAME, CARAVAN_TEXT, readCaravanRoom, isCaravanRoom } from '../systems/caravanRoom.js';
 import { INTERIOR_SHELL_BUCKET } from './decorBase.js';   // HOME-DOORS: a doorway is an opening in the shell's walls   // AUDIT 63 F22: AddFlats' RandomTreasure arm lives with the walk that finds its markers
 import { advanceMachinery, mountMachineryChild, machineryChildPos, MILL_SOUND } from '../world/windmills.js';   // WM4b: the machinery's moving parts; WM4c: its hum
 import { buildDungeonContext } from './dungeonContext.js';
@@ -2105,7 +2107,9 @@ export function createWorldModes(host) {
   // so the save can carry the way back in (SerializablePlayer
   // .cs:183-187). Cleared with interiorBuilding at every exit.
   let exteriorDoor = null;
-  let interiorCabin = null;   // SAILING-CABINS: this boat's private room, never the bank's scene
+  let interiorCabin = null;   // SAILING-CABINS: this boat's private room, never the bank's scene - WAGONS1: or the caravan's (systems/caravanRoom.js; isCaravanRoom tells them apart)
+  /** WAGONS1: the private room's scene-cache name - a ship cabin's by its boat, the caravan's one a character. */
+  const privateRoomSceneName = (room) => (isCaravanRoom(room) ? CARAVAN_SCENE_NAME : cabinSceneName(room.uid));
   /** GetNameBankOfCurrentRegion (PlayerGPS.cs:421-427) - F016. An
    *  unknown region answers Breton, which is DFU's own fallback. */
   const currentNameBank = () => getNameBankOfRegion(
@@ -2944,7 +2948,7 @@ export function createWorldModes(host) {
     || (interiorHome && b === interiorBuilding ? interiorHome.own : isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, b?.buildingKey)));   // HOME1: my online home's cupboards are my storage, and another's are not
   const interiorHoverName = composeNamer([
     (key) => host.profHoverName?.(key) ?? null,   // INDOOR-SKIN (PROF-MENU): a profession node's acts first (a body's knife and search), as underground
-    (key) => interiorCabin && typeof key === 'string' && key.startsWith('exit:') ? { title: 'Return to deck' } : null,
+    (key) => interiorCabin && typeof key === 'string' && key.startsWith('exit:') ? { title: isCaravanRoom(interiorCabin) ? CARAVAN_TEXT.exit : 'Return to deck' } : null,   // WAGONS1: the caravan's door
     (key) => {
       // AUDIT-WH2 L2-F5: C1's guard, on this ladder too. The exterior
       // lane got it and the other three did not, and a namer is handed
@@ -4195,7 +4199,7 @@ export function createWorldModes(host) {
    *  standing in. Null when the building has no key - an unkeyed
    *  interior cannot be cached, because it cannot be named. */
   function currentInteriorScene() {
-    if (interiorCabin) return cabinSceneName(interiorCabin.uid);
+    if (interiorCabin) return privateRoomSceneName(interiorCabin);   // WAGONS1
     const key = interiorBuilding?.buildingKey;
     if (!key) return null;
     // HOME1: my online home keeps its things under its OWN scene - offline the same building is a stranger's, whose
@@ -4284,7 +4288,7 @@ export function createWorldModes(host) {
   function interiorIdentity() {
     return {
       ...(privateVisitRoom ? { privateRoom: privateVisitRoom, ...(privateVisitOwner ? { cabinOwner: privateVisitOwner } : {}) } : {}),
-      ...(interiorCabin ? { sailingCabin: readSailingCabin(interiorCabin) } : {}),
+      ...(interiorCabin ? (isCaravanRoom(interiorCabin) ? { caravanRoom: readCaravanRoom(interiorCabin) } : { sailingCabin: readSailingCabin(interiorCabin) }) : {}),   // WAGONS1: the caravan's own field
       door: {
         blockIndex: exteriorDoor.blockIndex,
         recordIndex: exteriorDoor.recordIndex,
@@ -4670,6 +4674,7 @@ export function createWorldModes(host) {
     // SEAT-HALL (7.2): the palace's Charter Room - its keepers', DECOR's catalogue, at most a hundred pieces, in its
     // largest room and clear of the court (decorTool.js charterWhyNot; charterClear below)
     if (interiorSeatHall?.keeper) return { kind: 'home', hall: true, seat: true, charter: true, cap: SEAT_HALL_DECOR_CAP, where: SEAT_HALL_TEXT.where, mapId: homeTownOf(b), buildingKey: b.buildingKey };
+    if (isCaravanRoom(interiorCabin)) return { kind: 'caravan', where: CARAVAN_TEXT.where };   // WAGONS1: the caravan, furnished as a ship is (the save's, paid from the purse)
     if (b.buildingType === BUILDING_TYPES.Ship) return { kind: 'ship', where: 'Your ship' };
     return { kind: 'house', where: 'Your house' };
   }
@@ -7670,6 +7675,13 @@ export function createWorldModes(host) {
     if (!entry) return false;
     return enterInteriorCore(entry.hit, entry.entries, { building: entry.building, pos, ...visit });
   }
+  /** WAGONS1: into the caravan's room (`room` its descriptor - systems/caravanRoom.js), through the cabin's own door. */
+  async function enterCaravanRoom(room, pos = null) {
+    if (mode !== 'exterior' || !host.caravanRoom) return false;
+    const entry = caravanRoomEntry(blocks, room, host.caravanRoom.fromNative);
+    if (!entry) return false;
+    return enterInteriorCore(entry.hit, entry.entries, { building: entry.building, pos });
+  }
   async function restoreSailingCabin(saved, pos, sailingBoat) {
     if (mode !== 'exterior') return false;
     const cabin = readSailingCabin(saved.sailingCabin);
@@ -7876,7 +7888,7 @@ export function createWorldModes(host) {
       privateVisitRoom = restore?.privateRoom ?? null;
       privateVisitOwner = restore?.cabinOwner ?? null;
       interiorCabin = hit.sailingCabin ?? null;
-      if (interiorCabin && !privateVisitRoom) addPermanentScene(sceneCache(), cabinSceneName(interiorCabin.uid));
+      if (interiorCabin && !privateVisitRoom) addPermanentScene(sceneCache(), privateRoomSceneName(interiorCabin));   // WAGONS1: a ship's or the caravan's
       _insideTavern = insideTavern;
       _insideResidence = insideResidence;
       _insidePartyRestExempt = partyRestExempt;
@@ -8330,8 +8342,9 @@ export function createWorldModes(host) {
    *  precomputed one so tryExit above does not pay for a second
    *  `exteriorLanding` call it already made. */
   function exitInteriorNow(landing = null) {
-    const cabinLanding = interiorCabin ? host.sailingCabin?.returnToDeck(interiorCabin, privateVisitOwner) : null;
-    if (interiorCabin && !cabinLanding) { say('Your ship is not available at this location.'); return false; }
+    const caravanOut = isCaravanRoom(interiorCabin);   // WAGONS1: out of the caravan's door, onto the ground behind it
+    const cabinLanding = interiorCabin ? (caravanOut ? host.caravanRoom?.returnToWagon(interiorCabin) : host.sailingCabin?.returnToDeck(interiorCabin, privateVisitOwner)) : null;
+    if (interiorCabin && !cabinLanding) { say(caravanOut ? CARAVAN_TEXT.notHere : 'Your ship is not available at this location.'); return false; }
     if (cabinLanding) landing = cabinLanding.position;
     if (!landing) {
       landing = exteriorLanding(
@@ -8381,7 +8394,7 @@ export function createWorldModes(host) {
     // RepositionPlayer(Offset): the door centre is where DFU puts the
     // controller's CENTRE; the feet go a body-half lower, never below
     // the terrain's floor (enterExit.repositionFeetY).
-    player.spawn(landing[0], cabinLanding ? landing[1] : repositionFeetY(player.collider.heightAt(landing[0], landing[2]), landing[1]), landing[2]);
+    player.spawn(landing[0], cabinLanding && !caravanOut ? landing[1] : repositionFeetY(player.collider.heightAt(landing[0], landing[2]), landing[1]), landing[2]);   // WAGONS1: the caravan's step is the ground's, found as a door's
     if (cabinLanding) cam.yaw = cabinLanding.yaw;
     host.horseCart?.()?.handleExteriorTransition();   // HCC: OnTransitionExterior / OnTransitionDungeonExterior [IL_9ae4] - the interior access closes, the following horse resumes
     setMode('exterior');
@@ -12082,7 +12095,9 @@ export function createWorldModes(host) {
   registerPresenter({ mount: (win) => showQuestOverlay(win), priority: 10 });
   return {
     get mode() { return mode; },
-    get sailingCabin() { return mode === 'interior' ? interiorCabin : null; },
+    get sailingCabin() { return mode === 'interior' && !isCaravanRoom(interiorCabin) ? interiorCabin : null; },
+    /** WAGONS1: the caravan's room while the player stands in it. */
+    get caravanRoom() { return mode === 'interior' && isCaravanRoom(interiorCabin) ? interiorCabin : null; },
     get cabinOwner() { return mode === 'interior' ? privateVisitOwner : null; },
     // WD3 (AUDIT WD3 R7): the room's layouts of the homes' towns have landed - a home's room the player stands in, its
     // pieces unasked while they were unheard, asked now (loadHomeDecor: once a visit, the visit's own)
@@ -12143,7 +12158,7 @@ export function createWorldModes(host) {
     // location, the interior's building; null in the exterior
     // ARENA4: the floor's instance standing a relay's bout is that bout's room (`arena:b<id>`)
     roomIdentity: () => (mode === 'dungeon' ? (isGateArena(dungeonLoc) ? { kind: 'gate', day: dungeonLoc.gate } : isSdRealm(dungeonLoc) ? { kind: 'sd', s: dungeonLoc.sdRealm } : isArenaFloor(dungeonLoc) && dungeonLoc.arenaBout ? { kind: 'arena', o: dungeonLoc.arenaBout } : { kind: 'dungeon', mapId: dungeonLoc?.mapTableData?.mapId ?? null, regionIndex: dungeonLoc?.regionIndex ?? -1, name: dungeonLoc?.name ?? '', size: builtDungeonSize(dungeonLoc), ...(isTutorialHold(dungeonLoc) ? { solo: true } : {}) })   // WB3b: the court's room is its gate's own; SD-ONLINE: a dungeon's room is its layout's (the size it was BUILT at); HOLD-SOLO (FIELD BUGS 2026-10-07b): the tutorial dungeon is every character's own - `solo`, which world.js keys no room (AUDIT FB1007b H1: the shipped start's, never a setting's)
-      : mode === 'interior' ? { kind: 'interior', buildingKey: interiorBuilding?.buildingKey ?? 0, layout: _visitLayout, ...(interiorCabin ? { boatUid: interiorCabin.uid } : {}), ...(_intShared?.owned ? { private: true, privateRoom: privateVisitRoom } : {}) } : null),   // personal interiors share presence in an owner-specific room, never world memory/loot
+      : mode === 'interior' ? { kind: 'interior', buildingKey: interiorBuilding?.buildingKey ?? 0, layout: _visitLayout, ...(interiorCabin && !isCaravanRoom(interiorCabin) ? { boatUid: interiorCabin.uid } : {}), ...(_intShared?.owned ? { private: true, privateRoom: privateVisitRoom } : {}) } : null),   // personal interiors share presence in an owner-specific room, never world memory/loot
     get dungeonLocation() { return dungeonLoc; },   // B2: playerInside's dungeon arm
     /** X7: the Identify SPELL's window (Identify.cs:71-76 pushes the
      *  trade window itself). The spell can be cast anywhere, but the
@@ -13173,6 +13188,12 @@ export function createWorldModes(host) {
      *  found or the entry fails; the no-door reposition arm
      *  (RestorePositionHelper :615-621) belongs to the caller. */
     async restoreInterior(saved, pos = null, { fromNative = null, yOffset = 0, strictDoor = false, sailingBoat = undefined } = {}) {
+      // WAGONS1: a save made in the caravan comes back into it while the player still drives one; else outside
+      if (saved?.caravanRoom) {
+        if (mode !== 'exterior' || !host.caravanRoom?.canRestore(saved.caravanRoom)) return false;
+        try { await enterCaravanRoom(readCaravanRoom(saved.caravanRoom), pos); } catch (e) { console.error('[worldModes] restoreInterior (caravan) failed:', e); return false; }
+        return mode === 'interior';
+      }
       const cabin = saved?.sailingCabin;
       const d = saved?.door;
       if ((!d && !cabin) || mode !== 'exterior') return false;
@@ -13227,6 +13248,7 @@ export function createWorldModes(host) {
       return mode === 'interior';
     },
     enterSailingCabin,
+    enterCaravanRoom,   // WAGONS1
     tryEnter,
     exteriorActivationDistance,   // AUDIT 63 F33 (review): the rival distance the living-foe arm must beat
     exteriorHoverPick,   // WORLD-HOVER: the plaque's winner, raced exactly as the press's is

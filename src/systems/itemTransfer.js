@@ -51,10 +51,11 @@ import { makeItemPermanent } from './quest/item.js';   // TransferItem's MakePer
 import { getBool } from './settings.js';   // GUI/CanDropQuestItems
 import { setLightSource } from './lightSource.js';   // DISC7: the light in hand's one door
 import { REMAINS_LIST } from './legacy/heirloom.js';   // AUDIT LEGACY II H4: a remains' list, open
-import { BAG_WORDS, isBagItem, holdsOtherBag } from '../net/bagLaw.js';   // BAG1: a loaded Materials Bag never leaves the pack; ONE-BAG: one to a character
+import { BAG_WORDS, isBagItem, holdsOtherBag } from '../net/bagLaw.js';
+import { SMALL_CART_KG } from './wagonKinds.js';   // WAGONS1: DFU's 750, one literal   // BAG1: a loaded Materials Bag never leaves the pack; ONE-BAG: one to a character
 
 /** ItemHelper.WagonKgLimit (:56). */
-export const WAGON_KG_LIMIT = 750;
+export const WAGON_KG_LIMIT = SMALL_CART_KG;   // WAGONS1: the Small Cart's - each kind's own is systems/wagonKinds.js wagonKgLimitOf, handed in as `wagonKg`
 /** Internal_Strings.csv:828-829, verbatim - these ship in Unity-side
  *  localization rather than TEXT.RSC, and the rows are in the
  *  reference tree, the way the sibling row "cannotRemoveItem"
@@ -206,7 +207,7 @@ const packRefuses = (capacity, item, units, remote) => !!capacity.gone || canHol
  * @returns {{ok:true, amount:number, notice:string|null}
  *          |{ok:false, refusal:object, notice:string|null}}
  */
-export function planDropGold(text, { carried = 0, usingWagon = false, remote = [], groundRefusal = null, capacity = null } = {}) {
+export function planDropGold(text, { carried = 0, usingWagon = false, remote = [], groundRefusal = null, capacity = null, wagonKg = WAGON_KG_LIMIT } = {}) {
   if (groundRefusal && !usingWagon) return { ok: false, refusal: { reason: 'ground', text: groundRefusal }, notice: null };   // HOUSE-DROP: gold on a floor that refuses it
   // A numeric field of 8 opening on "0": anything that is not a run of
   // digits is not a number, and 0 fails the range below.
@@ -223,7 +224,7 @@ export function planDropGold(text, { carried = 0, usingWagon = false, remote = [
   }
   if (!usingWagon) return { ok: true, amount: asked, notice: null };
   // :1296-1303 - the 750kg headroom in COINS, and the box names it.
-  const canHold = canHoldAmount(carried, GOLD_PIECE_WEIGHT_KG, WAGON_KG_LIMIT, totalWeight(remote));
+  const canHold = canHoldAmount(carried, GOLD_PIECE_WEIGHT_KG, wagonKg, totalWeight(remote));   // WAGONS1: the driven wagon's own
   const notice = asked > canHold ? wagonFullGoldText(canHold) : null;
   const amount = Math.min(asked, canHold);
   // A FULL wagon still shows the box - it says "0 more gold", which is
@@ -249,7 +250,7 @@ export function planDropGold(text, { carried = 0, usingWagon = false, remote = [
  * @returns {{ok:false, refusal:object}|{ok:true, amount:number, sound:'click'}}
  */
 export function planStore(item, {
-  remote = [], usingWagon = false, chooseOne = null, getQuest = null, dryRun = false, groundRefusal = null, capacity = null, bagLoaded = false,
+  remote = [], usingWagon = false, chooseOne = null, getQuest = null, dryRun = false, groundRefusal = null, capacity = null, bagLoaded = false, wagonKg = WAGON_KG_LIMIT,
 } = {}) {
   if (!item) return { ok: false, refusal: REFUSAL.missing };
   if (bagLoaded && isBagItem(item)) return { ok: false, refusal: REFUSAL.bagLoaded };   // BAG1
@@ -294,7 +295,7 @@ export function planStore(item, {
     // :1996-1999 -> WagonCanHoldAmount (:1425-1434). Zero fits refuses
     // with cannotHoldAnymore and NO click; a partial fit split-takes
     // exactly what fits.
-    const canHold = canHoldAmount(stack, effectiveUnitWeightInKg(item), WAGON_KG_LIMIT, totalWeight(remote));
+    const canHold = canHoldAmount(stack, effectiveUnitWeightInKg(item), wagonKg, totalWeight(remote));   // WAGONS1: the driven wagon's capacity
     if (canHold <= 0) return { ok: false, refusal: REFUSAL.wagonFull };
     return { ok: true, amount: Math.min(canHold, stack), sound: 'click' };
   }

@@ -42,8 +42,10 @@ export function duelPromptSub(msLeft) {
  * @param {() => number} o.now  the duel law's own clock
  * @param {boolean} [o.touch]
  * @param {Document} [o.doc]
+ * @param {(peer: string, name: string) => string} [o.line]  WAGONS1: what the strip says of an ask (a duel's, by default)
+ * @param {number} [o.ttlMs]  WAGONS1: how long an ask stands (the strip's countdown) - a duel's, by default
  */
-export function createDuelPrompt({ asks, accept, decline, name, now, touch = false, doc = document }) {
+export function createDuelPrompt({ asks, accept, decline, name, now, touch = false, doc = document, line: lineOf = (_peer, who) => `${who} challenges you to a duel`, ttlMs = DUEL_ASK_TTL_MS }) {
   if (doc?.getElementById && !doc.getElementById(DUEL_PROMPT_STYLE_ID)) {
     const st = doc.createElement('style');
     st.id = DUEL_PROMPT_STYLE_ID;
@@ -77,9 +79,9 @@ export function createDuelPrompt({ asks, accept, decline, name, now, touch = fal
     const up = !!top;
     if (root.dataset.up !== (up ? '1' : '0')) root.dataset.up = up ? '1' : '0';
     if (!up) return;
-    const line = `${name(top.peer) || 'Someone'} challenges you to a duel`;
+    const line = lineOf(top.peer, name(top.peer) || 'Someone');
     if (nm.textContent !== line) nm.textContent = line;
-    const s = duelPromptSub(DUEL_ASK_TTL_MS - (now() - top.at));
+    const s = duelPromptSub(ttlMs - (now() - top.at));
     if (sub.textContent !== s) sub.textContent = s;
   };
   return {

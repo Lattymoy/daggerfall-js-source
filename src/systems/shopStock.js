@@ -57,7 +57,8 @@ import { MERCHANTS_FACTION_ID } from './guilds.js';               // S41: Factio
 import { turnOnConditionFlag, turnOffConditionFlag, REGION_FLAGS, REGION_COUNT } from './regionConditions.js';   // S42: the store S41's flag was waiting on
 import { isOnlinePage } from './onlineLane.js';   // REALM P0.4: online, a shop pays at most half what it asks
 import { BAG_TEMPLATE, isBagItem } from '../net/bagLaw.js';   // BAG1: the Materials Bag, at every General Store online
-import { createPellets } from './thunderlock.js';   // SHOP-PELLETS: the gun's shot on the counter - the shot alone, never the gun
+import { createPellets } from './thunderlock.js';
+import { newWagonItem } from './wagonKinds.js';   // WAGONS1: the Open Wagon and the Caravan, minted beside the cart   // SHOP-PELLETS: the gun's shot on the counter - the shot alone, never the gun
 
 // ItemGroups ids used by the shelf tables (DaggerfallUnityEnums).
 const GROUP_NAMES = Object.freeze({
@@ -318,6 +319,10 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
   if (buildingType === BUILDING_TYPES.GeneralStore) {
     add({ group: 'Transportation', templateIndex: TRANSPORT_HORSE });
     add({ group: 'Transportation', templateIndex: TRANSPORT_SMALL_CART });
+    // WAGONS1 (2026-10-09, Mac's two new wagons, asked: "Bought like the Small Cart"): the Open Wagon and the Caravan
+    // beside it, on every General Store's every shelf as the cart is - the cart's own item, marked with its kind
+    // (systems/wagonKinds.js newWagonItem), named and valued, so every "owns a cart" law answers for them
+    for (const kind of ['openWagon', 'caravan']) add(newWagonItem(kind));
     // BAG1 (bible/06-Systems/Materials-Bag.md): THE MATERIALS BAG beside the cart, at every General Store - online alone,
     // where the professions are (nothing offline gathers into it), and by name, as the horse and the cart are.
     // BAG-SHELF (FIELD BUGS 2026-10-04, "nobody can find material bags in store"): on EVERY shelf, whoever stocks it, as

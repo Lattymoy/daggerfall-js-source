@@ -71,7 +71,8 @@ import { ownTimeLeftText, ownTimeLeftShort } from '../systems/worldTick.js';   /
 import { shopliftAttempt } from '../systems/theft.js';
 import { entityMaxEncumbrance } from '../combat/formulas.js';
 import { CANNOT_REMOVE_ITEM_TEXT } from '../systems/createItem.js';
-import { questTransferRefused, SMALL_CART_TEMPLATE, TABS, tabAccepts } from './nativeInventory.js';
+import { questTransferRefused, TABS, tabAccepts } from './nativeInventory.js';
+import { activeWagonItem } from '../systems/wagonKinds.js';   // WAGONS1: the wagon driven
 import { initialTradeTab, STEAL_SUCCESS_TEXT, STEAL_FAILURE_TEXT } from './nativeTrade.js';
 import { expandGuildMacros } from '../systems/guildServiceActions.js';
 import { firstName } from '../systems/talkSession.js';   // MACRO-4: %pct's shop arm
@@ -205,8 +206,7 @@ function quotePriceFor(item, side) {
     usingIdentifySpell: deps.usingIdentifySpell ?? false,
     wagonLoaded: (deps.entity?.wagonItems ?? []).length > 0,
     bagLoaded: (deps.entity?.bagItems ?? []).length > 0,   // BAG1: the Materials Bag holding anything
-    usedWagon: (deps.entity?.items ?? []).find(
-      (i) => i.group === 'Transportation' && i.templateIndex === SMALL_CART_TEMPLATE) ?? null,
+    usedWagon: activeWagonItem(deps.entity?.items ?? []),   // WAGONS1: the wagon driven (the best owned) - a cart left over from an upgrade is an empty cart to sell
   });
   if (d.kind !== 'stage') return null;
   if (mode === 'Identify' && deps.usingIdentifySpell) return { label: 'Identify for', price: 0 };
@@ -319,8 +319,7 @@ function canTransferSelected() {
       usingIdentifySpell: deps.usingIdentifySpell ?? false,
       wagonLoaded: (deps.entity?.wagonItems ?? []).length > 0,
       bagLoaded: (deps.entity?.bagItems ?? []).length > 0,   // BAG1: the Materials Bag holding anything
-      usedWagon: (deps.entity?.items ?? []).find(
-        (i) => i.group === 'Transportation' && i.templateIndex === SMALL_CART_TEMPLATE) ?? null,
+      usedWagon: activeWagonItem(deps.entity?.items ?? []),   // WAGONS1: the wagon driven (the best owned) - a cart left over from an upgrade is an empty cart to sell
     });
     return d.kind === 'stage' || d.kind === 'unstage' || isQuickSellCandidate();
   }
@@ -347,8 +346,7 @@ function pickLocal(item) {
     usingIdentifySpell: deps.usingIdentifySpell ?? false,
     wagonLoaded: (deps.entity?.wagonItems ?? []).length > 0,
     bagLoaded: (deps.entity?.bagItems ?? []).length > 0,   // BAG1: the Materials Bag holding anything
-    usedWagon: (deps.entity?.items ?? []).find(
-      (i) => i.group === 'Transportation' && i.templateIndex === SMALL_CART_TEMPLATE) ?? null,
+    usedWagon: activeWagonItem(deps.entity?.items ?? []),   // WAGONS1: the wagon driven (the best owned) - a cart left over from an upgrade is an empty cart to sell
   });
   if (d.kind === 'stage') {
     if (refuseTransfer(item)) return;
@@ -413,8 +411,7 @@ function splitMaxOf(item, side) {
     usingIdentifySpell: deps.usingIdentifySpell ?? false,
     wagonLoaded: (deps.entity?.wagonItems ?? []).length > 0,
     bagLoaded: (deps.entity?.bagItems ?? []).length > 0,   // BAG1: the Materials Bag holding anything
-    usedWagon: (deps.entity?.items ?? []).find(
-      (i) => i.group === 'Transportation' && i.templateIndex === SMALL_CART_TEMPLATE) ?? null,
+    usedWagon: activeWagonItem(deps.entity?.items ?? []),   // WAGONS1: the wagon driven (the best owned) - a cart left over from an upgrade is an empty cart to sell
   });
   return d.kind === 'stage' || d.kind === 'unstage' ? stackOf(item) : 0;
 }

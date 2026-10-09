@@ -60,9 +60,9 @@ import {
   CONTAINER_IMAGES, LOCAL_TARGET_ICON_RECT, REMOTE_TARGET_ICON_RECT,
   drawTargetIconPanel, targetIconWeightText,
 } from './targetIconPanel.js';
-import { WAGON_KG_LIMIT } from '../systems/itemTransfer.js';   // ItemHelper.WagonKgLimit (:56)
+import { wagonKgFor, activeWagonItem } from '../systems/wagonKinds.js';   // ItemHelper.WagonKgLimit (:56) - WAGONS1: the driven wagon's
 import { CANNOT_REMOVE_ITEM_TEXT } from '../systems/createItem.js';   // both TransferItem refusals speak it
-import { questTransferRefused, SMALL_CART_TEMPLATE, INV_RECTS, TABS, tabAccepts } from './nativeInventory.js';   // DaggerfallTradeWindow EXTENDS the inventory window; MAC-N2: and INHERITS its four tab pages
+import { questTransferRefused, INV_RECTS, TABS, tabAccepts } from './nativeInventory.js';   // DaggerfallTradeWindow EXTENDS the inventory window; MAC-N2: and INHERITS its four tab pages
 import { expandGuildMacros } from '../systems/guildServiceActions.js';
 import { firstName } from '../systems/talkSession.js';   // MACRO-4: %pct's shop arm
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
@@ -580,8 +580,7 @@ export class NativeTradeWindow {
       // the singleton - they are not the window's collections.
       wagonLoaded: (this.hooks.entity?.wagonItems ?? []).length > 0,
       bagLoaded: (this.hooks.entity?.bagItems ?? []).length > 0,   // BAG1: the Materials Bag holding anything
-      usedWagon: (this.hooks.entity?.items ?? []).find(
-        (i) => i.group === 'Transportation' && i.templateIndex === SMALL_CART_TEMPLATE) ?? null,
+      usedWagon: activeWagonItem(this.hooks.entity?.items ?? []),   // WAGONS1: the wagon driven (the best owned) - a cart left over from an upgrade is an empty cart to sell
     });
     if (d.kind === 'stage') {
       if (this._refuseTransfer(item)) return;
@@ -963,7 +962,7 @@ export class NativeTradeWindow {
     if (this.usingWagon) {
       return {
         container: CONTAINER_IMAGES.Wagon,
-        label: targetIconWeightText(totalWeight(this.hooks.entity?.wagonItems ?? []), WAGON_KG_LIMIT),
+        label: targetIconWeightText(totalWeight(this.hooks.entity?.wagonItems ?? []), wagonKgFor(this.hooks.entity)),
       };
     }
     return {

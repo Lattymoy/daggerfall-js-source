@@ -17,6 +17,7 @@
 // FRAME_ROLES: a card a panel, a picture a well, a state a chip) - this sheet writes geometry and
 // the words' colours alone, as the Companions page's does.
 
+import { stableWagonName, WAGON_KINDS } from '../systems/wagonKinds.js';   // WAGONS1: the Stable's card names the wagon driven
 import { requestFittedIcon, fittedImg } from './textureCanvas.js';
 import { WAGON_MODE, HORSE_MODE, TRANSPORT, HORSE_NAME_MAX } from '../systems/horseCartLaw.js';
 import { optionPath } from './settingsMap.js';   // ORG2: a switch named in a window says where it lives
@@ -36,6 +37,7 @@ export function _setHoldingsIconForTests(fn) { _icon = fn ?? ((p, box, onReady) 
  * @property {boolean} hcc   Horse Cart and Cargo is on: the pair stands in the world (else the classic transport)
  * @property {boolean} hasHorse @property {boolean} hasCart
  * @property {any} [view]   the runtime's stableView() while `hcc`
+ * @property {string|null} [kind]   WAGONS1: the wagon driven ('cart', 'openWagon', 'caravan' - systems/wagonKinds.js)
  *
  * @typedef {Object} HoldingsProvider
  * @property {() => StableModel} [stable]   the horse and the wagon
@@ -51,9 +53,9 @@ export const holdingsProvider = () => _provider;
  * scenes/exterior.js): the Stable's half of the provider over a host's runtime - `on()` the mod's switch, `hasHorse()`
  * and `hasCart()` the pack's two items.
  */
-export function stableProviderFor({ runtime, on, hasHorse, hasCart }) {
+export function stableProviderFor({ runtime, on, hasHorse, hasCart, wagonKind = () => null }) {
   return {
-    stable: () => ({ hcc: !!on(), hasHorse: !!hasHorse(), hasCart: !!hasCart(), view: on() ? runtime.stableView() : null }),
+    stable: () => ({ hcc: !!on(), hasHorse: !!hasHorse(), hasCart: !!hasCart(), view: on() ? runtime.stableView() : null, kind: wagonKind() ?? null }),   // WAGONS1: which wagon
     stableAct: (verb, arg) => {
       if (!on()) return { ok: false, text: `Turn on Horse Cart and Cargo (${optionPath('feat:mod-horse-cart-and-cargo')}) to call your horse and wagon.` };   // ORG2: where it lives, from the map
       if (verb === 'summon') return runtime.summonTransport();
@@ -227,7 +229,7 @@ export function drawStablePage(detail, rerender, { el, divider, meter = null } =
   if (words.wagon) {
     const extra = [];
     if (v && v.limit > 0) extra.push(holdingMeter(el, meter, 'Load', v.kg, v.limit, 'thin'));
-    list.append(card(el, { art: WAGON_ART, glyph: '☸', name: 'Your wagon', words: words.wagon, sub: null, extra, rerender }).item);
+    list.append(card(el, { art: WAGON_ART, glyph: '☸', name: stableWagonName(m.kind), words: words.wagon, sub: m.kind && m.kind !== 'cart' ? WAGON_KINDS[m.kind]?.name ?? null : null, extra, rerender }).item);   // WAGONS1: the wagon driven, by its kind
   }
   detail.append(list);
   // THE ACTS - the pair's, as the mod's summon is (both answer together)

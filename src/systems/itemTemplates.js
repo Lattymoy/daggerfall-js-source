@@ -10,6 +10,7 @@ import { clampArmorVariant } from './armorMaterials.js';   // AUDIT 23 (items-6)
 import { conditionMultipliersByMaterial, valueMultipliersByMaterial, WEAPONS, WEAPON_CONDITION_POOL } from '../characters/weapons.js';   // AUDIT 23 (items-5); AUDIT 68 S27-weightForMaterial-dup: ItemBuilder's value ladder and the Weapons enum, one home each; WEAPON-POOL: the one pool
 import { GROUP_TEMPLATE_INDICES } from './itemTemplatesData.js';
 import { WAGON_MODEL_ID } from './horseCartLaw.js';   // DISC24-B: the cart's picture is the wagon's model
+import { WAGON_KINDS, wagonKindOf } from './wagonKinds.js';   // WAGONS1: a wagon's picture is Mac's wagon of its kind (read at call time - wagonKinds.js reads this module's TRANSPORT_SMALL_CART)
 import TEMPLATES_JSON from '../characters/itemTemplates.json' with { type: 'json' };
 import { playerArchiveFor, resolvePaperdollRecord } from '../characters/paperdollArt.js';   // AUDIT 17f: SetRace, one home; NT3 (F006): the record law too
 import { itemDyeColor, itemDyeTarget } from './itemDye.js';
@@ -310,6 +311,7 @@ export function mintCondition(item) {
  *  answers null for it) - the Small Cart's wagon. Null for every other
  *  item. */
 export function inventoryItemModel(item) {
+  if (item?.templateIndex === TRANSPORT_SMALL_CART) return WAGON_KINDS[wagonKindOf(item)].icon;   // WAGONS1: Mac's wagon of its kind (ui/modelIcon.js's port door), the Small Cart's his Wagon Cart
   return ITEM_MODEL_PICTURES.get(item?.templateIndex) ?? null;
 }
 

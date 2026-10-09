@@ -3239,6 +3239,8 @@ export const lookGate = (bucket, now) => tokenGate(bucket, now, LOOK_HZ_MAX, 1);
  * parked), `n` the horse's name through the label door; every part within PARK_REACH of the anchor. Anything else is
  * null - the frame is refused.
  */
+/** WAGONS1: the highest wagon kind a parked word may name (systems/wagonKinds.js WAGON_KIND_ORDER's last place). */
+export const PARK_WAGON_KINDS_MAX = 2;
 export function validParkData(d) {
   if (!d || typeof d !== 'object' || Array.isArray(d)) return null;
   if (typeof d.c !== 'string' || !PARK_CHAR_RE.test(d.c)) return null;
@@ -3258,6 +3260,10 @@ export function validParkData(d) {
     const len = Math.hypot(w[4], w[5], w[6], w[7]);
     if (!(len > 0.5 && len < 2) || !PARK_TIERS.has(w[8])) return null;
     rec.w = [PARK_KIND_DEPLOYED, w[1], w[2], w[3], w[4] / len, w[5] / len, w[6] / len, w[7] / len, w[8], 0];
+    // WAGONS1: which wagon it is (systems/horseCartWire.js `wk` - 1 the Open Wagon, 2 the Caravan; absent the Small
+    // Cart) and whether a horse is in its shafts (`wh`): kept with it, or the cell would remember every wagon a cart
+    if (Number.isInteger(r.wk) && r.wk >= 1 && r.wk <= PARK_WAGON_KINDS_MAX) rec.wk = r.wk;
+    if (r.wh === 1) rec.wh = 1;
   }
   if (r.h !== undefined) {
     const h = r.h;

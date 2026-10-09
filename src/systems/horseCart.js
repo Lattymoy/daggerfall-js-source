@@ -35,6 +35,8 @@
 //     openNamePrompt({ label, value, maxCharacters, onSubmit }) -> { isOpen() }   DaggerfallInputMessageBox
 //     phys: { raycastAll(origin, dir, max), sphereCastClear(origin, r, dir, d), threats() }   systems/horseFollow.js's seam
 //     presentation: scenes/horseCartPool.js - { wagonParts() -> { wheelLeftPivot, wheelRightPivot, wheelRadius, bounds } | null,
+//                     hitchOf() -> metres (WAGONS1: how far ahead of the wagon's rear axle its horse stands - the mod's
+//                     HITCHED_HORSE_LOCAL_Z for the classic wagon, each of Mac's its own; absent, the mod's),
 //                     horseArt: { ensureStationary() -> bool, ensureWalk() -> void, hasWalk() -> bool },
 //                     cameraPosition() -> [x,y,z], onChanged() }
 //     log: { warn, error, info }
@@ -312,6 +314,9 @@ export function createHorseCartRuntime(deps) {
   }
   handleSettingsChanged();
 
+  /** WAGONS1: the wagon's own length ahead of its axle to its horse - the presentation's (its model's), else the mod's. */
+  function hitchZ() { const z = deps.presentation?.hitchOf?.(); return Number.isFinite(z) && z > 0 ? z : HITCHED_HORSE_LOCAL_Z; }
+
   // ── the moving wagon's presentation object (CreateWagonVisual [IL_5694] / ClearMovingPresentation [IL_a794])
   function createWagonVisual() {
     const parts = deps.presentation?.wagonParts?.() ?? null;
@@ -363,7 +368,7 @@ export function createHorseCartRuntime(deps) {
     const pose = stationaryHorseVisual?.tryGetGroundedPose();
     if (pose) { const [wx, wz] = toWorld(pose.position); setHorseLoose(wx, wz, pose.forward); return; }
     const heading = savedHeading();
-    const [hx, hz] = applyLocalOffsetToWorld(wagonState.WorldX, wagonState.WorldZ, heading, HITCHED_HORSE_LOCAL_X, HITCHED_HORSE_LOCAL_Z, ratio());
+    const [hx, hz] = applyLocalOffsetToWorld(wagonState.WorldX, wagonState.WorldZ, heading, HITCHED_HORSE_LOCAL_X, hitchZ(), ratio());
     setHorseLoose(hx, hz, heading);
   }
   function resetWagonState(mode) { wagonState.Version = WAGON_SAVE_VERSION; wagonState.Mode = mode; wagonState.WorldX = 0; wagonState.WorldZ = 0; wagonState.HeadingX = 0; wagonState.HeadingZ = 1; wagonState.InteriorAccessMode = INTERIOR_ACCESS.None; wagonState.InteriorAccessId = 0; changed(); }
@@ -478,7 +483,7 @@ export function createHorseCartRuntime(deps) {
       let pos = d.anchor, heading = d.heading;
       const gp = deployedVisual?.tryGetGroundedPose();
       if (gp) { pos = gp.position; heading = gp.forward; }
-      return vadd(vadd(pos, vscale(horizontalRight(heading), HITCHED_HORSE_LOCAL_X)), vscale(heading, HITCHED_HORSE_LOCAL_Z));
+      return vadd(vadd(pos, vscale(horizontalRight(heading), HITCHED_HORSE_LOCAL_X)), vscale(heading, hitchZ()));
     }
     return null;
   }
@@ -1127,7 +1132,7 @@ export function createHorseCartRuntime(deps) {
   /** WAGON-HITCH: ApplyGroundedPose's place in the frame, on the shafts (horseFollow.js hitchedPoseStep) - the axle
    *  HITCHED_HORSE_LOCAL_Z from the hitch, the mod's ground bookkeeping kept. */
   function applyHitchedPose(hitchPoint, forward, dt, seed = null) {
-    const next = hitchedPoseStep(phys, wagonVisual.pose, hitchPoint, forward, HITCHED_HORSE_LOCAL_Z, dt, seed);
+    const next = hitchedPoseStep(phys, wagonVisual.pose, hitchPoint, forward, hitchZ(), dt, seed);
     wagonVisual.pose = next;
     if (next.hasLastValid) hasLastValidGroundState = true; else resetWheelMotionState();
   }
@@ -1230,7 +1235,7 @@ export function createHorseCartRuntime(deps) {
       pos = d.anchor; fwd = d.heading;
       const gp = deployedVisual?.tryGetGroundedPose();
       if (gp) { pos = gp.position; fwd = gp.forward; deployedWagon = deployedVisual; }
-      pos = vadd(vadd(pos, vscale(horizontalRight(fwd), HITCHED_HORSE_LOCAL_X)), vscale(fwd, HITCHED_HORSE_LOCAL_Z));
+      pos = vadd(vadd(pos, vscale(horizontalRight(fwd), HITCHED_HORSE_LOCAL_X)), vscale(fwd, hitchZ()));
     } else { destroyStationaryHorsePresentation(); return; }
     if (!ensureHorseTextures()) { destroyStationaryHorsePresentation(); return; }
     ensureHorseWalkTextures();

@@ -55,7 +55,12 @@ export const companionKeyOf = (c) => c.key ?? `${c.boat}:${c.name}`;
  *   now: () => number,
  *   onKnocked?: (c: any, by: any) => void,
  *   onStood?: (c: any, rec: any) => void,
+ *   seat?: (i: number, n: number) => ({ feet: number[], yaw: number } | null),
  * }} deps
+ *
+ * WAGONS1: `seat(i, n)` - where the `i`th of `n` rides when the player's wagon carries companions in its back
+ * (systems/wagonSeats.js companionSeats; null: on foot, at heel). A body with a seat takes no step (characters/
+ * enemyMotor.js update) and is never caught up: it is where the wagon is.
  */
 export function createCrewAshore(deps) {
   /** @type {Map<string, { c: any, rec: any, remove: (rec: any) => void, has: ((rec: any) => boolean) | null, fx: any }>} */
@@ -101,6 +106,8 @@ export function createCrewAshore(deps) {
     const [dx, dz] = companionSlot(L.yaw, i, n);
     return place.spot ? place.spot(L.feet, dx, dz) : [L.feet[0] + dx, L.feet[1], L.feet[2] + dz];
   }
+  /** WAGONS1: the motor's seat handle - the host's seat for the `i`th of `n`, read each step. */
+  const seatOf = (i, n) => () => deps.seat?.(i, n) ?? null;
   /** The motor's follow handle: the leader's live feet, and how near this one keeps. */
   const followOf = (i) => ({ feet: () => deps.leader()?.feet ?? null, stop: HEEL_M + i * HEEL_STEP_M, trail: () => trail });   // COMPANION-TRAIL
 
@@ -136,7 +143,8 @@ export function createCrewAshore(deps) {
       }
       rec.shipmate = true;
       rec.ai.follow = followOf(i);
-      if (place && L) {
+      rec.ai.seat = deps.seat ? seatOf(i, list.length) : null;   // WAGONS1
+      if (place && L && !rec.ai.seat?.()) {
         const f = rec.ai.feet;
         // AUDIT CC-A3: a floor away counts only while the leader stands on one - levitating, swimming or in the air, the
         // body stood at his height would only fall and be stood up there again

@@ -95,11 +95,12 @@ import { modSetting, modSettingsOf } from '../systems/modSettings.js';
 import { timeScale as hccTimeScale } from '../systems/timeScale.js';   // AUDIT HCC: the runtime's Time.deltaTime rides Time.timeScale, as the motor's does   // SIB1: the mod's own switch; HCC: Horse Cart and Cargo's eight
 import { horseNameTooltip } from '../ui/horseNameTooltip.js';   // AUDIT HCC U6: the mod's HUD label, both skins
 import { createHorseCartPool } from './horseCartPool.js';   // HCC: the presentation, world.js's twin on this host
+import { wagonPoolDeps } from '../world/wagonModels.js';   // WAGONS1: the pool's two words, one seam for both hosts
 import { createHorseCartRuntime } from '../systems/horseCart.js';   // HCC: TrailingWagonRuntime over this host's seams
 import { setHoldingsProvider, stableProviderFor } from '../ui/holdingsPages.js';   // HOLDINGS: the Stable page over this host's horse and wagon (no boats here)
 import { isQualifyingThreatState } from '../systems/horseFollow.js';   // HCC: CollectThreats' qualification
 import { totalWeight } from '../systems/inventory.js';   // HCC: PlayerEntity.WagonWeight
-import { WAGON_KG_LIMIT } from '../systems/itemTransfer.js';   // HCC: ItemHelper.WagonKgLimit
+import { wagonKgFor, activeWagonKind } from '../systems/wagonKinds.js';   // HCC: ItemHelper.WagonKgLimit - WAGONS1: the driven wagon's
 import { InputMessageBoxWindow } from '../ui/inputMessageBox.js';   // HCC: the horse's name
 import { isLocalPlayerTarget } from '../characters/enemyTargets.js';   // HCC: CollectThreats' `senses.Target == player`
 import { SeasonHelper, archivePrefix as seasonPrefixOf } from '../systems/seasonsIliacBay.js';   // SIB1: Seasons of the Iliac Bay's SeasonHelper; WINDFALL1: and its atlases' prefixes, which Windfall's own tables key on
@@ -1674,6 +1675,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const hcc = createHorseCartPool({
     renderer, meshes: { getGpuMesh, cpuModels }, collider: () => collider, now: () => performance.now() / 1000,
     threats: hccThreats, selfId: () => null, peerName: () => null, onChanged: null, log: console,
+    ...wagonPoolDeps(() => playerEntity.items ?? []),   // WAGONS1: Mac's wagons, by the one the player drives
   });
   const hccRuntime = createHorseCartRuntime({
     ready: () => walkMode,
@@ -1688,7 +1690,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       isPlayerInside: () => _mode() !== 'exterior', isPlayerInsideDungeon: () => _mode() === 'dungeon', isPlayerInsideBuilding: () => _mode() === 'interior',
       buildingKey: () => modes?.interiorBuilding?.buildingKey ?? 0, dungeonId: () => modes?.roomIdentity?.()?.mapId ?? null,
     },
-    entity: { wagonWeight: () => totalWeight(playerEntity.wagonItems ?? []), wagonKgLimit: () => WAGON_KG_LIMIT },
+    entity: { wagonWeight: () => totalWeight(playerEntity.wagonItems ?? []), wagonKgLimit: () => wagonKgFor(playerEntity) },   // WAGONS1: the driven wagon's
     activateMode: () => getInteractionMode(), fadeInProgress: () => false,
     say: (l) => townTalk.say(l), setMidScreenText: (t, seconds) => setMidScreenText(t, seconds), tooFarText: () => TOO_FAR_AWAY_TEXT,
     settings: hccSettings, actionPressed: hccActionPressed, now: () => performance.now() / 1000,
@@ -1714,7 +1716,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // HOLDINGS (bible/03-World/Holdings.md): world.js's twin - the Stable page over this host's pair; no Fleet (this host
   // stands no Come Sail Away)
   setHoldingsProvider({
-    ...stableProviderFor({ runtime: hccRuntime, on: hccOn, hasHorse: () => hasHorse(playerEntity.items ?? []), hasCart: () => hasCart(playerEntity.items ?? []) }),
+    ...stableProviderFor({ runtime: hccRuntime, on: hccOn, hasHorse: () => hasHorse(playerEntity.items ?? []), hasCart: () => hasCart(playerEntity.items ?? []), wagonKind: () => activeWagonKind(playerEntity.items ?? []) }),   // WAGONS1: the Stable names the wagon driven
     fleet: null,
   });
   /** AUDIT HCC H1: LateUpdate once a frame in every mode, before the world pass draws the wagon (world.js's twin). */
