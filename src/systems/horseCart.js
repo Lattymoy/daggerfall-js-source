@@ -356,6 +356,21 @@ export function createHorseCartRuntime(deps) {
 
   /** WAGONS1: the wagon's own length ahead of its axle to its horse - the presentation's (its model's), else the mod's. */
   function hitchZ() { const z = deps.presentation?.hitchOf?.(); return Number.isFinite(z) && z > 0 ? z : HITCHED_HORSE_LOCAL_Z; }
+  /** WAGONS2 (AUDIT): THE WAGON'S LENGTH IN THE MOD'S DISTANCES. The mod measures its team's reaches - the player 5 m
+   *  from the wagon, the horse 3.5 m from it - from the wagon's anchor, its rear axle, and stands its horse 3.1 m ahead of
+   *  that (HITCHED_HORSE_LOCAL_Z), inside its own 3.5. Mac's wagons hitch theirs 3.8, 7.1 and 7.7 m ahead: out of that
+   *  reach, a parked team of any of them could never be mounted again, and the far end of a caravan was out of its
+   *  store's. A point is measured instead to the nearest point of the wagon's run - from its anchor forward by as much as
+   *  its hitch is longer than the mod's (`forward` the wagon's way); the classic wagon's run is its anchor alone, the
+   *  mod's own distances exactly. */
+  function nearestOnWagon(anchor, forward, to) {
+    const run = hitchZ() - HITCHED_HORSE_LOCAL_Z;
+    const fl = forward ? Math.hypot(forward[0], forward[2]) : 0;
+    if (!(run > 0) || !(fl > 0) || !to) return anchor;
+    const fx = forward[0] / fl, fz = forward[2] / fl;
+    const t = Math.min(run, Math.max(0, (to[0] - anchor[0]) * fx + (to[2] - anchor[2]) * fz));
+    return [anchor[0] + fx * t, anchor[1], anchor[2] + fz * t];
+  }
   /** WAGONS2: a parked four-wheeler's hitched horse stands at the end of its pole as its bogie rests - the mod's place
    *  straight ahead of the body (`at`) swung about the kingpin by the steer the wagon stopped at (`restWheels`), facing
    *  along the pole - so the horse comes to stand where the rider sat after a turn too. A wagon with no bogie, or one
@@ -660,13 +675,14 @@ export function createHorseCartRuntime(deps) {
     if (pee().isPlayerInside() || tm().isOnShip()) return false;
     const w = tryGetPhysicalWagonScene();
     if (!w) return false;
-    let wagonPos = w.anchor;
+    let wagonPos = w.anchor ?? w.position;
     const gp = deployedVisual?.tryGetGroundedPose();
     if (gp) wagonPos = gp.position;
     let horsePos;
     if (wagonState.HorseMode === HORSE_MODE.WithPlayer && tm().get() === TRANSPORT.Horse) horsePos = playerPosition();
     else { horsePos = tryGetHorseScenePosition(); if (!horsePos) return false; }
-    return isPhysicalTeamWithinMountDistances(playerPosition(), wagonPos, horsePos);
+    const way = gp?.forward ?? w.heading;
+    return isPhysicalTeamWithinMountDistances(playerPosition(), wagonPos, horsePos, (to) => nearestOnWagon(wagonPos, way, to));   // WAGONS2 (AUDIT): each measured to the wagon's run
   }
   function isHorseCloseEnoughToHitch() {
     const horsePos = tryGetHorseScenePosition();
@@ -676,7 +692,7 @@ export function createHorseCartRuntime(deps) {
     let wagonPos = d.anchor;
     const gp = deployedVisual?.tryGetGroundedPose();
     if (gp) wagonPos = gp.position;
-    return isWithinHorizontalDistance(horsePos, wagonPos, HORSE_WAGON_HITCH_DISTANCE);
+    return isWithinHorizontalDistance(horsePos, nearestOnWagon(wagonPos, gp?.forward ?? d.heading, horsePos), HORSE_WAGON_HITCH_DISTANCE);   // WAGONS2 (AUDIT): to the wagon's run
   }
   function detachFollowingTeamAndRideHorse() {
     const live = tryGetLiveFollowingWagonPose();
@@ -961,7 +977,7 @@ export function createHorseCartRuntime(deps) {
         const gp = deployedVisual?.tryGetGroundedPose();
         if (gp) pos = gp.position;
         else if (isTeamFollowing() && wagonVisual && wagonActive()) pos = wagonPosition();
-        if (isWithinHorizontalDistance(playerPosition(), pos, WAGON_INVENTORY_DISTANCE)) return { ok: true, denial };
+        if (isWithinHorizontalDistance(playerPosition(), nearestOnWagon(pos, gp?.forward ?? w.heading, playerPosition()), WAGON_INVENTORY_DISTANCE)) return { ok: true, denial };   // WAGONS2 (AUDIT): to the wagon's run
       }
       return { ok: false, denial: HCC_TEXT.within5m };
     }

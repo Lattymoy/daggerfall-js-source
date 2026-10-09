@@ -173,5 +173,19 @@
     "old": "    && !wagonRiders?.seated()   // WAGONS2: nor a rider seated",
     "new": "    && true   // WAGONS2: nor a rider seated",
     "tests": ["test/tv8_party_walk.test.js"]
+  },
+  {
+    "name": "WAGONS2-the-run-unread",
+    "file": "src/systems/horseCart.js",
+    "old": "    if (!(run > 0) || !(fl > 0) || !to) return anchor;",
+    "new": "    if (run > -1e9) return anchor;",
+    "tests": ["test/wagons2_wheels.test.js"]
+  },
+  {
+    "name": "WAGONS2-the-stores-reach-from-the-axle",
+    "file": "src/systems/horseCart.js",
+    "old": "if (isWithinHorizontalDistance(playerPosition(), nearestOnWagon(pos, gp?.forward ?? w.heading, playerPosition()), WAGON_INVENTORY_DISTANCE)) return { ok: true, denial };",
+    "new": "if (isWithinHorizontalDistance(playerPosition(), pos, WAGON_INVENTORY_DISTANCE)) return { ok: true, denial };",
+    "tests": ["test/wagons2_wheels.test.js"]
   }
 ]

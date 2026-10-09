@@ -347,3 +347,24 @@ test('WAGONS2 x OW-BIG: under the Overworld each of my grown wheels keeps its ow
   wheel.angles = [10 + 80, 20 + 40, 30 - 16, 40 + 8];
   closeAll(drawn(), [10 + 10, 20 + 5, 30 - 2, 40 + 1], 1e-4, 'each its own step, an eighth of it');
 });
+
+test('WAGONS2 (AUDIT) THE TEAM MOUNTED AGAIN: each of Mac\'s wagons parked with its horse in its shafts is mounted again from beside its horse - the mod\'s reaches (the player 5 m from the wagon, the horse 3.5 m from it) measured to the wagon\'s run, its hitch past the mod\'s 3.1 m; its far end is in its store\'s reach; the classic wagon\'s reaches the mod\'s own point (mutants: the run unread, the store\'s reach from the axle)', async () => {
+  for (const kind of ['cart', 'openWagon', 'caravan']) {
+    const { w, rt, step, state } = await wagonWorld(kind);
+    step(2); rt.tryUseTransport(TRANSPORT.Cart); step(2);
+    for (let i = 0; i < 40; i++) rideOn(w, step, 0.1);
+    w.mode = TRANSPORT.Foot; step(3);
+    assert.deepEqual([state().Mode, state().HorseMode], [WAGON_MODE.Deployed, HORSE_MODE.HitchedToWagon], `${kind}: parked, hitched`);
+    const horse = rt.view().horse.position;
+    w.pos = [horse[0] + 1.5, 0.9, horse[2]]; step(2);
+    assert.equal(rt.tryUseTransport(TRANSPORT.Cart).succeeded, true, `${kind}: mounted again from beside its horse`);
+    step(2);
+    w.mode = TRANSPORT.Foot; step(3);
+    const v = rt.view(), axle = v.deployed.position, fwd = quatForward(v.deployed.rotation);
+    const far = WAGON_KINDS[kind].hitch - 3.1;
+    w.pos = [axle[0] + fwd[0] * far + 2, 0.9, axle[2] + fwd[2] * far]; step(1);
+    assert.equal(rt.canAccessWagonInventory().allowed, true, `${kind}: its far end in its store's reach`);
+    w.pos = [axle[0] - fwd[0] * 6, 0.9, axle[2] - fwd[2] * 6]; step(1);
+    assert.equal(rt.canAccessWagonInventory().allowed, false, `${kind}: 6 m behind its rear, out of reach`);
+  }
+});

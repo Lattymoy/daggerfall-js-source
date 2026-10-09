@@ -74,8 +74,8 @@
   {
     "name": "HCC-mount-distances-wagon-only",
     "file": "src/systems/horseCartLaw.js",
-    "old": "  isWithinHorizontalDistance(player, wagon, WAGON_INVENTORY_DISTANCE) && isWithinHorizontalDistance(player, horse, HORSE_MENU_MOUNT_DISTANCE) && isWithinHorizontalDistance(horse, wagon, HORSE_WAGON_HITCH_DISTANCE);",
-    "new": "  isWithinHorizontalDistance(player, wagon, WAGON_INVENTORY_DISTANCE) && isWithinHorizontalDistance(player, horse, HORSE_MENU_MOUNT_DISTANCE);",
+    "old": "&& isWithinHorizontalDistance(horse, nearest ? nearest(horse) : wagon, HORSE_WAGON_HITCH_DISTANCE);",
+    "new": ";",
     "tests": [
       "test/hcc_law.test.js"
     ]
