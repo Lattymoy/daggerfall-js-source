@@ -175,7 +175,12 @@ test('CARDS10 a ranked game\'s receipt (i1): minted, read and verified; the aren
   assert.ok(rc.startsWith(`${ILIAC_RECEIPT_V}.`));
   assert.deepEqual({ ...readIliacReceipt(rc), i: 0, e: 0 }, { ...what, i: 0, e: 0, signed: true });
   assert.equal((await verifyIliacReceipt(rc, kp.publicKey, { subtle, nowS })).ok, true);
-  assert.equal((await verifyIliacReceipt(rc.slice(0, -2) + 'AA', kp.publicKey, { subtle, nowS })).why, 'signature');
+  // a signature character changed, well inside it: the last two carry the signature's last byte - the top of
+  // Ed25519's S, always under 0x10 - which a fresh key leaves 0, 'AA' already, about one run in 16 (a deploy's
+  // shard did), and that receipt was never tampered
+  const at = rc.length - 10;
+  const tampered = rc.slice(0, at) + (rc[at] === 'A' ? 'B' : 'A') + rc.slice(at + 1);
+  assert.equal((await verifyIliacReceipt(tampered, kp.publicKey, { subtle, nowS })).why, 'signature');
   assert.equal((await verifyIliacReceipt(rc, kp.publicKey, { subtle, nowS: nowS + 8 * 86400 })).why, 'expired');
   const unsigned = await mintIliacReceipt(what, null, { subtle, nowS });
   assert.equal((await verifyIliacReceipt(unsigned, kp.publicKey, { subtle, nowS })).why, 'unsigned');
