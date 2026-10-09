@@ -349,5 +349,14 @@
     "tests": [
       "test/sd25_hang.test.js"
     ]
+  },
+  {
+    "name": "SD25-HANG-the-lip-facing-in",
+    "file": "src/world/sdRealm.js",
+    "old": "C(x0, -SD_LIP, z0), C(x0, 0, z0), C(x1, 0, z1), C(x1, -SD_LIP, z1),",
+    "new": "C(x1, -SD_LIP, z1), C(x1, 0, z1), C(x0, 0, z0), C(x0, -SD_LIP, z0),",
+    "tests": [
+      "test/sd25_hang.test.js"
+    ]
   }
 ]

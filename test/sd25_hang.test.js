@@ -108,6 +108,11 @@ test('SD-LOOK S11 THE ROOTS: 3-5 spires an island (one a root on the phones), ea
   // the skirt's top ring is the lip's foot: realmIsland's own 48 corners, SD_LIP under the floor
   const lip = trisOf(buildRealmModel()).filter((t) => t.rec === SD_REALM_ROOT_RECORD).flatMap((t) => t.P).filter((p) => near(p[1], -SD_LIP) && near(Math.hypot(p[0] - SD_THRESHOLD.x, p[2] - SD_THRESHOLD.z), SD_THRESHOLD.r, 1e-3));
   assert.ok(lip.length >= SD_ISLAND_SIDES, 'the static island keeps its lip, SD_LIP deep at its rim');
+  const lipTris = trisOf(buildRealmModel()).filter((t) => t.rec === SD_REALM_ROOT_RECORD && t.P.every((p) => near(Math.hypot(p[0] - SD_THRESHOLD.x, p[2] - SD_THRESHOLD.z), SD_THRESHOLD.r, 1e-3)));
+  for (const t of lipTris) {
+    const u = t.P[1].map((v, i) => v - t.P[0][i]), w = t.P[2].map((v, i) => v - t.P[0][i]), n = [u[1] * w[2] - u[2] * w[1], u[0] * w[1] - u[1] * w[0]];
+    assert.ok(n[0] * (t.P[0][0] - SD_THRESHOLD.x) + n[1] * (t.P[0][2] - SD_THRESHOLD.z) > 0, 'the lip faces out');
+  }
   const roots = trisOf(buildHangModel('threshold')), rootPts = roots.filter((t) => t.rec === SD_REALM_ROOT_RECORD).flatMap((t) => t.P);
   const corners = Array.from({ length: SD_ISLAND_SIDES }, (_, k) => { const a = (k / SD_ISLAND_SIDES) * Math.PI * 2; return [SD_THRESHOLD.x + Math.cos(a) * SD_THRESHOLD.r, -SD_LIP, SD_THRESHOLD.z + Math.sin(a) * SD_THRESHOLD.r]; });
   const atCorner = (p, c) => near(p[0], c[0], 1e-3) && near(p[1], c[1], 1e-3) && near(p[2], c[2], 1e-3);
