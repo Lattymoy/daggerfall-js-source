@@ -52,5 +52,59 @@
     "tests": [
       "test/sd26_render.test.js"
     ]
+  },
+  {
+    "name": "SD26-R3-the-edge-never-handed",
+    "file": "src/render/gateFx.js",
+    "old": "      gl.uniform3f(S.uEdge, b.edge ? b.edge[0] : 0, b.edge ? b.edge[1] : 0, b.edge ? b.edge[2] : 0);",
+    "new": "      gl.uniform3f(S.uEdge, 0, 0, 0);",
+    "tests": [
+      "test/sd26_render.test.js"
+    ]
+  },
+  {
+    "name": "SD26-R3-the-shader-rests-past-it",
+    "file": "src/render/gateFx.js",
+    "old": "  if (uEdge.z > 0.0) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/sd26_render.test.js"
+    ]
+  },
+  {
+    "name": "SD26-R3-slid-off-on-air",
+    "file": "src/render/gateFx.js",
+    "old": "upv * t - g * t * t : rest - g * (t - tc) * (t - tc));",
+    "new": "upv * t - g * t * t : rest);",
+    "tests": [
+      "test/sd26_render.test.js"
+    ]
+  },
+  {
+    "name": "SD26-R3-the-mirror-edgeless",
+    "file": "src/render/gateFx.js",
+    "old": "  if (edge && edge[2] > 0) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/sd26_render.test.js"
+    ]
+  },
+  {
+    "name": "SD26-R3-dust-past-the-rim-kept",
+    "file": "src/scenes/sdFx.js",
+    "old": "        if (Math.hypot(x, z) <= SD_ARENA.r) add(where(x, 0.1, z),",
+    "new": "        add(where(x, 0.1, z),",
+    "tests": [
+      "test/sd26_render.test.js"
+    ]
+  },
+  {
+    "name": "SD26-R3-the-hours-bursts-edgeless",
+    "file": "src/scenes/sdFx.js",
+    "old": "floor: NaN, edge: SD_FX_EDGE };",
+    "new": "floor: NaN, edge: null };",
+    "tests": [
+      "test/sd26_render.test.js"
+    ]
   }
 ]

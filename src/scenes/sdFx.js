@@ -62,6 +62,9 @@ export const SD_RING_DUST = Object.freeze({ n: 6, after: 400 });
  *  seventeen kinds - the Pulse's, the Hearts', an Echo's, the stun's, the fall's - piled their spent sparks on an unseen
  *  pane 1.2-4.4 m in the air. */
 export const SD_FX_FLOOR_Y = realmToDungeon(SD_ARENA.x, 0, SD_ARENA.z)[1];
+/** AUDIT SD IV (R3): AND WHERE IT ENDS - its centre (the dungeon's x, z) and its rim (SD_ARENA.r, where the blows' floor
+ *  marking is clipped, render/gateTelegraph.js): the gate's pass rested a spark that ran past it on air over the void. */
+export const SD_FX_EDGE = Object.freeze([realmToDungeon(SD_ARENA.x, 0, SD_ARENA.z)[0], realmToDungeon(SD_ARENA.x, 0, SD_ARENA.z)[2], SD_ARENA.r]);
 /** The fall's white-gold flash: six metres over the arena's heart (the dungeon's frame). */
 const FLASH_AT = Object.freeze(realmToDungeon(SD_ARENA.x, 6, SD_ARENA.z));
 /** A body with no place: the arena's heart. */
@@ -93,7 +96,7 @@ export function createSdFx({ link, feet = () => null, shake = () => {} }) {
   const where = (x, y, z) => realmToDungeon(SD_ARENA.x + x, y, SD_ARENA.z + z);
   const add = (p, at0, kd, color, floor = SD_FX_FLOOR_Y) => {   // AUDIT SD III (V1): on the arena's floor
     let b = bursts.length < FX_BURSTS_MAX ? null : bursts.reduce((o, q) => (q.at0 < o.at0 ? q : o));
-    if (!b) { b = { at: [0, 0, 0], at0: 0, t: 0, kind: kd, color, floor: NaN }; bursts.push(b); }
+    if (!b) { b = { at: [0, 0, 0], at0: 0, t: 0, kind: kd, color, floor: NaN, edge: SD_FX_EDGE }; bursts.push(b); }   // AUDIT SD IV (R3): the arena's edge
     b.at[0] = p[0]; b.at[1] = p[1]; b.at[2] = p[2]; b.at0 = at0; b.kind = kd; b.color = color; b.floor = floor;
   };
   /** My feet in the arena's frame, or null. */
@@ -123,7 +126,10 @@ export function createSdFx({ link, feet = () => null, shake = () => {} }) {
     if (A === SD_BLOWS.stomp) {
       add(where(a.x, 0.1, a.z), a.at, SD_FX_KINDS.stomp, color);
       const r = stompFrontAt(a, a.at + SD_RING_DUST.after);
-      for (let i = 0; i < SD_RING_DUST.n; i++) { const g = (i / SD_RING_DUST.n) * Math.PI * 2; add(where(a.x + Math.sin(g) * r, 0.1, a.z + Math.cos(g) * r), a.at + SD_RING_DUST.after, SD_FX_KINDS.ring, color); }
+      for (let i = 0; i < SD_RING_DUST.n; i++) {   // AUDIT SD IV (R3): none past the rim - the ring is not drawn there, and its dust rose out of the void
+        const g = (i / SD_RING_DUST.n) * Math.PI * 2, x = a.x + Math.sin(g) * r, z = a.z + Math.cos(g) * r;
+        if (Math.hypot(x, z) <= SD_ARENA.r) add(where(x, 0.1, z), a.at + SD_RING_DUST.after, SD_FX_KINDS.ring, color);
+      }
       felt('stomp', a.x, a.z);
     } else if (A === SD_BLOWS.hand) {
       // AUDIT SD III (V3): out of its chest along the beam's first bearing - never inside the heart crystal

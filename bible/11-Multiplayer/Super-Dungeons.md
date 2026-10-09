@@ -437,7 +437,8 @@ the arena's heart in the Mantella's green, its white and red, each Echo risen an
 risen and broken, the stun, its wake, its gears slipping under a fifth, and its fall: a burst out of its chest, a column
 of brass as its body sinks, and the way home's pale light where it rises. Nine of them shake the camera by how near they
 fell (the whole arena for the Hour's own), and eleven light the floor where they fall; the fall flashes the arena
-white-gold.
+white-gold. Every spark comes to rest on the arena's floor, and the floor ends at its rim (`SD_FX_EDGE`): past it a
+spark rests on nothing and falls on into the void, and the ring throws no dust past it (AUDIT SD IV R3).
 
 **How it moves** (SD17, `scenes/sdRemnantRig.js`). The Remnant and its Echoes stand in seven parts - a pelvis where the
 body stands and six turned about their joints (two legs at the hips, the torso at the waist, the head at the neck and
