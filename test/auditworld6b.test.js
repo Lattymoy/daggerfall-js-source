@@ -13,7 +13,7 @@ import { relayVersionAtLeast } from './relayVersion.mjs';
 import { OnlineSession, FOES_STALE_MS } from '../src/net/online.js';
 import { fakeRoom } from './fakeRoom.mjs';
 import { fakeSocketClass } from './fakeSocket.mjs';
-import { createExteriorFoes, MAX_ACTIVE_ENCOUNTER_FOES } from '../src/scenes/exteriorFoes.js';
+import { createExteriorFoes, MAX_ACTIVE_ENCOUNTER_FOES, ENCOUNTER_PUPPETS_MAX } from '../src/scenes/exteriorFoes.js';
 import { runDayChange, dayRollsFor, setSharedClock, sharedClockOn, MINUTES_PER_DAY, DAY_SALT, worldRegionPricesOn } from '../src/systems/worldTick.js';
 import { regionPriceAdjustment } from '../src/systems/shopStock.js';   // ECON1: the world's index through the one seam
 import { MERCHANTS_FACTION_ID } from '../src/systems/guilds.js';
@@ -207,19 +207,21 @@ test('AUDIT WORLD6b B1/B2/B10: the pool - a fall\'s, another foe\'s and a relaye
 });
 
 test('AUDIT WORLD6b B3/C2/B14: the pool - an owner stands at most CELL_PUPPETS_MAX live puppets here (a corpse and a build count, a swept one does not); a record outside the law is refused whole while its neighbours land; a puppet carries no loot, no kit and no spells', async () => {
+  // DESYNC-ZERO: the reader's allowance is ENCOUNTER_PUPPETS_MAX now (a Greater Giant's call stands whole); CELL_PUPPETS_MAX is its floor
+  assert.ok(ENCOUNTER_PUPPETS_MAX >= CELL_PUPPETS_MAX && ENCOUNTER_PUPPETS_MAX + 4 <= CELL_FRAME_RECORDS_MAX);
   const hits = [];
   const pool = createExteriorFoes(poolRig());
   pool.setNet(netFor(hits));
-  const many = []; for (let i = 1; i <= CELL_PUPPETS_MAX + 4; i++) many.push(rec(i));
+  const many = []; for (let i = 1; i <= ENCOUNTER_PUPPETS_MAX + 4; i++) many.push(rec(i));
   pool.applyFoes('bob-0002', frame(1, many));
   await settle();
-  assert.equal(puppets(pool).length, CELL_PUPPETS_MAX, `B3: ${CELL_PUPPETS_MAX} of ${many.length} stand`);
+  assert.equal(puppets(pool).length, ENCOUNTER_PUPPETS_MAX, `B3: ${ENCOUNTER_PUPPETS_MAX} of ${many.length} stand`);
   assert.equal(pool.applyFoes('bob-0002', frame(2, [rec(1, { d: 1 })], 0)), true);
-  assert.equal(puppets(pool).filter((f) => !f.dead).length, CELL_PUPPETS_MAX - 1);
-  pool.applyFoes('bob-0002', frame(3, [rec(20)], 0)); await settle();
-  assert.equal(puppets(pool).filter((f) => !f.dead).length, CELL_PUPPETS_MAX, 'a dead one\'s slot is free for the next');
-  pool.applyFoes('bob-0002', frame(4, [rec(21)], 0)); await settle();
-  assert.equal(puppets(pool).filter((f) => !f.dead).length, CELL_PUPPETS_MAX, 'and the cap holds');
+  assert.equal(puppets(pool).filter((f) => !f.dead).length, ENCOUNTER_PUPPETS_MAX - 1);
+  pool.applyFoes('bob-0002', frame(3, [rec(ENCOUNTER_PUPPETS_MAX + 10)], 0)); await settle();
+  assert.equal(puppets(pool).filter((f) => !f.dead).length, ENCOUNTER_PUPPETS_MAX, 'a dead one\'s slot is free for the next');
+  pool.applyFoes('bob-0002', frame(4, [rec(ENCOUNTER_PUPPETS_MAX + 11)], 0)); await settle();
+  assert.equal(puppets(pool).filter((f) => !f.dead).length, ENCOUNTER_PUPPETS_MAX, 'and the cap holds');
   pool.applyFoes('eve-0003', frame(1, [rec(1), rec(2)])); await settle();
   assert.equal(puppets(pool).filter((f) => f.puppet === 'eve-0003').length, 2, 'the cap is per owner');
   // C2: the projection
@@ -346,7 +348,7 @@ test('AUDIT WORLD6b C1: the puppet\'s target lives in the WORLD frame - when the
   pool.update(0.05, [0, 0, 0], [0, 1.6, 0]);
   assert.ok(pup.ai.feet[0] > 20 + shift && pup.ai.feet[0] < 21 + shift, 'and a new record eases in the new frame');
   const x = rd('src/scenes/exteriorFoes.js');
-  assert.match(x, /const feet = f\.ai\.feet, t = p\.wire \? _net\.toScene\(p\.wire\) : null;/, 'by source: converted in the step');
+  assert.match(x, /const feet = f\.ai\.feet, t = p\.wire \? puppetLead\(p, _net\.toScene\(p\.wire\), performance\.now\(\) \/ 1000\) : null;/, 'by source: converted in the step (PIN MOVED - DESYNC-ZERO: then led along its way, scenes/puppetLead.js; a shift is a jump the lead refuses)');
   assert.doesNotMatch(x, /_pup\.feet/, 'no scene-frame target survives');
 });
 

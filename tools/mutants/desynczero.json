@@ -1,0 +1,79 @@
+[
+  {
+    "name": "DZ-private-tag-an-ended-quest",
+    "file": "src/scenes/questFoeHost.js",
+    "old": "  if (!quest || quest.questTombstoned || typeof s !== 'string' || typeof quest.questName !== 'string') return null;\n  return { q: quest.questName, s, pv: 1 };",
+    "new": "  if (!quest || typeof s !== 'string' || typeof quest.questName !== 'string') return null;\n  return { q: quest.questName, s, pv: 1 };",
+    "tests": ["test/desynczero.test.js"]
+  },
+  {
+    "name": "DZ-a-strangers-foe-credits",
+    "file": "src/scenes/world.js",
+    "old": "      if (from != null && !social?.isPartyPeer(from)) return;   // DESYNC-ZERO: a stranger's quest foe counts for nobody here",
+    "new": "      void 0;",
+    "tests": ["test/desynczero.test.js"]
+  },
+  {
+    "name": "DZ-an-unlinked-copy-counts-nothing",
+    "file": "src/scenes/questFoeHost.js",
+    "old": "  const quest = machine.sharedCandidateNamed?.(tag.q) ?? null;\n  if (!quest || quest.questTombstoned || !quest.resources) return null;",
+    "new": "  const quest = null;\n  if (!quest || quest.questTombstoned || !quest.resources) return null;",
+    "tests": ["test/desynczero.test.js", "test/keptkill.test.js"]
+  },
+  {
+    "name": "DZ-pv-bit-unread",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "...(fl & 4 ? { pv: 1 } : {})",
+    "new": "...({})",
+    "tests": ["test/desynczero.test.js"]
+  },
+  {
+    "name": "DZ-lead-a-standing-foe",
+    "file": "src/scenes/puppetLead.js",
+    "old": "  if (!p.moving || (L.vx === 0 && L.vz === 0)) return t;",
+    "new": "  if (L.vx === 0 && L.vz === 0) return t;",
+    "tests": ["test/desynczero.test.js"]
+  },
+  {
+    "name": "DZ-lead-unbounded",
+    "file": "src/scenes/puppetLead.js",
+    "old": "  const age = Math.min(Math.max(0, nowS - L.at), LEAD_MAX_S);",
+    "new": "  const age = Math.max(0, nowS - L.at);",
+    "tests": ["test/desynczero.test.js"]
+  },
+  {
+    "name": "DZ-lead-a-jump",
+    "file": "src/scenes/puppetLead.js",
+    "old": "      if (s2 <= LEAD_SPEED_MAX * LEAD_SPEED_MAX) { L.vx = vx; L.vz = vz; }",
+    "new": "      L.vx = vx; L.vz = vz; void s2;",
+    "tests": ["test/desynczero.test.js"]
+  },
+  {
+    "name": "DZ-hide-past-a-longer-host",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (lc >= _layoutFoes || lc >= _hiddenFrom) return;",
+    "new": "    if (lc >= _hiddenFrom) return;",
+    "tests": ["test/desynczero.test.js"]
+  },
+  {
+    "name": "DZ-surplus-unnumbered",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      nf._surI = i;\n",
+    "new": "",
+    "tests": ["test/desynczero.test.js"]
+  },
+  {
+    "name": "DZ-surplus-newest-lost",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (_surplusPending.has(i)) { _surplusPending.set(i, r); return; }",
+    "new": "    if (_surplusPending.has(i)) return;",
+    "tests": ["test/desynczero.test.js"]
+  },
+  {
+    "name": "DZ-mismatch-said-every-time",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (_layoutMismatchSaid) return;\n",
+    "new": "",
+    "tests": ["test/desynczero.test.js"]
+  }
+]

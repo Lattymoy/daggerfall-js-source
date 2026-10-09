@@ -2,7 +2,7 @@
   {
     "name": "KK-dungeon-no-tick",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    for (const f of foes) { f.questBehaviour?.update(); if (f._keptTag) keptKillTick(f); }",
+    "old": "    for (const f of foes) { f.questBehaviour?.update(); if (f._keptTag || (f.questBehaviour && f._ownFrom == null)) keptKillTick(f); }",
     "new": "    for (const f of foes) { f.questBehaviour?.update(); }",
     "tests": [
       "test/keptkill.test.js"
@@ -11,8 +11,8 @@
   {
     "name": "KK-dungeon-said-alive",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    if (!f._keptTag || f._keptSaid || f._ownFrom != null || !(f.entity?.health <= 0)) return false;\n    f._keptSaid = true;\n    ownShare()",
-    "new": "    if (!f._keptTag || f._keptSaid || f._ownFrom != null) return false;\n    f._keptSaid = true;\n    ownShare()",
+    "old": "    if (!tag || f._keptSaid || f._ownFrom != null || !(f.entity?.health <= 0)) return false;\n    f._keptSaid = true;\n    ownShare()",
+    "new": "    if (!tag || f._keptSaid || f._ownFrom != null) return false;\n    f._keptSaid = true;\n    ownShare()",
     "tests": [
       "test/keptkill.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "KK-dungeon-said-twice",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    f._keptSaid = true;\n    ownShare()?.onKeptDied?.(f._keptTag, f._ownSeq);",
-    "new": "    ownShare()?.onKeptDied?.(f._keptTag, f._ownSeq);",
+    "old": "    f._keptSaid = true;\n    ownShare()?.onKeptDied?.({ q: tag.q, s: tag.s }, f._ownSeq);",
+    "new": "    ownShare()?.onKeptDied?.({ q: tag.q, s: tag.s }, f._ownSeq);",
     "tests": [
       "test/keptkill.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "KK-dungeon-wrong-number",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    ownShare()?.onKeptDied?.(f._keptTag, f._ownSeq);",
-    "new": "    ownShare()?.onKeptDied?.(f._keptTag, f._ownI);",
+    "old": "    ownShare()?.onKeptDied?.({ q: tag.q, s: tag.s }, f._ownSeq);",
+    "new": "    ownShare()?.onKeptDied?.({ q: tag.q, s: tag.s }, f._ownI);",
     "tests": [
       "test/keptkill.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "KK-exterior-no-tick",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (f._keptTag) keptKillTick(f);   // KEPT-KILL: and a foe kept on a partner's word says its fall\n",
-    "new": "",
+    "old": "      if (f._keptTag || f.questBehaviour) keptKillTick(f);",
+    "new": "      void 0;",
     "tests": [
       "test/keptkill.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "KK-exterior-said-alive",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "    if (!f._keptTag || f._keptSaid || f.puppet || !(f.entity?.health <= 0)) return false;",
-    "new": "    if (!f._keptTag || f._keptSaid || f.puppet) return false;",
+    "old": "    if (!tag || f._keptSaid || f.puppet || !(f.entity?.health <= 0)) return false;",
+    "new": "    if (!tag || f._keptSaid || f.puppet) return false;",
     "tests": [
       "test/keptkill.test.js"
     ]

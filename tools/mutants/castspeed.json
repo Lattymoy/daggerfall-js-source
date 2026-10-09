@@ -2,8 +2,8 @@
   {
     "name": "CASTSPEED-dfu-period",
     "file": "src/combat/fpsSpellCasting.js",
-    "old": "export const CAST_FRAME_PERIOD = 0.1;",
-    "new": "export const CAST_FRAME_PERIOD = 0.04;",
+    "old": "export const CAST_FRAME_PERIOD = 0.04;",
+    "new": "export const CAST_FRAME_PERIOD = 0.1;",
     "tests": [
       "test/castspeed.test.js",
       "test/fpsspellcasting.test.js"
@@ -153,5 +153,40 @@
     "tests": [
       "test/castspeed.test.js"
     ]
+  },
+  {
+    "name": "CASTRECOVER-no-recovery-gate",
+    "file": "src/combat/fpsSpellCasting.js",
+    "old": "    if (this.isPlayingAnim || this._hold || this._recover > 0) return false;",
+    "new": "    if (this.isPlayingAnim || this._hold) return false;",
+    "tests": ["test/castspeed.test.js", "test/fpsspellcasting.test.js", "test/hostmagic.test.js"]
+  },
+  {
+    "name": "CASTRECOVER-click-ignores-recovery",
+    "file": "src/scenes/hostMagic.js",
+    "old": "  castBusy = () => fpsSpellCasting.isPlayingAnim || fpsSpellCasting.releaseHeld || fpsSpellCasting.recovering,",
+    "new": "  castBusy = () => fpsSpellCasting.isPlayingAnim || fpsSpellCasting.releaseHeld,",
+    "tests": ["test/hostmagic.test.js", "test/castspeed.test.js"]
+  },
+  {
+    "name": "CASTRECOVER-recovery-ignores-rate",
+    "file": "src/combat/fpsSpellCasting.js",
+    "old": "    this._recover = CAST_RECOVER_S / validCastRate(rate);",
+    "new": "    this._recover = CAST_RECOVER_S;",
+    "tests": ["test/castspeed.test.js"]
+  },
+  {
+    "name": "HANDSEAM-hands-tile",
+    "file": "src/combat/fpsSpellCasting.js",
+    "old": "c32, { clamp: true }),",
+    "new": "c32),",
+    "tests": ["test/fpsspellcasting.test.js"]
+  },
+  {
+    "name": "HANDSEAM-clamp-wraps",
+    "file": "src/render/renderer.js",
+    "old": "  if (opts.clamp) return { wrap: gl.CLAMP_TO_EDGE, filter: gl.NEAREST };",
+    "new": "  if (opts.clamp) return { wrap: gl.REPEAT, filter: gl.NEAREST };",
+    "tests": ["test/startwindow.test.js"]
   }
 ]

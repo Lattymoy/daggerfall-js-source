@@ -169,6 +169,14 @@ export const LANDFORM_DIALS = Object.freeze({
   // land's own height over the knee (at most 0.9 of it); `region` the region field's wavelength, `warp` how far the
   // shapes' domain is pushed about (over `warpScale`), and the rolling octaves' wavelengths and weights (samples).
   hills: Object.freeze({ uplandAt: 700, coast: 1.25, region: 2400, warp: 80, warpScale: 520, scales: Object.freeze([300, 125, 50]), weights: Object.freeze([1, 0.36, 0.1]) }),
+  // LANDFORM8 (WOD-PEAKS, 2026-10-09, the owner: "can you place more rounded not SUPER HUGE mountains?"): a mountain
+  // land's `peaks` - rounded mountains standing on its hills where World of Daggerfall's faceted spires stood
+  // (modSettings.js world-of-daggerfall `Mountains`, now off): one to a `cell` (samples) of the cells `fill` holds,
+  // each a bell (a cosine from its summit to its foot - round on top, easing out at the foot, never a crease) of its
+  // own girth (0.24 to 0.42 of a cell across its radius - 550 m to a kilometre in the mountains) and lean, as tall as
+  // `high` (kernel units) at most on the high ground - 200 m in the mountains, 140 m in the mountain woods - and lower
+  // on the low ground by the land's own `upland`; where two meet the taller stands. Centred as the hills are (PEAK_MEAN),
+  // so the land's average height stays DFU's, lifted; at most some 30 degrees on a bell's flank.
   // LANDFORM6: THE LAND WEARS ITS CLIMATE - each climate's hills: `low`/`high` their height (kernel units, either side of
   // the land) where the region field lies flat and where it rolls hardest, `upland` how much taller on the high ground,
   // and their `shape` (shapeRaw); a desert's `rockFrom` the slow rock field's level past which its sand gives way to mesas
@@ -177,8 +185,8 @@ export const LANDFORM_DIALS = Object.freeze({
   // on).
   lands: Object.freeze({
     woodlands: Object.freeze({ low: 4, high: 48, upland: 1.6, shape: 'rolling' }),
-    mountainWoods: Object.freeze({ low: 8, high: 56, upland: 1.6, shape: 'foothills' }),
-    mountain: Object.freeze({ low: 16, high: 80, upland: 1.6, shape: 'ridged' }),
+    mountainWoods: Object.freeze({ low: 8, high: 56, upland: 1.6, shape: 'foothills', peaks: Object.freeze({ cell: 380, fill: 0.34, high: 112 }) }),
+    mountain: Object.freeze({ low: 16, high: 80, upland: 1.6, shape: 'ridged', peaks: Object.freeze({ cell: 360, fill: 0.5, high: 160 }) }),
     desert: Object.freeze({ low: 6, high: 26, upland: 1.3, shape: 'desert', rockFrom: 0.3 }),
     desert2: Object.freeze({ low: 6, high: 30, upland: 1.3, shape: 'desert', rockFrom: -0.1 }),
     rainforest: Object.freeze({ low: 8, high: 50, upland: 1.4, shape: 'knolls', cell: 120, fill: 0.62, edge: 0.88, roll: 0.15 }),
@@ -321,7 +329,7 @@ const LAND_OF_CLIMATE = (() => {
   return lut;
 })();
 /** LANDFORM6: a land's tallest hill, kernel units - `high` x `upland`. */
-const landTop = (land) => land.high * land.upland;
+const landTop = (land) => land.high * land.upland + (land.peaks ? land.peaks.high : 0);   // LANDFORM8: and its tallest peak
 /** LANDFORM6: the tallest hill a climate stands (`climate` a CLIMATE.PAK value; the woodlands' for any other), kernel
  *  units - what its hills' ease over the knee is measured by. */
 export function hillsTopOf(climate) {
@@ -519,6 +527,39 @@ function knolls(wx, wy, rock, land) {
   return gather * knollField(wx, wy, land.cell, land.fill, land.edge) + land.roll * rolling(wx, wy, land.cell / 110) + 0.05 * signed(wx / 90 + 63.7, wy / 90 + 29.1);
 }
 
+/** LANDFORM8: the mean of peakField over the land per unit of `fill` - its own law, integrated: a held cell's peak is
+ *  0.725 tall on average, its bell averages 0.2974 of that over its ellipse (1/2 - 2/pi^2), and the ellipse covers
+ *  pi r^2 / lean of the cell - E[r^2] = 0.1116 cell^2, E[1/lean] = ln(1.4)/0.4 = 0.84118. Overlaps (the taller kept) are rare. */
+export const PEAK_MEAN = 0.725 * (0.5 - 2 / (Math.PI * Math.PI)) * Math.PI * (0.0576 + 0.0864 * 0.5 + 0.0324 / 3) * 0.8411805915530323;   // ln(1.4)/0.4, written out: the ground asks no engine's own logarithm (AUDIT LANDFORMS III A8)
+
+/** LANDFORM8: a mountain land's rounded peaks at a warped point - 0..1 of its `peaks.high`: one bell to a cell of the
+ *  cells `fill` holds, at its own place, girth, height and lean (an ellipse up to 1.4 to 1, turned its own way); the
+ *  taller where two meet. World-placed (cellHash): one number from every pixel and every client. */
+export function peakField(wx, wy, cell, fill) {
+  const fx = wx / cell, fy = wy / cell, cx = Math.floor(fx), cy = Math.floor(fy);
+  // a peak's centre lies 0.15..0.85 into its cell and its radius is at most 0.42 - it reaches at most 0.27 past its cell
+  const i0 = fx - cx < 0.3 ? -1 : 0, i1 = fx - cx > 0.7 ? 1 : 0, j0 = fy - cy < 0.3 ? -1 : 0, j1 = fy - cy > 0.7 ? 1 : 0;
+  let best = 0;
+  for (let j = j0; j <= j1; j++) {
+    for (let i = i0; i <= i1; i++) {
+      const ix = cx + i, iy = cy + j;
+      if (cellHash(ix, iy, 11) >= fill) continue;
+      const kx = (ix + 0.15 + 0.7 * cellHash(ix, iy, 12)) * cell, ky = (iy + 0.15 + 0.7 * cellHash(ix, iy, 13)) * cell;
+      const r = cell * (0.24 + 0.18 * cellHash(ix, iy, 14));
+      const dx = wx - kx, dy = wy - ky;
+      if (!(dx * dx + dy * dy < r * r)) continue;
+      const turn = 2 * cellHash(ix, iy, 15), ang = turn > 1 ? turn - 2 : turn, lean = 1 + 0.4 * cellHash(ix, iy, 16);
+      const ca = cosPi(ang), sa = sinPi(ang);
+      const ru = dx * ca + dy * sa, rv = (dy * ca - dx * sa) * lean;
+      const q = Math.sqrt(ru * ru + rv * rv) / r;
+      if (!(q < 1)) continue;
+      const v = (0.45 + 0.55 * cellHash(ix, iy, 17)) * (0.5 + 0.5 * cosPi(q));
+      if (v > best) best = v;
+    }
+  }
+  return best;
+}
+
 /** LANDFORM6: a swamp's ground - near flat: broad shallow hollows and low hummocks, nothing a walker would call a hill. */
 function hummocks(wx, wy) {
   return 0.55 * signed(wx / 380 + 12.1, wy / 380 + 70.3) + 0.3 * signed(wx / 95 + 93.9, wy / 95 + 41.5) + 0.15 * signed(wx / 34 + 2.7, wy / 34 + 61.9);
@@ -659,6 +700,11 @@ export function hillsAt(gx, gy, macro, low, lattice = null, climates = null, out
     const amp = w * (land.low + (land.high - land.low) * region) * (1 + (land.upland - 1) * up);
     deep += amp;
     sum += amp * landShape(j, wx, wy, gx, gy, rock);
+    if (land.peaks) {   // LANDFORM8: a mountain land's rounded peaks, on its hills - taller on the high ground
+      const pa = w * land.peaks.high * (1 + (land.upland - 1) * up) / land.upland;   // the land's own upland: low ground's peaks lower
+      sum += pa * (peakField(wx, wy, land.peaks.cell, land.peaks.fill) - land.peaks.fill * PEAK_MEAN);   // centred: the land's mean stays its own
+      deep += pa;   // a river's valley carves a peak down as it carves a hill (AUDIT LANDFORMS III C1)
+    }
   }
   const ease = smooth01(e / (H.coast * top));
   if (out) out[0] = deep * ease;

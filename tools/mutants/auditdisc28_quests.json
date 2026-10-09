@@ -103,28 +103,10 @@
     ]
   },
   {
-    "name": "AD28Q-J-kept-blow-refused",
-    "file": "src/scenes/exteriorFoes.js",
-    "old": "(f._keptTag ? !!_questShare?.partyPeer?.(id) :",
-    "new": "(f._keptTag ? !!_questShare?.accepts?.(id, f._keptTag) :",
-    "tests": [
-      "test/auditdisc28_quests.test.js"
-    ]
-  },
-  {
     "name": "AD28Q-J-own-heir-refused",
     "file": "src/scenes/dungeonContext.js",
     "old": " && !(ownHeirIsMe(r) && share?.partyPeer?.(from))",
     "new": "",
-    "tests": [
-      "test/questparty3c.test.js"
-    ]
-  },
-  {
-    "name": "AD28Q-J-own-kept-blow-refused",
-    "file": "src/scenes/dungeonContext.js",
-    "old": "(f._keptTag ? !!ownShare()?.partyPeer?.(id) :",
-    "new": "(f._keptTag ? !!ownShare()?.accepts?.(id, f._keptTag) :",
     "tests": [
       "test/questparty3c.test.js"
     ]

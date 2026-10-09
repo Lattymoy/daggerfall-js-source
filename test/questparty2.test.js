@@ -236,7 +236,7 @@ test('AUDIT pre-merge Q3 + F1 executed: an heir whose copy holds no such quest k
   bob.p.applyFoes('cat-0004', fr);
   await settle();
   assert.equal(pups(bob.p, 'cat-0004').length, 0, 'a stranger stands none of it');
-  assert.equal(amy.p.applyHit('bob-0009', { i: took.seq, dmg: 5, kind: 'melee' }), false, 'nor lands a blow on it');
+  assert.equal(amy.p.applyHit('bob-0009', { i: took.seq, dmg: 5, kind: 'melee' }), true, 'DESYNC-ZERO: a blow from anyone in the room lands on a foe that stands there - the kill\'s credit stays the party\'s');
   const saved = host.p.snapshotWorld((feet) => ({ x: feet[0], z: feet[2] }));
   assert.equal(saved.find((s) => s.questResource !== undefined && s.questMarker === true) != null, true, 'the save carries the marker\'s flag');
   const back = pool('amy-0003');
