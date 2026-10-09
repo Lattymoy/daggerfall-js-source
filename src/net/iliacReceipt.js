@@ -23,7 +23,9 @@
 import { _b64url, SIG_BYTES, SKEW_S, ID_RE } from './identityToken.js';
 
 /** How a ranked game ended: on the board (holdings, power, a draw), or conceded by a seat that stood up. Here, not in
- *  net/iliacTable.js, so the account service's bundle never carries the rules (that file imports them). */
+ *  net/iliacTable.js, so a receipt is read without the relay's table. (AUDIT CARDS-6 D13: this said the account service's
+ *  bundle "never carries the rules" - it does: wire.js imports iliacTable.js for the frame's words, and
+ *  server-account/src/iliac.js imports iliacHand.js for the deck's law.) */
 export const ILIAC_HOW = Object.freeze(['holdings', 'power', 'draw', 'left']);
 /** A game's id - one game, one result (16 hex, the arena bout's shape). */
 export const ILIAC_GAME_ID_RE = /^[0-9a-f]{16}$/;

@@ -259,6 +259,9 @@ const RENT_STATUS = Object.freeze({
   'rent-taken': 409, 'rent-held': 409, 'rent-rooms': 409, 'rent-none': 409, 'rent-own': 403, 'realm-only': 403,
   'rent-rate': 429, 'no-rent-room': 404, 'no-home': 404,
 });
+/** AUDIT CARDS-6 D8: a card table's and a ranked deck's refusals that are not a bad request (400, the default): the service
+ *  with no key to sign with, a guest asking for a ranked seat. */
+const CARDS_STATUS = Object.freeze({ 'cards-closed': 503, 'ranked-needs-account': 403 });
 /** SERVER-POST: the post's own refusals; a claim's realm words are REALM_STATUS's. */
 const POST_STATUS = Object.freeze({ 'no-post': 404, 'post-no-item': 409, 'post-claimed': 409, 'post-unclaimed': 409, 'realm-only': 403, 'realm-needed': 409, server: 503 });   // AUDIT SERVER-POST: a batch D1 dropped is the service's failure, counted as one
 const REALM_STATUS = Object.freeze({
@@ -1361,7 +1364,10 @@ const service = {
         const r = await act();
         if (r.error === 'seq') return json({ error: 'seq', seq: r.seq }, 409, origin);   // the record moved under the act, as a checkpoint's
         // AUDIT CARDS-4 A4: and why a receipt was refused - the device keeps one refused on its signature or clock
-        if ('error' in r) return r.why ? json({ error: r.error, why: r.why }, 400, origin) : no(r.error, 400, origin);
+        // AUDIT CARDS-6 D7: and the card a short deck lacks (iliac.js deckOrderOf) - said nowhere, the vouch's "(card)" never
+        // could be; D8: the service without its key is the service's 503 (the token's own no-signing-key), and a guest's
+        // ranked seat the account's 403 (the arena's ladder-needs-account) - neither a bad request
+        if ('error' in r) return json({ error: r.error, ...(r.why ? { why: r.why } : {}), ...(typeof r.card === 'string' ? { card: r.card } : {}) }, CARDS_STATUS[r.error] ?? 400, origin);
         return json(r, 200, origin);
       }
 

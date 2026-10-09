@@ -75,7 +75,9 @@ test('CARDS10 the claim: one row a game whichever seat carries it, the arena\'s 
   // a guest at the table: kept as nothing
   const G = await S.guest();
   const g = await claimOf(S, A, await receiptOf(S, A, G, 0));
-  assert.deepEqual([g.body.recorded, g.body.why], [false, 'guest']);
+  // PIN MOVED (AUDIT CARDS-6 D11): the OTHER seat unregistered is its own word - `guest` is the claimant's (which
+  // registering mends, its carrier keeping the receipt), and A's carrier kept this one a week for nothing
+  assert.deepEqual([g.body.recorded, g.body.why], [false, 'foe-unregistered']);
   // the pair's day: past ARENA_PAIR_DAY_MAX rated games between two, a game is kept and not counted
   for (let i = 1; i < ARENA_PAIR_DAY_MAX; i++) await claimOf(S, A, await receiptOf(S, A, B, 0));
   const capped = await claimOf(S, A, await receiptOf(S, A, B, 0));

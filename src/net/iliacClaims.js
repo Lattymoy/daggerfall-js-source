@@ -36,7 +36,8 @@ export function iliacClaimVerdict(answer) {
  *   nowS?: () => (number|null), nowMs?: () => number, me?: () => (string|null),
  *   onCounted?: (data: any) => void, onGuest?: () => void,
  * }} deps `claim` is net/accountClient.js accountIliac's - `{ ok, data }` or `{ ok: false, error, why? }`; `onCounted`
- *   told each answer that recorded a game (its result, its rating); `onGuest` once a receipt a guest carried
+ *   told each answer that recorded a game (its result, its rating) - and each that found it recorded already with this
+ *   account's rating on it (AUDIT CARDS-6 E18); `onGuest` once a receipt a guest carried
  */
 export function createIliacClaims({ claim, store = null, nowS = () => Math.floor(Date.now() / 1000), nowMs = () => Date.now(), me = () => null, onCounted = () => {}, onGuest = () => {} }) {
   let running = null, again = false, lastAt = -Infinity, lastMe;
@@ -66,6 +67,10 @@ export function createIliacClaims({ claim, store = null, nowS = () => Math.floor
       let answer;
       try { answer = await claim(r); } catch { answer = { ok: false, error: 'offline' }; }
       if (answer?.ok && answer.data?.recorded === true) { recorded++; onCounted(answer.data); }
+      // AUDIT CARDS-6 E18: THE OTHER SEAT HEARS IT TOO. One row a game, whichever seat carries it first - the second
+      // carrier's answer is `claimed`, with its own side's rating and change on it (iliac.js gameAnswer), and only the
+      // first was ever told: the loser of a game the winner carried never heard his rating fall
+      else if (answer?.ok && answer.data?.why === 'claimed' && Number.isFinite(answer.data?.rating)) onCounted(answer.data);
       else if (answer?.ok && answer.data?.why === 'guest' && !guestSaid.has(r)) { guestSaid.add(r); onGuest(); }
       if (iliacClaimVerdict(answer) === 'done') { settled.add(r); keep(kept().filter((k) => k !== r)); }
     }

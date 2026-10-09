@@ -17,6 +17,14 @@
 --   iliac_games       every ranked game kept
 --   iliac_champions   the season's #1 as the service last counted it (the
 --                     title's - iliac.js storeIliacChampion)
+--
+-- AUDIT CARDS-6 (2026-10-09), changed in place - the migration had not been
+-- applied anywhere: `played` is the receipt's own second (its `i`, the
+-- relay's clock at the game's end), the one a pair's day is counted on (D5:
+-- the claim's own `at` let ten games played in an hour all count, their
+-- receipts held and carried five a day); and the pair's index, which both of
+-- a pair's counts ask on its two accounts (D12: the season's count walked
+-- every game of the season).
 
 CREATE TABLE IF NOT EXISTS iliac_games (
   game    TEXT PRIMARY KEY,
@@ -28,13 +36,15 @@ CREATE TABLE IF NOT EXISTS iliac_games (
   ra0     INTEGER NOT NULL, rb0 INTEGER NOT NULL,          -- the ratings before
   ra1     INTEGER NOT NULL, rb1 INTEGER NOT NULL,          -- and after
   rated   INTEGER NOT NULL DEFAULT 1,
-  at      INTEGER NOT NULL,
+  played  INTEGER NOT NULL,                 -- the receipt's issue second (its `i`) - a pair's day is counted on it
+  at      INTEGER NOT NULL,                 -- the claim's second - the row's, never the game's
   FOREIGN KEY (a) REFERENCES players(id) ON DELETE SET NULL,
   FOREIGN KEY (b) REFERENCES players(id) ON DELETE SET NULL
 );
 CREATE INDEX IF NOT EXISTS idx_iliac_games_a ON iliac_games (a, season, at);
 CREATE INDEX IF NOT EXISTS idx_iliac_games_b ON iliac_games (b, season, at);
 CREATE INDEX IF NOT EXISTS idx_iliac_games_season ON iliac_games (season, at);
+CREATE INDEX IF NOT EXISTS idx_iliac_games_pair ON iliac_games (a, b, season);
 
 CREATE TABLE IF NOT EXISTS iliac_champions (
   season INTEGER PRIMARY KEY,

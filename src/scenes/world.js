@@ -53,7 +53,7 @@ import { arenaReplaysRestore } from '../systems/arenaReplay.js';   // ARENA5: yo
 import { createArenaGate, nearArenaGate } from './arenaGate.js';   // ARENA3; ARENA4b: the Herald's choice and the pause door's banner too
 import { createArenaOnline } from './arenaOnline.js';   // ARENA4: the arena online - the hall, a relay's bout, the boards and the receipts
 import { arenaFloorRoomOf } from '../net/arenaLaw.js';   // ARENA4: a bout's room (ARENA4b: or the hour's exhibition's)
-import { accountArena, accountIliac } from '../net/accountClient.js';   // ARENA4: the arena's records on the account service; CARDS10: Iliac Hand's season board
+import { accountArena, accountIliac, iliacRefusalText } from '../net/accountClient.js';   // ARENA4: the arena's records on the account service; CARDS10: Iliac Hand's season board; AUDIT CARDS-6 E14: and its refusals' own words
 import { fighterIdentity } from '../systems/arenaFighters.js';   // ARENA4: the relay's fighters billed by the bout's seed
 import { bossStandIn } from '../world/gateBoss.js';   // ARENA4: my opponent's stand-in for the formulas
 import { closeArenaDoor, arenaDoorOpen } from '../ui/arenaDoor.js'; import { createArenaSessionButton } from '../ui/arenaSessionButton.js';   // HOTFIX 1003f: the session's button on the screen   // ARENA4: the window goes when a bout calls
@@ -1770,7 +1770,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ranked games' signed results this device carries to it (net/iliacClaims.js), offered at once and again while kept
   const iliacDoor = accountIliac({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });
   const iliacClaims = params.has('online')
-    ? createIliacClaims({ claim: (r) => iliacDoor.claim(r), store: { get: (k) => _spoilsStore.get(k), set: (k, v) => _spoilsStore.set(k, v) }, me: () => iliacDoor.me(),   // the one store (AUDIT WB A6): its memory every reader's nowMs: () => Date.now() + _sharedOffsetMs,
+    ? createIliacClaims({ claim: (r) => iliacDoor.claim(r), store: { get: (k) => _spoilsStore.get(k), set: (k, v) => _spoilsStore.set(k, v) }, me: () => iliacDoor.me(),   // the one store (AUDIT WB A6): its memory every reader's
+      // AUDIT CARDS-6 D9 (E17): A RECEIPT'S LIFE IS THE RELAY'S (AUDIT ONLINE2 F2's law, the gate's and the serpent's carriers'
+      // relayNowS - declared far below, so said here as the seats' book says it): the device's clock let a receipt go on
+      // add, eight days fast; and the retry's clock the shared one (it was written inside that line's comment, never passed)
+      nowS: () => (_sharedClockHeard ? Math.floor((Date.now() + _sharedOffsetMs) / 1000) : null), nowMs: () => Date.now() + _sharedOffsetMs,
       onCounted: (a) => townTalk?.say?.(a.rated ? `Iliac Hand: the game is on the season's board - your rating ${a.rating} (${a.delta >= 0 ? '+' : ''}${a.delta}).` : 'Iliac Hand: the game is kept, but not counted - you have played that opponent often enough today.'),
       onGuest: () => townTalk?.say?.('Iliac Hand: register your account to keep your ranked games on the board.') })
     : null;
@@ -27015,13 +27019,16 @@ export async function bootWorld(canvas, renderer, params, status) {
     // vouched for by the service (a realm character's own cards, the record checkpointed first); the results carried
     iliacOnline: { ok: () => !!online?.iliacOk, send: (w) => !!online?.sendIliac(w), id: () => online?.id ?? null, now: () => Date.now() + _sharedOffsetMs },
     iliacRanked: {
-      why: () => (!realmSession ? 'Ranked games are a realm character\'s - its cards are the ones the realm keeps.' : !iliacDoor.me() ? 'Sign in to play ranked.' : null),
+      // AUDIT CARDS-6 E14: a guest's account is offered no ranked seat - it was, and every vouch it asked failed
+      why: () => (!realmSession ? 'Ranked games are a realm character\'s - its cards are the ones the realm keeps.' : !iliacDoor.me() ? 'Sign in to play ranked.' : iliacDoor.guest() ? iliacRefusalText('ranked-needs-account') : null),
       vouch: async (deck) => {
         if (!realmSession) return { ok: false, why: 'Ranked games are a realm character\'s.' };
-        const r = await realmGoldAct({ session: realmSession, checkpoint: () => onlineCheckpoint(), needsAnswer: true, call: (realm) => iliacDoor.deck({ character: characterIdOf(playerEntity), realm, deck }) });
+        // AUDIT CARDS-6 E6: A READ (realmGoldAct's `read`) - the order moves nothing on the record, so an answer lost is
+        // "not answering", never the session's end; asked as an act (`needsAnswer`) a lost answer or a `seq` was
+        // `unknown`, and the player was thrown to the title menu for asking to play cards
+        const r = await realmGoldAct({ session: realmSession, checkpoint: () => onlineCheckpoint(), read: true, call: (realm) => iliacDoor.deck({ character: characterIdOf(playerEntity), realm, deck }) });
         if (r?.ok && typeof r.data?.order === 'string') return { ok: true, order: r.data.order };
-        const card = r?.data?.card ?? r?.card;
-        return { ok: false, why: r?.error === 'deck-short' ? `Your realm character does not hold every card of that deck${card ? ` (${card})` : ''}.` : r?.error === 'cards-realm' ? 'Ranked games are a realm character\'s.' : 'The realm could not vouch for that deck.' };
+        return { ok: false, why: iliacRefusalText(r?.error, r?.card) };   // AUDIT CARDS-6 E14/D7: in Iliac Hand's words, a short deck's card named
       },
       board: () => iliacDoor.board(),   // the season's board (iliac.js iliacBoardOf)
     },

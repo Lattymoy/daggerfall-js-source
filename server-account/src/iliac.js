@@ -23,8 +23,13 @@
 // keyed by the game's id, whichever of the two accounts carries it first;
 // the Elo the arena's (arenaLaw.js eloAfter), its season the arena's
 // (arenaSeasonOf), a pair's day and season capped as the arena's are - so
-// two friends trading wins climb nothing. A rating is written only while
-// both ratings stand as they were read (the INSERT's own WHERE).
+// two friends trading wins climb at most ARENA_PAIR_SEASON_MAX games' worth a
+// season (AUDIT CARDS-6 D4: this said "climb nothing", and five accounts
+// losing on purpose inside the caps take the top and the title in two days -
+// the arena's law, kept; a guard against it is a design question). A rating
+// is written only while both ratings stand as they were read (the INSERT's
+// own WHERE), "the rating now" an account's last row WRITTEN (AUDIT CARDS-6
+// D1: see RATING_NOW_SQL).
 //
 // ═══ THE TITLE IS DERIVED (titles.js) ═══════════════════════════════
 //
@@ -42,8 +47,7 @@ import { arenaSeasonOf, arenaSeasonEndsS, arenaSeasonDay, eloAfter, ARENA_ELO_ST
 import { deckShortOf } from '../../src/net/cardWorthLaw.js';
 import { deckValid } from '../../src/net/iliacHand.js';   // the rules' own deck law (iliacHand.js imports cardLaw.js, dice.js and iliacCards.js - the bundle's already)
 import { realmActFirst, getRealmBlob, realmSaveTextOf } from './realm.js';
-import { displayName } from './accounts.js';
-import { titleWorn, glyphsOf } from './titles.js';
+import { boardNamesOf } from './boardNames.js';   // AUDIT CARDS-6 D3: a board's names wear every honour, the arena's too
 
 /** MEASURE (CARDS10): the games and the different foes the season's #1 must have played to wear the title - the
  *  arena's laurel's bounds (arenaLaw.js ARENA_CHAMPION_MIN_BOUTS, ARENA_CHAMPION_MIN_FOES), a card game's own. */
@@ -98,9 +102,21 @@ const MY_GAMES_SQL = (p, s) => `SELECT ra1 AS r, at, rowid AS k, CASE result WHE
     UNION ALL
     SELECT rb1, at, rowid, CASE result WHEN 1 THEN 1 ELSE 0 END, CASE result WHEN 0 THEN 1 ELSE 0 END, CASE result WHEN 2 THEN 1 ELSE 0 END
       FROM iliac_games WHERE b = ${p} AND season = ${s} AND rated = 1 AND a IS NOT ${p}`;
-/** An account's season rating NOW as one SQL value, for a write to ask in its own WHERE (`p` the account, ?2 the season). */
+/** An account's season rating NOW as one SQL value, for a write to ask in its own WHERE (`p` the account, ?2 the season).
+ *  AUDIT CARDS-6 D1: NOW IS THE LAST ROW WRITTEN - `k`, the rowid, alone. It was the greatest (`at`, rowid), and `at` is
+ *  the second a claim's REQUEST began (index.js reads the clock once): a claim begun in second T that lands after one of
+ *  the same account begun in T+1 read T+1's row as the rating it moved, passed this guard, and wrote its own row at T -
+ *  under the row it chained from, so the account's rating was read off T+1's again and the later-landed game's change
+ *  was lost (a loss of 17, gone). The rowid is the order the rows were written in, which this guard already serialises
+ *  (every row chains from the one written last), and no row is ever deleted (an account's sides go NULL). */
 const RATING_NOW_SQL = (p) => `COALESCE((SELECT CASE WHEN r BETWEEN ${ARENA_ELO_MIN} AND ${ARENA_ELO_MAX} THEN r ELSE ${ARENA_ELO_START} END
-    FROM (SELECT r FROM (${MY_GAMES_SQL(p, '?2')}) ORDER BY at DESC, k DESC LIMIT 1)), ${ARENA_ELO_START})`;
+    FROM (SELECT r FROM (${MY_GAMES_SQL(p, '?2')}) ORDER BY k DESC LIMIT 1)), ${ARENA_ELO_START})`;
+/** AUDIT CARDS-6 D12: A PAIR'S RATED GAMES (`?1` and `?2` its two accounts, `when` the rows' further bound) - its two
+ *  seatings, each one lookup on idx_iliac_games_pair. As one `(a = ?1 AND b = ?2) OR (a = ?2 AND b = ?1)` the planner
+ *  took the season's index and walked every game of the season (5.5 ms of a claim over 50,000, unanalysed); a game an
+ *  account played against itself is one row, counted once. */
+const PAIR_SQL = (when) => `SELECT (SELECT COUNT(*) FROM iliac_games WHERE a = ?1 AND b = ?2 AND rated = 1 AND ${when})
+    + (SELECT COUNT(*) FROM iliac_games WHERE a = ?2 AND b = ?1 AND ?1 IS NOT ?2 AND rated = 1 AND ${when}) AS n`;
 /** Both sides of a season's rated games as rows - an account per row, its rating after, its result, its foe. */
 const SIDES_SQL = `sides AS (
     SELECT a AS p, ra1 AS r, at, rowid AS k, CASE result WHEN 0 THEN 1 ELSE 0 END AS w, CASE result WHEN 1 THEN 1 ELSE 0 END AS l, CASE result WHEN 2 THEN 1 ELSE 0 END AS d, b AS o
@@ -109,17 +125,18 @@ const SIDES_SQL = `sides AS (
     SELECT b, rb1, at, rowid, CASE result WHEN 1 THEN 1 ELSE 0 END, CASE result WHEN 0 THEN 1 ELSE 0 END, CASE result WHEN 2 THEN 1 ELSE 0 END, a
       FROM iliac_games WHERE season = ?1 AND rated = 1 AND b IS NOT NULL)`;
 /** The season's board: each account's rating after its last rated game and its tally, ranked - the rating, then wins,
- *  then fewer games, then the one who got there first. */
+ *  then fewer games, then the one who got there first. The last game the last WRITTEN (AUDIT CARDS-6 D1, RATING_NOW_SQL). */
 const BOARD_SQL = `WITH ${SIDES_SQL},
-  last AS (SELECT p, r, at, ROW_NUMBER() OVER (PARTITION BY p ORDER BY at DESC, k DESC) AS rn FROM sides),
+  last AS (SELECT p, r, at, ROW_NUMBER() OVER (PARTITION BY p ORDER BY k DESC) AS rn FROM sides),
   tally AS (SELECT p, SUM(w) AS w, SUM(l) AS l, SUM(d) AS d, COUNT(*) AS n, COUNT(DISTINCT o) AS foes FROM sides GROUP BY p)
   SELECT last.p AS player, last.r AS rating, last.at AS at, tally.w AS wins, tally.l AS losses, tally.d AS draws, tally.n AS games, tally.foes AS foes
     FROM last JOIN tally ON tally.p = last.p WHERE last.rn = 1
     ORDER BY last.r DESC, tally.w DESC, tally.n ASC, last.at ASC, last.p ASC`;
 
-/** An account's rating in a season and its tally - the start for one that has played nobody. */
+/** An account's rating in a season and its tally - the start for one that has played nobody. Its rating the last row
+ *  written (AUDIT CARDS-6 D1, RATING_NOW_SQL). */
 export async function iliacRatingOf({ db }, playerId, season) {
-  const t = await db.prepare(`SELECT (SELECT r FROM (${MY_GAMES_SQL('?2', '?1')}) ORDER BY at DESC, k DESC LIMIT 1) AS last,
+  const t = await db.prepare(`SELECT (SELECT r FROM (${MY_GAMES_SQL('?2', '?1')}) ORDER BY k DESC LIMIT 1) AS last,
        SUM(w) AS w, SUM(l) AS l, SUM(d) AS d, COUNT(*) AS n FROM (${MY_GAMES_SQL('?2', '?1')})`).bind(season, playerId).first();
   const n = (v) => Number(v ?? 0) || 0;
   return { rating: t?.last != null ? arenaRatingOk(Number(t.last)) : ARENA_ELO_START, wins: n(t?.w), losses: n(t?.l), draws: n(t?.d), games: n(t?.n) };
@@ -163,19 +180,26 @@ async function championNow(ctx, nowS) {
 /**
  * THE CLOCK'S COUNT (cron.js, every minute): the season's #1 counted before a reader would count it - only once the kept
  * word is ILIAC_CHAMPION_CLOCK_S old, and only when a rated game came since (a kept word no game is newer than is
- * stamped again, never counted); a season nobody played writes nothing. Answers how many it counted (0 or 1).
+ * stamped again, never counted - unless it names nobody: AUDIT CARDS-6 D10); a season nobody played writes nothing.
+ * Answers how many it counted (0 or 1).
  * @param {{ db: any, nowS: number }} ctx
  */
 export async function iliacChampionClock(ctx) {
   const season = arenaSeasonOf(ctx.nowS);
   // ONE question a quiet minute (AUDIT SCALE D7's law): the kept word's age and the season's last rated game together
   const q = await ctx.db.prepare(`SELECT (SELECT at FROM iliac_champions WHERE season = ?1) AS kept,
+      (SELECT player FROM iliac_champions WHERE season = ?1) AS player,
       (SELECT MAX(at) FROM iliac_games WHERE season = ?1 AND rated = 1) AS last`).bind(season).first();
-  const kept = q?.kept == null ? null : { at: Number(q.kept) };
+  const kept = q?.kept == null ? null : { at: Number(q.kept), player: q.player ?? null };
   if (kept && ctx.nowS - kept.at < ILIAC_CHAMPION_CLOCK_S) return 0;
   const last = { at: q?.last ?? null };
   if (last.at == null) return 0;
-  if (kept && Number(last.at) < kept.at) {
+  // AUDIT CARDS-6 D10: A KEPT WORD OF NOBODY IS COUNTED AGAIN, NOT STAMPED. The champion's account deleted, its kept word
+  // goes NULL (the foreign key's SET NULL), and stamped by its age it stood NULL until some rated game came - an hour of
+  // clock runs on, the board named the next #1 and the title's door refused them. A NULL cannot tell that from a top not
+  // yet worthy, so a played season whose word is nobody is counted once each ILIAC_CHAMPION_CLOCK_S - one count, not one
+  // a minute.
+  if (kept && kept.player != null && Number(last.at) < kept.at) {
     await ctx.db.prepare('UPDATE iliac_champions SET at = ?2 WHERE season = ?1').bind(season, ctx.nowS).run();
     return 0;
   }
@@ -202,11 +226,27 @@ async function gameAnswer(ctx, me, row) {
   return { game: row.game, side, result, how: row.how, rating: after, delta: after - before, rated: row.rated === 1, season: row.season, standing: await iliacRatingOf(ctx, me, row.season) };
 }
 
+/** AUDIT CARDS-6 D12: MAY THIS RATED GAME MOVE THE BOARD'S TOP? Every rated claim counted the season's whole board
+ *  (BOARD_SQL, storeIliacChampion - 268 ms of a claim's 273 over 50,000 games) for a #1 most games cannot touch. A game
+ *  between `a` and `b` moves their two rows alone: while the kept #1 is somebody else and both end the game below that
+ *  #1's rating now, the board's first row is the same account with the same tally (no account's rating is over the
+ *  first row's) - the same #1, the same title. Anything else is counted: no #1 kept (none yet, none worthy, one
+ *  deleted), the #1 one of the two, either reaching its rating. A kept word that was already wrong is no worse for the
+ *  skip: the minute clock counts it again once it is ILIAC_CHAMPION_CLOCK_S old, a rated game since (iliacChampionClock). */
+async function topMayMove(ctx, season, a, b, na, nb) {
+  const kept = await ctx.db.prepare('SELECT player FROM iliac_champions WHERE season = ?1').bind(season).first();
+  const top = kept?.player ?? null;
+  if (!top || top === a || top === b) return true;
+  const { rating } = await iliacRatingOf(ctx, top, season);
+  return na >= rating || nb >= rating;
+}
+
 /**
  * A RANKED GAME'S CLAIM: the relay's receipt (net/iliacReceipt.js) for a game this account played. One row a game,
  * whichever seat carries it first; both accounts must be registered to be rated. Answers `{ recorded, ... }`, a game
- * already kept `{ recorded: false, why: 'claimed', ... }`, or `{ error }` ('no-gate-key', 'receipt', 'not-yours',
- * 'busy' - carried again).
+ * already kept `{ recorded: false, why: 'claimed', ... }`, a guest's `{ recorded: false, why: 'guest' }` (registering
+ * mends it), one whose OTHER seat is no registered account `{ recorded: false, why: 'foe-unregistered' }` (nothing
+ * mends it - AUDIT CARDS-6 D11), or `{ error }` ('no-gate-key', 'receipt', 'not-yours', 'busy' - carried again).
  * @param {{ db: any, nowS: number, subtle: SubtleCrypto }} ctx @param {any} player @param {unknown} receipt
  * @param {CryptoKey|null} publicKey the relay's
  */
@@ -224,23 +264,28 @@ export async function claimIliac(ctx, player, receipt, publicKey) {
   if (kept) return { recorded: false, why: 'claimed', ...(await gameAnswer(ctx, player.id, kept)) };
   const rows = (await db.prepare('SELECT id, handle FROM players WHERE id IN (?1, ?2)').bind(a, b).all()).results ?? [];
   const linked = (id) => rows.some((r) => r.id === id && r.handle);
-  if (!linked(a) || !linked(b)) return { recorded: false, why: 'guest' };
+  // AUDIT CARDS-6 D11: the claimant is registered (above), so a side unregistered here is the OTHER seat's - an account
+  // since deleted (a ranked seat's deck order takes a registered account): `guest` told a registered player to register
+  // and kept the receipt a week, offered every five minutes, for a game nothing can rate
+  if (!linked(a) || !linked(b)) return { recorded: false, why: 'foe-unregistered' };
   for (let tries = 0; tries < ILIAC_RATE_TRIES; tries++) {
     const ra = await iliacRatingOf(ctx, a, season), rb = await iliacRatingOf(ctx, b, season);
-    // THE PAIR'S DAY AND SEASON: past the arena's bounds between the two, a game is kept and not counted
-    const pair = await db.prepare(`SELECT COUNT(*) AS n FROM iliac_games WHERE rated = 1 AND at > ?3 - 86400
-        AND ((a = ?1 AND b = ?2) OR (a = ?2 AND b = ?1))`).bind(a, b, nowS).first();
-    const pairSeason = await db.prepare(`SELECT COUNT(*) AS n FROM iliac_games WHERE rated = 1 AND season = ?3
-        AND ((a = ?1 AND b = ?2) OR (a = ?2 AND b = ?1))`).bind(a, b, season).first();
+    // THE PAIR'S DAY AND SEASON: past the arena's bounds between the two, a game is kept and not counted. AUDIT CARDS-6
+    // D5: the day is the GAMES' - each row's `played`, its receipt's own second, within a day either side of this one's -
+    // where `at > now - 86400` read the claims' clock: ten games played in an hour, their receipts held and carried five
+    // a day, were all counted. Either side, since a receipt held back is carried after the games that followed it.
+    const pair = await db.prepare(PAIR_SQL('played > ?3 - 86400 AND played < ?3 + 86400')).bind(a, b, c.i).first();
+    const pairSeason = await db.prepare(PAIR_SQL('season = ?3')).bind(a, b, season).first();
     const rated = Number(pair?.n ?? 0) < ARENA_PAIR_DAY_MAX && Number(pairSeason?.n ?? 0) < ARENA_PAIR_SEASON_MAX;
     const [na, nb] = rated ? eloAfter(ra.rating, rb.rating, c.r === 0 ? 1 : c.r === 1 ? 0 : 0.5) : [ra.rating, rb.rating];
-    const ins = await db.prepare(`INSERT OR IGNORE INTO iliac_games (game, season, a, b, result, how, ra0, rb0, ra1, rb1, rated, at)
-        SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12
+    const ins = await db.prepare(`INSERT OR IGNORE INTO iliac_games (game, season, a, b, result, how, ra0, rb0, ra1, rb1, rated, played, at)
+        SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13
         WHERE ${RATING_NOW_SQL('?3')} = ?7 AND ${RATING_NOW_SQL('?4')} = ?8`)
-      .bind(c.j, season, a, b, c.r, c.h, ra.rating, rb.rating, na, nb, rated ? 1 : 0, nowS).run();
+      .bind(c.j, season, a, b, c.r, c.h, ra.rating, rb.rating, na, nb, rated ? 1 : 0, c.i, nowS).run();
     const row = await db.prepare('SELECT * FROM iliac_games WHERE game = ?1').bind(c.j).first();
     if (Number(ins?.meta?.changes ?? 0) > 0) {
-      if (rated) { try { await storeIliacChampion(ctx, season, nowS); } catch { /* the game is recorded; the #1 is counted again by its age */ } }
+      // AUDIT CARDS-6 D12: counted only when this game may move the top (topMayMove)
+      if (rated) { try { if (await topMayMove(ctx, season, a, b, na, nb)) await storeIliacChampion(ctx, season, nowS); } catch { /* the game is recorded; the #1 is counted again by its age */ } }
       return { recorded: true, ...(await gameAnswer(ctx, player.id, row)) };
     }
     if (row) return { recorded: false, why: 'claimed', ...(await gameAnswer(ctx, player.id, row)) };
@@ -249,21 +294,6 @@ export async function claimIliac(ctx, player, receipt, publicKey) {
 }
 
 // ── THE BOARD ────────────────────────────────────────────────────────────────────────────────────────────────────
-
-/** Players by id, with the badge each wears now (titles.js, with the season's #1 laid on). */
-async function namesOf({ db }, ids, env, nowS, champion) {
-  const want = [...new Set(ids.filter(Boolean))];
-  const out = new Map();
-  for (let i = 0; i < want.length; i += 50) {
-    const part = want.slice(i, i + 50);
-    const rows = (await db.prepare(`SELECT * FROM players WHERE id IN (${part.map((_, k) => `?${k + 1}`).join(', ')})`).bind(...part).all()).results ?? [];
-    for (const row of rows) {
-      const withH = { ...row, iliac: { champion: champion === row.id } };
-      out.set(row.id, { name: displayName(row), title: titleWorn(withH, env) ?? null, glyphs: glyphsOf(withH, env, nowS) });
-    }
-  }
-  return out;
-}
 
 /**
  * THE BOARD (`/v1/iliac/board`): the season (its number, day and end), its ranked rows (a top ten, the caller pinned
@@ -280,11 +310,13 @@ export async function iliacBoardOf(ctx, player, env) {
   const shown = ranked.slice(0, ILIAC_BOARD_TOP);
   const mine = ranked.find((r) => r.you) ?? null;
   const pinned = mine && !shown.includes(mine) ? mine : null;
-  const names = await namesOf(ctx, [...shown, pinned].filter(Boolean).map((r) => r.player).concat(champion ? [champion] : []), env, nowS, champion);
+  // AUDIT CARDS-6 D3: the badges every honour's (boardNames.js) - the season's #1 this board counted, the arena's as a
+  // letter's are; it laid its own alone, and the arena's #1 here wore neither its title nor its laurel
+  const names = await boardNamesOf(ctx, [...shown, pinned].filter(Boolean).map((r) => r.player).concat(champion ? [champion] : []), env, nowS, { iliac: (row) => ({ champion: champion === row.id }) });
   const named = (r) => (r ? { ...r, ...(names.get(r.player) ?? { name: '?', title: null, glyphs: [] }) } : null);
   return {
     ok: true,
-    season: { n: season, day: arenaSeasonDay(nowS), ends: arenaSeasonEndsS(nowS) },
+    season: { n: season, day: arenaSeasonDay(nowS), ends: arenaSeasonEndsS(season) },   // AUDIT CARDS-6 D6: the season's end (it was handed the clock, and said the year 275760)
     rows: shown.map(named), pinned: named(pinned), total: ranked.length,
     champion: champion ? { player: champion, name: names.get(champion)?.name ?? '?' } : null,
     titleNeeds: { games: ILIAC_CHAMPION_MIN_GAMES, foes: ILIAC_CHAMPION_MIN_FOES },
