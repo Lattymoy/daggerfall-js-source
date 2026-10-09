@@ -128,3 +128,26 @@ test('INT6 review: a rollback never past a move the service made since the clean
   const rando = await s.registered('rando');
   for (const act of ['holds', 'findings', 'clear', 'hold', 'rollback', 'budget']) assert.equal((await s.call(`/v1/mod/realm-${act}`, { id: cai.character }, rando.secret)).status, 403, act);
 });
+
+test('INT1 stock (its audit): a piece put in a guild\'s vault before the law read vaults is taken by nobody - it waits for staff; rollback with no clean save kept answers its word (409)', async () => {
+  const s = await standService({ MARKS_OPEN: 'on', DEVELOPER_HANDLES: 'mac' });
+  const raw = s.env.DB._raw;
+  const gm = await s.registered('Aldric', { renown: 10 });
+  gm.realm = await seatRealm(s.env, gm.secret, 'Aldric', { name: 'Aldric', level: 5, goldPieces: 20_000, items: [sword()], bankAccounts: [{ accountGold: 0 }] });
+  gm.character = gm.realm.id;
+  raw.prepare('INSERT OR REPLACE INTO renown_tracks (player, char_id, name, xp, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)').run(gm.id, gm.character, 'Aldric', 1_000_000, T0, T0);
+  const found = await s.call('/v1/guilds/found', { character: gm.character, name: 'The Iron Oath', tag: 'IRON', realm: gm.realm.at(), region: 0 }, gm.secret);
+  assert.equal(found.status, 200, JSON.stringify(found.body));
+  const put = await s.call('/v1/guilds/vault/put', { character: gm.character, realm: gm.realm.at(), pick: 0, item: validLootList([sword()])[0] }, gm.secret);
+  assert.equal(put.status, 200, JSON.stringify(put.body));
+  // as a vault filled before INT1 stands: the forged piece in the slot
+  raw.prepare('UPDATE guild_vault SET rec = ? WHERE guild_id = ?').run(JSON.stringify(forged()), found.body.guild.id);
+  const slot = raw.prepare('SELECT slot FROM guild_vault WHERE guild_id = ?').get(found.body.guild.id).slot;
+  const take = await s.call('/v1/guilds/vault/take', { character: gm.character, realm: gm.realm.at(), slot }, gm.secret);
+  assert.deepEqual([take.status, take.body.error], [409, 'vault-goods']);
+  // no clean save kept: the rollback's own word
+  const mac = await s.registered('mac');
+  raw.prepare('UPDATE realm_characters SET clean_obj = NULL WHERE id = ?').run(gm.character);
+  const none = await s.call('/v1/mod/realm-rollback', { id: gm.character }, mac.secret);
+  assert.deepEqual([none.status, none.body.error], [409, 'no-clean']);
+});

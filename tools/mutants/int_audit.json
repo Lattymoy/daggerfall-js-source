@@ -493,5 +493,14 @@
     "tests": [
       "test/accountdeploy.test.js"
     ]
+  },
+  {
+    "name": "INTA-old-stock-vaulted",
+    "file": "server-account/src/guildVault.js",
+    "old": "  if (!lawfulItem(rec)) return { error: 'vault-goods' };   // one no honest client mints goes to no member: it waits for staff\n",
+    "new": "",
+    "tests": [
+      "test/int6_review.test.js"
+    ]
   }
 ]

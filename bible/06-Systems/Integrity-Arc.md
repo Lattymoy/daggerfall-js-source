@@ -292,7 +292,7 @@ the clock, and the legacy record held to its own law.
   `ACCOUNT_VERSION` acct99. Pins: `test/int1_itemlaw.test.js`, `int2_judge.test.js`, `int4_itemids.test.js`,
   `int5_budget.test.js`, `int6_review.test.js`, and `accountdeploy.test.js`'s Worker load; the honest sweep
   `test/honestItems.mjs` over DFU's own magic table (`test/dfuMagicItems.mjs`). Mutants `tools/mutants/int1.json`,
-  `int2.json`, `int4_int5.json` and `int_audit.json`: 110, all dead (the arc's two that first survived - a weapon's row on
+  `int2.json`, `int4_int5.json` and `int_audit.json`: 111, all dead (the arc's two that first survived - a weapon's row on
   armour, a soul's set without its soul - held since by cases the one rule refuses and controls the maker lays). Pins moved (each marked PIN MOVED where it stands): saves the judge reads honest in the realm
   pins (a level in every save, a tile claiming the save's own level, crafted pieces' `products` rows of their own
   template, a peer's piece in its group), the checkpoint's answer carrying `tradeHeld`, the last clean save kept past the
