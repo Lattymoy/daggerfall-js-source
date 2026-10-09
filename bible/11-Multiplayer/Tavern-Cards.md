@@ -1,6 +1,6 @@
 # TAVERN CARDS - a card table in every tavern (CARDS0, the design record)
 
-**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, the others' to see, on relay world178; AUDIT CARDS over all of it the same day (section 13, `01-Overview/Audit-Cards.md`); CARDS4 SHIPPED (section 14) and CARDS3 SHIPPED (section 15) together (Mac: "Do 3 and 4") - offline Hold'em against the tavern's regulars for gold, the cards and chips on the cloth; AUDIT CARDS-2 over all of it (section 16, `01-Overview/Audit-Cards-2.md`; Mac: "Perfection"); then (Mac: "Do 3 4 and 5") CARDS5 SHIPPED (section 17, the relay deals - online Hold'em between players, friendly), CARDS4b (section 18, the regulars seated in their chairs) and CARDS3b (section 19, the held hand, the peek, the chips dragged, the riffle); then (Mac: "I wanna do a deep comprehensive of everything and give the cards daggerfall especially themes") AUDIT CARDS-3 over all of it (section 20, `01-Overview/Audit-Cards-3.md`) and CARDS-BAY SHIPPED (section 21, the deck of the Iliac Bay); then (Mac: "#2 and cleanup") CARDS-TIDY (section 22) and CARDS6 SHIPPED (section 23, gold tables online - the stakes escrowed by the realm service); then (Mac: "2 and 3") AUDIT CARDS-4 over them (section 25, `01-Overview/Audit-Cards-4.md`) and CARDS6b SHIPPED (section 24, the top-up and gold owed elsewhere); then (Mac: "So what about card collections?") the Holdings rail's COLLECTIONS page, CARDS7 SHIPPED (Iliac Hand's rules) and CARDS8 SHIPPED (the first set, its painted faces, the Card Binder and the starter deck) - section 26. Then (Mac: "one last comprehensive audit") AUDIT CARDS-5 - section 27. Then (the owner: "Lets instead place a specific table in each inn. A new property specifficaly used for the card table") TAVERN-TABLE - section 28, every tavern's own card table, a prop of its own; then (the owner: "Audit this") AUDIT TAVERN-TABLE - section 29; then (Discord, live: "Card tables just aren't working at all right now" - "it doesnt let him use gold tables"; the owner: "Two tables per tavern") TAVERN-TABLES - section 30, the chips table and the gold table. Mac answered
+**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, the others' to see, on relay world178; AUDIT CARDS over all of it the same day (section 13, `01-Overview/Audit-Cards.md`); CARDS4 SHIPPED (section 14) and CARDS3 SHIPPED (section 15) together (Mac: "Do 3 and 4") - offline Hold'em against the tavern's regulars for gold, the cards and chips on the cloth; AUDIT CARDS-2 over all of it (section 16, `01-Overview/Audit-Cards-2.md`; Mac: "Perfection"); then (Mac: "Do 3 4 and 5") CARDS5 SHIPPED (section 17, the relay deals - online Hold'em between players, friendly), CARDS4b (section 18, the regulars seated in their chairs) and CARDS3b (section 19, the held hand, the peek, the chips dragged, the riffle); then (Mac: "I wanna do a deep comprehensive of everything and give the cards daggerfall especially themes") AUDIT CARDS-3 over all of it (section 20, `01-Overview/Audit-Cards-3.md`) and CARDS-BAY SHIPPED (section 21, the deck of the Iliac Bay); then (Mac: "#2 and cleanup") CARDS-TIDY (section 22) and CARDS6 SHIPPED (section 23, gold tables online - the stakes escrowed by the realm service); then (Mac: "2 and 3") AUDIT CARDS-4 over them (section 25, `01-Overview/Audit-Cards-4.md`) and CARDS6b SHIPPED (section 24, the top-up and gold owed elsewhere); then (Mac: "So what about card collections?") the Holdings rail's COLLECTIONS page, CARDS7 SHIPPED (Iliac Hand's rules) and CARDS8 SHIPPED (the first set, its painted faces, the Card Binder and the starter deck) - section 26. Then (Mac: "one last comprehensive audit") AUDIT CARDS-5 - section 27. Then (the owner: "Lets instead place a specific table in each inn. A new property specifficaly used for the card table") TAVERN-TABLE - section 28, every tavern's own card table, a prop of its own; then (the owner: "Audit this") AUDIT TAVERN-TABLE - section 29; then (Discord, live: "Card tables just aren't working at all right now" - "it doesnt let him use gold tables"; the owner: "Two tables per tavern") TAVERN-TABLES - section 30, the chips table and the gold table; then (AUDIT CARDS-6's lane E, found live on main) CARDS-TOUCH - section 31, a phone's finger at the table the table's, and (a live report: "Shes clicking deal me in but nothing happens") CARDS-SAID, a refused stake said on the panel. Mac answered
 four of section 9's five questions the same day, and the house deck's art (Q5) on 2026-10-08; the collectible cards' art is still open. Every DECIDED below binds the build
 slices, and a slice that ships one records any change here first.**
 
@@ -946,3 +946,42 @@ Told the cause, the owner: **"Two tables per tavern"** - one always for gold (re
   relay's version (world180, its law row in `test/relayversion.test.js`). `tools/mutants/taverntable.json`'s seven
   interior records re-aimed by content.
 - **Deploy:** the relay first (world180 - its deploy drops every connected player, as a bump does), then the site.
+
+## 31. CARDS-TOUCH and CARDS-SAID (2026-10-09): a phone's finger at the table is the table's; a refused stake said on the panel
+
+AUDIT CARDS-6 (over the Iliac Hand branch, `01-Overview/Audit-Cards-6.md` when it lands) found it in lane E as its first
+HIGH, and it reproduced on main as it stood (section 30's merge): **on a phone, a tap on the player's own cards stood
+him up** - folded out of turn, cashed out.
+
+- **THE CAUSE.** The cards take a finger on the hand, the chips and the cloth at the capture phase
+  (`scenes/worldModes.js` `cardPointerListen`, AUDIT CARDS-3 C5: pointer events, so a touch is a pointer too) - but
+  the touch layer (`ui/touch.js`) reads the raw TOUCH events, and read the same finger again: a still, short touch on
+  the right half is its TAP, the activate press along the finger's ray (`world.js` `inputHooks.tap` -> `_tapArmed` ->
+  the activate gate -> `tryExit`), and seated the press stands him up (CARDS2: "the press stands you up and does
+  nothing else"). A chip carried up the cloth was the layer's LOOK, turning the seated head under the chips; a held
+  drag its swing. Driven in Chromium on main's own `touch.js` under the cards' listeners (390 x 844, touch): the tap
+  on the held hand and the tap on the cloth each reached the host as a TAP, the chip drag as eight looks. The mouse
+  never had it - the panel holds the cursor, and a press the cards take is cancelled before the seat sees it.
+- **THE FIX** (`ui/touch.js` `cardTable`, the hosts' `cardTable: () => !!modes?.cardSeated?.()` in `scenes/world.js`
+  and `scenes/exterior.js` - both enter buildings through worldModes - over worldModes' `cardSeated`, true in an
+  interior while a seat is held). While he sits, the layer's look, swing and tap stand down (a swing held into the
+  seat let go once), and so do the gyro's turn and the stick's half tap (the lock pick). The stick still walks him off
+  the seat (`leavesSeat`), and the panel's Stand up stands him - a phone's way up, as the E key and the swing are the
+  keyboard's. The pad is untouched: it presses through its own keys, and its look and swing are its own.
+- **Pins:** `test/cardstouch.test.js` 4 (the real touch layer over test/audit0928_input.test.js's stub document, its
+  hook the hosts' own line over worldModes' own `cardSeated`: seated - a tap, a drag, a hold-and-drag and the stick's
+  tap say nothing; standing, and outside a building, each says what it always did; a swing held as he sits let go
+  once; by source, both hosts, the gyro and the stick); `tools/mutants/cardstouch.json` 7 (all dead). PIN MOVED:
+  `audit39_uicore` - the layer's hooks header names `cardTable`; `touchinput2` - the gyro's gate reads the seat too.
+- **CARDS-SAID** - a live report the same night, after section 30 deployed: **"Shes clicking deal me in but nothing
+  happens"**. The gold table's buy-in asks the realm service for the stake (`cardGoldSit`), and a refusal was SAID ALONE
+  (`say`, the mid-screen line - under the panel, and a phone's panel covers the screen's middle) while the panel came
+  back exactly as it was, "Deal me in" lit again. Driven on main's own card block: a stake answered sits (the service
+  takes table 1, the relay's order names it); a refused one changed nothing on the panel. FIXED: the refusal is the
+  panel's buy-in line too (`cardHudModel` `refused`, the buy-in beside it), until the next press - "The realm is holding
+  your stake..." while it is asked. WHY the realm refused her is not known here - the service's words are now on the
+  panel, and the next report names them. Pins: `test/cardssaid.test.js` 1 (busy, a purse the record cannot cover,
+  stakes closed, any other word, a lost answer; the next press; a held stake sitting); `tools/mutants/cardssaid.json` 5
+  (4 dead, 1 equivalent - the clearing at the press, which the asking line always covers). PIN MOVED:
+  `auditcards4_pins` - the closed-game guard before the refusal, now the panel's; `tools/mutants/auditcards4.json`'s two
+  records on that line re-aimed by content.
