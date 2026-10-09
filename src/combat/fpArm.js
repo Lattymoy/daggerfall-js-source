@@ -3119,8 +3119,10 @@ export function createFpArm() {
 
   const active = () => !standIn && !!(built && built.ok && mesh && renderer && camera && (actionState || movementState || jumpState || idleState)
     && viewMode === 'first');
+  // MWNPC4 (AUDIT, 2026-10-09): a body in its recoil or its death stands too - die() resets every other state, so a
+  // dying body answered false here, its lane let it go (PeerBodies._standing) and its corpse flat drew instead
   const thirdActive = () => !standIn && !!(built && built.ok && thirdBuilt && thirdBuilt.ok && thirdMesh
-    && renderer && (actionState || movementState || jumpState || idleState) && viewMode === 'third');
+    && renderer && (actionState || movementState || jumpState || idleState || hitState || deathState) && viewMode === 'third');
 
   /**
    * MW-D9f: THE UPDATE PREDICATE, WHICH IS NOT THE DRAW PREDICATE.

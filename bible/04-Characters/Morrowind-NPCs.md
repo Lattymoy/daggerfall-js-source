@@ -407,6 +407,16 @@ host pin (the peers' lane passes the gate), AUDIT WORLD C7 (the linger
 re-latches the reactions with the swing), fparm's ready() (the recoil and
 the death count as a clip); the MWA4 data-gate mutant re-aimed by content.
 
+AMENDED 2026-10-09 (found planning MWNPC9): THE DYING BODY WAS LET GO.
+ready() counted the recoil and the death, and the DRAW predicate
+(`thirdActive`) did not - so `die()`, which resets every other state,
+left a body standing for nothing: PeerBodies' `_standing` answered false,
+the lane let the body go and the host's billboard - the corpse flat -
+drew in its place. Every death MWNPC5 and MWNPC6 stand was the classic
+corpse; the lane tests drive a stub rig and could not see it. The draw
+counts the recoil and the death now, pinned on the fixture rig (MWNPC4b:
+a dying body stands); `tools/mutants/mwnpc4.json` 39 mutants, 39 dead.
+
 THE FOUR HOSTS (rule 17e). None is wired in this slice - the lane is the
 door, and no population stands at it yet: scenes/exterior.js,
 scenes/world.js, scenes/worldModes.js and scenes/dungeonContext.js are

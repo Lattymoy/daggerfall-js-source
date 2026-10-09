@@ -340,5 +340,14 @@
   "tests": [
    "test/mwnpc4_npclane.test.js"
   ]
+ },
+ {
+  "name": "MWNPC4-dying-body-let-go",
+  "file": "src/combat/fpArm.js",
+  "old": "jumpState || idleState || hitState || deathState) && viewMode === 'third');",
+  "new": "jumpState || idleState) && viewMode === 'third');",
+  "tests": [
+   "test/mwnpc4_npclane.test.js"
+  ]
  }
 ]

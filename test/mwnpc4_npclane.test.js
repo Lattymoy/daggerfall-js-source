@@ -93,6 +93,7 @@ test('MWNPC4b the death: one of the deaths by the roll, over everything, held at
   assert.equal(s.idleGroup, null, 'the idle reset');
   r.update(1 / 60, { pose: true });
   assert.equal(r.status().posedGroup, 'death2', 'the death wins');
+  assert.equal(r.thirdActive(), true, 'and the dying body STANDS (drawn, its lane keeps it) - die() reset every other state, and the draw used to count only those');
   for (let i = 0; i < 60; i++) r.update(1 / 60, { pose: true });
   s = r.status();
   assert.ok(Math.abs(s.death.time - s.death.stop) < 1e-6, `played to its stop (${s.death.time} of ${s.death.stop})`);
