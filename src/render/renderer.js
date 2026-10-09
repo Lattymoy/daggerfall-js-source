@@ -4836,7 +4836,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    *  framebuffer is attached on the draw path (the upload law: creation binds no framebuffer). */
   _rwEnsureTarget(w, h) {
     let t = this._rwTarget;
-    if (t && t.allocW === w && t.allocH === h) return t;
+    if (t && t.allocW >= w && t.allocH >= h) return t;   // RW1 (AUDIT): a pane that shrinks keeps the target it has (it reallocated at every 64 px step down, a pane sliding off-screen every few frames)
     if (t) this.releaseOutsideView();
     const gl = this.gl;
     const tex = gl.createTexture();
@@ -4927,6 +4927,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       t.fog = Float32Array.from(this._fogColor);   // the background's sky stands under the same air
       this.setClearColor(VIEW_OUT_CLEAR);   // nothing drawn is the sky: the background paints it
       this.beginFrame(cropProj, view, sunDir ?? (k?.taken ? k.lightDir : this._lightDir));
+      this._frameFbo = t.fbo; setFrameTarget(t.fbo);   // RW1 (AUDIT): again - the frame's own begin let the lane's target go, and a sprite pass restoring "the frame's" target would have drawn on the screen
       gl.viewport(0, 0, t.w, t.h);
       this._worldViewportPx = [0, 0, t.w, t.h];   // a pass that restores "the world's" viewport restores this one
       this._rw.rooms = true;   // the neighbours' windows show their rooms
@@ -4947,6 +4948,10 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       console.warn('[real windows] the view out could not be drawn', e?.message ?? e);
     } finally {
       if (this._rwClipOn) { this._use(this.program); gl.uniform4f(this.rwLocs.clipMax, 0, 0, 0, 0); this._rwClipOn = false; }   // the box is the pass's alone
+      // RW1 (AUDIT): the draw-state baseline every entry point assumes (endPanelFrame's) - a throw mid-pass in a blended
+      // phase left the depth mask off, and the next frame's depth clear did nothing
+      gl.colorMask(true, true, true, true); gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.DEPTH_TEST); gl.enable(gl.CULL_FACE);
+      this.clearScreenScissor();
       this._worldViewportPx = was.worldViewportPx;
       this._frameFbo = was.frameFbo; setFrameTarget(was.frameTarget);
       gl.bindFramebuffer(gl.FRAMEBUFFER, was.frameTarget ?? null);
@@ -5229,6 +5234,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   }
   /** TV1: the point the sun's cascades stand about - the focus while set, the camera otherwise. */
   _shadowEye() { return this._focus[3] > 0.5 ? this._focus.subarray(0, 3) : this._camPos; }
+
+  /** RW1 (AUDIT): the fog's colour alone, its law as it stands - the view out's street re-lit by the clock. */
+  setFogColor(color) { if (color) { this._fogColor = color; this._frameStamp++; } }
 
   setFog(mode, density, start, end, color) {
     this._fogMode = mode === 'linear' ? 1 : mode === 'exp' ? 2 : mode === 'exp2' ? 3 : 0;

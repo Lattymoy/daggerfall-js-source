@@ -76,7 +76,7 @@ import { waterBedDepths } from '../world/waterBed.js';   // WATER-NEXT 2: the be
 import { createRipples, createRippleStir, RIPPLE_SPAN, RIPPLE_CELLS, BOAT_STIR, BOAT_WAKE_SPEED } from '../world/waterRipples.js';   // WATER-NEXT 4: the rings and wakes
 import { waterCorners, WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';   // GRASS-WET1: the one table that says which of a tile's corners stand in water - the DRAW's, because a blade in a puddle is a picture, not a physics
 import { windowEmissionRGB } from '../render/windowEmission.js';
-import { realWindowsMode, VIEW_RINGS, VIEW_CLIP_PAD } from '../render/realWindows.js';   // RW1: the rooms behind the glass, and the street a building's glass looks out on
+import { realWindowsMode, VIEW_RINGS, VIEW_CLIP_PAD, clockFogColor } from '../render/realWindows.js';   // RW1: the rooms behind the glass, and the street a building's glass looks out on
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights, capFadeColors, capFadePairs, fillLanternPool, rangesFor } from '../world/cityLights.js';
 import { isHearthFlat, HEARTH_NEAR } from '../systems/survival/hearth.js';   // HEARTH1: which of those lanterns is a fire you could cook on, and how far one can matter
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
@@ -27389,6 +27389,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     return _rwClip;
   };
+  /** RW1 (AUDIT): the town's lanterns as the street frame lights them - its pool refilled, the nearest the installed set
+   *  takes - for a street looked out on after dark (the kept frame's were the hour the player went in). */
+  const outsideLanterns = (r) => {
+    const pool = fillLanternPool(built.values(), (p) => state.pixelTranslation(p.px, p.py, _lightT), _sceneLights, _litRanges, worldLightAnimator.ranges, null);
+    _litRanges = pool.ranges;
+    return nearestLights(_sceneLights, cam.pos, r.maxPointLights, _litRanges, null, 0, pool.n);
+  };
   const drawOutsideStreet = (r, planes) => {
     const ground = [], flats = [];
     for (const p of built.values()) {
@@ -27416,15 +27423,30 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
     }
     for (const cell of ground) r.drawTerrain(cell.dwTerrain ?? cell.terrain, cell._pixelMatrix, r.tileArrays.get(cell.groundArchive), cell.tilemapTex, 6.4, !!cell._dwBytes, ecoDraw(cell));
+    // RW1 (AUDIT): AND THE WATER, as the street frame draws it - the seafloor under a carved cell's holes, then the
+    // surfaces over the bed on the frame's last uniforms (a waterfront looked out on showed the dry bed, the sea the sky)
+    if (deepWaters) drawDeepWatersFloors(ground);
+    if (waterOn && _waterU) {
+      let n = 0;
+      for (const p of ground) {
+        if (!p.water) continue;
+        const row = _waterRows[n++] ??= [null, null, null, null];
+        row[0] = p.water; row[1] = p._pixelMatrix; row[2] = r.tileArrays.get(p.groundArchive); row[3] = p.tilemapTex;
+      }
+      r.drawWaterSurfaces(_waterRows, n, 6.4, _waterU);
+      for (let i = 0; i < n; i++) _waterRows[i].fill(null);
+    }
     if (flats.length) r.drawBillboards(flats, new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]), UP_Y);
   };
   const outsideView = (doorMatrix) => ({
     clip: outsideViewClip(doorMatrix),
     setup: (r) => {   // the clock's light: an hour spent indoors is an hour later outside
       const clockMinute = minuteNow();
+      const keptFog = r._fogColor, keptSun = r._sunScale;   // RW1 (AUDIT): the air the street was kept in, at the light it was kept at
       r.setLighting(exteriorAmbient(clockMinute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), 1), sunScale(clockMinute), SUN_RIG_COLOR);
+      r.setFogColor(clockFogColor(keptFog, keptSun, r._sunScale));   // RW1 (AUDIT): ...re-lit by the clock - the sky behind the glass with it
       r.setWindowEmission(windowEmissionRGB(windowStyleForTime(clockMinute)));
-      if (!lightsOnAt(clockMinute)) r.setPointLights(new Float32Array(0), CITY_LIGHT_COLOR_F32);
+      r.setPointLights(lightsOnAt(clockMinute) ? outsideLanterns(r) : new Float32Array(0), CITY_LIGHT_COLOR_F32);   // RW1 (AUDIT): the town's lanterns by the clock - never the player's own light, which stays indoors with them
       return sunDirection(clockMinute);
     },
     draw: ({ renderer: r, planes }) => drawOutsideStreet(r, planes),

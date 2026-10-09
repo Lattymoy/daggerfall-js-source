@@ -1865,6 +1865,7 @@ export class AirPass {
 
   _replayEmission(f, sp, vp, depthOn) {
     const gl = this.gl, P = this.programs, T = this.targets;
+    f.bindVao?.(null);   // RW1 (AUDIT): the images' quads bind their own VAO behind the renderer's back - its shadow still named a mesh's, so the first replay's bind of that mesh was skipped and drew from the quad (GL 1282, "no element array buffer bound")
     const planes = spherePlanes(vp, this._planes);   // EL5: the eye's frustum - what it cannot see cannot bloom
     let bound = null;
     for (let i = 0; i < sp.count; i++) {

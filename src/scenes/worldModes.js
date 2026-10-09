@@ -1709,6 +1709,9 @@ export function createWorldModes(host) {
   const interiorArrows = new ArrowFlight({ getGpuMesh: pipeline.getGpuMesh, collider: () => interiorCtx?.collider, effects: interiorHitEffects });   // FIELD-GUN14: the orb's flat rides the host's own one-shot pool, which this frame already draws
   let _arrowsCtx = null;
   const viewOut = createViewOut();   // RW1: this host's view out through a building's glass (render/realWindows.js)
+  /** RW1 (AUDIT): the view out goes with the building - its target freed (it held up to 8 MB through the whole street
+   *  after), the glass the last room met forgotten (the next building's first frame cropped to it). */
+  const dropViewOut = () => { renderer.releaseOutsideView?.(); viewOut.drawn = false; renderer.takeGlassRect?.(); };
   let interiorCtx = null;
   // WORLD6a (Mac: "Lets tackle #1 next"): THE BUILDING IS A WORLD ROOM. The live wiring the pure half
   // (world/interiorShared.js) is handed: this interior's key (the relay room's own spelling), the context's stamp
@@ -8524,6 +8527,7 @@ export function createWorldModes(host) {
     host.onInteriorLeave?.();   // WORLD6a: the room's memory goes out while the building still stands
     teardownQuestFlats();   // Q4-v: OnDestroy for the quest stands, before the batch teardown
     interiorCtx.destroy();
+    dropViewOut();   // RW1 (AUDIT)
     _intShared = null;
     interiorFoes?.destroy?.();   // IF: OnTransitionExterior tears the interior's enemies down with it
     interiorFoes = null;
@@ -12856,6 +12860,7 @@ export function createWorldModes(host) {
         // real thing to drop. The clear() below carries the dispose.
         teardownQuestFlats();
         interiorCtx.destroy();
+        dropViewOut();   // RW1 (AUDIT): the forced way out too
         interiorFoes?.destroy?.();
         interiorFoes = null;
         interiorGuards?.clearLive?.();   // ROAD-B: same teardown, the quest-teleport / load arm

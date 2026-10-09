@@ -48,7 +48,7 @@ import {
 export function realWindowsMode(search = globalThis.location?.search ?? '') {
   if (!isEnhanced(search)) return 'off';
   const door = pageParam('windows', search);
-  const v = door ?? getPref('realWindows');
+  const v = door === 'full' || door === 'rooms' || door === 'off' ? door : getPref('realWindows');   // RW1 (AUDIT): a door it does not know (`?windows=0`, a typo) is no door - the row's word stands
   return v === 'rooms' || v === 'off' ? v : 'full';
 }
 
@@ -272,7 +272,7 @@ vec3 rwRoomOver(vec3 base, float glass, vec3 dp1, vec3 dp2, vec2 duv1, vec2 duv2
   // the seeds: the glass's tile, its wall's plane in the model's own frame - a street's houses differ, a house keeps them
   vec3 vn = length(vNormal) > 1e-4 ? normalize(vNormal) : N;
   vec3 nq = floor(vn * 4.0 + 0.5);
-  float plane = floor(dot(vn, vWorldPos - uModel[3].xyz) * 2.0 + 0.5);
+  float plane = floor(dot(vn, vWorldPos - uModel[3].xyz) * 40.0 + 0.5);   // RW1 (AUDIT): rounded to the native a wall stands on - at half metres a wall at 0.25 m sat on the boundary and the floating origin flipped its seed
   vec2 tile = floor(vUV);
   float s0 = rwHash(vec3(tile.x + 17.0 * nq.x + 3.0 * nq.z, tile.y + 29.0 * nq.y, plane));
   float s1 = rwHash(vec3(plane * 0.731, tile.x * 1.7 + nq.z, tile.y + 5.0));
@@ -328,7 +328,7 @@ vec3 rwRoomOver(vec3 base, float glass, vec3 dp1, vec3 dp2, vec2 duv1, vec2 duv2
   float lit = night * step(s2, ${g(ROOM_LIT_SHARE)});
   vec3 light = uRoomDay * (1.0 - ${g(ROOM_DAY_FALLOFF)} * hz) + uRoomLamp.rgb * (lit * (${g(ROOM_LAMP_NEAR)} - ${g(ROOM_LAMP_FALLOFF)} * hz));
   vec3 room = rwDecode(albedo) * light + rwDecode(${v3(ROOM_HEARTH_GLOW)}) * (glow * night);
-  float F = pow(1.0 - nv, 5.0);
+  float F = pow(max(1.0 - nv, 0.0), 5.0);   // RW1 (AUDIT): head on, nv rounds past 1 - pow of a negative is undefined
   float r0 = mix(${g(ROOM_REFLECT_DAY)}, ${g(ROOM_REFLECT_NIGHT)}, night);
   float R = r0 + (1.0 - r0) * ${g(ROOM_FRESNEL)} * F;
   return mix(base, mix(room, base, R), glass * fade);
@@ -355,6 +355,14 @@ export const RW_MAIN_ROOM = '  if (uWinMode > 0.5 && uWinMode < 1.5) lit = rwRoo
 /** The view out is drawn at this share of the world's pixels, no side over the cap, in a texture sized up to the
  *  bucket (a pane that grows a pixel does not reallocate). */
 export const VIEW_SCALE = 0.5;
+/** RW1 (AUDIT): THE STREET'S AIR BY THE CLOCK - the fog colour the last street frame kept (`kept`, at the sun's scale it
+ *  was kept at, `keptSun`), dimmed or brightened by the classic haze's day factor to the light the clock gives now
+ *  (`nowSun`): an evening spent indoors looks out on a night sky, a night's sleep on a day's. Each channel 0..1. */
+export function clockFogColor(kept, keptSun, nowSun) {
+  const day = (s) => 0.1 + 0.9 * Math.min(1, Math.max(0, (Number.isFinite(s) ? s : 0) / 0.6));
+  const k = day(nowSun) / day(keptSun);
+  return Float32Array.from([0, 1, 2], (i) => Math.min(1, Math.max(0, (kept?.[i] ?? 0) * k)));
+}
 export const VIEW_MAX_SIDE = 1024;
 export const VIEW_BUCKET = 64;
 /** A still camera's view out is kept this long, then drawn again (the street's people and its clock move on). */

@@ -184,7 +184,7 @@
   {
     "name": "RW1-door-ignored",
     "file": "src/render/realWindows.js",
-    "old": "  const v = door ?? getPref('realWindows');",
+    "old": "  const v = door === 'full' || door === 'rooms' || door === 'off' ? door : getPref('realWindows');",
     "new": "  const v = getPref('realWindows');",
     "tests": [
       "test/windows1_rooms.test.js"
@@ -461,6 +461,114 @@
     "new": "key: 'realWindows', initial: 'rooms',",
     "tests": [
       "test/windows1_rooms.test.js"
+    ]
+  },
+  {
+    "name": "RW1-AUDIT-the-fog-unlit",
+    "file": "src/scenes/world.js",
+    "old": "      r.setFogColor(clockFogColor(keptFog, keptSun, r._sunScale));   // RW1 (AUDIT): ...re-lit by the clock - the sky behind the glass with it",
+    "new": "      void keptFog; void keptSun;",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-AUDIT-the-clock-ignored",
+    "file": "src/render/realWindows.js",
+    "old": "  const k = day(nowSun) / day(keptSun);",
+    "new": "  const k = 1;",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-AUDIT-the-lanterns-kept",
+    "file": "src/scenes/world.js",
+    "old": "r.setPointLights(lightsOnAt(clockMinute) ? outsideLanterns(r) : new Float32Array(0), CITY_LIGHT_COLOR_F32);",
+    "new": "if (!lightsOnAt(clockMinute)) r.setPointLights(new Float32Array(0), CITY_LIGHT_COLOR_F32);",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-AUDIT-the-water-left-out",
+    "file": "src/scenes/world.js",
+    "old": "      r.drawWaterSurfaces(_waterRows, n, 6.4, _waterU);\n      for (let i = 0; i < n; i++) _waterRows[i].fill(null);\n    }\n    if (flats.length)",
+    "new": "      void n;\n      for (let i = 0; i < n; i++) _waterRows[i].fill(null);\n    }\n    if (flats.length)",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-AUDIT-the-target-shrunk",
+    "file": "src/render/renderer.js",
+    "old": "if (t && t.allocW >= w && t.allocH >= h) return t;",
+    "new": "if (t && t.allocW === w && t.allocH === h) return t;",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-AUDIT-the-buildings-target-kept",
+    "file": "src/scenes/worldModes.js",
+    "old": "  const dropViewOut = () => { renderer.releaseOutsideView?.(); viewOut.drawn = false; renderer.takeGlassRect?.(); };",
+    "new": "  const dropViewOut = () => {};",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-AUDIT-the-baseline-left",
+    "file": "src/render/renderer.js",
+    "old": "      gl.colorMask(true, true, true, true); gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.DEPTH_TEST); gl.enable(gl.CULL_FACE);\n      this.clearScreenScissor();\n      this._worldViewportPx = was.worldViewportPx;",
+    "new": "      this._worldViewportPx = was.worldViewportPx;",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-AUDIT-an-unknown-door-full",
+    "file": "src/render/realWindows.js",
+    "old": "const v = door === 'full' || door === 'rooms' || door === 'off' ? door : getPref('realWindows');",
+    "new": "const v = door ?? getPref('realWindows');",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-AUDIT-the-half-metre-seed",
+    "file": "src/render/realWindows.js",
+    "old": "* 40.0 + 0.5);   // RW1 (AUDIT)",
+    "new": "* 2.0 + 0.5);   // RW1 (AUDIT)",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-AUDIT-the-negative-pow",
+    "file": "src/render/realWindows.js",
+    "old": "float F = pow(max(1.0 - nv, 0.0), 5.0);",
+    "new": "float F = pow(1.0 - nv, 5.0);",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-AUDIT-the-replays-stale-vao",
+    "file": "src/render/airPass.js",
+    "old": "    f.bindVao?.(null);   // RW1 (AUDIT)",
+    "new": "    void f;   // RW1 (AUDIT)",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-AUDIT-the-frames-target-let-go",
+    "file": "src/render/renderer.js",
+    "old": "      this._frameFbo = t.fbo; setFrameTarget(t.fbo);   // RW1 (AUDIT): again",
+    "new": "      void t;   // RW1 (AUDIT): again",
+    "tests": [
+      "test/windows1_view.test.js"
     ]
   }
 ]

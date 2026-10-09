@@ -413,3 +413,59 @@ test('RW1 view V11: an interior\'s declared glass never blooms - the Enhanced Li
   assert.deepEqual(bound, ['window-mask'], 'the window blooms, the glass does not');
   assert.equal(fake.stats.emitDraws, 1);
 });
+
+test('RW1 (AUDIT) THE STREET AS IT STANDS NOW: its air re-lit by the clock (a night\'s sky after an evening indoors, a day\'s after a night\'s sleep), the town\'s lanterns by the clock and never the player\'s own light, its water and seafloor drawn; the target kept as a pane shrinks and freed with the building; the bracket puts the draw baseline back after a throw and holds its own target past its frame\'s begin; a door the switch does not know is no door; the seed rounded to the native, the Fresnel never NaN; the air pass\'s replay binds its mesh past the quads (mutants: the fog unlit, the lanterns kept, the water left out, the target shrunk, the building\'s target kept, the baseline left, an unknown door full, the half-metre seed, the negative pow, the replay\'s stale VAO)', async () => {
+  const { clockFogColor, realWindowsGlsl, realWindowsMode } = await import('../src/render/realWindows.js');
+  const { getPref, setPref } = await import('../src/systems/uiPrefs.js');
+  // the clock's air
+  const day = new Float32Array([0.5, 0.6, 0.8]);
+  const night = clockFogColor(day, 0.6, 0);
+  assert.ok(night.every((v, i) => Math.abs(v - day[i] * 0.1) < 1e-6), `an evening indoors: a night's air ${night}`);
+  const morning = clockFogColor(night, 0, 0.6);
+  assert.ok(morning.every((v, i) => Math.abs(v - day[i]) < 1e-5), 'a night\'s sleep: the day\'s');
+  assert.ok(clockFogColor([0.9, 0.9, 0.9], 0, 0.6).every((v) => v <= 1), 'never past white');
+  // the switch's door
+  const was = getPref('realWindows');
+  try {
+    setPref('realWindows', 'rooms');
+    assert.equal(realWindowsMode('?skin=enhanced&windows=0'), 'rooms', 'a door it does not know: the row stands');
+    assert.equal(realWindowsMode('?skin=enhanced&windows=off'), 'off');
+  } finally { setPref('realWindows', was); }
+  // the shader
+  const glsl = realWindowsGlsl();
+  assert.match(glsl, /float plane = floor\(dot\(vn, vWorldPos - uModel\[3\]\.xyz\) \* 40\.0 \+ 0\.5\);/, 'the seed at the native');
+  assert.match(glsl, /float F = pow\(max\(1\.0 - nv, 0\.0\), 5\.0\);/, 'never the pow of a negative');
+  // the target: kept as the pane shrinks
+  const log = [];
+  const r = recordingRenderer(log);
+  const big = r._rwEnsureTarget(512, 256);
+  assert.equal(r._rwEnsureTarget(256, 128), big, 'a smaller pane: the same target');
+  assert.notEqual(r._rwEnsureTarget(1024, 256), big, 'a larger one: a new one');
+  // the bracket after a throw: the baseline back
+  r.setWindowRooms('full');
+  log.length = 0;
+  r.outsideViewFrame([-0.5, -0.5, 0.5, 0.5], I, I, { draw: ({ renderer: rr }) => { rr.gl.depthMask(false); rr.gl.enable('BLEND'); throw new Error('mid-pass in a blended phase'); } });
+  const last = (name, pick = () => true) => log.filter((c) => c[0] === name && pick(c)).at(-1);
+  assert.deepEqual(last('depthMask'), ['depthMask', true], 'the depth mask on again');
+  const blend = log.filter((c) => (c[0] === 'enable' || c[0] === 'disable') && c[1] === 'BLEND').at(-1);
+  assert.deepEqual(blend, ['disable', 'BLEND'], 'blending off again');
+  assert.equal(r._rwOutside, null, 'the bracket closed');
+  // the replay: its mesh's VAO bound past the quads' own
+  const { AirPass } = await import('../src/render/airPass.js');
+  const binds = [];
+  const gl = new Proxy({}, { get: (_, k) => (typeof k === 'string' && k.toUpperCase() === k ? k : () => {}) });
+  const fake = { gl, programs: { emitMesh: { p: {}, uProj: 'p', uView: 'v', uModel: 'm', uEmissionTex: 'e', uEmissionColor: 'c' } }, targets: {}, _planes: new Float32Array(24), _identityView: I, _emitDepth() {}, _white: [1, 1, 1], stats: { emitDraws: 0 } };
+  const mesh = { vao: { id: 'mesh' }, subMeshes: [{ _evEmis: 'window-mask', _evWin: 1, primitiveCount: 2, startIndex: 0 }] };
+  AirPass.prototype._replayEmission.call(fake, { blackTex: 'black', windowEmission: [0.8, 0.57, 0.18], bindVao: (v) => binds.push(v) }, { count: 1, records: [{ kind: 0, mesh, matrix: I, bounded: false }] }, I, null);
+  assert.deepEqual(binds, [null, mesh.vao], 'the shadow forgotten first, then the mesh bound');
+  // the hosts
+  const w = rd('src/scenes/world.js'), ex = rd('src/scenes/exterior.js'), wm = rd('src/scenes/worldModes.js'), rr = rd('src/render/renderer.js');
+  for (const host of [w, ex]) assert.match(host, /r\.setFogColor\(clockFogColor\(keptFog, keptSun, r\._sunScale\)\);/);
+  assert.match(w, /r\.setPointLights\(lightsOnAt\(clockMinute\) \? outsideLanterns\(r\) : new Float32Array\(0\), CITY_LIGHT_COLOR_F32\);/);
+  assert.match(ex, /r\.setPointLights\(lightsOnAt\(clockMinute\) \? nearestLights\(cityLights, cam\.pos, r\.maxPointLights, lightAnimator\.ranges\) : new Float32Array\(0\), CITY_LIGHT_COLOR_F32\);/);
+  assert.match(w, /if \(deepWaters\) drawDeepWatersFloors\(ground\);\n\s+if \(waterOn && _waterU\) \{/);
+  assert.match(w, /r\.drawWaterSurfaces\(_waterRows, n, 6\.4, _waterU\);/);
+  assert.equal((wm.match(/dropViewOut\(\);   \/\/ RW1 \(AUDIT\)/g) ?? []).length, 2, 'both ways out of a building');
+  assert.match(wm, /const dropViewOut = \(\) => \{ renderer\.releaseOutsideView\?\.\(\); viewOut\.drawn = false; renderer\.takeGlassRect\?\.\(\); \};/, 'its target freed, its glass forgotten');
+  assert.match(rr, /this\.beginFrame\(cropProj, view, [^\n]*\n\s+this\._frameFbo = t\.fbo; setFrameTarget\(t\.fbo\);/);
+});

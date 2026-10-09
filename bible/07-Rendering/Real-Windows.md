@@ -46,7 +46,7 @@ auto-emissive arm, never a mod's picture). A context that is not ARENA2's has tw
 `renderer.uploadTexture(archive, record, color32, { cutout: true })` - every solid pass discards the texels under half
 alpha (drawMesh, a static batch's sub-mesh, the shadow casters' replay); indoors the hole shows the street, or with the
 street off the sky - and `renderer.uploadGlassMask(archive, record, mask)` (white texels glass, never an emission).
-`renderer.outsideViewSkip` (a mesh the street pass leaves out - the caravan the player sits in) and
+`renderer.outsideViewSkip` (a mesh the street pass leaves out - unused today: the caravan the player sits in is left out by where it stands, `src/scenes/horseCartPool.js` drawOutside, since its meshes are every caravan's) and
 `renderer.outsideViewDraws` (a draw the street pass also makes) are the street pass's hooks.
 
 ## The switch
@@ -91,4 +91,31 @@ view out); mutants `tools/mutants/windows1.json`; PROBE
 `tools/realWindowsProbe.mjs` (a synthetic street on SwiftShader - its lane
 runs report GL error 1282 from the Enhanced Lighting air pass's replay as it
 stands at HEAD, not the view out's).
+
+## The audit (RW1 AUDIT)
+
+- **The street as it stands now.** The view out's setup re-lights the kept
+  street by the clock: its fog colour (`clockFogColor` - the classic haze's
+  day factor from the light it was kept at to the light now, so the sky
+  behind the glass darkens through an evening indoors), and the town's
+  lanterns when the clock lights them - never the player's own torch or
+  candle, which stays indoors with them.
+- **The water.** The street pass draws the seafloor under a carved cell's
+  holes and the water's surfaces over the bed, on the last street frame's
+  uniforms; a waterfront looked out on showed dry bed, the sea the sky.
+- **The target.** Kept while a pane shrinks (it reallocated at every 64 px
+  step down), and freed with the building, its last glass forgotten - both
+  ways out (`dropViewOut`).
+- **The bracket.** Its `finally` puts the draw baseline back
+  (endPanelFrame's: colour mask, depth mask, blend, depth test, cull,
+  scissor), and it holds its own target past its frame's begin.
+- **The switch.** A kill-door value it does not know (`?windows=0`) is no
+  door; the row's word stands.
+- **The shader.** The room's seed rounds the wall's plane to the native (at
+  half metres a wall at 0.25 m sat on the boundary and the floating origin
+  flipped its look); the Fresnel term never takes the pow of a negative.
+- **Before this arc.** The Enhanced Lighting air pass's emission replay drew
+  its first mesh from the quads' VAO (the images bind theirs behind the
+  renderer's shadow): GL error 1282 in the probe's lane runs. The replay now
+  forgets the shadow first (`src/render/airPass.js` _replayEmission).
 
