@@ -16,9 +16,8 @@ import { OnlineSession } from './online.js';
 import { cellRoomOfWire } from './wire.js';
 import { validHccRecord, HCC_WIRE_KIND } from '../systems/horseCartWire.js';
 
-/** How far (natives, either axis - forty a metre) a caravan's record may stand from where it stood when I stepped in and
- *  still be the caravan I am in: a parked caravan does not drift, so two metres is a re-park, never a rounding. */
-export const CARAVAN_STANDS_NATIVES = 80;
+import { CARAVAN_STANDS_NATIVES } from '../systems/caravanRoom.js';   // the caravan the room stands on, where it stands - one reach for the visit and the owner's own room
+export { CARAVAN_STANDS_NATIVES };
 
 /** Whether a cell's record (`raw`, the park record's `r`) is a caravan still parked where `at` says (natives). */
 export function caravanStands(raw, at) {

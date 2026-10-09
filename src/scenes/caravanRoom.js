@@ -17,9 +17,8 @@ import { toColor32 } from '../formats/color32Order.js';
 import { quatRotate } from '../world/quat.js';
 import { WAGON_MODE } from '../systems/horseCartLaw.js';
 
-/** WAGONS2 (AUDIT): how far (natives - 40 a metre) the parked caravan may stand from where its room was entered and the
- *  room still be its: its grounding's lean, never a caravan driven off and parked elsewhere. */
-export const CARAVAN_STANDS_NATIVES = 80;
+import { CARAVAN_STANDS_NATIVES } from '../systems/caravanRoom.js';   // WAGONS2 (AUDIT): the room's caravan where it stands
+export { CARAVAN_STANDS_NATIVES };
 /** Where a Horse Cart and Cargo record (the runtime's state, or a save's) has its wagon parked - `[WorldX, WorldZ]` in
  *  natives - or null when it stands nowhere. */
 export const parkedCaravanAt = (st) => (st && st.Mode === WAGON_MODE.Deployed && Number.isFinite(st.WorldX) && Number.isFinite(st.WorldZ) ? [st.WorldX, st.WorldZ] : null);

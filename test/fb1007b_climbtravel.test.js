@@ -223,9 +223,9 @@ test('AUDIT FB1007b C2: no journey sets out from a wall - the journey would let 
   while (!m.onWall && f++ < 600) m.update(1 / 60, FORWARD, 0);
   assert.ok(m.onWall);
   const said = [], began = [];
-  const run = (player, src, call) => new Function('player', 'travelOptions', 'tvSay', 'TRAVEL_VIEW_TEXT', 'duelEnemyNear', 'areEnemiesNearby', 'exteriorFoePool', 'csaAboard', 'tvRoutesJourneys',
+  const run = (player, src, call) => new Function('player', 'travelOptions', 'tvSay', 'TRAVEL_VIEW_TEXT', 'duelEnemyNear', 'areEnemiesNearby', 'exteriorFoePool', 'csaAboard', 'tvRoutesJourneys', 'wagonRiders',
     `${constLine('climbingNow')} ${src} return ${call};`)(player, { beginTravel: (...a) => began.push(a), beginTravelToCoords: (...a) => began.push(a) }, (l) => said.push(l), TRAVEL_VIEW_TEXT,
-    () => false, () => false, () => [], { aboard: false }, () => false);
+    () => false, () => false, () => [], { aboard: false }, () => false, null);   // WAGONS2: seated in no one's wagon
   const canGo = cutFn(WORLD, 'function travelViewCanGo() {');
   assert.equal(run(m, canGo, 'travelViewCanGo()'), false, 'the view\'s click: refused');
   assert.deepEqual(said, [TRAVEL_VIEW_TEXT.climbing]);
