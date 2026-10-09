@@ -15,7 +15,7 @@ The report is right on its main charge. Three read-only audits of this tree (202
 
 | Charge | Where it stood | Evidence |
 |---|---|---|
-| No damage, free magicka, no fatigue | TRUE in solo, co-op, duels, the wild zone and every boss fight: no server ever holds a player's health, magicka or fatigue. FALSE in the arena, a siege and the Royal Tourney (PVP-REF holds both fighters). | duels and the wild zone resolve on the defender's own machine (`net/wire.js` "THE DEFENDER RESOLVES IT", `net/wildFight.js`); a boss "never learns who was struck" (`net/gateStrike.js`, `net/serpentBrain.js`, `net/sdRemnant.js`) |
+| No damage, free magicka, no fatigue | TRUE in solo, co-op, duels, the wild zone and every boss fight: no server ever holds a player's health, magicka or fatigue. FALSE in the arena, a siege and the Royal Tourney (PVP-REF holds both fighters). | duels and the wild zone resolved on the defender's own machine (`net/wire.js`'s duel frame said "THE DEFENDER RESOLVES IT" until lane 2 retired it, `net/wildFight.js`); a boss "never learns who was struck" (`net/gateStrike.js`, `net/serpentBrain.js`, `net/sdRemnant.js`) |
 | Infinite damage in PvE | EFFECTIVELY: a co-op blow is taken up to 10,000 (a kill). A boss's blows are clipped by a cap and a bucket (`net/gateBrain.js`). A raid's kills are the client's word, one a second. | `scenes/dungeonContext.js` HIT_DMG_MAX; `net/raidLaw.js` |
 | Max damage in PvP | PARTLY: the arena's cap reads the weapon the CLIENT names; a duel's or the zone's blow is never refereed at all, and a spell there has no cap. | `net/arenaBrain.js` arenaBlowCap; `net/siegeRef.js` siegeHeld |
 | Any item, any gold | TRUE, AND IT REACHED OTHER PLAYERS: a realm character's checkpoint was read at its first save alone (customs' wealth) and stored unopened after; the market, a realm trade, a guild's vault and treasury, a rent and a card table's stake took goods and gold from that record as the truth; the market's listing check never asked whether the piece was one the game mints. | `server-account/src/realm.js` firstSaveRefusal; `06-Systems/Economy-Arc.md`: "Assume infinite wealth" was literally true |
@@ -293,7 +293,12 @@ and sets a bout only on a start it saw asked and answered, both fighters whole; 
 referee speaks in its own frame (`dref`: bout, hp, end, no), and a bout won names its winner in a `d1` receipt handed to
 both, which `/v1/duel/claim` counts once by its bout's id (`duel_results.rk`) inside DUEL1's bounds. DUEL1's loser's
 own report retires (`/v1/duel/loss` answers 410 `retired`), its gap and its mutual draw with it, and a duel never
-touches the save's health (no heal at its end). The client duels on a refereeing relay alone (world183).
+touches the save's health (no heal at its end). The client duels on a refereeing relay alone (world183); the referee's
+word is heard on any socket the client holds, and a bout's frames go to the room that referees it (5b).
+**THE FOUR HOSTS.** `scenes/world.js` WIRED (the challenge, the bout's frames, the referee's word and readout, the
+receipt's carrier); `scenes/dungeonContext.js` and `scenes/worldModes.js` NO DUEL on purpose - a duel is outdoors alone
+(`world.js:"if ((modes?.mode ?? 'exterior') !== 'exterior') return 'outdoors';"`), every door refuses a duellist;
+`scenes/exterior.js`, the offline fixed city, NOT WIRED on purpose: no relay, no other player.
 
 ### INT9 - the open zone refereed, a death's drop taken off the record (`net/wildRef.js`, `net/wildReceipt.js`, `server-account/src/wild.js`)
 
@@ -369,7 +374,12 @@ law pinned equal. No target's machine applies a peer's harm: a peer's cast at a 
 (`systems/allyCast.js`). A Royal Tourney's bout is blows alone - the relay refused a heal between its two but refereed a
 crafted client's damaging cast as a siege's; it takes no cast now. Found while pinning: the zone's mend cleared a
 caster's cast window on every blow (the striker is unstruck), so a crafted client cast past the rate - mend restores
-vitality alone.
+vitality alone. **THE FOUR HOSTS.** `scenes/world.js` WIRED (the duel's, the zone's and a siege's casts, each a number
+for its referee); `scenes/dungeonContext.js` WIRED - the zone's halls through world.js's own `wildSpellOut`, the arena's
+rival through its own law pinned equal
+(`dungeonContext.js:"castAtDuel: opts.arenaRival ? (_id, sp) => spellOnRival(sp) : (opts.wildSpellOut ? (id, sp) => opts.wildSpellOut(id, sp) : null),"`);
+`scenes/worldModes.js` (a building) no spell meets another player there - no fight is struck indoors; `scenes/exterior.js`
+NOT WIRED on purpose: offline, no other player.
 
 ### 5b. The audit (2026-10-09, Mac: "Lets audit this")
 
