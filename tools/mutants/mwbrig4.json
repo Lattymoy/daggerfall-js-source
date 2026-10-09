@@ -1,0 +1,67 @@
+[
+  {
+    "name": "MWBRIG4-steel-alone-again",
+    "file": "src/characters/ownArmorModels.js",
+    "old": "export const BRIGANDINE_METALS = Object.freeze(Object.keys(ARMOR_MATERIAL).filter((k) => isPlate(ARMOR_MATERIAL[k])));",
+    "new": "export const BRIGANDINE_METALS = Object.freeze(Object.keys(ARMOR_MATERIAL).filter((k) => k === 'Steel'));",
+    "tests": [
+      "test/mwbrig4.test.js"
+    ],
+    "note": "MW-BRIG1's table: every other metal's jerkin back in retail's cuirass, though its name says Brigandine."
+  },
+  {
+    "name": "MWBRIG4-every-metal-in-steel",
+    "file": "src/characters/ownArmorModels.js",
+    "old": "  parts: Object.freeze([Object.freeze({ part: 'cuirass', model: `brigandine_${metal.toLowerCase()}.nif` })]),",
+    "new": "  parts: Object.freeze([Object.freeze({ part: 'cuirass', model: 'brigandine_steel.nif' })]),",
+    "tests": [
+      "test/mwbrig4.test.js"
+    ],
+    "note": "Every metal worn in the Steel painting."
+  },
+  {
+    "name": "MWBRIG4-the-row-keyed-on-steel",
+    "file": "src/characters/ownArmorModels.js",
+    "old": "  material: ARMOR_MATERIAL[metal],\n  skinFrom: BRIGANDINE_SKIN_FROM,",
+    "new": "  material: ARMOR_MATERIAL.Steel,\n  skinFrom: BRIGANDINE_SKIN_FROM,",
+    "tests": [
+      "test/mwbrig4.test.js"
+    ]
+  },
+  {
+    "name": "MWBRIG4-not-fitted",
+    "file": "src/characters/ownArmorModels.js",
+    "old": "  fitTo: 'chest',   // MW-BRIG3: its closed top sits where the chest skin it hides ends, at the base of the neck",
+    "new": "",
+    "tests": [
+      "test/mwbrig4.test.js"
+    ]
+  },
+  {
+    "name": "MWBRIG4-every-nif-names-steel",
+    "file": "tools/bakeBrigandine.mjs",
+    "old": "nif: meshToNif(mesh, { texture: textureNameFor(metal), node: 'Brigandine' })",
+    "new": "nif: meshToNif(mesh, { texture: TEXTURE_NAME, node: 'Brigandine' })",
+    "tests": [
+      "test/mwbrig4.test.js"
+    ]
+  },
+  {
+    "name": "MWBRIG4-the-painting-of-another-metal",
+    "file": "tools/bakeBrigandine.mjs",
+    "old": "      return paint(mesh, metal, pngs[metal], sheets);",
+    "new": "      return paint(mesh, metal, pngs.Steel, sheets);",
+    "tests": [
+      "test/mwbrig4.test.js"
+    ]
+  },
+  {
+    "name": "MWBRIG4-a-missing-painting-baked-anyway",
+    "file": "tools/bakeBrigandine.mjs",
+    "old": "      if (!pngs[metal]) throw new Error(`no painting for the ${metal} brigandine (${PAINTING[metal]})`);",
+    "new": "",
+    "tests": [
+      "test/mwbrig4.test.js"
+    ]
+  }
+]
