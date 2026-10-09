@@ -1,0 +1,408 @@
+[
+  {
+    "name": "SD25-S9-a-ramp-left-out",
+    "file": "src/world/sdStepsArt.js",
+    "old": "const PALETTE = paletteOf(Ba, Br, Vg, Vo, Bz);",
+    "new": "const PALETTE = paletteOf(Ba, Br, Vg, Vo);",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-drift-deck-alight",
+    "file": "src/world/sdStepsArt.js",
+    "old": "for (const ex of [5, 58]) fill(albedo,",
+    "new": "for (const ex of [5, 58]) fill(emission,",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-riser-lip-no-brighter",
+    "file": "src/world/sdStepsArt.js",
+    "old": "paintRim(albedo, emission, A, GOLD, SD_STEPS_GLOW.lip);",
+    "new": "paintRim(albedo, emission, A, GOLD, SD_STEPS_GLOW.line);",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-hand-running-forward",
+    "file": "src/world/sdStepsArt.js",
+    "old": "export const beatHandAngle = (k) => ((12 - k) / 12) * Math.PI * 2;",
+    "new": "export const beatHandAngle = (k) => (k / 12) * Math.PI * 2;",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-ember-a-frame-early",
+    "file": "src/world/sdStepsArt.js",
+    "old": "export const SD_BEAT_EMBER_FRAME = 10;",
+    "new": "export const SD_BEAT_EMBER_FRAME = 9;",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-falter-unfaltered",
+    "file": "src/world/sdStepsArt.js",
+    "old": "f = faltered ? SD_STEPS_GLOW.falter / SD_STEPS_GLOW.tick : 1;",
+    "new": "f = 1;",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-ticks-behind-the-hand-lit",
+    "file": "src/world/sdStepsArt.js",
+    "old": "export const beatTickLit = (k, h) => h >= 1 && h < 12 - k;",
+    "new": "export const beatTickLit = (k, h) => h >= 1 && h > 12 - k;",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-no-dissolve",
+    "file": "src/scenes/sdSteps.js",
+    "old": "st.draw.gpu = (out >= 0 ? dissolve[out] : into >= 0 ? dissolve[into] : null) ?? meshes.get('beat');",
+    "new": "st.draw.gpu = meshes.get('beat');",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-ghost-on-a-solid-plate",
+    "file": "src/scenes/sdSteps.js",
+    "old": "ghostState[o] = solid ? 0 : 1;",
+    "new": "ghostState[o] = 1;",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-ghost-hand-forward",
+    "file": "src/scenes/sdSteps.js",
+    "old": "ghostState[o + 1] = solid ? 0 : left / (SD_BEAT_CYCLE - SD_BEAT_SOLID);",
+    "new": "ghostState[o + 1] = solid ? 0 : 1 - left / (SD_BEAT_CYCLE - SD_BEAT_SOLID);",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-ghost-never-brightening",
+    "file": "src/scenes/sdSteps.js",
+    "old": "left / (SD_BEAT_CYCLE - SD_BEAT_SOLID); ghostState[o + 2] = SD_GHOST.base + (SD_GHOST.peak - SD_GHOST.base) * e * e * (3 - 2 * e);",
+    "new": "left / (SD_BEAT_CYCLE - SD_BEAT_SOLID); ghostState[o + 2] = SD_GHOST.base;",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-a-stage-keeping-all",
+    "file": "src/world/sdStepsModel.js",
+    "old": "keep: (face, iu, iv) => BAYER4[(((iv + face * 3) & 3) << 2) | ((iu + face * 5) & 3)] < keep",
+    "new": "keep: () => true",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-lean-the-wrong-way",
+    "file": "src/scenes/sdSteps.js",
+    "old": "m[0] = c; m[1] = sn; m[4] = -sn; m[5] = c;",
+    "new": "m[0] = c; m[1] = -sn; m[4] = sn; m[5] = c;",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-pivot-riding-the-deck",
+    "file": "src/scenes/sdSteps.js",
+    "old": "m[12] = SD_REALM_ORIGIN[0] + st.s.x;",
+    "new": "m[12] = _p[0];",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-a-pendulum-casting",
+    "file": "src/scenes/sdSteps.js",
+    "old": ") }, noShadow: true }; draws.push(st.pend); }",
+    "new": ") } }; draws.push(st.pend); }",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-lean-not-asin",
+    "file": "src/world/sdStepsModel.js",
+    "old": "Math.asin(Math.max(-1, Math.min(1, dx / SD_PENDULUM.len)))",
+    "new": "Math.atan(Math.max(-1, Math.min(1, dx / SD_PENDULUM.len)))",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-rack-proud-of-the-box",
+    "file": "src/world/sdStepsModel.js",
+    "old": "const z1 = -d / 2 + SD_RACK.out, z0 = -d / 2,",
+    "new": "const z1 = -d / 2 + SD_RACK.out, z0 = -d / 2 - SD_RACK.out,",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-face-not-set-back",
+    "file": "src/world/sdStepsModel.js",
+    "old": "bevelledBox(f, rec, SD_RISER_ATLAS, box, { z0: SD_RACK.out });",
+    "new": "bevelledBox(f, rec, SD_RISER_ATLAS, box, { z0: 0 });",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-a-step-casting",
+    "file": "src/scenes/sdSteps.js",
+    "old": "st.draw = { gpu, object: { matrix: new Float32Array(16) }, noShadow: true, texRemap: null };",
+    "new": "st.draw = { gpu, object: { matrix: new Float32Array(16) }, noShadow: false, texRemap: null };",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-stages-never-advancing",
+    "file": "src/scenes/sdSteps.js",
+    "old": "CRUMBLE_STAGES[1 + Math.min(2, Math.floor((since / SD_CRUMBLE_DELAY) * 3))]",
+    "new": "CRUMBLE_STAGES[1]",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-rewind-skipped",
+    "file": "src/scenes/sdSteps.js",
+    "old": "show = f >= back || (f >= 0 && _crumble.drop < SD_CRUMBLE_SEEN);",
+    "new": "show = f >= 0 && _crumble.drop < SD_CRUMBLE_SEEN;",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-chunks-home-early",
+    "file": "src/scenes/sdSteps.js",
+    "old": "tau = f >= back ? SD_CHUNK.rise * r * r : f,",
+    "new": "tau = f >= back ? 0 : f,",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-no-grit",
+    "file": "src/scenes/sdSteps.js",
+    "old": "if (shaking) { const m = g.object.matrix;",
+    "new": "if (false) { const m = g.object.matrix;",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-no-click-home",
+    "file": "src/scenes/sdSteps.js",
+    "old": "          play3(SD_STEPS_SOUNDS.clack, [x, y, z], 0.7, 2.6);\n",
+    "new": "",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-no-shudder-home",
+    "file": "src/scenes/sdSteps.js",
+    "old": "if (!shaking && since < 0 && t >= st.back",
+    "new": "if (false && since < 0 && t >= st.back",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-crumble-ghost-hand-forward",
+    "file": "src/scenes/sdSteps.js",
+    "old": "ghostState[o + 1] = f >= 0 ? (SD_CRUMBLE_BACK - f) / SD_CRUMBLE_BACK : 0;",
+    "new": "ghostState[o + 1] = f >= 0 ? f / SD_CRUMBLE_BACK : 0;",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-vane-against-the-push",
+    "file": "src/world/sdStepsModel.js",
+    "old": "const dir = gustAt(n * SD_GUST_EVERY + SD_GUST_FOR / 2, _vaneGust).push > 0 ? 1 : -1;",
+    "new": "const dir = gustAt(n * SD_GUST_EVERY + SD_GUST_FOR / 2, _vaneGust).push < 0 ? 1 : -1;",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-vane-not-swinging-back",
+    "file": "src/world/sdStepsModel.js",
+    "old": "io[1] = dir * (Math.PI / 2) * (u < span ? w : 1 - w);",
+    "new": "io[1] = dir * (Math.PI / 2) * (u < span ? w : 0);",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-two-waystones-lit",
+    "file": "src/scenes/sdSteps.js",
+    "old": "stoneDraws[k].texRemap = k === mine ? null : WAYSTONE_DARK;",
+    "new": "stoneDraws[k].texRemap = k <= mine ? null : WAYSTONE_DARK;",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-fin-plain",
+    "file": "src/world/sdStepsModel.js",
+    "old": "const fr = i >= 0 ? SD_HALL_EMBLEM_RECORD + i : rec,",
+    "new": "const fr = rec,",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-no-clack",
+    "file": "src/scenes/sdSteps.js",
+    "old": " play(SD_STEPS_SOUNDS.clack, 0.45, 2.2); }",
+    "new": " }",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-line-half-as-wide",
+    "file": "src/render/sdStepsPass.js",
+    "old": "c.xy += (n * aM.y + d * (far ? 1.0 : -1.0)) * (uWidth * 0.5) / h * c.w;",
+    "new": "c.xy += (n * aM.y + d * (far ? 1.0 : -1.0)) * (uWidth * 0.25) / h * c.w;",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-ghost-hand-mirrored",
+    "file": "src/render/sdStepsPass.js",
+    "old": "B = vec3(sin(a) * HAND, LIFT, cos(a) * HAND);",
+    "new": "B = vec3(-sin(a) * HAND, LIFT, cos(a) * HAND);",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-an-unlit-ghost-drawn",
+    "file": "src/render/sdStepsPass.js",
+    "old": "if (st.x <= 0.0) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }",
+    "new": "if (st.x < 0.0) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-ghost-unposterized",
+    "file": "src/render/sdStepsPass.js",
+    "old": "o = vec4(sdPixel(uColor * vK, floor(gl_FragCoord.xy), uSteps) * fogFactorAt(vWorld), 1.0);",
+    "new": "o = vec4(uColor * vK * fogFactorAt(vWorld), 1.0);",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-every-ghost-a-beat-plate",
+    "file": "src/render/sdStepsPass.js",
+    "old": "for (const [a, b] of stepEdges(s.kind)) put(a, b, slot, 0);",
+    "new": "for (const [a, b] of stepEdges('beat')) put(a, b, slot, 0);",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-rewind-run-forward",
+    "file": "src/scenes/sdFx.js",
+    "old": "        if (b.kind === SD_FX_REWIND) b.t = b.t >= 0 ? FX_BURST_MS / 1000 - b.t : -1;",
+    "new": "",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-slow-frame-taken",
+    "file": "src/scenes/sdFx.js",
+    "old": "t - wasAt < SD_REWIND_SEEN.gap ? sdCastBackSeen(wasY, rx, ry, rz) : -1",
+    "new": "sdCastBackSeen(wasY, rx, ry, rz)",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-any-landing-taken",
+    "file": "src/scenes/sdFx.js",
+    "old": "  if (!(wasY < SD_VOID_Y + SD_REWIND_SEEN.fell)) return -1;\n",
+    "new": "",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-rewind-light-dying",
+    "file": "src/scenes/sdFx.js",
+    "old": "const rw = b.kind === SD_FX_REWIND, g = rw ? L[0] - f : f;",
+    "new": "const rw = b.kind === SD_FX_REWIND, g = f;",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-falter-a-flicker",
+    "file": "src/scenes/sdSteps.js",
+    "old": "export const SD_BEAT_BLINK_HZ = 2.5;",
+    "new": "export const SD_BEAT_BLINK_HZ = 20;",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-rune-upside-down",
+    "file": "src/world/sdStepsModel.js",
+    "old": "[c[0], c[3]], [c[2], c[3]], [c[2], c[1]], [c[0], c[1]]);   // its rune drawn y up",
+    "new": "[c[0], c[1]], [c[2], c[1]], [c[2], c[3]], [c[0], c[3]]);   // its rune drawn y up",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-ghosts-never-drawn",
+    "file": "src/scenes/world.js",
+    "old": "const ghosts = !!modes?.dungeonCtx?.sdStepsDraw?.(proj, view, fog);",
+    "new": "const ghosts = false;",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-door-never-handed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "sdStepsDraw: sdSteps ? (proj, view, fog) => sdSteps.drawPass(proj, view, fog) : undefined,",
+    "new": "sdStepsDraw: undefined,",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-ending-never-handed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "createSdSteps({ ending: sdMarksOf(dfLocation.sdRealm)[0], renderer, audio })",
+    "new": "createSdSteps({ renderer, audio })",
+    "tests": [
+      "test/sd25_steps.test.js",
+      "test/sd7b_steps.test.js"
+    ]
+  }
+]

@@ -5,9 +5,13 @@ import assert from 'node:assert/strict';
 import { SD_STEPS_COURSE, SD_BEAT_SOLID, SD_BEAT_BLINK, beatWarned } from '../src/world/sdSteps.js';
 import { createSdSteps, SD_BEAT_BLINK_HZ } from '../src/scenes/sdSteps.js';
 import { TELEGRAPH_THROB_MAX_HZ } from '../src/render/gateTelegraph.js';
+import { SD_STEPS_RECORD as SD_STEPS_RECORD_S0 } from '../src/world/sdStepsArt.js';
+import { SD_REALM_ARCHIVE as SD_REALM_ARCHIVE_S0 } from '../src/world/sdRealm.js';
 
 /** A realm second on a whole Beat cycle (sd7b's). */
 const T0 = 1_800_000_000 - (1_800_000_000 % 36);
+/** SD-LOOK S9: the Beat's falter frame, as a draw's texRemap names it. */
+const FALTER = `${SD_REALM_ARCHIVE_S0}_${SD_STEPS_RECORD_S0.falter}`;
 
 test('SD-FLASH: a Beat step\'s warning falters at most three times a second (TELEGRAPH_THROB_MAX_HZ) - its 0.4 s is one falter, timed from the warning\'s own start: shown first, then out, still solid (mutants: the old 8; the falter on the absolute clock)', () => {
   assert.ok(SD_BEAT_BLINK_HZ <= TELEGRAPH_THROB_MAX_HZ);
@@ -23,7 +27,11 @@ test('SD-FLASH: a Beat step\'s warning falters at most three times a second (TEL
       for (let k = 0; k < 24; k++) {
         steps.ride(from + (k + 0.5) / 60, 1 / 60, null);
         assert.equal(steps.steps[i].solid, true, `step ${i}: warning, still there`);
-        seen.push(!steps.steps[i].matrix.every((x) => x === 0));
+        // PIN MOVED (SD-LOOK S9): the falter is the plate's light (its falter frame, a draw's texRemap), never the plate -
+        // it stays seen while it holds, dissolving out
+        assert.ok(steps.steps[i].matrix.some((x) => x !== 0), `step ${i}: seen while it holds`);
+        const remap = steps.steps[i].remap;
+        seen.push(!(remap && [...remap.values()][0] === FALTER));
       }
       const falters = seen.filter((v, k) => !v && (k === 0 || seen[k - 1])).length;
       assert.equal(seen[0], true, `step ${i}: shown as the warning starts`);

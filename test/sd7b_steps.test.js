@@ -16,8 +16,8 @@ import {
   SD_CRUMBLE_DELAY, SD_CRUMBLE_BACK, SD_CRUMBLE_FALL_G, SD_BEAT_CYCLE, SD_BEAT_HALF, SD_CAST_BACK_LOSS, SD_DRIFT_SIZE,
   SD_BEAT_SIZE, SD_CRUMBLE_SIZE, stepAt, beatStands, beatBlinks,
 } from '../src/world/sdSteps.js';
-import { SD_STEP_KINDS, SD_STEP_WEAR, stepBox, buildStepModel, stepTris, buildChecksModel, checkFloorTris } from '../src/world/sdStepsModel.js';
-import { stepsArt, crackedArt, beatArt, SD_STEPS_CRACKED_RECORD, SD_STEPS_BEAT_RECORD, SD_STEPS_ART_SIZE } from '../src/world/sdStepsArt.js';
+import { SD_STEP_KINDS, SD_STEP_WEAR, SD_RACK, stepBox, buildStepModel, stepTris, buildChecksModel, checkFloorTris } from '../src/world/sdStepsModel.js';
+import { stepsArt, crackedArt, beatArt, SD_STEPS_CRACKED_RECORD, SD_STEPS_BEAT_RECORD, SD_STEPS_ATLAS, SD_STEPS_RECORD } from '../src/world/sdStepsArt.js';
 import {
   createSdSteps, sdStepKey, SD_CHECKS_KEY, SD_STEPS_TEXT, SD_STEPS_SOUNDS, SD_STEP_GONE_Y, SD_CRUMBLE_SHAKE,
 } from '../src/scenes/sdSteps.js';
@@ -63,6 +63,8 @@ function slab(col, key, kind, at) {
 const parkourAt = (skill) => ({ enabled: () => true, inputs: () => ({ climbing: skill, jumping: skill, khajiit: false, enhanced: false, fatigue: 1, load: 0 }), tally: () => {}, say: () => {}, hold: null });
 
 test('SD7b THE STEPS, MADE: each kind a box in its own frame, its top the origin - the Drift\'s, the Beat\'s and the Crumble\'s a slab, a riser reaching past the step it rises from; every face turned out, the collider\'s twelve triangles the same box; what each wears; the checkpoints B and C islands at their heights (mutants: a face turned in; a riser no deeper than a step; the wrong wear)', () => {
+  // PIN MOVED (SD-LOOK S9): each step bevelled (about 36 triangles, a riser's rack of teeth more), one atlas a kind - its
+  // drawn box still the law's box exactly, every face but a rack tooth's turned out from its middle (a tooth's from its own)
   assert.deepEqual(SD_STEP_KINDS, ['drift', 'beat', 'riser', 'crumble']);
   assert.deepEqual(stepBox('drift'), { w: SD_DRIFT_SIZE.w, d: SD_DRIFT_SIZE.d, h: SD_STEP_THICK });
   assert.deepEqual(stepBox('beat'), { w: SD_BEAT_SIZE.w, d: SD_BEAT_SIZE.d, h: SD_STEP_THICK });
@@ -74,11 +76,13 @@ test('SD7b THE STEPS, MADE: each kind a box in its own frame, its top the origin
     const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
     for (let k = 0; k < P.length / 3; k++) for (let j = 0; j < 3; j++) { lo[j] = Math.min(lo[j], v(k)[j]); hi[j] = Math.max(hi[j], v(k)[j]); }
     assert.ok(near(lo, [-box.w / 2, -box.h, -box.d / 2], 1e-5) && near(hi, [box.w / 2, 0, box.d / 2], 1e-5), `${kind}: its box, its top the origin`);
-    assert.equal(m.indices.length, 36, `${kind}: six faces`);
+    assert.equal(m.indices.length, kind === 'riser' ? 36 * 3 + SD_RACK.n * 30 : 36 * 3, `${kind}: bevelled - top, chamfer, line, side, foot, underside (a riser's teeth besides)`);
     for (let k = 0; k < m.indices.length; k += 3) {
       const a = v(m.indices[k]), b = v(m.indices[k + 1]), c = v(m.indices[k + 2]);
       const mid = [(a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3, (a[2] + b[2] + c[2]) / 3];
-      assert.ok(dot(cross(sub(b, a), sub(c, a)), sub(mid, centre)) > 0, `${kind}: face ${k / 3} turned out`);
+      const tooth = kind === 'riser' && mid[2] < -box.d / 2 + SD_RACK.out - 1e-4 && Math.abs(mid[0]) <= SD_RACK.w / 2 + 1e-4;
+      const from = tooth ? [0, -SD_RISER_H + SD_RACK.from + Math.round((mid[1] + SD_RISER_H - SD_RACK.from) / SD_RACK.pitch) * SD_RACK.pitch, -box.d / 2 + SD_RACK.out / 2] : centre;
+      assert.ok(dot(cross(sub(b, a), sub(c, a)), sub(mid, from)) > 0, `${kind}: face ${k / 3} turned out`);
     }
     const recs = new Set(m.subMeshes.map((s) => s.textureRecord));
     assert.deepEqual(recs, new Set(Object.values(SD_STEP_WEAR[kind])), `${kind}: what it wears`);
@@ -94,9 +98,7 @@ test('SD7b THE STEPS, MADE: each kind a box in its own frame, its top the origin
     }
     assert.equal(top, 2, `${kind}: its top a floor`);
   }
-  assert.equal(SD_STEP_WEAR.beat.side, SD_HALL_GLOW_RECORD.brass, 'the Beat\'s sides glow');
-  assert.equal(SD_STEP_WEAR.beat.top, SD_STEPS_BEAT_RECORD);
-  assert.equal(SD_STEP_WEAR.crumble.top, SD_STEPS_CRACKED_RECORD);
+  assert.deepEqual(SD_STEP_WEAR, { drift: { atlas: SD_STEPS_RECORD.drift }, beat: { atlas: SD_STEPS_BEAT_RECORD }, riser: { atlas: SD_STEPS_RECORD.riser }, crumble: { atlas: SD_STEPS_CRACKED_RECORD } }, 'one atlas a kind (PIN MOVED, SD-LOOK S9: the Beat\'s sides no longer glow whole - its dial is its light)');
   // the checkpoints B and C (A is the first step, the hall's)
   const floor = checkFloorTris();
   assert.equal(floor.length, 2 * SD_ISLAND_SIDES * 9);
@@ -114,32 +116,37 @@ test('SD7b THE STEPS, MADE: each kind a box in its own frame, its top the origin
   assert.ok(ys.has(C.y) && ys.has(B.y), 'B on the course\'s floor, C a riser and another up');
 });
 
-test('SD7b THE ART: two pictures after the hall\'s - the Crumble\'s cracked stone, its cracks alight and the rest dark; the Beat\'s brass plate, its rim alight and its hub dark - the same pixels every time (mutants: the cracks unlit; the hub alight)', () => {
-  const art = stepsArt();
-  assert.deepEqual(art.map(([r]) => r), [SD_STEPS_CRACKED_RECORD, SD_STEPS_BEAT_RECORD]);
+test('SD7b THE ART: the pictures after the hall\'s - the Crumble\'s cracked stone, its cracks alight and the rest dark; the Beat\'s brass plate, its rim alight and its hub dark - the same pixels every time (mutants: the cracks unlit; the hub alight)', () => {
+  // PIN MOVED (SD-LOOK S9): an atlas a kind (world/sdStepsArt.js SD_STEPS_ATLAS - top, side, the rim's line, the chamfer,
+  // the underside), the Beat's twelve frames and its falter, the Crumble's rest and three stages, the parts lit and dark
+  const art = stepsArt(), R = SD_STEPS_RECORD;
+  assert.deepEqual(art.map(([r]) => r), [R.crumble[0], R.beat[0], R.drift, R.riser, ...R.beat.slice(1), R.falter, ...R.crumble.slice(1), R.parts, R.partsDark]);
+  assert.deepEqual([SD_STEPS_CRACKED_RECORD, SD_STEPS_BEAT_RECORD], [21, 22], 'SD7b\'s two records kept');
   assert.ok(SD_STEPS_CRACKED_RECORD > Math.max(...Object.values(SD_HALL_GLOW_RECORD)), 'after the hall\'s');
-  const S = SD_STEPS_ART_SIZE;
-  for (const [, a] of art) {
-    for (const img of [a.albedo, a.emission]) { assert.equal(img.width, S); assert.equal(img.height, S); assert.equal(img.colors.length, S * S * 4); }
+  const A = SD_STEPS_ATLAS;
+  for (const [rec, a] of art) {
+    const [w, h] = rec === R.parts || rec === R.partsDark ? [64, 64] : [A.w, A.h];
+    for (const img of [a.albedo, a.emission]) { assert.equal(img.width, w); assert.equal(img.height, h); assert.equal(img.colors.length, w * h * 4); }
   }
   assert.deepEqual(stepsArt()[0][1].albedo.colors, art[0][1].albedo.colors, 'the same pixels');
-  const lit = (img, x, y) => { const i = (y * S + x) * 4; return img.colors[i] + img.colors[i + 1] + img.colors[i + 2]; };
-  const c = crackedArt();
+  const lit = (img, x, y) => { const i = (y * img.width + x) * 4; return img.colors[i] + img.colors[i + 1] + img.colors[i + 2]; };
+  const [tx, ty, tw, th] = A.top, c = crackedArt();
   let cracks = 0, dark = 0;
-  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) { const e = lit(c.emission, x, y); if (e > 300) cracks++; else if (e === 0) dark++; }
-  assert.ok(cracks > S * S * 0.03 && cracks < S * S * 0.3, `the cracks alight (${cracks})`);
-  assert.ok(dark > S * S * 0.5, 'the stone dark');
+  for (let y = ty; y < ty + th; y++) for (let x = tx; x < tx + tw; x++) { const e = lit(c.emission, x, y); if (e > 50) cracks++; else if (e === 0) dark++; }
+  assert.ok(cracks > tw * th * 0.03 && cracks < tw * th * 0.3, `the cracks alight (${cracks})`);
+  assert.ok(dark > tw * th * 0.5, 'the stone dark');
   const b = beatArt();
-  assert.ok(lit(b.emission, 0, 0) > 500 && lit(b.emission, S - 1, S - 1) > 500, 'its rim alight');
-  assert.equal(lit(b.emission, S / 2, S / 2), 0, 'its hub dark');
+  assert.ok(lit(b.emission, A.line[0], A.line[1]) > 150 && lit(b.emission, A.line[0] + A.line[2] - 1, A.line[1]) > 150, 'its rim alight');
+  assert.equal(lit(b.emission, tx + tw / 2, ty + th / 2), 0, 'its hub dark');
 });
 
 test('SD7b STOOD: once - a mesh a kind and the checkpoints\', a draw and a MOVER\'s bucket for every step (its place read at every query), the checkpoints\' floors still (mutants: a step without its bucket; a bucket that does not move)', () => {
   const r = rig();
   assert.equal(r.stand(), true);
   assert.equal(r.stand(), false, 'once');
-  assert.deepEqual(r.uploads.map(([a, rec]) => [a, rec]), [[SD_REALM_ARCHIVE, SD_STEPS_CRACKED_RECORD], [SD_REALM_ARCHIVE, SD_STEPS_BEAT_RECORD]]);
-  assert.equal(r.draws.length, 1 + SD_STEPS_COURSE.length + 1, 'the checkpoints, every step and (AUDIT SD II, L2 F18 - PIN MOVED) the breath\'s streaks');
+  assert.deepEqual(r.uploads.map(([a, rec]) => [a, rec]), stepsArt().map(([rec]) => [SD_REALM_ARCHIVE, rec]), 'PIN MOVED (SD-LOOK S9): every atlas, frame and stage');
+  const n = (k) => SD_STEPS_COURSE.filter((s) => s.kind === k).length;
+  assert.equal(r.draws.length, 1 + SD_STEPS_COURSE.length + 1 + n('drift') + n('crumble') * 5 + 3 + 1, 'the checkpoints, every step and (AUDIT SD II, L2 F18 - PIN MOVED) the breath\'s streaks; PIN MOVED (SD-LOOK S9): a pendulum a Drift step, four chunks and a grit a Crumble step, three waystones, the vane');
   assert.equal(r.buckets.size, SD_STEPS_COURSE.length + 1);
   for (const s of SD_STEPS_COURSE) {
     const bk = r.buckets.get(sdStepKey(s.i));
@@ -150,7 +157,7 @@ test('SD7b STOOD: once - a mesh a kind and the checkpoints\', a draw and a MOVER
   assert.equal(r.buckets.get(SD_CHECKS_KEY).t, null, 'the checkpoints still');
   assert.equal(sdStepKey(7), 'sd:step:7');
   r.steps.clear();
-  assert.equal(r.dropped.length, SD_STEP_KINDS.length + 2, 'every mesh freed (the breath\'s streaks\' too)');
+  assert.equal(r.dropped.length, SD_STEP_KINDS.length + 2 + 4 + 1 + 4 + 1 + 1 + 1, 'every mesh freed (the breath\'s streaks\' too; PIN MOVED, SD-LOOK S9: the Beat\'s four dissolve stages, the pendulum, the four chunks, the grit, the waystone, the vane)');
   assert.equal(r.steps.ride(T0, 1 / 60, null), null, 'cleared: nothing rides');
 });
 
@@ -177,17 +184,19 @@ test('SD7b ON THE REALM\'S CLOCK: every step stood where the law has it - the Dr
       else assert.ok(s.kind === 'beat' && beatBlinks(s, t), 'only a blinking step is ever hidden while it stands');
     }
   }
-  // a Beat step's blink: hidden for some of its last 0.4 s, shown for the rest
-  const s = step(8);
-  let shown = 0, hidden = 0;
+  // a Beat step's blink: faltered for some of its last 0.4 s, lit for the rest - PIN MOVED (SD-LOOK S9): the falter is its
+  // light (its falter frame, a draw's texRemap), never the plate: a step that holds stays seen
+  const s = step(8), falterRec = `${SD_REALM_ARCHIVE}_${SD_STEPS_RECORD.falter}`;
+  let lit = 0, faltered = 0;
   for (let k = 0; k < 24; k++) {
     const t = T0 + s.beat + 2.0 + k / 60;
     r.steps.ride(t, 1 / 60, null);
-    const m = r.steps.steps[8].matrix;
-    if (m.every((x) => x === 0)) hidden++; else shown++;
-    assert.equal(r.steps.steps[8].solid, true, 'blinking, still there');
+    const st = r.steps.steps[8];
+    assert.ok(st.matrix.some((x) => x !== 0), 'seen while it holds');
+    if (st.remap && [...st.remap.values()][0] === falterRec) faltered++; else lit++;
+    assert.equal(st.solid, true, 'blinking, still there');
   }
-  assert.ok(hidden >= 8 && shown >= 8, `it blinks (${shown} shown, ${hidden} hidden)`);
+  assert.ok(faltered >= 8 && lit >= 8, `it blinks (${lit} lit, ${faltered} faltered)`);
   assert.ok(SD_STEP_GONE_Y < -300, 'gone far under the void\'s floor');
 });
 
@@ -250,7 +259,9 @@ test('SD7b THE CRUMBLE, MY OWN: my foot on a Crumble step starts it - its grind 
   st = r.steps.steps[i];
   assert.equal(st.solid, false);
   assert.equal(st.T[1], SD_STEP_GONE_Y, 'its bucket gone - a body falls');
-  assert.ok(Math.abs(st.matrix[13] - (restOf(i)[1] - 0.5 * SD_CRUMBLE_FALL_G * 0.01)) < 1e-4, 'its draw falling');
+  // PIN MOVED (SD-LOOK S9): fallen, its draw hidden and its four chunks falling in its stead, at the law's own gravity
+  assert.ok(st.matrix.every((x) => x === 0), 'its draw gone');
+  assert.ok(st.chunks.length === 4 && st.chunks.every((m) => Math.abs(m[13] - (restOf(i)[1] - SD_STEP_THICK / 2 - 0.5 * SD_CRUMBLE_FALL_G * 0.01 * (1 + 0.06 * (st.chunks.indexOf(m) - 1.5)))) < 1e-4), 'its chunks falling');
   r.steps.ride(t0 + SD_CRUMBLE_DELAY + 4, 1 / 60, null, true);
   assert.ok(r.steps.steps[i].matrix.every((x) => x === 0), 'fallen out of sight');
   r.steps.ride(t0 + SD_CRUMBLE_DELAY + SD_CRUMBLE_BACK + 0.05, 1 / 60, null, true);
@@ -464,7 +475,7 @@ test('SD7b THE CAST-BACK, run from the hosts\' own text: the mode machine stands
 test('SD7b the hosts by source: the dungeon host makes the Steps in the Hour alone, stands them once, rides them on the outer host\'s clock and frees them; the mode machine rides them beside the movers\' ride, BEFORE the motor, every frame of the dungeon - live only while the motor runs - stands a body cast back and hands the realm\'s clock on; the world host widens the edge, wards Levitate in the Hour and takes what the void costs', () => {
   const D = read('src/scenes/dungeonContext.js');
   assert.match(D, /import \{ createSdSteps \} from '\.\/sdSteps\.js';/);
-  assert.match(D, /const sdSteps = _sdRealm \? createSdSteps\(\{ renderer, audio \}\) : null;/);
+  assert.match(D, /const sdSteps = _sdRealm \? createSdSteps\(\{ ending: sdMarksOf\(dfLocation\.sdRealm\)\[0\], renderer, audio \}\) : null;/);   // PIN MOVED (SD-LOOK S9): its Hollow's Ending on the vane
   assert.match(D, /if \(!_sdStepsStood\) \{ _sdStepsStood = true; sdSteps\.stand\(\{ dynamicDraws, collider \}\); \}\n\s+return sdSteps\.ride\(opts\.sdClock\?\.\(\) \?\? performance\.now\(\) \/ 1000, dt, body, live\);/);
   assert.match(D, /sdStepsRide\(dt, body, live = true\) \{ return sdStepsRide\(dt, body, live\); \},/);
   assert.match(D, /sdSteps\?\.clear\(\);/);

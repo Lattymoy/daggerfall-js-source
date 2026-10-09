@@ -257,7 +257,8 @@ of the Warp - a Hollow - whose deepest hall opens on the Hour.
 
 The realm is a made level (`world/sdRealm.js`, the Court's pattern: a made location `0x7ffff200`, block index 900200,
 one pseudo-archive, 38151 - records 0-4 the realm's, 5-20 the Orrery's hall, 21-22 the Steps, 23-24 the Echoes, 25-30 the
-Endings' lights, 31-32 the Threshold's cobbles and the edge line, 33-36 the Rift's and its Return's hand-plate alight) laid
+Endings' lights, 31-32 the Threshold's cobbles and the edge line, 33-36 the Rift's and its Return's hand-plate alight, 60-78 the
+Steps' atlases, the Beat's frames and the Crumble's cracks, the pendulums' and waystones' parts) laid
 along +Z in the dungeon's frame:
 
 | stage | where | what |

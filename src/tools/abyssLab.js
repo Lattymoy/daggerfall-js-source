@@ -17,6 +17,12 @@
 //   ?veil=in|back|home|cast&vp=closing|shut|opening&vs=<seconds into it>&vshut=<seconds it stood shut>&vx=&vy=  the
 //                    Hour's veil over the frame (render/sdVeil.js), still at that moment; &reduce its reduced motion
 //   ?plate           the Returns' hand-plates alight, as when the activation ray finds them (SD-LOOK S6)
+//   SD-LOOK S9, the Steps: ?view=pendulums|beat|beat-far|gust|crumble   their cameras; ?beat=<s into the first Beat
+//                    plate's 3.6 s cycle> (the clock put there - the next plate half a beat on); ?crumble=<s since a foot>
+//                    (every Crumble pin touched that long ago: 0-0.7 its crack stages, 0.7-5.1 its chunks falling, 5.1-5.7
+//                    flying back); ?span=0|1|2 (the waystone my cast-back would take me to); ?rewind=<s since>&on=0|1|2
+//                    (the cast-back's gold rewind burst on that checkpoint, scenes/sdFx.js); ?grey the frame in grey (a screenshot's);
+//                    ?touch=on the phone's tier (two chunks a Crumble pin, toothless pendulum gears - ui/touchDevice.js)
 // `window.__frame` counts drawn frames (the probes frame-sync on it - bible/Home.md's Process); `window.__lab` moves the
 // camera and the clock from a probe.
 import { Renderer, WORLD_FRAME, INTERIOR_CLEAR } from '../render/renderer.js';
@@ -36,6 +42,8 @@ import { realmArt } from '../world/sdRealmArt.js';
 import { faces } from '../world/gateModel.js';
 import { createSdHall } from '../scenes/sdHall.js';
 import { createSdSteps } from '../scenes/sdSteps.js';
+import { createSdFx } from '../scenes/sdFx.js';
+import { SD_STEPS_COURSE, SD_BEAT_CYCLE } from '../world/sdSteps.js';
 import { createSdRemnant } from '../scenes/sdRemnant.js';
 import { createSdEnd, SD_RETURN_KEY } from '../scenes/sdEnd.js';
 import { sdRiftFace, SD_RIFT_OPEN_LOOK, SD_RIFT_NOT_YET, SD_RIFT_CLOSED, SD_RIFT_REFUSED } from '../world/sdDungeon.js';
@@ -51,6 +59,7 @@ const params = new URLSearchParams(location.search);
 const canvas = document.getElementById('c');
 const $ = (id) => document.getElementById(id);
 if (params.has('nopanel')) $('panel').style.display = 'none';
+if (params.has('grey')) canvas.style.filter = 'grayscale(1)';   // SD-LOOK: the grayscale check - every meaning carried by shape, place and motion, never by hue alone
 canvas.getContext('webgl2', { antialias: false, preserveDrawingBuffer: true });   // the probe reads pixels after the frame; the renderer's own getContext returns this one
 const renderer = new Renderer(canvas);
 const gl = renderer.gl;
@@ -69,6 +78,12 @@ const VIEWS = {
   'hollow-side': { at: [-4.6, 1.7, 3.6], yaw: 50, pitch: 4, hollow: true },
   'hollow-ret': { at: [2.2, 1.7, 5.0], yaw: 20, pitch: 6, hollow: true },
   'hollow-close': { at: [0, 2.6, 2.6], yaw: 0, pitch: 8, hollow: true },
+  // SD-LOOK S9: the Steps - the Drift's pendulums from beside A, a Beat plate close and from 30 m, the vane on C, the Crumble
+  pendulums: { at: [-11, 9, 70], yaw: 28, pitch: 16 },
+  beat: { at: [3.2, 4.2, 123.5], yaw: -14, pitch: -24 },
+  'beat-far': { at: [0, 5.5, 102], yaw: 0, pitch: -7 },
+  gust: { at: [-1.4, 6.3, 168.6], yaw: 30, pitch: 2 },
+  crumble: { at: [3.4, 7.4, 173.5], yaw: -12, pitch: -22 },
 };
 const viewSel = $('view');
 for (const k of Object.keys(VIEWS)) { const o = document.createElement('option'); o.value = o.textContent = k; viewSel.append(o); }
@@ -79,6 +94,7 @@ if (params.has('still')) $('still').checked = true;
 
 /** The Hour's anchored clock, as the lab pins or runs it - read by the stands below, so it is the page's first. */
 let clock = Number($('t').value);
+if (params.has('beat')) { clock = 10 * SD_BEAT_CYCLE + Number(params.get('beat')); $('t').value = String(clock); }   // SD-LOOK S9: a whole number of Beat cycles on
 const cam = { pos: [0, 0, 0], yaw: 0, pitch: 0, hollow: false };
 function setView(name) {
   const v = VIEWS[name] ?? VIEWS.threshold;
@@ -110,8 +126,12 @@ const dynamicDraws = [];
 const LAB_SLOT = Number(params.get('slot') ?? 1);
 const hall = createSdHall({ renderer, s: LAB_SLOT });
 hall.stand({ dynamicDraws, collider: null });
-const steps = createSdSteps({ renderer });
+const steps = createSdSteps({ renderer, ending: sdMarksOf(LAB_SLOT)[0] });   // SD-LOOK S9: the Hollow's Ending on the vane
 steps.stand({ dynamicDraws, collider: null });
+/** SD-LOOK S9: the Steps' knobs - every Crumble pin touched ?crumble= ago, the waystone ?span= lit, the rewind on ?on=. */
+const CRUMBLES = SD_STEPS_COURSE.filter((s) => s.kind === 'crumble').map((s) => s.i);
+const labFx = createSdFx({ link: { state: () => null, now: () => clock * 1000 } });
+if (params.has('rewind')) labFx.rewind(Number(params.get('on') ?? 1), (clock - Number(params.get('rewind'))) * 1000);
 const remnant = createSdRemnant({ renderer, link: () => null, ending: sdMarksOf(LAB_SLOT)[0] });
 remnant.stand({ dynamicDraws });
 const arenaGlow = new SdArenaGlowRenderer(gl);
@@ -309,6 +329,8 @@ function frame(now) {
     renderer.setPointLights(hour.data, null, hour.colors);
     renderer.setClearColor(INTERIOR_CLEAR);
     hall.frame(dt, null, null);
+    if (params.has('crumble')) for (const i of CRUMBLES) steps.touch(i, clock - Number(params.get('crumble')));
+    if (params.has('span')) steps.standOn(Number(params.get('span')));
     steps.ride(clock, dt, null, true);
     remnant.frame(dt, null);
     if (params.has('plate')) wayBack.hoverName(SD_RETURN_KEY);
@@ -326,6 +348,8 @@ function frame(now) {
     if (params.get('fight') === 'held' && stompWall.draw(HELD, 1, proj, view, courtFogNow())) renderer.markForeignPass();
     if (params.get('fight') === 'fell' && stompWall.draw([Object.assign(sdHomeBeacon((Number(params.get('age') ?? 3) - 1.5) * 1000, {}, 2.3 * 1.5), { x: 0, z: -8 })], 1, proj, view, courtFogNow())) renderer.markForeignPass();   // its beacon
     if (motes.draw(proj, view, clock, courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color), renderer.worldViewportPx?.[3] ?? h)) renderer.markForeignPass();
+    if (steps.drawPass(proj, view, courtFogNow())) renderer.markForeignPass();   // SD-LOOK S9: the Steps' ghosts, as the world host's Hour pass draws them
+    if (labFx.draw(gl, proj, view, cam.pos, clock * 1000, courtFogNow(), renderer.worldViewportPx?.[3] ?? h)) renderer.markForeignPass();   // and the cast-back's rewind
   }
   renderer.resolveFrame();
   drawVeil();
