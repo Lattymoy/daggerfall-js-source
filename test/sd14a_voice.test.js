@@ -42,7 +42,7 @@ test('SD14a ITS VOICE IS THE IRON ATRONACH\'S, for a colossus: Daggerfall\'s own
   assert.deepEqual([iron.moveSound, iron.barkSound, iron.attackSound], [SD_IRON.move, SD_IRON.bark, SD_IRON.attack]);
   const C = SD_VOICE_CUES;
   const flat = Object.values(C).flatMap((c) => (Array.isArray(c) ? c : c.clip !== undefined ? [c] : Object.values(c)));
-  assert.equal(flat.length, 33);   // AUDIT SD III (A2, PIN MOVED): and the End's knell
+  assert.equal(flat.length, 32);   // AUDIT SD III (A2, PIN MOVED): and the End's knell; PIN MOVED (AUDIT SD IV A4): and no quake - it was the Stomp's landing twice
   assert.ok(SD_VOICE_CUES.knell.clip === SD_VOICE_CUES.release.end.clip && SD_VOICE_CUES.knell.volume < SD_VOICE_CUES.release.end.volume / 2, 'the End struck again: its own toll, softer');
   assert.ok(flat.every((c) => Number.isInteger(c.clip) && c.pitch > 0 && c.pitch < 3 && c.volume > 0 && c.reach > 0));
   assert.ok(C.step.pitch < C.echoStep[0].pitch && C.echoStep[0].pitch < C.echoStep[1].pitch, 'the Remnant under gold under silver');
@@ -179,7 +179,7 @@ test('SD14a ITS ECHOES: each risen (the chime), striding, hurt and broken (the s
   assert.ok(Math.abs(at[0] - realmToDungeon(SD_ARENA.x - 6, 0, 0)[0]) < 0.01, 'where it stood');
 });
 
-test('SD14a EACH BLOW\'S RELEASE, THE GROUND\'S SHOCK, AND A VOLLEY AIMED AT ME: SD_RELEASE_MS before it lands, once, never for a blow first seen past it; the Stomp\'s landing shaking the ground under the Remnant; a Volley\'s mark within SD_STING_M of my feet stinging at its word, at my feet - one far off, nothing (mutants: no release; a release every frame; a late blow released; no quake; the sting for every Volley)', () => {
+test('SD14a EACH BLOW\'S RELEASE, AND A VOLLEY AIMED AT ME: SD_RELEASE_MS before it lands, once, never for a blow first seen past it; a Volley\'s mark within SD_STING_M of my feet stinging at its word, at my feet - one far off, nothing (mutants: no release; a release every frame; a late blow released; the sting for every Volley)', () => {
   const r = rig();
   r.v.frame();
   r.s.rem.atk = { i: 7, a: SD_BLOWS.stomp.id, at: r.at() + 1000, x: 0, z: 0, yw: 0, tg: [] };
@@ -189,8 +189,10 @@ test('SD14a EACH BLOW\'S RELEASE, THE GROUND\'S SHOCK, AND A VOLLEY AIMED AT ME:
   assert.equal(count(r.heard, SD_VOICE_CUES.release.stomp), 1, 'its release');
   r.step(100); r.step(100);
   assert.equal(count(r.heard, SD_VOICE_CUES.release.stomp), 1, 'once');
+  // PIN MOVED (AUDIT SD IV A4): no quake - the ground's shock under the Stomp is its landing (the blows'), and the
+  // quake was the same thud a second time in the same frame (sd26_audio)
   r.step(200);
-  assert.equal(count(r.heard, SD_VOICE_CUES.quake), 1, 'the ground\'s shock');
+  assert.equal(SD_VOICE_CUES.quake, undefined);
   // a blow first seen past its release: nothing
   r.s.rem.atk = { i: 8, a: SD_BLOWS.hand.id, at: r.at() + 100, x: 0, z: 0, yw: 0, tg: [] };
   r.step(16); r.step(200);

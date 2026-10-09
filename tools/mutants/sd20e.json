@@ -227,8 +227,8 @@
   {
     "name": "SD20E-T11-the-capitals-back",
     "file": "src/systems/sdOmen.js",
-    "old": "- ${sdNameIn(E.sig)} - under ${O.map((o) => sdNameIn(o.name)).join(' and ')}.",
-    "new": "- ${E.sig} - under ${O.map((o) => o.name).join(' and ')}.",
+    "old": ", under ${O.map((o) => sdNameIn(o.name)).join(' and ')}.",
+    "new": ", under ${O.map((o) => o.name).join(' and ')}.",
     "tests": [
       "test/sd20e_text.test.js"
     ]

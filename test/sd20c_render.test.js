@@ -24,7 +24,7 @@ import { sdBodyAt } from '../src/net/sdFightLink.js';
 import { handSweepOf, handSweepHas, sdWayOut, sdPerilAt } from '../src/scenes/sdArenaRead.js';
 import { sdGearsAt, gearMatrix, sdBeamDraws, sdBeamsAt, sdKeptList } from '../src/scenes/sdRemnantRig.js';
 import { SdBeamRenderer, SD_BEAM_VS, SD_BEAM_FS, SD_BEAM_W, SD_BEAM_MAX, SD_BEAM_MIN_RAD } from '../src/render/sdBeam.js';
-import { SD_SKY_VS, SD_SKY_FS } from '../src/render/sdSky.js';
+import { SD_SKY_VS, SD_SKY_FS, SD_SKY_PAINT_FS } from '../src/render/sdSky.js';
 import { createSdRemnant, remnantPose, echoPose, sdTurnToward, SD_TURN_RATE, SD_REM_SINK_MS, SD_ECHO_SINK_MS } from '../src/scenes/sdRemnant.js';
 import { createSdRemnantBlows } from '../src/scenes/sdRemnantBlows.js';
 import { SD_BRASS_GLSL, SD_BRASS_RAMP, sdBrassGrade } from '../src/world/sdBrassSky.js';
@@ -244,9 +244,9 @@ test('SD20c NO REVERSED SMOOTHSTEP IN ANY SHADER (V14): GLSL leaves smoothstep(a
     for (const c of src.matchAll(/smoothstep\(\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*,/g)) { read1++; assert.ok(Number(c[1]) < Number(c[2]), `${f}: ${c[0]}`); }
   }
   assert.ok(read1 > 150, `${read1} read`);
-  for (const [name, glsl] of [['the beam', SD_BEAM_VS + SD_BEAM_FS], ['the sky', SD_SKY_VS + SD_SKY_FS]]) {
+  for (const [name, glsl] of [['the beam', SD_BEAM_VS + SD_BEAM_FS], ['the sky', SD_SKY_VS + SD_SKY_FS + SD_SKY_PAINT_FS]]   /* SD-LOOK (PIN MOVED): its paint holds its horizon and its face */) {
     const edges = smoothEdges(glsl), told = edges.filter(([a, b]) => a !== null && b !== null);
-    assert.ok(told.length >= 6, `${name}: ${told.length} of ${edges.length} read`);
+    assert.ok(told.length >= 5, `${name}: ${told.length} of ${edges.length} read`);   // SD-LOOK (PIN MOVED): the sky's five, now its paint's (it had six)
     for (const [a, b, src] of told) assert.ok(a < b, `${name}: smoothstep(${src}, ...)`);
   }
 });

@@ -84,7 +84,7 @@
   {
     "name": "SD4B-onto-another-floor",
     "file": "src/world/sdDungeon.js",
-    "old": "  return y != null && Math.abs(y - from[1]) <= SD_STEP_M ? [x, y, z] : null;",
+    "old": "  return y != null && (lower ? y - from[1] : Math.abs(y - from[1])) <= SD_STEP_M ? [x, y, z] : null;",
     "new": "  return y != null ? [x, y, z] : null;",
     "tests": [
       "test/sd4b_rift.test.js"
@@ -165,8 +165,8 @@
   {
     "name": "SD4B-the-Return-kept",
     "file": "src/scenes/sdEnd.js",
-    "old": "    returnOut() { if (!ret) return; free(ret.batch); ret = null; wasRet = null; rebatch(); },",
-    "new": "    returnOut() { if (!ret) return; free(ret.batch); },",
+    "old": "    returnOut() { if (!ret) return; dropMesh(ret.arch); dropMesh(ret.hand); dropMesh(ret.plate); for (const d of ret.parts ?? NONE) dropMesh(d); ret = null; wasRet = null; retarget(); },",
+    "new": "    returnOut() { if (!ret) return; dropMesh(ret.arch); dropMesh(ret.hand); dropMesh(ret.plate); for (const d of ret.parts ?? NONE) dropMesh(d); },",
     "tests": [
       "test/sd4b_rift.test.js"
     ]
@@ -174,7 +174,7 @@
   {
     "name": "SD4B-the-bell-unrung",
     "file": "src/scenes/sdEnd.js",
-    "old": "      bell = startRiftBell(audio, [r.at[0], r.at[1] + r.size / 2, r.at[2]]);",
+    "old": "      bell = startRiftBell(audio, [r.at[0], r.at[1] + rift.cy, r.at[2]]);",
     "new": "      bell = null;",
     "tests": [
       "test/sd4b_rift.test.js"
@@ -183,7 +183,7 @@
   {
     "name": "SD4B-the-Return's-box-the-Rift's",
     "file": "src/scenes/sdEnd.js",
-    "old": "aabb: boxOf(ret.at, SD_RETURN_SIZE.w / 2, SD_RETURN_SIZE.h)",
+    "old": "aabb: boxOf(ret.at, (SD_RETURN_SIZE.w / 2) * ret.scale, SD_RETURN_SIZE.h * ret.scale)",
     "new": "aabb: boxOf(ret.at, rift.size / 2, rift.size)",
     "tests": [
       "test/sd4b_rift.test.js"
@@ -192,10 +192,10 @@
   {
     "name": "SD4B-the-teeth-still",
     "file": "src/scenes/sdEnd.js",
-    "old": "  const turn = ((k / n) * 2 * Math.PI) / 8;   // the teeth's eighth of a turn",
-    "new": "  const turn = 0;   // the teeth's eighth of a turn",
+    "old": "    rift.n[N_GEAR] = (L.tickHz > 0 ? (si + se * se * (3 - 2 * se)) * pitch + jerk : jerk) * rift.turn;",
+    "new": "    rift.n[N_GEAR] = jerk * rift.turn;",
     "tests": [
-      "test/sd4b_rift.test.js"
+      "test/sd25_look.test.js"
     ]
   },
   {
@@ -282,8 +282,8 @@
   {
     "name": "SD4B-the-word-off-no-record",
     "file": "src/scenes/world.js",
-    "old": "    return { word: sdRiftWord(rec, s, now, { entered: _sdEntered.has(s), fallen: _sdFallen.has(s) }), returns:",
-    "new": "    return { word: sdRiftWord(null, s, now, { entered: _sdEntered.has(s), fallen: _sdFallen.has(s) }), returns:",
+    "old": "return { word: sdRiftWord(rec, s, now, seen), returns:",
+    "new": "return { word: sdRiftWord(null, s, now, seen), returns:",
     "tests": [
       "test/sd4b_rift.test.js"
     ]

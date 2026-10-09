@@ -43,6 +43,7 @@ export const NOT_IMPORTABLE = Object.freeze({
   'src/tools/waterLab.js': 'location at module scope',   // WATER1: the water lab
   'src/tools/levelUpLab.js': 'document at module scope',   // LV1: the level-up lab
   'src/tools/cardsLab.js': 'location at module scope',   // CARDS3: the cards' lab
+  'src/tools/abyssLab.js': 'location at module scope',   // SD-LAB: the Abyss Dungeon's lab
 });
 
 test('every module under src/ loads - its body RUNS, not just parses', async () => {
@@ -71,7 +72,7 @@ test('the blind spot is exactly twelve modules, each with a reason', () => {
   for (const f of Object.keys(NOT_IMPORTABLE)) {
     assert.ok(files.includes(f), `${f} is on the exclusion list and no longer exists`);
   }
-  assert.equal(Object.keys(NOT_IMPORTABLE).length, 12);   // WATER1: the water lab joined the sky lab; LV1: the level-up lab joined both; CARDS3: the cards' lab
+  assert.equal(Object.keys(NOT_IMPORTABLE).length, 13);   // WATER1: the water lab joined the sky lab; LV1: the level-up lab joined both; CARDS3: the cards' lab; SD-LAB: the Abyss Dungeon's (PIN MOVED)
   // The three that matter are the hosts: they carry the most edits and
   // the least coverage, which is exactly the combination that produced
   // the boot failure. Recorded here so the next reader sees the cost.

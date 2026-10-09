@@ -380,8 +380,8 @@
   {
     "name": "SD9D-no-clunk",
     "file": "src/scenes/world.js",
-    "old": "    else if (name === 'gear') audio.playOneShotId(SD_HALL_SOUNDS.clunk, 1);",
-    "new": "    else if (name === 'gear') audio.playOneShotId(SD_HALL_SOUNDS.chime, 1);",
+    "old": "    else if (name === 'gear') audio.playOneShot(SD_HALL_SOUNDS.clunk, 1);",
+    "new": "    else if (name === 'gear') audio.playOneShot(SD_HALL_SOUNDS.chime, 1);",
     "tests": [
       "test/sd9d_numidium.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "SD9D-the-sounds-crossed",
     "file": "src/scenes/world.js",
-    "old": "    else if (name === 'hour') audio.playOneShotId(SD_HALL_SOUNDS.toll, 1);",
-    "new": "    else if (name === 'hour') audio.playOneShotId(SD_HALL_SOUNDS.clunk, 1);",
+    "old": "    else if (name === 'hour') audio.playOneShot(SD_HALL_SOUNDS.toll, 1);",
+    "new": "    else if (name === 'hour') audio.playOneShot(SD_HALL_SOUNDS.clunk, 1);",
     "tests": [
       "test/sd9d_numidium.test.js"
     ]

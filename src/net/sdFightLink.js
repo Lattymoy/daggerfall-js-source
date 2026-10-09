@@ -12,7 +12,8 @@
 // answered me.
 //
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
-import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_REM, SD_REM_START, SD_ECHO_SPOTS, SD_PHASE_AT, keepInArena, sdProfileOf } from './sdRemnant.js';
+import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_REM, SD_REM_START, SD_ECHO_SPOTS, SD_PHASE_AT, SD_STUN_MS, keepInArena, sdProfileOf } from './sdRemnant.js';
+import { STATE_SEND_MS } from './gateBrain.js';
 
 /**
  * @typedef {{ x: number, z: number, yw: number, mv: {x: number, z: number, tx: number, tz: number, v: number, at: number}|null, atk: any }} SdBody
@@ -37,6 +38,12 @@ export const SD_FIGHT_EMPTY = Object.freeze({
 
 /** How long the page waits for the realm's answer before it says its `in` again (and between two at most). */
 export const SD_IN_RETRY_MS = 2000;
+/** AUDIT SD IV (8): a fight that has said nothing this long has left me behind - three of a living fight's beats, each its
+ *  whole state (STATE_SEND_MS). A loss the realm told no socket of mine (a hello says nothing of a lost fight, and a
+ *  loss fanned into a dead socket is lost with it) left a counted page in a dead fight for good: no `st`, no `lost`, its
+ *  `in` never due. My `in` is due again; the realm answers it with a fresh fight, or a living one's state, nothing
+ *  written. */
+export const SD_FIGHT_HEARD_MS = 3 * STATE_SEND_MS;
 
 /** AUDIT SD II (L6 F7, SD11d): the Reset's Hearts' thread - its call and each Heart broken say it anew (the page's voice,
  *  scenes/sdVoice.js `key`): the newer count takes the older's place, never queued behind it. */
@@ -62,6 +69,10 @@ export const SD_FIGHT_TEXT = Object.freeze({
 });
 /** The refusals the page never says its `in` again after, this visit (the rest wait for another fight). */
 const FOR_GOOD = Object.freeze(['the Hour has closed', 'an older Hour']);
+/** AUDIT SD IV (5): the whole arena's blows a link keeps owed at most. */
+export const SD_OWED_MAX = 32;
+/** A blow of the whole arena - the Pulse, the Reset, the End: no place to misjudge, judged however late (net/sdStrike.js). */
+const wholeArena = (atk) => !!atk && SD_BLOW_BY_ID[atk.a]?.shape === 'all';
 
 /**
  * Where a body stands at `now` (the relay's clock): its walk carried on from the last word, as the law carries it
@@ -190,6 +201,30 @@ export function createSdFightLink({ now, say = () => {}, onRefused = () => {} })
   let inAt = -Infinity, mine = 0;
   /** @type {{fi: number, lost: number, m: string}|null} */
   let refused = null;
+  /** AUDIT SD IV (5): THE WHOLE ARENA'S BLOWS OWED. The state keeps a blow until a later word replaces it - a Pulse's `clk`
+   *  to the next `st` past its clear, a Reset's to the Remnant's next blow or walk - and a hidden tab draws no frame to
+   *  judge it in that time: a few seconds of Ctrl+Tab across a landing escaped 75% or 70% of everyone's health, no save
+   *  (SD20a F3 open again). Each one heard while the realm counts me is kept by its number until the page judges it
+   *  (scenes/sdRemnantBlows.js, `paid`), save what the law took out of flight before it landed: a Reset broken by its
+   *  stun or called off by the End's word, a blow landing past the fall or the loss, the last fight's.
+   *  @type {Array<{b: number, atk: any}>} */
+  let owed = [];
+  /** The owed list after word `w` moved the state from `was`. */
+  function owe(was, w) {
+    if (state.fi !== was.fi) owed = [];
+    if (state.fi > 0 && mine === state.fi) {
+      const c = state.clk, r = state.rem.atk;
+      if (wholeArena(c) && !owed.some((o) => o.atk.i === c.i)) owed.push({ b: SD_BODY.hour, atk: c });
+      if (wholeArena(r) && !owed.some((o) => o.atk.i === r.i)) owed.push({ b: SD_BODY.remnant, atk: r });
+      if (owed.length > SD_OWED_MAX) owed.shift();
+    }
+    if (!owed.length) return;
+    const cut = Math.min(state.fell ? state.fell.at : Infinity, state.lost || Infinity);
+    const stun = state.su > 0 && state.su !== was.su ? (w.k === 'stun' ? w.at : state.su - SD_STUN_MS) : Infinity;   // an `st` alone after a reconnect says the stun by its end
+    const end = state.ended > 0 && !was.ended ? state.ended - SD_BLOWS.end.windup : Infinity;   // the End said: the Remnant's blow called off
+    const off = Math.min(stun, end);
+    if (cut < Infinity || off < Infinity) owed = owed.filter((o) => o.atk.at <= cut && (o.atk.a !== SD_BLOWS.reset.id || o.atk.at <= off));
+  }
   return {
     /** A word from the realm I stand in: its fight's, folded; a refusal said; the turns said once each. */
     word(w) {
@@ -203,6 +238,7 @@ export function createSdFightLink({ now, say = () => {}, onRefused = () => {} })
       const was = state;
       state = foldSdFight(state, w, now());
       if (w.k === 'st' && w.me === 1) { mine = state.fi; refused = null; }   // the realm's answer to my `in`: I am in this fight
+      owe(was, w);
       if (w.k === 'ph' && was.fi) say(w.n === 2 ? SD_FIGHT_TEXT.dragonBreak(sdProfileOf(state).pairMs) : SD_FIGHT_TEXT.lastMoment);
       else if (w.k === 'ec' && was.fi) { if (w.d != null && w.n) say(SD_FIGHT_TEXT.echoFell(w.n, w.d)); else if (w.r != null) say(SD_FIGHT_TEXT.echoRose(w.r)); }
       else if (w.k === 'stun' && was.fi) say(SD_FIGHT_TEXT.stunned);
@@ -220,16 +256,22 @@ export function createSdFightLink({ now, say = () => {}, onRefused = () => {} })
     /**
      * Whether my `in` is due at `t`, standing alive in the arena: not counted in a fight still to fight (none heard, a
      * fight lost, or one that never answered me), no refusal standing against it (one for good; else one said while the
-     * fight stood as it stands - a fresh fight or a loss lapses it), and its last saying SD_IN_RETRY_MS behind.
+     * fight stood as it stands - a fresh fight or a loss lapses it), and its last saying SD_IN_RETRY_MS behind. AUDIT SD
+     * IV (8): a fight unfallen and unheard SD_FIGHT_HEARD_MS holds me no longer, and lapses a refusal said in it.
      */
     inDue(t) {
-      if (refused && (FOR_GOOD.includes(refused.m) || (refused.fi === state.fi && refused.lost === state.lost))) return false;
-      if (state.fi > 0 && !state.lost && (state.fell || state.ended || mine === state.fi)) return false;
+      const silent = state.fi > 0 && t - state.heardAt >= SD_FIGHT_HEARD_MS;
+      if (refused && (FOR_GOOD.includes(refused.m) || (refused.fi === state.fi && refused.lost === state.lost && !silent))) return false;
+      if (state.fi > 0 && !state.lost && (state.fell || ((state.ended || mine === state.fi) && !silent))) return false;
       return t - inAt >= SD_IN_RETRY_MS;
     },
     /** My `in` left the socket at `t`. */
     sentIn(t) { inAt = t; },
+    /** AUDIT SD IV (5): the whole arena's blows owed a verdict, `{b, atk}` each - the page judges them, then pays. */
+    owed: () => owed,
+    /** AUDIT SD IV (5): blow `i` judged - owed no more. */
+    paid(i) { owed = owed.filter((o) => o.atk.i !== i); },
     /** Out of the realm: its fight forgotten, my place in it and the refusals with it. */
-    leave() { state = SD_FIGHT_EMPTY; inAt = -Infinity; mine = 0; refused = null; },
+    leave() { state = SD_FIGHT_EMPTY; inAt = -Infinity; mine = 0; refused = null; owed = []; },
   };
 }

@@ -27,8 +27,9 @@ function worldSeams(tr, buildingDoors) {
   const sd = /\n {2}(const shiftedDoor = \(entry\) => \{\n[\s\S]*?\n {2}\};)\n/.exec(W);
   assert.ok(sd, 'the world host\'s shiftedDoor');
   const shiftedDoor = new Function('state', `${sd[1]}\nreturn shiftedDoor;`)(state);
-  const hd = /\n {4}sdHollowDoors: (\(h\) => .*?),\s+\/\/ /.exec(W);
-  assert.ok(hd, 'the world host\'s sdHollowDoors');
+  // AUDIT SD IV (F40, PIN MOVED): the list is one const, the mode machine's seam and the step out to the pixel both read it
+  const hd = /\n {2}const sdHollowDoorsOf = (\(h\) => .*?);\n/.exec(W);
+  assert.ok(hd && /\n {4}sdHollowDoors: \(h\) => sdHollowDoorsOf\(h\),/.test(W), 'the world host\'s sdHollowDoors');
   const sdHollowDoors = new Function('buildingDoors', 'DOOR_TYPE', 'shiftedDoor', `return ${hd[1]};`)(buildingDoors, DOOR_TYPE, shiftedDoor);
   const dr = /\n {4}door: \(key\) => \{\n([\s\S]*?)\n {4}\},\n/.exec(W);
   assert.ok(dr && /_sdDoorAt/.test(dr[1]), 'the sdHost\'s door seam');

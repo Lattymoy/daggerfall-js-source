@@ -72,8 +72,8 @@
   {
     "name": "SD2-always-the-first-pixel",
     "file": "src/systems/sdSite.js",
-    "old": "    const id = pixels[sdRoll(rec.s, 4) % pixels.length];",
-    "new": "    const id = pixels[0];",
+    "old": "    const roll = sdRoll(rec.s, 4) % pixels.length;",
+    "new": "    const roll = 0;",
     "tests": [
       "test/sd2_sdsite.test.js"
     ],

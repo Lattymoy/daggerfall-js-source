@@ -107,6 +107,10 @@ import { applyFog, DUNGEON_FOG } from '../render/underwaterFog.js';
 import { gateArenaLocation, gateArenaBlocks, isGateArena, buildCourtModel, buildWalkSlabModel, walkSlabs, slabMatrix, courtFloorTris, courtLightsNear, withCourtLights, courtExitDoor, courtDoorAabb, COURT_ARCHIVE, COURT_FOG, COURT_TEXT } from '../world/gateArena.js';   // WB3b: the Burning Court - a level made in code on this host's dungeon arm
 import { isSdRealm, sdRealmLocation, sdRealmBlocks, buildRealmModel, realmColliderTris, realmLightsWith, realmLighting, SD_REALM_ARCHIVE, SD_REALM_FOG } from '../world/sdRealm.js';   // SD5a: the Shattered Hour, a made level as the court is
 import { realmArt } from '../world/sdRealmArt.js';   // SD5a: its art, made in code
+import { SD_HOUR_GRADE } from '../world/sdLook.js';   // SD-LOOK: the Hour's grade on the lane
+/** SD-LOOK: the dungeon arm's two draw options for its dynamic draws (render/renderer.js drawMesh), made once - the hot
+ *  loop makes nothing. */
+const DRAW_NO_SHADOW = Object.freeze({ noShadow: true }), DRAW_SHADOW = Object.freeze({ noShadow: false });
 import { sdRoomKey } from '../net/sdLaw.js';   // SD5a: its room, the relay's realm
 import { isBound } from '../systems/itemBound.js';   // AUDIT SS: the keyed shelf sells no bound piece
 import { lockRefuses } from '../systems/itemLock.js';   // AUDIT SS: nor a locked one
@@ -8554,12 +8558,12 @@ export function createWorldModes(host) {
    *  under it), then the veil opened on whatever stands, whatever `go` answered or threw. One step at a time: a second
    *  asked while one is under way is refused. No veil (offline, a page with no WebGL2) - the step unveiled. */
   let _stepping = false;
-  async function stepThroughFire(go, look = 'fire') {
+  async function stepThroughFire(go, look = 'fire', opts = undefined) {
     const veil = host.gateVeil?.() ?? null;
     if (_stepping) return false;
     _stepping = true;
     try {
-      if (veil) await veil.cover(look);   // AUDIT SD II (L6 F8): the step's own veil - the Hour's brass for the Rift's
+      if (veil) await veil.cover(look, opts);   // AUDIT SD II (L6 F8): the step's own veil - SD-LOOK: the Hour's blades for the Rift's, closing on it (`opts.centre`)
       return await go();
     } finally {
       _stepping = false;
@@ -8579,6 +8583,12 @@ export function createWorldModes(host) {
   /** AUDIT WB D10: the court's equator light, one array filled each frame (the renderer reads it that frame). */
   const _courtEquator = new Float32Array(3);
   const courtEquatorOf = (ct) => { _courtEquator.set(ct.equator); return _courtEquator; };
+  /** AUDIT SD IV (R1): the Hour's additive light (host.drawSdTelegraph) is drawn in drawFoes' late slot - this frame's
+   *  matrices and eye, kept here for it, nothing made. */
+  const _sdLate = { on: false, proj: null, view: null, eye: null };
+  /** AUDIT SD IV (R5): the Hour's fog and trilight, filled each frame (the lane's scaled to the dark) - nothing made. */
+  const _hourFog = { mode: '', density: 0, start: 0, end: 0, color: [0, 0, 0] }, _hourFogColor = new Float32Array(3);
+  const _hourTri = { sky: [0, 0, 0], equator: [0, 0, 0], ground: [0, 0, 0] };
   /** WB3b: the court stood into a built context, before the start marker is read: its mesh among the context's own
    *  draws, its floor on the collider (the spawn lands on it), the way home its exit door (the exit family's ray,
    *  ladder and wagon word take it - no family of its own), and the way home's name. */
@@ -8889,7 +8899,7 @@ export function createWorldModes(host) {
           onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
           questShare: () => host.foesQuestShare?.() ?? null,   // QUEST-PARTY phase 3c: the party's law for the dungeon's shared quest foes
           castleRecordsHere: () => castleRecordsHere(),   // AUDIT WHERE-ROBES P1: a castle's shelf is its Hall of Records, not a search, while the seats are open
-          lateWorldDraw: () => host.drawVeiledPeerBodies?.(),   // INVIS-LOOK: the concealed peers' bodies, translucent - after the foes' flats, before the water and the first screen quad
+          lateWorldDraw: () => { host.drawVeiledPeerBodies?.(); if (_sdLate.on) host.drawSdTelegraph?.(_sdLate); },   // INVIS-LOOK: the concealed peers' bodies, translucent - after the foes' flats, before the water and the first screen quad   // AUDIT SD IV (R1): and the Hour's light, in the same slot
           gateBoss: () => host.gateBoss?.() ?? null,   // WB4b: the Burning Court's boss as a body my blows meet (none outside the court)
           onBossHit: (hit) => !!host.onBossHit?.(hit),   // WB4b: and the door a blow's number leaves him through
           onBossTrap: (trap) => !!host.onBossTrap?.(trap),   // WBX7: and a soul trap laid on him, kept by the court for his fall
@@ -9099,7 +9109,7 @@ export function createWorldModes(host) {
         gate: hit.gateArena ?? null,   // WB3b: the way home lands at the gate, not at a door
         arena: hit.arenaFloor ?? null,   // ARENA2: the floor's way out lands before the Herald
         arenaFrom: hit.arenaFrom ?? null,   // AUDIT PRE-MERGE 1003b C7: or, with no Herald streamed in, where it was entered from
-        sdHollow: hit.sdHollow ?? null,   // SD5a: out of the Hour - a death, its end - before the Hollow's door
+        sdHollow: hit.sdHollow ?? null,   // SD5a: out of the Hour - its end, the way home - before the Hollow's door (AUDIT SD IV F4: a death wakes by the death's own door, SD2d)
         // SD-LAND (2026-10-08, the Discord, out of an Abyss Dungeon: "suddenly I am flying"): where I stood outside as I
         // went in - the way out lands there when it finds no door to land before (a Hollow taken down at its end, its door
         // gone with it), as the arena's floor does (AUDIT PRE-MERGE 1003b C7) - never the dungeon's own frame read outside
@@ -10004,7 +10014,7 @@ export function createWorldModes(host) {
       renderer.setMoonlight(null);
       renderer.setIndirectLight(NO_INDIRECT_POS, 0, NO_INDIRECT_COLOR);
       if (isGateArena(dungeonLoc)) { const _cl = courtLighting(deadlandsFlash(_deadS)); const _ct = dungeonTrilight(!!renderer.lightingLane, _cl.tri); renderer.setLighting(courtEquatorOf(_ct), 0, undefined, _ct); renderer.setMoonlight(_cl.key); }   // WB6a: the court is no dungeon - lit red from the sky, orange from the fire under it, and by the vortex's fire from behind the boss (the moon's term: the one directional light a dungeon frame leaves dark); the lane's dark rides the trilight as the fog's does   // WB6b: a strike in the sky flares over it, the moment the sky draws it
-      if (isSdRealm(dungeonLoc)) { const _rl = realmLighting(); const _rt = dungeonTrilight(!!renderer.lightingLane, _rl.tri); renderer.setLighting(courtEquatorOf(_rt), 0, undefined, _rt); renderer.setMoonlight(_rl.key); }   // SD5a: the Hour's brass light and its clock-face's key, the court's way
+      if (isSdRealm(dungeonLoc)) { const _rl = realmLighting(); const _rt = dungeonTrilight(!!renderer.lightingLane, _rl.tri, _hourTri); renderer.setLighting(courtEquatorOf(_rt), 0, undefined, _rt); renderer.setMoonlight(_rl.key); }   // SD5a: the Hour's brass light and its clock-face's key, the court's way
       if (isArenaFloor(dungeonLoc)) renderer.setLighting(new Float32Array(ARENA_FLOOR_AMBIENT), 0);   // ARENA2: an open sky over the sand at the torches' hour - the stands seen across it, not a dungeon's dark
       // AUDIT 26 F001: a dungeon mesh is textured by SetDungeonTextures
       // (DaggerfallMesh.cs:153-169), which calls GetMaterial with NO
@@ -10023,7 +10033,7 @@ export function createWorldModes(host) {
       // restores it on surfacing.
       { const _fog = dungeonFog(!!renderer.lightingLane, betterAmbience.dungeonFog() ?? DUNGEON_FOG); applyFog(renderer, dungeonCtx.underwaterFogSettings?.(cam.pos[1], player.pos, _fog) ?? _fog); }
       if (isArenaFloor(dungeonLoc)) applyFog(renderer, dungeonFog(!!renderer.lightingLane, ARENA_FLOOR_FOG));   // ARENA2: the night air over the colosseum, thin enough to see the far tiers
-      if (isSdRealm(dungeonLoc)) applyFog(renderer, dungeonFog(!!renderer.lightingLane, SD_REALM_FOG));   // SD5a: the Hour's brass haze over the dungeon's
+      if (isSdRealm(dungeonLoc)) { applyFog(renderer, dungeonFog(!!renderer.lightingLane, SD_REALM_FOG, _hourFog), _hourFogColor); renderer.setSceneGrade?.(SD_HOUR_GRADE); }   // SD5a: the Hour's brass haze over the dungeon's; SD-LOOK: and its grade - the eye held down, the void black   // AUDIT SD IV (R5): into kept ones, nothing made
       if (isGateArena(dungeonLoc)) applyFog(renderer, dungeonFog(!!renderer.lightingLane, COURT_FOG));   // WB3b: the Deadlands' air in the court, over the dungeon's   // AUDIT-EL F6   // BA1: FoggyDungeons' linear fog is the base the water murk overrides
       // AUDIT DISC19: THE CANDLE BURNS WHITE UNDERGROUND TOO. One shared
       // colour lit every light down here - the dungeon's 0.8, or the lane's
@@ -10047,13 +10057,13 @@ export function createWorldModes(host) {
         // 16-slot shader cap picks from what survives (dungeonLights.js
         // carries the composition and why that order).
         _dgNear,   // EL1: the installed set's cap
-        abyssCandle(dungeonCtx.candleLight(), _abyss), _abyss?.torchOff ? null : _dgTint(playerTorchLight(playerEntity, player.feetAt(), cam.yaw)), _dgTint(thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw)), ...(host.peerLights?.({ torches: !_abyss?.torchOff }) ?? []).map((l) => abyssCandle(_dgTint(l), _abyss)), ...dungeonCtx.campLights().map(_dgTint), ...dungeonCtx.torchLights().map(_dgTint), ...(host.modeLights?.() ?? []));   // OH-E: the abyss's candle at half, its torch put out; AUDIT PRE-MERGE 0928 M4: and the others' (PEERLIGHT1/2), as on their own screens; X11 the Light effect's candle; T1 the torch. DISC19-B: the DUNGEON's engine's candle - every cast down here is the context's engine's, and this host's own `magic` is not updated underground (its candle stood dark, or lit at the street it was cast on); HT1 the dropped lights; SURV3 the campfires; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
+        abyssCandle(dungeonCtx.candleLight(), _abyss), _abyss?.torchOff ? null : _dgTint(playerTorchLight(playerEntity, player.feetAt(), cam.yaw)), _dgTint(thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw)), ...(host.peerLights?.({ torches: !_abyss?.torchOff }) ?? []).map((l) => abyssCandle(_dgTint(l), _abyss)), ...dungeonCtx.campLights().map(_dgTint), ...dungeonCtx.torchLights().map(_dgTint), ...(dungeonCtx.sdEndLights?.() ?? []), ...(host.modeLights?.() ?? []));   // OH-E: the abyss's candle at half, its torch put out; AUDIT PRE-MERGE 0928 M4: and the others' (PEERLIGHT1/2), as on their own screens; X11 the Light effect's candle; T1 the torch. DISC19-B: the DUNGEON's engine's candle - every cast down here is the context's engine's, and this host's own `magic` is not updated underground (its candle stood dark, or lit at the street it was cast on); HT1 the dropped lights; SURV3 the campfires; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
       renderer.setPointLights(_dgLit.data, null, (_dgFade && capFadePairs(_dgLit.data, _dgLit.data.length / 4 - _dgNear.data.length / 4, cam.pos, renderer.maxPointLights, _dgLit.colors)) || _dgLit.colors);   // LA-AUDIT A5
       // WB3b: the braziers, in their own fire's colour, after the player's lights; WB4: and the glow on the boss - WB9b: the
       // fight's own lights first (his glow, the crystals, the spoils), then the braziers nearest first, so the renderer's
       // cap drops a far court's fire, never him
       if (isGateArena(dungeonLoc)) { const _court = withCourtLights(_dgLit, [...(host.gateCourtLights?.() ?? []), ...courtLightsNear(cam.pos)]); renderer.setPointLights(_court.data, null, _court.colors); }
-      if (isSdRealm(dungeonLoc)) { const _hour = realmLightsWith(_dgLit, host.sdRealmLights?.() ?? NO_LIGHTS, cam.pos); renderer.setPointLights(_hour.data, null, _hour.colors); }   // SD5a: the Hour's lamps, after the player's own lights, nearest first; SD9e: the spoils' light before them, as the court's; AUDIT SD II (L2 F9): into the realm's own arrays, made once
+      if (isSdRealm(dungeonLoc)) { const _hour = realmLightsWith(_dgLit, host.sdRealmLights?.() ?? NO_LIGHTS, cam.pos, host.sdLampDim?.() ?? null); renderer.setPointLights(_hour.data, null, _hour.colors); }   // SD5a: the Hour's lamps, after the player's own lights, nearest first; SD9e: the spoils' light before them, as the court's; AUDIT SD II (L2 F9): into the realm's own arrays, made once; SD-LOOK S7: the arena's dimmed through the Reset
       renderer.everyLightCasts();   // LA-SHADOW3: the level is drawn whole below (no view cull) - every torch keeps a shadow map, none lights through the rock as the nearest eight change (DISC15's rooms)
       renderer.setClearColor(INTERIOR_CLEAR);   // REVIEW 2026-09-05 (PR #55 review): the world-hosted dungeon/interior frame is THIS one - the host's own setClearColor sits after its `modes.frame` return
       renderer.setWorldViewport(worldViewportRect(canvas.clientWidth, canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
@@ -10062,7 +10072,7 @@ export function createWorldModes(host) {
       host.drawPeerBodies?.({ proj, view, eye: mwv.eye });   // MWBODY1: the others' bodies, after the player's own
       if (dungeonCtx.staticBatch) renderer.drawMesh(dungeonCtx.staticBatch, BATCH_IDENTITY, null);   // PERF5: the level's static models, one call per texture
       for (const d of dungeonCtx.drawList) if (!d._batched) renderer.drawMesh(d.mesh, d.matrix, d.texRemap ?? dungeonCtx.texRemap);   // AUDIT PRE-MERGE 1003 W4: a climate-free model's own table
-      for (const d of dungeonCtx.dynamicDraws) if (!d.hidden) renderer.drawMesh(d.gpu, d.object.matrix, dungeonCtx.texRemap);   // AUDIT SD II (L2 F11): a draw that says it is hidden (the Hour's gone steps and bodies) is no draw, and no shadow's record
+      for (const d of dungeonCtx.dynamicDraws) if (!d.hidden && !d.culled) renderer.drawMesh(d.gpu, d.object.matrix, d.texRemap ?? dungeonCtx.texRemap, d.noShadow ? DRAW_NO_SHADOW : DRAW_SHADOW);   // AUDIT SD II (L2 F11): a draw that says it is hidden (the Hour's gone steps and bodies) is no draw, and no shadow's record; SD-LOOK: a draw's own texRemap (a state's records), `noShadow` (a part that turns rebuilds no cube) and `culled` (a stage out of sight) - each read only where a draw carries it
       host.drawModeMeshes?.();   // CSA-C: a boat on the dungeon's water
       drawCrownHall({ proj, view, eye: mwv.eye });   // CROWN-HALL: the throne room's board, chest and banners - opaque, before the flats
       drawArenaWall(); if (isArenaFloor(dungeonLoc)) host.drawSky?.(cam.yaw, cam.pitch + (host.climbFeel?.pitch?.() ?? 0), fieldOfView() + (host.climbFeel?.fovRad() ?? 0), largeHudWorldAspect(canvas.clientWidth, canvas.clientHeight), renderer.worldViewportPx ?? [0, 0, renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight]);   // ARENA5: the Hall of Champions' plaques - opaque, before the flats; HOTFIX 1003l (live: "the private sessions are missing the sky and the entrance is black"): the floor is drawn as a dungeon, cleared to black - the world's own sky over it now, after the opaque level (it shades only what nothing nearer claimed) and before the flats
@@ -10074,7 +10084,13 @@ export function createWorldModes(host) {
       renderer.drawBillboards([...dungeonCtx.billboardBatches, ...dungeonCtx.campBatches(), ...dungeonCtx.torchBatches(), ...(host.extraBillboards?.() ?? [])], camRight, UP_Y);   // ONLINE1: the peers on the dungeon's own pass; HT1 the dropped torches; SURV3 the campfires
       host.drawLootLines?.({ proj, view, eye: mwv.eye, finds: () => dungeonCtx.lootFinds?.() ?? [] });   // LOOT11: the lines of light over the dungeon's finds
       if (isGateArena(dungeonLoc)) host.drawGateCourt?.({ proj, view, eye: mwv.eye });
-      if (isSdRealm(dungeonLoc)) host.drawSdTelegraph?.({ proj, view, eye: mwv.eye });   // SD8d: the Brass Remnant's blows on the arena's floor, the court's way   // WB4: the boss's telegraph on the court's floor - after the court and its billboards, before drawFoes' screen quads end the world pass
+      if (dungeonCtx.sdEndLook) host.drawSdRift?.({ proj, view, eye: mwv.eye, end: dungeonCtx });   // SD-LOOK: the Rift's window into the Hour, its floor light and its heart; the Return's window home - after the flats (they composite over what stands behind them)
+      // SD8d: the Brass Remnant's blows on the arena's floor, the court's way. AUDIT SD IV (R1): AFTER THE LAST FLAT - the
+      // Hour's blows, spoils' lines, motes, sparks and beam write no depth, and a pile, a missile or a portal drawn after
+      // them covered the light in front of it: drawFoes' late slot draws them (lateWorldDraw); a window up skips drawFoes,
+      // so they are drawn here then, under it
+      _sdLate.on = isSdRealm(dungeonLoc); _sdLate.proj = proj; _sdLate.view = view; _sdLate.eye = mwv.eye;
+      if (_sdLate.on && dungeonCtx.uiOverlayActive) host.drawSdTelegraph?.(_sdLate);
       // AUDIT 17e F1: this MUST return true like every other exit of
       // the dungeon branch. Returning undefined let the host fall
       // through and run its whole exterior frame on top - the town

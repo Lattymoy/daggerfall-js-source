@@ -1,0 +1,209 @@
+[
+  {
+    "name": "SD27-L1-the-dungeon-arm-unwarded",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "playerLevitating: () => hasActiveEffect(playerEntity, 'levitate') && !levitateWarded() || staffFly(),",
+    "new": "playerLevitating: () => hasActiveEffect(playerEntity, 'levitate') || staffFly(),",
+    "tests": [
+      "test/sd27_audit.test.js"
+    ]
+  },
+  {
+    "name": "SD27-L1-the-hour-out-of-the-ward",
+    "file": "src/scenes/world.js",
+    "old": "registerLevitateWard(() => inSiegeRoom() || modes?.sdRealmSlot?.() != null);",
+    "new": "registerLevitateWard(() => inSiegeRoom());",
+    "tests": [
+      "test/sd27_audit.test.js"
+    ]
+  },
+  {
+    "name": "SD27-S1-the-sky-blind-to-the-empty-fight",
+    "file": "src/render/sdArenaGlow.js",
+    "old": "if (!s || !(s.fi > 0) || s.fell || !(t >= s.op)) return out;",
+    "new": "if (!s || s.fell || !(t >= s.op)) return out;",
+    "tests": [
+      "test/sd27_audit.test.js"
+    ]
+  },
+  {
+    "name": "SD27-S1-the-floor-blind-to-the-empty-fight",
+    "file": "src/render/sdArenaGlow.js",
+    "old": "if (!s || !(s.fi > 0) || s.fell) return memo;",
+    "new": "if (!s || s.fell) return memo;",
+    "tests": [
+      "test/sd27_audit.test.js"
+    ]
+  },
+  {
+    "name": "SD27-S2-the-way-back-revealed",
+    "file": "src/scenes/sdEnd.js",
+    "old": "if (!rift.hollow && !rift.revealed && eye &&",
+    "new": "if (!rift.revealed && eye &&",
+    "tests": [
+      "test/sd27_audit.test.js"
+    ]
+  },
+  {
+    "name": "SD27-R2-the-floor-light-past-the-rim",
+    "file": "src/world/sdRealm.js",
+    "old": "return q < 0 ? 0 : Math.min(1.6 * SD_WAY_BACK_SIZE, Math.max(0, -b + Math.sqrt(q)));",
+    "new": "return 1.6 * SD_WAY_BACK_SIZE;",
+    "tests": [
+      "test/sd27_audit.test.js"
+    ]
+  },
+  {
+    "name": "SD27-R2-the-way-back-unprobed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "hollow: true, probe: SD_THRESHOLD_RIM }); return; }",
+    "new": "hollow: true }); return; }",
+    "tests": [
+      "test/sd27_audit.test.js"
+    ]
+  },
+  {
+    "name": "SD27-L2-the-edge-from-the-word-alone",
+    "file": "src/scenes/world.js",
+    "old": "const sdConcordHere = () => !!sdHallWord()?.ok && modes?.dungeonCtx?.sdHallBridgeLaid?.() !== false;",
+    "new": "const sdConcordHere = () => !!sdHallWord()?.ok;",
+    "tests": [
+      "test/sd27_audit.test.js"
+    ]
+  },
+  {
+    "name": "SD27-L2-the-hall-unasked",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "sdHallBridgeLaid: sdHall ? () => sdHall.bridgeLaid : undefined,",
+    "new": "sdHallBridgeLaid: undefined,",
+    "tests": [
+      "test/sd27_audit.test.js"
+    ]
+  },
+  {
+    "name": "SD27-L2-the-bridge-walkable-before-drawn",
+    "file": "src/scenes/sdHall.js",
+    "old": "get bridgeLaid() { return ok && laid; },",
+    "new": "get bridgeLaid() { return ok; },",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD27-S5-under-the-veil-hosted",
+    "file": "src/scenes/world.js",
+    "old": "ready: () => !gateVeil?.busy,",
+    "new": "ready: () => true,",
+    "tests": [
+      "test/sd27_audit.test.js"
+    ]
+  },
+  {
+    "name": "SD27-S5-under-the-veil",
+    "file": "src/scenes/sdFx.js",
+    "old": "if (!here && ready()) {",
+    "new": "if (!here) {",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD27-L5-the-latch-kept-hosted",
+    "file": "src/scenes/world.js",
+    "old": "    if (!inRealm) sdFx?.away();   // AUDIT SD V (L5): the next arrival exhales, whatever was heard\n",
+    "new": "",
+    "tests": [
+      "test/sd27_audit.test.js"
+    ]
+  },
+  {
+    "name": "SD27-L5-the-latch-kept",
+    "file": "src/scenes/sdFx.js",
+    "old": "away() { here = false; wasY = NaN; },",
+    "new": "away() {},",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD27-L3-the-rods-over-the-deck",
+    "file": "src/world/sdStepsModel.js",
+    "old": "foot: 2.15, head: 2.15, eye: 1.3,",
+    "new": "foot: 1.2, head: 0.5, eye: 1.2,",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD27-P1-the-open-look-made-a-call",
+    "file": "src/world/sdDungeon.js",
+    "old": "if (ph === 'found') return FOUND_LOOKS[Math.max(1, Math.min(24, Math.ceil((rec.until - now) / 3600000)))];",
+    "new": "if (ph === 'found') return { ...SD_RIFT_OPEN_LOOK, studs: Math.max(1, Math.min(24, Math.ceil((rec.until - now) / 3600000))) };",
+    "tests": [
+      "test/sd27_audit.test.js"
+    ]
+  },
+  {
+    "name": "SD27-P1-the-host-asking-the-whole-word",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "look: () => (opts.superRiftLook ? opts.superRiftLook(dfLocation?.sdSlot) : sdEndWord()?.look) ?? null",
+    "new": "look: () => sdEndWord()?.look ?? null",
+    "tests": [
+      "test/sd27_audit.test.js"
+    ]
+  },
+  {
+    "name": "SD27-P1-the-look-made-a-frame",
+    "file": "src/scenes/sdEnd.js",
+    "old": "      const out = _look;\n",
+    "new": "      const out = { window: null, floor: null, bay: null };\n",
+    "tests": [
+      "test/sd27_audit.test.js"
+    ]
+  },
+  {
+    "name": "SD27-P1-the-halos-let-go",
+    "file": "src/scenes/sdEnd.js",
+    "old": "      let n = 0;   // AUDIT SD V (P1): filled in place - a list's length set to nought lets its store go, and the next push makes one\n",
+    "new": "      let n = 0; _halos.length = 0;\n",
+    "tests": [
+      "test/sd27_audit.test.js"
+    ]
+  },
+  {
+    "name": "SD27-P4-the-skys-key-a-string",
+    "file": "src/render/sdSky.js",
+    "old": "    this._all = all;\n",
+    "new": "    this._all = all; this._key = `${steps}|${idx}|${light?.join(',') ?? ''}|${haze?.join?.(',') ?? ''}`;\n",
+    "tests": [
+      "test/sd27_audit.test.js"
+    ]
+  },
+  {
+    "name": "SD27-P6-the-halos-corners-made",
+    "file": "src/render/sdHalo.js",
+    "old": "for (let c = 0; c < 12; c += 2) { d[o++] = h.at[0]; d[o++] = h.at[1]; d[o++] = h.at[2]; d[o++] = CORNERS[c]; d[o++] = CORNERS[c + 1];",
+    "new": "for (const C of [[-1, -1], [1, -1], [1, 1], [-1, -1], [1, 1], [-1, 1]]) { d[o++] = h.at[0]; d[o++] = h.at[1]; d[o++] = h.at[2]; d[o++] = C[0]; d[o++] = C[1];",
+    "tests": [
+      "test/sd27_audit.test.js"
+    ]
+  },
+  {
+    "name": "SD27-P2-the-hands-made",
+    "file": "src/world/sdHall.js",
+    "old": "  const F = STONE_FRAMES[i], n = F.n, R = F.R, o = HAND_AT[i];\n",
+    "new": "  out = new Float32Array(16); const F = STONE_FRAMES[i], n = F.n, R = F.R, o = HAND_AT[i];\n",
+    "tests": [
+      "test/sd27_audit.test.js"
+    ]
+  },
+  {
+    "name": "SD27-P3-the-air-asked-a-frame",
+    "file": "src/scenes/sdAir.js",
+    "old": "const E = periodEvents(), P = SD_SKY_PERIOD,",
+    "new": "const E = sdAirEvents(0, SD_SKY_PERIOD), P = SD_SKY_PERIOD,",
+    "tests": [
+      "test/sd27_audit.test.js"
+    ]
+  }
+]
