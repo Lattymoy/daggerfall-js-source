@@ -65,7 +65,7 @@ import { MARKS_RID_RE } from './marksLaw.js';
 import { gateHash } from './gateLaw.js';   // CHAP2a: a hall writ's own dice
 import { courtWrits, material, regionOk } from './nodeLaw.js';   // CHAP2a: the Court's writ law, the material families, a region
 import { REGION_NAMES } from '../formats/mapsTables.js';   // CHAP4b: a seat's region, named
-import { seatWeekOf, chronicleWhen } from './townSeatLaw.js';   // CHAP3a: Merit's week is the seats' (the Turning settles both); CHAP4d: the Chronicle's when
+import { seatWeekOf, chronicleWhen, seatSeasonName } from './townSeatLaw.js';   // CHAP3a: Merit's week is the seats' (the Turning settles both); CHAP4d: the Chronicle's when; CHAP6a: a Season's name
 import { REALM_CHARACTER_RE } from './identityToken.js';   // CHAP3a: a member's own writ is drawn over its realm id
 
 /** The membership books a character holds (systems/guilds.js: the mortal's and the vampire's), each one temple and one
@@ -898,6 +898,7 @@ export function chapterFocusLineOf(/** @type {unknown} */ faction, /** @type {un
  *  Morning Star, Alda took the Master's seat of the Fighters Guild." - null for a row it has no words for or a hidden
  *  guild's. A character gone since is "A member since gone". Worded without gender. `zero` the Season's (seasonOf). */
 export function chapterChronicleLine(/** @type {any} */ row, /** @type {number | null} */ zero = null) {
+  if (row?.kind === 'event' || row?.kind === 'season') return chapterSeasonLine(row);   // CHAP6a: a Season's own lines
   if (row?.kind !== 'seat' || !isRollFaction(row?.faction) || hallHidden(row.faction)) return null;
   const guild = `the ${hallPosterName(row.faction)}`;
   const from = row?.data?.from ?? null, to = row?.data?.to ?? null;
@@ -943,4 +944,152 @@ export function chapterRollLines(/** @type {unknown} */ faction, /** @type {any}
     master ? `Master of the chapter: ${master.name}.` : 'The Master\'s seat stands empty.',
     officers.length ? `${officers.length > 1 ? 'Its officers' : 'Its officer'}: ${namesListed(officers)}.` : 'No officer\'s seat is held.',
   ];
+}
+
+// ─── CHAP6a: THE SEASON'S EVENT (Chapters-Arc 7) ────────────────────
+// At the Turning that opens a Season every confirmed chapter draws one event - a pure function of the Season, the
+// chapter's key and a salt, as a Tide is (tideLaw.js) - from weights its last Season moved. The event holds the whole
+// Season: a Decline costs 2 Strength a week unless the week's Merit meets twice the target, a Crackdown's writs pay half
+// again and a chapter under 30 at the Season's end shuts its halls for the next, a Rivalry races two chapters of one
+// region on the Season's Merit and the winner takes 10 Strength from the loser. The Schism's and the Succession's
+// choices are CHAP6b's; what the client shows of every event (an Ascendancy's prices among it) CHAP6c's. No Season
+// counted, no event: every chapter is Calm, as every land's Tide is.
+
+/** The events' own salt, beside the hall writs' and the member writs'. */
+export const CHAPTER_EVENT_SALT = 0x5ea6;
+/** THE EVENTS and their base weights (section 7's table), in the table's order. */
+export const CHAPTER_EVENTS = Object.freeze([
+  Object.freeze({ id: 'calm', name: 'Calm', weight: 30 }),
+  Object.freeze({ id: 'schism', name: 'Schism', weight: 15 }),
+  Object.freeze({ id: 'succession', name: 'Succession', weight: 10 }),
+  Object.freeze({ id: 'crackdown', name: 'Crackdown', weight: 10 }),
+  Object.freeze({ id: 'rivalry', name: 'Rivalry', weight: 15 }),
+  Object.freeze({ id: 'decline', name: 'Decline', weight: 10 }),
+  Object.freeze({ id: 'ascendancy', name: 'Ascendancy', weight: 10 }),
+]);
+const EVENT_IDS = CHAPTER_EVENTS.map((e) => e.id);
+/** Whether `v` names an event. */
+export const chapterEventOk = (/** @type {unknown} */ v) => typeof v === 'string' && /** @type {string[]} */ (EVENT_IDS).includes(v);
+/** An event's name ("Schism"), or null. */
+export const chapterEventName = (/** @type {unknown} */ id) => CHAPTER_EVENTS.find((e) => e.id === id)?.name ?? null;
+/** THE EVENTS' NUMBERS (section 7, Appendix A). */
+export const CHAPTER_EVENT_EFFECTS = Object.freeze({
+  /** Schism: +10 where the Master's seat changed hands twice last Season. */
+  schismMasters: 2, schismMoved: 10,
+  /** Succession: +10 where the chapter ended its last Season Ascendant. */
+  successionAscendant: 10,
+  /** Crackdown: twice the weight for the underworld; +10 where a seat of the region has the Curfew; its writs pay half
+   *  again; under 30 Strength at the Season's end, the halls shut for the next. */
+  crackdownHidden: 2, crackdownCurfew: 10, crackdownPay: 1.5, crackdownShut: 30,
+  /** Rivalry: +10 where a rival chapter of the region is Thriving (or Ascendant); the winner takes 10 from the loser. */
+  rivalryThriving: 10, rivalrySwing: 10,
+  /** Decline: +15 where Failing; 2 a week unless the week's Merit meets twice the target. */
+  declineFailing: 15, declineFall: 2, declineMeets: 2,
+  /** Ascendancy: +15 where Ascendant. */
+  ascendancyAscendant: 15,
+});
+
+/** THE RIVALS (section 8, CALL 5 - the port's own table, never FACTION.TXT): each pair is a Rivalry's draw where both
+ *  keep a chapter in the region. The watch is no chapter: a Crackdown's hunter alone. */
+export const CHAPTER_RIVAL_PAIRS = Object.freeze([
+  Object.freeze([GUILD_FACTION_IDS.FightersGuild, GUILD_FACTION_IDS.ThievesGuild]),
+  Object.freeze([GUILD_FACTION_IDS.DarkBrotherhood, DIVINES.Arkay]),
+  Object.freeze([GUILD_FACTION_IDS.DarkBrotherhood, DIVINES.Stendarr]),
+  ...Object.values(ORDERS).map((o) => Object.freeze([GUILD_FACTION_IDS.DarkBrotherhood, o])),
+  Object.freeze([GUILD_FACTION_IDS.MagesGuild, DIVINES.Julianos]),
+]);
+/** A guild faction's rivals, ascending - none for a chapter the table names no rival for. */
+export const chapterRivalsOf = (/** @type {unknown} */ faction) => CHAPTER_RIVAL_PAIRS
+  .flatMap(([a, b]) => (a === faction ? [b] : b === faction ? [a] : [])).sort((x, y) => x - y);
+
+/**
+ * A CHAPTER'S WEIGHTS for the Season it draws (section 7's table), in CHAPTER_EVENTS' order. `c`: the chapter's guild
+ * `faction`; `band` its band as its last Season ended (before the Season's halving); `masters` the hands its Master's seat
+ * changed into last Season; `rivalBand` the band of the rival it would race (null: no rival keeps a chapter in the
+ * region - AUDIT CHAP R9, CALL 5: the Rivalry's weight is then Calm's); `curfew` whether a seat of the region has the
+ * Curfew as law.
+ * @param {{ faction: number, band?: string, masters?: number, rivalBand?: string | null, curfew?: boolean }} c
+ */
+export function chapterEventWeights({ faction, band = 'steady', masters = 0, rivalBand = null, curfew = false }) {
+  const E = CHAPTER_EVENT_EFFECTS;
+  /** @type {Record<string, number>} */
+  const w = Object.fromEntries(CHAPTER_EVENTS.map((e) => [e.id, e.weight]));
+  if (masters >= E.schismMasters) w.schism += E.schismMoved;
+  if (band === 'ascendant') { w.succession += E.successionAscendant; w.ascendancy += E.ascendancyAscendant; }
+  if (hallHidden(faction)) w.crackdown *= E.crackdownHidden;
+  if (curfew) w.crackdown += E.crackdownCurfew;
+  if (rivalBand === null) { w.calm += w.rivalry; w.rivalry = 0; }
+  else if (rivalBand === 'thriving' || rivalBand === 'ascendant') w.rivalry += E.rivalryThriving;
+  if (band === 'failing') w.decline += E.declineFailing;
+  return CHAPTER_EVENTS.map((e) => w[e.id]);
+}
+
+/** THE EVENT chapter `faction` of `region` draws for Season `season` over `weights` (chapterEventWeights') - an event's
+ *  id; Calm for a Season that is none or weights that sum to none. */
+export function chapterEventOf(/** @type {number} */ season, /** @type {number} */ faction, /** @type {number} */ region, /** @type {number[]} */ weights) {
+  const total = Array.isArray(weights) ? weights.reduce((a, b) => a + Math.max(0, whole(b)), 0) : 0;
+  if (!Number.isSafeInteger(season) || season < 0 || total <= 0) return 'calm';
+  let r = gateHash(CHAPTER_EVENT_SALT, season, chapterTitleKey(faction, region)) % total;
+  for (let i = 0; i < CHAPTER_EVENTS.length; i++) {
+    const wt = Math.max(0, whole(weights[i]));
+    if (r < wt) return CHAPTER_EVENTS[i].id;
+    r -= wt;
+  }
+  return 'calm';
+}
+
+/** The rival a Rivalry races: of `rivals` (`[{ faction, strength }]`, the guild's rivals keeping a chapter in the
+ *  region), the strongest, the lower guild id at a tie - null for none. */
+export function chapterRivalPick(/** @type {{ faction: number, strength: number }[]} */ rivals) {
+  const list = Array.isArray(rivals) ? rivals.filter((r) => Number.isSafeInteger(r?.faction)) : [];
+  if (!list.length) return null;
+  return list.reduce((a, b) => (b.strength > a.strength || (b.strength === a.strength && b.faction < a.faction) ? b : a)).faction;
+}
+
+/** A DECLINE'S WEEK: Strength `s` after the week's own step falls 2 more unless the week's Merit meets twice the target. */
+export function declineAfter(/** @type {number} */ s, /** @type {number} */ merit, /** @type {number} */ target) {
+  const E = CHAPTER_EVENT_EFFECTS;
+  return Number(merit) >= E.declineMeets * Math.max(1, Number(target) || 0) ? s : Math.max(STRENGTH_MIN, s - E.declineFall);
+}
+
+/** A RIVALRY'S END: `[a, b]` the two chapters' Strengths, `[ma, mb]` their Season's Merit - the winner (more Merit)
+ *  takes 10 Strength from the loser, never past 100 nor below 0; a tie moves neither. Answers `{ a, b, won }` - `won`
+ *  'a', 'b' or null. */
+export function rivalryEnd(/** @type {[number, number]} */ [a, b], /** @type {[number, number]} */ [ma, mb]) {
+  if (!(ma > mb) && !(mb > ma)) return { a, b, won: null };
+  const E = CHAPTER_EVENT_EFFECTS;
+  const [w, l] = ma > mb ? [a, b] : [b, a];
+  const lost = Math.min(E.rivalrySwing, l);   // the loser's sting is whole; the winner's gain stops at 100
+  const won = Math.min(STRENGTH_MAX, w + lost);
+  return ma > mb ? { a: won, b: l - lost, won: 'a' } : { a: l - lost, b: won, won: 'b' };
+}
+
+/** A CRACKDOWN'S WRIT PAY: half again, whole. */
+export const crackdownPay = (/** @type {number} */ pay) => Math.round(Math.max(0, Number(pay) || 0) * CHAPTER_EVENT_EFFECTS.crackdownPay);
+/** Whether a Crackdown's chapter at Strength `s` at its Season's end shuts its halls for the next. */
+export const crackdownShuts = (/** @type {number} */ s) => Number(s) < CHAPTER_EVENT_EFFECTS.crackdownShut;
+
+/** The guild a Season's line names: "the Thieves Guild" - or, for a hidden guild (a public line naming the underworld's
+ *  chapter would say where it keeps its halls), "its rival in the shadows". */
+const rivalWords = (/** @type {unknown} */ f) => (isRollFaction(f) && !hallHidden(f) ? `the ${hallPosterName(/** @type {number} */ (f))}` : 'its rival in the shadows');
+/** CHAP6a: A SEASON'S LINE IN WORDS - an 'event' row `{ faction, data: { season, event, ... } }` ("At the end of the Season
+ *  of Morning Star, the Fighters Guild won its rivalry with the Thieves Guild.") or a 'season' row, the Master who held the
+ *  seat the whole Season ("Through the Season of Morning Star, Alda held the Master's seat of the Fighters Guild.") -
+ *  null for a row it has no words for (CHAP6b words the Schism and the Succession) or a hidden guild's. */
+export function chapterSeasonLine(/** @type {any} */ row) {
+  if (!isRollFaction(row?.faction) || hallHidden(row.faction)) return null;
+  const season = seatSeasonName(row?.data?.season);
+  if (!season) return null;
+  const guild = `the ${hallPosterName(row.faction)}`;
+  if (row.kind === 'season') {
+    const who = typeof row?.name === 'string' && row.name ? row.name : 'A member since gone';
+    return `Through ${season}, ${who} held the Master's seat of ${guild}.`;
+  }
+  const d = row.data;
+  const did = d.event === 'decline' ? (d.fell > 0 ? `${guild}'s decline cost it ${d.fell} Strength` : `${guild} held against its decline`)
+    : d.event === 'crackdown' ? (d.shut ? `a crackdown shut the halls of ${guild} for the Season after` : `${guild} weathered a crackdown`)
+      : d.event === 'rivalry' ? (d.won === true ? `${guild} won its rivalry with ${rivalWords(d.rival)}` : d.won === false ? `${guild} lost its rivalry with ${rivalWords(d.rival)}`
+        : `${guild}'s rivalry with ${rivalWords(d.rival)} ended even`)
+        : d.event === 'ascendancy' ? `${guild} stood ascendant` : null;
+  return did ? `At the end of ${season}, ${did}.` : null;
 }

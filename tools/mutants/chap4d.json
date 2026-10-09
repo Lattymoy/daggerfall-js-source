@@ -137,11 +137,12 @@
   {
     "name": "CHAP4D-CHRON-NAME",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const who = typeof row?.name === 'string' && row.name ? row.name : 'A member since gone';",
-    "new": "const who = row?.name ?? 'A member';",
+    "old": "const who = typeof row?.name === 'string' && row.name ? row.name : 'A member since gone';\n  return `${",
+    "new": "const who = row?.name ?? 'A member';\n  return `${",
     "tests": [
       "test/chap4d_focus.test.js"
-    ]
+    ],
+    "note": "CHAP6a: re-aimed by content (the Season's event beside it)."
   },
   {
     "name": "CHAP4D-CHRON-WHEN",
@@ -317,11 +318,12 @@
   {
     "name": "CHAP4D-LINES-CHARACTER",
     "file": "server-account/src/professions.js",
-    "old": "chapters: halls ? await chapterLines(db, region, nowS, members, character) : [],",
-    "new": "chapters: halls ? await chapterLines(db, region, nowS, members) : [],",
+    "old": "chapters: halls ? await chapterLines(db, region, nowS, members, character, zero) : [],",
+    "new": "chapters: halls ? await chapterLines(db, region, nowS, members, null, zero) : [],",
     "tests": [
       "test/chap4d_focus.test.js"
-    ]
+    ],
+    "note": "CHAP6a: re-aimed by content (the Season's event beside it)."
   },
   {
     "name": "CHAP4D-HALL-SECTION",

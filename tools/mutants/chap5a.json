@@ -246,11 +246,12 @@
   {
     "name": "CHAP5A-SERVICE-SEATS",
     "file": "server-account/src/npcChapters.js",
-    "old": "band: chapterBandOf(strength).band, seats: seats.get(`${c.faction}|${c.region}`) ?? [] };",
-    "new": "band: chapterBandOf(strength).band, seats: [] };",
+    "old": "band: chapterBandOf(strength).band, seats: seats.get(`${c.faction}|${c.region}`) ?? [], ...events",
+    "new": "band: chapterBandOf(strength).band, seats: [], ...events",
     "tests": [
       "test/chap5a_roll.test.js"
-    ]
+    ],
+    "note": "CHAP6a: re-aimed by content (the Season's event beside it)."
   },
   {
     "name": "CHAP5A-HOST-REGION",

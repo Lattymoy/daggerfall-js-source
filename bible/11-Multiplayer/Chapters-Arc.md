@@ -23,7 +23,8 @@ its chapter's hall writs, the Chronicle read in the Hall of Records - section 6,
 its record at the foot). CHAP5b BUILT (2026-10-09, the same word; the hall's people and the town's talk by the band -
 section 9, its record at the foot). AUDIT CHAP4 (2026-10-09, Mac: "Lets do a deep audit on everything so far") read
 all of it again through six lenses and fixed what they found (`01-Overview/Audit-Chapters-4.md`, its record at the
-foot); CHAP6 (the Seasons' events) is next. Merged with main
+foot); CHAP6a BUILT (2026-10-09, Mac: "continue"; the Season's event drawn, a Decline's weeks, the Season's end - section
+7, its record at the foot); CHAP6b (the Schism, the Succession, the doctrine) is next. Merged with main
 past the Super Dungeons arc, then past SCALE4 and TAVERN CARDS (2026-10-08), then past SERVER-POST and HOURS-FIRST
 (2026-10-09), then past PERMADEATH-HOUSES and TAVERN-TABLES (2026-10-09): the arc's migrations are `0095_npc_roll` to `0100_npc_seats`, its service `acct99` and its relay `world181` - the records below name each
 migration by its current number and the service by the version it was built under. AUDIT CHAP3 (2026-10-08, Mac:
@@ -693,6 +694,44 @@ and a salt, as a Tide is (`net/tideLaw.js`) - from weights its last Season moved
   the seats stand; the Master who held all eight weeks keeps "Master of the <Region> Chapter, Season N" for good; the
   Chronicle writes the Season's line.
 
+BUILT (CHAP6a, 2026-10-09, Mac: "continue"), the roll and the weeks - `src/net/npcChapterLaw.js` (`CHAPTER_EVENTS`,
+`CHAPTER_EVENT_EFFECTS`, `CHAPTER_RIVAL_PAIRS`, `chapterEventWeights`, `chapterEventOf`, `declineAfter`, `rivalryEnd`,
+`crackdownPay`, `crackdownShuts`, `chapterSeasonLine`), `server-account/src/npcChapters.js` (`seasonEnded`, `seasonDrawn`,
+`regionEvents`), migration `0099` grown in place:
+
+- **The draw** is the Turning that opens a Season - the one that settles the week before its first, which ends the
+  Season before it in the same batch - for every chapter confirmed then, in every counted Season (Season 0 too, as the
+  Tides roll in it); with no Season counted, no event: every chapter is Calm. A chapter confirmed later in a Season, or
+  a Season that opened while the Chapters were shut ('off'), draws nothing until the next. Its weights' inputs,
+  NARROWED where the table left them open: the band is the chapter's Strength as its last Season ENDED (its last week's
+  step, its Decline, its ending resolved - before the halving); "the Master's seat changed hands" counts the Chronicle's
+  rows that put a new holder in the Master's seat at the Turnings that placed the last Season's seats; "a rival chapter
+  in the region is Thriving" is Thriving or Ascendant (Ascendant is "as Thriving"), read off the strongest rival
+  keeping a chapter there - the one a Rivalry races (`chapterRivalPick`, the lower guild at a tie); "the region's seat
+  holder's Edict is Curfew" is a seat of the region with the Curfew as law in the week the drawing Turning closes.
+- **A Decline** costs its 2 at each of the Season's Turnings, after the week's own step, unless the week's Merit met
+  twice its target; what it took is kept in the chapter's state (`fell`).
+- **The Season's end**, in order: the week's step (and a Decline's); every Rivalry raced on the whole Season's Merit (a
+  gate's where its day's claims agree, as every sum) - the loser gives 10 (never below 0), the winner takes them (never
+  past 100), a tie moves neither, a pair that drew each other races once, a rival no longer confirmed races no one; then
+  each Crackdown's line (under 30, its halls shut for the next Season - the Season's end whole, the Rivalries' swings
+  in it); then the halving; then the next Season's draw.
+- **A Crackdown's writs** - the chapter's hall writs and a member's own - pay half again (`crackdownPay`, Marks), inside
+  the same three a day (CALL 8: a bounded raise on writs the day already counts, no new faucet). **Shut halls** post
+  neither for the Season; what the client shuts with them (the halls' people, their services) is CHAP6c's.
+- **The Chronicle** writes an 'event' row for each chapter whose event was no Calm, with how it ended ("At the end of
+  the Season of Morning Star, the Fighters Guild won its rivalry with the Thieves Guild." - a hidden rival is "its rival
+  in the shadows": a public line naming the underworld's chapter would say where it keeps its halls), and a 'season'
+  row for each Master placed at or before the Turning that opened the Season and sitting still at its end ("Through the
+  Season of Morning Star, Alda held the Master's seat of the Fighters Guild." - never Season 0's, which crowns no one, as
+  the seats' own); the Hall of Records reads both. The title the 'season' row earns is CHAP6c's (a relay change).
+- **The sheet and the board** carry each chapter's Season's event (`event`), a Rivalry's rival where it is public (a
+  hidden rival to its members alone, on the board), and `shut`. The opening week ('on' after 'dev') clears every
+  developers' event and shut hall with their Strength.
+- **Still to build**: the Schism's backing, the Succession's heir, the doctrine and the Master's vote (CHAP6b); every
+  event on the client - the board's and the roll's words, the town's talk, an Ascendancy's prices, the shut halls, the
+  titles (CHAP6c).
+
 ## 8. Rivals and patrons (CHAP7)
 
 - **Rivals** (DECIDED, CALL 5): the port's own table in the law module, never FACTION.TXT. Each pair is a Rivalry's
@@ -704,7 +743,7 @@ and a salt, as a Tide is (`net/tideLaw.js`) - from weights its last Season moved
   | Dark Brotherhood | Temple of Arkay; Temple of Stendarr; every knightly order | Murder against the god of death's order, the god of mercy, and the oath-bound knights |
   | Mages Guild | Temple of Julianos | Two claims to learning, one of them a god's |
 
-  The watch is no chapter: it is a Crackdown's hunter alone (7).
+  The watch is no chapter: it is a Crackdown's hunter alone (7). BUILT (CHAP6a): `CHAPTER_RIVAL_PAIRS`, fourteen pairs.
 - **Patrons** (DECIDED, CALL 6): a player guild (GUILD1) may be a chapter's **patron** for a Season - one patron a
   chapter, the highest Marks bid at the Season's first Turning, the winner's bid burnt and every other bid returned.
   A patron's banner hangs in the chapter's halls, its members pay the Thriving band's prices there whatever the
@@ -793,9 +832,10 @@ DECIDED.
   grown in place): `npc_hall_regions` (region, chapters, ver, done, at) - a region's chapters computed once a change.
   BUILT (CHAP4a, migration `0100_npc_seats`): `npc_chapter_seats` (faction, region, char_id, account, seat, since, week,
   at - the draft's `key` the chapter's own pair) and `npc_chapter_history` (seq, faction, region, week, kind, char_id,
-  data JSON, at). BUILT (CHAP4d, `0099` grown in place): `npc_chapters`' `focus` and `focus_week`; AUDIT CHAP4 S2: a
-  week's `open` is 'dev', 'on' or 'off' (an off week recorded, nothing moved). Still drawn: a
-  chapter's event, event_state JSON and doctrine (CHAP6).
+  data JSON, at). BUILT (CHAP4d, `0099` grown in place): `npc_chapters`' `focus` and `focus_week`; CHAP6a (grown in
+  place): its `event`, `event_season`, `event_data` JSON and `shut_season`, and the Chronicle's 'event' and 'season'
+  rows; AUDIT CHAP4 S2: a week's `open` is 'dev', 'on' or 'off' (an off week recorded, nothing moved). Still drawn: a
+  chapter's doctrine (CHAP6b).
 - **Endpoints** (`/v1/chapters/...`): `roll` and `claim` BUILT (CHAP1, behind `CHAPTERS_OPEN`, shipped `dev`; each
   names the realm character and the playing tab's lease); `witness` BUILT (CHAP2a); `halls` and `strike` BUILT (AUDIT
   CHAP2 E1, a developer's); `list` BUILT (CHAP3b, the sheet; CHAP5a its seats' holders); `focus` and `history` BUILT (CHAP4d, a Master's Focus and a region's Chronicle); `standings` (a chapter's Merit) still drawn; the hall writs
@@ -836,7 +876,9 @@ DECIDED.
 5. **CHAP5 - the living world reads the sheet.** The hall's people, the lines, the roll. CHAP5a BUILT (2026-10-09): the
    sheet's seats, the hall's roll on its shelf (5.3, 9). CHAP5b BUILT (2026-10-09): the hall's evenings and the town's
    talk by the band (9).
-6. **CHAP6 - the Seasons' events.** The roll, the seven events, their endings.
+6. **CHAP6 - the Seasons' events.** The roll, the seven events, their endings. CHAP6a BUILT (2026-10-09): the roll,
+   the Decline's weeks, the Season's end (the Rivalries, the Crackdowns' shut halls, the Chronicle's lines), the events
+   on the sheet and the board (7).
 7. **CHAP7 - rivals and patrons.** Last, because it reads the Seats' guilds.
 
 CALL 1 retired the eighth slice the first draft carried (the other factions to the service): they wait on Realm phase 3.
@@ -936,11 +978,12 @@ is Mac's to overrule.
 | Unearned seat | vacant | 6 |
 | Patron | one a chapter a Season, highest Marks bid, burnt | 8 |
 | Holder's Merit | no carry - a sitting holder keeps an EQUAL standing (`chapterSeatPlan`'s first tie-break; AUDIT CHAP4 E1, decided: the x1.2 it carried made a holder at 2000 of the four weeks' 2400 unbeatable) | 6 |
-| Event weights | Calm 30, Schism 15, Succession 10, Crackdown 10, Rivalry 15, Decline 10, Ascendancy 10; moved as section 7's table says (AUDIT CHAP R11) | 7 |
-| Decline's weekly fall | 2 Strength, unless the week's Merit meets twice the target | 7 |
+| Event weights | Calm 30, Schism 15, Succession 10, Crackdown 10, Rivalry 15, Decline 10, Ascendancy 10; moved as section 7's table says (AUDIT CHAP R11; `CHAPTER_EVENTS`, `chapterEventWeights`, drawn on `CHAPTER_EVENT_SALT`) | 7 |
+| Decline's weekly fall | 2 Strength, unless the week's Merit meets twice the target (`CHAPTER_EVENT_EFFECTS.declineFall`, `declineMeets`) | 7 |
 | Ascendancy's prices | a further tenth off | 7 |
-| Rivalry's swing | 10 Strength | 7 |
-| Crackdown's shut line | Strength 30 | 7 |
+| Rivalry's swing | 10 Strength, the loser's whole, the winner's never past 100 (`rivalrySwing`) | 7 |
+| Crackdown's pay | half again, whole (`crackdownPay`) | 7 |
+| Crackdown's shut line | Strength 30 - under it, the halls shut for the next Season (`crackdownShut`) | 7 |
 | The Chronicle the Hall reads | a region's newest 60 rows, the hidden guilds' left out first (`CHAPTER_CHRONICLE_ROWS`, `server-account/src/npcChapters.js`; AUDIT CHAP4 S3) | 6 |
 | A name on the hall's roll | 32 characters at most, the realm's own cap (`CHAPTER_ROLL_NAME_MAX`) | 9 |
 | The hall's evenings by band | Failing 1, Steady 2, Thriving and Ascendant 3 a week, from the member's own day and three and five after it (`GUILD_DAYS_BY_BAND`, `GUILD_DAY_OFFSETS`, `src/systems/livingWorld/dayPlan.js` - the living world's own law module, as LW0 keeps it) | 9 |
@@ -1331,3 +1374,26 @@ evenings by band, the talk's days, the seats' beat).
   mutants, all dead. Thirty-seven older records re-aimed at the code the fixes moved, all dead; CHAP4a's two carry
   records retired with it (42 there now); AUDIT CHAP3's `A3-S2-OFF` no longer equivalent. The pins the fixes moved say
   PIN MOVED.
+
+## CHAP6a - the Season's event, as built (2026-10-09, Mac: "continue")
+
+The sixth slice's first; section 7 carries the law and what building it narrowed (BUILT, CHAP6a).
+
+- **The law.** `src/net/npcChapterLaw.js`: `CHAPTER_EVENT_SALT`, `CHAPTER_EVENTS`, `chapterEventOk`, `chapterEventName`,
+  `CHAPTER_EVENT_EFFECTS`, `CHAPTER_RIVAL_PAIRS`, `chapterRivalsOf`, `chapterEventWeights`, `chapterEventOf`,
+  `chapterRivalPick`, `declineAfter`, `rivalryEnd`, `crackdownPay`, `crackdownShuts`, `chapterSeasonLine` (and
+  `chapterChronicleLine` routes a Season's rows to it).
+- **The service.** `server-account/src/npcChapters.js`: the Turning carries each chapter's event (`heldEvent`), a
+  Decline's week, the Season's end (`seasonEnded`, over `chapterMeritBetween`) and the draw (`seasonDrawn`) in its one
+  batch, the opening week's reset; `seasonNumberAt`, `regionEvents`; the sheet's `event`, `rival`, `shut`.
+  `server-account/src/professions.js`: a shut hall posts no writs nor its members their own; a Crackdown's pay half
+  again; the board's chapter lines carry the event. Migrations `0099` (the event columns) and `0100` (the Chronicle's
+  two new kinds, a comment) grown in place - nothing shipped; still `acct99`.
+- **Pins.** `test/chap6a_events.test.js`, 16 tests: the events and their numbers; every weight's modifier; the draw
+  (its sameness, its spread, a weight of none, its golden rolls); the rivals and the pick; a Decline's week, a
+  Rivalry's end, a Crackdown's pay and line; the Season's lines; the draw at a Season's opening with every input
+  moved; no draw mid-Season, uncounted, unconfirmed or shut; a Decline's Season; the Season's end (one race a pair, the
+  whole Season's Merit, a rival gone, the shut line after the races, the rows); the Season's Master; the opening's
+  reset; the Chronicle's read; the board's and the sheet's events (a hidden rival unnamed, last Season's none); the
+  shut halls and a Crackdown's pay. `tools/mutants/chap6a.json`: 89 mutants, all dead. Nine older records re-aimed by
+  content (CHAP3a's, CHAP3b's, CHAP4d's, CHAP5a's, AUDIT CHAP4's S6), all dead.

@@ -428,20 +428,22 @@
   {
     "name": "CHAP3A-POST-CALL",
     "file": "server-account/src/professions.js",
-    "old": "  await postMemberWrits(db, day, region, nowS, character, members);\n",
+    "old": "  await postMemberWrits(db, day, region, nowS, character, members, zero);\n",
     "new": "",
     "tests": [
       "test/chap3a_merit.test.js"
-    ]
+    ],
+    "note": "CHAP6a: re-aimed by content (the Season's event beside it)."
   },
   {
     "name": "CHAP3A-POST-CHAPTERS",
     "file": "server-account/src/professions.js",
-    "old": "const want = members.filter((f) => chapters.has(f));",
-    "new": "const want = members;",
+    "old": "const want = members.filter((f) => chapters.has(f) && !events.get(f)?.shut);",
+    "new": "const want = members.filter((f) => !events.get(f)?.shut);",
     "tests": [
       "test/chap3a_merit.test.js"
-    ]
+    ],
+    "note": "CHAP6a: re-aimed by content (the Season's event beside it)."
   },
   {
     "name": "CHAP3A-POST-ONCE",

@@ -137,11 +137,12 @@
   {
     "name": "AUDIT-CHAP4-S6-RESET",
     "file": "server-account/src/npcChapters.js",
-    "old": "      ...(opened ? [db.prepare('UPDATE npc_chapters SET strength = ?1 WHERE true').bind(STRENGTH_START)] : []),\n",
+    "old": "      ...(opened ? [db.prepare(\"UPDATE npc_chapters SET strength = ?1, event = NULL, event_season = NULL, event_data = '{}', shut_season = NULL WHERE true\").bind(STRENGTH_START)] : []),\n",
     "new": "",
     "tests": [
       "test/audit_chap4.test.js"
-    ]
+    ],
+    "note": "CHAP6a: re-aimed by content (the Season's event beside it)."
   },
   {
     "name": "AUDIT-CHAP4-E1-CARRY-BACK",

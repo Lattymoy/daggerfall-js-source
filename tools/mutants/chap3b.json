@@ -288,20 +288,22 @@
   {
     "name": "CHAP3B-SETTLE-PREV",
     "file": "server-account/src/npcChapters.js",
-    "old": "  for (const r of held) at(Number(r.faction), Number(r.region)).prev = Number(r.strength);",
-    "new": "  for (const r of held) at(Number(r.faction), Number(r.region));",
+    "old": "  for (const r of held) Object.assign(at(Number(r.faction), Number(r.region)), heldEvent(r), { prev: Number(r.strength) });",
+    "new": "  for (const r of held) Object.assign(at(Number(r.faction), Number(r.region)), heldEvent(r));",
     "tests": [
       "test/chap3b_strength.test.js"
-    ]
+    ],
+    "note": "CHAP6a: re-aimed by content (the Season's event beside it)."
   },
   {
     "name": "CHAP3B-SETTLE-SEASON",
     "file": "server-account/src/npcChapters.js",
-    "old": "return [c.faction, c.region, ends ? strengthSeasonEnd(s) : s, c.merit];",
-    "new": "return [c.faction, c.region, s, c.merit];",
+    "old": "[c.faction, c.region, ends ? strengthSeasonEnd(c.s) : c.s, c.merit,",
+    "new": "[c.faction, c.region, c.s, c.merit,",
     "tests": [
       "test/chap3b_strength.test.js"
-    ]
+    ],
+    "note": "CHAP6a: re-aimed by content (the Season's event beside it)."
   },
   {
     "name": "CHAP3B-SETTLE-GUESTS",
@@ -471,11 +473,12 @@
   {
     "name": "CHAP3B-LINES-SWITCH",
     "file": "server-account/src/professions.js",
-    "old": "chapters: halls ? await chapterLines(db, region, nowS, members, character) : [],",
-    "new": "chapters: await chapterLines(db, region, nowS, members, character),",
+    "old": "chapters: halls ? await chapterLines(db, region, nowS, members, character, zero) : [],",
+    "new": "chapters: await chapterLines(db, region, nowS, members, character, zero),",
     "tests": [
       "test/chap3b_strength.test.js"
-    ]
+    ],
+    "note": "CHAP6a: re-aimed by content (the Season's event beside it)."
   },
   {
     "name": "CHAP3B-ROUTE",

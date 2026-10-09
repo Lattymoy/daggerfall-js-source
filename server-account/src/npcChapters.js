@@ -43,6 +43,7 @@ import { seatWeekStartMs, SEAT_WEEK_MS, seasonEndingAt, seasonZeroOf, seasonOf, 
 import {
   STRENGTH_START, strengthAfter, strengthTarget, strengthSeasonEnd, chapterBandOf, meritWeekOf, hallHidden, chaptersSwitchOf,
   SEAT_MERIT_WEEKS, seatEligibleAt, chapterSeatPlan, seatChangesOf, chapterTitlesOf, chapterFocusOk, HIDDEN_HALL_FACTIONS,
+  chapterEventWeights, chapterEventOf, chapterEventOk, chapterRivalsOf, chapterRivalPick, declineAfter, rivalryEnd, crackdownShuts,
 } from '../../src/net/npcChapterLaw.js';
 
 /** The most weeks one read settles - a service asleep for longer starts its count again from there (the seats' own). */
@@ -90,34 +91,50 @@ export async function settleChapterWeek(db, week, nowS, zero = null, open = 'on'
   // last week the Chapters were open at all ('dev' or 'on'), the weeks they were shut ('off') no week of either
   const last = await db.prepare("SELECT open FROM npc_chapter_weeks WHERE week < ?1 AND open <> 'off' ORDER BY week DESC LIMIT 1").bind(week).first();
   const opened = open === 'on' && last?.open === 'dev';
-  const { results: held = [] } = opened ? { results: [] } : await db.prepare('SELECT faction, region, strength FROM npc_chapters').all();
-  /** @type {Map<string, { faction: number, region: number, prev: number, merit: number }>} */
+  const { results: held = [] } = opened ? { results: [] } : await db.prepare('SELECT faction, region, strength, event, event_season, event_data, shut_season FROM npc_chapters').all();
+  /** @type {Map<string, Chapter>} */
   const all = new Map();
   const at = (/** @type {number} */ f, /** @type {number} */ g) => {
     const k = `${f}|${g}`;
-    if (!all.has(k)) all.set(k, { faction: f, region: g, prev: STRENGTH_START, merit: 0 });
-    return /** @type {{ faction: number, region: number, prev: number, merit: number }} */ (all.get(k));
+    if (!all.has(k)) all.set(k, { faction: f, region: g, prev: STRENGTH_START, merit: 0, s: STRENGTH_START, event: null, eventSeason: null, data: {}, shut: null });
+    return /** @type {Chapter} */ (all.get(k));
   };
   const confirmed = await allChapters(db, nowS);
   for (const c of confirmed) at(c.faction, c.region);
-  for (const r of held) at(Number(r.faction), Number(r.region)).prev = Number(r.strength);
+  for (const r of held) Object.assign(at(Number(r.faction), Number(r.region)), heldEvent(r), { prev: Number(r.strength) });
   for (const r of merits) at(Number(r.faction), Number(r.region)).merit += Number(r.n);
   const ends = seasonEndingAt(week, zero);
-  const rows = [...all.values()].map((c) => {
-    const s = strengthAfter(c.prev, c.merit, target);
-    return [c.faction, c.region, ends ? strengthSeasonEnd(s) : s, c.merit];
-  });
-  const seats = await seatsPlaced(db, week, turning, open, opened, new Set(confirmed.map((c) => `${c.faction}|${c.region}`)));
+  const keys = new Set(confirmed.map((c) => `${c.faction}|${c.region}`));
+  // CHAP6a: the week's step, and a Decline's 2 more where the Season's event is one (Chapters-Arc 7)
+  const season = seasonOf(week, zero);
+  const live = (/** @type {Chapter} */ c) => (season && c.eventSeason === season.n ? c.event : null);
+  for (const c of all.values()) {
+    c.s = strengthAfter(c.prev, c.merit, target);
+    if (live(c) === 'decline') {
+      const d = declineAfter(c.s, c.merit, target);
+      c.data = { ...c.data, fell: Number(c.data.fell ?? 0) + (c.s - d) };
+      c.s = d;
+    }
+  }
+  /** @type {any[]} */
+  const seasonRows = ends ? await seasonEnded(db, /** @type {{ n: number, start: number }} */ (season), week, all, keys, live, opened) : [];
+  const next = seasonOf(week + 1, zero);
+  if (next && next.start === week + 1) await seasonDrawn(db, next.n, week, season, all, keys);
+  const rows = [...all.values()].map((c) => [c.faction, c.region, ends ? strengthSeasonEnd(c.s) : c.s, c.merit, c.event, c.eventSeason, JSON.stringify(c.data), c.shut]);
+  const seats = await seatsPlaced(db, week, turning, open, opened, keys);
   try {
     await db.batch([
       db.prepare('INSERT INTO npc_chapter_weeks (week, active, target, chapters, open, at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)').bind(week, active, target, rows.length, open, nowS),
       // AUDIT CHAP4 S6: the opening week starts EVERY chapter from 50 - a chapter this week names no more than one it does not
       // (a developers' trial chapter whose town is confirmed again later read its trial Strength)
-      ...(opened ? [db.prepare('UPDATE npc_chapters SET strength = ?1 WHERE true').bind(STRENGTH_START)] : []),
-      db.prepare(`INSERT INTO npc_chapters (faction, region, strength, week, merit, at)
-        SELECT json_extract(value, '$[0]'), json_extract(value, '$[1]'), json_extract(value, '$[2]'), ?1, json_extract(value, '$[3]'), ?2
+      // CHAP6a: and no developers' event, nor a shut hall, past the opening
+      ...(opened ? [db.prepare("UPDATE npc_chapters SET strength = ?1, event = NULL, event_season = NULL, event_data = '{}', shut_season = NULL WHERE true").bind(STRENGTH_START)] : []),
+      db.prepare(`INSERT INTO npc_chapters (faction, region, strength, week, merit, at, event, event_season, event_data, shut_season)
+        SELECT json_extract(value, '$[0]'), json_extract(value, '$[1]'), json_extract(value, '$[2]'), ?1, json_extract(value, '$[3]'), ?2,
+          json_extract(value, '$[4]'), json_extract(value, '$[5]'), json_extract(value, '$[6]'), json_extract(value, '$[7]')
         FROM json_each(?3) WHERE true
-        ON CONFLICT (faction, region) DO UPDATE SET strength = excluded.strength, week = excluded.week, merit = excluded.merit, at = excluded.at`)
+        ON CONFLICT (faction, region) DO UPDATE SET strength = excluded.strength, week = excluded.week, merit = excluded.merit, at = excluded.at,
+          event = excluded.event, event_season = excluded.event_season, event_data = excluded.event_data, shut_season = excluded.shut_season`)
         .bind(week, nowS, JSON.stringify(rows)),
       // CHAP4a: the seats, the whole table again; a Chronicle row a seat that moved
       db.prepare('DELETE FROM npc_chapter_seats WHERE true'),
@@ -131,11 +148,131 @@ export async function settleChapterWeek(db, week, nowS, zero = null, open = 'on'
           json_object('from', json_extract(value, '$[3]'), 'to', json_extract(value, '$[4]')), ?2 FROM json_each(?3)
           WHERE json_extract(value, '$[4]') IS NULL OR EXISTS (SELECT 1 FROM realm_characters c WHERE c.id = json_extract(value, '$[2]'))`)   // S5: nor is said to take one
         .bind(week, nowS, JSON.stringify(seats.changes)),
+      // CHAP6a: the Season's own lines - each event's ending, and each Master who held the seat the whole of it
+      db.prepare(`INSERT INTO npc_chapter_history (faction, region, week, kind, char_id, data, at)
+        SELECT json_extract(value, '$[0]'), json_extract(value, '$[1]'), ?1, json_extract(value, '$[2]'), json_extract(value, '$[3]'), json_extract(value, '$[4]'), ?2
+        FROM json_each(?3) WHERE json_extract(value, '$[3]') = '' OR EXISTS (SELECT 1 FROM realm_characters c WHERE c.id = json_extract(value, '$[3]'))`)
+        .bind(week, nowS, JSON.stringify(seasonRows)),
     ]);
   } catch {
     return { settled: false };
   }
   return { settled: true, chapters: rows.length };
+}
+
+/** @typedef {{ faction: number, region: number, prev: number, merit: number, s: number, event: string | null, eventSeason: number | null, data: any, shut: number | null }} Chapter */
+
+/** CHAP6a: a held row's event, as the Turning carries it. */
+function heldEvent(/** @type {any} */ r) {
+  let data = {};
+  try { data = JSON.parse(r.event_data ?? '{}') ?? {}; } catch { /* a state nobody can read is no state */ }
+  return {
+    event: chapterEventOk(r.event) ? String(r.event) : null, eventSeason: r.event_season == null ? null : Number(r.event_season),
+    data: typeof data === 'object' && !Array.isArray(data) ? data : {}, shut: r.shut_season == null ? null : Number(r.shut_season),
+  };
+}
+
+/**
+ * CHAP6a: EVERY CHAPTER'S MERIT from week `from` to week `to`, a Map of `faction|region` to its sum - a gate's where its
+ * day's claims agree (AUDIT CHAP3 E1, as the week's own sums).
+ * @param {any} db @param {number} from @param {number} to
+ */
+async function chapterMeritBetween(db, from, to) {
+  const { results: lines = [] } = await db.prepare(`SELECT faction, region, source, ref, SUM(amount) AS n FROM npc_chapter_merit WHERE week BETWEEN ?1 AND ?2
+    GROUP BY faction, region, source, CASE WHEN source = 'gate' THEN ref ELSE '' END`).bind(from, to).all();
+  const gateDays = [...new Set(lines.filter((r) => r.source === 'gate').map((r) => gateDayOf(r.ref)).filter((d) => d !== null))];
+  const agreed = await agreedGateRegions(db, gateDays);
+  /** @type {Map<string, number>} */
+  const out = new Map();
+  for (const r of lines) {
+    if (r.source === 'gate' && agreed.get(/** @type {number} */ (gateDayOf(r.ref))) !== Number(r.region)) continue;
+    const k = `${r.faction}|${r.region}`;
+    out.set(k, (out.get(k) ?? 0) + Number(r.n));
+  }
+  return out;
+}
+
+/**
+ * CHAP6a: A SEASON'S END (Chapters-Arc 7: "the event resolves"), before its halving - each Rivalry raced on the Season's
+ * Merit and its winner given 10 of the loser's Strength (a pair that drew each other raced once), each Crackdown's
+ * chapter under 30 shut for the next Season. Answers the Chronicle's rows `[faction, region, kind, char, data]`: an
+ * 'event' row a chapter whose event was no Calm, and a 'season' row each Master who held the seat the whole Season
+ * (placed at or before the Turning that opened it, sitting still - never Season 0's, which crowns no one, as the seats'
+ * own; never at the Chapters' opening, whose seats are none).
+ * @param {any} db @param {{ n: number, start: number }} season @param {number} week @param {Map<string, Chapter>} all
+ * @param {Set<string>} keys @param {(c: Chapter) => string | null} live @param {boolean} opened
+ */
+async function seasonEnded(db, season, week, all, keys, live, opened) {
+  const merit = await chapterMeritBetween(db, season.start, week);
+  /** @type {Map<string, string | null>} */
+  const raced = new Map();
+  for (const c of all.values()) {
+    if (live(c) !== 'rivalry') continue;
+    const k = `${c.faction}|${c.region}`, rk = `${c.data.rival}|${c.region}`;
+    const r = keys.has(rk) ? all.get(rk) : undefined;
+    if (!r) { c.data = { ...c.data, won: null }; continue; }   // its rival's chapter gone: no race to win
+    const pair = [k, rk].sort().join('&');
+    if (!raced.has(pair)) {
+      const end = rivalryEnd([c.s, r.s], [merit.get(k) ?? 0, merit.get(rk) ?? 0]);
+      c.s = end.a; r.s = end.b;
+      raced.set(pair, end.won === null ? null : end.won === 'a' ? k : rk);
+    }
+    const winner = raced.get(pair);
+    c.data = { ...c.data, won: winner == null ? null : winner === k };
+  }
+  /** @type {any[]} */
+  const out = [];
+  for (const c of all.values()) {
+    const e = live(c);
+    if (e === 'crackdown') {
+      const shut = crackdownShuts(c.s);
+      if (shut) c.shut = season.n + 1;
+      c.data = { ...c.data, shut };
+    }
+    if (e && e !== 'calm') out.push([c.faction, c.region, 'event', '', JSON.stringify({ ...c.data, season: season.n, event: e })]);
+  }
+  if (season.n > 0 && !opened) {
+    const { results: masters = [] } = await db.prepare("SELECT faction, region, char_id FROM npc_chapter_seats WHERE seat = 'master' AND since <= ?1 ORDER BY faction, region")
+      .bind(season.start - 1).all();
+    for (const m of masters) {
+      if (keys.has(`${m.faction}|${m.region}`)) out.push([Number(m.faction), Number(m.region), 'season', String(m.char_id), JSON.stringify({ season: season.n })]);
+    }
+  }
+  return out;
+}
+
+/**
+ * CHAP6a: A SEASON'S DRAW (Chapters-Arc 7) at the Turning that opens Season `n` (`week` its last week before, `ended`
+ * the Season that week closed, or null): every confirmed chapter's event over the weights its last Season moved - its
+ * band as that Season ended, the hands its Master's seat changed into in it, its strongest rival in the region (the
+ * Rivalry's to race), whether a seat of the region has the Curfew as law. A chapter no longer confirmed draws none.
+ * @param {any} db @param {number} n @param {number} week @param {{ start: number } | null} ended @param {Map<string, Chapter>} all @param {Set<string>} keys
+ */
+async function seasonDrawn(db, n, week, ended, all, keys) {
+  /** @type {Map<string, number>} */
+  const masters = new Map();
+  if (ended) {
+    const { results = [] } = await db.prepare(`SELECT faction, region, COUNT(*) AS n FROM npc_chapter_history WHERE kind = 'seat' AND week BETWEEN ?1 AND ?2
+      AND json_extract(data, '$.to') = 'master' GROUP BY faction, region`).bind(ended.start - 1, week - 1).all();
+    for (const r of results) masters.set(`${r.faction}|${r.region}`, Number(r.n));
+  }
+  const { results: curfews = [] } = await db.prepare(`SELECT DISTINCT h.region FROM town_seat_edicts e JOIN town_seat_holds h ON h.key = e.key
+    WHERE e.week = ?1 AND e.state = 'law' AND e.edict = 'curfew'`).bind(week).all();
+  const curfew = new Set(curfews.map((r) => Number(r.region)));
+  for (const c of all.values()) {
+    const k = `${c.faction}|${c.region}`;
+    if (!keys.has(k)) continue;
+    const rivals = chapterRivalsOf(c.faction).map((f) => all.get(`${f}|${c.region}`)).filter((r) => r && keys.has(`${r.faction}|${r.region}`))
+      .map((r) => ({ faction: /** @type {Chapter} */ (r).faction, strength: /** @type {Chapter} */ (r).s }));
+    const rival = chapterRivalPick(rivals);
+    const weights = chapterEventWeights({
+      faction: c.faction, band: chapterBandOf(c.s).band, masters: masters.get(k) ?? 0,
+      rivalBand: rival === null ? null : chapterBandOf(/** @type {Chapter} */ (all.get(`${rival}|${c.region}`)).s).band, curfew: curfew.has(c.region),
+    });
+    c.event = chapterEventOf(n, c.faction, c.region, weights);
+    c.eventSeason = n;
+    c.data = c.event === 'rivalry' ? { rival } : {};
+  }
 }
 
 /**
@@ -260,6 +397,40 @@ export async function settleChaptersDue(db, nowS, zero = null, open = 'on') {
   return n;
 }
 
+/** CHAP6a: the Season `nowS` is in (its number), or null with none counted - the week a chapter's event and shut halls
+ *  are read against. */
+export const seasonNumberAt = (/** @type {number} */ nowS, /** @type {number | null} */ zero) => seasonOf(meritWeekOf(nowS), zero)?.n ?? null;
+
+/** CHAP6a: a chapter's event this Season as a reader is told it - `{ event, rival?, shut? }` (`event` null where none was
+ *  drawn for it) - or null where it has neither; `named` whether a rival guild may be named to this reader. */
+function eventView(/** @type {any} */ r, /** @type {number | null} */ n, /** @type {(f: number) => boolean} */ named) {
+  if (n == null) return null;
+  const e = heldEvent(r);
+  const event = e.eventSeason === n ? e.event : null;
+  const shut = e.shut === n;
+  if (!event && !shut) return null;
+  const rival = event === 'rivalry' && Number.isSafeInteger(e.data.rival) && named(e.data.rival) ? e.data.rival : null;
+  return { event, ...(rival !== null ? { rival } : {}), ...(shut ? { shut: true } : {}) };
+}
+
+/**
+ * CHAP6a: A REGION'S CHAPTERS' EVENTS this Season `n` (null: none counted) - a Map of guild faction to eventView's
+ * `{ event, rival?, shut? }`, for each chapter with an event drawn for this Season or its halls shut for it. `named`
+ * whether a rival guild may be named (a hidden one only to its members).
+ * @param {any} db @param {number} region @param {number | null} n @param {(f: number) => boolean} [named]
+ */
+export async function regionEvents(db, region, n, named = (f) => !hallHidden(f)) {
+  /** @type {Map<number, { event: string | null, rival?: number, shut?: boolean }>} */
+  const out = new Map();
+  if (n == null) return out;
+  const { results = [] } = await db.prepare('SELECT faction, event, event_season, event_data, shut_season FROM npc_chapters WHERE region = ?1').bind(region).all();
+  for (const r of results) {
+    const v = eventView(r, n, named);
+    if (v) out.set(Number(r.faction), v);
+  }
+  return out;
+}
+
 /** A region's chapters' Strengths: a Map of guild faction to Strength (50 for one no Turning has settled yet). */
 export async function regionStrengths(/** @type {any} */ db, /** @type {number} */ region, /** @type {number[]} */ factions) {
   const out = new Map(factions.map((f) => [f, STRENGTH_START]));
@@ -270,8 +441,9 @@ export async function regionStrengths(/** @type {any} */ db, /** @type {number} 
 }
 
 /**
- * THE CHAPTER SHEET (5.3): `{ week, chapters: [{ f, region, strength, band, seats }] }` - every chapter confirmed now, its
- * Strength and band, after the Turnings due, and (CHAP5a) its seats' holders `[{ seat, name }]`, the Master's first. The Thieves Guild's and the Dark Brotherhood's are left off: a public sheet
+ * THE CHAPTER SHEET (5.3): `{ week, chapters: [{ f, region, strength, band, seats, event?, rival?, shut? }] }` - every
+ * chapter confirmed now, its Strength and band, after the Turnings due, (CHAP5a) its seats' holders `[{ seat, name }]`,
+ * the Master's first, and (CHAP6a) its Season's event, a Rivalry's public rival, and whether its halls are shut. The Thieves Guild's and the Dark Brotherhood's are left off: a public sheet
  * would name where the underworld keeps its halls (their members read theirs on the board). `{ error }`:
  * 'chapters-closed'.
  * @param {{ db: any, nowS: number }} ctx @param {any} player @param {any} env
@@ -280,8 +452,11 @@ export async function chapterSheet({ db, nowS }, player, env) {
   if (!chaptersOpenFor(player, env)) return { error: 'chapters-closed' };
   await settleChaptersDue(db, nowS, seasonZeroOf(env?.SEASON_ZERO_WEEK), env?.CHAPTERS_OPEN);
   const chapters = (await allChapters(db, nowS)).filter((c) => !hallHidden(c.faction));
-  const { results = [] } = await db.prepare('SELECT faction, region, strength FROM npc_chapters').all();
+  const { results = [] } = await db.prepare('SELECT faction, region, strength, event, event_season, event_data, shut_season FROM npc_chapters').all();
   const held = new Map(results.map((/** @type {any} */ r) => [`${r.faction}|${r.region}`, Number(r.strength)]));
+  // CHAP6a: and each chapter's Season's event - its rival named where the rival is public, as the sheet itself is
+  const n = seasonNumberAt(nowS, seasonZeroOf(env?.SEASON_ZERO_WEEK));
+  const events = new Map(results.map((/** @type {any} */ r) => [`${r.faction}|${r.region}`, eventView(r, n, (f) => !hallHidden(f))]));
   // CHAP5a (Chapters-Arc 5.3, 9): and each chapter's seats' holders, by the names their characters carry now - the
   // Master's first, then its officers by their tenure (the hall's roll); a hidden guild's chapters are not on the sheet
   const { results: seatRows = [] } = await db.prepare(`SELECT s.faction, s.region, s.seat, c.name FROM npc_chapter_seats s
@@ -297,7 +472,7 @@ export async function chapterSheet({ db, nowS }, player, env) {
     week: meritWeekOf(nowS),
     chapters: chapters.map((c) => {
       const strength = held.get(`${c.faction}|${c.region}`) ?? STRENGTH_START;
-      return { f: c.faction, region: c.region, strength, band: chapterBandOf(strength).band, seats: seats.get(`${c.faction}|${c.region}`) ?? [] };
+      return { f: c.faction, region: c.region, strength, band: chapterBandOf(strength).band, seats: seats.get(`${c.faction}|${c.region}`) ?? [], ...events.get(`${c.faction}|${c.region}`) };
     }),
   };
 }

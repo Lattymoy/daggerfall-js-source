@@ -30,7 +30,9 @@ CREATE INDEX IF NOT EXISTS idx_npc_chapter_seats_char ON npc_chapter_seats (char
 -- THE CHRONICLE. One row a change of seat: the chapter, the Turning's week,
 -- its kind ('seat'), the character, and `data` - `{ "from": seat | null,
 -- "to": seat | null }`. The Hall of Records' to read (Chapters-Arc 6); kept
--- when the character is deleted, as the seats' own history is.
+-- when the character is deleted, as the seats' own history is. CHAP6a: and
+-- a Season's own rows - 'event', the Season's event and how it ended
+-- (`char_id` ''), and 'season', the Master who held the seat all of it.
 CREATE TABLE IF NOT EXISTS npc_chapter_history (
   seq       INTEGER PRIMARY KEY,
   faction   INTEGER NOT NULL,

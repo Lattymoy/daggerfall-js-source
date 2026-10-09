@@ -33,6 +33,10 @@ CREATE TABLE IF NOT EXISTS npc_chapter_weeks (
 -- CHAP4d (grown in place - nothing of it shipped): and its Master's Focus,
 -- the material family its hall writs ask more of, and the week it was
 -- chosen in (it holds for that week alone).
+-- CHAP6a (grown in place): and its Season's event (Chapters-Arc 7) - the
+-- event drawn at the Turning that opened Season `event_season`, its state
+-- (`event_data`: a Rivalry's rival, a Decline's Strength lost so far, an
+-- ending's outcome), and the Season a Crackdown shut its halls for.
 CREATE TABLE IF NOT EXISTS npc_chapters (
   faction   INTEGER NOT NULL,
   region    INTEGER NOT NULL,
@@ -42,6 +46,10 @@ CREATE TABLE IF NOT EXISTS npc_chapters (
   at        INTEGER NOT NULL,
   focus     TEXT,
   focus_week INTEGER,
+  event     TEXT CHECK (event IS NULL OR event IN ('calm', 'schism', 'succession', 'crackdown', 'rivalry', 'decline', 'ascendancy')),
+  event_season INTEGER,
+  event_data TEXT NOT NULL DEFAULT '{}',
+  shut_season INTEGER,
   PRIMARY KEY (faction, region)
 );
 CREATE INDEX IF NOT EXISTS idx_npc_chapters_region ON npc_chapters (region);
