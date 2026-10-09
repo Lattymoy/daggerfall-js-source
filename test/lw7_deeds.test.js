@@ -366,7 +366,7 @@ test('LW7 the streaming host: every resident\'s place by the lives (`livingCycle
   assert.match(w, /got = \{ holder, dies: !pl\.vacant && pl\.dies, hand: pl\.hand \};/);
   assert.match(w, /return pl\.dies && pl\.hand == null; \},   \/\/ LW7/);
   assert.match(w, /f = handsOn\(f, \(m\) => livingPlaceOf\(m, livingCycleOf\(m, Math\.floor\(\(trip\.outT0 - 240\) \/ 1440\)\)\)\.hand\);/);
-  assert.match(w, /helped: won\.has\(n\.enc\) \}\)\);/);
+  assert.match(w, /helped: won\.has\(n\.enc\) \}\)\) \};/);   // PIN MOVED (LW16): the town's news at any minute (livingRoadNewsAt), the word carried's too
   assert.match(w, /const res = livingPlaceOf\(c\.res, livingCycleOf\(c\.res, day\)\)\.holder;/);
   // PIN MOVED (LEGACY5): a townsperson wed into Project Legacy's line holds no census place (the line's resident now)
   assert.match(w, /holderOf: \(res, day\) => \(legacyHost\?\.holdsResident\(res\.id\) \? null : livingPlaceOf\(res, livingCycleOf\(res, day\)\)\.holder\), deadAt: livingDeadAt, slay: livingSlay, killed: livingKilled,/);   // WATCH-FIX: PIN MOVED - and one of the watch another hand killed

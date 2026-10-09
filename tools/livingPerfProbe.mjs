@@ -33,7 +33,8 @@ import { MobilePerson, PERSON_MOVE_SPEED } from '../src/characters/mobilePerson.
 import { CLASSIC_MINUTES_PER_SECOND } from '../src/systems/worldTick.js';
 import { DAY_MIN, DAY_START_MIN } from '../src/systems/livingWorld/dayPlan.js';
 import { planRoute } from '../src/systems/travelRoute.js';
-import { diversAt, fallenIn, CALENDAR_MPM, NATIVE_PER_M, NATIVE_PIXEL, partiesNear } from '../src/systems/livingWorld/trips.js';
+import { diversAt, fallenIn, CALENDAR_MPM, NATIVE_PER_M, NATIVE_PIXEL, partiesNear, townTrips, visitorsOf, newsOf, NEWS_DAYS, TRIP_REACH_PX } from '../src/systems/livingWorld/trips.js';
+import { carriedNews } from '../src/systems/livingWorld/carried.js';   // LW16
 import { createLivingRoads } from '../src/scenes/livingRoads.js';
 import { createLivingIndoors } from '../src/scenes/livingIndoors.js';
 import { createRelations } from '../src/systems/livingWorld/relations.js';
@@ -249,6 +250,54 @@ console.log('THE OUTLAWS (LW12: the bands of the map\'s region, their hideouts, 
     console.log(`  the roads' layer at a hideout (${layer.parties().length} parties): the way in ${ms(frames[0])}, then mean ${ms(f.mean)} p99 ${ms(f.p99)} max ${ms(f.max)}`);
     check(f.max <= 6, `the roads' layer at a hideout, any frame <= 6 ms (${ms(f.max)})`);
   }
+}
+
+console.log('THE WORD CARRIED (LW16: a town\'s visits of these days and their towns\' news, worked a slice a frame)');
+{
+  // the host's generator's shape (scenes/world.js livingVisitsGen): a town about's trips a slice, its visitors, each
+  // visit's town's news a day a slice, a courier's town's visits (one hop) - each town cold, as on the way into it
+  const map = livingMap({});
+  let worstSlice = 0, worstTotal = 0, worstSlices = 0, items = 0, tells = 0;
+  for (const town of map.towns) {
+    const o = { mpm: CALENDAR_MPM, memo: new Map() };
+    const told = new Map(), vis = new Map();
+    const newsAt = (tn, t) => {
+      const noon = Math.floor((t - 240) / DAY_MIN) * DAY_MIN + 960, k = `${tn.mapId}:${noon}`;
+      if (!told.has(k)) { const v = []; for (let d = 0; d <= NEWS_DAYS; d++) v.push(...(townTrips(tn, noon - d * DAY_MIN, map.world, o) ?? [])); told.set(k, v); }
+      return newsOf(told.get(k), t);
+    };
+    const visOf = (tn, day) => { const k = `${tn.mapId}:${day}`; if (!vis.has(k)) vis.set(k, visitorsOf(tn, day, map.world, o)); return vis.get(k); };
+    const gen = function* (tn, day, relay) {
+      const out = [], seen = new Set();
+      for (let d = 0; d <= NEWS_DAYS; d++) {
+        for (const near of map.world.townsNear(tn.px, tn.py, TRIP_REACH_PX)) { townTrips(near, (day - d) * DAY_MIN + 960, map.world, o); yield; }
+        const vs = visOf(tn, day - d);
+        yield;
+        for (const v of vs ?? []) {
+          const tr = v.trip;
+          if (!tr?.from || seen.has(tr.id)) continue;
+          seen.add(tr.id);
+          const courier = tr.party.some((m) => m.job === 'courier');
+          const heard = relay && courier ? yield* gen(tr.from, Math.floor((tr.outT0 - 240) / DAY_MIN), false) : [];
+          for (let b = 0; b <= NEWS_DAYS; b++) { townTrips(tr.from, Math.floor((tr.outT0 - 240) / DAY_MIN) * DAY_MIN + 960 - b * DAY_MIN, map.world, o); yield; }
+          out.push({ id: tr.id, from: tr.from, inT: tr.outT1, outT0: tr.outT0, courier, news: newsAt(tr.from, tr.outT0), ...(heard.length ? { relay: heard } : {}) });
+          yield;
+        }
+      }
+      return out;
+    };
+    townTrips(town, 300 * DAY_MIN + 960, map.world, o); visOf(town, 300);   // the town's own day read first, as its roads' read
+    const g = gen(town, 300, true);
+    let total = 0, n = 0, r;
+    do { const a = now(); r = g.next(); const dt = now() - a; total += dt; n++; worstSlice = Math.max(worstSlice, dt); } while (!r.done);
+    worstTotal = Math.max(worstTotal, total); worstSlices = Math.max(worstSlices, n);
+    const a = now();
+    for (let m = 0; m < 60; m++) items += carriedNews(r.value, 300 * DAY_MIN + 600 + m).length;
+    tells = Math.max(tells, (now() - a) / 60);
+  }
+  console.log(`  ${map.towns.length} towns, each cold: the worst town's word ${ms(worstTotal)} in ${worstSlices} slices, the worst slice ${ms(worstSlice)}; the word told a minute at most ${ms(tells)} (${items} items)`);
+  check(worstSlice <= 10, `the carried word, any slice <= 10 ms (${ms(worstSlice)}) - its whole, cold, once in one frame was 23-85 ms`);
+  check(tells <= 1, `the carried word told, a minute's read <= 1 ms (${ms(tells)})`);
 }
 
 console.log('THE ROOM');

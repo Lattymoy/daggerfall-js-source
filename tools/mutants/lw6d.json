@@ -2,8 +2,8 @@
   {
     "name": "LW6d-kinds",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "export const TALE_KINDS = Object.freeze(['home', 'routed']);",
-    "new": "export const TALE_KINDS = Object.freeze(['routed']);",
+    "old": "export const TALE_KINDS = Object.freeze(['home', 'routed', 'held']);",
+    "new": "export const TALE_KINDS = Object.freeze(['routed', 'held']);",
     "tests": [
       "test/lw6d_word.test.js"
     ]
@@ -92,12 +92,12 @@
   {
     "name": "LW6d-early",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": " && !turns.died?.size && !turns.killed?.size && !turns.home?.size && !turns.routed?.size)) return [];",
-    "new": " && !turns.died?.size && !turns.killed?.size && !turns.routed?.size)) return [];",
+    "old": " && !turns.died?.size && !turns.killed?.size && !turns.home?.size && !turns.routed?.size && !turns.held?.size)) return [];",
+    "new": " && !turns.died?.size && !turns.killed?.size && !turns.routed?.size && !turns.held?.size)) return [];",
     "tests": [
       "test/lw6d_word.test.js"
     ],
-    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home. LW16 (re-aimed by content): a party robbed beside it."
   },
   {
     "name": "LW6d-known",

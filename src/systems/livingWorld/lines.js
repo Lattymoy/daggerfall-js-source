@@ -376,7 +376,7 @@ export function watchBand(rep, known) {
 }
 
 /** The fallback for a token the reader cannot fill. LW-TALK: {place} is filled from the town's own road (meetups.js). */
-export const TOKEN_FALLBACK = Object.freeze({ town: 'town', region: 'the court', a: 'friend', b: 'friend', place: 'the next town', player: 'friend', who: 'someone', foe: 'brigands', house: 'that house', hour: 'The hour' });   // LW-STIR: {hour}, the watch's call
+export const TOKEN_FALLBACK = Object.freeze({ town: 'town', region: 'the court', a: 'friend', b: 'friend', place: 'the next town', player: 'friend', who: 'someone', foe: 'brigands', house: 'that house', hour: 'The hour', from: 'the next town' });   // LW-STIR: {hour}, the watch's call
 
 /**
  * LW4: WHAT THE TOWN SAYS OF THE ROAD - two- and three-line scripts on a trouble its own travellers met: `{who}` the one
@@ -468,6 +468,11 @@ export const ROUTED_NEWS = Object.freeze([
   Object.freeze(['{player} routed {who}, they say. Their camp off the road stands empty.', 'Then the road is safe for a while. A while.']),
   Object.freeze(['Have you heard? {who} are finished. {player} saw to it.', 'Somebody had to. The watch never would.']),
 ]);
+/** LW16: of a party of the region the PLAYER robbed on the road, once a witness carried it in - `{who}` the one robbed. */
+export const HELD_NEWS = Object.freeze([
+  Object.freeze(['{player} robbed {who} on the road, they say.', 'In broad day?', 'Bold as brass. The watch has their name now.']),
+  Object.freeze(['Did you hear? {who} was held up on the road. {player}, they say.', 'Then I\'m keeping my purse close.']),
+]);
 /** LW7: of a fight on the road the PLAYER turned for its party (the character's `won`) - `{player}` the one who came. */
 export const HELPED_NEWS = Object.freeze({
   won: Object.freeze([
@@ -509,6 +514,25 @@ export const KIN_NEWS = Object.freeze({
 });
 /** Of a meeting with news to tell, the share that tells it. */
 export const NEWS_SHARE = 0.4;
+/** LW16: of the news told, the share that is the word carried in from the towns about (a town with none tells its own). */
+export const CARRIED_SHARE = 0.3;
+/** LW16: the word carried's first line - `{from}` the town it came from (the script of the news itself after it). */
+export const CARRIED_OPENERS = Object.freeze([
+  'There\'s word from {from}.',
+  'A carter in from {from} had news.',
+  'You hear what they\'re saying in {from}?',
+  'Travellers from {from} are telling it.',
+]);
+/** LW16: A STRANGER WHO HAS HEARD of the character greets them by it - a fight they turned on the road (`helped`), a
+ *  keepsake carried home (`saved`), a band routed, one of a town struck down where it was seen (`slain`), a party robbed
+ *  (`robbed`); `{who}`, `{foe}`, `{place}` the deed's. */
+export const HEARD_GREETINGS = Object.freeze({
+  helped: Object.freeze(['You\'re the one who drove off {foe} on the road to {place}?', 'They say you stood with {who} against {foe}. Good day to you.', 'I heard what you did for {who}\'s party.']),
+  saved: Object.freeze(['You brought {who}\'s keepsake home, didn\'t you? Bless you.', 'You went into the dark for {who}. Not many would.']),
+  routed: Object.freeze(['You\'re the one who broke {who}? The road thanks you.', '{who} are finished, they say - and you\'re why.']),
+  slain: Object.freeze(['I know who you are. I heard about {who}.', 'Keep your distance. {who} was a friend of a friend.']),
+  robbed: Object.freeze(['You\'re the one who robbed {who} on the road. I\'m watching you.', 'Hand on my purse, stranger. I heard about {who}.']),
+});
 
 /** LW7: a news item's words - a deed's (struck down by the player, seen or not; died at their side; WATCH-FIX: one of
  *  the watch another hand killed), a fight the player turned, a passage by sea's (LW5b), a dive's (LW6), the road's.
@@ -520,6 +544,7 @@ const newsPool = (item) => (item.kin ? KIN_NEWS[/** @type {keyof typeof KIN_NEWS
   : item.kind === 'killed' ? KILLED_NEWS[item.watch ? 'watch' : 'town']
   : item.kind === 'home' ? HOME_NEWS   // LW6d: a keepsake carried home
   : item.kind === 'routed' ? ROUTED_NEWS   // LW12: a band the player routed
+  : item.kind === 'held' ? HELD_NEWS   // LW16: a party the player robbed
     : item.helped && HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)] ? HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)]
       : item.sea ? SEA_NEWS[/** @type {keyof typeof SEA_NEWS} */ (item.kind)]   // LW5b: the sea's own words
         : (item.dive ? DIVE_NEWS : ROAD_NEWS)[/** @type {keyof typeof ROAD_NEWS} */ (item.kind)]);
@@ -527,16 +552,34 @@ const newsPool = (item) => (item.kin ? KIN_NEWS[/** @type {keyof typeof KIN_NEWS
 /**
  * LW4: a meeting's news, if it tells one - NEWS_SHARE of the meetings with news to tell, the item drawn on the seed -
  * and its script by the news's end.
- * @param {number} seed @param {readonly { kind: string, dive?: boolean, helped?: boolean, seen?: boolean }[] | null | undefined} news
+ * @param {number} seed @param {readonly { kind: string, dive?: boolean, helped?: boolean, seen?: boolean, carried?: boolean }[] | null | undefined} news
  * @returns {{ item: any, script: readonly string[] } | null}
  */
 export function newsScript(seed, news) {
   if (!news?.length) return null;
   const rng = seededRng((seed ^ 0x4e455753) >>> 0);   // 'NEWS'
   if (rng() >= NEWS_SHARE) return null;
-  const item = news[Math.floor(rng() * news.length)];
+  // LW16: the word carried in from the towns about, CARRIED_SHARE of the news told - on a draw of its own, so a town
+  // with none tells its own as ever
+  const carried = news.filter((n) => n.carried);
+  const own = carried.length ? news.filter((n) => !n.carried) : news;
+  const list = carried.length && seededRng((seed ^ 0x43415252) >>> 0)() < CARRIED_SHARE ? carried : own;   // 'CARR'
+  if (!list.length) return null;
+  const item = list[Math.floor(rng() * list.length)];
   const pool = newsPool(item);
-  return pool ? { item, script: pool[Math.floor(rng() * pool.length)] } : null;
+  if (!pool) return null;
+  const script = pool[Math.floor(rng() * pool.length)];
+  return { item, script: item.carried ? carriedScript(Math.floor(rng() * CARRIED_OPENERS.length), script) : script };
+}
+
+/** LW16: a carried news's script - its opener before the news's own (one array a pair, so a circle never says it twice
+ *  running). @type {WeakMap<readonly string[], (readonly string[])[]>} */
+const _carriedScripts = new WeakMap();
+/** @param {number} o @param {readonly string[]} script */
+function carriedScript(o, script) {
+  let row = _carriedScripts.get(script);
+  if (!row) { row = []; _carriedScripts.set(script, row); }
+  return (row[o] ??= Object.freeze([CARRIED_OPENERS[o], ...script]));
 }
 
 /** LW4: the names Daggerfall's foes take more than one at a time that no rule makes. */

@@ -265,13 +265,15 @@ test('LW11 a deed reported: a hand caught in the goods turns the party against t
   log.trades[0].caught();
   assert.ok(rel.regard(trip.leader.id, Math.floor(t / 1440)) < 0, 'the party\'s regard');
   assert.equal(rel.reports().length, 1);
-  assert.deepEqual({ ...rel.reports()[0], witnesses: undefined }, { crime: CRIMES.Theft, region: 17, at: trip.outT1, who: '', witnesses: undefined });
+  assert.deepEqual({ ...rel.reports()[0], witnesses: undefined }, { crime: CRIMES.Theft, region: 17, at: trip.outT1, who: trip.leader.name, witnesses: undefined });   // PIN MOVED (LW16): the one robbed named, for the tale
   host.step();
   assert.deepEqual(log.charged, [], 'not before the town');
   clock.t = trip.outT1;
   host.step();
   assert.deepEqual(log.charged, [[17, CRIMES.Theft]]);
   assert.equal(rel.reports().length, 0);
+  // LW16: the robbery charged is a tale its region's towns tell, by the one robbed (relations.js TALE_KINDS `held`)
+  assert.deepEqual([...rel.turns().held], [[`R17.${trip.outT1}~${CRIMES.Theft}`, { t: trip.outT1, seen: true, who: trip.leader.name }]]);
   // slain - and every witness dead before the town: void
   clock.t = t;
   const victim = trip.party.find((m) => m.id !== trip.leader.id);
@@ -286,6 +288,23 @@ test('LW11 a deed reported: a hand caught in the goods turns the party against t
   assert.deepEqual(log.charged, [[17, CRIMES.Theft]], 'void');
   assert.equal(rel.reports().length, 0);
   assert.equal(host.caught(trip.leader, t), false, 'nobody standing to carry it');
+  assert.equal(rel.turns().held.size, 1, 'LW16: void, no tale');
+  // LW16: a purse picked and charged is a robbery's tale, by the one robbed; a murder charged never one (the hand's own)
+  const m2 = hostOver(trip, { now: t });
+  m2.dead.add(victim.id);
+  m2.host.caught(trip.leader, t);
+  m2.host.slain(victim, t);
+  m2.clock.t = trip.outT1;
+  m2.host.step();
+  assert.deepEqual(m2.log.charged, [[17, CRIMES.Pickpocketing], [17, CRIMES.Murder]]);
+  assert.deepEqual([...m2.rel.turns().held].map(([k, h]) => [k, h.who]), [[`R17.${trip.outT1}~${CRIMES.Pickpocketing}`, trip.leader.name]]);
+  // LW16: a purse picked and every witness dead before the town: void, no tale
+  const m3 = hostOver(trip, { now: t });
+  m3.host.caught(trip.leader, t);
+  for (const m of trip.party) m3.dead.add(m.id);
+  m3.clock.t = trip.outT1;
+  m3.host.step();
+  assert.deepEqual([m3.log.charged, m3.rel.turns().held.size], [[], 0]);
 });
 
 test('LW11 the hold-up: the party\'s armed all down, its leader standing - it yields once, its robbery the character\'s (its cargo a quarter, LW10), a theft reported, the counter its goods and the rest of its purse open to take (mutants: the yield, the robbed minute, the take)', () => {
@@ -298,6 +317,7 @@ test('LW11 the hold-up: the party\'s armed all down, its leader standing - it yi
   assert.equal(host.robbed(trip.id), t);
   assert.equal(log.said.at(-1), CARAVAN_LINES.yield(trip.leader.name.split(' ')[0]));
   assert.equal(rel.reports()[0].crime, CRIMES.Theft);
+  assert.equal(rel.reports()[0].who, trip.leader.name, 'LW16: the one robbed, for the tale');
   host.step();
   assert.equal(log.said.filter((s) => /Take it/.test(s)).length, 1, 'once');
   host.offers({ living: { res: trip.leader } }, () => {});

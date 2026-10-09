@@ -165,6 +165,7 @@ export function circleLine(circle, t, lineMin, ctx = {}, memo = null) {
     a: firstNameOf(circle.members[at.k % n].name), b: firstNameOf(circle.members[(at.k + 1) % n].name),
     who: told ? firstNameOf(told.item.who) : null, foe: told ? told.item.foe : null, player: ctx.player,   // LW7: a deed's, a fight's turner
     house: told?.item.house ?? null,   // LEGACY6: the house a kinsman's news is of
+    from: told?.item.from ?? null,   // LW16: the town the word was carried from
   });
   return { who, text, index, k: at.k };
 }

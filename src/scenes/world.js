@@ -121,7 +121,7 @@ import { createRelations, LIVING_WORLD_VENDOR } from '../systems/livingWorld/rel
 import { ResidentWalker } from '../characters/residentWalker.js';
 import { firstNameOf } from '../systems/livingWorld/lines.js';
 import { travellerRoster, mintResident } from '../systems/livingWorld/census.js';   // LW3: a town's travellers, off its MAPS row alone; LW4: a newcomer to a place the road emptied
-import { townTrips, visitorsOf as tripVisitorsOf, awayOf as tripAwayOf, placeCycle, setsOut, newsOf, paceScale, NEWS_DAYS, diversAt, cycleOf, handsOn, nativeDry, divesIn } from '../systems/livingWorld/trips.js';   // LW3: the roads, pure; LW4: the places' cycles, the town's news; LW7: a townsperson's cycle, a trip's hand deaths; LW-DRY: the ground a party stops on
+import { townTrips, visitorsOf as tripVisitorsOf, awayOf as tripAwayOf, placeCycle, setsOut, newsOf, paceScale, NEWS_DAYS, diversAt, cycleOf, handsOn, nativeDry, divesIn, TRIP_REACH_PX } from '../systems/livingWorld/trips.js';   // LW3: the roads, pure; LW4: the places' cycles, the town's news; LW7: a townsperson's cycle, a trip's hand deaths; LW-DRY: the ground a party stops on
 import { createDryGround } from '../world/dryGround.js';   // LW-DRY: the height map's own dry ground, every client's alike
 import { placeAt, turnKey } from '../systems/livingWorld/lives.js';   // LW4: who holds a traveller's place
 import { peoplePage } from '../systems/livingWorld/people.js';   // LW7c: the chronicle's People page
@@ -2631,6 +2631,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   });
   /** The Living World's day of the sky's minute (livingTown.js dayOf: a day starts at 04:00). */
   const livingRegardDay = () => Math.floor((skyMinutes() - 240) / 1440);
+  /** LW16: a resident's regard of the one played - their own where they have one, else (one of the town the street
+   *  stands) a stranger's by its repute (systems/livingWorld/carried.js): read, never stored */
+  const livingRegardOf = (res, day) => {
+    const lt = livingRelations.known(res.id) ? null : livingTownOfMap(res.town);
+    return lt ? lt.reputeAt().regard : livingRelations.regard(res.id, day);
+  };
 
   // A5b: OUTDOOR MUSIC. AssignPlaylist's City/Wilderness arms - night
   // overrides everything, and by day the weather picks the list
@@ -2931,6 +2937,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const livingTripsOf = (town, day) => {
     livingMemoFresh();   // a new network, new ways
     livingTurnsFresh();
+    livingWordFresh();   // LW16: the town's news kept with the roads
     const o = { mpm: PERSON_MOVE_SPEED / livingBaseRate(), memo: _livingTripMemo };
     const noon = day * 1440 + 240 + 720;
     const trips = townTrips(town, noon, livingTripWorld, o);
@@ -2953,13 +2960,110 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (w.length) away.set(h.id, w);
     }
     // LW4: the town's news of the road - its own parties' troubles of the last days, each known once they were home
-    const told = [];
-    for (let d = 0; d <= NEWS_DAYS; d++) { const tr = townTrips(town, noon - d * 1440, livingTripWorld, o); if (tr) told.push(...tr); }
-    const won = livingRelations.turns().won;
-    const news = newsOf(told, noon).map((n) => ({ ...n, foe: n.band ?? (n.foe != null ? livingFoeWord(n.foe, 2) : ''), helped: won.has(n.enc) }));   // LW7: a fight the player turned; LW12: a band by its name
+    const { told, news } = livingRoadNewsAt(town, noon, o);
     // LW-TALK: the towns of its road - where its people's trips of these days were bound - for its talk's {place}
     const places = [...new Set([...trips, ...told].map((tr) => tr.to?.name).filter(Boolean))].sort();
     return { away, visitors, holders, news, places };
+  };
+  /** LW4: a town's news of the road at minute `t` - its own parties' troubles of the last NEWS_DAYS days, each known once
+   *  they were home (trips.js newsOf); LW7 a fight the player turned (`helped`); LW12 a band by its name. */
+  const livingRoadNewsAt = (town, t, o) => {
+    const noon = Math.floor((t - 240) / 1440) * 1440 + 240 + 720;
+    const k = `${town.mapId >>> 0}:${noon}`;
+    let told = _livingToldKept.get(k);
+    if (!told) {
+      told = [];
+      let whole = true;
+      for (let d = 0; d <= NEWS_DAYS; d++) { const tr = townTrips(town, noon - d * 1440, livingTripWorld, o); if (tr) told.push(...tr); else whole = false; }
+      if (whole) { if (_livingToldKept.size > 2000) _livingToldKept.clear(); _livingToldKept.set(k, told); }   // LW16: kept while the roads' memo stands
+    }
+    const won = livingRelations.turns().won;
+    return { told, news: newsOf(told, t).map((n) => ({ ...n, foe: n.band ?? (n.foe != null ? livingFoeWord(n.foe, 2) : ''), helped: won.has(n.enc) })) };
+  };
+  /**
+   * LW16: THE WORD CARRIED - THE VISITS a town has had these NEWS_DAYS days (carried.js carriedNews' `visits`): each
+   * party come in from a town about, where from, when it came in and set out, its town's news of the road when it set
+   * out, and a courier's (`relay`, when `relay` is asked) the visits its own town had had by then - one hop, never two.
+   * A generator, worked a slice a frame (`livingCarriedStep`): the towns about, cold, cost tens of milliseconds.
+   * @param {any} town @param {number} day @param {any} o @param {boolean} relay
+   */
+  function* livingVisitsGen(town, day, o, relay) {
+    /** @type {any[] & { partial?: boolean }} */
+    const out = [];
+    const seen = new Set();
+    for (let d = 0; d <= NEWS_DAYS; d++) {
+      // the towns about read a town a slice (townTrips keeps each day's: the visitors' read after them is the book's)
+      const noon = (day - d) * 1440 + 240 + 720;
+      for (const near of livingTripWorld.townsNear(town.px ?? 0, town.py ?? 0, TRIP_REACH_PX)) { townTrips(near, noon, livingTripWorld, o); yield; }
+      const vs = livingVisitorsCached(town, day - d, o);
+      if (vs === undefined) out.partial = true;   // a way still asked: the word worked again later
+      yield;
+      for (const v of vs ?? []) {
+        const tr = v.trip;
+        if (!tr?.from || seen.has(tr.id)) continue;
+        seen.add(tr.id);
+        const courier = tr.party.some((m) => m.job === 'courier');
+        const from = { mapId: tr.from.mapId, region: tr.from.region, name: tr.from.name ?? '' };
+        const heard = relay && courier ? yield* livingVisitsGen(tr.from, Math.floor((tr.outT0 - 240) / 1440), o, false) : [];
+        if (heard.partial) out.partial = true;
+        const fromNoon = Math.floor((tr.outT0 - 240) / 1440) * 1440 + 240 + 720;
+        for (let b = 0; b <= NEWS_DAYS; b++) { townTrips(tr.from, fromNoon - b * 1440, livingTripWorld, o); yield; }   // its town's news, a day a slice
+        out.push({ id: tr.id, from, inT: tr.outT1, outT0: tr.outT0, courier, news: livingRoadNewsAt(tr.from, tr.outT0, o).news, ...(heard.length ? { relay: heard } : {}) });
+        yield;
+      }
+    }
+    return out;
+  }
+  /** LW16: a town's visitors of a day, and its told trips by a noon, kept while the roads' memo stands (a town about is
+   *  asked by every town near it). */
+  const _livingVisitorsKept = new Map(), _livingToldKept = new Map();
+  const livingVisitorsCached = (town, day, o) => {
+    const k = `${town.mapId >>> 0}:${day}`;
+    if (_livingVisitorsKept.has(k)) return _livingVisitorsKept.get(k);
+    const vs = tripVisitorsOf(town, day, livingTripWorld, o);
+    if (vs !== undefined) { if (_livingVisitorsKept.size > 2000) _livingVisitorsKept.clear(); _livingVisitorsKept.set(k, vs); }   // a way still asked: asked again
+    return vs;
+  };
+  /** LW16: each town's carried word by its day - `{ gen }` while it is worked, `{ visits }` once done. */
+  const _livingCarried = new Map();
+  /** LW16: the visits a town's word carries on `day` - null while they are worked (the town tells its own meanwhile). */
+  const livingCarriedOf = (town, day) => {
+    livingWordFresh();
+    const k = `${town.mapId >>> 0}:${day}`;
+    let e = _livingCarried.get(k);
+    if (e?.visits?.partial && performance.now() - e.at > LIVING_CARRIED_RETRY_MS) e = null;   // a way asked then: again, now
+    if (!e) {
+      if (_livingCarried.size > 16) _livingCarried.clear();
+      e = { gen: livingVisitsGen(town, day, { mpm: PERSON_MOVE_SPEED / livingBaseRate(), memo: _livingTripMemo }, true), visits: null, at: 0 };
+      _livingCarried.set(k, e);
+    }
+    return e.visits;
+  };
+  /** LW16: how long a word worked while a way was still asked stands before it is worked again (real ms). */
+  const LIVING_CARRIED_RETRY_MS = 5000;
+  /** LW16: the kept word made again with the roads (a new network, a turn of fate, another character's record). */
+  let _livingWordV = null;
+  const livingWordFresh = () => {
+    livingMemoFresh();
+    livingTurnsFresh();
+    const v = `${livingWays.generation}|${livingRelations.turnsVersion()}`;
+    if (_livingWordV === v && _livingWordRel === livingRelations) return;
+    _livingWordV = v; _livingWordRel = livingRelations;
+    _livingCarried.clear(); _livingVisitorsKept.clear(); _livingToldKept.clear();
+  };
+  let _livingWordRel = null;
+  /** LW16: the most of a frame the carried word is worked for. */
+  const LIVING_CARRIED_SLICE_MS = 3;
+  /** LW16: the carried word worked for at most `budgetMs` of a frame. @param {number} budgetMs */
+  const livingCarriedStep = (budgetMs) => {
+    const t0 = performance.now();
+    for (const e of _livingCarried.values()) {
+      while (!e.visits) {
+        if (performance.now() - t0 >= budgetMs) return;
+        const r = e.gen.next();
+        if (r.done) { e.visits = r.value; e.at = performance.now(); }
+      }
+    }
   };
   // LW5: THE BAY'S SAILORS (systems/livingWorld/portCrews.js) - a port's sailors the crews of the packets calling at it,
   // each where her clock has her (the shared one the naval host stands and steers her by, raidNowMs): aboard under way,
@@ -5656,6 +5760,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           relations: () => livingRelations, playerName: () => playerEntity.name ?? '', weather: () => weather,
           townName: dfLocation.name, regionName: dfLocation.regionName ?? '',
           patronsOf: () => _livingPatrons.get(livingTown.mapId >>> 0) ?? null,   // LW15: its patrons' errands, its traders' doors
+          carriedOf: (day) => livingCarriedOf(livingTown, day),   // LW16: the word carried in from the towns about
           tripsOf: (day) => livingTripsOf(livingTown, day), armOf: livingArmOf, flatOf: livingFlatOf,   // LW3: its travellers away and armed, its visitors - LW-LOOKS: its still pictures
           familyNews: (t) => legacyHost?.newsFor(livingTown.mapId, t) ?? null,   // LEGACY6: what the town says of the line
           extraPeople: (day, town) => legacyHost?.residentsOf(livingTown.mapId, (seed) => town.homeFor(seed), (id) => town.residents.find((r) => r.id === id) ?? null) ?? null,   // LEGACY-HOME: Project Legacy's line, at home here (LEGACY5: a spouse, the census's own)
@@ -14200,7 +14305,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!res || !legacyHost) return [];
     const day = livingRegardDay();
     return legacyHost.topicRows(res, {
-      regard: livingRelations.regard(res.id, day), personality: liveStat(playerEntity, 'personality'),
+      regard: livingRegardOf(res, day), personality: liveStat(playerEntity, 'personality'),   // LW16: a stranger's by the town's repute
       etiquette: skillValue(playerEntity, SKILLS.Etiquette), townName: _townOfMapId.get(res.town >>> 0)?.name ?? '',   // their own town's - the street's, a room's or a road's alike
     });
   }
@@ -32732,6 +32837,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (livingWorldOn() && _mode() === 'exterior' && !tvf) { livingHideoutsHostOf().frame(dt); livePersonBatches.push(...livingHideoutsHostOf().batches()); }   // LW12: a band's hideout near, stood
     else _livingHideoutsHost?.clear();
     if (livingWorldOn() && _mode() === 'exterior') livingPatronsStep(Date.now() / 1000, () => { const p = playerTravelPixel(); return p ? maps.getRegionIndexAt(p.x, p.y) : null; });   // LW15: the region's patrons, now and then
+    if (livingWorldOn()) livingCarriedStep(LIVING_CARRIED_SLICE_MS);   // LW16: the word carried, worked a slice a frame
     if (livingWorldOn()) { livingWatchStep(); livingPeerWatchStep(); }   // LW7 / WATCH-FIX: the turned watch followed, mine and a peer's
     if (livingIndoors?.size || livingIndoors?.spots().length) livingIndoors.clear();   // LW8: the street again - the room's residents freed (LW-FIX1: and an empty room's sounding)
     if (livingRemains) { livingRemains.clear(); livingRemains = null; }   // LW6b: ...and the deep's layer let go with its dungeon

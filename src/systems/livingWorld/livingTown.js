@@ -53,12 +53,13 @@ import { NAV_CELL } from '../../world/cityNavigation.js';   // LW-DAWN: a berth'
 import { createPathBook, pointOnLine } from './townPaths.js';
 import { spotCircles, spotRound, circleLine, circlesStands, aloneStand, aloneStands, ROUND_S, GATHER_BEAT_S, lineMinutes, ALONE_FAR_M, SPACE_M } from './meetups.js';
 import { spotIncidents, stirLine, stirLoud, smallVoice, gateWord } from './stir.js';
-import { LIVING_GREETINGS, LIVING_KEEPSAKE, WATCH_GREETINGS, watchBand, fillLine, firstNameOf } from './lines.js';
+import { LIVING_GREETINGS, LIVING_KEEPSAKE, WATCH_GREETINGS, HEARD_GREETINGS, watchBand, fillLine, firstNameOf } from './lines.js';
 import { keepsakeFor } from './keepsake.js';
 import { lwSeed, textSeed } from './seed.js';
 import { placeKeyOf } from './lives.js';
 import { NEWS_DAYS } from './trips.js';
 import { patronVisits } from './patrons.js';   // LW15: a patron's errand to a player's trader
+import { carriedNews, reputeOf, reputeKind, regardWithRepute, heardOf } from './carried.js';   // LW16: the word carried, the character's repute
 
 /** AUDIT LEGACY II B2: whose household a resident is of - their own `household` when they live here beyond the census
  *  (Project Legacy's line), else their census house; null for none. */
@@ -246,8 +247,9 @@ export class LivingTown {
    *   suppressSpawns?: () => boolean,
    *   relations?: () => (ReturnType<typeof import('./relations.js').createRelations> | null),
    *   playerName?: () => string, weather?: () => (string|null), townName?: string, regionName?: string,
+   *   carriedOf?: (day: number) => (any[] | null),
    *   tripsOf?: (day: number) => ({ away: Map<string, { t0: number, t1: number, yaw: number, armed: boolean, dock?: boolean }[]>, visitors: { res: Resident, inT: number, outT: number, yaw: number, trip?: any, dock?: boolean }[],
-   *     holders?: Map<string, Resident|null>, news?: { kind: string, who: string, foe: string, place: string }[], places?: string[] } | undefined),
+   *     holders?: Map<string, Resident|null>, news?: { kind: string, who: string, foe: string, place: string }[], places?: string[], carried?: any[] } | undefined),
    *   armOf?: (res: Resident) => ({ mobileType: number, basics: any, archive: number, frameCount: (record: number) => number, sex?: 'male'|'female' } | null),
    *   flatOf?: (flat: { archive: number, record: number }) => ({ archive: number, record: number, frameCount: number } | null),
    *   ashore?: (res: Resident) => ('home'|'sea'|'abroad'|null),
@@ -344,6 +346,8 @@ export class LivingTown {
     this._stirVoice = new Map();
     /** @type {{ person: any, text: string, until: number }[]} the words to the player standing */
     this._greetings = [];
+    /** @type {{ visits: any, m: number, v: number, out: any[] } | null} LW16: the word carried in, kept by the minute */
+    this._carriedMemo = null;
     this._now = 0;
     this._realNow = 0;
     /** @type {number|null} the clock at the last frame (an arrival is a jump from it) */
@@ -479,7 +483,7 @@ export class LivingTown {
     const got = this.o.tripsOf(day);
     if (!got) return null;
     this._roads = { day, away: got.away, visitorOf: new Map(got.visitors.map((v) => [v.res.id, v])), visitors: got.visitors.map((v) => v.res),
-      holders: got.holders ?? null, news: got.news ?? null, places: got.places ?? null,   // LW4: who holds each traveller's place today; the town's news of the road; LW-TALK: its towns
+      holders: got.holders ?? null, news: got.news ?? null, places: got.places ?? null, carried: got.carried ?? null,   // LW4: who holds each traveller's place today; the town's news of the road; LW-TALK: its towns
       other: besideDay(this._roads, day) };   // LW-DAWN
     this._people = null;
     for (const [id, e] of this._plans) {
@@ -1321,7 +1325,11 @@ export class LivingTown {
     const seldom = pool === LIVING_GREETINGS.stranger || pool === WATCH_GREETINGS.citizen;
     if (seldom && !stopped && (lwSeed(textSeed(res.id), Math.floor(t)) % 4) !== 0) return null;
     rel?.seen(res.id, day);
-    return fillLine(pool[lwSeed(textSeed(res.id), Math.floor(t / 7)) % pool.length], { player: this.o.playerName?.() ?? '', town: this.o.townName ?? '' });
+    // LW16: a stranger who has heard of the character speaks of it, now and then (carried.js heardOf)
+    const deed = pool === LIVING_GREETINGS.stranger ? heardOf(this.reputeAt(t).deeds, lwSeed(textSeed(res.id), Math.floor(t / 7), 0x68656172)) : null;   // 'hear'
+    const said = deed ? HEARD_GREETINGS[/** @type {keyof typeof HEARD_GREETINGS} */ (reputeKind(deed))] : pool;
+    return fillLine(said[lwSeed(textSeed(res.id), Math.floor(t / 7)) % said.length], { player: this.o.playerName?.() ?? '', town: this.o.townName ?? '',
+      ...(deed ? { who: deed.kind === 'routed' ? deed.who : firstNameOf(deed.who), foe: deed.foe, place: deed.place } : {}) });
   }
 
   /**
@@ -1391,8 +1399,42 @@ export class LivingTown {
     if (deeds.length) ctx.news = [...(ctx.news ?? []), ...deeds];
     const kin = this.o.familyNews?.(t) ?? [];   // LEGACY6: what the town says of Project Legacy's house (legacy/influence.js newsFor)
     if (kin.length) ctx.news = [...(ctx.news ?? []), ...kin];
+    const carried = this.carriedAt(t);   // LW16: the word carried in from the towns about
+    if (carried.length) ctx.news = [...(ctx.news ?? []), ...carried];
     ctx.player = this.o.playerName?.() ?? '';
     return ctx;
+  }
+
+  /**
+   * LW16: THE WORD CARRIED IN at minute `t` (carried.js carriedNews) - the visits of these days the roads' word names
+   * (`_roads.carried`, else the host's `carriedOf(day)`: none while it is worked), each telling its town's news and the
+   * character's deeds known there when it set out (`deedNews` of that town); kept by the minute and the character's
+   * turns.
+   * @param {number} [t]
+   */
+  carriedAt(t = this._now) {
+    const visits = this._roads?.carried ?? (this._roads ? this.o.carriedOf?.(this._roads.day) : null);
+    if (!visits?.length) return [];
+    const v = this.o.relations?.()?.turnsVersion?.() ?? 0, m = Math.floor(t);
+    const c = this._carriedMemo;
+    if (c && c.visits === visits && c.m === m && c.v === v) return c.out;
+    const own = [...(this._roads?.news ?? []), ...this.deedNews(t)];
+    const out = carriedNews(visits, t, { own, deedsAt: (town, minute) => this.deedNews(minute, town) });
+    this._carriedMemo = { visits, m, v, out };
+    return out;
+  }
+
+  /** LW16: THE TOWN'S REPUTE of the character at minute `t` - its strangers' regard and the deeds it knows of (carried.js
+   *  reputeOf over the road's news, its deeds and the word carried in). @param {number} [t] */
+  reputeAt(t = this._now) {
+    return reputeOf([...(this._roads?.news ?? []), ...this.deedNews(t), ...this.carriedAt(t)]);
+  }
+
+  /** LW16: a resident's regard of the character - their own where they have one, else the town's repute (read, never
+   *  stored). @param {Resident} res @param {number} [t] */
+  regardOf(res, t = this._now) {
+    const rel = this.o.relations?.();
+    return regardWithRepute(!!rel?.known(res.id), rel?.regard(res.id, this.dayOf(t)) ?? 0, this.reputeAt(t).regard);
   }
 
   /** LW8b: the meetings' beat on the town's clock - a round (meetups.js ROUND_S) and a line (the crew's), in its minutes. */
@@ -1532,14 +1574,17 @@ export class LivingTown {
    * LW7: WHAT THE TOWN SAYS OF THE DEEDS - each of its own the player struck down (`slain`), known DEED_KNOWN_MIN after,
    * for NEWS_DAYS: `who` their name, `seen` whether anyone saw whose hand it was; each who died fighting at the
    * player's side (`died`); WATCH-FIX: each another hand cut down in its street (`killed`), `watch` one of the watch's.
-   * LW12: a band of its region the character routed (`routed`, `who` its name).
+   * LW12: a band of its region the character routed (`routed`, `who` its name). LW16: a party of its region the
+   * character robbed on the road, charged (`held`, `who` the one robbed); and any town's deeds (`town`: the word a
+   * visitor carries from theirs - livingWorld/carried.js).
    * The character's own, read over the town's pure news (relations.js turns).
+   * @param {number} [t] @param {{ mapId: number, region?: number }} [town]
    * @returns {{ kind: string, who: string, foe: string, place: string, t: number, seen: boolean, watch?: boolean }[]}
    */
-  deedNews(t = this._now) {
+  deedNews(t = this._now, town = this.o.town) {
     const turns = this.o.relations?.()?.turns?.();
-    if (!turns || (!turns.slain?.size && !turns.died?.size && !turns.killed?.size && !turns.home?.size && !turns.routed?.size)) return [];
-    const prefix = `L${this.o.town.mapId >>> 0}.`;
+    if (!turns || (!turns.slain?.size && !turns.died?.size && !turns.killed?.size && !turns.home?.size && !turns.routed?.size && !turns.held?.size)) return [];
+    const prefix = `L${town.mapId >>> 0}.`;
     const out = [];
     for (const kind of /** @type {const} */ (['slain', 'died', 'killed'])) {   // WATCH-FIX: and one of the watch another hand cut down
       for (const [key, h] of turns[kind] ?? []) {
@@ -1558,11 +1603,18 @@ export class LivingTown {
       out.push({ kind: 'home', who: h.who, foe: '', place: '', t: known, seen: true });
     }
     // LW12: a band the character routed - told in its region's towns (the hideout's key names its region), by its name
-    const region = `O${(this.o.town.region ?? -1) >>> 0}.`;
+    const region = `O${(town.region ?? -1) >>> 0}.`;
     for (const [key, h] of turns.routed ?? []) {
       const known = h.t + DEED_KNOWN_MIN;
       if (!key.startsWith(region) || known > t || t - known >= NEWS_DAYS * DAY_MIN || !h.who) continue;
       out.push({ kind: 'routed', who: h.who, foe: '', place: '', t: known, seen: true });
+    }
+    // LW16: a party the character robbed, charged to its region - told in its region's towns, by the one robbed
+    const charged = `R${(town.region ?? -1) >>> 0}.`;
+    for (const [key, h] of turns.held ?? []) {
+      const known = h.t + DEED_KNOWN_MIN;
+      if (!key.startsWith(charged) || known > t || t - known >= NEWS_DAYS * DAY_MIN || !h.who) continue;
+      out.push({ kind: 'held', who: h.who, foe: '', place: '', t: known, seen: true });
     }
     return out.sort((a, b) => b.t - a.t);
   }

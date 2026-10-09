@@ -129,7 +129,7 @@ export function createCaravanHost(deps) {
       caught: () => {
         const day = deps.day(deps.clock());
         for (const m of membersAt(trip, deps.clock())) rel()?.note?.(m.id, 'crime', day);
-        report(trip, deps.clock(), CRIMES.Theft, '');
+        report(trip, deps.clock(), CRIMES.Theft, trip.leader?.name ?? '');   // LW16: the one robbed, for the tale
       },
     });
   }
@@ -183,7 +183,7 @@ export function createCaravanHost(deps) {
     /** A traveller struck down by the player: a murder, reported. @param {any} res @param {number} t */
     slain(res, t) { const trip = partyOf(res); return trip ? report(trip, t, CRIMES.Murder, res.name) : false; },
     /** A hand caught in a traveller's purse: a pickpocketing, reported. @param {any} res @param {number} t */
-    caught(res, t) { const trip = partyOf(res); return trip ? report(trip, t, CRIMES.Pickpocketing, '') : false; },
+    caught(res, t) { const trip = partyOf(res); return trip ? report(trip, t, CRIMES.Pickpocketing, res.name ?? '') : false; },   // LW16: the one robbed, for the tale
     /** The minute the character robbed a trip (its cargo a quarter), or null. @param {string} tripId */
     robbed: (tripId) => rel()?.wares?.(tripId)?.robbed ?? null,
     /**
@@ -206,7 +206,7 @@ export function createCaravanHost(deps) {
         if (!yields(trip, t, (m) => deps.deadAt(m, t))) continue;
         yielded.add(trip.id);
         keep(trip, 0, t);
-        report(trip, t, CRIMES.Theft, '');
+        report(trip, t, CRIMES.Theft, trip.leader?.name ?? '');   // LW16: the one robbed, for the tale
         deps.say(CARAVAN_LINES.yield(firstNameOf(trip.leader.name)));
       }
       // THE REPORTS carried in - charged, or void when nobody lived to carry them
@@ -214,6 +214,8 @@ export function createCaravanHost(deps) {
         if (t < rep.at) continue;
         const alive = rep.witnesses.some((id) => { const w = deps.resOf(id); return w && !deps.deadAt(w, rep.at); });
         if (alive) deps.charge(rep.region, rep.crime);
+        // LW16: a robbery charged is a tale its region's towns tell (relations.js TALE_KINDS `held`) - the word travels
+        if (alive && rep.crime !== CRIMES.Murder && rep.who && rep.region >= 0) r.turn('held', `R${rep.region >>> 0}.${rep.at}~${rep.crime}`, { t: rep.at, who: rep.who });
         r.dropReport(rep);
       }
       // THE ESCORT

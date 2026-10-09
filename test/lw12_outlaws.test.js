@@ -253,7 +253,7 @@ test('LW12 the take: the parties the band robbed since it formed and within TAKE
 });
 
 test('LW12 heard of and told: the road\'s news of a hold-up names the band; a town of its region tells of a rout by the player; the routed tale, the heard and looted marks ride the save as add-only kinds (mutants: the band named, the region, the kinds)', () => {
-  assert.deepEqual([...TALE_KINDS], ['home', 'routed']);
+  assert.deepEqual([...TALE_KINDS], ['home', 'routed', 'held']);   // PIN MOVED (LW16): a party robbed, charged
   assert.deepEqual([...MARK_KINDS], ['laid', 'heard', 'looted']);
   const trip = { id: 'L1.t0:3', leader: { name: 'Ada Lark' }, to: { name: 'Wayrest' }, backT1: 100, enc: { id: 'L1.t0:3:e', kind: 'robbed', foes: [138], band: 'O1.0~2', bandName: 'the Black Hand' } };
   const n = newsOf([trip], 200);
@@ -272,7 +272,7 @@ test('LW12 heard of and told: the road\'s news of a hold-up names the band; a to
   assert.equal(back.turns().routed.get('O17.0@3.0').who, 'the Black Hand');
   assert.ok(back.turns().heard.has('O17.0~3') && back.turns().looted.has('O17.0~3'));
   const lt = readFileSync(new URL('../src/systems/livingWorld/livingTown.js', import.meta.url), 'utf8');
-  assert.match(lt, /const region = `O\$\{\(this\.o\.town\.region \?\? -1\) >>> 0\}\.`;/);
+  assert.match(lt, /const region = `O\$\{\(town\.region \?\? -1\) >>> 0\}\.`;/);   // PIN MOVED (LW16): any town's deeds (the word a visitor carries)
   assert.match(lt, /if \(!key\.startsWith\(region\) \|\| known > t \|\| t - known >= NEWS_DAYS \* DAY_MIN \|\| !h\.who\) continue;\n\s*out\.push\(\{ kind: 'routed',/);
 });
 

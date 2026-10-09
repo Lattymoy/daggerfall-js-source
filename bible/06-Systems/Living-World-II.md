@@ -9,7 +9,7 @@ up decorations that can be used as shops" - HOME-VENDOR's hired trader. Asked wh
 dungeon, and in what order to build: "Your decision" to both (section 1, decisions 2 and 3). "I want this to be as
 detailed as possible."
 
-**Status: LW9-LW15 BUILT 2026-10-09; LW16 designed.** Eight slices, LW9 to LW16, in the order of decision 2.
+**Status: LW9-LW16 BUILT 2026-10-09.** Eight slices, LW9 to LW16, in the order of decision 2.
 As each one ships, its record is written on this page under its name, the way `06-Systems/Living-World.md` records
 LW1-LW8. That first page stays the record of LW0-LW8 and their fixes, and its LW0 decisions bind here except where
 section 1 says otherwise. Every constant below marked "proposed" is a starting number for the slice to measure. None
@@ -703,7 +703,8 @@ errand in `dayPlan.js`.
 - `scenes/worldModes.js`, `scenes/dungeonContext.js`, `scenes/exterior.js`: none.
 - The service: migration `0097_patrons.sql` (`market_listings.patron_hour`, `market_patron_sales`, `realm_faucets`),
   `market.js` (the reckoning, the reads), `cron.js` (HOUR_JOBS `patrons`), `budget.js` (FAUCET_KINDS,
-  `faucetStatement`). The account service redeploys on merge.
+  `faucetStatement`), `.github/workflows/account-deploy.yml` (the law's file among the paths that deploy the Worker,
+  `test/accountdeploy.test.js` ACC1-CI). The account service redeploys on merge.
 
 Pins: `test/lw15_patrons.test.js` (6) - the law (the share, the odds, the over, the draws, the takes, a crafted piece
 no dearer, the hour's odds measured); the hour (the town, the seller, the day, the order, the hours); the service
@@ -712,21 +713,77 @@ law's own fold, a private home none, a piece taken back mid-reckoning none, a fu
 cron firing by firing; the dealing, the errand cut and taken up, the night's fold, the browser, the Vendor page's
 words; the host's seams. Mutants: `tools/mutants/lw15.json` (63).
 
-## 9. LW16 - the word travels
+## 9. LW16 - the word travels (BUILT 2026-10-09)
 
-Overall improvement: what happens in one town is heard in the next.
+Overall improvement: what happens in one town is heard in the next. The law is `src/systems/livingWorld/carried.js`
+(pure); the town's half is `livingTown.js` (`deedNews` of any town, `carriedAt`, `reputeAt`, `regardOf`, the greeting);
+the host's is `scenes/world.js` (the visits, worked a slice a frame).
 
-- **NEWS CARRIED.**
-  - A town's meetings now tell, beside its own news, the news of the towns its visitors came from (`visitorsOf`).
-  - Each item is known from the visitor's arrival minute, for NEWS_DAYS, in CARRIED_SHARE (0.3) of the news lines.
-  - So a deed in Wayrest is known in Ripmarket when Wayrest's first traveller comes in after it.
-  - Couriers carry the news of every town they pass through, one hop further.
-- **THE PLAYER'S REPUTE.**
-  - A deed known in a town, carried or its own, moves the regard of the town's STRANGERS (those with no regard of
-    their own) by its repute. REPUTE (proposed): saved +4, helped +2, routed +5, slain -8, robbed -5.
-  - It is read, never stored, and never moves a regard past FRIEND_AT or ENEMY_AT.
-  - So a stranger greets a hero by what they heard: "You're the one who drove off the Orcs at the ford?"
-- **Pins**: the arrival minute, the courier's hop, and repute read at the time, bounded, never stored.
+### 9.1 The word carried (`carriedNews`)
+
+- **A VISIT TELLS WHAT ITS TOWN KNEW WHEN IT SET OUT**: a party come in from a town about (its trip's `from`) carries
+  that town's news of the road (trips.js `newsOf` of its own parties, the fights the character turned among them) and
+  the character's deeds known there (`deedNews(minute, town)`: one of it struck down, one died at the character's side,
+  a keepsake carried home, a band of its region routed, a party of its region robbed) - each as it stood at the
+  minute the party set out (`outT0`): a deed known after they left stays behind.
+- **KNOWN HERE FROM ITS COMING IN** (the trip's `outT1`) for NEWS_DAYS (3), from the visits of the last NEWS_DAYS days.
+  Never the town's own news as carried (a region's tale it knows already is its own); an item two carried, from the
+  first in.
+- **A COURIER, ONE HOP FURTHER**: a party with a courier carries too what its own town had heard from ITS visitors by
+  the time it set out - each item from the town it was first told in. Never two hops.
+- **TOLD** (`lines.js newsScript`): CARRIED_SHARE (0.3) of the news a meeting tells, on a draw of its own - a town with
+  none tells its own as ever (the old law replayed, pinned) - its script opened by one of CARRIED_OPENERS ("There's
+  word from {from}."), the town it came from (`meetups.js circleLine`'s `{from}`; TOKEN_FALLBACK "the next town").
+
+### 9.2 The character's repute (`reputeOf`)
+
+- Each deed of the character known in a town, its own or carried in, has its REPUTE: a keepsake carried home
+  (`saved`) +4, a fight turned on the road (`helped`) +2, a band routed +5, one of a town struck down where it was SEEN
+  (`slain`) -8, a party robbed (`robbed`) -5. One struck down unseen, one who died at the character's side, another
+  hand's killing and Project Legacy's house's news carry none.
+- **A STRANGER'S REGARD** (`regardOf`; the talk's rows, `world.js livingRegardOf`): one with no regard of their own
+  takes the town's repute, the sum held between REPUTE_MIN and REPUTE_MAX (ENEMY_AT + 1, FRIEND_AT - 1): read, never
+  stored - a name heard makes nobody a friend or an enemy. A known face keeps their own.
+- **A STRANGER WHO HAS HEARD** greets the character by it (`greetingFor`, `heardOf`): HEARD_SHARE (0.5) of a stranger's
+  words, one of the deeds known (HEARD_GREETINGS: "You're the one who drove off {foe} on the road to {place}?", "I
+  know who you are. I heard about {who}.").
+- **A PARTY ROBBED, TOLD** (built here: the design named the repute, nothing kept the deed): a robbery the road
+  reported (LW11 - a hand in a caravan's goods, its hold-up, a purse picked) is, once a witness carries it in and it
+  is charged, a tale of its region's towns (relations.js TALE_KINDS `held`, `R<region>.<minute>~<crime>`, the name of
+  the one robbed - the report now names them), in its own words (HELD_NEWS). A murder charged never one: it is the
+  hand's. Void, none.
+
+### 9.3 The host, and the measure
+
+- The town's own day read (`livingTripsOf`) is as before. The word carried is worked APART (`livingCarriedOf`,
+  `livingVisitsGen`): a generator over the visits of the last NEWS_DAYS days - each town about's trips a slice, its
+  visitors, each visit's town's news a day a slice, a courier's town's visits - worked LIVING_CARRIED_SLICE_MS (3 ms)
+  a frame (`livingCarriedStep`); the LivingTown asks it by its day (`carriedOf`) and tells it once done. A word worked
+  while a way was still being asked is worked again after LIVING_CARRIED_RETRY_MS (5 s). The towns'
+  visitors and told trips are kept while the roads' memo stands, made again with a new network or a turn of fate
+  (`livingWordFresh`).
+- Measure (`tools/livingPerfProbe.mjs` "THE WORD CARRIED", the 81-town synthetic map, each town cold): the whole word
+  70-85 ms - in one frame that was a hitch, the base day read itself 45-50 ms cold - now in at most 1,352 slices, the
+  worst 3-6 ms (a collection lifts one to 15 now and then); the word told, a minute's read, 0.05 ms.
+
+### 9.4 The four hosts, the pins
+
+- `scenes/world.js`: WIRED (the visits worked, `carriedOf`, a town's news at any minute `livingRoadNewsAt`, the talk's
+  regard by the repute).
+- `scenes/caravanHost.js`: the robbery's tale on its charge; the report names the one robbed.
+- `scenes/worldModes.js`, `scenes/dungeonContext.js`, `scenes/exterior.js`: none.
+
+Moved pins: `lw6d_word` and `lw12_outlaws` (TALE_KINDS' `held`; `deedNews` of any town), `lw7_deeds` (the town's
+news at any minute), `lw8b_talk` (a stranger's word of a deed heard), `lw11_caravan` (the report names the one
+robbed). Re-aimed by content: `lw6d.json` LW6d-early and its TALE_KINDS record, `lw8b.json` LW8b-greet-seen,
+`lw7.json` LW7-host-helped.
+
+Pins: `test/lw16_word.test.js` (5) - the word carried (the window, the set-out, the own, the first in, the deeds, the
+courier's one hop); the repute (each kind, the bounds, the order, the stranger, the share); told (the share on its own
+draw, the old law replayed, the opener, a robbery's words); the living town (any town's deeds, a robbery told in its
+region, the word in its talk, the repute, a stranger's regard and word, the host's word once worked); the host's
+seams. `test/lw11_caravan.test.js` (the tale on the charge, void none, a murder none). Mutants:
+`tools/mutants/lw16.json` (64).
 
 ## 10. Found on the way (not changed by this design)
 
@@ -750,6 +807,8 @@ Overall improvement: what happens in one town is heard in the next.
 2. The patrons' numbers (8.1): PATRON_PAY_SHARE, the town's hourly share and each seller's ceilings. And whether a
    private home's trader sells to the street (8.2).
 3. A band on the bounty board (5.4): the board is shared, a rout the character's own. Still open after LW12.
+4. The repute's numbers (9.2): REPUTE, HEARD_SHARE and CARRIED_SHARE, and whether a heard name should ever carry a
+   stranger past a friend's or an enemy's regard (built: never).
 4. The escort's pay: gold (the client's word, as a counter's gold is) is proposed. Marks (the service's) is the
    alternative.
 5. Couriers on horseback (3.1), if the rider art serves.

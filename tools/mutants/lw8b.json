@@ -282,12 +282,13 @@
   {
     "name": "LW8b-greet-seen",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "    rel?.seen(res.id, day);\n    return fillLine(",
-    "new": "    return fillLine(",
+    "old": "    rel?.seen(res.id, day);\n    // LW16: a stranger who has heard",
+    "new": "    // LW16: a stranger who has heard",
     "tests": [
       "test/lw8b_talk.test.js",
       "test/lw2_livingTown.test.js"
-    ]
+    ],
+    "note": "LW16 (re-aimed by content): the heard word between it and the line."
   },
   {
     "name": "LW8b-greet-stranger",
