@@ -140,7 +140,7 @@ test('WEATHER2a the hosts: the arrival hands the sim its minute, the sky is hand
   assert.match(sim, /function applyFromArray\(climateIndex, nowMinutes\) \{\s*\n\s*return _set\(weatherForClimate\(climateIndex\), climateIndex, nowMinutes\);/);
   assert.match(sim, /if \(!_set\(next, climateIndex, nowMinutes\)\) return false;[^\n]*\n\s*_jumps\+\+;/, 'the respawn roll through the ground, the jump kept');
   assert.match(sim, /const changed = applyFromArray\(climateIndex, nowMinutes\);/, 'the drain');
-  assert.match(sim, /import \{ groundIsSnowy, climateSeasonFromMinutes \} from '\.\.\/world\/climateSwaps\.js';/, 'the terrain\'s own law, not a copy');
+  assert.match(sim, /import \{ groundWearsSnow, climateSeasonFromMinutes \} from '\.\.\/world\/climateSwaps\.js';/, 'the terrain\'s own law, not a copy');
 });
 
 test('WEATHER2a records: the arc page, the ledger row, Home\'s index and the testing row', () => {

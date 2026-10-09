@@ -1,0 +1,9 @@
+[
+  {"name": "CT-route-ungated", "file": "src/ui/touch.js", "old": "      if (table) { if (ev.type === 'swipe' && swiping) { swiping = false; hooks.attack?.(0, 0, false); } continue; }\n", "new": "", "tests": ["test/cardstouch.test.js"]},
+  {"name": "CT-swing-kept", "file": "src/ui/touch.js", "old": "if (table) { if (ev.type === 'swipe' && swiping) { swiping = false; hooks.attack?.(0, 0, false); } continue; }", "new": "if (table) { continue; }", "tests": ["test/cardstouch.test.js"]},
+  {"name": "CT-stick-tap", "file": "src/ui/touch.js", "old": "if (!hooks.cardTable?.()) hooks.tap?.(stickOrigin[0], stickOrigin[1], { lockOnly: true });", "new": "hooks.tap?.(stickOrigin[0], stickOrigin[1], { lockOnly: true });", "tests": ["test/cardstouch.test.js"]},
+  {"name": "CT-gyro", "file": "src/ui/touch.js", "old": "|| hooks.paused?.() || hooks.cardTable?.()) return;", "new": "|| hooks.paused?.()) return;", "tests": ["test/cardstouch.test.js"]},
+  {"name": "CT-seat-anywhere", "file": "src/scenes/worldModes.js", "old": "cardSeated: () => mode === 'interior' && !!cardSeat,", "new": "cardSeated: () => !!cardSeat,", "tests": ["test/cardstouch.test.js"]},
+  {"name": "CT-world-no-seat", "file": "src/scenes/world.js", "old": "    cardTable: () => !!modes?.cardSeated?.(),   // CARDS-TOUCH", "new": "    cardTable: () => false,   // CARDS-TOUCH", "tests": ["test/cardstouch.test.js"]},
+  {"name": "CT-exterior-no-seat", "file": "src/scenes/exterior.js", "old": "    cardTable: () => !!modes?.cardSeated?.(),   // CARDS-TOUCH", "new": "    cardTable: () => false,   // CARDS-TOUCH", "tests": ["test/cardstouch.test.js"]}
+]

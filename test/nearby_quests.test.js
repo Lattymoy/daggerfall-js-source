@@ -43,9 +43,11 @@ function makeWorld(sites) {
     const wc = mapPixelToWorldCoord(pixel.x, pixel.y);
     const ll = mapPixelToLongitudeLatitude(pixel.x, pixel.y);
     const dungeon = s.kind === 'dungeon';
+    // PIN MOVED (KVAR-HOLD, 2026-10-08): the ids start past 5000 - 1001 is Mantellan Crux, a main-story dungeon, and no
+    // random quest draws one now
     return {
       loaded: true, regionIndex: 0, regionName: 'Testshire', name: `${s.kind}${s.dx}`, locationIndex: index, hasDungeon: dungeon,
-      mapTableData: { mapId: 1000 + index, locationType: dungeon ? 7 : 0, dungeonType: dungeon ? 2 : -1, longitude: ll.x, latitude: ll.y },
+      mapTableData: { mapId: 5000 + index, locationType: dungeon ? 7 : 0, dungeonType: dungeon ? 2 : -1, longitude: ll.x, latitude: ll.y },
       exterior: {
         buildings: dungeon ? [] : [tavern],
         recordElement: { header: { x: wc.x, y: wc.y } },

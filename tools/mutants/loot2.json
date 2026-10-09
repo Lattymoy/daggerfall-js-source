@@ -131,8 +131,8 @@
   {
     "name": "LOOT2-the-gate-never",
     "file": "src/systems/gateSpoils.js",
-    "old": "  lastPass(pieces.map((p) => p.item), rolls);\n  // CARDS9 (bible/11-Multiplayer/Tavern-Cards.md section 30): THE WARDEN'S OWN CARD",
-    "new": "  // CARDS9 (bible/11-Multiplayer/Tavern-Cards.md section 30): THE WARDEN'S OWN CARD",
+    "old": "  lastPass(pieces.map((p) => p.item), rolls);\n  // CARDS9 (bible/11-Multiplayer/Tavern-Cards.md section 32): THE WARDEN'S OWN CARD",
+    "new": "  // CARDS9 (bible/11-Multiplayer/Tavern-Cards.md section 32): THE WARDEN'S OWN CARD",
     "tests": [
       "test/loot2_exalted.test.js"
     ]

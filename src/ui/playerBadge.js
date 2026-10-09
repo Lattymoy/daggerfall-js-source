@@ -96,6 +96,7 @@ export const TITLE_TEXT = Object.freeze({
   primarch: 'Primarch',              // PRIMARCH (2026-10-04, GA00250: "the title will be Primarch"): GA00250's own
   crystalfist: 'Crystal Fist',       // CRYSTAL-FIST (2026-10-05, the owner: "Title: Crystal Fist"): Flylighter's own
   hourbreaker: 'Hourbreaker',        // SD9b (2026-10-07, the Super Dungeons arc): one Brass Remnant's kill in four grants it
+  hoursfirst: "Hour's First",       // HOURS-FIRST (2026-10-08, Mac: "a title named Hour's First"): the first group to break an Abyss Dungeon, by name
   iliacchampion: 'Iliac Champion',   // CARDS10 (2026-10-08, Tavern-Cards section 6.4: "a title for the top of it"): Iliac Hand's season #1, while they hold the top
 });
 
@@ -109,6 +110,7 @@ export const AURA_TEXT = Object.freeze({
   seraphwings: 'Seraph Wings',   // SERAPH-WINGS: wings of flowing golden light, the developers' own
   resonance: 'Crystal Resonance',   // CRYSTAL-FIST: the Crystal Fist's ring of purple squares rising and falling, granted with the title
   turninghour: 'The Turning Hour',   // SD9c: the Brass Remnant's wheel of brass gears and gold light, one kill in eight
+  firsthour: 'The First Hour',   // HOURS-FIRST: The Turning Hour in the first dawn's light, Hour's First's own, granted with the title
 });
 
 /** SHADOW-FANG (2026-09-26, Mac): "SirMcMobdon gets a brand new
@@ -178,6 +180,14 @@ export const CRYSTAL_PURPLE = Object.freeze([0.639, 0.286, 0.643, 1]);   // #a34
 export const HOUR_BRASS = Object.freeze([0.71, 0.525, 0.184, 1]);   // #b5862f
 export const HOUR_GOLD = Object.freeze([0.91, 0.753, 0.376, 1]);    // #e8c060 - SD9c: The Turning Hour's light (render/auraRing.js TURNING_RGB reads all three from here)
 export const HOUR_LIGHT = Object.freeze([1, 0.945, 0.769, 1]);      // #fff1c4
+/** HOURS-FIRST (2026-10-08, Mac: "a unique different version of the aura, a title named Hour's First"): THE FIRST
+ *  DAWN'S COLOURS - the Hour broken for the first time, and the light that came back into it. Hour's First is drawn rose
+ *  gold into pearl into the dawn's white; its one colour the rose gold - redder and paler than the Hourbreaker's gold and
+ *  the Grand Champion's bronze, oranger than the Hierophant's rose. The First Hour's wheel is cast in them
+ *  (render/auraRing.js FIRST_RGB reads all three from here). */
+export const HOUR_DAWN = Object.freeze([0.902, 0.553, 0.443, 1]);   // #e68d71
+export const HOUR_PEARL = Object.freeze([1, 0.851, 0.659, 1]);       // #ffd9a8
+export const HOUR_SUN = Object.freeze([1, 0.969, 0.918, 1]);         // #fff7ea
 
 /** A title's colour, RGBA 0..1 - the same shape SOC4's PARTY_GREEN is
  *  in, so `nameLayer.cssRgba` turns it into CSS and `drawText` takes it
@@ -228,6 +238,7 @@ export const TITLE_RGBA = Object.freeze({
   // royal purple and the Apostle's periwinkle, darker and bluer than the Hierophant's rose
   crystalfist: CRYSTAL_PURPLE,
   hourbreaker: HOUR_GOLD,   // SD9b: the Remnant's bar's gold
+  hoursfirst: HOUR_DAWN,    // HOURS-FIRST: the first dawn's rose gold
   // CARDS10: the ILIAC CHAMPION in the Bay's own sea-blue - the water the game is named for, bluer and brighter than the
   // Apostle's periwinkle, no gold (the Founder's) and no green (the Arena Champion's laurel)
   iliacchampion: Object.freeze([0.239, 0.608, 0.820, 1]),   // #3d9bd1
@@ -243,6 +254,7 @@ export const TITLE_GRADIENT = Object.freeze({
   penitent: Object.freeze([PENITENT_GOLD, PENITENT_LIGHT, PENITENT_SKY]),
   gatebreaker: Object.freeze([GATEBREAKER_CRIMSON, GATEBREAKER_FIRE, GATEBREAKER_EMBER]),   // WB9g: coal, fire, ember
   hourbreaker: Object.freeze([HOUR_BRASS, HOUR_GOLD, HOUR_LIGHT]),   // SD9b: the Remnant's brass into the light of its heart
+  hoursfirst: Object.freeze([HOUR_DAWN, HOUR_PEARL, HOUR_SUN]),   // HOURS-FIRST: rose gold into pearl into the dawn's white
   aegis: Object.freeze([OBLIVION_VOID, OBLIVION_VIOLET, OBLIVION_LILAC]),   // AEGIS: out of the void into the ward's light
 });
 
@@ -257,6 +269,7 @@ export const TITLE_EDGE = Object.freeze({
   penitent: Object.freeze([0, 0, 0, 1]),
   gatebreaker: Object.freeze([0, 0, 0, 1]),   // WB9g: its ember end is bright - edged in black, as Penitent's
   aegis: Object.freeze([0, 0, 0, 1]),   // AEGIS: its lilac end is bright - edged in black, as Penitent's and the Gatebreaker's
+  hoursfirst: Object.freeze([0, 0, 0, 1]),   // HOURS-FIRST: its dawn end is near white - edged in black, as Penitent's
 });
 
 /** A glyph's colour. The sprout is green because Mac said green; the
@@ -525,7 +538,7 @@ export const badgeClass = (kind, key) => `${kind}-${key}`;
  *  the Gatebreaker's, the Oblivion Ward the Aegis of Oblivion's, the Golden Radiance the Primarch's (PRIMARCH), the Holo
  *  Shadow Cloak the Shadow Fang's black and crimson (SHADOW-CLOAK), the Seraph Wings the Founder's gold - the wings' own, where
  *  the developer's paint is a red (SERAPH-WINGS), the Crystal Resonance the Crystal Fist's purple (CRYSTAL-FIST). A pin walks AURA_TEXT and requires an entry. */
-export const AURA_PAINT = Object.freeze({ dagonfire: 'gatebreaker', oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker' });
+export const AURA_PAINT = Object.freeze({ dagonfire: 'gatebreaker', oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst' });   // HOURS-FIRST: The First Hour in Hour's First's rose gold
 /** SHADOW-FANG: `titlePaint`'s properties as CSS declarations, the colour
  *  left to the button (its border is drawn in it) - so a gradient title's
  *  word on the card is the SAME paint as over a head, not a second one. */

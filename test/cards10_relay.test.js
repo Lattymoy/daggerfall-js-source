@@ -1,4 +1,4 @@
-// CARDS10 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 31): THE RELAY DEALS ILIAC HAND. Driven: the relay's
+// CARDS10 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 33): THE RELAY DEALS ILIAC HAND. Driven: the relay's
 // Iliac table (net/iliacTable.js) - its two seats of a cloth's chairs, a deck the law refuses refused, the first game
 // after the second seat; the deal from the relay's own source, each seat's hand in a frame to that seat ALONE, the room a
 // spectator's view (no hand, no deck); a commit hidden (the room hears that, never what); the turn turned over once both
@@ -154,10 +154,13 @@ test('CARDS10 the words both ways: a sit carries thirty card ids and an order; a
   assert.deepEqual(parseClient(sit, { hasHello: true }), { t: 'iliac', op: 'sit', table: 0, chair: 0, chairs: 2, deck: DECK });
   assert.deepEqual(parseClient(sit), { error: 'iliac before hello' });
   assert.deepEqual(parseClient(JSON.stringify({ t: 'iliac', op: 'sit', table: 0, chair: 0, chairs: 2, deck: DECK, order: 'x'.repeat(ILIAC_FRAME_MAX) }), { hasHello: true }), { error: 'frame too large' });
-  assert.equal(RELAY_VERSION, 'world179');
-  assert.equal(ILIAC_RELAY_MIN, 179);
-  assert.ok(relaySupportsIliac('world179'));
-  assert.ok(!relaySupportsIliac('world178'), 'an older relay closes the socket on the frame');
+  // PIN MOVED (at the merge of main): world179 on its branch - main's HOURS-FIRST took world179 and TAVERN-TABLES world180,
+  // neither of which deals Iliac Hand, so the relay that first does is world181
+  assert.equal(RELAY_VERSION, 'world181');
+  assert.equal(ILIAC_RELAY_MIN, 181);
+  assert.ok(relaySupportsIliac('world181'));
+  assert.ok(!relaySupportsIliac('world180'), 'an older relay closes the socket on the frame');
+  assert.ok(!relaySupportsIliac('world179'), 'and HOURS-FIRST\'s, the number this slice had on its branch');
 });
 
 test('CARDS10 a ranked game\'s receipt (i1): minted, read and verified; the arena\'s refused by it and it by the arena\'s; a draw said one way; the deck order a kind of its own', async () => {
@@ -279,12 +282,13 @@ test('CARDS10 the relay: a ranked seat\'s deck order checked (its account, its d
   assert.ok(v.ok, v.why);
   assert.deepEqual([v.claims.f, v.claims.r, v.claims.h], [['acct-peer-a', 'acct-peer-b'], 0, 'left']);
   assert.equal(r.room._iliac.get(0).results.length, 0, 'signed, let go');
-  // and Iliac refused at a cloth Hold'em holds
+  // and Iliac refused at a cloth Hold'em holds - PIN MOVED (TAVERN-TABLES, at the merge): table 1 is the room's gold table
+  // (net/holdemTable.js HOLDEM_GOLD_TABLE), which seats no chips sit, so the chips cloth is table 2, Iliac's next table 3
   await word(r, a, { op: 'stand', table: 0 });
-  _tick(300); await r.raw(c, JSON.stringify({ t: 'holdem', op: 'sit', table: 1, chair: 0, chairs: 4, bb: 10 }));
-  await word(r, a, { op: 'sit', table: 1, chair: 1, chairs: 4, deck: DECK });
+  _tick(300); await r.raw(c, JSON.stringify({ t: 'holdem', op: 'sit', table: 2, chair: 0, chairs: 4, bb: 10 }));
+  await word(r, a, { op: 'sit', table: 2, chair: 1, chairs: 4, deck: DECK });
   assert.equal(iliac(a).at(-1).error, 'other game');
   // sitting at Iliac stands a player up from Hold'em
-  await word(r, c, { op: 'sit', table: 2, chair: 0, chairs: 4, deck: DECK });
-  assert.ok(!r.room._holdem.get(1)?.seats.some((s) => s?.id === 'peer-c'), 'one seat in a room at a time');
+  await word(r, c, { op: 'sit', table: 3, chair: 0, chairs: 4, deck: DECK });
+  assert.ok(!r.room._holdem.get(2)?.seats.some((s) => s?.id === 'peer-c'), 'one seat in a room at a time');
 }));

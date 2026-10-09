@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 
 import {
   dungeonModelSet, meshHasDungeonEntrance, dungeonEntranceModel, owDungeonGrow, owDungeonDrawn, grownModelMatrix, modelFoot,
-  TV_DUNGEON_MODELS_MAX, TV_DUNGEON_ICON_K, TV_DUNGEON_GROW_MAX, TV_DUNGEON_GROWN_MIN,
+  TV_DUNGEON_MODELS_MAX, TV_DUNGEON_ICON_K, TV_DUNGEON_GROW_MAX, TV_DUNGEON_GROWN_MIN, startDungeonLoads,
 } from '../src/systems/travelDungeonModels.js';
 import { subMeshDoorType, dfMeshToModel, DOOR_TYPE } from '../src/world/meshReader.js';
 import { trs, multiply } from '../src/world/mat4.js';
@@ -256,12 +256,12 @@ test('OW-DUNGEONS the host\'s load: its blocks laid as its pixel\'s build lays t
 });
 
 test('OW-DUNGEONS the host\'s draw: under the view alone, the set kept in step (a new one loaded, one gone released), each drawn grown with the eye\'s distance about its foot - over a built pixel on the real model\'s own level and only once grown past it, past the grid on the far ring\'s ground - and none casting a giant\'s shadow (mutants: drawn in play; drawn with a shadow; the gone kept; the level the ground\'s over a built pixel; drawn twice at its own size)', () => {
-  const src = lift(/\n {2}(const _tvDngAt = \[0, 0, 0\];\n {2}function drawTvDungeonModels\(eye\) \{[\s\S]*?\n {2}\})\n/, 'drawTvDungeonModels');
+  const src = lift(/\n {2}(const _tvDngAt = \[0, 0, 0\];\n {2}function drawTvDungeonModels\(eye, up\) \{[\s\S]*?\n {2}\})\n/, 'drawTvDungeonModels');
   const s = { list: [], loads: [], draws: [], released: [] };
   const map = new Map();
   const entry = (key, px, py) => ({ key, px, py, ready: true, gpu: { key }, local: trs(0, 0, 0, 0, 0, 0), box: [-2, 0, -2, 2, 8, 2], h: 8, texRemap: 'tex', matrix: new Float32Array(16), hold: { release: () => s.released.push(key) } });
   const d = {
-    tvDungeonModelList: () => s.list, _tvDngModel: map,
+    tvDungeonModelList: () => s.list, _tvDngModel: map, startDungeonLoads,
     tvDungeonModelLoad: (g) => { s.loads.push(g.key); map.set(g.key, entry(g.key, g.px, g.py)); },
     state: { pixelTranslation: (px, py) => [px * 1000, 7, py * 1000] },
     modelFoot, owDungeonGrow, owDungeonDrawn, grownModelMatrix,
@@ -269,11 +269,16 @@ test('OW-DUNGEONS the host\'s draw: under the view alone, the set kept in step (
     tvGroundAt: () => { s.grounds = (s.grounds ?? 0) + 1; return 99; }, tvGroundGenNow: () => s.gen ?? 1,
     renderer: { drawMesh: (mesh, m, tex, o) => s.draws.push({ key: mesh.key, y: m[13], sy: m[5], tex, o }) },
   };
-  const draw = new Function('d', `const { tvDungeonModelList, _tvDngModel, tvDungeonModelLoad, state, modelFoot, owDungeonGrow, owDungeonDrawn, grownModelMatrix, built, tvGroundAt, tvGroundGenNow, renderer } = d;\n${src}\nreturn drawTvDungeonModels;`)(d);
+  const draw = new Function('d', `const { tvDungeonModelList, _tvDngModel, tvDungeonModelLoad, startDungeonLoads, state, modelFoot, owDungeonGrow, owDungeonDrawn, grownModelMatrix, built, tvGroundAt, tvGroundGenNow, renderer } = d;\n${src}\nreturn drawTvDungeonModels;`)(d);
   s.list = [{ key: 'dng:built', px: 1, py: 1 }, { key: 'dng:far', px: 9, py: 9 }];
-  draw(null);
+  draw(null, true);
   assert.equal(s.loads.length, 0, 'no eye, no view: nothing');
-  draw([1000, 480, 1000]);
+  draw([1000, 480, 1000], false);
+  assert.equal(s.loads.length, 0, 'TV-BURST: the view still rising - nothing loaded');
+  draw([1000, 480, 1000], true);
+  assert.deepEqual(s.loads, ['dng:built'], 'TV-BURST: up - one load a frame, the nearest first');
+  s.draws.length = 0;
+  draw([1000, 480, 1000], true);
   assert.deepEqual(s.loads, ['dng:built', 'dng:far'], 'each new one loaded');
   const byKey = Object.fromEntries(s.draws.map((x) => [x.key, x]));
   assert.ok(near(byKey['dng:built'].y, 7 + 30), 'over its built pixel: on the real model\'s own level');
@@ -298,7 +303,7 @@ test('OW-DUNGEONS the host\'s draw: under the view alone, the set kept in step (
   assert.ok(!map.has('dng:built'));
   assert.equal(s.loads.length, 2, 'the one still there not loaded again');
   // drawn from the exterior frame under the view alone, beside the grown wagon
-  assert.match(WORLD, /hcc\.draw\(renderer, null, tvf \? \{ selfGrow: tvf\.grow, grow: peerGrow \} : undefined\);[^\n]*\n\s*if \(tvf\) drawTvDungeonModels\(travelView\?\.eye \?\? null\);/);
+  assert.match(WORLD, /hcc\.draw\(renderer, null, tvf \? \{ selfGrow: tvf\.grow, grow: peerGrow \} : undefined\);[^\n]*\n\s*if \(tvf\) drawTvDungeonModels\(travelView\?\.eye \?\? null, tvf\.fullyUp\);/);
   assert.match(WORLD, /pipeline\.keepPlaces\('owdungeon', TV_DUNGEON_MODELS_MAX\);/);
   assert.match(WORLD, /tvDngModels = \{ at: null, dg: -1, n: -1, list: \[\] \}; for \(const e of _tvDngModel\.values\(\)\) e\.hold\.release\(\); _tvDngModel\.clear\(\);   \/\/ OW-DUNGEONS: nor their models, once the view is cut/, 'a load forgets them');
 });

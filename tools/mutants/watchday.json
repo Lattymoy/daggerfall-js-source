@@ -209,8 +209,8 @@
   {
     "name": "WATCH-DAY-post-not-out",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "export const OUTDOOR = Object.freeze(new Set(['walk', 'market', 'social', 'stall', 'beg', 'dock', 'watch', 'post']));",
-    "new": "export const OUTDOOR = Object.freeze(new Set(['walk', 'market', 'social', 'stall', 'beg', 'dock', 'watch']));",
+    "old": "export const OUTDOOR = Object.freeze(new Set(['walk', 'market', 'social', 'stall', 'beg', 'dock', 'watch', 'post', 'gate']));",
+    "new": "export const OUTDOOR = Object.freeze(new Set(['walk', 'market', 'social', 'stall', 'beg', 'dock', 'watch', 'gate']));",
     "tests": [
       "test/watchday_watch.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "WATCH-DAY-post-faces-in",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "yaw: e.kind === 'post' && !inCircle ? e.at.yaw : st.yaw,",
-    "new": "yaw: st.yaw,",
+    "old": "e.kind === 'post' && !inCircle ? e.at.yaw : loud",
+    "new": "loud",
     "tests": [
       "test/watchday_watch.test.js"
     ]

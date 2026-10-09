@@ -353,11 +353,12 @@
   {
     "name": "CARDS10-wire-relay-min",
     "file": "src/net/wire.js",
-    "old": "export const ILIAC_RELAY_MIN = 179;",
-    "new": "export const ILIAC_RELAY_MIN = 178;",
+    "old": "export const ILIAC_RELAY_MIN = 181;",
+    "new": "export const ILIAC_RELAY_MIN = 180;",
     "tests": [
       "test/cards10_relay.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (at the merge of main): 181, past main's HOURS-FIRST world179 and TAVERN-TABLES world180 - a mutant one short lets a world180 relay be sent the frame it closes on."
   },
   {
     "name": "CARDS10-service-short",

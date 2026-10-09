@@ -487,6 +487,13 @@ Once held, held for good. The profile counts *Hours broken*. (SD9b: the roll is 
 spoils' draws, which are the receipt's seed's alone; the grants are laid on the account's row, `players.sd_honours`, by the kill's
 row alone, and read off it as the Broker's sale is - so every badge the service mints carries them with no other read.)
 
+**Hour's First** (HOURS-FIRST, 2026-10-08, Mac of the first clear's thirteen: "a unique different version of the aura, a
+title named Hour's First, and each the gilded gun"). The first group to break an Abyss Dungeon - the claims of slot 1,
+read by SD-CLEARS - hold the title **Hour's First** and its aura **The First Hour**, The Turning Hour's wheel in the first
+dawn's colours with its dial turning forward, the Hour's own mark ablaze and the first light's rays, granted by name in the account service's
+config (`HOURS_FIRST_HANDLES`); and each was sent the Hourlock in the server's post, to claim from the mailbox beside the
+hourglass (`06-Systems/Accounts-And-Cloud-Saves-Arc.md` HOURS-FIRST and SERVER-POST).
+
 **The collapse.** The kill sets the record `fell`; for `SD_COLLAPSE_MS` (3 minutes) the realm stands so the spoils can
 be taken and a way home rises where the Remnant fell, clear of the pillars (to the Hollow's door, OUTSIDE) - pressed,
 never walked into, for it stands where the spoils land (SD11f, the gate's SS3); it rises out of the floor with the
@@ -685,7 +692,10 @@ alone, every player stepping their own foes - which is safe, and is why the orde
 
 Leaves: an older page in a dungeon the world re-lays stands in the whole dungeon's room, apart from this build's
 players, until it reloads. Offline, a dungeon no quest holds follows the switches unless the world's sizes are asked
-for (the sync asks for them).
+for (the sync asks for them). MEDIUM-DISTINCT (2026-10-08, `03-World/Delve-Arc.md`) moved the medium layout of every
+dungeon whose two interior draws repeated, inside the same `.m` room: its memory from before is the old layout's, and
+a page from before shares the room laying the old one until it reloads - OPEN for Mac (a tag of its own is a relay
+version).
 
 ### TIER1 - shipped 2026-10-05
 

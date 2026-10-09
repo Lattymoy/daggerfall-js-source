@@ -1,5 +1,5 @@
 // @ts-check
-// CARDS10 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 31; section 6.4: "At the same tavern table, seated
+// CARDS10 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 33; section 6.4: "At the same tavern table, seated
 // the same way. Offline against a patron who has a deck of his own"): ILIAC HAND AGAINST A REGULAR - pure, DOM-free,
 // clocked by the `now` it is handed, as the Hold'em evening is (systems/cardTableSession.js). The player (seat 0) and one
 // of the tavern's regulars (seat 1) play one game of the rules engine (net/iliacHand.js); the regular plays by his temper

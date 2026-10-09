@@ -325,17 +325,35 @@ export const SPACE_FAR_M = 12;
  * bearing and then a step of arc either way by turns - held by the street and seen from the spot (`street.clear` from
  * it, as every stand at a spot is). The many alone at a busy spot stood on one another at their own places (drawn by
  * geometry, a bearing and a distance off their id: the birthday problem), and on the circles about it. None keeps the
- * space within SPACE_FAR_M: their own place. Pure: the spot, the street and who stands there - every reader alike.
+ * space within SPACE_FAR_M: their own place. LW-STIR: `beside` - one to stand before another of `ids` (an incident's
+ * two, stir.js: the one comes to the one who keeps their stand) - at their turn, their place before the other's
+ * (`besideStand`), or just after the other's where the other comes after them. Pure: the spot, the street and who
+ * stands there - every reader alike.
  * @param {{ x: number, z: number, key?: string }} spot @param {readonly string[]} ids
  * @param {readonly { x: number, z: number }[]} taken @param {import('./places.js').Street} street
+ * @param {ReadonlyMap<string, string> | null} [beside]
  * @returns {Map<string, { x: number, z: number, yaw: number }>}
  */
-export function aloneStands(spot, ids, taken, street) {
+export function aloneStands(spot, ids, taken, street, beside = null) {
   /** @type {Map<string, { x: number, z: number, yaw: number }>} */
   const out = new Map();
   const placed = [...taken];
   const free = (/** @type {number} */ x, /** @type {number} */ z) => placed.every((p) => Math.hypot(p.x - x, p.z - z) >= SPACE_M - 1e-6);
-  for (const id of ids) {
+  /** @type {Map<string, string[]>} those waiting for the one they come before to be placed */
+  const waiting = new Map();
+  /** @param {string} id */
+  const lay = (id) => {
+    const to = beside?.get(id);
+    if (to != null && to !== id && ids.includes(to) && !out.has(to) && !waiting.get(id)?.includes(to)) { waiting.set(to, [...(waiting.get(to) ?? []), id]); return; }
+    const by = to != null ? out.get(to) : null;
+    const got = (by ? besideStand(spot, by, free, street) : null) ?? alone(id);
+    out.set(id, got);
+    placed.push(got);
+    for (const w of waiting.get(id) ?? []) lay(w);
+    waiting.delete(id);
+  };
+  /** @param {string} id */
+  const alone = (id) => {
     const own = aloneStand(spot, id, street);
     let got = free(own.x, own.z) ? own : null;
     const r0 = Math.hypot(own.x - spot.x, own.z - spot.z), b0 = Math.atan2(own.x - spot.x, own.z - spot.z);
@@ -349,11 +367,31 @@ export function aloneStands(spot, ids, taken, street) {
         if (free(x, z) && street.clear(spot.x, spot.z, x, z)) got = { x, z, yaw: b + Math.PI };
       }
     }
-    got ??= own;
-    out.set(id, got);
-    placed.push(got);
-  }
+    return got ?? own;
+  };
+  for (const id of ids) lay(id);
   return out;
+}
+
+/** LW-STIR: how far before the one who keeps their stand the other of an incident stands (m) - a circle's own apart. */
+export const FACE_M = CIRCLE_APART;
+
+/**
+ * LW-STIR: THE PLACE BEFORE ONE STANDING (`by`, their place and the way they face) - FACE_M off them the way they face,
+ * else a step of arc either way about them by turns, the nearest that keeps SPACE_M from every place taken (`free`),
+ * held by the street with nothing between them, and seen from the spot; facing them. Null: none about them.
+ * @param {{ x: number, z: number }} spot @param {{ x: number, z: number, yaw: number }} by
+ * @param {(x: number, z: number) => boolean} free @param {import('./places.js').Street} street
+ * @returns {{ x: number, z: number, yaw: number } | null}
+ */
+export function besideStand(spot, by, free, street) {
+  const turns = Math.ceil(Math.PI * FACE_M / SPACE_STEP_M);
+  for (let j = 0; j <= 2 * turns; j++) {
+    const b = by.yaw + (j % 2 ? 1 : -1) * Math.ceil(j / 2) * (SPACE_STEP_M / FACE_M);
+    const x = by.x + Math.sin(b) * FACE_M, z = by.z + Math.cos(b) * FACE_M;
+    if (free(x, z) && street.holds(x, z) && street.clear(by.x, by.z, x, z) && street.clear(spot.x, spot.z, x, z)) return { x, z, yaw: b + Math.PI };
+  }
+  return null;
 }
 
 /** LW-SPACE: the turns a circle moved off its own middle tries about the new one (a twelfth of a half-turn at a time,

@@ -90,7 +90,7 @@ export function rollSerpentSpoils(seed, level, earned = 'dealt') {
   // SERPENT-SET: the Old Coil's own set, a dealer's alone - rolled LAST, so every hoard before it is what it was
   const coil = dealt ? rollSerpentSetPiece(rolls) : null;
   if (coil) pieces.push({ item: coil, tier: coil.rarity });
-  // CARDS9 (Tavern-Cards section 30): SETHRAKUL'S OWN CARD - a dealer's alone, one draw more after the set piece's, so
+  // CARDS9 (Tavern-Cards section 32): SETHRAKUL'S OWN CARD - a dealer's alone, one draw more after the set piece's, so
   // every hoard before it is what it was; kept beside the pieces
   const card = dealt ? bossCardRoll('serpent', rolls) : null;
   return { gold, pieces, embers: serpentEmbers(), card };

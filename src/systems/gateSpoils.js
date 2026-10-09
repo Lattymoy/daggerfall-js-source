@@ -233,7 +233,7 @@ export function rollSpoils(seed, level) {
   // LOOT2 (bible/06-Systems/Loot-Arc.md section 4): the ladder's last pass - a Legendary among them Exalted one time in
   // ten - rolled after the Regalia, so every spoils before it is what it was for its seed
   lastPass(pieces.map((p) => p.item), rolls);
-  // CARDS9 (bible/11-Multiplayer/Tavern-Cards.md section 30): THE WARDEN'S OWN CARD - one draw more, LAST of all (after
+  // CARDS9 (bible/11-Multiplayer/Tavern-Cards.md section 32): THE WARDEN'S OWN CARD - one draw more, LAST of all (after
   // the last pass), so every spoils before it is what it was for its seed; kept beside the pieces, never among them
   const card = bossCardRoll('gate', rolls);
   return { gold, pieces, sigil: sigilStone(), card };

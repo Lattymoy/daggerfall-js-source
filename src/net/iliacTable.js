@@ -1,5 +1,5 @@
 // @ts-check
-// CARDS10 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 31; section 6.4: "Online against another player, the
+// CARDS10 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 33; section 6.4: "Online against another player, the
 // relay running the game exactly as it runs Hold'em - hidden hands, its own shuffle, its own clock"): THE RELAY'S ILIAC
 // TABLE - pure, DOM-free and plain-data (the relay checkpoints it whole), one home for the relay and its pins, Hold'em's
 // table's twin (net/holdemTable.js). Section 5's decisions, built for the second game:

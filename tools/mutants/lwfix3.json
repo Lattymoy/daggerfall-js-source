@@ -106,7 +106,7 @@
   {
     "name": "LW-FIX3-walk-held",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "    if (back > 0 && Math.max(cursor, t1) + back > D1) t1 = D1;\n",
+    "old": "    if (back > 0 && Math.max(cursor, t1) + halt + back > D1) t1 = D1;\n",
     "new": "",
     "tests": [
       "test/lwfix3_town.test.js",

@@ -42,7 +42,7 @@ import {
   addItem, canHoldAmount, effectiveUnitWeightInKg, totalWeight, isSummoned,
   splitStack, GOLD_PIECE_WEIGHT_KG, goldPiecesOf, addGoldPieces, isGoldPieces, tellTaken,
 } from './inventory.js';
-import { isMap, isLightSource } from './useItem.js';   // AUDIT 26 F156/F157: the map interception + the lit-torch clear
+import { isMap, isLightSource, isSpellbook } from './useItem.js';   // AUDIT 26 F156/F157: the map interception + the lit-torch clear; KEEP-SPELLBOOK
 import { CANNOT_REMOVE_ITEM_TEXT } from './createItem.js';
 // AUDIT 26: DaggerfallEntity.MaxEncumbrance, enchantment allowance and
 // all - :1417 reads playerEntity.MaxEncumbrance, not the bare formula.
@@ -66,6 +66,14 @@ export const WAGON_KG_LIMIT = 750;
 export const CANNOT_HOLD_TEXT = 'Your wagon cannot hold any more stuff.';
 export const CANNOT_CARRY_TEXT = 'You cannot carry any more stuff.';
 
+/** KEEP-SPELLBOOK (2026-10-08, the owner: "a player dropped his spellbook apparently"): the port's own - DFU lets the
+ *  spellbook go like any MiscItems piece. The character's spellbook (MiscItems 132, not a quest's) leaves the pack for
+ *  nowhere but the character's own wagon: never the ground, a pile, a body, a chest, a companion's pack, or a
+ *  counter's sale (ui/nativeTrade.js, ui/enhancedTrade.js). A death in the zone already keeps it
+ *  (systems/wildDeath.js wildCanLose). One reading, one sentence, for every door that asks. */
+export const isKeptSpellbook = (item) => isSpellbook(item) && item.group === 'MiscItems' && !item.questItem;
+export const SPELLBOOK_KEPT_TEXT = 'Your spellbook never leaves you.';
+
 /** Why a transfer did not happen, and whether the player is told.
  *  EVERY refusal is silent in the SOUND sense - DFU's guards all
  *  return above DoTransferItem's click - so the only thing that
@@ -81,6 +89,7 @@ export const REFUSAL = Object.freeze({
    *  words, because DFU pops the same string for both. */
   questItem: { reason: 'questItem', text: CANNOT_REMOVE_ITEM_TEXT },
   remains: { reason: 'remains', text: 'These are the remains of your blood. Carry them home, or leave them where they lie.' },   // AUDIT LEGACY II H4
+  spellbook: { reason: 'spellbook', text: SPELLBOOK_KEPT_TEXT },   // KEEP-SPELLBOOK
   chooseOnePile: { reason: 'chooseOnePile', text: null },
   wagonFull: { reason: 'wagonFull', text: CANNOT_HOLD_TEXT },
   cannotCarry: { reason: 'cannotCarry', text: CANNOT_CARRY_TEXT },
@@ -248,6 +257,7 @@ export function planStore(item, {
   // groundRefusalOf) only when the destination IS the ground, so a wagon, a chest and a trade are untouched
   if (groundRefusal) return { ok: false, refusal: { reason: 'ground', text: groundRefusal } };
   if (item.group === 'Transportation') return { ok: false, refusal: REFUSAL.transport };
+  if (isKeptSpellbook(item) && !usingWagon) return { ok: false, refusal: REFUSAL.spellbook };   // KEEP-SPELLBOOK: the own wagon takes it, nothing else
   if (isSummoned(item)) return { ok: false, refusal: REFUSAL.summoned };
   // AUDIT LEGACY II H4: an ancestor's remains (Project Legacy) leave the character's keeping - the pack, the wagon -
   // only back into the list they were taken from (it bears their mark while open, systems/legacy/heirloom.js

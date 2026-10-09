@@ -4,7 +4,7 @@
 //
 // bible/11-Multiplayer/Tavern-Cards.md section 6.4, DECIDED: "a ladder.
 // Online wins rank a player on a season board, the Arena's way
-// (11-Multiplayer/Arena.md), with a title for the top of it." Section 29.
+// (11-Multiplayer/Arena.md), with a title for the top of it." Section 33 (AUDIT CARDS-6 lane D: it said 29, a number two merges stale).
 //
 // ═══ THE DECK IS VOUCHED FOR (/v1/cards/deck) ═══════════════════════
 //

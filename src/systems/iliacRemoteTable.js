@@ -1,5 +1,5 @@
 // @ts-check
-// CARDS10 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 31): THE RELAY'S ILIAC TABLE AS THIS CLIENT SEES IT -
+// CARDS10 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 33): THE RELAY'S ILIAC TABLE AS THIS CLIENT SEES IT -
 // pure, the Hold'em client's twin (systems/cardRemoteTable.js). The relay deals and runs the game (net/iliacTable.js);
 // this keeps what it said - the room's table (`state`: the seats, the game as a spectator sees it, the clock), this
 // player's own view of the game when he sits in it (`mine`: his hand, his plays) - and answers the view the panel and

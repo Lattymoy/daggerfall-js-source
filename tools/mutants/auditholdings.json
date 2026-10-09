@@ -139,15 +139,6 @@
     ]
   },
   {
-    "name": "AH-F5-parts-credit-unstamped",
-    "file": "src/systems/fleet.js",
-    "old": "  if (r && credit && Number.isInteger(credit.region) && credit.region >= 0) r.credit = { region: credit.region, due: Number.isFinite(credit.due) ? credit.due : 0 };",
-    "new": "  if (false) r.credit = null;",
-    "tests": [
-      "test/auditholdings.test.js"
-    ]
-  },
-  {
     "name": "AH-F7-a-number-twice",
     "file": "src/systems/fleet.js",
     "old": "    if (!s || !isUid(s.uid) || !hullOk(s.hull) || _ships.has(s.uid)) continue;",
@@ -199,15 +190,6 @@
     "new": "export function forgetShip(uid) {\n  void uid;",
     "tests": [
       "test/auditholdings.test.js"
-    ]
-  },
-  {
-    "name": "AH-F5-parts-on-credit-unclaimed",
-    "file": "src/scenes/worldModes.js",
-    "old": "      if (credit) for (const it of staged) if (it?.templateIndex === FLEET_PARTS_TEMPLATE && it.UID) creditShip(",
-    "new": "      if (false) for (const it of staged) if (it?.templateIndex === FLEET_PARTS_TEMPLATE && it.UID) creditShip(",
-    "tests": [
-      "test/fleet.test.js"
     ]
   },
   {

@@ -650,8 +650,8 @@
   {
     "name": "AC4-C7-lost-answer-unsaid",
     "file": "src/scenes/worldModes.js",
-    "old": "    if (!r.ok) { say((r.unknown ? CARD_STAKE_REFUSALS.unknown : CARD_STAKE_REFUSALS[r.error]) ?? 'The realm could not hold your stake - try again.'); paintCardGame(); return; }\n    g.stakeWord",
-    "new": "    if (!r.ok) { say(CARD_STAKE_REFUSALS[r.error] ?? 'The realm could not hold your stake - try again.'); paintCardGame(); return; }\n    g.stakeWord",
+    "old": "    if (!r.ok) { g.refused = (r.unknown ? CARD_STAKE_REFUSALS.unknown : CARD_STAKE_REFUSALS[r.error]) ?? 'The realm could not hold your stake - try again.'; say(g.refused); paintCardGame(); return; }\n    g.stakeWord",
+    "new": "    if (!r.ok) { g.refused = CARD_STAKE_REFUSALS[r.error] ?? 'The realm could not hold your stake - try again.'; say(g.refused); paintCardGame(); return; }\n    g.stakeWord",
     "tests": [
       "test/auditcards4_client.test.js",
       "test/auditcards4_pins.test.js",
@@ -662,8 +662,10 @@
       "test/cards6_law.test.js",
       "test/cards6_relay.test.js",
       "test/cards6_service.test.js",
-      "test/cards6b_topup.test.js"
-    ]
+      "test/cards6b_topup.test.js",
+      "test/cardssaid.test.js"
+    ],
+    "note": "CARDS-SAID (re-aimed by content): the refusal is the panel's line too (g.refused), said from there."
   },
   {
     "name": "AC4-T-elsewhere-own-room",
@@ -1334,8 +1336,8 @@
   {
     "name": "AC4-C-closed-game-sat",
     "file": "src/scenes/worldModes.js",
-    "old": "    if (g !== cardGame || !cardSeat) return;\n    if (!r.ok) { say((r.unknown",
-    "new": "    if (!r.ok) { say((r.unknown",
+    "old": "    if (g !== cardGame || !cardSeat) return;\n    // CARDS-SAID (Tavern-Cards section 31)",
+    "new": "    // CARDS-SAID (Tavern-Cards section 31)",
     "tests": [
       "test/auditcards4_client.test.js",
       "test/auditcards4_pins.test.js",
@@ -1346,8 +1348,10 @@
       "test/cards6_law.test.js",
       "test/cards6_relay.test.js",
       "test/cards6_service.test.js",
-      "test/cards6b_topup.test.js"
-    ]
+      "test/cards6b_topup.test.js",
+      "test/cardssaid.test.js"
+    ],
+    "note": "CARDS-SAID (re-aimed by content): the refusal is the panel's line too (g.refused), said from there."
   },
   {
     "name": "AC4-C-purse-not-reread",

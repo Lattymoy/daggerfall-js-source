@@ -1,4 +1,4 @@
-// CARDS3c (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 32; section 3, DECIDED: the hand "can be peeked
+// CARDS3c (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 34; section 3, DECIDED: the hand "can be peeked
 // (lifted at the corner) or squeezed ... a click on the cards checks, a push folds"): THE SQUEEZE, THE CLICK AND THE
 // PUSH (world/cardHand.js), and the host's wiring of them (scenes/worldModes.js cardPointerListen, cardDrawGame). Driven:
 // a short still press is a click, a long one or one that wandered is no click; a drag up the screen more up than across

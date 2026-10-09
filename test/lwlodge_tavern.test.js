@@ -268,7 +268,15 @@ test('LW-LODGE in the tavern: a lodger up in their room (their day\'s home there
   assert.equal(lone.layer.stood()[0]?.bed, bedA, 'in view: still up there');
   lone.layer.frame(0.016, [0, 0, 0], toward + Math.PI, [0, 1.6, 0]);
   lone.layer.frame(0.016, [0, 0, 0], toward + Math.PI, [0, 1.6, 0]);
-  assert.equal(lone.layer.stood()[0]?.bed, -1, 'looked away from: down in the common room');
+  // AUDIT LW-ROOMS: PIN MOVED - looked away from, they leave their room; and come down where the player is not looking
+  // (the room's walk deals the common room's first free place in the half the player looked into: they wait for it)
+  assert.ok(lone.layer.stood().every((s) => s.bed !== bedA), 'looked away from: gone from their room');
+  const down = tavernRig({ inside: [[a, 'tavern']], lodgers: [a] });
+  down.layer.frame(0.016, [0, 0, 0], 0, [0, 1.6, 0]);
+  const place = down.layer.stood()[0].at;   // the common room's first free place
+  lone.layer.frame(0.016, [0, 0, 0], Math.atan2(place[0], place[2]) + Math.PI, [0, 1.6, 0]);
+  assert.equal(lone.layer.stood()[0]?.bed, -1, 'down in the common room');
+  assert.deepEqual(lone.layer.stood()[0]?.at, place, 'where the player is not looking');
 });
 
 test('LW-LODGE the hosts: the building host hands the room its beds (its Rest markers, RentRoom\'s own list) and the bed of the room the player rents there (findRentedRoom\'s, by the town and the building); the world host hands them to the room\'s residents (mutants: the beds unhanded, the rented unhanded)', () => {

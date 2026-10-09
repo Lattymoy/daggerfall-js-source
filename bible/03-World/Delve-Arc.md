@@ -171,6 +171,36 @@ placements put back, its stamp the room's). Its own row beside DFU's, which stay
 `test/dsize1_mediumdungeons.test.js` (11, DETECT-FINDS' with it, MAPS.BSA's with ARENA2); `tools/mutants/dsize1.json`
 (27).
 
+**MEDIUM-DISTINCT (2026-10-08, Mac: "Medium dungeons just copy and paste 2 layouts together") - NEVER ONE INTERIOR
+BLOCK TWICE.** GetRandomBlock draws with replacement, and the medium size draws its two interior blocks from a pool of
+two to four (a dungeon of 10 to 22 blocks - `01-Overview/Audit-Delve.md`'s sizes; MAPS.BSA repeats names within a list
+too), so a quarter to a half of them laid the same block twice side by side: one area and its copy (the report's map,
+two identical halves). Now an interior block that repeats one already laid takes the pool's next block round from the
+repeated one's first place in it that is not laid (`world/smallerDungeons.js distinctInterior`, after the draws in
+`regenerateDungeon`). It takes no draw of its own, so every border row draws as it did and a layout whose draws never
+repeated is the layout it always was. A pool of one name keeps the repeat. Border blocks are left as drawn (the ends;
+Daggerfall's own lists repeat them). DFU's five-block plus lays one interior block, so it never meets this and stays
+DFU's draw for draw. What the move would strand, held:
+- **A save** made in a moved dungeon's old layout: the moved build says so (`distinct`) and stamps
+  `MEDIUM_DISTINCT_STAMP` (5, past the world's sizes' 4 - a save stamp, never a quest's frozen size). The load compares
+  the stamp whole, so that save stands at the start and leaves its world record unapplied (`otherLayout`, AUDIT DELVE
+  E2), and a save made in it on a build before this one does the same there.
+- **A running quest** at a medium size (the medium stamp 3 or the world's sizes, 4) whose markers were chosen on the
+  old layout: at every load, online and off, after `relayOnlineDungeons`, its dungeon Places are compared with the
+  dungeon its world builds now and enumerated again where they differ, its placements put back, its stamp untouched
+  (`systems/quest/questRepair.js relayMovedLayouts`, wired in `scenes/questBridge.js` restore; the two re-lays share one
+  body, `relayDungeonPlaces`). DFU's stamps are left alone: neither of their builds moved.
+- **Online**, OPEN for Mac: the room is named by the size, not the draw (`dungeon:m<id>.m`), so a moved dungeon's room
+  memory written before this build - kept up to thirty days after the room last drains - is the old layout's, read by
+  index into the new, and a page from before it shares the room laying the old one until it reloads. A room tag of its
+  own is a relay version (`net/wire.js` WORLD_ROOM, DUNGEON_ROOM_TAGS) and was left out of this fix.
+THE FOUR HOSTS: `scenes/worldModes.js` and `scenes/dungeonContext.js` build and save through the law
+(`dungeonLocationFor`, `smallerDungeonsStamp`, `needsStartWarp`) and need no seam; `scenes/world.js` and
+`scenes/exterior.js` size the quest layer's locations through it and load quests through the bridge, which runs the
+re-lay. AUDIT FIELD-BUGS 1008 (`01-Overview/Audit-Log.md`): the re-lay reads only a build that moved (`distinct`), offline
+only a dungeon a link holds (unlinked, the build is the settings'), and a shared copy arriving
+(`questRepair.js relayQuestMovedLayout`). `test/mediumdistinct.test.js` (4); `tools/mutants/mediumdistinct.json` (18), all dead.
+
 **SD-ONLINE (2026-10-05, Mac: "So medium dungeons will be the new by default option thats on (online only)", then "On
 second thought. Large, medium and small should all play into account online" - "World mixes sizes") - ONLINE EVERY
 DUNGEON HAS THE WORLD'S OWN SIZE.** The first of the Super Dungeons arc's slices (`11-Multiplayer/Super-Dungeons.md`

@@ -1,5 +1,5 @@
 // @ts-check
-// CARDS10 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 31): ILIAC HAND ON THE CLOTH - the collectible game's
+// CARDS10 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 33): ILIAC HAND ON THE CLOTH - the collectible game's
 // cards as bodies on the tavern table, the Hold'em deck's own plate (render/cardTableDraw.js plateModel: a face, a back,
 // an edge, the poker size), drawn through the renderer's own path (createMesh, uploadTexture, drawMesh) in the room's pass
 // after the decor, made once when the game opens and freed when it closes (EVERY ALLOCATION HAS AN OWNER - the host's

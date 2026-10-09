@@ -1,5 +1,5 @@
 // @ts-check
-// CARDS9 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 30; Mac: "Lets build every inch of this"): A CARD'S
+// CARDS9 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 32; Mac: "Lets build every inch of this"): A CARD'S
 // WORTH AND ITS CUSTOMS - pure, one home for the client and the account service (the Worker bundles net/ and never
 // systems/, so the card's template and its worth live here, and systems/iliacItems.js re-exports them).
 //

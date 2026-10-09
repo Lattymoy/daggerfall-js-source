@@ -440,7 +440,7 @@ export function firstSaveRefusal(text, row) {
   let level = null;
   try { level = JSON.parse(row.summary ?? 'null')?.level ?? null; } catch { level = null; }
   if (!(shaped && liquidWealthOf(save) <= customsAllowance(level))) return { error: 'customs-allowance' };
-  // CARDS9 (Tavern-Cards section 30): A CUSTOMS CHARACTER'S CARDS, at their worth, within the level's card allowance -
+  // CARDS9 (Tavern-Cards section 32): A CUSTOMS CHARACTER'S CARDS, at their worth, within the level's card allowance -
   // customs' own bound (systems/realmCustoms.js cardCustoms takes the dearest past it on the client's copy)
   return cardWorthOf(save) <= customsCardAllowance(level) ? null : { error: 'customs-cards' };
 }

@@ -24,9 +24,9 @@ export const PANEL_CARD_H = 45;
 
 /**
  * The panel's model.
- * @param {{phase: 'buyin'|'playing'|'over', view?: any, legal?: any, buyIn?: {min: number, max: number}|null, stakes: {sb: number, bb: number}, friendly?: boolean, log?: string[], why?: string|null, online?: {waiting: boolean, clock: number, error: string|null, regulars?: boolean, gold?: boolean}|null, gold?: boolean, staking?: boolean, topUp?: number|null, iliac?: boolean, packPrice?: number|null}} p
+ * @param {{phase: 'buyin'|'playing'|'over', view?: any, legal?: any, buyIn?: {min: number, max: number}|null, stakes: {sb: number, bb: number}, friendly?: boolean, log?: string[], why?: string|null, refused?: string|null, online?: {waiting: boolean, clock: number, error: string|null, regulars?: boolean, gold?: boolean}|null, gold?: boolean, staking?: boolean, topUp?: number|null, iliac?: boolean, packPrice?: number|null}} p
  */
-export function cardHudModel({ phase, view = null, legal = null, buyIn = null, stakes, friendly = false, log = [], why = null, online = null, gold = false, staking = false, topUp = null, iliac = false, packPrice = null }) {
+export function cardHudModel({ phase, view = null, legal = null, buyIn = null, stakes, friendly = false, log = [], why = null, online = null, gold = false, staking = false, topUp = null, iliac = false, packPrice = null, refused = null }) {
   const unit = friendly ? 'chips' : 'gold';
   const title = `Card table - ${stakes.sb}/${stakes.bb} ${unit}`;
   // CARDS6: online, a realm character's table plays for gold - the realm holds the stake, the relay deals
@@ -36,7 +36,9 @@ export function cardHudModel({ phase, view = null, legal = null, buyIn = null, s
     return {
       phase, title, note,
       buyIn: buyIn ? { min: buyIn.min, max: buyIn.max, value: Math.min(buyIn.max, Math.max(buyIn.min, BUY_IN_START_BB * stakes.bb)) } : null,
-      message: staking ? 'The realm is holding your stake...' : buyIn ? `Buy in for ${buyIn.min}-${buyIn.max} ${unit}.` : `You need ${BUY_IN_MIN_BB * stakes.bb} ${unit} to sit in at these stakes.`,
+      // CARDS-SAID (Tavern-Cards section 31): a stake the realm refused, said here until the next press - never the panel
+      // as it was, as though the press did nothing
+      message: staking ? 'The realm is holding your stake...' : refused ? `${refused}${buyIn ? ` (Buy in for ${buyIn.min}-${buyIn.max} ${unit}.)` : ''}` : buyIn ? `Buy in for ${buyIn.min}-${buyIn.max} ${unit}.` : `You need ${BUY_IN_MIN_BB * stakes.bb} ${unit} to sit in at these stakes.`,
       actions: [
         { id: 'deal', label: 'Deal me in', enabled: !!buyIn && !staking },   // CARDS6: one stake at a time
         ...(iliac ? [{ id: 'iliac', label: 'Play Iliac Hand', enabled: !staking }] : []),   // CARDS10: the other game at this table

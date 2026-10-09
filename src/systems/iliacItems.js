@@ -25,7 +25,7 @@ import { ILIAC_CARD_TEMPLATE, cardWorth } from '../net/cardWorthLaw.js';   // CA
  *  CARDS9: the card's number is the law's (net/cardWorthLaw.js - the account service reads it there). */
 export { ILIAC_CARD_TEMPLATE };   // the law's own, handed on (one declaration - audit24's ratchet)
 export const CARD_BINDER_TEMPLATE = 582;
-/** CARDS9 (section 30): the tavern's sealed pack of cards (systems/cardSources.js opens it). */
+/** CARDS9 (section 32): the tavern's sealed pack of cards (systems/cardSources.js opens it). */
 export const CARD_PACK_TEMPLATE = 583;
 const GROUP = 'UselessItems2';
 /** The rows. Rarity 20: no shelf and no loot table rolls either. The card wears DFU's Parchment picture (TEXTURE.209

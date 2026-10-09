@@ -165,6 +165,9 @@ export const ITEM_FIELDS = Object.freeze({
   // a pile, a body and a shelf (systems/rriRealism.js) - which an online counter's sale reads at best (tradeModes.js
   // saleConditionPercentage); absent on a piece handed over whole
   foundCondition: int({ min: 0 }),
+  // ACQUIRE1 (bible/10-UI/Loot-Banner.md): the piece has stood in the player's own keeping (systems/acquireWatch.js) - true,
+  // or absent. The RECEIVER's mark, as equipSlot and questItem are: loot.js validLootItem strips it off the wire
+  acquired: bool(),
 });
 
 /** The declared names, and those of one kind. */

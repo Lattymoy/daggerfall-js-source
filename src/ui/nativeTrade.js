@@ -36,6 +36,7 @@ import { getBool } from '../systems/settings.js';   // AUDIT 64 F53: InstantRepa
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from './text.js';
 import { planTake, applyTransfer, clearLightSourceOnLeave, CANNOT_CARRY_TEXT } from '../systems/itemTransfer.js';   // AUDIT 26 F157/F158
+import { isKeptSpellbook, SPELLBOOK_KEPT_TEXT } from '../systems/itemTransfer.js';   // KEEP-SPELLBOOK: never sold
 import { HOW_MANY_ITEMS, SPLIT_INPUT_MAX, parseSplitAmount, splitRequired } from '../systems/itemTransfer.js';   // DISC25-F: TransferItem's split popup, inherited
 import { InputMessageBoxWindow } from './inputMessageBox.js';   // DISC25-F: ...pushed as CM5 pushes it for the pack
 import { audio } from '../systems/audio.js';
@@ -43,7 +44,7 @@ import { SOUND } from '../systems/soundClips.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, fitBoxRows } from './messageBox.js';
 import {
   MODE_ACTION_ART, SELL_GOLD_ART, modeActionArt,
-  tradeCost, getTradePrice, tradeDecision, sellProceeds, creditRows, creditRefusalRows,
+  tradeCost, getTradePrice, tradeDecision, sellProceeds,
   localListAccepts, localClickDecision, DOESNT_NEED_IDENTIFY, LETTER_OF_CREDIT_TEXT,
   MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID, DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID,
 } from '../systems/tradeModes.js';
@@ -552,6 +553,12 @@ export class NativeTradeWindow {
       this.box = { rows: [{ text: boundText(itemLongName(item, { getQuest: this.hooks.getQuest ?? null })), center: true }], buttons: null };
       return true;
     }
+    // KEEP-SPELLBOOK: the spellbook is never put up for sale (systems/itemTransfer.js isKeptSpellbook); a repair or an
+    // identify still takes it, because it comes back
+    if ((this.mode === 'Sell' || this.mode === 'SellMagic') && isKeptSpellbook(item)) {
+      this.box = { rows: [{ text: SPELLBOOK_KEPT_TEXT, center: true }], buttons: null };
+      return true;
+    }
     const refused = isSummoned(item) || questTransferRefused(item, {
       fromLocal: true, toWagon: false, getQuest: this.hooks.getQuest ?? null,
     });
@@ -778,14 +785,8 @@ export class NativeTradeWindow {
     const price = getTradePrice(this.mode, cost, ctx.quality ?? 0, ctx.skills ?? {}, pieces);   // FB0929: a purchase asks a gold a piece at least
     const d = tradeDecision(this.mode, { cost, tradePrice: price, gold: this.hooks.gold() });
     if (d.kind === 'notEnoughGold') {
-      // SHIP-CREDIT (Mac: "Buy on credit"): a boat the purse falls short of, offered on the bank's credit - or why not
-      const credit = this.mode === 'Buy' ? this.hooks.credit?.([...this.stagedForCost], price) ?? null : null;
-      if (credit?.kind === 'credit') {
-        this.box = { rows: creditRows(credit, price, this.hooks.gold?.() ?? 0), buttons: 'YesNo', price, cost, onYes: () => this._confirm(price, credit) };
-        return;
-      }
       // the two records CONCATENATED into one click-anywhere box
-      this.box = { rows: [...d.textIds.flatMap((id) => this._rows(id, price)), ...(credit?.kind === 'refuse' ? creditRefusalRows(credit, credit.lines) : [])], buttons: null };
+      this.box = { rows: d.textIds.flatMap((id) => this._rows(id, price)), buttons: null };
       return;
     }
     this.box = { rows: this._rows(d.textId, price), buttons: 'YesNo', price, cost, onYes: () => this._confirm(price) };
@@ -808,11 +809,11 @@ export class NativeTradeWindow {
   }
 
   /** ConfirmTrade_OnButtonClick's Yes arm (:1027-1092). */
-  _confirm(price, credit = null) {
+  _confirm(price) {
     const selling = this.mode === 'Sell' || this.mode === 'SellMagic';
     const proceeds = selling
       ? sellProceeds(price, this.hooks.weight?.() ?? {})
-      : credit;   // SHIP-CREDIT: a purchase on the bank's credit
+      : null;
     this.hooks.commit?.(this.mode, [...this.stagedForCost], price, proceeds);
     // D7 - ConfirmTrade clears PER MODE, and two of the four clear
     // nothing at all (:1027-1090). Buy does `PlayerEntity.Items

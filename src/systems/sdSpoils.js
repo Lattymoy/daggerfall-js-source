@@ -91,7 +91,7 @@ export function rollSdSpoils(seed, level) {
   // GILDED1: THE HOURLOCK - one draw more, LAST of all, so every spoils before it (the Brass's own) is what it was
   const hourlock = rollHourlock(rolls);
   if (hourlock) pieces.push({ item: hourlock, tier: hourlock.rarity });
-  // CARDS9 (Tavern-Cards section 30; Mac: "Dont forget about a card needing to come from the abyss dungeon also"): THE
+  // CARDS9 (Tavern-Cards section 32; Mac: "Dont forget about a card needing to come from the abyss dungeon also"): THE
   // BRASS REMNANT'S OWN CARD - one draw more after the Hourlock's, LAST of all; kept beside the pieces
   const card = bossCardRoll('abyss', rolls);
   return { gold, pieces, card };

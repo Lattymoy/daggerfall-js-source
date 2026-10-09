@@ -125,11 +125,18 @@ Either death, at the first dead frame, while the room is still the player's (`wi
 
 - KEPT: potions, light sources, the camp's kit and fire, food and water, the rest consumables, ammunition, bandages -
   and everything that never changes hands (a quest's item, a summoned or bound piece, a boat's deed or parts, the
-  Materials Bag, a vehicle, a deed, the spellbook, a letter of credit). `src/systems/wildDeath.js`.
+  Materials Bag, a vehicle, a deed, the spellbook). KEEP-WALLET (2026-10-09, the owner: "the wallet shouldnt drop in
+  the zone"): the wallet, and the Deadlands Embers and Welkynd Shards it holds, stay with the fallen - the wallet is an
+  organizer, its pieces lie in the pack itself, so the rule names each (`isWalletItem`, `walletHolds`;
+  `wildDeath.js:"if (isWalletItem(item) || walletHolds(item)) return false;"`). `src/systems/wildDeath.js`.
 - DROPPED: every other thing in the bag and in the cart, taken out, the character saved, and the records deposited in
   the room's remains (section 5). WILD GOLD: and half the gold - `WILD_GOLD_LOSS` (0.5) of the purse and of the cart's
   gold stack, as ONE pile record in the same remains (`takeWildGold`, `wildDeath.js:"export function takeWildGold"`),
-  for anyone to take; the usual death penalty is not taken on top (`world.js:"const goldLost ="`).
+  for anyone to take; the usual death penalty is not taken on top (`world.js:"const goldLost ="`). LETTERS-DROP (the
+  owner: "letter of credits should be dropped"): a letter of credit is the one piece the wallet holds that the death
+  takes, as it takes the purse's coin - into the same remains at its whole value, unless a quest's or one the trade
+  refuses (`wildDeath.js:"item.templateIndex === TEMPLATES.Letter_of_credit && !item.questItem"`) - answered ahead
+  of the decor's kept-back list, which names the letter too.
 - WORN: kept on a death to a foe. At another player's hand, in the open country (a cell room), the killer may take
   ONE worn piece: the fallen's game offers the list (`worn`), the killer's body window picks (`pick`), and the
   fallen's game takes the piece out, saves, and gives it (`gave`). The killer's game holds nothing until the gift
@@ -629,6 +636,16 @@ each is a line here, findable by its tag.
 - PVPFIX (the owner: "Undeniable Access/lockpicking should actually work on locked crates"): an armed Open spell fires
   on the next lock touched, a crate's as a door's, and the pick is tried in Grab mode too
   (`dungeonContext.js:"Access/lockpicking"`).
+- KEEP-SPELLBOOK (the owner: "a player dropped his spellbook apparently"; the hotfix of the same day): the character's
+  spellbook (MiscItems 132, not a quest's - `isKeptSpellbook`, `itemTransfer.js:"export const isKeptSpellbook"`) leaves
+  the pack for nowhere but the character's own wagon. The store ladder refuses it everywhere else - the ground, a pile,
+  a body, a chest, a companion's pack - in its own words, "Your spellbook never leaves you." (`REFUSAL.spellbook`,
+  `itemTransfer.js:"if (isKeptSpellbook(item) && !usingWagon)"`), and so does the shift-drop, ahead of a lock's
+  "unlock it first" (`shiftDropRefusal`, `physicalItems.js:"isKeptSpellbook(item) ? { text: SPELLBOOK_KEPT_TEXT }"`).
+  Neither counter puts it up for Sell or Sell Magic (`nativeTrade.js:"&& isKeptSpellbook(item)) {"`;
+  `enhancedTrade.js:"if (selling() && isKeptSpellbook(item)) {"`, and the enhanced counter quotes it no price - its
+  `saleRefused`). A death in the zone already kept it (section 4, `wildCanLose`). The player trade's table
+  (`tradePack.js` `tradeRefusal`) is untouched: the hotfix closed the ground, the containers and the counters.
 
 ## 22. Known limits
 
@@ -663,7 +680,8 @@ The zone landed without a run of the suite. Four of what it caught were the sour
 `test/wild1_zone.test.js`, `test/wild1_wire.test.js`, `test/wild1_fight.test.js`, `test/wild2_rings.test.js`,
 `test/pvpdungeons_game.test.js` (the halls' placement and foes, HEAL-CURSE, REST-WARN, SWAP-HANDS, GOTHWAY-BOARDS,
 ZONE-GIANTS' walks and the hub's giants, GIANT-FIELDS, GIANT-LEASH, CROW-NEWS, DUNGEON-RESPAWN, GREATER-GIANT,
-WILD-KEEPOUT), `test/pvpdungeons_hub.test.js` (the `wdun` wire, the lock, the way back, the reset, the crows, the
+WILD-KEEPOUT, KEEP-SPELLBOOK - `tools/mutants/keepspellbook.json`, 9, all dead), `test/pvpdungeons_hub.test.js` (the `wdun` wire, the lock, the way back, the reset, the crows, the
 relay's hub and no friend's take); the host seams of section 23 in `test/bootorder.test.js`,
 `test/audit68_worldmodes.test.js`, `test/mapkeep.test.js`, `test/mwattach.test.js`, `test/audit26_uiwindows.test.js`
-and `test/audit24_onehome.test.js`; `tools/mutants/wildsuite.json`.
+and `test/audit24_onehome.test.js`; `tools/mutants/wildsuite.json`; LETTERS-DROP and KEEP-WALLET in
+`test/wild1_zone.test.js`, `tools/mutants/keepwallet.json`.

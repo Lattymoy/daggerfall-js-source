@@ -21,27 +21,30 @@ async function withRoom(key, fn) {
 const holdem = (ws) => ws.sent.filter((m) => m.t === 'holdem');
 const word = (r, ws, o) => r.raw(ws, JSON.stringify({ t: 'holdem', ...o }));
 const sitW = (table, chair, chairs = 2, bb = 10) => ({ op: 'sit', table, chair, chairs, bb });
+// PIN MOVED (TAVERN-TABLES, world180): table 1 is the room's gold table now (net/holdemTable.js HOLDEM_GOLD_TABLE) and
+// seats a stake alone - the chips sits below that stood at "another table" stand at table 2, and A4's four at 0, 2, 3, 4.
+const CHIPS = [0, 2, 3, 4];
 
 test('AUDIT CARDS-3 A1: a sit refused at another table stands nobody up - no fold unsaid, nothing unsaved', () => withRoom('interior:m100.200', async ({ r, tickMs }) => {
   const a = r.connect(); await r.hello(a, 'peer-a', null, { name: 'Ann' });
   const b = r.connect(); await r.hello(b, 'peer-b', null, { name: 'Bob' });
   const c = r.connect(); await r.hello(c, 'peer-c', null, { name: 'Cat' });
-  await word(r, a, sitW(0, 0)); await word(r, b, sitW(0, 1)); await word(r, c, sitW(1, 0));
+  await word(r, a, sitW(0, 0)); await word(r, b, sitW(0, 1)); await word(r, c, sitW(2, 0));
   tickMs(HOLDEM_FIRST_MS); await r.fire();
   const before = JSON.stringify(r.store.get('holdem')[0]);
   for (const ws of [a, b, c]) ws.sent.length = 0;
-  await word(r, a, sitW(1, 0));   // Cat's chair
-  assert.deepEqual(holdem(a), [{ t: 'holdem', table: 1, now: Date.now(), error: 'taken' }], 'refused, to her alone');
+  await word(r, a, sitW(2, 0));   // Cat's chair
+  assert.deepEqual(holdem(a), [{ t: 'holdem', table: 2, now: Date.now(), error: 'taken' }], 'refused, to her alone');
   assert.deepEqual([holdem(b), holdem(c)], [[], []], 'the room told nothing - because nothing moved');
   const t0 = r.room._holdem.get(0);
   assert.ok(t0.hand && t0.seats[0]?.id === 'peer-a' && !t0.seats[0].leaving, 'still in her hand at table 0');
   assert.equal(JSON.stringify(r.store.get('holdem')[0]), before, 'storage and memory agree');
   // a sit that takes stands her up at the other table - said and saved
-  await word(r, c, { op: 'stand', table: 1 });
+  await word(r, c, { op: 'stand', table: 2 });
   for (const ws of [a, b, c]) ws.sent.length = 0;
-  await word(r, a, sitW(1, 1));
+  await word(r, a, sitW(2, 1));
   assert.ok(holdem(b).some((m) => m.table === 0 && m.events?.some((e) => e.t === 'act' && e.type === 'fold' && e.seat === 0)), 'folded at table 0, and the room told');
-  assert.equal(r.store.get('holdem')[1].seats[1].id, 'peer-a');
+  assert.equal(r.store.get('holdem')[2].seats[1].id, 'peer-a');
   assert.ok(r.store.get('holdem')[0].seats[0]?.leaving || !r.store.get('holdem')[0].seats[0], 'stood up there, saved');
 }));
 
@@ -54,7 +57,7 @@ test('AUDIT CARDS-3 A2: one seat an account - a second tab under another id is r
   await word(r, m2, sitW(0, 1, 3));
   assert.equal(holdem(m2).at(-1).error, 'account seated');
   assert.ok(HOLDEM_REFUSALS['account seated'], 'the panel says it in words');
-  await word(r, m2, sitW(1, 0, 3));
+  await word(r, m2, sitW(2, 0, 3));
   assert.equal(holdem(m2).at(-1).error, 'account seated', 'at any table of the room');
   await word(r, o, sitW(0, 1, 3));
   assert.deepEqual(r.room._holdem.get(0).seats.map((s) => s?.id ?? null), ['peer-m1', 'peer-o', null]);
@@ -109,7 +112,7 @@ test('AUDIT CARDS-3 A4: the room\'s sits on one gate - ten sockets toggling get 
   r.state.storage.put = async (k, v) => { if (k === 'holdem') puts++; return put(k, v); };
   let refused = 0, sat = 0;
   for (let round = 0; round < 3; round++) {
-    for (const [i, w] of socks.entries()) { w.sent.length = 0; await word(r, w, sitW(i % 4, 0)); const last = holdem(w).at(-1); if (last?.error === 'busy') refused++; else if (last?.state) sat++; await word(r, w, { op: 'stand', table: i % 4 }); }
+    for (const [i, w] of socks.entries()) { w.sent.length = 0; await word(r, w, sitW(CHIPS[i % 4], 0)); const last = holdem(w).at(-1); if (last?.error === 'busy') refused++; else if (last?.state) sat++; await word(r, w, { op: 'stand', table: CHIPS[i % 4] }); }
     tickMs(100);
   }
   assert.ok(sat <= HOLDEM_SIT_ROOM_HZ_MAX + 2, `sits through the room's gate: ${sat}`);

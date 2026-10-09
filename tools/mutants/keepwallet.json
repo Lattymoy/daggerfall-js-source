@@ -1,0 +1,22 @@
+[
+  {
+    "name": "LETTERS-DROP-the-letter-kept",
+    "file": "src/systems/wildDeath.js",
+    "old": "  if (item.group === 'MiscItems' && item.templateIndex === TEMPLATES.Letter_of_credit && !item.questItem) return tradeRefusal({ ...item, equipSlot: undefined }) === null;\n",
+    "new": "",
+    "tests": [
+      "test/wild1_zone.test.js"
+    ]
+  },
+  {
+    "name": "KEEP-WALLET-the-wallets-guard-gone",
+    "file": "src/systems/wildDeath.js",
+    "old": "  if (isWalletItem(item) || walletHolds(item)) return false;\n",
+    "new": "",
+    "tests": [
+      "test/wild1_zone.test.js"
+    ],
+    "equivalent": true,
+    "why": "The wallet, the Deadlands Ember and the Welkynd Shard are each bound by their template rows (walletItem.js WALLET_ROW, gateSpoils.js), so the trade's own refusal below already keeps them; the guard is the owner's rule written where the zone's law is read, and holds should a row ever lose its binding. The pin holds the outcome either way."
+  }
+]

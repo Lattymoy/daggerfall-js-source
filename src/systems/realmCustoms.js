@@ -145,7 +145,7 @@ export function applyCustoms(snap) {
 }
 
 /**
- * CARDS9 (bible/11-Multiplayer/Tavern-Cards.md section 30): THE CARDS' CUSTOMS, in place (the realm's copy, as all of
+ * CARDS9 (bible/11-Multiplayer/Tavern-Cards.md section 32): THE CARDS' CUSTOMS, in place (the realm's copy, as all of
  * customs is). A character brings cards worth no more than customsCardAllowance(level) (net/cardWorthLaw.js - the
  * starter deck's worth and a sum a level); past it the DEAREST card goes first, one card at a time off its stack, until
  * the rest fit - a stash's before the wagon's before the pack's (customs' own order, carriedItemLists). The offline

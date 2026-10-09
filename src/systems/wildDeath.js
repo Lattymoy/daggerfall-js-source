@@ -12,10 +12,10 @@
 //   KEPT, always: the consumables the owner named and their kin - potions, light sources (a torch, a lantern, a candle),
 //     the camp's kit and its fire (Climates & Calories' gear, food and water), the rest consumables (REST6), arrows and
 //     every other ammunition, bandages - and everything that may never change hands (a quest's item, a summoned or
-//     bound piece, a boat's deed or parts, the Materials Bag, a vehicle, a deed, the spellbook, a letter of credit -
-//     the trade's refusals and the decor's kept-back list, read, not rewritten).
+//     bound piece, a boat's deed or parts, the Materials Bag, a vehicle, a deed, the spellbook, the wallet and the Embers
+//     and Shards it holds - the trade's refusals and the decor's kept-back list, read, not rewritten).
 //   DROPPED: every other thing in the bag and in the cart - into the room's remains (net/wildLaw.js), where anyone may
-//     take it for ten minutes.
+//     take it for ten minutes. A letter of credit too (LETTERS-DROP, 2026-10-09), ahead of the decor's kept-back list.
 //   WORN: kept on a death to a foe. On a death at another player's hand the killer may take ONE worn piece the same
 //     rules let go (`wornOffer`) - the fallen's own game gives it (net/wildFight.js).
 // The purse is the death penalty's (systems/deathPenalty.js) and unchanged.
@@ -31,6 +31,7 @@ import { isEquipped } from './equip.js';
 import { DECOR_OWN_KEPT_BACK } from './decorItems.js';
 import { WILD_ITEMS_MAX } from '../net/wire.js';
 import { goldStack } from './inventory.js';
+import { isWalletItem, walletHolds } from './walletItem.js';   // KEEP-WALLET
 
 /** The groups no death in the zone ever drops: a vehicle, a deed, a quest's own item. */
 export const WILD_NEVER_GROUPS = Object.freeze(new Set(['Transportation', 'Deeds', 'QuestItems', 'Currency']));
@@ -46,7 +47,14 @@ export function keptOnWildDeath(item) {
  *  that is not worn (its `isEquipped` arm is the only one that asks where the piece is), and the kept-back list. */
 export function wildCanLose(item) {
   if (!item || keptOnWildDeath(item)) return false;
+  // LETTERS-DROP (the owner: "letter of credits should be dropped"): a letter of credit is the one piece of the wallet's
+  // that a death in the zone takes, as a coin of the purse is - the Embers and the Shards stay
+  if (item.group === 'MiscItems' && item.templateIndex === TEMPLATES.Letter_of_credit && !item.questItem) return tradeRefusal({ ...item, equipSlot: undefined }) === null;
   if (WILD_NEVER_GROUPS.has(item.group) || DECOR_OWN_KEPT_BACK.has(item.templateIndex) || item.templateIndex === TEMPLATES.Spellbook) return false;
+  // KEEP-WALLET (2026-10-09, the owner: "the wallet shouldnt drop in the zone"): the wallet is an organizer - its pieces
+  // lie in the pack itself; the Deadlands Embers and the Welkynd Shards stay with the fallen, as the wallet does (bound
+  // already) - the letters of credit drop (LETTERS-DROP, above)
+  if (isWalletItem(item) || walletHolds(item)) return false;
   return tradeRefusal({ ...item, equipSlot: undefined }) === null;
 }
 
@@ -97,6 +105,7 @@ export function wildRecord(item) {
   const copy = JSON.parse(JSON.stringify(item));
   delete copy.equipSlot;
   delete copy.questItem;
+  delete copy.acquired;   // ACQUIRE1: the receiver's mark too (loot.js strips it on the way in)
   return copy;
 }
 

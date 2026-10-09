@@ -3124,4 +3124,4 @@ mounted with the foes stream, the receiver, the glue, the owner's boat a
 frame ahead; the press, the ladder, the plaque, the pack guard); the motor's
 carry; the helm's buttons; the panel on a page; the Plus dress; the pad's
 gestures and prompts; the pad layer at the helm; the host's helm seam,
-mounted. `tools/mutants/csa_together.json`: 93 mutants, all dead.
+mounted. `tools/mutants/csa_together.json`: 95 mutants, all dead (two of them FIELD BUGS 2026-10-09 #7, `01-Overview/Field-Bugs-2026-10-09.md`).

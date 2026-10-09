@@ -179,6 +179,12 @@ export const REFUSALS = Object.freeze({
   // MAIL1, letters. The words are the service's (server-account/src/letters.js) and the letter's law's
   // (net/letterLaw.js, which the service returns verbatim); every one says what to do next.
   'mail-needs-account': 'Letters need a username and a password. Give this account one and you can send and receive them.',
+  // SERVER-POST, the server's post (server-account/src/post.js): the developers' messages, and the items in them
+  'post-needs-account': 'The mailbox needs a username and a password. Give this account one and the developers can send you post.',
+  'no-post': 'That message is not in your mailbox any more.',
+  'post-no-item': 'That message holds no item to claim.',
+  'post-claimed': 'That item has already been claimed.',
+  'post-unclaimed': 'Claim the item in that message before you throw it away.',
   muted: 'You are muted, so you cannot send letters or pin notes until the mute ends.',
   'no-reader': 'No registered player has that username.',
   'to-self': 'A letter goes to another player.',
@@ -205,6 +211,7 @@ export const REFUSALS = Object.freeze({
   'home-cap': `A character can own at most ${HOME_CAP} homes. Sell one to buy another.`,
   'home-rate': 'You have bought and sold a lot of homes this hour. Try again later.',
   'no-home': 'That home is not yours any more.',
+  'not-heir': 'Only a living character of the same line as its fallen owner can take up that home.',   // PERMADEATH-HOUSES: server-account/src/homes.js inheritHome
   'bad-home': 'The account service could not tell which building that is.',
   'home-character': 'The account service could not tell which character this is for.',
   'bad-entry': 'The account service does not know that setting. The game may need updating.',
@@ -1266,6 +1273,9 @@ export function accountHomes({ fetch, storage }) {
     // character's record from anyone else's claim; and that hold given up as the deed sells at the bank
     deed: ({ mapId, buildingKey, region, character, layout = null }) => post('/v1/homes/deed', { mapId, buildingKey, region, character, layout: layout || null }),
     releaseDeed: (mapId, buildingKey) => post('/v1/homes/release', { mapId, buildingKey, deed: true }),
+    // PERMADEATH-HOUSES: a fallen member's home (`from`, their tombstoned realm character) taken up by the living realm
+    // character of their line who carries it on (`character`) - server-account/src/homes.js inheritHome
+    inherit: ({ mapId, buildingKey, character, from }) => post('/v1/homes/inherit', { mapId, buildingKey, character, from }),
   };
 }
 

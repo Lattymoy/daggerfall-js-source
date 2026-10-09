@@ -1,4 +1,4 @@
-// CARDS10 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 31; Mac: "Lets build every inch of this"): ILIAC
+// CARDS10 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 33; Mac: "Lets build every inch of this"): ILIAC
 // HAND AT THE TAVERN TABLE, OFFLINE. The regulars' decks (the starter curve, their kind, their grade's upgrades) and
 // their play (each play tried on a copy of the game, judged as their own seat sees it); the evening's clock (a thought,
 // the commit, the reveal's beat, six turns, for keeps); the forfeits' book (one card a regular a game day); the panel's

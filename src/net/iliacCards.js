@@ -227,7 +227,7 @@ export const ILIAC_CARDS = Object.freeze([
     fx: [{ on: 'ongoing', do: 'buff', to: 'all.mine', tag: 'orc', n: 2 }], text: 'Ongoing: your orc units have +2 power.', flavor: 'The god of curses remembers every orc by name.' },
   { id: 'meridia', name: 'Meridia', kind: 'prince', cost: 5, power: 5, tier: 'legendary', tags: ['daedra', 'prince'], emblem: 'daedric',
     fx: [{ on: 'ongoing', do: 'weaken', to: 'all.theirs', tag: 'undead', n: 2 }], text: 'Ongoing: enemy undead units have -2 power.', flavor: 'Her light finds the dead wherever they hide.' },
-  // ── the bosses' own (CARDS9, section 30: "the Oblivion Gate's boss and the Sea Serpent can drop their own, at the
+  // ── the bosses' own (CARDS9, section 32: "the Oblivion Gate's boss and the Sea Serpent can drop their own, at the
   //    aetheric tier" - and the Abyss Dungeon's, Mac: "Dont forget about a card needing to come from the abyss dungeon
   //    also"). Found only in their spoils (systems/cardSources.js BOSS_CARDS): no pack, no regular, no foe deals them. ──
   { id: 'valkynaz-ruhn', name: 'Valkynaz Ruhn', kind: 'unit', cost: 6, power: 8, tier: 'aetheric', tags: ['daedra'], emblem: 'gate',
