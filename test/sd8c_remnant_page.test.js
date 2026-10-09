@@ -22,6 +22,7 @@ import {
   createSdRemnant, remnantPose, echoPose, heartsOpenAt, remnantOpenAt, arenaToDungeon, SD_KNEEL_M, SD_KNEEL_EASE_MS, SD_REM_SINK_MS, SD_ECHO_SINK_MS,
   SD_REMNANT_MOBILE, SD_REMNANT_NAMES,
   SD_GEAR_DRAWS,
+  SD_DECOR_DRAWS,
 } from '../src/scenes/sdRemnant.js';
 import { remnantBarModel, sdBarNear, SD_BAR_TEXT, SD_BAR_NEAR_M, SD_ENDS_WARN_MS, SD_ENDS_NEAR_MS } from '../src/ui/sdRemnantBar.js';
 import { drawGateBossBar, destroyGateBossBar, FELL_HOLD_MS, FELL_FADE_MS } from '../src/ui/gateBossBar.js';
@@ -335,12 +336,12 @@ const feetAt = (x, z) => arenaToDungeon(x, z);
 
 test('SD8c THE SET STANDS THE BODIES: the Remnant, the two Echoes and the most Hearts a Reset raises, each a draw hidden until the fight stands it; their metals uploaded; with no fight to fight the Remnant waits where a fight begins it, facing the way in; it walks where the realm says, kneels stunned, is gone outside time and rises at the centre for the Last Moment, and sinks where it fell; an Echo rises out of the floor and sinks where it fell; a Heart stands while the Reset winds up (mutants: a body drawn outside time; no kneel; the fall left standing)', () => {
   const { set, draws, r, L, at } = rig();
-  assert.equal(draws.length, 1 + 2 + SD_HEARTS[1] + 3 * SD_RIG_PARTS.length + SD_GEAR_DRAWS);   // PIN MOVED (SD17): each body's turned parts and the gears after the Hearts
+  assert.equal(draws.length, 1 + 2 + SD_HEARTS[1] + 3 * SD_RIG_PARTS.length + SD_GEAR_DRAWS + SD_DECOR_DRAWS.length);   // PIN MOVED (SD17): each body's turned parts and the gears after the Hearts; PIN MOVED (SD-LOOK S8): the decor after the gears
   assert.ok(draws.every(hidden), 'hidden until the first frame');
   assert.ok(r.up.some(([a, rec]) => a === SD_REALM_ARCHIVE && rec === SD_REMNANT_GOLD_RECORD) && r.up.some(([, rec]) => rec === SD_REMNANT_SILVER_RECORD), 'the Echoes\' metals uploaded');
   set.frame(0.016, null);
   assert.deepEqual(translation(draws[0]).map((v) => Math.round(v * 100) / 100), arenaToDungeon(...SD_REM_START).map((v) => Math.round(v * 100) / 100), 'waiting at its start');
-  assert.ok(draws.slice(1, 3 + SD_HEARTS[1]).every(hidden) && draws.slice(3 + SD_HEARTS[1] + SD_RIG_PARTS.length).every(hidden), 'no Echo, no Heart');   // PIN MOVED (SD17): the Remnant's own parts stand with it
+  assert.ok(draws.slice(1, 3 + SD_HEARTS[1]).every(hidden) && draws.slice(3 + SD_HEARTS[1] + SD_RIG_PARTS.length, 3 + SD_HEARTS[1] + 3 * SD_RIG_PARTS.length + SD_GEAR_DRAWS).every(hidden), 'no Echo, no Heart');   // PIN MOVED (SD17): the Remnant's own parts stand with it; PIN MOVED (SD-LOOK S8): and its decor
   // pure: where it stands, and how
   const s0 = L.state();
   assert.deepEqual(remnantPose(SD_FIGHT_EMPTY, T0), { x: SD_REM_START[0], z: SD_REM_START[1], yw: Math.PI, sink: 0, shown: true }, 'no fight: waiting');

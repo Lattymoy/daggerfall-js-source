@@ -13,7 +13,7 @@
 import { faces } from './gateModel.js';
 import { packRealmFaces, SD_REALM_BRASS_RECORD, SD_REALM_ROOT_RECORD } from './sdRealm.js';
 import { SD_HALL_GLOW_RECORD } from './sdHallArt.js';
-import { SD_REMNANT_GOLD_RECORD, SD_REMNANT_SILVER_RECORD, SD_REMNANT_ENDING_RECORD } from './sdRemnantArt.js';
+import { SD_REMNANT_GOLD_RECORD, SD_REMNANT_SILVER_RECORD, SD_REMNANT_ENDING_RECORD, SD_REMNANT_ARCHIVE, SD_REMNANT_TELL_RECORD, SD_REMNANT_DIAL_RECORD, SD_REMNANT_HAND_RECORD, SD_REMNANT_LAMP_RECORD, SD_REMNANT_RIM_RECORD, SD_TELL_REGION, SD_TELL_ART_SIZE, SD_LAMP_ART } from './sdRemnantArt.js';
 import { SD_REM, SD_ECHO, SD_HEART } from '../net/sdRemnant.js';
 
 /** Its parts, its own frame, at the Remnant's own height (an Echo is scaled to its own - remnantScale). The joints the rig
@@ -41,12 +41,26 @@ export const SD_REMNANT_KIT = Object.freeze({
   blade: Object.freeze({ root: 4.5, w0: 0.36, w1: 0.18, spade: 3.62, spadeW: 0.5, d: 0.12 }),
   pipes: Object.freeze([[-0.52, 5.95], [-0.26, 6.3], [0.26, 6.42], [0.52, 6.1]]),
 });
-/** What each wears - its metal (the Remnant the Hour's own brass), its joints, its heart and its eyes. */
+/** What each wears - its metal (the Remnant the Hour's own brass), its joints, its heart and its eyes. SD-LOOK S8: and
+ *  its TELLS' atlas cold (world/sdRemnantArt.js SD_REMNANT_TELL_RECORD - the sole, the blade, the fist and the ribs
+ *  sample its regions; a part that tells is drawn with a remap to its heat), and its back-dial's chapter ring. */
 export const SD_REMNANT_WEAR = Object.freeze({
-  brass: Object.freeze({ metal: SD_REALM_BRASS_RECORD, joint: SD_REALM_ROOT_RECORD }),
-  gold: Object.freeze({ metal: SD_REMNANT_GOLD_RECORD, joint: SD_REMNANT_GOLD_RECORD }),
-  silver: Object.freeze({ metal: SD_REMNANT_SILVER_RECORD, joint: SD_REMNANT_SILVER_RECORD }),
+  brass: Object.freeze({ metal: SD_REALM_BRASS_RECORD, joint: SD_REALM_ROOT_RECORD, tell: SD_REMNANT_TELL_RECORD.brass[0], dial: SD_REMNANT_DIAL_RECORD.brass, rim: SD_REMNANT_RIM_RECORD.brass }),
+  gold: Object.freeze({ metal: SD_REMNANT_GOLD_RECORD, joint: SD_REMNANT_GOLD_RECORD, tell: SD_REMNANT_TELL_RECORD.gold[0], dial: SD_REMNANT_DIAL_RECORD.gold, rim: SD_REMNANT_RIM_RECORD.gold }),
+  silver: Object.freeze({ metal: SD_REMNANT_SILVER_RECORD, joint: SD_REMNANT_SILVER_RECORD, tell: SD_REMNANT_TELL_RECORD.silver[0], dial: SD_REMNANT_DIAL_RECORD.silver, rim: SD_REMNANT_RIM_RECORD.silver }),
 });
+/** SD-LOOK S8: THE BACK-DIAL, in the body's own frame (a decor draw on the torso's matrix, never a rig part): its centre
+ *  behind the head (`y`, `z` - clear of the vents), its teeth's tips at the law's radius `r` (from the front its rim
+ *  haloes the head), its rim and the chapter ring's inner edge, its thickness, its teeth and segments, its hub and the
+ *  four spokes (an X - none straight up behind the helm); the HAND over its back face (`hz` behind it), `len` to its
+ *  spade's tip, `tail` its counterweight. */
+export const SD_REMNANT_DIAL = Object.freeze({
+  y: 6.75, z: -1.32, r: 2.2, rim: 2.06, ring: 1.55, d: 0.1, teeth: 40, seg: 48, hub: 0.3, spokeW: 0.16,
+  hand: Object.freeze({ hz: 0.05, len: 2.0, tail: 0.5, w: 0.12, d: 0.04 }),
+});
+/** SD-LOOK S8: THE RIB LAMPS - one at each rib's front end (pushed `out` to the fore of it), `r` across, counted from the
+ *  bottom row up, the body's left before its right on each. */
+export const SD_RIB_LAMP = Object.freeze({ r: 0.1, out: 0.08 });
 export const SD_REMNANT_HEART_RECORD = SD_HALL_GLOW_RECORD.mantella;
 export const SD_REMNANT_EYE_RECORD = SD_HALL_GLOW_RECORD.brass;
 /** How tall a body stands (the law's) over the model's own height - an Echo smaller. */
@@ -152,11 +166,43 @@ function gearX(f, rec, c, G) {
     both(p(a1, r, x0), p(a1, r1, x0), p(a1, r1, x1), p(a1, r, x1));
   }
 }
-/** A box as plates (world/gateModel.js box's faces, a metre a tile). */
-function slab(f, rec, cx, y0, cz, w, h, d) {
+/** A box as plates (world/gateModel.js box's faces, a metre a tile). SD-LOOK S8: its underside into `under` (a collector
+ *  and its record - the sole's tread) when one is given. */
+function slab(f, rec, cx, y0, cz, w, h, d, under = null) {
   const x0 = cx - w / 2, x1 = cx + w / 2, z0 = cz - d / 2, z1 = cz + d / 2, y1 = y0 + h, ref = [cx, y0 + h / 2, cz];
   const c = [[x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1], [x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1]];
-  for (const [a, b, e, g] of [[0, 3, 2, 1], [4, 5, 6, 7], [0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6], [3, 0, 4, 7]]) plate(f, rec, c[a], c[b], c[e], c[g], ref);
+  for (const [a, b, e, g] of [[0, 3, 2, 1], [4, 5, 6, 7], [0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6], [3, 0, 4, 7]]) {
+    if (under && a === 4) plate(under.f, under.rec, c[a], c[b], c[e], c[g], ref);
+    else plate(f, rec, c[a], c[b], c[e], c[g], ref);
+  }
+}
+/** SD-LOOK S8: A COLLECTOR INTO ONE REGION of the tell atlas (world/sdRemnantArt.js SD_TELL_REGION `R`): every face put
+ *  through it samples R alone, each corner's uv its own (a metre along `su`, across `sv`) scaled into the region and
+ *  clamped to it - the ribs' bars (their core along their middle), the sole, the fist. */
+function uvRegion(f, R, su, sv) {
+  const S = SD_TELL_ART_SIZE, [x0, y0, w, h] = R;
+  const at = (q) => [(x0 + 0.5 + Math.max(0, Math.min(1, q[0] / su)) * (w - 1)) / S, (y0 + 0.5 + Math.max(0, Math.min(1, q[1] / sv)) * (h - 1)) / S];
+  return { tri: (rec, a, b, c, ua, ub, uc) => f.tri(rec, a, b, c, at(ua), at(ub), at(uc)), quad: (rec, a, b, c, d, ua, ub, uc, ud) => f.quad(rec, a, b, c, d, at(ua), at(ub), at(uc), at(ud)) };
+}
+/** SD-LOOK S8: THE SAME BY PLACE - each corner's uv where it stands in the box lo..hi: along axis `along` for u (the
+ *  blade's length: its tip at u 0, its root at the region's right), across the face's other free axis for v - so the
+ *  blade's heat runs root to tip whichever face is drawn. */
+function placeRegion(f, R, lo, hi, along) {
+  const S = SD_TELL_ART_SIZE, [x0, y0, w, h] = R, k = (p, a) => Math.max(0, Math.min(1, (p[a] - lo[a]) / (hi[a] - lo[a])));
+  const across = (a, b, c) => {
+    const n = vcross(vsub(b, a), vsub(c, a)), m = [Math.abs(n[0]), Math.abs(n[1]), Math.abs(n[2])];
+    const d = m[0] >= m[1] && m[0] >= m[2] ? 0 : m[1] >= m[2] ? 1 : 2;
+    return d === along ? (along === 2 ? 0 : 2) : 3 - d - along;
+  };
+  const at = (p, q) => [(x0 + 0.5 + k(p, along) * (w - 1)) / S, (y0 + 0.5 + k(p, q) * (h - 1)) / S];
+  const tri = (rec, a, b, c) => { const q = across(a, b, c); f.tri(rec, a, b, c, at(a, q), at(b, q), at(c, q)); };
+  return { tri, quad: (rec, a, b, c, d) => { const q = across(a, b, c); f.tri(rec, a, b, c, at(a, q), at(b, q), at(c, q)); f.tri(rec, a, c, d, at(a, q), at(c, q), at(d, q)); } };
+}
+/** SD-LOOK S8: a quad with its own uvs, wound to face away from `ref` (plate's law, its uvs given). */
+function quadUV(f, rec, a, b, c, d, ua, ub, uc, ud, ref) {
+  const n = vcross(vsub(b, a), vsub(c, a)), mid = [(a[0] + c[0]) / 2, (a[1] + c[1]) / 2, (a[2] + c[2]) / 2];
+  if (vdot(n, vsub(mid, ref)) >= 0) f.quad(rec, a, b, c, d, ua, ub, uc, ud);
+  else f.quad(rec, d, c, b, a, ud, uc, ub, ua);
 }
 /** A flat piece cut to the outline `pts` ([z, y] in the plane x = cx, convex), `d` thick along x - the blade's shaft and
  *  its spade. */
@@ -168,6 +214,23 @@ function cut(f, rec, cx, pts, d) {
     facet(f, rec, [x1, m[1], m[0]], [x1, a[1], a[0]], [x1, b[1], b[0]], ref);
     facet(f, rec, [x0, m[1], m[0]], [x0, b[1], b[0]], [x0, a[1], a[0]], ref);
   }
+}
+
+/** A rib's line (side `s`, row `k` from the bottom): from the spine round to the front, falling a little - five points. */
+export function ribPath(s, k) {
+  const B = SD_REMNANT_BODY, yr = B.legH + B.hipH + 0.5 + k * 0.4, path = [];
+  for (let i = 0; i <= 4; i++) {
+    const g = (-80 + (148 * i) / 4) * (Math.PI / 180);
+    path.push([s * Math.cos(g) * B.cageRX, yr + 0.08 - 0.23 * (i / 4), Math.sin(g) * B.cageRZ]);
+  }
+  return path;
+}
+/** SD-LOOK S8: a body's faces packed (world/sdRealm.js packRealmFaces), each record from 100 the Remnant's own archive's
+ *  (world/sdRemnantArt.js SD_REMNANT_ARCHIVE) - the rest the Hour's. */
+export function packRemnantFaces(f) {
+  const m = packRealmFaces(f);
+  for (const sm of m.subMeshes) if (sm.textureRecord >= 100) sm.textureArchive = SD_REMNANT_ARCHIVE;
+  return m;
 }
 
 /** Every face of a body, each into the collector `into(part)` answers for its part (SD18c: its heart and eyes in `ending`'s
@@ -184,7 +247,7 @@ function emitRemnant(metal, into, ending = null) {
   // right shows on; at -x it pointed the Hour-Hand with what every screen showed as its left
   for (const s of [-1, 1]) {
     const f = into(s > 0 ? 'legR' : 'legL'), x = s * B.legX;
-    slab(f, W.metal, x, 0, 0.16, B.legW, 0.32, 1.45);                                                        // the sabaton
+    slab(f, W.metal, x, 0, 0.16, B.legW, 0.32, 1.45, { f: uvRegion(f, SD_TELL_REGION.sole, B.legW, 1.45), rec: W.tell });   // the sabaton (SD-LOOK S8: its sole the Stomp's tell)
     lathe(f, W.joint, x, 0, [[0.34, 0.32], [0.36, 0.5]], 8);                                                  // the ankle
     lathe(f, W.metal, x, 0.02, [[0.36, 0.5], [0.46, 0.9], [0.5, 1.4], [0.44, 1.48]], N, 0.92);                // the greave
     slab(f, W.joint, x, 1.4, 0.4, 0.58, 0.42, 0.3);                                                           // the poleyn
@@ -200,15 +263,10 @@ function emitRemnant(metal, into, ending = null) {
   lathe(f, W.joint, 0, 0, [[0, cy0], [0.8, cy0], [0.86, cy0 + 0.45], [0, cy0 + 0.45]], N, 0.62);               // the waist
   slab(f, W.metal, 0, cy0 + 0.3, -0.62, 0.38, 2.2, 0.32);                                                     // the spine
   slab(f, W.metal, 0, cy0 + 0.7, -0.8, 1.6, 1.6, 0.12);                                                       // the back plate
-  // the cage: four ribs a side from the spine round to the front, falling a little, open over the heart
-  for (const s of [-1, 1]) for (let k = 0; k < B.bars / 2; k++) {
-    const yr = cy0 + 0.5 + k * 0.4, path = [];
-    for (let i = 0; i <= 4; i++) {
-      const g = (-80 + (148 * i) / 4) * (Math.PI / 180);
-      path.push([s * Math.cos(g) * B.cageRX, yr + 0.08 - 0.23 * (i / 4), Math.sin(g) * B.cageRZ]);
-    }
-    rib(f, W.metal, path, B.bar);
-  }
+  // the cage: four ribs a side from the spine round to the front, falling a little, open over the heart (SD-LOOK S8: the
+  // Pulse's tell - each bar samples the ribs' region, its core along its middle)
+  const ribs = uvRegion(f, SD_TELL_REGION.rib, 0.6, B.bar);
+  for (const s of [-1, 1]) for (let k = 0; k < B.bars / 2; k++) rib(ribs, W.tell, ribPath(s, k), B.bar);
   // the heart: a faceted soul-gem the size of a man's torso
   const H = B.heartY, R = B.heartR;
   lathe(f, heartRecordOf(ending), 0, 0, [[0, H - R], [R, H + 0.1], [R * 0.68, H + 0.36], [0, H + 0.44]], 8);
@@ -243,13 +301,14 @@ function emitRemnant(metal, into, ending = null) {
     gearX(f, W.joint, [x + s * K.elbow.out, K.elbow.y, 0], K.elbow);
     if (s < 0) {
       lathe(f, W.metal, x, 0, [[0, K.elbow.y], [0.3, K.elbow.y], [0.27, B.armBot + 0.62], [0, B.armBot + 0.62]], 8);   // the forearm
-      slab(f, W.metal, x, B.armBot, 0.04, B.armW, 0.62, 0.72);                                                         // the fist
-      for (let k = 0; k < 4; k++) rod(f, W.joint, [x - 0.27, B.armBot + 0.5 - k * 0.13, 0.42], [x + 0.27, B.armBot + 0.5 - k * 0.13, 0.42], 0.065, 6);   // its gear knuckles
+      const fist = uvRegion(f, SD_TELL_REGION.fist, 0.72, 0.62);   // SD-LOOK S8: the Volley's tell
+      slab(fist, W.tell, x, B.armBot, 0.04, B.armW, 0.62, 0.72);                                                       // the fist
+      for (let k = 0; k < 4; k++) rod(fist, W.tell, [x - 0.27, B.armBot + 0.5 - k * 0.13, 0.42], [x + 0.27, B.armBot + 0.5 - k * 0.13, 0.42], 0.065, 6);   // its gear knuckles
     } else {
-      const L = K.blade;
+      const L = K.blade, blade = placeRegion(f, SD_TELL_REGION.blade, [x - 1, B.armBot, -1], [x + 1, L.root, 1], 1);   // SD-LOOK S8: the Hour-Hand's tell, root to tip
       lathe(f, W.joint, x, 0, [[0, K.elbow.y], [0.22, K.elbow.y], [0.2, L.root], [0, L.root]], 8);   // the wrist's collar
-      cut(f, W.metal, x, [[-L.w0 / 2, L.root], [L.w0 / 2, L.root], [L.w1 / 2, L.spade], [-L.w1 / 2, L.spade]], L.d);   // the hand's shaft
-      cut(f, W.metal, x, [[0, L.spade + 0.14], [L.spadeW / 2, (L.spade + B.armBot) / 2 + 0.05], [0, B.armBot], [-L.spadeW / 2, (L.spade + B.armBot) / 2 + 0.05]], L.d);   // its spade, its tip the hand point
+      cut(blade, W.tell, x, [[-L.w0 / 2, L.root], [L.w0 / 2, L.root], [L.w1 / 2, L.spade], [-L.w1 / 2, L.spade]], L.d);   // the hand's shaft
+      cut(blade, W.tell, x, [[0, L.spade + 0.14], [L.spadeW / 2, (L.spade + B.armBot) / 2 + 0.05], [0, B.armBot], [-L.spadeW / 2, (L.spade + B.armBot) / 2 + 0.05]], L.d);   // its spade, its tip the hand point
     }
   }
 }
@@ -257,14 +316,95 @@ function emitRemnant(metal, into, ending = null) {
 export function buildRemnantModel(metal = 'brass', ending = null) {
   const f = faces();
   emitRemnant(metal, () => f, ending);
-  return packRealmFaces(f);
+  return packRemnantFaces(f);
 }
 /** SD17: THE REMNANT AS ITS PARTS (SD_REMNANT_PARTS' order), each a mesh in the body's own frame - stood whole, they are
  *  buildRemnantModel's faces, every one. */
 export function buildRemnantParts(metal = 'brass', ending = null) {
   const fs = Object.fromEntries(SD_REMNANT_PARTS.map((n) => [n, faces()]));
   emitRemnant(metal, (n) => fs[n], ending);
-  return SD_REMNANT_PARTS.map((n) => packRealmFaces(fs[n]));
+  return SD_REMNANT_PARTS.map((n) => packRemnantFaces(fs[n]));
+}
+
+// ── SD-LOOK S8: the decor - drawn by the scene on the torso's matrix (scenes/sdRemnantRig.js), never rig parts ───────
+/** THE BACK-DIAL of a body in `metal`, in its own frame: a toothed rim at the law's radius (its tips the rim line), the
+ *  chapter ring (its back face - toward -z, seen from behind - the twelve hours, u once round clockwise from XII as that
+ *  face is seen: +x is the screen's right from behind, through the camera's one mirror - world/mat4.js), four spokes in
+ *  an X and a hub; its front plain metal, so from the front its rim haloes the head. */
+export function buildBackDialModel(metal = 'brass') {
+  const f = faces(), D = SD_REMNANT_DIAL, W = SD_REMNANT_WEAR[metal], N = D.seg, z0 = D.z - D.d / 2, z1 = D.z + D.d / 2;
+  const at = (a, r, z) => [Math.sin(a) * r, D.y + Math.cos(a) * r, z];   // a: clockwise from XII as the back is seen
+  for (let k = 0; k < N; k++) {
+    const a0 = (k / N) * Math.PI * 2, a1 = ((k + 1) / N) * Math.PI * 2, rm = (D.ring + D.rim) / 2, ref = [Math.sin((a0 + a1) / 2) * rm, D.y + Math.cos((a0 + a1) / 2) * rm, D.z];
+    const u0 = k / N, u1 = (k + 1) / N;
+    quadUV(f, W.dial, at(a0, D.ring, z0), at(a1, D.ring, z0), at(a1, D.rim, z0), at(a0, D.rim, z0), [u0, 0], [u1, 0], [u1, 1], [u0, 1], ref);   // the hours, behind
+    plate(f, W.metal, at(a0, D.ring, z1), at(a1, D.ring, z1), at(a1, D.rim, z1), at(a0, D.rim, z1), ref);   // its front
+    plate(f, W.metal, at(a0, D.ring, z0), at(a1, D.ring, z0), at(a1, D.ring, z1), at(a0, D.ring, z1), [0, D.y, D.z]);   // its inner edge
+  }
+  // the rim's teeth: a tooth and a gap round the outer edge, its tips at the law's radius
+  for (let k = 0; k < D.teeth * 2; k++) {
+    const a0 = (k / (D.teeth * 2)) * Math.PI * 2, a1 = ((k + 1) / (D.teeth * 2)) * Math.PI * 2, r = k % 2 ? D.rim : D.r, mid = (a0 + a1) / 2;
+    const ref = [Math.sin(mid) * (D.rim - 0.05), D.y + Math.cos(mid) * (D.rim - 0.05), D.z];
+    if (r > D.rim) for (const z of [z0, z1]) plate(f, z === z1 ? W.rim : W.metal, at(a0, D.rim, z), at(a1, D.rim, z), at(a1, r, z), at(a0, r, z), ref);   // its front the rim line
+    plate(f, W.rim, at(a0, r, z0), at(a1, r, z0), at(a1, r, z1), at(a0, r, z1), ref);   // its face outward: the rim line
+    const r1 = k % 2 ? D.r : D.rim;
+    plate(f, W.metal, at(a1, r, z0), at(a1, r1, z0), at(a1, r1, z1), at(a1, r, z1), [Math.sin(a1 + (k % 2 ? 0.02 : -0.02)) * (D.rim + 0.05), D.y + Math.cos(a1 + (k % 2 ? 0.02 : -0.02)) * (D.rim + 0.05), D.z]);   // its flank
+  }
+  // four spokes in an X from the hub to the ring, and the hub
+  for (let k = 0; k < 4; k++) {
+    const a = Math.PI / 4 + (k * Math.PI) / 2, s = Math.sin(a), c = Math.cos(a), w = D.spokeW / 2;
+    const p = (r, e, z) => [s * r + c * e, D.y + c * r - s * e, z], ref = [s * (D.ring / 2), D.y + c * (D.ring / 2), D.z];
+    const q = [[p(D.hub, -w, z0), p(D.ring + 0.02, -w, z0), p(D.ring + 0.02, w, z0), p(D.hub, w, z0)], [p(D.hub, -w, z1), p(D.ring + 0.02, -w, z1), p(D.ring + 0.02, w, z1), p(D.hub, w, z1)]];
+    plate(f, W.metal, ...q[0], ref); plate(f, W.metal, ...q[1], ref);
+    plate(f, W.metal, q[0][0], q[0][1], q[1][1], q[1][0], ref); plate(f, W.metal, q[0][3], q[0][2], q[1][2], q[1][3], ref);
+  }
+  rod(f, W.joint, [0, D.y, z1 + 0.02], [0, D.y, z0 - 0.08], D.hub, 10);
+  return packRemnantFaces(f);
+}
+/** THE DIAL'S HAND: pointing at XII from the dial's centre, over its back face - a shaft to a spade's tip, a counterweight
+ *  below; both faces (it turns, and is seen from either side through the open dial). Its record the cold hand's (a
+ *  remap lights it - world/sdRemnantArt.js SD_REMNANT_HAND_RECORD). */
+export function buildDialHandModel() {
+  const f = faces(), D = SD_REMNANT_DIAL, H = D.hand, rec = SD_REMNANT_HAND_RECORD.cold, z = D.z - D.d / 2 - H.hz, y = D.y;
+  const outline = [[0, y + H.len], [H.w * 1.6, y + H.len - 0.32], [H.w / 2, y + H.len - 0.3], [H.w / 2, y - H.tail + 0.12], [H.w * 1.2, y - H.tail], [-H.w * 1.2, y - H.tail], [-H.w / 2, y - H.tail + 0.12], [-H.w / 2, y + H.len - 0.3], [-H.w * 1.6, y + H.len - 0.32]];
+  const cz = [z - H.d / 2, z + H.d / 2];
+  // a fan from the hub over the outline (clockwise, x right and y up: an edge's outside is its direction turned a
+  // quarter anticlockwise), each face out, and its edge
+  for (let k = 0; k < outline.length; k++) {
+    const a = outline[k], b = outline[(k + 1) % outline.length], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1;
+    const inside = [(a[0] + b[0]) / 2 + (dy / l) * 0.01, (a[1] + b[1]) / 2 - (dx / l) * 0.01, z];
+    facet(f, rec, [0, y, cz[0]], [a[0], a[1], cz[0]], [b[0], b[1], cz[0]], [0, y, z]);
+    facet(f, rec, [0, y, cz[1]], [a[0], a[1], cz[1]], [b[0], b[1], cz[1]], [0, y, z]);
+    plate(f, rec, [a[0], a[1], cz[0]], [b[0], b[1], cz[0]], [b[0], b[1], cz[1]], [a[0], a[1], cz[1]], inside);
+  }
+  return packRemnantFaces(f);
+}
+/** The rib lamps' places in the body's own frame, from the bottom up - each row the body's left (-x) then its right. */
+export const ribLampAt = (n) => {
+  const p = ribPath(n % 2 ? 1 : -1, Math.floor(n / 2))[4];
+  return [p[0], p[1], p[2] + SD_RIB_LAMP.out];
+};
+/** THE RIB LAMPS: eight faceted lamps, one at each rib's front end; lamp n's faces sample cell n of the lamps' strip
+ *  (world/sdRemnantArt.js remnantLampArt), so a remap to the strip with n lit lights the lowest n. */
+export function buildRibLampsModel() {
+  const f = faces(), r = SD_RIB_LAMP.r, rec = SD_REMNANT_LAMP_RECORD[0], { w: W, h: H } = SD_LAMP_ART;
+  for (let n = 0; n < 8; n++) {
+    const c = ribLampAt(n), cell = uvCell(f, n, W, H);
+    const P = [[c[0] + r, c[1], c[2]], [c[0], c[1], c[2] + r], [c[0] - r, c[1], c[2]], [c[0], c[1], c[2] - r * 0.4]], top = [c[0], c[1] + r * 1.3, c[2]], bot = [c[0], c[1] - r * 1.3, c[2]];
+    for (let k = 0; k < 4; k++) { facet(cell, rec, top, P[k], P[(k + 1) % 4], c); facet(cell, rec, bot, P[(k + 1) % 4], P[k], c); }
+  }
+  return packRemnantFaces(f);
+}
+/** A collector whose faces' uvs (0..1) fall inside cell n of an 8-cell strip W x H. */
+function uvCell(f, n, W, H) {
+  const at = (q) => [(n * (W / 8) + 0.5 + q[0] * (W / 8 - 1)) / W, (0.5 + q[1] * (H - 1)) / H];
+  return { tri: (rec, a, b, c, ua, ub, uc) => f.tri(rec, a, b, c, at(ua), at(ub), at(uc)), quad: (rec, a, b, c, d, ua, ub, uc, ud) => f.quad(rec, a, b, c, d, at(ua), at(ub), at(uc), at(ud)) };
+}
+/** THE HEART TORN OUT (the fall): the cage's faceted gem alone, about its own centre - in `ending`'s light. */
+export function buildTornHeartModel(ending = null) {
+  const f = faces(), R = SD_REMNANT_BODY.heartR;
+  lathe(f, heartRecordOf(ending), 0, 0, [[0, -R], [R, 0.1], [R * 0.68, 0.36], [0, 0.44]], 8);
+  return packRemnantFaces(f);
 }
 /** SD17: A GEAR of the Volley - a brass cog SD_GEAR.r across with SD_GEAR.teeth teeth, SD_GEAR.d thick, its disc in the
  *  x-y plane about its own centre; both sides of every face (it tumbles). */
