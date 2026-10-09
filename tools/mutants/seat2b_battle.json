@@ -139,7 +139,7 @@
   {
     "name": "SEAT2b2b-work-unclipped",
     "file": "src/net/siegeRef.js",
-    "old": "  const got = Math.min(want, siegeBlowMax(held.w, held.m));\n  if (got <= 0)",
+    "old": "  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa));\n  if (got <= 0)",
     "new": "  const got = want;\n  if (got <= 0)",
     "tests": [
       "test/seat2b_battle_law.test.js"
@@ -348,8 +348,8 @@
   {
     "name": "SEAT2b2b-relay-share-whole",
     "file": "server/src/index.js",
-    "old": "share: gate ? SIEGE_GATEHOUSE.blowShare : 1 }, now);",
-    "new": "share: 1 }, now);",
+    "old": "share: gate ? SIEGE_GATEHOUSE.blowShare : 1, wa: a.wa ?? null }, now);",
+    "new": "share: 1, wa: a.wa ?? null }, now);",
     "tests": [
       "test/seat2b_battle_relay.test.js"
     ]

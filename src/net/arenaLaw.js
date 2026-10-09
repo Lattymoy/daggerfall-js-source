@@ -369,16 +369,23 @@ export const ARENA_MATERIAL_MOD = Object.freeze([-1, 0, 0, 1, 2, 3, 3, 4, 5, 6])
  *  modifiers (strength, enchantments) are given past a weapon's. */
 export const ARENA_HAND_MAX = 41;
 export const ARENA_MOD_MAX = 20;
+/** INT7: the most reach a weapon has (net/siegeRef.js ARMS_TOP_MAX, pinned equal - this law imports nothing). */
+export const ARENA_ARMS_TOP_MAX = 32;
+/** INT7: a signed arms claim (net/identityToken.js `wa`, net/siegeRef.js armsOk - pinned equal): `[reach, bow]`. */
+export const arenaArmsOk = (wa) => Array.isArray(wa) && wa.length === 2 && Number.isInteger(wa[0]) && wa[0] >= 0 && wa[0] <= ARENA_ARMS_TOP_MAX && (wa[1] === 0 || wa[1] === 1);
 /**
  * THE MOST ONE BLOW MAY BE: a weapon's DFU maximum at its material and the fighter's modifiers' room, doubled for a
- * critical; a bare hand's (or an unknown template's) likewise; a spell ARENA_SPELL_MAX. Pure.
- * @param {{ r: number, w?: number, m?: number }} blow
+ * critical; a bare hand's (or an unknown template's) likewise; a spell ARENA_SPELL_MAX. Pure. INT7: a weapon's maximum at
+ * its material never past the fighter's SIGNED arms (`wa` - the most reach its judged pack holds); a bare hand every
+ * fighter's.
+ * @param {{ r: number, w?: number, m?: number, wa?: any }} blow
  */
-export function arenaBlowCap({ r, w = -1, m = 0 }) {
+export function arenaBlowCap({ r, w = -1, m = 0, wa = null }) {
   if (r === ARENA_HIT.Spell) return ARENA_SPELL_MAX;
   const wmax = ARENA_WEAPON_MAX[/** @type {any} */ (w)];
   const mat = Number.isInteger(m) && m >= 0 && m < ARENA_MATERIAL_MOD.length ? ARENA_MATERIAL_MOD[m] : 0;
-  return 2 * ((wmax != null ? wmax + mat : ARENA_HAND_MAX) + ARENA_MOD_MAX);
+  const reach = wmax != null ? (arenaArmsOk(wa) ? Math.min(wmax + mat, wa[0]) : wmax + mat) : ARENA_HAND_MAX;
+  return 2 * (reach + ARENA_MOD_MAX);
 }
 
 // ── THE FLOOR ─────────────────────────────────────────────────────────────────────────────────

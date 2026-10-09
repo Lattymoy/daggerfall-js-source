@@ -168,6 +168,9 @@ export async function verdictOn({ db, nowS }, { player, char, seq, key }, row, s
     level_seen: lv.level,
     level_at: lv.at,
     law_sig: sig,
+    // INT7: the arms the identity mint signs - the most reach of the lawful weapons in the pack, and a lawful bow
+    arms_top: judged.arms[0],
+    arms_bow: judged.arms[1],
   };
   // the first thing the law found, for the tab to name the piece to its player (only when it holds)
   const why = held === 'law' && lawHolds ? (({ code, t }) => ({ code, t: t ?? null }))(lawFindings[0]) : null;
@@ -183,8 +186,9 @@ export function verdictWrite(db, char, row, s) {
   return db.prepare(
     'UPDATE realm_characters SET judged_seq = ?2, held = ?3, held_at = ?4, strikes = ?5, review = ?6, wealth = ?7, witnessed = 0,'
     + ' allowance = CASE WHEN ?8 IS NULL OR allowance IS NULL THEN ?9 ELSE ?9 + (allowance - ?8) END,'
-    + ' played_at = ?10, clean_obj = ?11, clean_seq = ?12, level_seen = ?13, level_at = ?14, law_sig = ?15, wealth_v = ?17'
+    + ' played_at = ?10, clean_obj = ?11, clean_seq = ?12, level_seen = ?13, level_at = ?14, law_sig = ?15, wealth_v = ?17,'
+    + ' arms_top = ?18, arms_bow = ?19'
     + ' WHERE id = ?1 AND judge_rev = ?16',
   ).bind(char, s.judged_seq, s.held, s.held_at, s.strikes, s.review, s.wealth, row.allowance ?? null, s.allowance, s.played_at,
-    s.clean_obj, s.clean_seq, s.level_seen, s.level_at, s.law_sig, row.judge_rev ?? 0, WEALTH_VERSION);
+    s.clean_obj, s.clean_seq, s.level_seen, s.level_at, s.law_sig, row.judge_rev ?? 0, WEALTH_VERSION, s.arms_top ?? null, s.arms_bow ?? null);
 }

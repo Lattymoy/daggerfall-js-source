@@ -21,7 +21,7 @@ import { RENOWN_TRACKS_MAX } from '../src/net/renown.js';
 import { GUILD_FOUND_RENOWN, GUILD_RANK_MASTER } from '../src/net/guildLaw.js';
 import {
   mintToken, verifyToken, claimsValid, REALM_CHARACTER_RE, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, tokenBodyOf, GLYPHS, SEAT_TITLES, AURAS,
-  RENOWN_MAX, ARENA_RATING_MAX, CHARACTER_LEVEL_MAX,
+  RENOWN_MAX, ARENA_RATING_MAX, CHARACTER_LEVEL_MAX, TOKEN_ARMS_TOP_MAX,
 } from '../src/net/identityToken.js';
 import { HOUSE_NAME_MAX, HOUSE_GIVEN_MAX, HOUSE_GEN_MAX } from '../src/net/houseLaw.js';
 import { NAME_MAX, parseClient } from '../src/net/wire.js';
@@ -177,7 +177,8 @@ test('AUDIT LEGACY III O11: THE TOKEN\'S BODY BOUND IS ONE - the relay\'s hello 
     gi: `g${'z'.repeat(10)}`, gt: 'WWWW', gm: `m${'9'.repeat(15)}`, rc: 1, rb: [15, 14], ar: ARENA_RATING_MAX, cl: CHARACTER_LEVEL_MAX,
   };
   const house = { hn: 'H'.repeat(HOUSE_NAME_MAX), hc: 'G'.repeat(HOUSE_GIVEN_MAX), hb: 1, hg: HOUSE_GEN_MAX };
-  const widest = await mintToken({ ...every, ...house, ci: `r${'f'.repeat(20)}` }, kp.privateKey, { subtle, nowS });
+  // INT7: and the arms (`wa`, at their widest) - every claim the realm signs, the house still inside the hello's bound
+  const widest = await mintToken({ ...every, ...house, ci: `r${'f'.repeat(20)}`, wa: [TOKEN_ARMS_TOP_MAX, 1] }, kp.privateKey, { subtle, nowS });
   const body = tokenBodyOf(widest).length;
   assert.ok(body > 640, `past the old bound (${body})`);
   assert.ok(body <= TOKEN_BODY_MAX, `every claim, a house at its bounds and the character inside the hello (${body} of ${TOKEN_BODY_MAX})`);

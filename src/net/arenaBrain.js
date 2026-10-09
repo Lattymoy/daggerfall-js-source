@@ -27,7 +27,7 @@ import {
 import {
   ARENA_FLOOR_CENTRE, ARENA_RING_R, ARENA_PVP_MARKS, ARENA_HIT, ARENA_HIT_HZ_MAX, ARENA_BUCKET_RATE, ARENA_BUCKET_DEPTH, ARENA_MELEE_REACH,
   ARENA_POSE_SLACK, ARENA_BOW_REACH, ARENA_SPELLS_IN, ARENA_SPELL_WINDOW_MS, ARENA_SPEED_MAX, ARENA_SPEED_SLACK, ARENA_JOIN_WAIT_MS,
-  ARENA_GONE_MS, arenaBlowCap, pvpVitality, ladderVitality, arenaLadderBout, ARENA_SPECTATORS_MAX, ARENA_CHEER_MS, arenaFoeStats, bannerClaim, ARENA_EX_BANNERS,
+  ARENA_GONE_MS, arenaBlowCap, arenaArmsOk, pvpVitality, ladderVitality, arenaLadderBout, ARENA_SPECTATORS_MAX, ARENA_CHEER_MS, arenaFoeStats, bannerClaim, ARENA_EX_BANNERS,
   ARENA_PRIVATE_VITALITY, ARENA_PRIVATE_MEMBERS_MAX, ARENA_PRIVATE_HIST_MAX, ARENA_PRIVATE_KICKED_MAX, ARENA_MEMBER_ID_RE,   // ARENA6: a private session
   ARENA_BLOW_TIER_LEVEL, ARENA_BLOW_CHANCE, ARENA_BLOW_COOLDOWN_MIN_MS, ARENA_BLOW_COOLDOWN_MAX_MS, LADDER_JUDGES_SHARE, ARENA_TICKET_RE,   // AUDIT ARENA-LADDER
 } from './arenaLaw.js';
@@ -219,9 +219,10 @@ export function hpWord(st) {
  * the striker under ARENA_HIT_HZ_MAX a second (a swing through two bodies is ONE blow by its `q`), a melee blow within
  * reach of the striker's own last good pose and a shaft within a bow's, a spell under its count; the damage capped by the
  * weapon's DFU maximum (doubled for a critical) and the striker's bucket. Answers the words to fan (none for a blow not
- * believed) and what landed (`got`).
+ * believed) and what landed (`got`). INT7: `wa` the striker's signed arms (its socket's token - null: a token from before
+ * them) - the weapon's maximum never past their reach (arenaBlowCap), and a shaft only where they hold a bow.
  */
-export function refBlow(st, id, { i: to, d, r, w = -1, m = 0, q = null }, now) {
+export function refBlow(st, id, { i: to, d, r, w = -1, m = 0, q = null }, now, wa = null) {
   const out = { words: [], got: 0 };
   if (!st.b || !boutLive(st.b) || id === to) return out;
   const a = hpOf(st, id), t = hpOf(st, to);
@@ -245,12 +246,12 @@ export function refBlow(st, id, { i: to, d, r, w = -1, m = 0, q = null }, now) {
   if (!from || !at) return out;
   const gap = Math.hypot(from[0] - at[0], from[1] - at[1]);
   if (r === ARENA_HIT.Melee && gap > ARENA_MELEE_REACH + ARENA_POSE_SLACK) { boutMiss(st.b, { from: id, now }); return { words: takeWords(st), got: 0 }; }
-  if (r === ARENA_HIT.Shaft && gap > ARENA_BOW_REACH) return out;
+  if (r === ARENA_HIT.Shaft && (gap > ARENA_BOW_REACH || (arenaArmsOk(wa) && wa[1] !== 1))) return out;   // INT7: a shaft a signed bow's
   // THE CAP AND THE BUCKET
   M.bucket = Math.min(ARENA_BUCKET_DEPTH, M.bucket + (Math.max(0, now - M.bucketAt) / 1000) * ARENA_BUCKET_RATE);
   M.bucketAt = now;
   const want = Math.max(0, Number(d) || 0);
-  const got = Math.max(0, Math.floor(Math.min(want, arenaBlowCap({ r, w, m }), M.bucket)));
+  const got = Math.max(0, Math.floor(Math.min(want, arenaBlowCap({ r, w, m, wa }), M.bucket)));
   M.bucket -= got;
   if (!(got > 0)) { boutMiss(st.b, { from: id, now }); return { words: takeWords(st), got: 0 }; }
   land(st, id, to, got, now, got >= t.maxHealth * 0.15);

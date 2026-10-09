@@ -137,7 +137,10 @@ test('BALANCE1: every blow\'s wear path takes the scale - DFU\'s DamageEquipment
     // the other two, where they are charged
     assert.match(rd('src/combat/pcaao.js'), /lowerCondition\(item, blowWear\(amount, rolls\), owner, say, removeFrom\);/, 'the overhaul\'s one wear sink');
     assert.match(rd('src/systems/rrInstall.js'), /\(it, amount\) => lowerCondition\(it, blowWear\(amount, rolls\), owner, say\)/, 'Roleplay Realism\'s armour x5');
-    assert.match(rd('src/scenes/world.js'), /if \(amount > 0\) lowerCondition\(sent\.weapon, dfuBlowWear\(amount\), playerEntity,/, 'a duel\'s blade (DFU\'s amount at the port\'s multiple - WEAR-ONE\'s 1 - then the scale)');
+    // PIN MOVED (INT8/INT9, 2026-10-09 - bible/06-Systems/Integrity-Arc.md lane 2): the referee's word that a blow landed
+    // wears the weapon of the strike that left - a duel's, and the open zone's the same
+    assert.match(rd('src/scenes/world.js'), /if \(amount > 0\) lowerCondition\(_duelLastWeapon, dfuBlowWear\(amount\), playerEntity,/, 'a duel\'s blade (DFU\'s amount at the port\'s multiple - WEAR-ONE\'s 1 - then the scale)');
+    assert.match(rd('src/scenes/world.js'), /if \(wear > 0\) lowerCondition\(_wildLastWeapon, dfuBlowWear\(wear\), playerEntity,/, 'and the open zone\'s');
     assert.match(rd('src/combat/formulas.js'), /lowerCondition\(item, dfuBlowWear\(amount, rolls\), owner, say\);/, 'DFU\'s');
     assert.match(rd('src/systems/equip.js'), /export const dfuBlowWear = \(amount, rolls = Math\.random\) => \(amount > 0 \? blowWear\(amount \* _dfuMultiple, rolls\) : amount\);/, 'and the multiple rides the scale\'s one sink');
     // NOT a blow: an enchantment's use charges its item's condition by its own cost
