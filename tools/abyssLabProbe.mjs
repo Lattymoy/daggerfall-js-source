@@ -5,6 +5,7 @@
 //     node tools/abyssLabProbe.mjs                        every view, to $ABYSS_SHOTS (default /tmp)
 //     node tools/abyssLabProbe.mjs hollow threshold       the named views
 //     ABYSS_Q='lane=off' node tools/abyssLabProbe.mjs     more of the lab's query on every shot
+//     ABYSS_PORT=5242 node tools/abyssLabProbe.mjs        another port (two probes at once)
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 
@@ -16,7 +17,8 @@ const want = process.argv.slice(2).filter((a) => VIEWS.includes(a));
 const results = [];
 const check = (name, ok, detail = '') => { results.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`); };
 
-const server = await createServer({ server: { port: 5241, strictPort: true, watch: { ignored: ['**/.claude/**'] } }, logLevel: 'error' });   // a still probe: never the agents' worktrees
+const port = Number(process.env.ABYSS_PORT ?? 5241);
+const server = await createServer({ server: { port, strictPort: true, watch: { ignored: ['**/.claude/**'] } }, logLevel: 'error' });   // a still probe: never the agents' worktrees
 await server.listen();
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const page = await browser.newPage({ viewport: { width: Number(process.env.ABYSS_W ?? 960), height: Number(process.env.ABYSS_H ?? 540) } });
@@ -26,7 +28,7 @@ page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
 try {
   for (const view of want.length ? want : VIEWS) {
     errors.length = 0;
-    await page.goto(`http://127.0.0.1:5241/abyss.html?still&nopanel&t=${process.env.ABYSS_T ?? 40}&view=${view}${extra ? `&${extra}` : ''}`, { waitUntil: 'load' });
+    await page.goto(`http://127.0.0.1:${port}/abyss.html?still&nopanel&t=${process.env.ABYSS_T ?? 40}&view=${view}${extra ? `&${extra}` : ''}`, { waitUntil: 'load' });
     await page.waitForFunction(() => (window.__frame ?? 0) >= 4, null, { timeout: 240000 });
     const s = await page.evaluate(() => {
       const c = document.getElementById('c'), gl = c.getContext('webgl2');
