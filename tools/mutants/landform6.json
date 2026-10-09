@@ -92,10 +92,11 @@
   {
     "name": "LANDFORM6-mountains-gentle",
     "file": "src/world/landforms.js",
-    "old": "    mountain: Object.freeze({ low: 16, high: 80, upland: 1.6, shape: 'ridged' }),",
-    "new": "    mountain: Object.freeze({ low: 16, high: 40, upland: 1.6, shape: 'ridged' }),",
+    "old": "    mountain: Object.freeze({ low: 16, high: 80, upland: 1.6, shape: 'ridged', peaks:",
+    "new": "    mountain: Object.freeze({ low: 16, high: 40, upland: 1.6, shape: 'ridged', peaks:",
     "tests": [
-      "test/landform6.test.js"
+      "test/landform6.test.js",
+      "test/auditlandforms.test.js"
     ]
   },
   {

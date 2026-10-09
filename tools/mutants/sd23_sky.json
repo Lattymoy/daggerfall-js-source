@@ -2,8 +2,8 @@
   {
     "name": "SD23-the-hour-doors-raw",
     "file": "src/scenes/world.js",
-    "old": ".map(shiftedDoor),   // SD5a: out of the Hour",
-    "new": ".map((d) => d.door),   // SD5a: out of the Hour",
+    "old": "DOOR_TYPE.DUNGEON_ENTRANCE).map(shiftedDoor);",
+    "new": "DOOR_TYPE.DUNGEON_ENTRANCE).map((d) => d.door);",
     "tests": [
       "test/sd23_sky.test.js",
       "test/sd5a_realm.test.js"

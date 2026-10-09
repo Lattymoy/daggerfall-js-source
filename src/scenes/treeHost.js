@@ -161,8 +161,8 @@ export function treeKind({ book, renderer = null, flatBatchAabb = null, getTextu
   return {
     id: 'tree',
     professions: Object.freeze(['logging']),
-    nodesOf({ px, py, day, info, confirmed, entry }) {
-      return standTrees({ px, py, day, climate: info.climate, confirmed, forest: entry.forest ?? null, rocks: entry.rocks ?? [] });   // NODE-CLEAR
+    nodesOf({ px, py, day, info, confirmed, entry, near }) {
+      return standTrees({ px, py, day, climate: info.climate, confirmed, forest: entry.forest ?? null, rocks: [...(entry.rocks ?? []), ...(near ?? [])] });   // NODE-CLEAR; ROCK-NEAR
     },
     /** A standing tree is the forest's own flat: the node adds none. */
     flatsOf: () => [],

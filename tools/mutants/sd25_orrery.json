@@ -1,0 +1,353 @@
+[
+  {
+    "name": "SD25-S10-the-plinth-ten-out",
+    "file": "src/world/sdHall.js",
+    "old": "plinth0: Object.freeze({ r: 0.845, o: 0.395, y: 0.16 })",
+    "new": "plinth0: Object.freeze({ r: 0.945, o: 0.395, y: 0.16 })",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-banner-off-the-stone",
+    "file": "src/world/sdHall.js",
+    "old": "o: 0.375, amp: 0.017, ampWind: 0.02,",
+    "new": "o: 0.475, amp: 0.017, ampWind: 0.02,",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-banner's-ripple-past-the-law",
+    "file": "src/world/sdHall.js",
+    "old": "o: 0.375, amp: 0.017, ampWind: 0.02,",
+    "new": "o: 0.375, amp: 0.017, ampWind: 0.06,",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-shaft-shrunk",
+    "file": "src/world/sdHall.js",
+    "old": "shaft: Object.freeze({ r: 0.77, o: 0.33, chamfer: 0.06 }),",
+    "new": "shaft: Object.freeze({ r: 0.67, o: 0.25, chamfer: 0.06 }),",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-gear-past-its-crown",
+    "file": "src/world/sdHall.js",
+    "old": "export const SD_CROWN_GEAR = Object.freeze({ y: 3.26, tip: 0.6,",
+    "new": "export const SD_CROWN_GEAR = Object.freeze({ y: 3.26, tip: 0.95,",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-bezel-proud",
+    "file": "src/world/sdHall.js",
+    "old": "export const SD_BEZEL = Object.freeze({ r0: 0.44, r1: 0.52, o0: 0.355, o1: 0.378,",
+    "new": "export const SD_BEZEL = Object.freeze({ r0: 0.44, r1: 0.52, o0: 0.355, o1: 0.45,",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-gear-one-to-one",
+    "file": "src/world/sdHall.js",
+    "old": "teeth: 12, spokes: 5, t: 0.08, ratio: 2 });",
+    "new": "teeth: 12, spokes: 5, t: 0.08, ratio: 1 });",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-gear-with-its-hand's-way",
+    "file": "src/world/sdHall.js",
+    "old": "  const t = -SD_CROWN_GEAR.ratio * ((hour % 12) / 12) * Math.PI * 2,",
+    "new": "  const t = SD_CROWN_GEAR.ratio * ((hour % 12) / 12) * Math.PI * 2,",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-gear-ahead-of-its-hand",
+    "file": "src/scenes/sdHall.js",
+    "old": "crownGearMatrix(i, shown[i], gears[i].object.matrix)",
+    "new": "crownGearMatrix(i, want[i], gears[i].object.matrix)",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-a-ring-on-its-stone's-hour",
+    "file": "src/scenes/sdHall.js",
+    "old": "ringPoseInto(k, hang, ringState, pose); ringMatrix(",
+    "new": "ringPoseInto(k, hang, ringState, pose); pose[0] += shown[k] * Math.PI / 6; ringMatrix(",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-mode-B-switched-on",
+    "file": "src/world/sdOrreryModel.js",
+    "old": "export const SD_ORRERY_MODE_B = false;",
+    "new": "export const SD_ORRERY_MODE_B = true;",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-gold-through-the-whole-settling",
+    "file": "src/scenes/sdHall.js",
+    "old": "export const SD_BEZEL_MS = Object.freeze({ gold: 0.65,",
+    "new": "export const SD_BEZEL_MS = Object.freeze({ gold: 1,",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-ember-on-every-stone",
+    "file": "src/scenes/sdHall.js",
+    "old": "emberUntil[pressedStone] = now() + SD_BEZEL_MS.ember;",
+    "new": "emberUntil.fill(now() + SD_BEZEL_MS.ember);",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-ember-with-no-press-of-mine",
+    "file": "src/scenes/sdHall.js",
+    "old": "w.w === 1 && pressedStone >= 0 && now() - pressedAt < SD_BEZEL_MS.mine)",
+    "new": "w.w === 1 && pressedStone >= 0)",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-flash-on-a-fall",
+    "file": "src/scenes/sdHall.js",
+    "old": "if (!first && !w.x && w.lit > lit) flashUntil",
+    "new": "if (!first && !w.x && w.lit !== lit) flashUntil",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-dim-gone",
+    "file": "src/scenes/sdHall.js",
+    "old": "dimUntil = now() + SD_DIAL_DIM_MS;",
+    "new": "dimUntil = now();",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-pulse-at-four",
+    "file": "src/scenes/sdHall.js",
+    "old": "export const SD_FRAY_PULSE_HZ = 2;",
+    "new": "export const SD_FRAY_PULSE_HZ = 4;",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-warning-a-tab-early",
+    "file": "src/scenes/sdHall.js",
+    "old": "const warn = !blaze && f >= tabs - 8;",
+    "new": "const warn = !blaze && f >= tabs - 9;",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-gem-out-at-nought",
+    "file": "src/world/sdHallArt.js",
+    "old": "export const gemGlow = (n) => (3 + 2 * Math.min(6, Math.max(0, n))) / 15;",
+    "new": "export const gemGlow = (n) => (2 * Math.min(6, Math.max(0, n))) / 12;",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-a-tick-every-second",
+    "file": "src/world/sdOrreryModel.js",
+    "old": "export const SD_RING_TICK_S = 6;",
+    "new": "export const SD_RING_TICK_S = 1;",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-shiver-from-the-first-turn",
+    "file": "src/world/sdOrreryModel.js",
+    "old": "  if (fray > 0.75) tilt +=",
+    "new": "  if (fray > 0) tilt +=",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-concord-not-flat",
+    "file": "src/world/sdOrreryModel.js",
+    "old": "  if (concordAge >= 0) tilt *= 1 - ease(concordAge / SD_RING_CONCORD_S);",
+    "new": "  if (concordAge >= 0) tilt *= 1 - 0.9 * ease(concordAge / SD_RING_CONCORD_S);",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-rings-down-into-the-hall",
+    "file": "src/world/sdOrreryModel.js",
+    "old": "medallion: 0.9, pin: 0.25, hubY: 12.5,",
+    "new": "medallion: 0.9, pin: 0.25, hubY: 6,",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-tock-twice",
+    "file": "src/scenes/sdHall.js",
+    "old": "if (!tocked && ms >= SD_CONCORD_MS.rings) { tocked = true; play(",
+    "new": "if (ms >= SD_CONCORD_MS.rings) { tocked = true; play(",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-wind-unending",
+    "file": "src/scenes/sdHall.js",
+    "old": "if (ms >= SD_BANNER.wind * 1000) bannerLive = false;",
+    "new": "if (ms >= SD_BANNER.wind * 100000) bannerLive = false;",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-first-word-choreographed",
+    "file": "src/scenes/sdHall.js",
+    "old": "if (first) concordWhole();",
+    "new": "if (first && false) concordWhole();",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-plates-from-the-far-end",
+    "file": "src/scenes/sdHall.js",
+    "old": "const kj = (kb - (j * 0.6) / (n - 1)) / 0.4;",
+    "new": "const kj = (kb - ((n - 1 - j) * 0.6) / (n - 1)) / 0.4;",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-relief-lit-from-below",
+    "file": "src/world/sdHallArt.js",
+    "old": "const lit = m(x - 1, y + 1) < 1, shade = m(x + 1, y - 1) < 1;",
+    "new": "const lit = m(x + 1, y - 1) < 1, shade = m(x - 1, y + 1) < 1;",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-cloth-blue",
+    "file": "src/world/sdHallArt.js",
+    "old": "  [[14, 30, 28], [22, 46, 42], [34, 64, 58], [48, 84, 76], [66, 106, 96]],",
+    "new": "  [[14, 28, 44], [22, 44, 70], [34, 60, 98], [48, 80, 126], [66, 100, 150]],",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-plates'-hours-forward",
+    "file": "src/world/sdHallArt.js",
+    "old": "const s = SD_HOUR_NUMERALS[(12 - j) % 12], y0 = j * 16;",
+    "new": "const s = SD_HOUR_NUMERALS[j], y0 = j * 16;",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-XII-turned-to-the-walk",
+    "file": "src/world/sdHall.js",
+    "old": "    const F = floorAt((h / 12) * Math.PI * 2);",
+    "new": "    const F = floorAt(((h + 6) / 12) * Math.PI * 2);",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-a-numeral-misspelt",
+    "file": "src/world/sdHall.js",
+    "old": "numeralStrokes(SD_HOUR_NUMERALS[h]))",
+    "new": "numeralStrokes(SD_HOUR_NUMERALS[(h + 1) % 12]))",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-hands-casting",
+    "file": "src/scenes/sdHall.js",
+    "old": "({ gpu, object: { matrix }, noShadow: true, texRemap: null, hidden })",
+    "new": "({ gpu, object: { matrix }, noShadow: false, texRemap: null, hidden })",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-atlas-left-unquantized",
+    "file": "src/world/sdHallArt.js",
+    "old": "  quantize(albedo, paletteOf(B, Br, Bz, Vg, Pa, ...SD_BANNER_RAMPS));\n",
+    "new": "",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-hall's-halos-dropped",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "sdEndWith(sdEnd.halos(), sdHall?.halos(), _sdEndHalos)",
+    "new": "sdEndWith(sdEnd.halos(), null, _sdEndHalos)",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-gem's-light-dropped",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "sdEndWith(sdEnd.lights(), sdHall?.lights(), _sdEndLights)",
+    "new": "sdEndWith(sdEnd.lights(), null, _sdEndLights)",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-rings-off-the-anchored-clock",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "s: dfLocation.sdRealm, clock: sdEndClock, onTurn:",
+    "new": "s: dfLocation.sdRealm, onTurn:",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-phone's-wind-a-frame-at-a-time",
+    "file": "src/scenes/sdHall.js",
+    "old": "if (!lite || key !== bannerKey)",
+    "new": "if (true || key !== bannerKey)",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-phone's-rings-in-48",
+    "file": "src/scenes/sdHall.js",
+    "old": "buildOrbitRing(k, lite ? SD_RING_LITE_SEGS : SD_ORRERY_RINGS.segs)",
+    "new": "buildOrbitRing(k, SD_ORRERY_RINGS.segs)",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  }
+]

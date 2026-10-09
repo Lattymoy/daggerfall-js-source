@@ -421,6 +421,34 @@ const PUBLIC_ALLOWLIST = new Map([
   ['src/assets/mw/source/Brigandine_Steel.png', "SUPPLIED - the brigandine's texture as Mac supplied it with the mesh (the FBX's Steel.png), committed as the DDS's source"],
   ['src/assets/mw/meshes/brigandine_steel.nif', 'SUPPLIED - the brigandine, baked to a Morrowind NIF by tools/bakeBrigandine.mjs (skinned from the body at bind time, MW-BRIG2); a Bethesda format, no Bethesda data'],
   ['src/assets/mw/textures/brigandine_steel.dds', 'SUPPLIED - Brigandine_Steel.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  // MW-BRIG4 (2026-10-09): Mac's nine paintings of the brigandine's unwrap, one per metal the jerkin is a brigandine in
+  ['src/assets/mw/source/Brigandine_Iron.png', "SUPPLIED - the Iron brigandine's painting as Mac sent it (2026-10-09, his 1 of nine - tan with dark rivets), committed as its DDS's source"],
+  ['src/assets/mw/meshes/brigandine_iron.nif', 'SUPPLIED - the brigandine mesh written naming the Iron painting by tools/bakeBrigandine.mjs (MW-BRIG4); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/textures/brigandine_iron.dds', 'SUPPLIED - Brigandine_Iron.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/source/Brigandine_Silver.png', "SUPPLIED - the Silver brigandine's painting as Mac sent it (2026-10-09, his 7 of nine - deep blue with silver rivets), committed as its DDS's source"],
+  ['src/assets/mw/meshes/brigandine_silver.nif', 'SUPPLIED - the brigandine mesh written naming the Silver painting by tools/bakeBrigandine.mjs (MW-BRIG4); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/textures/brigandine_silver.dds', 'SUPPLIED - Brigandine_Silver.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/source/Brigandine_Elven.png', "SUPPLIED - the Elven brigandine's painting as Mac sent it (2026-10-09, his 6 of nine - green with white rivets), committed as its DDS's source"],
+  ['src/assets/mw/meshes/brigandine_elven.nif', 'SUPPLIED - the brigandine mesh written naming the Elven painting by tools/bakeBrigandine.mjs (MW-BRIG4); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/textures/brigandine_elven.dds', 'SUPPLIED - Brigandine_Elven.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/source/Brigandine_Dwarven.png', "SUPPLIED - the Dwarven brigandine's painting as Mac sent it (2026-10-09, his 9 of nine - deep blue with gold rivets), committed as its DDS's source"],
+  ['src/assets/mw/meshes/brigandine_dwarven.nif', 'SUPPLIED - the brigandine mesh written naming the Dwarven painting by tools/bakeBrigandine.mjs (MW-BRIG4); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/textures/brigandine_dwarven.dds', 'SUPPLIED - Brigandine_Dwarven.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/source/Brigandine_Mithril.png', "SUPPLIED - the Mithril brigandine's painting as Mac sent it (2026-10-09, his 3 of nine - light blue with teal rivets), committed as its DDS's source"],
+  ['src/assets/mw/meshes/brigandine_mithril.nif', 'SUPPLIED - the brigandine mesh written naming the Mithril painting by tools/bakeBrigandine.mjs (MW-BRIG4); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/textures/brigandine_mithril.dds', 'SUPPLIED - Brigandine_Mithril.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/source/Brigandine_Adamantium.png', "SUPPLIED - the Adamantium brigandine's painting as Mac sent it (2026-10-09, his 2 of nine - tan with red rivets), committed as its DDS's source"],
+  ['src/assets/mw/meshes/brigandine_adamantium.nif', 'SUPPLIED - the brigandine mesh written naming the Adamantium painting by tools/bakeBrigandine.mjs (MW-BRIG4); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/textures/brigandine_adamantium.dds', 'SUPPLIED - Brigandine_Adamantium.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/source/Brigandine_Ebony.png', "SUPPLIED - the Ebony brigandine's painting as Mac sent it (2026-10-09, his 8 of nine - red with light rivets), committed as its DDS's source"],
+  ['src/assets/mw/meshes/brigandine_ebony.nif', 'SUPPLIED - the brigandine mesh written naming the Ebony painting by tools/bakeBrigandine.mjs (MW-BRIG4); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/textures/brigandine_ebony.dds', 'SUPPLIED - Brigandine_Ebony.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/source/Brigandine_Orcish.png', "SUPPLIED - the Orcish brigandine's painting as Mac sent it (2026-10-09, his 5 of nine - green with dark rivets), committed as its DDS's source"],
+  ['src/assets/mw/meshes/brigandine_orcish.nif', 'SUPPLIED - the brigandine mesh written naming the Orcish painting by tools/bakeBrigandine.mjs (MW-BRIG4); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/textures/brigandine_orcish.dds', 'SUPPLIED - Brigandine_Orcish.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/source/Brigandine_Daedric.png', "SUPPLIED - the Daedric brigandine's painting as Mac sent it (2026-10-09, his 4 of nine - red with dark rivets), committed as its DDS's source"],
+  ['src/assets/mw/meshes/brigandine_daedric.nif', 'SUPPLIED - the brigandine mesh written naming the Daedric painting by tools/bakeBrigandine.mjs (MW-BRIG4); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/textures/brigandine_daedric.dds', 'SUPPLIED - Brigandine_Daedric.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
   // MW-STEEL1 (2026-10-06): Mac's steel plate, the whole classic set for the Morrowind body, supplied as two Blender
   // exports of one scene (New_Ship.fbx, the open helm; New_Ship1.fbx, the closed). His scene also carried the body it
   // was fitted on - Morrowind's own Breton head and neck, out of a "Morrowind_TPose_Models" pack - and those are
@@ -434,8 +462,8 @@ const PUBLIC_ALLOWLIST = new Map([
   // re-makes every mesh and texture below from these sources, and test/mwsteel1.test.js holds it to the bytes. MW-STEEL4
   // (2026-10-07): every mesh is skinned at the bake to Morrowind's Bip01 bones, its inverse binds the bind of the vendored
   // retail skeleton (vendor/weapon-sheathing, Greatness7's, credited) - numbers of a skeleton, no Bethesda geometry.
-  ['src/assets/mw/source/Steel_Plate.fbx', "SUPPLIED - Mac's Blender export of the steel plate with the open helm (New_Ship.fbx, 2026-10-06), the Morrowind Breton head and neck it was fitted on stripped out by tools/fbxStrip.mjs (the plate skirt kept since MW-STEEL2); committed so the files below are a DERIVATION the gate can re-run"],
-  ['src/assets/mw/source/Steel_Plate_Closed_Helm.fbx', "SUPPLIED - the closed helm and its visor out of Mac's second export (New_Ship1.fbx, 2026-10-06), every other object stripped by tools/fbxStrip.mjs (the shared pieces are the first export's, measured the same); a DERIVATION's source"],
+  ['src/assets/mw/source/Steel_Plate.fbx', "SUPPLIED - Mac's Blender export of the steel plate with the closed helm (steel_armor.fbx, 2026-10-09 - MW-STEEL5), committed as it came: it carries no Morrowind head or neck; committed so the files below are a DERIVATION the gate can re-run"],
+  ['src/assets/mw/source/Steel_Plate_Open_Helm.fbx', "SUPPLIED - the open helm alone out of Mac's first export (New_Ship.fbx, 2026-10-06), every other object - and the Morrowind Breton head and neck it was fitted on - stripped by tools/fbxStrip.mjs (MW-STEEL5); a DERIVATION's source"],
   ['src/assets/mw/source/Steel_Plate_Cuirass.png', "SUPPLIED - the breastplate's painting as Mac sent it (his steelbreastplate texture), committed as its DDS's source"],
   ['src/assets/mw/source/Steel_Plate_Pauldron.png', "SUPPLIED - the pauldrons' painting as Mac sent it (his steelpauldrons texture), committed as its DDS's source"],
   ['src/assets/mw/source/Steel_Plate_Gauntlet.png', "SUPPLIED - the gauntlets' painting as Mac sent it (his newgloves texture), committed as its DDS's source"],

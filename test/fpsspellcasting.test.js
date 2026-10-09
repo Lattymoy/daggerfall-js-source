@@ -64,7 +64,7 @@ test('fpsSpellCasting: the constants are FPSSpellCasting’s, and the surface is
   assert.equal(SMALL_FRAME_ADJUST, 0.134);
   assert.equal(ANIM_SPEED, 0.04);
   // CAST-SPEED: the port's hands step at two and a half times it (Mac, 2026-10-08: in line with the Morrowind cast)
-  assert.equal(CAST_FRAME_PERIOD, 0.1);
+  assert.equal(CAST_FRAME_PERIOD, 0.04);   // CAST-QUICK: DFU's own clock again
   // "Animation starts and ends with frame 0" (:50).
   assert.deepEqual([...FRAME_INDICES], [0, 1, 2, 3, 4, 5, 0]);
   assert.equal(FRAME_INDICES.at(0), FRAME_INDICES.at(-1));
@@ -226,6 +226,7 @@ test('fpsSpellCasting: the rig’s cast door starts the hands and its frame runs
   // AND IT RUNS WHILE PARALYSED. FPSSpellCasting is its own component
   // in DFU - WeaponManager.ShowWeapons(false) never reached it - so a
   // cast already in flight finishes its motion.
+  r.frame(1);   // CAST-RECOVER: the last cast's recovery run out
   r.castSpellAnim(2, ELEMENT_TYPES.Fire);
   r.frame(CAST_FRAME_PERIOD, { paralyzed: true });
   assert.equal(fpsSpellCasting.frameIndex, 1, 'paralysis does not freeze the casting hands');
@@ -311,4 +312,12 @@ test('fpsSpellCasting: the five spell archives satisfy the animation on real dat
       assert.ok(w(4) < w(2), 'FIRE00C6 r4 is a small frame too (:224)');
     }
   }
+});
+
+test('HAND-SEAM: the casting hands upload CLAMPED (NEAREST, no wrap) under their own key - the inner edge of each hand never samples the art\'s far column', () => {
+  const src = readFileSync(new URL('../src/combat/fpsSpellCasting.js', import.meta.url), 'utf8');
+  assert.match(src, /tex: renderer\.uploadTexture\('img', `fpsc:\$\{fileName\}:\$\{r\}`, c32, \{ clamp: true \}\),/, 'the hands ask for the clamp');
+  const r = readFileSync(new URL('../src/render/renderer.js', import.meta.url), 'utf8');
+  assert.match(r, /\$\{opts\.clamp && !opts\.smooth \? '#clamp' : ''\}`;/, 'and a clamped upload keys apart from a tiling one of the same art');
+  assert.match(r, /const \{ wrap, filter \} = textureParams\(gl, opts\);\s*\n\s*gl\.texParameteri\(gl\.TEXTURE_2D, gl\.TEXTURE_WRAP_S, wrap\);\s*\n\s*gl\.texParameteri\(gl\.TEXTURE_2D, gl\.TEXTURE_WRAP_T, wrap\);/, 'the upload applies what textureParams answers');
 });

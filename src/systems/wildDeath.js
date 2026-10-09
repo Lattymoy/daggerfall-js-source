@@ -30,6 +30,7 @@ import { tradeRefusal } from './tradePack.js';
 import { isEquipped } from './equip.js';
 import { DECOR_OWN_KEPT_BACK } from './decorItems.js';
 import { WILD_ITEMS_MAX } from '../net/wire.js';
+import { RECEIVER_MARKS } from '../net/realmTradeLaw.js';
 import { goldStack } from './inventory.js';
 import { isWalletItem, walletHolds } from './walletItem.js';   // KEEP-WALLET
 
@@ -103,9 +104,7 @@ export const wornOffer = (items) => (Array.isArray(items) ? items.filter((it) =>
  *  strips them too; never sent is better than stripped). */
 export function wildRecord(item) {
   const copy = JSON.parse(JSON.stringify(item));
-  delete copy.equipSlot;
-  delete copy.questItem;
-  delete copy.acquired;   // ACQUIRE1: the receiver's mark too (loot.js strips it on the way in)
+  for (const k of RECEIVER_MARKS) delete copy[k];   // ACQUIRE1's `acquired` among them; MARK-WIRE: one list (net/realmTradeLaw.js)
   return copy;
 }
 

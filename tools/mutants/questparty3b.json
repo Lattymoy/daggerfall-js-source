@@ -9,15 +9,15 @@
   {
     "name": "QP3B-flags-unbounded",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "if (!Number.isInteger(fl) || fl < 0 || fl > 3) continue;",
+    "old": "if (!Number.isInteger(fl) || fl < 0 || fl > 7) continue;",
     "new": "if (!Number.isInteger(fl) || fl < 0) continue;",
     "tests": ["test/questparty3b.test.js"]
   },
   {
     "name": "QP3B-marker-bit-unread",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "...(fl & 1 ? { mk: 1 } : {})",
-    "new": "...(fl & 4 ? { mk: 1 } : {})",
+    "old": "...(fl & 1 && !(fl & 4) ? { mk: 1 } : {})",
+    "new": "...(fl & 8 ? { mk: 1 } : {})",
     "tests": ["test/questparty3b.test.js"]
   },
   {
@@ -51,7 +51,7 @@
   {
     "name": "QP3B-marker-never-flagged",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "fl = (f?._questMarker ? 1 : 0) |",
+    "old": "fl = (f?._questMarker && !pv ? 1 : 0) |",
     "new": "fl = 0 |",
     "tests": ["test/questparty3b.test.js"]
   },

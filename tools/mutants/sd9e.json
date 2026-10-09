@@ -398,8 +398,8 @@
   {
     "name": "SD9E-realm-unlit",
     "file": "src/scenes/worldModes.js",
-    "old": "realmLightsWith(_dgLit, host.sdRealmLights?.() ?? NO_LIGHTS, cam.pos)",
-    "new": "realmLightsWith(_dgLit, NO_LIGHTS, cam.pos)",
+    "old": "realmLightsWith(_dgLit, host.sdRealmLights?.() ?? NO_LIGHTS, cam.pos, host.sdLampDim?.() ?? null)",
+    "new": "realmLightsWith(_dgLit, NO_LIGHTS, cam.pos, host.sdLampDim?.() ?? null)",
     "tests": [
       "test/sd9e_spoils.test.js"
     ]

@@ -1,0 +1,20 @@
+[
+  {
+    "name": "DRIVER-FACE-never-written",
+    "file": "src/systems/immersiveTravel.js",
+    "old": "  setFlatFaceOverride(IT_DRIVER_FACE.archive, IT_DRIVER_FACE.record, IT_DRIVER_FACE.faceIndex);   // DRIVER-FACE\n",
+    "new": "",
+    "tests": [
+      "test/fb1009b_driverface.test.js"
+    ]
+  },
+  {
+    "name": "DRIVER-FACE-written-with-the-mod-off",
+    "file": "src/systems/immersiveTravel.js",
+    "old": "  _installed = true;\n  if (!latchModLoaded(",
+    "new": "  _installed = true;\n  setFlatFaceOverride(IT_DRIVER_FACE.archive, IT_DRIVER_FACE.record, IT_DRIVER_FACE.faceIndex);\n  if (!latchModLoaded(",
+    "tests": [
+      "test/fb1009b_driverface.test.js"
+    ]
+  }
+]

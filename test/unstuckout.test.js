@@ -69,7 +69,7 @@ test('UNSTUCK-OUT the nearest open ground: inside a mountain\'s rock (a real clo
 
 test('UNSTUCK-OUT the world host: a fast-travel landing held in a rock stands on the nearest open ground; tvSeaY stands before the boot\'s load reads it (mutants: the landing unchecked). `/unstuck` outdoors is PVPUNSTUCK\'s (bible/11-Multiplayer/Wild-Zone.md section 17: the nearest town) - UNSTUCK-OUT\'s own open-ground arm was withdrawn for it at the merge', () => {
   const w = src('src/scenes/world.js');
-  assert.match(w, /import \{ floorLanding, doorWorldPosition, openGroundNear, heldInSolid \} from '\.\.\/player\/enterExit\.js';/);
+  assert.match(w, /import \{ floorLanding, doorWorldPosition, (?:dungeonEntranceLanding, repositionFeetY, )?openGroundNear, heldInSolid \} from '\.\.\/player\/enterExit\.js';/);
   assert.match(w, /if \(walkMode && \(!local \|\| ground\) && heldInSolid\(collider, pos\)\) \{\n\s*const open = openGroundNear\(collider, pos\[0\], pos\[2\], \{ dry: \(floor\) => floor >= tvSeaY\(\) \}\);\n\s*if \(open\) \{\n[^\n]*\n\s*pos = open;/);
   const landing = w.indexOf('heldInSolid(collider, pos)');
   assert.ok(landing > w.indexOf('if (walkMode && landing && pos[1] - raw[1] > OBSTRUCTED_ABOVE) {') && landing < w.indexOf('const resolved = resolveArrival ? await resolveArrival(pos) : null;'), 'after TL2, before the arrival is committed');

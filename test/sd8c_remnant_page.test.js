@@ -12,7 +12,7 @@ import {
   newRemnantFight, joinRemnant, stepRemnant, applyRemnantHit, applyEchoHit, applyHeartHit, heartsOpen, remnantStateOf, behindPillar, windupFor,
   SD_ECHO_PAIR_MS,
 } from '../src/net/sdRemnant.js';
-import { SD_FIGHT_EMPTY, SD_IN_RETRY_MS, SD_FIGHT_TEXT, foldSdFight, createSdFightLink, sdBodyAt, sdBlowDone, sdHeartsOf } from '../src/net/sdFightLink.js';
+import { SD_FIGHT_EMPTY, SD_IN_RETRY_MS, SD_FIGHT_HEARD_MS, SD_FIGHT_TEXT, foldSdFight, createSdFightLink, sdBodyAt, sdBlowDone, sdHeartsOf } from '../src/net/sdFightLink.js';
 import { validSdOut, SOCIAL_ROOM, SD_KEY, worldRoom, PIXEL_UNITS, SD_BRAIN_V, SD_NO_WORDS } from '../src/net/wire.js';
 import { SD_ARENA, SD_PILLAR_R, SD_PILLAR_W, SD_PILLAR_H, realmToDungeon, dungeonToRealm } from '../src/net/sdBrain.js';
 import { dpsRef, HIT_KINDS, PHASE_AT } from '../src/net/gateBrain.js';
@@ -22,6 +22,7 @@ import {
   createSdRemnant, remnantPose, echoPose, heartsOpenAt, remnantOpenAt, arenaToDungeon, SD_KNEEL_M, SD_KNEEL_EASE_MS, SD_REM_SINK_MS, SD_ECHO_SINK_MS,
   SD_REMNANT_MOBILE, SD_REMNANT_NAMES,
   SD_GEAR_DRAWS,
+  SD_DECOR_DRAWS,
 } from '../src/scenes/sdRemnant.js';
 import { remnantBarModel, sdBarNear, SD_BAR_TEXT, SD_BAR_NEAR_M, SD_ENDS_WARN_MS, SD_ENDS_NEAR_MS } from '../src/ui/sdRemnantBar.js';
 import { drawGateBossBar, destroyGateBossBar, FELL_HOLD_MS, FELL_FADE_MS } from '../src/ui/gateBossBar.js';
@@ -193,7 +194,7 @@ test('SD8c MY PLACE IN THE FIGHT: my `in` is due standing in the arena until the
   assert.equal(L.joined(), false, 'a whole state fanned to everyone is no answer');
   L.word(st({ me: 1 }));
   assert.equal(L.joined(), true, 'the realm\'s answer: I am in it');
-  assert.equal(L.inDue(clock + 60_000), false, 'and say no more');
+  assert.equal(L.inDue(clock + SD_FIGHT_HEARD_MS - 1), false, 'and say no more');   // PIN MOVED (AUDIT SD IV 8): while the fight is heard - a minute of silence is a fight lost unheard, and the `in` is due again (sd26_net)
   L.word(validSdOut({ k: 'lost', at: clock }));
   assert.equal(L.joined(), false, 'a fight lost');
   assert.equal(L.inDue(clock + 60_000), true, 'the next `in` makes a fresh one');
@@ -208,7 +209,7 @@ test('SD8c MY PLACE IN THE FIGHT: my `in` is due standing in the arena until the
   L.word(st());
   L.word(validSdOut({ k: 'no', m: SD_NO_WORDS[2] }));
   assert.deepEqual([said.at(-1), refused.at(-1)], [SD_FIGHT_TEXT.no['the arena is full'], 'the arena is full']);
-  assert.equal(L.inDue(clock + 60_000), false, 'the arena full: not into this fight');
+  assert.equal(L.inDue(clock + SD_FIGHT_HEARD_MS - 1), false, 'the arena full: not into this fight');   // PIN MOVED (AUDIT SD IV 8): while it is heard - a refusal lapses with a fight gone silent
   L.word(validSdOut({ k: 'lost', at: clock }));
   assert.equal(L.inDue(clock + 60_000), true, 'its loss lapses it');
   L.word(validSdOut({ k: 'no', m: SD_NO_WORDS[3] }));
@@ -227,7 +228,7 @@ test('SD8c MY PLACE IN THE FIGHT: my `in` is due standing in the arena until the
   assert.equal(L2.inDue(clock + 60_000), false, 'fallen');
   f.fell = null; f.ended = { at: T0 }; f.fi = 7;
   L2.word(st());
-  assert.equal(L2.inDue(clock + 60_000), false, 'past its Hour');
+  assert.equal(L2.inDue(clock + SD_FIGHT_HEARD_MS - 1), false, 'past its Hour');   // PIN MOVED (AUDIT SD IV 8): while it is heard - an Hour Ended gone silent was lost unheard
   // the turns said once each, live alone
   const words = [];
   const L3 = createSdFightLink({ now: () => clock, say: (t) => words.push(t) });
@@ -335,12 +336,12 @@ const feetAt = (x, z) => arenaToDungeon(x, z);
 
 test('SD8c THE SET STANDS THE BODIES: the Remnant, the two Echoes and the most Hearts a Reset raises, each a draw hidden until the fight stands it; their metals uploaded; with no fight to fight the Remnant waits where a fight begins it, facing the way in; it walks where the realm says, kneels stunned, is gone outside time and rises at the centre for the Last Moment, and sinks where it fell; an Echo rises out of the floor and sinks where it fell; a Heart stands while the Reset winds up (mutants: a body drawn outside time; no kneel; the fall left standing)', () => {
   const { set, draws, r, L, at } = rig();
-  assert.equal(draws.length, 1 + 2 + SD_HEARTS[1] + 3 * SD_RIG_PARTS.length + SD_GEAR_DRAWS);   // PIN MOVED (SD17): each body's turned parts and the gears after the Hearts
+  assert.equal(draws.length, 1 + 2 + SD_HEARTS[1] + 3 * SD_RIG_PARTS.length + SD_GEAR_DRAWS + SD_DECOR_DRAWS.length);   // PIN MOVED (SD17): each body's turned parts and the gears after the Hearts; PIN MOVED (SD-LOOK S8): the decor after the gears
   assert.ok(draws.every(hidden), 'hidden until the first frame');
   assert.ok(r.up.some(([a, rec]) => a === SD_REALM_ARCHIVE && rec === SD_REMNANT_GOLD_RECORD) && r.up.some(([, rec]) => rec === SD_REMNANT_SILVER_RECORD), 'the Echoes\' metals uploaded');
   set.frame(0.016, null);
   assert.deepEqual(translation(draws[0]).map((v) => Math.round(v * 100) / 100), arenaToDungeon(...SD_REM_START).map((v) => Math.round(v * 100) / 100), 'waiting at its start');
-  assert.ok(draws.slice(1, 3 + SD_HEARTS[1]).every(hidden) && draws.slice(3 + SD_HEARTS[1] + SD_RIG_PARTS.length).every(hidden), 'no Echo, no Heart');   // PIN MOVED (SD17): the Remnant's own parts stand with it
+  assert.ok(draws.slice(1, 3 + SD_HEARTS[1]).every(hidden) && draws.slice(3 + SD_HEARTS[1] + SD_RIG_PARTS.length, 3 + SD_HEARTS[1] + 3 * SD_RIG_PARTS.length + SD_GEAR_DRAWS).every(hidden), 'no Echo, no Heart');   // PIN MOVED (SD17): the Remnant's own parts stand with it; PIN MOVED (SD-LOOK S8): and its decor
   // pure: where it stands, and how
   const s0 = L.state();
   assert.deepEqual(remnantPose(SD_FIGHT_EMPTY, T0), { x: SD_REM_START[0], z: SD_REM_START[1], yw: Math.PI, sink: 0, shown: true }, 'no fight: waiting');
@@ -670,7 +671,7 @@ test('SD8c THE HOSTS, by source: the dungeon context makes the arena\'s set in t
   assert.match(W, /online\.onSdFight = \(w\) => sdFightHeard\(w\);/);
   assert.match(W, /if \(!sdFightLink \|\| slot == null \|\| \(w\.k === 'st' && w\.s !== slot\)\) return;/);
   assert.match(W, /if \(!inRealm && _sdFightHeld\) \{ sdFightLink\.leave\(\); sdBlows\?\.leave\(\); sdRemVoice\?\.leave\(\); sdFx\?\.leave\(\); _sdFightHeld = false; \}/);   // PIN MOVED (SD8d): its blows forgotten with it   // SD14a (PIN MOVED): its voice let go with it   // SD16 (PIN MOVED): its sparks
-  assert.match(W, /const s = sdFightLink\.state\(\), now = sdFightLink\.now\(\);\n\s*if \(sdBarNear\(x, z\)\) bar = remnantBarModel\(s, now\);/);   // SD15 (PIN MOVED): the fight read once a frame, for the bar and the arena read
+  assert.match(W, /const s = sdFightLink\.state\(\), now = sdFightLink\.now\(\);\n\s*const near = sdBarNear\(x, z\);\n\s*if \(near\) bar = remnantBarModel\(s, now\);/);   // SD15 (PIN MOVED): the fight read once a frame, for the bar and the arena read; PIN MOVED (AUDIT SD IV T1): its nearness kept, the title card's gate too
   assert.match(W, /const hidden = gamePaused\(\) \|\| !!townTalk\.hudHidden \|\| !!gateVeil\?\.busy;[^\n]*\n\s*if \(bar \|\| _sdBarUp\) \{ drawGateBossBar\(bar, \{ hidden \}\); _sdBarUp = !!bar; \}/);   // SD15 (PIN MOVED): one hide for the bar, the ground and the card; AUDIT SD III (T18, PIN MOVED): and under the veil, as the court's
   assert.match(W, /sdFightIn: \(\) => !!online\?\.sendSdIn\?\.\(playerEntity\.level\),/);
   assert.match(W, /sdBlow: \(k, f\) => !!online\?\.sendSdBlow\?\.\(k, f\),/);

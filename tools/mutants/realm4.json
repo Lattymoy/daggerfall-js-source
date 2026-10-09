@@ -56,7 +56,7 @@
   {
     "name": "REALM4-marks-ride",
     "file": "src/net/realmTradeLaw.js",
-    "old": "    delete rec.equipSlot; delete rec.questItem;\n",
+    "old": "    for (const k of RECEIVER_MARKS) delete rec[k];\n",
     "new": "",
     "tests": [
       "test/realm4.test.js"

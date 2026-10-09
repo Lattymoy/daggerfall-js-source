@@ -1184,13 +1184,23 @@ export function dungeonAmbient(on, rgb) {
  *  Ambience's fog colour is the colour its trilight is lerped toward, so a
  *  scaled ambient under an unscaled fog put the far end of a hall BRIGHTER
  *  than its near walls. The underwater override is not this one's. */
-export function dungeonFog(on, fog) {
+export function dungeonFog(on, fog, into = null) {
   if (!on || !fog?.color) return fog;
   const c = fog.color;
+  if (into) {   // AUDIT SD IV (R5): a frame's, into the host's kept record (applyFog's fields) - its own loop, never a helper's: a
+    // helper fed both a fog's frozen colour and a trilight's numbers boxed every number it read (9 a frame)
+    into.mode = fog.mode; into.density = fog.density; into.start = fog.start; into.end = fog.end;
+    for (let k = 0; k < 3; k++) into.color[k] = c[k] * EL_DUNGEON_AMBIENT_SCALE;
+    return into;
+  }
   return { ...fog, color: [c[0] * EL_DUNGEON_AMBIENT_SCALE, c[1] * EL_DUNGEON_AMBIENT_SCALE, c[2] * EL_DUNGEON_AMBIENT_SCALE] };
 }
-export function dungeonTrilight(on, tri) {
+export function dungeonTrilight(on, tri, into = null) {
   if (!on || !tri) return tri;
+  if (into) {   // AUDIT SD IV (R5): the same
+    for (let k = 0; k < 3; k++) { into.sky[k] = tri.sky[k] * EL_DUNGEON_AMBIENT_SCALE; into.equator[k] = tri.equator[k] * EL_DUNGEON_AMBIENT_SCALE; into.ground[k] = tri.ground[k] * EL_DUNGEON_AMBIENT_SCALE; }
+    return into;
+  }
   const k = (c) => [c[0] * EL_DUNGEON_AMBIENT_SCALE, c[1] * EL_DUNGEON_AMBIENT_SCALE, c[2] * EL_DUNGEON_AMBIENT_SCALE];
   return { sky: k(tri.sky), equator: k(tri.equator), ground: k(tri.ground) };
 }

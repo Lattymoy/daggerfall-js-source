@@ -21,8 +21,9 @@
 // The weapon table keys on the template alone because the Thunderlock has
 // no material ladder. Armour does: Roleplay & Realism Items' Jerkin is
 // leather, fur or "Brigandine" by its material (rriItems.js lightWord -
-// Iron and up), and Mac's model is the STEEL one. Every other material
-// of the same jerkin keeps the retail cuirass it resolved to before.
+// Iron and up). Mac's model was the STEEL one (MW-BRIG1); since MW-BRIG4
+// every brigandine metal wears it in its own painting, and the leather
+// and fur jerkins keep the retail cuirass they resolved to before.
 //
 // ═══ MW-STEEL1: THE STEEL PLATE ═══════════════════════════════════
 //
@@ -44,12 +45,20 @@
 // it on the very path it takes a retail ARMO's BODY meshes. The runtime fit
 // and skin solve MW-STEEL1-3 carried (`fit`, `solvePose`, a part's own
 // `skinFrom`) are gone with it.
-import { ARMOR_MATERIAL } from '../systems/armorMaterials.js';
+// MW-BRIG4 (2026-10-09, Mac: "Also for the integrated brigadine chest piece, we need each of these textures
+// implemented", nine paintings; asked which metal wears which, he took the map offered - one per metal): EVERY METAL
+// OF THE BRIGANDINE JERKIN wears the brigandine now, each in its own painting - the one mesh, baked once per metal
+// with that metal's texture (tools/bakeBrigandine.mjs). Steel keeps MW-BRIG1's red.
+import { ARMOR_MATERIAL, isPlate } from '../systems/armorMaterials.js';
 
 /** Roleplay & Realism Items' Jerkin (systems/rriItems.js RRI_TEMPLATES,
  *  ItemJerkin). Restated rather than imported for the leaf's sake;
  *  test/mwbrig2.test.js holds it to the mod's own row. */
 export const RRI_JERKIN_TEMPLATE = 520;
+
+/** MW-BRIG4: the metals the Jerkin is a BRIGANDINE in - every plate material, Iron to Daedric (rriItems.js lightWord:
+ *  "Iron and up"), in the material ladder's order. Each wears the brigandine in its own painting. */
+export const BRIGANDINE_METALS = Object.freeze(Object.keys(ARMOR_MATERIAL).filter((k) => isPlate(ARMOR_MATERIAL[k])));
 
 /** MW-STEEL1: Daggerfall's classic armour templates (combat/enemyEquipment.js ARMOR_ENUM, DFU's ItemEnums.Armor),
  *  restated for the leaf's sake; test/mwsteel1.test.js holds them to the enum. */
@@ -111,6 +120,21 @@ function steelPlate() {
   ];
 }
 
+/** MW-BRIG1: Roleplay & Realism Items' Jerkin as a brigandine - MW-BRIG4: in every metal it is one, its painting the
+ *  metal's (`brigandine_<metal>.nif`, which names `brigandine_<metal>.dds`). One piece, worn as a cuirass (it hides the
+ *  chest skin). The skirt needs no split of its own: skinned from the groin, thighs and knees, it bends with the legs
+ *  under it. */
+const BRIGANDINE_SKIN_FROM = Object.freeze(['chest', 'groin', 'upperleg', 'knee']);
+const brigandine = (metal) => Object.freeze({
+  id: `daggerfall_brigandine_${metal.toLowerCase()}`,
+  name: `${metal} Brigandine`,
+  templateIndex: RRI_JERKIN_TEMPLATE,
+  material: ARMOR_MATERIAL[metal],
+  skinFrom: BRIGANDINE_SKIN_FROM,
+  fitTo: 'chest',   // MW-BRIG3: its closed top sits where the chest skin it hides ends, at the base of the neck
+  parts: Object.freeze([Object.freeze({ part: 'cuirass', model: `brigandine_${metal.toLowerCase()}.nif` })]),
+});
+
 /**
  * The port's own worn models.
  *
@@ -134,19 +158,7 @@ function steelPlate() {
  * `styles`: a piece that comes more than one way (the steel helm), the parts of each - `parts` is the default's.
  */
 export const OWN_MW_ARMOR = Object.freeze([
-  Object.freeze({
-    id: 'daggerfall_brigandine_steel',
-    name: 'Steel Brigandine',
-    templateIndex: RRI_JERKIN_TEMPLATE,
-    material: ARMOR_MATERIAL.Steel,
-    // One piece, worn as a cuirass (it hides the chest skin). The skirt needs no split of its own: skinned from the
-    // groin, thighs and knees, it bends with the legs under it.
-    skinFrom: Object.freeze(['chest', 'groin', 'upperleg', 'knee']),
-    fitTo: 'chest',   // MW-BRIG3: its closed top sits where the chest skin it hides ends, at the base of the neck
-    parts: Object.freeze([
-      Object.freeze({ part: 'cuirass', model: 'brigandine_steel.nif' }),
-    ]),
-  }),
+  ...BRIGANDINE_METALS.map(brigandine),
   ...steelPlate(),
 ]);
 

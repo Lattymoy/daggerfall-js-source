@@ -11,7 +11,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  createSdAir, sdAirEvents, sdAirWindGain, buildHourWorks, buildOrreryHum, SD_AIR_VOID, SD_AIR_WORKS, SD_AIR_HUM, SD_AIR_GEARS,
+  SD_AIR_FAR, createSdAir, sdAirEvents, sdAirWindGain, buildHourWorks, buildOrreryHum, SD_AIR_VOID, SD_AIR_WORKS, SD_AIR_HUM, SD_AIR_GEARS,
   SD_AIR_HUM_AT, SD_AIR_GEARS_AT, SD_AIR_EVENTS, SD_AIR_RATE, SD_WORKS_SECONDS, SD_HUM_SECONDS,
 } from '../src/scenes/sdAir.js';
 import { airSourceAt, AIR_BACKLOG_S } from '../src/scenes/deadlandsAir.js';
@@ -127,7 +127,7 @@ test('SD14b HEARD FROM ITS QUARTER: each event played as it falls in a frame, fa
   air.frame(first.t + 0.01, ear);
   assert.equal(e.shots.length, 1);
   assert.deepEqual(e.shots[0].at, airSourceAt(ear, first.az, first.lift));
-  assert.equal(e.shots[0].far, true); assert.equal(e.shots[0].clip, first.clip);
+  assert.equal(e.shots[0].far, SD_AIR_FAR); assert.equal(e.shots[0].clip, first.clip);   // PIN MOVED (AUDIT SD IV A5): far under the Hour's name, which its stop lets go
   air.frame(first.t + 0.01 + AIR_BACKLOG_S + 60, ear);
   assert.equal(e.shots.length, 1, 'a tab put away: nothing of what it passed');
   let lo = Infinity, hi = -Infinity;
