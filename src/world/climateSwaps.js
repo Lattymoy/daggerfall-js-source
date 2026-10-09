@@ -293,6 +293,17 @@ export function groundIsSnowy(climateSettings, season) {
   return climateSettings.climateType !== BASE.Desert && season === SEASON.Winter;
 }
 
+/** SNOWLESS1: the texture door's word on a winter ground archive whose DRAWN set wears no snow - Vanilla Enhanced's
+ *  Snowless Swamps and Jungles deciding 403 (systems/dfmodTextures.js winterGroundSnowless registers it). None by default. */
+let _snowlessGround = null;
+export function setSnowlessGround(fn) { _snowlessGround = typeof fn === 'function' ? fn : null; }
+/** SNOWLESS1: THE GROUND AS DRAWN WEARS SNOW - groundIsSnowy (the archive law the terrain keys its +1 on, unchanged: the
+ *  pack dresses 403, it does not move the terrain off it), unless the set drawn for that winter archive is a snowless
+ *  one. What the weather's ground law and Snowfall ask. */
+export function groundWearsSnow(climateSettings, season) {
+  return groundIsSnowy(climateSettings, season) && !(_snowlessGround?.(climateSettings.groundArchive + 1) ?? false);
+}
+
 export function getGroundArchive(climateBase, season) {
   let archive;
   switch (climateBase) {

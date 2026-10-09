@@ -87,7 +87,16 @@ IsSnowFreeClimate serves the footsteps and the table never rolls snow
 for a snow-free zone, so nothing in DFU keeps rain off snow. This is a
 departure, recorded on the Ledger, and it is the enhanced lane's.
 
-`test/weather2a_snowground.test.js`.
+**SNOWLESS1 (FIELD BUGS 2026-10-09 #1, `01-Overview/Field-Bugs-2026-10-09.md`).** The law asked the archive law alone
+(`groundIsSnowy`: climate type and season), so with Snowless Swamps and Jungles worn every winter rain and storm in an
+Ocean, Rainforest or Swamp climate fell as snow on its green ground (about 37% of a jungle's winter days), and snow
+systems the weather map drifts out of a snowy climate went on snowing over the desert, where nothing turned them back.
+It asks the ground as drawn now (`world/climateSwaps.js` groundWearsSnow: the add-on's winter set wears none), and runs
+both ways: snow over a ground that wears none falls as rain (`overGround`, `mapGround`). The table's own swamp-winter
+snow rains under the add-on too - the same enhanced-lane departure, recorded on the Ledger's row; the classic lane keeps
+every word.
+
+`test/weather2a_snowground.test.js`, `test/fb1009_snowless.test.js`.
 
 ## C - CLOUD TYPES BY PLACE (WEATHER2c, 2026-09-14)
 

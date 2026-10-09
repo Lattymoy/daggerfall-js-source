@@ -157,8 +157,8 @@
   {
     "name": "YARD-CORNER-the-house-asked-at-its-corners",
     "file": "src/scenes/homeYards.js",
-    "old": "  if (yardFootMeets(ground, lot.house, YARD_EDGE_PAD)) return YARD_IN_HOUSE;",
-    "new": "  if (ground.some(([px, pz]) => inRect(px, pz, lot.house, -YARD_EDGE_PAD))) return YARD_IN_HOUSE;",
+    "old": "  if ((lot.walls ?? [lot.house]).some(meets)) return YARD_IN_HOUSE;",
+    "new": "  if ((lot.walls ?? [lot.house]).some((r) => ground.some(([px, pz]) => inRect(px, pz, r, -YARD_EDGE_PAD)))) return YARD_IN_HOUSE;",
     "tests": [
       "test/fb1001_yard.test.js",
       "test/homeyard.test.js"
@@ -167,7 +167,7 @@
   {
     "name": "YARD-CORNER-a-neighbour-asked-at-its-corners",
     "file": "src/scenes/homeYards.js",
-    "old": "  if ((others ?? []).some((r) => yardFootMeets(ground, r, YARD_EDGE_PAD))) return YARD_ON_OTHER;",
+    "old": "  if ((others ?? []).some(meets)) return YARD_ON_OTHER;",
     "new": "  if ((others ?? []).some((r) => ground.some(([px, pz]) => inRect(px, pz, r, -YARD_EDGE_PAD)))) return YARD_ON_OTHER;",
     "tests": [
       "test/fb1001_yard.test.js",
@@ -177,8 +177,8 @@
   {
     "name": "YARD-CORNER-touching-the-wall-is-in-it",
     "file": "src/scenes/homeYards.js",
-    "old": "  if (yardFootMeets(ground, lot.house, YARD_EDGE_PAD)) return YARD_IN_HOUSE;",
-    "new": "  if (yardFootMeets(ground, lot.house, -YARD_EDGE_PAD)) return YARD_IN_HOUSE;",
+    "old": "  if ((lot.walls ?? [lot.house]).some(meets)) return YARD_IN_HOUSE;",
+    "new": "  if ((lot.walls ?? [lot.house]).some((r) => inRect(x, z, r) || yardFootMeets(ground, r, -YARD_EDGE_PAD))) return YARD_IN_HOUSE;",
     "tests": [
       "test/fb1001_yard.test.js",
       "test/homeyard.test.js"

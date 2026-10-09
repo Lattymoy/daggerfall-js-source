@@ -418,7 +418,7 @@ import { markFoeStruck } from '../ui/hudFoeTarget.js';   // DUEL1: my duel oppon
 import { lowerCondition, dfuBlowWear } from '../systems/equip.js';   // DUEL1: my weapon wears on a blow that landed on my opponent; BALANCE1: on the port's wear scale
 import { reportPlayerAttack, registerAttackResolutionListener } from '../combat/formulas.js';   // DUEL1: the defender's answer, on my HUD's damage numbers
 import { worldHoverFrame, hideWorldPlaque, destroyWorldPlaque, worldPlaqueOn, reticleAnchor } from '../ui/worldPlaque.js';   // WORLD-HOVER: the one seam each host calls, its hide door for the branches that return above it, and the teardown
-import { dungeonModelSet, dungeonEntranceModel, owDungeonGrow, owDungeonDrawn, grownModelMatrix, modelFoot, TV_DUNGEON_MODELS_MAX } from '../systems/travelDungeonModels.js';   // OW-DUNGEONS: each dungeon's own model, grown under the Overworld
+import { dungeonModelSet, dungeonEntranceModel, owDungeonGrow, owDungeonDrawn, grownModelMatrix, modelFoot, TV_DUNGEON_MODELS_MAX, startDungeonLoads } from '../systems/travelDungeonModels.js';   // OW-DUNGEONS: each dungeon's own model, grown under the Overworld; TV-BURST: started one a frame
 import { keysHeading, axesToward, tvOwnGrow } from '../player/travelCamera.js';   // OW-FACE: the body faces the keys' way under the Overworld; OW-PEERS: the others grown as the traveller is
 import { createTravelView, TV_MOVE_ACTIONS, TRAVEL_VIEW_TEXT, travelViewLine, travelTripLine, travelWalkRate, shipPassageRows } from './travelView.js';   // TV1: the travel view (bible/06-Systems/Travel-View.md) - the raised eye, its input and its ways out
 import { showTravelViewHud, hideTravelViewHud, updateTravelViewHud, travelViewHudPickAt, showTravelViewConfirm, hideTravelViewConfirm, travelViewConfirmOpen, setTravelViewArmsOf } from '../ui/travelViewHud.js';   // TV1: its readout; AUDIT HERALDRY H4: the tag's arms
@@ -861,6 +861,7 @@ import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the c
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
 import { homeLookRemap, HOME_LOOK_BUILD_WAIT_MS } from '../world/homeLook.js';   // HOME-LOOK: a painted house's own table
 import { createHomeYards, yardLampRows } from './homeYards.js';   // HOME-YARD: the town's yards, and the owner's decorator outside; YARD-LIGHT: a yard's lamps as the night's scene lights
+import { modelFootRects, footRectsAt } from './homeYards.js';   // FB1009 HOME-FOOT: a building's ground, its models' faces seen from above
 import { loadIcon } from '../ui/textureCanvas.js';   // HOME-YARD: the decorator's pictures
 import { decorScanDeps } from '../systems/decorScan.js';   // HOME-YARD: the catalogue's scan (DECOR-DUNGEON: one constructor for both hosts)
 import { DOOR_TYPE } from '../world/meshReader.js';   // ARENA1: the undercroft's stair is a dungeon entrance (DECOR-DUNGEON: GLOBAL_SCALE went with the yards' scan deps, systems/decorScan.js)
@@ -3274,6 +3275,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!b) archAabbs.set(id, b = localAabb(positions));
     return b;
   };
+  /** FB1009 HOME-FOOT: each model's ground seen from above (homeYards.js modelFootRects), in its own frame - measured once. */
+  const modelFeet = new Map();
+  const modelFeetOf = (id, cpu) => {
+    let rs = modelFeet.get(id);
+    if (!rs) modelFeet.set(id, rs = modelFootRects(cpu.positions, cpu.indices));
+    return rs;
+  };
   /** AUDIT 64 F14: DaggerfallCityGate.Update over every built pixel's
    *  gates (DaggerfallCityGate.cs:44-51). SetOpen (:26-37) changes the
    *  model through ChangeDaggerfallMeshGameObject
@@ -5026,7 +5034,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     let townHomes = null;
     const pixelHomeKeys = new Set();   // HOME-LOOK: the homes drawn out of the merge
     const pixelBuildingKeys = new Set();   // HOME-LOOK: every building of the pixel, by its key
-    /** @type {Map<number, {at: number[], box: number[]}>} HOME-YARD: each building's own place and the box round its models, pixel-local */
+    /** @type {Map<number, {at: number[], box: number[], rects: number[][]}>} HOME-YARD: each building's own place and the box round its models, pixel-local; FB1009 HOME-FOOT: and the ground its models' faces cover */
     const pixelHomeFrames = new Map();
     const pixelDungeonDoors = [];   // CASTLE-GATE: the dungeon-entrance doors the town's blocks stand, each with its model's box and its outward normal
     if (dfLocation) {
@@ -5114,9 +5122,10 @@ export async function bootWorld(canvas, renderer, params, status) {
             pixelBuildingKeys.add(homeKey);
             // its own place (rmbLayout.js recordAt) and the box round its models: its yard's frame and footprint
             const at = Array.isArray(placed.recordAt) ? [locLocal[0] + b.originX + placed.recordAt[0], locLocal[1] + placed.recordAt[1], locLocal[2] + b.originZ + placed.recordAt[2]] : null;
+            const rects = footRectsAt(modelFeetOf(placed.modelIdNum, cpu), local);   // FB1009 HOME-FOOT: the ground its faces cover, never its box
             const f = pixelHomeFrames.get(homeKey);
-            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box] });
-            else if (f) for (let i = 0; i < 3; i++) { f.box[i] = Math.min(f.box[i], box[i]); f.box[i + 3] = Math.max(f.box[i + 3], box[i + 3]); }
+            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], rects });
+            else if (f) { for (let i = 0; i < 3; i++) { f.box[i] = Math.min(f.box[i], box[i]); f.box[i + 3] = Math.max(f.box[i + 3], box[i + 3]); } f.rects.push(...rects); }
           }
           const homeRow = homeKey != null ? townHomes?.get(homeKey) ?? null : null;
           const homeLook = homeRow ? lookOfHome(homeTown, homeKey, homeRow) : null;
@@ -28950,7 +28959,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       const free = isClimateFreeModel(pick.modelIdNum);   // ARENA1's law, as the build's
       const texRemap = free ? NO_CLIMATE_REMAP : new Map();
       const climate = g.loc.climate?.climateType ?? getWorldClimateSettings(maps.getClimateIndex(g.px, g.py)).climateType;
-      if (!free) await remapSubMeshes(gpu.subMeshes, texRemap, (a, r) => applyClimate(a, r, climate, season), pipeline);
+      // TV-PIN (FIELD BUGS 2026-10-09): the climate's pictures through the place's OWN door - held by its hold, and let go
+      // with it. The host's `pipeline` is the pinned door (dataPipeline.js pinnedUpload), and every climate and season
+      // picture of every dungeon the view ever stood stayed on the GPU for the session
+      if (!free) await remapSubMeshes(gpu.subMeshes, texRemap, (a, r) => applyClimate(a, r, climate, season), { getTexture: pipeline.getTexture, uploadRecord: e.hold.uploadRecord });
       if (_tvDngModel.get(g.key) !== e) return;
       const box = transformedAabb(archAabb(pick.modelIdNum, cpu.positions), pick.local);
       Object.assign(e, { ready: true, gpu, local: pick.local, box, h: Math.max(0.5, box[4] - Math.max(0, box[1])), texRemap });
@@ -28959,13 +28971,16 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   /** OW-DUNGEONS: the set kept in step - a new one's model asked for, one gone released - and each drawn grown with the
    *  eye's distance (owDungeonGrow) about its foot, where its real one stands: over a built pixel on the real model's
    *  own level, past the grid on the far ring's ground. No giant's shadow (the view's law, WAGON-HITCH B2). Under the
-   *  view alone: in play the world's own entrance is the model. */
+   *  view alone: in play the world's own entrance is the model. TV-BURST (FIELD BUGS 2026-10-09): `up` the view fully up
+   *  (the frame's `fullyUp`) - the loads start one a frame from then, the nearest first (startDungeonLoads); they all
+   *  started on the view's first frame, a whole set's layouts, meshes and pictures inside one draw. */
   const _tvDngAt = [0, 0, 0];
-  function drawTvDungeonModels(eye) {
+  function drawTvDungeonModels(eye, up) {
     if (!eye) return;
     const list = tvDungeonModelList();
     const keep = new Set();
-    for (const g of list) { keep.add(g.key); if (!_tvDngModel.has(g.key)) tvDungeonModelLoad(g); }
+    for (const g of list) keep.add(g.key);
+    startDungeonLoads(list, _tvDngModel, up, tvDungeonModelLoad);
     for (const [k, e] of _tvDngModel) if (!keep.has(k)) { e.hold.release(); _tvDngModel.delete(k); }
     for (const e of _tvDngModel.values()) {
       if (!e.ready) continue;
@@ -28983,6 +28998,14 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       if (!owDungeonDrawn(g, !!level)) continue;
       renderer.drawMesh(e.gpu, grownModelMatrix(e.local, e.box, _tvDngAt, g, e.matrix), e.texRemap, { noShadow: true });
     }
+  }
+  /** TV-BURST (FIELD BUGS 2026-10-09): THE VIEW DOWN, ITS MODELS LET GO - every place released to its kind's shelf
+   *  (PLACE-LRU keeps TV_DUNGEON_MODELS_MAX of them warm, so a view raised again where it was builds nothing again) and the
+   *  map emptied, so the next view starts its own one a frame; a load still in flight finds itself gone and stops
+   *  (tvDungeonModelLoad's own guards). They were held, undrawn, until a load. */
+  function dropTvDungeonModels() {
+    for (const e of _tvDngModel.values()) e.hold.release();
+    _tvDngModel.clear();
   }
   /** AUDIT OW5 D1 (the audit before the merge, 2026-09-29): THE FIND ASKS EVERY UNFOUND DUNGEON IN ITS REACH - never the
    *  plates' list above, which keeps TV_DUNGEON_MAX with the FOUND first (AUDIT OW4 D7), so a traveller who had found a
@@ -31519,7 +31542,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const windfallLaw = windfall.frame({ dt: gamePaused() ? 0 : dt * worldTimeScale(), outside: true, weather, minutes: skyMinutes(), climate: maps.getClimateIndex(_wfPx.x, _wfPx.y), mapPixel: _wfPx,
       heading: wd.on ? wd.dir : null, feet: walkMode && playerSpawned ? player.pos : cam.pos, height: player.height });   // WINDFALL1: the mod's frame - its sounds and leaves, and the law the flora lean by (one wind: WIND1's heading); AUDIT ENVIRONS W1: WindMod.Update's Time.deltaTime, held by a pause and scaled with the world
     _snowPixels.clear();
-    snowfall.frame({ now: now / 1000, inside: false, player: snowPlayer(), weather, seconds: worldMinutes() * 60, winter: season === SEASON.Winter, climate: maps.getClimateIndex(_wfPx.x, _wfPx.y), npcs: snowNpcs, corpses: snowBodies });   // SNOWFALL1: DynamicSnowController.Update - its tiers round the player, the tracks, the snowpack by the event clock
+    snowfall.frame({ now: now / 1000, inside: false, player: snowPlayer(), weather, seconds: worldMinutes() * 60, winter: season === SEASON.Winter, climate: maps.getClimateIndex(_wfPx.x, _wfPx.y), overworld: !!tvf, npcs: snowNpcs, corpses: snowBodies });   // SNOWFALL1: DynamicSnowController.Update - its tiers round the player, the tracks, the snowpack by the event clock; TV-SNOW: under the Overworld, which draws no snow, the clocks alone (snowfallHost.js)
     animalAmbience.update(dt, cam.pos);   // A4: town animal barks (PlayRandomlyIfPlayerNear)
     // Storm lightning strobe. AUDIT 39 (#14): ENHANCED-SKIN ONLY -
     // shipped DFU renders no flash (PlayLightningEffect is 0 on both
@@ -31749,7 +31772,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     gatePool?.draw(renderer);   // WB2: the Oblivion Gate's stone
     camps.draw(renderer);   // SURV3: the tents, the cart's own pass
     hcc.draw(renderer, null, tvf ? { selfGrow: tvf.grow, grow: peerGrow } : undefined);   // HCC: the trailing / parked / following wagon and its cargo, mine and the peers' (the horses ride the flats' pass); WAGON-HITCH x OW-BIG: a cart's wagon grown with its rider under the Overworld
-    if (tvf) drawTvDungeonModels(travelView?.eye ?? null);   // OW-DUNGEONS: each dungeon's own model, grown under the Overworld
+    if (tvf) drawTvDungeonModels(travelView?.eye ?? null, tvf.fullyUp);   // OW-DUNGEONS: each dungeon's own model, grown under the Overworld; TV-BURST: loaded once the view is up, one a frame
+    else if (_tvDngModel.size) dropTvDungeonModels();   // TV-BURST: the view down, its models let go (kept warm on their shelf)
     bountyFarms?.draw(renderer);   // BOUNTY-FARM: a held farm bounty's farmstead
     quays?.draw(renderer);   // QUAYS: the harbours' quays and the gangways to my ships made fast
     yards?.draw(renderer);   // HOME-YARD: the pieces outside the town's homes, and the one being placed

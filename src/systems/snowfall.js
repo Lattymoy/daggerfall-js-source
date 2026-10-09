@@ -605,6 +605,13 @@ export class PersistentTrackField {
     this.nextSequence = 0;
     this.lastSaveRawBytes = 0; this.lastSaveCompressedBytes = 0; this.lastSaveBase64Characters = 0;
     this.evictedCells = 0;
+    /** TV-SAVE (FIELD BUGS 2026-10-09): moves on every change to what the record packs - a cell made or deepened
+     *  (_setCellMinimum, whose limit lets the oldest go only after it made one), every cell refilled (Refill, which lets
+     *  the full ones go) - and never back, so a field cleared and filled again is never the one before. */
+    this.revision = 0;
+    /** TV-SAVE: the last record packed - `{ revision, text, compressed }` - and how many times one was (the pins'). */
+    this._packed = null;
+    this.packs = 0;
   }
   get count() { return this.cells.size; }
   get hasDeformation() { return this.cells.size > 0; }
@@ -674,6 +681,7 @@ export class PersistentTrackField {
   /** Refill(byteStep): every cell rises by the step; a cell that reaches full is gone. */
   refill(byteStep) {
     if (byteStep <= 0 || this.cells.size === 0) return;
+    this.revision++;   // TV-SAVE: every cell rises or goes
     const C = this.cells, keys = C.keys, live = C.live, vals = C.vals, n = keys.length;   // AUDIT ENVIRONS P4: the Dictionary's slots in its order - a removal frees its own slot, never a later one's, so no copy of the keys
     for (let q = 0; q < n; q++) {
       if (!live[q]) continue;
@@ -689,25 +697,34 @@ export class PersistentTrackField {
   clear() {
     this.cells.clear(); this.buckets.clear(); this.order = []; this.orderHead = 0; this.nextSequence = 0;
     this.lastSaveRawBytes = 0; this.lastSaveCompressedBytes = 0; this.lastSaveBase64Characters = 0; this.evictedCells = 0;
+    this._packed = null;   // TV-SAVE: the last record's text goes with the field (an empty field packs none)
   }
 
-  /** WriteSaveData(data): nine bytes a cell (x and z little-endian, the snow left), deflated, base64 - into the record. */
+  /** WriteSaveData(data): nine bytes a cell (x and z little-endian, the snow left), deflated, base64 - into the record.
+   *  TV-SAVE (FIELD BUGS 2026-10-09: "the game is starting to slow down, and especially freeze"): a field unchanged since
+   *  the last record writes that record's text again rather than packing it again - the same text, character for
+   *  character. A full field (65,536 cells) packed in 80-90 ms on this thread, and every save asked it: online, the
+   *  checkpoint every two minutes. */
   writeSaveData(data) {
     if (!data) return;
     data.FormatVersion = 1;
     data.CellCount = this.cells.size;
     this.lastSaveRawBytes = this.cells.size * 9;
     if (this.cells.size === 0) { data.PackedCells = ''; this.lastSaveCompressedBytes = 0; this.lastSaveBase64Characters = 0; return; }
-    const raw = new Uint8Array(this.cells.size * 9);
-    const view = new DataView(raw.buffer);
-    let o = 0;
-    for (const [key, cell] of this.cells) {
-      view.setInt32(o, keyX(key), true); view.setInt32(o + 4, keyZ(key), true); raw[o + 8] = cell.remaining;
-      o += 9;
+    if (this._packed?.revision !== this.revision) {
+      const raw = new Uint8Array(this.cells.size * 9);
+      const view = new DataView(raw.buffer);
+      let o = 0;
+      for (const [key, cell] of this.cells) {
+        view.setInt32(o, keyX(key), true); view.setInt32(o + 4, keyZ(key), true); raw[o + 8] = cell.remaining;
+        o += 9;
+      }
+      const packed = deflateRaw(raw);
+      this._packed = { revision: this.revision, text: bytesToBase64(packed), compressed: packed.length };
+      this.packs++;
     }
-    const packed = deflateRaw(raw);
-    this.lastSaveCompressedBytes = packed.length;
-    data.PackedCells = bytesToBase64(packed);
+    this.lastSaveCompressedBytes = this._packed.compressed;
+    data.PackedCells = this._packed.text;
     this.lastSaveBase64Characters = data.PackedCells.length;
   }
 
@@ -743,6 +760,7 @@ export class PersistentTrackField {
       if (remaining < cell.remaining) {
         this._compact(1);
         cell.remaining = remaining;
+        this.revision++;   // TV-SAVE: deepened
         cell.sequence = ++this.nextSequence;
         this.order.push({ key, sequence: cell.sequence });
         this._compact();
@@ -752,6 +770,7 @@ export class PersistentTrackField {
     this._compact(1);
     const fresh = { remaining, sequence: ++this.nextSequence };
     this.cells.set(key, fresh);
+    this.revision++;   // TV-SAVE: made
     this.order.push({ key, sequence: fresh.sequence });
     const bucketKey = makeKey(floorDivide(x, BUCKET), floorDivide(z, BUCKET));
     let bucket = this.buckets.get(bucketKey);

@@ -14,7 +14,8 @@ import { RMB_DIMENSION } from '../src/formats/blocksFile.js';
 import { GLOBAL_SCALE } from '../src/world/meshReader.js';
 import { MAP_W, MAP_H } from '../src/world/roadNetwork.js';
 import { trs, multiply } from '../src/world/mat4.js';
-import { transformedAabb } from '../src/render/frustum.js';
+import { transformedAabb, localAabb } from '../src/render/frustum.js';
+import { modelFootRects, footRectsAt } from '../src/scenes/homeYards.js';
 
 /** The distantland fake woods (test/terrainworker.test.js's): the kernel's three-method surface. */
 export const fakeWoods = {
@@ -41,17 +42,40 @@ export const CHAIR_MODEL = 41000;
 
 const tile = (record) => ({ textureRecord: record, tileBitfield: record, isRotated: false, isFlipped: false });
 /**
+ * FB1009 HOME-FOOT: AN L-SHAPED HOUSE, Hammerfell's (ARCH3D 600 and its kin), in its own frame (metres, y up, its foot
+ * at 0): its back the whole width (x -3.6 to 3.6, z 0 to 3.6), its leg the west half (x -3.6 to 0, z -3.6 to 0), both
+ * roofed flat at 3 m; the open corner between them (x 0 to 3.6, z -3.6 to 0) is the ground its door opens onto - the
+ * door in the back's south wall at x 1.2 to 2.4, facing -z. Walls as upright quads round the outline. Float32, as the
+ * pipeline mints a model; the box round it is +-3.6 on both axes, so the box holds the open corner.
+ */
+export const L_DOOR = Object.freeze({ x0: 1.2, x1: 2.4, z: 0 });
+export function lHouse() {
+  const H = 3;
+  const P = [], I = [];
+  const quad = (a, b, c, d) => { const n = P.length / 3; P.push(...a, ...b, ...c, ...d); I.push(n, n + 1, n + 2, n, n + 2, n + 3); };
+  quad([-3.6, H, 0], [3.6, H, 0], [3.6, H, 3.6], [-3.6, H, 3.6]);   // the back's roof, its first edge along the door's wall
+  quad([-3.6, H, -3.6], [0, H, -3.6], [0, H, 0], [-3.6, H, 0]);   // the leg's roof
+  const outline = [[-3.6, -3.6], [0, -3.6], [0, 0], [3.6, 0], [3.6, 3.6], [-3.6, 3.6]];
+  for (let i = 0; i < outline.length; i++) {
+    const [ax, az] = outline[i], [bx, bz] = outline[(i + 1) % outline.length];
+    quad([ax, 0, az], [bx, 0, bz], [bx, H, bz], [ax, H, az]);
+  }
+  return { positions: new Float32Array(P), indices: new Uint32Array(I) };
+}
+
+/**
  * One town block: `houses` its buildings' subrecords ([xPos, zPos] in the block's own units - a house at the
- * subrecord's origin, as Daggerfall stands one), `ground(tileX, tileY)` its ground tile's record (16 x 16, tileY rising
- * with the world's z - setLocationTiles' own reading, groundTiles[x][15 - y]).
+ * subrecord's origin, as Daggerfall stands one - and FB1009 its turn, yRotation, 1024 a half turn), `ground(tileX,
+ * tileY)` its ground tile's record (16 x 16, tileY rising with the world's z - setLocationTiles' own reading,
+ * groundTiles[x][15 - y]).
  */
 export function townBlock({ houses, ground }) {
   const groundTiles = Array.from({ length: 16 }, (_, x) => Array.from({ length: 16 }, (__, row) => tile(ground(x, 15 - row))));
   return {
     index: 0, name: 'FBYARD01.RMB',
     rmbBlock: {
-      subRecords: houses.map(([xPos, zPos]) => ({
-        xPos, zPos, yRotation: 0,
+      subRecords: houses.map(([xPos, zPos, yRotation = 0]) => ({
+        xPos, zPos, yRotation,
         exterior: { block3dObjectRecords: [{ modelId: String(HOUSE_MODEL), modelIdNum: HOUSE_MODEL, xPos: 0, yPos: 0, zPos: 0, xRotation: 0, yRotation: 0, zRotation: 0 }] },
       })),
       misc3dObjectRecords: [],
@@ -64,9 +88,11 @@ export function townBlock({ houses, ground }) {
  * THE TOWN'S PIXEL, as world.js buildPixel stands it: `{ built, frames, keys, at }` - `built` the pixel's entry (its
  * homeTown, homeFrames, tilemapBytes and the painter's `paths`, as world.js keeps them), `keys` the houses' building
  * keys in order, `ground` the town's floor (y). `network` - `{ roads, tracks }` masks for this pixel (roadNetwork.js
- * DIR), the road painter's; none, no painter.
+ * DIR), the road painter's; none, no painter. FB1009 HOME-FOOT: `model` - the houses' model (`{ positions, indices }`, its
+ * own frame - lHouse), whose box and ground (`rects`, as world.js records them) the frames take; none, HOUSE_BOX and no
+ * rects, as before. `locals` each house's placement (pixel-local), by key.
  */
-export function townPixel({ houses, ground, network = null, px = 207, py = 213, mapId = 7, floor = 40 }) {
+export function townPixel({ houses, ground, network = null, px = 207, py = 213, mapId = 7, floor = 40, model = null }) {
   const block = townBlock({ houses, ground });
   const dfLocation = { exterior: { exteriorData: { width: 1, height: 1, blockNames: [block.name] } }, mapTableData: { locationType: 0, mapId }, climate: { groundArchive: 302 } };
   const maps = { getRmbBlockName: () => block.name };
@@ -88,18 +114,21 @@ export function townPixel({ houses, ground, network = null, px = 207, py = 213, 
   const locLocal = [tilePos.x * tileSide, floor, tilePos.y * tileSide];
   const homeFrames = new Map();
   const keys = [];
+  const locals = new Map();
+  const feet = model ? modelFootRects(model.positions, model.indices) : null;   // world.js modelFeetOf: measured once
   for (const b of loc.blocks) {
     const originMatrix = trs(locLocal[0] + b.originX, locLocal[1], locLocal[2] + b.originZ, 0, 0, 0);
     for (const placed of b.layout.models) {
       const local = multiply(originMatrix, placed.matrix);
-      const box = transformedAabb(HOUSE_BOX, local);
+      const box = transformedAabb(model ? localAabb(model.positions) : HOUSE_BOX, local);
       const homeKey = makeBuildingKey(b.x, b.y, placed.recordIndex);
       const at = [locLocal[0] + b.originX + placed.recordAt[0], locLocal[1] + placed.recordAt[1], locLocal[2] + b.originZ + placed.recordAt[2]];
-      if (!homeFrames.has(homeKey)) { homeFrames.set(homeKey, { at, box: [...box] }); keys.push(homeKey); }
+      const covered = feet ? { rects: footRectsAt(feet, local) } : {};   // world.js: the ground its faces cover
+      if (!homeFrames.has(homeKey)) { homeFrames.set(homeKey, { at, box: [...box], ...covered }); keys.push(homeKey); locals.set(homeKey, local); }
     }
   }
   const built = { px, py, homeTown: mapId, homeFrames, homeRegion: 17, tilemapBytes, paths };
-  return { built, keys, locLocal, floor, tilemapBytes, paths, block };
+  return { built, keys, locLocal, floor, tilemapBytes, paths, block, locals };
 }
 
 /** A block-local point (metres, the block's own frame - x east, z north from its south-west corner) in its pixel. */

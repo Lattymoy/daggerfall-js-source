@@ -211,6 +211,7 @@ export const REFUSALS = Object.freeze({
   'home-cap': `A character can own at most ${HOME_CAP} homes. Sell one to buy another.`,
   'home-rate': 'You have bought and sold a lot of homes this hour. Try again later.',
   'no-home': 'That home is not yours any more.',
+  'not-heir': 'Only a living character of the same line as its fallen owner can take up that home.',   // PERMADEATH-HOUSES: server-account/src/homes.js inheritHome
   'bad-home': 'The account service could not tell which building that is.',
   'home-character': 'The account service could not tell which character this is for.',
   'bad-entry': 'The account service does not know that setting. The game may need updating.',
