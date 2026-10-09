@@ -308,8 +308,8 @@
   {
     "name": "LW9-carter-stall",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "  const job = visitor ? (res.job === 'carter' ? 'carter-visit' : res.job === 'minstrel' ? 'minstrel-visit' : 'visitor') : res.job;",
-    "new": "  const job = visitor ? (res.job === 'minstrel' ? 'minstrel-visit' : 'visitor') : res.job;",
+    "old": "  const job = visitor ? (res.job === 'carter' ? 'carter-visit' : res.job === 'minstrel' ? 'minstrel-visit' : res.job === 'pilgrim' ? 'pilgrim-visit' : 'visitor') : res.job;",
+    "new": "  const job = visitor ? (res.job === 'minstrel' ? 'minstrel-visit' : res.job === 'pilgrim' ? 'pilgrim-visit' : 'visitor') : res.job;",
     "tests": [
       "test/lw9_traffic.test.js"
     ]

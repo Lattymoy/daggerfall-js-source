@@ -361,6 +361,8 @@ export const LODGE_UP_MIN = Object.freeze([20, 60]);
 /** LW9: a carter's stall at a market (hours: from the morning - from their coming in, at once - to the afternoon), and a
  *  minstrel's evening playing a tavern (hours). */
 export const MARKET_STALL_H = Object.freeze([8, 13.5]);
+/** LW13: a visiting pilgrim's hours at the temple - the morning's, the evening's. */
+export const PILGRIM_TEMPLE_H = Object.freeze([8.5, 15.5]);
 export const MINSTREL_PLAY_H = Object.freeze([18.5, 23]);
 
 /** LW-ERRANDS: the shop an errand of `job` takes one into, of `shops` (the shops nearest home, the nearest first): of a
@@ -463,7 +465,7 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
     else I('market', fav.market, from, rollInt(rng, 20, 40));
   };
   // LW9: a carter come to market keeps a stall; a minstrel come to play keeps the tavern's evening - their own visits
-  const job = visitor ? (res.job === 'carter' ? 'carter-visit' : res.job === 'minstrel' ? 'minstrel-visit' : 'visitor') : res.job;
+  const job = visitor ? (res.job === 'carter' ? 'carter-visit' : res.job === 'minstrel' ? 'minstrel-visit' : res.job === 'pilgrim' ? 'pilgrim-visit' : 'visitor') : res.job;   // LW13: a pilgrim come to a temple town keeps its temple
   const lodger = isLodger(res, places, home);
   switch (job) {
     case 'keeper': case 'smith': case 'clerk': case 'scholar': case 'helper': case 'guildsman': {
@@ -606,6 +608,15 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
       if (res.social > 0.5) stroll(h(12.5));
       if (res.social > 0.4) I('social', fav.social[0] ?? null, h(15), rollInt(rng, 30, 60));
       I('temple', fav.temple, h(17), 45);
+      break;
+    }
+    case 'pilgrim-visit': {
+      // LW13: A PILGRIM COME TO A TEMPLE TOWN - its temple the morning long and again before the evening (a holy day's
+      // crowd: every band of the region's towns at once), the market between
+      I('temple', fav.temple, h(PILGRIM_TEMPLE_H[0]), rollInt(rng, 150, 210));
+      I('market', fav.market, h(13), rollInt(rng, 30, 60));
+      I('temple', fav.temple, h(PILGRIM_TEMPLE_H[1]), rollInt(rng, 90, 120));
+      I('tavern', lodger ? home : fav.tavern, h(19.5), rollInt(rng, 90, 150), lodger ? bed - rollInt(rng, LODGE_UP_MIN[0], LODGE_UP_MIN[1]) : undefined);
       break;
     }
     case 'carter-visit': {

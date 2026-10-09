@@ -85,8 +85,8 @@
   {
     "name": "LW3-chance-unread",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "  if (rng() >= chance && !world.fated?.(res, k)) return null;   // LW4: a death the lives hold for this cycle is met on the road",
-    "new": "  if (rng() >= 1 && !world.fated?.(res, k)) return null;   // LW4: a death the lives hold for this cycle is met on the road",
+    "old": "  if (rng() >= chance && !world.fated?.(res, k) && !company?.places.slice(1).some((p) => world.fated?.(p, k))) return null;   // LW4: a death the lives hold for this cycle is met on the road",
+    "new": "  if (rng() >= 1 && !world.fated?.(res, k) && !company?.places.slice(1).some((p) => world.fated?.(p, k))) return null;   // LW4: a death the lives hold for this cycle is met on the road",
     "tests": [
       "test/lw3_roads.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "LW3-contract-unread",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "      const contract = mi < 0 ? [] : sellswords.filter((_, i) => i % merchants.length === mi);",
-    "new": "      const contract = mi < 0 ? [] : sellswords;",
+    "old": "    const contract = mi < 0 ? [] : sellswords.filter((_, i) => i % merchants.length === mi);",
+    "new": "    const contract = mi < 0 ? [] : sellswords;",
     "tests": [
       "test/lw3_roads.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "LW3-contract-one-merchant",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "      const contract = mi < 0 ? [] : sellswords.filter((_, i) => i % merchants.length === mi);",
-    "new": "      const contract = mi < 0 ? [] : sellswords.filter((_, i) => i % merchants.length === 0);",
+    "old": "    const contract = mi < 0 ? [] : sellswords.filter((_, i) => i % merchants.length === mi);",
+    "new": "    const contract = mi < 0 ? [] : sellswords.filter((_, i) => i % merchants.length === 0);",
     "tests": [
       "test/lw3_roads.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "LW3-train-of-the-window",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "      const mt = placeTrip(m, d);",
-    "new": "      const mt = trips.find((x) => x.leader.slot === m.slot) ?? null;",
+    "old": "      const mt = placeTrip(m, d);\n      if (mt && mt.to.mapId === j.to.mapId && dayOf(mt) === d) return mt;",
+    "new": "      const mt = trips.find((x) => x.leader.slot === m.slot) ?? null;\n      if (mt && mt.to.mapId === j.to.mapId && dayOf(mt) === d) return mt;",
     "tests": [
       "test/lw3_roads.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "LW3-stranger-known",
     "file": "src/scenes/livingRoads.js",
-    "old": "        : rel?.known(m.res.id) ? ROAD_GREETINGS.known : ROAD_GREETINGS.stranger;",
-    "new": "        : ROAD_GREETINGS.known;",
+    "old": "        : known ? pools.known : pools.stranger;",
+    "new": "        : pools.known;",
     "tests": [
       "test/lw3_roads.test.js"
     ]

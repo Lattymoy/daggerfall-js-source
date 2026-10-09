@@ -1,0 +1,380 @@
+[
+  {
+    "name": "LW13-size",
+    "file": "src/systems/livingWorld/companies.js",
+    "old": "export const COMPANY_SIZE = Object.freeze([2, 4]);",
+    "new": "export const COMPANY_SIZE = Object.freeze([2, 3]);",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-city",
+    "file": "src/systems/livingWorld/companies.js",
+    "old": "export const COMPANY_CITY_MAX = 5;",
+    "new": "export const COMPANY_CITY_MAX = 4;",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-city-count",
+    "file": "src/systems/livingWorld/companies.js",
+    "old": "export const COMPANY_CITY_ADVENTURERS = 5;",
+    "new": "export const COMPANY_CITY_ADVENTURERS = 4;",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-mix",
+    "file": "src/systems/livingWorld/companies.js",
+    "old": "      const i = left.findIndex((r) => !have.has(roleOf(r.cls)));",
+    "new": "      const i = 0;",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-left",
+    "file": "src/systems/livingWorld/companies.js",
+    "old": "  while (left.length >= 2) {",
+    "new": "  while (left.length >= 1) {",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-order",
+    "file": "src/systems/livingWorld/companies.js",
+    "old": "  const advs = roster.filter((r) => r.job === 'adventurer').sort((a, b) => a.slot - b.slot);",
+    "new": "  const advs = roster.filter((r) => r.job === 'adventurer').sort((a, b) => b.slot - a.slot);",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-role-run",
+    "file": "src/systems/livingWorld/companies.js",
+    "old": "export const ROLE_RUNS = Object.freeze({ mage: [128, 133], thief: [134, 139], warrior: [140, 145] });",
+    "new": "export const ROLE_RUNS = Object.freeze({ mage: [128, 134], thief: [135, 139], warrior: [140, 145] });",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-role-order",
+    "file": "src/systems/livingWorld/companies.js",
+    "old": "export const ROLE_ORDER = Object.freeze(['warrior', 'thief', 'mage']);",
+    "new": "export const ROLE_ORDER = Object.freeze(['warrior', 'mage', 'thief']);",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-name-first",
+    "file": "src/systems/livingWorld/companies.js",
+    "old": "  if (r < 1 / 3 && name) return `${name}'s company`;",
+    "new": "",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-name-town",
+    "file": "src/systems/livingWorld/companies.js",
+    "old": "  if (r < 2 / 3 && town) return `${beasts} of ${town}`;",
+    "new": "  if (r < 2 / 3) return `${beasts} of ${town}`;",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-head",
+    "file": "src/systems/livingWorld/companies.js",
+    "old": "(!a || (m.level ?? 1) > (a.level ?? 1) ? m : a)",
+    "new": "(!a || (m.level ?? 1) >= (a.level ?? 1) ? m : a)",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-holy-region",
+    "file": "src/systems/livingWorld/companies.js",
+    "old": "      if (id && holidayRegion(id) !== 0xFF) return { town: t, day: d, id };",
+    "new": "      if (id) return { town: t, day: d, id };",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-holy-edge",
+    "file": "src/systems/livingWorld/companies.js",
+    "old": "  for (let d = day0 + 1; d < day0 + days - 1; d++) {",
+    "new": "  for (let d = day0; d < day0 + days - 1; d++) {",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-holy-chance",
+    "file": "src/systems/livingWorld/companies.js",
+    "old": "export const HOLY_CHANCE = 0.8;",
+    "new": "export const HOLY_CHANCE = 0.6;",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-dive-chance",
+    "file": "src/systems/livingWorld/companies.js",
+    "old": "export const COMPANY_DIVE_CHANCE = 0.75;",
+    "new": "export const COMPANY_DIVE_CHANCE = 0.55;",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-leader",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    return c && c.places[0].slot !== res.slot ? c.places[0] : null;",
+    "new": "    return null;",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-own-none",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  if ((res.job === 'patrol' || res.job === 'adventurer') && leaderOf(res, world.rosterOf(home))) return null;",
+    "new": "  if (res.job === 'patrol' && leaderOf(res, world.rosterOf(home))) return null;",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-fated",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": " && !company?.places.slice(1).some((p) => world.fated?.(p, k))) return null;",
+    "new": ") return null;",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-dive",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    if (drng() < (company ? COMPANY_DIVE_CHANCE : DIVE_CHANCE)) {",
+    "new": "    if (drng() < DIVE_CHANCE) {",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-holy-on",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    if (holy !== null) return holy;   // undefined (a way asked) or the holy day's; none, the trip it always was\n",
+    "new": "\n",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-holy-in",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "export const HOLY_IN_H = 10;",
+    "new": "export const HOLY_IN_H = 14;",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-holy-back",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  const backT0 = (holy.day + 1) * DAY_MIN + 7 * 60 +",
+    "new": "  const backT0 = (holy.day + 2) * DAY_MIN + 7 * 60 +",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-holy-minute",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  let outT0 = outDay * DAY_MIN + holyDepartMin(home, holy.day), outT1",
+    "new": "  let outT0 = outDay * DAY_MIN + holyDepartMin(home, holy.day) + res.slot, outT1",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-holy-draw",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  if (!holyDraw(res, k)) return null;\n",
+    "new": "",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-riders",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    return [tr.leader, ...c.places.slice(1).map((p) => held(p, k)).filter((h) => !!h)];",
+    "new": "    return [tr.leader];",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-company-name",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "out.push({ ...tr, party: membersOf(c, tr), company: { key: c.key, name: named.name } }); }",
+    "new": "out.push({ ...tr, party: membersOf(c, tr) }); }",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-hire",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "      if (!hired.length) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-hire-drop",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "      else if (!hireOf(tr)) {",
+    "new": "      else if (true) {",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-hire-to",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "      if (mt && !mt.sea && mt.to.mapId === ct.to.mapId && dayOf(mt) === d && !hiredOf(mt).length) return mt;",
+    "new": "      if (mt && !mt.sea && dayOf(mt) === d && !hiredOf(mt).length) return mt;",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-hire-dive",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    if (ct.dive || ct.sea) return null;",
+    "new": "    if (ct.sea) return null;",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-band",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "      if (band.length < 2) out.push(tr);",
+    "new": "      if (true) out.push(tr);",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-band-lead",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "      else if (band[0].id === tr.id) out.push({ ...tr, party: band.map((t) => t.leader) });",
+    "new": "      else out.push({ ...tr, party: band.map((t) => t.leader) });",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-band-train",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    } else if (tr.kind === 'pilgrim') {\n      if (trainOf(tr)) continue;",
+    "new": "    } else if (tr.kind === 'pilgrim') {",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-file",
+    "file": "src/scenes/livingRoads.js",
+    "old": "  const file = trip.company ? byRole(trip.party) : trip.party;",
+    "new": "  const file = trip.party;",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-label",
+    "file": "src/scenes/livingRoads.js",
+    "old": "  if (trip.company) return beset ? `${trip.company.name} beset by ${beset}` : to ? `${trip.company.name}, to ${to}` : trip.company.name;   // LW13: a company by its name\n",
+    "new": "",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-word",
+    "file": "src/scenes/livingRoads.js",
+    "old": "      const word = company?.head?.id ?? m.res.id;",
+    "new": "      const word = m.res.id;",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-refuse",
+    "file": "src/scenes/livingRoads.js",
+    "old": "const s = rel.standing(companyAt(id, deps.clock())?.head?.id ?? id, dayOf(deps.clock()));",
+    "new": "const s = rel.standing(id, dayOf(deps.clock()));",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-people",
+    "file": "src/systems/livingWorld/people.js",
+    "old": "      fate: fates.get(`${placeKeyOf(res)}|${res.name}`) ?? null, words: '', company: companyOf(res, town) };",
+    "new": "      fate: fates.get(`${placeKeyOf(res)}|${res.name}`) ?? null, words: '', company: '' };",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-chronicle",
+    "file": "src/ui/enhancedChronicle.js",
+    "old": "        if (p.company) top.append(el('span', 'sb-chip', p.company));   // LW13: the company they walk with\n",
+    "new": "",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-pilgrim-visit",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "res.job === 'pilgrim' ? 'pilgrim-visit' : 'visitor'",
+    "new": "'visitor'",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-pilgrim-hours",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "export const PILGRIM_TEMPLE_H = Object.freeze([8.5, 15.5]);",
+    "new": "export const PILGRIM_TEMPLE_H = Object.freeze([10.5, 15.5]);",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-greet-name",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "  stranger: Object.freeze(['{company} - you\\'ve heard of us?', 'Make way for {company}.', 'Good road. We\\'re {company}.']),",
+    "new": "  stranger: Object.freeze(['You\\'ve heard of us?', 'Make way for {company}.', 'Good road. We\\'re {company}.']),",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  }
+]

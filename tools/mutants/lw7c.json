@@ -92,8 +92,8 @@
   {
     "name": "LW7c-fate-unread",
     "file": "src/systems/livingWorld/people.js",
-    "old": "      fate: fates.get(`${placeKeyOf(res)}|${res.name}`) ?? null, words: '' };",
-    "new": "      fate: null, words: '' };",
+    "old": "      fate: fates.get(`${placeKeyOf(res)}|${res.name}`) ?? null, words: '', company: companyOf(res, town) };",
+    "new": "      fate: null, words: '', company: companyOf(res, town) };",
     "tests": [
       "test/lw7c_people.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "LW7c-cap",
     "file": "src/systems/livingWorld/people.js",
-    "old": "known: known.slice(0, PEOPLE_MAX) };",
-    "new": "known };",
+    "old": "known: known.slice(0, PEOPLE_MAX), companies:",
+    "new": "known, companies:",
     "tests": [
       "test/lw7c_people.test.js"
     ]

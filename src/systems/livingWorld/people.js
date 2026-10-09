@@ -9,7 +9,8 @@
 // newcomer's), and the census's mint is a pure function of those - a name reads the seed, the region's bank and the
 // sex, and the sex reads no trade but the watch's - so the page mints each one again (`residentOfId`). The dead are the
 // character's own hand deaths (relations.js HAND_KINDS), told by their place and the name they bore.
-import { mintResident } from './census.js';
+import { mintResident, travellerRoster } from './census.js';
+import { companyOfPlace, namedIn } from './companies.js';   // LW13: the companies the known walk with
 import { regardStanding } from './relations.js';
 import { placeKeyOf } from './lives.js';
 
@@ -36,12 +37,24 @@ export function residentOfId(id, townOf) {
  * THE PAGE: everyone the character knows, as three lists - FRIENDS (the warmest first), ENEMIES (the hostile and the
  * enemies, the bitterest first) and the KNOWN (the latest seen first) - each to PEOPLE_MAX. Each row: `id`, `name`,
  * `town` (its name, '' unknown), `standing`, `regard` (on `day`, eased), `days` since last seen, `fate` - 'slain' by
- * the player's hand, 'died' at their side, null - and the `words` the page says of them (`personWords`).
+ * the player's hand, 'died' at their side, null - and the `words` the page says of them (`personWords`). LW13: `company`
+ * the company a traveller walks with ('' none), and the page's COMPANIES - each one any of the known walk with, its
+ * town and the known of it.
  * @param {{ entries: () => { id: string, seen: number }[], regard: (id: string, day: number) => number, turns: () => any }} rel
  * @param {number} day @param {(mapId: number) => any} townOf
- * @returns {{ friends: any[], enemies: any[], known: any[] }}
+ * @returns {{ friends: any[], enemies: any[], known: any[], companies: { name: string, town: string, members: string[] }[] }}
  */
 export function peoplePage(rel, day, townOf) {
+  /** @type {Map<number, any[]>} the travellers' rosters, by town (the census's own, made once a page) */
+  const rosters = new Map();
+  const companyOf = (/** @type {any} */ res, /** @type {any} */ town) => {
+    if (res.roll !== 't' || !town) return '';
+    let roster = rosters.get(town.mapId);
+    if (!roster) { roster = travellerRoster(town); rosters.set(town.mapId, roster); }
+    const place = roster.find((r) => r.slot === res.slot);
+    const c = place ? companyOfPlace(place, roster) : null;
+    return c ? namedIn(c, town.name ?? '').name : '';
+  };
   const t = rel.turns?.() ?? {};
   /** @type {Map<string, 'slain'|'died'>} the hand deaths, by `place|name` */
   const fates = new Map();
@@ -55,14 +68,23 @@ export function peoplePage(rel, day, townOf) {
     const r = rel.regard(e.id, day);
     const town = townOf(res.town);
     const row = { id: e.id, name: res.name, town: town?.name ?? '', standing: regardStanding(r), regard: Math.round(r), days: Math.max(0, day - e.seen),
-      fate: fates.get(`${placeKeyOf(res)}|${res.name}`) ?? null, words: '' };
+      fate: fates.get(`${placeKeyOf(res)}|${res.name}`) ?? null, words: '', company: companyOf(res, town) };
     row.words = personWords(row);
     rows.push(row);
   }
   const friends = rows.filter((p) => p.standing === 'friend').sort((a, b) => b.regard - a.regard || a.days - b.days);
   const enemies = rows.filter((p) => p.standing === 'enemy' || p.standing === 'hostile').sort((a, b) => a.regard - b.regard || a.days - b.days);
   const known = rows.filter((p) => p.standing === 'neutral').sort((a, b) => a.days - b.days || (a.name < b.name ? -1 : 1));
-  return { friends: friends.slice(0, PEOPLE_MAX), enemies: enemies.slice(0, PEOPLE_MAX), known: known.slice(0, PEOPLE_MAX) };
+  // LW13: the companies the known walk with, each its town and its known members (by name, in the page's order)
+  /** @type {Map<string, { name: string, town: string, members: string[] }>} */
+  const companies = new Map();
+  for (const p of [...friends, ...enemies, ...known]) {
+    if (!p.company) continue;
+    const key = `${p.company}|${p.town}`;
+    if (!companies.has(key)) companies.set(key, { name: p.company, town: p.town, members: [] });
+    companies.get(key)?.members.push(p.name);
+  }
+  return { friends: friends.slice(0, PEOPLE_MAX), enemies: enemies.slice(0, PEOPLE_MAX), known: known.slice(0, PEOPLE_MAX), companies: [...companies.values()] };
 }
 
 /** What the page says of one: their fate, else what their standing means to the player, and when they were last seen. */

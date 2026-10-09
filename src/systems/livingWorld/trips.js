@@ -33,6 +33,7 @@ import { DAY_MIN, DAY_START_MIN } from './dayPlan.js';
 import { WORLD_MAP_TERRAIN_DIM as NATIVE_PIXEL } from '../../formats/mapsFile.js';
 import { NATIVE_PER_M } from '../travelDungeons.js';
 import { CITY_COURT_BLOCKS } from './census.js';
+import { companiesOf, companyOfPlace, namedIn, COMPANY_DIVE_CHANCE, holyDayOf, holyDepartMin, holyDraw } from './companies.js';   // LW13: the companies, the pilgrims' holy day
 
 // the native units' one homes: a map pixel the MAPS format's own (mapsFile.js), a metre the travel view's (travelDungeons.js)
 export { NATIVE_PIXEL, NATIVE_PER_M };
@@ -131,7 +132,9 @@ export const DRY_STEP_N = 80;
  *   pace: number, outT0: number, outT1: number, backT0: number, backT1: number, trim0: number, trim1: number,
  *   enc?: any, halt?: { t0: number, t1: number, fightEnd: number, s: number, leg: 'out'|'back' },
  *   fallen?: { res: Resident, t: number, s: number, inside?: boolean, hand?: boolean, atSea?: boolean }[], turned?: boolean, dive?: { t0: number, t1: number },
- *   sea?: { key: string, len: number }, market?: boolean, wild?: { x: number, z: number } }} Trip - LW5b: `sea` a passage
+ *   sea?: { key: string, len: number }, market?: boolean, wild?: { x: number, z: number }, company?: { key: string, name: string },
+ *   holy?: { day: number, id: number }, hiredBy?: string }} Trip - LW13: `company` the company walking it, `holy` a pilgrims'
+ *   holy day it is bound for, `hiredBy` a company's trip a merchant's train took on. LW5b: `sea` a passage
  *   by sea, its lane and length (no road under it). LW9: `market` a carter's day to market, `wild` a hunter's point in the
  *   wild (its `to` no town: `mapId` -1). LW6: `dive` an
  *   adventurer's hours in the dungeon it went to (its `to` a dungeon). LW4: `k` its cycle; the trouble's
@@ -279,7 +282,8 @@ export function roadBound(job, home, t) {
 /**
  * LW9: THE ONE A TRAVELLER RIDES WITH - a place whose trips are another's: a sellsword's its contract merchant
  * (contractOf), a patrol's its first (the patrol rides as one), a retainer's the noble the retainers are dealt to in slot
- * order (the first to the first, round again, as the sellswords are). Null for one who leads, or rides with nobody.
+ * order (the first to the first, round again, as the sellswords are); LW13 an adventurer's its company's first
+ * (companies.js). Null for one who leads, or rides with nobody.
  * @param {Resident} res @param {Resident[]} roster @returns {Resident|null}
  */
 export function leaderOf(res, roster) {
@@ -287,6 +291,10 @@ export function leaderOf(res, roster) {
   if (res.job === 'patrol') {
     const first = roster.filter((r) => r.job === 'patrol').sort((a, b) => a.slot - b.slot)[0] ?? null;
     return first && first.slot !== res.slot ? first : null;
+  }
+  if (res.job === 'adventurer') {   // LW13: a company's place rides with its first
+    const c = companyOfPlace(res, roster);
+    return c && c.places[0].slot !== res.slot ? c.places[0] : null;
   }
   if (res.job === 'retainer') {
     const nobles = roster.filter((r) => r.job === 'noble').sort((a, b) => a.slot - b.slot);
@@ -429,13 +437,14 @@ export function innAhead(way, s, dir, lo, hi) {
 export function ownTrip(res, home, k, world, { mpm }) {
   const chance = rowOf(TRIP_CHANCE, ROAD_TRIP_CHANCE, res.job);
   if (!(chance > 0)) return null;
-  if (res.job === 'patrol' && leaderOf(res, world.rosterOf(home))) return null;   // LW9: a patrol's rides with its first
+  if ((res.job === 'patrol' || res.job === 'adventurer') && leaderOf(res, world.rosterOf(home))) return null;   // LW9: a patrol's rides with its first; LW13: a company's with its first
+  const company = res.job === 'adventurer' ? companyOfPlace(res, world.rosterOf(home)) : null;   // LW13: the company it leads
   const scale = paceScale(mpm);
   const len = Math.max(2, Math.round((rowOf(CYCLE_DAYS, ROAD_CYCLE_DAYS, res.job) ?? 8) * scale));
   const phase = lwSeed(res.town, res.slot, 0x6379) % len;
   const start = k * len - phase;
   const rng = lwRng(res.town, res.slot, k, 0x74726970);   // 'trip'
-  if (rng() >= chance && !world.fated?.(res, k)) return null;   // LW4: a death the lives hold for this cycle is met on the road (AUDIT-B1: the dice's - a spare never takes the trip away)
+  if (rng() >= chance && !world.fated?.(res, k) && !company?.places.slice(1).some((p) => world.fated?.(p, k))) return null;   // LW4: a death the lives hold for this cycle is met on the road (AUDIT-B1: the dice's - a spare never takes the trip away); LW13: any of its company's
   const pace = (rowOf(TRIP_PACE, ROAD_PACE, res.job) ?? 1) * mpm * NATIVE_PER_M;   // native a clock minute
   // LW9: a carter's day to market, a hunter's into the wild - their own laws
   if (res.job === 'carter') return marketTrip(res, home, k, world, { start, len, pace, rng });
@@ -443,10 +452,15 @@ export function ownTrip(res, home, k, world, { mpm }) {
   // LW6: an adventurer's cycle a DIVE now and then - its own dice, so a cycle that is none is the trip it always was
   if (res.job === 'adventurer' && world.dungeonsNear) {
     const drng = lwRng(res.town, res.slot, k, 0x64697665);   // 'dive'
-    if (drng() < DIVE_CHANCE) {
+    if (drng() < (company ? COMPANY_DIVE_CHANCE : DIVE_CHANCE)) {   // LW13: a company the likelier
       const dive = diveTrip(res, home, k, world, { start, len, pace, rng: drng });
       if (dive !== null) return dive;   // undefined (a way asked) or the dive; none that fits, the town trip
     }
+  }
+  // LW13: a pilgrim's cycle with a temple town's holy day in reach goes to it (its own draw), as a band with its town's
+  if (res.job === 'pilgrim' && world.templeTown) {
+    const holy = holyTrip(res, home, k, world, { start, len, pace });
+    if (holy !== null) return holy;   // undefined (a way asked) or the holy day's; none, the trip it always was
   }
   // LW5b: a port town's traveller's cycle a PASSAGE BY SEA now and then - its own dice, so a cycle that is none is the
   // trip it always was
@@ -510,6 +524,45 @@ export function ownTrip(res, home, k, world, { mpm }) {
 
 /** LW5b: the way of a trip with no road under it - a passage by sea. */
 const noWay = () => ({ pts: [], cum: [0], len: 0, kinds: [] });
+
+/** LW13: a pilgrim's holy day is reached by this hour of its morning (in for the day's rites). */
+export const HOLY_IN_H = 10;
+/**
+ * LW13: A PILGRIMAGE TO A HOLY DAY - the first temple town within a pilgrim's range keeping its region's own holy day
+ * inside the cycle (companies.js holyDayOf, the nearer first): out of a morning (one minute for its town's pilgrims -
+ * they go as a band) to arrive by HOLY_IN_H of it, home the morning after - inside the cycle, or none (null); the
+ * pilgrim's own draw (HOLY_CHANCE) says whether it goes. Undefined while a way is asked.
+ * @param {Resident} res @param {LwTown} home @param {number} k @param {TripWorld} world
+ * @param {{ start: number, len: number, pace: number }} o
+ * @returns {Trip|null|undefined}
+ */
+export function holyTrip(res, home, k, world, { start, len, pace }) {
+  if (!holyDraw(res, k)) return null;
+  const [rMin, rMax] = TRIP_RANGE_PX.pilgrim;
+  const dist = (t) => Math.hypot((t.px ?? 0) - (home.px ?? 0), (t.py ?? 0) - (home.py ?? 0));
+  const temples = world.townsNear(home.px ?? 0, home.py ?? 0, rMax)
+    .filter((t) => t.mapId !== home.mapId && Math.max(Math.abs((t.px ?? 0) - (home.px ?? 0)), Math.abs((t.py ?? 0) - (home.py ?? 0))) >= rMin && !!world.templeTown?.(t))
+    .sort((a, b) => dist(a) - dist(b) || a.mapId - b.mapId);
+  const holy = holyDayOf(temples, start, len);
+  if (!holy) return null;
+  const plan = world.routeOf(home, holy.town);
+  if (plan === undefined) return undefined;
+  if (!plan || !(plan.pixels?.length >= 2)) return null;
+  const to = /** @type {LwTown} */ (holy.town);
+  const way = innsAlong(wayOf(plan, world.dryAt), plan, world, home, to);
+  const trim0 = Math.min(townTrim(home), way.len * 0.4), trim1 = Math.min(townTrim(to), way.len * 0.4);
+  const walk = Math.max(0, way.len - trim0 - trim1) / pace;
+  const by = holy.day * DAY_MIN + HOLY_IN_H * 60;
+  let outDay = holy.day - Math.ceil(walk / ((WALK_TO_H - WALK_FROM_H) * 60));
+  let outT0 = outDay * DAY_MIN + holyDepartMin(home, holy.day), outT1 = whenWalked(outT0, walk);
+  for (let i = 0; i < 2 && outT1 > by; i++) { outDay--; outT0 = outDay * DAY_MIN + holyDepartMin(home, holy.day); outT1 = whenWalked(outT0, walk); }
+  if (outT1 > by) return null;
+  const backT0 = (holy.day + 1) * DAY_MIN + 7 * 60 + (lwSeed(home.mapId >>> 0, holy.day, 0x6261) % 120);   // 'ba': the morning after
+  const backT1 = whenWalked(backT0, walk);
+  if (outT0 < start * DAY_MIN || backT1 > (start + len) * DAY_MIN + DAY_START_MIN) return null;
+  return { id: `${res.id}:${k}`, k, kind: res.job, leader: res, party: [res], from: home, to, way, pace,
+    outT0, outT1, backT0, backT1, trim0, trim1, holy: { day: holy.day, id: holy.id } };
+}
 
 /**
  * LW5b: A PASSAGE BY SEA - a port town's traveller's trip to a port a lane of the Bay runs to from theirs
@@ -723,6 +776,9 @@ const JOINS = new Set(['pilgrim', 'courier', 'pedlar']);
  *    (the trip's own roll, 0 to HIRE_MAX). A merchant's trips never overlap (each fits its cycle), so neither do theirs.
  *  - A pilgrim's, courier's or pedlar's trip that sets out the day a merchant's does, for the same town, JOINS that
  *    merchant's train - the first merchant in slot order with such a trip - and walks its timeline, its pace.
+ *  - LW13: a COMPANY (companies.js) walks its first place's trip, every place's holder that cycle with it, named; one
+ *    setting out the day a merchant's train with no sellsword does, for the same town, is HIRED on it. PILGRIMS of the
+ *    town setting out the same day for the same town (in no train) go as a BAND, the first place leading.
  * `tripOf(res, k)` the town's traveller's own trip of a cycle (townTrips' book); pure over it. LW4: the contract and
  * the joiners are the PLACES' (the census roster's slots); `holderOf(res, k)` who holds each that cycle (a place
  * standing empty hires nobody and joins nobody).
@@ -746,16 +802,46 @@ export function formCaravans(town, trips, roster, tripOf, scale, holderOf, fated
     }
     return null;
   };
+  /** A merchant's trip's sellswords: its contract's first `want` places, and any whose holder the road takes. @param {Trip} tr */
+  const hiredOf = (tr) => {
+    const mi = merchants.findIndex((m) => m.slot === tr.leader.slot);
+    const want = seededRng(lwSeed(tr.leader.town, tr.leader.slot, tr.outT0 | 0, 0x68697265))() * (HIRE_MAX + 1) | 0;   // 'hire'
+    const k = tr.k ?? cycleOf(tr.leader, dayOf(tr), scale).k;
+    // the contract's first `want` places, and any place of it whose holder the road takes this cycle (a fated death is met on the road)
+    const contract = mi < 0 ? [] : sellswords.filter((_, i) => i % merchants.length === mi);
+    return /** @type {Resident[]} */ (contract.map((sw, i) => { const h = held(sw, k); return h && (i < want || !!fated?.(h, k)) ? h : null; }).filter((h) => !!h));
+  };
+  // LW13: THE COMPANIES (companies.js) - each its first place's trip, its places' holders that cycle walking it; a company
+  // setting out the day a merchant's train with no sellsword does, for the same town, is HIRED on it (the joiners' law)
+  const companies = companiesOf(roster);
+  /** A company's members on its trip: each place's holder that cycle (a place standing empty walks with nobody). */
+  const membersOf = (/** @type {any} */ c, /** @type {Trip} */ tr) => {
+    const k = tr.k ?? cycleOf(tr.leader, dayOf(tr), scale).k;
+    return [tr.leader, ...c.places.slice(1).map((p) => held(p, k)).filter((h) => !!h)];
+  };
+  /** The merchant's train a company's trip is hired on, or null. @param {Trip} ct */
+  const hireOf = (ct) => {
+    if (ct.dive || ct.sea) return null;
+    const d = dayOf(ct);
+    for (const m of merchants) {
+      const mt = placeTrip(m, d);
+      if (mt && !mt.sea && mt.to.mapId === ct.to.mapId && dayOf(mt) === d && !hiredOf(mt).length) return mt;
+    }
+    return null;
+  };
+  // LW13: PILGRIM BANDS - a town's pilgrims setting out the same day for the same town (not in a merchant's train) go
+  // together, the first place in slot order leading
+  const pilgrims = roster.filter((r) => r.job === 'pilgrim').sort((a, b) => a.slot - b.slot);
+  /** The band a pilgrim's trip walks in: its members' trips, the leader's first. @param {Trip} pt */
+  const bandOf = (pt) => {
+    const d = dayOf(pt);
+    return pilgrims.map((r) => placeTrip(r, d)).filter((t) => !!t && t.kind === 'pilgrim' && !t.sea && t.to.mapId === pt.to.mapId && dayOf(t) === d && !trainOf(t));
+  };
   /** @type {Trip[]} */
   const out = [];
   for (const tr of trips) {
     if (tr.kind === 'merchant') {
-      const mi = merchants.findIndex((m) => m.slot === tr.leader.slot);
-      const want = seededRng(lwSeed(tr.leader.town, tr.leader.slot, tr.outT0 | 0, 0x68697265))() * (HIRE_MAX + 1) | 0;   // 'hire'
-      const k = tr.k ?? cycleOf(tr.leader, dayOf(tr), scale).k;
-      // the contract's first `want` places, and any place of it whose holder the road takes this cycle (a fated death is met on the road)
-      const contract = mi < 0 ? [] : sellswords.filter((_, i) => i % merchants.length === mi);
-      const hired = contract.map((sw, i) => { const h = held(sw, k); return h && (i < want || !!fated?.(h, k)) ? h : null; }).filter((h) => !!h);
+      const hired = hiredOf(tr);
       const d = dayOf(tr);
       const joined = [];
       for (const r of roster) {
@@ -763,13 +849,31 @@ export function formCaravans(town, trips, roster, tripOf, scale, holderOf, fated
         const jt = placeTrip(r, d);
         if (jt && jt.to.mapId === tr.to.mapId && dayOf(jt) === d && trainOf(jt)?.id === tr.id) joined.push(jt.leader);
       }
-      out.push({ ...tr, party: [tr.leader, .../** @type {Resident[]} */ (hired), ...joined] });
+      // LW13: no sellsword with it - the first company setting out with it hired on
+      let hiredBy = null;
+      if (!hired.length) {
+        for (const c of companies) {
+          const ct = placeTrip(c.places[0], d);
+          if (ct && hireOf(ct)?.id === tr.id) { joined.push(...membersOf(c, ct)); hiredBy = c.key; break; }
+        }
+      }
+      out.push({ ...tr, party: [tr.leader, ...hired, ...joined], ...(hiredBy ? { hiredBy } : {}) });
     } else if (tr.kind === 'patrol' || tr.kind === 'noble') {
       // LW9: a patrol rides as one, its first leading; a noble goes in procession with the retainers dealt to them -
       // every place of it its holder that cycle (a place standing empty rides with nobody)
       const k = tr.k ?? cycleOf(tr.leader, dayOf(tr), scale).k;
       const riders = roster.filter((r) => r.slot !== tr.leader.slot && leaderOf(r, roster)?.slot === tr.leader.slot).sort((a, b) => a.slot - b.slot);
       out.push({ ...tr, party: [tr.leader, ...riders.map((r) => held(r, k)).filter((h) => !!h)] });
+    } else if (tr.kind === 'adventurer') {
+      // LW13: a company walks its first place's trip together, named; one hired on a merchant's train walks in it
+      const c = companies.find((x) => x.places[0].slot === tr.leader.slot) ?? null;
+      if (!c) out.push(tr);
+      else if (!hireOf(tr)) { const named = namedIn(c, town.name ?? ''); out.push({ ...tr, party: membersOf(c, tr), company: { key: c.key, name: named.name } }); }
+    } else if (tr.kind === 'pilgrim') {
+      if (trainOf(tr)) continue;
+      const band = bandOf(tr);
+      if (band.length < 2) out.push(tr);
+      else if (band[0].id === tr.id) out.push({ ...tr, party: band.map((t) => t.leader) });   // LW13: the band, its first leading
     } else if (!(JOINS.has(tr.kind) && trainOf(tr))) out.push(tr);
   }
   return out;

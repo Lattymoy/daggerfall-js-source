@@ -342,6 +342,13 @@ export const ROAD_GREETINGS = Object.freeze({
   enemy: Object.freeze(['Keep your distance.', 'Walk on.', 'I\'ve nothing for you.']),
 });
 
+/** LW13: a company's member's word in passing - `{company}` its name - by its head's regard. */
+export const COMPANY_GREETINGS = Object.freeze({
+  friend: Object.freeze(['{player}! {company} remember their friends.', 'Walk with {company} a while, {player}?']),
+  known: Object.freeze(['{company}, on the road again.', 'You again. {company} keep turning up where you are.']),
+  stranger: Object.freeze(['{company} - you\'ve heard of us?', 'Make way for {company}.', 'Good road. We\'re {company}.']),
+});
+
 /** What a resident says to the player in passing, by their regard (relations.js). */
 export const LIVING_GREETINGS = Object.freeze({
   friend: Object.freeze(['Well met, {player}!', '{player}! Good to see you.', 'Ho, {player}. Keeping safe?', 'There\'s a friendly face.']),

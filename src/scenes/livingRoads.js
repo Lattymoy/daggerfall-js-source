@@ -25,7 +25,8 @@
 import { partiesOfTown, partyAt, wayAt, membersAt, remainsOfTown, NATIVE_PER_M, NATIVE_PIXEL, TRIP_REACH_PX } from '../systems/livingWorld/trips.js';
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 import { circleLine, lineMinutes, ROUND_S } from '../systems/livingWorld/meetups.js';
-import { ROAD_GREETINGS, ROAD_PASS_SCRIPTS, ROAD_PASS_WARNINGS, BAND_WARNINGS, fillLine, firstNameOf } from '../systems/livingWorld/lines.js';
+import { ROAD_GREETINGS, ROAD_PASS_SCRIPTS, ROAD_PASS_WARNINGS, BAND_WARNINGS, COMPANY_GREETINGS, fillLine, firstNameOf } from '../systems/livingWorld/lines.js';
+import { byRole, headOf } from '../systems/livingWorld/companies.js';   // LW13: a company in file by role, its head's word
 import { FIRE_FLAT } from '../systems/survival/camp.js';
 import { teamOf, trainOf, campTeam } from '../systems/livingWorld/wagons.js';   // LW10: the wagon trains
 import { lwSeed, textSeed } from '../systems/livingWorld/seed.js';
@@ -78,6 +79,7 @@ export function partyLabel(trip, home = '', beset = '') {
   const n = trip.party?.length ?? 1;
   const bound = ROAD_LABELS[trip.kind]?.(n) ?? (trip.kind === 'merchant' ? 'Caravan' : trip.kind === 'pilgrim' ? (n > 1 ? 'Pilgrims' : 'Pilgrim')
     : trip.kind === 'courier' ? 'Courier' : trip.kind === 'adventurer' ? (n > 1 ? 'Adventurers' : 'Adventurer') : (n > 1 ? 'Travellers' : 'Pedlar'));
+  if (trip.company) return beset ? `${trip.company.name} beset by ${beset}` : to ? `${trip.company.name}, to ${to}` : trip.company.name;   // LW13: a company by its name
   if (beset) return `${bound} beset by ${beset}`;
   if (trip.robbed) return to ? `${bound} to ${to} (robbed)` : `${bound} (robbed)`;   // LW11: the character's own robbery
   if (trip.wild) return `${bound} in the wild`;   // LW9: no town
@@ -205,12 +207,13 @@ export function partyPlaces(trip, at, ring = null) {
     return out;
   }
   const back = at.phase === 'back';
+  const file = trip.company ? byRole(trip.party) : trip.party;   // LW13: a company in file by role - warriors before, thieves between, mages behind
   for (let i = 0; i < n; i++) {
     const s = /** @type {number} */ (at.s) + (back ? 1 : -1) * i * FILE_GAP_N;   // behind the leader, the way they walk
     const p = wayAt(trip.way, s);
     const side = i === 0 ? 0 : (i % 2 ? 1 : -1) * FILE_SIDE_N;
     const yaw = back ? p.yaw + Math.PI : p.yaw;
-    out.push({ res: trip.party[i], x: p.x + Math.cos(p.yaw) * side, z: p.z - Math.sin(p.yaw) * side, yaw, moving: true });
+    out.push({ res: file[i], x: p.x + Math.cos(p.yaw) * side, z: p.z - Math.sin(p.yaw) * side, yaw, moving: true });
   }
   return out;
 }
@@ -414,6 +417,12 @@ export function createLivingRoads(deps) {
     if (!overworld && dt > 0) greet(t);
   }
 
+  /** LW13: the company a traveller walks with at `t` - its name and its head (the highest level walking) - or null. @param {string} id @param {number} t */
+  function companyAt(id, t) {
+    const p = parties.find((q) => q.trip.company && q.trip.party.some((x) => x.id === id));
+    return p ? { name: p.trip.company.name, head: headOf(membersAt(p.trip, t)) } : null;
+  }
+
   /** A word to the player passing close - by regard, once in ROAD_GREET_REST_MIN of the clock. */
   function greet(t) {
     for (const m of list) {
@@ -422,10 +431,15 @@ export function createLivingRoads(deps) {
       if (last != null && t >= last && t - last < ROAD_GREET_REST_MIN) continue;   // AUDIT-E6: a clock gone back (a load) forgets the rest
       greeted.set(m.res.id, t);
       const rel = deps.relations?.() ?? null;
-      const standing = rel ? rel.standing(m.res.id, dayOf(t)) : 'neutral';
-      const pool = standing === 'friend' ? ROAD_GREETINGS.friend : standing === 'enemy' || standing === 'hostile' ? ROAD_GREETINGS.enemy
-        : rel?.known(m.res.id) ? ROAD_GREETINGS.known : ROAD_GREETINGS.stranger;
-      let text = fillLine(pool[lwSeed(textSeed(m.res.id), Math.floor(t / 7)) % pool.length], { player: deps.playerName?.() ?? '' });
+      // LW13: a company's word to the player is its head's, and its greeting names it
+      const company = companyAt(m.res.id, t);
+      const word = company?.head?.id ?? m.res.id;
+      const standing = rel ? rel.standing(word, dayOf(t)) : 'neutral';
+      const known = !!rel?.known(word);
+      const pools = company && standing !== 'enemy' && standing !== 'hostile' ? COMPANY_GREETINGS : ROAD_GREETINGS;
+      const pool = standing === 'friend' ? pools.friend : standing === 'enemy' || standing === 'hostile' ? ROAD_GREETINGS.enemy
+        : known ? pools.known : pools.stranger;
+      let text = fillLine(pool[lwSeed(textSeed(m.res.id), Math.floor(t / 7)) % pool.length], { player: deps.playerName?.() ?? '', company: company?.name ?? '' });
       // LW12: and a warning of a band whose hideout lies near, the first time (never from one who will not speak to them)
       const band = standing === 'enemy' || standing === 'hostile' ? null : deps.unheard?.(t) ?? null;
       if (band) { text = `${text} ${fillLine(BAND_WARNINGS[lwSeed(textSeed(m.res.id), 0x7761726e) % BAND_WARNINGS.length], { band: band.name })}`; deps.heard?.(band); }   // 'warn'
@@ -559,7 +573,7 @@ export function createLivingRoads(deps) {
       const id = person?.living?.id;
       const rel = deps.relations?.();
       if (!id || !rel) return null;
-      const s = rel.standing(id, dayOf(deps.clock()));
+      const s = rel.standing(companyAt(id, deps.clock())?.head?.id ?? id, dayOf(deps.clock()));   // LW13: a company's word is its head's
       return s === 'enemy' || s === 'hostile' ? fillLine(LIVING_REFUSAL, { a: firstNameOf(person.nameNPC) }) : null;
     },
     /** Every body freed and the parties forgotten (the host's teardown). */

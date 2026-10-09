@@ -9,7 +9,7 @@ up decorations that can be used as shops" - HOME-VENDOR's hired trader. Asked wh
 dungeon, and in what order to build: "Your decision" to both (section 1, decisions 2 and 3). "I want this to be as
 detailed as possible."
 
-**Status: LW9-LW12 BUILT 2026-10-09; LW13-LW16 designed.** Eight slices, LW9 to LW16, in the order of decision 2.
+**Status: LW9-LW13 BUILT 2026-10-09; LW14-LW16 designed.** Eight slices, LW9 to LW16, in the order of decision 2.
 As each one ships, its record is written on this page under its name, the way `06-Systems/Living-World.md` records
 LW1-LW8. That first page stays the record of LW0-LW8 and their fixes, and its LW0 decisions bind here except where
 section 1 says otherwise. Every constant below marked "proposed" is a starting number for the slice to measure. None
@@ -492,53 +492,63 @@ TALE_KINDS).
 
 Pins: `test/lw12_outlaws.test.js` (11). Mutants: `tools/mutants/lw12.json` (75).
 
-## 6. LW13 - the companies
+## 6. LW13 - the companies (BUILT 2026-10-09)
 
-Mac: "groups of npcs forming parties and traveling".
+Mac: "groups of npcs forming parties and traveling". The law is `src/systems/livingWorld/companies.js` (pure, over the
+census's roster) and `src/systems/livingWorld/trips.js` (`leaderOf`, `ownTrip`, `holyTrip`, `formCaravans`).
 
-### 6.1 The company (`systems/livingWorld/companies.js`, pure)
+### 6.1 The company (`companies.js`)
 
-- **THE DEAL.** A town's adventurers (LW9's count) are dealt into companies in slot order.
-  - A company's size is drawn from its first slot's seed: 2-4, or up to 5 in a city.
-  - Each company takes a mix of the three runs where the town has them: a mage's (MOBILE_TYPES 128-133), a thief's
-    (134-139) and a warrior's (140-145), the eighteen classes' three runs of six.
-  - An adventurer left over goes alone, as today.
-- **THE LEADER AND THE NAME.** The leader is the highest-level member. The name is drawn off two lists, or the
-  leader's ("The Lantern Company", "Ravens of Wayrest", "Ada Lark's company").
-- **A COMPANY IS ITS PLACES**, as a caravan's contract is its sellswords' places.
-  - A member who dies leaves the place empty for VACANT_CYCLES. Then the newcomer holds it and belongs to the company
-    (`lives.js` unchanged).
-  - The leader is always the highest level among the current holders.
-- **ONE CYCLE, ONE TRIP.**
-  - The company's trip follows its leader's place's cycle and dice (`ownTrip`).
-  - A member whose place is fated that cycle forces the company out, as `formCaravans`' fated contract does.
-  - Every member's own trip that cycle is the company's. Their away windows are the company's, since `awayOf` already
-    reads the party.
-- **WHAT IT DOES.**
-  - A DIVE, in COMPANY_DIVE_CHANCE (0.75) of its cycles.
-  - A town's trip.
-  - HIRED: a merchant whose town keeps no sellswords (under nine blocks) takes a company that is home that cycle and
-    sets out the same day for the same town. It is the joiners' law, with a company joining a train.
-- **PILGRIM BANDS.** Pilgrims set out to arrive at a temple town for its region's holy day (`holidays.js
-  getHolidayId`). Those of one town go together as a band. On the holy day the temple town's visitors are many, and
-  LW8's temple room is full.
+- **THE DEAL** (`companiesOf`, once a roster). A town's adventurers in slot order: each company's size off its first
+  place's seed, COMPANY_SIZE (2-4), to COMPANY_CITY_MAX (5) where the town keeps COMPANY_CITY_ADVENTURERS (5) of them
+  (a city's). Each place after the first is the next in slot order of a run the company lacks - a mage's (128-133), a
+  thief's (134-139), a warrior's (140-145) - where one is left, else the next. One left over goes alone, as before; a
+  town of one adventurer keeps no company. No census id changes: a company is its places.
+- **THE NAME** (`companyName`, `namedIn`): "The <word> Company", "<beasts> of <its town>" or "<first's> company" (the
+  first place's census name), off the company's key `C<map>.<i>`.
+- **THE HEAD** (`headOf`): the highest level of those walking. The trip is the company's FIRST place's - its cycle
+  and its dice, as a patrol's is its first's (`leaderOf` answers the first for every other place; `placeCycle`
+  follows) - and the head is its word: the greeting's regard and the talk's refusal are the head's.
+  - Built differently from the design: the design made the highest-level holder the trip's leader. A trip's id and its
+    dice are its leader's place's, so the first place keeps the trip and the head speaks for the company.
+- **A COMPANY IS ITS PLACES.** Every place's holder that cycle walks with it (a place standing empty walks with nobody;
+  the newcomer who holds it belongs to it - `lives.js` unchanged).
+- **ONE CYCLE, ONE TRIP.** No place but the first has a trip of its own (`ownTrip` answers none); every member's away
+  window is the company's (`awayOf` reads the party). A member whose place is fated that cycle sends the company out
+  whatever its first's chance said.
+- **WHAT IT DOES.** A DIVE in COMPANY_DIVE_CHANCE (0.75) of its cycles (a lone adventurer DIVE_CHANCE, 0.55), else a
+  town's trip.
+- **HIRED.** A company setting out the day a merchant's train with no sellsword hired does, for the same town, walks
+  in it - its trip dropped, the train marked `hiredBy` (the joiners' law). Built differently: the design gave the hire
+  to merchants of towns that keep no sellswords (under nine blocks); no such town keeps two adventurers, so the hire
+  goes to any train setting out with none.
+- **PILGRIM BANDS.** A town's pilgrims setting out the same day for the same town, in no merchant's train, go
+  together, the first place leading.
+- **THE HOLY DAY** (`holyDayOf`, `holyTrip`). A pilgrim's cycle with a temple town in range keeping its region's own
+  holy day (`holidays.js getHolidayId`; never a day every region keeps) goes to it on the pilgrim's own draw
+  (HOLY_CHANCE, 0.8): out at one minute of the morning for its town (`holyDepartMin` - so its pilgrims go as a band),
+  in by HOLY_IN_H (10) of the holy day, home the morning after - inside the cycle, or the trip it always was. A
+  pilgrim come to a temple town keeps its temple (`dayPlan.js` `pilgrim-visit`: PILGRIM_TEMPLE_H, 8:30 for the morning
+  and 15:30), so on the holy day the temple is full of every band of the region's towns (LW8 stands them inside).
 
 ### 6.2 Seen
 
-- On the road a company walks in file by role, warriors before, thieves between and mages behind, and camps together. The Overworld
-  mark reads "The Lantern Company, to Mournoth", the dungeon by name.
-- Their greetings name the company ("Ravens of Wayrest - you've heard of us?"). The chronicle's People page (LW7c)
-  groups them.
-- Each member keeps their own regard. The company's word to the player is its leader's.
+- On the road a company walks in file by role (`byRole`): warriors before, thieves between, mages behind; it camps
+  together. Its Overworld mark reads "The Lantern Company, to Mournoth" (the dungeon by name on a dive), "...beset by
+  Orcs" in a fight.
+- Its greeting names it (COMPANY_GREETINGS: "The Lantern Company - you've heard of us?"), by its head's regard. Each
+  member keeps their own regard; the company's word to the player is its head's.
+- The chronicle's People page (`people.js peoplePage`, `ui/enhancedChronicle.js`): each card a member's company, and a
+  COMPANIES group - each company any of the known walk with, its town and the members the character knows.
 
-### 6.3 Pins
+### 6.3 The measure, the pins
 
-- the deal: sizes, the mix and the one left over;
-- the solitary adventurer's id unchanged;
-- one trip a cycle;
-- the fated forcing the company out;
-- the hire;
-- the pilgrims' holy-day law.
+Measure (`tools/livingPerfProbe.mjs`, THE TRAFFIC): within 3 px by day the adventurers' parties fell from 69 to 38 (a
+company walks as one); the roads' layer's worst frame 0.9-1.5 ms (the budget 6).
+
+Moved pins: `lw4_trouble` (a fated member's place sends its company's first), `lw6_deep` (a company's dive chance).
+
+Pins: `test/lw13_companies.test.js` (9). Mutants: `tools/mutants/lw13.json` (42).
 
 ## 7. LW14 - the deep's own
 

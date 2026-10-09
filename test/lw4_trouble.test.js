@@ -13,6 +13,7 @@ import { troubleOf, troubledTrip, strengthOf, foeStrength, RISK_PER_DAY, GROUND_
 import {
   townTrips, ownTrip, formCaravans, partyAt, membersAt, awayOf, visitorsOf, newsOf, remainsNear, placeCycle, setsOut, contractOf, cycleOf, wayAt as wayAtOf0,
   walkedMinutes, whenWalked, CALENDAR_MPM, HALT_CATCH_UP, NEWS_DAYS, REMAINS_MIN, TRIP_PACE, TRIP_CHANCE,
+  leaderOf,
 } from '../src/systems/livingWorld/trips.js';
 import { mintResident, travellerRoster } from '../src/systems/livingWorld/census.js';
 import { createRelations, TURN_KINDS, TURNS_MAX } from '../src/systems/livingWorld/relations.js';
@@ -250,7 +251,10 @@ test('LW4 the towns see the trouble: a turned party never visits; one fallen on 
       if (!(chance > 0)) continue;
       for (let k = 40; k < 140; k++) {
         if (!lm.world.fated(place, k) || !lm.world.holderOf(place, k)) continue;
-        const holder = lm.world.holderOf(place, k);
+        // PIN MOVED (LW13): a company's place rides its first's trip - the fated among them send the company out
+        const lead = leaderOf(place, lm.world.rosterOf(town));
+        const holder = lead ? lm.world.holderOf(lead, k) : lm.world.holderOf(place, k);
+        if (!holder) continue;
         if (lwRng(holder.town, holder.slot, k, 0x74726970)() < chance) continue;   // its chance would have sent it anyway
         const own = ownTrip(holder, town, k, { ...lm.world, fated: () => false }, O());
         const forced = ownTrip(holder, town, k, lm.world, O());
