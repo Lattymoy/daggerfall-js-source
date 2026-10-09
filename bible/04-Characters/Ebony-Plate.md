@@ -32,14 +32,23 @@ drops the repeat and clips what is left, mapping the triangles back to the face'
 `earClip` threw, so every other bake in the tree is byte for byte what it was, and a face with no repeat (or one that
 is still no face, a bow tie) is refused as before. The bake records how many faces took that door (`repeated`: 8).
 
+**The left boot's stray island** (AUDIT MW-EBONY, the same day). The pairs are exact mirrors - pauldrons, gauntlets,
+greaves - but the left boot (`Cube.024`) is the right boot mirrored plus a 7-triangle island (7.7 square units) across
+the middle at x -0.21 to 1.95, z 33.6 to 36.15: mirror images of the boot's own geometry, eight of its eleven vertices
+sitting on the right boot's. Skinned wholly to the left calf, it floated off that knee inside the right greave as the
+left leg moved. `dropAcross` drops an island (triangles joined by a shared corner) of one side's piece that stands
+wholly past `MIDDLE_SLACK` (0.5) on the other side; the left boot ships 450 triangles of 457 (`dropped`: 7), and the
+right boot, given the same door, loses nothing. Three of the left boot's inner-edge vertices stay within a quarter unit
+of the middle with no mirror; they are its own surface.
+
 ## The rig
 
 Each piece takes its steel twin's rig (`EBONY_RIG`), the helm the closed helm's (rigid on the head, raised
 `HELM_LIFT` as MW-STEEL5 raised the steel helms). One difference: the ebony breastplate carries its own tassets, down
 to the thighs, where the steel one stops at the waist. So the breastplate's rig adds both thighs and **hangs over its
 joints** - `jointWeights`' new `mode: 'over'`: above `top` (84) the joint law alone (the spine, the clavicles), below
-it the joint law's answer keeps 1 - share and the thighs take the share, 0.7 at the hem (62), split across 4 units of
-the middle. The legs weigh in by the hang alone: the joint law never picks a thigh, nor blends into one as a child at
+it the joint law's answer keeps 1 - share and the thighs take the share, 0.7 at the hem (62), split across the middle's
+8 units (4 either side). The legs weigh in by the hang alone: the joint law never picks a thigh, nor blends into one as a child at
 its own origin (MW-CLOAK1 closed that second door), so a plate over the thigh is not the thigh's outright and the waist
 stays one surface. The ebony skirt is the steel skirt's rig hung to its own hem (60).
 
@@ -54,8 +63,9 @@ knee, the helm the HAIR (one helm - Mac sent no open one, so the Steel Helm swit
 
 `test/mwebony1.test.js` (5): the bake byte for byte from the committed files, each DDS its painting, the export's
 hash and object names; the scene placement, the helm lifted, the shapes named for rule 15, weights summing to one, the
-tasset law exactly; Ebony alone, the composer's adds and shadows, Mithril and Adamantium keep retail; through the
-binder on the vendored retail skeleton - idle placements, and in a stride the right tassets move with the leg, less
-than its knee, while the chest stays; and earClipRepeated's door. Rendered posed on the retail rig, idle and striding,
-before it shipped. `tools/mutants/mwebony1.json` (10, all dead). `test/mwsteel1.test.js` keeps its census to Steel and
+tasset law exactly, and the left boot's island dropped and nothing of it across the middle; Ebony alone, the
+composer's adds and shadows, Mithril and Adamantium keep retail; through the binder on the vendored retail skeleton -
+idle placements, and in a stride the right tassets (the same vertices at rest and posed) move with the leg, less than
+its knee, while the chest stays; and earClipRepeated's door. Rendered posed on the retail rig, idle and striding,
+before it shipped. `tools/mutants/mwebony1.json` (10, all dead); the island's door in `tools/mutants/auditmwcloak.json`. `test/mwsteel1.test.js` keeps its census to Steel and
 no longer expects Ebony to keep retail's record.

@@ -14,8 +14,10 @@
 //
 // - and the normals are the result's own, area-weighted, turned to face as the source's did. The UVs ride linearly (an
 // edge's new vertex at its edge's middle, an old vertex where it was): the painting is cloth, and the slide is under a
-// unit. One vertex a position, as the bake's meshes are where no seam splits them; a mesh with a seam, or an edge
-// three faces share, is refused rather than torn.
+// unit. One vertex a position, as the bake's meshes are where no seam splits them; a mesh with a seam, an edge three
+// faces share, or a vertex two open edges' runs meet at (a bow tie's waist - AUDIT MW-CLOAK: it took the first two of
+// its rim neighbours and dragged one wing across the other) is refused rather than torn. The result's bounds are its
+// own; nothing per-vertex the subdivision does not carry rides along at the old length.
 
 const key = (a, b) => (a < b ? a * 1048576 + b : b * 1048576 + a);
 
@@ -23,6 +25,7 @@ const key = (a, b) => (a < b ? a * 1048576 + b : b * 1048576 + a);
 export function loopSubdivideOnce(mesh) {
   const P = mesh.positions; const I = mesh.indices; const U = mesh.uvs ?? null;
   const n = P.length / 3;
+  if (n >= 1048576) throw new Error(`${n} vertices - the edge key holds 2^20`);
   const seen = new Set();
   for (let v = 0; v < n; v++) {
     const k = `${P[v * 3]},${P[v * 3 + 1]},${P[v * 3 + 2]}`;
@@ -47,13 +50,14 @@ export function loopSubdivideOnce(mesh) {
     ring[a].add(b); ring[b].add(a);
     if (far.length === 1) { rim[a].push(b); rim[b].push(a); }
   }
+  for (let v = 0; v < n; v++) if (rim[v].length > 2) throw new Error(`vertex ${v} is where ${rim[v].length / 2} open edges' runs meet - a bow tie this subdivision does not untie`);
   const out = n + edges.size;
   const pos = new Float32Array(out * 3);
   const uv = U ? new Float32Array(out * 2) : null;
   for (let v = 0; v < n; v++) {
     const r = rim[v];
     let w0, nb, wn;
-    if (r.length >= 2) { w0 = 3 / 4; nb = r.slice(0, 2); wn = 1 / 8; }   // on the open edge (a vertex two rims meet at keeps its first two)
+    if (r.length === 2) { w0 = 3 / 4; nb = r; wn = 1 / 8; }   // on the open edge
     else {
       nb = [...ring[v]];
       const k = nb.length;
@@ -82,7 +86,13 @@ export function loopSubdivideOnce(mesh) {
     const ab = mid(a, b), bc = mid(b, c), ca = mid(c, a);
     idx.set([a, ab, ca, ab, b, bc, ca, bc, c, ab, bc, ca], o); o += 12;
   }
-  return { ...mesh, positions: pos, indices: idx, ...(uv ? { uvs: uv } : {}), normals: vertexNormals(pos, idx, mesh.normals ? facing(mesh) : null) };
+  const min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
+  for (let v = 0; v < pos.length; v += 3) for (let c = 0; c < 3; c++) { min[c] = Math.min(min[c], pos[v + c]); max[c] = Math.max(max[c], pos[v + c]); }
+  return {
+    ...(mesh.name != null ? { name: mesh.name } : {}), ...(mesh.bake ? { bake: { ...mesh.bake, subdivided: (mesh.bake.subdivided ?? 0) + 1 } } : {}),
+    positions: pos, indices: idx, ...(uv ? { uvs: uv } : {}), normals: vertexNormals(pos, idx, mesh.normals ? facing(mesh) : null),
+    bounds: { min, max },
+  };
 }
 
 /** `levels` of Loop subdivision; the mesh untouched at 0. */

@@ -87,12 +87,16 @@ export const EBONY_RIG = Object.freeze({
   helm: PLATE_RIG.helm_closed,
 });
 
-const shape = (object, texture, box) => Object.freeze({ object, texture, box: Object.freeze(box) });
+const shape = (object, texture, box, opts = {}) => Object.freeze({ object, texture, box: Object.freeze(box), ...opts });
 const piece = (id, shapes, lift = 0) => Object.freeze({ id, shapes: Object.freeze(shapes), ...(lift ? { lift } : {}) });
 /**
  * Each piece, the object it is read from, the painting it wears and the scene box it was read at. +X is the actor's
  * right: the right pauldron is `Cube.028`, the right gauntlet `.004`, the right greave `Breton_Male.007`, the right
- * boot `Cube.027` (the left boot's inner flare reaches 1.95 past the middle). The helm is raised HELM_LIFT (MW-STEEL5).
+ * boot `Cube.027`. The left boot's object carries a STRAY of the right boot's: a seven-triangle island at x -0.21 to
+ * 1.95, eight of its eleven corners on the right boot's own, that no other pair has (the pauldrons, gauntlets and
+ * greaves mirror each other to the vertex; the left boot is the mirrored right one and this) - skinned to the left calf
+ * it floated off the knee in every step (AUDIT MW-EBONY). Its box is the object's as exported; the island is dropped
+ * after (`acrossTheMiddle`). The helm is raised HELM_LIFT (MW-STEEL5).
  */
 export const PIECES = Object.freeze([
   piece('cuirass', [shape('Plane.001', 'cuirass', [[-14.37, -12.69, 62.3], [14.37, 12.59, 117.4]])]),
@@ -104,12 +108,50 @@ export const PIECES = Object.freeze([
   piece('greave_right', [shape('Breton_Male.007', 'greave', [[0.53, -5.32, 42.68], [11.99, 8.2, 83.05]])]),
   piece('greave_left', [shape('Breton_Male.001', 'greave', [[-11.99, -5.32, 42.68], [-0.53, 8.2, 83.05]])]),
   piece('boot_right', [shape('Cube.027', 'boot', [[0.13, -6.48, -0.21], [11.33, 14.61, 48.13]])]),
-  piece('boot_left', [shape('Cube.024', 'boot', [[-11.33, -6.48, -0.21], [1.95, 14.61, 48.13]])]),
+  piece('boot_left', [shape('Cube.024', 'boot', [[-11.33, -6.48, -0.21], [1.95, 14.61, 48.13]], { acrossTheMiddle: 'left' })]),
   piece('helm', [shape('Sphere.007', 'helm', [[-6.31, -6.64, 112.1], [6.31, 10.19, 133.37]])], HELM_LIFT),
 ]);
 
-/** One piece's shapes as the bake places them: each held to its box, then raised by the piece's `lift`. */
-export const pieceMeshes = (tree, p) => p.shapes.map((s) => liftMesh(bakeObject(tree, s.object, s.box), p.lift ?? 0));
+/** One piece's shapes as the bake places them: each held to its box, its strays across the middle dropped, then raised
+ *  by the piece's `lift`. */
+export const pieceMeshes = (tree, p) => p.shapes.map((s) => liftMesh(s.acrossTheMiddle ? dropAcross(bakeObject(tree, s.object, s.box), s.acrossTheMiddle) : bakeObject(tree, s.object, s.box), p.lift ?? 0));
+
+/** How far past the middle a piece of one side may reach and still be its own: the left boot's inner flare reaches
+ *  -0.32, the right boot's 0.13. */
+export const MIDDLE_SLACK = 0.5;
+/**
+ * AUDIT MW-EBONY: a mesh of one `side` ('left' or 'right') with every island (triangles joined by a shared corner)
+ * that stands wholly across the middle - past MIDDLE_SLACK on the other side - dropped, its vertices with it, and the
+ * bounds and the bake record made the result's (`dropped`: the triangles taken out).
+ */
+export function dropAcross(mesh, side) {
+  const P = mesh.positions; const I = mesh.indices; const n = P.length / 3;
+  const across = (v) => (side === 'left' ? P[v * 3] > -MIDDLE_SLACK : P[v * 3] < MIDDLE_SLACK);
+  // islands by shared position
+  const key = (v) => `${P[v * 3]},${P[v * 3 + 1]},${P[v * 3 + 2]}`;
+  const first = new Map(); const id = new Int32Array(n);
+  for (let v = 0; v < n; v++) { const k = key(v); if (!first.has(k)) first.set(k, v); id[v] = first.get(k); }
+  const parent = Int32Array.from({ length: n }, (_, i) => i);
+  const find = (x) => { while (parent[x] !== x) x = parent[x] = parent[parent[x]]; return x; };
+  for (let t = 0; t < I.length; t += 3) { const a = find(id[I[t]]); parent[find(id[I[t + 1]])] = a; parent[find(id[I[t + 2]])] = a; }
+  const wholly = new Map();
+  for (let v = 0; v < n; v++) { const r = find(id[v]); wholly.set(r, (wholly.get(r) ?? true) && across(v)); }
+  const kept = [];
+  for (let t = 0; t < I.length; t += 3) if (!wholly.get(find(id[I[t]]))) kept.push(I[t], I[t + 1], I[t + 2]);
+  const dropped = (I.length - kept.length) / 3;
+  if (!dropped) return mesh;
+  // the vertices the kept triangles use, in their order
+  const remap = new Int32Array(n).fill(-1); const order = [];
+  for (const v of kept) if (remap[v] < 0) { remap[v] = order.length; order.push(v); }
+  const pick = (arr, k) => (arr ? Array.from({ length: order.length * k }, (_, i) => arr[order[Math.floor(i / k)] * k + (i % k)]) : arr);
+  const positions = pick(P, 3);
+  const min = [0, 1, 2].map((c) => +Math.min(...positions.filter((_, i) => i % 3 === c)).toFixed(6));
+  const max = [0, 1, 2].map((c) => +Math.max(...positions.filter((_, i) => i % 3 === c)).toFixed(6));
+  return {
+    ...mesh, positions, indices: kept.map((v) => remap[v]), uvs: pick(mesh.uvs, 2), normals: pick(mesh.normals, 3),
+    bounds: { min, max }, bake: { ...mesh.bake, dropped },
+  };
+}
 
 /** One piece's weights in `bind` (plateBind) and its bones at their binds, for skinnedMeshesToNif. */
 export function pieceRig(id, meshes, bind) {

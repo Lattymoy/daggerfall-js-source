@@ -98,10 +98,10 @@
   {
     "name": "MWCLOAK1-vertices-only",
     "file": "src/formats/mwCloakFit.js",
-    "old": "      const n = Math.floor(Math.hypot(dx, dy, dz) / step);",
-    "new": "      const n = 0;",
+    "old": "    const n = Math.floor(Math.hypot(dx, dy, dz) / step);",
+    "new": "    const n = 0;",
     "tests": ["test/mwcloak1.test.js"],
-    "note": "The daedric greatsword's long edges cross the sheet between vertices clear of it."
+    "note": "Fit 1 samples what the cloak covers at its vertices alone: a pauldron's edges cross the sheet between vertices clear of it."
   },
   {
     "name": "MWCLOAK1-not-re-placed",

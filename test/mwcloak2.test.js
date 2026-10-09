@@ -61,9 +61,23 @@ test('MW-CLOAK2: one level of Loop subdivision - every triangle in four, an edge
   // the normals are the result's own: a fresh area-weighted pass over its positions agrees
   const fresh = vertexNormals(s.positions, s.indices);
   for (let k = 0; k < fresh.length; k++) assert.ok(near(fresh[k], s.normals[k], 1e-5));
+  // AUDIT MW-CLOAK: on a net with no symmetry to hide behind, an interior edge's vertex is 3/8 its ends and 1/8 its far
+  // corners - not its middle: a quad (0,0) (4,0) (4,4) (0,4) split on its diagonal, the far corners lifted unequally
+  const quad = { positions: Float32Array.from([0, 0, 0, 4, 0, 1, 4, 4, 0, 0, 4, 3]), indices: Uint16Array.from([0, 1, 2, 0, 2, 3]) };
+  const sq = loopSubdivideOnce(quad);
+  const diag = [0, 1, 2].map((c) => 3 / 8 * (quad.positions[c] + quad.positions[6 + c]) + 1 / 8 * (quad.positions[3 + c] + quad.positions[9 + c]));
+  let hit = false;
+  for (let v = 0; v < sq.positions.length / 3; v++) if ([0, 1, 2].every((c) => near(sq.positions[v * 3 + c], diag[c], 1e-5))) hit = true;
+  assert.ok(hit, `the diagonal's vertex at ${diag.map((x) => x.toFixed(3))} (its middle would be 2, 2, 0)`);
+  // a bow tie's waist is refused, not dragged through one wing; the result's bounds are its own
+  assert.throws(() => loopSubdivideOnce({ positions: Float32Array.from([0, 0, 0, 1, 1, 0, 1, -1, 0, -1, 1, 0, -1, -1, 0]), indices: Uint16Array.from([0, 1, 2, 0, 3, 4]) }), /open edges' runs meet/);
+  for (let c = 0; c < 3; c++) {
+    const xs = Array.from(s.positions).filter((_, i) => i % 3 === c);
+    assert.ok(near(s.bounds.min[c], Math.min(...xs), 1e-6) && near(s.bounds.max[c], Math.max(...xs), 1e-6), 'the bounds the result\'s own');
+  }
 });
 
-test('MW-CLOAK2: the cloak smoothed two levels - over the shoulders the bend between neighbouring faces falls from 14.8 degrees to 3, the creases past 20 from 54 to the six at the left strap\'s very tip, the outline\'s sharpest turn from 82 degrees to 24', () => {
+test('MW-CLOAK2: the cloak smoothed two levels - the creases past 20 degrees from 54 to the six at the left strap\'s very tip, the outline\'s sharpest turn from 82 degrees to 24, and over the shoulders the bend between neighbouring faces from 14.8 degrees to 3', () => {
   const base = bakeObject(readFbx(raw(SOURCE)), CLOAK_OBJECT, CLOAK_BOX);
   assert.equal(CLOAK_SUBDIVISIONS, 2);
   const smooth = loopSubdivide(base, CLOAK_SUBDIVISIONS);
@@ -114,22 +128,32 @@ test('MW-CLOAK2: the fit over the armour eases the cloak round each point that c
   const slope = async (radius) => {
     const asm = await build();
     const c = asm.pieces.find(isCloak); const before = Float32Array.from(c.positions); const oldNormals = c.batch.normals;
-    const fit = fitCloakOver(asm, { isCloak, isUnder: (p) => !isCloak(p), radius });
+    const fit = fitCloakOver(asm, { isCloak, isUnder: (p) => !isCloak(p), radius, poses: [{}] });   // the rest alone: the ease, not the poses
     poseAssembly(asm);
     const A = c.positions; const I = c.indices;
     const push = (v) => Math.hypot(A[v * 3] - before[v * 3], A[v * 3 + 1] - before[v * 3 + 1], A[v * 3 + 2] - before[v * 3 + 2]);
+    // AUDIT MW-CLOAK: and how it lands - each vertex's push in this pose straight back (carried into the bind through
+    // its own blend, which the bind-to-rest turn is not), and its mean over the vertices eased
+    let side = 0; let sum = 0; let moved = 0;
+    for (let v = 0; v < A.length / 3; v++) {
+      side = Math.max(side, Math.abs(A[v * 3] - before[v * 3]), Math.abs(A[v * 3 + 2] - before[v * 3 + 2]));
+      if (push(v) > 1e-6) { sum += push(v); moved++; }
+    }
     let steepest = 0;
     for (let t = 0; t < I.length; t += 3) for (let e = 0; e < 3; e++) {
       const a = I[t + e], b = I[t + (e + 1) % 3];
       const d = Math.hypot(before[a * 3] - before[b * 3], before[a * 3 + 1] - before[b * 3 + 1], before[a * 3 + 2] - before[b * 3 + 2]);
       if (d > 1e-6) steepest = Math.max(steepest, Math.abs(push(a) - push(b)) / d);
     }
-    return { fit, steepest, batch: c.batch, oldNormals, asm };
+    return { fit, steepest, side, mean: sum / moved, batch: c.batch, oldNormals, asm };
   };
   const eased = await slope(CLOAK_EASE_RADIUS);
   assert.equal(CLOAK_EASE_RADIUS, 8);
   assert.ok(eased.fit.pushed > 500 && eased.fit.most > 3 && eased.fit.most < 4, `${eased.fit.pushed} vertices eased, the furthest ${eased.fit.most.toFixed(2)}`);
   assert.ok(eased.steepest < 0.8, `the push slopes at most ${eased.steepest.toFixed(2)} a unit`);
+  assert.ok(eased.side < 1e-3, `pushed straight back - ${eased.side.toFixed(4)} aside`);
+  // the falloff (1 - (d / 8)^2)^2: the mean push over the eased vertices 1.66 (a falloff of (1 - (d / 8)^2) alone, 1.90)
+  assert.ok(eased.mean > 1.55 && eased.mean < 1.78, `the eased vertices' mean push ${eased.mean.toFixed(3)}`);
   const stepped = await slope(1e-3);
   assert.ok(stepped.steepest > 5, `a triangle's corners alone step ${stepped.steepest.toFixed(1)} a unit - the facet over the pauldron`);
   // its normals are its new shape's, facing as before
@@ -149,7 +173,7 @@ test('MW-CLOAK2: the fit over the armour eases the cloak round each point that c
   const rev = Uint16Array.from(fc.indices, (_, k) => fc.indices[k - (k % 3) + [0, 2, 1][k % 3]]);
   fc.batch = { ...fc.batch, indices: rev }; fc.indices = rev;
   const baked = fc.batch.normals;
-  fitCloakOver(flipped, { isCloak, isUnder: (p) => !isCloak(p) });
+  fitCloakOver(flipped, { isCloak, isUnder: (p) => !isCloak(p), poses: [{}] });
   let out = 0;
   for (let k = 0; k < baked.length; k += 3) out += baked[k] * fc.batch.normals[k] + baked[k + 1] * fc.batch.normals[k + 1] + baked[k + 2] * fc.batch.normals[k + 2];
   assert.ok(out > 0.9 * baked.length / 3, 'facing out whatever the winding');

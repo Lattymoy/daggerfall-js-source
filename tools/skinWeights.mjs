@@ -30,11 +30,13 @@
 //   4. MW-EBONY1: or it hangs OVER its joints (`hang.mode` 'over' - a breastplate whose tassets reach the thighs, a
 //      cloak): above `top` the joint law alone, below it the joint law's own answer keeps 1 - share and the legs
 //      take the share, so the waist is one surface - nothing changes where the share is nought. The legs weigh in by
-//      the hang alone: the joint law never picks them, so a plate over the thigh is not the thigh's outright.
+//      the hang alone: the joint law never picks them - as the nearest bone, as a child's blend, or as a parent's -
+//      so a plate over the thigh is not the thigh's outright, and a bone is weighed once.
 //
 // Welded vertices (one position, split by a seam in the UVs or the normals) are weighted once and share the answer,
 // so a seam never opens under a pose. Every list is normalised to 1; a vertex carries one bone or a joint's two (a
-// hanging one up to three). Pure arithmetic - +, *, /, sqrt - so the bake is the same bytes on every machine.
+// hanging one three, the root and two legs; one hung over its joints four, a joint's two and two legs). Pure
+// arithmetic - +, *, /, sqrt - so the bake is the same bytes on every machine.
 //
 // Answers one `[[boneName, weight], ...]` list per vertex, heaviest first - what skinnedMeshesToNif writes.
 
@@ -91,7 +93,7 @@ export function jointWeights(positions, bones, { hang = null } = {}) {
     let k = legIndex?.has(0) ? -1 : 0;
     for (let i = 0; i < d.length; i++) if (!legIndex?.has(i) && (k < 0 || d[i] < d[k])) k = i;
     const b = bones[k];
-    if (b.parent) {
+    if (b.parent && !legIndex?.has(index.get(b.parent))) {   // AUDIT MW-CLOAK: over its joints, a leg is never a parent's blend either
       const L = b.blend ?? 1;
       if (dot(sub(p, b.from), axis[k]) < L) { const w = across(p, k); return [[k, w], [index.get(b.parent), 1 - w]]; }
     }

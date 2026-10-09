@@ -14,7 +14,7 @@
 //   IT HAS BONES - SKINNED AT BAKE TIME, as the plate is (MW-STEEL4): from the shoulders to the waist it rides the
 //   spine as the steel breastplate does (the pelvis, the spine to the neck, the clavicles at its shoulders), and from
 //   the waist down it HANGS OVER that (tools/skinWeights.mjs, mode 'over'): each thigh takes a growing share of its
-//   own side, to 0.85 at the hem, split across 10 units of the middle - so the cloak walks with the legs, the side over
+//   own side, to 0.85 at the hem, split across the middle's 20 units (10 either side) - so the cloak walks with the legs, the side over
 //   the leg stepping back going back with it, without riding a leg outright and tearing at the middle. Half at the hem
 //   was tried first and lost: posed on retail's rig in a stride (the back thigh 30 degrees, its knee 45), the trailing
 //   calf came through the hem; at 0.85 the hem stays behind it.
@@ -36,7 +36,7 @@ import { isMain } from './lib/isMain.mjs';
 import { PLATE_RIG, RETAIL_SKELETON, plateBind, rigSegments, bakeObject } from './bakeSteelPlate.mjs';
 import { CLOAK_PAINTINGS, cloakModel } from '../src/characters/ownClothingModels.js';
 
-/** Mac's export, as committed - the cloak and a light, as it came. */
+/** Mac's export, as committed - the cloak alone, as it came. */
 export const SOURCE = 'src/assets/mw/source/Cloak.fbx';
 /** The cloak's object in it, and the scene box it was read at. */
 export const CLOAK_OBJECT = 'Cube.020 Remeshed.001';

@@ -519,7 +519,7 @@ const PUBLIC_ALLOWLIST = new Map([
   ['src/assets/mw/textures/ebony_plate_greave.dds', 'SUPPLIED - Ebony_Plate_Greave.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
   ['src/assets/mw/textures/ebony_plate_boot.dds', 'SUPPLIED - Ebony_Plate_Boot.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
   ['src/assets/mw/textures/ebony_plate_helm.dds', 'SUPPLIED - Ebony_Plate_Helm.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
-  ['src/assets/mw/source/Cloak.fbx', "SUPPLIED - Mac's Blender export of the cloak (New_Ship-1.fbx, 2026-10-09 - MW-CLOAK1), committed as it came: the cloak and a light, no Morrowind body; committed so the files below are a DERIVATION the gate can re-run"],
+  ['src/assets/mw/source/Cloak.fbx', "SUPPLIED - Mac's Blender export of the cloak (New_Ship-1.fbx, 2026-10-09 - MW-CLOAK1), committed as it came: the cloak alone, no Morrowind body; committed so the files below are a DERIVATION the gate can re-run"],
   ['src/assets/mw/source/Cloak_Blue.png', "SUPPLIED - Mac's blue painting of the cloak (2026-10-09 - MW-CLOAK1), committed as it came"],
   ['src/assets/mw/source/Cloak_Grey.png', "SUPPLIED - Mac's grey painting of the cloak (2026-10-09 - MW-CLOAK1), committed as it came"],
   ['src/assets/mw/source/Cloak_Red.png', "SUPPLIED - Mac's red painting of the cloak (2026-10-09 - MW-CLOAK1), committed as it came"],

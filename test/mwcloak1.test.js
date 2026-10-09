@@ -20,8 +20,7 @@ import { composeWornArmor, composeWornModest, fpWornAdds, itemMapCoverage, mwIte
 import { ARMOR_MATERIAL } from '../src/systems/armorMaterials.js';
 import { CLASSIC_ARMOR_TEMPLATE } from '../src/characters/ownArmorModels.js';
 import { CLOAK_NAMES, CLOAK_PAINTINGS, CLOAK_DYE_PAINTING, ownCloakFor, ownCloakModelPaths, cloakModel, isCloakSlot } from '../src/characters/ownClothingModels.js';
-import { CLOAK_CLEARANCE, HIP_PITCH_LIMIT, SLUNG_PITCH_LIMIT, cloakSheet, fitCloakOver, fitStowedGear, surfaceSamples } from '../src/formats/mwCloakFit.js';
-import { HOLSTER_SLOTS } from '../src/systems/weaponSheathing.js';
+import { CLOAK_CLEARANCE, CLOAK_PUSH_LIMIT, HIP_PITCH_LIMIT, SLUNG_PITCH_LIMIT, cloakSheet, cellKey, fitCloakOver, fitStowedGear, surfaceSamples } from '../src/formats/mwCloakFit.js';
 import { readPng } from '../tools/pngIO.mjs';
 import { readFbx } from '../tools/fbxRead.mjs';
 import { meshModelNames } from '../tools/fbxStrip.mjs';
@@ -30,95 +29,12 @@ import { PLATE_RIG, RETAIL_SKELETON, bakeObject } from '../tools/bakeSteelPlate.
 import { SOURCE, CLOAK_OBJECT, CLOAK_BOX, CLOAK_RIG, CLOAK_SUBDIVISIONS, PAINTING, bakeCloak, meshFile, textureFile, textureName } from '../tools/bakeCloak.mjs';
 import { loopSubdivide } from '../tools/meshSubdivide.mjs';
 import { retailSkeleton } from './fixtures/mw/retailRig.mjs';
+import { SHEATHED, set, CLOAK, isCloak, isGear, isUnder, body, turned, through, crossings } from './fixtures/mw/cloakRig.mjs';
 
 const raw = (p) => readFileSync(new URL(`../${p}`, import.meta.url));
 const onDisk = (p) => new Uint8Array(raw(p));
 const sha = (p) => createHash('sha256').update(raw(p)).digest('hex');
 const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
-const SHEATHED = (f) => onDisk(`vendor/weapon-sheathing/Data Files/Meshes/w/${f}`);
-const set = (material) => Object.values(CLASSIC_ARMOR_TEMPLATE).map((templateIndex) => ({ templateIndex, material }));
-const CLOAK = Object.freeze({ kind: 'clothing', templateIndex: 154, name: 'Casual Cloak', dye: 2 });
-const isCloak = (p) => isCloakSlot(p.slot);
-const isGear = (p) => HOLSTER_SLOTS.includes(p.slot);
-const isUnder = (p) => !isCloak(p) && !isGear(p);
-
-/** A body in `material`'s plate and the red cloak, on retail's rig - and whatever stowed gear `gear` names. */
-async function body(material, gear = []) {
-  const worn = composeWornArmor({ pieces: [...set(material), CLOAK], armors: [], bodyPool: [], helmStyle: 'open' });
-  const parts = worn.adds.map((a) => ({ slot: a.slot, partName: a.partName, bones: a.bones, bytes: onDisk(`src/assets/mw/meshes/${a.model}`) }));
-  for (const [file, bone] of gear) parts.push({ slot: 'sheath', bones: [bone], bytes: SHEATHED(file), bare: true });
-  const asm = await assembleFirstPersonArm({ skeletonBytes: retailSkeleton(), parts });
-  assert.ok(asm.ok, asm.error);
-  assert.deepEqual(asm.notes, []);
-  return asm;
-}
-/** A pose of whole turns about each bone's own z (the axis a thigh swings forward on), over its rest. */
-function turned(asm, turns) {
-  const sk = asm.skeleton;
-  const rots = new Map(Object.entries(turns).map(([name, deg]) => {
-    const rest = Array.from(sk.nodes.get(sk.byName.get(name)).rest.rotation);
-    const a = deg * Math.PI / 180; const rz = [Math.cos(a), -Math.sin(a), 0, Math.sin(a), Math.cos(a), 0, 0, 0, 1];
-    const m = [0, 1, 2].flatMap((r) => [0, 1, 2].map((c) => rest[r * 3] * rz[c] + rest[r * 3 + 1] * rz[3 + c] + rest[r * 3 + 2] * rz[6 + c]));
-    const w = Math.sqrt(1 + m[0] + m[4] + m[8]) / 2;
-    return [name, [w, (m[7] - m[5]) / (4 * w), (m[2] - m[6]) / (4 * w), (m[3] - m[1]) / (4 * w)]];
-  }));
-  return { tracks: new Map([...rots.keys()].map((k) => [k, k])), sampleTrack: (k) => ({ rotation: rots.get(k) }) };
-}
-/** How far each piece `which` names stands BEHIND the cloak's front - through it - at its worst (0: nowhere). */
-function through(asm, which) {
-  const cloak = asm.pieces.find(isCloak);
-  const sheet = cloakSheet(cloak.positions, cloak.indices);
-  let worst = 0;
-  for (const p of asm.pieces.filter((q) => q !== cloak && which(q))) {
-    const pts = surfaceSamples(p.positions, p.indices);
-    for (let v = 0; v < pts.length; v += 3) {
-      const c = sheet.get(`${Math.round(pts[v])},${Math.round(pts[v + 2])}`);
-      if (c) worst = Math.max(worst, c.front - pts[v + 1]);
-    }
-  }
-  return worst;
-}
-/** Edges of the pieces `which` names that pass through a triangle of the cloak - the clip itself, counted. */
-function crossings(asm, which) {
-  const cloak = asm.pieces.find(isCloak);
-  const C = cloak.positions; const T = cloak.indices;
-  const box = new Float32Array(T.length * 2);   // each triangle's box: min x y z, max x y z
-  for (let k = 0; k < T.length; k += 3) {
-    for (let c = 0; c < 3; c++) {
-      const v = [C[T[k] * 3 + c], C[T[k + 1] * 3 + c], C[T[k + 2] * 3 + c]];
-      box[k * 2 + c] = Math.min(...v); box[k * 2 + 3 + c] = Math.max(...v);
-    }
-  }
-  let n = 0;
-  for (const p of asm.pieces.filter((q) => q !== cloak && which(q))) {
-    const P = p.positions; const I = p.indices;
-    for (let t = 0; t < I.length; t += 3) {
-      for (let e = 0; e < 3; e++) {
-        const a = I[t + e] * 3, b = I[t + (e + 1) % 3] * 3;
-        const o = [P[a], P[a + 1], P[a + 2]], d = [P[b] - P[a], P[b + 1] - P[a + 1], P[b + 2] - P[a + 2]];
-        const lo = [0, 1, 2].map((c) => Math.min(P[a + c], P[b + c])), hi = [0, 1, 2].map((c) => Math.max(P[a + c], P[b + c]));
-        for (let k = 0; k < T.length; k += 3) {
-          if (box[k * 2] > hi[0] || box[k * 2 + 1] > hi[1] || box[k * 2 + 2] > hi[2] || box[k * 2 + 3] < lo[0] || box[k * 2 + 4] < lo[1] || box[k * 2 + 5] < lo[2]) continue;
-          const v0 = T[k] * 3, v1 = T[k + 1] * 3, v2 = T[k + 2] * 3;
-          const e1 = [C[v1] - C[v0], C[v1 + 1] - C[v0 + 1], C[v1 + 2] - C[v0 + 2]], e2 = [C[v2] - C[v0], C[v2 + 1] - C[v0 + 1], C[v2 + 2] - C[v0 + 2]];
-          const h = [d[1] * e2[2] - d[2] * e2[1], d[2] * e2[0] - d[0] * e2[2], d[0] * e2[1] - d[1] * e2[0]];
-          const det = e1[0] * h[0] + e1[1] * h[1] + e1[2] * h[2];
-          if (Math.abs(det) < 1e-9) continue;
-          const s = [o[0] - C[v0], o[1] - C[v0 + 1], o[2] - C[v0 + 2]];
-          const u = (s[0] * h[0] + s[1] * h[1] + s[2] * h[2]) / det;
-          if (u < 0 || u > 1) continue;
-          const q = [s[1] * e1[2] - s[2] * e1[1], s[2] * e1[0] - s[0] * e1[2], s[0] * e1[1] - s[1] * e1[0]];
-          const w = (d[0] * q[0] + d[1] * q[1] + d[2] * q[2]) / det;
-          if (w < 0 || u + w > 1) continue;
-          const f = (e2[0] * q[0] + e2[1] * q[1] + e2[2] * q[2]) / det;
-          if (f > 0 && f < 1) n++;
-        }
-      }
-    }
-  }
-  return n;
-}
-
 test('MW-CLOAK1: every mesh and painting re-made from the committed export, its eight paintings and retail\'s skeleton byte for byte; the export Mac\'s as it came, with nothing of Bethesda\'s in it', () => {
   const baked = bakeCloak({ source: raw(SOURCE), pngs: Object.fromEntries(Object.entries(PAINTING).map(([p, f]) => [p, raw(f)])), skeleton: raw(RETAIL_SKELETON) });
   assert.deepEqual(baked.paintings.map((p) => p.painting), [...CLOAK_PAINTINGS]);
@@ -172,6 +88,14 @@ test('MW-CLOAK1: the cloak is its object in the scene\'s placement (smoothed, MW
   const rig = [{ name: 'P', from: [0, 0, 0], to: [0, 0, 10] }, { name: 'L', parent: 'P', from: [0, 0, 0], to: [0, 0, -40] }, { name: 'R', parent: 'P', from: [4, 0, 0], to: [4, 0, -40] }];
   assert.deepEqual(jointWeights([0, 0, -0.5], rig, { hang: { mode: 'over', root: 'P', legs: ['L', 'R'], top: -10, bottom: -40, share: 1, centre: 2 } }), [[['P', 1]]]);
   assert.deepEqual(jointWeights([0, 0, -0.5], rig).map((l) => l.map(([n]) => n).sort()), [['L', 'P']], 'the joint law alone blends into the leg there');
+  // AUDIT MW-CLOAK: nor as a parent's blend - a bone hung under a leg (a calf) takes the vertex at its own origin, and
+  // the leg comes in by the hang alone, once: its weight the hang's share exactly
+  const deep = [...rig, { name: 'LC', parent: 'L', from: [-3, 0, -40], to: [-3, 0, -80] }];
+  const [list] = jointWeights([-3, 0, -40.5], deep, { hang: { mode: 'over', root: 'P', legs: ['L', 'R'], top: -10, bottom: -60, share: 0.5, centre: 2 } });
+  assert.deepEqual(list.map(([n]) => n).sort(), ['L', 'LC']);
+  const share = smoothstep((-10 + 40.5) / 50) * 0.5;
+  const w = Object.fromEntries(list);
+  assert.ok(Math.abs(w.L - share) < 1e-6 && Math.abs(w.LC - (1 - share)) < 1e-6, `the thigh ${w.L} - the hang's ${share} alone`);
 });
 
 test('MW-CLOAK1: the Casual and Formal Cloak, a man\'s and a woman\'s, wear it in their dye\'s painting - Aquamarine the blue, Yellow the light brown - claiming no slot and hiding nothing; one cloak drawn of two', () => {
@@ -212,7 +136,7 @@ test('MW-CLOAK1: the Casual and Formal Cloak, a man\'s and a woman\'s, wear it i
   assert.ok(rows.every((r) => /the port's own cloak/.test(r.note) && r.reserve === null));
 });
 
-test('MW-CLOAK1: through the binder on retail\'s rig the cloak moves with the body - the shoulders on the spine, the hem with the leg stepping back, and the trailing leg kept behind it', async () => {
+test('MW-CLOAK1: through the binder on retail\'s rig the cloak moves with the body - the shoulders on the spine, the hem with the leg stepping back; as baked the stride\'s trailing boot reaches into the hem, and fitted (AUDIT MW-CLOAK) it does not', async () => {
   const asm = await body(ARMOR_MATERIAL.Steel);
   const cloak = () => asm.pieces.find(isCloak);
   assert.equal(cloak().kind, 'skinned');
@@ -239,6 +163,12 @@ test('MW-CLOAK1: through the binder on retail\'s rig the cloak moves with the bo
   poseAssembly(asm, turned(asm, { 'bip01 r thigh': 22, 'bip01 l thigh': -20, 'bip01 l calf': 30 }));
   assert.equal(through(asm, trailing), 0, 'a walk\'s trailing greave and boot stay in front of it');
   assert.equal(crossings(asm, trailing), 0);
+  // AUDIT MW-CLOAK: fit 1 holds the cloak over the stride too - the hem's middle eased back past the boot it reached
+  fitCloakOver(asm, { isCloak, isUnder });
+  for (const stride of [{ 'bip01 r thigh': 35, 'bip01 l thigh': -30, 'bip01 l calf': 45 }, { 'bip01 l thigh': 35, 'bip01 r thigh': -30, 'bip01 r calf': 45 }]) {
+    poseAssembly(asm, turned(asm, stride));
+    assert.equal(crossings(asm, isUnder), 0, 'fitted, no leg through the hem in either stride');
+  }
 });
 
 test('MW-CLOAK1: the cloak eases back over the armour under it - the ebony pauldrons through its shoulders, then behind it in every pose; the cloak\'s batch replaced, never written into', async () => {
@@ -248,17 +178,23 @@ test('MW-CLOAK1: the cloak eases back over the armour under it - the ebony pauld
   const cloak = asm.pieces.find(isCloak);
   const baked = cloak.batch.positions; const copy = Float32Array.from(baked);
   const fit = fitCloakOver(asm, { isCloak, isUnder });
-  assert.ok(fit.pushed > 0 && fit.most > before && fit.most < before + CLOAK_CLEARANCE + 1, `${fit.pushed} vertices eased back, the furthest ${fit.most.toFixed(2)}`);
+  // the furthest is the poses' (an arm swung back, a stride's boot), more than the rest's pauldrons alone ask
+  assert.ok(fit.pushed > 0 && fit.most > before + CLOAK_CLEARANCE && fit.most < CLOAK_PUSH_LIMIT && fit.deep === 0, `${fit.pushed} vertices eased back, the furthest ${fit.most.toFixed(2)}`);
   assert.notEqual(cloak.batch.positions, baked, 'a new array');
   assert.deepEqual(Array.from(baked), Array.from(copy), 'the parsed batch is untouched');
+  // the live pose re-skinned at once: the next pose of the same rest moves nothing
+  const live = Float32Array.from(cloak.positions);
   poseAssembly(asm);
+  assert.ok(live.every((x, k) => Math.abs(x - cloak.positions[k]) < 1e-4), 'the live cloak already the fitted one');
   assert.ok(through(asm, isUnder) <= 0, 'nothing of the body stands behind it at rest');
   assert.equal(crossings(asm, isUnder), 0);
-  // it rides the bones: a stride keeps the shoulders clear
-  poseAssembly(asm, turned(asm, { 'bip01 r thigh': 22, 'bip01 l thigh': -20, 'bip01 l calf': 30 }));
-  assert.equal(crossings(asm, (p) => /pauldron/.test(p.slot)), 0);
+  // it rides the bones: a walk, and an arm swung back, keep the shoulders clear
+  for (const pose of [{ 'bip01 r thigh': 22, 'bip01 l thigh': -20, 'bip01 l calf': 30 }, { 'bip01 l upperarm': 20 }, { 'bip01 r upperarm': -20 }]) {
+    poseAssembly(asm, turned(asm, pose));
+    assert.equal(crossings(asm, (p) => /pauldron/.test(p.slot)), 0);
+  }
   // a second fit finds nothing; a body without a cloak is not a cloak's
-  assert.deepEqual(fitCloakOver(asm, { isCloak, isUnder }), { pushed: 0, most: 0 });
+  assert.deepEqual(fitCloakOver(asm, { isCloak, isUnder }), { pushed: 0, most: 0, deep: 0 });
   assert.equal(fitCloakOver({ ...asm, pieces: asm.pieces.filter((p) => !isCloak(p)) }, { isCloak, isUnder }), null);
   // a FOLDED cloak - a second layer three units behind the first, skinned as it is: the layer in front is the one the
   // pauldrons come through, and both end behind them (a pass per fold uncovered)
@@ -274,9 +210,9 @@ test('MW-CLOAK1: the cloak eases back over the armour under it - the ebony pauld
   fitCloakOver(folded, { isCloak, isUnder });
   poseAssembly(folded);
   assert.ok(through(folded, isUnder) <= 0, 'both layers behind the pauldrons');
-  // the steel plate it was fitted on needs little: its pauldrons' back edge, 1.2 through, and the clearance
+  // the steel plate it was fitted on asks less of it than the ebony's bigger pauldrons
   const steel = await body(ARMOR_MATERIAL.Steel);
-  assert.ok(fitCloakOver(steel, { isCloak, isUnder }).most < 2.5);
+  assert.ok(fitCloakOver(steel, { isCloak, isUnder }).most < fit.most);
 });
 
 test('MW-CLOAK1: stowed gear against the cloak, on the addon\'s own scabbards - the greatsword and the bow slung OVER it, the longsword pitched UNDER it, the dagger left as it hangs; none through it', async () => {
@@ -289,6 +225,7 @@ test('MW-CLOAK1: stowed gear against the cloak, on the addon\'s own scabbards - 
   assert.ok(crossings(asm, (p) => gearAt('Bip01 LongBladeOneHand').includes(p)) > 0, 'the longsword\'s tip through its side');
   const dagger = gearAt('Bip01 ShortBladeOneHand')[0].source;
   const sword = gearAt('Bip01 LongBladeOneHand')[0].source; const swordCopy = Float32Array.from(sword);
+  const swordNormals = gearAt('Bip01 LongBladeOneHand')[0].sourceNormals;
   const rows = fitStowedGear(asm, { isCloak, isGear });
   const by = Object.fromEntries(rows.map((r) => [r.bone, r]));
   assert.deepEqual(rows.map((r) => [r.bone, r.slung, r.how]), [
@@ -299,6 +236,16 @@ test('MW-CLOAK1: stowed gear against the cloak, on the addon\'s own scabbards - 
   assert.ok(by['Bip01 LongBladeOneHand'].by >= 10 && by['Bip01 LongBladeOneHand'].by <= 20, `the longsword nearer plumb by ${by['Bip01 LongBladeOneHand'].by} degrees`);
   assert.equal(gearAt('Bip01 ShortBladeOneHand')[0].source, dagger, 'the dagger untouched');
   assert.deepEqual(Array.from(sword), Array.from(swordCopy), 'a moved source is replaced, never written into');
+  // the pitched sword's normals turned with it: each still meets its vertex's edges at the angle it did
+  const pitched = gearAt('Bip01 LongBladeOneHand')[0];
+  assert.ok(swordNormals && pitched.sourceNormals !== swordNormals, 'its normals replaced');
+  let bent = 0;
+  for (let t = 0; t < pitched.indices.length; t += 3) for (let e = 0; e < 3; e++) {
+    const a = pitched.indices[t + e] * 3, b = pitched.indices[t + (e + 1) % 3] * 3;
+    const cos = (P, N) => { const d = [P[b] - P[a], P[b + 1] - P[a + 1], P[b + 2] - P[a + 2]]; return (d[0] * N[a] + d[1] * N[a + 1] + d[2] * N[a + 2]) / (Math.hypot(...d) || 1); };
+    bent = Math.max(bent, Math.abs(cos(swordCopy, swordNormals) - cos(pitched.source, pitched.sourceNormals)));
+  }
+  assert.ok(bent < 1e-3, `a normal off its turned edges by ${bent.toFixed(4)}`);
   assert.equal(crossings(asm, isGear), 0, 'the live pose re-placed at once');
   // and from here on every pose places them so
   for (const pose of [{}, turned(asm, { 'bip01 spine1': 8 })]) {
@@ -310,7 +257,7 @@ test('MW-CLOAK1: stowed gear against the cloak, on the addon\'s own scabbards - 
   for (const p of asm.pieces.filter(isGear)) {
     const pts = surfaceSamples(p.positions, p.indices);
     for (let v = 0; v < pts.length; v += 3) {
-      const c = sheet.get(`${Math.round(pts[v])},${Math.round(pts[v + 2])}`);
+      const c = sheet.get(cellKey(pts[v], pts[v + 2]));
       if (!c) continue;
       if (p.bone === 'Bip01 LongBladeTwoClose' || p.bone === 'Bip01 MarksmanBow') assert.ok(pts[v + 1] <= c.back - CLOAK_CLEARANCE + 1e-3, `${p.bone} wholly over the cloak`);
       else assert.ok(pts[v + 1] >= c.front + CLOAK_CLEARANCE - 1e-3, `${p.bone} wholly under it`);
@@ -326,10 +273,15 @@ test('MW-CLOAK1: stowed gear against the cloak, on the addon\'s own scabbards - 
   assert.equal(bare.pieces[0].source, was);
 });
 
-test('MW-CLOAK1 by source: the third-person build fits the cloak over the body\'s skin and what it wears, once it is assembled; a weapon swap fits the new holster against it', () => {
+test('MW-CLOAK1 by source: the third-person build fits the cloak over the body\'s skin and what it wears, once it is assembled, and ties the stowed gear to it; a weapon swap fits the new holster; a seated body seats its cloak; a cloak\'s icon is its own', () => {
   const fp = src('src/combat/fpArm.js');
   assert.match(fp, /hangHipLight\(arm\);[^\n]*\n\s*const cloakFit = fitThirdPersonCloak\(arm, new Set\(\[\.\.\.skinRows, \.\.\.worn\.adds\]\.map\(\(row\) => row\.slot\)\)\);/);
   assert.match(fp, /\.\.\.resolvedHolster\.notes, \.\.\.cloakFit\.notes,/);
-  assert.match(fp, /bindPartsInto\(t\.arm, \[\.\.\.tResolved\.parts, \.\.\.tHolster\.parts\]\);\s*const tFit = fitThirdPersonCloak\(t\.arm, null\);/);
-  assert.match(fp, /export function fitThirdPersonCloak\(arm, underSlots\) \{\s*const isCloak = \(p\) => isCloakSlot\(p\.slot\);\s*const cloak = underSlots \? fitCloakOver\(arm, \{ isCloak, isUnder: \(p\) => underSlots\.has\(p\.slot\) \}\) : null;\s*const gear = fitStowedGear\(arm, \{ isCloak, isGear: \(p\) => HOLSTER_SLOTS\.includes\(p\.slot\) \}\);/);
+  assert.match(fp, /bindPartsInto\(t\.arm, \[\.\.\.tResolved\.parts, \.\.\.tHolster\.parts\]\);\s*const tFit = fitThirdPersonCloak\(t\.arm, null\);[^\n]*\n\s*t\.holster = tHolster\.info;\s*t\.notes = \[\.\.\.\(t\.notes \|\| \[\]\)\.filter\(\(n\) => !\/\^holster\[ :@\]\/\.test\(n\)\), \.\.\.tHolster\.notes, \.\.\.tFit\.notes\];/);
+  assert.match(fp, /export function fitThirdPersonCloak\(arm, underSlots\) \{\s*const isCloak = \(p\) => isCloakSlot\(p\.slot\);\s*const isGear = \(p\) => HOLSTER_SLOTS\.includes\(p\.slot\);\s*const covered = \(slot\) => underSlots\.has\(slot\) && slot !== 'tail' && !\/\^shield\\b\/\.test\(slot\);\s*seatCloak\(arm, false, isCloak\);[^\n]*\n\s*const cloak = underSlots \? fitCloakOver\(arm, \{ isCloak, isUnder: \(p\) => covered\(p\.slot\) \}\) : null;\s*const gear = fitStowedGear\(arm, \{ isCloak, isGear \}\);\s*const follow = followCloak\(arm, \{ isCloak, isGear \}\);/);
+  assert.match(fp, /if \(t\.cloaked\) seatCloak\(t\.arm, !!\(cam && cam\.seat\)\);\n(\s*\/\/[^\n]*\n)*\s*if \(pose\) \{\s*poseAssembly\(t\.arm, \{/);
+  assert.match(fp, /cloaked: !!cloakFit\.follow \|\| !!cloakFit\.cloak,/);
+  assert.match(fp, /const cloak = ownCloakFor\(\{ kind: 'clothing', name: CLOTHING_NAME\[item\.templateIndex\], dye: item\.dye \?\? 0 \}\);\s*if \(cloak\) return \{ id: `\$\{cloak\.id\}_\$\{cloak\.painting\}`, model: cloak\.model \};/);
+  assert.match(fp, /if \(\(item\.group === 'MensClothing' \|\| item\.group === 'WomensClothing'\) && !ownCloakFor\(/);
+  assert.match(src('src/formats/mwFirstPerson.js'), /assembly\.time = time;[\s\S]{0,400}if \(assembly\.afterPose\) assembly\.afterPose\(assembly\);\s*assembly\.bounds = /);
 });

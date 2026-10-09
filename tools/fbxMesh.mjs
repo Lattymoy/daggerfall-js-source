@@ -241,6 +241,24 @@ export function isConvexPolygon(pts) {
 }
 
 /**
+ * MW-EBONY1 (2026-10-09): A FACE THAT NAMES ONE CORNER TWICE. Mac's ebony breastplate carries eight 16-gons each with
+ * two corners standing on the very spot as the corner before them - two vertices, one place, a zero-length edge - and
+ * earClip finds no ear in them (a corner of no turn is neither an ear nor a reflex). Dropping each corner that repeats
+ * the one before it leaves the face's own outline, which clips; the dropped corner's triangles would have had no area.
+ * Taken only where earClip refused, so every face that clipped before clips as it did and every bake keeps its bytes.
+ * Answers triangles as index triples into `pts` (the kept corners' own indices), or null when the face still has no
+ * triangulation once its repeats are gone.
+ */
+export function earClipRepeated(pts, epsilon = 1e-6) {
+  const keep = pts.map((_, i) => i).filter((i) => {
+    const p = pts[i]; const q = pts[(i + pts.length - 1) % pts.length];
+    return Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]) > epsilon;
+  });
+  if (keep.length === pts.length || keep.length < 3) return null;
+  try { return earClip(keep.map((i) => pts[i])).map((t) => t.map((j) => keep[j])); } catch { return null; }
+}
+
+/**
  * MW-BRIG1: EAR CLIPPING, for the polygon a fan would tear.
  *
  * The polygon is projected onto the plane its Newell normal names -
@@ -260,24 +278,6 @@ export function isConvexPolygon(pts) {
  * itself has no triangulation to find, and is refused by name - as is
  * one that folds so that no ear is left to cut.
  */
-/**
- * MW-EBONY1 (2026-10-09): A FACE THAT NAMES ONE CORNER TWICE. Mac's ebony breastplate carries eight 16-gons each with
- * two corners standing on the very spot as the corner before them - two vertices, one place, a zero-length edge - and
- * earClip finds no ear in them (a corner of no turn is neither an ear nor a reflex). Dropping each corner that repeats
- * the one before it leaves the face's own outline, which clips; the dropped corner's triangles would have had no area.
- * Taken only where earClip refused, so every face that clipped before clips as it did and every bake keeps its bytes.
- * Answers triangles as index triples into `pts` (the kept corners' own indices), or null when the face still has no
- * triangulation once its repeats are gone.
- */
-export function earClipRepeated(pts, epsilon = 1e-6) {
-  const keep = pts.map((_, i) => i).filter((i) => {
-    const p = pts[i]; const q = pts[(i + pts.length - 1) % pts.length];
-    return Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]) > epsilon;
-  });
-  if (keep.length === pts.length || keep.length < 3) return null;
-  try { return earClip(keep.map((i) => pts[i])).map((t) => t.map((j) => keep[j])); } catch { return null; }
-}
-
 export function earClip(pts) {
   const nrm = newellNormal(pts);
   const k = [0, 1, 2].reduce((best, i) => (Math.abs(nrm[i]) > Math.abs(nrm[best]) ? i : best), 0);

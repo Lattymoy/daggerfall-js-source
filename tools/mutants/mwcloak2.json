@@ -18,16 +18,16 @@
   {
     "name": "MWCLOAK2-the-rim-pulled-in",
     "file": "tools/meshSubdivide.mjs",
-    "old": "    if (r.length >= 2) { w0 = 3 / 4; nb = r.slice(0, 2); wn = 1 / 8; }",
-    "new": "    if (r.length >= 2) { w0 = 1 / 2; nb = r.slice(0, 2); wn = 1 / 4; }",
+    "old": "    if (r.length === 2) { w0 = 3 / 4; nb = r; wn = 1 / 8; }   // on the open edge",
+    "new": "    if (r.length === 2) { w0 = 1 / 2; nb = r; wn = 1 / 4; }   // on the open edge",
     "tests": ["test/mwcloak2.test.js"],
     "note": "The open edge relaxed twice as hard: the corners pull far into the sheet."
   },
   {
     "name": "MWCLOAK2-the-rim-as-the-inside",
     "file": "tools/meshSubdivide.mjs",
-    "old": "    if (r.length >= 2) { w0 = 3 / 4; nb = r.slice(0, 2); wn = 1 / 8; }",
-    "new": "    if (false) { w0 = 3 / 4; nb = r.slice(0, 2); wn = 1 / 8; }",
+    "old": "    if (r.length === 2) { w0 = 3 / 4; nb = r; wn = 1 / 8; }   // on the open edge",
+    "new": "    if (false) { w0 = 3 / 4; nb = r; wn = 1 / 8; }   // on the open edge",
     "tests": ["test/mwcloak2.test.js"],
     "note": "A rim vertex smoothed by its whole ring, inside neighbours and all: the edge pulls into the sheet."
   },

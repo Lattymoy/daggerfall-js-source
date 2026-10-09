@@ -23,7 +23,7 @@ import { meshModelNames } from '../tools/fbxStrip.mjs';
 import { earClip, earClipRepeated } from '../tools/fbxMesh.mjs';
 import { smoothstep } from '../tools/skinWeights.mjs';
 import { HELM_LIFT, PLATE_RIG, RETAIL_SKELETON, bakeObject } from '../tools/bakeSteelPlate.mjs';
-import { SOURCE, TEXTURES, PIECES, EBONY_RIG, bakeEbonyPlate, meshFile, textureFile, textureName } from '../tools/bakeEbonyPlate.mjs';
+import { SOURCE, TEXTURES, PIECES, EBONY_RIG, MIDDLE_SLACK, bakeEbonyPlate, dropAcross, meshFile, pieceMeshes, textureFile, textureName } from '../tools/bakeEbonyPlate.mjs';
 import { retailSkeleton } from './fixtures/mw/retailRig.mjs';
 
 const raw = (p) => readFileSync(new URL(`../${p}`, import.meta.url));
@@ -85,6 +85,18 @@ test('MW-EBONY1: every piece is its object in the scene\'s placement, the helm r
     });
   }
   assert.deepEqual(PIECES.filter((p) => p.lift).map((p) => [p.id, p.lift]), [['helm', HELM_LIFT]]);
+  // AUDIT MW-EBONY: the left boot's object carries a seven-triangle island of the right boot's, across the middle -
+  // dropped; what is left mirrors the right boot but for three corners at its own inner edge
+  const [left] = pieceMeshes(tree, PIECES.find((p) => p.id === 'boot_left'));
+  const [right] = pieceMeshes(tree, PIECES.find((p) => p.id === 'boot_right'));
+  assert.equal(left.bake.dropped, 7);
+  assert.equal(bakeObject(tree, 'Cube.024').indices.length / 3 - left.indices.length / 3, 7);
+  assert.equal(left.indices.length / 3, 450);
+  assert.ok(Math.max(...Array.from(left.positions).filter((_, i) => i % 3 === 0)) < MIDDLE_SLACK, 'nothing of the left boot stands across the middle');
+  const mirrored = new Set(Array.from({ length: right.positions.length / 3 }, (_, v) => [-right.positions[v * 3], right.positions[v * 3 + 1], right.positions[v * 3 + 2]].map((x) => x.toFixed(2)).join()));
+  const lone = Array.from({ length: left.positions.length / 3 }, (_, v) => [left.positions[v * 3], left.positions[v * 3 + 1], left.positions[v * 3 + 2]]).filter((q) => !mirrored.has(q.map((x) => x.toFixed(2)).join()));
+  assert.ok(lone.length <= 3 && lone.every((q) => Math.abs(q[0]) < 0.25), `${lone.length} corners mirror no right one, all at the inner edge`);
+  assert.equal(dropAcross(right, 'right'), right, 'the right boot has nothing across');
   // the breastplate: the steel cuirass's spine and clavicles, and below the waist the thighs' share over them
   const [plate] = nifOf('cuirass');
   const share = (v) => plate.skin.bones.filter((b) => b.name.endsWith('thigh')).reduce((s, b) => { const k = Array.from(b.indices).indexOf(v); return s + (k < 0 ? 0 : b.weights[k]); }, 0);
@@ -145,7 +157,11 @@ test('MW-EBONY1: through the binder retail\'s armour takes - every piece a skinn
   assert.ok([0, 1, 2].every((k) => Math.min(...helm.map((v) => v[k])) < head[k] && Math.max(...helm.map((v) => v[k])) > head[k]), 'the head bone inside the helm');
   for (const s of ['R', 'L']) assert.ok(centroid(verts(`${s === 'R' ? 'right' : 'left'} foot (daggerfall_ebony_boots)`))[2] < B(`Bip01 ${s} Calf`)[2], `the ${s} boot under the knee`);
   // a stride: the right thigh forward - the tassets over it go some way with it, the chest not at all
-  const restTassets = centroid(verts('cuirass (daggerfall_ebony_cuirass)').filter((v) => v[2] < 70 && v[0] > 3));
+  // AUDIT MW-EBONY: the same vertices at rest and striding (a selection by height changed with the pose, so the centroid
+  // moved with no vertex moving)
+  const tassetIdx = (() => { const P = zone('cuirass (daggerfall_ebony_cuirass)')[0].positions; return Array.from({ length: P.length / 3 }, (_, i) => i).filter((i) => P[i * 3 + 2] < 70 && P[i * 3] > 3); })();
+  const tassetAt = () => { const P = zone('cuirass (daggerfall_ebony_cuirass)')[0].positions; return centroid(tassetIdx.map((i) => [P[i * 3], P[i * 3 + 1], P[i * 3 + 2]])); };
+  const restTassets = tassetAt();
   const restChest = centroid(verts('cuirass (daggerfall_ebony_cuirass)').filter((v) => v[2] > 100));
   const deg = Math.PI / 180; const sk = asm.skeleton;
   const rest = Array.from(sk.nodes.get(sk.byName.get('bip01 r thigh')).rest.rotation);
@@ -156,7 +172,7 @@ test('MW-EBONY1: through the binder retail\'s armour takes - every piece a skinn
   const restThigh = B('Bip01 R Calf');
   poseAssembly(asm, { tracks: new Map([['bip01 r thigh', 1]]), sampleTrack: () => ({ rotation: q }) });
   const knee = dist(B('Bip01 R Calf'), restThigh);
-  const tassets = dist(centroid(verts('cuirass (daggerfall_ebony_cuirass)').filter((v) => v[2] < 75 && v[0] > 3)), restTassets);
+  const tassets = dist(tassetAt(), restTassets);
   assert.ok(knee > 15, `the knee moved (${knee.toFixed(1)})`);
   assert.ok(tassets > 2 && tassets < knee, `the right tassets moved ${tassets.toFixed(1)} - with the leg, less than its knee`);
   assert.ok(dist(centroid(verts('cuirass (daggerfall_ebony_cuirass)').filter((v) => v[2] > 100)), restChest) < 1e-3, 'the chest stays');
@@ -173,7 +189,7 @@ test('MW-EBONY1: a face that names a corner twice is clipped once the repeat is 
   assert.ok(Math.abs(tris.reduce((s, t) => s + area(t), 0) - 9) < 1e-9, 'they cover the outline, 9, every one wound as the face is');
   assert.equal(earClipRepeated([[0, 0, 0], [4, 0, 0], [2, 1, 0], [0, 3, 0]]), null, 'no repeat: not this door');
   assert.equal(earClipRepeated([[0, 0, 0], [2, 2, 0], [2, 2, 0], [2, 0, 0], [0, 2, 0]]), null, 'a bow tie is still no face');
-  // the breastplate's eight: baked, the record says so; the steel plate's bake says nothing
+  // the breastplate's eight: baked, the record says so; another object's bake (the left boot) says nothing
   assert.equal(bakeObject(tree, 'Plane.001').bake.repeated, 8);
   assert.equal('repeated' in bakeObject(tree, 'Cube.024').bake, false);
 });
