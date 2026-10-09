@@ -83,8 +83,8 @@
   {
     "name": "LEGACY7B-never-walks",
     "file": "src/world/familyBodies.js",
-    "old": "mv: moving ? 1 : 0 });",
-    "new": "mv: 0 });",
+    "old": "mv: moving ? 1 : 0, ...(st > 0 ? { st } : {}) });",
+    "new": "mv: 0, ...(st > 0 ? { st } : {}) });",
     "tests": [
       "test/legacy7_body.test.js"
     ]

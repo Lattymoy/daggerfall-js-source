@@ -1310,3 +1310,11 @@ carriage town wears a wheel left of its mark, clear of its hub circle and seat r
 it; a seat answers its hover with the EVENT-TIP card (who holds it, this week's battle - a seat's lines bounded at 160,
 not 80), and the I box names a held seat's holder - it read "unheld" whoever held it. The record:
 `01-Overview/Field-Bugs-2026-10-04e.md`.
+
+## TAMRIEL1 - the continent round the Bay (2026-10-08)
+
+The world sheet zooms out past the Bay's own fit onto the whole of Tamriel, inked in the same hand round the Bay's
+rectangle and joined to the Bay's own coast; a hover beyond the Bay names the province, a capital or the sea, and a
+press there picks nothing. The sheet's limits carry the continent's frame (`clampView` takes an origin), the home view
+stays the Bay's fit, and past CONTINENT_BELOW of it the Bay's own ink thins (CONTINENT_BAND). Built once, painted
+only when the view leaves the Bay. The record is `03-World/Tamriel.md`.

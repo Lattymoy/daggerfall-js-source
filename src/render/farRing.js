@@ -85,15 +85,20 @@ export const ringHeight = (byte, relief = false, fade = 1) =>
  * @param {number} o.baseY
  * @param {number} [o.radius]
  * @param {boolean} [o.relief] - LANDFORM1: the Landforms row's lift on every height (ringHeight)
+ * @param {?((x: number, y: number) => number)} [o.byteAt] - TAMRIEL2: the height byte past the map's edge, or null for the clamp
  */
-export function buildFarRingGrid({ heightBytes, mapWidth, mapHeight, climateAt, baseX, baseY, radius = RING_RADIUS, relief = false }) {
+export function buildFarRingGrid({ heightBytes, mapWidth, mapHeight, climateAt, baseX, baseY, radius = RING_RADIUS, relief = false, byteAt: byteAtPast = null }) {
   const side = radius * 2 + 1;
   const positions = new Float32Array(side * side * 3);
   const normals = new Float32Array(side * side * 3);
   const colors = new Uint8Array(side * side * 3);
   const clampX = (x) => Math.max(0, Math.min(mapWidth - 1, x));
   const clampY = (y) => Math.max(0, Math.min(mapHeight - 1, y));
-  const byteAt = (x, y) => heightBytes[clampY(y) * mapWidth + clampX(x)];
+  // TAMRIEL2: past the map the host may hand the continent's own bytes (world/tamrielGround.js groundWoods); the map's
+  // bytes stay the buffer's, read as ever - the clamp is the host's edge-of-the-world when it hands none
+  const byteAt = byteAtPast
+    ? (x, y) => (x >= 0 && y >= 0 && x < mapWidth && y < mapHeight ? heightBytes[y * mapWidth + x] : byteAtPast(x, y))
+    : (x, y) => heightBytes[clampY(y) * mapWidth + clampX(x)];
   // AUDIT LANDFORMS II I1: each node's lift faded beside the sea as the kernel fades it - from the same clamped bytes
   const heightOf = relief ? (x, y) => ringHeight(byteAt(x, y), true, cliffFadeAt(byteAt, clampX(x), clampY(y))) : (x, y) => ringHeight(byteAt(x, y));
   let o = 0;

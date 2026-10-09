@@ -70,8 +70,8 @@ test('FOUNDER5 the names: a handle in FOUNDER_HANDLES holds Founder whenever it 
 test('FOUNDER5 the config: FOUNDER_HANDLES is a var in wrangler.toml beside the developers\' and moderators\' lists; the version moved to acct92 (CRAFT2-CRAFT5 on to acct93 since, SD9b\'s acct94 after it, and SCALE4a-c\'s acct95 after that)', () => {
   const toml = src('server-account/wrangler.toml');
   assert.match(toml, /^FOUNDER_HANDLES = "[^"]*"$/m);
-  assert.match(toml, /^ACCOUNT_VERSION = "acct95"$/m);
-  assert.match(src('server-account/src/service.js'), /export const ACCOUNT_VERSION = 'acct95';/);   // PIN MOVED: CRAFT2-CRAFT5's acct93, then SD9b's acct94 (the Super Dungeons arc's merges of main), then SCALE4a-c's acct95 (acct94 on its branch, renumbered past SD9b at the merge)
+  assert.match(toml, /^ACCOUNT_VERSION = "acct96"$/m);
+  assert.match(src('server-account/src/service.js'), /export const ACCOUNT_VERSION = 'acct96';/);   // PIN MOVED: CRAFT2-CRAFT5's acct93, then SD9b's acct94 (the Super Dungeons arc's merges of main), then SCALE4a-c's acct95 (acct94 on its branch, renumbered past SD9b at the merge)
 });
 
 // ── THE SERVICE, end to end ─────────────────────────────────────────

@@ -96,3 +96,5 @@ tools/shots/
 
 # tools/mutate.mjs: a source file's backup while a mutant is applied in place
 *.mutbak
+# TAMRIEL1: the fit probe's render of the player's own picture (tools/tamrielFitProbe.mjs default --out).
+tamriel-shots/

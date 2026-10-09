@@ -64,6 +64,7 @@ import { magicPowersLines } from '../systems/itemPowers.js';   // PLUS10: %mpw
 import { CHAT_MAX } from '../net/wire.js';   // CHAT-POST: a posted item is one chat line
 import { itemIsIdentified } from '../systems/tradeModes.js';   // PLUS10: MagicPowers' identified arm
 import { PACK_PAGES, PAGE_IDS, pageOf, filterByPage } from './packPages.js';   // PX31: the pack's nine pages (the classic keeps DFU's four)
+import { isCardBinder, isIliacCard, binderDecks } from '../systems/iliacItems.js';   // CARDS8: the binder holds the cards
 import { isWalletItem, walletContents, walletLedger, refreshWalletSilver } from '../systems/walletItem.js';   // WALLET1: the wallet's sheet; WALLET-UI: its ledger
 import { useItem, isLightSource, usableItem, isPotionRecipe, toggleHood, HOOD_TEXT, nextDrape, drapeCount, DRAPE_TEXT } from '../systems/useItem.js';   // PLUS10: isPotionRecipe, a recipe's second Info box   // HT2: the light source's own act; Mac: Use only where the law has an arm   // HOOD-SAID: the hood's button and its lines   // CLOAK-DRAPE: the drape's
 // QS2: the quickslot model (systems/quickslots.js). This screen is the ONE
@@ -245,11 +246,16 @@ export function packModel(deps = {}) {
   // and the wallet together are still a partition of what the pack holds unworn.
   const walletItem = items.find(isWalletItem) ?? null;
   const wallet = walletItem ? { item: walletItem, ...walletContents(items, entity) } : null;
-  const held = new Set(wallet?.held ?? []);
+  // CARDS8: and THE CARDS LEAVE THE PAGES for the binder's sheet, while the pack holds one (systems/iliacItems.js) - the
+  // Wallet's law: every card stays in `items`; the pages, the wallet and the binder are still a partition
+  const binderItem = items.find(isCardBinder) ?? null;
+  const binder = binderItem ? { item: binderItem, held: items.filter((it) => isIliacCard(it) && !isEquipped(it)) } : null;
+  const held = new Set([...(wallet?.held ?? []), ...(binder?.held ?? [])]);
   const paged = held.size ? items.filter((it) => !held.has(it)) : items;
   return {
     tabs: PACK_PAGES.map(([tab, label]) => ({ tab, label, items: filterByPage(paged, tab) })),   // PX31; WALLET1: less what the wallet holds
     wallet,
+    binder,   // CARDS8
     worn,
     // PlayerEntity.GoldPieces, the COUNTER - gold has not been an item
     // in the pack since E4, so there is no stack here to find.
@@ -591,7 +597,7 @@ export function useResultAction(r, { openBook = null, openSpellbook = null, plac
       : { kind: 'message', text: USE_PENDING.openPortal };
   }
   // WALLET1: the wallet - its sheet, in the detail column; nothing closes
-  if (r.kind === 'wallet') return { kind: 'pickWallet', item: r.item };
+  if (r.kind === 'wallet' || r.kind === 'binder') return { kind: 'pickWallet', item: r.item };   // CARDS8 (AUDIT CARDS-5 C5): the binder's sheet the same way
   // MEND-AIM: a use that asks WHICH (a repair kit, more than one piece to mend) - the pack asks, and uses it again aimed
   if (r.kind === 'chooseTarget') return { kind: 'chooseTarget', item: r.item, targets: r.targets, labels: r.labels, title: r.title };
   // The classic window's own ladder, in its own order: an explicit
@@ -3465,6 +3471,31 @@ function walletSheet(w) {
   }
   return box;
 }
+/** CARDS8: the binder's sheet - its decks, then each card it holds as the pack's own row (the Wallet's way: every act a
+ *  card has on a page it has here); the decks are built on the Holdings page, under Collections. */
+function binderSheet(b) {
+  const box = el('div', 'walletsheet bindersheet');
+  const n = b.held.reduce((s, it) => s + Math.max(1, it.stackCount ?? 1), 0);
+  box.append(el('h4', 'wallet-head', `${n} card${n === 1 ? '' : 's'} of ${b.held.length} kind${b.held.length === 1 ? '' : 's'}`));
+  for (const d of binderDecks(b.item)) {   // AUDIT CARDS-5 C1: the decks a reader may trust
+    const row = el('div', 'wallet-row');
+    row.append(el('span', 'wallet-k', d.name), el('span', 'wallet-v', `${d.cards.length} cards`));
+    box.append(row);
+  }
+  box.append(el('p', 'wallet-note', 'Your decks are built on the Holdings page, under Collections.'));
+  if (b.held.length) {
+    const rows = el('div', 'walletpieces');
+    for (const it of b.held) rows.append(itemRow(it));
+    box.append(rows);
+  }
+  return box;
+}
+/** CARDS8: a card's way back to the binder's sheet. */
+function binderBack(binder) {
+  const b = el('button', 'act', 'Binder');
+  b.onclick = () => { picked = binder; side = 'local'; notice = null; render(); };
+  return b;
+}
 /** WALLET1: a held piece's way back to the wallet's sheet. */
 function walletBack(wallet) {
   const b = el('button', 'act', 'Wallet');
@@ -3493,6 +3524,8 @@ function detailCol() {
   // the buttons); a piece the wallet holds - the way back to the wallet, beside its own acts
   if (side === 'local' && model?.wallet && picked === model.wallet.item) (c.querySelector('.card-body') ?? c).append(walletSheet(model.wallet));
   if (side === 'local' && model?.wallet?.held.includes(picked)) acts.append(walletBack(model.wallet.item));
+  if (side === 'local' && model?.binder && picked === model.binder.item) (c.querySelector('.card-body') ?? c).append(binderSheet(model.binder));   // CARDS8
+  if (side === 'local' && model?.binder?.held.includes(picked)) acts.append(binderBack(model.binder.item));
   col.append(c);
   // The address, for the player who wants it and the developer who
   // needs it - the same place the classic window's own info panel
