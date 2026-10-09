@@ -279,6 +279,7 @@ export const REFUSALS = Object.freeze({
   // INT9: a death in the open zone's drop (server-account/src/wild.js) - the fallen's own tab has the first half minute
   grace: 'The fallen still has a moment to settle their own fall. It is tried again shortly.',
   nonce: 'That fall could not be read. Try again.',
+  room: 'That fall named no place its remains could lie. Try again.',
   // MARKS1: Marks, the server's currency (server-account/src/marks.js)
   'marks-need-account': 'Silver is kept by registered accounts. Add a username to hold it.',
   'marks-closed': 'The counting-houses are not striking silver yet.',
@@ -1131,8 +1132,9 @@ export function accountDuels({ fetch, storage }) {
 }
 
 /** INT9: A DEATH IN THE OPEN ZONE'S DROP, taken off the realm record by the service (server-account/src/wild.js) - `body`
- *  `{ receipt, realm }` (the fallen's, its record's `at`), `{ receipt }` (the killer's, after the grace) or `{ n, realm }`
- *  (a death to a foe: the tab's nonce). Answers `{ r, order, items, kept, burnt?, realm? }`. */
+ *  `{ receipt, realm, room }` (the fallen's, its record's `at`), `{ receipt, room }` (the killer's, after the grace) or
+ *  `{ n, realm, room }` (a death to a foe: the tab's nonce) - `room` where the remains will lie (AUDIT INT9: the order names
+ *  it). Answers `{ r, order, items, kept, took, gold, wi, burnt?, realm? }`. */
 export const wildFallAsk = (io, body) => call(io, '/v1/wild/fall', body);
 /** INT9: the zone's one call, bound to this device's stored session (the duels' way). */
 export function accountWild({ fetch, storage }) {

@@ -188,6 +188,7 @@ export function validRingRecord(r) {
  * @param {(peer: string) => void} [o.onPrompt]
  * @param {(duel: any) => void} [o.onStart]
  * @param {(g: any, duel: any) => void} [o.onHp]
+ * @param {(duel: any) => void} [o.onBout]   AUDIT INT8: the referee set the bout (its `bout` word - both whole)
  * @param {(duel: any, end: { why: string, won: boolean, lost: boolean, by: string }) => void} [o.onEnd]
  * @param {(rc: string) => void} [o.onReceipt]
  * @param {(duel: any) => void} [o.onHeal]
@@ -196,7 +197,7 @@ export function validRingRecord(r) {
 export function createDuelManager({
   send, now = () => Date.now(), say = () => {}, peerName = () => null, selfId = () => '', near = () => true, can = () => null,
   ringFor = () => null, reaches = () => true, myPos = () => null, peerPos = () => null, onPrompt = () => {}, onStart = () => {},
-  onHp = () => {}, onEnd = () => {}, onReceipt = () => {}, onHeal = () => {}, rand = Math.random,
+  onHp = () => {}, onBout = (/** @type {any} */ _d) => {}, onEnd = () => {}, onReceipt = () => {}, onHeal = () => {}, rand = Math.random,
 }) {
   /** @type {{ peer: string, s: string, at: number } | null} */
   let outgoing = null;                 // my ask
@@ -443,6 +444,7 @@ export function createDuelManager({
         if (!duel || duel.s !== g.s) return;
         duel.h = g.h;
         if (g.k === 'hp') { try { onHp(g, duel); } catch { /* the HUD is not the duel's problem */ } }
+        else { try { onBout(duel); } catch { /* the HUD is not the duel's problem */ } }   // AUDIT INT8: the bout set - its readout drawn whole
         mgr.onChange?.();
         return;
       }

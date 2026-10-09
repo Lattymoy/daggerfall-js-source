@@ -566,7 +566,7 @@ export class OnlineSession {
     this._inPageBuckets = new Map();   // JOURNAL1: the gate on pages coming in, per sender - the card gate's shape
     this.duelOk = false;          // DUEL1: the relay that welcomed this socket routes duel frames (relaySupportsDuel) - an older one CLOSES the socket on one, so no challenge is sent through it
     this.onDuel = null;           // DUEL1: (id, data, sub) => void - a duel frame at ME, projected by the wire's validDuelData; `sub` the sender's account as the RELAY verified it (null from a relay that stamps none)
-    this.onDuelRef = null;        // INT8: (g) => void - the duel referee's word on my bout, projected by the wire's validDuelRefOut
+    this.onDuelRef = null;        // INT8: (g, room) => void - the duel referee's word on my bout, projected by the wire's validDuelRefOut, and the room that referees it
     this._duelBucket = null;      // DUEL1: my own duel frames out - duelGate's law
     this._inDuelBuckets = new Map();   // DUEL1: the gate on duel frames coming in, per sender - the directed frames' shape (`_directedIn`)
     this.wedOk = false;           // LEGACY7 part three: the relay that welcomed this socket routes wed frames (relaySupportsWed) - an older one CLOSES the socket on one, so no proposal is sent through it
@@ -1274,10 +1274,13 @@ export class OnlineSession {
    *  (`_socketFor`), through the wire's own projection first, DUEL_HZ_MAX a second, never at a relay that would close
    *  the socket for it. TRUE MEANS THE FRAME LEFT THE SOCKET; false is refused to the caller, never queued here - the
    *  duel's own law (net/duelSession.js) owns its retries and its timeouts. */
-  sendDuel(data) {
+  sendDuel(data, { room = null } = {}) {
     const d = validDuelData(data);
     if (!d || d.to === this.id || !this.duelOk) return false;
-    const ws = this._socketFor(d.to);
+    // AUDIT INT8: a bout's frames go to the room that referees it (`room`, its `dref`'s) - the opponent's reporting socket
+    // moves with a crossing, and a blow sent to another room met no bout
+    const h = room && room !== this.room ? this._halo.get(room) : null;
+    const ws = room ? (room === this.room ? (this.status === 'open' ? this._ws : null) : (h?.status === 'open' ? h.ws : null)) : this._socketFor(d.to);
     if (!ws) return false;
     const gate = duelGate(this._duelBucket, this._now());
     if (!gate.pass) return false;
@@ -2619,10 +2622,10 @@ export class OnlineSession {
       this._directedIn(m, now, 'duel', this._inDuelBuckets, duelInGate, DUEL_IN_HZ_MAX, validDuelData, (id, d) => this.onDuel?.(id, d, subOf(m)));
     } else if (m.t === 'dref') {
       // INT8: THE DUEL REFEREE'S WORD on my bout (net/duelRef.js) - the relay's own, never a peer's (it routes no `dref` a
-      // client sends), on my primary socket, projected by the wire's own law; what it means is the duel's to decide
-      if (!primary) return;
+      // client sends), on ANY socket I hold (AUDIT INT8: a bout asked through a halo is refereed there, and its every word
+      // was dropped), projected by the wire's own law, with the room it came from; what it means is the duel's to decide
       const g = validDuelRefOut(m);
-      if (g) this._deliver('dref', () => this.onDuelRef?.(g));
+      if (g) this._deliver('dref', () => this.onDuelRef?.(g, room));
     } else if (m.t === 'wed') {
       // LEGACY7 part three: a wed frame the relay routed to me - the duel's law: on any socket I hold, never my own back,
       // gated coming in per sender, projected by the wire, addressed to ME, with the sender's account as the relay

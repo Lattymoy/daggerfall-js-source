@@ -65,7 +65,11 @@ export function createWildFight({ send, now = () => Date.now(), can = () => fals
     pick(peer, i) {
       const b = mgr.body(peer);
       if (!b || !(Number.isInteger(i) && i >= 0 && i < b.items.length)) return false;
-      if (!once({ k: 'pick', r: b.s, w: i }, { room: b.room })) return false;
+      // AUDIT INT9: and what the offer showed there - the relay signs it beside the place, and the service matches it
+      // against what the fallen really wears
+      const it = b.items[i], t = it?.templateIndex, m = it?.material ?? 0;
+      const tm = Number.isInteger(t) && t >= 0 && t < 65536 && Number.isInteger(m) && m >= 0 && m < 65536 ? { t, m } : {};
+      if (!once({ k: 'pick', r: b.s, w: i, ...tm }, { room: b.room })) return false;
       b.picked = true;
       return true;
     },

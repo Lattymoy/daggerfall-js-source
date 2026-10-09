@@ -656,7 +656,7 @@ import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER, exterio
 import { isOnFoot } from '../systems/transport.js';   // TransportManager.IsOnFoot - the raycast's reach and the mounted footstep gate
 import { floorLanding, doorWorldPosition, dungeonEntranceLanding, repositionFeetY, openGroundNear, heldInSolid } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27); SD2b: where a Hollow's mouth stands, to find it at
 import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../systems/skills.js';   // TO1: the avoid-encounter roll reads skillValue live (imported above) Stealth   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
-import { playerEntity, surfacePlayer, hurtPlayer, playerBlowCameToNothing, setDeathPresenter, presentPlayerDeath, setDeathListener, setAvoidDeathHook, setStaffPowers, staffPowers, registerLevitateWard, registerFreeFlight } from '../characters/playerEntity.js';   // AUDIT-SEATS G5: a siege's ward on Levitate   // AUDIT-SEATS G4: a spectator's flight
+import { playerEntity, surfacePlayer, hurtPlayer, forcePlayerDeath, playerBlowCameToNothing, setDeathPresenter, presentPlayerDeath, setDeathListener, setAvoidDeathHook, setStaffPowers, staffPowers, registerLevitateWard, registerFreeFlight } from '../characters/playerEntity.js';   // AUDIT-SEATS G5: a siege's ward on Levitate   // AUDIT-SEATS G4: a spectator's flight
 import { SOUND } from '../systems/soundClips.js';
 import { createWeaponRig, autoBuildArms, armIdentityOf, armBuiltFor, armsReady, sheetHolderOf, buildArmsFor, prebuildArmsForSave } from '../combat/weaponRig.js';   // MWA1: the arms at boot; MWA3: the identity the arm should stand for, beside the one it does; MW-EARLY: and before the world is read
 import { weaponPoseOf, applyWeaponPose, mergeWeaponPose, playerMeleeCanHit, registerPlayerSwingListener, WEAPON_REACH } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
@@ -727,7 +727,7 @@ import { createRealmLine } from '../systems/legacy/realmLine.js';   // LEGACY7: 
 import { reclaimFromDevice, reclaimLines, crossLeveling, LEVELING_CROSS_LINE } from '../systems/realmCustoms.js';   // RESTORE: what customs once kept back, given back at the boot; LEVEL-ONLINE-3: the realm's one leveling
 import { appStorage } from '../systems/appStorage.js';   // ACC1d: where that session lives - the app's store, not the tab's (a second tab is the same player)
 import { skyClassicMinutes, wallMsForSkyMinutes, skyMinutesPerMsAt } from '../net/skyLaw.js';   // TIME1: the sky's own clock, installed beside the event clock
-import { POSE_STRIKES, isWorldRoom, isCellRoom, cellHaloFor, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes } from '../net/wire.js';   // WORLD6b-iii(b): the cell seam's halo   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
+import { POSE_STRIKES, isWorldRoom, isCellRoom, cellHaloFor, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes, WILD_DATA_MAX, WILD_ITEMS_MAX } from '../net/wire.js';   // WORLD6b-iii(b): the cell seam's halo   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
 import { hasDaggerfallArrows } from '../combat/fpArm.js';   // MAC7 #2: the arrow bit on the wire - weaponRig's own read
 import { drawText } from '../ui/text.js';   // ONLINE1: the session's status line
 import { RemotePlayers, composeLook, createSightCache, NAME_RANGE } from '../net/remotePlayers.js';   // ONLINE1: the others, drawn; NAME1: and the sight test their names take, cached and hysteresised (AUDIT NAME1 F2/F5)
@@ -786,7 +786,7 @@ import { setWildHere, wildHere, isWildRegion, wildMaskOf, wildInside, wildNear, 
 import { createPartyTruce } from '../systems/wildZone.js';   // PARTY-TRUCE (FIELD BUGS 2026-10-09b)
 import { GREATER_GIANT_CALL, GREATER_GIANT_CALL_AT } from '../systems/wildZone.js';   // GREATER-GIANT
 import { wildRing, wildRingAt, wildRingName, wildRingBonus, setWildMask, wildMask, WILD_RINGS, wildJourney, WILD_GIANT, WILD_GIANT_CHANCE, WILD_GIANT_MAX, WILD_STRANGER_M, WILD_STRANGER_SEE_M, WILD_STRANGER_SLOW_M, WILD_STRANGER_RGBA } from '../systems/wildZone.js';   // WILD2: the four rings; WILD3: the journeys
-import { takeWildDeath, wornOffer, wildRecord, wildChunks, wildSpawnSpot } from '../systems/wildDeath.js';
+import { wildTakeTook, wornOffer, wildRecord, wildChunks, wildSpawnSpot } from '../systems/wildDeath.js';
 import { readWildReceipt, WILD_FALL_GRACE_S } from '../net/wildReceipt.js';   // INT9: the relay's fall, carried to the service
 import { WILD_REF } from '../net/wildRef.js';   // INT9: the zone referee's numbers (its mend, for the HUD)
 import { createWildFight } from '../net/wildFight.js';
@@ -20247,7 +20247,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     };
     // DUEL1: A DUEL FRAME AT ME - the law decides (net/duelSession.js); `sub` the sender's account as the relay stamped it
     online.onDuel = (id, d, sub = null) => { duelMgr.onFrame(id, d, sub); };
-    online.onDuelRef = (g) => { duelMgr.onRef(g); };   // INT8: the referee's word on my bout
+    online.onDuelRef = (g, room) => { if (g.k === 'bout') _duelRoom = room ?? null; duelMgr.onRef(g); };   // INT8: the referee's word on my bout - AUDIT INT8: and its room, where its frames go
     online.onWild = (id, d, sub = null) => { wildFight.onFrame(id, d, sub); };   // WILD1: a fallen's offer at me (INT9: the one frame the zone routes) - the zone's law decides (net/wildFight.js)
     online.onWildRef = (g, room) => wildRefIn(g, room);   // INT9: the zone referee's word - a blow landed, a fall, a fall signed
     // WILD1: my room's word on its remains (net/wildRemains.js). WILD-SEEN (2026-10-09, the owner: "when i die i dont see my
@@ -21048,8 +21048,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   let _duelLastWeapon = null;    // INT8: the weapon of my last strike - the referee's word on it names no number
   let _duelFoe = null;      // my opponent as the HUD's target bar reads a foe ({ entity: { name, health, maxHealth }, dead })
   let _duelWall = null;     // { c (world), alpha, live } - my own ring, drawn from the duel's start to its fade
+  let _duelRoom = null;   // AUDIT INT8: the room that referees my bout (its `dref`'s) - its frames go there
   const duelMgr = createDuelManager({
-    send: (d) => online?.sendDuel(d) === true,
+    send: (d) => online?.sendDuel(d, { room: duelMgr?.duel && _duelRoom ? _duelRoom : null }) === true,
     now: () => performance.now(),   // monotonic: a wall clock that steps must not age an ask or a duel
     say: tradeSay,
     peerName: (id) => peerName(id),
@@ -21071,6 +21072,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       audio.playOneShot(SOUND.Parry6, 1);   // the blades cross: the count begins
     },
     onHp: (g) => duelHpIn(g),   // INT8: the referee's word that a blow landed
+    onBout: (d) => duelHudSay(d),   // AUDIT INT8: the referee's bout set - both bars drawn (it read "sets the bout" until a blow)
     onEnd: (duel, end) => duelEnded(duel, end),
     onReceipt: (rc) => { if (duelClaims.keep(rc)) duelClaims.offer({ force: true }); },   // INT8: a bout won, the relay's receipt - either fighter's to carry
   });
@@ -21950,7 +21952,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
   };
   let _wildFell = null;           // my fall, the referee's word: { r, by, room, at }
-  const _wildSeize = new Map();   // a fall I won, signed: r -> { rc, room, peer, due } - its drop the fallen's tab's first
+  const _wildSeize = new Map();   // a fall I won, signed: r -> { rc, room, p, due, tries } - its drop the fallen's tab's first
+  const _wildFellAt = new Map();  // AUDIT INT9: where a fall I won lay, in its room's frame, when the referee called it: r -> p
   /** A FALL (`wref` `fell`): mine - a death in the zone, the referee's word, whatever my save's health says; my foe's at my
    *  hand - its body's offer awaited under the fall's id, from the room that refereed it. */
   const wildFellIn = (g, room) => {
@@ -21958,11 +21961,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (g.id === me) {
       _wildFell = { r: g.r, by: g.by, room, at: Date.now() };
       _wildVit = null; wildHudSay();
-      if (playerEntity.health > 0) hurtPlayer(playerEntity, playerEntity.health, { bypassShield: true });   // the SetHealth(0) door: the referee's fall is no blow to turn aside
+      // AUDIT INT9: THE REFEREE'S FALL IS A DEATH, whatever this machine would say - no guild's AvoidDeath, no withheld
+      // blow, no save (the SetHealth(0) door turned it aside, and the fallen stood with a fall already called on it)
+      forcePlayerDeath(playerEntity);
       return;
     }
     if (g.by !== me) return;
     wildFight.fell(g.id, g.r, room);
+    { const p = duelWorldOf(g.id); if (p) { _wildFellAt.set(g.r, p); if (_wildFellAt.size > 16) _wildFellAt.delete(_wildFellAt.keys().next().value); } }   // AUDIT INT9: the seizure lays the remains where the body fell
     if (_wildVit?.foe?.id === g.id) { _wildVit = null; wildHudSay(); }
   };
   /** A FALL SIGNED (`wref` `rc`, net/wildReceipt.js): mine - my drop taken off my record against it, now; my foe's - theirs
@@ -21972,7 +21978,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!c || c.r !== g.r || !me) return;
     if (c.f === me) { wildTakeDrop(g.rc, room); return; }
     if (c.k !== me || _wildSeize.has(c.r)) return;
-    _wildSeize.set(c.r, { rc: g.rc, room, peer: wildFight.bodies().find((p) => wildFight.body(p)?.s === c.r) ?? null, due: Date.now() + (WILD_FALL_GRACE_S + 5) * 1000 });
+    _wildSeize.set(c.r, { rc: g.rc, room, p: _wildFellAt.get(c.r) ?? null, due: Date.now() + (WILD_FALL_GRACE_S + 5) * 1000, tries: 0 });
     if (_wildSeize.size > 16) _wildSeize.delete(_wildSeize.keys().next().value);
   };
   const wildRefIn = (g, room) => {
@@ -21989,14 +21995,17 @@ export async function bootWorld(canvas, renderer, params, status) {
   const wildBodyArrived = (from, body) => {
     wildBodyGone(from);
     remotePlayers?.holdCorpse?.(from, WILD_DEATH_HOLD_S * 1000);   // "the body ... disappears in 2 minutes"
-    const items = validLootList(body.items ?? []) ?? [];
+    // AUDIT INT9: each record minted alone, its place in the offer kept - a record the law refused shifted every later one,
+    // and the pick named another piece
+    const minted = (Array.isArray(body.items) ? body.items : []).map((it) => validLootList([it])?.[0] ?? null);
+    const items = minted.filter(Boolean);
     if (!items.length || !wildOutdoors()) return;
     const mark = remotePlayers?.corpseMarks?.(onlineToScene)?.find((c) => c.id === from) ?? null;
     if (!mark) return;
     const name = peerName(from) ?? 'Another player';
     const pile = droppedLoot.seedPile(items, mark.feet, WILD_PILE_ICON, null, null, { unsaved: true, drawn: false, owner: 'wild' });
     pile.noStore = WILD_NO_STORE; pile.wildBody = from; pile.label = `${name}'s body`;
-    _wildBodies.set(from, { pile, minted: [...items], name });
+    _wildBodies.set(from, { pile, minted, name });
     tradeSay(`${name} has fallen by your hand - search their body to take one piece of their gear.`);
   };
   /** The body pressed: the pack in choose-one over its worn pieces - "players can choose 1 item of the equipped ones". */
@@ -22022,6 +22031,8 @@ export async function bootWorld(canvas, renderer, params, status) {
 
   // ── MY DEATH IN THE ZONE (the fallen's side) ──
   let _wildGhost = false;  // my socket stays in the room while my body lies (the drop's deposit, and the relay's receipt, reach it)
+  let _wildGhostEndAt = null;   // AUDIT INT9: a hall's or a building's ghost leaves then (a cell's: null, it stays while the body lies)
+  const WILD_GHOST_HOLD_MS = 15_000;
   let _wildMine = null;    // my remains: { r, room, p, until } - for the world map's mark
   let _wildBody = null;    // where my body lies: { p, room, dungeon, px } - read at the death, for the deposit that follows
   // WILD-KEEP (FIELD BUGS 2026-10-09c): kept on the device for the character that fell, and read back once - a game that
@@ -22046,65 +22057,52 @@ export async function bootWorld(canvas, renderer, params, status) {
       return onlineCheckpoint();
     } catch (e) { console.error('[wild] the death checkpoint failed', e); return false; } finally { playerEntity.health = hp; }
   };
-  /** The pack as it stands - its lists, the purse and the cart's coin - for a drop's undo (a refusal puts it all back). */
-  const wildPackOf = () => {
-    const cartGold = (playerEntity.wagonItems ?? []).find((i) => i?.group === 'Currency') ?? null;
-    return { items: [...(playerEntity.items ?? [])], wagon: [...(playerEntity.wagonItems ?? [])], gold: playerEntity.goldPieces ?? 0, cartGold, cart: cartGold?.stackCount };
-  };
-  const wildPackBack = (s) => {
-    (playerEntity.items ??= []).splice(0, playerEntity.items.length, ...s.items);
-    (playerEntity.wagonItems ??= []).splice(0, playerEntity.wagonItems.length, ...s.wagon);
-    playerEntity.goldPieces = s.gold;
-    if (s.cartGold) s.cartGold.stackCount = s.cart;
-  };
   const _wildTaking = new Set();   // the falls whose drop this tab has asked for (a receipt said twice is one act)
   /**
    * INT9: MY DROP, TAKEN OFF MY RECORD BY THE ACCOUNT SERVICE (server-account/src/wild.js) - against the fall the relay
    * signed (`rc`), or none (a death to a foe: my tab's nonce). The record's own act (systems/realmSaves.js realmGoldAct):
-   * checkpointed as it will rise, the same drop taken out of my pack by the same law (systems/wildDropLaw.js
-   * takeWildDeath - the killer's worn piece first), the service asked; a refusal puts it all back, an answer gives back
-   * what the ledger kept and the room the service's records, on its order (wildDeposit). Never a record of my own choosing.
+   * checkpointed as it will rise, the service asked - naming the room my remains will lie in - and on its answer EXACTLY
+   * WHAT IT TOOK taken out of my pack (systems/wildDropLaw.js wildTakeTook - AUDIT INT9: this game ran the law again
+   * without the ledger's word, and took what the service kept), the room given the service's records on its order
+   * (wildDeposit). The answer is needed: a landed act whose answer was lost ends the session, and the join reads the record.
    */
   const wildTakeDrop = (rc, room) => {
     const c = rc ? readWildReceipt(rc) : null;
     const nonce = c ? null : [...globalThis.crypto.getRandomValues(new Uint8Array(8))].map((x) => x.toString(16).padStart(2, '0')).join('');
     const key = c ? c.r : nonce;
-    if (!realmSession || realmSession.lost || _wildTaking.has(key)) return;
+    const body = _wildBody;
+    const lay = room ?? body?.room ?? null;
+    if (!realmSession || realmSession.lost || !lay || _wildTaking.has(key)) return;
     _wildTaking.add(key);
     if (_wildTaking.size > 32) _wildTaking.delete(_wildTaking.values().next().value);
-    const body = _wildBody;
-    let before = null, took = null;
     realmGoldAct({
       session: realmSession,
       checkpoint: () => wildDeathCheckpoint(),
-      reserve: () => {
-        before = wildPackOf();
-        took = takeWildDeath(playerEntity, c ? c.w : -1);
-        if (took.killer) unequipItem(playerEntity, took.taken[0]);
-        return () => wildPackBack(before);
-      },
-      call: (at) => wildAccount.fall({ ...(c ? { receipt: rc } : { n: nonce }), realm: at }),
-      apply: (a) => wildDropTaken(a?.data ?? null, took, before, body, room),
+      needsAnswer: true,
+      call: (at) => wildAccount.fall({ ...(c ? { receipt: rc } : { n: nonce }), realm: at, room: lay }),
+      apply: (a) => wildDropTaken(a?.data ?? null, body, lay),
     }).catch((e) => console.warn('[wild] the drop failed', e?.message ?? e));
   };
-  /** The service's answer to my drop: what the ledger kept back is mine still (a piece it would not let go), the death
-   *  screen says what fell, and the records go to the room on the service's order. */
-  const wildDropTaken = (d, took, before, body, room) => {
-    if (!d || !took) return;
-    const kept = new Set(Array.isArray(d.kept) ? d.kept : []);
-    const keptIt = (it) => !!it && (kept.has(it.provenance) || kept.has(it.uid));
-    for (const it of took.taken) if (keptIt(it)) (before?.wagon.includes(it) ? (playerEntity.wagonItems ??= []) : (playerEntity.items ??= [])).push(it);
+  /** The service's answer to my drop: what it took off my record goes out of my pack (a worn piece unequipped), the death
+   *  screen says what fell - or, risen since, a line says it - and the records go to the room on the service's order. */
+  const wildDropTaken = (d, body, room) => {
+    if (!d) return;
+    const out = wildTakeTook(playerEntity, d.took, d.gold, (it) => { if (isEquipped(it)) unequipItem(playerEntity, it); });
     const n = Array.isArray(d.items) ? d.items.length : 0;
     const dd = wildDeath();
-    if (dd) setWildDeath({ killer: dd.killer, dropped: d.order ? n : 0, claimed: took.killer && !keptIt(took.taken[0]) ? itemLongName(took.taken[0]) : null });
-    if (d.order && n && body) wildDeposit({ r: d.r, items: d.items, o: d.order, p: body.p, room: room ?? body.room, mine: body });
+    const claimed = d.wi === 0 && out.length && d.took?.[0] ? itemLongName(out[0]) : null;
+    if (dd) setWildDeath({ killer: dd.killer, dropped: d.order ? n : 0, claimed });
+    else if (out.length || d.gold?.purse || d.gold?.cart) townTalk.say(WILD_TEXT.dropLate);   // AUDIT INT9: a receipt that found me risen
+    if (d.order && n && body) wildDeposit({ r: d.r, items: d.items, o: d.order, p: body.p, room, mine: body });
   };
   /** THE DEPOSIT - the service's records to the room, chunk by chunk on the wild frames' own pace, each chunk carrying its
    *  order (the room keeps the remains only when the records digest to it: net/wildLaw.js). An order is good a minute. */
   const _wildDeposits = [];   // { r, chunks, k, o, p, room, mine, at }
   const wildDeposit = (dep) => {
     if (_wildDeposits.some((x) => x.r === dep.r)) return;
-    _wildDeposits.push({ ...dep, chunks: wildChunks(dep.items), k: 0, at: Date.now() });
+    // AUDIT INT9: chunked by their bytes too - each frame and its order inside the wire's bound
+    const room = WILD_DATA_MAX - JSON.stringify({ k: 'fall', r: dep.r, p: dep.p, items: [], last: 0, o: dep.o }).length - 16;
+    _wildDeposits.push({ ...dep, chunks: wildChunks(dep.items, WILD_ITEMS_MAX, room), k: 0, at: Date.now() });
   };
   const wildDepositFrame = () => {
     for (const dep of [..._wildDeposits]) {
@@ -22112,7 +22110,10 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (dep.k === 0 && dep.mine) wildMineLies(dep);
         dep.k++;
       }
-      if (dep.k >= dep.chunks.length || Date.now() - dep.at > 50_000) _wildDeposits.splice(_wildDeposits.indexOf(dep), 1);
+      if (dep.k >= dep.chunks.length || Date.now() - dep.at > 50_000) {
+        _wildDeposits.splice(_wildDeposits.indexOf(dep), 1);
+        if (dep.mine && _wildGhostEndAt != null) _wildGhostEndAt = Math.min(_wildGhostEndAt, Date.now());   // AUDIT INT9: a hall's or a building's ghost lingers no longer
+      }
     }
   };
   /** My remains lie: the world map's mark, kept on the device (WILD-KEEP), and a followed flag where they lie
@@ -22131,11 +22132,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (const [r, s] of [..._wildSeize]) {
       if (now < s.due) continue;
       _wildSeize.delete(r);
-      if (wildRemains.has(r)) continue;   // their tab took it: its remains stand
-      const p = duelWorldOf(s.peer) ?? campToWire(player.feetAt());
-      wildAccount.fall({ receipt: s.rc }).then((a) => {
+      if (wildRemains.has(r)) continue;   // their tab took it: its remains stand (or stood)
+      const p = s.p ?? campToWire(player.feetAt());   // AUDIT INT9: where the body fell, in its room's frame
+      wildAccount.fall({ receipt: s.rc, room: s.room }).then((a) => {
         const d = a?.ok ? a.data : null;
-        if (d?.order && Array.isArray(d.items) && d.items.length) wildDeposit({ r: d.r, items: d.items, o: d.order, p, room: s.room, mine: null });
+        if (d?.order && Array.isArray(d.items) && d.items.length) { wildDeposit({ r: d.r, items: d.items, o: d.order, p, room: s.room, mine: null }); return; }
+        // AUDIT INT9: a word that says nothing of the fall (offline, the service's own error, the rate, a record that moved
+        // under the seizure) is asked again, a few times
+        if (['offline', 'server', 'rate', 'seq', 'no-session'].includes(a?.error) && s.tries < 3) _wildSeize.set(r, { ...s, due: Date.now() + 5_000 * (s.tries + 1), tries: s.tries + 1 });
       }).catch(() => { /* the fallen's own tab, or nobody: the receipt's hour is theirs */ });
     }
   };
@@ -22151,7 +22155,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // a hall always locks it and sets the crows over it - whether or not the pack had anything to drop
     if (modes?.mode === 'dungeon' && _wdunInside) wdunLeft(true);
     setWildDeath({ killer: fell ? (peerName(fell.by) ?? 'Another player') : null, dropped: 0 });
+    _wildVit = null; wildHudSay();   // AUDIT INT9: the readout goes with the life
     _wildGhost = true;
+    // AUDIT INT9: a cell keeps my body's socket while it lies; a hall's or a building's room keeps it only until my deposit
+    // has gone (its fall is signed at once), or a moment - a ghost there held the room's world as its host
+    _wildGhostEndAt = isCellRoom(online.room) ? null : Date.now() + WILD_GHOST_HOLD_MS;
     if (fell) {
       const worn = isCellRoom(online.room) ? wornOffer(playerEntity.items) : [];
       if (worn.length) wildFight.offerWorn(fell.by, fell.r, worn.map(wildRecord));
@@ -22162,10 +22170,14 @@ export async function bootWorld(canvas, renderer, params, status) {
   const wildGhostEnd = () => {
     setWildDeath(null);
     _wildFell = null;
-    if (_wildGhost) {
-      _wildGhost = false;
-      if (online?.room) { online.leave(); exteriorFoes.clearPuppets(); modes?.clearOwnPuppets?.(); _foesRoom = null; }
-    }
+    wildGhostLeave();
+  };
+  /** The ghost's socket let go - its room left, the dead stay dead. */
+  const wildGhostLeave = () => {
+    _wildGhostEndAt = null;
+    if (!_wildGhost) return;
+    _wildGhost = false;
+    if (online?.room) { online.leave(); exteriorFoes.clearPuppets(); modes?.clearOwnPuppets?.(); _foesRoom = null; }
   };
   /** THE RISE OUT OF THE ZONE (the owner: "when the players respawns in a town near the zone the cart comes with
    *  him"): the nearest town or temple OUTSIDE the zone - never the mountains' own, where the next fight waits. */
@@ -26851,6 +26863,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();   // D-ONLINE1: the modal hosts' deaths (a dungeon's, a building's) are captured here, BEFORE the leave below clears online.room
       { const hourSlot = modes?.sdRealmSlot?.() ?? null; if (hourSlot != null) _sdFallen.add(hourSlot); }   // SD-ONELIFE: a death in the Hour is final for its Hollow (AUDIT SD III: under D-ONLINE1's capture, the block's first statement as AUDIT WORLD B6 and MWBODY1 hold it)
       if (_wildGhost && online.room) online.tick();   // WILD1: the ghost's socket kept alive (its pings, its reconnect) - it sends no pose
+      if (_wildGhost && _wildGhostEndAt != null && Date.now() >= _wildGhostEndAt && !_wildDeposits.length) wildGhostLeave();   // AUDIT INT9: a hall's or a building's ghost, its deposit gone
       if (online.room && !_wildGhost) {
         // PCORPSE1: the body is left where it fell - one last pose, flagged, before the leave below takes the living figure
         _deadMark = online._pose ? { k: online.room, x: online._pose.x, y: online._pose.y, z: online._pose.z, at: Date.now() } : null;

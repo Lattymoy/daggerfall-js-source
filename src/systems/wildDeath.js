@@ -27,9 +27,17 @@ import { WILD_ITEMS_MAX } from '../net/wire.js';
 export { WILD_NEVER_GROUPS, keptOnWildDeath, wildCanLose, takeWildDrop, WILD_GOLD_LOSS, takeWildGold, wornOffer, wildRecord, takeWildDeath, wildPickOf, wildDropCandidates, wildTookOf, wildTakeTook } from './wildDropLaw.js';
 
 /** A list cut into the wire's chunks. */
-export function wildChunks(list, size = WILD_ITEMS_MAX) {
+export function wildChunks(list, size = WILD_ITEMS_MAX, bytes = Infinity) {
+  // INT9 (AUDIT): and `bytes` of their JSON a chunk - a frame of sixteen heavy records was past the wire's own bound
+  // (net/wire.js WILD_DATA_MAX), refused at the sender, and the deposit never left
   const out = [];
-  for (let i = 0; i < list.length; i += size) out.push(list.slice(i, i + size));
+  let cur = [], n = 2;
+  for (const it of list) {
+    const w = JSON.stringify(it).length + 1;
+    if (cur.length && (cur.length >= size || n + w > bytes)) { out.push(cur); cur = []; n = 2; }
+    cur.push(it); n += w;
+  }
+  if (cur.length) out.push(cur);
   return out;
 }
 

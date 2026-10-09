@@ -42,7 +42,7 @@ async function foeFallId(/** @type {SubtleCrypto} */ subtle, /** @type {string} 
   return [...h.slice(0, 6)].map((x) => x.toString(16).padStart(2, '0')).join('');
 }
 
-/** A fall's answer: the remains' id, the records taken, the pieces the ledger kept back, what the record lost as the
+/** A fall's answer: the remains' id, the records taken (`wi` 0: the first is the killer's), the pieces the ledger kept back, what the record lost as the
  *  fallen's game finds it again (`took`, `gold` - wildDropLaw.js wildTakeTook), and - where the room is given any - the
  *  service's order over the records. THE FALL'S OWN ORDER: issued at `oi` for room `wm`, the same every asking, good its
  *  minute alone (AUDIT INT9: a fresh order each asking, naming no room, laid one fall's drop twice - in a second room, or
@@ -53,7 +53,7 @@ async function answerOf(/** @type {any} */ ctx, /** @type {CryptoKey} */ signing
     const wh = await remainsDigest(records, { subtle: ctx.subtle });
     order = await mintRemainsOrder({ s: fallen, wr: r, wh, wn: records.length, wm, ...(killerFirst && killer ? { wk: killer, wi: 0 } : {}), ...(wg ? { wg } : {}) }, signing, { subtle: ctx.subtle, nowS: oi });
   }
-  return { r, order, items: records, kept, took: Array.isArray(tk?.took) ? tk.took : [], gold: { purse: tk?.gold?.purse ?? 0, cart: tk?.gold?.cart ?? 0 }, ...(burnt ? { burnt: true } : {}), ...(seq != null ? { realm: { seq } } : {}) };
+  return { r, order, items: records, kept, wi: killerFirst ? 0 : -1, took: Array.isArray(tk?.took) ? tk.took : [], gold: { purse: tk?.gold?.purse ?? 0, cart: tk?.gold?.cart ?? 0 }, ...(burnt ? { burnt: true } : {}), ...(seq != null ? { realm: { seq } } : {}) };
 }
 
 /**

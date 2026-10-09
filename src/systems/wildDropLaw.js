@@ -198,9 +198,10 @@ export const wildTookOf = (/** @type {any[]} */ taken, /** @type {string[]} */ f
  * `{ purse, cart }`), in place: each piece found by its id or its craft's provenance, else by its marks, in the list it
  * lay in; the purse and the cart's coin lowered by their shares. Never the law run again on the live pack (AUDIT INT9:
  * the game ran it without the ledger's word, and took what the service kept). Answers the pieces taken out.
- * @param {any} entity @param {any[]} took @param {{ purse?: number, cart?: number } | null} gold
+ * @param {any} entity @param {any[]} took @param {{ purse?: number, cart?: number } | null} gold @param {(item: any) => void} [before]
+ *   told of each piece before it leaves its list (a worn one unequipped)
  */
-export function wildTakeTook(entity, took, gold) {
+export function wildTakeTook(entity, took, gold, before = (/** @type {any} */ _it) => {}) {
   const out = [];
   for (const s of Array.isArray(took) ? took : []) {
     const list = s?.f === 'cart' ? entity?.wagonItems : entity?.items;
@@ -208,7 +209,9 @@ export function wildTakeTook(entity, took, gold) {
     const same = (/** @type {any} */ it) => !!it && (s.u ? it.uid === s.u : s.p ? it.provenance === s.p
       : !it.uid && !it.provenance && it.group === s.g && it.templateIndex === s.t && (it.material ?? 0) === s.m && Math.max(1, Math.floor(it.stackCount ?? 1)) === s.n);
     const i = list.findIndex(same);
-    if (i >= 0) out.push(list.splice(i, 1)[0]);
+    if (i < 0) continue;
+    before(list[i]);
+    out.push(list.splice(i, 1)[0]);
   }
   const purse = Math.max(0, Math.floor(gold?.purse ?? 0)), cart = Math.max(0, Math.floor(gold?.cart ?? 0));
   if (purse) entity.goldPieces = Math.max(0, Math.floor(entity.goldPieces ?? 0) - purse);

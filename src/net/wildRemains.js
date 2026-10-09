@@ -112,11 +112,20 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
     if (left > 0 && item?.group === 'Currency') left -= unpurse(left);   // WILD GOLD: the window's take of coin went to the purse
   };
 
+  /** INT9 (AUDIT): every remains' id said here this life - a killer's seizure is never asked of one its fallen laid. */
+  const saidIds = new Set();
+  /** INT9: the piece I picked off a fallen's body, asked of the room - the whole of it, once it has left. */
+  const askMine = (/** @type {any} */ rec) => {
+    const it = rec.wk && rec.wk === me() ? rec.items[rec.wi] : null;
+    const key = `${rec.r}:${rec.wi}`;
+    if (it && !asked.has(key) && send({ k: 'take', r: rec.r, i: rec.wi, n: Math.max(1, it.stackCount ?? 1) })) asked.set(key, 1);
+  };
+
   const book = {
     /** The remains I may see now, for the maps (mine marked): `{ r, p, nm, mine, until }`. */
     list() { return [...recs.values()].filter((r) => r.items.some(Boolean)).map((r) => ({ r: r.r, p: r.p, nm: r.nm, mine: r.mine, until: r.until })); },
-    /** INT9: is remains `r` said in this room (a killer's seizure waits on it). */
-    has(r) { return recs.has(r); },
+    /** INT9: has remains `r` been said in this room (a killer's seizure waits on it) - AUDIT INT9: ever, an emptied one too. */
+    has(r) { return recs.has(r) || saidIds.has(r); },
     /** Mine, in this room. */
     mineHere() { return book.list().filter((r) => r.mine); },
     /** Whether any remains of mine stand here - the loot lines' door with the rarity row off (scenes/lootLines.js). */
@@ -146,10 +155,10 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
         for (let k = 0; k < w.items.length && w.off + k < WILD_REMAINS_ITEMS_MAX; k++) rec.items[w.off + k] = w.items[k] ?? null;
         rec.end = w.end;
         rec.until = now() + w.ttl;
+        saidIds.add(w.r);
+        if (saidIds.size > 64) saidIds.delete(saidIds.values().next().value);
         seed(rec);
-        // INT9: the piece I picked off this fallen's body - asked for at once, the whole of it
-        const mineK = rec.wk && rec.wk === me() ? rec.items[rec.wi] : null;
-        if (mineK && !asked.has(`${rec.r}:${rec.wi}`) && send({ k: 'take', r: rec.r, i: rec.wi, n: Math.max(1, mineK.stackCount ?? 1) })) asked.set(`${rec.r}:${rec.wi}`, 1);
+        askMine(rec);   // INT9: the piece I picked off this fallen's body - asked for at once, the whole of it
         return;
       }
       const rec = recs.get(w.r);
@@ -176,6 +185,7 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
       const left = (asked.get(key) ?? 1) - 1;
       if (left > 0) asked.set(key, left); else asked.delete(key);
       if (w.k === 'got') {
+        if (rec && w.i === rec.wi && rec.wk === me()) rec.items[w.i] = null;   // AUDIT INT9: mine, whole - never asked again before the room's `rm`
         const item = mint([w.it])?.[0] ?? null;
         if (item) { addItem(pack(), item); say(`You take ${nameOf(item)}.`); }
       } else if (w.k === 'no') {
@@ -187,6 +197,7 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
       const t = now();
       for (const rec of [...recs.values()]) {
         if (t >= rec.until) { unseed(rec); recs.delete(rec.r); continue; }
+        askMine(rec);   // AUDIT INT9: an ask that never left (the socket, the gate) is asked again - it was asked once, at the word
         // a pile its pool let go under me (a building's cache restored, a dungeon rebuilt) is stood again from the room's word
         if (!rec.pile || rec.pile.dead) { rec.pile = null; if (poolNow && rec.items.some(Boolean)) seed(rec); continue; }
         for (const [obj, info] of [...rec.seen]) {
