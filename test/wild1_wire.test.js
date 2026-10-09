@@ -80,17 +80,17 @@ const wilds = (ws, k) => ws.sent.filter((m) => m.t === 'wild' && (!k || m.k === 
 
 // PIN MOVED (INT9): a deposit is kept only on the account service's order over its records, and a blow is the relay's to
 // referee - routed to nobody (test/int9_wild_ref.test.js); a fallen's offer of its worn gear is the one frame routed now
-test('WILD1 relay: a deposit is kept and said to the room, the first take wins, a late hello hears what is left, a fallen\'s offer is routed with its account', async () => {
+test('WILD1 relay: a deposit is kept and said to the room, the first take wins, a late hello hears what is left, a fallen\'s offer is routed with its account; an emptied remains goes from the room\'s word but stays its TOMBSTONE (PIN MOVED, AUDIT INT9: it was let go, and its order laid it again)', async () => {
   const world = fakeRooms();
   const r = world.room(CELL);
   const a = r.connect(), b = r.connect(), c = r.connect();
   await r.hello(a, 'peer-0001', ON); await r.hello(b, 'peer-0002', ON); await r.hello(c, 'peer-0003', ON);
   const say = (ws, data) => r.raw(ws, JSON.stringify({ t: 'wild', data }));
   const dep = [item(1), { ...item(2), stackCount: 4 }];
-  const o = await mintRemainsOrder({ s: 'acct-peer-0001', wr: 'rrrrrr01', wh: await remainsDigest(dep, { subtle: globalThis.crypto.subtle }), wn: 2 }, (await r.signer()).privateKey, { subtle: globalThis.crypto.subtle, nowS: Math.floor(Date.now() / 1000) }).catch(() => null);
+  const o = await mintRemainsOrder({ s: 'acct-peer-0001', wr: 'rrrrrr01', wh: await remainsDigest(dep, { subtle: globalThis.crypto.subtle }), wn: 2, wm: CELL }, (await r.signer()).privateKey, { subtle: globalThis.crypto.subtle, nowS: Math.floor(Date.now() / 1000) }).catch(() => null);
   assert.equal(o, null, 'a remains\' id is twelve hex now - the relay\'s, or the service\'s');
   const R = '0123456789ab';
-  const order = await mintRemainsOrder({ s: 'acct-peer-0001', wr: R, wh: await remainsDigest(dep, { subtle: globalThis.crypto.subtle }), wn: 2 }, (await r.signer()).privateKey, { subtle: globalThis.crypto.subtle, nowS: Math.floor(Date.now() / 1000) });
+  const order = await mintRemainsOrder({ s: 'acct-peer-0001', wr: R, wh: await remainsDigest(dep, { subtle: globalThis.crypto.subtle }), wn: 2, wm: CELL }, (await r.signer()).privateKey, { subtle: globalThis.crypto.subtle, nowS: Math.floor(Date.now() / 1000) });
   await say(a, { k: 'fall', r: R, p: [1, 2, 3], items: dep, last: 1, o: order });
   const ri = wilds(b, 'ri');
   assert.equal(ri.length, 1);
@@ -106,7 +106,7 @@ test('WILD1 relay: a deposit is kept and said to the room, the first take wins, 
   assert.deepEqual(wilds(d, 'ri')[0].items, [null, { ...item(2), stackCount: 4 }], 'a late hello hears what is left');
   await say(b, { k: 'take', r: R, i: 1, n: 4 });
   assert.deepEqual(wilds(a, 'gone'), [{ t: 'wild', k: 'gone', r: R }], 'emptied: gone');
-  assert.equal(r.store.get(wildRemainsKey(R)), undefined);
+  assert.deepEqual(r.store.get(wildRemainsKey(R))?.items, [null, null], 'kept, emptied - a tombstone, said to nobody');
   await say(a, { k: 'strike', to: 'peer-0002', n: 1, by: 'melee', p: [1000, 2, 1000], d: 9 });
   assert.equal(b.sent.filter((m) => m.t === 'wild' && m.data).length, 0, 'a blow is the referee\'s: routed to nobody');
   await say(a, { k: 'worn', to: 'peer-0002', s: R, items: [item(5)] });

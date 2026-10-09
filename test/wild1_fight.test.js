@@ -49,7 +49,7 @@ test('WILD1 fight: no blow out at a player who is not fair (my party, outside th
 // PIN MOVED (INT9): WILD1's fallen took the picked piece out of its pack and GAVE it (`gave`) - a pick nobody answered was
 // given up. Now the pick goes to the relay, in the room that refereed the fall, under the fall's id: the relay signs the
 // fall with it, the service takes the piece off the fallen's record, and the remains hold it for the killer alone.
-test('WILD1 fight: a body offers its worn pieces to its killer - only under a fall the referee called by its hand; ONE pick, to the room that refereed the fall (INT9)', () => {
+test('WILD1 fight: a body offers its worn pieces to its killer - only under a fall the referee called by its hand; ONE pick, to the room that refereed the fall (INT9), naming what the offer showed there (PIN MOVED, AUDIT INT9: `t`, `m` - the place alone was an index into a list the fallen built)', () => {
   const w = pair();
   w.b.offerWorn(PA, '0123456789ab', [{ group: 'Armor', templateIndex: 102 }]);
   w.flush();
@@ -64,7 +64,7 @@ test('WILD1 fight: a body offers its worn pieces to its killer - only under a fa
   assert.equal(w.a.pick(PB, 2), false, 'an offer\'s place');
   assert.equal(w.a.pick(PB, 1), true);
   assert.equal(w.a.pick(PB, 0), false, 'one pick a body');
-  assert.deepEqual(w.room, [[PA, { k: 'pick', r: '0123456789ab', w: 1 }, 'world:400,120']], 'to the room, never to the fallen');
+  assert.deepEqual(w.room, [[PA, { k: 'pick', r: '0123456789ab', w: 1, t: 120, m: 0 }, 'world:400,120']], 'to the room, never to the fallen');
 });
 
 test('WILD1 fight: a body\'s offer stands the referee\'s pick window, then goes (INT9)', () => {

@@ -245,7 +245,7 @@ test('INT8 THE RELAY, THE END: a fighter\'s own `end` is its loss once the count
   assert.equal(parseClient(JSON.stringify({ t: 'dref', k: 'end', s: S, w: 'peer-0003', why: 'fell' }), { hasHello: true }).t, undefined, 'the relay\'s parser refuses it');
 }));
 
-test('INT8 THE CLIENT\'S CARRIER: a duel\'s receipt is either fighter\'s to carry - kept, offered, let go on a settling answer (counted, not-yours, a receipt the service can never take) and kept on one it can mend; the client parses the referee\'s word on its primary socket alone (mutants: the loser\'s receipt dropped; a mendable refusal let go)', async () => {
+test('INT8 THE CLIENT\'S CARRIER: a duel\'s receipt is either fighter\'s to carry - kept, offered, let go on a settling answer (counted, not-yours, a receipt the service can never take) and kept on one it can mend; the client parses the referee\'s word on ANY socket it holds, with its room (PIN MOVED, AUDIT INT8: a bout asked through a halo is refereed there, and its every word was dropped) (mutants: the loser\'s receipt dropped; a mendable refusal let go)', async () => {
   const kp = await keys();
   const rc = await mintDuelReceipt({ f: ['acct-aaaa', 'acct-bbbb'], w: 1, n: '0123456789ab' }, kp.privateKey, { subtle, nowS: Math.floor(Date.now() / 1000) });
   const asked = [];
@@ -259,6 +259,8 @@ test('INT8 THE CLIENT\'S CARRIER: a duel\'s receipt is either fighter\'s to carr
   assert.equal(duelClaimSettles({ ok: false, error: 'not-yours' }), true);
   assert.equal(duelClaimSettles({ ok: false, error: 'offline' }), false);
   const online = rd('src/net/online.js');
-  assert.match(online, /\} else if \(m\.t === 'dref'\) \{[\s\S]*?if \(!primary\) return;\s*\n\s*const g = validDuelRefOut\(m\);\s*\n\s*if \(g\) this\._deliver\('dref', \(\) => this\.onDuelRef\?\.\(g\)\);/);
+  assert.match(online, /\} else if \(m\.t === 'dref'\) \{[\s\S]*?const g = validDuelRefOut\(m\);\s*\n\s*if \(g\) this\._deliver\('dref', \(\) => this\.onDuelRef\?\.\(g, room\)\);/);
+  assert.equal(/m\.t === 'dref'\) \{[^}]*if \(!primary\) return;/.test(online), false, 'never the primary alone');
+  assert.ok(rd('src/scenes/world.js').includes('send: (d) => online?.sendDuel(d, { room: duelMgr?.duel && _duelRoom ? _duelRoom : null }) === true,'), 'a bout\'s frames to the room that referees it');
   assert.match(online, /this\.duelOk = relaySupportsDuelRef\(relayV\);/, 'a client duels on a refereeing relay alone');
 });

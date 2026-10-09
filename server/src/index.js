@@ -6724,9 +6724,9 @@ export class Room {
     if (had && now - had.at < 60_000) return had.kin;
     // INT9 (AUDIT): a hub that does not answer is KIN - no blow lands and nothing is taken until it does (it answered
     // "strangers", and a party's blows landed); its silence is kept WDUN_KIN_SILENT_MS alone
-    let kin = true, heard = false;
     const rooms = this.env?.ROOMS;
-    if (rooms?.idFromName && rooms?.get) {
+    let kin = !!(rooms?.idFromName && rooms?.get), heard = !kin;   // no hub at all (a relay of one room): nobody's kin
+    if (kin) {
       try {
         const res = await rooms.get(rooms.idFromName(SOCIAL_ROOM)).fetch(new Request(`https://relay.internal${WDUN_INTERNAL_KIN}`, { method: 'POST', body: JSON.stringify({ a: taker, b: owner }), signal: AbortSignal.timeout(ROOM_CALL_MS) }));
         if (res?.ok) { kin = !!(await res.json())?.kin; heard = true; }
