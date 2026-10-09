@@ -32,7 +32,7 @@
 import { SD_ORRERY, SD_STONES, SD_STONE_POS, SD_STONE_BEARINGS, SD_REALM_ORIGIN, realmToDungeon } from '../net/sdBrain.js';
 import { faces } from './gateModel.js';
 import { realmIsland, packRealmFaces, SD_REALM_ARCHIVE, SD_REALM_FLOOR_RECORD, SD_REALM_BRASS_RECORD, SD_ISLAND_SIDES } from './sdRealm.js';
-import { SD_HALL_ATLAS, SD_HALL_ATLAS_RECORD, SD_HALL_GLOW_RECORD, SD_HALL_BAND_RECORD, SD_HALL_BRIDGE_RECORD, SD_HALL_EMBER_DIM_RECORD, SD_HALL_FLASH_RECORD, atlasUv } from './sdHallArt.js';
+import { SD_HALL_ATLAS, SD_HALL_ATLAS_RECORD, SD_HALL_GLOW_RECORD, SD_HALL_BAND_RECORD, SD_HALL_BRIDGE_RECORD, SD_HALL_EMBER_DIM_RECORD, SD_HALL_FLASH_RECORD, SD_HALL_GEM_RECORD, atlasUv } from './sdHallArt.js';
 import { SD_HOUR_NUMERALS } from './sdSkyArt.js';
 
 const deg = (d) => (d * Math.PI) / 180;
@@ -620,12 +620,15 @@ export function buildBannerModel() {
   return { positions, normals, uvs, indices, subMeshes: [{ textureArchive: SD_REALM_ARCHIVE, textureRecord: SD_HALL_ATLAS_RECORD, startIndex: 0, primitiveCount: indices.length / 3 }] };
 }
 
+/** SD-LOOK S10: the lit plates' record - soul light lives in crystal (Super-Dungeons-Look.md, the five lights): the gem's
+ *  own crystal at five of six, a signal (the value ladder's L3), never the critical rung the Mantella's flat glow reached. */
+export const SD_LIT_RECORD = SD_HALL_GEM_RECORD + 5;
 /** THE DIAL'S LIGHT for `n` stones at their true hours: the first `n` segments, clockwise from the twelfth - or null.
- *  SD-LOOK S10: each a PLATE RISEN SD_LIT_RING.rise from its sunk place, alight (`rec`, the Mantella's green; the flash's
- *  white-green for the whole ring's one flash).
+ *  SD-LOOK S10: each a PLATE RISEN SD_LIT_RING.rise from its sunk place, alight in soul-crystal (`rec`, SD_LIT_RECORD; the
+ *  flash's white-green for the whole ring's one flash).
  * @param {number} n
  * @param {number} [rec] */
-export function buildLitModel(n, rec = SD_HALL_GLOW_RECORD.mantella) {
+export function buildLitModel(n, rec = SD_LIT_RECORD) {
   if (!(n > 0)) return null;
   const f = faces(), out = [];
   for (let k = 0; k < Math.min(n, SD_STONES.length); k++) segmentPlate(out, rec, k, SD_LIT_RING.rise, true);

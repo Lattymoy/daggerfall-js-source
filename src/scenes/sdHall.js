@@ -41,7 +41,7 @@ import { hallArt, gemGlow, SD_HALL_GLOW_RECORD, SD_HALL_GOLD_DIM_RECORD, SD_HALL
 import {
   buildHallModel, buildHandModel, buildLitModel, buildFrayModel, buildBridgeModel, buildBridgePlateModel, buildBezelModel, buildCrownGearModel,
   buildBannerModel, buildBandModel, bannerPose, bandMatrix, plateMatrix, crownGearMatrix, hallFloorTris, hallSolidTris, handMatrix, handleBox, plaqueBox,
-  dialCentre, beforeStone, stonePoint, SD_PLAQUE, SD_FRAY_RING, SD_BRIDGE_PLATES, SD_BANNER, SD_BANNER_VERTS, SD_DIAL, SD_BEZEL, SD_STONE_SIZE,
+  dialCentre, beforeStone, stonePoint, SD_LIT_RECORD, SD_PLAQUE, SD_FRAY_RING, SD_BRIDGE_PLATES, SD_BANNER, SD_BANNER_VERTS, SD_DIAL, SD_BEZEL, SD_STONE_SIZE,
 } from '../world/sdHall.js';
 import { buildOrbitRing, buildOrreryHub, ringHang, ringPoseInto, ringMatrix, hubMatrix, ringTicks, gemCentre, SD_RING_SNAP_S, SD_ORRERY_RINGS } from '../world/sdOrreryModel.js';
 import { isTouchDevice } from '../ui/touchDevice.js';
@@ -105,7 +105,7 @@ const REMAP = Object.freeze({
   dim: new Map([[key(SD_REALM_BRASS_RECORD), key(SD_HALL_GOLD_DIM_RECORD)]]),
   ember: new Map([[key(SD_REALM_BRASS_RECORD), key(SD_HALL_GLOW_RECORD.fray)]]),
   pulse: new Map([[key(SD_HALL_EMBER_DIM_RECORD), key(SD_REALM_BRASS_RECORD)]]),
-  litDim: new Map([[key(SD_HALL_GLOW_RECORD.mantella), key(SD_HALL_GEM_RECORD + 2)]]),
+  litDim: new Map([[key(SD_LIT_RECORD), key(SD_HALL_GEM_RECORD + 2)]]),
   flare: new Map([[key(SD_HALL_GEM_RECORD), key(SD_HALL_FLASH_RECORD)]]),
   gem: Object.freeze([0, 1, 2, 3, 4, 5, 6].map((n) => (n === 0 ? null : new Map([[key(SD_HALL_GEM_RECORD), key(SD_HALL_GEM_RECORD + n)]])))),
 });
