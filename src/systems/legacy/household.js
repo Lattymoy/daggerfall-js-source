@@ -18,6 +18,8 @@
 //    and a face of the town's tables in the street, and their own chargen head in the talk window.
 //  - A HOUSE OF THE FAMILY'S holds the line and no one else (scenes/world.js livingIndoors' `only`); a kin struck down
 //    dies in the record (legacyHost.js kinSlain), never in the town's lives.
+//  - PERMADEATH-HOUSES: A DEAD MEMBER'S HOUSE PASSES to whoever carries the line (`deedsDue`; legacyHost.js takeDeeds) -
+//    the family lives in it meanwhile, and it is the taker's with the save that holds it (`syncHouses`' `taken`).
 import { CLASS_CAREERS } from '../chargen.js';
 import { isAlive, personOf, fullNameOf, isCustomCareer } from './family.js';
 import { PERSON_TEXTURES, PERSON_FACE_RECORDS } from '../../characters/mobilePerson.js';
@@ -44,28 +46,62 @@ export const FAMILY_SLOT_BASE = 9000;
 /** Stock careers draw as their class's own sprite - the class enemies' 128 + index (net/remotePlayers.js classMobileType). */
 export const CLASS_MOBILE_BASE = 128;
 
-/** A house row: where it stands and whose deed it is. */
-const houseKey = (h) => `${h?.mapId | 0}:${h?.buildingKey | 0}`;
-export const sameHouse = (a, b) => !!a && !!b && houseKey(a) === houseKey(b);
+/** A house row: where it stands and whose deed it is - its key `<mapId>:<buildingKey>`, what a member's `deedsTaken`
+ *  names (PERMADEATH-HOUSES). */
+export const houseKeyOf = (h) => `${h?.mapId | 0}:${h?.buildingKey | 0}`;
+export const sameHouse = (a, b) => !!a && !!b && houseKeyOf(a) === houseKeyOf(b);
+/** PERMADEATH-HOUSES: whether a row's holder is one of the line's dead. */
+export const heldByDead = (family, h) => !!personOf(family, h?.by)?.died;
 
 /**
  * THE FAMILY'S HOUSES, as the one played holds them now: their own rows replaced by what they hold (a deed bought,
  * sold or slept away - banking.js deedStands - changes the line's houses with it), every other member's kept. Answers
  * whether anything changed.
- * @param {any} family @param {number} personId @param {{ regionIndex:number, mapId:number, buildingKey:number, location?:string }[]} held
+ * PERMADEATH-HOUSES: `taken` - the dead's deeds this member took up (their save's `deedsTaken`, house keys). A row of
+ * the dead's they took and hold is theirs from here (`from` the dead, so a rewind can hand it back); one they took and
+ * no longer hold (sold before the save) goes. A row they were LEFT (`from`) that they no longer hold, by a save that
+ * never took it (an older save loaded), goes back to the dead - and is theirs to take up again.
+ * @param {any} family @param {number} personId @param {{ regionIndex:number, mapId:number, buildingKey:number, location?:string, layout?:string }[]} held
+ * @param {string[]} [taken]
  */
-export function syncHouses(family, personId, held) {
+export function syncHouses(family, personId, held, taken = []) {
   const mine = (held ?? []).filter((h) => (h?.buildingKey | 0) > 0 && (h?.mapId | 0) !== 0)
-    .map((h) => ({ regionIndex: h.regionIndex | 0, mapId: h.mapId | 0, buildingKey: h.buildingKey | 0, location: String(h.location ?? ''), by: personId }));
+    .map((h) => ({
+      regionIndex: h.regionIndex | 0, mapId: h.mapId | 0, buildingKey: h.buildingKey | 0, location: String(h.location ?? ''),
+      ...(typeof h.layout === 'string' && h.layout ? { layout: h.layout } : {}),   // PERMADEATH-HOUSES: the layout the deed names its building in (WD3)
+      by: personId,
+    }));
+  const holds = (h) => mine.some((m) => sameHouse(m, h));
+  const took = (h) => taken.includes(houseKeyOf(h)) && heldByDead(family, h);
   // AUDIT LEGACY II A5: the rows keep their places - one sold leaves its place, one bought joins at the end. Rebuilt
   // with the one played's rows last, "the first house" (the family home with none marked and none in the seat) was
   // always another member's, and the line moved house at every switch
   const was = family.houses ?? [];
-  const next = was.filter((h) => h.by !== personId || mine.some((m) => sameHouse(m, h)));
+  const next = [];
+  for (const h of was) {
+    if (h.by === personId) {
+      if (holds(h)) next.push(h);
+      else if (Number.isInteger(h.from) && !taken.includes(houseKeyOf(h))) { const { from, ...row } = h; next.push({ ...row, by: from }); }
+    } else if (!took(h)) next.push(h);
+    else if (holds(h)) next.push({ ...h, by: personId, from: h.by });
+  }
   for (const m of mine) if (!next.some((h) => sameHouse(h, m))) next.push(m);
   if (JSON.stringify(next) === JSON.stringify(was)) return false;
   family.houses = next;
   return true;
+}
+
+/**
+ * PERMADEATH-HOUSES (2026-10-09, the owner: "what happens to houses owned by dead permadeath characters" - the heir
+ * inherits): THE DEAD'S DEEDS DUE TO `p` - every house of the line's whose holder is dead and which `p`'s save has not
+ * taken up. Whoever carries the line takes them: the Succession's heir, or the one played when one of the line dies in
+ * the street. Rows, copied.
+ * @param {any} family @param {any} p
+ */
+export function deedsDue(family, p) {
+  if (!family || !p || !isAlive(p)) return [];
+  const taken = p.deedsTaken ?? [];
+  return (family.houses ?? []).filter((h) => heldByDead(family, h) && !taken.includes(houseKeyOf(h))).map((h) => ({ ...h }));
 }
 
 /** THE FAMILY HOME: the house the player marked, else the one in the family's seat, else the first; null with none. */

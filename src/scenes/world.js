@@ -173,12 +173,13 @@ import { maxFatigue, FATIGUE_MULTIPLIER, liveStat, STAT_KEYS_ORDER } from '../sy
 // finished since U7; what was missing was a host outside the dungeon
 // that opens one, and CanRest's whole town half.
 import { restDecision, getPreventedRestMessage, REST_TEXT } from '../systems/restSession.js';   // U48: the DISPATCH (DaggerfallUI.cs:651-688) above the rest window   // ROAD-B B5: GetPreventedRestMessage   // PARTY-REST5: enemiesNearby's own textId, for a follower's own relayed break
-import { isHouseOwned, deedStands, shipCoords, ownsShip, assignShipToPlayer, resetShip, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS, SHIP_TYPES, createBankAccounts, BANK_REGION_COUNT, forgiveLoans, loanAmnestyLines, foldEmpireAccounts, empireAccountLines, goldRegion } from '../systems/banking.js';   // H1: the quest residence filter; GetShipCoords for the map-pixel scene clear; OwnsShip for the travel popup   // AUDIT 58: AssignShipToPlayer's permanent half, which the classic import owed
+import { isHouseOwned, deedStands, shipCoords, ownsShip, assignShipToPlayer, resetShip, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS, SHIP_TYPES, createBankAccounts, BANK_REGION_COUNT, createHouses, allocateHouseToPlayer, forgiveLoans, loanAmnestyLines, foldEmpireAccounts, empireAccountLines, goldRegion } from '../systems/banking.js';   // H1: the quest residence filter; GetShipCoords for the map-pixel scene clear; OwnsShip for the travel popup   // AUDIT 58: AssignShipToPlayer's permanent half, which the classic import owed
 import {
   clearSceneCache,           // P1: SaveLoadManager.ClearSceneCache, at PlayerGPS's map-pixel seam
   createSceneCache, cacheScene, restoreCachedScene, worldSceneName, LOOT_CONTAINER_TYPES,   // A10: the ship arm's Cache/RestoreCachedScene pair (TransportManager.cs:382-398)
   addPermanentScene, interiorSceneName,   // AUDIT 58: the two names AssignShipToPlayer makes permanent (DaggerfallBankManager.cs:103-110)
   removePermanentScene,   // CSA-D: Come Sail Away's StopSailing takes its borrowed ship's scenes back
+  graftPermanentScene,   // PERMADEATH-HOUSES: a fallen member's house handed on as they left it
 } from '../systems/sceneCache.js';
 import { WORLD_CONTEXT, makeAnchor, teleportPlan } from '../systems/teleportAnchor.js';   // A10: the Recall anchor's law - shape, IsSameInterior, the cross-context plan
 import { isPlayerInTown } from '../systems/nearbyObjects.js';
@@ -687,7 +688,7 @@ import { seatTipOf } from '../net/townSeatLaw.js';   // SEAT-TIP: a seat's card 
 import { hasCarriageGate } from '../world/immersiveTravelGates.js';   // OW-HUBS: a town with a carriage at its gate
 import { seatArrivalLine, seatHallOf, seatBannerOf, boardTithePct } from '../net/townSeatLaw.js';   // SEAT1a: the seat's arrival line; SEAT-HALL: whose hall a palace is; CROWN-HALL: the throne room's banners; AUDIT SEATS-3 D3: a board's Tithe
 import { hallMay } from '../net/hallLaw.js';   // SEAT-HALL: a palace's keepers are a hall's
-import { createOnlineHomes, moveArenaHomes, homeSceneName, homeTownBlocks, holdRealmDeeds, homeClaimLayout, checkpointLanded } from '../systems/onlineHomes.js';   // HOME1: the account service's homes, one town at a time; ARENA4b: the ones the arena displaced, moved; HOME-PRICE: a town's size; FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed the realm gave, held
+import { createOnlineHomes, moveArenaHomes, homeSceneName, homeTownBlocks, holdRealmDeeds, homeClaimLayout, checkpointLanded, HOME_RETRY_MS } from '../systems/onlineHomes.js';   // HOME1: the account service's homes, one town at a time; ARENA4b: the ones the arena displaced, moved; HOME-PRICE: a town's size; FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed the realm gave, held
 import { townBoardRows, townHomeRows } from '../ui/townMapMarks.js';   // TOWN-MARKS: the Notice Boards and the player housing on the town map
 import { setVendorWaypoint, clearVendorWaypoint, vendorWaypoint, vendorWaypointKey, vendorWaypointVersion, isVendorWaypoint, vendorWaypointLabel } from '../systems/vendorWaypoint.js';   // HOME-VENDOR: the trader's waypoint
 import { setVendorPage } from '../ui/vendorPage.js';   // HOME-VENDOR: the Vendor page, under the Professions
@@ -711,6 +712,7 @@ import {
   realmIo, openRealmBoot, createRealmSession, realmSummaryOf, setRealmNotice, realmCreate, realmPut, realmBootSearch, realmRefusalText,
   sayRealmSave, REALM_OFFLINE_TEXT, REALM_EXIT_WAIT_MS, whenPageHides, whenPageGoes, realmTradeEscrow, realmGoldAct, realmDoorShut,
   REALM_RESTORED_TEXT, realmSaveWithHeld, realmList, realmUnions,
+  realmFetch,   // PERMADEATH-HOUSES: a fallen member's record read, for their home's cupboards
 } from '../systems/realmSaves.js';   // REALM P1.3: an online character is the realm's - joined, loaded and checkpointed through the service
 import { createRealmLine } from '../systems/legacy/realmLine.js';   // LEGACY7: online, Project Legacy's lines are the realm's
 import { reclaimFromDevice, reclaimLines, crossLeveling, LEVELING_CROSS_LINE } from '../systems/realmCustoms.js';   // RESTORE: what customs once kept back, given back at the boot; LEVEL-ONLINE-3: the realm's one leveling
@@ -25127,6 +25129,77 @@ export async function bootWorld(canvas, renderer, params, status) {
     return !!seat && h.mode !== 'dungeon' && h.loc === seat.loc && h.region === seat.region;
   };
   const legacyFaces = createFaceLoader({ fetchBytes, palette });
+  // PERMADEATH-HOUSES (2026-10-09, the owner: "what happens to houses owned by dead permadeath characters" - the heir
+  // inherits; bible/06-Systems/Legacy-Arc.md section 10c): A HOUSE OF THE LINE'S DEAD, HANDED TO THE ONE PLAYED
+  // (legacyHost.js takeDeeds). Offline it is Daggerfall's bank deed and the house as its owner left it - out of the
+  // fallen's own newest save, the one record of what they kept there; online the account service's home (homes.js
+  // inheritHome) and its cupboards, out of the fallen's realm record.
+  /** Daggerfall's deed into the one played's bank slot of its region - DaggerfallBankManager's one house a region, so a
+   *  slot holding another house 'waits' - and the house's scene as the fallen left it (`scenes()`, their scene cache's
+   *  snapshot) grafted in, permanent (sceneCache.js graftPermanentScene). */
+  const legacyInheritDeed = (row, scenes) => {
+    const region = row.regionIndex | 0;
+    if (!playerEntity.houses?.length) playerEntity.houses = createHouses(BANK_REGION_COUNT);
+    const slot = playerEntity.houses[region];
+    if (!slot) return null;
+    if ((slot.buildingKey | 0) > 0) return (slot.mapId >>> 0) === (row.mapId >>> 0) && (slot.buildingKey | 0) === (row.buildingKey | 0) ? 'given' : 'waits';
+    allocateHouseToPlayer(playerEntity.houses, region, { buildingKey: row.buildingKey | 0, mapId: row.mapId, location: row.location ?? '' }, {
+      // the building named "<heir>'s residence" in its own town's discovery (`<regionIndex>:<name>`, discoveryLocationId's key)
+      discoverBuilding: (key, name) => { if (row.location) discoverBuilding(`${region}:${row.location}`, { buildingKey: key, buildingType: TALK_BUILDING_TYPES.House1 }, name); },
+      addPermanentScene: () => {},   // the graft below makes the scene permanent, with what it held
+      addNote: (text) => questBridge?.notebook?.addNote?.(text),
+      playerName: playerEntity.name ?? '', regionName: REGION_NAMES[region] ?? '',
+    });
+    if (typeof row.layout === 'string') stampLayout(slot, row.layout);   // the layout the fallen's deed named it in (WD3)
+    graftPermanentScene(playerEntity.sceneCache ??= createSceneCache(), scenes(), interiorSceneName(row.mapId, row.buildingKey | 0));
+    return 'given';
+  };
+  /** ONLINE: asked of the service behind the play - 'asking' until it answered, then its answer once. */
+  const _legacyInheriting = new Map();
+  const legacyInheritOnline = (row, fallen) => {
+    if (!homesApi || !realmSession || !fallen?.characterId) return null;
+    const key = `${row.mapId >>> 0}:${row.buildingKey | 0}`;
+    const st = _legacyInheriting.get(key);
+    if (st === 'given' || st === 'waits' || st === 'gone') { _legacyInheriting.delete(key); return st; }
+    if (st === 'asking' || (typeof st === 'number' && Date.now() - st < HOME_RETRY_MS)) return 'asking';
+    _legacyInheriting.set(key, 'asking');
+    const me = realmSession.id, from = String(fallen.characterId);
+    const same = (h) => (h?.mapId >>> 0) === (row.mapId >>> 0) && (h?.buildingKey | 0) === (row.buildingKey | 0);
+    (async () => {
+      const all = await homesApi.mine();
+      if (!all?.ok || !Array.isArray(all.data?.homes)) throw new Error('homes');
+      const mine = all.data.homes.find((h) => same(h) && h.character === me) ?? null;
+      const theirs = all.data.homes.find((h) => same(h) && h.character === from) ?? null;
+      if (!mine && !theirs) return 'gone';   // sold after their last save reached the line
+      // a deed the realm holds (KNIGHT-HOUSE: a Knightly Order's house) is Daggerfall's bank deed as well - one a region
+      const deed = (mine ?? theirs).deed === true;
+      const slot = playerEntity.houses?.[row.regionIndex | 0];
+      if (deed && (slot?.buildingKey | 0) > 0 && !((slot.mapId >>> 0) === (row.mapId >>> 0) && (slot.buildingKey | 0) === (row.buildingKey | 0))) return 'waits';
+      if (!mine) {
+        const r = await homesApi.inherit({ mapId: row.mapId >>> 0, buildingKey: row.buildingKey | 0, character: me, from });
+        if (!r?.ok) { if (r?.error === 'no-home') return 'gone'; throw new Error(r?.error ?? 'offline'); }
+      }
+      // what they kept in it is their record's (the owner's storage is the owner's save - HOME1)
+      const rec = await realmFetch(realmIoNow(), from);
+      if (!rec.ok && rec.error !== 'no-data') throw new Error(rec.error ?? 'offline');
+      let snap = null;
+      try { snap = rec.ok ? JSON.parse(rec.text) : null; } catch { snap = null; }
+      const scenes = snap?.sceneCache ?? null;
+      const homeScene = homeSceneName(row.mapId, row.buildingKey | 0);
+      if (deed) legacyInheritDeed(row, () => scenes);
+      if (!deed || (scenes?.permanentScenes ?? []).includes(homeScene)) graftPermanentScene(playerEntity.sceneCache ??= createSceneCache(), scenes, homeScene);
+      // the line learns it with the next save (syncHousesNow): this realm character's homes hold it from now
+      if (_legacyOnlineHomes && !_legacyOnlineHomes.some(same)) _legacyOnlineHomes = [..._legacyOnlineHomes, { regionIndex: row.regionIndex | 0, mapId: row.mapId >>> 0, buildingKey: row.buildingKey | 0, location: row.location ?? '' }];
+      legacyOnlineHomesRead();
+      return 'given';
+    })().then((r) => { _legacyInheriting.set(key, r); }, () => { _legacyInheriting.set(key, Date.now()); });
+    return 'asking';
+  };
+  const legacyInheritHouse = (row, fallen) => {
+    if (isOnlinePage()) return legacyInheritOnline(row, fallen);
+    const at = fallen?.characterId ? newestSaveOf(enumerateSaves().info, fallen.characterId) : -1;
+    return legacyInheritDeed(row, () => (at >= 0 ? loadSlot(at)?.sceneCache ?? null : null));
+  };
   legacyHost = createLegacyHost({
     entity: playerEntity,
     storage: () => appStorage(),
@@ -25178,6 +25251,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     },
     // LEGACY-HOME: the houses the one played holds (a deed that stands - banking.js deedStands), and the house they are in
     heldHouses: () => (isOnlinePage() ? (realmSession ? _legacyOnlineHomes : null) : (playerEntity.houses ?? []).filter((h) => (h?.buildingKey | 0) > 0 && deedStands(h))),   // LEGACY7 part five: online, this realm character's online homes (null until read)
+    inheritHouse: legacyInheritHouse,   // PERMADEATH-HOUSES: a house of the line's dead, the one played's
     // LEGACY6: what the world remembers - the town's regard of the one played and its day, the towns' minute for the
     // house's news, and the killer a fallen kinsman's mirror names, handed to the heir (revenant.js)
     regards: () => livingRelations, regardDay: livingRegardDay, sky: () => skyMinutes(),
