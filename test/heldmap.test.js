@@ -3437,3 +3437,50 @@ test('TAMRIEL1 window: the frame round the Bay - the rest at the Bay\'s fit, the
     } finally { delete globalThis.innerWidth; delete globalThis.innerHeight; }
   });
 });
+
+test('MAP-SCALE (FIELD BUGS 2026-10-09e, "icons and text too small on high resolutions", a 1440p monitor): the paper is the fitted rectangle over the map\'s scale and the backing keeps every device pixel; the chrome is zoomed by the same; a pointer comes back over it in both lanes, the card\'s offsets too; a fixed choice of 1 is the sheet as it was (mutants: MAP-SCALE-paper-at-full-size, MAP-SCALE-pointer-not-divided, MAP-SCALE-hands-box-full-size, MAP-SCALE-tip-not-divided, MAP-SCALE-chrome-unzoomed)', () => {
+  withDocument((doc) => {
+    const make = doc.createElement;
+    doc.createElement = (...a) => { const n = make(...a); n.style.setProperty = (k, v) => { n.style[k] = v; }; return n; };
+    globalThis.innerWidth = 2560; globalThis.innerHeight = 1440;
+    try {
+      setPref('mapScale', 'auto');
+      const g = heldStageRect(2560, 1440);
+      const pw = g.w * (PAPER.x1 - PAPER.x0), ph = g.h * (PAPER.y1 - PAPER.y0);
+      const win = open(mkWin({ mapSize: { width: 1000, height: 500 }, woods: { heightMapBuffer: new Uint8Array(500000).fill(10) } }));
+      const k = 1.35;   // 1440 / 1080, to the twentieth
+      assert.equal(win._paper.k, k);
+      assert.ok(Math.abs(win._paper.w - pw / k) < 1e-9 && Math.abs(win._paper.h - ph / k) < 1e-9, 'the paper is the 1080p paper the names were drawn on');
+      assert.equal(win._paper.dpr, k, 'a paper pixel is k device pixels');
+      assert.equal(win._chrome.ink.width, Math.round(pw), 'the backing keeps every device pixel of the fitted sheet');
+      assert.equal(win._chrome.ink.style.width, `${pw}px`, 'and the canvas stands the fitted size on the screen');
+      assert.equal(win._chrome.root.style['--hm-ui'], String(k), 'the chrome zoomed by the same');
+      assert.deepEqual(win._paperPoint(135, 270), [100, 200], 'a client pixel is 1/k of a paper pixel');
+      assert.equal(win._view.scale, win._bayFit(), 'the rest is the Bay\'s fit on that paper');
+      // the card: placed in the screen's pixels and written in the zoomed box's own
+      win._showTip({ title: 'The gate', lines: ['A breach'] }, 270, 135);
+      assert.equal(win._chrome.tip.style.left, `${(270 + 16) / k}px`);
+      assert.equal(win._chrome.tip.style.top, `${(135 + 16) / k}px`);
+      // a fixed choice: 1 is the sheet as it was before the scale, on its next frame
+      setPref('mapScale', 1);
+      win.tick(0.05);
+      assert.equal(win._paper.k, 1);
+      assert.ok(Math.abs(win._paper.w - pw) < 1e-9);
+      assert.deepEqual(win._paperPoint(135, 270), [135, 270]);
+      win.dispose();
+      // THE HANDS LANE: the held paper's matrix maps the paper's own pixels, so the canvas's box is the paper's
+      setPref('mapScale', 'auto');
+      const holder = holderStub({ corners: () => TRAPEZIUM });
+      const w2 = open(mkWin({ ...bayDeps(), holder }));
+      assert.equal(w2._lane, 'hands');
+      assert.equal(w2._paper.k, k);
+      assert.equal(w2._chrome.ink.style.width, `${w2._paper.w}px`);
+      assert.equal(w2._chrome.ink.style.transform, quadPlacement(w2._paper.w, w2._paper.h, TRAPEZIUM).css);
+      const tr = w2._paperPoint(650, 300);
+      assert.ok(Math.abs(tr[0] - w2._paper.w) < 1e-6 && Math.abs(tr[1]) < 1e-6, 'the top-right corner is the paper\'s (w, 0)');
+      w2.dispose();
+      const css = read('src/ui/enhancedStyle.js');
+      assert.match(css, /\.hmroot \{ --hm-ui: 1; \}\n\.hmroot > :not\(\.hmstage\) \{ zoom: var\(--hm-ui, 1\); \}/, 'every piece over the sheet zoomed as one');
+    } finally { setPref('mapScale', 'auto'); delete globalThis.innerWidth; delete globalThis.innerHeight; }
+  });
+});

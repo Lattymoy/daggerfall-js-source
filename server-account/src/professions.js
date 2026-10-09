@@ -408,7 +408,8 @@ function cutsOf(act, tier, lumberjack) {
  * at a tree), the act's end on the shared clock (epoch seconds)
  * and the request's id. The id must be today's and real by the law; `at` at most ten minutes past, at any hour (ANY-HOUR,
  * 2026-10-01, Mac: "Remove the time limit for professions. Should be available at any time"); the ground as the witnesses confirmed it, or taken at the claim's word at the least it is worth (a
- * pixel's tiers 1-2 and no march or signature; a dungeon's tier 3 and no gem); the tier inside the rank; the Stores'
+ * pixel's tiers 1-2 - its veins' 1-3, UNWITNESSED-ORE (nodeLaw UNCONFIRMED_VEIN_TIER) - and no march or signature; a
+ * dungeon's tier 3 and no gem); the tier inside the rank; the Stores'
  * room decided in the harvest's own INSERT - CAP-OFF (2026-10-07, Mac: "Remove the cap on life skills"): no day's cap.
  * The yield, and a gem, are the service's dice.
  *

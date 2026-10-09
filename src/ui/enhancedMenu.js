@@ -165,6 +165,8 @@ import { legalStandingWord } from '../systems/legalBands.js';
 import { REGION_NAMES } from '../formats/mapsTables.js';   // GUILD-REP: the sheet's Affiliations box, on the Standing page
 import { hudLocked, setHudLocked, resetHudLayout, hudBarsSplit, setHudBarsSplit } from './hudLayout.js';   // HUD-MOVE: Lock UI and Reset UI
 import { enhancedHudScale as hudScaleNow, HUD_SCALE_MIN, HUD_SCALE_MAX } from './enhancedHud.js';   // PX30c
+import { mapScaleLabel, nextMapScale } from './mapScale.js';   // FIELD BUGS 2026-10-09e MAP-SCALE: the Maps row
+import { standingGroups } from '../systems/factionStanding.js';   // FIELD BUGS 2026-10-09e EVERY-STANDING: every organization's reputation
 import { playerEntity } from '../characters/playerEntity.js';
 // PX6: the Stats page's skill labels - the one home (systems/skills.js).
 import { SKILLS, SKILL_NAMES } from '../systems/skills.js';
@@ -2378,6 +2380,32 @@ function hudScaleRow() {
   return row;
 }
 
+/** FIELD BUGS 2026-10-09e MAP-SCALE ("Desktop client in-game map icons and text too small on high resolutions"): the
+ *  held map's interface scale, on the prefs shelf (uiPrefs.mapScale) - Auto (the screen's height over 1080) or a fixed
+ *  scale, stepped through MAP_SCALE_CHOICES (ui/mapScale.js). An open map takes it on its next frame. */
+function mapScaleRow() {
+  const row = el('div', 'row');
+  row.dataset.opt = 'mapScale'; row.dataset.pref = 'mapScale';   // ORG2
+  const main = el('div', 'row-main');
+  main.append(el('div', 'row-name', 'Map text and icons'), el('div', 'row-note', 'The world, town and dungeon maps. Auto grows them on screens taller than 1080p.'));
+  row.append(main);
+  const ctl = el('div', 'ctl');
+  const h = () => globalThis.innerHeight || 0;
+  const val = el('span', 'val', mapScaleLabel(getPref('mapScale'), h()));
+  const step = (dir, label) => {
+    const b = el('button', 'step', label);
+    b.onclick = () => {
+      const next = nextMapScale(getPref('mapScale'), dir);
+      setPref('mapScale', next);
+      val.textContent = mapScaleLabel(next, h());
+    };
+    return b;
+  };
+  ctl.append(step(-1, '\u2039'), val, step(1, '\u203a'));
+  row.append(ctl);
+  return row;
+}
+
 /** HUD-MOVE: LOCK UI and RESET UI. Locked (the default) the HUD stands still and takes no pointer; unlocked, every
  *  piece - the vitals, the hotbar, the chat, the compass, the Overworld's panel and the rest - is outlined in play and
  *  moves with a drag of the freed mouse. Reset puts every piece back where the game stands it. */
@@ -2530,6 +2558,9 @@ function portRowsControls() {
 function portRowsInterface({ pause = false } = {}) {
   const out = [];
   out.push(hudScaleRow());
+  out.push(mapScaleRow());   // MAP-SCALE
+  out.push(prefRow('standingAll', 'Every faction\'s standing',
+    'Your reputation with every guild, temple, knightly order, kingdom, coven, vampire clan and Daedric Prince on the character sheet\'s Standing page - not only the ones you belong to.'));   // EVERY-STANDING
   if (isEnhanced()) out.push(...hudLayoutRows());   // HUD-MOVE: the Enhanced Plus HUD's own - Classic draws none of it
   // FOEBAR1: the target bar's face is a two-way choice, not a switch - the
   // stick-position row's shape: a row whose button names the OTHER option.
@@ -4449,6 +4480,22 @@ function statsStanding(detail) {
   statsDress(detail, playerEntity);
   statsLaw(detail, playerEntity);
   statsGuilds(detail, playerEntity);
+  if (getPref('standingAll')) statsEveryStanding(detail, playerEntity);   // EVERY-STANDING
+}
+
+/** FIELD BUGS 2026-10-09e EVERY-STANDING ("Could we have a setting to see our reputation with every guild/kingdoms?" -
+ *  expelled from the Mages Guild, the way back in had no number on the screen): with the Interface tab's Character
+ *  sheet row on, every organization's reputation under its own divider - the guilds and temples the player is not in,
+ *  the knightly orders, the kingdoms, the covens, the clans, the Daedra (systems/factionStanding.js). */
+export function statsEveryStanding(detail, entity) {
+  for (const g of standingGroups(entity)) {
+    detail.append(pxDivider(g.title));
+    for (const r of g.rows) {
+      const row = el('div', 'px-stat px-org');
+      row.append(el('span', 'k', r.name), signedRep(r.rep));
+      detail.append(row);
+    }
+  }
 }
 
 /** DRESS1 (2026-09-30, Discord: "Add positive and negative reputation buffs for clothing items"): what the worn clothes

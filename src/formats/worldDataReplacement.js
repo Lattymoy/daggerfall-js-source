@@ -31,6 +31,7 @@ import { BLOCK_TYPES, RDB_RESOURCE_TYPES } from './blocksFile.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { setWorldDataDoor } from './worldDataDoor.js';
 import { curateBlockPeople } from '../world/curatedPeople.js';   // QUEST-AUDIT II TEMPLE-SUMMONER: the temples' summoners, at the one door
+import { curateBlockPlacements } from '../world/curatedPlacements.js';   // FIELD BUGS 2026-10-09e HILL-HOUSE: a house the pack's hills bury, at the same door
 
 export const AUTO_MAP_DATA_SIZE = 64 * 64;   // :45
 const NO_REPLACEMENT = Symbol('noReplacement');   // the C#'s noReplacementRegion/Location/Block/Building sentinels
@@ -439,6 +440,7 @@ export function getDFBlockReplacementData(block, blockName) {
     const dfBlock = blockFromJson(json, block, blockName);
     if (blockName.endsWith('.RMB')) replaceRmbBlockBuildingData(blockName, block, dfBlock);
     curateBlockPeople(dfBlock, liveAsset(blockReplacementFilename(blockName, variant))?.vendor);   // QUEST-AUDIT II TEMPLE-SUMMONER
+    curateBlockPlacements(dfBlock, liveAsset(blockReplacementFilename(blockName, variant))?.vendor);   // HILL-HOUSE
     return dfBlock;
   }
   const cached = blocks.get(blockKey);
@@ -454,6 +456,8 @@ export function getDFBlockReplacementData(block, blockName) {
   if (blockName.endsWith('.RMB')) replaceRmbBlockBuildingData(blockName, block, dfBlock);   // :382-384 - RMB blocks only
   // QUEST-AUDIT II TEMPLE-SUMMONER: a Beautiful Villages temple stands its deity's Daedra summoner (world/curatedPeople.js)
   curateBlockPeople(dfBlock, liveAsset(blockReplacementFilename(blockName, variant))?.vendor);
+  // FIELD BUGS 2026-10-09e HILL-HOUSE: TEMPASD1's House2 #6, out of the author's hills (world/curatedPlacements.js)
+  curateBlockPlacements(dfBlock, liveAsset(blockReplacementFilename(blockName, variant))?.vendor);
   cacheBlock(blockKey, dfBlock);
   console.log(`[worlddata] Found DFBlock override: ${blockName} (index: ${block})`);
   return dfBlock;
