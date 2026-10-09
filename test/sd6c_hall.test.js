@@ -17,10 +17,10 @@ import {
   SD_FRAY_RING, SD_BRIDGE, SD_FIRST_STEP, SD_HALL_FLOORS,
 } from '../src/world/sdHall.js';
 import {
-  hallArt, hallFaceArt, hallEmblemArt, hallPlaqueArt, hallGlowArt, SD_SIGNS, SD_PIPS, SD_HALL_FACE_RECORD, SD_HALL_EMBLEM_RECORD,
-  SD_HALL_PLAQUE_RECORD, SD_HALL_GLOW_RECORD, SD_GLOW_COLORS, SD_HALL_ART_SIZE, SD_EMBLEM_SIZE,
+  hallArt, hallAtlasArt, hallGlowArt, atlasUv, SD_SIGNS, SD_PIPS, SD_HALL_ATLAS, SD_HALL_ATLAS_RECORD, SD_HALL_GLOW_RECORD, SD_GLOW_COLORS,
 } from '../src/world/sdHallArt.js';
-import { createSdHall, sdStoneKey, sdPlaqueKey, SD_HALL_TEXT, SD_HALL_SOUNDS, SD_HAND_RATE, SD_FRAY_FULL_MS, SD_BRIDGE_LAY_MS } from '../src/scenes/sdHall.js';
+import { createSdHall, sdStoneKey, sdPlaqueKey, SD_HALL_TEXT, SD_HALL_SOUNDS, SD_HAND_RATE, SD_FRAY_FULL_MS, SD_BRIDGE_LAY_MS, SD_CONCORD_MS } from '../src/scenes/sdHall.js';
+import { SD_BRIDGE_PLATES } from '../src/world/sdHall.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const near = (a, b, e = 1e-6) => a.every((v, i) => Math.abs(v - b[i]) < e);
@@ -28,6 +28,17 @@ const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a
 const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 const overlap = (p, q) => [0, 1, 2].every((k) => p.min[k] < q.max[k] && q.min[k] < p.max[k]);
 const bearing = (x, z) => ((Math.atan2(x - SD_ORRERY.x, z - SD_ORRERY.z) * 180) / Math.PI + 360) % 360;
+/** SD-LOOK S10: a model's triangles `{ rec, P, U, N }` (positions in the realm's frame), sequential indices. */
+const trisOfModel = (m) => {
+  const out = [];
+  for (const sm of m.subMeshes) for (let k = sm.startIndex; k < sm.startIndex + sm.primitiveCount * 3; k += 3) {
+    const v = [0, 1, 2].map((j) => m.indices[k + j]);
+    out.push({ rec: sm.textureRecord, P: v.map((q) => dungeonToRealm(m.positions[q * 3], m.positions[q * 3 + 1], m.positions[q * 3 + 2])), U: v.map((q) => [m.uvs[q * 2], m.uvs[q * 2 + 1]]), N: [m.normals[v[0] * 3], m.normals[v[0] * 3 + 1], m.normals[v[0] * 3 + 2]] });
+  }
+  return out;
+};
+/** Whether every uv of a triangle falls in an atlas cell. */
+const inCell = (U, cell) => U.every(([u, v]) => u * SD_HALL_ATLAS.size >= cell[0] && u * SD_HALL_ATLAS.size <= cell[0] + cell[2] && v * SD_HALL_ATLAS.size >= cell[1] && v * SD_HALL_ATLAS.size <= cell[1] + cell[3]);
 
 test('SD6c the layout: each stone faces the hall\'s centre, its right the right of one who faces it as the screen shows it (the game\'s own camRight - AUDIT SD II: it was lookAt\'s, the mirror\'s); its two handles on its face, the right forward; no handle\'s box near another\'s; the plaques on the rim, numbered clockwise from the walk in, none on the walk in or the way on (mutants: a stone turned away; the handles swapped)', () => {
   for (let i = 0; i < SD_STONES.length; i++) {
@@ -84,16 +95,18 @@ test('SD6c THE HAND: on its dial, standing off the face, the twelfth hour straig
 test('SD6c the models: the hall\'s standing parts by record - each stone\'s dial and sign facing the hall, the plaques, the first step; the dial\'s light in its six segments clockwise from the twelfth; the fray a step a turn round the rim; the bridge from the rim to the first step, facing up (mutants: the lit ring at the wrong hours; the fray backwards)', () => {
   const hall = buildHallModel();
   const recs = hall.subMeshes.map((s) => s.textureRecord);
-  for (const r of [SD_HALL_FACE_RECORD, ...SD_STONES.map((_, i) => SD_HALL_EMBLEM_RECORD + i), ...SD_PIPS.map((_, k) => SD_HALL_PLAQUE_RECORD + k), 0, 1, 2]) assert.ok(recs.includes(r), `record ${r}`);
+  for (const r of [SD_HALL_ATLAS_RECORD, 0, 1, 2]) assert.ok(recs.includes(r), `record ${r}`);   // PIN MOVED (SD-LOOK S10): the signs, dials and plaques one atlas's cells
   assert.ok(hall.subMeshes.every((s) => s.textureArchive === SD_REALM_ARCHIVE));
   for (let k = 0; k < hall.normals.length; k += 3) assert.ok(Math.abs(Math.hypot(hall.normals[k], hall.normals[k + 1], hall.normals[k + 2]) - 1) < 1e-5);
-  // each sign faces the hall: its sub-mesh's normal is its stone's n
+  // each sign faces the hall: its relief's face (the atlas's emblem cell) looks along its stone's n, on its own stone
+  const tris = trisOfModel(hall);
   for (let i = 0; i < SD_STONES.length; i++) {
-    const sm = hall.subMeshes.find((s) => s.textureRecord === SD_HALL_EMBLEM_RECORD + i);
-    const v = sm.startIndex * 3;
-    assert.ok(near([hall.normals[v], hall.normals[v + 1], hall.normals[v + 2]], stoneFrame(i).n, 1e-5), `sign ${i} faces the hall`);
-    const p = dungeonToRealm(hall.positions[v], hall.positions[v + 1], hall.positions[v + 2]);
-    assert.ok(Math.hypot(p[0] - SD_STONE_POS[i].x, p[2] - SD_STONE_POS[i].z) < SD_STONE_SIZE.w, 'on its own stone');
+    const sign = tris.filter((t) => t.rec === SD_HALL_ATLAS_RECORD && inCell(t.U, SD_HALL_ATLAS.emblem[i]));
+    assert.equal(sign.length, 2, `sign ${i}: one face`);
+    for (const t of sign) {
+      assert.ok(near(t.N, stoneFrame(i).n, 1e-5), `sign ${i} faces the hall`);
+      assert.ok(t.P.every((p) => Math.hypot(p[0] - SD_STONE_POS[i].x, p[2] - SD_STONE_POS[i].z) < SD_STONE_SIZE.w), 'on its own stone');
+    }
   }
   // the first step's floor: a disc round its centre
   const floor = hall.subMeshes.find((s) => s.textureRecord === 0);
@@ -108,28 +121,31 @@ test('SD6c the models: the hall\'s standing parts by record - each stone\'s dial
       const p = dungeonToRealm(lit.positions[k], lit.positions[k + 1], lit.positions[k + 2]), r = Math.hypot(p[0] - SD_ORRERY.x, p[2] - SD_ORRERY.z);
       assert.ok(r >= SD_LIT_RING.r0 - 1e-3 && r <= SD_LIT_RING.r1 + 1e-3);
       seen.add(Math.floor(bearing(p[0], p[2]) / 60));
-      assert.ok(lit.normals[k + 1] > 0.99, 'facing up');
+      if (p[1] > SD_LIT_RING.rise - 1e-6) assert.ok(lit.normals[k + 1] > 0.99 || Math.abs(lit.normals[k + 1]) < 1e-6, 'its top facing up, its sides upright');   // PIN MOVED (SD-LOOK S10): a plate risen, its sides too
     }
+    assert.equal(trisOfModel(lit).filter((t) => t.P.every((p) => Math.abs(p[1] - SD_LIT_RING.rise) < 1e-6)).length, n * 16, 'each plate\'s top, up');
     assert.deepEqual([...seen].sort(), [...Array(n).keys()], `the first ${n} segments, clockwise from the twelfth`);
   }
   // the fray
   assert.equal(buildFrayModel(0), null);
-  for (const f of [1, 12, 48]) {
-    const fr = buildFrayModel(f);
-    assert.equal(fr.positions.length / 3, f * 6, 'a step a turn');
+  // PIN MOVED (SD-LOOK S10): the fray's 48 tabs, one up a turn - the ones up in its ember, clockwise from the twelfth
+  for (const f of [1, 12, 47]) {
+    const fr = buildFrayModel(f), up = trisOfModel(fr).filter((t) => t.rec === SD_HALL_GLOW_RECORD.fray);
+    assert.equal(up.length, f * 10, 'a tab a turn');
     let most = 0;
-    for (let k = 0; k < fr.positions.length; k += 3) {
-      const p = dungeonToRealm(fr.positions[k], fr.positions[k + 1], fr.positions[k + 2]), r = Math.hypot(p[0] - SD_ORRERY.x, p[2] - SD_ORRERY.z);
-      assert.ok(r >= SD_FRAY_RING.r0 - 1e-3 && r <= SD_FRAY_RING.r1 + 1e-3 && fr.normals[k + 1] > 0.99);
-      most = Math.max(most, (bearing(p[0], p[2]) + 359.9) % 360 + 0.1);
+    for (const t of trisOfModel(fr)) for (const p of t.P) {
+      const r = Math.hypot(p[0] - SD_ORRERY.x, p[2] - SD_ORRERY.z);
+      assert.ok(r >= SD_FRAY_RING.r0 - 0.05 && r <= SD_FRAY_RING.r1 + 0.05);
     }
+    for (const t of up) for (const p of t.P) most = Math.max(most, (bearing(p[0], p[2]) + 359.9) % 360 + 0.1);
     assert.ok(most <= (f / 48) * 360 + 1e-3, `${f}: clockwise from the twelfth`);
   }
   const bridge = buildBridgeModel();
   for (let k = 0; k < bridge.positions.length; k += 3) {
     const p = dungeonToRealm(bridge.positions[k], bridge.positions[k + 1], bridge.positions[k + 2]);
-    assert.ok(p[2] >= SD_BRIDGE.z0 - 1e-3 && p[2] <= SD_BRIDGE.z1 + 1e-3 && bridge.normals[k + 1] > 0.99);
+    assert.ok(p[2] >= SD_BRIDGE.z0 - 1e-3 && p[2] <= SD_BRIDGE.z1 + 1e-3);
   }
+  assert.equal(trisOfModel(bridge).filter((t) => t.N[1] > 0.99 && t.P.every((p) => Math.abs(p[1] - SD_BRIDGE.y) < 1e-6)).length, SD_BRIDGE_PLATES.n * 2, 'its plates\' tops facing up');   // PIN MOVED (SD-LOOK S10): twelve plates, their sides
   assert.ok(SD_BRIDGE.z0 < SD_ORRERY.z + SD_ORRERY.r && SD_BRIDGE.z1 > SD_FIRST_STEP.z - SD_FIRST_STEP.r, 'it reaches into both');
 });
 
@@ -154,29 +170,31 @@ test('SD6c THE FLOORS: the bridge and the first step stand in the collider from 
 });
 
 test('SD6c THE ART: a dial of twelve equal hours; six signs, each its own; plaques numbered in pips; glows their own light - every picture drawn y up (mutants: a sign the same as another; a plaque\'s pips miscounted)', () => {
+  // PIN MOVED (SD-LOOK S10): the dial, the signs and the plaques' pips are cells of the hall's one atlas (records 5-20 its)
   const recs = hallArt().map(([r]) => r);
-  assert.deepEqual(recs, [SD_HALL_FACE_RECORD, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]);
-  const px = (img, u, v) => { const S = img.width, x = Math.floor(((u + 1) / 2) * S), y = Math.floor(((v + 1) / 2) * S), i = (y * S + x) * 4; return img.colors.slice(i, i + 3); };
-  const bright = (c) => c[0] + c[1] + c[2] > 400;
-  const face = hallFaceArt();
-  for (let h = 0; h < 12; h++) { const a = (h / 12) * Math.PI * 2; assert.ok(bright(px(face.albedo, 0.72 * Math.sin(a), 0.72 * Math.cos(a))), `hour ${h} marked`); assert.ok(!bright(px(face.albedo, 0.72 * Math.sin(a + 0.26), 0.72 * Math.cos(a + 0.26))), 'between them dark'); }
-  assert.equal(face.albedo.width, SD_HALL_ART_SIZE);
+  assert.deepEqual(recs, [SD_HALL_ATLAS_RECORD, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]);
+  const atlas = hallAtlasArt().albedo, S = SD_HALL_ATLAS.size;
+  assert.equal(atlas.width, S);
+  /** A cell's texel at (u, v) in [-1, 1], y up. */
+  const px = (cell, u, v) => { const x = cell[0] + Math.floor(((u + 1) / 2) * cell[2]), y = cell[1] + Math.floor(((v + 1) / 2) * cell[3]), i = (y * S + x) * 4; return atlas.colors.slice(i, i + 3); };
+  const bright = (c) => c[0] + c[1] + c[2] > 380;
+  for (let h = 0; h < 12; h++) { const a = (h / 12) * Math.PI * 2; assert.ok(bright(px(SD_HALL_ATLAS.dial, 0.72 * Math.sin(a), 0.72 * Math.cos(a))), `hour ${h} marked`); assert.ok(!bright(px(SD_HALL_ATLAS.dial, 0.72 * Math.sin(a + 0.26), 0.72 * Math.cos(a + 0.26))), 'between them dark'); }
   const masks = SD_SIGNS.map((sign) => { let bits = ''; for (let y = -0.9; y < 0.9; y += 0.06) for (let x = -0.9; x < 0.9; x += 0.06) bits += sign(x, y) >= 1 ? '1' : '0'; return bits; });
   for (let i = 0; i < masks.length; i++) {
     const on = [...masks[i]].filter((b) => b === '1').length;
     assert.ok(on > 40, `sign ${i} has a body`);
     for (let j = i + 1; j < masks.length; j++) { let diff = 0; for (let k = 0; k < masks[i].length; k++) if (masks[i][k] !== masks[j][k]) diff++; assert.ok(diff > 60, `signs ${i} and ${j} differ`); }
   }
-  assert.equal(hallEmblemArt(0).albedo.width, SD_EMBLEM_SIZE);
-  const emblems = SD_SIGNS.map((_, i) => hallEmblemArt(i).albedo.colors);
+  const cellOf = (cell) => { const out = []; for (let y = 0; y < cell[3]; y++) for (let x = 0; x < cell[2]; x++) out.push(atlas.colors[((cell[1] + y) * S + cell[0] + x) * 4]); return out; };
+  const emblems = SD_HALL_ATLAS.emblem.map(cellOf);
   for (let i = 0; i < emblems.length; i++) for (let j = i + 1; j < emblems.length; j++) {
-    let diff = 0; for (let k = 0; k < emblems[i].length; k += 4) if (emblems[i][k] !== emblems[j][k]) diff++;
+    let diff = 0; for (let k = 0; k < emblems[i].length; k++) if (emblems[i][k] !== emblems[j][k]) diff++;
     assert.ok(diff > 500, `stones ${i} and ${j} wear different signs`);
   }
   for (let k = 0; k < SD_PIPS.length; k++) {
     assert.equal(SD_PIPS[k].length, k + 1);
-    const img = hallPlaqueArt(k).albedo;
-    for (const [x, y] of SD_PIPS[k]) assert.ok(bright(px(img, x * 0.75, y * 0.75)), `plaque ${k}'s pip`);
+    const cell = SD_HALL_ATLAS.ledger[k], cx = cell[0] + (cell[2] / 2 - 1) / 2 + 0.5, cy = cell[1] + cell[3] / 2;
+    for (const [x, y] of SD_PIPS[k]) { const X = Math.round(cx + x * 11 - 1.5) + 1, Y = Math.round(cy + y * 13 - 1.5) + 1, i = (Y * S + X) * 4; assert.ok(bright(atlas.colors.slice(i, i + 3)), `ledger ${k}'s pip`); }
     // a die's face reads the same turned half round (none to read backwards)
     const set = (p) => p.map(([x, y]) => `${x},${y}`).sort().join(' ');
     assert.equal(set(SD_PIPS[k]), set(SD_PIPS[k].map(([x, y]) => [-x === 0 ? 0 : -x, -y === 0 ? 0 : -y])));
@@ -186,6 +204,7 @@ test('SD6c THE ART: a dial of twelve equal hours; six signs, each its own; plaqu
     assert.deepEqual([...g.albedo.colors.slice(0, 3)], [...SD_GLOW_COLORS[k]]);
     assert.deepEqual([...g.emission.colors.slice(0, 3)], [...SD_GLOW_COLORS[k]], `${rec} its own light`);
   }
+  assert.ok(atlasUv(SD_HALL_ATLAS.dial, 0, 0)[0] > SD_HALL_ATLAS.dial[0] / S, 'a cell\'s uvs inside its texels');
 });
 
 /** The set over a fake renderer, engine and clock. */
@@ -207,7 +226,10 @@ test('SD6c THE SET: stood once - the hall, a hand on each dial, the bridge hidde
   assert.equal(r.hall.stand({ dynamicDraws: r.draws, collider: r.collider }), true);
   assert.equal(r.hall.stand({ dynamicDraws: r.draws, collider: r.collider }), false, 'once');
   assert.ok(r.uploads.length >= 16 && r.uploads.every(([a]) => a === SD_REALM_ARCHIVE));
-  assert.equal(r.draws.length, 1 + SD_STONES.length + 1, 'the hall, six hands, the bridge');
+  // PIN MOVED (SD-LOOK S10): and the crown gears, the bezels, the banners, the rings, the hub and its gem, the dial's flash,
+  // the Concord's band and the bridge's twelve plates (hidden until theirs)
+  const STOOD = 1 + 3 * SD_STONES.length + 1 + SD_STONES.length + 1 + 1 + 1 + SD_BRIDGE_PLATES.n + 1;
+  assert.equal(r.draws.length, STOOD, 'the hall, six hands, six gears, six bezels, the banners, six rings, the hub, the flash, the band, the plates, the bridge');
   const bridge = r.draws[r.draws.length - 1];
   assert.ok(bridge.object.matrix.every((v) => v === 0) && bridge.hidden === true, 'the bridge hidden');   // AUDIT SD II (L2 F11): and says so - no draw
   assert.deepEqual(r.floors, [['sd:hall', hallFloorTris().length + hallSolidTris().length]]);   // AUDIT SD II (L2 F2 - PIN MOVED): the stones and plaques solid with the floors
@@ -217,7 +239,7 @@ test('SD6c THE SET: stood once - the hall, a hand on each dial, the bridge hidde
   assert.deepEqual(r.hall.shown, st0, 'put there, not turned there');
   assert.equal(r.sounds.length, 0, 'no turn heard');
   assert.deepEqual(r.hall.counts, { lit: 2, fray: 4 });
-  assert.equal(r.draws.length, 1 + 6 + 1 + 2, 'the dial\'s light and the fray among the draws');
+  assert.equal(r.draws.length, STOOD + 2, 'the dial\'s light and the fray among the draws');
   // a turn: stone 1 from 11 forward to 0 - the short way, through the twelfth; its partners with it
   const i = 1, st1 = [...st0]; st1[i] = 0;
   const partners = [];
@@ -236,11 +258,11 @@ test('SD6c THE SET: stood once - the hall, a hand on each dial, the bridge hidde
   // the snap - AUDIT SD II (L2 F16 - PIN MOVED): the arc all the way round for a moment, then empty
   r.hall.frame(0.016, atStone(0), { k: 'pz', s: 1, st: st0, f: 0, lit: 2, ok: false, i: 0, a: 1, id: 'peer-x', q: 2, x: 1 });
   assert.ok(r.sounds.some((x) => x.rec === SD_HALL_SOUNDS.toll), 'the toll');
-  assert.equal(r.hall.counts.fray, SD_FRAY_RING.steps, 'full at the snap');
+  assert.equal(r.hall.counts.fray, o.fray, 'full at the snap');   // PIN MOVED (SD-LOOK S10): every tab up - its Hollow's own count
   r.tick(SD_FRAY_FULL_MS);
   r.hall.frame(0.016, atStone(0), null);
   assert.equal(r.hall.counts.fray, 0);
-  assert.equal(r.draws.length, 1 + 6 + 1 + 1, 'no fray to draw');
+  assert.equal(r.draws.length, STOOD + 1, 'no fray to draw');
   // another slot's word: nothing
   r.hall.frame(0.016, atStone(0), { k: 'pz', s: 2, st: [0, 0, 0, 0, 0, 0], f: 0, lit: 6, ok: true });
   assert.equal(r.hall.concord, false);
@@ -250,14 +272,16 @@ test('SD6c THE SET: stood once - the hall, a hand on each dial, the bridge hidde
   assert.ok(r.sounds.some((x) => x.rec === SD_HALL_SOUNDS.chime));
   assert.deepEqual(r.said, [SD_HALL_TEXT.concord]);
   // AUDIT SD III (V10, PIN MOVED): LAID out across the void from the hall's rim over SD_BRIDGE_LAY_MS, then whole - it
-  // stood whole in a frame
-  assert.equal(bridge.hidden, false, 'drawn');
-  assert.ok(bridge.object.matrix[10] < 0.01, 'its length not yet laid');
-  r.tick(SD_BRIDGE_LAY_MS / 2); r.hall.frame(0.016, atStone(0), null);
-  assert.ok(bridge.object.matrix[10] > 0.5 && bridge.object.matrix[10] < 1, `half the time, most of the way: ${bridge.object.matrix[10].toFixed(3)}`);
-  const z0 = realmToDungeon(SD_BRIDGE.x, 0, SD_BRIDGE.z0)[2], k = bridge.object.matrix[10];
-  assert.ok(Math.abs(z0 * k + bridge.object.matrix[14] - z0) < 1e-3, 'stretched from the hall\'s rim');
+  // stood whole in a frame. PIN MOVED (SD-LOOK S10): its twelve plates flip into place from the rim out, once the rings
+  // have locked (SD_CONCORD_MS.bridgeFrom); then the one bridge, whole
+  const { plates } = r.hall.parts;
+  assert.ok(bridge.hidden && plates.every((p) => p.hidden), 'not yet: the rings swing first');
+  r.tick(SD_CONCORD_MS.bridgeFrom + SD_BRIDGE_LAY_MS / 2); r.hall.frame(0.016, atStone(0), null);
+  assert.ok(!plates[0].hidden && plates[SD_BRIDGE_PLATES.n - 1].hidden, 'from the rim out');
+  assert.ok(plates[0].object.matrix[5] > 0.99, 'the first laid flat');
+  assert.ok(bridge.hidden, 'the whole bridge not yet');
   r.tick(SD_BRIDGE_LAY_MS); r.hall.frame(0.016, atStone(0), null);
+  assert.ok(plates.every((p) => p.hidden) && bridge.hidden === false, 'the plates folded into the one bridge');
   assert.deepEqual([...bridge.object.matrix], [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1], 'the bridge laid');
   r.hall.clear();
   assert.ok(r.dropped.length >= 5, 'every mesh freed');
