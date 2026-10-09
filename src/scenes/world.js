@@ -23546,6 +23546,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     link: sdFightLink,
     feet: () => (playerSpawned && modes?.sdRealmSlot?.() != null ? player.feetAt() : null),
     shake: (k) => betterAmbience.weaponKick(k),   // the gate's door (WB13d): under the player's own maxShake
+    arrived: () => modes?.dungeonCtx?.sdEndPulse?.('exhale'),   // SD-LOOK S6: the way back's ring turns once as I arrive
   }) : null;
   /** SD9e (Super-Dungeons.md section 11): ITS SPOILS ON THE ARENA'S FLOOR (scenes/sdSpoils.js) - SD_SPEW_AT_MS into its
    *  fall, off my receipt from my own realm (sdSpoilsReceipt), thrown from where it fell; leaving the Hour gathers the
