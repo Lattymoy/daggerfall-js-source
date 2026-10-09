@@ -347,9 +347,9 @@ test('S7 THE ARENA\'S WATCH MAKES NOTHING - L2 F9\'s measure (a child with a 64 
     let k = 0;
     const tick = () => clock[(k = (k + 1) & 4095)];
     const bytes = (fn) => {
-      for (let f = 0; f < 20000; f++) fn();
+      for (let f = 0; f < 200000; f++) fn();   // ten times the Hour's own warm-up: a loaded machine finishes its compiles late, and a compile's code is counted
       let least = Infinity;
-      for (let w = 0; w < 6; w++) {
+      for (let w = 0; w < 8; w++) {
         globalThis.gc(); globalThis.gc();
         const h0 = process.memoryUsage().heapUsed;
         for (let f = 0; f < 5000; f++) fn();
