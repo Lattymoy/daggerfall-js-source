@@ -74,8 +74,8 @@
   {
     "name": "LEGACY7-dead-held-at-the-door",
     "file": "server-account/src/realm.js",
-    "old": "'SELECT 1 FROM realm_characters WHERE id = ? AND player = ? AND dead_at IS NULL').bind(id, playerId).first());   // LEGACY7: never a tombstone",
-    "new": "'SELECT 1 FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first());   // LEGACY7: never a tombstone",
+    "old": "'SELECT 1 FROM realm_characters WHERE id = ? AND player = ? AND dead_at IS NULL AND lease IS NOT NULL').bind(id, playerId).first());   // LEGACY7: never a tombstone",
+    "new": "'SELECT 1 FROM realm_characters WHERE id = ? AND player = ? AND lease IS NOT NULL').bind(id, playerId).first());   // LEGACY7: never a tombstone",
     "tests": [
       "test/legacy7_service.test.js"
     ]

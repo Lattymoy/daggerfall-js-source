@@ -53,7 +53,8 @@ so balance is an edit to one file, pinned by its own tests, never a hunt.
    keeping of the town - and everything a seat changes is layered over the game, never written into it.
 3. **A SEAT IS DECIDED WHERE NO CLIENT CAN LIE.** FACT: almost everything online trusts the client - gold and items
    live in the save, Renown XP is client-reported (bounded, never verified; `server-account/src/renownTracks.js`), a
-   duel is resolved by the defender's own machine (`src/net/duelSession.js`), and no pose is speed-checked
+   duel is resolved by the defender's own machine (`src/net/duelSession.js` - INT8, 2026-10-09: refereed by the relay
+   since, `06-Systems/Integrity-Arc.md` 5), and no pose is speed-checked
    (`validPose`, `src/net/wire.js`). A seat is a prize other guilds lose, so:
    - every influence source is **witnessed by a server** or **bounded** and worth less (4.2);
    - every siege is **refereed by the relay**, as the Oblivion Gate's boss is (`src/net/gateBrain.js`,
@@ -83,7 +84,7 @@ so balance is an edit to one file, pinned by its own tests, never a hunt.
 | Homes, decor, stations | `server-account/src/homes.js`, `decor.js`; `src/net/homeLaw.js`, `decorLaw.js` | One owner a building (map_id, building_key); `HOME_CAP` 3; entry private/party/public; stations for a licence |
 | Renown | `renown_tracks` (0009), `src/net/renown.js`, `renownTracker.js` | Online level to 50, signed into the token (`lv`); client-reported XP, 5,000 a report, 15,000 an hour an account (SILVER-WAYS: it said 20,000 - RENOWN-ACCOUNT's three quarters made it 15,000, `renown.js` RENOWN_XP_HOUR_MAX); no region recorded |
 | The Oblivion Gate | `gateLaw.js`, `gateBrain.js`, `gateReceipt.js`, relay `_gate*`, `0014_gate_kills.sql` | Relay-refereed HP, reach, rate and damage buckets; phases; `r1.` Ed25519 receipts; the day's region from a pure shuffle bag |
-| Duels | `duelSession.js`, `duelCombat.js`, `0008_duels.sql` | 1v1 on a ring 12 m in radius (`DUEL_RADIUS_M`), defender-resolved - so no duel can award anything the server keeps |
+| Duels | `duelSession.js`, `duelCombat.js`, `0008_duels.sql` | 1v1 on a ring 12 m in radius (`DUEL_RADIUS_M`), defender-resolved - so no duel can award anything the server keeps (INT8, 2026-10-09: relay-refereed since, `net/duelRef.js`, its result a signed `d1` receipt - still no prize beyond the K/D record) |
 | Parties | the hub (`chat:world` Durable Object) | `PARTY_MAX` 8 |
 | Rooms | `roomKeyFor` (`src/net/online.js`), `wire.js` | A town online is inside a 16x16-pixel cell room; `SOCKETS_MAX` 256; 32 nearest hear every pose; 8 full bodies drawn |
 | The shared clock | `sharedClassicMinutes` (`wire.js`) | A game day is 2 real hours; the relay imports the same function |

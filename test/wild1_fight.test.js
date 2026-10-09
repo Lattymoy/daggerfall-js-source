@@ -166,4 +166,23 @@ test('INT9 remains: the killer\'s piece is no pile of anyone\'s - the killer\'s 
   killer.book.onWord({ k: 'got', r: '0123456789ab', i: 0, it: { group: 'Weapons', templateIndex: 120 } });
   assert.deepEqual(killer.pack.map((i) => i.templateIndex), [120], 'the piece picked off the body, arrived');
   assert.equal(killer.book.has('0123456789ab'), true);
+  killer.book.tick();
+  assert.equal(killer.sent.length, 1, 'arrived: never asked again before the room\'s `rm`');
+});
+
+test('INT9 (AUDIT) remains: the killer\'s ask that never left (the socket, the gate) is asked again on the next frame - it was asked once, at the room\'s word, and lost for good; a remains said here once is known after it empties (a seizure is never asked of one its fallen laid) (mutants: the ask never retried; an emptied remains forgotten)', () => {
+  const sent = [], p = pool(), pack = [];
+  let open = false;
+  const book = createWildRemains({
+    send: (d) => { if (!open) return false; sent.push(d); return true; }, pool: () => p, toScene: (x) => x, mine: () => false, pack: () => pack,
+    mint: (list) => list.map((it) => ({ ...it })), addItem: (list, it) => list.push(it), stacksWith: sameKind, now: () => 0, me: () => 'acct-bo',
+  });
+  book.setRoom('world:25,7'); book.setPool(p);
+  book.onWord({ k: 'ri', r: '0123456789ab', p: [0, 0, 0], nm: 'Ria', os: 'acct-ria', oid: 'peer-0001', ttl: 600_000, off: 0, items: [{ group: 'Weapons', templateIndex: 120 }], end: 1, wk: 'acct-bo', wi: 0 });
+  assert.deepEqual(sent, [], 'the socket refused it');
+  open = true;
+  book.tick();
+  assert.deepEqual(sent, [{ k: 'take', r: '0123456789ab', i: 0, n: 1 }], 'asked again');
+  book.onWord({ k: 'gone', r: '0123456789ab' });
+  assert.equal(book.has('0123456789ab'), true, 'said here once: known');
 });

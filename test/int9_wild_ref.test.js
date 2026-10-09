@@ -21,11 +21,11 @@ import { takeWildDeath, wornOffer, wildRecord, wildPickOf, wildDropCandidates, w
 import { WILD_PARTY_TRUCE_MS } from '../src/systems/wildZone.js';
 import { TEMPLATES } from '../src/systems/itemKinds.js';
 import { WILD_BODY_MS } from '../src/net/wildFight.js';
-import { validWildData, validWildRefOut, WILD_ITEMS_MAX, WILD_REMAINS_ITEMS_MAX, WILD_REF_RELAY_MIN, relaySupportsWildRef, RELAY_VERSION, WILD_ORDER_MAX, worldRoom, PIXEL_UNITS, WILD_DATA_MAX } from '../src/net/wire.js';
+import { validWildData, validWildRefOut, WILD_ITEMS_MAX, WILD_REMAINS_ITEMS_MAX, WILD_REF_RELAY_MIN, relaySupportsWildRef, RELAY_VERSION, WILD_ORDER_MAX, worldRoom, PIXEL_UNITS, WILD_DATA_MAX, SOCIAL_ROOM } from '../src/net/wire.js';
 import { OnlineSession, WILD_ZONE_KEEP_MS } from '../src/net/online.js';
 import { wildChunks } from '../src/systems/wildDeath.js';
 import { fakeSocketClass } from './fakeSocket.mjs';
-import { fakeRoom } from './fakeRoom.mjs';
+import { fakeRoom, fakeRooms } from './fakeRoom.mjs';
 import { standService } from './accountDb.mjs';
 import { seatRealm } from './realmSeat.mjs';
 import { WILD_FALLS_KEEP_S } from '../server-account/src/wild.js';
@@ -548,6 +548,29 @@ test('INT9 (AUDIT) THE RELAY, A FALL KEPT: a fall waiting on its pick is kept in
   await r.drop(a);
   assert.equal(r.room._wildRef.fighters.get('acct-peer-0001').zone, false, 'out of the zone');
 }));
+
+test('INT9 (AUDIT) THE RELAY, KIN AT THE HUB: a blow between two of one party never lands, nor under its truce (a party one of them left inside WILD_REF.truceMs) - the hub\'s word, asked over the real door; past the truce they are strangers; a hub that does not answer is KIN (it answered strangers) (mutants: the party unread; the truce unread; the truce endless; a silent hub strangers)', async () => {
+  const realNow = Date.now; let clock = T * 1000; Date.now = () => clock;
+  try {
+    const world = fakeRooms({ now: () => clock });
+    const hub = world.room(SOCIAL_ROOM), r = world.room(CELL);
+    const join = async (room, id, x) => { const ws = room.connect(); await room.hello(ws, id, P(x), { lv: 10, look: LOOK(), rc: 1, ci: CI[id] }); await room.raw(ws, JSON.stringify({ t: 'wild', data: { k: 'zone', z: 1 } })); return ws; };
+    const hit = async (room, a, b, n) => { clock += 300; await room.raw(a, JSON.stringify({ t: 'wild', data: { k: 'strike', to: 'peer-0002', n, by: 'melee', p: W(-1), d: 999 } })); return refs(b, 'hp').length; };
+    hub.store.set('acct:acct-peer-0001', { party: 'p1' }); hub.store.set('acct:acct-peer-0002', { party: 'p1' });
+    const a = await join(r, 'peer-0001', -1), b = await join(r, 'peer-0002', 1);
+    assert.equal(await hit(r, a, b, 1), 0, 'one party: no blow');
+    hub.store.set('acct:acct-peer-0002', { party: null, partyWas: { id: 'p1', at: clock } }); hub.wake();
+    clock += 61_000;   // the room's word on the pair, asked again
+    assert.equal(await hit(r, a, b, 2), 0, 'under the truce: no blow');
+    clock += WILD_REF.truceMs;
+    hub.wake();
+    assert.equal(await hit(r, a, b, 3), 1, 'past the truce: strangers');
+    // a hub that does not answer
+    const silent = fakeRoom(worldRoom(PX + 16, PY), { now: () => clock, ROOMS: { idFromName: (n) => n, get: () => ({ fetch: async () => { throw new Error('down'); } }) } });
+    const a2 = await join(silent, 'peer-0001', -1), b2 = await join(silent, 'peer-0002', 1);
+    assert.equal(await hit(silent, a2, b2, 4), 0, 'no answer: kin, nothing lands');
+  } finally { Date.now = realNow; }
+});
 
 // ─── THE ACCOUNT SERVICE ────────────────────────────────────────────────────────────────────────────────────────
 

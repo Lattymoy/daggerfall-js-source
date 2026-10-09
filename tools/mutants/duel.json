@@ -72,7 +72,7 @@
     ]
   },
   {
-    "name": "DUEL1-a-carried-off-duellist-loses",
+    "name": "DUEL1-a-carried-off-duellist-s-leave-told-as-a-fall",
     "file": "src/net/duelSession.js",
     "old": "      if (me && worldGroundMetres(me, d.c) > DUEL_RADIUS_M + DUEL_OUT_SLACK_M) { post({ k: 'end', to: d.peer, s: d.s, why: 'left' }); finish('left', { lost: !counting(d) }); return; }",
     "new": "      if (me && worldGroundMetres(me, d.c) > DUEL_RADIUS_M + DUEL_OUT_SLACK_M) { post({ k: 'end', to: d.peer, s: d.s, why: 'fell' }); finish('fell', { lost: true }); return; }",
@@ -111,7 +111,7 @@
     "name": "DUEL1-wire-cast-frame-takes-the-duel-s-ranges",
     "file": "src/net/wire.js",
     "old": "const CAST_RANGE_TYPES = Object.freeze([1, 2]);",
-    "new": "const CAST_RANGE_TYPES = DUEL_RANGE_TYPES;",
+    "new": "const CAST_RANGE_TYPES = Object.freeze([1, 2, 3, 4]);",
     "tests": [
       "test/duel_wire.test.js"
     ]
@@ -375,6 +375,26 @@
     "new": "",
     "tests": [
       "test/duel_session.test.js"
+    ]
+  },
+  {
+    "name": "DUEL1-the-winner-recorded-as-the-loser",
+    "file": "src/net/duelSession.js",
+    "old": "        const won = g.w !== '' && g.w === selfId(), lost = g.w !== '' && g.w !== selfId();",
+    "new": "        const lost = g.w !== '' && g.w === selfId(), won = g.w !== '' && g.w !== selfId();",
+    "tests": [
+      "test/duel_session.test.js",
+      "test/int8_duel_ref.test.js"
+    ]
+  },
+  {
+    "name": "DUEL1-a-third-player-s-blow-lands",
+    "file": "src/net/duelSession.js",
+    "old": "        if (!duel || duel.s !== g.s) return;",
+    "new": "        if (!duel) return;",
+    "tests": [
+      "test/duel_session.test.js",
+      "test/int8_duel_ref.test.js"
     ]
   }
 ]

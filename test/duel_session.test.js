@@ -19,7 +19,7 @@ import {
   DUEL_OUT_SLACK_M, DUEL_OUT_MS, DUEL_HEAL_HOLD_MS, NATIVES_PER_M, DUEL_REASK_MS, DUEL_REF_TEXT,
 } from '../src/net/duelSession.js';
 import { validDuelData, DUEL_WHY } from '../src/net/wire.js';
-import { newDuelRef, duelNote, duelOpen, duelBlow, duelBoutOf, duelForfeit, duelStep, duelEnd, duelVitals, DUEL_REF } from '../src/net/duelRef.js';
+import { newDuelRef, duelNote, duelOpen, duelBlow, duelBoutOf, duelForfeit, duelStep, duelEnd, duelVitals, duelPose, DUEL_REF } from '../src/net/duelRef.js';
 import { ROYAL_RING, SIEGE_HIT, siegeBlowMax, siegeVitality } from '../src/net/siegeRef.js';
 
 const P0 = [100000, 10, 200000];   // a world-frame point: natives on x and z, metres on y
@@ -107,7 +107,7 @@ function rig({ nearAB = true } = {}) {
   };
   /** The referee's beat, as the relay's frames drive it: a bout's clock, a fighter gone from the room, out of the ring. */
   const beat = () => {
-    for (const x of ['a', 'b']) { const b = duelBoutOf(ref, P[x].sub); if (b) { const side = b.a.sub === P[x].sub ? b.a : b.b; side.pose = pose(P[x]); if (Math.hypot((P[x].pos[0] - b.c[0]) / NATIVES_PER_M, (P[x].pos[2] - b.c[2]) / NATIVES_PER_M) > ROYAL_RING.radiusM + ROYAL_RING.outSlackM) side.outAt ??= t; else side.outAt = null; } }
+    for (const x of ['a', 'b']) duelPose(ref, P[x].sub, pose(P[x]), t);   // AUDIT INT8 (the pins' own): the referee's own pose law, never a copy of it
     const bouts = new Map(ref.bouts);
     for (const end of duelStep(ref, (sub) => P[keyOf(sub)].here, t)) close(end, bouts.get(end.s));
   };
@@ -305,14 +305,12 @@ test('DUEL1 THE RING HOLDS - INT8: AND LEAVING IT LOSES. My body carried past th
   r = duelling();
   r.P.b.pos = [r.m.a.live.c[0] + past, r.P.b.pos[1], r.m.a.live.c[2]];
   r.P.b.can = null;
-  const stay = r.P.b.pos;
   r.m.b.tick = () => {};   // B's own machine says nothing of it (a crafted client)
   r.tick(1);
   r.tick(DUEL_REF.outMs - 100);
   assert.equal(r.P.a.ends.length, 0, 'a moment past the edge is a trailing pose, not a verdict');
   r.tick(200);
   assert.deepEqual(r.P.a.ends[0], { why: 'left', won: true, lost: false, by: 'them' });
-  assert.ok(stay);
   // gone from the room: a walkover
   r = duelling();
   r.P.b.here = false;

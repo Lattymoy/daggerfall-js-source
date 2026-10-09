@@ -3335,9 +3335,6 @@ export const DUEL_WHY = Object.freeze(['declined', 'cancelled', 'busy', 'timeout
 export const DUEL_BLOWS = Object.freeze(['melee', 'arrow']);
 /** The swing a melee strike was (combat/playerWeapon.js SWING_MODS - the defender reads the mods off its own table). */
 export const DUEL_SWINGS = Object.freeze(['StrikeUp', 'StrikeDownRight', 'StrikeDownLeft', 'StrikeDown', 'StrikeLeft', 'StrikeRight']);
-/** The range types a duel's spell may name - every range that reaches ANOTHER body: a touch, a missile, a missile's
- *  blast, a blast around the caster. CasterOnly (0) lands on its caster and never rides the wire. */
-export const DUEL_RANGE_TYPES = Object.freeze([1, 2, 3, 4]);
 /** The widest duel frame: a spell record is the widest thing it carries (the cast frame's 2 KiB and a wrapper). */
 export const DUEL_FRAME_MAX = 4 * 1024;
 export const DUEL_DATA_MAX = DUEL_FRAME_MAX - 96;

@@ -873,7 +873,8 @@ projection, `castSpellOf`), and the cast frame is exactly what it was.
 columns - a player's wins are the rows naming them the winner, their losses the rows naming them the loser, so the ONE
 INSERT is the whole write. The loser reports at most once a DUEL_REPORT_GAP_S and one pair counts at most
 DUEL_PAIR_DAY_MAX a day, both measured inside that INSERT (`reportDuelLoss`); a self-duel (two tabs of one account) and a
-winner who is no account are refused. `POST /v1/duel/loss { winner }` (the session is the loser) and `POST /v1/duel/record
+winner who is no account are refused. `POST /v1/duel/loss { winner }` (the session is the loser - INT8: retired, 410;
+the relay's `d1` receipt at `/v1/duel/claim` records a duel now) and `POST /v1/duel/record
 { id }` sit behind a session; `/v1/account` carries the caller's own. The main menu's account card shows "Duels: 3 won,
 1 lost (K/D 3.00)" (the K/D is wins over losses, and no losses reads the wins); the Inspect card shows the same line
 for the player it stands for, asked by the relay's stamp and kept a minute. acct8.
@@ -943,6 +944,8 @@ INT8 retired the six of the mutual draw, the duel's heal and its fatigue floor -
 - **C1:** a duel ended away from a cell room (a Recall into a dungeon) forced every later foes frame full; only a cell
   room forces it now.
 - **D2:** Mac's "both are fully healed" had no pin; the heal's strip and its health, fatigue and magicka are pinned.
+  (INT8, 2026-10-09: the referee's vitality is the duel's own and the save's health is never touched - no heal stands to
+  pin; `06-Systems/Integrity-Arc.md` 5.)
 - **D3 (DISC21-C):** a pad player's empty-quickslot line named the keyboard's key; with the pad live it names none, as
   the chip shows a glyph.
 - **D4:** the clamp the tests drove (`clampToRing`) was not the one the motor ran; the motor runs it now.

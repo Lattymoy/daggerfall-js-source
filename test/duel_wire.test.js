@@ -5,18 +5,20 @@
 // funnel); the card frame carrying the answerer's account the same way; the session (sent only to a relay that routes
 // it, gated both ways, delivered only when addressed to me, with the stamp).
 import { test } from 'node:test';
+import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 
 import {
   parseClient, validDuelData, validCastData, relaySupportsDuel, RELAY_VERSION, DUEL_RELAY_MIN, DUEL_KINDS, DUEL_WHY,
   DUEL_FRAME_MAX, DUEL_DATA_MAX, DUEL_HZ_MAX, DUEL_IN_HZ_MAX,
-  DUEL_TEMPLATE_MAX, DUEL_MATERIAL_MAX, DUEL_DMG_MAX, DUEL_SEQ_MAX, DUEL_SWINGS, DUEL_RANGE_TYPES,
+  DUEL_TEMPLATE_MAX, DUEL_MATERIAL_MAX, DUEL_DMG_MAX, DUEL_SEQ_MAX, DUEL_SWINGS,
   CAST_HZ_MAX, DROP_STRIKES_MAX, POSE_BOUND, DUEL_REF_RELAY_MIN, relaySupportsDuelRef,
 } from '../src/net/wire.js';
 import { OnlineSession } from '../src/net/online.js';
 import { fakeRoom } from './fakeRoom.mjs';
 import { fakeSocketClass } from './fakeSocket.mjs';
 import { HEAL_SPELL } from './placeWidest.mjs';
+const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
 const quiet = (fn) => { const info = console.info, warn = console.warn; console.info = () => {}; console.warn = () => {}; try { return fn(); } finally { console.info = info; console.warn = warn; } };
 const P = [100000, 10.5, 200000];
@@ -65,7 +67,8 @@ test('DUEL1 the cast frame is exactly what it was: a touch or a ranged single ta
   // is the caster's counted number now (above), and the cast frame stands as it was
   assert.ok(validCastData({ to: 'peer-0002', level: 5, spell: HEAL_SPELL }));
   for (const rangeType of [0, 3, 4]) assert.equal(validCastData({ to: 'peer-0002', level: 5, spell: { ...HEAL_SPELL, rangeType } }), null, `a cast frame at range ${rangeType}`);
-  assert.deepEqual(DUEL_RANGE_TYPES, [1, 2, 3, 4], 'the ranges a duel\'s harmful spell reaches the opponent at (combat/duelCombat.js duelSpellOf)');
+  // AUDIT INT8 (the pins' own): DUEL_RANGE_TYPES retired with the duel's spell record - nothing read it but this line
+  assert.equal(/DUEL_RANGE_TYPES/.test(rd('src/net/wire.js')), false);
 });
 
 test('DUEL1 the parser and the version: `duel` is its own arm (after the hello, under its own door); world107 is the first relay that routes it (mutants: the frame parsed before the hello; an old relay trusted)', () => {

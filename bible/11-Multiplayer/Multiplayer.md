@@ -30,9 +30,12 @@ fighting beside each other against NPCs.
 
 **It is not** PvP, an MMO, or a shared campaign - with ONE door through the first: a DUEL (DUEL1, 2026-09-24, Mac:
 "I want to be the foundation of pvp"), consensual and bounded - two players who both said yes, in a ring of light,
-until one falls to 1 health, and both are healed after (`06-Systems/Community-Arc.md` DUEL1) - and, since WILD1
+until one falls (INT8, 2026-10-09: the relay referees it on its own vitality and signs its result - the save's health
+is never touched, nobody drops to 1 health and nothing is healed: `06-Systems/Integrity-Arc.md` 5;
+`06-Systems/Community-Arc.md` DUEL1) - and, since WILD1
 (2026-10-07), ONE PLACE where it is not consensual: the Wrothgarian Mountains, an open zone where players may fight,
-a death drops the bag and the cart and a killer takes one worn piece (`11-Multiplayer/Wild-Zone.md`). Nobody's save changes
+a death drops the bag and the cart and a killer takes one worn piece (`11-Multiplayer/Wild-Zone.md`; INT9: the relay
+referees its fights and the account service takes the drop off the record). Nobody's save changes
 shape because they played with a friend - and the one online progression, RENOWN (RENOWN1, 2026-09-24,
 Mac: "seperate unique to online but compatible"; named: "Lets officially call this Renown"), is a second level per character kept by the account service, never
 in the save, adding health and magicka only while online (`06-Systems/Accounts-And-Cloud-Saves-Arc.md` RENOWN1). It IS, since WORLD1

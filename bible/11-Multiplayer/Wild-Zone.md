@@ -102,9 +102,10 @@ ordinary dungeon.
 Two players standing in the zone may strike each other - never a member of my party, never my duel's opponent - in the
 open country and, since PVPDUNGEON (2026-10-08, the owner: "players should be able to attack each other in dungeons
 too in the pvp zone"), in its dungeons (`wildCan`, `world.js:"const wildCan = ()"`). THE RELAY REFEREES EVERY BLOW
-(INT9, 2026-10-09, `06-Systems/Integrity-Arc.md` section 5; `src/net/wildRef.js`): each socket says it stands in the
-zone (`zone`) and a blow lands only where both fighters said so, at the Royal Tourney's vitality (never the save's
-health), every strike and spell a number the striker's own sheet rolled, judged on the weapon its look holds and the
+(INT9, 2026-10-09, `06-Systems/Integrity-Arc.md` section 5; `src/net/wildRef.js`): my own cell's socket says I stand in
+the zone (`zone` - its audit: never a halo's, again at each crossing and every `WILD_ZONE_KEEP_MS`) and a blow lands only
+where both fighters said so in the same cell, at the Royal Tourney's vitality (never the save's health; the bar kept at
+the hub as I cross, whole again only unstruck and in the zone `WILD_REF.mendMs`, or away `WILD_REF.riseMs`), every strike and spell a number the striker's own sheet rolled, judged on the weapon its look holds and the
 arms its token signs, the reach from the places the relay believes; the referee's word (`wref`) says what landed, and
 a fall. There is no floor - a blow can kill. Outdoors the melee arm, the arrows and the cast
 engine's marks reach fair players through the duel's own arms (each falls through to the zone when no duel or battle
@@ -135,10 +136,13 @@ Either death, at the first dead frame, while the room is still the player's (`wi
   the law's home, a leaf the account Worker bundles; `src/systems/wildDeath.js` re-exports it).
 - DROPPED: every other thing in the bag and in the cart, into the room's remains (section 5). INT9: TAKEN OFF THE
   RECORD BY THE ACCOUNT SERVICE (`server-account/src/wild.js`, `/v1/wild/fall`), never handed over by the fallen's game:
-  the fallen's tab asks as an act on its record (checkpointed as it will rise, the same drop taken out of its pack by
-  the same law, `wildDropLaw.js:"export function takeWildDeath"`), against the relay's signed fall at a player's hand or
-  on its own nonce at a foe's; the service answers the records it took and its `remains` order over them, and the tab
-  deposits them on that order - the room keeps nothing else. WILD GOLD: and half the gold - `WILD_GOLD_LOSS` (0.5) of
+  the fallen's tab asks as an act on its record (checkpointed as it will rise; the law
+  `wildDropLaw.js:"export function takeWildDeath"` the service's alone - the killer's piece, the gold, then the drop by
+  worth), against the relay's signed fall at a player's hand or on its own nonce at a foe's, naming the room its remains
+  lie in; the service answers the records it took, what the record lost (the tab takes out exactly that -
+  `wildDropLaw.js:"export function wildTakeTook"`) and its `remains` order over them for that room, the same order each
+  asking, good its minute; and the tab deposits them on it - the room keeps nothing else (INT9's audit: each valuable
+  piece under a fresh id, the id it had the fallen's own copy). WILD GOLD: and half the gold - `WILD_GOLD_LOSS` (0.5) of
   the purse and of the cart's gold stack, as ONE pile record in the same remains (`takeWildGold`,
   `wildDropLaw.js:"export function takeWildGold"`),
   for anyone to take; the usual death penalty is not taken on top (`world.js:"const goldLost ="`). LETTERS-DROP (the
@@ -148,8 +152,8 @@ Either death, at the first dead frame, while the room is still the player's (`wi
   of the decor's kept-back list, which names the letter too.
 - WORN: kept on a death to a foe. At another player's hand, in the open country (a cell room), the killer may take
   ONE worn piece: the fallen's game shows the list (`worn`, under the fall's id), the killer's body window picks
-  (`pick`, INT9: to the relay, in the room that refereed the fall, within `WILD_REF.pickMs`), and the relay signs the
-  fall with it - the service takes that piece off the fallen's record first, and the remains hold it for the killer
+  (`pick`, INT9: to the relay, in the room that refereed the fall, within `WILD_REF.pickMs`, naming what the offer
+  showed there), and the relay signs the fall with it - the service takes that piece off the fallen's record first, and the remains hold it for the killer
   alone (their game asks for it as the room says the remains). While the body lies the fallen's socket stays in the
   room, so the signed fall reaches them; a fallen that lets `WILD_FALL_GRACE_S` (30 s) go by is seized by its killer
   (the record moved where it stands, its lease cleared). A death at a player's hand underground drops the bag and the
@@ -186,8 +190,8 @@ with the minutes left.
 - NOT A FRIEND'S (PVPDUNGEONS, the owner: "Party/guildmembers cant pick it up"): a fallen's remains are theirs and
   their foes', never their party's or their guild's. The room refuses the take
   (`server/src/index.js:"a fallen's remains are theirs and their"`) - a guildmate read off the sockets' own verified
-  guilds (the remains keep the fallen's `gi`), a party member asked of the hub (`_wdunKinOf`,
-  `server/src/index.js:"async _wdunKinOf"`, over `WDUN_INTERNAL_KIN`, kept a minute a pair, the stalest pair let go first past 512 - never the whole cache) - and a member's game
+  guilds (the remains keep the fallen's `gi` - INT9's audit: the service's order's `wg`, whoever carries it), a party member asked of the hub (`_wdunKinOf`,
+  `server/src/index.js:"async _wdunKinOf"`, over `WDUN_INTERNAL_KIN`, kept a minute a pair, the stalest pair let go first past 512 - never the whole cache; a hub that does not answer is kin, kept `WDUN_KIN_SILENT_MS`) - and a member's game
   never seeds the pile at all (`canTake`, `world.js:"canTake: (rec) =>"` and `wildRemains.js:"if (!canTake(rec))"`).
 - BESIDE THE BODY (PVPFIX, the owner: "place the pile next to the body not on top of it"): the pile stands a fixed
   step to the side of where they fell, the same on every client (`wildRemains.js:"- on top it was hidden"`) - on top
@@ -695,7 +699,9 @@ Pinned by `test/fb1009b_partytruce.test.js` and `test/tv8_party_walk.test.js`; `
 
 - INT9: a modified client can opt out of the zone's fights (never say `zone`) - it fights nobody and drops nothing to a
   player - and a death to a foe is the client's own word; it cannot opt into another's fight, keep a drop the relay's
-  fall names (its killer seizes it), or deposit anything the service did not take.
+  fall names (its killer seizes it), or deposit anything the service did not take. A fight across a cell's seam waits
+  for one of the two to cross (a fighter's bar is its own cell's), and the rest of lane 2's limits are
+  `06-Systems/Integrity-Arc.md` section 5's.
 - The maps' hiding is the receiving client's; a guildless player's own mark is never sent in the zone.
 - No player fighting inside the zone's buildings; underground no arrow is aimed at a player and no worn piece is
   claimed.

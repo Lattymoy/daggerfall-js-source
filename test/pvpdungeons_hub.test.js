@@ -112,7 +112,7 @@ test('PVPDUNGEONS relay: the hub keeps the halls - day, locks, the reset wipes t
     // PIN MOVED (INT9, 2026-10-09 - bible/06-Systems/Integrity-Arc.md lane 2): a deposit is kept only on the account
     // service's order over its records (test/int9_wild_ref.test.js) - the order minted here with the room's own key
     const R = '0123456789ab', dep = [item(1), item(2)];
-    const o = await mintRemainsOrder({ s: 'acct-a', wr: R, wh: await remainsDigest(dep, { subtle: globalThis.crypto.subtle }), wn: 2 }, (await cell.signer()).privateKey, { subtle: globalThis.crypto.subtle, nowS: Math.floor(clock / 1000) });
+    const o = await mintRemainsOrder({ s: 'acct-a', wr: R, wh: await remainsDigest(dep, { subtle: globalThis.crypto.subtle }), wn: 2, wm: CELL }, (await cell.signer()).privateKey, { subtle: globalThis.crypto.subtle, nowS: Math.floor(clock / 1000) });
     await say(ca, { k: 'fall', r: R, p: [1, 2, 3], items: dep, last: 1, o });
     await say(cc, { k: 'take', r: R, i: 0, n: 1 });
     const party = hub.store.get('acct:acct-c')?.party ?? null;
@@ -123,6 +123,7 @@ test('PVPDUNGEONS relay: the hub keeps the halls - day, locks, the reset wipes t
     // the kin cache is bounded as the relay's caches are (SCALE2b): the stalest pair goes, never the whole cache
     const relay = readFileSync(new URL('../server/src/index.js', import.meta.url), 'utf8');
     assert.doesNotMatch(relay, /this\._wdunKin\.clear\(\)/, 'never the whole cache at once');
-    assert.match(relay, /this\._wdunKin\.delete\(key\);\s*\n\s*if \(this\._wdunKin\.size >= 512\) this\._wdunKin\.delete\(this\._wdunKin\.keys\(\)\.next\(\)\.value\);\s*\n\s*this\._wdunKin\.set\(key, \{ kin, at: now \}\);/, 'the stalest pair first, and a pair asked again moves to the end');
+    // PIN MOVED (INT9's audit): a hub's silence is kept WDUN_KIN_SILENT_MS alone (its pair is kin meanwhile)
+    assert.match(relay, /this\._wdunKin\.delete\(key\);\s*\n\s*if \(this\._wdunKin\.size >= 512\) this\._wdunKin\.delete\(this\._wdunKin\.keys\(\)\.next\(\)\.value\);\s*\n\s*this\._wdunKin\.set\(key, \{ kin, at: heard \? now : now - 60_000 \+ WDUN_KIN_SILENT_MS \}\);/, 'the stalest pair first, and a pair asked again moves to the end');
   } finally { Date.now = realNow; }
 });

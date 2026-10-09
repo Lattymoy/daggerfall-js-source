@@ -299,37 +299,66 @@ touches the save's health (no heal at its end). The client duels on a refereeing
 
 - **Who fights.** The relay cannot see the map (the zone is the POLITIC map's region 16, cut by
   `systems/wildZone.js` from the files every client holds), so a socket's zone is its own word: `zone` 1 where it stands
-  in it, alive and where it fights, 0 elsewhere - said on every socket it holds and again at each welcome. A blow lands
-  only where BOTH fighters said so, never on kin: a party member, one under the party's truce (the hub keeps the party a
-  record left, `partyWas`, for `WILD_REF.truceMs`, the client's `WILD_PARTY_TRUCE_MS`), or the fighter's own duel
-  opponent.
-- **The fight.** The Royal Tourney's vitality; a fighter no player has struck for `WILD_REF.mendMs` is whole again (its
-  vitality alone - INT10); every blow and cast the referee's; `wref hp` to both, `wref fell` to the room. A fallen rises
-  whole on its next word that it stands in the zone.
-- **The fall.** The striker is its killer. The fallen's game shows its killer its worn gear (`worn`, under the fall's
-  id); the killer's body window picks ONE (`pick`, to the room that refereed the fall) within `WILD_REF.pickMs`, and the
-  relay signs the fall - `f1` `{ f, c, k, r, w }`, the fallen, its realm character, the killer, the remains' id, the
-  piece's place - and hands it to both; one away hears it at its next zone word. Unpicked, it is signed without a piece.
-- **The drop.** `/v1/wild/fall` takes it off the fallen's JUDGED record: the killer's worn piece first, the bag's and the
-  cart's drop and half the purse, by ONE law at both ends (`systems/wildDropLaw.js` takeWildDeath, fitted to one remains,
-  the rest put back) - the fallen's own act at its tab's `at` (`realmGoldAct`: checkpointed as it will rise, the same
-  drop taken out of its pack, the service asked), or its killer's SEIZURE once `WILD_FALL_GRACE_S` (30 s) has gone by
-  (the record moved where it stands, its lease cleared: a tab that never says it fell plays a record that moved under
-  it). Once a fall (`wild_falls`, by the remains' id): a second asking is answered the first's records under a fresh
-  order. A death to a foe has no receipt: the fallen's own act on its tab's nonce, its remains' id a digest of the
-  character and the nonce (asked again it is the same fall, and never a relay's id). A piece the ledger bars from leaving
-  stays (`kept`); the drop is let go, so whoever takes it up takes it as their own.
-- **The room.** The service signs what it took for the room - a `remains` order (`wr`, the records' digest `wh` and count
-  `wn`, and `wk`/`wi`: the killer's piece, theirs alone) - and the relay keeps a deposit only on that order, its records
-  digesting to it; a second carrier's deposit of a vouched remains is nothing. The killer's game asks for its piece the
-  moment the room says the remains. The cron sweeps the falls after `WILD_FALLS_KEEP_S`.
+  in it, alive and where it fights, 0 elsewhere - said on its OWN CELL'S socket alone (a halo's is none), again at its
+  welcome, at each crossing (the cell left hears 0, the one crossed into 1) and every `WILD_ZONE_KEEP_MS` while it stands
+  (`net/online.js`). A fighter is a realm character in play: a token with no `ci` makes none, and the identity mint signs
+  `rc` and `ci` only for a character whose lease is held (`server-account/src/realm.js` realmCharacterHeld - a tab
+  playing one character named a poor other, and its deaths dropped the other's record). A blow lands only where BOTH
+  fighters said so, never on kin: a party member, one under the party's truce (the hub keeps the party a record left,
+  `partyWas`, for `WILD_REF.truceMs`, the client's `WILD_PARTY_TRUCE_MS`), or the fighter's own duel opponent - and a hub
+  that does not answer is kin, for `WDUN_KIN_SILENT_MS` (the room asks again then). A socket's close takes its fighter out
+  of the zone (`wildGone`).
+- **The fight.** The Royal Tourney's vitality; every blow and cast the referee's; `wref hp` to both, `wref fell` to the
+  room. NO FREE BAR: a fighter is whole again only unstruck `WILD_REF.mendMs` AND in the zone as long (its vitality alone -
+  INT10), or away from the zone `WILD_REF.riseMs`; a word off and on keeps its bar. A fighter's bar is kept at the hub
+  after each blow (`WILD_INTERNAL_VIT`, `wildCarry`) and taken by the next room it stands in (a step into another cell
+  was a fresh bar); a fallen carried is down there too. A pose past any run is believed, and its fighter strikes nothing
+  for `WILD_REF.jumpMs` (a jump was never believed, and a gallop left the place stale for good). A fallen rises whole on
+  its word that it stands in the zone once `WILD_REF.riseMs` has gone by - the death screen's own wait (it rose on its
+  next word, where it fell).
+- **The fall.** The striker is its killer, and the referee's fall is a death on the fallen's machine whatever that says
+  (`characters/playerEntity.js` forcePlayerDeath - the SetHealth(0) door's AvoidDeath and withholding stood a fallen up).
+  The fallen's game shows its killer its worn gear (`worn`, under the fall's id, each record minted alone so its place
+  holds); the killer's body window picks ONE (`pick`, to the room that refereed the fall, with what the offer showed
+  there - `t`, `m`) within `WILD_REF.pickMs`, and the relay signs the fall - `f1` `{ f, c, k, r, w, wt }`, the fallen,
+  its realm character, the killer, the remains' id, the piece's place and what it was - and hands it to both; one away
+  hears it at its next zone word. Unpicked, it is signed without a piece; a building's or a dungeon's fall at once (no
+  body is searched there); a fall waiting on its pick is kept in the room's storage (`WILD_FALL_PREFIX`) and signed by a
+  room that restarted, and a full room's oldest is signed, never forgotten.
+- **The drop.** `/v1/wild/fall` takes it off the fallen's JUDGED record by ONE law (`systems/wildDropLaw.js`
+  takeWildDeath): the killer's worn piece first (`wildPickOf` - the piece the offer showed, else none), then half the
+  purse and the cart's coin, then the bag's and the cart's drop BY WORTH (a bag of junk ahead of them kept the gold and
+  the valuables), fitted to one remains, every record within `WILD_RECORD_BYTES_MAX`, the rest put back where it came
+  from; the record's lit light follows its piece. The service answers what it took as the game finds it again (`took`,
+  `gold` - wildTookOf), and the fallen's game takes out EXACTLY that (`wildTakeTook` - it ran the law again without the
+  ledger's word, and took what the service kept). The fallen's own act at its tab's `at` (`realmGoldAct`, its answer
+  needed: checkpointed as it will rise, the service asked, the room named), or its killer's SEIZURE once
+  `WILD_FALL_GRACE_S` (30 s) has gone by (the record moved where it stands, its lease cleared, a dead record never), laid
+  where the body fell and asked again on a word that says nothing. Once a fall (`wild_falls`, by the remains' id): a
+  second asking is answered the first's records and THE SAME ORDER, issued at its first minting for its first room (`oi`,
+  `wm`) and good its minute alone - and, for the fallen's own tab, where its record stands. A death to a foe has no
+  receipt: the fallen's own act on its tab's nonce, its remains' id a digest of the character and the nonce.
+- **The ledger.** Every piece the death could take is asked of the ledger before any is taken (`wildDropCandidates` -
+  it asked of a dry run's fitted few); a piece it bars stays (`kept`). Each valuable piece dropped lies in the remains
+  under a FRESH id, and the id it had is written down as the fallen's own copy (`ledger.js` knownCopySteps): a game that
+  kept the piece holds a copy that moves by no route, where before it held the piece again and whoever took it up was
+  charged for a copy. A crafted piece keeps its craft's key, written down the same. The save two back is dropped, as every
+  act drops it.
+- **The room.** The service signs what it took for the room - a `remains` order (`wr`, the records' digest `wh` and
+  count `wn`, the room `wm`, `wk`/`wi`: the killer's piece, theirs alone, `wg`: the fallen's guild) - and the relay keeps
+  a deposit only in the room the order names, its records digesting to it. An emptied remains is a TOMBSTONE while it
+  lives: kept, said to nobody, never laid again (it was let go, and its order laid the same records twice), never let go
+  for a newcomer younger than `WILD_TOMB_MIN_MS`. A second carrier's chunks are nothing, quietly - unless the first has
+  stalled `WILD_STALL_MS`, when the second lays it afresh. The remains' guild is the order's (the killer carrying it wrote
+  its own). The deposit goes in chunks bounded by the wire's frame. The killer's game asks for its piece the moment the
+  room says the remains, and again until the ask leaves. The cron sweeps the falls after `WILD_FALLS_KEEP_S`.
 - **Lane 1's freeze.** A record the judge holds still loses its drop, and the room is given none of it (`burnt`, no
   order): a held character hands no value to another player.
 - **THE FOUR HOSTS.** `scenes/world.js` WIRED (the zone word, the blows, the referee's readout, the fall, the drop, the
   deposit, the seizure); `scenes/dungeonContext.js` (the zone's halls) WIRED through world.js's own `wildStrike` and
-  `wildSpellOut`, refereed alike, its pool holding the remains; `scenes/worldModes.js` (a building) no fight - the zone
-  word is 0 indoors - its pool holding the remains; `scenes/exterior.js`, the offline fixed city, NOT WIRED on purpose:
-  the zone is online's alone.
+  `wildSpellOut`, refereed alike, its pool holding the remains, its ghost leaving once its deposit has gone; `scenes/
+  worldModes.js` (a building) no fight - the zone word is 0 indoors - its pool holding the remains;
+  `scenes/exterior.js`, the offline fixed city, NOT WIRED on purpose: the zone is online's alone.
 
 ### INT10 - every spell between players capped
 
@@ -342,12 +371,34 @@ crafted client's damaging cast as a siege's; it takes no cast now. Found while p
 caster's cast window on every blow (the striker is unstruck), so a crafted client cast past the rate - mend restores
 vitality alone.
 
+### 5b. The audit (2026-10-09, Mac: "Lets audit this")
+
+Five reviews ran on lane 2 as first built: the relay's referee and its races, the service and the ledger, a modified
+client's ways round both, the honest player's own paths, and the tests and the docs. What they found, and where each fix
+is told above: one fall's drop laid twice - an order re-minted on each asking, naming no room, and a room that let an
+emptied remains go (INT9, the room); a fallen that kept a dropped piece charging its taker for a copy (the ledger); the
+ledger asked of a dry run while the take ran another, and the fallen's game taking what the service kept (the drop); the
+gold last behind a bag of junk, a heavy record that fit no frame, the light left on another piece, the cart's coin put
+back into the purse (the drop); the pick an index into the fallen's own list (the fall); a word off and on a heal, a step
+into another cell a fresh bar, a rise at once where the body fell, a jump never believed (the fight); a fall forgotten by
+a full room or a restarted one, and a dungeon's signed a minute late (the fall); a closed tab a fighter for good, a hub's
+silence read as strangers, a token naming a character not in play (who fights); the referee's fall turned aside by the
+death door; the duel referee's word dropped on a halo, a bout's frames sent to another room, its readout drawn only at
+the first blow (INT8); and in the pins, a duel's ring copied by hand, a pick window read through a signed fall, asserts
+of a literal beside the value, a constant nothing read (`DUEL_RANGE_TYPES`, retired), two DUEL1 records retired whose
+laws still stand (re-aimed). The four-point duel cast path in `systems/effects.js` (`duelCast`, `bundleDuel`) is
+DORMANT: no caller sets it since INT8, kept as it stands and pinned so (`test/int8_duel_ref.test.js`).
+
 ### Decisions (2026-10-09)
 
 - **Customs** (Mac: "Your decision"): it stands as lane 1 left it - an offline character comes in whole, and its first
   judgement charges what it adds past its level's allowance to the budget, which holds nothing until staff turn it on.
 - A fight between players never touches the save's health (the sieges' law since PVP-REF), and a spell between players is
-  its harm alone: a paralysis, a drain or a slow from another player does not land, as a siege's never did.
+  its harm alone: a paralysis, a drain or a slow from another player does not land, as a siege's never did. TWO
+  DEPARTURES FROM MAC'S DUEL1 ASKS, made by this lane and told to Mac in its pull request: "Loser drops to 1HP and both
+  are fully healed on duel end" - the duel's bar is the referee's vitality now, so the loser's health is never touched
+  and nothing needs healing; and "weapons, bows and spells all count" - a spell counts by its harm alone (its other
+  families, a paralysis or a drain, do not land on another player).
 - The zone's membership is each socket's own word, and its receipts are the relay's to sign and the service's to settle.
 
 ### What lane 2 leaves open
@@ -357,8 +408,21 @@ vitality alone.
 - A death to a foe is the client's own word (the world is simulated on the player's machine): a client that never dies
   to a foe drops nothing to one.
 - A fall the relay signed whose fallen's tab and killer both never carry its receipt within its hour drops nothing.
-- A room's referee is its memory: a relay object that restarts mid-fight forgets the fight (a fall already signed is the
-  service's to settle).
+- A room's referee is its memory: a relay object that restarts mid-fight forgets the fight (a fall already signed, or
+  waiting on its pick, is kept); the hub keeps the bars a fighter carries in its memory too, and one that restarts sends
+  each fighter whole into its next room.
+- A fighter's bar is its own cell's: a blow lands only between two that stand in the same cell (a fight across a seam
+  waits for one of them to cross), and the bar crosses with it.
+- An order is good its minute: a deposit that never left inside it (the network gone for a minute) lays nothing, and the
+  drop is lost to everyone - the record lost it either way.
+- A crafted piece the fallen takes back from its own remains is written down as its copy: it wears it, and never trades
+  it (the craft's key cannot be minted afresh as an id is).
+- A pick at a piece the fallen no longer wears (it changed between the offer and the receipt) takes none.
+- A relay before world183 knows no `wref`, no `zone` and no `dref`: a client meets it fighting nobody and duelling
+  nobody. A client from before world183 still open in a tab sends the zone's retired words (WILD1's `result` and
+  `gave`) and the duel's own resolve, which the new relay refuses - it is closed for them until it reloads. The deploy
+  runs the relay first (`.github/workflows/account-deploy.yml` waits on it, `deploy.yml`'s site on the service), so a
+  reload meets the new client.
 - Boss fights are lane 3's.
 
 **Pins.** `test/int7_arms.test.js`, `test/int8_duel_ref.test.js`, `test/int9_wild_ref.test.js`,

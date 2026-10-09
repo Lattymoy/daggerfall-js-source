@@ -8,7 +8,7 @@
 // (test/fakeRoom.mjs) - a crafted client's every lie it used to tell.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 
 import { mintDuelReceipt, readDuelReceipt, verifyDuelReceipt, duelReceiptValid, DUEL_RECEIPT_V, DUEL_RECEIPT_TTL_S, DUEL_RECEIPT_MAX } from '../src/net/duelReceipt.js';
 import { newDuelRef, duelNote, duelOpen, duelBlow, duelPose, duelForfeit, duelStep, duelBoutOf, duelVitals, DUEL_REF } from '../src/net/duelRef.js';
@@ -117,7 +117,8 @@ test('INT8 THE REFEREE\'S LAW, THE END: a fighter\'s own word is its loss once t
   ({ st, bout } = opened());
   assert.deepEqual(duelForfeit(st, 'acct-a', 'yield', bout.startMs).w, 1, 'a yield: the other wins');
   ({ st, bout } = opened());
-  assert.deepEqual([duelForfeit(st, 'acct-b', 'dead', bout.startMs + 5).w, 'left'], [0, 'left'], 'fallen to something else: lost');
+  const e = duelForfeit(st, 'acct-b', 'dead', bout.startMs + 5);
+  assert.deepEqual([e.w, e.why], [0, 'left'], 'fallen to something else: lost');   // AUDIT INT8 (the pins' own): its word read, never a literal beside it
   // the ring
   ({ st, bout } = opened());
   const out = at(ROYAL_RING.radiusM + ROYAL_RING.outSlackM + 1);
@@ -255,7 +256,13 @@ test('INT8 THE CLIENT\'S CARRIER: a duel\'s receipt is either fighter\'s to carr
   assert.equal(await c.offer({ force: true }), 0, 'a refusal the service can mend: kept');
   assert.equal(await c.offer({ force: true }), 1, 'counted: let go');
   assert.deepEqual(c.list(), []);
-  assert.equal(createDuelClaims({ claim: async () => ({ ok: true }), me: () => 'acct-cccc', storage: null }).keep(rc), true);
+  assert.deepEqual(asked, [rc, rc], 'the loser offered it, twice');
+  // AUDIT INT8 (the pins' own): a stranger's game keeps what a socket handed it, and offers none of it
+  const strangerAsked = [];
+  const stranger = createDuelClaims({ claim: async (r) => { strangerAsked.push(r); return { ok: true }; }, me: () => 'acct-cccc', storage: null });
+  assert.equal(stranger.keep(rc), true);
+  await stranger.offer({ force: true });
+  assert.deepEqual(strangerAsked, [], 'a receipt naming neither fighter it plays: never offered');
   assert.equal(duelClaimSettles({ ok: false, error: 'not-yours' }), true);
   assert.equal(duelClaimSettles({ ok: false, error: 'offline' }), false);
   const online = rd('src/net/online.js');
@@ -263,4 +270,17 @@ test('INT8 THE CLIENT\'S CARRIER: a duel\'s receipt is either fighter\'s to carr
   assert.equal(/m\.t === 'dref'\) \{[^}]*if \(!primary\) return;/.test(online), false, 'never the primary alone');
   assert.ok(rd('src/scenes/world.js').includes('send: (d) => online?.sendDuel(d, { room: duelMgr?.duel && _duelRoom ? _duelRoom : null }) === true,'), 'a bout\'s frames to the room that referees it');
   assert.match(online, /this\.duelOk = relaySupportsDuelRef\(relayV\);/, 'a client duels on a refereeing relay alone');
+});
+
+test('INT8 (AUDIT) THE DUEL\'S CAST PATH IS DORMANT: no caller hands a spell to the target\'s own effects as a duel\'s (`duelCast`) since the referee holds the duel - its floor and its strip in systems/effects.js stand unread, kept as they stand (bible/06-Systems/Integrity-Arc.md 5b) (mutants: a duel opponent\'s spell applied on its target\'s machine)', () => {
+  const callers = [];
+  const walk = (dir) => {
+    for (const e of readdirSync(new URL(`../${dir}`, import.meta.url), { withFileTypes: true })) {
+      const p = `${dir}/${e.name}`;
+      if (e.isDirectory()) walk(p);
+      else if (e.name.endsWith('.js') && p !== 'src/systems/effects.js' && /duelCast:\s*true/.test(rd(p))) callers.push(p);
+    }
+  };
+  walk('src');
+  assert.deepEqual(callers, [], 'nothing sets a duel\'s cast');
 });
