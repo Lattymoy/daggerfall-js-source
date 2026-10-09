@@ -1268,6 +1268,9 @@ export function accountHomes({ fetch, storage }) {
     // character's record from anyone else's claim; and that hold given up as the deed sells at the bank
     deed: ({ mapId, buildingKey, region, character, layout = null }) => post('/v1/homes/deed', { mapId, buildingKey, region, character, layout: layout || null }),
     releaseDeed: (mapId, buildingKey) => post('/v1/homes/release', { mapId, buildingKey, deed: true }),
+    // PERMADEATH-HOUSES: a fallen member's home (`from`, their tombstoned realm character) taken up by the living realm
+    // character of their line who carries it on (`character`) - server-account/src/homes.js inheritHome
+    inherit: ({ mapId, buildingKey, character, from }) => post('/v1/homes/inherit', { mapId, buildingKey, character, from }),
   };
 }
 

@@ -473,7 +473,8 @@ than standing still.
   deed is the character's own, `systems/banking.js`, so the rows are the one played's `houses`, a deed that stands,
   learned with the SAVE that holds it and at a load - AUDIT LEGACY II A6: an unsaved purchase or sale moved the line;
   another member's rows are kept, and every row keeps its place - A5: rebuilt, "the first house" changed with whoever
-  was played). THE FAMILY HOME is the one marked on the House page, else the one
+  was played). A dead member's house stays the line's until whoever carries the line takes it up (PERMADEATH-HOUSES,
+  section 10c). THE FAMILY HOME is the one marked on the House page, else the one
   in the family's seat, else the first (`familyHome`). A parked member lives in the house their save was made in; the
   never-played and the retired in the family home. With NO house, the members live in the family's seat town as its
   townsfolk, in a residence of the town LENT to the line (`LivingTown.homeFor`, the same house for the same family -
@@ -536,6 +537,64 @@ than standing still.
 - **The House page** lists the homes - each house, whose deed, the family home marked, "Make this the family home" on
   the others - and the card says where each member lives ("At the family home in Sentinel", "In their own house",
   "In Gothway Garden, among its townsfolk", "On their own journey").
+
+## 10c. THE HOUSE OF THE DEAD (PERMADEATH-HOUSES)
+
+*Built: PERMADEATH-HOUSES (2026-10-09). The law is `systems/legacy/household.js` (`deedsDue`, `syncHouses`' `taken`,
+`heldByDead`); the host's half `scenes/legacyHost.js` (`takeDeeds`); the world's `scenes/world.js` (`legacyInheritHouse`);
+the scene handed on `systems/sceneCache.js` (`graftPermanentScene`); online `server-account/src/homes.js` (`inheritHome`,
+`/v1/homes/inherit`, acct98 - acct97 on its branch, renumbered past SERVER-POST and HOURS-FIRST at the merge). Pinned in `test/permadeath_houses.test.js`, mutation-proven in
+`tools/mutants/permadeathhouses.json` (30, all dead).*
+
+The owner (2026-10-09): "now all that needs to be looked at is what happens to houses owned by dead permadeath
+characters and I can go back to playing my family". Asked, he chose **the heir inherits**: the deed is the estate's, as
+the gold is.
+
+**What it was.** A deed is the character's own (`banking.js`), so a fallen member's stayed in a save the line refuses to
+play (THE PAST, section 3). Their row stood on in `family.houses`, so the line lived on in the house - often the family
+home - while the one carrying the line held no deed to it: its door locked at night, no bed of theirs, no cupboard. Online
+the tombstone kept its home for good (HOME1's exclusive registry, `afterTomb` touching no home): a building out of the
+world, locked to its own family.
+
+**The law.**
+- **A HOUSE WHOSE HOLDER IS DEAD IS DUE TO WHOEVER CARRIES THE LINE** (`deedsDue`): the Succession's heir once they land
+  (a newborn or a living member), or the one played when one of the line dies in the street (`kinSlain`, `kinKilled` - a
+  parked member's house). A living holder's house is theirs; a RETIRED elder keeps theirs (section 6 - "keeps the house"),
+  and the service refuses one as the client never asks it. Nothing is taken while the Succession waits, by the past played
+  back, or on a page the line has left (the tick's own guards); and never at the birth - online the first save is held to
+  a newborn's purse (`realm.js firstSaveRefusal`), so the first tick after the birth takes it up.
+- **THE DEEDS A MEMBER DIES HOLDING** are the live ones: the fall syncs them before it records the death (`onDeath`), as the
+  estate reads the live purse - a house bought since the last save is the line's, and the gold it cost left the estate
+  with it. An Enduring member who rises keeps their house; one who dies of their years leaves it, as a fall does.
+- **TAKEN WITH THE SAVE** (`deedsTaken`, the save's word as `estatePaid` is - `mergeFamily`, and a member's own save field
+  in `store.js MEMBER_SAVE_FIELDS`): the world hands the house over (below), the taker's `deedsTaken` names it, and the
+  next save that holds it makes the row theirs - in its own place (AUDIT LEGACY II A5), naming who left it (`from`; the
+  House page: "Tlist Hlaalu's deed, left by Ysolde Hlaalu"). Taken and sold before that save, the row goes. A save that never
+  took it (an older one loaded) hands it back to the dead, and it is taken up again, as an estate is paid again; so a
+  reload never loses the house and never gives it twice. Meanwhile the row is the dead's: the family lives on in it, and
+  the House page reads "The late Ysolde Hlaalu's deed - it passes to whoever carries the line".
+- **ONE A REGION** (DaggerfallBankManager's `houses[regionIndex]`): a taker who already holds another house in that
+  region cannot hold two, so the inherited one WAITS - said once a page ("... waits for you - you keep a house in that
+  region already, and the bank deeds one a region. Sell yours there to take it up."), taken up the first tick the slot is
+  free. **Departure (recorded):** offered as "sold into the estate", it waits instead - DFU prices a house off its
+  building's model (`housePrice(meshRadius)`), which only its own town's directory can read, and a waiting house is not
+  lost: the family still lives in it and the player chooses which to keep.
+
+**Handed over** (`deps.inheritHouse(row, fallen)` - `'given'`, `'waits'`, `'gone'`, or still asked):
+- **Offline** - Daggerfall's own deed (`allocateHouseToPlayer`: the slot, "<heir>'s residence" on the map, the notebook's
+  deed) in the layout the fallen's deed named it in (WD3 - the row carries `layout`), and THE HOUSE AS ITS OWNER LEFT IT:
+  its scene and its other layouts' visits out of the fallen's own newest save (`loadSlot`; the save's cache holds the live
+  interior when they saved inside it), permanent, sans corpses (`graftPermanentScene`) - the chests, the placed pieces,
+  the things set out, the furniture taken out. A slot already holding that very building is given as it stands (the
+  heir's own world's furnishing kept).
+- **Online** - the account service moves the home (`inheritHome`): a LIVING realm character of the fallen's line
+  (`lineage_id`), the fallen a tombstone that FELL, the same account, never a guild's hall; one UPDATE naming the fallen
+  as the holder, so two takers race to one answer. Everything the row owns moves with it - its pieces, its rooms and rent,
+  its entry, its sale (its `paid` - the deed's share comes back to the heir's record if they sell). Its cupboards are the
+  fallen's realm record's (HOME1: the owner's storage is the owner's save), read through `/v1/realm/<id>/data` (a
+  tombstone's record is read, never written) and grafted under the home's scene. A Knightly Order's house the realm held
+  (KNIGHT-HOUSE's deed row) is Daggerfall's bank deed as well: one a region, and the deed and its house scene given as
+  offline. A home the fallen sold after their last save reached the line is `'gone'` and leaves the line's houses.
 
 ## 11. THE UI (Enhanced Plus)
 

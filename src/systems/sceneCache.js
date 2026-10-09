@@ -232,6 +232,25 @@ export function clearSceneCache(cache, { start = true } = {}) {
   cache.scenes = kept;
 }
 
+/** PERMADEATH-HOUSES (bible/06-Systems/Legacy-Arc.md section 10c): A HOUSE'S SCENE HANDED ON - `sceneName`'s entry and
+ *  its other layouts' visits (layoutSceneName), out of ANOTHER save's cache (snapshotSceneCache's shape - a dead
+ *  member's), into `cache` as permanent scenes: the heir finds the house as its owner left it. Sans corpses, as the
+ *  world's own move keeps a permanent scene. Answers how many entries came. */
+export function graftPermanentScene(cache, snap, sceneName) {
+  let n = 0;
+  for (const e of Array.isArray(snap?.scenes) ? snap.scenes : []) {
+    const name = String(e?.sceneName ?? '');
+    if (name !== sceneName && !name.startsWith(`${sceneName}|`)) continue;
+    const d = copySceneEntry(e);
+    d.lootContainers = d.lootContainers.filter((c) => c.containerType !== LOOT_CONTAINER_TYPES.CorpseMarker);
+    cache.scenes.set(name, d);
+    cache.permanent.add(name);
+    n++;
+  }
+  cache.permanent.add(sceneName);
+  return n;
+}
+
 /** GetSceneCache / RestoreSceneCache (:150-190) - the save shape.
  *  DFU writes the cache as an ARRAY of named entries rather than a
  *  dictionary, which is what a JSON round-trip needs anyway. */

@@ -520,6 +520,16 @@ export function livesLine(family, p) {
   return sameHouse(home, familyHome(family)) ? `At the family home${where}` : `In their own house${where}`;
 }
 
+/** LEGACY-HOME: whose deed a house of the line's is, in words. PERMADEATH-HOUSES: one of the line's dead holds it until
+ *  whoever carries the line takes it up (legacyHost.js takeDeeds), and one taken up names who left it. */
+export function deedLine(family, h, holder = personOf(family, h?.by)) {
+  if (!holder) return 'A deed of the house';
+  const name = fullNameOf(holder.given, holder.surname);
+  if (!isAlive(holder)) return `The late ${name}'s deed - it passes to whoever carries the line`;
+  const from = Number.isInteger(h?.from) ? personOf(family, h.from) : null;
+  return from ? `${name}'s deed, left by ${fullNameOf(from.given, from.surname)}` : `${name}'s deed`;
+}
+
 /** An act's word, said to a reader as it changes (AUDIT LEGACY II U14). */
 function liveLine(el, said) {
   const n = el('p', said.ok ? 'fam-said' : 'fam-why', said.text);
@@ -596,7 +606,7 @@ export function drawHousePage(detail, rerender, { el, divider } = /** @type {any
       const row = el('div', 'fam-hallrow');
       const holder = personOf(family, h.by);
       row.append(el('div', 'fam-kin', `${h.location || 'A house'}${sameHouse(h, home) ? ' - the family home' : ''}`),
-        el('div', 'fam-sub', holder ? `${fullNameOf(holder.given, holder.surname)}'s deed` : 'A deed of the house'));
+        el('div', 'fam-sub', deedLine(family, h, holder)));
       if (!sameHouse(h, home) && prov.markHome) {
         const b = el('button', 'act fam-makehome', 'Make this the family home');
         b.setAttribute('aria-label', `Make ${h.location || 'this house'} the family home`);
