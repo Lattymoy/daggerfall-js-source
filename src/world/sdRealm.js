@@ -359,7 +359,7 @@ export function buildRealmModel() {
   // hands' own brass glow), a brass cap; the lights were pools from nowhere 2.4 m over the rims
   for (const p of realmLampFeet()) {
     lampBoxQuads(p, SD_LAMP_POST_W, 0, SD_LAMP_H - SD_LAMP_HEAD).forEach((q, i) => f.quad(SD_REALM_BRASS_RECORD, q[0], q[1], q[2], q[3], ...(i < 4 ? LAMP_SIDE_UV : PILLAR_TOP_UV)));
-    lampBoxQuads(p, SD_LAMP_HEAD, SD_LAMP_H - SD_LAMP_HEAD, SD_LAMP_H + SD_LAMP_HEAD).forEach((q) => f.quad(SD_HALL_GLOW_RECORD.brass, q[0], q[1], q[2], q[3], ...PILLAR_TOP_UV));
+    lampBoxQuads(p, SD_LAMP_HEAD, SD_LAMP_H - SD_LAMP_HEAD, SD_LAMP_H + SD_LAMP_HEAD, true).forEach((q) => f.quad(SD_HALL_GLOW_RECORD.brass, q[0], q[1], q[2], q[3], ...PILLAR_TOP_UV));
     lampBoxQuads(p, SD_LAMP_HEAD, SD_LAMP_H + SD_LAMP_HEAD, SD_LAMP_H + SD_LAMP_HEAD + 0.03).forEach((q) => f.quad(SD_REALM_BRASS_RECORD, q[0], q[1], q[2], q[3], ...PILLAR_TOP_UV));
   }
   return packRealmFaces(f);
@@ -369,8 +369,9 @@ const PILLAR_TOP_UV = [[0, 0], [0, 1], [1, 1], [1, 0]];
 const LAMP_SIDE_UV = [[0, 0], [0, SD_LAMP_H / 3], [0.1, SD_LAMP_H / 3], [0.1, 0]];
 /** AUDIT SD II (L2 F14): a lamp's box about its foot `p` (the realm's frame) - `w` either way across, from y0 to y1 - its
  *  four sides and its top as quads (the dungeon's frame, wound to face out), pillarQuads' own shape: one geometry for the
- *  post's draw and its collider. */
-function lampBoxQuads(p, w, y0, y1) {
+ *  post's draw and its collider. AUDIT SD IV (R4): `under` its underside too, facing down - the head hangs over the eye,
+ *  and from under it the sky showed through a ring round every post. */
+function lampBoxQuads(p, w, y0, y1, under = false) {
   const C = (dx, y, dz) => realmToDungeon(p[0] + dx, y, p[2] + dz);
   const corners = [[-w, -w], [w, -w], [w, w], [-w, w]];
   const out = [];
@@ -379,6 +380,7 @@ function lampBoxQuads(p, w, y0, y1) {
     out.push([C(ax, y0, az), C(ax, y1, az), C(bx, y1, bz), C(bx, y0, bz)]);
   }
   out.push([C(-w, y1, -w), C(-w, y1, w), C(w, y1, w), C(w, y1, -w)]);
+  if (under) out.push([C(-w, y0, -w), C(w, y0, -w), C(w, y0, w), C(-w, y0, w)]);
   return out;
 }
 /** THE ARENA'S PILLAR `k` - on the diagonals, SD_PILLAR_R out, a square SD_PILLAR_W across and SD_PILLAR_H tall: its four

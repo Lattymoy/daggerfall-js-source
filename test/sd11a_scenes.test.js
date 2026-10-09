@@ -186,7 +186,7 @@ test('AUDIT SD II L2 F2: THE STONES AND THE PLAQUES STAND - the hall stands each
     const { at, n } = plaqueFrame(k);
     assert.ok(walk(realmToDungeon(at[0] + n[0] * 2.5, 0, at[2] + n[2] * 2.5), [-n[0], 0, -n[2]], 4) < 2.5, `plaque ${k}: a body stops at it`);
   }
-  assert.equal(hallSolidTris().length / 9, SD_STONE_POS.length * 4 * 5 * 2 + SD_PLAQUE.bearings.length * 6 * 2, 'a stone\'s four boxes (its slab, its cap, its handles) and a plaque\'s post and tablet, two triangles a face');
+  assert.equal(hallSolidTris().length / 9, SD_STONE_POS.length * (4 * 5 + 1) * 2 + SD_PLAQUE.bearings.length * 6 * 2, 'a stone\'s four boxes (its slab, its cap, its handles) and a plaque\'s post and tablet, two triangles a face');   // PIN MOVED (AUDIT SD IV R4): the cap shut underneath, one face more - the draw's and the collider's one geometry
   // the press: before its face, never behind it
   const i = 2, { at, n, R } = stoneFrame(i);
   const behind = [at[0] - n[0] * 1.2 + R[0] * 1.4, 0, at[2] - n[2] * 1.2 + R[2] * 1.4];
@@ -571,7 +571,7 @@ test('AUDIT SD II L2 F14: A LAMP UNDER EVERY LIGHT - each of the Hour\'s twenty 
     assert.equal(post.length, 10, `lamp ${i}: its post, four sides and a top`);
     assert.ok(post.some((t) => t.P.some((p) => Math.abs(p[1]) < e)) && post.some((t) => t.P.some((p) => Math.abs(p[1] - (SD_LAMP_H - SD_LAMP_HEAD)) < e)), 'from the floor to its head');
     const head = tris.filter((t) => t.rec === SD_HALL_GLOW_RECORD.brass && about(f, SD_LAMP_HEAD, SD_LAMP_H - SD_LAMP_HEAD, SD_LAMP_H + SD_LAMP_HEAD)(t));
-    assert.equal(head.length, 10, `lamp ${i}: its head alight round its light`);
+    assert.equal(head.length, 12, `lamp ${i}: its head alight round its light`);   // PIN MOVED (AUDIT SD IV R4): and shut underneath - six faces, not five
     assert.ok(tris.some((t) => t.rec === SD_REALM_BRASS_RECORD && about(f, SD_LAMP_HEAD, SD_LAMP_H + SD_LAMP_HEAD, SD_LAMP_H + SD_LAMP_HEAD + 0.05)(t) && t.P.every((p) => p[1] > SD_LAMP_H + SD_LAMP_HEAD + 1e-3)), 'its cap');
   }
   assert.ok(SD_LAMP_HEAD < SHADOW_POINT_NEAR, 'the head inside its light\'s near plane, every way: a cube face\'s near plane lies SHADOW_POINT_NEAR along its axis');

@@ -106,5 +106,41 @@
     "tests": [
       "test/sd26_render.test.js"
     ]
+  },
+  {
+    "name": "SD26-R4-the-heads-underside-dropped",
+    "file": "src/world/sdRealm.js",
+    "old": "SD_LAMP_H + SD_LAMP_HEAD, true).forEach((q) => f.quad(SD_HALL_GLOW_RECORD.brass,",
+    "new": "SD_LAMP_H + SD_LAMP_HEAD).forEach((q) => f.quad(SD_HALL_GLOW_RECORD.brass,",
+    "tests": [
+      "test/sd26_render.test.js"
+    ]
+  },
+  {
+    "name": "SD26-R4-the-caps-underside-dropped",
+    "file": "src/world/sdHall.js",
+    "old": "d / 2 + 0.05, 0.12, true)],",
+    "new": "d / 2 + 0.05, 0.12)],",
+    "tests": [
+      "test/sd26_render.test.js"
+    ]
+  },
+  {
+    "name": "SD26-R4-the-heads-underside-wound-in",
+    "file": "src/world/sdRealm.js",
+    "old": "  if (under) out.push([C(-w, y0, -w), C(w, y0, -w), C(w, y0, w), C(-w, y0, w)]);",
+    "new": "  if (under) out.push([C(-w, y0, -w), C(-w, y0, w), C(w, y0, w), C(w, y0, -w)]);",
+    "tests": [
+      "test/sd26_render.test.js"
+    ]
+  },
+  {
+    "name": "SD26-R4-the-caps-underside-wound-in",
+    "file": "src/world/sdHall.js",
+    "old": "out.push([q(-1, -1), q(-1, 1), q(1, 1), q(1, -1)]); }",
+    "new": "out.push([q(-1, -1), q(1, -1), q(1, 1), q(-1, 1)]); }",
+    "tests": [
+      "test/sd26_render.test.js"
+    ]
   }
 ]

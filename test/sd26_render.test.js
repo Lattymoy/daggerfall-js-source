@@ -20,8 +20,11 @@ import { trs } from '../src/world/mat4.js';
 import { glslFunctions } from './glsl.mjs';
 import { GateFxRenderer, FX_SPARK_VS, FX_SPARKS, FX_BURST_MS, sparkAt } from '../src/render/gateFx.js';
 import { createSdFx, SD_FX_KINDS, SD_FX_EDGE, SD_FX_FLOOR_Y, SD_RING_DUST } from '../src/scenes/sdFx.js';
-import { SD_ARENA, realmToDungeon } from '../src/net/sdBrain.js';
+import { SD_ARENA, SD_STONES, realmToDungeon, dungeonToRealm } from '../src/net/sdBrain.js';
 import { SD_BLOWS, SD_BODY, SD_REM } from '../src/net/sdRemnant.js';
+import { buildRealmModel, realmLampFeet, SD_LAMP_H, SD_LAMP_HEAD, SD_REALM_BRASS_RECORD } from '../src/world/sdRealm.js';
+import { buildHallModel, stoneFrame, SD_STONE_SIZE } from '../src/world/sdHall.js';
+import { SD_HALL_GLOW_RECORD } from '../src/world/sdHallArt.js';
 
 const read = (p) => readFileSync(p, 'utf8');
 
@@ -164,3 +167,46 @@ test('AUDIT SD IV (R3): THE ARENA\'S FLOOR HAS AN EDGE - past its rim a spark re
     else assert.ok(dust.length > 0 && dust.length < SD_RING_DUST.n, `at its keep, ${dust.length} of ${SD_RING_DUST.n}: the far ones over the void dropped`);
   }
 });
+
+/** A model's triangles in the realm's frame, each with its record. */
+function realmTris(m) {
+  const out = [];
+  for (const sm of m.subMeshes) {
+    for (let k = sm.startIndex; k < sm.startIndex + sm.primitiveCount * 3; k += 3) {
+      out.push({ rec: sm.textureRecord, P: [0, 1, 2].map((j) => { const v = m.indices[k + j]; return dungeonToRealm(m.positions[v * 3], m.positions[v * 3 + 1], m.positions[v * 3 + 2]); }) });
+    }
+  }
+  return out;
+}
+/** A part is shut when every edge is two triangles', and faces out when each triangle's (b-a)x(c-a) leans from `mid`. */
+function shut(tris, mid) {
+  const edges = new Map(), key = (p) => p.map((v) => v.toFixed(3)).join();
+  for (const { P } of tris) for (let j = 0; j < 3; j++) { const a = key(P[j]), b = key(P[(j + 1) % 3]), k = a < b ? `${a}|${b}` : `${b}|${a}`; edges.set(k, (edges.get(k) ?? 0) + 1); }
+  const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+  const out = tris.every(({ P: [a, b, c] }) => {
+    const u = sub(b, a), v = sub(c, a), nrm = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+    const o = sub([(a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3, (a[2] + b[2] + c[2]) / 3], mid);
+    return nrm[0] * o[0] + nrm[1] * o[1] + nrm[2] * o[2] > 0;
+  });
+  return { open: [...edges.values()].filter((n) => n === 1).length, out, down: tris.some(({ P }) => P.every((p) => Math.abs(p[1] - P[0][1]) < 1e-4) && P[0][1] < mid[1]) };
+}
+
+test('AUDIT SD IV (R4): NOTHING OPEN OVER THE EYE - every lamp\'s head (its underside 2.31 m up, over a 1.7 m eye) and every stone\'s cap (its 5 cm overhang 2.6 m up) is a shut box, every face out: the sky showed through a ring round every post and a band under every cap (mutants: the head\'s underside dropped; the cap\'s; one wound in)', () => {
+  const e = 1e-3, realm = realmTris(buildRealmModel()), hall = realmTris(buildHallModel());
+  const feet = realmLampFeet();
+  assert.equal(feet.length, 20);
+  for (const f of feet) {
+    const head = realm.filter((t) => t.rec === SD_HALL_GLOW_RECORD.brass && t.P.every((p) => Math.abs(p[0] - f[0]) <= SD_LAMP_HEAD + e && Math.abs(p[2] - f[2]) <= SD_LAMP_HEAD + e && p[1] >= SD_LAMP_H - SD_LAMP_HEAD - e && p[1] <= SD_LAMP_H + SD_LAMP_HEAD + e));
+    const s = shut(head, [f[0], SD_LAMP_H, f[2]]);
+    assert.ok(head.length === 12 && s.open === 0 && s.out && s.down, `the lamp at ${f[0].toFixed(1)}, ${f[2].toFixed(1)}: its head shut (${head.length} faces, ${s.open} open edges), out, its underside down`);
+  }
+  for (let i = 0; i < SD_STONES.length; i++) {
+    const { at, n, R } = stoneFrame(i), base = [at[0], at[1] + SD_STONE_SIZE.h, at[2]];
+    const hw = SD_STONE_SIZE.w / 2 + 0.05, hd = SD_STONE_SIZE.d / 2 + 0.05;
+    const along = (p, v) => (p[0] - base[0]) * v[0] + (p[1] - base[1]) * v[1] + (p[2] - base[2]) * v[2];
+    const cap = hall.filter((t) => t.rec === SD_REALM_BRASS_RECORD && t.P.every((p) => Math.abs(along(p, R)) <= hw + e && Math.abs(along(p, n)) <= hd + e && p[1] - base[1] >= -e && p[1] - base[1] <= 0.12 + e));
+    const s = shut(cap, [base[0], base[1] + 0.06, base[2]]);
+    assert.ok(cap.length === 12 && s.open === 0 && s.out && s.down, `stone ${i}: its cap shut (${cap.length} faces, ${s.open} open edges), out, its underside down`);
+  }
+});
+

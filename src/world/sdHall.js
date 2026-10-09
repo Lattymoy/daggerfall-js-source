@@ -103,14 +103,16 @@ function upright(f, rec, c, R, w, h) {
 }
 /** A box (a slab, a cap, a handle, a post): its bottom middle `c`, its axes `R` and `n`, half-sizes and height - its four
  *  sides and its top as quads (four corners each, the dungeon's frame, wound to face out): AUDIT SD II (L2 F2) ONE
- *  geometry for its draw and its collider, as the arena's pillars are (world/sdRealm.js pillarQuads). */
-function boxQuads(c, R, n, hw, hd, h) {
+ *  geometry for its draw and its collider, as the arena's pillars are (world/sdRealm.js pillarQuads). AUDIT SD IV (R4):
+ *  `under` its underside too, facing down - a box that overhangs over the eye (the cap). */
+function boxQuads(c, R, n, hw, hd, h, under = false) {
   const out = [];
   for (const [N, A, half, across] of [[n, R, hd, hw], [mul(n, -1), mul(R, -1), hd, hw], [R, mul(n, -1), hw, hd], [mul(R, -1), n, hw, hd]])
     out.push(uprightQuad(add(c, mul(N, half)), A, across * 2, h));
   const top = add(c, [0, h, 0]);
   const p = (a, b) => realmToDungeon(...add(add(top, mul(R, a * hw)), mul(n, b * hd)));
   out.push([p(-1, -1), p(1, -1), p(1, 1), p(-1, 1)]);
+  if (under) { const q = (a, b) => realmToDungeon(...add(add(c, mul(R, a * hw)), mul(n, b * hd))); out.push([q(-1, -1), q(-1, 1), q(1, 1), q(1, -1)]); }
   return out;
 }
 function box(f, rec, c, R, n, hw, hd, h) {
@@ -126,7 +128,7 @@ export function buildHallModel() {
   for (let i = 0; i < SD_STONES.length; i++) {
     const { R } = stoneFrame(i);
     // the slab, its brass cap and the two handles out from the face's edges (stoneSolids - the collider's own boxes)
-    for (const [rec, quads] of stoneSolids(i)) quads.forEach(([a, b, d, e], k) => f.quad(rec, a, b, d, e, ...(k % 5 < 4 ? UPRIGHT_UV : TOP_UV)));
+    for (const [rec, quads] of stoneSolids(i)) quads.forEach(([a, b, d, e]) => f.quad(rec, a, b, d, e, ...(a[1] === b[1] && b[1] === d[1] ? TOP_UV : UPRIGHT_UV)));   // AUDIT SD IV (R4): a level face (a top, the cap's underside) the top's
     // the dial, a hair before the face; the notch over its twelfth hour; the sign above
     upright(f, SD_HALL_FACE_RECORD, stonePoint(i, 0, SD_DIAL.y - SD_DIAL.r, 0.005), R, SD_DIAL.r * 2, SD_DIAL.r * 2);
     const T = (p) => realmToDungeon(p[0], p[1], p[2]);
@@ -146,14 +148,14 @@ export function buildHallModel() {
 /** A plaque's face's bottom middle (the realm's frame): on its post's top, a little before it. */
 const plaqueFaceFoot = (k) => { const { at, n } = plaqueFrame(k); return add(at, add(mul(n, 0.09), [0, SD_PLAQUE.post, 0])); };
 /** AUDIT SD II (L2 F2): STONE `i`'s SOLIDS - its slab, its brass cap and its two handles, each `[record, quads]` (five
- *  quads a box, boxQuads') - the draw's and the collider's one geometry.
+ *  quads a box, boxQuads'; six the cap's, AUDIT SD IV R4) - the draw's and the collider's one geometry.
  * @returns {Array<[number, number[][][]]>} */
 function stoneSolids(i) {
   const { at, n, R } = stoneFrame(i);
   const { w, d, h } = SD_STONE_SIZE;
   return [
     [SD_REALM_ROOT_RECORD, boxQuads(at, R, n, w / 2, d / 2, h)],
-    [SD_REALM_BRASS_RECORD, boxQuads(add(at, [0, h, 0]), R, n, w / 2 + 0.05, d / 2 + 0.05, 0.12)],
+    [SD_REALM_BRASS_RECORD, boxQuads(add(at, [0, h, 0]), R, n, w / 2 + 0.05, d / 2 + 0.05, 0.12, true)],   // AUDIT SD IV (R4): its overhang shut underneath
     [SD_REALM_BRASS_RECORD, [-1, 1].flatMap((side) => boxQuads(handleFoot(i, side), R, n, 0.06, SD_HANDLE.out / 2, 0.22))],
   ];
 }
