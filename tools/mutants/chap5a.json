@@ -258,11 +258,12 @@
   {
     "name": "CHAP5A-HOST-REGION",
     "file": "src/scenes/world.js",
-    "old": "const c = Number.isInteger(region) ? chapterSheet?.chapterOf(faction, region) ?? null : null;",
-    "new": "const c = Number.isInteger(region) ? chapterSheet?.chapterOf(faction, 0) ?? null : null;",
+    "old": "const c = Number.isInteger(region) ? chapterSheet?.chapterOf(faction, region) ?? null : null;\n      const title",
+    "new": "const c = Number.isInteger(region) ? chapterSheet?.chapterOf(faction, 0) ?? null : null;\n      const title",
     "tests": [
       "test/chap5a_roll.test.js"
-    ]
+    ],
+    "note": "AUDIT CHAP5: aimed at its one site - the hall's price (AUDIT CHAP5 C1) keeps the same line."
   },
   {
     "name": "CHAP5A-HOST-TITLE",

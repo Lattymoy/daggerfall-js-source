@@ -722,7 +722,9 @@ export class SpellbookWindow {
     // wrote the same comparison in the temple, the trade window and
     // here, and the port keeps ONE home (tradeModes.js already reuses
     // it for the trade records).
-    this._tradeOffset = cureOfferMessageOffset(this.presentedCost, price);
+    // AUDIT CHAP5 D6: against the cost the hall's chapter lists (its band laid over DFU's, as the price is) - the
+    // bargaining's own line; a Thriving hall's price against DFU's list said the player had haggled it down
+    this._tradeOffset = cureOfferMessageOffset(chapterPriced(this.presentedCost, this.deps.priceFactor?.() ?? 1), price);
     this.top = 'trade';
   }
 

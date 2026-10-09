@@ -29,38 +29,42 @@
   {
     "name": "CHAP6B-SCHISM-SALT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "gateHash(CHAPTER_SCHISM_SALT, season, chapterTitleKey(faction, region)) % CHAPTER_DOCTRINES.length",
-    "new": "gateHash(CHAPTER_EVENT_SALT, season, chapterTitleKey(faction, region)) % CHAPTER_DOCTRINES.length",
+    "old": "drawOf(gateHash(CHAPTER_SCHISM_SALT, season, chapterTitleKey(faction, region)), own.length)",
+    "new": "drawOf(gateHash(CHAPTER_EVENT_SALT, season, chapterTitleKey(faction, region)), own.length)",
     "tests": [
       "test/chap6b_backing.test.js"
-    ]
+    ],
+    "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
   },
   {
     "name": "CHAP6B-SCHISM-KEY",
     "file": "src/net/npcChapterLaw.js",
-    "old": "gateHash(CHAPTER_SCHISM_SALT, season, chapterTitleKey(faction, region)) % CHAPTER_DOCTRINES.length",
-    "new": "gateHash(CHAPTER_SCHISM_SALT, season, faction) % CHAPTER_DOCTRINES.length",
+    "old": "drawOf(gateHash(CHAPTER_SCHISM_SALT, season, chapterTitleKey(faction, region)), own.length)",
+    "new": "drawOf(gateHash(CHAPTER_SCHISM_SALT, season, faction), own.length)",
     "tests": [
       "test/chap6b_backing.test.js"
-    ]
+    ],
+    "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
   },
   {
     "name": "CHAP6B-SCHISM-SEASON",
     "file": "src/net/npcChapterLaw.js",
-    "old": "gateHash(CHAPTER_SCHISM_SALT, season, chapterTitleKey(faction, region)) % CHAPTER_DOCTRINES.length",
-    "new": "gateHash(CHAPTER_SCHISM_SALT, chapterTitleKey(faction, region)) % CHAPTER_DOCTRINES.length",
+    "old": "drawOf(gateHash(CHAPTER_SCHISM_SALT, season, chapterTitleKey(faction, region)), own.length)",
+    "new": "drawOf(gateHash(CHAPTER_SCHISM_SALT, chapterTitleKey(faction, region)), own.length)",
     "tests": [
       "test/chap6b_backing.test.js"
-    ]
+    ],
+    "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
   },
   {
     "name": "CHAP6B-SCHISM-OUT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "return CHAPTER_DOCTRINES.filter((_, i) => i !== out);",
-    "new": "return CHAPTER_DOCTRINES.filter((_, i) => i !== 0);",
+    "old": "return own.filter((_, i) => i !== out);",
+    "new": "return own.filter((_, i) => i !== 0);",
     "tests": [
       "test/chap6b_backing.test.js"
-    ]
+    ],
+    "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
   },
   {
     "name": "CHAP6B-CANDIDATES",
@@ -167,10 +171,9 @@
     "old": ": Number.isSafeInteger(top) ? /** @type {number} */ (top) : 0);",
     "new": ": top ? /** @type {number} */ (top) : 0);",
     "tests": [
-      "test/chap6b_backing.test.js"
-    ],
-    "equivalent": true,
-    "why": "`top` is a candidate's index, 0 to 2: where it is 0 the mutant falls to the hall's own first - candidate 0 as well - and where it is 1 or 2 both read it; a top that is no whole number (null) is the hall's first either way."
+      "test/chap6b_backing.test.js",
+      "test/audit_chap5.test.js"
+    ]
   },
   {
     "name": "CHAP6B-WRIT-COUNT",
@@ -427,11 +430,12 @@
   {
     "name": "CHAP6B-BACK-SEASON",
     "file": "server-account/src/npcChapters.js",
-    "old": "  if (!season) return { error: 'no-event' };\n  const row",
-    "new": "  const row",
+    "old": "  if (!season) return { error: 'no-event' };\n  // AUDIT CHAP5 S3",
+    "new": "  // AUDIT CHAP5 S3",
     "tests": [
       "test/chap6b_backing.test.js"
-    ]
+    ],
+    "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
   },
   {
     "name": "CHAP6B-BACK-EVENT",

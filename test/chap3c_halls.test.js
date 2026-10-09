@@ -191,7 +191,7 @@ test('CHAP3c the wiring: the hall\'s chapter read off its guild and region; trai
   const world = src('src/scenes/world.js');
   assert.match(world, /const chapterSheet = hallDoor \? createChapterSheet\(\{ door: hallDoor \}\) : null;/);
   // PIN MOVED (AUDIT CHAP3 C6: the politic map's region at the player's pixel, as the halls' witness and the board read it)
-  assert.match(world, /chapterHere: \(faction\) => \{\n\s+const px = playerTravelPixel\(\);\n\s+const region = \(\(\) => \{ try \{ return maps\.getRegionIndexAt\(px\.x, px\.y\); \} catch \{ return null; \} \}\)\(\);\n\s+return Number\.isInteger\(region\) \? chapterSheet\?\.chapterOf\(faction, region\) \?\? null : null;/);   // PIN MOVED (CHAP6d): the whole chapter
+  assert.match(world, /chapterHere: \(faction\) => \{\n\s+const px = playerTravelPixel\(\);\n\s+const region = \(\(\) => \{ try \{ return maps\.getRegionIndexAt\(px\.x, px\.y\); \} catch \{ return null; \} \}\)\(\);\n\s+const c = Number\.isInteger\(region\) \? chapterSheet\?\.chapterOf\(faction, region\) \?\? null : null;/);   // PIN MOVED (CHAP6d): the whole chapter; (AUDIT CHAP5 C1) kept, a patron's hall's book asked
   assert.match(world, /const revealMemberGuildHalls = \(\{ witness = false \} = \{\}\) => \{\n\s+if \(witness\) chapterSheet\?\.refresh\(\);/);
   assert.match(src('src/net/accountClient.js'), /list: \(\) => post\('\/v1\/chapters\/list', \{\}\),/);
   // offline there is no door, so no sheet: every hall DFU's own

@@ -99,7 +99,10 @@ export async function settleChapterWeek(db, week, nowS, zero = null, open = 'on'
   // AUDIT CHAP3 S2: the developers' weeks forgotten the first week the Chapters are everyone's - AUDIT CHAP4 S2: the
   // last week the Chapters were open at all ('dev' or 'on'), the weeks they were shut ('off') no week of either
   const last = await db.prepare("SELECT open FROM npc_chapter_weeks WHERE week < ?1 AND open <> 'off' ORDER BY week DESC LIMIT 1").bind(week).first();
-  const opened = open === 'on' && last?.open === 'dev';
+  // AUDIT CHAP5 S6: the opening is the FIRST week ever settled 'on' - a trial of the developers' after it ('on', 'dev',
+  // 'on' again) wiped every chapter's Strength, seats and paid patronage in the middle of a Season
+  const opened = open === 'on' && last?.open === 'dev'
+    && !(await db.prepare("SELECT 1 FROM npc_chapter_weeks WHERE week < ?1 AND open = 'on' LIMIT 1").bind(week).first());
   const { results: held = [] } = opened ? { results: [] } : await db.prepare('SELECT faction, region, strength, event, event_season, event_data, shut_season, doctrine, doctrine_season FROM npc_chapters').all();
   /** @type {Map<string, Chapter>} */
   const all = new Map();
@@ -128,11 +131,13 @@ export async function settleChapterWeek(db, week, nowS, zero = null, open = 'on'
   // CHAP6b: a Succession named at the Season's third Turning (or the first after it a sleeping service settles)
   if (season && week >= season.start + SUCCESSION_TURNING - 1) await successionNamed(db, season, week, all, live);
   /** @type {any[]} */
-  const seasonRows = ends ? await seasonEnded(db, /** @type {{ n: number, start: number }} */ (season), week, all, keys, live, opened) : [];
+  const seasonRows = ends ? await seasonEnded(db, /** @type {{ n: number, start: number }} */ (season), week, all, keys, live, opened, open) : [];
   const next = seasonOf(week + 1, zero);
   if (next && next.start === week + 1) await seasonDrawn(db, next.n, week, season, all, keys);
-  // CHAP7a: and the Season's patrons - each chapter's highest bid burnt, every other home (Chapters-Arc 8)
-  const patrons = next && next.start === week + 1 ? await patronsDrawn(db, next.n, keys) : null;
+  // CHAP7a: and the Season's patrons - each chapter's highest bid burnt, every other home (Chapters-Arc 8). AUDIT CHAP5
+  // S6: at the opening every bid goes home, none won - the developers' trial bought nobody a Season
+  const patrons = opened ? await patronsDrawn(db, PATRON_SEASONS_ALL, new Set())
+    : next && next.start === week + 1 ? await patronsDrawn(db, next.n, keys) : null;
   const rows = [...all.values()].map((c) => [c.faction, c.region, ends ? strengthSeasonEnd(c.s) : c.s, c.merit, c.event, c.eventSeason, JSON.stringify(c.data), c.shut, c.doctrine, c.doctrineSeason]);
   const seats = await seatsPlaced(db, week, turning, open, opened, keys);
   try {
@@ -180,6 +185,8 @@ export async function settleChapterWeek(db, week, nowS, zero = null, open = 'on'
 
 /** The ledger's actor for the Turning's own patron lines (one a bid, its id the bid's escrow's). */
 const PATRON_ACTOR = 'chapters';
+/** AUDIT CHAP5 S6: the Season past every bid's - the opening's draw, which sends every open bid home. */
+const PATRON_SEASONS_ALL = 2 ** 31 - 1;
 const LEDGER = 'INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid)';
 
 /**
@@ -241,13 +248,15 @@ function patronStatements(db, { n, lines, won }, nowS) {
         json_extract(v.value, '$[3]'), b.amount, ?2, ?3, '${PATRON_ACTOR}', 'The Turning', json_extract(v.value, '$[0]')
       FROM json_each(?1) v JOIN npc_chapter_patron_bids b ON b.faction = json_extract(v.value, '$[4]') AND b.region = json_extract(v.value, '$[5]')
         AND b.guild_id = json_extract(v.value, '$[6]') AND b.season = json_extract(v.value, '$[7]') AND b.state = 'open'`).bind(JSON.stringify(lines), utcDay(nowS), nowS),
-    db.prepare(`UPDATE npc_chapter_patron_bids SET state = CASE WHEN EXISTS (SELECT 1 FROM json_each(?2) w WHERE json_extract(w.value, '$[0]') = faction
-        AND json_extract(w.value, '$[1]') = region AND json_extract(w.value, '$[2]') = guild_id AND season = ?1) THEN 'won' ELSE 'lost' END
-      WHERE season <= ?1 AND state = 'open' AND EXISTS (SELECT 1 FROM json_each(?3) v WHERE json_extract(v.value, '$[4]') = faction
-        AND json_extract(v.value, '$[5]') = region AND json_extract(v.value, '$[6]') = guild_id AND json_extract(v.value, '$[7]') = season)`).bind(n, JSON.stringify(won), JSON.stringify(lines)),
-    db.prepare(`UPDATE npc_chapters SET patron = (SELECT json_extract(w.value, '$[2]') FROM json_each(?1) w WHERE json_extract(w.value, '$[0]') = faction
-        AND json_extract(w.value, '$[1]') = region), patron_season = ?2
-      WHERE EXISTS (SELECT 1 FROM json_each(?1) w WHERE json_extract(w.value, '$[0]') = faction AND json_extract(w.value, '$[1]') = region)`).bind(JSON.stringify(won), n),
+    // AUDIT CHAP5 S4: each array read ONCE (a row-value IN over an uncorrelated list, an UPDATE ... FROM) - a correlated
+    // EXISTS read the whole array again for every bid, a Season of some thousands of bids past the batch's time
+    db.prepare(`UPDATE npc_chapter_patron_bids SET state = CASE WHEN (faction, region, guild_id, season) IN (SELECT json_extract(value, '$[0]'),
+        json_extract(value, '$[1]'), json_extract(value, '$[2]'), ?1 FROM json_each(?2)) THEN 'won' ELSE 'lost' END
+      WHERE season <= ?1 AND state = 'open' AND (faction, region, guild_id, season) IN (SELECT json_extract(value, '$[4]'), json_extract(value, '$[5]'),
+        json_extract(value, '$[6]'), json_extract(value, '$[7]') FROM json_each(?3))`).bind(n, JSON.stringify(won), JSON.stringify(lines)),
+    db.prepare(`UPDATE npc_chapters SET patron = w.guild, patron_season = ?2
+      FROM (SELECT json_extract(value, '$[0]') AS f, json_extract(value, '$[1]') AS g, json_extract(value, '$[2]') AS guild FROM json_each(?1)) w
+      WHERE npc_chapters.faction = w.f AND npc_chapters.region = w.g`).bind(JSON.stringify(won), n),
     db.prepare("INSERT INTO realm_tx_guard (moved, expected) SELECT 1, 0 WHERE EXISTS (SELECT 1 FROM npc_chapter_patron_bids WHERE season <= ?1 AND state = 'open')").bind(n),
   ];
 }
@@ -319,8 +328,10 @@ export async function regionPatrons(/** @type {any} */ db, /** @type {number | n
   /** @type {Map<string, any>} */
   const out = new Map();
   if (n == null) return out;
-  const { results = [] } = await db.prepare(`SELECT c.faction, c.region, g.id, g.name, g.tag, g.heraldry FROM npc_chapters c JOIN guilds g ON g.id = c.patron
-    WHERE c.patron_season = ?1 AND (?2 IS NULL OR c.region = ?2)`).bind(n, region).all();
+  // AUDIT CHAP5 S5: a region's on its own index - `?2 IS NULL OR` read every chapter for a board's one region
+  const head = 'SELECT c.faction, c.region, g.id, g.name, g.tag, g.heraldry FROM npc_chapters c JOIN guilds g ON g.id = c.patron';
+  const { results = [] } = await (region == null ? db.prepare(`${head} WHERE c.patron_season = ?1`).bind(n)
+    : db.prepare(`${head} WHERE c.region = ?2 AND c.patron_season = ?1`).bind(n, region)).all();
   for (const r of results) out.set(`${r.faction}|${r.region}`, { id: String(r.id), name: String(r.name), tag: String(r.tag ?? ''), heraldry: heraldryOfRow(r.heraldry) });
   return out;
 }
@@ -436,24 +447,29 @@ async function chapterMeritBetween(db, from, to) {
  * chapter under 30 shut for the next Season. Answers the Chronicle's rows `[faction, region, kind, char, data]`: an
  * 'event' row a chapter whose event was no Calm, and a 'season' row each Master who held the seat the whole Season
  * (placed at or before the Turning that opened it, sitting still - never Season 0's, which crowns no one, as the seats'
- * own; never at the Chapters' opening, whose seats are none).
+ * own; never at the Chapters' opening, whose seats are none). AUDIT CHAP5 E5: a chapter races once a Season - the
+ * first of its rivalries in the chapters' order; any other ends even. `open` the switch the week settles under.
  * @param {any} db @param {{ n: number, start: number }} season @param {number} week @param {Map<string, Chapter>} all
- * @param {Set<string>} keys @param {(c: Chapter) => string | null} live @param {boolean} opened
+ * @param {Set<string>} keys @param {(c: Chapter) => string | null} live @param {boolean} opened @param {string} open
  */
-async function seasonEnded(db, season, week, all, keys, live, opened) {
+async function seasonEnded(db, season, week, all, keys, live, opened, open) {
   const merit = await chapterMeritBetween(db, season.start, week);
   /** @type {Map<string, string | null>} */
   const raced = new Map();
+  /** @type {Set<string>} */
+  const ran = new Set();   // AUDIT CHAP5 E5: the chapters that raced - a hub (the Brotherhood, every order's and two temples' rival) raced each
   for (const c of all.values()) {
     if (live(c) !== 'rivalry') continue;
     const k = `${c.faction}|${c.region}`, rk = `${c.data.rival}|${c.region}`;
     const r = keys.has(rk) ? all.get(rk) : undefined;
     if (!r) { c.data = { ...c.data, won: null }; continue; }   // its rival's chapter gone: no race to win
     const pair = [k, rk].sort().join('&');
+    if (!raced.has(pair) && (ran.has(k) || ran.has(rk))) raced.set(pair, null);   // E5: one of the two raced already - even
     if (!raced.has(pair)) {
       const end = rivalryEnd([c.s, r.s], [merit.get(k) ?? 0, merit.get(rk) ?? 0]);
       c.s = end.a; r.s = end.b;
       raced.set(pair, end.won === null ? null : end.won === 'a' ? k : rk);
+      ran.add(k); ran.add(rk);
     }
     const winner = raced.get(pair);
     c.data = { ...c.data, won: winner == null ? null : winner === k };
@@ -486,9 +502,15 @@ async function seasonEnded(db, season, week, all, keys, live, opened) {
     }
     if (e && e !== 'calm') out.push([c.faction, c.region, 'event', '', JSON.stringify({ ...c.data, season: season.n, event: e })]);
   }
-  if (season.n > 0 && !opened) {
-    const { results: masters = [] } = await db.prepare("SELECT faction, region, char_id FROM npc_chapter_seats WHERE seat = 'master' AND since <= ?1 ORDER BY faction, region")
-      .bind(season.start - 1).all();
+  // AUDIT CHAP5 S6: never a Season any week of which the developers' alone settled - their trial crowned for good
+  const trial = open !== 'on' || !!(await db.prepare("SELECT 1 FROM npc_chapter_weeks WHERE week BETWEEN ?1 AND ?2 AND open = 'dev' LIMIT 1").bind(season.start, week - 1).first());
+  if (season.n > 0 && !opened && !trial) {
+    // AUDIT CHAP5 S1/E2: and the seat a Master's the whole Season - a seat's `since` is the character's at the chapter,
+    // kept from an officer's seat to the Master's: one who rose to it in the Season's last week was crowned for it
+    const { results: masters = [] } = await db.prepare(`SELECT s.faction, s.region, s.char_id FROM npc_chapter_seats s WHERE s.seat = 'master' AND s.since <= ?1
+      AND NOT EXISTS (SELECT 1 FROM npc_chapter_history h WHERE h.char_id = s.char_id AND h.week BETWEEN ?2 AND ?3 AND h.faction = s.faction
+        AND h.region = s.region AND h.kind = 'seat' AND json_extract(h.data, '$.to') = 'master')
+      ORDER BY s.faction, s.region`).bind(season.start - 1, season.start, week - 1).all();
     for (const m of masters) {
       if (keys.has(`${m.faction}|${m.region}`)) out.push([Number(m.faction), Number(m.region), 'season', String(m.char_id), JSON.stringify({ season: season.n })]);
     }
@@ -580,8 +602,8 @@ async function seatsPlaced(db, week, turning, open, opened, chapters) {
 }
 
 /** CHAP4c: whether the chapters' titles are minted for this account - the Chapters open to it and CHAPTER_TITLES on. The
- *  relay must carry the three ids (RELAY_VERSION world182) before this is turned on: a token with a title the relay does
- *  not know is refused at the hello. */
+ *  relay must carry the five ids (RELAY_VERSION world183 - CHAP6e's two beside CHAP4c's three) before this is turned on:
+ *  a token with a title the relay does not know is refused at the hello. */
 export const chapterTitlesOpenFor = (/** @type {any} */ player, /** @type {any} */ env) => env?.CHAPTER_TITLES === 'on' && chaptersOpenFor(player, env);
 
 /** CHAP4c: the first week of the Season `week` falls in - the counted Season's, or with none counted the eight-week
@@ -730,6 +752,10 @@ export async function backChapter({ db, nowS }, player, env, { character, factio
   const week = meritWeekOf(nowS);
   const season = seasonOf(week, zero);
   if (!season) return { error: 'no-event' };
+  // AUDIT CHAP5 S3: a hidden guild's chapter's Season is its members' alone - a stranger asked of it is answered as of a
+  // chapter with no event (its 'no-side', 'closed' and 'not-member' told which regions keep the underworld's halls)
+  if (hallHidden(faction) && !(await db.prepare('SELECT 1 FROM npc_roll WHERE char_id = ?1 AND player = ?2 AND faction_id = ?3 AND member = 1 AND dormant = 0')
+    .bind(character, player.id, faction).first())) return { error: 'no-event' };
   const row = await db.prepare('SELECT event, event_season, event_data FROM npc_chapters WHERE faction = ?1 AND region = ?2').bind(faction, region).first();
   const e = row ? heldEvent(row) : null;
   const event = e && e.eventSeason === season.n ? e.event : null;
@@ -846,8 +872,12 @@ export async function chapterChronicle({ db }, _player, env, { region } = {}) {
     LEFT JOIN realm_characters c ON c.id = h.char_id WHERE h.region = ?1 AND h.faction NOT IN (SELECT value FROM json_each(?3))
     ORDER BY h.seq DESC LIMIT ?2`).bind(region, CHAPTER_CHRONICLE_ROWS, JSON.stringify(HIDDEN_HALL_FACTIONS)).all();
   const rows = results.reverse().map((/** @type {any} */ r) => {
+    /** @type {any} */
     let data = {};
     try { data = JSON.parse(r.data); } catch { /* a row the Chronicle has no words for */ }
+    // AUDIT CHAP5 S2: a public chapter's Rivalry with a hidden one never names it - the line says "its rival in the
+    // shadows" (chapterSeasonLine), and the row the reader is sent says no more than the line
+    if (data && typeof data === 'object' && hallHidden(data.rival)) { data = { ...data }; delete data.rival; }
     return { faction: Number(r.faction), week: Number(r.week), kind: String(r.kind), data, name: r.name ?? null };
   });
   return { rows, zero: seasonZeroOf(env?.SEASON_ZERO_WEEK) };

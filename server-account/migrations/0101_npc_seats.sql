@@ -3,7 +3,7 @@
 --   npx wrangler d1 migrations apply daggerfall-accounts --remote
 --
 -- Applied exactly once through the `d1_migrations` ledger, which the
--- deploy runs (ACC1-CI). Deploy this service (acct99 - AUDIT CHAP4 R1: acct95 then, renumbered at the merges of main) BEFORE the site.
+-- deploy runs (ACC1-CI). Deploy this service (acct100 - AUDIT CHAP4 R1, AUDIT CHAP5 R3: acct95 then, renumbered at the merges of main) BEFORE the site.
 --
 -- Mac: "Your decision", on "Whats next" (bible/11-Multiplayer/Chapters-Arc.md
 -- sections 3.5 and 6, CHAP4a). The law is src/net/npcChapterLaw.js; the
@@ -51,6 +51,12 @@ CREATE INDEX IF NOT EXISTS idx_npc_chapter_history_chapter ON npc_chapter_histor
 -- Records' chapterChronicle). Without them each read scanned every row the Chronicle ever kept.
 CREATE INDEX IF NOT EXISTS idx_npc_chapter_history_char ON npc_chapter_history (char_id, week);
 CREATE INDEX IF NOT EXISTS idx_npc_chapter_history_region ON npc_chapter_history (region, seq);
+-- AUDIT CHAP5 S5 (grown in place - nothing of it shipped): and a Season's own
+-- read - the Masters' seats each chapter changed into in it (the Turning's
+-- draw, seasonDrawn), which scanned every row the Chronicle ever kept. The
+-- week first: led by the kind, it drew a token's mint off the character's
+-- own index, to every 'season' row the realm ever kept.
+CREATE INDEX IF NOT EXISTS idx_npc_chapter_history_week ON npc_chapter_history (week, kind);
 -- CHAP6b (grown in place - nothing of it shipped): A SEASON'S BACKING. One
 -- row an account a chapter a Season: the side its member backs in the
 -- Season's Schism (0 or 1) or the candidate it names in its Succession (0
@@ -67,6 +73,10 @@ CREATE TABLE IF NOT EXISTS npc_chapter_backing (
   at        INTEGER NOT NULL,
   PRIMARY KEY (faction, region, season, account)
 );
+-- AUDIT CHAP5 S5: an account's backings in a region's chapters this Season
+-- (every board's read) and a Season's backings (its Turnings') on their own
+-- index - the key leads with the chapter, which neither read names.
+CREATE INDEX IF NOT EXISTS idx_npc_chapter_backing_season ON npc_chapter_backing (season, region, account);
 -- CHAP7a (grown in place - nothing of it shipped): A CHAPTER'S PATRONAGE'S
 -- BIDS. One row a guild a chapter a Season: the whole of what its
 -- guildmaster bid from the guild's treasury for the Season after the one
@@ -84,3 +94,7 @@ CREATE TABLE IF NOT EXISTS npc_chapter_patron_bids (
   PRIMARY KEY (faction, region, season, guild_id)
 );
 CREATE INDEX IF NOT EXISTS idx_npc_chapter_patron_bids_season ON npc_chapter_patron_bids (season, state);
+-- AUDIT CHAP5 E4/S5: a guild's open bids - its board's own (guildPatronBids)
+-- and the disbanding's guard (guilds.js guildKeepsSql: a guild with Marks
+-- in a bid's escrow is never gone).
+CREATE INDEX IF NOT EXISTS idx_npc_chapter_patron_bids_guild ON npc_chapter_patron_bids (guild_id, season, state);

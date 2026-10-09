@@ -38,7 +38,7 @@ test('CHAP6b the doctrines: training, the shelf, writs - what each does; a Schis
   assert.deepEqual([chapterDoctrineOk('writs'), chapterDoctrineOk('Writs'), chapterDoctrineOk(null)], [true, false, false]);
   const n = { training: 0, shelf: 0, writs: 0 };
   for (let s = 0; s < 900; s++) {
-    const two = schismDoctrinesOf(s, FIGHTERS, ANTICLERE);
+    const two = schismDoctrinesOf(s, MAGES, ANTICLERE);   // PIN MOVED (AUDIT CHAP5 D3): a guild of the three (the Fighters keep no shelf)
     assert.equal(two.length, 2);
     assert.deepEqual(two, CHAPTER_DOCTRINES.filter((d) => two.includes(d)), 'in the doctrines\' order');
     n[CHAPTER_DOCTRINES.find((d) => !two.includes(d))]++;
@@ -48,7 +48,8 @@ test('CHAP6b the doctrines: training, the shelf, writs - what each does; a Schis
   assert.notDeepEqual(Array.from({ length: 12 }, (_, s) => schismDoctrinesOf(s, MAGES, ANTICLERE).join('+')), GOLDEN_MAGES, 'the region in the roll');
 });
 /** The Mages of Daggerfall's Schisms' doctrines, Seasons 0 to 11 - the roll as every reader rolls it (a change is a new law). */
-const GOLDEN_MAGES = ['shelf+writs', 'shelf+writs', 'shelf+writs', 'shelf+writs', 'training+writs', 'training+shelf', 'shelf+writs', 'shelf+writs', 'shelf+writs', 'training+writs', 'shelf+writs', 'shelf+writs'];
+// PIN MOVED (AUDIT CHAP5 E3): the roll scaled (drawOf), never its remainder
+const GOLDEN_MAGES = ['training+shelf', 'training+shelf', 'training+writs', 'shelf+writs', 'training+shelf', 'shelf+writs', 'training+writs', 'training+shelf', 'shelf+writs', 'training+writs', 'training+shelf', 'training+writs'];
 
 test('CHAP6b the sides: a Schism\'s two, a Succession\'s three candidates, no other event\'s (mutants: each count, the bounds)', () => {
   assert.deepEqual([chapterSidesOf('schism'), chapterSidesOf('succession'), chapterSidesOf('rivalry'), chapterSidesOf(null)], [2, SUCCESSION_CANDIDATES, 0, 0]);

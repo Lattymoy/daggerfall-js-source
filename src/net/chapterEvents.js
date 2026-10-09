@@ -52,7 +52,7 @@ export function chapterSeasonLines(faction, region, c) {
     const names = Array.from({ length: SUCCESSION_CANDIDATES }, (_, i) => name(i));
     if (s.heir !== null && names[s.heir]) out.push(`${names[s.heir]} is the hall's new head.`);
     else out.push(names.every(Boolean) ? `The hall's head steps down this Season: ${listed(/** @type {string[]} */ (names))} stand to follow.` : 'The hall\'s head steps down this Season.');
-  } else if (s.event === 'crackdown') out.push('The watch hunts the chapter this Season: its writs pay half again.');
+  } else if (s.event === 'crackdown') out.push('The watch hunts the chapter this Season: its members\' own writs earn half again Merit.');   // AUDIT CHAP5 E1
   else if (s.event === 'rivalry') out.push(`The chapter races ${rivalOf(s.rival)} for Merit this Season.`);
   else if (s.event === 'decline') out.push('The chapter is in decline this Season: it loses Strength each week its Merit falls short of twice the target.');
   else if (s.event === 'ascendancy') out.push('The chapter is ascendant this Season.');

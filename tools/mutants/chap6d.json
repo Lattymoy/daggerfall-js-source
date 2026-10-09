@@ -164,11 +164,13 @@
   {
     "name": "CHAP6D-MODES-SHUT",
     "file": "src/scenes/worldModes.js",
-    "old": "    if (chapterHallShut(host.chapterHere?.(guild.factionId) ?? null)) { townTalk?.say?.(CHAPTER_HALL_SHUT_LINE); return; }\n",
-    "new": "",
+    "old": "    const shutBox = () => (chapterHallShut(host.chapterHere?.(guild.factionId) ?? null) ? { rows: [CHAPTER_HALL_SHUT_LINE] } : null);",
+    "new": "    const shutBox = () => null;",
     "tests": [
-      "test/chap6d_halls.test.js"
-    ]
+      "test/chap6d_halls.test.js",
+      "test/audit_chap5.test.js"
+    ],
+    "note": "AUDIT CHAP5 D2: the gate moved into the services, the popup standing."
   },
   {
     "name": "CHAP6D-MODES-BOOK",

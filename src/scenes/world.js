@@ -5872,8 +5872,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // before every banner the town flies, measured here; hung and lit while a Festival rules (scenes/seatFestival.js)
     const festivalAnchors = pixelBoardSplit ? festivalBannerAnchors({ frames: pixelHomeFrames, tavernKeys: buildingKeysOfType(locBlocks, makeBuildingKey, TALK_BUILDING_TYPES.Tavern), boards: pixelBoards, bounty: pixelBoardSplit }) : null;
     const festivalLanterns = festivalAnchors ? festivalLanternsOf([...(seatAnchors ?? []), ...festivalAnchors]) : null;
-    // CHAP7b (Chapters-Arc 8): the town's guild halls and temples, by their guild - a chapter's patron's banners hang at them
-    const pixelChapterHalls = new Map(dfLocation && locBlocks ? buildingSummaries(dfLocation.exterior?.buildings ?? [], locBlocks, { locationIndex: dfLocation.locationIndex ?? 0, locationName: dfLocation.name })
+    // CHAP7b (Chapters-Arc 8): the town's guild halls and temples, by their guild - a chapter's patron's banners hang at them.
+    // AUDIT CHAP5 C5: online alone (the sheet's) - offline no banner hangs, and the buildings' names are drawn for nothing
+    const pixelChapterHalls = new Map(chapterSheet && dfLocation && locBlocks ? buildingSummaries(dfLocation.exterior?.buildings ?? [], locBlocks, { locationIndex: dfLocation.locationIndex ?? 0, locationName: dfLocation.name })
       .filter((b) => (b.buildingType === TALK_BUILDING_TYPES.GuildHall || b.buildingType === TALK_BUILDING_TYPES.Temple) && b.factionId > 0)
       .map((b) => [b.buildingKey, b.factionId]) : []);
     // SEAT2a part four (Seats-Arc 6.2): the battlefield the town's own records give - the banners, the Throne, the camps
@@ -11882,10 +11883,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     version: () => (seatBook.open === true ? 1 : 0),
   }) : null;
   // CHAP7b (Chapters-Arc 8): a patron's banners at its chapter's halls (scenes/chapterBanners.js), on the same pass, off the
-  // chapter sheet - the hall's guild in the pixel's politic region, as its prices read it
+  // chapter sheet - the hall's guild in the pixel's politic region, as its prices read it. AUDIT CHAP5 C2: the building's
+  // faction read as its chapter's (a temple's templar order its divine's - livingChapterOf's law)
   const chapterBanners = chapterSheet && bannerPass ? createChapterBanners({
     built: () => built, regionAt: (px, py) => { try { return maps.getRegionIndexAt(px, py); } catch { return null; } },
-    chapterOf: (faction, region) => chapterSheet.chapterOf(faction, region), translation: (px, py) => state.pixelTranslation(px, py), eye: () => cam.pos,
+    chapterOf: (faction, region) => chapterSheet.chapterOf(chapterFactionOf(faction, townTalk?.factionDict ?? null) ?? faction, region),
+    translation: (px, py) => state.pixelTranslation(px, py), eye: () => cam.pos,
   }) : null;
   // FESTIVAL-STAGE (Seats-Arc 7.6): whether a Festival rules at a town - its streets' music, its lanterns lit
   const festivalStage = seatBook ? createFestivalStage({ seatAt: (mapId) => seatHere(mapId), version: () => (seatBook.open === true ? 1 : 0) }) : null;
@@ -27816,15 +27819,21 @@ export async function bootWorld(canvas, renderer, params, status) {
     // again, without waiting, when the guild book's look is old), the hall bought and opened through the book, and the
     // hall's chest: the guild Stores on the Guild tab
     seatShopFactor: (b) => seatEdicts.shopFactor(b),   // SEAT1d (Seats-Arc 7.2, 7.6): a seat town's shops - its holder's members, Market Day
-    // CHAP7b (Chapters-Arc 8): the playing account's player guild - a chapter's patron's members pay the Thriving prices
-    guildId: () => guildBook?.guild?.id ?? null,
+    // CHAP7b (Chapters-Arc 8): the playing account's player guild - a chapter's patron's members pay the Thriving prices.
+    // AUDIT CHAP5 C1: asked again, without waiting, when the book's look is old (the seats' own guildId's way) - the book
+    // looks first at the Guild tab, so a fresh page's member paid the band's price until it was opened
+    guildId: () => { const g = guildBook; if (g?.stale?.()) g.refresh().catch(() => {}); return g?.guild?.id ?? null; },
     // CHAP3c: a hall's chapter's Strength, its band on the hall - AUDIT CHAP3 C6: in the region the chapters are keyed by
     // (the politic map's, as the hall's witness and the board read it), never the location record's. CHAP6d: the whole
     // chapter (chapterSheet.js chapterOf) - its band and its Season on the hall
     chapterHere: (faction) => {
       const px = playerTravelPixel();
       const region = (() => { try { return maps.getRegionIndexAt(px.x, px.y); } catch { return null; } })();
-      return Number.isInteger(region) ? chapterSheet?.chapterOf(faction, region) ?? null : null;
+      const c = Number.isInteger(region) ? chapterSheet?.chapterOf(faction, region) ?? null : null;
+      // AUDIT CHAP5 C1: a hall with a patron has the guild book look at once - the hall's popup asks this first (its shut
+      // halls), so the book has its guild before a window's price reads it
+      if (c?.patron && guildBook?.stale?.()) guildBook.refresh().catch(() => {});
+      return c;
     },
     // CHAP4b: the rank the playing character's seat gives it at a hall of this guild here (the politic region, as the
     // sheet's); and the highest rank DFU's review gives while the Roll holds - 8 and 9 are seats (Chapters-Arc 3.5)

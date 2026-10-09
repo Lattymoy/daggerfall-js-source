@@ -3,7 +3,7 @@
 --   npx wrangler d1 migrations apply daggerfall-accounts --remote
 --
 -- Applied exactly once through the `d1_migrations` ledger, which the
--- deploy runs (ACC1-CI). Deploy this service (acct99 - AUDIT CHAP4 R1: acct95 then, renumbered at the merges of main) BEFORE the site:
+-- deploy runs (ACC1-CI). Deploy this service (acct100 - AUDIT CHAP4 R1, AUDIT CHAP5 R3: acct95 then, renumbered at the merges of main) BEFORE the site:
 -- the new site shows a chapter's receipt asks on the Notice Board.
 --
 -- Mac: "Keep going with the arc/slices" (bible/11-Multiplayer/Chapters-Arc.md

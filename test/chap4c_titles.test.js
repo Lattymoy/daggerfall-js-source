@@ -1,6 +1,6 @@
 // CHAP4c (2026-10-08, Mac: "Your call", the Chapters arc's seats - bible/11-Multiplayer/Chapters-Arc.md section 6): THE
 // CHAPTERS' TITLES ON THE TOKEN - three generic ids (a chapter's Master, an officer, a Master who lost the seat this
-// Season), each with the seats' bounded claim [the chapter's key, the Season]; the relay carrying the claim (world182; AUDIT CHAP4 R12, then past TAVERN-TABLES and TV-BEYOND at the merges);
+// Season), each with the seats' bounded claim [the chapter's key, the Season]; the relay carrying the claim (world183; AUDIT CHAP4 R12, then past TAVERN-TABLES, TV-BEYOND and CARDS10 at the merges - AUDIT CHAP5 R10);
 // the client wording them without gender; the service deriving them from the seats and the Chronicle, behind
 // CHAPTER_TITLES (shipped off: the relay goes first).
 import { test } from 'node:test';

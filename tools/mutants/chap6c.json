@@ -236,11 +236,12 @@
   {
     "name": "CHAP6C-LINE-CRACKDOWN",
     "file": "src/net/chapterEvents.js",
-    "old": "  } else if (s.event === 'crackdown') out.push('The watch hunts the chapter this Season: its writs pay half again.');\n",
+    "old": "  } else if (s.event === 'crackdown') out.push('The watch hunts the chapter this Season: its members\\' own writs earn half again Merit.');   // AUDIT CHAP5 E1\n",
     "new": "  }\n",
     "tests": [
       "test/chap6c_words.test.js"
-    ]
+    ],
+    "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
   },
   {
     "name": "CHAP6C-LINE-RIVALRY",
@@ -434,20 +435,22 @@
   {
     "name": "CHAP6C-BACK-LATE",
     "file": "src/ui/noticeWindow.js",
-    "old": "text: accountRefusalText(r?.error) };\n    if (!alive) { work.sayLate?.(said.text); return; }\n    busy = false;\n    word = said;\n    loadWrits(true);\n  }\n\n  async function setFocus",
-    "new": "text: accountRefusalText(r?.error) };\n    if (!alive) { return; }\n    busy = false;\n    word = said;\n    loadWrits(true);\n  }\n\n  async function setFocus",
+    "old": "chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' } : { ok: false, text: accountRefusalText(r?.error) };\n    if (!alive) { work.sayLate?.(said.text); return; }",
+    "new": "chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' } : { ok: false, text: accountRefusalText(r?.error) };\n    if (!alive) { return; }",
     "tests": [
       "test/chap6c_words.test.js"
-    ]
+    ],
+    "note": "AUDIT CHAP5 T1-T3: re-aimed - the old text ran on into the next door (bidPatron's)."
   },
   {
     "name": "CHAP6C-BACK-RELOAD",
     "file": "src/ui/noticeWindow.js",
-    "old": "    word = said;\n    loadWrits(true);\n  }\n\n  async function setFocus",
-    "new": "    word = said;\n    render();\n  }\n\n  async function setFocus",
+    "old": "chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' } : { ok: false, text: accountRefusalText(r?.error) };\n    if (!alive) { work.sayLate?.(said.text); return; }\n    busy = false;\n    word = said;\n    loadWrits(true);",
+    "new": "chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' } : { ok: false, text: accountRefusalText(r?.error) };\n    if (!alive) { work.sayLate?.(said.text); return; }\n    busy = false;\n    word = said;\n    render();",
     "tests": [
       "test/chap6c_words.test.js"
-    ]
+    ],
+    "note": "AUDIT CHAP5 T1-T3: re-aimed - the old text ran on into the next door (bidPatron's)."
   },
   {
     "name": "CHAP6C-DOOR",

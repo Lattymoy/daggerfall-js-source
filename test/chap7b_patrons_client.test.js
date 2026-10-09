@@ -176,9 +176,9 @@ test('CHAP7b the wiring: the build keeps each town\'s halls by their guild; the 
   assert.match(world, /\.filter\(\(b\) => \(b\.buildingType === TALK_BUILDING_TYPES\.GuildHall \|\| b\.buildingType === TALK_BUILDING_TYPES\.Temple\) && b\.factionId > 0\)\n\s+\.map\(\(b\) => \[b\.buildingKey, b\.factionId\]\) : \[\]\);/);
   assert.match(world, /\n\s+chapterHalls: pixelChapterHalls,/);
   assert.match(world, /for \(const b of chapterBanners\?\.list\(\) \?\? \[\]\) all\.push\(b\);/);
-  assert.match(world, /chapterOf: \(faction, region\) => chapterSheet\.chapterOf\(faction, region\),/);
+  assert.match(world, /chapterOf: \(faction, region\) => chapterSheet\.chapterOf\(chapterFactionOf\(faction, townTalk\?\.factionDict \?\? null\) \?\? faction, region\),/);   // PIN MOVED (AUDIT CHAP5 C2): a temple's templar order its divine's
   assert.match(world, /regionAt: \(px, py\) => \{ try \{ return maps\.getRegionIndexAt\(px, py\); \} catch \{ return null; \} \},\n\s+chapterOf:/);
-  assert.match(world, /\n\s+guildId: \(\) => guildBook\?\.guild\?\.id \?\? null,/);
+  assert.match(world, /until it was opened\n\s+guildId: \(\) => \{ const g = guildBook; if \(g\?\.stale\?\.\(\)\) g\.refresh\(\)\.catch\(\(\) => \{\}\); return g\?\.guild\?\.id \?\? null; \},/);   // PIN MOVED (AUDIT CHAP5 C1): asked again when old
   assert.match(world, /patron: hallDoor && realmSession \? \(faction, marks\) => hallDoor\.patron\(realmSession\.id, faction, region, marks, mintMarksRid\(\)\) : null,/);
   assert.match(src('src/scenes/worldModes.js'), /chapterHallFactor\(chapterHere\(\), service, host\.guildId\?\.\(\) \?\? null\)/);
   assert.match(src('src/net/accountClient.js'), /patron: \(character, faction, region, marks, rid\) => post\('\/v1\/chapters\/patron', \{ character, faction, region, marks, rid \}\),/);

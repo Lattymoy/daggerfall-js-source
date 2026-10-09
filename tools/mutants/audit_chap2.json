@@ -447,14 +447,14 @@
     "name": "T-HALLS-WITNESS-FORGET",
     "file": "server-account/src/npcHalls.js",
     "old": "  if (r?.meta?.changes) _kept.delete(h.region);   // AUDIT CHAP2 E9: a report that changed nothing is no news\n",
-    "new": "",
+    "new": "  if (r?.meta?.changes) { /* forgets nothing */ }\n",
     "tests": [
       "test/audit_chap1.test.js",
       "test/audit_chap2.test.js",
       "test/chap1_roll.test.js",
       "test/chap2_halls.test.js"
     ],
-    "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
+    "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved. AUDIT CHAP5 T1-T3: re-aimed - the mutant failed for its own reason (a name it does not import, a statement that does not parse), never the law's."
   },
   {
     "name": "T-HALLS-KEPT-SET",

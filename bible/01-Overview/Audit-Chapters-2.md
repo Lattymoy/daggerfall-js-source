@@ -8,8 +8,9 @@ none edited the tree while any of them was reading (Home.md, DO NOT FIX WHILE TH
 
 - **the service** (S): `server-account/src/npcRoll.js`, `npcHalls.js`, the hall parts of `professions.js`, the routes,
   migrations `0088` and `0089` then (AUDIT CHAP4 R15: renumbered at each merge of main since - `0090`/`0091` past
-  CRAFT2-CRAFT5, `0091`/`0092` past SD9b, `0092`/`0093` past SCALE4, `0093`/`0094` past TAVERN CARDS, and now
-  `0096_npc_roll` and `0097_npc_halls` past SERVER-POST and HOURS-FIRST; AUDIT CHAP3 R5 said it otherwise);
+  CRAFT2-CRAFT5, `0091`/`0092` past SD9b, `0092`/`0093` past SCALE4, `0093`/`0094` past TAVERN CARDS, `0095`/`0096` past
+  SERVER-POST and HOURS-FIRST, and now `0096_npc_roll` and `0097_npc_halls` past CARDS10; AUDIT CHAP3 R5 said it
+  otherwise, AUDIT CHAP5 R8 set it right);
 - **the client** (C): `src/net/npcRollTracker.js`, `npcHallBook.js`, the door, the board, `scenes/world.js`'s wiring;
 - **Daggerfall's law** (D): the leaf, the join, the halls each town keeps, the reveal - against DFU's C#;
 - **the economy and its abuse** (E): a modified client, colluding accounts, the numbers;
@@ -21,11 +22,11 @@ Every finding was re-read here before a line moved; where lenses found one fault
 carries an `AUDIT CHAP2 <ID>` comment and a pin in `test/audit_chap2.test.js` (34), and is mutated in
 `tools/mutants/audit_chap2.json` - the fixes' own mutants and the pins lens's 122, re-aimed by content where the fixes
 moved their lines, and one for Mac's decision: **166 records, 157 dead, 9 equivalent as recorded** (each with its
-reason). The first run judged a few records dead that a flaky pin had failed - the audit's own end-to-end pin waited two
+reason; 158 and 8 since AUDIT CHAP4, which killed one). The first run judged a few records dead that a flaky pin had failed - the audit's own end-to-end pin waited two
 turns for a real round trip, which a loaded runner does not always give - so the pin waits on what the trip moves, and
 every record judged on one failing test was run again: four the pins lens had called equivalent stand so. The arc's older lists hold
 too: `chap1.json` 25, `audit_chap1.json` 49 and `chap2.json` 39, all dead. The service stays `acct94`: none of it has
-shipped, so migration `0091` (today's `0097_npc_halls`) grew in place.
+shipped, so migration `0089` (today's `0097_npc_halls` - AUDIT CHAP5 R8) grew in place.
 
 ## Fixed
 

@@ -40,11 +40,12 @@
   {
     "name": "A3-S2-RESET",
     "file": "server-account/src/npcChapters.js",
-    "old": "const opened = open === 'on' && last?.open === 'dev';",
-    "new": "const opened = false;",
+    "old": "  const opened = open === 'on' && last?.open === 'dev'\n",
+    "new": "  const opened = false\n",
     "tests": [
       "test/audit_chap3.test.js"
-    ]
+    ],
+    "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
   },
   {
     "name": "A3-S2-STORED",

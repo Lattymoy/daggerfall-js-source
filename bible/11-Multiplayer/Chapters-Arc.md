@@ -33,7 +33,9 @@ High Master in an Ascendancy, a Season's Master for good - sections 6 and 7, its
 (2026-10-09, the same word; the patrons on the service - a guild's sealed bid in escrow, the Season's opening Turning
 burning the highest and sending the rest home, the patron on the sheet, the board and in the Chronicle - section 8, its
 record at the foot); CHAP7b BUILT (2026-10-09, the same word; the patrons on the client - the board's bid, the banners at
-the chapter's halls, the members' Thriving prices - section 8, its record at the foot). The arc's seven slices stand. Merged with main
+the chapter's halls, the members' Thriving prices - section 8, its record at the foot). The arc's seven slices stand. AUDIT
+CHAP5 (2026-10-09, Mac: "I think we do a deep comprehensive audit across everything") read all of it again through six
+lenses and fixed what they found (`01-Overview/Audit-Chapters-5.md`, its record at the foot). Merged with main
 past the Super Dungeons arc, then past SCALE4 and TAVERN CARDS (2026-10-08), then past SERVER-POST and HOURS-FIRST
 (2026-10-09), then past PERMADEATH-HOUSES and TAVERN-TABLES, then past TV-BEYOND (2026-10-09), then past CARDS9 and CARDS10 (2026-10-09; Iliac Hand's season board, its migration `0095_iliac_ladder`, `acct99` and `world182` deployed first): the arc's migrations are `0096_npc_roll` to `0101_npc_seats`, its service `acct100` and its relay `world183` - the records below name each
 migration by its current number and the service by the version it was built under. AUDIT CHAP3 (2026-10-08, Mac:
@@ -107,7 +109,8 @@ Appendix A names their homes.
   Merit decides how it ends.
 - **The living world shows it.** The account service publishes one **chapter sheet**; the living world reads it as one
   more input of its pure function, so every player sees the same hall: crowded or empty, quarrelling or proud, its
-  Schism's two candidates walking the same street.
+  Schism's two candidates walking the same street (NARROWED, 9: named by every reader alike, not yet walking it - AUDIT
+  CHAP5 R11).
 
 ## 1. The laws this arc keeps
 
@@ -266,7 +269,11 @@ passing the seat round housed every one of it); the promotion's own texts and gi
 Dark Brotherhood's location at each promotion, the Mages Guild's 8, an order's and a temple's 9) come with DFU's review,
 which online stops at 7. A seat's SERVICES are its while it is held (the teleport, the summoning, the repair's scale,
 the quests). AUDIT CHAP4 D3: a seat's TITLE is the one its chapter's halls say - the popup and its counter read the
-seated book, as the hall's services and quests do; the character sheet's affiliations name the book's rank.
+seated book, as the hall's services and quests do; the character sheet's affiliations name the book's rank. AUDIT CHAP5
+D1, NARROWED: a seat lifts only a membership DFU's own review holds AT 7 (`seatedBook`) - the seat's Eligible is the
+Roll's reputation alone, so a rank-2 member seated was handed every service DFU's ranks 3 to 9 ask skills for (a Mages
+Guild's Teleport, its Summoning, its magic items); one below 7 at its book keeps its own rank's services and title at
+its seat's halls until DFU's review gives it 7.
 
 ### 3.6 Customs and a new character
 
@@ -535,7 +542,8 @@ the hall the player stands in (its guild's faction, as the hall's service window
 - **What a band reaches, by DFU's own halls** (AUDIT CHAP3 D3): only what a hall sells. The Mages Guild and the temples
   sell spells and shelves; the Fighters Guild training alone; the ten knightly orders none of these (DFU's
   `KnightlyOrder.CanAccessService`: quests, armor, a house) - their band is felt in their writs alone (and, CHAP5b, in
-  their halls' evenings and their towns' talk), until CHAP6 gives an order's hall a band of its own (AUDIT CHAP4 R7). AUDIT CHAP3 D4: RefinedTraining's five-day package moves by less than
+  their halls' evenings and their towns' talk), until a slice gives an order's hall a band of its own (AUDIT CHAP4 R7) - still open: CHAP6 gave it none, and AUDIT
+  CHAP5 D3 gives an order's chapter one doctrine alone, more writs (AUDIT CHAP5 R12). AUDIT CHAP3 D4: RefinedTraining's five-day package moves by less than
   the factor - its own per-session upkeep (RR's `(cost + level x 8 + 72) x 5`) is RR's, unbanded.
 - **The price shown is the price charged** (AUDIT CHAP3 C1): each window reads the hall's factor once as it opens -
   training's flow, the spellbook and the spellmaker alike - and the hall's chapter is read in the politic map's region
@@ -557,7 +565,7 @@ Turnings due settled first, behind `CHAPTERS_OPEN`; the client's door is `accoun
 CHAP4's and CHAP6's to add, and its cache CHAP3c's, the halls' first reader. NARROWED: the Thieves Guild's and the Dark
 Brotherhood's chapters are never on it - a public sheet would name where the underworld keeps its halls, which their
 writs and receipt asks keep to their members (AUDIT CHAP2 S2). The board says the region's chapters' state beside its
-writs ("The Fighters Guild here is Thriving (Strength 74)", `chapterLineOf`), a hidden guild's to its members alone.
+writs ("The chapter of the Fighters Guild here is Thriving (Strength 74)", `chapterLineOf` - AUDIT CHAP5 R16), a hidden guild's to its members alone.
 BUILT (CHAP3c): the playing tab holds the sheet (`src/net/chapterSheet.js` createChapterSheet over `accountRoll.list`),
 read at a town's entry and again once ten minutes old (`SHEET_KEPT_MS`, the seats' list's beat), one read at a time, a
 refusal that is the account's stopping it for the page - and forgetting what it held, so every hall is DFU's own again
@@ -698,9 +706,9 @@ and a salt, as a Tide is (`net/tideLaw.js`) - from weights its last Season moved
 | Event | Base weight | Moved by | The Season |
 |---|---|---|---|
 | **Calm** | 30 | - | Nothing beyond the week |
-| **Schism** | 15 | +10 if the Master's seat changed hands twice last Season | Two of the hall's residents stand for the chapter's doctrine. Members back one with their Merit; at the Season's end the winner's doctrine holds the next Season (a perk set in the law module: cheaper training, or a deeper shelf, or more writs) |
+| **Schism** | 15 | +10 if the Master's seat changed hands twice last Season; none, its weight Calm's, for a guild whose hall holds one doctrine (AUDIT CHAP5 D3) | Two of the hall's residents stand for the chapter's doctrine. Members back one with their Merit; at the Season's end the winner's doctrine holds the next Season (a perk set in the law module: cheaper training, or a deeper shelf, or more writs - only what the guild's DFU hall sells, AUDIT CHAP5 D3) |
 | **Succession** | 10 | +10 if the chapter was Ascendant | The hall's head steps down. The Master names the successor from the hall's residents at the Season's third Turning; with no Master, the most-Merit member's choice stands |
-| **Crackdown** | 10 | Thieves and Brotherhood x2; +10 if the region's seat holder's Edict is Curfew | The watch or a rival hunts the chapter: its writs pay half again, and a chapter under 30 Strength at the Season's end shuts its halls for the next |
+| **Crackdown** | 10 | Thieves and Brotherhood x2; +10 if the region's seat holder's Edict is Curfew | The watch or a rival hunts the chapter: its members' own writs earn half again Merit (AUDIT CHAP5 E1 - its writs pay as any), and a chapter under 30 Strength at the Season's end shuts its halls for the next |
 | **Rivalry** | 15 | +10 if a rival chapter (section 8) in the region is Thriving; with no rival chapter in the region its weight is Calm's (AUDIT CHAP R9: a weight of 0 spread its share over every event, where CALL 5 gives it to Calm) | Two chapters in one region race on Merit; the winner takes 10 Strength from the loser at the Season's end |
 | **Decline** | 10 | +15 if Failing | Strength falls 2 more each week unless the week's Merit meets twice the target |
 | **Ascendancy** | 10 | +15 if Ascendant | The halls' prices a further tenth off; the Master's title gains "High" for the Season |
@@ -711,7 +719,7 @@ and a salt, as a Tide is (`net/tideLaw.js`) - from weights its last Season moved
 
 BUILT (CHAP6a, 2026-10-09, Mac: "continue"), the roll and the weeks - `src/net/npcChapterLaw.js` (`CHAPTER_EVENTS`,
 `CHAPTER_EVENT_EFFECTS`, `CHAPTER_RIVAL_PAIRS`, `chapterEventWeights`, `chapterEventOf`, `declineAfter`, `rivalryEnd`,
-`crackdownPay`, `crackdownShuts`, `chapterSeasonLine`), `server-account/src/npcChapters.js` (`seasonEnded`, `seasonDrawn`,
+`crackdownMerit` - `crackdownPay` until AUDIT CHAP5 E1 -, `crackdownShuts`, `chapterSeasonLine`), `server-account/src/npcChapters.js` (`seasonEnded`, `seasonDrawn`,
 `regionEvents`), migration `0100` grown in place:
 
 - **The draw** is the Turning that opens a Season - the one that settles the week before its first, which ends the
@@ -724,15 +732,25 @@ BUILT (CHAP6a, 2026-10-09, Mac: "continue"), the roll and the weeks - `src/net/n
   in the region is Thriving" is Thriving or Ascendant (Ascendant is "as Thriving"), read off the strongest rival
   keeping a chapter there - the one a Rivalry races (`chapterRivalPick`, the lower guild at a tie); "the region's seat
   holder's Edict is Curfew" is a seat of the region with the Curfew as law in the week the drawing Turning closes.
+  AUDIT CHAP5 E3: the roll is scaled over the weights' sum (`drawOf`: floor(h / 2^32 x total)), never its remainder - a
+  remainder drew most chapters again on any change of the sum, so a Curfew's edict or a Master's seat churned steered a
+  region's events; scaled, a modifier moves the chapters its own share reaches. The roll stays public (a pure function,
+  as a Tide's): RESIDUAL, a reader can still foresee the next Season's draw and weigh it - no secret salt.
 - **A Decline** costs its 2 at each of the Season's Turnings, after the week's own step, unless the week's Merit met
   twice its target; what it took is kept in the chapter's state (`fell`).
 - **The Season's end**, in order: the week's step (and a Decline's); every Rivalry raced on the whole Season's Merit (a
   gate's where its day's claims agree, as every sum) - the loser gives 10 (never below 0), the winner takes them (never
-  past 100), a tie moves neither, a pair that drew each other races once, a rival no longer confirmed races no one; then
+  past 100), a tie moves neither, a pair that drew each other races once, a rival no longer confirmed races no one -
+  AUDIT CHAP5 E5: and a chapter races ONCE a Season, the first of its rivalries in the chapters' order (by region, then
+  guild): any other ends even (the Brotherhood, every order's and two temples' rival, was raced by each and lost ten a
+  race); then
   each Crackdown's line (under 30, its halls shut for the next Season - the Season's end whole, the Rivalries' swings
   in it); then the halving; then the next Season's draw.
-- **A Crackdown's writs** - the chapter's hall writs and a member's own - pay half again (`crackdownPay`, Marks), inside
-  the same three a day (CALL 8: a bounded raise on writs the day already counts, no new faucet). **Shut halls** post
+- **A Crackdown's writs** - AUDIT CHAP5 E1: pay as any writ; a member's own writ for the chapter earns half again its
+  Merit (`crackdownMerit`, 150 for its own units' whole), counted at its delivery. The Marks' half again it paid until
+  then (`crackdownPay`) was a faucet CALL 8 never meant: any account fills a hall writ, with units bought, so a Crackdown
+  chapter's writs paid x1.8 of what their units cost against PROF0's x1.2 (Appendix C rejected x1.5) - the half again
+  is now the members' help to a hunted chapter, inside the week's Merit cap. **Shut halls** post
   neither for the Season; what the client shuts with them (the halls' people, their services) is CHAP6c's - BUILT
   (CHAP6d), below.
 - **The Chronicle** writes an 'event' row for each chapter whose event was no Calm, with how it ended ("At the end of
@@ -740,11 +758,18 @@ BUILT (CHAP6a, 2026-10-09, Mac: "continue"), the roll and the weeks - `src/net/n
   in the shadows": a public line naming the underworld's chapter would say where it keeps its halls), and a 'season'
   row for each Master placed at or before the Turning that opened the Season and sitting still at its end ("Through the
   Season of Morning Star, Alda held the Master's seat of the Fighters Guild." - never Season 0's, which crowns no one, as
-  the seats' own); the Hall of Records reads both. The title the 'season' row earns is CHAP6e's (a relay change) -
+  the seats' own); the Hall of Records reads both. AUDIT CHAP5 S1/E2: the MASTER'S seat the whole Season - a seat's
+  `since` is the character's at the chapter, kept from an officer's seat to the Master's, so an officer who rose to it
+  in the Season's last week was crowned; one the Chronicle saw take the Master's seat in the Season (weeks after its
+  first Turning) is none. AUDIT CHAP5 S6: and never a Season any week of which the developers alone settled ('dev'),
+  their trial no title for good. AUDIT CHAP5 S2: a hidden rival is never in the row a reader is sent either (the Hall of
+  Records' `chapterChronicle` drops it) - RESIDUAL (D4, CALL 5): a public chapter's Rivalry with "its rival in the
+  shadows" still says, by its table, which hidden guild keeps a chapter there (the Fighters' only rival is the Thieves). The title the 'season' row earns is CHAP6e's (a relay change) -
   BUILT, below.
 - **The sheet and the board** carry each chapter's Season's event (`event`), a Rivalry's rival where it is public (a
   hidden rival to its members alone, on the board), and `shut`. The opening week ('on' after 'dev') clears every
-  developers' event and shut hall with their Strength.
+  developers' event and shut hall with their Strength - AUDIT CHAP5 S6: the FIRST week ever settled 'on'; a developers'
+  trial after it ('on', 'dev', 'on') wiped every chapter's Strength, seats and paid patronage in the middle of a Season.
 - **Still to build**: the Schism's backing, the Succession's heir, the doctrine and the Master's vote (CHAP6b) - BUILT,
   below; every event on the client - the board's and the roll's words, the town's talk, an Ascendancy's prices, the shut
   halls, the doctrines' training and shelf, the candidates' names, the titles (CHAP6c) - the words and the names BUILT
@@ -757,12 +782,18 @@ BUILT (CHAP6b, 2026-10-09, Mac: "continue"), the members' part - `src/net/npcCha
 
 - **A Schism's two candidates** each stand for a doctrine - two of the three ("cheaper training, or a deeper shelf, or
   more writs"), the third left out by the event's own roll (`schismDoctrinesOf`, on its own salt), side 0 the first in
-  the doctrines' order. **A Succession's candidates** are three of the hall's residents; the service knows them by
+  the doctrines' order. AUDIT CHAP5 D3: two of its GUILD's own (`chapterDoctrinesFor`) - the doctrines DFU's hall can
+  give: all three at the Mages Guild and every temple with a shelf; training and more writs, both, at the Fighters Guild
+  (no shelf) and Kynareth's temple (spells, never a potion, magic item or soul gem); more writs alone at a knightly order
+  (KnightlyOrder.cs: no training, no shelf) and a hidden guild (its hall DFU's own on every sheet) - one doctrine, no
+  Schism: its weight is Calm's. **A Succession's candidates** are three of the hall's residents; the service knows them by
   their index (0 to 2), the client names them off the hall's census (9, CHAP6c).
 - **The backing** (`POST /v1/chapters/back { character, faction, region, side }`): the account's standing character,
   an ACTIVE member of the guild on its Roll (AUDIT CHAP4 D1's dormant lines refused), backs one side of its chapter's
   Schism or names one candidate of its Succession - one backing an account a chapter a Season (an account's alts are
-  one voice), changed until the event is decided; the event and the membership asked inside the write. NARROWED: any
+  one voice), changed until the event is decided; the event and the membership asked inside the write. AUDIT CHAP5 S3: a
+  hidden guild's chapter's Season is its members' to ask of - a stranger (no active membership) is answered "no event"
+  before the event is read; its 'no-side', 'closed' and 'not-member' told which regions keep the underworld's halls. NARROWED: any
   active member of the guild may back any of its chapters' events; only its Merit at that chapter weighs.
 - **The Schism, decided at the Season's end**: each side's weight is its backers' accounts' Merit at the chapter that
   Season (a gate's where its day's claims agree, as every sum); the heavier side wins; at a tie the Master's side - the
@@ -807,19 +838,25 @@ services window (`src/scenes/worldModes.js`), the host's `chapterHere` (`src/sce
 - **The prices**: the band's factor (5.2, CHAP3c), times 0.9 in an Ascendancy - training, a spell bought and a spell
   made alike, as the table's "the halls' prices" are the band's three - times 0.9 again on TRAINING alone where
   "cheaper training" holds the Season; rounded once, never under 1, as the band's (`chapterPriced`). An Ascendant
-  chapter in an Ascendancy trains at 0.9 x 0.9 x 0.9 of DFU's price.
+  chapter in an Ascendancy trains at 0.9 x 0.9 of DFU's price, 0.9 x 0.9 x 0.9 with "cheaper training" too (AUDIT CHAP5
+  D7). AUDIT CHAP5 D6: the spellbook's haggle line weighs its price against the cost the hall's chapter lists - DFU's
+  list against a Thriving hall's price read as a bargain the player never struck.
 - **The shelf**: the band's step and "a deeper shelf"'s two more, inside the band's own bounds (`chapterShelfQuality`'s
   `extra`: 1-20, a world-data hall past 20 never lowered) - a Failing hall's four less is two less with it; minted once
   a day, as the band's (GUILD-SHELF).
 - **The shut halls**: a hall whose chapter's halls a Crackdown shut answers every service of its window - training, the
-  spells, the shelves, repair and the rest alike - with one line, "The hall is shut this Season, by the watch's order.",
-  in the town's talk, before any window opens; its two `guildsman` keep their working day at home, and no resident
+  spells, the shelves, repair, its quests and the rest alike, the Reforge's and the temple's rows too - with one line,
+  "The hall is shut this Season, by the watch's order.", on its popup. AUDIT CHAP5 D2: the popup itself stands - DFU's
+  OnPush (the rank review, a temple's free healing, the Mages' free recharge), Talk and the join are the guild's, not
+  its counter's; the whole popup was refused before. Its two `guildsman` keep their working day at home, and no resident
   spends an evening there - nor a sellsword's or an adventurer's daily visit (their day's own draws kept, so the rest of
   the day stands as it was). NARROWED: the door stays DFU's - its opening hours, its shelf of books and the hall's roll
-  on it (9) - the Crackdown shuts the chapter's work, not the building.
+  on it (9) - the Crackdown shuts the chapter's work, not the building. AUDIT CHAP5 C3, NARROWED: a shut TEMPLE's
+  worship goes on - its priests keep their day, the pious their visits (the living town reads the guild halls' bands
+  alone); the Crackdown shuts its counter, not its altar.
 - **The host** hands the window the hall's whole chapter off the sheet (`chapterHere`, the band's `chapterStrength` it
-  replaced); none known - offline, the classic skin, a hidden guild, a chapter the sheet does not name - every hall is
-  DFU's own, as the band's.
+  replaced); none known - offline, a hidden guild, a chapter the sheet does not name - every hall is DFU's own, as the
+  band's (AUDIT CHAP5 C4: "the classic skin" was never one - the sheet is read online on either skin).
 
 BUILT (CHAP6e, 2026-10-09, Mac: "continue"), the Season's two titles - `src/net/identityToken.js` (`CHAPTER_TITLES`'s
 `highmaster` and `seasonmaster`), `src/net/npcChapterLaw.js` (`chapterTitleText`, `chapterTitlesOf`'s `high` and
@@ -835,7 +872,8 @@ badge (`src/ui/playerBadge.js`):
 - **The Season's Master**: every 'season' row of the Chronicle (CHAP6a: a Master placed at or before the Turning that
   opened the Season and sitting at its end) titles its character for good - `seasonmaster`, "Master of the Mages Guild,
   Daggerfall, Season 3", its claim the chapter and the Season it held. NARROWED: one title in the wardrobe, its newest
-  Season signed (then by guild and region); held with no seat now, at a chapter struck since (for good is for good);
+  Season signed (then by guild and region); held with no seat now, at a chapter struck since (for good is for good -
+  AUDIT CHAP5 E6 kept it so: a strike is the developers' word on a town, never on a Master's Season);
   never a hidden guild's, a dead character's (the seats' own law), nor Season 0's.
 - **The relay**: the two ids join the closed list last, riding with the seats' claim (`titleClaimed`) - `world182` grown
   in place (undeployed, its law re-hashed; `world183` since the merge of main past CARDS10's), deployed before `CHAPTER_TITLES` is turned on, as CHAP4c's three.
@@ -884,7 +922,13 @@ grown in place:
   on it). A bid still open for an earlier Season - one that opened while the Chapters were shut - goes home with them;
   a bid that lands between the Turning's read and its batch fails the batch, and the next read settles the week with
   it. The chapter keeps its patron for the Season (`npc_chapters.patron`, `patron_season`); the opening week clears a
-  developers' patron.
+  developers' patron - AUDIT CHAP5 S6: and sends every open bid home, none won, though the opening be a Season's first
+  Turning (a developers' bid bought nobody the Season). AUDIT CHAP5 S4: the statements read each list once (a row-value
+  IN, an UPDATE ... FROM) - a correlated EXISTS read the whole list again for every bid, and a Season of some thousands
+  of bids took the Turning's batch past its time (4,000 bids, 7.7 s; now well under one).
+- **A guild with a bid standing never goes** (AUDIT CHAP5 E4): its disbanding refused ('guild-patron', "The guild has
+  bid for a chapter's patronage. It cannot go until the Season opens and the bid is decided.") - `guildKeepsSql` kept
+  its writs' and contracts' escrow and not this one, which the guild's going burnt.
 - **The Chronicle** writes a 'patron' row - "For the Season of First Seed, Grey Lanterns took the patronage of the
   Fighters Guild." - the guild's name as it stood (`chapterPatronLine`); the Hall of Records reads it. **The sheet and
   the board** carry each chapter's `patron` this Season (`{ id, name, tag, heraldry }`; a guild gone since is none);
@@ -902,13 +946,19 @@ BUILT (CHAP7b, 2026-10-09, Mac: "continue"), the patrons on the client - `src/ne
 - **The members' prices**: a hall's price factor for a reader whose player guild is its chapter's patron this Season is
   the Thriving band's (0.9) whatever the chapter's Strength - a Failing chapter's patron's members pay 0.9, not 1.25 -
   and an Ascendancy's and the training doctrine's tenths lie on it as on anyone's; the shelf is the band's (8 named
-  the prices alone). The host hands the hall the playing account's guild (its GuildBook's).
+  the prices alone). The host hands the hall the playing account's guild (its GuildBook's) - AUDIT CHAP5 C1: asked
+  again when the book's look is old, and at once where the hall's chapter has a patron (the hall's popup asks the
+  chapter first); the book looked first at the Guild tab, so a fresh page's member paid the band's price. A patron of a
+  knightly order's chapter buys its banner and its line alone - an order's hall sells no training nor spell (AUDIT
+  CHAP5 D3).
 - **The banners**: the sheet keeps each chapter's patron and its arms (`heraldryOf` - arms that are not, none); a town's
   guild halls and temples, by their guild, are kept at its build (`chapterHalls`), and a hall whose chapter - the hall's
   guild in the pixel's politic region (AUDIT CHAP3 C6) - has a patron with arms hangs them, two banners beside its door,
   on the halls' and the seats' own pass (`hallBannerAnchors`, `bannerKeyOf`; the nearest of all of them drawn). A patron
   with no arms, a door unmeasured, a chapter the sheet does not name: none. NARROWED: beside the door, outside - DFU's
-  hall interiors are its own blocks, as a player guild's hall's banners are its street's.
+  hall interiors are its own blocks, as a player guild's hall's banners are its street's. AUDIT CHAP5 C2: the hall's
+  guild read as its chapter's (a temple's templar order its divine's, `chapterFactionOf` - the living town's law); AUDIT
+  CHAP5 C5: the halls kept online alone (offline no banner hangs, and the buildings' names are drawn for nothing).
 - **The board** names each chapter's patron ("Its patron this Season: Grey Lanterns [GLN]."), and to its guild's
   guildmaster alone (the board sends the bid to it alone) its bid for the Season after - "Your guild bids 1,500 silver for
   its patronage in the Season of First Seed." - and what it may bid: none standing, 1,000, 2,000 or 5,000; standing,
@@ -944,7 +994,8 @@ classic skin, the row off, the service unreachable - the living world is exactly
   Steady chapter is no news - told as the town's news (`LivingTown.chapterNews`, beside the roads', the deeds' and the
   house's) on two days of the week, its own drawn on the seed by the town and the guild, for each chapter of the town's
   guild halls and temples the sheet names; `{guild}` the chapter's guild ("the Fighters Guild"). The event's lines and
-  the rumour mill's Season news are CHAP6's, with the events. BUILT (CHAP6c): `CHAPTER_EVENT_NEWS` by the Season's
+  the rumour mill's Season news are CHAP6's, with the events - NARROWED (AUDIT CHAP5 R11): the town's talk alone carries
+  them; the rumour mill (`systems/rumorMill.js`) carries no chapter's news. BUILT (CHAP6c): `CHAPTER_EVENT_NEWS` by the Season's
   event and shut halls, told before the band's news on the same two days (`LivingTown.chapterNews`: shut halls first,
   then its event - Calm none - else its band); the host's `livingChapterOf` reads the whole chapter off the sheet.
 - **The hall's roll**: the seats' holders, named on a board inside each hall. BUILT (CHAP5a), NARROWED: a DFU guild hall
@@ -1008,7 +1059,10 @@ DECIDED.
   grown in place): `npc_chapters`' `doctrine` and `doctrine_season`; `npc_chapter_backing` (faction, region, season,
   account, char_id, side, at - one an account a chapter a Season). BUILT (CHAP7a, grown in place): `npc_chapters`'
   `patron` and `patron_season`; `npc_chapter_patron_bids` (faction, region, season, guild_id, amount, at, state - 'open',
-  'won' or 'lost'; one a guild a chapter a Season); the Chronicle's 'patron' rows.
+  'won' or 'lost'; one a guild a chapter a Season); the Chronicle's 'patron' rows. AUDIT CHAP5 S5 (`0101` grown in
+  place): the reads' own indexes - `npc_chapter_backing (season, region, account)`, `npc_chapter_history (week, kind)`
+  (the week first, so a token's mint keeps its character's own index), `npc_chapter_patron_bids (guild_id, season,
+  state)`.
 - **Endpoints** (`/v1/chapters/...`): `roll` and `claim` BUILT (CHAP1, behind `CHAPTERS_OPEN`, shipped `dev`; each
   names the realm character and the playing tab's lease); `witness` BUILT (CHAP2a); `halls` and `strike` BUILT (AUDIT
   CHAP2 E1, a developer's); `list` BUILT (CHAP3b, the sheet; CHAP5a its seats' holders); `focus` and `history` BUILT (CHAP4d, a Master's Focus and a region's Chronicle); `back` BUILT (CHAP6b, a member's
@@ -1017,8 +1071,8 @@ DECIDED.
 - **The settle**: inside `settleWeek`, after the seats' steps - Merit summed, Strength moved, seats placed, and at a
   Season's boundary the events resolved and drawn. NARROWED (CHAP3b): the Chapters' own Turning on the seats' week,
   keyed on its own row (`npc_chapter_weeks`, migration `0100_npc_chapters`), beside `settleWeek` rather than in it -
-  5.2. BUILT (CHAP3b): `npc_chapters` (faction, region, strength, week, merit, at - the draft's event and doctrine are
-  CHAP6's to add; focus and focus_week CHAP4d's) and `npc_chapter_weeks` (week, active, target, chapters, open, at).
+  5.2. BUILT (CHAP3b): `npc_chapters` (faction, region, strength, week, merit, at - the event and the doctrine CHAP6's,
+  BUILT; focus and focus_week CHAP4d's) and `npc_chapter_weeks` (week, active, target, chapters, open, at).
 - **The relay**: AUDIT CHAP R5 - this said "no change: the gate, raid and serpent receipts already name an account and a
   region". Only the raid's names a region (`w`); a gate's region is taken from its claims, as the Seats take it (Seats-Arc
   4.2: the region three of the day's receipts agree on), and a serpent's has none - so CHAP2b credits a gate in the Seats'
@@ -1027,7 +1081,8 @@ DECIDED.
 - **Law modules, pure, shared**: `net/npcChapterLaw.js` (Appendix A - BUILT for the Roll, CHAP1, the halls and their
   writs, CHAP2a, the receipts, CHAP2b, Merit, CHAP3a, Strength and the bands, CHAP3b and CHAP3c; the event weights and
   the rivals, CHAP6a; the patrons, CHAP7a); the playing tab's side is `net/npcRollTracker.js` (CHAP1; the first draft named it
-  systems/npcChapters.js), `net/npcHallBook.js` (CHAP2a) and `net/chapterSheet.js`, the sheet's reader (CHAP3c); DFU's guild faction ids live in the leaf
+  systems/npcChapters.js), `net/npcHallBook.js` (CHAP2a), `net/chapterSheet.js`, the sheet's reader (CHAP3c), and
+  `net/chapterEvents.js`, the Season's words and choices (CHAP6c - AUDIT CHAP5 R14); DFU's guild faction ids live in the leaf
   `systems/guildFactions.js`, which the service can reach and `guilds.js` cannot be.
 
 ## 12. The slices, in order
@@ -1075,14 +1130,21 @@ host online runs in - the interiors and the dungeons are that same page and that
   on its training, spells and shelf, through the host's `chapterStrength` (world.js's sheet; none offline). CHAP4b
   BUILT: the hall's services read the book seated (the host's `chapterSeatRank`), its review the host's ceiling
   (`rollRankCeiling`, 7 while the Roll holds). CHAP5a BUILT: the hall's shelf - its chapter's roll first (the host's
-  `chapterRoll`), and alone for whoever the shelf refuses - DFU's refusal line after it (AUDIT CHAP4 D4).
+  `chapterRoll`), and alone for whoever the shelf refuses - DFU's refusal line after it (AUDIT CHAP4 D4). CHAP6d BUILT
+  (AUDIT CHAP5 R14: the band's `chapterStrength` is gone): the whole chapter through the host's `chapterHere` - each
+  window priced by its own service, the shelves by the band and the doctrine, a shut hall's services refused on its
+  standing popup (AUDIT CHAP5 D2). CHAP7b BUILT: the reader's guild (`guildId`), a patron's members' Thriving price.
 - `scenes/world.js` (the streets) - the living world's read of the sheet and the Notice Board's hall writs (CHAP2,
   CHAP5). CHAP3c BUILT: the sheet the playing tab holds (`net/chapterSheet.js`), asked at a town's entry and handed to
   the interiors. CHAP4b BUILT: the tab holds the book at 7 and says the seats (`onCapped`, `onSeats`), and names a seat's
   rank where the character stands (`seatRankHere` - the hall's and the paid teleport's). CHAP4d BUILT: the board's Focus
   door (`setFocus`) and the palace's Hall of Records reading its region's chapters' Chronicle. CHAP5a BUILT: the hall's
-  roll off the sheet the tab holds (`chapterRoll`, the politic region, as `chapterStrength`). CHAP5b BUILT: the living
+  roll off the sheet the tab holds (`chapterRoll`, the politic region, as `chapterHere`). CHAP5b BUILT: the living
   town's `chapterOf` - a chapter's band and its guild named, off the same sheet in the same region (`livingChapterOf`).
+  CHAP6c BUILT: the board's backing door (`back`) and the Season's words; CHAP6d: the living town's shut halls (its
+  `chapterOf`'s `shut`); CHAP7b: the board's bid door (`patron`), the patron's banners at its chapter's halls
+  (`chapterBanners`, the build's `chapterHalls`), the reader's guild for the hall's price (`guildId`, its book asked
+  again when old - AUDIT CHAP5 C1).
 - `scenes/exterior.js` (the fixed city) - no online, so no Roll and no sheet: flagged by name, DFU's guilds and DFU's
   prices as today.
 - `scenes/dungeonContext.js` - no hall, so no sheet; the receipts a dungeon's foes give are the relay's already: none.
@@ -1139,7 +1201,7 @@ is Mac's to overrule.
 | A hall witnessed | kind `npchall`, keyed `1:<mapId>` (`HALL_REPORT_V`), three accounts a week old (`WITNESS`), 24 towns an hour an account (`HALL_WITNESS_HOUR`), a town once a UTC day a device until counted, then never again (`npcHallBook.js` `HALL_DONE`, AUDIT CHAP2 E9), kept on the device under `HALL_REPORTED_KEY` (`chap2.halls`), 200 towns at most (`HALL_REPORTED_MAX`); an account ignored for a week after three unmatched answers in one (the seats' `SEAT_WITNESS_UNMATCHED_MAX`) | 4 |
 | A region's chapters kept | 60 seconds an isolate (`CHAPTERS_KEPT_MS`, `server-account/src/npcHalls.js`) | 4 |
 | The join's floor | 0 (`RANK_REQ_REPUTATION[0]`, `joinRecordable`) | 3.4 |
-| A member's own writ, Merit | 100 for its units, its own units' share, rounded down (`MERIT_WRIT`, `meritOfWrit`); one a member a chapter a UTC day (`memberWrit`, `memberWritId`, `MEMBER_WRIT_SALT`) | 5.1 |
+| A member's own writ, Merit | 100 for its units, its own units' share, rounded down (`MERIT_WRIT`, `meritOfWrit`); one a member a GUILD a UTC day, wherever posted (AUDIT CHAP3 E3; AUDIT CHAP5 R13 - `memberWrit`, `memberWritId`, `MEMBER_WRIT_SALT`); half again, 150, for a chapter under a Crackdown (AUDIT CHAP5 E1, `crackdownMerit`) | 5.1 |
 | A receipt, Merit | 50 shared among the chapters its own receipt lines credit, rounded down (`MERIT_RECEIPT`, `meritOfReceipt`; AUDIT CHAP3 E4) | 5.1 |
 | Merit tenure | 7 days on the Roll (`MERIT_TENURE_S`, from `joined_at`) | 5.1 |
 | Merit cap | 600 an account a chapter a week (`MERIT_CAP_WEEK`); one chapter of a guild an account a seat week (`meritWeekOf`) | 5.1 |
@@ -1157,15 +1219,15 @@ is Mac's to overrule.
 | Seat eligibility | 14 days in the guild, account 7 days old | 6 |
 | Merit window | 4 weeks | 6 |
 | Unearned seat | vacant | 6 |
-| Patron | one a chapter a Season, highest Marks bid, burnt, every other home; at least 1,000, sealed, raised never lowered (`CHAPTER_PATRON_MIN`, `patronBidOk`, `patronWinnerOf`; CHAP7a) | 8 |
+| Patron | one a chapter a Season, highest Marks bid, burnt, every other home; at least 1,000, sealed, raised never lowered (`CHAPTER_PATRON_MIN`, `patronBidOk`, `patronWinnerOf`; CHAP7a); the board's offers 1,000, 2,000 or 5,000 for a first bid, 500, 1,000 or 5,000 more on a standing one (`CHAPTER_PATRON_RAISES`, `chapterPatronBidsOf`; CHAP7b); its members' price the Thriving band's, 0.9 (`CHAPTER_PATRON_BAND`, `CHAPTER_PATRON_PRICE`; CHAP7b - AUDIT CHAP5 R17); every open bid home at the opening (AUDIT CHAP5 S6) | 8 |
 | Holder's Merit | no carry - a sitting holder keeps an EQUAL standing (`chapterSeatPlan`'s first tie-break; AUDIT CHAP4 E1, decided: the x1.2 it carried made a holder at 2000 of the four weeks' 2400 unbeatable) | 6 |
-| Event weights | Calm 30, Schism 15, Succession 10, Crackdown 10, Rivalry 15, Decline 10, Ascendancy 10; moved as section 7's table says (AUDIT CHAP R11; `CHAPTER_EVENTS`, `chapterEventWeights`, drawn on `CHAPTER_EVENT_SALT`) | 7 |
+| Event weights | Calm 30, Schism 15, Succession 10, Crackdown 10, Rivalry 15, Decline 10, Ascendancy 10; moved as section 7's table says (AUDIT CHAP R11; `CHAPTER_EVENTS`, `chapterEventWeights`, drawn on `CHAPTER_EVENT_SALT`, scaled over the sum - `drawOf`, AUDIT CHAP5 E3); a Schism's weight Calm's for a guild of one doctrine (AUDIT CHAP5 D3) | 7 |
 | Decline's weekly fall | 2 Strength, unless the week's Merit meets twice the target (`CHAPTER_EVENT_EFFECTS.declineFall`, `declineMeets`) | 7 |
 | Ascendancy's prices | a further tenth off training, a spell bought and a spell made (`CHAPTER_EVENT_EFFECTS.ascendancyPrice`, `chapterHallFactor`) | 7 |
-| Rivalry's swing | 10 Strength, the loser's whole, the winner's never past 100 (`rivalrySwing`) | 7 |
-| Crackdown's pay | half again, whole (`crackdownPay`) | 7 |
+| Rivalry's swing | 10 Strength, the loser's whole, the winner's never past 100 (`rivalrySwing`); one race a chapter a Season, any other rivalry even (AUDIT CHAP5 E5) | 7 |
+| Crackdown's Merit | a member's own writ's, half again, whole (`crackdownMerit`; AUDIT CHAP5 E1 - its writs pay as any, `crackdownPay` retired) | 7 |
 | Crackdown's shut line | Strength 30 - under it, the halls shut for the next Season (`crackdownShut`) | 7 |
-| The doctrines | training a further tenth off, the shelf two qualities deeper inside the band's bounds, one hall writ more a day (`CHAPTER_DOCTRINE_EFFECTS`, `chapterHallFactor`, `chapterHallShelf`); a Schism two of the three (`schismDoctrinesOf`, `CHAPTER_SCHISM_SALT`) | 7 |
+| The doctrines | training a further tenth off, the shelf two qualities deeper inside the band's bounds, one hall writ more a day (`CHAPTER_DOCTRINE_EFFECTS`, `chapterHallFactor`, `chapterHallShelf`); a Schism two of the guild's own (`schismDoctrinesOf`, `CHAPTER_SCHISM_SALT`); a guild's own by its DFU hall - an order and a hidden guild more writs alone, the Fighters Guild and Kynareth training and writs, the rest all three (`chapterDoctrinesFor`, AUDIT CHAP5 D3) | 7 |
 | A Succession | three candidates, named at the Season's third Turning (`SUCCESSION_CANDIDATES`, `SUCCESSION_TURNING`) | 7 |
 | The Chronicle the Hall reads | a region's newest 60 rows, the hidden guilds' left out first (`CHAPTER_CHRONICLE_ROWS`, `server-account/src/npcChapters.js`; AUDIT CHAP4 S3) | 6 |
 | A name on the hall's roll | 32 characters at most, the realm's own cap (`CHAPTER_ROLL_NAME_MAX`) | 9 |
@@ -1216,7 +1278,7 @@ the law and every place this slice narrowed it (BUILT, CHAP1).
   either side of the epoch, a second seed ignored (AUDIT CHAP R11: this said refused), the day's bound and its rollover, the record line by line, a repeat,
   a lost race, the tenure, the lease, a stranger, a tombstone, the delete; the tab against a fake door - the seed, the
   minute, the cut said, a lost claim sent again unchanged, a shut Roll, a membership claimed alone, the page's last
-  claim; and the wiring. `tools/mutants/chap1.json`: 26 mutants, 26 dead - one (CHAP1-TAB-RESEND) survived the first
+  claim; and the wiring. `tools/mutants/chap1.json`: 26 mutants, 26 dead (25 since, AUDIT CHAP5 R15) - one (CHAP1-TAB-RESEND) survived the first
   run, because the pin compared the last call with itself when no new call had been made, and the pin now counts the
   calls. Sixteen tests that pin the service's version moved to `acct93` with it.
 
@@ -1379,7 +1441,7 @@ whole: the week's Merit, the Turning's Strength, its band on the writs and the h
   (nothing before its read, one read at a time, the beat, a failed read keeping the last, a door that throws, the stops,
   a row naming no guild); training's offer and gold check, DFU's chain and RefinedTraining's; a spell bought; a spell
   made (its gold, never its spell points); the hosts' wiring. `tools/mutants/chap3c.json`: 36 mutants, 35 dead, 1
-  equivalent as recorded. TIME1's census row for the soul gems' shelf moved with its line (`test/fixtures/time1_census.json`), and GUILD-SHELF's
+  equivalent as recorded (36 dead since AUDIT CHAP3 T7 - AUDIT CHAP5 R15). TIME1's census row for the soul gems' shelf moved with its line (`test/fixtures/time1_census.json`), and GUILD-SHELF's
 `GUILD-SHELF-potions-mint-a-throwaway` was re-aimed at the potions' line (dead).
 
 ## AUDIT CHAP3 - everything so far read again (2026-10-08, Mac: "Let's audit everything we have so far before we continue")
@@ -1579,7 +1641,7 @@ The sixth slice's first; section 7 carries the law and what building it narrowed
   moved; no draw mid-Season, uncounted, unconfirmed or shut; a Decline's Season; the Season's end (one race a pair, the
   whole Season's Merit, a rival gone, the shut line after the races, the rows); the Season's Master; the opening's
   reset; the Chronicle's read; the board's and the sheet's events (a hidden rival unnamed, last Season's none); the
-  shut halls and a Crackdown's pay. `tools/mutants/chap6a.json`: 89 mutants, all dead. Nine older records re-aimed by
+  shut halls and a Crackdown's pay. `tools/mutants/chap6a.json`: 89 mutants, all dead (87 since AUDIT CHAP5 E1 retired the Marks pay's two). Nine older records re-aimed by
   content (CHAP3a's, CHAP3b's, CHAP4d's, CHAP5a's, AUDIT CHAP4's S6), all dead.
 
 ## CHAP6b - the Schism, the Succession and the doctrine, as built (2026-10-09, Mac: "continue")
@@ -1603,7 +1665,7 @@ The sixth slice's second; section 7 carries the law and what building it narrowe
   Succession named (the Master's, the richer backer's in the Season and the chapter alone, an officer's a member's, the
   tie, the hall's, named once, a missed third Turning); the Schism decided (the sums, the Master's tie, none carried,
   the doctrine's Season, the rows and the Chronicle's line); the opening's reset; the board and the sheet; "more
-  writs". `tools/mutants/chap6b.json`: 64 mutants, 63 dead, 1 equivalent as recorded. Eleven older records re-aimed by
+  writs". `tools/mutants/chap6b.json`: 64 mutants, 63 dead, 1 equivalent as recorded (64 dead since AUDIT CHAP5 T17). Eleven older records re-aimed by
   content (AUDIT CHAP2's, CHAP3b's, CHAP4d's, AUDIT CHAP4's S6, CHAP6a's six), all dead; three older pins moved (PIN
   MOVED: CHAP4d's writs' count, CHAP6a's Schism line, ACC1b's table list). `src/net/accountClient.js`: the four
   refusals' words (ACC1e walks the service for every one).
@@ -1720,3 +1782,31 @@ slices stand.
   re-aimed by content (CHAP3c's, CHAP5a's, CHAP6c's two, CHAP6d's two). Older pins moved (PIN MOVED): CHAP5a's and
   CHAP6c's sheets (the patron), CHAP3c's and CHAP6d's price factor (the reader's guild), AUDIT SEATS-3 C4's banners'
   pass (a patron's banners on it).
+
+## AUDIT CHAP5 - everything read again (2026-10-09, Mac: "I think we do a deep comprehensive audit across everything")
+
+Six lenses read CHAP0 to CHAP7b, the four audits and the merges of main (`01-Overview/Audit-Chapters-5.md` is the
+record, every finding and its fix). What it changed here: 3.5 (a seat lifts only a book held at 7, D1); 5.2 (the
+orders' band still open); 5.3 (the board's line); section 7 (a Crackdown's half again its members' Merit, never Marks,
+E1; the draw scaled, E3; one race a chapter a Season, E5; a Season's Master the whole Season's, S1; the opening the
+first week ever 'on' and a Season of a developers' week crowning no one, S6; the Chronicle never naming a hidden rival,
+S2; a guild's doctrines what its DFU hall sells, D3; a hidden chapter's backing its members' to ask of, S3; the shut
+hall's services refused on its standing popup, D2; a shut temple's worship going on, C3; the spellbook's haggle line,
+D6; 0.81 and 0.729, D7; no "classic skin", C4); section 8 (every bid home at the opening, S6; the statements read
+once, S4; a guild with a bid standing never goes, E4; the reader's guild asked again, C1; the banners' guild a temple's
+divine and the halls kept online alone, C2, C5; an order's patron's purchase); sections 0 and 9 (the candidates and the
+rumour mill NARROWED); section 11 (the reads' indexes, `chapterEvents.js`); section 13 (the hosts); Appendix A.
+
+- **The code.** `src/net/npcChapterLaw.js` (`crackdownMerit` for `crackdownPay`, `drawOf`, `chapterDoctrinesFor`,
+  `schismDoctrinesOf` and `chapterEventWeights` by the guild's doctrines, `seatedBook` at 7);
+  `server-account/src/npcChapters.js` (`settleChapterWeek`'s opening and the opening's draw, `seasonEnded`'s
+  continuity, trial and one race, `patronStatements` uncorrelated, `backChapter`'s hidden ask, `chapterChronicle`'s
+  rival, `regionPatrons` split); `professions.js` (the writs' flat pay, a member writ's Merit); `guilds.js`
+  (`guildKeepsSql`, `guild-patron`); `index.js` (its status); migration `0101` grown in place (three indexes);
+  `src/scenes/world.js` (`guildId`, `chapterHere`'s book, the banners' faction, the halls online alone);
+  `worldModes.js` (`shutBox` on the services); `spellbookWindow.js` (the haggle's cost); `chapterEvents.js` (the
+  Crackdown's words); `accountClient.js` (`guild-patron`'s sentence).
+- **The tests.** `test/audit_chap5.test.js` (29); `tools/mutants/audit_chap5.json` (71, all dead). Thirty-two older
+  records re-aimed and run again, all dead; CHAP6a's two pay records retired; CHAP6b's `CHAP6B-HEIR-TOP` no longer
+  equivalent. Older pins moved (PIN MOVED): CHAP3c, CHAP6a, CHAP6b, CHAP6c, CHAP6d, CHAP7a, CHAP7b.
+

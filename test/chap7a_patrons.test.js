@@ -281,7 +281,7 @@ test('CHAP7a the wiring: the route and its door; the migrations grown in place; 
   assert.match(ix, /: path === '\/v1\/chapters\/patron' \? await bidPatron\(ctx, who\.player, env, body\)/);
   assert.match(rd('server-account/src/service.js'), /\n  '\/v1\/chapters\/patron',/);
   const nc = rd('server-account/src/npcChapters.js');
-  assert.match(nc, /const patrons = next && next\.start === week \+ 1 \? await patronsDrawn\(db, next\.n, keys\) : null;/);
+  assert.match(nc, /const patrons = opened \? await patronsDrawn\(db, PATRON_SEASONS_ALL, new Set\(\)\)\n\s+: next && next\.start === week \+ 1 \? await patronsDrawn\(db, next\.n, keys\) : null;/);   // PIN MOVED (AUDIT CHAP5 S6): the opening's draw sends every bid home
   assert.match(nc, /\.bind\(week, nowS, JSON\.stringify\(\[\.\.\.seasonRows, \.\.\.\(patrons\?\.rows \?\? \[\]\)\]\)\),\n\s+\.\.\.\(patrons \? patronStatements\(db, patrons, nowS\) : \[\]\),/);
   assert.match(nc, /INSERT INTO realm_tx_guard \(moved, expected\) SELECT 1, 0 WHERE EXISTS \(SELECT 1 FROM npc_chapter_patron_bids WHERE season <= \?1 AND state = 'open'\)/);
   assert.match(nc, /doctrine = NULL, doctrine_season = NULL, patron = NULL, patron_season = NULL WHERE true/);

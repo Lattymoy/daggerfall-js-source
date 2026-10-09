@@ -109,10 +109,11 @@ test('CHAP6d the wiring: the host hands the hall its whole chapter; each window 
   const modes = src('src/scenes/worldModes.js');
   assert.match(modes, /const chapterFactor = \(\/\*\* @type \{string\} \*\/ service\) => chapterHallFactor\(chapterHere\(\), service, host\.guildId\?\.\(\) \?\? null\);/);   // PIN MOVED (CHAP7b): and the reader's guild, a patron's members' price
   assert.match(modes, /const shelfQuality = \(\) => chapterHallShelf\(b\?\.quality \?\? 0, chapterHere\(\)\);/);
-  assert.match(modes, /if \(chapterHallShut\(host\.chapterHere\?\.\(guild\.factionId\) \?\? null\)\) \{ townTalk\?\.say\?\.\(CHAPTER_HALL_SHUT_LINE\); return; \}\n\s+if \(!guildServiceArtLoaded\(\) \|\| !_shopFont\) return;/);
+  // PIN MOVED (AUDIT CHAP5 D2): the services refused, DFU's popup standing - audit_chap5 pins the seams
+  assert.match(modes, /const shutBox = \(\) => \(chapterHallShut\(host\.chapterHere\?\.\(guild\.factionId\) \?\? null\) \? \{ rows: \[CHAPTER_HALL_SHUT_LINE\] \} : null\);/);
   assert.match(modes, /const bookFactor = chapterFactor\('spells'\);/);
   assert.match(modes, /const makerFactor = chapterFactor\('spells'\);/);
   assert.match(modes, /priceFactor: chapterFactor\('training'\),/);
   assert.equal((modes.match(/quality: shelfQuality\(\)/g) ?? []).length, 3);
-  assert.match(src('src/scenes/world.js'), /return Number\.isInteger\(region\) \? chapterSheet\?\.chapterOf\(faction, region\) \?\? null : null;\n\s+\},\n\s+\/\/ CHAP4b/);
+  assert.match(src('src/scenes/world.js'), /const c = Number\.isInteger\(region\) \? chapterSheet\?\.chapterOf\(faction, region\) \?\? null : null;\n(\s+\/\/.*\n)+\s+if \(c\?\.patron && guildBook\?\.stale\?\.\(\)\) guildBook\.refresh\(\)\.catch\(\(\) => \{\}\);\n\s+return c;\n\s+\},\n\s+\/\/ CHAP4b/);   // PIN MOVED (AUDIT CHAP5 C1)
 });

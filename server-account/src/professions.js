@@ -87,7 +87,7 @@ import { fortTiersOf } from './seatForts.js';   // SEAT2b part two: the halls st
 import { RAM_KIT } from '../../src/net/professionLaw.js';   // SEAT2b part two: a siege work's place in the Stores
 import { SIEGE_GEM } from '../../src/net/professionLaw.js';   // PROF10: a Lapidary's Siege-cracked Gem, spent for a piece's gem
 import { CARRIED_MAX, DEPOSIT_MAX, CLAMP_ORDER, DEPOSIT_ORDERS, CARRIED_ROW_DAYS, heldOk, seenOk, depositOrderOk } from '../../src/net/bagLaw.js';   // BAG1: what a character carries, counted
-import { hallWrits, hallWritCountIn, hallWritId, hallHidden, HALL_WRIT_REP, memberWrit, memberWritId, MERIT_WRIT, chapterBandOf, chaptersSwitchOf, meritWeekOf, chapterFocusesOf, crackdownPay, doctrineWritCount } from '../../src/net/npcChapterLaw.js';   // CHAP2a: a chapter's hall writs and what one pays its guild; CHAP3a: a member's own
+import { hallWrits, hallWritCountIn, hallWritId, hallHidden, HALL_WRIT_REP, memberWrit, memberWritId, MERIT_WRIT, chapterBandOf, chaptersSwitchOf, meritWeekOf, chapterFocusesOf, crackdownMerit, doctrineWritCount } from '../../src/net/npcChapterLaw.js';   // CHAP2a: a chapter's hall writs and what one pays its guild; CHAP3a: a member's own
 import { MAX_REPUTATION, GUILD_FACTION_IDS } from '../../src/systems/guildFactions.js';   // CHAP2a: a hall writ's reputation, inside DFU's bound; the hidden two
 import { regionChapters } from './npcHalls.js';   // CHAP2a: the region's chapters, witnessed
 import { chaptersOpenFor } from './npcRoll.js';   // CHAP2a: hall writs while the Roll is open to the account
@@ -1465,10 +1465,11 @@ async function postWrits(db, day, region, nowS, zero = null, open = 'off') {
     await settleChaptersDue(db, nowS, zero, open);
     const strengths = await regionStrengths(db, region, chapters);
     const focuses = await regionFocuses(db, region, meritWeekOf(nowS));   // CHAP4d: every other writ the Master's family
-    // CHAP6a: a chapter whose halls a Crackdown shut posts none this Season; one under a Crackdown pays half again
+    // CHAP6a: a chapter whose halls a Crackdown shut posts none this Season. AUDIT CHAP5 E1: its writs pay as any - a
+    // Crackdown's half again is its members' Merit (deliverWrit), never Marks any account's bought units fetch
     const events = await regionEvents(db, region, seasonNumberAt(nowS, zero));
     const halls = chapters.filter((f) => !events.get(f)?.shut).flatMap((f) => hallWrits(day, region, f, doctrineWritCount(hallWritCountIn(active, strengths.get(f)), events.get(f)?.doctrine), table, focuses.get(f) ?? null)
-      .map((w) => ({ ...w, faction: f, pay: events.get(f)?.event === 'crackdown' ? crackdownPay(w.pay) : w.pay })));
+      .map((w) => ({ ...w, faction: f })));
     // AUDIT CHAP3 S4: the region's hall writs in ONE statement over a bound JSON array (SCALE1's law - a region of many
     // chapters at a busy realm's scale was a statement a writ, over a thousand), in their own batch: the Court's stand
     // whatever becomes of them
@@ -1489,7 +1490,7 @@ async function postWrits(db, day, region, nowS, zero = null, open = 'off') {
 async function postMemberWrits(db, day, region, nowS, character, members, zero = null) {
   if (!members.length) return;
   const chapters = new Set(await regionChapters(db, region, nowS * 1000));
-  const events = await regionEvents(db, region, seasonNumberAt(nowS, zero));   // CHAP6a: none from a shut hall; a Crackdown's pays half again
+  const events = await regionEvents(db, region, seasonNumberAt(nowS, zero));   // CHAP6a: none from a shut hall
   const want = members.filter((f) => chapters.has(f) && !events.get(f)?.shut);
   if (!want.length) return;
   // AUDIT CHAP3 E3: ONE A MEMBER A GUILD A UTC DAY, wherever posted - the first board of the day with a chapter of the
@@ -1506,7 +1507,7 @@ async function postMemberWrits(db, day, region, nowS, character, members, zero =
   await db.batch(writs.map(({ f, w }) => db.prepare(`INSERT OR IGNORE INTO writs (id, kind, day, region, faction, owner, slot, material, tier, qty, pay, renown, expires_at)
     SELECT ?1, 'member', ?2, ?3, ?4, ?5, 0, ?6, ?7, ?8, ?9, ?10, ?11
     WHERE NOT EXISTS (SELECT 1 FROM writs WHERE day = ?2 AND kind = 'member' AND owner = ?5 AND faction = ?4)`)
-    .bind(memberWritId(day, region, f, character), day, region, f, character, w.material, w.tier, w.units, events.get(f)?.event === 'crackdown' ? crackdownPay(w.pay) : w.pay, w.renown, (day + 1) * DAY_S)));
+    .bind(memberWritId(day, region, f, character), day, region, f, character, w.material, w.tier, w.units, w.pay, w.renown, (day + 1) * DAY_S)));
 }
 
 /** CHAP3b: THE BOARD'S CHAPTER LINES - each chapter of the region, `{ faction, strength, band }`, a hidden guild's to its
@@ -1634,6 +1635,9 @@ export async function deliverWrit(ctx, player, env, { character, id, rid } = {})
   const m = material(w.material);
   const prof = professionOfFamily(m?.family);
   const before = Number((await db.prepare('SELECT xp FROM renown_tracks WHERE player = ?1 AND char_id = ?2').bind(player.id, character).first())?.xp ?? 0);
+  // AUDIT CHAP5 E1: a member's own writ for a chapter under a Crackdown this Season earns half again its Merit
+  const merit = w.kind === 'member' && (await regionEvents(db, Number(w.region), seasonNumberAt(nowS, seasonZeroOf(env?.SEASON_ZERO_WEEK)), () => true))
+    .get(Number(w.faction))?.event === 'crackdown' ? crackdownMerit(MERIT_WRIT) : MERIT_WRIT;
   const nonce = mintId(rand);
   const filled = 'EXISTS (SELECT 1 FROM writs WHERE id = ?5 AND n = ?6)';
   await db.batch([
@@ -1651,7 +1655,7 @@ export async function deliverWrit(ctx, player, env, { character, id, rid } = {})
       player: player.id, character, faction: Number(w.faction), region: Number(w.region), source: 'writ', ref: id, nowS,
       amountSql: `(SELECT (qty - MIN(qty, COALESCE((SELECT b.qty FROM prof_stores b WHERE b.player = ?1 AND b.char_id = ?2
         AND b.material = writs.material AND b.origin = 'bought'), 0))) * ?13 / qty FROM writs WHERE id = ?11 AND n = ?12)`,
-      guard: 'EXISTS (SELECT 1 FROM writs WHERE id = ?11 AND n = ?12)', binds: [id, nonce, MERIT_WRIT],
+      guard: 'EXISTS (SELECT 1 FROM writs WHERE id = ?11 AND n = ?12)', binds: [id, nonce, merit],
     })] : []),
     // the units out of the Stores, bought first
     ...spendStatements(db, {

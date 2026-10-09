@@ -542,11 +542,12 @@
   {
     "name": "CHAP3A-DELIVER-SCALE",
     "file": "server-account/src/professions.js",
-    "old": "binds: [id, nonce, MERIT_WRIT],",
+    "old": "binds: [id, nonce, merit],",
     "new": "binds: [id, nonce, 50],",
     "tests": [
       "test/chap3a_merit.test.js"
-    ]
+    ],
+    "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
   },
   {
     "name": "CHAP3A-DELIVER-ANSWER",

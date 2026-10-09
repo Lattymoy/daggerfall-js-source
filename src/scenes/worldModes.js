@@ -5468,8 +5468,11 @@ export function createWorldModes(host) {
     const dict = townTalk?.factionDict ?? null;
     const guild = createGuildForGroup(route.guildGroup, route.buildingFactionId, dict);
     if (!guild) { townTalk?.say?.('You get no response.'); return; }
-    // CHAP6d (Chapters-Arc 7): online, a hall whose chapter's halls a Crackdown shut serves nothing this Season
-    if (chapterHallShut(host.chapterHere?.(guild.factionId) ?? null)) { townTalk?.say?.(CHAPTER_HALL_SHUT_LINE); return; }
+    // CHAP6d (Chapters-Arc 7): online, a hall whose chapter's halls a Crackdown shut serves nothing this Season. AUDIT CHAP5
+    // D2: what it sells alone (its services, its quests, the Reforge's and the temple's rows) - DFU's popup stands, and
+    // with it OnPush's rank review, a temple's free healing, the Mages' free recharge, Talk and the join
+    const shutBox = () => (chapterHallShut(host.chapterHere?.(guild.factionId) ?? null) ? { rows: [CHAPTER_HALL_SHUT_LINE] } : null);
+    shutBox();   // AUDIT CHAP5 C1: asked as the popup opens - a patron's hall has the guild book look before a price reads it
     if (!guildServiceArtLoaded() || !_shopFont) return;   // no art, no window (the U8 idiom)
     const memberships = activeMemberships(playerEntity);   // V2e: the vampire-aware book
     // CHAP4b (Chapters-Arc 6): a seat's rank at its own chapter's halls - the hall's services read the book SEATED (the
@@ -5558,6 +5561,8 @@ export function createWorldModes(host) {
        *  the same engine doors, then the window push. */
       onTalk: () => talkToStaticNpcHere({ isSpyMaster: false, returnTo: win }),
       onService: () => {
+        const shut = shutBox();   // AUDIT CHAP5 D2
+        if (shut) return shut;
         const access = serviceAccess(guild, membershipOf(seated(), guild), service);   // CHAP4b: a seat's rank here
         if (!access.allowed) {
           return { rows: access.textId ? rows(access.textId) : [access.text] };
@@ -5592,13 +5597,13 @@ export function createWorldModes(host) {
       onClose: () => closeSpellWindow(win),
       // LOOT9 (the Loot arc, bible/06-Systems/Loot-Arc.md section 11): the Mages Guild's Identify NPC keeps the Reforge
       // too - the popup's fourth row on either skin; a dispatch, as a service's is
-      reforge: route.guildGroup === GUILD_GROUPS.MagesGuild && service === 'Identify' && lootRarityOn() ? () => (openReforge() ? { dispatched: true } : null) : null,
+      reforge: route.guildGroup === GUILD_GROUPS.MagesGuild && service === 'Identify' && lootRarityOn() ? () => shutBox() ?? (openReforge() ? { dispatched: true } : null) : null,
       // LOOT16 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 8): a temple's Cure Disease priest lifts a curse
       // too - the popup's row in the Reforge's place, on either skin; a dispatch, as a service's is
-      lift: route.guildGroup === GUILD_GROUPS.HolyOrder && service === 'CureDisease' && lootRarityOn() ? () => (openLift() ? { dispatched: true } : null) : null,
+      lift: route.guildGroup === GUILD_GROUPS.HolyOrder && service === 'CureDisease' && lootRarityOn() ? () => shutBox() ?? (openLift() ? { dispatched: true } : null) : null,
       // HEAL-CURSE (the owner: "Add a button to the temple services under heal disease named heal curse"): the Cure
       // Disease priest's second row - the curse's offer as a Yes/No box, its rite paid and done on the Yes
-      healCurse: service === 'CureDisease' ? () => healCurseBox() : null,
+      healCurse: service === 'CureDisease' ? () => shutBox() ?? healCurseBox() : null,
     });  win = enhancedWindow(win, 'guild');   // PORT4: the enhanced skin's face; the classic window unchanged
     mountServiceWindow(win);
   }

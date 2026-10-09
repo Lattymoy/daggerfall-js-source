@@ -3,7 +3,7 @@
 --   npx wrangler d1 migrations apply daggerfall-accounts --remote
 --
 -- Applied exactly once through the `d1_migrations` ledger, which the
--- deploy runs (ACC1-CI). Deploy this service (acct99 - AUDIT CHAP4 R1: acct95 then, renumbered at the merges of main) BEFORE the site:
+-- deploy runs (ACC1-CI). Deploy this service (acct100 - AUDIT CHAP4 R1, AUDIT CHAP5 R3: acct95 then, renumbered at the merges of main) BEFORE the site:
 -- the new site asks /v1/chapters/roll as a realm character comes online.
 --
 -- Mac: "completely overhaul the NPC guild system and reputation system",
@@ -25,7 +25,9 @@
 --                   `gained_day` - the daily pace), what a gain past the
 --                   pace left `owed` (AUDIT CHAP D2: paid on the days
 --                   after, never lost), and its membership:
---                   `member`, the `rank` its client reported, and
+--                   `member`, the `rank` its client reported (never
+--                   past what its reputation allows, nor 7 - AUDIT CHAP5
+--                   R19: npcChapterLaw.js rollBookRankOf), and
 --                   `joined_at` - when the service first saw it a member,
 --                   the tenure a seat will ask (CHAP4). AUDIT CHAP4 D1
 --                   (grown in place - nothing shipped): and `dormant`, 1

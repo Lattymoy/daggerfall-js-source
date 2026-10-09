@@ -63,7 +63,7 @@ test('CHAP6c the Season\'s lines: a Schism\'s two and their doctrines, a Success
   assert.deepEqual(L({ event: 'succession', season: 1 }), [`The hall's head steps down this Season: ${n(0)}, ${n(1)} and ${n(2)} stand to follow.`]);
   assert.deepEqual(L({ event: 'succession', season: 1, heir: 2 }), [`${n(2)} is the hall's new head.`]);
   assert.deepEqual(L({ event: 'succession' }), ['The hall\'s head steps down this Season.']);
-  assert.deepEqual(L({ event: 'crackdown' }), ['The watch hunts the chapter this Season: its writs pay half again.']);
+  assert.deepEqual(L({ event: 'crackdown' }), ['The watch hunts the chapter this Season: its members\' own writs earn half again Merit.']);
   assert.deepEqual(L({ event: 'rivalry', rival: JULIANOS }, MAGES), ['The chapter races the Temple of Julianos for Merit this Season.']);
   assert.deepEqual(L({ event: 'rivalry', rival: THIEVES }), ['The chapter races a rival in the shadows for Merit this Season.']);
   assert.deepEqual(L({ event: 'rivalry' }), ['The chapter races a rival chapter for Merit this Season.']);
@@ -129,7 +129,7 @@ test('CHAP6c the board says each chapter\'s Season, and offers a member of its g
   const s = await board(chapters, { merit: [meritOf(FIGHTERS)], back: async (f, side) => { calls.push([f, side]); return { ok: true, event: 'schism', side }; } });
   const texts = byClass(s.host, 'notice-season').map((p) => p.textContent);
   assert.deepEqual(texts, [`The chapter is split this Season: ${n(0)} stands for cheaper training, ${n(1)} for more writs.`,
-    'The watch hunts the chapter this Season: its writs pay half again.', 'The chapter holds to more writs this Season.']);
+    'The watch hunts the chapter this Season: its members\' own writs earn half again Merit.', 'The chapter holds to more writs this Season.']);
   const picks = byClass(s.host, 'notice-back-pick');
   assert.equal(picks.length, 1, 'the Mages\' chapter: no member here, no choices');
   const buttons = [...picks[0].querySelectorAll('button')];

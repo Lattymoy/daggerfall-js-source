@@ -292,11 +292,12 @@
   {
     "name": "CHAP7B-WORLD-GUILD",
     "file": "src/scenes/world.js",
-    "old": "    guildId: () => guildBook?.guild?.id ?? null,\n",
-    "new": "    guildId: () => null,\n",
+    "old": "until it was opened\n    guildId: () => { const g = guildBook; if (g?.stale?.()) g.refresh().catch(() => {}); return g?.guild?.id ?? null; },\n",
+    "new": "until it was opened\n    guildId: () => null,\n",
     "tests": [
       "test/chap7b_patrons_client.test.js"
-    ]
+    ],
+    "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
   },
   {
     "name": "CHAP7B-WORLD-DOOR",

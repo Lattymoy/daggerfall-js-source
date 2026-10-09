@@ -173,11 +173,12 @@
   {
     "name": "CHAP7A-DRAWN",
     "file": "server-account/src/npcChapters.js",
-    "old": "const patrons = next && next.start === week + 1 ? await patronsDrawn(db, next.n, keys) : null;",
-    "new": "const patrons = null;",
+    "old": "    : next && next.start === week + 1 ? await patronsDrawn(db, next.n, keys) : null;",
+    "new": "    : null;",
     "tests": [
       "test/chap7a_patrons.test.js"
-    ]
+    ],
+    "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
   },
   {
     "name": "CHAP7A-BATCH-ROWS",
@@ -326,11 +327,12 @@
   {
     "name": "CHAP7A-STMT-PATRON",
     "file": "server-account/src/npcChapters.js",
-    "old": "), patron_season = ?2\n      WHERE EXISTS",
-    "new": "), patron_season = ?2 - 1\n      WHERE EXISTS",
+    "old": "UPDATE npc_chapters SET patron = w.guild, patron_season = ?2\n",
+    "new": "UPDATE npc_chapters SET patron = w.guild, patron_season = ?2 - 1\n",
     "tests": [
       "test/chap7a_patrons.test.js"
-    ]
+    ],
+    "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
   },
   {
     "name": "CHAP7A-GUARD",
@@ -497,11 +499,12 @@
   {
     "name": "CHAP7A-PATRONS-SEASON",
     "file": "server-account/src/npcChapters.js",
-    "old": "    WHERE c.patron_season = ?1 AND (?2 IS NULL OR c.region = ?2)`)",
-    "new": "    WHERE (?2 IS NULL OR c.region = ?2)`)",
+    "old": "    : db.prepare(`${head} WHERE c.region = ?2 AND c.patron_season = ?1`).bind(n, region)).all();",
+    "new": "    : db.prepare(`${head} WHERE c.region = ?2`).bind(n, region)).all();",
     "tests": [
       "test/chap7a_patrons.test.js"
-    ]
+    ],
+    "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
   },
   {
     "name": "CHAP7A-SHEET",

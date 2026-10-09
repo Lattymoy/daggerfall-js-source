@@ -246,10 +246,11 @@
     "name": "CHAP3C-SPELLMAKER-SP",
     "file": "src/ui/spellMakerWindow.js",
     "old": "    this.totalSpellPointCost = sp;\n  }",
-    "new": "    this.totalSpellPointCost = f === 1 ? sp : Math.round(sp * f);\n  }",
+    "new": "    { const f = this.priceFactor?.() ?? 1; this.totalSpellPointCost = f === 1 ? sp : Math.round(sp * f); }\n  }",
     "tests": [
       "test/chap3c_halls.test.js"
-    ]
+    ],
+    "note": "AUDIT CHAP5 T1-T3: re-aimed - the mutant failed for its own reason (a name it does not import, a statement that does not parse), never the law's."
   },
   {
     "name": "CHAP3C-SPELLMAKER-KEPT",
@@ -322,13 +323,13 @@
   {
     "name": "CHAP3C-WORLD-HOOK",
     "file": "src/scenes/world.js",
-    "old": "      return Number.isInteger(region) ? chapterSheet?.chapterOf(faction, region) ?? null : null;\n    },\n    // CHAP4b",
-    "new": "      return null;\n    },\n    // CHAP4b",
+    "old": "      const c = Number.isInteger(region) ? chapterSheet?.chapterOf(faction, region) ?? null : null;\n      // AUDIT CHAP5 C1",
+    "new": "      const c = null;\n      // AUDIT CHAP5 C1",
     "tests": [
       "test/chap3c_halls.test.js",
       "test/audit_chap3.test.js"
     ],
-    "note": "CHAP6d: re-aimed by content (the whole chapter on the hall)."
+    "note": "CHAP6d: re-aimed by content (the whole chapter on the hall). AUDIT CHAP5: re-aimed by content at the code its fixes moved."
   },
   {
     "name": "CHAP3C-WORLD-REFRESH",

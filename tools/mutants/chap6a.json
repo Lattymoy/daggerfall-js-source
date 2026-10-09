@@ -137,11 +137,12 @@
   {
     "name": "CHAP6A-E-SHUT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "crackdownPay: 1.5, crackdownShut: 30,",
-    "new": "crackdownPay: 1.5, crackdownShut: 31,",
+    "old": "crackdownMerit: 1.5, crackdownShut: 30,",
+    "new": "crackdownMerit: 1.5, crackdownShut: 31,",
     "tests": [
       "test/chap6a_events.test.js"
-    ]
+    ],
+    "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
   },
   {
     "name": "CHAP6A-DRAW-SALT",
@@ -290,20 +291,23 @@
   {
     "name": "CHAP6A-PAY-ROUND",
     "file": "src/net/npcChapterLaw.js",
-    "old": "Math.round(Math.max(0, Number(pay) || 0) * CHAPTER_EVENT_EFFECTS.crackdownPay)",
-    "new": "Math.floor(Math.max(0, Number(pay) || 0) * CHAPTER_EVENT_EFFECTS.crackdownPay)",
+    "old": "Math.round(Math.max(0, Number(merit) || 0) * CHAPTER_EVENT_EFFECTS.crackdownMerit)",
+    "new": "Math.floor(Math.max(0, Number(merit) || 0) * CHAPTER_EVENT_EFFECTS.crackdownMerit)",
     "tests": [
       "test/chap6a_events.test.js"
-    ]
+    ],
+    "note": "AUDIT CHAP5 E1: the half again is Merit now (crackdownMerit)."
   },
   {
     "name": "CHAP6A-PAY-FLOOR",
     "file": "src/net/npcChapterLaw.js",
-    "old": "Math.round(Math.max(0, Number(pay) || 0) * CHAPTER_EVENT_EFFECTS.crackdownPay)",
-    "new": "Math.round((Number(pay) || 0) * CHAPTER_EVENT_EFFECTS.crackdownPay)",
+    "old": "Math.round(Math.max(0, Number(merit) || 0) * CHAPTER_EVENT_EFFECTS.crackdownMerit)",
+    "new": "Math.round((Number(merit) || 0) * CHAPTER_EVENT_EFFECTS.crackdownMerit)",
     "tests": [
-      "test/chap6a_events.test.js"
-    ]
+      "test/chap6a_events.test.js",
+      "test/audit_chap5.test.js"
+    ],
+    "note": "AUDIT CHAP5 E1: the half again is Merit now (crackdownMerit)."
   },
   {
     "name": "CHAP6A-SHUTS",
@@ -560,29 +564,32 @@
   {
     "name": "CHAP6A-SVC-MASTER-ZERO",
     "file": "server-account/src/npcChapters.js",
-    "old": "if (season.n > 0 && !opened) {",
-    "new": "if (!opened) {",
+    "old": "if (season.n > 0 && !opened && !trial) {",
+    "new": "if (!opened && !trial) {",
     "tests": [
       "test/chap6a_events.test.js"
-    ]
+    ],
+    "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
   },
   {
     "name": "CHAP6A-SVC-MASTER-SINCE",
     "file": "server-account/src/npcChapters.js",
-    "old": "WHERE seat = 'master' AND since <= ?1 ORDER BY faction, region\")\n      .bind(season.start - 1).all();",
-    "new": "WHERE seat = 'master' AND since <= ?1 ORDER BY faction, region\")\n      .bind(season.start).all();",
+    "old": "      ORDER BY s.faction, s.region`).bind(season.start - 1, season.start, week - 1).all();",
+    "new": "      ORDER BY s.faction, s.region`).bind(season.start, season.start, week - 1).all();",
     "tests": [
       "test/chap6a_events.test.js"
-    ]
+    ],
+    "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
   },
   {
     "name": "CHAP6A-SVC-MASTER-SEAT",
     "file": "server-account/src/npcChapters.js",
-    "old": "FROM npc_chapter_seats WHERE seat = 'master' AND since <= ?1",
-    "new": "FROM npc_chapter_seats WHERE since <= ?1",
+    "old": "FROM npc_chapter_seats s WHERE s.seat = 'master' AND s.since <= ?1",
+    "new": "FROM npc_chapter_seats s WHERE s.since <= ?1",
     "tests": [
       "test/chap6a_events.test.js"
-    ]
+    ],
+    "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
   },
   {
     "name": "CHAP6A-SVC-MASTER-CONFIRMED",
@@ -756,15 +763,6 @@
     ]
   },
   {
-    "name": "CHAP6A-POST-PAY",
-    "file": "server-account/src/professions.js",
-    "old": "pay: events.get(f)?.event === 'crackdown' ? crackdownPay(w.pay) : w.pay })));",
-    "new": "pay: w.pay })));",
-    "tests": [
-      "test/chap6a_events.test.js"
-    ]
-  },
-  {
     "name": "CHAP6A-POST-ZERO",
     "file": "server-account/src/professions.js",
     "old": "    const events = await regionEvents(db, region, seasonNumberAt(nowS, zero));\n    const halls",
@@ -778,15 +776,6 @@
     "file": "server-account/src/professions.js",
     "old": "const want = members.filter((f) => chapters.has(f) && !events.get(f)?.shut);",
     "new": "const want = members.filter((f) => chapters.has(f));",
-    "tests": [
-      "test/chap6a_events.test.js"
-    ]
-  },
-  {
-    "name": "CHAP6A-MEMBER-PAY",
-    "file": "server-account/src/professions.js",
-    "old": "events.get(f)?.event === 'crackdown' ? crackdownPay(w.pay) : w.pay, w.renown, (day + 1) * DAY_S)));",
-    "new": "w.pay, w.renown, (day + 1) * DAY_S)));",
     "tests": [
       "test/chap6a_events.test.js"
     ]

@@ -21,19 +21,21 @@
     "name": "CHAP4C-RELAY-STAMP",
     "file": "src/net/wire.js",
     "old": "if (typeof t === 'string' && titleClaimed(t) && seatTitleClaimOk(from?.ts)) row.ts = from.ts;",
-    "new": "if (typeof t === 'string' && SEAT_TITLES.includes(t) && seatTitleClaimOk(from?.ts)) row.ts = from.ts;",
+    "new": "if (typeof t === 'string' && ['warden', 'protector', 'crowned', 'keeper', 'champion'].includes(t) && seatTitleClaimOk(from?.ts)) row.ts = from.ts;",
     "tests": [
       "test/chap4c_titles.test.js"
-    ]
+    ],
+    "note": "AUDIT CHAP5 T1-T3: re-aimed - the mutant failed for its own reason (a name it does not import, a statement that does not parse), never the law's."
   },
   {
     "name": "CHAP4C-RELAY-READ",
     "file": "src/net/wire.js",
     "old": "const ts = title && titleClaimed(title) && seatTitleClaimOk(row?.ts) ? [row.ts[0], row.ts[1]] : null;",
-    "new": "const ts = title && SEAT_TITLES.includes(title) && seatTitleClaimOk(row?.ts) ? [row.ts[0], row.ts[1]] : null;",
+    "new": "const ts = title && ['warden', 'protector', 'crowned', 'keeper', 'champion'].includes(title) && seatTitleClaimOk(row?.ts) ? [row.ts[0], row.ts[1]] : null;",
     "tests": [
       "test/chap4c_titles.test.js"
-    ]
+    ],
+    "note": "AUDIT CHAP5 T1-T3: re-aimed - the mutant failed for its own reason (a name it does not import, a statement that does not parse), never the law's."
   },
   {
     "name": "CHAP4C-KEY",
