@@ -303,7 +303,7 @@ function frame(now) {
     renderer.setMoonlight(rl.key);
     applyFog(renderer, dungeonFog(lane, SD_REALM_FOG));
     if (!params.has('nograde')) renderer.setSceneGrade(SD_HOUR_GRADE);   // SD-LOOK: the dungeon arm's own (?nograde: the lane's defaults, for a before)
-    const hour = realmLightsWith(EMPTY_LIT, NO_LIGHTS, cam.pos);
+    const hour = realmLightsWith(EMPTY_LIT, remnant.lights(), cam.pos);   // SD-LOOK: its heart's light first
     renderer.setPointLights(hour.data, null, hour.colors);
     renderer.setClearColor(INTERIOR_CLEAR);
     hall.frame(dt, null, null);

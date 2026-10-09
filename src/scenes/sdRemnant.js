@@ -24,13 +24,14 @@
 //
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
 import { SD_ARENA, SD_REALM_ORIGIN, realmToDungeon } from '../net/sdBrain.js';
-import { SD_REM, SD_ECHO, SD_HEART, SD_REM_START, SD_BREAK_MS, SD_BLOWS, SD_HEARTS_CLOSE_MS, SD_HEARTS, SD_STUN_MS, inArena } from '../net/sdRemnant.js';
+import { SD_REM, SD_ECHO, SD_HEART, SD_REM_START, SD_BREAK_MS, SD_BLOWS, SD_HEARTS_CLOSE_MS, SD_HEARTS, SD_STUN_MS, SD_PULSE_EVERY_MS, inArena } from '../net/sdRemnant.js';
 import { HIT_KINDS, wrapYaw } from '../net/gateBrain.js';
 import { sdBodyAt, sdHeartsOf, sdHourOver, SD_FIGHT_EMPTY } from '../net/sdFightLink.js';
 import { SD_REALM_ARCHIVE } from '../world/sdRealm.js';
 import { remnantArt } from '../world/sdRemnantArt.js';
 import { ensureSdHallArt } from './sdHall.js';
-import { buildRemnantParts, buildHeartModel, buildGearModel, remnantMatrix, remnantScale } from '../world/sdRemnantModel.js';
+import { buildRemnantParts, buildHeartModel, buildGearModel, remnantMatrix, remnantScale, SD_REMNANT_BODY } from '../world/sdRemnantModel.js';
+import { SD_ENDINGS } from '../net/sdMarks.js';
 import { remnantRig, rigMatrices, restRig, sdGearsAt, gearMatrix, sdKeptList, SD_RIG_PARTS } from './sdRemnantRig.js';
 import { bossStandIn, crystalStandIn, hostStandIn } from '../world/gateBoss.js';
 
@@ -56,6 +57,21 @@ export const sdTurnToward = (was, to, dt, rate = SD_TURN_RATE) => {
   const d = wrapYaw(to - was), step = rate * Math.max(0, dt || 0);
   return Math.abs(d) <= step ? to : wrapYaw(was + Math.sign(d) * step);
 };
+/** SD-LOOK (Super-Dungeons-Look.md section 10): THE HEART'S LIGHT - its reach (m, at the Remnant's height; an Echo's
+ *  its scale's), its light at rest and at the top of a beat, the Pulse's and the Reset's flare over it, and THE
+ *  METRONOME: a beat a second at `hz[0]` just after a Mantella Pulse, quickening to `hz[1]` as the next comes (never over
+ *  3 Hz - the flash law), every Pulse SD_PULSE_EVERY_MS apart. The Echoes' hearts in their own metal's light. */
+export const SD_HEART_LIGHT = Object.freeze({ range: 9, rest: 0.7, beat: 0.45, flare: 2.5, hz: Object.freeze([0.6, 2.5]), echo: Object.freeze([Object.freeze([1.0, 0.8, 0.42]), Object.freeze([0.8, 0.86, 1.0])]) });
+const MANTELLA_LIGHT = Object.freeze([0.45, 1.0, 0.6]);
+/** The heart's beat at `t` (ms) of the fight `s`: its light's swell, 0..1 - the metronome's phase run since the last Pulse
+ *  `pulseAt` (ms; else since the fight began), the beat a quick rise and a slow fall. Pure. */
+export function sdHeartBeat(s, t, pulseAt) {
+  const from = Number.isFinite(pulseAt) && pulseAt <= t ? pulseAt : (s?.op ?? 0), tau = Math.max(0, (t - from) / 1000);
+  const [h0, h1] = SD_HEART_LIGHT.hz, T = SD_PULSE_EVERY_MS / 1000, k = Math.min(tau, T);
+  const phase = h0 * k + ((h1 - h0) * k * k) / (2 * T) + h1 * (tau - k);   // the rate rising h0 to h1 over a Pulse's span
+  const f = phase - Math.floor(phase);
+  return f < 0.15 ? f / 0.15 : Math.exp(-(f - 0.15) * 5);
+}
 /** SD17: the gears in flight at once at most - a Volley's five marks from each of three bodies. */
 export const SD_GEAR_DRAWS = SD_BLOWS.volley.max * 3;
 const ZERO = new Float32Array(16);
@@ -165,6 +181,10 @@ export function createSdRemnant({ renderer = null, link = () => null, sendIn = (
   const meshes = [];
   let remDraw = null;
   const echoDraws = [], heartDraws = [];
+  // SD-LOOK: the hearts' lights, kept (the frame's - nothing made), the light their Ending gives, the last Pulse heard
+  const heartLights = Array.from({ length: 3 }, () => ({ x: 0, y: 0, z: 0, range: 0, color: [0, 0, 0] })), litList = [];
+  const heartColor = SD_ENDINGS.find((E) => E.id === ending)?.light ?? MANTELLA_LIGHT;
+  let pulseAt = -Infinity;
   /** SD17: each body's turned parts (the Remnant's, gold's, silver's), the gears' draws, the rig's pose and matrices */
   const partDraws = [[], [], []], gearDraws = [];
   const _rig = restRig(), _parts = SD_RIG_PARTS.map(() => new Float32Array(16));
@@ -319,6 +339,31 @@ export function createSdRemnant({ renderer = null, link = () => null, sendIn = (
       const dmg = Math.round(d);
       if (!(dmg >= 1)) return false;
       return !!sendBlow('xhit', { c, q: blowQ(`x${c}`), d: dmg, r });
+    },
+    /**
+     * SD-LOOK: THE HEARTS' LIGHT - each standing body's heart (its torso's turn carries it) a point light in its Ending's
+     * light (the Echoes' in their metal's), beating as the metronome says, flaring on the Pulse and through the Reset's
+     * wind-up. The renderer's light list's shape, kept records; none with no body standing.
+     */
+    lights() {
+      litList.length = 0;
+      if (!draws) return litList;
+      const L = link(), s = L ? L.state() : SD_FIGHT_EMPTY, t = L ? L.now() : 0, H = SD_HEART_LIGHT;
+      const clk = s.clk;
+      if (clk && clk.a === SD_BLOWS.pulse.id && clk.at <= t && clk.at > pulseAt) pulseAt = clk.at;
+      const flare = (clk && clk.a === SD_BLOWS.pulse.id && t >= clk.at - SD_BLOWS.pulse.windup && t < clk.at + 600)
+        || (s.rem?.atk?.a === SD_BLOWS.reset.id && t < s.rem.atk.at && !(s.su > t)) ? H.flare : 1;
+      const k = (H.rest + H.beat * sdHeartBeat(s, t, pulseAt)) * flare;
+      for (let b = 0; b < heartLights.length; b++) {
+        const d = b === 0 ? remDraw : echoDraws[b - 1], torso = partDraws[b]?.[2];
+        if (!d || d.hidden || !torso || torso.hidden) continue;
+        const m = torso.object.matrix, y = SD_REMNANT_BODY.heartY, o = heartLights[b], c = b === 0 ? heartColor : H.echo[b - 1];
+        o.x = m[4] * y + m[12]; o.y = m[5] * y + m[13]; o.z = m[6] * y + m[14];
+        o.range = H.range * (b === 0 ? 1 : ECHO_SCALE);
+        o.color[0] = c[0] * k; o.color[1] = c[1] * k; o.color[2] = c[2] * k;
+        litList.push(o);
+      }
+      return litList;
     },
     /** Gone with the dungeon: every mesh freed. */
     clear() {
