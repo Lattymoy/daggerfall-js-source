@@ -10,7 +10,7 @@ import { assembleFirstPersonArm, poseAssembly, bindPartsInto } from '../src/form
 import { ARMOR_MATERIAL } from '../src/systems/armorMaterials.js';
 import {
   CLOAK_FIT_POSES, CLOAK_PUSH_LIMIT, CLOAK_SEATED_SHARE, FOLLOW, SLUNG_MOVE_LIMIT,
-  fitCloakOver, fitStowedGear, followCloak, applyCloakFollow, seatCloak, cloakSheet, cellKey,
+  fitCloakOver, fitStowedGear, followCloak, applyCloakFollow, seatCloak, cloakSheet, sheetCellKey,
 } from '../src/formats/mwCloakFit.js';
 import { fitThirdPersonCloak } from '../src/combat/fpArm.js';
 import { meshToNif } from '../tools/nifWrite.mjs';
@@ -206,7 +206,7 @@ test('AUDIT MW-CLOAK: what the fits will not chase or move - a thing more than C
   fitCloakOver(rod, { isCloak, isUnder, poses: [{}] });
   poseAssembly(rod);
   const sheet = cloakSheet(rod.pieces.find(isCloak).positions, rod.pieces.find(isCloak).indices);
-  const front = sheet.get(cellKey(0, 70)).front;
+  const front = sheet.get(sheetCellKey(0, 70)).front;
   bindPartsInto(rod, [boxPart(rod, 'Bip01 LongBladeOneHand', 'sheath', [[-40, front - 1.5, 70], [40, front - 1, 71]])]);
   poseAssembly(rod);
   const across = fitStowedGear(rod, { isCloak, isGear });

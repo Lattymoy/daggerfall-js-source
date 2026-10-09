@@ -26,8 +26,8 @@
   {
     "name": "AUDITMWCLOAK-deep-points-chased",
     "file": "src/formats/mwCloakFit.js",
-    "old": "if (over > room + 1e-6) { deepSeen.add(cellKey(u[v], u[v + 2])); continue; }",
-    "new": "if (false) { deepSeen.add(cellKey(u[v], u[v + 2])); continue; }",
+    "old": "if (over > room + 1e-6) { deepSeen.add(sheetCellKey(u[v], u[v + 2])); continue; }",
+    "new": "if (false) { deepSeen.add(sheetCellKey(u[v], u[v + 2])); continue; }",
     "tests": ["test/auditmwcloak.test.js"],
     "note": "A rod far through the cloak chased: its ring creeps up to the limit pass after pass, and nothing names it."
   },

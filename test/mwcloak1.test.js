@@ -20,7 +20,7 @@ import { composeWornArmor, composeWornModest, fpWornAdds, itemMapCoverage, mwIte
 import { ARMOR_MATERIAL } from '../src/systems/armorMaterials.js';
 import { CLASSIC_ARMOR_TEMPLATE } from '../src/characters/ownArmorModels.js';
 import { CLOAK_NAMES, CLOAK_PAINTINGS, CLOAK_DYE_PAINTING, ownCloakFor, ownCloakModelPaths, cloakModel, isCloakSlot } from '../src/characters/ownClothingModels.js';
-import { CLOAK_CLEARANCE, CLOAK_PUSH_LIMIT, HIP_PITCH_LIMIT, SLUNG_PITCH_LIMIT, cloakSheet, cellKey, fitCloakOver, fitStowedGear, surfaceSamples } from '../src/formats/mwCloakFit.js';
+import { CLOAK_CLEARANCE, CLOAK_PUSH_LIMIT, HIP_PITCH_LIMIT, SLUNG_PITCH_LIMIT, cloakSheet, sheetCellKey, fitCloakOver, fitStowedGear, surfaceSamples } from '../src/formats/mwCloakFit.js';
 import { readPng } from '../tools/pngIO.mjs';
 import { readFbx } from '../tools/fbxRead.mjs';
 import { meshModelNames } from '../tools/fbxStrip.mjs';
@@ -257,7 +257,7 @@ test('MW-CLOAK1: stowed gear against the cloak, on the addon\'s own scabbards - 
   for (const p of asm.pieces.filter(isGear)) {
     const pts = surfaceSamples(p.positions, p.indices);
     for (let v = 0; v < pts.length; v += 3) {
-      const c = sheet.get(cellKey(pts[v], pts[v + 2]));
+      const c = sheet.get(sheetCellKey(pts[v], pts[v + 2]));
       if (!c) continue;
       if (p.bone === 'Bip01 LongBladeTwoClose' || p.bone === 'Bip01 MarksmanBow') assert.ok(pts[v + 1] <= c.back - CLOAK_CLEARANCE + 1e-3, `${p.bone} wholly over the cloak`);
       else assert.ok(pts[v + 1] >= c.front + CLOAK_CLEARANCE - 1e-3, `${p.bone} wholly under it`);

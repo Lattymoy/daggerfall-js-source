@@ -79,7 +79,7 @@ export const CLOAK_SEATED_SHARE = 0.3;
 export const FOLLOW = Object.freeze({ rounds: 6, sweeps: 40, slideCost: 0.1, maxTurn: 25 * Math.PI / 180, maxSlide: 8, cell: 2 });
 
 /** A unit cell of the rig's (x, z) as one number - the sheet's key (a string key was most of the fits' cost). */
-export const cellKey = (x, z) => (Math.round(x) + 32768) * 65536 + (Math.round(z) + 32768);
+export const sheetCellKey = (x, z) => (Math.round(x) + 32768) * 65536 + (Math.round(z) + 32768);
 
 /** A piece's placed surface as points, one typed array: its vertices, and its edges' interiors every `step` units.
  *  `keep(x, y, z)`, when given, answers which points are wanted - the rest are never stored. */
@@ -176,7 +176,7 @@ function poseOf(assembly, turns = {}) {
 }
 
 /**
- * The cloak as a height field over the rig's (x, z): for each unit cell its triangles cover (keyed by cellKey), the
+ * The cloak as a height field over the rig's (x, z): for each unit cell its triangles cover (keyed by sheetCellKey), the
  * sheet's FRONT (the largest y, the layer nearest the body where it folds) and BACK, and the triangle each came from.
  */
 export function cloakSheet(positions, indices) {
@@ -296,7 +296,7 @@ export function fitCloakOver(assembly, { isCloak, isUnder, clearance = CLOAK_CLE
         const deepest = new Map();
         for (const u of set.under) {
           for (let v = 0; v < u.length; v += 3) {
-            const cell = sheet.get(cellKey(u[v], u[v + 2]));
+            const cell = sheet.get(sheetCellKey(u[v], u[v + 2]));
             if (!cell) continue;
             const over = cell.front - (u[v + 1] - clearance);
             if (over <= 1e-4) continue;
@@ -304,9 +304,9 @@ export function fitCloakOver(assembly, { isCloak, isUnder, clearance = CLOAK_CLE
             // chased (chased, its ring crept up to the limit pass after pass round a point still through it)
             let room = Infinity;
             for (let k = 0; k < 3; k++) room = Math.min(room, limit - total[rep[cloak.indices[cell.frontTri + k]]]);
-            if (over > room + 1e-6) { deepSeen.add(cellKey(u[v], u[v + 2])); continue; }
+            if (over > room + 1e-6) { deepSeen.add(sheetCellKey(u[v], u[v + 2])); continue; }
             // one point a unit cell for the ease - the deepest
-            const ck = cellKey(u[v], u[v + 2]);
+            const ck = sheetCellKey(u[v], u[v + 2]);
             const at = deepest.get(ck);
             if (at == null) { deepest.set(ck, through.length); through.push(u[v], u[v + 2], over); } else if (over > through[at + 2]) { through[at] = u[v]; through[at + 1] = u[v + 2]; through[at + 2] = over; }
             // its own triangle the whole way, so every pass makes headway
@@ -438,8 +438,8 @@ export function fitStowedGear(assembly, { isCloak, isGear, clearance = CLOAK_CLE
   if (!cloaks.length) return null;
   const rest = poseOf(assembly);
   const sheets = cloaks.map((c) => cloakSheet(rest.place(c), c.indices));
-  const front = (x, z) => { let y = null; for (const s of sheets) { const c = s.get(cellKey(x, z)); if (c && (y == null || c.front > y)) y = c.front; } return y; };
-  const back = (x, z) => { let y = null; for (const s of sheets) { const c = s.get(cellKey(x, z)); if (c && (y == null || c.back < y)) y = c.back; } return y; };
+  const front = (x, z) => { let y = null; for (const s of sheets) { const c = s.get(sheetCellKey(x, z)); if (c && (y == null || c.front > y)) y = c.front; } return y; };
+  const back = (x, z) => { let y = null; for (const s of sheets) { const c = s.get(sheetCellKey(x, z)); if (c && (y == null || c.back < y)) y = c.back; } return y; };
   const rows = [];
   for (const [ref, pieces] of gearGroups(assembly, isGear)) {
     const at = assembly.fns.attachmentTransform(rest.mats, ref);
