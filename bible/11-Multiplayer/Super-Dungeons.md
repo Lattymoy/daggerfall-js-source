@@ -174,8 +174,9 @@ against the slot's law (section 4) or in the realm's own frame (sections 8-10).
   to brass, by its column's light, whole within 1 km and gone by 8 km, a little all day and most at dusk. Within 60 m of
   its centre a banner names it and its state (*"The Stopped Bell - fades in 1d 04h"*, *"... - collapsing"* - SD20e
   T1: what it is is the card's, beside it), its marks beside it on the gate's own card, both in the Hour's brass. Its
-  find is followed by its marks (*"The Stopped Bell keeps the Ending of Sentinel - Sunfall - under the Unending Reset and
-  the Brazen Hide."*), a found Hollow's last hour is said
+  find is followed by its marks (*"The Stopped Bell keeps the Ending of Sentinel, its Sunfall, under the Unending Reset
+  and the Brazen Hide."* - AUDIT SD IV, SD26 T9: its signature hung between dashes, an aside WB13b's law forbids), a
+  found Hollow's last hour is said
   to the realm once (*"... near Copperham will fade within the hour."*), and once one is gone the Timers count the next
   one's not-before - never where.
 
@@ -2083,7 +2084,7 @@ window, its slot popped first - still inside the function).
 | L6 F11 | "CRYSTALS" IN DAGON'S RED. The Remnant's damage chart named its Hearts' column "Crystals", in the court's fire | "Hearts", in the Hour's brass (`damageChartModel`'s `crystals` and `theme`) |
 | L6 F15 | THE FIGHT HEARD ON THE STEPS. The fight's lines reached everyone in the Hour - the Dragon Break and the End to a body mid-jump on the Crumble | to whoever stands where the bar stands (`sdNearArena`); its fall to the whole Hour |
 | L6 F20 | "IN THE BRASS HOLLOW" CAPITAL. Every Hollow's name begins "The", and kept its capital mid-sentence and on its plaque | small inside a line (`net/sdLaw.js` `sdNameIn`; the plaque's *"To the Brass Hollow"*) |
-| L6 F21 | WB13b'S WORDS BROKEN. Dash asides, comment and shouting: *"The Remnant steps outside time - strike down the GOLD and SILVER Echoes together."*, *"The Reset gathers - break its Hearts!"*, *"The Hour is breaking - it collapses in 3:00. The way home stands where the Remnant fell."* (said four seconds before it rose) | the event, then what to do: *"The Dragon Break! Strike down the Gold and Silver Echoes together."*, *"The Reset! Break all 5 Hearts!"*, *"The Hour collapses in 3:00. The way home opens where the Remnant fell."*, *"The Concord! A bridge of light opens."* - a law over every line the arc says |
+| L6 F21 | WB13b'S WORDS BROKEN. Dash asides, comment and shouting: *"The Remnant steps outside time - strike down the GOLD and SILVER Echoes together."*, *"The Reset gathers - break its Hearts!"*, *"The Hour is breaking - it collapses in 3:00. The way home stands where the Remnant fell."* (said four seconds before it rose) | the event, then what to do: *"The Dragon Break! Strike down the Gold and Silver Echoes together."*, *"The Reset! Break all 5 Hearts!"*, *"The Hour collapses in 3:00. The way home opens where the Remnant fell."*, *"The Concord! A bridge of light opens."* - a law over every line the arc says (AUDIT SD IV, SD26 T9: its pin read no line added after it - the marks line with every find hung its signature between dashes, three of the card's tips broke it; now said plainly and read. Its scope is what is said - a chat or voice line, a plaque's row, a tip; a label and its value keep their dash, the bar's chips, the card's wake line, the ground's warning and the Timers' rows, as the gate's do) |
 | L6 F23 | THE END ON THE RESET'S PITCH. Their wind-ups on one clip stood 3.2 semitones apart (WB13d asks four) | the End at 0.236 |
 | L6 | AN UNFOUND HOLLOW'S FADE SAID. Its rise is said to nobody, and its fade was said to everyone | a found Hollow's fade alone |
 | L2 (the gate's) | A POW OF A NEGATIVE in the shaders the Hour draws through - the veil's throat, the telegraph's lip and wave | squared |

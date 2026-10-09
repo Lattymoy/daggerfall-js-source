@@ -13,7 +13,11 @@ import { courtSaySeconds } from '../src/scenes/gateCourt.js';
 import { createSdFightLink, SD_FIGHT_TEXT, SD_HEARTS_KEY } from '../src/net/sdFightLink.js';
 import { SD_BLOWS, SD_BODY, SD_ECHO_PAIR_MS, newRemnantFight, joinRemnant, remnantStateOf } from '../src/net/sdRemnant.js';
 import { validSdOut } from '../src/net/wire.js';
-import { SD_ARENA, realmToDungeon } from '../src/net/sdBrain.js';
+import { SD_ARENA, realmToDungeon, SD_TURN_WAIT_LINE } from '../src/net/sdBrain.js';
+import { SD_ENDINGS, sdEndingOf, sdMarksOf } from '../src/net/sdMarks.js';
+import { sdMarksLine, sdHourLine } from '../src/systems/sdOmen.js';
+import { SD_CLAIM_TEXT } from '../src/net/sdClaims.js';
+import { SD_MARK_TIPS } from '../src/ui/sdMarksView.js';
 import { createSdRemnantBlows, SD_BLOWS_TEXT, SD_BLOW_CUES, SD_HEART_LATE_MS } from '../src/scenes/sdRemnantBlows.js';
 import { arenaToDungeon } from '../src/scenes/sdRemnant.js';
 import { BOSS_CUES, FIRE_CAST_ID } from '../src/world/gateBoss.js';
@@ -497,6 +501,16 @@ function arcLines() {
   for (const hour of [true, false]) for (const first of [true, false]) add(`collapse.${hour}.${first}`, sdCollapseLine(SD_COLLAPSE_MS, { hour, first }));
   add('fadeR', sdFadeReadout(60_000, { hour: true }));
   add('fight.dragonBreak.15', SD_FIGHT_TEXT.dragonBreak(SD_ECHO_PAIR_MS)); add('fight.dragonBreak.10', SD_FIGHT_TEXT.dragonBreak(10_000));   // AUDIT SD III (T14): its window's words, read
+  // PIN MOVED (AUDIT SD IV T9): and every line the arc has said since SD11 - the marks line with every find (each Ending's;
+  // it hung its signature between dashes), the last hour's, the turn's wait, the claim's words, the card's tips (two
+  // dash asides and an "X, not Y"). The law's scope: what is SAID - a chat line, a voice's line, a plaque's row, a tip.
+  // A label and its value keep their dash (the bar's chips, the card's wake line "Sunfall - the Ending of Sentinel", the
+  // ground's "Brass Stomp - jump!", the Timers' rows), as the gate's own do.
+  for (const E of SD_ENDINGS) { const s = Array.from({ length: 216 }, (_, i) => i + 1).find((k) => sdEndingOf(sdMarksOf(k))?.id === E.id); add(`marks.${E.id}`, sdMarksLine({ name: 'The Stopped Bell', s })); }
+  add('hour.near', sdHourLine({ name: 'The Stopped Bell', near: 'Copperham' })); add('hour.region', sdHourLine({ region: 'Alik\'r Desert' }));
+  add('turnWait', SD_TURN_WAIT_LINE);
+  add('claim.recorded', SD_CLAIM_TEXT.recorded(3)); for (const k of ['title', 'aura', 'guest']) add(`claim.${k}`, SD_CLAIM_TEXT[k]);
+  walk('tip', SD_MARK_TIPS);
   return out;
 }
 

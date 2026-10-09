@@ -26,6 +26,8 @@ import { drawGateBossBar, destroyGateBossBar, BOSS_BAR_CSS } from '../src/ui/gat
 import { ONLINE_DRESS_CSS } from '../src/ui/enhancedPlusStyle.js';
 import { SD_BLOWS, SD_BODY } from '../src/net/sdRemnant.js';
 import { sdMarksLine, sdHourLine, SD_HOUR_LEFT_MS } from '../src/systems/sdOmen.js';
+import { sdMarksOf, sdEndingOf } from '../src/net/sdMarks.js';
+import { SD_MARK_TIPS } from '../src/ui/sdMarksView.js';
 import { sdCities, sdTemplates } from '../src/systems/sdSite.js';
 import { scanGatePixels } from '../src/systems/gateSite.js';
 import { LOCATION_TYPES, CLIMATES } from '../src/formats/mapsFile.js';
@@ -35,6 +37,8 @@ import { createSdHall, SD_HALL_TEXT } from '../src/scenes/sdHall.js';
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const W = read('src/scenes/world.js');
 const T0 = 1_800_000_000_000;
+/** A slot whose Hollow keeps Sentinel's Ending. */
+const SLOT_SENTINEL = Array.from({ length: 216 }, (_, i) => i + 1).find((k) => sdEndingOf(sdMarksOf(k))?.id === 'sentinel');
 
 /** world.js's own sdFightFrame over a fight, a player and a card the test holds. */
 function fightHost() {
@@ -322,4 +326,18 @@ test('SD26 THE STONE\'S PLAQUE NEVER OFFERS A TURN THE CONCORD REFUSES (T8): onc
   const late = createSdHall({ s: 7, now: () => 0 });
   late.frame(0.016, null, { s: 7, st: truth, lit: 6, f: 0, ok: true });
   assert.equal(late.hoverName('sdstone:2:b').subs[1], SD_HALL_TEXT.held);
+});
+
+test('SD26 WB13B\'S WORDS OVER THE LINES SINCE SD11 (T9): L6 F21 made WB13b\'s wording law "a law over every line the arc says" - no dash aside, no colon gloss, no "X, not Y", nothing shouted - and its pin (sd11d arcLines) never read a line added after it: the marks line said with every find hung its signature between dashes ("the Ending of Sentinel - Sunfall - under ..."), and three of the card\'s tips broke it ("Jump its Stomp\'s ring - it reaches the rim.", "... three quarters round - keep a pillar near.", "Move at the word, not the fill."). The signature is the Ending\'s own between commas, the tips said plainly, and sd11d reads them all now (mutants: the marks line dashed; each tip as it was)', () => {
+  const rule = (s) => [/\S - \S/.test(s) && 'a dash aside', /[a-z]: [a-z]/i.test(s.replace(/\b\d{1,2}:\d{2}\b/g, '')) && 'a colon gloss', /, not \w/.test(s) && '"X, not Y"', /\b[A-Z]{3,}\b/.test(s) && 'shouted'].filter(Boolean);
+  for (let s = 1; s <= 216; s++) {
+    const line = sdMarksLine({ name: 'The Stopped Bell', s }), E = sdEndingOf(sdMarksOf(s));
+    assert.deepEqual(rule(line), [], `slot ${s}: ${line}`);
+    assert.ok(line.startsWith(`The Stopped Bell keeps the Ending of ${E.stone}, its ${E.sig.replace(/^The /, '')}, under the `), line);
+  }
+  assert.equal(sdMarksLine({ name: 'The Stopped Bell', s: SLOT_SENTINEL }).split(', under')[0], 'The Stopped Bell keeps the Ending of Sentinel, its Sunfall');
+  for (const [k, v] of Object.entries(SD_MARK_TIPS)) assert.deepEqual(rule(v), [], `tip ${k}: ${v}`);
+  assert.deepEqual([SD_MARK_TIPS.daggerfall, SD_MARK_TIPS.wayrest, SD_MARK_TIPS.quickened], ['Its Stomp\'s ring reaches the rim. Jump it.', 'Its Hand reaches three quarters round. Keep a pillar near.', 'Move at the word, before the fill.']);
+  // and the law's own pin reads them, with the last hour's, the turn's wait and the claim's words
+  assert.match(read('test/sd11d_words.test.js'), /add\(`marks\.\$\{E\.id\}`, sdMarksLine\([\s\S]{0,400}walk\('tip', SD_MARK_TIPS\);\n {2}return out;/);
 });
