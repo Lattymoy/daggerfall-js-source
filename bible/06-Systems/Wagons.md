@@ -360,8 +360,9 @@ moves past 2 m, stops being parked or a caravan, or is gone, I am stood
 outside behind its door and told "The caravan has moved on. You step
 outside." A repaint reaches the room live.
 
-**The relay** (world183, re-hashed in place): the `caravan` frame and its
-keeping, `relaySupportsCaravan` at 183, and the park record's `we`/`wg`.
+**The relay** (world185, re-hashed in place - world183 until the merge
+past main's CHAP4c and PERF-RELAY1): the `caravan` frame and its keeping,
+`relaySupportsCaravan` at 185, and the park record's `we`/`wg`.
 
 **Known limits.** Visitors see the pieces as the owner placed them the last
 time the owner stood in the caravan online. A paint changed inside reaches
@@ -374,7 +375,7 @@ ones the owner's document lists, as the door is the owner's client's to keep
 - The relay meters the `caravan` frame: one document a second from a socket
   (CARAVAN_DOC_MIN_MS), an unchanged one neither stored again nor fanned
   until its lease wants renewing, the fan charged to the sender's own act
-  bytes. world183 re-hashed in place.
+  bytes. Re-hashed in place.
 - The listener hears the cell that keeps the record (the record's own room),
   not the cell the drawn pose names.
 - A door set against a visitor while they stand inside stands them out,
@@ -462,7 +463,8 @@ Items and economy, motion and drawing, the caravan's room, and online.
 A parked team's record (HCC-PARK) now keeps the wagon's kind and whether a
 horse stands in it (`wk`, `wh`; `src/net/wire.js` validParkData) - and, since
 WAGONS2, its paint (`wl`). That is a relay change, so RELAY_VERSION is
-`world183`. Until the relay is deployed, a parked wagon the relay restores
+`world185` (world182, then world183, on the branch - renumbered past
+main's at each merge). Until the relay is deployed, a parked wagon the relay restores
 comes back as the Small Cart, as built.
 
 ## THE FOUR HOSTS
