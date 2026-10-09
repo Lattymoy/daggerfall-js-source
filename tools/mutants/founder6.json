@@ -1,0 +1,42 @@
+[
+  {
+    "name": "FOUNDER6-no-default",
+    "file": "server-account/src/titles.js",
+    "old": "  if (t == null) return titlesHeld(player, env).includes(DEFAULT_TITLE) ? DEFAULT_TITLE : undefined;   // FOUNDER6\n",
+    "new": "",
+    "tests": [
+      "test/founder6.test.js"
+    ],
+    "note": "Holding is wearing nothing again: a founder who never pressed Wardrobe > Title wears no Founder, and nothing over the name says it was granted."
+  },
+  {
+    "name": "FOUNDER6-the-default-unconditional",
+    "file": "server-account/src/titles.js",
+    "old": "  if (t == null) return titlesHeld(player, env).includes(DEFAULT_TITLE) ? DEFAULT_TITLE : undefined;   // FOUNDER6\n",
+    "new": "  if (t == null) return DEFAULT_TITLE;\n",
+    "tests": [
+      "test/founder6.test.js"
+    ],
+    "note": "Every row that never chose wears Founder, guests and latecomers too - a title nobody granted, signed over the name."
+  },
+  {
+    "name": "FOUNDER6-taken-off-stored-as-null",
+    "file": "server-account/src/accounts.js",
+    "old": "  const stored = title ?? '';\n",
+    "new": "  const stored = title;\n",
+    "tests": [
+      "test/founder6.test.js"
+    ],
+    "note": "Taking Founder off writes NULL, which reads as never chosen: it is back on the next token, and a founder cannot go bare."
+  },
+  {
+    "name": "FOUNDER6-the-list-emptied",
+    "file": "server-account/wrangler.toml",
+    "old": "FOUNDER_HANDLES = \"spragual,SylviaBun\"",
+    "new": "FOUNDER_HANDLES = \"\"",
+    "tests": [
+      "test/founder6.test.js"
+    ],
+    "note": "The two reporters are named by nobody: Founder rests on their rows' dates alone."
+  }
+]

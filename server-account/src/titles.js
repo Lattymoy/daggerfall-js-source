@@ -373,13 +373,23 @@ export function glyphRefusal(glyph, player, env, nowS) {
   return glyphsOf(player, env, nowS).includes(glyph) ? null : 'not-held';
 }
 
+/** FOUNDER6 (2026-10-09, Mac: "Everytime I try to grant the founder title to people they dont recieve it"): THE TITLE
+ *  WORN BY A PLAYER WHO NEVER CHOSE ONE. FOUNDER2 to FOUNDER5 each widened who HOLDS Founder, and holding is not
+ *  wearing: a founder who never found Wardrobe > Title on the account card wore nothing, and nothing over their name
+ *  said they had been granted anything. A row whose `title` is NULL has never chosen, so it wears Founder while it
+ *  holds it; one that took its title off stores '' (equipTitle) and wears nothing, as it chose. */
+export const DEFAULT_TITLE = 'founder';
+
 /** The title this player WEARS: the stored one, but only while they
  *  still hold it. A stored title is a choice made once and a grant is
  *  a fact checked now, so the check is here rather than at the write -
  *  a developer removed from the list stops wearing the badge on their
- *  next token, without anybody having to remember to clear a column. */
+ *  next token, without anybody having to remember to clear a column.
+ *  FOUNDER6: never chosen (NULL) wears DEFAULT_TITLE while it is held;
+ *  taken off ('') wears none. */
 export function titleWorn(player, env) {
   const t = player?.title;
+  if (t == null) return titlesHeld(player, env).includes(DEFAULT_TITLE) ? DEFAULT_TITLE : undefined;   // FOUNDER6
   if (typeof t !== 'string' || !t) return undefined;
   return titlesHeld(player, env).includes(t) ? t : undefined;
 }

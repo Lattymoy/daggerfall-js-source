@@ -149,7 +149,9 @@ test('ACC3: HOLDING IS NOT WEARING - a stored title stops being worn the moment 
   assert.equal(titleWorn(dev, {}), undefined);
   assert.equal(wardrobeOf(dev, {}, NOW).title, null, 'the wardrobe says null rather than a title nobody holds');
 
-  assert.equal(titleWorn({ ...dev, title: null }, env), undefined);
+  // PIN MOVED (FOUNDER6): a title never chosen (NULL) wears Founder while it is held; one taken off ('') wears none
+  assert.equal(titleWorn({ ...dev, title: null }, env), 'founder');
+  assert.equal(titleWorn({ ...dev, title: '' }, env), undefined);
   assert.equal(titleWorn({ ...dev, title: 'emperor' }, env), undefined, 'a column somebody edited by hand is not a grant');
 });
 
@@ -246,7 +248,7 @@ test('ACC3: /v1/account carries the wardrobe, and /v1/account/title equips one o
 
   const seen = (await call('GET', '/v1/account', undefined, me.secret)).body;
   assert.deepEqual(seen.wardrobe.titles, ['founder', 'developer']);
-  assert.equal(seen.wardrobe.title, null, 'nothing is worn until it is equipped - null is a perfectly good answer and is what every existing row gets');
+  assert.equal(seen.wardrobe.title, 'founder', 'PIN MOVED (FOUNDER6): a founder who never chose a title wears Founder - it was null, and nothing over the name said Founder had been granted');
   assert.ok(seen.wardrobe.glyphs.includes('dev'));
   assert.equal('title' in seen.account, false, 'the wardrobe is its own field: an account view is the ROW, a wardrobe is the row read against config and a clock');
 
@@ -261,6 +263,7 @@ test('ACC3: /v1/account carries the wardrobe, and /v1/account/title equips one o
   const off = await call('POST', '/v1/account/title', { title: null }, me.secret);
   assert.equal(off.status, 200);
   assert.equal(off.body.title, null);
+  assert.equal((await call('GET', '/v1/account', undefined, me.secret)).body.wardrobe.title, null, 'FOUNDER6: taken off stays off - Founder does not come back by default');
   assert.equal((await call('POST', '/v1/account/title', {}, me.secret)).status, 200, 'an absent title is "take it off" too');
 });
 
@@ -277,7 +280,7 @@ test('ACC3: a title nobody granted cannot be equipped by a client that asks nice
   assert.equal(nope.body.error, 'no-title');
   // AND NOTHING WAS WRITTEN. A refusal that half-lands is worse than
   // one that does not land at all.
-  assert.equal((await call('GET', '/v1/account', undefined, me.secret)).body.wardrobe.title, null);
+  assert.equal((await call('GET', '/v1/account', undefined, me.secret)).body.wardrobe.title, 'founder', 'PIN MOVED (FOUNDER6): the founder\'s default, never the refused title');
   // The route needs a credential like every other one behind the door.
   assert.equal((await call('POST', '/v1/account/title', { title: 'founder' })).status, 401);
 });

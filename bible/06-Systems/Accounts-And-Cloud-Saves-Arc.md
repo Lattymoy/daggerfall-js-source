@@ -2418,7 +2418,7 @@ ENUMERATED** applied to the one place a grant is usually a row:
 
 | | held when |
 |---|---|
-| **Founder** | registered, and first played by `FOUNDER_UNTIL` or named in `env.FOUNDER_HANDLES` (FOUNDER5): `min(created_at, registered_at, first_played_at) <= FOUNDER_UNTIL` - 1790337600, 2026-09-25T12:00:00Z since FOUNDER5 (the end of the 24th at UTC-12); `first_played_at` since FOUNDER4 (the first contact of a row the account shares a character with, migration 0078), the two before it since FOUNDER3 (it read `registered_at` alone before; 1790294400 — 2026-09-25T00:00:00Z since FOUNDER2; it was 1790121600, 2026-09-23T00:00:00Z) |
+| **Founder** | (worn by default while held and no title was ever chosen, FOUNDER6) registered, and first played by `FOUNDER_UNTIL` or named in `env.FOUNDER_HANDLES` (FOUNDER5): `min(created_at, registered_at, first_played_at) <= FOUNDER_UNTIL` - 1790337600, 2026-09-25T12:00:00Z since FOUNDER5 (the end of the 24th at UTC-12); `first_played_at` since FOUNDER4 (the first contact of a row the account shares a character with, migration 0078), the two before it since FOUNDER3 (it read `registered_at` alone before; 1790294400 — 2026-09-25T00:00:00Z since FOUNDER2; it was 1790121600, 2026-09-23T00:00:00Z) |
 | **Developer** | the handle is in `env.DEVELOPER_HANDLES` |
 | **sprout** | `nowS - created_at < SPROUT_S` (two weeks) |
 | **dev** | the same list as the Developer title |
@@ -2458,6 +2458,11 @@ column, and a column somebody edits by hand is not a grant.
 
 `migrations/0004_titles.sql` is one `ALTER TABLE` and a long note saying
 why there is no walk beneath it.
+
+FOUNDER6 (2026-10-09): `players.title` NULL means **never chosen**, and a
+founder who never chose wears Founder (`titles.js` DEFAULT_TITLE,
+titleWorn); taking a title off stores `''` (`accounts.js` equipTitle), so
+it stays off. See FOUNDER6 below.
 
 ### D2 — THE BADGE RIDES THE SIGNATURE, and this is ACC1g's law one field over
 
@@ -4631,6 +4636,33 @@ linking characters at every save; every account), Mac chose "Time zone + name li
   and a customs (Founder the moment the character arrives; nothing for a character no earlier row holds, nor one
   linked to a later row). `tools/mutants/founder5.json` (14: 12 dead, 2 equivalent as recorded). The pins of the old instant moved
   (founder2, founder3, founder4, titlen, acc3titles; founder2.json's two records and titlen.json's TR-founder-cutoff-moved-forward re-aimed by content).
+
+## FOUNDER6 — Founder worn by default, and the two reporters named (2026-10-09, acct97)
+
+Mac: "Everytime I try to grant the founder title to people they dont recieve it", with two account cards from the
+bug-reports channel, spragual's and SylviaBun's, each reading "Registered Sep 24, 2026".
+
+- **Why five tries never showed.** FOUNDER2 to FOUNDER5 each widened who HOLDS Founder - and since FOUNDER5 (deployed
+  2026-10-07; the live service answered acct96 on 2026-10-09) an account registered on the 24th anywhere holds it.
+  The cards were posted on 2026-10-04, under FOUNDER2's 00:00Z instant, with no Title row in the wardrobe at all: an
+  evening of the 24th in the Americas, the case FOUNDER5 closed. But HOLDING IS NOT WEARING (D1): no path ever put
+  Founder ON anybody. A founder who never found Wardrobe > Title on the account card wore nothing, and nothing over
+  their name said they had been granted anything - so every grant read as one that never landed.
+- **Worn by default** (`server-account/src/titles.js` DEFAULT_TITLE, titleWorn): a row whose `title` is NULL has
+  never chosen, and wears Founder while it holds it - on the signed token the relay reads, the account card, the
+  Notice Board, letters and the arena board alike (all read titleWorn). A chosen title stands; a chosen title that
+  lapsed is not swapped for the default; a non-founder and a guest wear nothing by default.
+- **Taken off stays off** (`server-account/src/accounts.js` equipTitle): equipping none stores `''`, never NULL, so
+  a founder who takes it off stays bare. A founder who took it off BEFORE this deploy stored NULL, which reads as
+  never chosen: Founder is back on them once, and one press takes it off for good.
+- **The names** (`wrangler.toml` FOUNDER_HANDLES): spragual and SylviaBun, so no date can leave either out.
+- `ACCOUNT_VERSION` acct97 in both the Worker and `wrangler.toml`; no migration, no relay or client change (the
+  client's wardrobe already shows the worn title pressed, and a press on it sends none). The version's pins moved.
+- Pins: `test/founder6.test.js` (3) - worn by default and taken off (the rule), the names and the version (the
+  config), and the real Worker (a founder first seen on the evening of the 24th signs Founder without a press, signs
+  none once it is taken off and Founder again when pressed; a named founder signs it; a latecomer none).
+  `test/acc3titles.test.js`'s three "nothing is worn until it is equipped" pins moved. `tools/mutants/founder6.json`
+  (4, all dead).
 
 ## KNIGHT-HOUSE — a deed the realm gave, held off its character's record (2026-10-04, acct77)
 

@@ -87,7 +87,7 @@ crons = ["* * * * *", "41 * * * *"]
 [vars]
 # Answered by /health so a deploy that did not happen cannot look like
 # one that did. Kept in step with ACCOUNT_VERSION in src/service.js.
-ACCOUNT_VERSION = "acct96"
+ACCOUNT_VERSION = "acct97"
 # WB5b: THE RELAY'S PUBLIC HALF, GATE_PUBLIC_KEY - the key an Oblivion
 # Gate's kill receipts verify with (src/net/gateReceipt.js) - is NOT a
 # var here. GATE-KEYS (2026-09-26): the account deploy mints the pair
@@ -146,7 +146,11 @@ MODERATOR_HANDLES = "Asynian,tabbyvish,Starempire42"
 # cloud - is named here: comma-separated handles, case-insensitive, the
 # same as the lines above. It only adds: a founder by the date holds the
 # title whether listed or not. Empty: nobody by name yet.
-FOUNDER_HANDLES = ""
+# FOUNDER6 (2026-10-09, Mac: "Everytime I try to grant the founder title
+# to people they dont recieve it"): spragual and SylviaBun, each reporting
+# an account card that reads "Registered Sep 24, 2026" - named so no date
+# can leave them out.
+FOUNDER_HANDLES = "spragual,SylviaBun"
 # TITLE-N (2026-09-24, Mac): the Dungeon Master - the orange title, the
 # die beside the name, and /dm's orange line (the relay reads the right
 # off the `dm` glyph in the signed token, as /red reads `dev`). "This

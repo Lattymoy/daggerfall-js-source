@@ -401,11 +401,15 @@ export const accountWardrobe = (player, env, nowS) => wardrobeOf(player, env, no
 export async function equipTitle({ db, nowS }, player, env, title) {
   const why = equipRefusal(title, player, env);
   if (why) return { error: why };
+  // FOUNDER6: TAKEN OFF IS '', NEVER NULL - a NULL title has never been
+  // chosen and wears Founder (titles.js DEFAULT_TITLE), so a player who
+  // takes it off must stay bare.
+  const stored = title ?? '';
   await db.prepare('UPDATE players SET title = ?, last_seen = ? WHERE id = ?')
-    .bind(title, nowS, player.id).run();
+    .bind(stored, nowS, player.id).run();
   // The ROW this answer describes is the row after the write, so the
   // caller never has to re-read to know what it did.
-  return { ok: true, ...wardrobeOf({ ...player, title }, env, nowS) };
+  return { ok: true, ...wardrobeOf({ ...player, title: stored }, env, nowS) };
 }
 
 /**
