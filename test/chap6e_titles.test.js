@@ -40,7 +40,7 @@ test('CHAP6e the vocabulary: a High Master and a Season\'s Master, last in the c
     assert.deepEqual(row.ts, [4017, 2], `${t}: stamped`);
     assert.deepEqual(readBadge({ title: t, ts: [4017, 2], glyphs: [] }).ts, [4017, 2], `${t}: read back`);
   }
-  assert.equal(RELAY_VERSION, 'world184');   // PIN MOVED: world183 - past CARDS10's world182 at the merge of main
+  assert.equal(RELAY_VERSION, 'world185');   // PIN MOVED: world183 - past CARDS10's world182 at the merge of main
 });
 
 // ── THE WORDS ───────────────────────────────────────────────────────
