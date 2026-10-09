@@ -74,13 +74,17 @@ function rig({ inside = [], clock = 100 * DAY_MIN + 1200, stays = true } = {}) {
   return { layer, synced, st, BEAT };
 }
 const RES = (i) => ({ id: `L9.${i}`, name: `Res${i} Lane`, job: 'labourer', cls: null });
+const AWAY = [0, 0, -4.65];   // AUDIT LW-ROOMS: a step behind the door's row, looking out of it
 
 test('LW-FIX1 a walker whose day ends mid-walk goes where they are unseen - judged where they are, not where they make for (mutants: the place)', () => {
   const r = rig({ inside: [RES(1)], stays: false });
   r.layer.frame(0.016, [0, 0, -4.6], 0, [0, 1.6, -4.6]);
+  // AUDIT LW-ROOMS: PIN MOVED - a walk with over 4 m to go: the player stands halfway on, and the walker a second's
+  // stroll on must not have passed them (the room's walk dealt this one a first walk of 1.6 m)
+  const left = () => { const s = r.layer.stood()[0]; return s.walking ? Math.hypot(s.at[0] - r.synced[0].feet[0], s.at[2] - r.synced[0].feet[2]) : 0; };
   let k = 0;
-  while (!r.layer.stood()[0].walking && k++ < 600) r.layer.frame(0.5, [0, 0, -4.6], 0, [0, 1.6, -4.6]);
-  assert.ok(r.layer.stood()[0].walking, 'a walk');
+  while (left() < 4 && k++ < 4000) r.layer.frame(0.5, [0, 0, -4.6], 0, [0, 1.6, -4.6]);
+  assert.ok(r.layer.stood()[0].walking && left() >= 4, 'a walk');
   r.layer.frame(0.2, [0, 0, -4.6], 0, [0, 1.6, -4.6]);
   const now = r.synced[0].feet, to = r.layer.stood()[0].at;
   // the player halfway on, facing back at the walker: the walker in view, where they make for behind
@@ -110,15 +114,16 @@ test('LW-FIX1 a table\'s talk is never re-dealt mid-script - LW-TALK: PIN MOVED 
   r.layer.frame(0.016, [0, 0, -4.6], 0, [0, 1.6, -4.6]);
   // a third sits down at their table mid-exchange: the pair talk it out
   r.st.inside = [RES(1), RES(2), RES(3)];
-  r.layer.frame(1, [0, 0, -4.6], Math.PI, [0, 1.6, -4.6]);
+  r.layer.frame(1, AWAY, Math.PI, [0, 1.6, -4.65]);   // AUDIT LW-ROOMS: PIN MOVED - looking away a step behind the door's
+  // row (the room's walk deals the pair's table a place in that row, square to the look, where the eye's own rounding saw it)
   assert.equal(r.layer.stood().filter((x) => x.table === a.table).length, 3, 'the third at their table');
   const ctx = { weather: null, hour: 20, news: null, room: 'tavern' };
   for (let i = 1; i < SLOT_LINES; i++) {
     const tm = s0 + (i + 0.5) * r.BEAT.lineMin;
     r.st.clock = tm;
-    r.layer.frame(0.016, [0, 0, -4.6], Math.PI, [0, 1.6, -4.6]);
+    r.layer.frame(0.016, AWAY, Math.PI, [0, 1.6, -4.65]);
     const want = circleLine(c0, tm, r.BEAT.lineMin, ctx);
-    assert.deepEqual(r.layer.speech([0, 1.6, -4.6]).map((l) => l.text), want ? [want.text] : [], 'the pair\'s talk, as dealt');
+    assert.deepEqual(r.layer.speech([0, 1.6, -4.65]).map((l) => l.text), want ? [want.text] : [], 'the pair\'s talk, as dealt');
   }
   // after its last line, the three's company meets - its talk from its own first line
   const met = s0 + SLOT_LINES * r.BEAT.lineMin;
@@ -127,9 +132,9 @@ test('LW-FIX1 a table\'s talk is never re-dealt mid-script - LW-TALK: PIN MOVED 
   let heard = 0;
   for (let tm = met; tm < met + r.BEAT.roundMin && heard < 3; tm += 0.25 * r.BEAT.lineMin) {
     r.st.clock = tm;
-    r.layer.frame(0.016, [0, 0, -4.6], Math.PI, [0, 1.6, -4.6]);
+    r.layer.frame(0.016, AWAY, Math.PI, [0, 1.6, -4.65]);
     const want = circleLine(trio, tm, r.BEAT.lineMin, ctx);
-    assert.deepEqual(r.layer.speech([0, 1.6, -4.6]).map((l) => l.text), want ? [want.text] : [], 'the three\'s talk');
+    assert.deepEqual(r.layer.speech([0, 1.6, -4.65]).map((l) => l.text), want ? [want.text] : [], 'the three\'s talk');
     if (want) heard++;
   }
   assert.ok(heard > 0, 'the three talking');
@@ -138,10 +143,10 @@ test('LW-FIX1 a table\'s talk is never re-dealt mid-script - LW-TALK: PIN MOVED 
   const trioK = circleSlots(trio, r.BEAT.lineMin).findIndex((_, i) => slotSpoken(trio, i));
   const ts = circleSlots(trio, r.BEAT.lineMin)[trioK] + 0.5 * r.BEAT.lineMin;
   r.st.clock = ts;
-  r.layer.frame(0.016, [0, 0, -4.6], Math.PI, [0, 1.6, -4.6]);
+  r.layer.frame(0.016, AWAY, Math.PI, [0, 1.6, -4.65]);
   const leaver = t3.find((x) => x.res.id !== circleLine(trio, ts, r.BEAT.lineMin, ctx).who.id).res.id;
   r.st.inside = [RES(1), RES(2), RES(3)].filter((x) => x.id !== leaver);
-  r.layer.frame(1, [0, 0, -4.6], Math.PI, [0, 1.6, -4.6]);
+  r.layer.frame(1, AWAY, Math.PI, [0, 1.6, -4.65]);
   const two = r.layer.stood().filter((x) => x.table === a.table).map((x) => x.res);
   assert.equal(two.length, 2, 'two left at the table');
   const left = r.st.clock;
@@ -149,9 +154,9 @@ test('LW-FIX1 a table\'s talk is never re-dealt mid-script - LW-TALK: PIN MOVED 
   for (let i = 1; i < SLOT_LINES; i++) {
     const tm = ts + i * r.BEAT.lineMin;
     r.st.clock = tm;
-    r.layer.frame(0.016, [0, 0, -4.6], Math.PI, [0, 1.6, -4.6]);
+    r.layer.frame(0.016, AWAY, Math.PI, [0, 1.6, -4.65]);
     const want = circleLine(theirs, tm, r.BEAT.lineMin, ctx);
-    assert.deepEqual(r.layer.speech([0, 1.6, -4.6]).map((l) => l.text), want ? [want.text] : [], 'the two\'s own talk, never the three\'s carried');
+    assert.deepEqual(r.layer.speech([0, 1.6, -4.65]).map((l) => l.text), want ? [want.text] : [], 'the two\'s own talk, never the three\'s carried');
   }
   // one of the pair goes mid-exchange (the player looking away): the circle silent at once
   const solo = rig({ inside: [RES(1), RES(2)] });
@@ -159,12 +164,12 @@ test('LW-FIX1 a table\'s talk is never re-dealt mid-script - LW-TALK: PIN MOVED 
   solo.st.clock = s0 + 0.5 * solo.BEAT.lineMin;
   solo.layer.frame(0.016, [0, 0, -4.6], 0, [0, 1.6, -4.6]);
   solo.st.inside = [RES(1)];
-  solo.layer.frame(1, [0, 0, -4.6], Math.PI, [0, 1.6, -4.6]);
+  solo.layer.frame(1, AWAY, Math.PI, [0, 1.6, -4.65]);
   assert.equal(solo.layer.size, 1);
   for (let i = 0; i < 3; i++) {
     solo.st.clock = s0 + (i + 1.5) * solo.BEAT.lineMin;
-    solo.layer.frame(0.016, [0, 0, -4.6], Math.PI, [0, 1.6, -4.6]);
-    assert.deepEqual(solo.layer.speech([0, 1.6, -4.6]), [], 'silent');
+    solo.layer.frame(0.016, AWAY, Math.PI, [0, 1.6, -4.65]);
+    assert.deepEqual(solo.layer.speech([0, 1.6, -4.65]), [], 'silent');
   }
 });
 

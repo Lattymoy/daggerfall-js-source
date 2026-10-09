@@ -44,14 +44,18 @@ function rig({ inside = [], clock = 100 * DAY_MIN + 1200, origin = () => null, w
     lineCtx: () => ({ weather: null, hour: 20, news: null }), typeOf: () => BUILDING_TYPES.Tavern, greetingFor: (res, t) => greeting(res, t),
     o: { relations: () => createRelations() },
   };
-  const layer = createLivingIndoors({
+  const deps = {
     sprites, building: () => ({ key: 7000, town }), collider: () => collider, floorAt, origin, waysIn,
     staticFeet: () => [], clock: () => st.clock, ready: () => true,
-  });
-  return { layer, synced, st, BEAT, collider, floorAt };
+  };
+  const layer = createLivingIndoors(deps);
+  return { layer, synced, st, BEAT, collider, floorAt, deps };
 }
+/** A rig's deps, for another layer over its room and town (AUDIT LW-ROOMS). @param {{ deps: any }} r */
+const rigDeps = (r) => ({ ...r.deps, sprites: { sync() {}, persons: () => [], batches: () => [], clear() {} } });
 const RES = (i) => ({ id: `L9.${i}`, name: `Res${i} Lane`, job: 'labourer', cls: null });
 const DOOR = [0, 0, -4.6];
+const AWAY = [0, 0, -4.65];   // AUDIT LW-ROOMS: a step behind the door's row, looking out of it
 
 test('LW-FIX6 a player\'s own room stands nobody of the living world - DFU\'s AddPeople stands nobody in a house the player owns; an online home (anyone\'s), a private room and a cabin likewise - the room\'s answer the people gate\'s own law, kept with the room; the host asks it (mutants: the home, the house, the private room, the answer unread)', () => {
   const m = rd('src/scenes/worldModes.js');
@@ -124,7 +128,9 @@ test('LW-FIX6 two who come to an empty table never begin mid-script - LW-TALK: P
   r.layer.frame(0.016, DOOR, 0, [0, 1.6, -4.6]);   // in: nobody at any table
   r.st.clock = T + 5;
   r.st.inside = [RES(1), RES(2)];
-  r.layer.frame(1, DOOR, Math.PI, [0, 1.6, -4.6]);   // the player looks away: the pair stood
+  r.layer.frame(1, AWAY, Math.PI, [0, 1.6, -4.65]);   // the player looks away: the pair stood - AUDIT LW-ROOMS: PIN MOVED - a step
+  // behind the door's row (the room's walk lays its first table in that row now, square to the player's look out of the
+  // door, where the eye's own rounding saw it)
   const [a, b] = r.layer.stood();
   assert.equal(a.table, b.table, 'the pair at one table');
   const since = T + 5;
@@ -133,9 +139,9 @@ test('LW-FIX6 two who come to an empty table never begin mid-script - LW-TALK: P
   let first = null, said = 0;
   for (let tm = since; tm < since + r.BEAT.roundMin; tm += 0.25 * r.BEAT.lineMin) {
     r.st.clock = tm;
-    r.layer.frame(0.016, DOOR, Math.PI, [0, 1.6, -4.6]);
+    r.layer.frame(0.016, AWAY, Math.PI, [0, 1.6, -4.65]);
     const want = circleLine(circle, tm, r.BEAT.lineMin, ctx);
-    assert.deepEqual(r.layer.speech([0, 1.6, -4.6]).map((l) => l.text), want ? [want.text] : [], 'their talk, from its first line');
+    assert.deepEqual(r.layer.speech([0, 1.6, -4.65]).map((l) => l.text), want ? [want.text] : [], 'their talk, from its first line');
     if (want) { said++; first ??= want; }
   }
   assert.ok(said > 0 && first.index === 0, 'heard, from a first line');
@@ -145,21 +151,21 @@ test('LW-FIX6 two who come to an empty table never begin mid-script - LW-TALK: P
   const gone = since + r.BEAT.roundMin + 3;
   r.st.clock = gone;
   r.st.inside = [];
-  r.layer.frame(1, DOOR, Math.PI, [0, 1.6, -4.6]);
+  r.layer.frame(1, AWAY, Math.PI, [0, 1.6, -4.65]);
   assert.equal(r.layer.size, 0, 'the table empty');
   const old = dealCircles(`in:7000:${a.table}:${since}`, [a.res, b.res], 1, since + r.BEAT.roundMin, since + 2 * r.BEAT.roundMin, GATHER_BEAT_S * r.BEAT.roundMin / ROUND_S)[0];
   const oldSlots = circleSlots(old, r.BEAT.lineMin);
   const back = oldSlots.find((x) => x > gone) + 1.5 * r.BEAT.lineMin;   // the old company's exchange under way
   r.st.clock = back;
   r.st.inside = [RES(1), RES(2)];
-  r.layer.frame(1, DOOR, Math.PI, [0, 1.6, -4.6]);
+  r.layer.frame(1, AWAY, Math.PI, [0, 1.6, -4.65]);
   assert.equal(r.layer.stood().filter((x) => x.table === a.table).length, 2, 'back at their table');
   const anew = dealCircles(`in:7000:${a.table}:${back}`, [a.res, b.res], 0, back, back + r.BEAT.roundMin, GATHER_BEAT_S * r.BEAT.roundMin / ROUND_S)[0];
   for (let tm = back; tm < back + 3 * r.BEAT.lineMin; tm += 0.25 * r.BEAT.lineMin) {
     r.st.clock = tm;
-    r.layer.frame(0.016, DOOR, Math.PI, [0, 1.6, -4.6]);
+    r.layer.frame(0.016, AWAY, Math.PI, [0, 1.6, -4.65]);
     const want = circleLine(anew, tm, r.BEAT.lineMin, ctx);
-    assert.deepEqual(r.layer.speech([0, 1.6, -4.6]).map((l) => l.text), want ? [want.text] : [], 'met anew');
+    assert.deepEqual(r.layer.speech([0, 1.6, -4.65]).map((l) => l.text), want ? [want.text] : [], 'met anew');
   }
 });
 
@@ -235,12 +241,19 @@ test('LW-FIX6 the hosts: the ways asked in the modal frame too (a load made in a
   const flats = [{ x: 1, y: 0, z: 2, dead: false, active: true }, { x: 5, y: 0, z: 5, dead: true, active: true }, { x: NaN, z: 0 }];
   assert.deepEqual(questFeet('interior', flats), [[1, 0, 2]], 'the standing ones');
   assert.deepEqual(questFeet('exterior', flats), []);
-  const staticFeet = new Function('modes', `return ${lift(w, /\n\s*staticFeet: (\(\) => [^\n]*?\.concat\(modes\?\.interiorQuestFeet\?\.\(\) \?\? \[\]\)),/, 'the host\'s static feet')}`);
-  const room = rig();
-  const spots = soundRoom(DOOR, room.collider, room.floorAt, []);
-  const quest = spots[2];
-  const feet = staticFeet({ interiorCtx: { people: [{ x: 9, y: 0, z: 9 }, { x: 8, y: 0, z: 8, active: false }] }, interiorQuestFeet: () => [quest] })();
-  assert.deepEqual(feet, [[9, 0, 9], quest]);
-  const kept = soundRoom(DOOR, room.collider, room.floorAt, feet);
-  assert.ok(kept.every((p) => Math.hypot(p[0] - quest[0], p[2] - quest[2]) >= INDOOR_CLEAR_M), 'no place on the quest\'s person');
+  // AUDIT LW-ROOMS: PIN MOVED - the building's own people every one (at their post at the hour or not), the quest's people
+  // apart: the reader's own, kept clear when one is placed - in no reader's measure of the room
+  const staticFeet = new Function('modes', `return ${lift(w, /\n\s*staticFeet: (\(\) => \(modes\?\.interiorCtx\?\.people \?\? \[\]\)[^\n]*?\)),   \/\/ AUDIT LW-ROOMS/, 'the host\'s static feet')}`);
+  const hostQuest = new Function('modes', `return ${lift(w, /\n\s*questFeet: (\(\) => modes\?\.interiorQuestFeet\?\.\(\) \?\? \[\]),/, 'the host\'s quest feet')}`);
+  const many = Array.from({ length: 12 }, (_, i) => RES(i + 1));
+  const plain = rig({ inside: many });
+  plain.layer.frame(0.016, DOOR, 0, [0, 1.6, -4.6]);
+  const quest = plain.layer.stood()[0].at;   // the room's first place to fill
+  const modesNow = { interiorCtx: { people: [{ x: 9, y: 0, z: 9 }, { x: 8, y: 0, z: 8, active: false }] }, interiorQuestFeet: () => [quest] };
+  assert.deepEqual(staticFeet(modesNow)(), [[9, 0, 9], [8, 0, 8]], 'every one of the building\'s own');
+  assert.deepEqual(hostQuest(modesNow)(), [quest], 'the quest\'s apart');
+  const questy = createLivingIndoors({ ...rigDeps(plain), questFeet: () => [quest] });
+  questy.frame(0.016, DOOR, 0, [0, 1.6, -4.6]);
+  assert.deepEqual(questy.spots(), plain.layer.spots(), 'the same room');
+  assert.ok(questy.stood().length > 0 && questy.stood().every((x) => Math.hypot(x.at[0] - quest[0], x.at[2] - quest[2]) >= INDOOR_CLEAR_M), 'nobody on the quest\'s person');
 });
