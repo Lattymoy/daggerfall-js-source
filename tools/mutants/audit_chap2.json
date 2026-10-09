@@ -1747,8 +1747,10 @@
       "test/audit_chap1.test.js",
       "test/audit_chap2.test.js",
       "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
-    ]
+      "test/chap2_halls.test.js",
+      "test/audit_chap4.test.js"
+    ],
+    "note": "AUDIT CHAP4 T: since AUDIT CHAP3 S5 asks the strike again inside the write, this first check is told apart only by a witness the age refuses - pinned there (a young account at a struck town is answered struck)."
   },
   {
     "name": "AUDIT-CHAP2-E1-STRIKE-DELETE",

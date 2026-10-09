@@ -1327,7 +1327,7 @@ evenings by band, the talk's days, the seats' beat).
   `chapterFactionOf`. `world.js`: a town's evenings by its own region; the ceiling before the first word; one Hall of
   Records read. `worldModes.js`: a seat's title at its halls; a knightly order's gifts by the book; the refused shelf's
   line. `lines.js`: the talk reworded. `noticeWindow.js`: a late Focus said in the chat.
-- **Pins.** `test/audit_chap4.test.js`, 27 tests, one a finding or a group; `tools/mutants/audit_chap4.json`, 71
+- **Pins.** `test/audit_chap4.test.js`, 28 tests, one a finding or a group; `tools/mutants/audit_chap4.json`, 71
   mutants, all dead. Thirty-seven older records re-aimed at the code the fixes moved, all dead; CHAP4a's two carry
   records retired with it (42 there now); AUDIT CHAP3's `A3-S2-OFF` no longer equivalent. The pins the fixes moved say
   PIN MOVED.

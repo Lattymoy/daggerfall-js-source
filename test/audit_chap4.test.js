@@ -67,6 +67,17 @@ async function stand(extra = {}) {
 }
 const turnOf = (w) => seatWeekStartMs(w + 1) / 1000 + CHAPTER_TURNING_GRACE_S + 1;   // a moment the week's Turning is due
 
+test('AUDIT CHAP4 T (the arc\'s survivor): a struck town is answered struck to every witness, a young account\'s too - before its age is asked, so its hall book stops reporting the town (mutants: AUDIT CHAP2\'s first strike check)', async () => {
+  const s = await stand();
+  const { witnessHall } = await import('../server-account/src/npcHalls.js');
+  s.raw.prepare('INSERT INTO npc_hall_strikes (map_id, by, at) VALUES (99, ?, ?)').run('Devra', NOW);
+  const young = await s.registered('Newcomer');
+  s.raw.prepare('UPDATE players SET registered_at = ? WHERE id = ?').run(NOW - DAY, young.id);
+  const player = s.raw.prepare('SELECT * FROM players WHERE id = ?').get(young.id);
+  assert.deepEqual(await witnessHall({ db: s.env.DB, nowS: NOW }, { ...player }, s.env, { hall: { key: 99, region: ANTICLERE, factions: [FIGHTERS] } }), { error: 'hall-struck' });
+  assert.deepEqual(await witnessHall({ db: s.env.DB, nowS: NOW }, { ...player }, s.env, { hall: { key: 98, region: ANTICLERE, factions: [FIGHTERS] } }), { ok: true, counted: false, why: 'young' }, 'a town not struck: the age asked');
+});
+
 // ── THE SERVICE ─────────────────────────────────────────────────────
 
 test('AUDIT CHAP4 S1: the Chronicle\'s two readers ask its new indexes - a character\'s rows by week, a region\'s newest - never a scan of every row it ever kept (mutants: either index)', async () => {

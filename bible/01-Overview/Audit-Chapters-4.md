@@ -20,7 +20,7 @@ reading (Home.md, DO NOT FIX WHILE THE VERIFIER IS READING):
 - **the pins** (T): the arc's test files and mutation lists - flakes, weak pins, wrong equivalences, gaps.
 
 Every finding was re-read here before a line moved. Each fix carries an `AUDIT CHAP4 <ID>` comment and a pin in
-`test/audit_chap4.test.js` (27), and is mutated in `tools/mutants/audit_chap4.json`: **71 records, all dead**. Thirty-seven
+`test/audit_chap4.test.js` (28), and is mutated in `tools/mutants/audit_chap4.json`: **71 records, all dead**. Thirty-seven
 older records the fixes moved were re-aimed by content and run again, all dead; two were retired with the carry they
 mutated (CHAP4a's `CHAP4A-CARRY`, `CHAP4A-SCORE-CARRY` - E1); AUDIT CHAP3's `A3-S2-OFF`, recorded equivalent, dies now
 (S2). The service stays `acct98` and the relay `world180` (`acct99` and `world181` since the merge of main past PERMADEATH-HOUSES and TAVERN-TABLES): none of the arc has shipped, so migrations `0095`, `0099` and
@@ -86,6 +86,7 @@ migrations `0095`, `0099`, `0100`)
 | T7 | low-medium | The evenings' seed: the town, the day's slice and the whole day survived. | Pinned. |
 | T10 | low | The rolls' justification, the news pools, the Focus's faction guard. | Pinned. |
 | T (equivalence) | low | `A3-D2-STEP0`'s reason held for whole qualities only. | Its reason narrowed. |
+| T (the arc's run) | low | Every Chapters list run again: one survivor, AUDIT CHAP2's `AUDIT-CHAP2-E1-STRUCK` - since AUDIT CHAP3 S5 the strike is asked again inside the write, so the first check differs only for a witness its age refuses: a young account at a struck town was told `young`, and its hall book kept reporting the town. | Pinned: struck is said before the age. |
 
 **The record** - R1 to R17: the six migrations' deploy line (`acct98`, `acct99` since); the relay's deploy (on the merge to main, by
 `relay-deploy.yml`, not by hand); Appendix A (the computed regions for `ALL_CHAPTERS_KEPT_MS`, the book's 7, the
@@ -108,5 +109,5 @@ comment (count alone); the tracker's lease stop (that lease alone).
 
 Each with a `PIN MOVED` note: CHAP4a (the carry to the tie, confirmed chapters, the scene), CHAP4c (confirmed chapters;
 the relay's own row), CHAP4d (last week's seat, the Hall's read), CHAP1 (the dormant mark), CHAP3b and CHAP5a
-(`chapterLineOf`), BS1's shelf, FB1004d's knightly house (`kept`), SEASON1's records, the seat heraldry, AUDIT SEATS2's
+(`chapterLineOf`), BS1's shelf, FB1004d's knightly house (`kept`), SEASON1's records, the seat heraldry, AUDIT-SEATS' Hall of Records from the board, AUDIT SEATS2's
 client, CHAP4b (the ceiling), CHAP5b (the host's wiring), MACRO4's guild title.
