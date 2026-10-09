@@ -11,8 +11,8 @@
   {
     "name": "HOTFIX1003f-STRANGER-POSE-FANNED",
     "file": "server/src/index.js",
-    "old": "      if (isArenaPrivateRoom(a.key) && !S?.members?.[a.sub]) return;   // HOTFIX 1003f: and its stands",
-    "new": "      if (false) return;   // HOTFIX 1003f: and its stands",
+    "old": "    if (isArenaPrivateRoom(a.key) && !S?.members?.[a.sub]) return;   // HOTFIX 1003f: and its stands",
+    "new": "    if (false) return;   // HOTFIX 1003f: and its stands",
     "tests": [
       "test/hotfix1003_stands.test.js"
     ]

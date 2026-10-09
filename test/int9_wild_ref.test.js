@@ -373,8 +373,8 @@ test('INT9 THE WIRE: a blow carries the striker\'s rolled number (`d`) and no sh
   assert.deepEqual(validWildRefOut({ t: 'wref', k: 'hp', by: 'peer-0001', to: 'peer-0002', d: 4, r: 0, h: [['peer-0001', 320, 320], ['peer-0002', 316, 320]] }).h[1], ['peer-0002', 316, 320]);
   assert.deepEqual(validWildRefOut({ t: 'wref', k: 'fell', id: 'peer-0002', by: 'peer-0001', r: '0123456789ab' }), { k: 'fell', id: 'peer-0002', by: 'peer-0001', r: '0123456789ab' });
   assert.equal(validWildRefOut({ t: 'wref', k: 'rc', r: '0123456789ab', rc: 'x'.repeat(WILD_RECEIPT_MAX + 1) }), null);
-  assert.equal(WILD_REF_RELAY_MIN, 184);   // PIN MOVED: world183 on its branch, renumbered past CHAP4c's world183 at the merge
-  assert.deepEqual(['world183', 'world184', null].map(relaySupportsWildRef), [false, true, false]);
+  assert.equal(WILD_REF_RELAY_MIN, 185);   // PIN MOVED: world183, then world184, on its branch, renumbered past CHAP4c's world183 and PERF-RELAY1's world184 at the merges
+  assert.deepEqual(['world184', 'world185', null].map(relaySupportsWildRef), [false, true, false]);
   assert.ok(relaySupportsWildRef(RELAY_VERSION));
 });
 

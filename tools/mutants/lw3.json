@@ -409,8 +409,8 @@
   {
     "name": "LW3-ways-budget-unspent",
     "file": "src/systems/livingWorld/ways.js",
-    "old": "        if (budget <= 0) return undefined;",
-    "new": "        if (budget < -99) return undefined;",
+    "old": "        if (budget <= 0 && !(spent < spendMs && asked < WAYS_MAX_PER_FRAME)) return undefined;",
+    "new": "        if (budget < -99 && !(spent < spendMs && asked < WAYS_MAX_PER_FRAME)) return undefined;",
     "tests": [
       "test/lw3_roads.test.js"
     ]

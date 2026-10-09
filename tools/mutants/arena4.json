@@ -1393,8 +1393,8 @@
   {
     "name": "ARENA4-STANDS-POSE-NOBODY",
     "file": "server/src/index.js",
-    "old": "        if (cur.af) { try { const st = await this._boutOf();",
-    "new": "        if (!cur.af) return; { try { const st = await this._boutOf();",
+    "old": "      if (cur.af) { try { const st = await this._boutOf();",
+    "new": "      if (!cur.af) return; { try { const st = await this._boutOf();",
     "tests": [
       "test/arena4_relay.test.js",
       "test/hotfix1003_stands.test.js"
