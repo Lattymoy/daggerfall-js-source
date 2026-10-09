@@ -131,8 +131,8 @@
   {
     "name": "LW-FIX6-quest-feet-unread",
     "file": "src/scenes/world.js",
-    "old": ".map((p) => [p.x, p.y, p.z]).concat(modes?.interiorQuestFeet?.() ?? []),",
-    "new": ".map((p) => [p.x, p.y, p.z]),",
+    "old": "      questFeet: () => modes?.interiorQuestFeet?.() ?? [],",
+    "new": "      questFeet: () => [],",
     "tests": [
       "test/lwfix6_rooms.test.js"
     ]
@@ -167,8 +167,8 @@
   {
     "name": "LW-FIX6-ways-in-unpassed",
     "file": "src/scenes/livingIndoors.js",
-    "old": "deps.staticFeet(), deps.waysIn?.() ?? []) : [];",
-    "new": "deps.staticFeet(), []) : [];",
+    "old": "...beds.map((x) => x.feet)], deps.waysIn?.() ?? []) : [];",
+    "new": "...beds.map((x) => x.feet)], []) : [];",
     "tests": [
       "test/lwfix6_rooms.test.js"
     ]

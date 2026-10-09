@@ -57,6 +57,7 @@ import {
   updateRepairTimes, repairCountdown, repairCountdownText,   // UXB1-K: when a job is ready
 } from '../systems/repairService.js';
 import { planTake, applyTransfer, clearLightSourceOnLeave, CANNOT_CARRY_TEXT, HOW_MANY_ITEMS, parseSplitAmount } from '../systems/itemTransfer.js';
+import { isKeptSpellbook, SPELLBOOK_KEPT_TEXT } from '../systems/itemTransfer.js';   // KEEP-SPELLBOOK: never sold
 import { howManyField } from './howManyField.js';   // DISC25-F: the counter's how-many field, the pack's own
 import { isTextEntryTarget } from './input.js';
 import { isSummoned, carriedWeight, totalWeight, transferAll, addItem } from '../systems/inventory.js';   // AUDIT UXB1 F4: addItem, a returning lot's merge
@@ -236,9 +237,10 @@ function refuse(refusal) {
   render();
 }
 
-/** LOCK1, SS4: a piece this counter will not put up for SALE - locked, or bound (systems/itemBound.js); a repair or an
- *  identify still takes either, because it comes back. AUDIT SS: one reading for the refusal, the quote and the count. */
-const saleRefused = (item) => selling() && (lockRefuses(item, 'sell') || isBound(item));
+/** LOCK1, SS4: a piece this counter will not put up for SALE - locked, or bound (systems/itemBound.js), or the
+ *  character's spellbook (KEEP-SPELLBOOK); a repair or an identify still takes any of them, because it comes back.
+ *  AUDIT SS: one reading for the refusal, the quote and the count. */
+const saleRefused = (item) => selling() && (lockRefuses(item, 'sell') || isBound(item) || isKeptSpellbook(item));
 
 function refuseTransfer(item) {
   // LOCK1: a locked piece is not put up for SALE - a repair or an identify still takes it, because it comes back
@@ -250,6 +252,12 @@ function refuseTransfer(item) {
   // SS4: a BOUND piece is not put up for sale either (systems/itemBound.js) - a repair or an identify still takes it
   if (selling() && isBound(item)) {
     box = { rows: [{ text: boundText(itemLine(item, deps.entity).name), center: true }], buttons: null };
+    render();
+    return true;
+  }
+  // KEEP-SPELLBOOK: nor the spellbook (systems/itemTransfer.js isKeptSpellbook) - a repair or an identify still takes it
+  if (selling() && isKeptSpellbook(item)) {
+    box = { rows: [{ text: SPELLBOOK_KEPT_TEXT, center: true }], buttons: null };
     render();
     return true;
   }

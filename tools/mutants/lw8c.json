@@ -83,25 +83,27 @@
   {
     "name": "LW8c-dice",
     "file": "src/scenes/livingIndoors.js",
-    "old": "  const roll = lwSeed(textSeed(id), stirs, 0x67) % Math.max(1, free.length);",
+    "old": "  const roll = lwSeed(textSeed(id), stirs, 0x67) % own.length;",
     "new": "  const roll = 0;",
     "tests": [
-      "test/lw8c_astir.test.js"
+      "test/lw8c_astir.test.js",
+      "test/auditlwrooms.test.js"
     ]
   },
   {
     "name": "LW8c-line",
     "file": "src/scenes/livingIndoors.js",
-    "old": "{ const i = free[(roll + k) % free.length]; if (walkable(at, room.spots[i])) return i; }",
-    "new": "{ const i = free[(roll + k) % free.length]; return i; }",
+    "old": "{ const i = own[(roll + k) % own.length]; if (i === first || walkable(at, room.spots[i])) return i; }",
+    "new": "{ const i = own[(roll + k) % own.length]; return i; }",
     "tests": [
-      "test/lw8c_astir.test.js"
+      "test/lw8c_astir.test.js",
+      "test/auditlwrooms.test.js"
     ]
   },
   {
     "name": "LW8c-nearest",
     "file": "src/scenes/livingIndoors.js",
-    "old": "    .sort((a, b) => Math.hypot(room.spots[a][0] - at[0], room.spots[a][2] - at[2]) - Math.hypot(room.spots[b][0] - at[0], room.spots[b][2] - at[2]) || a - b);",
+    "old": "    .sort((a, b) => apart(a, at) - apart(b, at) || a - b);",
     "new": "    .sort((a, b) => b - a);",
     "tests": [
       "test/lw8c_astir.test.js"
@@ -110,8 +112,8 @@
   {
     "name": "LW8c-company-alone",
     "file": "src/scenes/livingIndoors.js",
-    "old": "&& alone.get(room.tableOf[i]) === 1)",
-    "new": "&& alone.get(room.tableOf[i]) >= 1)",
+    "old": "&& alone.get(room.tableOf[i]) === 1\n",
+    "new": "&& alone.get(room.tableOf[i]) >= 1\n",
     "tests": [
       "test/lw8c_astir.test.js"
     ]

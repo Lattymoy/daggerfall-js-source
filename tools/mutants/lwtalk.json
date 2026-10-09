@@ -183,8 +183,8 @@
   {
     "name": "LW-TALK-deal-from-street",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "      if (this._away(res)) continue;   // WATCH-FIX: with the watch - a guard stands for them\n      if (this._gone(res)) continue;   // LW5: aboard, or ashore at the far port\n      everyone.push(res);",
-    "new": "      if (this._away(res) || this._taken.get(res.id) === day) continue;   // WATCH-FIX: with the watch - a guard stands for them\n      if (this._gone(res)) continue;   // LW5: aboard, or ashore at the far port\n      everyone.push(res);",
+    "old": "      if (this._away(res)) { lent.push(res); continue; }   // WATCH-FIX: with the watch - a guard stands for them\n      if (this._gone(res)) continue;   // LW5: aboard, or ashore at the far port\n      everyone.push(res);",
+    "new": "      if (this._away(res)) { lent.push(res); continue; }   // WATCH-FIX: with the watch - a guard stands for them\n      if (this._taken.get(res.id) === day) continue;\n      if (this._gone(res)) continue;   // LW5: aboard, or ashore at the far port\n      everyone.push(res);",
     "tests": [
       "test/lwtalk_town.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "LW-TALK-not-dropped",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "        const members = dealt.members.filter((m) => !absent.has(m.id));",
-    "new": "        const members = dealt.members;",
+    "old": "        const members = dealt.members.filter((m) => !absent.has(m.id) && !inInc(m.id));",
+    "new": "        const members = dealt.members.filter((m) => !inInc(m.id));",
     "tests": [
       "test/lwtalk_town.test.js"
     ]
@@ -261,8 +261,8 @@
   {
     "name": "LW-TALK-keep-street-first",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "const keep = keepUnits(wanted, (id) => this._inCircle.get(id)?.circle, this.maxPopulation);",
-    "new": "const keep = keepUnits(wanted.map((w) => ({ res: w.res, d: this._rowOf(w.res)?.visible ? -1 : w.d })), (id) => this._inCircle.get(id)?.circle, this.maxPopulation);",
+    "old": "const keep = keepUnits(wanted, (id) => this._inCircle.get(id)?.circle ?? this._inStir.get(id)?.pair, this.maxPopulation);",
+    "new": "const keep = keepUnits(wanted.map((w) => ({ res: w.res, d: this._rowOf(w.res)?.visible ? -1 : w.d })), (id) => this._inCircle.get(id)?.circle ?? this._inStir.get(id)?.pair, this.maxPopulation);",
     "tests": [
       "test/lwtalk_town.test.js"
     ],
