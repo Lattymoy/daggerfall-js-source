@@ -29,8 +29,10 @@ Succession's heir, the Master's vote - section 7, its record at the foot); CHAP6
 the Season's words and a member's choices on the client - sections 7 and 9, its record at the foot); CHAP6d BUILT
 (2026-10-09, the same word; the Season on the halls - an Ascendancy's prices, the doctrines' training and shelf, the shut
 halls - sections 7 and 9, its record at the foot); CHAP6e BUILT (2026-10-09, the same word; the Season's two titles - a
-High Master in an Ascendancy, a Season's Master for good - sections 6 and 7, its record at the foot); CHAP7 (rivals and
-patrons) is next. Merged with main
+High Master in an Ascendancy, a Season's Master for good - sections 6 and 7, its record at the foot); CHAP7a BUILT
+(2026-10-09, the same word; the patrons on the service - a guild's sealed bid in escrow, the Season's opening Turning
+burning the highest and sending the rest home, the patron on the sheet, the board and in the Chronicle - section 8, its
+record at the foot); CHAP7b (the patrons on the client: the board's bid, the banner, the members' prices) is next. Merged with main
 past the Super Dungeons arc, then past SCALE4 and TAVERN CARDS (2026-10-08), then past SERVER-POST and HOURS-FIRST
 (2026-10-09), then past PERMADEATH-HOUSES and TAVERN-TABLES, then past TV-BEYOND (2026-10-09): the arc's migrations are `0095_npc_roll` to `0100_npc_seats`, its service `acct99` and its relay `world182` - the records below name each
 migration by its current number and the service by the version it was built under. AUDIT CHAP3 (2026-10-08, Mac:
@@ -859,6 +861,37 @@ badge (`src/ui/playerBadge.js`):
   influence for one guild would count it three times into a war the Seats' caps were balanced without (AUDIT CHAP R6:
   this named a raid receipt, which raises none, and said twice where CALL 6 said three times).
 
+BUILT (CHAP7a, 2026-10-09, Mac: "continue"), the patrons on the service - `src/net/npcChapterLaw.js`
+(`CHAPTER_PATRON_MIN`, `patronBidOk`, `patronEscrowId`, `patronWinnerOf`, `chapterPatronOf`, `chapterPatronLine`),
+`server-account/src/npcChapters.js` (`bidPatron`, the Turning's `patronsDrawn` and `patronStatements`, `regionPatrons`,
+`guildPatronBids`), `src/net/marksLaw.js` (`patron-escrow`, `patron`, `patron-return`), migrations `0099` and `0100`
+grown in place:
+
+- **The bid** (`POST /v1/chapters/patron { character, faction, region, marks, rid }`): the account's character the
+  guildmaster of its player guild (GUILD1: the treasury is the guildmaster's to spend), for the Season AFTER this one,
+  the whole the guild will pay, in silver (Marks) from the guild's Marks treasury - at least 1,000
+  (`CHAPTER_PATRON_MIN`, an eighth of a palace's claim fee), raised by the difference and held in the ledger's escrow
+  (`patron:<Season>:<chapter's key>:<guild>`), never lowered nor taken back. Refused for a hidden guild's chapter (a
+  patron's banner would say where the underworld keeps its halls), a chapter not confirmed now, with no Season counted,
+  with the Marks shut, and once the Turning that opens that Season has settled; a request made twice is made once.
+  NARROWED: sealed - each guild's board says its own bid, never another's (8 named no open book; a sealed bid wants no
+  watch on a rival's sum and leaves nothing to snipe at the last hour).
+- **The Season's patrons, at the Turning that opens it** (inside its one batch): each chapter's highest bid of a guild
+  still standing, at a chapter confirmed now, wins - at a tie the one that stood at its sum first, then the lower guild
+  (`patronWinnerOf`); its escrow is burnt (`patron`), every other goes home (`patron-return`) - burnt where its guild is
+  gone, or where its treasury would pass the cap (reckoned across every bid going home to it, so the batch never fails
+  on it). A bid still open for an earlier Season - one that opened while the Chapters were shut - goes home with them;
+  a bid that lands between the Turning's read and its batch fails the batch, and the next read settles the week with
+  it. The chapter keeps its patron for the Season (`npc_chapters.patron`, `patron_season`); the opening week clears a
+  developers' patron.
+- **The Chronicle** writes a 'patron' row - "For the Season of First Seed, Grey Lanterns took the patronage of the
+  Fighters Guild." - the guild's name as it stood (`chapterPatronLine`); the Hall of Records reads it. **The sheet and
+  the board** carry each chapter's `patron` this Season (`{ id, name, tag, heraldry }`; a guild gone since is none);
+  the board, to a guildmaster alone, its own guild's bid for the Season after (`patronBid`, `{ season, marks }`).
+- **No seat influence** (CALL 6): nothing of it touches the Seats' tables.
+- **Still to build** (CHAP7b): the board's bid and its words, the patron's banner in the chapter's halls, its members'
+  Thriving prices there.
+
 ## 9. The living world shows it (CHAP5)
 
 DECIDED. LW0 decision 2 narrows by one input: the living world is a pure function of the world's data, a seed, the
@@ -949,11 +982,13 @@ DECIDED.
   place): its `event`, `event_season`, `event_data` JSON and `shut_season`, and the Chronicle's 'event' and 'season'
   rows; AUDIT CHAP4 S2: a week's `open` is 'dev', 'on' or 'off' (an off week recorded, nothing moved). BUILT (CHAP6b,
   grown in place): `npc_chapters`' `doctrine` and `doctrine_season`; `npc_chapter_backing` (faction, region, season,
-  account, char_id, side, at - one an account a chapter a Season).
+  account, char_id, side, at - one an account a chapter a Season). BUILT (CHAP7a, grown in place): `npc_chapters`'
+  `patron` and `patron_season`; `npc_chapter_patron_bids` (faction, region, season, guild_id, amount, at, state - 'open',
+  'won' or 'lost'; one a guild a chapter a Season); the Chronicle's 'patron' rows.
 - **Endpoints** (`/v1/chapters/...`): `roll` and `claim` BUILT (CHAP1, behind `CHAPTERS_OPEN`, shipped `dev`; each
   names the realm character and the playing tab's lease); `witness` BUILT (CHAP2a); `halls` and `strike` BUILT (AUDIT
   CHAP2 E1, a developer's); `list` BUILT (CHAP3b, the sheet; CHAP5a its seats' holders); `focus` and `history` BUILT (CHAP4d, a Master's Focus and a region's Chronicle); `back` BUILT (CHAP6b, a member's
-  backing in its chapter's Season); `standings` (a chapter's Merit) still drawn; the hall writs
+  backing in its chapter's Season); `patron` BUILT (CHAP7a, a guild's bid for a chapter's patronage); `standings` (a chapter's Merit) still drawn; the hall writs
   ride the board's own writ endpoints, and (CHAP3a) a member's own writ and the account's Merit lines ride its list.
 - **The settle**: inside `settleWeek`, after the seats' steps - Merit summed, Strength moved, seats placed, and at a
   Season's boundary the events resolved and drawn. NARROWED (CHAP3b): the Chapters' own Turning on the seats' week,
@@ -967,7 +1002,7 @@ DECIDED.
   chapter needs the serpent.
 - **Law modules, pure, shared**: `net/npcChapterLaw.js` (Appendix A - BUILT for the Roll, CHAP1, the halls and their
   writs, CHAP2a, the receipts, CHAP2b, Merit, CHAP3a, Strength and the bands, CHAP3b and CHAP3c; the event weights and
-  the rivals still drawn); the playing tab's side is `net/npcRollTracker.js` (CHAP1; the first draft named it
+  the rivals, CHAP6a; the patrons, CHAP7a); the playing tab's side is `net/npcRollTracker.js` (CHAP1; the first draft named it
   systems/npcChapters.js), `net/npcHallBook.js` (CHAP2a) and `net/chapterSheet.js`, the sheet's reader (CHAP3c); DFU's guild faction ids live in the leaf
   `systems/guildFactions.js`, which the service can reach and `guilds.js` cannot be.
 
@@ -998,7 +1033,9 @@ DECIDED.
    the candidates named, a member's choices on the board (7, 9). CHAP6d BUILT (2026-10-09): an Ascendancy's prices, the
    doctrines' training and shelf, the shut halls and their people (7, 9). CHAP6e BUILT (2026-10-09): the High Master and
    the Season's Master on the token (6, 7).
-7. **CHAP7 - rivals and patrons.** Last, because it reads the Seats' guilds.
+7. **CHAP7 - rivals and patrons.** Last, because it reads the Seats' guilds. The rivals BUILT with the Rivalry (CHAP6a,
+   8). CHAP7a BUILT (2026-10-09): the patrons on the service - the bid, the Season's decision, the patron on the sheet,
+   the board and in the Chronicle (8).
 
 CALL 1 retired the eighth slice the first draft carried (the other factions to the service): they wait on Realm phase 3.
 
@@ -1095,7 +1132,7 @@ is Mac's to overrule.
 | Seat eligibility | 14 days in the guild, account 7 days old | 6 |
 | Merit window | 4 weeks | 6 |
 | Unearned seat | vacant | 6 |
-| Patron | one a chapter a Season, highest Marks bid, burnt | 8 |
+| Patron | one a chapter a Season, highest Marks bid, burnt, every other home; at least 1,000, sealed, raised never lowered (`CHAPTER_PATRON_MIN`, `patronBidOk`, `patronWinnerOf`; CHAP7a) | 8 |
 | Holder's Merit | no carry - a sitting holder keeps an EQUAL standing (`chapterSeatPlan`'s first tie-break; AUDIT CHAP4 E1, decided: the x1.2 it carried made a holder at 2000 of the four weeks' 2400 unbeatable) | 6 |
 | Event weights | Calm 30, Schism 15, Succession 10, Crackdown 10, Rivalry 15, Decline 10, Ascendancy 10; moved as section 7's table says (AUDIT CHAP R11; `CHAPTER_EVENTS`, `chapterEventWeights`, drawn on `CHAPTER_EVENT_SALT`) | 7 |
 | Decline's weekly fall | 2 Strength, unless the week's Merit meets twice the target (`CHAPTER_EVENT_EFFECTS.declineFall`, `declineMeets`) | 7 |
@@ -1611,3 +1648,27 @@ The sixth slice's last; sections 6 and 7 carry the law and what building it narr
   passed the unsorted list whenever the random ids fell in the characters' own order, so it now gives the later
   character the lower id (PIN MOVED). Older pins moved (PIN MOVED): the vocabulary's newest (acc3titles, aegis, primarch,
   crystalfist, hoursfirst), CHAP4c's three ids and colours, SEAT1c's mint line.
+
+## CHAP7a - the patrons on the service, as built (2026-10-09, Mac: "continue")
+
+The seventh slice's first; section 8 carries the law and what building it narrowed (BUILT, CHAP7a).
+
+- **The law.** `src/net/npcChapterLaw.js`: `CHAPTER_PATRON_MIN`, `patronBidOk`, `patronEscrowId`, `patronWinnerOf`,
+  `chapterPatronOf`, `chapterPatronLine` (and `chapterChronicleLine` reading a 'patron' row). `src/net/marksLaw.js`: the
+  ledger's `patron-escrow`, `patron` and `patron-return`.
+- **The service.** `server-account/src/npcChapters.js`: `bidPatron` (`/v1/chapters/patron`), the Season-opening
+  Turning's `patronsDrawn` and `patronStatements` in its one batch, `regionPatrons` (the sheet's and the board's
+  `patron`), `guildPatronBids` (the guildmaster's `patronBid`); `professions.js`: the board's lines; `index.js` and
+  `service.js`: the route and its refusals; migrations `0099` (`patron`, `patron_season`) and `0100`
+  (`npc_chapter_patron_bids`, the Chronicle's 'patron' kind) grown in place. Still `acct99`. `src/net/accountClient.js`:
+  the three new refusals' words.
+- **Pins.** `test/chap7a_patrons.test.js`, 7 tests: the law (the bounds, the escrow's id, the winner's order, the
+  kinds); the words (the patron's fields, the Chronicle's line and its guards); a bid (escrowed, raised by the
+  difference, never lowered, made once, each refusal); the Turning (the highest burnt, the rest home, a struck chapter's,
+  a gone guild's, an earlier Season's, the patron written, the Chronicle's rows, the sheet's patron and one gone since,
+  the ledger adding up with the escrow counted); the board (this Season's patron, a guildmaster's own bids, none to
+  another rank or on a hidden guild's chapter); a guild near the cap; the wiring. `tools/mutants/chap7a.json`: 63
+  mutants, all dead - eight survived the first pins and have their own now (an earlier Season's bid that would have won
+  this one, a gone guild's highest at a live chapter, a treasury that never held a Mark, a raise another raise beat to
+  the table, a request id another act spent, a raise past the cap, more than one move at once). Six older records re-aimed by content (CHAP6a's three, CHAP6b's two, AUDIT CHAP4's reset); two kept one site
+  by giving the bid's shape check its own order. One older pin moved (PIN MOVED: ACC1b's tables).

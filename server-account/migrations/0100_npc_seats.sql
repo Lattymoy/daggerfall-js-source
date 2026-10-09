@@ -33,6 +33,8 @@ CREATE INDEX IF NOT EXISTS idx_npc_chapter_seats_char ON npc_chapter_seats (char
 -- when the character is deleted, as the seats' own history is. CHAP6a: and
 -- a Season's own rows - 'event', the Season's event and how it ended
 -- (`char_id` ''), and 'season', the Master who held the seat all of it.
+-- CHAP7a: and 'patron', the guild that won a Season's patronage (`char_id`
+-- '', `data` its id and its name and tag as they stood, and the Season).
 CREATE TABLE IF NOT EXISTS npc_chapter_history (
   seq       INTEGER PRIMARY KEY,
   faction   INTEGER NOT NULL,
@@ -65,3 +67,20 @@ CREATE TABLE IF NOT EXISTS npc_chapter_backing (
   at        INTEGER NOT NULL,
   PRIMARY KEY (faction, region, season, account)
 );
+-- CHAP7a (grown in place - nothing of it shipped): A CHAPTER'S PATRONAGE'S
+-- BIDS. One row a guild a chapter a Season: the whole of what its
+-- guildmaster bid from the guild's treasury for the Season after the one
+-- it bid in (held in the ledger's escrow, `patron:<Season>:<key>:<guild>`),
+-- and when it stood at that sum. Decided at the Turning that opens the
+-- Season - the highest burnt, every other home ('won' or 'lost').
+CREATE TABLE IF NOT EXISTS npc_chapter_patron_bids (
+  faction   INTEGER NOT NULL,
+  region    INTEGER NOT NULL,
+  season    INTEGER NOT NULL,
+  guild_id  TEXT NOT NULL,
+  amount    INTEGER NOT NULL CHECK (amount > 0),
+  at        INTEGER NOT NULL,
+  state     TEXT NOT NULL DEFAULT 'open' CHECK (state IN ('open', 'won', 'lost')),
+  PRIMARY KEY (faction, region, season, guild_id)
+);
+CREATE INDEX IF NOT EXISTS idx_npc_chapter_patron_bids_season ON npc_chapter_patron_bids (season, state);

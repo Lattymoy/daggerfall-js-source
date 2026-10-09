@@ -364,8 +364,8 @@
   {
     "name": "CHAP6B-SVC-RESET-DOCTRINE",
     "file": "server-account/src/npcChapters.js",
-    "old": "shut_season = NULL, doctrine = NULL, doctrine_season = NULL WHERE true",
-    "new": "shut_season = NULL WHERE true",
+    "old": "shut_season = NULL, doctrine = NULL, doctrine_season = NULL, patron = NULL",
+    "new": "shut_season = NULL, patron = NULL",
     "tests": [
       "test/chap6b_backing.test.js"
     ]
@@ -553,8 +553,8 @@
   {
     "name": "CHAP6B-ROUTE",
     "file": "server-account/src/index.js",
-    "old": "|| path === '/v1/chapters/history' || path === '/v1/chapters/back') {",
-    "new": "|| path === '/v1/chapters/history') {",
+    "old": "|| path === '/v1/chapters/back' || path === '/v1/chapters/patron') {",
+    "new": "|| path === '/v1/chapters/patron') {",
     "tests": [
       "test/chap6b_backing.test.js"
     ]

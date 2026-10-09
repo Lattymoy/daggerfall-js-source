@@ -45,7 +45,15 @@ import {
   SEAT_MERIT_WEEKS, seatEligibleAt, chapterSeatPlan, seatChangesOf, chapterTitlesOf, chapterFocusOk, HIDDEN_HALL_FACTIONS,
   chapterEventWeights, chapterEventOf, chapterEventOk, chapterRivalsOf, chapterRivalPick, declineAfter, rivalryEnd, crackdownShuts,
   schismDoctrinesOf, schismWinner, successionHeir, chapterBackOk, chapterDoctrineOk, SUCCESSION_TURNING,
+  patronBidOk, patronEscrowId, patronWinnerOf,
 } from '../../src/net/npcChapterLaw.js';
+import { MARKS_MAX, MARKS_MOVE_MAX, MARKS_OPS_MAX, MARKS_OPS_WINDOW_S, MARKS_RID_RE, utcDay } from '../../src/net/marksLaw.js';   // CHAP7a: a patron's bid
+import { guildMay } from '../../src/net/guildLaw.js';
+import { accountKind, displayName, overRate } from './accounts.js';
+import { guildActorOf } from './guilds.js';
+import { marksOpenFor, guildBalanceOf } from './marks.js';
+import { mustChange } from './realm.js';
+import { heraldryOfRow } from './halls.js';
 
 /** The most weeks one read settles - a service asleep for longer starts its count again from there (the seats' own). */
 export const CHAPTER_WEEKS_MAX = 8;
@@ -123,6 +131,8 @@ export async function settleChapterWeek(db, week, nowS, zero = null, open = 'on'
   const seasonRows = ends ? await seasonEnded(db, /** @type {{ n: number, start: number }} */ (season), week, all, keys, live, opened) : [];
   const next = seasonOf(week + 1, zero);
   if (next && next.start === week + 1) await seasonDrawn(db, next.n, week, season, all, keys);
+  // CHAP7a: and the Season's patrons - each chapter's highest bid burnt, every other home (Chapters-Arc 8)
+  const patrons = next && next.start === week + 1 ? await patronsDrawn(db, next.n, keys) : null;
   const rows = [...all.values()].map((c) => [c.faction, c.region, ends ? strengthSeasonEnd(c.s) : c.s, c.merit, c.event, c.eventSeason, JSON.stringify(c.data), c.shut, c.doctrine, c.doctrineSeason]);
   const seats = await seatsPlaced(db, week, turning, open, opened, keys);
   try {
@@ -131,7 +141,7 @@ export async function settleChapterWeek(db, week, nowS, zero = null, open = 'on'
       // AUDIT CHAP4 S6: the opening week starts EVERY chapter from 50 - a chapter this week names no more than one it does not
       // (a developers' trial chapter whose town is confirmed again later read its trial Strength)
       // CHAP6a: and no developers' event, nor a shut hall, past the opening
-      ...(opened ? [db.prepare("UPDATE npc_chapters SET strength = ?1, event = NULL, event_season = NULL, event_data = '{}', shut_season = NULL, doctrine = NULL, doctrine_season = NULL WHERE true").bind(STRENGTH_START)] : []),
+      ...(opened ? [db.prepare("UPDATE npc_chapters SET strength = ?1, event = NULL, event_season = NULL, event_data = '{}', shut_season = NULL, doctrine = NULL, doctrine_season = NULL, patron = NULL, patron_season = NULL WHERE true").bind(STRENGTH_START)] : []),
       db.prepare(`INSERT INTO npc_chapters (faction, region, strength, week, merit, at, event, event_season, event_data, shut_season, doctrine, doctrine_season)
         SELECT json_extract(value, '$[0]'), json_extract(value, '$[1]'), json_extract(value, '$[2]'), ?1, json_extract(value, '$[3]'), ?2,
           json_extract(value, '$[4]'), json_extract(value, '$[5]'), json_extract(value, '$[6]'), json_extract(value, '$[7]'),
@@ -157,12 +167,168 @@ export async function settleChapterWeek(db, week, nowS, zero = null, open = 'on'
       db.prepare(`INSERT INTO npc_chapter_history (faction, region, week, kind, char_id, data, at)
         SELECT json_extract(value, '$[0]'), json_extract(value, '$[1]'), ?1, json_extract(value, '$[2]'), json_extract(value, '$[3]'), json_extract(value, '$[4]'), ?2
         FROM json_each(?3) WHERE json_extract(value, '$[3]') = '' OR EXISTS (SELECT 1 FROM realm_characters c WHERE c.id = json_extract(value, '$[3]'))`)
-        .bind(week, nowS, JSON.stringify(seasonRows)),
+        .bind(week, nowS, JSON.stringify([...seasonRows, ...(patrons?.rows ?? [])])),
+      ...(patrons ? patronStatements(db, patrons, nowS) : []),
     ]);
   } catch {
     return { settled: false };
   }
   return { settled: true, chapters: rows.length };
+}
+
+// ─── CHAP7a: THE PATRONS (Chapters-Arc 8, CALL 6) ───────────────────
+
+/** The ledger's actor for the Turning's own patron lines (one a bid, its id the bid's escrow's). */
+const PATRON_ACTOR = 'chapters';
+const LEDGER = 'INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid)';
+
+/**
+ * CHAP7a: THE PATRONS OF SEASON `n`, decided at the Turning that opens it: each chapter's open bids for it, the highest
+ * of a guild still standing at a chapter confirmed now (npcChapterLaw.js patronWinnerOf - at a tie the one that stood
+ * at it first) wins; its escrow is burnt ('patron') and every other goes home ('patron-return') - burnt where its guild
+ * is gone or its treasury would pass the cap, the cap reckoned across every bid going home to it, so the batch never
+ * fails on it. A bid still open for an earlier Season - one that opened while the Chapters were shut ('off', nothing
+ * settled) - goes home with them. Answers `{ n, lines, won, rows }` - the ledger's lines `[escrow id, dst kind, dst id,
+ * kind, faction, region, guild, Season]`, each chapter's patron `[faction, region, guild]`, and a Chronicle row a patron.
+ * @param {any} db @param {number} n @param {Set<string>} keys
+ */
+async function patronsDrawn(db, n, keys) {
+  const { results: bids = [] } = await db.prepare(`SELECT b.faction, b.region, b.season, b.guild_id, b.amount, b.at, g.name, g.tag,
+      (SELECT balance FROM guild_marks m WHERE m.guild_id = b.guild_id) AS treasury
+    FROM npc_chapter_patron_bids b LEFT JOIN guilds g ON g.id = b.guild_id WHERE b.season <= ?1 AND b.state = 'open'
+    ORDER BY b.season, b.faction, b.region, b.guild_id`).bind(n).all();
+  /** @type {Map<string, any[]>} */
+  const by = new Map();
+  for (const b of bids) {
+    const k = `${b.faction}|${b.region}|${b.season}`;
+    if (!by.has(k)) by.set(k, []);
+    by.get(k)?.push(b);
+  }
+  /** @type {Map<string, number>} */
+  const home = new Map();   // each guild's treasury as the lines going home to it leave it
+  const lines = [], won = [], rows = [];
+  for (const [k, list] of by) {
+    const [f, g, season] = k.split('|').map(Number);
+    const standing = season === n && keys.has(`${f}|${g}`) && !hallHidden(f) ? list.filter((b) => b.name != null) : [];
+    const win = patronWinnerOf(standing.map((b) => ({ guild: String(b.guild_id), amount: Number(b.amount), at: Number(b.at), b })))?.b ?? null;
+    for (const b of list) {
+      const guild = String(b.guild_id), id = patronEscrowId(season, f, g, guild);
+      if (b === win) {
+        lines.push([id, 'burn', null, 'patron', f, g, guild, season]);
+        won.push([f, g, guild]);
+        rows.push([f, g, 'patron', '', JSON.stringify({ season: n, guild, name: String(b.name), tag: b.tag == null ? '' : String(b.tag) })]);
+        continue;
+      }
+      const left = home.has(guild) ? /** @type {number} */ (home.get(guild)) : Number(b.treasury ?? 0);
+      const goes = b.name != null && left + Number(b.amount) <= MARKS_MAX;
+      if (goes) home.set(guild, left + Number(b.amount));
+      lines.push([id, goes ? 'guild' : 'burn', goes ? guild : null, 'patron-return', f, g, guild, season]);
+    }
+  }
+  return { n, lines, won, rows };
+}
+
+/**
+ * CHAP7a: THE TURNING'S PATRON STATEMENTS, in its one batch after the chapters' own: the ledger's lines (each bid's whole
+ * escrow, its amount as the table holds it), the bids decided, each chapter's patron and its Season - and last a guard
+ * that fails the whole batch if a bid for the Season stands undecided (one that landed between the read and the batch:
+ * the next read settles the week again, with it).
+ * @param {any} db @param {{ n: number, lines: any[], won: any[] }} p @param {number} nowS
+ */
+function patronStatements(db, { n, lines, won }, nowS) {
+  return [
+    db.prepare(`${LEDGER} SELECT 'escrow', json_extract(v.value, '$[0]'), json_extract(v.value, '$[1]'), json_extract(v.value, '$[2]'),
+        json_extract(v.value, '$[3]'), b.amount, ?2, ?3, '${PATRON_ACTOR}', 'The Turning', json_extract(v.value, '$[0]')
+      FROM json_each(?1) v JOIN npc_chapter_patron_bids b ON b.faction = json_extract(v.value, '$[4]') AND b.region = json_extract(v.value, '$[5]')
+        AND b.guild_id = json_extract(v.value, '$[6]') AND b.season = json_extract(v.value, '$[7]') AND b.state = 'open'`).bind(JSON.stringify(lines), utcDay(nowS), nowS),
+    db.prepare(`UPDATE npc_chapter_patron_bids SET state = CASE WHEN EXISTS (SELECT 1 FROM json_each(?2) w WHERE json_extract(w.value, '$[0]') = faction
+        AND json_extract(w.value, '$[1]') = region AND json_extract(w.value, '$[2]') = guild_id AND season = ?1) THEN 'won' ELSE 'lost' END
+      WHERE season <= ?1 AND state = 'open' AND EXISTS (SELECT 1 FROM json_each(?3) v WHERE json_extract(v.value, '$[4]') = faction
+        AND json_extract(v.value, '$[5]') = region AND json_extract(v.value, '$[6]') = guild_id AND json_extract(v.value, '$[7]') = season)`).bind(n, JSON.stringify(won), JSON.stringify(lines)),
+    db.prepare(`UPDATE npc_chapters SET patron = (SELECT json_extract(w.value, '$[2]') FROM json_each(?1) w WHERE json_extract(w.value, '$[0]') = faction
+        AND json_extract(w.value, '$[1]') = region), patron_season = ?2
+      WHERE EXISTS (SELECT 1 FROM json_each(?1) w WHERE json_extract(w.value, '$[0]') = faction AND json_extract(w.value, '$[1]') = region)`).bind(JSON.stringify(won), n),
+    db.prepare("INSERT INTO realm_tx_guard (moved, expected) SELECT 1, 0 WHERE EXISTS (SELECT 1 FROM npc_chapter_patron_bids WHERE season <= ?1 AND state = 'open')").bind(n),
+  ];
+}
+
+/**
+ * CHAP7a: A GUILD'S BID FOR A CHAPTER'S PATRONAGE (`POST /v1/chapters/patron { character, faction, region, marks, rid }`)
+ * - the account's character the guildmaster of its player guild (GUILD1: its treasury is the guildmaster's to spend),
+ * the bid the whole the guild will pay for the Season after this one, more than it stood at; the difference held from
+ * the guild's treasury in escrow. Never a hidden guild's chapter, nor one not confirmed now; never once the Turning
+ * that opens that Season has settled. One batch: the line (its guards inside it), then the bid. Answers `{ ok, season,
+ * marks, guildMarks }` (`repeat` for a request already made), or `{ error }`: 'body', 'marks-need-account',
+ * 'marks-rid', 'no-season', 'no-chapter', the guild's door's ('guild-character', 'no-guild'), 'guild-rank',
+ * 'marks-closed', 'bad-marks', 'patron-low', 'marks-rate', 'guild-marks-short', 'closed'.
+ * @param {{ db: any, nowS: number }} ctx @param {any} player @param {any} env @param {any} body
+ */
+export async function bidPatron(ctx, player, env, { character, faction, region, marks, rid } = {}) {
+  const { db, nowS } = ctx;
+  if (typeof character !== 'string' || !REALM_ID_RE.test(character) || !regionOk(region) || !Number.isSafeInteger(faction)) return { error: 'body' };
+  if (accountKind(player) !== 'linked') return { error: 'marks-need-account' };
+  if (typeof rid !== 'string' || !MARKS_RID_RE.test(rid)) return { error: 'marks-rid' };
+  const prior = await db.prepare('SELECT * FROM marks_ledger WHERE actor = ?1 AND rid = ?2').bind(player.id, rid).first();
+  if (prior) {
+    if (prior.kind !== 'patron-escrow') return { error: 'marks-rid' };
+    const bid = await db.prepare('SELECT season, amount FROM npc_chapter_patron_bids WHERE faction = ?1 AND region = ?2 AND guild_id = ?3 ORDER BY season DESC').bind(faction, region, prior.src_id).first();
+    return { ok: true, repeat: true, season: Number(bid?.season ?? 0), marks: Number(bid?.amount ?? 0), guildMarks: await guildBalanceOf(db, prior.src_id) };
+  }
+  const zero = seasonZeroOf(env?.SEASON_ZERO_WEEK);
+  await settleChaptersDue(db, nowS, zero, env?.CHAPTERS_OPEN);
+  const now = seasonOf(meritWeekOf(nowS), zero);
+  if (!now) return { error: 'no-season' };
+  const season = now.n + 1;
+  if (hallHidden(faction) || !(await allChapters(db, nowS)).some((c) => c.faction === faction && c.region === region)) return { error: 'no-chapter' };
+  const a = await guildActorOf(db, player, character);
+  if (a.error) return a;
+  if (!guildMay(a.me.rank, 'withdraw')) return { error: 'guild-rank' };
+  if (!marksOpenFor(player, env)) return { error: 'marks-closed' };
+  const guild = String(a.me.guild_id);
+  const prev = Number((await db.prepare('SELECT amount FROM npc_chapter_patron_bids WHERE faction = ?1 AND region = ?2 AND season = ?3 AND guild_id = ?4')
+    .bind(faction, region, season, guild).first())?.amount ?? 0);
+  if (!Number.isSafeInteger(marks) || marks < 1 || marks - prev > MARKS_MOVE_MAX) return { error: 'bad-marks' };
+  if (!patronBidOk(marks, prev)) return { error: marks > MARKS_MAX ? 'bad-marks' : 'patron-low' };
+  if (await overRate(ctx, `marks:${player.id}`, MARKS_OPS_MAX, MARKS_OPS_WINDOW_S)) return { error: 'marks-rate' };
+  const more = marks - prev;
+  try {
+    await db.batch([
+      // THE LINE: the guildmaster still, the treasury's silver, the bid where it stood, the Season not yet opened
+      db.prepare(`${LEDGER} SELECT 'guild', ?1, 'escrow', ?2, 'patron-escrow', ?3, ?4, ?5, ?6, ?7, ?8
+        WHERE COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?1), 0) >= ?3
+          AND EXISTS (SELECT 1 FROM guild_members WHERE player = ?6 AND char_id = ?9 AND guild_id = ?1 AND rank = ?10)
+          AND COALESCE((SELECT amount FROM npc_chapter_patron_bids WHERE faction = ?11 AND region = ?12 AND season = ?13 AND guild_id = ?1), 0) = ?14
+          AND NOT EXISTS (SELECT 1 FROM npc_chapter_weeks WHERE week >= ?15)`)
+        .bind(guild, patronEscrowId(season, faction, region, guild), more, utcDay(nowS), nowS, player.id, displayName(player), rid, character, a.me.rank,
+          faction, region, season, prev, now.end - 1),
+      mustChange(db),
+      db.prepare(`INSERT INTO npc_chapter_patron_bids (faction, region, season, guild_id, amount, at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+        ON CONFLICT (faction, region, season, guild_id) DO UPDATE SET amount = excluded.amount, at = excluded.at`).bind(faction, region, season, guild, marks, nowS),
+    ]);
+  } catch {
+    if (await db.prepare('SELECT 1 FROM npc_chapter_weeks WHERE week >= ?1').bind(now.end - 1).first()) return { error: 'closed' };
+    return { error: (await guildBalanceOf(db, guild)) < more ? 'guild-marks-short' : 'patron-low' };
+  }
+  return { ok: true, season, marks, guildMarks: await guildBalanceOf(db, guild) };
+}
+
+/** CHAP7a: a region's chapters' patrons this Season (every region's for `region` null), a Map of `faction|region` to
+ *  `{ id, name, tag, heraldry }` - a patron whose guild is gone since is none. `n` the Season (seasonNumberAt), null for
+ *  none counted. */
+export async function regionPatrons(/** @type {any} */ db, /** @type {number | null} */ region, /** @type {number | null} */ n) {
+  /** @type {Map<string, any>} */
+  const out = new Map();
+  if (n == null) return out;
+  const { results = [] } = await db.prepare(`SELECT c.faction, c.region, g.id, g.name, g.tag, g.heraldry FROM npc_chapters c JOIN guilds g ON g.id = c.patron
+    WHERE c.patron_season = ?1 AND (?2 IS NULL OR c.region = ?2)`).bind(n, region).all();
+  for (const r of results) out.set(`${r.faction}|${r.region}`, { id: String(r.id), name: String(r.name), tag: String(r.tag ?? ''), heraldry: heraldryOfRow(r.heraldry) });
+  return out;
+}
+
+/** CHAP7a: a guild's own bids on a region's chapters for Season `n`, a Map of guild faction to its whole. */
+export async function guildPatronBids(/** @type {any} */ db, /** @type {number} */ region, /** @type {number} */ n, /** @type {string} */ guild) {
+  const { results = [] } = await db.prepare("SELECT faction, amount FROM npc_chapter_patron_bids WHERE region = ?1 AND season = ?2 AND guild_id = ?3 AND state = 'open'").bind(region, n, guild).all();
+  return new Map(results.map((/** @type {any} */ r) => [Number(r.faction), Number(r.amount)]));
 }
 
 /** @typedef {{ faction: number, region: number, prev: number, merit: number, s: number, event: string | null, eventSeason: number | null, data: any, shut: number | null, doctrine: string | null, doctrineSeason: number | null }} Chapter */
@@ -606,6 +772,7 @@ export async function chapterSheet({ db, nowS }, player, env) {
   // CHAP6a: and each chapter's Season's event - its rival named where the rival is public, as the sheet itself is
   const n = seasonNumberAt(nowS, seasonZeroOf(env?.SEASON_ZERO_WEEK));
   const events = new Map(results.map((/** @type {any} */ r) => [`${r.faction}|${r.region}`, eventView(r, n, (f) => !hallHidden(f))]));
+  const patrons = await regionPatrons(db, null, n);   // CHAP7a: and its patron this Season
   // CHAP5a (Chapters-Arc 5.3, 9): and each chapter's seats' holders, by the names their characters carry now - the
   // Master's first, then its officers by their tenure (the hall's roll); a hidden guild's chapters are not on the sheet
   const { results: seatRows = [] } = await db.prepare(`SELECT s.faction, s.region, s.seat, c.name FROM npc_chapter_seats s
@@ -621,7 +788,9 @@ export async function chapterSheet({ db, nowS }, player, env) {
     week: meritWeekOf(nowS),
     chapters: chapters.map((c) => {
       const strength = held.get(`${c.faction}|${c.region}`) ?? STRENGTH_START;
-      return { f: c.faction, region: c.region, strength, band: chapterBandOf(strength).band, seats: seats.get(`${c.faction}|${c.region}`) ?? [], ...events.get(`${c.faction}|${c.region}`) };
+      const patron = patrons.get(`${c.faction}|${c.region}`);
+      return { f: c.faction, region: c.region, strength, band: chapterBandOf(strength).band, seats: seats.get(`${c.faction}|${c.region}`) ?? [], ...events.get(`${c.faction}|${c.region}`),
+        ...(patron ? { patron } : {}) };
     }),
   };
 }

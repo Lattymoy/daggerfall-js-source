@@ -137,7 +137,7 @@
   {
     "name": "AUDIT-CHAP4-S6-RESET",
     "file": "server-account/src/npcChapters.js",
-    "old": "      ...(opened ? [db.prepare(\"UPDATE npc_chapters SET strength = ?1, event = NULL, event_season = NULL, event_data = '{}', shut_season = NULL, doctrine = NULL, doctrine_season = NULL WHERE true\").bind(STRENGTH_START)] : []),\n",
+    "old": "      ...(opened ? [db.prepare(\"UPDATE npc_chapters SET strength = ?1, event = NULL, event_season = NULL, event_data = '{}', shut_season = NULL, doctrine = NULL, doctrine_season = NULL, patron = NULL, patron_season = NULL WHERE true\").bind(STRENGTH_START)] : []),\n",
     "new": "",
     "tests": [
       "test/audit_chap4.test.js"

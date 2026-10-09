@@ -114,6 +114,7 @@
 //   POST /v1/chapters/focus { character, faction, region, focus } -> { ok, focus, week } | { error }   (CHAP4d: a Master's Focus)
 //   POST /v1/chapters/history { region } -> { rows: [{ faction, week, kind, data, name }], zero }   (CHAP4d: a region's Chronicle; AUDIT CHAP4 R10)
 //   POST /v1/chapters/back { character, faction, region, side } -> { ok, event, side } | { error }   (CHAP6b: a Schism's side, a Succession's candidate)
+//   POST /v1/chapters/patron { character, faction, region, marks, rid } -> { ok, season, marks, guildMarks } | { error }   (CHAP7a: a guild's bid for a chapter's patronage)
 // ARENA4b, the arena online's second half: a bout's Renown on its claim, and the homes the arena displaced:
 //   POST /v1/arena/claim { receipt, character?, name? } -> { ...ARENA4's, renown?, order? }   (a ladder win, a rated players' win)
 //   POST /v1/arena/attempt { tier, bout, room } -> { ticket, tier, bout, room, forfeits } | 409 { error: 'order', ladder } | 403 { error: 'ladder-needs-account' }   (AUDIT ARENA-LADDER: a ladder attempt's ticket, for one room)
@@ -188,7 +189,7 @@ import { reportRenownXp, renownTrackOf, renownTracksOf, renownCharacterOk } from
 import { chaptersOpenFor, readRoll, claimRoll } from './npcRoll.js';   // CHAP1: the Roll - a realm character's standing with Daggerfall's guilds
 import { witnessHall, listHalls, strikeHall } from './npcHalls.js';
 import { creditReceipt } from './npcReceipts.js';   // CHAP2b: a receipt's standing and the chapter's receipt writ
-import { chapterSheet, chapterSeatsOf, chapterTitlesOpenFor, chapterTitlesOfAccount, setChapterFocus, chapterChronicle, backChapter } from './npcChapters.js';   // CHAP3b: the chapter sheet; CHAP4a: a character's seats; CHAP4c: the chapters' titles
+import { chapterSheet, chapterSeatsOf, chapterTitlesOpenFor, chapterTitlesOfAccount, setChapterFocus, chapterChronicle, backChapter, bidPatron } from './npcChapters.js';   // CHAP3b: the chapter sheet; CHAP4a: a character's seats; CHAP4c: the chapters' titles
 import { contractRegionOfRaid } from '../../src/net/writLaw.js';   // CHAP2b: the region a raid's key names   // CHAP2a: a town's guild halls, witnessed; AUDIT CHAP2 E1: audited and struck
 import { claimRaid, raidRecordOf } from './raids.js';   // RAID4: the towns defended
 import { claimSerpent, serpentRecordOf } from './serpents.js';   // SERPENT1: the serpents slain
@@ -311,6 +312,10 @@ const ROLL_STATUS = Object.freeze({
   'hall-struck': 409, 'not-developer': 403, 'bad-region': 400,   // AUDIT CHAP2 E1: a struck town; the audit and the strike a developer's
   'not-master': 403,   // CHAP4d: a Focus set by a character that is not that chapter's Master ('no-focus' and 'body' the shape's 400)
   'no-event': 409, closed: 409, 'not-member': 403,   // CHAP6b: a backing where the Season holds nothing to back, one decided, or by no member ('no-side' the shape's 400)
+  // CHAP7a: a patron's bid - an account's, a request's id, the Marks switch, its rank, the hour's writes; no Season or chapter to bid on; too
+  // little or no more than it stood at, too little in the treasury ('bad-marks', 'marks-rid', 'guild-character' the shape's 400)
+  'marks-need-account': 403, 'marks-closed': 403, 'guilds-need-account': 403, 'no-guild': 404, 'guild-rank': 403, 'marks-rate': 429,
+  'no-season': 409, 'no-chapter': 404, 'patron-low': 409, 'guild-marks-short': 409,
 });
 /** GUILD1: each guild refusal's status - a bad shape 400 (the default), the wrong rank or too little Renown 403, a
  *  thing that is not there 404, a conflict with what is 409, the hour's writes spent 429. */
@@ -1082,7 +1087,7 @@ const service = {
       // the standing as it did before CHAP1.
       if (path === '/v1/chapters/roll' || path === '/v1/chapters/claim' || path === '/v1/chapters/witness'
         || path === '/v1/chapters/halls' || path === '/v1/chapters/strike' || path === '/v1/chapters/list'
-        || path === '/v1/chapters/focus' || path === '/v1/chapters/history' || path === '/v1/chapters/back') {
+        || path === '/v1/chapters/focus' || path === '/v1/chapters/history' || path === '/v1/chapters/back' || path === '/v1/chapters/patron') {
         if (request.method !== 'POST') return no('method', 405, origin);
         if (!chaptersOpenFor(who.player, env)) return no('chapters-closed', 403, origin);
         // CHAP2a: and a town's guild halls witnessed, as a seat is (npcHalls.js); AUDIT CHAP2 E1: a region's audit list
@@ -1093,6 +1098,7 @@ const service = {
           : path === '/v1/chapters/focus' ? await setChapterFocus(ctx, who.player, env, body)
           : path === '/v1/chapters/history' ? await chapterChronicle(ctx, who.player, env, body)
           : path === '/v1/chapters/back' ? await backChapter(ctx, who.player, env, body)   // CHAP6b: a member's backing in its chapter's Season
+          : path === '/v1/chapters/patron' ? await bidPatron(ctx, who.player, env, body)   // CHAP7a: a guild's bid for a chapter's patronage
           : path === '/v1/chapters/witness' ? await witnessHall(ctx, who.player, env, body)
           : path === '/v1/chapters/halls' ? await listHalls(ctx, who.player, env, body)
             : path === '/v1/chapters/strike' ? await strikeHall(ctx, who.player, env, body)

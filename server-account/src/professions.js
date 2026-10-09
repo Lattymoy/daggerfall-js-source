@@ -93,7 +93,7 @@ import { regionChapters } from './npcHalls.js';   // CHAP2a: the region's chapte
 import { chaptersOpenFor } from './npcRoll.js';   // CHAP2a: hall writs while the Roll is open to the account
 import { receiptAsks, membersOf } from './npcReceipts.js';   // CHAP2b: a chapter's receipt asks beside its writs; CHAP3a: the reader's guilds
 import { meritStatement, meritOfAct, meritAsks } from './npcMerit.js';   // CHAP3a: a member's own writ's Merit, the board's Merit lines
-import { settleChaptersDue, regionStrengths, regionFocuses, masterSeatsIn, regionEvents, seasonNumberAt, regionBackings } from './npcChapters.js';   // CHAP4d: the week's Focuses, a Master's chapters   // CHAP3b: the Turning before a chapter's writs, its band
+import { settleChaptersDue, regionStrengths, regionFocuses, masterSeatsIn, regionEvents, seasonNumberAt, regionBackings, regionPatrons, guildPatronBids } from './npcChapters.js';   // CHAP4d: the week's Focuses, a Master's chapters   // CHAP3b: the Turning before a chapter's writs, its band
 
 const DAY_S = 86_400;
 /** The pixels one read may ask after - a streamed 5 x 5. */
@@ -1512,7 +1512,9 @@ async function postMemberWrits(db, day, region, nowS, character, members, zero =
 /** CHAP3b: THE BOARD'S CHAPTER LINES - each chapter of the region, `{ faction, strength, band }`, a hidden guild's to its
  *  members alone (`members`, the reader's guilds on its Roll) as its writs are. CHAP6a: and its Season's event (`event`,
  *  a Rivalry's `rival` - a hidden rival named to its members alone - and `shut`); CHAP6b: a Schism's `sides`, a
- *  Succession's `heir`, the `doctrine` holding, and the side the reader's account backs (`backed`). */
+ *  Succession's `heir`, the `doctrine` holding, and the side the reader's account backs (`backed`). CHAP7a: and its
+ *  `patron` this Season, and - where the reader's character is its player guild's guildmaster - its guild's standing bid
+ *  for the Season after (`patronBid`, `{ season, marks }`, 0 for none); never a hidden guild's. */
 async function chapterLines(db, region, nowS, members, character = null, zero = null, account = null) {
   const chapters = (await regionChapters(db, region, nowS * 1000)).filter((f) => !hallHidden(f) || members.includes(f));
   const strengths = await regionStrengths(db, region, chapters);
@@ -1521,9 +1523,16 @@ async function chapterLines(db, region, nowS, members, character = null, zero = 
   const masters = await masterSeatsIn(db, character, region, meritWeekOf(nowS));   // AUDIT CHAP4 S4: last week's Turning's seats
   const events = await regionEvents(db, region, seasonNumberAt(nowS, zero), (f) => !hallHidden(f) || members.includes(f));
   const backed = account ? await regionBackings(db, region, seasonNumberAt(nowS, zero), account) : new Map();   // CHAP6b: the reader's own
+  // CHAP7a: each chapter's patron this Season, and the reader's guild's bids for the next where it is the guildmaster
+  const n = seasonNumberAt(nowS, zero);
+  const patrons = await regionPatrons(db, region, n);
+  const gm = n != null && account && character ? await db.prepare('SELECT guild_id FROM guild_members WHERE player = ?1 AND char_id = ?2 AND rank = 0').bind(account, character).first() : null;
+  const bids = gm ? await guildPatronBids(db, region, /** @type {number} */ (n) + 1, String(gm.guild_id)) : null;
   return chapters.map((f) => ({
     faction: f, strength: strengths.get(f), band: chapterBandOf(strengths.get(f)).band, focus: focuses.get(f) ?? null,
     ...(masters.has(f) ? { master: true, focuses: chapterFocusesOf(f) } : {}), ...events.get(f), ...(backed.has(f) ? { backed: backed.get(f) } : {}),
+    ...(patrons.has(`${f}|${region}`) && !hallHidden(f) ? { patron: patrons.get(`${f}|${region}`) } : {}),
+    ...(bids && !hallHidden(f) ? { patronBid: { season: /** @type {number} */ (n) + 1, marks: bids.get(f) ?? 0 } } : {}),
   }));
 }
 

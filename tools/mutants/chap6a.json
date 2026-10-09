@@ -470,8 +470,8 @@
   {
     "name": "CHAP6A-SVC-RESET-EVENTS",
     "file": "server-account/src/npcChapters.js",
-    "old": "UPDATE npc_chapters SET strength = ?1, event = NULL, event_season = NULL, event_data = '{}', shut_season = NULL, doctrine = NULL, doctrine_season = NULL WHERE true",
-    "new": "UPDATE npc_chapters SET strength = ?1, doctrine = NULL, doctrine_season = NULL WHERE true",
+    "old": "UPDATE npc_chapters SET strength = ?1, event = NULL, event_season = NULL, event_data = '{}', shut_season = NULL, doctrine = NULL, doctrine_season = NULL, patron = NULL, patron_season = NULL WHERE true",
+    "new": "UPDATE npc_chapters SET strength = ?1, doctrine = NULL, doctrine_season = NULL, patron = NULL, patron_season = NULL WHERE true",
     "tests": [
       "test/chap6a_events.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "CHAP6A-SVC-SEASON-ROWS",
     "file": "server-account/src/npcChapters.js",
-    "old": "        .bind(week, nowS, JSON.stringify(seasonRows)),\n",
-    "new": "        .bind(week, nowS, '[]'),\n",
+    "old": "        .bind(week, nowS, JSON.stringify([...seasonRows, ...(patrons?.rows ?? [])])),\n",
+    "new": "        .bind(week, nowS, JSON.stringify([...(patrons?.rows ?? [])])),\n",
     "tests": [
       "test/chap6a_events.test.js"
     ]
@@ -704,8 +704,8 @@
   {
     "name": "CHAP6A-SHEET-EVENTS",
     "file": "server-account/src/npcChapters.js",
-    "old": "seats: seats.get(`${c.faction}|${c.region}`) ?? [], ...events.get(`${c.faction}|${c.region}`) };",
-    "new": "seats: seats.get(`${c.faction}|${c.region}`) ?? [] };",
+    "old": "seats: seats.get(`${c.faction}|${c.region}`) ?? [], ...events.get(`${c.faction}|${c.region}`),\n",
+    "new": "seats: seats.get(`${c.faction}|${c.region}`) ?? [],\n",
     "tests": [
       "test/chap6a_events.test.js"
     ]

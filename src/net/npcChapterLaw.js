@@ -65,7 +65,9 @@ import { MARKS_RID_RE } from './marksLaw.js';
 import { gateHash } from './gateLaw.js';   // CHAP2a: a hall writ's own dice
 import { courtWrits, material, regionOk } from './nodeLaw.js';   // CHAP2a: the Court's writ law, the material families, a region
 import { REGION_NAMES } from '../formats/mapsTables.js';   // CHAP4b: a seat's region, named
-import { seatWeekOf, chronicleWhen, seatSeasonName } from './townSeatLaw.js';   // CHAP3a: Merit's week is the seats' (the Turning settles both); CHAP4d: the Chronicle's when; CHAP6a: a Season's name
+import { seatWeekOf, chronicleWhen, seatSeasonName } from './townSeatLaw.js';
+import { GUILD_ID_RE, GUILD_NAME_MAX, GUILD_TAG_RE } from './guildLaw.js';   // CHAP7a: a patron is a player guild
+import { MARKS_MAX } from './marksLaw.js';   // CHAP7a: a bid held under the one cap every treasury keeps   // CHAP3a: Merit's week is the seats' (the Turning settles both); CHAP4d: the Chronicle's when; CHAP6a: a Season's name
 import { REALM_CHARACTER_RE } from './identityToken.js';   // CHAP3a: a member's own writ is drawn over its realm id
 
 /** The membership books a character holds (systems/guilds.js: the mortal's and the vampire's), each one temple and one
@@ -913,6 +915,7 @@ export function chapterFocusLineOf(/** @type {unknown} */ faction, /** @type {un
  *  guild's. A character gone since is "A member since gone". Worded without gender. `zero` the Season's (seasonOf). */
 export function chapterChronicleLine(/** @type {any} */ row, /** @type {number | null} */ zero = null) {
   if (row?.kind === 'event' || row?.kind === 'season') return chapterSeasonLine(row);   // CHAP6a: a Season's own lines
+  if (row?.kind === 'patron') return chapterPatronLine(row);   // CHAP7a: a Season's patron
   if (row?.kind !== 'seat' || !isRollFaction(row?.faction) || hallHidden(row.faction)) return null;
   const guild = `the ${hallPosterName(row.faction)}`;
   const from = row?.data?.from ?? null, to = row?.data?.to ?? null;
@@ -1207,3 +1210,43 @@ export const chapterHallShelf = (/** @type {number} */ quality, /** @type {any} 
 export const chapterHallShut = (/** @type {any} */ chapter) => chapterSeasonOf(chapter).shut;
 /** What a shut hall says. */
 export const CHAPTER_HALL_SHUT_LINE = 'The hall is shut this Season, by the watch\'s order.';
+
+// ─── CHAP7a: THE PATRONS (Chapters-Arc 8, CALL 6) ───────────────────
+// A player guild (GUILD1) may be a chapter's patron for a Season: its guildmaster bids silver from the guild's treasury
+// for the Season after this one, held in escrow; at the Turning that opens that Season the highest bid wins and is
+// burnt, every other bid goes home. A patron's banner hangs in the chapter's halls and its members pay the Thriving
+// band's prices there (CHAP7b); the Chronicle names it. A patron gains no seat influence (CALL 6). Never a hidden guild's
+// chapter: a patron's banner would say where the underworld keeps its halls.
+
+/** The least a guild bids for a chapter's patronage, in Marks (silver) - an eighth of a palace's claim fee. */
+export const CHAPTER_PATRON_MIN = 1000;
+/** Whether `marks` is a guild's bid, `prev` its standing one for the same chapter and Season (0 for none): whole, at
+ *  least the least, more than it stood at, never past the cap a treasury keeps. */
+export const patronBidOk = (/** @type {unknown} */ marks, prev = 0) => Number.isSafeInteger(marks) && /** @type {number} */ (marks) >= CHAPTER_PATRON_MIN
+  && /** @type {number} */ (marks) > prev && /** @type {number} */ (marks) <= MARKS_MAX;
+/** The ledger's escrow id for a guild's bid on a chapter's Season - `patron:<Season>:<chapter's key>:<guild>`. */
+export const patronEscrowId = (/** @type {number} */ season, /** @type {number} */ f, /** @type {number} */ region, /** @type {string} */ guild) => `patron:${season}:${chapterTitleKey(f, region)}:${guild}`;
+/** THE WINNING BID of `bids` `[{ guild, amount, at }]` - the highest; at a tie the one that stood at it first, then the
+ *  lower guild id - or null for none. */
+export function patronWinnerOf(/** @type {Iterable<any>} */ bids) {
+  let best = null;
+  for (const b of bids) {
+    if (!b || typeof b.guild !== 'string' || !Number.isSafeInteger(b.amount)) continue;
+    if (!best || b.amount > best.amount || (b.amount === best.amount && (b.at < best.at || (b.at === best.at && b.guild < best.guild)))) best = b;
+  }
+  return best;
+}
+/** A chapter's patron as the sheet or the board says it - `{ id, name, tag }`, each checked - or null. */
+export function chapterPatronOf(/** @type {any} */ p) {
+  if (!p || typeof p.id !== 'string' || !GUILD_ID_RE.test(p.id) || typeof p.name !== 'string' || !p.name.trim()) return null;
+  return { id: p.id, name: p.name.trim().slice(0, GUILD_NAME_MAX), tag: typeof p.tag === 'string' && GUILD_TAG_RE.test(p.tag) ? p.tag : '' };
+}
+/** THE CHRONICLE'S PATRON ROW in words: "For the Season of Morning Star, the Iron Wolves took the patronage of the
+ *  Fighters Guild." - null for a row it has no words for or a hidden guild's. */
+export function chapterPatronLine(/** @type {any} */ row) {
+  if (row?.kind !== 'patron' || !isRollFaction(row?.faction) || hallHidden(row.faction)) return null;
+  const season = seatSeasonName(row?.data?.season);
+  const name = typeof row?.data?.name === 'string' ? row.data.name.trim().slice(0, GUILD_NAME_MAX) : '';
+  if (!season || !name) return null;
+  return `For ${season}, ${name} took the patronage of the ${hallPosterName(row.faction)}.`;
+}

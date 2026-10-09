@@ -631,6 +631,10 @@ export const REFUSALS = Object.freeze({
   'no-side': 'There is no such side to back.',
   closed: 'That has already been decided.',
   'not-member': 'Only an active member of the guild may back its chapter.',
+  // CHAP7a: a guild's bid for a chapter's patronage - for the Season after this one, the guildmaster's, more than it stood at
+  'no-season': 'No Season is counted yet, so there is no patronage to bid for.',
+  'no-chapter': 'There is no chapter there whose patronage a guild may bid for.',
+  'patron-low': 'A bid for a patronage is at least 1,000 silver, and more than your guild bid before.',
   // CARDS6: a gold card table's stake and its cash-out (server-account/src/cards.js)
   'cards-realm': 'Only an online character of the realm can play a card table for gold.',
   'cards-closed': 'The realm is not holding stakes for card tables right now. Try again later.',
