@@ -171,7 +171,8 @@ export function sdPillarLookAt(s, t, look, glow = null) {
 export const sdPillarLook = () => ({ hands: new Float32Array(16), k: Float64Array.of(1, 0) });
 
 const _marks = [markShape([0, 0], 0, SD_MARK_COLOR.remnant, SD_REM.r), markShape([0, 0], 0, SD_MARK_COLOR.echoes[0], SD_ECHO.r), markShape([0, 0], 0, SD_MARK_COLOR.echoes[1], SD_ECHO.r)];
-const _markList = [];
+/** The marks picked this frame, and a kept list for each count (none's length ever set: AUDIT SD II, L2 F9). */
+const _picked = [null, null, null], _markLists = [[], [null], [null, null], [null, null, null]];
 /** A body standing on the floor - shown, and no deeper in it than its kneel (rising, its legs out). */
 const onFloor = (p) => p.shown && p.sink <= SD_KNEEL_M + 1e-6;
 /**
@@ -183,13 +184,14 @@ export function sdArenaMarksAt(s, t) {
   let n = 0;
   if (s && !s.fell && !(s.fi > 0 && s.lost > 0)) {
     const p = remnantPose(s, t, _pose);
-    if (onFloor(p)) { const m = _marks[0]; m.origin[0] = p.x; m.origin[1] = p.z; m.yaw = p.yw; _markList[n++] = m; }
+    if (onFloor(p)) { const m = _marks[0]; m.origin[0] = p.x; m.origin[1] = p.z; m.yaw = p.yw; _picked[n++] = m; }
     for (let e = 0; e < 2; e++) {
       if (!(s.ec?.[e]?.h > 0)) continue;
       const q = echoPose(s, e, t, _pose);
-      if (onFloor(q)) { const m = _marks[1 + e]; m.origin[0] = q.x; m.origin[1] = q.z; m.yaw = q.yw; _markList[n++] = m; }
+      if (onFloor(q)) { const m = _marks[1 + e]; m.origin[0] = q.x; m.origin[1] = q.z; m.yaw = q.yw; _picked[n++] = m; }
     }
   }
-  if (_markList.length !== n) _markList.length = n;
-  return _markList;
+  const list = _markLists[n];
+  for (let i = 0; i < n; i++) list[i] = _picked[i];
+  return list;
 }

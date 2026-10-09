@@ -254,8 +254,8 @@
   {
     "name": "SD25-S7-its-facing-unset",
     "file": "src/scenes/sdArenaWatch.js",
-    "old": "    if (onFloor(p)) { const m = _marks[0]; m.origin[0] = p.x; m.origin[1] = p.z; m.yaw = p.yw; _markList[n++] = m; }",
-    "new": "    if (onFloor(p)) { const m = _marks[0]; m.origin[0] = p.x; m.origin[1] = p.z; _markList[n++] = m; }",
+    "old": "    if (onFloor(p)) { const m = _marks[0]; m.origin[0] = p.x; m.origin[1] = p.z; m.yaw = p.yw; _picked[n++] = m; }",
+    "new": "    if (onFloor(p)) { const m = _marks[0]; m.origin[0] = p.x; m.origin[1] = p.z; _picked[n++] = m; }",
     "tests": [
       "test/sd25_arena.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "SD25-S7-the-marks-list-made-a-frame",
     "file": "src/scenes/sdArenaWatch.js",
-    "old": "  return _markList;\n}",
-    "new": "  return _markList.slice(0, n);\n}",
+    "old": "  return list;\n}",
+    "new": "  return list.slice(0, n);\n}",
     "tests": [
       "test/sd25_arena.test.js"
     ]
