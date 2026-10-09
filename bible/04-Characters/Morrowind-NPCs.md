@@ -103,7 +103,7 @@ Each line is a slice's acceptance, not an aspiration:
 | MWNPC6 THE WATCH | cityGuards' two instances (SHIPPED, section 11: a lane of its own under WATCH_BODY_TIERS) | world.js, worldModes.js, exterior.js; dungeonContext.js stands none (named) |
 | MWNPC7 TOWNSFOLK | walkers and living residents, a wardrobe by FACTION sgroup that actually varies (distinct records and dyes per persona) (the WALKERS SHIPPED, section 12: a wardrobe per outfit variant, dyed per spawn - the living residents indoors are MWNPC8's standing people) | world.js, exterior.js, worldModes.js (living residents indoors) |
 | MWNPC8 STANDING PEOPLE | street, interior, dungeon and quest StaticNPCs; children and vampires keep their sprite; `drawnFlat`'s nudity law honoured (8a SHIPPED, section 13a: the buildings' people; 8b SHIPPED, section 13b: the dungeons' and the street's; 8c SHIPPED, section 13c: exterior.js's and the quests' stands) | all four |
-| MWNPC9 CREATURES | CREA records, creature skeletons and their own .kf, the match table with its declared misses (9a SHIPPED, section 14a: the body) | dungeonContext.js, world.js, worldModes.js, exterior.js |
+| MWNPC9 CREATURES | CREA records, creature skeletons and their own .kf, the match table with its declared misses (9a SHIPPED, section 14a: the body; 9b SHIPPED, section 14b: the rig, the match, the hosts) | dungeonContext.js, world.js, worldModes.js, exterior.js |
 | MWNPC10 THE REST | crews, road parties, siege, gate court, the broker | their hosts |
 
 Click and talk boxes keep the billboard's size (they are the classic
@@ -917,3 +917,91 @@ Pins moved: mwload_records' empty set (it carries the creatures).
 THE FOUR HOSTS: none wired in 9a - the body is the door; 9b offers the
 creature foes at dungeonContext.js, exteriorFoes.js (the world's and the
 interiors'), and exterior.js's pool.
+
+### 14b. The rig, the match and the hosts (SHIPPED 2026-10-09)
+
+- THE BUILD (`combat/fpArm.js` buildCreatureBody, `buildFpArm`'s
+  `creature` option). The match's candidate ids in order; per id the last
+  CREA record the masters carry (a later one in a master, a later master
+  - the store's overwrite); the first candidate carried wins. Its model
+  through rule 18's actor path, assembled (14a), textured as a body is,
+  its sources (14a), refused at its stage - `record`, `model`, `clip` - as
+  any body is, and the sprite stands. XSCL is a uniform scale (weight and
+  height alike, Creature::adjustScale). It stands in third person from its
+  first frame and refuses first person; its standing height (the idle's
+  first frame over its feet, scaled, in metres - `bodyHeight()`) is what
+  PeerBodies culls and heads it by, where a person is the capsule.
+- THE GROUPS, a NON-BIPED's (OpenMW CharacterController, read at
+  0.48.0). No weapon short group for its claws and no spellcasting stance
+  (`stanceOf`): its bare `idle`, looping on with no loop dice, and its bare
+  `walkforward` - for a run it has no clip for too (the movement
+  fallback); no turning on the spot (character.cpp:2178 - a biped's); its
+  idle let go while an upper-body action, a movement or a recoil plays,
+  and taken up again from its start (refreshIdleAnims' non-biped arm).
+  Its BLOW is one of its attack groups by the roll ("Randomize attacks for
+  non-bipedal creatures", chooseRandomAttackAnimation), played "start" to
+  "stop" in one section standing as the follow-through - so the machine's
+  next blow cuts it as it cuts a person's - and paced so the playhead
+  reaches the group's "hit" at the machine's hit (MW-PACE1), or, with no
+  hit key, its stop at the blow's end. Its CAST is one of the same (its
+  spellcast group IS a random attack - "No 'release' text key to use, so
+  cast immediately"). Its recoil and its death are the body's (MWNPC4). A
+  BIPEDAL creature (a skeleton warrior, a dremora lord, a draugr)
+  animates as a person, off xbase_anim first.
+- THE MATCH (`characters/creatureBodies.js` CREATURE_MATCH), a census:
+  every creature mobile named, a Morrowind creature or a declared miss
+  with its reason. The ids are the records' own, READ OFF UESP's creature
+  tables (its API, 2026-10-09), never recalled. Matched: rat (rat), imp
+  (scamp), spriggan (BM_spriggan), grizzly bear (BM_bear_black), skeletal
+  warrior (skeleton warrior, else skeleton), giant (bm_frost_giant),
+  zombie (bonewalker), mummy (draugr), frost and ice daedra/atronach
+  (atronach_frost), fire daedra and atronach (atronach_flame), iron
+  atronach (atronach_storm), daedroth, daedra seducer (winged twilight),
+  daedra lord (dremora_lord), lich and ancient lich (lich), dreugh. Declared
+  misses: the ghost and the wraith (a body's textures are alpha-tested,
+  never blended - a translucent dead would be cut, not seen through);
+  the orcs and the vampires (people, not creatures - an orc's race is no
+  Daggerfall race a look can name yet); the werewolf (the player's wolf,
+  WEREWOLF1, not yet a foe's); the slaughterfish (its swimming groups are
+  not driven); and every beast Morrowind has none of (giant bat,
+  sabretooth, spider, centaur, nymph, harpy, wereboar, scorpion,
+  gargoyle, the dragonlings, the flesh atronach, the lamia).
+- THE HOSTS. `foeActor` wears a matched creature's look (`{ creature:
+  [ids] }`, one frozen object a kind - a body key); `isBodyFoe` (a class
+  foe, or a matched creature) is the offer's test at every foe host -
+  dungeonContext.js and exteriorFoes.js (the world's, the interiors' and
+  exterior.js's pool), the living and the dead from the kill - on the
+  foes' own lane, under the foes' caps: no new lane, no new bound. The
+  watch are people. PeerBodies keys a creature `crea|<ids>` (every rat one
+  body, a spare handed only between rats, never a person's key), builds
+  it from its record, and rolls its blow by the swing count.
+
+NOT HERE: a Weapon-flagged creature's held weapon and shield (a skeleton
+warrior strikes bare-handed from xbase_anim); knockdown (Daggerfall has
+no such event); the extra idles (OpenMW's wander AI plays them); swimming;
+an atronach's flame and a creature's UV, visibility and flip controllers
+(a body's pieces run no NIF controllers - the flame stands at its emitter).
+
+PROVEN. `test/mwnpc9b_creaturerig.test.js` (10), a creature built on a
+real rig from the fixture's master and archive: the record, the x-model
+and the sources, the scale and the height, third person and no first;
+the refusals at their stages; the bare stances, the idle's endless loop,
+the walk for a run, no turn though its .kf has turns, the idle let go
+under the walk; the blow by the roll, one section, the idle back at its
+end, the next blow cutting the last, the pace to the hit; the cast; the
+recoil and the death (the dying creature stands); a Bipedal one's
+sources; PeerBodies' key and build; the match's census, its ids pinned,
+the misses' reasons, the look; the hosts' offers; the candidates in
+order. `tools/mutants/mwnpc9b.json`: 27 mutants, 26 dead, 1 equivalent as
+recorded (the creature's weapon guard: its stub holds nothing either way -
+kept for the stub it spares a frame). Pins moved: MWNPC5b's and 5c's
+offers (`isBodyFoe`; the pool's unmatched creature is a giant bat now),
+MW-D39's stance count (the idle, the jump and the movement read it through
+`stanceOf`), MAC7's strike (it carries the roll); eight mutant records
+re-aimed by content. Found on the way: MWNPC5b-look-not-kept had been
+surviving (no pin held the look kept over an equal copy of a piece) -
+pinned in mwnpc5_foes.
+
+THE FOUR HOSTS for the creatures: dungeonContext.js, exteriorFoes.js
+(world.js's and worldModes.js's interiors), and exterior.js (its pool is
+exteriorFoes.js) - WIRED, through the foe lane they already run.

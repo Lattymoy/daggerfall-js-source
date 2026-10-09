@@ -131,8 +131,9 @@ test('MWNPC5b-d the dungeon context by source: the lane a frame (none while unwa
   const begin = at('npcLane?.begin();');
   const loop = at('    for (const f of foes) {\n      _fi++;\n      if (f.dead) continue;');
   assert.ok(lane < begin && begin < loop, 'begun before the foes are walked');
-  const reset = at('        f.batch.castOnly = false;\n        if (npcLane && isClassFoe(f)) { npcLane.stand(\'foe\', foeActor(f), f.batch.conceal ?? null, f.batch.hitFlash || 0, foeFx(f)); _npcStood.push(f); }\n        _mobileBatches.push(f.batch);');
-  const dead = at("if (npcLane && f.dead && f.corpse && isClassFoe(f) && f.ai) { npcLane.stand('foe', foeActor(f), null, 0, foeFx(f, f.corpseBatch)); _npcStood.push(f); }");
+  // PIN MOVED (MWNPC9, bible/04-Characters/Morrowind-NPCs.md section 14b): a creature Morrowind matches is offered too
+  const reset = at('        f.batch.castOnly = false;\n        if (npcLane && isBodyFoe(f)) { npcLane.stand(\'foe\', foeActor(f), f.batch.conceal ?? null, f.batch.hitFlash || 0, foeFx(f)); _npcStood.push(f); }\n        _mobileBatches.push(f.batch);');
+  const dead = at("if (npcLane && f.dead && f.corpse && isBodyFoe(f) && f.ai) { npcLane.stand('foe', foeActor(f), null, 0, foeFx(f, f.corpseBatch)); _npcStood.push(f); }");
   const sync = at('npcLane.end(dt, eye);');
   const cast = at("for (const f of _npcStood) { const b = f.dead ? f.corpseBatch : f.batch; if (b) b.castOnly = npcLane.has('foe', foeId(f)); }");
   const bind = at('try { npcLane.draw(canvas, { proj, view, eye }); } finally { renderer.flushCharacterSpriteBatch?.(); }');

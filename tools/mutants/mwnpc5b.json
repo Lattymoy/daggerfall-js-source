@@ -236,8 +236,8 @@
  {
   "name": "MWNPC5b-host-not-offered",
   "file": "src/scenes/dungeonContext.js",
-  "old": "        if (npcLane && isClassFoe(f)) { npcLane.stand('foe', foeActor(f), f.batch.conceal ?? null, f.batch.hitFlash || 0, foeFx(f)); _npcStood.push(f); }",
-  "new": "        if (npcLane && isClassFoe(f)) _npcStood.push(f);",
+  "old": "        if (npcLane && isBodyFoe(f)) { npcLane.stand('foe', foeActor(f), f.batch.conceal ?? null, f.batch.hitFlash || 0, foeFx(f)); _npcStood.push(f); }",
+  "new": "        if (npcLane && isBodyFoe(f)) _npcStood.push(f);",
   "tests": [
    "test/mwnpc5_dungeon.test.js"
   ]
@@ -245,8 +245,8 @@
  {
   "name": "MWNPC5b-host-castonly-sticks",
   "file": "src/scenes/dungeonContext.js",
-  "old": "        f.batch.castOnly = false;\n        if (npcLane && isClassFoe(f))",
-  "new": "        if (npcLane && isClassFoe(f))",
+  "old": "        f.batch.castOnly = false;\n        if (npcLane && isBodyFoe(f))",
+  "new": "        if (npcLane && isBodyFoe(f))",
   "tests": [
    "test/mwnpc5_dungeon.test.js"
   ]
@@ -254,7 +254,7 @@
  {
   "name": "MWNPC5b-host-dead-unoffered",
   "file": "src/scenes/dungeonContext.js",
-  "old": "      if (npcLane && f.dead && f.corpse && isClassFoe(f) && f.ai) {",
+  "old": "      if (npcLane && f.dead && f.corpse && isBodyFoe(f) && f.ai) {",
   "new": "      if (false) {",
   "tests": [
    "test/mwnpc5_dungeon.test.js"

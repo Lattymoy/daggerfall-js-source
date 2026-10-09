@@ -102,7 +102,7 @@ import { setBatchDissolve } from '../systems/dissolve.js';   // DISSOLVE: burnt 
 import { createPortalSet } from './portalFx.js';   // COMPANION-PORTAL
 import { QUARRY_BLOW } from '../systems/livingWorld/quarry.js';
 import { createHostNpcBodies, npcBodiesOn } from '../characters/npcBodies.js';   // MWNPC5c: the pool's foes in their Morrowind bodies
-import { isClassFoe, foeActor, foeFx, foeId } from '../characters/foeBodies.js';   // WATCH-PROTECTS: a townsperson's one blow
+import { isBodyFoe, foeActor, foeFx, foeId } from '../characters/foeBodies.js';   // WATCH-PROTECTS: a townsperson's one blow
 import { elitesAllowed, promoteEliteFoe, rollOverworldElite, grantEliteLoot, eliteGlow, setBatchEliteGlow, eliteSize, isEliteCorpse, markEliteCorpseBatch, ELITE_FOE_SIZE } from '../systems/eliteFoes.js';   // ELITE FOES: 5% of the wilds' foes   // HITFLASH1
 
 // The port's allocation-owner guards (classic self-limits through the
@@ -2056,12 +2056,12 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // MWNPC5c: a class foe offered to its body, dressed as its billboard is; the billboard draws until drawBodies says
       // the body stands, and casts its shadow either way
       f.batch.castOnly = false;
-      if (npcLane && isClassFoe(f)) { npcLane.stand('foe', foeActor(f), f.batch.conceal ?? null, f.batch.hitFlash || 0, foeFx(f)); _npcStood.push(f); }
+      if (npcLane && isBodyFoe(f)) { npcLane.stand('foe', foeActor(f), f.batch.conceal ?? null, f.batch.hitFlash || 0, foeFx(f)); _npcStood.push(f); }
       out.push(f.batch);
     }
     // MWNPC5c: the dead from the kill until the corpse is collected, the corpse flat casting alone under the body
     for (const c of corpseBatches) c.batch.castOnly = false;
-    if (npcLane) for (const f of foes) if (f.dead && f.corpse && isClassFoe(f) && f.ai) { npcLane.stand('foe', foeActor(f), null, 0, foeFx(f, f.corpseMarker?.batch)); _npcStood.push(f); }
+    if (npcLane) for (const f of foes) if (f.dead && f.corpse && isBodyFoe(f) && f.ai) { npcLane.stand('foe', foeActor(f), null, 0, foeFx(f, f.corpseMarker?.batch)); _npcStood.push(f); }
     return [...out, ...corpseBatches.map((c) => c.batch), ...portals.batches()];   // COMPANION-PORTAL: and the portals
   }
 

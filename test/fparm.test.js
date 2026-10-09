@@ -3022,8 +3022,11 @@ test('MW-D39: readySpell and castSpell are the two doors, and neither gates the 
   assert.equal(arm.status().spellReady ?? false, false);
   const src = readFileSync('src/combat/fpArm.js', 'utf8');
   // the stance re-composes on ready, and the three group readers take the flag
-  assert.equal((src.match(/animWeaponType\(built\.mwType, sheathed, spellReady\)/g) || []).length, 5,
-    'idle, movement (x2), the weapon group and the torch\'s carried-left rule (MW-D51) must all read the spell stance');
+  // PIN MOVED (MWNPC9, bible/04-Characters/Morrowind-NPCs.md section 14b): the idle, the jump and the movement read it
+  // through `stanceOf()` - the stance a non-biped creature takes bare - which reads it once
+  assert.equal((src.match(/animWeaponType\(built\.mwType, sheathed, spellReady\)/g) || []).length, 3,
+    'stanceOf, the weapon group and the torch\'s carried-left rule (MW-D51) must all read the spell stance');
+  assert.equal((src.match(/= stanceOf\(\);/g) || []).length, 3, 'the idle, the jump and the movement through stanceOf');
   assert.match(src, /readySpell\(ready\) \{[\s\S]*?refreshWeaponGroup\(\);\n      resetIdle\(\);\n      resetMovement\(\);/);
   // PIN MOVED (MW-CAST1): an un-ready mid-cast is the spell GOING - Daggerfall clears the ready at its release - so
   // the cast finishes and the stance drops at its end (it used to be taken for an abort and dropped mid-motion)

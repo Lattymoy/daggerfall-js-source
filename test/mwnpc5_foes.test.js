@@ -69,6 +69,10 @@ test('MWNPC5b-1 the class foe alone; its look - the same foe the same person, th
   assert.notEqual(l2, l1, 'a helm put on: a new look');
   assert.equal(l2.race, l1.race, 'the same person in it');
   assert.equal(l2.faceIndex, l1.faceIndex);
+  // MWNPC9 (found by MWNPC5b-look-not-kept surviving): a slot holding an equal copy of what it held - the same piece
+  // re-made, a reload's - is a new compare but the same wear, so the same look object (no new body key minted)
+  f.entity.equip.slots[EQUIP_SLOTS.Head] = { ...f.entity.equip.slots[EQUIP_SLOTS.Head] };
+  assert.equal(foeLook(f), l2, 'the same wear: the same look');
 });
 
 test('MWNPC5b-2 the actor: the stride (a run only in pursuit), a swing per new attack count, a cast per cast, a recoil per hit the flash marked, a death off its seed', () => {

@@ -199,6 +199,7 @@ function wolfLookKey(look) {
  *  equip table tore the standing wolf down and built it again ten seconds on (a second refusal and warning, where it
  *  was refused). */
 export function peerBodyKey(look, shown = null, glyphs = null) {
+  if (look?.creature) return `crea|${look.creature}`;   // MWNPC9: a creature is its record - every one of a kind one body, never a person's
   return peerIsWolf(shown) ? `wolf|${wolfLookKey(look)}|${werewolfSkinOf(glyphs) ?? ''}` : bodyLookKey(look);   // SHADOW-FANG: and the wolf's skin
 }
 
@@ -219,6 +220,7 @@ function bodyLookKey(look) {
 }
 
 export function peerBuildOpts(look, shown = null, glyphs = null) {
+  if (look?.creature) return { creature: look.creature, reachSweep: false };   // MWNPC9: its CREA record (fpArm buildCreatureBody) - nothing worn or held
   const stub = peerStubEntity(look);
   const wolf = peerIsWolf(shown);
   const skin = wolf ? werewolfSkinOf(glyphs) : null;   // SHADOW-FANG: the glyphs the relay read off the peer's own token
@@ -363,7 +365,7 @@ export class PeerBodies {
   has(id) { return this._standing(this._bodies.get(id)); }
 
   /** The body's height over its feet - the capsule scaled by the race's own (MW-D34) - or 0 without a standing body: the name pass's head. */
-  heightOf(id) { const b = this._bodies.get(id); return this._standing(b) ? CAPSULE_HEIGHT * (b.rig.raceHeightScale?.() ?? 1) * (this._cam?.grow && b.feet ? Math.max(1, this._cam.grow(b.feet)) : 1) : 0; }   // OW-PEERS: a grown body's head, for its name
+  heightOf(id) { const b = this._bodies.get(id); return this._standing(b) ? (b.rig.bodyHeight?.() ?? CAPSULE_HEIGHT * (b.rig.raceHeightScale?.() ?? 1)) * (this._cam?.grow && b.feet ? Math.max(1, this._cam.grow(b.feet)) : 1) : 0; }   // OW-PEERS: a grown body's head, for its name
 
   /** Why a look has no body - a person's, or (AUDIT E7) a wolf's by the pose and glyphs it is keyed on - or null. */
   failureOf(look, shown = null, glyphs = null) {
@@ -584,7 +586,7 @@ export class PeerBodies {
   /** WB9h: does the view the last body pass drew (viewPlanes) reach this body - its sphere about its middle, BODY_SPHERE_SHARE of
    *  its height round, `margin` metres more? */
   _sees(b, margin, grow = 1) {
-    const h = CAPSULE_HEIGHT * (b.rig.raceHeightScale?.() ?? 1) * grow;   // OW-PEERS: a grown body reaches its grow times as far
+    const h = (b.rig.bodyHeight?.() ?? CAPSULE_HEIGHT * (b.rig.raceHeightScale?.() ?? 1)) * grow;   // OW-PEERS: a grown body reaches its grow times as far; MWNPC9: a creature its own height
     return sphereInView(this._planes, b.feet[0], b.feet[1] + h / 2, b.feet[2], h * BODY_SPHERE_SHARE + margin);
   }
 
@@ -650,7 +652,7 @@ export class PeerBodies {
     // DISC12 (Discord: "Weapons when swapped into left hand dont work showing fists"): THE HAND IN USE. The body was
     // built holding the look's RIGHT hand, always, so a peer fighting left-handed stood with the wrong weapon or a fist.
     // The pose says the hand (`lh`); the weapon follows it through setWeapon, the arm's own door, when the arm is quiet.
-    if (look) {
+    if (look && !look.creature) {   // MWNPC9: a creature's claws are its body
       const want = b.wolf ? null : peerWeaponOf(look, shown);   // WEREWOLF1: the wolf's hands are its claws
       if (want !== b.weapon && (want?.templateIndex !== b.weapon?.templateIndex || want?.equipSlot !== b.weapon?.equipSlot)
         && (b.rig.upperBodyReady?.() ?? true) && b.rig.setWeapon?.(want, { hasAmmo: !!shown.am }) !== false) { b.weapon = want; b.ammo = shown.am ? 1 : 0; }
@@ -689,7 +691,7 @@ export class PeerBodies {
         }
       }
       if (b.pending && b.pending.left-- > 0) {
-        if (b.rig.attack?.(b.pending.strike, { hold: b.pending.hold, blow: b.pending.blow ?? null })) { b.held = b.pending.hold; b.pending = null; }
+        if (b.rig.attack?.(b.pending.strike, { hold: b.pending.hold, blow: b.pending.blow ?? null, roll: b.swing })) { b.held = b.pending.hold; b.pending = null; }   // MWNPC9: the count rolls a creature's attack
       } else b.pending = null;
       if (cn !== b.cast) { b.cast = cn; b.rig.castSpell?.(shown.cr | 0); }
     }

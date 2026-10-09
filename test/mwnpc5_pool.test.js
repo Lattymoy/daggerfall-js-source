@@ -47,14 +47,16 @@ test('MWNPC5c the pool offers its class foes dressed, the dead from the kill, sy
     wantNpcBodies: () => want, makeNpcBodies: () => { made++; return (lane = recordingLane()); },
   });
   const knight = foe(130, [2, 0, 3], { seq: 7 });
-  const rat = foe(0, [4, 0, 5], { seq: 8 });
+  // PIN MOVED (MWNPC9, bible/04-Characters/Morrowind-NPCs.md section 14b): the rat has a Morrowind body now - the creature
+  // left out is one Morrowind has no match for (a giant bat, a declared miss)
+  const rat = foe(3, [4, 0, 5], { seq: 8 });
   const fallen = foe(131, [6, 0, 1], { seq: 9, dead: true, corpse: true, corpseMarker: { batch: {} } });
   knight._hfAt = performance.now() / 1000;   // struck this moment: the host's hit flash lights its billboard
   pool.foes.push(knight, rat, fallen);
   const out = pool.batches();
   assert.equal(made, 1, 'the lane made the first frame it is wanted');
   assert.ok(out.includes(knight.batch) && out.includes(rat.batch), 'every live billboard still in the pass (it casts either way)');
-  assert.deepEqual(lane.offered.map((o) => o.actor.id), [7, 9], 'the class foe and the dead class foe - never the creature');
+  assert.deepEqual(lane.offered.map((o) => o.actor.id), [7, 9], 'the class foe and the dead class foe - never the unmatched creature');
   assert.ok(lane.offered[0].flash > 0.5 && lane.offered[0].flash === knight.batch.hitFlash, `dressed as its billboard is (${lane.offered[0].flash})`);
   assert.equal(lane.offered[0].actor.hits, 1, 'and the hit is a recoil');
   assert.equal(lane.offered[1].actor.dead > 0, true, 'the dead offered dead');

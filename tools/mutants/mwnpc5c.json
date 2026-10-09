@@ -2,8 +2,8 @@
  {
   "name": "MWNPC5c-pool-not-offered",
   "file": "src/scenes/exteriorFoes.js",
-  "old": "      if (npcLane && isClassFoe(f)) { npcLane.stand('foe', foeActor(f), f.batch.conceal ?? null, f.batch.hitFlash || 0, foeFx(f)); _npcStood.push(f); }",
-  "new": "      if (npcLane && isClassFoe(f)) _npcStood.push(f);",
+  "old": "      if (npcLane && isBodyFoe(f)) { npcLane.stand('foe', foeActor(f), f.batch.conceal ?? null, f.batch.hitFlash || 0, foeFx(f)); _npcStood.push(f); }",
+  "new": "      if (npcLane && isBodyFoe(f)) _npcStood.push(f);",
   "tests": [
    "test/mwnpc5_pool.test.js"
   ]
@@ -11,7 +11,7 @@
  {
   "name": "MWNPC5c-pool-creature-offered",
   "file": "src/scenes/exteriorFoes.js",
-  "old": "      if (npcLane && isClassFoe(f)) { npcLane.stand('foe'",
+  "old": "      if (npcLane && isBodyFoe(f)) { npcLane.stand('foe'",
   "new": "      if (npcLane) { npcLane.stand('foe'",
   "tests": [
    "test/mwnpc5_pool.test.js"
@@ -29,8 +29,8 @@
  {
   "name": "MWNPC5c-pool-castonly-sticks",
   "file": "src/scenes/exteriorFoes.js",
-  "old": "      f.batch.castOnly = false;\n      if (npcLane && isClassFoe(f))",
-  "new": "      if (npcLane && isClassFoe(f))",
+  "old": "      f.batch.castOnly = false;\n      if (npcLane && isBodyFoe(f))",
+  "new": "      if (npcLane && isBodyFoe(f))",
   "tests": [
    "test/mwnpc5_pool.test.js"
   ]
@@ -38,8 +38,8 @@
  {
   "name": "MWNPC5c-pool-dead-unoffered",
   "file": "src/scenes/exteriorFoes.js",
-  "old": "    if (npcLane) for (const f of foes) if (f.dead && f.corpse && isClassFoe(f) && f.ai) {",
-  "new": "    if (false) for (const f of foes) if (f.dead && f.corpse && isClassFoe(f) && f.ai) {",
+  "old": "    if (npcLane) for (const f of foes) if (f.dead && f.corpse && isBodyFoe(f) && f.ai) {",
+  "new": "    if (false) for (const f of foes) if (f.dead && f.corpse && isBodyFoe(f) && f.ai) {",
   "tests": [
    "test/mwnpc5_pool.test.js"
   ]

@@ -69,6 +69,7 @@ import {
   jumpAnimState,
   sourcesKeyTime, sourceVelocityOf,
   magicEffectRecords, vfxStaticRecords,   // MW-SPELLFX1: the magic effects and the statics their visuals are
+  assembleCreature, creatureAnimSources, creatureRecords, CREA_FLAG,   // MWNPC9: a creature's body
 } from '../formats/mwFirstPerson.js';
 import { PART_BONES, dfRaceKeyOf } from '../formats/mwNpc.js';
 import { portraitFeatures, headFeatures, hairFeatures, matchFace, FACE_MATCH_VERSION } from '../formats/mwFaceMatch.js';
@@ -1957,6 +1958,90 @@ async function buildTpBody({
   }
 }
 
+/**
+ * MWNPC9 (bible/04-Characters/Morrowind-NPCs.md section 14b): A CREATURE'S BODY, BUILT. The CREA record by id (the
+ * last master that carries it wins - the load order), its model through rule 18's actor path (the "x" variant when
+ * its .kf is there), assembled as its own skeleton and body (formats/mwFirstPerson.js assembleCreature), textured as a
+ * body is, and animated from its sources - xbase_anim first for a Bipedal one, then its own (creatureanimation.cpp).
+ * Nothing is worn, held, hung or faced, and there is no first person: the answer is the third-person body, shaped as
+ * buildTpBody's so the rig, the GPU skin and the sprite take it unchanged, standing also as `built` (no arm), with the
+ * record (`creature`) and XSCL as a uniform scale (Creature::adjustScale - weight and height alike).
+ */
+async function buildCreatureBody({ creature, deps = null }) {
+  const ids = [].concat(creature).map((c) => String(c || '').toLowerCase());   // the candidates, in the match's order (characters/creatureBodies.js)
+  try {
+    const d = deps || await import('../scenes/dataSource.js');
+    const archives = await d.loadMorrowindArchives();
+    if (!archives.length) return { ok: false, stage: 'data', error: 'no Morrowind .bsa attached' };
+    const esmNames = (await d.storedMorrowindNames()).filter((n) => /\.esm$/i.test(n));
+    if (!esmNames.length) return { ok: false, stage: 'data', error: 'no Morrowind .esm attached - the creature records live there' };
+    const gen = adoptMemoGeneration(d.morrowindDataGeneration);
+    const found = new Map();
+    for (const n of esmNames) {
+      const records = typeof d.loadMorrowindArmRecords === 'function' ? await d.loadMorrowindArmRecords(n) : null;
+      let list;
+      if (records) list = armRecordsOf(records, 'creatures');
+      else {
+        const bytes = await d.loadMorrowindFile(n);
+        const key = gen === null ? null : `${gen}:${n}:${bytes.byteLength}:creatures`;
+        list = key ? ESM_WALK_CACHE.get(key) : undefined;
+        if (list === undefined) { list = creatureRecords(bytes); if (key) ESM_WALK_CACHE.set(key, list); }
+      }
+      for (const c of list) if (ids.includes(c.id)) found.set(c.id, c);   // the last record wins - a later one in a master, a later master
+    }
+    const rec = ids.map((i) => found.get(i)).find(Boolean) ?? null;   // the first candidate the masters carry
+    if (!rec) return { ok: false, stage: 'record', error: `no CREA record ${ids.map((i) => `"${i}"`).join(' or ')} in ${esmNames.join(', ')}` };
+    const exists = (p) => archives.some((a) => a.has(p));
+    const find = (p) => findLoaded(archives, p);
+    const modelPath = correctActorModelPath(`meshes/${rec.model}`, exists);
+    await loadFromArchives(archives, [modelPath]);
+    const arc = find(modelPath);
+    if (!arc) return { ok: false, stage: 'model', error: `${modelPath} is not in your archives` };
+    const modelBytes = nifBytes(arc, modelPath);
+    const arm = await assembleCreature({ modelBytes, parseNif: parseNifOnce });   // MWNPC3: one parse a mesh, every body
+    if (!arm.ok) return { ok: false, stage: arm.stage || 'assembly', error: arm.error, notes: arm.notes || [] };
+    await preloadArmTextures([...arm.pieces, ...(arm.effects ?? [])], archives, gen);
+    const textures = collectArmTextures([...arm.pieces, ...(arm.effects ?? [])], archives, gen);
+    const bipedal = (rec.flags & CREA_FLAG.Bipedal) !== 0;
+    const sourcePaths = creatureAnimSources(modelPath, exists, { bipedal });
+    if (!sourcePaths.length) return { ok: false, stage: 'clip', error: `no animation file - ${animSourceName(modelPath)} is not in your archives`, notes: arm.notes };
+    await loadFromArchives(archives, sourcePaths);
+    const sources = [];
+    for (const p of sourcePaths) {
+      const one = await cachedClipReport(gen, modelPath, p, () => find(p).get(p).slice(), arm.skeleton);
+      if (!one.ok) return { ok: false, stage: 'clip', error: `${p}: ${one.error}`, notes: arm.notes };
+      sources.push({ name: p, keys: one.keys, groups: one.groups, groupSet: new Set(one.groups), trackMap: one.trackMap, binding: one.binding,
+        wouldAccumRoot: accumRootRef(arm.skeleton, one.trackMap) });
+    }
+    const groupSet = new Set(sources.flatMap((so) => so.groups));
+    const idlePick = groupSet.has(FP_IDLE_BASE) ? pickAnimSource(sources, FP_IDLE_BASE, resetClip, { loopFallback: true }) : null;
+    if (!idlePick) return { ok: false, stage: 'clip', error: `no source gives "${FP_IDLE_BASE}" a start and a stop key`, notes: arm.notes };
+    const accumRoot = sources.reduce((acc, so) => (acc ?? so.wouldAccumRoot), null) ?? null;
+    for (const so of sources) so.accumRoot = accumRoot;
+    poseAssembly(arm, { tracks: idlePick.source.trackMap, sampleTrack, time: idlePick.state.startTime, accumRoot });
+    const third = {
+      ok: true, arm, tracks: idlePick.source.trackMap, accumRoot, keys: idlePick.source.keys, sources, sourcePaths,
+      clip: idlePick.state, groups: [...groupSet].sort(), groupSet, mwType: MW_WEAPON_TYPE.None, textures,
+      skeletonPath: modelPath, settingsSkeleton: modelPath,
+      weapon: null, arrow: null, torch: null, hipLight: null, hipLightTried: false, holster: null, boneSources: [], sheathing: false,
+      werewolf: false, leftArm: new Set(), rows: [], notes: [...(arm.notes || [])], pieces: armPieceRows(arm.pieces).length, skeletonBytes: modelBytes,
+    };
+    const scale = Number.isFinite(rec.scale) && rec.scale > 0 ? rec.scale : 1;
+    // its standing height, metres: the idle's first frame over its feet (Z up, the model's origin its feet), scaled - what
+    // a host culls and labels it by, where a person is the capsule (PeerBodies)
+    const bb = arm.bounds;
+    const height = bb ? ((bb.maxZ - Math.min(bb.minZ, 0)) * scale) / MW_UNITS_PER_METER : null;
+    return {
+      ...third, third,
+      creature: { id: rec.id, name: rec.name, flags: rec.flags, bipedal, scale, height },
+      raceScale: { weight: scale, height: scale },
+      catalog: null, cameraRef: -1, reach: 0, idleReach: 0, allWeapons: [], allLights: [], worn: [], face: null,
+    };
+  } catch (err) {
+    return { ok: false, stage: 'build', error: err && err.message ? err.message : String(err) };
+  }
+}
+
 export async function buildFpArm({
   race, female = false, beast = null, faceIndex = 0, weapon = null, hasAmmo = false, armor = null, deps = null,
   torch = false,   // MW-D51: a lit Daggerfall torch in hand at the build
@@ -1965,7 +2050,9 @@ export async function buildFpArm({
   werewolf = false,   // WEREWOLF1: the transformed werewolf - Bloodmoon's wolf, in both views
   skin = null,   // SHADOW-FANG (AUDIT D2): the wolf's skin (characters/werewolfSkin.js), painted in the build - a person wears none
   reachSweep = true,   // MWNPC3: PX27's every-clip reach sweep - the first-person far plane's; false for a rig that never draws first person
+  creature = null,   // MWNPC9: a CREA id, or the match's candidates in order - a creature's body instead (buildCreatureBody)
 } = {}) {
+  if (creature) return buildCreatureBody({ creature, deps });   // MWNPC9
   const d = deps || await import('../scenes/dataSource.js');
   // WEREWOLF1: THE WOLF HOLDS NOTHING. setWerewolf's unequipAll empties both hands and every slot
   // (mechanicsmanagerimp.cpp:1896-1901), and the player's items are refused while transformed - so no weapon, no
@@ -3117,6 +3204,15 @@ export function createFpArm() {
   const thirdBodyBox = { minX: 0, minY: 0, minZ: 0, maxX: 0, maxY: 0, maxZ: 0 };   // PR-BOW1: the same fold less CARRIED_SLOTS - the body's own height
   const figureBodyBox = { minX: 0, minY: 0, minZ: 0, maxX: 0, maxY: 0, maxZ: 0 };   // PR-BOW1b: the portrait's body fold, owned by the rig
   const rig = () => (viewMode === 'third' && thirdBuilt && thirdBuilt.ok ? thirdBuilt : built);
+  /** MWNPC9: a CREATURE that is not Bipedal (built from its CREA record - buildCreatureBody). The reference gives it no
+   *  weapon short group for its bare claws (getWeaponShortGroup: HandToHand on a non-biped is empty) and no spellcasting
+   *  movement ("Non-biped creatures don't use spellcasting-specific movement animations"): its stances are the bare
+   *  groups - idle, walkforward - whatever it has drawn or readied. A Bipedal creature animates as a person does. */
+  const nonBiped = () => !!(built && built.ok && built.creature && !built.creature.bipedal);
+  const stanceOf = () => {
+    const t = animWeaponType(built.mwType, sheathed, spellReady);
+    return nonBiped() && !isRealWeapon(t) ? MW_WEAPON_TYPE.None : t;
+  };
 
   const active = () => !standIn && !!(built && built.ok && mesh && renderer && camera && (actionState || movementState || jumpState || idleState)
     && viewMode === 'first');
@@ -3494,7 +3590,13 @@ export function createFpArm() {
    */
   function refreshIdle(force = false) {
     if (!built || !built.ok || dead) return;   // MWNPC4: a dead actor's states are no longer refreshed
-    const type = animWeaponType(built.mwType, sheathed, spellReady);
+    // MWNPC9: refreshIdleAnims' non-biped arm (character.cpp:680-685) - a creature lets its idle go while an upper-body
+    // action, a movement or a recoil plays, and takes it up again from its start once none does
+    if (nonBiped() && ((upper !== UPPER_BODY.None && upper !== UPPER_BODY.WeaponEquipped) || movementState || hitState)) {
+      idleState = null; idleGroup = null; idleSource = null;
+      return;
+    }
+    const type = stanceOf();   // MWNPC9: a non-biped's bare stance
     // MW-D52: the idle STATE picks the base - "idlesneak" while sneaking
     // on the ground where a source carries it, else the plain idle with
     // its weapon suffix. The sneak idle takes no suffix and no loop dice.
@@ -3722,7 +3824,7 @@ export function createFpArm() {
       priorInAir: jumpKind === 'inair',
       jumpPlaying: !!(jumpState && jumpState.playing),
     });
-    const stance = animWeaponType(built.mwType, sheathed, spellReady);
+    const stance = stanceOf();   // MWNPC9
     const force = !!jumpState && jumpStance !== stance;
     if (!force && derived.jump === jumpKind) return derived.inJump;   // :496
     if (!derived.jump) {
@@ -3784,7 +3886,7 @@ export function createFpArm() {
       running: !!(mv && mv.running),
       sneaking,
       turning: turnDir,
-      thirdPerson: viewMode === 'third',
+      thirdPerson: viewMode === 'third' && !nonBiped(),   // MWNPC9: turning animations are a biped's (character.cpp:2178)
     });
     if (!base) {
       // MW-D29: the frame the movement EMPTIES while one was playing,
@@ -3802,7 +3904,7 @@ export function createFpArm() {
     // sword mid-walk re-composes walkforward -> walkforward1h THAT
     // frame - the port's old gate keyed on the movestate name alone and
     // kept the bare-handed walk playing with the sword out.
-    const stance = animWeaponType(built.mwType, sheathed, spellReady);
+    const stance = stanceOf();   // MWNPC9: a non-biped's bare walk
     const fresh = !(movementState && movementState.playing
       && movementBase === base && movementStance === stance);
     if (fresh) {
@@ -3956,6 +4058,37 @@ export function createFpArm() {
     blowPlan = null;
     if (resetIdleOnAttackEnd) { resetIdleOnAttackEnd = false; resetIdle(); }
   }
+
+  /**
+   * MWNPC9: A NON-BIPED CREATURE'S BLOW (character.cpp:1355-1363 and :1529-1532): "Randomize attacks for non-bipedal
+   * creatures" - one of its attack groups by the roll (chooseRandomAttackAnimation: "attack" + chooseRandomGroup), played
+   * "start" to "stop" in ONE section, its blow landing on the group's "hit" key (on its start, when it has none -
+   * handleTextKey). The section stands as the follow-through (AttackEnd), so the machine's next blow cuts it as it cuts
+   * a person's, and stepUpper's endAttack frees the claws at its stop. Paced to the machine's blow: the playhead reaches
+   * "hit" at the hit (MW-PACE1), or - with no hit key - the stop at the blow's end.
+   */
+  function creatureAttack(roll, blow) {
+    if (dead) return null;
+    if (upper === UPPER_BODY.AttackEnd) endAttack();
+    if (upper !== UPPER_BODY.WeaponEquipped) return null;
+    const g = chooseRandomGroup('attack', roll);
+    const pick = g ? pickAnimSource(rig().sources, g, resetClip, { start: 'start', stop: 'stop', loopCount: 0 }) : null;
+    if (!pick) return null;
+    actionState = pick.state; actionSource = pick.source;
+    upper = UPPER_BODY.AttackEnd;
+    attackType = g; holdWindUp = false; attackStrength = 1;
+    resetIdleOnAttackEnd = true;
+    blowPlan = null;
+    if (blow && blow.hitAt > 0 && blow.seconds >= blow.hitAt && Number.isFinite(blow.seconds)) {
+      const st = actionState;
+      const hit = getTextKeyTime(pick.source.keys, `${g}: hit`);
+      const rate = hit > st.startTime ? blowRate(hit - st.startTime, blow.hitAt) : blowRate(st.stopTime - st.startTime, blow.seconds);
+      blowPlan = { seconds: blow.seconds, hitAt: blow.hitAt, clock: 0, rate };
+    }
+    refreshIdle();   // a non-biped lets its idle go
+    return g;
+  }
+  let creatureCasts = 0;   // MWNPC9: the roll a non-biped's casts pick their attack by
 
   /**
    * MW-PACE1: A BLOW'S PACE, said ahead. The machine has begun a strike and `blow` says when its hit lands and when
@@ -4134,7 +4267,7 @@ export function createFpArm() {
         // named note, and the machine stands back up in first person -
         // the one view that cannot be missing.
         thirdBuilt = res && res.ok ? (res.third || null) : null;
-        viewMode = 'first';
+        viewMode = res && res.ok && res.creature && thirdBuilt ? 'third' : 'first';   // MWNPC9: a creature is its body, from the first frame
         wornKey = fpWeaponKey(opts && opts.weapon, !!(opts && opts.hasAmmo));
         wornEquipKey = wornEquipKeyOf(opts && opts.armor);
         lastBuildOpts = opts ? { ...opts } : null;
@@ -4566,8 +4699,9 @@ export function createFpArm() {
      * Daggerfall's swing has no charge, so the button is never "still
      * held at max attack".
      */
-    attack(strike, { hold = false, blow = null } = {}) {
+    attack(strike, { hold = false, blow = null, roll = 0 } = {}) {
       if (!built || !built.ok || sheathed || dead) return null;   // MWNPC4: the dead swing nothing
+      if (nonBiped()) return creatureAttack(roll, blow);   // MWNPC9: claws and jaws - one of its attacks by the roll
       // MW-PACE1: A BLOW IN THE FOLLOW-THROUGH IS CUT FOR THE NEXT. The machine starts a strike only from Idle, so
       // a strike arriving here is a blow it has already finished; refusing it (the reference's gate, which knows no
       // second clock) drew one blow in two at a high Speed, the second landing on an arm at rest. The wind-up and the
@@ -4938,6 +5072,9 @@ export function createFpArm() {
      *  speed its spellcast group plays at from "<type> start" to "<type> stop", as the classic frames step at it. */
     castSpell(rangeType = 2, rate = 1) {
       if (dead) return false;   // MWNPC4: the dead cast nothing
+      // MWNPC9: a non-biped casts in one of its attacks ("No 'release' text key to use, so cast immediately" -
+      // character.cpp:1459-1464: its spellcast group is a random attack, played start to stop)
+      if (nonBiped()) return creatureAttack(++creatureCasts, null) !== null;
       // WEREWOLF1 (AUDIT E6): nor casts one - the turn back is cast in beast form, and on the wolf it latched a spell
       // stance the next frame's readySpell(false) tore down again
       if (!built || !built.ok || built.werewolf) return false;
@@ -5422,6 +5559,7 @@ export function createFpArm() {
       const want = mode === 'third' ? 'third' : 'first';
       if (want === viewMode) return true;
       if (want === 'third' && standIn) return false;   // BEAST-SELF: no Morrowind body for a beast - refused, and no refusal on the card
+      if (want === 'first' && built && built.creature) return false;   // MWNPC9: a creature has no first person
       if (want === 'third' && !(thirdBuilt && thirdBuilt.ok)) {
         notes.push(`view: no third-person body - ${thirdBuilt ? `${thirdBuilt.stage}: ${thirdBuilt.error}` : 'not built'}`);
         return false;
@@ -5504,6 +5642,8 @@ export function createFpArm() {
      *  tracked node sits on the scaled actor. mwViewFrame passes it so
      *  no host re-derives the seam (MW-D25's law). */
     raceHeightScale: () => (built && built.ok && built.raceScale ? built.raceScale.height : 1),
+    /** MWNPC9: a creature's own standing height in metres (its build's measure), null for a person - who is the capsule. */
+    bodyHeight: () => (built && built.ok && built.creature && built.creature.height > 0 ? built.creature.height : null),
 
     /**
      * MW-D24: THE THIRD-PERSON DRAW - the body composited into the world

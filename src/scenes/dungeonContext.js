@@ -288,7 +288,7 @@ import { UnderwaterFog } from '../render/underwaterFog.js';   // ROAD-B (b3): Un
 import { NavClient } from '../ai/navClient.js';   // ENHANCED AI 3b
 import { getPref } from '../systems/uiPrefs.js';
 import { createHostNpcBodies, npcBodiesOn } from '../characters/npcBodies.js';   // MWNPC5b: the foes in their Morrowind bodies
-import { isClassFoe, foeActor, foeFx, foeId } from '../characters/foeBodies.js';
+import { isBodyFoe, foeActor, foeFx, foeId } from '../characters/foeBodies.js';
 import { createPopulationLane } from '../characters/npcBodies.js'; import { personActor } from '../characters/peopleBodies.js';   // MWNPC8b: the dungeon's standing people   // ENHANCED AI 3b: the Enhanced tab's switch
 import { raiseEnemyDeath, playRareDrop, pileBody, sayEnemyDied } from './corpseMarker.js';   // UL1: OnEnemyDeath; LR3: the drop chime; LOOT-STACK: a body as the loot window's tab; LOOT7-CHECK DUNGEON-DIED: the kill notice
 import { rollCorpseKit, capFoeLoot } from '../systems/foeLootCap.js';   // KIT-ROLL: a foe's kit, laddered at its death by every body door; AUDIT 625 L5: a copy's cap
@@ -7766,7 +7766,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // MWNPC5b: a class foe is offered to its body, dressed as its billboard is - concealed, flashing, its tells; the
         // billboard draws until the lane says the body stands (below), and casts its shadow either way
         f.batch.castOnly = false;
-        if (npcLane && isClassFoe(f)) { npcLane.stand('foe', foeActor(f), f.batch.conceal ?? null, f.batch.hitFlash || 0, foeFx(f)); _npcStood.push(f); }
+        if (npcLane && isBodyFoe(f)) { npcLane.stand('foe', foeActor(f), f.batch.conceal ?? null, f.batch.hitFlash || 0, foeFx(f)); _npcStood.push(f); }
         _mobileBatches.push(f.batch);
         continue;
       }
@@ -7795,7 +7795,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (f.corpseBatch) f.corpseBatch.castOnly = false;
       // the body from the kill (f.corpse, raised at the death - the flat is minted after its texture warms), until the
       // corpse is freed
-      if (npcLane && f.dead && f.corpse && isClassFoe(f) && f.ai) { npcLane.stand('foe', foeActor(f), null, 0, foeFx(f, f.corpseBatch)); _npcStood.push(f); }
+      if (npcLane && f.dead && f.corpse && isBodyFoe(f) && f.ai) { npcLane.stand('foe', foeActor(f), null, 0, foeFx(f, f.corpseBatch)); _npcStood.push(f); }
     }
     if (npcLane) {
       npcLane.end(dt, eye);

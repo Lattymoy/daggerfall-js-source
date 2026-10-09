@@ -9,6 +9,7 @@
 // complaint), and the tells are the batch's as the host set them.
 import { composeLook } from '../net/remotePlayers.js';
 import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';
+import { creatureLook } from './creatureBodies.js';   // MWNPC9: a creature foe's look, its Morrowind creature
 
 /** The Iliac Bay's people, weighted - the races a class foe is drawn as (Daggerfall's own spelling, the look's). The
  *  Bay is Breton and Redguard country; the rest are travellers, the beast folk fewest. */
@@ -50,6 +51,8 @@ const pick = (list, h) => list[h % list.length];
 /** Is this foe one a Morrowind body stands for? A CLASS foe (Daggerfall's people - the mobiles past 127) - the
  *  creatures are MWNPC9's, with their own skeletons. */
 export const isClassFoe = (f) => !!f?.entity?.isClass;
+/** MWNPC9: a foe that stands in a body - a class foe, or a creature Morrowind has a match for (creatureBodies.js). */
+export const isBodyFoe = (f) => isClassFoe(f) || !!creatureLook(f);
 
 /** The foe's look: its race and face drawn off its seed, its gender its own, and what it wears - its equip table, as
  *  the player's look reads the player's (composeLook), with the clothes under the armour it has none over. Kept on the
@@ -108,7 +111,7 @@ export function foeActor(f, id = foeId(f)) {   // MWNPC6: `id` a population's ow
   const swings = (f._atkA | 0) >> 1;
   return {
     id,
-    look: foeLook(f),
+    look: isClassFoe(f) ? foeLook(f) : creatureLook(f),   // MWNPC9: a creature's is its Morrowind creature
     feet: f.ai.feet,
     yaw: f.ai.yaw,
     moving: !!f.ai.moving,

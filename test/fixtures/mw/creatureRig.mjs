@@ -14,7 +14,8 @@
 //            +- Tri Tail  RIGID
 //
 // and its .kf: Idle, WalkForward (Bip01 forward along +y), Attack1 (start / hit / stop - Head turns), Attack2,
-// Hit1, Death1 - and no RunForward, which a creature that has none walks instead.
+// Hit1, Death1, TurnLeft and TurnRight (which a non-biped never plays) - and no RunForward, which a creature that has
+// none walks instead.
 import { writeNif } from '../../../tools/nifWrite.mjs';
 
 export const CREATURE_MODEL = 'meshes/r/xcreature.nif';
@@ -66,6 +67,7 @@ export const CREATURE_KEYS = Object.freeze([
   [2.9, 'Attack2: Start'], [3.1, 'Attack2: Hit'], [3.3, 'Attack2: Stop'],
   [3.4, 'Hit1: Start'], [3.7, 'Hit1: Stop'],
   [3.8, 'Death1: Start'], [4.4, 'Death1: Stop'],
+  [4.5, 'TurnLeft: Start'], [4.9, 'TurnLeft: Stop'], [5.0, 'TurnRight: Start'], [5.4, 'TurnRight: Stop'],   // a non-biped never plays these
 ]);
 
 /** The .kf: Bip01 walked forward along +y across WalkForward, Head turned a quarter about z across Attack1. */
@@ -86,4 +88,36 @@ export function creatureClip({ keys = CREATURE_KEYS } = {}) {
     ], translations: { keys: [] }, scales: { keys: [] } },
   ];
   return writeNif(r, [0]);
+}
+
+/** MWNPC9b: a CREA record - NAME, MODL (as the record writes it, backslashes), FNAM, FLAG and XSCL. */
+export function creaRec(id, model, { name = id, flags = 0x48, scale = null } = {}) {
+  const sub = (tag, data) => { const b = new Uint8Array(8 + data.length); b.set([...tag].map((c) => c.charCodeAt(0)), 0); new DataView(b.buffer).setUint32(4, data.length, true); b.set(data, 8); return b; };
+  const z = (s) => Uint8Array.from([...s].map((c) => c.charCodeAt(0)).concat(0));
+  const i32 = (n) => { const b = new Uint8Array(4); new DataView(b.buffer).setInt32(0, n, true); return b; };
+  const f32 = (n) => { const b = new Uint8Array(4); new DataView(b.buffer).setFloat32(0, n, true); return b; };
+  const subs = [sub('NAME', z(id)), sub('MODL', z(model)), sub('FNAM', z(name)), sub('NPDT', new Uint8Array(96)), sub('FLAG', i32(flags)), ...(scale == null ? [] : [sub('XSCL', f32(scale))])];
+  const size = subs.reduce((a, s) => a + s.length, 0);
+  const rec = new Uint8Array(16 + size);
+  rec.set([...'CREA'].map((c) => c.charCodeAt(0)), 0);
+  new DataView(rec.buffer).setUint32(4, size, true);
+  let o = 16; for (const s of subs) { rec.set(s, o); o += s.length; }
+  return rec;
+}
+
+/** MWNPC9b: build deps standing the fixture creature - a master carrying its CREA record(s) and an archive holding
+ *  its x-model and .kf (and, `base`, an xbase_anim.kf for a Bipedal one). `files` adds or (null) removes entries. */
+export function creatureDeps({ records = [creaRec('fixture_beast', 'r\\creature.nif', { scale: 1.5 })], base = null, files = {} } = {}) {
+  const map = new Map([[CREATURE_MODEL, creatureModel()], [CREATURE_KF, creatureClip()], ...(base ? [['meshes/xbase_anim.kf', base]] : [])]);
+  for (const [p, b] of Object.entries(files)) { if (b) map.set(p, b); else map.delete(p); }
+  const hedr = new Uint8Array(8 + 300); hedr.set([...'HEDR'].map((c) => c.charCodeAt(0)), 0); new DataView(hedr.buffer).setUint32(4, 300, true);
+  const tes3 = new Uint8Array(16 + hedr.length); tes3.set([...'TES3'].map((c) => c.charCodeAt(0)), 0); new DataView(tes3.buffer).setUint32(4, hedr.length, true); tes3.set(hedr, 16);
+  const parts = [tes3, ...records];
+  const esm = new Uint8Array(parts.reduce((a, r) => a + r.length, 0));
+  let o = 0; for (const r of parts) { esm.set(r, o); o += r.length; }
+  return {
+    loadMorrowindArchives: async () => [{ has: (p) => map.has(p), get: (p) => map.get(p) }],
+    storedMorrowindNames: async () => ['creatures.esm'],
+    loadMorrowindFile: async () => esm,
+  };
 }
