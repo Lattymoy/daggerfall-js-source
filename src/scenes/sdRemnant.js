@@ -27,14 +27,14 @@ import { SD_ARENA, SD_REALM_ORIGIN, realmToDungeon } from '../net/sdBrain.js';
 import { SD_REM, SD_ECHO, SD_HEART, SD_REM_START, SD_BREAK_MS, SD_BLOWS, SD_BLOW_BY_ID, SD_BODY, SD_HEARTS_CLOSE_MS, SD_HEARTS, SD_STUN_MS, SD_PULSE_EVERY_MS, SD_ECHO_PAIR_MS, inArena, atkWindup, blowShape, sdProfileOf } from '../net/sdRemnant.js';
 import { HIT_KINDS, wrapYaw } from '../net/gateBrain.js';
 import { sdBodyAt, sdHeartsOf, sdHourOver, SD_FIGHT_EMPTY } from '../net/sdFightLink.js';
-import { SD_REALM_ARCHIVE } from '../world/sdRealm.js';
-import { remnantArt, remnantLookArt, SD_REMNANT_ARCHIVE, SD_REMNANT_TELL_RECORD, SD_REMNANT_WHITE_RECORD, SD_REMNANT_HUSK_RECORD, SD_REMNANT_HAND_RECORD, SD_REMNANT_LAMP_RECORD } from '../world/sdRemnantArt.js';
+import { SD_REALM_ARCHIVE, SD_REALM_BRASS_RECORD } from '../world/sdRealm.js';
+import { remnantArt, remnantLookArt, SD_REMNANT_ARCHIVE, SD_REMNANT_TELL_RECORD, SD_REMNANT_WHITE_RECORD, SD_REMNANT_HUSK_RECORD, SD_REMNANT_HAND_RECORD, SD_REMNANT_LAMP_RECORD, SD_REMNANT_GATHER_RECORD } from '../world/sdRemnantArt.js';
 import { ensureSdHallArt } from './sdHall.js';
 import { buildRemnantParts, buildHeartModel, buildGearModel, buildBackDialModel, buildDialHandModel, buildRibLampsModel, buildTornHeartModel, heartRecordOf, remnantMatrix, remnantScale, SD_REMNANT_BODY } from '../world/sdRemnantModel.js';
 import { SD_ENDINGS } from '../net/sdMarks.js';
 import { sdTick, handToTwelve } from '../world/sdLook.js';
 import { SD_BLOW_COLOR } from './sdRemnantBlows.js';
-import { remnantRig, rigMatrices, restRig, sdGearsAt, gearMatrix, gearFlightOf, sdKeptList, dialHandMatrix, dialFallMatrix, heartFallMatrix, SD_RIG_PARTS } from './sdRemnantRig.js';
+import { remnantRig, rigMatrices, restRig, sdGearsAt, sdGatherGearsAt, gearMatrix, gatherGearMatrix, gearFlightOf, sdKeptList, dialHandMatrix, dialFallMatrix, heartFallMatrix, SD_RIG_PARTS, SD_REM_HAND } from './sdRemnantRig.js';
 import { bossStandIn, crystalStandIn, hostStandIn } from '../world/gateBoss.js';
 
 /** The look the stand-ins wear for the formulas (characters/enemyBasics.js): an Iron Atronach's - a thing of metal. */
@@ -89,6 +89,8 @@ const _remPose = { x: 0, z: 0, yw: 0, sink: 0, shown: false };
 const _bodyAt = [0, 0];
 /** AUDIT SD III (V5): the gears in flight, a list kept and filled in place (a frame of a Volley's flight made 1.7 KB). */
 const _gears = sdKeptList();
+/** SD-LOOK S8: the gears forming in the hands, a list kept the same way. */
+const _forming = sdKeptList();
 const _echoPose = { x: 0, z: 0, yw: 0, sink: 0, shown: false };
 const _heartPose = { x: 0, z: 0, yw: 0, sink: 0, shown: true };
 /** An Echo's scale beside the Remnant's (world/sdRemnantModel.js remnantScale), once. */
@@ -310,6 +312,7 @@ export function createSdRemnant({ renderer = null, link = () => null, sendIn = (
   });
   const handMaps = SD_DIAL_LOOK.map((look) => remapOf(look === 'cold' ? [] : [[[SD_REMNANT_ARCHIVE, SD_REMNANT_HAND_RECORD.cold], [SD_REMNANT_ARCHIVE, SD_REMNANT_HAND_RECORD[look]]]]));
   const lampMaps = SD_REMNANT_LAMP_RECORD.map((rec, n) => remapOf(n ? [[[SD_REMNANT_ARCHIVE, SD_REMNANT_LAMP_RECORD[0]], [SD_REMNANT_ARCHIVE, rec]]] : []));
+  const gatherMap = remapOf([[[SD_REALM_ARCHIVE, SD_REALM_BRASS_RECORD], [SD_REMNANT_ARCHIVE, SD_REMNANT_GATHER_RECORD]]]);
   const _tells = new Uint8Array(SD_TELLS.length), _hand = new Float64Array(2), _fellBase = new Float32Array(16);
   let fellOf = null;
   const _fellHand = new Float64Array(2);
@@ -354,6 +357,15 @@ export function createSdRemnant({ renderer = null, link = () => null, sendIn = (
     if (!body || body.hidden) { for (const d of list) hide(d); return; }
     rigMatrices(body.object.matrix, remnantRig(s, who, t, _rig), _parts);
     for (let i = 0; i < list.length; i++) { const d = list[i]; if (!d) continue; d.object.matrix.set(_parts[i]); d.hidden = false; }
+  };
+  /** SD-LOOK S8: a forming gear stood at its body's drawn hand (scenes/sdRemnantRig.js SD_REM_HAND, on its arm's matrix) -
+   *  false when that body is not drawn. */
+  const formAt = (f) => {
+    const arm = partDraws[f.who + 1]?.[4 + f.h];
+    if (!arm || arm.hidden) return false;
+    const m = arm.object.matrix, p = SD_REM_HAND[f.h];
+    f.x = m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12]; f.y = m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13]; f.z = m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14];
+    return true;
   };
   /** SD-LOOK S8: body `b`'s tells on its parts (the raised leg's sole, the blade, the fist, the ribs and the heart - each
    *  part's remap to its heat), its back-dial on its torso and its hand turned on it - the Remnant's broken free and
@@ -431,13 +443,14 @@ export function createSdRemnant({ renderer = null, link = () => null, sendIn = (
       limbs(partDraws[0], remDraw, -1, s, t);   // SD17: its body moved
       decor(0, s, t);   // SD-LOOK S8: its tells, its dial, its lamps, its fall
       for (let e = 0; e < echoDraws.length; e++) { place(echoDraws[e], turn(echoPose(s, e, t, _echoPose), 1 + e, dt), ECHO_SCALE); limbs(partDraws[1 + e], echoDraws[e], e, s, t); decor(1 + e, s, t); }
-      // SD17: the Volley's gears in flight
-      const gears = live(s) ? sdGearsAt(s, t, _gears) : NONE;
+      // SD17: the Volley's gears in flight - SD-LOOK S8: and after them, those forming in its hands as it gathers
+      const gears = live(s) ? sdGearsAt(s, t, _gears) : NONE, forming = live(s) ? sdGatherGearsAt(s, t, _forming) : NONE;
       for (let g = 0; g < gearDraws.length; g++) {
-        const d = gearDraws[g], q = gears[g];
+        const d = gearDraws[g], q = gears[g], f = q ? null : forming[g - gears.length];
         if (!d) continue;
-        if (!q) { hide(d); continue; }
-        gearMatrix(q.x, q.y, q.z, q.spin, d.object.matrix, q.yaw); d.hidden = false;   // AUDIT SD III (V12): on edge along its flight
+        if (q) { gearMatrix(q.x, q.y, q.z, q.spin, d.object.matrix, q.yaw); d.texRemap = null; d.hidden = false; }   // AUDIT SD III (V12): on edge along its flight
+        else if (f && formAt(f)) { gatherGearMatrix(f, d.object.matrix); d.texRemap = gatherMap; d.hidden = false; }   // forming at its drawn hand, hot in the Volley's colour
+        else hide(d);
       }
       const cx = live(s) && !s.fell ? sdHeartsOf(s, t) : null;   // standing while the Reset winds up - gone as it lands
       for (let c = 0; c < heartDraws.length; c++) {

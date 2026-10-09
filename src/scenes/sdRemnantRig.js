@@ -355,6 +355,41 @@ export function sdGearsAt(s, t, out = null) {
   return list;
 }
 
+const newGather = () => ({ x: 0, y: 0, z: 0, spin: 0, who: 0, h: 0, k: 0, yaw: 0 });
+/**
+ * SD-LOOK S8: THE VOLLEY'S GEARS FORMING (Super-Dungeons-Look.md section 10's tell): through each standing body's gather -
+ * its wind-up until its gears leave its hands (gearFlightOf) - a gear grows in each of its hands (`h` 0 its right, 1 its
+ * left - SD_REM_HAND's), spinning, whole as they leave: `{ who, h, k, spin, yaw }` (`k` its size, `yaw` its body's
+ * facing turned a quarter, so its face is to the front), into `out` (an sdKeptList) when one is given - the scene stands
+ * each at its drawn hand (`x, y, z`). Pure.
+ */
+export function sdGatherGearsAt(s, t, out = null) {
+  /** @type {any[]} */ let list = /** @type {any} */ (NONE);
+  if (out) out.length = 0;
+  if (!live(s) || s.fell) return list;
+  for (let who = -1; who < (s.ec?.length ?? 0); who++) {
+    const Bd = who < 0 ? s.rem : s.ec[who], a = Bd?.atk;
+    if (!a || a.a !== SD_BLOWS.volley.id || (who >= 0 && !(Bd.h > 0)) || (who < 0 && (s.ph === 2 || t < s.su))) continue;
+    const w = atkWindup(a, SD_BLOWS.volley, s.ph, who < 0 ? SD_BODY.remnant : SD_BODY.gold + who), t0 = a.at - w, go = a.at - gearFlightOf(w);
+    if (!(t >= t0 && t < go)) continue;
+    for (let h = 0; h < 2; h++) {
+      if (list === NONE) list = out ?? sdKeptList();
+      const g = keptNext(list, newGather);
+      g.who = who; g.h = h; g.k = (t - t0) / (go - t0); g.spin = (t / 1000) * SD_GEAR_SPIN * (h ? -1 : 1); g.yaw = (Bd.yw ?? 0) + Math.PI / 2;
+    }
+  }
+  return list;
+}
+/** A forming gear (sdGatherGearsAt's record, its `x, y, z` the DUNGEON's frame) - gearMatrix's turn at its size - into
+ *  `out` (the record read whole: AUDIT SD II, L2 F9's law). */
+export function gatherGearMatrix(q, out) {
+  gearMatrix(0, 0, 0, q.spin, out, q.yaw);
+  const k = q.k;
+  for (let i = 0; i < 11; i++) out[i] *= k;
+  out[12] = q.x; out[13] = q.y; out[14] = q.z;
+  return out;
+}
+
 /** The distance along bearing `b` from (x, z) to the first pillar's face, `len` at most. Pure. */
 export function beamReach(x, z, b, len) {
   const sx = Math.sin(b), cz = Math.cos(b);

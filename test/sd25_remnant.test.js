@@ -10,7 +10,7 @@ import { pathToFileURL, fileURLToPath } from 'node:url';
 import {
   remnantTellArt, remnantDialArt, remnantLampArt, remnantLookArt, remnantArt, tellLit, SD_REMNANT_ARCHIVE, SD_REMNANT_TELL_RECORD, SD_REMNANT_WHITE_RECORD,
   SD_REMNANT_HUSK_RECORD, SD_REMNANT_DIAL_RECORD, SD_REMNANT_HAND_RECORD, SD_REMNANT_LAMP_RECORD, SD_REMNANT_RIM_RECORD, SD_TELL_REGION, SD_TELL_ART_SIZE,
-  SD_TELL_BLOW, SD_TELL_GLOW, SD_BLADE_MID, SD_DIAL_ART, SD_LAMP_ART, SD_DIAL_RIM_GLOW, echoMetalArt,
+  SD_TELL_BLOW, SD_TELL_GLOW, SD_BLADE_MID, SD_DIAL_ART, SD_LAMP_ART, SD_DIAL_RIM_GLOW, SD_REMNANT_GATHER_RECORD, SD_GATHER_GLOW, echoMetalArt,
 } from '../src/world/sdRemnantArt.js';
 import {
   buildRemnantParts, buildBackDialModel, buildDialHandModel, buildRibLampsModel, buildTornHeartModel, ribLampAt, heartRecordOf, remnantMatrix,
@@ -20,7 +20,7 @@ import {
   createSdRemnant, ensureSdRemnantArt, sdTellsAt, sdDialHandAt, sdRibLampsLit, SD_TELLS, SD_TELL_HEAT, SD_TELL_AFTER_MS, SD_DIAL_LOOK, SD_DIAL_TURNS,
   SD_GEAR_DRAWS, SD_DECOR_DRAWS,
 } from '../src/scenes/sdRemnant.js';
-import { dialHandMatrix, dialFallMatrix, heartFallMatrix, gearFlightOf, mul4, SD_FALL_DECOR, SD_RIG_PARTS } from '../src/scenes/sdRemnantRig.js';
+import { dialHandMatrix, dialFallMatrix, heartFallMatrix, gearFlightOf, mul4, sdGatherGearsAt, SD_FALL_DECOR, SD_RIG_PARTS, SD_REM_HAND } from '../src/scenes/sdRemnantRig.js';
 import { SD_BLOW_COLOR } from '../src/scenes/sdRemnantBlows.js';
 import { SD_BLOWS, SD_BODY, SD_HEARTS, SD_STUN_MS, SD_ECHO_PAIR_MS, SD_REM_START, windupFor } from '../src/net/sdRemnant.js';
 import { SD_FIGHT_EMPTY } from '../src/net/sdFightLink.js';
@@ -199,6 +199,35 @@ test('SD-LOOK S8 ONLY THE PART THAT TELLS LIGHTS (the scene): each telling part 
   s.at(at - 0.2 * windupFor(SD_BLOWS.stomp, 2, SD_BODY.gold), fight({ ph: 2, ec: echoes({ atk: blowAt(SD_BLOWS.stomp, at) }) }));
   assert.deepEqual(s.parts(1)[0].texRemap ? [...s.parts(1)[0].texRemap] : null, [[key(SD_REMNANT_ARCHIVE, G[0]), key(SD_REMNANT_ARCHIVE, G[2])]], 'gold\'s own atlas');
   assert.equal(s.parts(2)[0].texRemap, null, 'silver\'s still');
+});
+
+test('SD-LOOK S8 THE VOLLEY\'S GEARS FORM IN ITS HANDS (sdGatherGearsAt; the stretch tell): through its gather a gear grows in each hand, spinning, whole as they leave it - none before its wind-up, none from the moment they fly (the flight\'s own), an Echo\'s by its own wind-up, none stunned, outside time or broken; the scene stands each at its body\'s DRAWN hand, at its size, hot in the Volley\'s colour (its own record), and the gears in flight cold (mutants: the gears whole at once; forming past their leaving; forming cold; each at the other hand)', () => {
+  const at = T0 + 10_000, w = SD_BLOWS.volley.windup, go = at - gearFlightOf(w), t0 = at - w;
+  const vo = fight({ rem: { ...fight().rem, atk: blowAt(SD_BLOWS.volley, at, { tg: [[3, 3], [-4, 2]] }) } });
+  const mid = t0 + (go - t0) / 2;
+  assert.deepEqual(sdGatherGearsAt(vo, t0 - 1), [], 'nothing before its wind-up');
+  const g = sdGatherGearsAt(vo, mid);
+  assert.deepEqual(g.map((q) => [q.who, q.h, +q.k.toFixed(6)]), [[-1, 0, 0.5], [-1, 1, 0.5]], 'one in each hand, half grown');
+  assert.ok(sdGatherGearsAt(vo, go - 1).every((q) => q.k > 0.99), 'whole as they leave');
+  assert.deepEqual([sdGatherGearsAt(vo, go).length, sdGatherGearsAt({ ...vo, su: at + 5000 }, mid).length, sdGatherGearsAt({ ...vo, ph: 2 }, mid).length], [0, 0, 0], 'none flying, stunned or outside time');
+  const ew = windupFor(SD_BLOWS.volley, 2, SD_BODY.gold), ego = at - gearFlightOf(ew), ev = fight({ ph: 2, ec: echoes({ atk: blowAt(SD_BLOWS.volley, at, { tg: [[1, 1]] }) }) });
+  assert.deepEqual(sdGatherGearsAt(ev, (at - ew + ego) / 2).map((q) => [q.who, +q.k.toFixed(6)]), [[0, 0.5], [0, 0.5]], 'an Echo\'s by its own wind-up');
+  assert.equal(sdGatherGearsAt(fight({ ph: 2, ec: echoes({ atk: blowAt(SD_BLOWS.volley, at), h: 0, dn: T0 }) }), (at - ew + ego) / 2).length, 0, 'none on a broken Echo');
+  // the scene: after the flying ones, at the drawn hands
+  const s = set(vo), H = 3 + SD_HEARTS[1], gears = s.draws.slice(H + 3 * SD_RIG_PARTS.length, H + 3 * SD_RIG_PARTS.length + SD_GEAR_DRAWS);
+  s.at(mid);
+  const shown = gears.filter((d) => !d.hidden);
+  assert.equal(shown.length, 2);
+  shown.forEach((d, h) => {
+    const arm = s.parts(0)[4 + h].object.matrix, p = SD_REM_HAND[h], want = [0, 1, 2].map((k) => arm[k] * p[0] + arm[4 + k] * p[1] + arm[8 + k] * p[2] + arm[12 + k]);
+    assert.ok([12, 13, 14].every((i, k) => near(d.object.matrix[i], want[k], 1e-4)), `gear ${h} at its drawn hand`);
+    assert.ok(near(Math.hypot(d.object.matrix[0], d.object.matrix[1], d.object.matrix[2]), 0.5, 1e-5), 'at its size');
+    assert.deepEqual([...d.texRemap], [[key(SD_REALM_ARCHIVE, SD_REALM_BRASS_RECORD), key(SD_REMNANT_ARCHIVE, SD_REMNANT_GATHER_RECORD)]], 'hot in the Volley\'s colour');
+  });
+  s.at(go + 10);
+  assert.ok(gears.filter((d) => !d.hidden).length === 2 && gears.filter((d) => !d.hidden).every((d) => d.texRemap === null), 'in flight: cold');
+  const art = remnantLookArt(SD_BLOW_COLOR).find(([r]) => r === SD_REMNANT_GATHER_RECORD)[1], e = texel(art.emission, 3, 1);
+  assert.ok(e.every((v, i) => Math.abs(v - Math.round(Math.round(SD_BLOW_COLOR.volley[i] * 255) * SD_GATHER_GLOW * 0.8)) <= 1), 'the Volley\'s colour');
 });
 
 // ── the back-dial ──────────────────────────────────────────────────────────────────────────────────────────────────
@@ -393,7 +422,7 @@ test('SD-LOOK S8 NOTHING THAT TURNS CASTS: every decor draw (the dials, their ha
   assert.equal(up.length, n, 'once a renderer');
   assert.deepEqual(Object.values(SD_REMNANT_HAND_RECORD).length, SD_DIAL_LOOK.length);
   assert.equal(SD_REMNANT_TELL_RECORD.brass.length, 3);
-  assert.equal(new Set([...Object.values(SD_REMNANT_TELL_RECORD).flat(), ...SD_REMNANT_WHITE_RECORD, SD_REMNANT_HUSK_RECORD, ...Object.values(SD_REMNANT_DIAL_RECORD), ...Object.values(SD_REMNANT_HAND_RECORD), ...SD_REMNANT_LAMP_RECORD, ...Object.values(SD_REMNANT_RIM_RECORD)]).size, recs.length);
+  assert.equal(new Set([...Object.values(SD_REMNANT_TELL_RECORD).flat(), ...SD_REMNANT_WHITE_RECORD, SD_REMNANT_HUSK_RECORD, ...Object.values(SD_REMNANT_DIAL_RECORD), ...Object.values(SD_REMNANT_HAND_RECORD), ...SD_REMNANT_LAMP_RECORD, ...Object.values(SD_REMNANT_RIM_RECORD), SD_REMNANT_GATHER_RECORD]).size, recs.length);
   assert.notEqual(SD_REALM_BRASS_RECORD, SD_REMNANT_TELL_RECORD.brass[0]);
   assert.ok(buildDialHandModel().subMeshes.every((sm) => sm.textureArchive === SD_REMNANT_ARCHIVE && sm.textureRecord === SD_REMNANT_HAND_RECORD.cold));
 });

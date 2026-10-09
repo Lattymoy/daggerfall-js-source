@@ -89,6 +89,9 @@ export const SD_REMNANT_LAMP_RECORD = Object.freeze(Array.from({ length: 9 }, (_
  *  line - world/sdRealmArt.js SD_EDGE_GLOW), so from the front its rim haloes the head; SD_DIAL_RIM_GLOW of its colour. */
 export const SD_REMNANT_RIM_RECORD = Object.freeze({ brass: 129, gold: 130, silver: 131 });
 export const SD_DIAL_RIM_GLOW = 0.3;
+/** The Volley's gears forming in its hands: brass hot in the Volley's colour (a tell, from any side), SD_GATHER_GLOW of it. */
+export const SD_REMNANT_GATHER_RECORD = 132;
+export const SD_GATHER_GLOW = 0.8;
 /** The atlas's side, and its regions in texels `[x0, y0, w, h]` (row 0 is v 0): the sole's tread, the fist's knuckles,
  *  the blade (its length along u, 0 at the tip, the root at the right), the ribs' bar (along u). */
 export const SD_TELL_ART_SIZE = 64;
@@ -191,6 +194,13 @@ export function remnantRimArt(metal) {
   for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) { const c = step(M, y % 4 === 3 ? top - 2 : top - (x + y) % 2); putTexel(albedo, x, y, c); putTexel(emission, x, y, kitScale(c, SD_DIAL_RIM_GLOW)); }
   return { albedo, emission };
 }
+/** THE VOLLEY'S GEARS FORMING: bright brass heated toward `color` (the Volley's), rubbed rows a texel apart, its light
+ *  SD_GATHER_GLOW of the colour. */
+export function remnantGatherArt(color) {
+  const S = SD_ENDING_ART_SIZE, albedo = kitImage(S), emission = kitImage(S), hue = rgb8(color), Br = SD_RAMP.brass;
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) { const edge = y % 4 === 0; putTexel(albedo, x, y, blendRgb(step(Br, edge ? 5 : 4), hue, edge ? 0.5 : 0.7)); putTexel(emission, x, y, kitScale(hue, SD_GATHER_GLOW * (edge ? 1 : 0.8))); }
+  return { albedo, emission };
+}
 /** THE DIAL'S HAND, by its look: cold (the dial's dark brass, no light - it only ticks), or lit in the light it means -
  *  ember (the stun running out), gold or silver (the fallen Echo's window), white (the Reset). */
 export function remnantHandArt(look) {
@@ -229,5 +239,6 @@ export function remnantLookArt(colors) {
   for (const [look, rec] of Object.entries(SD_REMNANT_HAND_RECORD)) out.push([rec, remnantHandArt(look)]);
   SD_REMNANT_LAMP_RECORD.forEach((rec, n) => out.push([rec, remnantLampArt(n)]));
   for (const metal of /** @type {const} */ (['brass', 'gold', 'silver'])) out.push([SD_REMNANT_RIM_RECORD[metal], remnantRimArt(metal)]);
+  out.push([SD_REMNANT_GATHER_RECORD, remnantGatherArt(colors.volley)]);
   return out;
 }
