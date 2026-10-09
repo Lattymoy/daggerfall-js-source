@@ -474,5 +474,19 @@
     "old": "if (loadedWagonHeld(sellable[i])) sellable.splice(i, 1);",
     "new": "if (false) sellable.splice(i, 1);",
     "tests": ["test/wagons2.test.js"]
+  },
+  {
+    "name": "WAGONS2-VISIT-AUDIT-a-door-on-anything",
+    "file": "src/systems/itemLaw.js",
+    "old": "|| has(item, 'wagonEntry')) &&",
+    "new": ") &&",
+    "tests": ["test/wagons2.test.js"]
+  },
+  {
+    "name": "WAGONS2-VISIT-AUDIT-an-unknown-door-lawful",
+    "file": "src/systems/itemFields.js",
+    "old": "wagonEntry: oneOf(['private', 'party', 'public', 'guild']),",
+    "new": "wagonEntry: str(),",
+    "tests": ["test/wagons2.test.js"]
   }
 ]

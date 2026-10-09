@@ -226,7 +226,7 @@ export function itemFindings(v, opts = {}) {
     && item.decks.every((/** @type {any} */ d) => Array.isArray(d?.cards) && d.cards.every((/** @type {string} */ c) => cardById(c))))) out.add('card');
   // ── a wagon's mark: on DFU's Small Cart alone, and a marked kind at its own price (WAGONS2 AUDIT: a row marked a
   //    Caravan at the cart's 150 sold as a Caravan at the cart's price) ──
-  if ((has(item, 'wagonKind') || has(item, 'wagonLook')) && item.templateIndex !== TRANSPORT_SMALL_CART) out.add('wagon');
+  if ((has(item, 'wagonKind') || has(item, 'wagonLook') || has(item, 'wagonEntry')) && item.templateIndex !== TRANSPORT_SMALL_CART) out.add('wagon');
   if (has(item, 'wagonKind') && item.wagonKind !== 'cart' && !(item.value >= (WAGON_KINDS[item.wagonKind]?.value ?? Infinity))) out.add('wagon');
   // ── the Broker's binding ────────────────────────────────────────────
   if (has(item, 'stonesPaid') && !(item.bound === true && BROKER_STONES.has(item.stonesPaid))) out.add('bound');

@@ -177,6 +177,9 @@ export const ITEM_FIELDS = Object.freeze({
   // cart) and its paint (systems/wagonLooks.js: `{ o, w, f, c }`, each one of six - absent, as built)
   wagonKind: oneOf(['cart', 'openWagon', 'caravan']),
   wagonLook: rec((l) => Object.keys(l).every((k) => ['o', 'w', 'f', 'c'].includes(k) && Number.isInteger(l[k]) && l[k] >= 0 && l[k] < 6)),
+  // WAGONS2-VISIT: who may enter a caravan (systems/caravanVisit.js - an online home's entries, net/homeLaw.js
+  // HOME_ENTRIES; absent, its owner alone)
+  wagonEntry: oneOf(['private', 'party', 'public', 'guild']),
 });
 
 /** The declared names, and those of one kind. */

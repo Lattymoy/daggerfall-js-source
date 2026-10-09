@@ -38,6 +38,8 @@ import { createCaravanAccess, parkedCaravanAt, CARAVAN_STANDS_NATIVES } from '..
 import { WAGON_MODE } from '../src/systems/horseCartLaw.js';
 import { createSceneCache, cacheScene, layoutSceneName, addPermanentScene, containsPermanentScene, foldLayoutCopies } from '../src/systems/sceneCache.js';
 import { itemFindings } from '../src/systems/itemLaw.js';
+import { ITEM_FIELDS } from '../src/systems/itemFields.js';
+import { HOME_ENTRIES } from '../src/net/homeLaw.js';
 
 const src = (p) => readFileSync(new URL(`../src/${p}`, import.meta.url), 'utf8');
 const bakeOf = (kind) => JSON.parse(readFileSync(new URL(`../src/assets/wagons/${kind}.json`, import.meta.url), 'utf8'));
@@ -579,5 +581,9 @@ test('WAGONS2 (AUDIT) THE CARAVAN KEPT: the wagon a player drives while it holds
   assert.ok(itemFindings({ ...caravan, value: 150 }).includes('wagon'), 'a caravan at the cart\'s price');
   assert.ok(itemFindings({ ...sword, wagonKind: 'cart' }).includes('wagon'), 'a mark on anything but the cart');
   assert.ok(itemFindings({ ...sword, wagonLook: { o: 1 } }).includes('wagon'), 'a paint on anything but the cart');
+  assert.ok(itemFindings({ ...sword, wagonEntry: 'public' }).includes('wagon'), 'a door on anything but the cart');
+  assert.deepEqual(itemFindings({ ...caravan, wagonEntry: 'guild' }), [], 'a caravan\'s door');
+  assert.ok(itemFindings({ ...caravan, wagonEntry: 'everyone' }).includes('shape'), 'a door the law does not know');
+  assert.deepEqual([...ITEM_FIELDS.wagonEntry.values].sort(), [...HOME_ENTRIES].sort(), 'an online home\'s entries');
   assert.ok(itemFindings({ ...caravan, wagonLook: { o: 6 } }).includes('shape'), 'a paint the law does not know');
 });

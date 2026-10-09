@@ -21,7 +21,11 @@
 //          hosts' fetch; absent, the classic model 41214 stands for every kind, as before WAGONS1),
 //          enterCaravan() (WAGONS1: my parked caravan's "Step inside" row - scenes/caravanRoom.js; absent, no row),
 //          riders (WAGONS1: the seats in the back - scenes/wagonRiders.js: { passengers(), go(), declined() - my word's
-//          `ps`, `go` and `pn`; acts(owner, kind, kept) -> plaque rows over another player's wagon; press(owner, id, distance) }) }
+//          `ps`, `go` and `pn`; acts(owner, kind, kept) -> plaque rows over another player's wagon; press(owner, id, distance) }),
+//          wagonEntry() -> { entry, guild } | null (WAGONS2-VISIT: who may enter my caravan - the word's `we` and `wg`),
+//          caravanEntry ({ row() -> label | null, turn() -> line | null } - WAGONS2-VISIT: my parked caravan's "Who may
+//          enter" row, and its press), visit ({ may(target), enter(target) } - WAGONS2-VISIT: another's parked caravan whose
+//          door is open to me, its "Step inside" row and press; absent, no row) }
 //
 // WAGONS1 (2026-10-09, Mac: "1. Is a replacement model for the current cart ingame 2. Theres an open wagon ... 3. Is a
 // closed wagon varient"): THE WAGON DRAWN IS MAC'S. With the hosts' `bakedWagon` the parts are his Wagon Cart, Open
@@ -77,6 +81,10 @@ export const HORSE_WALK_BILLBOARD_HEIGHT = HORSE_WALK_SPRITE_HEIGHT * GLOBAL_SCA
 export const WAGON_BUCKET = 'hccWagon';
 /** WAGONS1: the plaque row that takes the player into their parked caravan (a row id the mod's modes never are). */
 export const CARAVAN_ENTER_ROW = 'wagon:enter';
+/** WAGONS2-VISIT (2026-10-09, Mac: "Like an online home"): "Step inside" another player's parked caravan whose door is
+ *  open to me, and "Who may enter" on my own - row ids neither the mod's modes nor the riders' ('wagon:...') are. */
+export const CARAVAN_VISIT_ROW = 'caravan:visit';
+export const CARAVAN_ENTRY_ROW = 'caravan:entry';
 /** The activation keys the hosts race. */
 export const KEY_WAGON = 'hccWagon', KEY_FOLLOWING_WAGON = 'hccFollowingWagon', KEY_HORSE = 'hccHorse';
 export { WAGON_HOVER_TEXT, HORSE_BOX_CENTER, HORSE_BOX_SIZE };   // the pool's callers read them here (the pins do)
@@ -180,6 +188,9 @@ export function createHorseCartPool({
   wagonLook = /** @type {() => any} */ (() => null),
   enterCaravan = /** @type {(() => any) | null} */ (null),
   riders = /** @type {any} */ (null),
+  wagonEntry = /** @type {() => any} */ (() => null),
+  caravanEntry = /** @type {any} */ (null),
+  visit = /** @type {any} */ (null),
 } = {}) {
   /** @type {any} */ let runtime = null;
   let enabled = true;   // the mod's Enabled switch: off, nothing of the mod stands, draws, answers the ray or rides the wire
@@ -447,6 +458,8 @@ export function createHorseCartPool({
     // WAGONS2: what the draw turns its wheels and bogie by (the wire carries none of it): the moving wagon's own, the
     // parked one's as they stood when it stopped (none: as the mod stands a parked wagon's, at 0)
     if (wagon) wagon.turn = wagon.kind === HCC_WIRE_KIND.Deployed ? v.rest ?? null : { angle: v.moving.wheel?.angle ?? 0, angles: v.moving.wheel?.angles ?? null, steer: v.moving.pose.steer ?? 0 };
+    const entry = wagon ? wagonEntry?.() : null;   // WAGONS2-VISIT: who may enter it (the wire's `we`, and the guild's `wg`)
+    if (entry) { wagon.entry = entry.entry; wagon.guild = entry.guild ?? null; }
     const h = v.horse;
     const horse = h?.isInteractive ? { position: h.position, forward: h.forward, frame: h.walk?.animationFrame ?? 0, walking: !!h.walk?.walking } : null;
     return { wagon, horse, name: v.state?.HorseName ?? '', interaction: !!v.moving?.interaction, deployed: !!v.deployed?.isGrounded, go: riders?.go?.() ?? null, declined: riders?.declined?.() ?? [] };   // WAGONS1: a journey my riders go on, who I turned away
@@ -691,12 +704,17 @@ export function createHorseCartPool({
   const wagonTitle = (kind) => (validWagonKind(kind) && kind !== 'cart' ? WAGON_KINDS[kind].name : WAGON_HOVER_TEXT);
   /** WAGONS1: my parked caravan's door - "Step inside" after the mod's own rows (its storage stays "Open the wagon"). */
   const withCaravanRow = (named, parked = true) => (parked && enterCaravan && WAGON_KINDS[myKind()]?.enterable ? { ...named, actions: [...(named.actions ?? []), { id: CARAVAN_ENTER_ROW, label: CARAVAN_TEXT.enter }] } : named);
+  /** WAGONS2-VISIT: and on my parked caravan, online, who may enter it - "Who may enter: ..." after its door (the host's
+   *  words; a press moves it on). */
+  const withEntryRow = (named, parked = true) => { const label = parked && WAGON_KINDS[myKind()]?.enterable ? caravanEntry?.row?.() ?? null : null; return label ? { ...named, actions: [...(named.actions ?? []), { id: CARAVAN_ENTRY_ROW, label }] } : named; };
+  /** WAGONS2-VISIT: "Step inside" over another player's parked caravan whose door is open to me (the host's word). */
+  const caravanVisitRows = (owner) => { const t = visit?.may ? visitTarget(owner) : null; return t && visit.may(t) ? [{ id: CARAVAN_VISIT_ROW, label: CARAVAN_TEXT.enter }] : []; };
   /** WORLD-HOVER: the plaque's word - the horse's name or "Horse" (HorseTargetLabel), "Wagon", and a peer's by whose it is. */
   function hoverName(key) {
     if (typeof key !== 'string') return null;
     // ACT-MENU: my own three carry the mod's verbs as the plaque's rows (horseCartLaw.js hccActionRows) - the wheel
     // lights one and the activate key presses it, in place of the interaction mode set beforehand
-    if ((key === KEY_WAGON || key === KEY_FOLLOWING_WAGON) && myKind() !== 'cart') return withCaravanRow(withActions({ title: wagonTitle(myKind()) }, key === KEY_WAGON ? 'deployedWagon' : 'followingWagon'), key === KEY_WAGON);   // WAGONS1: a bigger wagon by its own name, the caravan's door on the parked one
+    if ((key === KEY_WAGON || key === KEY_FOLLOWING_WAGON) && myKind() !== 'cart') return withEntryRow(withCaravanRow(withActions({ title: wagonTitle(myKind()) }, key === KEY_WAGON ? 'deployedWagon' : 'followingWagon'), key === KEY_WAGON), key === KEY_WAGON);   // WAGONS1: a bigger wagon by its own name, the caravan's door on the parked one
     if (key === KEY_WAGON) return withActions({ title: WAGON_HOVER_TEXT }, 'deployedWagon');
     if (key === KEY_FOLLOWING_WAGON) return withActions({ title: WAGON_HOVER_TEXT }, 'followingWagon');
     if (key === KEY_HORSE) return withActions({ title: runtime ? runtime.horseTargetLabel : horseTargetLabel('') }, 'horse');
@@ -712,6 +730,8 @@ export function createHorseCartPool({
     const owned = ownedLine(who);
     if (pk.what === 'w') {
       const rows = riders?.acts?.(p.ownerId ?? pk.owner, p.wagon?.model, p.kept) ?? [];   // WAGONS1: ask to ride, get down
+      const inside = caravanVisitRows(pk.owner);   // WAGONS2-VISIT: step into it, where its door is open to me
+      if (inside.length) return { title: wagonTitle(p.wagon?.model), subs: [owned], actions: [...rows, ...inside] };
       return rows.length ? { title: wagonTitle(p.wagon?.model), subs: [owned], actions: rows } : { title: wagonTitle(p.wagon?.model), subs: [owned] };
     }
     return { title: horseTargetLabel(p.name ?? ''), subs: [owned] };
@@ -734,11 +754,23 @@ export function createHorseCartPool({
       void enterCaravan?.();
       return true;
     }
+    if (key === KEY_WAGON && mode === CARAVAN_ENTRY_ROW) {   // WAGONS2-VISIT: who may enter my caravan, moved on - at the mod's own reach
+      if (!(distance <= ACTIVATION_REACH)) { tooFar?.(); return true; }   // the mod's own reach
+      const line = caravanEntry?.turn?.() ?? null;
+      if (line) say?.(line);
+      return true;
+    }
     if (key === KEY_WAGON) return runtime.handleDeployedWagonActivation(distance, mode);
     if (key === KEY_FOLLOWING_WAGON) return runtime.handleFollowingWagonActivation(distance, mode);
     if (key === KEY_HORSE) return runtime.handleStationaryHorseActivation(distance, mode);
     const pk = peerOfKey(key);
     if (!pk || !_peers.has(pk.owner)) return false;
+    if (pk.what === 'w' && mode === CARAVAN_VISIT_ROW) {   // WAGONS2-VISIT: into another's caravan, at the mod's own reach
+      if (!(distance <= ACTIVATION_REACH)) { tooFar?.(); return true; }   // the mod's own reach
+      const t = visitTarget(pk.owner);
+      if (t) void visit?.enter?.(t);
+      return true;
+    }
     if (pk.what === 'w' && typeof mode === 'string' && mode.startsWith('wagon:') && riders?.press) return !!riders.press(_peers.get(pk.owner)?.ownerId ?? pk.owner, mode, distance);   // WAGONS1: the seats' own reach (systems/wagonSeats.js RIDE_ASK_REACH)
     if (!(distance <= ACTIVATION_REACH)) { tooFar?.(); return true; }
     const n = hoverName(key);
@@ -788,11 +820,36 @@ export function createHorseCartPool({
     const s = shown();
     const w = s?.wagon;
     if (!w || w.kind !== HCC_WIRE_KIND.Deployed || !WAGON_KINDS[w.model]?.enterable) return null;
-    const door = partsOf(w.model)?.door;
+    return caravanDoorAt(w.model, w.position, w.rotation);
+  }
+  /** WAGONS1: THE CARAVAN'S DOOR LAW, one home for mine and another's (WAGONS2-VISIT): a caravan of `kind` standing at
+   *  `position` / `rotation` - its pose, the ground behind its rear door and the way out, facing away; null without its
+   *  model's door. */
+  function caravanDoorAt(kind, position, rotation) {
+    const door = partsOf(kind)?.door;
     if (!door) return null;
-    const off = quatRotate(w.rotation, door.step);
-    const out = quatRotate(w.rotation, [0, 0, -1]);
-    return { position: [...w.position], rotation: [...w.rotation], step: [w.position[0] + off[0], w.position[1] + off[1], w.position[2] + off[2]], yaw: Math.atan2(out[0], out[2]) };
+    const off = quatRotate(rotation, door.step);
+    const out = quatRotate(rotation, [0, 0, -1]);
+    return { position: [...position], rotation: [...rotation], step: [position[0] + off[0], position[1] + off[1], position[2] + off[2]], yaw: Math.atan2(out[0], out[2]) };
+  }
+  /**
+   * WAGONS2-VISIT: ANOTHER PLAYER'S PARKED CARAVAN, AS A VISIT NAMES IT - its owner key `k` (the cell's record of it names
+   * it: the room is `caravan:<k>`; a live word alone names none, so a caravan the cell keeps no record of opens to
+   * nobody), its owner (the session's name for them, else the relay's stamp on the record), who may enter (`entry`,
+   * `guild`), its inside's paint (`look`), where its record stands (`at`, natives - the visit's own test that it still
+   * does) and its door as drawn here (caravanDoorAt). Null for anything but a parked caravan.
+   */
+  function visitTarget(owner) {
+    const p = _peers.get(owner);
+    const w = p?.wagon;
+    if (!w || w.kind !== HCC_WIRE_KIND.Deployed || !WAGON_KINDS[w.model]?.enterable || !p.shownWagon || !p.wire?.w) return null;
+    let kept = null;
+    for (const e of _kept.values()) if ((p.kept ? keptKey(e.k) === owner : e.id === (p.ownerId ?? owner)) && (!kept || e.seq > kept.seq)) kept = e;
+    if (!kept) return null;
+    const door = caravanDoorAt(w.model, p.shownWagon, p.shownRotation ?? w.rotation);
+    if (!door) return null;
+    const name = peerName(p.ownerId ?? owner) ?? (kept.name || p.ownerName || null);
+    return { ...door, k: kept.k, owner: name, entry: w.entry ?? 'private', guild: w.guild ?? null, look: w.look ?? null, at: [...p.wire.w.position] };
   }
 
   // ── the floating origin
@@ -1001,6 +1058,7 @@ export function createHorseCartPool({
     const near = (x, z) => Math.abs(x - a[0]) <= PARK_REACH && Math.abs(z - a[1]) <= PARK_REACH;
     if (horseParked && rec?.h && !v.horseFollowing && !v.teamFollowing && near(rec.h[0], rec.h[2])) { r.h = [...rec.h]; r.h[5] = 0; if (rec.n) r.n = rec.n; }
     if (r.w && !near(r.w[1], r.w[3])) { delete r.w; delete r.wk; delete r.wh; delete r.wl; }
+    if (r.w && rec.we) { r.we = rec.we; if (rec.wg) r.wg = rec.wg; }   // WAGONS2-VISIT: who may enter it, the cell's to keep while its owner is away
     return r.w || r.h ? { a, r } : { a };
   }
 
@@ -1027,6 +1085,7 @@ export function createHorseCartPool({
     frame, batches, draw, targets, hoverName, tooltipText, activate, offsetAll, destroyAll, clearPeers, shown, groundMoved,
     wireRecord, applyOwner, sweepOwners, applyKept, replaceKept, pruneKept, parkWord, parkedDoor, mySeat, peerSeat, peerRide, mySeatCount, mySeatsKnown,
     seatDrawn, seatGlue, drawnFrameOf, puppetSeatDrawn,   // WAGONS2: the seats as drawn - the Overworld's grown wagons
+    visitTarget,   // WAGONS2-VISIT
     get peers() { return _peers; }, get kept() { return _kept; }, get parts() { return partsOf(myKind()); }, partsOf, hitchOf,
   };
 }

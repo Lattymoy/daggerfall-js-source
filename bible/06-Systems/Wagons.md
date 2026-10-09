@@ -305,6 +305,68 @@ now measure to the wagon's run, from its anchor forward by `hitch - 3.1`
 (`src/systems/horseCart.js` nearestOnWagon). The store's reach is measured
 the same way.
 
+### Visits (WAGONS2-VISIT)
+
+Mac, item 3: "People should be able to use the interior just like houses,
+like crafting and such". Asked who may come into a player's caravan online,
+he chose "Like an online home": the owner sets who, and visitors cannot take
+from its storage. They come in "to craft, rest, look around". Online only.
+
+**Who may enter** is the caravan's own (`src/systems/caravanVisit.js`):
+`wagonEntry` on the caravan item, one of an online home's four entries
+(`src/net/homeLaw.js` HOME_ENTRIES). Absent, the owner alone.
+
+- Online, the owner's parked caravan lists "Who may enter: Only me". A press
+  turns it round as a home's door does (`homeNextEntry`).
+- It rides the word (`hv`'s `we`, and for the guild entry `wg`, the guild's
+  tag) and the cell's park record (`validParkData`), so it holds while the
+  owner is away.
+- A visitor's client reads it as a home's door is read (`homeMayEnter`): the
+  owner by the relay's stamp, the party by its signed handles, the guild by
+  its tag. As with homes, the check is the client's.
+
+**The room** is the caravan's own on the relay: `caravan:<k>`, where `k` is
+the owner's park key, the key the cell's record carries
+(`src/net/privateInterior.js` caravanRoomOf). Its poses are in MapsFile's
+frame. The owner inside stands in it too (`src/scenes/world.js`
+privateRoomHere): before, the owner got a town building's room in a town and
+no room in the wilderness, so their party lost them. An older relay is asked
+for no caravan room.
+
+**What the owner placed** is said to that room (the `caravan` frame,
+`{ c, d }`): the pieces as the save keeps them, unturned, through the decor
+law, as many as fit the frame. It is sent on every welcome to the room and on
+every change. The relay keeps the last one from the owner alone, hands it to
+each joiner, and forgets it 72 h (PARK_TTL_MS) after it was said. What the
+storage holds never leaves the owner's save.
+
+**A visit** needs no owner present: a parked caravan whose cell keeps its
+record, on a relay that keeps caravan rooms.
+
+- Its plaque lists "Step inside" where its door is open to me, at the mod's
+  3.2 m reach.
+- The press builds the same room at that caravan's pose, in its owner's inside
+  paint, through the one door law and the one transition. It is a private
+  visit: my own scene cache is neither read nor kept.
+- The owner's pieces stand, turned with the caravan as it stands here.
+- A visitor looks around, crafts at its stations and rests. They never open
+  its storage ("This belongs to <owner>."), never decorate, drop nothing and
+  cast nothing (a home visitor's rules).
+- A save made visiting comes back outside.
+
+**Moved on or gone.** Inside, a listener joined to the caravan's cell with no
+presence (`src/net/caravanVisitLink.js`) hears its record. If the caravan
+moves past 2 m, stops being parked or a caravan, or is gone, I am stood
+outside behind its door and told "The caravan has moved on. You step
+outside." A repaint reaches the room live.
+
+**The relay** (world183, re-hashed in place): the `caravan` frame and its
+keeping, `relaySupportsCaravan` at 183, and the park record's `we`/`wg`.
+
+**Known limit.** Visitors see the pieces as the owner placed them the last
+time the owner stood in the caravan online. A paint changed inside reaches
+the cell when the owner comes out.
+
 ### The room waits for its caravan (audit)
 
 The room is the character's. It is kept for good in the save whether or not
@@ -376,14 +438,19 @@ comes back as the Small Cart, as built.
 ## THE FOUR HOSTS
 
 - `src/scenes/world.js` - wired: the models, the kinds, the capacity, the
-  stable, the caravan's door, the riders and the companions' seats.
+  stable, the caravan's door, the riders and the companions' seats; since
+  WAGONS2 the paint, the Overworld's seats, the visits (the plaque's rows and
+  word, the visit's door, the room's key, the owner's pieces, the listener).
 - `src/scenes/exterior.js` (the fixed city) - wired for the models, the kinds,
-  the capacity and the stable. FLAGGED: no caravan room and no riders. It has
-  no peers and no private-room path, so the plaque lists neither row.
+  the capacity, the stable and the paint. FLAGGED: no caravan room, no riders
+  and no visits. It has no peers and no private-room path, so the plaque lists
+  none of those rows.
 - `src/scenes/worldModes.js` - the caravan's room: its entry, save field,
-  restore, decor kind and exit.
-- `src/scenes/dungeonContext.js` - draws no wagon. FLAGGED: no caravan room
-  and no riders.
+  restore, decor kind and exit; since WAGONS2 its turn, its paint tab, the
+  visit (the guest's stations, bed and refusals, the pieces stood and
+  published) and the travelling rooms' layouts.
+- `src/scenes/dungeonContext.js` - draws no wagon. FLAGGED: no caravan room,
+  no riders and no visits.
 
 ## Pins
 
@@ -394,7 +461,10 @@ comes back as the Small Cart, as built.
 - `test/wagons1_seats.test.js` - the seats' words, the owner, the rider, the
   journey, the companions, the caravan and the interior host.
 
-The mutants are in `tools/mutants/wagons1.json`. Records re-aimed:
+- `test/wagons2.test.js`, `test/wagons2_wheels.test.js` - WAGONS2 and its audit.
+- `test/wagons2_visit.test.js`, `test/wagons2_visit_relay.test.js` - the visits.
+
+The mutants are in `tools/mutants/wagons1.json`, `wagons2.json`, `wagons2_wheels.json` and `wagons2_visit.json`. Records re-aimed:
 `companionweight.json`, `disc8.json`, `hcc.json`, `prwagon1.json`,
 `soc1.json`, `wagonhitch.json`.
 
