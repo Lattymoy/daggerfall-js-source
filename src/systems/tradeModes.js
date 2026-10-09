@@ -385,40 +385,6 @@ export function tradeDecision(mode, { cost, tradePrice, gold = 0 }) {
  *  not that explanation - it plays where GoldPieces would have. */
 export const LETTER_OF_CREDIT_TEXT = 'You are paid with a letter of credit.';
 
-/** SHIP-CREDIT (2026-10-01, Mac's "Buy on credit"): the templates a lot must hold to be bought on credit - Come Sail
- *  Away's parts and deed (systems/comeSailAwayItems.js BOAT_PARTS_TEMPLATE, BOAT_DEED_TEMPLATE; pinned equal). */
-export const CREDIT_ITEM_TEMPLATES = Object.freeze([1320, 1321]);
-/** SHIP-CREDIT: whether a lot staged to buy holds a boat - only a boat is sold on the bank's credit. */
-export const lotHasBoat = (staged = []) => staged.some((it) => CREDIT_ITEM_TEMPLATES.includes(it?.templateIndex));
-/** SHIP-CREDIT (the review before the merge, 2026-10-01: a boat in the basket put the whole basket on the bank's
- *  credit): whether a lot staged to buy is boats and nothing else - the one lot the bank lends on. */
-export const lotAllBoats = (staged = []) => staged.length > 0 && staged.every((it) => CREDIT_ITEM_TEMPLATES.includes(it?.templateIndex));
-/** SHIP-CREDIT: the refusal of a lot that holds a boat among other goods (creditRefusalRows names it). */
-export const CREDIT_BOAT_ALONE = 'boatAlone';
-/** SHIP-CREDIT: the offer's box - what the purse holds against the price, what the bank lends, what is paid now and
- *  owed within the year (banking.js creditDecision's `credit`), and the question. */
-export function creditRows({ loan, pay, owed }, price, purse) {
-  return [
-    { text: `You have ${purse} of the ${price} gold.`, center: true },
-    { text: `The bank will lend you ${loan} gold for the boat.`, center: true },
-    { text: `You pay ${pay} now, and owe ${owed} within a year.`, center: true },
-    { text: 'Buy on credit?', center: true },
-  ];
-}
-/** SHIP-CREDIT: why the bank lends nothing, under the refusal's own box (creditDecision's `refuse`); none for a
- *  refusal it does not name. `empireLines` the Empire's own words online (banking.js empireRefusalLines). */
-export function creditRefusalRows(r, empireLines = null) {
-  if (Array.isArray(empireLines) && empireLines.length) return empireLines.map((text) => ({ text, center: true }));
-  const text = r?.result === CREDIT_REFUSALS.ALREADY_HAVE_LOAN ? 'The bank will not lend: a loan of yours stands here.'
-    : r?.result === CREDIT_REFUSALS.ALREADY_DEFAULTED ? 'The bank lends nothing to one who has defaulted.'
-      : r?.result === CREDIT_REFUSALS.NOT_ENOUGH_GOLD ? `The bank lends on a boat only to one who pays ${r.down} gold down.`
-        : r?.result === CREDIT_REFUSALS.LOAN_REQUEST_TOO_HIGH ? `The bank will lend you no more than ${r.max} gold.`
-          : r?.result === CREDIT_BOAT_ALONE ? 'The bank lends on a boat bought by itself.' : null;
-  return text ? [{ text, center: true }] : [];
-}
-/** SHIP-CREDIT: the refusals creditRefusalRows names - banking.js TRANSACTION_RESULT's (pinned equal). */
-export const CREDIT_REFUSALS = Object.freeze({ ALREADY_DEFAULTED: 288, ALREADY_HAVE_LOAN: 289, LOAN_REQUEST_TOO_HIGH: 295, NOT_ENOUGH_GOLD: 454 });
-
 /** ConfirmTrade's SELL arm (:1035-1050): the proceeds are weighed
  *  BEFORE they are paid, and a purse that would push the player past
  *  MaxEncumbrance becomes a LETTER OF CREDIT for the full amount

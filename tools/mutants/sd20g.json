@@ -120,8 +120,8 @@
   {
     "name": "SD20G-D3-complete-unread",
     "file": "src/systems/questGuidance.js",
-    "old": "return !!q && (q.questComplete === true || q.questTombstoned === true);",
-    "new": "return !!q && q.questTombstoned === true;",
+    "old": "return !!q && (q.questComplete === true || q.questTombstoned === true || q.shelvedAt != null);",
+    "new": "return !!q && (q.questTombstoned === true || q.shelvedAt != null);",
     "tests": [
       "test/sd20g_delve.test.js"
     ]

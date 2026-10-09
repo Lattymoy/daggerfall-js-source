@@ -173,12 +173,13 @@ import { maxFatigue, FATIGUE_MULTIPLIER, liveStat, STAT_KEYS_ORDER } from '../sy
 // finished since U7; what was missing was a host outside the dungeon
 // that opens one, and CanRest's whole town half.
 import { restDecision, getPreventedRestMessage, REST_TEXT } from '../systems/restSession.js';   // U48: the DISPATCH (DaggerfallUI.cs:651-688) above the rest window   // ROAD-B B5: GetPreventedRestMessage   // PARTY-REST5: enemiesNearby's own textId, for a follower's own relayed break
-import { isHouseOwned, deedStands, shipCoords, ownsShip, assignShipToPlayer, resetShip, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS, SHIP_TYPES, createBankAccounts, BANK_REGION_COUNT, forgiveLoans, loanAmnestyLines, foldEmpireAccounts, empireAccountLines, goldRegion } from '../systems/banking.js';   // H1: the quest residence filter; GetShipCoords for the map-pixel scene clear; OwnsShip for the travel popup   // AUDIT 58: AssignShipToPlayer's permanent half, which the classic import owed
+import { isHouseOwned, deedStands, shipCoords, ownsShip, assignShipToPlayer, resetShip, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS, SHIP_TYPES, createBankAccounts, BANK_REGION_COUNT, createHouses, allocateHouseToPlayer, forgiveLoans, loanAmnestyLines, foldEmpireAccounts, empireAccountLines, goldRegion } from '../systems/banking.js';   // H1: the quest residence filter; GetShipCoords for the map-pixel scene clear; OwnsShip for the travel popup   // AUDIT 58: AssignShipToPlayer's permanent half, which the classic import owed
 import {
   clearSceneCache,           // P1: SaveLoadManager.ClearSceneCache, at PlayerGPS's map-pixel seam
   createSceneCache, cacheScene, restoreCachedScene, worldSceneName, LOOT_CONTAINER_TYPES,   // A10: the ship arm's Cache/RestoreCachedScene pair (TransportManager.cs:382-398)
   addPermanentScene, interiorSceneName,   // AUDIT 58: the two names AssignShipToPlayer makes permanent (DaggerfallBankManager.cs:103-110)
   removePermanentScene,   // CSA-D: Come Sail Away's StopSailing takes its borrowed ship's scenes back
+  graftPermanentScene,   // PERMADEATH-HOUSES: a fallen member's house handed on as they left it
 } from '../systems/sceneCache.js';
 import { WORLD_CONTEXT, makeAnchor, teleportPlan } from '../systems/teleportAnchor.js';   // A10: the Recall anchor's law - shape, IsSameInterior, the cross-context plan
 import { isPlayerInTown } from '../systems/nearbyObjects.js';
@@ -646,7 +647,7 @@ import { travelDriveForward, travelLookaheadFor } from '../systems/travelAutopil
 import { createTravelSteer, createColliderProbe, steerDrive } from '../systems/travelSteer.js';   // TRAVEL-NAV1: the journey goes round what is in its way, and stops short of what it cannot
 import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER, exteriorSwimming, feetWaterCoverage, SWIM_COVERAGE } from '../player/exteriorSurface.js';   // ROAD-B (b3): PlayerMotor's three exterior surface methods; OT1: IsPlayerSwimming above ground
 import { isOnFoot } from '../systems/transport.js';   // TransportManager.IsOnFoot - the raycast's reach and the mounted footstep gate
-import { floorLanding, doorWorldPosition } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27); SD2b: where a Hollow's mouth stands, to find it at
+import { floorLanding, doorWorldPosition, openGroundNear, heldInSolid } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27); SD2b: where a Hollow's mouth stands, to find it at
 import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../systems/skills.js';   // TO1: the avoid-encounter roll reads skillValue live (imported above) Stealth   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
 import { playerEntity, surfacePlayer, hurtPlayer, playerBlowCameToNothing, setDeathPresenter, presentPlayerDeath, setDeathListener, setAvoidDeathHook, registerDuelFell, duelSpare, setStaffPowers, staffPowers, registerLevitateWard, registerFreeFlight } from '../characters/playerEntity.js';   // AUDIT-SEATS G5: a siege's ward on Levitate   // AUDIT-SEATS G4: a spectator's flight
 import { SOUND } from '../systems/soundClips.js';
@@ -687,7 +688,7 @@ import { seatTipOf } from '../net/townSeatLaw.js';   // SEAT-TIP: a seat's card 
 import { hasCarriageGate } from '../world/immersiveTravelGates.js';   // OW-HUBS: a town with a carriage at its gate
 import { seatArrivalLine, seatHallOf, seatBannerOf, boardTithePct } from '../net/townSeatLaw.js';   // SEAT1a: the seat's arrival line; SEAT-HALL: whose hall a palace is; CROWN-HALL: the throne room's banners; AUDIT SEATS-3 D3: a board's Tithe
 import { hallMay } from '../net/hallLaw.js';   // SEAT-HALL: a palace's keepers are a hall's
-import { createOnlineHomes, moveArenaHomes, homeSceneName, homeTownBlocks, holdRealmDeeds, homeClaimLayout, checkpointLanded } from '../systems/onlineHomes.js';   // HOME1: the account service's homes, one town at a time; ARENA4b: the ones the arena displaced, moved; HOME-PRICE: a town's size; FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed the realm gave, held
+import { createOnlineHomes, moveArenaHomes, homeSceneName, homeTownBlocks, holdRealmDeeds, homeClaimLayout, checkpointLanded, HOME_RETRY_MS } from '../systems/onlineHomes.js';   // HOME1: the account service's homes, one town at a time; ARENA4b: the ones the arena displaced, moved; HOME-PRICE: a town's size; FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed the realm gave, held
 import { townBoardRows, townHomeRows } from '../ui/townMapMarks.js';   // TOWN-MARKS: the Notice Boards and the player housing on the town map
 import { setVendorWaypoint, clearVendorWaypoint, vendorWaypoint, vendorWaypointKey, vendorWaypointVersion, isVendorWaypoint, vendorWaypointLabel } from '../systems/vendorWaypoint.js';   // HOME-VENDOR: the trader's waypoint
 import { setVendorPage } from '../ui/vendorPage.js';   // HOME-VENDOR: the Vendor page, under the Professions
@@ -711,6 +712,7 @@ import {
   realmIo, openRealmBoot, createRealmSession, realmSummaryOf, setRealmNotice, realmCreate, realmPut, realmBootSearch, realmRefusalText,
   sayRealmSave, REALM_OFFLINE_TEXT, REALM_EXIT_WAIT_MS, whenPageHides, whenPageGoes, realmTradeEscrow, realmGoldAct, realmDoorShut,
   REALM_RESTORED_TEXT, realmSaveWithHeld, realmList, realmUnions,
+  realmFetch,   // PERMADEATH-HOUSES: a fallen member's record read, for their home's cupboards
 } from '../systems/realmSaves.js';   // REALM P1.3: an online character is the realm's - joined, loaded and checkpointed through the service
 import { createRealmLine } from '../systems/legacy/realmLine.js';   // LEGACY7: online, Project Legacy's lines are the realm's
 import { reclaimFromDevice, reclaimLines, crossLeveling, LEVELING_CROSS_LINE } from '../systems/realmCustoms.js';   // RESTORE: what customs once kept back, given back at the boot; LEVEL-ONLINE-3: the realm's one leveling
@@ -747,6 +749,7 @@ import { createChatPanel } from '../ui/chatPanel.js';   // CHAT1: the enhanced s
 import { makeVideoQueue } from '../systems/quest/videoQueue.js';   // CRUX1: the quest videos in turn
 import { createPartyPanel } from '../ui/partyPanel.js';   // SOC4: the party HUD - my party's portraits and their health / stamina / magicka
 import { MailBox, mailNoticeText } from '../net/mail.js';   // MAIL1: the letterbox the Letters tab draws and the frame polls
+import { PostBox, postNoticeText } from '../net/serverPost.js';   // SERVER-POST: the server's post the pause face's mailbox draws
 import { GuildBook } from '../net/guildBook.js';   // GUILD1b: the guild the Guild tab draws
 import { sellProceeds } from '../systems/tradeModes.js';   // GUILD-LETTER: a withdrawal weighed as the trade window weighs a sale
 import { realmLetterOfCredit } from '../net/realmGoldLaw.js';   // GUILD-LETTER: the letter the service writes on a realm record, one maker
@@ -811,6 +814,7 @@ import { changeLegalRep, legalRepOf, CRIMES, setCrimeCommitted, lowerRepForCrime
 import { isEquipped, unequipSlot, unequipItem } from '../systems/equip.js';
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 import { makeItemPermanent } from '../systems/quest/item.js';
+import { isShelved } from '../systems/quest/quest.js';   // QUEST-SHELF: a quest set aside
 import { guildOfFaction, membershipOf, guildFactionIdOfGroup, joinedGuildOfGroup, activeMemberships, guildInitiationQuestEnded } from '../systems/guilds.js';   // V2e: the per-read vampire book pick; F96: the TG/DB initiation listener
 import { GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';   // the membership book's key - the travel popup's free-ship read   // AUDIT 39 (#23): GetRegionFaction's Province filter
 import { freeShipTravel, freeTavernRooms, avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // KnightlyOrder.FreeShipTravel, the second half of hasShip; FreeTavernRooms, the trip cost's inn nights
@@ -6275,6 +6279,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   // StartGameBehaviour.ApplyStartSettings (:283), never rebuilding a
   // live world mid-session.
   const state = new StreamingWorldState(fogDistance); pipeline.keepPlaces('pixel', (2 * state.terrainDistance + 1) ** 2);   // LV1: the one read above - DFU's setting on the 1:1 lane, the Enhanced pane's Land view distance on the enhanced; FIELD BUGS 2026-10-04d PLACE-LRU: and the pixels gone that are kept warm, one whole view's worth (the player's "minimum set for chunks visible by viewing range" is the view itself, never freed)
+  const _tvSeaT = [0, 0, 0];
+  /** The sea's surface in the scene (y) - Deep Waters' own, or the ground's clamp at OceanElevation; one for every pixel.
+   *  FIELD BUGS 2026-10-08 (UNSTUCK-OUT's audit): declared here, beside `state`, not with the travel view far below - a
+   *  fast-travel landing held in a rock asks it (its open ground is above the sea), and the boot's own load lands before
+   *  that line ran: a const read in its dead zone threw. */
+  const tvSeaY = () => (deepWaters?.oceanLocalY ?? SCALED_OCEAN_ELEVATION * STREAMING_TERRAIN_SCALE) + state.pixelTranslation(state.current.x, state.current.y, _tvSeaT)[1];
   const queue = state.init(startPixel.x, startPixel.y);
   if (wod) wodSlots.step(startPixel.x, startPixel.y, state.terrainDistance, StreamingWorldState.onMap);   // AUDIT BRANCH (WoD) L1-3: the first UpdateWorld
   _wodArrival = wodArrivalOf(queue);   // WOD6: the first world is an InitWorld too
@@ -13136,6 +13146,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       pos = floorLanding(collider, eraw, ARRIVAL_REACH, ARRIVAL_LIFT);
       console.warn(`[travel] start marker at ${raw[0].toFixed(1)},${raw[2].toFixed(1)} stands in geometry (floor ${(pos[1] - raw[1]).toFixed(1)} above the flat) - landing at the edge instead`);
     }
+    // UNSTUCK-OUT (FIELD BUGS 2026-10-08, Sahh: "I got stuck inside a mountain during fast travel"): a floor the ray
+    // found INSIDE a rock - a World of Daggerfall mountain's inner face, or under the crown of one standing in the
+    // ground - stands the body where the rock's walls cannot be seen and hold it. The nearest open ground instead.
+    if (walkMode && (!local || ground) && heldInSolid(collider, pos)) {
+      const open = openGroundNear(collider, pos[0], pos[2], { dry: (floor) => floor >= tvSeaY() });
+      if (open) {
+        console.warn(`[travel] landing at ${pos[0].toFixed(1)},${pos[2].toFixed(1)} stands inside a rock - on open ground ${Math.hypot(open[0] - pos[0], open[2] - pos[2]).toFixed(0)} away instead`);
+        pos = open;
+      }
+    }
     // Party journeys validate after the pixel builds but BEFORE its terrain
     // landing is committed. A missing hull must not expose the seabed fallback.
     const resolved = resolveArrival ? await resolveArrival(pos) : null;
@@ -16263,6 +16283,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   // else"): what the pause face's timers window reads (systems/eventTimers.js) - the relay's clock and what this host
   // already holds: the day's gate site and the relay's word of its kill, the seats list (the week's battles, the
   // Season's zero), the day's raids in relay ms. Null offline - every row is a shared moment of the online world.
+  /** SERVER-POST: what the pause face's mailbox reads - the box, online; null offline (no envelope), as the hourglass's.
+   *  AUDIT TIMERS1 D6's law: the pause door is armed before `online` and the box are declared, so not there yet is none. */
+  const postSource = () => { try { return online && postBox ? postBox : null; } catch { return null; } };
   let _timersSeatAsk = -Infinity;
   const timersSource = ({ ask = false } = {}) => {
     // AUDIT TIMERS1 D6: the pause door is armed before the boot's last awaits, and `online` (and the gate's two) are
@@ -16311,6 +16334,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // pane's read of the same signal, not a second gate.
     loadingPrevented: () => !!online,
     timers: timersSource,   // TIMERS1: the hourglass's window (null offline - no hourglass)
+    post: postSource,   // SERVER-POST: the mailbox beside it (null offline - no mailbox)
     // SAV4: the slot window's seams - the pause SAVE/LOAD doors
     // open it with these (openClassicPauseFlow builds the doors).
     playerName: () => playerEntity.name, playerId: () => playerEntity.characterId ?? null,
@@ -18361,6 +18385,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     currentRegionIndex: () => _questRegionIndex(),
     getRandomTokens: (textId) => townTalk.variantTokens(textId),
     expandQuestTokens,
+    questAway: (uid) => isShelved(questBridge?.machine.getQuest(uid)),   // QUEST-SHELF's audit: its rumors told by no one while it is away
     // AUDIT 39 (#109): THE COMMON-RUMOR MACRO PASS, which no host
     // ever supplied - so every regional-conditions rumor the sim
     // files (TEXT.RSC 1400-1483, all of them naming %fx1/%fx2/%fl1/
@@ -18401,7 +18426,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // topic tree reads it, and so does the exterior automap's
   // residence-plate arm (ExteriorAutomap.cs:686), which walks the same
   // set.
-  const activeQuestIds = () => [...(questBridge?.machine.quests.values() ?? [])].filter((q) => !q.questTombstoned).map((q) => q.uid);
+  const activeQuestIds = () => [...(questBridge?.machine.quests.values() ?? [])].filter((q) => !q.questTombstoned && !isShelved(q)).map((q) => q.uid);   // QUEST-SHELF: a quest set aside is no live one
   const topicTree = new TopicTree({
     getQuest: (questID) => questBridge?.machine.getQuest(questID) ?? null,
     getAllActiveQuestIds: activeQuestIds,
@@ -19306,6 +19331,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // SOC5's key reaches it through `hudCtx.openSocial` rather than a second copy of this reference.
   let socialPanel = null;
   let mail = null;   // MAIL1: the letterbox (net/mail.js MailBox), made with the panel that draws it
+  let postBox = null;   // SERVER-POST: the server's post (net/serverPost.js PostBox), made beside the letterbox
   let guildBook = null;   // GUILD1b: the character's guild (net/guildBook.js GuildBook), made with the panel that draws it
   const socialLink = () => { const tab = chatLog?.tabs.find((t) => t.room === SOCIAL_ROOM); return tab ? (chatLinks?.get(tab.id) ?? null) : null; };
   /** RAID-ROLL: the hub asked for the towns table by its operator's pinned hash - this world's, when it hashes to it
@@ -20359,6 +20385,14 @@ export async function bootWorld(canvas, renderer, params, status) {
       // (RF-per-request: interiors and dungeons only - houses, shops,
       // temples, windmills and the like, same as any building door).
       onSend: (tabId, text) => {
+        // SERVER-POST (AUDIT SERVER-POST: the classic skin's pause window has no envelope, and the notice sent its players to
+        // one): `/mail` - the mailbox, on either skin and wherever the player stands (the enhanced pause face with its window
+        // open: ui/pauseDoor.js's door, worldModes.js openPauseAt indoors and underground). Local, never sent.
+        if (/^\/mail(box)?$/i.test(text.trim())) {
+          if (!postSource()) { chatLog.push(tabId, { text: 'The mailbox is online - it opens once you are connected and signed in.', system: true }); return true; }
+          if (!modes?.openPauseAt?.('mailbox')) hudCtx.togglePause({ at: 'mailbox' });
+          return true;
+        }
         if (/^\/unstuck(\s+cancel)?$/i.test(text.trim())) {
           // PVPUNSTUCK: outside the zone at once (30 min cooldown); in the zone after a five-minute wait with a bar that can
           // be cancelled (a second /unstuck or "/unstuck cancel" cancels too), and a 60 minute cooldown - overworld and dungeons
@@ -20618,6 +20652,9 @@ export async function bootWorld(canvas, renderer, params, status) {
         return;
       }
       if (result.reason === 'finished') return;   // DISC28-I: a partner's finish of a quest I never had - nothing to say
+      // QUEST-SHELF: a copy I set aside - the party's step is not mine while it is away; its audit: a DELIBERATE share is
+      // answered (RECEIVER_REFUSAL_TEXT 'shelved', below), only the background sync is quiet
+      if (result.reason === 'shelved' && quest.data?.sync === 1) return;
       // AUDIT DISC28 QS-3: nor any refusal of a FINAL - a partner's finish is no offer: to a member who ended the copy
       // already (both delivered; a timer that ran out in every world on the same tick), holds one of their own, or never
       // took it, it is news of nothing - and a sync's 'done' is a copy I finished myself. Said, it told a party that had
@@ -20655,6 +20692,24 @@ export async function bootWorld(canvas, renderer, params, status) {
     });
     // SCALE4c: its looks ride the heartbeat - while the online lane runs, as its poll there ran
     heartbeat.add('mail', whileLive(mail.heartbeatPart(), () => performance.now() - _mailFrameAt < FRAME_LIVE_MS));
+    // SERVER-POST (2026-10-08, Mac: "an ingame server mailbox that goes next to the hourglass in the pause menu. It should
+    // show notifications whenever players have a message. First use is to utilize it for players being granted items"):
+    // THE SERVER'S POST - the developers' messages, looked at on the letterbox's clock (riding the heartbeat while the
+    // online lane runs), a new one said on the world tab as a letter is; the pause face's envelope counts what waits
+    // (pauseDoorHooks `post`). An item is claimed into the realm character being played: the service writes it into the
+    // record and the pack takes it on the answer - the guild vault's take (realmGoldAct, the answer needed)
+    postBox = new PostBox({
+      ioOf: () => {
+        const st = appStorage();
+        const s = storedSession(st);
+        return s ? { fetch: (u, i) => globalThis.fetch(u, i), base: serviceBase(st), secret: s.secret, storage: st } : null;
+      },
+      onPost: (event) => { chatLog.push(tab.id, { text: postNoticeText(event), system: true }); },
+      character: () => characterIdOf(playerEntity),
+      realm: realmSession && { act: (o) => realmGoldAct({ session: realmSession, checkpoint: () => onlineCheckpoint(), ...o }), abandon: (why) => realmSession.abandon(why) },   // offline, none: no claim
+      pack: { add: (rec) => { addItem((playerEntity.items ??= []), setItemFields(rec), 'back'); }, changed: () => { saveSoon.changed(); } },
+    });
+    heartbeat.add('post', whileLive(postBox.heartbeatPart(), () => performance.now() - _mailFrameAt < FRAME_LIVE_MS));
     // GUILD1b: THE CHARACTER'S GUILD, over the account service (GUILD1a's door). Its gold is the save's: the purse first,
     // then the bank account of the region the player stands in - HOME1's order (worldModes homeAccount), and the
     // account minted on first use as the bank window mints it.
@@ -20934,8 +20989,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** Why I cannot wed now (a WED_WHY code), or null - the house's law, on a relay that carries the frame. */
   // AUDIT LEGACY III W3: and never while lying dead - an Enduring death in the temple, its rise still to come, wed (the
   // duel's own law, duelCan's 'dead'; a wedding has no word of its own for it, so 'busy')
+  // FIELD BUGS 2026-10-08 (Sahh: two Enduring or two Bloodlines characters "cannot seem to marry each other" - the
+  // button grey everywhere): wedRefusal answers NULL when the one played may wed, and `?? 'house'` read that null as
+  // no house - every character refused, at every temple, and every proposal and answer with it. 'house' only for no host.
   const wedCan = () => (playerEntity.health <= 0 || modes?.deathUp?.() ? 'busy'
-    : online?.status === 'open' && online.wedOk ? (legacyHost?.wedRefusal() ?? 'house') : 'busy');
+    : online?.status === 'open' && online.wedOk ? (legacyHost ? legacyHost.wedRefusal() : 'house') : 'busy');
   /** The proposal at me on the town's Yes/No box (the window it stands for, so a proposal taken back closes it). */
   let _wedBox = null;
   let _wedBoxPeer = null;
@@ -25112,6 +25170,77 @@ export async function bootWorld(canvas, renderer, params, status) {
     return !!seat && h.mode !== 'dungeon' && h.loc === seat.loc && h.region === seat.region;
   };
   const legacyFaces = createFaceLoader({ fetchBytes, palette });
+  // PERMADEATH-HOUSES (2026-10-09, the owner: "what happens to houses owned by dead permadeath characters" - the heir
+  // inherits; bible/06-Systems/Legacy-Arc.md section 10c): A HOUSE OF THE LINE'S DEAD, HANDED TO THE ONE PLAYED
+  // (legacyHost.js takeDeeds). Offline it is Daggerfall's bank deed and the house as its owner left it - out of the
+  // fallen's own newest save, the one record of what they kept there; online the account service's home (homes.js
+  // inheritHome) and its cupboards, out of the fallen's realm record.
+  /** Daggerfall's deed into the one played's bank slot of its region - DaggerfallBankManager's one house a region, so a
+   *  slot holding another house 'waits' - and the house's scene as the fallen left it (`scenes()`, their scene cache's
+   *  snapshot) grafted in, permanent (sceneCache.js graftPermanentScene). */
+  const legacyInheritDeed = (row, scenes) => {
+    const region = row.regionIndex | 0;
+    if (!playerEntity.houses?.length) playerEntity.houses = createHouses(BANK_REGION_COUNT);
+    const slot = playerEntity.houses[region];
+    if (!slot) return null;
+    if ((slot.buildingKey | 0) > 0) return (slot.mapId >>> 0) === (row.mapId >>> 0) && (slot.buildingKey | 0) === (row.buildingKey | 0) ? 'given' : 'waits';
+    allocateHouseToPlayer(playerEntity.houses, region, { buildingKey: row.buildingKey | 0, mapId: row.mapId, location: row.location ?? '' }, {
+      // the building named "<heir>'s residence" in its own town's discovery (`<regionIndex>:<name>`, discoveryLocationId's key)
+      discoverBuilding: (key, name) => { if (row.location) discoverBuilding(`${region}:${row.location}`, { buildingKey: key, buildingType: TALK_BUILDING_TYPES.House1 }, name); },
+      addPermanentScene: () => {},   // the graft below makes the scene permanent, with what it held
+      addNote: (text) => questBridge?.notebook?.addNote?.(text),
+      playerName: playerEntity.name ?? '', regionName: REGION_NAMES[region] ?? '',
+    });
+    if (typeof row.layout === 'string') stampLayout(slot, row.layout);   // the layout the fallen's deed named it in (WD3)
+    graftPermanentScene(playerEntity.sceneCache ??= createSceneCache(), scenes(), interiorSceneName(row.mapId, row.buildingKey | 0));
+    return 'given';
+  };
+  /** ONLINE: asked of the service behind the play - 'asking' until it answered, then its answer once. */
+  const _legacyInheriting = new Map();
+  const legacyInheritOnline = (row, fallen) => {
+    if (!homesApi || !realmSession || !fallen?.characterId) return null;
+    const key = `${row.mapId >>> 0}:${row.buildingKey | 0}`;
+    const st = _legacyInheriting.get(key);
+    if (st === 'given' || st === 'waits' || st === 'gone') { _legacyInheriting.delete(key); return st; }
+    if (st === 'asking' || (typeof st === 'number' && Date.now() - st < HOME_RETRY_MS)) return 'asking';
+    _legacyInheriting.set(key, 'asking');
+    const me = realmSession.id, from = String(fallen.characterId);
+    const same = (h) => (h?.mapId >>> 0) === (row.mapId >>> 0) && (h?.buildingKey | 0) === (row.buildingKey | 0);
+    (async () => {
+      const all = await homesApi.mine();
+      if (!all?.ok || !Array.isArray(all.data?.homes)) throw new Error('homes');
+      const mine = all.data.homes.find((h) => same(h) && h.character === me) ?? null;
+      const theirs = all.data.homes.find((h) => same(h) && h.character === from) ?? null;
+      if (!mine && !theirs) return 'gone';   // sold after their last save reached the line
+      // a deed the realm holds (KNIGHT-HOUSE: a Knightly Order's house) is Daggerfall's bank deed as well - one a region
+      const deed = (mine ?? theirs).deed === true;
+      const slot = playerEntity.houses?.[row.regionIndex | 0];
+      if (deed && (slot?.buildingKey | 0) > 0 && !((slot.mapId >>> 0) === (row.mapId >>> 0) && (slot.buildingKey | 0) === (row.buildingKey | 0))) return 'waits';
+      if (!mine) {
+        const r = await homesApi.inherit({ mapId: row.mapId >>> 0, buildingKey: row.buildingKey | 0, character: me, from });
+        if (!r?.ok) { if (r?.error === 'no-home') return 'gone'; throw new Error(r?.error ?? 'offline'); }
+      }
+      // what they kept in it is their record's (the owner's storage is the owner's save - HOME1)
+      const rec = await realmFetch(realmIoNow(), from);
+      if (!rec.ok && rec.error !== 'no-data') throw new Error(rec.error ?? 'offline');
+      let snap = null;
+      try { snap = rec.ok ? JSON.parse(rec.text) : null; } catch { snap = null; }
+      const scenes = snap?.sceneCache ?? null;
+      const homeScene = homeSceneName(row.mapId, row.buildingKey | 0);
+      if (deed) legacyInheritDeed(row, () => scenes);
+      if (!deed || (scenes?.permanentScenes ?? []).includes(homeScene)) graftPermanentScene(playerEntity.sceneCache ??= createSceneCache(), scenes, homeScene);
+      // the line learns it with the next save (syncHousesNow): this realm character's homes hold it from now
+      if (_legacyOnlineHomes && !_legacyOnlineHomes.some(same)) _legacyOnlineHomes = [..._legacyOnlineHomes, { regionIndex: row.regionIndex | 0, mapId: row.mapId >>> 0, buildingKey: row.buildingKey | 0, location: row.location ?? '' }];
+      legacyOnlineHomesRead();
+      return 'given';
+    })().then((r) => { _legacyInheriting.set(key, r); }, () => { _legacyInheriting.set(key, Date.now()); });
+    return 'asking';
+  };
+  const legacyInheritHouse = (row, fallen) => {
+    if (isOnlinePage()) return legacyInheritOnline(row, fallen);
+    const at = fallen?.characterId ? newestSaveOf(enumerateSaves().info, fallen.characterId) : -1;
+    return legacyInheritDeed(row, () => (at >= 0 ? loadSlot(at)?.sceneCache ?? null : null));
+  };
   legacyHost = createLegacyHost({
     entity: playerEntity,
     storage: () => appStorage(),
@@ -25163,6 +25292,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     },
     // LEGACY-HOME: the houses the one played holds (a deed that stands - banking.js deedStands), and the house they are in
     heldHouses: () => (isOnlinePage() ? (realmSession ? _legacyOnlineHomes : null) : (playerEntity.houses ?? []).filter((h) => (h?.buildingKey | 0) > 0 && deedStands(h))),   // LEGACY7 part five: online, this realm character's online homes (null until read)
+    inheritHouse: legacyInheritHouse,   // PERMADEATH-HOUSES: a house of the line's dead, the one played's
     // LEGACY6: what the world remembers - the town's regard of the one played and its day, the towns' minute for the
     // house's news, and the killer a fallen kinsman's mirror names, handed to the heir (revenant.js)
     regards: () => livingRelations, regardDay: livingRegardDay, sky: () => skyMinutes(),
@@ -27533,6 +27663,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // worldModes.js's togglePause for the door itself.
     loadingPrevented: () => !!online,
     timers: timersSource,   // TIMERS1: forwarded to a building's and a dungeon's pause face
+    post: postSource,   // SERVER-POST: and the mailbox's box
     playerName: () => playerEntity.name, playerId: () => playerEntity.characterId ?? null,
     saveAs: (saveName) => worldQuickSave(saveName),
     loadKey: (key) => worldQuickLoad({ key }),
@@ -28045,9 +28176,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   /** TV4 (AUDIT TV D3): the land's height at a scene point - the built grid's, the far ring's past it. */
   // AUDIT DEEP R-4: on the SEA, its surface (and the margin with it - the sea is flat and known): the seabed Deep Waters
   // carves under clear water is no floor for a veil, whose foot the surface (no depth written) never cuts
-  const _tvSeaT = [0, 0, 0];
-  /** The sea's surface in the scene (y) - Deep Waters' own, or the ground's clamp at OceanElevation; one for every pixel. */
-  const tvSeaY = () => (deepWaters?.oceanLocalY ?? SCALED_OCEAN_ELEVATION * STREAMING_TERRAIN_SCALE) + state.pixelTranslation(state.current.x, state.current.y, _tvSeaT)[1];
+  // (tvSeaY, the sea's surface, stands beside `state` - FIELD BUGS 2026-10-08 UNSTUCK-OUT's audit: the boot's load reads it)
   const tvGroundAt = (x, z) => {
     const n = state.worldCoords([x, 0, z]);
     const g = tvSceneOf(n.x, n.z)[1];

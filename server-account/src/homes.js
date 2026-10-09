@@ -215,6 +215,35 @@ export async function holdDeed(ctx, player, body = {}) {
   return (await townLayoutRefusal(db, mapId, layout ?? null)) ?? { error: 'home-taken' };   // a first home of the town, in another layout, landed first
 }
 
+/**
+ * PERMADEATH-HOUSES (2026-10-09, the owner: "what happens to houses owned by dead permadeath characters" - the heir
+ * inherits; bible/06-Systems/Legacy-Arc.md section 10c): A FALLEN MEMBER'S HOME PASSES TO THE ONE WHO CARRIES THE LINE.
+ * A realm character a Bloodline's fall (or an Enduring line's last death) made a tombstone (legacy.js entomb, `dead_why`
+ * 'fell') holds its homes for good - a building taken out of the world, its door locked to its own family. The account's
+ * LIVING realm character of the SAME LINE (`lineage_id`) takes one up: the row's character moves, and with it everything
+ * the row's owner owns (its decor, its rooms and rent, its entry - each keyed by the house, owned through the row).
+ * Never a retired elder's (they keep their house), never another account's, never a guild's hall. One statement decides:
+ * the UPDATE names the fallen as the holder, so two takers race to one answer. Answers `{ ok, home }` (`repeat` when it
+ * is the taker's already), or `not-heir`, `no-home` (the fallen holds it no more), `bad-home`, `realm-only`.
+ * @param {{db: any}} ctx @param {any} player
+ * @param {{mapId?: unknown, buildingKey?: unknown, character?: unknown, from?: unknown}} body
+ */
+export async function inheritHome({ db }, player, body = {}) {
+  const { mapId, buildingKey, character, from } = body ?? {};
+  if (accountKind(player) !== 'linked') return { error: 'homes-need-account' };
+  if (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey)) return { error: 'bad-home' };
+  if (typeof character !== 'string' || !REALM_ID_RE.test(character) || typeof from !== 'string' || !REALM_ID_RE.test(from) || from === character) return { error: 'realm-only' };
+  const kin = await db.prepare(`SELECT 1 FROM realm_characters h JOIN realm_characters d ON d.player = h.player AND d.lineage_id = h.lineage_id
+      WHERE h.id = ? AND d.id = ? AND h.player = ? AND h.lineage_id IS NOT NULL AND h.dead_at IS NULL AND d.dead_at IS NOT NULL AND d.dead_why = 'fell'`)
+    .bind(character, from, player.id).first();
+  if (!kin) return { error: 'not-heir' };
+  const took = await db.prepare('UPDATE homes SET char_id = ? WHERE map_id = ? AND building_key = ? AND player = ? AND char_id = ? AND guild_id IS NULL')
+    .bind(character, mapId, buildingKey, player.id, from).run();
+  const row = await db.prepare('SELECT * FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND char_id = ? AND guild_id IS NULL').bind(mapId, buildingKey, player.id, character).first();
+  if (!row) return { error: 'no-home' };
+  return { ok: true, home: homeOf(row), ...(took?.meta?.changes ? {} : { repeat: true }) };
+}
+
 /** DECOR1e: a home's placed pieces and half of what they cost - what its sale gives back for them. */
 const decorBackStatement = (db, mapId, buildingKey) => db.prepare(`SELECT COALESCE(SUM(CASE WHEN json_valid(place) THEN 1 ELSE 0 END), 0) AS n,
       COALESCE(SUM(CASE WHEN json_valid(place) THEN CAST(json_extract(place, '$.paid') AS INTEGER) / 2 ELSE 0 END), 0) AS back
