@@ -596,6 +596,8 @@ export function validLootItem(v) {
   // AUDIT WORLD6b-iii(c) A6/B4: the marks that mean "worn by me" and "bound to my quest" are the RECEIVER's, never a
   // container's word - a wire-borne equipSlot re-linked into the pack's slots on the next load and pushed my own out
   delete out.equipSlot; delete out.questItem;
+  // ACQUIRE1: and "it is mine already" (systems/acquireWatch.js) - a piece another player hands over is new to its taker
+  delete out.acquired;
   return out;
 }
 

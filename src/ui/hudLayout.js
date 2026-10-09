@@ -53,6 +53,7 @@ export const HUD_PIECES = Object.freeze([
   { id: 'notices', sel: '.notice-stack', name: 'Notifications', dummy: true, ghost: 'notices' },
   { id: 'boss', sel: '.wb-boss-bar', name: 'Boss bar', dummy: true, ghost: 'boss' },
   { id: 'revenant', sel: '.rvncard-stack', name: 'Revenant taunts', dummy: true, ghost: 'revenant' },   // REVENANT-CARD
+  { id: 'loot', sel: '.lootbanner-stack', name: 'Loot banners', dummy: true, ghost: 'loot' },   // LOOT-BANNER
   { id: 'fps', sel: '#fps-counter', name: 'FPS counter' },
   { id: 'midtext', sel: '#enhanced-midtext, .hudmid[data-hm-ghost="midtext"]', name: 'Screen messages', dummy: true, ghost: 'midtext' },
   { id: 'netstatus', sel: '#enhanced-netstatus, .hudstatus[data-hm-ghost="netstatus"]', name: 'Online status', dummy: true, ghost: 'netstatus' },
@@ -257,12 +258,12 @@ let ghostDeps = null, ghostDepsLoading = false;
 function ensureGhostDeps() {
   if (ghostDeps || ghostDepsLoading) return;
   ghostDepsLoading = true;
-  Promise.all([import('./gateBossBar.js'), import('./partyPanel.js'), import('./revenantCard.js')])
-    .then(([boss, party, revenant]) => { ghostDeps = { BOSS_BAR_CSS: boss.BOSS_BAR_CSS, BOSS_BAR_STYLE_ID: boss.BOSS_BAR_STYLE_ID, injectPartyStyle: party.injectPartyStyle, buildRevenantPreview: revenant.buildRevenantPreview }; })
+  Promise.all([import('./gateBossBar.js'), import('./partyPanel.js'), import('./revenantCard.js'), import('./lootBanner.js')])
+    .then(([boss, party, revenant, loot]) => { ghostDeps = { BOSS_BAR_CSS: boss.BOSS_BAR_CSS, BOSS_BAR_STYLE_ID: boss.BOSS_BAR_STYLE_ID, injectPartyStyle: party.injectPartyStyle, buildRevenantPreview: revenant.buildRevenantPreview, buildLootBannerPreview: loot.buildLootBannerPreview }; })
     .catch(() => { ghostDeps = {}; });
 }
 function buildGhost(doc, kind) {
-  if ((kind === 'party' || kind === 'boss' || kind === 'revenant') && !ghostDeps) { ensureGhostDeps(); return null; }   // next sweep
+  if ((kind === 'party' || kind === 'boss' || kind === 'revenant' || kind === 'loot') && !ghostDeps) { ensureGhostDeps(); return null; }   // next sweep
   const div = (cls, text) => { const n = doc.createElement('div'); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
   let g = null;
   if (kind === 'notices') {
@@ -291,6 +292,8 @@ function buildGhost(doc, kind) {
     g.append(div('wb-boss-name', 'Boss (preview)'), track);
   } else if (kind === 'revenant') {
     try { g = ghostDeps.buildRevenantPreview?.(doc) ?? null; } catch { g = null; }   // REVENANT-CARD: a card as one will stand
+  } else if (kind === 'loot') {
+    try { g = ghostDeps.buildLootBannerPreview?.(doc) ?? null; } catch { g = null; }   // LOOT-BANNER: a banner as one will stand
   }
   if (g) { g.setAttribute('data-hm-ghost', kind); doc.body.append(g); }
   return g;

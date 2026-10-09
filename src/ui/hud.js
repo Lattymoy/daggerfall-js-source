@@ -23,6 +23,7 @@ import { drawLevelNotices } from './levelNotice.js';   // LV2: the level-up noti
 import { drawQuestHerald } from './questHerald.js';   // GUIDE3: the quest news, on the same one call
 import { drawQuestTracker } from './questTracker.js';   // GUIDE4: the quest the HUD follows, on the same one call
 import { drawRevenantCards } from './revenantCard.js';   // REVENANT-CARD: a revenant's portrait and words, on the same one call (and the presenter it registers)
+import { drawLootBanners } from './lootBanner.js';   // LOOT-BANNER: what arrived in the player's keeping, on the same one call (and the codex's door it registers)
 import { drawCrosshairAndModeIcon, crosshairCentreY } from './hudCrosshair.js';   // U38; AUDIT RETRO1 G5: the reticle's row, for the loot panel beside it
 import { playerDamageFlash } from './damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage rides the one HUD call
 import { playerBloodScreen, SCREEN_SPATTER_MIN } from './bloodScreen.js';   // BLOOD2e: blood on the lens rides the same call
@@ -500,6 +501,7 @@ export function hideHudTextSurfaces(hudText = null) {
   drawQuestHerald({ hidden: true });
   drawQuestTracker({ hidden: true });
   drawRevenantCards({ hidden: true });   // REVENANT-CARD: the same door
+  drawLootBanners({ hidden: true });   // LOOT-BANNER: the same door
 }
 
 export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
@@ -661,6 +663,10 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   drawQuestHerald({ hidden: cursorActive || !hudRenderEnabled(), dt });
   drawQuestTracker({ hidden: cursorActive || !hudRenderEnabled() });   // GUIDE4: the tracker's card, the same gate and the same hide door
   drawRevenantCards({ hidden: cursorActive || !hudRenderEnabled(), dt });   // REVENANT-CARD: the same gate, its clock the frame's - no card stands on the classic skin, so this is outside its gate as the herald is
+  // LOOT-BANNER: the same gate and clock, outside the skin's gate for a reason of its own - the watcher reads and marks the
+  // pack on EVERY skin (the four hosts hand drawHud the player entity as `vitals`), so a piece found on the classic skin
+  // is not announced when the player switches to Enhanced Plus; only Plus draws a banner
+  drawLootBanners({ entity: vitals, hidden: cursorActive || !hudRenderEnabled(), dt });
   if (isEnhanced() && typeof document !== 'undefined') {
     drawLevelNotices({ hidden: cursorActive || !hudRenderEnabled() });
     drawEnhancedHud(vitals, heading01, dt, {
