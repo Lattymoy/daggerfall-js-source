@@ -261,8 +261,8 @@
   {
     "name": "WAGONS1-the-seat-dropped-mid-journey",
     "file": "src/scenes/wagonRiders.js",
-    "old": "if (!deps.traveling?.() && !((ride.wait ?? 0) > now)) getDown(RIDE_TEXT.ownerGone);",
-    "new": "getDown(RIDE_TEXT.ownerGone);",
+    "old": "if (!deps.traveling?.() && !((ride.wait ?? 0) > now) && now - ride.lost >= RIDE_LOST_GRACE_MS) getDown(RIDE_TEXT.ownerGone); }",
+    "new": "getDown(RIDE_TEXT.ownerGone); }",
     "tests": ["test/wagons1_seats.test.js"]
   },
   {

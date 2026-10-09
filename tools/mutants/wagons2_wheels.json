@@ -1,0 +1,407 @@
+[
+  {
+    "name": "WAGONS2-the-chord-ignored",
+    "file": "src/world/wagonModels.js",
+    "old": "const c = lo[1] > pivot[1] ? Math.sqrt(R * R - (lo[1] - pivot[1]) ** 2) : R;",
+    "new": "const c = R;",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-kingpin-offset-ignored",
+    "file": "src/world/wagonModels.js",
+    "old": "for (const [reach, side] of [[c + dz, 1], [c - dz, -1]]) {",
+    "new": "for (const [reach, side] of [[c, 1], [c, -1]]) {",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-wall-s-run-unread",
+    "file": "src/world/wagonModels.js",
+    "old": "if (z >= lo[2] && z <= hi[2]) lock = Math.min(lock, (a * 180) / Math.PI);",
+    "new": "lock = Math.min(lock, (a * 180) / Math.PI + 0 * z);",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-whole-radius-never-met",
+    "file": "src/world/wagonModels.js",
+    "old": "const c = lo[1] > pivot[1] ? Math.sqrt(R * R - (lo[1] - pivot[1]) ** 2) : R;",
+    "new": "const c = Math.sqrt(R * R - (lo[1] - pivot[1]) ** 2);",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-a-wheel-s-radius-dropped",
+    "file": "src/world/wagonModels.js",
+    "old": "pivot: w.pivot, radius: w.radius, front:",
+    "new": "pivot: w.pivot, front:",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-every-wheel-a-front-one",
+    "file": "src/world/wagonModels.js",
+    "old": "front: !!geo.bogie && w.role.startsWith('wheelFront') }));",
+    "new": "front: !!geo.bogie }));",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-pole-left-on-the-body",
+    "file": "src/world/wagonModels.js",
+    "old": "  if (front) poleGeometry(front, kind);",
+    "new": "  if (front) poleGeometry(statics, kind);",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-bogie-out-of-the-bounds",
+    "file": "src/world/wagonModels.js",
+    "old": "  if (geo.bogie) take(geo.bogie.geometry.positions, [0, 0, 0]);\n",
+    "new": "",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-bogie-out-of-the-icon",
+    "file": "src/world/wagonModels.js",
+    "old": "const parts = [geo.statics, ...(geo.bogie ? [geo.bogie.geometry] : []), ...geo.wheels",
+    "new": "const parts = [geo.statics, ...geo.wheels",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-kingpin-pulled-the-whole-hitch",
+    "file": "src/systems/horseFollow.js",
+    "old": "const wb = bogie.wheelbase, pole = length - wb;",
+    "new": "const wb = bogie.wheelbase, pole = length;",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-body-pulled-from-the-hitch",
+    "file": "src/systems/horseFollow.js",
+    "old": "const a = hitchAxle(axleFrom, k.axle, wb, k.dir);",
+    "new": "const a = hitchAxle(axleFrom, hitch, wb, k.dir);",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-lock-dropped",
+    "file": "src/systems/horseFollow.js",
+    "old": "const held = clampSteer(steer, bogie.steerLimit);",
+    "new": "const held = steer;",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-lock-laid-the-wrong-way",
+    "file": "src/systems/horseFollow.js",
+    "old": "const dir = yawed(k.dir, -held);",
+    "new": "const dir = yawed(k.dir, held);",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-turn-s-sense-flipped",
+    "file": "src/systems/horseFollow.js",
+    "old": "Math.atan2(from[2] * to[0] - from[0] * to[2],",
+    "new": "Math.atan2(from[0] * to[2] - from[2] * to[0],",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-kingpin-at-the-axle",
+    "file": "src/systems/horseFollow.js",
+    "old": "const to = [hitch[0] - (axle[0] + f[0] * bogie.wheelbase), 0, hitch[2] - (axle[2] + f[2] * bogie.wheelbase)];",
+    "new": "const to = [hitch[0] - axle[0], 0, hitch[2] - axle[2]];",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-bogie-unread",
+    "file": "src/systems/horseFollow.js",
+    "old": "  const two = bogie && length > bogie.wheelbase;",
+    "new": "  const two = false;",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-kingpin-laid-fresh-every-frame",
+    "file": "src/systems/horseFollow.js",
+    "old": "const kingpinFrom = two && w.active ?",
+    "new": "const kingpinFrom = false ?",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-a-bogie-longer-than-its-hitch-two-bars",
+    "file": "src/systems/horseFollow.js",
+    "old": "  const two = bogie && length > bogie.wheelbase;",
+    "new": "  const two = !!bogie;",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-wheel-s-own-radius-unread",
+    "file": "src/systems/horseCart.js",
+    "old": "list[i]?.radius ?? parts.wheelRadius",
+    "new": "parts.wheelRadius",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-front-heading-unsteered",
+    "file": "src/systems/horseCart.js",
+    "old": "h: quatRotate(rotation, turned ? yawed(V_FORWARD, steer) : V_FORWARD)",
+    "new": "h: quatRotate(rotation, V_FORWARD)",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-front-contact-unsteered",
+    "file": "src/systems/horseCart.js",
+    "old": "const local = turned ? steeredLocal(bogie.kingpin, c, steer) : c;",
+    "new": "const local = c;",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-a-wheel-with-no-contact-zeroed",
+    "file": "src/systems/horseCart.js",
+    "old": "if (!b) return a;",
+    "new": "if (!b) return 0;",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-classic-pair-not-listed",
+    "file": "src/systems/horseCart.js",
+    "old": "parts?.wheels ?? (parts?.wheelLeftPivot ?",
+    "new": "parts?.wheels ?? (false ?",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-runtime-s-wheels-unrolled",
+    "file": "src/systems/horseCart.js",
+    "old": "    w.angles = rolledAngles(w.angles, w.contacts, contacts, wagonVisual.parts); w.contacts = contacts;",
+    "new": "    w.contacts = contacts;",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-bogie-not-handed-to-the-shafts",
+    "file": "src/systems/horseCart.js",
+    "old": "hitchZ(), dt, seed, wagonVisual.parts?.bogie ?? null);",
+    "new": "hitchZ(), dt, seed, null);",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-steer-not-given-to-the-wheels",
+    "file": "src/systems/horseCart.js",
+    "old": "wheelContacts(wagonVisual.parts, pos, wagonVisual.pose.rotation, wagonVisual.pose.steer ?? 0);",
+    "new": "wheelContacts(wagonVisual.parts, pos, wagonVisual.pose.rotation, 0);",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-runtime-s-recentre-unshifted",
+    "file": "src/systems/horseCart.js",
+    "old": "      for (const c of wagonVisual.wheel.contacts ?? []) c.p = vadd(c.p, d);",
+    "new": "      for (const c of []) c.p = vadd(c.p, d);",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-nothing-kept",
+    "file": "src/systems/horseCart.js",
+    "old": "    if (had) restWheels = {",
+    "new": "    if (false) restWheels = {",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-parked-draw-at-0",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "wagon.turn = wagon.kind === HCC_WIRE_KIND.Deployed ? v.rest ?? null :",
+    "new": "wagon.turn = wagon.kind === HCC_WIRE_KIND.Deployed ? null :",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-drive-off-from-0",
+    "file": "src/systems/horseCart.js",
+    "old": "angles: [...(restWheels?.angles ?? [])], contacts: null },",
+    "new": "angles: [], contacts: null },",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-a-jump-zeroes-them",
+    "file": "src/systems/horseCart.js",
+    "old": "angle: 0, angles: wagonVisual.wheel?.angles ?? [], contacts: null }; }",
+    "new": "angle: 0, angles: [], contacts: null }; }",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-horse-straight-ahead-of-the-body",
+    "file": "src/systems/horseCart.js",
+    "old": "    if (!bogie || !steer || !(pole > 0)) return { at, forward };",
+    "new": "    return { at, forward };",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-a-load-keeps-them",
+    "file": "src/systems/horseCart.js",
+    "old": "    restWheels = null;   // WAGONS2: a load",
+    "new": "    void 0;   // WAGONS2: a load",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-steer-s-sense-flipped-in-the-draw",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "quatAngleAxis(steer, STEER_AXIS)",
+    "new": "quatAngleAxis(-steer, STEER_AXIS)",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-bogie-unturned",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "if (g.bogie && steered) r.drawMesh(g.bogie, multiply(body, steered), paint, o);",
+    "new": "if (g.bogie && steered) r.drawMesh(g.bogie, body, texRemap, o);",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-front-wheels-unturned",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "wheelMatrix(w.front ? front : m, w.pivot, angleOf(i))",
+    "new": "wheelMatrix(m, w.pivot, angleOf(i))",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-one-angle-for-every-wheel",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "const angleOf = (i) => turn?.angles?.[i] ?? turn?.angle ?? 0;",
+    "new": "const angleOf = () => turn?.angle ?? 0;",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-classic-right-wheel-at-the-left-s",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "wheelMatrix(m, parts.wheelRightPivot, angleOf(1))",
+    "new": "wheelMatrix(m, parts.wheelRightPivot, angleOf(0))",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-peer-s-wheels-unturned",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "      turnPeer(p);   // WAGONS2: its wheels and bogie, off the pose drawn here",
+    "new": "      // turnPeer(p);",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-word-s-angle-not-the-seed",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "angles: contacts.map(() => p.wagon.angle ?? 0)",
+    "new": "angles: contacts.map(() => 0)",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-peer-s-two-bars-dropped",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "const turn = bogie && length > bogie.wheelbase ? bogieAxle(",
+    "new": "const turn = false ? bogieAxle(",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-a-leap-rolled",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "t.angles = rolledAngles(t.angles, leapt ? null : t.contacts, contacts, parts);",
+    "new": "t.angles = rolledAngles(t.angles, t.contacts, contacts, parts);",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-recentre-unshifted",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "for (const v of [p.shownHorse, p.shownWagon, ...(p.turn?.contacts ?? []).map((c) => c.p)])",
+    "new": "for (const v of [p.shownHorse, p.shownWagon])",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-the-following-steer-unread",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "if (p.wagon.kind === HCC_WIRE_KIND.Following && parts.bogie && p.shownHorse) p.steer =",
+    "new": "if (false) p.steer =",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-one-clock-for-every-wheel",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "turn.angles ? turn.angles.map((a, i) => step(i, a)) : null",
+    "new": "turn.angles ? turn.angles.map((a) => step('angle', a)) : null",
+    "tests": [
+      "test/wagons2_wheels.test.js"
+    ]
+  }
+]

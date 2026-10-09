@@ -266,10 +266,10 @@ test('WAGONS2 THE PAINT ON THE WAGON: the pool draws the driven wagon in its pai
   await flush();
   r.draws.length = 0;
   assert.equal(pool.draw(r), 1);
-  const body = r.draws[0], room = r.draws[1];
+  const body = r.draws[0], room = r.draws.at(-1);
   for (const rec of LOOK_RECORDS.caravan) assert.equal(body.remap.get(`${WAGON_ARCHIVE}_${rec}`), `${WAGON_ARCHIVE}_${lookRecord(rec, 2)}`);
   assert.equal(body.remap.size, LOOK_RECORDS.caravan.length);
-  assert.ok(r.draws.slice(2).every((d) => d.remap === body.remap), 'its wheels in its paint');
+  assert.ok(r.draws.slice(1, -1).every((d) => d.remap === body.remap), 'its bogie and its wheels in its paint');
   assert.equal(room.gpu.model.subMeshes.length, 5, 'the room inside');
   assert.deepEqual(room.o, { noShadow: true });
   assert.equal(room.remap.get(`${WAGON_ARCHIVE}_${TEX.roomSide}`), `${WAGON_ARCHIVE}_${lookRecord(TEX.roomSide, 1)}`);

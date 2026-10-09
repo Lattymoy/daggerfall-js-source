@@ -5,8 +5,9 @@
 // Mac's models (src/assets/wagons/*.json, baked by tools/bakeWagons.mjs - each in its wagon's frame: metres, +x its
 // right, +y up, +z the way it is pulled, the origin on the ground under its rear wheels' centres) built here into the
 // PARTS Horse Cart and Cargo's presentation draws (scenes/horseCartPool.js; the classic model's are systems/
-// wagon41214.js buildWagonParts): what stands still on the wagon's frame (`statics` - its body, its bench, its axles,
-// the cart's shafts, the four-wheelers' pole), each wheel re-based on its own turning centre (`wheels`), the rear pair
+// wagon41214.js buildWagonParts): what stands still on the wagon's frame (`statics` - its body, its bench, its rear
+// axle, the cart's shafts), the four-wheelers' front axle and pole turning on their kingpin (`bogie`, WAGONS2), each
+// wheel re-based on its own turning centre with its own radius (`wheels`), the rear pair
 // the two the parked wagon is grounded on (`wheelLeft` / `wheelRight` and their pivots, DeployedWagonVisual's two-wheel
 // solve) and the wheels' radius (the ground the turning reads off) - and, the port's own: the cargo the wagon's
 // fullness shows (`cargo`, WagonCargoVisual's twelve classic pieces laid in this wagon's bed), where a passenger sits
@@ -30,7 +31,7 @@ import { WAGON_ARCHIVE, TEX, WAGON_TILE, BANDS, wagonArt } from './wagonArt.js';
 import { toColor32 } from '../formats/color32Order.js';
 import { MeshBench, prism, box, planarUv, sub, add, dot } from './galleonMesh.js';
 import { benchPart } from './galleonModel.js';
-import { pointsOf } from './shipKit.js';
+import { pointsOf, boxOfPoints } from './shipKit.js';
 import { quatAngleAxis, quatRotate, quatMultiply } from './quat.js';
 import { NORMAL_GROUND_OFFSET } from '../systems/horseCartLaw.js';
 import { CARGO_DEFINITIONS } from '../systems/wagon41214.js';
@@ -137,17 +138,56 @@ function poleGeometry(bench, kind) {
 /** The radius a wheel rolls on: its pivot over the ground (its lowest corner - the bake's frame stands it there). */
 const rollRadius = (part, pivot) => { let lo = Infinity; for (let i = 1; i < part.positions.length; i += 3) lo = Math.min(lo, part.positions[i]); return pivot[1] - lo; };
 
+/** WAGONS2: the bake's parts that turn with a four-wheeler's front wheels on its kingpin (with the pole drawn here). */
+export const BOGIE_ROLES = Object.freeze(['axleFront']);
+
+/**
+ * WAGONS2 (2026-10-09, Mac: "Real wheel movement"): THE LOCK - how far a four-wheeler's front axle may turn on its
+ * kingpin (degrees, either way) before a front wheel's rim cuts into what stands beside it. Measured off the bake (its
+ * ground frame, before the lift): each front wheel a disc of its roll radius about its pivot, its inner face at its
+ * innermost x; each static part beside it (narrower than that face, its foot below the wheel's top) a wall at its
+ * outermost x from its foot up. The rim meets a wall first at the end of the chord the wall's foot cuts across the
+ * face (`c` its half, `reach` its end's run from the kingpin along the wagon), turned until `inner cos a - reach sin a`
+ * comes in to the wall: a = acos(wall / hypot(inner, reach)) - atan2(reach, inner), where that end then stands along
+ * the wall's run. The least such angle is the lock. Mac's open wagon and caravan: the body's side 1.3594 m out from its
+ * foot 0.9425 m up, the front-left rim's face 1.4616 m out (0.10 m clear), radius 0.7811 - a chord's half of 0.7642,
+ * so 6.85 degrees; the bench in front of the wheels would allow 12.7.
+ * @param {any} bake @param {number[]} kingpin the bake frame's
+ */
+export function steerLimitOf(bake, kingpin) {
+  const walls = bake.parts.filter((p) => !p.role.startsWith('wheel') && !BOGIE_ROLES.includes(p.role)).map((p) => boxOfPoints(pointsOf(p)));
+  let lock = 90;
+  for (const wheel of bake.parts.filter((p) => p.role.startsWith('wheelFront'))) {
+    const pivot = wheel.origin, R = rollRadius(wheel, pivot), dz = pivot[2] - kingpin[2];
+    const inner = Math.min(...pointsOf(wheel).map((q) => Math.abs(q[0])));
+    for (const { min: lo, max: hi } of walls) {
+      const wall = Math.max(Math.abs(lo[0]), Math.abs(hi[0]));
+      if (wall >= inner || lo[1] >= pivot[1] + R) continue;   // not beside the wheel: across its face, or over its top
+      const c = lo[1] > pivot[1] ? Math.sqrt(R * R - (lo[1] - pivot[1]) ** 2) : R;
+      for (const [reach, side] of [[c + dz, 1], [c - dz, -1]]) {   // the chord's front end turning in, and its back end
+        const a = Math.acos(wall / Math.hypot(inner, reach)) - Math.atan2(reach, inner);
+        const z = kingpin[2] + side * (inner * Math.sin(a) + reach * Math.cos(a));
+        if (z >= lo[2] && z <= hi[2]) lock = Math.min(lock, (a * 180) / Math.PI);
+      }
+    }
+  }
+  return lock;
+}
+
 /**
  * A wagon's parts from its bake (`bake` a parsed src/assets/wagons/*.json): every geometry built, its pictures laid,
  * lifted down the mod's metre. Pure; no renderer.
+ * WAGONS2: a four-wheeler's front axle and pole are its `bogie` - their own geometry, turning on the `kingpin` (the
+ * front axle's centre, lifted), with the `wheelbase` from the rear axle and the lock (`steerLimitOf`).
  * @param {any} bake
  */
 export function wagonGeometry(bake) {
   const kind = bake?.wagon;
   if (!WAGON_KINDS[kind] || !Array.isArray(bake.parts)) throw new Error(`no wagon's bake (${kind})`);
   const statics = new MeshBench(WAGON_ARCHIVE);
+  const front = kind !== 'cart' ? new MeshBench(WAGON_ARCHIVE) : null;   // WAGONS2: the bogie
   const wheels = [];
-  let radius = 0, rear = 0;
+  let radius = 0, rear = 0, rearZ = 0, kingpin = null;
   for (const part of bake.parts) {
     if (part.role.startsWith('wheel')) {
       const pivot = part.origin;
@@ -155,20 +195,26 @@ export function wagonGeometry(bake) {
       const bench = new MeshBench(WAGON_ARCHIVE);
       benchPart(bench, part, { offset: pivot, role: part.role, keep: null, skin: (role, n, c) => wagonFaceSkin(kind, role, n, c, pivot, R) });
       wheels.push({ role: part.role, geometry: bench.finish(), pivot: [pivot[0], pivot[1] - LIFT, pivot[2]], radius: R });
-      if (part.role.startsWith('wheelRear')) { radius += R; rear++; }
+      if (part.role.startsWith('wheelRear')) { radius += R; rear++; rearZ += pivot[2] / 2; }
+    } else if (front && BOGIE_ROLES.includes(part.role)) {
+      benchPart(front, part, { offset: [0, 0, 0], role: part.role, keep: null, skin: (role, n, c) => wagonFaceSkin(kind, role, n, c) });
+      kingpin = part.origin;
     } else benchPart(statics, part, { offset: [0, 0, 0], role: part.role, keep: null, skin: (role, n, c) => wagonFaceSkin(kind, role, n, c) });
   }
   if (rear !== 2) throw new Error(`the ${kind} has ${rear} rear wheels`);
-  if (kind !== 'cart') poleGeometry(statics, kind);
-  return { kind, statics: lifted(statics.finish()), wheels, wheelRadius: radius / 2 };
+  if (front && !kingpin) throw new Error(`the ${kind} has no front axle`);
+  if (front) poleGeometry(front, kind);
+  const bogie = front ? { geometry: lifted(front.finish()), kingpin: [kingpin[0], kingpin[1] - LIFT, kingpin[2]], wheelbase: kingpin[2] - rearZ, steerLimit: steerLimitOf(bake, kingpin) } : null;
+  return { kind, statics: lifted(statics.finish()), wheels, wheelRadius: radius / 2, bogie };
 }
 
 /** The bounds of every point a wagon's geometry has (its statics and its wheels in place) - the parked wagon's
- *  collider (DeployedWagonVisual's BoxCollider over the model's bounds). */
+ *  collider (DeployedWagonVisual's BoxCollider over the model's bounds). WAGONS2: its bogie as it stands straight. */
 function boundsOf(geo) {
   const min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
   const take = (p, at) => { for (let i = 0; i < p.length; i += 3) for (let k = 0; k < 3; k++) { const v = p[i + k] + at[k]; if (v < min[k]) min[k] = v; if (v > max[k]) max[k] = v; } };
   take(geo.statics.positions, [0, 0, 0]);
+  if (geo.bogie) take(geo.bogie.geometry.positions, [0, 0, 0]);
   for (const w of geo.wheels) take(w.geometry.positions, w.pivot);
   return { min, max, center: [0, 1, 2].map((k) => (min[k] + max[k]) / 2), size: [0, 1, 2].map((k) => max[k] - min[k]) };
 }
@@ -226,7 +272,8 @@ export function doorFor(kind) {
  * the wagon's own beside it.
  */
 export function buildBakedWagonParts(geo, make = rendererModelOf) {
-  const wheels = geo.wheels.map((w) => ({ role: w.role, model: make(w.geometry, `Wagon_${w.role}`), pivot: w.pivot }));
+  // WAGONS2: each wheel rolls on its own radius, and a four-wheeler's front pair turns with its bogie
+  const wheels = geo.wheels.map((w) => ({ role: w.role, model: make(w.geometry, `Wagon_${w.role}`), pivot: w.pivot, radius: w.radius, front: !!geo.bogie && w.role.startsWith('wheelFront') }));
   const rearLeft = wheels.find((w) => w.role === 'wheelRearLeft'), rearRight = wheels.find((w) => w.role === 'wheelRearRight');
   return {
     kind: geo.kind,
@@ -238,12 +285,13 @@ export function buildBakedWagonParts(geo, make = rendererModelOf) {
     hitchPitch: geo.kind === 'cart' ? CART_REST_PITCH_DEG : 0,
     axlePivot: [0, (rearLeft.pivot[1] + rearRight.pivot[1]) / 2, (rearLeft.pivot[2] + rearRight.pivot[2]) / 2],
     cargo: cargoFor(geo.kind), seats: seatsFor(geo.kind), door: doorFor(geo.kind),
+    bogie: geo.bogie ? { model: make(geo.bogie.geometry, `Wagon_${geo.kind}_bogie`), kingpin: geo.bogie.kingpin, wheelbase: geo.bogie.wheelbase, steerLimit: geo.bogie.steerLimit } : null,   // WAGONS2
   };
 }
 
 /** The whole wagon as one model, its wheels in place: the item's picture (ui/modelIcon.js's port door). */
 export function wagonIconModel(geo) {
-  const parts = [geo.statics, ...geo.wheels.map((w) => ({ ...w.geometry, positions: w.geometry.positions.map((v, i) => v + w.pivot[i % 3]) }))];
+  const parts = [geo.statics, ...(geo.bogie ? [geo.bogie.geometry] : []), ...geo.wheels.map((w) => ({ ...w.geometry, positions: w.geometry.positions.map((v, i) => v + w.pivot[i % 3]) }))];
   const groups = new Map();
   for (const g of parts) g.subMeshes.forEach((sm, k) => {
     const rec = g.slots[k].record;
