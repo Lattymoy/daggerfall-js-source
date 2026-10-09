@@ -38,6 +38,8 @@ import { houseWord } from '../systems/legacy/houseName.js';   // LEGACY-NAME: "t
 import { loadFamily, storeFamily, leaveBirth, readBirth, clearBirth, listFamilies, mergeFacts, noteSeen, seenRevOf } from '../systems/legacy/store.js';
 import { birthSearch } from '../systems/legacy/places.js';
 import { payToll, tollLine, ageOf, isElder, isSpent } from '../systems/legacy/age.js';
+import { liveVampirism } from '../systems/racialLive.js';   // AGELESS-CURSE
+import { liveLycanthropy } from '../systems/lycanthropy.js';   // AGELESS-CURSE
 import { legacySettings } from '../systems/legacy/settings.js';
 import { registerModSaveData } from '../systems/modSaveData.js';
 import { repairItemLists } from '../systems/save.js';   // ITEM-WALK B: the load's item repairs, on what leaves the line's record
@@ -446,7 +448,8 @@ export function createLegacyHost(deps) {
     writeCurrent();
     const d = { at: deps.now(), place: deps.here(), gold: deps.gold(), by: deps.killer?.() ?? null, cause: 'fell' };
     if (family.model === MODELS.enduring) {
-      const paid = payToll(p, legacySettings().tollShare, p.lived);
+      const cursed = !!(deps.entity && (liveVampirism(deps.entity) || liveLycanthropy(deps.entity)));   // AGELESS-CURSE: a vampire or a lycanthrope pays no toll
+      const paid = payToll(p, legacySettings().tollShare, p.lived, { ageless: cursed });
       touch(family);
       store();
       if (!paid.final) { outcome = { kind: 'rise', line: tollLine(p.given, paid) }; return outcome; }
