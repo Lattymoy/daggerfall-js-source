@@ -1908,8 +1908,9 @@ court's fire should be its own colour is the gate's call.
 
 Pins: `test/sd11a_scenes.test.js` (17 - the hall through the game's camera; the stones and plaques stand; the glows
 `white`; the walk; the sign; every face out; the aurorae whole round; no pow of a negative; the clock-face and the shards
-over its whole period; no blood on a mover; a frame makes nothing, measured in a child against a control; the same lights
-and sky made in place; posed before the world pass and a hidden draw no draw; a lamp under every light; the hall's word
+over its whole period; no blood on a mover; a frame makes nothing, measured in a child against a control (the arc's own
+code - the dungeon arm's general lines and the renderer's own copies are any dungeon's); the same lights and sky made
+in place; posed before the world pass and a hidden draw no draw; a lamp under every light; the hall's word
 forgotten; the breath seen; the void's span); `tools/mutants/sd11a.json` (68, all dead - three dropped that cannot die:
 TurboFan's escape analysis takes the allocations they put back). RE-AIMED BY CONTENT, each still dead: `blood1.json` (2),
 `sd4b.json`, `sd5a.json`, `sd6c.json` (3), `sd7a.json` (5), `sd7b.json` (4), `sd8c.json` (3), `sd9c.json` (2), `sd9e.json`
@@ -2394,9 +2395,9 @@ own, so each footfall is heard as a leg plants), eased over its first and last m
 foot. Every blow is moved, on the blow's own wind-up (an Echo's and the Last Moment's faster - `windupFor`): the Stomp's
 leg 0.95 rad up, slammed at `SD_RELEASE_MS`; the Hand's arm level and the waist turned to the sweep's start, then with
 the beam; the Volley's arms back, then thrown as the gears leave; the Reset's hands over its head, trembling more as it
-nears. The rig's numbers live in typed arrays and its joints go by index (AUDIT SD II, L2 F9's law: the Hour's frame
-makes nothing - a number written into an object's field, or handed to a function the engine has not taken up, is a box
-made).
+nears. The rig's numbers live in typed arrays and its joints go by index (AUDIT SD II, L2 F9's law: the arc's
+own code makes nothing in the Hour's frame - a number written into an object's field, or handed to a function the
+engine has not taken up, is a box made).
 - **The gears** (`sdGearsAt`): each Volley mark's gear thrown `gearFlightOf` (900 ms, at most 45% of the wind-up) before
 it lands, from between its hands as they leave them, arcing `SD_GEAR_ARC_M` (7 m) over the straight line, spinning, down
 on its mark as the Volley lands (SD16's burst takes it there); a broken Echo throws none. Fifteen draws

@@ -142,5 +142,32 @@
     "tests": [
       "test/sd26_render.test.js"
     ]
+  },
+  {
+    "name": "SD26-R5-the-fogs-colour-made-a-frame",
+    "file": "src/scenes/worldModes.js",
+    "old": "SD_REALM_FOG, _hourFog), _hourFogColor);",
+    "new": "SD_REALM_FOG, _hourFog));",
+    "tests": [
+      "test/sd26_render.test.js"
+    ]
+  },
+  {
+    "name": "SD26-R5-the-lanes-fog-made",
+    "file": "src/scenes/worldModes.js",
+    "old": "SD_REALM_FOG, _hourFog), _hourFogColor);",
+    "new": "SD_REALM_FOG), _hourFogColor);",
+    "tests": [
+      "test/sd26_render.test.js"
+    ]
+  },
+  {
+    "name": "SD26-R5-the-lanes-trilight-made",
+    "file": "src/scenes/worldModes.js",
+    "old": "dungeonTrilight(!!renderer.lightingLane, _rl.tri, _hourTri);",
+    "new": "dungeonTrilight(!!renderer.lightingLane, _rl.tri);",
+    "tests": [
+      "test/sd26_render.test.js"
+    ]
   }
 ]

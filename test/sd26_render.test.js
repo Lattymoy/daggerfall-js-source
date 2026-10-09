@@ -7,6 +7,8 @@ import './modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
 import { realmArt } from '../src/world/sdRealmArt.js';
 import { hallArt } from '../src/world/sdHallArt.js';
 import { stepsArt } from '../src/world/sdStepsArt.js';
@@ -210,3 +212,59 @@ test('AUDIT SD IV (R4): NOTHING OPEN OVER THE EYE - every lamp\'s head (its unde
   }
 });
 
+test('AUDIT SD IV (R5): THE ARM\'S HOUR FOG AND TRILIGHT MAKE NOTHING, on both lanes - L2 F9\'s measure (a child with a 64 MB young space, the least of six windows, against a control that must show) over the arm\'s own two lines, run from their text: the fog\'s colour and the lane\'s scaled fog and trilight were made a frame (640 B classic, 760 B under the lane); the light they hand is the light they handed (mutants: the fog\'s colour made a frame; the lane\'s fog made; the lane\'s trilight made)', () => {
+  const M = read('src/scenes/worldModes.js');
+  const line = (head) => { const i = M.indexOf(head); assert.ok(i > 0, head); return M.slice(i, M.indexOf('\n', i)).replace(/\s+\/\/ .*$/, ''); };
+  const lighting = line('if (isSdRealm(dungeonLoc)) { const _rl = realmLighting();'), fog = line('if (isSdRealm(dungeonLoc)) { applyFog(renderer, dungeonFog(');
+  const kept = [line('const _hourFog = {'), line('const _hourTri = {'), line('const _courtEquator = '), line('const courtEquatorOf = ')].join('\n');
+  // the light handed is the light it always was: dungeonFog / dungeonTrilight with nothing kept
+  const url = (p) => pathToFileURL(new URL(`../${p}`, import.meta.url).pathname).href;
+  const run = (lane) => {
+    const got = {}, renderer = { lightingLane: lane ? {} : null, setLighting: (a, s, c, tri) => { got.equator = [...a]; got.tri = JSON.parse(JSON.stringify(tri)); }, setMoonlight() {}, setFog: (...a) => { got.fog = [...a.slice(0, 4), [...a[4]]]; }, setSceneGrade() {} };
+    return { renderer, got };
+  };
+  return Promise.all(['src/world/sdRealm.js', 'src/render/enhancedLighting.js', 'src/render/underwaterFog.js'].map((p) => import(url(p)))).then(([R, EL, UF]) => {
+    for (const lane of [false, true]) {
+      const { renderer, got } = run(lane);
+      new Function('renderer', 'isSdRealm', 'dungeonLoc', 'realmLighting', 'dungeonTrilight', 'dungeonFog', 'applyFog', 'SD_REALM_FOG', 'SD_HOUR_GRADE', `${kept}\n${lighting}\n${fog}`)(renderer, () => true, {}, R.realmLighting, EL.dungeonTrilight, EL.dungeonFog, UF.applyFog, R.SD_REALM_FOG, {});
+      const tri = EL.dungeonTrilight(lane, R.realmLighting().tri), f = EL.dungeonFog(lane, R.SD_REALM_FOG);
+      const near = (a, b) => a.every((v, i) => Math.abs(v - b[i]) < 1e-6);
+      assert.ok(near(got.equator, tri.equator) && near(got.tri.sky, tri.sky) && near(got.tri.ground, tri.ground), `lane ${lane}: the Hour's trilight as it was`);
+      assert.deepEqual(got.fog.slice(0, 4), [f.mode, f.density, f.start, f.end]);
+      assert.ok(near(got.fog[4], f.color), `lane ${lane}: the Hour's fog as it was`);
+    }
+    // and made in place: the measure - each lane a session of its own, as a game is (one closure's feedback is its
+    // site's: a lane's frames measured after the other's run on code the other taught, and box what it never saw)
+    for (const lane of [false, true]) {
+      const script = `
+      const R = await import(${JSON.stringify(url('src/world/sdRealm.js'))});
+      const EL = await import(${JSON.stringify(url('src/render/enhancedLighting.js'))});
+      const UF = await import(${JSON.stringify(url('src/render/underwaterFog.js'))});
+      const realmLighting = R.realmLighting, SD_REALM_FOG = R.SD_REALM_FOG, dungeonTrilight = EL.dungeonTrilight, dungeonFog = EL.dungeonFog, applyFog = UF.applyFog;
+      const SD_HOUR_GRADE = {}, isSdRealm = () => true, dungeonLoc = {};
+      ${kept}
+      const bytes = (fn) => {
+        for (let f = 0; f < 20000; f++) fn();
+        let least = Infinity;
+        for (let w = 0; w < 6; w++) {
+          globalThis.gc(); globalThis.gc();
+          const h0 = process.memoryUsage().heapUsed;
+          for (let f = 0; f < 5000; f++) fn();
+          least = Math.min(least, (process.memoryUsage().heapUsed - h0) / 5000);
+        }
+        return least;
+      };
+      const out = {}, sink = [], feet = [1, 2, 3];
+      out.control = bytes(() => { sink[0] = [feet[0] + 0.5, feet[1] + 0.5, feet[2] + 0.5]; });
+      const renderer = { lightingLane: ${lane} ? {} : null, setLighting() {}, setMoonlight() {}, setFog() {}, setSceneGrade() {} };
+      out.lines = bytes(() => { ${lighting} ${fog} });
+      console.log(JSON.stringify(out));
+      `;
+      const child = spawnSync(process.execPath, ['--expose-gc', '--min-semi-space-size=64', '--max-semi-space-size=64', '--input-type=module', '-e', script], { encoding: 'utf8' });
+      assert.equal(child.status, 0, child.stderr);
+      const m = JSON.parse(child.stdout.trim().split('\n').pop());
+      assert.ok(m.control >= 40, `the control made ${m.control.toFixed(2)} bytes a frame - the measure is blind`);
+      assert.ok(m.lines < 2, `lane ${lane}: the Hour's lines made ${m.lines.toFixed(2)} bytes a frame (the control ${m.control.toFixed(2)})`);
+    }
+  });
+});
