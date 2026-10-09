@@ -92,8 +92,8 @@
   {
     "name": "REALM-GZIP-the-first-save-read-unopened",
     "file": "server-account/src/realm.js",
-    "old": "    const refused = firstSaveRefusal(await saveTextOf(new Uint8Array(body), REALM_TEXT_MAX_BYTES), row);\n",
-    "new": "    const refused = firstSaveRefusal(new TextDecoder().decode(body), row);\n",
+    "old": "  const text = await saveTextOf(new Uint8Array(body), REALM_TEXT_MAX_BYTES);\n",
+    "new": "  const text = new TextDecoder().decode(body);\n",
     "tests": [
       "test/realm_gzip.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "REALM-GZIP-the-first-save-opened-unbounded",
     "file": "server-account/src/realm.js",
-    "old": "    const refused = firstSaveRefusal(await saveTextOf(new Uint8Array(body), REALM_TEXT_MAX_BYTES), row);\n",
-    "new": "    const refused = firstSaveRefusal(await saveTextOf(new Uint8Array(body), Infinity), row);\n",
+    "old": "  const text = await saveTextOf(new Uint8Array(body), REALM_TEXT_MAX_BYTES);\n",
+    "new": "  const text = await saveTextOf(new Uint8Array(body), Infinity);\n",
     "tests": [
       "test/realm_gzip.test.js"
     ]

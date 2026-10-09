@@ -39,9 +39,10 @@ CREATE INDEX IF NOT EXISTS realm_characters_review ON realm_characters (review) 
 
 -- THE FINDINGS, kept for staff: one row a judgement that found something (a law finding, a duplicate, a gain past the
 -- budget - in MEASURE, a gain that WOULD have been - or the cutover's outlier). `detail` is the judge's JSON, bounded
--- by judge.js FINDINGS_KEPT. The cron sweeps rows past REALM_FINDINGS_KEEP_S.
+-- by judge.js FINDINGS_KEPT. The cron sweeps rows past REALM_FINDINGS_KEEP_S. `id` is the rowid - no AUTOINCREMENT,
+-- whose sequence table the findings do not need (0013_guilds.sql's ledger the same).
 CREATE TABLE IF NOT EXISTS realm_findings (
-  id        INTEGER PRIMARY KEY AUTOINCREMENT,
+  id        INTEGER PRIMARY KEY,
   player    TEXT NOT NULL,
   char_id   TEXT NOT NULL,
   seq       INTEGER NOT NULL,

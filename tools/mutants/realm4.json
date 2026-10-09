@@ -155,8 +155,8 @@
   {
     "name": "REALM4-lost-checkpoint-keeps-object",
     "file": "server-account/src/realm.js",
-    "old": "  if (!moved.meta.changes) {\n    await dropObjects(bucket, [key]);\n",
-    "new": "  if (!moved.meta.changes) {\n",
+    "old": "  await dropObjects(bucket, [key]);\n  return false;\n",
+    "new": "  return false;\n",
     "tests": [
       "test/realm4.test.js"
     ]

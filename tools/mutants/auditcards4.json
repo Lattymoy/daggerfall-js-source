@@ -38,8 +38,8 @@
   {
     "name": "AC4-A4-why-unsaid",
     "file": "server-account/src/index.js",
-    "old": "if ('error' in r) return r.why ? json({ error: r.error, why: r.why }, 400, origin) : no(r.error, 400, origin);",
-    "new": "if ('error' in r) return no(r.error, 400, origin);",
+    "old": "if ('error' in r) return r.why ? json({ error: r.error, why: r.why }, 400, origin) : no(r.error, JUDGE_STATUS[r.error] ?? 400, origin);",
+    "new": "if ('error' in r) return no(r.error, JUDGE_STATUS[r.error] ?? 400, origin);",
     "tests": [
       "test/auditcards4_client.test.js",
       "test/auditcards4_pins.test.js",

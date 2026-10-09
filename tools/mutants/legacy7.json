@@ -56,8 +56,8 @@
   {
     "name": "LEGACY7-dead-joined",
     "file": "server-account/src/realm.js",
-    "old": "'UPDATE realm_characters SET lease = ?, lease_at = ? WHERE id = ? AND player = ? AND dead_at IS NULL'",
-    "new": "'UPDATE realm_characters SET lease = ?, lease_at = ? WHERE id = ? AND player = ?'",
+    "old": "played_at = (SELECT played_s FROM players WHERE id = ?2) WHERE id = ?1 AND player = ?2 AND dead_at IS NULL'",
+    "new": "played_at = (SELECT played_s FROM players WHERE id = ?2) WHERE id = ?1 AND player = ?2'",
     "tests": [
       "test/legacy7_service.test.js"
     ]

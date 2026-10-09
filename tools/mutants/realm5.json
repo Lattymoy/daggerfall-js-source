@@ -111,8 +111,8 @@
   {
     "name": "REALM5-withdraw-never-credits",
     "file": "server-account/src/guilds.js",
-    "old": "    : (creditSave(save, gold, { letter }) ? null : 'bad-gold')));",
-    "new": "    : null));",
+    "old": "    : (creditSave(save, gold, { letter }) ? null : 'bad-gold')), { outbound",
+    "new": "    : null), { outbound",
     "tests": [
       "test/realm5.test.js"
     ],
