@@ -44,6 +44,8 @@ import { isGoldPieces } from './inventory.js';
 // counting with them (every container, a boat's hold, a deed at what the realm's bank pays)
 import { REST_ITEM, restItemsOnline } from './restItems.js';   // AUDIT REST-PARTY B4: the supplies stay offline while their online sources are shut (REST-LOOT: open since 2026-10-05; the switch is the way back)
 import { liquidWorthOf, stashedItemLists, carriedItemLists, liquidWealthOf, deedsOf, customsAllowance, CUSTOMS_WEALTH_BASE, CUSTOMS_WEALTH_PER_LEVEL, CUSTOMS_HOUSE_PRICE } from '../net/realmGoldLaw.js';
+import { cardWorthOf, cardRecordWorth, decorOwnOf, isCardRecord, customsCardAllowance } from '../net/cardWorthLaw.js';   // CARDS9: the cards' customs, one law with the service's first save; AUDIT CARDS-6 A1/A2: a pack's worth, and the decor
+import { binderOf, binderDecks, collectionOf, deckHeldRefusal } from './iliacItems.js';   // AUDIT CARDS-6 A9: the copies the binder's decks need, kept last
 
 export { stashedItemLists, liquidWealthOf, deedsOf, customsAllowance, CUSTOMS_WEALTH_BASE, CUSTOMS_WEALTH_PER_LEVEL, CUSTOMS_HOUSE_PRICE };
 const lists = (/** @type {any[]} */ ...ls) => ls.filter(Array.isArray);
@@ -139,8 +141,94 @@ export function applyCustoms(snap) {
       }
     }
   }
-  return { called: call.called, paid: call.paid, owed: call.owed, wealth, allowance, taken: wealth - liquidWealthOf(snap), crossed, restKept };
+  const decks = heldDecksOf(snap);   // AUDIT CARDS-6 A9: the binder's decks the pack backs before the cards' customs...
+  const cards = cardCustoms(snap);   // CARDS9: and the cards, at their worth
+  const decksShort = decks.filter((d) => deckHeldRefusal(d.cards, snap.items)).length;   // ...and those it left naming a card that stayed
+  return { called: call.called, paid: call.paid, owed: call.owed, wealth, allowance, taken: wealth - liquidWealthOf(snap), crossed, restKept, cardsKept: cards.kept, cardWorth: cards.worth, cardAllowance: cards.allowance, decksShort };
 }
+
+/**
+ * CARDS9 (bible/11-Multiplayer/Tavern-Cards.md section 32): THE CARDS' CUSTOMS, in place (the realm's copy, as all of
+ * customs is). A character brings cards worth no more than customsCardAllowance(level) (net/cardWorthLaw.js - the
+ * starter deck's worth and a sum a level); past it the DEAREST card goes first, one card at a time off its stack, until
+ * the rest fit - a stash's before the wagon's before the pack's (customs' own order, carriedItemLists). The offline
+ * character keeps every card. Answers `{ kept, worth, allowance }`: the cards that stayed behind, the worth carried
+ * before, the allowance.
+ *
+ * AUDIT CARDS-6 A1: A SEALED PACK IS TAKEN AS A CARD, at its worth (net/cardWorthLaw.js CARD_PACK_WORTH, among the cards
+ * by it - the dearest first, one rule): customs had read template 581 alone, and a pack crossed to open online.
+ * AUDIT CARDS-6 A2: AND WHAT STANDS AS THE OWNER'S OWN DECOR (DECOR2a's decorOwn, decorOwnOf) is taken FIRST among its
+ * worth - out of the pack's reach, as a stash is - the item stays offline and the piece it stood as goes with it (REST
+ * III B2's way with the rest supplies): online, the piece taken down or the house sold hands it back to the pack.
+ * AUDIT CARDS-6 A9: WITHIN A WORTH, THE COPIES NO DECK NEEDS GO FIRST. The sort kept the lists' order, and the chargen
+ * gift's stacks lead the pack, so customs took the starter deck's cards before the found cards beside them and left the
+ * binder's "Starter Deck" naming cards the realm character no longer held. A card in the pack is spare while the pack
+ * holds more of it than the deck that names the most of it (iliacItems.js binderDecks); one outside the pack is spare
+ * already (a deck is dealt from the pack - deckHeldRefusal). What a deck still lost is said (applyCustoms' `decksShort`,
+ * customsLines): the table deals no deck its binder cannot back, and says why (ui/cardBinderPage.js DECK_REFUSAL_WORDS
+ * 'not held').
+ * @param {any} snap
+ */
+export function cardCustoms(snap) {
+  const allowance = customsCardAllowance(snap?.level);
+  const worth = cardWorthOf(snap);
+  let over = worth - allowance, kept = 0;
+  if (over <= 0) return { kept, worth, allowance };
+  const pack = Array.isArray(snap.items) ? snap.items : null;
+  /** @type {Map<string, number>} */
+  const need = new Map();
+  for (const d of binderDecks(binderOf(pack))) {
+    const n = new Map();
+    for (const id of d.cards) n.set(id, (n.get(id) ?? 0) + 1);
+    for (const [id, k] of n) need.set(id, Math.max(need.get(id) ?? 0, k));
+  }
+  const have = collectionOf(pack);
+  const unit = (/** @type {any} */ rec) => cardRecordWorth({ ...rec, stackCount: 1 });
+  /** @type {{ rec: any, inPack: boolean, left: () => boolean, takeOne: () => void }[]} */
+  const held = [];
+  for (const { scene, id, rec } of decorOwnOf(snap)) {
+    if (!(unit(rec) > 0)) continue;
+    held.push({
+      rec, inPack: false, left: () => scene.decorOwn?.[id] === rec,
+      takeOne: () => {
+        if ((rec.stackCount ?? 1) > 1) { rec.stackCount -= 1; return; }
+        delete scene.decorOwn[id];
+        if (Array.isArray(scene.decor)) scene.decor = scene.decor.filter((/** @type {any} */ p) => p?.id !== id);
+      },
+    });
+  }
+  for (const list of carriedItemLists(snap)) {
+    for (const rec of list) {
+      if (!(unit(rec) > 0)) continue;
+      held.push({
+        rec, inPack: list === pack, left: () => list.includes(rec),
+        takeOne: () => { if ((rec.stackCount ?? 1) > 1) rec.stackCount -= 1; else list.splice(list.indexOf(rec), 1); },
+      });
+    }
+  }
+  held.sort((a, b) => unit(b.rec) - unit(a.rec));   // stable: the decor's, then the lists' own order, within a worth
+  const spare = (/** @type {any} */ h) => !h.inPack || !isCardRecord(h.rec) || (have.get(h.rec.card) ?? 0) > (need.get(h.rec.card) ?? 0);
+  for (let i = 0; i < held.length && over > 0;) {
+    const w = unit(held[i].rec);
+    let j = i;
+    while (j < held.length && unit(held[j].rec) === w) j++;
+    for (const sparesOnly of [true, false]) {
+      for (let k = i; k < j && over > 0; k++) {
+        const h = held[k];
+        while (over > 0 && h.left() && (!sparesOnly || spare(h))) {
+          h.takeOne();
+          if (h.inPack && isCardRecord(h.rec)) have.set(h.rec.card, (have.get(h.rec.card) ?? 1) - 1);
+          over -= w;
+          kept++;
+        }
+      }
+    }
+    i = j;
+  }
+  return { kept, worth, allowance };
+}
+/** AUDIT CARDS-6 A9: the binder's decks the pack backs - every card each names, held (iliacItems.js deckHeldRefusal). */
+const heldDecksOf = (/** @type {any} */ snap) => binderDecks(binderOf(snap?.items)).filter((d) => !deckHeldRefusal(d.cards, snap?.items));
 const REST_ITEM_IDS = new Set(Object.values(REST_ITEM));
 
 /**
@@ -289,7 +377,7 @@ export const CUSTOMS_PROMISE = Object.freeze([
 /** What customs did, in the Online door's words - or, `before` it runs (FIELD 2026-09-29, Dracula/Valentin: "HOW TF WAS
  *  I SUPPOSED TO KNOW YALL WOULD FORCE THE LOANS TO BE PAID"), what it will do: the same report off a copy customs ran
  *  on, told ahead, and the door's promise under it. */
-export function customsLines({ called, owed, wealth, allowance, taken, crossed = [], restKept = 0 }, { before = false } = {}) {
+export function customsLines({ called, owed, wealth, allowance, taken, crossed = [], restKept = 0, cardsKept = 0, cardWorth: cardsWorth = 0, cardAllowance = 0, decksShort = 0 }, { before = false } = {}) {
   const lines = [];
   if (called > 0) {
     lines.push(before
@@ -306,6 +394,10 @@ export function customsLines({ called, owed, wealth, allowance, taken, crossed =
   const what = [crossed.includes('ship') ? 'your ship' : '', houses > 1 ? `${houses} houses` : houses ? 'your house' : ''].filter(Boolean).join(' and ');
   if (what) lines.push(`${what[0].toUpperCase()}${what.slice(1)} ${before ? 'will come' : 'came'} with you, every piece in ${crossed.length > 1 ? 'them' : 'it'}; the realm's bank does not buy back what comes through customs.`);
   if (restKept > 0) lines.push(`Your rest supplies ${before ? 'will stay' : 'stayed'} with your offline character - they are not yet sold in the realm.`);   // AUDIT REST-PARTY B4; AUDIT REST II H13: the Tonics, Salts, Draughts and Candles are rest supplies, not camping
+  // CARDS9: the cards past the allowance, the dearest first
+  if (cardsKept > 0) lines.push(`Your cards are worth ${cardsWorth} gold; the realm lets a character of this level bring ${cardAllowance}. ${cardsKept} ${cardsKept === 1 ? 'card' : 'cards'}, the dearest, ${before ? 'will stay' : 'stayed'} with your offline character.`);
+  // AUDIT CARDS-6 A9: and a binder's deck left naming a card that stayed - the table deals it again once the binder holds it
+  if (decksShort > 0) lines.push(`${decksShort === 1 ? 'One deck' : `${decksShort} decks`} in your binder ${before ? 'will name' : decksShort === 1 ? 'names' : 'name'} cards that ${before ? 'stay' : 'stayed'} behind; the table deals a deck only when your binder holds every card it names.`);
   if (!lines.length) lines.push(before ? 'Customs finds nothing to settle.' : 'Customs found nothing to settle.');
   return before ? [...lines, ...CUSTOMS_PROMISE] : lines;
 }

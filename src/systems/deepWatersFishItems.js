@@ -22,21 +22,13 @@
 // powers of two).
 // ═══════════════════════════════════════════════════════════════════
 
-import FISH_TEMPLATES_JSON from '../../vendor/iliac-puddle-no-more/ItemTemplates.json' with { type: 'json' };
+import { FISH_GROUP, fishIconArchive, DEEP_WATERS_FISH_TEMPLATES } from './deepWatersFishRows.js';   // INT1: the rows' leaf - the item law reads them headless
 import { registerCustomTemplates, setItemFields, mintCondition, registerCustomItemGroup } from './itemTemplates.js';   // CSA-H: DeepWaters.Init's RegisterCustomItem group, on the shelves' one table (FORAGE1's one home)
 import { modSetting, modLatchedOn } from './modSettings.js';
 import { addVendorTextures, decodePng } from './textureReplacement.js';
 import { PASSIVE_FISH_SPECIES, isFishTemplateIndex, speciesOfTemplate, restoreIconAspect } from '../world/passiveFish.js';
 
-/** ItemGroups.UselessItems2, as the port names it. */
-export const FISH_GROUP = 'UselessItems2';
-/** A fish's picture's archive: its own template index (record 0). */
-export const fishIconArchive = (templateIndex) => templateIndex;
-
-/** The mod's rows, each drawn from its own picture (above). */
-export const DEEP_WATERS_FISH_TEMPLATES = Object.freeze(FISH_TEMPLATES_JSON.map((t) => Object.freeze({
-  ...t, worldTextureArchive: fishIconArchive(t.index), worldTextureRecord: 0,
-})));
+export { FISH_GROUP, fishIconArchive, DEEP_WATERS_FISH_TEMPLATES };
 registerCustomTemplates(DEEP_WATERS_FISH_TEMPLATES);
 // CSA-H (found porting Come Sail Away's shelves): DeepWaters.Init registers each fish's row with RegisterCustomItem(
 // index, (ItemGroups)9, null) - no class, but the GROUP - so DFU's shelf loop (DaggerfallLoot.cs:255-287) stocks the

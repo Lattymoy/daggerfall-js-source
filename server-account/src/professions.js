@@ -903,7 +903,7 @@ export async function withdrawStores(ctx, player, env, { character, material: ke
  * `order` which origins move first: `all` (the Stores page - gold's, bought, own) or `spend` (a writ's or the market's
  * shortfall, put in just before it spends - bought, own, never gold's). Refused `carried-short` past what the count holds after
  * the cut, `stores-full` past the Stores' 5,000.
- * BAG-CRAFT (FIELD BUGS 2026-10-09c, Mac: "I just want players to also be able to craft from their inventory, not just
+ * BAG-CRAFT (FIELD BUGS 2026-10-09d, Mac: "I just want players to also be able to craft from their inventory, not just
  * the store"): `work` - a station's shortfall - moves `spend`'s counted units and then units the count does not hold, as
  * many as `held` names past the count once cut (bagLaw.js looseOrder), into the Stores as loose (LOOSE_ORIGIN - AUDIT
  * BAG-CRAFT A1: a station's alone); the count is not touched for them. Its row's `loose` says them.

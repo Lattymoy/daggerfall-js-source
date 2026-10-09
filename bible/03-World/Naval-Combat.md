@@ -1374,7 +1374,13 @@ followers and Come Sail Away's crew never leaves the boat; all of this is the po
   fighting him keeps the town's watch. The layer's catch-up (`CATCH_UP_M`) comes long before the street's cull
   (`ENCOUNTER_CULL_DISTANCE`); he takes no encounter slot; he is `transient` (no place's save) and the room's save skips
   him. His green bar shows in every mode (`navalCrewBars`, the host's `drawCompanionBars`, under a dungeon window too),
-  a peer's companion's indoors and underground as well.
+  a peer's companion's indoors and underground as well. [CEIL-GHOST, FIELD BUGS 2026-10-09c, "Ghost companion isn't
+  showing health bar - clipping into ceiling": a FLYING companion (a ghost is Spectral, a bat Flying) follows on the
+  leader's level - the flyers' floor lift (DFU's "Stop fliers from moving too near the floor during combat",
+  `enemyMotor.js:"FLYER_FLOOR_LIFT = 0.1"`) is combat's and never runs while following; it read a leader a hair below
+  it as a descent and climbed the ghost till its 2.6 m met the ceiling. The bar stands over the body and under the
+  ceiling over it (`navalHud.js:"export function crewBarPoint"`) - over the ceiling the sight test hid it
+  (`01-Overview/Field-Bugs-2026-10-09c.md`).]
 - **CO-OP** (AUDIT CREW CC-E, Mac: *"Full co-op combat now"*). The owner simulates and the striker reports, as for the
   player's own blows: a companion's blow on a foe another client stands goes to its owner as an ALLY's (`al`, `ac` his
   number - the owner's foe turns on him, never on his player); a foe's blow on another's companion goes to the

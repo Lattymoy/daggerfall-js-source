@@ -108,9 +108,11 @@ export const materialValue = (basePrice, material) => basePrice * 3 * (valueMult
 /** The item's BASE VALUE for cost math (DaggerfallUnityItem.value
  *  after ItemBuilder): weapons/plate = basePrice * 3 * mult[material];
  *  chain armor doubles; everything else is the template basePrice.
- *  Armor materials arrive as the 0x0000/0x0100/0x02xx enum. */
-export function itemBaseValue(item) {
-  const t = templateByIndex(item.templateIndex);
+ *  Armor materials arrive as the 0x0000/0x0100/0x02xx enum.
+ *  INT1: `lookup` the template reader - the item law's (systems/itemLaw.js lawTemplate) knows the rows a headless reader
+ *  never registers. */
+export function itemBaseValue(item, lookup = templateByIndex) {
+  const t = lookup(item.templateIndex);
   if (!t) return 1;
   // AUDIT 17e F14: CreateWeapon's arrow branch never applies the
   // material multiplier (ItemBuilder.cs) - an arrow is worth its

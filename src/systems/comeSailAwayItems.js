@@ -21,7 +21,7 @@
 import { registerCustomTemplates, setItemFields, mintCondition, registerCustomItemGroup } from './itemTemplates.js';   // CSA-H: RegisterCustomItem's group, on the shelves' one table (FORAGE1's one home)
 import { modSetting, modLatchedOn } from './modSettings.js';
 import { registerModEffectKind, WATER_WALKING_SILENT_KIND } from './effects.js';
-import { HULL_NAMES, HULL_PRICES, HULL_WEIGHTS, VARIANT_NAMES } from './comeSailAwayBoat.js';
+import { HULL_NAMES, HULL_PRICES, HULL_WEIGHTS, VARIANT_NAMES } from './comeSailAwayHulls.js';   // INT1: the leaf, not the boat's renderer
 
 /** ItemBoatParts.templateIndex and ItemBoatDeed.templateIndex. */
 export const BOAT_PARTS_TEMPLATE = 1320;

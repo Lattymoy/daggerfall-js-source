@@ -25,6 +25,7 @@
 import { houseOfRecord } from '../../src/net/houseLaw.js';   // LEGACY7 part two: the house a member wears online
 import { checkName } from '../../src/net/nameFilter.js';   // ...through the name filter, as a guild's name is
 import { ID_RE, REALM_CHARACTER_RE } from '../../src/net/identityToken.js';   // LEGACY7 part three: the other's account, by the token's own shape; AUDIT LEGACY III O1: and its realm character
+import { releaseSteps } from './ledger.js';   // INT4: a tombstone's pieces let go - an heir, a looter takes them up
 import { guildMemberDead } from './guilds.js';   // AUDIT LEGACY III O5: a tombstone's guild seat handed on
 
 /** A family's id, as the client mints it (src/systems/legacy/family.js mintFamilyId). */
@@ -259,6 +260,7 @@ async function fellRetired(/** @type {any} */ db, /** @type {string} */ playerId
  */
 async function afterTomb(db, playerId, id, atS, why) {
   if (why === 'fell') await endUnionsOf(db, id, atS, 'died').run();
+  await db.batch(releaseSteps(db, id, atS));   // INT4: its claims withdrawn, what it held no record's now
   await guildMemberDead(db, playerId, id);
   await db.prepare('DELETE FROM realm_wed_halves WHERE player = ? AND char_id = ?').bind(playerId, id).run();
 }

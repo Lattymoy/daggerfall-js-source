@@ -1,4 +1,4 @@
-// BAG-CRAFT (FIELD BUGS 2026-10-09c - "People cannot craft from their bag"; Mac: "I just want players to also be able to
+// BAG-CRAFT (FIELD BUGS 2026-10-09d - "People cannot craft from their bag"; Mac: "I just want players to also be able to
 // craft from their inventory, not just the store") - A STATION WORKS WHAT THE BAG AND THE PACK HOLD, counted or not: a
 // craft, a brew, a smelt and a temper put their shortfall in from every unit the bag, the pack and the wagon hold but
 // gold's (net/bagLaw.js carriedWorkable), by the deposit's `work` order, which the service takes past its carried count

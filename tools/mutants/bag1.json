@@ -310,8 +310,8 @@
   {
     "name": "AUDIT-BAG1-B6-the-wagon-unread",
     "file": "src/systems/materialsBag.js",
-    "old": "  for (const list of [entity?.items ?? [], entity?.bagItems ?? [], entity?.wagonItems ?? []]) {",
-    "new": "  for (const list of [entity?.items ?? [], entity?.bagItems ?? []]) {",
+    "old": "  for (const list of [entity?.items ?? [], entity?.bagItems ?? [], entity?.wagonItems ?? []]) {\n    for (const it of list) if (materialKeyOfItem(it) === key) n += it.stackCount ?? 1;",
+    "new": "  for (const list of [entity?.items ?? [], entity?.bagItems ?? []]) {\n    for (const it of list) if (materialKeyOfItem(it) === key) n += it.stackCount ?? 1;",
     "tests": [
       "test/bag1_client.test.js"
     ]

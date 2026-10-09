@@ -367,7 +367,7 @@ export function createProfBook({ door, storage = null, character = () => null, n
      *  a carrying book, what the character carries and still holds of the service's count (bagLaw.js carriedUsable) - the
      *  shortfall put in the Stores before it spends (`ensureInStores`). A station reads `workable`. */
     held(material) { return this.storesHeld(material) + this.carriedUsable(material); },
-    /** BAG-CRAFT (FIELD BUGS 2026-10-09c, Mac: "I just want players to also be able to craft from their inventory, not
+    /** BAG-CRAFT (FIELD BUGS 2026-10-09d, Mac: "I just want players to also be able to craft from their inventory, not
      *  just the store"): WHAT A STATION MAY WORK OF IT - a craft, a brew, a smelt, a temper: the Stores' and everything the
      *  bag, the pack and the wagon hold of it, counted or not, but gold's (bagLaw.js carriedWorkable) - the shortfall put
      *  in first (`ensureInStores` with `work`). */

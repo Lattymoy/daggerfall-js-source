@@ -148,13 +148,14 @@ import { getPref, setPref } from '../systems/uiPrefs.js';
  * @property {() => boolean} [inTown]   BAG1: whether the Stores are reached here - in a town, indoors or out
  * @property {(key: string) => number} [room]   BAG1: how many more units of a material the bag and the pack can take
  * @property {(key: string) => number} [carriedHeld]   BAG1: how many units of a material the bag and the pack hold
+ * @property {() => string[]} [heldKeys]   UNCOUNTED: every material the bag, the pack and the wagon hold an item of
  * @property {() => ({ has: boolean, kg: number, max: number, count?: number })} [bag]   BAG1: the Materials Bag - held, its load and
  *   its limit (AUDIT2: and how many pieces its list holds)
  * @property {() => ({ moved: number, left: number })} [emptyBag]   AUDIT2 BAG1 H1/U2: every piece in the bag into the pack, as much
  *   as the pack carries - anywhere, on either skin
  */
 let _provider = /** @type {ProfPagesProvider|null} */ (null);
-/** BAG-CRAFT (FIELD BUGS 2026-10-09c, Mac: "I just want players to also be able to craft from their inventory, not just
+/** BAG-CRAFT (FIELD BUGS 2026-10-09d, Mac: "I just want players to also be able to craft from their inventory, not just
  *  the store"): WHAT A STATION MAY WORK OF A MATERIAL - every station's read, one home: the book's `workable` (the Stores,
  *  and the bag, the pack and the wagon counted or not - net/profBook.js); a book that has none answers its `held`. */
 const workOf = (/** @type {any} */ book, /** @type {string} */ k) => (typeof book?.workable === 'function' ? book.workable(k) : book.held(k));
@@ -212,20 +213,29 @@ export const BAG_PAGE_WORDS = Object.freeze({
     ...refused.map((r) => `${r.name}: ${r.text ?? 'not put in.'}`),
     ...(stop ? [stop] : []),
   ].join(' '),
+  /** UNCOUNTED (FIELD BUGS 2026-10-09c, "Some ingredients won't let you store them": Troll's Blood and Orc's Blood from a
+   *  dungeon, and what a friend was traded): units held that the service never handed out (law 3) - a card's split, and
+   *  the picked bar's why. The page listed none of them and said nothing. */
+  uncountedSplit: (n) => `${n.toLocaleString('en-US')} unstorable`,
+  uncounted: 'Looted, bought at a shop or given by another player, a material stays an item in your pack: only what you gathered, or took out of your Stores, goes back in. A Mages Guild\'s potion maker and every crafting station use it as it is.',   // BAG-CRAFT: a station's put-in takes it, loose
 });
 /** AUDIT2 BAG1 U1: how many more units of a row's material the Stores take - their bound less what they hold, every
  *  origin (the deposit's own decision, server-account/src/professions.js depositStores). */
 export const storesRoomOf = (book, row) => Math.max(0, (book?.state?.caps?.stores ?? STORES_MAX) - ((row?.own | 0) + (row?.bought | 0) + (row?.gold | 0) + (row?.loose | 0)));   // AUDIT BAG-CRAFT A1: every origin fills it
 /** BAG1: the page's rows for a carrying book - every material the Stores hold or the character carries, each with its
- *  Stores split (`own`, `bought`, `gold`) and `carried`: what the bag and the pack hold of it that the service counts. */
-export function carryRows(book, carriedHeld) {
+ *  Stores split (`own`, `bought`, `gold`) and `carried`: what the bag and the pack hold of it that the service counts.
+ *  UNCOUNTED: and, with `heldKeys` (every material held), `uncounted` - what is held past the count, which no Put in takes. */
+export function carryRows(book, carriedHeld, heldKeys = null) {
   const out = new Map();
   for (const [k, s] of book.state.stores) out.set(k, { ...s, carried: 0 });
-  for (const k of book.state.carried?.keys?.() ?? []) {
-    const n = carriedTotal(clampCarried(book.carried(k), carriedHeld?.(k) ?? 0));   // every origin, as far as the pack still holds it
-    if (n <= 0) continue;
+  for (const k of new Set([...(book.state.carried?.keys?.() ?? []), ...(heldKeys?.() ?? [])])) {
+    const held = carriedHeld?.(k) ?? 0;
+    const n = carriedTotal(clampCarried(book.carried(k), held));   // every origin, as far as the pack still holds it
+    const uncounted = heldKeys ? Math.max(0, held - Math.max(0, n)) : 0;
+    if (n <= 0 && uncounted <= 0) continue;
     const row = out.get(k) ?? { material: k, own: 0, bought: 0, carried: 0 };
-    row.carried = n;
+    row.carried = Math.max(0, n);
+    if (uncounted > 0) row.uncounted = uncounted;
     out.set(k, row);
   }
   return out;
@@ -588,8 +598,8 @@ export function storesRows(stores, { family = null, query = '', sort = 'tier' } 
   const q = String(query ?? '').trim().toLowerCase();
   const rows = [...stores.values()].map((s) => {
     const m = material(s.material);
-    return { ...s, name: nameOf(s.material), family: m?.family ?? null, tier: m?.tier ?? 0, value: m?.value ?? 0, total: s.own + s.bought + (s.gold | 0) + (s.loose | 0), carried: s.carried | 0 };   // GOLD-MARKET: what gold bought is held too; BAG1: what is carried beside it; AUDIT BAG-CRAFT A1: and what a station's put-in brought loose
-  }).filter((r) => r.total + r.carried > 0 && (!family || r.family === family) && (!q || r.name.toLowerCase().includes(q)));
+    return { ...s, name: nameOf(s.material), family: m?.family ?? null, tier: m?.tier ?? 0, value: m?.value ?? 0, total: s.own + s.bought + (s.gold | 0) + (s.loose | 0), carried: s.carried | 0, uncounted: s.uncounted | 0 };   // AUDIT BAG-CRAFT A1: and what a station's put-in brought loose; GOLD-MARKET: what gold bought is held too; BAG1: what is carried beside it; UNCOUNTED: and held past the count
+  }).filter((r) => r.total + r.carried + r.uncounted > 0 && (!family || r.family === family) && (!q || r.name.toLowerCase().includes(q)));
   const byName = (a, b) => a.name.localeCompare(b.name);
   rows.sort(sort === 'name' ? byName : sort === 'count' ? (a, b) => (b.total - a.total) || byName(a, b) : (a, b) => (a.tier - b.tier) || byName(a, b));
   return rows;
@@ -725,7 +735,7 @@ function drawCarryStores(detail, rerender, kit) {
     };
     detail.append(empty);
   }
-  const all = carryRows(book, p.carriedHeld);
+  const all = carryRows(book, p.carriedHeld, p.heldKeys);
   const rows = storesRows(all, _stores, p.name);
   // AUDIT BAG1: whatever the filter shows - the button puts in everything carried, and a search that hid the carried
   // materials hid the button with them
@@ -766,7 +776,7 @@ function drawCarryStores(detail, rerender, kit) {
     const card = el('button', `prof-mat${_stores.picked === r.material ? ' on' : ''}`);
     card.type = 'button';
     card.append(el('b', null, r.name), el('span', 'prof-count', r.total.toLocaleString('en-US')),
-      el('span', 'prof-split', [r.total ? storesSplit(r) : null, r.carried ? `${r.carried.toLocaleString('en-US')} carried` : null].filter(Boolean).join(' · ')));
+      el('span', 'prof-split', [r.total ? storesSplit(r) : null, r.carried ? `${r.carried.toLocaleString('en-US')} carried` : null, r.uncounted ? BAG_PAGE_WORDS.uncountedSplit(r.uncounted) : null].filter(Boolean).join(' · ')));
     card.onclick = () => { _stores.picked = r.material; _stores.qty = Math.max(1, Math.min(_stores.qty, Math.max(r.total, r.carried))); _stores.word = null; rerender(); };
     grid.append(card);
   }
@@ -808,6 +818,7 @@ function drawCarryStores(detail, rerender, kit) {
       const why = [pick.total > 0 && room < 1 ? BAG_WORDS.noRoom : null, pick.carried > 0 && inMost < 1 ? BAG_PAGE_WORDS.storesFull : null].filter(Boolean);
       if (why.length) detail.append(el('p', 'px-note prof-why', why.join(' ')));
     }
+    if (pick.uncounted > 0) detail.append(el('p', 'px-note prof-why', BAG_PAGE_WORDS.uncounted));   // UNCOUNTED: why Put in leaves them
     detail.append(el('p', 'px-note', withdrawable(pick.material) ? BAG_PAGE_WORDS.takenNote
       : staysLine(pick)));
     if ((pick.gold | 0) > 0) detail.append(el('p', 'px-note', GOLD_GOODS_LINE));

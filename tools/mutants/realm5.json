@@ -111,8 +111,8 @@
   {
     "name": "REALM5-withdraw-never-credits",
     "file": "server-account/src/guilds.js",
-    "old": "    : (creditSave(save, gold, { letter }) ? null : 'bad-gold')));",
-    "new": "    : null));",
+    "old": "    : (creditSave(save, gold, { letter }) ? null : 'bad-gold')), { outbound",
+    "new": "    : null), { outbound",
     "tests": [
       "test/realm5.test.js"
     ],
@@ -158,7 +158,7 @@
   {
     "name": "REALM5-landed-not-known",
     "file": "src/systems/realmSaves.js",
-    "old": "      if (r?.error === 'seq') return i > 0 && r.seq === at.seq + 1 && !needsAnswer ? { ok: true, landed: true, seq: r.seq } : { ok: false, error: 'offline', unknown: true };\n",
+    "old": "      if (r?.error === 'seq') return i > 0 && r.seq === at.seq + 1 && !needsAnswer && !read ? { ok: true, landed: true, seq: r.seq } : unanswered;\n",
     "new": "",
     "tests": [
       "test/realm5.test.js"
@@ -176,8 +176,8 @@
   {
     "name": "REALM5-no-checkpoint-first",
     "file": "src/systems/realmSaves.js",
-    "old": "export async function realmGoldAct({ session, checkpoint, reserve = null, apply = null, call, wait = (ms) => new Promise((r) => { setTimeout(r, ms); }), needsAnswer = false }) {\n  checkpoint();\n",
-    "new": "export async function realmGoldAct({ session, checkpoint, reserve = null, apply = null, call, wait = (ms) => new Promise((r) => { setTimeout(r, ms); }), needsAnswer = false }) {\n",
+    "old": "export async function realmGoldAct({ session, checkpoint, reserve = null, apply = null, call, wait = (ms) => new Promise((r) => { setTimeout(r, ms); }), needsAnswer = false, read = false }) {\n  checkpoint();\n",
+    "new": "export async function realmGoldAct({ session, checkpoint, reserve = null, apply = null, call, wait = (ms) => new Promise((r) => { setTimeout(r, ms); }), needsAnswer = false, read = false }) {\n",
     "tests": [
       "test/realm5.test.js"
     ]

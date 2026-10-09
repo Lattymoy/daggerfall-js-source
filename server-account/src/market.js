@@ -60,7 +60,8 @@ import { marketHallTitheCap } from '../../src/net/fortLaw.js';
 import { tideNow } from './tides.js';   // SEASON1 part two: a Bandit Summer's couriers (9.3)
 import { tideCourier } from '../../src/net/tideLaw.js';
 import { profOpenFor, spendStatements, spendOrigins, spendableSql, storeOf } from './professions.js';
-import { REALM_ID_RE, realmActFirst, prepareRealmRecord, mustChange, dropIfUnnamed, recordMovedOf, dropObjects } from './realm.js';   // GOLD-MARKET
+import { REALM_ID_RE, realmActFirst, prepareRealmRecord, mustChange, dropIfUnnamed, recordMovedOf, dropObjects, realmHoldOf } from './realm.js';   // GOLD-MARKET
+import { lawfulItem } from '../../src/systems/itemLaw.js';   // INT1: no piece the law cannot stand behind is listed
 import { payFromSave, creditSave } from '../../src/net/realmGoldLaw.js';   // GOLD-MARKET: a gold sale moves a realm record's gold
 import { CHAR_ID_RE } from './service.js';
 import { MARKS_MAX, MARK_WORTH_GOLD, utcDay } from '../../src/net/marksLaw.js';
@@ -427,7 +428,7 @@ export async function closeAuctions(ctx) {
         SELECT 'escrow', b.id, 'burn', NULL, 'courier', b.courier, ?3, ?4, b.bidder, a.id, 'auction:' || a.id || ':courier' ${won} AND b.courier > 0`)
         .bind(a.id, nonce, day, nowS),
       // the owner moved only to a bid that won - never to no one
-      db.prepare(`UPDATE products SET owner = (SELECT b.bidder ${won}), listed = 0, bought_with = 'marks'   -- GOLD-MARKET: won with Drakes
+      db.prepare(`UPDATE products SET owner = (SELECT b.bidder ${won}), credited = 0, listed = 0, bought_with = 'marks'   -- GOLD-MARKET: won with Drakes
         WHERE provenance = (SELECT provenance FROM market_auctions WHERE id = ?1 AND cn = ?2)
           AND EXISTS (SELECT 1 ${won})`).bind(a.id, nonce),
       db.prepare(`INSERT OR IGNORE INTO market_deliveries (id, player, char_id, provenance, wear, why, from_region, arrives_at, at)
@@ -807,6 +808,8 @@ export async function marketList(ctx, player, env, { character, region, kind, ma
     if (made && !pieceListable(made.recipe)) return { error: 'market-not-listable' };
   } else return { error: 'bad-act' };
   if (units * price > MARKET_WORTH_MAX) return { error: 'bad-price' };   // AUDIT 30 L8: no balance could pay its fee or buy it
+  const held = await realmHoldOf(db, me, character);   // INT3 (AUDIT INT): a held character lists nothing - its craft, its Stores
+  if (held) return held;
   if (await overRate(ctx, `market-post:${me}`, MARKET_POSTS_MAX, MARKET_WINDOW_S)) return { error: 'market-rate' };
   await settle(ctx, player);
   const fee = listingFee(units * price);
@@ -931,11 +934,12 @@ async function listGood(ctx, player, env, { character, region, item, pick, price
   let moved = null;
   const prep = await prepareRealmRecord(ctx, me, side.at, (save) => {
     if (goodRefusal(Array.isArray(save.items) ? save.items[pick] : null)) return 'market-not-good';
+    if (!lawfulItem(save.items[pick])) return 'market-not-good';   // INT1: and a piece the item law can stand behind
     const out = takeTradeGoods(save, { items: [item], gold: 0 }, [pick]);
     if (!out) return 'market-good-gone';
     moved = out[0];
     return null;
-  });
+  }, { outbound: true, escrow: true });   // INT3: a listing hands the piece to the market's buyers; INT4: and the ledger holds it the market's
   if (prep.error) return prep;
   const id = mintId(rand);
   const nonce = mintId(rand);
@@ -1040,6 +1044,9 @@ export async function marketBuy(ctx, player, env, { character, region, listing: 
   if ((l.currency === 'gold') !== (at != null)) return { error: at ? 'market-currency' : 'market-gold-realm' };
   if (l.kind === 'piece' || l.kind === 'item') units = 1;   // MARKET-ANY: a piece from a pack, whole
   else if (!unitsOk(units)) return { error: 'bad-units' };
+  // INT1 (AUDIT INT): a piece listed before the item law read listings is read as it is bought - one no honest client
+  // mints is sold to nobody (it waits for staff, and its buyer's trade is never held over it)
+  if (l.kind === 'item' && !lawfulItem(goodOf(l.item))) return { error: 'market-not-good' };
   if (units > Number(l.own) + Number(l.bought)) return { error: 'market-short' };
   const from = Number(l.region);
   const own = hubsOf(hubs);
@@ -1107,7 +1114,7 @@ export async function marketBuy(ctx, player, env, { character, region, listing: 
       SELECT buyer, char_id, material, 'bought', units FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND kind = 'material' AND delivered = 1
       ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = prof_stores.qty + excluded.qty`).bind(me, rid, nonce),
     // a piece's owner moved, and by courier its delivery written
-    db.prepare(`UPDATE products SET owner = ?1, listed = 0, bought_with = 'marks' WHERE provenance = (SELECT provenance FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND kind = 'piece')`)
+    db.prepare(`UPDATE products SET owner = ?1, credited = 0, listed = 0, bought_with = 'marks' WHERE provenance = (SELECT provenance FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND kind = 'piece')`)
       .bind(me, rid, nonce),   // GOLD-MARKET: bought with Drakes - it lists for Drakes alone
     db.prepare(`INSERT OR IGNORE INTO market_deliveries (id, player, char_id, provenance, wear, why, from_region, arrives_at, at)
       SELECT ?4, s.buyer, s.char_id, s.provenance, l.wear, 'bought', s.from_region, s.arrives_at, s.at
@@ -1154,7 +1161,7 @@ async function buyWithGold(ctx, player, { character, region, l, units, max, rid,
   const from = Number(l.region);
   const here = from === region;
   const delivered = l.kind === 'piece' || l.kind === 'item' || here ? 1 : 0;   // MARKET-ANY: a pack's piece's delivery written at once
-  const prep = await prepareRealmRecord(ctx, me, at, (save) => (payFromSave(save, total + courier, region) ? null : 'realm-gold'));
+  const prep = await prepareRealmRecord(ctx, me, at, (save) => (payFromSave(save, total + courier, region) ? null : 'realm-gold'), { outbound: true });   // INT3: a purchase pays the seller
   if (prep.error) return prep;
   const nonce = mintId(rand);
   const day = utcDay(nowS);
@@ -1189,7 +1196,7 @@ async function buyWithGold(ctx, player, { character, region, l, units, max, rid,
         SELECT buyer, char_id, material, 'gold', units FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND kind = 'material' AND delivered = 1
         ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = prof_stores.qty + excluded.qty`).bind(me, rid, nonce),
       // a piece's owner moved, marked bought with gold (it lists for gold alone), and by courier its delivery written
-      db.prepare(`UPDATE products SET owner = ?1, listed = 0, bought_with = 'gold' WHERE provenance = (SELECT provenance FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND kind = 'piece')`)
+      db.prepare(`UPDATE products SET owner = ?1, credited = 0, listed = 0, bought_with = 'gold' WHERE provenance = (SELECT provenance FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND kind = 'piece')`)
         .bind(me, rid, nonce),
       db.prepare(`INSERT OR IGNORE INTO market_deliveries (id, player, char_id, provenance, wear, why, from_region, arrives_at, at)
         SELECT ?4, s.buyer, s.char_id, s.provenance, l.wear, 'bought', s.from_region, s.arrives_at, s.at
@@ -1340,6 +1347,8 @@ export async function marketFill(ctx, player, env, { character, region, order: i
   if (!regionOk(region)) return { error: 'bad-region' };
   if (!idOk(id)) return { error: 'bad-order' };
   if (!unitsOk(units)) return { error: 'bad-units' };
+  const frozen = await realmHoldOf(db, me, character);   // INT3 (AUDIT INT): a held character fills no order from its Stores
+  if (frozen) return frozen;
   if (await overRate(ctx, `market:${me}`, MARKET_OPS_MAX, MARKET_WINDOW_S)) return { error: 'market-rate' };
   const o = await db.prepare('SELECT * FROM market_orders WHERE id = ?1').bind(id).first();
   if (!o || o.state !== 'open' || Number(o.expires_at) <= nowS) return { error: 'market-gone' };
@@ -1593,6 +1602,8 @@ export async function marketAuction(ctx, player, env, { character, region, prove
   const made = await db.prepare('SELECT recipe, quality FROM products WHERE provenance = ?1').bind(provenance).first();
   if (made && !pieceListable(made.recipe)) return { error: 'market-not-listable' };
   if (made && !auctionable(made.recipe, Number(made.quality))) return { error: 'auction-not-masterwork' };
+  const held = await realmHoldOf(db, me, character);   // INT3 (AUDIT INT): a held character auctions nothing
+  if (held) return held;
   if (await overRate(ctx, `market-post:${me}`, MARKET_POSTS_MAX, MARKET_WINDOW_S)) return { error: 'market-rate' };
   await settle(ctx, player);   // MARKET-AUDIT: as a listing posted - a listing past its hours, unsettled, stood among the thirty
   if (await db.prepare('SELECT 1 FROM market_deliveries WHERE provenance = ?1 AND collected = 0').bind(provenance).first()) return { error: 'market-uncollected' };

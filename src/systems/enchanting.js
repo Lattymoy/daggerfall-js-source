@@ -163,9 +163,11 @@ export function keptEnchantments(item) {
   }
   return out;
 }
-export function itemEnchantmentPower(item) {
+/** INT1: `lookup` the template reader - the item law's (systems/itemLaw.js lawTemplate) knows the rows a headless reader
+ *  never registers. */
+export function itemEnchantmentPower(item, lookup = templateByIndex) {
   if (!item) throw new Error('itemEnchantmentPower: item is null');
-  const basePower = craftedJewelPoints(item) ?? templateByIndex(item.templateIndex)?.enchantmentPoints ?? 0;
+  const basePower = craftedJewelPoints(item) ?? lookup(item.templateIndex)?.enchantmentPoints ?? 0;
   const cls = customItemClass(item.templateIndex);
   if (cls?.enchantmentPower) return cls.enchantmentPower(item, { enchantmentPoints: basePower, armorEnchantmentMultiplier });
   let multiplier = 0;

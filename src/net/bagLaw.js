@@ -99,7 +99,7 @@ export const CLAMP_ORDER = Object.freeze(['gold', 'bought', 'own']);
  *  not hold (`looseOrder`). */
 export const DEPOSIT_ORDERS = Object.freeze({ all: CLAMP_ORDER, spend: Object.freeze(['bought', 'own']), work: Object.freeze(['bought', 'own']) });
 export const depositOrderOk = (o) => typeof o === 'string' && Object.hasOwn(DEPOSIT_ORDERS, o);
-/** BAG-CRAFT (FIELD BUGS 2026-10-09c, Mac: "I just want players to also be able to craft from their inventory, not just
+/** BAG-CRAFT (FIELD BUGS 2026-10-09d, Mac: "I just want players to also be able to craft from their inventory, not just
  *  the store"): whether a deposit by `o` may move units the carried count does not hold - a looted Red Rose, a log
  *  withdrawn before the bag, a stack traded from a friend - up to what the client says it holds past the count. A
  *  station's alone (a craft, a brew, a smelt, a temper): a writ, the market and the Stores page's Put in still move only
@@ -109,7 +109,7 @@ export const looseOrder = (o) => o === 'work';
  *  bought: as bought it went to a writ, the guild Stores, a Drakes listing or fill, and a withdrawal counted it carried
  *  (every door law 3 walls), a `work` put-in being no station's act but a request any client may send. A station alone
  *  spends it (STATION_ORIGINS); everything else reads `own` and `bought` (WRIT_ORIGINS); a withdrawal gives it back to
- *  the pack uncounted. GOLD-MARKET's wall turned the other way (migration 0095_loose_origin.sql). */
+ *  the pack uncounted. GOLD-MARKET's wall turned the other way (migration 0097_loose_origin.sql). */
 export const LOOSE_ORIGIN = 'loose';
 /** AUDIT BAG-CRAFT A1: what a writ, the guild Stores and the market's Drakes side spend of the Stores - never gold's
  *  (GOLD-MARKET), never loose (the stations' wall). */

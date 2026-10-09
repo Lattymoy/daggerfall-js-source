@@ -2,7 +2,7 @@
 // A1: BAG-CRAFT's `work` put-in moved the units the carried count did not hold into the Stores as BOUGHT - and a `work`
 // put-in is no station's act but a request any client may send. Reproduced against the real Worker before the fix: 200
 // Mithril Ore no pack had, put in by a bare `work` deposit, listed for Drakes, and withdrawn counted as carried (every
-// counted door open to it). Fixed: the Stores' fourth origin, `loose` (migration 0095_loose_origin.sql, bagLaw.js
+// counted door open to it). Fixed: the Stores' fourth origin, `loose` (migration 0097_loose_origin.sql, bagLaw.js
 // LOOSE_ORIGIN) - a station alone spends it (craft, smelt, brew, temper: STATION_ORIGINS, loose first); a writ, the
 // guild Stores and the market read own and bought (WRIT_ORIGINS); a withdrawal gives it back to the pack uncounted; a
 // station's products of it stay walled (a smelt's loose, a piece walled to gold - MARKET-ANY's pack-piece law).

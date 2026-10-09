@@ -94,6 +94,17 @@ in** - every counted unit the bag and the pack hold, in one press, whatever the 
 went in and names each material refused (its Stores full) and goes on past it; the counting-house's silence ends it.
 Put in and Put everything in stop at the Stores' own room (5,000 a material, every origin), and a full material is said,
 never asked; why Take out or Put in is shut is drawn under the bar, not only on a title (the second audit's U1, U14).
+**What is held and never counted is named** (UNCOUNTED, FIELD BUGS 2026-10-09c, "Some ingredients won't let you store
+them": Troll's Blood and Orc's Blood from a dungeon, and a friend's traded units): the page built its rows from the
+counted materials alone, so a pack full of looted blood showed nothing and said nothing. Every material the pack, the
+bag and the wagon hold an item of (`systems/materialsBag.js` heldKeysOf, the host's `heldKeys`) has its card now, its
+units past the count "N unstorable", and the picked bar says why in the player's words: looted, bought at a shop or
+given by another player, a material stays an item in the pack; only what was gathered or taken out of the Stores goes
+back in; a Mages Guild's potion maker uses it as it is. Law 3 is unchanged (section 5): Put in and Put everything in
+move only the count. A realm trade moves save records and no count - so the receiver's units are held and never
+counted, by the same law; letting the count travel with a trade is the owner's call. Pinned by
+`test/fb1009c_uncounted.test.js`; `tools/mutants/fb1009c_uncounted.json` (7, all dead; `bag1.json`'s B6 and
+`goldmarket.json`'s stores-total records re-aimed by content).
 **Empty your bag into your pack** stands on the page, in a town or out of one, whenever the bag's list holds anything:
 every piece, as much of each as the pack's weight takes, what no Put in takes first (a full pack never leaves the jam
 behind).
@@ -288,7 +299,7 @@ windows' Buy basket) and the keyed shelf (`scenes/worldModes.js` doBuy) while an
 basket or the wagon: "You already have a Materials Bag." One out of the character's own wagon is never refused, and the
 bag is no decor piece. Pinned by `test/fb1004_onebag.test.js`; the audit's findings in the field-bug record.
 
-## 14. From play - BAG-CRAFT (FIELD BUGS 2026-10-09c)
+## 14. From play - BAG-CRAFT (FIELD BUGS 2026-10-09d)
 
 "People cannot craft from their bag" - and, asked whether a station should spend what the service never counted, Mac:
 "I just want players to also be able to craft from their inventory, not just the store."
@@ -323,10 +334,10 @@ station makes of them, reaches a writ, the guild Stores, a Drakes listing or fil
 them lists for gold alone, as any pack's piece does (MARKET-ANY). Law 3's guarantee stands for the economy, and
 `Professions-Arc.md` law 3 says where the door is.
 
-Pinned by `test/fb1009c_bagcraft.test.js` (the done-when: a Steel Longsword from raw goods the service never counted,
+Pinned by `test/fb1009d_bagcraft.test.js` (the done-when: a Steel Longsword from raw goods the service never counted,
 in one press through the real Worker; the law; the service's `work`, `spend` and `all` and a full Store; the book's
-doors; the anvil and the forge over a real carrying book); `tools/mutants/fb1009c_bagcraft.json`. The record:
-`01-Overview/Field-Bugs-2026-10-09c.md`. ACCOUNT_VERSION `acct99`.
+doors; the anvil and the forge over a real carrying book); `tools/mutants/fb1009d_bagcraft.json`. The record:
+`01-Overview/Field-Bugs-2026-10-09d.md`. ACCOUNT_VERSION `acct101`.
 
 ## 15. The audit - AUDIT BAG-CRAFT (2026-10-09, Mac: "Audit this")
 
@@ -336,7 +347,7 @@ the real Worker or the real modules before it was fixed, pinned and mutated (`to
 
 | # | Found | Fixed |
 |---|---|---|
-| A1 (HIGH) | A `work` put-in is no station's act but a request any client may send, and its units went into the Stores as **bought** - every door law 3 walls. Reproduced: 200 Mithril Ore no pack held, put in by a bare `work` deposit, listed for Drakes (100) and withdrawn counted as carried (50) - and by the same reads delivered to a Court writ, the guild Stores or a guild writ, and filled into a Drakes order. Section 14's "sell the pieces for Marks" understated it | **The stations' wall** - GOLD-MARKET's turned the other way: the Stores' fourth origin, `loose` (migration `0095_loose_origin.sql`; `bagLaw.js` LOOSE_ORIGIN, STATION_ORIGINS, WRIT_ORIGINS). A station alone spends it, first (`professions.js` workableSql and workStatements - a craft, a smelt, `alchemy.js`'s brew, a temper); a writ, the guild Stores and the market read own and bought (`spendableSql`); a withdrawal takes it after gold's and never counts it; a smelt's products of it are loose, a craft's piece of it is walled to gold (`bought_with` 'gold' - MARKET-ANY's pack-piece law: no Drakes listing, commission or auction), a temper with it walls the piece the same, a Ram Kit of it is loose (no camp's writ takes it); a brew never reckons it unbruised. The book reads it as a station's (`storesWorkable`) and no writ's (`storesHeld`); the Stores page counts it in the total and the room and says it ("from your pack", LOOSE_GOODS_LINE) |
+| A1 (HIGH) | A `work` put-in is no station's act but a request any client may send, and its units went into the Stores as **bought** - every door law 3 walls. Reproduced: 200 Mithril Ore no pack held, put in by a bare `work` deposit, listed for Drakes (100) and withdrawn counted as carried (50) - and by the same reads delivered to a Court writ, the guild Stores or a guild writ, and filled into a Drakes order. Section 14's "sell the pieces for Marks" understated it | **The stations' wall** - GOLD-MARKET's turned the other way: the Stores' fourth origin, `loose` (migration `0097_loose_origin.sql`; `bagLaw.js` LOOSE_ORIGIN, STATION_ORIGINS, WRIT_ORIGINS). A station alone spends it, first (`professions.js` workableSql and workStatements - a craft, a smelt, `alchemy.js`'s brew, a temper); a writ, the guild Stores and the market read own and bought (`spendableSql`); a withdrawal takes it after gold's and never counts it; a smelt's products of it are loose, a craft's piece of it is walled to gold (`bought_with` 'gold' - MARKET-ANY's pack-piece law: no Drakes listing, commission or auction), a temper with it walls the piece the same, a Ram Kit of it is loose (no camp's writ takes it); a brew never reckons it unbruised. The book reads it as a station's (`storesWorkable`) and no writ's (`storesHeld`); the Stores page counts it in the total and the room and says it ("from your pack", LOOSE_GOODS_LINE) |
 | C1 | The book's door pins read the source with `includes`, which a comment quoting the line would satisfy | Pinned on lines of code (`codeHas`) |
 | C2 | No pin held a writ's put-in reading the Stores' loose units as already in (the audit's own survivor) | Pinned: the counted unit goes in all the same |
 | B1 (LOW, kept) | A craft refused by the service after its put-in (a rank, a fee) leaves the moved goods in the Stores | Not changed: they are loose there, the next station's, and Take out gives them back to the pack uncounted |
@@ -344,4 +355,4 @@ the real Worker or the real modules before it was fixed, pinned and mutated (`to
 What the wall costs an honest player: a piece made of looted goods lists for gold alone, as the looted goods
 themselves would from the pack; and a Ram Kit of them stays a station's. Pinned by `test/auditbagcraft.test.js` (the
 wall at every door, through the real Worker - the gold wall's own test the pattern; the stations' spends and products;
-the brew's unbruised count; the Stores page over a real carrying book) and `test/fb1009c_bagcraft.test.js`.
+the brew's unbruised count; the Stores page over a real carrying book) and `test/fb1009d_bagcraft.test.js`.

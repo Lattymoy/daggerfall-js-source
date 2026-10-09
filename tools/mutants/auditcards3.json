@@ -382,8 +382,8 @@
   {
     "name": "D-relay-no-one-seat",
     "file": "server/src/index.js",
-    "old": "for (const [k, other] of tables) if (k !== m.table) { const up",
-    "new": "for (const [k, other] of tables) if (false) { const up",
+    "old": "for (const [k, other] of tables) if (k !== m.table) { const up = holdemStand",
+    "new": "for (const [k, other] of tables) if (false) { const up = holdemStand",
     "tests": [
       "test/auditcards2_cloth.test.js",
       "test/auditcards2_host.test.js",
@@ -911,7 +911,9 @@
       "test/cards5_client.test.js",
       "test/cards5_relay.test.js",
       "test/cardsbay_faces.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "since AUDIT CARDS-4 D4 the sit closes its table's watch itself (sitAtCardTable's closeCardWatch(i), before openCardGame), and no watch opens for the table the player sits at (cardOnlineFrame: AUDIT CARDS-3 B6/D5's `cardSeat && f.table === cardSeat.table` return) - so this second close finds nothing on every road to it, the sit's and Iliac Hand's onHoldem alike. Found by AUDIT CARDS-6's re-run; it survived on 8b603e308 too, before the audit's fixes"
   },
   {
     "name": "D-host-waiting-midhand",
@@ -1933,7 +1935,7 @@
   {
     "name": "C1-hand-under-panel",
     "file": "src/scenes/worldModes.js",
-    "old": "    const mats = g.lift > 1e-4 ? heldMatrices(view, fan, g.peek, g.lift) : mats0;",
+    "old": "    const mats = g.lift > 1e-4 ? heldMatrices(view, fan, g.peek, g.lift, fit) : mats0;",
     "new": "    const mats = mats0;",
     "tests": [
       "test/auditcards2_cloth.test.js",
@@ -2175,8 +2177,8 @@
   {
     "name": "C1-lift-unscaled",
     "file": "src/world/cardHand.js",
-    "old": "  return Math.min(HELD_LIFT_MAX, (over * 2 * -HELD_AT[2]) / (proj[5] * h));",
-    "new": "  return Math.min(HELD_LIFT_MAX, over / h);",
+    "old": "  return Math.min(HELD_LIFT_MAX * Math.max(1, fit), (over * 2 * -HELD_AT[2]) / (proj[5] * h));",
+    "new": "  return Math.min(HELD_LIFT_MAX * Math.max(1, fit), over / h);",
     "tests": [
       "test/auditcards2_cloth.test.js",
       "test/auditcards2_host.test.js",

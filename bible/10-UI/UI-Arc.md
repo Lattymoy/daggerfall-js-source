@@ -18680,6 +18680,18 @@ the disposer takes the listener and a pending delivery; the refused request aske
 with no shell left alone; the bridge by source); `kb1_keybinds.test.js`'s sweep carries the reservation. Mutants
 `tools/mutants/esc_lock.json` (8, all dead). `01-Overview/Field-Bugs-2026-09-27.md`.
 
+**A THIRD RULE - GECKO ENDS A LOCK ON A TOUCH (TOUCH-UNLOCK, FIELD BUGS 2026-10-09c).** On Firefox for Android and its
+forks every tap opened the pause ("Touching anywhere onscreen in mobile opens the system menu"; Chrome played). Gecko
+grants a tap's lock - a tap is a user activation, and the hosts' canvas arm asks on every pointerdown - and ends ANY
+lock on the next touch event (`PresShell.cpp`, `PointerLockManager::Unlock("TouchEvent")`), posting the change after
+that touch's own dispatch: a loss the page did not ask for, with nothing up - this section's swallowed Escape. The pause
+then relocked on its close, for the next tap to end. Blink never ends a lock on a touch, which is why "a finger never
+holds a lock" (AUDIT 62 F6, PL3) held there. `bindCursorToggle` now hears the four touch events on the document's
+capture phase, and a loss within `TOUCH_UNLOCK_MS` (500 ms) of one is the finger's - never delivered; a loss with no
+touch near is the player's Escape as before, so a mouse and a keyboard are untouched (and a Firefox touchscreen laptop,
+the layer off, is covered too). Not proven on a device. Pinned in `test/fb1009c_touchunlock.test.js` (2);
+`tools/mutants/fb1009c_touchunlock.json` (4, all dead; `esc_lock.json`'s relock record re-aimed by content).
+
 ## CARD-FIT - the item card fits its window and says what a glance needs (2026-09-28)
 
 The Discord (#bug-reports, Cruor): *"New sigil items descriptor is a bit long! ... all the buttons on it's pop-up card
