@@ -64,23 +64,113 @@ export const KIND_ORDER = Object.freeze(['enhanced', 'mod', 'classic']);
  *
  *  In display order. Every row declares one. */
 export const GROUPS = Object.freeze({
-  sight: Object.freeze({ label: 'Sight' }),
-  world: Object.freeze({ label: 'The world' }),
-  loot: Object.freeze({ label: 'Loot & items' }),
-  combat: Object.freeze({ label: 'Combat' }),
+  // ORG1 (2026-10-09): each group says what it holds, under its heading - the page shows one group at a time now
+  sight: Object.freeze({ label: 'Sight', blurb: 'How the world is drawn: how far you see, the light, the sky and water, and the plants and wind.' }),
+  world: Object.freeze({ label: 'The world', blurb: 'What the world holds: its dungeons, land, towns, roads and seas, and the things to do in it.' }),
+  loot: Object.freeze({ label: 'Loot & items', blurb: 'What you find, what it is worth and what you carry.' }),
+  combat: Object.freeze({ label: 'Combat', blurb: 'How a fight goes: your enemies, the weapons in your hands and what a blow leaves behind.' }),
   // ORL1 (2026-09-17): the fifth group. A leveling system is not what
   // you see, where you are, what you carry or how you fight - it is
   // what you BECOME, and filing it under any of the four would have
   // been filing it under the nearest one rather than the right one.
-  character: Object.freeze({ label: 'Your character' }),
+  character: Object.freeze({ label: 'Your character', blurb: 'Who you become: how you level, your family line and what you need to stay alive.' }),
   // FT18 (2026-09-25, Mac: "a comprehensive reorganize and consolidation of our mod/enhancements"): two more, because
   // Sight had grown to sixteen tiles and a third of them were not things you see in the world - the HUD's quick slots,
   // the map, the tooltips - and the sounds were spread over three groups. What is drawn OVER the world is the
   // interface; what you hear is sound.
-  interface: Object.freeze({ label: 'Interface' }),
-  sound: Object.freeze({ label: 'Sound' }),
+  interface: Object.freeze({ label: 'Interface', blurb: 'What is drawn over the world: the maps, help with quests and dungeons, and the HUD.' }),
+  sound: Object.freeze({ label: 'Sound', blurb: 'What you hear: the wind, your footsteps and the noise of a fight.' }),
 });
 export const GROUP_ORDER = Object.freeze(['sight', 'interface', 'sound', 'world', 'loot', 'combat', 'character']);
+
+// ── ORG1 (2026-10-09, Mac: "reorganize settings and features to not be horrible to scroll through. Proper
+// organization and detail"): THE SECTIONS. Ninety-six tiles under seven headings read as one 8,000-pixel wall - The
+// world alone was thirty-four tiles in registry order, a dungeon's size beside a ship's rigging. Each group is cut into
+// the sections a player looks for, in the order they look, each with a line saying what it holds. The ORDER here is the
+// tiles' order on the page. The map is TOTAL AND DISJOINT, as the settings map is (ui/settingsMap.js): every row stands
+// in exactly one section of its own group, and test/org1_sections.test.js fails a row added without a place.
+export const FEATURE_SECTIONS = Object.freeze({
+  sight: Object.freeze([
+    Object.freeze({ id: 'distance', label: 'Distance & performance', blurb: 'How far and how sharply the world is drawn - the first things to turn down if the game runs slow.',
+      ids: Object.freeze(['land-view-distance', 'render-scale', 'ground-sharpness', 'cloud-quality']) }),
+    Object.freeze({ id: 'light', label: 'Lighting', blurb: 'Lamps, torches, the sun and the shadows they cast.',
+      ids: Object.freeze(['enhanced-lighting', 'modded-lighting', 'first-person-lighting']) }),
+    Object.freeze({ id: 'sky', label: 'Sky, water & weather', blurb: 'The sky over you, the water around you and the weather between them.',
+      ids: Object.freeze(['enhanced-environments', 'enhanced-water', 'water-quality', 'mod-heat-haze', 'mod-snowfall']) }),
+    Object.freeze({ id: 'plants', label: 'Plants, trees & wind', blurb: 'What grows outdoors, how it changes with the seasons, and how the wind moves it.',
+      ids: Object.freeze(['grass', 'wind', 'mod-windfall', 'mod-low-poly-trees', 'mod-seasons-iliac-bay']) }),
+    Object.freeze({ id: 'art', label: 'Art & effects', blurb: 'Dungeon walls, how you see yourself in third person, and enemies you could not see before.',
+      ids: Object.freeze(['dungeon-wall-style', 'mod-eye-of-the-beholder', 'enhanced-combat-visuals']) }),
+  ]),
+  interface: Object.freeze([
+    Object.freeze({ id: 'maps', label: 'Maps', blurb: 'The map you hold: towns, dungeons in 3D and the land past the Bay.',
+      ids: Object.freeze(['enhanced-map', 'dungeon-map-3d', 'tamriel-map']) }),
+    Object.freeze({ id: 'quests', label: 'Quests', blurb: 'How your quests tell you what changed and where to go next.',
+      ids: Object.freeze(['quest-herald', 'quest-tracker', 'quest-marks', 'quest-guidance', 'choose-guild-jobs']) }),
+    Object.freeze({ id: 'dungeons', label: 'Dungeon help', blurb: 'Finding your way around a dungeon, and back out of it.',
+      ids: Object.freeze(['dungeon-sense', 'dungeon-echoes', 'dungeon-way-out']) }),
+    Object.freeze({ id: 'hud', label: 'HUD & messages', blurb: 'What sits on the screen while you play, and the lines it shows you.',
+      ids: Object.freeze(['quick-slots', 'near-death-warning', 'mod-world-tooltips', 'mod-ambient-text', 'loading-screen']) }),
+  ]),
+  sound: Object.freeze([
+    Object.freeze({ id: 'sound', label: 'Sound', blurb: 'What you hear.',
+      ids: Object.freeze(['enhanced-sounds', 'mod-immersive-footsteps', 'combat-voices']) }),
+  ]),
+  world: Object.freeze([
+    Object.freeze({ id: 'dungeons', label: 'Dungeons', blurb: 'How big dungeons are and what lives in them.',
+      ids: Object.freeze(['smaller-dungeons', 'medium-dungeons', 'world-dungeon-sizes', 'varied-dungeon-monsters', 'mod-aquatic-sprites']) }),
+    Object.freeze({ id: 'land', label: 'Land, weather & ambience', blurb: 'The shape of the land, its forests and roads, the weather moving across it and how places feel.',
+      ids: Object.freeze(['tamriel-land', 'landforms', 'real-forests', 'climate-blend', 'road-verges', 'mod-roads-hazelnut', 'weather-events', 'mod-better-ambience']) }),
+    Object.freeze({ id: 'towns', label: 'Towns & people', blurb: 'How towns are laid out and the people who live in them.',
+      ids: Object.freeze(['living-world', 'mod-beautiful-villages', 'mod-beautiful-cities', 'mod-windmills-kamer', 'town-watch']) }),
+    Object.freeze({ id: 'encounters', label: 'Wilderness & encounters', blurb: 'What you meet out in the wilds and on the road.',
+      ids: Object.freeze(['mod-world-of-daggerfall', 'wilderness-camps', 'road-encounters', 'mod-world-events-raiding-parties']) }),
+    Object.freeze({ id: 'travel', label: 'Travel', blurb: 'Getting from place to place, and how far your quests send you.',
+      ids: Object.freeze(['mod-travel-options', 'mod-immersive-travel', 'mod-horse-cart-and-cargo', 'nearby-quests']) }),
+    Object.freeze({ id: 'sea', label: 'The sea & ships', blurb: 'Your own boat, the ships at sea and what lies under the water.',
+      ids: Object.freeze(['mod-come-sail-away', 'mod-detailed-ships', 'mod-warm-ashes-ships', 'mod-iliac-puddle-no-more', 'mod-ocean-holes']) }),
+    Object.freeze({ id: 'activities', label: 'Climbing, gathering & handling', blurb: 'Climbing, gathering in the wild, and gear you pick up and drop one piece at a time.',
+      ids: Object.freeze(['enhanced-climbing', 'mod-foraging', 'mod-physical-items']) }),
+  ]),
+  loot: Object.freeze([
+    Object.freeze({ id: 'loot', label: 'Loot', blurb: 'What enemies and dungeons leave you, and how you take it.',
+      ids: Object.freeze(['quick-loot', 'loot-rarity', 'mod-unleveledloot']) }),
+    Object.freeze({ id: 'items', label: 'Items, realism & light', blurb: 'What items weigh and cost, the rules of realism, and the light you carry.',
+      ids: Object.freeze(['mod-roleplay-realism-items', 'mod-roleplay-realism', 'mod-handheld-torches', 'torches-from-items']) }),
+  ]),
+  combat: Object.freeze([
+    Object.freeze({ id: 'foes', label: 'Enemies & rules', blurb: 'How enemies fight, how hard they hit, and how armour and skill decide a blow.',
+      ids: Object.freeze(['enhanced-ai', 'mod-meanermonsters', 'mod-pcaao', 'enemy-infighting']) }),
+    Object.freeze({ id: 'weapons', label: 'Weapons in hand', blurb: 'What you hold in first person and how it moves.',
+      ids: Object.freeze(['mod-weapon-widget', 'mod-shield-widget', 'mod-diverse-weapons', 'bows-left-hand']) }),
+    Object.freeze({ id: 'morrowind', label: 'With Morrowind data', blurb: 'Needs your own Morrowind files, attached under Your files & packs.',
+      ids: Object.freeze(['mod-weapon-sheathing', 'steel-helm', 'mw-spell-effects']) }),
+    Object.freeze({ id: 'aftermath', label: 'Blood & battles at sea', blurb: 'What a fight leaves behind, and fighting from a ship.',
+      ids: Object.freeze(['blood', 'naval-combat']) }),
+  ]),
+  character: Object.freeze([
+    Object.freeze({ id: 'character', label: 'Your character', blurb: 'Leveling, your family line and your needs.',
+      ids: Object.freeze(['mod-oblivion-remaster-leveling', 'mod-project-legacy', 'mod-climates-calories']) }),
+  ]),
+});
+
+/** ORG1: a section a registry row is not yet placed in - the page never drops a row it has (the pin fails it first). */
+const MORE_SECTION = Object.freeze({ id: 'more', label: 'More', blurb: 'Not yet placed in a section.', ids: Object.freeze([]) });
+/** ORG1: a group's rows cut into its sections, in the sections' order and each section's own order - `[{ section,
+ *  items }]`, a section with nothing in `rows` (the kind filter took it) left out. */
+export function featureSections(group, rows) {
+  const left = new Map(rows.filter((f) => f.group === group).map((f) => [f.id, f]));
+  const out = [];
+  for (const section of FEATURE_SECTIONS[group] ?? []) {
+    const items = section.ids.map((id) => left.get(id)).filter(Boolean);
+    for (const f of items) left.delete(f.id);
+    if (items.length) out.push({ section, items });
+  }
+  if (left.size) out.push({ section: MORE_SECTION, items: [...left.values()] });
+  return out;
+}
+/** ORG1: the section a row stands in, or null. */
+export const sectionOfFeature = (f) => (FEATURE_SECTIONS[f?.group] ?? []).find((s) => s.ids.includes(f.id)) ?? null;
 
 /** WM3: the Windmills pack's switch key. It is declared HERE with its
  *  row (RF4's law) rather than in `world/windmills.js`, because that

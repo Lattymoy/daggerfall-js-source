@@ -329,8 +329,9 @@ test('FT18 by source: the pane\'s search filters in place and All off asks first
   assert.match(pane, /search\.type = 'search';/);
   assert.match(pane, /search\.oninput = \(\) => \{ featureQuery = search\.value; applyQuery\(\); \};/, 'typing filters, it does not repaint - the field keeps its keys');
   assert.match(pane, /const hit = matchesFeatureQuery\(f, featureQuery\); t\.hidden = !hit;/);
-  assert.match(pane, /g\.head\.hidden = !n;\s*\n\s*g\.grid\.hidden = !n;/, 'a group left with nothing goes too');
-  assert.match(pane, /none\.hidden = shown > 0;/, 'and an empty search says so');
+  assert.match(pane, /S\.sec\.hidden = !m;/, 'a section left with nothing goes too');   // ORG1: the group is cut into sections
+  assert.match(pane, /G\.block\.hidden = !n \|\|/, 'and a group');
+  assert.match(pane, /none\.hidden = shown > 0 \|\| \(files != null && !files\.hidden\);/, 'and an empty search says so (ORG1: the files page is not an empty one)');
   assert.match(pane, /\{ label: 'All off', onClick: \(\) => ask\('Turn Everything Off', ALL_OFF_ASK, 'All off', \(\) => \{ featuresAllOff\(\); \}\) \}/, 'All off is asked first');
   assert.match(pane, /\.\.\.\(kept && typeof kept === 'object' \? \[\{ label: 'Restore',/, 'Restore only while there is something to restore');
   assert.match(menu, /featureQuery = '';   \/\/ FT18: a fresh visit searches nothing/);

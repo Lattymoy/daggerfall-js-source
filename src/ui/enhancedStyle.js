@@ -5469,7 +5469,60 @@ ${paceControlsCss('tview')}
 .ft-search::placeholder { color: var(--dim); }
 .ft-search:focus-visible { outline: none; border-color: var(--brass); }
 .ft-tile[hidden], .ft-grid[hidden], .ft-grouphead[hidden], .ft-none[hidden] { display: none; }
-.ft-panes { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 22px; align-items: start; }
+/* ORG1 (2026-10-09): the settings pages' sections - a head (title, count, a line of what it holds) over its rows, the
+   strip of their names that stays at the top of a long page, and the category card's index of them. A head's scroll
+   margin clears the strip, so a jump lands the head under it rather than behind it. In the pause window's condensed
+   list the heads are small: a title and a count under the category's divider. */
+.sec-jump { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 18px;
+  background: rgba(14,17,22,0.96); border-bottom: 1px solid #20262e; }
+.sec-jumpbtn { font-family: var(--data); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim);
+  background: none; border: 1px solid var(--iron); padding: 5px 9px; cursor: pointer; }
+.sec-jumpbtn:hover { color: var(--bone); border-color: var(--dim); }
+.sec-jumpbtn:focus-visible { outline: 2px solid var(--brass); outline-offset: 1px; }
+.sec-head { padding: 18px 18px 8px; scroll-margin-top: 52px; border-bottom: 1px solid #20262e; }
+.sec-title { display: flex; align-items: baseline; gap: 8px; }
+.sec-head h3 { margin: 0; font-family: var(--data); font-size: 13px; letter-spacing: 0.08em; color: var(--brass); font-weight: 600; }
+.sec-head .count { font-size: 11px; color: #8b8578; font-variant-numeric: tabular-nums; }
+.sec-blurb { margin: 4px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--dim); max-width: 70ch; }
+.sec-head.small { padding: 10px 2px 4px; border-bottom: 0; }
+.sec-head.small h3 { font-size: 12px; }
+.sec-index { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 14px 0; padding-top: 10px; border-top: 1px solid var(--iron); }
+.sec-index dt { font-family: var(--data); font-size: 12px; color: var(--brass); }
+.sec-index dd { margin: 0; font-size: 12px; line-height: 1.45; color: var(--dim); }
+.shell .sec-jump { background: rgba(10,12,17,0.92); border-bottom: 2px solid rgba(125,116,96,0.35); }
+.shell .sec-jumpbtn { border: 2px solid rgba(125,116,96,0.35); text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.shell .sec-head { border-bottom: 2px solid rgba(125,116,96,0.3); }
+.shell .sec-head h3 { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.shell .sec-blurb, .shell .sec-index dd { text-shadow: 2px 2px 0 rgba(0,0,0,0.6); }
+.shell .sec-index { border-top: 2px solid rgba(125,116,96,0.3); }
+.ft-panes { display: grid; grid-template-columns: 158px minmax(0, 1fr) 250px; gap: 18px; align-items: start; }   /* ORG1: the groups, the tiles, the rail - three tiles a row at 1440 */
+/* ORG1 (2026-10-09, Mac: "not be horrible to scroll through. Proper organization and detail"): the groups' rail - one
+   group on the page at a time - the line under a group's head, and its sections, each a small head and a line of what
+   it holds. While the search holds a word every group shows, so no button reads as the one chosen. */
+.ft-groups { position: sticky; top: 8px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ft-groupbtn { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; width: 100%; text-align: left;
+  padding: 9px 12px; min-height: 40px; background: none; border: 0; border-left: 2px solid transparent; color: var(--dim);
+  font-family: var(--data); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; }
+.ft-groupbtn:hover { color: var(--bone); }
+.ft-groupbtn.on { color: var(--brass); border-left-color: var(--brass); background: rgba(0,0,0,0.25); }
+.ft-groupbtn .count { font-size: 11px; color: #8b8578; font-variant-numeric: tabular-nums; letter-spacing: 0; }
+.ft-groups.searching .ft-groupbtn.on { color: var(--dim); border-left-color: transparent; background: none; }
+.ft-groupbtn:focus-visible { outline: 2px solid var(--brass); outline-offset: -2px; }
+.ft-group[hidden], .ft-section[hidden] { display: none; }
+.ft-group + .ft-group { margin-top: 26px; }
+.ft-groupblurb { margin: -2px 0 14px; font-size: 13px; line-height: 1.5; color: var(--dim); max-width: 70ch; }
+.ft-files > .card { margin-bottom: 16px; }
+.ft-groupbtn[data-group="files"] { margin-top: 10px; }   /* the files' door stands apart from the groups */
+.px-sys .ft-groupbtn[data-group="files"] { margin-top: 0; }
+.ft-section + .ft-section { margin-top: 20px; }
+.ft-sechead { display: flex; align-items: baseline; gap: 8px; margin: 0 0 2px; }
+.ft-sechead h3 { font-family: var(--data); font-size: 13px; letter-spacing: 0.06em; color: var(--brass); margin: 0; font-weight: 600; }
+.ft-secblurb { margin: 0 0 8px; font-size: 12.5px; line-height: 1.45; color: var(--dim); max-width: 70ch; }
+/* the pause window's pane is narrower than the screen: the groups ride the top as a strip there */
+.px-sys .ft-panes { grid-template-columns: minmax(0, 1fr) 240px; }
+.px-sys .ft-groups { grid-column: 1 / -1; position: static; flex-direction: row; flex-wrap: wrap; }
+.px-sys .ft-groupbtn { width: auto; border-left: 0; border-bottom: 2px solid transparent; }
+.px-sys .ft-groupbtn.on { border-bottom-color: var(--brass); }
 .ft-main { min-width: 0; }
 .ft-grouphead { display: flex; align-items: baseline; gap: 10px; margin: 18px 0 8px; }
 .ft-grouphead:first-child { margin-top: 0; }
@@ -5541,8 +5594,18 @@ ${paceControlsCss('tview')}
 .ft-rail-kv dd { margin: 0; font-size: 12px; color: var(--bone); opacity: 0.85; }
 
 @media (max-width: 860px) {
-  .ft-panes { grid-template-columns: minmax(0, 1fr); }
+  .ft-panes, .px-sys .ft-panes { grid-template-columns: minmax(0, 1fr); }
   .ft-rail { position: static; order: -1; }
+  .ft-groups { position: static; order: -2; flex-direction: row; flex-wrap: wrap; }   /* ORG1: a strip over the rail */
+  .ft-groupbtn { width: auto; border-left: 0; border-bottom: 2px solid transparent; }
+  .ft-groupbtn.on { border-bottom-color: var(--brass); }
+  .ft-groupbtn[data-group="files"] { margin-top: 0; }
+  /* ORG1: on a narrow screen both strips are ONE row that scrolls sideways - wrapped, the section strip stood three
+     rows tall over the list it is there to save scrolling through */
+  .ft-groups, .sec-jump { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .ft-groups::-webkit-scrollbar, .sec-jump::-webkit-scrollbar { display: none; }
+  .ft-groupbtn, .sec-jumpbtn { flex: none; white-space: nowrap; }
+  .sec-jump { padding: 6px 12px; }
 }
 
 /* -- FT16 (2026-09-15, Mac: "make the new feature UI elements have the
@@ -5579,6 +5642,10 @@ ${paceControlsCss('tview')}
 .shell .ft-tile-drawer { border-top: 2px solid rgba(125,116,96,0.3); }
 .shell .ft-rail { background: rgba(10,12,17,0.55); border: 2px solid rgba(125,116,96,0.35); }
 .shell .ft-rail-kv { border-top: 2px solid rgba(125,116,96,0.3); }
+.shell .ft-groupbtn { text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }   /* ORG1: the groups, in the settings rail's paint */
+.shell .ft-groupbtn.on { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.shell .ft-groups.searching .ft-groupbtn.on { color: var(--dim); text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.shell .ft-groupblurb, .shell .ft-secblurb { text-shadow: 2px 2px 0 rgba(0,0,0,0.6); }
 
 /* ── OVH1: THE OVERHAULS (2026-09-24, Mac: "3 large panels ... directional arrows allowing you to switch being
    different feature sets") ─────────────────────────────────────────────────────────────────────────────────────

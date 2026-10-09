@@ -1138,3 +1138,32 @@ so nothing on the home ever reached the game's own values again.
 
 Pins: `test/ft18_features.test.js` (2, FEATURES-DEFAULTS) - the issue's own path (tinker, All off, Restore, then
 Defaults), a fresh shelf reading every tile's default segment, the online lock read back offline, the confirm.
+
+## ORG1 - ONE GROUP AT A TIME, IN SECTIONS (2026-10-09)
+
+Mac: "I want to reorganize settings and features to not be horrible to scroll through. Proper organization and
+detail." The home was ninety-six tiles under seven thin headings in one scroll 8,010 pixels tall at 1440x900; The
+world alone was thirty-four tiles in registry order, a dungeon's size beside a ship's rigging, and the Morrowind card
+above and the footer's four cards below stood around whichever part the player was reading.
+
+- **Three panes: the groups, the tiles, the rail.** A rail of the groups with their counts (All, then GROUP_ORDER)
+  shows ONE group at a time - the first on a first visit; All shows every one. On a narrow screen and in the pause
+  window the rail is a strip over the tiles.
+- **Each group says what it holds** (`GROUPS[g].blurb`) and is **cut into sections** (`systems/features.js`
+  `FEATURE_SECTIONS`), each a small head with a count and a line. The order in the map is the tiles' order on the
+  page; `featureSections` cuts a group's rows by it, and a row the map does not place is drawn under a last More
+  rather than lost. The map is total and disjoint over the registry - a row added without a section fails
+  `test/org1_sections.test.js`, as a settings key without a category always has. A group of one section (Sound, Your
+  character) is its own heading.
+- **The search reaches every tile.** While it holds a word the group is set aside: every group shows its matches, a
+  section or group with none goes, and the groups' buttons count the matches so they say where to look. The search
+  still hides in place (FT18), so the field keeps its keys.
+- **What you attach is a page of its own: Your files & packs** - the Morrowind assets card (MWA4) at its head, then
+  FT14's footer (other players' look, the packs, the night's sounds, DFU's own mod system). All shows it after the
+  tiles; the search, which reaches tiles, sets it aside. Combat's "With Morrowind data" section points there.
+- **The rail says where a tile stands** - Found in: the group and its section - for a tile the search found.
+
+World measured at 1440x900 after the change: 2,605 pixels (was the whole home's 8,010); Combat 1,358; Your
+character fits the screen. Pins: `test/org1_sections.test.js` (5); FT0/FT14's source pins
+(`test/features.test.js`) and FT18's (`test/ft18_features.test.js`) re-aimed at the groups, the sections and the
+files page.

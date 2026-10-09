@@ -110,7 +110,7 @@ test('FT0: Features is on every rail and both dispatch tables, and the pane is t
   }
   assert.match(menu, /\['features', 'Features'\],/, 'the pause system rail (SYSTEM_PANES)');
   assert.equal((menu.match(/features: paneFeatures,/g) ?? []).length, 2, 'both dispatch tables (boot and pause)');
-  assert.match(menu, /import \{ FEATURES, KINDS, KIND_ORDER, GROUPS, GROUP_ORDER, filterFeatures, featureCounts, featureForControl, resolveControl, modModules, modDials, matchesFeatureQuery \} from '\.\.\/systems\/features\.js';/);
+  assert.match(menu, /import \{ FEATURES, KINDS, KIND_ORDER, GROUPS, GROUP_ORDER, filterFeatures, featureCounts, featureForControl, resolveControl, modModules, modDials, matchesFeatureQuery, featureSections, sectionOfFeature, FEATURE_SECTIONS \} from '\.\.\/systems\/features\.js';/);   // ORG1: and the sections
   assert.match(menu, /function paneFeatures\(body\) \{[\s\S]*?featureCounts\(FEATURES\)[\s\S]*?chip\(null, 'All', counts\.all\)[\s\S]*?for \(const k of KIND_ORDER\) chips\.append\(chip\(k, KINDS\[k\]\.label, counts\[k\]\)\)/, 'All then the three kind chips, with counts');
   assert.match(menu, /if \(!FEATURES\.length\) \{\s*body\.append\(empty\('Nothing here yet'/, 'an empty registry says so - the rail-hole law - rather than hiding the section');
   assert.match(menu, /const rows = filterFeatures\(FEATURES, featureKind\);/);
@@ -137,18 +137,22 @@ test('FT14: the panel is tiles grouped by what they change, the control is alway
   // what it carried that was never a mod setting has a home, on the features screen
   assert.match(menu, /function modsFooter\(body\) \{[\s\S]*?packsCard\(\)[\s\S]*?Enhancements\/LypyL_ModSystem/,
     'the packs door and DFU\'s own mod switches survive the pane');
-  assert.match(menu, /if \(featureKind == null \|\| featureKind === 'mod'\) modsFooter\(body\);/,
-    'drawn under the tiles, and only where a player looking for mods would be');
-  // MWA4: the assets card survives it too - at the HEAD of the list, above the tiles, on the same filter
-  assert.match(menu, /panes\.append\(main, rail\);\n\s*if \(featureKind == null \|\| featureKind === 'mod'\) body\.append\(morrowindCard\(\)\);[^\n]*\n\s*body\.append\(panes\);/,
-    'MWA4: the Morrowind assets card heads the feature list');
+  // ORG1: on a page of their own in the groups' rail (All shows it after the tiles), and only where a player looking
+  // for mods would be
+  assert.match(menu, /const withFiles = featureKind == null \|\| featureKind === 'mod';/);
+  assert.match(menu, /if \(withFiles\) \{\n\s*files = el\('section', 'ft-group ft-files'\);[\s\S]*?modsFooter\(files\);/,
+    'drawn on the files page, and only where a player looking for mods would be');
+  // MWA4: the assets card survives it too - at the HEAD of that page, on the same filter
+  assert.match(menu, /files\.append\(head, el\('p', 'ft-groupblurb', FILES_PAGE_BLURB\)\);\n\s*files\.append\(morrowindCard\(\)\);[^\n]*\n\s*modsFooter\(files\);/,
+    'MWA4: the Morrowind assets card heads the files page');
   assert.doesNotMatch(menu.slice(menu.indexOf('function modsFooter('), menu.indexOf('\n}', menu.indexOf('function modsFooter('))), /morrowindCard\(\)/, 'and is drawn once');
 
   // (2) GROUPED BY WHAT THEY CHANGE, filtered by who wrote them
-  assert.match(menu, /for \(const g of GROUP_ORDER\) \{\s*\n\s*const items = rows\.filter\(\(f\) => f\.group === g\);/,
+  assert.match(menu, /const groups = GROUP_ORDER\.filter\(\(g\) => rows\.some\(\(f\) => f\.group === g\)\);/, 'the groups, in their order');
+  assert.match(menu, /for \(const g of groups\) \{\s*\n\s*const items = rows\.filter\(\(f\) => f\.group === g\);/,
     'the groups are the headings');
-  assert.match(menu, /const grid = el\('div', 'ft-grid'\);\s*\n\s*const tiles = items\.map\(\(f\) => \[f, featureTile\(f\)\]\);\s*\n\s*for \(const \[, t\] of tiles\) grid\.append\(t\);/,
-    'and each group is a grid of tiles (FT18: kept beside their rows, for the search)');
+  assert.match(menu, /const grid = el\('div', 'ft-grid'\);\s*\n\s*const tiles = its\.map\(\(f\) => \[f, featureTile\(f\)\]\);\s*\n\s*for \(const \[, t\] of tiles\) grid\.append\(t\);/,
+    'and each section is a grid of tiles (FT18: kept beside their rows, for the search; ORG1: a group is cut into sections)');
 
   // (3) THE CONTROL IS A BAR, for every store, and Off is its first segment
   assert.match(menu, /function tileStates\(f\) \{/, 'one adapter answers the states, whatever store the row lives in');

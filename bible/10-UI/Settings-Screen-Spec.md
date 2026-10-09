@@ -935,3 +935,32 @@ The **seven categories, their order, titles, blurbs and the whole key→category
 * **`GUI/InteractionModeIcon` and the other un‑vendored enums.** Extend `scripts/bakeSettingsText.mjs` to emit a `SETTINGS_VALUES` table from `vendor/dfu-settings/GameSettings.txt` and, where that file is silent, vendor the lists from `DaggerfallAdvancedSettingsWindow.cs`. Until a list is vendored the key stays `blocked('novalues')`. **Never guess an option name.**
 * **`index.html`'s `user-scalable=no`.** It removes the only text‑size escape hatch a low‑vision player has on a WebGL canvas. Removing it is a one‑token change with whole‑port consequences (the game canvas wants it) and belongs in its own row; the in‑screen `Text Size` row is this slice's answer.
 * **Safe‑area insets.** `viewport-fit=cover` is set with no `env(safe-area-inset-*)` anywhere in the tree, so on a notched phone the footer sits under the home‑indicator strip. A whole‑port row; note that this screen's `oy` letterbox partly absorbs it in comfort mode but not in portrait, where `oy = 0`.
+## 10. ORG1 - SECTIONS (2026-10-09)
+
+Mac: "I want to reorganize settings and features to not be horrible to scroll through. Proper organization and
+detail." The categories were the only structure a page had. Interface drew forty rows in one run - the crosshair, a
+tooltip's colour, a shop's sign and five map colours in the map's storage order - and Video's nine live rows sat over
+fifty-one folded ones with nothing to say which belonged together.
+
+- **Each category is cut into sections** (`ui/settingsMap.js` `CATEGORY_SECTIONS`): a title, a line of what it holds,
+  and its keys in the order they draw. The map is total and disjoint over every category's keys - stored, unavailable
+  and moved keys keep a place for the day they draw flat - and `test/org1_sections.test.js` pins both ways.
+  Interface: HUD, Tooltips, Inventory talk & shops, Messages & prompts, Travel map, Town map, Dungeon map. Video:
+  Display, Brightness & light, Retro look, Shadows, Textures & detail, Post effects. Game: Quests, Play, Starting a new
+  game, Advanced. Controls: Mouse & looking, Attacking, Moving, Game controller, Touchscreen. Accessibility: Motion,
+  Readability, Large status bar. Audio and Data & Mods are one section each.
+- **A page draws a head per section it fills** (`ui/enhancedMenu.js` `sectionedRows`): the title, how many rows, the
+  line. A page that fills one section is its own heading and draws none. The port's own rows stand first in their
+  section - a row says its section (`inSection`), else its category's `PORT_SECTION` (the quest repair under Quests,
+  the pad's cursor under Game controller, the HUD's rows) - then the store keys in the section's order.
+- **Three sections or more get a strip of their names** at the top of the list that stays in view while it scrolls;
+  a press lands the section's head clear of it (`scroll-margin-top`). On a narrow screen the strip is one row that
+  scrolls sideways.
+- **The category card indexes its sections**, each title with its line, under the category's own blurb.
+- **The pause's condensed list is one pass per category**: its divider, then the rows under small heads. The port's
+  rows used to follow every category's keys in a second run of the same dividers, so Game, Controls and Interface
+  each stood twice.
+- **A DFU row carries its own line** under its name (`helpOf`, the help panel's first paragraph), as the port's rows
+  always have; the help panel keeps the whole of it, the tier and the `[Section] Key`.
+
+The tiers' folds (Saved for later, Not available here) and the sub-rail's counts are unchanged.

@@ -45,9 +45,9 @@
     ]
   },
   {
-    "name": "MWA4-the-card-off-the-head-of-the-list",
+    "name": "MWA4-the-card-off-the-head-of-the-files-page",
     "file": "src/ui/enhancedMenu.js",
-    "old": "  if (featureKind == null || featureKind === 'mod') body.append(morrowindCard());   // MWA4: the assets card heads the list\n",
+    "old": "    files.append(morrowindCard());   // MWA4: the assets card heads the page\n",
     "new": "",
     "tests": [
       "test/features.test.js"

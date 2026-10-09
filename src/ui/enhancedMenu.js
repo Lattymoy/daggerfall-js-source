@@ -102,7 +102,7 @@ import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';
 import { dfWornEquipment } from '../formats/mwItemMap.js';
 import { ARMOR_ENUM } from '../combat/enemyEquipment.js';
 import { morrowindDataCount, morrowindDataCounted, countMorrowindArchives, assetPickerOpen, textureStoreRegistered, textureStoreSettled } from '../scenes/dataSource.js';   // MAC1: the boot door counts the store itself; AUDIT 65 XL-6: by NAME - it never reads a stored file   // MW-IMPORT: the attach door; MWFIX: and the modal it opens owns the keyboard
-import { CATEGORIES, keysOf } from '../ui/settingsMap.js';
+import { CATEGORIES, keysOf, CATEGORY_SECTIONS, sectionOfKey } from '../ui/settingsMap.js';
 import { widgetFor, blockedReason, formatValue, stepValue, COLOUR_KEYS, ENUM_LAW } from '../ui/settingsLaw.js';   // FT14: the enum's own values are the bar's segments
 import { labelOf, helpOf, INSTEAD, TIER_TEXT } from '../ui/settingsCopy.js';
 import {
@@ -196,7 +196,7 @@ import { installVanillaEnhancedPack } from '../systems/vanillaEnhancedPack.js'; 
 import { PLUS_THEMES } from './enhancedFrame.js';   // PLUS2: Enhanced Plus's colours
 import { plusTheme, setPlusTheme } from './enhancedPlusStyle.js';  import { plusCursorOn, setPlusCursor } from './plusCursor.js';   // OVH1: the three looks
 import { UI_PACKS, packUrl } from '../systems/uiPack.js';   // OVH2: a pack's own picture on its card
-import { FEATURES, KINDS, KIND_ORDER, GROUPS, GROUP_ORDER, filterFeatures, featureCounts, featureForControl, resolveControl, modModules, modDials, matchesFeatureQuery } from '../systems/features.js';   // FT14: the groups and each mod's curated keys
+import { FEATURES, KINDS, KIND_ORDER, GROUPS, GROUP_ORDER, filterFeatures, featureCounts, featureForControl, resolveControl, modModules, modDials, matchesFeatureQuery, featureSections, sectionOfFeature, FEATURE_SECTIONS } from '../systems/features.js';   // FT14: the groups and each mod's curated keys
 import '../world/landView.js';   // RF4: the land-view lane registers itself with the registry
 import '../world/outdoors.js';   // RF4: the outdoors lane too
 import '../systems/featureLanes.js';   // FT18: the wind, the quick slots and the blood
@@ -276,6 +276,7 @@ const RAIL_ACTS = Object.freeze({ resume: 'resume' });
 let section = 'continue';
 let featureKind = null;   // FT0: the chip - null is All, else a KINDS id; per mount like the rest
 let featureQuery = '';   // FT18: the Features search - what the player typed, per mount
+let featureGroup = GROUP_ORDER[0];   // ORG1: the group the home shows - null is every group; kept across visits in a session
 let category = CATEGORIES[0].id;
 let pickedKey = null;
 let sheetOpen = false;   // the help pane is a sheet on a phone
@@ -1629,21 +1630,18 @@ function paneQuickSettings(pane) {
   // One scroll, grouped under the categories' own titles - 48 live
   // rows flat read as a wall; the dividers give the scroll a spine
   // without bringing back the chip strip this pane exists to shed.
+  // ORG1: ONE PASS. The port's own rows used to follow every category's keys in a second run of the same dividers, so
+  // Game, Controls and Interface each stood twice; now a category is one divider, its rows under the small heads of
+  // the sections the main menu files them in.
   for (const cat of CATEGORIES) {
     const liveKeys = paneKeys(cat.id).filter((key) => tierOf(key) === 'live');   // FT13: the moved keys are not here
-    if (!liveKeys.length) continue;
+    const port = portRows(cat.id, { pause: true });   // SO1: and the port's own rows that take effect without a reload
+    const rows = [...port];
+    for (const key of liveKeys) { const r = settingRow(key); if (r) rows.push(r); }
+    if (!rows.length) continue;
     any = true;
     list.append(pxDivider(cat.title));
-    for (const key of liveKeys) put(list, settingRow(key));
-  }
-  // SO1: and the port's own rows that take effect without a reload,
-  // under the categories they live in on the main menu
-  for (const cat of CATEGORIES) {
-    const port = portRows(cat.id, { pause: true });
-    if (!port.length) continue;
-    any = true;
-    list.append(pxDivider(cat.title));
-    for (const r of port) list.append(r);
+    for (const r of sectionedRows(cat.id, rows, { small: true })) list.append(r);
   }
   if (!any) list.append(empty('Nothing live here yet', 'No setting has an in-game consumer in this build.'));
   // FT16: the condensed pause settings has no category rail, so the
@@ -1675,6 +1673,15 @@ function categoryCard() {
   const d = el('div', 'dcard');
   d.append(el('h3', null, cat.title));
   d.append(el('p', null, cat.blurb));
+  // ORG1: what the page is cut into, a line each - the sections that draw a row here, in their order
+  const drawn = new Set([...portRows(category).map((r) => r.dataset?.section),
+    ...paneKeys(category).filter(drawsFlat).map((k) => sectionOfKey(category, k)?.id)]);
+  const secs = (CATEGORY_SECTIONS[category] ?? []).filter((sec) => drawn.has(sec.id));
+  if (secs.length > 1) {
+    const dl = el('dl', 'sec-index');
+    for (const sec of secs) dl.append(el('dt', null, sec.title), el('dd', null, sec.blurb));
+    d.append(dl);
+  }
   const b = el('button', 'act', 'Reset everything to defaults');
   b.onclick = () => ask(
     'Reset Everything',
@@ -1749,12 +1756,17 @@ function settingRow(key, { compact = false, home = false } = {}) {
   const blocked = widget === 'blocked';
 
   const row = el('div', `row${key === pickedKey ? ' on' : ''}${blocked ? ' blocked' : ''}`);
+  row.dataset.key = key;   // ORG1: the section a page files it under reads it
 
   // The raw `Section/Key` used to sit under every label. It appears in
   // exactly ONE place now - the help panel - which is where it was
   // always meant to be and where the player who wants it will look.
   const main = el('button', 'row-main');
   main.append(el('div', 'row-name', labelOf(key)));
+  // ORG1 ("proper organization and detail"): the setting's own line under its name, as the port's rows have always
+  // carried theirs - a player scanning a section reads what each row does without opening it. The help panel keeps the
+  // whole of it, the tier and the `[Section] Key`.
+  if (!compact) { const help = helpOf(key); if (help && help !== labelOf(key)) main.append(el('div', 'row-note', help)); }
   main.onclick = () => { pickedKey = key; sheetOpen = true; render(); };
   row.append(main);
 
@@ -2135,6 +2147,7 @@ function portRowsControls() {
     'On: the controller\u2019s menu cursor eases in, speeds up on a long push, slows over a button and settles on it '
     + 'when you let go. Off: Daggerfall\u2019s own cursor, one steady speed.'));
   if (!isTouchDevice()) return out;
+  const touchFrom = out.length;   // ORG1: what follows is a finger's - the Touchscreen section
   const times = (v) => `${v.toFixed(2)}\u00d7`;
   out.push(stepRow('touchLookSensitivity', 'Look sensitivity',
     'How far a thumb\u2019s drag turns the camera, on top of the mouse sensitivity in Controls. '
@@ -2188,6 +2201,7 @@ function portRowsControls() {
   out.push(prefRow('touchFullscreen', 'Fullscreen on touch',
     'The first touch asks the browser for fullscreen and a landscape lock. Where the browser will not '
     + '(Safari on iPhone), add the game to the home screen instead - it opens fullscreen from there.'));
+  for (const r of out.slice(touchFrom)) inSection('touch', r);   // ORG1
   return out.filter(Boolean);   // FT13: a pref that lives on the home draws nothing
 }
 
@@ -2222,6 +2236,7 @@ function portRowsInterface({ pause = false } = {}) {
     'Frames a second in the top-right corner, with the frame\u2019s milliseconds and the slowest frame of the '
     + 'last second. Takes effect at once. ?fps in the address bar forces it on for a probe.'));
   if (!pause) out.push(prefRow('skipStartVideo', SKIP_START_VIDEO_NAME, SKIP_START_VIDEO_NOTE));   // UXB1-A: read at launch, so the front door's alone - as the skin's
+  if (!pause) inSection('prompts', out.at(-1));   // ORG1: how the game starts, not the HUD's
   return out.filter(Boolean);   // FT13
 }
 
@@ -2303,17 +2318,64 @@ function tierGroup(catId, tier, title, blurb, keys) {
   return g;
 }
 
+/** ORG1: a port row's section - the id in CATEGORY_SECTIONS its page files it under (a store key's row carries its key,
+ *  and the map answers for it). Returns the row, or nothing for nothing. A port row that names none stands in its
+ *  category's PORT_SECTION: the quest repair under Quests, the pad's cursor under Game controller, the HUD's rows. */
+function inSection(id, row) { if (row) row.dataset.section = id; return row; }
+const PORT_SECTION = Object.freeze({ game: 'quests', controls: 'controller', interface: 'hud' });
+/** ORG1 (2026-10-09, Mac: "reorganize settings and features to not be horrible to scroll through. Proper organization
+ *  and detail"): A CATEGORY'S ROWS UNDER ITS SECTIONS. Each section the rows fill (ui/settingsMap.js CATEGORY_SECTIONS,
+ *  in its order) gets a head - its title, how many rows, a line of what it holds - and its rows: the port's own first,
+ *  then the store keys in the section's order. A page of one section is its own heading and draws none. With three
+ *  sections or more, `jump` puts a strip of their names at the top that stays in view while the list scrolls. A row
+ *  the map does not place (none, by the pin) is not dropped: it stands under a last head of its own. */
+export function sectionedRows(catId, rows, { jump = false, small = false } = {}) {   // exported for its pin
+  const secs = [...(CATEGORY_SECTIONS[catId] ?? []), { id: 'more', title: 'More', blurb: '', keys: [] }];
+  const idOf = (r) => r.dataset?.section ?? (r.dataset?.key ? sectionOfKey(catId, r.dataset.key)?.id : PORT_SECTION[catId]) ?? 'more';
+  const filled = secs.map((sec) => {
+    const mine = rows.filter((r) => idOf(r) === sec.id);
+    const port = mine.filter((r) => !r.dataset?.key);
+    const keyed = mine.filter((r) => r.dataset?.key).sort((a, b) => sec.keys.indexOf(a.dataset.key) - sec.keys.indexOf(b.dataset.key));
+    return { sec, rows: [...port, ...keyed] };
+  }).filter((x) => x.rows.length);
+  if (filled.length < 2) return rows;
+  const out = [];
+  const anchor = (sec) => `sec-${catId}-${sec.id}`;
+  if (jump && filled.length >= 3) {
+    const strip = el('nav', 'sec-jump');
+    strip.setAttribute('aria-label', 'Sections');
+    for (const { sec } of filled) {
+      const b = el('button', 'sec-jumpbtn', sec.title);
+      b.type = 'button';
+      b.onclick = () => document.getElementById(anchor(sec))?.scrollIntoView({ block: 'start' });
+      strip.append(b);
+    }
+    out.push(strip);
+  }
+  for (const { sec, rows: rs } of filled) {
+    const head = el('div', `sec-head${small ? ' small' : ''}`);
+    if (!small) head.id = anchor(sec);
+    const t = el('div', 'sec-title');
+    t.append(el('h3', null, sec.title), el('span', 'count', String(rs.length)));
+    head.append(t);
+    if (sec.blurb && !small) head.append(el('p', 'sec-blurb', sec.blurb));
+    out.push(head, ...rs);
+  }
+  return out;
+}
+
 /** A category's rows, in order: the port's own, the store keys that do
  *  something here flat (drawsFlat), then the two folded tiers. */
 function categoryRows(catId) {
   const keys = paneKeys(catId);   // FT13: the moved keys are the home's
   const out = [...portRows(catId)];
   for (const key of keys) if (drawsFlat(key)) { const r = settingRow(key); if (r) out.push(r); }
+  const page = sectionedRows(catId, out, { jump: true });   // ORG1: under their sections' heads
   for (const [tier, title, blurb] of TIER_GROUPS) {
     const ks = keys.filter((k) => tierOf(k) === tier);
-    if (ks.length) out.push(tierGroup(catId, tier, title, blurb, ks));
+    if (ks.length) page.push(tierGroup(catId, tier, title, blurb, ks));
   }
-  return out;
+  return page;
 }
 
 /** FPS-VSYNC: a key the desktop shell reads at its next launch does something here too - drawn flat with the live
@@ -3092,6 +3154,8 @@ function paintRail(rail = document.getElementById('ft-rail')) {
   if (f.effect) rail.append(el('p', 'ft-rail-effect', f.effect));
   const kv = el('dl', 'ft-rail-kv');
   const pair = (k, v) => { kv.append(el('dt', null, k), el('dd', null, v)); };
+  const sec = sectionOfFeature(f);   // ORG1: where the tile stands, for a tile found by the search
+  pair('Found in', sec && (FEATURE_SECTIONS[f.group]?.length ?? 0) > 1 ? `${GROUPS[f.group].label} \u203a ${sec.label}` : GROUPS[f.group]?.label ?? '');
   pair('Stored', c.store === 'prefs' ? 'Port preferences'
     : c.store === 'mods' ? `${MOD_SETTINGS[c.vendor].title}\u2019s own modsettings`
       : 'Daggerfall Unity settings.ini');
@@ -3154,51 +3218,128 @@ function paneFeatures(body) {
   // rail that reads out whichever one is pointed at. The kind is a
   // FILTER (the chips above) and no longer a heading, because "who
   // wrote it" does not group anything a player is looking for.
-  if (featureSel && !rows.some((f) => f.id === featureSel)) featureSel = null;   // the filter took the selected tile away
+  //
+  // ORG1 (2026-10-09, Mac: "reorganize settings and features to not be horrible to scroll through. Proper organization
+  // and detail"): THREE PANES - the groups, the tiles, the rail. Ninety-six tiles under seven thin headings were one
+  // 8,000-pixel scroll; now the page shows ONE GROUP at a time (All shows every one), each under its own line of what it
+  // holds and cut into SECTIONS (systems/features.js FEATURE_SECTIONS), each with its own line too. The search still
+  // reaches every tile: while it holds a word the group is set aside and every group shows what matches, with the
+  // groups' counts saying where the matches are. Every group's tiles are built either way - the search hides in place,
+  // so the field keeps the keys it is typed into.
+  const groups = GROUP_ORDER.filter((g) => rows.some((f) => f.group === g));
+  const withFiles = featureKind == null || featureKind === 'mod';   // FT14: where a player looking for mods would be
+  if (featureGroup !== null && !groups.includes(featureGroup) && !(featureGroup === FILES_PAGE && withFiles)) featureGroup = groups[0];   // the kind filter emptied it
+  const inView = (f) => featureGroup === null || f.group === featureGroup;
+  if (featureSel && !rows.some((f) => f.id === featureSel && inView(f))) featureSel = null;   // the filter or the group took it away
   body.classList.add('wide');   // FT14: .body is capped at 720px for READING; a tile grid is scanned, not read
   const panes = el('div', 'ft-panes');
+  const nav = el('nav', 'ft-groups');
+  nav.setAttribute('aria-label', 'Feature groups');
+  const navBtns = [];
+  const groupBtn = (g, label, n) => {
+    const b = el('button', `ft-groupbtn${featureGroup === g ? ' on' : ''}`, label);
+    b.type = 'button';
+    b.dataset.group = g ?? 'all';
+    b.setAttribute('aria-pressed', String(featureGroup === g));
+    const count = el('span', 'count', String(n));
+    b.append(count);
+    b.onclick = () => { featureGroup = g; featureQuery = ''; featureSel = null; featureOpen = null; render(); };
+    nav.append(b);
+    navBtns.push({ g, count });
+  };
+  groupBtn(null, 'All', rows.length);
+  for (const g of groups) groupBtn(g, GROUPS[g].label, rows.filter((f) => f.group === g).length);
+  if (withFiles) groupBtn(FILES_PAGE, 'Your files & packs', '');   // ORG1: the cards, on a page of their own
   const main = el('div', 'ft-main');
   const shownGroups = [];   // FT18: what the search walks
-  for (const g of GROUP_ORDER) {
+  for (const g of groups) {
     const items = rows.filter((f) => f.group === g);
-    if (!items.length) continue;
+    const block = el('section', 'ft-group');
+    block.dataset.group = g;
     const head = el('div', 'ft-grouphead');
     const gn = el('span', 'ft-gn', String(items.length));
     head.append(el('h2', null, GROUPS[g].label), gn, el('span', 'ft-gline'));
-    main.append(head);
-    const grid = el('div', 'ft-grid');
-    const tiles = items.map((f) => [f, featureTile(f)]);
-    for (const [, t] of tiles) grid.append(t);
-    main.append(grid);
-    shownGroups.push({ head, grid, gn, tiles });
+    block.append(head, el('p', 'ft-groupblurb', GROUPS[g].blurb));
+    const secs = [];
+    const cut = featureSections(g, items);
+    for (const { section, items: its } of cut) {
+      const sec = el('div', 'ft-section');
+      sec.dataset.section = section.id;
+      const sn = el('span', 'ft-gn', String(its.length));
+      if (cut.length > 1) {   // a group of one section is its own heading
+        const sh = el('div', 'ft-sechead');
+        sh.append(el('h3', null, section.label), sn);
+        sec.append(sh);
+        if (section.blurb) sec.append(el('p', 'ft-secblurb', section.blurb));
+      }
+      const grid = el('div', 'ft-grid');
+      const tiles = its.map((f) => [f, featureTile(f)]);
+      for (const [, t] of tiles) grid.append(t);
+      sec.append(grid);
+      block.append(sec);
+      secs.push({ sec, sn, tiles });
+    }
+    main.append(block);
+    shownGroups.push({ g, block, gn, secs });
+  }
+  // ORG1: WHAT YOU ATTACH, A PAGE OF ITS OWN. The Morrowind assets card (MWA4) and what the Mods pane carried that was
+  // never a mod setting (FT14's footer - the packs, other players' look, the night's sounds, DFU's own mod system) stood
+  // above and below the tiles on every visit, a screen's height of cards around whichever group was open. They are the
+  // files you bring, not switches: one door in the groups' rail, and All still shows them after the tiles.
+  let files = null;
+  if (withFiles) {
+    files = el('section', 'ft-group ft-files');
+    files.dataset.group = FILES_PAGE;
+    const head = el('div', 'ft-grouphead');
+    head.append(el('h2', null, 'Your files & packs'), el('span', 'ft-gline'));
+    files.append(head, el('p', 'ft-groupblurb', FILES_PAGE_BLURB));
+    files.append(morrowindCard());   // MWA4: the assets card heads the page
+    modsFooter(files);
+    main.append(files);
   }
   const none = el('p', 'meta ft-none', 'Nothing here matches that. Try a shorter word, or the mod\u2019s author.');
   main.append(none);
-  /** FT18: hide what the query does not find - a tile, and a group left with none; the group's count is what shows. */
+  /** FT18 + ORG1: hide what the query does not find - a tile, a section and a group left with none - and, with no
+   *  query, every group but the one chosen. The counts are what shows: a group's on its head and its button. */
   const applyQuery = () => {
+    const q = featureQuery.trim();
     let shown = 0;
-    for (const g of shownGroups) {
+    let all = 0;
+    for (const G of shownGroups) {
       let n = 0;
-      for (const [f, t] of g.tiles) { const hit = matchesFeatureQuery(f, featureQuery); t.hidden = !hit; if (hit) n++; }
-      g.head.hidden = !n;
-      g.grid.hidden = !n;
-      g.gn.textContent = String(n);
-      shown += n;
+      for (const S of G.secs) {
+        let m = 0;
+        for (const [f, t] of S.tiles) { const hit = matchesFeatureQuery(f, featureQuery); t.hidden = !hit; if (hit) m++; }
+        S.sec.hidden = !m;
+        S.sn.textContent = String(m);
+        n += m;
+      }
+      G.gn.textContent = String(n);
+      G.block.hidden = !n || (!q && featureGroup !== null && G.g !== featureGroup);   // FILES_PAGE shows no tile group
+      if (!G.block.hidden) shown += n;
+      all += n;
+      const btn = navBtns.find((b) => b.g === G.g);
+      if (btn) btn.count.textContent = String(n);
     }
-    none.hidden = shown > 0;
+    navBtns.find((b) => b.g === null).count.textContent = String(all);
+    nav.classList.toggle('searching', !!q);   // the buttons say where the matches are; the page shows them all
+    if (files) files.hidden = !!q || (featureGroup !== null && featureGroup !== FILES_PAGE);   // the search reaches tiles, not cards
+    none.hidden = shown > 0 || (files != null && !files.hidden);
   };
   search.oninput = () => { featureQuery = search.value; applyQuery(); };
   applyQuery();
   const rail = el('aside', 'ft-rail');
   rail.id = 'ft-rail';
   rail.setAttribute('aria-live', 'polite');
-  panes.append(main, rail);
-  if (featureKind == null || featureKind === 'mod') body.append(morrowindCard());   // MWA4: the assets card heads the list
+  panes.append(nav, main, rail);
   body.append(panes);
-  if (!featureSel) featureSel = rows[0].id;
+  if (!featureSel) featureSel = rows.find(inView)?.id ?? rows[0].id;
   paintRail(rail);
-  if (featureKind == null || featureKind === 'mod') modsFooter(body);   // FT14: what the Mods pane carried that was never a mod setting
 }
+/** ORG1: the groups' rail's last door - the files a player attaches and the packs, not a group of switches. */
+export const FILES_PAGE = 'files';
+export const FILES_PAGE_BLURB = 'What you bring to the game: your own Morrowind files for a body in 3D, texture packs, '
+  + 'how other players look to you, and Daggerfall Unity\u2019s own mod system.';
 
 // ── OVH1 (2026-09-24, Mac: "A new option on the main menu that opens to show 3 large panels. These panels will
 // have directional arrows allowing you to switch being different feature sets") - THE OVERHAULS PANE. Three cards,
