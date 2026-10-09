@@ -4833,6 +4833,16 @@ export function createWorldModes(host) {
     say(`Its ${pieces.length} placed piece${pieces.length === 1 ? '' : 's'} went with it: ${goldSum(back)} gold to ${accountWords(goldRegion(playerEntity.bankAccounts, region) !== region)}.`);
     return back;
   }
+  /** WAGONS2 (AUDIT): A CARAVAN NO LONGER OWNED - the last of them sold - takes its room with it, as a sold ship takes
+   *  her cabin's and a sold house its own (decorSold: the owner's own things back to the pack, half of what each placed
+   *  piece cost back into the account, what the room's storage held gone with it), and the room's scene is no longer
+   *  kept for good. Never while the player stands in it. Answers whether it went. */
+  function caravanGone() {
+    if (isCaravanRoom(interiorCabin) || !containsPermanentScene(sceneCache(), CARAVAN_SCENE_NAME)) return false;
+    decorSold(CARAVAN_SCENE_NAME, buildingDirectory?.()?.regionIndex ?? 0);
+    removePermanentScene(sceneCache(), CARAVAN_SCENE_NAME);
+    return true;
+  }
   /** DECOR2a: ONE OF THE PLAYER'S OWN THINGS OUT OF THE PACK, to stand in a room - one of a stack, moved as a drop
    *  moves it (itemTransfer.js applyTransfer: a lit torch stops lighting the player, a stack splits one off) - or null
    *  when it is no longer carried. */
@@ -12236,6 +12246,7 @@ export function createWorldModes(host) {
     get sailingCabin() { return mode === 'interior' && !isCaravanRoom(interiorCabin) ? interiorCabin : null; },
     /** WAGONS1: the caravan's room while the player stands in it. */
     get caravanRoom() { return mode === 'interior' && isCaravanRoom(interiorCabin) ? interiorCabin : null; },
+    caravanGone,   // WAGONS2 (AUDIT): the last caravan sold - its room goes with it
     get cabinOwner() { return mode === 'interior' ? privateVisitOwner : null; },
     // WD3 (AUDIT WD3 R7): the room's layouts of the homes' towns have landed - a home's room the player stands in, its
     // pieces unasked while they were unheard, asked now (loadHomeDecor: once a visit, the visit's own)

@@ -430,3 +430,34 @@ test('WAGONS2 THE OVERWORLD\'S SEATS: a wagon is drawn grown with its rider unde
   assert.match(w, /: online\.drawable\(\); if \(hccOn\(\)\) hcc\.seatGlue\(drawable, \{ toWire: campToWire \}\);/);
   assert.equal((w.match(/seatDraw: \(i\) => wagonRiders\?\.companionSeatDrawn\(/g) ?? []).length, 2, 'both companion layers');
 });
+
+test('WAGONS2 (AUDIT) THE CARAVAN SOLD: the last caravan gone from the pack takes its room with it, as a sold ship takes her cabin\'s - its placed pieces sold back, the owner\'s own things to the pack, its scene no longer kept for good - never while the player stands in it, never for a room never made; a load is never a sale (run on the hosts\' own code) (mutants: the room kept, the sale under the player\'s feet, a load taken for a sale)', () => {
+  const wm = src('scenes/worldModes.js'), w = src('scenes/world.js');
+  const body = /\n {2}(function caravanGone\(\) \{\n[\s\S]*?\n {2}\})\n/.exec(wm)?.[1];
+  assert.ok(body, 'lifted from scenes/worldModes.js');
+  const run = (over = {}) => {
+    const calls = [];
+    const d = { isCaravanRoom: (r) => r?.kind === 'caravan', interiorCabin: null, containsPermanentScene: () => true, sceneCache: () => 'cache',
+      decorSold: (n, r) => calls.push(['sold', n, r]), removePermanentScene: (c, n) => calls.push(['kept no more', n]), CARAVAN_SCENE_NAME: 'Caravan [WAGONS1]',
+      buildingDirectory: () => ({ regionIndex: 17 }), ...over };
+    const fn = new Function('d', `const { ${Object.keys(d).join(', ')} } = d;\n${body}\nreturn caravanGone();`);
+    return { went: fn(d), calls };
+  };
+  assert.deepEqual(run(), { went: true, calls: [['sold', 'Caravan [WAGONS1]', 17], ['kept no more', 'Caravan [WAGONS1]']] });
+  assert.deepEqual(run({ interiorCabin: { kind: 'caravan' } }), { went: false, calls: [] }, 'never under the player\'s feet');
+  assert.deepEqual(run({ containsPermanentScene: () => false }), { went: false, calls: [] }, 'no room was ever made');
+  assert.match(wm, /\n {4}caravanGone,   \/\/ WAGONS2 \(AUDIT\)/, 'the host\'s door');
+  // the world host's latch: owned last frame, owned no more - the room goes; a load re-latches without a sale
+  const latch = /\n(\s*const ownsCaravan = activeWagonKind\(playerEntity\.items \?\? \[\]\) === 'caravan';[^\n]*\n\s*if \(_ownedCaravan && !ownsCaravan && playerSpawned\) modes\?\.caravanGone\?\.\(\);\n\s*_ownedCaravan = ownsCaravan;)/.exec(w)?.[1];
+  assert.ok(latch, 'lifted from scenes/world.js hccTick');
+  const tick = new Function('s', `let { _ownedCaravan, playerEntity, playerSpawned, modes } = s; const activeWagonKind = (items) => (items.some((i) => i.k === 'caravan') ? 'caravan' : items.length ? 'cart' : null);\n${latch}\nreturn _ownedCaravan;`);
+  let gone = 0;
+  const modes = { caravanGone: () => { gone++; } };
+  let owned = tick({ _ownedCaravan: false, playerEntity: { items: [{ k: 'caravan' }] }, playerSpawned: true, modes });
+  assert.equal(owned, true);
+  owned = tick({ _ownedCaravan: owned, playerEntity: { items: [{ k: 'cart' }] }, playerSpawned: true, modes });
+  assert.deepEqual([owned, gone], [false, 1], 'sold: the room goes');
+  tick({ _ownedCaravan: false, playerEntity: { items: [] }, playerSpawned: true, modes });
+  assert.equal(gone, 1, 'none owned before: nothing goes');
+  assert.equal((w.match(/_ownedCaravan = activeWagonKind\(playerEntity\.items \?\? \[\]\) === 'caravan';   \/\/ WAGONS2 \(AUDIT\): a load is never a sale/g) ?? []).length, 2, 'both loads re-latch');
+});

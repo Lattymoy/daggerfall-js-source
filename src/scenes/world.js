@@ -10090,7 +10090,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     const tipOn = hcc.enabled && walkMode && _mode() === 'exterior' && !worldPlaqueOn() && !gamePaused() && !pointerSurfaces.size;
     horseNameTooltip.set(tipOn ? hcc.tooltipText(cam.pos, [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)], collider) : '');
     if (_mode() === 'exterior') wagonRiders?.frame();   // WAGONS1: my riders kept to my seats, and me to my seat in another's wagon, as the pool just stood them
+    const ownsCaravan = activeWagonKind(playerEntity.items ?? []) === 'caravan';   // WAGONS2 (AUDIT): the last caravan sold - its room goes with it
+    if (_ownedCaravan && !ownsCaravan && playerSpawned) modes?.caravanGone?.();
+    _ownedCaravan = ownsCaravan;
   };
+  let _ownedCaravan = false;   // WAGONS2 (AUDIT): whether I owned a caravan last frame (a load starts it at what the save holds - never a sale)
   /** The mod's ModSettingsChanged: the shelf has no event, so the eight keys are re-read once a second. */
   const hccPollSettings = (nowMs) => {
     if (nowMs - _hccSettingsAt < 1000) return;
@@ -14944,6 +14948,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       await modes?.transitionSettled?.();
       if (csaRuntime) csaCall(() => csaRuntime.OnStartLoad());   // CSA-D: ComeSailAway.OnStartLoad - the riders dropped, the helm left; CSA-J (the audit): AHEAD of the save's player (SaveLoadManager.cs:1378, the restore at :1497) - its StopSailing hands a lent ship back, and after restorePlayer it took the loaded character's own
       const extras = restorePlayer(playerEntity, snap, spellsByIndex);
+      _ownedCaravan = activeWagonKind(playerEntity.items ?? []) === 'caravan';   // WAGONS2 (AUDIT): a load is never a sale - its caravan's room is the save's
       if (!extras) { townTalk.say('Save version mismatch.'); return; }
       autoBuildArms(playerEntity);   // MWA1: the loaded character's arms (a boot into ?load has no chargenDone until here)
       hccRuntime.handleStartLoad();   // AUDIT HCC H3: SaveLoadManager.OnStartLoad [IL_a714] - the old character's horse, name and parked wagon end HERE, before any await, on every branch below
@@ -15268,6 +15273,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       return false;
     }
     const extras = restorePlayer(playerEntity, bundle.snap, spellsByIndex);
+    _ownedCaravan = activeWagonKind(playerEntity.items ?? []) === 'caravan';   // WAGONS2 (AUDIT): a load is never a sale - its caravan's room is the save's
     if (!extras) return false;
     autoBuildArms(playerEntity);   // MWA1: the classic save's character too
     // AUDIT 58: StartFromClassicSave.cs:616 -

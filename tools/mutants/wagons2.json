@@ -236,5 +236,26 @@
     "old": "      return drawn && drawn.g > 1 ? drawn : null;",
     "new": "      return drawn;",
     "tests": ["test/wagons2.test.js"]
+  },
+  {
+    "name": "WAGONS2-the-sold-caravans-room-kept",
+    "file": "src/scenes/worldModes.js",
+    "old": "    removePermanentScene(sceneCache(), CARAVAN_SCENE_NAME);\n    return true;",
+    "new": "    return true;",
+    "tests": ["test/wagons2.test.js"]
+  },
+  {
+    "name": "WAGONS2-the-sale-under-the-players-feet",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (isCaravanRoom(interiorCabin) || !containsPermanentScene(sceneCache(), CARAVAN_SCENE_NAME)) return false;",
+    "new": "    if (!containsPermanentScene(sceneCache(), CARAVAN_SCENE_NAME)) return false;",
+    "tests": ["test/wagons2.test.js"]
+  },
+  {
+    "name": "WAGONS2-a-load-taken-for-a-sale",
+    "file": "src/scenes/world.js",
+    "old": "    const extras = restorePlayer(playerEntity, bundle.snap, spellsByIndex);\n    _ownedCaravan = activeWagonKind(playerEntity.items ?? []) === 'caravan';",
+    "new": "    const extras = restorePlayer(playerEntity, bundle.snap, spellsByIndex);\n    void 0;",
+    "tests": ["test/wagons2.test.js"]
   }
 ]
