@@ -2206,7 +2206,8 @@ the world host's respawn; `scenes/dungeonContext.js` FLAGGED - the Rift's refusa
 ### SD13 - shipped 2026-10-07 (the Score of the Hour)
 
 Mac: *"The detail needs to exceed that of the oblivion gates. These are the pinnacle of the hardest content in the
-game"*. The Warden has four songs, 5,529 notes, ten voices; the Hollow and the Hour had none - a dungeon's track played
+game"*. The Warden has four songs, 5,529 notes (5,504 since SD20d A8 merged its 25 doubled - AUDIT SD IV, SD26 A6),
+ten voices; the Hollow and the Hour had none - a dungeon's track played
 under the Remnant. Now nine, written as notes for the game's own player and FM bank, pressed, chosen by a pure law:
 
 | song | where, when | tempo / length | notes |
@@ -2221,7 +2222,9 @@ under the Remnant. Now nine, written as notes for the game's own player and FM b
 | HOURFELL - it falls | the fall, anywhere in the Hour: SD_SCORE_STING_MS (16.5 s) from its own first note | 88 BPM, 12 bars | 102 |
 | HOURGONE - the collapse | after the fall, and in the Hollow while it collapses | 72 BPM, 24 bars | 590 |
 
-10,865 notes on thirteen voices and the kit (14 channels against the Warden's 10): the harpsichord's escapement, the
+(AUDIT SD IV, SD26 A6: the counts as SD13 shipped them. AUDIT SD III, SD20d A8 merged 33 doubled note-ons, and the
+songs hold 1,068 (the Orrery), 1,222 (the Steps), 1,459, 1,793 and 2,846 (the war) and 1,180 (the Hour ends) - 10,832
+in all.) 10,865 notes on thirteen voices and the kit (14 channels against the Warden's 10): the harpsichord's escapement, the
 bass, strings, brass, choir, church organ, timpani, a music box for the chime, tubular bells for the hours, horns,
 pizzicato, harp and the orchestra hit; the kit's woods for the clock (the tick on the hi wood block, the tock on the
 low, the claves racing in the Last Moment), the gears' ride bell, the low drums. Silence from the End (its word or its
@@ -2248,7 +2251,8 @@ FLAGGED - the music is the world host's (it reads the mode machine's place, and 
 
 The Warden speaks in 48 cues; the Remnant had its blows' wind-ups and landings and its fall's thud, and nothing of its
 body (the inventory's own words: "no Remnant footsteps, its wake, phase turns, Echo rise / fall ... the stun, the loss,
-any voice"). `scenes/sdRemnantVoice.js` reads the fight this page holds each frame and speaks 32 cues more, in
+any voice"). `scenes/sdRemnantVoice.js` reads the fight this page holds each frame and speaks 32 cues more (AUDIT SD IV,
+SD26 A6: 33, and the arc's 60 below 61, from SD20d A2's knell until SD26 A4 took the quake out), in
 Daggerfall's own Iron Atronach's voice (`ENEMY_BASICS` row 36: its move 222, bark 223, attack 224) pitched for a
 colossus of brass - the Remnant under gold under silver:
 
@@ -2259,8 +2263,9 @@ colossus of brass - the Remnant under gold under silver:
   Last Moment (its deepest bark, the storm's roll); back from outside time (the gears grinding together); stunned (its
   bark, a ring) and up again (the gears); the gears slipping once under a fifth of its health; its cry at its fall; the
   ground's shock under its Stomp (AUDIT SD IV, SD26 A4: the Stomp's own landing, `SD_BLOW_CUES.land.stomp` - the
-  voice's quake started the same thud a second time in the same frame, and is gone); the Hour's bell, lowest, when the
-  fight is lost.
+  voice's quake started the same thud a second time in the same frame, and is gone); the Hour's bell, the lowest of its
+  body's, when the fight is lost (AUDIT SD IV, SD26 A6: this said "lowest" - the End's toll and its knell are the same
+  bell lower).
 - **Its Echoes**, each at its own pitch: risen (the chime), striding (`SD_ECHO_STRIDE_M`), hurt, broken (the shatter).
 - **Each blow's release** (WB13d's law): `SD_RELEASE_MS` (350 ms) before it lands, once - the Stomp's body, the Hand's
   swing, the Volley's gears loosed, the Pulse's roll, the Reset's ring, the End's bell.
@@ -2289,7 +2294,7 @@ nothing put back but the Rift's bell. `scenes/sdAir.js`, on the Deadlands' model
 | bed | what | where |
 |---|---|---|
 | the void's wind | DAGGER.SND's deep moan at 0.55 (the Deadlands' at 0.74), breathing 24 times a period between 60% and its level | everywhere in the Hour |
-| the Hour's works | a tick (the Orrery's clunk at 1.6) and a tock (at 1.2) a second, the gears' grind faint under them - MADE at runtime out of the player's own archive, as the Rift's bell is (`buildHourWorks`) | everywhere |
+| the Hour's works | a tick (the Orrery's clunk at 1.6) and a tock (at 1.2) a second (0.8 and 0.6 since AUDIT SD III, SD20d A9 - `SD_WORKS_TICK`, under the Beat's own pitch; AUDIT SD IV, SD26 A6), the gears' grind faint under them - MADE at runtime out of the player's own archive, as the Rift's bell is (`buildHourWorks`) | everywhere |
 | the Orrery's hum | the ship's bell slowed to a drone at a quarter, its fifth and its octave over it, darkened, swelling twice a loop (`buildOrreryHum`) | over the Orrery's centre, 50 m (never the arena) |
 | the arena's gears | the grind at 0.55 | under the arena's floor, 70 m |
 

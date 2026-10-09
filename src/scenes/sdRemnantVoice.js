@@ -11,8 +11,8 @@
 //     wake (the bark, the Hour's bell under it); its turn to the Dragon Break (the Rift's chime, low - it steps outside
 //     time) and to the Last Moment (its deepest bark, the storm's roll over it); its return from outside time (the
 //     gears grinding back together); a stun (its bark cut short, a ring) and its recovery (the gears again); once, the
-//     gears slipping as it falls under a fifth of its health; its cry at its fall; the Hour's bell, lowest, when the
-//     fight is lost.
+//     gears slipping as it falls under a fifth of its health; its cry at its fall; the Hour's bell, the lowest of its
+//     body's, when the fight is lost (AUDIT SD IV, A6: the End's toll and its knell are the same bell lower).
 //   ITS ECHOES - each its own pitch, gold's under silver's: rising (the chime), each stride, each hurt, broken (the
 //     shatter).
 //   ITS BLOWS' RELEASE - WB13d's law: SD_RELEASE_MS before each blow lands, the weight of it coming (the Stomp's body,
