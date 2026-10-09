@@ -659,9 +659,15 @@ export function tickHudLayout(doc = globalThis.document, now = (globalThis.perfo
     // stand while the HUD itself is hidden
     timer = setInterval(() => sweepHudLayout(doc), SWEEP_MS);
     timer?.unref?.();   // never what keeps a process alive (Node's timers; a browser's is a number)
+    lastSweep = now; sweepHudLayout(doc);   // PERF-HUD1: the first sweep at once; the interval takes every one after it
+    return;
   }
-  if (now - lastSweep >= SWEEP_MS) { lastSweep = now; sweepHudLayout(doc); }
+  // PERF-HUD1 (PERF-NEXT item 5): ONE CLOCK. This tick swept on its own clock beside the interval's - about eight sweeps
+  // of ~31 querySelectorAll a second where four were meant (the real game's profile: the HUD's sweeps 1.4 ms a second of
+  // this container's CPU). The interval is the clock where it runs; the tick sweeps only where none does (a page
+  // without events - a test's stub document - whose start returned above before an interval was set).
+  if (!timer && now - lastSweep >= SWEEP_MS) { lastSweep = now; sweepHudLayout(doc); }
 }
 
 /** Tests: forget the started state. */
-export function _resetHudLayoutForTests() { if (timer) clearInterval(timer); timer = null; started = false; docRef = null; drag = null; }
+export function _resetHudLayoutForTests() { if (timer) clearInterval(timer); timer = null; started = false; docRef = null; drag = null; lastSweep = -Infinity; }   // PERF-HUD1: the clock too

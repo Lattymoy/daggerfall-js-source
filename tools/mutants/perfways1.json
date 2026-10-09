@@ -1,0 +1,44 @@
+[
+  {
+    "name": "PERF-WAYS1-no-time-past-the-floor",
+    "file": "src/systems/livingWorld/ways.js",
+    "old": "        if (budget <= 0 && !(spent < spendMs && asked < WAYS_MAX_PER_FRAME)) return undefined;",
+    "new": "        if (budget <= 0) return undefined;",
+    "tests": ["test/perfways1.test.js"]
+  },
+  {
+    "name": "PERF-WAYS1-no-floor-past-the-time",
+    "file": "src/systems/livingWorld/ways.js",
+    "old": "        if (budget <= 0 && !(spent < spendMs && asked < WAYS_MAX_PER_FRAME)) return undefined;",
+    "new": "        if (!(spent < spendMs && asked < WAYS_MAX_PER_FRAME)) return undefined;",
+    "tests": ["test/perfways1.test.js"]
+  },
+  {
+    "name": "PERF-WAYS1-no-cap",
+    "file": "src/systems/livingWorld/ways.js",
+    "old": "        if (budget <= 0 && !(spent < spendMs && asked < WAYS_MAX_PER_FRAME)) return undefined;",
+    "new": "        if (budget <= 0 && !(spent < spendMs)) return undefined;",
+    "tests": ["test/perfways1.test.js"]
+  },
+  {
+    "name": "PERF-WAYS1-the-time-never-renewed",
+    "file": "src/systems/livingWorld/ways.js",
+    "old": "    frame(n = WAYS_PER_FRAME, ms = WAYS_MS_PER_FRAME) { budget = n; asked = 0; spent = 0; spendMs = ms; },",
+    "new": "    frame(n = WAYS_PER_FRAME, ms = WAYS_MS_PER_FRAME) { budget = n; asked = 0; spendMs = ms; },",
+    "tests": ["test/perfways1.test.js"]
+  },
+  {
+    "name": "PERF-WAYS1-the-time-not-counted",
+    "file": "src/systems/livingWorld/ways.js",
+    "old": "        spent += now() - t0;",
+    "new": "",
+    "tests": ["test/perfways1.test.js"]
+  },
+  {
+    "name": "PERF-WAYS1-a-pair-planned-on-another-network",
+    "file": "src/systems/livingWorld/ways.js",
+    "old": "        way = plan({ x: p.px, y: p.py }, { x: q.px, y: q.py }, { roads: raw.roads ?? null, tracks: raw.tracks ?? null, ...ground() }) ?? null;",
+    "new": "        way = plan({ x: p.px, y: p.py }, { x: q.px, y: q.py }, { roads: null, tracks: raw.tracks ?? null, ...ground() }) ?? null;",
+    "tests": ["test/lw3_roads.test.js"]
+  }
+]

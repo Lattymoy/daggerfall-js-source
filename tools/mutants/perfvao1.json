@@ -1,0 +1,16 @@
+[
+  {
+    "name": "PERF-VAO1-a-closure-each-frame-again",
+    "file": "src/render/renderer.js",
+    "old": "    const bindVao = this._bindVaoFn;   // PERF-VAO1: the renderer's one, made with it",
+    "new": "    const bindVao = (vao) => this._bindVao(vao);",
+    "tests": ["test/perfvao1.test.js"]
+  },
+  {
+    "name": "PERF-VAO1-past-the-renderers-skip",
+    "file": "src/render/renderer.js",
+    "old": "    this._bindVaoFn = (/** @type {WebGLVertexArrayObject|null} */ vao) => this._bindVao(vao);",
+    "new": "    this._bindVaoFn = (/** @type {WebGLVertexArrayObject|null} */ vao) => this.gl.bindVertexArray(vao);",
+    "tests": ["test/perfvao1.test.js"]
+  }
+]

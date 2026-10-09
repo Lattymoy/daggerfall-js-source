@@ -349,11 +349,11 @@ function stopDev(p) {
   started.delete(p);
   try { process.kill(-p.pid, 'SIGKILL'); } catch { /* already gone */ }
 }
-const stopAll = () => { for (const p of [...started]) stopDev(p); };
+export const stopAll = () => { for (const p of [...started]) stopDev(p); };
 
 // ═══ THE SERVICES ══════════════════════════════════════════════════════════════════════════════════════════════════
 
-async function standServices(o, state) {
+export async function standServices(o, state) {
   const accountPort = o.port, relayPort = o.port + 1;
   for (const port of [accountPort, relayPort]) {
     if (await portHeld(port)) throw new Error(`something already holds 127.0.0.1:${port} - stop it (an orphaned workerd: \`ps aux | grep workerd\`), or pass --port`);
@@ -447,7 +447,7 @@ export function rolesOf(n, o) {
   return { mover: roll(o.movers, 0.6180339887498949), fighter: roll(o.fighters, 0.4142135623730951), registered: roll(o.registered, 0.7320508075688772) };
 }
 
-function makeBot(n, o, ctx) {
+export function makeBot(n, o, ctx) {
   const k = n % o.cells;
   const town = townPixel(k, o.edge === 1);
   const bot = {
@@ -463,7 +463,7 @@ function makeBot(n, o, ctx) {
   return bot;
 }
 
-async function setUp(bot, o) {
+export async function setUp(bot, o) {
   const io0 = { fetch: bot.fetch, base: LOAD_SERVICE };
   const made = await quietly(() => bot.fetch(`${LOAD_SERVICE}/v1/auth/guest`, {
     method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ label: 'load', ...ACCEPTED }),

@@ -1,0 +1,23 @@
+[
+  {
+    "name": "PERF-ON4-a-needle-moved-in-the-tree",
+    "file": "src/systems/buildBreather.js",
+    "old": "export const BUILD_SLICE_FLOOR_MS = 3;",
+    "new": "export const BUILD_SLICE_FLOOR_MS = 3.0;",
+    "tests": ["test/perfon4_probes.test.js"]
+  },
+  {
+    "name": "PERF-ON4-the-online-lane-needle-moved",
+    "file": "src/systems/onlineLane.js",
+    "old": "export const ONLINE_REFUSED_FLAGS = Object.freeze(['shot', 'fly',",
+    "new": "export const ONLINE_REFUSED_FLAGS = Object.freeze(['fly', 'shot',",
+    "tests": ["test/perfon4_probes.test.js"]
+  },
+  {
+    "name": "PERF-ON4-the-plugin-passing-a-missed-needle",
+    "file": "tools/frameProbe.mjs",
+    "old": "      if (!a.includes(needle)) throw new Error(`${name}: ${row.file} needle missed: ${needle.slice(0, 80)}`);",
+    "new": "",
+    "tests": ["test/perfon4_probes.test.js"]
+  }
+]

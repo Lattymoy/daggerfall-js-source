@@ -1,0 +1,75 @@
+[
+  {
+    "name": "PERF-SUN1-the-far-list-by-the-near-planes",
+    "file": "src/render/shadowPass.js",
+    "old": "    const P = planes[last];\n    for (let i = 0; i < this.count; i++) {",
+    "new": "    const P = planes[0];\n    for (let i = 0; i < this.count; i++) {",
+    "tests": ["test/perfsun1.test.js"]
+  },
+  {
+    "name": "PERF-SUN1-a-nearer-list-by-the-nearest-planes",
+    "file": "src/render/shadowPass.js",
+    "old": "      const from = out[c + 1], Q = planes[c];",
+    "new": "      const from = out[c + 1], Q = planes[0];",
+    "tests": ["test/perfsun1.test.js"]
+  },
+  {
+    "name": "PERF-SUN1-an-unbounded-record-left-out",
+    "file": "src/render/shadowPass.js",
+    "old": "      if (r.kind !== REC_BB) { if (recordVisible(P, r)) add(last, i); continue; }",
+    "new": "      if (r.kind !== REC_BB) { if (r.bounded && recordVisible(P, r)) add(last, i); continue; }",
+    "tests": ["test/perfsun1.test.js"]
+  },
+  {
+    "name": "PERF-SUN1-a-record-cut-at-its-first-flat-out",
+    "file": "src/render/shadowPass.js",
+    "old": "        if (!b || !batchVisible(P, b)) continue;   // the replay's first question drops a null one too",
+    "new": "        if (!b || !batchVisible(P, b)) break;",
+    "tests": ["test/perfsun1.test.js"]
+  },
+  {
+    "name": "PERF-SUN1-a-list-kept-from-the-last-frame",
+    "file": "src/render/shadowPass.js",
+    "old": "      if (L.bb[j]) L.bb[j].length = 0; else L.bb[j] = [];\n      return j;",
+    "new": "      if (!L.bb[j]) L.bb[j] = [];\n      return j;",
+    "tests": ["test/perfsun1.test.js"],
+    "equivalent": true,
+    "why": "discard() empties every cascade's list after each frame's passes (renderer.js _renderPasses), so no slot is filled twice between two discards; the clear in add() is belt-and-braces for a render that reaches no discard - and the next mutant pins discard's half"
+
+  },
+  {
+    "name": "PERF-SUN1-no-list-at-all",
+    "file": "src/render/shadowPass.js",
+    "old": "      const sunCand = SHADOW_TUNING.sunPrepass !== false ? this._sunCandidates(this._sunVPNew) : null;   // PERF-SUN1",
+    "new": "      const sunCand = null;",
+    "tests": ["test/perfsun1.test.js"]
+  },
+  {
+    "name": "PERF-SUN1-a-cascade-walking-another-ones-list",
+    "file": "src/render/shadowPass.js",
+    "old": "REPLAY_ALL, true, sunCand ? sunCand[c] : null);",
+    "new": "REPLAY_ALL, true, sunCand ? sunCand[0] : null);",
+    "tests": ["test/perfsun1.test.js"]
+  },
+  {
+    "name": "PERF-SUN1-the-far-cascade-walking-the-next-one-ins-list",
+    "file": "src/render/shadowPass.js",
+    "old": "REPLAY_ALL, true, sunCand ? sunCand[c] : null);",
+    "new": "REPLAY_ALL, true, sunCand ? sunCand[Math.max(0, c - 1)] : null);",
+    "tests": ["test/perfsun1.test.js"]
+  },
+  {
+    "name": "PERF-SUN1-the-walk-off-switch-ignored",
+    "file": "src/render/shadowPass.js",
+    "old": "      const sunCand = SHADOW_TUNING.sunPrepass !== false ? this._sunCandidates(this._sunVPNew) : null;   // PERF-SUN1",
+    "new": "      const sunCand = this._sunCandidates(this._sunVPNew);",
+    "tests": ["test/perfsun1.test.js"]
+  },
+  {
+    "name": "PERF-SUN1-discard-leaves-the-cascades-lists",
+    "file": "src/render/shadowPass.js",
+    "old": "    for (const c of this._sunCands) { for (let j = 0; j < c.hw; j++) { const l = c.bb[j]; if (l) l.length = 0; } c.n = 0; c.hw = 0; }   // PERF-SUN1: the cascades' too",
+    "new": "",
+    "tests": ["test/perfsun1.test.js"]
+  }
+]
