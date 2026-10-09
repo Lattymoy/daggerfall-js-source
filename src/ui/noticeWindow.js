@@ -52,7 +52,7 @@ import {
   BOUNTY_BOARD_LINE, noteIsNew,
 } from '../net/boardLaw.js';
 import { accountRefusalText } from '../net/accountClient.js';   // PROF1: a writ's refusal, in words
-import { hallPosterName, isChapterWrit, meritLineOf, chapterLineOf } from '../net/npcChapterLaw.js';   // CHAP2a: a hall writ's guild, named; CHAP3a: a member's own writ, its Merit; CHAP3b: a chapter's Strength
+import { hallPosterName, isChapterWrit, meritLineOf, chapterLineOf, chapterFocusLineOf } from '../net/npcChapterLaw.js';   // CHAP2a: a hall writ's guild, named; CHAP3a: a member's own writ, its Merit; CHAP3b: a chapter's Strength
 import { movedFirstText } from '../net/bagLaw.js';   // AUDIT2 BAG1 K8: what went into the Stores before a refusal
 import { createMarketTab } from './marketTab.js';   // PROF5: the Market tab
 import { createWorkTab } from './workTab.js';   // PROF6: the Work tab's guild writs and commissions
@@ -162,7 +162,7 @@ function injectSkin(doc = document) {
  *   nowS?: () => number,
  *   onExit?: (() => void) | null,
  *   work?: ({ book: any, region: number, regionName: string, countName: (key: string, n: number) => string,
- *     onTaken?: (r: any) => (string|void), sayLate?: (text: string) => void, writs?: any, regionNameOf?: (r: number) => string,
+ *     onTaken?: (r: any) => (string|void), sayLate?: (text: string) => void, setFocus?: ((faction: number, focus: string) => Promise<any>) | null, writs?: any, regionNameOf?: (r: number) => string,
  *     pieces?: (c: any) => any[], settle?: () => any, onList?: (data: any) => void, forgetMarket?: () => void } | null),
  *   market?: (any | null),
  *   guilds?: boolean,
@@ -509,6 +509,17 @@ export function mountNoticeBoard(host, deps) {
     return li;
   }
 
+  /** CHAP4d: a chapter's Master names its Focus - the list read again, the line its answer. */
+  async function setFocus(faction, focus) {
+    if (busy || workBusy || !work.setFocus) return;
+    busy = true; render();
+    const r = await work.setFocus(faction, focus);
+    if (!alive) return;
+    busy = false;
+    word = r?.ok ? { ok: true, text: chapterFocusLineOf(faction, focus) ?? 'Focus set.' } : { ok: false, text: accountRefusalText(r?.error) };
+    loadWrits(true);
+  }
+
   async function takeWrit(w) {
     if (busy || workBusy) return;
     busy = true; render();
@@ -536,7 +547,17 @@ export function mountNoticeBoard(host, deps) {
     // AUDIT CHAP2 C5: "Writs" - the count is every writ the account filled today, the Court's and the halls' (CALL 8)
     body.append(el('p', 'notice-worktoday', `Writs today: ${today.filled} of ${today.max}${writsStale ? ' - the list may be out of date' : ''}`));
     for (const m of writs?.merit ?? []) body.append(el('p', 'notice-merit', meritLineOf(m, nowS())));   // CHAP3a: the account's Merit here
-    for (const c of writs?.chapters ?? []) body.append(el('p', 'notice-chapter', chapterLineOf(c)));   // CHAP3b: the chapters here, their Strength
+    for (const c of writs?.chapters ?? []) {
+      body.append(el('p', 'notice-chapter', chapterLineOf(c)));   // CHAP3b: the chapters here, their Strength
+      // CHAP4d: and its Master's Focus this week - and, for its Master, the families to choose it from
+      const focusLine = chapterFocusLineOf(c.faction, c.focus);
+      if (focusLine) body.append(el('p', 'notice-chapter notice-focus', focusLine));
+      if (c.master && c.focuses?.length && work.setFocus) {
+        const row = el('p', 'notice-chapter notice-focus-pick', 'Your chapter\'s Focus this week: ');
+        for (const f of c.focuses) row.append(button(f === c.focus ? 'on' : '', f, () => setFocus(c.faction, f)));
+        body.append(row);
+      }
+    }
     const grid = el('ul', 'notice-grid');
     grid.setAttribute('role', 'list');
     const list = writs?.writs ?? [];

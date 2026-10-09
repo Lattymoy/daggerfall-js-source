@@ -242,7 +242,7 @@ test('CHAP3b the board: a chapter\'s hall writs by its band - one Failing, three
   const l = (await s.call('/v1/writs/list', { character: s.R.id, region: ANTICLERE }, s.who.secret)).body;
   const posted = (f) => s.raw.prepare("SELECT COUNT(*) AS n FROM writs WHERE kind = 'hall' AND faction = ?").get(f).n;
   assert.deepEqual([41, 108, 368].map(posted), [3, 1, 2], 'Thriving, Failing, and a chapter no Turning has settled');
-  assert.deepEqual(l.chapters, [{ faction: 41, strength: 75, band: 'thriving' }, { faction: 368, strength: 50, band: 'steady' }], 'the Brotherhood\'s to its members alone');
+  assert.deepEqual(l.chapters, [{ faction: 41, strength: 75, band: 'thriving', focus: null }, { faction: 368, strength: 50, band: 'steady', focus: null }], 'the Brotherhood\'s to its members alone');   // PIN MOVED (CHAP4d): and each chapter's Focus this week
   // a Turning passed after the day's writs were written down: the lines read it
   const turning = seatWeekStartMs(meritWeekOf(_now) + 1) / 1000;
   const past = turning + CHAPTER_TURNING_GRACE_S + 60;   // PIN MOVED (AUDIT CHAP3 S1): a week settles its grace after its boundary
@@ -252,7 +252,7 @@ test('CHAP3b the board: a chapter\'s hall writs by its band - one Failing, three
   s.merit(meritWeekOf(_now), 41, ANTICLERE, 600);
   clock(past);
   const after = (await s.call('/v1/writs/list', { character: s.R.id, region: ANTICLERE }, s.who.secret)).body;
-  assert.deepEqual(after.chapters[0], { faction: 41, strength: 85, band: 'thriving' }, 'settled on the read, not the next day\'s writs');
+  assert.deepEqual(after.chapters[0], { faction: 41, strength: 85, band: 'thriving', focus: null }, 'settled on the read, not the next day\'s writs');   // PIN MOVED (CHAP4d): and its Focus
   // the Chapters shut to the reader: no lines - and the day's hall writs still by the band the week's Turning left
   const shut = await stand({ open: 'dev', towns: [[77, ANTICLERE, [41]]] });
   shut.raw.prepare("INSERT INTO npc_chapters (faction, region, strength, week, merit, at) VALUES (41, 21, 65, 0, 0, 0)").run();
@@ -269,7 +269,7 @@ test('CHAP3b the wiring: the sheet\'s route, the client\'s door, the board\'s ch
   assert.match(src('server-account/src/service.js'), /'\/v1\/chapters\/list'/);
   assert.match(src('server-account/src/index.js'), /path === '\/v1\/chapters\/list' \? await chapterSheet\(ctx, who\.player, env\)/);
   assert.match(src('src/net/accountClient.js'), /list: \(\) => post\('\/v1\/chapters\/list', \{\}\),/);
-  assert.match(src('src/ui/noticeWindow.js'), /for \(const c of writs\?\.chapters \?\? \[\]\) body\.append\(el\('p', 'notice-chapter', chapterLineOf\(c\)\)\);/);
+  assert.match(src('src/ui/noticeWindow.js'), /for \(const c of writs\?\.chapters \?\? \[\]\) \{\n\s+body\.append\(el\('p', 'notice-chapter', chapterLineOf\(c\)\)\);/);   // PIN MOVED (CHAP4d): the line, then its Focus
   const mig = src('server-account/migrations/0097_npc_chapters.sql');
   assert.match(mig, /week\s+INTEGER PRIMARY KEY/);
   assert.match(mig, /strength\s+INTEGER NOT NULL CHECK \(strength BETWEEN 0 AND 100\)/);

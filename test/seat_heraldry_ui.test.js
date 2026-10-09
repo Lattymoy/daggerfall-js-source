@@ -269,8 +269,8 @@ test('HERALDRY-SHOWN THE HALL OF RECORDS\' ROLL OF ARMS: the book reader draws t
   assert.deepEqual(hallOfRecordsTokens(ANTICLERE, rows, null, () => null), t.slice(0, -11), 'none known: no Roll');
   const w = rd('src/scenes/world.js');
   assert.match(w, /townTalk\.showOverlay\(hallOfRecordsWindow\(st, r\.data\.rows, r\.data\.zero, seatArmsOf\)\);/);
-  assert.match(w, /return r\.data \? hallOfRecordsWindow\(seat, r\.data\.rows, r\.data\.zero, seatArmsOf\) : null;/);
-  assert.match(rd('src/ui/hallOfRecords.js'), /export const hallOfRecordsWindow = \(seat, rows, zero = null, armsOf = null\) => createBookReaderWindow\(hallOfRecordsBook\(seat, rows, zero, armsOf\)\);/);
+  assert.match(w, /return r\.data \? hallOfRecordsWindow\(seat, r\.data\.rows, r\.data\.zero, seatArmsOf, ch\?\.ok \? ch\.data : null\) : null;/);   // PIN MOVED (CHAP4d): and the chapters' Chronicle
+  assert.match(rd('src/ui/hallOfRecords.js'), /export const hallOfRecordsWindow = \(seat, rows, zero = null, armsOf = null, chapters = null\) => createBookReaderWindow\(hallOfRecordsBook\(seat, rows, zero, armsOf, chapters\)\);/);   // PIN MOVED (CHAP4d): and the chapters' Chronicle
 });
 
 // ─── AUDIT HERALDRY H1-H4 ────────────────────────────────────────────

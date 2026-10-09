@@ -184,7 +184,7 @@ import { reportRenownXp, renownTrackOf, renownTracksOf, renownCharacterOk } from
 import { chaptersOpenFor, readRoll, claimRoll } from './npcRoll.js';   // CHAP1: the Roll - a realm character's standing with Daggerfall's guilds
 import { witnessHall, listHalls, strikeHall } from './npcHalls.js';
 import { creditReceipt } from './npcReceipts.js';   // CHAP2b: a receipt's standing and the chapter's receipt writ
-import { chapterSheet, chapterSeatsOf, chapterTitlesOpenFor, chapterTitlesOfAccount } from './npcChapters.js';   // CHAP3b: the chapter sheet; CHAP4a: a character's seats; CHAP4c: the chapters' titles
+import { chapterSheet, chapterSeatsOf, chapterTitlesOpenFor, chapterTitlesOfAccount, setChapterFocus, chapterChronicle } from './npcChapters.js';   // CHAP3b: the chapter sheet; CHAP4a: a character's seats; CHAP4c: the chapters' titles
 import { contractRegionOfRaid } from '../../src/net/writLaw.js';   // CHAP2b: the region a raid's key names   // CHAP2a: a town's guild halls, witnessed; AUDIT CHAP2 E1: audited and struck
 import { claimRaid, raidRecordOf } from './raids.js';   // RAID4: the towns defended
 import { claimSerpent, serpentRecordOf } from './serpents.js';   // SERPENT1: the serpents slain
@@ -303,6 +303,7 @@ const ROLL_STATUS = Object.freeze({
   'halls-need-account': 403, 'halls-rate': 429,   // CHAP2a: a hall's witness - a guest's, or past the hour's
   'roll-rate': 429,   // AUDIT CHAP2 E2: the claims' hour
   'hall-struck': 409, 'not-developer': 403, 'bad-region': 400,   // AUDIT CHAP2 E1: a struck town; the audit and the strike a developer's
+  'not-master': 403,   // CHAP4d: a Focus set by a character that is not that chapter's Master ('no-focus' and 'body' the shape's 400)
 });
 /** GUILD1: each guild refusal's status - a bad shape 400 (the default), the wrong rank or too little Renown 403, a
  *  thing that is not there 404, a conflict with what is 409, the hour's writes spent 429. */
@@ -1073,13 +1074,17 @@ const service = {
       // lease the playing tab's. Behind CHAPTERS_OPEN; shut, the save keeps
       // the standing as it did before CHAP1.
       if (path === '/v1/chapters/roll' || path === '/v1/chapters/claim' || path === '/v1/chapters/witness'
-        || path === '/v1/chapters/halls' || path === '/v1/chapters/strike' || path === '/v1/chapters/list') {
+        || path === '/v1/chapters/halls' || path === '/v1/chapters/strike' || path === '/v1/chapters/list'
+        || path === '/v1/chapters/focus' || path === '/v1/chapters/history') {
         if (request.method !== 'POST') return no('method', 405, origin);
         if (!chaptersOpenFor(who.player, env)) return no('chapters-closed', 403, origin);
         // CHAP2a: and a town's guild halls witnessed, as a seat is (npcHalls.js); AUDIT CHAP2 E1: a region's audit list
         // and a false town struck, a developer's
         // CHAP3b: and the chapter sheet - every chapter's Strength and band, after the Turnings due (npcChapters.js)
+        // CHAP4d: and a chapter's Master's Focus, and a region's Chronicle of its chapters' seats
         const r = path === '/v1/chapters/list' ? await chapterSheet(ctx, who.player, env)
+          : path === '/v1/chapters/focus' ? await setChapterFocus(ctx, who.player, env, body)
+          : path === '/v1/chapters/history' ? await chapterChronicle(ctx, who.player, env, body)
           : path === '/v1/chapters/witness' ? await witnessHall(ctx, who.player, env, body)
           : path === '/v1/chapters/halls' ? await listHalls(ctx, who.player, env, body)
             : path === '/v1/chapters/strike' ? await strikeHall(ctx, who.player, env, body)

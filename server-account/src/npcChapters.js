@@ -35,12 +35,14 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { chaptersOpenFor } from './npcRoll.js';
+import { REALM_ID_RE } from './realm.js';   // CHAP4d: a Master's character, as the Roll names one
+import { regionOk } from '../../src/net/nodeLaw.js';
 import { allRegionChapters } from './npcHalls.js';
 import { agreedGateRegions } from './seatInfluence.js';   // AUDIT CHAP3 E1: a gate's region, as three of the day's claims agree on it
 import { seatWeekStartMs, SEAT_WEEK_MS, seasonEndingAt, seasonZeroOf, seasonOf, SEASON_WEEKS } from '../../src/net/townSeatLaw.js';
 import {
   STRENGTH_START, strengthAfter, strengthTarget, strengthSeasonEnd, chapterBandOf, meritWeekOf, hallHidden, chaptersSwitchOf,
-  SEAT_MERIT_WEEKS, seatEligibleAt, chapterSeatPlan, seatChangesOf, chapterTitlesOf,
+  SEAT_MERIT_WEEKS, seatEligibleAt, chapterSeatPlan, seatChangesOf, chapterTitlesOf, chapterFocusOk,
 } from '../../src/net/npcChapterLaw.js';
 
 /** The most weeks one read settles - a service asleep for longer starts its count again from there (the seats' own). */
@@ -261,4 +263,56 @@ export async function chapterSheet({ db, nowS }, player, env) {
       return { f: c.faction, region: c.region, strength, band: chapterBandOf(strength).band };
     }),
   };
+}
+
+// ─── CHAP4d: THE FOCUS AND THE CHRONICLE ────────────────────────────
+
+/**
+ * THE MASTER'S FOCUS: `{ character, faction, region, focus }` - the account's standing character, the Master of that
+ * chapter, names the material family its hall writs ask more of this week (npcChapterLaw.js chapterFocusOk - its guild's
+ * own, where it has more than one). One write, the seat asked inside it. Answers `{ ok: true, focus, week }`, or `{ error }`:
+ * 'body', 'no-focus' (none of its guild's), 'not-master' (no Master's seat of that chapter on that character).
+ * @param {{ db: any, nowS: number }} ctx @param {{ id: string }} player @param {any} _env @param {any} body
+ */
+export async function setChapterFocus({ db, nowS }, player, _env, { character, faction, region, focus } = {}) {
+  if (typeof character !== 'string' || !REALM_ID_RE.test(character) || !Number.isSafeInteger(faction) || !regionOk(region)) return { error: 'body' };
+  if (!chapterFocusOk(faction, focus)) return { error: 'no-focus' };
+  const week = meritWeekOf(nowS);
+  const r = await db.prepare(`UPDATE npc_chapters SET focus = ?1, focus_week = ?2 WHERE faction = ?3 AND region = ?4
+    AND EXISTS (SELECT 1 FROM npc_chapter_seats s JOIN realm_characters c ON c.id = s.char_id AND c.player = ?6 AND c.dead_at IS NULL
+      WHERE s.faction = ?3 AND s.region = ?4 AND s.char_id = ?5 AND s.seat = 'master')`).bind(focus, week, faction, region, character, player.id).run();
+  return Number(r?.meta?.changes ?? 0) > 0 ? { ok: true, focus, week } : { error: 'not-master' };
+}
+
+/** CHAP4d: a region's chapters' Focuses this week - a Map of guild faction to family (the hall writs' draw reads it). */
+export async function regionFocuses(/** @type {any} */ db, /** @type {number} */ region, /** @type {number} */ week) {
+  const { results = [] } = await db.prepare('SELECT faction, focus FROM npc_chapters WHERE region = ?1 AND focus_week = ?2 AND focus IS NOT NULL').bind(region, week).all();
+  return new Map(results.filter((/** @type {any} */ r) => chapterFocusOk(Number(r.faction), r.focus)).map((/** @type {any} */ r) => [Number(r.faction), String(r.focus)]));
+}
+
+/** CHAP4d: the chapters a character is the Master of in a region - a Set of guild factions (the board offers the Focus). */
+export async function masterSeatsIn(/** @type {any} */ db, /** @type {unknown} */ character, /** @type {number} */ region) {
+  if (typeof character !== 'string') return new Set();
+  const { results = [] } = await db.prepare("SELECT faction FROM npc_chapter_seats WHERE char_id = ?1 AND region = ?2 AND seat = 'master'").bind(character, region).all();
+  return new Set(results.map((/** @type {any} */ r) => Number(r.faction)));
+}
+
+/** The most of a region's Chronicle the Hall of Records reads - its newest rows. */
+export const CHAPTER_CHRONICLE_ROWS = 60;
+/**
+ * CHAP4d: A REGION'S CHAPTERS' CHRONICLE, `{ rows: [{ faction, week, kind, data, name }], zero }` - its newest
+ * CHAPTER_CHRONICLE_ROWS, oldest first (the book's order), each character named as it is now (null for one gone since);
+ * never a hidden guild's (their seats are their members' alone).
+ * @param {{ db: any }} ctx @param {any} _player @param {any} env @param {any} body
+ */
+export async function chapterChronicle({ db }, _player, env, { region } = {}) {
+  if (!regionOk(region)) return { error: 'body' };
+  const { results = [] } = await db.prepare(`SELECT h.faction, h.week, h.kind, h.data, c.name FROM npc_chapter_history h
+    LEFT JOIN realm_characters c ON c.id = h.char_id WHERE h.region = ?1 ORDER BY h.seq DESC LIMIT ?2`).bind(region, CHAPTER_CHRONICLE_ROWS).all();
+  const rows = results.filter((/** @type {any} */ r) => !hallHidden(Number(r.faction))).reverse().map((/** @type {any} */ r) => {
+    let data = {};
+    try { data = JSON.parse(r.data); } catch { /* a row the Chronicle has no words for */ }
+    return { faction: Number(r.faction), week: Number(r.week), kind: String(r.kind), data, name: r.name ?? null };
+  });
+  return { rows, zero: seasonZeroOf(env?.SEASON_ZERO_WEEK) };
 }

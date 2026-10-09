@@ -38,8 +38,8 @@
   {
     "name": "CHAP2-OWN-DICE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "  return courtWrits(day, region, count + 1, from, (slot, k) => gateHash(HALL_WRIT_SALT, day, region, faction, slot, k) / 4294967296)",
-    "new": "  return courtWrits(day, region, count + 1, from)",
+    "old": "const dice = (/** @type {number} */ slot, /** @type {number} */ k) => gateHash(HALL_WRIT_SALT, day, region, faction, slot, k) / 4294967296;",
+    "new": "const dice = undefined;",
     "tests": [
       "test/chap2_halls.test.js",
       "test/audit_chap2.test.js"

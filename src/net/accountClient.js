@@ -616,6 +616,9 @@ export const REFUSALS = Object.freeze({
   // AUDIT CHAP2: the claims' hour; a town a developer struck
   'roll-rate': 'Your standing with the guilds has been sent often this hour. It will be sent again later.',
   'hall-struck': 'That town\'s guild halls were struck from the record.',
+  // CHAP4d: a chapter's Focus - set by its Master alone, to a family its guild's own
+  'not-master': 'Only the chapter\'s Master sets its Focus.',
+  'no-focus': 'The guild asks for no such thing.',
   // CARDS6: a gold card table's stake and its cash-out (server-account/src/cards.js)
   'cards-realm': 'Only an online character of the realm can play a card table for gold.',
   'cards-closed': 'The realm is not holding stakes for card tables right now. Try again later.',
@@ -1390,6 +1393,9 @@ export function accountRoll({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     strike: (key) => post('/v1/chapters/strike', { key }),
     /** CHAP3b: the chapter sheet - every chapter's Strength and band (the halls' prices read it, CHAP3c) */
     list: () => post('/v1/chapters/list', {}),
+    /** CHAP4d: a chapter's Master names its Focus this week; and a region's Chronicle of its chapters' seats */
+    focus: (character, faction, region, focus) => post('/v1/chapters/focus', { character, faction, region, focus }),
+    history: (region) => post('/v1/chapters/history', { region }),
   };
 }
 

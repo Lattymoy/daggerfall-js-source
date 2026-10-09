@@ -133,6 +133,6 @@ test('SEASON1 THE HALL OF RECORDS ON THE PAGE: the book asks its door for a seat
   // PIN MOVED (AUDIT-SEATS C11): a book that lands after the player left - or over a window opened meanwhile - is disposed
   assert.match(modes, /if \(interiorBuilding !== b \|\| interiorOverlay\) \{ dropRecords\(w\); return; \}\n\s+if \(w\) interiorOverlay = w;\n\s+else say\(HALL_OF_RECORDS_SHUT\);/);
   const world = src('src/scenes/world.js');
-  assert.match(world, /hallOfRecords: \{\n\s+here: \(mapId\) => !!seatHere\(mapId\),\n\s+read: async \(mapId\) => \{\n\s+const seat = seatHere\(mapId\);\n\s+if \(!seat \|\| !seatBook\) return null;\n\s+const r = await seatBook\.records\(seat\.key\);\n\s+return r\.data \? hallOfRecordsWindow\(seat, r\.data\.rows, r\.data\.zero, seatArmsOf\) : null;/);
+  assert.match(world, /hallOfRecords: \{\n\s+here: \(mapId\) => !!seatHere\(mapId\),\n\s+read: async \(mapId\) => \{\n\s+const seat = seatHere\(mapId\);\n\s+if \(!seat \|\| !seatBook\) return null;\n\s+const r = await seatBook\.records\(seat\.key\);\n[^\n]*\n\s+const ch = hallDoor && rollTracker\?\.held \? await hallDoor\.history\(seat\.region\)\.catch\(\(\) => null\) : null;\n\s+return r\.data \? hallOfRecordsWindow\(seat, r\.data\.rows, r\.data\.zero, seatArmsOf, ch\?\.ok \? ch\.data : null\) : null;/);   // PIN MOVED (CHAP4d): and the region's chapters' Chronicle
   assert.match(src('src/ui/seatTab.js'), /chronicleLine\(r, seat, book\.zero \?\? null\)/);
 });

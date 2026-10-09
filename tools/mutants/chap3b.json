@@ -471,8 +471,8 @@
   {
     "name": "CHAP3B-LINES-SWITCH",
     "file": "server-account/src/professions.js",
-    "old": "chapters: halls ? await chapterLines(db, region, nowS, members) : [],",
-    "new": "chapters: await chapterLines(db, region, nowS, members),",
+    "old": "chapters: halls ? await chapterLines(db, region, nowS, members, character) : [],",
+    "new": "chapters: await chapterLines(db, region, nowS, members, character),",
     "tests": [
       "test/chap3b_strength.test.js"
     ]
@@ -498,7 +498,7 @@
   {
     "name": "CHAP3B-BOARD-LINES",
     "file": "src/ui/noticeWindow.js",
-    "old": "    for (const c of writs?.chapters ?? []) body.append(el('p', 'notice-chapter', chapterLineOf(c)));   // CHAP3b: the chapters here, their Strength\n",
+    "old": "      body.append(el('p', 'notice-chapter', chapterLineOf(c)));   // CHAP3b: the chapters here, their Strength\n",
     "new": "",
     "tests": [
       "test/chap3b_strength.test.js"

@@ -65,7 +65,7 @@ import { MARKS_RID_RE } from './marksLaw.js';
 import { gateHash } from './gateLaw.js';   // CHAP2a: a hall writ's own dice
 import { courtWrits, material, regionOk } from './nodeLaw.js';   // CHAP2a: the Court's writ law, the material families, a region
 import { REGION_NAMES } from '../formats/mapsTables.js';   // CHAP4b: a seat's region, named
-import { seatWeekOf, SIEGE_DEFENCE_BONUS } from './townSeatLaw.js';   // CHAP3a: Merit's week is the seats' (the Turning settles both); CHAP4a: a holder's carry
+import { seatWeekOf, SIEGE_DEFENCE_BONUS, chronicleWhen } from './townSeatLaw.js';   // CHAP3a: Merit's week is the seats' (the Turning settles both); CHAP4a: a holder's carry
 import { REALM_CHARACTER_RE } from './identityToken.js';   // CHAP3a: a member's own writ is drawn over its realm id
 
 /** The membership books a character holds (systems/guilds.js: the mortal's and the vampire's), each one temple and one
@@ -457,10 +457,12 @@ export function hallRememberLine(/** @type {number[]} */ factions, merit = 0) {
 /**
  * A CHAPTER'S WRITS FOR THE DAY: `table` the region's witnessed writ table (nodeLaw.js regionWritTable), narrowed to the
  * guild's own kinds (the whole table where the region yields none of them), drawn by the Court's law from the chapter's
- * own dice. Each `{ slot, material, tier, units, pay, renown }`, as a Court writ is.
- * @param {number} day @param {number} region @param {number} faction @param {number} count @param {any[]} table
+ * own dice. Each `{ slot, material, tier, units, pay, renown }`, as a Court writ is. CHAP4d: `focus` the week's Focus
+ * its Master chose (chapterFocusOk) - every other writ, from the first, drawn from that family alone where the table
+ * yields it, by the same slot's dice.
+ * @param {number} day @param {number} region @param {number} faction @param {number} count @param {any[]} table @param {string | null} [focus]
  */
-export function hallWrits(day, region, faction, count, table) {
+export function hallWrits(day, region, faction, count, table, focus = null) {
   if (!isRollFaction(faction) || !table?.length) return [];
   const families = hallFamiliesOf(faction);
   const own = table.filter((m) => families.includes(material(m.material)?.family));
@@ -468,8 +470,11 @@ export function hallWrits(day, region, faction, count, table) {
   // AUDIT CHAP2 E5: the Court's law gives its slot 0 the table's top tier ("one a day of tier 5-6", PROF0 11) - a
   // chapter's two would have made every other hall writ that one, paying a quarter more than a Court writ. The day's top
   // writ stays the Court's: a chapter's writs are the Court's law's slots after it, renumbered from 0
-  return courtWrits(day, region, count + 1, from, (slot, k) => gateHash(HALL_WRIT_SALT, day, region, faction, slot, k) / 4294967296)
-    .slice(1).map((w, i) => ({ ...w, slot: i }));
+  const dice = (/** @type {number} */ slot, /** @type {number} */ k) => gateHash(HALL_WRIT_SALT, day, region, faction, slot, k) / 4294967296;
+  const drawn = courtWrits(day, region, count + 1, from, dice).slice(1);
+  const focused = chapterFocusOk(faction, focus) ? table.filter((m) => material(m.material)?.family === focus) : [];
+  const fw = focused.length ? courtWrits(day, region, count + 1, focused, dice).slice(1) : null;
+  return drawn.map((w, i) => ({ ...(fw && i % 2 === 0 ? fw[i] : w), slot: i }));
 }
 
 /** A HALL REPORT, validated and made canonical: `{ key, region, factions }` - the location's map id (an unsigned 32-bit
@@ -852,4 +857,38 @@ export function chapterTitlesOf(seats, lost, season) {
   const once = new Map(former.map((s) => [`${s.f}|${s.region}`, s]));
   return [...rows(held.filter((s) => s.seat === 'master'), 'chaptermaster'), ...rows(held.filter((s) => s.seat === 'officer'), 'chapterofficer'),
     ...rows([...once.values()], 'formermaster')];
+}
+
+// ─── CHAP4d: THE FOCUS AND THE CHRONICLE (Chapters-Arc 6) ───────────
+// The Master's week: which of its guild's material families its chapter's hall writs ask for more of (every other writ,
+// hallWrits), chosen on the board, holding for the week it was chosen in. And the Chronicle's rows in words, read by the
+// Hall of Records of a palace in the chapter's region - as the seats' are.
+
+/** The families a chapter's Master may focus its writs on - its guild's own, where it has more than one to choose. */
+export function chapterFocusesOf(/** @type {unknown} */ faction) {
+  const f = hallFamiliesOf(/** @type {number} */ (faction));
+  return f.length > 1 ? f : [];
+}
+/** Whether `focus` is a family `faction`'s Master may choose. */
+export const chapterFocusOk = (/** @type {unknown} */ faction, /** @type {unknown} */ focus) => typeof focus === 'string' && chapterFocusesOf(faction).includes(focus);
+/** The board's line for a chapter's Focus: "The Fighters Guild's Master asks for metals this week." - null for none. */
+export function chapterFocusLineOf(/** @type {unknown} */ faction, /** @type {unknown} */ focus) {
+  return chapterFocusOk(faction, focus) ? `The ${hallPosterName(/** @type {number} */ (faction))}'s Master asks for ${focus} this week.` : null;
+}
+/** A CHRONICLE ROW IN WORDS: `{ faction, week, kind, data: { from, to }, name }` - "In the third week of the Season of
+ *  Morning Star, Alda took the Master's seat of the Fighters Guild." - null for a row it has no words for or a hidden
+ *  guild's. A character gone since is "A member since gone". Worded without gender. `zero` the Season's (seasonOf). */
+export function chapterChronicleLine(/** @type {any} */ row, /** @type {number | null} */ zero = null) {
+  if (row?.kind !== 'seat' || !isRollFaction(row?.faction) || hallHidden(row.faction)) return null;
+  const guild = `the ${hallPosterName(row.faction)}`;
+  const from = row?.data?.from ?? null, to = row?.data?.to ?? null;
+  const words = (/** @type {string} */ s) => /** @type {Record<string, string>} */ (SEAT_WORDS)[s];
+  let did = null;
+  if (!from && words(to)) did = `took ${words(to)} of ${guild}`;
+  else if (from === 'officer' && to === 'master') did = `rose to the Master's seat of ${guild}`;
+  else if (from === 'master' && to === 'officer') did = `gave the Master's seat of ${guild} up, and kept an officer's`;
+  else if (words(from) && !to) did = `lost ${words(from)} of ${guild}`;
+  if (!did) return null;
+  const who = typeof row?.name === 'string' && row.name ? row.name : 'A member since gone';
+  return `${Number.isSafeInteger(row?.week) ? `${chronicleWhen(row.week, zero)}, ` : ''}${who} ${did}.`;
 }

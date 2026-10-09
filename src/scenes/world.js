@@ -25329,6 +25329,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       book: profBook, region, regionName: REGION_NAMES[region] ?? 'the region', countName: materialCountLabel,
       onTaken: (r) => profWritTaken(r),
       sayLate: (text) => chatNotice(text),   // AUDIT CHAP3 C5: a writ filled after the board closed says its line in the chat
+      // CHAP4d: a chapter's Master names its Focus here, for the character playing
+      setFocus: hallDoor && realmSession ? (faction, focus) => hallDoor.focus(realmSession.id, faction, region, focus) : null,
       // PROF6: the guild writs and commissions beside the Court's, while the Marks are this account's too
       ...(writBook && marksBook?.state?.open !== false ? {
         writs: writBook, regionNameOf: (r) => REGION_NAMES[r] ?? 'another region', pieces: commissionPieces,
@@ -27387,7 +27389,9 @@ export async function bootWorld(canvas, renderer, params, status) {
         const seat = seatHere(mapId);
         if (!seat || !seatBook) return null;
         const r = await seatBook.records(seat.key);
-        return r.data ? hallOfRecordsWindow(seat, r.data.rows, r.data.zero, seatArmsOf) : null;   // HERALDRY-SHOWN: its Roll of Arms
+        // CHAP4d: and the region's chapters' Chronicle, where the Chapters are this account's (a refusal: the seat's alone)
+        const ch = hallDoor && rollTracker?.held ? await hallDoor.history(seat.region).catch(() => null) : null;
+        return r.data ? hallOfRecordsWindow(seat, r.data.rows, r.data.zero, seatArmsOf, ch?.ok ? ch.data : null) : null;   // HERALDRY-SHOWN: its Roll of Arms
       },
     },
     // SEAT-HALL (Seats-Arc 7.2: "the palace interior is the holder's guild hall"): a palace seat's palace, as its visitor

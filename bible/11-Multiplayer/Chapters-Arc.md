@@ -17,7 +17,9 @@ the foot). CHAP4a BUILT (2026-10-08, Mac: "Your decision", on "Whats next"; the 
 rank stopped at 7 - sections 3.5 and 6, its record at the foot); CHAP4b BUILT (2026-10-08, the same word; the book
 held at 7 online, a seat's rank at its chapter's halls, the seats said - the same sections, its record at the foot);
 CHAP4c BUILT (2026-10-08, Mac: "Your call"; the seats' titles on the token, behind `CHAPTER_TITLES`, the relay's
-`world179` first - section 6, its record at the foot); CHAP4d (the Chronicle's reader, the Focus) is next. Merged with main
+`world179` first - section 6, its record at the foot); CHAP4d BUILT (2026-10-09, Mac: "Continue"; the Master's Focus on
+its chapter's hall writs, the Chronicle read in the Hall of Records - section 6, its record at the foot); CHAP5 (the
+living world reads the sheet) is next. Merged with main
 past the Super Dungeons arc, then past SCALE4 and TAVERN CARDS (2026-10-08): the arc's migrations are `0093_npc_roll`
 to `0098_npc_seats` and its service `acct97` - the records below name each
 migration by its current number and the service by the version it was built under. AUDIT CHAP3 (2026-10-08, Mac:
@@ -572,10 +574,34 @@ BUILT (CHAP4a, 2026-10-08), and where building it asked, narrowed here:
   seat until the next Turning places it nowhere.
 - **The Chronicle** (`npc_chapter_history`): a row of kind `seat` for each character whose seat moved, `{ from, to }`
   (null for none) - a week that moved no seat writes none; kept when the character is deleted. Its reader - the Hall of
-  Records - is CHAP4c's, with the titles.
+  Records - CHAP4d's, BUILT below.
 - **Hidden guilds** are placed as any chapter is; nothing of their seats is public (the sheet and the board name none).
 - **Still to build**: the titles on the token and "Former Master" (CHAP4c - a new title id and claim reach the relay
-  first, Seats-Arc 7.4, worded without gender) - BUILT, below; the Focus and the Chronicle's reader (CHAP4d).
+  first, Seats-Arc 7.4, worded without gender) - BUILT, below; the Focus and the Chronicle's reader (CHAP4d) - BUILT,
+  below; the Master's vote in its Season's event (CHAP6).
+
+BUILT (CHAP4d, 2026-10-09, Mac: "Continue"), the Focus and the Chronicle's reader:
+
+- **The Focus, NARROWED** from "which of its writ kinds it posts more of": a chapter posts one kind - hall writs, drawn
+  from its guild's material families (CHAP2a) - so the Master chooses one of those FAMILIES (`chapterFocusesOf`: its
+  guild's own, where it has more than one to choose - the Fighters metals or wood, the Mages herbs or metals; a guild of
+  one family, a temple or the Brotherhood, has no Focus). It holds for the seats' week it was chosen in
+  (`npc_chapters.focus`, `focus_week`) and lapses at the Turning; chosen again, it replaces the week's.
+- **What it moves** (`npcChapterLaw.js` hallWrits): every other hall writ, from the first, is drawn from the Focus's
+  family alone, by the same slot's dice - the rest exactly as they were; a Focus not the guild's, or one the region's
+  table yields none of, moves nothing. The day's writs are posted once, so a Focus set after a day's post moves the next
+  day's.
+- **Set on the Notice Board** (`/v1/chapters/focus`, `setChapterFocus`): the Work tab says each chapter's Focus under its
+  line ("The Fighters Guild's Master asks for metals this week.") and offers its Master - the character the board is
+  read for, a standing character of the account - the families, the one held marked. One write, the seat asked inside
+  it: an officer, another account's character, a dead Master are refused ('not-master'), a family not its guild's
+  ('no-focus').
+- **The Chronicle's reader** (`/v1/chapters/history`, `chapterChronicle`): a palace's Hall of Records reads, after the
+  seat's own Chronicle, "The Chapters of <Region>" - its region's newest sixty seat changes, oldest first, each a
+  sentence worded without gender ("In the third week of the Season of Morning Star, Alda took the Master's seat of the
+  Fighters Guild.": took, rose to, gave up and kept an officer's, lost), a character gone since "A member since gone";
+  never a hidden guild's. Read only where the Roll holds (online, the Chapters open to the account); a refusal leaves the
+  seat's book as it was.
 
 BUILT (CHAP4c, 2026-10-08, Mac: "Your call"), the seats' titles:
 
@@ -713,10 +739,11 @@ DECIDED.
   grown in place): `npc_hall_regions` (region, chapters, ver, done, at) - a region's chapters computed once a change.
   BUILT (CHAP4a, migration `0098_npc_seats`): `npc_chapter_seats` (faction, region, char_id, account, seat, since, week,
   at - the draft's `key` the chapter's own pair) and `npc_chapter_history` (seq, faction, region, week, kind, char_id,
-  data JSON). Still drawn: a chapter's event, event_state JSON, doctrine and focus (CHAP4c, CHAP6).
+  data JSON). BUILT (CHAP4d, `0097` grown in place): `npc_chapters`' `focus` and `focus_week`. Still drawn: a
+  chapter's event, event_state JSON and doctrine (CHAP6).
 - **Endpoints** (`/v1/chapters/...`): `roll` and `claim` BUILT (CHAP1, behind `CHAPTERS_OPEN`, shipped `dev`; each
   names the realm character and the playing tab's lease); `witness` BUILT (CHAP2a); `halls` and `strike` BUILT (AUDIT
-  CHAP2 E1, a developer's); `list` BUILT (CHAP3b, the sheet); `standings` (a chapter's Merit), `history` still drawn; the hall writs
+  CHAP2 E1, a developer's); `list` BUILT (CHAP3b, the sheet); `focus` and `history` BUILT (CHAP4d, a Master's Focus and a region's Chronicle); `standings` (a chapter's Merit) still drawn; the hall writs
   ride the board's own writ endpoints, and (CHAP3a) a member's own writ and the account's Merit lines ride its list.
 - **The settle**: inside `settleWeek`, after the seats' steps - Merit summed, Strength moved, seats placed, and at a
   Season's boundary the events resolved and drawn. NARROWED (CHAP3b): the Chapters' own Turning on the seats' week,
@@ -749,7 +776,8 @@ DECIDED.
 4. **CHAP4 - the seats.** Ranks 8 and 9 contested; the titles; the Focus; the Chronicle's rows. CHAP4a BUILT
    (2026-10-08): the seats placed at the Turning, the Roll's rank stopped at 7, the Chronicle's rows (section 6). CHAP4b
    BUILT (2026-10-08): the book held at 7 online, a seat's rank at its chapter's halls, the seats said (3.5, 6). CHAP4c
-   BUILT (2026-10-08): the seats' titles on the token, behind `CHAPTER_TITLES` (6).
+   BUILT (2026-10-08): the seats' titles on the token, behind `CHAPTER_TITLES` (6). CHAP4d BUILT (2026-10-09): the
+   Master's Focus on the hall writs, the Chronicle read in the Hall of Records (6).
 5. **CHAP5 - the living world reads the sheet.** The hall's people, the lines, the roll.
 6. **CHAP6 - the Seasons' events.** The roll, the seven events, their endings.
 7. **CHAP7 - rivals and patrons.** Last, because it reads the Seats' guilds.
@@ -770,7 +798,8 @@ host online runs in - the interiors and the dungeons are that same page and that
 - `scenes/world.js` (the streets) - the living world's read of the sheet and the Notice Board's hall writs (CHAP2,
   CHAP5). CHAP3c BUILT: the sheet the playing tab holds (`net/chapterSheet.js`), asked at a town's entry and handed to
   the interiors. CHAP4b BUILT: the tab holds the book at 7 and says the seats (`onCapped`, `onSeats`), and names a seat's
-  rank where the character stands (`seatRankHere` - the hall's and the paid teleport's).
+  rank where the character stands (`seatRankHere` - the hall's and the paid teleport's). CHAP4d BUILT: the board's Focus
+  door (`setFocus`) and the palace's Hall of Records reading its region's chapters' Chronicle.
 - `scenes/exterior.js` (the fixed city) - no online, so no Roll and no sheet: flagged by name, DFU's guilds and DFU's
   prices as today.
 - `scenes/dungeonContext.js` - no hall, so no sheet; the receipts a dungeon's foes give are the relay's already: none.
@@ -1145,3 +1174,27 @@ The fourth slice's titles; section 6 carries the law and what building it narrow
   seat lost, a dead character; the wiring. `tools/mutants/chap4c.json`: 28 mutants, all dead. Pins moved: the
   vocabulary's newest (acc3titles, aegis, primarch, crystalfist), SHADOW-FANG's widest token (the longest claimed title
   now a chapter's), SEAT1c's mint line.
+
+## CHAP4d - the Focus and the Chronicle's reader, as built (2026-10-09, Mac: "Continue")
+
+The fourth slice's last; section 6 carries the law and what building it narrowed (BUILT, CHAP4d).
+
+- **The law.** `src/net/npcChapterLaw.js`: `hallWrits` takes the week's Focus; `chapterFocusesOf`, `chapterFocusOk`,
+  `chapterFocusLineOf` (the board's line); `chapterChronicleLine` (a Chronicle row in words, the seats' `chronicleWhen`).
+- **The service.** `server-account/src/npcChapters.js`: `setChapterFocus` (one guarded write), `regionFocuses`,
+  `masterSeatsIn`, `chapterChronicle` (`CHAPTER_CHRONICLE_ROWS`, 60); `professions.js`: the day's hall writs posted with
+  each chapter's Focus, the list's chapter lines carrying it and, for its Master, the families; `index.js`: the two
+  routes, 'not-master' a 403. Migration `0097_npc_chapters` grown in place (`focus`, `focus_week` - nothing of it
+  shipped). Still `acct97`.
+- **The client.** `src/net/accountClient.js`: the chapters door's `focus` and `history`, the two refusals' words;
+  `src/ui/noticeWindow.js`: the Focus under its chapter's line, its Master's choice; `src/ui/hallOfRecords.js`: "The
+  Chapters of <Region>" after the seat's own rows (and under the empty seat's word); `src/scenes/world.js`: the board's
+  `setFocus`, the Hall's read.
+- **Pins.** `test/chap4d_focus.test.js`, 9 tests: the families (a guild of one none); the focused writs (every other, the
+  same slot's dice, the guards); the Chronicle in words (each arm, the Season's, the hidden, a gone member, no week); the
+  Hall's section; the Focus set (the seat asked, the account, the dead, the family, the week); the board's lines and the
+  post's writs (the week's, a lapsed one, a stored one not its guild's, an officer's none); the Chronicle's read (the
+  region, the hidden, the order, the bound); the Work tab; the wiring. `tools/mutants/chap4d.json`: 52 mutants, all
+  dead. Pins moved: CHAP3b's board line (a block now), SEASON1's and HERALDRY-SHOWN's Hall read and window; eight
+  mutants re-aimed by content (AUDIT CHAP2's post count and top slot, CHAP2's own dice, CHAP3b's switch and board line,
+  RECORDS' empty book and read, HERALDRY-SHOWN's Roll unpassed).

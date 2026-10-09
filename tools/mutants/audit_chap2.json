@@ -1214,8 +1214,8 @@
   {
     "name": "T-POST-COUNT-ACTIVE",
     "file": "server-account/src/professions.js",
-    "old": "hallWrits(day, region, f, hallWritCountIn(active, strengths.get(f)), table)",
-    "new": "hallWrits(day, region, f, hallWritCountIn(0, strengths.get(f)), table)",
+    "old": "hallWrits(day, region, f, hallWritCountIn(active, strengths.get(f)), table, focuses.get(f) ?? null)",
+    "new": "hallWrits(day, region, f, hallWritCountIn(0, strengths.get(f)), table, focuses.get(f) ?? null)",
     "tests": [
       "test/audit_chap1.test.js",
       "test/audit_chap2.test.js",
@@ -1897,8 +1897,8 @@
   {
     "name": "AUDIT-CHAP2-E5-TOP-SLOT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "    .slice(1).map((w, i) => ({ ...w, slot: i }));",
-    "new": "    .slice(0, count);",
+    "old": "const drawn = courtWrits(day, region, count + 1, from, dice).slice(1);",
+    "new": "const drawn = courtWrits(day, region, count + 1, from, dice).slice(0, count);",
     "tests": [
       "test/audit_chap1.test.js",
       "test/audit_chap2.test.js",

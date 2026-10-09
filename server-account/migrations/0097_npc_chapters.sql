@@ -27,6 +27,9 @@ CREATE TABLE IF NOT EXISTS npc_chapter_weeks (
 -- THE CHAPTERS. One row a guild faction and region a Turning has settled:
 -- its Strength, the week that last moved it and that week's Merit. A
 -- chapter no Turning has settled yet stands at 50 (STRENGTH_START).
+-- CHAP4d (grown in place - nothing of it shipped): and its Master's Focus,
+-- the material family its hall writs ask more of, and the week it was
+-- chosen in (it holds for that week alone).
 CREATE TABLE IF NOT EXISTS npc_chapters (
   faction   INTEGER NOT NULL,
   region    INTEGER NOT NULL,
@@ -34,6 +37,8 @@ CREATE TABLE IF NOT EXISTS npc_chapters (
   week      INTEGER NOT NULL,
   merit     INTEGER NOT NULL DEFAULT 0,
   at        INTEGER NOT NULL,
+  focus     TEXT,
+  focus_week INTEGER,
   PRIMARY KEY (faction, region)
 );
 CREATE INDEX IF NOT EXISTS idx_npc_chapters_region ON npc_chapters (region);

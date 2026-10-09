@@ -1,0 +1,470 @@
+[
+  {
+    "name": "CHAP4D-FLOOR",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "return f.length > 1 ? f : [];",
+    "new": "return f.length > 0 ? f : [];",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-GUARD",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "typeof focus === 'string' && chapterFocusesOf(faction).includes(focus);",
+    "new": "typeof focus === 'string';",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-SHARE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "...(fw && i % 2 === 0 ? fw[i] : w), slot: i",
+    "new": "...(fw && i % 2 === 1 ? fw[i] : w), slot: i",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-SHARE-ALL",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "...(fw && i % 2 === 0 ? fw[i] : w), slot: i",
+    "new": "...(fw ? fw[i] : w), slot: i",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-DICE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "const fw = focused.length ? courtWrits(day, region, count + 1, focused, dice).slice(1) : null;",
+    "new": "const fw = focused.length ? courtWrits(day, region, count + 1, focused, (slot, k) => dice(slot + 1, k)).slice(1) : null;",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-FOCUS-GUARD",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "const focused = chapterFocusOk(faction, focus) ? table",
+    "new": "const focused = typeof focus === 'string' ? table",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-FOCUS-EMPTY",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "const fw = focused.length ? courtWrits",
+    "new": "const fw = focused ? courtWrits",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-LINE-OK",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "return chapterFocusOk(faction, focus) ? `The ${hallPosterName",
+    "new": "return focus ? `The ${hallPosterName",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-CHRON-TOOK",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "if (!from && words(to)) did = `took ${words(to)} of ${guild}`;",
+    "new": "if (!from && words(to)) did = `rose to ${words(to)} of ${guild}`;",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-CHRON-ROSE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "else if (from === 'officer' && to === 'master') did",
+    "new": "else if (from === 'master' && to === 'master') did",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-CHRON-GAVE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "else if (from === 'master' && to === 'officer') did = `gave the Master's seat of ${guild} up, and kept an officer's`;",
+    "new": "else if (from === 'master' && to === 'officer') did = `lost the Master's seat of ${guild}`;",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-CHRON-LOST",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "else if (words(from) && !to) did = `lost ${words(from)} of ${guild}`;",
+    "new": "else if (words(from)) did = `lost ${words(from)} of ${guild}`;",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-CHRON-NONE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  if (!did) return null;\n  const who",
+    "new": "  if (!did) did = 'did something';\n  const who",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-CHRON-HIDDEN",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "if (row?.kind !== 'seat' || !isRollFaction(row?.faction) || hallHidden(row.faction)) return null;",
+    "new": "if (row?.kind !== 'seat' || !isRollFaction(row?.faction)) return null;",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-CHRON-KIND",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "if (row?.kind !== 'seat' || !isRollFaction",
+    "new": "if (!isRollFaction",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-CHRON-NAME",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "const who = typeof row?.name === 'string' && row.name ? row.name : 'A member since gone';",
+    "new": "const who = row?.name ?? 'A member';",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-CHRON-WHEN",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "return `${Number.isSafeInteger(row?.week) ? `${chronicleWhen(row.week, zero)}, ` : ''}${who} ${did}.`;",
+    "new": "return `${who} ${did}.`;",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-SET-SEAT",
+    "file": "server-account/src/npcChapters.js",
+    "old": "WHERE s.faction = ?3 AND s.region = ?4 AND s.char_id = ?5 AND s.seat = 'master')`)",
+    "new": "WHERE s.faction = ?3 AND s.region = ?4 AND s.char_id = ?5)`)",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-SET-ACCOUNT",
+    "file": "server-account/src/npcChapters.js",
+    "old": "JOIN realm_characters c ON c.id = s.char_id AND c.player = ?6 AND c.dead_at IS NULL",
+    "new": "JOIN realm_characters c ON c.id = s.char_id AND c.dead_at IS NULL",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-SET-DEAD",
+    "file": "server-account/src/npcChapters.js",
+    "old": "JOIN realm_characters c ON c.id = s.char_id AND c.player = ?6 AND c.dead_at IS NULL",
+    "new": "JOIN realm_characters c ON c.id = s.char_id AND c.player = ?6",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-SET-FAMILY",
+    "file": "server-account/src/npcChapters.js",
+    "old": "  if (!chapterFocusOk(faction, focus)) return { error: 'no-focus' };\n",
+    "new": "  if (typeof focus !== 'string') return { error: 'no-focus' };\n",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-SET-WEEK",
+    "file": "server-account/src/npcChapters.js",
+    "old": "const week = meritWeekOf(nowS);\n  const r = await db.prepare(`UPDATE npc_chapters SET focus",
+    "new": "const week = meritWeekOf(nowS) + 1;\n  const r = await db.prepare(`UPDATE npc_chapters SET focus",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-SET-BODY",
+    "file": "server-account/src/npcChapters.js",
+    "old": "if (typeof character !== 'string' || !REALM_ID_RE.test(character) || !Number.isSafeInteger(faction) || !regionOk(region)) return { error: 'body' };",
+    "new": "if (typeof character !== 'string') return { error: 'body' };",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-FOCI-WEEK",
+    "file": "server-account/src/npcChapters.js",
+    "old": "WHERE region = ?1 AND focus_week = ?2 AND focus IS NOT NULL",
+    "new": "WHERE region = ?1 AND focus_week <= ?2 AND focus IS NOT NULL",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-FOCI-OK",
+    "file": "server-account/src/npcChapters.js",
+    "old": "return new Map(results.filter((/** @type {any} */ r) => chapterFocusOk(Number(r.faction), r.focus)).map(",
+    "new": "return new Map(results.map(",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-MASTERS-SEAT",
+    "file": "server-account/src/npcChapters.js",
+    "old": "WHERE char_id = ?1 AND region = ?2 AND seat = 'master'\")",
+    "new": "WHERE char_id = ?1 AND region = ?2\")",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-CHRONICLE-REGION",
+    "file": "server-account/src/npcChapters.js",
+    "old": "LEFT JOIN realm_characters c ON c.id = h.char_id WHERE h.region = ?1 ORDER BY",
+    "new": "LEFT JOIN realm_characters c ON c.id = h.char_id WHERE h.region >= ?1 ORDER BY",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-CHRONICLE-HIDDEN",
+    "file": "server-account/src/npcChapters.js",
+    "old": "const rows = results.filter((/** @type {any} */ r) => !hallHidden(Number(r.faction))).reverse().map(",
+    "new": "const rows = results.reverse().map(",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-CHRONICLE-ORDER",
+    "file": "server-account/src/npcChapters.js",
+    "old": "!hallHidden(Number(r.faction))).reverse().map(",
+    "new": "!hallHidden(Number(r.faction))).map(",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-CHRONICLE-BOUND",
+    "file": "server-account/src/npcChapters.js",
+    "old": "export const CHAPTER_CHRONICLE_ROWS = 60;",
+    "new": "export const CHAPTER_CHRONICLE_ROWS = 600;",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-CHRONICLE-NAME",
+    "file": "server-account/src/npcChapters.js",
+    "old": "data, name: r.name ?? null };",
+    "new": "data, name: null };",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-POST-FOCUS",
+    "file": "server-account/src/professions.js",
+    "old": "hallWrits(day, region, f, hallWritCountIn(active, strengths.get(f)), table, focuses.get(f) ?? null)",
+    "new": "hallWrits(day, region, f, hallWritCountIn(active, strengths.get(f)), table)",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-POST-WEEK",
+    "file": "server-account/src/professions.js",
+    "old": "const focuses = await regionFocuses(db, region, meritWeekOf(nowS));   // CHAP4d: every other",
+    "new": "const focuses = await regionFocuses(db, region, meritWeekOf(nowS) - 1);   // CHAP4d: every other",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-LINES-FOCUS",
+    "file": "server-account/src/professions.js",
+    "old": "band: chapterBandOf(strengths.get(f)).band, focus: focuses.get(f) ?? null,",
+    "new": "band: chapterBandOf(strengths.get(f)).band, focus: null,",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-LINES-MASTER",
+    "file": "server-account/src/professions.js",
+    "old": "...(masters.has(f) ? { master: true, focuses: chapterFocusesOf(f) } : {}),",
+    "new": "...({ master: true, focuses: chapterFocusesOf(f) }),",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-LINES-CHARACTER",
+    "file": "server-account/src/professions.js",
+    "old": "chapters: halls ? await chapterLines(db, region, nowS, members, character) : [],",
+    "new": "chapters: halls ? await chapterLines(db, region, nowS, members) : [],",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-HALL-SECTION",
+    "file": "src/ui/hallOfRecords.js",
+    "old": "  if (said.length) {\n    out.push({ formatting: RSC.JustifyCenter }, text(hallOfRecordsChaptersTitle(seat))",
+    "new": "  if (false) {\n    out.push({ formatting: RSC.JustifyCenter }, text(hallOfRecordsChaptersTitle(seat))",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-HALL-EMPTY",
+    "file": "src/ui/hallOfRecords.js",
+    "old": "if (!chapters.length && !said.length) return",
+    "new": "if (!chapters.length) return",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-HALL-HEADING",
+    "file": "src/ui/hallOfRecords.js",
+    "old": "`The Chapters of ${REGION_NAMES[seat?.region] ?? 'the Region'}`",
+    "new": "`The Chapters`",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-HALL-LINES",
+    "file": "src/ui/hallOfRecords.js",
+    "old": "return chapters.rows.map((/** @type {any} */ r) => chapterChronicleLine(r, chapters.zero ?? null)).filter(Boolean);",
+    "new": "return chapters.rows.map((/** @type {any} */ r) => chapterChronicleLine(r, null)).filter(Boolean);",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-HALL-PASS",
+    "file": "src/ui/hallOfRecords.js",
+    "old": "const tokens = hallOfRecordsTokens(seat, rows, zero, armsOf, chapters);",
+    "new": "const tokens = hallOfRecordsTokens(seat, rows, zero, armsOf);",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-BOARD-LINE",
+    "file": "src/ui/noticeWindow.js",
+    "old": "if (focusLine) body.append(el('p', 'notice-chapter notice-focus', focusLine));",
+    "new": "/* gone */",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-BOARD-OFFER",
+    "file": "src/ui/noticeWindow.js",
+    "old": "if (c.master && c.focuses?.length && work.setFocus) {",
+    "new": "if (c.focuses?.length && work.setFocus) {",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-BOARD-MARK",
+    "file": "src/ui/noticeWindow.js",
+    "old": "row.append(button(f === c.focus ? 'on' : '', f, () => setFocus(c.faction, f)));",
+    "new": "row.append(button('', f, () => setFocus(c.faction, f)));",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-BOARD-PRESS",
+    "file": "src/ui/noticeWindow.js",
+    "old": "    const r = await work.setFocus(faction, focus);\n",
+    "new": "    const r = { ok: true };\n",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-BOARD-RELOAD",
+    "file": "src/ui/noticeWindow.js",
+    "old": "    word = r?.ok ? { ok: true, text: chapterFocusLineOf(faction, focus) ?? 'Focus set.' } : { ok: false, text: accountRefusalText(r?.error) };\n    loadWrits(true);\n",
+    "new": "    word = r?.ok ? { ok: true, text: chapterFocusLineOf(faction, focus) ?? 'Focus set.' } : { ok: false, text: accountRefusalText(r?.error) };\n    render();\n",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-SEAM-HOST",
+    "file": "src/scenes/world.js",
+    "old": "setFocus: hallDoor && realmSession ? (faction, focus) => hallDoor.focus(realmSession.id, faction, region, focus) : null,",
+    "new": "setFocus: null,",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-SEAM-HALL",
+    "file": "src/scenes/world.js",
+    "old": "const ch = hallDoor && rollTracker?.held ? await hallDoor.history(seat.region).catch(() => null) : null;",
+    "new": "const ch = null;",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-SEAM-ROUTE-FOCUS",
+    "file": "server-account/src/index.js",
+    "old": "          : path === '/v1/chapters/focus' ? await setChapterFocus(ctx, who.player, env, body)\n",
+    "new": "          : path === '/v1/chapters/focus' ? { error: 'body' }\n",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-SEAM-ROUTE-HISTORY",
+    "file": "server-account/src/index.js",
+    "old": "          : path === '/v1/chapters/history' ? await chapterChronicle(ctx, who.player, env, body)\n",
+    "new": "          : path === '/v1/chapters/history' ? { error: 'body' }\n",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-SEAM-STATUS",
+    "file": "server-account/src/index.js",
+    "old": "  'not-master': 403,",
+    "new": "  'not-master': 400,",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4D-SEAM-DOOR",
+    "file": "src/net/accountClient.js",
+    "old": "focus: (character, faction, region, focus) => post('/v1/chapters/focus', { character, faction, region, focus }),",
+    "new": "focus: (character, faction, region, focus) => post('/v1/chapters/focus', { character, faction, focus }),",
+    "tests": [
+      "test/chap4d_focus.test.js"
+    ]
+  }
+]
