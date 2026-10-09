@@ -163,3 +163,58 @@ export function npcBodiesOn() {
 export function createHostNpcBodies({ renderer, collider = () => null, tiers = NPC_BODY_TIERS }) {   // MWNPC6: `tiers` a population's own caps (WATCH_BODY_TIERS)
   return createNpcBodies({ renderer, enabled: npcBodiesOn, generation: morrowindDataGeneration, tier: () => getPref('mwNpcBodies') ?? NPC_BODIES_DEFAULT, collider, tiers });
 }
+
+/**
+ * MWNPC7: A POPULATION'S LANE AT ITS HOST - the shape the foe pools grew (dungeonContext.js, exteriorFoes.js,
+ * cityGuards.js) for a host that walks its population inline: the lane made the first frame it is wanted and let go the
+ * frame it is not; each actor `offer`ed with the billboard its host would draw for it, that billboard's `castOnly`
+ * reset at the offer; `draw` syncs the lane, marks each offered billboard cast-only where its body stands (it casts the
+ * shadow the body does not) and draws the bodies in one bind - after the sync, so a body arriving or leaving is never a
+ * frame drawn twice or not at all, and nothing if nothing was offered since the last draw.
+ * @param {{ laneName: string, renderer: any, collider?: () => any, tiers?: any, want?: () => boolean, make?: (() => any) | null }} p
+ */
+export function createPopulationLane({ laneName, renderer, collider = () => null, tiers = NPC_BODY_TIERS, want = npcBodiesOn, make = null }) {
+  let lane = null;
+  let offered = false;
+  /** @type {any[]} */
+  const ids = [];
+  /** @type {any[]} */
+  const batches = [];
+  return {
+    /** A frame begins: true while the lane is wanted (the host then offers its actors). */
+    frame() {
+      ids.length = 0; batches.length = 0;
+      if (!want()) { if (lane) { lane.destroy(); lane = null; } offered = false; return false; }
+      lane ??= make ? make() : createHostNpcBodies({ renderer, collider, tiers });
+      lane.begin();
+      offered = true;
+      return true;
+    },
+    /** One actor, with the billboard its host draws for it (reset to drawn here). @param {any} actor @param {any} batch
+     *  @param {any} [conceal] @param {number} [flash] @param {any} [fx] */
+    offer(actor, batch, conceal = null, flash = 0, fx = null) {
+      if (batch) batch.castOnly = false;
+      if (!lane || !offered) return;
+      lane.stand(laneName, actor, conceal, flash, fx);
+      ids.push(actor.id); batches.push(batch);
+    },
+    /** Synced, marked, drawn - before the host draws the billboards it offered.
+     *  @param {any} canvas @param {Float32Array} proj @param {Float32Array} view @param {number[]} eye @param {number} dt */
+    draw(canvas, proj, view, eye, dt) {
+      if (!lane || !offered) return;
+      offered = false;
+      lane.end(dt, eye);
+      for (let i = 0; i < ids.length; i++) if (batches[i]) batches[i].castOnly = lane.has(laneName, ids[i]);
+      renderer.beginCharacterSpriteBatch?.();
+      try { lane.draw(canvas, { proj, view, eye }); } finally { renderer.flushCharacterSpriteBatch?.(); }
+    },
+    /** The concealed, translucent - after the host's opaque world. */
+    drawVeiled() { lane?.drawVeiled(); },
+    /** The floating origin moved. @param {number[]} o */
+    offsetAll(o) { lane?.offsetAll(o); },
+    /** Let go (the place left). */
+    destroy() { lane?.destroy(); lane = null; offered = false; ids.length = 0; batches.length = 0; },
+    /** Does this actor stand in a body? @param {any} id */
+    has(id) { return !!lane?.has(laneName, id); },
+  };
+}

@@ -1,0 +1,200 @@
+[
+ {
+  "name": "MWNPC7-variant-ignored",
+  "file": "src/characters/folkBodies.js",
+  "old": "  const outfit = FOLK_OUTFITS[gender][folkVariant(person.archive, race)];",
+  "new": "  const outfit = FOLK_OUTFITS[gender][0];",
+  "tests": [
+   "test/mwnpc7_folk.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC7-female-variant-unread",
+  "file": "src/characters/folkBodies.js",
+  "old": "  const j = t.female.indexOf(archive);\n  return j >= 0 ? j : 0;",
+  "new": "  return 0;",
+  "tests": [
+   "test/mwnpc7_folk.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC7-gender-ignored",
+  "file": "src/characters/folkBodies.js",
+  "old": "  const female = person.gender === GENDERS.Female;",
+  "new": "  const female = false;",
+  "tests": [
+   "test/mwnpc7_folk.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC7-legs-dropped",
+  "file": "src/characters/folkBodies.js",
+  "old": "  if (outfit[1] != null) items.push(",
+  "new": "  if (false) items.push(",
+  "tests": [
+   "test/mwnpc7_folk.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC7-one-dye",
+  "file": "src/characters/folkBodies.js",
+  "old": "  const dye = (k) => FOLK_DYES[mix(seed ^ k) % FOLK_DYES.length];",
+  "new": "  const dye = (k) => FOLK_DYES[0];",
+  "tests": [
+   "test/mwnpc7_folk.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC7-guard-in-clothes",
+  "file": "src/characters/folkBodies.js",
+  "old": "  if (person.guard || person.archive === GUARD_TEXTURE) {",
+  "new": "  if (false) {",
+  "tests": [
+   "test/mwnpc7_folk.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC7-guard-iron",
+  "file": "src/characters/folkBodies.js",
+  "old": "equipSlot: EQUIP_SLOTS[slot], material: 1 });   // steel",
+  "new": "equipSlot: EQUIP_SLOTS[slot], material: 0 });   // steel",
+  "tests": [
+   "test/mwnpc7_folk.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC7-reroll-same-id",
+  "file": "src/characters/folkBodies.js",
+  "old": "  return (person._mwFolk = { key, n, id: `${shell}.${n}`, seed,",
+  "new": "  return (person._mwFolk = { key, n, id: `${shell}`, seed,",
+  "tests": [
+   "test/mwnpc7_folk.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC7-reroll-unseen",
+  "file": "src/characters/folkBodies.js",
+  "old": "  if (person._mwFolk && person._mwFolk.key === key) return person._mwFolk;",
+  "new": "  if (person._mwFolk) return person._mwFolk;",
+  "tests": [
+   "test/mwnpc7_folk.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC7-roll-every-frame",
+  "file": "src/characters/folkBodies.js",
+  "old": "  if (person._mwFolk && person._mwFolk.key === key) return person._mwFolk;",
+  "new": "  if (false) return person._mwFolk;",
+  "tests": [
+   "test/mwnpc7_folk.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC7-yaw-wheel-ignored",
+  "file": "src/characters/folkBodies.js",
+  "old": "  a.yaw = Number.isFinite(person.yaw) ? person.yaw : (person.facingYaw ?? 0);",
+  "new": "  a.yaw = Number.isFinite(person.yaw) ? person.yaw : 0;",
+  "tests": [
+   "test/mwnpc7_folk.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC7-idle-walks",
+  "file": "src/characters/folkBodies.js",
+  "old": "  a.moving = person.state === 'move';",
+  "new": "  a.moving = true;",
+  "tests": [
+   "test/mwnpc7_folk.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC7-actor-allocates",
+  "file": "src/characters/folkBodies.js",
+  "old": "  const a = person._mwActor ??= {",
+  "new": "  const a = {",
+  "tests": [
+   "test/mwnpc7_folk.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC7-lane-no-reset",
+  "file": "src/characters/npcBodies.js",
+  "old": "      if (batch) batch.castOnly = false;\n      if (!lane || !offered) return;",
+  "new": "      if (!lane || !offered) return;",
+  "tests": [
+   "test/mwnpc7_folk.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC7-lane-kept-unwanted",
+  "file": "src/characters/npcBodies.js",
+  "old": "      if (!want()) { if (lane) { lane.destroy(); lane = null; } offered = false; return false; }",
+  "new": "      if (!want()) { offered = false; return false; }",
+  "tests": [
+   "test/mwnpc7_folk.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC7-lane-resyncs",
+  "file": "src/characters/npcBodies.js",
+  "old": "      if (!lane || !offered) return;\n      offered = false;\n      lane.end(dt, eye);",
+  "new": "      if (!lane) return;\n      offered = false;\n      lane.end(dt, eye);",
+  "tests": [
+   "test/mwnpc7_folk.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC7-lane-unmarked",
+  "file": "src/characters/npcBodies.js",
+  "old": "if (batches[i]) batches[i].castOnly = lane.has(laneName, ids[i]);",
+  "new": "if (batches[i]) batches[i].castOnly = false;",
+  "tests": [
+   "test/mwnpc7_folk.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC7-lane-unsynced",
+  "file": "src/characters/npcBodies.js",
+  "old": "      offered = false;\n      lane.end(dt, eye);\n      for (let i = 0;",
+  "new": "      offered = false;\n      for (let i = 0;",
+  "tests": [
+   "test/mwnpc7_folk.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC7-world-unoffered",
+  "file": "src/scenes/world.js",
+  "old": "        if (_folkOn) folkStreet.offer(folkActor(person, batch.origin, p.population.race), batch);",
+  "new": "        if (false) folkStreet.offer(folkActor(person, batch.origin, p.population.race), batch);",
+  "tests": [
+   "test/mwnpc7_folk.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC7-world-undrawn",
+  "file": "src/scenes/world.js",
+  "old": "    folkStreet.draw(canvas, proj, view, mwv.eye, townTalk.overlayActive ? 0 : dt);",
+  "new": "",
+  "tests": [
+   "test/mwnpc7_folk.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC7-world-kept-indoors",
+  "file": "src/scenes/world.js",
+  "old": "folkStreet.destroy();   // MWNPC7: indoors",
+  "new": "// MWNPC7: indoors",
+  "tests": [
+   "test/mwnpc7_folk.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC7-exterior-unoffered",
+  "file": "src/scenes/exterior.js",
+  "old": "        if (_folkOn) folkStreet.offer(folkActor(person, batch.origin, population.race), batch);",
+  "new": "        if (false) folkStreet.offer(folkActor(person, batch.origin, population.race), batch);",
+  "tests": [
+   "test/mwnpc7_folk.test.js"
+  ]
+ }
+]

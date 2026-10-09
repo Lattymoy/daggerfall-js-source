@@ -161,6 +161,7 @@ import { createCityGuards } from './cityGuards.js';   // G1
 // streaming world host and the interior host mount. See the mount
 // below for what stands foes in it on this route.
 import { createExteriorFoes } from './exteriorFoes.js';
+import { createPopulationLane } from '../characters/npcBodies.js'; import { folkActor } from '../characters/folkBodies.js';   // MWNPC7: the walkers in Morrowind bodies
 import { createArrestFlow } from './arrestFlow.js';   // G2
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatableHit, pickQuestFoe, pickFoe, peacefulFoePass } from '../player/activate.js';   // G3: corpse loot; QG1/ROAD-G G2: the foe-click door; TI1: the lock-on pick
@@ -628,6 +629,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // Player collision (P1): every placed model's triangles, world-space,
   // over the flat ground floor.
   const collider = new Collider(() => GROUND_OFFSET * 0.025);
+  const folkStreet = createPopulationLane({ laneName: 'folk', renderer, collider: () => collider });   // MWNPC7 (Morrowind-NPCs.md section 12): the location's walkers
   collider.cover = createCoverIndex();   // TACT1: the location's solid flats are cover, with the switch on
   let colliderTris = 0;
   const buildingDoors = []; // {door, dfBlock, recordIndex, climateBase, season (A1: INTERIOR_SEASON), dfLocation, group}
@@ -5881,6 +5883,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       _livePersons.length = 0;   // T3b: the activation ray's targets   // PERF-TOWN1: the same rows, refilled
       const personBatches = _personBatches;
       personBatches.length = 0;
+      const _folkOn = !!population && folkStreet.frame();   // MWNPC7
       for (const { person, out } of live) {
         const batch = personBatchOf.get(person);
         batch.archive = person.archive;   // audit 2026-08-17: identity re-rolls per spawn - re-point the batch
@@ -5902,8 +5905,11 @@ export async function bootExterior(canvas, renderer, params, status) {
         const seat = town.seat(_livePersons.length);
         seat.person = person; seat.pos = person.pos;
         _livePersons.push(seat);
+        if (_folkOn) folkStreet.offer(folkActor(person, batch.origin, population.race), batch);   // MWNPC7: a walker offered their body
+        else batch.castOnly = false;
         personBatches.push(batch);
       }
+      folkStreet.draw(canvas, proj, view, eye, popDt);   // MWNPC7: the walkers' bodies, before the person billboards draw
       // G1: the guards drive + draw on the same flats' axis. WINFOE1
       // (2026-09-17, Mac: "enemies should still be able to do damage"):
       // the ENEMY pools no longer freeze under a window - a rest, the
@@ -5936,6 +5942,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       if (personBatches.length) renderer.drawBillboards(personBatches, camRight, UP_Y);
       exteriorFoes.drawVeiledBodies();   // MWNPC5c: the concealed foes' bodies, after the person billboards
       cityGuards.drawVeiledBodies();   // MWNPC6: and the watch's
+      folkStreet.drawVeiled();   // MWNPC7: and the walkers'
     }
     // WINDFALL1: the leaves and the snow, with the opaque world (world.js's twin note)
     if (windfall.particles && windfall.draw(proj, view, renderer.flatLightAt(walkMode ? player.pos : cam.pos))) renderer.markForeignPass();

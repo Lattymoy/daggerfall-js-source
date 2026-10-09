@@ -101,7 +101,7 @@ Each line is a slice's acceptance, not an aspiration:
 | MWNPC4 THE NPC LANE | the lane (`characters/npcBodies.js`: the NPCs as synthetic peers under a tier's caps, `has()` for the host's billboard), the hit recoil and the death on the rig and off the pose, one build queue across every lane (SHIPPED, section 9); an actor's machine read into the pose is each population's adapter, MWNPC5 onward | the rig and the lanes; the four hosts flagged, wired with the first population |
 | MWNPC5 FOES | class foes in their rolled equipment, a stable race and face per foe (not one Breton), the effects parity: hit flash, glint, elite glow, dissolve, concealment (5a SHIPPED, section 10: the glint, the elite's glow, outline and embers and the dissolve on the body's quad - the hit flash and the concealment it already drew); 5b SHIPPED (section 10b): the dungeon's foes, the cast-only billboard, the Features row; 5c SHIPPED (section 10c): the encounter pool - the exterior, the interiors, exterior.js; shadows kept (the billboard casts) | dungeonContext.js, world.js (exteriorFoes), worldModes.js (interior foes), exterior.js |
 | MWNPC6 THE WATCH | cityGuards' two instances (SHIPPED, section 11: a lane of its own under WATCH_BODY_TIERS) | world.js, worldModes.js, exterior.js; dungeonContext.js stands none (named) |
-| MWNPC7 TOWNSFOLK | walkers and living residents, a wardrobe by FACTION sgroup that actually varies (distinct records and dyes per persona) | world.js, exterior.js, worldModes.js (living residents indoors) |
+| MWNPC7 TOWNSFOLK | walkers and living residents, a wardrobe by FACTION sgroup that actually varies (distinct records and dyes per persona) (the WALKERS SHIPPED, section 12: a wardrobe per outfit variant, dyed per spawn - the living residents indoors are MWNPC8's standing people) | world.js, exterior.js, worldModes.js (living residents indoors) |
 | MWNPC8 STANDING PEOPLE | street, interior, dungeon and quest StaticNPCs; children and vampires keep their sprite; `drawnFlat`'s nudity law honoured | all four |
 | MWNPC9 CREATURES | CREA records, creature skeletons and their own .kf, the match table with its declared misses | dungeonContext.js, world.js, worldModes.js, exterior.js |
 | MWNPC10 THE REST | crews, road parties, siege, gate court, the broker | their hosts |
@@ -385,7 +385,9 @@ the way Morrowind shows them; and the NPCs need a lane of their own.
   palette upload (MWNPC1), and draws every seen one in the one bind
   (MWNPC2); at All, 12. A crowd of NPCs never takes a peer's body.
   (AMENDED BY MWNPC6, section 11: the watch's lane adds 2 skins at Near and
-  4 at All - 10 and 16 a frame on a street with all three.)
+  4 at All - 10 and 16 a frame on a street with all three. AMENDED AGAIN BY
+  MWNPC7, section 12: the walkers' lane adds 4 at Near and 8 at All - 14
+  and 24 a frame on a street with all four.)
 
 PROVEN. `test/mwnpc4_npclane.test.js` (5), on a fixture rig whose clip file
 is MW-CAST1's with the fists' group and the reaction groups appended (two
@@ -643,4 +645,61 @@ source. The foe-host enumeration (MWNPC5b-e) names the watch WIRED.
 real motor and ARENA2's CLASS18.CFG to stand a watchman, so the live offer
 is pinned by source (as section 10b's dungeon is) beside the encounter
 pool's behavioural proof of the same lines.
+
+## 12. MWNPC7 - THE STREET'S WALKERS IN THEIR BODIES (SHIPPED 2026-10-09)
+
+- A WALKER, READ (`characters/folkBodies.js`). Daggerfall rolls a walker
+  at every spawn (townPopulation.js RandomiseNPC): the climate's race, a
+  gender, one of four outfits (the sprite archive, PERSON_TEXTURES), a face
+  record, a name - or, one in 32, the guard's arm (texture 399). The body
+  is that roll: the race and gender as rolled; a face off the face record;
+  a WARDROBE PER OUTFIT VARIANT (`FOLK_OUTFITS` - the men's commoner,
+  tradesman, traveller and scholar, a shirt and pants, a tunic and
+  breeches, a long shirt and tall boots, plain robes; the women's blouse
+  and skirt, shirt and pants, robes, shirt and skirt with tall boots), each
+  garment dyed off the spawn (`FOLK_DYES`) so a street is not one colour;
+  the guard in the watch's whole steel plate. A RE-ROLL IS A NEW PERSON:
+  the pool's shells come back as someone else, so another archive, face,
+  name or gender is a new id (`<shell>.<spawn>`) and a new look - a body
+  built for them, never the last one's re-dressed (PeerBodies holds a
+  changed look to BODY_REBUILD_MS). The actor: their feet as the host
+  places their billboard, their wheel's facing (`facingYaw`, the foes'
+  convention) or a resident's own yaw, walking while they move - never
+  running, armed, hit or dead. One actor object a walker.
+- THE POPULATION LANE (`npcBodies.js` createPopulationLane). The shape
+  the foe pools grew, for a host that walks its population inline:
+  `frame()` (made when wanted, let go when not), `offer(actor, batch, ...)`
+  (the billboard reset to drawn), `draw(canvas, proj, view, eye, dt)` (the
+  sync, the cast-only marks, one bind - nothing if nothing was offered),
+  `drawVeiled`, `offsetAll`, `destroy`, `has`.
+- THE HOSTS. world.js's streets (every built pixel's town, on the 'folk'
+  lane; the line's own members keep the family's bodies - LEGACY7) and
+  exterior.js's location offer every walker and draw before the person
+  billboards (held under a talk, as the street is); world.js lets the
+  walkers go indoors and moves them with the origin. world.js offers a
+  walker right AFTER pushing their billboard (LEGACY7's line - the family
+  stand, then the push - kept whole; the cast-only is read at the draw, so
+  the order is free), and lets them go just past TV7's measured modal arm.
+- THE BOUND. The walkers' lane stands under the switch's tier (NPC_BODY_
+  TIERS: 12 within 30 m and 4 skins at Near; 24, 60 m, 8 at All) - with the
+  peers', the foes' and the watch's, 14 skins a frame at Near on a street
+  with all four, 24 at All; every one a palette upload (MWNPC1), every seen
+  body in its lane's one bind (MWNPC2).
+
+PROVEN. `test/mwnpc7_folk.test.js` (4): every race, gender and outfit
+variant's look (its garments in its slots, the street's dyes, a face),
+the dyes varying across spawns, the guard's whole steel plate; the same
+roll the same id and look object, a re-roll a new id and look, another
+walker another id, the actor's feet, facing (the wheel's, or a resident's
+yaw), walk and idle, never armed, hit or dead; the population lane's whole
+cycle on a recording lane; and THE POPULATION HOSTS ENUMERATED - every
+scene that walks a town population named (world.js, exterior.js), each
+offering, drawing before its billboards, drawing the veiled, its
+billboard drawn whenever the lane is not. `tools/mutants/mwnpc7.json`: 22
+mutants, 22 dead.
+
+NOT HERE: the living residents indoors (worldModes.js's buildings) and
+the street's standing people are MWNPC8's; a walker struck or slain in the
+street keeps the classic billboard's answer (the walkers have none of
+their own to give).
 
