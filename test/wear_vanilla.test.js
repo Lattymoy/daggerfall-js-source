@@ -214,7 +214,10 @@ test('WEAR-VANILLA: through the core, an armed Knight\'s blow on an iron-clad pl
       assert.ok(pieces.includes(seen[1].item), 'the struck piece is mine');
       if (dfuWear(d) > 0) { assert.deepEqual([armour, weapon], [portWear(d), portWear(d)], `${d} damage: DFU's ${dfuWear(d)}`); exact++; } else { assert.ok([0, DFU_WEAR_MULTIPLE].includes(armour) && [0, DFU_WEAR_MULTIPLE].includes(weapon), 'under 5: the 20% floor roll\'s 1, or nothing'); floor++; }
     }
-    assert.ok(exact >= 100 && floor >= 30, `both kinds of blow land (${exact} worn by the amount, ${floor} by the floor roll)`);
+    // PIN MOVED (BAL2, bible/05-Combat/Balance-Arc.md section 4): the Knight hits and crits by the player's rule now, so
+    // fewer of his blows fall under 5 - of these 300, 29 or 52 by the spawn's own Math.random draw (it was 80 or 105);
+    // both kinds still land, the floor's at 20
+    assert.ok(exact >= 100 && floor >= 20, `both kinds of blow land (${exact} worn by the amount, ${floor} by the floor roll)`);
     // a piece the blow breaks says so
     const said = [];
     for (let i = 0; i < 300 && !said.length; i++) {

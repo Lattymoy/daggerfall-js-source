@@ -168,7 +168,7 @@ function damageModel(ctx, swing, foe) {
     if (!core.overhaul) return d;
     d = Math.max(0, d);
     if (critical && crit.damageMult !== 1) d = unityRound(Math.fround(d * crit.damageMult));
-    if (core.modules.conditionBasedEffectiveness && weapon && d >= 1) d = pcaaoAlterDamageBasedOnWepCondition(d, skillId === SKILLS.BluntWeapon, weapon);
+    if (core.modules.conditionBasedEffectiveness && weapon && d >= 1) d = pcaaoAlterDamageBasedOnWepCondition(d, skillId === SKILLS.BluntWeapon, weapon, core.modules.equipmentDamageEnhanced);   // BAL1: the edge rides the mod's wear
     return d;
   };
   const plain = rolls.map((r) => finish(one(r), false));

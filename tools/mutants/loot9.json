@@ -291,7 +291,7 @@
   {
     "name": "LOOT9-exalted-every-line",
     "file": "src/systems/lootRarity.js",
-    "old": "&& item.exalted === true && list.length) lines = [list.length - 1];",
+    "old": "&& item.exalted === true && list.length) lines = [list.filter((a) => a?.gem == null).length - 1];",
     "new": "&& item.exalted === true && list.length) lines = list.map((_, i) => i);",
     "tests": [
       "test/loot9_reforge.test.js"
@@ -354,11 +354,12 @@
   {
     "name": "LOOT9-name-stays",
     "file": "src/systems/lootRarity.js",
-    "old": "  if (tier !== 'legendary') item.name = rarityName(item, tier, item.affixes);\n",
-    "new": "\n",
+    "old": "  if (tier !== 'legendary') item.name = rarityName(item, tier, item.affixes.filter((a) => a?.gem == null));",
+    "new": "",
     "tests": [
       "test/loot9_reforge.test.js"
-    ]
+    ],
+    "note": "AUDIT BAL/GEM (PIN MOVED, 2026-10-10): its line changed with the audit's fix; re-aimed by content."
   },
   {
     "name": "LOOT9-price-stays",

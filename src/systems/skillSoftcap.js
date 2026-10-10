@@ -268,6 +268,10 @@ export function movementTallyWeight(entity, skillId, amount, skill) {
 // decimate those ... we need to double those minimum"). Both need Master
 // Skills in force (always online; offline the player's switch) and neither
 // runs while mentoring. Every number lives in ENEMY_SCALING below.
+// BAL3 (the place's threat, below progressionScaling's header): the VETERAN
+// row also stands by the PLACE alone - without Master Skills, while
+// mentoring, offline, in a dungeon by its ladder tier and in the wilds -
+// and these player-read layers sit beside it, the more of the two.
 //
 //  1. VETERAN - the answer to Daggerfall's own endgame, where a foe's skills
 //     stop at 100 by level 14 and a monster's health never grows. It ramps in
@@ -369,19 +373,45 @@ export function veteranProgress(entity) {
 /** Both layers of one player, for the spawn door. */
 export const combatStanding = (entity) => ({ veteran: veteranProgress(entity), edge: combatEdge(entity) });
 
-/** The whole scaling for one foe (pure). `standing` is combatStanding's { veteran, edge }. null = none. */
-export function progressionScaling(standing, dShare, fShare) {
+// ---- the place's threat (BAL3) ---------------------------------------
+//
+// BAL3 (bible/05-Combat/Balance-Arc.md section 5; Mac, 2026-10-10: "Do everything and be extremely detailed", of "let
+// the place set the threat, the way the source already sets loot"): THE PLACE SETS THE THREAT, NEVER THE PLAYER. The
+// loot ladder grades every place a foe stands in (lootRarity.js DUNGEON_RARITY_TIER: a Cemetery 3, a mine or a cave 4,
+// a Crypt 9, a Vampire Haunt 14, a Dragon's Den 18), and a corpse's or a pile's odds are that place's. The veteran
+// layer above answered the PLAYER instead - their own best skills, and only with Master Skills in force (offline:
+// never by default) - so the deepest dungeon in the game fielded DFU's own foes to every player who had not opted in.
+// Now the veteran layer reads the PLACE: from PLACE_THREAT.from (a town's 4 - DFU's own foes) to PLACE_THREAT.full (a
+// Dragon's Den's 18 - the whole veteran row, +10 skill, x2 health, x1.25 damage), linear between, times the foe's own
+// share (a rat stays a rat). The wilderness stands as the dungeons it reads like (SOFTCAP5's own equivalence: by day
+// between a cemetery's 3 and a ruined castle's 6, so 5; at night a harpy nest's 7). Master Skills' veteran is kept as
+// a floor beside it (the player's veteran in this kind of place, whichever is more), and the overcap stays the climb's
+// alone. Pure numbers: the host hands the place's veteran in, and hands 0 with the loot ladder off - the grading is
+// the ladder's, so with it off the place is DFU's again, as the ladder's champions and elites are.
+export const PLACE_THREAT = Object.freeze({ from: 4, full: 18, wilderness: Object.freeze({ day: 5, night: 7 }) });
+/** The place's veteran, 0..1, from its tier (0..21): none at a town's 4 or under, whole at a Dragon's Den's 18. */
+export const placeVeteran = (tier) => (Number.isFinite(tier) ? clamp01((tier - PLACE_THREAT.from) / (PLACE_THREAT.full - PLACE_THREAT.from)) : 0);
+/** The wilderness's tier by the hour. */
+export const wildernessThreat = (night) => (night ? PLACE_THREAT.wilderness.night : PLACE_THREAT.wilderness.day);
+
+/** The whole scaling for one foe (pure). `standing` is combatStanding's { veteran, edge }; `place` the place's veteran
+ *  (placeVeteran, 0..1 - BAL3). The veteran layer is the place's, or the player's veteran in this kind of place
+ *  (dShare), whichever is more; the overcap is the player's climb, in this kind of place. null = none. */
+export function progressionScaling(standing, dShare, fShare, place = 0) {
   const share = clamp01(dShare) * clamp01(fShare);
   const v = clamp01(standing?.veteran ?? 0);
+  const p = clamp01(place);
   const o = clamp01((standing?.edge ?? 0) / (EFFECTIVE_SKILL_MAX - SKILL_SOFT_CAP));
-  if (!(share > 0) || !(v > 0 || o > 0)) return null;
+  const vet = Math.max(clamp01(fShare) * p, share * v);   // BAL3: the place's veteran, the foe's share of it - Master Skills' a floor beside it
+  const over = share * o;
+  if (!(vet > 0 || over > 0)) return null;
   const { veteran: V, overcap: O } = ENEMY_SCALING;
-  const skillGain = share * (V.skill * v + O.skill * o);
+  const skillGain = V.skill * vet + O.skill * over;
   return {
-    share, veteran: v, edge: standing?.edge ?? 0,
+    share, veteran: v, place: p, edge: standing?.edge ?? 0,
     skillGain,
-    healthMult: 1 + share * (V.health * v + O.health * o),
-    damageMult: 1 + share * (V.damage * v + O.damage * o),
+    healthMult: 1 + V.health * vet + O.health * over,
+    damageMult: 1 + V.damage * vet + O.damage * over,
     challengeLevels: Math.round(skillGain * CHALLENGE_LEVELS_PER_SKILL),
   };
 }

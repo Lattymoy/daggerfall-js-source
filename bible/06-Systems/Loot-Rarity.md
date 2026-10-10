@@ -222,7 +222,11 @@ piece has taken), `junk` (LOOT18, the player's mark - the lock's twin)
 and `socket` (LOOT20, 'empty' or the gem set in it - `validSocket`; a
 set gem's line rides `affixes` marked with its gem). A known curse is
 read on the tier line ("Cursed Rare"), as the Exalted is: a variant of
-its rung, never a rung of its own (the arc's law 7).
+its rung, never a rung of its own (the arc's law 7). GEM1
+(`Gem-Sockets.md`) adds `sockets` - the socket list, one to three
+values a piece, 'empty' or the gem set in each - and keeps `socket`
+declared, read as a list of one; `validSocket` refuses both on one
+piece.
 
 ## The Test Room door
 

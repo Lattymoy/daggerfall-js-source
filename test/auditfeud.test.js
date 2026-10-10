@@ -290,7 +290,8 @@ test('AUDIT FEUD H1: THE WORLD HOST - a knocked-out sworn one stands for nothing
 test('AUDIT FEUD H2: PRIVATEER\'S HOLD\'S IN-PLACE RESPAWN is a respawn like the world host\'s - its fights ended, its killer\'s theft taken and said (mutants: each dropped)', () => {
   const m = read('src/scenes/worldModes.js');
   // PIN MOVED (AUDIT LEGACY B5): the arm takes an offline Project Legacy rise too - the penalty and the theft online's alone
-  const at = m.indexOf("const goldLost = online ? applyDeathPenalty(playerEntity) : 0;   // DEATH-PENALTY: Privateer's Hold");
+  // PIN MOVED (BAL4, bible/05-Combat/Balance-Arc.md section 6): the penalty is every rise's now; the theft stays online's
+  const at = m.indexOf("const goldLost = applyDeathPenalty(playerEntity);   // DEATH-PENALTY: Privateer's Hold");
   assert.ok(at > 0);
   const block = m.slice(at, at + 900);
   assert.match(block, /endPlayerFights\(\);/);
