@@ -530,3 +530,39 @@ test('TECH1 THE SCREEN: the marks in the ground pass at their own sizes, nothing
   assert.deepEqual(T.techniqueHudChips(me, pw), [], 'the ladder off: no chip');
   _resetForTests();
 });
+
+test('TECH1 THE GROUND OUTDOORS (AUDIT TECH1): on the real Collider the open ground is its terrain, never a mesh - the look meets it, so a Volley and a ground leap aim where the eye sees the ground, a hill ends a look and a lane, and indoors (no terrain) the meshes alone answer (mutants: the march dropped; the crossing unrefined; the terrain unread under a point)', () => {
+  reset();
+  const lookAt = (pitch) => [0, Math.sin(pitch), Math.cos(pitch)];
+  const eye = [0, 1.7, 0], feet = [0, 0, 0];
+  // flat terrain at 0, as the exterior host's sampler answers: the look at -0.1 meets it at 1.7 / tan(0.1)
+  const flat = new Collider(() => 0);
+  const meet = 1.7 / Math.tan(0.1);
+  assert.ok(Math.abs(T.rayHit(eye, lookAt(-0.1), 40, flat) - 1.7 / Math.sin(0.1)) < 0.01, 'the crossing, to a centimetre');
+  assert.equal(T.rayHit(eye, lookAt(0.1), 40, flat), Infinity, 'a look into the sky meets nothing');
+  const v = T.aimFor(TECHNIQUES.volley, { pos: eye, feet, yaw: 0, pitch: -0.1 }, flat, []);
+  assert.equal(v.ok, true, 'a Volley outdoors aims');
+  assert.ok(Math.abs(v.point[2] - meet) < 0.4 && v.point[1] === 0, `on the ground the eye sees: ${v.point}`);
+  const l = T.aimFor(TECHNIQUES.leap, { pos: eye, feet, yaw: 0, pitch: -0.3 }, flat, []);
+  assert.equal(l.ok, true, 'a ground leap outdoors aims');
+  assert.ok(Math.abs(l.point[2] - 1.7 / Math.tan(0.3)) < 0.4, `${l.point}`);
+  // a hill rising ahead (a quarter in a metre) ends the look early, and stands under the point
+  const hill = new Collider((x, z) => Math.max(0, z - 4) * 0.5);
+  const h = T.groundAim(eye, lookAt(-0.05), feet, hill, 28);
+  assert.ok(h && h.point[2] > 4 && h.point[2] < 9, `the hill's face: ${h?.point}`);
+  assert.ok(Math.abs(h.point[1] - Math.max(0, h.point[2] - 4) * 0.5) < 0.05, 'the point stands on the hill');
+  assert.equal(T.floorUnder([0, 20, 10], hill), 3, 'the terrain under a point in the air');
+  // a Piercing Shot's lane ends in the ground it is aimed into
+  const lane = T.aimFor(TECHNIQUES.pierce, { pos: eye, feet, yaw: 0, pitch: -0.2 }, flat, []).lane;
+  assert.ok(Math.abs(lane.len - 1.7 / Math.tan(0.2)) < 0.05, `the lane to the ground: ${lane.len}`);
+  // indoors and underground the sampler answers -Infinity: the meshes alone, and the march never runs
+  const indoor = { raycast: () => 7, surfaceHit: () => null, heightAt: () => -Infinity };
+  assert.equal(T.rayHit(eye, lookAt(-0.1), 40, indoor), 7);
+  assert.equal(T.rayHit(eye, lookAt(-0.1), 40, { raycast: () => Infinity, heightAt: () => -Infinity }), Infinity);
+  // a mesh nearer than the ground wins; the ground nearer than a far mesh wins
+  const both = new Collider(() => 0);
+  both.raycast = () => 3;
+  assert.equal(T.rayHit(eye, lookAt(-0.1), 40, both), 3);
+  both.raycast = () => 30;
+  assert.ok(Math.abs(T.rayHit(eye, lookAt(-0.1), 40, both) - 1.7 / Math.sin(0.1)) < 0.01);
+});

@@ -635,5 +635,50 @@
       "test/tech1_roster.test.js",
       "test/lr1_lootrarity.test.js"
     ]
+  },
+  {
+    "name": "TECH1-AUDIT-the-march-dropped",
+    "file": "src/combat/techniques.js",
+    "old": "  if (!Number.isFinite(groundAt(collider, origin[0], origin[2]))) return best;   // no terrain here (indoors, underground)",
+    "new": "  return best;   // no terrain here (indoors, underground)",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-AUDIT-the-crossing-unrefined",
+    "file": "src/combat/techniques.js",
+    "old": "    for (let i = 0; i < GROUND_MARCH_REFINE; i++) {",
+    "new": "    for (let i = 0; i < 0; i++) {",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-AUDIT-the-ground-aim-mesh-only",
+    "file": "src/combat/techniques.js",
+    "old": "  const hit = rayHit(eye, look, range + 2, collider);   // a wall, a floor - or the open ground outdoors",
+    "new": "  const hit = collider.raycast(eye, look, range + 2);   // a wall, a floor - or the open ground outdoors",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-AUDIT-the-lane-through-the-ground",
+    "file": "src/combat/techniques.js",
+    "old": "      const hit = rayHit(eye, look, tech.length, collider);   // the shot's length",
+    "new": "      const hit = collider.raycast(eye, look, tech.length);   // the shot's length",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-AUDIT-the-mesh-ignored",
+    "file": "src/combat/techniques.js",
+    "old": "  try { const m = collider?.raycast?.(origin, dir, max); if (Number.isFinite(m) && m >= 0) best = m; } catch { /* no meshes */ }",
+    "new": "",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
   }
 ]

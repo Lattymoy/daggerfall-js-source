@@ -114,23 +114,57 @@ const flatOf = (yaw) => [Math.sin(yaw), 0, Math.cos(yaw)];
 const at = (o, d, s) => [o[0] + d[0] * s, o[1] + d[1] * s, o[2] + d[2] * s];
 const flatDist = (a, b) => Math.hypot(b[0] - a[0], b[2] - a[2]);
 
+/** THE GROUND'S HEIGHT at (x, z), or NaN: the terrain the host draws (the collider's surfaceAt - BLOOD1 AUDIT 3's drawn
+ *  ground), else its sampler (heightAt). Outdoors the ground is not a mesh: `raycast` never meets it (player/collider.js
+ *  surfaceHit's own note). Indoors and underground the sampler answers -Infinity, and the floors are meshes. */
+function groundAt(collider, x, z) {
+  try {
+    const h = typeof collider?.surfaceAt === 'function' ? collider.surfaceAt(x, z) : collider?.heightAt?.(x, z);
+    return Number.isFinite(h) ? h : NaN;
+  } catch { return NaN; }
+}
+/** Steps the look's march takes along the ground (metres), and the halvings that refine where it crossed. */
+const GROUND_MARCH_STEP = 0.25;
+const GROUND_MARCH_REFINE = 10;
+
 /**
- * THE FLOOR UNDER A POINT - the highest ground at or below `p` (the collider's meshes, and the terrain the mesh ray
- * never sees - its heightAt), or null when there is none within 40 m.
+ * WHERE A RAY FIRST MEETS THE WORLD, within `max` metres: the nearer of the collider's meshes (`raycast` - a wall, a
+ * floor indoors, a building) and the terrain (marched against groundAt, then halved down to the crossing), as a
+ * distance along the unit `dir`; Infinity when it meets neither. AUDIT TECH1 (2026-10-10): every look a technique casts
+ * reads this - a mesh ray alone never met the outdoor ground, so every Volley and every ground leap outdoors answered
+ * "Out of reach".
+ */
+export function rayHit(origin, dir, max, collider) {
+  let best = Infinity;
+  try { const m = collider?.raycast?.(origin, dir, max); if (Number.isFinite(m) && m >= 0) best = m; } catch { /* no meshes */ }
+  if (!Number.isFinite(groundAt(collider, origin[0], origin[2]))) return best;   // no terrain here (indoors, underground)
+  const end = Math.min(max, best);
+  const above = (t) => {
+    const g = groundAt(collider, origin[0] + dir[0] * t, origin[2] + dir[2] * t);
+    return !Number.isFinite(g) || origin[1] + dir[1] * t > g;
+  };
+  if (!above(0)) return best;   // an origin under the ground meets nothing it can see
+  for (let t = GROUND_MARCH_STEP, prev = 0; prev < end; prev = t, t = Math.min(end, t + GROUND_MARCH_STEP)) {
+    if (above(t)) { if (t >= end) break; continue; }
+    let lo = prev, hi = t;
+    for (let i = 0; i < GROUND_MARCH_REFINE; i++) { const mid = (lo + hi) / 2; if (above(mid)) lo = mid; else hi = mid; }
+    return Math.min(best, hi);
+  }
+  return best;
+}
+
+/**
+ * THE FLOOR UNDER A POINT - the nearest ground at or below `p`, or null when there is none within 40 m: the collider's
+ * surfaceHit, which answers the nearer of its meshes and its terrain (player/collider.js), or its mesh ray alone where it
+ * has no surfaceHit.
  */
 export function floorUnder(p, collider) {
   const o = [p[0], p[1] + 1, p[2]];
-  let y = null;
   try {
     const h = collider?.surfaceHit?.(o, [0, -1, 0], 41) ?? null;
     const d = h && Number.isFinite(h.dist) ? h.dist : collider?.raycast?.(o, [0, -1, 0], 41);
-    if (Number.isFinite(d)) y = o[1] - d;
-  } catch { /* no mesh floor */ }
-  try {
-    const t = collider?.heightAt?.(p[0], p[2]);
-    if (Number.isFinite(t) && t <= o[1] && (y == null || t > y)) y = t;
-  } catch { /* no terrain */ }
-  return y;
+    return Number.isFinite(d) ? o[1] - d : null;
+  } catch { return null; }
 }
 
 /**
@@ -140,7 +174,8 @@ export function floorUnder(p, collider) {
  */
 export function groundAim(eye, look, feet, collider, range) {
   let d = range + 2;
-  try { const hit = collider?.raycast?.(eye, look, range + 2); if (Number.isFinite(hit)) d = Math.max(0, hit - 0.3); } catch { /* the look's end */ }
+  const hit = rayHit(eye, look, range + 2, collider);   // a wall, a floor - or the open ground outdoors
+  if (Number.isFinite(hit)) d = Math.max(0, hit - 0.3);
   let p = at(eye, look, d);
   const h = flatDist(feet, p);
   if (h > range) {   // past the reach on the level: the reach's own point, along the look's way
@@ -168,7 +203,8 @@ export function foeUnderLook(eye, look, range, collider, foes = playerDoor()?.fo
     if (along <= 0) continue;
     const perp = Math.sqrt(Math.max(0, dist * dist - along * along));
     if (perp > 0.6 + 0.06 * along) continue;
-    try { const wall = collider?.raycast?.(eye, [v[0] / dist, v[1] / dist, v[2] / dist], dist); if (Number.isFinite(wall) && wall < dist - 0.4) continue; } catch { /* in sight */ }
+    const wall = rayHit(eye, [v[0] / dist, v[1] / dist, v[2] / dist], dist, collider);   // a wall, or a hill between
+    if (Number.isFinite(wall) && wall < dist - 0.4) continue;
     const s = perp + along * 0.05;
     if (s < score) { score = s; best = f; }
   }
@@ -239,12 +275,14 @@ export function aimFor(tech, cam, collider, foes = undefined) {
     const yaw = cam.yaw ?? 0, way = flatOf(yaw);
     if (tech.mech === 'pierce') {
       let len = tech.length;
-      try { const hit = collider?.raycast?.(eye, look, tech.length); if (Number.isFinite(hit)) len = Math.max(0.5, hit); } catch { /* the shot's length */ }
+      const hit = rayHit(eye, look, tech.length, collider);   // the shot's length: to a wall, or into the ground
+      if (Number.isFinite(hit)) len = Math.max(0.5, hit);
       return { ok: true, lane: { from: [feet[0], feet[2]], dir: [way[0], way[2]], len: len * Math.hypot(look[0], look[2]), halfW: 0.3, yaw, y: feet[1] }, point: null };
     }
     const chest = [feet[0], feet[1] + 1, feet[2]];
     let len = tech.length;
-    try { const hit = collider?.raycast?.(chest, way, tech.length + 0.6); if (Number.isFinite(hit)) len = Math.max(0, hit - 0.6); } catch { /* the dash's length */ }
+    const hit = rayHit(chest, way, tech.length + 0.6, collider);   // the dash's length: to a wall, or a rise it cannot run
+    if (Number.isFinite(hit)) len = Math.max(0, hit - 0.6);
     const end = at(feet, way, len);
     const y = floorUnder([end[0], feet[1] + 0.6, end[2]], collider);
     const point = [end[0], y ?? feet[1], end[2]];
@@ -260,7 +298,7 @@ export function aimFor(tech, cam, collider, foes = undefined) {
       : [at(f, toward, -r)];
     for (const s of spots) {
       const chest = [f[0], f[1] + 1, f[2]], dir = [s[0] - f[0], 0, s[2] - f[2]], dl = Math.hypot(dir[0], dir[2]);
-      try { if (dl > 1e-6) { const wall = collider?.raycast?.(chest, [dir[0] / dl, 0, dir[2] / dl], dl + 0.4); if (Number.isFinite(wall) && wall < dl + 0.35) continue; } } catch { /* clear */ }
+      if (dl > 1e-6) { const wall = rayHit(chest, [dir[0] / dl, 0, dir[2] / dl], dl + 0.4, collider); if (Number.isFinite(wall) && wall < dl + 0.35) continue; }
       const y = floorUnder([s[0], f[1] + 0.8, s[2]], collider);
       if (y == null) continue;
       const point = [s[0], y, s[2]];
@@ -281,7 +319,7 @@ export function aimFor(tech, cam, collider, foes = undefined) {
  *   rig            the stepping rig (its identity - a change of rig sets the aim and the flight aside)
  *   entity, pw     the player and its PlayerWeapon
  *   cam            the rig's camera: { pos (eye), yaw, pitch, feet }
- *   collider       the host's collider (raycast / surfaceHit / heightAt)
+ *   collider       the host's collider (raycast / surfaceHit, and the terrain's surfaceAt / heightAt - rayHit)
  *   held           the key, held this frame
  *   ready          the rig's own gate - drawn, no spell, no cast, no climb, no equip pause, no act's tool, not paralyzed
  *   startSwing(s)  start the machine's strike `s` (and the arm's): true when it began

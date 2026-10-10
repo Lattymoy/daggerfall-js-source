@@ -180,7 +180,10 @@ schedule (`blowSchedule`). The collider stops the body; gravity lands it; the fa
 the landing). Air control does not steer a technique's flight (`techFlight`). A Shadowstep turns the view on the foe
 before its strike (the door's `face`).
 
-**The aim** (`aimFor`): a Volley's disc is where the look meets the ground within 28 m, refused under 6. A Leap Strike or
+**The aim** (`aimFor`): every look it casts meets the world through `rayHit` - the nearer of the collider's meshes and
+the terrain, marched along the look in quarter metres and halved down to the crossing (outdoors the ground is the
+collider's `surfaceAt`/`heightAt`, never a mesh; indoors and underground the meshes alone). A Volley's disc is where
+the look meets the ground within 28 m, refused under 6. A Leap Strike or
 a Flying Kick lands just in front of the foe under the look (its radius and 0.55 m short), or on the ground where the
 look meets it. A Shadowstep tries behind the foe, then each side, then in front - the first spot no wall stands between
 and a floor stands under. A Lunge runs to the first wall less 0.6 m. A landing more than 4 m below the feet or 2.5 m
@@ -272,12 +275,12 @@ Gauntlets' Flying Kick and Haymaker) - every technique a press away.
   worth, before a gem's, one at most, another family refused); the door's LAST draw (every door with the pass off and
   on, piece for piece, over seeds; the corpse kit); the Reforge, the Hone, the Exalted; the card (a Legendary's line in
   the Legendary band); the item law (every honest shape lawful, each forgery named); the Test Room.
-- `test/tech1_runner.test.js` (15) - the refusals in order and their words, asked again at the release; the aim and its
+- `test/tech1_runner.test.js` (16) - the refusals in order and their words, asked again at the release; the aim and its
   marks; a swing's blow on the real PlayerWeapon (the formula's damage times the multiplier, the arc, single, the
   wounded share, a player's body passed); a Volley's queue, its spend, a shot's tally a shaft, and its fall; a Piercing
   Shot; the leap on the real PlayerMotor (lands on its aim, air control does not steer it); the cooldown and its line;
   the aim set aside (the Activate press; a door crossed mid-aim, the next rig holding the same weapon; another rig
-  mid-swing); THE LOOSE HELD (the Morrowind arm's held hit).
+  mid-swing); THE LOOSE HELD (the Morrowind arm's held hit); THE GROUND OUTDOORS (on the real Collider).
 - `test/tech1_hosts.test.js` (4) - the action, its key and its rows; the rig's order, its held-hit flag; THE FOUR HOSTS,
   swept from the source (each host's door, and each ground pass's marks call right after its foes'); the dungeon lane;
   the mark's own size in the pass; the world host's chip seam and recentre, the HUD's colour, the side buttons' guard.
