@@ -106,6 +106,15 @@ export function troubleOf(trip, world) {
     wm = walkWm; t0 = walkT0; camp = false;
     s = leg === 'out' ? trip.trim0 + trip.pace * wm : trip.way.len - trip.trim1 - trip.pace * wm;
   }
+  // AUDIT LW-II-2 R3: A MORNING STILL LODGED - a walk's trouble whose minute falls while the party waits at its inn for
+  // its day's walk to come up to it (trips.js partyAt) is met as it sets out again: the first minute it is back on the
+  // road, at the inn's place. Before, the halt stood it on the road behind the inn, where the walk would have been, and
+  // then it was lodged again - out of the inn and back, and gone from its guests at the halt's minute
+  if (!camp && partyAt(trip, t0).inn) {
+    const end = leg === 'out' ? trip.outT1 : trip.backT1;
+    for (t0 = Math.ceil(t0); t0 < end && partyAt(trip, t0).inn; t0++);
+    s = partyAt(trip, t0).s ?? s;   // where it stands as it sets out - the inn's place, its walk come up to it
+  }
   if (trip.way.dry) {
     // LW-DRY: met on dry ground - a party on a wet stretch then (a ford by day, its walk on to the night's camp) is met at
     // the first dry ground on from it, as it comes to it (trips.js partyAt: the ground between its day's walk and where

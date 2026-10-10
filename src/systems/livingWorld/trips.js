@@ -446,8 +446,10 @@ export function ownTrip(res, home, k, world, { mpm }) {
   const company = res.job === 'adventurer' ? companyOfPlace(res, world.rosterOf(home)) : null;   // LW13: the company it leads
   // LW13: its company's other places; AUDIT LW-II F2: a patrol's round its riders' - the patrol rides as one, as a company
   // walks, so a rider the road takes this cycle sends the round out (before, a fated rider's first stayed home on its own
-  // chance, and the rider died abroad with no road, remains or news)
-  const riders = company ? company.places.slice(1) : res.job === 'patrol' ? world.rosterOf(home).filter((r) => r.job === 'patrol' && r.slot !== res.slot) : [];
+  // chance, and the rider died abroad with no road, remains or news). AUDIT LW-II-2 R7: and a noble's procession the
+  // retainers dealt to them - F2 left them out, and a fated retainer whose noble's chance said stay died abroad unseen
+  const riders = company ? company.places.slice(1) : res.job === 'patrol' ? world.rosterOf(home).filter((r) => r.job === 'patrol' && r.slot !== res.slot)
+    : res.job === 'noble' ? world.rosterOf(home).filter((r) => r.job === 'retainer' && leaderOf(r, world.rosterOf(home))?.slot === res.slot) : [];
   const scale = paceScale(mpm);
   const len = Math.max(2, Math.round((rowOf(CYCLE_DAYS, ROAD_CYCLE_DAYS, res.job) ?? 8) * scale));
   const phase = lwSeed(res.town, res.slot, 0x6379) % len;
@@ -1005,6 +1007,16 @@ export function partyAt(trip, t) {
     return Math.max(0, pace * walkedMinutes(h.t0, h.t1) - HALT_CATCH_UP * pace * walkedMinutes(h.t1, m));
   };
   if (t < trip.outT1) return walked('out', light, (m) => Math.max(trim0, trim0 + Math.min(walk, pace * walkedMinutes(trip.outT0, m)) - lag('out', m)));
+  if (t < trip.backT0 && trip.wild) {
+    // AUDIT LW-II-2 R6: WHAT A HALT LEFT OWED AT THE WILD'S EDGE IS WALKED ON - no town to make it up in: from where the
+    // leg's end found it (behind its walk, or held where it fell by a halt run past the walk's end - troubledTrip holds
+    // the arrival) on to its point at the catch-up pace (a half again its own, as it walked), by day, and only there the
+    // hunt's camp. Before, the camp stood at the point from the leg's end, and the hunter jumped to it
+    const sOut = (/** @type {number} */ m) => Math.max(trim0, trim0 + Math.min(walk, pace * walkedMinutes(trip.outT0, m)) - lag('out', m));
+    const end = way.len - trim1, s1 = h && h.leg === 'out' && h.t1 >= trip.outT1 ? h.s : sOut(trip.outT1);
+    const on = (/** @type {number} */ m) => (m < trip.outT1 ? sOut(m) : Math.min(end, s1 + (1 + HALT_CATCH_UP) * pace * walkedMinutes(trip.outT1, m)));
+    if (end - s1 > 1 && on(t) < end) return walked('out', light, on);
+  }
   if (t < trip.backT0) return trip.wild ? { ...placed('out', way.len - trim1), camp: true } : { phase: 'stay' };   // LW9: the hunt's camp in the wild
   return walked('back', trip.backT0, (m) => Math.min(way.len - trim1, way.len - trim1 - Math.min(walk, pace * walkedMinutes(trip.backT0, m)) + lag('back', m)));
 }
@@ -1047,7 +1059,11 @@ export function awayOf(res, trips) {
   for (const tr of trips) {
     if (!tr.party.some((p) => p.id === res.id)) continue;
     const fell = tr.fallen?.some((f) => f.res.id === res.id);   // LW4: one the road took never walks home
-    out.push({ t0: tr.outT0, t1: fell ? Infinity : tr.backT1, yaw: leavingYaw(tr), armed: res.cls != null, dock: !!tr.sea });   // LW5b: a passage leaves by the dock
+    // AUDIT LW-II-2 R5: out at the leg's first light (partyAt's - AUDIT LW-II E5: a party setting out before it is at home
+    // till it walks): the town had them gone at outT0 and the road had them home, nowhere at all till seven. A passage
+    // sails on its tide
+    const t0 = tr.sea ? tr.outT0 : whenWalked(tr.outT0, 0);
+    out.push({ t0, t1: fell ? Infinity : tr.backT1, yaw: leavingYaw(tr), armed: res.cls != null, dock: !!tr.sea });   // LW5b: a passage leaves by the dock
   }
   return out.sort((a, b) => a.t0 - b.t0);
 }
@@ -1338,6 +1354,11 @@ export function divesIn(dungeon, t0, t1, world, o) {
       if (trips === undefined) { pending = true; break; }
       for (const trip of trips) {
         if (!trip.dive || trip.to?.mapId !== dungeon.mapId || !(trip.dive.t0 < t1 && trip.dive.t1 > t0) || found.has(trip.id)) continue;
+        // AUDIT LW-II-2 D3: a dive TURNED home on the road (trouble.js troubledTrip: its trouble on the way out fled or fell)
+        // never came to the dungeon, and clears nothing in it - its `dive` the hours it would have spent there. Before,
+        // its build read them, and the stops it never walked to stood dead and emptied. (One turned inside - its leader
+        // fallen - has its hours cut at the turning, troubledTrip's own, and its reach ends before it: deepRoute.js routeOf.)
+        if (trip.turned) continue;
         found.set(trip.id, trip);
       }
     }

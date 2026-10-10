@@ -73,8 +73,16 @@ export function createRoadTeams({ renderer, presentation, collider = () => null 
     const pres = presentation();
     const art = pres?.horseArt;
     if (art) { art.ensureStationary?.(); art.ensureWalk?.(); }
+    // the wagons drawn: the nearest WAGONS_DRAWN (their poses below, after the horses)
+    const near = [...wagonList].sort((a, b) => a.distM - b.distM).slice(0, WAGONS_DRAWN);
+    // AUDIT LW-II-2 R11: THE CAP TAKES A TEAM WHOLE - a wagon's horse (`<trip>:h<i>`, its wagon `<trip>:w<i>`, wagons.js)
+    // is posed only where its wagon is drawn; a pack horse, no wagon of its own, as ever. Before, past the cap the wagon
+    // was dropped and its horse walked the road drawing nothing
+    const drawnW = new Set(near.map((w) => w.key)), listed = new Set(wagonList.map((w) => w.key));
+    const capped = (/** @type {string} */ key) => { const w = key.replace(/:h(\d+)$/, ':w$1'); return w !== key && listed.has(w) && !drawnW.has(w); };
     const seen = new Set();
     for (const h of horseList) {
+      if (capped(h.key)) continue;
       seen.add(h.key);
       let s = horses.get(h.key);
       if (!s) {
@@ -93,7 +101,6 @@ export function createRoadTeams({ renderer, presentation, collider = () => null 
     // the wagons: the nearest, each its pose; a standing one's box on the collider
     const parts = (pres?.partsOf ? pres.partsOf(ROAD_WAGON_KIND) : pres?.wagonParts?.()) ?? null;   // the road's kind's, never the driven
     wagons = [];
-    const near = [...wagonList].sort((a, b) => a.distM - b.distM).slice(0, WAGONS_DRAWN);
     const stand = new Set();
     for (const w of near) {
       const up = [w.front[0] - w.feet[0], w.front[1] - w.feet[1], w.front[2] - w.feet[2]];
