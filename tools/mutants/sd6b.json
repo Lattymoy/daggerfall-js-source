@@ -2,11 +2,12 @@
   {
     "name": "SD6B-pz-unknown",
     "file": "src/net/wire.js",
-    "old": "export const SD_KINDS = Object.freeze(['found', 'pz', 'in', 'hit', 'ehit', 'xhit', 'spent']);",
-    "new": "export const SD_KINDS = Object.freeze(['found', 'in', 'hit', 'ehit', 'xhit', 'spent']);",
+    "old": "export const SD_KINDS = Object.freeze(['found', 'pz', 'in', 'hit', 'ehit', 'xhit', 'spent', 'vt']);",
+    "new": "export const SD_KINDS = Object.freeze(['found', 'in', 'hit', 'ehit', 'xhit', 'spent', 'vt']);",
     "tests": [
       "test/sd6b_hall.test.js"
-    ]
+    ],
+    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. "
   },
   {
     "name": "SD6B-a-seventh-stone",

@@ -248,7 +248,7 @@ test('WB3b the seams, by source: the dungeon host enters the court through its o
   assert.match(w, /enter: \(g\) => \{ modes\?\.enterGateArena\?\.\(g\); \},/);
   assert.match(w, /else if \(modes\?\.roomIdentity\?\.\(\)\?\.kind === 'gate'\) key = gateRoomKey\(modes\?\.roomIdentity\?\.\(\)\?\.day\);/);
   assert.match(w, /if \(gateLink && online\.gateOk && isGateRoom\(online\.room\) && online\.welcomes !== _gateInFor && online\.sendGate\(\{ k: 'in', lv: Math\.max\(1, playerEntity\.level \| 0\), bv: GATE_BRAIN_V \}\)\) _gateInFor = online\.welcomes;/);   // AUDIT WBX R7: the brain's law said with it
-  assert.match(w, /online\.onGate = \(g\) => gateLink\?\.word\(g\);/);
+  assert.match(w, /online\.onGate = \(g\) => \{ if \(g\?\.k === 'bd'\) bossCountFell\(modes\?\.gateArenaDay\?\.\(\) != null\); else gateLink\?\.word\(g\); \};/);   // PIN MOVED (INT11): the count's fall heard beside the link
   assert.match(w, /if \(tab\.room === SOCIAL_ROOM\) link\.onGate = \(g\) => gateLink\?\.word\(g\);/);
   // WB9b: the three courts' floor, as far as the walkways are laid - one arena, its crossings and clock refilled each frame
   assert.match(w, /if \(!player\.arena && modes\?\.gateArenaDay\?\.\(\) != null\) \{ _courtArena\.xa = gateLink\?\.state\(\)\?\.xa \?\? _gateFloor\.none; _courtArena\.now = Date\.now\(\) \+ _sharedOffsetMs; player\.arena = _courtArena; \}/, 'the floor in the online frame');

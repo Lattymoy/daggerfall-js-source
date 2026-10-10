@@ -33,7 +33,7 @@ test('WAGONS2-VISIT THE FRAME: `caravan` is `{ c, d }` - the park frame\'s chara
   assert.equal(parseClient(JSON.stringify({ t: 'caravan', data: { c: CA, d: DOC } })).error, 'caravan before hello');
   assert.equal(parseClient(JSON.stringify({ t: 'caravan', data: { c: CA, d: 7 } }), { hasHello: true }).error, 'bad caravan');
   assert.equal(CARAVAN_RELAY_MIN, 187);
-  assert.equal(relaySupportsCaravan('world186'), false); assert.equal(relaySupportsCaravan('world188'), true); assert.equal(relaySupportsCaravan(RELAY_VERSION), true);
+  assert.equal(relaySupportsCaravan('world186'), false); assert.equal(relaySupportsCaravan('world189'), true); assert.equal(relaySupportsCaravan(RELAY_VERSION), true);
   assert.equal(relaySupportsCaravan(null), false);
 });
 

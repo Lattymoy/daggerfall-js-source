@@ -141,11 +141,12 @@
   {
     "name": "AUDWBX-S2-the-level-unsigned",
     "file": "src/net/gateReceipt.js",
-    "old": "const claimsOf = ({ d, b, s, c, x, l, r }, nowS) => ({ d, b, s, c, x, ...(l !== undefined ? { l } : {}), ...(r === 1 ? { r } : {}), i: nowS, e: nowS + RECEIPT_TTL_S });",
-    "new": "const claimsOf = ({ d, b, s, c, x, l, r }, nowS) => ({ d, b, s, c, x, ...(r === 1 ? { r } : {}), i: nowS, e: nowS + RECEIPT_TTL_S });",
+    "old": "const claimsOf = ({ d, b, s, c, x, l, r, m }, nowS) => ({ d, b, s, c, x, ...(l !== undefined ? { l } : {}), ...(r === 1 ? { r } : {}), ...(m !== undefined ? { m } : {}), i: nowS, e: nowS + RECEIPT_TTL_S });",
+    "new": "const claimsOf = ({ d, b, s, c, x, l, r, m }, nowS) => ({ d, b, s, c, x, ...(r === 1 ? { r } : {}), ...(m !== undefined ? { m } : {}), i: nowS, e: nowS + RECEIPT_TTL_S });",
     "tests": [
       "test/auditwbx.test.js"
-    ]
+    ],
+    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. "
   },
   {
     "name": "AUDWBX-S2-the-players-level-whatever-the-claim",

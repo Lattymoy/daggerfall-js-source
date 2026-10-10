@@ -1808,7 +1808,8 @@ street guards' and the rosters' watch (the city watch wears what it
 rolled).
 
 THE WIRE. `ls` and `lw` change wire.js, so the relay's bundle: RELAY_VERSION
-world188 (past main's WAGONS1 world187, which may deploy first). The relay
+world189 (world188 on the branch, renumbered past main's INT11-INT14
+world188 at the merge - it may deploy first). The relay
 forwards foe frames unread; no frame changes shape.
 
 PROVEN. `test/mwnpc_audit2.test.js` (17) - each finding executed where it

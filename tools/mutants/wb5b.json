@@ -20,12 +20,12 @@
   {
     "name": "WB5b-counted-twice",
     "file": "server-account/src/accounts.js",
-    "old": "'INSERT OR IGNORE INTO gate_kills (day, account, boss, earned, at, region, stones) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)'",
-    "new": "'INSERT OR REPLACE INTO gate_kills (day, account, boss, earned, at, region, stones) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)'",
+    "old": "'INSERT OR IGNORE INTO gate_kills (day, account, boss, earned, at, region, stones, body) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)'",
+    "new": "'INSERT OR REPLACE INTO gate_kills (day, account, boss, earned, at, region, stones, body) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)'",
     "tests": [
       "test/wb5b_gate_claim.test.js"
     ],
-    "note": "SEAT1b (PIN MOVED): re-aimed by content - the report names its region, the gate claim its region and character. WB12d (re-aimed at its merge): the row's `stones` beside SEAT1b's `region`."
+    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. SEAT1b (PIN MOVED): re-aimed by content - the report names its region, the gate claim its region and character. WB12d (re-aimed at its merge): the row's `stones` beside SEAT1b's `region`."
   },
   {
     "name": "WB5b-no-key-no-refusal",

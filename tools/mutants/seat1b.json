@@ -138,12 +138,12 @@
   {
     "name": "SEAT1b-gate-region-not-stored",
     "file": "server-account/src/accounts.js",
-    "old": ".bind(c.d, player.id, c.b, c.x, nowS, c.x !== 'rite' && seatRegionOk(region) ? region : null, embers);",
-    "new": ".bind(c.d, player.id, c.b, c.x, nowS, null, embers);",
+    "old": "nowS, c.x !== 'rite' && seatRegionOk(region) ? region : null, embers, c.m",
+    "new": "nowS, null, embers, c.m",
     "tests": [
       "test/seat1b_service.test.js"
     ],
-    "note": "WB12d (re-aimed at its merge): the row's embers beside the region, and the rite's own row none."
+    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. WB12d (re-aimed at its merge): the row's embers beside the region, and the rite's own row none."
   },
   {
     "name": "SEAT1b-gate-agreement-two",

@@ -285,7 +285,7 @@ test('SD9a THE PAGE: my receipt heard from my own realm or the hub - never a cel
 
 test('SD9a the relay by source: the receipts minted before the fall is said, by the gate\'s `earned`; handed at the late `in`; the hub told them with who stood there; kept, handed at a hello, spent, swept (mutants: each step dropped)', () => {
   const w = read('server/src/index.js');
-  assert.match(w, /for \(const sub of Object\.keys\(f\.players\)\.filter\(\(x\) => earned\(f, x\)\)\) \{\n\s+try \{ f\.rc\[sub\] = await mintSdReceipt\(\{ d: f\.s, s: sub, c: rand32\(\), x: earnedBy\(f, sub\), l: f\.players\[sub\]\.lv \}, key, \{ subtle: crypto\.subtle, nowS \}\); \}/);
+  assert.match(w, /for \(const sub of Object\.keys\(f\.players\)\.filter\(\(x\) => earned\(f, x\)\)\) \{\n\s+try \{ f\.rc\[sub\] = await mintSdReceipt\(\{ d: f\.s, s: sub, c: rand32\(\), x: earnedBy\(f, sub\), l: f\.players\[sub\]\.lv, \.\.\.this\._bodyMeasureOf\(f, sub, earned\) \}, key, \{ subtle: crypto\.subtle, nowS \}\); \}/);   // PIN MOVED (INT14): and the count's measure
   const at = (re) => w.search(re);
   assert.ok(at(/f\.rc\[sub\] = await mintSdReceipt/) < at(/f\.said = true;   \/\/ kept before it is said/) && at(/f\.said = true;   \/\/ kept before it is said/) < at(/this\._sdFightFan\(\[\{ k: 'fell', \.\.\.f\.fell \}\]\);/), 'minted, kept, then said');
   assert.match(w, /rc: Object\.entries\(f\.rc \?\? \{\}\), here: f\.here \?\? \[\] \}\), signal: AbortSignal\.timeout\(SD_TELL_RETRY_MS\)/);
@@ -293,5 +293,5 @@ test('SD9a the relay by source: the receipts minted before the fall is said, by 
   assert.match(w, /if \(isSocialRoom\(a\.key\) && who\.subject\) \{ try \{ await this\._sdReceiptTo\(ws, who\.subject, now\); \}/);
   assert.match(w, /'sweep:sdrc'/);
   assert.match(w, /import \{ mintSdReceipt, readSdReceipt, SD_RECEIPT_TTL_S \} from '\.\.\/\.\.\/src\/net\/sdReceipt\.js';/);
-  assert.match(read('test/relayversion.test.js'), /'src\/net\/sdRemnant\.js', 'src\/net\/sdReceipt\.js'\]/, 'net/sdReceipt.js in the bundle');
+  assert.match(read('test/relayversion.test.js'), /'src\/net\/sdReceipt\.js'\]/, 'net/sdReceipt.js in the bundle');   // PIN MOVED (INT12): last still - net/sdRemnant.js walks earlier now, under net/bossRef.js
 });

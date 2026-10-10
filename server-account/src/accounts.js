@@ -919,8 +919,8 @@ export async function claimGate({ db, nowS, subtle }, player, receipt, publicKey
   // at least three of its claims agree on (seatInfluence.js), null where the claim named none, and on the rite's own
   // row, which is no kill
   const embers = c.r === 1 ? 2 : 1;
-  const kill = db.prepare('INSERT OR IGNORE INTO gate_kills (day, account, boss, earned, at, region, stones) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)')
-    .bind(c.d, player.id, c.b, c.x, nowS, c.x !== 'rite' && seatRegionOk(region) ? region : null, embers);
+  const kill = db.prepare('INSERT OR IGNORE INTO gate_kills (day, account, boss, earned, at, region, stones, body) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)')
+    .bind(c.d, player.id, c.b, c.x, nowS, c.x !== 'rite' && seatRegionOk(region) ? region : null, embers, c.m ? JSON.stringify(c.m) : null);   // INT14: the relay's count, kept
   // MARKS1 / AUDIT 28 M4: the gate's Marks (marks.js gateStrikeStatement) IN THE SAME BATCH as the row - one transaction,
   // so a strike that fails takes the row with it and the retry claims afresh; `strike` null where Marks are not this
   // account's, and the row is written alone. WB12d: the rite alone is no breach closed - no strike
