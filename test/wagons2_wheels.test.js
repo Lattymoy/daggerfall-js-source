@@ -12,13 +12,13 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { makeWorld, PARTS } from './hccWorld.mjs';
 import { syntheticWagon41214 } from './hccModel.mjs';
-import { TRANSPORT, WAGON_MODE, HORSE_MODE, WAGON_MODEL_ID, NORMAL_GROUND_OFFSET } from '../src/systems/horseCartLaw.js';
+import { TRANSPORT, WAGON_MODE, HORSE_MODE, WAGON_MODEL_ID, NORMAL_GROUND_OFFSET, HORSE_BOX_SIZE } from '../src/systems/horseCartLaw.js';
 import { bogieAxle, steerToward, hitchedPoseStep, yawBetween, yawed } from '../src/systems/horseFollow.js';
 import { wheelContacts, rolledAngles } from '../src/systems/horseCart.js';
 import { createHorseCartPool } from '../src/scenes/horseCartPool.js';
 import { HCC_WIRE_KIND } from '../src/systems/horseCartWire.js';
 import { CARGO_DEFINITIONS } from '../src/systems/wagon41214.js';
-import { wagonGeometry, buildBakedWagonParts, steerLimitOf, wagonIconModel, MEASURED, LIFT } from '../src/world/wagonModels.js';
+import { wagonGeometry, buildBakedWagonParts, steerLimitOf, wagonIconModel, MEASURED, LIFT, TEAM, rigGrowOf } from '../src/world/wagonModels.js';
 import { WAGON_KINDS } from '../src/systems/wagonKinds.js';
 import { quatForward, quatRotate, quatAngleAxis, mat4FromQuatPos, UNITY_QUAT_IDENTITY } from '../src/world/quat.js';
 import { multiply } from '../src/world/mat4.js';
@@ -88,7 +88,7 @@ test('WAGONS2 THE LOCK: the four-wheelers\' front axle turns 6.85 degrees either
   close(low, ((Math.acos(1.43 / Math.hypot(inner, r2)) - Math.atan2(r2, inner)) * 180) / Math.PI, 1e-9, 'a rail low beside them meets the whole radius');
 });
 
-test('WAGONS2 THE PARTS: each wheel carries its own radius, a four-wheeler\'s front pair turns with its bogie - the front axle and the pole on the kingpin, the wheelbase from the rear axle; the body keeps no pole; the bounds and the item\'s picture keep the whole wagon (mutants: a wheel\'s radius dropped, every wheel taken for a front one, the pole left on the body, the bogie out of the bounds, the bogie out of the icon)', () => {
+test('WAGONS2 THE PARTS: each wheel carries its own radius, a four-wheeler\'s front pair turns with its bogie - the front axle and the pole on the kingpin, the wheelbase from the rear axle; the body keeps no pole; the item\'s picture keeps the whole wagon, the bounds (the parked box) its body and front axle - WAGONS3: a pair\'s pole runs on between the horses, and the box stands short of it (mutants: a wheel\'s radius dropped, every wheel taken for a front one, the pole left on the body, the front axle out of the bounds, the pole in them, the bogie out of the icon)', () => {
   const zs = (g) => { let lo = Infinity, hi = -Infinity; for (let i = 2; i < g.positions.length; i += 3) { lo = Math.min(lo, g.positions[i]); hi = Math.max(hi, g.positions[i]); } return [lo, hi]; };
   for (const kind of ['cart', 'openWagon', 'caravan']) {
     const g = wagonGeometry(bakeOf(kind)), parts = buildBakedWagonParts(g, id);
@@ -100,10 +100,13 @@ test('WAGONS2 THE PARTS: each wheel carries its own radius, a four-wheeler\'s fr
     close(parts.bogie.wheelbase, 3.8659, 1e-9, `${kind}: the wheelbase`);
     close(parts.bogie.steerLimit, 6.849695, 1e-5, `${kind}: the lock`);
     const [blo, bhi] = zs(g.bogie.geometry);
-    close(bhi, WAGON_KINDS[kind].hitch - 1.25 + 0.25, 1e-5, `${kind}: the bogie reaches the pole's iron at the horse`);
+    close(bhi, WAGON_KINDS[kind].hitch + TEAM.poleTip + 0.2, 1e-5, `${kind}: the bogie reaches the pole's iron between the pair's collars`);   // PIN MOVED (WAGONS3)
     assert.ok(blo > 3.7 && blo < 3.8, `${kind}: and back to the front axle (${blo})`);
     close(zs(g.statics)[1], MEASURED[kind].frontZ, 1e-2, `${kind}: the body ends at its own front`);
-    close(parts.bounds.max[2], bhi, 1e-6, `${kind}: the bounds reach the pole's tip`);
+    close(parts.bounds.max[2], Math.max(zs(g.statics)[1], parts.bogie.reach?.max?.[2] ?? -Infinity), 1e-6, `${kind}: the bounds stop at the body - the pole and its team outside the parked box (PIN MOVED, WAGONS3)`);
+    assert.ok(parts.bounds.max[2] < WAGON_KINDS[kind].hitch - HORSE_BOX_SIZE[2] / 2, `${kind}: short of its horses' rumps (${parts.bounds.max[2]})`);
+    assert.ok(g.bogie.reach.min[2] < 3.8 && g.bogie.reach.max[2] > 3.9, `${kind}: the front axle's reach`);
+    assert.ok(parts.bounds.max[0] >= g.bogie.reach.max[0] - 1e-9 && parts.bounds.max[0] > 1.58, `${kind}: the front axle's ends in the bounds (${parts.bounds.max[0]})`);
     close(zs(wagonIconModel(g))[1], bhi, 1e-6, `${kind}: the picture draws the pole`);
   }
 });
@@ -345,7 +348,8 @@ test('WAGONS2 x OW-BIG: under the Overworld each of my grown wheels keeps its ow
   const drawn = () => { r.draws.length = 0; pool.draw(r, null, { selfGrow: 8 }); return r.draws.slice(2, 6).map((d) => wheelTurnOf(d.m)); };
   closeAll(drawn(), [10, 20, 30, 40], 1e-4, 'grown from where they stood');
   wheel.angles = [10 + 80, 20 + 40, 30 - 16, 40 + 8];
-  closeAll(drawn(), [10 + 10, 20 + 5, 30 - 2, 40 + 1], 1e-4, 'each its own step, an eighth of it');
+  const g = rigGrowOf(8, 'openWagon');   // PIN MOVED (WAGONS3): the rig's own grow, not the traveller's eight
+  closeAll(drawn(), [10 + 80 / g, 20 + 40 / g, 30 - 16 / g, 40 + 8 / g], 1e-4, 'each its own step, over the rig\'s grow');
 });
 
 test('WAGONS2 (AUDIT) THE TEAM MOUNTED AGAIN: each of Mac\'s wagons parked with its horse in its shafts is mounted again from beside its horse - the mod\'s reaches (the player 5 m from the wagon, the horse 3.5 m from it) measured to the wagon\'s run, its hitch past the mod\'s 3.1 m; its far end is in its store\'s reach; the classic wagon\'s reaches the mod\'s own point (mutants: the run unread, the store\'s reach from the axle)', async () => {

@@ -128,7 +128,8 @@ test('HCC hosts: world.js - the frame, the draw, the origin, the ray, the plaque
     // AUDIT HCC H1: LateUpdate ONCE a frame, in every mode - the modal branch, and the exterior frame before the world pass
     /hcc\.setEnabled\(hccOn\(\)\); if \(hcc\.enabled\) hccPollSettings\(nowMs\); hcc\.frame\(dt, cam\.pos, gamePaused\(\) \? 0 : dt \* (?:worldTimeScale|hccTimeScale)\(\)\);/,   // AUDIT HCC (branch audit): the runtime's Time.deltaTime - held by the pause, scaled with the world
     /hccTick\(dt, now\);[^\n]*\n\s+townTalk\.frame\(dt\);\n\s+renderer\.resolveFrame\(\);[^\n]*\n\s+capturePendingScreenshot\(canvas\);/,   // AUDIT RETRO1 E5: the frame shown before its shot
-    /hccTick\(dt, now\);[^\n]*\n\s+renderer\.setClearColor\(SKY_CLEAR\);/,
+    // PIN MOVED (WAGONS3): before the camera, which sits on the bench of the wagon it just stood - and so before the world pass
+    /hccTick\(dt, now\);\n(?:\s+\/\/[^\n]*\n)*\s+_driverSeat = walkMode && playerSpawned && player\.transportMode === TRANSPORT_MODES\.Cart && [^\n]*hcc\.driverSeat\(\) : null;\n\s+if \(_driverSeat\) cam\.pos = /,
     /if \(hcc\.enabled && _mode\(\) === 'exterior'\) livePersonBatches\.push\(\.\.\.hcc\.batches\(\)\);/,
     // AUDIT HCC K2/K3: GetKeyDown is the frame's edge ring, behind HandleConfiguredHotkeys' IsPlayingGame / LoadInProgress gate
     // KB1: and the key is the registry's action - the mod's TextKey is no longer parsed
@@ -154,6 +155,9 @@ test('HCC hosts: world.js - the frame, the draw, the origin, the ray, the plaque
     /exteriorFoes\.setOnHcc\(\(from, hv, at\) => hcc\.applyOwner\(from, hv, campToScene, at\), \(\) => hcc\.clearPeers\(\)\);/,
     /horseCart: \(\) => hccRuntimeOn\(\),\s+\/\/ HCC: TrailingWagonTransportWindow/, /horseCart: hccRuntimeOn,\s+\/\/ HCC: the wagon's storage access is the runtime's word/,
   ]) assert.match(w, re, `world.js lost ${re}`);
+  // WAGONS3: the exterior frame's LateUpdate before the camera and before the world pass (the clear colour opens it)
+  { const at = w.indexOf('    hccTick(dt, now);\n    // WAGONS3'), cam0 = w.indexOf('const mwv0 = mwViewFrame({'), clear = w.indexOf('renderer.setClearColor(SKY_CLEAR);   // INCIDENT 2026-09-04');
+    assert.ok(at > 0 && at < cam0 && cam0 < clear, 'world.js: hccTick, then the camera, then the world pass'); }
   assert.equal((w.match(/hcc\.clearPeers\(\)/g) ?? []).length, 1, 'the peers\' teams clear wherever the pool\'s puppets do - the pool\'s own clearPuppets hook, so the pinned room-change and leave lines stand as they were');
   assert.match(w, /if \(!seam\) \{ exteriorFoes\.clearPuppets\(\);/); assert.match(w, /online\.leave\(\); exteriorFoes\.clearPuppets\(\); modes\?\.clearOwnPuppets\?\.\(\); _foesRoom = null;/);   // QUEST-PARTY phase 3b: and a building's
 });
@@ -166,7 +170,8 @@ test('HCC hosts: exterior.js mirrors the same seams over the fixed city (no stre
     /streaming: \{ isReady: \(\) => true, isInit: \(\) => false, mapPixelX: \(\) => _locPixel\.x, mapPixelY: \(\) => _locPixel\.y, ratio: \(\) => 1 \/ GLOBAL_SCALE \}/,
     /isOnShip: \(\) => false/,
     /hcc\.setEnabled\(hccOn\(\)\); if \(hcc\.enabled\) hccPollSettings\(nowMs\); hcc\.frame\(dt, cam\.pos, gamePaused\(\) \? 0 : dt \* (?:worldTimeScale|hccTimeScale)\(\)\);/,   // AUDIT HCC (branch audit): the runtime's Time.deltaTime - held by the pause, scaled with the world
-    /hccTick\(dt, now\);[^\n]*\n\s+townTalk\.frame\(dt\);/, /hccTick\(dt, now\);[^\n]*\n\s+renderer\.setClearColor\(SKY_CLEAR\);/,
+    /hccTick\(dt, now\);[^\n]*\n\s+townTalk\.frame\(dt\);/,
+    /hccTick\(dt, now\);\n\s+_driverSeat = walkMode && player\.transportMode === TRANSPORT_MODES\.Cart && [^\n]*hcc\.driverSeat\(\) : null;\n\s+if \(_driverSeat\) cam\.pos = /,   // PIN MOVED (WAGONS3): before the camera
     /if \(hcc\.enabled\) personBatches\.push\(\.\.\.hcc\.batches\(\)\);/,
     /const hccActionPressed = \(action\) => !gamePaused\(\) && pressed\(latch\.edge, keys, action\);/,
     /camps\.draw\(renderer, texRemap\);[^\n]*\n\s+hcc\.draw\(renderer, texRemap\);/,
@@ -175,6 +180,10 @@ test('HCC hosts: exterior.js mirrors the same seams over the fixed city (no stre
     /\(key\) => hcc\.hoverName\(key\),/, /horseCart: pickActivatableHit\(cam\.pos, _hd, hcc\.targets\(\), collider\),/,
     /horseCart: hccRuntimeOn,/, /horseCart: \(\) => hccRuntimeOn\(\),/,
   ]) assert.match(e, re, `exterior.js lost ${re}`);
+  // AUDIT WAGONS3 R6: the fixed city's LateUpdate before the camera and before the world pass too (the pin WAGONS3 moved
+  // off the clear colour for world.js alone)
+  { const at = e.indexOf('    hccTick(dt, now);\n    _driverSeat'), cam0 = e.indexOf('? mwViewFrame({ fpEye: cam.pos, feet: player.feetAt(), yaw: cam.yaw, pitch: cam.pitch,'), clear = e.indexOf('renderer.setClearColor(SKY_CLEAR);   // INCIDENT 2026-09-04');
+    assert.ok(at > 0 && at < cam0 && cam0 < clear, 'exterior.js: hccTick, then the camera, then the world pass'); }
   assert.doesNotMatch(e, /wireRecord|applyOwner|sweepOwners/, 'no room, no wire on this host');
   assert.doesNotMatch(e, /travelOptions/, 'and no Travel Options seam (ENH-NOTICE3 A: the journey is world.js\'s alone) - the runtime reads the absent seam as "no such mod"');
 });

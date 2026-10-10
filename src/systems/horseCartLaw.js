@@ -52,6 +52,10 @@ export const LOG_PREFIX = '[TrailingWagon]';
 export const WAGON_MODEL_ID = 41214;
 export const HORSE_NAME_MAX = 31;
 export const WAGON_FOLLOW_DISTANCE = 2.5;
+/** WAGONS3 (Mac: "Spawning the wagon can trap you under the wagon"): how far past its own hitch a wagon laid fresh stands
+ *  behind the player (m) - its pole's tip and its team clear of the capsule (systems/horseCart.js deploySetback). Not the
+ *  mod's: its one wagon laid at WAGON_FOLLOW_DISTANCE. */
+export const DEPLOY_CLEARANCE = 1.0;
 export const SAMPLE_DISTANCE = 0.08;
 export const RETAINED_TRAIL_DISTANCE = 7.0;
 export const TELEPORT_DISTANCE = 20.0;

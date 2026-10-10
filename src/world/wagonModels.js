@@ -37,6 +37,7 @@ import { NORMAL_GROUND_OFFSET } from '../systems/horseCartLaw.js';
 import { CARGO_DEFINITIONS } from '../systems/wagon41214.js';
 import { WAGON_KINDS, activeWagonKind, activeWagonItem } from '../systems/wagonKinds.js';
 import { wagonLookOf } from '../systems/wagonLooks.js';   // WAGONS2: the driven wagon's paint
+import { SEATED_HIP_HEIGHT } from '../player/seatPose.js';   // WAGONS3: the seated hips' height over the feet, the measured biped's
 
 /** Where each wagon's bake is (fetched at the load, as the ships' are - systems/comeSailAwayModels.js). */
 export const WAGON_MODEL_URLS = Object.freeze({
@@ -53,9 +54,16 @@ export const LIFT = NORMAL_GROUND_OFFSET;
  *  `innerX` inside, `bedZ` the bed's run (back to front), `frontZ` the wagon's foremost point. */
 export const MEASURED = Object.freeze({
   cart: Object.freeze({ axleY: 0.5445, floorY: 0.69, innerX: 1.0543, sideX: 1.1589, bedZ: Object.freeze([-0.37, 2.2]), frontZ: 3.14, bottomFront: Object.freeze([0.1452, 2.1778]), bottomBack: Object.freeze([0.6201, -0.4852]) }),
-  openWagon: Object.freeze({ axleY: 0.7811, floorY: 1.0142, innerX: 1.2, sideX: 1.36, bedZ: Object.freeze([-0.6, 5.0]), frontZ: 5.65, frontAxle: Object.freeze([0, 0.824, 3.8659]) }),
-  caravan: Object.freeze({ axleY: 0.7811, floorY: 0.9425, innerX: 1.2, sideX: 1.36, bedZ: Object.freeze([-0.7077, 5.1164]), frontZ: 6.25, frontAxle: Object.freeze([0, 0.824, 3.8659]), rearZ: -0.7077, endTopY: 3.5166 }),
+  openWagon: Object.freeze({ axleY: 0.7811, floorY: 1.0142, innerX: 1.2, sideX: 1.36, bedZ: Object.freeze([-0.6, 5.0]), frontZ: 5.65, frontAxle: Object.freeze([0, 0.824, 3.8659]), bench: Object.freeze({ y: 1.54, z: 5.28 }) }),
+  caravan: Object.freeze({ axleY: 0.7811, floorY: 0.9425, innerX: 1.2, sideX: 1.36, bedZ: Object.freeze([-0.7077, 5.1164]), frontZ: 6.25, frontAxle: Object.freeze([0, 0.824, 3.8659]), rearZ: -0.7077, endTopY: 3.5166, bench: Object.freeze({ y: 2.476, z: 5.49 }) }),
 });
+/** WAGONS3: `bench` above - where the driver's hips sit on a front bench (metres, the bake's frame): `y` the bench's top
+ *  under them, `z` their run - a thigh's length or less behind the bench's front edge, so the knees stand at its lip,
+ *  and clear of the body's front wall behind them. Read off the bake (test/wagons3.test.js): the open wagon's bench is
+ *  level at 1.525-1.556 m over 4.90-5.65 m, its back half under the body's front wall (5.12 m) - the hips 0.37 m before
+ *  its edge, 0.16 m before the wall; the caravan's falls from 2.564 m at its back (4.81 m) to 2.417 m at its front
+ *  (5.94 m), the hips a thigh (0.45 m) before its edge, and its step - the footboard before it, 1.88-1.92 m high - is
+ *  where the seated feet come down. */
 
 /** THE CART'S REST: its bottom's fall from its back edge to its front (degrees) - as Mac drew it, unhitched. */
 export const CART_REST_PITCH_DEG = (() => {
@@ -126,13 +134,72 @@ function lifted(g, dy = -LIFT) {
 }
 
 /** The pole a four-wheeler is drawn by (it has no shafts): from its front axle forward to where the horse stands
- *  (`hitch` m ahead of the rear axle, the kind's), a doubletree across its end and the hounds braced back to the axle. */
+ *  (`hitch` m ahead of the rear axle, the kind's), a doubletree across its end and the hounds braced back to the axle.
+ *  WAGONS3 (Mac: "requiring 2 horses"): a PAIR's pole - run on between the two horses to their collars (`TEAM.poleTip`
+ *  past the hitch) with the neck yoke across its tip, and the doubletree across it behind their hocks, a singletree at
+ *  each end where that horse's traces meet it (`TEAM.tree`). */
 function poleGeometry(bench, kind) {
-  const ax = MEASURED[kind].frontAxle, tip = [0, 1.0, WAGON_KINDS[kind].hitch - 1.25];
-  prism(bench, TEX.beam, [0, ax[1], ax[2]], tip, 0.07, 0.055, 6, { tileV: WAGON_TILE.beam[1] });
-  box(bench, TEX.beam, [0, tip[1], tip[2]], [0.55, 0.05, 0.05], { tile: WAGON_TILE.beam });
+  const ax = MEASURED[kind].frontAxle, hitch = WAGON_KINDS[kind].hitch;
+  const tip = [0, TEAM.yokeY, hitch + TEAM.poleTip], tree = TEAM.tree, tz = hitch - tree.back;
+  prism(bench, TEX.beam, [0, ax[1], ax[2]], tip, 0.07, 0.05, 6, { tileV: WAGON_TILE.beam[1] });
+  box(bench, TEX.beam, [0, tip[1], tip[2]], [TEAM.side - TEAM.collar[0] - 0.05, 0.025, 0.025], { tile: WAGON_TILE.beam });   // the neck yoke, between the collars (box's sizes are halves)
+  box(bench, TEX.beam, [0, tree.y, tz], [TEAM.side, 0.03, 0.03], { tile: WAGON_TILE.beam });   // the doubletree, its ends at each horse's middle
+  for (const s of [-1, 1]) box(bench, TEX.beam, [s * TEAM.side, tree.y, tz - 0.04], [tree.half, 0.025, 0.025], { tile: WAGON_TILE.beam });   // a singletree each, its ends at that horse's traces
   for (const s of [-1, 1]) prism(bench, TEX.beam, [s * 0.7, ax[1], ax[2] - 0.05], [0, 0.88, ax[2] + 1.0], 0.035, 0.035, 5, { tileV: WAGON_TILE.beam[1] });
-  prism(bench, TEX.iron, [0, tip[1], tip[2]], [0, tip[1], tip[2] + 0.25], 0.04, 0.025, 6);   // its iron
+  prism(bench, TEX.iron, [0, tip[1], tip[2]], [0, tip[1], tip[2] + 0.2], 0.04, 0.025, 6);   // its iron
+}
+
+/**
+ * WAGONS3 (2026-10-10, Mac: "requiring 2 horses to use" and "Proper animated rope mechanics that connect the horses to
+ * the wagon"): THE TEAM, measured on the horse the pool draws (scenes/horseCartPool.js - the mod's billboard, 121 x 94
+ * pixels at the global scale: 3.03 m long, 2.35 m high, its body HORSE_BOX_SIZE's 2.6 m) in a horse's own frame (metres:
+ * +x its right, +y up, +z the way it faces, the origin on the ground under its middle). A pair stands `side` either side
+ * of the pole; each horse's two TRACES run from its `collar` (either side of its chest) back to the ends of its
+ * singletree (`tree`: `back` behind its middle, `y` over the ground, `half` its half width - the bake's frame, before the
+ * lift); the REINS from the driver's hands to its `bit`. The Small Cart's one horse pulls from its shafts' roots
+ * (`cartTrace`, the bake's frame: either side of the body's front at the shafts' line). The neck yoke rides the pole's
+ * tip `poleTip` past the hitch at `yokeY`.
+ */
+export const TEAM = Object.freeze({
+  side: 0.65,
+  collar: Object.freeze([0.24, 1.35, 0.75]),
+  bit: Object.freeze([0, 1.7, 1.3]),
+  tree: Object.freeze({ back: 1.55, y: 0.92, half: 0.3 }),
+  cartTrace: Object.freeze([0.57, 0.62, 2.2]),
+  poleTip: 0.5, yokeY: 1.15,
+});
+/** WAGONS3: where each horse of a kind's team stands across its hitch - its x in the wagon's frame (the pole's line):
+ *  the Small Cart's one on it, a pair either side. */
+export const teamSidesOf = (kind) => (WAGON_KINDS[kind]?.horses === 2 ? [-TEAM.side, TEAM.side] : [0]);
+/** WAGONS3: THE DRIVER'S SEAT on a kind's front bench (the lifted frame): `feet` the seated feet's floor under the hips
+ *  (the bench's top less SEATED_HIP_HEIGHT - player/seatPose.js's measured biped), `yaw` the way they face (the wagon's,
+ *  degrees), `top` where the hands hold the reins over the feet (seatPose's `top`: the hands a forearm over it, before
+ *  the hips). Null for a kind with no bench - the Small Cart's driver rides its horse, the mod's own way. The seat a
+ *  pool stands is this one (buildBakedWagonParts `driver`), drawn under the cart's tilt as a back seat is (none tilts:
+ *  the cart has none). */
+// FLAGGED: the Small Cart has no bench (Mac's choice) - its driver rides its horse the mod's way, and RIDE-POV keeps the Morrowind body in the head on it (bible/06-Systems/Wagons.md WAGONS3).
+export function driverSeatFor(kind) {
+  const b = MEASURED[kind]?.bench;
+  if (!b) return null;
+  return Object.freeze({ feet: Object.freeze([0, b.y - SEATED_HIP_HEIGHT - LIFT, b.z]), yaw: 0, top: DRIVER_HANDS_TOP });
+}
+/** WAGONS3: the reins' hands over the seated feet - a hand's breadth over the lap (SEATED_HIP_HEIGHT), not a card
+ *  table's SEAT_TOP_DEFAULT. */
+export const DRIVER_HANDS_TOP = SEATED_HIP_HEIGHT + 0.11;
+/** WAGONS3: where each trace meets the wagon (the lifted frame): `[horse, side, point, onBogie]` per trace - a pair's on
+ *  their singletrees (which turn with the pole on the kingpin: `onBogie`), the Small Cart's at its shafts' roots (the
+ *  body's frame, borne level with it). `horse` the team's index (teamSidesOf), `side` -1 its left trace, +1 its right. */
+export function traceRootsOf(kind) {
+  if (!WAGON_KINDS[kind]) return [];
+  const out = [];
+  if (kind === 'cart') {
+    const [x, y, z] = TEAM.cartTrace;
+    for (const s of [-1, 1]) out.push(Object.freeze([0, s, Object.freeze(fromLevel(kind, [s * x, y - LIFT, z])), false]));
+    return out;
+  }
+  const hitch = WAGON_KINDS[kind].hitch, t = TEAM.tree;
+  teamSidesOf(kind).forEach((hx, i) => { for (const s of [-1, 1]) out.push(Object.freeze([i, s, Object.freeze([hx + s * t.half, t.y - LIFT, hitch - t.back - 0.04]), true])); });
+  return out;
 }
 
 /** The radius a wheel rolls on: its pivot over the ground (its lowest corner - the bake's frame stands it there). */
@@ -187,7 +254,7 @@ export function wagonGeometry(bake) {
   const statics = new MeshBench(WAGON_ARCHIVE);
   const front = kind !== 'cart' ? new MeshBench(WAGON_ARCHIVE) : null;   // WAGONS2: the bogie
   const wheels = [];
-  let radius = 0, rear = 0, rearZ = 0, kingpin = null;
+  let radius = 0, rear = 0, rearZ = 0, kingpin = null, axleBox = null, cabinBox = null;
   for (const part of bake.parts) {
     if (part.role.startsWith('wheel')) {
       const pivot = part.origin;
@@ -199,22 +266,33 @@ export function wagonGeometry(bake) {
     } else if (front && BOGIE_ROLES.includes(part.role)) {
       benchPart(front, part, { offset: [0, 0, 0], role: part.role, keep: null, skin: (role, n, c) => wagonFaceSkin(kind, role, n, c) });
       kingpin = part.origin;
-    } else benchPart(statics, part, { offset: [0, 0, 0], role: part.role, keep: null, skin: (role, n, c) => wagonFaceSkin(kind, role, n, c) });
+      axleBox = boxOfPoints(pointsOf(part));   // WAGONS3: the front axle's own reach - the parked box's, the pole's left out
+    } else {
+      benchPart(statics, part, { offset: [0, 0, 0], role: part.role, keep: null, skin: (role, n, c) => wagonFaceSkin(kind, role, n, c) });
+      // WAGONS3: the body's own box - a third-person camera's wall. AUDIT WAGONS3 B1: the caravan's alone (`enterable`,
+      // a room with walls and a roof) - the open wagon's body is its two hoops, and their box stood 5.6 cm behind its
+      // bench, so every cast back from the driver's head met it at once and the camera never left the head
+      if (part.role === 'body' && WAGON_KINDS[kind].enterable) cabinBox = boxOfPoints(pointsOf(part));
+    }
   }
   if (rear !== 2) throw new Error(`the ${kind} has ${rear} rear wheels`);
   if (front && !kingpin) throw new Error(`the ${kind} has no front axle`);
   if (front) poleGeometry(front, kind);
-  const bogie = front ? { geometry: lifted(front.finish()), kingpin: [kingpin[0], kingpin[1] - LIFT, kingpin[2]], wheelbase: kingpin[2] - rearZ, steerLimit: steerLimitOf(bake, kingpin) } : null;
-  return { kind, statics: lifted(statics.finish()), wheels, wheelRadius: radius / 2, bogie };
+  const reach = axleBox ? { min: [axleBox.min[0], axleBox.min[1] - LIFT, axleBox.min[2]], max: [axleBox.max[0], axleBox.max[1] - LIFT, axleBox.max[2]] } : null;
+  const bogie = front ? { geometry: lifted(front.finish()), kingpin: [kingpin[0], kingpin[1] - LIFT, kingpin[2]], wheelbase: kingpin[2] - rearZ, steerLimit: steerLimitOf(bake, kingpin), reach } : null;
+  const cabin = cabinBox ? { min: [cabinBox.min[0], cabinBox.min[1] - LIFT, cabinBox.min[2]], max: [cabinBox.max[0], cabinBox.max[1] - LIFT, cabinBox.max[2]] } : null;
+  return { kind, statics: lifted(statics.finish()), wheels, wheelRadius: radius / 2, bogie, cabin };
 }
 
 /** The bounds of every point a wagon's geometry has (its statics and its wheels in place) - the parked wagon's
- *  collider (DeployedWagonVisual's BoxCollider over the model's bounds). WAGONS2: its bogie as it stands straight. */
+ *  collider (DeployedWagonVisual's BoxCollider over the model's bounds). WAGONS2: its bogie as it stands straight.
+ *  WAGONS3 (Mac: "Spawning the wagon can trap you under the wagon"): its front axle, never its pole - a pair's pole runs
+ *  on between the two horses to their collars, and a box to its tip stood round the team and the player beside it. */
 function boundsOf(geo) {
   const min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
   const take = (p, at) => { for (let i = 0; i < p.length; i += 3) for (let k = 0; k < 3; k++) { const v = p[i + k] + at[k]; if (v < min[k]) min[k] = v; if (v > max[k]) max[k] = v; } };
   take(geo.statics.positions, [0, 0, 0]);
-  if (geo.bogie) take(geo.bogie.geometry.positions, [0, 0, 0]);
+  if (geo.bogie?.reach) take([...geo.bogie.reach.min, ...geo.bogie.reach.max], [0, 0, 0]);
   for (const w of geo.wheels) take(w.geometry.positions, w.pivot);
   return { min, max, center: [0, 1, 2].map((k) => (min[k] + max[k]) / 2), size: [0, 1, 2].map((k) => max[k] - min[k]) };
 }
@@ -266,6 +344,22 @@ export function doorFor(kind) {
 }
 
 /**
+ * WAGONS3 (2026-10-10, Mac: "All the wagons/carts are oversized in the overworld"): A DRIVEN RIG'S GROW UNDER THE
+ * OVERWORLD. OW-BIG grows the traveller `g` times (player/travelCamera.js tvOwnGrow - 10 at the view's own height) so a
+ * body reads from hundreds of metres up, and WAGON-HITCH grew a driven wagon with its rider by the same `g`: a horse and
+ * rider read 30 m long, and the wagons behind them 60, 95 and 100 m - longer than the towns they drove past. A rig is
+ * drawn as long as RIG_READ_M grown by the traveller's `g` - a rider on horseback's length, a little more - whichever of
+ * the three it is: `g` times RIG_READ_M over the rig's own length (its hitch, the horse's half before it, the rear
+ * wheels' half behind the axle), never smaller than the rig itself (1) and never grown past `g`.
+ */
+export const RIG_READ_M = 4;
+/** WAGONS3: a kind's driven rig, end to end (m): its hitch (`hitch` - the pool's, the classic wagon's 3.1 where it
+ *  stands for the kind), a horse's half ahead of it (HORSE_BOX_SIZE's 2.6 m), its rear wheels' radius behind the axle. */
+export const rigLengthOf = (kind, hitch = null) => { const k = WAGON_KINDS[kind] ? kind : 'cart'; return (Number.isFinite(hitch) && hitch > 0 ? hitch : WAGON_KINDS[k].hitch) + 1.3 + (k === 'cart' ? 0.57 : 0.8); };
+/** WAGONS3: how many times a driven rig of `kind` (hitched `hitch` m ahead) is drawn under a traveller grown `g` times. */
+export const rigGrowOf = (g, kind, hitch = null) => (g > 1 ? Math.max(1, g * Math.min(1, RIG_READ_M / rigLengthOf(kind, hitch))) : 1);
+
+/**
  * The parts the cart's presentation draws, from a wagon's geometry (`wagonGeometry`): `make(geometry, name)` turns
  * a geometry into whatever the caller draws (the pool's `rendererModelOf`; a test's identity). The classic contract
  * (systems/wagon41214.js buildWagonParts: body, the shafts, the wheels and their pivots, the radius, the bounds) with
@@ -284,7 +378,7 @@ export function buildBakedWagonParts(geo, make = rendererModelOf) {
     bounds: boundsOf(geo),
     hitchPitch: geo.kind === 'cart' ? CART_REST_PITCH_DEG : 0,
     axlePivot: [0, (rearLeft.pivot[1] + rearRight.pivot[1]) / 2, (rearLeft.pivot[2] + rearRight.pivot[2]) / 2],
-    cargo: cargoFor(geo.kind), seats: seatsFor(geo.kind), door: doorFor(geo.kind),
+    cargo: cargoFor(geo.kind), seats: seatsFor(geo.kind), door: doorFor(geo.kind), driver: driverSeatFor(geo.kind), traces: traceRootsOf(geo.kind), cabin: geo.cabin ?? null,   // WAGONS3: the bench's driver, the traces' roots, the body's box
     bogie: geo.bogie ? { model: make(geo.bogie.geometry, `Wagon_${geo.kind}_bogie`), kingpin: geo.bogie.kingpin, wheelbase: geo.bogie.wheelbase, steerLimit: geo.bogie.steerLimit } : null,   // WAGONS2
   };
 }

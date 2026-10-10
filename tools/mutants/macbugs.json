@@ -130,8 +130,8 @@
   {
     "name": "MAC-A-a-clear-sweep-leaks-Infinity-into-the-camera-instead-of-a-miss",
     "file": "src/scenes/world.js",
-    "old": "      spherecast: (o, r, d, m) => { const h = collider.sphereCast(o, r, d, m, camFilter).dist; return Number.isFinite(h) ? h : null; },",
-    "new": "      spherecast: (o, r, d, m) => collider.sphereCast(o, r, d, m, camFilter).dist,",
+    "old": "      spherecast: (o, r, d, m) => { const h = Math.min(collider.sphereCast(o, r, d, m, camFilter).dist, hcc.cameraHit(o, d, m, r)); return Number.isFinite(h) ? h : null; },",
+    "new": "      spherecast: (o, r, d, m) => Math.min(collider.sphereCast(o, r, d, m, camFilter).dist, hcc.cameraHit(o, d, m, r)),",
     "tests": [
       "test/maca_camera_sphere.test.js"
     ]

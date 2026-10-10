@@ -15,6 +15,7 @@ import { syntheticWagon41214 } from './hccModel.mjs';
 import { TRANSPORT, WAGON_MODE, HORSE_MODE, HITCHED_HORSE_LOCAL_Z, NORMAL_GROUND_OFFSET, WAGON_MODEL_ID, TELEPORT_DISTANCE } from '../src/systems/horseCartLaw.js';
 import { hitchedPoseStep, hitchAxle, WagonHitch, hitchJumpReach, HITCH_JUMP_SPEED } from '../src/systems/horseFollow.js';
 import { createHorseCartPool, grownHitchedPosition, grownWheelStep } from '../src/scenes/horseCartPool.js';
+import { rigGrowOf } from '../src/world/wagonModels.js';   // WAGONS3: a driven rig's grow under the Overworld
 import { HCC_WIRE_KIND } from '../src/systems/horseCartWire.js';
 import { CARGO_DEFINITIONS } from '../src/systems/wagon41214.js';
 import { quatForward, quatRotate, quatLookRotation, UNITY_QUAT_IDENTITY } from '../src/world/quat.js';
@@ -167,9 +168,14 @@ test('WAGON-HITCH x OW-BIG: under the Overworld my cart\'s wagon is drawn grown 
   assert.ok(Math.abs(scaleOf(renderer.draws[0].m) - 1) < 1e-9, 'off the view: its own size');
   renderer.draws.length = 0; pool.draw(renderer, null, { selfGrow: 8, grow: () => 99 });
   const body = renderer.draws[0].m;
-  assert.ok(Math.abs(scaleOf(body) - 8) < 1e-9, 'grown with the traveller\'s own step, never the peers\' law');
-  const at = [body[12], body[13], body[14]], want = [0, NORMAL_GROUND_OFFSET * 8, -L * 8];
-  assert.ok(at.every((v, i) => Math.abs(v - want[i]) < 1e-5), `its axle eight hitch-lengths back, its wheels on the ground: ${at}`);   // the matrix is Float32
+  // PIN MOVED (WAGONS3, Mac: "All the wagons/carts are oversized in the overworld"): grown by the rig's own law off the
+  // traveller's step - a rig read as long as a rider on horseback (world/wagonModels.js rigGrowOf), the classic wagon's
+  // hitch its length - not the traveller's eight
+  const g = rigGrowOf(8, 'cart', L);
+  assert.ok(g > 1 && g < 8, `grown, less than the traveller: ${g}`);
+  assert.ok(Math.abs(scaleOf(body) - g) < 1e-5, 'grown with the traveller\'s own step, never the peers\' law');
+  const at = [body[12], body[13], body[14]], want = [0, NORMAL_GROUND_OFFSET * g, -L * g];
+  assert.ok(at.every((v, i) => Math.abs(v - want[i]) < 1e-5), `its axle g hitch-lengths back, its wheels on the ground: ${at}`);   // the matrix is Float32
   assert.ok(renderer.draws.length > 1 && renderer.draws.every((d) => d.o?.noShadow === true), 'no grown piece casts a giant\'s shadow (AUDIT B2)');
   renderer.draws.length = 0; pool.draw(renderer);
   assert.ok(renderer.draws.every((d) => !d.o?.noShadow), 'at its own size it casts as a wagon does');
@@ -202,7 +208,7 @@ test('WAGON-HITCH: another player\'s cart wagon hangs from their rider as drawn 
     assert.ok(p.shownWagon[2] < anchor[2], 'behind the rider');
   }
   renderer.draws.length = 0; pool.draw(renderer, null, { selfGrow: 8, grow: (q) => (q === pool.peers.get('p1').hitch ? 6 : 1) });
-  assert.ok(Math.abs(scaleOf(renderer.draws[0].m) - 6) < 1e-9, 'grown by the OW-PEERS law at their rider');
+  assert.ok(Math.abs(scaleOf(renderer.draws[0].m) - rigGrowOf(6, 'cart', L)) < 1e-5, 'grown by the OW-PEERS law at their rider - the rig\'s share of it (PIN MOVED, WAGONS3)');
   // a parked wagon with the same anchor is a wagon in the world: the word's own place
   pool.applyOwner('p1', { w: [HCC_WIRE_KIND.Deployed, 40, NORMAL_GROUND_OFFSET, 40, 0, 0, 0, 1, 0, 0] }, (p) => p, 99);
   for (let i = 0; i < 90; i++) pool.frame(1 / 30, [0, 2, 5]);
@@ -348,7 +354,7 @@ test('AUDIT WAGON-HITCH B1/B7: a grown wagon finds the ground up a hill its own 
   renderer.draws.length = 0; pool.draw(renderer, null, { selfGrow: 12 });
   const m = renderer.draws[0].m;
   const groundThere = -t * m[14];
-  assert.ok(Math.abs(m[13] - (groundThere + NORMAL_GROUND_OFFSET * 12)) < 1e-3, `on the hill ${groundThere.toFixed(2)} m up, not sunk into it: ${m[13]}`);
+  assert.ok(Math.abs(m[13] - (groundThere + NORMAL_GROUND_OFFSET * rigGrowOf(12, 'cart', L))) < 1e-3, `on the hill ${groundThere.toFixed(2)} m up, not sunk into it: ${m[13]}`);   // PIN MOVED (WAGONS3): at the rig's grow
   // the wheel clock: the small wagon's wheel turns 80 degrees, the twelve-times wheel a twelfth of it; the step is taken
   // the short way across the wrap
   let s = grownWheelStep(null, 100, 12);

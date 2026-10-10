@@ -228,6 +228,10 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && 
  *   crimeTheft()           -> CrimeCommitted = Crimes.Theft (:927)
  *   spawnCityGuards(flag)  -> SpawnCityGuards(true) (:928)
  *   say(line, seconds)     -> AddHUDText(text, 2) (:918, :925)
+ *   stealRefusal()         -> AUDIT MERCHANT-YARDS Y1: the counter's word
+ *                             when its keeper never looks away (a yard's,
+ *                             systems/merchantYards.js yardCounter) - said,
+ *                             and nothing rolled, tallied or moved
  *   deliver(items)         -> DECOR2b: furniture stolen off the shelf,
  *                             to the host's delivery, as bought furniture
  *                             goes (never the pack; decorFurnish.js)
@@ -726,6 +730,8 @@ export class NativeTradeWindow {
   _doSteal() {
     const { cost } = this.cost();
     if (this.mode !== 'Buy' || !(cost > 0)) return;
+    const refused = this.hooks.stealRefusal?.() ?? null;   // AUDIT MERCHANT-YARDS Y1
+    if (refused) { this.hooks.say?.(refused, 2); return; }
     const ctx = this.hooks.priceCtx?.() ?? {};
     const out = shopliftAttempt({
       basket: this.basket,

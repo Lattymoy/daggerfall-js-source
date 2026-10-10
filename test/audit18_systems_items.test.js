@@ -22,6 +22,7 @@ import {
 import { planTake, applyTransfer } from '../src/systems/itemTransfer.js';   // E4: the transfer door
 import { goldAmount } from '../src/systems/court.js';
 import { stockShopShelf, randomizeArmorVariant } from '../src/systems/shopStock.js';
+import { yardStock } from '../src/systems/merchantYards.js';
 import { ITEM_TEMPLATES, inventoryItemImage, templateByIndex } from '../src/systems/itemTemplates.js';
 import { playerArchiveFor } from '../src/characters/paperdollArt.js';
 import { CLOTHING_DYES, DYE_COLORS } from '../src/characters/dyes.js';
@@ -357,7 +358,7 @@ test('audit18 items: every minted shop/loot row carries the template ItemName', 
   // spot pins straight off ItemTemplates.txt
   const gs = stockShopShelf({ buildingType: BUILDING_TYPES.GeneralStore, quality: 20 }, { level: 5, gender: 'male' }, { rolls: () => 0.4 });
   assert.equal(gs.find((i) => i.templateIndex === OIL_TEMPLATE).name, 'Oil');
-  assert.equal(gs.find((i) => i.templateIndex === 94).name, 'Horse');
+  assert.equal(yardStock('stable').find((i) => i.templateIndex === 94).name, 'Horse');   // PIN MOVED (MERCHANT-YARDS, 2026-10-10): the horse is the Stable's row now, minted as a shelf mints one
 });
 
 // ---------------------------------------------------------------

@@ -291,8 +291,8 @@
   {
     "name": "HCC-mirror-never",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    b.size = { w: view.flip ? -HORSE_BILLBOARD_WIDTH : HORSE_BILLBOARD_WIDTH, h };",
-    "new": "    b.size = { w: HORSE_BILLBOARD_WIDTH, h };",
+    "old": "    b.size = { w: (view.flip ? -HORSE_BILLBOARD_WIDTH : HORSE_BILLBOARD_WIDTH) * g, h: h * g };",
+    "new": "    b.size = { w: HORSE_BILLBOARD_WIDTH * g, h: h * g };",
     "tests": [
       "test/hcc_pool.test.js"
     ]
