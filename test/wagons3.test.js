@@ -563,7 +563,7 @@ test('WAGONS3 TWO HORSES TO PULL A PAIR\'S WAGON: short of its pair the wagon is
   }
 });
 
-test('WAGONS3 THE CAMERA\'S WALL ON THE BENCH: a ray from the camera\'s focal over my seat back into my driven caravan\'s body stops at it, less the camera\'s radius; one ahead, one starting inside it, a parked wagon and the Small Cart have none; AUDIT WAGONS3 B1: the open wagon\'s hoops are no wall (the camera leaves the head), and the wall stands where the wagon is drawn (mutants: the wall\'s frame unturned, inside taken for a hit, the radius unread, every body a cabin, the stepped pose)', async () => {
+test('WAGONS3 THE CAMERA\'S WALL ON THE BENCH: a ray from the camera\'s focal over my seat back into my driven caravan\'s body stops at it, less the camera\'s radius; one ahead, one starting inside it, a parked wagon and the Small Cart have none; AUDIT WAGONS3 B1: the wall stands where the wagon is drawn; PIN MOVED (BENCH-CAM): the open wagon\'s tilt a wall too, its camera free from the pivot over it (mutants: the wall\'s frame unturned, inside taken for a hit, the radius unread, the stepped pose; BENCH-CAM\'s: the tilt no shell)', async () => {
   const FOCAL = FOCAL_HEIGHT / MW_UNITS_PER_METER;   // player/mwCamera.js: the focal the camera casts back from, over the feet
   let shift = null;
   const world = await wagonWorld('caravan', { renderShift: () => shift });
@@ -575,8 +575,8 @@ test('WAGONS3 THE CAMERA\'S WALL ON THE BENCH: a ray from the camera\'s focal ov
   // the focal stands over the caravan's roof (a level cast back clears it - the camera free); looking up at the driver
   // the cast falls back and down, onto the body's front under the roof
   const BACK = [0, -0.6, -0.8];
-  const front = s.wagon.position[2] + parts.cabin.max[2];
-  assert.ok(eye[1] - s.wagon.position[1] - (eye[2] - front) * 0.75 < parts.cabin.max[1], 'the cast meets the front under the roof');
+  const front = s.wagon.position[2] + parts.shell.max[2];
+  assert.ok(eye[1] - s.wagon.position[1] - (eye[2] - front) * 0.75 < parts.shell.max[1], 'the cast meets the front under the roof');
   close(world.pool.cameraHit(eye, BACK, 10), (eye[2] - front) / 0.8, 1e-6, 'back into the body: its front');
   close(world.pool.cameraHit(eye, BACK, 10, 0.2), (eye[2] - front) / 0.8 - 0.2, 1e-6, 'less the radius');
   assert.equal(world.pool.cameraHit(eye, [0, 0, -1], 10), Infinity, 'level, over the roof: free');
@@ -589,28 +589,32 @@ test('WAGONS3 THE CAMERA\'S WALL ON THE BENCH: a ray from the camera\'s focal ov
   const t = world.pool.shown(), ts = world.pool.driverSeat(), back = qr(t.wagon.rotation, BACK);
   const teye = [ts.feet[0], ts.feet[1] + FOCAL, ts.feet[2]];
   const lz = qr([-t.wagon.rotation[0], -t.wagon.rotation[1], -t.wagon.rotation[2], t.wagon.rotation[3]], [teye[0] - t.wagon.position[0], teye[1] - t.wagon.position[1], teye[2] - t.wagon.position[2]])[2];
-  close(world.pool.cameraHit(teye, back, 10), (lz - parts.cabin.max[2]) / 0.8, 1e-6, 'straight back along the turned wagon: its front');
+  close(world.pool.cameraHit(teye, back, 10), (lz - parts.shell.max[2]) / 0.8, 1e-6, 'straight back along the turned wagon: its front');
   world.w.mode = TRANSPORT.Foot; world.step(3); world.pool.frame(1 / 30, [0, 2, -5], 0);
   assert.equal(world.pool.cameraHit(eye, BACK, 10), Infinity, 'parked: a collider of its own');
   const cart = await wagonWorld('cart');
   drive(cart); cart.pool.frame(1 / 30, [0, 2, -5], 0);
   assert.equal(cart.pool.cameraHit([0, 2, 3], [0, 0, -1], 10), Infinity, 'the Small Cart: no bench');
-  // AUDIT WAGONS3 B1: the open wagon - its body is its two hoops, the front one 5.6 cm behind the bench: no cabin, so a
-  // cast back from its focal runs its whole length (it met the hoops' box at once, and the camera never left the head)
+  // AUDIT WAGONS3 B1 stood the open wagon no wall: its front hoop stood 5.6 cm behind the bench and met every cast from
+  // the head. PIN MOVED (BENCH-CAM): its tilt is a shell as the caravan's room is, and the camera turns about a pivot
+  // over it (cameraFloor) - from there free to the full distance, level and looking down on the driver; from the old
+  // focal under the tilt the cast meets it at once
   const open = await wagonWorld('openWagon');
-  assert.equal(open.pool.partsOf('openWagon').cabin, null, 'the open wagon stands no cabin');
-  assert.ok(parts.cabin, 'the caravan does');
+  assert.ok(open.pool.partsOf('openWagon').shell, 'the open wagon stands a shell');
+  assert.ok(parts.shell, 'the caravan does');
   drive(open); open.pool.frame(1 / 30, [0, 2, -5], 0);
   const os = open.pool.driverSeat();
   assert.ok(os, 'on its bench');
-  for (const d of [[0, 0, -1], BACK, [0, 0.5, -0.866]]) assert.equal(open.pool.cameraHit([os.feet[0], os.feet[1] + FOCAL, os.feet[2]], d, 2.74), Infinity, `its camera free to the full distance (${d})`);
+  const pivot = [os.feet[0], open.pool.cameraFloor(), os.feet[2]];
+  for (const d of [[0, 0, -1], [0, 0.5, -0.866]]) assert.equal(open.pool.cameraHit(pivot, d, 2.74), Infinity, `its camera free to the full distance from the pivot (${d})`);
+  assert.ok(open.pool.cameraHit([os.feet[0], os.feet[1] + FOCAL, os.feet[2]], [0, 0, -1], 2.74) < 0.2, 'under the tilt: the hoop at once');
   // the wall where the wagon is DRAWN: the motor's step interpolated moves the seat, and the wall with it
   const mid = await wagonWorld('caravan', { renderShift: () => shift });
   drive(mid); mid.pool.frame(1 / 30, [0, 2, -5], 0);
   const ms = mid.pool.driverSeat(), mp = mid.pool.shown().wagon.position;
   const meye = [ms.feet[0], ms.feet[1] + FOCAL, ms.feet[2]];
   const still = mid.pool.cameraHit(meye, BACK, 10);
-  close(still, (meye[2] - (mp[2] + parts.cabin.max[2])) / 0.8, 1e-6, 'unshifted: the stepped pose');
+  close(still, (meye[2] - (mp[2] + parts.shell.max[2])) / 0.8, 1e-6, 'unshifted: the stepped pose');
   shift = [0, 0, -0.08];
   const ds = mid.pool.driverSeat();
   close(ds.feet[2], ms.feet[2] - 0.08, 1e-9, 'a step behind, the seat drawn there');

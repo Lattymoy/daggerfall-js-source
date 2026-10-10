@@ -1,5 +1,4 @@
 [
-  {"name": "AUDIT-WAGONS3-B1-every-body-a-cabin", "file": "src/world/wagonModels.js", "old": "if (part.role === 'body' && WAGON_KINDS[kind].enterable) cabinBox = boxOfPoints(pointsOf(part));", "new": "if (part.role === 'body') cabinBox = boxOfPoints(pointsOf(part));", "tests": ["test/wagons3.test.js"]},
   {"name": "AUDIT-WAGONS3-B1-the-stepped-pose", "file": "src/scenes/horseCartPool.js", "old": "const m = wagonMatrix(f?.at ?? w.position, f?.rotation ?? w.rotation);", "new": "const m = wagonMatrix(w.position, w.rotation);", "tests": ["test/wagons3.test.js"]},
   {"name": "AUDIT-WAGONS3-B2-the-seatless-frame-a-saddle", "file": "src/scenes/horseCartPool.js", "old": "const benchKind = () => enabled && !!driverSeatFor(myKind());", "new": "const benchKind = () => false;", "tests": ["test/wagons3.test.js"]},
   {"name": "AUDIT-WAGONS3-B2-the-mod-off-a-bench", "file": "src/scenes/horseCartPool.js", "old": "const benchKind = () => enabled && !!driverSeatFor(myKind());", "new": "const benchKind = () => !!driverSeatFor(myKind());", "tests": ["test/wagons3.test.js"]},

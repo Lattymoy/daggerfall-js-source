@@ -186,6 +186,11 @@ export function driverSeatFor(kind) {
 /** WAGONS3: the reins' hands over the seated feet - a hand's breadth over the lap (SEATED_HIP_HEIGHT), not a card
  *  table's SEAT_TOP_DEFAULT. */
 export const DRIVER_HANDS_TOP = SEATED_HIP_HEIGHT + 0.11;
+/** BENCH-CAM (2026-10-10, from play: "this is what i see when i use my carriage" - the camera in the driver's head):
+ *  how far over a bench wagon's top (its `shell`, the body's box) the third-person camera's pivot stands while its
+ *  driver sits the bench - the caravan's room and the open wagon's tilt both stand higher than the seated head, so a
+ *  camera turning about the head met the wagon a hand's breadth behind it whichever way it looked. */
+export const SHELL_CLEAR_M = 0.35;
 /** WAGONS3: where each trace meets the wagon (the lifted frame): `[horse, side, point, onBogie]` per trace - a pair's on
  *  their singletrees (which turn with the pole on the kingpin: `onBogie`), the Small Cart's at its shafts' roots (the
  *  body's frame, borne level with it). `horse` the team's index (teamSidesOf), `side` -1 its left trace, +1 its right. */
@@ -254,7 +259,7 @@ export function wagonGeometry(bake) {
   const statics = new MeshBench(WAGON_ARCHIVE);
   const front = kind !== 'cart' ? new MeshBench(WAGON_ARCHIVE) : null;   // WAGONS2: the bogie
   const wheels = [];
-  let radius = 0, rear = 0, rearZ = 0, kingpin = null, axleBox = null, cabinBox = null;
+  let radius = 0, rear = 0, rearZ = 0, kingpin = null, axleBox = null, shellBox = null;
   for (const part of bake.parts) {
     if (part.role.startsWith('wheel')) {
       const pivot = part.origin;
@@ -269,10 +274,11 @@ export function wagonGeometry(bake) {
       axleBox = boxOfPoints(pointsOf(part));   // WAGONS3: the front axle's own reach - the parked box's, the pole's left out
     } else {
       benchPart(statics, part, { offset: [0, 0, 0], role: part.role, keep: null, skin: (role, n, c) => wagonFaceSkin(kind, role, n, c) });
-      // WAGONS3: the body's own box - a third-person camera's wall. AUDIT WAGONS3 B1: the caravan's alone (`enterable`,
-      // a room with walls and a roof) - the open wagon's body is its two hoops, and their box stood 5.6 cm behind its
-      // bench, so every cast back from the driver's head met it at once and the camera never left the head
-      if (part.role === 'body' && WAGON_KINDS[kind].enterable) cabinBox = boxOfPoints(pointsOf(part));
+      // WAGONS3: the body's own box - a third-person camera's wall. AUDIT WAGONS3 B1 had it the caravan's alone (the
+      // open wagon's hoops stood 5.6 cm behind its bench, and every cast back from the driver's head met them at once).
+      // BENCH-CAM: every bench wagon's (`MEASURED[kind].bench`), the caravan's room and the open wagon's tilt alike - the
+      // camera's pivot now rises over its top (`SHELL_CLEAR_M`), so no cast starts under it
+      if (part.role === 'body' && MEASURED[kind]?.bench) shellBox = boxOfPoints(pointsOf(part));
     }
   }
   if (rear !== 2) throw new Error(`the ${kind} has ${rear} rear wheels`);
@@ -280,8 +286,8 @@ export function wagonGeometry(bake) {
   if (front) poleGeometry(front, kind);
   const reach = axleBox ? { min: [axleBox.min[0], axleBox.min[1] - LIFT, axleBox.min[2]], max: [axleBox.max[0], axleBox.max[1] - LIFT, axleBox.max[2]] } : null;
   const bogie = front ? { geometry: lifted(front.finish()), kingpin: [kingpin[0], kingpin[1] - LIFT, kingpin[2]], wheelbase: kingpin[2] - rearZ, steerLimit: steerLimitOf(bake, kingpin), reach } : null;
-  const cabin = cabinBox ? { min: [cabinBox.min[0], cabinBox.min[1] - LIFT, cabinBox.min[2]], max: [cabinBox.max[0], cabinBox.max[1] - LIFT, cabinBox.max[2]] } : null;
-  return { kind, statics: lifted(statics.finish()), wheels, wheelRadius: radius / 2, bogie, cabin };
+  const shell = shellBox ? { min: [shellBox.min[0], shellBox.min[1] - LIFT, shellBox.min[2]], max: [shellBox.max[0], shellBox.max[1] - LIFT, shellBox.max[2]] } : null;
+  return { kind, statics: lifted(statics.finish()), wheels, wheelRadius: radius / 2, bogie, shell };
 }
 
 /** The bounds of every point a wagon's geometry has (its statics and its wheels in place) - the parked wagon's
@@ -378,7 +384,7 @@ export function buildBakedWagonParts(geo, make = rendererModelOf) {
     bounds: boundsOf(geo),
     hitchPitch: geo.kind === 'cart' ? CART_REST_PITCH_DEG : 0,
     axlePivot: [0, (rearLeft.pivot[1] + rearRight.pivot[1]) / 2, (rearLeft.pivot[2] + rearRight.pivot[2]) / 2],
-    cargo: cargoFor(geo.kind), seats: seatsFor(geo.kind), door: doorFor(geo.kind), driver: driverSeatFor(geo.kind), traces: traceRootsOf(geo.kind), cabin: geo.cabin ?? null,   // WAGONS3: the bench's driver, the traces' roots, the body's box
+    cargo: cargoFor(geo.kind), seats: seatsFor(geo.kind), door: doorFor(geo.kind), driver: driverSeatFor(geo.kind), traces: traceRootsOf(geo.kind), shell: geo.shell ?? null,   // WAGONS3: the bench's driver, the traces' roots, the body's box (BENCH-CAM: a bench wagon's, the camera's wall and the roof its pivot rises over)
     bogie: geo.bogie ? { model: make(geo.bogie.geometry, `Wagon_${geo.kind}_bogie`), kingpin: geo.bogie.kingpin, wheelbase: geo.bogie.wheelbase, steerLimit: geo.bogie.steerLimit } : null,   // WAGONS2
   };
 }

@@ -28,7 +28,8 @@
 // THE FOUR HOSTS (bible/Home.md): scenes/world.js - WIRED (each town pixel's build places its yards and carves the
 // people's navgrid round them; the pool is made beside the monument, framed, drawn - in the street and in the view out
 // of a window (AUDIT MERCHANT-YARDS G5) - its flats on the live axis, taken down at a re-anchor and a load; through a
-// door it stands as it stood, for the street a window shows). scenes/worldModes.js - WIRED for the press both exterior hosts
+// door it stands as it stood, for the street a window shows; YARDS-FOUND: each yard standing marked on the Overworld,
+// `overworldMarks`). scenes/worldModes.js - WIRED for the press both exterior hosts
 // share (`yardTargets` in the street's one ray, the `yard:` arm with the too-far refusal and the plaque's lit row) and
 // for the trade window (`openYardTrade`); its interiors stand no yard.
 // scenes/exterior.js - FLAGGED: the single-town bench stands no yard; the streaming host is where its towns are played.
@@ -56,6 +57,8 @@ export const YARD_REACH = STATIC_NPC_ACTIVATION_DISTANCE;
 /** A keeper's body, metres: half its side and its height (the collider's box, the eye's). */
 export const KEEPER_HALF = 0.3;
 export const KEEPER_HEIGHT = 1.85;
+/** YARDS-FOUND: how far over a yard's ground its Overworld mark stands - over its sheds' roofs and its gate's beam. */
+export const YARD_MARK_LIFT = 4;
 /** What a wagon on show says it carries (its hover's line). */
 export const WAGON_SHOW_LINE = Object.freeze({
   cart: 'Carries 750 kg',
@@ -373,6 +376,21 @@ export function createMerchantYards({
       const trade = verb === 'sell' && (p.what === 'keeper' || p.what === 'sign') ? 'Sell' : 'Buy';
       if (!open(p.y.site, trade, p.y.name)) midText(YARD_TEXT.shut);   // AUDIT MERCHANT-YARDS Y5: the counter named for its keeper
       return true;
+    },
+    /**
+     * YARDS-FOUND (2026-10-10, from play: "The new stable and transport merchant shops dont show on town
+     * maps/overworld"): EACH YARD STANDING, AS AN OVERWORLD MARK - its name over its ground (YARD_MARK_LIFT up), its kind
+     * the look's (`yard stable`, `yard transport` - ui/travelViewHud.js yardGlyph: its signboard's emblem) and the
+     * Towns switch's (systems/travelViewFilters.js markGroup). The yards of every town built about the player, as the
+     * pool stands them - a town out of the build stands none, and is marked by its own plate.
+     */
+    overworldMarks() {
+      const out = [];
+      for (const y of yards.values()) {
+        if (!y.at) continue;
+        out.push({ key: `yard:${y.key}`, at: [y.at[0], y.at[1] + YARD_MARK_LIFT, y.at[2]], label: y.name, kind: `yard ${y.site.kind}` });
+      }
+      return out;
     },
     /** For the tests and the probes. */
     state: () => [...yards.values()].map((y) => ({ key: y.key, kind: y.site.kind, at: y.at, collider: y.colAt !== null, name: y.name, wagons: y.wagonsIn, horses: y.horses.filter((h) => h.batch).length, keeper: !!y.keeperBatch })),

@@ -87,7 +87,7 @@ import { WAGON_HOVER_TEXT } from '../player/eotbWagon.js';   // the hover word f
 import { hccWireRecord, validHccRecord, hccRecordKey, easeToward, HCC_WIRE_KIND } from '../systems/horseCartWire.js';
 import { decodePng } from '../systems/textureReplacement.js';
 import { toColor32 } from '../formats/color32Order.js';
-import { wagonGeometry, buildBakedWagonParts, rendererModelOf, pitchedPoint, teamSidesOf, TEAM, rigGrowOf, driverSeatFor } from '../world/wagonModels.js';   // WAGONS1: Mac's wagons; WAGONS3: the team, the rig's grow, the bench
+import { wagonGeometry, buildBakedWagonParts, rendererModelOf, pitchedPoint, teamSidesOf, TEAM, rigGrowOf, driverSeatFor, SHELL_CLEAR_M } from '../world/wagonModels.js';   // WAGONS1: Mac's wagons; WAGONS3: the team, the rig's grow, the bench; BENCH-CAM: the pivot's clearance
 import { seatRigInput, seatTopByte } from '../player/seatPose.js';   // WAGONS3: the driver's hands, and a seated peer's `st`
 import { newRope, stepRope, tubeModel, tubeInto, tubeVertexCount, ROPE } from '../systems/wagonRopes.js';   // WAGONS3: the harness
 import { wagonArt, WAGON_ARCHIVE, wagonLookArt, isGlassRecord, LOOK_RECORDS, lookRecord, TEX as WAGON_TEX } from '../world/wagonArt.js';
@@ -990,23 +990,33 @@ export function createHorseCartPool({
     for (const h of _harness.values()) if (h.gpu && r?.drawMesh) { r.drawMesh(h.gpu, WORLD_MATRIX, null, NO_SHADOW); n++; }
     return n;
   }
+  /** BENCH-CAM: my driven bench wagon's `shell` (wagonModels.js wagonGeometry - the body's box) and the matrix it stands
+   *  in where the wagon is drawn - the camera's wall (cameraHit) and the roof its pivot rises over (cameraFloor) - or
+   *  null while I drive none (parked, following, the Small Cart, the classic model). */
+  function drivenShell() {
+    const s = shown(), w = s?.wagon;
+    if (!w || w.kind !== HCC_WIRE_KIND.Trailing) return null;
+    const parts = partsOf(w.model), box = parts?.shell;
+    if (!box || !parts.driver) return null;
+    const f = drawnFrameOf('', {}, s);
+    const m = wagonMatrix(f?.at ?? w.position, f?.rotation ?? w.rotation);
+    return { box, m };
+  }
   /**
    * WAGONS3 (Mac: "Using a wagon doesnt allow you to zoom out into 3rd person"): HOW FAR ALONG A RAY MY DRIVEN WAGON'S
    * BODY STANDS - the third-person camera's wall while I sit its bench (the moving wagon stands no collider, so the
    * camera behind me stood inside the caravan). From `o` along unit `d` up to `max` m, less `radius` (the camera's
-   * sphere); Infinity where the ray misses it, starts inside it, or no bench wagon of mine with a cabin (the caravan's
-   * - wagonModels.js wagonGeometry) is driven. AUDIT WAGONS3 B1: the wall stands where the wagon is DRAWN
-   * (drawnFrameOf - the motor's step interpolated, `renderShift`), as the seat the camera's focal rises from does: a
+   * sphere); Infinity where the ray misses it, starts inside it, or no bench wagon of mine is driven (BENCH-CAM: its
+   * `shell`, the caravan's room or the open wagon's tilt - wagonModels.js wagonGeometry). AUDIT WAGONS3 B1: the wall
+   * stands where the wagon is DRAWN (drawnFrameOf - the motor's step interpolated, `renderShift`), as the seat the
+   * camera's focal rises from does: a
    * wall on the wagon's stepped pose stood up to a step's travel from the drawn seat, and the camera leapt between the
    * head and its full distance on a display faster than the step.
    */
   function cameraHit(o, d, max, radius = 0) {
-    const s = shown(), w = s?.wagon;
-    if (!w || w.kind !== HCC_WIRE_KIND.Trailing) return Infinity;
-    const parts = partsOf(w.model), box = parts?.cabin;
-    if (!box || !parts.driver) return Infinity;
-    const f = drawnFrameOf('', {}, s);
-    const m = wagonMatrix(f?.at ?? w.position, f?.rotation ?? w.rotation);
+    const shell = drivenShell();
+    if (!shell) return Infinity;
+    const { box, m } = shell;
     const t = [o[0] - m[12], o[1] - m[13], o[2] - m[14]];
     const lo = [m[0] * t[0] + m[1] * t[1] + m[2] * t[2], m[4] * t[0] + m[5] * t[1] + m[6] * t[2], m[8] * t[0] + m[9] * t[1] + m[10] * t[2]];
     const ld = [m[0] * d[0] + m[1] * d[1] + m[2] * d[2], m[4] * d[0] + m[5] * d[1] + m[6] * d[2], m[8] * d[0] + m[9] * d[1] + m[10] * d[2]];
@@ -1019,6 +1029,24 @@ export function createHorseCartPool({
     }
     if (!(t0 <= t1) || t0 < 0 || t0 > max) return Infinity;
     return Math.max(0, t0 - radius);
+  }
+  /**
+   * BENCH-CAM (2026-10-10, from play: "this is what i see when i use my carriage" - Eye Of The Beholder's sprite filling
+   * the screen, the camera in the driver's head): THE HEIGHT MY THIRD-PERSON CAMERA'S PIVOT RISES TO while I sit my
+   * driven wagon's bench - its `shell`'s top where the wagon is drawn (its highest corner, the wagon pitched as it
+   * stands) and SHELL_CLEAR_M over it - or null where no bench wagon of mine is driven. The caravan's room stands 0.4 m
+   * behind the bench and over the seated head, so a camera turning about the head (the sprite's: from the head itself;
+   * the Morrowind body's: 12 cm over the roof, any look up) met it a hand's breadth back and stood in the head. Turned
+   * about a pivot over the roof the camera looks down on the driver, the team and the road the way a coach's is, and
+   * the wall (cameraHit) only stops it coming down through the roof.
+   */
+  function cameraFloor() {
+    const shell = drivenShell();
+    if (!shell) return null;
+    const { box, m } = shell;
+    let top = -Infinity;
+    for (const x of [box.min[0], box.max[0]]) for (const y of [box.min[1], box.max[1]]) for (const z of [box.min[2], box.max[2]]) top = Math.max(top, transformPoint(m, x, y, z)[1]);
+    return top + SHELL_CLEAR_M;
   }
 
   // ── the ray: the activation targets (RegisterCustomActivation at 3.2 - the runtime's ACTIVATION_REACH)
@@ -1496,7 +1524,7 @@ export function createHorseCartPool({
     frame, batches, draw, targets, hoverName, tooltipText, activate, offsetAll, destroyAll, clearPeers, shown, groundMoved,
     wireRecord, applyOwner, sweepOwners, applyKept, replaceKept, pruneKept, parkWord, parkedDoor, mySeat, peerSeat, peerRide, mySeatCount, mySeatsKnown,
     seatDrawn, seatGlue, drawnFrameOf, puppetSeatDrawn, wordSeat,   // WAGONS2: the seats as drawn - the Overworld's grown wagons
-    teamOf, driverDrawn, driverSeat, benchKind, driverGlue, cameraHit, harnessEnds, faceTeams,   // WAGONS3: the team, the driver, the harness, the camera's wall
+    teamOf, driverDrawn, driverSeat, benchKind, driverGlue, cameraHit, cameraFloor, harnessEnds, faceTeams,   // WAGONS3: the team, the driver, the harness, the camera's wall (BENCH-CAM: and the pivot's floor)
     get harness() { return _harness; }, capsuleInBox,
     visitTarget,   // WAGONS2-VISIT
     drawOutside,   // RW1 x WAGONS2: the wagons in the street a window looks out on
