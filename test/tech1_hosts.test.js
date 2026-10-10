@@ -44,15 +44,17 @@ test('TECH1 THE RIG: the one runner stepped AHEAD of the gesture on the swing\'s
   const step = rig.indexOf('stepTechnique(dt, _techCtx);');
   const gesture = rig.indexOf('? playerWeapon.gesture(_dx, _dy, _held, dt');
   assert.ok(step > 0 && gesture > step, 'the technique first: a click\'s strike and a technique\'s are one machine');
-  assert.match(rig, /held: !!actionDown\?\.\(TECHNIQUE_ACTION\)/);
-  assert.match(rig, /ready: !paralyzed && !!c && canAttack && !armLoosing && !_heldHit && !!camNow\?\.pos && !!camNow\?\.feet/, 'AUDIT TECH1: and no plain shot\'s hit held for the arm');
-  assert.match(rig, /paralyzed: !!paralyzed,/, 'AUDIT TECH1: a held body\'s clock stops');
-  assert.match(rig, /blocked: !!technique\?\.blocked\?\.\(\),/, 'AUDIT TECH1: a window holds the key');
+  // PIN MOVED (AUDIT TECH-FX): the context is filled in place each frame (tc.<field> = ...), not made anew
+  assert.match(rig, /tc\.held = !!actionDown\?\.\(TECHNIQUE_ACTION\);/);
+  assert.match(rig, /tc\.ready = !paralyzed && !!c && canAttack && !armLoosing && !_heldHit && !!camNow\?\.pos && !!camNow\?\.feet;/, 'AUDIT TECH1: and no plain shot\'s hit held for the arm');
+  assert.match(rig, /tc\.paralyzed = !!paralyzed;/, 'AUDIT TECH1: a held body\'s clock stops');
+  assert.match(rig, /tc\.blocked = !!technique\?\.blocked\?\.\(\);/, 'AUDIT TECH1: a window holds the key');
   assert.match(rig, /const strike = !paralyzed && c && canAttack && !armLoosing && !techniqueFlying\(\)\s*\? playerWeapon\.gesture\(/, 'AUDIT TECH1: no gesture while a leap or a dash is in the air');
   assert.match(rig, /if \(techniqueFlying\(\)\) return;[^\n]*\n\s*const strike = playerWeapon\.clickAttack\(\);/, 'AUDIT TECH1: nor the touch button\'s swing');
-  assert.match(rig, /startSwing: \(s\) => \{ if \(!playerWeapon\.techniqueStrike\(s\)\) return false; fpAttack\(s, dt\); return true; \}/);
+  assert.match(rig, /startSwing: \(s\) => \{ if \(!playerWeapon\.techniqueStrike\(s\)\) return false; fpAttack\(s, _techDt\); return true; \}/);   // PIN MOVED (AUDIT TECH-FX): the frame's dt through _techDt, the closure made once
+  assert.match(rig, /_techDt = dt;\s*_techCtx \?\?= \{/, 'AUDIT TECH-FX: the dt set before the context is read, the context made once');
   assert.match(rig, /return claimShot\(held\.evs, _techCtx\);/);
-  assert.match(rig, /holding: !!_heldHit,/, 'a Morrowind arm\'s held hit is a loose still to come (MW-D42)');
+  assert.match(rig, /tc\.holding = !!_heldHit;/, 'a Morrowind arm\'s held hit is a loose still to come (MW-D42)');   // PIN MOVED (AUDIT TECH-FX)
   assert.match(code('src/combat/playerWeapon.js'), /techniqueStrike\(strike\) \{\s*if \(!machineAttack\(this\.machine, strike\)\) return false;/);
 });
 
@@ -109,7 +111,9 @@ test('TECH1 THE FOUR HOSTS: exterior.js, world.js, worldModes.js\' interior arm 
 
 test('TECH1 THE WORLD HOST\'S OWN: the chip off the MODE\'s rig with its key\'s name, the recentre\'s shift beside the foes\' (AUDIT TACT D3); the HUD\'s chip wears the marks\' blue from the leaf; every host keeps the browser\'s Back off the side buttons (mutants: the chip off world.js\'s own rig; the shift; the guard)', () => {
   const w = code('src/scenes/world.js');
-  assert.match(w, /setHudTechniqueChips\(\(e\) => techniqueHudChips\(e, \(modes\?\.liveArm\?\.\(\)\?\.rig \?\? weaponRig\)\?\.playerWeapon, tagText\(getBinding\(bindings\(\), TECHNIQUE_ACTION\) \?\? ''\)\)\);/);
+  // PIN MOVED (AUDIT TECH-FX): the key's word through a thunk the chip asks only when ready, cached on the store's rev
+  assert.match(w, /setHudTechniqueChips\(\(e\) => techniqueHudChips\(e, \(modes\?\.liveArm\?\.\(\)\?\.rig \?\? weaponRig\)\?\.playerWeapon, techniqueKeyWord\)\);/);
+  assert.match(w, /if \(_techKey === null \|\| _techKeyStore !== b \|\| _techKeyRev !== rev\) \{ _techKeyStore = b; _techKeyRev = rev; _techKey = tagText\(getBinding\(b, TECHNIQUE_ACTION\) \?\? ''\); \}/);
   assert.match(code('src/ui/enhancedHud.js'), /const powers = setPowerChips\(vitals\);\s*powers\.push\(\.\.\.techniqueChips\(vitals\)\);/, 'the chip after the set powers\'');
   assert.match(w, /offsetTactics\(r\.offset\);\s*offsetTechniques\(r\.offset\);/);
   assert.equal(TECH_CHIP_COLOUR, '#59c7ff');

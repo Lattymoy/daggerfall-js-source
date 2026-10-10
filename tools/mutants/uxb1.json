@@ -209,7 +209,7 @@
   {
     "name": "UXB1-S-held-reads-the-owners-alone",
     "file": "src/ui/input.js",
-    "old": "  if (b.sharedPrimary?.size) for (const [code, list] of b.sharedPrimary) if (list.includes(action) && codeDown(b, keys, code, ring)) return true;",
+    "old": "  if (b.sharedPrimary?.size) for (const [code, list] of b.sharedPrimary) if (list.includes(action)) codes.push(code);",
     "new": "  // the primary's sharers unread",
     "tests": [
       "test/uxb1s_sharedkeys.test.js"
@@ -419,7 +419,7 @@
   {
     "name": "AUDIT-UXB1-F5-the-polls-forget-the-secondary-sharers",
     "file": "src/ui/input.js",
-    "old": "  if (b.sharedSecondary?.size) for (const [code, list] of b.sharedSecondary) if (list.includes(action) && codeDown(b, keys, code, ring)) return true;\n",
+    "old": "  if (b.sharedSecondary?.size) for (const [code, list] of b.sharedSecondary) if (list.includes(action)) codes.push(code);\n",
     "new": "",
     "tests": [
       "test/uxb1s_sharedkeys.test.js"

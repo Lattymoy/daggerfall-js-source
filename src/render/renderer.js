@@ -21,6 +21,8 @@ import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup:
 import { realWindowsGlsl, RW_MAIN_DERIVS, RW_MAIN_CUTOUT, RW_MAIN_GLASS, RW_MAIN_ROOM, GLASS_NONE, GLASS_EXTERIOR, GLASS_INTERIOR, winModeFor, roomLightFor, sphereNdcRect, cropProjection, viewTargetSize, viewSkyFrom, viewRays, VIEW_BG_VS, VIEW_BG_FS } from './realWindows.js';   // RW1: the real windows - the rooms, the glass, the view out
 import { frameTarget, setFrameTarget } from './renderTarget.js';   // RW1: the view out's pass hands the frame target back as it found it (EL4's restore)
 import { CLIP_SENTINEL } from '../world/terrainSurface.js';   // FAR-CLIP1: the byte the terrain's clip variant discards - the TileMap format's module, already in this file's closure (waterCorners.js)
+/** AUDIT TECH-FX: the screen offset before any is set - one, frozen (Renderer `screenOffset`). */
+const NO_SCREEN_OFFSET = Object.freeze([0, 0]);
 
 const VS = `#version 300 es
 layout(location=0) in vec3 aPos;
@@ -3834,11 +3836,18 @@ void main() {
    *  the overlay letterbox seam (2026-08-14): classic windows lay out
    *  on a virtual 320x200*s screen and this centers that screen on
    *  the real canvas. Set, draw, reset - never leave it on. */
-  setScreenOffset(x, y) { this._screenOffset = [x, y]; }
+  setScreenOffset(x, y) {
+    // AUDIT TECH-FX: written in place - every reader copies the two numbers out (ui/uiScreen.js onUiScreen, chargenArt,
+    // the rig's dip, the state snapshot), and a fresh pair a call was garbage on every frame retro mode's pillarbox or a
+    // technique's dip draws
+    const o = this._screenOffset;
+    if (o) { o[0] = x; o[1] = y; } else this._screenOffset = [x, y];
+  }
   /** The offset screen draws are currently shifted by. A full-canvas
    *  backdrop drawn from inside an offset overlay has to subtract it,
-   *  or it lands displaced by the letterbox margin (U21b). */
-  get screenOffset() { return this._screenOffset ?? [0, 0]; }
+   *  or it lands displaced by the letterbox margin (U21b). Read it, never
+   *  keep it: it is the renderer's own pair, moved in place. */
+  get screenOffset() { return this._screenOffset ?? NO_SCREEN_OFFSET; }
 
   /** Positioned screen-space quad in PIXELS (origin top-left), with a
    *  source UV rect - textured (uv0/uv1) or solid color (tex null).

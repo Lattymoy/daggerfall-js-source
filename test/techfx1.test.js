@@ -1,10 +1,11 @@
 // TECH-FX (bible/05-Combat/Weapon-Techniques.md THE FEEL; 2026-10-10, the owner: "lets do code driven design for each
 // technique, like real detail and ensure performance remains in tact"): WHAT A TECHNIQUE FEELS LIKE. The table read as
 // the peaks the player sees, the springs settling to exact rest at any frame rate, the comfort setting, each moment
-// cued on the real runner at the machine's own hit frame and each Volley arrow's landing, the climb's view step folding
-// the camera's channel in first person only, the rig's push of the whole layer put back however it leaves, the impact
-// engine's thirteen recipes under its own caps, the four hosts' doors - and the frame's allocation measured, at rest and
-// with every spring in flight.
+// cued on the real runner in the rig's own frame order - a swing's hit on the machine's own hit frame, each Volley
+// arrow where and when its line meets the ground - the climb's view step folding the camera's channel in first person
+// only, the rig's dip of the classic layer put back however it leaves, the impact engine's thirteen recipes under its
+// own caps, the four hosts' doors, and the frame's allocation measured, at rest and with every spring in flight. The
+// motor's feet are a Float32Array (player/motor.js `pos`), and every runner test here hands it one.
 import './modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -26,6 +27,8 @@ import { createWeaponRig } from '../src/combat/weaponRig.js';
 import { setSigilDueling } from '../src/systems/sigil.js';
 import { setPlayerDoor } from '../src/systems/playerDoor.js';
 import { ARROW_TEMPLATE } from '../src/systems/inventory.js';
+import { EQUIP_SLOTS } from '../src/systems/equip.js';
+import { mintCondition, setItemFields } from '../src/systems/itemTemplates.js';
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
 import { createClimbFeelHost } from '../src/player/climbFeel.js';
 import { SpellImpactFx, TECH_FX_LOOK, TECH_FX_RECIPES, FX_MAX_PARTS } from '../src/render/spellImpactFx.js';
@@ -51,49 +54,60 @@ const piece = (make, id, value = 20) => {
   return it;
 };
 const arrows = (n) => ({ ...createWeapon(ARROW_TEMPLATE, 0), stackCount: n });
-const flatGround = () => ({
-  raycast: (o, d, max) => { if (!(d[1] < 0)) return Infinity; const t = -o[1] / d[1]; return t <= max ? t : Infinity; },
-  surfaceHit: (o, d, max) => (d[1] < 0 && o[1] >= 0 && o[1] <= max ? { dist: o[1], normal: [0, 1, 0] } : null),
-  heightAt: () => 0,
-});
+/** The ground at height `y0`, rising `grade` metres a metre along +z - a look's ray, a fall's cast and the terrain's
+ *  height, all three the one plane. */
+const ground = (y0 = 0, grade = 0) => {
+  const hitAt = (o, d, max) => { const den = d[1] - grade * d[2]; if (!(den < 0)) return Infinity; const t = (y0 + grade * o[2] - o[1]) / den; return t >= 0 && t <= max ? t : Infinity; };
+  return {
+    raycast: hitAt,
+    surfaceHit: (o, d, max) => { const t = hitAt(o, d, max); return Number.isFinite(t) ? { dist: t, normal: [0, 1, -grade] } : null; },
+    heightAt: (x, z) => y0 + grade * z,
+  };
+};
+/** The motor's feet: a Float32Array, as player/motor.js keeps them - moved IN PLACE as the body moves. */
+const feet = (x, y, z) => new Float32Array([x, y, z]);
 const weaponOf = (it) => { const pw = new PlayerWeapon({ weapon: it, liveSpeed: 50 }); pw.sheathed = false; pw.update(0); return pw; };
 /** The host's technique door with THE FEEL's three ends logged in the order they came (and the TECH1 door's own). */
 function feelDoor(extra = {}) {
   const log = [];
   const door = {
-    fx: (recipe, at, o) => log.push({ k: 'fx', recipe, at, o }),
+    fx: (recipe, at, o) => log.push({ k: 'fx', recipe, at: [...at], o: { ...o, ...(o?.to ? { to: [...o.to] } : {}) } }),
     shake: (n) => log.push({ k: 'shake', n }),
     sound: (clip, volume, pitch) => log.push({ k: 'sound', clip, volume, pitch }),
     ...extra,
   };
   return { log, door, bursts: () => log.filter((e) => e.k === 'fx').map((e) => e.recipe), shakes: () => log.filter((e) => e.k === 'shake').map((e) => e.n), sounds: () => log.filter((e) => e.k === 'sound') };
 }
-function rig({ pw, entity, door, cam = { pos: [0, 1.7, 0], yaw: 0, pitch: -0.2, feet: [0, 0, 0] } }) {
+/** A rig over a fake host, stepped in THE RIG'S OWN ORDER (combat/weaponRig.js frame): the runner, then the machine,
+ *  then the frame's events handed back (claimShot) - `frame(held)` answers that frame's events. */
+function rig({ pw, entity, door, cam = { pos: [0, 1.7, 0], yaw: 0, pitch: -0.2, feet: feet(0, 0, 0) }, collider = ground() }) {
   const started = [];
   const ctx = (held) => ({
-    rig: rig, entity, pw, cam, collider: flatGround(), held, ready: true, cancel: false,
+    rig, entity, pw, cam, collider, held, ready: true, cancel: false,
     startSwing: (s) => { if (!pw.techniqueStrike(s)) return false; started.push(s); return true; },
     door, say: () => {}, noteShot: () => {},
   });
-  return { started, ctx, cam };
+  const frame = (held = false, dt = 1 / 60) => { T.stepTechnique(dt, ctx(held)); return T.claimShot(pw.update(dt), ctx(held)); };
+  return { started, ctx, cam, frame };
 }
 const reset = () => { _resetForTests(); setPref('lootRarity', true); setUiSkin('enhanced'); setPref('soundEnhancements', true); T._resetTechniquesForTests(); setSigilDueling(false); setPlayerDoor(null); };
-/** Every channel's furthest reach from rest over `s` seconds at `hz` (signed: the larger magnitude). */
+/** Every channel's furthest reach from rest over `s` seconds at `hz` (signed: the larger magnitude), and when. */
 function peaks(s = 1.5, hz = 240) {
   const v = FX.techniqueView(), h = FX.techniqueHands();
-  const out = { pitch: 0, roll: 0, eye: 0, fov: 0, x: 0, y: 0 };
-  const take = (k, x) => { if (Math.abs(x) > Math.abs(out[k])) out[k] = x; };
-  for (let i = 0; i < s * hz; i++) {
+  const out = { pitch: 0, roll: 0, eye: 0, fov: 0, y: 0 }, when = { pitch: 0, roll: 0, eye: 0, fov: 0, y: 0 };
+  const take = (k, x, t) => { if (Math.abs(x) > Math.abs(out[k])) { out[k] = x; when[k] = t; } };
+  for (let i = 1; i <= s * hz; i++) {
     FX.stepTechniqueFx(1 / hz);
-    take('pitch', v.pitch); take('roll', v.roll); take('eye', v.eye[1]); take('fov', v.fov); take('x', h.x); take('y', h.y);
+    take('pitch', v.pitch, i / hz); take('roll', v.roll, i / hz); take('eye', v.eye[1], i / hz); take('fov', v.fov, i / hz); take('y', h.y, i / hz);
   }
+  out.when = when;
   return out;
 }
 const near = (a, b, rel, msg) => assert.ok(Math.abs(a - b) <= Math.abs(b) * rel + 1e-12, `${msg}: ${a} against ${b}`);
 
 // ── the table ─────────────────────────────────────────────────────
 
-test('TECHFX1 THE TABLE: every technique of the roster has its moments - a swing\'s and a leap\'s and a dash\'s release and hit, a Piercing Shot\'s release and loose, a Volley\'s release, loose, shaft and close; every burst one the impact engine draws, every sound a clip of the game\'s own table, every peak a channel\'s; a shaft\'s flight the cast engine\'s (mutants: a moment dropped; a recipe unknown; a sound misnamed)', () => {
+test('TECHFX1 THE TABLE: every technique of the roster has its moments - a swing\'s and a leap\'s and a dash\'s release and hit, a Piercing Shot\'s release and loose, a Volley\'s release, loose, shaft and close; every burst one the impact engine draws, every sound a clip of the game\'s own table, every number a channel\'s; the hands only ever dip, a roll never past 3 degrees, a bow\'s loose no sound of its own; every row frozen through (mutants: a moment dropped; a recipe unknown; a sound misnamed; a hand lifted)', () => {
   assert.deepEqual(Object.keys(FX.TECH_FX).sort(), Object.keys(TECHNIQUES).sort(), 'one row a technique, none extra');
   const want = { swing: ['hit', 'release'], leap: ['hit', 'release'], dash: ['hit', 'release'], pierce: ['loose', 'release'], rain: ['close', 'loose', 'release', 'shaft'] };
   for (const [id, t] of Object.entries(TECHNIQUES)) {
@@ -103,7 +117,8 @@ test('TECHFX1 THE TABLE: every technique of the roster has its moments - a swing
       assert.ok(row.cam || row.hands || row.shake || row.burst || row.sound, `${where}: does something`);
       for (const k of Object.keys(row)) assert.ok(['cam', 'hands', 'shake', 'burst', 'r', 'sound'].includes(k), `${where}: ${k}`);
       for (const [k, v] of Object.entries(row.cam ?? {})) { assert.ok(['pitch', 'roll', 'eye', 'fov'].includes(k), `${where}: cam ${k}`); assert.ok(Number.isFinite(v) && v !== 0); }
-      for (const [k, v] of Object.entries(row.hands ?? {})) { assert.ok(['x', 'y'].includes(k), `${where}: hands ${k}`); assert.ok(Number.isFinite(v) && Math.abs(v) <= 0.2, `${where}: a push the screen holds`); }
+      if (row.cam?.roll != null) assert.ok(Math.abs(row.cam.roll) <= 3, `${where}: a roll the level sky can stand (${row.cam.roll})`);
+      if (row.hands) { assert.deepEqual(Object.keys(row.hands), ['y'], `${where}: the hands only dip`); assert.ok(row.hands.y > 0 && row.hands.y <= 0.15, `${where}: down, and a dip the screen holds`); }
       if (row.shake != null) assert.ok(row.shake > 0 && row.shake <= 4, `${where}: shake`);
       if (row.burst != null) assert.ok(TECH_FX_RECIPES.includes(row.burst), `${where}: ${row.burst} a recipe`);
       if (row.r != null) assert.ok(row.burst && row.r > 0, `${where}: a radius for a burst`);
@@ -112,54 +127,58 @@ test('TECHFX1 THE TABLE: every technique of the roster has its moments - a swing
         assert.equal(typeof SOUND[name], 'number', `${where}: ${name} in SOUND`);
         assert.ok(volume > 0 && volume <= 1 && pitch >= 0.5 && pitch <= 1.5, `${where}: volume ${volume}, pitch ${pitch}`);
       }
-      assert.ok(Object.isFrozen(row), `${where}: frozen`);
+      for (const part of [row, row.cam, row.hands, row.sound]) if (part) assert.ok(Object.isFrozen(part), `${where}: frozen through`);
     }
   }
+  assert.equal(FX.TECH_FX.volley.loose.sound, undefined, 'the host\'s bowSound is the loose\'s - a second ArrowShoot only doubled it');
+  assert.equal(FX.TECH_FX.pierce.loose.sound, undefined, '...and a Thunderlock\'s loose is its own shot');
   // a ring's radius is the technique's own reach, so the burst draws the blow's true size
   assert.equal(FX.TECH_FX.slam.hit.r, TECHNIQUES.slam.reach);
   assert.equal(FX.TECH_FX.whirlwind.hit.r, TECHNIQUES.whirlwind.reach);
   assert.equal(FX.TECH_FX.cleave.hit.r, TECHNIQUES.cleave.reach);
   assert.equal(FX.TECH_FX.leap.hit.r, TECHNIQUES.leap.radius);
   assert.equal(FX.TECH_FX.kick.hit.r, TECHNIQUES.kick.radius);
-  assert.equal(FX.TECH_ARROW_MPS, MISSILE_SPEED, 'a Volley\'s landing times are the cast engine\'s flight');
-  assert.deepEqual([...FX.FX_K], [17, 11, 14, 9, 15, 15]);
-  assert.deepEqual(FX.FX_CH, { pitch: 0, roll: 1, eye: 2, fov: 3, handX: 4, handY: 5 });
+  assert.deepEqual(FX.FX_CH, { pitch: 0, roll: 1, eye: 2, fov: 3, hands: 4 });
 });
 
 // ── the springs ───────────────────────────────────────────────────
 
-test('TECHFX1 THE SPRINGS: a moment\'s numbers ARE the peaks the screen reaches - every row of the table, every channel, to 1% (degrees for the angles and the lens, metres for the eye, screen heights for the hands); then each settles to EXACTLY rest and the step stops; the same curve at 30, 60 and 144 frames a second (mutants: the kick\'s e; a stiffness; the closed form\'s sign; the rest snap)', () => {
+test('TECHFX1 THE SPRINGS: a moment\'s numbers ARE the peaks the screen reaches - every row of the table, every channel, to 1%, each at its own stiffness\'s time (1/k); then each settles to EXACTLY rest from a sub-pixel, and the step stops; the same curve at 30, 60 and 144 frames a second; a roll kicked into the camera\'s own frame, mirrored (mutants: the kick\'s e; a stiffness; the closed form\'s sign; the rest snap coarsened)', () => {
   reset();
   for (const [id, rows] of Object.entries(FX.TECH_FX)) {
     for (const [moment, row] of Object.entries(rows)) {
       FX.resetTechniqueFx();
       assert.equal(FX.techniqueCue(id, moment), true);
       const p = peaks();
-      const c = row.cam ?? {}, h = row.hands ?? {};
-      const want = { pitch: (c.pitch ?? 0) * DEG, roll: (c.roll ?? 0) * DEG, eye: c.eye ?? 0, fov: c.fov ?? 0, x: h.x ?? 0, y: h.y ?? 0 };
+      const c = row.cam ?? {};
+      const want = { pitch: (c.pitch ?? 0) * DEG, roll: -(c.roll ?? 0) * DEG, eye: c.eye ?? 0, fov: c.fov ?? 0, y: row.hands?.y ?? 0 };
       for (const k of Object.keys(want)) near(p[k], want[k], 0.01, `${id}.${moment} ${k}`);
+      const K = { pitch: FX.FX_K[0], roll: FX.FX_K[1], eye: FX.FX_K[2], fov: FX.FX_K[3], y: FX.FX_K[4] };
+      for (const k of Object.keys(want)) if (want[k]) assert.ok(Math.abs(p.when[k] - 1 / K[k]) <= 1 / 240 + 1e-9, `${id}.${moment} ${k} peaks at 1/k (${p.when[k]} against ${1 / K[k]})`);
     }
   }
-  // the slam lands: the look DOWN (pitch up positive, the climb's own sign), the eye down, the hands down
+  assert.deepEqual([...FX.FX_K], [17, 11, 14, 9, 15]);
+  // the slam lands: the look DOWN (pitch up positive), the eye down, the hands down
   FX.resetTechniqueFx();
   FX.techniqueCue('slam', 'hit');
   FX.stepTechniqueFx(1 / 60); FX.stepTechniqueFx(1 / 60);
   assert.ok(FX.techniqueView().pitch < 0 && FX.techniqueView().eye[1] < 0 && FX.techniqueHands().y > 0);
-  // settled: exact rest, and the step does nothing after
-  let frames = 0;
-  while (FX.techniqueFxLive() && frames < 600) { FX.stepTechniqueFx(1 / 60); frames++; }
+  // settled: exact rest from below a pixel, and the step does nothing after
+  const v = FX.techniqueView(), h = FX.techniqueHands();
+  let frames = 0, lastY = 0, lastPitch = 0;
+  while (FX.techniqueFxLive() && frames < 600) { lastY = h.y; lastPitch = v.pitch; FX.stepTechniqueFx(1 / 60); frames++; }
   assert.equal(FX.techniqueFxLive(), false, 'at rest');
   assert.ok(frames < 180, `settled in ${frames} frames`);
-  const v = FX.techniqueView(), h = FX.techniqueHands();
-  assert.deepEqual([v.pitch, v.roll, v.eye[0], v.eye[1], v.eye[2], v.fov, h.x, h.y], [0, 0, 0, 0, 0, 0, 0, 0], 'every channel exactly 0');
+  assert.ok(Math.abs(lastY) * 2160 < 0.05 && Math.abs(lastPitch) < 1e-4, `the snap is below a pixel: ${lastY} screen heights, ${lastPitch} rad`);
+  assert.deepEqual([v.pitch, v.roll, v.eye[0], v.eye[1], v.eye[2], v.fov, h.y], [0, 0, 0, 0, 0, 0, 0], 'every channel exactly 0');
   // any frame rate, the one curve
-  const at = (hz, s = 0.25) => { FX.resetTechniqueFx(); FX.techniqueCue('slam', 'hit'); FX.techniqueCue('whirlwind', 'release'); for (let i = 0; i < Math.round(s * hz); i++) FX.stepTechniqueFx(1 / hz); return [v.pitch, v.roll, v.eye[1], v.fov, h.x, h.y]; };
+  const at = (hz, s) => { FX.resetTechniqueFx(); FX.techniqueCue('slam', 'hit'); FX.techniqueCue('whirlwind', 'release'); for (let i = 0; i < Math.round(s * hz); i++) FX.stepTechniqueFx(1 / hz); return [v.pitch, v.roll, v.eye[1], v.fov, h.y]; };
   const a = at(30, 1 / 3), b = at(60, 1 / 3), d = at(144, 1 / 3);
   for (let i = 0; i < a.length; i++) { near(b[i], a[i], 1e-9, `60 against 30 (${i})`); near(d[i], a[i], 1e-9, `144 against 30 (${i})`); }
   // a frame of nothing is nothing; a kick on a kick adds
   const before = [...at(60, 0.1)];
   FX.stepTechniqueFx(0); FX.stepTechniqueFx(NaN); FX.stepTechniqueFx(-1);
-  assert.deepEqual([v.pitch, v.roll, v.eye[1], v.fov, h.x, h.y], before);
+  assert.deepEqual([v.pitch, v.roll, v.eye[1], v.fov, h.y], before);
   FX.resetTechniqueFx();
   FX.techniqueCue('crush', 'hit'); FX.techniqueCue('crush', 'hit');
   near(peaks().pitch, -4.4 * DEG, 0.01, 'two blows, twice the dip');
@@ -167,7 +186,7 @@ test('TECHFX1 THE SPRINGS: a moment\'s numbers ARE the peaks the screen reaches 
   assert.equal(FX.techniqueCue('nothing', 'hit'), false, 'no such technique');
 });
 
-test('TECHFX1 COMFORT: "Technique camera motion" (techniqueMotion, 100% by default) scales the camera\'s springs, the shake and the hands\' push - at Off nothing on the screen moves; the burst and the sound are never scaled, and the sound follows Sound Enhancements and the skin (mutants: the motion unread; the shake unscaled; the burst scaled; the sound ungated)', () => {
+test('TECHFX1 COMFORT: "Technique camera motion" (techniqueMotion, 100% by default) scales the camera\'s springs, the shake and the hands\' dip - at Off nothing on the screen moves; the burst and the sound are never scaled, and the sound follows Sound Enhancements and the skin (mutants: the motion unread; the motion unclamped; the shake unscaled; the burst scaled; the sound ungated)', () => {
   reset();
   assert.equal(PREF_DEFAULTS.techniqueMotion, 1);
   assert.equal(FX.techniqueMotion(), 1);
@@ -184,9 +203,9 @@ test('TECHFX1 COMFORT: "Technique camera motion" (techniqueMotion, 100% by defau
   assert.deepEqual(full.d.shakes(), [3.2]);
   assert.deepEqual(half.d.shakes(), [1.6]);
   assert.deepEqual(off.d.shakes(), [], 'Off: no shake');
-  near(half.p.pitch, full.p.pitch / 2, 1e-9, 'half: half the dip');
-  near(half.p.y, full.p.y / 2, 1e-9, 'half: half the push');
-  assert.deepEqual(off.p, { pitch: 0, roll: 0, eye: 0, fov: 0, x: 0, y: 0 }, 'Off: nothing moves');
+  near(half.p.pitch, full.p.pitch / 2, 1e-9, 'half: half the dip of the look');
+  near(half.p.y, full.p.y / 2, 1e-9, 'half: half the hands\' dip');
+  assert.deepEqual([off.p.pitch, off.p.roll, off.p.eye, off.p.fov, off.p.y], [0, 0, 0, 0, 0], 'Off: nothing moves');
   for (const r of [full, half, off]) {
     assert.deepEqual(r.d.bursts(), ['shock'], 'the burst whatever the motion');
     assert.equal(r.d.log.find((e) => e.k === 'fx').o.r, 3.5);
@@ -210,69 +229,79 @@ test('TECHFX1 COMFORT: "Technique camera motion" (techniqueMotion, 100% by defau
 
 // ── the moments on the real runner ────────────────────────────────
 
-test('TECHFX1 THE SWING\'S MOMENTS: a Whirlwind\'s press is its release (the roll into the spin, the hands swung, the whoosh), its hit the MACHINE\'s own hit frame (the roll back, the sweep ring at the feet to its 3 m, spun its way, the shake) - once each; Ground Slam\'s and Skull Crack\'s hits their own (mutants: the release uncued; the hit at the press; the hit twice; the hit never)', () => {
+test('TECHFX1 THE SWING\'S MOMENTS: in the rig\'s own frame order, a Whirlwind\'s press is its release (the lean into the spin, the whoosh) and its hit is ON the machine\'s own hit frame - once - with the sweep at the motor\'s feet (a Float32Array) to its 3 m, spun the way a StrikeLeft carries the blade, and the hands\' dip; Ground Slam\'s shock and thud on raised ground, Skull Crack\'s star, Headsman\'s Chop\'s and the Haymaker\'s in front at the blow\'s height (mutants: the release uncued; the hit at the press; the hit twice; the hit never; the hit off the machine; a burst off the feet; the spin; the chop and the punch at the feet)', () => {
   reset();
   const fd = feelDoor();
   const pw = weaponOf(piece(() => createWeapon(120, 1), 'whirlwind'));
-  const r = rig({ pw, entity: player(), door: fd.door, cam: { pos: [0, 1.7, 0], yaw: 0.4, pitch: 0, feet: [2, 0, 3] } });
-  T.stepTechnique(1 / 60, r.ctx(true));
+  const r = rig({ pw, entity: player(), door: fd.door, cam: { pos: [2, 1.7, 3], yaw: 0.4, pitch: 0, feet: feet(2, 0, 3) } });
+  r.frame(true);
   assert.deepEqual(r.started, ['StrikeLeft']);
   assert.deepEqual(fd.sounds().map((s) => [s.clip, s.volume, s.pitch]), [[SOUND.SwingMediumPitch, 1, 0.75]], 'the release\'s whoosh');
   assert.deepEqual(fd.bursts(), [], 'nothing in the world at the press');
   FX.stepTechniqueFx(1 / 60);
-  assert.ok(FX.techniqueView().roll < 0 && FX.techniqueHands().x > 0, 'rolled into the spin, the hands swung right');
+  assert.ok(FX.techniqueView().roll > 0, 'leaning left on the screen - the camera\'s own roll, positive, under the hosts\' mirrored lens (techfx1_audit)');
   let iHit = -1, iCue = -1;
   for (let i = 0; i < 240 && T.techniqueState().act; i++) {
-    T.stepTechnique(1 / 60, r.ctx(false));
-    if (iCue < 0 && fd.bursts().length) iCue = i;
-    const evs = pw.update(1 / 60);
+    const n = fd.bursts().length;
+    const evs = r.frame(false);
     if (iHit < 0 && evs.includes('hit')) iHit = i;
+    if (iCue < 0 && fd.bursts().length > n) iCue = i;
   }
-  assert.ok(iHit >= 0 && iCue >= 0, `the hit (${iHit}) and its moment (${iCue})`);
-  assert.ok(Math.abs(iCue - iHit) <= 1, `the moment at the machine's hit frame: the cue ${iCue}, the hit ${iHit}`);
-  assert.ok(iCue > 3, 'never at the press');
+  assert.ok(iHit > 3, `the machine's hit (${iHit})`);
+  assert.equal(iCue, iHit, 'the moment ON the machine\'s hit frame - the frame\'s own event, not a clock of its own');
   const sweep = fd.log.find((e) => e.k === 'fx');
   assert.equal(sweep.recipe, 'sweep');
   assert.deepEqual(sweep.at, [2, 0, 3], 'at the feet');
-  assert.deepEqual([sweep.o.r, sweep.o.spin, sweep.o.ground, sweep.o.yaw], [3, -1, 0, 0.4], 'its 3 m, spun the Whirlwind\'s way');
+  assert.deepEqual([sweep.o.r, sweep.o.spin, sweep.o.ground, sweep.o.yaw], [3, 1, 0, 0.4], 'its 3 m, spun as a StrikeLeft carries the blade (to the left)');
   assert.deepEqual(fd.shakes(), [0.9]);
   assert.equal(fd.bursts().length, 1, 'once');
-  // Ground Slam: two rings and the stone at the feet, the deepest thud; Skull Crack: a star in front, at the blow's height
-  for (const [id, make, recipe, sound, shake] of [['slam', () => createWeapon(124, 1), 'shock', [SOUND.FallHard, 1, 0.7], 3.2], ['crush', () => createWeapon(124, 1), 'star', null, 1.6]]) {
+  FX.resetTechniqueFx(); FX.techniqueCue('whirlwind', 'hit'); FX.stepTechniqueFx(1 / 60);
+  assert.ok(FX.techniqueHands().y > 0, 'the hands dip on the hit');
+  // the others: on ground 5 m up, so a burst's floor is the feet's own
+  const cases = [
+    ['slam', () => createWeapon(124, 1), 'shock', [SOUND.FallHard, 1, 0.7], 3.2, 'feet'],
+    ['crush', () => createWeapon(124, 1), 'star', null, 1.6, 'front'],
+    ['execute', () => createWeapon(127, 1), 'chop', null, 2, 'front'],
+    ['haymaker', null, 'punch', null, 1.4, 'front'],
+  ];
+  for (const [id, make, recipe, sound, shake, where] of cases) {
     reset();
     const d = feelDoor();
-    const w = weaponOf(piece(make, id));
-    const rr = rig({ pw: w, entity: player(), door: d.door, cam: { pos: [0, 1.7, 0], yaw: Math.PI / 2, pitch: 0, feet: [0, 0, 0] } });
-    T.stepTechnique(1 / 60, rr.ctx(true));
+    const me = player();
+    if (id === 'haymaker') me.equip.slots[EQUIP_SLOTS.Gloves] = piece(() => mintCondition(setItemFields({ group: 'Armor', templateIndex: 103, material: 0x0201 })), 'haymaker');   // bare-handed: the Gauntlets' (tech1_runner's)
+    const w = weaponOf(id === 'haymaker' ? null : piece(make, id));
+    const rr = rig({ pw: w, entity: me, door: d.door, cam: { pos: [0, 6.7, 0], yaw: Math.PI / 2, pitch: 0, feet: feet(0, 5, 0) } });
+    rr.frame(true);
     assert.equal(rr.started.length, 1, id);
-    for (let i = 0; i < 240 && T.techniqueState().act; i++) { T.stepTechnique(1 / 60, rr.ctx(false)); w.update(1 / 60); }
+    for (let i = 0; i < 240 && T.techniqueState().act; i++) rr.frame(false);
     assert.deepEqual(d.bursts(), [recipe], id);
     assert.deepEqual(d.shakes(), [shake], id);
     const b = d.log.find((e) => e.k === 'fx');
-    if (recipe === 'star') {
-      assert.ok(Math.abs(b.at[0] - 1.2) < 1e-9 && Math.abs(b.at[1] - 1.1) < 1e-9 && Math.abs(b.at[2]) < 1e-9, `in front at the blow's height: ${b.at}`);
-      assert.ok(Math.abs(b.o.dir[0] + 1) < 1e-9, 'facing the one who struck');
-    } else assert.equal(b.o.r, 3.5);
-    if (sound) assert.deepEqual(d.sounds().at(-1) && [d.sounds().at(-1).clip, d.sounds().at(-1).volume, d.sounds().at(-1).pitch], sound, id);
+    assert.equal(b.o.ground, 5, `${id}: the feet's floor`);
+    if (where === 'front') {
+      assert.ok(Math.abs(b.at[0] - 1.2) < 1e-6 && Math.abs(b.at[1] - 6.1) < 1e-6 && Math.abs(b.at[2]) < 1e-6, `${id}: in front at the blow's height: ${b.at}`);
+      assert.ok(Math.abs(b.o.dir[0] + 1) < 1e-9, `${id}: facing the one who struck`);
+    } else { assert.deepEqual(b.at, [0, 5, 0], `${id}: at the feet`); assert.equal(b.o.r, 3.5); }
+    if (sound) assert.deepEqual([d.sounds().at(-1).clip, d.sounds().at(-1).volume, d.sounds().at(-1).pitch], sound, id);
   }
 });
 
-test('TECHFX1 THE LEAP\'S AND THE DASH\'S MOMENTS: a Leap Strike leaves the ground (the field widens, the whoosh) and its hit is the landing - the ring at its 2.5 m where the body lands, the thud, the heavy shake; a Lunge\'s hit lays its trail from where it began to where it struck (mutants: the leap\'s release uncued; the landing\'s ring off the feet; the trail\'s start forgotten)', () => {
+test('TECHFX1 THE LEAP\'S AND THE DASH\'S MOMENTS: a Leap Strike leaves the ground (the field widens, the whoosh) and its hit is the landing - the ring at its 2.5 m where the body came down, the thud, the heavy shake; a Lunge\'s hit lays its trail from where it began to where it struck, the motor\'s own feet moving in place (mutants: the leap\'s release uncued; the landing\'s ring off the feet; the trail\'s start forgotten; the start aliased to the moving feet)', () => {
   reset();
   const target = foeAt(0, 7);
   setPlayerDoor({ foes: () => [target] });
   const fd = feelDoor({ motor: () => ({ grounded: true, techniqueLaunch() { this.grounded = false; return true; } }) });
   const pw = weaponOf(piece(() => createWeapon(120, 1), 'leap'));
-  const cam = { pos: [0, 1.7, 0], yaw: 0, pitch: -0.02, feet: [0, 0, 0] };
-  const r = rig({ pw, entity: player(), door: fd.door, cam });
-  T.stepTechnique(1 / 60, r.ctx(true));
-  T.stepTechnique(1 / 60, r.ctx(false));
+  const body = feet(0, 0, 0);
+  const r = rig({ pw, entity: player(), door: fd.door, cam: { pos: [0, 1.7, 0], yaw: 0, pitch: -0.02, feet: body } });
+  r.frame(true);
+  r.frame(false);
   assert.equal(T.techniqueState().act, 'flight');
   assert.deepEqual(fd.sounds().map((s) => s.clip), [SOUND.SwingLowPitch], 'the leap\'s whoosh');
   FX.stepTechniqueFx(1 / 30);
   assert.ok(FX.techniqueView().fov > 0, 'the field widens as you leave');
-  cam.feet = [0, 0, 6];   // the body comes down before the foe
-  for (let i = 0; i < 240 && T.techniqueState().act; i++) { T.stepTechnique(1 / 60, r.ctx(false)); if (r.started.length) pw.update(1 / 60); }
+  body[2] = 6;   // the body comes down before the foe - the motor's own array, moved in place
+  for (let i = 0; i < 240 && T.techniqueState().act; i++) r.frame(false);
   assert.deepEqual(r.started, ['StrikeDown']);
   const land = fd.log.find((e) => e.k === 'fx');
   assert.equal(land.recipe, 'land');
@@ -284,101 +313,117 @@ test('TECHFX1 THE LEAP\'S AND THE DASH\'S MOMENTS: a Leap Strike leaves the grou
   reset();
   const ld = feelDoor({ motor: () => ({ grounded: true, techniqueLaunch() { this.grounded = false; return true; } }) });
   const lpw = weaponOf(piece(() => createWeapon(116, 1), 'lunge', 10));
-  const lcam = { pos: [1, 1.7, 1], yaw: Math.PI / 2, pitch: 0, feet: [1, 0, 1] };
-  const lr = rig({ pw: lpw, entity: player(), door: ld.door, cam: lcam });
-  T.stepTechnique(1 / 60, lr.ctx(true));
-  T.stepTechnique(1 / 60, lr.ctx(false));
-  lcam.feet = [6, 0, 1];
-  for (let i = 0; i < 240 && T.techniqueState().act; i++) { T.stepTechnique(1 / 60, lr.ctx(false)); if (lr.started.length) lpw.update(1 / 60); }
+  const run = feet(1, 0, 1);
+  const lr = rig({ pw: lpw, entity: player(), door: ld.door, cam: { pos: [1, 1.7, 1], yaw: Math.PI / 2, pitch: 0, feet: run } });
+  lr.frame(true);
+  lr.frame(false);
+  run[0] = 6;   // the dash carries the same feet along
+  for (let i = 0; i < 240 && T.techniqueState().act; i++) lr.frame(false);
   assert.equal(lr.started.length, 1);
   const trail = ld.log.find((e) => e.k === 'fx');
   assert.equal(trail.recipe, 'trail');
-  assert.deepEqual(trail.at, [1, 0, 1], 'from where the run began');
+  assert.deepEqual(trail.at, [1, 0, 1], 'from where the run began - its own copy, not the feet that moved on');
   assert.deepEqual(trail.o.to, [6, 0, 1], 'to where it struck');
 });
 
-test('TECHFX1 THE SHOTS\' MOMENTS: a Piercing Shot\'s loose kicks the look up, shakes, flares at the bow and lays a tracer down its lane; a Volley\'s loose flares, each of its arrows lands with a puff WHERE and WHEN it meets the ground (its loose plus its flight at the cast engine\'s speed, in order, after its own arrow is loosed), and the circle closes over the disc with the last - once (mutants: the tracer\'s lane; a landing off its arrow; the landings at the loose; the close twice)', () => {
+test('TECHFX1 THE SHOTS\' MOMENTS: a bow\'s release kicks its springs; a Piercing Shot\'s loose kicks the look up, shakes, flares at the bow (0.9 m down the look, a hand below the eye) and lays a tracer down the look AT THE LOOSE to the first thing it meets; a Volley\'s loose flares, each of its arrows puffs where its own line meets the ground and when (its loose plus its flight at the cast engine\'s speed, in order, after its own arrow is loosed), and the circle closes over the disc with the last - once; neither adds a sound to the bow\'s own (mutants: the shot\'s release uncued; the tracer\'s lane the aim\'s; the flare at the feet; a landing off its line; the landings at the loose; the close twice)', () => {
   reset();
   const me = player(); me.items.push(arrows(3));
   const pw = weaponOf(piece(() => createWeapon(129, 1), 'pierce', 10));
   const fired = [];
   const fd = feelDoor({ fireArrow: (from, dir, o) => fired.push({ from, dir, o }) });
-  const r = rig({ pw, entity: me, door: fd.door });
-  T.stepTechnique(1 / 60, r.ctx(true));
-  T.stepTechnique(1 / 60, r.ctx(false));
+  const wall = { raycast: (o, d, max) => { if (!(d[2] > 1e-9)) return Infinity; const t = (4 - o[2]) / d[2]; return t >= 0 && t <= max ? t : Infinity; }, surfaceHit: () => null, heightAt: () => NaN };
+  const cam = { pos: [0, 1.7, 0], yaw: Math.PI / 2, pitch: -0.2, feet: feet(0, 0, 0) };   // aimed into the open (+x)
+  const r = rig({ pw, entity: me, door: fd.door, cam, collider: wall });
+  r.frame(true);
+  r.frame(false);
+  FX.stepTechniqueFx(1 / 60);
+  assert.ok(FX.techniqueView().fov < 0, 'the draw\'s own kick: the field narrows as the string comes back');
   assert.deepEqual(fd.bursts(), [], 'the draw: no burst yet');
-  let evs = [];
-  for (let i = 0; i < 120 && !evs.includes('hit'); i++) evs = pw.update(1 / 60);
-  T.claimShot(evs, r.ctx(false));
+  cam.yaw = 0;   // turned on the wall before the string goes
+  for (let i = 0; i < 120 && !fired.length; i++) r.frame(false);
   assert.equal(fired.length, 1);
   const tr = fd.log.find((e) => e.k === 'fx');
   assert.equal(tr.recipe, 'tracer');
   const look = [0, Math.sin(-0.2), Math.cos(-0.2)];
-  for (let k = 0; k < 3; k++) assert.ok(Math.abs(tr.o.dir[k] - look[k]) < 1e-9, 'down the look');
-  assert.ok(tr.o.len > 0 && Number.isFinite(tr.o.len), `its lane's length: ${tr.o.len}`);
+  for (let k = 0; k < 3; k++) assert.ok(Math.abs(tr.o.dir[k] - look[k]) < 1e-9, 'down the look the shaft flies');
+  assert.ok(Math.abs(tr.o.len - 4 / Math.cos(0.2)) < 1e-6, `to the wall it meets at the loose: ${tr.o.len}`);
+  const at = [look[0] * 0.9, 1.7 + look[1] * 0.9 - 0.15, look[2] * 0.9];
+  for (let k = 0; k < 3; k++) assert.ok(Math.abs(tr.at[k] - at[k]) < 1e-6, `the flare at the bow: ${tr.at}`);
   assert.deepEqual(fd.shakes(), [0.8]);
-  assert.deepEqual(fd.sounds().map((s) => [s.clip, s.volume, s.pitch]), [[SOUND.ArrowShoot, 0.95, 0.7]]);
-  // the Volley
+  assert.deepEqual(fd.sounds(), [], 'the bow\'s own twang is the loose\'s');
+  // the Volley, on a slope: 0.25 m up for every metre ahead
   reset();
   const v = player(); v.items.push(arrows(10));
   const bow = weaponOf(piece(() => createWeapon(130, 1), 'volley', 20));
   const log = [];
   let now = 0;
-  const vd = feelDoor({ fireArrow: (from, dir) => log.push({ k: 'fire', t: now, from, dir }) });
-  const vr = rig({ pw: bow, entity: v, door: vd.door });
-  T.stepTechnique(1 / 60, vr.ctx(true));
+  const vd = feelDoor({ fireArrow: (from, dir) => log.push({ t: now, from: [...from], dir: [...dir] }) });
+  const slope = ground(0, 0.25);
+  const vr = rig({ pw: bow, entity: v, door: vd.door, cam: { pos: [0, 1.7, 0], yaw: 0, pitch: 0.05, feet: feet(0, 0, 0) }, collider: slope });
+  vr.frame(true);
   const aim = T.techniqueState().aim.point;
-  T.stepTechnique(1 / 60, vr.ctx(false));
-  let e = [];
-  for (let i = 0; i < 120 && !e.includes('hit'); i++) e = bow.update(1 / 60);
-  T.claimShot(e, vr.ctx(false));
+  assert.ok(aim && Math.abs(aim[1] - 0.25 * aim[2]) < 0.05, `the disc on the slope: ${aim}`);
+  vr.frame(false);
+  FX.stepTechniqueFx(1 / 60);
+  assert.ok(FX.techniqueView().pitch > 0 && FX.techniqueHands().y > 0, 'the release\'s kick: the look lifts as the bow comes up, the hands take its weight');
+  for (let i = 0; i < 120 && !vd.bursts().length; i++) { now += 1 / 60; const k = vd.log.length; vr.frame(false); for (const ev of vd.log.slice(k)) ev.t = now; }
   assert.deepEqual(vd.bursts(), ['flare'], 'the loose\'s flare');
-  assert.deepEqual(vd.sounds().map((s) => s.clip), [SOUND.ArrowShoot]);
+  assert.deepEqual(vd.sounds(), [], 'no second ArrowShoot over the bow\'s');
   const n0 = vd.log.length;
-  for (let i = 0; i < 240 && T.techniqueState().act; i++) {
+  for (let i = 0; i < 300 && T.techniqueState().act; i++) {
     now += 1 / 60;
     const k = vd.log.length;
-    T.stepTechnique(1 / 60, vr.ctx(false));
+    vr.frame(false);
     for (const ev of vd.log.slice(k)) ev.t = now;
   }
-  const fires = log, shafts = vd.log.slice(n0).filter((x) => x.k === 'fx' && x.recipe === 'shaft');
-  assert.equal(fires.length, 6);
+  const shafts = vd.log.slice(n0).filter((x) => x.k === 'fx' && x.recipe === 'shaft');
+  assert.equal(log.length, 6);
   assert.equal(shafts.length, 6, 'a puff an arrow');
-  for (const f of fires) {
-    const s = f.from[1] / -f.dir[1], p = [f.from[0] + f.dir[0] * s, 0, f.from[2] + f.dir[2] * s];
-    const mine = shafts.find((x) => Math.hypot(x.at[0] - p[0], x.at[2] - p[2]) < 1e-6);
-    assert.ok(mine, `a puff where the arrow from ${f.from} lands`);
-    const due = f.t + Math.hypot(p[0] - f.from[0], p[1] - f.from[1], p[2] - f.from[2]) / MISSILE_SPEED;
-    assert.ok(mine.t >= f.t && Math.abs(mine.t - due) <= 1 / 60 + 1e-9, `when it lands: ${mine.t.toFixed(3)}, due ${due.toFixed(3)}`);
+  for (const f of log) {
+    // where this arrow's line meets the slope (solve from[1] + dir[1] s = 0.25 (from[2] + dir[2] s))
+    const s = (0.25 * f.from[2] - f.from[1]) / (f.dir[1] - 0.25 * f.dir[2]);
+    const p = [f.from[0] + f.dir[0] * s, f.from[1] + f.dir[1] * s, f.from[2] + f.dir[2] * s];
+    const mine = shafts.find((x) => Math.hypot(x.at[0] - p[0], x.at[2] - p[2]) < 0.05);
+    assert.ok(mine, `a puff where the arrow from ${f.from.map((x) => x.toFixed(2))} meets the slope (${p.map((x) => x.toFixed(2))})`);
+    assert.ok(Math.abs(mine.at[1] - p[1]) < 0.05 && Math.abs(mine.o.ground - mine.at[1]) < 1e-9, `on the ground under it: ${mine.at[1]} against ${p[1]}`);
+    const due = f.t + s / MISSILE_SPEED;
+    assert.ok(mine.t >= f.t && Math.abs(mine.t - due) <= 1 / 60 + 1e-6, `when it lands: ${mine.t.toFixed(3)}, due ${due.toFixed(3)}`);
   }
   for (let i = 1; i < shafts.length; i++) assert.ok(shafts[i].t >= shafts[i - 1].t, 'in order');
   const close = vd.log.filter((x) => x.k === 'fx' && x.recipe === 'close');
   assert.equal(close.length, 1, 'the circle closes once');
-  assert.deepEqual(close[0].at, aim, 'over the disc');
+  assert.deepEqual(close[0].at, [...aim], 'over the disc');
   assert.equal(close[0].o.r, TECHNIQUES.volley.radius);
   assert.ok(vd.log.indexOf(close[0]) > vd.log.indexOf(shafts.at(-1)), 'with the last arrow');
   assert.deepEqual(vd.shakes(), [0.5]);
 });
 
-test('TECHFX1 A LOAD: no spring of the moment before a load still moves the view after it (mutant: the load\'s reset of the feel dropped)', () => {
+test('TECHFX1 A LOAD: no spring of the moment before a load or a teleport still moves the view after it - the climb host\'s reset (the hosts\' load and teleport) clears them at once, and the runner\'s own load check after (mutants: the load\'s reset of the feel dropped; the climb host\'s reset without it)', () => {
   reset();
   const me = player();
   const pw = weaponOf(piece(() => createWeapon(120, 1), 'whirlwind'));
   const r = rig({ pw, entity: me, door: null });
-  T.stepTechnique(1 / 60, r.ctx(false));
+  r.frame(false);
   FX.techniqueCue('slam', 'hit');
   FX.stepTechniqueFx(1 / 60);
-  T.stepTechnique(1 / 60, r.ctx(false));
+  r.frame(false);
   assert.equal(FX.techniqueFxLive(), true, 'no load: it moves on');
   assert.notEqual(restorePlayer(me, snapshotPlayer(me)), null, 'a load lands');
-  T.stepTechnique(1 / 60, r.ctx(false));
+  r.frame(false);
   assert.equal(FX.techniqueFxLive(), false);
   assert.deepEqual([FX.techniqueView().pitch, FX.techniqueView().eye[1], FX.techniqueHands().y], [0, 0, 0]);
+  // the host's own reset - its load and teleport call it before the frame draws
+  FX.techniqueCue('slam', 'hit'); FX.stepTechniqueFx(1 / 60);
+  const host = createClimbFeelHost(() => ({ climbEvents: [], climbMove: null, pos: [0, 0, 0], onWall: false }), { yaw: 0, pitch: 0, pos: [0, 0, 0] }, null);
+  host.reset();
+  assert.equal(FX.techniqueFxLive(), false, 'the host\'s reset rests the feel too');
+  assert.deepEqual([FX.techniqueView().pitch, FX.techniqueHands().y], [0, 0]);
 });
 
-// ── the camera's channel, the hands' push ─────────────────────────
+// ── the camera's channel, the hands' dip ──────────────────────────
 
-test('TECHFX1 THE CAMERA\'S CHANNEL: the climb\'s view step folds the technique\'s pitch, roll and eye into the view FIRST PERSON ONLY (the look dips with a slam: the forward\'s height is the pitch\'s sine), its field-of-view kick is every lens\'s, the sky takes its pitch; the springs step with the body\'s frame and stand under a held one; at rest the view is the matrix it was (mutants: the view unapplied; first person ignored; the lens unadded; the sky\'s pitch dropped; stepped under a held frame)', () => {
+test('TECHFX1 THE CAMERA\'S CHANNEL: the climb\'s view step folds the technique\'s pitch, roll and eye into the view FIRST PERSON ONLY (the look dips with a slam: the forward\'s height is the pitch\'s sine), its field-of-view kick is every lens\'s, the sky takes its pitch; the springs step with every frame - a held one too, so a window or the death screen never keeps a blow\'s tilt - while the climb\'s own feel stands under the hold; at rest the view is the matrix it was (mutants: the view unapplied; first person ignored; the lens unadded; the sky\'s pitch dropped; held with the body)', () => {
   reset();
   const motor = { climbEvents: [], climbMove: null, pos: [0, 0, 0], onWall: false };
   const host = createClimbFeelHost(() => motor, { yaw: 0, pitch: 0, pos: [0, 0, 0] }, null);
@@ -404,80 +449,101 @@ test('TECHFX1 THE CAMERA\'S CHANNEL: the climb\'s view step folds the technique\
   assert.deepEqual([...third], I, 'third person: never the camera\'s channel');
   assert.equal(host.pitch(), 0, 'nor the sky\'s pitch');
   assert.ok(Math.abs(host.fovRad() - tv.fov * DEG) < 1e-12, 'the lens\'s kick any view, as the climb\'s');
-  const held = [tv.pitch, tv.eye[1], tv.fov];
-  for (let i = 0; i < 10; i++) host.frame(1 / 60, true);
-  assert.deepEqual([tv.pitch, tv.eye[1], tv.fov], held, 'a held frame holds the springs');
+  // a held frame: the climb's feel stands, the technique's springs settle
+  const climbFx = JSON.stringify(host.fx), p0 = tv.pitch;
+  host.frame(1 / 60, true);
+  assert.equal(JSON.stringify(host.fx), climbFx, 'the climb\'s own feel stands under a held frame');
+  assert.notEqual(tv.pitch, p0, 'the technique\'s springs step on');
+  for (let i = 0; i < 240; i++) host.frame(1 / 60, true);
+  assert.equal(FX.techniqueFxLive(), false, 'and come to rest under the hold');
   host.reset();
   assert.equal(host.tech, null);
-  // the host's source: the step after the sounds, the fold after the climb's
+  // the host's source: the step first, the fold after the climb's
   const src = code('src/player/climbFeel.js');
-  assert.match(src, /sounds\?\.update\(dt, m\);\s*stepTechniqueFx\(dt\);/);
+  assert.match(src, /frame\(dt, held = false\) \{\s*stepTechniqueFx\(dt\);\s*const m = player\(\);\s*if \(!m \|\| held\) return;/);
   assert.match(src, /if \(this\.applied\) applyClimbView\(view, this\.applied\);\s*this\.tech = firstPerson \? techniqueView\(\) : null;\s*if \(this\.tech\) applyClimbView\(view, this\.tech\);\s*return view;/);
 });
 
-test('TECHFX1 THE HANDS\' PUSH: the rig moves its whole first-person layer by the spring through the renderer\'s screen offset (screen heights of its own canvas), over whatever offset stood, and puts it back however the layer leaves; at rest it touches nothing (mutants: the push dropped; the offset not restored; the push off the canvas\'s height)', () => {
+test('TECHFX1 THE HANDS\' DIP: the rig lowers its classic layer by the spring through the renderer\'s screen offset (screen heights of its own canvas, down only), over whatever offset stood, and puts it back however the layer leaves; at rest it touches nothing; the Morrowind arm takes the dip through its own screen transform instead (mutants: the dip dropped; the offset not restored; the dip off the canvas\'s width; the arm on the renderer\'s offset)', () => {
   reset();
   const calls = [];
   const renderer = { _o: [3, 4], get screenOffset() { return this._o; }, setScreenOffset(x, y) { calls.push([x, y]); this._o = [x, y]; } };
   const audio = { playOneShot() {} };
   const rg = createWeaponRig({ renderer, canvas: { width: 1000, height: 800, clientWidth: 1000, clientHeight: 800 }, fetchBytes: () => { throw new Error('no art in tests'); }, palette: null, audio, entity: { items: [] }, say: () => {} });
-  const draw = () => { try { rg.draw(); } catch { /* the stub renderer draws nothing: the offset's law is what is read */ } };
-  draw();
+  rg.draw();
   assert.deepEqual(calls, [], 'at rest: the offset untouched');
-  FX.techniqueCue('whirlwind', 'hit');
   FX.techniqueCue('slam', 'hit');
   FX.stepTechniqueFx(1 / 30);
-  const h = FX.techniqueHands();
-  assert.ok(h.x < 0 && h.y > 0);
-  draw();
+  const dy = FX.techniqueHands().y;
+  assert.ok(dy > 0);
+  rg.draw();
   assert.equal(calls.length, 2, 'set and put back');
-  assert.ok(Math.abs(calls[0][0] - (3 + h.x * 800)) < 1e-9 && Math.abs(calls[0][1] - (4 + h.y * 800)) < 1e-9, `pushed: ${calls[0]}`);
+  assert.ok(calls[0][0] === 3 && Math.abs(calls[0][1] - (4 + dy * 800)) < 1e-9, `dipped, never across: ${calls[0]}`);
   assert.deepEqual(calls[1], [3, 4], 'and back');
   assert.deepEqual(renderer.screenOffset, [3, 4]);
-  // the source: the layer drawn inside the push, the offset restored in a finally; the classic draws untouched
+  // the source: the arm through its transform, the classic lane through the offset, restored in a finally
   const src = code('src/combat/weaponRig.js');
-  assert.match(src, /function drawInner\(o\) \{\s*const h = techniqueHands\(\);\s*if \(\(!h\.x && !h\.y\) \|\| typeof renderer\?\.setScreenOffset !== 'function'\) return drawLayer\(o\);/);
-  assert.match(src, /renderer\.setScreenOffset\(ox \+ h\.x \* ch, oy \+ h\.y \* ch\);\s*try \{ return drawLayer\(o\); \} finally \{ renderer\.setScreenOffset\(ox, oy\); \}/);
+  assert.match(src, /function drawInner\(o\) \{\s*const dy = techniqueHands\(\)\.y;\s*if \(!\(dy > 0\)\) return drawLayer\(o\);\s*if \(fpArm\.active\(\)\) \{ _armDip = dy; try \{ return drawLayer\(o\); \} finally \{ _armDip = 0; \} \}/);
+  assert.match(src, /_dipPx = dy \* \(cv\(\)\?\.height \?\? 0\);\s*renderer\.setScreenOffset\(ox, oy \+ _dipPx\);\s*try \{ return drawLayer\(o\); \} finally \{ renderer\.setScreenOffset\(ox, oy\); _dipPx = 0; \}/);
+  assert.match(src, /if \(_armDip > 0\) \{ const armsBase = fpArm\.screenTransform\(\); fpArm\.setScreenTransform\(\(base\) => techniqueDipRect\(armsBase \? armsBase\(base\) : base, _armDip, base\.h\)\); \}/);
   assert.match(src, /try \{ return onUiScreen\(renderer, cv\(\), \(\) => drawInner\(\{ paralyzed \}\)\); \} finally \{/);
 });
 
 // ── the world's burst ─────────────────────────────────────────────
 
-test('TECHFX1 THE BURSTS: each of the thirteen recipes draws in the technique\'s blue and the stone\'s grey - a few dozen sparks at most, a ring or two, one light - every number finite, and all of it gone in five seconds; a thousand slams stay under the engine\'s caps; a bad place, an unknown recipe, a trail with no length draw nothing (mutants: a recipe dropped; a cap ignored; the guard)', () => {
+test('TECHFX1 THE BURSTS: each of the thirteen recipes draws in the technique\'s blue and its stone-dust - its own count of sparks (Ground Slam\'s 39 the most), a ring or two, one light at most - from Arrays or typed arrays alike, every number finite, and all of it gone in five seconds; a thousand slams stay under the engine\'s caps; a ring\'s reach clamped; an arc its own half-angle; a lost facing faces ahead; a bad place, an unknown recipe, a trail with no length draw nothing (mutants: a recipe dropped; a count raised; a cap ignored; the reach unclamped; the guard; the typed array refused)', () => {
   assert.deepEqual([...TECH_FX_LOOK.energy.main], [...T.TECH_COLOR], 'the marks\' and the chip\'s blue');
-  const at = [1, 0.5, 2];
   const o = { ground: 0, yaw: 0.3, r: 3, dir: [0, 0, 1], len: 12, to: [1, 0, 7], spin: -1 };
-  const counts = {};
+  const COUNTS = { shock: 39, land: 25, sweep: 24, arc: 21, star: 14, chop: 14, punch: 12, vanish: 15, trail: 14, tracer: 11, flare: 7, shaft: 5, close: 0 };
+  assert.deepEqual(Object.keys(COUNTS).sort(), [...TECH_FX_RECIPES].sort());
   for (const recipe of TECH_FX_RECIPES) {
-    const fx = new SpellImpactFx({ rng: lcg(3) });
-    assert.equal(fx.technique(recipe, at, o), true, recipe);
-    counts[recipe] = fx.parts.length;
-    assert.ok(fx.parts.length <= 60 && fx.decals.length <= 3 && fx.lights.length <= 1, `${recipe}: ${fx.parts.length} sparks, ${fx.decals.length} rings, ${fx.lights.length} lights`);
-    assert.ok(fx.parts.length + fx.decals.length > 0, `${recipe}: draws`);
-    for (const p of fx.parts) {
-      assert.ok(p.look === TECH_FX_LOOK.energy || p.look === TECH_FX_LOOK.stone, `${recipe}: its looks`);
-      assert.ok([...p.p, ...p.v, p.life, p.w].every(Number.isFinite), `${recipe}: finite`);
+    for (const typed of [false, true]) {
+      const fx = new SpellImpactFx({ rng: lcg(3) });
+      const at = typed ? new Float32Array([1, 0.5, 2]) : [1, 0.5, 2];
+      const oo = typed ? { ...o, dir: new Float32Array(o.dir), to: new Float32Array(o.to) } : o;
+      assert.equal(fx.technique(recipe, at, oo), true, `${recipe}${typed ? ' (typed)' : ''}`);
+      assert.equal(fx.parts.length, COUNTS[recipe], `${recipe}: its sparks`);
+      assert.ok(fx.decals.length <= 3 && fx.lights.length <= 1, `${recipe}: ${fx.decals.length} rings, ${fx.lights.length} lights`);
+      assert.ok(fx.parts.length + fx.decals.length > 0, `${recipe}: draws`);
+      for (const p of fx.parts) {
+        assert.ok(p.look === TECH_FX_LOOK.energy || p.look === TECH_FX_LOOK.stone, `${recipe}: its looks`);
+        assert.ok([...p.p, ...p.v, p.life, p.w].every(Number.isFinite), `${recipe}: finite`);
+      }
+      for (const d of fx.decals) assert.ok([...d.at, d.r0, d.r1, d.life].every(Number.isFinite) && d.look === TECH_FX_LOOK.energy, recipe);
+      for (let i = 0; i < 100; i++) fx.step(0.05);
+      assert.equal(fx.live, false, `${recipe}: gone in five seconds`);
     }
-    for (const d of fx.decals) assert.ok([...d.at, d.r0, d.r1, d.life].every(Number.isFinite) && d.look === TECH_FX_LOOK.energy, recipe);
-    for (let i = 0; i < 100; i++) fx.step(0.05);
-    assert.equal(fx.live, false, `${recipe}: gone in five seconds`);
   }
-  assert.ok(counts.shock > counts.land && counts.land > counts.shaft, `the heavier blow throws more: ${JSON.stringify(counts)}`);
   const many = new SpellImpactFx({ rng: lcg(5) });
-  for (let i = 0; i < 1000; i++) many.technique('shock', at, o);
+  for (let i = 0; i < 1000; i++) many.technique('shock', [1, 0.5, 2], o);
   assert.ok(many.parts.length <= FX_MAX_PARTS && many.decals.length <= 161 && many.lights.length <= 8, `${many.parts.length}, ${many.decals.length}, ${many.lights.length}`);
+  const wide = new SpellImpactFx({ rng: lcg(4) });
+  wide.technique('shock', [0, 0, 0], { r: 60 });
+  assert.ok(Math.max(...wide.decals.map((d) => d.r1)) <= 6, 'a ring\'s reach clamped to the engine\'s 6 m');
+  const narrow = new SpellImpactFx({ rng: lcg(4) });
+  narrow.technique('arc', [0, 0, 0], { yaw: 0, r: 3, half: 0.4 });
+  for (const p of narrow.parts.filter((q) => q.look === TECH_FX_LOOK.energy && q.age < 0 || q.age === 0)) {
+    const ang = Math.atan2(p.p[0], p.p[2]);
+    if (Math.hypot(p.p[0], p.p[2]) > 0.5) assert.ok(Math.abs(ang) <= 0.4 + 1e-9, `the arc's own half-angle: ${ang}`);
+  }
+  const lost = new SpellImpactFx({ rng: lcg(4) });
+  assert.equal(lost.technique('arc', [0, 0, 0], { yaw: NaN }), true);
+  assert.ok(lost.parts.every((p) => [...p.p, ...p.v].every(Number.isFinite)), 'a lost facing faces ahead, never NaN');
   const fx = new SpellImpactFx({ rng: lcg(9) });
-  assert.equal(fx.technique('nothing', at, o), false);
+  assert.equal(fx.technique('nothing', [1, 0.5, 2], o), false);
   assert.equal(fx.technique('shock', [NaN, 0, 0], o), false);
   assert.equal(fx.technique('shock', null, o), false);
-  assert.equal(fx.technique('trail', at, { ...o, to: null }), false);
-  assert.equal(fx.technique('trail', at, { ...o, to: [1.1, 0, 2.1] }), false, 'a trail too short to see');
+  assert.equal(fx.technique('trail', [1, 0.5, 2], { ...o, to: null }), false);
+  assert.equal(fx.technique('trail', [1, 0.5, 2], { ...o, to: [1.1, 0, 2.1] }), false, 'a trail too short to see');
   assert.equal(fx.live, false, 'none of them drew');
-  // the sweep spins the technique's way: a spark's velocity tangent to its ring, the sign the spin's
-  const cw = new SpellImpactFx({ rng: lcg(2) }), ccw = new SpellImpactFx({ rng: lcg(2) });
-  cw.technique('sweep', [0, 0, 0], { r: 3, spin: -1 }); ccw.technique('sweep', [0, 0, 0], { r: 3, spin: 1 });
-  const turn = (p) => p.p[0] * p.v[2] - p.p[2] * p.v[0];
-  assert.ok(cw.parts.every((p) => turn(p) < 0) && ccw.parts.every((p) => turn(p) > 0), 'each the way its spin turns');
+  // the sweep turns the way its spin says: +1 carries the sparks in front to the left (the right axis is [cos, 0, -sin])
+  for (const [spin, sign] of [[1, -1], [-1, 1]]) {
+    const sw = new SpellImpactFx({ rng: lcg(2) });
+    sw.technique('sweep', [0, 0, 0], { r: 3, spin, yaw: 0.6 });
+    const ahead = sw.parts.filter((p) => (p.p[0] * Math.sin(0.6) + p.p[2] * Math.cos(0.6)) > 1.5);
+    assert.ok(ahead.length > 0);
+    for (const p of ahead) assert.ok(Math.sign(p.v[0] * Math.cos(0.6) - p.v[2] * Math.sin(0.6)) === sign, `spin ${spin}: the spark ahead moves ${sign < 0 ? 'left' : 'right'}`);
+  }
 });
 
 // ── the hosts, the setting ────────────────────────────────────────
@@ -502,7 +568,7 @@ test('TECHFX1 THE FOUR HOSTS\' DOORS: each hands its rig the burst (its cast eng
   assert.match(magic, /if \(!fx\.live \|\| fxBroken/, 'one pass, drawn while anything lives');
 });
 
-test('TECHFX1 THE SETTING: "Technique camera motion" is a port row under Game (Full, 75%, Half, Low, Off), found by its key, and Settings > Accessibility > Motion lists it after the recoil\'s strength (mutants: the row unbuilt; unmapped)', () => {
+test('TECHFX1 THE SETTING: "Technique camera motion" is a port row under Game (Full, 75%, Half, Low, Off), found by its key, and Settings > Accessibility > Motion lists it after the recoil\'s strength (mutants: the row unbuilt; unmapped; the default off)', () => {
   const menu = code('src/ui/enhancedMenu.js');
   assert.match(menu, /return \[row, techniqueMotionRow\(\)\];/);
   assert.match(menu, /choiceRow\('techniqueMotion', 'Technique camera motion',[^;]*\[\[1, 'Full'\], \[0\.75, '75%'\], \[0\.5, 'Half'\], \[0\.25, 'Low'\], \[0, 'Off'\]\]\);/);
@@ -513,14 +579,18 @@ test('TECHFX1 THE SETTING: "Technique camera motion" is a port row under Game (F
 
 // ── the frame's allocation ────────────────────────────────────────
 
-test('TECHFX1 THE FRAME MAKES NOTHING (L2 F9\'s measure, in a child with a 64 MB young space, the least of six windows): at rest - the springs\' step, the view fold, the lens, the sky\'s pitch, the hands, the marks, the chip - and with all six springs in flight the step, the fold and the hands, none past 2 bytes a frame, against a control of three numbers into a fresh list a frame, which must show (mutants: the marks\' fresh empty list; the chip\'s; an output copied a frame; the view fold\'s eye destructured)', () => {
+test('TECHFX1 THE FRAME MAKES NOTHING (L2 F9\'s measure, in a child with a 64 MB young space, the least of six windows): at rest - the springs\' step, the view fold, the lens, the sky\'s pitch, the hands, the marks (the hosts\' own call), the chip with no technique, the runner\'s step with a technique in hand and with its cooldown running, the chip ready and recovering, the technique key\'s held poll - and with all five springs in flight the step, the fold and the hands, none past 2 bytes a frame, against a control of three numbers into a fresh list a frame, which must show (mutants: the marks\' fresh empty list; the hosts\' clock read at rest; the chip\'s fresh list; an output copied a frame; the view fold\'s eye destructured; the cooldowns a Map; the poll walking the dicts)', () => {
   const url = (p) => JSON.stringify(pathToFileURL(join(ROOT, p)).href);
   const script = `
     await import(${url('test/modsOff.js')});
     const FX = await import(${url('src/combat/techniqueFx.js')});
     const T = await import(${url('src/combat/techniques.js')});
+    const LR = await import(${url('src/systems/lootRarity.js')});
     const { createClimbFeelHost } = await import(${url('src/player/climbFeel.js')});
     const { setPref } = await import(${url('src/systems/uiPrefs.js')});
+    const { PlayerWeapon } = await import(${url('src/combat/playerWeapon.js')});
+    const { createWeapon } = await import(${url('src/combat/enemyEquipment.js')});
+    const { held } = await import(${url('src/ui/input.js')});
     setPref('lootRarity', true);
     const bytes = (fn) => {
       for (let f = 0; f < 20000; f++) fn();
@@ -533,8 +603,8 @@ test('TECHFX1 THE FRAME MAKES NOTHING (L2 F9\'s measure, in a child with a 64 MB
       }
       return least;
     };
-    const feet = [1, 2, 3], out = {}, sink = [];
-    out.control = bytes(() => { sink[0] = [feet[0] + 0.5, feet[1] + 0.5, feet[2] + 0.5]; });
+    const pos = [1, 2, 3], out = {}, sink = [];
+    out.control = bytes(() => { sink[0] = [pos[0] + 0.5, pos[1] + 0.5, pos[2] + 0.5]; });
     const motor = { climbEvents: [], climbMove: null, pos: [0, 0, 0], onWall: false };
     const host = createClimbFeelHost(() => motor, { yaw: 0, pitch: 0, pos: [0, 0, 0] }, null);
     host.frame(1 / 60);
@@ -544,22 +614,42 @@ test('TECHFX1 THE FRAME MAKES NOTHING (L2 F9\'s measure, in a child with a 64 MB
     FX.resetTechniqueFx();
     out.rest = bytes(() => {
       FX.stepTechniqueFx(1 / 60); V.set(I); host.view(V, true); lens[0] = host.fovRad(); lens[1] = host.pitch(); lens[2] = FX.techniqueHands().y;
-      sink[1] = T.techniqueMarks(0); sink[2] = T.techniqueHudChips(ent, null);
+      sink[1] = T.techniqueMarksNow(); sink[2] = T.techniqueHudChips(ent, null);
     });
+    // a technique in hand: the runner's frame at rest, the chip ready (its key a word the host caches), and recovering
+    const it = LR.applyRarity(createWeapon(120, 1), 'rare', () => 0.3); it.isIdentified = true;
+    LR.addTechniqueLine(it, () => 0.5, { id: 'whirlwind' });
+    const pw = new PlayerWeapon({ weapon: it, liveSpeed: 50 }); pw.sheathed = false; pw.update(0);
+    const me = { isPlayer: true, level: 8, items: [], stats: { strength: 60, intelligence: 50, willpower: 50, agility: 50, endurance: 50, personality: 50, speed: 50, luck: 50 }, skills: new Array(35).fill(50), fatigue: 6400, health: 100, maxHealth: 100, equip: { slots: [] }, career: {}, activeEffects: [] };
+    const tcam = { pos: [0, 1.7, 0], yaw: 0, pitch: 0, feet: new Float32Array(3) }, R = {};
+    const ctx = { rig: R, entity: me, pw, cam: tcam, collider: null, held: false, ready: true, cancel: false, paralyzed: false, blocked: false, holding: false, startSwing: () => false, door: null, say: () => {}, noteShot: () => {} };
+    const key = () => 'MOUSE3';
+    out.inHand = bytes(() => { T.stepTechnique(1 / 60, ctx); sink[3] = T.techniqueHudChips(me, pw, key); sink[4] = T.techniqueMarksNow(); });
+    ctx.startSwing = (s) => pw.techniqueStrike(s);
+    ctx.held = true; T.stepTechnique(1 / 60, ctx); ctx.held = false;
+    for (let i = 0; i < 240 && T.techniqueState().act; i++) { pw.update(1 / 60); T.stepTechnique(1 / 60, ctx); }
+    const waiting = T.techniqueWait('whirlwind') > 0;
+    ctx.startSwing = () => false;
+    out.cooling = bytes(() => { T.stepTechnique(1e-5, ctx); sink[3] = T.techniqueHudChips(me, pw, key); });
+    const keys = new Set(['KeyW']);
+    let down = false;
+    out.poll = bytes(() => { down = held(keys, 'WeaponTechnique'); });
     FX.techniqueCue('slam', 'hit'); FX.techniqueCue('whirlwind', 'release');
     // in flight: what THE FEEL writes in place - the springs, the fold into the view, the hands. (The lens's two numbers
     // are returned as numbers: at rest 0, which is free, and the rest measure above calls them; while a spring moves, a
     // call the JIT does not inline boxes its non-integer answer - the climb's own kick since CLIMB4, every number a
     // function returns.)
-    out.flight = bytes(() => { FX.stepTechniqueFx(1e-6); V.set(I); host.view(V, true); lens[2] = FX.techniqueHands().x; });
+    out.flight = bytes(() => { FX.stepTechniqueFx(1e-6); V.set(I); host.view(V, true); lens[2] = FX.techniqueHands().y; });
     lens[0] = host.fovRad(); lens[1] = host.pitch();
     const v = FX.techniqueView(), h = FX.techniqueHands();
-    console.log(JSON.stringify({ out, live: FX.techniqueFxLive(), moving: [v.pitch, v.roll, v.eye[1], v.fov, h.x, h.y].every((x) => x !== 0), acc: lens.every((x) => Number.isFinite(x) && x !== 0) && V[6] !== 0 }));
+    console.log(JSON.stringify({ out, live: FX.techniqueFxLive(), waiting, down, moving: [v.pitch, v.roll, v.eye[1], v.fov, h.y].every((x) => x !== 0), acc: lens.every((x) => Number.isFinite(x) && x !== 0) && V[6] !== 0 }));
   `;
   const run = spawnSync(process.execPath, ['--expose-gc', '--min-semi-space-size=64', '--max-semi-space-size=64', '--input-type=module', '-e', script], { encoding: 'utf8' });
   assert.equal(run.status, 0, run.stderr);
   const r = JSON.parse(run.stdout.trim().split('\n').pop());
-  assert.ok(r.live && r.moving && r.acc, 'every spring in flight through the second measure, and the view and the lens moved by it');
+  assert.ok(r.live && r.moving && r.acc, 'every spring in flight through the last measure, and the view and the lens moved by it');
+  assert.ok(r.waiting, 'the cooldown measure ran with the cooldown running');
+  assert.equal(r.down, false);
   const m = r.out;
   assert.ok(m.control >= 40, `the control made ${m.control.toFixed(2)} bytes a frame - the measure is blind`);
   for (const [path, b] of Object.entries(m)) if (path !== 'control') assert.ok(b < 2, `${path}: ${b.toFixed(2)} bytes a frame (the control ${m.control.toFixed(2)})`);

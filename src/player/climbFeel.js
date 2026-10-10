@@ -27,7 +27,7 @@
 
 import { PARKOUR_GRIP_LOW, PARKOUR_HAND_SPAN } from './parkour.js';
 import { ClimbSounds } from './climbSounds.js';   // the ear's half, framed with the eye's
-import { stepTechniqueFx, techniqueView } from '../combat/techniqueFx.js';   // TECH-FX: a technique's camera rides the climb's view step
+import { stepTechniqueFx, techniqueView, resetTechniqueFx } from '../combat/techniqueFx.js';   // TECH-FX: a technique's camera rides the climb's view step
 
 /** The constants of the feel. Angles in degrees where named _DEG, distances in metres, rates per second. */
 export const FEEL = Object.freeze({
@@ -305,12 +305,14 @@ export function createClimbFeelHost(player, cam, lookFilter, { audio = null, str
     /** AUDIT CLIMB-ARC F2/F4: `held` - the host holds the motor this frame (a window, the death screen, the season):
      *  the feel stands as it was - no event re-read, no clock, no sound - as a paused game runs no Update. */
     frame(dt, held = false) {
+      // TECH-FX: a technique's springs settle on every frame - under a held one too (AUDIT TECH-FX: held with the body, a
+      // window or the death screen opened in a blow's first moment kept its tilt and its dip as long as it stood)
+      stepTechniqueFx(dt);
       const m = player();
       if (!m || held) return;
       this.fx = law.update(dt, m, cam.yaw);
       if (this.fx.yaw) lookFilter?.turn?.(this.fx.yaw);
       sounds?.update(dt, m);
-      stepTechniqueFx(dt);   // TECH-FX: a technique's springs, stepped with the body's frame (held with it)
     },
     view(view, firstPerson) {
       this.applied = firstPerson && this.fx ? this.fx : null;
@@ -323,6 +325,6 @@ export function createClimbFeelHost(player, cam, lookFilter, { audio = null, str
     },
     fovRad() { return (((this.fx?.fov ?? 0) + techniqueView().fov) * Math.PI) / 180; },   // TECH-FX: and a technique's kick, every lens, as the climb's
     pitch() { return (this.applied?.pitch ?? 0) + (this.tech?.pitch ?? 0); },   // TECH-FX: the sky takes the technique's pitch too
-    reset() { law.reset(); sounds?.reset(); this.fx = null; this.applied = null; this.tech = null; },
+    reset() { law.reset(); sounds?.reset(); resetTechniqueFx(); this.fx = null; this.applied = null; this.tech = null; },   // TECH-FX: a load's or a teleport's frame shows no blow of the moment before (AUDIT TECH-FX: the runner's own reset waited for its next step)
   };
 }

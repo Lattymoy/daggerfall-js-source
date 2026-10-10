@@ -493,8 +493,8 @@
   {
     "name": "TECH1-the-key-unread",
     "file": "src/combat/weaponRig.js",
-    "old": "held: !!actionDown?.(TECHNIQUE_ACTION),",
-    "new": "held: false,",
+    "old": "tc.held = !!actionDown?.(TECHNIQUE_ACTION);",
+    "new": "tc.held = false;",
     "tests": [
       "test/tech1_hosts.test.js"
     ]
@@ -502,8 +502,8 @@
   {
     "name": "TECH1-the-rig-hold-unread",
     "file": "src/combat/weaponRig.js",
-    "old": "holding: !!_heldHit,",
-    "new": "holding: false,",
+    "old": "tc.holding = !!_heldHit;",
+    "new": "tc.holding = false;",
     "tests": [
       "test/tech1_hosts.test.js"
     ]
@@ -774,8 +774,8 @@
   {
     "name": "TECH1-AUDIT-the-rig-paralysis-untold",
     "file": "src/combat/weaponRig.js",
-    "old": "        paralyzed: !!paralyzed,",
-    "new": "        paralyzed: false,",
+    "old": "      tc.paralyzed = !!paralyzed;",
+    "new": "      tc.paralyzed = false;",
     "tests": [
       "test/tech1_hosts.test.js"
     ]
@@ -792,8 +792,8 @@
   {
     "name": "TECH1-AUDIT-the-rig-window-untold",
     "file": "src/combat/weaponRig.js",
-    "old": "        blocked: !!technique?.blocked?.(),",
-    "new": "        blocked: false,",
+    "old": "      tc.blocked = !!technique?.blocked?.();",
+    "new": "      tc.blocked = false;",
     "tests": [
       "test/tech1_hosts.test.js"
     ]
@@ -873,7 +873,7 @@
   {
     "name": "TECH1-AUDIT-the-load-unread",
     "file": "src/combat/techniques.js",
-    "old": "    if (_s.restores != null) { _s.aim = null; endAct(ctx.pw); _s.wait.clear(); }\n",
+    "old": "    if (_s.restores != null) { _s.aim = null; endAct(ctx.pw); _s.wait.fill(0); }\n",
     "new": "",
     "tests": [
       "test/tech1_audit.test.js"

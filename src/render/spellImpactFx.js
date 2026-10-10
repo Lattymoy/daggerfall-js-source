@@ -57,12 +57,15 @@ export const FX_LOOK = Object.freeze({
 const TAU = Math.PI * 2;
 
 /** TECH-FX (bible/05-Combat/Weapon-Techniques.md THE FEEL): a weapon technique's two looks - its ENERGY, in the
- *  technique's own blue (combat/techniques.js TECH_COLOR, the marks' and the HUD chip's), and the STONE its blows throw
- *  off the ground, warm and short-lived. Not elements: no art replaces them and `artColours` never lists them. */
+ *  technique's own blue (combat/techniques.js TECH_COLOR, the marks' and the HUD chip's), and the STONE-DUST its blows
+ *  throw off the ground, warm and short-lived (the pass is additive, so it reads as glowing grit, never grey). Not
+ *  elements: no art replaces them and `artColours` never lists them. */
 export const TECH_FX_LOOK = Object.freeze({
   energy: Object.freeze({ hot: [0.92, 0.98, 1.0], main: [0.35, 0.78, 1.0], end: [0.06, 0.2, 0.55], light: [0.55, 1.1, 1.9], range: 6, lightS: 0.32 }),
   stone: Object.freeze({ hot: [1.0, 0.93, 0.78], main: [0.82, 0.62, 0.4], end: [0.22, 0.15, 0.09], light: [1.2, 0.9, 0.6], range: 4, lightS: 0.3 }),
 });
+/** TECH-FX: a point - an Array or a typed array - of three finite numbers. */
+const vec3 = (v) => v != null && v.length >= 3 && Number.isFinite(v[0]) && Number.isFinite(v[1]) && Number.isFinite(v[2]);
 /** TECH-FX: the recipes `technique` knows. */
 export const TECH_FX_RECIPES = Object.freeze(['shock', 'land', 'sweep', 'arc', 'star', 'chop', 'punch', 'vanish', 'trail', 'tracer', 'flare', 'shaft', 'close']);
 
@@ -449,19 +452,22 @@ export class SpellImpactFx {
    * TECH-FX: A WEAPON TECHNIQUE'S BURST (bible/05-Combat/Weapon-Techniques.md THE FEEL). `recipe` one of TECH_FX_RECIPES,
    * `at` where (scene frame): the feet for a ring, the blow's point for a star, the eye for a tracer, the start of a
    * trail. `ground` the floor's height (default `at`'s), `yaw` the facing (forward on the floor is [sin, 0, cos]), `r` a
-   * ring's reach, `dir` a shot's or a punch's unit direction, `len` a tracer's length, `to` a trail's end, `spin` +1 or
-   * -1. The same sparks, rings and light the spells' landings are made of, in the technique's blue and the stone's warm
-   * grey, under this engine's own caps. Answers whether it drew anything.
+   * ring's reach, `dir` a shot's or a punch's unit direction, `len` a tracer's length, `to` a trail's end, `spin` +1 (a
+   * sweep carried to the player's left) or -1, `half` an arc's half-angle (radians). Any point may be an Array or a
+   * typed array (AUDIT TECH-FX: the motor's feet are a Float32Array). The same sparks, rings and light the spells'
+   * landings are made of, in the technique's blue and its warm stone-dust, under this engine's own caps. Answers
+   * whether it drew anything.
    */
-  technique(recipe, at, { ground = null, yaw = 0, r = 2.5, dir = null, len = 0, to = null, spin = 1 } = {}) {
-    if (!Array.isArray(at) || at.length < 3 || !at.every(Number.isFinite)) return false;
+  technique(recipe, at, { ground = null, yaw = 0, r = 2.5, dir = null, len = 0, to = null, spin = 1, half = 80 * Math.PI / 180 } = {}) {
+    if (!vec3(at)) return false;
+    if (!Number.isFinite(yaw)) yaw = 0;   // AUDIT TECH-FX: a lost facing faces +z rather than writing NaN instances
     const E = TECH_FX_LOOK.energy, S = TECH_FX_LOOK.stone;
     const R = (a, b) => this.r(a, b);
     const gy = Number.isFinite(ground) ? Math.min(ground, at[1]) : at[1];
     const floor = [at[0], gy + 0.04, at[2]];
     const fx = Math.sin(yaw), fz = Math.cos(yaw);
     const reach = Math.max(0.5, Math.min(6, Number.isFinite(r) ? r : 2.5));
-    const D = Array.isArray(dir) && dir.every(Number.isFinite) && Math.hypot(dir[0], dir[1], dir[2]) > 1e-6 ? dir : [fx, 0, fz];
+    const D = vec3(dir) && Math.hypot(dir[0], dir[1], dir[2]) > 1e-6 ? dir : [fx, 0, fz];
     const flare = (p, w, life, I) => this._part(E, p, [0, 0, 0], { life, w, w1: 1.8, g: 0, shape: FX_SHAPE.flare, streak: 0, I });
     const star = (p, w) => { this._part(E, p, [0, 0, 0], { life: 0.18, w, w1: 1.4, g: 0, shape: FX_SHAPE.star, streak: 0, I: 2.2 }); flare(p, w * 1.3, 0.15, 1.4); };
     const spray = (p, n, lo, hi, life) => {
@@ -512,10 +518,10 @@ export class SpellImpactFx {
         this._light(E, [at[0], gy + 0.6, at[2]], 0.6, { life: 0.3 });
         return true;
       }
-      case 'arc': {   // Cleave: a fan of sparks along its arc in front, swept across it
-        const half = 80 * Math.PI / 180;
+      case 'arc': {   // Cleave: a fan of sparks along its arc in front (its own half-angle), swept across it
+        const hw = Number.isFinite(half) && half > 0 ? Math.min(half, Math.PI) : 80 * Math.PI / 180;
         for (let i = 0; i < 20; i++) {
-          const a = yaw - half + (2 * half * i) / 19, rr = reach * R(0.45, 0.7), sp = R(4, 7);
+          const a = yaw - hw + (2 * hw * i) / 19, rr = reach * R(0.45, 0.7), sp = R(4, 7);
           const p = [at[0] + Math.sin(a) * rr, gy + R(0.9, 1.3), at[2] + Math.cos(a) * rr];
           this._part(E, p, [Math.cos(a) * sp, R(-0.2, 0.4), -Math.sin(a) * sp], { delay: (i / 19) * 0.08, life: R(0.22, 0.36), w: R(0.018, 0.03), g: 2, drag: 0.9, streak: 0.1, maxLen: 0.7, I: R(1.2, 1.8) });
         }
@@ -547,7 +553,7 @@ export class SpellImpactFx {
         return true;
       }
       case 'trail': {   // Lunge: sparks down the lane you ran, left behind in the order you passed
-        if (!Array.isArray(to) || !to.every(Number.isFinite)) return false;
+        if (!vec3(to)) return false;
         const lx = to[0] - at[0], lz = to[2] - at[2], L = Math.hypot(lx, lz);
         if (!(L > 0.3)) return false;
         const n = Math.min(18, Math.max(4, Math.round(L / 0.35)));

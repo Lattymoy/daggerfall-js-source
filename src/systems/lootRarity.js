@@ -1330,8 +1330,14 @@ function withLine(affixes, line) {
 // and the late finds' among them, is still its seed's), and a piece that can carry no technique takes no draw at all.
 /** Is a line a technique (TECH1)? */
 export const isTechniqueAffix = (a) => !!AFFIX_KINDS[a?.id]?.technique;
-/** The piece's technique line, or null - the first valid one (the law allows one). */
-export const techniqueLineOf = (item) => (Array.isArray(item?.affixes) ? item.affixes.find((a) => isTechniqueAffix(a) && validAffix(a)) ?? null : null);
+/** The piece's technique line, or null - the first valid one (the law allows one). AUDIT TECH-FX: a loop, not a `find`
+ *  - the HUD's chip asks it every frame, and the arrow `find` takes was a closure a call. */
+export function techniqueLineOf(item) {
+  const list = item?.affixes;
+  if (!Array.isArray(list)) return null;
+  for (let i = 0; i < list.length; i++) { const a = list[i]; if (isTechniqueAffix(a) && validAffix(a)) return a; }
+  return null;
+}
 let _techniquePerMille = TECHNIQUE_PER_MILLE;
 /** Tests only: the chances (null puts them back). */
 export function _setTechniqueForTests(table) { _techniquePerMille = table == null ? TECHNIQUE_PER_MILLE : table; }

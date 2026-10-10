@@ -82,7 +82,8 @@ export const PREF_DEFAULTS = Object.freeze({
   // a control; off is DFU's linear cursor, on both skins
   padCursorAssist: true,
   // TECH-FX (bible/05-Combat/Weapon-Techniques.md THE FEEL): how much a weapon technique moves the screen - its camera
-  // springs, its shake and the hands' push (combat/techniqueFx.js techniqueMotion); 0 moves nothing but its sparks
+  // springs, its shake and the hands' dip (combat/techniqueFx.js techniqueMotion); 0 moves nothing on the screen (its
+  // burst and its sound stay)
   techniqueMotion: 1,
   // PEERMENU1: the player menu's two binds, keyboard and controller, each { code, hold } (null = the defaults: hold E,
   // hold A - systems/peerMenuBind.js). Online only.

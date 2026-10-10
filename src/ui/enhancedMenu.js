@@ -2681,7 +2681,7 @@ function portRowsGame({ pause = false } = {}) {
  *  both skins; Settings > Accessibility > Motion lists it (ui/settingsMap.js). */
 function techniqueMotionRow() {
   const row = choiceRow('techniqueMotion', 'Technique camera motion',
-    'How much a weapon technique shakes and tilts the view and pushes your hands.',
+    'How much a weapon technique shakes and tilts the view and dips your hands.',
     [[1, 'Full'], [0.75, '75%'], [0.5, 'Half'], [0.25, 'Low'], [0, 'Off']]);
   if (row?.dataset) { row.dataset.opt = 'techniqueMotion'; row.dataset.pref = 'techniqueMotion'; }   // ORG2: the map finds it by its key
   return row;

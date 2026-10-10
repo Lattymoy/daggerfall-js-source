@@ -428,6 +428,10 @@ export function climbDrop(lower, height) {
 export function climbLowerRect(rect, lower) {
   return { ...rect, y: rect.y + climbDrop(lower, rect.h) };
 }
+/** TECH-FX: the arms' rect dipped by a technique's `dip` (screen heights of a `screenH`-tall screen - drawInner). */
+export function techniqueDipRect(rect, dip, screenH) {
+  return { ...rect, y: rect.y + dip * screenH };
+}
 
 export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, camera = null, say = () => {}, spellArmed = () => false, abortSpell = () => {}, bindWorn = true, activateHeld = () => false, envHit = null, missEffect = null, collider = null, actionDown = null, torches = () => null, sheetWindowUp = () => false, dropRefusal = () => null, actTool = () => null, technique = null }) {   // TECH1: `technique` the host's door for a weapon's technique (combat/techniques.js: motor, fireArrow, drainFatigue, face)   // HT1 (KB1): whether a registry action is held, and the hosts' dropped-torch pool   // MAP-WEAPON: whether the travel map window holds the screen   // AUDIT 28 W12: HasAction(ActivateCenterObject) - the drawn bow's un-draw; WW1: the widget's recoil doors
   const playerWeapon = new PlayerWeapon({ liveSpeed: () => (entity ? liveStat(entity, 'speed') : 50) });   // DISC28-D: the swing clock reads the live Speed (FPSWeapon.cs:431/549-556), as the body and the widget already did
@@ -913,6 +917,13 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
    *  frame's context it was last stepped with (the loose's claim reads it at the frame's end). */
   const _techRig = {};
   let _techCtx = null;
+  /** TECH-FX: the hands' dip this draw - the arm's (screen heights, through its transform) and the classic lane's (UI
+   *  pixels, through the renderer's offset): drawInner sets them for the draw it wraps. */
+  let _armDip = 0, _dipPx = 0;
+  /** AUDIT TECH-FX: the technique's frame context and its camera, filled in place each frame (a fresh pair and a fresh
+   *  startSwing closure were half a kilobyte a frame, for every player, whatever was in hand); the swing's dt rides here. */
+  let _techDt = 0;
+  const _techCam = { pos: null, yaw: 0, pitch: 0, feet: null };
 
   // WEAPON-VIS1: a live call count, not a guess - see window.__weaponDebug
   // (scenes/world.js). Counts every path that flips the sheath through
@@ -1103,6 +1114,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     // RETRO-UI: drawn on the UI canvas, measured on the real one - the muzzle is a canvas pixel the world ray reads
     const [rx, ry] = fromUiPoint(canvas, rect.x, rect.y), real = canvas.canvas ?? canvas;
     _tlDrawn = { rect: { ...rect, x: rx, y: ry }, canvasW: real.width, canvasH: real.height, muzzle: art.muzzle ?? null, flip: handedFlip(), viewport: renderer.worldViewportRect ?? null, aspect: renderer.worldProjAspect ?? null };   // RETRO1: and the lens's aspect
+    if (_dipPx) _tlDrawn.rect.y += _dipPx;   // TECH-FX: where a technique's dip drew it (drawInner) - the UI layer's pixels are the canvas's (ui/uiScreen.js uiCanvas offsets, never scales)
     // FIELD-GUN13 (Mac: "The muzzle flash itself shouldn't be affected
     // by the darkening lighting").
     //
@@ -1586,19 +1598,21 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // host's - AHEAD of the gesture: a technique's strike and a click's are one machine, and the first to start it holds
       // it. Its gate is the swing's own (drawn, no spell, no cast, no climb, no equip pause, no act's tool, no arm still
       // loosing) and the camera this rig rides.
-      _techCtx = {
-        rig: _techRig, entity, pw: playerWeapon,
-        cam: camNow?.pos && camNow?.feet ? { pos: camNow.pos, yaw: camNow.yaw ?? 0, pitch: camNow.pitch ?? 0, feet: camNow.feet } : null,
-        collider: collider?.() ?? null,
-        held: !!actionDown?.(TECHNIQUE_ACTION),
-        ready: !paralyzed && !!c && canAttack && !armLoosing && !_heldHit && !!camNow?.pos && !!camNow?.feet,   // AUDIT TECH1: and no plain shot's hit still held for the arm (MW-D42) - the click path's own gate
-        cancel: !!activateHeld(),
-        paralyzed: !!paralyzed,   // AUDIT TECH1: a held body's machine is frozen - and so is its technique's clock
-        blocked: !!technique?.blocked?.(),   // AUDIT TECH1: a window holds the world (the host's gamePaused) - and the key
-        holding: !!_heldHit,   // MW-D42: a shot's hit held for the Morrowind arm's release - the loose is still to come
-        startSwing: (s) => { if (!playerWeapon.techniqueStrike(s)) return false; fpAttack(s, dt); return true; },
+      _techDt = dt;
+      _techCtx ??= {
+        rig: _techRig, entity, pw: playerWeapon, cam: null, collider: null, held: false, ready: false, cancel: false, paralyzed: false, blocked: false, holding: false,
+        startSwing: (s) => { if (!playerWeapon.techniqueStrike(s)) return false; fpAttack(s, _techDt); return true; },
         door: technique, say, noteShot: noteShotHere,
       };
+      const tc = _techCtx;
+      if (camNow?.pos && camNow?.feet) { _techCam.pos = camNow.pos; _techCam.yaw = camNow.yaw ?? 0; _techCam.pitch = camNow.pitch ?? 0; _techCam.feet = camNow.feet; tc.cam = _techCam; } else tc.cam = null;
+      tc.collider = collider?.() ?? null;
+      tc.held = !!actionDown?.(TECHNIQUE_ACTION);
+      tc.ready = !paralyzed && !!c && canAttack && !armLoosing && !_heldHit && !!camNow?.pos && !!camNow?.feet;   // AUDIT TECH1: and no plain shot's hit still held for the arm (MW-D42) - the click path's own gate
+      tc.cancel = !!activateHeld();
+      tc.paralyzed = !!paralyzed;   // AUDIT TECH1: a held body's machine is frozen - and so is its technique's clock
+      tc.blocked = !!technique?.blocked?.();   // AUDIT TECH1: a window holds the world (the host's gamePaused) - and the key
+      tc.holding = !!_heldHit;   // MW-D42: a shot's hit held for the Morrowind arm's release - the loose is still to come
       stepTechnique(dt, _techCtx);
       // AUDIT TECH1: no gesture while a technique's leap or dash is in the air - its strike is the landing's
       const strike = !paralyzed && c && canAttack && !armLoosing && !techniqueFlying()
@@ -1874,17 +1888,23 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     /** DISC6: the rig's frame is handed to another mode's rig - its torch loop falls silent (handheldTorches silence). */
     silenceTorch() { handheld.silence(); },
   };
-  /** TECH-FX (bible/05-Combat/Weapon-Techniques.md THE FEEL): THE HANDS' PUSH - a technique's spring moves the whole
-   *  first-person layer (the weapon, the shield, the torch hand, the Morrowind arm) through the renderer's screen offset,
-   *  the seam retro mode's pillarbox places it with (ui/uiScreen.js onUiScreen); at rest the layer draws as it always has,
-   *  and the offset is put back however the layer leaves. The classic draws themselves are untouched (FIELD-GUN12). */
+  /** TECH-FX (bible/05-Combat/Weapon-Techniques.md THE FEEL): THE HANDS' DIP - a technique's spring lowers the
+   *  first-person layer (combat/techniqueFx.js techniqueHands, screen heights - only ever down: every sprite sits on a
+   *  screen edge). The CLASSIC lane (the weapon, the clone, the gun, the shield, the torch hand, the spell's hands) takes
+   *  it through the renderer's screen offset, the seam retro mode's pillarbox places it with (ui/uiScreen.js
+   *  onUiScreen), put back however the layer leaves; the Morrowind ARM takes it through its own screen transform (AUDIT
+   *  TECH-FX: its frame window - fpArm.js fpFrameWindow - covers the screen exactly, so an offset laid on after it cut a
+   *  bare band across the screen, and with the Weapon Widget off its overlay never read the offset at all). At rest the
+   *  layer draws as it always has; the classic draws themselves are untouched (FIELD-GUN12). */
   function drawInner(o) {
-    const h = techniqueHands();
-    if ((!h.x && !h.y) || typeof renderer?.setScreenOffset !== 'function') return drawLayer(o);
-    const ch = cv()?.height ?? 0;
+    const dy = techniqueHands().y;
+    if (!(dy > 0)) return drawLayer(o);
+    if (fpArm.active()) { _armDip = dy; try { return drawLayer(o); } finally { _armDip = 0; } }
+    if (typeof renderer?.setScreenOffset !== 'function') return drawLayer(o);
     const ox = renderer.screenOffset?.[0] ?? 0, oy = renderer.screenOffset?.[1] ?? 0;
-    renderer.setScreenOffset(ox + h.x * ch, oy + h.y * ch);
-    try { return drawLayer(o); } finally { renderer.setScreenOffset(ox, oy); }
+    _dipPx = dy * (cv()?.height ?? 0);
+    renderer.setScreenOffset(ox, oy + _dipPx);
+    try { return drawLayer(o); } finally { renderer.setScreenOffset(ox, oy); _dipPx = 0; }
   }
   function drawLayer({ paralyzed = false } = {}) {
     {
@@ -2078,6 +2098,9 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // and stay on the screen where the stone is.
       const armsClimb = fpArm.active() && !!fpArm.climbPosed?.();
       if (_climbLower > 0 && !armsClimb) { const armsBase = fpArm.screenTransform(); fpArm.setScreenTransform((base) => climbLowerRect(armsBase ? armsBase(base) : base, _climbLower)); }
+      // TECH-FX: and a technique's dip over all of it - through the transform, so the frame window grows over the edge
+      // the dip opens (drawInner)
+      if (_armDip > 0) { const armsBase = fpArm.screenTransform(); fpArm.setScreenTransform((base) => techniqueDipRect(armsBase ? armsBase(base) : base, _armDip, base.h)); }
       // Lowered out of sight, no lane draws (the arm's record stays the top's false); the gun and the clone have no slide
       // of their own to lend, so halfway down they are gone - the arms and the classic sprite slide the whole way.
       if (!armsClimb && (_climbLower >= CLIMB_LOWER_GONE || (_climbLower >= 0.5 && !fpArm.active() && (widgetOn() || thunderlockHeld())))) return;
