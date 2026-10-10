@@ -62,6 +62,7 @@ import { startMobileTalk, expandMacros, expandAnswerRecord, oathTextId, honorifi
 import { REGION_RACES } from '../formats/mapsFile.js';
 import { ChoiceWindow } from '../ui/talkWindow.js';
 import { buildBuildingDirectory, questorCandidateBuildings, TOPIC_CATEGORIES, whereIsAnswer, reactionTier012, buildingHint } from '../systems/talkTopics.js';
+import { yardDirectoryRows, YARD_KIND_ORDER, YARD_TALK_GROUPS } from '../systems/merchantYards.js';   // YARDS-FOUND: the town's yards in its directory
 import { LIST_ITEM_TYPE, QUESTION_TYPE } from '../systems/topicTree.js';   // TK-vi: the window's rows are the tree's ListItems; B6: the Work question type
 import { discoverBuilding } from '../systems/discovery.js';   // T4: %loc's mark side effect
 import { getNameBankOfRegion, fullName as nameHelperFullName, GENDERS } from '../characters/nameHelper.js';   // MACRO-6: %fn/%mn in the engine-less answer
@@ -326,6 +327,10 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       const opts = nameOpts();
       if (!opts) return;
       directory = buildBuildingDirectory(topics.exteriorBuildings, topics.blocks, opts);
+      // YARDS-FOUND (from play: "Ensure these locations appear when talking to NPCs"): the town's Stable and Wagon Yard
+      // (the host's `yards`, the location's frame) as rows beside its buildings - the Where-is page, the compass, the
+      // knowledge roll and the map's mark all read a place from this one list (systems/merchantYards.js yardDirectoryRows)
+      directory.push(...yardDirectoryRows(topics.yards));
       // QP1: GetBuildingList's questor half rides the SAME rebuild -
       // C# populates npcsWithWork inside the one building walk
       // (TalkManager.cs:2807-2874). The candidates go out through the
@@ -1024,9 +1029,10 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
 
   /** AUDIT 68 S21-talk-category-dup: the location's buildings grouped by TOPIC_CATEGORIES, empty groups dropped -
    *  one pipeline for the native window's rows and the keyed Where-is chain. */
-  const directoryByCategory = () => TOPIC_CATEGORIES
-    .map((c) => ({ label: c.caption, buildings: directory.filter((b) => b.buildingType === c.type) }))
-    .filter((c) => c.buildings.length);
+  const directoryByCategory = () => [
+    ...TOPIC_CATEGORIES.map((c) => ({ label: c.caption, buildings: directory.filter((b) => b.buildingType === c.type) })),
+    ...YARD_KIND_ORDER.map((k) => ({ label: YARD_TALK_GROUPS[k], buildings: directory.filter((b) => b.yard === k) })),   // YARDS-FOUND: the tree's own two groups, after the shops
+  ].filter((c) => c.buildings.length);
   /** The pre-engine fallback: T3c's flat category directory. */
   function localCategories() {
     return directoryByCategory()

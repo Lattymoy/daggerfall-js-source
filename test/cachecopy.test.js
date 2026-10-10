@@ -101,6 +101,7 @@ test('CACHE-COPY: the cache reaches the live layers BY A DRAW - one triangle a f
   const { sp, frame } = room();
   frame(); frame(); frame();   // records; the caches drawn (the man's first sight is still); his step seen: drawn without him
   for (let f = 0; f < 3; f++) {
+    const held = sp._faceDyn.slice();   // PERF-FACE: the live faces that hold more than the cache - the man, drawn there last frame
     const calls = frame();
     assert.equal(calls.filter((c) => c[0] === 'blitFramebuffer').length, 0, `frame ${f}: no blit - on Direct3D a depth blit out of an array's layer is no copy`);
     const copied = new Map();
@@ -122,7 +123,8 @@ test('CACHE-COPY: the cache reaches the live layers BY A DRAW - one triangle a f
       },
     });
     assert.equal(copied.size, 2, `frame ${f}: both lamps copied their caches (the man near both)`);
-    for (const [k, faces] of copied) assert.equal(faces, 0b111111, `slot ${k}: all six faces`);
+    // PERF-FACE (PIN MOVED): the faces that held the man, not six - a face that holds the cache is left as it is
+    for (const [k, faces] of copied) assert.equal(faces, [0, 1, 2, 3, 4, 5].reduce((m, i) => m | (held[k * 6 + i] ? 1 << i : 0), 0), `slot ${k}: every face that held more than the cache, and no other`);
     assert.ok([...copied.keys()].some((k) => k > 0), 'a slot past the first, where a layer without its slot is another lamp\'s');
   }
 });
@@ -184,7 +186,7 @@ test('CACHE-COPY: the copy binds its empty vertex array through the renderer\'s 
         assert.notEqual(s.vao, sp._copyVao, `frame ${f}: a replay draw on the copy's array - the tracker skipped its bind`);
       },
     });
-    assert.ok(copies >= 12 && draws > 0, `frame ${f}: two lamps copied and the man drawn over them (${copies} copies, ${draws} draws)`);
+    assert.ok(copies >= 2 && draws > 0, `frame ${f}: two lamps copied and the man drawn over them (${copies} copies, ${draws} draws)`);   // PERF-FACE (PIN MOVED): a lamp copies the faces that held him, not six
   }
   assert.ok(man.vao, 'the man has an array of his own');
 });

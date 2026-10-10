@@ -152,10 +152,11 @@ trace over the same window: the shadow pass's functions (`replay`, `_casterCandi
 the placement queries) reach TurboFan within the window; the world host's `frame` is never marked. On the relay,
 `Room._message` is over the line too (69,858 bytes, node 22).
 
-Whether the world host's frame is brought under the line is open (item 22): a prototype in this pass's scratch moved
-its largest self-contained blocks into functions of their own (24 lines, the text between untouched), and its A/B under
-a long session's tiering (V8's invocation thresholds lowered for both arms, since a once-a-frame function never reaches
-them at SwiftShader's ~0.4 fps) was stopped unfinished with the rest (AUDIT 637 D4: this paragraph said "running now").
+The world host's frame was brought under the line on 2026-10-10 (item 22, PERF-V8: `Performance-Priority.md`); this
+pass's prototype moved its largest self-contained blocks into functions of their own (24 lines, the text between
+untouched), and its A/B under a long session's tiering (V8's invocation thresholds lowered for both arms, since a
+once-a-frame function never reaches them at SwiftShader's ~0.4 fps) was stopped unfinished with the rest (AUDIT 637
+D4: this paragraph said "running now").
 
 ## Online, measured
 
@@ -259,8 +260,9 @@ container's CPU, or node/Chromium micro-benchmarks over the real modules where n
 **V8.**
 22. **The world host's `frame` over the ceiling** (99,547 bytes of bytecode in Chromium; by node 22's V8 compiled eagerly,
     `--no-lazy --print-bytecode`, 100,806 at this pass's merge and 105,613 on 2026-10-09 - `Performance-Online.md`;
-    61,440 is the line) never leaves the interpreter. Moving its largest blocks into functions of their own brings it under; unmeasured in the real game, and
-    it moves every cite into world.js below the first block - its own pull request, if its A/B shows a gain.
+    61,440 is the line). BUILT 2026-10-10 as PERF-V8 (`Performance-Priority.md`): twenty-one statements closures of
+    their own, made in place - lines inserted only, so no cite moved - and the frame 39,965 bytes; the real game's A/B
+    is still owed.
 
 ## For Mac
 

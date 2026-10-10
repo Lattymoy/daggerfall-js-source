@@ -30,8 +30,8 @@
   {
     "name": "NAME1-anchor-dom-gap-dropped",
     "file": "src/ui/nameLayer.js",
-    "old": "        setStyle(tag.node, 'top', `${Math.round(p.y - NAME_GAP_PX)}px`);",
-    "new": "        setStyle(tag.node, 'top', `${Math.round(p.y)}px`);",
+    "old": "${Math.round(p.y - NAME_GAP_PX)}px) translate(-50%, -100%)`);",
+    "new": "${Math.round(p.y)}px) translate(-50%, -100%)`);",
     "tests": [
       "test/name1_bubbles.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "NAME1-anchor-dom-stack-grows-down",
     "file": "src/ui/nameLayer.js",
-    "old": "  transform: translate(-50%, -100%); }",
-    "new": "  transform: translate(-50%, 0); }",
+    "old": "px) translate(-50%, -100%)`);",
+    "new": "px) translate(-50%, 0)`);",
     "tests": [
       "test/name1_bubbles.test.js"
     ]

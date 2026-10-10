@@ -5,7 +5,8 @@
 // The player's ask (2026-09-29): "all the locations show cause a lot of clutters add a filers to the bottom right
 // segments". Five groups, each a switch in the view's corner (ui/travelViewHud.js), kept on the device as the path
 // mode is:
-//   towns      - the places in the grid, their plates (kind 'place')
+//   towns      - the places in the grid, their plates (kind 'place'); YARDS-FOUND: and the towns' Stables and Wagon Yards
+//                ('yard <kind>'), shown and hidden with them but never counted as a town
 //   distant    - the far places held at the edge with their distance (kind 'far', not a dungeon)
 //   dungeons   - the unfound lairs and the found dungeons far off ('lair', 'far dungeon')
 //   enemies    - the roaming bands, the camps and packs, the raiders' sails ('band', 'camp', 'raider ...')
@@ -50,7 +51,7 @@ export function markGroup(kind = '') {
   const words = String(kind).split(' ');
   const k = words[0];
   if (words.includes('chase')) return null;   // a threat coming at me stays on the screen
-  if (k === 'place') return 'towns';
+  if (k === 'place' || k === 'yard') return 'towns';   // YARDS-FOUND: a town's yards go with its plate
   if (k === 'far') return words.includes('dungeon') ? 'dungeons' : 'distant';
   if (k === 'lair') return 'dungeons';
   if (k === 'band' || k === 'camp' || k === 'raider') return 'enemies';
@@ -195,9 +196,11 @@ export function markShown(m, f = travelViewFilters(), w = travelViewWho()) {
 }
 
 /** How many marks of each group there are (drawn or not) - the switches' counts. */
+/** YARDS-FOUND: a town's Stable or Wagon Yard on the Overworld (scenes/merchantYardsHost.js overworldMarks). */
+export const isYardMark = (m) => String(m?.kind ?? '').split(' ')[0] === 'yard';
 export function countGroups(marks) {
   const n = Object.fromEntries(TV_FILTER_GROUPS.map((g) => [g, 0]));
-  for (const m of marks ?? []) { const g = markGroup(m?.kind); if (g) n[g] += 1; }
+  for (const m of marks ?? []) { const g = markGroup(m?.kind); if (g && !isYardMark(m)) n[g] += 1; }   // YARDS-FOUND: the Towns switch counts towns
   return n;
 }
 

@@ -1,0 +1,46 @@
+[
+  {
+    "name": "PERF-FACE-a-a-drawn-face-reported-clean",
+    "file": "src/render/shadowPass.js",
+    "old": "            this._faceDyn[k * 6 + face] = drew > 0 ? 1 : 0;   // PERF-FACE: a face no dynamic drew into is the cache again",
+    "new": "            this._faceDyn[k * 6 + face] = 0;   // PERF-FACE: a face no dynamic drew into is the cache again",
+    "tests": ["test/perfface.test.js"]
+  },
+  {
+    "name": "PERF-FACE-b-a-fresh-cache-under-a-mover-copied-by-face",
+    "file": "src/render/shadowPass.js",
+    "old": "          this._blitSlot(k, f.bindVao, staticStale ? FACES_ALL : this._dirtyFaces(k));   // CACHE-COPY: by a draw; PERF-FACE: only the faces that hold more than the cache",
+    "new": "          this._blitSlot(k, f.bindVao, this._dirtyFaces(k));   // CACHE-COPY: by a draw; PERF-FACE: only the faces that hold more than the cache",
+    "tests": ["test/perfface.test.js"]
+  },
+  {
+    "name": "PERF-FACE-c-a-fresh-cache-with-nothing-moving-copied-by-face",
+    "file": "src/render/shadowPass.js",
+    "old": "          this._blitSlot(k, f.bindVao, staticStale ? FACES_ALL : this._dirtyFaces(k));   // PERF-FACE: a face that holds the cache already is left",
+    "new": "          this._blitSlot(k, f.bindVao, this._dirtyFaces(k));   // PERF-FACE: a face that holds the cache already is left",
+    "tests": ["test/perfface.test.js"]
+  },
+  {
+    "name": "PERF-FACE-d-an-emptied-slot-trusted",
+    "file": "src/render/shadowPass.js",
+    "old": "this._slotSelf[k] = 0; this._faceDyn.fill(1, k * 6, k * 6 + 6); }   // an emptied slot is drawn afresh when it is filled",
+    "new": "this._slotSelf[k] = 0; this._faceDyn.fill(0, k * 6, k * 6 + 6); }   // an emptied slot is drawn afresh when it is filled",
+    "tests": ["test/perfface.test.js"],
+    "equivalent": true,
+    "why": "An emptied slot's cache flag is cleared beside it (_slotCached 0), so the slot's next use is staticStale and copies FACES_ALL whatever its faces say - the fill is the invariant written down, not a law any frame can reach."
+  },
+  {
+    "name": "PERF-FACE-e-the-copy-back-leaves-faces-dirty",
+    "file": "src/render/shadowPass.js",
+    "old": "          this._faceDyn.fill(0, k * 6, k * 6 + 6);\n",
+    "new": "",
+    "tests": ["test/perfface.test.js"]
+  },
+  {
+    "name": "PERF-FACE-f-every-face-copied-again",
+    "file": "src/render/shadowPass.js",
+    "old": "      if (!(faces & (1 << face))) continue;   // PERF-FACE\n",
+    "new": "",
+    "tests": ["test/perfface.test.js"]
+  }
+]
