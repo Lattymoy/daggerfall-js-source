@@ -23,7 +23,7 @@
   {
     "name": "PERF-INST-d-the-shift-not-refiled",
     "file": "src/render/shadowPass.js",
-    "old": "      if (o._shGrid) _fileAll(o);   // PERF-INST: every placement moved - filed again where it stands now\n",
+    "old": "      if (o._shInstGrid) _fileAll(o);   // PERF-INST: every placement moved - filed again where it stands now\n",
     "new": "",
     "tests": ["test/perfinst.test.js"]
   },
@@ -37,8 +37,8 @@
   {
     "name": "PERF-INST-f-a-live-placement-evicted",
     "file": "src/render/shadowPass.js",
-    "old": "        if (!oldest || this.frameNo - oldest.seen < SHADOW_DYNAMIC_HOLD) { o._shLiveAt = this.frameNo; return true; }",
-    "new": "        if (!oldest) { o._shLiveAt = this.frameNo; return true; }",
+    "old": "        if (!oldest || this.frameNo - oldest.seen < SHADOW_DYNAMIC_HOLD) { o._shInstLiveAt = this.frameNo; return true; }",
+    "new": "        if (!oldest) { o._shInstLiveAt = this.frameNo; return true; }",
     "tests": ["test/perfinst.test.js"]
   },
   {
@@ -51,8 +51,8 @@
   {
     "name": "PERF-INST-h-all-live-kept-past-its-frame",
     "file": "src/render/shadowPass.js",
-    "old": "        if (o._shLiveAt === this.frameNo) return true;",
-    "new": "        if (o._shLiveAt != null) return true;",
+    "old": "        if (o._shInstLiveAt === this.frameNo) return true;",
+    "new": "        if (o._shInstLiveAt != null) return true;",
     "tests": ["test/perfinst.test.js"]
   },
   {

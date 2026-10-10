@@ -953,7 +953,7 @@ export const cubeKeeps = (lim, k, x, y, z, r) => {
 function _file(o, s) {
   const k = instKey(Math.floor(s.m[12] / SHADOW_INSTANCE_REACH), Math.floor(s.m[14] / SHADOW_INSTANCE_REACH));
   if (s.filed && k === s.key) return;
-  const grid = o._shGrid;
+  const grid = o._shInstGrid;
   if (s.filed) {
     const was = grid.get(s.key);
     if (was) { const i = was.indexOf(s); if (i >= 0) { was[i] = was[was.length - 1]; was.pop(); } if (!was.length) grid.delete(s.key); }
@@ -965,9 +965,9 @@ function _file(o, s) {
 }
 /** PERF-INST: every placement of `o` filed afresh (the first time past SHADOW_INSTANCE_LINEAR, and after an origin shift). */
 function _fileAll(o) {
-  o._shGrid = new Map();
+  o._shInstGrid = new Map();
   for (const s of o._shInst) { s.filed = false; s.key = NaN; _file(o, s); }
-  return o._shGrid;
+  return o._shInstGrid;
 }
 
 export class ShadowPass {
@@ -1336,7 +1336,7 @@ export class ShadowPass {
       const d = this._shiftDelta(o);
       for (const s of inst) { s.m[12] += d[0]; s.m[13] += d[1]; s.m[14] += d[2]; }
       this._shiftSeen(o);
-      if (o._shGrid) _fileAll(o);   // PERF-INST: every placement moved - filed again where it stands now
+      if (o._shInstGrid) _fileAll(o);   // PERF-INST: every placement moved - filed again where it stands now
     }
     if (inst.length > SHADOW_INSTANCE_LINEAR) return this._movedFiled(o, inst, matrix);   // PERF-INST
     const x = matrix[12], y = matrix[13], z = matrix[14];
@@ -1380,7 +1380,7 @@ export class ShadowPass {
    *  once a frame finds every placement live, the rest of that frame's misses are dynamic without it (a draw only
    *  makes a placement fresher). */
   _movedFiled(o, inst, matrix) {
-    const grid = o._shGrid ?? _fileAll(o);
+    const grid = o._shInstGrid ?? _fileAll(o);
     const x = matrix[12], y = matrix[13], z = matrix[14];
     let exact = null, best = null, bestD = SHADOW_INSTANCE_REACH * SHADOW_INSTANCE_REACH;
     const eps2 = SHADOW_STILL_EPS * SHADOW_STILL_EPS;
@@ -1401,10 +1401,10 @@ export class ShadowPass {
     let s = exact ?? best;
     if (!s) {
       if (inst.length >= SHADOW_INSTANCE_MAX) {
-        if (o._shLiveAt === this.frameNo) return true;   // every placement live this frame, already found
+        if (o._shInstLiveAt === this.frameNo) return true;   // every placement live this frame, already found
         let oldest = null;
         for (let i = 0; i < inst.length; i++) if (oldest === null || inst[i].seen < oldest.seen) oldest = inst[i];
-        if (!oldest || this.frameNo - oldest.seen < SHADOW_DYNAMIC_HOLD) { o._shLiveAt = this.frameNo; return true; }   // every placement live: dynamic, never wrong
+        if (!oldest || this.frameNo - oldest.seen < SHADOW_DYNAMIC_HOLD) { o._shInstLiveAt = this.frameNo; return true; }   // every placement live: dynamic, never wrong
         s = oldest; s.m.set(matrix); s.at = null; s.seen = this.frameNo;   // a placement not drawn for a hold: this one's now
         _file(o, s);
         return false;
