@@ -26,6 +26,7 @@ import { ammoTemplateFor } from '../characters/thunderlockIds.js';   // what a r
 import { isRriStackable } from './rriRealism.js';   // RRI2: the IsItemStackable override - an added yes (FormulaHelper.cs:2100-2102)
 import { noteShot } from './shotTally.js';   // ARENA-ARROWS: the shots a bout loosed - a leaf, so no cycle
 import { cardWorth } from '../net/cardWorthLaw.js';   // AUDIT CARDS-6 A6: a card split off is worth its card (the law imports nothing of systems/)
+import { PATRON_COUNTER_MARK } from '../net/patronLaw.js';   // AUDIT LW-II-2 S1: a stack keeps the counter's mark (the law imports nothing)
 
 /** DaggerfallUnityItem.IsEnchanted verbatim
  *  (DaggerfallUnityItem.cs:266-269): DERIVED from the enchantment
@@ -271,6 +272,9 @@ export function addItem(list, item, position = 'back') {
     // own stack-mate, or re-adding it doubles its count
     if (held !== item && stacksWith(held, item)) {
       held.stackCount = (held.stackCount ?? 1) + (item.stackCount ?? 1);
+      // AUDIT LW-II-2 S1 (the port's own field, Ledger A): a counter's piece merged in marks the stack - a patron takes no
+      // part of it (net/patronLaw.js PATRON_COUNTER_MARK), or a book bought joined to one found sold as found
+      if (item[PATRON_COUNTER_MARK] === true) held[PATRON_COUNTER_MARK] = true;
       return held;
     }
   }
@@ -383,6 +387,7 @@ export function splitStack(list, stack, numberToPick, { rolls = Math.random } = 
     if (w > 0) picked.value = w;
   }
   if (stack.bound === true) picked.bound = true;   // AUDIT SS: and its binding (systems/itemBound.js) - never the Broker's price, which a dismantle pays out of
+  if (stack[PATRON_COUNTER_MARK] === true) picked[PATRON_COUNTER_MARK] = true;   // AUDIT LW-II-2 S1: and the counter's mark (net/patronLaw.js) - a split is no way out of it
   list.push(picked);                              // AddItem(noStack: true)
   stack.stackCount = count - numberToPick;
   return picked;

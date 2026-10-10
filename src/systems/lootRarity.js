@@ -665,7 +665,9 @@ const lineParam = (item, id, free, rolls) => (id === 'skill' ? pickSkill(item, f
  *  of a tooltip or the magic round. */
 export function validAffix(a) {
   if (!a || typeof a !== 'object') return false;
-  const k = AFFIX_KINDS[a.id];
+  // AUDIT LW-II-2 S8: the kind's OWN row - an id Object.prototype answers ('constructor') passed as a kind, and the line
+  // below threw on its range (the item law, the judge's worth and the patrons' reckoning with it)
+  const k = Object.hasOwn(AFFIX_KINDS, a.id) ? AFFIX_KINDS[a.id] : null;
   if (!k) return false;
   if (k.params ? !k.params.includes(a.param) : a.param !== undefined) return false;
   const max = AFFIX_RANGES[a.id].legendary[1];

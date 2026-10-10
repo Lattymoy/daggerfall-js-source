@@ -65,6 +65,7 @@ import { HOLIDAYS } from './holidays.js';
 import { GUILDS } from './guilds.js';
 import { isBagItem } from '../net/bagLaw.js';   // BAG1: a loaded Materials Bag is never sold (the cart's rule)
 import { activeWagonItem } from './wagonKinds.js';   // WAGONS2 (FINAL AUDIT): the wagon driven, read once for every counter (sellGuardOf)
+import { PATRON_COUNTER_MARK } from '../net/patronLaw.js';   // AUDIT LW-II-2 S1: online, a counter's piece is no patron's
 import {
   cureOfferMessageOffset, TRADE_MESSAGE_BASE_ID, NOT_ENOUGH_GOLD_ID,
 } from './guildServiceActions.js';
@@ -235,6 +236,20 @@ export function saleConditionPercentage(item, { online = isOnlinePage() } = {}) 
   const found = item?.foundCondition;
   if (!online || !Number.isInteger(found) || !(found < (item?.currentCondition ?? 0))) return conditionPercentage(item);
   return conditionPercentage({ currentCondition: found, maxCondition: item.maxCondition });
+}
+
+/** AUDIT LW-II-2 S1: THE COUNTER'S MARK (net/patronLaw.js PATRON_COUNTER_MARK) - ONLINE, EVERY PIECE AN NPC COUNTER SELLS
+ *  IS MARKED, and no town's patron takes it (patronLaw.js patronTakes): a patron paid more than an online counter asks
+ *  (a book three times its file price, a quality-1 smith's weapon a fifth over its ask), so a player bought at the
+ *  counter, stocked a hired trader and printed the difference. The counter's Buy hands every piece through here
+ *  (worldModes.js commitTrade's Buy arm and the keyed list's doBuy - every shop's shelf, a guild's, a caravan's on the
+ *  road); the mark rides the save, the item law and the market's listing, and a stack keeps it through a merge (either
+ *  part's) and a split (inventory.js addItem, splitStack). Offline nothing is written. Answers how many it marked. */
+export function markCounterBought(items, { online = isOnlinePage() } = {}) {
+  if (!online) return 0;
+  let n = 0;
+  for (const it of items ?? []) if (it && typeof it === 'object') { it[PATRON_COUNTER_MARK] = true; n++; }
+  return n;
 }
 
 /**

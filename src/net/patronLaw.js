@@ -13,11 +13,12 @@
 //  - THE HOUR IS THE WINDOW. Each open trader listing in a home the town may enter is offered to the town's patrons once
 //    for each real hour it stands (an online sky day is a real hour - TIME1).
 //  - THE PRICE DECIDES. Its CAP is PATRON_PAY_SHARE of the piece's worth as the service judges it (itemLaw.js itemWorth's
-//    floor - never the record's own price, the client's to write - and a crafted piece's no higher than the piece it was
-//    made as, `patronWorth`); above it no patron buys; at or under it, the hour's chance by how far under (`patronOdds`).
+//    floor - never above it for the record's own price, the client's to write - and never above the record's own price
+//    either, nor a crafted piece's above the piece it was made as, `patronWorth`); above it no patron buys; at or under
+//    it, the hour's chance by how far under (`patronOdds`).
 //  - THE TOWN'S DEMAND IS SHARED: its traders together sell at most PATRON_TOWN_HOUR an hour, the hour's lowest draws.
 //  - THE CEILINGS: a seller PATRON_SELLER_HOUR pieces an hour, PATRON_SELLER_DAY_GOLD gold a real day; never a quest's
-//    piece or a keepsake (`patronTakes`).
+//    piece, a keepsake, or a piece bought at a counter online (`patronTakes`).
 //  - THE RECKONING covers the hours since the listing's last, at most PATRON_RECKON_HOURS of them.
 //
 // Pure: no clock, no network, no DOM.
@@ -69,9 +70,24 @@ export function patronOdds(r) {
 }
 /** A piece's cap - the most a patron pays for it. @param {number} worth */
 export const patronCap = (worth) => Math.floor(Math.max(0, worth) * PATRON_PAY_SHARE);
-/** Whether a patron would take the piece at all: never a quest's, never a keepsake. @param {any} item */
-export const patronTakes = (item) => !!item && typeof item === 'object' && !item.questItem && !item.livingKeepsake && item.templateIndex !== PATRON_KEEPSAKE_TEMPLATE;
+/** AUDIT LW-II-2 S1: THE COUNTER'S MARK - true on a piece an NPC counter sold online (systems/tradeModes.js
+ *  markCounterBought, the counter's Buy: every shop's shelf, a guild's, a caravan's), kept through the save, the item law
+ *  (itemFields.js declares it), the market's listing, a stack's merge and split (inventory.js addItem, splitStack). */
+export const PATRON_COUNTER_MARK = 'counterBought';
+/** Whether a patron would take the piece at all: never a quest's, never a keepsake - and AUDIT LW-II-2 S1, never a piece
+ *  an NPC counter sold online (PATRON_COUNTER_MARK): a patron paid more than an online counter asks for the same piece
+ *  (a book three times its file price; a quality-1 counter's weapon a fifth over its ask), so a player bought at the
+ *  counter, stocked a trader and printed the difference. @param {any} item */
+export const patronTakes = (item) => !!item && typeof item === 'object' && !item.questItem && !item.livingKeepsake && item.templateIndex !== PATRON_KEEPSAKE_TEMPLATE
+  && item[PATRON_COUNTER_MARK] !== true;
 
+/** AUDIT LW-II-2 S1: a record's own price - its `value` times its stack (tradeModes.js buyItemPrice's), 0 for no honest
+ *  number. @param {any} item */
+const ownPrice = (item) => {
+  const v = item?.value;
+  if (typeof v !== 'number' || !Number.isFinite(v) || v <= 0) return 0;
+  return v * (Number.isInteger(item.stackCount) && item.stackCount > 1 ? item.stackCount : 1);
+};
 /** The marks of a crafted piece (itemLaw.js's own `crafted` findings read these). */
 const CRAFT_MARKS = Object.freeze(['provenance', 'quality', 'hand', 'kitMetal', 'fieldKit', 'potent']);
 /**
@@ -80,10 +96,15 @@ const CRAFT_MARKS = Object.freeze(['provenance', 'quality', 'hand', 'kitMetal', 
  * marks off) - "shops are the floor, crafting the ceiling": a patron never pays a crafter more than a found piece fetches.
  * AUDIT LW-II P2: NEVER THE RECORD'S OWN PRICE - `value` is the client's to write, and the judge reads it up to a
  * generous ceiling (itemLaw.js worthCeiling: a found Broadsword written at 1e9 was worth 11,840 - a patron's 7,104, not 36).
+ * AUDIT LW-II-2 S1: AND NEVER ABOVE IT - the floor is a template's base, and a book's base is 2500 where its file prices
+ * it 300..800 (books.js bookValue), a potion recipe's its sheet's where the potion it teaches prices it (loot.js
+ * randomlyAddPotionRecipe): the record's own price (`value` times its stack, as a counter reads it) bounds the worth from
+ * above, so a client lowering it hurts no one but itself, and one raising it never passes the judge's floor. No price,
+ * no worth.
  * @param {any} item @param {(item: any) => number} worthOf
  */
 export function patronWorth(item, worthOf) {
-  const worth = worthOf({ ...item, value: 0 });
+  const worth = Math.min(worthOf({ ...item, value: 0 }), ownPrice(item));
   if (!item || !CRAFT_MARKS.some((k) => Object.prototype.hasOwnProperty.call(item, k))) return worth;
   const plain = { ...item, value: 0 };
   for (const k of CRAFT_MARKS) delete plain[k];

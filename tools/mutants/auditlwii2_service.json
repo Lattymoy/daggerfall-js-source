@@ -1,0 +1,371 @@
+[
+  {
+    "name": "AUDITLWII2-S1-takes-mark",
+    "file": "src/net/patronLaw.js",
+    "old": "\n  && item[PATRON_COUNTER_MARK] !== true;",
+    "new": ";",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S1-own-price",
+    "file": "src/net/patronLaw.js",
+    "old": "  const worth = Math.min(worthOf({ ...item, value: 0 }), ownPrice(item));",
+    "new": "  const worth = worthOf({ ...item, value: 0 });",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S1-own-stack",
+    "file": "src/net/patronLaw.js",
+    "old": "  return v * (Number.isInteger(item.stackCount) && item.stackCount > 1 ? item.stackCount : 1);",
+    "new": "  return v;",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S1-no-price",
+    "file": "src/net/patronLaw.js",
+    "old": "if (typeof v !== 'number' || !Number.isFinite(v) || v <= 0) return 0;",
+    "new": "if (typeof v !== 'number' || !Number.isFinite(v) || v <= 0) return Infinity;",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S1-stamp-online",
+    "file": "src/systems/tradeModes.js",
+    "old": "  if (!online) return 0;\n  let n = 0;\n  for (const it of items ?? [])",
+    "new": "  let n = 0;\n  for (const it of items ?? [])",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S1-stamp-mark",
+    "file": "src/systems/tradeModes.js",
+    "old": "{ it[PATRON_COUNTER_MARK] = true; n++; }",
+    "new": "{ n++; }",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S1-merge",
+    "file": "src/systems/inventory.js",
+    "old": "      if (item[PATRON_COUNTER_MARK] === true) held[PATRON_COUNTER_MARK] = true;\n",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S1-split",
+    "file": "src/systems/inventory.js",
+    "old": "  if (stack[PATRON_COUNTER_MARK] === true) picked[PATRON_COUNTER_MARK] = true;",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S1-field",
+    "file": "src/systems/itemFields.js",
+    "old": "  counterBought: bool(),\n",
+    "new": "  counterBought: int(),\n",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S1-door-counter",
+    "file": "src/scenes/worldModes.js",
+    "old": "      markCounterBought(staged);",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S1-door-keyed",
+    "file": "src/scenes/worldModes.js",
+    "old": "    markCounterBought([it]);",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S2-told",
+    "file": "server-account/src/market.js",
+    "old": "                ...(l.key ? escrowSpentSteps(db, l.key, claim, nowS) : []),\n",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S2-claim-read",
+    "file": "server-account/src/market.js",
+    "old": "const claim = l.key ? ((await",
+    "new": "const claim = false ? ((await",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S2-key",
+    "file": "server-account/src/market.js",
+    "old": "        key = item ? ledgerKeyOf(item) : null;",
+    "new": "        key = null;",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S2-copy",
+    "file": "server-account/src/ledger.js",
+    "old": "    ...copyRows(db, [key], claim, nowS),\n",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S2-charge",
+    "file": "server-account/src/ledger.js",
+    "old": "    ...chargeSteps(db, claim, [key], nowS),\n",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S2-gone",
+    "file": "server-account/src/ledger.js",
+    "old": "SET state = 'gone', claim_char = NULL, claim_at = NULL, at = ?3 WHERE uid = ?1 AND state = 'escrow' AND claim_char = ?2",
+    "new": "SET claim_char = NULL, claim_at = NULL, at = ?3 WHERE uid = ?1 AND state = 'escrow' AND claim_char = ?2",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S2-unclaimed",
+    "file": "server-account/src/ledger.js",
+    "old": "if (!claim) return [db.prepare(\"DELETE FROM item_uids WHERE uid = ?1 AND state = 'escrow' AND claim_char IS NULL\").bind(key)];",
+    "new": "if (!claim) return [];",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S3-shut-marks",
+    "file": "server-account/src/cron.js",
+    "old": ".sold : markPatronsShut(ctx))]",
+    "new": ".sold : 0)]",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S3-shut-hour",
+    "file": "server-account/src/market.js",
+    "old": "AND (patron_hour IS NULL OR patron_hour < ?1)`).bind(Math.floor(nowS / PATRON_HOUR_S)).run();",
+    "new": "AND (patron_hour IS NULL OR patron_hour < ?1)`).bind(Math.floor(nowS / PATRON_HOUR_S) - 1).run();",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S3-read-switch",
+    "file": "server-account/src/market.js",
+    "old": "  if (!marketOpenFor(null, env)) return { sold: 0, towns: 0 };\n",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S3-backfill-hour",
+    "file": "server-account/migrations/0105_patrons.sql",
+    "old": "CAST(strftime('%s', 'now') AS INTEGER) / 3600 - 1",
+    "new": "CAST(strftime('%s', 'now') AS INTEGER) / 3600",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S3-backfill-traders",
+    "file": "server-account/migrations/0105_patrons.sql",
+    "old": "  WHERE state = 'open' AND vendor_id IS NOT NULL AND currency = 'gold';",
+    "new": "  WHERE state = 'open' AND currency = 'gold';",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S3-backfill-open",
+    "file": "server-account/migrations/0105_patrons.sql",
+    "old": "  WHERE state = 'open' AND vendor_id IS NOT NULL AND currency = 'gold';",
+    "new": "  WHERE vendor_id IS NOT NULL AND currency = 'gold';",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S4-opens-now",
+    "file": "server-account/src/homes.js",
+    "old": ".bind(mapId, buildingKey, player.id, Math.floor(/** @type {number} */ (nowS) / PATRON_HOUR_S)).run();",
+    "new": ".bind(mapId, buildingKey, player.id, Math.floor(/** @type {number} */ (nowS) / PATRON_HOUR_S) - 1).run();",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S4-shut-reckons",
+    "file": "server-account/src/homes.js",
+    "old": "    await reckonPatrons(ctx, { maps: [mapId] }, env).catch(() => null);\n",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S5-town-read",
+    "file": "server-account/src/market.js",
+    "old": "takes = !Number(r.held) && patronTakes(item)",
+    "new": "takes = patronTakes(item)",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S5-write-guard",
+    "file": "server-account/src/market.js",
+    "old": "                    AND NOT ${PATRON_HELD_SQL}`)",
+    "new": "                    `)",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S6-faucets",
+    "file": "server-account/src/review.js",
+    "old": "return { days, config, isDefault: config === BUDGET_DEFAULT, bands, faucets };",
+    "new": "return { days, config, isDefault: config === BUDGET_DEFAULT, bands };",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S6-window",
+    "file": "server-account/src/review.js",
+    "old": "FROM realm_faucets WHERE hour >= ?1 GROUP BY kind",
+    "new": "FROM realm_faucets WHERE hour >= ?1 - 1000 GROUP BY kind",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S6-tool",
+    "file": "tools/realmReview.mjs",
+    "old": "  if (!Array.isArray(body?.faucets)) return [];\n  return body.faucets.map(",
+    "new": "  if (!Array.isArray(body?.faucets)) return [];\n  return [].map(",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S7-house",
+    "file": "server-account/src/market.js",
+    "old": " && p.buildingKey === Number(v.building_key));",
+    "new": ");",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S8-own-row",
+    "file": "src/systems/lootRarity.js",
+    "old": "const k = Object.hasOwn(AFFIX_KINDS, a.id) ? AFFIX_KINDS[a.id] : null;",
+    "new": "const k = AFFIX_KINDS[a.id];",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S8-own-try",
+    "file": "server-account/src/market.js",
+    "old": "      try {\n        worth = item ? patronWorth(item, itemWorth) : 0;\n        // AUDIT LW-II P3: the item law's re-reading, as a player's buy asks it (marketBuy: a piece listed before the law,\n        // or one a later law refuses, is sold to nobody); AUDIT LW-II-2 S5: never a held seller's\n        takes = !Number(r.held) && patronTakes(item) && lawfulItem(item) && !goodRefusal(item);\n        key = item ? ledgerKeyOf(item) : null;   // AUDIT LW-II-2 S2: the piece the ledger follows\n      } catch { worth = 0; takes = false; }\n",
+    "new": "      {\n        worth = item ? patronWorth(item, itemWorth) : 0;\n        // AUDIT LW-II P3: the item law's re-reading, as a player's buy asks it (marketBuy: a piece listed before the law,\n        // or one a later law refuses, is sold to nobody); AUDIT LW-II-2 S5: never a held seller's\n        takes = !Number(r.held) && patronTakes(item) && lawfulItem(item) && !goodRefusal(item);\n        key = item ? ledgerKeyOf(item) : null;   // AUDIT LW-II-2 S2: the piece the ledger follows\n      }\n",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-W6-houses",
+    "file": "server-account/src/market.js",
+    "old": "const results = [...newest, ...houses.filter((l) => !shown.has(traderOf(l)))];",
+    "new": "const results = newest;",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-W6-one-row",
+    "file": "server-account/src/market.js",
+    "old": ") WHERE v_rank = 1\n",
+    "new": ") WHERE v_rank >= 1\n",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-W6-once",
+    "file": "server-account/src/market.js",
+    "old": "...houses.filter((l) => !shown.has(traderOf(l)))]",
+    "new": "...houses]",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-P1-LW15P-own-mark",
+    "file": "server-account/src/market.js",
+    "old": " && (l.last == null || l.last < hour));",
+    "new": ");",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-P3-LW15P-first-whole-hour",
+    "file": "server-account/src/market.js",
+    "old": "!gone.has(l.id) && Math.floor(l.at / PATRON_HOUR_S) + 1 <= hour &&",
+    "new": "!gone.has(l.id) && Math.floor(l.at / PATRON_HOUR_S) <= hour &&",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-P3-LW15P-expired",
+    "file": "server-account/src/market.js",
+    "old": " && l.expires >= (hour + 1) * PATRON_HOUR_S && (l.last == null || l.last < hour));",
+    "new": " && (l.last == null || l.last < hour));",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-P17-LW15P-guild-hall",
+    "file": "server-account/src/market.js",
+    "old": "const PATRON_HOME_SQL = `h.entry = 'public' AND h.player = l.seller AND d.yard = 0 AND h.guild_id IS NULL",
+    "new": "const PATRON_HOME_SQL = `h.entry = 'public' AND h.player = l.seller AND d.yard = 0",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  }
+]

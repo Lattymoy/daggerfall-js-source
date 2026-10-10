@@ -16,7 +16,8 @@
 //                            move the service made since (`svc_seq` - a sale's piece would come back), nor for the dead
 //
 // Every act moves the row's `judge_rev`: a checkpoint judging the row as it stood before the act writes no verdict over it.
-//   /v1/mod/realm-budget     the measure (gain an hour of play, by level band) and the budget's config; `set` writes it
+//   /v1/mod/realm-budget     the measure (gain an hour of play, by level band), the service's own faucets' gold over its
+//                            window (a patron's purchases - AUDIT LW-II-2 S6) and the budget's config; `set` writes it
 //
 // THE MEASURE (Mac: "Measure 7 days, then enforce"). realm_wealth_hours keeps each character's hour - the gain no witness
 // explained and the seconds it played. The report reads every hour with play enough to say something (MEASURE_PLAYED_MIN),
@@ -26,7 +27,7 @@
 
 import { isDeveloper } from './titles.js';
 import { REALM_ID_RE, realmSaveTextOf, dropObjects } from './realm.js';
-import { budgetConfig, budgetConfigOf, forgetBudgetConfig, BUDGET_DEFAULT } from './budget.js';
+import { budgetConfig, budgetConfigOf, forgetBudgetConfig, BUDGET_DEFAULT, FAUCET_KINDS } from './budget.js';   // AUDIT LW-II-2 S6: and the service's own faucets
 import { wealthOf } from './judge.js';
 
 /** How long the judge's findings are kept (the hourly sweep, cron.js). */
@@ -158,5 +159,14 @@ export async function measure(db, nowS, days) {
     bands.push({ from: lo + 1, upTo: b.upTo, rate: b.rate, cap: b.cap, hours: n, quantiles, most: n ? await at(n - 1) : null, overs });
     lo = b.upTo;
   }
-  return { days, config, isDefault: config === BUDGET_DEFAULT, bands };
+  // AUDIT LW-II-2 S6 (Living World II decision 7: the patrons' gold "written where the wealth measure counts it"): the
+  // service's own faucets over the window - the gold it paid that no player paid (budget.js FAUCET_KINDS), each kind
+  // named, none left unread (realm_faucets was written and nothing read it)
+  const { results: paid = [] } = await db.prepare('SELECT kind, SUM(gold) AS gold, SUM(n) AS n FROM realm_faucets WHERE hour >= ?1 GROUP BY kind')
+    .bind(Math.floor(since / 3600)).all();
+  const faucets = FAUCET_KINDS.map((kind) => {
+    const r = paid.find((/** @type {any} */ x) => x.kind === kind);
+    return { kind, gold: Number(r?.gold ?? 0), n: Number(r?.n ?? 0) };
+  });
+  return { days, config, isDefault: config === BUDGET_DEFAULT, bands, faucets };
 }

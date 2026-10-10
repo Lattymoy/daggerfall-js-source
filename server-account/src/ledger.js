@@ -189,6 +189,24 @@ const copyRows = (/** @type {any} */ db, /** @type {string[]} */ keys, /** @type
  *  (server-account/src/wild.js): never charged, and moved by no route. */
 export const knownCopySteps = (/** @type {any} */ db, /** @type {string} */ char, /** @type {string[]} */ keys, /** @type {number} */ nowS) => copyRows(db, keys, char, nowS);
 
+/**
+ * AUDIT LW-II-2 S2: A PIECE IN ESCROW THE SERVICE DESTROYED - a patron's purchase (market.js reckonPatrons): no record
+ * holds it again, and the ledger was never told (the row stood in escrow, a claim on it waiting for ever, the copy kept
+ * and the seller never charged). A claim on it is a record showing a piece the service held - a copy: written down and
+ * charged to its claimant as a buyer's checkpoint charges one (copyRows, chargeSteps), the row kept `gone` so the copy
+ * never takes it up; no claim, the row goes. `claim` the claimant the row named as the sale read it (null: none) - the
+ * row's own step asks that it still does.
+ * @param {any} db @param {string} key @param {string | null} claim @param {number} nowS
+ */
+export function escrowSpentSteps(db, key, claim, nowS) {
+  if (!claim) return [db.prepare("DELETE FROM item_uids WHERE uid = ?1 AND state = 'escrow' AND claim_char IS NULL").bind(key)];
+  return [
+    ...copyRows(db, [key], claim, nowS),
+    ...chargeSteps(db, claim, [key], nowS),
+    db.prepare("UPDATE item_uids SET state = 'gone', claim_char = NULL, claim_at = NULL, at = ?3 WHERE uid = ?1 AND state = 'escrow' AND claim_char = ?2").bind(key, claim, nowS),
+  ];
+}
+
 /** Keys `char` let go: no row - or, where a copy of the piece is known, a row kept `gone`, so the copy cannot take it up. */
 function letGoSteps(/** @type {any} */ db, /** @type {string[]} */ keys, /** @type {string} */ char, /** @type {number} */ nowS) {
   return [
