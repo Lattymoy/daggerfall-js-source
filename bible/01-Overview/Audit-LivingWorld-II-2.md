@@ -70,6 +70,33 @@ All FIXED:
 Seen and left for Mac: the hold-up stands on the player's deeds alone - a caravan whose only guard the character
 struck down before hiring on yields as they walk beside it, and C2 then ends the contract unpaid.
 
+## C and H (with P2, P5, P11) - the outlaws (`test/auditlwii2_outlaws.test.js`, 10; `auditlwii2_outlaws.json`, 47)
+
+All FIXED:
+
+- **C4 - every band's chest opened with the same Horse, Small Cart and two wagons** (about 4,050 gold to sell): the goods
+  were a general store roll's first pieces, which are always its fixed ones. FIXED: drawn on the band's seed off the
+  roll's back shelf, none of its fixed pieces.
+- **C5 / H6 - standing a hideout read a fortnight of trips in one frame** (25-110 ms). FIXED: the take is a generator
+  worked a slice a frame from the frame after the stand; the pile is laid when it is done.
+- **C13 - online two readers could both stand the band.** FIXED: the election asked each second, the loser gives its
+  people up, the peers within BAND_KEEP_M counted.
+- **C14 - an outlaw chasing the player vanished at 281 m from the fire, and stepping out and back stood the band again
+  whole.** FIXED: never let go while one is engaged; the session keeps a band's kills by its key (the record's NOT KEPT
+  is gone).
+- **H2 - the hideout's tents and fire stood 819.2 m behind after every map-pixel crossing.** FIXED: it follows the
+  streaming origin. **H9 - a teleport left it standing a second in the new frame.** FIXED.
+- **H3 - C8's re-read of the band-less troubles never reached LW16's kept word**, so a late reader told "won" where an
+  early one told "robbed by the Wolves". FIXED: `resolved` remakes the told, the visitors and the carried word (the
+  last word kept, B11's).
+- **P2, P5, P11 - PINNED**: the eras read out of order; the real chest (`bandChest` over the real fate) and the real
+  stood band over the character's routs; a pedlar's robbery's quarter purse, the rout's thanks for every robbed party,
+  the nearest band's trouble, the leader's three classes. A carter's arm is not pinned: no carter travels on the
+  synthetic maps (their towns stand five pixels apart, no market in a day's walk).
+
+Seen and not changed: the trouble world's `resolved` can fire inside a read (inside `fate`, inside `townTrips`); an
+entry being built then can be kept after the clear half band-less. C8's own clear of the memo has the same exposure.
+
 ## D (with H5, P10) - the deep's own (`test/auditlwii2_deep.test.js`, 15; `auditlwii2_deep.json`, 34)
 
 All FIXED:

@@ -541,7 +541,9 @@ a region's towns, its roads, a seed and the clock); the hideout is stood by `src
   A stronger party fights as any does. A fight the player won for it is won: nothing taken.
 - **THE BAND'S TAKE** (`takeOf`): the parties it robbed since it formed and within TAKE_DAYS (14) - each
   TAKE_PURSE_SHARE (a quarter) of a counter's purse (else ROB_GOLD, 40) and TAKE_GOODS (2) of its goods, to
-  TAKE_GOODS_MAX (16). The host reads the troubled trips of its leg's two towns.
+  TAKE_GOODS_MAX (16). The take is `hideouts.js bandChest` (AUDIT LW-II-2 P5: it was world.js's, and no pin ran it),
+  reading the troubled trips of its leg's two towns a town-day a step, worked a slice a frame from the frame after the
+  stand (AUDIT LW-II-2 C5/H6: it read the fortnight's thirty town-days in the stand frame, 25-110 ms).
 - **THE NEWS.** A town's road news of a hold-up names the band (`newsOf`'s `band`; `ROAD_NEWS.robbed`), and a beset
   party's Overworld mark says "beset by the Black Hand"; two parties passing warn of it by name.
 
@@ -555,8 +557,11 @@ a region's towns, its roads, a seed and the clock); the hideout is stood by `src
   - its people as the pool's foes (loose, transient, managed - this host owns their lives), each its class, level and
     name, BAND_RING_M (3-9 m) about the
     fire: all of them by day, by night (before 6, from 20) half - the rest out on the road (`standingAt`);
-  - its CHEST, a ground pile (`droppedLoot.seedPile`, unsaved) of its take: goods off a general store's roll on the
-    band's own seed, and the gold - none if the character took from it before (`looted`). A hand in it is `looted` the
+  - its CHEST, a ground pile (`droppedLoot.seedPile`, unsaved) of its take, laid when the take is worked (CHEST_SLICE_MS,
+    3 ms a frame): goods DRAWN on the band's own seed off a general store's back-shelf roll on that seed, none of its
+    fixed pieces - no Transportation, no Materials Bag, no provisions or campfires (AUDIT LW-II-2 C4: every chest
+    opened with the roll's first pieces, the same Horse, Small Cart and two wagons for every band - about 4,050 gold to
+    sell), and the gold - none if the character took from it before (`looted`). A hand in it is `looted` the
     frame the pile differs from its minting - a piece taken, one put in, a stack split (AUDIT LW-II C2: kept at the
     let-go alone and by its count, a piece swapped in, or a save made while it stood, left it whole, and it refilled
     without end).
@@ -568,13 +573,21 @@ a region's towns, its roads, a seed and the clock); the hideout is stood by `src
   Hand." Its region's towns
   tell it (`livingTown.js deedNews`, ROUTED_NEWS).
 - **LET GO** past BAND_KEEP_M (280 m), under the Overworld or with the living world off: its living taken out, its
-  pile taken up. A load or a new game lets it go and writes nothing of it into the new character (AUDIT LW-II C11c).
+  pile taken up - never while one of the band is engaged with the player (the pool cull's own test; AUDIT LW-II-2 C14:
+  an outlaw two strides behind vanished at 281 m from the fire). A load or a new game lets it go and writes nothing of it into the new character (AUDIT LW-II C11c).
   Indoors the open world waits as it stood (its
   bodies the exterior pool's, as every foe left outside); the way back out finds the hideout stood, or lets it go.
-- **NOT KEPT:** the outlaws struck down before the player left. A hideout stood again stands all of them (the session
-  keeps no partial rout). NOT CHANGED (AUDIT LW-II C11a): by night the half in camp, its leader among them, is all a
-  rout asks - the half out on the road is not in the camp to beat.
-- **ONLINE** every reader's band is the same; a rout is the character's own, as every LW deed is.
+- **KEPT FOR THE SESSION** (AUDIT LW-II-2 C14): the outlaws struck down before the player left, by the band's key - a
+  hideout stood again stands only the rest, and one whose every person is down is routed. Stepping out past
+  BAND_KEEP_M and back had stood 4-8 fresh outlaws with their loot again. Another character's records forget them. NOT
+  CHANGED (AUDIT LW-II C11a): by night the half in camp, its leader among them, is all a rout asks - the half out on
+  the road is not in the camp to beat.
+- **IT FOLLOWS THE WORLD** (AUDIT LW-II-2 H2, H9): the streaming origin's recentre moves its tents and fire with the
+  camps (`offsetAll`; they stood 819.2 m behind after every map-pixel crossing, round an empty clearing), and a
+  teleport lets it go with the camps (it stood a second in the new frame, its chest lootable).
+- **ONLINE** every reader's band is the same; a rout is the character's own, as every LW deed is. AUDIT LW-II-2 C13:
+  the election is asked each second while the band stands, and a reader who loses it gives its people up; it counts
+  the peers within BAND_KEEP_M of the camp (a reader standing it from 250 m and a newcomer at 100 m both stood it).
 - ROB_RATIO's one home is `trouble.js` (outlaws.js re-exports it); the duplicate-declaration ratchet holds.
 
 ### 5.4 Heard of
@@ -606,6 +619,14 @@ TALE_KINDS); `nudedecor` (the band's camp fire among the billboards that are no 
 Pins: `test/lw12_outlaws.test.js` (16 - AUDIT LW-II: the chest kept by its minting, the rout by blows, the book asked
 again and its two readers alike, the robbery at the leg's end, the camp every reader's). Mutants:
 `tools/mutants/lw12.json` (93).
+
+AUDIT LW-II-2: `test/auditlwii2_outlaws.test.js` (10), `tools/mutants/auditlwii2_outlaws.json` (47); world.js wires the
+recentre and the teleport too, and the trouble world's `resolved` remakes LW16's kept word with the troubles (H3: the
+news told, the visitors and the carried word kept what was read band-less, and a late reader told another story).
+`tools/livingPerfProbe.mjs` stands every hideout, its stand frame counted. Moved: `lw12_outlaws` (the chest a generator,
+worked a frame after each second; the wiring's `resolved`; the title that said "freed indoors", H10), `audit26_dungeonfoes`
+F212 and `travelmap` U41 (their windows past `_teleportToPixel`); re-aimed by content: `lw12.json`'s host-keep,
+looted-read, C3-thanks, C11b-takeup, C11b-once and C8-wire records, `blood1.json`'s two teleport records.
 
 ## 6. LW13 - the companies (BUILT 2026-10-09)
 
