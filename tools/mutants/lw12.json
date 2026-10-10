@@ -822,7 +822,7 @@
     "name": "LW12-AUDIT-C11b-takeup",
     "file": "src/scenes/hideouts.js",
     "old": "          if (mine && !stood.owned) standPeople(stood, t);\n",
-    "new": "",
+    "new": "          if (mine && !stood.owned) void t;\n",
     "tests": [
       "test/lw12_outlaws.test.js"
     ]
