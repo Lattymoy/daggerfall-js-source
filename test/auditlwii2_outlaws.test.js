@@ -22,6 +22,7 @@ import { amGroupRollOwner } from '../src/systems/campEncounters.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
 import { DAY_MIN } from '../src/systems/livingWorld/dayPlan.js';
 import { MOBILE_TYPES } from '../src/characters/mobileTypes.js';
+import { yardStock } from '../src/systems/merchantYards.js';   // MERCHANT-YARDS: where the horse, the cart and the wagons are sold now
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const WORLD = read('src/scenes/world.js');
@@ -102,8 +103,14 @@ test('AUDIT LW-II-2 C4: a band\'s chest holds none of a general store\'s fixed p
   let counter;
   try { globalThis.location = { search: '?online' }; counter = stockShopShelf({ buildingType: BUILDING_TYPES.GeneralStore, quality: 10 }, PLAYER, { rolls: lwRng(7, 7) }); } finally { globalThis.location = where; }
   const fixed = counter.filter((it) => it.group === 'Transportation' || isBagItem(it) || isSurvivalItem(it));
-  assert.deepEqual(['Transportation', 'bag', 'survival'].map((k) => fixed.some((it) => (k === 'bag' ? isBagItem(it) : k === 'survival' ? isSurvivalItem(it) : it.group === k))), [true, true, true]);
-  assert.ok(counter.filter((it) => it.group === 'Transportation').length >= 4, 'the horse, the cart, the two wagons');
+  // PIN MOVED (MERCHANT-YARDS, main's #748, at the merge): the General Store sells no horse, cart or wagon any more - the
+  // town's Stable and Wagon Yard do (systems/merchantYards.js) - so its fixed pieces are the bag and the provisions; the
+  // chest's Transportation guard stands should a store's roll ever carry one again (its mutant recorded equivalent)
+  assert.deepEqual(['Transportation', 'bag', 'survival'].map((k) => fixed.some((it) => (k === 'bag' ? isBagItem(it) : k === 'survival' ? isSurvivalItem(it) : it.group === k))), [false, true, true]);
+  assert.equal(counter.filter((it) => it.group === 'Transportation').length, 0, 'the horse, the cart and the wagons are the yards\' now');
+  const yards = [...yardStock('stable'), ...yardStock('transport')];
+  assert.ok(yards.length >= 4 && yards.every((it) => it.group === 'Transportation'), 'the yards mint the horse, the cart and the wagons');
+  for (const it of yards) assert.equal(chestPiece(it), false, `${it.name}: never a band's, whoever stocks it`);
   for (const it of fixed) assert.equal(chestPiece(it), false, `${it.name} is the store's, never a band's`);
   const draws = counter.filter((it) => !fixed.includes(it) && /Weapons|Clothing|Books/.test(it.group));
   assert.ok(draws.length > 5 && draws.every(chestPiece), 'its own draws');

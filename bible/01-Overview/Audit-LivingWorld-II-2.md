@@ -173,7 +173,9 @@ All FIXED:
 
 - **C4 - every band's chest opened with the same Horse, Small Cart and two wagons** (about 4,050 gold to sell): the goods
   were a general store roll's first pieces, which are always its fixed ones. FIXED: drawn on the band's seed off the
-  roll's back shelf, none of its fixed pieces.
+  roll's back shelf, none of its fixed pieces. (Main's MERCHANT-YARDS, #748, has since taken the horse, the cart and the
+  wagons off the General Store for the town's Stable and Wagon Yard; the chest's Transportation guard stands, pinned with
+  the yards' own stock.)
 - **C5 / H6 - standing a hideout read a fortnight of trips in one frame** (25-110 ms). FIXED: the take is a generator
   worked a slice a frame from the frame after the stand; the pile is laid when it is done.
 - **C13 - online two readers could both stand the band.** FIXED: the election asked each second, the loser gives its
@@ -237,6 +239,9 @@ D3 (the road fixer's): see R.
 
 ## The integration
 
+- Main merged in after the lanes (#745 INT11-INT15, #748 WAGONS3 + MERCHANT-YARDS): LW15's migration renumbered
+  `0106_patrons` and the account's version `acct106`, past INT11-INT14's `0105_body` and acct105 (every version pin moved
+  with a note); `review.js` keeps both its routes; C4's pin reads the General Store MERCHANT-YARDS left (PIN MOVED).
 - Each lane's branch merged onto the head in turn, its records written as it landed; two moved pins only the whole
   suite could see were moved after the merges, each marked where it stands: `test/fixtures/time1_census.json` (C15's
   line in `livingRoadCaught`, named by its text) and `tv7_bands` TV7 host (the modal arm's window, 7000 to 7600: H7's

@@ -21,7 +21,8 @@
 //          wagon), feet() (where my body stands now - WAGONS2 AUDIT), world(p) (a scene point in the world's own frame, metres -
 //          FINAL AUDIT: a body moved off its pin, whatever a rebase did), jumpPressed(), travel({x, y}, besideAt, ownerName) ->
 //          Promise<boolean> (the party's journey, no fare), canTravel() (outdoors, not busy), prompt: { open, render },
-//          drawAt(feet | null) (WAGONS2: where my body is DRAWN while I sit - the seat of a wagon drawn grown, or null) }
+//          drawAt(feet | null, g) (WAGONS2: where my body is DRAWN while I sit - the seat of a wagon drawn grown, or null;
+//          WAGONS3: `g` its grow, world/wagonModels.js rigGrowOf's - the body drawn at it) }
 // Not a DFU member. Ledger A (WAGONS1).
 import { createRideBook, validRideWord, rideWord, RIDE_TEXT, RIDE_ASK_TTL_MS, RIDE_ASK_REACH, companionSeats } from '../systems/wagonSeats.js';
 import { WAGON_KINDS } from '../systems/wagonKinds.js';
@@ -206,7 +207,7 @@ export function createWagonRiders(deps) {
     // WAGONS2: and DRAWN on the seat as the wagon is drawn - under the Overworld, grown with it (pinned on its own seat,
     // the body stood a speck short of the grown bed)
     const drawn = deps.pool.seatDrawn?.(ride.owner, ride.seat) ?? null;
-    deps.drawAt?.(drawn && drawn.g > 1 ? drawn.feet : null);
+    deps.drawAt?.(drawn && drawn.g > 1 ? drawn.feet : null, drawn?.g ?? 1);   // WAGONS3: and at its grow - a rig is grown apart from its traveller
   }
 
   return {

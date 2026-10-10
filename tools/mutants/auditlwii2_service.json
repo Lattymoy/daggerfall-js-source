@@ -190,7 +190,7 @@
   },
   {
     "name": "AUDITLWII2-S3-backfill-hour",
-    "file": "server-account/migrations/0105_patrons.sql",
+    "file": "server-account/migrations/0106_patrons.sql",
     "old": "CAST(strftime('%s', 'now') AS INTEGER) / 3600 - 1",
     "new": "CAST(strftime('%s', 'now') AS INTEGER) / 3600",
     "tests": [
@@ -199,7 +199,7 @@
   },
   {
     "name": "AUDITLWII2-S3-backfill-traders",
-    "file": "server-account/migrations/0105_patrons.sql",
+    "file": "server-account/migrations/0106_patrons.sql",
     "old": "  WHERE state = 'open' AND vendor_id IS NOT NULL AND currency = 'gold';",
     "new": "  WHERE state = 'open' AND currency = 'gold';",
     "tests": [
@@ -208,7 +208,7 @@
   },
   {
     "name": "AUDITLWII2-S3-backfill-open",
-    "file": "server-account/migrations/0105_patrons.sql",
+    "file": "server-account/migrations/0106_patrons.sql",
     "old": "  WHERE state = 'open' AND vendor_id IS NOT NULL AND currency = 'gold';",
     "new": "  WHERE vendor_id IS NOT NULL AND currency = 'gold';",
     "tests": [

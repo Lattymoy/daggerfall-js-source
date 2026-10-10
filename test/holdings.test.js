@@ -218,7 +218,7 @@ test('HOLDINGS the Stable page over the real runtime through the hosts\' one sea
   const none = makeWorld({ horse: false, cart: false });
   setHoldingsProvider(stableProviderFor({ runtime: none.rt, on: () => true, hasHorse: () => false, hasCart: () => false }));
   d = draw();
-  assert.match(d.textContent, /You own no horse and no wagon\. A general store sells both/);
+  assert.match(d.textContent, /You own no horse and no wagon\. A city's or town's Stable sells horses to ride, and its Wagon Yard carts and wagons/);   // MERCHANT-YARDS: the General Store no longer sells either; AUDIT Y6: a town with no room stands neither, so never "every"
   setHoldingsProvider(null);
   assert.equal(stablePageShown(), false);
 });

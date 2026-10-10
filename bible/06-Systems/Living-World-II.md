@@ -896,7 +896,7 @@ errand in `dayPlan.js`.
 - **THE HOURS RECKONED** (`patronHours`): from the one after the listing's last (`market_listings.patron_hour`; none,
   its own first whole hour) to the last whole one, at most PATRON_RECKON_HOURS (48).
 
-### 8.2 The service (`server-account/src/market.js reckonPatrons`, migration `0105_patrons.sql`)
+### 8.2 The service (`server-account/src/market.js reckonPatrons`, migration `0106_patrons.sql`)
 
 - **THE SALE**, each its own batch: its row (`market_patron_sales`, keyed by the listing - reckoned twice, sold once;
   its house kept, `building_key` - AUDIT LW-II P9: told by a join on the piece's id, another's piece of the same id in
@@ -1002,8 +1002,9 @@ errand in `dayPlan.js`.
 
 - `scenes/world.js`: WIRED (the region's traders read, each town's `patronsOf`, the Vendor page's `patronName`).
 - `scenes/worldModes.js`, `scenes/dungeonContext.js`, `scenes/exterior.js`: none.
-- The service: migration `0105_patrons.sql` (`market_listings.patron_hour`, `market_patron_sales` and its indexes,
-  `realm_faucets`; the account's version `acct105`, and `accountworker`'s table list and every `ACCOUNT_VERSION` pin
+- The service: migration `0106_patrons.sql` (`market_listings.patron_hour`, `market_patron_sales` and its indexes,
+  `realm_faucets`; 0105 on the branch, renumbered past INT11-INT14's `0105_body` at the merge; the account's version
+  `acct106` - acct105 on the branch - and `accountworker`'s table list and every `ACCOUNT_VERSION` pin
   moved with it - AUDIT LW-II-2 P15), `market.js` (the reckoning, the reads, the prune), `homes.js` (a door opened marks its trader),
   `cron.js` (HOUR_JOBS `patrons`, behind the market's switches), `budget.js` (FAUCET_KINDS,
   `faucetStatement`), `.github/workflows/account-deploy.yml` (the law's file among the paths that deploy the Worker,

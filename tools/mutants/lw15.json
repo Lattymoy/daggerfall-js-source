@@ -697,7 +697,7 @@
   },
   {
     "name": "LW15-AUDIT-P6-region-index",
-    "file": "server-account/migrations/0105_patrons.sql",
+    "file": "server-account/migrations/0106_patrons.sql",
     "old": "CREATE INDEX IF NOT EXISTS idx_patron_sales_region ON market_patron_sales (region, at);",
     "new": "CREATE INDEX IF NOT EXISTS idx_patron_sales_region ON market_patron_sales (at);",
     "tests": [
@@ -706,7 +706,7 @@
   },
   {
     "name": "LW15-AUDIT-P6-day-index",
-    "file": "server-account/migrations/0105_patrons.sql",
+    "file": "server-account/migrations/0106_patrons.sql",
     "old": "CREATE INDEX IF NOT EXISTS idx_patron_sales_day ON market_patron_sales (day);",
     "new": "",
     "tests": [

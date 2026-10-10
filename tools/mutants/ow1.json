@@ -142,7 +142,7 @@
   {
     "name": "OW-BIG-face-drops-it",
     "file": "src/scenes/world.js",
-    "old": "    const tvFace = tvf ? { yaw: tvf.yaw, up: tvf.up, grow: tvf.grow } : null;",
+    "old": "    const tvFace = tvf ? { yaw: tvf.yaw, up: tvf.up, grow: player.drawGrow ?? tvf.grow } : null;",
     "new": "    const tvFace = tvf ? { yaw: tvf.yaw, up: tvf.up } : null;",
     "tests": [
       "test/tv1_travel_view.test.js"

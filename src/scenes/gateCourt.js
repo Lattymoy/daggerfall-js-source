@@ -37,6 +37,7 @@ import { marksCardModel, drawGateMarksCard } from '../ui/gateMarksView.js';   //
 import { groundViewModel, drawGateGround } from '../ui/gateGroundView.js';   // WB9d: his ground and his element, felt
 import { damageChartModel, drawGateDamageChart } from '../ui/gateDamageChart.js';   // GATE-UX: every challenger's damage, ranked, once he has fallen
 import { readReceipt } from '../net/gateReceipt.js';
+import { bodySayer } from '../net/bossBody.js';   // INT15: my body, said to the court's room
 import { createGateHost } from './gateHost.js';   // WB11c: the Legion-Lord's host - its bodies, blows, words and sounds
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 import { mobileBillboardSize, billboardSize } from '../world/rmbFlats.js';
@@ -234,6 +235,7 @@ export const HEAL_SEND_MS = 1000;
  *   sendCrystal?: (hit: { c: number, q: number, d: number, r: number }) => boolean,
  *   sendHost?: (hit: { i: number, q: number, d: number, r: number }) => boolean,
  *   sendHeal?: (heal: { h: Array<[string, number]> }) => boolean,
+ *   sendBody?: (v: number) => boolean,
  *   rng?: () => number,
  *   portalDoor?: (door: any) => void,
  *   soulTrap?: (trap: { chance: number, mobile: number, name: string }) => void,
@@ -246,7 +248,8 @@ export const HEAL_SEND_MS = 1000;
  *   WB9a: `veiled` - the step's fire is over the screen (ui/gateVeil.js): the marks' card waits under it. WB9c:
  *   `sendCrystal` - a blow of mine on a crystal of Oblivion, to the court's room (the wire's `xhit`). WB11c: `sendHost` -
  *   a blow of mine on one of his host, to the court's room (the wire's `ahit`). GATE-HEAL: `sendHeal` - what my mates'
- *   spells healed in me, and whose, to the court's room (the wire's `heal`).
+ *   spells healed in me, and whose, to the court's room (the wire's `heal`). INT15: `sendBody` - my body's share in
+ *   thousandths, to the court's room (the wire's `vt` - the relay's count believes a mend by it, net/bossBody.js).
  *   WB8b: `save` answers the saving throw against `el` (his aspect's element - fire, frost, shock, poison) and `strike`
  *   is told the element it landed with. WBX2: `portalDoor` lays the risen portal's door into the court's exit doors, once, so the exit's own ray, name and
  *   press take it - the way home (SS3: the portal is never walked through; GATE-FBX: and the court's only door - the
@@ -257,7 +260,7 @@ export const HEAL_SEND_MS = 1000;
 export function createGateCourt({
   renderer = null, gl = null, getTexture = null, uploadRecordFrame = null, audio = null,
   link, spoils = null, now, cam = () => null, feet = () => null, player = () => null, save = () => 100,
-  strike = () => {}, say = () => {}, hudHidden = () => false, veiled = () => false, send = () => false, sendCrystal = () => false, sendHost = () => false, sendHeal = () => false, rng = Math.random,
+  strike = () => {}, say = () => {}, hudHidden = () => false, veiled = () => false, send = () => false, sendCrystal = () => false, sendHost = () => false, sendHeal = () => false, sendBody = () => false, rng = Math.random,
   portalDoor: layPortalDoor = () => {}, soulTrap = () => {}, me = () => null, yaw = () => null, shake = () => {},
 }) {
   let pass = null;
@@ -285,6 +288,7 @@ export function createGateCourt({
   // my last word to the relay, and when that word went. My own spells, potions and items are no one's.
   let healSentAt = -Infinity;
   const healOwed = new Map();
+  const sayBody = bodySayer(sendBody);   // INT15
   const healLive = (s) => !!s && s.day !== null && !s.fell && s.wrath == null;
   /** What my mates healed in me, out as the wire's `heal`: whole points (the fractions kept for the next), each caster once. */
   function sendOwed(t) {
@@ -903,6 +907,8 @@ export function createGateCourt({
       // it; WB13a: and a blow still to come on my feet, over all of it, with the way out
       drawGateGround(groundViewModel({ inside: inFire, ground: groundName, color: groundColor, biteAt, biteColor, now: t, peril }), { hidden: hudHidden() });
       if (healOwed.size && t - healSentAt >= HEAL_SEND_MS) sendOwed(t);   // GATE-HEAL: what my mates healed in me, out
+      // INT15: MY BODY, in my own word, while I stand alive in a fight that lives (net/bossBody.js bodySayer's pace)
+      { const e = player(); if (alive && healLive(s) && e?.maxHealth > 0) sayBody(e.health / e.maxHealth, t); }
       prevT = t;
     },
     /**

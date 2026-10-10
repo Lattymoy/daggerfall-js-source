@@ -282,12 +282,12 @@ test('AUDIT LW-II-2 S3: WHILE THE MARKET IS NOT OPEN TO EVERYONE NO HOUR IS PAID
   // the migration: the listings standing when it runs
   const files = readdirSync(new URL('../server-account/migrations', import.meta.url)).filter((f) => f.endsWith('.sql')).sort();
   const db = new DatabaseSync(':memory:', { enableForeignKeyConstraints: false });
-  for (const f of files.filter((x) => x < '0105')) db.exec(readFileSync(new URL(`../server-account/migrations/${f}`, import.meta.url), 'utf8'));
+  for (const f of files.filter((x) => x < '0106')) db.exec(readFileSync(new URL(`../server-account/migrations/${f}`, import.meta.url), 'utf8'));
   const row = (id, vendor, state = 'open', currency = 'gold') => db.prepare(`INSERT INTO market_listings (id, seller, char_id, region, kind, units, own, bought, price, fee, at, expires_at, rid, n, currency, item, vendor_map, vendor_id, state)
     VALUES (?, 'p1', 'c1', 17, 'item', 1, 1, 0, 100, 1, 1, 9999999999, ?, ?, ?, '{}', ?, ?, ?)`).run(id, `r-${id}`, `n-${id}`, currency, vendor ? 1001 : null, vendor ? 'trader1' : null, state);
   row('trader', true); row('board', false); row('sold', true, 'sold');
   const before = Math.floor(realNow() / 1000 / 3600);
-  db.exec(readFileSync(new URL('../server-account/migrations/0105_patrons.sql', import.meta.url), 'utf8'));
+  db.exec(readFileSync(new URL('../server-account/migrations/0106_patrons.sql', import.meta.url), 'utf8'));
   const after = Math.floor(realNow() / 1000 / 3600);
   const hourOf = (id) => db.prepare('SELECT patron_hour AS h FROM market_listings WHERE id = ?').get(id).h;
   assert.ok([before - 1, after - 1].includes(hourOf('trader')), `the trader's listing to the hour before it ran: ${hourOf('trader')} of ${before}`);

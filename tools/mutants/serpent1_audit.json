@@ -775,11 +775,12 @@
   {
     "name": "AUDIT-SERPENT-T2-relay-wr",
     "file": "server/src/index.js",
-    "old": "} else if (m.k === 'wr') { const out = []; serpentBrain.serpentWreck(f, a.sub, m.w, now, out); await this._serpentSay(fights, id, f, out, now); }",
-    "new": "} else if (m.k === 'wr') { /* unheard */ }",
+    "old": "      if (m.w || !sunk) { delete me.cw; delete me.wf; const out = []; serpentBrain.serpentWreck(f, a.sub, m.w, now, out); await this._serpentSay(fights, id, f, out, now); }\n      else me.wf = 1;",
+    "new": "      /* unheard */ void me;",
     "tests": [
       "test/serpent1_auditrelay.test.js"
-    ]
+    ],
+    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. "
   },
   {
     "name": "AUDIT-SERPENT-S9-woke-on-read",

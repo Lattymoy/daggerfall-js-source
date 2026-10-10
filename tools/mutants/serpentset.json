@@ -396,12 +396,13 @@
   {
     "name": "SERPENT-SET-embers-unwritten",
     "file": "server-account/src/serpents.js",
-    "old": ".bind(c.d, player.id, c.b, c.h, character, xp, nonce, nowS, embers),",
-    "new": ".bind(c.d, player.id, c.b, c.h, character, xp, nonce, nowS, 0),",
+    "old": ".bind(c.d, player.id, c.b, c.h, character, xp, nonce, nowS, embers, c.m",
+    "new": ".bind(c.d, player.id, c.b, c.h, character, xp, nonce, nowS, 0, c.m",
     "why": "a serpent's row with no embers",
     "tests": [
       "test/serpentset_service.test.js"
-    ]
+    ],
+    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. "
   },
   {
     "name": "SERPENT-SET-purse-gates-alone",

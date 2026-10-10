@@ -518,7 +518,7 @@ test('DISC20-C: the world host asks the pool to re-stand over every pixel it bui
   assert.ok(decl > 0 && decl < first && first < pool && pool < bind, 'declared before the first build, bound after the pool');
   const set = s.indexOf('built.set(key, {');
   const call = s.indexOf('hccGroundMoved(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE);');
-  assert.ok(set > 0 && call > set && call - set < 9700, 'after the pixel is published, over its own bounds (THE MERGE: the entry grew by GATE-CLEAR\'s fields and the batch\'s; PROF4 by its forest; GRASS-LIT2 by the near grid\'s normals; ARENA2 by the sand\'s origin; LPT1 by its low-poly trees; VERGE1 by the road\'s question and ECOTONE1 by the border\'s sets; AUDIT LANDFORMS II H2 by the beach a gathering node asks; LEFAY1 by the monument\'s spot)');   // PIN MOVED (AUDIT LANDFORMS II H2): 9000 -> 9500, the entry's one new line; PIN MOVED (LEFAY1): 9500 -> 9700, its `lefay` line
+  assert.ok(set > 0 && call > set && call - set < 9900, 'after the pixel is published, over its own bounds (THE MERGE: the entry grew by GATE-CLEAR\'s fields and the batch\'s; PROF4 by its forest; GRASS-LIT2 by the near grid\'s normals; ARENA2 by the sand\'s origin; LPT1 by its low-poly trees; VERGE1 by the road\'s question and ECOTONE1 by the border\'s sets; AUDIT LANDFORMS II H2 by the beach a gathering node asks; LEFAY1 by the monument\'s spot; MERCHANT-YARDS by the yards\' sites)');   // PIN MOVED (AUDIT LANDFORMS II H2): 9000 -> 9500, the entry's one new line; PIN MOVED (LEFAY1): 9500 -> 9700, its `lefay` line
   assert.match(s.slice(call - 200, call), /if \(hccGroundMoved\) \{\s+const t = state\.pixelTranslation\(px, py\);\s+$/);
 });
 
@@ -537,6 +537,8 @@ test('AUDIT pre-merge I-B executed: a concealed owner\'s team is concealed with 
   looks.set('follow', { mode: 1, alpha: 0.3, t: 0, phase: 0 });
   assert.equal(drawn(), 2, 'the enhanced lane draws its owner - and the wagon with it');
   const src = readFileSync(new URL('../src/scenes/horseCartPool.js', import.meta.url), 'utf8');
-  assert.match(src, /if \(_stillReady && !p\.hidden\) \{ const b = horseBatch\(owner\); if \(b\) \{ poseHorseBatch\([^\n]*\); b\.conceal = p\.look; \} \}\n\s*else if \(p\.hidden\) dropHorseBatch\(owner\);/, 'the horse: nowhere for a hidden owner, in its look for a concealed one');
+  // PIN MOVED (WAGONS3): the horse is its owner's TEAM now (a pair draws two) - posed by poseTeam with the owner's look
+  assert.match(src, /if \(p\.hidden\) \{ dropTeamBatches\(owner\); _teams\.delete\(owner\); \} else poseTeam\(owner, teamOf\(owner, null, dt\), cameraPos, p\.look\);/, 'the horse: nowhere for a hidden owner, in its look for a concealed one');
+  assert.match(src, /if \(b\) \{ poseHorseBatch\(b, cameraPos, h, h\.g\); if \(owner\) b\.conceal = conceal; \}/, 'each of the team in its owner\'s look');
   assert.match(readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8'), /hcc\.setPeerLook\(\(id\) => \(_hiddenPeers\.has\(id\) \? 'hidden' : \(_veils\.get\(id\) \?\? null\)\)\);/, 'the host hands the peers\' looks');
 });

@@ -33,8 +33,11 @@ import { bodyAt, segmentBox, segExposed, headExposed, coilWeight, SEG_N, MODE, m
 import { SERPENT_ATTACK_BY_ID, SERPENT_ATTACK_TABLE, ADMIT_R, FAN_R, ENGAGE_R, SERPENT_POOL_TICK_MS, ZONES, SERPENT_PHASE_NAMES, MAEL_R, SERPENT_SHIELD_MS, CRUISE_V, refOf, SERPENT_DRAWN_MS } from '../net/serpentBrain.js';
 import { serpentBossById, serpentCountdown, serpentCountdownWords, serpentSwims, SERPENT_BRAIN_V, SERPENT_DIVE_MS } from '../net/serpentLaw.js';
 import { cellRoomOfWire } from '../net/wire.js';
+import { bodySayer } from '../net/bossBody.js';   // INT15: my hull, said to the cell
 import { shapeMeets, shipHurt, crushHurt, gripHurt, grindHurt, venomBite, venomHurt, shoveOf, shoveLeft, maelPull, globAt, poolOf, poolBites, fleetShare, SHOVE_S } from '../systems/serpentStrike.js';
 
+/** INT13: the line as the relay's count wrecks her (`bd`). */
+export const COUNT_WRECK_LINE = 'She is holed past saving - the fight counts her wrecked.';
 /** How often an `in` is said again while I am within its waters' sight (a reconnect, a halo come up, a share back). */
 export const IN_RESEND_MS = 20_000;
 /** How soon an `in` unanswered is said again. */
@@ -155,6 +158,15 @@ export function createSerpentHost(deps) {
     for (const [z, d] of pending) if (d > 0 && !deps.online?.send?.({ k: 'hit', d: Math.min(5000, Math.round(d * 100) / 100), z }, cell)) kept.set(z, Math.min(5000, d));
     pending = kept;
     pendingAt = t;
+  }
+  /** INT15: MY SHIP'S HULL, in my own word - her share of her whole, to the cell at bodySayer's pace (the relay's count
+   *  believes a patch by it - net/bossBody.js); to a relay that counts it alone - AUDIT INT15: the relay of the socket the
+   *  word leaves on, which the session asks (net/online.js sendSerpent): her cell's may be a halo's, and the primary's
+   *  version said nothing of it. */
+  const sayHull = bodySayer((v) => !!live && !!deps.online?.send?.({ k: 'vt', v }, cellRoomOfWire(live.sw.site.sx, live.sw.site.sz)));
+  function hullWord(t) {
+    const b = deps.boat?.();
+    if (b && b.maxHull > 0 && Number.isFinite(b.hullNow)) sayHull(b.hullNow / b.maxHull, t);
   }
   /** AUDIT SERPENT T2: my ship's wreck said as it comes (and her afloat again) - her share leaves its health meanwhile. */
   function wreckWord(sw) {
@@ -363,12 +375,22 @@ export function createSerpentHost(deps) {
       if (!s.fell && !s.gone && t - s.heardAt > SERPENT_HEARD_MS) { deps.link.leave(); held = null; return false; }   // AUDIT SERPENT M5
       flushHits(t, sw);
       wreckWord(sw);
+      hullWord(t);   // INT15
       tellings(s, t);
       attacks(s, t);
       dashWake(s, t);
       coilOnMe(s, t);
       eyeOnMe(s, t);
       venomOnMe(t, me);
+      return true;
+    },
+    /** INT13: THE RELAY'S COUNT HAS WRECKED MY SHIP (`bd`, the cell's word, once its BOSS_BODY line enforces): her whole
+     *  hull taken as a blow of the fight's - the sea's own wreck (navalHost serpentStrike, a brace's half and all), whatever
+     *  this machine's count said. False for no ship of mine, or another site's word. */
+    wrecked(w) {
+      const ship = myShip();
+      if (!ship || !live || w?.sx !== live.sx || w?.sz !== live.sz) return false;
+      deps.strike?.(ship.boat, { hull: Math.ceil(ship.maxHull * 2) + 1, sail: 0, crew: 0 }, { shake: 2.6, line: COUNT_WRECK_LINE });
       return true;
     },
     /** THE SHOTS' TARGETS (navalShots.js ShotTarget): every segment of it above the sea, its box in the scene - none

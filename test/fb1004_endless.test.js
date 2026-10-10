@@ -63,7 +63,7 @@ test('ENDLESS-STOCK: Campfires bought are back on the shelf, one for each bought
 test('ENDLESS-STOCK: only the bag and the Campfire - the horse, the cart and the rest of a shelf sell out as before; nothing is put on a shelf that is not a list (mutants: every row endless)', () => {
   const shelf = onlineShelf();
   const others = shelf.filter((it) => !isEndlessStock(it));
-  assert.ok(others.some((it) => it.group === 'Transportation'), 'the horse and the cart are on it');
+  assert.ok(others.some((it) => it.group === 'Books'), 'the books are on it');   // PIN MOVED (MERCHANT-YARDS, 2026-10-10): the horse and the cart were the rows read here - the town's yards sell them now
   const before = shelf.length;
   assert.equal(buy(shelf, others), 0, 'none of them comes back');
   assert.equal(shelf.length, before - others.length);

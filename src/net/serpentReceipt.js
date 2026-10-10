@@ -8,6 +8,7 @@
 //         c the spoils' seed (32 bits, the relay's CSPRNG)   x how it was earned ('dealt' | 'stood')
 //         h the hull it fought from (-1 aboard another's - net/serpentBrain.js clampHull)   l the level it was admitted at
 //         i issued, epoch seconds   e expires (i + SERPENT_RECEIPT_TTL_S)
+//         m the relay's count of the account's hull through the fight (INT14 - net/bossBody.js bodyMeasure; optional)
 //
 // ONE KEY, THREE THINGS, NEVER CONFUSED. The relay's one secret (GATE_SIGNING_KEY) signs this as it signs a gate's kill
 // and a raid's cleanse, and the version is INSIDE the signed bytes: `l1` is refused by the gate's verifier (its `r1`) and
@@ -20,6 +21,7 @@
 //
 // PURE, and all three ends import it. Not a DFU member. Ledger A (SERPENT1).
 import { _b64url, SIG_BYTES, SKEW_S, ID_RE } from './identityToken.js';
+import { bodyMeasureValid } from './bossBody.js';   // INT14: the count's measure, carried
 
 /** The only version this file reads or writes. */
 export const SERPENT_RECEIPT_V = 'l1';
@@ -51,6 +53,7 @@ export function serpentReceiptValid(c) {
   if (!SERPENT_EARNED.includes(c.x)) return false;
   if (!Number.isInteger(c.h) || c.h < -1 || c.h > 4) return false;
   if (!Number.isSafeInteger(c.l) || c.l < 1 || c.l > SERPENT_RECEIPT_LV_MAX) return false;
+  if (c.m !== undefined && !bodyMeasureValid(c.m)) return false;   // INT14: optional - a receipt minted before it carries none
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i || c.e - c.i > SERPENT_RECEIPT_TTL_S) return false;
   return true;
@@ -58,14 +61,14 @@ export function serpentReceiptValid(c) {
 
 /**
  * MINT - the relay's half. With no key the receipt goes out unsigned (`l1.<body>.`) - the seed still rides it.
- * @param {{d: number, b: string, s: string, c: number, x: string, h: number, l: number}} what
+ * @param {{d: number, b: string, s: string, c: number, x: string, h: number, l: number, m?: number[]}} what
  * @param {CryptoKey|null} privateKey an Ed25519 private key (net/gateReceipt.js importReceiptKey), or null for none
  * @param {{subtle: SubtleCrypto, nowS: number}} env
  * @returns {Promise<string>}
  */
-export async function mintSerpentReceipt({ d, b, s, c, x, h, l }, privateKey, { subtle, nowS }) {
+export async function mintSerpentReceipt({ d, b, s, c, x, h, l, m }, privateKey, { subtle, nowS }) {
   if (!Number.isSafeInteger(nowS)) throw new TypeError('mintSerpentReceipt needs an integer epoch-seconds clock');
-  const claims = { d, b, s, c, x, h, l, i: nowS, e: nowS + SERPENT_RECEIPT_TTL_S };
+  const claims = { d, b, s, c, x, h, l, ...(m !== undefined ? { m } : {}), i: nowS, e: nowS + SERPENT_RECEIPT_TTL_S };
   if (!serpentReceiptValid(claims)) throw new TypeError('mintSerpentReceipt refused a claim set it could not verify');
   const body = _b64url.encode(enc.encode(JSON.stringify(claims)));
   if (!privateKey) return `${SERPENT_RECEIPT_V}.${body}.`;
