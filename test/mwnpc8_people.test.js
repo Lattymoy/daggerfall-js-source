@@ -7,6 +7,7 @@
 // and the host by source.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { ARMOR_MATERIAL } from '../src/systems/armorMaterials.js';
 import { readFileSync } from 'node:fs';
 import { wardrobeOf, personLook, personActor, PEOPLE_WARDROBE, PERSON_TURN_RATE } from '../src/characters/peopleBodies.js';
 import { FOLK_OUTFITS } from '../src/characters/folkBodies.js';
@@ -53,7 +54,7 @@ test('MWNPC8a-2 the look: their race and gender, the faction\'s garments in its 
   const knight = personLook({}, data({ race: RACES.Nord }), fac({ ggroup: GUILD_GROUPS.KnightlyOrder }));
   const plate = knight.items.filter((it) => it.group === 'Armor');
   assert.deepEqual(plate.map((it) => it.templateIndex).sort(), [ARMOR_ENUM.Cuirass, ARMOR_ENUM.Greaves, ARMOR_ENUM.Boots, ARMOR_ENUM.Left_Pauldron, ARMOR_ENUM.Right_Pauldron, ARMOR_ENUM.Gauntlets].sort(), 'steel');
-  assert.ok(plate.every((it) => it.material === 1));
+  assert.ok(plate.every((it) => it.material === ARMOR_MATERIAL.Steel));   // PIN MOVED (MWNPC12, section 17): steel is ARMOR_MATERIAL.Steel - 1 named no material
   assert.equal(knight.items.filter((it) => it.equipSlot === EQUIP_SLOTS.Feet).length, 1, 'his boots, no shoes beside');
   const commons = new Set();
   for (let s = 0; s < 40; s++) commons.add(personLook({}, data({ nameSeed: s }), null).items[0].templateIndex);

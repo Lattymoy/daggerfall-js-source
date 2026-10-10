@@ -14,6 +14,7 @@ import { RACES } from '../systems/races.js';
 import { SOCIAL_GROUPS, GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';
 import { EQUIP_SLOTS } from '../systems/equip.js';
 import { ARMOR_ENUM } from '../combat/enemyEquipment.js';
+import { ARMOR_MATERIAL } from '../systems/armorMaterials.js';   // MWNPC12: steel is ARMOR_MATERIAL.Steel
 import { FOLK_OUTFITS } from './folkBodies.js';
 import { EDITOR_FLATS_ARCHIVE } from '../world/rmbFlats.js';
 
@@ -82,7 +83,7 @@ export function personLook(pn, data, faction) {
   const dye = (k) => dyes[mix(seed ^ k) % dyes.length];
   let outfit;
   if (kind === 'steel') {
-    for (const [slot, piece] of STEEL) items.push({ templateIndex: piece, group: 'Armor', equipSlot: EQUIP_SLOTS[slot], material: 1 });
+    for (const [slot, piece] of STEEL) items.push({ templateIndex: piece, group: 'Armor', equipSlot: EQUIP_SLOTS[slot], material: ARMOR_MATERIAL.Steel });   // MWNPC12: steel, as mwArmorRecords reads it
     outfit = FOLK_OUTFITS[gender][0];
   } else if (kind === 'common') outfit = FOLK_OUTFITS[gender][mix(seed ^ 0x0f) % 4];
   else outfit = PEOPLE_WARDROBE[kind][gender];

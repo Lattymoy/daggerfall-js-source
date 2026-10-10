@@ -200,7 +200,7 @@
  {
   "name": "MWNPC9b-actor-a-person",
   "file": "src/characters/foeBodies.js",
-  "old": "    look: isClassFoe(f) ? foeLook(f) : creatureLook(f),",
+  "old": "    look: isPersonFoe(f) ? foeLook(f) : creatureLook(f),",
   "new": "    look: foeLook(f),",
   "tests": [
    "test/mwnpc9b_creaturerig.test.js"
@@ -209,8 +209,8 @@
  {
   "name": "MWNPC9b-creatures-not-body-foes",
   "file": "src/characters/foeBodies.js",
-  "old": "export const isBodyFoe = (f) => isClassFoe(f) || !!creatureLook(f);",
-  "new": "export const isBodyFoe = (f) => isClassFoe(f);",
+  "old": "export const isBodyFoe = (f) => isPersonFoe(f) || !!creatureLook(f);",
+  "new": "export const isBodyFoe = (f) => isPersonFoe(f);",
   "tests": [
    "test/mwnpc9b_creaturerig.test.js"
   ]

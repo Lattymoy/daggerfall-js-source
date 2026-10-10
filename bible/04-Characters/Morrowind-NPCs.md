@@ -113,6 +113,7 @@ Each line is a slice's acceptance, not an aspiration:
 | MWNPC7 TOWNSFOLK | walkers and living residents, a wardrobe by FACTION sgroup that actually varies (distinct records and dyes per persona) (the WALKERS SHIPPED, section 12: a wardrobe per outfit variant, dyed per spawn - the living residents indoors are MWNPC8's standing people) | world.js, exterior.js, worldModes.js (living residents indoors) |
 | MWNPC8 STANDING PEOPLE | street, interior, dungeon and quest StaticNPCs; children and vampires keep their sprite; `drawnFlat`'s nudity law honoured (8a SHIPPED, section 13a: the buildings' people; 8b SHIPPED, section 13b: the dungeons' and the street's; 8c SHIPPED, section 13c: exterior.js's and the quests' stands) | all four |
 | MWNPC9 CREATURES | CREA records, creature skeletons and their own .kf, the match table with its declared misses (9a SHIPPED, section 14a: the body; 9b SHIPPED, section 14b: the rig, the match, the hosts) | dungeonContext.js, world.js, worldModes.js, exterior.js |
+| MWNPC12 STEEL AND ORCS | the steel no look ever wore (material 1 named none) worn; the four orcs as people in Morrowind's Orc body (SHIPPED, section 17) | foeBodies.js, folkBodies.js, peopleBodies.js - every foe host and roster through them |
 | MWNPC11 ONE FRAME | every NPC lane on one frame budget - the nearest bodies across all of them, the skins shared out - and the lanes probe (SHIPPED, section 16) | every lane (createHostNpcBodies) |
 | MWNPC10 THE REST | crews, road parties, siege, gate court, the broker (10a SHIPPED, section 15a: the gate court; the broker keeps her guise. 10b SHIPPED, section 15b: the siege and the crews. 10c SHIPPED, section 15c: the roads' parties and the living residents indoors) | their hosts |
 
@@ -977,7 +978,8 @@ interiors'), and exterior.js's pool.
   misses: the ghost and the wraith (a body's textures are alpha-tested,
   never blended - a translucent dead would be cut, not seen through);
   the orcs and the vampires (people, not creatures - an orc's race is no
-  Daggerfall race a look can name yet); the werewolf (the player's wolf,
+  Daggerfall race a look can name yet; AMENDED BY MWNPC12, section 17: the
+  orcs stand as people in Morrowind's Orc body - still never creatures); the werewolf (the player's wolf,
   WEREWOLF1, not yet a foe's); the slaughterfish (its swimming groups are
   not driven); and every beast Morrowind has none of (giant bat,
   sabretooth, spider, centaur, nymph, harpy, wereboar, scorpion,
@@ -1240,3 +1242,59 @@ let go hands the frame to the other, its six nearest exactly); the tiers
 below MWNPC7's sum and every host's lane on the page's budget; a shuffled
 crowd's six nearest, and a lane past its range taking no skin.
 `tools/mutants/mwnpc11.json`: 24 mutants, 24 dead.
+
+## 17. MWNPC12 - THE STEEL THAT NEVER SHOWED, AND THE ORCS (SHIPPED 2026-10-10)
+
+- THE STEEL. Every look that put a body in steel without an equip table to
+  read - the street's guard (MWNPC7, folkBodies.js), a knightly order's or
+  a fighters' guild's standing person (MWNPC8a, peopleBodies.js), the
+  rosters' steel classes and the watch (MWNPC10b, foeBodies.js rosterLook)
+  - wrote its material as `1`. A look's armour is resolved by
+  `formats/mwItemMap.js` mwArmorRecords against Daggerfall's own
+  ARMOR_MATERIAL (systems/armorMaterials.js - steel is 0x0201), and 1
+  names no material: none of it resolved, so every one of them stood in
+  their clothes, and the ones whose boots took their feet stood barefoot.
+  Their pins checked the number, not the piece worn. Each now wears
+  ARMOR_MATERIAL.Steel, and the pin is mwArmorRecords itself over
+  Morrowind's own ids: every piece of every steel look resolves to steel.
+  (Sections 11, 12, 13a and 15b's "steel" was this until now.) A weapon's
+  material is Daggerfall's weapon table, where 1 is steel - those were
+  right.
+- THE ORCS (foeBodies.js ORC_MOBILES, isPersonFoe: the orc, its sergeant,
+  its shaman, its warlord). Daggerfall's monsters that are people stand
+  as people in Morrowind's Orc body - never creatures (creatureBodies.js
+  keeps them misses). A foe orc is dressed and armed from its own equip
+  table as a class foe is (DFU arms an orc as it arms a class -
+  enemyEquipment.js equipmentVariantFor), its clothes under; the dungeon's
+  and the encounter pool's hosts stand it through isBodyFoe and foeActor,
+  as every person foe. An orc with no table to read - a road's, a
+  roster's (a caravan beset by orcs) - wears DFU's own kit for it
+  (`orcKit`, rollEnemyEquipment's law): the orc and its shaman a
+  one-hander and half the time a buckler or a round shield, each piece of
+  armour at even odds; the sergeant a two-hander and each piece three
+  times in four; the warlord nine in ten; each piece leather, chain or
+  iron or steel plate by DFU's own odds (randomArmorMaterial, at the low
+  levels' plate). A face off the seed, as every roster's.
+- An orc's body is built on the player's data as any person's: the Orc
+  race's body parts, its head walked (Daggerfall has no orc portrait to
+  match - matchFaceFor stands the walk). A body that fails to build keeps
+  the sprite, as every lane's does.
+
+NOT HERE: the vampires (a vampire's face is Morrowind's vampire head, a
+part the walk does not choose yet), the werewolf foe, the ghost and the
+wraith keep their sprites (section 14b).
+
+PROVEN. `test/mwnpc12_steelorcs.test.js` (3): the guard's, the knight's,
+the warrior's and the watch's every armour piece resolved to steel by
+mwArmorRecords over Morrowind's ids, and 1 resolving nothing; each orc
+mobile a person, not a class nor a creature, in Morrowind's Orc and what
+its table holds, a class foe still the Bay's, a rat its creature; the
+roster orcs' kit over 300 seeds each - the variant's blade, the shield
+half the time on one-handers and never on two, each piece at its odds,
+leather, chain and iron or steel at DFU's - and the road's beset by Orcs.
+`tools/mutants/mwnpc12.json`: 21 mutants, 21 dead. Pins moved: MWNPC7-1,
+MWNPC8a-1 and MWNPC10b-1's `material === 1` (each now ARMOR_MATERIAL.Steel);
+mutant records re-aimed by content: MWNPC7-guard-iron, MWNPC9b's actor
+and body-foe records (isPersonFoe), MWNPC10b's creature and all-men,
+MWNPC10c's unarmed, one-hander and race records.
+

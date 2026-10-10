@@ -8,6 +8,7 @@
 // whole cycle on a recording lane, and the population hosts by source - every host that walks a population named.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { ARMOR_MATERIAL } from '../src/systems/armorMaterials.js';
 import { readFileSync, readdirSync } from 'node:fs';
 import { folkLook, folkActor, folkVariant, FOLK_OUTFITS, FOLK_DYES } from '../src/characters/folkBodies.js';
 import { createPopulationLane } from '../src/characters/npcBodies.js';
@@ -42,7 +43,8 @@ test('MWNPC7a a walker\'s look is their roll - the race and gender, the outfit t
   assert.equal(guard.gender, 'male');
   const plate = guard.items.filter((it) => it.group === 'Armor');
   assert.deepEqual(plate.map((it) => it.templateIndex).sort((a, b) => a - b), [ARMOR_ENUM.Cuirass, ARMOR_ENUM.Gauntlets, ARMOR_ENUM.Greaves, ARMOR_ENUM.Left_Pauldron, ARMOR_ENUM.Right_Pauldron, ARMOR_ENUM.Helm, ARMOR_ENUM.Boots].sort((a, b) => a - b), 'the watch\'s whole plate');
-  assert.ok(plate.every((it) => it.material === 1), 'steel');
+  // PIN MOVED (MWNPC12, Morrowind-NPCs.md section 17): steel is ARMOR_MATERIAL.Steel - the 1 this pinned named no material
+  assert.ok(plate.every((it) => it.material === ARMOR_MATERIAL.Steel), 'steel');
 });
 
 test('MWNPC7b a re-roll is a new person - a new id and a new look; the same roll the same object; the actor is the walker\'s stride, never armed, hit nor dead', () => {

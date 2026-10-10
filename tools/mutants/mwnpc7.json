@@ -56,8 +56,8 @@
  {
   "name": "MWNPC7-guard-iron",
   "file": "src/characters/folkBodies.js",
-  "old": "equipSlot: EQUIP_SLOTS[slot], material: 1 });   // steel",
-  "new": "equipSlot: EQUIP_SLOTS[slot], material: 0 });   // steel",
+  "old": "equipSlot: EQUIP_SLOTS[slot], material: ARMOR_MATERIAL.Steel });",
+  "new": "equipSlot: EQUIP_SLOTS[slot], material: ARMOR_MATERIAL.Iron });",
   "tests": [
    "test/mwnpc7_folk.test.js"
   ]

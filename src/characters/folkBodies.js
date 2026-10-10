@@ -11,6 +11,7 @@ import { GENDERS } from './nameHelper.js';
 import { PERSON_TEXTURES, GUARD_TEXTURE } from './mobilePerson.js';
 import { EQUIP_SLOTS } from '../systems/equip.js';
 import { ARMOR_ENUM } from '../combat/enemyEquipment.js';
+import { ARMOR_MATERIAL } from '../systems/armorMaterials.js';   // MWNPC12: steel is ARMOR_MATERIAL.Steel - a look's armour is resolved by it (mwItemMap.js mwArmorRecords)
 
 /** What each outfit variant wears (its Daggerfall clothing templates - mwItemMap.js dresses each in a Morrowind CLOT),
  *  by gender, in PERSON_TEXTURES' variant order. [shirt-or-robe, legs or null, feet]. */
@@ -73,7 +74,7 @@ export function folkLookOf(person, race, seed) {
     // the street's guard: the watch's iron and steel, his longsword drawn at need - and none of it rolled
     for (const [slot, piece] of [['ChestArmor', ARMOR_ENUM.Cuirass], ['LegsArmor', ARMOR_ENUM.Greaves], ['Head', ARMOR_ENUM.Helm], ['Feet', ARMOR_ENUM.Boots],
       ['LeftArm', ARMOR_ENUM.Left_Pauldron], ['RightArm', ARMOR_ENUM.Right_Pauldron], ['Gloves', ARMOR_ENUM.Gauntlets]]) {
-      items.push({ templateIndex: piece, group: 'Armor', equipSlot: EQUIP_SLOTS[slot], material: 1 });   // steel
+      items.push({ templateIndex: piece, group: 'Armor', equipSlot: EQUIP_SLOTS[slot], material: ARMOR_MATERIAL.Steel });   // steel - MWNPC12: 1 named no material, so none of it was ever worn
     }
     items.push({ templateIndex: 165, group: 'MensClothing', equipSlot: EQUIP_SLOTS.ChestClothes, dye: 1 });
     items.push({ templateIndex: 151, group: 'MensClothing', equipSlot: EQUIP_SLOTS.LegsClothes, dye: 1 });

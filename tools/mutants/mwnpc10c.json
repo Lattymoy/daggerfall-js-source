@@ -2,8 +2,8 @@
  {
   "name": "MWNPC10c-unarmed",
   "file": "src/characters/foeBodies.js",
-  "old": "  const items = /** @type {any[]} */ ([rosterBlade(h)]);",
-  "new": "  const items = [];",
+  "old": "  const items = /** @type {any[]} */ (orc ? orcKit(mobileType, h) : [rosterBlade(h)]);",
+  "new": "  const items = /** @type {any[]} */ (orc ? orcKit(mobileType, h) : []);",
   "tests": [
    "test/mwnpc10c_roads.test.js"
   ]
@@ -11,8 +11,8 @@
  {
   "name": "MWNPC10c-one-handers-only",
   "file": "src/characters/foeBodies.js",
-  "old": "  const two = mix(h ^ 0xb1) & 1;",
-  "new": "  const two = 0;",
+  "old": "function rosterBlade(h, two = mix(h ^ 0xb1) & 1) {",
+  "new": "function rosterBlade(h, two = 0) {",
   "tests": [
    "test/mwnpc10c_roads.test.js"
   ]
@@ -47,8 +47,8 @@
  {
   "name": "MWNPC10c-race-ignored",
   "file": "src/characters/foeBodies.js",
-  "old": "race: race ?? bay.race,",
-  "new": "race: bay.race,",
+  "old": "race: orc ? 'Orc' : race ?? bay.race,",
+  "new": "race: orc ? 'Orc' : bay.race,",
   "tests": [
    "test/mwnpc10c_roads.test.js"
   ]

@@ -10,7 +10,7 @@
 import { composeLook } from '../net/remotePlayers.js';
 import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';
 import { creatureLook } from './creatureBodies.js';   // MWNPC9: a creature foe's look, its Morrowind creature
-import { ARMOR_ENUM, WEAPONS_ENUM } from '../combat/enemyEquipment.js'; import { MOBILE_TYPES } from './mobileTypes.js';   // MWNPC10: a roster's people, armoured and armed by their class
+import { ARMOR_ENUM, WEAPONS_ENUM, equipmentVariantFor } from '../combat/enemyEquipment.js'; import { ARMOR_MATERIAL } from '../systems/armorMaterials.js'; import { MOBILE_TYPES } from './mobileTypes.js';   // MWNPC10: a roster's people, armoured and armed by their class
 
 /** The Iliac Bay's people, weighted - the races a class foe is drawn as (Daggerfall's own spelling, the look's). The
  *  Bay is Breton and Redguard country; the rest are travellers, the beast folk fewest. */
@@ -70,8 +70,17 @@ function clothesUnder(items, W, h) {
 /** Is this foe one a Morrowind body stands for? A CLASS foe (Daggerfall's people - the mobiles past 127) - the
  *  creatures are MWNPC9's, with their own skeletons. */
 export const isClassFoe = (f) => !!f?.entity?.isClass;
-/** MWNPC9: a foe that stands in a body - a class foe, or a creature Morrowind has a match for (creatureBodies.js). */
-export const isBodyFoe = (f) => isClassFoe(f) || !!creatureLook(f);
+/** MWNPC12 (bible/04-Characters/Morrowind-NPCs.md section 17): THE ORCS - Daggerfall's monsters that are people (the
+ *  orc, its sergeant, its shaman, its warlord). Each stands as a person in Morrowind's Orc body, dressed and armed from
+ *  its own equip table as a class foe is (DFU arms an orc as it arms a class - enemyEquipment.js equipmentVariantFor);
+ *  never a creature (creatureBodies.js declares them misses). */
+/** @type {Set<number>} */
+export const ORC_MOBILES = new Set([MOBILE_TYPES.Orc, MOBILE_TYPES.OrcSergeant, MOBILE_TYPES.OrcShaman, MOBILE_TYPES.OrcWarlord]);
+/** MWNPC12: a foe that stands as a person - a class foe, or an orc. */
+export const isPersonFoe = (f) => isClassFoe(f) || ORC_MOBILES.has(f?.mobileType);
+/** MWNPC9: a foe that stands in a body - a person (MWNPC12: an orc too), or a creature Morrowind has a match for
+ *  (creatureBodies.js). */
+export const isBodyFoe = (f) => isPersonFoe(f) || !!creatureLook(f);
 
 /** The foe's look: its race and face drawn off its seed, its gender its own, and what it wears - its equip table, as
  *  the player's look reads the player's (composeLook), with the clothes under the armour it has none over. Kept on the
@@ -93,7 +102,8 @@ export function foeLook(f) {
   const wornKey = worn.map((it) => `${it.equipSlot}:${it.templateIndex}:${it.material ?? ''}:${it.dye ?? ''}`).join('|');
   if (f._mwLook && f._mwLookKey === wornKey) return f._mwLook;
   const h = foeSeed(f);
-  const { race, faceIndex } = bayPerson(h);
+  const bay = bayPerson(h), faceIndex = bay.faceIndex;
+  const race = ORC_MOBILES.has(f.mobileType) ? 'Orc' : bay.race;   // MWNPC12: an orc in Morrowind's Orc body
   const gender = f.gender === 'female' ? 'female' : 'male';
   f._mwLookKey = wornKey;
   return (f._mwLook = { race, gender, faceIndex, items: clothesUnder([...worn], FOE_WARDROBE[gender], h) });
@@ -122,7 +132,7 @@ export function foeActor(f, id = foeId(f)) {   // MWNPC6: `id` a population's ow
   const swings = (f._atkA | 0) >> 1;
   return {
     id,
-    look: isClassFoe(f) ? foeLook(f) : creatureLook(f),   // MWNPC9: a creature's is its Morrowind creature
+    look: isPersonFoe(f) ? foeLook(f) : creatureLook(f),   // MWNPC9: a creature's is its Morrowind creature; MWNPC12: an orc a person's
     feet: f.ai.feet,
     yaw: f.ai.yaw,
     moving: !!f.ai.moving,
@@ -146,10 +156,30 @@ const STEEL_PLATE = Object.freeze([['ChestArmor', 'Cuirass'], ['LegsArmor', 'Gre
 /** MWNPC10c: a roster's blade, by DFU's own roll for a class foe (combat/enemyEquipment.js rollEnemyEquipment): one of
  *  its two variants - a broadsword, a saber or a longsword; or a two-hander, a claymore to a battle axe - iron or
  *  steel, off the seed. */
-function rosterBlade(h) {
-  const two = mix(h ^ 0xb1) & 1;
+function rosterBlade(h, two = mix(h ^ 0xb1) & 1) {   // MWNPC12: or the variant's own (an orc's)
   const lo = two ? WEAPONS_ENUM.Claymore : WEAPONS_ENUM.Broadsword, hi = two ? WEAPONS_ENUM['Battle Axe'] : WEAPONS_ENUM.Longsword;
   return { templateIndex: lo + (mix(h ^ 0xb2) % (hi + 1 - lo)), group: 'Weapons', equipSlot: EQUIP_SLOTS.RightHand, material: mix(h ^ 0xb3) & 1 };
+}
+
+/** MWNPC12: the pieces DFU rolls for an armed monster, in its order (rollEnemyEquipment) - each its own chance. */
+const ORC_PIECES = Object.freeze([['Head', 'Helm'], ['RightArm', 'Right_Pauldron'], ['LeftArm', 'Left_Pauldron'], ['ChestArmor', 'Cuirass'], ['LegsArmor', 'Greaves'], ['Feet', 'Boots']]);
+/** MWNPC12: an armour material by DFU's own roll (enemyEquipment.js randomArmorMaterial): leather below 70, chain to
+ *  89, plate from 90 - iron or steel, the low levels' plate. */
+function orcMaterial(h) {
+  const roll = 1 + (mix(h) % 100);
+  return roll >= 90 ? (mix(h ^ 0x1e) & 1 ? ARMOR_MATERIAL.Steel : ARMOR_MATERIAL.Iron) : roll >= 70 ? ARMOR_MATERIAL.Chain : ARMOR_MATERIAL.Leather;
+}
+/** MWNPC12: AN ORC'S KIT WITH NO EQUIP TABLE TO READ (a road's or a roster's orc), by DFU's own roll for it
+ *  (rollEnemyEquipment over equipmentVariantFor): the orc and its shaman a one-hander, half the time a shield, each
+ *  piece of armour at even odds; the sergeant a two-hander and each piece three times in four; the warlord a
+ *  two-hander and nine in ten - off the seed. */
+function orcKit(mobileType, h) {
+  const variant = equipmentVariantFor(mobileType, false) ?? 0;
+  const items = /** @type {any[]} */ ([rosterBlade(h, variant > 0 ? 1 : 0)]);
+  const chance = variant === 0 ? 50 : variant === 1 ? 75 : 90;
+  if (variant === 0 && mix(h ^ 0x5d) % 100 < 50) items.push({ templateIndex: ARMOR_ENUM.Buckler + (mix(h ^ 0x5e) % (ARMOR_ENUM.Round_Shield + 1 - ARMOR_ENUM.Buckler)), group: 'Armor', equipSlot: EQUIP_SLOTS.LeftHand, material: orcMaterial(h ^ 0x5f) });
+  ORC_PIECES.forEach(([slot, piece], k) => { if (mix(h ^ (0xa0 + k)) % 100 < chance) items.push({ templateIndex: ARMOR_ENUM[piece], group: 'Armor', equipSlot: EQUIP_SLOTS[slot], material: orcMaterial(h ^ (0xe0 + k)) }); });
+  return items;
 }
 
 /**
@@ -164,16 +194,17 @@ function rosterBlade(h) {
 export function rosterLook(rec, { mobileType, gender = 'male', seed = 0, race = undefined }) {
   if (rec._mwRosterMob === mobileType && rec._mwRosterG === gender && rec._mwRosterSeed === seed && rec._mwRosterRace === race) return rec._mwRosterLook;   // no key built a frame
   rec._mwRosterMob = mobileType; rec._mwRosterG = gender; rec._mwRosterSeed = seed; rec._mwRosterRace = race;
-  if (!(mobileType >= 128)) return (rec._mwRosterLook = creatureLook({ mobileType }));
+  const orc = ORC_MOBILES.has(mobileType);   // MWNPC12: a person, never a creature
+  if (!orc && !(mobileType >= 128)) return (rec._mwRosterLook = creatureLook({ mobileType }));
   const h = mix((seed >>> 0) ^ mix((mobileType | 0) + 0x9e3779b9));
   const bay = bayPerson(h);
   const g = gender === 'female' ? 'female' : 'male';
-  const items = /** @type {any[]} */ ([rosterBlade(h)]);
+  const items = /** @type {any[]} */ (orc ? orcKit(mobileType, h) : [rosterBlade(h)]);
   if (STEEL_CLASSES.has(mobileType)) {
-    for (const [slot, piece] of STEEL_PLATE) items.push({ templateIndex: ARMOR_ENUM[piece], group: 'Armor', equipSlot: EQUIP_SLOTS[slot], material: 1 });   // steel
-    if (mobileType === MOBILE_TYPES.Knight_CityWatch) items.push({ templateIndex: ARMOR_ENUM.Helm, group: 'Armor', equipSlot: EQUIP_SLOTS.Head, material: 1 });
+    for (const [slot, piece] of STEEL_PLATE) items.push({ templateIndex: ARMOR_ENUM[piece], group: 'Armor', equipSlot: EQUIP_SLOTS[slot], material: ARMOR_MATERIAL.Steel });   // steel (MWNPC12: by mwArmorRecords' own table)
+    if (mobileType === MOBILE_TYPES.Knight_CityWatch) items.push({ templateIndex: ARMOR_ENUM.Helm, group: 'Armor', equipSlot: EQUIP_SLOTS.Head, material: ARMOR_MATERIAL.Steel });
   }
-  return (rec._mwRosterLook = { race: race ?? bay.race, gender: g, faceIndex: bay.faceIndex, items: clothesUnder(items, FOE_WARDROBE[g], h) });
+  return (rec._mwRosterLook = { race: orc ? 'Orc' : race ?? bay.race, gender: g, faceIndex: bay.faceIndex, items: clothesUnder(items, FOE_WARDROBE[g], h) });
 }
 
 /** The tells the host has dressed the foe's billboard in this frame, for its body's quad (renderer.js

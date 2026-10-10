@@ -6,6 +6,7 @@
 // Pinned on the real drivers (their own tests' stand-ins) over recording lanes, and the world's draw points by source.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { ARMOR_MATERIAL } from '../src/systems/armorMaterials.js';
 import { readFileSync } from 'node:fs';
 import { rosterLook } from '../src/characters/foeBodies.js';
 import { MOBILE_TYPES as M } from '../src/characters/mobileTypes.js';
@@ -32,7 +33,7 @@ test('MWNPC10b-1 rosterLook: a class one dressed by its class off its seed - ste
   for (const t of [M.Knight, M.Warrior, M.Spellsword]) assert.deepEqual(plate(rosterLook({}, { mobileType: t, seed: 4 })), steel, `${t}: in steel`);
   const watch = rosterLook({}, { mobileType: M.Knight_CityWatch, seed: 4 });
   assert.deepEqual(plate(watch), [...steel, ARMOR_ENUM.Helm].sort((a, b) => a - b), 'the watch helmed');
-  assert.ok(watch.items.filter((it) => it.group === 'Armor').every((it) => it.material === 1));
+  assert.ok(watch.items.filter((it) => it.group === 'Armor').every((it) => it.material === ARMOR_MATERIAL.Steel));   // PIN MOVED (MWNPC12, section 17): steel is ARMOR_MATERIAL.Steel
   assert.equal(watch.items.filter((it) => it.equipSlot === EQUIP_SLOTS.Feet).length, 1, 'his boots, no shoes beside');
   const rogue = rosterLook({}, { mobileType: M.Rogue, gender: 'female', seed: 9 });
   assert.equal(plate(rogue).length, 0, 'a rogue in her clothes');
