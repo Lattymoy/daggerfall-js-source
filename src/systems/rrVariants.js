@@ -16,7 +16,7 @@
 // resident, asked over the mod message bus) has no counterpart: the port
 // does not carry that mod, so `materialSet` is false and the billboard
 // takes the walker's archive, exactly the C#'s else.
-import { PERSON_TEXTURES, PERSON_FACE_RECORDS, PERSON_IDLE_RECORD, NUM_PERSON_FACE_VARIANTS } from '../characters/mobilePerson.js';
+import { PERSON_TEXTURES, PERSON_FACE_RECORDS, PERSON_IDLE_RECORD, NUM_PERSON_FACE_VARIANTS, redguardRegion } from '../characters/mobilePerson.js';
 import { getWorldClimateSettings, FACTION_RACES } from '../formats/mapsFile.js';
 import { BUILDING_TYPES, isResidence } from '../world/buildingNames.js';
 import { isShop } from './shopStock.js';
@@ -110,17 +110,19 @@ export function rrResidentVariant({ archive, record, factionID = 0, nameSeed = 0
  *  swap under variantNpcs in a tavern or a shop, the resident's under
  *  variantResidents in a house. `pn` is the interior person (archive,
  *  record, factionID); `nameSeed` is StaticNPC's (the host computes it
- *  by its law); `worldClimate` the location's. Writes the face override
- *  for a resident (the C#'s flatsDict write) and answers the new archive
- *  and record, or null for the classic. */
-export function rrVariantPerson(pn, { buildingType = -1, quality = 0, nameSeed = 0, worldClimate = null } = {}) {
+ *  by its law); `worldClimate` the location's, `region` its region
+ *  (REGIONAL-FOLK: a Redguard region's residents are Redguards, as its
+ *  walkers are - characters/mobilePerson.js walkerRace). Writes the face
+ *  override for a resident (the C#'s flatsDict write) and answers the new
+ *  archive and record, or null for the classic. */
+export function rrVariantPerson(pn, { buildingType = -1, quality = 0, nameSeed = 0, worldClimate = null, region = null } = {}) {
   if (!pn) return null;
   if (rrModule('variantNpcs')) {
     const record = rrShopTavernRecord(pn.textureArchive, pn.textureRecord, buildingType, quality);
     if (record > -1) return { textureArchive: RR_NPC_ARCHIVE, textureRecord: record };
   }
   if (rrModule('variantResidents') && isResidence(buildingType)) {
-    const v = rrResidentVariant({ archive: pn.textureArchive, record: pn.textureRecord, factionID: pn.factionID ?? 0, nameSeed }, rrClimateRace(worldClimate));
+    const v = rrResidentVariant({ archive: pn.textureArchive, record: pn.textureRecord, factionID: pn.factionID ?? 0, nameSeed }, redguardRegion(region) ? 'Redguard' : rrClimateRace(worldClimate));
     if (v) {
       setFlatFaceOverride(pn.textureArchive, pn.textureRecord, v.faceIndex);   // flatsDict[flatId] = { faceIndex } (:1017-1023), keyed by the flat the person was born as
       return { textureArchive: v.textureArchive, textureRecord: v.textureRecord };

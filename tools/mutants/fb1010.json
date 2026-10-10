@@ -115,5 +115,176 @@
     "tests": [
       "test/fb1010_findfirst.test.js"
     ]
+  },
+  {
+    "name": "RFOLK-climate-only",
+    "file": "src/characters/mobilePerson.js",
+    "old": "export const walkerRace = (people, region) => (redguardRegion(region) ? 'Redguard' : raceOfPeople(people));",
+    "new": "export const walkerRace = (people, region) => raceOfPeople(people);",
+    "tests": [
+      "test/fb1010_regionalfolk.test.js"
+    ]
+  },
+  {
+    "name": "RFOLK-breton-regions",
+    "file": "src/characters/mobilePerson.js",
+    "old": "REGION_RACES[/** @type {number} */ (region)] === 1;",
+    "new": "REGION_RACES[/** @type {number} */ (region)] === 0;",
+    "tests": [
+      "test/fb1010_regionalfolk.test.js"
+    ]
+  },
+  {
+    "name": "RFOLK-census-climate",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "  const race = walkerRace(town.people, town.region);",
+    "new": "  const race = walkerRace(town.people, null);",
+    "tests": [
+      "test/fb1010_regionalfolk.test.js"
+    ]
+  },
+  {
+    "name": "RFOLK-world-host-climate",
+    "file": "src/scenes/world.js",
+    "old": "race: walkerRace(climate?.people, dfLocation.regionIndex),",
+    "new": "race: walkerRace(climate?.people, null),",
+    "tests": [
+      "test/fb1010_regionalfolk.test.js"
+    ]
+  },
+  {
+    "name": "RFOLK-exterior-host-climate",
+    "file": "src/scenes/exterior.js",
+    "old": "const populationRace = walkerRace(dfLocation.climate?.people, dfLocation.regionIndex);",
+    "new": "const populationRace = walkerRace(dfLocation.climate?.people, null);",
+    "tests": [
+      "test/fb1010_regionalfolk.test.js"
+    ]
+  },
+  {
+    "name": "RFOLK-rr-climate",
+    "file": "src/systems/rrVariants.js",
+    "old": "redguardRegion(region) ? 'Redguard' : rrClimateRace(worldClimate));",
+    "new": "rrClimateRace(worldClimate));",
+    "tests": [
+      "test/fb1010_regionalfolk.test.js"
+    ]
+  },
+  {
+    "name": "RFOLK-rr-host-unasked",
+    "file": "src/scenes/worldModes.js",
+    "old": "            region: hit.dfLocation?.regionIndex ?? null,   // REGIONAL-FOLK: a Redguard region's residents are Redguards\n",
+    "new": "",
+    "tests": [
+      "test/fb1010_regionalfolk.test.js"
+    ]
+  },
+  {
+    "name": "DAMNED-never",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (damnable(item) && (damned ?? rolls() * DAMNED_IN >= DAMNED_IN - 1)) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/fb1010_truecurse.test.js"
+    ]
+  },
+  {
+    "name": "DAMNED-half",
+    "file": "src/systems/lootRarity.js",
+    "old": "rolls() * DAMNED_IN >= DAMNED_IN - 1)) {",
+    "new": "rolls() * DAMNED_IN >= DAMNED_IN - 2)) {",
+    "tests": [
+      "test/fb1010_truecurse.test.js"
+    ]
+  },
+  {
+    "name": "DAMNED-one-in-three",
+    "file": "src/systems/lootRarity.js",
+    "old": "export const DAMNED_IN = 4;",
+    "new": "export const DAMNED_IN = 3;",
+    "tests": [
+      "test/fb1010_truecurse.test.js"
+    ]
+  },
+  {
+    "name": "DAMNED-not-top",
+    "file": "src/systems/lootRarity.js",
+    "old": "    line.value = hi;\n    Object.assign(drawback, DAMNED_DRAWBACK);",
+    "new": "    Object.assign(drawback, DAMNED_DRAWBACK);",
+    "tests": [
+      "test/fb1010_truecurse.test.js"
+    ]
+  },
+  {
+    "name": "DAMNED-any-legendary",
+    "file": "src/systems/lootRarity.js",
+    "old": "const damnable = (item) => item?.rarity === 'legendary' && item.group === 'Weapons';",
+    "new": "const damnable = (item) => item?.rarity === 'legendary';",
+    "tests": [
+      "test/fb1010_truecurse.test.js"
+    ]
+  },
+  {
+    "name": "DAMNED-law-unknown",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (isDamned(item)) return damnable(item) && carried;   // TRUE-CURSE: a Legendary weapon's alone\n",
+    "new": "",
+    "tests": [
+      "test/fb1010_truecurse.test.js"
+    ]
+  },
+  {
+    "name": "DAMNED-law-unbitten",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (isDamned(item)) return damnable(item) && carried;",
+    "new": "  if (isDamned(item)) return damnable(item);",
+    "tests": [
+      "test/fb1010_truecurse.test.js"
+    ]
+  },
+  {
+    "name": "DAMNED-said-cursed",
+    "file": "src/systems/lootRarity.js",
+    "old": "(isDamned(item) ? DAMNED_WORD : CURSED_WORD)",
+    "new": "CURSED_WORD",
+    "tests": [
+      "test/fb1010_truecurse.test.js"
+    ]
+  },
+  {
+    "name": "DAMNED-liftable",
+    "file": "src/systems/lootCurse.js",
+    "old": "  if (isDamned(item)) return 'damned';\n",
+    "new": "",
+    "tests": [
+      "test/fb1010_truecurse.test.js"
+    ]
+  },
+  {
+    "name": "DAMNED-label-cannot",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "  if (why === 'damned') return 'Damned';   // TRUE-CURSE\n",
+    "new": "",
+    "tests": [
+      "test/fb1010_truecurse.test.js"
+    ]
+  },
+  {
+    "name": "DAMNED-room-spared",
+    "file": "src/systems/testRoom.js",
+    "old": "cursePiece(it, rolls, { damned: true }); put(it);",
+    "new": "cursePiece(it, rolls, { damned: false }); put(it);",
+    "tests": [
+      "test/fb1010_truecurse.test.js"
+    ]
+  },
+  {
+    "name": "DAMNED-room-old-rolled",
+    "file": "src/systems/testRoom.js",
+    "old": "cursePiece(l, rolls, { damned: false }); put(l);",
+    "new": "cursePiece(l, rolls); put(l);",
+    "tests": [
+      "test/fb1010_truecurse.test.js"
+    ]
   }
 ]

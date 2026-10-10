@@ -98,7 +98,10 @@ test('LOOT16: a curse - a line more from the top half of its band, of a kind its
       assert.equal(it.value, before.value + LR.affixesWorth([line], it), 'the line\'s worth; the drawback\'s nothing');
       assert.deepEqual(it.enchantments.slice(0, -1), before.ench, 'its own enchantment kept');
       assert.deepEqual(it.enchantments.at(-1), it.cursed, 'the drawback beside it');
-      assert.ok(params(it.cursed.type, { ...it, enchantments: before.ench }).includes(it.cursed.param), 'a drawback its group takes');
+      // TRUE-CURSE (FIELD BUGS 2026-10-10, PIN MOVED): a Legendary weapon's curse may be damned - Health Leech: Whenever Used,
+      // its line at the very top of its band (test/fb1010_truecurse.test.js holds the rest)
+      if (LR.isDamned(it)) assert.ok(tier === 'legendary' && it.group === 'Weapons' && line.value === hi, 'a damned one: a Legendary weapon\'s, the top of its band');
+      else assert.ok(params(it.cursed.type, { ...it, enchantments: before.ench }).includes(it.cursed.param), 'a drawback its group takes');
       assert.ok(LR.validCurse(it) && LR.isCursed(it));
       assert.equal(LR.cursePiece(it, lcg(1)), false, 'never twice');
       seenTypes.add(it.cursed.type);

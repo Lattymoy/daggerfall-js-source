@@ -71,6 +71,7 @@ export const LIFTED = (name) => `Lifted: ${name} - the curse is gone, and its li
 export const LIFT_REFUSALS = Object.freeze({
   off: 'Loot rarity is off', not: 'No curse on it', unknown: 'Not yet identified - the guild identifies it first',
   worn: 'Take it off first', gold: 'Not enough gold', gone: 'No longer in your pack',
+  damned: 'Damned - no temple can lift this curse',   // TRUE-CURSE
 });
 export const CODEX_TITLE = 'The Codex';
 export const CODEX_SUB = 'Every Gilded, Legendary and Aetheric piece you have found - and where the rest are said to be';
@@ -104,6 +105,7 @@ export function reforgeLabel(why, price, have, verb = 'Reforge') {
   if (why === 'imprinted') return 'Imprinted';
   if (why === 'none') return 'None hidden';   // LOOT19
   if (why === 'nowhere') return 'No map here';
+  if (why === 'damned') return 'Damned';   // TRUE-CURSE
   return 'Cannot';
 }
 /** The last word of a press. */

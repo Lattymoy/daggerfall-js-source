@@ -1345,13 +1345,15 @@ export function isPerfect(item) {
 }
 /** LOOT16: the word a known curse puts before its tier - "Cursed Rare", "Cursed Legendary". */
 export const CURSED_WORD = 'Cursed ';
+/** TRUE-CURSE: a damned one's - "Damned Legendary". */
+export const DAMNED_WORD = 'Damned ';
 /** The tier's words on the first line: "Exalted Legendary", "Perfect Rare", else the tier's own label. An Exalted is
  *  said while the piece is still unknown (its tile's pips say it too); a Perfect only once its numbers are read; LOOT16:
  *  a curse before either, once the piece is identified (DFU's IsIdentified - worn unknowing, it bites unsaid). */
 export function tierLabel(item) {
   const tier = rarityOf(item);
   if (tier === 'legendary' && item?.exalted === true) return 'Exalted Legendary';
-  const cursed = isCursed(item) && identified(item) ? CURSED_WORD : '';   // LOOT16: a curse is said once the piece is known
+  const cursed = isCursed(item) && identified(item) ? (isDamned(item) ? DAMNED_WORD : CURSED_WORD) : '';   // LOOT16: a curse is said once the piece is known
   if (tier === 'rare' && isPerfect(item) && identified(item)) return `${cursed}Perfect Rare`;
   return `${cursed}${RARITIES[tier].label}`;
 }
@@ -1427,13 +1429,25 @@ export function curseParams(row, item) {
 }
 /** Whether a piece carries a curse not yet lifted. */
 export const isCursed = (item) => !!item?.cursed && typeof item.cursed === 'object';
+/** TRUE-CURSE (FIELD BUGS 2026-10-10, the Discord's "True cursed item experience"; Port-Ledger A): A DAMNED PIECE - one
+ *  cursed Legendary weapon in DAMNED_IN. Its line is at the very top of its band; its drawback is the catalogue's row that
+ *  bites every blow, Health Leech: Whenever Used (8 health a strike, 16 a use - HealthLeech.cs:84-89, enchantments.js),
+ *  which no other curse draws; and no temple lifts it (lootCurse.js liftRefusal). Taking it off still ends the bite: a
+ *  blade for a fight's few blows, then put away. */
+export const DAMNED_IN = 4;
+export const DAMNED_DRAWBACK = Object.freeze({ type: T.HealthLeech, param: 0 });
+/** Whether a piece's curse is damned - its drawback is the damned row's. */
+export const isDamned = (item) => isCursed(item) && item.cursed.type === DAMNED_DRAWBACK.type && item.cursed.param === DAMNED_DRAWBACK.param;
+/** A piece a curse may damn: a Legendary weapon. */
+const damnable = (item) => item?.rarity === 'legendary' && item.group === 'Weapons';
 /** CURSE A PIECE IN PLACE - a Rare or a Legendary that is no Exalted and no cursed one: one more line, a number kind its
  *  group may carry and its lines do not (or, none left, a kind with a param they leave free), its value from the top
  *  half of its tier's band; one drawback, a row of its group's drawn and then its param; the drawback beside its
  *  enchantment (`enchantments`) and named (`cursed`, what the temple lifts); the line's worth on its price (a drawback
  *  is worth nothing, DFU's own law - enchantments.js VALUE_COUNTS_BELOW). It never renames the piece: a Rare's prefix and
- *  suffix are its first lines'. Answers whether it was cursed. */
-export function cursePiece(item, rolls = Math.random) {
+ *  suffix are its first lines'. TRUE-CURSE: a Legendary weapon's curse is damned one time in DAMNED_IN, rolled last
+ *  (`damned` true or false decides it instead, and draws nothing). Answers whether it was cursed. */
+export function cursePiece(item, rolls = Math.random, { damned = null } = {}) {
   if ((item?.rarity !== 'rare' && item?.rarity !== 'legendary') || item.exalted === true || isCursed(item) || !Array.isArray(item.affixes)) return false;
   const numbers = AFFIX_IDS.filter((id) => !AFFIX_KINDS[id].proc && AFFIX_KINDS[id].groups.includes(item.group));   // a number - LOOT4's kinds that do something are the last pass's
   const carried = new Set(item.affixes.map((a) => a?.id));
@@ -1452,6 +1466,10 @@ export function cursePiece(item, rolls = Math.random) {
   const lined = { ...item, affixes: [...item.affixes, line] };
   const row = pick(CURSE_DRAWBACKS.filter((r) => curseParams(r, lined).length), rolls);
   const drawback = { type: row.type, param: pick(curseParams(row, lined), rolls) };
+  if (damnable(item) && (damned ?? rolls() * DAMNED_IN >= DAMNED_IN - 1)) {   // TRUE-CURSE: the top of its band, the bite at every blow
+    line.value = hi;
+    Object.assign(drawback, DAMNED_DRAWBACK);
+  }
   item.affixes = [...item.affixes, line];
   item.enchantments = [...(Array.isArray(item.enchantments) ? item.enchantments : []), { ...drawback }];
   item.cursed = drawback;
@@ -1475,10 +1493,12 @@ export function validCurse(item) {
   if (item?.cursed == null) return true;
   const c = item.cursed;
   if (!isCursed(item) || (item.rarity !== 'rare' && item.rarity !== 'legendary') || item.exalted === true) return false;
+  const carried = Array.isArray(item.enchantments) && item.enchantments.some((e) => e?.type === c.type && e?.param === c.param);
+  if (isDamned(item)) return damnable(item) && carried;   // TRUE-CURSE: a Legendary weapon's alone
   const row = CURSE_DRAWBACKS.find((r) => r.type === c.type);
   if (!row || (row.groups && !row.groups.includes(item.group))) return false;
   if (!(row.metal && CURSE_METAL.includes(item.group) ? row.metal : row.params).includes(c.param)) return false;
-  return Array.isArray(item.enchantments) && item.enchantments.some((e) => e?.type === c.type && e?.param === c.param);
+  return carried;
 }
 /** LOOT16: a curse's drawback as the card names it - "Bad Rep With: Commoners" - or '' for a piece with none. */
 export function curseLine(item) {

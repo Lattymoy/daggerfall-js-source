@@ -142,7 +142,7 @@ import { goldStack } from '../systems/inventory.js';   // LW6b: ...and their pur
 import { mintKeepsake } from '../systems/livingWorld/keepsake.js'; import { lwRng, textSeed } from '../systems/livingWorld/seed.js';   // LW6c: ...and their keepsake, carried home; AUDIT-C5: their goods their key's own (on this line, so no cite below it moves)
 import { createLivingIndoors } from './livingIndoors.js';   // LW8: the residents inside the building the player is in
 import { createTravellerSprites, classLookOf } from '../world/travellerSprites.js';   // LW3: their bodies, and the armed walk's sprite
-import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES, PERSON_MOVE_SPEED } from '../characters/mobilePerson.js';
+import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES, PERSON_MOVE_SPEED, walkerRace } from '../characters/mobilePerson.js';
 import { bowDamageArrow, weaponOfMaterial, armorOfMaterial } from '../combat/enemyEquipment.js';   // MAC-N1: the recovered shaft is CreateWeapon's arrow, value and all; OH-E: UpgradeLoot's SetItem + ApplyWeaponMaterial / ApplyArmorSettings
 import { createTownTalk, rayPersonDistance, nearestPerson } from './townTalk.js';   // AUDIT 63 F33 (review): the townsfolk's own pick distance, the enemy arm's rival
 import { createPlayerMagic } from './hostMagic.js';   // M2: spellcasting above ground
@@ -5527,7 +5527,8 @@ export async function bootWorld(canvas, renderer, params, status) {
           totalBlocks: loc.width * loc.height,
           // AUDIT 23 (characters-4/5): billboard race = the climate's
           // People; the NAME bank = the REGION's (MobilePersonNPC.cs:214).
-          race: ({ 0: 'Nord', 2: 'Redguard', 3: 'Breton' })[climate?.people] ?? 'Breton',
+          // REGIONAL-FOLK: and a Redguard region's walkers are Redguards.
+          race: walkerRace(climate?.people, dfLocation.regionIndex),
           nameBank: getNameBankOfRegion(dfLocation.regionIndex),
           makePerson: (archive, guard) => {
             const person = new MobilePerson(nav, {
