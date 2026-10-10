@@ -1049,7 +1049,8 @@ export const arrivingYaw = (trip) => wayAt(trip.way, trip.way.len - trip.trim1 -
 
 /**
  * A home town's away windows for a resident on `day` - each trip of theirs (their own, or a caravan they ride with)
- * touching the living day: out at its first minute, home at its last; armed where they carry a class.
+ * touching the living day: out at its first minute on the road (AUDIT LW-II-2 R5: its first light), home at its last; armed
+ * where they carry a class.
  * @param {Resident} res @param {Trip[]} trips - townTrips' answer for the day
  * LW5b: a passage by sea's window is the dock's (`dock`).
  * @returns {{ t0: number, t1: number, yaw: number, armed: boolean, dock: boolean }[]}
