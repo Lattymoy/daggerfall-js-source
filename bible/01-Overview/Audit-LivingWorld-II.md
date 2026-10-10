@@ -161,7 +161,7 @@ All FIXED (`06-Systems/Living-World-II.md` 8.3, 9.1-9.4):
 
 ## The record
 
-- Pins: lw9 17, lw10 8, lw11 21, lw12 16, lw13 10, lw14 12, lw15 12, lw16 8 (`09-Testing/Testing.md`).
-- Mutants, every one dead or recorded equivalent: lw9 62, lw10 24, lw11 98, lw12 93, lw13 45, lw14 64, lw15
+- Pins: lw9 17, lw10 9, lw11 21, lw12 16, lw13 10, lw14 12, lw15 12, lw16 8 (`09-Testing/Testing.md`).
+- Mutants, every one dead or recorded equivalent: lw9 62, lw10 34, lw11 98, lw12 93, lw13 45, lw14 64, lw15
   106, lw16 73; and the records in other slices' files a fix moved (lw3, lw4, lw6b, lw7b, lwfix4), re-aimed by content.
 - `06-Systems/Living-World-II.md` and `01-Overview/Port-Ledger.md` corrected where they claimed what the code did not.

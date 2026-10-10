@@ -297,6 +297,14 @@ Mac: "actual caravans utilizing horses and wagons".
 - **ONE MEMBER, ONE EXPORT.** The pool's own wagon draw and horse pose are handed out through its `presentation`
   (`drawWagon`, `poseHorse`) beside its `wagonParts` and `horseArt`. The living world's teams draw with them, and the
   pool's switch governs only the player's own cart: the pieces are built whatever it says (decision 4).
+- **WAGONS1 x LW10** (2026-10-10, main's WAGONS1-WAGONS2 merged in): the pool draws a wagon of a KIND now - Mac's
+  models where his are drawn (the Small Cart, the Open Wagon, the Caravan), Daggerfall's 41214 where they are not - its
+  parts (`partsOf`) and its hitch (`hitchOfKind`) the kind's, its draw taking its wheels' turn as an object, the kind
+  and whether it is hitched, and every one of those unsaid is the PLAYER'S driven wagon's. The living world's wagon is
+  the Small Cart (`roadTeams.js ROAD_WAGON_KIND`) whatever the player drives: drawn by its own parts, its wheels turned,
+  hitched on the march and at rest at camp (`wagons.js` `hitched`), and the train laid at that wagon's own hitch
+  (`trainOf`'s `hitchN`, the teams' `hitchN()`: 3.8 m where Mac's cart is drawn, the mod's 3.1 where it is not). As the
+  merge first stood, every living caravan wore the player's own wagon, its wheels still.
 - **THE ROADS' LAYER** lays each team with its train: a party with a team walks in the train's places, not in plain
   file; its horses and wagons are handed to the teams with their scene feet and, for a wagon, the ground WAGON_FRONT_N
   (1.5 m) before its axle, for its tilt. A lodged party (LW9) shows none.
@@ -322,8 +330,8 @@ Measure: the roads' layer with the teams laid stays inside its 6 ms on the probe
 pool's: at most WAGONS_DRAWN wagons of five meshes and their cargo a frame. A real-GPU frame is measured in a browser
 (`tools/travelViewPerf.mjs`); the container has none.
 
-Pins: `test/lw10_wagons.test.js` (8 - AUDIT LW-II: the roads' layer at a camp, its bodies and its parked teams).
-Mutants: `tools/mutants/lw10.json` (24).
+Pins: `test/lw10_wagons.test.js` (9 - AUDIT LW-II: the roads' layer at a camp, its bodies and its parked teams;
+WAGONS1 x LW10 through a real pool). Mutants: `tools/mutants/lw10.json` (34).
 
 ## 4. LW11 - the caravan's door: trade, theft, the hold-up, the escort (BUILT 2026-10-09)
 
