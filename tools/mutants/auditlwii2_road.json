@@ -205,5 +205,78 @@
     "tests": [
       "test/auditlwii2_road.test.js"
     ]
+  },
+  {
+    "name": "AUDITLWII2-R8-hired",
+    "file": "src/scenes/livingRoads.js",
+    "old": "    return p ? { name: p.trip.company.name, head: headOf(membersAt(p.trip, t)) } : hiredAt(id, t);",
+    "new": "    return p ? { name: p.trip.company.name, head: headOf(membersAt(p.trip, t)) } : null;",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-R8-its-own",
+    "file": "src/scenes/livingRoads.js",
+    "old": "      const of = (/** @type {any} */ m) => slots.has(m.slot);",
+    "new": "      const of = (/** @type {any} */ m) => !!m;",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-R8-town-name",
+    "file": "src/scenes/livingRoads.js",
+    "old": "namedIn(c, q.trip.from?.name ?? '')",
+    "new": "namedIn(c, '')",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-R11-cap",
+    "file": "src/world/roadTeams.js",
+    "old": "      if (capped(h.key)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-R11-pack",
+    "file": "src/world/roadTeams.js",
+    "old": "return w !== key && listed.has(w) && !drawnW.has(w);",
+    "new": "return w !== key && !drawnW.has(w);",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-D3-turned",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "        if (trip.turned) continue;\n",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-D3-inside-cut",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "    return { ...trip, enc, fallen, turned: false, backT0, backT1: whenWalked(backT0, walk), dive: { t0: /** @type {any} */ (trip.dive).t0, t1: backT0 } };",
+    "new": "    return { ...trip, enc, fallen, turned: false, backT0, backT1: whenWalked(backT0, walk) };",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-P17-LW10P-nearest-sort",
+    "file": "src/world/roadTeams.js",
+    "old": "    const near = [...wagonList].sort((a, b) => a.distM - b.distM).slice(0, WAGONS_DRAWN);",
+    "new": "    const near = [...wagonList].slice(0, WAGONS_DRAWN);",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ],
+    "note": "the NEAREST WAGONS_DRAWN - the pin hands them in distance order already (lens P's LW10P-nearest-sort; R11's pin hands them farthest first)"
   }
 ]

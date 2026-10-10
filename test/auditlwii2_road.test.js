@@ -341,3 +341,155 @@ test('AUDIT LW-II-2 R7: a noble\'s fated retainer sends the procession out whate
   }
   assert.ok(fated > 0 && overChance > 0, `fated retainers (${fated}), of them where the noble's chance said stay (${overChance})`);
 });
+
+test('AUDIT LW-II-2 R8: a company hired on a merchant\'s train is a company still - one of it greets the player as the company, by its name off its town (namedIn, as its own trip\'s), and it answers by its head\'s regard (the highest of its own walking); the merchant is none of it (mutants: R8 the hired, R8 its own, R8 its town\'s name)', () => {
+  const map = livingMap();
+  const o = O();
+  // a train with a company hired on it, whose name its town's (the name's town form), walking by day
+  let found = null;
+  const seen = new Set();
+  for (let day = 300; day < 360 && !found; day++) {
+    for (const town of map.towns) {
+      for (const tr of townTrips(town, day * DAY_MIN + 720, map.world, o) ?? []) {
+        if (!tr.hiredBy || seen.has(tr.id)) continue;
+        seen.add(tr.id);
+        const c = companiesOf(map.world.rosterOf(town)).find((x) => x.key === tr.hiredBy);
+        if (namedIn(c, town.name).name === namedIn(c, '').name) continue;
+        for (let m = Math.ceil(whenWalked(tr.outT0, 0)) + 20; m < tr.outT1 && !found; m += 20) { const at = partyAt(tr, m); if (onRoad(at) && !at.camp && !at.halt) found = { tr, t: m, at, town, c }; }
+        if (found) break;
+      }
+      if (found) break;
+    }
+  }
+  assert.ok(found, 'a company named for its town, hired on a train on the road');
+  const { tr, t, at, town, c } = found;
+  assert.equal(tr.company, undefined, 'the train no company\'s own trip');
+  const name = namedIn(c, town.name).name;
+  const slots = new Set(c.places.map((p) => p.slot));
+  const ofIt = membersAt(tr, t).filter((m) => slots.has(m.slot));
+  assert.ok(ofIt.length >= 2, 'its company walking');
+  const head = headOf(ofIt);
+  const member = ofIt.find((m) => m.id !== head.id);
+  const merchant = tr.leader;
+  /** What the road says to a player standing at `who`'s side in the train (a fresh regard, `rel` for the refusals). */
+  const at_ = (who, rel = createRelations()) => {
+    const p = trainOf(tr, at, membersAt(tr, t), t).people.find((x) => x.res.id === who.id);
+    const eye = [p.x / 40, 1.6, p.z / 40];
+    const sprites = { sync: () => {}, batches: () => [], persons: () => [], bodyOf: (id) => ({ person: { id, pos: eye } }), clear: () => {} };
+    const roads = createLivingRoads({ world: map.world, mpm: CALENDAR_MPM, clock: () => t, baseRate: () => RATE, sceneOf: (nx, nz) => [nx / 40, 0, nz / 40], here: () => ({ x: p.x, z: p.z }), sprites: /** @type {any} */ (sprites), relations: () => rel, memo: new Map() });
+    roads.frame(1 / 30, eye);
+    return { roads, said: (id) => roads.speech(eye, 30).filter((s) => s.person.id === id).map((s) => s.text) };
+  };
+  const [word] = at_(member).said(member.id);
+  assert.ok(COMPANY_GREETINGS.stranger.map((l) => fillLine(l, { company: name, player: '' })).includes(word), `its greeting the company's, by its name ("${word}")`);
+  const [plain] = at_(merchant).said(merchant.id);
+  assert.ok(ROAD_GREETINGS.stranger.includes(plain), `the merchant's its own ("${plain}")`);
+  // the head an enemy: the company will not talk, its merchant will
+  const rel = createRelations();
+  rel.note(head.id, 'slain', Math.floor((t - DAY_START_MIN) / DAY_MIN));
+  assert.equal(rel.standing(member.id, Math.floor((t - DAY_START_MIN) / DAY_MIN)), 'neutral', 'the member\'s own regard nothing');
+  const { roads } = at_(member, rel);
+  assert.ok(roads.refuses({ living: { id: member.id }, nameNPC: member.name }), 'one of it refuses, by its head\'s regard');
+  assert.equal(roads.refuses({ living: { id: merchant.id }, nameNPC: merchant.name }), null, 'its merchant talks');
+});
+
+test('AUDIT LW-II-2 R11 x LW10: past WAGONS_DRAWN the team is capped whole - the nearest wagons drawn (handed in any order), a wagon\'s horse posed only where its wagon is, a pack horse (no wagon of its own) posed wherever it stands; a horse the cap takes is freed (mutants: R11 the cap, R11 the pack horse, LW10P the nearest)', () => {
+  const map = livingMap();
+  const o = O();
+  // a merchant's caravan and a pedlar walking out, as the census and the trips make them
+  let merchant = null, pedlar = null;
+  for (let day = 300; day < 330 && !(merchant && pedlar); day++) {
+    for (const town of map.towns) {
+      for (const tr of townTrips(town, day * DAY_MIN + 720, map.world, o) ?? []) {
+        if (tr.kind === 'merchant' && !tr.sea && teamOf(tr).wagons === 1 && tr.way.len > 4 * NATIVE_PIXEL) merchant ??= tr;
+        if (tr.kind === 'pedlar' && !tr.sea && teamOf(tr).packs === 1 && tr.way.len > 2 * NATIVE_PIXEL) pedlar ??= tr;
+      }
+    }
+  }
+  assert.ok(merchant && pedlar, 'a caravan and a pedlar');
+  // eight caravans of it in file along its way (each its own trip: its own team's keys), the pedlar on its own road
+  const t = merchant.outT0 + 60;
+  const shown = (eye) => {
+    const horses = [], wagons = [];
+    const lay = (trip, s) => {
+      const train = trainOf(trip, { phase: 'out', s }, trip.party, t);
+      const dist = (q) => Math.hypot(q.x / 40 - eye[0], q.z / 40 - eye[2]);
+      for (const h of train.horses) horses.push({ key: h.key, feet: [h.x / 40, 0, h.z / 40], yaw: h.yaw, moving: true, speed: 1, distM: dist(h) });
+      for (const w of train.wagons) wagons.push({ key: w.key, feet: [w.x / 40, 0, w.z / 40], front: [w.x / 40 + Math.sin(w.yaw), 0, w.z / 40 + Math.cos(w.yaw)], yaw: w.yaw, moving: true, tier: w.tier, s: w.s, hitched: true, distM: dist(w) });
+    };
+    for (let i = 0; i < 8; i++) lay({ ...merchant, id: `${merchant.id}#${i}` }, merchant.trim0 + 2000 + i * 400);
+    lay(pedlar, pedlar.trim0 + 0);
+    return { horses, wagons: wagons.reverse() };   // the farthest first: the cap's own sort
+  };
+  const made = [], destroyed = [], posed = [], drawn = [];
+  const renderer = { createBillboardBatch: () => { const b = { origin: null, size: { w: 1, h: 1 } }; made.push(b); return b; }, destroyBillboardBatch: (b) => destroyed.push(b) };
+  const pres = {
+    horseArt: { ensureStationary: () => true, ensureWalk: () => {}, hasWalk: () => true },
+    poseHorse: (b, eye, horse) => posed.push(horse.position.join(',')),
+    wagonParts: () => ({ wheelRadius: 0.4, bounds: { min: [-1, 0, -2], max: [1, 1.5, 2] } }),
+    drawWagon: (r, tex, pos) => { drawn.push(pos); return true; },
+  };
+  const teams = createRoadTeams({ renderer, presentation: () => pres, collider: () => null });
+  const check = (eye) => {
+    const { horses, wagons } = shown(eye);
+    posed.length = 0; drawn.length = 0;
+    teams.sync(horses, wagons, { dt: 0.1, eye });
+    teams.draw({});
+    const near = [...wagons].sort((a, b) => a.distM - b.distM).slice(0, WAGONS_DRAWN);
+    assert.equal(drawn.length, WAGONS_DRAWN, 'six wagons drawn');
+    assert.deepEqual(drawn.map((p) => `${p[0]},${p[2]}`).sort(), near.map((w) => `${w.feet[0]},${w.feet[2]}`).sort(), 'the nearest six');
+    const want = horses.filter((h) => !/:h0$/.test(h.key) || !wagons.some((w) => w.key === h.key.replace(/:h0$/, ':w0')) || near.some((w) => w.key === h.key.replace(/:h0$/, ':w0')));
+    assert.ok(want.some((h) => h.key.startsWith(pedlar.id)), 'the pack horse among them');
+    assert.equal(teams.shown().horses, want.length, 'a horse to each wagon drawn, and the pack horse');
+    assert.deepEqual([...posed].sort(), want.map((h) => h.feet.join(',')).sort(), 'posed where they stand');
+    return want.length;
+  };
+  const p0 = trainOf(merchant, { phase: 'out', s: merchant.trim0 }, merchant.party, t).horses[0];
+  assert.equal(check([p0.x / 40, 1.6, p0.z / 40]), WAGONS_DRAWN + 1);
+  const freedBefore = destroyed.length;
+  const p1 = trainOf(merchant, { phase: 'out', s: merchant.trim0 + 2000 + 8 * 400 }, merchant.party, t).horses[0];
+  check([p1.x / 40, 1.6, p1.z / 40]);
+  assert.equal(destroyed.length - freedBefore, 2, 'the two horses the cap took now freed');
+  teams.clear();
+  assert.equal(destroyed.length, made.length, 'every batch freed at clear');
+});
+
+test('AUDIT LW-II-2 D3: a dive turned home on the road before it came to its dungeon clears nothing there - the dungeon\'s build never reads it (divesIn), where it reads every dive that went in; one turned inside (its leader fallen) has its hours cut at its turning, and its reach ends before it (mutants: D3 the turned, D3 the cut inside)', () => {
+  const map = livingMap({ dives: true });
+  const o = O();
+  const seen = new Set();
+  let turned = 0, listed = 0, inside = null;
+  for (let day = 300; day < 350 && !(turned && inside); day++) {
+    for (const town of map.towns) {
+      for (const tr of townTrips(town, day * DAY_MIN + 720, map.world, o) ?? []) {
+        if (!tr.dive || seen.has(tr.id)) continue;
+        seen.add(tr.id);
+        if (!inside && tr.enc?.leg === 'dive' && tr.enc.shape === 'fell') inside = tr;
+        if (!tr.turned && listed >= 40) continue;   // (enough of those that went in)
+        const dungeon = map.dungeons.find((d) => d.mapId === tr.to.mapId);
+        const read = divesIn(dungeon, tr.dive.t0 - 1, tr.dive.t1 + 1, map.world, o);
+        assert.equal(read.pending, false);
+        const has = read.dives.some((d) => d.id === tr.id);
+        if (tr.turned) {
+          turned++;
+          assert.ok(tr.outT1 <= tr.dive.t0, `${tr.id}: turned before it came`);
+          assert.equal(has, false, `${tr.id}: turned on the road, never read by its dungeon`);
+        } else {
+          listed++;
+          assert.equal(has, true, `${tr.id}: a dive that went in, read`);
+        }
+      }
+    }
+  }
+  assert.ok(turned > 0 && listed > 0 && inside, `dives turned on the road (${turned}), dives that went in (${listed}), one turned inside`);
+  // turned inside: its hours cut at its turning (the leader's fall, the company out at the fight's end), and a dungeon of
+  // stops close together reached no farther than the turning
+  assert.equal(inside.dive.t1, inside.enc.t1, 'its hours inside end as it comes out');
+  const markers = Array.from({ length: 40 }, (_, i) => ({ record: i % 4 === 3 ? 19 : 15, x: 6 + i * 3, y: 0, z: 10, position: i + 1, loadID: i + 1 }));
+  const stops = stopsOf([{ originX: 0, originZ: 0, layout: { markers } }], 200, { x: 0, z: 0 });
+  const route = routeOf(stops, { x: 0, z: 0 }, inside);
+  assert.ok(route.legs.length > 1, 'it walked some of its dungeon');
+  assert.ok(route.legs.every((l) => l.tOut <= inside.enc.t0), 'its reach ends before its turning');
+  const cleared = clearedOf([route], inside.enc.t1 + 30);
+  assert.deepEqual([...cleared].sort(), route.legs.map((l) => l.stop.key).sort(), 'what it cleared, the stops it reached before it turned');
+});
