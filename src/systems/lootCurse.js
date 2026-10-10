@@ -20,7 +20,7 @@
 // is cursed and nothing is lifted.
 // ═══════════════════════════════════════════════════════════════════
 
-import { lootRarityOn, isCursed } from './lootRarity.js';
+import { lootRarityOn, isCursed, isDamned } from './lootRarity.js';
 import { itemBaseValue } from './itemTemplates.js';
 import { isEquipped } from './equip.js';
 import { totalGoldAmount, deductGold } from './court.js';
@@ -38,12 +38,14 @@ export function liftPrice(item) {
 /** The pieces of a pack the temple sees a curse on: cursed, and known (a curse the guild has not named is no curse the
  *  priest can see - and listing it would say what Identify has not). */
 export const cursedKnown = (items) => (Array.isArray(items) ? items : []).filter((it) => isCursed(it) && itemIsIdentified(it));
-/** Why a piece's curse may not be lifted now, or null: 'off', 'not' (no curse), 'unknown' (not yet identified), 'worn'
- *  (its drawback is on the wearer - off first, as the Reforge asks), 'gold'. `player` is the payer. */
+/** Why a piece's curse may not be lifted now, or null: 'off', 'not' (no curse), 'unknown' (not yet identified), 'damned'
+ *  (TRUE-CURSE: no temple lifts it - said once it is known, never before), 'worn' (its drawback is on the wearer - off
+ *  first, as the Reforge asks), 'gold'. `player` is the payer. */
 export function liftRefusal(item, player) {
   if (!lootRarityOn()) return 'off';
   if (!isCursed(item)) return 'not';
   if (!itemIsIdentified(item)) return 'unknown';
+  if (isDamned(item)) return 'damned';
   if (isEquipped(item)) return 'worn';
   if (totalGoldAmount(player) < /** @type {number} */ (liftPrice(item))) return 'gold';
   return null;
