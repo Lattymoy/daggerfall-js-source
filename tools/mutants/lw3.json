@@ -85,8 +85,8 @@
   {
     "name": "LW3-chance-unread",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "  if (rng() >= chance && !world.fated?.(res, k) && !company?.places.slice(1).some((p) => world.fated?.(p, k))) return null;   // LW4: a death the lives hold for this cycle is met on the road",
-    "new": "  if (rng() >= 1 && !world.fated?.(res, k) && !company?.places.slice(1).some((p) => world.fated?.(p, k))) return null;   // LW4: a death the lives hold for this cycle is met on the road",
+    "old": "  const goes = rng() < chance || !!world.fated?.(res, k)",
+    "new": "  const goes = rng() < 1 || !!world.fated?.(res, k)",
     "tests": [
       "test/lw3_roads.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "LW3-trim-unread",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "  if (t < trip.outT1) return walked('out', trip.outT0, (m) => Math.max(trim0, trim0 + Math.min(walk, pace * walkedMinutes(trip.outT0, m)) - lag('out', m)));",
-    "new": "  if (t < trip.outT1) return walked('out', trip.outT0, (m) => Math.max(0, Math.min(walk, pace * walkedMinutes(trip.outT0, m)) - lag('out', m)));",
+    "old": "  if (t < trip.outT1) return walked('out', light, (m) => Math.max(trim0, trim0 + Math.min(walk, pace * walkedMinutes(trip.outT0, m)) - lag('out', m)));",
+    "new": "  if (t < trip.outT1) return walked('out', light, (m) => Math.max(0, Math.min(walk, pace * walkedMinutes(trip.outT0, m)) - lag('out', m)));",
     "tests": [
       "test/lw3_roads.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "LW3-play-reach",
     "file": "src/scenes/livingRoads.js",
-    "old": "      const reach = overworld ? TRAVELLER_FAR_M + 60 : ROADS_PLAY_M;",
-    "new": "      const reach = overworld ? TRAVELLER_FAR_M + 60 : ROADS_PLAY_M * 40;",
+    "old": "    const reach = overworld ? TRAVELLER_FAR_M + 60 : ROADS_PLAY_M;",
+    "new": "    const reach = overworld ? TRAVELLER_FAR_M + 60 : ROADS_PLAY_M * 40;",
     "tests": [
       "test/lw3_roads.test.js"
     ]

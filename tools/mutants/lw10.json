@@ -187,5 +187,32 @@
     "tests": [
       "test/lw10_wagons.test.js"
     ]
+  },
+  {
+    "name": "LW10-AUDIT-E8-wheels-home",
+    "file": "src/systems/livingWorld/wagons.js",
+    "old": "s: back ? trip.way.len - axle : axle });",
+    "new": "s: axle });",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-AUDIT-F3-park",
+    "file": "src/scenes/livingRoads.js",
+    "old": "            for (const h of parked.horses) horses.push({ ...h, speed: 0 });\n            wagons.push(...parked.wagons);",
+    "new": "",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-AUDIT-F3-train-people",
+    "file": "src/scenes/livingRoads.js",
+    "old": "places = fight ? fightPlaces(p.trip, at, members) : train.people;",
+    "new": "places = fight ? fightPlaces(p.trip, at, members) : partyPlaces(members === p.trip.party ? p.trip : { ...p.trip, party: members }, at, null);",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
   }
 ]

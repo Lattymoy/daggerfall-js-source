@@ -95,7 +95,9 @@ export function trainOf(trip, at, members, t) {
     horses.push({ key: `${trip.id}:h${i}`, ...place(s), moving });
     if (i < team.wagons) {
       const axle = s - dir * HITCH_N;
-      wagons.push({ key: `${trip.id}:w${i}`, ...place(axle), moving, tier: cargoOf(trip, t), s: axle });
+      // AUDIT LW-II E8: the distance walked the way the wagon faces - home, from the far end (the mod turns its wheels by
+      // travel along the wagon's forward: the way's own s, falling home, spun them backwards)
+      wagons.push({ key: `${trip.id}:w${i}`, ...place(axle), moving, tier: cargoOf(trip, t), s: back ? trip.way.len - axle : axle });
       s = axle - dir * WAGON_TAIL_N;
     } else s -= dir * WALK_GAP_N;
   }

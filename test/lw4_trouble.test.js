@@ -12,7 +12,7 @@ import { HAZARD, VACANT_CYCLES, fateHits, deathCounted, placeAt, placeKeyOf, tur
 import { troubleOf, troubledTrip, strengthOf, foeStrength, RISK_PER_DAY, GROUND_RISK, RISK_MAX, CAMP_SHARE, HALT_MIN, FIGHT_MIN, FOES_MAX } from '../src/systems/livingWorld/trouble.js';
 import {
   townTrips, ownTrip, formCaravans, partyAt, membersAt, awayOf, visitorsOf, newsOf, remainsNear, placeCycle, setsOut, contractOf, cycleOf, wayAt as wayAtOf0,
-  walkedMinutes, whenWalked, CALENDAR_MPM, HALT_CATCH_UP, NEWS_DAYS, REMAINS_MIN, TRIP_PACE, TRIP_CHANCE,
+  walkedMinutes, whenWalked, CALENDAR_MPM, HALT_CATCH_UP, NEWS_DAYS, REMAINS_MIN, TRIP_PACE, TRIP_CHANCE, ROAD_TRIP_CHANCE,
   leaderOf,
 } from '../src/systems/livingWorld/trips.js';
 import { mintResident, travellerRoster } from '../src/systems/livingWorld/census.js';
@@ -247,7 +247,7 @@ test('LW4 the towns see the trouble: a turned party never visits; one fallen on 
   let shown = 0;
   for (const town of lm.towns) {
     for (const place of lm.world.rosterOf(town)) {
-      const chance = TRIP_CHANCE[place.job];
+      const chance = TRIP_CHANCE[place.job] ?? ROAD_TRIP_CHANCE[place.job];   // PIN MOVED (AUDIT LW-II F2): the road's new traffic too
       if (!(chance > 0)) continue;
       for (let k = 40; k < 140; k++) {
         if (!lm.world.fated(place, k) || !lm.world.holderOf(place, k)) continue;
@@ -258,6 +258,7 @@ test('LW4 the towns see the trouble: a turned party never visits; one fallen on 
         if (lwRng(holder.town, holder.slot, k, 0x74726970)() < chance) continue;   // its chance would have sent it anyway
         const own = ownTrip(holder, town, k, { ...lm.world, fated: () => false }, O());
         const forced = ownTrip(holder, town, k, lm.world, O());
+        if (own?.holy) { assert.deepEqual(forced, own); continue; }   // PIN MOVED (AUDIT LW-II F7): a holy day's cycle goes on its own draw, whatever the cycle's chance said
         assert.equal(own, null, 'its own chance said stay');
         assert.ok(forced, `${holder.id}@${k}: the road keeps its appointment all the same`);
         assert.equal(lm.world.holderOf(place, k + 1), null, 'and the place stands empty after');
@@ -437,7 +438,11 @@ test('LW4 the streaming host: the trouble\'s world (the climate at the place, th
   assert.match(w, /diced: \(res, trip\) => livingTripPlace\(res, trip\)\.diced,/, 'AUDIT-B1: the trouble\'s shape the dice\'s own');
   assert.match(w, /turnOf: \(id\) => \{ const t = livingRelations\.turns\(\); return t\.won\.has\(id\) \? 'won' : t\.lost\.has\(id\) \? 'lost' : null; \},/);
   assert.match(w, /livingTripWorld\.holderOf = \(res, k\) => livingPlaceOf\(res, k\)\.holder;\n\s*livingTripWorld\.fated = \(res, k\) => livingPlaceOf\(res, k\)\.diced;/, 'AUDIT-B1: a fated trip the dice\'s - a spare never takes it away');
-  assert.match(w, /if \(!f\) \{\n\s*f = troubledTrip\(trip, troubleOf\(trip, livingTroubleWorld\)\);/);
+  // PIN MOVED (AUDIT LW-II E1): the trouble read while a patrol's cover waits on a round's way is never kept - undefined,
+  // a way still asked (trips.js townTrips) - so every reader keeps the trouble read with every round known
+  assert.match(w, /if \(!f\) \{\n\s*const was = _livingCoverPending;\n\s*_livingCoverPending = false;\n\s*const enc = troubleOf\(trip, livingTroubleWorld\);\n\s*const waits = _livingCoverPending;\n\s*_livingCoverPending = was;[^\n]*\n\s*if \(waits\) return undefined;[^\n]*\n\s*f = troubledTrip\(trip, enc\);/);
+  assert.match(w, /const livingCovered = \(c\) => \{ if \(c === undefined\) _livingCoverPending = true; return !!c; \};/);
+  assert.match(w, /covered: \(trip\) => livingCovered\(patrolCover\(trip, livingTripWorld, /);
   assert.match(w, /const holder = pl\.vacant \? null : pl\.holder == null \? res\n\s*: \(town \? mintResident\(town, res\.roll \?\? 't', res\.slot, res\.job, \{ gen: pl\.holder, home: res\.home, work: res\.work, faction: res\.faction \}\) : res\);/, 'LW7: a townsperson\'s newcomer the census\'s own mint too');
   assert.match(w, /_livingPlaces\.clear\(\); _livingFates\.clear\(\); _livingTripMemo\.clear\(\);/, 'a turn of fate, or a load: the books made again');
   assert.match(w, /livingTurnsFresh\(\);   \/\/ LW4: a turn of fate made, or a save loaded/);

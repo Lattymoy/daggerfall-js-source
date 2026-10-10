@@ -209,8 +209,8 @@
   {
     "name": "LW4-fated-not-forced",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "  if (rng() >= chance && !world.fated?.(res, k) && !company",
-    "new": "  if (rng() >= chance && false && !company",
+    "old": "  const goes = rng() < chance || !!world.fated?.(res, k) ||",
+    "new": "  const goes = rng() < chance || false ||",
     "tests": [
       "test/lw4_trouble.test.js"
     ]

@@ -314,22 +314,16 @@ export function createLivingRoads(deps) {
     busy.clear();
     const fights = deps.fights ?? null;
     if (fights) fights.frame(parties.map((p) => ({ trip: p.trip, at: partyAt(p.trip, t) })), here, t, { ground: !overworld });   // LW4b: the fights stood live
-    if (deps.stands) {
-      // LW7b: THE ARMED BEYOND THE WALLS - each armed member of a party on the road (not at its fight: that is the fights')
-      // where they walk, for their regard to stand them: a hostile drawing, a friend at the player's side
-      const cands = [];
-      if (here && !overworld) {
-        for (const p of parties) {
-          const at = partyAt(p.trip, t);
-          if ((at.phase !== 'out' && at.phase !== 'back') || at.fight || at.inn) continue;   // LW9: lodged at an inn, indoors
-          const members = membersAt(p.trip, t);
-          for (const m of partyPlaces(members === p.trip.party ? p.trip : { ...p.trip, party: members }, at)) if (m.res.cls != null) cands.push({ res: m.res, trip: p.trip, x: m.x, z: m.z, yaw: m.yaw });
-        }
-      }
-      deps.stands.frame(cands, here, t, { dt, ground: !overworld });
-    }
+    const reach = overworld ? TRAVELLER_FAR_M + 60 : ROADS_PLAY_M;
+    // AUDIT LW-II E3: EACH PARTY NEAR LAID OUT ONCE, AS IT IS DRAWN - its people where the bodies stand (a shared camp's ring,
+    // a train's file), its team, its fire - and the armed handed to the stands from there. Before, the stands' places
+    // were the party's plain file and its own camp: an armed member drawn at another party's fire, or in its train's
+    // van, was stood up to 59 m from their body
+    /** @type {{ p: any, at: any, fight: boolean, live: boolean, allies: any, peerLive: boolean, places: { res: any, x: number, z: number, yaw: number, moving: boolean }[], fire: { x: number, z: number } | null }[]} */
+    const drawn = [];
+    /** LW10: the teams this frame - each horse and wagon where its train has it (scene feet) */
+    const horses = [], wagons = [];
     if (here) {
-      const reach = overworld ? TRAVELLER_FAR_M + 60 : ROADS_PLAY_M;
       // LW9: the night's camps near one another one camp, round one fire
       const camped = [];
       for (const p of parties) {
@@ -337,8 +331,6 @@ export function createLivingRoads(deps) {
         if ((at.phase === 'out' || at.phase === 'back') && at.camp && !at.halt && !at.inn) camped.push({ trip: p.trip, at, members: membersAt(p.trip, t) });
       }
       const groups = campGroups(camped);
-      /** LW10: the teams this frame - each horse and wagon where its train has it (scene feet) */
-      const horses = [], wagons = [];
       const rate = deps.baseRate?.() ?? 0;
       for (const p of parties) {
         const at = partyAt(p.trip, t);
@@ -375,10 +367,30 @@ export function createLivingRoads(deps) {
           }
         }
         // LW9: A FIRE AT EVERY CAMP - the camps' own flame (survival/camp.js FIRE_FLAT), one to a shared camp
+        let fire = null;
         if (at.camp && !at.halt && !fight && (!ring || ring.first)) {
-          const fx = ring ? ring.x : /** @type {number} */ (at.x), fz = ring ? ring.z : /** @type {number} */ (at.z);
-          const distM = Math.hypot(fx - here.x, fz - here.z) / NATIVE_PER_M;
-          if (distM <= reach) list.push({ key: `fire:${p.trip.id}`, res: { id: `fire:${p.trip.id}`, name: '' }, feet: deps.sceneOf(fx, fz), yaw: 0, moving: false, distM, talk: false, flat: FIRE_FLAT });
+          fire = { x: ring ? ring.x : /** @type {number} */ (at.x), z: ring ? ring.z : /** @type {number} */ (at.z) };
+        }
+        drawn.push({ p, at, fight, live, allies, peerLive, places, fire });
+      }
+    }
+    if (deps.stands) {
+      // LW7b: THE ARMED BEYOND THE WALLS - each armed member of a party on the road (not at its fight: that is the fights')
+      // where they walk, for their regard to stand them: a hostile drawing, a friend at the player's side
+      const cands = [];
+      if (here && !overworld) {
+        for (const d of drawn) {
+          if (d.fight) continue;   // LW4b: at its fight - the fights' (LW9: one lodged at an inn is indoors, never laid out)
+          for (const m of d.places) if (m.res.cls != null) cands.push({ res: m.res, trip: d.p.trip, x: m.x, z: m.z, yaw: m.yaw });
+        }
+      }
+      deps.stands.frame(cands, here, t, { dt, ground: !overworld });
+    }
+    if (here) {
+      for (const { p, at, fight, live, allies, peerLive, places, fire } of drawn) {
+        if (fire) {
+          const distM = Math.hypot(fire.x - here.x, fire.z - here.z) / NATIVE_PER_M;
+          if (distM <= reach) list.push({ key: `fire:${p.trip.id}`, res: { id: `fire:${p.trip.id}`, name: '' }, feet: deps.sceneOf(fire.x, fire.z), yaw: 0, moving: false, distM, talk: false, flat: FIRE_FLAT });
         }
         for (const m of places) {
           if (allies?.has(m.res.id)) continue;
