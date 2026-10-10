@@ -127,12 +127,12 @@ town stands unchanged, and `lw9_traffic.test.js` pins it against the same town r
 
    | Job | Who | Class | Cycle | Where | Hazard |
    |---|---|---|---|---|---|
-   | `carter` (a farmer to market) | a farm (type 3) 1; a hamlet (1) or village (2) 1 + blocks/4, to 3 | none | 7 days | the nearest town within 1-4 px keeping a market (a city or a village of MARKET_BLOCKS, 4), on its MARKET DAY (`trips.js marketDay`: one in seven, by its map id) - in by MARKET_IN_H (noon), at a stall till MARKET_OUT_H (13:30), home by nightfall | 0.003 |
+   | `carter` (a farmer to market) | a farm (type 3) 1; a hamlet (1) or village (2) 1 + blocks/4, to 3 | none | 7 days | the nearest town within 1-2 px (AUDIT LW-II E5: 1-4 before - a walk from first light in by noon reaches two at the calendar's pace, one at the online pace) keeping a market (a city or a village of MARKET_BLOCKS, 4), on its MARKET DAY (`trips.js marketDay`: one in seven, by its map id) - in by MARKET_IN_H (noon), at a stall till MARKET_OUT_H (13:30), home by nightfall | 0.003 |
    | `hunter` | a hamlet, village or farm: 1 | an Archer or a Ranger | 4 days | THE WILD (2.2) | 0.01 |
    | `patrol` | a city of CITY_COURT_BLOCKS (16): 2 + blocks/32, to 4 | Knight, level 6-14 | 6 days | a ROUND to a town of its own region within 3-12 px, and back | 0.008 |
    | `noble` | a city of 16 blocks: 1 | none | 20 days | another court (a city of 16 blocks) within 6-18 px | 0.004 |
    | `retainer` | a city of 16 blocks: 2 | a Knight, Warrior or Archer | the noble's | with their noble | 0.008 |
-   | `minstrel` | a city of 9 blocks: 1 | Bard | 4 days | a town of 4 blocks within 3-8 px - plays its tavern of an evening, lodged there | 0.006 |
+   | `minstrel` | a city of 9 blocks: 1 | Bard | 6 days (AUDIT LW-II: 4 before - no trip with its stay fit a four-day cycle, and no minstrel ever travelled) | a town of 4 blocks within 3-8 px - plays its tavern of an evening, lodged there | 0.006 |
 
    Their tables stand beside the first's (`trips.js` ROAD_PACE, ROAD_CYCLE_DAYS, ROAD_TRIP_CHANCE, ROAD_RANGE_PX,
    ROAD_STAY_DAYS; `lives.js` ROAD_HAZARD, `hazardOf`), so the first's tables, which are pinned whole, stay as they were.
@@ -218,7 +218,7 @@ villages, hamlets and roadside taverns), the parties about four points at 08:00,
 | parties within 3 px | 1.73 | 2.65 (x1.53) |
 | the roads' layer, any frame | 1.81 ms worst | 0.90-2.83 ms worst (budget 6) |
 
-The synthetic map's towns stand five pixels apart, so its carters find no market within their four pixels and none are
+The synthetic map's towns stand five pixels apart, so its carters find no market within their two pixels and none are
 counted. The game's farms stand by their towns, so carters will add more. The real-map targets (2.6 of the design: a
 main road meeting a party every four real minutes by day) are measured where ARENA2_PATH names the data; the container
 has none.
