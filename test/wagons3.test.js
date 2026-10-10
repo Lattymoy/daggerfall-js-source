@@ -79,7 +79,7 @@ test('WAGONS3 THE TEAM\'S LAW: the two bench wagons take a pair, the Small Cart 
   assert.equal(horseCountOf([...horseItems(2), { templateIndex: 1 }]), 2);
   assert.equal(horseCountOf(null), 0);
   const pack = (kind, horses) => [newWagonItem(kind), ...horseItems(horses)];
-  assert.equal(wagonTeamShort(pack('openWagon', 1)), 'Your Open Wagon needs two horses to pull it. Buy another at a General Store.');
+  assert.equal(wagonTeamShort(pack('openWagon', 1)), 'Your Open Wagon needs two horses to pull it. Buy another at a town\'s Stable.');
   assert.equal(wagonTeamShort(pack('caravan', 1)), WAGON_TEAM_TEXT.short('caravan'));
   assert.equal(wagonTeamShort(pack('caravan', 2)), null, 'a pair');
   assert.equal(wagonTeamShort(pack('caravan', 3)), null, 'and to spare');

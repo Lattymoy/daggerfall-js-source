@@ -1432,5 +1432,9 @@ export function createHorseCartPool({
     visitTarget,   // WAGONS2-VISIT
     drawOutside,   // RW1 x WAGONS2: the wagons in the street a window looks out on
     get peers() { return _peers; }, get kept() { return _kept; }, get parts() { return partsOf(myKind()); }, partsOf, hitchOf,
+    /** MERCHANT-YARDS (scenes/merchantYardsHost.js): A WAGON ON SHOW in a town's Wagon Yard - one of `kind`, standing
+     *  empty, unhitched, its wheels at rest and its paint its own, at `position` turned by `rotation` (Unity's quaternion):
+     *  drawn as a parked one is (drawWagon). Answers whether it drew (false while its parts still build). */
+    drawShowWagon: (r, texRemap, position, rotation, kind) => drawWagon(r, texRemap, position, rotation, 0, null, 1, kind, false, null),
   };
 }

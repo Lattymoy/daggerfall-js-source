@@ -10,7 +10,7 @@
 // two new wagons are that same item, marked: a template-93 item carries `wagonKind` ('openWagon' or 'caravan'; absent,
 // the Small Cart), its own name and its own value - so every one of those laws keeps answering, a save carries the mark
 // as it carries any field (systems/save.js spreads each item), and a shop mints them on the General Store's shelf beside
-// the cart. A player who owns more than one drives the best (`activeWagonItem`): buying a wagon is the upgrade, and the
+// the cart (MERCHANT-YARDS, 2026-10-10: the Wagon Yard's counter now - systems/merchantYards.js yardStock). A player who owns more than one drives the best (`activeWagonItem`): buying a wagon is the upgrade, and the
 // cart left over is an empty cart to sell.
 //
 // Pure: no DOM, no renderer, no clock. Not a DFU member. Ledger A (WAGONS1).
@@ -24,15 +24,21 @@ export const SMALL_CART_KG = 750;
  * law takes it from there, systems/shopStock.js calculateCost), `hitch` how far ahead of its rear axle the horse stands
  * (metres - the classic wagon's 3.1, HITCHED_HORSE_LOCAL_Z, measured for model 41214; each of Mac's is measured for its
  * own length, world/wagonModels.js), `seats` how many ride in its back, `enterable` whether it opens as a room, `icon`
- * the model id its picture is drawn from (ui/modelIcon.js's port door), `rank` which of two owned is driven.
+ * the model id its picture is drawn from (ui/modelIcon.js's port door), `rank` which of two owned is driven, `floor` the
+ * least value a lawful one carries (systems/itemLaw.js) - the price it was first shelved at, so a wagon bought before
+ * WAGON-PRICE stays lawful.
+ *
+ * WAGON-PRICE (2026-10-10, asked: "Raise the price", then "More" - ten times): the Open Wagon 900 -> 9000, the Caravan
+ * 2500 -> 25000. The Small Cart keeps DFU's template value.
+ *
  * WAGONS3 (2026-10-10, Mac: "sit on the wagon itself, the ledge its built for and requiring 2 horses to use"; asked,
  * "Open Wagon + Caravan"): `horses` how many horses pull it - the two built with a front bench take a pair, the driver
  * on the bench (world/wagonModels.js driverSeatFor); the Small Cart keeps one between its shafts.
  */
 export const WAGON_KINDS = Object.freeze({
-  cart: Object.freeze({ key: 'cart', name: 'Small Cart', kg: SMALL_CART_KG, value: 150, hitch: 3.8, seats: 0, enterable: false, icon: 112490, rank: 0, horses: 1 }),
-  openWagon: Object.freeze({ key: 'openWagon', name: 'Open Wagon', kg: 1500, value: 900, hitch: 7.1, seats: 4, enterable: false, icon: 112491, rank: 1, horses: 2 }),
-  caravan: Object.freeze({ key: 'caravan', name: 'Caravan', kg: 2000, value: 2500, hitch: 7.7, seats: 0, enterable: true, icon: 112492, rank: 2, horses: 2 }),
+  cart: Object.freeze({ key: 'cart', name: 'Small Cart', kg: SMALL_CART_KG, value: 150, floor: 150, hitch: 3.8, seats: 0, enterable: false, icon: 112490, rank: 0, horses: 1 }),
+  openWagon: Object.freeze({ key: 'openWagon', name: 'Open Wagon', kg: 1500, value: 9000, floor: 900, hitch: 7.1, seats: 4, enterable: false, icon: 112491, rank: 1, horses: 2 }),
+  caravan: Object.freeze({ key: 'caravan', name: 'Caravan', kg: 2000, value: 25000, floor: 2500, hitch: 7.7, seats: 0, enterable: true, icon: 112492, rank: 2, horses: 2 }),
 });
 /** The kinds in the order a shop shelves them and the Stable ranks them. */
 export const WAGON_KIND_ORDER = Object.freeze(['cart', 'openWagon', 'caravan']);
@@ -75,7 +81,7 @@ export const wagonHorsesOf = (kind) => WAGON_KINDS[validWagonKind(kind) ?? 'cart
 export const horseCountOf = (items) => { let n = 0; for (const it of items ?? []) if (it?.templateIndex === TRANSPORT_HORSE) n++; return n; };
 /** WAGONS3: the word a short team is refused with. */
 export const WAGON_TEAM_TEXT = Object.freeze({
-  short: (kind) => `Your ${WAGON_KINDS[validWagonKind(kind) ?? 'cart'].name} needs ${wagonHorsesOf(kind) === 2 ? 'two horses' : 'a horse'} to pull it. Buy another at a General Store.`,
+  short: (kind) => `Your ${WAGON_KINDS[validWagonKind(kind) ?? 'cart'].name} needs ${wagonHorsesOf(kind) === 2 ? 'two horses' : 'a horse'} to pull it. Buy another at a town's Stable.`,
 });
 /** WAGONS3: why the wagon a pack drives cannot be hitched - its team is short of the horses it takes (one owned, two
  *  needed) - or null. No horse at all is the mod's own refusal (horseCart.js `needHorseToPull`), said where it says it. */

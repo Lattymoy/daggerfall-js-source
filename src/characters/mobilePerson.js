@@ -63,7 +63,8 @@ export const redguardRegion = (region) => Number.isInteger(region) && REGION_RAC
 /** REGIONAL-FOLK (FIELD BUGS 2026-10-10, the Discord's "Add Regional NPCs"; Port-Ledger A): THE RACE A TOWN'S WALKERS
  *  WEAR. DFU dresses them by the climate (above) and names them by the REGION (MobilePersonNPC.cs:214, FALL.EXE's
  *  REGION_RACES), so Sentinel and the Dragontail Mountains walked Breton and Nord bodies under Redguard names. A
- *  Redguard region's walkers are Redguards; every other region's are the climate's, as DFU's.
+ *  Redguard region's walkers are Redguards; every other region's are the climate's, as DFU's. MERCHANT-YARDS: a town's
+ *  yard keepers wear it too (scenes/world.js merchantYardSitesFor).
  *  @param {number|undefined|null} people @param {number|undefined|null} region */
 export const walkerRace = (people, region) => (redguardRegion(region) ? 'Redguard' : raceOfPeople(people));
 

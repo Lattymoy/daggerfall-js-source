@@ -34,11 +34,12 @@ const flush = async (n = 8) => { for (let i = 0; i < n; i++) await tick(); };
 test('WAGONS1 THE KINDS: three, their names, capacities, values, hitches and seats as the law says (the Small Cart DFU\'s 750 kg at its template\'s 150) - a pack drives its best wagon, and a cart item unmarked is the Small Cart (mutants: a rank flipped, a capacity moved, the mark unread)', () => {
   assert.deepEqual(WAGON_KIND_ORDER, ['cart', 'openWagon', 'caravan']);
   assert.deepEqual(WAGON_KIND_ORDER.map((k) => [WAGON_KINDS[k].name, WAGON_KINDS[k].kg, WAGON_KINDS[k].value, WAGON_KINDS[k].hitch, WAGON_KINDS[k].seats, WAGON_KINDS[k].enterable, WAGON_KINDS[k].rank]),
-    [['Small Cart', 750, 150, 3.8, 0, false, 0], ['Open Wagon', 1500, 900, 7.1, 4, false, 1], ['Caravan', 2000, 2500, 7.7, 0, true, 2]]);
+    [['Small Cart', 750, 150, 3.8, 0, false, 0], ['Open Wagon', 1500, 9000, 7.1, 4, false, 1], ['Caravan', 2000, 25000, 7.7, 0, true, 2]]);   // WAGON-PRICE (2026-10-10): 900 and 2500 ten times over
+  assert.deepEqual(WAGON_KIND_ORDER.map((k) => WAGON_KINDS[k].floor), [150, 900, 2500], 'WAGON-PRICE: each floor the price it was first shelved at');
   assert.equal(SMALL_CART_KG, 750); assert.equal(WAGON_KG_LIMIT, SMALL_CART_KG, 'itemTransfer.js reads the one 750');
   const cart = newWagonItem('cart'), open = newWagonItem('openWagon'), caravan = newWagonItem('caravan');
   assert.deepEqual(cart, { group: 'Transportation', templateIndex: TRANSPORT_SMALL_CART });
-  assert.deepEqual([open.wagonKind, open.value, caravan.wagonKind, caravan.value], ['openWagon', 900, 'caravan', 2500]);
+  assert.deepEqual([open.wagonKind, open.value, caravan.wagonKind, caravan.value], ['openWagon', 9000, 'caravan', 25000]);
   assert.deepEqual([cart, open, caravan].map(resolveItemName), ['Small Cart', 'Open Wagon', 'Caravan'], 'each says its kind; the rows keep the template\'s ItemName');
   assert.ok([cart, open, caravan].every(isWagonItem));
   assert.deepEqual([cart, open, caravan, { templateIndex: TRANSPORT_SMALL_CART, wagonKind: 'barge' }].map(wagonKindOf), ['cart', 'openWagon', 'caravan', 'cart']);
