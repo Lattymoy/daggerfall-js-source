@@ -16,7 +16,7 @@ import { favourites, dayPlan, DAY_MIN, SQUARE_LIKE, SOCIAL_NEAR, ORDER_FACTIONS,
 import { MOBILE_TYPES } from '../src/characters/mobileTypes.js';
 import { townPlaces, streetNet } from '../src/systems/livingWorld/places.js';
 import { townCensus, hasShopJob } from '../src/systems/livingWorld/census.js';
-import { townTrips, partiesNear, remainsNear, partiesOfTown, remainsOfTown, memoTrip, cycleOf, formCaravans, paceScale, CALENDAR_MPM, NATIVE_PIXEL, TRIP_REACH_PX, TRIP_CHANCE } from '../src/systems/livingWorld/trips.js';
+import { townTrips, partiesNear, remainsNear, partiesOfTown, remainsOfTown, memoTrip, cycleOf, formCaravans, paceScale, CALENDAR_MPM, NATIVE_PIXEL, TRIP_REACH_PX, TRIP_CHANCE, ROAD_TRIP_CHANCE } from '../src/systems/livingWorld/trips.js';
 import { createLivingRoads, ROADS_TOWNS_PER_FRAME, ROADS_JUMP_PX, ROADS_TICK_S, ROADS_VIEW_PX } from '../src/scenes/livingRoads.js';
 import { ResidentWalker } from '../src/characters/residentWalker.js';
 import { PERSON_MOVE_SPEED } from '../src/characters/mobilePerson.js';
@@ -323,7 +323,7 @@ function refTownTrips(town, t, world, o) {
   const tripOf = (res, k) => { const trip = memoTrip(res, town, k, world, o); if (trip === undefined) pending = true; return trip ?? null; };
   const trips = [];
   for (const res of roster) {
-    if (!(TRIP_CHANCE[res.job] > 0)) continue;
+    if (!((TRIP_CHANCE[res.job] ?? ROAD_TRIP_CHANCE[res.job]) > 0)) continue;   // LW9: PIN MOVED - the road's new traffic's own chances
     const cyc = cycleOf(res, day, scale);
     for (const k of [cyc.k - 1, cyc.k]) {
       const holder = world.holderOf ? world.holderOf(res, k) : res;

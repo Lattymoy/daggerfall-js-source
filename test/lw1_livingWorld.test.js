@@ -58,7 +58,8 @@ test('LW1 census: a resident is a DFU townsperson drawn once - the climate\'s pe
   const roster = travellerRoster(town);
   assert.deepEqual(roster.map((r) => `${r.id}:${r.job}`), ['L777.t0:merchant', 'L777.t1:merchant', 'L777.t2:merchant', 'L777.t3:mercenary', 'L777.t4:mercenary',
     'L777.t5:adventurer', 'L777.t6:adventurer', 'L777.t7:sailor', 'L777.t8:sailor', 'L777.t9:sailor', 'L777.t10:pilgrim', 'L777.t11:pilgrim', 'L777.t12:courier',
-    'L777.t13:pedlar', 'L777.t14:pedlar', 'L777.t15:pedlar']);
+    'L777.t13:pedlar', 'L777.t14:pedlar', 'L777.t15:pedlar',
+    'L777.t16:pedlar', 'L777.t17:pedlar', 'L777.t18:pilgrim', 'L777.t19:courier']);   // LW9: PIN MOVED - more of the road's own, appended (census.js moreCounts)
   assert.deepEqual(travellerRoster(town).map((r) => r.name), roster.map((r) => r.name), 'the same people for every reader');
   assert.notDeepEqual(travellerRoster({ ...town, mapId: 778 }).map((r) => r.name), roster.map((r) => r.name), 'another town, other people');
   for (const r of roster) {
@@ -367,7 +368,7 @@ test('LW1 lines: a token is filled from where and when it is said and a missing 
 test('LW1 regards: a stranger reads 0; a word counts once a day, a blow and a crime cost, help and a life saved earn; friend at FRIEND_AT, enemy at ENEMY_AT, hostile at HOSTILE_AT; a regard eases toward zero EASE_PER_DAY a day unseen and never across it; the save\'s record round-trips and a bad one reads as nobody known; the vendor is LivingWorld (mutants: talk counted twice, the ease crossing zero, a bad record kept)', () => {
   assert.equal(LIVING_WORLD_VENDOR, 'LivingWorld');
   assert.deepEqual([FRIEND_AT, ENEMY_AT, HOSTILE_AT, EASE_PER_DAY], [40, -40, -70, 0.5]);
-  assert.deepEqual(EVENTS, { talk: 3, polite: 1, gift: 8, helped: 20, saved: 35, struck: -45, crime: -15, slain: -75, insulted: -6 });   // LW7: one of their own slain turns them hostile
+  assert.deepEqual(EVENTS, { talk: 3, polite: 1, gift: 8, helped: 20, saved: 35, struck: -45, crime: -15, slain: -75, insulted: -6, poached: -4 });   // LW7: one of their own slain turns them hostile; PIN MOVED (LW14): a find poached
   const rel = createRelations();
   assert.equal(rel.regard('L1.0', 10), 0);
   assert.equal(rel.known('L1.0'), false);

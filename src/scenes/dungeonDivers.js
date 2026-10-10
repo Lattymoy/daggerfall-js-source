@@ -20,17 +20,53 @@
 // none hostile, its ENEMIES keep away (no word for the player, no blade beside them) and the rest stand with the player;
 // a company all enemies passes the player by.
 //
+// LW14 (2026-10-09, bible/06-Systems/Living-World-II.md "LW14"): THE DEEP'S OWN. Where the dungeon's stops are known
+// (`route` - systems/livingWorld/deepRoute.js: the company's way through its rooms), a company is MET WHERE ITS ROUTE
+// HAS IT, not behind the player: stood about its stop (or the floor between two) once the player is within DEEP_NEAR_M
+// of it, or within DEEP_SEE_M with a clear line - and HOLDING there, fighting what it fights (a classic motor walks no
+// straight line through a wall). Not met yet, a company fighting within DEEP_HEAR_M rings steel ("You hear fighting
+// ahead." once). Its leader OFFERS (the talk's door, `offers`): JOIN US (they follow the player, along the player's own
+// TRAIL round the corners), LEAD ON (they walk on to their next stop, the player along), PART WAYS (they keep to their
+// own). HURT: a member under RETREAT_HP falls back; the company under half its strength makes for the way out. A RIVAL
+// (not joined, its head no friend) minds its finds: the player taking from the treasure at the stop it makes for costs
+// each of it `poached`, with a word. A company left past DEEP_KEEP_M is let go, to be met again further on its way.
+//
 // EVERY ALLOCATION HAS AN OWNER: each body stood is this layer's until its company leaves (a foe cut down the pool's
 // own); `clear()` (the dungeon left, a sweep) forgets every one - the dungeon's pool goes with its context.
 // ═══════════════════════════════════════════════════════════════════
 import { membersAt } from '../systems/livingWorld/trips.js';
 import { firstNameOf } from '../systems/livingWorld/lines.js';
+import { pointAt, stopAt } from '../systems/livingWorld/deepRoute.js';   // LW14: where their route has them
+import { headOf } from '../systems/livingWorld/companies.js';   // LW14: the company's word, its head's
 
 /** How far behind the player a company is stood when met (m), and how near each keeps (m, the first; each after a pace
  *  further). */
 export const DIVER_STAND_M = 5;
 export const DIVER_HEEL_M = 3;
 export const DIVER_HEEL_STEP_M = 1.2;
+/** LW14: a company is met within DEEP_NEAR_M of its place (m), or within DEEP_SEE_M with a clear line; heard fighting
+ *  within DEEP_HEAR_M; let go past DEEP_KEEP_M. */
+export const DEEP_NEAR_M = 15;
+export const DEEP_SEE_M = 35;
+export const DEEP_HEAR_M = 60;
+export const DEEP_KEEP_M = 70;
+/** AUDIT LW-II D7: a company on another floor - more than this above or below the player - is neither met nor seen. */
+export const DEEP_FLOOR_DY = 3;
+/** AUDIT LW-II D4: LEAD ON's arrival - each member within its own follow stop and this of the stop's floor (the motor
+ *  halts at its stop and stands within it and a step more). */
+export const DIVER_ARRIVE_SLACK_M = 2;
+/** LW14: steel rings this often (real seconds) from a fight heard. */
+export const DEEP_RING_S = 2.5;
+/** LW14: a member under this share of their health falls back (m further behind). */
+export const RETREAT_HP = 0.3;
+export const RETREAT_BACK_M = 4;
+/** LW14: the player's trail (crewAshore.js's own: a crumb each TRAIL_STEP_M, TRAIL_MAX kept, a jump past TRAIL_JUMP_M
+ *  begins it again). */
+export const DIVER_TRAIL_STEP_M = 0.75;
+export const DIVER_TRAIL_MAX = 64;
+export const DIVER_TRAIL_JUMP_M = 8;
+/** LW14: a rival's word, a find taken before them. @param {string} name */
+export const POACHED_LINE = (name) => `${name}: "That was ours to find."`;
 
 /**
  * @param {{
@@ -49,19 +85,46 @@ export const DIVER_HEEL_STEP_M = 1.2;
  *   spawnFoe?: (mobileType: number, feet: number[], o: { yaw: number, level: number, gender: string }) => Promise<any>,
  *   slay?: (res: any, t: number, seen: boolean) => void,
  *   died?: (res: any, t: number) => void,
+ *   route?: (trip: any) => any,
+ *   floor?: (x: number, y: number, z: number) => number[],
+ *   clearLine?: (a: number[], b: number[]) => boolean,
+ *   ring?: (feet: number[]) => void,
+ *   choose?: (lines: string[], options: { code: string, label: string, action: () => void }[]) => any,
+ *   stopPile?: (key: string) => any,
+ *   realNow?: () => number,
  * }} deps - `spot(from, dx, dz)` a place walked out from the player's feet (never inside a wall); `owner()` whether
  *   this player stands the divers here (the election); `day()` the living day (the regards' clock); LW7b `spawnFoe` the
- *   dungeon's loose stand for one who draws on the player, `slay(res, t, seen)` the host's hand turn
+ *   dungeon's loose stand for one who draws on the player, `slay(res, t, seen)` the host's hand turn; LW14 `route(trip)`
+ *   the dive's route over this dungeon's stops (none: met behind the player, as before), `floor` a point's floor,
+ *   `clearLine` whether nothing stands between two feet, `ring(feet)` steel at a place, `choose` the talk's choice
+ *   window (AUDIT LW-II-2 D4: answering whether it mounted), `stopPile(key)` a stop's treasure pile, `realNow()` real seconds
  */
 export function createDungeonDivers(deps) {
-  /** @type {Map<string, { trip: any, allies: Map<string, any>, foes: Map<string, any>, fell: Set<string>, met: boolean }>} */
+  /** @type {Map<string, any>} */
   const companies = new Map();
   /** AUDIT-C2: the companies that made for the surface this visit - never met again in it. */
   const ended = new Set();
+  /** LW14: the companies heard (said once) and the next ring of each fight heard. */
+  const heard = new Set();
+  const rings = new Map();
+  /** LW14: the player's trail (crewAshore.js's law): where they walked in this dungeon, oldest first. @type {number[][]} */
+  const trail = [];
+  let leaderWas = /** @type {number[] | null} */ (null);
+  const realNow = () => deps.realNow?.() ?? Date.now() / 1000;
+  let lastT = 0;   // LW14: the frame's minute (the door's choices read it)
 
-  const takeOut = (rec) => { try { if (deps.inPool(rec)) deps.remove(rec); } catch (e) { console.warn('[divers] a body would not leave', e?.message ?? e); } };
+  const takeOut = (rec) => { try { if (deps.inPool(rec)) deps.remove(rec); } catch (e) { console.warn('[divers] a body would not leave', /** @type {any} */ (e)?.message ?? e); } };
+  /** AUDIT LW-II D8: each company let go, as it was left - parted or not, each member's share of health (met again
+   *  further on, it was stood whole and asked again) - the dungeon's visit's own. @type {Map<string, { parted: boolean, hp: Map<string, number> }>} */
+  const leftAs = new Map();
   function letGo(id) {
     const c = companies.get(id);
+    if (c) {
+      if (leftAs.size > 64) leftAs.clear();
+      const hp = new Map();
+      for (const [mid, rec] of c.allies) if (!rec.dead && rec.entity?.maxHealth > 0) hp.set(mid, rec.entity.health / rec.entity.maxHealth);
+      leftAs.set(id, { parted: c.parted, hp });
+    }
     if (!c) return;
     for (const rec of c.allies.values()) if (!rec.dead) takeOut(rec);   // AUDIT-C4: one cut down is the pool's own (their body, to be found)
     for (const rec of c.foes.values()) if (!rec.dead) takeOut(rec);   // LW7b: one cut down is the pool's own
@@ -69,11 +132,30 @@ export function createDungeonDivers(deps) {
   }
   const turn = (kind, key) => deps.relations?.()?.turn(kind, key);
 
-  /** Meet a company: its members behind the player, keeping with them - LW7b: or its hostile drawing on them. */
-  function meet(trip, members) {
-    const L = deps.leader();
-    if (!L) return;
-    const c = { trip, allies: new Map(), foes: new Map(), fell: new Set(), met: true };
+  /** LW14: a crumb of the player's trail. @param {number[]} feet */
+  function drop(feet) {
+    if (leaderWas && Math.hypot(feet[0] - leaderWas[0], feet[1] - leaderWas[1], feet[2] - leaderWas[2]) > DIVER_TRAIL_JUMP_M) trail.length = 0;
+    leaderWas = [feet[0], feet[1], feet[2]];
+    const last = trail[trail.length - 1];
+    if (last && Math.hypot(feet[0] - last[0], feet[2] - last[2]) < DIVER_TRAIL_STEP_M) return;
+    trail.push([feet[0], feet[1], feet[2]]);
+    if (trail.length > DIVER_TRAIL_MAX) trail.shift();
+  }
+  /** The player's heel for the `i`th of a company, along the trail round the corners. @param {number} i */
+  const heelOf = (i) => ({ feet: () => deps.leader()?.feet ?? null, stop: DIVER_HEEL_M + i * DIVER_HEEL_STEP_M, trail: () => trail });
+
+  /** Meet a company: its members behind the player, keeping with them - LW7b: or its hostile drawing on them. LW14: or,
+   *  `at` its place on its route, stood about it and holding there. */
+  function meet(trip, members, at = null) {
+    const L0 = deps.leader();
+    if (!L0) return;
+    const L = at ? { feet: at, yaw: Math.atan2(L0.feet[0] - at[0], L0.feet[2] - at[2]) } : L0;
+    // AUDIT LW-II D2: its strength is who STOOD (`size`, counted as each body arrives - the bodies come one by one, an enemy
+    // keeps away, a spawn can fail), and it is read only once none is still coming (`pending`): the armed counted before
+    // any arrived, the first body in made the company "had enough" with nobody hurt (and paid its regard and spared its
+    // fated for nothing)
+    const was = leftAs.get(trip.id) ?? null;   // AUDIT LW-II D8: met again, as it was left
+    const c = { trip, allies: new Map(), foes: new Map(), fell: new Set(), met: true, mode: at ? 'hold' : 'join', at, size: 0, pending: 0, going: null, pile: null, parted: !!was?.parted, said: new Set() };
     companies.set(trip.id, c);
     const rel = deps.relations?.();
     const standing = (m) => rel?.standing(m.id, deps.day()) ?? 'neutral';
@@ -100,20 +182,27 @@ export function createDungeonDivers(deps) {
     stand.forEach((m, i) => {
       if (m.cls == null) return;
       const side = (i - (stand.length - 1) / 2) * 1.4;
-      const back = DIVER_STAND_M + Math.floor(i / 3);
+      const back = at ? 1.5 + Math.floor(i / 3) : DIVER_STAND_M + Math.floor(i / 3);   // LW14: met at their place, about it
       const dx = -Math.sin(L.yaw) * back + Math.cos(L.yaw) * side, dz = -Math.cos(L.yaw) * back - Math.sin(L.yaw) * side;
       const feet = deps.spot(L.feet, dx, dz);
+      c.pending++;
       Promise.resolve(deps.spawn(m.cls, feet, { yaw: L.yaw, level: m.level ?? 1, gender: m.sex ?? 'male' })).then((rec) => {
+        c.pending--;
         if (!rec) return;
         if (companies.get(trip.id) !== c) { takeOut(rec); return; }
+        c.size++;
+        const hp = was?.hp.get(m.id);   // AUDIT LW-II D8: hurt when it was left, hurt still
+        if (hp != null && rec.entity?.maxHealth > 0) rec.entity.health = Math.max(1, Math.round(rec.entity.maxHealth * hp));
         rec.shipmate = true;
         rec.living = { id: m.id, res: m, town: deps.door ?? null };
         if (rec.entity) { rec.entity.name = m.name; rec.entity.team = 'PlayerAlly'; rec.entity.mobileTeam = 'PlayerAlly'; }
-        if (rec.ai) rec.ai.follow = { feet: () => deps.leader()?.feet ?? null, stop: DIVER_HEEL_M + i * DIVER_HEEL_STEP_M };
+        rec.heel = i;
+        if (rec.ai && !at) rec.ai.follow = heelOf(i);   // LW14: along the trail; met at their place, they hold it
         c.allies.set(m.id, rec);
-      }).catch(() => {});
+      }).catch(() => { c.pending--; });
     });
-    deps.say?.(`You meet ${trip.leader.name}'s company, come down into ${trip.to?.name ?? 'the deep'}.`);
+    const name = trip.company?.name ?? `${trip.leader.name}'s company`;
+    deps.say?.(at ? `You come upon ${name}, at work in ${trip.to?.name ?? 'the deep'}.` : `You meet ${name}, come down into ${trip.to?.name ?? 'the deep'}.`);
   }
 
   /** LW7b: a company's foe cut down - slain by the player's hand before their company, its living turned against them. */
@@ -124,19 +213,91 @@ export function createDungeonDivers(deps) {
     for (const m of membersAt(c.trip, t)) if (m.id !== mid) rel?.note(m.id, 'slain', deps.day());
   }
 
+  /** The survivors make for the surface - their regard, the fated among them spared - and the company is let go. */
+  function makeOut(id, c, line) {
+    const rel = deps.relations?.();
+    let left = 0;
+    for (const [mid, rec] of c.allies) {
+      if (c.fell.has(mid) || rec.dead) continue;
+      const m = rec.living.res;
+      const fated = deps.dies(m, c.trip);
+      if (fated) turn('spared', deps.turnKeyOf(m, c.trip));
+      rel?.note(m.id, fated ? 'saved' : 'helped', deps.day());
+      left++;
+    }
+    if (left) deps.say?.(line);
+    letGo(id);
+    ended.add(id);
+  }
+
+  /** LW14: the stop a company makes for from minute `t` (its next, or the one LEAD ON walks to), or null. */
+  function nextStop(c, t) {
+    if (c.going) return c.going.stop;
+    const route = deps.route?.(c.trip);
+    if (!route) return null;
+    const s = stopAt(route, t);
+    if (!s?.at && !s?.between) return null;   // AUDIT LW-II D6: on the way out (or not inside) - no stop ahead (legs[0], passed hours ago, was charged as their find)
+    const now = s?.at ?? (s?.between ? s.between[1] : null);
+    const i = now ? route.legs.findIndex((l) => l.stop === now) : -1;
+    return route.legs[s?.at ? i + 1 : Math.max(0, i)]?.stop ?? null;
+  }
+  /** LW14: lead on - each member walks to the next stop's floor (the motor's own walk), the player along. */
+  function leadOn(c, t) {
+    const route = deps.route?.(c.trip);
+    const from = c.going ? route?.legs.findIndex((l) => l.stop === c.going.stop) ?? -1 : -1;
+    const s = from >= 0 ? route?.legs[from + 1]?.stop ?? null : nextStop(c, t);
+    if (!s) return false;
+    const feet = deps.floor ? deps.floor(s.x, s.y, s.z) : [s.x, s.y, s.z];
+    for (const rec of c.allies.values()) if (rec.ai && !rec.dead) { rec.ai.follow = { feet: () => feet, stop: 1.5 + (rec.heel ?? 0) * 0.8 }; rec.fellBack = false; }   // AUDIT LW-II D4: a new walk, a new chance to fall back
+    c.going = { stop: s, feet };
+    c.mode = 'lead';
+    return true;
+  }
+  /** LW14: join us - they follow the player along the trail. */
+  function join(c) {
+    for (const rec of c.allies.values()) if (rec.ai && !rec.dead) { rec.ai.follow = heelOf(rec.heel ?? 0); rec.fellBack = false; }
+    c.mode = 'join'; c.going = null;
+  }
+
   return {
     /**
      * One frame in the dungeon: each company diving here met (this player standing it), each read - the fallen, the
      * hours done - and each the dive lists no longer let go. `divers` trips.js diversAt's, at the clock's minute `t`.
+     * LW14: a company with a route met where it has it, heard fighting, led on, hurt, a rival to the player's finds.
      * @param {{ trip: any, members: any[] }[]} divers @param {number} t
      */
     frame(divers, t) {
+      lastT = t;
+      const L = deps.leader();
+      if (L) drop(L.feet);
       const listed = new Set();
       for (const { trip, members } of divers) {
         listed.add(trip.id);
-        if (!companies.has(trip.id) && !ended.has(trip.id) && deps.owner() && members.some((m) => m.cls != null)) meet(trip, members);
+        if (companies.has(trip.id) || ended.has(trip.id) || !deps.owner() || !members.some((m) => m.cls != null)) continue;
+        const route = deps.route?.(trip) ?? null;
+        if (!route || !route.legs?.length) { meet(trip, members); continue; }
+        // LW14: where its route has it - met near, or seen; else heard at its fight
+        const p = pointAt(route, t);
+        if (!p || !L) continue;
+        // AUDIT LW-II D9: the floor's five rays only for a company within hearing (every listed company, every frame)
+        if (Math.hypot(p.x - L.feet[0], p.z - L.feet[2]) > DEEP_HEAR_M + DIVER_STAND_M) continue;
+        const at = deps.floor ? deps.floor(p.x, p.y ?? L.feet[1], p.z) : [p.x, p.y ?? L.feet[1], p.z];
+        const d = Math.hypot(at[0] - L.feet[0], at[2] - L.feet[2]);
+        const floor = Math.abs(at[1] - L.feet[1]) <= DEEP_FLOOR_DY;   // AUDIT LW-II D7: on the player's floor - one below or above is heard, never met
+        if (floor && (d <= DEEP_NEAR_M || (d <= DEEP_SEE_M && (deps.clearLine?.(L.feet, at) ?? false)))) { meet(trip, members, at); continue; }
+        const s = stopAt(route, t);
+        if (s?.fighting && d <= DEEP_HEAR_M) {
+          const now = realNow();
+          if (!heard.has(trip.id)) { heard.add(trip.id); deps.say?.('You hear fighting ahead.'); }
+          if (now >= (rings.get(trip.id) ?? 0)) { rings.set(trip.id, now + DEEP_RING_S); deps.ring?.(at); }
+        }
       }
       for (const [id, c] of [...companies]) {
+        // AUDIT LW-II-2 D2: a body dead and GONE from the pool was cut, not cut down - a load's rewind (dungeonContext.js
+        // applyWorld cuts the pool's tail past the save's count, and marks each dead) - forgotten, no turn written: a death,
+        // a slaying, a "had enough" paid into the game the load stood, of a company met after its save
+        for (const [mid, rec] of [...c.foes]) if (rec.dead && !c.fell.has(mid) && !deps.inPool(rec)) c.foes.delete(mid);
+        for (const [mid, rec] of [...c.allies]) if (rec.dead && !c.fell.has(mid) && !deps.inPool(rec)) { c.allies.delete(mid); c.size--; }
         for (const [mid, rec] of c.foes) if (rec.dead && !c.fell.has(mid)) slain(c, mid, rec, t);   // LW7b
         for (const [mid, rec] of c.allies) {
           if (!rec.dead || c.fell.has(mid)) continue;
@@ -145,31 +306,87 @@ export function createDungeonDivers(deps) {
           // own hour of the dive's trouble, and the company met again stood them up alive till then)
           if (deps.died) deps.died(rec.living.res, t); else turn('fallen', deps.turnKeyOf(rec.living.res, c.trip));
         }
-        if (t >= c.trip.backT0 || !listed.has(id)) {
-          // their hours done: the survivors make for the surface, the fated among them spared
+        const name = c.trip.company?.name ?? `${c.trip.leader.name}'s company`;
+        if (t >= c.trip.backT0 || !listed.has(id)) { makeOut(id, c, `${name} make for the surface.`); continue; }   // their hours done
+        // LW14: HURT - one under RETREAT_HP falls back; under half its strength the company makes for the way out
+        const standing = [...c.allies.values()].filter((rec) => !rec.dead);
+        if (!c.pending && c.size > 1 && standing.length * 2 < c.size) { makeOut(id, c, `${name} have had enough - they make for the way out.`); continue; }
+        for (const rec of standing) {
+          const e = rec.entity;
+          if (!e || !rec.ai?.follow || rec.fellBack || !(e.maxHealth > 0) || e.health / e.maxHealth >= RETREAT_HP) continue;
+          rec.fellBack = true;
+          const f = rec.ai.follow;
+          rec.ai.follow = { ...f, stop: (f.stop ?? DIVER_HEEL_M) + RETREAT_BACK_M };
+        }
+        // LW14: LEAD ON - at the stop, on to the next (the player along); none left, they hold
+        if (c.mode === 'lead' && c.going && standing.every((rec) => !rec.ai?.feet || Math.hypot(rec.ai.feet[0] - c.going.feet[0], rec.ai.feet[2] - c.going.feet[2]) < (rec.ai.follow?.stop ?? DIVER_HEEL_M) + DIVER_ARRIVE_SLACK_M)) {
+          if (!leadOn(c, t)) c.mode = 'hold';
+        }
+        // LW14: A RIVAL minds its finds - the treasure at the stop it makes for, taken by the player before them
+        if (c.mode !== 'join' && deps.stopPile && L) {
+          const s = nextStop(c, t);
+          const pile = s?.kind === 'treasure' ? deps.stopPile(s.key) : null;
+          // AUDIT LW-II-2 D5: the pile's OWN pieces, as first seen - a piece the player put in and took back is no find of
+          // theirs - and seen again whenever the room's word lands in it (dungeonContext.js applyLoot's `roomWords`): a
+          // peer's take is the room's, never this player's (the count alone charged both)
+          if (pile !== c.pile?.pile || pile?.roomWords !== c.pile?.words) c.pile = pile ? { pile, own: new Set(pile.items ?? []), words: pile.roomWords, at: s } : null;
+          const head = headOf(standing.map((rec) => rec.living?.res).filter(Boolean));
           const rel = deps.relations?.();
-          let left = 0;
-          for (const [mid, rec] of c.allies) {
-            if (c.fell.has(mid) || rec.dead) continue;
-            const m = rec.living.res;
-            const fated = deps.dies(m, c.trip);
-            if (fated) turn('spared', deps.turnKeyOf(m, c.trip));
-            rel?.note(m.id, fated ? 'saved' : 'helped', deps.day());
-            left++;
+          if (c.pile && head && rel?.standing(head.id, deps.day()) !== 'friend') {
+            const items = c.pile.pile.items ?? [];
+            const taken = [...c.pile.own].filter((it) => !items.includes(it));
+            const near = Math.hypot(c.pile.at.x - L.feet[0], c.pile.at.z - L.feet[2]) < 4;
+            if (taken.length && near) {
+              for (const rec of standing) rel?.note(rec.living.res.id, 'poached', deps.day());
+              if (!c.said.has(c.pile.at.key)) { c.said.add(c.pile.at.key); deps.say?.(POACHED_LINE(firstNameOf(head.name))); }   // AUDIT LW-II D12: said once a pile, not once an item
+            }
+            for (const it of taken) c.pile.own.delete(it);
           }
-          if (left) deps.say?.(`${c.trip.leader.name}'s company make for the surface.`);
-          letGo(id);
-          ended.add(id);
+        }
+        // LW14: left behind - let go, to be met again further on its way
+        if (c.at && L && c.mode !== 'join' && ![...c.foes.values()].some((rec) => !rec.dead)) {   // AUDIT LW-II D8: one drawing on the player is never let go (outrun, it stood again whole)
+          // AUDIT LW-II-2 D1: left behind is measured from the COMPANY - its nearest standing member - never from where it
+          // goes (LEAD ON to a stop past DEEP_KEEP_M let a company beside the player go the very next frame); none stood
+          // yet, its place
+          const feet = standing.map((rec) => rec.ai?.feet).filter(Boolean);
+          const ref = c.going?.feet ?? c.at;
+          const away = feet.length ? Math.min(...feet.map((f) => Math.hypot(f[0] - L.feet[0], f[2] - L.feet[2]))) : Math.hypot(ref[0] - L.feet[0], ref[2] - L.feet[2]);
+          if (away > DEEP_KEEP_M) letGo(id);
         }
       }
+    },
+    /**
+     * LW14: THE DOOR - a company's head (or any of a held one) asks what the player would: JOIN US, LEAD ON, PART WAYS,
+     * talk. Answers whether a choice was opened (the talk behind it). @param {any} person @param {() => void} talk
+     */
+    offers(person, talk) {
+      const id = person?.living?.id;
+      if (!id || !deps.choose) return false;
+      for (const c of companies.values()) {
+        if (!c.allies.has(id) || c.parted || c.mode === 'join') continue;
+        const name = firstNameOf(person.living.res?.name ?? '');
+        // AUDIT LW-II-2 D4: answers whether the choice MOUNTED - a window that stood nowhere (no dungeon to mount it: the
+        // street's talk door asking a company left below) opened nothing, and the talk behind it is the person's
+        const shown = deps.choose([`${name}: "Well met, down here. What'll it be?"`], [
+          { code: 'KeyJ', label: 'J - join us', action: () => join(c) },
+          { code: 'KeyL', label: 'L - lead on', action: () => { if (!leadOn(c, lastT)) deps.say?.(`${name}: "We're done here - nowhere left to lead."`); } },
+          { code: 'KeyP', label: 'P - part ways', action: () => { c.parted = true; c.mode = 'hold'; } },
+          { code: 'KeyA', label: 'A - talk', action: () => talk() },
+          { code: 'Escape', label: 'Esc - goodbye', action: () => {} },
+        ]);
+        return !!shown;
+      }
+      return false;
     },
     /** The companies met here (the probes; the pins). */
     companies: () => [...companies.values()],
     /** LW6b: whether one of a company was stood here this time - their end is what happens here, not the deep's word
      *  (the host lays no remains of them). @param {string} tripId @param {string} resId */
     stood: (tripId, resId) => { const c = companies.get(tripId); return !!c && (c.allies.has(resId) || c.foes.has(resId)); },
+    /** LW14: the player's trail (the pins). */
+    trail: () => trail,
     /** Every company forgotten (the dungeon left; a sweep) - its pool goes with it. */
-    clear() { for (const id of [...companies.keys()]) letGo(id); ended.clear(); },
+    clear() { for (const id of [...companies.keys()]) letGo(id); leftAs.clear(); ended.clear(); heard.clear(); rings.clear(); trail.length = 0; leaderWas = null; },
     get size() { return companies.size; },
   };
 }

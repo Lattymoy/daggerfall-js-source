@@ -147,11 +147,12 @@
   {
     "name": "CHAP5B-BAND-HANDED",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "plan = dayPlan(res, this.places, day, { mpm: this.o.mpm, away, watch: this._watchSize, bandOf: this._bandOf });",
-    "new": "plan = dayPlan(res, this.places, day, { mpm: this.o.mpm, away, watch: this._watchSize });",
+    "old": "watch: this._watchSize, bandOf: this._bandOf, ...this._patronsFor(res, day) });",
+    "new": "watch: this._watchSize, ...this._patronsFor(res, day) });",
     "tests": [
       "test/chap5b_people.test.js"
-    ]
+    ],
+    "note": "LW15 (re-aimed by content at the merge): the patrons' errands beside it."
   },
   {
     "name": "CHAP5B-READ-MINUTE",
@@ -284,11 +285,12 @@
   {
     "name": "CHAP5B-FALLBACK",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "hour: 'The hour', guild: 'the guild' });",
-    "new": "hour: 'The hour', guild: 'a guild' });",
+    "old": "hour: 'The hour', guild: 'the guild', from:",
+    "new": "hour: 'The hour', guild: 'a guild', from:",
     "tests": [
       "test/chap5b_people.test.js"
-    ]
+    ],
+    "note": "LW16 (re-aimed by content at the merge): {from} beside it."
   },
   {
     "name": "CHAP5B-NEWS-DAYS-CONST",

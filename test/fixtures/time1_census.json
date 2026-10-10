@@ -422,6 +422,12 @@
   },
   {
    "file": "src/scenes/world.js",
+   "has": "knownCriminal(playerEntity, trip.from.region, { ownNow: ownMinutes(), worldNow: trustedWorldMinutes() })",
+   "clock": "event",
+   "why": "a banishment's term - a patrol's halt of a wanted player on the road (LW9)"
+  },
+  {
+   "file": "src/scenes/world.js",
    "has": "warnsFirst: () => livingWorldOn(), regionName: (r) => REGION_NAMES[r] ?? 'this region', worldNow: () => trustedWorldMinutes(),",
    "clock": "event",
    "why": "a banishment's term - no first offence warned to a banished one (WATCH-KNOWS)"
@@ -1001,6 +1007,54 @@
    "has": "_livingDiversList = here ? diversAt(here, skyMinutes(), livingTripWorld,",
    "clock": "sky",
    "why": "LW6: the companies diving the player's dungeon at the sky's minute"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "relations: () => livingRelations, clock: () => skyMinutes(), day: (t) => Math.floor((t - 240) / 1440), roads: () => livingRoads,",
+   "clock": "sky",
+   "why": "LW11: the caravan's door - its counter's keeper, a report's landing minute and the escort on the living world's clock"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "advanceOwnMinutes(Math.max(0, until - skyMinutes()));",
+   "clock": "sky",
+   "why": "LW11: offline, the escort travels on with the caravan to its next stop - the one clock moved as a journey moves it"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "if (p?.living?.res) caravanHostOf().caught(p.living.res, skyMinutes());",
+   "clock": "sky",
+   "why": "LW11: a hand caught on the road - its report carried on the living world's clock"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "clock: () => skyMinutes(),",
+   "clock": "sky",
+   "why": "LW12: a band's hideout stood - its people by day or night, its chest's take and its rout on the living world's clock"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "livingHideoutsHostOf().marks(hereN.x, hereN.z, skyMinutes())",
+   "clock": "sky",
+   "why": "LW12: the Overworld's rumoured hideouts - the band standing at the living world's minute"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "const tBuild = skyMinutes();",
+   "clock": "sky",
+   "why": "LW14: a dungeon's build reads the dives of the living world's last day, on its clock - the stops a company left"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "t: skyClassicMinutes((p.hour * 3600 + p.minute * 60) * 1000), seed: p.seed",
+   "clock": "sky",
+   "why": "LW15: a patron's sale, told by its real hour and minute (the service's own UTC instant - AUDIT LW-II B5: no machine offset), read as the shared sky's minute of the sale (an online sky day is a real hour)"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "const t = skyClassicMinutes((pt.hour * 3600 + pt.minute * 60) * 1000);",
+   "clock": "sky",
+   "why": "LW15 / AUDIT LW-II B12: the Vendor page's buyer - the sale's sky minute, so the town names the one holding the place the day the patron comes"
   },
   {
    "file": "src/scenes/world.js",

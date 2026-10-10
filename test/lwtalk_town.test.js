@@ -454,7 +454,8 @@ test('LW-TALK the words: {place} a town of the town\'s road (its trips\' towns, 
     const top = Math.max(...counts.values());
     assert.ok(total > 500 && top / total < 0.05, `${rec.mapId}: the commonest opener ${(100 * top / total).toFixed(1)}% of ${total}`);
   }
-  assert.match(rd('src/scenes/world.js'), /const places = \[\.\.\.new Set\(\[\.\.\.trips, \.\.\.told\]\.map\(\(tr\) => tr\.to\?\.name\)\.filter\(Boolean\)\)\]\.sort\(\);\n    return \{ away, visitors, holders, news, places \};/);
+  // PIN MOVED (AUDIT LW-II E7): a trip's end by its place's name (trips.js placeName) - never "the wild", a hunter's no town
+  assert.match(rd('src/scenes/world.js'), /const places = \[\.\.\.new Set\(\[\.\.\.trips, \.\.\.told\]\.map\(\(tr\) => placeName\(tr\.to\)\)\.filter\(Boolean\)\)\]\.sort\(\);[^\n]*\n    return \{ away, visitors, holders, news, places \};/);
 });
 
 test('LW-TALK the hosts: the street\'s town deals, gathers, keeps circles whole and says aloud (livingTown.js); the rooms deal a table\'s company from its sitting and keep it put through its first round and its exchanges (scenes/livingIndoors.js); the road\'s parties talk in exchanges from their round\'s start (scenes/livingRoads.js); the bodies stand on the wheel (characters/residentWalker.js, world/travellerSprites.js) (mutants: each seam)', () => {

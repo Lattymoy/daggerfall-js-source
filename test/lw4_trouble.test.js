@@ -12,7 +12,8 @@ import { HAZARD, VACANT_CYCLES, fateHits, deathCounted, placeAt, placeKeyOf, tur
 import { troubleOf, troubledTrip, strengthOf, foeStrength, RISK_PER_DAY, GROUND_RISK, RISK_MAX, CAMP_SHARE, HALT_MIN, FIGHT_MIN, FOES_MAX } from '../src/systems/livingWorld/trouble.js';
 import {
   townTrips, ownTrip, formCaravans, partyAt, membersAt, awayOf, visitorsOf, newsOf, remainsNear, placeCycle, setsOut, contractOf, cycleOf, wayAt as wayAtOf0,
-  walkedMinutes, whenWalked, CALENDAR_MPM, HALT_CATCH_UP, NEWS_DAYS, REMAINS_MIN, TRIP_PACE, TRIP_CHANCE,
+  walkedMinutes, whenWalked, CALENDAR_MPM, HALT_CATCH_UP, NEWS_DAYS, REMAINS_MIN, TRIP_PACE, TRIP_CHANCE, ROAD_TRIP_CHANCE,
+  leaderOf,
 } from '../src/systems/livingWorld/trips.js';
 import { mintResident, travellerRoster } from '../src/systems/livingWorld/census.js';
 import { createRelations, TURN_KINDS, TURNS_MAX } from '../src/systems/livingWorld/relations.js';
@@ -117,8 +118,9 @@ test('LW4 trouble on the road: at most one encounter a trip, its chance the walk
   assert.deepEqual({ ...GROUND_RISK }, { road: 0.6, track: 0.9, open: 1.4 });
   assert.equal(RISK_MAX, 0.55);
   assert.equal(FOES_MAX, 6);
-  assert.deepEqual({ ...HALT_MIN }, { driven: 25, won: 60, fled: 15, fell: 45 });
-  assert.deepEqual({ ...FIGHT_MIN }, { driven: 10, won: 25, fled: 8, fell: 20 });
+  // PIN MOVED (LW12): a band's hold-up, robbed
+  assert.deepEqual({ ...HALT_MIN }, { driven: 25, won: 60, fled: 15, fell: 45, robbed: 30 });
+  assert.deepEqual({ ...FIGHT_MIN }, { driven: 10, won: 25, fled: 8, fell: 20, robbed: 10 });
   assert.ok(strengthOf({ cls: 140, level: 10 }) > strengthOf({ job: 'merchant' }) && strengthOf({ job: 'merchant' }) > strengthOf({ job: 'pedlar' }));
   assert.ok(foeStrength(12) > foeStrength(2));
   const map = livingMap();
@@ -245,14 +247,18 @@ test('LW4 the towns see the trouble: a turned party never visits; one fallen on 
   let shown = 0;
   for (const town of lm.towns) {
     for (const place of lm.world.rosterOf(town)) {
-      const chance = TRIP_CHANCE[place.job];
+      const chance = TRIP_CHANCE[place.job] ?? ROAD_TRIP_CHANCE[place.job];   // PIN MOVED (AUDIT LW-II F2): the road's new traffic too
       if (!(chance > 0)) continue;
       for (let k = 40; k < 140; k++) {
         if (!lm.world.fated(place, k) || !lm.world.holderOf(place, k)) continue;
-        const holder = lm.world.holderOf(place, k);
+        // PIN MOVED (LW13): a company's place rides its first's trip - the fated among them send the company out
+        const lead = leaderOf(place, lm.world.rosterOf(town));
+        const holder = lead ? lm.world.holderOf(lead, k) : lm.world.holderOf(place, k);
+        if (!holder) continue;
         if (lwRng(holder.town, holder.slot, k, 0x74726970)() < chance) continue;   // its chance would have sent it anyway
         const own = ownTrip(holder, town, k, { ...lm.world, fated: () => false }, O());
         const forced = ownTrip(holder, town, k, lm.world, O());
+        if (own?.holy) { assert.deepEqual(forced, own); continue; }   // PIN MOVED (AUDIT LW-II F7): a holy day's cycle goes on its own draw, whatever the cycle's chance said
         assert.equal(own, null, 'its own chance said stay');
         assert.ok(forced, `${holder.id}@${k}: the road keeps its appointment all the same`);
         assert.equal(lm.world.holderOf(place, k + 1), null, 'and the place stands empty after');
@@ -296,7 +302,7 @@ test('LW4 the towns see the trouble: a turned party never visits; one fallen on 
 test('LW4 what the town says: its own parties\' troubles, known from when they were home (none home: when they were due), for NEWS_DAYS, newest first - the fallen first named; a town meeting tells one NEWS_SHARE of the time, the news\'s own script by its end with `{who}`, `{foe}`, `{place}` filled; never on the road; a foe\'s word, many or one (mutants: the knowing, the days, the share, the tokens, the road, the plurals)', () => {
   assert.equal(NEWS_DAYS, 3);
   assert.equal(NEWS_SHARE, 0.4);
-  assert.deepEqual(Object.keys(ROAD_NEWS), ['driven', 'won', 'fled', 'fell']);
+  assert.deepEqual(Object.keys(ROAD_NEWS), ['driven', 'won', 'fled', 'fell', 'robbed']);   // PIN MOVED (LW12): a band's hold-up
   const base = { leader: { name: 'Ada Lark' }, to: { name: 'Far' }, party: [] };
   const trips = [
     { ...base, id: 'a', enc: { kind: 'won', foes: [7] }, fallen: [], backT1: 1000 },
@@ -432,7 +438,11 @@ test('LW4 the streaming host: the trouble\'s world (the climate at the place, th
   assert.match(w, /diced: \(res, trip\) => livingTripPlace\(res, trip\)\.diced,/, 'AUDIT-B1: the trouble\'s shape the dice\'s own');
   assert.match(w, /turnOf: \(id\) => \{ const t = livingRelations\.turns\(\); return t\.won\.has\(id\) \? 'won' : t\.lost\.has\(id\) \? 'lost' : null; \},/);
   assert.match(w, /livingTripWorld\.holderOf = \(res, k\) => livingPlaceOf\(res, k\)\.holder;\n\s*livingTripWorld\.fated = \(res, k\) => livingPlaceOf\(res, k\)\.diced;/, 'AUDIT-B1: a fated trip the dice\'s - a spare never takes it away');
-  assert.match(w, /if \(!f\) \{\n\s*f = troubledTrip\(trip, troubleOf\(trip, livingTroubleWorld\)\);/);
+  // PIN MOVED (AUDIT LW-II E1): the trouble read while a patrol's cover waits on a round's way is never kept - undefined,
+  // a way still asked (trips.js townTrips) - so every reader keeps the trouble read with every round known
+  assert.match(w, /if \(!f\) \{\n\s*const was = _livingCoverPending;\n\s*_livingCoverPending = false;\n\s*const enc = troubleOf\(trip, livingTroubleWorld\);\n\s*const waits = _livingCoverPending;\n\s*_livingCoverPending = was;[^\n]*\n\s*if \(waits\) return undefined;[^\n]*\n\s*f = troubledTrip\(trip, enc\);/);
+  assert.match(w, /const livingCovered = \(c\) => \{ if \(c === undefined\) _livingCoverPending = true; return !!c; \};/);
+  assert.match(w, /covered: \(trip\) => livingCovered\(patrolCover\(trip, livingTripWorld, /);
   assert.match(w, /const holder = pl\.vacant \? null : pl\.holder == null \? res\n\s*: \(town \? mintResident\(town, res\.roll \?\? 't', res\.slot, res\.job, \{ gen: pl\.holder, home: res\.home, work: res\.work, faction: res\.faction \}\) : res\);/, 'LW7: a townsperson\'s newcomer the census\'s own mint too');
   assert.match(w, /_livingPlaces\.clear\(\); _livingFates\.clear\(\); _livingTripMemo\.clear\(\);/, 'a turn of fate, or a load: the books made again');
   assert.match(w, /livingTurnsFresh\(\);   \/\/ LW4: a turn of fate made, or a save loaded/);
@@ -440,7 +450,7 @@ test('LW4 the streaming host: the trouble\'s world (the climate at the place, th
   assert.match(w, /if \(w\.length\) away\.set\(h\.id, w\);/);
   assert.match(w, /return \{ away, visitors, holders, news, places \};/);   // LW-TALK: PIN MOVED - the towns of its road
   assert.match(w, /foeName: livingFoeWord,/);
-  assert.match(rd('src/ui/travelViewHud.js'), /look === 'wayfarer' \? \(\/\\bfight\\b\/\.test\(m\.kind \?\? ''\) \? C\.band : C\.wayfarer\)/);
+  assert.match(rd('src/ui/travelViewHud.js'), /look === 'wayfarer' \? \(\/\\b\(fight\|hideout\)\\b\/\.test\(m\.kind \?\? ''\) \? C\.band : C\.wayfarer\)/);   // PIN MOVED (LW12): a rumoured hideout in the bands' red too
   // the pace the trouble reads the lives at is the trips' own
   assert.equal(PERSON_MOVE_SPEED / 0.2, CALENDAR_MPM);
   assert.ok(TRIP_PACE.merchant > 0);

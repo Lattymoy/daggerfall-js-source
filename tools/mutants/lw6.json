@@ -177,8 +177,8 @@
   {
     "name": "LW6-meet-a-peers",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "        if (!companies.has(trip.id) && !ended.has(trip.id) && deps.owner() && members.some((m) => m.cls != null)) meet(trip, members);",
-    "new": "        if (!companies.has(trip.id) && !ended.has(trip.id) && members.some((m) => m.cls != null)) meet(trip, members);",
+    "old": "        if (companies.has(trip.id) || ended.has(trip.id) || !deps.owner() || !members.some((m) => m.cls != null)) continue;",
+    "new": "        if (companies.has(trip.id) || ended.has(trip.id) || !members.some((m) => m.cls != null)) continue;",
     "tests": [
       "test/lw6_deep.test.js"
     ]
@@ -195,8 +195,8 @@
   {
     "name": "LW6-unfollowing",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "        if (rec.ai) rec.ai.follow = { feet: () => deps.leader()?.feet ?? null, stop: DIVER_HEEL_M + i * DIVER_HEEL_STEP_M };",
-    "new": "        void DIVER_HEEL_STEP_M;",
+    "old": "        if (rec.ai && !at) rec.ai.follow = heelOf(i);",
+    "new": "        void heelOf;",
     "tests": [
       "test/lw6_deep.test.js"
     ]
@@ -222,8 +222,8 @@
   {
     "name": "LW6-spared-unturned",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "            if (fated) turn('spared', deps.turnKeyOf(m, c.trip));",
-    "new": "            void fated;",
+    "old": "      if (fated) turn('spared', deps.turnKeyOf(m, c.trip));",
+    "new": "      void fated;",
     "tests": [
       "test/lw6_deep.test.js"
     ]
@@ -231,8 +231,8 @@
   {
     "name": "LW6-regard-flat",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "            rel?.note(m.id, fated ? 'saved' : 'helped', deps.day());",
-    "new": "            rel?.note(m.id, 'helped', deps.day());",
+    "old": "      rel?.note(m.id, fated ? 'saved' : 'helped', deps.day());",
+    "new": "      rel?.note(m.id, 'helped', deps.day());",
     "tests": [
       "test/lw6_deep.test.js"
     ]
@@ -240,8 +240,8 @@
   {
     "name": "LW6-fallen-thanked",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "            if (c.fell.has(mid) || rec.dead) continue;",
-    "new": "            if (false) continue;",
+    "old": "      if (c.fell.has(mid) || rec.dead) continue;\n      const m = rec.living.res;",
+    "new": "      if (false) continue;\n      const m = rec.living.res;",
     "tests": [
       "test/lw6_deep.test.js"
     ]
@@ -276,8 +276,8 @@
   {
     "name": "LW6-host-divers-unmet",
     "file": "src/scenes/world.js",
-    "old": "      livingDiversStep(now);   // LW6: underground, the companies diving here met",
-    "new": "      // LW6: underground, the companies diving here met",
+    "old": "      try { livingDiversStep(now); }",
+    "new": "      try { /* LW6: underground, the companies diving here met */ }",
     "tests": [
       "test/lw6_deep.test.js"
     ]

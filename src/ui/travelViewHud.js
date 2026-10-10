@@ -840,6 +840,8 @@ export function strangerHelm(g, x, y) {
   g.fillRect(x - 4, y - 6, 2.5, 1);       // the crown's light
   g.fillStyle = fill;
 }
+/** LW12: a rumoured hideout's ring (px). */
+export const TV_HIDEOUT_R = 11;
 /** YARDS-FOUND: THE YARDS' MARK, by the emblem each yard's signboard paints (world/merchantYardArt.js) - the Wagon
  *  Yard's wheel (the carriage towns' own, a little smaller: OW-HUBS' wheelPath), the Stable's horseshoe with its opening
  *  up for luck and its nail holes - in `color` on the marks' black edge, about (x, y). */
@@ -1141,7 +1143,7 @@ function drawMarks(marks, vw, vh, dpr, feet = null) {
   for (const q of placed) {
     const { m, held, x, y, look } = q;
     g.globalAlpha = q.fade ? TV_UNDER_HUD_ALPHA : 1;   // OW-EDGES: faint where it would lie over the compass or the hotbar
-    const color = look === 'gather' ? (m.color ?? C.brass) : look === 'party' ? C.party : look === 'traveller' ? C.traveller : look === 'lair' ? C.lair : look === 'band' ? C.band : look === 'raider' ? C.raider : look === 'stranger' ? C.stranger : look === 'camp' ? C.camp : look === 'bounty' ? C.bounty : look === 'waypoint' ? waypointCss(m.color) : look === 'wayfarer' ? (/\bfight\b/.test(m.kind ?? '') ? C.band : C.wayfarer) : C.brass;   // OWS3: a raider in the cinnabar; OW6: a camp in the ember; LW3: a party on the road in its dust (LW4: beset, in the bands' red)
+    const color = look === 'gather' ? (m.color ?? C.brass) : look === 'party' ? C.party : look === 'traveller' ? C.traveller : look === 'lair' ? C.lair : look === 'band' ? C.band : look === 'raider' ? C.raider : look === 'stranger' ? C.stranger : look === 'camp' ? C.camp : look === 'bounty' ? C.bounty : look === 'waypoint' ? waypointCss(m.color) : look === 'wayfarer' ? (/\b(fight|hideout)\b/.test(m.kind ?? '') ? C.band : C.wayfarer) : C.brass;   // OWS3: a raider in the cinnabar; OW6: a camp in the ember; LW3: a party on the road in its dust (LW4: beset, in the bands' red)
     g.fillStyle = color; g.strokeStyle = '#000'; g.lineWidth = 1;
     if (held) {   // the arrow, turned the way it lies (0 up, clockwise)
       g.save(); g.translate(x, y); g.rotate((held.angle * Math.PI) / 180);
@@ -1171,9 +1173,15 @@ function drawMarks(marks, vw, vh, dpr, feet = null) {
       wheelPath(g, x, y, TV_WHEEL_R);
       g.lineWidth = 3; g.strokeStyle = '#000'; g.stroke();
       g.lineWidth = 1.5; g.strokeStyle = C.brass; g.stroke();
+    } else if (look === 'wayfarer' && /\bhideout\b/.test(m.kind ?? '')) {   // LW12: a band's rumoured hideout - a ring, its area, never a point
+      g.beginPath(); g.arc(x, y, TV_HIDEOUT_R, 0, Math.PI * 2); g.lineWidth = 4; g.strokeStyle = '#000'; g.stroke();
+      g.lineWidth = 2; g.strokeStyle = color; g.setLineDash?.([4, 3]); g.stroke(); g.setLineDash?.([]);
     } else if (look === 'wayfarer') {   // LW3: a party on the road - a pack's square, a caravan's the larger
       const r = /\bcaravan\b/.test(m.kind ?? '') ? 5 : 3.5;
-      g.beginPath(); g.rect(x - r, y - r, r * 2, r * 2); g.fill(); g.stroke();
+      if (/\bcaravan\b/.test(m.kind ?? '')) {   // LW10: a caravan's mark its wagon - the bed and two wheels under it
+        g.beginPath(); g.rect(x - r - 1, y - r + 1, r * 2 + 2, r * 1.4); g.fill(); g.stroke();
+        for (const wx of [x - r * 0.55, x + r * 0.55]) { g.beginPath(); g.arc(wx, y + r * 0.6, r * 0.42, 0, Math.PI * 2); g.fill(); g.stroke(); }
+      } else { g.beginPath(); g.rect(x - r, y - r, r * 2, r * 2); g.fill(); g.stroke(); }
     } else {
       const r = look === 'dest' || /\bcrowd\b/.test(m.kind ?? '') ? 7 : look === 'place' || look === 'far' ? 4 : 5;   // OW-CROWD: a crowd's dot the larger
       g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); g.stroke();

@@ -49,7 +49,8 @@ import { enemyControllerHeight, idleSpriteHeight, flyerStandFeet, centreFromFeet
 import { MobileUnit, MOBILE_DAEDRA_SEDUCER, SeducerTransformBehaviour } from '../characters/mobileUnit.js';   // C11: classic sprite monsters   // A5: the Seducer transform pair + its trigger
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
 import { customModelFor, customAliasFor, emptyModel, isClimateFreeModel, NO_CLIMATE_REMAP } from '../world/customModels.js';   // DS1: models no ARCH3D carries, and GetModelData's false; WD3: a classic model under another id; AUDIT PRE-MERGE 1003 W4: and one that wears its own pictures
-import { RDB_SIDE, MOVE_ACTION_FLAGS, ACTION_FLAGS, TRIGGER_FLAGS } from '../world/rdbLayout.js';   // WAVE D: the move family - an acting FLAT tweens like the model beside it
+import { RDB_SIDE, MOVE_ACTION_FLAGS, ACTION_FLAGS, TRIGGER_FLAGS } from '../world/rdbLayout.js';
+import { stopsOf } from '../systems/livingWorld/deepRoute.js';   // LW14: a company's stops, and what it left   // WAVE D: the move family - an acting FLAT tweens like the model beside it
 import { NPC_CONTEXT } from '../characters/staticNpc.js';   // AUDIT 64 F13: StaticNPC.SetLayoutData(RdbObject) stamps Context.Dungeon
 import { drawnFlat } from '../characters/nudeFlats.js';   // NUDE-FLATS: Show Nudity off draws a nude figure's clothed stand-in
 import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, isActionDoorObject, hasActionCollision, standsOnAction, actionContact, classifyPlacementAction, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT, DOOR_TEXT_HUD_DELAY_S, sharedRecord, validActionRecord } from '../world/actionSystem.js';   // AUDIT WORLD3 B1: the shared half of a record - the picker's latch stays home; AUDIT WORLD34 C2: and the memory's records projected like an act's
@@ -1071,6 +1072,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       dungeonType: dfLocation.mapTableData.dungeonType,
       playerLevel: _superTier ? superFoeLevel(effectiveLevel(playerEntity)) : effectiveLevel(playerEntity),   // SOFTCAP2: a mentor's dungeon draws the GROUP's monsters. ChooseRandomEnemyType bands on the LIVE level (wired audit 2026-08-16; was stuck at the default 1); SD4a: a Super dungeon's at the top band
     });
+  // LW14 (bible/06-Systems/Living-World-II.md "LW14"): THE DIVE'S STOPS - this dungeon's random foe and treasure markers
+  // in the order a company works them (systems/livingWorld/deepRoute.js), and those a dive of the living world left
+  // within DIVE_CLEAR_MIN (the host's word, `opts.deepCleared` - every reader's the same): their foes built dead and
+  // emptied, their piles built empty
+  const _deepStops = stopsOf(dungeon.blocks, RDB_SIDE, dungeon.startMarker ?? null);
+  const _deepCleared = opts.deepCleared?.(dfLocation, _deepStops, dungeon.startMarker ?? null) ?? new Set();
+  // AUDIT LW-II D3: a foe's LoadID is its RDB block's (blockData.Position + the object's), so two placed copies of one block
+  // share every LoadID - the stop is the PLACED block's: keyed by its index and the LoadID together
+  const _deepFoeCleared = new Set(_deepStops.filter((s) => s.kind === 'foe' && _deepCleared.has(s.key)).map((s) => `${s.block}:${s.loadID}`));
   // PVPDUNGEONS: a hall of the zone holds the high tiers alone - every rat, bat and orc of its template's tables swapped
   // for its ring's own (systems/wildDungeons.js wildHallFoes: a pure pick by the hall's id, the same on every client)
   if (dfLocation?.wildRing > 0) {
@@ -3804,7 +3814,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     return items;
   }
   {
-    for (const b of dungeon.blocks) {   // the PLACED blocks (layout + origins) - NOT the BlocksFile reader parameter (the S2 black-screen bug: 't is not iterable' at boot with real data)
+    for (const [bi, b] of dungeon.blocks.entries()) {   // the PLACED blocks (layout + origins) - NOT the BlocksFile reader parameter (the S2 black-screen bug: 't is not iterable' at boot with real data)
       for (const m of b.layout.markers) {
         const isRandom = !m.archive && m.record === RANDOM_TREASURE_MARKER_RECORD;
         const isFixed = m.archive === RANDOM_TREASURE_ARCHIVE;
@@ -3815,7 +3825,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // (rollPileItems), which the hour's respawn rolls again
         const items = rollPileItems();
         if (_wildDungeon) wildPileMore(items, rollPileItems, _wildRing);   // WILD1: the open zone's ring - its share of a second roll
+        const stopKey = isRandom ? `${bi}:${m.position}` : null;   // LW14: a company's stop
+        if (stopKey && _deepCleared.has(stopKey)) items.length = 0;   // LW14: a pile a company passed, picked over
         lootPiles.push({ pos: [m.x + b.originX, m.y, m.z + b.originZ], record, items, isFixed, batch: null });
+        if (stopKey) lootPiles[lootPiles.length - 1].stopKey = stopKey;
       }
     }
   }
@@ -6009,6 +6022,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (canon === _lootOpenKey) { n++; continue; }   // C1: not under an open window
       held.length = 0;
       for (const it of items) held.push(it);
+      if (canon.startsWith('loot:')) { const p = lootPiles[Number(canon.slice(5))]; p.roomWords = (p.roomWords ?? 0) + 1; }   // AUDIT LW-II-2 D5: the room's word counted on the pile - a company minding it (dungeonDivers.js) reads it again, and charges no peer's take to this player
       if (canon.startsWith('loot:')) settleLootFlat(Number(canon.slice(5)));
       n++;
     }
@@ -8977,6 +8991,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // remains laid there as a pile of the dungeon's own (its class's corpse picture), and whether a pile still lies at one
     restingSpots: () => (_restingSpots ??= _layoutEnemies.filter((e) => !e.fixed).map((e) => floorLanding(collider, [e.x, e.y + 0.2, e.z]))),
     layRemains: (items, feet, icon) => droppedLoot.dropPile(items, feet, null, icon),
+    // LW14: the dive's stops (in a company's order), its entry, a stop's treasure pile (the rival's find), and a stop's floor
+    deepStops: () => _deepStops,
+    deepEntry: () => dungeon.startMarker ?? null,
+    stopPile: (key) => lootPiles.find((p) => p.stopKey === key) ?? null,
+    ringAt: (feet) => { audio.play3d(SOUND.Hit2, [feet[0], feet[1] + 1, feet[2]], 0.7, { maxDistance: 70 }); audio.play3d(SOUND.SwingLowPitch, [feet[0], feet[1] + 1, feet[2]], 0.6, { maxDistance: 70 }); },   // LW14: a company's fight heard (the game's own steel)
+    floorAt: (x, y, z) => floorLanding(collider, [x, y + 0.2, z]),
+    clearLine: (a, b) => { const d = [b[0] - a[0], b[1] - a[1], b[2] - a[2]]; const len = Math.hypot(d[0], d[1], d[2]); if (!(len > 0)) return true; const hit = collider.raycast([a[0], a[1] + 1.2, a[2]], [d[0] / len, d[1] / len, d[2] / len], len); return !Number.isFinite(hit) || hit >= len - 0.5; },
     pileNear: (feet, r) => droppedLoot._piles.some((p) => Math.hypot(p.pos[0] - feet[0], p.pos[2] - feet[2]) <= r && Math.abs(p.pos[1] - feet[1]) <= 2),
     questMarkerMover: (markerID) => sceneMarkerMover(dungeon.blocks, actions, markerID),   // TOTEM-CAGE: the acting marker a quest item rides (AddQuestItem's parenting), or null
     replaceFoe: replaceFoeInPool,   // AUDIT 58 (review): the hosted route's enchant mount routes the Wabbajack here by pool membership
@@ -10450,6 +10471,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // AUDIT SD IV (S1): the end stood as the level is built - every door shut, every platform home - before a save's state
   // or the room's (applyWorld, a peer's act) can open one: where the Rift, the Return and the landing back stand is the
   // layout's alone, the same on every client, whatever window held the first frame back
+  // LW14: A COMPANY WAS HERE FIRST - a random foe at a stop a dive passed stands dead where it stood, its pack emptied,
+  // and a pile it passed lies picked over (its flat gone, as one the player emptied). AUDIT LW-II D1: at the build's END -
+  // setFoeDead's corpse reads the relay's clock (`_wallNow`), the batches and the animator, every one declared further
+  // down the build than the stand: the clear where it stood threw in each corpse's mint, and each foe it cleared went
+  // dead with no body (vanished, never respawned)
+  for (const f of foes) {
+    if (!f.entity || f.src?.fixed || !_deepFoeCleared.has(`${f.src?.blockIndex}:${f.src?.loadID}`)) continue;
+    f.entity.items = [];
+    setFoeDead(f, true);
+  }
+  for (const [i, p] of lootPiles.entries()) if (p.stopKey && _deepCleared.has(p.stopKey) && !p.items.length) settleLootFlat(i);
   if (sdEnd && !_sdEndAsked) { _sdEndAsked = true; standSdEnd(); }
   return api;
 }

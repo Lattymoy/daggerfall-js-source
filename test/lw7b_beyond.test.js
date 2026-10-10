@@ -299,11 +299,12 @@ test('LW7b a company\'s regard in the deep: one who counts the player HOSTILE dr
 test('LW7b the streaming host: the stands on the roads (the pool\'s loose transient body, allied for a friend; the fights\' own gate; the hand turns; the fight a foe on the player within FIGHT_NEAR_M by the threat law; the HUD line); a death at the player\'s side; the divers\' foe stand and the slaying (mutants: each seam)', () => {
   const w = rd('src/scenes/world.js');
   assert.match(w, /stands: createRoadStands\(\{\n\s*spawn: \(type, feet, o\) => exteriorFoes\.spawnFoe\(type, feet, \{ allied: o\.allied, yaw: o\.yaw, gender: o\.gender, level: o\.level, loose: true, transient: true \}\),/);
-  assert.match(w, /slay: livingSlay, died: livingDied,\n\s*deadAt: livingDeadAt,[^\n]*\n\s*fighting: \(\) => hccThreats\(\)\.some\(\(q\) => Math\.hypot\(q\[0\] - player\.pos\[0\], q\[2\] - player\.pos\[2\]\) <= FIGHT_NEAR_M\),\n\s*say: \(text\) => townTalk\.say\(text\),/);
+  // PIN MOVED (LW11): the road's slay - the hand's turn and the road's report of it
+  assert.match(w, /slay: livingRoadSlay, died: livingDied,\n\s*deadAt: livingDeadAt,[^\n]*\n\s*fighting: \(\) => hccThreats\(\)\.some\(\(q\) => Math\.hypot\(q\[0\] - player\.pos\[0\], q\[2\] - player\.pos\[2\]\) <= FIGHT_NEAR_M\),\n\s*say: \(text\) => townTalk\.say\(text\),/);
   // PIN MOVED (LEGACY5): a courtship of the fallen's ends first
   assert.match(w, /const livingDied = \(res, t\) => \{ (?:legacyHost\?\.residentDied\(res\.id\); )?livingRelations\.turn\('died', turnKey\(res, livingCycleOf\(res, Math\.floor\(\(t - 240\) \/ 1440\)\)\), \{ t, who: res\.name \}\); \};/);
   assert.match(w, /spawnFoe: \(type, feet, o\) => d\.spawnLooseFoe\(type, feet, \{ yawRad: o\.yaw, allied: false, gender: o\.gender, level: o\.level \}\),/);
-  assert.match(w, /spawnFoe: [^\n]*\n\s*slay: livingSlay,\n\s*died: livingDied,[^\n]*\n\s*\}\), \{ pool: d \}\);/);
+  assert.match(w, /spawnFoe: [^\n]*\n\s*slay: livingSlay,\n\s*died: livingDied,[^\n]*\n(?:\s*(?:\/\/|route:|floor:|clearLine:|ring:|choose:|stopPile:)[^\n]*\n)*\s*\}\), \{ pool: d \}\);/);   // PIN MOVED (LW14): the deep's own deps after
   const lr = rd('src/scenes/livingRoads.js');
   assert.match(lr, /if \(deps\.stands\?\.stood\(m\.res\.id\)\) continue;/);
   assert.match(lr, /deps\.fights\?\.clear\(\); deps\.stands\?\.clear\(\);/);

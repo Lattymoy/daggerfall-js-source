@@ -417,7 +417,7 @@ test('LEGACY-HOME wiring: the town\'s extra people are the host\'s; a family hou
   // PROJECT LEGACY'S MERGE OF WATCH-PROTECTS: one of the line a beast killed is the record's too, and a townsperson's
   // death by another hand ends their courtship as one struck down does
   assert.match(w, /const livingKilled = \(res, t\) => \{[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*if \(isFamilyRes\(res\)\) \{ legacyHost\?\.kinKilled\(res\); return; \}\n\s*legacyHost\?\.residentDied\(res\.id\);[^\n]*\n\s*livingRelations\.turn\('killed', /);
-  assert.match(w, /kin: \(person, talk\) => legacyMeetKin\(person, talk\) \}/);
+  assert.match(w, /kin: \(person, talk\) => legacyMeetKin\(person, talk\),/);   // PIN MOVED (LW11): a caravan's door after the kin's
   // PIN MOVED (LEGACY7 part five): offline the deeds as before; online the realm character's homes (test/legacy7_homes)
   assert.match(w, /heldHouses: \(\) => \(isOnlinePage\(\) \? \(realmSession \? _legacyOnlineHomes : null\) : \(playerEntity\.houses \?\? \[\]\)\.filter\(\(h\) => \(h\?\.buildingKey \| 0\) > 0 && deedStands\(h\)\)\),/);
   assert.match(w, /play: \(\) => legacyHost\?\.switchTo\(kin\.person\.id, \{ here: true \}\)/);

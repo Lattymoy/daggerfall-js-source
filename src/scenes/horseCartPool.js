@@ -1491,7 +1491,10 @@ export function createHorseCartPool({
     },
     get enabled() { return enabled; },
     get runtime() { return runtime; },
-    presentation: { wagonParts, horseArt, hitchOf: () => hitchOf(myKind()), onChanged: () => onChanged?.() },
+    // LW10 (bible/06-Systems/Living-World-II.md): the living world's teams draw with the pool's own pieces - its wagon's
+    // draw and its horse's pose, one home for both (ONE MEMBER, ONE EXPORT; world/roadTeams.js); WAGONS1 x LW10: a
+    // wagon of a KIND - its parts (`partsOf`) and its hitch (`hitchOfKind`) - never the player's driven one (`hitchOf`)
+    presentation: { wagonParts, horseArt, hitchOf: () => hitchOf(myKind()), onChanged: () => onChanged?.(), drawWagon, poseHorse: poseHorseBatch, partsOf, hitchOfKind: hitchOf },
     phys,
     frame, batches, draw, targets, hoverName, tooltipText, activate, offsetAll, destroyAll, clearPeers, shown, groundMoved,
     wireRecord, applyOwner, sweepOwners, applyKept, replaceKept, pruneKept, parkWord, parkedDoor, mySeat, peerSeat, peerRide, mySeatCount, mySeatsKnown,

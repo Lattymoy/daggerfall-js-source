@@ -47,8 +47,8 @@
   {
     "name": "LW7b-draw-reach",
     "file": "src/scenes/roadStands.js",
-    "old": "          if (standing === 'hostile' && distM <= DRAW_M) stand(c, 'foe');",
-    "new": "          if (standing === 'hostile' && distM <= DRAW_M * 2) stand(c, 'foe');",
+    "old": "          if ((standing === 'hostile' || halt) && distM <= DRAW_M) stand(c, 'foe', halt);",
+    "new": "          if ((standing === 'hostile' || halt) && distM <= DRAW_M * 2) stand(c, 'foe', halt);",
     "tests": [
       "test/lw7b_beyond.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "LW7b-draw-enemy",
     "file": "src/scenes/roadStands.js",
-    "old": "          if (standing === 'hostile' && distM <= DRAW_M) stand(c, 'foe');",
-    "new": "          if ((standing === 'hostile' || standing === 'enemy') && distM <= DRAW_M) stand(c, 'foe');",
+    "old": "          if ((standing === 'hostile' || halt) && distM <= DRAW_M) stand(c, 'foe', halt);",
+    "new": "          if ((standing === 'hostile' || standing === 'enemy' || halt) && distM <= DRAW_M) stand(c, 'foe', halt);",
     "tests": [
       "test/lw7b_beyond.test.js"
     ]
@@ -272,7 +272,7 @@
   {
     "name": "LW7b-say",
     "file": "src/scenes/roadStands.js",
-    "old": "    deps.say?.(kind === 'foe' ? `${first} draws on you!` : `${first} comes to your side.`);",
+    "old": "    deps.say?.(halt ? `${first}: \"${halt}\"` : kind === 'foe' ? `${first} draws on you!` : `${first} comes to your side.`);",
     "new": "    deps.say?.('');",
     "tests": [
       "test/lw7b_beyond.test.js"
@@ -308,8 +308,8 @@
   {
     "name": "LW7b-roads-fight",
     "file": "src/scenes/livingRoads.js",
-    "old": "          if ((at.phase !== 'out' && at.phase !== 'back') || at.fight) continue;",
-    "new": "          if (at.phase !== 'out' && at.phase !== 'back') continue;",
+    "old": "          if (d.fight) continue;   // LW4b: at its fight - the fights'",
+    "new": "          // LW4b: at its fight - the fights'",
     "tests": [
       "test/lw7b_beyond.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "LW7b-roads-sky",
     "file": "src/scenes/livingRoads.js",
-    "old": "      if (here && !overworld) {\n        for (const p of parties) {",
-    "new": "      if (here) {\n        for (const p of parties) {",
+    "old": "      if (here && !overworld) {\n        for (const d of drawn) {",
+    "new": "      if (here) {\n        for (const d of drawn) {",
     "tests": [
       "test/lw7b_beyond.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "LW7b-host-died-unwired",
     "file": "src/scenes/world.js",
-    "old": "      slay: livingSlay, died: livingDied,",
-    "new": "      slay: livingSlay, died: () => {},",
+    "old": "      slay: livingRoadSlay, died: livingDied,",
+    "new": "      slay: livingRoadSlay, died: () => {},",
     "tests": [
       "test/lw7b_beyond.test.js"
     ]

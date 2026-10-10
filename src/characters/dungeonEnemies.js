@@ -28,7 +28,7 @@ import { getBool } from '../systems/settings.js';   // AUDIT 28 W3: AlternateRan
 
 const EDITOR_FLATS_ARCHIVE = 199;   // TextureReader.EditorFlatsTextureArchive
 const FIXED_RECORD = 16;
-const RANDOM_RECORD = 15;
+export const RANDOM_RECORD = 15;   // AUDIT LW-II-2 D11: exported, the one home - the living world's dive stops read it (deepRoute.js STOP_FOE)
 const UNDERWATER_TABLE = 19;
 const PASSIVE_ACTION = 99;
 const GENDER_FEMALE_FLAG = 1;

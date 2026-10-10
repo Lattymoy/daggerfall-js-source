@@ -72,7 +72,7 @@
 import { WITNESS_M, GREET_RANGE, GREET_REST_MIN, GREET_S, LINE_RANGE } from '../systems/livingWorld/livingTown.js';
 import { dealCircles, circleLine, exchangeAt, ROUND_S, GATHER_BEAT_S, SLOT_LINES } from '../systems/livingWorld/meetups.js';
 import { PERSON_IDLE_DISTANCE } from '../characters/mobilePerson.js';
-import { roomKindOf } from '../systems/livingWorld/lines.js';
+import { roomKindOf, minstrelLine } from '../systems/livingWorld/lines.js';
 import { lwSeed, textSeed } from '../systems/livingWorld/seed.js';
 import { townClassOf, stillFlatOf } from '../systems/livingWorld/looks.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
@@ -707,6 +707,13 @@ export function createLivingIndoors(deps) {
           const seat = line ? heard(line.who.id) : null;
           if (line && seat) out.push({ person: seat.person, text: line.text, kind: /** @type {'talk'} */ ('talk') });
         }
+      }
+      // LW9: A MINSTREL PLAYS the room - one at no table's talk, standing, sings their song over the room
+      for (const [id, st] of stood) {
+        if (st.res.job !== 'minstrel' || inCircle.has(id) || st.walk || st.bed >= 0) continue;
+        const text = minstrelLine(st.res, t, b.town.lineCtx?.(t) ?? {});
+        const seat = text ? heard(id) : null;
+        if (text && seat) out.push({ person: seat.person, text, kind: /** @type {'talk'} */ ('talk') });
       }
       for (const [id, w] of [...words]) {
         if (!(w.until > realNow)) { words.delete(id); continue; }

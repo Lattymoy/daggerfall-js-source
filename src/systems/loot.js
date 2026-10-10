@@ -35,7 +35,7 @@ import { validItemField, validItemFields, itemFieldsOfKind, ITEM_STR_MAX } from 
 import { validSetMarks } from './aetheric.js';   // AUDIT SET D6: the wire's cross-checks of a sigil and an Aetheric piece
 import { validGildedMarks } from './gilded.js';   // GILDED1: and a Gilded piece's - its record's exactly
 import { validImprint, validCurse, validSocket } from './lootRarity.js';   // LOOT10: and of a Rare's imprint; LOOT16: and of a curse; LOOT20: and of a socket
-import { createRandomBook, BOOK_TEMPLATE } from './books.js';   // IM1: CreateRandomBook whole (A2: + its book-file price)
+import { createRandomBook, BOOK_TEMPLATE, bookValue } from './books.js';   // IM1: CreateRandomBook whole (A2: + its book-file price); AUDIT LW-II-2 S9: the wire's floor of a book
 import { potionRecipeByKey, POTION_DEFAULT_TEXTURE_RECORD } from './potions.js';   // F103: PotionRecipeKey's price side effect; AUDIT 63 F20: and its texture-record half
 import { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS, DROP_ICON_ARCHIVES, DROP_ICON_IDXS } from './lootDataTables.js';   // G5: DaggerfallLootDataTables.cs, its own file again
 import { themedIngredientPool } from './lootThemes.js';   // MOD: a monster's CreatureIngredients roll draws from ITS OWN curated subset, not the full mismatched pool
@@ -608,9 +608,9 @@ function wireLootItem(v) {
   // reads `value`, so a peer minted a Daedric dai-katana at `value: 0` onto a shop's shelf and every player in the
   // Bay could buy it for 2 gold, and the room remembered it for thirty days. The value is floored at what the port
   // itself would mint for the template and material (itemBaseValue - ItemBuilder's own arithmetic); an honest value
-  // above it (an enchantment's worth, a book's price) stands. A forged item still lands, at its true price: that is
+  // above it (an enchantment's worth) stands. A forged item still lands, at its true price: that is
   // a peer selling a conjured thing, which the WORLD4 law already accepts for a chest, and is recorded.
-  out.value = Math.max(Number.isFinite(out.value) ? out.value : 0, itemBaseValue(out));
+  out.value = Math.max(Number.isFinite(out.value) ? out.value : 0, wireFloorOf(out));
   // AUDIT WORLD6b-iii(c) B2/C1: a stack is a whole number in [1, LOOT_STACK_MAX] or absent - not an item otherwise
   if (out.stackCount !== undefined && (!Number.isInteger(out.stackCount) || out.stackCount < 1 || out.stackCount > LOOT_STACK_MAX)) return null;
   // AUDIT WORLD6b-iii(c) A6/B4: the marks that mean "worn by me" and "bound to my quest" are the RECEIVER's, never a
@@ -707,6 +707,17 @@ export const POTION_TEMPLATE_INDEX = GROUP_TEMPLATE_INDICES.UselessItems1[1];
  *  A key no recipe answers leaves the template value standing, as the
  *  setter's own null guard does. */
 const potionValue = (recipeKey, item) => potionRecipeByKey(recipeKey)?.price ?? itemBaseValue(item);
+/** AUDIT LW-II-2 S9: THE WIRE'S FLOOR IS WHAT THE PORT MINTS THE PIECE AT - a book at its file's price (books.js
+ *  `bookValue`, CreateBook's; the template's basePrice only where no price is registered), a potion recipe at the
+ *  potion it teaches (CreateRandomRecipe's, `potionValue`), every other piece at itemBaseValue. Floored at the
+ *  template's, a book minted at its file's 300-800 crossed the wire at 2500 (a recipe at its sheet's): bought at a
+ *  counter, set down in a room's shared container and taken up again, it sold back for more than it cost - and a
+ *  patron (LW15) judged it by the same price. @param {any} item */
+const wireFloorOf = (item) => {
+  if (item.group === 'Books' && item.templateIndex === BOOK_TEMPLATE) return bookValue(item.message);
+  if (item.group === 'MiscItems' && item.templateIndex === POTION_RECIPE_TEMPLATE_INDEX && item.potionRecipeKey != null) return potionValue(item.potionRecipeKey, item);
+  return itemBaseValue(item);
+};
 
 /** ItemBuilder.CreatePotion (:752-755) - a bottle carrying a key.
  *

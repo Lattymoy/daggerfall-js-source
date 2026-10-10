@@ -17,7 +17,7 @@ import { createRelations } from '../src/systems/livingWorld/relations.js';
 import { CLASSIC_MINUTES_PER_SECOND } from '../src/systems/worldTick.js';
 import { dealCircles, circleLine, ROUND_S, GATHER_BEAT_S, lineMinutes } from '../src/systems/livingWorld/meetups.js';   // LW-TALK: PIN MOVED - a table's company dealt
 import {
-  ROOM_TALKS, roomKindOf, pickScript, fillLine, TOKEN_FALLBACK, LIVING_GREETINGS,
+  ROOM_TALKS, roomKindOf, pickScript, fillLine, TOKEN_FALLBACK, LIVING_GREETINGS, HEARD_GREETINGS, firstNameOf,   // LW16: a stranger's word of a deed heard
   TOWN_TALKS, JOB_TALKS, WEATHER_TALKS, EVENING_TALKS, NIGHT_TALKS, ROAD_TALKS, CAMP_TALKS, MORNING_TALKS, DAY_TALKS,
 } from '../src/systems/livingWorld/lines.js';
 import { seededRng } from '../src/systems/wind.js';
@@ -270,7 +270,9 @@ test('LW8b the town\'s doors for a room: its talk\'s beat (the street\'s round a
   assert.equal(rel.entries().find((x) => x.id === f.id).seen, day, 'the word said: seen today');
   assert.ok(LIVING_GREETINGS.enemy.map((x) => fillLine(x, { player: 'Mac' })).includes(town.greetingFor(e, t, false)), 'an enemy\'s');
   let spoke = 0, silent = 0;
-  for (let m = 0; m < 400; m++) { const w = town.greetingFor(s, t + m * 11, false); if (w == null) silent++; else { spoke++; assert.ok(LIVING_GREETINGS.stranger.map((x) => fillLine(x, { player: 'Mac' })).includes(w)); } }
+  // PIN MOVED (LW16): a stranger who has heard of the deed (the one struck down here, seen) speaks of it now and then
+  const strangerWords = [...LIVING_GREETINGS.stranger, ...HEARD_GREETINGS.slain].map((x) => fillLine(x, { player: 'Mac', who: firstNameOf(victim.name) }));
+  for (let m = 0; m < 400; m++) { const w = town.greetingFor(s, t + m * 11, false); if (w == null) silent++; else { spoke++; assert.ok(strangerWords.includes(w)); } }
   assert.ok(spoke > 50 && silent > spoke, `a stranger now and then (${spoke} of 400)`);
   for (let m = 0; m < 40; m++) assert.ok(town.greetingFor(s, t + m * 11, true) != null, 'always to one stopped before them');
 });

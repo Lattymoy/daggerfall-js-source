@@ -84,6 +84,8 @@ export function youSeeEnemyText(name) {
  * @param deps.nothingText    GetRandomText(8999)
  * @param deps.openCompanion  COMPANION-KIT: a companion of MINE (crewAshore.js - `companion`, a shipmate, never another
  *   player's `peer:` one) activated in any mode but Steal opens his pack (the host's window); none, DFU's line as ever
+ * @param deps.openLiving     LW14: one of a living world's company beside the player (scenes/dungeonDivers.js - `living`,
+ *   a shipmate) activated in any mode but Steal asks what the player would (the company's door); none, the line
  * @returns true when the activation was CONSUMED (DFU's `break` out of
  *   ActivateMobileEnemy - the enemy was the ray's hit either way)
  */
@@ -99,6 +101,7 @@ export function activateMobileEnemy(foe, distance, mode, player, {
   midScreen = setMidScreenText,
   openCompanion = null,
   openFate = null,   // REVENANT-FATE: (foe) => the yielded revenant's choice (the host's loot-menu door)
+  openLiving = null,   // LW14: (foe) => a company's choices (the living world's door), whether one was opened
 } = {}) {
   if (!foe || foe.dead) return false;
   // REVENANT-FATE (2026-10-02, Mac: "Players should have the option to kill or spare"; "the choice popup should reuse
@@ -118,6 +121,13 @@ export function activateMobileEnemy(foe, distance, mode, player, {
     // open at TreasureActivationDistance and refuse past it with the HUD's one refusal (ActivateLootContainer :868-873)
     if (distance > TREASURE_ACTIVATION_DISTANCE) { midScreen?.(TOO_FAR_AWAY_TEXT); return true; }
     if (openCompanion(foe)) return true;
+  }
+  // LW14: one of a company of the living world beside the player - its door (join us, lead on, part ways)
+  // AUDIT LW-II D11: at the treasure's reach, as his pack's (the HUD's one refusal past it), and never in Info ("You see")
+  if (mode !== 'steal' && mode !== 'info' && openLiving && foe.living?.res && foe.shipmate === true) {
+    const far = distance > TREASURE_ACTIVATION_DISTANCE;
+    if (far) { midScreen?.(TOO_FAR_AWAY_TEXT); return true; }
+    if (openLiving(foe)) return true;
   }
   if (mode !== 'steal') {
     // :814-826 - Info, Grab and Talk all pop the one line, with no

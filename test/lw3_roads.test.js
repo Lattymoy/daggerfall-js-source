@@ -13,7 +13,7 @@ import {
   TRIP_RANGE_PX, TRIP_PACE, STAY_DAYS, HIRE_MAX, TRIP_REACH_PX, CALENDAR_MPM,
 } from '../src/systems/livingWorld/trips.js';
 import { createWayBook, WAYS_PER_FRAME, WAYS_MS_PER_FRAME } from '../src/systems/livingWorld/ways.js';
-import { travellerRoster, travellerCounts } from '../src/systems/livingWorld/census.js';
+import { travellerRoster, travellerCounts, ROAD_JOBS } from '../src/systems/livingWorld/census.js';
 import { DAY_MIN, DAY_START_MIN } from '../src/systems/livingWorld/dayPlan.js';
 import { LivingTown } from '../src/systems/livingWorld/livingTown.js';
 import { ResidentWalker } from '../src/characters/residentWalker.js';
@@ -64,6 +64,7 @@ test('LW3 a traveller\'s trip: each cycle (its length the job\'s, scaled by the 
   let made = 0, none = 0;
   for (const home of towns.slice(20, 50)) {
     for (const res of world.rosterOf(home)) {
+      if (ROAD_JOBS.includes(res.job)) continue;   // LW9: PIN MOVED - the road's new traffic keeps its own tables (lw9_traffic.test.js)
       if (!(TRIP_CHANCE[res.job] > 0)) { assert.equal(ownTrip(res, home, 5, world, O()), null, `${res.job} travels with a merchant, never alone`); continue; }
       for (let k = 40; k < 46; k++) {
         const trip = ownTrip(res, home, k, world, O());
@@ -406,7 +407,9 @@ test('LW3 the Overworld knows a party on the road: the `wayfarer` kind is the tr
   assert.equal(TRAVEL_VIEW_MARK_COLORS.wayfarer, '#c9a96e');
   const hud = rd('src/ui/travelViewHud.js');
   assert.match(hud, /if \(k === 'wayfarer'\) return k;/);
-  assert.match(hud, /\} else if \(look === 'wayfarer'\) \{[^\n]*\n\s*const r = \/\\bcaravan\\b\/\.test\(m\.kind \?\? ''\) \? 5 : 3\.5;\n\s*g\.beginPath\(\); g\.rect\(x - r, y - r, r \* 2, r \* 2\); g\.fill\(\); g\.stroke\(\);/);
+  // LW10: PIN MOVED - a caravan's mark is its wagon now (lw10_wagons.test.js); the rest keep the square
+  // AUDIT LW-II F6: the square tied to the wayfarer's own branch again (its caravan's wagon between) - loose, any square drew it
+  assert.match(hud, /\} else if \(look === 'wayfarer'\) \{[^\n]*\n\s*const r = \/\\bcaravan\\b\/\.test\(m\.kind \?\? ''\) \? 5 : 3\.5;\n\s*if \(\/\\bcaravan\\b\/\.test\(m\.kind \?\? ''\)\) \{[^\n]*\n[^\n]*\n[^\n]*\n\s*\} else \{ g\.beginPath\(\); g\.rect\(x - r, y - r, r \* 2, r \* 2\); g\.fill\(\); g\.stroke\(\); \}\n/);
 });
 
 test('LW3 the ways: the living world\'s own book - a pair of towns asked once, the lower map id first and the other way its reverse; a few new pairs a frame; nothing while the roads are not built; the drawn network, whichever it is, and a new network clears the book (mutants: the direction, the budget, the network)', () => {
@@ -451,8 +454,10 @@ test('LW3 the streaming host: the trips\' world is the game\'s own populated row
   assert.match(w, /for \(const l of livingRoads\.speech\(eye\)\) \{/);
   assert.match(w, /for \(const m of livingRoads\.marks\(\)\) if \(markShown\(\{ kind: m\.kind \}\)\) marks\.push\(/);
   const tt = rd('src/scenes/townTalk.js');
-  assert.match(tt, /if \(!r\.success\) \{ livingTalk\?\.caught\?\.\(target\.person\); if \(!target\.person\?\.living\?\.town\?\.roadside\) onCrime\?\.\(\); \}/);
-  assert.match(w, /caught: \(p\) => livingRoads\?\.caught\(p\) \?\? null, roadside: true \};/);
+  assert.match(tt, /if \(!r\.success\) \{ livingTalk\?\.caught\?\.\(target\.person\); if \(!target\.person\?\.living\?\.town\?\.roadside\) onCrime\?\.\(\); else playerEntity\.crimeCommitted = crimeWas; \}/);   // PIN MOVED (AUDIT LW-II-2 C15): on the road the crime flag that stood before the pickpocket is put back (the road's door cleared every crime)
+  // PIN MOVED (LW11): the road's caught hand goes through the caravan's door too (its report), the roads' layer first
+  assert.match(w, /caught: \(p\) => livingRoadCaught\(p\), roadside: true \};/);
+  assert.match(w, /const livingRoadCaught = \(p\) => \{\n\s*const id = livingRoads\?\.caught\(p\) \?\? null;/);
   assert.equal(travellerCounts({ mapId: 1, blocks: 1 }).pedlar, 1, 'every town its pedlar');
   assert.deepEqual({ ...TRIP_PACE }, { merchant: 0.85, mercenary: 0.85, adventurer: 1.05, courier: 1.3, pilgrim: 0.9, sailor: 1, pedlar: 0.95 });
 });

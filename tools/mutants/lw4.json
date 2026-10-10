@@ -209,8 +209,8 @@
   {
     "name": "LW4-fated-not-forced",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "  if (rng() >= chance && !world.fated?.(res, k)) return null;",
-    "new": "  if (rng() >= chance) return null;",
+    "old": "  const goes = rng() < chance || !!world.fated?.(res, k) ||",
+    "new": "  const goes = rng() < chance || false ||",
     "tests": [
       "test/lw4_trouble.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "LW4-fallen-come-home",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "    out.push({ t0: tr.outT0, t1: fell ? Infinity : tr.backT1, yaw: leavingYaw(tr), armed: res.cls != null, dock: !!tr.sea });",
-    "new": "    out.push({ t0: tr.outT0, t1: tr.backT1, yaw: leavingYaw(tr), armed: res.cls != null, dock: !!tr.sea });",
+    "old": "    out.push({ t0, t1: fell ? Infinity : tr.backT1, yaw: leavingYaw(tr), armed: res.cls != null, dock: !!tr.sea });",
+    "new": "    out.push({ t0, t1: tr.backT1, yaw: leavingYaw(tr), armed: res.cls != null, dock: !!tr.sea });",
     "tests": [
       "test/lw4_trouble.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "LW4-sword-own-cycle",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "  const m = res.job === 'mercenary' ? contractOf(res, roster) : null;",
-    "new": "  const m = null;",
+    "old": "  const m = leaderOf(res, roster);   // LW9: a patrol's and a retainer's too",
+    "new": "  const m = null;   // LW9: a patrol's and a retainer's too",
     "tests": [
       "test/lw4_trouble.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "LW4-sword-sets-out-alone",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "  if (res.job === 'mercenary') {\n    const m = contractOf(res, world.rosterOf(town));",
-    "new": "  if (false) {\n    const m = contractOf(res, world.rosterOf(town));",
+    "old": "  if (res.job === 'mercenary' || leaderOf(res, world.rosterOf(town))) {   // LW9: a patrol's and a retainer's ride with their leader",
+    "new": "  if (false) {   // LW9: a patrol's and a retainer's ride with their leader",
     "tests": [
       "test/lw4_trouble.test.js"
     ]
@@ -381,11 +381,12 @@
   {
     "name": "LW4-news-nameless",
     "file": "src/systems/livingWorld/meetups.js",
-    "old": "    who: told ? firstNameOf(told.item.who) : null,",
+    "old": "    who: told ? (told.item.kind === 'routed' ? told.item.who : firstNameOf(told.item.who)) : null,",
     "new": "    who: null,",
     "tests": [
       "test/lw4_trouble.test.js"
-    ]
+    ],
+    "note": "AUDIT LW-II (re-aimed by content): a band named whole beside it."
   },
   {
     "name": "LW4-plural-y",
@@ -408,8 +409,8 @@
   {
     "name": "LW4-turns-unsaved",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "      return { v: 1, people, ...t };",
-    "new": "      return { v: 1, people };",
+    "old": "      return { v: 1, people, ...t, ...(Object.keys(roadOut).length ? { road: roadOut } : {}) };",
+    "new": "      return { v: 1, people, ...(Object.keys(roadOut).length ? { road: roadOut } : {}) };",
     "tests": [
       "test/lw4_trouble.test.js"
     ]
@@ -562,7 +563,7 @@
   {
     "name": "LW4-hud-fight-unred",
     "file": "src/ui/travelViewHud.js",
-    "old": "look === 'wayfarer' ? (/\\bfight\\b/.test(m.kind ?? '') ? C.band : C.wayfarer)",
+    "old": "look === 'wayfarer' ? (/\\b(fight|hideout)\\b/.test(m.kind ?? '') ? C.band : C.wayfarer)",
     "new": "look === 'wayfarer' ? C.wayfarer",
     "tests": [
       "test/lw4_trouble.test.js"

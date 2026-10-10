@@ -110,8 +110,8 @@
   {
     "name": "LW7-tone-shared",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "      const tone = kind === 'polite' ? 'polite' : kind === 'insulted' ? 'blunt' : null;",
-    "new": "      const tone = kind === 'polite' ? 'polite' : kind === 'insulted' ? 'polite' : null;",
+    "old": "      const tone = kind === 'polite' ? 'polite' : kind === 'insulted' ? 'blunt' : kind === 'poached' ? 'poach' : null;",
+    "new": "      const tone = kind === 'polite' ? 'polite' : kind === 'insulted' ? 'polite' : kind === 'poached' ? 'poach' : null;",
     "tests": [
       "test/lw7_deeds.test.js"
     ]
@@ -722,11 +722,12 @@
   {
     "name": "LW7-host-helped",
     "file": "src/scenes/world.js",
-    "old": "helped: won.has(n.enc) }));",
-    "new": "helped: false }));",
+    "old": "helped: won.has(n.enc) })) };",
+    "new": "helped: false })) };",
     "tests": [
       "test/lw7_deeds.test.js"
-    ]
+    ],
+    "note": "LW16 (re-aimed by content): the town's news at any minute (livingRoadNewsAt)."
   },
   {
     "name": "LW7-host-crew-holder",
@@ -889,7 +890,7 @@
   {
     "name": "LW7-host-road-slay",
     "file": "src/scenes/world.js",
-    "old": "    slay: livingSlay,   // LW7: a traveller struck down",
+    "old": "    slay: livingRoadSlay,   // LW7: a traveller struck down",
     "new": "    slay: null,   // LW7: a traveller struck down",
     "tests": [
       "test/lw7_deeds.test.js"

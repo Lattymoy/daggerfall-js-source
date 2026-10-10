@@ -745,6 +745,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       if (target.person.pickpocketAttempted) return;
       if (dist > PICKPOCKET_DISTANCE) { setMidScreenText(TOO_FAR_AWAY_TEXT); return; }   // AUDIT 64 F34: :790, the same surface
       target.person.pickpocketAttempted = true;
+      const crimeWas = playerEntity.crimeCommitted;   // AUDIT LW-II-2 C15: the flag standing before the hand went in
       const r = pickpocket(playerEntity, {
         rolls,
         nothingText: () => randomPooledText(FOUND_NOTHING_VALUABLE_TEXT_ID, 'You found nothing valuable.'),   // F046: GetRandomText(8999)
@@ -758,8 +759,10 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       if (r.modal) showOverlay(new ActionTextBox(String(r.message).split('\n')));
       else hud.add(r.message);
       // G1: the caught pickpocket IS the crime - SpawnCityGuards(true). LW3: a resident of the living world remembers the
-      // hand in their purse (their regard of the player); on the road - no town, no watch - that is all that comes of it
-      if (!r.success) { livingTalk?.caught?.(target.person); if (!target.person?.living?.town?.roadside) onCrime?.(); }
+      // hand in their purse (their regard of the player); on the road - no town, no watch - that is all that comes of it:
+      // AUDIT LW-II-2 C15, the flag the pickpocket set (talk.js: no target, a crime) put back as it stood - the road's door
+      // cleared it, and a crime standing before it with it
+      if (!r.success) { livingTalk?.caught?.(target.person); if (!target.person?.living?.town?.roadside) onCrime?.(); else playerEntity.crimeCommitted = crimeWas; }
       return;
     }
     // Info / Grab / Talk all talk to a mobile NPC (DFU verbatim)
@@ -796,6 +799,9 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // LEGACY-HOME: one of the player's own line (Project Legacy's family in the world, systems/legacy/household.js) is
     // met before the words - Play as them, the town's own conversation (`talk`, below), or goodbye: the host's window
     if (livingTalk?.kin?.(target.person, () => converse(target))) return;
+    // LW11: one of the road's people who keeps a counter or offers the road (a caravan's merchant, a pedlar, a carter) asks
+    // what the player wants before the words - Trade, Hire on, Talk, Goodbye: the host's window
+    if (livingTalk?.offers?.(target.person, () => converse(target))) return;
     converse(target);
   }
 

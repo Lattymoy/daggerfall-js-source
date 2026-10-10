@@ -269,12 +269,13 @@ test('LW2 the streaming host: where the row is on, the population block stands a
   assert.match(w, /clock: skyMinutes, rate: livingRate, mpm: PERSON_MOVE_SPEED \/ livingBaseRate\(\),/);
   assert.match(w, /const livingBaseRate = \(\) => \(params\.has\('online'\) \? skyMinutesPerMsAt\(Date\.now\(\) \+ _sharedOffsetMs\) \* 1000 : CLASSIC_MINUTES_PER_SECOND\);/);
   assert.match(w, /const livingRate = \(\) => \(params\.has\('online'\) \? livingBaseRate\(\) : CLASSIC_MINUTES_PER_SECOND \* worldTimeScale\(\)\);/);
-  assert.match(w, /registerModSaveData\(LIVING_WORLD_VENDOR, \{\n\s+newSaveData: \(\) => null,\n\s+getSaveData: \(\) => livingRelations\.snapshot\(\),\n\s+restoreSaveData: \(rec\) => \{ livingRelations = createRelations\(rec\); \},/);
+  assert.match(w, /registerModSaveData\(LIVING_WORLD_VENDOR, \{\n\s+newSaveData: \(\) => null,\n(?:\s+\/\/[^\n]*\n)*\s+getSaveData: \(\) => \{ _caravanHost\?\.flush\(\); return livingRelations\.snapshot\(\); \},\n\s+restoreSaveData: \(rec\) => \{ livingRelations = createRelations\(rec\); \},/);   // PIN MOVED (AUDIT LW-II-2 C3): the caravan host's counters written into the record before its snapshot
   const lines = w.slice(w.indexOf('function navalCrewLines('), w.indexOf('function livingLinePoints('));
   assert.match(lines, /livingLinePoints\(points, w, h, rect, proj, view, eye\);/);
   assert.ok(lines.indexOf('livingLinePoints(') < lines.indexOf('drawCrewLines('), 'merged before the one draw');
   // PIN MOVED (LEGACY-HOME): the doors gained `kin` - one of Project Legacy's line met before the words (test/legacyhome.test.js)
-  assert.match(w, /livingTalk: \{ refuses: \(person\) => person\?\.living\?\.town\?\.refuses\(person\) \?\? null, talked: \(person\) => person\?\.living\?\.town\?\.talked\(person\), caught: \(person\) => person\?\.living\?\.town\?\.caught\?\.\(person\),\n\s*kin: \(person, talk\) => legacyMeetKin\(person, talk\) \},/);
+  // PIN MOVED (LW11): a caravan's door after the kin's
+  assert.match(w, /livingTalk: \{ refuses: \(person\) => person\?\.living\?\.town\?\.refuses\(person\) \?\? null, talked: \(person\) => person\?\.living\?\.town\?\.talked\(person\), caught: \(person\) => person\?\.living\?\.town\?\.caught\?\.\(person\),\n\s*kin: \(person, talk\) => legacyMeetKin\(person, talk\),[^\n]*\n\s*offers: \(person, talk\) => \(livingWorldOn\(\) \? caravanHostOf\(\)\.offers\(person, talk\) \|\| \(_mode\(\) === 'dungeon' && !!livingDivers\?\.offers\(person, talk\)\) : false\) \},/);   // PIN MOVED (AUDIT LW-II-2 D4): a company below answers below alone
   const tt = rd('src/scenes/townTalk.js');
   const act = tt.slice(tt.indexOf('function activate(target, dist)'));
   assert.ok(act.indexOf('livingTalk?.refuses?.(target.person)') > 0 && act.indexOf('livingTalk?.refuses?.(target.person)') < act.indexOf('const eng0 = engine();'), 'the refusal before the conversation');

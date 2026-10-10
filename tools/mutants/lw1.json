@@ -453,8 +453,8 @@
   {
     "name": "LW1-token-fallback",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "  return text.replace(/\\{(\\w+)\\}/g, (_, k) => (ctx[k] ? String(ctx[k]) : TOKEN_FALLBACK[/** @type {keyof typeof TOKEN_FALLBACK} */ (k)] ?? ''));",
-    "new": "  return text.replace(/\\{(\\w+)\\}/g, (_, k) => (ctx[k] ? String(ctx[k]) : ''));",
+    "old": "const s = ctx[k] ? String(ctx[k]) : TOKEN_FALLBACK[/** @type {keyof typeof TOKEN_FALLBACK} */ (k)] ?? '';",
+    "new": "const s = ctx[k] ? String(ctx[k]) : '';",
     "tests": [
       "test/lw1_livingWorld.test.js"
     ]

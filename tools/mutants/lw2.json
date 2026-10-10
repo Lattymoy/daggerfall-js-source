@@ -259,8 +259,8 @@
   {
     "name": "LW2-talk-doors-unwired",
     "file": "src/scenes/world.js",
-    "old": "    livingTalk: { refuses: (person) => person?.living?.town?.refuses(person) ?? null, talked: (person) => person?.living?.town?.talked(person), caught: (person) => person?.living?.town?.caught?.(person),\n      kin: (person, talk) => legacyMeetKin(person, talk) },   // LEGACY-HOME: one of the player's line, met",
-    "new": "    livingTalk: null,",
+    "old": "    livingTalk: { refuses: (person) => person?.living?.town?.refuses(person) ?? null, talked: (person) => person?.living?.town?.talked(person), caught: (person) => person?.living?.town?.caught?.(person),\n      kin: (person, talk) => legacyMeetKin(person, talk),   // LEGACY-HOME: one of the player's line, met",
+    "new": "    livingTalk: { kin: (person, talk) => legacyMeetKin(person, talk),",
     "tests": [
       "test/lw2_livingTown.test.js"
     ]
@@ -268,7 +268,7 @@
   {
     "name": "LW2-regards-unsaved",
     "file": "src/scenes/world.js",
-    "old": "    getSaveData: () => livingRelations.snapshot(),",
+    "old": "    getSaveData: () => { _caravanHost?.flush(); return livingRelations.snapshot(); },",
     "new": "    getSaveData: () => null,",
     "tests": [
       "test/lw2_livingTown.test.js"

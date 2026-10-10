@@ -365,9 +365,29 @@ function render() {
         const top = el('div', 'cr-head');
         top.append(el('span', 'cr-when', p.name));
         if (p.town) top.append(el('span', 'sb-chip', p.town));
+        if (p.company) top.append(el('span', 'sb-chip', p.company));   // LW13: the company they walk with
         card.append(top);
         const words = el('div', 'cr-prose');
         words.append(el('p', null, p.words ?? ''));
+        card.append(words);
+        box.append(card);
+      }
+      detail.append(box);
+    }
+    // LW13: the companies the known walk with - each its town and the members the character knows
+    if (page.companies?.length) {
+      const line = el('div', 'sb-frame');
+      line.append(el('span', 'sb-chip', `Companies \u00b7 ${page.companies.length}`));
+      detail.append(line);
+      const box = el('div', 'cr-entries');
+      for (const c of page.companies) {
+        const card = el('div', 'cr-entry');
+        const top = el('div', 'cr-head');
+        top.append(el('span', 'cr-when', c.name));
+        if (c.town) top.append(el('span', 'sb-chip', c.town));
+        card.append(top);
+        const words = el('div', 'cr-prose');
+        words.append(el('p', null, `You know ${c.members.join(', ')}.`));
         card.append(words);
         box.append(card);
       }

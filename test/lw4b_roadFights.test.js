@@ -162,5 +162,5 @@ test('LW4b the end is what happens: an ally cut down FELL; every foe dead, the f
   assert.match(w, /owner: \(feet\) => amGroupRollOwner\(online\?\.id \?\? null, player\.feetAt\(\), \(peersNear\(\) \?\? \[\]\)\.filter\(\(p\) => Math\.hypot\(p\.feet\[0\] - feet\[0\], p\.feet\[2\] - feet\[2\]\) <= LIVE_M\), Infinity\),/, 'AUDIT-B5: the fight\'s own election');
   assert.match(w, /ready: \(\) => !!walkMode && !!playerSpawned && !_loading && !modes\?\.transitioning && _mode\(\) === 'exterior' && !playerAfloat\(\),/);
   assert.match(w, /return turnKey\(place, placeCycle\(place, roster, Math\.floor\(trip\.outT0 \/ 1440\), livingScale\(\)\)\);/);
-  assert.match(rd('src/scenes/livingRoads.js'), /clear\(\) \{ deps\.sprites\.clear\(\); deps\.fights\?\.clear\(\);/);
+  assert.match(rd('src/scenes/livingRoads.js'), /clear\(\) \{ deps\.sprites\.clear\(\); deps\.teams\?\.clear\(\); deps\.fights\?\.clear\(\);/);   // LW10: PIN MOVED - the teams cleared beside
 });

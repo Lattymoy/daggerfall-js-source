@@ -573,9 +573,12 @@ function castIdentifySpell() {
 function confirmTrade(price) {
   const isSelling = selling();
   const proceeds = isSelling ? sellProceeds(price, deps.weight?.() ?? {}) : null;
-  deps.commit?.(mode, [...stagedForCost()], price, proceeds);
+  const refused = deps.commit?.(mode, [...stagedForCost()], price, proceeds) === false;
   if (inBuy()) basket.length = 0;
   else if (isSelling) staged.length = 0;
+  // AUDIT LW-II-2 C10: a deal the counter refused (LW11's road counter, its purse spent - the host put the goods back in
+  // the pack) is none: the staging cleared, and no coin clinks nor letter of credit is told for it
+  if (refused) { render(); return; }
   audio.playOneShot(proceeds?.kind === 'letterOfCredit' ? SOUND.ParchmentScratching : SOUND.GoldPieces, 1);
   if (proceeds?.kind === 'letterOfCredit') {
     box = { rows: [{ text: 'You are paid with a letter of credit.', center: true }], buttons: null };

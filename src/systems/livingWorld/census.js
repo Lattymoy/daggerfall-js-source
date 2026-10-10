@@ -38,9 +38,17 @@ export const JOBS = Object.freeze({
   labourer: 'labourer', farmer: 'farmer', fisher: 'fisher', crafter: 'crafter', homemaker: 'homemaker', beggar: 'beggar',
   merchant: 'merchant', mercenary: 'mercenary', adventurer: 'adventurer', sailor: 'sailor', pilgrim: 'pilgrim',
   courier: 'courier', pedlar: 'pedlar',
+  // LW9 (bible/06-Systems/Living-World-II.md): the road's new traffic
+  carter: 'carter', hunter: 'hunter', patrol: 'patrol', noble: 'noble', retainer: 'retainer', minstrel: 'minstrel',
 });
 /** The jobs that travel (trips.js): the traveller roster's own. */
 export const TRAVELLER_JOBS = Object.freeze(['merchant', 'mercenary', 'adventurer', 'sailor', 'pilgrim', 'courier', 'pedlar']);
+/** LW9: THE ROAD'S NEW TRAFFIC, APPENDED - a traveller's id is `L<mapId>.t<slot>`, dealt in the jobs' order, so a job
+ *  anywhere but after every one before it would re-key the regard and the turns of every traveller after it (Living
+ *  World II decision 9): these are dealt after TRAVELLER_JOBS' own, in this order. A farm's or a village's CARTER takes
+ *  its produce to market; a HUNTER goes into the wild; a city's PATROL keeps the region's roads; its NOBLE goes in
+ *  procession with their RETAINERS; its MINSTREL plays the taverns of the towns about. */
+export const ROAD_JOBS = Object.freeze(['carter', 'hunter', 'patrol', 'noble', 'retainer', 'minstrel']);
 
 /** The shops a keeper keeps, and the trade it makes them. */
 const SHOP_JOB = Object.freeze({
@@ -59,11 +67,15 @@ export const ADVENTURER_CLASSES = Object.freeze([128, 129, 130, 131, 132, 133, 1
 export const MERCENARY_CLASSES = Object.freeze([MOBILE_TYPES.Warrior, MOBILE_TYPES.Knight, MOBILE_TYPES.Barbarian, MOBILE_TYPES.Archer,
   MOBILE_TYPES.Ranger, MOBILE_TYPES.Spellsword, MOBILE_TYPES.Battlemage]);
 export const COURIER_CLASSES = Object.freeze([MOBILE_TYPES.Acrobat, MOBILE_TYPES.Ranger, MOBILE_TYPES.Rogue]);
+/** LW9: a hunter goes out with a bow; a noble's retainers are the fighting gentry's; a minstrel is a bard. */
+export const HUNTER_CLASSES = Object.freeze([MOBILE_TYPES.Archer, MOBILE_TYPES.Ranger]);
+export const RETAINER_CLASSES = Object.freeze([MOBILE_TYPES.Knight, MOBILE_TYPES.Warrior, MOBILE_TYPES.Archer]);
 
 /**
  * @typedef {{ mapId: number, name?: string, px?: number, py?: number, type?: number, region?: number, people?: number,
- *   blocks: number, port?: boolean }} LwTown - a town as its MAPS row says it: `blocks` its RMB grid's cells, `people`
- *   the climate's (0 Nord, 2 Redguard, 3 Breton), `port` whether ships put in
+ *   blocks: number, port?: boolean, wild?: boolean }} LwTown - a town as its MAPS row says it: `blocks` its RMB grid's
+ *   cells, `people` the climate's (0 Nord, 2 Redguard, 3 Breton), `port` whether ships put in; LW9 `wild` no town - a
+ *   hunter's point in the wild (trips.js wildTrip)
  * @typedef {{ key: number, type: number, quality?: number, factionId?: number }} LwBuilding - a building summary's own
  *   columns (world/buildingSummaries.js: buildingKey, buildingType, quality, factionId)
  * @typedef {{ id: string, town: number, slot: number, roll: 'h'|'t'|'w', name: string, gender: number, sex: 'male'|'female',
@@ -86,7 +98,7 @@ export function residentName(seed, bank, gender) {
 
 /** The tempers by job: [lark, day, owl] weights. */
 const TEMPER_OF = Object.freeze({
-  farmer: [6, 3, 0], fisher: [6, 3, 0], innkeeper: [0, 2, 6], server: [0, 2, 6], guard: [2, 6, 2], beggar: [1, 4, 3],
+  farmer: [6, 3, 0], fisher: [6, 3, 0], carter: [6, 3, 0], hunter: [6, 3, 0], minstrel: [0, 3, 6], innkeeper: [0, 2, 6], server: [0, 2, 6], guard: [2, 6, 2], beggar: [1, 4, 3],
   adventurer: [1, 5, 3], mercenary: [1, 5, 3], sailor: [4, 4, 1], priest: [5, 4, 0],
 });
 const DEFAULT_TEMPER = Object.freeze([2, 7, 1]);
@@ -119,6 +131,10 @@ export function mintResident(town, roll, slot, job, at = {}) {
   if (job === 'adventurer') { cls = pickOf(rng, ADVENTURER_CLASSES); level = 1 + Math.floor(19 * Math.pow(rng(), 1.6)); }
   else if (job === 'mercenary') { cls = pickOf(rng, MERCENARY_CLASSES); level = rollInt(rng, 3, 14); }
   else if (job === 'courier') { cls = pickOf(rng, COURIER_CLASSES); level = rollInt(rng, 2, 8); }
+  else if (job === 'hunter') { cls = pickOf(rng, HUNTER_CLASSES); level = rollInt(rng, 2, 8); }   // LW9
+  else if (job === 'patrol') { cls = MOBILE_TYPES.Knight; level = rollInt(rng, 6, 14); }
+  else if (job === 'retainer') { cls = pickOf(rng, RETAINER_CLASSES); level = rollInt(rng, 4, 12); }
+  else if (job === 'minstrel') { cls = MOBILE_TYPES.Bard; level = rollInt(rng, 2, 8); }
   else if (job === 'guard') level = rollInt(rng, 5, 15);
   return {
     id: `L${town.mapId >>> 0}.${roll === 'h' ? '' : roll}${slot}${gen == null ? '' : `~${gen}`}`,
@@ -148,6 +164,44 @@ export function travellerCounts(town) {
   };
 }
 
+/** LW9: a place's MAPS location type (formats/mapsFile.js LOCATION_TYPES): a city, a hamlet, a village, a farm. */
+const CITY = 0, HAMLET = 1, VILLAGE = 2, FARM = 3;
+/** LW9: a city keeps a patrol, a noble and a minstrel from this many blocks (a palace's city). */
+export const CITY_COURT_BLOCKS = 16;
+/** LW9: how many of each of the road's new travellers a place keeps, by its kind and its size - a farm one carter; a
+ *  hamlet or a village one and one more each four blocks, to three, and a hunter; a city of CITY_COURT_BLOCKS a patrol of
+ *  two (one more each thirty-two blocks, to four), a noble and the noble's two retainers, and a minstrel from nine
+ *  blocks. Never TRAVELLER_JOBS' own (travellerCounts, pinned whole). @param {LwTown} town */
+export function roadCounts(town) {
+  const b = Math.max(1, town.blocks | 0);
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const rural = town.type === HAMLET || town.type === VILLAGE || town.type === FARM;
+  const court = town.type === CITY && b >= CITY_COURT_BLOCKS;
+  return {
+    carter: town.type === FARM ? 1 : rural ? clamp(1 + Math.floor(b / 4), 1, 3) : 0,
+    hunter: rural ? 1 : 0,
+    patrol: court ? clamp(2 + Math.floor(b / 32), 2, 4) : 0,
+    noble: court ? 1 : 0,
+    retainer: court ? 2 : 0,
+    minstrel: town.type === CITY && b >= 9 ? 1 : 0,
+  };
+}
+
+/** LW9: MORE OF THE ROAD'S OWN - the first roster's pedlars, pilgrims and couriers again, dealt AFTER the new traffic
+ *  (every id before them unchanged): a pedlar more for every six blocks from two (to four), a pilgrim more from four
+ *  blocks, a courier more from nine. Never a merchant (the sellswords are dealt to the merchants by their count:
+ *  formCaravans' contract - one more would move every sellsword's contract) nor a sellsword. @param {LwTown} town */
+export function moreCounts(town) {
+  const b = Math.max(1, town.blocks | 0);
+  return {
+    pedlar: b >= 2 ? Math.max(1, Math.min(4, Math.floor(b / 6))) : 0,
+    pilgrim: b >= 4 ? 1 : 0,
+    courier: b >= 9 ? 1 : 0,
+  };
+}
+/** LW9: the order MORE_JOBS are dealt in, after ROAD_JOBS. */
+export const MORE_JOBS = Object.freeze(['pedlar', 'pilgrim', 'courier']);
+
 /** WATCH-DAY: the watch's companies - one to each day of its rotation (dayPlan.js watchDuty: the day's shift, the
  *  evening's, the night's, the day off). */
 export const WATCH_COMPANIES = 4;
@@ -172,6 +226,15 @@ export function travellerRoster(town) {
   let slot = 0;
   for (const job of TRAVELLER_JOBS) {
     for (let i = 0; i < counts[/** @type {keyof ReturnType<typeof travellerCounts>} */ (job)]; i++) out.push(mintResident(town, 't', slot++, job));
+  }
+  // LW9: the road's new traffic after them (ROAD_JOBS - every id before it unchanged)
+  const more = roadCounts(town);
+  for (const job of ROAD_JOBS) {
+    for (let i = 0; i < more[/** @type {keyof ReturnType<typeof roadCounts>} */ (job)]; i++) out.push(mintResident(town, 't', slot++, job));
+  }
+  const again = moreCounts(town);
+  for (const job of MORE_JOBS) {
+    for (let i = 0; i < again[/** @type {keyof ReturnType<typeof moreCounts>} */ (job)]; i++) out.push(mintResident(town, 't', slot++, job));
   }
   return out;
 }

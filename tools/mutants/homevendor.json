@@ -210,8 +210,8 @@
   {
     "name": "HOMEVENDOR-the-sales-unread",
     "file": "src/ui/vendorPage.js",
-    "old": "    const sold = mine.sold ?? [];",
-    "new": "    const sold = [];",
+    "old": "    const sold = [...(mine.sold ?? []), ...(mine.patronSold ?? [])]",
+    "new": "    const sold = [...(mine.patronSold ?? [])]",
     "tests": [
       "test/homevendor_ui.test.js"
     ]

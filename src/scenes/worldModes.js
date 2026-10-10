@@ -184,7 +184,7 @@ import { staticDoorName, npcHoverName, questResourceName, questStandItem, worldT
 import { LOCATION_TYPES, REGION_NAMES } from '../formats/mapsFile.js';   // WORLD-HOVER: .cs:777-782 - a dungeon exit names its town, or the region   // WORLD-HOVER: the texture record is DERIVED at its one reader, off the stored model id
 import { isShop, isRepairShop, stockShopShelf, stockHouseContainer, PRIVATE_PROPERTY_TEXT_ID, privatePropertyRows, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems, stockGuildMagicItems, stockGuildPotions, dayShelf, createStockedDate, needsRestock, stockSearched, restockEndless } from '../systems/shopStock.js';   // X6: the soul-gem shelf; G4: the two guild shelves; A2: the daily restock; ENDLESS-STOCK: the bag and the Campfire never sell out
 import { BAG_WORDS, isBagItem, holdsOtherBag } from '../net/bagLaw.js';   // ONE-BAG: one Materials Bag to a character, on the keyed shelf too
-import { identifySpellPass, identifiedTallyText, NOT_ENOUGH_SPELL_POINTS_TEXT, tradeCost, getTradePrice } from '../systems/tradeModes.js';   // X7: the Identify SPELL's per-item roll; F067: its magicka refusal; FB0929: the keyed rows' prices are the counter's
+import { identifySpellPass, identifiedTallyText, NOT_ENOUGH_SPELL_POINTS_TEXT, tradeCost, getTradePrice, markCounterBought } from '../systems/tradeModes.js';   // X7: the Identify SPELL's per-item roll; F067: its magicka refusal; FB0929: the keyed rows' prices are the counter's; AUDIT LW-II-2 S1: the counter's mark
 import { liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // X10: the Dispel Magic picker
 import { ListPickerWindow, listPickerArtLoaded } from '../ui/listPicker.js';   // X10
 import { chapterRollWindow } from '../ui/chapterRoll.js';   // CHAP5a: the hall's roll, the shelf's first book
@@ -3433,7 +3433,7 @@ export function createWorldModes(host) {
    *  its counter (ui/tradeDoor.js - a transformed lycanthrope). The door
    *  has already said the line; the popup reads this as a dispatch. */
   const DOOR_REFUSED = Object.freeze({ refusedByDoor: true });
-  function openTradeWindow(shelf, b, mode, { guildFactionId = null, reducedRepairCost: repairDiscount = null, identifySpell = null } = {}) {
+  function openTradeWindow(shelf, b, mode, { guildFactionId = null, reducedRepairCost: repairDiscount = null, identifySpell = null } = {}, road = null) {
     // AUDIT 63 F11: CalculateTradePrice's player reads are BOTH live on
     // BOTH branches - FormulaHelper.cs:1993 (selling) and :1999 (buying)
     // take `player.Stats.LivePersonality` (DaggerfallStats.cs:55 ->
@@ -3546,6 +3546,19 @@ export function createWorldModes(host) {
         // AUDIT CHAP4 D3: the counter of a chapter's hall names a seat's title, as the hall's popup does
         return g ? getTitle(membershipOf(seatedBook(activeMemberships(playerEntity), membershipKey(g), host.chapterSeatRank?.(g.factionId) ?? null), g), playerEntity, g) : null;
       },
+      // LW11 (bible/06-Systems/Living-World-II.md): A CARAVAN'S COUNTER ON THE ROAD - the counter's own above, the road's
+      // after it: a sale past its purse refused (the goods back in the pack - the window moved them out at the click), a
+      // deal done its record kept, and a hand caught in its goods the road's (no watch: a report, never the town's crime)
+      ...(road ? {
+        commit: (m, staged, price, proceeds) => {
+          if (road.allow?.(m, staged, price) === false) { if (m === 'Sell' || m === 'SellMagic') (playerEntity.items ??= []).push(...staged); return false; }
+          const r = commitTrade(shelf, m, staged, price, proceeds, identifySpell);
+          road.done?.(m, staged, price);
+          return r;
+        },
+        crimeTheft: () => road.caught?.(),
+        spawnCityGuards: () => {},
+      } : {}),
     });
   }
 
@@ -3555,6 +3568,7 @@ export function createWorldModes(host) {
   function commitTrade(shelf, mode, staged, price, proceeds, identifySpell = null) {
     if (mode === 'Buy') {
       deductGold(playerEntity, price);
+      markCounterBought(staged);   // AUDIT LW-II-2 S1: online, a counter's piece is never a patron's (before a stack's merge takes it)
       for (const it of staged) {
         const i = shelf.items.indexOf(it);
         if (i >= 0) shelf.items.splice(i, 1);
@@ -3688,6 +3702,7 @@ export function createWorldModes(host) {
     if (totalGoldAmount(playerEntity) < price) return null;
     deductGold(playerEntity, price);
     shelf.items.splice(at, 1);
+    markCounterBought([it]);   // AUDIT LW-II-2 S1: the keyed list's purchase marked as the counter's
     playerEntity.items = playerEntity.items || [];
     if (isFurnishing(it)) decorDeliver([it]);   // DECOR2b: the furnisher delivers
     // AUDIT HOLDINGS F8: a ship's deed off the keyed shelf goes to the Fleet's book as the counter's does (she waits at
@@ -3733,6 +3748,7 @@ export function createWorldModes(host) {
     if (Number.isFinite(b?.priceIndex)) return b.priceIndex;   // AUDIT MERCHANT-YARDS Y2: a counter that names its own index (a yard's, systems/merchantYards.js YARD_PRICE_INDEX) is priced at it, both ways
     const adj = regionPriceAdjustment(playerEntity, b?.regionIndex ?? 0);
     const f = mode === 'Buy' || mode === 'Repair' ? host.seatShopFactor?.(b) ?? 1 : 1;
+    if (b?.roadDiscount && mode === 'Buy') return Math.round(adj * f * (1 - b.roadDiscount));   // LW11: a friend's counter on the road
     return f === 1 ? adj : Math.round(adj * f);
   }
   function buyPrice(it) {
@@ -9071,6 +9087,7 @@ export function createWorldModes(host) {
           fallenTarget: (eye, dir, reach) => host.fallenTarget?.(eye, dir, reach) ?? null,   // RESURRECT1: and its fallen bodies, and the door the call leaves through
           raiseFallen: (f) => !!host.raiseFallen?.(f),
           partyRestGate: () => host.partyRestGate?.(),   // PARTY-REST2 (AUDIT DROPS D1): the dungeon's rest asks the party too - ONE copy (main carried two; eslint no-dupe-keys)
+          deepCleared: (loc, stops, entry) => host.deepCleared?.(loc, stops, entry) ?? null,   // LW14: the stops a company of the living world left, the outer host's word
           pointerSurfaceUp: () => !!host.pointerSurfaceUp?.(),   // AUDIT DROPS E1: the plaque comes down under a pointer surface
           // D-ONLINE1: the dungeon death screen's own door - see
           // dungeonContext.js's DeathScreen construction. Delegates to
@@ -9565,6 +9582,7 @@ export function createWorldModes(host) {
         doorBehind: doorDistanceOf(eye, dir, targets, dungeonCtx.collider),   // AUDIT TACT C7: a castle's peaceful guard is no door either
         openCompanion: (rec) => !!host.openCompanionPack?.(rec),   // COMPANION-KIT: my companion's pack, underground
         openFate: (rec) => !!host.openRevenantFate?.(rec),   // REVENANT-FATE: a beaten revenant's choice, underground
+        openLiving: (rec) => !!host.openLivingDiver?.(rec),   // LW14: a company of the living world's door, underground
         // AUDIT 65 HP-2/HP-3: the sinks are the DUNGEON'S, not the
         // building's. DaggerfallUI.MessageBox builds on uiManager's
         // TopWindow (PlayerActivate.cs:1640/:1646 -> DaggerfallUI.cs:1328-1330)
@@ -12367,6 +12385,17 @@ export function createWorldModes(host) {
   registerPresenter({ mount: (win) => showQuestOverlay(win), priority: 10 });
   return {
     get mode() { return mode; },
+    /**
+     * LW11 (bible/06-Systems/Living-World-II.md): A CARAVAN'S COUNTER ON THE ROAD - the trade window on a shelf of the
+     * road's (its `b` the counter's kind, quality, name and region), mounted where the player stands (outdoors the talk's
+     * overlay, never the interior's slot); `allow`/`done`/`caught` the counter's record and the road's crime. Answers
+     * whether it opened (the classic skin's art may still be loading).
+     * @param {{ shelf: { items: any[] }, b: any, allow?: Function, done?: Function, caught?: Function }} o @param {'Buy'|'Sell'} [tradeMode]
+     */
+    openRoadTrade(o, tradeMode = 'Buy') {
+      ensureShopFont();
+      return !!mountServiceWindow(openTradeWindow(o.shelf, o.b, tradeMode, {}, o));
+    },
     get sailingCabin() { return mode === 'interior' && !isCaravanRoom(interiorCabin) ? interiorCabin : null; },
     /** WAGONS1: the caravan's room while the player stands in it. */
     get caravanRoom() { return mode === 'interior' && isCaravanRoom(interiorCabin) ? interiorCabin : null; },

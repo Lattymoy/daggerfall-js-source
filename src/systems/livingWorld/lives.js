@@ -30,6 +30,11 @@ import { lwRoll } from './seed.js';
 /** A slot's chance a cycle of dying on the road, by job (a sailor's is the sea's, LW5) - a town of a dozen travellers
  *  loses one every season or so: a merchant one cycle in about 170, a sellsword one in 100, an adventurer one in 80. */
 export const HAZARD = Object.freeze({ merchant: 0.006, mercenary: 0.01, adventurer: 0.012, pilgrim: 0.006, courier: 0.004, pedlar: 0.004 });
+/** LW9: the road's new traffic's - a carter's day to market the safest, a hunter's wild the worst of them, a patrol and
+ *  a noble's retainers a sellsword's sort. */
+export const ROAD_HAZARD = Object.freeze({ carter: 0.003, hunter: 0.01, patrol: 0.008, noble: 0.004, retainer: 0.008, minstrel: 0.006 });
+/** A job's hazard, the road's new traffic's beside the first's. @param {string} job */
+export const hazardOf = (job) => HAZARD[/** @type {keyof typeof HAZARD} */ (job)] ?? ROAD_HAZARD[/** @type {keyof typeof ROAD_HAZARD} */ (job)] ?? 0;
 /** The cycles a place stands empty after a death. */
 export const VACANT_CYCLES = 3;
 const FATE = 0x46415445;   // 'FATE'
@@ -59,7 +64,7 @@ export function roadHits(res, k, turns) {
   const key = turnKey(res, k);
   if (turns?.fallen?.has(key)) return true;
   if (turns?.spared?.has(key)) return false;
-  const h = HAZARD[/** @type {keyof typeof HAZARD} */ (res.job)] ?? 0;
+  const h = hazardOf(res.job);
   return h > 0 && lwRoll(res.town, res.slot, k, FATE) < h;
 }
 
@@ -100,7 +105,7 @@ export function placeAt(res, k, turns) {
   const dies = roadHits(res, k, turns) && (!!turns?.fallen?.has(turnKey(res, k)) || quiet);
   // AUDIT-B1: the dice's own death this cycle - the character's turns of THIS cycle aside (a spare, one cut down beside
   // them): what shapes the cycle's trip and its trouble, which a turn never re-rolls
-  const h = HAZARD[/** @type {keyof typeof HAZARD} */ (res.job)] ?? 0;
+  const h = hazardOf(res.job);
   const diced = h > 0 && lwRoll(res.town, res.slot, k, FATE) < h && quiet;
   return { vacant: false, holder: last, dies, diced, since: last, hand: handDeath(res, k, turns) };
 }

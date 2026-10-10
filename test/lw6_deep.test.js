@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { synthMap, livingMap, partiesOver } from './lwRoads.mjs';
 import { ownTrip, diveTrip, diversAt, remainsNear, partyAt, cycleOf, CALENDAR_MPM, DIVE_CHANCE, DIVE_RANGE_PX, DIVE_MIN, TRIP_PACE, NATIVE_PER_M } from '../src/systems/livingWorld/trips.js';
+import { companyOfPlace, COMPANY_DIVE_CHANCE } from '../src/systems/livingWorld/companies.js';   // LW13: a company dives the likelier
 import { troubleOf, troubledTrip, HALT_MIN } from '../src/systems/livingWorld/trouble.js';
 import { DIVE_NEWS, ROAD_NEWS, newsScript } from '../src/systems/livingWorld/lines.js';
 import { createDungeonDivers, DIVER_STAND_M, DIVER_HEEL_M, DIVER_HEEL_STEP_M } from '../src/scenes/dungeonDivers.js';
@@ -22,7 +23,7 @@ test('LW6 the dives: an adventurer\'s cycle a DIVE now and then (DIVE_CHANCE, it
   assert.deepEqual([...DIVE_RANGE_PX], [1, 8]);
   assert.deepEqual([...DIVE_MIN], [240, 600]);
   const plain = synthMap(), deep = synthMap({ dives: true });
-  let dives = 0, trips = 0, same = 0;
+  let dives = 0, trips = 0, same = 0, want = 0;
   for (const town of deep.towns) {
     for (const res of deep.world.rosterOf(town)) {
       for (let k = 40; k < 70; k++) {
@@ -30,7 +31,9 @@ test('LW6 the dives: an adventurer\'s cycle a DIVE now and then (DIVE_CHANCE, it
         if (res.job !== 'adventurer') { assert.ok(!t?.dive, 'none but an adventurer dives'); continue; }
         if (!t) continue;
         trips++;
-        const diving = lwRng(res.town, res.slot, k, 0x64697665)() < DIVE_CHANCE;
+        const chance = companyOfPlace(res, deep.world.rosterOf(town)) ? COMPANY_DIVE_CHANCE : DIVE_CHANCE;   // PIN MOVED (LW13): a company's first, the company's chance
+        want += chance;
+        const diving = lwRng(res.town, res.slot, k, 0x64697665)() < chance;
         if (!t.dive) {
           assert.deepEqual(t, ownTrip(res, town, k, plain.world, O()), 'no dive: the town trip it always was');
           if (!diving) same++;
@@ -52,7 +55,7 @@ test('LW6 the dives: an adventurer\'s cycle a DIVE now and then (DIVE_CHANCE, it
     }
   }
   assert.ok(dives > 20 && same > 10, `dives and plain trips both (${dives} dives, ${same} plain, of ${trips})`);
-  assert.ok(dives / trips > DIVE_CHANCE - 0.15 && dives / trips < DIVE_CHANCE + 0.05, `about DIVE_CHANCE of an adventurer's trips (${(dives / trips).toFixed(2)})`);
+  assert.ok(dives / trips > want / trips - 0.15 && dives / trips < want / trips + 0.05, `about DIVE_CHANCE of a lone adventurer's trips, COMPANY_DIVE_CHANCE of a company's (${(dives / trips).toFixed(2)} of ${(want / trips).toFixed(2)})`);
   // never a dungeon on the town's own pixel (DIVE_RANGE_PX's floor)
   const own = synthMap({ dives: true });
   const home = own.towns[40];
@@ -216,6 +219,6 @@ test('LW6 the streaming host: the dungeons dived (the game\'s own rows of a laby
   assert.ok(!/dungeonCtx\?\.location\?\.\(\)/.test(w), 'never a dungeon location the context does not carry');
   assert.match(rd('src/scenes/dungeonContext.js'), /\n    abyss: \{\n      location: \(\) => \(\{ regionIndex: dfLocation\.regionIndex \?\? -1, locationIndex: dfLocation\.locationIndex \?\? -1 \}\),/, 'the context carries it there');
   assert.match(w, /spawn: \(type, feet, o\) => d\.spawnLooseFoe\(type, feet, \{ yawRad: o\.yaw, allied: true, gender: o\.gender, level: o\.level \}\),/);
-  assert.match(w, /livingDiversStep\(now\);   \/\/ LW6: underground, the companies diving here met/);
+  assert.match(w, /try \{ livingDiversStep\(now\); \} catch \(e\) \{ console\.warn\('\[divers\] step', e\); \}   \/\/ LW6: underground, the companies diving here met/);   // PIN MOVED (AUDIT LW-II-2): wrapped as its neighbours are - a throw never kills the frame loop
   assert.match(w, /_livingDiversList = here \? diversAt\(here, skyMinutes\(\), livingTripWorld,/);
 });

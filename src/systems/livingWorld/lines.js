@@ -293,12 +293,60 @@ export const CAMP_TALKS = Object.freeze([
   S('My grandmother said the dead walk on nights like this.', 'Your grandmother said a lot of things.'),
   S('Get some sleep. Long road tomorrow.', 'Every road is a long road.'),
 ]);
+/** LW9: two parties passing on the road - a word from each (the first the one who speaks first): the road's own talk, or,
+ *  where either has met trouble behind it ({foe}), its warning. */
+export const ROAD_PASS_SCRIPTS = Object.freeze([
+  S('Road\'s clear behind us.', 'And ahead of us. Safe travels.'),
+  S('Far to go?', 'Far enough. Yourselves?'),
+  S('Weather\'s turning, friend.', 'We\'ll make the next town before it does.'),
+  S('Gods keep you.', 'And you.'),
+  S('Mind the bridge, the planks are rotten.', 'Thanks for the word.'),
+  S('Is the inn still open past the ford?', 'It was last week.'),
+]);
+export const ROAD_PASS_WARNINGS = Object.freeze([
+  S('Watch yourselves - {foe} back the way we came.', 'We\'ll keep our eyes open.'),
+  S('{foe} on the road behind us. We lost time to them.', 'Then we\'ll go careful.'),
+]);
+/** LW12: a traveller's warning of a band whose hideout lies near - `{band}` its name. */
+export const BAND_WARNINGS = Object.freeze([
+  'Mind yourself - {band} keep a camp off this road.',
+  'They say {band} hide out near here. Keep your purse close.',
+  'Watch the trees. {band} have a camp somewhere about.',
+]);
+/** LW9: a minstrel playing a tavern's common room - the song's line over them. */
+export const MINSTREL_SONGS = Object.freeze([
+  '♪ The Lusty Argonian Maid, she sang it to the moon... ♪', '♪ Oh the road to {place} is long and the ale is thin... ♪',
+  '♪ Fair Wayrest, fair Wayrest, where the river runs to sea... ♪', '♪ The knight of the Dragon rode out in the rain... ♪',
+  '♪ Sing of the Iliac, the bay and the gold... ♪', '♪ Ten septims for a song, and a song for a kiss... ♪',
+]);
+/** LW9: a minstrel plays a song every MINSTREL_EVERY_MIN of the clock, its line up MINSTREL_UP_MIN of it. */
+export const MINSTREL_EVERY_MIN = 4;
+export const MINSTREL_UP_MIN = 1.5;
+/** LW9: the minstrel's song at minute `t`, or null between songs - their seed's, the same for every reader.
+ *  @param {{ id: string }} res @param {number} t @param {Record<string, any>} [ctx] */
+export function minstrelLine(res, t, ctx = {}) {
+  const k = Math.floor(t / MINSTREL_EVERY_MIN);
+  if (t - k * MINSTREL_EVERY_MIN >= MINSTREL_UP_MIN) return null;
+  let h = 2166136261;
+  for (const c of `${res.id}:${k}`) h = Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0;
+  return fillLine(MINSTREL_SONGS[h % MINSTREL_SONGS.length], ctx);
+}
+/** LW9: what a patrol says drawing on a player wanted in its region. */
+export const PATROL_HALT_LINES = Object.freeze(['Halt! You are wanted in these lands!', 'In the name of the law - stand and yield!', 'There\'s a price on your head. Draw!']);
+
 /** LW3: what a traveller says to the player met on the road, by their regard. */
 export const ROAD_GREETINGS = Object.freeze({
   friend: Object.freeze(['{player}! Well met on the road.', 'Safe travels, {player}.', 'Good to see a friendly face out here, {player}.']),
   known: Object.freeze(['Safe travels.', 'The road\'s quiet today.', 'Mind yourself out here.']),
   stranger: Object.freeze(['Traveller.', 'Safe road.', 'Watch the road ahead.', 'Keep your blade close.']),
   enemy: Object.freeze(['Keep your distance.', 'Walk on.', 'I\'ve nothing for you.']),
+});
+
+/** LW13: a company's member's word in passing - `{company}` its name - by its head's regard. */
+export const COMPANY_GREETINGS = Object.freeze({
+  friend: Object.freeze(['{player}! {company} remember their friends.', 'Walk with {company} a while, {player}?']),
+  known: Object.freeze(['{company}, on the road again.', 'You again. {company} keep turning up where you are.']),
+  stranger: Object.freeze(['{company} - you\'ve heard of us?', 'Make way for {company}.', 'Good road. We\'re {company}.']),
 });
 
 /** What a resident says to the player in passing, by their regard (relations.js). */
@@ -328,7 +376,7 @@ export function watchBand(rep, known) {
 }
 
 /** The fallback for a token the reader cannot fill. LW-TALK: {place} is filled from the town's own road (meetups.js). */
-export const TOKEN_FALLBACK = Object.freeze({ town: 'town', region: 'the court', a: 'friend', b: 'friend', place: 'the next town', player: 'friend', who: 'someone', foe: 'brigands', house: 'that house', hour: 'The hour', guild: 'the guild' });   // CHAP5b: {guild}, a chapter's   // LW-STIR: {hour}, the watch's call
+export const TOKEN_FALLBACK = Object.freeze({ town: 'town', region: 'the court', a: 'friend', b: 'friend', place: 'the next town', player: 'friend', who: 'someone', foe: 'brigands', house: 'that house', hour: 'The hour', guild: 'the guild', from: 'the next town' });   // CHAP5b: {guild}, a chapter's; LW16: {from}, the town the word came from   // LW-STIR: {hour}, the watch's call
 
 /**
  * LW4: WHAT THE TOWN SAYS OF THE ROAD - two- and three-line scripts on a trouble its own travellers met: `{who}` the one
@@ -352,6 +400,12 @@ export const ROAD_NEWS = Object.freeze({
     Object.freeze(['{who} never came back from the road to {place}.', '{foe}?', 'So the ones who made it home say.']),
     Object.freeze(['Have you heard about {who}? {foe}, near {place}.', 'Gods. I spoke with {who} only last week.', 'The road takes the best of us.']),
     Object.freeze(['They buried what they could find of {who}.', 'The road to {place}. Always that road.']),
+  ]),
+  // LW12: held up by a band - {foe} its name
+  robbed: Object.freeze([
+    Object.freeze(['They say {foe} took {who}\'s goods on the road to {place}.', 'Again? Somebody should do something about them.']),
+    Object.freeze(['{who} came home with empty hands. {foe}, near {place}.', 'At least {who} came home.']),
+    Object.freeze(['Have you heard? {foe} held up {who} on the {place} road.', 'Not a drop of blood, they say. Just everything else.']),
   ]),
 });
 /** LW6: what the town says of a DIVE - `{place}` the dungeon. */
@@ -408,6 +462,16 @@ export const HOME_NEWS = Object.freeze([
   Object.freeze(['Did you hear? {player} brought {who}\'s keepsake up out of the deep.', 'Home to the family? Gods bless them.']),
   Object.freeze(['{who}\'s people have something of theirs back, thanks to {player}.', 'Not many would go down there for the dead.']),
   Object.freeze(['That {player} - went into the dark and came back with {who}\'s keepsake.', 'There is kindness in the world yet.']),
+]);
+/** LW12: of a band of the region the PLAYER routed - `{who}` its name. */
+export const ROUTED_NEWS = Object.freeze([
+  Object.freeze(['{player} routed {who}, they say. Their camp off the road stands empty.', 'Then the road is safe for a while. A while.']),
+  Object.freeze(['Have you heard? {who} are finished. {player} saw to it.', 'Somebody had to. The watch never would.']),
+]);
+/** LW16: of a party of the region the PLAYER robbed on the road, once a witness carried it in - `{who}` the one robbed. */
+export const HELD_NEWS = Object.freeze([
+  Object.freeze(['{player} robbed {who} on the road, they say.', 'In broad day?', 'Bold as brass. The watch has their name now.']),
+  Object.freeze(['Did you hear? {who} was held up on the road. {player}, they say.', 'Then I\'m keeping my purse close.']),
 ]);
 /** LW7: of a fight on the road the PLAYER turned for its party (the character's `won`) - `{player}` the one who came. */
 export const HELPED_NEWS = Object.freeze({
@@ -499,6 +563,25 @@ export const CHAPTER_EVENT_NEWS = Object.freeze({
 
 /** Of a meeting with news to tell, the share that tells it. */
 export const NEWS_SHARE = 0.4;
+/** LW16: of the news told, the share that is the word carried in from the towns about (a town with none tells its own). */
+export const CARRIED_SHARE = 0.3;
+/** LW16: the word carried's first line - `{from}` the town it came from (the script of the news itself after it). */
+export const CARRIED_OPENERS = Object.freeze([
+  'There\'s word from {from}.',
+  'A carter in from {from} had news.',
+  'You hear what they\'re saying in {from}?',
+  'Travellers from {from} are telling it.',
+]);
+/** LW16: A STRANGER WHO HAS HEARD of the character greets them by it - a fight they turned on the road (`helped`), a
+ *  keepsake carried home (`saved`), a band routed, one of a town struck down where it was seen (`slain`), a party robbed
+ *  (`robbed`); `{who}`, `{foe}`, `{place}` the deed's. */
+export const HEARD_GREETINGS = Object.freeze({
+  helped: Object.freeze(['You\'re the one who drove off {foe} on the road to {place}?', 'They say you stood with {who} against {foe}. Good day to you.', 'I heard what you did for {who}\'s party.']),
+  saved: Object.freeze(['You brought {who}\'s keepsake home, didn\'t you? Bless you.', 'You went into the dark for {who}. Not many would.']),
+  routed: Object.freeze(['You\'re the one who broke {who}? The road thanks you.', '{who} are finished, they say - and you\'re why.']),
+  slain: Object.freeze(['I know who you are. I heard about {who}.', 'Keep your distance. {who} was a friend of a friend.']),
+  robbed: Object.freeze(['You\'re the one who robbed {who} on the road. I\'m watching you.', 'Hand on my purse, stranger. I heard about {who}.']),
+});
 
 /** LW7: a news item's words - a deed's (struck down by the player, seen or not; died at their side; WATCH-FIX: one of
  *  the watch another hand killed), a fight the player turned, a passage by sea's (LW5b), a dive's (LW6), the road's.
@@ -510,6 +593,8 @@ const newsPool = (item) => (item.kin ? KIN_NEWS[/** @type {keyof typeof KIN_NEWS
   : item.kind === 'died' ? DIED_NEWS
   : item.kind === 'killed' ? KILLED_NEWS[item.watch ? 'watch' : 'town']
   : item.kind === 'home' ? HOME_NEWS   // LW6d: a keepsake carried home
+  : item.kind === 'routed' ? ROUTED_NEWS   // LW12: a band the player routed
+  : item.kind === 'held' ? HELD_NEWS   // LW16: a party the player robbed
     : item.helped && HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)] ? HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)]
       : item.sea ? SEA_NEWS[/** @type {keyof typeof SEA_NEWS} */ (item.kind)]   // LW5b: the sea's own words
         : (item.dive ? DIVE_NEWS : ROAD_NEWS)[/** @type {keyof typeof ROAD_NEWS} */ (item.kind)]);
@@ -517,16 +602,36 @@ const newsPool = (item) => (item.kin ? KIN_NEWS[/** @type {keyof typeof KIN_NEWS
 /**
  * LW4: a meeting's news, if it tells one - NEWS_SHARE of the meetings with news to tell, the item drawn on the seed -
  * and its script by the news's end.
- * @param {number} seed @param {readonly { kind: string, dive?: boolean, helped?: boolean, seen?: boolean }[] | null | undefined} news
+ * @param {number} seed @param {readonly { kind: string, dive?: boolean, helped?: boolean, seen?: boolean, carried?: boolean }[] | null | undefined} news
  * @returns {{ item: any, script: readonly string[] } | null}
  */
 export function newsScript(seed, news) {
   if (!news?.length) return null;
   const rng = seededRng((seed ^ 0x4e455753) >>> 0);   // 'NEWS'
   if (rng() >= NEWS_SHARE) return null;
-  const item = news[Math.floor(rng() * news.length)];
+  // LW16: the word carried in from the towns about, CARRIED_SHARE of the news told - on a draw of its own, so a town
+  // with none tells its own as ever
+  const carried = news.filter((n) => n.carried);
+  const own = carried.length ? news.filter((n) => !n.carried) : news;
+  // AUDIT LW-II B10: a town with only the word carried tells it as often as another its own (on the draw it fell to its
+  // own, found none and told nothing: a third as often)
+  const list = carried.length && (!own.length || seededRng((seed ^ 0x43415252) >>> 0)() < CARRIED_SHARE) ? carried : own;   // 'CARR'
+  if (!list.length) return null;
+  const item = list[Math.floor(rng() * list.length)];
   const pool = newsPool(item);
-  return pool ? { item, script: pool[Math.floor(rng() * pool.length)] } : null;
+  if (!pool) return null;
+  const script = pool[Math.floor(rng() * pool.length)];
+  return { item, script: item.carried ? carriedScript(Math.floor(rng() * CARRIED_OPENERS.length), script) : script };
+}
+
+/** LW16: a carried news's script - its opener before the news's own (one array a pair, so a circle never says it twice
+ *  running). @type {WeakMap<readonly string[], (readonly string[])[]>} */
+const _carriedScripts = new WeakMap();
+/** @param {number} o @param {readonly string[]} script */
+function carriedScript(o, script) {
+  let row = _carriedScripts.get(script);
+  if (!row) { row = []; _carriedScripts.set(script, row); }
+  return (row[o] ??= Object.freeze([CARRIED_OPENERS[o], ...script]));
 }
 
 /** LW4: the names Daggerfall's foes take more than one at a time that no rule makes. */
@@ -547,9 +652,14 @@ export function foeWord(name, n) {
   return `${w}s`;
 }
 
-/** A line with its tokens filled. @param {string} text @param {Record<string, string|undefined|null>} ctx */
+/** A line with its tokens filled. AUDIT LW-II-2 W8: a token that opens a sentence - the line's first, or after a stop and a
+ *  space - opens it with a capital ("The Red Hand are finished", where a band's minted name is "the Red Hand"); mid-
+ *  sentence it keeps its case. @param {string} text @param {Record<string, string|undefined|null>} ctx */
 export function fillLine(text, ctx = {}) {
-  return text.replace(/\{(\w+)\}/g, (_, k) => (ctx[k] ? String(ctx[k]) : TOKEN_FALLBACK[/** @type {keyof typeof TOKEN_FALLBACK} */ (k)] ?? ''));
+  return text.replace(/\{(\w+)\}/g, (_, k, at) => {
+    const s = ctx[k] ? String(ctx[k]) : TOKEN_FALLBACK[/** @type {keyof typeof TOKEN_FALLBACK} */ (k)] ?? '';
+    return at === 0 || /[.?!]\s$/.test(text.slice(0, at)) ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+  });
 }
 
 /**

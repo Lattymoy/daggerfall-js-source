@@ -83,8 +83,8 @@
   {
     "name": "LW6b-pending",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "      if (trips === undefined) { pending = true; break; }",
-    "new": "      if (trips === undefined) { break; }",
+    "old": "      const trips = townTrips(town, t - back * DAY_MIN, world, o);\n      if (trips === undefined) { pending = true; break; }",
+    "new": "      const trips = townTrips(town, t - back * DAY_MIN, world, o);\n      if (trips === undefined) { break; }",
     "tests": [
       "test/lw6b_remains.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "LW6b-mark-kinds",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "export const MARK_KINDS = Object.freeze(['laid']);",
-    "new": "export const MARK_KINDS = Object.freeze([]);",
+    "old": "export const MARK_KINDS = Object.freeze(['laid', 'heard', 'looted']);",
+    "new": "export const MARK_KINDS = Object.freeze(['heard', 'looted']);",
     "tests": [
       "test/lw6b_remains.test.js"
     ]
@@ -264,11 +264,12 @@
   {
     "name": "LW6b-places",
     "file": "src/scenes/deepRemains.js",
-    "old": "      if (!spots.length) return;",
-    "new": "      void 0;",
+    "old": "        if (!at) continue;   // AUDIT LW-II D13",
+    "new": "        void 0;   // AUDIT LW-II D13",
     "tests": [
       "test/lw6b_remains.test.js"
-    ]
+    ],
+    "note": "AUDIT LW-II (re-aimed by content): the route's places beside it."
   },
   {
     "name": "LW6b-stood-member",
@@ -327,8 +328,8 @@
   {
     "name": "LW6b-host-step",
     "file": "src/scenes/world.js",
-    "old": "      livingRemainsStep(now);   // LW6b",
-    "new": "      void 0;   // LW6b",
+    "old": "      try { livingRemainsStep(now); }",
+    "new": "      try { void 0; }",
     "tests": [
       "test/lw6b_remains.test.js"
     ]

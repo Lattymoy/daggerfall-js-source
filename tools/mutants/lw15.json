@@ -1,0 +1,972 @@
+[
+  {
+    "name": "LW15-share",
+    "file": "src/net/patronLaw.js",
+    "old": "export const PATRON_PAY_SHARE = 0.6;",
+    "new": "export const PATRON_PAY_SHARE = 0.7;",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-odds",
+    "file": "src/net/patronLaw.js",
+    "old": "Object.freeze([0.5, 0.25])",
+    "new": "Object.freeze([0.5, 0.3])",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-odds-negative",
+    "file": "src/net/patronLaw.js",
+    "old": "  if (!(r >= 0)) return 0;\n",
+    "new": "\n",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-odds-over",
+    "file": "src/net/patronLaw.js",
+    "old": "  for (const [bound, odds] of PATRON_ODDS) if (r <= bound) return odds;\n  return 0;",
+    "new": "  for (const [bound, odds] of PATRON_ODDS) if (r <= bound) return odds;\n  return 0.05;",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-cap-floor",
+    "file": "src/net/patronLaw.js",
+    "old": "Math.floor(Math.max(0, worth) * PATRON_PAY_SHARE)",
+    "new": "Math.floor(worth * PATRON_PAY_SHARE)",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-takes-quest",
+    "file": "src/net/patronLaw.js",
+    "old": "&& !item.questItem &&",
+    "new": "&&",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-takes-keepsake",
+    "file": "src/net/patronLaw.js",
+    "old": " && item.templateIndex !== PATRON_KEEPSAKE_TEMPLATE\n",
+    "new": "\n",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-takes-living",
+    "file": "src/net/patronLaw.js",
+    "old": "!item.livingKeepsake && ",
+    "new": "",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-worth-crafted",
+    "file": "src/net/patronLaw.js",
+    "old": "  return Math.min(worth, worthOf(plain));",
+    "new": "  return worth;",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-worth-value",
+    "file": "src/net/patronLaw.js",
+    "old": "  const plain = { ...item, value: 0 };",
+    "new": "  const plain = { ...item };",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-draw-hour",
+    "file": "src/net/patronLaw.js",
+    "old": "fnv(`${salt}${listing}:${hour}:draw${salt}`)",
+    "new": "fnv(`${salt}${listing}:draw${salt}`)",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-hour-odds",
+    "file": "src/net/patronLaw.js",
+    "old": "    if (draw >= patronOdds(l.price / patronCap(l.worth))) continue;",
+    "new": "    if (draw >= 0.5) continue;",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-hour-takes",
+    "file": "src/net/patronLaw.js",
+    "old": "    if (l.takes === false || !(l.price >= 1)) continue;",
+    "new": "    if (!(l.price >= 1)) continue;",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-hour-price",
+    "file": "src/net/patronLaw.js",
+    "old": "    if (l.takes === false || !(l.price >= 1)) continue;",
+    "new": "    if (l.takes === false) continue;",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-hour-order",
+    "file": "src/net/patronLaw.js",
+    "old": "  cands.sort((a, b) => a.draw - b.draw ||",
+    "new": "  cands.sort((a, b) => b.draw - a.draw ||",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-hour-town",
+    "file": "src/net/patronLaw.js",
+    "old": "    if (n >= PATRON_TOWN_HOUR) break;",
+    "new": "    if (n > PATRON_TOWN_HOUR) break;",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-hour-sold",
+    "file": "src/net/patronLaw.js",
+    "old": "  let n = sold;",
+    "new": "  let n = 0;",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-hour-seller",
+    "file": "src/net/patronLaw.js",
+    "old": "    if ((hourN.get(l.seller) ?? 0) >= PATRON_SELLER_HOUR) continue;",
+    "new": "    if ((hourN.get(l.seller) ?? 0) > PATRON_SELLER_HOUR) continue;",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-hour-day",
+    "file": "src/net/patronLaw.js",
+    "old": "    if ((dayG.get(l.seller) ?? 0) + l.price > PATRON_SELLER_DAY_GOLD) continue;",
+    "new": "    if ((dayG.get(l.seller) ?? 0) > PATRON_SELLER_DAY_GOLD) continue;",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-hours-cap",
+    "file": "src/net/patronLaw.js",
+    "old": "  const first = Math.max(last != null ? last + 1 : Math.floor(fromS / PATRON_HOUR_S) + 1, cur - PATRON_RECKON_HOURS);",
+    "new": "  const first = last != null ? last + 1 : Math.floor(fromS / PATRON_HOUR_S) + 1;",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-hours-first",
+    "file": "src/net/patronLaw.js",
+    "old": "Math.floor(fromS / PATRON_HOUR_S) + 1, cur",
+    "new": "Math.floor(fromS / PATRON_HOUR_S), cur",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-hours-last",
+    "file": "src/net/patronLaw.js",
+    "old": "last != null ? last + 1 :",
+    "new": "last != null ? last :",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-door",
+    "file": "server-account/src/market.js",
+    "old": "h.entry = 'public' AND h.player = l.seller",
+    "new": "h.entry IN ('public', 'private') AND h.player = l.seller",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-purse",
+    "file": "server-account/src/market.js",
+    "old": "AND l.price = ?11 AND COALESCE((SELECT gold FROM market_gold WHERE player = l.seller AND char_id = l.char_id), 0) + ?8 <= ?12\n",
+    "new": "AND l.price = ?11\n",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-must",
+    "file": "server-account/src/market.js",
+    "old": "MARKET_GOLD_HELD_MAX, l.bkey),\n                mustChange(db),\n",
+    "new": "MARKET_GOLD_HELD_MAX, l.bkey),\n",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-gets",
+    "file": "server-account/src/market.js",
+    "old": "excluded.gold`).bind(l.seller, l.char, gets),",
+    "new": "excluded.gold`).bind(l.seller, l.char, sale.price),",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-faucet",
+    "file": "server-account/src/market.js",
+    "old": "            faucetStatement(db, 'patron', hour, gets),\n",
+    "new": "",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-sold-state",
+    "file": "server-account/src/market.js",
+    "old": "db.prepare(`UPDATE market_listings SET own = 0, bought = 0, state = 'sold', closed_at = ?2 WHERE id = ?1`).bind(l.id, at),",
+    "new": "db.prepare(`UPDATE market_listings SET own = 0, bought = 0, closed_at = ?2 WHERE id = ?1`).bind(l.id, at),",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-partial-mark",
+    "file": "server-account/src/market.js",
+    "old": "    const mark = partial ? reached : hourNow - 1;",
+    "new": "    const mark = partial ? null : hourNow - 1;",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-reached",
+    "file": "server-account/src/market.js",
+    "old": "        reached = hour;\n      }\n",
+    "new": "      }\n",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-mark-whole",
+    "file": "server-account/src/market.js",
+    "old": "    const mark = partial ? reached : hourNow - 1;",
+    "new": "    const mark = partial ? reached : hourNow;",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-vendor-reckon",
+    "file": "server-account/src/market.js",
+    "old": "  await reckonPatrons(ctx, { maps: [vend.map] }, env).catch(() => null);",
+    "new": "  void 0;",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-vendors-reckon",
+    "file": "server-account/src/market.js",
+    "old": "  await reckonPatrons(ctx, { region }, env).catch(() => null);",
+    "new": "  void region;",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-my-reckon",
+    "file": "server-account/src/market.js",
+    "old": "  await reckonPatrons(ctx, { maps: [...new Set(traders.map((v) => Number(v.map_id)))] }, env).catch(() => null);",
+    "new": "  void 0;",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-told",
+    "file": "server-account/src/market.js",
+    "old": "  const patrons = (await patronsTold(db, [vend.map], nowS).catch(() => [])).filter((p) => p.vendor === vend.id && p.buildingKey === Number(v.building_key));",
+    "new": "  const patrons = [];",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-vendors-told",
+    "file": "server-account/src/market.js",
+    "old": "    patrons: await patronsTold(db, { region }, nowS).catch(() => []),",
+    "new": "    patrons: await patronsTold(db, results.map((l) => Number(l.v_map)), nowS).catch(() => []),",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-told-key",
+    "file": "server-account/src/market.js",
+    "old": "buildingKey: r.building_key == null ? null : Number(r.building_key),",
+    "new": "buildingKey: null,",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-my-sold",
+    "file": "server-account/src/market.js",
+    "old": "    patronSold: patronSold.map((s) => ({",
+    "new": "    patronSold: patronSold.slice(1).map((s) => ({",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-faucet-n",
+    "file": "server-account/src/budget.js",
+    "old": "n = realm_faucets.n + 1',",
+    "new": "n = realm_faucets.n',",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-cron-job",
+    "file": "server-account/src/cron.js",
+    "old": "['patrons', async (ctx, env) => (marketOpenFor(null, env) ? (await reckonPatrons(ctx, {}, env)).sold : markPatronsShut(ctx))]",
+    "new": "['patrons', async () => 0]",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-deal-guard",
+    "file": "src/systems/livingWorld/patrons.js",
+    "old": "r.roll === 'h' && !r.guard",
+    "new": "r.roll === 'h'",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-deal-roll",
+    "file": "src/systems/livingWorld/patrons.js",
+    "old": "r.roll === 'h' && !r.guard",
+    "new": "!r.guard",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-deal-order",
+    "file": "src/systems/livingWorld/patrons.js",
+    "old": ".sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))",
+    "new": "",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-visit-window",
+    "file": "src/systems/livingWorld/patrons.js",
+    "old": "    if (!(v.t >= D0 && v.t < D1)) continue;",
+    "new": "    if (!(v.t >= D0)) continue;",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-visit-fold",
+    "file": "src/systems/livingWorld/patrons.js",
+    "old": "from: day * DAY_MIN + open + ((((tod - open) % span) + span) % span),",
+    "new": "from: v.t,",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-visit-stay",
+    "file": "src/systems/livingWorld/patrons.js",
+    "old": "dur: PATRON_STAY_MIN });",
+    "new": "dur: 10 });",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-words",
+    "file": "src/systems/livingWorld/patrons.js",
+    "old": "`${res.name}${town ? ` of ${town}` : ''}`",
+    "new": "`${res.name}`",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-errand",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "  for (const e of errands) if (e?.at) patronErrand(intents, e, mpm);",
+    "new": "  void errands;",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-errand-cut",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "      prev.until = Math.min(prev.until ?? Infinity, leave);   // none of it left before",
+    "new": "      void leave;   // none of it left before",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ],
+    "note": "AUDIT LW-II (re-aimed by content)."
+  },
+  {
+    "name": "LW15-errand-resume",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "      if (end - back >= MIN_STAY) add.push({ ...prev, from: back, dur: end - back });\n",
+    "new": "",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-errand-order",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "  let k = intents.findIndex((it) => it.from >= e.from);\n  if (k < 0) k = intents.length;",
+    "new": "  let k = intents.length;",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ],
+    "note": "AUDIT LW-II (re-aimed by content)."
+  },
+  {
+    "name": "LW15-browse",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "if (brng && brng() < PATRON_BROWSE_SHARE) {",
+    "new": "if (brng && brng() < 0) {",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-browse-share",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "export const PATRON_BROWSE_SHARE = 0.1;",
+    "new": "export const PATRON_BROWSE_SHARE = 0.2;",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-browse-none",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "  const brng = browse.length ? lwRng(",
+    "new": "  const brng = true ? lwRng(",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-town-replan",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "(e.pb !== undefined && e.pv !== this._patronV() && !this._patronsKept(e, res, day))",
+    "new": "false",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-town-errands",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "watch: this._watchSize, bandOf: this._bandOf, ...this._patronsFor(res, day) });",
+    "new": "watch: this._watchSize, bandOf: this._bandOf });",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ],
+    "note": "Re-aimed by content at the merge: CHAP5b's bands beside it."
+  },
+  {
+    "name": "LW15-host-online",
+    "file": "src/scenes/world.js",
+    "old": "if (!params.has('online') || !marketBook) return;",
+    "new": "if (!marketBook) return;",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-host-public",
+    "file": "src/scenes/world.js",
+    "old": "if (row.home?.entry !== 'public') continue;",
+    "new": "if (!row.home) continue;",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-host-own",
+    "file": "src/scenes/world.js",
+    "old": "patronsOf: () => _livingPatrons.get(livingTown.mapId >>> 0) ?? null,",
+    "new": "patronsOf: () => null,",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-host-name",
+    "file": "src/scenes/world.js",
+    "old": "patronName: (pt) => livingPatronName(pt),",
+    "new": "patronName: () => null,",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-page-merge",
+    "file": "src/ui/vendorPage.js",
+    "old": "    const sold = [...(mine.sold ?? []), ...(mine.patronSold ?? [])]",
+    "new": "    const sold = [...(mine.sold ?? [])]",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-page-who",
+    "file": "src/ui/vendorPage.js",
+    "old": "const who = s.patron ? safe(() => p.patronName?.(s.patron), null) : null;",
+    "new": "const who = null;",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-hour-capped",
+    "file": "src/net/patronLaw.js",
+    "old": "patronOdds(l.price / patronCap(l.worth))",
+    "new": "patronOdds(l.price / Math.max(1, patronCap(l.worth)))",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P1-town",
+    "file": "server-account/src/market.js",
+    "old": "                    AND (SELECT COUNT(*) FROM market_patron_sales WHERE map = ?2 AND hour = ?3) < ${PATRON_TOWN_HOUR}\n",
+    "new": "",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P1-seller-hour",
+    "file": "server-account/src/market.js",
+    "old": "                    AND (SELECT COUNT(*) FROM market_patron_sales WHERE seller = l.seller AND day = ?10 AND hour = ?3) < ${PATRON_SELLER_HOUR}\n",
+    "new": "",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P1-seller-day",
+    "file": "server-account/src/market.js",
+    "old": "                    AND (SELECT COALESCE(SUM(price), 0) FROM market_patron_sales WHERE seller = l.seller AND day = ?10) + l.price <= ${PATRON_SELLER_DAY_GOLD}\n",
+    "new": "",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P2-floor",
+    "file": "src/net/patronLaw.js",
+    "old": "  const worth = Math.min(worthOf({ ...item, value: 0 }), ownPrice(item));",
+    "new": "  const worth = Math.min(worthOf(item), ownPrice(item));",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P3-law",
+    "file": "server-account/src/market.js",
+    "old": "patronTakes(item) && lawfulItem(item) && !goodRefusal(item);",
+    "new": "patronTakes(item) && !goodRefusal(item);",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P3-refusal",
+    "file": "server-account/src/market.js",
+    "old": "patronTakes(item) && lawfulItem(item) && !goodRefusal(item);",
+    "new": "patronTakes(item) && lawfulItem(item);",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P4-held",
+    "file": "server-account/src/market.js",
+    "old": "(c.held IS NOT NULL OR c.judged_seq IS NULL)",
+    "new": "(c.judged_seq IS NULL)",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P4-unjudged",
+    "file": "server-account/src/market.js",
+    "old": "(c.held IS NOT NULL OR c.judged_seq IS NULL)",
+    "new": "(c.held IS NOT NULL)",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P5-dice-first",
+    "file": "server-account/src/market.js",
+    "old": "        if (cands.length) {\n",
+    "new": "        if (cands.length || open.length) {\n",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P5-read-share",
+    "file": "server-account/src/market.js",
+    "old": "  const budget = ctx.budget ?? (() => tally.n < PATRON_READ_STATEMENTS);",
+    "new": "  const budget = ctx.budget ?? (() => true);",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P5-read-constant",
+    "file": "server-account/src/market.js",
+    "old": "export const PATRON_READ_STATEMENTS = 200;",
+    "new": "export const PATRON_READ_STATEMENTS = 400;",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P5-mark-moved",
+    "file": "server-account/src/market.js",
+    "old": "    if (mark != null && rows.some((r) => !gone.has(r.id) && (r.patron_hour == null || Number(r.patron_hour) < mark))) {",
+    "new": "    if (mark != null) {",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P5-order",
+    "file": "server-account/src/market.js",
+    "old": "      GROUP BY l.vendor_map ORDER BY MIN(COALESCE(l.patron_hour, l.at / ${PATRON_HOUR_S})), l.vendor_map LIMIT ${PATRON_CRON_TOWNS}`)",
+    "new": "      GROUP BY l.vendor_map LIMIT ${PATRON_CRON_TOWNS}`)",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P6-prune",
+    "file": "server-account/src/market.js",
+    "old": "    bounded('market_patron_sales', 'day < ?1', keepFrom),\n",
+    "new": "",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P6-region-index",
+    "file": "server-account/migrations/0106_patrons.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_patron_sales_region ON market_patron_sales (region, at);",
+    "new": "CREATE INDEX IF NOT EXISTS idx_patron_sales_region ON market_patron_sales (at);",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P6-day-index",
+    "file": "server-account/migrations/0106_patrons.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_patron_sales_day ON market_patron_sales (day);",
+    "new": "",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P6-counts-day",
+    "file": "server-account/src/market.js",
+    "old": "FROM market_patron_sales WHERE day = ?3 AND seller IN",
+    "new": "FROM market_patron_sales WHERE (hour = ?2 OR day = ?3) AND seller IN",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P7-door",
+    "file": "server-account/src/homes.js",
+    "old": "  if (entry === 'public' && Number.isSafeInteger(nowS)) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P7-opens",
+    "file": "server-account/src/homes.js",
+    "old": "AND guild_id IS NULL AND entry != 'public')`)",
+    "new": "AND guild_id IS NULL)`)",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P7-shut-town",
+    "file": "server-account/src/market.js",
+    "old": "    const hours = [...new Set(ls.flatMap(",
+    "new": "    if (!ls.length) continue;\n    const hours = [...new Set(ls.flatMap(",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P8-switch",
+    "file": "server-account/src/cron.js",
+    "old": "(marketOpenFor(null, env) ? (await reckonPatrons(ctx, {}, env)).sold : markPatronsShut(ctx))",
+    "new": "(await reckonPatrons(ctx, {}, env)).sold",
+    "tests": [
+      "test/lw15_patrons.test.js",
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P9-told-join",
+    "file": "server-account/src/market.js",
+    "old": "FROM market_patron_sales s JOIN market_listings l ON l.id = s.listing WHERE ${where}",
+    "new": "FROM market_patron_sales s JOIN market_listings l ON l.id = s.listing LEFT JOIN home_decor d ON d.map_id = l.vendor_map AND d.id = l.vendor_id WHERE ${where}",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P9-house",
+    "file": "server-account/src/market.js",
+    "old": "MARKET_GOLD_HELD_MAX, l.bkey),",
+    "new": "MARKET_GOLD_HELD_MAX, null),",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P10-secret",
+    "file": "server-account/src/market.js",
+    "old": "  if (!key) return '';\n  const hash",
+    "new": "  return '';\n  const hash",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P10-draw",
+    "file": "src/net/patronLaw.js",
+    "old": "fnv(`${salt}${listing}:${hour}:draw${salt}`)",
+    "new": "fnv(`${listing}:${hour}:draw`)",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P10-draw-after",
+    "file": "src/net/patronLaw.js",
+    "old": "fnv(`${salt}${listing}:${hour}:draw${salt}`)",
+    "new": "fnv(`${salt}${listing}:${hour}:draw`)",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P10-cands",
+    "file": "server-account/src/market.js",
+    "old": "const cands = patronCands(open, hour, salt).map((c) => c.l);",
+    "new": "const cands = patronCands(open, hour).map((c) => c.l);",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P10-route",
+    "file": "server-account/src/market.js",
+    "old": "  await reckonPatrons(ctx, { maps: [vend.map] }, env).catch(() => null);",
+    "new": "  await reckonPatrons(ctx, { maps: [vend.map] }).catch(() => null);",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P11-failure",
+    "file": "server-account/src/market.js",
+    "old": "              if (!guardRefused(e)) throw e;",
+    "new": "              void e;",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P11-guard",
+    "file": "server-account/src/market.js",
+    "old": "/moved = expected/.test(",
+    "new": "/moved = nothing/.test(",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P11-partial",
+    "file": "server-account/src/market.js",
+    "old": "      partial = true;\n      console.warn('[patrons]",
+    "new": "      console.warn('[patrons]",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-B1-delay",
+    "file": "src/systems/livingWorld/patrons.js",
+    "old": "export const PATRON_DELAY_DAYS = 2;",
+    "new": "export const PATRON_DELAY_DAYS = 0;",
+    "tests": [
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-B1-shift",
+    "file": "src/systems/livingWorld/patrons.js",
+    "old": "const D0 = day * DAY_MIN + 4 * 60 - shift, D1 = D0 + DAY_MIN;",
+    "new": "const D0 = day * DAY_MIN + 4 * 60, D1 = D0 + DAY_MIN;",
+    "tests": [
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-B2-hours",
+    "file": "src/systems/livingWorld/patrons.js",
+    "old": "export const PATRON_OPEN_H = Object.freeze([9, 17]);",
+    "new": "export const PATRON_OPEN_H = Object.freeze([8, 20]);",
+    "tests": [
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-B2-at-its-minute",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "  let k = intents.findIndex((it) => it.from >= e.from);",
+    "new": "  let k = intents.findIndex((it) => it.from > e.from);",
+    "tests": [
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-B2-late",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "until: e.from + e.dur + PATRON_LATE_MIN }];",
+    "new": "until: e.from + e.dur }];",
+    "tests": [
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-B2-within-a-walk",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "    if (end > leave) {",
+    "new": "    if (end > e.from) {",
+    "tests": [
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-B12-holders",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "const res = by.get(v.resId) ?? null;",
+    "new": "const res = this.residents.find((r) => r.id === v.resId) ?? null;",
+    "tests": [
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-B12-named",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "return place ? this._householdsOf(this.dayOf(t) + PATRON_DELAY_DAYS).get(place.id) ?? null : null;",
+    "new": "return place;",
+    "tests": [
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-B5-offset",
+    "file": "src/scenes/world.js",
+    "old": "t: skyClassicMinutes((p.hour * 3600 + p.minute * 60) * 1000), seed: p.seed });",
+    "new": "t: skyClassicMinutes((p.hour * 3600 + p.minute * 60) * 1000 + _sharedOffsetMs), seed: p.seed });",
+    "tests": [
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-B6-order",
+    "file": "src/scenes/world.js",
+    "old": "        const traders = [...e.traders].sort((a, b) => a - b);",
+    "new": "        const traders = [...e.traders];",
+    "tests": [
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-B6-changed",
+    "file": "src/scenes/world.js",
+    "old": "        if (_livingPatrons.get(map)?.sig === sig) continue;\n",
+    "new": "",
+    "tests": [
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-B7-forgotten",
+    "file": "src/scenes/world.js",
+    "old": "      for (const [map, e] of _livingPatrons) if (e.region === region && !byMap.has(map)) _livingPatrons.delete(map);\n",
+    "new": "",
+    "tests": [
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  }
+]

@@ -1,0 +1,324 @@
+[
+  {
+    "name": "AUDITLWII2-W1-asked-alone",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "(e.pb !== undefined && e.pv !== this._patronV() && !this._patronsKept(e, res, day))",
+    "new": "(e.pv !== this._patronV() && !this._patronsKept(e, res, day))",
+    "tests": [
+      "test/auditlwii2_town.test.js",
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-W5-kept",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": " && !this._patronsKept(e, res, day))) {",
+    "new": ")) {",
+    "tests": [
+      "test/auditlwii2_town.test.js",
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-W5-doors",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "if (s.pe !== e.pe || s.pb !== e.pb) return false;",
+    "new": "if (s.pe !== e.pe) return false;",
+    "tests": [
+      "test/auditlwii2_town.test.js",
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-W5-own-errands",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "if (s.pe !== e.pe || s.pb !== e.pb) return false;",
+    "new": "if (s.pb !== e.pb) return false;",
+    "tests": [
+      "test/auditlwii2_town.test.js",
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-W2-named-by-place",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    const place = patronOf(seed, this.residents);",
+    "new": "    const place = patronOf(seed, this.peopleOf(this.dayOf(t) + PATRON_DELAY_DAYS));",
+    "tests": [
+      "test/auditlwii2_town.test.js",
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-W2-walked-by-place",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "for (const v of patronVisits(p.told ?? [], day, this.residents)) {",
+    "new": "for (const v of patronVisits(p.told ?? [], day, this.peopleOf(day))) {",
+    "tests": [
+      "test/auditlwii2_town.test.js",
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-W2-holder",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "by.set(r.id, x ? (x.id === r.id ? r : { ...x, home: r.home }) : (extra?.find((m) => placeKeyOf(m) === r.id) ?? null));",
+    "new": "by.set(r.id, r);",
+    "tests": [
+      "test/auditlwii2_town.test.js",
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-W2-spouse",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": ": (extra?.find((m) => placeKeyOf(m) === r.id) ?? null));",
+    "new": ": null);",
+    "tests": [
+      "test/auditlwii2_town.test.js",
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-W4-no-roads",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "return place ? this._householdsOf(this.dayOf(t) + PATRON_DELAY_DAYS).get(place.id) ?? null : null;",
+    "new": "return place ? this.peopleOf(this.dayOf(t) + PATRON_DELAY_DAYS).find((r) => placeKeyOf(r) === place.id) ?? null : null;",
+    "tests": [
+      "test/auditlwii2_town.test.js",
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-W4-kept",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    if (kept && kept.extra === extra) return kept.by;",
+    "new": "    void kept;",
+    "tests": [
+      "test/auditlwii2_town.test.js",
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-W3-own-clock",
+    "file": "src/scenes/world.js",
+    "old": "const r = _livingPatronsRead.get(region);",
+    "new": "const r = [..._livingPatronsRead.values()].at(-1);",
+    "tests": [
+      "test/auditlwii2_town.test.js",
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-W3-remembered",
+    "file": "src/scenes/world.js",
+    "old": "if (_livingPatronsBusy) { _livingPatronsWant = region; return; }",
+    "new": "if (_livingPatronsBusy) return;",
+    "tests": [
+      "test/auditlwii2_town.test.js",
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-W3-settled",
+    "file": "src/scenes/world.js",
+    "old": "if (want != null && livingPatronsDue(want, _livingPatronsNow)) livingPatronsRead(want, _livingPatronsNow);",
+    "new": "void want;",
+    "tests": [
+      "test/auditlwii2_town.test.js",
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-W3-failed",
+    "file": "src/scenes/world.js",
+    "old": "if (!r?.ok) { mark.failed = true; return; }",
+    "new": "if (!r?.ok) return;",
+    "tests": [
+      "test/auditlwii2_town.test.js",
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-W3-retry-s",
+    "file": "src/scenes/world.js",
+    "old": "  const PATRON_RETRY_S = 60;",
+    "new": "  const PATRON_RETRY_S = 600;",
+    "tests": [
+      "test/auditlwii2_town.test.js",
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-W11-a-living-town",
+    "file": "src/scenes/world.js",
+    "old": "for (const b of built.values()) if (b.population instanceof LivingTown) {",
+    "new": "for (const b of built.values()) if (b.population) {",
+    "tests": [
+      "test/auditlwii2_town.test.js",
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-W11-the-frame",
+    "file": "src/scenes/world.js",
+    "old": "livingPatronsStep(Date.now() / 1000, livingPatronsRegion);",
+    "new": "livingPatronsStep(Date.now() / 1000, () => { const p = playerTravelPixel(); return p ? maps.getRegionIndexAt(p.x, p.y) : null; });",
+    "tests": [
+      "test/auditlwii2_town.test.js",
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-W7-last",
+    "file": "src/scenes/world.js",
+    "old": "e.at = performance.now(); _livingCarriedLast.set(e.map, e.visits); }",
+    "new": "e.at = performance.now(); }",
+    "tests": [
+      "test/auditlwii2_town.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-H7-modal",
+    "file": "src/scenes/world.js",
+    "old": "      if (livingWorldOn()) livingCarriedStep(LIVING_CARRIED_SLICE_MS);   // AUDIT LW-II-2 H7:",
+    "new": "      void 0;   // AUDIT LW-II-2 H7:",
+    "tests": [
+      "test/auditlwii2_town.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-W8-start",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "return at === 0 || /[.?!]\\s$/.test(text.slice(0, at)) ?",
+    "new": "return /[.?!]\\s$/.test(text.slice(0, at)) ?",
+    "tests": [
+      "test/auditlwii2_town.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-W8-stop",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "/[.?!]\\s$/.test(text.slice(0, at))",
+    "new": "/[?!]\\s$/.test(text.slice(0, at))",
+    "tests": [
+      "test/auditlwii2_town.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-W8-question",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "/[.?!]\\s$/.test(text.slice(0, at))",
+    "new": "/[.!]\\s$/.test(text.slice(0, at))",
+    "tests": [
+      "test/auditlwii2_town.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-W8-exclaim",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "/[.?!]\\s$/.test(text.slice(0, at))",
+    "new": "/[.?]\\s$/.test(text.slice(0, at))",
+    "tests": [
+      "test/auditlwii2_town.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-W8-mid",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "return at === 0 || /[.?!]\\s$/.test(text.slice(0, at)) ? s.charAt(0).toUpperCase() + s.slice(1) : s;",
+    "new": "return s.charAt(0).toUpperCase() + s.slice(1);",
+    "tests": [
+      "test/auditlwii2_town.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-W10-late-online",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "until: e.from + e.dur + PATRON_LATE_MIN }];",
+    "new": "until: e.from + e.dur + PATRON_LATE_MIN / 1.5 }];",
+    "tests": [
+      "test/auditlwii2_town.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-W10-leave-online",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "    const leave = e.from - walkMinutes(prev.at, e.at, mpm);",
+    "new": "    const leave = e.from - walkMinutes(prev.at, e.at, mpm) / 2;",
+    "tests": [
+      "test/auditlwii2_town.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-P12-LW16P-host-visit-in",
+    "file": "src/scenes/world.js",
+    "old": "        out.push({ id: tr.id, from, inT: tr.outT1, outT0: tr.outT0, courier,",
+    "new": "        out.push({ id: tr.id, from, inT: tr.outT0, outT0: tr.outT0, courier,",
+    "tests": [
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-P17-LW15P-read-s",
+    "file": "src/scenes/world.js",
+    "old": "  const PATRON_READ_S = 600;",
+    "new": "  const PATRON_READ_S = 6;",
+    "tests": [
+      "test/auditlwii2_town.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-P17-LW15P-minute-range",
+    "file": "src/net/patronLaw.js",
+    "old": "export const patronMinute = (listing, hour) => fnv(`${listing}:${hour}:minute`) % 60;",
+    "new": "export const patronMinute = (listing, hour) => fnv(`${listing}:${hour}:minute`) % 30;",
+    "tests": [
+      "test/auditlwii2_town.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-P17-LW16P-heard-pick",
+    "file": "src/systems/livingWorld/carried.js",
+    "old": "  return deeds[Math.floor((seed >>> 0) / 1000) % deeds.length];",
+    "new": "  return deeds[0];",
+    "tests": [
+      "test/auditlwii2_town.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-P17-LW16P-routed-known-min",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    for (const [key, h] of turns.routed ?? []) {\n      const known = h.t + DEED_KNOWN_MIN;",
+    "new": "    for (const [key, h] of turns.routed ?? []) {\n      const known = h.t;",
+    "tests": [
+      "test/auditlwii2_town.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-P17-LW15P-browse-any-trader",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "browse[Math.floor(brng() * browse.length) % browse.length]",
+    "new": "browse[0]",
+    "tests": [
+      "test/auditlwii2_town.test.js"
+    ]
+  }
+]

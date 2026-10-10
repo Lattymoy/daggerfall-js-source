@@ -53,11 +53,13 @@ import { NAV_CELL } from '../../world/cityNavigation.js';   // LW-DAWN: a berth'
 import { createPathBook, pointOnLine } from './townPaths.js';
 import { spotCircles, spotRound, circleLine, circlesStands, aloneStand, aloneStands, ROUND_S, GATHER_BEAT_S, lineMinutes, ALONE_FAR_M, SPACE_M } from './meetups.js';
 import { spotIncidents, stirLine, stirLoud, smallVoice, gateWord } from './stir.js';
-import { LIVING_GREETINGS, LIVING_KEEPSAKE, WATCH_GREETINGS, watchBand, fillLine, firstNameOf, CHAPTER_NEWS, CHAPTER_NEWS_DAYS, CHAPTER_EVENT_NEWS } from './lines.js';
+import { LIVING_GREETINGS, LIVING_KEEPSAKE, WATCH_GREETINGS, HEARD_GREETINGS, watchBand, fillLine, firstNameOf, CHAPTER_NEWS, CHAPTER_NEWS_DAYS, CHAPTER_EVENT_NEWS } from './lines.js';
 import { keepsakeFor } from './keepsake.js';
 import { lwSeed, textSeed } from './seed.js';
 import { placeKeyOf } from './lives.js';
 import { NEWS_DAYS } from './trips.js';
+import { patronVisits, patronOf, PATRON_DELAY_DAYS } from './patrons.js';   // LW15: a patron's errand to a player's trader
+import { carriedNews, reputeOf, reputeKind, regardWithRepute, heardOf } from './carried.js';   // LW16: the word carried, the character's repute
 
 /** AUDIT LEGACY II B2: whose household a resident is of - their own `household` when they live here beyond the census
  *  (Project Legacy's line), else their census house; null for none. */
@@ -257,6 +259,7 @@ export class LivingTown {
    *   suppressSpawns?: () => boolean,
    *   relations?: () => (ReturnType<typeof import('./relations.js').createRelations> | null),
    *   playerName?: () => string, weather?: () => (string|null), townName?: string, regionName?: string,
+   *   carriedOf?: (day: number) => (any[] | null),
    *   tripsOf?: (day: number) => ({ away: Map<string, { t0: number, t1: number, yaw: number, armed: boolean, dock?: boolean }[]>, visitors: { res: Resident, inT: number, outT: number, yaw: number, trip?: any, dock?: boolean }[],
    *     holders?: Map<string, Resident|null>, news?: { kind: string, who: string, foe: string, place: string }[], places?: string[] } | undefined),
    *   armOf?: (res: Resident) => ({ mobileType: number, basics: any, archive: number, frameCount: (record: number) => number, sex?: 'male'|'female' } | null),
@@ -276,6 +279,7 @@ export class LivingTown {
    *   familyNews?: (t: number) => readonly any[] | null,
    *   chapterOf?: (faction: number) => ({ band: string, name: string, event?: string | null, shut?: boolean } | null),
    *   dangers?: () => (readonly number[][] | null),
+   *   patronsOf?: () => ({ v: number, told: readonly { door: number, t: number, seed: number }[], traders: readonly number[] } | null),
    * }} o - LW6c: `keepsakes()` what the player carries (a keepsake carried home), `takeKeepsake(item)` it handed over.
    *   `tripsOf(day)` the roads' word on the town for a day (trips.js through the host's book: who of it is away
    *   when, who of elsewhere stays here; LW-TALK `places` the towns its roads and news name, its talk's {place}), undefined while its ways are still being asked; `armOf(res)` a resident's
@@ -316,7 +320,7 @@ export class LivingTown {
     this.maxPopulation = maxPopulationFor(o.town.blocks);
     /** @type {Row[]} */
     this.pool = [];
-    /** @type {Map<string, { day: number, plan: Entry[], roads?: boolean, inT?: number, home?: number|null, other?: any, sheet?: string }>} LW-DAWN `other`: the day kept beside it; CHAP5b `sheet` the halls' bands it was made under */
+    /** @type {Map<string, { day: number, plan: Entry[], roads?: boolean, inT?: number, home?: number|null, other?: any, sheet?: string, pv?: number, pe?: string, pb?: string }>} LW-DAWN `other`: the day kept beside it; CHAP5b `sheet` the halls' bands it was made under; LW15 `pv` the patrons' word it was made on (AUDIT LW-II-2 W5: `pe` its own errands', `pb` the browsers' doors' - a plan that read it alone) */
     this._plans = new Map();
     this._paths = createPathBook(nav);
     this._timer = Infinity;
@@ -362,6 +366,15 @@ export class LivingTown {
     this._stirVoice = new Map();
     /** @type {{ person: any, text: string, until: number }[]} the words to the player standing */
     this._greetings = [];
+    /** LW15: each day's patrons' word (`_patronDayOf`), and AUDIT LW-II-2 W2/W4 each day's households' holders
+     *  (`_householdsOf`) @type {Map<number, any>} */
+    this._patronDays = new Map();
+    /** @type {Map<number, { extra: readonly Resident[]|null, by: Map<string, Resident|null> }>} */
+    this._holders = new Map();
+    /** @type {{ visits: any, m: number, v: number, out: any[] } | null} LW16: the word carried in, kept by the minute */
+    this._carriedMemo = null;
+    /** @type {{ v: number, map: Map<string, any[]> } | null} AUDIT LW-II B3: each visit's town's deeds, kept with the turns */
+    this._deedsKept = null;
     this._now = 0;
     this._realNow = 0;
     /** @type {number|null} the clock at the last frame (an arrival is a jump from it) */
@@ -464,11 +477,14 @@ export class LivingTown {
     // AUDIT LEGACY II B3: a resident whose HOME changed (Project Legacy's line moved into a house bought, or to the home
     // the player marked) is planned again at once - kept by the day alone, they slept the rest of it in the old house
     const sheet = this._chapterStamp();   // CHAP5b: the halls' chapters' bands - a day's plans made again when they move
-    if (!e || e.day !== day || e.home !== res.home || (e.sheet ?? '') !== sheet || (crew && !(Math.abs((e.inT ?? -Infinity) - crew.inT) <= CREW_REPLAN_MIN))) {   // LW5: a crew's arrival read off two clocks: replanned only when it moved
+    // AUDIT LW-II-2 W1/W5: the patrons' word asked of a plan that read it alone (`pb` - a crew's and a visitor's never do:
+    // a crew's plan, never signed, was made again at every read of a town with any word, and the stir and the walks with
+    // it), and made again only when what it read of it moved (`_patronsKept`)
+    if (!e || e.day !== day || e.home !== res.home || (e.sheet ?? '') !== sheet || (crew && !(Math.abs((e.inT ?? -Infinity) - crew.inT) <= CREW_REPLAN_MIN)) || (e.pb !== undefined && e.pv !== this._patronV() && !this._patronsKept(e, res, day))) {   // LW5: a crew's arrival read off two clocks: replanned only when it moved; LW15: the patrons' word changed
       const other = besideDay(e, day);   // LW-DAWN
       const roads = this._roadsOf(day);
       const visit = roads?.visitorOf.get(res.id) ?? null;
-      let plan;
+      let plan, signed = null;
       if (crew) {
         // LW5: a hand of a packet lying here - in off the dock when she made fast, lodged at a tavern, back aboard by her
         // sailing (the square, a town with no dock)
@@ -489,13 +505,106 @@ export class LivingTown {
         plan = dayPlan(res, this.places, day, { mpm: this.o.mpm, visitor: true, home: this._lodging(res), away, bandOf: this._bandOf });
       } else {
         const away = (roads?.away.get(res.id) ?? []).map((w) => ({ t0: w.t0, t1: w.t1, exit: w.dock ? (this.dockSpot() ?? exitToward(this.places, w.yaw)) : exitToward(this.places, w.yaw), armed: w.armed }));   // LW5b: a passage leaves by the dock
-        plan = dayPlan(res, this.places, day, { mpm: this.o.mpm, away, watch: this._watchSize, bandOf: this._bandOf });
+        plan = dayPlan(res, this.places, day, { mpm: this.o.mpm, away, watch: this._watchSize, bandOf: this._bandOf, ...this._patronsFor(res, day) });   // LW15: a patron's errand, a browser's
+        signed = this._patronSign(res, day);   // AUDIT LW-II-2 W5: what it read of the patrons' word
       }
-      e = { day, plan, roads: !!roads, home: res.home, other, sheet };
+      e = { day, plan, roads: !!roads, home: res.home, other, sheet, ...signed };
       this._planGen++;
       this._plans.set(res.id, e);
     }
     return e.plan;
+  }
+
+  /** LW15: the patrons' word's version (the host's - a new sale read, the town's traders changed): a plan made before it
+   *  is asked again (AUDIT LW-II-2 W5: made again where what it read moved, `_patronsKept`). */
+  _patronV() { return this.o.patronsOf?.()?.v ?? 0; }
+  /**
+   * LW15: A RESIDENT'S PATRON ERRANDS on `day` - the sales told dealt to the town's households (patrons.js patronVisits,
+   * every reader the same), each its house's door - and the public traders' doors a browser's errand may take.
+   * @param {any} res @param {number} day @returns {{ errands?: any[], browse?: any[] }}
+   */
+  _patronsFor(res, day) {
+    const d = this._patronDayOf(day);
+    if (!d) return {};
+    const errands = d.byRes.get(res.id)?.errands ?? [];
+    return { ...(errands.length ? { errands } : {}), ...(d.browse.length ? { browse: d.browse } : {}) };
+  }
+
+  /**
+   * LW15: the patrons' word on `day` - each resident's errands and the browsers' doors - kept for the day while the word
+   * and the households stand. AUDIT LW-II-2 W2: each sale DEALT to a census household's place (patrons.js patronVisits
+   * over the census - every reader's), and WALKED by whoever holds that place that day on this reader (`_householdsOf`): a
+   * place vacant here walks none. Dealt over the day's people (AUDIT LW-II B12), a reader whose character had struck one
+   * householder down dealt nine sales in ten of the town to another than every other reader did - the pool's order moved.
+   * AUDIT LW-II-2 W5: each resident's errands signed (`sig`), and the doors (`browseSig`) - what a plan read of the word.
+   * @param {number} day
+   * @returns {{ v: number, by: Map<string, Resident|null>, byRes: Map<string, { errands: any[], sig: string }>, browse: any[], browseSig: string } | null}
+   */
+  _patronDayOf(day) {
+    const p = this.o.patronsOf?.();
+    if (!p) return null;
+    const by = this._householdsOf(day);
+    let d = this._patronDays.get(day);
+    if (!d || d.v !== p.v || d.by !== by) {
+      /** @type {Map<string, { errands: any[], sig: string }>} */
+      const byRes = new Map();
+      for (const v of patronVisits(p.told ?? [], day, this.residents)) {
+        const res = by.get(v.resId) ?? null;   // the place's holder today: the census's own, a newcomer - none while it stands empty
+        if (!res) continue;
+        if (!byRes.has(res.id)) byRes.set(res.id, { errands: [], sig: '' });
+        const x = /** @type {{ errands: any[], sig: string }} */ (byRes.get(res.id));
+        x.errands.push({ at: this.places.doors.get(v.door) ?? null, from: v.from, dur: v.dur });
+        x.sig += `${v.door}:${v.from}:${v.dur};`;
+      }
+      const browse = (p.traders ?? []).map((k) => this.places.doors.get(k)).filter(Boolean);
+      d = { v: p.v, by, byRes, browse, browseSig: browse.map((s) => s.key).join() };
+      this._patronDays.set(day, d);
+      for (const k of this._patronDays.keys()) if (k < day - 1 || k > day + 1) this._patronDays.delete(k);
+    }
+    return d;
+  }
+
+  /** AUDIT LW-II-2 W5: what a resident's plan of `day` reads of the patrons' word - the word's version, their own errands
+   *  of the day and the browsers' doors (all '' with no word). @param {Resident} res @param {number} day */
+  _patronSign(res, day) {
+    const d = this._patronDayOf(day);
+    return { pv: this._patronV(), pe: d?.byRes.get(res.id)?.sig ?? '', pb: d?.browseSig ?? '' };
+  }
+
+  /** AUDIT LW-II-2 W5: a plan made on an older patrons' word that reads the same of its resident now - their own errands
+   *  and the doors as they were - is KEPT, marked with the word (a new sale walked by another, or walked on another day,
+   *  made the whole town's day again in one frame: 37 ms on a 12x12 town, against 5). @param {any} e @param {Resident} res
+   *  @param {number} day */
+  _patronsKept(e, res, day) {
+    const s = this._patronSign(res, day);
+    if (s.pe !== e.pe || s.pb !== e.pb) return false;
+    e.pv = s.pv;
+    return true;
+  }
+
+  /**
+   * AUDIT LW-II-2 W2/W4: THE HOUSEHOLDS' PLACES on `day` and who holds each that day on this reader - the census's own, a
+   * newcomer (`o.holderOf`), one of the line living here beyond the census in it (`o.extraPeople`: a spouse wed in, the
+   * census's own), or nobody (null: vacant). By the census's id. Read off the lives alone, NEVER the roads' word: the
+   * Vendor page names a buyer up to a real day back, and each of its days was a whole cold read of the town's roads
+   * (`_roadsOf` - 12 days, 249 ms in one render) that put the street's own word for today out. Kept by the day.
+   * @param {number} day @returns {Map<string, Resident|null>}
+   */
+  _householdsOf(day) {
+    const extra = this.o.extraPeople?.(day, this) ?? null;
+    const kept = this._holders.get(day);
+    if (kept && kept.extra === extra) return kept.by;
+    const hold = this.o.holderOf;
+    /** @type {Map<string, Resident|null>} */
+    const by = new Map();
+    for (const r of this.residents) {
+      if (r.roll !== 'h' || r.guard) continue;
+      const x = hold ? hold(r, day) : r;
+      by.set(r.id, x ? (x.id === r.id ? r : { ...x, home: r.home }) : (extra?.find((m) => placeKeyOf(m) === r.id) ?? null));   // as peopleOf holds it
+    }
+    if (this._holders.size > 40) this._holders.clear();
+    this._holders.set(day, { extra, by });
+    return by;
   }
 
   /** The roads' word for a day, kept (undefined while its ways are being asked - the day is planned without them and
@@ -1350,7 +1459,11 @@ export class LivingTown {
     const seldom = pool === LIVING_GREETINGS.stranger || pool === WATCH_GREETINGS.citizen;
     if (seldom && !stopped && (lwSeed(textSeed(res.id), Math.floor(t)) % 4) !== 0) return null;
     rel?.seen(res.id, day);
-    return fillLine(pool[lwSeed(textSeed(res.id), Math.floor(t / 7)) % pool.length], { player: this.o.playerName?.() ?? '', town: this.o.townName ?? '' });
+    // LW16: a stranger who has heard of the character speaks of it, now and then (carried.js heardOf)
+    const deed = pool === LIVING_GREETINGS.stranger ? heardOf(this.reputeAt(t).deeds, lwSeed(textSeed(res.id), Math.floor(t / 7), 0x68656172)) : null;   // 'hear'
+    const said = deed ? HEARD_GREETINGS[/** @type {keyof typeof HEARD_GREETINGS} */ (reputeKind(deed))] : pool;
+    return fillLine(said[lwSeed(textSeed(res.id), Math.floor(t / 7)) % said.length], { player: this.o.playerName?.() ?? '', town: this.o.townName ?? '',
+      ...(deed ? { who: deed.kind === 'routed' ? deed.who : firstNameOf(deed.who), foe: deed.foe, place: deed.place } : {}) });
   }
 
   /**
@@ -1422,8 +1535,77 @@ export class LivingTown {
     if (kin.length) ctx.news = [...(ctx.news ?? []), ...kin];
     const chapters = this.chapterNews(t);   // CHAP5b: and of its guilds' chapters
     if (chapters.length) ctx.news = [...(ctx.news ?? []), ...chapters];
+    const carried = this.carriedAt(t);   // LW16: the word carried in from the towns about
+    if (carried.length) ctx.news = [...(ctx.news ?? []), ...carried];
     ctx.player = this.o.playerName?.() ?? '';
     return ctx;
+  }
+
+  /**
+   * LW16: THE WORD CARRIED IN at minute `t` (carried.js carriedNews) - the visits of these days the host names for the
+   * roads' day (`carriedOf(day)`: none while it is worked), each telling its town's news and the
+   * character's deeds known there when it set out (`deedNews` of that town); kept by the minute and the character's
+   * turns.
+   * @param {number} [t]
+   */
+  carriedAt(t = this._now) {
+    const visits = this._roads ? this.o.carriedOf?.(this._roads.day) : null;   // AUDIT LW-II-2 W10: the host's alone (the roads' word carried none - no producer wrote it)
+    if (!visits?.length) return [];
+    const v = this.o.relations?.()?.turnsVersion?.() ?? 0, m = Math.floor(t);
+    const c = this._carriedMemo;
+    if (c && c.visits === visits && c.m === m && c.v === v) return c.out;
+    const own = [...this._roadNewsAt(t), ...this.deedNews(t)];
+    // AUDIT LW-II B3: a visit's deeds are its town's at the minute it set out - read once (a minute's read ran every
+    // visit's and every relay's turns again: 18-80 ms a frame once a sky minute for a character of many deeds), kept with
+    // the turns they were read over
+    if (this._deedsKept?.v !== v) this._deedsKept = { v, map: new Map() };
+    const kept = this._deedsKept.map, region = this.o.town.region ?? null;
+    const deedsAt = (/** @type {any} */ town, /** @type {number} */ minute) => {
+      const k = `${town.mapId >>> 0}:${minute}`;
+      let d = kept.get(k);
+      if (!d) {
+        // AUDIT LW-II B8: a tale of this town's own region (a band routed, a party robbed) is its own word - carried in
+        // again, it outlived its own days
+        d = this.deedNews(minute, town).filter((x) => !((x.kind === 'routed' || x.kind === 'held') && region != null && town.region === region));
+        if (kept.size > 4096) kept.clear();
+        kept.set(k, d);
+      }
+      return d;
+    };
+    const out = carriedNews(visits, t, { own, deedsAt, here: this.o.town.mapId });
+    this._carriedMemo = { visits, m, v, out };
+    return out;
+  }
+
+  /** AUDIT LW-II B9: the road's news the town knows by minute `t` (the day's word is read at its noon - a fight the
+   *  character turned, its party home at eleven, was known at five). @param {number} t */
+  _roadNewsAt(t) {
+    const news = this._roads?.news ?? [];
+    return news.every((n) => n.t <= t) ? news : news.filter((n) => n.t <= t);
+  }
+
+  /** LW16: THE TOWN'S REPUTE of the character at minute `t` - its strangers' regard and the deeds it knows of (carried.js
+   *  reputeOf over the road's news, its deeds and the word carried in). @param {number} [t] */
+  reputeAt(t = this._now) {
+    return reputeOf([...this._roadNewsAt(t), ...this.deedNews(t), ...this.carriedAt(t)]);
+  }
+
+  /** LW15 / AUDIT LW-II B12: the buyer a sale names (the Vendor page's) - the one holding the household's place the sale
+   *  is dealt to on the day the patron comes (the one who walks in - `_patronDayOf`). @param {number} seed
+   *  @param {number} t - the sale's sky minute */
+  patronOfSale(seed, t) {
+    // AUDIT LW-II-2 W2/W4: the place dealt over the census (every reader's), named by its holder that day off the lives
+    // alone - never the roads' word (each sale's day a cold read of the town that put the street's own out); vacant
+    // here: null, the page's "a townsperson of"
+    const place = patronOf(seed, this.residents);
+    return place ? this._householdsOf(this.dayOf(t) + PATRON_DELAY_DAYS).get(place.id) ?? null : null;
+  }
+
+  /** LW16: a resident's regard of the character - their own where they have one, else the town's repute (read, never
+   *  stored). @param {Resident} res @param {number} [t] */
+  regardOf(res, t = this._now) {
+    const rel = this.o.relations?.();
+    return regardWithRepute(!!rel?.known(res.id), rel?.regard(res.id, this.dayOf(t)) ?? 0, this.reputeAt(t).regard);
   }
 
   /** LW8b: the meetings' beat on the town's clock - a round (meetups.js ROUND_S) and a line (the crew's), in its minutes. */
@@ -1563,13 +1745,17 @@ export class LivingTown {
    * LW7: WHAT THE TOWN SAYS OF THE DEEDS - each of its own the player struck down (`slain`), known DEED_KNOWN_MIN after,
    * for NEWS_DAYS: `who` their name, `seen` whether anyone saw whose hand it was; each who died fighting at the
    * player's side (`died`); WATCH-FIX: each another hand cut down in its street (`killed`), `watch` one of the watch's.
+   * LW12: a band of its region the character routed (`routed`, `who` its name). LW16: a party of its region the
+   * character robbed on the road, charged (`held`, `who` the one robbed); and any town's deeds (`town`: the word a
+   * visitor carries from theirs - livingWorld/carried.js).
    * The character's own, read over the town's pure news (relations.js turns).
+   * @param {number} [t] @param {{ mapId: number, region?: number }} [town]
    * @returns {{ kind: string, who: string, foe: string, place: string, t: number, seen: boolean, watch?: boolean }[]}
    */
-  deedNews(t = this._now) {
+  deedNews(t = this._now, town = this.o.town) {
     const turns = this.o.relations?.()?.turns?.();
-    if (!turns || (!turns.slain?.size && !turns.died?.size && !turns.killed?.size && !turns.home?.size)) return [];
-    const prefix = `L${this.o.town.mapId >>> 0}.`;
+    if (!turns || (!turns.slain?.size && !turns.died?.size && !turns.killed?.size && !turns.home?.size && !turns.routed?.size && !turns.held?.size)) return [];
+    const prefix = `L${town.mapId >>> 0}.`;
     const out = [];
     for (const kind of /** @type {const} */ (['slain', 'died', 'killed'])) {   // WATCH-FIX: and one of the watch another hand cut down
       for (const [key, h] of turns[kind] ?? []) {
@@ -1586,6 +1772,20 @@ export class LivingTown {
       const known = h.t + DEED_KNOWN_MIN;
       if (!key.startsWith(prefix) || known > t || t - known >= NEWS_DAYS * DAY_MIN || !h.who) continue;
       out.push({ kind: 'home', who: h.who, foe: '', place: '', t: known, seen: true });
+    }
+    // LW12: a band the character routed - told in its region's towns (the hideout's key names its region), by its name
+    const region = `O${(town.region ?? -1) >>> 0}.`;
+    for (const [key, h] of turns.routed ?? []) {
+      const known = h.t + DEED_KNOWN_MIN;
+      if (!key.startsWith(region) || known > t || t - known >= NEWS_DAYS * DAY_MIN || !h.who) continue;
+      out.push({ kind: 'routed', who: h.who, foe: '', place: '', t: known, seen: true });
+    }
+    // LW16: a party the character robbed, charged to its region - told in its region's towns, by the one robbed
+    const charged = `R${(town.region ?? -1) >>> 0}.`;
+    for (const [key, h] of turns.held ?? []) {
+      const known = h.t + DEED_KNOWN_MIN;
+      if (!key.startsWith(charged) || known > t || t - known >= NEWS_DAYS * DAY_MIN || !h.who) continue;
+      out.push({ kind: 'held', who: h.who, foe: '', place: '', t: known, seen: true });
     }
     return out.sort((a, b) => b.t - a.t);
   }

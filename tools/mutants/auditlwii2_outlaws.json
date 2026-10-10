@@ -1,0 +1,472 @@
+[
+  {
+    "name": "AUDITLWII2-C4-transport",
+    "file": "src/scenes/hideouts.js",
+    "old": "!!it && it.group !== 'Transportation' && !isBagItem(it)",
+    "new": "!!it && !isBagItem(it)",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "a chest holds no Transportation"
+  },
+  {
+    "name": "AUDITLWII2-C4-bag",
+    "file": "src/scenes/hideouts.js",
+    "old": "it.group !== 'Transportation' && !isBagItem(it) && !isSurvivalItem(it)",
+    "new": "it.group !== 'Transportation' && !isSurvivalItem(it)",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "no Materials Bag"
+  },
+  {
+    "name": "AUDITLWII2-C4-provisions",
+    "file": "src/scenes/hideouts.js",
+    "old": "!isBagItem(it) && !isSurvivalItem(it);",
+    "new": "!isBagItem(it);",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "no provisions, no Campfires"
+  },
+  {
+    "name": "AUDITLWII2-C4-filter",
+    "file": "src/scenes/hideouts.js",
+    "old": "shelfIndex: 1 }).filter(chestPiece) : [];",
+    "new": "shelfIndex: 1 }) : [];",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "the chest's pool is the roll's own draws"
+  },
+  {
+    "name": "AUDITLWII2-C4-shelf",
+    "file": "src/scenes/hideouts.js",
+    "old": "0x63687374), shelfIndex: 1 })",
+    "new": "0x63687374), shelfIndex: 0 })",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "a back shelf's roll: none of the counter's pieces"
+  },
+  {
+    "name": "AUDITLWII2-C4-draw",
+    "file": "src/scenes/hideouts.js",
+    "old": "items.push(pool.splice(Math.floor(draw() * pool.length), 1)[0]);",
+    "new": "items.push(pool.splice(0, 1)[0]);",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "drawn, never the roll's first pieces"
+  },
+  {
+    "name": "AUDITLWII2-C4-seed",
+    "file": "src/scenes/hideouts.js",
+    "old": "deps.shelf({ rolls: lwRng(textSeed(band.key), 0x63687374)",
+    "new": "deps.shelf({ rolls: lwRng(textSeed('chest'), 0x63687374)",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "the roll on the band's own seed"
+  },
+  {
+    "name": "AUDITLWII2-P5-LW12P-wire-chest-gold",
+    "file": "src/scenes/hideouts.js",
+    "old": "  if (take.gold > 0) items.push(deps.gold(take.gold));\n",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "the chest: goods AND the gold (takeOf)"
+  },
+  {
+    "name": "AUDITLWII2-P5-LW12P-wire-chest-days",
+    "file": "src/scenes/hideouts.js",
+    "old": "for (let d = 0; d <= TAKE_DAYS; d++) for (const town of towns)",
+    "new": "for (let d = 0; d <= 0; d++) for (const town of towns)",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "the take over TAKE_DAYS of its leg's towns' trips"
+  },
+  {
+    "name": "AUDITLWII2-P5-LW12P-wire-chest-towns",
+    "file": "src/scenes/hideouts.js",
+    "old": "const towns = [band.hideout.a, band.hideout.b].map((id) => deps.townOf(id)).filter(Boolean);",
+    "new": "const towns = [band.hideout.a].map((id) => deps.townOf(id)).filter(Boolean);",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "the troubled trips of its leg's TWO towns"
+  },
+  {
+    "name": "AUDITLWII2-P5-LW12P-wire-stood-routs",
+    "file": "src/scenes/world.js",
+    "old": "    bandAt: (h, t) => outlawBandAt(h, t, livingRouts()),",
+    "new": "    bandAt: (h, t) => outlawBandAt(h, t),",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "a rout by the character empties the hideout STOOD for them"
+  },
+  {
+    "name": "AUDITLWII2-P5-LW12P-wire-hideouts-near",
+    "file": "src/scenes/world.js",
+    "old": "    const regions = new Set(livingTripWorld.townsNear(px, py, 8).map((t) => t.region | 0));",
+    "new": "    const regions = new Set(livingTripWorld.townsNear(px, py, 1).map((t) => t.region | 0));",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "the hideouts about the player: of the regions of the towns within eight pixels"
+  },
+  {
+    "name": "AUDITLWII2-P5-wire-chest-trips",
+    "file": "src/scenes/world.js",
+    "old": "    tripsOf: (town, at) => tripsOfTown(town, at, livingTripWorld, livingTripO()),",
+    "new": "    tripsOf: () => [],",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "the host's chest reads its towns' troubled trips"
+  },
+  {
+    "name": "AUDITLWII2-P5-wire-chest",
+    "file": "src/scenes/world.js",
+    "old": "    chest: livingBandChest,\n",
+    "new": "    chest: () => ({ next: () => ({ done: true, value: { items: [], robbed: [] } }) }),\n",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "the host's chest is livingBandChest"
+  },
+  {
+    "name": "AUDITLWII2-C5-stand-frame",
+    "file": "src/scenes/hideouts.js",
+    "old": "      stood.chest = deps.chest(band, t);\n",
+    "new": "      stood.chest = deps.chest(band, t);\n      workChest(stood, Infinity);\n",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "the stand frame reads no trip"
+  },
+  {
+    "name": "AUDITLWII2-C5-slice",
+    "file": "src/scenes/hideouts.js",
+    "old": "      if (now() - t0 >= budgetMs) return;\n",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "a slice a frame"
+  },
+  {
+    "name": "AUDITLWII2-C5-slice-ms",
+    "file": "src/scenes/hideouts.js",
+    "old": "export const CHEST_SLICE_MS = 3;",
+    "new": "export const CHEST_SLICE_MS = 6;",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "CHEST_SLICE_MS"
+  },
+  {
+    "name": "AUDITLWII2-C5-work",
+    "file": "src/scenes/hideouts.js",
+    "old": "      if (stood?.chest) workChest(stood, CHEST_SLICE_MS);",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "the frame works the chest"
+  },
+  {
+    "name": "AUDITLWII2-C5-rout",
+    "file": "src/scenes/hideouts.js",
+    "old": "    if (s.chest) workChest(s, Infinity);",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "a rout before the chest is done reads its robbed"
+  },
+  {
+    "name": "AUDITLWII2-C5-minted",
+    "file": "src/scenes/hideouts.js",
+    "old": "      s.minted = c.items.map((it) => [it, it?.stackCount]);",
+    "new": "      s.minted = [];",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "the pile's minting is the take's (C2's measure)"
+  },
+  {
+    "name": "AUDITLWII2-C13-giveup",
+    "file": "src/scenes/hideouts.js",
+    "old": "          else if (!mine && stood.owned) dropPeople(stood);\n",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "the election lost: its people given up"
+  },
+  {
+    "name": "AUDITLWII2-C13-coming",
+    "file": "src/scenes/hideouts.js",
+    "old": "if (stood !== s || s.wave !== wave) { takeOut(rec); return; }",
+    "new": "if (stood !== s) { takeOut(rec); return; }",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "a body coming after the give-up taken out"
+  },
+  {
+    "name": "AUDITLWII2-C13-wave",
+    "file": "src/scenes/hideouts.js",
+    "old": "s.allDown = false; s.wave++;",
+    "new": "s.allDown = false;",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "the give-up ends the standing's wave"
+  },
+  {
+    "name": "AUDITLWII2-C13-filter",
+    "file": "src/scenes/world.js",
+    "old": "<= BAND_KEEP_M), Infinity);",
+    "new": "<= BAND_LIVE_M), Infinity);",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "the election counts the peers within BAND_KEEP_M"
+  },
+  {
+    "name": "AUDITLWII2-C14-hold",
+    "file": "src/scenes/hideouts.js",
+    "old": " && !stood.foes.some((/** @type {any} */ rec) => !rec.dead && deps.engaged?.(rec))) { letGo(); return; }",
+    "new": ") { letGo(); return; }",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "never let go under one drawing on the player"
+  },
+  {
+    "name": "AUDITLWII2-C14-kept-filter",
+    "file": "src/scenes/hideouts.js",
+    "old": ".filter((p) => !down?.has(p.id))",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "the struck-down stand no more"
+  },
+  {
+    "name": "AUDITLWII2-C14-kept-letgo",
+    "file": "src/scenes/hideouts.js",
+    "old": "    for (const rec of s.foes) if (s.killed.has(rec) || killed(rec)) strike(s, rec);\n",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "the let-go keeps the struck-down"
+  },
+  {
+    "name": "AUDITLWII2-C14-kept-latched",
+    "file": "src/scenes/hideouts.js",
+    "old": "if (s.killed.has(rec) || killed(rec)) strike(s, rec);",
+    "new": "if (killed(rec)) strike(s, rec);",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "one latched killed, its body since taken up, kept"
+  },
+  {
+    "name": "AUDITLWII2-C14-last-blow",
+    "file": "src/scenes/hideouts.js",
+    "old": "(stood.foes.length || stood.allDown)",
+    "new": "stood.foes.length",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "every one struck down before: routed when stood again"
+  },
+  {
+    "name": "AUDITLWII2-C14-character",
+    "file": "src/scenes/hideouts.js",
+    "old": "      if (rel() !== downsRel) { downs.clear(); downsRel = rel(); }",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "another character's records keep none of the struck-down"
+  },
+  {
+    "name": "AUDITLWII2-C14-wire",
+    "file": "src/scenes/world.js",
+    "old": "    engaged: (f) => !!f.ai?.detected && f.ai.targetIsLocalPlayer !== false,",
+    "new": "    engaged: () => false,",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "the host's engaged: the pool's cull's own spare"
+  },
+  {
+    "name": "AUDITLWII2-H2-tents",
+    "file": "src/scenes/hideouts.js",
+    "old": "      for (const tt of s.tents) move(tt.feet);\n",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "its tents follow the origin"
+  },
+  {
+    "name": "AUDITLWII2-H2-centre",
+    "file": "src/scenes/hideouts.js",
+    "old": "      move(s.centre);\n",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "its fire's centre (and its chest's) follows the origin"
+  },
+  {
+    "name": "AUDITLWII2-H2-free",
+    "file": "src/scenes/hideouts.js",
+    "old": "        deps.renderer?.destroyBillboardBatch?.(s.batch);\n",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "the old fire batch freed"
+  },
+  {
+    "name": "AUDITLWII2-H2-frame",
+    "file": "src/scenes/hideouts.js",
+    "old": "        s.batch = deps.renderer?.createBillboardBatch?.(FIRE_FLAT.archive, FIRE_FLAT.record, fire.size, [s.centre]) ?? null;\n        if (s.batch) s.batch.frame = frame;\n",
+    "new": "        s.batch = null;\n",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "minted again at once, its frame kept"
+  },
+  {
+    "name": "AUDITLWII2-H2-wire",
+    "file": "src/scenes/world.js",
+    "old": "      _livingHideoutsHost?.offsetAll(r.offset);",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "the recentre block moves the hideout"
+  },
+  {
+    "name": "AUDITLWII2-H9-free",
+    "file": "src/scenes/world.js",
+    "old": "    _livingHideoutsHost?.clear();\n    // AUDIT SURV-TIERS (the third pass): AND THE CAMPS",
+    "new": "    // AUDIT SURV-TIERS (the third pass): AND THE CAMPS",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "the teleport lets the hideout go beside the camps"
+  },
+  {
+    "name": "AUDITLWII2-H3-told",
+    "file": "src/scenes/world.js",
+    "old": "_livingTripMemo.clear(); _livingToldKept.clear(); _livingVisitorsKept.clear(); for",
+    "new": "_livingTripMemo.clear(); _livingVisitorsKept.clear(); for",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "resolved makes the told trips again"
+  },
+  {
+    "name": "AUDITLWII2-H3-visitors",
+    "file": "src/scenes/world.js",
+    "old": "_livingToldKept.clear(); _livingVisitorsKept.clear(); for (const x of _livingCarried",
+    "new": "_livingToldKept.clear(); for (const x of _livingCarried",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "resolved makes the visitors again"
+  },
+  {
+    "name": "AUDITLWII2-H3-carried",
+    "file": "src/scenes/world.js",
+    "old": "_livingCarriedLast.set(x.map, x.visits); _livingCarried.clear(); },",
+    "new": "_livingCarriedLast.set(x.map, x.visits); },",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "resolved makes the carried word again"
+  },
+  {
+    "name": "AUDITLWII2-H3-last",
+    "file": "src/scenes/world.js",
+    "old": "_livingVisitorsKept.clear(); for (const x of _livingCarried.values()) if (x.visits) _livingCarriedLast.set(x.map, x.visits); _livingCarried.clear(); },",
+    "new": "_livingVisitorsKept.clear(); _livingCarried.clear(); },",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "B11's last word told while it is worked again"
+  },
+  {
+    "name": "AUDITLWII2-H3-last-kept",
+    "file": "src/scenes/world.js",
+    "old": "_livingCarriedLast.set(x.map, x.visits); _livingCarried.clear(); },",
+    "new": "_livingCarriedLast.set(x.map, x.visits); _livingCarriedLast.clear(); _livingCarried.clear(); },",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "B11's last word kept"
+  },
+  {
+    "name": "AUDITLWII2-P2-LW12P-gens-cache-order",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "  if (!c || c.e > k - 1) c = { e: 0, gen: 0, lastT: -Infinity };",
+    "new": "  if (!c || c.e > k) c = { e: 0, gen: 0, lastT: -Infinity };",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "genAt: an earlier minute read after a later one reads a fresh reader's generation"
+  },
+  {
+    "name": "AUDITLWII2-P11-LW12P-take-counter-kinds",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "(tr.kind === 'merchant' || tr.kind === 'carter' || tr.kind === 'pedlar' ?",
+    "new": "(tr.kind === 'merchant' ?",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "takeOf: a quarter of a COUNTER's purse (a pedlar's too)"
+  },
+  {
+    "name": "AUDITLWII2-P11-LW12P-trouble-nearest",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "    .sort((a, b) => Math.max(Math.abs(a.px - px), Math.abs(a.py - py)) - Math.max(Math.abs(b.px - px), Math.abs(b.py - py)) || (a.key < b.key ? -1 : 1));",
+    "new": "    .sort((a, b) => (a.key < b.key ? -1 : 1));",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "bandTrouble: the NEAREST hideout standing a band takes the trouble"
+  },
+  {
+    "name": "AUDITLWII2-P11-LW12P-rout-thanks-all",
+    "file": "src/scenes/hideouts.js",
+    "old": "    for (const tr of s.robbed) for (const m of tr.party ?? []) if (!thanked.has(m.id)) { thanked.add(m.id); r?.note?.(m.id, 'helped', day); }",
+    "new": "    for (const tr of s.robbed.slice(0, 1)) for (const m of tr.party ?? []) if (!thanked.has(m.id)) { thanked.add(m.id); r?.note?.(m.id, 'helped', day); }",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "`helped` regard from every member of the parties it robbed of late"
+  },
+  {
+    "name": "AUDITLWII2-P11-LW12P-leader-classes",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "    const cls = i === 0 ? pickOf(rng, [MOBILE_TYPES.Nightblade, MOBILE_TYPES.Barbarian, MOBILE_TYPES.Rogue]) : pickOf(rng, OUTLAW_CLASSES);",
+    "new": "    const cls = pickOf(rng, OUTLAW_CLASSES);",
+    "tests": [
+      "test/auditlwii2_outlaws.test.js"
+    ],
+    "note": "5.1: the leader a Nightblade, Barbarian or Rogue"
+  }
+]

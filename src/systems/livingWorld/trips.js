@@ -32,6 +32,8 @@ import { seededRng } from '../wind.js';
 import { DAY_MIN, DAY_START_MIN } from './dayPlan.js';
 import { WORLD_MAP_TERRAIN_DIM as NATIVE_PIXEL } from '../../formats/mapsFile.js';
 import { NATIVE_PER_M } from '../travelDungeons.js';
+import { CITY_COURT_BLOCKS } from './census.js';
+import { companiesOf, companyOfPlace, namedIn, COMPANY_DIVE_CHANCE, holyDayOf, holyDepartMin, holyDraw } from './companies.js';   // LW13: the companies, the pilgrims' holy day
 
 // the native units' one homes: a map pixel the MAPS format's own (mapsFile.js), a metre the travel view's (travelDungeons.js)
 export { NATIVE_PIXEL, NATIVE_PER_M };
@@ -52,6 +54,38 @@ export const TRIP_RANGE_PX = Object.freeze({ merchant: [3, 14], adventurer: [3, 
 export const STAY_DAYS = Object.freeze({ merchant: [1, 2], adventurer: [1, 1], pilgrim: [1, 2], courier: [0, 1], pedlar: [0, 1] });
 /** The most sellswords a merchant hires for the road. */
 export const HIRE_MAX = 3;
+/** LW9 (bible/06-Systems/Living-World-II.md): THE ROAD'S NEW TRAFFIC's own tables, beside the first's - each job's pace,
+ *  cycle (days), chance a cycle, reach (map pixels) and stay (days). A patrol's and a noble's people ride with their
+ *  leader (`leaderOf`) as a sellsword rides with its merchant, and keep no tables of their own. */
+export const ROAD_PACE = Object.freeze({ carter: 0.8, hunter: 1, patrol: 1, noble: 0.85, retainer: 0.85, minstrel: 0.95 });
+/** AUDIT LW-II F2: a minstrel's cycle six days - a trip fits its cycle with a day spare (estDays <= len - 1), and a day's
+ *  walk each way, a night or two played and the day home is five: at four, no minstrel ever left town at the calendar's
+ *  pace (offline), and a fated one died abroad with no road under them. */
+export const ROAD_CYCLE_DAYS = Object.freeze({ carter: 7, hunter: 4, patrol: 6, noble: 20, minstrel: 6 });
+export const ROAD_TRIP_CHANCE = Object.freeze({ carter: 0.8, hunter: 0.75, patrol: 0.95, noble: 0.6, minstrel: 0.8 });
+/** AUDIT LW-II E5: a carter's reach what a morning's walk fits - from first light (WALK_FROM_H) to the market by MARKET_IN_H
+ *  at a carter's pace, two map pixels at the calendar's (online's, one); its four of before were never walked. */
+export const ROAD_RANGE_PX = Object.freeze({ carter: [1, 2], hunter: [1, 3], patrol: [3, 12], noble: [6, 18], minstrel: [3, 8] });
+export const ROAD_STAY_DAYS = Object.freeze({ carter: [0, 0], hunter: [0, 0], patrol: [0, 1], noble: [1, 2], minstrel: [1, 2] });
+/** A job's row of a table, the road's new traffic's beside the first's. @param {Record<string, any>} first @param {Record<string, any>} road @param {string} job */
+const rowOf = (first, road, job) => first[job] ?? road[job];
+/** LW9: A CARTER'S MARKET - a town of this many blocks or more, a city or a village (a General Store's town), its market
+ *  day one day in seven by its map id; the carter in by MARKET_IN_H (the road walked from first light, WALK_FROM_H), at
+ *  the stall till MARKET_OUT_H, home by nightfall - a market farther than a morning's walk is no carter's. */
+export const MARKET_BLOCKS = 4;
+export const MARKET_IN_H = 12;
+export const MARKET_OUT_H = 13.5;
+/** LW9: A HUNTER'S WILD - its point the first of a few seeded tries that stands on dry ground off every town's pixel. */
+export const WILD_TRIES = 6;
+/** LW9: THE INN ON THE ROAD - a roadside tavern (location type 6) this near the way (map pixels) is an inn a party walks
+ *  on to at nightfall, when it lies ahead within INN_AHEAD_N (native: a map pixel) - it lodges there, not in a camp. */
+export const INN_TYPE = 6;
+export const INN_REACH_PX = 1;
+export const INN_AHEAD_N = NATIVE_PIXEL;
+/** LW9: A PATROL KEEPS THE ROADS round its towns - a trip from or to a town a patrol's round went from or to in the
+ *  days before it (and while it walks) meets trouble PATROL_RISK times as often. */
+export const PATROL_COVER_DAYS = 2;
+export const PATROL_RISK = 0.5;
 /** The farthest a traveller's home can be from a town and still be read for visitors or the roads (map pixels). */
 export const TRIP_REACH_PX = 18;
 /** LW6: the share of an adventurer's trips that are DIVES - into a dungeon in reach, when one is - and the reach
@@ -77,8 +111,9 @@ export const DRY_STEP_N = 80;
  * @typedef {import('./census.js').Resident} Resident
  * @typedef {import('./census.js').LwTown} LwTown
  * @typedef {{ pixels: { x: number, y: number }[], kinds?: string[] }} RoutePlan - travelRoute.js planRoute's answer
- * @typedef {{ pts: number[][], cum: number[], len: number, kinds: string[], dry?: (nx: number, nz: number) => boolean }} Way - a
- *   route as a walked line (native). LW-DRY `dry`: whether the ground at a native point is dry (the world's `dryAt`)
+ * @typedef {{ pts: number[][], cum: number[], len: number, kinds: string[], dry?: (nx: number, nz: number) => boolean,
+ *   inns?: { s: number, town: LwTown }[] }} Way - a route as a walked line (native). LW-DRY `dry`: whether the ground at a
+ *   native point is dry (the world's `dryAt`). LW9 `inns`: the roadside taverns on it (innsAlong)
  * @typedef {{
  *   townsNear: (px: number, py: number, rMax: number) => LwTown[],
  *   routeOf: (a: LwTown, b: LwTown) => (RoutePlan | null | undefined),
@@ -87,14 +122,14 @@ export const DRY_STEP_N = 80;
  *   holderOf?: (res: Resident, k: number) => (Resident | null),
  *   dungeonsNear?: (px: number, py: number, rMax: number) => LwTown[],
  *   fated?: (res: Resident, k: number) => boolean,
- *   fate?: (trip: Trip) => Trip,
+ *   fate?: (trip: Trip) => (Trip | undefined),
  *   lanesFrom?: (town: LwTown) => ({ to: LwTown, len: number, key: string }[] | undefined),
  *   dryAt?: (nx: number, nz: number) => boolean,
  * }} TripWorld - the host's: towns near a pixel (the game's own rows, populated); the planner's way between two towns
  *   (undefined while it is being asked, null for none); a town's travellers (census.js travellerRoster). LW4: who holds
  *   a traveller's place in a cycle (lives.js - null while it stands empty; unasked, the census's own), whether its
  *   holder dies that cycle (and so sets out whatever the chance said - a fated death is on the road), and the trouble
- *   a trip meets (trouble.js - the trip as it left it). LW6: the dungeons near a pixel (`dungeon: true` rows - an
+ *   a trip meets (trouble.js - the trip as it left it; AUDIT LW-II E1: undefined while it waits on a way). LW6: the dungeons near a pixel (`dungeon: true` rows - an
  *   adventurer's dives). LW5b: the Bay's lanes from a port town (naval/seaLanes.js: the far port, the lane's length in
  *   metres; none for a town with no harbour; undefined while the map is unread). LW-DRY: whether the ground at a native
  *   point is dry (`nativeDry` over world/dryGround.js - the height map's own, every client's alike); unasked, all is dry)
@@ -102,7 +137,11 @@ export const DRY_STEP_N = 80;
  *   pace: number, outT0: number, outT1: number, backT0: number, backT1: number, trim0: number, trim1: number,
  *   enc?: any, halt?: { t0: number, t1: number, fightEnd: number, s: number, leg: 'out'|'back' },
  *   fallen?: { res: Resident, t: number, s: number, inside?: boolean, hand?: boolean, atSea?: boolean }[], turned?: boolean, dive?: { t0: number, t1: number },
- *   sea?: { key: string, len: number } }} Trip - LW5b: `sea` a passage by sea, its lane and length (no road under it). LW6: `dive` an
+ *   sea?: { key: string, len: number }, market?: boolean, wild?: { x: number, z: number }, company?: { key: string, name: string },
+ *   holy?: { day: number, id: number }, hiredBy?: string }} Trip - LW13: `company` the company walking it, `holy` a pilgrims'
+ *   holy day it is bound for, `hiredBy` a company's trip a merchant's train took on. LW5b: `sea` a passage
+ *   by sea, its lane and length (no road under it). LW9: `market` a carter's day to market, `wild` a hunter's point in the
+ *   wild (its `to` no town: `mapId` -1). LW6: `dive` an
  *   adventurer's hours in the dungeon it went to (its `to` a dungeon). LW4: `k` its cycle; the trouble's
  *   `enc`, its `halt`, the `fallen` and whether it `turned` home (trouble.js troubledTrip). LW7: a fallen by a `hand`
  *   (handsOn - struck down by the player, or at their side) gone from that minute, no remains or news of the road's
@@ -226,10 +265,172 @@ export const townTrim = (town) => (Math.ceil(Math.sqrt(Math.max(1, town.blocks |
 
 /** A traveller's cycle holding `day`: its number, its first day and its length (days). @param {Resident} res @param {number} day @param {number} scale */
 export function cycleOf(res, day, scale) {
-  const len = Math.max(2, Math.round((CYCLE_DAYS[/** @type {keyof typeof CYCLE_DAYS} */ (res.job)] ?? 8) * scale));
+  const len = Math.max(2, Math.round((rowOf(CYCLE_DAYS, ROAD_CYCLE_DAYS, res.job) ?? 8) * scale));
   const phase = lwSeed(res.town, res.slot, 0x6379) % len;   // 'cy'
   const k = Math.floor((day + phase) / len);
   return { k, start: k * len - phase, len };
+}
+
+/**
+ * LW9: where the road's new traffic may be bound - a patrol keeps its own region, a noble goes to another court (a city
+ * of CITY_COURT_BLOCKS), a minstrel to a town big enough for a tavern's crowd; the first's jobs anywhere their range
+ * says.
+ * @param {string} job @param {LwTown} home @param {LwTown} t
+ */
+export function roadBound(job, home, t) {
+  if (job === 'patrol') return home.region == null || t.region === home.region;
+  if (job === 'noble') return t.type === 0 && (t.blocks | 0) >= CITY_COURT_BLOCKS;
+  if (job === 'minstrel') return (t.blocks | 0) >= MARKET_BLOCKS;
+  return true;
+}
+
+/**
+ * LW9: THE ONE A TRAVELLER RIDES WITH - a place whose trips are another's: a sellsword's its contract merchant
+ * (contractOf), a patrol's its first (the patrol rides as one), a retainer's the noble the retainers are dealt to in slot
+ * order (the first to the first, round again, as the sellswords are); LW13 an adventurer's its company's first
+ * (companies.js). Null for one who leads, or rides with nobody.
+ * @param {Resident} res @param {Resident[]} roster @returns {Resident|null}
+ */
+export function leaderOf(res, roster) {
+  if (res.job === 'mercenary') return contractOf(res, roster);
+  if (res.job === 'patrol') {
+    const first = roster.filter((r) => r.job === 'patrol').sort((a, b) => a.slot - b.slot)[0] ?? null;
+    return first && first.slot !== res.slot ? first : null;
+  }
+  if (res.job === 'adventurer') {   // LW13: a company's place rides with its first
+    const c = companyOfPlace(res, roster);
+    return c && c.places[0].slot !== res.slot ? c.places[0] : null;
+  }
+  if (res.job === 'retainer') {
+    const nobles = roster.filter((r) => r.job === 'noble').sort((a, b) => a.slot - b.slot);
+    const i = roster.filter((r) => r.job === 'retainer').sort((a, b) => a.slot - b.slot).findIndex((r) => r.slot === res.slot);
+    return nobles.length && i >= 0 ? nobles[i % nobles.length] : null;
+  }
+  return null;
+}
+
+/** LW9: a market town's market day - one day in seven, by its map id: true on `day`. @param {LwTown} town @param {number} day */
+export const marketDay = (town, day) => ((day + (lwSeed(town.mapId >>> 0, 0x6d6b74) % 7)) % 7) === 0;   // 'mkt'
+
+/**
+ * LW9: A CARTER'S DAY TO MARKET - the nearest town within reach that keeps a market (a city or a village of
+ * MARKET_BLOCKS), on its MARKET DAY in the cycle (`marketDay`): out at first light, in by MARKET_IN_H (a walk longer than
+ * that is too far - the next nearer), at the stall till MARKET_OUT_H, home by the evening. Null for none; undefined while
+ * a way is asked.
+ * @param {Resident} res @param {LwTown} home @param {number} k @param {TripWorld} world
+ * @param {{ start: number, len: number, pace: number, rng: () => number }} o
+ * @returns {Trip|null|undefined}
+ */
+export function marketTrip(res, home, k, world, { start, len, pace, rng }) {
+  const [, rMax] = ROAD_RANGE_PX.carter;
+  const dist = (/** @type {LwTown} */ t) => Math.hypot((t.px ?? 0) - (home.px ?? 0), (t.py ?? 0) - (home.py ?? 0));
+  const near = world.townsNear(home.px ?? 0, home.py ?? 0, rMax)
+    .filter((t) => t.mapId !== home.mapId && (t.blocks | 0) >= MARKET_BLOCKS && (t.type == null || t.type === 0 || t.type === 2))
+    .sort((a, b) => dist(a) - dist(b) || a.mapId - b.mapId);
+  const leave = Math.floor((5 + rng()) * 60);
+  for (const to of near) {
+    let day = -1;
+    for (let d = start; d < start + len; d++) if (marketDay(to, d)) { day = d; break; }
+    if (day < 0) continue;
+    const plan = world.routeOf(home, to);
+    if (plan === undefined) return undefined;
+    if (!plan || !(plan.pixels?.length >= 2)) continue;
+    const way = wayOf(plan, world.dryAt);
+    const trim0 = Math.min(townTrim(home), way.len * 0.4), trim1 = Math.min(townTrim(to), way.len * 0.4);
+    const walk = Math.max(0, way.len - trim0 - trim1) / pace;
+    const outT0 = day * DAY_MIN + leave;
+    const outT1 = whenWalked(outT0, walk);
+    if (outT1 > day * DAY_MIN + MARKET_IN_H * 60) continue;   // too far to be in for the market
+    const backT0 = day * DAY_MIN + MARKET_OUT_H * 60;
+    const backT1 = whenWalked(backT0, walk);
+    if (backT1 > day * DAY_MIN + WALK_TO_H * 60) continue;   // home by nightfall
+    return { id: `${res.id}:${k}`, k, kind: res.job, leader: res, party: [res], from: home, to, way, pace,
+      outT0, outT1, backT0, backT1, trim0, trim1, market: true };
+  }
+  return null;
+}
+
+/** LW9: the wild a hunter goes into - no town, its own name. @param {number} px @param {number} py @returns {LwTown} */
+const wildOf = (px, py) => ({ mapId: -1, name: 'the wild', px, py, blocks: 1, wild: true });
+
+/**
+ * LW9: A HUNTER'S DAY IN THE WILD - a point on dry, open ground one to three map pixels off their town (the first of
+ * WILD_TRIES seeded tries that stands dry, off every town's pixel, its line from the town dry where it is sounded), out at
+ * first light, a night's camp there, home the next day. Its way is no road: a straight line from the town, `open`
+ * throughout (trouble.js GROUND_RISK's worst). Null for none.
+ * @param {Resident} res @param {LwTown} home @param {number} k @param {TripWorld} world
+ * @param {{ start: number, len: number, pace: number, rng: () => number }} o
+ * @returns {Trip|null}
+ */
+export function wildTrip(res, home, k, world, { start, len, pace, rng }) {
+  const hx = ((home.px ?? 0) + 0.5) * NATIVE_PIXEL, hz = (499 - (home.py ?? 0) + 0.5) * NATIVE_PIXEL;
+  const [rMin, rMax] = ROAD_RANGE_PX.hunter;
+  for (let i = 0; i < WILD_TRIES; i++) {
+    const ang = rng() * Math.PI * 2, d = (rMin + rng() * (rMax - rMin)) * NATIVE_PIXEL;
+    const wx = hx + Math.sin(ang) * d, wz = hz + Math.cos(ang) * d;
+    const ppx = Math.floor(wx / NATIVE_PIXEL), ppy = 499 - Math.floor(wz / NATIVE_PIXEL);
+    if (world.townsNear(ppx, ppy, 0).length) continue;
+    let dry = true;
+    for (let j = 1; dry && j <= 4; j++) dry = !world.dryAt || world.dryAt(hx + ((wx - hx) * j) / 4, hz + ((wz - hz) * j) / 4);
+    if (!dry) continue;
+    /** @type {Way} */
+    const way = { pts: [[hx, hz], [wx, wz]], cum: [0, d], len: d, kinds: ['open'] };
+    if (world.dryAt) way.dry = world.dryAt;
+    const trim0 = Math.min(townTrim(home), d * 0.4), trim1 = 0;
+    const walk = Math.max(0, d - trim0) / pace;
+    const estDays = 3;
+    if (estDays > len - 1) return null;
+    const dayOffset = Math.floor(rng() * (len - estDays));
+    const outT0 = (start + dayOffset) * DAY_MIN + Math.floor((6 + rng()) * 60);
+    const outT1 = whenWalked(outT0, walk);
+    const backT0 = (Math.floor(outT1 / DAY_MIN) + 1) * DAY_MIN + Math.floor((8 + rng() * 2) * 60);   // the next morning's hunt done
+    const backT1 = whenWalked(backT0, walk);
+    if (backT1 > (start + len) * DAY_MIN + DAY_START_MIN) return null;
+    return { id: `${res.id}:${k}`, k, kind: res.job, leader: res, party: [res], from: home, to: wildOf(ppx, ppy), way, pace,
+      outT0, outT1, backT0, backT1, trim0, trim1, wild: { x: wx, z: wz } };
+  }
+  return null;
+}
+
+/**
+ * LW9: THE INNS ON A WAY - each roadside tavern (location type INN_TYPE) within INN_REACH_PX of one of the route's
+ * pixels, but its two ends, where the way comes nearest it (`s`, native) - read once, as the way is made (`way.inns`).
+ * @param {Way} way @param {RoutePlan} plan @param {TripWorld} world @param {LwTown} home @param {LwTown} to
+ * @returns {Way}
+ */
+export function innsAlong(way, plan, world, home, to) {
+  /** @type {Map<number, { s: number, town: LwTown }>} */
+  const found = new Map();
+  const px = plan?.pixels ?? [];
+  for (let i = 0; i < px.length; i++) {
+    for (const t of world.townsNear(px[i].x, px[i].y, INN_REACH_PX)) {
+      if (t.type !== INN_TYPE || t.mapId === home.mapId || t.mapId === to.mapId || found.has(t.mapId)) continue;
+      found.set(t.mapId, { s: way.cum[i] ?? 0, town: t });
+    }
+  }
+  if (found.size) way.inns = [...found.values()].sort((a, b) => a.s - b.s || a.town.mapId - b.town.mapId);
+  return way;
+}
+
+/**
+ * LW9: WHERE NIGHT STOPS A PARTY - an inn on its way ahead within INN_AHEAD_N (the nearest; it walks on to it and lodges
+ * there), else the first dry ground on (dryStop).
+ * @param {Way} way @param {number} s @param {1|-1} dir @param {number} lo @param {number} hi @returns {number}
+ */
+export function nightStop(way, s, dir, lo, hi) {
+  const inn = innAhead(way, s, dir, lo, hi);
+  return inn ? inn.s : dryStop(way, s, dir, lo, hi);
+}
+
+/** LW9: the inn ahead of `s` within INN_AHEAD_N, between `lo` and `hi`, or null. @param {Way} way @param {number} s @param {1|-1} dir @param {number} lo @param {number} hi */
+export function innAhead(way, s, dir, lo, hi) {
+  let best = null;
+  for (const inn of way.inns ?? []) {
+    const ahead = dir * (inn.s - s);
+    if (ahead < 0 || ahead > INN_AHEAD_N || inn.s < lo || inn.s > hi) continue;
+    if (!best || ahead < dir * (best.s - s)) best = inn;
+  }
+  return best;
 }
 
 /**
@@ -239,22 +440,43 @@ export function cycleOf(res, day, scale) {
  * @returns {Trip|null|undefined}
  */
 export function ownTrip(res, home, k, world, { mpm }) {
-  const chance = TRIP_CHANCE[/** @type {keyof typeof TRIP_CHANCE} */ (res.job)];
+  const chance = rowOf(TRIP_CHANCE, ROAD_TRIP_CHANCE, res.job);
   if (!(chance > 0)) return null;
+  if ((res.job === 'patrol' || res.job === 'adventurer') && leaderOf(res, world.rosterOf(home))) return null;   // LW9: a patrol's rides with its first; LW13: a company's with its first
+  const company = res.job === 'adventurer' ? companyOfPlace(res, world.rosterOf(home)) : null;   // LW13: the company it leads
+  // LW13: its company's other places; AUDIT LW-II F2: a patrol's round its riders' - the patrol rides as one, as a company
+  // walks, so a rider the road takes this cycle sends the round out (before, a fated rider's first stayed home on its own
+  // chance, and the rider died abroad with no road, remains or news). AUDIT LW-II-2 R7: and a noble's procession the
+  // retainers dealt to them - F2 left them out, and a fated retainer whose noble's chance said stay died abroad unseen
+  const riders = company ? company.places.slice(1) : res.job === 'patrol' ? world.rosterOf(home).filter((r) => r.job === 'patrol' && r.slot !== res.slot)
+    : res.job === 'noble' ? world.rosterOf(home).filter((r) => r.job === 'retainer' && leaderOf(r, world.rosterOf(home))?.slot === res.slot) : [];
   const scale = paceScale(mpm);
-  const len = Math.max(2, Math.round((CYCLE_DAYS[/** @type {keyof typeof CYCLE_DAYS} */ (res.job)] ?? 8) * scale));
+  const len = Math.max(2, Math.round((rowOf(CYCLE_DAYS, ROAD_CYCLE_DAYS, res.job) ?? 8) * scale));
   const phase = lwSeed(res.town, res.slot, 0x6379) % len;
   const start = k * len - phase;
   const rng = lwRng(res.town, res.slot, k, 0x74726970);   // 'trip'
-  if (rng() >= chance && !world.fated?.(res, k)) return null;   // LW4: a death the lives hold for this cycle is met on the road (AUDIT-B1: the dice's - a spare never takes the trip away)
-  const pace = (TRIP_PACE[/** @type {keyof typeof TRIP_PACE} */ (res.job)] ?? 1) * mpm * NATIVE_PER_M;   // native a clock minute
+  const goes = rng() < chance || !!world.fated?.(res, k) || riders.some((p) => world.fated?.(p, k));   // LW4: a death the lives hold for this cycle is met on the road (AUDIT-B1: the dice's - a spare never takes the trip away); LW13: any of its company's
+  // AUDIT LW-II F7: A HOLY DAY'S CYCLE IS ITS OWN DRAW - a pilgrim's holy day in reach goes on HOLY_CHANCE alone ("the
+  // temple full of every band"); behind the cycle's chance it went 0.5 x 0.8 of them
+  const holyCycle = res.job === 'pilgrim' && !!world.templeTown;
+  if (!goes && !holyCycle) return null;
+  const pace = (rowOf(TRIP_PACE, ROAD_PACE, res.job) ?? 1) * mpm * NATIVE_PER_M;   // native a clock minute
+  // LW9: a carter's day to market, a hunter's into the wild - their own laws
+  if (res.job === 'carter') return marketTrip(res, home, k, world, { start, len, pace, rng });
+  if (res.job === 'hunter') return wildTrip(res, home, k, world, { start, len, pace, rng });
   // LW6: an adventurer's cycle a DIVE now and then - its own dice, so a cycle that is none is the trip it always was
   if (res.job === 'adventurer' && world.dungeonsNear) {
     const drng = lwRng(res.town, res.slot, k, 0x64697665);   // 'dive'
-    if (drng() < DIVE_CHANCE) {
+    if (drng() < (company ? COMPANY_DIVE_CHANCE : DIVE_CHANCE)) {   // LW13: a company the likelier
       const dive = diveTrip(res, home, k, world, { start, len, pace, rng: drng });
       if (dive !== null) return dive;   // undefined (a way asked) or the dive; none that fits, the town trip
     }
+  }
+  // LW13: a pilgrim's cycle with a temple town's holy day in reach goes to it (its own draw), as a band with its town's
+  if (holyCycle) {
+    const holy = holyTrip(res, home, k, world, { start, len, pace });
+    if (holy !== null) return holy;   // undefined (a way asked) or the holy day's; none, the trip it always was
+    if (!goes) return null;   // AUDIT LW-II F7: no holy day this cycle, and its chance said stay
   }
   // LW5b: a port town's traveller's cycle a PASSAGE BY SEA now and then - its own dice, so a cycle that is none is the
   // trip it always was
@@ -266,9 +488,10 @@ export function ownTrip(res, home, k, world, { mpm }) {
       if (sea !== null) return sea;   // undefined (the map unread) or the passage; none that fits, the road's trip
     }
   }
-  const [rMin, rMax] = TRIP_RANGE_PX[/** @type {keyof typeof TRIP_RANGE_PX} */ (res.job)] ?? [3, 12];
+  const [rMin, rMax] = rowOf(TRIP_RANGE_PX, ROAD_RANGE_PX, res.job) ?? [3, 12];
   const near = world.townsNear(home.px ?? 0, home.py ?? 0, rMax)
-    .filter((t) => t.mapId !== home.mapId && Math.max(Math.abs((t.px ?? 0) - (home.px ?? 0)), Math.abs((t.py ?? 0) - (home.py ?? 0))) >= rMin);
+    .filter((t) => t.mapId !== home.mapId && Math.max(Math.abs((t.px ?? 0) - (home.px ?? 0)), Math.abs((t.py ?? 0) - (home.py ?? 0))) >= rMin)
+    .filter((t) => roadBound(res.job, home, t));   // LW9: a patrol keeps its region, a noble goes to a court, a minstrel to a tavern's town
   if (!near.length) return null;
   /** @type {Record<string, number>} */
   const weights = {};
@@ -277,6 +500,7 @@ export function ownTrip(res, home, k, world, { mpm }) {
     const size = Math.pow(Math.max(1, t.blocks | 0), 0.7);
     let w = res.job === 'merchant' ? size / (1 + d / 8) : res.job === 'pilgrim' ? ((world.templeTown?.(t) ? 6 : 0.2) * size) / (1 + d / 12) : 1 / (1 + d / 10);
     if (res.job === 'adventurer') w = size / (1 + d / 6);
+    else if (res.job === 'patrol' || res.job === 'noble' || res.job === 'minstrel') w = size / (1 + d / 8);   // LW9
     weights[String(t.mapId)] = w;
   }
   // the pick, then the towns nearer than it, the farthest of them first - the trip most like the one chosen that fits
@@ -286,7 +510,7 @@ export function ownTrip(res, home, k, world, { mpm }) {
   const dist = (t) => Math.hypot((t.px ?? 0) - (home.px ?? 0), (t.py ?? 0) - (home.py ?? 0));
   const nearer = near.filter((t) => t !== first && dist(t) < dist(first)).sort((a, b) => dist(b) - dist(a) || a.mapId - b.mapId);
   const order = [first, ...nearer];
-  const [sLo, sHi] = STAY_DAYS[/** @type {keyof typeof STAY_DAYS} */ (res.job)] ?? [1, 1];
+  const [sLo, sHi] = rowOf(STAY_DAYS, ROAD_STAY_DAYS, res.job) ?? [1, 1];
   const stay = rollInt(rng, sLo, sHi);
   const departH = res.job === 'adventurer' ? 6 + rng() * 2 : 7 + rng() * 2;
   const offsetRoll = rng();
@@ -294,7 +518,7 @@ export function ownTrip(res, home, k, world, { mpm }) {
     const plan = world.routeOf(home, to);
     if (plan === undefined) return undefined;
     if (!plan || !(plan.pixels?.length >= 2)) continue;
-    const way = wayOf(plan, world.dryAt);
+    const way = innsAlong(wayOf(plan, world.dryAt), plan, world, home, to);   // LW9: the inns on its road
     const trim0 = Math.min(townTrim(home), way.len * 0.4), trim1 = Math.min(townTrim(/** @type {LwTown} */ (to)), way.len * 0.4);
     const walk = Math.max(0, way.len - trim0 - trim1) / pace;   // minutes of daylight walking, each way
     const estDays = 2 * Math.ceil(walk / ((WALK_TO_H - WALK_FROM_H) * 60)) + stay + 1;
@@ -316,6 +540,45 @@ export function ownTrip(res, home, k, world, { mpm }) {
 
 /** LW5b: the way of a trip with no road under it - a passage by sea. */
 const noWay = () => ({ pts: [], cum: [0], len: 0, kinds: [] });
+
+/** LW13: a pilgrim's holy day is reached by this hour of its morning (in for the day's rites). */
+export const HOLY_IN_H = 10;
+/**
+ * LW13: A PILGRIMAGE TO A HOLY DAY - the first temple town within a pilgrim's range keeping its region's own holy day
+ * inside the cycle (companies.js holyDayOf, the nearer first): out of a morning (one minute for its town's pilgrims -
+ * they go as a band) to arrive by HOLY_IN_H of it, home the morning after - inside the cycle, or none (null); the
+ * pilgrim's own draw (HOLY_CHANCE) says whether it goes. Undefined while a way is asked.
+ * @param {Resident} res @param {LwTown} home @param {number} k @param {TripWorld} world
+ * @param {{ start: number, len: number, pace: number }} o
+ * @returns {Trip|null|undefined}
+ */
+export function holyTrip(res, home, k, world, { start, len, pace }) {
+  if (!holyDraw(res, k)) return null;
+  const [rMin, rMax] = TRIP_RANGE_PX.pilgrim;
+  const dist = (t) => Math.hypot((t.px ?? 0) - (home.px ?? 0), (t.py ?? 0) - (home.py ?? 0));
+  const temples = world.townsNear(home.px ?? 0, home.py ?? 0, rMax)
+    .filter((t) => t.mapId !== home.mapId && Math.max(Math.abs((t.px ?? 0) - (home.px ?? 0)), Math.abs((t.py ?? 0) - (home.py ?? 0))) >= rMin && !!world.templeTown?.(t))
+    .sort((a, b) => dist(a) - dist(b) || a.mapId - b.mapId);
+  const holy = holyDayOf(temples, start, len);
+  if (!holy) return null;
+  const plan = world.routeOf(home, holy.town);
+  if (plan === undefined) return undefined;
+  if (!plan || !(plan.pixels?.length >= 2)) return null;
+  const to = /** @type {LwTown} */ (holy.town);
+  const way = innsAlong(wayOf(plan, world.dryAt), plan, world, home, to);
+  const trim0 = Math.min(townTrim(home), way.len * 0.4), trim1 = Math.min(townTrim(to), way.len * 0.4);
+  const walk = Math.max(0, way.len - trim0 - trim1) / pace;
+  const by = holy.day * DAY_MIN + HOLY_IN_H * 60;
+  let outDay = holy.day - Math.ceil(walk / ((WALK_TO_H - WALK_FROM_H) * 60));
+  let outT0 = outDay * DAY_MIN + holyDepartMin(home, holy.day), outT1 = whenWalked(outT0, walk);
+  for (let i = 0; i < 2 && outT1 > by; i++) { outDay--; outT0 = outDay * DAY_MIN + holyDepartMin(home, holy.day); outT1 = whenWalked(outT0, walk); }
+  if (outT1 > by) return null;
+  const backT0 = (holy.day + 1) * DAY_MIN + 7 * 60 + (lwSeed(home.mapId >>> 0, holy.day, 0x6261) % 120);   // 'ba': the morning after
+  const backT1 = whenWalked(backT0, walk);
+  if (outT0 < start * DAY_MIN || backT1 > (start + len) * DAY_MIN + DAY_START_MIN) return null;
+  return { id: `${res.id}:${k}`, k, kind: res.job, leader: res, party: [res], from: home, to, way, pace,
+    outT0, outT1, backT0, backT1, trim0, trim1, holy: { day: holy.day, id: holy.id } };
+}
 
 /**
  * LW5b: A PASSAGE BY SEA - a port town's traveller's trip to a port a lane of the Bay runs to from theirs
@@ -439,7 +702,7 @@ export function contractOf(res, roster) {
  * @param {Resident} res @param {Resident[]} roster @param {number} day @param {number} scale
  */
 export function placeCycle(res, roster, day, scale) {
-  const m = res.job === 'mercenary' ? contractOf(res, roster) : null;
+  const m = leaderOf(res, roster);   // LW9: a patrol's and a retainer's too
   return cycleOf(m ?? res, day, scale).k;
 }
 
@@ -452,8 +715,8 @@ export function placeCycle(res, roster, day, scale) {
  */
 export function setsOut(res, town, k, world, o) {
   let who = res;
-  if (res.job === 'mercenary') {
-    const m = contractOf(res, world.rosterOf(town));
+  if (res.job === 'mercenary' || leaderOf(res, world.rosterOf(town))) {   // LW9: a patrol's and a retainer's ride with their leader
+    const m = leaderOf(res, world.rosterOf(town));
     const held = m && (world.holderOf ? world.holderOf(m, k) : m);
     if (!held) return false;
     who = held;
@@ -492,7 +755,7 @@ export function townTrips(town, t, world, o) {
     /** @type {Trip[]} */
     const cands = [];
     for (const res of roster) {
-      if (!(TRIP_CHANCE[/** @type {keyof typeof TRIP_CHANCE} */ (res.job)] > 0)) continue;
+      if (!(rowOf(TRIP_CHANCE, ROAD_TRIP_CHANCE, res.job) > 0)) continue;
       const cyc = cycleOf(res, day, scale);
       for (const k of [cyc.k - 1, cyc.k]) {
         const holder = world.holderOf ? world.holderOf(res, k) : res;   // LW4: whoever holds the place that cycle - none while it stands empty
@@ -514,6 +777,8 @@ export function townTrips(town, t, world, o) {
   const made = formCaravans(town, trips, roster, tripOf, scale, world.holderOf, world.fated);
   if (pending) return undefined;
   const out = world.fate ? made.map((tr) => /** @type {Trip} */ (/** @type {any} */ (world.fate)(tr))) : made;   // LW4: each party's trouble
+  // AUDIT LW-II E1: a trouble that waits on a way (a patrol's round its cover reads) is a way still asked - nothing kept
+  if (out.some((tr) => !tr)) return undefined;
   kept.pass = pass; kept.out = out;
   return out;
 }
@@ -529,6 +794,9 @@ const JOINS = new Set(['pilgrim', 'courier', 'pedlar']);
  *    (the trip's own roll, 0 to HIRE_MAX). A merchant's trips never overlap (each fits its cycle), so neither do theirs.
  *  - A pilgrim's, courier's or pedlar's trip that sets out the day a merchant's does, for the same town, JOINS that
  *    merchant's train - the first merchant in slot order with such a trip - and walks its timeline, its pace.
+ *  - LW13: a COMPANY (companies.js) walks its first place's trip, every place's holder that cycle with it, named; one
+ *    setting out the day a merchant's train with no sellsword does, for the same town, is HIRED on it. PILGRIMS of the
+ *    town setting out the same day for the same town (in no train) go as a BAND, the first place leading.
  * `tripOf(res, k)` the town's traveller's own trip of a cycle (townTrips' book); pure over it. LW4: the contract and
  * the joiners are the PLACES' (the census roster's slots); `holderOf(res, k)` who holds each that cycle (a place
  * standing empty hires nobody and joins nobody).
@@ -552,16 +820,56 @@ export function formCaravans(town, trips, roster, tripOf, scale, holderOf, fated
     }
     return null;
   };
+  /** A merchant's trip's sellswords: its contract's first `want` places, and any whose holder the road takes. @param {Trip} tr */
+  const hiredOf = (tr) => {
+    const mi = merchants.findIndex((m) => m.slot === tr.leader.slot);
+    const want = seededRng(lwSeed(tr.leader.town, tr.leader.slot, tr.outT0 | 0, 0x68697265))() * (HIRE_MAX + 1) | 0;   // 'hire'
+    const k = tr.k ?? cycleOf(tr.leader, dayOf(tr), scale).k;
+    // the contract's first `want` places, and any place of it whose holder the road takes this cycle (a fated death is met on the road)
+    const contract = mi < 0 ? [] : sellswords.filter((_, i) => i % merchants.length === mi);
+    return /** @type {Resident[]} */ (contract.map((sw, i) => { const h = held(sw, k); return h && (i < want || !!fated?.(h, k)) ? h : null; }).filter((h) => !!h));
+  };
+  // LW13: THE COMPANIES (companies.js) - each its first place's trip, its places' holders that cycle walking it; a company
+  // setting out the day a merchant's train with no sellsword does, for the same town, is HIRED on it (the joiners' law)
+  const companies = companiesOf(roster);
+  /** A company's members on its trip: each place's holder that cycle (a place standing empty walks with nobody). */
+  const membersOf = (/** @type {any} */ c, /** @type {Trip} */ tr) => {
+    const k = tr.k ?? cycleOf(tr.leader, dayOf(tr), scale).k;
+    return [tr.leader, ...c.places.slice(1).map((p) => held(p, k)).filter((h) => !!h)];
+  };
+  /** The merchant's train a company's trip could be hired on, or null. @param {Trip} ct */
+  const trainFor = (ct) => {
+    if (ct.dive || ct.sea) return null;
+    const d = dayOf(ct);
+    for (const m of merchants) {
+      const mt = placeTrip(m, d);
+      if (mt && !mt.sea && mt.to.mapId === ct.to.mapId && dayOf(mt) === d && !hiredOf(mt).length) return mt;
+    }
+    return null;
+  };
+  /** The merchant's train a company's trip is hired on, or null - AUDIT LW-II E4: ONE COMPANY TO A TRAIN, the first in
+   *  the deal's order setting out with it. Before, a second company setting out with it dropped its own trip for a
+   *  train that hired the first alone: it walked nowhere. @param {Trip} ct */
+  const hireOf = (ct) => {
+    const mt = trainFor(ct);
+    if (!mt) return null;
+    const d = dayOf(ct);
+    const first = companies.find((c) => { const t = placeTrip(c.places[0], d); return !!t && trainFor(t)?.id === mt.id; });
+    return first && first.places[0].slot === ct.leader.slot ? mt : null;
+  };
+  // LW13: PILGRIM BANDS - a town's pilgrims setting out the same day for the same town (not in a merchant's train) go
+  // together, the first place in slot order leading
+  const pilgrims = roster.filter((r) => r.job === 'pilgrim').sort((a, b) => a.slot - b.slot);
+  /** The band a pilgrim's trip walks in: its members' trips, the leader's first. @param {Trip} pt */
+  const bandOf = (pt) => {
+    const d = dayOf(pt);
+    return pilgrims.map((r) => placeTrip(r, d)).filter((t) => !!t && t.kind === 'pilgrim' && !t.sea && t.to.mapId === pt.to.mapId && dayOf(t) === d && !trainOf(t));
+  };
   /** @type {Trip[]} */
   const out = [];
   for (const tr of trips) {
     if (tr.kind === 'merchant') {
-      const mi = merchants.findIndex((m) => m.slot === tr.leader.slot);
-      const want = seededRng(lwSeed(tr.leader.town, tr.leader.slot, tr.outT0 | 0, 0x68697265))() * (HIRE_MAX + 1) | 0;   // 'hire'
-      const k = tr.k ?? cycleOf(tr.leader, dayOf(tr), scale).k;
-      // the contract's first `want` places, and any place of it whose holder the road takes this cycle (a fated death is met on the road)
-      const contract = mi < 0 ? [] : sellswords.filter((_, i) => i % merchants.length === mi);
-      const hired = contract.map((sw, i) => { const h = held(sw, k); return h && (i < want || !!fated?.(h, k)) ? h : null; }).filter((h) => !!h);
+      const hired = hiredOf(tr);
       const d = dayOf(tr);
       const joined = [];
       for (const r of roster) {
@@ -569,7 +877,31 @@ export function formCaravans(town, trips, roster, tripOf, scale, holderOf, fated
         const jt = placeTrip(r, d);
         if (jt && jt.to.mapId === tr.to.mapId && dayOf(jt) === d && trainOf(jt)?.id === tr.id) joined.push(jt.leader);
       }
-      out.push({ ...tr, party: [tr.leader, .../** @type {Resident[]} */ (hired), ...joined] });
+      // LW13: no sellsword with it - the first company setting out with it hired on
+      let hiredBy = null;
+      if (!hired.length) {
+        for (const c of companies) {
+          const ct = placeTrip(c.places[0], d);
+          if (ct && hireOf(ct)?.id === tr.id) { joined.push(...membersOf(c, ct)); hiredBy = c.key; break; }
+        }
+      }
+      out.push({ ...tr, party: [tr.leader, ...hired, ...joined], ...(hiredBy ? { hiredBy } : {}) });
+    } else if (tr.kind === 'patrol' || tr.kind === 'noble') {
+      // LW9: a patrol rides as one, its first leading; a noble goes in procession with the retainers dealt to them -
+      // every place of it its holder that cycle (a place standing empty rides with nobody)
+      const k = tr.k ?? cycleOf(tr.leader, dayOf(tr), scale).k;
+      const riders = roster.filter((r) => r.slot !== tr.leader.slot && leaderOf(r, roster)?.slot === tr.leader.slot).sort((a, b) => a.slot - b.slot);
+      out.push({ ...tr, party: [tr.leader, ...riders.map((r) => held(r, k)).filter((h) => !!h)] });
+    } else if (tr.kind === 'adventurer') {
+      // LW13: a company walks its first place's trip together, named; one hired on a merchant's train walks in it
+      const c = companies.find((x) => x.places[0].slot === tr.leader.slot) ?? null;
+      if (!c) out.push(tr);
+      else if (!hireOf(tr)) { const named = namedIn(c, town.name ?? ''); out.push({ ...tr, party: membersOf(c, tr), company: { key: c.key, name: named.name } }); }
+    } else if (tr.kind === 'pilgrim') {
+      if (trainOf(tr)) continue;
+      const band = bandOf(tr);
+      if (band.length < 2) out.push(tr);
+      else if (band[0].id === tr.id) out.push({ ...tr, party: band.map((t) => t.leader) });   // LW13: the band, its first leading
     } else if (!(JOINS.has(tr.kind) && trainOf(tr))) out.push(tr);
   }
   return out;
@@ -578,12 +910,17 @@ export function formCaravans(town, trips, roster, tripOf, scale, holderOf, fated
 /** LW4: how long a town talks of a trouble on the road (days from when it was known). */
 export const NEWS_DAYS = 3;
 
+/** AUDIT LW-II E7: the name a trip's end goes by in a town's talk - '' for none, and for a hunter's wild (no town: its
+ *  `mapId` -1), which "the road to {place}" and "the {place} road" read as a town's - the talk's own fallback says it.
+ *  @param {LwTown|null|undefined} to */
+export const placeName = (to) => (to && !(to.mapId < 0) ? to.name ?? '' : '');
+
 /**
  * LW4: WHAT A TOWN KNOWS OF THE ROAD at minute `t` - its own parties' troubles (trouble.js), each known from when the
  * party came home (a party none of whom came home, from when it was due: `trip.backT1`), for NEWS_DAYS - newest
  * first. `who` the one it befell (the first of the fallen, else the leader), `foe` the first of the foes, `place`
  * the town they were bound for, `enc` the encounter's id (LW7: the character's turn of it). A hand's dead are not the
- * road's news (LW7).
+ * road's news (LW7). LW12: a band's trouble names it (`band`).
  * @param {Trip[]} trips - the town's own, about the minute (and the days before it) @param {number} t
  * @returns {{ id: string, enc: string, kind: string, who: string, foe: number|null, place: string, t: number, dive: boolean, sea: boolean }[]}
  */
@@ -598,7 +935,7 @@ export function newsOf(trips, t) {
     if (!(known <= t && t - known < NEWS_DAYS * DAY_MIN)) continue;
     const fell = tr.fallen?.filter((f) => !f.hand) ?? [];
     const who = fell[0]?.res ?? tr.leader;
-    out.push({ id: tr.id, enc: enc.id, kind: fell.length ? 'fell' : enc.kind, who: who.name, foe: enc.foes?.[0] ?? null, place: tr.to?.name ?? '', t: known, dive: !!tr.dive, sea: !!tr.sea });
+    out.push({ id: tr.id, enc: enc.id, kind: fell.length ? 'fell' : enc.kind, who: who.name, foe: enc.foes?.[0] ?? null, ...(enc.bandName ? { band: enc.bandName } : {}), place: placeName(tr.to), t: known, dive: !!tr.dive, sea: !!tr.sea });
   }
   return out.sort((a, b) => b.t - a.t);
 }
@@ -611,7 +948,8 @@ export function newsOf(trips, t) {
  * from where it stood.
  * @param {Trip} trip @param {number} t
  * LW5b: a passage by sea is 'sea' while it sails, out and home (no road under it).
- * @returns {{ phase: 'home'|'out'|'stay'|'back'|'sea', x?: number, z?: number, yaw?: number, camp?: boolean, s?: number, halt?: boolean, fight?: boolean }}
+ * LW9: `inn` the roadside tavern it lodges at for the night (no camp: it is indoors).
+ * @returns {{ phase: 'home'|'out'|'stay'|'back'|'sea', x?: number, z?: number, yaw?: number, camp?: boolean, s?: number, halt?: boolean, fight?: boolean, inn?: LwTown }}
  */
 export function partyAt(trip, t) {
   const { way, pace, trim0, trim1 } = trip;
@@ -619,6 +957,10 @@ export function partyAt(trip, t) {
   const daylight = (m) => { const h = (((m % DAY_MIN) + DAY_MIN) % DAY_MIN) / 60; return h >= WALK_FROM_H && h < WALK_TO_H; };
   if (t < trip.outT0 || t >= trip.backT1) return { phase: 'home' };
   if (trip.sea) return { phase: t < trip.outT1 || t >= trip.backT0 ? 'sea' : 'stay' };   // LW5b: a passage is the ship's, never the road's
+  // AUDIT LW-II E5: A PARTY SETTING OUT BEFORE FIRST LIGHT (a carter at five, a hunter or a company at six) walks from the
+  // light, and till then is no camp at its town's edge - its ring, its fire and its pack horse were drawn there, at home
+  const light = daylight(trip.outT0) ? trip.outT0 : whenWalked(trip.outT0, 0);
+  if (t < light) return { phase: 'home' };
   const h = trip.halt;
   const placed = (/** @type {'out'|'back'} */ phase, /** @type {number} */ s, extra = {}) => {
     const p = wayAt(way, s);
@@ -635,24 +977,25 @@ export function partyAt(trip, t) {
   // (`way.dry`), the day's walk.
   const walked = (/** @type {'out'|'back'} */ phase, /** @type {number} */ legT0, /** @type {(m: number) => number} */ sAt) => {
     const s = sAt(t);
-    if (!way.dry) return placed(phase, s);
+    if (!way.dry && !way.inns) return placed(phase, s);   // LW9: a way with an inn on it stops at it, dry ground read or not
     const dir = phase === 'out' ? 1 : -1;
     const lo = trim0, hi = way.len - trim1;
     let fall = daylight(legT0) ? lastDusk(legT0) + DAY_MIN : legT0;
     if (t < fall) return placed(phase, s);   // its first day's walk
     // the nights up to `t`, each from where the party stands at its fall
-    let at = sAt(fall), camp = dryStop(way, at, dir, lo, hi);
+    let at = sAt(fall), camp = nightStop(way, at, dir, lo, hi);   // LW9: an inn ahead, else dry ground
     for (let next = lastDusk(fall) + DAY_MIN; next <= t; next += DAY_MIN) {
       const on = pace * (next - fall) >= Math.abs(camp - at) ? camp : at + dir * pace * (next - fall);
       const w = sAt(next);
       at = dir * (w - on) >= 0 ? w : on;
       fall = next;
-      camp = dryStop(way, at, dir, lo, hi);
+      camp = nightStop(way, at, dir, lo, hi);
     }
     const reached = pace * (t - fall) >= Math.abs(camp - at);
     const there = reached ? camp : at + dir * pace * (t - fall);
     if (daylight(t) && dir * (s - there) >= 0) return { ...placed(phase, s), camp: false };   // the day's walk
-    return { ...placed(phase, there), camp: reached };   // walking on to the night's camp, or at it
+    const inn = reached ? way.inns?.find((i) => i.s === camp) ?? null : null;   // LW9: lodged at the inn on the road
+    return { ...placed(phase, there), camp: reached, ...(inn ? { inn: inn.town } : {}) };   // walking on to the night's camp, or at it
   };
   if (trip.turned && h && t >= h.t1) return walked('back', h.t1, (m) => Math.max(trim0, h.s - Math.min(h.s - trim0, pace * walkedMinutes(h.t1, m))));
   // the lag a halt left - the ground the day's walk would have covered while the party stood - made up at HALT_CATCH_UP
@@ -663,8 +1006,18 @@ export function partyAt(trip, t) {
     if (!h || h.leg !== leg || m < h.t0) return 0;
     return Math.max(0, pace * walkedMinutes(h.t0, h.t1) - HALT_CATCH_UP * pace * walkedMinutes(h.t1, m));
   };
-  if (t < trip.outT1) return walked('out', trip.outT0, (m) => Math.max(trim0, trim0 + Math.min(walk, pace * walkedMinutes(trip.outT0, m)) - lag('out', m)));
-  if (t < trip.backT0) return { phase: 'stay' };
+  if (t < trip.outT1) return walked('out', light, (m) => Math.max(trim0, trim0 + Math.min(walk, pace * walkedMinutes(trip.outT0, m)) - lag('out', m)));
+  if (t < trip.backT0 && trip.wild) {
+    // AUDIT LW-II-2 R6: WHAT A HALT LEFT OWED AT THE WILD'S EDGE IS WALKED ON - no town to make it up in: from where the
+    // leg's end found it (behind its walk, or held where it fell by a halt run past the walk's end - troubledTrip holds
+    // the arrival) on to its point at the catch-up pace (a half again its own, as it walked), by day, and only there the
+    // hunt's camp. Before, the camp stood at the point from the leg's end, and the hunter jumped to it
+    const sOut = (/** @type {number} */ m) => Math.max(trim0, trim0 + Math.min(walk, pace * walkedMinutes(trip.outT0, m)) - lag('out', m));
+    const end = way.len - trim1, s1 = h && h.leg === 'out' && h.t1 >= trip.outT1 ? h.s : sOut(trip.outT1);
+    const on = (/** @type {number} */ m) => (m < trip.outT1 ? sOut(m) : Math.min(end, s1 + (1 + HALT_CATCH_UP) * pace * walkedMinutes(trip.outT1, m)));
+    if (end - s1 > 1 && on(t) < end) return walked('out', light, on);
+  }
+  if (t < trip.backT0) return trip.wild ? { ...placed('out', way.len - trim1), camp: true } : { phase: 'stay' };   // LW9: the hunt's camp in the wild
   return walked('back', trip.backT0, (m) => Math.min(way.len - trim1, way.len - trim1 - Math.min(walk, pace * walkedMinutes(trip.backT0, m)) + lag('back', m)));
 }
 
@@ -696,7 +1049,8 @@ export const arrivingYaw = (trip) => wayAt(trip.way, trip.way.len - trip.trim1 -
 
 /**
  * A home town's away windows for a resident on `day` - each trip of theirs (their own, or a caravan they ride with)
- * touching the living day: out at its first minute, home at its last; armed where they carry a class.
+ * touching the living day: out at its first minute on the road (AUDIT LW-II-2 R5: its first light), home at its last; armed
+ * where they carry a class.
  * @param {Resident} res @param {Trip[]} trips - townTrips' answer for the day
  * LW5b: a passage by sea's window is the dock's (`dock`).
  * @returns {{ t0: number, t1: number, yaw: number, armed: boolean, dock: boolean }[]}
@@ -706,7 +1060,11 @@ export function awayOf(res, trips) {
   for (const tr of trips) {
     if (!tr.party.some((p) => p.id === res.id)) continue;
     const fell = tr.fallen?.some((f) => f.res.id === res.id);   // LW4: one the road took never walks home
-    out.push({ t0: tr.outT0, t1: fell ? Infinity : tr.backT1, yaw: leavingYaw(tr), armed: res.cls != null, dock: !!tr.sea });   // LW5b: a passage leaves by the dock
+    // AUDIT LW-II-2 R5: out at the leg's first light (partyAt's - AUDIT LW-II E5: a party setting out before it is at home
+    // till it walks): the town had them gone at outT0 and the road had them home, nowhere at all till seven. A passage
+    // sails on its tide
+    const t0 = tr.sea ? tr.outT0 : whenWalked(tr.outT0, 0);
+    out.push({ t0, t1: fell ? Infinity : tr.backT1, yaw: leavingYaw(tr), armed: res.cls != null, dock: !!tr.sea });   // LW5b: a passage leaves by the dock
   }
   return out.sort((a, b) => a.t0 - b.t0);
 }
@@ -737,6 +1095,107 @@ export function visitorsOf(town, day, world, o) {
     }
   }
   return pending ? undefined : out;
+}
+
+/** AUDIT LW-II E2: the first whole minute in (`a`, `b`] at which `ok` holds - false at `a`, true at `b`, turning once
+ *  between (a party's coming in to an inn, its going). @param {number} a @param {number} b @param {(m: number) => boolean} ok */
+const firstMinute = (a, b, ok) => {
+  let lo = Math.floor(a), hi = Math.ceil(b);
+  while (hi - lo > 1) { const m = Math.floor((lo + hi) / 2); if (ok(m)) hi = m; else lo = m; }
+  return hi;
+};
+
+/**
+ * LW9: THE INN'S GUESTS on living day `day` - the parties of the towns within TRIP_REACH_PX lodged at `inn` (a roadside
+ * tavern on their way: partyAt's `inn`) the night before the day (out of a morning) or the day's own night: each member
+ * with the minute they came in (sounded on from nightfall a quarter hour at a time) and the minute of the morning they
+ * leave (AUDIT LW-II E2: when their day's walk comes up to the inn), each guest once (AUDIT LW-II E6).
+ * Undefined while a way is still being asked.
+ * @param {LwTown} inn @param {number} day @param {TripWorld} world @param {{ mpm: number, memo?: Map<string, Trip|null> }} o
+ * @returns {{ res: Resident, trip: Trip, inT: number, outT: number, yaw: number, dock: boolean }[] | undefined}
+ */
+export function innGuestsOf(inn, day, world, o) {
+  const D0 = day * DAY_MIN + DAY_START_MIN, D1 = D0 + DAY_MIN;
+  const out = [];
+  const seen = new Set();
+  let pending = false;
+  for (const from of world.townsNear(inn.px ?? 0, inn.py ?? 0, TRIP_REACH_PX)) {
+    for (const d of [day - 1, day]) {
+      const trips = townTrips(from, d * DAY_MIN + 23 * 60, world, o);
+      if (trips === undefined) { pending = true; break; }
+      // AUDIT LW-II E2: THE NIGHT SOUNDED WHOLE - from nightfall to the next first light, a quarter hour at a time, the
+      // first minute lodged its coming in (to the minute between the two soundings). Before, only eleven o'clock was
+      // asked: a party walking on in the dark that reached the inn later (the online pace's, half the calendar's) was
+      // indoors, off the road, and nobody's guest. And out when it leaves - when its day's walk comes up to the inn
+      // (partyAt: a stop ahead waits for the walk), an hour or two past first light: before, out at first light, and
+      // nowhere till its walk came up
+      const dusk = d * DAY_MIN + WALK_TO_H * 60, dawn = (d + 1) * DAY_MIN + WALK_FROM_H * 60;
+      const lodged = (/** @type {Trip} */ tr, /** @type {number} */ m) => partyAt(tr, m).inn?.mapId === inn.mapId;
+      for (const tr of trips) {
+        if (tr.sea || !(tr.outT0 < dawn && tr.backT1 > dusk) || !tr.way.inns?.some((i) => i.town.mapId === inn.mapId)) continue;
+        let at = null, inT = -1;
+        for (let m = dusk; m < dawn; m += 15) {
+          const p = partyAt(tr, m);
+          if (p.inn?.mapId === inn.mapId) { at = p; inT = m > dusk ? firstMinute(m - 15, m, (x) => lodged(tr, x)) : m; break; }
+          // its night's stop reached, and not this inn's: there till the light - unless a trouble of the night moves it (a
+          // party turned home at its camp walks back in the dark, to an inn behind it as like as not)
+          if (p.camp && !p.halt && !(tr.halt && tr.halt.t0 > m && tr.halt.t0 < dawn)) break;
+        }
+        if (!at) continue;
+        let outT = dawn;
+        while (outT < tr.backT1 && outT < dawn + DAY_MIN && lodged(tr, outT)) outT += 15;
+        if (outT > dawn) outT = firstMinute(outT - 15, outT, (x) => !lodged(tr, x));
+        if (!(inT < D1 && outT > D0)) continue;
+        const yaw = /** @type {number} */ (at.yaw ?? 0) + Math.PI;   // in from the road it walks
+        for (const res of membersAt(tr, inT)) {
+          if (seen.has(res.id)) continue;   // AUDIT LW-II E6: a guest once - a party turned home lodging here two nights was listed twice
+          seen.add(res.id);
+          out.push({ res, trip: tr, inT, outT, yaw, dock: false });
+        }
+      }
+    }
+  }
+  return pending ? undefined : out;
+}
+
+/**
+ * LW9: DOES A PATROL KEEP THE ROAD a trip walks - a patrol's round (its first's own trip; LW9's `patrol`) from or to
+ * either end of the trip, walking within PATROL_COVER_DAYS before the trip set out or while it walks. Read off the patrols'
+ * own trips alone (memoTrip - never their trouble), so a trip's trouble never asks its own.
+ * AUDIT LW-II E1: UNDEFINED WHILE A ROUND IT NEEDS WAITS ON ITS WAY (memoTrip's undefined) and none known covers it -
+ * before, a round not yet asked read as no cover, and the trouble kept whichever answer its reader got first: two
+ * clients met different encounters on one trip. The host's trouble takes it as a way still asked (world.js `fate`).
+ * AUDIT LW-II E10: the patrol cities about EITHER end - a round goes from its city to a town within ROAD_RANGE_PX of it,
+ * so one that went to (or from) the trip's far end can stand beyond that range of its near one.
+ * @param {Trip} trip @param {TripWorld} world @param {{ mpm: number, memo?: Map<string, Trip|null> }} o
+ * @returns {boolean|undefined}
+ */
+export function patrolCover(trip, world, o) {
+  if (!trip.from || !trip.to || trip.to.mapId < 0) return false;
+  const ends = new Set([trip.from.mapId, trip.to.mapId]);
+  const lo = trip.outT0 - PATROL_COVER_DAYS * DAY_MIN, hi = trip.backT1;
+  const scale = paceScale(o.mpm);
+  const [, reach] = ROAD_RANGE_PX.patrol;
+  const asked = new Set();
+  let pending = false;
+  for (const end of [trip.from, trip.to]) {
+    for (const town of world.townsNear(end.px ?? 0, end.py ?? 0, reach)) {
+      if (asked.has(town.mapId)) continue;
+      asked.add(town.mapId);
+      if (town.type !== 0 || (town.blocks | 0) < CITY_COURT_BLOCKS) continue;
+      const first = world.rosterOf(town).find((r) => r.job === 'patrol' && !leaderOf(r, world.rosterOf(town)));
+      if (!first) continue;
+      // every cycle of its first's that can hold a round walking in the window - the one before the window's too
+      const k1 = cycleOf(first, Math.floor(hi / DAY_MIN), scale).k;
+      for (let kk = cycleOf(first, Math.floor(lo / DAY_MIN), scale).k - 1; kk <= k1; kk++) {
+        const holder = world.holderOf ? world.holderOf(first, kk) : first;
+        const pt = holder ? memoTrip(holder, town, kk, world, o) : null;
+        if (pt === undefined) { pending = true; continue; }
+        if (pt && pt.outT0 < hi && pt.backT1 > lo && (ends.has(pt.from.mapId) || ends.has(pt.to.mapId))) return true;
+      }
+    }
+  }
+  return pending ? undefined : false;
 }
 
 /**
@@ -877,4 +1336,33 @@ export function diversAt(dungeon, t, world, o) {
     }
   }
   return { divers, pending };
+}
+
+/**
+ * LW14: THE DIVES into `dungeon` whose hours inside touch minute `t0` to `t1` - the parties of the towns within reach,
+ * each once (their trip as the trouble left it): what a dungeon's build reads for the stops a company passed
+ * (deepRoute.js clearedOf). The oldest first. `pending` as diversAt's.
+ * @param {LwTown} dungeon @param {number} t0 @param {number} t1 @param {TripWorld} world @param {{ mpm: number, memo?: Map<string, Trip|null> }} o
+ * @returns {{ dives: Trip[], pending: boolean }}
+ */
+export function divesIn(dungeon, t0, t1, world, o) {
+  /** @type {Map<string, Trip>} */
+  const found = new Map();
+  let pending = false;
+  for (const town of world.townsNear(dungeon.px ?? 0, dungeon.py ?? 0, TRIP_REACH_PX)) {
+    for (let back = 0; t1 - back * DAY_MIN >= t0 - DAY_MIN; back++) {
+      const trips = townTrips(town, t1 - back * DAY_MIN, world, o);
+      if (trips === undefined) { pending = true; break; }
+      for (const trip of trips) {
+        if (!trip.dive || trip.to?.mapId !== dungeon.mapId || !(trip.dive.t0 < t1 && trip.dive.t1 > t0) || found.has(trip.id)) continue;
+        // AUDIT LW-II-2 D3: a dive TURNED home on the road (trouble.js troubledTrip: its trouble on the way out fled or fell)
+        // never came to the dungeon, and clears nothing in it - its `dive` the hours it would have spent there. Before,
+        // its build read them, and the stops it never walked to stood dead and emptied. (One turned inside - its leader
+        // fallen - has its hours cut at the turning, troubledTrip's own, and its reach ends before it: deepRoute.js routeOf.)
+        if (trip.turned) continue;
+        found.set(trip.id, trip);
+      }
+    }
+  }
+  return { dives: [...found.values()].sort((a, b) => /** @type {any} */ (a.dive).t0 - /** @type {any} */ (b.dive).t0 || (a.id < b.id ? -1 : 1)), pending };
 }

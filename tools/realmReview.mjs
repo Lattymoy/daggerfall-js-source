@@ -6,7 +6,8 @@
 //   node tools/realmReview.mjs clear <id> [note]             lift its hold (its strikes with it) and its flag
 //   node tools/realmReview.mjs hold <id> [note]              hold its trade by hand
 //   node tools/realmReview.mjs rollback <id> [note]          back to its last checkpoint judged clean (its tab loses the seat)
-//   node tools/realmReview.mjs budget [days]                 the measure: gold an hour of play, by level band, and the config
+//   node tools/realmReview.mjs budget [days]                 the measure: gold an hour of play, by level band, the service's
+//                                                            own faucets' gold in the window (a patron's purchases), and the config
 //   node tools/realmReview.mjs budget-set <json>             write the budget's config - { enforce, bands: [{ upTo, rate, cap }] }
 //   node tools/realmReview.mjs bodies [days]                 INT14: the boss fights' count - mends claimed a minute, and what
 //                                                            the line standing would have cost
@@ -31,6 +32,14 @@ export const USAGE = [
   '       node tools/realmReview.mjs bodies [days]',
   '  Sign in with DAGGER_HANDLE and DAGGER_PASSWORD (or DAGGER_SECRET); DAGGER_ACCOUNT_SERVICE for another service.',
 ].join('\n');
+
+/** AUDIT LW-II-2 S6 (Living World II decision 7): the measure's faucets named, one line each - the gold the service paid
+ *  that no player paid, over the window the measure read (server-account/src/review.js measure's `faucets`).
+ *  @param {any} body @returns {string[]} */
+export function faucetLines(body) {
+  if (!Array.isArray(body?.faucets)) return [];
+  return body.faucets.map((/** @type {any} */ f) => `faucet ${f.kind}: ${f.gold} gold in ${f.n} payments over the last ${body.days} days`);
+}
 
 /** The acts that name a character. */
 const BY_ID = Object.freeze(['findings', 'clear', 'hold', 'rollback']);
@@ -91,6 +100,7 @@ async function main() {
     const r = await post(base, req.path, req.body, secret);
     if (!r.ok) { console.error(`Refused (${r.body?.error ?? r.status}): ${accountRefusalText(r.body?.error)}`); process.exitCode = 1; return; }
     console.log(JSON.stringify(r.body, null, 2));
+    for (const line of faucetLines(r.body)) console.log(line);   // AUDIT LW-II-2 S6: what the living world minted, said
   } finally {
     if (opened) await post(base, '/v1/auth/logout', {}, secret).catch(() => {});   // the session this call opened, and no other
   }

@@ -81,6 +81,7 @@ on:
       - "src/net/productRecord.js"
       - "src/net/marketLaw.js"
       - "src/net/vendorLaw.js"
+      - "src/net/patronLaw.js"
       - "src/net/writLaw.js"
       - "src/net/gateLaw.js"
       - "src/formats/mapsTables.js"

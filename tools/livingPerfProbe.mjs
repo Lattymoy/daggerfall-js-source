@@ -23,15 +23,21 @@
 // Usage: node tools/livingPerfProbe.mjs        (prints the table; exits 1 on a blown budget)
 import { readFileSync } from 'node:fs';
 import { synthTown } from '../test/lwTown.mjs';
-import { livingMap } from '../test/lwRoads.mjs';
+import { hideoutsOf, bandTrouble, outlawBandAt } from '../src/systems/livingWorld/outlaws.js';   // LW12
+import { createHideouts, bandChest } from '../src/scenes/hideouts.js';   // AUDIT LW-II-2 C5: a hideout stood, its chest a slice a frame
+import { stockShopShelf } from '../src/systems/shopStock.js';
+import { goldStack } from '../src/systems/inventory.js';
+import { livingMap, partiesOver } from '../test/lwRoads.mjs';
 import { LivingTown, ARRIVAL_SHOW_S } from '../src/systems/livingWorld/livingTown.js';
+import { travellerCounts } from '../src/systems/livingWorld/census.js';
 import { TownPopulation } from '../src/systems/townPopulation.js';
 import { ResidentWalker } from '../src/characters/residentWalker.js';
 import { MobilePerson, PERSON_MOVE_SPEED } from '../src/characters/mobilePerson.js';
 import { CLASSIC_MINUTES_PER_SECOND } from '../src/systems/worldTick.js';
 import { DAY_MIN, DAY_START_MIN } from '../src/systems/livingWorld/dayPlan.js';
 import { planRoute } from '../src/systems/travelRoute.js';
-import { diversAt, fallenIn, CALENDAR_MPM, NATIVE_PER_M, partiesNear } from '../src/systems/livingWorld/trips.js';
+import { diversAt, fallenIn, CALENDAR_MPM, NATIVE_PER_M, NATIVE_PIXEL, partiesNear, townTrips, visitorsOf, newsOf, NEWS_DAYS, TRIP_REACH_PX } from '../src/systems/livingWorld/trips.js';
+import { carriedNews } from '../src/systems/livingWorld/carried.js';   // LW16
 import { createLivingRoads } from '../src/scenes/livingRoads.js';
 import { createLivingIndoors } from '../src/scenes/livingIndoors.js';
 import { createRelations } from '../src/systems/livingWorld/relations.js';
@@ -181,6 +187,145 @@ console.log('THE ROADS');
   const dv = [], fl = [];
   for (let i = 0; i < 20; i++) { let a = now(); diversAt(dungeon, t0 + i, map.world, o); dv.push(now() - a); a = now(); fallenIn(dungeon, t0 + i, map.world, o); fl.push(now() - a); }
   console.log(`  the deep's readers, once a second below: the divers ${ms(stats(dv).mean)}, the fallen ${ms(stats(fl).mean)}`);
+}
+
+console.log('THE TRAFFIC (LW9: the parties on the road about a point - the first roster\'s and the new traffic\'s)');
+{
+  // the synthetic map mixed as the game's is: some of its places farms (type 3, a block), villages and hamlets (types 2
+  // and 1, four to eight blocks) and roadside taverns (type 6, a block) - set before anything reads a roster
+  const map = livingMap({ dives: true });
+  map.towns.forEach((t, i) => {
+    const r = (Math.imul(t.mapId, 2654435761) >>> 0) % 10;
+    if (r < 2) { t.type = 3; t.blocks = 1; } else if (r < 4) { t.type = 2; t.blocks = 4 + (r % 5); } else if (r < 5) { t.type = 1; t.blocks = 2; } else if (r < 6 && i % 2) { t.type = 6; t.blocks = 1; }
+  });
+  const o = { mpm: CALENDAR_MPM, memo: new Map() };
+  // a party the roster before LW9 sent: its leader one of the first roster's slots (travellerCounts')
+  const before = (trip) => trip.leader.slot < Object.values(travellerCounts(trip.from)).reduce((a, b) => a + b, 0);
+  const at = (rPx) => {
+    let all = 0, old = 0, n = 0;
+    const kinds = {};
+    for (let day = 300; day < 314; day++) for (const h of [8, 12, 18]) for (const [px, py] of [[115, 115], [120, 120], [125, 125], [130, 115]]) {
+      const got = partiesNear(px, py, day * DAY_MIN + h * 60, map.world, o, rPx).parties;
+      all += got.length; n++;
+      for (const p of got) { if (before(p.trip)) old++; kinds[p.trip.kind] = (kinds[p.trip.kind] ?? 0) + 1; }
+    }
+    return { all: all / n, old: old / n, kinds };
+  };
+  for (const r of [1, 3]) {
+    const a = at(r);
+    console.log(`  within ${r} px, by day: ${a.old.toFixed(2)} parties before LW9, ${a.all.toFixed(2)} with the new traffic (x${(a.all / Math.max(1e-9, a.old)).toFixed(2)}) - ${Object.entries(a.kinds).map(([k, v]) => `${k} ${v}`).join(', ')}`);
+  }
+  const t0 = 300 * DAY_MIN + 600;
+  const here = { x: (120 + 0.5) * NATIVE_PIXEL, z: (499 - 120 + 0.5) * NATIVE_PIXEL };
+  const clock = { t: t0 };
+  const sprites = { sync() {}, batches: () => [], persons: () => [], bodyOf: () => null, clear() {} };
+  const layer = createLivingRoads({ world: map.world, mpm: CALENDAR_MPM, clock: () => clock.t, baseRate: () => RATE, sceneOf: (x, z) => [x / NATIVE_PER_M, 0, z / NATIVE_PER_M], here: () => here, sprites, relations: () => createRelations(), memo: o.memo });
+  const eye = [here.x / NATIVE_PER_M, 1.6, here.z / NATIVE_PER_M], frames = [];
+  for (let i = 0; i < 1800; i++) { clock.t += RATE / 30; const a = now(); layer.frame(1 / 30, eye); layer.speech(eye); frames.push(now() - a); }
+  const f = stats(frames.slice(1));
+  console.log(`  the roads' layer with the new traffic (${layer.parties().length} parties): the way in ${ms(frames[0])}, then mean ${ms(f.mean)} p99 ${ms(f.p99)} max ${ms(f.max)}`);
+  check(f.max <= 6, `the roads' layer with the new traffic, any frame <= 6 ms (${ms(f.max)})`);
+}
+
+console.log('THE OUTLAWS (LW12: the bands of the map\'s region, their hideouts, the hold-ups on the dice)');
+{
+  const map = livingMap({ dives: true });
+  map.world.townsIn = (r) => map.towns.filter((t) => t.region === r);
+  let a = now();
+  const hs = hideoutsOf(17, map.world) ?? [];
+  console.log(`  the region's hideouts (${map.towns.length} towns, ${hs.length} bands): placed in ${ms(now() - a)}, once a network`);
+  map.trouble.bandAt = (trip, px, py, t) => bandTrouble(trip, px, py, t, hs);
+  const o = { mpm: CALENDAR_MPM, memo: new Map() };
+  a = now();
+  const trips = partiesOver(map, 300, 314, o);
+  const enc = trips.filter((tr) => tr.enc && !tr.enc.inside && !tr.enc.atSea);
+  const band = enc.filter((tr) => tr.enc.band), robbed = band.filter((tr) => tr.enc.kind === 'robbed');
+  console.log(`  a fortnight's troubles, the whole map: ${enc.length}, ${band.length} a band's (${robbed.length} robbed, no blood) - read in ${ms(now() - a)}`);
+  const h = hs[0];
+  if (h) {
+    const here = { x: h.x, z: h.z };
+    const clock = { t: 300 * DAY_MIN + 600 };
+    const sprites = { sync() {}, batches: () => [], persons: () => [], bodyOf: () => null, clear() {} };
+    const layer = createLivingRoads({ world: map.world, mpm: CALENDAR_MPM, clock: () => clock.t, baseRate: () => RATE, sceneOf: (x, z) => [x / NATIVE_PER_M, 0, z / NATIVE_PER_M], here: () => here, sprites, relations: () => createRelations(), memo: o.memo });
+    const eye = [here.x / NATIVE_PER_M, 1.6, here.z / NATIVE_PER_M], frames = [];
+    for (let i = 0; i < 1800; i++) { clock.t += RATE / 30; const b = now(); layer.frame(1 / 30, eye); layer.speech(eye); frames.push(now() - b); }
+    const f = stats(frames.slice(1));
+    console.log(`  the roads' layer at a hideout (${layer.parties().length} parties): the way in ${ms(frames[0])}, then mean ${ms(f.mean)} p99 ${ms(f.p99)} max ${ms(f.max)}`);
+    check(f.max <= 6, `the roads' layer at a hideout, any frame <= 6 ms (${ms(f.max)})`);
+  }
+  // AUDIT LW-II-2 C5: A HIDEOUT STOOD - its camp, its people and its chest (hideouts.js bandChest: its take, a fortnight
+  // of its leg's two towns' trips, cold but today's, as the roads' layer leaves them; the shops' roll warm, as the game's
+  // is) - every frame from the one that stood it, THAT ONE COUNTED: the chest read in it cost it 25-110 ms, and the
+  // measure above dropped its first frame and stood no camp
+  stockShopShelf({ buildingType: BUILDING_TYPES.GeneralStore, quality: 10 }, { level: 10 }, { shelfIndex: 1 });
+  for (const hh of hs) {
+    const t = 300 * DAY_MIN + 600, band = outlawBandAt(hh, t);
+    if (!band) continue;
+    const ho = { mpm: CALENDAR_MPM, memo: new Map() };
+    for (const id of [hh.a, hh.b]) for (let d = -1; d <= 1; d++) townTrips(map.byId.get(id), t + d * DAY_MIN, map.world, ho);   // the roads' warm days
+    let reads = 0;
+    const rel = createRelations();
+    const host = createHideouts({
+      hideoutsNear: () => [hh], bandAt: (x, at) => outlawBandAt(x, at), clock: () => t, here: () => ({ x: hh.x, z: hh.z }), ready: () => true, owner: () => true,
+      sceneOf: (x, z) => [x / NATIVE_PER_M, 0, z / NATIVE_PER_M], spawn: () => Promise.resolve({ dead: false, entity: {} }), remove() {}, inPool: () => true,
+      relations: () => rel, say() {}, dropPile: (items) => ({ items }), removePile() {},
+      chest: (b, at) => bandChest(b, at, { townOf: (id) => map.byId.get(id), tripsOf: (town, at2) => { reads++; return townTrips(town, at2, map.world, ho); }, shelf: (q) => stockShopShelf({ buildingType: BUILDING_TYPES.GeneralStore, quality: 10 }, { level: 10 }, q), gold: (n) => goldStack(n) }),
+    });
+    const frames = [];
+    let first = -1, last = -1;
+    for (let i = 0; i < 300; i++) { const r0 = reads, b = now(); host.frame(1 / 30); frames.push(now() - b); if (reads > r0) { if (first < 0) first = i; last = i; } }
+    const f = stats(frames);
+    console.log(`  a hideout stood (${hh.key}, ${band.people.length} of ${band.name}): the stand frame ${ms(frames[0])} (${first > 0 ? 'no trip read' : 'TRIPS READ'}), its chest's ${reads} town-days read over frames ${first}-${last} (pile: ${host.shown()?.pile}), any frame mean ${ms(f.mean)} max ${ms(f.max)}`);
+    check(first > 0 && frames[0] <= 6 && f.max <= 6, `a hideout stood: its stand frame reads no trip (${ms(frames[0])}), every frame after <= 6 ms (${ms(f.max)})`);
+  }
+}
+
+console.log('THE WORD CARRIED (LW16: a town\'s visits of these days and their towns\' news, worked a slice a frame)');
+{
+  // the host's generator's shape (scenes/world.js livingVisitsGen): a town about's trips a slice, its visitors, each
+  // visit's town's news a day a slice, a courier's town's visits (one hop) - each town cold, as on the way into it
+  const map = livingMap({});
+  let worstSlice = 0, worstTotal = 0, worstSlices = 0, items = 0, tells = 0;
+  for (const town of map.towns) {
+    const o = { mpm: CALENDAR_MPM, memo: new Map() };
+    const told = new Map(), vis = new Map();
+    const newsAt = (tn, t) => {
+      const noon = Math.floor((t - 240) / DAY_MIN) * DAY_MIN + 960, k = `${tn.mapId}:${noon}`;
+      if (!told.has(k)) { const v = []; for (let d = 0; d <= NEWS_DAYS; d++) v.push(...(townTrips(tn, noon - d * DAY_MIN, map.world, o) ?? [])); told.set(k, v); }
+      return newsOf(told.get(k), t);
+    };
+    const visOf = (tn, day) => { const k = `${tn.mapId}:${day}`; if (!vis.has(k)) vis.set(k, visitorsOf(tn, day, map.world, o)); return vis.get(k); };
+    const gen = function* (tn, day, relay) {
+      const out = [], seen = new Set();
+      for (let d = 0; d <= NEWS_DAYS; d++) {
+        for (const near of map.world.townsNear(tn.px, tn.py, TRIP_REACH_PX)) { townTrips(near, (day - d) * DAY_MIN + 960, map.world, o); yield; }
+        const vs = visOf(tn, day - d);
+        yield;
+        for (const v of vs ?? []) {
+          const tr = v.trip;
+          if (!tr?.from || seen.has(tr.id)) continue;
+          seen.add(tr.id);
+          const courier = tr.party.some((m) => m.job === 'courier');
+          const heard = relay && courier ? yield* gen(tr.from, Math.floor((tr.outT0 - 240) / DAY_MIN), false) : [];
+          for (let b = 0; b <= NEWS_DAYS; b++) { townTrips(tr.from, Math.floor((tr.outT0 - 240) / DAY_MIN) * DAY_MIN + 960 - b * DAY_MIN, map.world, o); yield; }
+          out.push({ id: tr.id, from: tr.from, inT: tr.outT1, outT0: tr.outT0, courier, news: newsAt(tr.from, tr.outT0), ...(heard.length ? { relay: heard } : {}) });
+          yield;
+        }
+      }
+      return out;
+    };
+    townTrips(town, 300 * DAY_MIN + 960, map.world, o); visOf(town, 300);   // the town's own day read first, as its roads' read
+    const g = gen(town, 300, true);
+    let total = 0, n = 0, r;
+    do { const a = now(); r = g.next(); const dt = now() - a; total += dt; n++; worstSlice = Math.max(worstSlice, dt); } while (!r.done);
+    worstTotal = Math.max(worstTotal, total); worstSlices = Math.max(worstSlices, n);
+    const a = now();
+    for (let m = 0; m < 60; m++) items += carriedNews(r.value, 300 * DAY_MIN + 600 + m).length;
+    tells = Math.max(tells, (now() - a) / 60);
+  }
+  console.log(`  ${map.towns.length} towns, each cold: the worst town's word ${ms(worstTotal)} in ${worstSlices} slices, the worst slice ${ms(worstSlice)}; the word told a minute at most ${ms(tells)} (${items} items)`);
+  check(worstSlice <= 10, `the carried word, any slice <= 10 ms (${ms(worstSlice)}) - its whole, cold, once in one frame was 23-85 ms`);
+  check(tells <= 1, `the carried word told, a minute's read <= 1 ms (${ms(tells)})`);
 }
 
 console.log('THE ROOM');

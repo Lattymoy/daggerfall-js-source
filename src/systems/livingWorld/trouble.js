@@ -18,9 +18,15 @@
 // party where it fell for its HALT_MIN (the fight its FIGHT_MIN of it, then the wounds bound and the dead seen to); a
 // party that won walks on and makes up the halt by its arrival (`partyAt`'s catch-up); one turned home walks back from
 // where it stood, and never comes to the town it set out for.
+//
+// LW12 (bible/06-Systems/Living-World-II.md "LW12"): THE OUTLAWS - a trouble within reach of a band's hideout is the
+// band's in its share of them (the host's `bandAt`, outlaws.js bandTrouble - its own draw, never this stream): its foes
+// the band's people at their levels, its name on the encounter (`band`, `bandName`). A party under ROB_RATIO of the
+// band's strength yields - ROBBED, no blood, held HALT_MIN.robbed, then walking on without its goods (`robbed` on the
+// trip: LW10's cargo a quarter) - else it fights as any party does.
 import { lwRng, textSeed } from './seed.js';
 import { DAY_MIN } from './dayPlan.js';
-import { WALK_TO_H, whenWalked, wayAt, dryStop, partyAt, NATIVE_PIXEL } from './trips.js';
+import { WALK_TO_H, whenWalked, wayAt, dryStop, partyAt, NATIVE_PIXEL, innAhead, PATROL_RISK } from './trips.js';
 
 /** A day's walking's chance of trouble, on middling ground. */
 export const RISK_PER_DAY = 0.09;
@@ -30,9 +36,12 @@ export const GROUND_RISK = Object.freeze({ road: 0.6, track: 0.9, open: 1.4 });
 export const RISK_MAX = 0.55;
 /** Of the encounters on a leg that spans a night, the share that fall on the camp. */
 export const CAMP_SHARE = 0.3;
-/** The party held where it fell, minutes of the clock, by the end - and of it, the fight's own minutes. */
-export const HALT_MIN = Object.freeze({ driven: 25, won: 60, fled: 15, fell: 45 });
-export const FIGHT_MIN = Object.freeze({ driven: 10, won: 25, fled: 8, fell: 20 });
+/** The party held where it fell, minutes of the clock, by the end - and of it, the fight's own minutes. LW12: ROBBED,
+ *  held up by a band - the outlaws standing over it, then the party walks on without its goods. */
+export const HALT_MIN = Object.freeze({ driven: 25, won: 60, fled: 15, fell: 45, robbed: 30 });
+export const FIGHT_MIN = Object.freeze({ driven: 10, won: 25, fled: 8, fell: 20, robbed: 10 });
+/** LW12: a party under this share of a band's strength yields to it - robbed, no blood (outlaws.js reads it). */
+export const ROB_RATIO = 0.6;
 /** The most foes an encounter is. */
 export const FOES_MAX = 6;
 const TROU = 0x54524f55;   // 'TROU'
@@ -47,8 +56,11 @@ export const foeStrength = (level) => 1 + 0.6 * Math.max(1, level);
  * @typedef {{ climateAt: (px: number, py: number) => number,
  *   foesOf: (q: { climateIndex: number, dungeonType?: number, minute: number, level: number, size: number, rolls: () => number }) => (number[] | null),
  *   foeLevel?: (type: number, level: number) => number, dies?: (res: any, trip: any) => boolean, diced?: (res: any, trip: any) => boolean,
- *   turnOf?: (encId: string) => ('won'|'lost'|null) }} TroubleWorld - `turnOf` the character's own turn of an encounter
- *   (relations.js turns: a fight the player won for the party, or lost with it)
+ *   turnOf?: (encId: string) => ('won'|'lost'|null), covered?: (trip: any) => boolean,
+ *   bandAt?: (trip: any, px: number, py: number, t: number) => ({ band: any, foes: number[], level: number } | null) }} TroubleWorld - `turnOf` the
+ *   character's own turn of an encounter (relations.js turns: a fight the player won for the party, or lost with it); LW9
+ *   `covered` whether a patrol keeps the trip's road (trips.js patrolCover); LW12 `bandAt` a band's trouble there
+ *   (outlaws.js bandTrouble over the character's routs)
  */
 
 /**
@@ -74,7 +86,7 @@ export function troubleOf(trip, world) {
   const rng = lwRng(textSeed(trip.id), TROU);
   const kinds = trip.way.kinds ?? [];
   const ground = kinds.length ? kinds.reduce((a, k) => a + (GROUND_RISK[/** @type {keyof typeof GROUND_RISK} */ (k)] ?? 1), 0) / kinds.length : 1;
-  const risk = Math.min(RISK_MAX, RISK_PER_DAY * 2 * days * ground);
+  const risk = Math.min(RISK_MAX, RISK_PER_DAY * 2 * days * ground) * (world.covered?.(trip) ? PATROL_RISK : 1);   // LW9: a patrol keeps the road
   const u = rng();
   if (!fated.length && !dead.length && u >= risk) return null;
   const leg = rng() < (fated.length ? 0.7 : 0.5) ? 'out' : 'back';
@@ -82,12 +94,27 @@ export function troubleOf(trip, world) {
   // where: a seeded stretch of the walk, or the camp of a leg's first night
   let wm = (0.15 + 0.7 * rng()) * walkMin;
   let t0 = whenWalked(legStart, wm), camp = false;
+  const walkWm = wm, walkT0 = t0;   // LW9: the walk's own, should the night's camp be an inn
   // a leg its first day's light does not finish camps that night: now and then the trouble finds the camp, at eleven
   const firstLight = whenWalked(legStart, 0);
   const dayEnd = Math.floor(firstLight / DAY_MIN) * DAY_MIN + WALK_TO_H * 60;
   const firstDay = Math.max(0, dayEnd - firstLight);
   if (rng() < CAMP_SHARE && firstDay > 0 && firstDay < walkMin) { wm = firstDay; t0 = dayEnd + 4 * 60; camp = true; }
   let s = leg === 'out' ? trip.trim0 + trip.pace * wm : trip.way.len - trip.trim1 - trip.pace * wm;
+  // LW9: THE INN ON THE ROAD - a night lodged at one meets no trouble at a camp: the trouble falls on the walk
+  if (camp && innAhead(trip.way, s, leg === 'out' ? 1 : -1, trip.trim0, trip.way.len - trip.trim1)) {
+    wm = walkWm; t0 = walkT0; camp = false;
+    s = leg === 'out' ? trip.trim0 + trip.pace * wm : trip.way.len - trip.trim1 - trip.pace * wm;
+  }
+  // AUDIT LW-II-2 R3: A MORNING STILL LODGED - a walk's trouble whose minute falls while the party waits at its inn for
+  // its day's walk to come up to it (trips.js partyAt) is met as it sets out again: the first minute it is back on the
+  // road, at the inn's place. Before, the halt stood it on the road behind the inn, where the walk would have been, and
+  // then it was lodged again - out of the inn and back, and gone from its guests at the halt's minute
+  if (!camp && partyAt(trip, t0).inn) {
+    const end = leg === 'out' ? trip.outT1 : trip.backT1;
+    for (t0 = Math.ceil(t0); t0 < end && partyAt(trip, t0).inn; t0++);
+    s = partyAt(trip, t0).s ?? s;   // where it stands as it sets out - the inn's place, its walk come up to it
+  }
   if (trip.way.dry) {
     // LW-DRY: met on dry ground - a party on a wet stretch then (a ford by day, its walk on to the night's camp) is met at
     // the first dry ground on from it, as it comes to it (trips.js partyAt: the ground between its day's walk and where
@@ -108,27 +135,32 @@ export function troubleOf(trip, world) {
   const armed = trip.party.filter((m) => m.cls != null);
   const level = Math.max(1, ...armed.map((m) => m.level ?? 1), 2);
   const size = fated.length ? Math.min(FOES_MAX, trip.party.length + 2) : Math.min(FOES_MAX, 1 + Math.floor(rng() * (trip.party.length + 1)));
-  const foes = world.foesOf({ climateIndex: world.climateAt(px, py), minute: t0, level, size, rolls: rng }) ?? [];
+  const outlaws = world.bandAt?.(trip, px, py, t0) ?? null;   // LW12: a band's own trouble, its people
+  const foes = outlaws ? outlaws.foes : world.foesOf({ climateIndex: world.climateAt(px, py), minute: t0, level, size, rolls: rng }) ?? [];
+  const foeLv = outlaws ? outlaws.level : level;
   if (!foes.length && !fated.length && !dead.length) return null;   // the sea, a climate with no table: nothing out there
-  /** @type {'driven'|'won'|'fled'|'fell'} the dice's - the halt and the fight's length */
+  /** @type {'driven'|'won'|'fled'|'fell'|'robbed'} the dice's - the halt and the fight's length */
   let shape;
   if (fated.length) shape = fated.includes(trip.leader.id) ? 'fell' : 'won';
   else {
     const sP = trip.party.reduce((a, m) => a + strengthOf(m), 0);
-    const sF = foes.reduce((a, f) => a + foeStrength(world.foeLevel?.(f, level) ?? level), 0);
+    const sF = foes.reduce((a, f) => a + foeStrength(outlaws ? foeLv : world.foeLevel?.(f, level) ?? level), 0);
     const pWin = sP / (sP + sF);
-    const r = rng();
-    shape = r < 0.55 * pWin ? 'driven' : r < pWin ? 'won' : 'fled';
+    if (outlaws && sP < ROB_RATIO * sF) shape = 'robbed';   // LW12: it yields
+    else {
+      const r = rng();
+      shape = r < 0.55 * pWin ? 'driven' : r < pWin ? 'won' : 'fled';
+    }
   }
   // how it went: the leader dead (a turn) the party fell, the fated leader spared it stood; and the character's own turn -
   // a fight they won for the party is won (its leader standing), one they lost with it, fled
-  /** @type {'driven'|'won'|'fled'|'fell'} */
+  /** @type {'driven'|'won'|'fled'|'fell'|'robbed'} */
   let kind = dead.includes(trip.leader.id) ? 'fell' : shape === 'fell' ? 'won' : shape;
   const turn = world.turnOf?.(`${trip.id}:e`) ?? null;
   if (turn === 'won' && kind !== 'fell') kind = 'won';
   else if (turn === 'lost' && (kind === 'driven' || kind === 'won')) kind = 'fled';
   return { id: `${trip.id}:e`, leg, camp, t0, t1: t0 + HALT_MIN[shape], fightEnd: t0 + FIGHT_MIN[shape], s, x: p.x, z: p.z, px, py,
-    foes, level, kind, shape, dead };
+    foes, level: foeLv, kind, shape, dead, ...(outlaws ? { band: outlaws.band.key, bandName: outlaws.band.name } : {}) };
 }
 
 /**
@@ -185,7 +217,7 @@ export function troubledTrip(trip, enc) {
     // LW5b: lost at sea - gone from the party at the hour, nowhere to lie; the ship sails on with the rest
     return { ...trip, enc, fallen: enc.dead.map((id) => ({ res: byId.get(id), t: enc.t0, s: 0, atSea: true })).filter((f) => f.res), turned: false };
   }
-  const shape = enc.shape ?? enc.kind;   // AUDIT-B1: the fight's length and a dive's end are the dice's
+  const shape = /** @type {any} */ (enc).shape ?? enc.kind;   // AUDIT-B1: the fight's length and a dive's end are the dice's
   const fallAt = enc.t0 + FIGHT_MIN[shape] * 0.6;
   if (enc.leg === 'dive') {
     // LW6: under the ground - the fallen lie there; a party whose leader fell comes out at once and walks home (AUDIT-C2:
@@ -199,11 +231,14 @@ export function troubledTrip(trip, enc) {
   const fallen = enc.dead.map((id) => ({ res: byId.get(id), t: fallAt, s: enc.s })).filter((f) => f.res);
   const halt = { t0: enc.t0, t1: enc.t1, fightEnd: enc.fightEnd, s: enc.s, leg: enc.leg };
   const turned = enc.leg === 'out' && (enc.kind === 'fled' || enc.kind === 'fell');
+  // LW12: on without its goods - AUDIT LW-II C9: a hold-up near the leg's end as well (its halt past the arrival: the
+  // returns below dropped it, and the band's take counted a robbery its counter never knew)
+  const robbed = enc.kind === 'robbed' ? { robbed: { t: enc.t0, by: enc.band } } : {};
   // AUDIT-B7: a halt that runs past its leg's planned end holds the arrival (never halted on the road and lodged in town
   // at once; a way home's halt never cut by the party's being home)
-  if (!turned && enc.leg === 'out' && enc.t1 > trip.outT1) return { ...trip, enc, halt, fallen, turned: false, outT1: Math.min(enc.t1, trip.backT0) };
-  if (!turned && enc.leg === 'back' && enc.t1 > trip.backT1) return { ...trip, enc, halt, fallen, turned: false, backT1: enc.t1 };
-  if (!turned) return { ...trip, enc, halt, fallen, turned: false };
+  if (!turned && enc.leg === 'out' && enc.t1 > trip.outT1) return { ...trip, enc, halt, fallen, turned: false, outT1: Math.min(enc.t1, trip.backT0), ...robbed };
+  if (!turned && enc.leg === 'back' && enc.t1 > trip.backT1) return { ...trip, enc, halt, fallen, turned: false, backT1: enc.t1, ...robbed };
+  if (!turned) return { ...trip, enc, halt, fallen, turned: false, ...robbed };
   const home = Math.max(0, enc.s - trip.trim0) / trip.pace;
   const backT1 = whenWalked(enc.t1, home);
   return { ...trip, enc, halt, fallen, turned: true, outT1: enc.t0, backT0: enc.t1, backT1 };
