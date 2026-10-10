@@ -46,7 +46,7 @@
   {
     "name": "LW-FIX4-arrival-unheld",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": "  if (!turned && enc.leg === 'out' && enc.t1 > trip.outT1) return { ...trip, enc, halt, fallen, turned: false, outT1: Math.min(enc.t1, trip.backT0) };\n",
+    "old": "  if (!turned && enc.leg === 'out' && enc.t1 > trip.outT1) return { ...trip, enc, halt, fallen, turned: false, outT1: Math.min(enc.t1, trip.backT0), ...robbed };\n",
     "new": "",
     "tests": [
       "test/lwfix4_turns.test.js",
@@ -57,7 +57,7 @@
   {
     "name": "LW-FIX4-homecoming-unheld",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": "  if (!turned && enc.leg === 'back' && enc.t1 > trip.backT1) return { ...trip, enc, halt, fallen, turned: false, backT1: enc.t1 };\n",
+    "old": "  if (!turned && enc.leg === 'back' && enc.t1 > trip.backT1) return { ...trip, enc, halt, fallen, turned: false, backT1: enc.t1, ...robbed };\n",
     "new": "",
     "tests": [
       "test/lwfix4_turns.test.js",

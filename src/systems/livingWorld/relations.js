@@ -24,6 +24,9 @@
 // road's dice never held, so the lives take the place from that minute (lives.js handDeath) and the road keeps the rest
 // of the day as it was; the town talks of them by name (livingTown.js deedNews).
 
+import { CRIMES } from '../crimes.js';
+import { REGION_COUNT } from '../regionConditions.js';
+
 /** The save's record's vendor (modSaveData): the character's regards ride their save under it. */
 export const LIVING_WORLD_VENDOR = 'LivingWorld';
 
@@ -64,6 +67,10 @@ export const TALE_KINDS = Object.freeze(['home', 'routed', 'held']);
  *  key, decision 10). */
 export const WARES_MAX = 40;
 export const REPORTS_MAX = 40;
+/** AUDIT LW-II C10: a report's crime is one of the law's (crimes.js CRIMES, never None) and its region one of the map's
+ *  (regionConditions.js REGION_COUNT) - a save's or a host's any integer charged legalRep[-7] = NaN. */
+const CRIME_KINDS = new Set(Object.values(CRIMES).filter((c) => c !== CRIMES.None));
+const reportOk = (crime, region) => CRIME_KINDS.has(crime) && Number.isSafeInteger(region) && region >= 0 && region < REGION_COUNT;
 
 /** What moves a regard, and by how much. `talk` counts once a day per resident, and each tone of word (`polite`,
  *  `insulted`) once a day. LW7: one of their own slain turns them HOSTILE (an armed one draws on you beyond the walls). */
@@ -112,9 +119,11 @@ export function createRelations(record = null) {
   const turnOk = (key) => typeof key === 'string' && key.length > 0 && key.length <= 80;
   /** LW11: the road's records @type {Map<string, { gone: Set<number>, coin: number, robbed: number | null }>} */
   const wares = new Map();
-  /** @type {{ crime: number, region: number, at: number, who: string, witnesses: string[] }[]} */
+  /** @type {{ crime: number, region: number, at: number, who: string, witnesses: string[], trip?: string }[]} AUDIT LW-II C10:
+   *  `trip` the party's (its own fallen read at the town) */
   const reports = [];
-  /** @type {{ trip: string, t: number, pay: number, fights: number, leader: string, to: number } | null} */
+  /** @type {{ trip: string, t: number, pay: number, fights: number, leader: string, to: number, near: number | null } | null}
+   *  AUDIT LW-II C5b: `near` the last minute the escort was with the party */
   let escort = null;
   const road = record && typeof record === 'object' && record.v === 1 && record.road && typeof record.road === 'object' ? record.road : null;
   if (road) {
@@ -126,15 +135,15 @@ export function createRelations(record = null) {
     }
     if (Array.isArray(road.reports)) {
       for (const e of road.reports.slice(-REPORTS_MAX)) {
-        const [crime, region, at, who, witnesses] = Array.isArray(e) ? e : [];
-        if (Number.isSafeInteger(crime) && Number.isSafeInteger(region) && Number.isFinite(Number(at)) && typeof witnesses === 'string') {
-          reports.push({ crime, region, at: Number(at), who: nameOk(who), witnesses: witnesses.split(',').filter(ok) });
+        const [crime, region, at, who, witnesses, trip] = Array.isArray(e) ? e : [];
+        if (reportOk(crime, region) && Number.isFinite(Number(at)) && typeof witnesses === 'string') {
+          reports.push({ crime, region, at: Number(at), who: nameOk(who), witnesses: witnesses.split(',').filter(ok), ...(turnOk(trip) ? { trip } : {}) });
         }
       }
     }
     if (Array.isArray(road.escort)) {
-      const [trip, t, pay, fights, leader, to] = road.escort;
-      if (turnOk(trip) && Number.isFinite(Number(t)) && Number.isFinite(Number(pay)) && ok(leader)) escort = { trip, t: Number(t), pay: Math.max(0, Number(pay)), fights: Math.max(0, Number(fights) | 0), leader, to: Number(to) | 0 };
+      const [trip, t, pay, fights, leader, to, near] = road.escort;
+      if (turnOk(trip) && Number.isFinite(Number(t)) && Number.isFinite(Number(pay)) && ok(leader)) escort = { trip, t: Number(t), pay: Math.max(0, Number(pay)), fights: Math.max(0, Number(fights) | 0), leader, to: Number(to) | 0, near: near != null && Number.isFinite(Number(near)) ? Number(near) : null };
     }
   }
   if (record && typeof record === 'object' && record.v === 1 && record.turns && typeof record.turns === 'object') {
@@ -277,15 +286,23 @@ export function createRelations(record = null) {
       if (!turnOk(tripId)) return;
       wares.delete(tripId);
       wares.set(tripId, { gone: new Set([...gone].filter((i) => Number.isSafeInteger(i) && i >= 0 && i < 1000)), coin: Math.max(0, Number(coin) || 0), robbed: robbed != null && Number.isFinite(robbed) ? robbed : null });
-      while (wares.size > WARES_MAX) wares.delete(/** @type {string} */ (wares.keys().next().value));
+      // AUDIT LW-II C7: A ROBBERY IS THE LAST FORGOTTEN - the oldest counter not robbed leaves first, while the robbed are
+      // half the book or fewer (the oldest of WARES_MAX / 2 robberies is long home): pushed out by forty trades, a robbed
+      // caravan restocked its shelf and its purse and was robbed again
+      while (wares.size > WARES_MAX) {
+        const robbedIds = [...wares].filter(([, w]) => w.robbed != null).map(([id]) => id);
+        const out = robbedIds.length > WARES_MAX / 2 ? robbedIds[0] : [...wares].find(([, w]) => w.robbed == null)?.[0];
+        wares.delete(out ?? /** @type {string} */ (wares.keys().next().value));
+      }
     },
     /** LW11: the crimes witnesses are carrying to a town (read them; `report` and `dropReport` write). */
     reports: () => reports,
-    /** LW11: a crime a witness carries - charged at `at` (the host's), void if every witness is dead by then.
-     *  @param {{ crime: number, region: number, at: number, who?: string, witnesses: string[] }} r */
+    /** LW11: a crime a witness carries - charged at `at` (the host's), void if every witness is dead by then; AUDIT LW-II
+     *  C10 the law's crime, the map's region, and the party's `trip`.
+     *  @param {{ crime: number, region: number, at: number, who?: string, witnesses: string[], trip?: string }} r */
     report(r) {
-      if (!Number.isSafeInteger(r?.crime) || !Number.isSafeInteger(r?.region) || !Number.isFinite(r?.at) || !Array.isArray(r?.witnesses)) return false;
-      reports.push({ crime: r.crime, region: r.region, at: r.at, who: nameOk(r.who), witnesses: r.witnesses.filter(ok) });
+      if (!reportOk(r?.crime, r?.region) || !Number.isFinite(r?.at) || !Array.isArray(r?.witnesses)) return false;
+      reports.push({ crime: r.crime, region: r.region, at: r.at, who: nameOk(r.who), witnesses: r.witnesses.filter(ok), ...(turnOk(r.trip) ? { trip: /** @type {string} */ (r.trip) } : {}) });
       while (reports.length > REPORTS_MAX) reports.shift();
       return true;
     },
@@ -293,8 +310,9 @@ export function createRelations(record = null) {
     dropReport(r) { const i = reports.indexOf(r); if (i >= 0) reports.splice(i, 1); },
     /** LW11: the escort the character is hired on, or null. */
     escort: () => escort,
-    /** LW11: hired on, or done (null). @param {{ trip: string, t: number, pay: number, fights: number, leader: string, to: number } | null} c */
-    setEscort(c) { escort = c && turnOk(c.trip) && ok(c.leader) ? { trip: c.trip, t: Number(c.t) || 0, pay: Math.max(0, Number(c.pay) || 0), fights: Math.max(0, c.fights | 0), leader: c.leader, to: c.to | 0 } : null; },
+    /** LW11: hired on, or done (null); AUDIT LW-II C5b `near` the last minute the escort was with the party.
+     *  @param {{ trip: string, t: number, pay: number, fights: number, leader: string, to: number, near?: number | null } | null} c */
+    setEscort(c) { escort = c && turnOk(c.trip) && ok(c.leader) ? { trip: c.trip, t: Number(c.t) || 0, pay: Math.max(0, Number(c.pay) || 0), fights: Math.max(0, c.fights | 0), leader: c.leader, to: c.to | 0, near: c.near != null && Number.isFinite(c.near) ? Number(c.near) : null } : null; },
     /** Everyone known, for a list (the player's own). */
     entries: () => [...map.entries()].map(([id, e]) => ({ id, ...e })),
     size: () => map.size,
@@ -317,8 +335,8 @@ export function createRelations(record = null) {
       // LW11: the road's records, each only once there is one
       const roadOut = {
         ...(wares.size ? { wares: [...wares].map(([id, w]) => (w.robbed != null ? [id, [...w.gone].sort((a, b) => a - b), w.coin, w.robbed] : [id, [...w.gone].sort((a, b) => a - b), w.coin])) } : {}),
-        ...(reports.length ? { reports: reports.map((r) => [r.crime, r.region, r.at, r.who, r.witnesses.join(',')]) } : {}),
-        ...(escort ? { escort: [escort.trip, escort.t, escort.pay, escort.fights, escort.leader, escort.to] } : {}),
+        ...(reports.length ? { reports: reports.map((r) => (r.trip ? [r.crime, r.region, r.at, r.who, r.witnesses.join(','), r.trip] : [r.crime, r.region, r.at, r.who, r.witnesses.join(',')])) } : {}),
+        ...(escort ? { escort: escort.near != null ? [escort.trip, escort.t, escort.pay, escort.fights, escort.leader, escort.to, escort.near] : [escort.trip, escort.t, escort.pay, escort.fights, escort.leader, escort.to] } : {}),
       };
       return { v: 1, people, ...t, ...(Object.keys(roadOut).length ? { road: roadOut } : {}) };
     },

@@ -9,7 +9,9 @@ up decorations that can be used as shops" - HOME-VENDOR's hired trader. Asked wh
 dungeon, and in what order to build: "Your decision" to both (section 1, decisions 2 and 3). "I want this to be as
 detailed as possible."
 
-**Status: LW9-LW16 BUILT 2026-10-09.** Eight slices, LW9 to LW16, in the order of decision 2.
+**Status: LW9-LW16 BUILT 2026-10-09; AUDITED 2026-10-10** (Mac: "Lets do a deep audit and ensure this is perfection" -
+`01-Overview/Audit-LivingWorld-II.md`: every finding, where it stands below marked AUDIT LW-II, and what was not
+changed and why). Eight slices, LW9 to LW16, in the order of decision 2.
 As each one ships, its record is written on this page under its name, the way `06-Systems/Living-World.md` records
 LW1-LW8. That first page stays the record of LW0-LW8 and their fixes, and its LW0 decisions bind here except where
 section 1 says otherwise. Every constant below marked "proposed" is a starting number for the slice to measure. None
@@ -144,7 +146,8 @@ town stands unchanged, and `lw9_traffic.test.js` pins it against the same town r
 **THE ONE A TRAVELLER RIDES WITH** (`trips.js leaderOf`). A sellsword rides with its contract merchant, as before. A
 patrol rides as one behind its first. A retainer is dealt to the nobles in slot order, as the sellswords are to the
 merchants. Their places live by their leader's cycle (`placeCycle`), they set out when their leader does (`setsOut`),
-and `formCaravans` makes the round and the procession whole: every place of it, held that cycle.
+and `formCaravans` makes the round and the procession whole: every place of it, held that cycle. A rider whose place is
+fated that cycle sends the round out, as a company's member does (AUDIT LW-II F2: the fated knight stayed home).
 
 **AT HOME AND AWAY** (`dayPlan.js`).
 - At home: a carter and a hunter work the fields as a farmer does; a patrol's knight and a retainer keep a sellsword's
@@ -160,7 +163,8 @@ and `formCaravans` makes the round and the procession whole: every place of it, 
   - A hunter's point is the first of WILD_TRIES seeded tries 1-3 px off their town that stands on dry ground, off every
     town's pixel, with the line to it dry where it is sounded (four points).
   - Their way is that straight line, `open` throughout, so its trouble is open country's.
-  - The trip's `to` is no town (`mapId` -1, "the wild"), and `trip.wild` is the point.
+  - The trip's `to` is no town (`mapId` -1, "the wild"), and `trip.wild` is the point. The talk and the news never name
+    it as a place (`placeName`: AUDIT LW-II E7 - "the wild" was told as a town's name); they say "the next town".
   - Out at first light; then the hunt's camp at the point (`partyAt`: out, camped, there) until the next morning, and
     home within the cycle.
 - **THE INN ON THE ROAD** (`trips.js innsAlong`, `nightStop`, `innAhead`, `innGuestsOf`).
@@ -169,9 +173,13 @@ and `formCaravans` makes the round and the procession whole: every place of it, 
   - At nightfall a party walks on to an inn within INN_AHEAD_N (a map pixel) ahead of it, and lodges there (`partyAt`'s
     `inn`). Otherwise it camps on dry ground, as LW-DRY has it.
   - The inn's GUESTS on a living day are the parties of the towns within reach lodged there the night before (out of a
-    morning) or that night: in from the minute they lodged (sounded on from nightfall a quarter hour at a time), out at
-    first light. The host hands them to the tavern's town as its visitors (world.js `livingTripsOf`), so LW-LODGE's
-    rooms take them.
+    morning) or that night: in from the minute they lodged, out at the minute they leave, one guest an id. AUDIT LW-II
+    E2: sounded from dusk to the next first light, a quarter hour at a time and then to the minute (`firstMinute`) - a
+    party lodging after dark was never listed (the audit's measure: 7 lodgings at the calendar's pace, 63 at the
+    online pace; none now); and a lodged party stays in until its day's walk catches up (96 minutes past 07:00 on average, up to five
+    hours online), where it was listed as gone at first light. E6: a party turned home lodging two nights was listed
+    twice. The host hands them to the tavern's town as its visitors (world.js `livingTripsOf`), so LW-LODGE's rooms take
+    them.
   - A night lodged at an inn meets no trouble at a camp (`trouble.js`): CAMP_SHARE's camp trouble falls on that day's
     walk instead.
 
@@ -187,6 +195,9 @@ and `formCaravans` makes the round and the procession whole: every place of it, 
   middle, one to a shared camp, none on the march and none at a halt. It has no light of its own: the roads' bodies are
   billboards and carry none.
 - **LODGED IS INDOORS**: a party at an inn draws no body on the road and wears no Overworld mark.
+- **LAID OUT ONCE, AS DRAWN** (AUDIT LW-II E3): the layer lays each party near out once a frame, where its bodies are
+  drawn, and the stands (the talk's, the fights') read those places - they laid each party out again on their own, and
+  stood it away from where its bodies were drawn.
 
 ### 2.4 The patrol keeps the road
 
@@ -194,6 +205,11 @@ and `formCaravans` makes the round and the procession whole: every place of it, 
   the round walked or within PATROL_COVER_DAYS (2) before the trip set out, meets trouble PATROL_RISK (0.5) times as
   often. The cover is read off the patrols' own trips alone (`memoTrip`, never their trouble), so no trip's trouble ever
   asks its own. The host's trouble world reads it (`livingTroubleWorld.covered`).
+  - AUDIT LW-II E10: the patrol cities about EITHER end of the trip - a round reaches the towns within its range of its
+    city; they were sought about `from` alone.
+  - AUDIT LW-II E1: a cover still waiting on a round's way answers undefined, and the trouble read meanwhile is kept
+    nowhere (`townTrips` keeps no day with a fate undefined; world.js `fate`, `livingCovered`). It answered false, and
+    the uncovered trouble was kept: two readers, their ways planned a few frames apart, saw different troubles.
 - **THE LAW BEYOND THE WALLS** (`roadStands.js` `wanted`). A patrol's knight within DRAW_M (45 m) of a player the round's
   region knows for a criminal (`standing.js knownCriminal`) draws on them, whatever their regard, with the law's word
   (`lines.js PATROL_HALT_LINES`). Built as the draw, not as DFU's arrest: the arrest flow (`scenes/arrestFlow.js`) is
@@ -232,9 +248,11 @@ has none.
 - `scenes/exterior.js`: FLAGGED, as LW2 has it.
 - `scenes/dungeonContext.js`: no roads.
 
-Pins: `test/lw9_traffic.test.js` (12). PIN MOVED: `lw1_livingWorld` (the roster's ids, more of the road's own appended),
+Pins: `test/lw9_traffic.test.js` (17 - AUDIT LW-II: the road jobs' own tables against their reach, stay, pace and
+cycle; the cover's two readers; the lodging after dark and the leaving; one fire to a shared camp and none on the march;
+the friendly knight still halting a wanted player). PIN MOVED: `lw1_livingWorld` (the roster's ids, more of the road's own appended),
 `lw3_roads` (the first's tables pinned alone), `lwperf_cost` (the day's trips' reference reads the new chances).
-Mutants: `tools/mutants/lw9.json` (37); twelve records the slice's edits moved were re-aimed by content (`lw3`, `lw4`,
+Mutants: `tools/mutants/lw9.json` (62); twelve records the slice's edits moved were re-aimed by content (`lw3`, `lw4`,
 `lw6b`, `lw7b`, `lwdry`).
 
 ## 3. LW10 - the wagon train (BUILT 2026-10-09)
@@ -265,7 +283,8 @@ Mac: "actual caravans utilizing horses and wagons".
 - **AT CAMP** (`campTeam`): each wagon CAMP_PARK_N (3 m) beyond the camp's ring, facing its fire, its horse unhitched
   CAMP_HORSE_SIDE_N to its side; a pack horse by itself. The ring is the shared camp's (LW9) where there is one.
 - **THE WHEELS** (`wheelAngleAt`): Horse Cart and Cargo's turn by travel (`horseCartLaw.js wheelRotationDegrees`) off
-  the distance the axle has walked along its way, wrapped. Every reader's wheels stand at the same spoke.
+  the distance the axle has walked along its way, wrapped. Every reader's wheels stand at the same spoke. Home, the
+  distance runs from the far end (AUDIT LW-II E8: it ran down, and the wheels turned backwards).
 - **THE CARGO** (`cargoOf`, the tiers CARGO_DEFINITIONS shows): full (90) on the way out; home, sold (50) or bought
   (75) by the trip's seed; a quarter (25) once robbed (LW11's `robbed`, the character's own).
 
@@ -299,7 +318,8 @@ Measure: the roads' layer with the teams laid stays inside its 6 ms on the probe
 pool's: at most WAGONS_DRAWN wagons of five meshes and their cargo a frame. A real-GPU frame is measured in a browser
 (`tools/travelViewPerf.mjs`); the container has none.
 
-Pins: `test/lw10_wagons.test.js` (7). Mutants: `tools/mutants/lw10.json` (21).
+Pins: `test/lw10_wagons.test.js` (8 - AUDIT LW-II: the roads' layer at a camp, its bodies and its parked teams).
+Mutants: `tools/mutants/lw10.json` (24).
 
 ## 4. LW11 - the caravan's door: trade, theft, the hold-up, the escort (BUILT 2026-10-09)
 
@@ -332,8 +352,11 @@ Mac: "caravans ... that can be assaulted, protected or traded with". The law is 
 - **ITS STOCK** is the shops' own roll (`shopStock.js stockShopShelf`) at that kind and quality, its rolls seeded by
   the trip (`lwRng(trip id, 'ware')`): the same all trip. Each ware carries its place in the first roll (`WARE_KEY`).
 - **WHAT LEFT THE SHELF STAYS GONE.** Bought, stolen unseen or taken, the character's WARES record keeps the places
-  gone and the coin paid out, by trip (WARES_MAX, 40, newest kept). The next session's shelf is the roll less those.
-  A load or a new game (another character's records) forgets the session's shelves.
+  gone and the coin paid out, by trip (WARES_MAX, 40). The next session's shelf is the roll less those. A load or a
+  new game (another character's records) forgets the session's shelves. AUDIT LW-II C7: A ROBBERY IS THE LAST
+  FORGOTTEN - the session's shelf carries its coin and its robbery and writes them back as they are, and the book lets
+  the oldest record NOT robbed go first, while the robbed are half of it or fewer: pushed out by forty trades, a robbed
+  caravan's record came back unrobbed, its shelf and purse whole, to be robbed again.
 - **THE WINDOW** is the shops' own (`worldModes.js openTradeWindow`), through the interior host's API (`openRoadTrade`)
   and `mountServiceWindow`: outdoors on the talk's overlay, never `interiorOverlay`. Its building is the counter's
   (kind, quality, name - "Ada Lark's caravan" - and the region at the party's place). Prices are the counter's own,
@@ -355,30 +378,57 @@ Mac: "caravans ... that can be assaulted, protected or traded with". The law is 
 - **CHARGED, OR VOID.** Once a second the host reads the reports whose minute has come: charged (`lowerRepForCrime`
   in the region, and `tallyCrimeGuildRequirements` as every crime is) if a witness lives at that minute, dropped if
   none does. A load past the minute charges it at the first step. The REPORTS record is add-only (REPORTS_MAX, 40).
+  - A WITNESS IS WHOEVER HOLDS THE PLACE (AUDIT LW-II C1, `caravanHost.js travellerOf`): a newcomer (`~<gen>`) minted
+    as the lives mint them. The roster holds the census's own alone, and at the game's epoch nearly every place is a
+    newcomer's: looked up there, every witness was nobody and every report void. While the town's trips wait on their
+    ways (`tripOfId` undefined) the report waits, asked again.
+  - A report names its trip, and a witness the road took on the way (its trip's own fallen, which the hands' deaths
+    never read) carries nothing to the town (C10). Its crime is one of the law's (`crimes.js` CRIMES, never None) and
+    its region one of the map's (`reportOk`, on load and on writing - any integer was charged, legalRep[-7] = NaN).
 - **NOT BUILT: STEALING FROM THE WAGON** (its cargo as a loot list, each piece on `shopliftAttempt`, NIGHT_STEAL at
   night) and the Assault report. The counter's own steal stands for the first (the shops' shoplift law). The road has
   no blow short of a striking down (LW7), so there is no assault to report. The wagon's steal is section 11, call 7.
 
 ### 4.4 The hold-up (`yields`)
 
-- A party that had armed, none of them standing - its own fallen, or one the host knows a hand took - and its leader
-  standing YIELDS, once: "Take it! Take what you want - just let us be!"
+- A party whose armed - those the road left it - are all down by the player's own hand (`slainAt`: the character's
+  `slain` turns), its leader standing and the player within ESCORT_KEEP_M of it, YIELDS, once: "Take it! Take what you
+  want - just let us be!" AUDIT LW-II C4: the trip's own fallen (the dice's) were read as beaten, and a sellsword who
+  died fighting beside the player as the player's doing - a party whose guards fell to anyone yielded to whoever was
+  within the roads' read, and the player became its robber.
 - The robbery is the character's: its minute in the WARES record, the cargo a quarter from then (LW10's
   `cargoOf`), a Theft reported, the Overworld's mark "Caravan to Wayrest (robbed)" (`partyLabel`).
-- Its counter is then `T - take`: its goods and what is left of its purse lie open in a loot window (the chest's).
+- Its counter is then `T - take`: its goods and what is left of its purse lie open in a loot window (the chest's) -
+  none of the purse where a band took it first (AUDIT LW-II C6: the whole purse lay open).
 
 ### 4.5 The escort (`escortOffer`, `escortPay`)
 
 - **HIRE ON.** A merchant's caravan offers the road from ESCORT_OFFER_MIN (18 hours) before it sets out until it is
-  in; never a caravan turned home, never by sea. One contract at a time (the ESCORT record).
+  in; never a caravan turned home, never by sea, never one the character robbed (AUDIT LW-II C5e). One contract at a
+  time (the ESCORT record).
 - **THE PAY**: each day of the walk out (WALK_FROM_H to WALK_TO_H, a part a whole) at ESCORT_GOLD_DAY (60) and
   ESCORT_GOLD_LEVEL (15) a level of the player's, and ESCORT_FIGHT (100) a foe of the trip's fight, if the player won
-  it (the character's `won` turn). Paid at the town it was bound for, with `helped` regard from every member.
-- **THE TERMS.** Within ESCORT_KEEP_M (300 m) of the party is near. Further than that for more than ESCORT_LOST_MIN
-  (60 minutes of the clock) at a stretch breaks it: no pay, an `insulted` regard from the merchant. The leader fallen
-  ends it ("did not live to pay you"); the caravan turned back ends it unpaid.
+  it (the character's `won` turn) and it began after the hire (C5e). Paid at the town it was bound for, with `helped`
+  regard from every member. Hired on the way, the share of the walk still ahead of the party at the hire (AUDIT LW-II
+  C5a: hired a minute short of the town, it paid the whole walk).
+- **THE TERMS.** Within ESCORT_KEEP_M (300 m) of the party is near; the contract keeps the last minute it was (`near`,
+  saved with it). Further than that for more than ESCORT_LOST_MIN (60 minutes of the clock) at a stretch breaks it: no
+  pay, an `insulted` regard from the merchant. The leader fallen - by a hand, or by the road (AUDIT LW-II C5d, its own
+  fallen) - ends it ("did not live to pay you"); the caravan turned back ends it unpaid, from its trouble's minute
+  (C5c: it paid through the halt).
+- **WITH IT THROUGHOUT** (AUDIT LW-II C5b, `escortNear`): judged to the town however the clock came past it. The step
+  runs in the open world and in the modal frame alike (an escort waited out indoors was never asked where it stood, and
+  paid at the town). The clock since the escort was last with the party is read back each ESCORT_SAMPLE_MIN (5) against
+  where the player stands now: never a stretch of ESCORT_LOST_MIN without the party near. A party camped beside a
+  sleeper keeps them; one that walked off from a sleeper, or came up to them after an hour of their sleep, does not;
+  and a journey that set the player down beside it is a stretch away (on review: one that set them by its town as it
+  came in was paid - the first cut read a moved player's last minute alone, and kept a 5 m "stood still" test the
+  read-back made idle, which a mutant said). Indoors the player stands at the building (an interior stands at its
+  building's world matrix), and a party lodged at an inn is near whoever is at that inn - its location the one on its
+  pixel, the party on the road beside it. Below, nobody is near.
 - **OFFLINE, TRAVEL ON WITH THEM** (`R`): the one clock moved as a journey moves it (`advanceOwnMinutes`), the player
-  set down beside the party at its next stop - a minute before its trouble, the night's dusk, or the town. Online
+  set down beside the party at its next stop - a minute before its trouble, the night's dusk, or the town - and the
+  contract's `near` with it (the road walked beside it). Online
   there is no such choice (decision 6): the world's clock is everyone's.
 - **NOT BUILT: THE NEWS** of a caravan robbed or escorted whole (`ROBBED_NEWS`, `ESCORT_NEWS`). It is LW16's, where
   the word travels.
@@ -386,7 +436,9 @@ Mac: "caravans ... that can be assaulted, protected or traded with". The law is 
 ### 4.6 The four hosts, the measure, the pins
 
 - `scenes/world.js`: WIRED (the door, the counter's stock and window, the loot, the reports' charge, the road's slay
-  and caught hand, the step once a second wherever the living world runs, the offline travel).
+  and caught hand, the traveller by place and the trip pending (`travellerOf`, `tripOfId`), the player's own hand
+  (`livingSlainAt`), the step once a second in the open world and the modal frame (`caravanStep`), the offline
+  travel).
 - `scenes/worldModes.js`: WIRED through its API (`openRoadTrade`; the counter's discount and refusal in its trade
   window).
 - `scenes/dungeonContext.js`: none (no road). `scenes/exterior.js`: FLAGGED, as LW2 has it.
@@ -397,7 +449,11 @@ contract. Nothing per frame.
 Moved pins: `lw3_roads` (the caught hand's door), `lw7_deeds` (the road's slay), `lw7b_beyond` and `lwfix4_turns`
 (the stands' slay) - each now through the LW11 wrapper, which calls the old.
 
-Pins: `test/lw11_caravan.test.js` (14). Mutants: `tools/mutants/lw11.json` (60).
+Moved by the audit: `lwfix4_turns`' records (a hold-up's robbery carried at the leg's end, C9).
+
+Pins: `test/lw11_caravan.test.js` (21 - AUDIT LW-II: the newcomer witness and the trip pending, the hold-up by the
+player's own hand, the escort with the party throughout, the band's purse, the book's robbery last forgotten, the
+report's law). Mutants: `tools/mutants/lw11.json` (98).
 
 ## 5. LW12 - the outlaws (BUILT 2026-10-09)
 
@@ -410,8 +466,11 @@ a region's towns, its roads, a seed and the clock); the hideout is stood by `src
 - **THE HIDEOUT** (`hideoutsOf`): each band takes a LEG - two of the region's towns of BAND_TOWN_BLOCKS (4) or more,
   BAND_LEG_PX (3 to 14 px) apart - the seed's pick, never two bands on one leg. The hideout stands HIDEOUT_OFF_PX (1-2
   px) off the middle pixel of that leg's planned road, to the seed's side, on dry ground (`dryAt`) and on no town;
-  failing that, the next candidate along the road. Until a leg's road is planned the region answers none (asked again;
-  the host keeps a region's hideouts for the network's generation).
+  failing that, the next candidate along the road. Until a leg's road is planned the region answers none, asked again
+  (the host's book, `hideouts.js createHideoutBook`: kept for the network's generation, a waiting region asked no
+  sooner than HIDEOUTS_ASK_MS, 100 ms). AUDIT LW-II C8: its bands found, the troubles read band-less meanwhile are made
+  again - kept as none for the session, one reader's caravan was held up by a band where another's, its roads planned a
+  few frames later, fought orcs.
 - **THE NAME** (`outlawBandName`): "the <word> <band>" off two lists (BAND_WORDS, BAND_NOUNS), or one time in three the
   leader's "<first name>'s <band>".
 - **ITS PEOPLE** (`bandPeople`): BAND_SIZE (4 to 8), ids `O<region>.<band>~<gen>.<i>` (a character's heir
@@ -435,7 +494,8 @@ a region's towns, its roads, a seed and the clock); the hideout is stood by `src
   (`band`, `bandName`). The host's `bandAt` reads the hideouts of the trip's two regions and the character's routs.
 - **A NEW END: ROBBED.** A party whose strength (`strengthOf`) is under ROB_RATIO (0.6) of the band's yields - no
   blood, held HALT_MIN.robbed (30) minutes (FIGHT_MIN.robbed 10: the outlaws standing over it, a fight the player can
-  stand), then walking on with `robbed` on its trip (`{ t, by }`): LW10's cargo a quarter, LW11's counter without its
+  stand), then walking on with `robbed` on its trip (`{ t, by }` - AUDIT LW-II C9: a halt run past its leg's end as
+  well): LW10's cargo a quarter, LW11's counter without its
   purse ("The outlaws took every septim we had") and half its goods - the band's, never the character's gone.
   A stronger party fights as any does. A fight the player won for it is won: nothing taken.
 - **THE BAND'S TAKE** (`takeOf`): the parties it robbed since it formed and within TAKE_DAYS (14) - each
@@ -446,23 +506,33 @@ a region's towns, its roads, a seed and the clock); the hideout is stood by `src
 
 ### 5.3 The hideout stood (`scenes/hideouts.js`)
 
-- **STOOD LIVE** on foot within BAND_LIVE_M (200 m), by the one standing it (the road fights' own election online),
-  once a second:
+- **STOOD LIVE** on foot within BAND_LIVE_M (200 m), once a second: its camp - tents, fire, chest - by every reader,
+  and its people by the one it falls to (the road fights' own election online; a reader who becomes it later takes
+  them up. AUDIT LW-II C11b: online the camp stood for its owner alone):
   - its tents (TENT_MODEL 41606, the camps' own, through the host's meshes) on a ring of TENT_RING_M about its fire
     (FIRE_FLAT), one each three of its people, at least two;
-  - its people as the pool's foes (loose, transient), each its class, level and name, BAND_RING_M (3-9 m) about the
+  - its people as the pool's foes (loose, transient, managed - this host owns their lives), each its class, level and
+    name, BAND_RING_M (3-9 m) about the
     fire: all of them by day, by night (before 6, from 20) half - the rest out on the road (`standingAt`);
   - its CHEST, a ground pile (`droppedLoot.seedPile`, unsaved) of its take: goods off a general store's roll on the
-    band's own seed, and the gold - none if the character took from it before (`looted`).
+    band's own seed, and the gold - none if the character took from it before (`looted`). A hand in it is `looted` the
+    frame the pile differs from its minting - a piece taken, one put in, a stack split (AUDIT LW-II C2: kept at the
+    let-go alone and by its count, a piece swapped in, or a save made while it stood, left it whole, and it refilled
+    without end).
 - **AN EMPTY HIDEOUT** (a vacancy) stands its tents alone: a cold camp, nobody, no chest.
-- **ROUTED.** Every one of its people down: the character's `routed` tale (`<hideout>@<gen>.<heir>`, its name), `helped`
-  regard from every member of the parties it robbed of late, and "You have routed the Black Hand." Its region's towns
+- **ROUTED.** Every one of its people stood KILLED - dead with its body, or executed (`killed`, latched as each falls).
+  AUDIT LW-II C3: the pool's relevance cull (120 m) took a band stood at 200 m as dead the frame after, and one gone
+  from the pool counted as one down - walking up to a hideout routed it. Then: the character's `routed` tale (`<hideout>@<gen>.<heir>`, its name), `helped`
+  regard from every member of the parties it robbed of late (its chest looted or not), and "You have routed the Black
+  Hand." Its region's towns
   tell it (`livingTown.js deedNews`, ROUTED_NEWS).
 - **LET GO** past BAND_KEEP_M (280 m), under the Overworld or with the living world off: its living taken out, its
-  pile taken up - and a chest taken from is `looted` for the character. Indoors the open world waits as it stood (its
+  pile taken up. A load or a new game lets it go and writes nothing of it into the new character (AUDIT LW-II C11c).
+  Indoors the open world waits as it stood (its
   bodies the exterior pool's, as every foe left outside); the way back out finds the hideout stood, or lets it go.
 - **NOT KEPT:** the outlaws struck down before the player left. A hideout stood again stands all of them (the session
-  keeps no partial rout).
+  keeps no partial rout). NOT CHANGED (AUDIT LW-II C11a): by night the half in camp, its leader among them, is all a
+  rout asks - the half out on the road is not in the camp to beat.
 - **ONLINE** every reader's band is the same; a rout is the character's own, as every LW deed is.
 - ROB_RATIO's one home is `trouble.js` (outlaws.js re-exports it); the duplicate-declaration ratchet holds.
 
@@ -490,7 +560,9 @@ about 1.2 ms, once a network; a fortnight's 341 troubles, 7 a band's (5 robbed);
 Moved pins: `lw4_trouble` (HALT_MIN, FIGHT_MIN, ROAD_NEWS's ends), `lw6b_remains` and `lw6d_word` (MARK_KINDS,
 TALE_KINDS).
 
-Pins: `test/lw12_outlaws.test.js` (11). Mutants: `tools/mutants/lw12.json` (75).
+Pins: `test/lw12_outlaws.test.js` (16 - AUDIT LW-II: the chest kept by its minting, the rout by blows, the book asked
+again and its two readers alike, the robbery at the leg's end, the camp every reader's). Mutants:
+`tools/mutants/lw12.json` (93).
 
 ## 6. LW13 - the companies (BUILT 2026-10-09)
 
@@ -521,12 +593,14 @@ census's roster) and `src/systems/livingWorld/trips.js` (`leaderOf`, `ownTrip`, 
 - **HIRED.** A company setting out the day a merchant's train with no sellsword hired does, for the same town, walks
   in it - its trip dropped, the train marked `hiredBy` (the joiners' law). Built differently: the design gave the hire
   to merchants of towns that keep no sellswords (under nine blocks); no such town keeps two adventurers, so the hire
-  goes to any train setting out with none.
+  goes to any train setting out with none. One company to a train (AUDIT LW-II E4, `trainFor`): the first in the deal
+  takes it, and a second walks its own trip - it was dropped into the same train's hire and vanished.
 - **PILGRIM BANDS.** A town's pilgrims setting out the same day for the same town, in no merchant's train, go
   together, the first place leading.
 - **THE HOLY DAY** (`holyDayOf`, `holyTrip`). A pilgrim's cycle with a temple town in range keeping its region's own
   holy day (`holidays.js getHolidayId`; never a day every region keeps) goes to it on the pilgrim's own draw
-  (HOLY_CHANCE, 0.8): out at one minute of the morning for its town (`holyDepartMin` - so its pilgrims go as a band),
+  (HOLY_CHANCE, 0.8 - AUDIT LW-II F7: on it alone; the cycle's own chance was asked first, and the cycle's draw is
+  still taken in its order, so no other trip's dice move): out at one minute of the morning for its town (`holyDepartMin` - so its pilgrims go as a band),
   in by HOLY_IN_H (10) of the holy day, home the morning after - inside the cycle, or the trip it always was. A
   pilgrim come to a temple town keeps its temple (`dayPlan.js` `pilgrim-visit`: PILGRIM_TEMPLE_H, 8:30 for the morning
   and 15:30), so on the holy day the temple is full of every band of the region's towns (LW8 stands them inside).
@@ -548,7 +622,14 @@ company walks as one); the roads' layer's worst frame 0.9-1.5 ms (the budget 6).
 
 Moved pins: `lw4_trouble` (a fated member's place sends its company's first), `lw6_deep` (a company's dive chance).
 
-Pins: `test/lw13_companies.test.js` (9). Mutants: `tools/mutants/lw13.json` (42).
+- **NOT CHANGED (AUDIT LW-II E9): THE PLACES RE-KEYED.** A company's later places live by its first's cycle, where
+  they lived by their own: a hand's turn (`slain`, `died`) on such a place saved within one cycle before the release
+  that carries LW13 is read a cycle off - its member can stand again for up to one cycle, or a vacancy come a cycle
+  late. Once, at that release. A load-time re-key would need each turn's minute mapped to the first's cycle, which the
+  record does not keep.
+
+Pins: `test/lw13_companies.test.js` (10 - AUDIT LW-II: one company to a train; the holy day on its own draw).
+Mutants: `tools/mutants/lw13.json` (45).
 
 ## 7. LW14 - the deep's own (BUILT 2026-10-09)
 
@@ -659,16 +740,23 @@ errand in `dayPlan.js`.
   `public`, its owner the seller, no guild's hall) is offered to its town's patrons once for each whole real hour it
   stands (an online sky day is a real hour, TIME1).
 - **THE PRICE DECIDES** (`patronCap`, `patronOdds`): the cap is PATRON_PAY_SHARE (0.6) of the piece's worth as the
-  service judges it (`itemLaw.js itemWorth`); with r the price over the cap, the hour's odds are 0.25 at r <= 0.5,
+  service judges it (`itemLaw.js itemWorth`'s FLOOR: the piece priced at nothing - what it is. AUDIT LW-II P2: never
+  the record's own `value`, which is the client's to write and the judge reads up to a generous ceiling - a found
+  Broadsword written at 1e9 was worth 11,840, a patron's 7,104); with r the price over the cap, the hour's odds are 0.25 at r <= 0.5,
   0.12 at r <= 0.75, 0.05 at r <= 1, and none above it (PATRON_ODDS). Nothing for nothing: a price under 1, or a
   piece with no cap, never sells.
 - **A CRAFTED PIECE NO DEARER** (`patronWorth`): its worth is no more than the piece it was made as - the crafted
   marks off (`provenance`, `quality`, `hand`, `kitMetal`, `fieldKit`, `potent`), its value nothing. Shops are the
   floor, crafting the ceiling: a patron never pays a crafter more than a found piece fetches.
 - **NEVER** a quest's piece or a keepsake (`patronTakes`: `questItem`, `livingKeepsake`, the keepsake's template
-  1800); the listing's own laws (`goodRefusal`, `lawfulItem`) already stand before it.
+  1800); and the item law and the market's own law are read again at the sale, as a buy reads them (`lawfulItem`,
+  `goodRefusal` - AUDIT LW-II P3: read only at the listing).
 - **THE TOWN'S DEMAND IS SHARED** (`patronHour`): the hour's sales are the lowest draws under their odds
-  (`patronDraw`, the listing's and the hour's alone), at most PATRON_TOWN_HOUR (4) for the town's traders together
+  (`patronCands`; `patronDraw`, the listing's, the hour's and the service's SECRET - AUDIT LW-II P10: on the listing
+  and the hour alone the dice were public, and a seller could compute the hour each piece would sell in and list again
+  until one sold at once. The secret is `market.js patronSalt`, of the service's identity key, before and after the
+  listing in the hash - before alone, the whole secret is one 32-bit state a seller's own sales give away. The seed and
+  the minute a client is told stay the listing's and the hour's), at most PATRON_TOWN_HOUR (4) for the town's traders together
   (the hour's sales already made counted), PATRON_SELLER_HOUR (2) a seller, PATRON_SELLER_DAY_GOLD (20,000) a seller's
   real day.
 - **THE BUYER**: the service names a SEED and a MINUTE of the hour (`patronSeed`, `patronMinute`), never a person.
@@ -677,22 +765,41 @@ errand in `dayPlan.js`.
 
 ### 8.2 The service (`server-account/src/market.js reckonPatrons`, migration `0105_patrons.sql`)
 
-- **THE SALE**, each its own batch: its row (`market_patron_sales`, keyed by the listing - reckoned twice, sold once),
-  written only while the listing is open at the same price and the seller's held gold has room (MARKET_GOLD_HELD_MAX:
-  a patron passes a trader whose purse is full by), with `mustChange`; the listing `sold`; the 5% tax and 1% fee burnt
+- **THE SALE**, each its own batch: its row (`market_patron_sales`, keyed by the listing - reckoned twice, sold once;
+  its house kept, `building_key` - AUDIT LW-II P9: told by a join on the piece's id, another's piece of the same id in
+  the town told every sale twice), written only while the listing is open at the same price, the seller's held gold
+  has room (MARKET_GOLD_HELD_MAX: a patron passes a trader whose purse is full by), the town's hour, the seller's hour
+  and the seller's day have room, and the seller is neither held by the judge nor unjudged - each asked IN the write
+  (AUDIT LW-II P1: asked before it, six towns read at once sold twelve of a seller's pieces an hour and 48,337 gold a
+  day; P4: a held seller sold) - with `mustChange`. A write the guard refuses is a pass, the hour reckoned; any other
+  failure stops the town at the last hour it finished (P11: every failure counted as a pass, past an unsold hour); the listing `sold`; the 5% tax and 1% fee burnt
   (`goldSaleOf`), the rest to the seller's held gold (`market_gold`); the gold written to the service's own faucet
   (`budget.js faucetStatement`, kind `patron`, table `realm_faucets` by the hour), for staff to read before a budget is
   enforced. No delivery: the piece leaves the realm.
 - **WHEN**: lazily on every read of a trader - `/v1/market/vendor` (its town), `/vendors` (its region), `/myvendors`
-  (the owner's towns) - and in the hour's cron (HOUR_JOBS `patrons`: PATRON_CRON_TOWNS (40) towns waiting a firing,
-  inside the job's share of the firing's statements). A reckoning its budget stops marks the last whole hour it
-  reached, so firing by firing a town nobody reads is reckoned through. The dice are pure: reckoned late, the same
-  sales as reckoned every hour.
+  (the owner's towns) - and in the hour's cron (HOUR_JOBS `patrons`: PATRON_CRON_TOWNS (40) towns a firing, the longest
+  waiting first, inside the job's share of the firing's statements; only while the market is open to everyone,
+  `marketOpenFor` - AUDIT LW-II P8: shut, every route answered 'market-closed' and the clock paid patrons anyway). A
+  reckoning its budget stops marks the last whole hour it reached, so firing by firing a town nobody reads is reckoned
+  through. The dice are pure: reckoned late, the same sales as reckoned every hour (`reckonPatrons(ctx, opts, env)`).
+- **BOUNDED** (AUDIT LW-II P5: one region's read two days behind ran 5,826 statements, where D1 answers an invocation a
+  thousand): the law's dice asked before the database (`patronCands` - an hour no listing draws under its odds asks
+  nothing), one counts query an hour with a candidate (`PATRON_COUNTS_SQL`), PATRON_READ_STATEMENTS (200) a read and
+  the rest the next's, the mark written only where it moves.
+- **A DOOR OPENED** to the town opens its trader FROM NOW (AUDIT LW-II P7, `homes.js setHomeEntry`): its listings are
+  marked reckoned to the last whole hour - twenty pieces stocked behind a private door all sold, at its opening, in the
+  hours before it. A town whose traders all stand behind shut doors is marked as it is read.
+- **KEPT** with the market's history: pruned by `pruneMarketHistory` at MARKET_KEEP_DAYS, indexed for the region's read
+  (`region, at`) and the hour's counts (`day`) (AUDIT LW-II P6: the region's read walked the table whole, and nothing
+  pruned it).
 - **TOLD**: within PATRON_TOLD_S (a day), newest first, each `{ listing, map, vendor, buildingKey, hour, minute, seed,
   price, name }` - a trader's read its own, the region's read its region's (a trader sold out still tells its last
   day's); `/myvendors` answers `patronSold`, each with `patron: { map, seed, hour, minute }`.
 - Built differently from the design: the sale is its own table, not a `market_sales` row whose buyer is the patron's
   mark (`market_sales.buyer` is a player's key), keyed by the listing rather than `(buyer, rid)`.
+- NOT CHANGED: a held seller's piece is refused in the write, not left out of the hour's choice, so it can take one of
+  the town's slots that hour - another seller's sale lost that hour, never gold, and the held seller sells nothing.
+  A reckoning handed no `env` (the tests' direct calls alone) reads the public dice.
 
 ### 8.3 Drawn, by the client
 
@@ -732,17 +839,21 @@ errand in `dayPlan.js`.
 
 - `scenes/world.js`: WIRED (the region's traders read, each town's `patronsOf`, the Vendor page's `patronName`).
 - `scenes/worldModes.js`, `scenes/dungeonContext.js`, `scenes/exterior.js`: none.
-- The service: migration `0105_patrons.sql` (`market_listings.patron_hour`, `market_patron_sales`, `realm_faucets`),
-  `market.js` (the reckoning, the reads), `cron.js` (HOUR_JOBS `patrons`), `budget.js` (FAUCET_KINDS,
+- The service: migration `0105_patrons.sql` (`market_listings.patron_hour`, `market_patron_sales` and its indexes,
+  `realm_faucets`), `market.js` (the reckoning, the reads, the prune), `homes.js` (a door opened marks its trader),
+  `cron.js` (HOUR_JOBS `patrons`, behind the market's switches), `budget.js` (FAUCET_KINDS,
   `faucetStatement`), `.github/workflows/account-deploy.yml` (the law's file among the paths that deploy the Worker,
   `test/accountdeploy.test.js` ACC1-CI). The account service redeploys on merge.
 
-Pins: `test/lw15_patrons.test.js` (6) - the law (the share, the odds, the over, the draws, the takes, a crafted piece
+Pins: `test/lw15_patrons.test.js` (12) - the law (the share, the odds, the over, the draws, the takes, a crafted piece
 no dearer, the hour's odds measured); the hour (the town, the seller, the day, the order, the hours); the service
 through the real Worker over node:sqlite (the sale, the gold, the faucet, twice the same, late and hourly each the
 law's own fold, a private home none, a piece taken back mid-reckoning none, a full purse none, the region's read); the
 cron firing by firing; the dealing, the errand cut and taken up, the night's fold, the browser, the Vendor page's
-words; the host's seams. Mutants: `tools/mutants/lw15.json` (63).
+words; the host's seams; and AUDIT LW-II P1-P11 each through the real Worker (the ceilings held in the write under six
+reads at once, the floor's worth, the laws read again, the held seller, the read bounded, the sales told once and
+pruned, the door opened from now, the switch, the secret, the failure unmarked). Mutants: `tools/mutants/lw15.json`
+(106).
 
 ## 9. LW16 - the word travels (BUILT 2026-10-09)
 

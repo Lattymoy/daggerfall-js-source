@@ -222,12 +222,14 @@ export function troubledTrip(trip, enc) {
   const fallen = enc.dead.map((id) => ({ res: byId.get(id), t: fallAt, s: enc.s })).filter((f) => f.res);
   const halt = { t0: enc.t0, t1: enc.t1, fightEnd: enc.fightEnd, s: enc.s, leg: enc.leg };
   const turned = enc.leg === 'out' && (enc.kind === 'fled' || enc.kind === 'fell');
+  // LW12: on without its goods - AUDIT LW-II C9: a hold-up near the leg's end as well (its halt past the arrival: the
+  // returns below dropped it, and the band's take counted a robbery its counter never knew)
+  const robbed = enc.kind === 'robbed' ? { robbed: { t: enc.t0, by: enc.band } } : {};
   // AUDIT-B7: a halt that runs past its leg's planned end holds the arrival (never halted on the road and lodged in town
   // at once; a way home's halt never cut by the party's being home)
-  if (!turned && enc.leg === 'out' && enc.t1 > trip.outT1) return { ...trip, enc, halt, fallen, turned: false, outT1: Math.min(enc.t1, trip.backT0) };
-  if (!turned && enc.leg === 'back' && enc.t1 > trip.backT1) return { ...trip, enc, halt, fallen, turned: false, backT1: enc.t1 };
-  if (!turned && enc.kind === 'robbed') return { ...trip, enc, halt, fallen, turned: false, robbed: { t: enc.t0, by: enc.band } };   // LW12: on without its goods
-  if (!turned) return { ...trip, enc, halt, fallen, turned: false };
+  if (!turned && enc.leg === 'out' && enc.t1 > trip.outT1) return { ...trip, enc, halt, fallen, turned: false, outT1: Math.min(enc.t1, trip.backT0), ...robbed };
+  if (!turned && enc.leg === 'back' && enc.t1 > trip.backT1) return { ...trip, enc, halt, fallen, turned: false, backT1: enc.t1, ...robbed };
+  if (!turned) return { ...trip, enc, halt, fallen, turned: false, ...robbed };
   const home = Math.max(0, enc.s - trip.trim0) / trip.pace;
   const backT1 = whenWalked(enc.t1, home);
   return { ...trip, enc, halt, fallen, turned: true, outT1: enc.t0, backT0: enc.t1, backT1 };

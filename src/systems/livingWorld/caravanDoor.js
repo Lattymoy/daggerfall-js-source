@@ -23,7 +23,7 @@
 // ESCORT_FIGHT a foe of each fight won, at the town it was bound for; broken by falling ESCORT_KEEP_M behind for
 // ESCORT_LOST_MIN of the clock.
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
-import { WALK_FROM_H, WALK_TO_H, partyAt, membersAt } from './trips.js';
+import { WALK_FROM_H, WALK_TO_H, NATIVE_PER_M, NATIVE_PIXEL, partyAt, membersAt } from './trips.js';
 
 /** The kinds of trip that keep a counter on the road, and its kind of shop. */
 export const COUNTERS = Object.freeze({ merchant: BUILDING_TYPES.GeneralStore, carter: BUILDING_TYPES.GeneralStore, pedlar: BUILDING_TYPES.PawnShop });
@@ -42,6 +42,9 @@ export const ESCORT_FIGHT = 100;
 /** The escort broken: this far behind the party (m) this long (minutes of the clock). */
 export const ESCORT_KEEP_M = 300;
 export const ESCORT_LOST_MIN = 60;
+/** AUDIT LW-II C5b: the clock passed since the escort was last with the party (a step's, a rest's, a wait's, a
+ *  journey's) is read back this often (minutes) for the party near. */
+export const ESCORT_SAMPLE_MIN = 5;
 
 /**
  * THE COUNTER a trip keeps on the road - its shop's kind, quality, name and purse - or null (a trip that keeps none).
@@ -74,14 +77,17 @@ export function keepsCounter(trip, res, t) {
 export const reportAt = (trip, t) => (t < trip.outT1 && !trip.turned ? trip.outT1 : trip.backT1);
 
 /**
- * THE HOLD-UP: the party had armed, none of them stands at `t`, and its leader does - it yields.
- * @param {any} trip @param {number} t @param {(res: any) => boolean} [down] - beside the trip's own fallen, one down by the
- *   host's word (a hand's death the trip has not read yet)
+ * THE HOLD-UP: the party's armed the road left standing at `t` are all down by the host's word, and its leader stands -
+ * it yields.
+ * AUDIT LW-II C4: the armed BEATEN - those the road left it (its own fallen are the road's: a party that lost its guards
+ * to the dice had nobody for the player to beat, and yielded to whoever passed); `down` the host's word, the player's own
+ * hand (a sellsword who died fighting beside the player, or one another hand took, was never beaten by them).
+ * @param {any} trip @param {number} t @param {(res: any) => boolean} [down] - one down by the host's word (the player's hand)
  */
 export function yields(trip, t, down = () => false) {
-  const armed = trip.party.filter((m) => m.cls != null);
-  if (!armed.length) return false;
-  const standing = membersAt(trip, t).filter((m) => !down(m));
+  const left = membersAt(trip, t);
+  if (!left.some((m) => m.cls != null)) return false;
+  const standing = left.filter((m) => !down(m));
   return !standing.some((m) => m.cls != null) && standing.some((m) => m.id === trip.leader?.id);
 }
 
@@ -95,11 +101,43 @@ export function escortOffer(trip, t) {
 }
 
 /** THE ESCORT'S PAY at the town: the days of the walk out (each from WALK_FROM_H to WALK_TO_H, a part a whole) at the
- *  day's rate for the player's level, and each foe of the fights won. @param {any} trip @param {number} level @param {number} foes */
-export function escortPay(trip, level, foes = 0) {
-  const walk = Math.max(0, trip.way.len - trip.trim0 - trip.trim1) / Math.max(1e-9, trip.pace);
+ *  day's rate for the player's level, and each foe of the fights won. AUDIT LW-II C5a: hired on the way (`from`, the
+ *  minute of the hire), the share of the walk still ahead of the party then - hired a minute short of the town, it paid
+ *  the whole walk. @param {any} trip @param {number} level @param {number} foes @param {number} [from] */
+export function escortPay(trip, level, foes = 0, from = -Infinity) {
+  const len = Math.max(0, trip.way.len - trip.trim0 - trip.trim1);
+  const walk = len / Math.max(1e-9, trip.pace);
   const days = Math.max(1, Math.ceil(walk / ((WALK_TO_H - WALK_FROM_H) * 60)));
-  return days * (ESCORT_GOLD_DAY + ESCORT_GOLD_LEVEL * Math.max(1, level | 0)) + ESCORT_FIGHT * Math.max(0, foes | 0);
+  const at = from > trip.outT0 ? partyAt(trip, from) : null;
+  const ahead = at?.s != null ? Math.min(1, Math.max(0, trip.way.len - trip.trim1 - at.s) / Math.max(1e-9, len)) : 1;
+  return Math.round(days * (ESCORT_GOLD_DAY + ESCORT_GOLD_LEVEL * Math.max(1, level | 0)) * ahead) + ESCORT_FIGHT * Math.max(0, foes | 0);
+}
+
+/**
+ * AUDIT LW-II C5b: THE LAST MINUTE THE ESCORT WAS WITH THE PARTY, to minute `t` - `since` the last the contract knew.
+ * The clock since is read back each ESCORT_SAMPLE_MIN against where the player stands now (`here`): the last minute the
+ * party stood within ESCORT_KEEP_M before a stretch of ESCORT_LOST_MIN without it. A party camped beside a sleeper keeps
+ * them; one that walked off from a sleeper does not, nor one that came up to them after an hour of their sleep; and a
+ * journey that set the player down beside it (by its town as it came in) was a stretch away - the party stood near
+ * the journey's end only at its end (it was paid: the end alone was read). The host's own `travelWith` writes the road
+ * it walked beside them. A party lodged at an inn is near anyone at that inn (a night slept under its roof).
+ * @param {any} trip @param {{ x: number, z: number } | null} here @param {number} since @param {number} t
+ */
+export function escortNear(trip, here, since, t) {
+  if (!here || !Number.isFinite(t) || !Number.isFinite(since)) return since;
+  // a party lodged at an inn (LW9: placed on the road beside it, up to a pixel off) is with whoever is at that inn - its
+  // location the one on its pixel
+  const near = (/** @type {number} */ m) => {
+    const at = partyAt(trip, m);
+    if (at.inn && Math.floor(here.x / NATIVE_PIXEL) === at.inn.px && 499 - Math.floor(here.z / NATIVE_PIXEL) === at.inn.py) return true;
+    return at.x != null && Math.hypot(here.x - /** @type {number} */ (at.x), here.z - /** @type {number} */ (at.z)) / NATIVE_PER_M <= ESCORT_KEEP_M;
+  };
+  let last = since;
+  for (let m = since; ; m = Math.min(t, m + ESCORT_SAMPLE_MIN)) {
+    if (m - last > ESCORT_LOST_MIN) return last;
+    if (near(m)) last = Math.max(last, m);
+    if (m >= t) return last;
+  }
 }
 
 /** A ware's place on its counter's first roll, carried on the item (the record's `gone` names these). */
