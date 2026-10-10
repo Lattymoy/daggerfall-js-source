@@ -64,6 +64,7 @@ import { isPotion } from './useItem.js';   // ESSENTIALS-HALF: the potion, by DF
 import { HOLIDAYS } from './holidays.js';
 import { GUILDS } from './guilds.js';
 import { isBagItem } from '../net/bagLaw.js';   // BAG1: a loaded Materials Bag is never sold (the cart's rule)
+import { activeWagonItem } from './wagonKinds.js';   // WAGONS2 (FINAL AUDIT): the wagon driven, read once for every counter (sellGuardOf)
 import {
   cureOfferMessageOffset, TRADE_MESSAGE_BASE_ID, NOT_ENOUGH_GOLD_ID,
 } from './guildServiceActions.js';
@@ -426,6 +427,15 @@ export function localListAccepts(mode, item, { accepts = () => true, enchanted =
  *  textId | text } | { kind: 'ignore' }. Every 'stage' is a
  *  TransferItem call in DFU (:795, :817, :823, :826), so the window
  *  owes it TransferItem's own guards on top of this. */
+/** WAGONS2 (FINAL AUDIT): WHAT A COUNTER'S CLICK READS OFF THE ENTITY - PlayerEntity.WagonItems and .Items.GetItem
+ *  (:789-793; WAGONS1: the wagon DRIVEN, the best owned - a cart left over from an upgrade is an empty cart to sell) and
+ *  BAG1's bag - one home for the six places the two trade windows asked it, each its own copy (the copies were pinned
+ *  nowhere: any one turned back to the first wagon in the pack sold a loaded caravan while a spare cart was held). */
+export const sellGuardOf = (entity) => ({
+  wagonLoaded: (entity?.wagonItems ?? []).length > 0,
+  bagLoaded: (entity?.bagItems ?? []).length > 0,   // BAG1: the Materials Bag holding anything
+  usedWagon: activeWagonItem(entity?.items ?? []),
+});
 export function localClickDecision(mode, item, {
   inBasket = () => false, allowMagicRepairs = false, usingIdentifySpell = false,
   wagonLoaded = false, usedWagon = null, bagLoaded = false,

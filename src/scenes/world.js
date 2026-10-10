@@ -76,6 +76,7 @@ import { waterBedDepths } from '../world/waterBed.js';   // WATER-NEXT 2: the be
 import { createRipples, createRippleStir, RIPPLE_SPAN, RIPPLE_CELLS, BOAT_STIR, BOAT_WAKE_SPEED } from '../world/waterRipples.js';   // WATER-NEXT 4: the rings and wakes
 import { waterCorners, WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';   // GRASS-WET1: the one table that says which of a tile's corners stand in water - the DRAW's, because a blade in a puddle is a picture, not a physics
 import { windowEmissionRGB } from '../render/windowEmission.js';
+import { realWindowsMode, VIEW_RINGS, VIEW_CLIP_PAD, clockFogColor } from '../render/realWindows.js';   // RW1: the rooms behind the glass, and the street a building's glass looks out on
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights, capFadeColors, capFadePairs, fillLanternPool, rangesFor } from '../world/cityLights.js';
 import { isHearthFlat, HEARTH_NEAR } from '../systems/survival/hearth.js';   // HEARTH1: which of those lanterns is a fire you could cook on, and how far one can matter
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
@@ -528,6 +529,7 @@ import { raidMapMarks } from '../ui/eventMapMarks.js';   // EVENT-TIP: the towns
 import { StreamingWorldState, TerrainSlots, worldCoordToMapPixel, locationWorldRect, isInLocationRect, mapPixelToWorldCoords, SCENE_MAP_RATIO, nearestFirstFrom } from '../world/streamingWorld.js';   // HCC: StreamingWorld.SceneMapRatio; AUDIT BRANCH (WoD) L1-3: DFU's terrain array; AUDIT 68 S22: the load list's one order
 import { horseNameTooltip } from '../ui/horseNameTooltip.js';   // AUDIT HCC U6: the mod's HUD label, both skins
 import { createHorseCartPool, ownedLine } from './horseCartPool.js';
+import { wagonPoolDeps } from '../world/wagonModels.js';   // WAGONS1: the pool's two words, one seam for both hosts
 import { createPeerRiders, createPeerWalkers, createEotbArt } from '../net/peerRiders.js';   // RIDE: another player in the saddle   // HCC: Horse Cart and Cargo's presentation - the wagon's five pieces, the horse's eight views, the peers' teams
 import { createHorseCartRuntime } from '../systems/horseCart.js';   // HCC: TrailingWagonRuntime over this host's seams
 import { setForagingHost } from '../systems/foragingInstall.js';   // FORAGE1: Foraging's reaches into the world, answered by this host
@@ -560,6 +562,10 @@ import { boatTriggers, boatMenuRows, boatMenuStart, pressBoatVerb, BOAT_VERB } f
 import { linkBankCabin, readBankCabinLink, bankCabinCandidates } from '../systems/boatCabinOwnership.js';
 import { hasSailingCabin, savedCabinBoat, cabinSceneName } from '../systems/sailingCabin.js';
 import { createSailingCabinAccess } from './sailingCabin.js';
+import { createCaravanAccess, parkedCaravanAt } from './caravanRoom.js';   // WAGONS1: the caravan's room
+import { createWagonRiders, GO_LEAD_MS } from './wagonRiders.js';   // WAGONS1: the seats in the back
+import { HCC_WIRE_KIND } from '../systems/horseCartWire.js';   // WAGONS1: which way my wagon goes (my companions ride while it goes with me)
+import { RIDE_TEXT, RIDE_ASK_TTL_MS } from '../systems/wagonSeats.js';
 import { createSailingCabinLink } from '../net/sailingCabinLink.js';
 import { capsuleFits } from '../player/parkour.js';
 import { TRIGGER_MODEL as CSA_TRIGGER_MODEL, setLights as csaSetLights, HULL_NAMES as CSA_HULL_NAMES, nodeOf as csaNodeOf, AUDIO_CLIPS as CSA_AUDIO_CLIPS, colliderBoundsInChildren as csaColliderBoundsInChildren, animatorOf as csaAnimatorOf, meshLocalBounds as csaMeshLocalBounds } from '../systems/comeSailAwayBoat.js';   // CSA-B: the probe's lanterns; CSA-D: the plaque's word for a boat; CSA-G: the loops' objects and the five clips; CSA-J: Eye of the Beholder's Collider.bounds
@@ -620,7 +626,9 @@ import { questBoardIndices, bountyDungeons } from '../systems/bountyBoard.js';  
 import { createBountyOverlay, closeBountyDoor, bountyDoorOpen } from '../ui/bountyDoor.js';   // BOUNTY1: the board's window and the payday notice
 import { isQualifyingThreatState } from '../systems/horseFollow.js';   // HCC: CollectThreats' qualification, the mod's own five-term test
 import { totalWeight } from '../systems/inventory.js';   // HCC: PlayerEntity.WagonWeight
-import { WAGON_KG_LIMIT, planTake, CANNOT_CARRY_TEXT } from '../systems/itemTransfer.js';   // HCC: ItemHelper.WagonKgLimit; SET7: the Broker's sale asks the pack's own carry gate
+import { planTake, CANNOT_CARRY_TEXT } from '../systems/itemTransfer.js';   // SET7: the Broker's sale asks the pack's own carry gate
+import { wagonKgFor, activeWagonItem, activeWagonKind, WAGON_KINDS } from '../systems/wagonKinds.js';   // WAGONS1: HCC's ItemHelper.WagonKgLimit, the driven wagon's
+import { wagonLookOf, paintDrivenWagon } from '../systems/wagonLooks.js';   // WAGONS2: the driven wagon's paint
 import { giveNavalItems } from '../systems/naval/navalTransfer.js';
 import { InputMessageBoxWindow } from '../ui/inputMessageBox.js';   // HCC: the horse's name (DaggerfallInputMessageBox)
 import { getBool, getInt, getFloat } from '../systems/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
@@ -639,7 +647,7 @@ import { createCoverIndex, isCoverFlat, coverProxy, coverProxies, FELLED } from 
 import { noteLocalPlayer, tacticsNow, tickTactics, offsetTactics } from '../ai/tactics.js';   // TACT2; TACT4: the brain's clock; AUDIT TACT: its tick, the recentre's shift
 import { drawableBlows, registerBlowDodgedListener } from '../ai/foeBlows.js';   // TACT4; AUDIT ARENA-LADDER: a dodge told
 import { landViewRead } from '../world/landView.js';   // LV1: the enhanced lane's own streamed radius; FT2: the read is the module's
-import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, hourOf, daylightScale, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
+import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, hourOf, daylightScale, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime, viewOutLight } from '../world/worldClock.js';
 import { dungeonLocationFor } from '../world/smallerDungeons.js';   // AUDIT 28 F-B2: the quest layer sees the sized dungeon
 import { audio, QuestAudioSource, logarithmicRolloff, plainSourceGain } from '../systems/audio.js';   // E6: the QuestMachine's own DaggerfallAudioSource (PlaySound's busy-skip)
 import { music } from '../systems/music.js';
@@ -656,7 +664,7 @@ import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER, exterio
 import { isOnFoot } from '../systems/transport.js';   // TransportManager.IsOnFoot - the raycast's reach and the mounted footstep gate
 import { floorLanding, doorWorldPosition, dungeonEntranceLanding, repositionFeetY, openGroundNear, heldInSolid } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27); SD2b: where a Hollow's mouth stands, to find it at
 import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../systems/skills.js';   // TO1: the avoid-encounter roll reads skillValue live (imported above) Stealth   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
-import { playerEntity, surfacePlayer, hurtPlayer, playerBlowCameToNothing, setDeathPresenter, presentPlayerDeath, setDeathListener, setAvoidDeathHook, registerDuelFell, duelSpare, setStaffPowers, staffPowers, registerLevitateWard, registerFreeFlight } from '../characters/playerEntity.js';   // AUDIT-SEATS G5: a siege's ward on Levitate   // AUDIT-SEATS G4: a spectator's flight
+import { playerEntity, surfacePlayer, hurtPlayer, forcePlayerDeath, playerBlowCameToNothing, setDeathPresenter, presentPlayerDeath, setDeathListener, setAvoidDeathHook, setStaffPowers, staffPowers, registerLevitateWard, registerFreeFlight } from '../characters/playerEntity.js';   // AUDIT-SEATS G5: a siege's ward on Levitate   // AUDIT-SEATS G4: a spectator's flight
 import { SOUND } from '../systems/soundClips.js';
 import { createWeaponRig, autoBuildArms, armIdentityOf, armBuiltFor, armsReady, sheetHolderOf, buildArmsFor, prebuildArmsForSave } from '../combat/weaponRig.js';   // MWA1: the arms at boot; MWA3: the identity the arm should stand for, beside the one it does; MW-EARLY: and before the world is read
 import { weaponPoseOf, applyWeaponPose, mergeWeaponPose, playerMeleeCanHit, registerPlayerSwingListener, WEAPON_REACH } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
@@ -680,7 +688,7 @@ import { createSeatLock, SEAT_NOTICE, SEAT_MID_TEXT, PLAY_HERE_LABEL } from '../
 import { readAccount, buyInsignia, equipTitle, equipAura, adoptIdentity as adoptSessionIdentity } from '../net/accountClient.js';   // WB9g: the Broker's insignia - the account's wardrobe, its sale and its wearing, and my own screen's word of it
 import { ownAura } from '../systems/ownGlyphs.js';   // WB9g: the aura at my own feet - the service's last word, kept on the stored session
 import { INSIGNIA, insigniaRefusal } from '../net/insignia.js';   // WB9g
-import { accountTokenMinter, storedSession, muteAccount, serviceBase, accountRefusalText, accountDuels, accountRenown, accountRoll, accountHomes, accountDecor, accountGuilds, accountGates, accountMarks, accountCards, accountBoard, accountProf, accountRaids, accountMarket, accountWrits, accountSeats, accountSerpents, accountSds } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4's beat knocks through the tab's heartbeat (SCALE4c), not from here
+import { accountTokenMinter, storedSession, muteAccount, serviceBase, accountRefusalText, accountDuels, accountWild, accountRenown, accountRoll, accountHomes, accountDecor, accountGuilds, accountGates, accountMarks, accountCards, accountBoard, accountProf, accountRaids, accountMarket, accountWrits, accountSeats, accountSerpents, accountSds } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4's beat knocks through the tab's heartbeat (SCALE4c), not from here
 import { parseModCommand, runModCommand, mutedText, mutedNotices } from '../net/moderation.js';   // MOD1: /mute and /unmute, and the line a muted player reads
 import { createHeartbeat, whileLive } from '../net/heartbeat.js';   // SCALE4c: the beat, the letterbox and the town's board in one request
 import { startPlayClock } from '../net/playClock.js';   // ACC4: time played, knocked from here and measured by the account service's clock
@@ -734,6 +742,7 @@ import { reclaimFromDevice, reclaimLines, crossLeveling, LEVELING_CROSS_LINE } f
 import { appStorage } from '../systems/appStorage.js';   // ACC1d: where that session lives - the app's store, not the tab's (a second tab is the same player)
 import { skyClassicMinutes, wallMsForSkyMinutes, skyMinutesPerMsAt } from '../net/skyLaw.js';   // TIME1: the sky's own clock, installed beside the event clock
 import { POSE_STRIKES, isWorldRoom, isCellRoom, cellHaloFor, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes } from '../net/wire.js';   // WORLD6b-iii(b): the cell seam's halo   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
+import { WILD_DATA_MAX, WILD_ITEMS_MAX } from '../net/wire.js';   // INT9 (AUDIT): a deposit's chunks, bounded by the wire's frame
 import { hasDaggerfallArrows } from '../combat/fpArm.js';   // MAC7 #2: the arrow bit on the wire - weaponRig's own read
 import { drawText } from '../ui/text.js';   // ONLINE1: the session's status line
 import { RemotePlayers, composeLook, createSightCache, NAME_RANGE } from '../net/remotePlayers.js';   // ONLINE1: the others, drawn; NAME1: and the sight test their names take, cached and hysteresised (AUDIT NAME1 F2/F5)
@@ -749,6 +758,13 @@ import { partyCompassPoints } from '../ui/partyMapMarks.js';   // COMPASS-PARTY:
 import { SocialState, accountId, accountSecret } from '../net/social.js';   // SOC2: the friends and the party, as the hub says them; the account the hub's hello carries; SOC3: and the two colours a name wears in the DOM - my party's green, a friend's blue
 import { SOCIAL_ROOM, PARTY_SEND_MS, chatRegionRoom, relaySupportsRite, relaySupportsCage } from '../net/wire.js';   // CHAT-CHAN: a region's channel
 import { cellRoomOfWire } from '../net/wire.js';   // HCC-PARK: the cell a parked team's anchor stands in
+import { parkKeyOf } from '../net/wire.js';   // WAGONS2-VISIT: my caravan's room is named by my park key
+import { caravanRoomOf, caravanKeyOf } from '../net/privateInterior.js';   // WAGONS2-VISIT: a caravan's own room
+import { CARAVAN_TEXT } from '../systems/caravanRoom.js';   // WAGONS2 (FINAL AUDIT): a caravan's save that cannot come back, said
+import { caravanEntryOf, setDrivenCaravanEntry, caravanMayEnter, CARAVAN_VISIT_TEXT } from '../systems/caravanVisit.js';   // WAGONS2-VISIT: who may enter a caravan, and a visit to another's
+import { HOME_ENTRY_WORDS, homeNextEntry } from '../systems/onlineHomes.js';   // WAGONS2-VISIT: a caravan's door is turned as a home's is
+import { createCaravanVisitLink } from '../net/caravanVisitLink.js';   // WAGONS2-VISIT: the visited caravan's cell, heard from inside it
+import { RECEIVER_MARKS } from '../net/realmTradeLaw.js';   // WAGONS2-VISIT (AUDIT): the last owner's marks, never carried to the next
 import { GATE_BRAIN_V } from '../net/wire.js';   // AUDIT WBX R7: the brain's law this client knows, said on every `in`
 import { characterIdOf } from '../systems/characterId.js';   // AUDIT HCC-PARK: my parked team is my CHARACTER's (the relay keys it by the account and this)
 import { chooseTable, tableMoveSpeed } from '../player/eotbBillboard.js';   // AUDIT RIDE: the rider's gallop is the table the rider's own sprite shows
@@ -778,7 +794,7 @@ import { composePartyFx } from '../net/partyBuffs.js';   // PARTY-BUFFS: my effe
 import { stampItemIds, tradeHeldNotice } from '../systems/itemIds.js';   // INT4: a valuable piece's id, minted at a realm checkpoint; INT3: the hold, said
 import { checkpointAllowed, checkpointDue, checkpointedTradePack, createSaveSoon } from '../systems/onlineCheckpoint.js';   // REALM P0.5: the character saved as it plays online; PROF-SAVE: and at once after a professions act
 import { createTradeManager, TRADE_RANGE_M, inTradeRange, tradeDistance } from '../net/tradeSession.js';   // TRADE1: the player-to-player trade's state machine (pure)
-import { createTradePack, tradeRefusal, createMarketGoods } from '../systems/tradePack.js';   // TRADE1: the trade's door into the real pack; PROF5: what may not be sold; MARKET-ANY: the pack's side of a piece from the pack
+import { createTradePack, tradeRefusal, packTradeRefusal, createMarketGoods } from '../systems/tradePack.js';   // TRADE1: the trade's door into the real pack; PROF5: what may not be sold; MARKET-ANY: the pack's side of a piece from the pack
 import { isLocked } from '../systems/itemLock.js';   // PROF5: a locked piece is not listed
 import { createPlayerTradeWindow, playerTradeReady } from '../ui/playerTradeDoor.js';   // TRADE1: the enhanced window two players share
 import { createPeerMenuReader } from '../systems/peerMenuBind.js';   // PEERMENU1: the player menu opens on a bind (hold E / hold A)
@@ -792,7 +808,9 @@ import { setWildHere, wildHere, isWildRegion, wildMaskOf, wildInside, wildNear, 
 import { createPartyTruce } from '../systems/wildZone.js';   // PARTY-TRUCE (FIELD BUGS 2026-10-09b)
 import { GREATER_GIANT_CALL, GREATER_GIANT_CALL_AT } from '../systems/wildZone.js';   // GREATER-GIANT
 import { wildRing, wildRingAt, wildRingName, wildRingBonus, setWildMask, wildMask, WILD_RINGS, wildJourney, WILD_GIANT, WILD_GIANT_CHANCE, WILD_GIANT_MAX, WILD_STRANGER_M, WILD_STRANGER_SEE_M, WILD_STRANGER_SLOW_M, WILD_STRANGER_RGBA } from '../systems/wildZone.js';   // WILD2: the four rings; WILD3: the journeys
-import { takeWildDrop, takeWildGold, wornOffer, wildRecord, wildChunks, wildSpawnSpot } from '../systems/wildDeath.js';
+import { wildTakeTook, wornOffer, wildRecord, wildChunks, wildSpawnSpot } from '../systems/wildDeath.js';
+import { readWildReceipt, WILD_FALL_GRACE_S } from '../net/wildReceipt.js';   // INT9: the relay's fall, carried to the service
+import { WILD_REF } from '../net/wildRef.js';   // INT9: the zone referee's numbers (its mend, for the HUD)
 import { createWildFight } from '../net/wildFight.js';
 import { createWildRemains, WILD_PILE_ICON, WILD_NO_STORE } from '../net/wildRemains.js';   // WILD-WAYPOINT: my remains' flag on both maps (below)
 import { markRemains, remainsMarkTick, remainsGone, keepMine, keptMine, forgetMine } from '../systems/wildRemainsWaypoint.js';   // WILD-KEEP: and my remains' record, kept on the device
@@ -815,7 +833,7 @@ import { createFestivalStage, festivalBannerAnchors, festivalLanternsOf } from '
 import { drawBanner } from '../ui/heraldryArt.js';   // GUILD1d: ...its heraldry painted on it
 import { heraldryLookup } from '../ui/heraldrySwatch.js';   // HERALDRY-SHOWN: a guild's heraldry by its tag, off what this client holds
 import { AuraRingRenderer, auraWearers, auraLookOf, auraBeastStep, auraMotionStep, auraCapeStep, auraSpriteBones, auraSpritePosed, auraWingLights, CLOAK_BONES, AURA_KINDLE_S, AURA_FORGET_S } from '../render/auraRing.js'; import { peerBodyYaw } from '../net/peerClimb.js';   // WB9g: Dagon's Fire at a wearer's feet; SHADOW-CLOAK: a peer's facing, the cloak's front (on this line, so no cite below it moves)
-import { duelAttackerOf, duelWeaponOf, duelSwingOf, resolveDuelStrike, duelBlowPlausible, duelSpellOf, duelSpellFromWire, duelWearDamage, DUEL_TRAIL_MS, duelStub } from '../combat/duelCombat.js';   // DUEL1: the blow between two duellists, both halves
+import { duelAttackerOf, duelWeaponOf, duelSwingOf, resolveDuelStrike, duelWearDamage, duelStub } from '../combat/duelCombat.js';   // DUEL1: the blow between two duellists - INT8/INT9: the striker's half alone, the relay referees
 import { createPageWindow, pageView } from '../ui/pageWindow.js';   // JOURNAL1: a page another player holds out, read and kept
 import { PageOffers, pageOfferText, pageShownText, pageTooFarText, keptPageTokens, keptLetterTokens, letterOfPage, PAGE_UNSUPPORTED_TEXT, PAGE_NO_READERS_TEXT, PAGE_GONE_TEXT } from '../net/journalPage.js';   // JOURNAL1: a page of the journal shown, and one shown to me kept
 import { quickslotTag, quickslotHand, tagText } from '../ui/quickslotTags.js';   // JOURNAL1: the F-menu's own key, named off the live bindings
@@ -976,12 +994,12 @@ import { hallStepsFor, harbourPortFor, coastalAt } from '../net/fortLaw.js';   /
 import { isWaterPixel } from '../ui/overworldModel.js';   // SEAT2b part two: a coast is the sea beside the town (the port's one water law)
 import { createSiegeNpcs } from './siegeNpcs.js';   // SEAT2b part two (c): the Barracks' guards and a revolt's rising, drawn
 import { createSiegeSession, isBattleLeaveCommand, BATTLE_NONE_TEXT } from '../net/siegeSession.js';   // SEAT2a part four: a siege as this client fights it   // AUDIT-SEATS C1: the chat's `/leave`
-import { SIEGE_UNITS_PER_M, SIEGE_REACH, SIEGE_WORK_IDS, SIEGE_GATEHOUSE, SIEGE_RAM } from '../net/siegeRef.js';   // SEAT2b part two (b): a swing at the Gatehouse or the Ram
+import { SIEGE_UNITS_PER_M, SIEGE_REACH, SIEGE_WORK_IDS, SIEGE_GATEHOUSE, SIEGE_RAM, SIEGE_HIT as DUEL_REF_KIND } from '../net/siegeRef.js';   // SEAT2b part two (b): a swing at the Gatehouse or the Ram; INT8: a referee's word's kind
 import { createSiegeClaims } from '../net/siegeClaims.js';   // SEAT2a part four: its receipts carried to the service
 import { createSiegeHud } from '../ui/siegeHud.js';   // SEAT2a part four: the bar, the sides, the result card
 import { siegeFieldOf, siegeFieldWire, buildingKeysOfType, royalRingWire, castleEntranceOf } from '../systems/siegeField.js';   // SEAT2a part four: the battlefield the town's records give   // CROWN1 part two: and a crown's ring
 import { createRoyalSession } from '../net/royalSession.js';   // CROWN1 part two: a Royal Tourney as this client fights it
-import { createRoyalClaims } from '../net/siegeClaims.js';   // CROWN1 part two: its bouts' receipts carried to the service
+import { createRoyalClaims, createDuelClaims } from '../net/siegeClaims.js';   // CROWN1 part two: its bouts' receipts carried to the service; INT8: a duel's
 import { createSiegeHerald } from '../net/siegeHerald.js';   // AUDIT-SEATS G1: the battles announced in the server's voice
 import { siegeBlowKind, siegeCastClamp, siegeSpellNumbers, siegeSpellBarred, SIEGE_SPELL_BARRED_TEXT, SIEGE_DISMOUNT_TEXT } from '../combat/siegeCombat.js';   // AUDIT-SEATS G5: a battle's shafts, spells and saddle
 
@@ -4563,13 +4581,13 @@ export async function bootWorld(canvas, renderer, params, status) {
   const _dwBreathState = { tally: 0 };
   const _dwSurfaceList = [];
   let _waterU = null;   // WATER-NEXT 2: the frame's water uniforms, set where the terrain's water draws
-  function drawDeepWatersSurfaces(nowMs) {
+  function drawDeepWatersSurfaces(nowMs, cells = null) {
     const f = _dwFrame;
     if (!f || !f.s.spawnSurfaces) return;
     _dwSurfaceList.length = 0;
-    for (const p of built.values()) {
+    for (const p of cells ?? built.values()) {   // RW1 x WAGONS2 (FINAL AUDIT): `cells` the view out's own, culled by its own planes (the street frame's _visible is the street's)
       const h = p.deepWaters?.gpu;
-      if (p._visible && h?.surface) _dwSurfaceList.push({ h, model: p._pixelMatrix });
+      if ((cells || p._visible) && h?.surface) _dwSurfaceList.push({ h, model: p._pixelMatrix });
     }
     if (!_dwSurfaceList.length) return;
     // WATER-NEXT 2: from above, the sea is the water's own - the swell, the depth to the floor the mod carved, the
@@ -7282,7 +7300,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // in (`?region=&loc=`). AUDIT LEGACY B7: a birth that waits for nobody (a stale address, a birth already made) or
     // whose files would not load goes back to the title menu, SAID - never to a stranger's wizard: the line waits on the
     // record (its heir chosen, unborn), and the fallen's save asks again.
-    const legacyBirthFailed = (why) => { console.warn(`[legacy] the birth did not take: ${why}`); setRealmNotice(globalThis.sessionStorage, `The heir could not be born: ${why}. The house waits - load the fallen's save to try again.`); releaseUnloadGuard(); exitToTitleMenu(); };
+    const legacyBirthFailed = (why) => { console.warn(`[legacy] the birth did not take: ${why}`); setRealmNotice(globalThis.sessionStorage, `The heir could not be born: ${why}. The house waits - ${realmNew ? 'choose who carries it on from the Online page' : 'load the fallen\'s save to try again'}.`); releaseUnloadGuard(); exitToTitleMenu(); };   // HOUSE-WAITS (FIELD BUGS 2026-10-09f): online the fallen is a tombstone - the Online page names the waiting house
     Promise.all([createChargenFlow(fetchBytes), legacyReady]).then(([{ careers, spellsByIndex: sbi, factionDict }, host]) => {
       spellsByIndex = sbi;
       const r = host?.bornResult({ careers, factionDict });
@@ -7642,13 +7660,41 @@ export async function bootWorld(canvas, renderer, params, status) {
   const hccRuntimeOn = () => (hccOn() ? hccRuntime : null);
   /** CollectThreats [IL_2230]: every live enemy that is hostile, not an ally, targeting ME and has detected me. */
   const hccThreats = () => exteriorFoePool().filter((f) => !f.dead && f.ai?.feet && isQualifyingThreatState(true, !!f.ai.isHostile, f.entity?.team === 'PlayerAlly', isLocalPlayerTarget(f.ai.target), !!f.ai.detected)).map((f) => [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]]);
+  /** WAGONS1: the seats in the back (scenes/wagonRiders.js) - made just below the pool, which reads them through this. */
+  let wagonRiders = null;
   const hcc = createHorseCartPool({
+    riders: { passengers: () => wagonRiders?.passengers() ?? [], go: () => wagonRiders?.go() ?? null, declined: () => wagonRiders?.declined() ?? [], acts: (o, k, kept) => wagonRiders?.acts(o, k, kept) ?? [], press: (o, id, d) => wagonRiders?.press(o, id, d) ?? false, sitsIn: (p, o, k) => wagonRiders?.sitsIn(p, o, k) ?? false },   // WAGONS1; FINAL AUDIT: a rider's own word seats them
     renderer, meshes: { getGpuMesh, cpuModels }, collider: () => collider, now: () => performance.now() / 1000,
     threats: hccThreats, selfId: () => online?.id ?? null, peerName: (id) => peerName(id),
-    onChanged: () => { _hccDirty = true; }, toWire: (p) => campToWire(p), log: console, peerAnchor: (id) => { const sh = _peerMapPoses.get(id); return sh && (sh.rd | 0) === 2 ? onlineToScene(sh) : null; },   // AUDIT HCC O5: the change key in the wire frame (campToWire is the pose's law, declared with the stream below; read only once frames run); WAGON-HITCH: where another player's cart rider stands as drawn this frame (`rd` 2, the cart - the pose peerRiders stands them on, boat-adjusted; the online frame fills the map before the pool steps), so their trailing wagon hangs from the rider seen here rather than easing apart from it
+    onChanged: () => { _hccDirty = true; }, toWire: (p) => campToWire(p), log: console, ...wagonPoolDeps(() => playerEntity.items ?? []), enterCaravan: () => caravanRooms.enter(),   // WAGONS1: Mac's wagons, by the one the player drives; the caravan's door
+    wagonEntry: () => caravanEntryWord(),   // WAGONS2-VISIT: who may enter my caravan, on its word
+    caravanEntry: { row: () => caravanEntryRow(), turn: () => caravanEntryTurn() },   // WAGONS2-VISIT: my caravan's "Who may enter"
+    visit: { may: (t) => caravanVisitMay(t), enter: (t) => caravanVisitEnter(t) },   // WAGONS2-VISIT: another's caravan, open to me
+    peerAnchor: (id) => { const sh = _peerMapPoses.get(id); return sh && (sh.rd | 0) === 2 ? onlineToScene(sh) : null; },   // AUDIT HCC O5: the change key in the wire frame (campToWire is the pose's law, declared with the stream below; read only once frames run); WAGON-HITCH: where another player's cart rider stands as drawn this frame (`rd` 2, the cart - the pose peerRiders stands them on, boat-adjusted; the online frame fills the map before the pool steps), so their trailing wagon hangs from the rider seen here rather than easing apart from it
   });
   hcc.setPeerLook((id) => (_hiddenPeers.has(id) ? 'hidden' : (_veils.get(id) ?? null)));   // AUDIT (pre-merge) I-B: a concealed owner's team is concealed with it (last frame's word - the pool steps before the peers sync)
   hccGroundMoved = hcc.groundMoved;   // DISC20-C
+  // RW1 x WAGONS2: the wagons stand in the street a window looks out on - all but the caravan whose room I stand in
+  renderer.outsideViewDraws?.add(({ renderer: r }) => { if (!hccOn()) return; const room = modes?.caravanRoom ?? null; hcc.drawOutside(r, room ? caravanRooms.fromNative(room.origin) : null); });
+  // WAGONS1: the seats in the back of my wagon and of another's - asks and answers on the foes frame, a rider pinned to
+  // their seat with the motor held, the owner's journey followed (the party's own, landing beside the owner's wagon)
+  wagonRiders = createWagonRiders({
+    selfId: () => online?.id ?? null, name: (id) => peerName(id) ?? 'Someone', now: () => performance.now(), say: (l) => townTalk.say(l), pool: hcc,
+    pin: (feet) => player.pinFeet(feet[0], feet[1], feet[2]),
+    unpin: (feet) => { if (feet) player.pinFeet(feet[0], repositionFeetY(player.collider.heightAt(feet[0], feet[2]), feet[1]), feet[2]); },
+    feet: () => player.pos,   // WAGONS2 (AUDIT): a body moved off its seat (a load, a respawn, a teleport) is not stood back beside the wagon
+    world: (p) => { const w = state.worldCoords(p); return [w.x / SCENE_MAP_RATIO, p[1], w.z / SCENE_MAP_RATIO]; },   // FINAL AUDIT: and a teleport while seated ends the ride (a rebase moves nothing in this frame)
+    changed: () => { _hccDirty = true; },   // my `wr` moved: the next foes frame carries it
+    jumpPressed: () => !gamePaused() && !pointerSurfaces.size && pressed(latch.edge, keys, 'Jump'),
+    traveling: () => _traveling, canTravel: () => !partyTravelRefusal(),
+    travel: (to, besideAt, ownerName) => {
+      const fare = partyTripFare(to, travelMapPopUpState());
+      const where = partyPlaceName(to);
+      return partyTravelJourney({ pixel: { x: to.x, y: to.y }, name: where, besideAt, besideText: `You ride with ${ownerName} to ${where}.` }, fare.opts, { ...fare.computed, totalCost: 0, piecesCost: 0 });   // WAGONS2 (AUDIT): the owner's wagon carries me - no fare (the party's journey charged the rider the map's); its time is the map's
+    },
+    prompt: { render: () => ridePrompt?.render() },
+    drawAt: (feet) => { player.drawFeet = feet; },   // WAGONS2: my body drawn on my seat in a wagon drawn grown under the Overworld
+  });
   const hccRuntime = createHorseCartRuntime({
     ready: () => walkMode && playerSpawned && !_teleporting && !_traveling,   // TryGetGameManager: a game in progress, the player standing, the world up
     transport: {
@@ -7666,7 +7712,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       isPlayerInside: () => _mode() !== 'exterior', isPlayerInsideDungeon: () => _mode() === 'dungeon', isPlayerInsideBuilding: () => _mode() === 'interior',
       buildingKey: () => modes?.interiorBuilding?.buildingKey ?? 0, dungeonId: () => modes?.roomIdentity?.()?.mapId ?? null,
     },
-    entity: { wagonWeight: () => totalWeight(playerEntity.wagonItems ?? []), wagonKgLimit: () => WAGON_KG_LIMIT },
+    entity: { wagonWeight: () => totalWeight(playerEntity.wagonItems ?? []), wagonKgLimit: () => wagonKgFor(playerEntity) },   // WAGONS1: the driven wagon's
     activateMode: () => getInteractionMode(),
     fadeInProgress: () => false,   // the port fades no transition
     say: (l) => townTalk.say(l), setMidScreenText: (t, seconds) => setMidScreenText(t, seconds), tooFarText: () => TOO_FAR_AWAY_TEXT,
@@ -8094,6 +8140,54 @@ export async function bootWorld(canvas, renderer, params, status) {
     fromNative: (p) => { const [x, z] = state.localFromWorld(p[0], p[2]); return [x, p[1] + state.compensation[1], z]; },
     enterInterior: (cabin) => modes?.enterSailingCabin(cabin), say: (line) => townTalk.say(line), log: (e) => console.error('[sailing cabin]', e),
   });
+  /** WAGONS1: my parked caravan's room (scenes/caravanRoom.js) - the cabin's door law, the caravan's pose its anchor. */
+  const caravanRooms = createCaravanAccess({
+    available: () => !!modes && hccOn(), mode: () => modes?.mode ?? 'exterior', busy: () => worldMoveBusy() || !!wagonRiders?.seated(),   // WAGONS2 (AUDIT): never from a seat in another's wagon
+    parked: () => hcc.parkedDoor(), ownsCaravan: () => activeWagonKind(playerEntity.items ?? []) === 'caravan',
+    parkedAt: () => parkedCaravanAt(hccRuntime.view().state),   // WAGONS2 (AUDIT): where my caravan stands parked now - a Recall's room only on it
+    look: () => wagonLookOf(activeWagonItem(playerEntity.items ?? [])),   // WAGONS2: the room in my caravan's paint
+    paint: (part, i) => { const r = paintDrivenWagon(playerEntity.items ?? [], part, i); if (r.ok) _hccDirty = true; return r; },   // WAGONS2: its inside painted from the decorator
+    toNative: (p) => { const w = state.worldCoords(p); return [w.x, p[1] - state.compensation[1], w.z]; },
+    fromNative: (p) => { const [x, z] = state.localFromWorld(p[0], p[2]); return [x, p[1] + state.compensation[1], z]; },
+    ground: (p) => [p[0], repositionFeetY(collider.heightAt(p[0], p[2]), p[1]), p[2]],   // the door's landing law, on the street's own collider
+    enterInterior: (room, visit = null) => modes?.enterCaravanRoom(room, null, visit), say: (line) => townTalk.say(line), log: (e) => console.error('[caravan]', e),   // WAGONS2-VISIT: and another's, a visit
+  });
+  /** WAGONS2 (FINAL AUDIT): WHERE A SAVE OR AN ANCHOR MADE IN A CARAVAN LANDS WHEN ITS ROOM CANNOT COME BACK (a visit's -
+   *  their room is theirs to stand - the caravan moved, sold, the mod off): the ground behind the rear door it was made by,
+   *  as the room's own door lets out - it fell to the building's no-door arm, the teleport's landing at the pixel's centre
+   *  (a town's roof, or half a kilometre off in the wilds), or a Recall stood inside the wagon's body. Null for any other. */
+  const caravanDoorLanding = (interior) => (interior?.caravanRoom ? caravanRooms.returnToWagon(interior.caravanRoom) : null);
+  // ═══ WAGONS2-VISIT (2026-10-09, Mac: "People should be able to use the interior just like houses, like crafting and
+  // such"; who comes in, "Like an online home") - A CARAVAN'S DOOR ONLINE (systems/caravanVisit.js) ═══════════════════
+  /** Who may enter my caravan, as its word says it (`we`), with my guild's tag when it is my guild's (`wg`) - null
+   *  offline (the room is then the save's alone) or with no caravan driven. */
+  const caravanEntryWord = () => {
+    if (!onlineOn || activeWagonKind(playerEntity.items ?? []) !== 'caravan') return null;
+    const entry = caravanEntryOf(activeWagonItem(playerEntity.items ?? []));
+    return { entry, guild: entry === 'guild' ? myGuildTag() : null };
+  };
+  /** My parked caravan's row: "Who may enter: Only me" (a home's own words, systems/onlineHomes.js HOME_ENTRY_WORDS). */
+  const caravanEntryRow = () => { const w = caravanEntryWord(); return w ? CARAVAN_VISIT_TEXT.entryRow(HOME_ENTRY_WORDS[w.entry]) : null; };
+  /** Its press: who may enter moved on, round as a home's door turns (homeNextEntry) - kept on the caravan, said on its
+   *  word at once - and said. */
+  const caravanEntryTurn = () => {
+    const w = caravanEntryWord();
+    const next = w ? setDrivenCaravanEntry(playerEntity.items ?? [], homeNextEntry(w.entry)) : null;
+    if (!next) return null;
+    _hccDirty = true;
+    return CARAVAN_VISIT_TEXT.entryLine(HOME_ENTRY_WORDS[next]);
+  };
+  /** Whether another's parked caravan opens to me: online at a relay that keeps caravans' rooms, outdoors, its owner's
+   *  word read as a home's door reads it - my party's handles (the relay's), my guild's tag. */
+  const caravanDoorOpen = (t) => caravanMayEnter(t, { partyNames: (social?.others?.() ?? []).map((m) => m.name).filter((n) => typeof n === 'string' && n.length > 0), guild: myGuildTag() });
+  const caravanVisitMay = (t) => !!online?.caravanOk && online.status === 'open' && (modes?.mode ?? 'exterior') === 'exterior' && caravanDoorOpen(t)
+    && !wagonRiders?.seated();   // WAGONS2-VISIT (AUDIT): never from a seat in another's wagon (its row offered, its press said nothing)
+  /** Its press: into it, through the same door as my own (scenes/caravanRoom.js visit) - its room the record's key. */
+  const caravanVisitEnter = (t) => {
+    const room = caravanRoomOf(t?.k);
+    if (!room || !caravanVisitMay(t)) { townTalk.say(CARAVAN_VISIT_TEXT.shut(t?.owner || 'another player')); return false; }
+    return caravanRooms.visit(t, room);
+  };
   /** BOAT-MENU: a boat of mine's boxes and its rows (systems/csaBoatMenu.js) - what the plaque lists and the picker. */
   const _csaBoxes = new WeakMap();   // BOAT-MENU: boat -> { root, variant, boxes } - the walk once per hull and style, not each frame the plaque asks
   // CABIN-TITLES: and the Fleet's book - HOLDINGS took a ship's deed out of the pack into it, so a ship laid up there
@@ -9433,7 +9527,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     changed: () => surfacePlayer(),
   }) : null;
   setHoldingsProvider({
-    ...stableProviderFor({ runtime: hccRuntime, on: hccOn, hasHorse: () => hasTransport(TRANSPORT_HORSE), hasCart: () => hasTransport(TRANSPORT_SMALL_CART) }),
+    ...stableProviderFor({ runtime: hccRuntime, on: hccOn, hasHorse: () => hasTransport(TRANSPORT_HORSE), hasCart: () => hasTransport(TRANSPORT_SMALL_CART), wagonKind: () => activeWagonKind(playerEntity.items ?? []), items: () => playerEntity.items ?? [], onPainted: () => { _hccDirty = true; } }),   // WAGONS1: the Stable names the wagon driven - WAGONS2: and paints it
     fleet: fleetHost ? { model: () => fleetHost.model(), offer: (uid) => fleetHost.offer(uid), act: (uid, verb, arg) => fleetHost.act(uid, verb, arg) } : null,
   });
   /** The sea emptied: a transition, a teleport, the arc switched off - its window with it. */
@@ -9859,12 +9953,18 @@ export async function bootWorld(canvas, renderer, params, status) {
     const r = by ? revenantFelled(playerEntity, by, ally) : null;
     if (r) revenantSay(revenantFelledEvent(r, ally, { archive: by.archive ?? by.mobileArchive ?? null }), (l) => townTalk.say(l));
   };
+  /** WAGONS1: whether my wagon goes with me now - trailing my cart, or my team following me: my companions ride in its
+   *  back (systems/wagonSeats.js companionSeats); parked, they get down and walk at heel. */
+  const wagonCarriesCompanions = () => { const k = hcc.shown()?.wagon?.kind; return k === HCC_WIRE_KIND.Trailing || k === HCC_WIRE_KIND.Following; };
+  const crewCount = () => (navalOn() ? naval?.companions?.party?.length ?? 0 : 0);
   const crewAshore = createCrewAshore({
     party: () => (navalOn() ? naval?.companions ?? null : null),
     place: companionPlace,
     leader: () => (playerSpawned ? { feet: [player.pos[0], player.pos[1], player.pos[2]], yaw: cam.yaw, grounded: !!player.grounded && !player.levitating && !player.swimming } : null),   // AUDIT CC-A3: on a floor or not
     now: () => Math.floor(playerTicker.ownMinutes),
     onKnocked: (c, by) => { naval?.companionKnocked?.(c); felledBy(by, c.name); },   // RVN10: a special foe's blow fells him - a deed on it
+    seat: (i) => wagonRiders?.companionSeat(i, wagonCarriesCompanions()) ?? null,   // WAGONS1: the crew's hands take the seats in my wagon's back first
+    seatDraw: (i) => wagonRiders?.companionSeatDrawn(i, wagonCarriesCompanions()) ?? null,   // WAGONS2: and drawn there as the wagon is drawn (grown under the Overworld)
   });
   // COMPANION-SLOTS: the crew's hands ashore take the player's side's slots with the sworn
   registerCompanionCount('crew', () => (navalOn() ? naval?.companions?.party?.length ?? 0 : 0));
@@ -9897,6 +9997,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       rec.revenantCompanion = c.name;
       if (_revenantArrivals.delete(c.name)) revenantCompanionSay('arrive', c.name);
     },
+    seat: (i) => wagonRiders?.companionSeat(crewCount() + i, wagonCarriesCompanions()) ?? null,   // WAGONS1: the sworn take the seats after the crew's
+    seatDraw: (i) => wagonRiders?.companionSeatDrawn(crewCount() + i, wagonCarriesCompanions()) ?? null,   // WAGONS2
   });
   /** REVENANT-COMPANION: a sworn one called to the player's side - it says so as it steps through. */
   const noteRevenantArrival = (id) => _revenantArrivals.add(id);
@@ -10086,6 +10188,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // IsPlayingGame (no window, no surface holding the mouse), and only where the enhanced plaque is not already naming it
     const tipOn = hcc.enabled && walkMode && _mode() === 'exterior' && !worldPlaqueOn() && !gamePaused() && !pointerSurfaces.size;
     horseNameTooltip.set(tipOn ? hcc.tooltipText(cam.pos, [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)], collider) : '');
+    if (_mode() === 'exterior') wagonRiders?.frame();   // WAGONS1: my riders kept to my seats, and me to my seat in another's wagon, as the pool just stood them
+    if (_mode() !== 'exterior' || !(playerEntity.health > 0)) wagonRiders?.leave();   // WAGONS2 (AUDIT): a door, a death - out of the ride where I stand (the outdoors again would pin me back on the seat)
   };
   /** The mod's ModSettingsChanged: the shelf has no event, so the eight keys are re-read once a second. */
   const hccPollSettings = (nowMs) => {
@@ -11360,13 +11464,13 @@ export async function bootWorld(canvas, renderer, params, status) {
   // target and healed nobody - found while wiring reflection, which
   // needs the caster's sinks for the same reason.
   const playerSpellSinks = {
-    hurt: (n) => { if (n > 0) hurtPlayer(playerEntity, n, _duelScope ? { spare: duelSpare } : undefined); },   // DUEL1: a duel opponent's spell, landing now (duelBlowIn), stops at 1 health
+    hurt: (n) => { if (n > 0) hurtPlayer(playerEntity, n); },   // INT8: a duel opponent's spell lands on the referee's bar, never here
     heal: (n) => { if (n > 0) { playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + n); surfacePlayer(); } },
     drainMagicka: (n) => { if (n > 0) { playerEntity.magicka = Math.max(0, (playerEntity.magicka ?? 0) - n); surfacePlayer(); } },
     restoreMagicka: (n) => { if (n > 0) { playerEntity.magicka = Math.min(playerEntity.maxMagicka ?? Infinity, (playerEntity.magicka ?? 0) + n); surfacePlayer(); } },
     // AUDIT DUEL1 B3: a duel opponent's fatigue damage (landing now, or a round of theirs) leaves 1 - at 0 the exhaustion
     // collapse (onExhaustedExterior) can kill a swimmer or a player a foe can see, through no duel's floor
-    drainFatigue: (n, a = null) => drainExteriorFatigue(_duelScope || a?.bundleDuel ? Math.min(n, Math.max(0, (playerEntity.fatigue ?? 0) - 1)) : n),
+    drainFatigue: (n, a = null) => drainExteriorFatigue(a?.bundleDuel ? Math.min(n, Math.max(0, (playerEntity.fatigue ?? 0) - 1)) : n),
     restoreFatigue: (n) => { if (n > 0) { playerEntity.fatigue = Math.min(maxFatigue(playerEntity), (playerEntity.fatigue ?? 0) + n); surfacePlayer(); } },
     say: (l) => townTalk.say(l),
   };
@@ -13651,7 +13755,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // RestorePositionHelper's three arms (PlayerEnterExit.cs
       // :622-655), in its own order: dungeon first, then building
       // with doors, then outside.
-      let landed = false;
+      let landed = false, outOfCaravan = null;
       if (plan.arrive === 'dungeon') {
         // The dungeon mount - StartDungeonInterior through the ONE
         // door the quest respawner uses (:626-630 RespawnPlayer with
@@ -13676,15 +13780,18 @@ export async function bootWorld(canvas, renderer, params, status) {
         // teleport's landing, never the inside position on the
         // outside collider.
         landed = !!(await modes?.restoreInterior?.(a.interior ? { ...a.interior, layout: a.layout } : a.interior, anchorLanding(a)));   // WD3 (AUDIT WD3 S5): with the layout the anchor was set in
-        if (!landed) townTalk.say('Building has no exterior doors. Repositioning player.');
+        if (!landed && !(outOfCaravan = caravanDoorLanding(a.interior))) townTalk.say('Building has no exterior doors. Repositioning player.');
+        else if (!landed) townTalk.say(CARAVAN_TEXT.outside);
       }
       if (!landed) _wodInside = false;   // WOD6: it landed outside after all
       if (landed) {
         cam.pos = player.eyeAt();   // EV1: the interpolated render eye
       } else if (plan.arrive !== 'dungeon') {
         // The exterior landing: the anchor's native coordinates back
-        // through the arrival origin, the quickload's own shape.
-        const [lx, ly, lz] = anchorLanding(a);
+        // through the arrival origin, the quickload's own shape - or,
+        // an anchor set in a caravan, the ground behind its rear door
+        // (the native point is inside the wagon's body)
+        const [lx, ly, lz] = outOfCaravan?.position ?? anchorLanding(a);
         if (walkMode) { player.spawn(lx, ly, lz); playerSpawned = true; }
         cam.pos = [lx, ly + (walkMode ? 0 : 40), lz];
       }
@@ -14100,6 +14207,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (_respawning) return;   // and a second death mid-flight cannot start a second respawn
     _respawning = true;
     endPlayerFights();   // RVN10 (Feud-Arc.md 21.2): the death ended every fight - the respawn's jump routs nobody (a death no hurt told)
+    wagonRiders?.leave();   // WAGONS2 (AUDIT): a death ends a ride in another's wagon - the risen body is never pinned back on its seat
     // WILD1: a death in the open zone rises OUT of it - the nearest town beyond the mountains - its body's offer over and
     // its cell let go (the ghost), the team brought along whatever its settings say
     const wildRise = !!wildDeath();
@@ -14210,9 +14318,15 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** PARTY-TRAVEL: a pick may carry `besideAt` - a follower's journey to the party leader lands beside them, read once
    *  the core has built the pixel - and `besideText`, the arrival's line when it did. True once the journey arrived;
    *  nothing (falsy) when it never left. */
+  let _goLeadBusy = false;   // WAGONS2 (AUDIT): fastTravelTo is waiting out GO_LEAD_MS for my riders' clients to hear `go`
   async function fastTravelTo(pick, opts, computed) {
     if (worldMoveBusy()) return;   // AUDIT 68 S22: before the gold goes
     if (_traveling) return;
+    if (_goLeadBusy) return;   // WAGONS2 (AUDIT): a journey already telling my riders - `_traveling` rises only past the lead, and a second ask in it set out twice
+    // WAGONS2 (FINAL AUDIT): a rider seated in another's wagon goes where it goes - their own fast travel (a map's, a
+    // ship's passage) teleported the pinned body away, its motor held at the far end until the owner's word lapsed. The
+    // journey that follows the owner is the party's own (`besideAt`)
+    if (typeof pick.besideAt !== 'function' && wagonRiders?.seated()) { tvSay(TRAVEL_VIEW_TEXT.rider); hudFade.clearFade(); return false; }
     const wildTrip = wildTravelGate(pick.pixel, computed?.piecesCost ?? 0);   // WILD3: never into or out of the open zone; inside it, the fee and the wait
     if (!wildTrip.ok) { hudFade.clearFade(); return false; }
     // HCC (AUDIT HCC H2): DaggerfallTravelPopUp.OnPreFastTravel [IL_a1d8] - the mod's ONE subscription for a
@@ -14228,6 +14342,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     _partyTravelOriginBoat = departure?.boat ?? null;
     _partyArrivalPending = partyArrival;
     let hccPostDue = false;
+    // WAGONS1: riders in my wagon go where I go - told before I leave the room (their clients set out on the word)
+    // FINAL AUDIT: and only when my wagon goes too - a parked one, or a following team left at the departure, keeps
+    // none (its riders were carried off and landed with no wagon, their motor held till the owner's word lapsed)
+    if (!partyArrival && !hccRuntimeOn()?.wagonGoesOnJourney?.() && wagonRiders?.release()) _hccDirty = true;
+    if (!partyArrival && wagonRiders?.announce(pick.pixel)) { _hccDirty = true; _goLeadBusy = true; try { await new Promise((r) => setTimeout(r, GO_LEAD_MS)); } finally { _goLeadBusy = false; } }
     try {
       hccRuntimeOn()?.handlePreFastTravel();
       hccPostDue = true;   // the Post is owed once the Pre ran
@@ -14948,6 +15067,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (!extras) { townTalk.say('Save version mismatch.'); return; }
       autoBuildArms(playerEntity);   // MWA1: the loaded character's arms (a boot into ?load has no chargenDone until here)
       hccRuntime.handleStartLoad();   // AUDIT HCC H3: SaveLoadManager.OnStartLoad [IL_a714] - the old character's horse, name and parked wagon end HERE, before any await, on every branch below
+      wagonRiders?.clear();   // WAGONS2 (AUDIT): a load ends every ride - mine in another's wagon, and my riders' seats (the loaded character's wagon is the save's)
       // CameraRecoiler's SaveLoadManager_OnStartLoad (:185-191): the
       // incoming character does not inherit the old one's reel.
       cameraRecoiler.reset();
@@ -15011,6 +15131,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // too - it suppresses its own marker-foe walk while the record
         // is landing (GameObjectHelper.cs:1073-1076) and overlays the
         // saved pools once the fresh ones are minted.
+        if (extras.interior?.caravanRoom) extras.interior = { ...extras.interior, caravanAt: parkedCaravanAt(extras.modData?.[HCC_VENDOR] ?? null) };   // WAGONS2 (AUDIT): the save's caravan where it was parked (the runtime's is restored after)
         const inside = extras.interior
           ? await (modes?.restoreInterior?.(extras.interior, [lx, ly, lz], {
             fromNative: (nx, nz) => state.localFromWorld(nx, nz), yOffset: state.compensation[1],
@@ -15022,7 +15143,14 @@ export async function bootWorld(canvas, renderer, params, status) {
           playerSpawned = true;
           cam.pos = [lx, ly, lz];
         } else if (extras.interior) {
-          townTalk.say('Building has no exterior doors. Repositioning player.');
+          const out = caravanDoorLanding(extras.interior);
+          if (!out) townTalk.say('Building has no exterior doors. Repositioning player.');
+          else {   // WAGONS2 (FINAL AUDIT): a caravan's room that cannot come back stands its player behind its rear door
+            townTalk.say(CARAVAN_TEXT.outside);
+            const [x, y, z] = out.position;
+            if (walkMode) { player.spawn(x, y, z); playerSpawned = true; }
+            cam.pos = [x, y + (walkMode ? 0 : 40), z];
+          }
         } else {
           if (walkMode) { player.spawn(lx, ly, lz); playerSpawned = true; }
           cam.pos = [lx, ly + (walkMode ? 0 : 40), lz];
@@ -15930,6 +16058,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT FB1007b C2: from a wall the pick is answered with the refusal - never DFU's fast travel in its stead (the
     // callers fall through to it on false)
     if (climbingNow()) { tvSay(TRAVEL_VIEW_TEXT.climbing); return true; }
+    // WAGONS2 (FINAL AUDIT): nor from a seat in another's wagon - the classic arm (First-Person Travel off the roads, the
+    // classic skin) set out with the motor held, the world's time raised and the body pinned to the seat
+    if (wagonRiders?.seated()) { tvSay(TRAVEL_VIEW_TEXT.rider); return true; }
     if (coords) travelOptions.beginTravelToCoords(pick.pixel, !!opts?.speedCautious);
     else {
       travelOptions.beginTravel({
@@ -19528,6 +19659,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   let socialMenu = null;
   let profileWin = null;   // INSPECT1: the profile over a player the F key found - made beside the F-menu it opens from
   let pageWin = null;   // JOURNAL1: the page a player held out to me, read - made beside the profile, under its gate
+  let ridePrompt = null;   // WAGONS1: a rider's ask for a seat in my wagon, the duel strip's twin
   let duelPrompt = null;   // DUEL1: the challenge at me, as a strip at the top of the screen - made beside the profile
   const pageOffers = new PageOffers();   // JOURNAL1: the pages held out to me, one per writer, waiting to be read
   let _letterPending = null;   // JOURNAL1: { draft, at } - a page sent as a letter, waiting for the chronicle to come down so the letters can open on it
@@ -19617,6 +19749,25 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!via) return;
     _parkSent = { key, word, via, c }; _parkSentAt = now; _parkRoom = online.room; _parkWelcomes = online.welcomes;
   };
+  // WAGONS2-VISIT: WHAT I HAVE PLACED IN MY CARAVAN, SAID TO ITS ROOM (net/wire.js validCaravanData) - while I stand in it
+  // online: the interior host's document of its pieces (unturned - systems/caravanVisit.js caravanDecorDoc) on every
+  // welcome of the room, and again when it changed, read at most once in CARAVAN_DECOR_MIN_MS. The relay keeps the last
+  // for my visitors, whether I am there or not.
+  const CARAVAN_DECOR_MIN_MS = 1500;
+  let _cvSent = null, _cvWelcomes = -1, _cvRoom = null, _cvReadAt = -Infinity;
+  const caravanDecorTick = (now) => {
+    if (!online || online.status !== 'open' || !online.caravanOk || !caravanKeyOf(online.room)) return;
+    const fresh = online.welcomes !== _cvWelcomes || online.room !== _cvRoom;
+    if (!fresh && now - _cvReadAt < CARAVAN_DECOR_MIN_MS) return;
+    _cvReadAt = now;
+    const d = modes?.myCaravanDecor?.() ?? null;   // null unless I stand in my own caravan
+    const c = characterIdOf(playerEntity);
+    if (!d || !c) return;
+    const key = JSON.stringify(d);
+    if (!fresh && key === _cvSent) return;
+    if (!online.sendCaravan({ c, d })) return;
+    _cvSent = key; _cvWelcomes = online.welcomes; _cvRoom = online.room;
+  };
   const foesStream = (now) => {
     if (!online || online.status !== 'open') return false;
     // WORLD6b: in a CELL everyone streams their own foes; in a world room the host alone
@@ -19638,7 +19789,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const seaRaidMoved = cell && seaRaidWord(null, full);   // OW6: and a raider's at sea
     const frame = cell ? ((modes?.mode ?? 'exterior') === 'exterior' ? exteriorFoes.foesFrame(full, _hccDirty || csaMoved || csaAboardMoved || bandMoved || navalMoved || seaRaidMoved) : null) : modes?.dungeonFoesFrame?.(full);
     if (!frame) return false;
-    if (cell && full) frame.c = camps.wireRecords(campToWire); if (cell && (full || _hccDirty)) { frame.hv = hcc.wireRecord(campToWire); _hccDirty = false; } if (cell) duelRingWord(frame, full); if (cell) csaWord(frame, full); if (cell) csaAboardWord(frame, full); if (cell) bandWord(frame, full); if (cell) navalWord(frame, full); if (cell) seaRaidWord(frame, full); if (cell) { const rk = raidWireWord(); if (rk) frame.rk = rk; } if (cell) portalWord(frame, full);   // HCC-ONLINE: my horse and wagon as shown (null: none stand) ride beside the camps - on every full frame, and on a moved word between them   // AUDIT SURV B: an empty list says "none stand" - the last camp packed reaches the peers   // SURV3: my camps ride my full frame - a shared world object in the cell's own way; RAID2: my word on the raids I run or fought - my share of their deaths, and my claim; PORTAL1: my portal, on every full frame while it stands and I stand near it
+    if (cell && full) frame.c = camps.wireRecords(campToWire); if (cell && (full || _hccDirty)) { frame.hv = hcc.wireRecord(campToWire); _hccDirty = false; } if (cell) duelRingWord(frame, full); if (cell) csaWord(frame, full); if (cell) csaAboardWord(frame, full); if (cell) bandWord(frame, full); if (cell) navalWord(frame, full); if (cell) seaRaidWord(frame, full); if (cell) { const rk = raidWireWord(); if (rk) frame.rk = rk; } if (cell) portalWord(frame, full); if (cell && frame.hv !== undefined) frame.wr = wagonRiders?.word() ?? null;   // HCC-ONLINE: my horse and wagon as shown (null: none stand) ride beside the camps - on every full frame, and on a moved word between them   // AUDIT SURV B: an empty list says "none stand" - the last camp packed reaches the peers   // SURV3: my camps ride my full frame - a shared world object in the cell's own way; RAID2: my word on the raids I run or fought - my share of their deaths, and my claim; PORTAL1: my portal, on every full frame while it stands and I stand near it; WAGONS1: my ask for a seat in another's wagon, or the seat I sit in - beside my team's word, on its clock (sent whenever `hv` is)
     if (!online.sendFoes(frame)) { _foesFullAt = -Infinity; return false; }   // AUDIT WORLD2 A9: a refused frame's deltas were already committed - the next frame carries every foe
     if (full) _foesFullAt = now;
     return true;
@@ -19793,6 +19944,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   const staffGlyphs = () => _staffGlyphs;
   let _privateSource = null, _privatePrefix = null;
   function privateRoomHere(identity) {
+    if (modes?.caravanRoom) {
+      if (caravanRelayOk()) return caravanRoomHere(identity);   // WAGONS2-VISIT: a caravan's own room - mine, or the one I visit
+      if (caravanKeyOf(identity?.privateRoom)) return null;   // a visit at an older relay keeps no caravan's room (none is entered there)
+    }   // WAGONS2-VISIT (AUDIT): and my own caravan at an older relay - the owned room, as before it (it left me in none)
     // Old relays accept arbitrary room names without this room's owner gate.
     // Never advertise personal presence through one of those relays.
     if (!chatLinks.get('world')?.staffTeleportOk || !social?.acct || !realmSession?.id) return null;
@@ -19807,6 +19962,30 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (identity?.boatUid) return privateBoatRoom(_privatePrefix, identity.boatUid);
     return privateInteriorRoom(_privatePrefix, _questLoc()?.mapTableData?.mapId, identity?.buildingKey);
   }
+  // WAGONS2-VISIT: THE CARAVAN'S ROOM ON THE RELAY (net/privateInterior.js caravanRoomOf) - `caravan:<k>`, `k` its owner's
+  // park key (net/wire.js parkKeyOf: the account the token verified and the character - the key the cell's record of the
+  // parked caravan carries). Mine is worked out once an account and character (the digest is async: no room until it
+  // lands); a visit's is the one its record named (the identity's `privateRoom`). An older relay keeps no caravan's room,
+  // and is asked for none. WAGONS2's caravan room had none at all in the wilderness (no town's map id) and a town
+  // building's (`owned:...:<map>.<key>`) in a town - its party lost it either way, and no visitor could find it.
+  let _caravanKeyFor = null, _caravanKey = null;
+  function myCaravanRoom() {
+    const c = characterIdOf(playerEntity);
+    if (!social?.acct || !c) return null;
+    const source = `${social.acct}\n${c}`;
+    if (_caravanKeyFor !== source) {
+      _caravanKeyFor = source; _caravanKey = null;
+      parkKeyOf(social.acct, c).then((k) => { if (_caravanKeyFor === source) _caravanKey = k; }).catch(() => { if (_caravanKeyFor === source) _caravanKeyFor = null; });
+    }
+    return caravanRoomOf(_caravanKey);
+  }
+  // WAGONS2-VISIT (FINAL AUDIT): a fresh session (a load inside my caravan, online turned on in it) has had no welcome
+  // to say its relay - and with no room it is never welcomed - so the world channel's word stands for it, as the owned
+  // rooms' staffTeleportOk does; the frame itself still waits for the primary's own (online.js sendCaravan)
+  const caravanRelayOk = () => !!(online?.caravanOk || chatLinks?.get('world')?.caravanOk);
+  function caravanRoomHere(identity) {   // its one caller asks the relay first (privateRoomHere's caravanRelayOk)
+    return caravanKeyOf(identity?.privateRoom) ? identity.privateRoom : myCaravanRoom();
+  }
   /** STAFF-TP: x/z are native world coordinates outdoors/in buildings;
    * dungeon/court positions are local to that exact instance. y never grounds. */
   function staffDestination() {
@@ -19818,8 +19997,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT FB1007b H3: the tutorial dungeon is each character's own (HOLD-SOLO) - staff sent there landed in their own
     // empty copy, told they stood at the player's exact position
     if (identity?.solo) return { error: 'unavailable' };
-    const privateRoom = identity?.private ? privateRoomHere(identity) : null;
-    if (mode === 'interior' && (!identity?.buildingKey || (identity.private && !privateRoom))) return { error: 'private' };
+    // WAGONS2 (FINAL AUDIT): a caravan's room is no building a door of the street walks into (staff sent there were told
+    // the instance could not be entered) - staff land behind its rear door, outside, where its owner steps out
+    const caravanRoom = mode === 'interior' ? modes?.caravanRoom ?? null : null;
+    const caravanOut = caravanRoom ? caravanDoorLanding({ caravanRoom }) : null;
+    if (caravanRoom && !caravanOut) return { error: 'private' };
+    const privateRoom = identity?.private && !caravanOut ? privateRoomHere(identity) : null;
+    if (mode === 'interior' && !caravanOut && (!identity?.buildingKey || (identity.private && !privateRoom))) return { error: 'private' };
     const inside = modes?.anchorContext?.();
     const inDungeon = mode === 'dungeon';
     const wc = inDungeon ? null : state.worldCoords(player.pos);
@@ -19829,7 +20013,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       pos: inDungeon ? [...player.pos] : [wc.x, player.pos[1] - state.compensation[1], wc.z],
       yaw: cam.yaw, pitch: cam.pitch,
     };
-    if (mode === 'interior') {
+    if (caravanOut) {
+      const c = state.worldCoords(caravanOut.position);
+      dest = { ...dest, kind: 'exterior', pos: [c.x, caravanOut.position[1] - state.compensation[1], c.z], yaw: caravanOut.yaw };
+    } else if (mode === 'interior') {
       const door = inside?.interior?.door;
       dest.door = door && { ...door, buildingKey: door.buildingKey >>> 0 };
       dest.layout = identity?.layout ?? 'classic';
@@ -20163,6 +20350,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     behaviourFor: (tag) => questBehaviourFor(questBridge?.machine, tag),
     adoptsOrphan: (from, f) => !!social?.party && adoptsOrphanQuestFoe({ myId: online?.id ?? null, myFeet: player.feetAt(), foeFeet: f.ai?.feet, partyPeers: (peersNear() ?? []).filter((p) => p.id !== from && social.isPartyPeer(p.id)) }),
   };
+  // WAGONS2-VISIT: the caravan I visit stands while its cell says so (net/caravanVisitLink.js) - moved on or gone, I am
+  // stood outside behind its door and told; painted again, its room wears it
+  const caravanVisitLink = createCaravanVisitLink({
+    onGone: (why) => modes?.leaveCaravanVisit?.(why === 'shut' ? CARAVAN_VISIT_TEXT.closed(modes?.caravanVisit?.cabinOwner || 'Its owner') : CARAVAN_VISIT_TEXT.gone) ?? true,
+    may: (w, visit) => caravanDoorOpen({ owner: visit.owner, entry: w.entry ?? 'private', guild: w.guild ?? null }),   // WAGONS2-VISIT (AUDIT): its door as its record says it now
+    onLook: (look) => { modes?.repaintCaravanVisit?.(look); },
+  });
   const cabinLink = createSailingCabinLink({
     frame: () => {
       const frame = exteriorFoes.emptyFoesFrame();
@@ -20270,6 +20464,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     exteriorFoes.setOnSites((from, sites) => wodPeerSites(from, sites), wodSprungList);   // WOD7: a peer's sprung markers - mine are spent; mine ride my full frames
     exteriorFoes.setOnCamps((from, c, at) => camps.applyOwner(from, c, campToScene, at));   // SURV3: a peer's camps, off their foes frame past the pool's own room test, through validCampRecord
     exteriorFoes.setOnHcc((from, hv, at) => hcc.applyOwner(from, hv, campToScene, at), () => hcc.clearPeers());
+    exteriorFoes.setOnRide((from, wr) => wagonRiders?.hear(from, wr));   // WAGONS1: a rider's ask, or the seat they sit in
+    exteriorFoes.setPuppetSeatDraw((f) => (hccOn() && (f.companion != null || f.shipmate) ? hcc.puppetSeatDrawn(f.puppet, f.ai?.feet, f._pup?.wire ?? null) : null));   // WAGONS2: a peer's seated companion drawn in their grown wagon
     exteriorFoes.setOnBands((from, bd) => bandHear(from, bd));   // TV7b: a peer's band chases, off their foes frame past the room test
     exteriorFoes.setOnSeaRaiders((from, sr) => seaRaidHear(from, sr));   // OW6: and their raider chases at sea, the same way
     exteriorFoes.setOnCsa((from, sa, at) => csaPeers.applyOwner(from, sa, campToScene, at), () => csaPeers.clearPeers());   // CSA-J: a peer's boats, off their foes frame past the room test, through validCsaRecord
@@ -20283,6 +20479,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     exteriorFoes.setOnPortals((from, r) => { const p = online?.peers?.get(from); portalGates.applyOwner(from, r, p?.shown ? onlineToScene(p.shown) : null); });   // PORTAL1: a peer's portal - believed only near the peer's own feet (AUDIT PORTAL1 O1), kept to its own time
     exteriorFoes.setOnDuel((from, r, at) => { const rec = r === null ? null : validRingRecord(r); if (rec) _duelRings.set(from, { rec, at }); else _duelRings.delete(from); }, () => _duelRings.clear());   // DUEL1: a peer's ring, for the wall
     online.onPark = (room, e) => hcc.applyKept(room, e, campToScene, performance.now());   // HCC-PARK: a cell's word about a parked team (mine or a halo's cell), its owner here or not
+    online.onCaravan = (room, doc) => modes?.applyCaravanDecor?.(room, doc);   // WAGONS2-VISIT: what the caravan I visit holds, from its room
     online.onParks = (room, list) => hcc.replaceKept(room, list, campToScene, performance.now());   // HCC-PARK: and a cell's whole memory, after its welcome   // HCC-ONLINE: a peer's horse and wagon, the same frame, the same room test, through validHccRecord; and the peers' teams go wherever the pool's puppets go (a room change, a leave)
     online.onTrade = (id, data) => { tradeMgr.onFrame(id, data); };
     online.onPeerDeath = (peer, pose, room) => {
@@ -20344,14 +20541,18 @@ export async function bootWorld(canvas, renderer, params, status) {
     };
     // DUEL1: A DUEL FRAME AT ME - the law decides (net/duelSession.js); `sub` the sender's account as the relay stamped it
     online.onDuel = (id, d, sub = null) => { duelMgr.onFrame(id, d, sub); };
-    online.onWild = (id, d, sub = null) => { wildFight.onFrame(id, d, sub); };   // WILD1: a blow, a fallen's offer, a pick or a gift at me - the zone's law decides (net/wildFight.js)
+    online.onDuelRef = (g, room) => { if (g.k === 'bout') _duelRoom = room ?? null; duelMgr.onRef(g); };   // INT8: the referee's word on my bout - AUDIT INT8: and its room, where its frames go
+    online.onWild = (id, d, sub = null) => { wildFight.onFrame(id, d, sub); };   // WILD1: a fallen's offer at me (INT9: the one frame the zone routes) - the zone's law decides (net/wildFight.js)
+    online.onWildRef = (g, room) => wildRefIn(g, room);   // INT9: the zone referee's word - a blow landed, a fall, a fall signed
     // WILD1: my room's word on its remains (net/wildRemains.js). WILD-SEEN (2026-10-09, the owner: "when i die i dont see my
     // own pile"): the book is told the room FIRST - the frame told it a frame late, and a near relay's hello answered inside
     // that frame, so the room's remains were heard and then cleared as "another room's" by the frame's setRoom
+    // HALO-REMAINS: a halo's word too - the cell beside mine says its remains at its hello, and a crossing into it promotes
+    // that socket with no hello again; the book holds every room I hold (its records go when their room is let go)
     online.onWildRoom = (w, room) => {
-      if (room !== online.room) return;
-      wildRemains.setRoom(room);
-      wildRemains.onWord(w);
+      if (!online.heldRooms().includes(room)) return;
+      wildRemains.setRooms(online.heldRooms());
+      wildRemains.onWord(w, room);
       if (w?.k === 'gone') { remainsGone(w.r); forgetMine(w.r); }   // WILD-WAYPOINT: all taken, or let go - the flag goes with them; WILD-KEEP: and the kept record
     };
     online.onWed = (id, d, sub = null, sc = null) => { wedMgr.onFrame(id, d, sub, sc); };   // LEGACY7 part three: a wed frame at me - the wedding's law decides; AUDIT LEGACY III O1: `sc` their realm character as the relay stamped it
@@ -20457,6 +20658,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       peerRiders?.destroy();   // RIDE
       peerWalkers?.destroy();   // DISC23-B
     });
+    globalThis.addEventListener?.('pagehide', () => caravanVisitLink.close());   // WAGONS2-VISIT: and the visited caravan's listener goes with the page
   };
   // CHAT1 (Mac: "the live chat in enhanced format ... one world tab with
   // the ability to add more tabs at a later time"): one channel session
@@ -20930,8 +21132,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       door: accountGuilds({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }),
       // GUILD2b (bible/11-Multiplayer/Guild-Overhaul.md): the pack a vault's piece leaves and arrives in - the item made
       // whole as the save's loader makes one (setItemFields), added as DFU's AddItem adds; the one checkpoint asked
-      pack: { items: () => (playerEntity.items ??= []), add: (rec) => { addItem((playerEntity.items ??= []), setItemFields(rec), 'back'); }, changed: () => { saveSoon.changed(); },
-        reach: () => _storesReached() },   // GUILD2b: the vault is reached in a town, as the Stores are (BAG1)
+      pack: { items: () => (playerEntity.items ??= []), add: (rec) => { const it = { ...rec }; for (const k of RECEIVER_MARKS) delete it[k]; addItem((playerEntity.items ??= []), setItemFields(it), 'back'); }, changed: () => { saveSoon.changed(); },   // WAGONS2-VISIT (AUDIT): a piece from the vault comes without the last owner's marks (a caravan's door among them)
+        reach: () => _storesReached(), refuses: (it) => packTradeRefusal(it, playerEntity) },   // GUILD2b: the vault is reached in a town, as the Stores are (BAG1); WAGONS2 (AUDIT): what the pack keeps - the loaded wagon
       marks: marksBook,   // MARKS1: the guild's Marks treasury moves through the account's Marks
       // PROF6: the guild Stores and the Officers' writ budget, through the writs' book, while the professions are this
       // account's
@@ -21044,6 +21246,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       asks: () => duelMgr.asks(), now: () => performance.now(), name: (id) => peerName(id) ?? 'Someone', touch: isTouchDevice(), doc: document,
       accept: (id) => { const r = duelMgr.accept(id); if (!r.ok) tradeSay(r.why === 'try again' ? TRY_AGAIN_TEXT : `You cannot accept: ${r.why}.`); },
       decline: (id) => { duelMgr.decline(id); },
+    });
+    // WAGONS1: a rider's ask for a seat in my wagon's back - the duel's strip, its own words
+    ridePrompt = createDuelPrompt({
+      asks: () => wagonRiders?.asks() ?? [], now: () => performance.now(), name: (id) => peerName(id) ?? 'Someone', touch: isTouchDevice(), doc: document,
+      accept: (id) => { wagonRiders?.accept(id); _hccDirty = true; }, decline: (id) => { wagonRiders?.decline(id); _hccDirty = true; },
+      line: (_peer, who) => RIDE_TEXT.asked(who), ttlMs: RIDE_ASK_TTL_MS, second: true,   // WAGONS2 (FINAL AUDIT): below the duel's strip, never over it
     });
     // JOURNAL1: the page window, beside the profile and under the same gate - the F-menu's 'Read their page' opens it
     // over a page held out to me (pageOffers), and F again puts it away (socialInteract). Keep files the page it shows
@@ -21158,15 +21366,14 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** DUEL_RANGE_M between two BODIES, the trade's own measure (metres, never a pixel or a room). */
   const duelNear = (peerId) => { const b = duelBody(peerId); return !!b && tradeDistance(player.feetAt(), b.feet) <= DUEL_RANGE_M; };
   const duelAccount = accountDuels({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });
-  /** AUDIT DUEL1 B6: my own feet (world frame) over the last DUEL_TRAIL_MS of a live duel, oldest first - a swing reached
-   *  me if it reached where I was when its striker saw me (duelCombat.js duelBlowPlausible). */
-  const _duelTrail = [];
-  let _duelScope = false;   // the opponent's spell is landing: its instant damage stops at the duel's floor (playerSpellSinks)
-  const _duelSent = new Map();   // my blow's number -> { kind, weapon } - what its result is about
+  const wildAccount = accountWild({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });   // INT9: a death in the open zone's drop
+  const _duelSent = new Map();   // my blow's number -> { kind, weapon } - what it was
+  let _duelLastWeapon = null;    // INT8: the weapon of my last strike - the referee's word on it names no number
   let _duelFoe = null;      // my opponent as the HUD's target bar reads a foe ({ entity: { name, health, maxHealth }, dead })
   let _duelWall = null;     // { c (world), alpha, live } - my own ring, drawn from the duel's start to its fade
+  let _duelRoom = null;   // AUDIT INT8: the room that referees my bout (its `dref`'s) - its frames go there
   const duelMgr = createDuelManager({
-    send: (d) => online?.sendDuel(d) === true,
+    send: (d) => online?.sendDuel(d, { room: duelMgr?.duel && _duelRoom ? _duelRoom : null }) === true,
     now: () => performance.now(),   // monotonic: a wall clock that steps must not age an ask or a duel
     say: tradeSay,
     peerName: (id) => peerName(id),
@@ -21183,14 +21390,14 @@ export async function bootWorld(canvas, renderer, params, status) {
       profileWin?.hide();
       _duelWall = { c: d.c, s: d.s, alpha: 0, live: true };
       _duelFoe = { entity: { name: peerName(d.peer) ?? 'Your opponent', health: 1, maxHealth: 1 }, dead: false, duel: true };   // AUDIT TELL U7: `duel` - no foe's wind-up takes the bar from it (ui/hudFoeTarget.js markFoeThreat)
+      duelHudSay(d);   // INT8: the referee's vitality, mine and theirs
       _duelSent.clear();
       audio.playOneShot(SOUND.Parry6, 1);   // the blades cross: the count begins
     },
-    onBlow: (d, duel) => duelBlowIn(d, duel),
-    onResult: (d) => duelResultIn(d),
+    onHp: (g) => duelHpIn(g),   // INT8: the referee's word that a blow landed
+    onBout: (d) => duelHudSay(d),   // AUDIT INT8: the referee's bout set - both bars drawn (it read "sets the bout" until a blow)
     onEnd: (duel, end) => duelEnded(duel, end),
-    onHeal: () => duelHeal(),
-    vitals: () => [playerEntity.health, playerEntity.maxHealth],
+    onReceipt: (rc) => { if (duelClaims.keep(rc)) duelClaims.offer({ force: true }); },   // INT8: a bout won, the relay's receipt - either fighter's to carry
   });
   duelMgr.onChange = () => { duelPrompt?.render(); repaintDuelProfile(); };
 
@@ -21285,53 +21492,39 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (const p of wedMgr.peers()) if (!online?.reachesPeer(p)) wedMgr.gone(p);
     if (performance.now() - _unionsAt > UNIONS_READ_MS) legacyUnionsRead();
   };
-  registerDuelFell(() => duelMgr.fell());   // characters/playerEntity.js duelSpare: every duel-sourced blow's floor says it here
-  /** THE DEFENDER: my opponent's blow, checked by the law (theirs, this duel's, past the count, once, in budget), placed
-   *  (combat/duelCombat.js duelBlowPlausible - a blow from where they are not seen lands nothing) and resolved on MY
-   *  sheet, landed through the one door with the duel's floor. `{ hit, dmg }`, or null for a blow that could not be. */
-  const duelBlowIn = (d, duel) => {
-    if (playerEntity.health <= 0 || modes?.deathUp?.() || (modes?.mode ?? 'exterior') !== 'exterior') return null;
-    if (!duelBlowPlausible(d, [..._duelTrail.map((e) => e.p), campToWire(player.feetAt())], duelWorldOf(duel.peer), DUEL_RADIUS_M)) return null;
-    const who = peerName(duel.peer) ?? 'Your opponent';
-    if (d.k === 'spell') {
-      const spell = duelSpellFromWire(d.spell);
-      if (!spell) return null;
-      townTalk.say(`${who} casts ${spell.name || 'a spell'} on you.`);
-      const before = playerEntity.health;
-      _duelScope = true;
-      try { magic.applySpellToPlayer(spell, d.level, null, { duelCast: true }); } finally { _duelScope = false; }
-      const dmg = Math.max(0, Math.trunc(before - playerEntity.health));
-      if (dmg > 0) { flashPlayerDamage(dmg); playPlayerVoice(audio, playerPainVoice(playerEntity, dmg)); }
-      surfacePlayer();
-      return { hit: true, dmg };
-    }
-    tallySkill(playerEntity, SKILLS.Dodging, 1);   // the defender's own tally, once a blow, as a foe's blow tallies it
-    const from = campToScene(d.p);
-    const r = resolveDuelStrike(d, playerEntity, { backFacing: isBackFacing(cam.yaw, player.feetAt(), from) });
-    if (r.dmg > 0) {
-      hurtPlayer(playerEntity, r.dmg, { spare: duelSpare });
-      audio.playOneShot(hitSoundFor(d.w ? { templateIndex: d.w.t } : null), PLAYER_HIT_VOLUME);
-      flashPlayerDamage(r.dmg);
-      playPlayerVoice(audio, playerPainVoice(playerEntity, r.dmg));
-      surfacePlayer();
-    }
-    return r;
+  /** INT8: THE DUEL'S HUD - the referee's vitality (net/duelRef.js: the Royal Tourney's, never my save's health), mine
+   *  over theirs, drawn on the battles' readout (ui/siegeHud.js) for the duel's life; its Leave is my yield. */
+  let _duelHud = null;
+  const duelHudSay = (d) => {
+    if (!d) { _duelHud?.hide(); return; }
+    _duelHud ??= createSiegeHud(document, { onLeave: () => duelMgr.yieldDuel() });
+    const me = online?.id ?? '', h = d.h ?? [];
+    const mine = h.find((x) => x[0] === me), theirs = h.find((x) => x[0] !== me);
+    const name = peerName(d.peer) ?? 'your opponent';
+    _duelHud.update({ bar: [`Duel with ${name}`, theirs ? `${name}: ${theirs[1]} / ${theirs[2]}` : 'The referee sets the bout...'], sides: '', self: mine ? [`Your vitality: ${mine[1]} / ${mine[2]}`] : [], works: '', arms: null, card: null });
   };
-  /** THE ATTACKER: my blow out - my sheet and my weapon (never a number: the defender resolves it). The swing is theirs
-   *  when it left; its result comes back as `duelResultIn`. */
+  /** THE ATTACKER: my blow out - INT8: rolled on my own sheet against a body of my own sheet (a siege's way: the
+   *  target's armour is not mine to read), the number sent for the RELAY to referee (net/duelRef.js clips it to the
+   *  weapon my look holds and the arms my token signs). A swing that rolled nothing is a miss, said here; the referee's
+   *  word on one that landed comes back as `duelHpIn`. */
   const duelStrikeOut = (by, weapon, swing, drawMs = 0, to = null) => {
     if (!duelMgr.fighting) return siegeStrikeOut(to, by, weapon, swing, drawMs);   // AUDIT-SEATS G5: outside a duel, my shaft on a battle's foe (`to`)
-    const w = duelWeaponOf(weapon), sw = duelSwingOf(swing);
-    const n = duelMgr.blow('strike', { by, p: campToWire(player.feetAt()), a: duelAttackerOf(playerEntity, weapon), ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...(drawMs > 0 ? { at: Math.min(60000, Math.trunc(drawMs)) } : {}) });
-    if (n) { _duelSent.set(n, { kind: 'strike', weapon }); if (_duelSent.size > 64) _duelSent.delete(_duelSent.keys().next().value); }
+    const a = duelAttackerOf(playerEntity, weapon), w = duelWeaponOf(weapon), sw = duelSwingOf(swing);
+    const at = drawMs > 0 ? { at: Math.min(60000, Math.trunc(drawMs)) } : {};
+    const r = resolveDuelStrike({ by, a, ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...at }, duelStub(a).stub);
+    if (!(r.dmg > 0)) { reportPlayerAttack({ hit: false, damage: 0, critical: false, backstab: false, ineffective: false }); return true; }
+    const n = duelMgr.blow('strike', { by, p: campToWire(player.feetAt()), d: Math.trunc(r.dmg), ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...at });
+    if (n) { _duelSent.set(n, { kind: 'strike', weapon }); _duelLastWeapon = weapon ?? null; if (_duelSent.size > 64) _duelSent.delete(_duelSent.keys().next().value); }
     return !!n;
   };
-  /** My spell reached my opponent (the cast engine's duel marks, scenes/hostMagic.js): its harmful families out. */
+  /** My spell reached my opponent (the cast engine's duel marks, scenes/hostMagic.js): INT8 - its harm counted on a
+   *  stand-in of my own sheet (combat/siegeCombat.js siegeSpellNumbers, a siege's way), to the referee as a cast. */
   const duelSpellOut = (peerId, sp) => {
     if (!duelMgr.fighting) return siegeSpellOut(peerId, sp);   // AUDIT-SEATS G5: outside a duel, my spell on a siege's foe
-    const spell = duelSpellOf(sp);
-    if (!spell || peerId !== duelMgr.opponent) return false;
-    const n = duelMgr.blow('spell', { p: campToWire(player.feetAt()), level: Math.max(1, Math.min(30, Math.trunc(playerEntity.level || 1))), spell });
+    if (peerId !== duelMgr.opponent) return false;
+    const { harm } = siegeSpellNumbers(sp, Math.max(1, Math.trunc(playerEntity.level || 1)), duelStub(duelAttackerOf(playerEntity)).stub, playerEntity);
+    if (!(harm > 0)) return false;
+    const n = duelMgr.blow('spell', { p: campToWire(player.feetAt()), d: siegeCastClamp(harm, false) });
     if (n) { _duelSent.set(n, { kind: 'spell', weapon: null }); if (_duelSent.size > 64) _duelSent.delete(_duelSent.keys().next().value); }
     return !!n;
   };
@@ -21475,60 +21668,60 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     _watchedFrom = null;
   };
-  /** The defender's answer to one of my blows: the HUD's number (HN1's seam), my opponent's health on the target bar,
-   *  and for a strike that landed the sound, the blood and my weapon's wear (FormulaHelper's DamageEquipment attacker
-   *  half, which ran on the defender's machine against a stub and so never reached my own blade). */
-  const duelResultIn = (d) => {
-    const sent = _duelSent.get(d.n) ?? null;
-    _duelSent.delete(d.n);
-    reportPlayerAttack({ hit: d.hit === 1, damage: d.dmg, critical: false, backstab: false, ineffective: false });
-    if (_duelFoe) { _duelFoe.entity.health = d.h[0]; _duelFoe.entity.maxHealth = d.h[1]; markFoeStruck(_duelFoe); }
-    const b = duelBody(duelMgr.duel?.peer);
-    if (d.dmg > 0 && sent?.kind === 'strike') {
-      if (b) {
-        audio.play3d(hitSoundFor(sent.weapon ?? null), b.feet, ENEMY_HIT_VOLUME, { maxDistance: 16 });
-        hitEffects.showBloodSplash(0, [b.feet[0], b.feet[1] + (b.height ?? CAPSULE_HEIGHT) / 2, b.feet[2]], null, bloodHit(d.dmg, { maxHealth: d.h[1] }, { fromPlayer: true, weapon: sent.weapon ?? null }));
+  /** INT8: THE REFEREE'S WORD THAT A BLOW LANDED (`dref` `hp`) - the bout's vitality on the HUD and my opponent's on the
+   *  target bar; a blow of mine: the HUD's number (HN1's seam), and for a strike the sound, the blood and my weapon's wear
+   *  (FormulaHelper's DamageEquipment attacker half, on what the referee let land, never past what this weapon could
+   *  deal); a blow on me: its flash, its sound and my voice - my save's health untouched (a duel is the referee's bar). */
+  const duelHpIn = (g) => {
+    const d = duelMgr.duel;
+    if (!d) return;
+    duelHudSay(d);
+    const theirs = (g.h ?? []).find((x) => x[0] === d.peer);
+    if (_duelFoe && theirs) { _duelFoe.entity.health = theirs[1]; _duelFoe.entity.maxHealth = theirs[2]; }
+    const mine = g.by === (online?.id ?? '');
+    if (mine) {
+      if (_duelFoe) markFoeStruck(_duelFoe);
+      reportPlayerAttack({ hit: true, damage: g.d, critical: false, backstab: false, ineffective: false });
+      const b = duelBody(d.peer);
+      if (g.r !== DUEL_REF_KIND.Spell && b) {
+        audio.play3d(hitSoundFor(_duelLastWeapon), b.feet, ENEMY_HIT_VOLUME, { maxDistance: 16 });
+        hitEffects.showBloodSplash(0, [b.feet[0], b.feet[1] + (b.height ?? CAPSULE_HEIGHT) / 2, b.feet[2]], null, bloodHit(g.d, { maxHealth: theirs?.[2] ?? 1 }, { fromPlayer: true, weapon: _duelLastWeapon }));
       }
-      if (sent.weapon) {
-        let amount = Math.trunc((10 * duelWearDamage(d.dmg, sent.weapon, playerEntity) + 50) / 100);   // AUDIT DUEL1 A2: the defender's damage, never past what this weapon could deal
+      if (g.r !== DUEL_REF_KIND.Spell && _duelLastWeapon) {
+        let amount = Math.trunc((10 * duelWearDamage(g.d, _duelLastWeapon, playerEntity) + 50) / 100);   // AUDIT DUEL1 A2: never past what this weapon could deal
         if (amount === 0 && Math.random() < 0.2) amount = 1;
-        if (amount > 0) lowerCondition(sent.weapon, dfuBlowWear(amount), playerEntity, (l) => townTalk.say(l));   // BALANCE1: a duel's blow wears on the port's scale too; WEAR-TWICE: twice DFU's, WEAR-ONE: DFU's again
+        if (amount > 0) lowerCondition(_duelLastWeapon, dfuBlowWear(amount), playerEntity, (l) => townTalk.say(l));   // BALANCE1: a duel's blow wears on the port's scale too; WEAR-TWICE: twice DFU's, WEAR-ONE: DFU's again
       }
+      return;
+    }
+    if (g.to === (online?.id ?? '') && g.d > 0) {
+      if (g.r !== DUEL_REF_KIND.Spell) audio.playOneShot(hitSoundFor(null), PLAYER_HIT_VOLUME);
+      flashPlayerDamage(g.d);
+      playPlayerVoice(audio, playerPainVoice(playerEntity, g.d));
     }
   };
-  /** The duel is over here. The ring comes down (the wall fades), the target bar goes, and MY LOSS - mine alone: nobody
-   *  credits themselves a win - goes to the account service naming the winner by the account the relay stamped on
-   *  their frames. Then the Inspect card, if it stands for either of us, reads the new record. */
-  const duelEnded = (duel, end) => {
+  /** The duel is over here. The ring comes down (the wall fades), the target bar and the HUD go, and the Inspect card, if it
+   *  stands for either of us, reads the record again - INT8: the record is the relay's receipt (onReceipt), never a loss of
+   *  mine reported. */
+  const duelEnded = (duel) => {
     if (_duelWall) _duelWall.live = false;
     if (_duelFoe) { _duelFoe.dead = true; _duelFoe = null; }
-    if (end.lost && duel.sub) {
-      duelAccount.lost(duel.sub).then((r) => {
-        if (r?.ok && r.data?.recorded === false) { const line = duelUncountedText(r.data.why); if (line) tradeSay(line); }   // AUDIT DUEL1: the service says which bound, and the line says it too
-        duelRecords.forget(duel.sub); repaintDuelProfile();
-      }).catch(() => {});
-    } else if (end.won && duel.sub) duelRecords.forget(duel.sub);
+    duelHudSay(null);
+    if (duel.sub) duelRecords.forget(duel.sub);
+    repaintDuelProfile();
   };
-  /** DUEL_HEAL_HOLD_MS after the end: "both are fully healed on duel end" - health, fatigue and magicka in full, and the
-   *  opponent's spells on me stripped (a duel's poison does not outlive the duel). A player who fell to something else in
-   *  the meantime is not raised by it. */
+  /** INT8: A BOUT'S RECEIPTS, carried to the account service (net/siegeClaims.js createDuelClaims): kept on the device
+   *  until the service settles each - either fighter's to carry, counted once. */
+  const duelClaims = createDuelClaims({
+    claim: (r) => duelAccount.claim(r), me: () => _seatDoor?.me() ?? null, storage: appStorage(), nowMs: () => Date.now(),
+    onClaimed: (a) => {
+      if (a?.ok && a.data?.recorded === false) { const line = duelUncountedText(a.data.why); if (line) tradeSay(line); }   // AUDIT DUEL1: the service says which bound, and the line says it too
+      repaintDuelProfile();
+    },
+  });
   /** AUDIT DUEL1 D5: the player is leaving the game - every duel state ends here (duelSession.js reset: a live duel as
-   *  `left`, my asks taken back, the asks at me refused), and a duel in play or in its hold heals at once. */
-  const duelLeaveNow = () => {
-    const had = !!duelMgr.duel;
-    duelMgr.reset();
-    if (had) duelHeal();
-  };
-  const duelHeal = () => {
-    if (Array.isArray(playerEntity.activeEffects)) playerEntity.activeEffects = playerEntity.activeEffects.filter((a) => !a?.bundleDuel);
-    if (playerEntity.health > 0 && !modes?.deathUp?.()) {
-      playerEntity.health = playerEntity.maxHealth;
-      playerEntity.fatigue = maxFatigue(playerEntity);
-      playerEntity.magicka = playerEntity.maxMagicka ?? playerEntity.magicka;
-      townTalk.say('You are fully healed.');
-    }
-    surfacePlayer();
-  };
+   *  `left`, my asks taken back, the asks at me refused). INT8: no heal - a duel never touched the save's health. */
+  const duelLeaveNow = () => { duelMgr.reset(); };
   // FIELD BUGS 29h (BOOT-HIDE; the Discord's "CRASH (2) ReferenceError: Cannot access 'be' before initialization", from
   // the document's hide event): THE CHECKPOINT'S DOORS - the ones the PAGE opens (the unload, a tab or window put
   // away) and the two the game hands on (a change saved soon, the title exit). Each runs the exit autosave or the
@@ -21555,8 +21748,6 @@ export async function bootWorld(canvas, renderer, params, status) {
   // its pool) WIRED; worldModes.js (a building's pool, the remains) and dungeonContext.js (a dungeon's pool, its foes
   // and piles four times and twice) WIRED; exterior.js, the offline fixed city, NOT WIRED on purpose - the zone is
   // online's alone.
-  /** How far a shaft's or a spell's blow in the zone may come from, metres (duelBlowPlausible's ring, doubled there). */
-  const WILD_REACH_M = 50;
   /** The zone's mask over the maps file - for the maps, online alone (offline the mountains are Daggerfall's own). */
   const wildMapMask = () => (_onlineWorldSession() ? wildMaskOf(maps) : null);
   /** Is a world-frame point (natives on x and z) in the zone - or, `near`, within its band? */
@@ -21976,9 +22167,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (const b of peersNear() ?? []) if (wildFair(b.id)) out.push(b);
     return out;
   };
-  const _wildSent = new Map();   // `${peer}:${n}` -> { kind, weapon } - what a result is about
-  /** MY BLOW ON A FAIR PLAYER `to` - a swing or a shaft: my sheet and my weapon, never a number (the defender resolves
-   *  it, the duel's own law). True when it left. */
+  let _wildLastWeapon = null;   // INT9: the weapon of my last strike that left - the referee's word on it wears it
   // ZONE-WATCH (the owner: "attacking other players in cities will call the guards"): my blow or my spell on a player in a
   // town of the zone - in its streets or under one of its roofs - is ASSAULT, the watch's own crime, and the watch comes
   // (ten times as strong here) for me; once each ten seconds, so a fight keeps it called without a storm of posts
@@ -21995,20 +22184,28 @@ export async function bootWorld(canvas, renderer, params, status) {
     _crimeResponse();
     townTalk.say('The town watch has seen you strike - the guards are coming!');
   };
+  /** MY BLOW ON A FAIR PLAYER `to` - a swing or a shaft. INT9: rolled on my own sheet against a body of my own sheet (a
+   *  siege's way: the target's armour is not mine to read), the number sent for the RELAY to referee (net/wildRef.js clips
+   *  it to the weapon my look holds and the arms my token signs); a swing that rolled nothing is a miss, said here, and the
+   *  referee's word on one that landed comes back as `wildHpIn`. True when the swing was the zone's. */
   const wildStrikeOut = (to, by, weapon, swing, drawMs = 0) => {
     if (!wildFair(to)) return false;
-    const w = duelWeaponOf(weapon), sw = duelSwingOf(swing);
-    const n = wildFight.blow(to, 'strike', { by, p: campToWire(player.feetAt()), a: duelAttackerOf(playerEntity, weapon), ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...(drawMs > 0 ? { at: Math.min(60000, Math.trunc(drawMs)) } : {}) });
-    if (n) { _wildSent.set(`${to}:${n}`, { kind: 'strike', weapon }); if (_wildSent.size > 64) _wildSent.delete(_wildSent.keys().next().value); zoneWatchCall(); }
+    const a = duelAttackerOf(playerEntity, weapon), w = duelWeaponOf(weapon), sw = duelSwingOf(swing);
+    const at = drawMs > 0 ? { at: Math.min(60000, Math.trunc(drawMs)) } : {};
+    const r = resolveDuelStrike({ by, a, ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...at }, duelStub(a).stub);
+    if (!(r.dmg > 0)) { reportPlayerAttack({ hit: false, damage: 0, critical: false, backstab: false, ineffective: false }); zoneWatchCall(); return true; }
+    const n = wildFight.blow(to, 'strike', { by, p: campToWire(player.feetAt()), d: Math.trunc(r.dmg), ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...at });
+    if (n) { _wildLastWeapon = weapon ?? null; zoneWatchCall(); }
     return !!n;
   };
-  /** My harmful spell met a fair player (the cast engine's marks): its harmful families out, as a duel's. */
+  /** My harmful spell met a fair player (the cast engine's marks): INT9 - its harm counted on a stand-in of my own sheet
+   *  (combat/siegeCombat.js siegeSpellNumbers, a siege's way), to the referee as a cast (it clips, and bounds the rate). */
   const wildSpellOut = (peerId, sp) => {
     if (!wildFair(peerId)) return false;
-    const spell = duelSpellOf(sp);
-    if (!spell) return false;
-    const n = wildFight.blow(peerId, 'spell', { p: campToWire(player.feetAt()), level: Math.max(1, Math.min(30, Math.trunc(playerEntity.level || 1))), spell });
-    if (n) { _wildSent.set(`${peerId}:${n}`, { kind: 'spell', weapon: null }); if (_wildSent.size > 64) _wildSent.delete(_wildSent.keys().next().value); zoneWatchCall(); }
+    const { harm } = siegeSpellNumbers(sp, Math.max(1, Math.trunc(playerEntity.level || 1)), duelStub(duelAttackerOf(playerEntity)).stub, playerEntity);
+    if (!(harm > 0)) return false;
+    const n = wildFight.blow(peerId, 'spell', { p: campToWire(player.feetAt()), d: siegeCastClamp(harm, false) });
+    if (n) zoneWatchCall();
     return !!n;
   };
   /** The melee arm in the zone: the nearest fair body within a weapon's reach, in view and in sight (the duel's test). */
@@ -22025,7 +22222,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     return best ? wildStrikeOut(best, 'melee', weaponRig.playerWeapon.strikingWeapon, weaponRig.playerWeapon.machine?.state) : false;
   };
   /** The fair bodies as the arrows' targets (each marked a duel's: a shaft stops on it dealing nothing here, and the
-   *  blow is the defender's to resolve), and as the cast engine's marks. */
+   *  blow is the referee's - INT9), and as the cast engine's marks. */
   const wildArrowTargets = () => {
     const bodies = wildBodiesNow();
     return bodies.length ? bodies.map((b) => ({ feet: b.feet, ref: { duel: true, id: b.id, dead: false, ai: { feet: b.feet, height: b.height ?? CAPSULE_HEIGHT } } })) : NO_BODIES;
@@ -22034,70 +22231,104 @@ export async function bootWorld(canvas, renderer, params, status) {
     const bodies = wildBodiesNow();
     return bodies.length ? bodies.map((b) => ({ ...b, name: peerName(b.id) ?? 'another player' })) : null;
   };
-  /** THE DEFENDER: a fair player's blow, checked by the law (net/wildFight.js), placed (a blow from where they are not
-   *  seen lands nothing) and resolved on MY sheet through the one door - with no floor: in the zone a blow can kill. */
-  const wildBlowIn = (d, from) => {
-    if (!wildCan()) return null;
-    if (!duelBlowPlausible(d, [..._duelTrail.map((e) => e.p), campToWire(player.feetAt())], duelWorldOf(from), WILD_REACH_M)) return null;
-    const who = peerName(from) ?? 'Another player';
-    if (d.k === 'spell') {
-      const spell = duelSpellFromWire(d.spell);
-      if (!spell) return null;
-      townTalk.say(`${who} casts ${spell.name || 'a spell'} on you.`);
-      const before = playerEntity.health;
-      magic.applySpellToPlayer(spell, d.level, null);
-      const dmg = Math.max(0, Math.trunc(before - playerEntity.health));
-      if (dmg > 0) { flashPlayerDamage(dmg); playPlayerVoice(audio, playerPainVoice(playerEntity, dmg)); }
-      surfacePlayer();
-      return { hit: true, dmg };
-    }
-    tallySkill(playerEntity, SKILLS.Dodging, 1);
-    const r = resolveDuelStrike(d, playerEntity, { backFacing: isBackFacing(cam.yaw, player.feetAt(), campToScene(d.p)) });
-    if (r.dmg > 0) {
-      hurtPlayer(playerEntity, r.dmg);
-      audio.playOneShot(hitSoundFor(d.w ? { templateIndex: d.w.t } : null), PLAYER_HIT_VOLUME);
-      flashPlayerDamage(r.dmg);
-      playPlayerVoice(audio, playerPainVoice(playerEntity, r.dmg));
-      surfacePlayer();
-    }
-    return r;
+  // ── INT9: THE REFEREE'S WORD (net/wildRef.js - the relay holds the zone's fights) ──
+  /** THE ZONE'S HUD - the referee's vitality (the Royal Tourney's, never my save's health: that is the foes' alone), mine
+   *  and my last foe's, on the battles' readout (ui/siegeHud.js, with nothing to leave) while the fight is fresh - the
+   *  referee makes a fighter no player has struck for WILD_REF.mendMs whole again. */
+  let _wildHud = null;
+  let _wildVit = null;   // { mine: [hp, max] | null, foe: { id, hp, max } | null, at }
+  const wildHudSay = () => {
+    if (!_wildVit) { _wildHud?.hide(); return; }
+    _wildHud ??= createSiegeHud(document);
+    const f = _wildVit.foe, name = f ? (peerName(f.id) ?? 'another player') : '';
+    _wildHud.update({ bar: [WILD_NAME, f ? `${name}: ${f.hp} / ${f.max}` : ''], sides: '', self: _wildVit.mine ? [`Your vitality: ${_wildVit.mine[0]} / ${_wildVit.mine[1]}`] : [], works: '', arms: null, card: null });
   };
-  /** The defender's answer to one of my blows: the HUD's number, and for a strike that landed the sound, the blood and
-   *  my weapon's wear (the duel's own). */
-  const wildResultIn = (d, from) => {
-    const sent = _wildSent.get(`${from}:${d.n}`) ?? null;
-    _wildSent.delete(`${from}:${d.n}`);
-    reportPlayerAttack({ hit: d.hit === 1, damage: d.dmg, critical: false, backstab: false, ineffective: false });
-    if (!(d.dmg > 0) || sent?.kind !== 'strike') return;
-    const b = duelBody(from);
-    if (b) {
-      audio.play3d(hitSoundFor(sent.weapon ?? null), b.feet, ENEMY_HIT_VOLUME, { maxDistance: 16 });
-      hitEffects.showBloodSplash(0, [b.feet[0], b.feet[1] + (b.height ?? CAPSULE_HEIGHT) / 2, b.feet[2]], null, bloodHit(d.dmg, { maxHealth: d.h[1] }, { fromPlayer: true, weapon: sent.weapon ?? null }));
+  const wildHudFrame = () => { if (_wildVit && (Date.now() - _wildVit.at > WILD_REF.mendMs || !wildHere())) { _wildVit = null; wildHudSay(); } };
+  /** A BLOW OR A CAST LANDED (`wref` `hp`): the HUD's vitality; a blow of mine - the HUD's number (HN1's seam), and for a
+   *  strike the sound, the blood and my weapon's wear (FormulaHelper's DamageEquipment attacker half, on what the referee
+   *  let land - the duel's own); a blow on me - its flash, its sound and my voice. */
+  const wildHpIn = (g) => {
+    const me = online?.id ?? '';
+    if (g.by !== me && g.to !== me) return;
+    const foeId = g.by === me ? g.to : g.by;
+    const mine = g.h.find((x) => x[0] === me), theirs = g.h.find((x) => x[0] === foeId);
+    _wildVit = { mine: mine ? [mine[1], mine[2]] : (_wildVit?.mine ?? null), foe: theirs ? { id: foeId, hp: theirs[1], max: theirs[2] } : null, at: Date.now() };
+    wildHudSay();
+    if (g.by === me) {
+      reportPlayerAttack({ hit: true, damage: g.d, critical: false, backstab: false, ineffective: false });
+      const b = duelBody(g.to);
+      if (g.r !== DUEL_REF_KIND.Spell && b) {
+        audio.play3d(hitSoundFor(_wildLastWeapon), b.feet, ENEMY_HIT_VOLUME, { maxDistance: 16 });
+        hitEffects.showBloodSplash(0, [b.feet[0], b.feet[1] + (b.height ?? CAPSULE_HEIGHT) / 2, b.feet[2]], null, bloodHit(g.d, { maxHealth: theirs?.[2] ?? 1 }, { fromPlayer: true, weapon: _wildLastWeapon }));
+      }
+      if (g.r !== DUEL_REF_KIND.Spell && _wildLastWeapon) {
+        let wear = Math.trunc((10 * duelWearDamage(g.d, _wildLastWeapon, playerEntity) + 50) / 100);
+        if (wear === 0 && Math.random() < 0.2) wear = 1;
+        if (wear > 0) lowerCondition(_wildLastWeapon, dfuBlowWear(wear), playerEntity, (l) => townTalk.say(l));
+      }
+      return;
     }
-    if (sent.weapon) {   // FormulaHelper's DamageEquipment attacker half, on the port's scale - the duel's own (duelResultIn)
-      let wear = Math.trunc((10 * duelWearDamage(d.dmg, sent.weapon, playerEntity) + 50) / 100);
-      if (wear === 0 && Math.random() < 0.2) wear = 1;
-      if (wear > 0) lowerCondition(sent.weapon, dfuBlowWear(wear), playerEntity, (l) => townTalk.say(l));
+    if (g.d > 0) {
+      if (g.r !== DUEL_REF_KIND.Spell) audio.playOneShot(hitSoundFor(null), PLAYER_HIT_VOLUME);
+      flashPlayerDamage(g.d);
+      playPlayerVoice(audio, playerPainVoice(playerEntity, g.d));
     }
+  };
+  let _wildFell = null;           // my fall, the referee's word: { r, by, room, at }
+  const _wildSeize = new Map();   // a fall I won, signed: r -> { rc, room, p, due, tries } - its drop the fallen's tab's first
+  const _wildFellAt = new Map();  // AUDIT INT9: where a fall I won lay, in its room's frame, when the referee called it: r -> p
+  /** A FALL (`wref` `fell`): mine - a death in the zone, the referee's word, whatever my save's health says; my foe's at my
+   *  hand - its body's offer awaited under the fall's id, from the room that refereed it. */
+  const wildFellIn = (g, room) => {
+    const me = online?.id ?? '';
+    if (g.id === me) {
+      _wildFell = { r: g.r, by: g.by, room, at: Date.now() };
+      _wildVit = null; wildHudSay();
+      // AUDIT INT9: THE REFEREE'S FALL IS A DEATH, whatever this machine would say - no guild's AvoidDeath, no withheld
+      // blow, no save (the SetHealth(0) door turned it aside, and the fallen stood with a fall already called on it)
+      forcePlayerDeath(playerEntity);
+      return;
+    }
+    if (g.by !== me) return;
+    wildFight.fell(g.id, g.r, room);
+    { const p = duelWorldOf(g.id); if (p) { _wildFellAt.set(g.r, p); if (_wildFellAt.size > 16) _wildFellAt.delete(_wildFellAt.keys().next().value); } }   // AUDIT INT9: the seizure lays the remains where the body fell
+    if (_wildVit?.foe?.id === g.id) { _wildVit = null; wildHudSay(); }
+  };
+  /** A FALL SIGNED (`wref` `rc`, net/wildReceipt.js): mine - my drop taken off my record against it, now; my foe's - theirs
+   *  to carry first, mine to carry once WILD_FALL_GRACE_S has gone by with no remains of theirs in the room. */
+  const wildRcIn = (g, room) => {
+    const c = readWildReceipt(g.rc), me = social?.acct ?? null;
+    if (!c || c.r !== g.r || !me) return;
+    if (c.f === me) { wildTakeDrop(g.rc, room); return; }
+    if (c.k !== me || _wildSeize.has(c.r)) return;
+    _wildSeize.set(c.r, { rc: g.rc, room, p: _wildFellAt.get(c.r) ?? null, due: Date.now() + (WILD_FALL_GRACE_S + 5) * 1000, tries: 0 });
+    if (_wildSeize.size > 16) _wildSeize.delete(_wildSeize.keys().next().value);
+  };
+  const wildRefIn = (g, room) => {
+    if (g.k === 'hp') wildHpIn(g);
+    else if (g.k === 'fell') wildFellIn(g, room);
+    else if (g.k === 'rc') wildRcIn(g, room);
   };
 
   // ── A BODY'S ONE PIECE (the killer's side) ──
   /** My victims' bodies I may take from: peer -> { pile, minted, name } - an unseen pile under their body in the
    *  street's pool, opened in choose-one (the pack's own reward mode, on either skin). */
   const _wildBodies = new Map();
-  const _wildGiftNames = new Map();   // peer -> the name a pending gift is from (they may be gone from the room)
   const wildBodyGone = (peer) => { const b = _wildBodies.get(peer); if (b) { droppedLoot.removePile(b.pile); _wildBodies.delete(peer); } };
   const wildBodyArrived = (from, body) => {
     wildBodyGone(from);
     remotePlayers?.holdCorpse?.(from, WILD_DEATH_HOLD_S * 1000);   // "the body ... disappears in 2 minutes"
-    const items = validLootList(body.items ?? []) ?? [];
+    // AUDIT INT9: each record minted alone, its place in the offer kept - a record the law refused shifted every later one,
+    // and the pick named another piece
+    const minted = (Array.isArray(body.items) ? body.items : []).map((it) => validLootList([it])?.[0] ?? null);
+    const items = minted.filter(Boolean);
     if (!items.length || !wildOutdoors()) return;
     const mark = remotePlayers?.corpseMarks?.(onlineToScene)?.find((c) => c.id === from) ?? null;
     if (!mark) return;
     const name = peerName(from) ?? 'Another player';
     const pile = droppedLoot.seedPile(items, mark.feet, WILD_PILE_ICON, null, null, { unsaved: true, drawn: false, owner: 'wild' });
     pile.noStore = WILD_NO_STORE; pile.wildBody = from; pile.label = `${name}'s body`;
-    _wildBodies.set(from, { pile, minted: [...items], name });
+    _wildBodies.set(from, { pile, minted, name });
     tradeSay(`${name} has fallen by your hand - search their body to take one piece of their gear.`);
   };
   /** The body pressed: the pack in choose-one over its worn pieces - "players can choose 1 item of the equipped ones". */
@@ -22107,8 +22338,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     const w = makeInventoryWindow({ chooseOne: { items: pile.items, title: `${b.name} - choose one`, onChoose: (taken) => wildBodyChosen(peer, taken) } });
     if (w) townTalk.showOverlay(w);
   };
-  /** The choice made: what the window put in my pack goes straight back out (the piece is the fallen's to GIVE - their
-   *  gift brings the record), and the pick goes to them. */
+  /** The choice made: what the window put in my pack goes straight back out, and the pick goes to the relay (INT9) - it
+   *  signs the fall with it, the service takes that piece off the fallen's record, and it reaches me from their remains
+   *  (net/wildRemains.js asks for it the moment the room says them). */
   const wildBodyChosen = (peer, taken) => {
     const b = _wildBodies.get(peer);
     const list = playerEntity.items ?? [];
@@ -22117,27 +22349,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     const i = b && taken ? b.minted.indexOf(taken) : -1;
     wildBodyGone(peer);
     if (i < 0 || !wildFight.pick(peer, i)) { townTalk.say(WILD_TEXT.gone); return; }
-    _wildGiftNames.set(peer, b.name);
-  };
-  const wildGot = (from, it) => {
-    const item = validLootList([it])?.[0] ?? null;
-    const name = _wildGiftNames.get(from) ?? peerName(from);
-    _wildGiftNames.delete(from);
-    if (!item) { townTalk.say(WILD_TEXT.gone); return; }
-    addItem(playerEntity.items ??= [], item);
-    townTalk.say(WILD_TEXT.picked(name, itemLongName(item)));
-    onlineCheckpoint();
+    townTalk.say(WILD_TEXT.chosen(b.name, itemLongName(taken)));
   };
 
   // ── MY DEATH IN THE ZONE (the fallen's side) ──
-  let _wildOffer = null;   // { worn: [items], killerName } - my body's worn pieces, offered to my killer
-  let _wildGhost = false;  // my socket stays in the street's cell while my body lies (my killer's pick reaches me)
+  let _wildGhost = false;  // my socket stays in the room while my body lies (the drop's deposit, and the relay's receipt, reach it)
+  let _wildGhostEndAt = null;   // AUDIT INT9: a hall's or a building's ghost leaves then (a cell's: null, it stays while the body lies)
+  const WILD_GHOST_HOLD_MS = 15_000;
   let _wildMine = null;    // my remains: { r, room, p, until } - for the world map's mark
+  let _wildBody = null;    // where my body lies: { p, room, dungeon, px } - read at the death, for the deposit that follows
   // WILD-KEEP (FIELD BUGS 2026-10-09c): kept on the device for the character that fell, and read back once - a game that
   // crashed or closed inside the remains' ten minutes knows them again (systems/wildRemainsWaypoint.js)
   const wildWho = () => (realmSession?.id != null ? `realm:${realmSession.id}` : playerEntity?.name ? `name:${playerEntity.name}` : null);
   let _wildMineRead = false;
-  const wildMint = () => { let x = ''; while (x.length < 10) x += Math.random().toString(36).slice(2); return x.slice(0, 10).padEnd(10, '0'); };
   /** THE ZONE'S DEATH CHECKPOINT. A dead character is never the realm's save (realmCheckpoint), and a death in the zone
    *  takes things out of the pack that the room then holds for anyone - so a game closed on the death screen must not
    *  come back with them (a copy in the pack and on the ground). The character is saved AS IT WILL RISE: one health,
@@ -22156,68 +22380,127 @@ export async function bootWorld(canvas, renderer, params, status) {
       return onlineCheckpoint();
     } catch (e) { console.error('[wild] the death checkpoint failed', e); return false; } finally { playerEntity.health = hp; }
   };
-  /** THE FIRST DEAD FRAME IN THE ZONE (onlineFrame's dead branch, the room still mine): what the bag and the cart drop
-   *  is taken out, the character saved without it, and the records go to the room's remains; at another player's hand
-   *  my worn pieces are offered to them, and my socket stays in the cell while my body lies. Answers whether the death
-   *  was the zone's. */
-  const wildDeathBegin = () => {
-    if (!wildHere() || !online?.wildOk || online.status !== 'open' || !online.room || !_deadMark) return false;
-    const killer = wildFight.killer();
-    const killerName = killer ? (peerName(killer.id) ?? 'Another player') : null;
-    const p = [_deadMark.x, _deadMark.y, _deadMark.z];
-    const lost = takeWildDrop(playerEntity.items ??= [], playerEntity.wagonItems ??= []);
-    { const g = takeWildGold(playerEntity); if (g) lost.push(g); }   // WILD GOLD: half the purse lies in the same pile, ten minutes, for anyone
-    if (lost.length) wildDeathCheckpoint();
-    let sent = 0;
-    if (lost.length) {
-      const r = wildMint();
-      const chunks = wildChunks(lost.map(wildRecord));
-      for (let k = 0; k < chunks.length; k++) {
-        if (!online.sendWild({ k: 'fall', r, p, items: chunks[k], last: k === chunks.length - 1 ? 1 : 0 })) break;
-        sent += chunks[k].length;
+  const _wildTaking = new Set();   // the falls whose drop this tab has asked for (a receipt said twice is one act)
+  /**
+   * INT9: MY DROP, TAKEN OFF MY RECORD BY THE ACCOUNT SERVICE (server-account/src/wild.js) - against the fall the relay
+   * signed (`rc`), or none (a death to a foe: my tab's nonce). The record's own act (systems/realmSaves.js realmGoldAct):
+   * checkpointed as it will rise, the service asked - naming the room my remains will lie in - and on its answer EXACTLY
+   * WHAT IT TOOK taken out of my pack (systems/wildDropLaw.js wildTakeTook - AUDIT INT9: this game ran the law again
+   * without the ledger's word, and took what the service kept), the room given the service's records on its order
+   * (wildDeposit). The answer is needed: a landed act whose answer was lost ends the session, and the join reads the record.
+   */
+  const wildTakeDrop = (rc, room) => {
+    const c = rc ? readWildReceipt(rc) : null;
+    const nonce = c ? null : [...globalThis.crypto.getRandomValues(new Uint8Array(8))].map((x) => x.toString(16).padStart(2, '0')).join('');
+    const key = c ? c.r : nonce;
+    const body = _wildBody;
+    const lay = room ?? body?.room ?? null;
+    if (!realmSession || realmSession.lost || !lay || _wildTaking.has(key)) return;
+    _wildTaking.add(key);
+    if (_wildTaking.size > 32) _wildTaking.delete(_wildTaking.values().next().value);
+    realmGoldAct({
+      session: realmSession,
+      checkpoint: () => wildDeathCheckpoint(),
+      needsAnswer: true,
+      call: (at) => wildAccount.fall({ ...(c ? { receipt: rc } : { n: nonce }), realm: at, room: lay }),
+      apply: (a) => wildDropTaken(a?.data ?? null, body, lay),
+    }).catch((e) => console.warn('[wild] the drop failed', e?.message ?? e));
+  };
+  /** The service's answer to my drop: what it took off my record goes out of my pack (a worn piece unequipped), the death
+   *  screen says what fell - or, risen since, a line says it - and the records go to the room on the service's order. */
+  const wildDropTaken = (d, body, room) => {
+    if (!d) return;
+    const out = wildTakeTook(playerEntity, d.took, d.gold, (it) => { if (isEquipped(it)) unequipItem(playerEntity, it); });
+    const n = Array.isArray(d.items) ? d.items.length : 0;
+    const dd = wildDeath();
+    const claimed = d.wi === 0 && out.length && d.took?.[0] ? itemLongName(out[0]) : null;
+    if (dd) setWildDeath({ killer: dd.killer, dropped: d.order ? n : 0, claimed });
+    else if (out.length || d.gold?.purse || d.gold?.cart) townTalk.say(WILD_TEXT.dropLate);   // AUDIT INT9: a receipt that found me risen
+    if (d.order && n && body) wildDeposit({ r: d.r, items: d.items, o: d.order, p: body.p, room, mine: body });
+  };
+  /** THE DEPOSIT - the service's records to the room, chunk by chunk on the wild frames' own pace, each chunk carrying its
+   *  order (the room keeps the remains only when the records digest to it: net/wildLaw.js). An order is good a minute. */
+  const _wildDeposits = [];   // { r, chunks, k, o, p, room, mine, at }
+  const wildDeposit = (dep) => {
+    if (_wildDeposits.some((x) => x.r === dep.r)) return;
+    // AUDIT INT9: chunked by their bytes too - each frame and its order inside the wire's bound
+    const room = WILD_DATA_MAX - JSON.stringify({ k: 'fall', r: dep.r, p: dep.p, items: [], last: 0, o: dep.o }).length - 16;
+    _wildDeposits.push({ ...dep, chunks: wildChunks(dep.items, WILD_ITEMS_MAX, room), k: 0, at: Date.now() });
+  };
+  const wildDepositFrame = () => {
+    for (const dep of [..._wildDeposits]) {
+      while (dep.k < dep.chunks.length && online?.sendWild({ k: 'fall', r: dep.r, p: dep.p, items: dep.chunks[dep.k], last: dep.k === dep.chunks.length - 1 ? 1 : 0, o: dep.o }, { room: dep.room })) {
+        if (dep.k === 0 && dep.mine) wildMineLies(dep);
+        dep.k++;
       }
-      // what never left the socket goes back into the pack - nothing is lost to a closed door - and is saved so
-      for (const it of lost.slice(sent)) { if (isGoldPieces(it)) addGoldPieces(playerEntity, it.stackCount ?? 1); else addItem(playerEntity.items, it); }
-      if (sent < lost.length) wildDeathCheckpoint();
-      if (sent) _wildMine = { r, room: online.room, p, until: Date.now() + WILD_REMAINS_MS, dungeon: (modes?.mode === 'dungeon') ? (_wdunInside?.h ?? wdKey()) : null };   // PVPDUNGEONS: a death in a hall locks it for the hour, my remains my way back in, and the crows circle it for everyone   // PVPDUNGEONS: a death underground locks the hall for the hour; my pile's life is the key back in
-      if (sent) keepMine(_wildMine, wildWho());   // WILD-KEEP: on the device, for a game that does not live to the pick
-      if (sent) {   // WILD-WAYPOINT: a followed flag where they lie - the street's point, or a building's or a dungeon's door
-        const at = isCellRoom(online.room) ? nativeToMapPoint(p[0], p[2]) : ((px) => (px ? { mx: px.x + 0.5, my: px.y + 0.5 } : null))(playerTravelPixel());
-        if (at) markRemains({ mx: at.mx, my: at.my, until: _wildMine.until, r });
+      if (dep.k >= dep.chunks.length || Date.now() - dep.at > 50_000) {
+        _wildDeposits.splice(_wildDeposits.indexOf(dep), 1);
+        if (dep.mine && _wildGhostEndAt != null) _wildGhostEndAt = Math.min(_wildGhostEndAt, Date.now());   // AUDIT INT9: a hall's or a building's ghost lingers no longer
       }
     }
+  };
+  /** My remains lie: the world map's mark, kept on the device (WILD-KEEP), and a followed flag where they lie
+   *  (WILD-WAYPOINT - the street's point, or a building's or a dungeon's door). */
+  const wildMineLies = (dep) => {
+    const b = dep.mine;
+    _wildMine = { r: dep.r, room: dep.room, p: dep.p, until: Date.now() + WILD_REMAINS_MS, dungeon: b.dungeon };   // PVPDUNGEONS: a death underground locks the hall for the hour; my pile's life is the key back in
+    keepMine(_wildMine, wildWho());
+    const at = isCellRoom(dep.room) ? nativeToMapPoint(dep.p[0], dep.p[2]) : (b.px ? { mx: b.px.x + 0.5, my: b.px.y + 0.5 } : null);
+    if (at) markRemains({ mx: at.mx, my: at.my, until: _wildMine.until, r: dep.r });
+  };
+  /** A FALL I WON whose fallen let the grace go by with no remains in the room: its drop taken by me, a SEIZURE (the
+   *  service moves their record where it stands), and deposited where they fell. */
+  const wildSeizeFrame = () => {
+    const now = Date.now();
+    for (const [r, s] of [..._wildSeize]) {
+      if (now < s.due) continue;
+      _wildSeize.delete(r);
+      if (wildRemains.has(r)) continue;   // their tab took it: its remains stand (or stood)
+      const p = s.p ?? campToWire(player.feetAt());   // AUDIT INT9: where the body fell, in its room's frame
+      wildAccount.fall({ receipt: s.rc, room: s.room }).then((a) => {
+        const d = a?.ok ? a.data : null;
+        if (d?.order && Array.isArray(d.items) && d.items.length) { wildDeposit({ r: d.r, items: d.items, o: d.order, p, room: s.room, mine: null }); return; }
+        // AUDIT INT9: a word that says nothing of the fall (offline, the service's own error, the rate, a record that moved
+        // under the seizure) is asked again, a few times
+        if (['offline', 'server', 'rate', 'seq', 'no-session'].includes(a?.error) && s.tries < 3) _wildSeize.set(r, { ...s, due: Date.now() + 5_000 * (s.tries + 1), tries: s.tries + 1 });
+      }).catch(() => { /* the fallen's own tab, or nobody: the receipt's hour is theirs */ });
+    }
+  };
+  /** THE FIRST DEAD FRAME IN THE ZONE (onlineFrame's dead branch, the room still mine): at another player's hand (the
+   *  referee's word, `_wildFell`) my worn pieces are shown to my killer and the drop waits on the fall the relay signs;
+   *  to a foe, my drop is taken off my record now. Either way my socket stays in the room while my body lies, so the
+   *  deposit and the receipt reach it. Answers whether the death was the zone's. */
+  const wildDeathBegin = () => {
+    if (!wildHere() || !online?.wildOk || online.status !== 'open' || !online.room || !_deadMark) return false;
+    const fell = _wildFell && Date.now() - _wildFell.at < 15_000 ? _wildFell : null;
+    _wildBody = { p: [_deadMark.x, _deadMark.y, _deadMark.z], room: online.room, dungeon: modes?.mode === 'dungeon' ? (_wdunInside?.h ?? wdKey()) : null, px: playerTravelPixel() };
     // HALL-CROWS (the owner: "i dont see the crows circleling around the dungeon where i died on the zone map"): a death in
     // a hall always locks it and sets the crows over it - whether or not the pack had anything to drop
     if (modes?.mode === 'dungeon' && _wdunInside) wdunLeft(true);
-    const worn = killer && isCellRoom(online.room) ? wornOffer(playerEntity.items) : [];
-    if (worn.length && wildFight.offerWorn(killer.id, wildMint(), worn.map(wildRecord))) { _wildOffer = { worn, killerName }; _wildGhost = true; }
-    setWildDeath({ killer: killerName, dropped: sent });
+    setWildDeath({ killer: fell ? (peerName(fell.by) ?? 'Another player') : null, dropped: 0 });
+    _wildVit = null; wildHudSay();   // AUDIT INT9: the readout goes with the life
+    _wildGhost = true;
+    // AUDIT INT9: a cell keeps my body's socket while it lies; a hall's or a building's room keeps it only until my deposit
+    // has gone (its fall is signed at once), or a moment - a ghost there held the room's world as its host
+    _wildGhostEndAt = isCellRoom(online.room) ? null : Date.now() + WILD_GHOST_HOLD_MS;
+    if (fell) {
+      const worn = isCellRoom(online.room) ? wornOffer(playerEntity.items) : [];
+      if (worn.length) wildFight.offerWorn(fell.by, fell.r, worn.map(wildRecord));
+    } else wildTakeDrop(null, online.room);
     return true;
   };
-  /** My killer picked a worn piece: out of my pack, the character saved without it, and given (net/wildFight.js). */
-  const wildPicked = (peer, i) => {
-    const o = _wildOffer;
-    const item = o?.worn?.[i] ?? null;
-    const list = playerEntity.items ?? [];
-    if (!item || !list.includes(item)) { wildFight.settleOffer(null); return; }
-    const record = wildRecord(item);
-    if (isEquipped(item)) unequipItem(playerEntity, item);
-    list.splice(list.indexOf(item), 1);
-    wildDeathCheckpoint();
-    if (!wildFight.settleOffer(record)) { addItem(list, item); wildDeathCheckpoint(); return; }   // the gift never left: it stays mine
-    const d = wildDeath();
-    setWildDeath({ killer: d?.killer ?? o.killerName, dropped: d?.dropped ?? 0, claimed: itemLongName(item) });
-  };
-  /** My body is gone (the rise, a party mate's Resurrect, the game left): the offer is over and the cell let go. */
+  /** My body is gone (the rise, a party mate's Resurrect, the game left): the cell let go. */
   const wildGhostEnd = () => {
-    wildFight.settleOffer(null);
-    _wildOffer = null;
     setWildDeath(null);
-    wildFight.clearStruck();
-    if (_wildGhost) {
-      _wildGhost = false;
-      if (online?.room) { online.leave(); exteriorFoes.clearPuppets(); modes?.clearOwnPuppets?.(); _foesRoom = null; }
-    }
+    _wildFell = null;
+    wildGhostLeave();
+  };
+  /** The ghost's socket let go - its room left, the dead stay dead. */
+  const wildGhostLeave = () => {
+    _wildGhostEndAt = null;
+    if (!_wildGhost) return;
+    _wildGhost = false;
+    if (online?.room) { online.leave(); exteriorFoes.clearPuppets(); modes?.clearOwnPuppets?.(); _foesRoom = null; }
   };
   /** THE RISE OUT OF THE ZONE (the owner: "when the players respawns in a town near the zone the cart comes with
    *  him"): the nearest town or temple OUTSIDE the zone - never the mountains' own, where the next fight waits. */
@@ -22299,7 +22582,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     try { giantNoticeFrame(); } catch (e) { console.warn('[giants] notice', e?.message ?? e); }   // GIANT-FALL
     wildFight.tick();
     for (const peer of [..._wildBodies.keys()]) if (!wildFight.body(peer)) wildBodyGone(peer);
-    wildRemains.setRoom(online?.status === 'open' ? online.room : null);
+    online?.setWildZone?.(wildCan() ? 1 : 0);   // INT9: my word on the zone, for its referee - standing in it, alive, where it fights
+    wildDepositFrame(); wildSeizeFrame(); wildHudFrame();   // INT9: a drop's deposit, a fall to seize, the referee's readout
+    wildRemains.setRooms(online?.status === 'open' ? online.heldRooms() : []);   // HALO-REMAINS: my room and the halo's
     wildRemains.setPool(wildOutdoors() ? droppedLoot : (modes?.droppedPool?.() ?? null));
     wildRemains.tick();
     setLootMarksLive(wildRemains.hasMine());   // my remains' red line stands with the rarity row off too
@@ -22473,20 +22758,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     townTalk.say(WILD_TEXT.travelPaid(j.fee));
   };
   const wildFight = createWildFight({
-    send: (d) => online?.sendWild(d) === true,
+    send: (d, o) => online?.sendWild(d, o) === true,
     now: () => performance.now(),
     can: wildCan,
     fair: wildFair,
-    onBlow: (d, from) => wildBlowIn(d, from),
-    onResult: (d, from) => wildResultIn(d, from),
-    vitals: () => [playerEntity.health, playerEntity.maxHealth],
     onBody: (from, body) => wildBodyArrived(from, body),
-    onPicked: (peer, i) => wildPicked(peer, i),
-    onGot: (from, it) => wildGot(from, it),
-    onNoGift: (from) => { _wildGiftNames.delete(from); townTalk.say(WILD_TEXT.gone); },
   });
   const wildRemains = createWildRemains({
-    send: (d) => online?.sendWild(d) === true,
+    send: (d, room) => online?.sendWild(d, { room }) === true,   // HALO-REMAINS: a take to the room that keeps the pile
     pool: () => (wildOutdoors() ? droppedLoot : (modes?.droppedPool?.() ?? null)),
     toScene: (p) => onlineToScene({ x: p[0], y: p[1], z: p[2] }),
     canTake: (rec) => rec.mine || !(rec.oid && (social?.isPartyPeer(rec.oid) || ((online?.drawable?.() ?? []).find((d) => d.id === rec.oid)?.gt && (online.drawable().find((d) => d.id === rec.oid).gt === myGuildTag())))),   // PVPDUNGEONS: party and guild members cannot take a fallen friend's pile
@@ -22500,6 +22779,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     say: (l) => townTalk.say(l),
     now: () => performance.now(),
     nameOf: (item) => itemLongName(item),
+    me: () => social?.acct ?? null,   // INT9: the killer's piece, mine alone
   });
   setHudZone(() => (wildHere() ? { name: `${WILD_TEXT.chip} - ${wildRingName(wildRing())}, ${wildRingBonus(wildRing())}`, foot: `${wildRing()}/${WILD_RINGS}` } : null));   // WILD1: the HUD's glyph, on the enhanced skin...
   setZoneEntity(playerEntity);   // ...and on the classic row
@@ -24164,6 +24444,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  the ring) - and the prompt's countdown. Runs before the death return, so a dead duellist's duel ends. */
   const duelFrame = () => {
     duelMgr.tick();
+    if (duelClaims.due()) duelClaims.offer();   // INT8: a bout's receipt the service has not settled yet, offered again on its wait
     const setsWere = setsDueling();
     setSetsDueling(!!duelMgr.live || arenaPvpLive());   // SET2: a duel (its countdown too) - every set sleeps while it stands (systems/sigilSets.js); AUDIT 625 P2: and a bout between players
     if (setsDueling() !== setsWere) computeEntityMods(playerEntity);   // SET3: the stat tiers leave with the duel's first frame and return with its last
@@ -24171,11 +24452,6 @@ export async function bootWorld(canvas, renderer, params, status) {
     // it (AUDIT DUEL1 C1: a duel ended in a dungeon left every one of that room's frames forced full)
     if (online && isCellRoom(online.room) && (duelMgr.live?.s ?? null) !== _duelRingSaid) _foesFullAt = -Infinity;
     const live = duelMgr.live;
-    const tNow = performance.now();
-    if ((live || wildHere()) && (modes?.mode ?? 'exterior') === 'exterior') {   // WILD1: the open zone's blows are placed against the same trail
-      _duelTrail.push({ t: tNow, p: campToWire(player.feetAt()) });
-      while (_duelTrail.length && tNow - _duelTrail[0].t > DUEL_TRAIL_MS) _duelTrail.shift();
-    } else if (_duelTrail.length) _duelTrail.length = 0;
     player.arena = live && (modes?.mode ?? 'exterior') === 'exterior' ? { centre: campToScene(live.c), radius: DUEL_RADIUS_M } : null;
     // CROWN1 part two: a Royal Tourney's bout holds me in its ring (the relay pulls a step past it back as well)
     const royalRing = !player.arena && (modes?.mode ?? 'exterior') === 'exterior' ? royalSession?.ring() : null;
@@ -26050,6 +26326,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  where the feet read mid-move, up to a kilometre from where they land (AUDIT OW3 D2's own law for the find). */
   const walkFree = () => !!travelOptions && (modes?.mode ?? 'exterior') === 'exterior' && playerSpawned && playerEntity.health > 0 && !modes?.deathUp?.()
     && !worldMoveBusy() && !townTalk.overlay && !gamePaused() && !(modes?.modalWindowUp?.() ?? false) && pointerSurfaces.size === 0 && !walkDanger()
+    && !wagonRiders?.seated()   // WAGONS2: nor a rider seated in another's wagon - its driver steers (a party walk's Yes walked a held motor)
     // AUDIT OW5 P1: and only where the Overworld's own doors would let me set out - its gate (the enhanced interface, never
     // underwater: THE OVERHAUL's lane) and a passenger's refusal (travelViewCanGo: the helmsman steers). A passenger said
     // Yes and was walked off the leader's deck toward the first land leg; a classic-skin member was walked a route
@@ -26901,6 +27178,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT ONESEAT H3: offline now - the sigil in hand drinks nothing and a weapon won here is won offline (SIGIL1), and
     // the Renown layer is off, as it is for every offline character (RENOWN1); Play online here puts both back
     setSigilOnline(false); setRenownLayer(playerEntity, null); computeEntityMods(playerEntity);   // SET3 (main's, at the merge): the sets sleep with the sigils - their stat tiers folded out now, as a Renown rise folds them in
+    wagonRiders?.clear();   // WAGONS2 (FINAL AUDIT): offline, nobody rides with me nor I with anyone - my riders' seats were kept for the gone, my companions walking at heel and every journey waiting GO_LEAD_MS on them
+    caravanVisitLink.close();   // WAGONS2-VISIT: and the visited caravan's listener goes with the seat
     seatLock?.release();
     console.info('[online] another tab, window or device has the seat - this one is offline');
   };
@@ -26962,6 +27241,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();   // D-ONLINE1: the modal hosts' deaths (a dungeon's, a building's) are captured here, BEFORE the leave below clears online.room
       { const hourSlot = modes?.sdRealmSlot?.() ?? null; if (hourSlot != null) _sdFallen.add(hourSlot); }   // SD-ONELIFE: a death in the Hour is final for its Hollow (AUDIT SD III: under D-ONLINE1's capture, the block's first statement as AUDIT WORLD B6 and MWBODY1 hold it)
       if (_wildGhost && online.room) online.tick();   // WILD1: the ghost's socket kept alive (its pings, its reconnect) - it sends no pose
+      if (_wildGhost && _wildGhostEndAt != null && Date.now() >= _wildGhostEndAt && !_wildDeposits.length) wildGhostLeave();   // AUDIT INT9: a hall's or a building's ghost, its deposit gone
       if (online.room && !_wildGhost) {
         // PCORPSE1: the body is left where it fell - one last pose, flagged, before the leave below takes the living figure
         _deadMark = online._pose ? { k: online.room, x: online._pose.x, y: online._pose.y, z: online._pose.z, at: Date.now() } : null;
@@ -27107,6 +27387,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       ...climbPoseOf(player),   // CLIMB5: my climb and the way my body faces on it, so the others turn me to the wall, pose me off the ground and hear me climb - absent off the wall
     };   // the wire's move bit: 1 walking, 2 running (the peers' bodies pick the clip off it)
     if (seated) arm.st = seated.st;   // CARDS2b: seated, and the table's top above the feet - absent standing, the wire's omission law
+    if (!modes?.caravanVisit) caravanVisitLink.close();   // WAGONS2-VISIT: no visit, no listener - closed before my primary joins the cell it heard (never replaced by my own id)
     if (!key) { if (online.room) online.leave(); }   // AUDIT ONLINE D4: a place the host cannot name is no room, not the old one in the wrong frame
     // AUDIT WORLD2 C8: a world room's edge is never a churn - the hold delayed every handover and let one dungeon's stream land in another
     // AUDIT WORLD6b-iii(b) B1/B8: a cell crossing is joined the moment the cell is HELD (the halo's socket promotes in
@@ -27159,9 +27440,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     modes?.setDungeonAuthority?.(dungeonAuthority(now));   // AUDIT WORLD2 C2: the seat re-read every frame - a dead socket, a terminal close or a silent host hands the foes back
     hccParkTick(now);   // HCC-PARK: my parked team's word to the cell it stands in, when it changed
     overworldLedgerFrame(now);   // OW6L: what I spent and my spawns' clocks, to the cell that keeps them
+    caravanDecorTick(now);   // WAGONS2-VISIT: what I placed in my caravan, to its room, when it changed
+    caravanVisitLink.tick(key ? online : null, modes?.caravanVisit ?? null);   // WAGONS2-VISIT: the visited caravan's cell, heard from inside it (after my primary's own join and tick)
     if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) camps.sweepOwners(ids, now, FOES_STALE_MS); }   // PERF11: the same list   // SURV3: a peer's camps go as their puppets do - the same liveness, the same answer-gate   // AUDIT WORLD6b-iii(b) C3/B5: no answer (the socket not open) is not "nobody" - it pruned every owner while the halos kept feeding frames, a spawn-and-discard loop per frame   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
     if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) hcc.sweepOwners(ids, now, FOES_STALE_MS); }   // HCC-ONLINE: a peer's team goes as their puppets and camps do - the same memoised list, the same liveness   // PERF11: the same list   // SURV3: a peer's camps go as their puppets do - the same liveness, the same answer-gate   // AUDIT WORLD6b-iii(b) C3/B5: no answer (the socket not open) is not "nobody" - it pruned every owner while the halos kept feeding frames, a spawn-and-discard loop per frame   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
     if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) csaPeers.sweepOwners(ids, now, FOES_STALE_MS); }   // CSA-J: a peer's boats go as their team does - the same memoised list, the same liveness
+    if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) wagonRiders?.sweep(ids); }   // WAGONS1: a rider of mine gone from the room gets down with them
     if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) csaAboard.sweepRiders(ids, now, FOES_STALE_MS); }   // CSA-K: and their place aboard a boat
     hcc.pruneKept(isCellRoom(online.room) ? [online.room, ...online.haloRooms()] : [], now);   // HCC-PARK: a kept team is its CELL's - it stands while I hold that cell's socket (mine or a halo's), and its welcome brings it back
     // INVIS-NET (2026-09-27, Mac relaying reports: "Other player's still see other players who are suppose to be
@@ -27178,7 +27462,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const peerYaw = travelView?.active && travelView.camera ? travelView.camera.yaw : cam.yaw;
     const peerEye = travelView?.eye ?? cam.pos, peerRight = [Math.cos(peerYaw), 0, -Math.sin(peerYaw)];
     const tvGrow = travelView?.active ? peerGrow : null;   // OW-PEERS: the others grown under the Overworld, as the traveller is
-    const drawable = isCellRoom(online.room) && csaOn() ? csaAboard.glue(online.drawable(), { poseOf: (o, i) => csaPoseAhead(o, i, dt), toWire: campToWire, dt }) : online.drawable();   // CSA-K: a peer aboard a boat stands on its deck as it is drawn here - its owner's (mine among them) or the one led here - never a stride behind it
+    const drawable = isCellRoom(online.room) && csaOn() ? csaAboard.glue(online.drawable(), { poseOf: (o, i) => csaPoseAhead(o, i, dt), toWire: campToWire, dt }) : online.drawable(); if (hccOn()) hcc.seatGlue(drawable, { toWire: campToWire });   // WAGONS2: the others seated in a wagon's back drawn on its seats as it is drawn here   // CSA-K: a peer aboard a boat stands on its deck as it is drawn here - its owner's (mine among them) or the one led here - never a stride behind it
     _peerMapPoses.clear();
     for (const d of drawable) if (d?.shown) _peerMapPoses.set(d.id, d.shown);
     const visiblePeers = gateCrowd.cut(cabin ? drawable : drawable.filter((d) => !csaPeers.isBelowDeck(d.id)), { on: modes?.gateArenaDay?.() != null, me: player.pos, at: (d) => onlineToScene(d.shown), max: gateCrowdMax(getPref('gateCrowd')), mate: (id) => !!social?.isPartyPeer(id) });   // GATE-CROWD (2026-10-07, Mac: "some type of filter when there are too many people"): in a gate's court, past the count on the Other players card only the nearest are drawn, my party always (net/gateCrowd.js) - the rest stand nowhere on this screen this frame: no body, sprite, name, light, cast or step (their map marks, above, are kept)
@@ -27367,6 +27651,99 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (covered) { sayNetStatus(null); return; }
     sayNetStatus(online?.statusLine());   // AUDIT ONLINE D12/E11: connecting, reconnecting, refused, replaced - said, not silent (FONT1: in the enhanced face)
   };
+  // RW1 (render/realWindows.js): THE STREET THROUGH A BUILDING'S GLASS - what the interior's view out draws (the mode
+  // machine asks, renderer.outsideViewFrame runs it): the clock's light over the exterior the last street frame kept,
+  // and the pixels' merged statics, odd models, ground and flats out to VIEW_RINGS, culled to the glass's own frustum.
+  // The building the player stands in is left out by its box (`clip`: the model the door's matrix stands, every door
+  // of a building carrying the building's own matrix) - from inside, its shell would stand between the pane and the street.
+  let _rwClipDoor = null, _rwClip = null;
+  const outsideViewClip = (doorMatrix) => {
+    if (doorMatrix === _rwClipDoor) return _rwClip;
+    _rwClipDoor = doorMatrix; _rwClip = null;
+    if (!doorMatrix) return null;
+    let best = -1;
+    for (const p of built.values()) {
+      const t = state.pixelTranslation(p.px, p.py);
+      for (const m of p.models) {
+        const l = m.local, b = m._box;
+        if (!l || !b || Math.abs(l[12] + t[0] - doorMatrix[12]) > 0.01 || Math.abs(l[13] + t[1] - doorMatrix[13]) > 0.01 || Math.abs(l[14] + t[2] - doorMatrix[14]) > 0.01) continue;
+        const vol = (b[3] - b[0]) * (b[4] - b[1]) * (b[5] - b[2]);
+        if (vol <= best) continue;
+        best = vol;
+        _rwClip = [b[0] + t[0] - VIEW_CLIP_PAD, b[1] + t[1] - VIEW_CLIP_PAD, b[2] + t[2] - VIEW_CLIP_PAD, b[3] + t[0] + VIEW_CLIP_PAD, b[4] + t[1] + VIEW_CLIP_PAD, b[5] + t[2] + VIEW_CLIP_PAD];
+      }
+    }
+    return _rwClip;
+  };
+  /** RW1 (AUDIT): the town's lanterns as the street frame lights them - its pool refilled, the nearest the installed set
+   *  takes - for a street looked out on after dark (the kept frame's were the hour the player went in). */
+  const outsideLanterns = (r) => {
+    const pool = fillLanternPool(built.values(), (p) => state.pixelTranslation(p.px, p.py, _lightT), _sceneLights, _litRanges, worldLightAnimator.ranges, null);
+    _litRanges = pool.ranges;
+    return nearestLights(_sceneLights, cam.pos, r.maxPointLights, _litRanges, null, 0, pool.n);
+  };
+  const drawOutsideStreet = (r, planes) => {
+    const ground = [], flats = [];
+    for (const p of built.values()) {
+      const ring = Math.max(Math.abs(p.px - state.current.x), Math.abs(p.py - state.current.y));
+      if (ring > VIEW_RINGS) continue;
+      const t = state.pixelTranslation(p.px, p.py, p._t || (p._t = [0, 0, 0]));
+      let pixelMatrix = p._pixelMatrix;
+      if (!pixelMatrix) pixelMatrix = p._pixelMatrix = identity();
+      if (pixelMatrix[12] !== t[0] || pixelMatrix[13] !== t[1] || pixelMatrix[14] !== t[2]) {
+        pixelMatrix[12] = t[0]; pixelMatrix[13] = t[1]; pixelMatrix[14] = t[2];
+        p._worldGen = (p._worldGen | 0) + 1;
+      }
+      if (p._box && aabbOutside(planes, p._box, t[0], t[1], t[2])) continue;
+      if (p.staticBatch) r.drawMesh(p.staticBatch, pixelMatrix, null);
+      for (const m of p.models) {
+        if (m._batched || aabbOutside(planes, m._box, t[0], t[1], t[2])) continue;
+        if (m._worldGen !== p._worldGen || !m._world) { m._world = multiply(pixelMatrix, m.local, m._world || new Float32Array(16)); m._worldGen = p._worldGen | 0; }
+        r.drawMesh(m.gpu, m._world, m.texRemap ?? p.texRemap);
+      }
+      ground.push(p);   // FINAL AUDIT: a pure-ocean pixel too - its ground hidden, its seafloor and its sea drawn (below), as the street frame does
+      for (const fb of p.batches) {
+        if (aabbOutside(planes, fb._box, t[0], t[1], t[2]) || !farFlatVisibleAt(ring, fb.farH ?? fb.size?.h ?? 0, fb.frame != null)) continue;
+        fb.origin = t;
+        flats.push(fb);
+      }
+    }
+    for (const cell of ground) if (!cell.deepWaters?.hide) r.drawTerrain(cell.dwTerrain ?? cell.terrain, cell._pixelMatrix, r.tileArrays.get(cell.groundArchive), cell.tilemapTex, 6.4, !!cell._dwBytes, ecoDraw(cell));   // DW-C: a pure-ocean pixel's ground is not drawn
+    // RW1 (AUDIT): AND THE WATER, as the street frame draws it - the seafloor under a carved cell's holes (a pure-ocean
+    // pixel's whole floor - FINAL AUDIT: it was left out, the sea the sky), then the surfaces over the bed on the frame's
+    // last uniforms (a waterfront looked out on showed the dry bed)
+    if (deepWaters) { drawDeepWatersFloors(ground); r.markForeignPass(); }   // FINAL AUDIT: the mod's floors ran their own programs - the renderer's bookkeeping told, as the street frame's sky span tells it
+    if (waterOn && _waterU) {
+      let n = 0;
+      for (const p of ground) {
+        if (!p.water || p.deepWaters?.hide) continue;   // DW-C: a hidden cap takes its water with it
+        const row = _waterRows[n++] ??= [null, null, null, null];
+        row[0] = p.water; row[1] = p._pixelMatrix; row[2] = r.tileArrays.get(p.groundArchive); row[3] = p.tilemapTex;
+      }
+      r.drawWaterSurfaces(_waterRows, n, 6.4, _waterU);
+      for (let i = 0; i < n; i++) _waterRows[i].fill(null);
+    }
+    if (flats.length) r.drawBillboards(flats, new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]), UP_Y);
+    // FINAL AUDIT: and the carved sea's top - Deep Waters' (on by default), the street frame's transparent queue after
+    // every cut-out flat: the view out drew the bed under it dry
+    if (deepWaters) drawDeepWatersSurfaces(performance.now(), ground);
+  };
+  const outsideView = (doorMatrix) => ({
+    clip: outsideViewClip(doorMatrix),
+    setup: (r) => {   // the clock's light: an hour spent indoors is an hour later outside
+      const clockMinute = minuteNow();
+      const keptFog = r._fogColor, keptSun = r._sunScale;   // RW1 (AUDIT): the air the street was kept in, at the light it was kept at
+      // WAGONS2 (FINAL AUDIT): and the weather's - the street frame's own terms (world/worldClock.js viewOutLight), so the clock's
+      // air below compares a dimmed sun with a dimmed sun
+      const light = viewOutLight(clockMinute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), weatherTerms().sun, sky.sunFactor());
+      r.setLighting(withMoonAmbient(light.ambient, sky.moonlight()), light.sun, SUN_RIG_COLOR);
+      r.setFogColor(clockFogColor(keptFog, keptSun, r._sunScale));   // RW1 (AUDIT): ...re-lit by the clock - the sky behind the glass with it
+      r.setWindowEmission(windowEmissionRGB(windowStyleForTime(clockMinute)));
+      r.setPointLights(lightsOnAt(clockMinute) ? outsideLanterns(r) : new Float32Array(0), CITY_LIGHT_COLOR_F32);   // RW1 (AUDIT): the town's lanterns by the clock - never the player's own light, which stays indoors with them
+      return sunDirection(clockMinute);
+    },
+    draw: ({ renderer: r, planes }) => drawOutsideStreet(r, planes),
+  });
   // VAR, not const: the pointer and wheel listeners far above close over
   // this binding and are live before it is assigned, so it must exist
   // and read undefined rather than throw a TDZ ReferenceError. Every
@@ -27374,6 +27751,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // what test/audit24_wave37.test.js asserts, both ways.
   var modes = createWorldModes({
     climbFeel,   // CLIMB4: the one body's climb camera - the modal frames take it after their own motor step
+    outsideView,   // RW1: the street through a building's glass (render/realWindows.js)
     seatedPeers: () => seatedPeerFeet(),   // CARDS2b (AUDIT CARDS B3): the others' seated feet, in this room's scene - their seats are taken
     cardOnline: { ok: () => !!online?.holdemOk, send: (w) => !!online?.sendHoldem(w), id: () => online?.id ?? null, welcomes: () => online?.holdemWelcomes ?? 0, room: () => online?.room ?? null },   // CARDS5: the relay that deals - a word to the room's card table, and who I am at it; CARDS6: the room a stake names
     cardStakes,   // CARDS6: a realm character's stakes at a relay's gold table (null off the realm)
@@ -27396,6 +27774,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     },
     iliacClaims,
     sailingCabin: sailingCabins,
+    caravanRoom: caravanRooms,   // WAGONS1
     linkedBankCabin: () => readBankCabinLink(playerEntity.boatCabinLink),
     enterLinkedBankCabin: () => enterLinkedBankCabin(),
     // WEATHER3b / AUDIT WEATHER3 R3: the world weather map over the place the player is inside - the building's pixel,
@@ -29205,6 +29584,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (climbingNow()) { tvSay(TRAVEL_VIEW_TEXT.climbing); return false; }   // AUDIT FB1007b C2
     if (duelEnemyNear() || areEnemiesNearby(exteriorFoePool())) { tvSay(TRAVEL_VIEW_TEXT.enemies); return false; }   // AUDIT DEEP2 B-4: a live duel too (DUEL1: no journey out of a duel)
     if (csaAboard.aboard) { tvSay(TRAVEL_VIEW_TEXT.passenger); return false; }   // OWS2: aboard another's boat, its helmsman steers
+    if (wagonRiders?.seated()) { tvSay(TRAVEL_VIEW_TEXT.rider); return false; }   // WAGONS2: seated in another's wagon, its driver steers - the Overworld's journeys and its walk carried a held motor
     return true;
   }
   /** OW-PATH: THE TRAVELLER IN A TOWN'S NEIGHBOURHOOD - inside its rect grown by TV_NEAR_REACH: from here every ground
@@ -30944,6 +31324,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // through the half-built world onto a model collider or the terrain as each went in, and the frame billed it.
       // The landing re-anchors the fall (player.spawn), so a held body arrives with none.
       const _seasonHeld = _partyArrivalPending || _seasonHoldKey !== null || _seasonStraightening;
+      const _rideHeld = !!wagonRiders?.seated();   // WAGONS1: a rider in another's wagon goes where it goes (pinned to their seat each frame, scenes/wagonRiders.js)
       if (!playerSpawned && built.has(startKey)) {
         // FIX-C: THE FIRST STAND IS DFU'S. StartNewCharacter
         // (StartGameBehaviour.cs:404-409) puts an exterior start through
@@ -31199,8 +31580,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         _dwLastForward = paralyzed ? 0 : axes.forward;   // DW-D: the shore exit's InputManager.Vertical, for the next frame's driver
         _csaAxes = { h: axes.strafe, v: axes.forward };   // CSA-D: InputManager.Horizontal / Vertical for the helm's inputTarget - CSA-J (the audit): InputManager has no paralysis gate, only the motors do
         playerBlowFrame({ motor: player, entity: playerEntity, shake: (k) => betterAmbience.weaponKick(k), hurt: (n) => { hurtPlayer(playerEntity, n); flashPlayerDamage(n); surfacePlayer(); } });   // TELL6e: a landing's push, rattle, knockdown and bleed
-        if (_overlayHeld || _seasonHeld) player.holdFrame();   // DISC8-G: a held motor reports no landing and no jump
-        if (!_overlayHeld && !_seasonHeld) player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: held(keys, 'Run'), autoRun: held(keys, 'AutoRun'), back: mv.backwards, sneak: held(keys, 'Sneak') || walkModeOn(), jump: false, up: false, down: false, crouch: crouchPress } : {
+        if (_overlayHeld || _seasonHeld || _rideHeld) player.holdFrame();   // DISC8-G: a held motor reports no landing and no jump
+        if (!_overlayHeld && !_seasonHeld && !_rideHeld) player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: held(keys, 'Run'), autoRun: held(keys, 'AutoRun'), back: mv.backwards, sneak: held(keys, 'Sneak') || walkModeOn(), jump: false, up: false, down: false, crouch: crouchPress } : {
           forward: axes.forward,   // TO1: the autopilot's force while a journey runs, else the player's own   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
           strafe: axes.strafe,
           run: held(keys, 'Run'),
@@ -32260,6 +32641,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
 
     // WM2b: read the eased wind ONCE a frame, not once a mill.
     const windNow = sky.wind();
+    renderer.setWindowRooms(realWindowsMode());   // RW1 (render/realWindows.js): this frame's rooms behind the town's glass - a frame's, asked after its beginFrame; and the street as it stands, kept for a building's view out
     // GHOST1 (2026-09-19): NORMALISED, because `_planes` now serves TWO
     // tests. EV3's `aabbOutside` only reads the sign of `a*px+b*py+c*pz+d`
     // and dividing all four coefficients by a positive length cannot

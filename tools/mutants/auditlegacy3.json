@@ -1365,8 +1365,8 @@
   {
     "name": "AUDIT-LEGACY-III-O1-the-relay-reads-no-ci",
     "file": "server/src/index.js",
-    "old": "...house, ci: c.ci };",
-    "new": "...house };",
+    "old": "...house, ci: c.ci, wa: c.wa };",
+    "new": "...house, wa: c.wa };",
     "tests": [
       "test/auditlegacy3.test.js"
     ]

@@ -40,7 +40,7 @@ test('CHAP6e the vocabulary: a High Master and a Season\'s Master, last in the c
     assert.deepEqual(row.ts, [4017, 2], `${t}: stamped`);
     assert.deepEqual(readBadge({ title: t, ts: [4017, 2], glyphs: [] }).ts, [4017, 2], `${t}: read back`);
   }
-  assert.equal(RELAY_VERSION, 'world184');   // PIN MOVED: world183 - past CARDS10's world182 at the merge of main
+  assert.equal(RELAY_VERSION, 'world187');   // PIN MOVED: world185, INT7-INT10 (the INTEGRITY arc's lane 2 - world183, then world184, on its branch, renumbered past CHAP4c's world183 and PERF-RELAY1's world184 at the merges); PIN MOVED: world183 - past CARDS10's world182 at the merge of main
 });
 
 // ── THE WORDS ───────────────────────────────────────────────────────

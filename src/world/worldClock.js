@@ -235,3 +235,14 @@ export class CityLightAnimator {
     }
   }
 }
+
+/** WAGONS2 (FINAL AUDIT): THE STREET'S LIGHT BY THE CLOCK AND THE WEATHER - the street frame's own terms at the clock's
+ *  minute (world.js's and exterior.js's setLighting) - here beside its two terms, off realWindows.js, which stands on the boot path a leaf (test/boot2.test.js): the ambient at the weather's sun (exteriorAmbient squares it), the
+ *  key the clock's sun times the weather's and the cloud's (`sunFactor`, the sky's). The view out was lit as a clear
+ *  day - a rainy noon's street looked out on at five times its ambient, a storm's at sixteen, and clockFogColor, given
+ *  a clear sun against the weather-dimmed one the street was kept at, brightened the air with no minute gone. Both
+ *  terms 1 on a clear day; the moon's ambient is the host's (withMoonAmbient). */
+export function viewOutLight(minute, nightScale, weatherSun = 1, sunFactor = 1) {
+  const w = Number.isFinite(weatherSun) ? Math.max(0, weatherSun) : 1, c = Number.isFinite(sunFactor) ? Math.max(0, sunFactor) : 1;
+  return { ambient: exteriorAmbient(minute, nightScale, w), sun: sunScale(minute) * w * c };
+}

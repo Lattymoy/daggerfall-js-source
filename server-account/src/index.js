@@ -174,7 +174,7 @@ import {
   devicesOf, accountView, displayName, accountKind,
   register, login, recover, changePassword, setEmail, overRate, overAccountRate,
   accountWardrobe, equipTitle, equipAura, equipGlyph, buyInsignia, insigniaPurse, creditPlay, muteAccount, isMuted, mutedUntil,
-  duelRecordOf, reportDuelLoss, gateRecordOf, claimGate, legalRefusal,
+  duelRecordOf, claimDuel, gateRecordOf, claimGate, legalRefusal,
   ACCOUNT_MAX, ACCOUNT_WINDOW_S,
 } from './accounts.js';
 import { mintToken, mintOrder, mintRenownOrder, mintGuildOrder, mintGuildOutOrder, MAX_TTL_S, TOKEN_V, ID_RE, SEAT_TITLES, CHAPTER_TITLES, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, tokenBodyOf } from '../../src/net/identityToken.js';
@@ -239,12 +239,13 @@ import { motherlodesRead, strikeMotherlode, isMotherlodeNode } from './motherlod
 import { marketRead, marketList, marketBuy, marketCancel, marketOrder, marketFill, marketUnorder, marketCollect, marketReport, marketRemove, marketAuction, marketBid, marketGoldCollect, marketVendor, marketVendors, marketMyVendors } from './market.js';   // PROF5: the market; PROF5b: its auctions; GOLD-MARKET: gold held collected
 import {
   listRealm, createRealm, customsRealm, joinRealm, checkpointRealm, getRealmBlob, leaveRealm, deleteRealm, undoRealm,
-  realmCharacterHeld, realmLevelOf, grantCustomsPass, REALM_CHARACTERS_MAX, REALM_MAX_BYTES, objectBytesOf,
+  realmCharacterHeld, realmLevelOf, realmArmsOf, grantCustomsPass, REALM_CHARACTERS_MAX, REALM_MAX_BYTES, objectBytesOf,
 } from './realm.js';   // REALM P1: the realm's characters; ARENA4b: the level on a realm character's tile, the token's `cl`
 import { grantSpoils } from './budget.js';   // INT5: a signed win's spoils fill the playing character's budget
 import { reviewAct } from './review.js';   // INT6: the review of the judge's verdicts
 import { isGzip, gzipSizeOf, gunzipText, REALM_TEXT_MAX_BYTES } from '../../src/net/realmSaveCodec.js';   // REALM-GZIP: a save rides packed
 import { tradeRealm, REALM_TRADE_BODY_MAX } from './realmTrade.js';   // REALM P2.1: a trade, settled here
+import { wildFall } from './wild.js';   // INT9: a death in the open zone's drop, taken off the record
 import { listLineages, putLineage, realmDie, realmHouseOf, realmWed, listUnions, LINEAGE_BODY_MAX, isTombstone } from './legacy.js';   // LEGACY7: Project Legacy's lines and the tombstone
 import { measured } from './metrics.js';   // SCALE1: every request counted (Workers Analytics Engine)
 import { runCron } from './cron.js';   // SCALE4b: the service's own clock
@@ -283,6 +284,9 @@ const no = (why, status, origin) => json({ error: why }, status, origin);
  *  hands a realm character's value to another player - its trade held, its record unread since the judge shipped, a
  *  piece the id ledger marked a duplicate - each a conflict with what stands (realm.js holdRefusal, prepareRealmRecord). */
 const JUDGE_STATUS = Object.freeze({ 'trade-held': 409, 'record-unjudged': 409, 'piece-dupe': 409, 'piece-claimed': 409, 'piece-legacy': 409 });
+/** INT9: a death's drop's refusals - no key to verify or sign with 503, a receipt not the caller's 403, the fallen's own
+ *  grace or the room's falls 409; the record's own (REALM_STATUS) after them, a bad shape 400 (the default). */
+const WILD_STATUS = Object.freeze({ 'no-gate-key': 503, 'no-signing-key': 503, 'not-yours': 403, grace: 409, nonce: 400 });
 /** HOME-RENT: a room's refusals - a bad shape 400 (the default). */
 const RENT_STATUS = Object.freeze({
   ...JUDGE_STATUS,
@@ -841,10 +845,13 @@ const service = {
         // The relay refuses a 0 at its door, so online is the realm's at the servers too. Stamped on every mint, a 0
         // included: a token with no `rc` is a service from before this, which the relay still admits.
         const rc = (await realmCharacterHeld(ctx, who.player.id, body.character)) ? 1 : 0;
-        // ARENA4b: AND THAT REALM CHARACTER'S LEVEL, `cl` - the level on its tile (realm.js realmLevelOf: its summary, the
-        // client's checkpoint's word, 1..1000), which the relay reads (a bout's vitality) as it reads `lv`. Absent for any
+        // ARENA4b: AND THAT REALM CHARACTER'S LEVEL, `cl` - the level on its tile (realm.js realmLevelOf: INT7 - the level
+        // its judge trusts, else its summary, 1..1000), which the relay reads (a bout's vitality) as it reads `lv`. Absent for any
         // other character, none named, or a level out of the claim's bounds - a token without it is a token as before.
         const cl = rc ? await realmLevelOf(ctx, who.player.id, body.character) : null;
+        // INT7: AND THAT REALM CHARACTER'S ARMS, `wa` - the most reach of its judged pack's lawful weapons and its bow
+        // (realm.js realmArmsOf), every referee's clip of a blow between players. Absent before its first judged checkpoint.
+        const wa = rc ? await realmArmsOf(ctx, who.player.id, body.character) : null;
         // ARENA4: AND THE ACCOUNT'S ARENA RATING this season, for a registered account - the hall queues by it (net/arenaLaw.js
         // pairQueue), off the signature, never a word of the client's. A guest's token carries none (a guest is not queued).
         const ar = who.player.handle ? (await arenaRatingOf(ctx, who.player.id, arenaSeasonOf(nowS))).rating : undefined;
@@ -854,7 +861,7 @@ const service = {
         // AUDIT LEGACY III O1: AND WHICH REALM CHARACTER (`ci`, beside a 1 alone) - the relay stamps it on a wedding's frames,
         // so each half names the character its player saw. Kept when a house is left unsaid: the widest token without a
         // house is under TOKEN_MAX_CHARS with it (test/auditlegacy3)
-        const signed = { s: who.player.id, n: displayName(who.player), k: accountKind(who.player), ...wardrobe, mu, lv, ...(guild ?? {}), rc, ...(rc ? { ci: body.character } : {}), ...(ar !== undefined ? { ar } : {}), ...(cl != null ? { cl } : {}) };
+        const signed = { s: who.player.id, n: displayName(who.player), k: accountKind(who.player), ...wardrobe, mu, lv, ...(guild ?? {}), rc, ...(rc ? { ci: body.character } : {}), ...(ar !== undefined ? { ar } : {}), ...(cl != null ? { cl } : {}), ...(wa ? { wa } : {}) };
         let token = await mintToken(house ? { ...signed, ...house } : signed, key, { subtle, nowS });
         // the token's own bounds (identityToken.js TOKEN_MAX_CHARS, and AUDIT LEGACY III O11 the relay hello's TOKEN_BODY_MAX):
         // a house that would take it past either is left unsaid, never the rest
@@ -915,12 +922,30 @@ const service = {
       }
 
       if (path === '/v1/duel/loss' && request.method === 'POST') {
-        // DUEL1: THE LOSER'S OWN REPORT. The caller is the loser - the
-        // session says so, never the body - and `winner` is the account
-        // the relay stamped on the winner's frames. accounts.js
-        // `reportDuelLoss` holds the bounds inside its one INSERT.
-        const r = await reportDuelLoss(ctx, who.player, body.winner);
-        return r.error ? no(r.error, r.error === 'no-player' ? 404 : 400, origin) : json(r, 200, origin);
+        // DUEL1's LOSER'S OWN REPORT - INT8: RETIRED. A duel's result is the relay's signed receipt now (below); a loss a
+        // client reports counts for nothing, and is told so.
+        return no('retired', 410, origin);
+      }
+
+      if (path === '/v1/duel/claim' && request.method === 'POST') {
+        // INT8 (bible/06-Systems/Integrity-Arc.md lane 2): A DUEL'S RESULT, THE RELAY'S - either fighter carries the receipt
+        // the referee handed it (src/net/duelReceipt.js `d1`); the session must be one of its two, never the body's word,
+        // and accounts.js `claimDuel` counts it once (its bout's id) inside its bounds. No public half here yet: 503, and
+        // the client keeps the receipt for its day.
+        const r = await claimDuel(ctx, who.player, body.receipt, await gatePublicKey(env, subtle));
+        if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);   // AUDIT WB A5's law: which rung refused it
+        return json(r, 200, origin);
+      }
+
+      if (path === '/v1/wild/fall' && request.method === 'POST') {
+        // INT9 (bible/06-Systems/Integrity-Arc.md lane 2): A DEATH IN THE OPEN ZONE'S DROP, TAKEN OFF THE FALLEN'S JUDGED
+        // RECORD (wild.js `wildFall`) - against the fall the relay signed (src/net/wildReceipt.js `f1`: the fallen's own tab
+        // with its record's `at`, its killer's after the grace), or none (a death to a foe: the caller's own record). The
+        // answer's `order` is the service's word on the records, the room's to keep a deposit on.
+        const r = await wildFall({ ...ctx, bucket: env.SAVES }, who.player, body, { gateKey: body.receipt !== undefined ? await gatePublicKey(env, subtle) : null, signing: await signingKey(env, subtle) });
+        if (!('error' in r)) return json(r, 200, origin);
+        if (r.error === 'seq') return json({ error: 'seq', seq: r.seq }, 409, origin);   // the record moved: its tab checkpoints and asks again
+        return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, WILD_STATUS[r.error] ?? REALM_STATUS[r.error] ?? 400, origin);
       }
 
       if (path === '/v1/duel/record' && request.method === 'POST') {

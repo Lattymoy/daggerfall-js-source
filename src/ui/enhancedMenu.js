@@ -118,9 +118,12 @@ import {
   sweepUnsent,
 } from '../systems/realmSaves.js';   // REALM P1.3: the Online door lists the realm's characters, the service's
 import { applyCustoms, customsLines, crossLeveling, LEVELING_CROSS_LINE } from '../systems/realmCustoms.js';   // REALM P1.5: an offline character comes in once, through customs
+import { createRealmLine } from '../systems/legacy/realmLine.js';   // HOUSE-WAITS (FIELD BUGS 2026-10-09f): the account's lines, read at the door
+import { loadFamily } from '../systems/legacy/store.js';
+import { waitingHouses, takeUpLine, houseWaitsTitle, houseWaitsLine, heirButtonLabel } from '../systems/legacy/waitingHouses.js';
 import { mintCharacterId } from '../systems/characterId.js';   // REALM P1.4: a copy to offline is a new offline character
 import { exportSavesZip, collectSlots, importSlots, entriesFromFiles, slotPathOf, TRANSFER_ZIP_NAME } from '../systems/saveTransfer.js';   // SP1: saves move between the website and the app
-import { appStorage } from '../systems/appStorage.js';   // SP1: the store under this build - the browser's on the site, the file store in the app   // SAV4: the slot store; SLOTS1: every slot
+import { appStorage, tabStorage } from '../systems/appStorage.js';   // SP1: the store under this build - the browser's on the site, the file store in the app   // SAV4: the slot store; SLOTS1: every slot
 import { uiSkin, SKIN_NAMES, isEnhanced } from '../systems/uiSkin.js';   // FD1: which boot rail
 import { getPref, setPref, isOpen, setOpen, PREF_DEFAULTS } from '../systems/uiPrefs.js';
 import { TOUCH_BUTTON_SLOTS, touchButtonSlots, nextTouchButton, touchButtonChoices } from './touchButtons.js';   // TOUCH-BUTTONS: the corner's three slots
@@ -396,6 +399,10 @@ export function takePickedSaveKey() { const k = _pickedSaveKey; _pickedSaveKey =
 /** REALM P1.3: the realm character the Online door's Play pressed - its id rides the boot (main.js ?realm). */
 let _pickedRealmId = null;
 export function takePickedRealmId() { const id = _pickedRealmId; _pickedRealmId = null; return id; }
+/** HOUSE-WAITS (FIELD BUGS 2026-10-09f): the member the Online page's waiting house was answered with - `{ personId,
+ *  region, loc }` - taken once by the boot (main.js), which births them online through the world host's own door. */
+let _pickedLegacyBirth = null;
+export function takePickedLegacyBirth() { const b = _pickedLegacyBirth; _pickedLegacyBirth = null; return b; }
 /** REALM P1.3: the realm's characters as the service listed them this visit (null: not asked yet), its bound, what the
  *  last act said (a refusal, customs' report, a copy's word) and whether an act is running. Per VISIT, as the cloud's. */
 let realmRows = null;
@@ -403,6 +410,9 @@ let realmAsked = false;
 let realmMax = 0;
 let realmWords = [];
 let realmBusy = false;
+/** HOUSE-WAITS: the account's lines as this visit read them (their ids, once pulled into the device's store), or null. */
+let realmLineIds = null;
+let realmLinesAsked = false;
 export function takePickedSaveName() { const n = _pickedSaveName; _pickedSaveName = null; return n; }
 
 /** One slot as the cards draw it: the character's line and numbers, and the slot's own name. */
@@ -1212,8 +1222,48 @@ function realmCard(who) {
     }
     box.append(grid);
   } else box.append(el('p', 'meta', 'No online characters yet. Make one, or bring one of yours in below.'));
+  for (const card of waitingHouseCards()) box.append(card);
   box.append(acts([{ label: 'New online character', primary: !realmRows.length, disabled: realmBusy || realmRows.length >= realmMax, onClick: () => onAction('online-new') }]));
   return box;
+}
+/** HOUSE-WAITS (FIELD BUGS 2026-10-09f, Sahh: a Bloodline's fall whose heir's birth went back to the title - "despite the
+ *  bloodline still having two characters left in it, I cannot access those characters in any way"): the account's lines
+ *  whose Succession waits, each with the members who may carry it on (systems/legacy/waitingHouses.js). The fallen is the
+ *  realm's tombstone and a member never played has no character, so this card is the line's one door from the menu. */
+let realmLine = null;
+function waitingHouseCards() {
+  if (!realmRows) return [];
+  if (!realmLinesAsked) {
+    realmLinesAsked = true;
+    realmLine = createRealmLine({ io: () => realmIoNow(), storage: () => appStorage() });
+    realmLine.pull().then((r) => { realmLineIds = r?.ok ? r.ids : []; render(); }).catch(() => { realmLineIds = []; });
+  }
+  if (!realmLineIds?.length) return [];
+  const living = new Set(realmRows.map((r) => String(r.id)));
+  const families = realmLineIds.map((id) => loadFamily(appStorage(), id)).filter(Boolean);
+  return waitingHouses(families, { played: (cid) => living.has(cid) }).map(({ family, fallen, heirs }) => {
+    const card = el('div', 'card svhousewaits');
+    card.append(el('h4', null, houseWaitsTitle(family)), el('p', 'meta', houseWaitsLine(family, fallen)));
+    card.append(acts(heirs.map((p) => ({
+      label: heirButtonLabel(p),
+      disabled: realmBusy || realmRows.length >= realmMax,
+      onClick: () => carryOn(family.id, p.id),
+    }))));
+    return card;
+  });
+}
+/** HOUSE-WAITS: the Succession's choice, made here - the record stored and the realm's copy written (its birth checks
+ *  the person there), then the boot births them online. */
+function carryOn(familyId, personId) {
+  realmBusy = true; render();
+  const took = takeUpLine({ storage: appStorage(), tab: tabStorage(), familyId, personId });
+  if (!took.ok) { realmWords = [took.why]; realmBusy = false; render(); return; }
+  Promise.resolve(realmLine?.push(took.family)).then(() => realmLine?.flush()).then((ok) => {
+    if (!ok) { realmWords = [realmRefusalText(realmLine?.refusalOf(familyId) ?? realmLine?.error ?? 'server')]; realmBusy = false; render(); return; }
+    _pickedLegacyBirth = { personId, region: took.place.region, loc: took.place.loc };
+    realmBusy = false;
+    onAction('online-new');
+  }).catch(() => { realmWords = [realmRefusalText('server')]; realmBusy = false; render(); });
 }
 const realmIoNow = () => realmIo({ fetch: (...a) => globalThis.fetch(...a), storage: appStorage() });
 /** One realm act at a time: busy while it runs, its words (or its refusal) shown after, and the list asked again. */
@@ -1933,7 +1983,7 @@ function graphicsPresetRow() {
   row.dataset.opt = 'graphicsPreset';
   const main = el('div', 'row-main');
   main.append(el('div', 'row-name', 'Quality preset'));
-  main.append(el('div', 'row-note', 'View distance, grass, clouds, ground sharpness and water.'));
+  main.append(el('div', 'row-note', 'View distance, grass, clouds, ground sharpness, water and windows.'));   // RW1: and the real windows
   row.append(main);
   const ctl = el('div', 'ctl');
   const seg = el('div', 'ft-seg');
@@ -5260,7 +5310,7 @@ export function mountEnhancedMenu(host, {
   cloudAsked = false;
   cloudArm = null;
   cloudWhy = null;   // the pre-merge audit (0927b): a refusal is last visit's news - this visit asks the service again
-  realmAsked = false; realmRows = null; realmBusy = false;   // REALM P1.3: the realm is asked again each visit
+  realmAsked = false; realmRows = null; realmBusy = false; realmLinesAsked = false; realmLineIds = null;   // REALM P1.3: the realm is asked again each visit
   realmWords = [takeRealmNotice(globalThis.sessionStorage)].filter(Boolean);   // REALM P1.3: why the last online boot came back here
   sections = mode === 'pause' ? SECTIONS_PAUSE : isEnhanced() ? SECTIONS_BOOT : SECTIONS_CLASSIC;   // FD1: one door, two rails
   // WHICH PANE OPENS. Both doors open on the PIXEL HOME (PX1/PX2) -

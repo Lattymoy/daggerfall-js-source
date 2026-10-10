@@ -5,7 +5,8 @@
 `src/formats/mwItemMap.js` (composeWornArmor) + `src/systems/features.js` (the Steel Helm row)
 (MW-STEEL1, Mac, 2026-10-06; MW-STEEL2, the skirt, 2026-10-07; MW-STEEL4, rigged as retail's armour is, 2026-10-07 -
 it retired the runtime rig MW-STEEL1 to MW-STEEL3 built, recorded below; MW-STEEL5, Mac's update and the helm on the
-game's head, 2026-10-09)
+game's head, 2026-10-09; MW-FIT1, what the plate covers - the upper arms under the pauldrons, the head under the closed
+helm - from a player's report, 2026-10-09)
 
 > "These 2 files are for the armor replacement of the morrowind steel armor with a varient to toggle the helmet type"
 
@@ -90,8 +91,9 @@ refuses it by name, so a re-export that renamed, moved or reshaped one never shi
 ROLES boxes, the same lesson). Every mesh keeps the scene placement (`placement: 'scene'`) and is skinned (the rig,
 below); every painting is mip-chained to an uncompressed DDS as the brigandine's is, the left and right of a pair
 sharing one. The closed helm is ONE part of TWO shapes - a shell in the helm's painting, a visor in the faceplate's -
-and so is the cuirass since MW-STEEL5, the breastplate and its waist band, both in the breastplate's. The helms are
-raised `HELM_LIFT` onto the game's head (MW-STEEL5, below).
+and so is the cuirass since MW-STEEL5, the breastplate and its waist band, both in the breastplate's. The open helm is
+raised `HELM_LIFT` onto the game's head (MW-STEEL5, below); the closed helm stands where Mac's export puts it, the head
+hidden under it (MW-FIT1, below).
 `test/mwsteel1.test.js` re-makes every file from the committed sources and the vendored skeleton byte for byte and
 decodes each DDS back to its painting pixel for pixel.
 
@@ -143,7 +145,7 @@ it), an identity skin transform and its weights; the shape NAMED for the slot it
 skinned part's geometry by that name ("Tri Right Hand 0" passes for the right hand, nothing for the left; the helm
 fills the HAIR slot, whose filter is the word "hair"). The bones stand as nodes under the root at their binds, after
 every shape, so the file is its own bind pose and a tool that skins it against its own nodes draws it where Mac put it
-(the helms `HELM_LIFT` higher since MW-STEEL5).
+(the open helm `HELM_LIFT` higher since MW-STEEL5).
 
 **Worn, it is a retail part.** composeWornArmor claims each piece's slots at an armour's priority and hands the build
 its mesh alone - no `skinFrom`, no fit - and bindPartsInto binds it on the skinned branch every retail body part and
@@ -163,8 +165,8 @@ skin shadows are the ordinary path:
 | Cuirass | cuirass (the breastplate) and skirt (the plates under it) | - |
 | Gauntlets | right hand, left hand | each its wrist and forearm |
 | Greaves | right upper leg, left upper leg | - |
-| Left / Right Pauldron | left / right pauldron | - |
-| Helm | **hair** | - |
+| Left / Right Pauldron | left / right pauldron | its upper arm (MW-FIT1) |
+| Helm | **hair** | the closed helm the head (MW-FIT1); the open one nothing |
 | Boots | right foot, left foot | each its ankle and knee |
 
 `hides` is reserveIndividualPart's occupation - the slot claimed with no mesh, at the armour's priority - so the skin
@@ -172,8 +174,9 @@ under a vambrace or a boot's shaft is not drawn. The law stands over the plate a
 reserves the groin and both upper legs at its higher priority and covers the greaves, and takes the skirt slot from the
 plate skirt; a robe the rest of what it reserves. The plate skirt shadows nothing (ARMO_PART's skirt row): the groin
 skin stays under it. The helm takes the HAIR slot: the hair is hidden (the helmet-hides-hair rule, AUDIT 30 F1, by the
-slot itself) and the head is LEFT - the open helm shows the face, and the closed one's eye slit looks onto it rather
-than through an empty helm.
+slot itself). The open helm leaves the head - its face shows; the closed helm hides it, as a retail closed helmet fills
+the head's slot (MW-FIT1, below). A part the first person does not draw hides nothing from it (`fpShadows`): the
+pauldron's upper arm is the first person's skin.
 
 ## The Steel Helm switch
 
@@ -189,9 +192,9 @@ after-step a choice's write takes as a switch's does); a peer's body takes it at
 - **Seen in game once, from behind** (Mac's screenshot, MW-STEEL5) - no retail data is in the tree. Every pin stands
   on retail's own skeleton (the vendored hierarchy, its rest and its Tri Shadow), and the plate is worn on the path
   retail's own armour is worn on, which the game has drawn since MW-D20 (Mac's retest: "hands PERFECT"); what is the
-  plate's own is the bind's placement under it (SCENE_FROM_BIND, read to about a unit), the weights, and the helms'
-  `HELM_LIFT` - read off one screenshot to about a unit, so the helm's face and the head under it from the front are
-  still to be looked at.
+  plate's own is the bind's placement under it (SCENE_FROM_BIND, read to about a unit), the weights, and the open
+  helm's `HELM_LIFT` - read off one screenshot to about a unit, so the open helm's face and the head under it from the
+  front are still to be looked at (the closed helm hides the head since MW-FIT1).
 - **The weights are geometric** - a rigger's law, not an artist's painting. If a joint folds badly in play, the
   piece's bones and blends in `PLATE_RIG` are where to look, and a re-bake is the whole fix.
 - **The first person's finger bones** are assumed on its rig, as retail's .1st hands use them; if a rig lacks one, the
@@ -265,7 +268,7 @@ nothing left of the runtime solve. `tools/mutants/mwsteel4.json` (16, all dead).
 at (the bind, the idle, a stride, the arms at work) on the same skeleton, off the tree - the pictures are not
 committed.
 
-## MW-STEEL5: Mac's update, and the helm on the game's head
+## MW-STEEL5: Mac's update, and the helm on the game's head (the closed helm's lift RETIRED by MW-FIT1)
 
 Mac, 2026-10-09: "Heres an updated fix for the integrated steel armor for the morrowind model. Theres also an issue
 where the helmet isnt positioned properly on the head but only for the new integrated model" - with `steel_armor.fbx`
@@ -325,3 +328,56 @@ cuirass's two shapes. `tools/mutants/mwsteel5.json` (19, all dead). The screensh
 head drawn, a render of the player's own data; what is kept of it is the ratio the probe reads against. The command
 line writes nothing until the bake has run on what it takes (AUDIT MW-STEEL5: it saved the new source first, and a
 refused open helm or a failed bake left it beside the old meshes).
+
+## MW-FIT1: what the plate covers
+
+A player's report, passed on by Mac on 2026-10-09 over two screenshots of the paperdoll: the Steel set ("the upper arm
+is still visible with the steel armor") and the Ebony set ("the ebony armor gets the same issue", "and the helmet
+elevation is too much", "the coif has to cover the neck"). It is the same body on the same path in both sets, so one
+fix serves both (`04-Characters/Ebony-Plate.md`).
+
+**A pauldron is a sleeve.** Both sets' pauldrons close round the upper arm all the way down: in the bind, every one of
+36 rays out of the upper arm's bone line meets the pauldron from the shoulder to the elbow, and at the elbow the
+gauntlet's cuff closes round the arm. Nothing hid the skin under it: the pauldron filled its own slot, which shadows
+nothing (ARMO_PART's pauldron rows - a retail pauldron layers over the clavicle), and the game's upper arm, a skinned
+part of its own girth and its own weights, stood up through the steel wherever the plate is snug (its tube is 1.9 to
+2.4 units off the bone at its tightest). So each pauldron `hides` its upper arm, as a gauntlet hides its forearm - the
+occupation with no mesh, at the armour's priority. **Only in the third person**: the first person draws the arm-bone
+parts alone (`fpWornAdds`), never a pauldron, and a hidden upper arm there would be a hole between the shoulder and the
+gauntlet. `composeWornArmor` answers the first person's shadows apart (`fpShadows`): a `hides` occupation remembers the
+part it lies under, and one under a part the first person does not draw is not the first person's; every other
+occupation - a gauntlet's, a robe's reserve - is both persons'. `fpArm.js` skins the first person with
+`worn.fpShadows ?? worn.shadows`.
+
+**A closed helm is the head.** MW-STEEL5 raised both helms `HELM_LIFT` up the head bone, because the scalp stood up
+through the closed helm's crown in Mac's screenshot. Raised, a helm also rises off the body Mac hung it on: the ebony
+coif and the steel visor came up off the collar, and a band of neck showed under them - in retail's idle, carried on
+the neck bone, rays square to the scene's neck missed the plate 13 to 17 times in 36 at z 115 to 116 under the ebony
+helm, and up to 36 under the steel one; and a wearer whose head stands lower on its bone than the screenshot's read
+saw the whole helm ride high. Both readings cannot be met by one rigid lift. Retail's answer is the slot: a helmet that
+fills the head's slot is the closed helm, and no head is drawn under it (`02-Formats/Morrowind-Rules.md`, "A helmet
+force-deletes hair before its own parts are added"). So the closed steel helm and the ebony helm - a visor, an eye slit,
+the ebony one a mail coif to the collar - hide the head (`hides: ['head']`, the mesh still the HAIR's, its shapes named
+for it by rule 15), and stand where Mac fitted them: the closed steel helm where his export puts it (113.88 to 132.82),
+the ebony helm where his (112.1 to 133.37). No scalp can stand through a crown with no head under it, whatever the
+race, and the coif hangs to the collar - in the idle the ebony coif and breastplate meet all 36 rays from z 110 to 115,
+the steel visor and breastplate at least 26 at every height to 117. The open helm shows the face, so it keeps the head
+and keeps `HELM_LIFT` - the one helm the MW-STEEL5 reading still decides (`tools/helmLiftProbe.mjs` reads it unchanged,
+3.24 to 4.25, with the closed helm put back by `overFit`, its export's unit over MW-STEEL1's fit).
+
+**What it does not do.** The open helm still stands `HELM_LIFT` over the collar (MW-STEEL5's band of neck under its
+aventail stands). Through a closed helm's eye slit is the helm's own inside, as in a retail closed helmet, not a face.
+At Mac's fit the steel closed helm leaves a little neck at the sides (26 to 29 of 36 rays meet plate at z 115 to 116)
+- his model's own, not the lift's. And it is read on the vendored retail skeleton and the scene's own measures, not
+seen in game: the paperdoll is the check.
+
+**How it was proven.** `test/mwfit1.test.js`: the sleeve on the shipped meshes, both sets, both sides; each pauldron's
+shadow in the third person and none in the first, the gauntlet's in both, a robe's reserve over a pauldron in both,
+and the two skins' shadows read where `fpArm.js` reads them; the closed steel helm (default and asked) and the ebony
+helm over the head and the hair, the open helm the hair alone, each one add, the hair's; and in retail's idle the neck
+under the shipped helms covered, and bare under both raised as they were. `test/mwsteel5.test.js`, `mwsteel1` and
+`mwebony1` re-read for the closed helms unlifted and the new shadows; the bake re-made two files, the closed steel helm
+and the ebony helm, and nothing else. `tools/mutants/mwfit1.json` (13: 12 dead, 1 recorded equivalent - a robe over a
+pauldron's hide keeping its first-person pass, which the slotlist walk cannot reach); seven records re-aimed by content
+(`MWEBONY1-the-helm-lifted-again` and `MWSTEEL5-the-closed-helm-lifted-again`, whose laws inverted, `MWSTEEL1-helm-in-the-head-slot`,
+`MWSTEEL1-hides-dropped`, `MWSTEEL4-the-plate-solved-at-runtime-again`, and the probe's two), every list re-run: 70 dead.

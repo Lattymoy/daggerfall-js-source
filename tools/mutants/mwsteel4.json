@@ -143,8 +143,8 @@
   {
     "name": "MWSTEEL4-the-plate-solved-at-runtime-again",
     "file": "src/formats/mwItemMap.js",
-    "old": "          ...(own.skinFrom ? { skinFrom: own.skinFrom, fitTo: own.fitTo ?? null } : {}) });",
-    "new": "          skinFrom: own.skinFrom ?? ['chest'], fitTo: own.fitTo ?? null });",
+    "old": "          ...(own.skinFrom ? { skinFrom: own.skinFrom, fitTo: own.fitTo ?? null } : {}) };",
+    "new": "          skinFrom: own.skinFrom ?? ['chest'], fitTo: own.fitTo ?? null };",
     "tests": [
       "test/mwsteel4.test.js"
     ],

@@ -74,8 +74,8 @@
   {
     "name": "HCC-mount-distances-wagon-only",
     "file": "src/systems/horseCartLaw.js",
-    "old": "  isWithinHorizontalDistance(player, wagon, WAGON_INVENTORY_DISTANCE) && isWithinHorizontalDistance(player, horse, HORSE_MENU_MOUNT_DISTANCE) && isWithinHorizontalDistance(horse, wagon, HORSE_WAGON_HITCH_DISTANCE);",
-    "new": "  isWithinHorizontalDistance(player, wagon, WAGON_INVENTORY_DISTANCE) && isWithinHorizontalDistance(player, horse, HORSE_MENU_MOUNT_DISTANCE);",
+    "old": "&& isWithinHorizontalDistance(horse, nearest ? nearest(horse) : wagon, HORSE_WAGON_HITCH_DISTANCE);",
+    "new": ";",
     "tests": [
       "test/hcc_law.test.js"
     ]
@@ -410,11 +410,12 @@
   {
     "name": "HCC-fast-travel-never-relocates",
     "file": "src/systems/horseCart.js",
-    "old": "    fastTravelFollowingSuspended = true; pendingFastTravelHorseRelocation = true;\n  }\n  function convertFollowingTransportToWaitAtDeparture() {",
-    "new": "    fastTravelFollowingSuspended = false; pendingFastTravelHorseRelocation = false;\n  }\n  function convertFollowingTransportToWaitAtDeparture() {",
+    "old": "    fastTravelFollowingSuspended = true; pendingFastTravelHorseRelocation = true;\n  }\n  /** WAGONS2 (FINAL AUDIT): WHETHER THE WAGON GOES",
+    "new": "    fastTravelFollowingSuspended = false; pendingFastTravelHorseRelocation = false;\n  }\n  /** WAGONS2 (FINAL AUDIT): WHETHER THE WAGON GOES",
     "tests": [
       "test/hcc_runtime.test.js"
-    ]
+    ],
+    "note": "WAGONS2 (FINAL AUDIT, PIN MOVED): re-aimed by content - wagonGoesOnJourney stands between handlePostFastTravel and the departure's conversion now."
   },
   {
     "name": "HCC-rebase-forgets-hitch",
@@ -437,7 +438,7 @@
   {
     "name": "HCC-hitch-offset-dropped",
     "file": "src/systems/horseCart.js",
-    "old": "      pos = vadd(vadd(pos, vscale(horizontalRight(fwd), HITCHED_HORSE_LOCAL_X)), vscale(fwd, HITCHED_HORSE_LOCAL_Z));",
+    "old": "      pos = vadd(vadd(pos, vscale(horizontalRight(fwd), HITCHED_HORSE_LOCAL_X)), vscale(fwd, hitchZ()));",
     "new": "      pos = vadd(pos, vscale(horizontalRight(fwd), HITCHED_HORSE_LOCAL_X));",
     "tests": [
       "test/hcc_runtime.test.js"

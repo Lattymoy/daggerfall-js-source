@@ -274,6 +274,12 @@ export const REFUSALS = Object.freeze({
   'no-gate-key': 'The account service cannot check a gate\'s receipt right now. It is kept and tried again.',
   receipt: 'That gate\'s receipt was not signed by the gate, or it has run out.',
   'not-yours': 'That gate\'s receipt names another account.',
+  // INT8: DUEL1's loser's own report, retired - a duel's result is the relay's receipt now
+  retired: 'That is no longer how a duel is recorded - the duel\'s referee records it.',
+  // INT9: a death in the open zone's drop (server-account/src/wild.js) - the fallen's own tab has the first half minute
+  grace: 'The fallen still has a moment to settle their own fall. It is tried again shortly.',
+  nonce: 'That fall could not be read. Try again.',
+  room: 'That fall named no place its remains could lie. Try again.',
   // MARKS1: Marks, the server's currency (server-account/src/marks.js)
   'marks-need-account': 'Silver is kept by registered accounts. Add a username to hold it.',
   'marks-closed': 'The counting-houses are not striking silver yet.',
@@ -1130,24 +1136,37 @@ export function accountPlayBeat({ fetch, storage }) {
   };
 }
 
-/** DUEL1: the LOSER's own report of a duel - `winner` the account the
- *  relay stamped on the winner's frames. `{ recorded, wins, losses }`. */
-export const reportDuelLoss = (io, winner) => call(io, '/v1/duel/loss', { winner });
+/** INT8: a duel's result, the relay's signed receipt (net/duelReceipt.js
+ *  `d1`) carried by either of its fighters - `{ recorded, wins, losses }`
+ *  (or `{ recorded: false, why }`). DUEL1's loser's own report retired. */
+export const claimDuelReceipt = (io, receipt) => call(io, '/v1/duel/claim', { receipt });
 /** DUEL1: any account's duelling record, `{ id, wins, losses }`. */
 export const readDuelRecord = (io, id) => call(io, '/v1/duel/record', { id });
 
 /**
  * DUEL1: THE DUELLING RECORD'S TWO CALLS, bound to this device's stored
  * session (read at each call, as the beat reads it). With no session
- * there is no account to lose with or to ask as: `{ ok: false, error:
- * 'no-session' }`, never a knock.
+ * there is no account to claim with or to ask as: `{ ok: false, error:
+ * 'no-session' }`, never a knock. INT8: a bout's receipt claimed, never
+ * a loss reported.
  */
 export function accountDuels({ fetch, storage }) {
   const io = () => { const s = storedSession(storage); return s ? { fetch, base: serviceBase(storage), secret: s.secret } : null; };
   return {
-    lost: async (winner) => { const i = io(); return i ? reportDuelLoss(i, winner) : { ok: false, error: 'no-session' }; },
+    claim: async (receipt) => { const i = io(); return i ? claimDuelReceipt(i, receipt) : { ok: false, error: 'no-session' }; },
     record: async (id) => { const i = io(); return i ? readDuelRecord(i, id) : { ok: false, error: 'no-session' }; },
   };
+}
+
+/** INT9: A DEATH IN THE OPEN ZONE'S DROP, taken off the realm record by the service (server-account/src/wild.js) - `body`
+ *  `{ receipt, realm, room }` (the fallen's, its record's `at`), `{ receipt, room }` (the killer's, after the grace) or
+ *  `{ n, realm, room }` (a death to a foe: the tab's nonce) - `room` where the remains will lie (AUDIT INT9: the order names
+ *  it). Answers `{ r, order, items, kept, took, gold, wi, burnt?, realm? }`. */
+export const wildFallAsk = (io, body) => call(io, '/v1/wild/fall', body);
+/** INT9: the zone's one call, bound to this device's stored session (the duels' way). */
+export function accountWild({ fetch, storage }) {
+  const io = () => { const s = storedSession(storage); return s ? { fetch, base: serviceBase(storage), secret: s.secret } : null; };
+  return { fall: async (body) => { const i = io(); return i ? wildFallAsk(i, body) : { ok: false, error: 'no-session' }; } };
 }
 
 /** WB5b: the kill receipt the relay signed for this account, carried to

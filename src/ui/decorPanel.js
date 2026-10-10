@@ -56,7 +56,9 @@ import { homeLookSwatch } from '../world/homeLook.js';
 import { decorIsDoor } from '../systems/decorDoorways.js';   // HOME-DOORS (AUDIT): a door's controls
 /** The crafts a piece may be made here: every station, the Forge only where it works (AUDIT 29 B2). HOME-VENDOR: and a
  *  trader only where the market trades - online, the trades open (its stock is market listings). */
-export const stationsOffered = () => DECOR_STATIONS.filter((k) => !(PROF_STATIONS.includes(k) || k === VENDOR_STATION) || forgeOffered());   // PROF4: the workbench as the forge
+/** WAGONS2 (FINAL AUDIT): `trader` - whether the room is a home, where a hired trader trades (the view's `trader`); a
+ *  caravan's or a ship's offers none. */
+export const stationsOffered = (trader = true) => DECOR_STATIONS.filter((k) => (k === VENDOR_STATION ? trader && forgeOffered() : !PROF_STATIONS.includes(k) || forgeOffered()));   // PROF4: the workbench as the forge
 
 export const DECOR_STYLE_ID = 'dagger-decor-style';
 export const DECOR_CSS = `
@@ -384,7 +386,7 @@ export function createDecorPanel({
   const removeBtn = act('Remove', () => { const it = placedSelected(); if (it && !removeBtn.disabled) onRemove(it.piece); });
   // HOME-STATIONS: the craft offered (cycled, free) and the act on it (made for its licence, or unmade)
   let stationOffer = DECOR_STATIONS[0], stationFor = null, stationArmed = null;   // the offer follows a newly chosen piece's own craft
-  const stationPick = act('Station', () => { const o = stationsOffered(); stationOffer = o[(o.indexOf(stationOffer) + 1) % o.length]; stationArmed = null; paintRoomSide(); });
+  const stationPick = act('Station', () => { const o = stationsOffered(view?.trader !== false); stationOffer = o[(o.indexOf(stationOffer) + 1) % o.length]; stationArmed = null; paintRoomSide(); });
   // AUDIT HOME-STATIONS S3: the act is the one the button SAYS (painted with it), never re-read from a newer piece
   const stationBtn = act('Make station', () => {
     const it = placedSelected();
@@ -549,6 +551,7 @@ export function createDecorPanel({
       chip(`Your things (${m})`, mode === 'own' || mode === 'look', () => setMode('own')),   // DECOR2b: a look is chosen within them
       chip(`Built in (${k})`, mode === 'base', () => setMode('base')),   // BASE-HIDE: the room's own furniture
       ...(view?.rent ? [chip(`Rooms to rent (${(view.rent.rows ?? []).filter((r) => r.offer).length})`, mode === 'rent', () => setMode('rent'))] : []),   // HOME-RENT
+      ...(view?.paint?.caravan ? [chip('Paint', mode === 'paint', () => setMode('paint'))] : []),   // WAGONS2: a caravan's inside, painted
       ...roomChips());   // DECOR-ROOMS
   }
   /** DECOR-ROOMS: THE ROOM TABS - one a room, the chosen one pressed, each saying how many pieces stand in it. Choosing
@@ -646,7 +649,33 @@ export function createDecorPanel({
    *  its swatch in the preview; the look painted only when it differs from the house's. */
   /** HOME-LOOK (AUDIT): the styles a roof's or a door's family holds in a climate, as the painter's door knows it, or null. */
   function lookRecordsOf(part, climate) { return view?.paint?.records?.(part, climate) ?? null; }
+  /** WAGONS2: one of the caravan's inside parts - its name and its paint now. */
+  function caravanPaintRow(row) {
+    const r = el('div', 'dfdecor-row');
+    r.setAttribute('role', 'option');
+    r.dataset.key = row.part;
+    r.setAttribute('aria-selected', row.part === paintPart ? 'true' : 'false');
+    const main = el('span', '');
+    main.append(el('div', 'dfdecor-row-name', row.name), el('div', 'dfdecor-row-sub', row.choices[row.current] ?? ''));
+    r.append(el('span', 'dfdecor-thumb', row.name.slice(0, 2)), main, el('span', 'dfdecor-row-price', 'Free'));
+    r.addEventListener('click', () => { paintPart = row.part; redraw(); });
+    return r;
+  }
+  /** WAGONS2: the chosen part's paints, a chip each - pressed, painted at once (free, any time - Mac's answer). */
+  function paintCaravanSide() {
+    const row = view.paint.caravan.find((x) => x.part === paintPart) ?? null;
+    pickName.textContent = row ? row.name : 'Choose a part of your caravan';
+    pickLine.textContent = row ? row.choices[row.current] ?? '' : 'Walls, floor and ceiling - each can wear another paint.';
+    pickPrice.textContent = 'Free';
+    paintClimates.replaceChildren();
+    paintKinds.replaceChildren(...(row ? row.choices.map((name, i) => chip(name, i === row.current, () => onPaint('caravan', { part: row.part, i }))) : []));
+    paintBtns.hidden = true;   // nothing to try on and paint: a chip pressed is painted
+    previewImg.removeAttribute?.('src');
+    pickWhy.textContent = '';
+  }
   function paintPaintSide() {
+    if (view?.paint?.caravan) { paintCaravanSide(); return; }   // WAGONS2
+    paintBtns.hidden = false;
     const part = paintPart;
     const choice = part ? paintLook?.[part] ?? null : null;
     pickName.textContent = part ? HOME_LOOK_PART_NAMES[part] : 'Choose a part of your house';
@@ -770,6 +799,13 @@ export function createDecorPanel({
     waiting.clear();
     if (mode === 'rent' && !view.rent) { mode = 'catalogue'; card.dataset.mode = mode; }   // HOME-RENT: no rooms door here any more
     if (mode === 'paint' && !view.paint) { mode = 'catalogue'; card.dataset.mode = mode; }   // HOME-LOOK: no painter here any more
+    if (mode === 'paint' && view.paint.caravan) {   // WAGONS2: the caravan's inside - a row a part, its paints chosen at once
+      if (!view.paint.caravan.some((r) => r.part === paintPart)) paintPart = view.paint.caravan[0]?.part ?? null;
+      list.replaceChildren(...view.paint.caravan.map(caravanPaintRow));
+      listSig = signature();
+      paintSide();
+      return;
+    }
     if (mode === 'paint') {   // HOME-LOOK: a row a part
       paintLook ??= { ...(view.paint.current ?? {}) };
       list.replaceChildren(...HOME_LOOK_PARTS.map(paintRow));
@@ -818,6 +854,7 @@ export function createDecorPanel({
     (view?.base ?? []).map((it) => `${it.key}:${it.name}:${it.hidden ? 1 : 0}:${it.holds ? 1 : 0}:${it.room ?? ''}`).join(','),   // BASE-HIDE
     (view?.rooms ?? []).map((r) => `${r.id}:${r.name}`).join(','), view?.roomId ?? '', view?.doorways ?? '',
     view?.yard ? 'y' : '', view?.paint ? homeLookSig(view.paint.current) : '-',   // HOME-YARD; HOME-LOOK
+    (view?.paint?.caravan ?? []).map((r) => `${r.part}:${r.current}`).join(','),   // WAGONS2: the caravan's inside, painted
     paintPart === 'roof' || paintPart === 'door' ? String(lookRecordsOf(paintPart, (paintLook?.[paintPart] ?? decorLookStart(paintPart)).climate)) : '',   // HOME-LOOK (AUDIT): a family's count answered
     view?.rent ? `${view.rent.due}:${view.rent.busy ? 1 : 0}${view.rent.loaded ? 1 : 0}${view.rent.finding ? 1 : 0}:${(view.rent.rows ?? []).map((r) => `${rentKeyOf(r)}:${r.offer ? `${r.offer.price}.${r.offer.taken ? 1 : 0}.${r.offer.listed ? 1 : 0}.${r.offer.until ?? ''}` : '-'}`).join(',')}` : ''].join('|');   // HOME-RENT (RENT-FRESH, RENT-ORPHANS: read, and still finding - each changes what the view says)   // DECOR-ROOMS: the tabs, and the one chosen; HOME-DOORS: the doorways free
 
