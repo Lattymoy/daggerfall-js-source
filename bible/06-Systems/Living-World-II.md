@@ -371,7 +371,11 @@ Mac: "caravans ... that can be assaulted, protected or traded with". The law is 
   new game (another character's records) forgets the session's shelves. AUDIT LW-II C7: A ROBBERY IS THE LAST
   FORGOTTEN - the session's shelf carries its coin and its robbery and writes them back as they are, and the book lets
   the oldest record NOT robbed go first, while the robbed are half of it or fewer: pushed out by forty trades, a robbed
-  caravan's record came back unrobbed, its shelf and purse whole, to be robbed again.
+  caravan's record came back unrobbed, its shelf and purse whole, to be robbed again. AUDIT LW-II-2 C3: A STACK PARTLY
+  TAKEN IS KEPT BY WHAT IS LEFT - an add-only `[place, count]` among the gone (the whole places first; the old form still
+  read), so a split stack no longer comes back whole after a load; and the save writes the session's shelves first
+  (world.js `getSaveData`, the host's `flush()`), so a piece taken in the step's second is not on the shelf again.
+  C12: a shelf made before the band's hold-up loses the band's half when it comes.
 - **THE WINDOW** is the shops' own (`worldModes.js openTradeWindow`), through the interior host's API (`openRoadTrade`)
   and `mountServiceWindow`: outdoors on the talk's overlay, never `interiorOverlay`. Its building is the counter's
   (kind, quality, name - "Ada Lark's caravan" - and the region at the party's place). Prices are the counter's own,
@@ -383,16 +387,20 @@ Mac: "caravans ... that can be assaulted, protected or traded with". The law is 
 
 - **EACH DEED IS A REPORT**, carried by the party's members still standing:
   - a hand caught in the counter's goods: Theft, and the `crime` regard of every member;
-  - a hand caught in a traveller's purse (today's pickpocket on the road): Pickpocketing. The road's door clears the
-    town's crime flag the pickpocket sets, because the report is the road's charge;
+  - a hand caught in a traveller's purse (today's pickpocket on the road): Pickpocketing. The town's crime flag the
+    pickpocket sets is put back as it stood before it, because the report is the road's charge (AUDIT LW-II-2 C15:
+    `townTalk.js activate` keeps the flag before the pickpocket; the road's door cleared every crime that stood);
   - a traveller struck down (LW7's `livingStrikeRoad`, a stood armed one, a fight the player started): Murder, naming
     them;
   - a hold-up (4.4): Theft.
 - **WHERE IT LANDS** (`reportAt`): the minute the party next reaches a town - the one it set out for on the way out,
-  home on the way back or once it has turned. The region is the one the road runs through at the deed.
+  home on the way back or once it has turned; a hunter's, whose way out ends in the wild, home (AUDIT LW-II-2 R9). The
+  region is the one the road runs through at the deed.
 - **CHARGED, OR VOID.** Once a second the host reads the reports whose minute has come: charged (`lowerRepForCrime`
   in the region, and `tallyCrimeGuildRequirements` as every crime is) if a witness lives at that minute, dropped if
   none does. A load past the minute charges it at the first step. The REPORTS record is add-only (REPORTS_MAX, 40).
+  AUDIT LW-II-2 C8: a full book lets a VOID report go first (one whose every witness is dead now), never a witnessed
+  one, and each step drops the void pending; the one struck down is never a witness of their own murder.
   - A WITNESS IS WHOEVER HOLDS THE PLACE (AUDIT LW-II C1, `caravanHost.js travellerOf`): a newcomer (`~<gen>`) minted
     as the lives mint them. The roster holds the census's own alone, and at the game's epoch nearly every place is a
     newcomer's: looked up there, every witness was nobody and every report void. While the town's trips wait on their
@@ -410,7 +418,10 @@ Mac: "caravans ... that can be assaulted, protected or traded with". The law is 
   `slain` turns), its leader standing and the player within ESCORT_KEEP_M of it, YIELDS, once: "Take it! Take what you
   want - just let us be!" AUDIT LW-II C4: the trip's own fallen (the dice's) were read as beaten, and a sellsword who
   died fighting beside the player as the player's doing - a party whose guards fell to anyone yielded to whoever was
-  within the roads' read, and the player became its robber.
+  within the roads' read, and the player became its robber. AUDIT LW-II-2 C1: "those the road left it" is the party
+  less the ROAD's own fallen alone (`!f.hand`) - read through `membersAt`, which drops the hand's dead too, a trip as the
+  host mints it (through `fate`) had no armed member left once the last guard fell, and yielded only when the host's
+  step read the roads' old trip object first.
 - The robbery is the character's: its minute in the WARES record, the cargo a quarter from then (LW10's
   `cargoOf`), a Theft reported, the Overworld's mark "Caravan to Wayrest (robbed)" (`partyLabel`).
 - Its counter is then `T - take`: its goods and what is left of its purse lie open in a loot window (the chest's) -
@@ -430,7 +441,10 @@ Mac: "caravans ... that can be assaulted, protected or traded with". The law is 
   saved with it). Further than that for more than ESCORT_LOST_MIN (60 minutes of the clock) at a stretch breaks it: no
   pay, an `insulted` regard from the merchant. The leader fallen - by a hand, or by the road (AUDIT LW-II C5d, its own
   fallen) - ends it ("did not live to pay you"); the caravan turned back ends it unpaid, from its trouble's minute
-  (C5c: it paid through the halt).
+  (C5c: it paid through the halt). AUDIT LW-II-2 C2: the character robbing the caravan, or striking one of its people
+  down, after the hire ends it unpaid, in the merchant's words (`CARAVAN_LINES.betrayed`). C9: a caravan the band robbed
+  under the escort still pays (its people came through), in its own words - "We're in - robbed, but alive." (Mac's call
+  9).
 - **WITH IT THROUGHOUT** (AUDIT LW-II C5b, `escortNear`): judged to the town however the clock came past it. The step
   runs in the open world and in the modal frame alike (an escort waited out indoors was never asked where it stood, and
   paid at the town). The clock since the escort was last with the party is read back each ESCORT_SAMPLE_MIN (5) against
@@ -442,9 +456,13 @@ Mac: "caravans ... that can be assaulted, protected or traded with". The law is 
   building's world matrix), and a party lodged at an inn is near whoever is at that inn - its location the one on its
   pixel, the party on the road beside it. Below, nobody is near.
 - **OFFLINE, TRAVEL ON WITH THEM** (`R`): the one clock moved as a journey moves it (`advanceOwnMinutes`), the player
-  set down beside the party at its next stop - a minute before its trouble, the night's dusk, or the town - and the
-  contract's `near` with it (the road walked beside it). Online
-  there is no such choice (decision 6): the world's clock is everyone's.
+  set down beside the party at its next stop - a minute before its trouble, the night's dusk, or a minute short of the
+  town, where it last walked (AUDIT LW-II-2 C7: at the town it stood nowhere, and the player was left on the empty
+  road) - and the contract's `near` with it (the road walked beside it). Online there is no such choice (decision 6):
+  the world's clock is everyone's. AUDIT LW-II-2 C6/H1: OFFERED ONLY WHERE A JOURNEY MAY GO - outdoors, no enemy near,
+  no duel, no hostile ship (the host's `travelFree`, the travel map's own refusals): a caravan lodged at an inn stands in
+  the tavern, and its door offered R there, moving the open world under the building; `travelWith` refuses the same
+  way, leaves a building first if it is ever reached there (`forceExitToExterior`) and catches its teleport.
 - **NOT BUILT: THE NEWS** of a caravan robbed or escorted whole (`ROBBED_NEWS`, `ESCORT_NEWS`). It is LW16's, where
   the word travels.
 
@@ -456,7 +474,8 @@ Mac: "caravans ... that can be assaulted, protected or traded with". The law is 
   travel).
 - `scenes/worldModes.js`: WIRED through its API (`openRoadTrade`; the counter's discount and refusal in its trade
   window).
-- `scenes/dungeonContext.js`: none (no road). `scenes/exterior.js`: FLAGGED, as LW2 has it.
+- `scenes/dungeonContext.js`: none (no road). `scenes/exterior.js`: FLAGGED, as LW2 has it. Indoors (a party lodged at
+  an inn, LW9) the door stands through the room's talk, and offers no R (AUDIT LW-II-2 C6/H1).
 
 Measure: the step reads the roads' parties already read (a few a second), the character's reports (40 at most) and one
 contract. Nothing per frame.
@@ -466,6 +485,12 @@ Moved pins: `lw3_roads` (the caught hand's door), `lw7_deeds` (the road's slay),
 talk's doors: a caravan's after the kin's - AUDIT LW-II-2 P15, unrecorded until then).
 
 Moved by the audit: `lwfix4_turns`' records (a hold-up's robbery carried at the leg's end, C9).
+
+AUDIT LW-II-2: `test/auditlwii2_door.test.js` (13), `tools/mutants/auditlwii2_door.json` (44). Moved: `lw11_caravan`
+(the host's `travelFree`; the road's caught hand no longer clears the crime; its hold-up fixtures minted through
+`handsOn`), `lw2_livingTown` (the save flushes the counters first), `lw3_roads` (the talk's caught line puts the crime
+back); re-aimed by content: `lw11.json`'s report, gone, witness and C4/C7/C10 records (`LW11-wire-caught` now aims at
+`townTalk.js`), `lw2.json` LW2-regards-unsaved, `lw3.json` LW3-road-watch.
 
 Pins: `test/lw11_caravan.test.js` (21 - AUDIT LW-II: the newcomer witness and the trip pending, the hold-up by the
 player's own hand, the escort with the party throughout, the band's purse, the book's robbery last forgotten, the
@@ -995,3 +1020,6 @@ seams. `test/lw11_caravan.test.js` (the tale on the charge, void none, a murder 
 8. LW11: the plaque rows (Trade, Talk, Steal, Hire on on the World Tooltips plaque) and stealing from the wagon (its
    cargo a loot list on `shopliftAttempt`, NIGHT_STEAL by night) were designed and not built: the ChoiceWindow and
    the counter's own steal stand in (4.1, 4.3). Build them, or keep the door as it is?
+9. LW11 (AUDIT LW-II-2 C9): a caravan the band robbed under the escort - pay it (built: paid, "robbed, but alive"),
+   or end the contract unpaid? And the hold-up stands on the player's deeds alone: a caravan whose only guard the
+   character struck down before hiring on yields as they walk beside it, and C2 then ends the contract unpaid.
