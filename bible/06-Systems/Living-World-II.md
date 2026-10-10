@@ -931,11 +931,23 @@ errand in `dayPlan.js`.
   in one order for every reader (the traders by key, the sales by minute), its version moved only when its word did,
   and a town of the region read with nothing now forgets what it had (B6/B7: the rows' order moved browsers' errands,
   every read made every town's day again, and a shut trader kept its browsers). Each town's LivingTown asks its own
-  (`patronsOf`) and plans its day again when the word changes. Offline, nothing: no service, no sale.
-- **THE BUYER DEALT** (`patrons.js patronOf`): the seed goes to one of the town's households (the census's `h` roll,
-  never the watch, a visitor or a guardsman), in the order of their ids - every reader deals the same one - over the
-  people HOLDING the town's places that day (AUDIT LW-II B12: `peopleOf` - a newcomer where the census's own is gone;
-  over the census, the dead were dealt and named).
+  (`patronsOf`) and plans its day again when the word changes. Offline, nothing: no service, no sale. AUDIT LW-II-2
+  W3/H8, W11: EACH REGION ITS OWN CLOCK - a region never read, or read PATRON_READ_S ago, is read at once; one asked
+  while a read is out is remembered and read when it settles (ASYNC NEVER DROPS); a failed read is tried again after
+  PATRON_RETRY_S (60 s) - one clock for every region left a region come to by a journey unread for up to ten minutes
+  (four living hours online), its traders browsed and walked to on one reader and not another; and only while a built
+  LivingTown stands (`livingPatronsRegion` - the wilderness read the region and reckoned it every ten minutes for
+  nobody). W1, W5: A PLAN IS MADE AGAIN ONLY WHERE ITS OWN WORD MOVED - each household's plan signed with what it read of
+  the word (its own errands that day, the browse doors); a crew hand's or a visitor's never asks it. The town's one
+  version replanned every resident at every new sale (37 ms in a frame on a 4x4 town; 1.4 now), and a port town's crew
+  hands at every read once any word stood (their plans carried none to compare).
+- **THE BUYER DEALT** (`patrons.js patronOf`): the seed goes to one of the town's household PLACES (the census's `h`
+  roll, never the watch, a visitor or a guardsman), in the order of their ids - every reader deals the same place -
+  and whoever HOLDS that place that day on this reader walks it and is named (`livingTown.js _householdsOf`: the
+  census's own, a newcomer, a spouse wed in (`extraPeople`); a place standing empty walks none, and the page says "a
+  townsperson of" its town). AUDIT LW-II-2 W2: B12 dealt over the people holding the places, which read this
+  character's own turns - a householder this character struck down shrank the pool by one, and nearly every sale of the
+  town went to someone else on that reader alone (1,818 of 2,000; 7 now, the empty place's own).
 - **THE ERRAND** (`patronVisits`, `dayPlan.js patronErrand`): to the trader's house's door, in for PATRON_STAY_MIN
   (25), and out again, PATRON_DELAY_DAYS (2) living days after the sale's own (AUDIT LW-II B1: online a living day is a
   real hour, the service reckons whole PAST hours and a reader asks each 600 s - the sale's own day was over before any
@@ -945,14 +957,17 @@ errand in `dayPlan.js`.
   sale's minute outside PATRON_OPEN_H (09:00-17:00 - an evening's errand ran into a farmer's bedtime) comes at its place
   in the open hours' fold. Measured on the synthetic town (thirty a resident a day, every household, four days): 0.3%
   of errands dropped at the calendar's pace, 3.5% at the online pace (a long day's walks) - a tenth and a quarter
-  before. Built differently from the design: the buyer is any household, not one FREE at the minute; the errand makes
+  before. AUDIT LW-II-2 W10: re-measured and now pinned at both paces (the online pace was unpinned) - 0.25% (34 of
+  13,832) at the calendar's, 4.03% (557 of 13,832) at the online's. Built differently from the design: the buyer is any household, not one FREE at the minute; the errand makes
   the time.
 - **BROWSERS** (`dayPlan.js` `browse`): PATRON_BROWSE_SHARE (0.1) of a household's errands go to one of the town's
   public traders' houses instead, on a draw of their own - they look and never buy. A town with no trader plans as it
   did (pinned by a digest of LW14's plans). Built differently: any errand, not by the trader's stock's kind.
 - **THE OWNER IS TOLD** (`vendorPage.js`): its sales to patrons beside its sales to players, "Sold to Ada Lark of
   Wayrest - ..." - the host's `patronName` (`livingPatronName`: the town's LivingTown's `patronOfSale`, the one who
-  walks in, where it stands, else "a townsperson of" it).
+  walks in, where it stands, else "a townsperson of" it). AUDIT LW-II-2 W4/H4: off the households alone, kept by day
+  - each name read a whole cold day of the town (its trips, its visitors, its news) and put the street's own day out of
+  the town's memory: a render of a day's sales cost up to 249 ms in one frame.
 - Not built: INSIDE (8.2 of the design) - a patron or a browser goes in at the house's door and comes out; the town is
   still never inside a player's home. The town's talk of a good find at the player's house is LW16's.
 
@@ -1045,7 +1060,11 @@ the host's is `scenes/world.js` (the visits, worked a slice a frame).
   visit whose town's news had a day still asked (it was kept partial for good). While the word is worked again the town
   tells the one it had (B11: the strangers' regard and words blinked out for the frames the working took); a working
   that throws ends partial, never wedging the slice (B13). The towns' visitors and told trips are kept while the roads'
-  memo stands, made again with a new network or a turn of fate (`livingWordFresh`).
+  memo stands, made again with a new network or a turn of fate (`livingWordFresh`), or when the band-less troubles are
+  read again (AUDIT LW-II-2 H3). AUDIT LW-II-2 W7: B11 holds at the day's turn too - a town's word done is kept as its
+  last, and the next day tells it until its own is done (the word blinked out at each day's turn, hourly online). H7:
+  the word is worked in the modal frame too (a town first asked from indoors told none). W10: the word is read through
+  `carriedOf` alone (a `_roads.carried` path no producer set is gone, and the pins drive the game's own).
 - Measure (`tools/livingPerfProbe.mjs` "THE WORD CARRIED", the 81-town synthetic map, each town cold): the whole word
   70-85 ms - in one frame that was a hitch, the base day read itself 45-50 ms cold - now in at most 1,352 slices, the
   worst 3-6 ms (a collection lifts one to 15 now and then); the word told, a minute's read, 0.05 ms - AUDIT LW-II B3:
@@ -1058,7 +1077,8 @@ the host's is `scenes/world.js` (the visits, worked a slice a frame).
 - `scenes/world.js`: WIRED (the visits worked, `carriedOf`, a town's news at any minute `livingRoadNewsAt`, the talk's
   regard by the repute).
 - `scenes/caravanHost.js`: the robbery's tale on its charge; the report names the one robbed.
-- `scenes/worldModes.js`, `scenes/dungeonContext.js`, `scenes/exterior.js`: none.
+- `scenes/worldModes.js`, `scenes/dungeonContext.js`: none of their own - the word is worked in world.js's modal
+  frame, which serves their rooms and dungeons (AUDIT LW-II-2 H7). `scenes/exterior.js`: none.
 
 Moved pins: `lw6d_word` and `lw12_outlaws` (TALE_KINDS' `held`; `deedNews` of any town), `lw7_deeds` (the town's
 news at any minute), `lw8b_talk` (a stranger's word of a deed heard), `lw11_caravan` (the report names the one
@@ -1074,6 +1094,13 @@ draw, the old law replayed, the opener, a robbery's words); the living town (any
 region, the word in its talk, the repute, a stranger's regard and word, the host's word once worked); the host's
 seams. `test/lw11_caravan.test.js` (the tale on the charge, void none, a murder none). Mutants:
 `tools/mutants/lw16.json` (73).
+
+AUDIT LW-II-2: `test/auditlwii2_town.test.js` (11), `tools/mutants/auditlwii2_town.json` (32). A token that opens a
+sentence opens it with a capital (`lines.js fillLine`, W8/C11: a band's "the" - "the Crooked Fangs have a camp ..."). Moved:
+`lw15_patrons` (the online gate, the plan's guard; the buyer and the walker by place), `lw16_word` (the word through
+`carriedOf`; the done line, `carriedAt`, the open world's step by its comment), `lw12_outlaws` (the warning's capital);
+re-aimed by content: `lw15.json` town-replan, host-online, B12-holders, B12-named, `lw16.json` host-word, `lw1.json`
+token-fallback.
 
 ## 10. Found on the way (not changed by this design)
 

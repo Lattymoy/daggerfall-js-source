@@ -106,6 +106,36 @@ All FIXED:
 - **P1, P3 - PINNED**: P7's door in a town of two traders; a listing's first whole hour and its expiry; a guild's hall
   never a patrons' trader. The P lane's four records carried, all dead.
 
+## W (with H4, H7, H8, C11, P12) - the patrons seen and the word (`test/auditlwii2_town.test.js`, 11; `auditlwii2_town.json`, 32)
+
+All FIXED:
+
+- **W1 (HIGH) - a port town with any patron word replanned every crew hand at every read.** LW15 compared each plan's
+  patron version, and a crew hand's plan carried none: every read of every frame made it again, and the day's
+  incidents and walks with it - a port's frame twice as dear. FIXED: only a plan that read the word compares it.
+- **W2 - the buyer was dealt over the people holding the places, which read this character's own turns**: a
+  householder this reader struck down moved nearly every sale of the town to someone else on that reader alone.
+  FIXED: dealt to a household's place over the census, then whoever holds it here; an empty place walks none.
+- **W3 / H8 - one read clock for every region**: a region come to by a journey stood unread up to ten minutes, a read
+  asked while one was out was dropped, a failed one waited the full ten. FIXED: each region its own clock, a region
+  asked while busy remembered, a failure tried again in a minute.
+- **W4 / H4 - the Vendor page read a whole cold town day for every sale it named** (up to 249 ms a render), and put
+  the street's own day out of the town's memory. FIXED: off the households alone, kept by day.
+- **W5 - any new sale replanned the whole town in one frame** (37 ms on a 4x4 town). FIXED: each plan signed with what
+  it read of the word; only the plans whose own word moved are made again.
+- **W7 - B11 failed at the day's turn**: the carried word blinked out while the new day's was worked. FIXED: a town's
+  word done is kept as its last. **H7 - the word was never worked indoors.** FIXED: worked in the modal frame too.
+- **W8 / C11 - a band's "the" opened sentences in lower case.** FIXED: a token that opens a sentence is capitalised.
+- **W10 - two pins tested shapes no producer mints**: the word through a `_roads.carried` nobody set, and the dropped
+  errands at a pace no patron walks. FIXED: the word through `carriedOf`; the drop pinned online too (4.03%; the
+  record's 3.5% re-measured).
+- **W11 - the patrons were read in the wilderness**, the region reckoned for nobody. FIXED: only while a living town
+  stands.
+- **P12, P17 - PINNED**: the host's visit shape (`inT` the coming in); the heard greeting's pick, a rout's known minute,
+  the read's 600 s, a sale's minute's range, a browser's any trader. The P lane's records carried, all dead.
+
+Recorded, not changed (W9, a record): the stranger's repute regard moves nothing a player sees.
+
 ## C and H (with P2, P5, P11) - the outlaws (`test/auditlwii2_outlaws.test.js`, 10; `auditlwii2_outlaws.json`, 47)
 
 All FIXED:
