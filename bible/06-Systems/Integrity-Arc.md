@@ -6,9 +6,9 @@ points, or using fatigue; do infinite damage in PvE and max damage in PvP; spawn
 you want". Read against the code, then: "I want to do everything and do it properly".
 
 **Status: lane 1 (the economy, INT1-INT6) BUILT and AUDITED (2026-10-09, section 4b: five reviews, every fix pinned) and
-merged (#730); lane 2 (PvP refereed everywhere, INT7-INT10) BUILT and AUDITED on its branch the same day (section 5,
-5b).** Lanes 3-4
-are the plan below, each its own pull request (Mac: "A PR per lane").
+merged (#730); lane 2 (PvP refereed everywhere, INT7-INT10) BUILT and AUDITED the same day (section 5, 5b) and merged
+(#737); lane 3 (boss fights, INT11-INT15) BUILT 2026-10-10 on its branch (section 6), measuring first.** Lane 4 is the
+plan below, its own pull request (Mac: "A PR per lane").
 
 ## 1. What the report found, read against the code
 
@@ -445,11 +445,129 @@ loser's report, the mutual draw, the duel's heal - which are the referee's now. 
 BAG-CRAFT, then past the Chapters' acct103 and migrations 0098-0103, at the merges); `RELAY_VERSION` world185 (world183,
 then world184, on its branch, renumbered past CHAP4c's and PERF-RELAY1's at the merges).
 
-## 6. Lane 3 - boss fights (planned)
+## 6. Lane 3 - boss fights (INT11-INT15)
 
-The relay holds each player's health in a gate, a serpent fight and an Abyss Dungeon and judges the boss's blows against
-the poses it already holds (`net/gateStrike.js`'s test, run where the client cannot skip it). A player the relay counts
-fallen is fallen - the spoils' "alive through half the fight" is the relay's word.
+**Built 2026-10-10** (Mac: "Do it", to this plan; asked what the relay believes of the healing it cannot see: "Measure,
+then enforce"). In a gate's court, an Abyss Dungeon's realm and a serpent's waters the relay judges the boss's blows
+itself, on the poses it already holds, by each fight's own strike law (`net/bossRef.js`), and keeps its own count of
+each fighter's body - a ship's hull at sea (`net/bossBody.js`). The count MEASURES first: each boss receipt carries what
+it saw (`m`), the account service keeps it, and staff read it; nobody falls by it until staff set the relay's line. The
+world stays the client's (section 2): the blow on this screen, the potion drunk, the save.
+
+### What lane 3 found
+
+Each fight's blows were judged on the struck player's machine alone - `net/gateStrike.js` ("The relay never learns who
+was struck; it did not need to"), `net/sdStrike.js`, `systems/serpentStrike.js` ("The relay never learns a ship's
+hurts") - and the relay's one word of a death was the pose's `dd`, the client's own. So the spoils' "stood alive half the
+fight" was the client's word, a client that took no blow stood every fight out, and one that took none could carry a
+fight alone (the serpent: "one ship alone still can't" held only for ships that took its blows).
+
+### The call: what the relay can believe
+
+A boss's blows are a share of the struck player's own health, and what softens them lives on the client: a potion (no
+cooldown here), a Heal, a Shield's pool, a set's halving (Malacath's Unbroken), a death save, an element's saving throw
+(`systems/spellcast.js` savingThrow - a career's Immune, a resisting affix, a Resist spell, stacking to the whole), a
+brace and a carpenter's patch at sea. The relay sees none of it. Asked (2026-10-10) whether to measure the healing it
+cannot see first, to cap healing in boss fights as a new rule, or to enforce a generous budget at once, Mac chose
+"Measure, then enforce" - lane 1's wealth budget's law (section 3, call 2).
+
+### INT11 - the body counted (`net/bossBody.js`), the gate judged (`net/bossRef.js` judgeGate)
+
+- **The count.** Each fighter's record in its fight keeps `bd`: the relay's count `v` (a share of the whole, 1 at its
+  first blow), its mend budget, and its measure. A blow the relay judged takes its share off `v` (bodyStruck); the blow
+  that takes it to nothing is the count's FALL - counted (`w`), the first one's stood time and damage kept.
+- **The client's word (`vt`, thousandths of its whole).** A word that says MORE than the count claims the difference as
+  a mend, believed out of a budget that fills `perS` a second to `depth` (bodySaid); what the budget cannot pay is left
+  unmet, and each rise of it is claimed PAST THE LINE (`o`) once, however often the word comes. A word that says LESS
+  claims nothing and lowers nothing: a blow the client took and said before the relay judged it would otherwise be taken
+  twice, and a hurt the relay never counted (an element's, a pool's, a fall's) is the client's to heal. A tab that never
+  says its body measures nothing (`sd` - its count would read falls that never were).
+- **What is counted:** the blows no saving throw answers - a plain blow (the Cleave, the Slam, the Charge, the Leap, the
+  Bound Across the Fire, a Harrier's Bite), and Dagon's Wrath and Reckoning, whole. An element's blow is the client's
+  (`blowOf`'s `saved`): a lawful character can be immune, so the count takes it as the immune would - nothing. A share
+  is the blow's `pct` alone; its `base` points need a maximum health the relay does not hold. Burning ground is never
+  counted.
+- **In the struck player's favour, always.** A landing is judged BODY_AFTER_MS (400) after it, so the first pose after it
+  has come; a body is struck only standing BODY_MARGIN (1.5 m) deep in the shape both where its last pose before the
+  landing put it and where its first after does (the relay's trail of each body's poses, BODY_TRAIL_MS) - a body that
+  stepped out as it landed, or in after, is not struck. The charge is judged down its lane each beat of its run, where
+  the body stood at the beat's two ends. Each blow is judged once (its record marked, `bj`; a run's struck, `bh`), so a
+  fight woken from its checkpoint judges nothing twice.
+- **The census as the count has it** (bodyCensus): a death the fight saw (`dd`) is noted; alive again is a new life -
+  whole, its budget full, its measure kept.
+
+### INT12 - the Abyss Dungeon (`net/bossRef.js` judgeRemnant)
+
+The Stomp's disc at its landing (never its rolling ring - a jump lets it pass, and a pose says no ground), the Gear
+Volley's marks, the Hour-Hand over its sweep each body once (a pillar between it and where it was cast spares it, at
+any height), and the Hour's own - the Mantella Pulse, the Reset while its Hearts stand at its landing, the Hour's End -
+over the whole arena at once (never the Steps). A blow its Hollow's marks gave an element is the client's, as at the
+gate. The census keeps SD-ONELIFE: no new life in the Hour.
+
+### INT13 - the serpent, on her hull (`net/bossRef.js` judgeSerpent)
+
+The count is a ship's HULL's, not a body's: every hurt the serpent does a hull is counted (a hull keeps no save) at the
+fleet's share (`fleetShare` - a pair's two thirds). Its blow at its landing (the ram down its lane over its run), the
+coil's grip each second on the ship it closed about - her captain's pose deep in its ring as it landed (her `esc` is her
+word; the ring is the relay's) - and its crush as it lets her go crushed, and the Maelstrom's eye grinding her. Only a
+ship of her own, afloat (a hand on another's deck is no hull here, a wreck is struck no more). Her place is her
+captain's pose: the relay holds no footprint, so her bow and stern are never struck by it - the favour again. Her mend
+line is the sea's own repairs under fire beside the free mending, twice over (BODY_DEFAULT's `hull`), and a wreck by the
+count floats again past HULL_REFLOAT, the sea's FIELD_REFLOAT (pinned equal).
+
+### INT14 - the measure kept and read
+
+- Each boss receipt (`r1`, `h1`, `l1`) carries the fighter's measure as `m` (bodyMeasure): [counted, believed, claimed
+  past the line] in thousandths, the count's falls, whether the receipt would have stood had its first fall been a fall
+  (the fight's own earning law asked of the fighter as it stood then), and its seconds stood. Optional - a receipt before
+  it carries none; every reader refuses a malformed one.
+- Migration `0105_body`: each kill row (`gate_kills`, `sd_kills`, `serpent_kills`) keeps it as `body`.
+- `/v1/mod/realm-bodies` (review.js bodiesMeasure, a developer's alone) answers each fight's receipts, the mends each
+  claimed a minute it stood by quantile and at most, how many claimed past the line, fell by the count, and would have
+  lost their receipt; `node tools/realmReview.mjs bodies [days]` asks it.
+- **THE LINE IS THE RELAY'S** - its `BOSS_BODY` var (`server/wrangler.toml`), JSON `{enforce, body: {depth, perS},
+  hull: {depth, perS}}` (bodyConfig). Empty is BODY_DEFAULT, which enforces nothing; a line it cannot read whole is the
+  default, never something nobody chose. Its first numbers - a whole body held and one more every 20 s; the hull's above
+  - are guesses the measure exists to replace: **OPEN**.
+
+### Enforced (once staff set `enforce`)
+
+A body the count takes to nothing is fallen by the relay's word: dead in the census (it stands no time, is chosen no
+more, its fall counted and fed as a `dd` is), its blows land nothing (bodyOut), and its game is told (`bd`) - the gate's
+court or the Hour's dies by the zone referee's door (`forcePlayerDeath`: no death save, no AvoidDeath). A fallen body
+mends no more; a new life comes only BODY_RISE_MS (15 s) after a death the fight saw. In the Hour the count's fall takes
+its one life (the realm's dead, as a `dd` does). At sea the count's wreck is a wreck (serpentWreck: her share out, her
+coil let go), `bd` wrecks her own ship on her machine (her whole hull, as a blow), her own `wr 0` is not heard and her
+volleys land nothing until the count floats her again.
+
+### INT15 - the clients
+
+Each fight's client says its body at most every BODY_SAY_MS (250), at once when it moves a thousandth, every
+BODY_SAY_KEEP_MS (3 s) however still (bodySayer): the court's (`scenes/gateCourt.js` sendBody) while it stands alive in
+a fight that lives, the Hour's through its realm's socket while the fight answered it, the serpent's host her hull
+through her cell. Only to a relay that counts (`BOSS_REF_RELAY_MIN` 186 - an older one's words know no `vt`). No
+brain's version moved: a tab from before it says no body, is refused nothing, and measures nothing.
+
+### Decisions (2026-10-10)
+
+1. **The healing the relay cannot see** - Mac: "Measure, then enforce" (asked; above).
+2. **What the count leaves out, in the struck player's favour** (this lane's): an element's blow and its burning ground
+   (a lawful character can be immune), a blow's `base` points, the Stomp's ring, a ship's bow and stern. The count is
+   what a body took at the least.
+3. **A silent tab measures nothing**, and no client is made to reload for this: its count is kept and its receipt carries
+   no measure, so no line is set from a tab that believed no mend.
+
+### What lane 3 leaves open
+
+- **An element is the client's.** A modified client is as tough against a fight's element as a lawful build immune to it,
+  and stands in its fire. The relay would need the judged pack's tolerances and resistances signed, as INT7 signed the
+  arms - and a Resist spell cast in the fight would still be the client's.
+- **The line is a guess** until the measure says otherwise; while it only measures, a client that takes no blow still
+  stands the fight out - its receipt says so (`w`, `k`).
+- **Once enforced, a heal past the line is a fall** while the screen says alive - the measure exists so that the line is
+  set past what honest play claims.
+- **A death save** (a set's turned killing blow) is a mend to the count, out of the budget like any other.
+- **The serpent's venom on a body** is not counted: a body's death at sea stays its own `dd`.
 
 ## 7. Lane 4 - progression claims (planned)
 
@@ -481,3 +599,11 @@ the clock, and the legacy record held to its own law.
   marked PIN MOVED where it stands): DUEL1's and WILD1's defender, gift and loser's report, the duel's heal and trail,
   the deposit that needs the service's order, the token's `wa`, the order kinds, the hour's sweeps (twenty), the version
   pins at acct104 and world185. The account Worker bundles the zone's drop law (`.github/workflows/account-deploy.yml`).
+- **INT11-INT15 (2026-10-10): lane 3, boss fights - built, measuring first (section 6).** Migration `0105_body` (each
+  boss kill's row keeps the relay's measure); `ACCOUNT_VERSION` acct105 and `RELAY_VERSION` world186 (`net/bossBody.js`,
+  `net/bossRef.js`, `net/gateStrike.js` with `world/segment.js`, and `systems/serpentStrike.js` join the relay's bundle;
+  `net/bossBody.js` the account Worker's, through the receipts). Pins: `test/int11_body.test.js` (the law and the three
+  judges), `test/int12_body_relay.test.js` (the relay over the real Room, measured and enforced; the receipts; the
+  service and the review; the client's glue). Mutants `tools/mutants/int_lane3.json`. Pins moved (each marked PIN MOVED
+  where it stands): the gate's, the Abyss Dungeon's and the serpent's word kinds (`vt` in, `bd` out), the Hour's census
+  and its receipts' and the gate's receipts' mint by source, the version pins at acct105 and world186.

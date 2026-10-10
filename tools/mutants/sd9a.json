@@ -137,20 +137,22 @@
   {
     "name": "SD9A-spent-unknown",
     "file": "src/net/wire.js",
-    "old": "'ehit', 'xhit', 'spent']);",
-    "new": "'ehit', 'xhit']);",
+    "old": "'ehit', 'xhit', 'spent', 'vt']);",
+    "new": "'ehit', 'xhit', 'vt']);",
     "tests": [
       "test/sd9a_receipt.test.js"
-    ]
+    ],
+    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. "
   },
   {
     "name": "SD9A-rcpt-unknown",
     "file": "src/net/wire.js",
-    "old": "'lost', 'no', 'rcpt']);",
-    "new": "'lost', 'no']);",
+    "old": "'lost', 'no', 'rcpt', 'bd']);",
+    "new": "'lost', 'no', 'bd']);",
     "tests": [
       "test/sd9a_receipt.test.js"
-    ]
+    ],
+    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. "
   },
   {
     "name": "SD9A-spent-any-slot",
@@ -227,11 +229,12 @@
   {
     "name": "SD9A-minted-after-the-fall-was-said",
     "file": "server/src/index.js",
-    "old": "    for (const sub of Object.keys(f.players).filter((x) => earned(f, x))) {\n      try { f.rc[sub] = await mintSdReceipt({ d: f.s, s: sub, c: rand32(), x: earnedBy(f, sub), l: f.players[sub].lv }, key, { subtle: crypto.subtle, nowS }); }\n      catch (e) { console.warn('[sd] receipt refused', e?.message ?? e); }\n    }\n    f.said = true;   // kept before it is said\n    // who stood in the realm at the kill - their spoils are its floor's, so the hub hands their other tabs nothing first\n    f.here = [...new Set([...this._all()].filter(([, b]) => b.id && b.sub && f.rc[b.sub]).map(([, b]) => b.sub))].slice(0, SD_FIGHTERS_MAX);\n    await this._sdFightSave(f, now, true);\n    this._sdFightFan([{ k: 'fell', ...f.fell }]);   // its moment, its best three, its count, its chart\n",
-    "new": "    f.said = true;   // kept before it is said\n    await this._sdFightSave(f, now, true);\n    this._sdFightFan([{ k: 'fell', ...f.fell }]);   // its moment, its best three, its count, its chart\n    for (const sub of Object.keys(f.players).filter((x) => earned(f, x))) {\n      try { f.rc[sub] = await mintSdReceipt({ d: f.s, s: sub, c: rand32(), x: earnedBy(f, sub), l: f.players[sub].lv }, key, { subtle: crypto.subtle, nowS }); }\n      catch (e) { console.warn('[sd] receipt refused', e?.message ?? e); }\n    }\n    f.here = [...new Set([...this._all()].filter(([, b]) => b.id && b.sub && f.rc[b.sub]).map(([, b]) => b.sub))].slice(0, SD_FIGHTERS_MAX);\n",
+    "old": "    for (const sub of Object.keys(f.players).filter((x) => earned(f, x))) {\n      try { f.rc[sub] = await mintSdReceipt({ d: f.s, s: sub, c: rand32(), x: earnedBy(f, sub), l: f.players[sub].lv, ...this._bodyMeasureOf(f, sub, earned) }, key, { subtle: crypto.subtle, nowS }); }   // INT14: the count's measure\n      catch (e) { console.warn('[sd] receipt refused', e?.message ?? e); }\n    }\n    f.said = true;   // kept before it is said\n    // who stood in the realm at the kill - their spoils are its floor's, so the hub hands their other tabs nothing first\n    f.here = [...new Set([...this._all()].filter(([, b]) => b.id && b.sub && f.rc[b.sub]).map(([, b]) => b.sub))].slice(0, SD_FIGHTERS_MAX);\n    await this._sdFightSave(f, now, true);\n    this._sdFightFan([{ k: 'fell', ...f.fell }]);   // its moment, its best three, its count, its chart\n",
+    "new": "    f.said = true;   // kept before it is said\n    await this._sdFightSave(f, now, true);\n    this._sdFightFan([{ k: 'fell', ...f.fell }]);   // its moment, its best three, its count, its chart\n    for (const sub of Object.keys(f.players).filter((x) => earned(f, x))) {\n      try { f.rc[sub] = await mintSdReceipt({ d: f.s, s: sub, c: rand32(), x: earnedBy(f, sub), l: f.players[sub].lv, ...this._bodyMeasureOf(f, sub, earned) }, key, { subtle: crypto.subtle, nowS }); }   // INT14: the count's measure\n      catch (e) { console.warn('[sd] receipt refused', e?.message ?? e); }\n    }\n    f.here = [...new Set([...this._all()].filter(([, b]) => b.id && b.sub && f.rc[b.sub]).map(([, b]) => b.sub))].slice(0, SD_FIGHTERS_MAX);\n",
     "tests": [
       "test/sd9a_receipt.test.js"
-    ]
+    ],
+    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. "
   },
   {
     "name": "SD9A-here-the-whole-realm",

@@ -93,6 +93,21 @@ GATE_DISCORD_ROLE = "1555589839825670258"
 # LEGAL STATE: the bells ping the gate's role (GATE_DISCORD_ROLE); name
 # one here to give the serpent its own.
 SERPENT_DISCORD_ROLE = ""
+# ═══ INT11-INT14: THE LINE THE BOSS FIGHTS' COUNT RUNS BY ════════════
+#
+# The relay counts each fighter's body in a gate, an Abyss Dungeon and
+# a serpent's fight (src/net/bossBody.js), and believes the healing a
+# client says it did out of a budget. MEASURE FIRST (Mac, 2026-10-10:
+# "Measure, then enforce"): EMPTY IS THE DEFAULT LINE, which ENFORCES
+# NOTHING - each boss receipt carries the count's measure and the
+# account service keeps it (`node tools/realmReview.mjs bodies 7`).
+# Staff set the line here once the measure says where, as JSON:
+#   {"enforce": true, "body": {"depth": 1, "perS": 0.05},
+#    "hull": {"depth": 0.15, "perS": 0.012}}
+# (bodyConfig: anything it cannot read whole is the default, which
+# enforces nothing). Changing it redeploys this Worker and drops every
+# connected player once.
+BOSS_BODY = ""
 
 # ═══ WB3: THE RELAY'S ONE SECRET ═══════════════════════════════════
 #

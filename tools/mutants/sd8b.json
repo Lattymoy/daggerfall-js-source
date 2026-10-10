@@ -138,11 +138,12 @@
   {
     "name": "SD8B-the-dead-strike",
     "file": "server/src/index.js",
-    "old": "    const pose = a.pose && !a.pose.dd ? this._arenaPoseOf(a.pose) : null;",
-    "new": "    const pose = a.pose ? this._arenaPoseOf(a.pose) : null;",
+    "old": "    const pose = a.pose && !a.pose.dd && !bodyOut(f.players[a.sub], line.enforce) ? this._arenaPoseOf(a.pose) : null;",
+    "new": "    const pose = a.pose && !bodyOut(f.players[a.sub], line.enforce) ? this._arenaPoseOf(a.pose) : null;",
     "tests": [
       "test/sd8b_fight.test.js"
-    ]
+    ],
+    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. "
   },
   {
     "name": "SD8B-a-blow-before-in-not-junk",

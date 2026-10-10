@@ -182,6 +182,16 @@ off the fallen's judged record, never handed over by the fallen's game.
 Every spell between players is capped by a referee. The bosses (lane 3)
 are next.
 
+INT11-INT15 (2026-10-10, the same arc's lane 3; Mac: "Measure, then
+enforce"): in a GATE's court, an ABYSS DUNGEON's realm and a SERPENT's
+waters the relay now judges the boss's blows itself on the poses it holds
+(`src/net/bossRef.js`, each fight's own strike law) and keeps its own
+count of each fighter's body - a ship's hull at sea (`src/net/bossBody.js`).
+The client's word of its body is believed as a mend out of a budget. The
+count MEASURES first: each boss receipt carries what it saw, and nobody
+falls by it until staff set the relay's line. The world itself - the
+boss's blow on this screen, the potion, the save - is still the client's.
+
 ### The state model is the save
 
 `systems/save.js` already knows how to snapshot the world and restore

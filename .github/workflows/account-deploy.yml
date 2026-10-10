@@ -88,6 +88,7 @@ on:
       - "src/systems/itemTemplatesData.js"
       - "src/net/raidLaw.js"
       - "src/net/gateReceipt.js"
+      - "src/net/bossBody.js"
       - "src/net/legalLaw.js"
       - "src/net/raidReceipt.js"
       - "src/net/serpentReceipt.js"

@@ -446,11 +446,12 @@
   {
     "name": "SD11c-G3-the-slot-unread",
     "file": "src/scenes/world.js",
-    "old": "    const slot = modes?.sdRealmSlot?.();\n    if (!sdFightLink || slot == null",
-    "new": "    const slot = 0;\n    if (!sdFightLink || slot == null",
+    "old": "    const slot = modes?.sdRealmSlot?.();\n    if (w?.k === 'bd') { bossCountFell(slot != null); return; }   // INT12: the relay's count's fall of me - the Hour's one life\n    if (!sdFightLink || slot == null",
+    "new": "    const slot = 0;\n    if (w?.k === 'bd') { bossCountFell(slot != null); return; }   // INT12: the relay's count's fall of me - the Hour's one life\n    if (!sdFightLink || slot == null",
     "tests": [
       "test/sd11c_page.test.js"
-    ]
+    ],
+    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. "
   },
   {
     "name": "SD11c-G3-another-slots-whole-state",

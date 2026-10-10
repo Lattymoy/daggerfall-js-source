@@ -464,11 +464,12 @@
   {
     "name": "SD11b-L8G8-the-dead-flag-unread",
     "file": "server/src/index.js",
-    "old": "const c = this._arenaPoseOf(b.pose); return { sub: b.sub, x: c.x, z: c.z, dead: !!b.pose.dd }",
-    "new": "const c = this._arenaPoseOf(b.pose); return { sub: b.sub, x: c.x, z: c.z, dead: false }",
+    "old": "const c = this._arenaPoseOf(b.pose); return { sub: b.sub, x: c.x, z: c.z, dead: !!b.pose.dd, tr:",
+    "new": "const c = this._arenaPoseOf(b.pose); return { sub: b.sub, x: c.x, z: c.z, dead: false, tr:",
     "tests": [
       "test/sd11b_relay.test.js"
-    ]
+    ],
+    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. "
   },
   {
     "name": "SD11b-L8G11-the-refusals-unsaid",
