@@ -84,24 +84,28 @@ test('audit24 combat: the bow RISE edge, the tracking reset, and the angle sign'
   // "after the button was RELEASED since the last shot"
   // (lastAttackHand == Hand.None), so an OR - or a missing edge - turns
   // one held button into a machine gun.
+  // PIN MOVED (BOW-CLOCK, FIELD BUGS 2026-10-09g): onto the DRAWN bow, which
+  // keeps the edge. The instant shot (BowDrawback off) repeats while held now -
+  // the owner's departure, pinned in fb1009g_bowclock.test.js.
+  const DRAWN = { bowDrawback: true };
   const bow = new PlayerWeapon({ weapon: { name: 'Long Bow', templateIndex: 130 }, liveSpeed: 50 });
   bow.sheathed = false;
   bow.update(0);
   assert.equal(bow.machine.isBow, true, 'a bow is a bow');
-  assert.equal(bow.gesture(0, 0, true, 1 / 60, DIM), 'StrikeDown', 'the press fires');
-  // and hold it for well past the cooldown (~1.33s at liveSpeed 50) -
-  // the cooldown alone would mask a missing edge for the first second
+  assert.equal(bow.gesture(0, 0, true, 1 / 60, DIM, DRAWN), 'StrikeUp', 'the press draws');
+  for (let i = 0; i < 30; i++) bow.update(1 / 60);
+  assert.equal(bow.gesture(0, 0, false, 1 / 60, DIM, DRAWN), 'StrikeDown', 'the release looses');
+  // press again at once and hold it for well past the cooldown (~1.33s at
+  // liveSpeed 50) - the cooldown alone would mask a missing edge for the first second
   let extra = 0;
   for (let i = 0; i < 200; i++) {
     bow.update(1 / 60);
-    if (bow.gesture(0, 0, true, 1 / 60, DIM)) extra++;
+    if (bow.gesture(0, 0, true, 1 / 60, DIM, DRAWN)) extra++;
   }
   assert.equal(extra, 0, 'HOLDING it fires nothing more - the edge is the whole rule');
   // release, then press again
-  assert.equal(bow.gesture(0, 0, false, 1 / 60, DIM), null, 'the release itself fires nothing');
-  // the bow cooldown at liveSpeed 50 is ~1.33s - clear it properly
-  for (let i = 0; i < 120; i++) bow.update(1 / 60);
-  assert.equal(bow.gesture(0, 0, true, 1 / 60, DIM), 'StrikeDown', 'and the NEXT press fires again');
+  assert.equal(bow.gesture(0, 0, false, 1 / 60, DIM, DRAWN), null, 'the release itself fires nothing');
+  assert.equal(bow.gesture(0, 0, true, 1 / 60, DIM, DRAWN), 'StrikeUp', 'and the NEXT press draws again');
 
   // THE TRACKING RESET is `if (!this._tracking)` - the frame tracking
   // STARTS clears the trail, so motion from before the button went
