@@ -182,8 +182,9 @@ heirlooms - section 7) and the remains always lie where the fallen fell.
 **ENDURING (not permadeath) - the answer to "somehow a persistent model".** A death is not final, but it is not free:
 it costs YEARS. Every member has an age and a span (THE SPAN: Breton, Nord 90, Redguard 80, Khajiit, Argonian 85,
 Wood Elf 150, Dark Elf 180, High Elf 200), born at a quarter of it. A death in Enduring is ARKAY'S TOLL: the player
-rises as the online respawn rises (D-ONLINE1 - the nearest temple, town or graveyard) - offline too, with no purse
-taken and no revenant's theft (the offline arm keeps the toll alone - AUDIT LEGACY II F5 corrected this line),
+rises as the online respawn rises (D-ONLINE1 - the nearest temple, town or graveyard) - offline too, with no
+revenant's theft (AUDIT LEGACY II F5 corrected this line; BAL4, 2026-10-10, `05-Combat/Balance-Arc.md` section 6: and
+the online respawn's tenth of the purse, stated on a death screen that says Rise - it was the toll alone),
 where the classic death would end the run - and the member is older by 6% of their span (its Features tile: Light 4%,
 Standard 6%, Heavy 10%). The years also pass as they live (the character's own clock, LIVED1: 360 days a year). At
 three quarters of the span the card names them an ELDER and the HUD says so, once a load. When the span is spent, the next death

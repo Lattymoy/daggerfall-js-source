@@ -107,7 +107,7 @@ wait for the Enhanced AI switch; the rest work without it (section 2.1).
 6. **Narrow patterns.** Three shapes, one fixed length each, no tracking, no feints, no follow-ups.
 7. **Tier gaps.** FACT: `ai/foeBlows.js blowTier` is `level >= 10 || elite || eliteFoe`. A champion
    (`systems/champions.js`, `entity.champion`) never passes it below level 10; elites (`entity.eliteFoe`) are
-   online-only (`eliteFoes.elitesAllowed`); and most revenants miss it - a monster revenant keeps its kind's level
+   online-only (`eliteFoes.elitesAllowed`; offline too wherever the loot ladder stands since BAL4, 2026-10-10); and most revenants miss it - a monster revenant keeps its kind's level
    (Grizzly 4, Spider 4, Orc 5, Werewolf 6, Orc Sergeant 7, Wereboar 8, Skeletal Warrior 9), a class revenant stands at
    the player's level + 2 a rank. Meaner Monsters rewrites levels too (its Orc is 6).
 8. **No defence but walking out.** FACT: the player has no block, parry or dodge - the Shield Widget's

@@ -117,6 +117,7 @@ import { runSurvivalMinutes, clearSurvivalMods, pauseSurvival } from './survival
 import { installSurvivalIcons } from './survival/items.js';   // SURV2: the templates register at its import; the icons here
 import { installThunderlockIcons } from './thunderlock.js';   // THUNDERLOCK: same wire - the import IS the registration (AUDIT-THUNDERLOCK F1)
 import './ayleidStones.js';   // LOOT21: the Ayleid stones - their rows, their late finds and their uses register at its import
+import './gems.js';   // GEM2: the graded gems - their rows and the world's gem find register at its import
 import { installSurvivalLoot } from './survival/loot.js';
 import './cardSources.js';   // CARDS9: where cards come from - a foe's card at its death, the pack's Use and template, registered at its import (the Ayleid stones' wire: AUDIT-THUNDERLOCK F1)   // SURV2: the corpse's food
 import { survivalOn, corpseFoodOn } from './survival/switch.js';   // SURV2: the one switch; CORPSE-FOOD: and the body's food, the room's online

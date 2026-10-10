@@ -18,7 +18,7 @@
 // PURE but for the item minters - the hosts call in.
 import { createRandomWeapon, createRandomArmor } from './loot.js';
 import { mintCondition, setItemFields } from './itemTemplates.js';
-import { applyRarity, rarityEligible, rarityChances, championSource, corpseSource } from './lootRarity.js';   // ELITE-RARE: the champion's blue the elite's Rare is read off
+import { applyRarity, rarityEligible, rarityChances, championSource, corpseSource, lootRarityOn } from './lootRarity.js';   // ELITE-RARE: the champion's blue the elite's Rare is read off; BAL4: the ladder's switch, offline
 import { goldStack } from './inventory.js';
 import { isAmmunition } from './itemTemplates.js';
 import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';   // ELITE-FLOOR: the watch is never an elite
@@ -71,9 +71,12 @@ export const eliteEligible = (entity, { checkLevel = true } = {}) => !!entity
   && entity.mobileType !== KNIGHT_CITY_WATCH
   && entity.team !== 'PlayerAlly' && entity.mobileTeam !== 'PlayerAlly';
 
-/** ONLINE ONLY (Mac: "elite enemies are online mode only"): elites stand in online play alone - an online page, or a
- *  host in a room. Offline and single-player, no foe is ever an elite. */
-export const elitesAllowed = ({ onlinePage = false, inRoom = false } = {}) => !!(onlinePage || inRoom);
+/** Where elites stand: online - an online page, or a host in a room - always; and BAL4 (bible/05-Combat/Balance-Arc.md
+ *  section 6; Mac, 2026-10-10: "Do everything", of "smarter AI and elites offline") offline too, wherever the loot ladder
+ *  is on - an elite's drop is the ladder's (eliteLoot's tiers), so with the ladder off no foe is ever one and the 1:1
+ *  lane is DFU exactly, as a champion's is (systems/champions.js). It was online only (Mac's word, as this comment
+ *  carried it: "elite enemies are online mode only"), until offline was found to field nothing past DFU's own foes. */
+export const elitesAllowed = ({ onlinePage = false, inRoom = false } = {}) => !!(onlinePage || inRoom) || lootRarityOn();
 
 /** Is this entity an elite foe? */
 export const isEliteFoe = (entity) => !!entity?.eliteFoe;
@@ -128,7 +131,7 @@ export function eliteRng(seed) {
  * `eliteFoe: true` in place and answers how many. SD4a: `count` a number of the caller's own - a Super dungeon's
  * SUPER_ELITE_FOES (world/sdDungeon.js).
  */
-export function pickDungeonElites(enemies, key, { elite = true, count = null } = {}) {
+export function pickDungeonElites(enemies, key, { elite = true, count = null, classLevel = Infinity } = {}) {
   if (!Array.isArray(enemies) || !enemies.length) return 0;
   const rng = eliteRng(eliteHash(elite ? 'elite-dungeon' : 'normal-dungeon', key));
   // an Elite Dungeon: 3 or 4; a normal one: at most 1, one time in five; SD4a: a Super dungeon its own `count` (six)
@@ -137,8 +140,11 @@ export function pickDungeonElites(enemies, key, { elite = true, count = null } =
     : (rng() < ELITE_FOE_NORMAL_DUNGEON_CHANCE ? 1 : 0);
   const pool = [];
   // ELITE-FLOOR, the same on every client: a kind under the floor by its OWN level never stands as one (a class foe's
-  // level is the party's, built per client, so the floor is the pick's here and promoteEliteFoe is told not to re-ask)
-  const kindLevel = (t) => (t >= 128 ? Infinity : (ENEMY_BASICS[t]?.level ?? 0));
+  // level is the party's, built per client, so the floor is the pick's here and promoteEliteFoe is told not to re-ask).
+  // AUDIT BAL (bible/05-Combat/Balance-Arc.md section 10): `classLevel` the level this dungeon's class foes are built
+  // at - offline one client builds them, so the host hands it and a new character's level-1 Knight is no elite; online
+  // it stays Infinity (each client builds its own, and the pick must be every client's)
+  const kindLevel = (t) => (t >= 128 ? classLevel : (ENEMY_BASICS[t]?.level ?? 0));
   enemies.forEach((e, i) => { if (e && !e.allied && e.reaction !== 'passive' && e.champion == null && kindLevel(e.mobileType) >= ELITE_FOE_MIN_LEVEL) pool.push(i); });   // never a LOOT7 champion (systems/champions.js; its trait index, 0 a trait too) - one or the other
   let n = 0;
   while (n < want && pool.length) {

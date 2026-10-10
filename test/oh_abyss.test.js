@@ -757,12 +757,14 @@ test('AUDIT OH-F B2 loadRebuilds: a load the abyss stands in - the live dungeon 
 test('AUDIT OH-F B1 the drowned dungeon\'s save: a destroyed foe stays gone (no corpse, no respawn), the restore\'s rebuilds settle before the mod loop', () => {
   const dc = src('src/scenes/dungeonContext.js');
   assert.match(dc, /\.\.\.\(f\.abyssDestroyed \? \{ abyssDestroyed: true \} : \{\}\),/, 'collectWorld writes the destroy');
-  const loop = dc.slice(dc.indexOf('function applyWorld('), dc.indexOf('function applyWorld(') + 6000);
+  // PIN MOVED (AUDIT BAL, bible/05-Combat/Balance-Arc.md section 10): the restore carries the saved elites' pre-pass and
+  // arm - the loop is read to its end, and its rebuilds are three (the species', the hour's, the elite's), each collected
+  const loop = dc.slice(dc.indexOf('function applyWorld('), dc.indexOf('return Promise.allSettled(settling)', dc.indexOf('function applyWorld(')));
   const destroyed = loop.indexOf('if (sf.abyssDestroyed) { if (!f.abyssDestroyed) { f.abyssDestroyed = true; questPoolOps.removeFoe(f); } return; }');
   assert.ok(destroyed > 0, 'restored through removeFoe - dead, bodiless, lootless - never setFoeDead\'s corpse');
   assert.ok(destroyed < loop.indexOf('respawnDue(sf.died, _now)') && destroyed < loop.indexOf('patchFoe(f, sf, wire);'), 'before the respawn and the patch');
   assert.match(dc, /if \(f\.abyssDestroyed\) return false;   \/\/ AUDIT OH-F B5\/C1/, 'the hour\'s respawn refuses it');
-  assert.equal((loop.match(/settling\.push\(retypeFoe\(/g) ?? []).length, 2, 'both of the restore\'s rebuilds are collected');
+  assert.equal((loop.match(/settling\.push\(retypeFoe\(/g) ?? []).length, 3, 'every one of the restore\'s rebuilds is collected');
   assert.match(dc, /return Promise\.allSettled\(settling\)\.then\(\(\) => undefined\);/);
   // AUDIT DELVE E2 (THE DELVE ARC): a save laid at another dungeon size than this one's leaves the room's record
   // unapplied (foe i of one layout is not foe i of the other); OH-F B1's law - the rebuilds handed back - stands beside it

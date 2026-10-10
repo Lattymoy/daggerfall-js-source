@@ -143,9 +143,13 @@ export function spoilsList(seed, level, claims = null) {
   // AUDIT CARDS-6 A8: the card's picture is drawn LAST, after the gold's - drawn between the ember's and the gold's, it
   // moved the gold pile's picture off what the seed gave it before CARDS9, in every hoard the card came in
   const card = s.card ? [{ kind: 'item', item: s.card, tier: 'aetheric', record: flat() }] : [];
+  // GEM2 (bible/06-Systems/Gem-Sockets.md section 4): the Warden's gem, its picture drawn after the card's - so every
+  // picture before it is what the seed gave it - and thrown after the card
+  const gems = (s.gems ?? []).map((g) => ({ kind: 'item', item: g, tier: 'common', record: flat() }));
   return [
     ...pieces,
     ...card,   // CARDS9: the Warden's card, after the pieces
+    ...gems,   // GEM2: the Warden's gem, after the card
     ember,
     ...(claims?.r === 1 ? [{ ...ember, item: sigilStone() }] : []),
     gold,

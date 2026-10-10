@@ -317,7 +317,7 @@
   {
     "name": "DAMNED-door-unpassed",
     "file": "src/systems/lootRarity.js",
-    "old": "  damnPass(minted, rolls);   // TRUE-CURSE: a cursed Legendary weapon damned, after every draw the door made (law 9)\n",
+    "old": "  damnPass(minted, rolls);   // TRUE-CURSE: a cursed Legendary weapon damned, after every draw the door made, the gem's too (law 9)\n",
     "new": "",
     "tests": [
       "test/fb1010_truecurse.test.js"

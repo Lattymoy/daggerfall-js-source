@@ -83,9 +83,10 @@ test('TRUE-CURSE: one cursed Legendary weapon in four, over the pass\'s own draw
 test('TRUE-CURSE (AUDIT FB1010 E3): the damning is each door\'s LAST draw (law 9) - after the curse\'s, the socket\'s and the late finds\' - so every other draw a door makes is the one it made before', () => {
   const lr = read('src/systems/lootRarity.js');
   const door = lr.slice(lr.indexOf('export function rollLootRarity'), lr.indexOf('\n}\n', lr.indexOf('export function rollLootRarity')));
-  assert.match(door, /items\.push\(\.\.\.rollLateFinds\(\{ \.\.\.source, luck \}, rolls\)\);[^\n]*\n  damnPass\(minted, rolls\);[^\n]*\n  return items;$/, 'the loot door: last of all');
+  assert.match(door, /items\.push\(\.\.\.\(_gemFind\?\.\(\{ \.\.\.source, luck \}, rolls\) \?\? \[\]\)\);[^\n]*\n  damnPass\(minted, rolls\);[^\n]*\n  return items;$/, 'the loot door: last of all, after GEM2\'s gem find');
+  assert.ok(door.indexOf('rollLateFinds(') < door.indexOf('weaponSocketPass(') && door.indexOf('weaponSocketPass(') < door.indexOf('damnPass('), '...after the late finds and GEM1\'s weapon sockets');
   const kit = read('src/systems/foeLootCap.js');
-  assert.match(kit, /socketPass\(kit, opts\.rolls \?\? Math\.random\);[^\n]*\n  damnPass\(kit, opts\.rolls \?\? Math\.random\);[^\n]*\n  return kit;/, 'a body\'s kit: last of all');
+  assert.match(kit, /weaponSocketPass\(kit, opts\.rolls \?\? Math\.random\);[^\n]*\n  damnPass\(kit, opts\.rolls \?\? Math\.random\);[^\n]*\n  return kit;/, 'a body\'s kit: last of all, after GEM1\'s weapon sockets');
   assert.doesNotMatch(lr.slice(lr.indexOf('export function cursePiece'), lr.indexOf('export function damnPiece')), /DAMNED_IN/, 'the curse draws nothing for the damning');
 });
 

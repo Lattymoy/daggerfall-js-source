@@ -127,7 +127,10 @@ test('AUDIT 39 #68: the multi-attack reflex gate is the PLAYER\'s setting, whoev
   const hit = calculateAttackDamage(monster, foeTarget, {
     dfRand: () => 60, rolls: attackRolls(), playerReflexes: 0,   // VeryHigh -> 70
   });
-  assert.equal(hit, 2, 'a VeryHigh-reflex game lets the blow through');
+  // PIN MOVED (BAL2, bible/05-Combat/Balance-Arc.md section 4): this file runs the overhaul (mods on, MO1), whose crit
+  // roll takes the first 0 - Critical Strike 40 lands it - and a monster's crit multiplies as the player's now:
+  // 2 x (1 + 8 x 0.05) = 2.8 -> 3 (it was x1.2: 2.4 -> 2). The reflex gate below is what the test pins, unmoved.
+  assert.equal(hit, 3, 'a VeryHigh-reflex game lets the blow through');
   const missed = calculateAttackDamage(monster, foeTarget, {
     dfRand: () => 60, rolls: attackRolls(), playerReflexes: 4,   // VeryLow -> 30
   });
@@ -139,7 +142,7 @@ test('AUDIT 39 #68: the multi-attack reflex gate is the PLAYER\'s setting, whoev
   // a strike AT the player finds the field on the target itself, which
   // is the read that was already correct.
   const player = { ...foeTarget, isPlayer: true, reflexes: 0 };
-  assert.equal(calculateAttackDamage(monster, player, { dfRand: () => 60, rolls: attackRolls() }), 2);
+  assert.equal(calculateAttackDamage(monster, player, { dfRand: () => 60, rolls: attackRolls() }), 3);   // PIN MOVED (BAL2): the crit, as above
 });
 
 test('AUDIT 39 #68: the foe-vs-foe seam hands the formula the player\'s value', () => {

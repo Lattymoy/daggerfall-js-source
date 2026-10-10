@@ -84,7 +84,7 @@ export function applyProgressionScaling(entity, scaling) {
   entity.health = entity.maxHealth;
   entity.damageScale = (Number.isFinite(entity.damageScale) ? entity.damageScale : 1) * scaling.damageMult;
   entity.challengeLevel = (entity.level ?? 1) + scaling.challengeLevels;
-  entity.progression = { share: scaling.share, veteran: scaling.veteran, edge: scaling.edge };   // for a HUD or a debugger; nothing reads it as law
+  entity.progression = { share: scaling.share, veteran: scaling.veteran, place: scaling.place ?? 0, edge: scaling.edge };   // for a HUD or a debugger; nothing reads it as law (BAL3: the place's veteran beside the player's)
   return entity;
 }
 

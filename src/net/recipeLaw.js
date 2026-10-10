@@ -106,7 +106,9 @@ export const FIELD_KIT_REPAIR = 0.15;
 export const KIT_REPAIR = 0.25;
 /** KIT-CEILING (2026-10-01, the economy arc - bible/06-Systems/Economy-Arc.md: field repair stays partial): no kit, a
  *  field kit or a smith's, mends a piece past three quarters of its condition - the overhaul's normal band (a blade at
- *  61-75% strikes at its own damage); the sharp edge above it is a smith's work. */
+ *  61-75% strikes at its own damage); the sharp edge above it is a smith's work. BAL1 (bible/05-Combat/Balance-Arc.md
+ *  section 3): that edge stands only with the overhaul's own wear module on - with it off (the port's default) a piece
+ *  over 75% strikes and reduces at its own value too, and the reach past the ceiling buys durability alone. */
 export const KIT_CEILING = 0.75;
 /** CRAFT5 (bible/06-Systems/Professions-Arc.md 41.8): A SUPERIOR OR MASTERWORK Repair Kit - a smith's best - mends up to
  *  nine tenths of a piece's condition (41.2, DECIDED); every other kit (a field kit, a smith's below Superior, a kit made

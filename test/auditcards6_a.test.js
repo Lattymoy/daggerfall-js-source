@@ -39,6 +39,7 @@ import { createSpoilsPool, spoilsList, SPOILS_TEXT } from '../src/scenes/spoilsP
 import { sdSpoilsList } from '../src/systems/sdSpoils.js';
 import { seededRng } from '../src/systems/wind.js';
 import { RANDOM_TREASURE_ICONS } from '../src/systems/loot.js';
+import { gemKindOf } from '../src/systems/lootRarity.js';   // GEM2: a boss's gem
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const packsIn = (list) => (list ?? []).filter(isPackRecord).reduce((s, it) => s + (it.stackCount ?? 1), 0);
@@ -278,10 +279,15 @@ test('AUDIT CARDS-6 A8: the card\'s picture is drawn LAST in its hoard - every e
       ['gate', spoilsList(s, lv), seededRng((s ^ 0x5eed) >>> 0)],
       ['abyss', sdSpoilsList(s, lv), seededRng(((s >>> 0) ^ 0x5eed) >>> 0)],
     ]) {
+      // PIN MOVED (GEM2, bible/06-Systems/Gem-Sockets.md): the boss's gems' pictures are drawn after the card's - every
+      // record before them still the look-stream's draw it was
       const cards = list.filter((p) => p.item?.templateIndex === 581);
-      const rest = list.filter((p) => p.item?.templateIndex !== 581);
+      const gems = list.filter((p) => gemKindOf(p.item));
+      const rest = list.filter((p) => p.item?.templateIndex !== 581 && !gemKindOf(p.item));
       for (const p of rest) assert.equal(p.record, icon(look), `${name} seed ${s}: ${p.kind} ${p.item?.name ?? ''}`);
-      for (const c of cards) assert.equal(c.record, icon(look), `${name} seed ${s}: the card, last`);
+      for (const c of cards) assert.equal(c.record, icon(look), `${name} seed ${s}: the card, after them`);
+      for (const g of gems) assert.equal(g.record, icon(look), `${name} seed ${s}: the gems, last`);
+      assert.equal(gems.length, name === 'gate' ? 1 : 2);
       if (cards.length && name === 'gate') gate++;
       if (cards.length && name === 'abyss') abyss++;
     }

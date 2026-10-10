@@ -254,6 +254,12 @@ piece's kind - a weapon's blow, every other piece's wearer:
 
 A socket's resistance counts toward LOOT12's cap; a gem's line never names the piece and is never reforged or honed.
 
+GEM1-GEM3 (2026-10-09, `06-Systems/Gem-Sockets.md`) built on this section: the socket is a LIST (`sockets` - LOOT20's
+string is still read), a weapon holds its size's (one to three) by a weapons' pass after every draw a door makes, a gem
+is set in the pack for nothing but the gem (the guild's 100 gold retired) and the Reforge extracts it whole for gold by
+its grade; a piece's gems of one kind read at most one Rare line; and thirty-two graded gems join DFU's eight, in the
+world's loot and the world bosses' spoils.
+
 ## 13. LOOT21 - the Ayleid stones
 
 Two unique finds (the Thunderlock's registry): a **Welkynd Stone** - used, your magicka is full and the stone is spent -
