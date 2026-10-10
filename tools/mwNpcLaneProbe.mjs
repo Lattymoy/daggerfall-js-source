@@ -14,6 +14,7 @@
 //   node tools/mwNpcLaneProbe.mjs
 // ═══════════════════════════════════════════════════════════════════
 import { createPopulationLane, createNpcBodies, createFrameBudget, NPC_BODY_TIERS, WATCH_BODY_TIERS, NPC_FRAME_TIERS } from '../src/characters/npcBodies.js';
+import { isMain } from './lib/isMain.mjs';
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
 /** The street: each population, how many, its caps - a port in a siege with a party on the road. */
@@ -76,7 +77,7 @@ export async function runStreet(tier, shared, { frames = 600, warm = 120 } = {})
   return { tier, shared, bodies: standing / frames, skins: c.skins / frames, draws: c.draws / frames, binds: c.binds / frames, builds: c.builds };
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isMain(import.meta.url)) {
   console.log(`\nTHE NPC LANES - a port's street in a siege with a party on the road (${STREET.map(([n, k]) => `${n} ${k}`).join(', ')}), 600 frames walking round the eye 2..70 m out; stub rigs, exact counts\n`);
   console.log('tier   lanes            bodies/frame   skins/frame   draws/frame   binds/frame   rigs built');
   for (const tier of ['near', 'all']) {
