@@ -441,8 +441,8 @@
   {
     "name": "AUDIT2-GUILD2-U4-a-locked-piece-offered",
     "file": "src/ui/socialPanel.js",
-    "old": "tradeRefusal(it) == null && !isLocked(it));",
-    "new": "tradeRefusal(it) == null);",
+    "old": "tradeRefusal(it) == null && !g.pack.refuses?.(it) && !isLocked(it));",
+    "new": "tradeRefusal(it) == null && !g.pack.refuses?.(it));",
     "tests": [
       "test/guild2_client.test.js"
     ]

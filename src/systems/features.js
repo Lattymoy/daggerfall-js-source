@@ -571,6 +571,20 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced', 'classic']),
     control: Object.freeze({ store: 'prefs', key: 'groundSharpness', initial: 'default', online: 'player', tiers: Object.freeze([['off', 'Off'], ['default', 'Default (4x)'], ['max', 'Maximum']]) }),
   }),
+  // RW1 (2026-10-09, Mac: "allowing players to see inside/outside of house windows"): REAL WINDOWS - from the street a
+  // room behind every house window, from inside the real world through the glass (render/realWindows.js carries the
+  // law; `?windows=off|rooms|full` the kill door). Rooms only drops the costly half - the view out is a second pass over
+  // the street. The player's own online: it is this screen's pixels. A preset row (systems/graphicsPresets.js).
+  Object.freeze({
+    id: 'real-windows',
+    group: 'sight',
+    title: 'Real windows',
+    note: 'From the street, house windows show the rooms behind them, lit warm at night; from inside, the windows '
+      + 'look out on the world. Rooms only is lighter on your machine; Off is the flat glass of the original.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'realWindows', initial: 'full', online: 'player', tiers: Object.freeze([['full', 'Full'], ['rooms', 'Rooms only'], ['off', 'Off']]) }),   // RW1: render/realWindows.js realWindowsMode reads it
+  }),
   // PERF-SCALE (2026-09-25, two players via Mac: "One user is reporting fps issues in the exterior but fine in the
   // interior ... GPU is NVIDIA GeForce RTX 4060 Ti", "me too my friend.. don't know why. I got a RX6600"): THE
   // RENDER SCALE. The world was drawn at the window's whole size with no cap, so a large window paid two to four

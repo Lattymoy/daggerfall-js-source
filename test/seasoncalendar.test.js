@@ -321,7 +321,7 @@ test('ROAD-Ar R0: the streaming host arms the hold before the teardown and relea
   // RESPAWN-HELD (FIELD BUGS 2026-09-30b, PIN MOVED): the same hold, and an arrival's build holds it too
   // (fb0930b_respawnheld.test.js runs it).
   assert.match(world, /const _seasonHeld = _partyArrivalPending \|\| _seasonHoldKey !== null \|\| _seasonStraightening;/);
-  assert.match(world, /if \(!_overlayHeld && !_seasonHeld\) player\.update\(dt,/,
+  assert.match(world, /if \(!_overlayHeld && !_seasonHeld && !_rideHeld\) player\.update\(dt,/,   // PIN MOVED (WAGONS1): a rider's held motor too
     'the motor must not integrate gravity while the ground is being rebuilt');
   assert.match(world, /if \(!_seasonHeld\) applyFallLanding\(playerEntity, player\.landedFallDistance,/,
     'and a frame the motor never ran reports no landing');

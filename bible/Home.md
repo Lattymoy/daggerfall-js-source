@@ -288,6 +288,7 @@ alone, flagged at its new site inside calculateAttackDamage.
 - `src/systems/playerTorch.js` - FLAGGED (blocked on data this reference tree does not carry): the
 - `src/ui/enhancedMenu.js` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
 - `src/ui/pauseWindow.js` - FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
+- `src/world/interiorGlass.js` - FLAGGED (unverified without the player's data): interior glass is read off palette index 0xff in a building interior's own records - tools/windowGlassScan.mjs lists the candidates from a real ARENA2 folder.
 
 ## Audits
 

@@ -221,7 +221,7 @@ test('DISC15: the shaders read either tier - the lit loop and the flat through c
 test('DISC15: the building hosts ask for the tier every frame, before beginFrame - the world\'s interior arm and the dev route; LA-SHADOW3: the two dungeon hosts too, which draw the level whole; the street never', () => {
   const wm = rd('src/scenes/worldModes.js'), it = rd('src/scenes/interior.js');
   assert.match(wm, /renderer\.setPointLights\(_itLit\.data, null, _itLit\.colors\);\n\s+renderer\.everyLightCasts\(\);/);
-  assert.ok(wm.indexOf('renderer.everyLightCasts();') < wm.indexOf('renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);   // AUDIT-EL F5: a WORLD frame - the lane replays its records for this one\n    mwViewDrawBody'), 'before the interior arm\'s beginFrame');
+  assert.ok(wm.indexOf('renderer.everyLightCasts();') < wm.indexOf('renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);   // AUDIT-EL F5: a WORLD frame - the lane replays its records for this one\n    renderer.setGlassView(_rwView);'), 'before the interior arm\'s beginFrame');   // RW1 (PIN MOVED): the arm's beginFrame is read off the glass view it hands over next
   assert.match(it, /renderer\.setPointLights\(lit\.data, null, lit\.colors\);\n\s+renderer\.everyLightCasts\(\);/);
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeonContext.js']) assert.ok(!rd(f).includes('everyLightCasts'), `${f}: a host that culls by view never asks`);
   // LA-SHADOW3 (re-aimed): DISC15 counted the dungeon among the view-culling hosts; neither dungeon host culls - each

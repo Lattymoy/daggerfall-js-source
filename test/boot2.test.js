@@ -72,8 +72,15 @@ test('BOOT2: the entry\'s static reach touches neither hub and stays under the c
   // WINDFALL1 (2026-10-08): 69 - Windfall's wind law in the billboard program (render/windfallSway.js: the GLSL chunk BB_VS
   // is built from as the renderer loads, and the uniforms the renderer, the shadow pass and the air pass feed it). A leaf
   // that imports nothing, so it can bring no hub, and the assertion below keeps it so. The ceiling moves to 71.
+  // RW1 (2026-10-09): 73 - the real windows' block in both mesh programs (render/realWindows.js: the GLSL FS and
+  // EL_MESH_FS are built from as the renderer loads) and the rooms' art it paints from (world/windowRoomArt.js, a leaf).
+  // realWindows.js reads only what is already on the path (the prefs, the skin, the page's query) beside the art; the
+  // interior glass rule and its climate tables were split out to world/interiorGlass.js to stay off it. The ceiling moves
+  // to 73.
   const importsOf = (p) => [...rd(p).matchAll(STATIC)].map((m) => m[1]);
   assert.deepEqual([importsOf('src/render/ecotoneGlsl.js'), importsOf('src/world/ecotone.js'), importsOf('src/render/windfallSway.js')], [['../world/ecotone.js'], [], []],
     'the border chunk and its law, and the wind law, stay leaves on the boot path');
-  assert.ok(reach.size <= 71, `the entry statically reaches ${reach.size} files - BOOT2 measured 43, PERF-URL 61, ECOTONE1 66, WINDFALL1 69, and holds the ceiling at 71`);
+  assert.deepEqual([importsOf('src/world/windowRoomArt.js'), importsOf('src/render/realWindows.js')], [[], ['../systems/uiPrefs.js', '../systems/uiSkin.js', '../systems/pageQuery.js', '../world/windowRoomArt.js']],
+    'RW1: the rooms\' art a leaf, the windows\' block reading only the path it already stands on');
+  assert.ok(reach.size <= 73, `the entry statically reaches ${reach.size} files - BOOT2 measured 43, PERF-URL 61, ECOTONE1 66, WINDFALL1 69, RW1 73, and holds the ceiling at 73`);
 });

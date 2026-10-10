@@ -1576,6 +1576,14 @@ export class EnemyAI {
    *  (transform1 sets Behaviour = Flying) and could be shoved out of
    *  its own transformation. */
   update(dt, playerFeet, senses = null, paralyzed = false, paused = false) {
+    // WAGONS1: a companion riding in the back of the player's wagon (scenes/crewAshore.js `seat`) takes no step - its
+    // feet are the seat's, wherever the wagon carries it, and it neither falls, walks nor fights until it gets down
+    const seat = this.seat?.();
+    if (seat) {
+      this.feet[0] = seat.feet[0]; this.feet[1] = seat.feet[1]; this.feet[2] = seat.feet[2];
+      this.yaw = seat.yaw; this.velY = 0; this.moving = false; this.isGrounded = true; this._acc = 0;
+      return;
+    }
     this._acc = (this._acc ?? 0) + Math.min(dt, MAX_FRAME_DT);
     while (this._acc >= FIXED_DT) {
       this._acc -= FIXED_DT;

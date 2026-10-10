@@ -65,7 +65,7 @@
   {
     "name": "AUDIT-BRANCH-0925-PRW1-A-their-wagon-met-at-the-square-box",
     "file": "src/scenes/horseCartPool.js",
-    "old": "obb: { m: pm, box: _parts.box }, ",
+    "old": "obb: { m: pm, box: theirs.box }, ",
     "new": "",
     "tests": [
       "test/prwagon1.test.js"

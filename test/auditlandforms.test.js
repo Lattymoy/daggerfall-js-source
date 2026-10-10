@@ -1079,6 +1079,7 @@ test('AUDIT LANDFORMS II H1: THE ONE CONSTRUCTION SEAM for C1 - every height wor
     ['y: player.pos[1] - state.compensation[1], yaw: cam.yaw,', 'the horse cart\'s party departure, one trip\'s'],
     ['const campToWire = (p) => { const wc = state.worldCoords(p); return [wc.x, p[1] - state.compensation[1], wc.z]; };   // SURV3: the pose\'s own law for the world frame', 'the wire: the room stands on one ground (C2)'],
     ['pos: inDungeon ? [...player.pos] : [wc.x, player.pos[1] - state.compensation[1], wc.z],', 'a staff teleport\'s live destination'],
+    ['dest = { ...dest, kind: \'exterior\', pos: [c.x, caravanOut.position[1] - state.compensation[1], c.z], yaw: caravanOut.yaw };', 'a staff teleport\'s live destination - behind a caravan\'s rear door (WAGONS2 FINAL AUDIT)'],
     ['toWire: (feet) => { const wc = state.worldCoords(feet); return [wc.x, feet[1] - state.compensation[1], wc.z]; },', 'the wire'],
     ['const partyFeetOf = (pos) => { const wc = state.worldCoords(pos); return { wx: wc.x, wy: pos[1] - state.compensation[1], wz: wc.z }; };', 'the party\'s live feet'],
     ['? { x: wc.x, y: player.pos[1] - state.compensation[1], z: wc.z, yaw: cam.yaw, pitch: cam.pitch, mv: 0 }', 'the online pose'],

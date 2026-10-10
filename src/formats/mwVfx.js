@@ -75,10 +75,11 @@ import {
 } from './mwParticles.js';
 
 /** NiTimeController's clock terms, as controllerTime takes them (the extrapolation bits unshifted, EXTRAPOLATION). */
-const timingOf = (c) => ({ frequency: c.frequency, phase: c.phase, startTime: c.startTime, stopTime: c.stopTime, extrapolation: c.flags & 0x6 });
+export const timingOf = (c) => ({ frequency: c.frequency, phase: c.phase, startTime: c.startTime, stopTime: c.stopTime, extrapolation: c.flags & 0x6 });
 
-/** Every ACTIVE controller on a record's chain (the reference makes no other), in chain order. */
-function activeControllers(nif, rec) {
+/** Every ACTIVE controller on a record's chain (the reference makes no other), in chain order. MW-BOW1: exported - a
+ *  part's own clock (formats/mwPartClock.js) reads the same chain. */
+export function activeControllers(nif, rec) {
   const out = [];
   const seen = new Set();
   for (let ref = rec?.controller ?? -1; ref >= 0 && !seen.has(ref);) {

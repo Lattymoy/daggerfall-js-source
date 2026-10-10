@@ -179,7 +179,7 @@
 // token seam is the one piece that has to be paid for, and it is paid
 // once here rather than a little at a time.
 import { routeStaffTeleport } from './staffTeleport.js';
-import { privateInteriorOf, privateInteriorAdmits } from '../../src/net/privateInterior.js';
+import { privateInteriorOf, privateInteriorAdmits, caravanKeyOf } from '../../src/net/privateInterior.js';   // WAGONS2-VISIT: and a caravan's own room
 import { isStaff } from '../../src/net/staffCommands.js';
 import { verifyToken, verifyOrder, verifyStakeOrderAnyAge, importPublicKeyB64, MAX_TTL_S, ORDER_TTL_S, renownIssuable, deckDigest, remainsDigest } from '../../src/net/identityToken.js';   // MOD1: and the mute order, checked with the same key
 /** ACC1d/F8: the most spent signatures one room remembers. Every entry
@@ -276,7 +276,7 @@ import { mintArenaReceipt } from '../../src/net/arenaReceipt.js';
 import { owIdInCell, owRowInCell, owRowSane, owFoldSpent, owFoldRows, owRowsBehind, owPrune, owLedgerOf, owLedgerEmpty, toWelcome } from '../../src/net/overworldLaw.js';
 
 import { serpentGate, validSerpentOut, SERPENT_INTERNAL_FELL, SERPENT_TELL_RETRY_MS, SERPENT_FIGHT_KEY, SERPENT_FIGHTS_KEY, SERPENT_SITES_MAX, serpentFightId, SERPENT_FELLS_KEY, SERPENT_FELLS_MAX, SERPENT_RC_PREFIX } from './relay.js';   // SERPENT1: the serpent's frame and its doors (the wire's, through relay.js - walked last, as ever)
-import { roomOf, parseClient, inRange, inRangeOf, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, OWN_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, amapShareGate, AMAP_ROOM_HZ_MAX, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, wedGate, WED_HZ_MAX, renownGate, renownRoomGate, lookGate, eventGate, EVENT_KEY, validLiveEvent, gateGate, siegeGate, SIEGE_IN_MS, GATE_INTERNAL_FELL, SOCIAL_ROOM, validGateOut, HELLO_WAIT_MS, GATE_TELL_RETRY_MS, gateReceiptKey, GATE_BRAIN_MIN, GATE_HERE_HOLD_MS, guildGate, guildRoomGate, GUILD_CHAT_ROOM_HZ_MAX, SEAT_ELSEWHERE, raidGate, RAID_INTERNAL_CLEAN, RAID_INTERNAL_DAY, RAID_DAY_ASK_MS, raidTownsGate, RAID_TELL_RETRY_MS, RAID_CLEANS_MAX, RAID_LEDGER_PREFIX, raidLedgerKey, RAID_RC_PREFIX, raidReceiptKeyOf, RAID_RC_KEEP, RAID_RC_KEEP_MS, mapPixelOfWire, validRaidOut, worldRoom, sharedClassicMinutes, wallMsForClassicMinutes, isRegionRoom, travHubGate, travRoomGate, TRAV_STALE_MS, TRAV_WELCOME_MAX, owGate, owRoomGate, OW_LEDGER_KEY, REALM_DOOR_WORD, riteRelayGate, validRiteOut, sanitizeName, RITE_INTERNAL_BROKEN, RITE_INTERNAL_DAY, RITE_TELL_RETRY_MS, RITE_KEY, RITE_BY_MAX, RITE_CIRCLES_MAX, RITE_HUB_CIRCLES_MAX, RITE_ASK_EVERY_MS, RITE_ASK_TIMEOUT_MS, arenaGate } from './relay.js';
+import { roomOf, parseClient, inRange, inRangeOf, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, OWN_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, amapShareGate, AMAP_ROOM_HZ_MAX, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, CARAVAN_DECOR_KEY, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, CARAVAN_DOC_MIN_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, wedGate, WED_HZ_MAX, renownGate, renownRoomGate, lookGate, eventGate, EVENT_KEY, validLiveEvent, gateGate, siegeGate, SIEGE_IN_MS, GATE_INTERNAL_FELL, SOCIAL_ROOM, validGateOut, HELLO_WAIT_MS, GATE_TELL_RETRY_MS, gateReceiptKey, GATE_BRAIN_MIN, GATE_HERE_HOLD_MS, guildGate, guildRoomGate, GUILD_CHAT_ROOM_HZ_MAX, SEAT_ELSEWHERE, raidGate, RAID_INTERNAL_CLEAN, RAID_INTERNAL_DAY, RAID_DAY_ASK_MS, raidTownsGate, RAID_TELL_RETRY_MS, RAID_CLEANS_MAX, RAID_LEDGER_PREFIX, raidLedgerKey, RAID_RC_PREFIX, raidReceiptKeyOf, RAID_RC_KEEP, RAID_RC_KEEP_MS, mapPixelOfWire, validRaidOut, worldRoom, sharedClassicMinutes, wallMsForClassicMinutes, isRegionRoom, travHubGate, travRoomGate, TRAV_STALE_MS, TRAV_WELCOME_MAX, owGate, owRoomGate, OW_LEDGER_KEY, REALM_DOOR_WORD, riteRelayGate, validRiteOut, sanitizeName, RITE_INTERNAL_BROKEN, RITE_INTERNAL_DAY, RITE_TELL_RETRY_MS, RITE_KEY, RITE_BY_MAX, RITE_CIRCLES_MAX, RITE_HUB_CIRCLES_MAX, RITE_ASK_EVERY_MS, RITE_ASK_TIMEOUT_MS, arenaGate } from './relay.js';
 import { holdemGate, holdemSitRoomGate } from './relay.js';   // CARDS5: the card table's gate; AUDIT CARDS-3 A4: the room's sits
 import { newTable, topUp as holdemTopUp, sit as holdemSit, sitRefusal as holdemSitRefusal, stand as holdemStand, actAt as holdemAct, tick as holdemTick, nextAt as holdemNextAt, emptyTable as holdemEmpty, tableLook as holdemLook, stateDelta as holdemDelta, holdemGoldTable } from '../../src/net/holdemTable.js';   // CARDS5: THE RELAY DEALS - the room's card tables (holdemTable.js imports only cardLaw.js, which imports only dice.js)
 // WILD1 (2026-10-07, the owner: "Wrothgarian mountains need to be turned into a open pvp zone"): ONE FILE JOINS THE
@@ -882,6 +882,36 @@ export class Room {
   /** AUDIT ATTACH: one socket's meters - its arms' buckets and strike counts, its junk, the funnels onto it - made on
    *  first use and gone with the socket (a WeakMap) or with a wake (the constructor's note says why that is safe). */
   _meterOf(ws) { let m = this._meters.get(ws); if (!m) this._meters.set(ws, m = {}); return m; }
+  /** WAGONS2-VISIT (FINAL AUDIT): A CARAVAN'S DOCUMENT IS OWED TO ITS VISITORS UNTIL IT IS FANNED. The fan is charged as an
+   *  act's is - the sender's own borrowing bucket (`abytes`, ACT_SENDER_BYTES_PER_S) first, then the room's
+   *  (ACT_ROOM_BYTES_PER_S), a refusal by the room charging the sender nothing. A refused fan was dropped whole, and
+   *  nothing said it again (the owner's client says an unchanged document once, and an unchanged one is fanned to
+   *  nobody), so its visitors kept the old layout until they walked in again; it waits for the alarm at the time its
+   *  bucket has repaid now, and goes then - the last document said, `d` null a forgetting. */
+  async _caravanFan(now) {
+    const from = this._cvOwed;
+    if (!from) return;
+    const out = `{"t":"caravan","data":${this._cvDoc ?? 'null'}}`;
+    const listeners = [...this._all()].filter(([other, b]) => other !== from && b.id);
+    const cost = out.length * listeners.length;
+    const meters = this._meterOf(from);
+    const mine = byteGate(meters.abytes, now, cost, ACT_SENDER_BYTES_PER_S, true);
+    let refused = mine.pass ? null : { bytes: mine.bucket.bytes, rate: ACT_SENDER_BYTES_PER_S };
+    if (!refused) {
+      const room = byteGate(this._roomActBytes, now, cost, ACT_ROOM_BYTES_PER_S, true);
+      this._roomActBytes = room.bucket;
+      if (!room.pass) refused = { bytes: room.bucket.bytes, rate: ACT_ROOM_BYTES_PER_S };
+    }
+    if (refused) {
+      if (!mine.pass) meters.abytes = mine.bucket;
+      this._cvOwedAt = now + Math.ceil((-refused.bytes / refused.rate) * 1000) + 1;
+      await this.state.storage.setAlarm(this._cvOwedAt);
+      return;
+    }
+    meters.abytes = mine.bucket;
+    this._cvOwed = null;
+    for (const [other] of listeners) this._send(other, out);
+  }
   /** AUDIT ATTACH: ONE ARM'S METER, SPENT - its bucket (`bucketKey`) through `gate`; over the rate the frame is dropped
    *  and a strike counted (`strikesKey`), a pass forgives them, and past `max` the socket is closed with `why`. True
    *  when the frame is taken. Every meter below is this one with its own gate, fields and words. */
@@ -1190,6 +1220,16 @@ export class Room {
     // client names - its word goes PARK_TTL_MS after it was said, as the cell's record it points at does
     const reg = await this.state.storage.get('reg');
     if (reg) { const due = reg.at + PARK_TTL_MS; if (Date.now() >= due) await this.state.storage.delete('reg'); else await this.state.storage.setAlarm(due); return; }
+    // WAGONS2-VISIT: a caravan's room forgets what its owner placed PARK_TTL_MS after they last said it, as the cell forgets the caravan
+    const cv = await this.state.storage.get(CARAVAN_DECOR_KEY);
+    if (cv) {
+      const now = Date.now(), due = (cv.at ?? 0) + PARK_TTL_MS;
+      if (now >= due) { this._cvDoc = null; this._cvOwed = null; await this.state.storage.delete(CARAVAN_DECOR_KEY); return; }
+      if (this._cvOwed) await this._caravanFan(now);   // FINAL AUDIT: a fan owed goes when its bucket has repaid
+      await this.state.storage.setAlarm(this._cvOwed ? Math.min(due, this._cvOwedAt) : due);
+      return;
+    }
+    if (this._cvOwed) { await this._caravanFan(Date.now()); return; }   // a forgetting (`d` null) owed - no document kept to arm for
     if (await this._gateTick()) return;   // WB3: a gate room's alarm is its boss's beat
     if (await this._siegeTick()) return;   // PVP-REF: a siege room's alarm is its fallen fighters' waves
     if (await this._arenaTick()) return;   // ARENA4: a bout's beat, or the hall's queue
@@ -1863,6 +1903,8 @@ export class Room {
           for (const [id, f] of fights) if (b && !f.fell && !f.gone && this._serpentHears(id, f, b)) { await this._serpentArm(Date.now()); break; }
         } catch (e) { console.warn('[serpent] hello arm failed', e?.message ?? e); }
       }
+      // WAGONS2-VISIT: a caravan's room hands its joiner what its owner placed in it (the `caravan` frame's), after the welcome
+      if (caravanKeyOf(a.key)) { const cv = await this.state.storage.get(CARAVAN_DECOR_KEY); if (cv && Date.now() - (cv.at ?? 0) < PARK_TTL_MS && !this._send(ws, JSON.stringify({ t: 'caravan', data: cv.d }))) return; }
       // WILD1: a place room's remains, after the welcome (a halo's hello too - a body across the seam lies there for me
       // as well): every live one, in its chunks
       if (streamsFoes(a.key)) { try { await this._wildHello(ws, Date.now()); } catch (e) { console.warn('[wild] hello failed', e?.message ?? e); } }
@@ -2233,6 +2275,37 @@ export class Room {
       if (m.data.r && cell === here) await this._parkStore(k, a.sub, a.id, a.name ?? '', m.data.r, now);
       else if (here && cell !== here) await this._parkDrop(k);   // mine here is superseded: nothing parked, or it stands elsewhere
       await this._parkRegister(k, cell, now);
+      return;
+    }
+    if (m.t === 'caravan') {
+      // WAGONS2-VISIT (net/wire.js validCaravanData): WHAT A CARAVAN'S OWNER PLACED IN IT, kept by its room - from a
+      // hello'd socket in a caravan's room (net/privateInterior.js caravanKeyOf), on the acts' bucket, and from the
+      // caravan's OWNER alone: the account the token verified and the character the frame names hash to the room's own
+      // key (parkKeyOf - the key the cell's record of the parked caravan carries); anyone else's is junk. The last is
+      // kept until PARK_TTL_MS after it was said (the alarm forgets it), handed to every joiner after its welcome, and
+      // fanned to everyone else here; `d` null forgets it.
+      const now = Date.now();
+      a = this._meterActs(ws, a, now); if (!a) return;
+      const ck = caravanKeyOf(a.key);
+      if (!ck || typeof a.sub !== 'string' || !a.sub || (await parkKeyOf(a.sub, m.data.c)) !== ck) { this._junk(ws); return; }
+      // WAGONS2-VISIT (AUDIT): one document a second from a socket at most (CARAVAN_DOC_MIN_MS - its owner's client says
+      // one at most every 1.5 s); an unchanged one neither fanned nor stored again until its lease wants renewing
+      // (PARK_REFRESH_MS); and the fan charged to the sender's own act bytes as an act's is - a hostile owner's
+      // documents were stored and fanned at the acts' 5 Hz, uncharged
+      // FINAL AUDIT: the second is the ROOM's, not a socket's (the owner's account may hello as many sockets into its own
+      // room as SOCKETS_MAX lets it, each passing the owner's check - a socket's own second was theirs times N)
+      if (now - (this._cvSaidAt ?? -Infinity) < CARAVAN_DOC_MIN_MS) return;
+      this._cvSaidAt = now;
+      if (m.data.d === null) { this._cvDoc = null; await this.state.storage.delete(CARAVAN_DECOR_KEY); }
+      else {
+        const doc = JSON.stringify(m.data.d), changed = doc !== this._cvDoc;
+        if (!changed && now - (this._cvAt ?? 0) < PARK_REFRESH_MS) return;
+        this._cvDoc = doc; this._cvAt = now;
+        await this.state.storage.put(CARAVAN_DECOR_KEY, { at: now, d: m.data.d }); await this.state.storage.setAlarm(now + PARK_TTL_MS);
+        if (!changed) return;
+      }
+      this._cvOwed = ws;
+      await this._caravanFan(now);
       return;
     }
     if (m.t === 'gate') {

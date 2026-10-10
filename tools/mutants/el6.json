@@ -29,11 +29,12 @@
   {
     "name": "emit-no-occlusion",
     "file": "src/render/airPass.js",
-    "old": "  if (occluded()) discard;   // EL6\n  outColor = vec4(airDecode(texture(uEmissionTex, vUV).rgb * uEmissionColor), 1.0);",
-    "new": "  outColor = vec4(airDecode(texture(uEmissionTex, vUV).rgb * uEmissionColor), 1.0);",
+    "old": "  if (occluded()) discard;   // EL6\n  if (uRoomsLit > 0.5",
+    "new": "  if (uRoomsLit > 0.5",
     "tests": [
       "test/el6_field.test.js"
-    ]
+    ],
+    "note": "WAGONS2 (FINAL AUDIT, PIN MOVED): re-aimed by content."
   },
   {
     "name": "emit-slack-huge",
