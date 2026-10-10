@@ -147,13 +147,18 @@ town stands unchanged, and `lw9_traffic.test.js` pins it against the same town r
 patrol rides as one behind its first. A retainer is dealt to the nobles in slot order, as the sellswords are to the
 merchants. Their places live by their leader's cycle (`placeCycle`), they set out when their leader does (`setsOut`),
 and `formCaravans` makes the round and the procession whole: every place of it, held that cycle. A rider whose place is
-fated that cycle sends the round out, as a company's member does (AUDIT LW-II F2: the fated knight stayed home).
+fated that cycle sends the round out, as a company's member does (AUDIT LW-II F2: the fated knight stayed home), and
+a noble's fated retainer the procession (AUDIT LW-II-2 R7: F2 reached the patrol alone - a retainer fated when the
+noble's own chance said stay died abroad with no road under it, no remains and no news).
 
 **AT HOME AND AWAY** (`dayPlan.js`).
 - At home: a carter and a hunter work the fields as a farmer does; a patrol's knight and a retainer keep a sellsword's
   day; a noble keeps a courtier's; a minstrel plays their own town's tavern of an evening.
 - Away: a carter come to market goes straight to a stall as they come in, until they go (MARKET_STALL_H, 8 to 13:30,
   their window cutting it). A minstrel come to play takes the tavern they lodge at from MINSTREL_PLAY_H (18:30 to 23:00).
+- Gone from the town from the leg's first light (`trips.js awayOf`), the minute the road has them out (AUDIT LW-II-2 R5:
+  the first audit's E5 kept a party home until first light on the road, and the town still walked it out of the gate at
+  the trip's own minute - a carter setting out before dawn stood nowhere for 89 minutes on average).
 - In the room: a minstrel standing at no table's talk sings over it (`lines.js minstrelLine`: a song every
   MINSTREL_EVERY_MIN of the clock, up MINSTREL_UP_MIN of it, by their seed).
 
@@ -166,7 +171,9 @@ fated that cycle sends the round out, as a company's member does (AUDIT LW-II F2
   - The trip's `to` is no town (`mapId` -1, "the wild"), and `trip.wild` is the point. The talk and the news never name
     it as a place (`placeName`: AUDIT LW-II E7 - "the wild" was told as a town's name); they say "the next town".
   - Out at first light; then the hunt's camp at the point (`partyAt`: out, camped, there) until the next morning, and
-    home within the cycle.
+    home within the cycle. Ground a halt left owing at the leg's end is walked on, by day, at the catch-up pace before
+    the hunt camps (AUDIT LW-II-2 R6: the hunter jumped up to 344 m to its camp; in a town the owed ground is made up
+    out of sight).
 - **THE INN ON THE ROAD** (`trips.js innsAlong`, `nightStop`, `innAhead`, `innGuestsOf`).
   - A roadside tavern (location type INN_TYPE, 6) within INN_REACH_PX (1) of one of a route's pixels, other than its two
     ends, is an inn on that way (`way.inns`, read once as the way is made).
@@ -179,7 +186,9 @@ fated that cycle sends the round out, as a company's member does (AUDIT LW-II F2
     online pace; none now); and a lodged party stays in until its day's walk catches up (96 minutes past 07:00 on average, up to five
     hours online), where it was listed as gone at first light. E6: a party turned home lodging two nights was listed
     twice. The host hands them to the tavern's town as its visitors (world.js `livingTripsOf`), so LW-LODGE's rooms take
-    them.
+    them. A morning's trouble whose minute falls while the party still lodges falls as it sets out, at the inn (AUDIT
+    LW-II-2 R3: it pulled the party out onto the road behind the inn for the fight and back in, and dropped it from the
+    inn's guests - 1.5% of halts at the calendar's pace, 4.2% online).
   - A night lodged at an inn meets no trouble at a camp (`trouble.js`): CAMP_SHARE's camp trouble falls on that day's
     walk instead.
 
@@ -187,13 +196,22 @@ fated that cycle sends the round out, as a company's member does (AUDIT LW-II F2
 
 - **PASSING** (`passingPairs`). Two parties walking within PASS_N (25 m) of each other at the same minute pass with a
   word each: the first's line, then the second's, a line a beat. The words are ROAD_PASS_SCRIPTS, or ROAD_PASS_WARNINGS
-  where either party has met trouble behind it, with its foe named. A pair is dealt once, the lower trip id first.
+  where either party has met trouble behind it, with its foe named. A pair is dealt once, the warned party first, and
+  its exchange is said ONCE - from the first beat that begins with the two near, a line a beat, then silence; a party
+  with nobody standing passes nobody (`walkingAt`, `passingLine`: pure - every reader hears the same line at the same
+  minute). AUDIT LW-II-2 R2: the line came off the absolute clock, so the exchange repeated every beat while the two
+  stayed near (2,932 of 2,943 passings said it more than once), half began on the reply, and a warning was said by the
+  party that met no trouble when it had the higher trip id.
 - **CAMPS SHARED** (`campGroups`). The night's camps within CAMP_SHARE_N (60 m) of one another are one camp: the
   earliest party's place, every one of them a place in its ring in order, the ring grown CAMP_RING_STEP_N for each of
-  its people past four. It is a drawing's law only: no timeline moves.
+  its people past four. It is a drawing's law only: no timeline moves. A party halted at its camp keeps its place in
+  the ring (AUDIT LW-II-2 R4: it left the shared camp for its own and came back).
 - **A FIRE AT EVERY CAMP**: the camps' own flame (`survival/camp.js FIRE_FLAT`, TEXTURE.210 record 1) at a camp's
-  middle, one to a shared camp, none on the march and none at a halt. It has no light of its own: the roads' bodies are
-  billboards and carry none.
+  middle, one to a shared camp, none on the march; a lone camp's goes out for its halt, a shared camp's burns while any
+  party of it is not halted (`campGroups`' `lit`). It has no light of its own: the roads' bodies are billboards and
+  carry none. NOBODY STANDING, NOTHING LAID (AUDIT LW-II-2 R1): a party struck down to the last lays no body, no team and
+  no camp - its horse walked on in its shafts with nobody and an empty fire burned at each night's camp to the trip's
+  end.
 - **LODGED IS INDOORS**: a party at an inn draws no body on the road and wears no Overworld mark.
 - **LAID OUT ONCE, AS DRAWN** (AUDIT LW-II E3): the layer lays each party near out once a frame, where its bodies are
   drawn, and the stands (the talk's, the fights') read those places - they laid each party out again on their own, and
@@ -285,7 +303,9 @@ Mac: "actual caravans utilizing horses and wagons".
   All walk by day. At a halt (a fight, its wounds bound) the train stands where it was. The way out and the way home
   read the way in opposite directions, so the train faces home on the way back.
 - **AT CAMP** (`campTeam`): each wagon CAMP_PARK_N (3 m) beyond the camp's ring, facing its fire, its horse unhitched
-  CAMP_HORSE_SIDE_N to its side; a pack horse by itself. The ring is the shared camp's (LW9) where there is one.
+  CAMP_HORSE_SIDE_N to its side; a pack horse by itself. The ring is the shared camp's (LW9) where there is one. Parked
+  through a fight at the camp too (AUDIT LW-II-2 R4: a caravan beset at its night camp lost its wagons and horses for
+  the fight - the minutes LW4b stands it live).
 - **THE WHEELS** (`wheelAngleAt`): Horse Cart and Cargo's turn by travel (`horseCartLaw.js wheelRotationDegrees`) off
   the distance the axle has walked along its way, wrapped. Every reader's wheels stand at the same spoke. Home, the
   distance runs from the far end (AUDIT LW-II E8: it ran down, and the wheels turned backwards).
@@ -312,7 +332,9 @@ Mac: "actual caravans utilizing horses and wagons".
   - Each horse is its own billboard batch, posed by the pool and stepped by `stepHorseWalk` at its party's pace;
     destroyed as it leaves the list.
   - The nearest WAGONS_DRAWN (6) wagons are drawn in the world mesh pass beside the cart's own (`hcc.draw`), a
-    NORMAL_GROUND_OFFSET above the ground and tilted to it; grown under the Overworld with the bands.
+    NORMAL_GROUND_OFFSET above the ground and tilted to it; grown under the Overworld with the bands. A team is capped
+    whole: a wagon's horse is posed only where its wagon is drawn (AUDIT LW-II-2 R11: past the six, horses walked in
+    shafts with no wagon behind); a pack horse is its own.
   - A STANDING wagon (camped, halted) stands its box on the host's collider (`usableBounds` of the model's bounds, the
     pool's `boxTriangles`) in a bucket of its own (`wagonBucket`), taken down when it moves or leaves; a moving wagon
     claims nothing.
@@ -658,7 +680,10 @@ census's roster) and `src/systems/livingWorld/trips.js` (`leaderOf`, `ownTrip`, 
   in it - its trip dropped, the train marked `hiredBy` (the joiners' law). Built differently: the design gave the hire
   to merchants of towns that keep no sellswords (under nine blocks); no such town keeps two adventurers, so the hire
   goes to any train setting out with none. One company to a train (AUDIT LW-II E4, `trainFor`): the first in the deal
-  takes it, and a second walks its own trip - it was dropped into the same train's hire and vanished.
+  takes it, and a second walks its own trip - it was dropped into the same train's hire and vanished. Hired, it is a
+  company still (`livingRoads.js hiredAt`, the train's `hiredBy` read back): named, greeting as a company, its word its
+  head's (AUDIT LW-II-2 R8: nothing read `hiredBy`, and a hired company greeted with the road's plain words, each member
+  by their own regard); its train's mark stays the caravan's.
 - **PILGRIM BANDS.** A town's pilgrims setting out the same day for the same town, in no merchant's train, go
   together, the first place leading.
 - **THE HOLY DAY** (`holyDayOf`, `holyTrip`). A pilgrim's cycle with a temple town in range keeping its region's own
@@ -735,7 +760,9 @@ below is `src/scenes/dungeonDivers.js`.
 
 - **AT THE DUNGEON'S BUILD** (`dungeonContext.js`; the modes host's `deepCleared`, the outer host's
   `livingDeepCleared`): every dive into the dungeon whose hours touch the last DIVE_CLEAR_MIN (a day: `trips.js
-  divesIn`) is routed over the dungeon's stops, and every stop one LEFT before the build's minute is CLEARED
+  divesIn` - never one turned home on the road before it went in, AUDIT LW-II-2 D3: it kept its dive's hours and
+  cleared the stops it never reached, 2.7% of dives; one turned inside is cut at its turning already) is routed over
+  the dungeon's stops, and every stop one LEFT before the build's minute is CLEARED
   (`clearedOf`): its random foe BUILT DEAD - its corpse where it stood, its pack emptied (`setFoeDead`) - and its random
   treasure pile built EMPTY (its flat gone, as one the player emptied). A stop a company is at now is being fought,
   not cleared; after a day the dungeon is as Daggerfall builds it. AUDIT LW-II D1: the clear stands at the build's

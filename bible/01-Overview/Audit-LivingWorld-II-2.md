@@ -28,6 +28,37 @@ AUDIT LW-II) and the day's two merges from main (#741-#744's wagons, gems and ba
 Findings seen by two lenses are pinned once, under the first id: C5 = H6, C6 = H1, C11 = W8, D4 = H5, W3 = H8,
 W4 = H4, S6 = P8, D12 within P13.
 
+## R (with D3, P6, P17) - the road (`test/auditlwii2_road.test.js`, 17; `auditlwii2_road.json`, 45)
+
+All FIXED:
+
+- **R1 (HIGH) - a party struck down to the last left a ghost train and an empty campfire to its trip's end**: the road
+  layer laid the party's places and team without asking who stood (its Overworld mark did ask). FIXED: nobody standing,
+  nothing laid - no body, no team, no camp, no fire.
+- **R2 - the passing exchange repeated every beat**, began on the reply half the time, and its warning came from the
+  party that met no trouble when it had the higher id. FIXED: said once from the first beat the two are near, the
+  warned party first, then silence - pure, the same line for every reader.
+- **R3 - a morning's trouble met while the party still lodged at its inn** pulled it onto the road behind the inn and
+  back in, and dropped it from the guests. FIXED: it falls as the party sets out, at the inn.
+- **R4 - a caravan beset at its night camp lost its wagons and horses for the fight**, and a halted party left its
+  shared camp. FIXED: parked through the fight; the halted keep their ring; a lone camp's fire out for its halt.
+- **R5 - E5 left a traveller setting out before first light nowhere** (the town had it gone, the road had it home).
+  FIXED: the town's away window opens at the leg's first light.
+- **R6 - a hunter jumped up to 344 m to its wild camp after a halt.** FIXED: the owed ground walked on.
+- **R7 - F2 never reached a noble's retainers.** FIXED: a fated retainer sends the procession out.
+- **R8 - a company hired on a train stopped being a company on the road.** FIXED: `hiredBy` read back.
+- **R11 - past six wagons, a horse walked in shafts with no wagon behind.** FIXED: a team capped whole.
+- **D3 - a dive turned home on the road still cleared its dungeon.** FIXED: `divesIn` skips it; one turned inside is
+  cut at its turning (pinned).
+- **P6, P17 - PINNED**: a patrol's cover of a trip setting out after its round; the census's new counts, classes and
+  levels, the wild's tries, the inn night's walk minute and its ends, the train's tail and park, the holy day's last
+  edge and a pilgrim's evening at the temple. The P lane's fifteen records carried, all dead.
+
+Seen and not changed: at a shared camp, a party that is not the camp's first stands its fight about its own trouble's
+place (the fight's place is the trouble's own, every reader's), so its people step out up to 60 m for the fight's
+minutes and come back to the ring for the halt. R8's head is not mutation-pinned: on the synthetic map the merchant
+never outranks the hired.
+
 ## C (with H1, R9, P4, P7) - the caravan's door (`test/auditlwii2_door.test.js`, 13; `auditlwii2_door.json`, 44)
 
 All FIXED:
