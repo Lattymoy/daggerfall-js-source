@@ -21,7 +21,7 @@ import {
   MEASURED, LIFT, TEAM, driverSeatFor, teamSidesOf, traceRootsOf, DRIVER_HANDS_TOP, RIG_READ_M, rigLengthOf, rigGrowOf,
   wagonGeometry, buildBakedWagonParts,
 } from '../src/world/wagonModels.js';
-import { SEATED_HIP_HEIGHT, SEAT_HIP_DROP, SEAT_PELVIS_HEIGHT, seatedMotion, seatRigInput, seatTopByte } from '../src/player/seatPose.js';
+import { SEATED_HIP_HEIGHT, SEAT_HIP_DROP, SEAT_PELVIS_HEIGHT, seatedMotion, seatedCamera, seatRigInput, seatTopByte } from '../src/player/seatPose.js';
 import { ROPE, newRope, layRope, stepRope, restSag, tubeModel, tubeInto, tubeVertexCount } from '../src/systems/wagonRopes.js';
 import { TEX, WAGON_ARCHIVE, wagonArt } from '../src/world/wagonArt.js';
 import { quatAngleAxis, UNITY_QUAT_IDENTITY, quatRotate as quatRotateT, quatForward } from '../src/world/quat.js';
@@ -559,14 +559,16 @@ test('WAGONS3 THE HOSTS SIT ME ON THE BENCH: the wagon\'s LateUpdate before the 
     assert.ok(s.indexOf('hccTick(dt, now);\n    _driverSeat') > 0 || s.indexOf('    hccTick(dt, now);\n    // WAGONS3') > 0, `${host}: the LateUpdate before the bench`);
     assert.match(s, /_driverSeat = walkMode [^\n]*player\.transportMode === TRANSPORT_MODES\.Cart && !\(townTalk\.overlay instanceof DeathScreen\) \? hcc\.driverSeat\(\) : null;/, `${host}: driving, never over a death's sink`);
     assert.match(s, /if \(_driverSeat\) cam\.pos = \[_driverSeat\.feet\[0\], _driverSeat\.feet\[1\] \+ SEATED_EYE_HEIGHT, _driverSeat\.feet\[2\]\];/, `${host}: the seated eye`);
-    assert.match(s, /feet: _driverSeat \? _driverSeat\.feet : player\.feetAt\(\), yaw: cam\.yaw, pitch: cam\.pitch,/, `${host}: the camera's feet the seat's`);
+
     assert.match(s, /riding: !!player\.riding && !_driverSeat,/, `${host}: the bench is no saddle`);
-    assert.match(s, /\.\.\.\(_driverSeat \? \{ seated: true, stopped: true \} : \{\}\),/, `${host}: seated, still`);
+    assert.match(s, /\.\.\.\(_driverSeat \? \{ seated: true, stopped: true, feet: _driverSeat\.feet \} : \{\}\),/, `${host}: seated, still, the camera's feet the seat's`);
+    assert.ok(s.indexOf('feet: player.feetAt(), yaw: cam.yaw, pitch: cam.pitch,') < s.indexOf('...(_driverSeat ? { seated: true, stopped: true, feet: _driverSeat.feet } : {}),'), `${host}: the seat's feet after the smoothed ones - the later key wins`);
     assert.match(s, /raycast: \(o, d, m\) => Math\.min\(collider\.raycast\(o, d, m(?:, camFilter)?\), hcc\.cameraHit\(o, d, m\)\),/, `${host}: the wall`);
     assert.match(s, /hcc\.cameraHit\(o, d, m, r\)\); return Number\.isFinite\(h\) \? h : null; \}/, `${host}: the sphere's wall`);
-    assert.match(s, /move: _driver(?:Body)?Seat \? seatedMotion\(motionBagOf\(player\)\) : motionBagOf\(player\),/, `${host}: the body still on it`);
     assert.match(s, /seat: _driver(?:Body)?Seat \? \{ feet: _driver(?:Body)?Seat\.feet, yaw: _driver(?:Body)?Seat\.yaw, top: _driver(?:Body)?Seat\.top \} : null,/, `${host}: seated by the rig`);
     assert.match(s, /hcc\.faceTeams\((?:mwv\.eye|eye)\);/, `${host}: the team turned to the eye that draws it`);
+    assert.match(s, /if \(_driverSeat && player\.transportMode === TRANSPORT_MODES\.Cart(?: && !\(townTalk\.overlay instanceof DeathScreen\))?\) cam\.pos = \[_driverSeat\.feet\[0\], _driverSeat\.feet\[1\] \+ SEATED_EYE_HEIGHT, _driverSeat\.feet\[2\]\];   \/\/ WAGONS3: on my bench \(last frame's seat/, `${host}: the frame's picks aim from the bench`);
+    assert.ok(s.indexOf("(last frame's seat until the wagon steps)") < s.indexOf('const _hccPick = pickActivatableHit(cam.pos, useFwd, hcc.targets(), collider);'), `${host}: before the picks`);
   }
   const w = rd('src/scenes/world.js');
   assert.match(w, /if \(_driverBodySeat\) \{ player\.drawFeet = _driverBodySeat\.feet; player\.drawYaw = _driverBodySeat\.yaw; player\.drawGrow = _driverBodySeat\.g > 1 \? _driverBodySeat\.g : null; \}/);
@@ -577,6 +579,12 @@ test('WAGONS3 THE HOSTS SIT ME ON THE BENCH: the wagon\'s LateUpdate before the 
   assert.match(e, /player\.drawFeet = _driverSeat \? _driverSeat\.feet : null; player\.drawYaw = _driverSeat \? _driverSeat\.yaw : null;/);
   assert.match(e, /if \(modeNow\(\) !== 'exterior'\) \{ _driverSeat = null; player\.drawFeet = null; player\.drawYaw = null; \}/);
   assert.match(rd('src/player/motor.js'), /bodyYawFor\(viewYaw\) \{ return this\.drawYaw \?\? this\._bodyYaw \?\? /);
+  assert.match(rd('src/combat/fpArm.js'), /const cam = seatedCamera\(camera && camera\(\)\);/, 'the rig reads a seated body still');
+  const bag = { forward: 1, speed: 5 };
+  assert.deepEqual(seatedCamera({ seat: { feet: [0, 0, 0] }, move: bag, yaw: 1 }), { seat: { feet: [0, 0, 0] }, move: seatedMotion(bag), yaw: 1 });
+  const free = { seat: null, move: bag };
+  assert.equal(seatedCamera(free), free, 'afoot: the bag as handed');
+  assert.equal(seatedCamera(null), null);
   assert.deepEqual(seatedMotion({ forward: 1, strafe: -1, running: true, speed: 9, standing: false, riding: true, jumping: true, grounded: true, height: 1.8 }), { forward: 0, strafe: 0, running: false, speed: 0, standing: true, riding: false, jumping: false, grounded: true, height: 1.8 });
 });
 

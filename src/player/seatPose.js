@@ -59,6 +59,9 @@ export const SEAT_HAND_OVER = 0.04;
 /** WAGONS3: a body seated on a moving seat (a wagon's bench) is still on it - the motor's bag (player/motor.js
  *  motionBagOf) with its stride taken out, so the third-person body poses the seat and plays no walk under it. */
 export const seatedMotion = (bag) => ({ ...bag, forward: 0, strafe: 0, running: false, speed: 0, standing: true, riding: false, jumping: false });
+/** WAGONS3: a rig's camera snapshot as the body reads it - seated (`seat`, a wagon's bench or a table's chair), its
+ *  motion bag still (combat/fpArm.js update: the hosts hand the motor's bag whole, WW2's one bag). */
+export const seatedCamera = (cam) => (cam && cam.seat && cam.move ? { ...cam, move: seatedMotion(cam.move) } : cam);
 
 /** The table's top above the feet as the wire's byte. */
 export const seatTopByte = (top) => Math.min(POSE_SEAT_TOP_MAX, Math.max(1, Math.round((Number(top) || 0) / SEAT_TOP_STEP)));

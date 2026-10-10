@@ -102,7 +102,7 @@ import { setHoldingsProvider, stableProviderFor } from '../ui/holdingsPages.js';
 import { isQualifyingThreatState } from '../systems/horseFollow.js';   // HCC: CollectThreats' qualification
 import { totalWeight } from '../systems/inventory.js';   // HCC: PlayerEntity.WagonWeight
 import { wagonKgFor, activeWagonKind, horseCountOf, wagonTeamShort } from '../systems/wagonKinds.js';   // HCC: ItemHelper.WagonKgLimit - WAGONS1: the driven wagon's
-import { SEATED_EYE_HEIGHT, seatedMotion } from '../player/seatPose.js';   // WAGONS3: the driver's seated eye, and the body still on the bench
+import { SEATED_EYE_HEIGHT } from '../player/seatPose.js';   // WAGONS3: the driver's seated eye
 import { InputMessageBoxWindow } from '../ui/inputMessageBox.js';   // HCC: the horse's name
 import { isLocalPlayerTarget } from '../characters/enemyTargets.js';   // HCC: CollectThreats' `senses.Target == player`
 import { SeasonHelper, archivePrefix as seasonPrefixOf } from '../systems/seasonsIliacBay.js';   // SIB1: Seasons of the Iliac Bay's SeasonHelper; WINDFALL1: and its atlases' prefixes, which Windfall's own tables key on
@@ -2506,9 +2506,9 @@ export async function bootExterior(canvas, renderer, params, status) {
     // named reason rather than an arm at the world origin.
     // MW-D10: rule 54's neck pitch; MW-D15: rule 32(a)'s sneak sink.
     camera: () => ({ pos: player.eyeAt(), yaw: cam.yaw, pitch: cam.pitch, sneaking: !!player.isSneaking, feet: player.pos, climbing: !!(player.climb?.isClimbing || player.mantling || player.onWall),   // HT1
+      seat: _driverSeat ? { feet: _driverSeat.feet, yaw: _driverSeat.yaw, top: _driverSeat.top } : null,   // WAGONS3: on my wagon's bench, the body seated (still on it - combat/fpArm.js seatedCamera)
       bob: [0, player.bobOffset ? player.bobOffset[1] : 0],   // IG1: the bob's vertical feeds the first-person offset
-      move: _driverSeat ? seatedMotion(motionBagOf(player)) : motionBagOf(player),   // MW-D26: the movement-settings vector, the reference's own selection source; MW-D39 added the jump-state inputs; WW2: the one bag (a partial copy left the bob's idle gate unsent); WAGONS3: still on the bench
-      seat: _driverSeat ? { feet: _driverSeat.feet, yaw: _driverSeat.yaw, top: _driverSeat.top } : null,   // WAGONS3: on my wagon's bench, the body seated
+      move: motionBagOf(player),   // MW-D26: the movement-settings vector, the reference's own selection source; MW-D39 added the jump-state inputs; WW2: the one bag (a partial copy left the bob's idle gate unsent)
       climb: climbRigInput(player, cam.yaw) }),   // CLIMB6: the climb's snapshot - the body's limbs on the stone (player/climbPose.js)
     spellArmed: () => magic.spellArmed(), abortSpell: () => magic.abortReadySpell(),   // M2: HasReadySpell hides the weapon; MAC-O1: WeaponManager.Update:251 - the key puts a readied spell away and draws
   });
@@ -5308,6 +5308,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         });
       }
       cam.pos = player.eyeAt();   // EV1: the interpolated render eye
+      if (_driverSeat && player.transportMode === TRANSPORT_MODES.Cart) cam.pos = [_driverSeat.feet[0], _driverSeat.feet[1] + SEATED_EYE_HEIGHT, _driverSeat.feet[2]];   // WAGONS3: on my bench (last frame's seat until the wagon steps) - the picks aim from the eye on the screen
       // DC1: PlayerDeath.Update's camera sink (per-frame off the fresh eye array).
       if (townTalk.overlay instanceof DeathScreen) cam.pos[1] -= townTalk.overlay.drop;
       if (townTalk.overlay instanceof DeathScreen) townTalk.overlay.tiltView(cam);   // DEATH3
@@ -5515,9 +5516,9 @@ export async function bootExterior(canvas, renderer, params, status) {
     // the screenshot scout and the horse keep their own framing (the
     // ride-view predates the machine and is its own recorded law).
     const mwv = (!shotMode || walkMode) && !riding
-      ? mwViewFrame({ fpEye: cam.pos, feet: _driverSeat ? _driverSeat.feet : player.feetAt(), yaw: cam.yaw, pitch: cam.pitch,   // WAGONS3: on the bench, the seat's feet
+      ? mwViewFrame({ fpEye: cam.pos, feet: player.feetAt(), yaw: cam.yaw, pitch: cam.pitch,
           dt, riding: !!player.riding && !_driverSeat,   // AUDIT-EOTB F3/F4: the host's own clock, and the one state only it has; WAGONS3: the bench is no saddle
-          ...(_driverSeat ? { seated: true, stopped: true } : {}),   // WAGONS3: seated on it, and still on it
+          ...(_driverSeat ? { seated: true, stopped: true, feet: _driverSeat.feet } : {}),   // WAGONS3: seated on it, still on it, the camera's feet the seat's (after `feet`: it wins)
           cart: player.transportMode === TRANSPORT_MODES.Cart, onExteriorPath: _surfPath,   // EOTB-IL: UpdateWagon's two host facts
           raycast: (o, d, m) => Math.min(collider.raycast(o, d, m), hcc.cameraHit(o, d, m)),   // WAGONS3: my driven wagon's body a wall to the camera on its bench
           spherecast: (o, r, d, m) => { const h = Math.min(collider.sphereCast(o, r, d, m).dist, hcc.cameraHit(o, d, m, r)); return Number.isFinite(h) ? h : null; } })   // MAC-A: castSphere's seam beside the ray - the camera's two obstacle guards are sphere casts (camera.cpp:186, :200)
@@ -5532,6 +5533,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       : riding
         ? [cam.pos[0] - fwd[0] * TP_DIST, cam.pos[1] - fwd[1] * TP_DIST, cam.pos[2] - fwd[2] * TP_DIST]
         : mwv.eye;
+    hcc.faceTeams(eye);   // WAGONS3: the team's billboards turned to the eye that draws them
     // ROAD-E E5: the DOCKED large HUD shrinks the world pass rather
     // than covering it (ViewportChanger.cs:56-62), and Unity derives a
     // camera's aspect from its viewport - so the lens takes the bar's
@@ -5706,7 +5708,6 @@ export async function bootExterior(canvas, renderer, params, status) {
     renderer.setWorldViewport(worldViewportRect(canvas.clientWidth, canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, sunDirection(minute), WORLD_FRAME);   // AUDIT-EL F5: a WORLD frame - the lane replays its records for this one
     renderer.setCloudShadow(sky?.cloudShadow ?? null);   // VC4: the frame's deck, for the body and everything before the terrain
-    hcc.faceTeams(eye);   // WAGONS3: the team's billboards turned to the eye that draws them
     mwViewDrawBody(canvas, { proj, view, eye, feet: player.bodyFeetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });   // MW-D24; DISC18: the body at the capsule's own feet, not the camera's smoothed ones
     mwViewDrawWagon(renderer, texRemap);   // EOTB-IL: the cart, when the transport is the cart
     camps.draw(renderer, texRemap);   // SURV3: the tents

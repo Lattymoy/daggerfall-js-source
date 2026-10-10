@@ -585,8 +585,10 @@ but on a bench wagon the camera and the body are on the bench.
   the seat (SEATED_EYE_HEIGHT), hand the camera the seat's feet, and draw the
   body there through the motor's draw overrides (`src/player/motor.js`
   drawFeet, drawYaw, drawGrow). The third-person body is posed seated
-  (fpArm's `seat`, the climb rig's solver) and still (seatedMotion: no stride
-  under it).
+  (fpArm's `seat`, the climb rig's solver) and still (`src/combat/fpArm.js`
+  seatedCamera: no stride under it). The frame's picks - a press, a talk, the
+  plaque - run before the wagon steps, so they aim from last frame's seat: the
+  eye on the screen, not the puller ahead of it.
 - **The motor's step.** The motor steps at a fixed 60 Hz and the eye is
   interpolated between steps. The driven wagon is drawn - with its team, its
   harness and its seat - where the player is drawn (`renderShift`), or a
@@ -725,10 +727,12 @@ as before.
 
 `test/wagons3.test.js`. Mutants: `tools/mutants/wagons3.json`. Records
 re-aimed: `auditinvis.json`, `fbsea.json`, `hcc.json`, `macbugs.json`,
-`ow1.json`, `wagonhitch.json`, `wagons2.json`, `wagons2_wheels.json`. Pins
-moved (PIN MOVED, WAGONS3): `boat_map_marker`, `disc18`, `disc20`,
-`eotb_audit2`, `fbsea_zoom`, `hcc_hosts`, `mwbody1`, `tv1_travel_view`,
-`wagonhitch`, `wagons1`, `wagons2`, `wagons2_wheels`.
+`ow1.json`, `wagonhitch.json`, `wagons2.json`, `wagons2_wheels.json` (its
+"the bogie out of the bounds" recorded equivalent: the front axle's reach lies
+inside the body's and the rear axle's). Pins moved (PIN MOVED, WAGONS3):
+`boat_map_marker`, `disc20`, `fbsea_zoom`, `gatecrowd`, `hcc_hosts`,
+`invisnet`, `mwbody1`, `tv1_travel_view`, `wagonhitch`, `wagons1`, `wagons2`,
+`wagons2_wheels`.
 
 ## The relay
 
