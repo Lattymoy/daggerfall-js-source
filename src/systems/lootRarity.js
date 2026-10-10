@@ -1228,6 +1228,7 @@ export function rollLootRarity(items, source, { rolls = Math.random, luck = 50 }
   cursePass([...minted, ...dressed], rolls);   // LOOT16: one Rare or Legendary in twelve cursed, after that
   socketPass(minted, rolls);   // LOOT20: and a socket, after the curse (a garment never takes one)
   items.push(...rollLateFinds({ ...source, luck }, rolls));   // LOOT21: the late finds - the Ayleid stones - last of all
+  damnPass(minted, rolls);   // TRUE-CURSE: a cursed Legendary weapon damned, after every draw the door made (law 9)
   return items;
 }
 /** LOOT14 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 6): THE WARDROBE'S PASS - every eligible garment of
@@ -1445,9 +1446,9 @@ const damnable = (item) => item?.rarity === 'legendary' && item.group === 'Weapo
  *  half of its tier's band; one drawback, a row of its group's drawn and then its param; the drawback beside its
  *  enchantment (`enchantments`) and named (`cursed`, what the temple lifts); the line's worth on its price (a drawback
  *  is worth nothing, DFU's own law - enchantments.js VALUE_COUNTS_BELOW). It never renames the piece: a Rare's prefix and
- *  suffix are its first lines'. TRUE-CURSE: a Legendary weapon's curse is damned one time in DAMNED_IN, rolled last
- *  (`damned` true or false decides it instead, and draws nothing). Answers whether it was cursed. */
-export function cursePiece(item, rolls = Math.random, { damned = null } = {}) {
+ *  suffix are its first lines'. TRUE-CURSE: `damned` damns it as well (the Test Room's; a door's are damnPass's,
+ *  after every draw it makes). Answers whether it was cursed. */
+export function cursePiece(item, rolls = Math.random, { damned = false } = {}) {
   if ((item?.rarity !== 'rare' && item?.rarity !== 'legendary') || item.exalted === true || isCursed(item) || !Array.isArray(item.affixes)) return false;
   const numbers = AFFIX_IDS.filter((id) => !AFFIX_KINDS[id].proc && AFFIX_KINDS[id].groups.includes(item.group));   // a number - LOOT4's kinds that do something are the last pass's
   const carried = new Set(item.affixes.map((a) => a?.id));
@@ -1466,15 +1467,42 @@ export function cursePiece(item, rolls = Math.random, { damned = null } = {}) {
   const lined = { ...item, affixes: [...item.affixes, line] };
   const row = pick(CURSE_DRAWBACKS.filter((r) => curseParams(r, lined).length), rolls);
   const drawback = { type: row.type, param: pick(curseParams(row, lined), rolls) };
-  if (damnable(item) && (damned ?? rolls() * DAMNED_IN >= DAMNED_IN - 1)) {   // TRUE-CURSE: the top of its band, the bite at every blow
-    line.value = hi;
-    Object.assign(drawback, DAMNED_DRAWBACK);
-  }
   item.affixes = [...item.affixes, line];
   item.enchantments = [...(Array.isArray(item.enchantments) ? item.enchantments : []), { ...drawback }];
   item.cursed = drawback;
   item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + affixesWorth([line], item);
+  if (damned) damnPiece(item);
   return true;
+}
+/** TRUE-CURSE: DAMN A CURSED PIECE IN PLACE - a cursed Legendary weapon not damned yet: its curse's line (the last the
+ *  curse laid - no later pass of a door lays one) at the very top of its band, the line's worth on its price with it, and
+ *  its drawback the damned row in the curse's own place. Answers whether it was damned. */
+export function damnPiece(item) {
+  if (!damnable(item) || !isCursed(item) || isDamned(item) || !Array.isArray(item.affixes) || !item.affixes.length) return false;
+  const old = item.affixes.at(-1);
+  const line = { ...old, value: AFFIX_RANGES[old.id].legendary[1] };
+  const c = item.cursed;
+  const list = Array.isArray(item.enchantments) ? item.enchantments : [];
+  let at = -1;
+  for (let i = list.length - 1; i >= 0 && at < 0; i--) if (list[i]?.type === c.type && list[i]?.param === c.param) at = i;   // the curse's own: the last of its kind
+  if (at < 0) return false;
+  item.affixes = [...item.affixes.slice(0, -1), line];
+  item.enchantments = list.map((e, i) => (i === at ? { ...DAMNED_DRAWBACK } : e));
+  item.cursed = { ...DAMNED_DRAWBACK };
+  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + affixesWorth([line], item) - affixesWorth([old], item);
+  return true;
+}
+/** TRUE-CURSE: THE DAMNING'S PASS over the pieces a door just laddered - each cursed Legendary weapon, one in DAMNED_IN -
+ *  AFTER every draw the door makes (law 9: the curse's pass, the socket's and the late finds', then this), so every
+ *  other curse and socket is drawn as it was. Answers the pieces it damned. */
+export function damnPass(pieces, rolls = Math.random) {
+  const damned = [];
+  if (!lootRarityOn()) return damned;
+  for (const it of pieces ?? []) {
+    if (!damnable(it) || !isCursed(it) || isDamned(it)) continue;
+    if (rolls() * DAMNED_IN >= DAMNED_IN - 1 && damnPiece(it)) damned.push(it);
+  }
+  return damned;
 }
 /** THE CURSE'S PASS over the pieces a door just laddered - each Rare and Legendary that is no Exalted, one in CURSE_IN -
  *  AFTER every draw the door makes (law 9: the last pass, the wardrobe's, then this). Answers the pieces it cursed. */

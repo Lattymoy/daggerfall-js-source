@@ -2,8 +2,8 @@
   {
     "name": "SPAMTAKE-card-stays",
     "file": "src/ui/bountyWindow.js",
-    "old": "        if (done.ok) picked = nextOpenNotice(deps.rows(), picked);",
-    "new": "        if (false) picked = nextOpenNotice(deps.rows(), picked);",
+    "old": "landed = next === picked ? p.slotKey : null; picked = next; }",
+    "new": "landed = next === picked ? p.slotKey : null; }",
     "tests": [
       "test/fb1010_spamtake.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SPAMTAKE-pick-keeps-arm",
     "file": "src/ui/bountyWindow.js",
-    "old": "      const pick = () => { picked = i; word = null; armed = null; render(); };",
-    "new": "      const pick = () => { picked = i; word = null; render(); };",
+    "old": "      const pick = () => { picked = i; word = null; armed = null; landed = null; render(); };",
+    "new": "      const pick = () => { picked = i; word = null; landed = null; render(); };",
     "tests": [
       "test/fb1010_spamtake.test.js"
     ]
@@ -164,7 +164,7 @@
   {
     "name": "RFOLK-rr-climate",
     "file": "src/systems/rrVariants.js",
-    "old": "redguardRegion(region) ? 'Redguard' : rrClimateRace(worldClimate));",
+    "old": "walkerRace(getWorldClimateSettings(worldClimate)?.people, region));   // AUDIT FB1010 C3: the street's own rule",
     "new": "rrClimateRace(worldClimate));",
     "tests": [
       "test/fb1010_regionalfolk.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "DAMNED-never",
     "file": "src/systems/lootRarity.js",
-    "old": "  if (damnable(item) && (damned ?? rolls() * DAMNED_IN >= DAMNED_IN - 1)) {",
-    "new": "  if (false) {",
+    "old": "    if (rolls() * DAMNED_IN >= DAMNED_IN - 1 && damnPiece(it)) damned.push(it);",
+    "new": "    if (false) damned.push(it);",
     "tests": [
       "test/fb1010_truecurse.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "DAMNED-half",
     "file": "src/systems/lootRarity.js",
-    "old": "rolls() * DAMNED_IN >= DAMNED_IN - 1)) {",
-    "new": "rolls() * DAMNED_IN >= DAMNED_IN - 2)) {",
+    "old": "rolls() * DAMNED_IN >= DAMNED_IN - 1 && damnPiece(it)",
+    "new": "rolls() * DAMNED_IN >= DAMNED_IN - 2 && damnPiece(it)",
     "tests": [
       "test/fb1010_truecurse.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "DAMNED-not-top",
     "file": "src/systems/lootRarity.js",
-    "old": "    line.value = hi;\n    Object.assign(drawback, DAMNED_DRAWBACK);",
-    "new": "    Object.assign(drawback, DAMNED_DRAWBACK);",
+    "old": "  const line = { ...old, value: AFFIX_RANGES[old.id].legendary[1] };",
+    "new": "  const line = { ...old };",
     "tests": [
       "test/fb1010_truecurse.test.js"
     ]
@@ -281,10 +281,172 @@
   {
     "name": "DAMNED-room-old-rolled",
     "file": "src/systems/testRoom.js",
-    "old": "cursePiece(l, rolls, { damned: false }); put(l);",
-    "new": "cursePiece(l, rolls); put(l);",
+    "old": "cursePiece(l, rolls); put(l);",
+    "new": "cursePiece(l, rolls, { damned: true }); put(l);",
     "tests": [
       "test/fb1010_truecurse.test.js"
+    ]
+  },
+  {
+    "name": "DAMNED-worth-unmoved",
+    "file": "src/systems/lootRarity.js",
+    "old": "  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + affixesWorth([line], item) - affixesWorth([old], item);",
+    "new": "  item.value = Number.isFinite(item.value) ? item.value : itemBaseValue(item);",
+    "tests": [
+      "test/fb1010_truecurse.test.js"
+    ]
+  },
+  {
+    "name": "DAMNED-drawback-added",
+    "file": "src/systems/lootRarity.js",
+    "old": "  item.enchantments = list.map((e, i) => (i === at ? { ...DAMNED_DRAWBACK } : e));",
+    "new": "  item.enchantments = [...list, { ...DAMNED_DRAWBACK }];",
+    "tests": [
+      "test/fb1010_truecurse.test.js"
+    ]
+  },
+  {
+    "name": "DAMNED-curse-damns",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (damned) damnPiece(item);",
+    "new": "  if (true) damnPiece(item);",
+    "tests": [
+      "test/fb1010_truecurse.test.js"
+    ]
+  },
+  {
+    "name": "DAMNED-door-unpassed",
+    "file": "src/systems/lootRarity.js",
+    "old": "  damnPass(minted, rolls);   // TRUE-CURSE: a cursed Legendary weapon damned, after every draw the door made (law 9)\n",
+    "new": "",
+    "tests": [
+      "test/fb1010_truecurse.test.js"
+    ]
+  },
+  {
+    "name": "DAMNED-kit-unpassed",
+    "file": "src/systems/foeLootCap.js",
+    "old": "  damnPass(kit, opts.rolls ?? Math.random);   // TRUE-CURSE: a cursed Legendary weapon damned, after every draw the kit made (law 9)\n",
+    "new": "",
+    "tests": [
+      "test/fb1010_truecurse.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-D1-world-unspared",
+    "file": "src/scenes/world.js",
+    "old": "hurtPlayer(playerEntity, n, arenaBouts.playerSpare() ?? {}); },",
+    "new": "hurtPlayer(playerEntity, n); },",
+    "tests": [
+      "test/fb1010_truecurse.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-D1-exterior-unspared",
+    "file": "src/scenes/exterior.js",
+    "old": "hurtPlayer(playerEntity, n, arenaBouts.playerSpare() ?? {}); },",
+    "new": "hurtPlayer(playerEntity, n); },",
+    "tests": [
+      "test/fb1010_truecurse.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-D2-priced",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "why === 'damned' ? '-' : `${price} gold`",
+    "new": "`${price} gold`",
+    "tests": [
+      "test/fb1010_truecurse.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A1-landed-presses",
+    "file": "src/ui/bountyWindow.js",
+    "old": "    } else if (r.state === 'held' && landed === p.slotKey) {",
+    "new": "    } else if (false) {",
+    "tests": [
+      "test/fb1010_spamtake.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A1-never-landed",
+    "file": "src/ui/bountyWindow.js",
+    "old": "landed = next === picked ? p.slotKey : null;",
+    "new": "landed = null;",
+    "tests": [
+      "test/fb1010_spamtake.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A1-pick-keeps-landed",
+    "file": "src/ui/bountyWindow.js",
+    "old": "      const pick = () => { picked = i; word = null; armed = null; landed = null; render(); };",
+    "new": "      const pick = () => { picked = i; word = null; armed = null; render(); };",
+    "tests": [
+      "test/fb1010_spamtake.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A2-focus-dropped",
+    "file": "src/ui/bountyWindow.js",
+    "old": "        armed = null;\n        render(keep);",
+    "new": "        armed = null;\n        render();",
+    "tests": [
+      "test/fb1010_spamtake.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A3-window-grows",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".bounty-win:not(.bounty-noticewin) { height: min(600px, 92vh); }\n",
+    "new": "",
+    "tests": [
+      "test/fb1010_spamtake.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A3-no-page",
+    "file": "src/ui/bountyWindow.js",
+    "old": "    const page = el('div', 'bounty-cardpage');",
+    "new": "    const page = card;",
+    "tests": [
+      "test/fb1010_spamtake.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-B1-goal-topleft",
+    "file": "src/ui/heldMap.js",
+    "old": "      this._goal = clampView(keep(this._goal), this._limits());",
+    "new": "      this._goal = clampView(this._goal, this._limits());",
+    "tests": [
+      "test/fb1010_findfirst.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-B2-over-the-driver",
+    "file": "src/ui/heldMap.js",
+    "old": "      && !this.teleportationTravel && !this._it && !this._to?.isTravelActive",
+    "new": "      && !this.teleportationTravel && !this._to?.isTravelActive",
+    "tests": [
+      "test/fb1010_findfirst.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-C1-copy-look",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    const now = deps.residentNow?.(rid) ?? null;",
+    "new": "    const now = null;",
+    "tests": [
+      "test/fb1010_regionalfolk.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-C1-host-unasked",
+    "file": "src/scenes/world.js",
+    "old": "    residentNow: (id) => residentOfId(id, livingTownOfId),   // AUDIT FB1010 C1: the betrothed as the census mints them now, for the wedding\n",
+    "new": "",
+    "tests": [
+      "test/fb1010_regionalfolk.test.js"
     ]
   }
 ]

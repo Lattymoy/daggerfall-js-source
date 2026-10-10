@@ -4644,7 +4644,9 @@ export async function bootExterior(canvas, renderer, params, status) {
       spellsByIndex: () => spellsByIndex,
       now: () => Math.floor(playerTicker.ownMinutes),
       sinks: {
-        hurt: (n) => { if (n > 0) hurtPlayer(playerEntity, n); },
+        // AUDIT FB1010 D1: an enchantment's own bite (a Damned blade's Health Leech, a curse's round) on the arena's sand
+        // holds me at 1 as every blow there does - the floor's dungeon mounts no ctx of its own (enchantCtx: false)
+        hurt: (n) => { if (n > 0) hurtPlayer(playerEntity, n, arenaBouts.playerSpare() ?? {}); },
         heal: (n) => { if (n > 0) { playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + n); surfacePlayer(); } },
       },
       playerSpellSinks,

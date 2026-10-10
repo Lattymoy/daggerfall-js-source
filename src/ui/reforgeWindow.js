@@ -636,7 +636,7 @@ export function mountReforgeWindow(host, deps) {
         if (done.ok) say(true, LIFTED(nameOf(it))); else say(false, LIFT_REFUSALS[done.reason ?? ''] ?? 'The priest will not lift that.');
         render();
       };
-      row.append(frameOf(it, picture), text, el('span', 'broker-price', `${price} gold`), btn);
+      row.append(frameOf(it, picture), text, el('span', 'broker-price', why === 'damned' ? '-' : `${price} gold`), btn);   // AUDIT FB1010 D2: no price for what no temple lifts
       list.append(row);
     }
   }

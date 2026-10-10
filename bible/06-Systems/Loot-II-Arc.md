@@ -51,7 +51,7 @@ And three of this arc's own, each the lesson of something this page found:
  WARDROBE  a garment ──► Magic, Rare, Legendary: standing, warmth, weatherproofing, the street's skills (LOOT14)
            six Legendary garments ──► powers felt on the road and at court (LOOT15)
  DECISIONS a Rare or Legendary, one in twelve ──► Cursed: a line more and a drawback, known at Identify (LOOT16)
-           ──► the temple lifts it for gold, the line kept
+           ──► the temple lifts it for gold, the line kept - never a Damned one (TRUE-CURSE)
            a line ──► honed: rolled again within its band, never lower, the price doubling (LOOT17)
  CLARITY   a card ──► every line against the piece it would replace (LOOT18)
            a junk mark ──► sold in one press; salvage every Magic in one; quick loot by tier
@@ -200,9 +200,10 @@ bites. Known, its tier line reads "Cursed Rare" or "Cursed Legendary" and the dr
 Cure Disease priest lifts it for gold - a quarter of the piece's price, at least 300 - the drawback gone and the line
 KEPT: the find's reward, paid for. Salvage, the Reforge and the hone take a cursed piece as its tier.
 
-TRUE-CURSE (`01-Overview/Field-Bugs-2026-10-10.md`): one cursed Legendary weapon in four is DAMNED - its line at the top
-of its band, its drawback Health Leech: Whenever Used (8 health a strike, 16 a use), "Damned Legendary" once known, and
-no temple lifts it. Taking it off ends the bite.
+TRUE-CURSE (`01-Overview/Field-Bugs-2026-10-10.md`): one cursed Legendary weapon in four is DAMNED, in its own pass after
+every draw a door makes (`damnPass`, law 9) - its line at the top of its band, its drawback Health Leech: Whenever Used
+(8 health a strike, 16 a use), "Damned Legendary" once known, and no temple lifts it. Taking it off ends the bite; on the
+arena's sand it holds the wielder at 1.
 
 HEAL-CURSE (2026-10-08, the owner, in the Wrothgarian zone's merge): the same priest's next row lifts a curse of the
 BLOOD - vampirism, lycanthropy, or either not yet turned - for 12,000 gold at the temple's price
@@ -456,7 +457,8 @@ the drawback named, a Legendary's curse line its band, "Cursed Perfect Rare"); t
 taking nothing, the drawback gone and the line, the price and the flavour kept, once) and the wire's six forgeries; the
 temple's row (its click and its key, no hook no row, the Reforge's row its own, DFU's L first), the Plus face, the
 host's hook and the page (the known cursed alone, the drawback and the price, a worn piece's refusal, a short purse's,
-the press, nothing to lift said). `tools/mutants/loot16.json` (71, all dead - the first run's survivor was the pass's own
+the press, nothing to lift said). `tools/mutants/loot16.json` (71; AUDIT FB1010 found LOOT16-a-row-of-nothing surviving on main - Bad Reactions From
+fits every piece, so the row filter is never empty - and left it as it stands; all dead at the time - the first run's survivor was the pass's own
 guard, which `cursePiece` repeats: what it adds is that a Magic costs a seeded stream no draw, now pinned).
 
 ### LOOT17 - the hone (2026-10-07)

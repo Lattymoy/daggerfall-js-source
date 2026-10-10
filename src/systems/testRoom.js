@@ -331,7 +331,7 @@ export function seedTestLoot(entity, rolls = Math.random) {
   // LOOT16 (bible/06-Systems/Loot-II-Arc.md section 8): a cursed Rare and a cursed Legendary, known - the temple's
   // lifting tried at once - after every draw the room made before
   { const r = applyRarity(base(TEST_LOOT_BASES[0]), 'rare', rolls); cursePiece(r, rolls); put(r); }
-  if (LEGENDARIES.length) { const l = legendaryItem(LEGENDARIES[0]); cursePiece(l, rolls, { damned: false }); put(l); }
+  if (LEGENDARIES.length) { const l = legendaryItem(LEGENDARIES[0]); cursePiece(l, rolls); put(l); }
   // LOOT20 (section 12): a Rare with an empty socket and a Ruby to set in it, at the Mages Guild's Reforge
   { const s = applyRarity(base(TEST_LOOT_BASES[0]), 'rare', rolls); s.socket = SOCKET_EMPTY; put(s); }
   put(mintCondition(setItemFields({ group: 'Gems', templateIndex: GEM_IDS.indexOf('ruby') })));

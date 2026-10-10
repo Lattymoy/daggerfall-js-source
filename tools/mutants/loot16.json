@@ -247,8 +247,8 @@
   {
     "name": "LOOT16-the-line-worthless",
     "file": "src/systems/lootRarity.js",
-    "old": "  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + affixesWorth([line], item);\n  return true;\n}\n/** THE CURSE'S PASS",
-    "new": "  item.value = Number.isFinite(item.value) ? item.value : itemBaseValue(item);\n  return true;\n}\n/** THE CURSE'S PASS",
+    "old": "  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + affixesWorth([line], item);\n  if (damned) damnPiece(item);",
+    "new": "  item.value = Number.isFinite(item.value) ? item.value : itemBaseValue(item);\n  if (damned) damnPiece(item);",
     "tests": [
       "test/loot16_curses.test.js"
     ]

@@ -16,8 +16,8 @@
 // resident, asked over the mod message bus) has no counterpart: the port
 // does not carry that mod, so `materialSet` is false and the billboard
 // takes the walker's archive, exactly the C#'s else.
-import { PERSON_TEXTURES, PERSON_FACE_RECORDS, PERSON_IDLE_RECORD, NUM_PERSON_FACE_VARIANTS, redguardRegion } from '../characters/mobilePerson.js';
-import { getWorldClimateSettings, FACTION_RACES } from '../formats/mapsFile.js';
+import { PERSON_TEXTURES, PERSON_FACE_RECORDS, PERSON_IDLE_RECORD, NUM_PERSON_FACE_VARIANTS, walkerRace, raceOfPeople } from '../characters/mobilePerson.js';
+import { getWorldClimateSettings } from '../formats/mapsFile.js';
 import { BUILDING_TYPES, isResidence } from '../world/buildingNames.js';
 import { isShop } from './shopStock.js';
 import { addVendorTextures } from './textureReplacement.js';
@@ -80,13 +80,10 @@ export function rrResidentGender(archive, record) {
 }
 /** GetClimateRace (:985-996): PlayerGPS.ClimateSettings.People - Redguard
  *  and Nord as they are, everything else (Breton, and the C#'s default
- *  arm) Breton. `worldClimate` is the location's climate. */
-export function rrClimateRace(worldClimate) {
-  const people = getWorldClimateSettings(worldClimate)?.people;
-  if (people === FACTION_RACES.Redguard) return 'Redguard';
-  if (people === FACTION_RACES.Nord) return 'Nord';
-  return 'Breton';
-}
+ *  arm) Breton. `worldClimate` is the location's climate. AUDIT FB1010 C3:
+ *  the walkers' one table (characters/mobilePerson.js raceOfPeople), which
+ *  reads the People so. */
+export const rrClimateRace = (worldClimate) => raceOfPeople(getWorldClimateSettings(worldClimate)?.people);
 /** The resident swap (:862-932): a faction-0 person of a known gender,
  *  `faceVariant = nameSeed % 29` under 24 (four in five), `outfitVariant =
  *  nameSeed % 4`; the walker archive of the race and gender at that
@@ -122,7 +119,7 @@ export function rrVariantPerson(pn, { buildingType = -1, quality = 0, nameSeed =
     if (record > -1) return { textureArchive: RR_NPC_ARCHIVE, textureRecord: record };
   }
   if (rrModule('variantResidents') && isResidence(buildingType)) {
-    const v = rrResidentVariant({ archive: pn.textureArchive, record: pn.textureRecord, factionID: pn.factionID ?? 0, nameSeed }, redguardRegion(region) ? 'Redguard' : rrClimateRace(worldClimate));
+    const v = rrResidentVariant({ archive: pn.textureArchive, record: pn.textureRecord, factionID: pn.factionID ?? 0, nameSeed }, walkerRace(getWorldClimateSettings(worldClimate)?.people, region));   // AUDIT FB1010 C3: the street's own rule
     if (v) {
       setFlatFaceOverride(pn.textureArchive, pn.textureRecord, v.faceIndex);   // flatsDict[flatId] = { faceIndex } (:1017-1023), keyed by the flat the person was born as
       return { textureArchive: v.textureArchive, textureRecord: v.textureRecord };

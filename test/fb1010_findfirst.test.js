@@ -8,6 +8,8 @@ import { readFileSync } from 'node:fs';
 import { HeldMapWindow } from '../src/ui/heldMap.js';
 import { CLIMATES } from '../src/formats/mapsFile.js';
 import { resetTravelMapState } from '../src/systems/travelMapState.js';
+import { MOD_SETTINGS } from '../src/systems/modSettings.js';
+import { readImmersiveTravelSettings, IT_POPUP, IMMERSIVE_TRAVEL_VENDOR } from '../src/systems/immersiveTravel.js';
 
 function fakeDocument() {
   const node = () => {
@@ -43,6 +45,10 @@ const mkWin = ({ findMeFirst = false, ...extra } = {}) => {
   return win;
 };
 const journey = (mod) => () => ({ settings: {}, destinationName: 'Wayrest', isTravelActive: false, ...mod });
+/** Where my pixel sits off the paper's middle, in paper pixels - [0, 0] on me. */
+const offMiddle = (w) => { const v = w._view; return [Math.round((ME.x + 0.5 - (v.ox + w._paper.w / (2 * v.scale))) * v.scale), Math.round((ME.y + 0.5 - (v.oy + w._paper.h / (2 * v.scale))) * v.scale)]; };
+/** MAP3's Morrowind arm, ready to take the sheet from tick `readyAt` - its four corners on the screen's middle. */
+const armFrom = (readyAt) => { let t = 0; return { tick() { t++; }, available: () => t >= readyAt, hold: () => true, release() {}, corners: () => [[400, 150], [1200, 150], [1200, 750], [400, 750]] }; };
 
 test('FIND-FIRST: the player\'s own world map opens as a press of Find me - the same glide to my pixel, the same red cross', () => withDocument(() => {
   const first = mkWin({ findMeFirst: true });
@@ -80,6 +86,35 @@ test('FIND-FIRST: an open for somewhere else is left as it was - a journal\'s pl
   assert.equal(resume._top, 'resume');
   assert.ok(!(resume._findMeT > 0), 'a journey to resume: the mod\'s question, over the bay');
   for (const w of [place, port, going, resume]) w.dispose();
+}));
+
+test('FIND-FIRST (AUDIT FB1010 B1): a paper that changes size under the open keeps me in its middle - the Morrowind arm taking the sheet a few ticks late, or giving it back unfitted - as a press of Find me lands', () => withDocument(() => {
+  for (const readyAt of [0, 2, 5]) {
+    const arm = armFrom(readyAt);
+    const w = mkWin({ findMeFirst: true, holder: arm });
+    for (let i = 0; i < 80; i++) { arm.tick(); w.tick(1 / 60); }
+    assert.equal(w._lane, 'hands', 'the arm holds it');
+    assert.deepEqual(offMiddle(w), [0, 0], `the arm ready at tick ${readyAt}: on me`);
+    w.dispose();
+  }
+  // MAP-FIT1: the arm takes the sheet, its corners run off the screen on the next tick, and it is given back
+  let t = 0;
+  const misfit = { available: () => true, hold: () => true, release() {}, corners: () => (t < 2 ? null : [[-200, 300], [1800, 300], [1800, 1200], [-200, 1200]]) };
+  const w = mkWin({ findMeFirst: true, holder: misfit });
+  for (let i = 0; i < 80; i++) { t++; w.tick(1 / 60); }
+  assert.equal(w._lane, 'sprite', 'given back');
+  assert.deepEqual(offMiddle(w), [0, 0], 'the painted sheet: on me');
+  w.dispose();
+}));
+
+test('FIND-FIRST (AUDIT FB1010 B2): a driver\'s map opens on the Bay even when asked - the carriage\'s and the ship\'s are the driver\'s routes', () => withDocument(() => {
+  const all = Object.fromEntries(Object.entries(MOD_SETTINGS[IMMERSIVE_TRAVEL_VENDOR].keys).map(([k, d]) => [k, d.default]));
+  const settings = readImmersiveTravelSettings((v, k) => all[k]);
+  const driver = mkWin({ findMeFirst: true, immersive: { kind: IT_POPUP.carriage, settings } });
+  driver.tick(0.05);
+  assert.ok(!(driver._findMeT > 0), 'no cross');
+  assert.deepEqual(driver._goal, driver._view, 'the Bay at rest');
+  driver.dispose();
 }));
 
 test('FIND-FIRST: the world host asks it of the player\'s own map alone - the key and the journal, never a teleport, a portal stone or a driver\'s map', () => {

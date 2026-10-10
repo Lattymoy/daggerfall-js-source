@@ -8,7 +8,8 @@
 // whole town: both, every traveller given a home among the households' houses.
 //
 // A RESIDENT IS A DFU TOWNSPERSON WHO KEEPS THEIR IDENTITY FOR LIFE (LW0 decision 4): RandomiseNPC's own parts -
-// the climate's people for the billboard (PERSON_TEXTURES, one of four outfits a sex), the talk portrait's record law
+// the climate's people for the billboard - a Redguard region's Redguards (REGIONAL-FOLK, characters/mobilePerson.js walkerRace;
+// FIELD BUGS 2026-10-10) - (PERSON_TEXTURES, one of four outfits a sex), the talk portrait's record law
 // (PERSON_FACE_RECORDS + one of 24), the region's name bank (MobilePersonNPC.cs:214) - drawn ONCE from the resident's
 // seed instead of at every spawn. The watch rides GUARD_TEXTURE, male, outfit 0 (RandomiseNPC's guard arm). The armed -
 // adventurers, sellswords, couriers - carry a CLASS too (LW0 decision 5): the sprite they wear beyond the walls.

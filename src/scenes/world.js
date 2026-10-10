@@ -125,7 +125,7 @@ import { travellerRoster, mintResident } from '../systems/livingWorld/census.js'
 import { townTrips, visitorsOf as tripVisitorsOf, awayOf as tripAwayOf, placeCycle, setsOut, newsOf, paceScale, NEWS_DAYS, diversAt, cycleOf, handsOn, nativeDry } from '../systems/livingWorld/trips.js';   // LW3: the roads, pure; LW4: the places' cycles, the town's news; LW7: a townsperson's cycle, a trip's hand deaths; LW-DRY: the ground a party stops on
 import { createDryGround } from '../world/dryGround.js';   // LW-DRY: the height map's own dry ground, every client's alike
 import { placeAt, turnKey } from '../systems/livingWorld/lives.js';   // LW4: who holds a traveller's place
-import { peoplePage } from '../systems/livingWorld/people.js';   // LW7c: the chronicle's People page
+import { peoplePage, residentOfId } from '../systems/livingWorld/people.js';   // LW7c: the chronicle's People page; AUDIT FB1010 C1: a betrothed as the census mints them
 import { troubleOf, troubledTrip } from '../systems/livingWorld/trouble.js';   // LW4: trouble on the road
 import { foeWord } from '../systems/livingWorld/lines.js';   // LW4: a foe's word for the town's talk and a mark
 import { portPackets, berthOf, sailorAt, crewsAshore } from '../systems/livingWorld/portCrews.js';   // LW5: the Bay's sailors
@@ -12213,7 +12213,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       spellsByIndex: () => spellsByIndex,
       now: () => Math.floor(playerTicker.ownMinutes),
       sinks: {
-        hurt: (n) => { if (n > 0) hurtPlayer(playerEntity, n); },
+        // AUDIT FB1010 D1: an enchantment's own bite (a Damned blade's Health Leech, a curse's round) on the arena's sand
+        // holds me at 1 as every blow there does - the floor's dungeon mounts no ctx of its own (enchantCtx: false)
+        hurt: (n) => { if (n > 0) hurtPlayer(playerEntity, n, arenaBouts.playerSpare() ?? {}); },
         heal: (n) => { if (n > 0) { playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + n); surfacePlayer(); } },
       },
       playerSpellSinks,
@@ -25900,6 +25902,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   };
   legacyHost = createLegacyHost({
     entity: playerEntity,
+    residentNow: (id) => residentOfId(id, livingTownOfId),   // AUDIT FB1010 C1: the betrothed as the census mints them now, for the wedding
     storage: () => appStorage(),
     tab: () => tabStorage(),
     on: () => legacyOn(),

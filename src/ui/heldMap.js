@@ -1177,6 +1177,7 @@ export class HeldMapWindow {
     c.ink.width = Math.max(1, Math.round(pw * dpr));
     c.ink.height = Math.max(1, Math.round(ph * dpr));
     const firstLayout = this._paper.w === 1;
+    const was = this._paper;
     this._paper = { w: pw / k, h: ph / k, dpr: dpr * k, k };
     this._stage = { x: sx, y: sy, w: sw, h: sh };
     if (this._lane === 'hands') {
@@ -1200,8 +1201,12 @@ export class HeldMapWindow {
       this._view = clampView(home, limits);
       this._goal = { ...this._view };
     } else {
-      this._view = clampView(this._view, this._limits());
-      this._goal = clampView(this._goal, this._limits());
+      // AUDIT FB1010 B1: a paper that changes size keeps the map point at its middle. The view's top-left was kept, so
+      // an open's aim - FIND-FIRST's glide to me, MAP2's journey centring, a journal's place - landed off the middle by
+      // the change when the Morrowind arm took the sheet a tick late or gave it back unfitted (MAP-FIT1)
+      const keep = (v) => ({ ...v, ox: v.ox + (was.w - this._paper.w) / (2 * v.scale), oy: v.oy + (was.h - this._paper.h) / (2 * v.scale) });
+      this._view = clampView(keep(this._view), this._limits());
+      this._goal = clampView(keep(this._goal), this._limits());
     }
     this._dirty = true;
   }

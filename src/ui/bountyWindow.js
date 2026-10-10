@@ -59,6 +59,10 @@ export function nextOpenNotice(rows, from) {
   }
   return from;
 }
+/** AUDIT FB1010 A1: the card a take stayed on (no open notice left to move to) says this where its presses stand, so a
+ *  run of presses at Take's place ends on words - never on Give up, nor on Share with party (which hands a mate's
+ *  ledger the bounty). A pick of the notice brings its presses back. */
+export const LANDED_LINE = 'Taken. Pick it on the left to share it or give it up.';
 /** How often the board re-reads the world while it stands (the clock, a kill made elsewhere, a mate's share). */
 export const BOUNTY_REPAINT_MS = 5_000;
 
@@ -124,14 +128,14 @@ export function mountBountyBoard(host, deps) {
   let card = null;
   let word = null;
   let armed = null;   // SPAM-TAKE: the held bounty whose Give up was pressed once - the second press gives it up
+  let landed = null;   // AUDIT FB1010 A1: the notice a take stayed on (none open to move to) - its card asks a pick first
   let alive = true;
 
   /** AUDIT 28 B11: the key the focus sits on (a notice's row, the card's act), kept through a repaint - every five
    *  seconds the list is rebuilt, and a keyboard's place in it was dropped to the page. */
   const FOCUS_RE = /\b(bounty-post-i\d+|bounty-take|bounty-share|bounty-drop)\b/;
   const focusKey = () => { const m = FOCUS_RE.exec(String(globalThis.document?.activeElement?.className ?? '')); return m ? m[1] : null; };
-  const render = () => {
-    const keep = focusKey();
+  const render = (keep = focusKey()) => {
     draw();
     if (keep) /** @type {HTMLElement|null} */ (win.querySelector?.(`.${keep}`))?.focus?.();
   };
@@ -153,7 +157,7 @@ export function mountBountyBoard(host, deps) {
       const main = el('div', 'bounty-post-body');
       main.append(el('span', 'bounty-post-title', p.title), el('span', 'bounty-post-meta', `Tier ${p.tier} · ${p.count} ${p.foes} · ${p.graveyard ? 'graveyard' : p.kind === 'dungeon' ? 'dungeon' : p.far} · ${p.gold} gold`));
       li.append(main, el('span', `bounty-state st-${r.state}`, stateWord(r)));
-      const pick = () => { picked = i; word = null; armed = null; render(); };
+      const pick = () => { picked = i; word = null; armed = null; landed = null; render(); };
       li.onclick = pick;
       li.onkeydown = (e) => { if (e.target === li && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault?.(); pick(); } };
       list.append(li);
@@ -171,29 +175,37 @@ export function mountBountyBoard(host, deps) {
     const r = rows[picked] ?? rows[0];
     if (!r) return;
     const p = r.posting;
+    // AUDIT FB1010 A3: the notice reads in its own scrolling page and the presses stand under it, at the card's foot -
+    // the window's height is fixed (BOUNTY_CSS), so Take stands where it stood whatever the story's length or the list's
     card = el('div', 'bounty-card');
-    card.append(el('h3', null, p.title));
-    card.append(el('p', 'bounty-tier', p.tierLabel));   // BOUNTY-TIERLABEL: which tier, and the levels in it
-    card.append(el('p', 'bounty-story', p.story));
-    card.append(el('p', 'bounty-poster', `- posted by ${p.poster}`));
+    const page = el('div', 'bounty-cardpage');
+    page.append(el('h3', null, p.title));
+    page.append(el('p', 'bounty-tier', p.tierLabel));   // BOUNTY-TIERLABEL: which tier, and the levels in it
+    page.append(el('p', 'bounty-story', p.story));
+    page.append(el('p', 'bounty-poster', `- posted by ${p.poster}`));
     const mapLine = el('p', 'bounty-mapline', p.mapLine);
-    card.append(mapLine);
+    page.append(mapLine);
     const reward = el('div', 'bounty-reward');
     reward.append(el('span', 'bounty-reward-head', 'Reward'), el('span', 'bounty-gold', `${p.gold} gold pieces`), el('span', 'bounty-itemhint', itemHint(p.item)));
-    card.append(reward);
-    if (r.held) card.append(el('p', 'bounty-progress', `${r.held.killed} of ${p.count} slain · ${bountyTimeText(r.held.left)} left`));
-    if (r.mates?.length && r.state !== 'held') card.append(el('p', 'bounty-mates', `${r.mates.join(', ')} ${r.mates.length > 1 ? 'are' : 'is'} already on this hunt - taking it joins them.`));
+    page.append(reward);
+    if (r.held) page.append(el('p', 'bounty-progress', `${r.held.killed} of ${p.count} slain · ${bountyTimeText(r.held.left)} left`));
+    if (r.mates?.length && r.state !== 'held') page.append(el('p', 'bounty-mates', `${r.mates.join(', ')} ${r.mates.length > 1 ? 'are' : 'is'} already on this hunt - taking it joins them.`));
+    card.append(page);
     const acts = el('div', 'bounty-acts');
     if (r.state === 'open') {
       acts.append(button('primary bounty-take', r.mates?.length ? 'Join the hunt' : 'Take bounty', () => {
+        const keep = focusKey();   // AUDIT FB1010 A2: before the host's own repaint (take's) blurs the press
         const done = deps.take(p.id);
         word = done.ok ? { ok: true, text: `Taken: ${p.title}. Look for the black circle on your map.` } : { ok: false, text: done.text ?? 'You cannot take that.' };
         // SPAM-TAKE: the card moves on to the next open notice, so Take stands where it stood - a run of presses takes
-        // the notices in order, where the card used to stay and turn Take into Give up under the cursor
-        if (done.ok) picked = nextOpenNotice(deps.rows(), picked);
+        // the notices in order, where the card used to stay and turn Take into Give up under the cursor. AUDIT FB1010
+        // A1: with none open to move to, the card stays on the one taken and asks a pick before it offers a press
+        if (done.ok) { const next = nextOpenNotice(deps.rows(), picked); landed = next === picked ? p.slotKey : null; picked = next; }
         armed = null;
-        render();
+        render(keep);
       }));
+    } else if (r.state === 'held' && landed === p.slotKey) {
+      acts.append(el('p', 'bounty-why bounty-landed', LANDED_LINE));
     } else if (r.state === 'held') {
       const heldId = deps.held().find((h) => h.posting.slotKey === p.slotKey)?.id ?? p.id;
       // SPAM-TAKE: Give up twice, as the journal's Abandon (the first press arms it), and first in the row - the card's
@@ -201,9 +213,10 @@ export function mountBountyBoard(host, deps) {
       acts.append(button('bounty-drop', armed === heldId ? 'Click again to give up' : 'Give up', () => {
         if (armed !== heldId) { armed = heldId; render(); return; }
         armed = null;
+        const keep = focusKey();   // AUDIT FB1010 A2: the host's repaint blurs the press
         deps.drop(heldId);
         word = { ok: false, text: `You gave up the hunt for the ${p.foes}.` };
-        render();
+        render(keep === 'bounty-drop' ? 'bounty-take' : keep);   // the notice open again: its Take
       }));
       if (deps.inParty() && !r.held?.shared) acts.append(button('bounty-share', 'Share with party', () => {
         const done = deps.share(heldId);

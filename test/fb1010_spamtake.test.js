@@ -7,13 +7,15 @@ import assert from 'node:assert/strict';
 
 import { byClass } from './chargenDom.mjs';
 import { createBountyHost } from '../src/scenes/bountyHost.js';
-import { mountBountyBoard, nextOpenNotice } from '../src/ui/bountyWindow.js';
+import { mountBountyBoard, nextOpenNotice, LANDED_LINE } from '../src/ui/bountyWindow.js';
 import { BOUNTY_CSS } from '../src/ui/enhancedPlusStyle.js';
 import { BOUNTY_ACTIVE_MAX } from '../src/systems/bountyBoard.js';
 
 const TOWN = { px: 300, py: 200, name: 'Daggerfall' };
 
-/** The host on day 900 at level 5, its board opened, and the window mounted on the deps it handed over. */
+/** The host on day 900 at level 5, its board opened, and the window mounted on the deps it handed over - and handed
+ *  back to the host as ui/bountyDoor.js does (`attach`), so the host's own repaint runs inside a press (AUDIT FB1010 A2:
+ *  without it the focus pin passed on a path the game never runs). */
 function boardOf({ inParty = false } = {}) {
   let deps = null;
   const host = createBountyHost({
@@ -26,9 +28,10 @@ function boardOf({ inParty = false } = {}) {
   host.openBoard(TOWN);
   const el = document.createElement('div');
   const view = mountBountyBoard(el, deps);
+  deps.attach?.(view);
   return { host, deps, el, view };
 }
-const cardTitle = (el) => byClass(el, 'bounty-card')[0]?.children[0]?.textContent;
+const cardTitle = (el) => byClass(el, 'bounty-cardpage')[0]?.children[0]?.textContent;
 
 test('SPAM-TAKE: Take pressed again and again takes the four notices in order, top to bottom, the press\'s focus carried to the next', () => {
   const { host, deps, el, view } = boardOf();
@@ -46,6 +49,20 @@ test('SPAM-TAKE: Take pressed again and again takes the four notices in order, t
   assert.deepEqual(host.held().map((h) => h.posting.slotKey), order, 'all four, in the board\'s order');
   assert.deepEqual(byClass(el, 'bounty-take'), [], 'nothing left to take');
   assert.equal(cardTitle(el), rows.at(-1).posting.title, 'the card stays on the last one taken');
+  assert.deepEqual(byClass(el, 'bounty-acts')[0].children.map((c) => c.textContent), [LANDED_LINE], 'AUDIT FB1010 A1: and asks a pick - no press stands where Take stood');
+  view.unmount();
+});
+
+test('SPAM-TAKE (AUDIT FB1010 A1): in a party, the press after the last take finds words, never Share with party - which would hand a mate\'s ledger the bounty - and a pick brings the presses back', () => {
+  const { host, el, view } = boardOf({ inParty: true });
+  for (let k = 0; k < 4; k++) byClass(el, 'bounty-take')[0].click();
+  assert.deepEqual(byClass(el, 'bounty-share'), [], 'no Share under the cursor');
+  assert.deepEqual(byClass(el, 'bounty-drop'), [], 'nor Give up');
+  assert.ok(host.held().every((h) => !h.shared), 'nothing shared');
+  view.repaint();
+  assert.deepEqual(byClass(el, 'bounty-share'), [], 'through the repaint');
+  byClass(el, 'bounty-post-i3')[0].click();
+  assert.deepEqual(byClass(el, 'bounty-acts')[0].children.map((b) => b.className), ['act bounty-drop', 'act bounty-share'], 'picked: its presses');
   view.unmount();
 });
 
@@ -79,6 +96,14 @@ test('SPAM-TAKE: Give up stands at the card\'s left, first in the row, never whe
   assert.deepEqual(acts.children.map((b) => b.className), ['act bounty-drop', 'act bounty-share'], 'Give up first, Share at the right');
   assert.match(BOUNTY_CSS, /\.bounty-acts \{ display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; \}/, 'Take stands at the row\'s right');
   assert.match(BOUNTY_CSS, /\.bounty-acts \.bounty-drop \{ margin-right: auto; \}/, 'Give up is pushed to its left');
+  // AUDIT FB1010 A3: Take stands where it stood as the window fills - one height, the notice's page scrolling above its
+  // presses at the card's foot, the list scrolling beside (or, on a phone, above) it
+  assert.match(BOUNTY_CSS, /\.bounty-win:not\(\.bounty-noticewin\) \{ height: min\(600px, 92vh\); \}/);
+  assert.match(BOUNTY_CSS, /\.bounty-card \{[^}]*align-self: stretch;[^}]*display: flex; flex-direction: column;/);
+  assert.match(BOUNTY_CSS, /\.bounty-cardpage \{ flex: 1 1 auto; min-height: 0; overflow: auto; \}/);
+  assert.match(BOUNTY_CSS, /@media \(max-width: 720px\) \{[^@]*\.bounty-win:not\(\.bounty-noticewin\) \.bounty-side \{ flex: 0 1 auto; max-height: 45%; \}/);
+  const card = byClass(el, 'bounty-card')[0];
+  assert.deepEqual(card.children.map((c) => c.className), ['bounty-cardpage', 'bounty-acts'], 'the page, then the presses');
   view.unmount();
 });
 
