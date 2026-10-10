@@ -51,6 +51,9 @@ export const PLUS_BIND_ROWS = Object.freeze([
   // options"): both ship with no pad button - the d-pad's tap and hold offer them too (ui/plusPad.js DPAD_CHOICES)
   { id: 'quickdial', label: 'Quick dial', sec: 'QuickDial' },
   { id: 'overworld', label: 'Overworld', sec: 'TravelView' },
+  // TECH1 (bible/05-Combat/Weapon-Techniques.md): the weapon's technique - no pad button ships on it (every Plus button
+  // holds a row); a button chosen here holds to aim and lets go to loose, as the key does
+  { id: 'technique', label: 'Weapon technique (hold to aim)', sec: 'WeaponTechnique' },
 ]);
 
 /** The pad button a row is on, or null. */

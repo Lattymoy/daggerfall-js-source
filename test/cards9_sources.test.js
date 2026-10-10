@@ -231,7 +231,9 @@ test('CARDS9 THE BOSSES\' OWN: the Warden\'s, Sethrakul\'s and the Brass Remnant
     if (a.card) { assert.equal(al.at(-2).item.card, 'brass-remnant'); assert.ok(validLootItem(JSON.parse(JSON.stringify(al.at(-2).item))), 'the crash record\'s door takes it'); }
   }
   // by source: each draw sits after the hoard's last piece's
-  assert.match(read('src/systems/gateSpoils.js'), /lastPass\(pieces\.map\(\(p\) => p\.item\), rolls\);\s*(\/\/[^\n]*\n\s*)*const card = bossCardRoll\('gate', rolls\);\s*return \{ gold, pieces, sigil: sigilStone\(\), card \};/);
+  // PIN MOVED (TECH1, bible/05-Combat/Weapon-Techniques.md): a weapon's technique is the door's draw after the card's
+  // (Loot-II law 9 - the card's draw and every one before it stand where they were); the card still follows the last pass
+  assert.match(read('src/systems/gateSpoils.js'), /lastPass\(pieces\.map\(\(p\) => p\.item\), rolls\);\s*(\/\/[^\n]*\n\s*)*const card = bossCardRoll\('gate', rolls\);\s*(\/\/[^\n]*\n\s*)*techniquePass\(pieces\.map\(\(p\) => p\.item\), rolls\);\s*return \{ gold, pieces, sigil: sigilStone\(\), card \};/);
   assert.match(read('src/systems/serpentSpoils.js'), /if \(coil\) pieces\.push\(\{ item: coil, tier: coil\.rarity \}\);\s*(\/\/[^\n]*\n\s*)*const card = dealt \? bossCardRoll\('serpent', rolls\) : null;/);
   assert.match(read('src/systems/sdSpoils.js'), /if \(hourlock\) pieces\.push\(\{ item: hourlock, tier: hourlock\.rarity \}\);\s*(\/\/[^\n]*\n\s*)*const card = bossCardRoll\('abyss', rolls\);/);
 });

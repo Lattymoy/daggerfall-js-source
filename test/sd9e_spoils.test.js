@@ -16,7 +16,7 @@ import { createSpoilsPool, spoilsList, SPOILS_KEYS, SPOILS_TEXT } from '../src/s
 import { RAID_SPOILS_KEYS } from '../src/systems/raidSpoils.js';
 import { SERPENT_SPOILS_KEYS } from '../src/systems/serpentSpoils.js';
 import { spoilsBase } from '../src/systems/gateSpoils.js';
-import { applyRarity, rarityChances, lastPass } from '../src/systems/lootRarity.js';
+import { applyRarity, rarityChances, lastPass, techniquePass } from '../src/systems/lootRarity.js';
 import { rollNumidiumPiece, NUMIDIUM_SET_CHANCE, AETHERIC } from '../src/systems/aetheric.js';
 import { rollHourlock, GILDED_CHANCE, GILDED } from '../src/systems/gilded.js';
 import { seededRng } from '../src/systems/wind.js';
@@ -85,6 +85,7 @@ test('SD9e THE ORDER: the roll is its law\'s stream, read in order - the gold, t
     const hour = rollHourlock(rolls);
     if (hour) pieces.push({ item: hour, tier: hour.rarity });
     const card = bossCardRoll('abyss', rolls);   // PIN MOVED (CARDS9): the Brass Remnant's own card, one draw after the Hourlock's - last
+    techniquePass(pieces.map((p) => p.item), rolls);   // PIN MOVED (TECH1): a weapon's technique, the door's draw after the card's (Loot-II law 9)
     return { gold, pieces, card };
   };
   for (let seed = 1; seed <= 300; seed++) {

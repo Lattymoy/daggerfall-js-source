@@ -87,6 +87,7 @@ import { liveStat } from '../systems/statMods.js';   // WW1: the widget's speed 
 import { castRate } from '../systems/castSpeed.js';   // CAST-SPEED: the rate both lanes' hands cast at
 import './swingLaw.js';   // AUDIT PRE-MERGE 0929 S5: SWING-LAW's reader of the weapon in the hand, registered as it loads - every rig's
 import { walkSpeed } from '../player/motor.js';   // WW1: GetBaseSpeed's walk arm
+import { stepTechnique, claimShot, TECHNIQUE_ACTION } from './techniques.js';   // TECH1: the technique key - every host's rig steps the one runner
 
 /**
  * TR2: THE ARMS-BUILD OPTS, ONE HOME. The pause card and the Test
@@ -427,7 +428,7 @@ export function climbLowerRect(rect, lower) {
   return { ...rect, y: rect.y + climbDrop(lower, rect.h) };
 }
 
-export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, camera = null, say = () => {}, spellArmed = () => false, abortSpell = () => {}, bindWorn = true, activateHeld = () => false, envHit = null, missEffect = null, collider = null, actionDown = null, torches = () => null, sheetWindowUp = () => false, dropRefusal = () => null, actTool = () => null }) {   // HT1 (KB1): whether a registry action is held, and the hosts' dropped-torch pool   // MAP-WEAPON: whether the travel map window holds the screen   // AUDIT 28 W12: HasAction(ActivateCenterObject) - the drawn bow's un-draw; WW1: the widget's recoil doors
+export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, camera = null, say = () => {}, spellArmed = () => false, abortSpell = () => {}, bindWorn = true, activateHeld = () => false, envHit = null, missEffect = null, collider = null, actionDown = null, torches = () => null, sheetWindowUp = () => false, dropRefusal = () => null, actTool = () => null, technique = null }) {   // TECH1: `technique` the host's door for a weapon's technique (combat/techniques.js: motor, fireArrow, drainFatigue, face)   // HT1 (KB1): whether a registry action is held, and the hosts' dropped-torch pool   // MAP-WEAPON: whether the travel map window holds the screen   // AUDIT 28 W12: HasAction(ActivateCenterObject) - the drawn bow's un-draw; WW1: the widget's recoil doors
   const playerWeapon = new PlayerWeapon({ liveSpeed: () => (entity ? liveStat(entity, 'speed') : 50) });   // DISC28-D: the swing clock reads the live Speed (FPSWeapon.cs:431/549-556), as the body and the widget already did
   playerWeapon.animCtx = () => ({ entity, weaponType: weaponTypeForItem(playerWeapon.weapon), usingRightHand: playerWeapon.usingRightHand });   // AUDIT-RR F1: GetMeleeWeaponAnimTime(player, weaponType, weaponHands) - the swing clock's own ask, so RR's weaponSpeed and RRI's weaponBalance time the blow that lands, not only the widget's clone
   const poseProbe = () => ({ ...weaponPoseOf(playerWeapon), weaponType: weaponTypeForItem(playerWeapon.weapon) });   // RR1: WeaponManager.Sheathed (the pair through its one law, HARD2c) + ScreenWeapon.WeaponType
@@ -904,6 +905,13 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     // when it is done, at this frame's dt) is the one the arm fits its wind-up, release and follow into.
     fpArm.attack(strike, { hold: m.isBow && m.state === 'StrikeUp', blow: playerWeapon.strikeSchedule(dt) });
   }
+
+  /** SPELLFX1: one loose counted for the wire - the hosts' own (`noteShot`, below) and a technique's (TECH1). */
+  const noteShotHere = (weapon) => { if (!orbArchiveFor(weapon)) shot.n = (shot.n + 1) & 0xffff; };
+  /** TECH1: this rig's identity to the one technique runner (a door into another host's rig sets an aim aside), and the
+   *  frame's context it was last stepped with (the loose's claim reads it at the frame's end). */
+  const _techRig = {};
+  let _techCtx = null;
 
   // WEAPON-VIS1: a live call count, not a guess - see window.__weaponDebug
   // (scenes/world.js). Counts every path that flips the sheath through
@@ -1397,7 +1405,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     cast,    // MAC7 #2: { n, rangeType } - the count and the range of the last cast, for the wire
     shot,    // SPELLFX1: { n } - arrows loosed, for the wire
     /** SPELLFX1: every host's player loose calls this once, with the weapon it loosed from. */
-    noteShot(weapon) { if (!orbArchiveFor(weapon)) shot.n = (shot.n + 1) & 0xffff; },
+    noteShot(weapon) { noteShotHere(weapon); },
     /** Host mouse events buffer here (sheathed = no attack processing).
      *  CH3 (characters-13): a running SWAP PAUSE blocks the attack
      *  the same way (WeaponManager.cs:276-278 returns before the
@@ -1572,6 +1580,22 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // BOW-CLOCK: no shot starts the arm cannot draw (armLoosing, above) - gesture() is not asked, so its button
       // latch keeps the press made while waiting.
       const armLoosing = armCannotDraw();
+      // TECH1 (bible/05-Combat/Weapon-Techniques.md): THE TECHNIQUE KEY, stepped by the rig that owns the frame - every
+      // host's - AHEAD of the gesture: a technique's strike and a click's are one machine, and the first to start it holds
+      // it. Its gate is the swing's own (drawn, no spell, no cast, no climb, no equip pause, no act's tool, no arm still
+      // loosing) and the camera this rig rides.
+      _techCtx = {
+        rig: _techRig, entity, pw: playerWeapon,
+        cam: camNow?.pos && camNow?.feet ? { pos: camNow.pos, yaw: camNow.yaw ?? 0, pitch: camNow.pitch ?? 0, feet: camNow.feet } : null,
+        collider: collider?.() ?? null,
+        held: !!actionDown?.(TECHNIQUE_ACTION),
+        ready: !paralyzed && !!c && canAttack && !armLoosing && !!camNow?.pos && !!camNow?.feet,
+        cancel: !!activateHeld(),
+        holding: !!_heldHit,   // MW-D42: a shot's hit held for the Morrowind arm's release - the loose is still to come
+        startSwing: (s) => { if (!playerWeapon.techniqueStrike(s)) return false; fpAttack(s, dt); return true; },
+        door: technique, say, noteShot: noteShotHere,
+      };
+      stepTechnique(dt, _techCtx);
       const strike = !paralyzed && c && canAttack && !armLoosing
         ? playerWeapon.gesture(_dx, _dy, _held, dt, Math.max(c.clientWidth, c.clientHeight), { cancelHeld: activateHeld() })   // AUDIT 28 W12
         : null;
@@ -1810,7 +1834,9 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // Same animation, same release key, same clock; only the pass
       // that draws it differs, and the pass is none of the loose's
       // business.
-      return held.evs;
+      // TECH1: a bow's technique takes its own hit frame - its loose is the Volley's or the Piercing Shot's, never a plain
+      // arrow the host would loose on it (combat/techniques.js claimShot)
+      return claimShot(held.evs, _techCtx);
     },
     /** The overlay draw, LAST in the host's frame (composites over the
      *  scene; any HUD draws over it). Runs the bow guard first. */

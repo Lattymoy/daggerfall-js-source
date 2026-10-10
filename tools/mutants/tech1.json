@@ -1,0 +1,639 @@
+[
+  {
+    "name": "TECH1-the-gun-a-bow",
+    "file": "src/combat/techniqueRoster.js",
+    "old": "  if (item.templateIndex === THUNDERLOCK_TEMPLATE) return 'thunderlock';\n",
+    "new": "",
+    "tests": [
+      "test/tech1_roster.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-any-armour-a-fist",
+    "file": "src/combat/techniqueRoster.js",
+    "old": "return item.templateIndex === GAUNTLETS_TEMPLATE ? 'handToHand' : null;",
+    "new": "return 'handToHand';",
+    "tests": [
+      "test/tech1_roster.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-multiplier-off-the-value",
+    "file": "src/combat/techniqueRoster.js",
+    "old": "export const techniqueMult = (base, value) => base * (1 + Math.max(0, value | 0) / 100);",
+    "new": "export const techniqueMult = (base, value) => base;",
+    "tests": [
+      "test/tech1_roster.test.js",
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-a-band-moved",
+    "file": "src/combat/techniqueRoster.js",
+    "old": "rare: Object.freeze([15, 30])",
+    "new": "rare: Object.freeze([15, 31])",
+    "tests": [
+      "test/tech1_roster.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-a-chance-moved",
+    "file": "src/combat/techniqueRoster.js",
+    "old": "rare: 300, legendary: 450",
+    "new": "rare: 301, legendary: 450",
+    "tests": [
+      "test/tech1_roster.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-cap-past-the-referee",
+    "file": "src/combat/techniqueRoster.js",
+    "old": "export const TECHNIQUE_MAX_SPEED = 16;",
+    "new": "export const TECHNIQUE_MAX_SPEED = 19;",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-card-off-the-value",
+    "file": "src/combat/techniqueRoster.js",
+    "old": "  const m = techniqueMult(t.base, value);\n",
+    "new": "  const m = t.base;\n",
+    "tests": [
+      "test/tech1_roster.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-a-technique-in-the-pools",
+    "file": "src/systems/lootRarity.js",
+    "old": "export const AFFIX_IDS = Object.freeze(Object.keys(AFFIX_KINDS).filter((id) => !AFFIX_KINDS[id].technique));",
+    "new": "export const AFFIX_IDS = Object.freeze(Object.keys(AFFIX_KINDS));",
+    "tests": [
+      "test/tech1_roster.test.js",
+      "test/lr1_lootrarity.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-a-draw-at-no-chance",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (!(perMille > 0)) return null;   // a tier with no chance",
+    "new": "  if (false) return null;   // a tier with no chance",
+    "tests": [
+      "test/tech1_roster.test.js",
+      "test/loot21_stones.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-pass-dropped",
+    "file": "src/systems/lootRarity.js",
+    "old": "  techniquePass(minted, rolls);   // TECH1: a weapon's technique - the door's LAST draw",
+    "new": "  void minted;   // TECH1: a weapon's technique - the door's LAST draw",
+    "tests": [
+      "test/tech1_roster.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-pass-before-the-late-finds",
+    "file": "src/systems/lootRarity.js",
+    "old": "  items.push(...rollLateFinds({ ...source, luck }, rolls));   // LOOT21: the late finds - the Ayleid stones - last of all\n  techniquePass(minted, rolls);",
+    "new": "  techniquePass(minted, rolls);\n  items.push(...rollLateFinds({ ...source, luck }, rolls));   // LOOT21: the late finds - the Ayleid stones - last of all",
+    "tests": [
+      "test/tech1_roster.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-a-line-after-the-technique",
+    "file": "src/systems/lootRarity.js",
+    "old": "  const at = affixes.findIndex((a) => a?.gem != null || !!AFFIX_KINDS[a?.id]?.technique);",
+    "new": "  const at = affixes.findIndex((a) => a?.gem != null);",
+    "tests": [
+      "test/tech1_roster.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-technique-after-the-gem",
+    "file": "src/systems/lootRarity.js",
+    "old": "  const gem = item.affixes.findIndex((a) => a?.gem != null);\n  item.affixes = gem < 0 ? [...item.affixes, line]",
+    "new": "  const gem = -1;\n  item.affixes = gem < 0 ? [...item.affixes, line]",
+    "tests": [
+      "test/tech1_roster.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-a-second-technique",
+    "file": "src/systems/lootRarity.js",
+    "old": "&& techniquesFor(item).length > 0 && !item.affixes.some(isTechniqueAffix);",
+    "new": "&& techniquesFor(item).length > 0;",
+    "tests": [
+      "test/tech1_roster.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-reforge-out-of-the-family",
+    "file": "src/systems/lootRarity.js",
+    "old": "  const pool = (was.technique ? ['technique'] : AFFIX_IDS).filter((id) => {",
+    "new": "  const pool = AFFIX_IDS.filter((id) => {",
+    "tests": [
+      "test/tech1_roster.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-exalted-index",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (lines.length === 1 && item?.rarity === 'legendary' && isTechniqueAffix(list[lines[0]])) lines = [lines[0] - 1];",
+    "new": "",
+    "tests": [
+      "test/tech1_roster.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-a-legendary-technique-its-record-band",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (item.rarity === 'legendary' && isTechniqueAffix(a)) return AFFIX_RANGES.technique.legendary;",
+    "new": "",
+    "tests": [
+      "test/tech1_roster.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-card-detail-dropped",
+    "file": "src/systems/lootRarity.js",
+    "old": "    const d = techniqueDetail(a);",
+    "new": "    const d = '';",
+    "tests": [
+      "test/tech1_roster.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-worth-moved",
+    "file": "src/systems/lootRarity.js",
+    "old": "  technique: 30 });",
+    "new": "  technique: 31 });",
+    "tests": [
+      "test/tech1_roster.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-another-family-params",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (id === 'technique') return techniquesFor(item);",
+    "new": "",
+    "tests": [
+      "test/tech1_roster.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-technique-names-the-piece",
+    "file": "src/systems/lootRarity.js",
+    "old": "technique: Object.freeze({ slot: null,",
+    "new": "technique: Object.freeze({ slot: 'suffix',",
+    "tests": [
+      "test/tech1_roster.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-law-the-place",
+    "file": "src/systems/itemLaw.js",
+    "old": "  if (techs.length > 1 || (techs.length === 1 && own[own.length - 1] !== techs[0])) out.push('affixes');",
+    "new": "  if (techs.length > 1) out.push('affixes');",
+    "tests": [
+      "test/tech1_roster.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-law-the-count",
+    "file": "src/systems/itemLaw.js",
+    "old": "  if (techs.length > 1 || (techs.length === 1 && own[own.length - 1] !== techs[0])) out.push('affixes');",
+    "new": "  if (techs.length === 1 && own[own.length - 1] !== techs[0]) out.push('affixes');",
+    "tests": [
+      "test/tech1_roster.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-law-the-technique-counted",
+    "file": "src/systems/itemLaw.js",
+    "old": "  const body = own.filter((a) => !AFFIX_KINDS[a?.id]?.technique);",
+    "new": "  const body = own;",
+    "tests": [
+      "test/tech1_roster.test.js",
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-law-the-version",
+    "file": "src/systems/itemLaw.js",
+    "old": "export const ITEM_LAW_VERSION = 2;",
+    "new": "export const ITEM_LAW_VERSION = 1;",
+    "tests": [
+      "test/tech1_roster.test.js",
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-a-duel-struck",
+    "file": "src/combat/techniqueBlow.js",
+    "old": "(foe.rival != null || foe.duel === true)",
+    "new": "(foe.rival != null)",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-lane-any-width",
+    "file": "src/combat/techniqueBlow.js",
+    "old": "return along >= -0.5 && along <= L.len + r && across <= L.halfW + r;",
+    "new": "return along >= -0.5 && along <= L.len + r;",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-arc-all-round",
+    "file": "src/combat/techniqueBlow.js",
+    "old": "return cos >= Math.cos(/** @type {number} */ (blow.arc));",
+    "new": "return true;",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-level-unread",
+    "file": "src/combat/techniqueBlow.js",
+    "old": "const level = (y) => !blow.feet || Math.abs(y - blow.feet[1]) <= TECH_REACH_UP;",
+    "new": "const level = (y) => true;",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-through-the-wall",
+    "file": "src/combat/techniqueBlow.js",
+    "old": "if (!blow || !sight?.losClear) return false;",
+    "new": "if (!blow) return false;",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-wounded-share",
+    "file": "src/combat/techniqueBlow.js",
+    "old": "  if (blow?.wounded > 0) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-a-miss-lands",
+    "file": "src/combat/techniqueBlow.js",
+    "old": "(damage > 0 ? Math.max(1, Math.round(damage * mult)) : damage)",
+    "new": "Math.max(1, Math.round(damage * mult))",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-to-hit-unread",
+    "file": "src/combat/playerWeapon.js",
+    "old": "      if (techOn(foe) && Number.isFinite(tb.toHit)) opts.toHitMod += tb.toHit;",
+    "new": "",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-swing-at-a-player",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    const techOn = (foe) => !!tb && !playerBody(foe);",
+    "new": "    const techOn = (foe) => !!tb;",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-swing-weight-unread",
+    "file": "src/combat/playerWeapon.js",
+    "old": "      const damage = techOn(foe) ? scaleBlowDamage(rolled, blowMult(tb, foe)) : rolled;",
+    "new": "      const damage = rolled;",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-single-strikes-all",
+    "file": "src/combat/playerWeapon.js",
+    "old": "      if (tb?.single && techOn(foe)) { singles.push({ foe, dist }); continue; }",
+    "new": "",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-blow-unread",
+    "file": "src/combat/playerWeapon.js",
+    "old": "if (!(techOn(foe) ? blowReaches(tb, foe, sight) : playerMeleeCanHit(dist, inView, losClear))) continue;",
+    "new": "if (!playerMeleeCanHit(dist, inView, losClear)) continue;",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-loose-no-draw-time",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    if (this.machine.isBow) this.lastDrawMs = this._bowAnimTimeMs();\n    return true;",
+    "new": "    return true;",
+    "tests": [
+      "test/pcaao.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-pierce-count",
+    "file": "src/combat/arrowFlight.js",
+    "old": "  return t.struck.length < t.pierce;",
+    "new": "  return false;",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-shaft-weight-unread",
+    "file": "src/combat/arrowFlight.js",
+    "old": "const dmg = m.technique && !playerBody(foe) ? scaleBlowDamage(rolled, blowMult(m.technique, foe)) : rolled;",
+    "new": "const dmg = rolled;",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-shaft-at-a-player",
+    "file": "src/combat/arrowFlight.js",
+    "old": "if (m.technique && (playerBody(t.ref) || m.technique.struck?.includes(t.ref))) continue;",
+    "new": "if (m.technique && m.technique.struck?.includes(t.ref)) continue;",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-awake-in-a-duel",
+    "file": "src/combat/techniques.js",
+    "old": "  if (sigilDueling()) return DUEL_TEXT;",
+    "new": "",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-awake-with-the-ladder-off",
+    "file": "src/combat/techniques.js",
+    "old": "  if (!lootRarityOn()) return LADDER_OFF_TEXT;",
+    "new": "",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-step-unclamped",
+    "file": "src/combat/techniques.js",
+    "old": "const step = Number.isFinite(dt) && dt > 0 ? Math.min(dt, 0.25) : 0;",
+    "new": "const step = Number.isFinite(dt) && dt > 0 ? dt : 0;",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-rig-identity",
+    "file": "src/combat/techniques.js",
+    "old": "  if (_s.owner !== ctx.rig) { _s.owner = ctx.rig; _s.aim = null; endAct(ctx.pw); }",
+    "new": "  _s.owner = ctx.rig;",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-hold-unread",
+    "file": "src/combat/techniques.js",
+    "old": "if (!a.loosed && !ctx.holding && (",
+    "new": "if (!a.loosed && (",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-fatigue-in-units",
+    "file": "src/combat/techniques.js",
+    "old": "export const techniqueFatigue = (tech) => Math.max(0, Math.round((tech?.fatigue ?? 0) * FATIGUE_MULTIPLIER));",
+    "new": "export const techniqueFatigue = (tech) => Math.max(0, Math.round(tech?.fatigue ?? 0));",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-hit-the-hosts",
+    "file": "src/combat/techniques.js",
+    "old": "  return evs.filter((e) => e !== 'hit');",
+    "new": "  return evs;",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-a-shaft-untallied",
+    "file": "src/combat/techniques.js",
+    "old": "for (; n < t.arrows; n++) { if (!spendAmmoFor(items, weapon)) break; tallySwingSkills(ctx.entity, weapon); }",
+    "new": "for (; n < t.arrows; n++) { if (!spendAmmoFor(items, weapon)) break; }",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-run-uncapped",
+    "file": "src/combat/techniques.js",
+    "old": "  if (h / timeAt(top) > maxSpeed) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-release-unasked",
+    "file": "src/combat/techniques.js",
+    "old": "    const why = refusal(hand, ctx);   // asked again at the release",
+    "new": "    const why = null;   // asked again at the release",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-cancel-unread",
+    "file": "src/combat/techniques.js",
+    "old": "!ctx.ready || ctx.cancel) { _s.aim = null; return; }",
+    "new": "!ctx.ready) { _s.aim = null; return; }",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-strike-on-landing-only",
+    "file": "src/combat/techniques.js",
+    "old": "if (!a.struck && (landed || a.time - a.t <= hitAt || a.t > a.time + 0.6)) {",
+    "new": "if (!a.struck && (landed || a.t > a.time + 0.6)) {",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-turn-unmade",
+    "file": "src/combat/techniques.js",
+    "old": "ctx.door?.face?.(a.foe.ai?.feet ?? null);",
+    "new": "void 0;",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-shot-at-plain-speed",
+    "file": "src/combat/techniques.js",
+    "old": "pierce: t.through }, speedScale: t.speed });",
+    "new": "pierce: t.through } });",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-key-unread",
+    "file": "src/combat/weaponRig.js",
+    "old": "held: !!actionDown?.(TECHNIQUE_ACTION),",
+    "new": "held: false,",
+    "tests": [
+      "test/tech1_hosts.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-rig-hold-unread",
+    "file": "src/combat/weaponRig.js",
+    "old": "holding: !!_heldHit,",
+    "new": "holding: false,",
+    "tests": [
+      "test/tech1_hosts.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-claim-dropped",
+    "file": "src/combat/weaponRig.js",
+    "old": "return claimShot(held.evs, _techCtx);",
+    "new": "return held.evs;",
+    "tests": [
+      "test/tech1_hosts.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-flight-steered",
+    "file": "src/player/motor.js",
+    "old": "!this._pkLeap && !this.techFlight) {",
+    "new": "!this._pkLeap) {",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-a-leap-from-the-water",
+    "file": "src/player/motor.js",
+    "old": "    if (this.swimming || this.levitating || this.slowFalling || this.climb?.isClimbing",
+    "new": "    if (this.levitating || this.slowFalling || this.climb?.isClimbing",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-mark-at-the-kind-size",
+    "file": "src/render/foeTelegraph.js",
+    "old": "      if (b.technique) {   // TECH1: the player's own mark",
+    "new": "      if (false) {   // TECH1: the player's own mark",
+    "tests": [
+      "test/tech1_hosts.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-lane-uniform",
+    "file": "src/render/foeTelegraph.js",
+    "old": "  if (b.kind === 'aimed') return [b.ahead ?? 0, b.halfW ?? 0, 0, 0];",
+    "new": "  if (b.kind === 'aimed') return [b.halfW ?? 0, b.ahead ?? 0, 0, 0];",
+    "tests": [
+      "test/tech1_runner.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-another-key",
+    "file": "src/systems/inputActions.js",
+    "old": "  ['Mouse3', 'WeaponTechnique'],",
+    "new": "  ['Mouse4', 'WeaponTechnique'],",
+    "tests": [
+      "test/tech1_hosts.test.js",
+      "test/inputactions.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-world-marks-undrawn",
+    "file": "src/scenes/world.js",
+    "old": "    renderer.drawFoeTelegraphs?.(techniqueMarksNow());",
+    "new": "",
+    "tests": [
+      "test/tech1_hosts.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-interior-fatigue-not-its-own",
+    "file": "src/scenes/worldModes.js",
+    "old": "      drainFatigue: (n) => drainInteriorFatigue(n),",
+    "new": "      drainFatigue: (n) => drainExteriorFatigue(n),",
+    "tests": [
+      "test/tech1_hosts.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-world-chip-unwired",
+    "file": "src/scenes/world.js",
+    "old": "  setHudTechniqueChips((e) =>",
+    "new": "  void ((e) =>",
+    "tests": [
+      "test/tech1_hosts.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-hud-chip-unread",
+    "file": "src/ui/enhancedHud.js",
+    "old": "  powers.push(...techniqueChips(vitals));",
+    "new": "",
+    "tests": [
+      "test/tech1_hosts.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-rival-struck",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "const rv = m.technique ? null : arenaRivalBody();",
+    "new": "const rv = arenaRivalBody();",
+    "tests": [
+      "test/tech1_hosts.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-corpse-kit-untechniqued",
+    "file": "src/systems/foeLootCap.js",
+    "old": "  techniquePass(kit, opts.rolls ?? Math.random);",
+    "new": "",
+    "tests": [
+      "test/tech1_roster.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-the-test-room-without",
+    "file": "src/systems/testRoom.js",
+    "old": "if (addTechniqueLine(it, () => 0.5, { id })) put(it);",
+    "new": "void it;",
+    "tests": [
+      "test/tech1_roster.test.js",
+      "test/lr1_lootrarity.test.js"
+    ]
+  }
+]

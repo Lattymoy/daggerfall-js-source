@@ -221,6 +221,7 @@ on:
       - "src/systems/loot.js"
       - "src/systems/lootDataTables.js"
       - "src/systems/lootRarity.js"
+      - "src/combat/techniqueRoster.js"
       - "src/systems/masterSkills.js"
       - "src/systems/mentorMode.js"
       - "src/systems/modSaveData.js"

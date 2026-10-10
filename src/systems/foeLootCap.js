@@ -35,6 +35,7 @@ import {
   corpseSource, rarityRank, lootRarityOn, rarityEligible, rollRarity, applyRarity, lastPass, legendaryFindMult, isGarment, RARITIES,
   cursePass,   // LOOT16
   socketPass,   // LOOT20
+  techniquePass,   // TECH1
 } from './lootRarity.js';
 import { isGoldPieces } from './inventory.js';
 import { wildFoeLoot } from './wildZone.js';   // WILD1: a foe of the open zone carries twice as much past its cap
@@ -192,6 +193,7 @@ export function rollCorpseKit(entity, opts = {}) {
   const kit = [...rollKitPieces(entity, opts), ...rollKitGarments(entity, opts)];   // LOOT14: the garments after every draw the kit made
   cursePass(kit, opts.rolls ?? Math.random);   // LOOT16: a body's own Rares and Legendaries, one in twelve cursed - after all of it
   socketPass(kit, opts.rolls ?? Math.random);   // LOOT20: and a socket, after the curse
+  techniquePass(kit, opts.rolls ?? Math.random);   // TECH1: and a weapon's technique, LAST of the kit's draws (law 9)
   return kit;
 }
 /** The first arc's kit roll, whole: every piece of the kit but its garments. */

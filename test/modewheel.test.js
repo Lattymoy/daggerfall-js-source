@@ -59,7 +59,7 @@ test('CROUCH-SNEAK + MODE-WHEEL defaults: Crouch keeps C and LB; Sneak and F1-F4
   assert.equal(by.get('Crouch'), 'KeyC');
   for (const a of ['Sneak', 'StealMode', 'GrabMode', 'InfoMode', 'TalkMode']) assert.equal(by.get(a), undefined, `${a} ships unbound`);
   assert.equal(by.get(MODE_WHEEL_ACTION), 'AltLeft');
-  assert.equal(ACTIONS.at(-1), MODE_WHEEL_ACTION, 'appended - a saved file resolves by position');
+  assert.equal(ACTIONS.at(-2), MODE_WHEEL_ACTION, 'appended - a saved file resolves by position (TECH1\'s technique after it)');
   assert.ok(ACTIONS.includes('Sneak') && ACTIONS.includes('StealMode'), 'the old rows stay, rebindable');
   assert.ok(PORT_ACTIONS.includes(MODE_WHEEL_ACTION), 'the classic windows yield it');
   assert.ok(!TOUCH_BUTTON_ACTIONS.some((a) => a.id === 'Sneak'));

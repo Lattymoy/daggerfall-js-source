@@ -11,7 +11,7 @@ import {
 } from '../src/systems/aetheric.js';
 import {
   RARITY_ORDER, RARITIES, ROLLED_TIERS, rarityOf, rarityRank, applyRarity, rarityEligible, bestRarity, rarityLines, rollRarity,
-  affixesWorth, validAffix, AFFIX_RANGES, isProcAffix,   // LOOT4: a line that does something, appended in a door's last pass
+  affixesWorth, validAffix, AFFIX_RANGES, isProcAffix, isTechniqueAffix,   // LOOT4: a line that does something, appended in a door's last pass; TECH1: a technique, its very last
 } from '../src/systems/lootRarity.js';
 import { rollSpoils, spoilsBase, magicOrBetter, SPOILS_GOLD_PER_LEVEL, SPOILS_LEGENDARY } from '../src/systems/gateSpoils.js';
 import { spoilsList } from '../src/scenes/spoilsPool.js';
@@ -160,7 +160,10 @@ test('SET6 the drop: the spoils\' LAST roll - a Regalia piece a sixth of the tim
     // LOOT2/LOOT4 (bible/06-Systems/Loot-Arc.md sections 4 and 6): an Exalted Legendary's extra line and a Magic's or a
     // Rare's line that does something are drawn AFTER everything and appended - the lines before them are still the
     // seed's, exactly
-    const drawn = (it) => (it.exalted ? it.affixes.slice(0, -1) : it.affixes?.filter((a) => !isProcAffix(a)));
+    // PIN MOVED (TECH1, bible/05-Combat/Weapon-Techniques.md): and a weapon's technique line, the door's very last draw, is
+    // set aside first - an Exalted's line is the last line before it
+    const own = (it) => it.affixes?.filter((a) => !isTechniqueAffix(a));
+    const drawn = (it) => (it.exalted ? own(it).slice(0, -1) : own(it)?.filter((a) => !isProcAffix(a)));
     assert.deepEqual(s.pieces.slice(0, 3).map((p) => JSON.stringify(drawn(p.item) ?? null)), b.affixes);
     const has = s.pieces.length === 4;
     assert.equal(has, b.next < REGALIA_CHANCE, `seed ${seed}: the next roll decides it`);

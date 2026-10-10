@@ -266,6 +266,7 @@ Generated from `ACTION_GROUPS` and the two default tables; the enhanced pane dra
 | `ReadyWeapon` | Z | `JoystickButton9` | Ready or sheathe weapon |
 | `SwingWeapon` | RIGHT CLICK | `JoystickAxis10Button0` | Swing weapon |
 | `SwitchHand` | H |  | Switch hand |
+| `WeaponTechnique` | MOUSE3 |  | Weapon technique (hold to aim) |
 
 ### Magic
 

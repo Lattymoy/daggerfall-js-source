@@ -87,6 +87,7 @@ import { survivalOn } from './survival/switch.js';   // LOOT14: the warmth and w
 import { hoodCapable } from './survival/temperature.js';   // LOOT15: Unseen answers a hood (HOOD-SAID's one law)
 import { ROLLED_TIERS } from './rarityTier.js';   // RARE-BREAK1: the rolled tiers' one home
 import { setPieceKind, rollSetSigil, rollSetJoin, setLines, setSigilLines } from './sigilSets.js';   // SET4: a won piece of armour or a shield may carry a set's sigil; a weapon's may join one; SET5: the set in words
+import { TECHNIQUE_IDS, TECHNIQUE_BANDS, TECHNIQUE_PER_MILLE, techniqueById, techniquesFor, techniqueBrief } from '../combat/techniqueRoster.js';   // TECH1: a weapon's technique - the roster's one table (a leaf)
 
 export const LOOT_RARITY_KEY = 'lootRarity';
 /** The switch. Read at every seam, so a press takes effect on the next
@@ -462,6 +463,8 @@ export const AFFIX_RANGES = Object.freeze({
   dry:       Object.freeze({ magic: [10, 20], rare: [20, 35], legendary: [35, 50] }), // % less of the weather's soaking
   // CAST-SPEED: the casting hands' own
   castSpeed: Object.freeze({ magic: [3, 6], rare: [6, 10], legendary: [10, 15] }),  // % faster a cast's hands (systems/castSpeed.js)
+  // TECH1: a technique's power - +% on its own multiplier (combat/techniqueRoster.js TECHNIQUE_BANDS, one band for all)
+  technique: TECHNIQUE_BANDS,
 });
 /** How many affixes a tier rolls: [min, max]. A Legendary's are its record's. */
 export const AFFIX_COUNTS = Object.freeze({ magic: [1, 2], rare: [3, 4] });
@@ -563,14 +566,25 @@ export const AFFIX_KINDS = Object.freeze({
   // pool one wider. A seeded hoard holding such a piece rolls on from a moved stream (the serpent hoard pins moved).
   castSpeed: Object.freeze({ slot: 'suffix', groups: Object.freeze(['Jewellery', 'Weapons']), params: null, proc: true,
     word: (band) => CAST_SPEED_SUFFIX[band], label: (a) => `+${a.value}% casting speed` }),
+  // TECH1 (2026-10-10, bible/05-Combat/Weapon-Techniques.md): A WEAPON'S TECHNIQUE - what the WeaponTechnique key does
+  // with the weapon in hand (combat/techniques.js): its param the technique (combat/techniqueRoster.js, the piece's own
+  // family alone - kindParams), its value the power over the technique's own multiplier. APPENDED LAST and drawn in no
+  // pool any other line is drawn from - it is not among AFFIX_IDS, the pools' kinds (rollAffixes, the proc line, the
+  // Exalted, the curse, the Reforge), so every one of those draws is the draw it was: one line a piece at most, taken at a
+  // door's END (techniquePass). No slot: it never names a piece. A weapon's, and the Gauntlets' for the bare hand
+  // (techniqueFamily).
+  technique: Object.freeze({ slot: null, groups: Object.freeze(['Weapons', 'Armor']), params: TECHNIQUE_IDS, technique: true,
+    word: (band, p) => techniqueById(p)?.name ?? '', label: (a) => `${techniqueById(a.param)?.name ?? 'Technique'} +${a.value}%` }),   // its word is its name (no piece's - it has no slot)
 });
-export const AFFIX_IDS = Object.freeze(Object.keys(AFFIX_KINDS));
+/** The kinds the ladder's pools draw from, in their order - every kind but a technique (TECH1: its door's own pass). */
+export const AFFIX_IDS = Object.freeze(Object.keys(AFFIX_KINDS).filter((id) => !AFFIX_KINDS[id].technique));
 
 /** Gold per point of each affix, for the item's value. */
 export const AFFIX_WORTH = Object.freeze({ damage: 40, armor: 60, weight: 15, stat: 90, resist: 20, skill: 25,
   elemental: 50, leech: 80, thorns: 40, focus: 60, slayer: 25,   // LOOT4
   standing: 60, warmth: 30, dry: 8,   // LOOT14
-  castSpeed: 60 });   // CAST-SPEED: focus's own worth, its fellow at the cast
+  castSpeed: 60,   // CAST-SPEED: focus's own worth, its fellow at the cast
+  technique: 30 });   // TECH1: +22% is 660 gold - a Rare's flavour's worth, about
 /** LOOT14: A GARMENT'S LINES ARE WORTH HALF - its slots carry no fight, and it weighs a quarter of a kilo to two and a
  *  half: at a weapon's price a Rare pair of Tights was the best gold a kilo in the game, against the Economy Arc's own
  *  pressure home (capacity). Its Rare enchantment is worth GARMENT_RARE_ENCHANT_WORTH where a weapon's is 600. */
@@ -582,6 +596,7 @@ const GARMENT_STATS = Object.freeze(['personality']);
 export function kindParams(id, item) {
   const k = AFFIX_KINDS[id];
   if (!k?.params) return null;
+  if (id === 'technique') return techniquesFor(item);   // TECH1: the piece's own family's - a bow's Volley, a sword's Leap Strike
   return id === 'stat' && isGarment(item) ? GARMENT_STATS : k.params;
 }
 
@@ -1228,6 +1243,7 @@ export function rollLootRarity(items, source, { rolls = Math.random, luck = 50 }
   cursePass([...minted, ...dressed], rolls);   // LOOT16: one Rare or Legendary in twelve cursed, after that
   socketPass(minted, rolls);   // LOOT20: and a socket, after the curse (a garment never takes one)
   items.push(...rollLateFinds({ ...source, luck }, rolls));   // LOOT21: the late finds - the Ayleid stones - last of all
+  techniquePass(minted, rolls);   // TECH1: a weapon's technique - the door's LAST draw, after even the late finds (law 9)
   return items;
 }
 /** LOOT14 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 6): THE WARDROBE'S PASS - every eligible garment of
@@ -1291,6 +1307,58 @@ export function rollProcLine(item, rolls = Math.random) {
 }
 /** Does a line do something (LOOT4's five)? */
 export const isProcAffix = (a) => !!AFFIX_KINDS[a?.id]?.proc;
+/** TECH1: a line added to a piece after its mint (an Exalted's, a curse's) is set BEFORE a technique's line and a set
+ *  gem's - a technique is the piece's last own line (the item law's), a gem's its last of all (LOOT20). A piece with
+ *  neither takes it at the end, as it always did. */
+function withLine(affixes, line) {
+  const at = affixes.findIndex((a) => a?.gem != null || !!AFFIX_KINDS[a?.id]?.technique);
+  return at < 0 ? [...affixes, line] : [...affixes.slice(0, at), line, ...affixes.slice(at)];
+}
+
+// ── TECH1: a weapon's technique ─────────────────────────────────────
+// bible/05-Combat/Weapon-Techniques.md. A Magic, Rare or Legendary weapon - or the Gauntlets, for the bare hand - minted
+// at a loot door takes, one time in TECHNIQUE_PER_MILLE, ONE technique line: a technique of its own family, its power
+// from its tier's band. The roll is the door's LAST draw (Loot-II law 9 - every draw the door made before it, the card's
+// and the late finds' among them, is still its seed's), and a piece that can carry no technique takes no draw at all.
+/** Is a line a technique (TECH1)? */
+export const isTechniqueAffix = (a) => !!AFFIX_KINDS[a?.id]?.technique;
+/** The piece's technique line, or null - the first valid one (the law allows one). */
+export const techniqueLineOf = (item) => (Array.isArray(item?.affixes) ? item.affixes.find((a) => isTechniqueAffix(a) && validAffix(a)) ?? null : null);
+let _techniquePerMille = TECHNIQUE_PER_MILLE;
+/** Tests only: the chances (null puts them back). */
+export function _setTechniqueForTests(table) { _techniquePerMille = table == null ? TECHNIQUE_PER_MILLE : table; }
+/** Whether a piece may take a technique line now: a rolled tier, a family with a technique, and none yet. */
+export const techniqueEligible = (item) => ROLLED_TIERS.includes(item?.rarity) && Array.isArray(item.affixes)
+  && techniquesFor(item).length > 0 && !item.affixes.some(isTechniqueAffix);
+/** ADD a technique line IN PLACE: one of the piece's family's techniques (`id` chooses it - the Test Room's - and a
+ *  technique of another family is refused), its value from its tier's band, set before a set gem's line (a gem's is
+ *  always last - LOOT20), its price with it. Answers the line, or null. */
+export function addTechniqueLine(item, rolls = Math.random, { id: chosen = null } = {}) {
+  if (!techniqueEligible(item)) return null;
+  if (chosen != null && !techniquesFor(item).includes(chosen)) return null;
+  const id = chosen ?? pick(techniquesFor(item), rolls);
+  const [lo, hi] = AFFIX_RANGES.technique[item.rarity];
+  const line = { id: 'technique', param: id, value: rangeInt(lo, hi, rolls) };
+  const gem = item.affixes.findIndex((a) => a?.gem != null);
+  item.affixes = gem < 0 ? [...item.affixes, line] : [...item.affixes.slice(0, gem), line, ...item.affixes.slice(gem)];
+  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + affixesWorth([line], item);   // its price with it
+  return line;
+}
+/** The chance, for a piece a door just minted: one roll, then the line. Answers the line, or null. */
+export function rollTechniqueLine(item, rolls = Math.random) {
+  if (!lootRarityOn() || !techniqueEligible(item)) return null;
+  const perMille = _techniquePerMille[item.rarity] ?? 0;
+  if (!(perMille > 0)) return null;   // a tier with no chance costs the stream no draw (the socket pass's own rule)
+  if (!(rolls() * 1000 < perMille)) return null;
+  return addTechniqueLine(item, rolls);
+}
+/** A DOOR'S TECHNIQUE PASS over the pieces it minted - called LAST, after every draw the door already makes. */
+export function techniquePass(pieces, rolls = Math.random) {
+  for (const it of pieces ?? []) rollTechniqueLine(it, rolls);
+}
+/** The card's line under a technique line: what a press does, with its numbers (combat/techniqueRoster.js
+ *  techniqueBrief). '' for any other line. */
+export const techniqueDetail = (a) => (isTechniqueAffix(a) && validAffix(a) ? techniqueBrief(a.param, a.value) : '');
 
 // ── LOOT2: the roll seen, and the Exalted ──────────────────────────
 // The Loot arc (bible/06-Systems/Loot-Arc.md section 4). A rolled line says the band it was rolled in, so two swords
@@ -1317,6 +1385,7 @@ export function affixBand(item, i) {
   if (!validAffix(a)) return null;
   if (a.gem != null) return null;   // LOOT20: a set gem's line is the gem's, fixed - no roll made it
   if (item.rarity === 'magic' || item.rarity === 'rare') return AFFIX_RANGES[a.id][item.rarity];
+  if (item.rarity === 'legendary' && isTechniqueAffix(a)) return AFFIX_RANGES.technique.legendary;   // TECH1: a Legendary's technique line was rolled in its band, Exalted or not
   if (item.rarity === 'legendary' && (item.exalted === true || isCursed(item))) {   // LOOT16: and a curse's line
     const own = recordLines(item);
     return own != null && i >= own ? AFFIX_RANGES[a.id].legendary : null;
@@ -1374,7 +1443,7 @@ export function exaltLegendary(item, rolls = Math.random) {
   // AUDIT LOOT II A7: a garment's on the wardrobe's leans (LOOT14); a weapon's, armour's or jewel's the even draw it always
   // was - the seeded spoils exalt those through lastPass, and their seeds stand
   const line = k.params ? { id, param: isGarment(item) ? lineParam(item, id, free, rolls) : pick(free, rolls), value } : { id, value };
-  item.affixes = [...item.affixes, line];
+  item.affixes = withLine(item.affixes, line);   // TECH1: before a technique's line
   item.exalted = true;
   item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + exaltedWorth(item) + affixesWorth([line], item);   // LOOT14: a garment's at half
   return true;
@@ -1452,7 +1521,7 @@ export function cursePiece(item, rolls = Math.random) {
   const lined = { ...item, affixes: [...item.affixes, line] };
   const row = pick(CURSE_DRAWBACKS.filter((r) => curseParams(r, lined).length), rolls);
   const drawback = { type: row.type, param: pick(curseParams(row, lined), rolls) };
-  item.affixes = [...item.affixes, line];
+  item.affixes = withLine(item.affixes, line);   // TECH1: before a technique's line
   item.enchantments = [...(Array.isArray(item.enchantments) ? item.enchantments : []), { ...drawback }];
   item.cursed = drawback;
   item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + affixesWorth([line], item);
@@ -1586,6 +1655,7 @@ export function reforgeableLines(item) {
   if (item?.rarity === 'magic' || item?.rarity === 'rare') lines = list.map((_, i) => i);
   else if (item?.rarity === 'legendary' && item.exalted === true && list.length) lines = [list.length - 1];
   if (lines.length === 1 && item?.rarity === 'legendary' && list[lines[0]]?.gem != null) lines = [lines[0] - 1];   // LOOT20: a set gem's line is last - the Exalted's own is the one before it
+  if (lines.length === 1 && item?.rarity === 'legendary' && isTechniqueAffix(list[lines[0]])) lines = [lines[0] - 1];   // TECH1: a technique's line (before a gem's) is the find's - the Exalted's own is before it
   lines = lines.filter((i) => validAffix(list[i]) && list[i].gem == null);   // LOOT20: and a gem's line is never reforged
   return Number.isInteger(item?.reforged) ? lines.filter((i) => i === item.reforged) : lines;
 }
@@ -1602,7 +1672,7 @@ export function reforgeAffix(item, index, rolls = Math.random) {
   const was = AFFIX_KINDS[old.id];
   const others = item.affixes.filter((a, i) => i !== index && a?.gem == null);   // AUDIT LOOT II A4: a gem's line is its socket's, no roll's - it never takes a kind or a param from the piece's own (a Diamond's damage left a weapon's damage line nothing to become)
   const freeParams = (id) => kindParams(id, item).filter((p) => !others.some((a) => a?.id === id && a.param === p));   // LOOT14: a garment's own params
-  const pool = AFFIX_IDS.filter((id) => {
+  const pool = (was.technique ? ['technique'] : AFFIX_IDS).filter((id) => {   // TECH1: a technique stays a technique (its family's) - the pools hold none
     const k = AFFIX_KINDS[id];
     if (!k.groups.includes(item.group) || !!k.proc !== !!was.proc) return false;
     if (tier === 'rare' && k.slot !== was.slot) return false;
@@ -1873,7 +1943,11 @@ export function rarityLines(item, { sigil = true, set = true, lore = true } = {}
   if (tier === 'common') return [];
   const out = [tierLabel(item)];   // LOOT2: "Exalted Legendary", "Perfect Rare"
   if (!identified(item)) { out.push('Unidentified'); return [...out, ...(sigil ? setSigilLines(item) : []), ...(set ? setLines(item) : [])]; }   // SIGIL1: a sigil is the port's own mark, seen at once - AUDIT SET U5: and so is its set (the card draws it; the classic tooltip said nothing)
-  (item.affixes ?? []).forEach((a, i) => out.push(affixLine(item, i) + asleepNote(a)));   // LOOT2: a rolled line with its band; LOOT14: a reader switched off says so
+  (item.affixes ?? []).forEach((a, i) => {
+    out.push(affixLine(item, i) + asleepNote(a));   // LOOT2: a rolled line with its band; LOOT14: a reader switched off says so
+    const d = techniqueDetail(a);   // TECH1: under a technique's line, what a press of the key does with it
+    if (d) out.push(d);
+  });
   if (item.rarity && Array.isArray(item.enchantments)) {
     for (const e of item.enchantments) {
       if (!e || e.type === T.None) continue;

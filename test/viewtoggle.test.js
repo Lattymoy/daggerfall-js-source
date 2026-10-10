@@ -36,7 +36,7 @@ test('VIEW-TOGGLE seam: the sprite lane flips first to third and back, one press
 });
 
 test('VIEW-TOGGLE action: a port action, appended, on the mouse\'s forward side button (a binding code since VOICE1, kept when voice was reverted - and never the browser\'s Forward), drawn in Movement; the world host polls its press edge under no window and hands it to the seam before the view frame', () => {
-  assert.deepEqual(ACTIONS.slice(-7), ['TogglePerspective', 'ActChoice', 'BoatSailUp', 'BoatSailDown', 'Professions', 'LegacyFamily', 'ModeWheel'], 'appended - MERGE 2: the professions branch\'s act choice after it, main\'s shipped first; HELM-KEYS\' two after them; CLASSIC-PAGES\' key; LEGACY1\'s family tree; MODE-WHEEL\'s wheel last');
+  assert.deepEqual(ACTIONS.slice(-8), ['TogglePerspective', 'ActChoice', 'BoatSailUp', 'BoatSailDown', 'Professions', 'LegacyFamily', 'ModeWheel', 'WeaponTechnique'], 'appended - MERGE 2: the professions branch\'s act choice after it, main\'s shipped first; HELM-KEYS\' two after them; CLASSIC-PAGES\' key; LEGACY1\'s family tree; MODE-WHEEL\'s wheel; TECH1\'s technique last');
   assert.ok(PORT_ACTIONS.includes('TogglePerspective'));
   assert.deepEqual(DEFAULT_BINDINGS.filter(([, a]) => a === 'TogglePerspective'), [['Mouse4', 'TogglePerspective']]);
   assert.equal(DEFAULT_BINDINGS.filter(([k]) => k === 'Mouse4').length, 1, 'nothing else on it');

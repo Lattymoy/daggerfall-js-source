@@ -36,7 +36,8 @@ import { BOOK_TEMPLATE, createBook } from './books.js';   // EB3: books in the p
 import { BOOK_ID_TITLES } from './booksData.js';
 import { setPref } from './uiPrefs.js';   // LR3: the loot door turns the ladder on for the session
 import { setModSetting } from './modSettings.js';   // FIELD BUGS 2026-09-29 (the sea) #5: the sea door turns Come Sail Away on
-import { applyRarity, LEGENDARIES, ROLLED_TIERS, exaltLegendary, WARDROBE_LEGENDARIES, cursePiece, SOCKET_EMPTY, GEM_IDS } from './lootRarity.js';   // LR3: one of everything the ladder can mint; LOOT2: and an Exalted; LOOT15: the wardrobe's; LOOT16: a curse
+import { applyRarity, LEGENDARIES, ROLLED_TIERS, exaltLegendary, WARDROBE_LEGENDARIES, cursePiece, SOCKET_EMPTY, GEM_IDS, addTechniqueLine } from './lootRarity.js';   // LR3: one of everything the ladder can mint; LOOT2: and an Exalted; LOOT15: the wardrobe's; LOOT16: a curse; TECH1: a technique
+import { TECHNIQUE_IDS, TECHNIQUES, GAUNTLETS_TEMPLATE } from '../combat/techniqueRoster.js';   // TECH1: one piece a technique, to try them all
 import { AETHERIC_RECORDS, mintAetheric } from './aetheric.js';   // SET6: the Aetheric rung - Ruhn's Regalia, whole (RAID4b: and the raiding parties' three sets)
 import { mintHourlock } from './gilded.js';   // GILDED1: the top rung's one record, to be seen and fired (its shot: createPellets, below)
 import { welkyndStone, varlaStone } from './ayleidStones.js';   // LOOT21: the Ayleid stones
@@ -249,6 +250,16 @@ export function seedTestGear(entity) {
   return added;
 }
 
+/** TECH1: the piece each technique family's sampler rides in the room - one of the family's own templates. */
+export const TECHNIQUE_TEST_BASES = Object.freeze({
+  archery: Object.freeze({ kind: 'weapon', templateIndex: WEAPONS_ENUM['Long Bow'] ?? 130, material: 1 }),
+  longBlade: Object.freeze({ kind: 'weapon', templateIndex: WEAPONS_ENUM.Longsword, material: 1 }),
+  shortBlade: Object.freeze({ kind: 'weapon', templateIndex: WEAPONS_ENUM.Dagger, material: 1 }),
+  axe: Object.freeze({ kind: 'weapon', templateIndex: WEAPONS_ENUM['Battle Axe'] ?? 127, material: 1 }),
+  blunt: Object.freeze({ kind: 'weapon', templateIndex: WEAPONS_ENUM.Mace ?? 124, material: 1 }),
+  handToHand: Object.freeze({ kind: 'armor', label: 'Steel Gauntlets', templateIndex: GAUNTLETS_TEMPLATE, material: ARMOR_MATERIAL.Steel }),
+});
+
 /** LR3: the ladder's bases - ten items across the three groups the
  *  ladder rolls, each minted the way the loot factories mint them. */
 export const TEST_LOOT_BASES = Object.freeze([
@@ -342,6 +353,16 @@ export function seedTestLoot(entity, rolls = Math.random) {
   // drops it - and a stack of its shot, so the toll can be heard; after every draw the room made before
   put(mintHourlock());
   put(createPellets(30));
+  // TECH1 (bible/05-Combat/Weapon-Techniques.md): THE TECHNIQUES - one Rare a technique, on a piece of its family (a Long
+  // Bow's two, a Longsword's, a Dagger's, a Battle Axe's, a Mace's, the Gauntlets' for the bare hand), its line at the
+  // band's middle, so every one can be tried on its key; after every draw the room made before
+  for (const id of TECHNIQUE_IDS) {
+    const fam = TECHNIQUES[id].families[0];
+    const piece = TECHNIQUE_TEST_BASES[fam];
+    if (!piece) continue;
+    const it = applyRarity(testItemOf(piece), 'rare', rolls);
+    if (addTechniqueLine(it, () => 0.5, { id })) put(it);
+  }
   return added;
 }
 /** LOOT14: the room's garments - a Formal Cloak and an Evening Gown, minted as a shelf mints clothing. */

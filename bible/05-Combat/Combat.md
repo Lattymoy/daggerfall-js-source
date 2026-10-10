@@ -1553,3 +1553,12 @@ re-run - 88 dead, RR1-18 equivalent as recorded. AUDIT PRE-MERGE 0929: `test/aud
 blow, mods on and off, for a claw and a sword and a second and third rig; the reader in a rig built without the boot;
 the reader that never writes), RR1's heft, `test/disc28_speed.test.js` on the weapon as the rig builds it; mutants
 `tools/mutants/audit0929_swing.json` (8, all dead). A declared departure: Ledger A (SWING-LAW).
+
+## TECH1 - WEAPON TECHNIQUES (2026-10-10, the owner's call) - SHIPPED
+
+A weapon found on the loot ladder may carry a technique, done by its own key (WeaponTechnique, the mouse's back side
+button): a Volley, a Leap Strike, a Shadowstep, a Whirlwind and eight more. It rides the swing's own machine and the
+shot's own loose: `PlayerWeapon.resolveHit` reads the technique's blow (`combat/techniqueBlow.js`) for its reach and
+scales DFU's rolled damage by its multiplier, and `playerArrowHitFoe` does the same for its shafts - the formula still
+decides, a miss is still a miss. The record, the roster and the four hosts' doors are `Weapon-Techniques.md`. A declared
+departure: Ledger A (TECH1).

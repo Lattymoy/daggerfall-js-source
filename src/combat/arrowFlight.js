@@ -35,8 +35,19 @@ import { orbArchiveFor, ORB_RECORD, noteOrbColour, ORB_SCALE } from '../characte
 import { playerWeaponHitEntity } from '../systems/worldTick.js';   // DISC10-D H1: OnWeaponHitEntity's one dispatcher (worldTick never reaches this module - no cycle)
 import { sparedByPlayer } from './friendlyFire.js';   // SHIPMATES: the player's shaft passes their own crew by
 import { coverDistance, coverStep } from '../ai/cover.js';   // TACT1: billboards are cover; AUDIT TACT B5: met by touch
+import { blowMult, scaleBlowDamage, playerBody } from './techniqueBlow.js';   // TECH1: a technique's shaft - its weight, and never a player's body
 
 export const ARROW_MODEL_ID = 99800;
+
+/** TECH1: a piercing technique shaft that has just struck `ref` - it notes the foe and flies on while it has foes left to
+ *  strike (`pierce`, its number); answers whether it flies on. Every other shaft stops on what it strikes. Shared by the
+ *  dungeon's own missile lane (scenes/dungeonContext.js). */
+export function techniquePierces(m, ref) {
+  const t = m?.technique;
+  if (!t || !(t.pierce > 1)) return false;
+  (t.struck ??= []).push(ref);
+  return t.struck.length < t.pierce;
+}
 
 /** The oriented arrow transform (dungeonContext.arrowMatrix law). */
 export function arrowMatrix(pos, dir) {
@@ -188,12 +199,15 @@ export class ArrowFlight {
         for (const t of foeTargets) {
           if (!t?.feet || t.ref === m.shooterFoe || t.ref?.dead) continue;
           if (m.fromPlayer && sparedByPlayer(t.ref)) continue;   // DISC19-F (AUDIT DISC19): the player's shaft flies through the town's defenders, as their spells do (hostMagic.js sparedFromPlayer) - SHIPMATES: and the player's own crew (combat/friendlyFire.js)
+          if (m.technique && (playerBody(t.ref) || m.technique.struck?.includes(t.ref))) continue;   // TECH1: a technique's shaft passes a player's body by (TECH law 3), and a piercing shot a foe it has struck
           if (missileHitsCapsule(m.pos, t.feet, t.ref?.ai?.height)) {   // ROAD-H tail: the target's own CAPSULE (REVIEW 2026-09-05 had its centre as a point)
             // ROAD-H tail (review): an ENEMY shaft damages only the foe
             // it was loosed at (:669); any other foe it meets stops it
             // and takes nothing. A PLAYER shaft (WeaponDamage through
             // playerArrowHitFoe) has no such gate - it strikes what it hits.
             if (!m.enemy || t.ref === m.aimFoe) foeImpact(m, t.ref);
+            // TECH1: a PIERCING SHOT flies on through - each foe it meets struck once, until it has struck its number
+            if (techniquePierces(m, t.ref)) continue;
             m.dead = true;
             break;
           }
@@ -297,7 +311,7 @@ export function playerArrowHitFoe(m, foe, {
   if (foe.yielded || foe.executing || foe.sparing || foe.leaving || foe.roaring) return 0;   // RVN4: nor one roaring its last stand
   const swing = SWING_MODS[playerWeapon?.machine?.state] ?? { damage: 0, toHit: 0 };
   const back = foe.ai && playerFeet ? isBackFacing(foe.ai.yaw, foe.ai.feet, playerFeet) : false;
-  const dmg = calculateAttackDamage(playerEntity, foe.entity, {
+  const rolled = calculateAttackDamage(playerEntity, foe.entity, {
     weapon: m.weapon ?? null,
     damageMod: swing.damage, toHitMod: swing.toHit,
     backstabChance: backstabChanceOf(playerEntity, back, foe),
@@ -305,6 +319,10 @@ export function playerArrowHitFoe(m, foe, {
     rolls, onInflictPoison, say,
     unaware: foeUnaware(foe),   // SET2: a shaft at a foe that had not noticed me - Nightfall Strike's "arrows too"
   });
+  // TECH1 (bible/05-Combat/Weapon-Techniques.md): a technique's shaft (a Volley's, a Piercing Shot's) weighs the formula's
+  // number by the technique - never on a player's body (its shaft passes them by in flight; a door that hands one here
+  // anyway gets the plain number)
+  const dmg = m.technique && !playerBody(foe) ? scaleBlowDamage(rolled, blowMult(m.technique, foe)) : rolled;
   const at = foe.ai?.feet ?? [m.pos[0], m.pos[1], m.pos[2]];
   // AUDIT 62 F20: the splash point is the struck foe's TRANSFORM
   // (DaggerfallMissile.cs:680-687 -> WeaponManager.cs:571), i.e. its

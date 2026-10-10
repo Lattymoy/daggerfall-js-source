@@ -31,7 +31,7 @@
 // Not a DFU member. Ledger A (SERPENT1).
 import { seededRng } from './wind.js';
 import { spoilsBase, magicOrBetter, sigilStone } from './gateSpoils.js';
-import { applyRarity, lastPass } from './lootRarity.js';
+import { applyRarity, lastPass, techniquePass } from './lootRarity.js';   // TECH1: the technique pass, a door's last draw
 import { rollSerpentSetPiece } from './aetheric.js';   // SERPENT-SET: the Old Coil's own
 import { SERPENT_EMBERS } from '../net/serpentHoardLaw.js';   // SERPENT-SET: the gate's currency
 import { bossCardRoll } from './bossCards.js';   // CARDS9: Sethrakul's own card, the hoard's last draw
@@ -93,6 +93,7 @@ export function rollSerpentSpoils(seed, level, earned = 'dealt') {
   // CARDS9 (Tavern-Cards section 32): SETHRAKUL'S OWN CARD - a dealer's alone, one draw more after the set piece's, so
   // every hoard before it is what it was; kept beside the pieces
   const card = dealt ? bossCardRoll('serpent', rolls) : null;
+  techniquePass(pieces.map((p) => p.item), rolls);   // TECH1: a weapon's technique - LAST of all, after the card (law 9); a set piece takes none
   return { gold, pieces, embers: serpentEmbers(), card };
 }
 

@@ -23,7 +23,7 @@
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
 import { seededRng } from './wind.js';
 import { spoilsBase } from './gateSpoils.js';
-import { applyRarity, rarityChances, lastPass } from './lootRarity.js';
+import { applyRarity, rarityChances, lastPass, techniquePass } from './lootRarity.js';   // TECH1: the technique pass, a door's last draw
 import { rollNumidiumPiece } from './aetheric.js';   // SD9d: the Brass Remnant's own set
 import { rollHourlock } from './gilded.js';   // GILDED1: the Hourlock - the spoils' last roll
 import { RANDOM_TREASURE_ICONS } from './loot.js';
@@ -94,6 +94,7 @@ export function rollSdSpoils(seed, level) {
   // CARDS9 (Tavern-Cards section 32; Mac: "Dont forget about a card needing to come from the abyss dungeon also"): THE
   // BRASS REMNANT'S OWN CARD - one draw more after the Hourlock's, LAST of all; kept beside the pieces
   const card = bossCardRoll('abyss', rolls);
+  techniquePass(pieces.map((p) => p.item), rolls);   // TECH1: a weapon's technique - LAST of all, after the card (law 9); a fixed record (the Brass, the Hourlock) takes none
   return { gold, pieces, card };
 }
 

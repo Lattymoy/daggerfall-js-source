@@ -43,6 +43,9 @@ export const TOUCH_BUTTON_ACTIONS = Object.freeze([
   { id: 'TravelMap', label: 'Travel map', glyph: 'Travel', kind: 'tap', w: 68 },
   { id: 'LogBook', label: 'Journal', glyph: 'Log', kind: 'tap', w: 60 },
   { id: 'Transport', label: 'Transport', glyph: 'Ride', kind: 'tap', w: 60 },
+  // TECH1 (bible/05-Combat/Weapon-Techniques.md): the weapon's technique - held while the finger is: an aiming technique
+  // aims while it holds (the other finger's drag is the look), and looses as it lifts; a quick tap looses it at the look
+  { id: 'WeaponTechnique', label: 'Weapon technique (hold to aim)', glyph: 'Tech', kind: 'hold', w: 60 },
 ]);
 const BY_ID = new Map(TOUCH_BUTTON_ACTIONS.map((a) => [a.id, a]));
 

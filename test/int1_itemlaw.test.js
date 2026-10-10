@@ -46,13 +46,13 @@ test('INT1: every item every honest producer mints carries no finding - in the s
   assert.deepEqual(honestItemsSkipped, [], 'every producer ran headless');
   const sources = new Set(SWEEP.map((s) => s.source));
   // PIN MOVED (its audit): the producers counted exactly - a producer dropped from the sweep is a hole, never a pass
-  assert.equal(sources.size, 83, `the sweep's producers: ${sources.size}`);
+  assert.equal(sources.size, 84, `the sweep's producers: ${sources.size}`);   // PIN MOVED (TECH1): + lootRarity.addTechniqueLine and what may follow it
   assert.ok(SWEEP.length >= 30_000, `the sweep's items: ${SWEEP.length}`);
   for (const wire of [false, true]) {
     const bad = (wire ? honestItems({ seeds: 4, wire: true }) : SWEEP).map(({ source, item }) => ({ source, f: itemFindings(item), item })).filter((x) => x.f.length);
     assert.deepEqual(bad.slice(0, 5).map((b) => `${b.source}: ${b.f.join(',')} ${JSON.stringify(b.item).slice(0, 200)}`), [], `${wire ? 'wire' : 'save'}: ${bad.length} honest items with findings`);
   }
-  assert.equal(ITEM_LAW_VERSION, 1);
+  assert.equal(ITEM_LAW_VERSION, 2);   // PIN MOVED (TECH1): a weapon's technique line is lawful from law 2 on
 });
 
 test('INT1: the forgeries the old wire validator took, each from an honest piece moved by one field - each named', () => {

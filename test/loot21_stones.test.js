@@ -77,6 +77,10 @@ test('LOOT21: the finds - late, from tier 6 and tier 10, never in rollUniqueFind
   // the door: the stones are its last two draws - each seed's draws recorded, then replayed with the last two found and
   // not found: everything before them the seed's own
   const src = { kind: 'corpse', tier: 21, boss: true, family: null };
+  // PIN MOVED (TECH1, bible/05-Combat/Weapon-Techniques.md): a weapon's technique is the door's draw after the stones' - off
+  // here (a tier with no chance takes no draw), so the stones are this replay's last two draws; test/tech1_roster
+  // holds the technique pass the door's very last
+  LR._setTechniqueForTests({});
   for (let seed = 1; seed < 30; seed++) {
     const base = lcg(seed);
     const rec = [];
@@ -91,6 +95,7 @@ test('LOOT21: the finds - late, from tier 6 and tier 10, never in rollUniqueFind
     assert.ok(!b.some((it) => isWelkyndStone(it) || isVarlaStone(it)));
     assert.deepEqual(JSON.stringify(a.slice(0, b.length)), JSON.stringify(b), `seed ${seed}: the rest the seed's own`);
   }
+  LR._setTechniqueForTests(null);
   // off: nothing
   _resetForTests();
   setPref('lootRarity', false);

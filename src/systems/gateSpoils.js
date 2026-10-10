@@ -31,7 +31,7 @@
 import { seededRng } from './wind.js';
 import { createRandomWeapon, createRandomArmor, ITEM_GROUPS } from './loot.js';
 import { setItemFields, isAmmunition, mintCondition, registerCustomTemplates, templateByIndex } from './itemTemplates.js';
-import { applyRarity, rarityChances, lastPass } from './lootRarity.js';
+import { applyRarity, rarityChances, lastPass, techniquePass } from './lootRarity.js';   // TECH1: the technique pass, a door's last draw
 import { rollRegalia } from './aetheric.js';   // SET6: Ruhn's Regalia - the spoils' last roll
 import { stacksWith, addItem } from './inventory.js';   // SS1: the fold of a pack saved before the stone stacked; PORTAL-GIFT: the gift joins the pack's stack
 import { wearableItem } from './equip.js';   // RARITY-WEAR: a spoils piece is one a slot takes
@@ -236,6 +236,9 @@ export function rollSpoils(seed, level) {
   // CARDS9 (bible/11-Multiplayer/Tavern-Cards.md section 32): THE WARDEN'S OWN CARD - one draw more, LAST of all (after
   // the last pass), so every spoils before it is what it was for its seed; kept beside the pieces, never among them
   const card = bossCardRoll('gate', rolls);
+  // TECH1 (bible/05-Combat/Weapon-Techniques.md): a weapon's technique - LAST of all, after the card, so every spoils
+  // before it is what it was for its seed (a piece with no technique family takes no draw)
+  techniquePass(pieces.map((p) => p.item), rolls);
   return { gold, pieces, sigil: sigilStone(), card };
 }
 

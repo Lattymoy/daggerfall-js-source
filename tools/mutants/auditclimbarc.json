@@ -182,8 +182,8 @@
   {
     "name": "L3-the-spell's-air-arm-over-a-leap",
     "file": "src/player/motor.js",
-    "old": "} else if (this.enhancedJumping?.() && !this._pkLeap) {",
-    "new": "} else if (this.enhancedJumping?.()) {",
+    "old": "} else if (this.enhancedJumping?.() && !this._pkLeap && !this.techFlight) {",
+    "new": "} else if (this.enhancedJumping?.() && !this.techFlight) {",
     "tests": [
       "test/auditclimbarc.test.js"
     ]

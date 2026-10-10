@@ -186,6 +186,9 @@ export const DPAD_CHOICES = Object.freeze([
   // options"): the two Windows-group actions the keyboard pane always drew. TravelView ships with no key in either
   // dict, so its d-pad press is the host's own door (gamepadInput.js fireDpad's `padAction`), not a synthetic key.
   ['QuickDial', 'Quick dial'], ['TravelView', 'Overworld'],
+  // TECH1 (bible/05-Combat/Weapon-Techniques.md): the weapon's technique - a d-pad's press looses it at the look (a held
+  // aim is a button's: the Controller bindings window's row, ui/plusPadBinds.js)
+  ['WeaponTechnique', 'Weapon technique'],
 ]);
 export const dpadChoiceWord = (a) => DPAD_CHOICES.find(([v]) => v === (a ?? null))?.[1] ?? String(a);
 const DPAD_ACTION_OK = new Set(DPAD_CHOICES.map(([v]) => v));

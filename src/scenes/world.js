@@ -644,6 +644,8 @@ import { preloadPrisonScreenArt, preloadCourtScreenArt } from '../ui/prisonScree
 import { TerrainGenClient } from '../world/terrainGenClient.js';   // EV7: the pixel kernel, off the main thread (samples/blend/tiles/grid/nature moved whole to terrainGen.js)
 import { getPref } from '../systems/uiPrefs.js';
 import { createCoverIndex, isCoverFlat, coverProxy, coverProxies, FELLED } from '../ai/cover.js';   // TACT1: billboards are cover; LPT1: a felled tree stands no 3D tree
+import { techniqueMarksNow, techniqueHudChips, offsetTechniques, TECHNIQUE_ACTION } from '../combat/techniques.js';   // TECH1 (bible/05-Combat/Weapon-Techniques.md): the player's marks on the ground, the HUD's chip, the recentre's shift
+import { setHudTechniqueChips } from '../ui/enhancedHud.js';   // TECH1: the technique's chip, beside the set powers'
 import { noteLocalPlayer, tacticsNow, tickTactics, offsetTactics } from '../ai/tactics.js';   // TACT2; TACT4: the brain's clock; AUDIT TACT: its tick, the recentre's shift
 import { drawableBlows, registerBlowDodgedListener } from '../ai/foeBlows.js';   // TACT4; AUDIT ARENA-LADDER: a dodge told
 import { landViewRead } from '../world/landView.js';   // LV1: the enhanced lane's own streamed radius; FT2: the read is the module's
@@ -1132,6 +1134,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   // Wrath's a fire cast (element 0), Eventide's a magic cast (element 4 - Chameleon's own, as its bundle carries)
   setSetsWearer(() => playerEntity);   // SET5: the classic tooltip's and a plaque's set lines read my worn sets
   setHudSetChips((e) => [...setHudChips(e), ...lootHudChips(e)]);   // SET5: the set powers' windows and recoveries, as chips after the HUD's effects; LOOT5: and the Legendary powers' beside them
+  // TECH1: and the weapon's technique - its name, its seconds while it recovers or its key while ready - off the MODE's
+  // rig (indoors and underground world.js's own is never readied; the live arm names the one in hand)
+  setHudTechniqueChips((e) => techniqueHudChips(e, (modes?.liveArm?.()?.rig ?? weaponRig)?.playerWeapon, tagText(getBinding(bindings(), TECHNIQUE_ACTION) ?? '')));
   setSetPowersVoice({ sound: (name) => {
     if (name === 'unbroken') audio.playOneShot(SOUND.Parry6, 1);
     else if (name === 'wrath') audio.playOneShotId(SPELL_CAST_SOUND[0], 1);
@@ -11084,6 +11089,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the weapon drew over the map.
     sheetWindowUp: () => townTalk.overlay?.holdsScreen === true,
     actTool: () => gatherHost?.handTool() ?? null,   // PROF1/PROF2: the Sickle for the steady hand's length, the Pick-Axe for a vein's (FORAGE0 14.2)
+    // TECH1 (bible/05-Combat/Weapon-Techniques.md): THE WEAPON TECHNIQUE'S DOOR into this host (combat/techniques.js) - the
+    // body a leap flies (this host's motor), the street's own arrow lane for a technique's shafts (a Volley's from the sky,
+    // `sky`: from that point; a Piercing Shot's from the bow hand or the gun's barrel, as a loose's), the exterior's
+    // fatigue door (its collapse law), and the view turned on a foe (Shadowstep's landing). The interior and dungeon
+    // modes hand their own rigs their own doors (worldModes.js).
+    technique: {
+      motor: () => player,
+      fireArrow: (from, dir, o) => arrows.fire(from, dir, { fromPlayer: true, weapon: weaponRig.playerWeapon.weapon, muzzle: o?.sky ? { world: [...from] } : weaponRig.thunderlockMuzzle(fieldOfView()), technique: o?.technique ?? null, ...(o?.speedScale ? { speedScale: o.speedScale } : {}) }),
+      drainFatigue: (n) => drainExteriorFatigue(n),
+      face: (p) => { if (!Array.isArray(p)) return; cam.yaw = Math.atan2(p[0] - player.pos[0], p[2] - player.pos[2]); lookFilter.settle(); },
+    },
   });
   // PROF1/PROF2 (bible/06-Systems/Professions-Arc.md 22, 23): THE GATHERING PROFESSIONS IN THE STREAMING WORLD - the day's
   // herb patches, veins and boulders on every built wilderness pixel, the prompt, the act, the answer (scenes/gatherHost.js,
@@ -32112,6 +32128,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       exteriorFoes.offsetAll(r.offset);   // X-slice
       labGrassField?.shiftOrigin(r.offset);   // PERF-EXT21: the field keeps its own origin and follows this one - every cell stays where it grew (AUDIT 49 F2 / GR5 threw it away here and regrew it for three seconds)
       offsetTactics(r.offset);   // AUDIT TACT D3: the noted player and every live wind-up move with the world
+      offsetTechniques(r.offset);   // TECH1: and the player's own - an aim, a leap's landing, a Volley's falling shafts
       hazeGl?.offsetOrigin(r.offset);   // HAZE1: the shimmer's noise stands on the land, not the scene
       heatHaze.offsetOrigin(r.offset);   // HAZE1 (AUDIT ENVIRONS I7): and the ring's layer, held while airborne, with it
       windfall.offsetOrigin(r.offset);   // WINDFALL1: the trees' places in the mod's wind, and its leaves, stand on the land
@@ -32936,6 +32953,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     meterFor(renderer.gl)?.markCpu('flats');   // PERF-CPU: submitting the billboards - the draws themselves, from JS. ABOVE setFlatWind, not between it and the draw: WIND3 pins the two as ADJACENT, and the wind is part of this phase anyway.
     yards?.drawDecals(renderer);   // HOME-YARD: the lot's marked edge while a piece is placed
     renderer.drawFoeTelegraphs?.(drawableBlows(tacticsNow(), walkMode && playerSpawned ? player.pos : cam.pos));   // TACT4: a foe's wind-up on the ground, under the bodies
+    renderer.drawFoeTelegraphs?.(techniqueMarksNow());   // TECH1: and the player's own marks, after the foes' (bible/05-Combat/Weapon-Techniques.md)
     bloodMarks.draw(camRight, UP_Y);   // BLOOD1a: the marks go down BEFORE the billboards, so a body standing in its own blood is over it and not under it. ABOVE setFlatWind for the reason its own neighbour gives: WIND3 pins the wind and the draw as ADJACENT.
     if (lowPolyTrees) lowPolyTreesFrame(cullOn ? _planes : null);   // LPT1: the near 3D trees, for the flats' call below (AFTER the gibs' call above, which would spend them)
     renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], windClock, wd.gust] : null, floraSwayOn() && wd.on ? windfallLaw : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway); WINDFALL1: by the mod's law while it is on

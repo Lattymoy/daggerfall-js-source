@@ -140,6 +140,9 @@ test('LOOT16: the doors - one Rare or Legendary in twelve a body or a pile mints
     LR._setCurseForTests(Infinity);
     const none = list(); LR.rollLootRarity(none, src, { rolls: lcg(seed) });
     LR._setCurseForTests(null);
+    // PIN MOVED (TECH1, bible/05-Combat/Weapon-Techniques.md): a weapon's technique is the door's very last draw, after the
+    // curse's - where a curse drew, the two runs' techniques differ, so it is set aside on both sides
+    const own = (x) => (x.affixes ?? []).filter((a) => !LR.isTechniqueAffix(a));
     all.forEach((it, i) => {
       const twin = none[i];
       assert.deepEqual([it.rarity, it.name, it.legendary], [twin.rarity, twin.name, twin.legendary], `seed ${seed}: piece ${i}'s tier and name`);
@@ -148,8 +151,8 @@ test('LOOT16: the doors - one Rare or Legendary in twelve a body or a pile mints
         if (it.exalted) { assert.ok(!LR.isCursed(it)); return; }
         both++;
         assert.ok(LR.isCursed(it), `seed ${seed}: piece ${i} cursed`);
-        assert.deepEqual(it.affixes.slice(0, -1), twin.affixes, 'its own lines its seed\'s');
-      } else assert.deepEqual(it.affixes, twin.affixes);
+        assert.deepEqual(own(it).slice(0, -1), own(twin), 'its own lines its seed\'s');
+      } else assert.deepEqual(own(it), own(twin));
     });
   }
   assert.ok(both > 20, `${both} Rares and Legendaries compared`);
