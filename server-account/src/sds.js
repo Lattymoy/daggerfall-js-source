@@ -78,8 +78,8 @@ export async function claimSd({ db, nowS, subtle, rand }, player, receipt, publi
   const nonce = hex(rand(new Uint8Array(8)));
   const [row, , count] = await db.batch([
     // THE ROW, stamped with this claim's nonce
-    db.prepare('INSERT OR IGNORE INTO sd_kills (slot, account, boss, earned, lv, title, aura, nonce, at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)')
-      .bind(c.d, player.id, c.b, c.x, c.l, title ? 1 : 0, aura ? 1 : 0, nonce, nowS),
+    db.prepare('INSERT OR IGNORE INTO sd_kills (slot, account, boss, earned, lv, title, aura, nonce, at, body) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)')
+      .bind(c.d, player.id, c.b, c.x, c.l, title ? 1 : 0, aura ? 1 : 0, nonce, nowS, c.m ? JSON.stringify(c.m) : null),   // INT14: the relay's count, kept
     // THE GRANTS, by THIS claim's row alone - held for good
     db.prepare('UPDATE players SET sd_honours = sd_honours | ?2 WHERE id = ?1 AND ?2 != 0 AND EXISTS (SELECT 1 FROM sd_kills WHERE slot = ?3 AND account = ?1 AND nonce = ?4)')
       .bind(player.id, bits, c.d, nonce),

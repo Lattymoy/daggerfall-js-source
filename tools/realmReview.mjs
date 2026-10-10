@@ -8,9 +8,14 @@
 //   node tools/realmReview.mjs rollback <id> [note]          back to its last checkpoint judged clean (its tab loses the seat)
 //   node tools/realmReview.mjs budget [days]                 the measure: gold an hour of play, by level band, and the config
 //   node tools/realmReview.mjs budget-set <json>             write the budget's config - { enforce, bands: [{ upTo, rate, cap }] }
+//   node tools/realmReview.mjs bodies [days]                 INT14: the boss fights' count - mends claimed a minute, and what
+//                                                            the line standing would have cost
 //
 // THE MEASURE FIRST (Mac, 2026-10-09: "Measure 7 days, then enforce"): read `budget 7` after a week, set each band's
 // `rate` past its 0.999 quantile with room, and `budget-set` with `enforce: true`.
+// INT14 (Mac, 2026-10-10: "Measure, then enforce"): read `bodies 7` after a week; the boss fights' line is the RELAY'S - set
+// its BOSS_BODY var (server/wrangler.toml, net/bossBody.js bodyConfig) to `{"enforce": true, "body": {"depth", "perS"},
+// "hull": {"depth", "perS"}}`, `perS` past the 0.999 quantile's rate (a minute's, in thousandths: / 60000) with room.
 //
 // Signed in as YOU - a developer, your handle in the service's DEVELOPER_HANDLES: DAGGER_HANDLE and DAGGER_PASSWORD sign
 // in for this one call and sign out after it; DAGGER_SECRET, a session secret you already hold, is used as it is and left
@@ -23,6 +28,7 @@ export const USAGE = [
   '       node tools/realmReview.mjs findings|clear|hold|rollback <realm character id> [note]',
   '       node tools/realmReview.mjs budget [days]',
   '       node tools/realmReview.mjs budget-set <json>',
+  '       node tools/realmReview.mjs bodies [days]',
   '  Sign in with DAGGER_HANDLE and DAGGER_PASSWORD (or DAGGER_SECRET); DAGGER_ACCOUNT_SERVICE for another service.',
 ].join('\n');
 
@@ -44,6 +50,10 @@ export function reviewRequest(argv) {
   if (act === 'budget' && rest.length <= 1) {
     const days = rest.length ? Number(rest[0]) : 7;
     return Number.isSafeInteger(days) && days >= 1 && days <= 30 ? { path: '/v1/mod/realm-budget', body: { days } } : { usage: USAGE };
+  }
+  if (act === 'bodies' && rest.length <= 1) {   // INT14
+    const days = rest.length ? Number(rest[0]) : 7;
+    return Number.isSafeInteger(days) && days >= 1 && days <= 30 ? { path: '/v1/mod/realm-bodies', body: { days } } : { usage: USAGE };
   }
   if (act === 'budget-set' && rest.length >= 1) {
     let set = null;

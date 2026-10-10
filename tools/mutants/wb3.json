@@ -426,17 +426,18 @@
   {
     "name": "WB3-the-dead-strike",
     "file": "server/src/index.js",
-    "old": "      applyHit(f, a.sub, m.d, m.r, a.pose && !a.pose.dd ? this._courtOf(a.pose) : null, now, m.q);",
-    "new": "      applyHit(f, a.sub, m.d, m.r, a.pose ? this._courtOf(a.pose) : null, now, m.q);",
+    "old": "    const at = a.pose && !a.pose.dd && !bodyOut(f.players[a.sub], line.enforce) ? this._courtOf(a.pose) : null;",
+    "new": "    const at = a.pose && !bodyOut(f.players[a.sub], line.enforce) ? this._courtOf(a.pose) : null;",
     "tests": [
       "test/wb3_gate_room.test.js"
-    ]
+    ],
+    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. "
   },
   {
     "name": "WB3-no-gate-meter",
     "file": "server/src/index.js",
-    "old": "      if (!this._spend(ws, now, gateGate, 'gateBucket', 'gateDrops', 'too many gate frames')) return;",
-    "new": "      void gateGate;",
+    "old": ": !this._spend(ws, now, gateGate, 'gateBucket', 'gateDrops', 'too many gate frames')) return;",
+    "new": ": (void gateGate, false)) return;",
     "tests": [
       "test/wb3_gate_room.test.js"
     ]

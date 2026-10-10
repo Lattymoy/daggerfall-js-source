@@ -11,6 +11,7 @@
 //         c the loot seed (32 bits, the relay's CSPRNG)   x how it was earned ('dealt' | 'stood' | 'rite')
 //         l the level the fight admitted the account at (AUDIT WBX S2 - its first claim; the spoils roll no higher)
 //         r 1 when the account also broke the faithful's rite (WB12d - an ember more; optional)
+//         m the relay's count of the account's body through the fight (INT14 - net/bossBody.js bodyMeasure; optional)
 //         i issued, epoch seconds   e expires (i + RECEIPT_TTL_S)
 //
 // identityToken.js's ladder, mirrored and not shared: the version is the algorithm and is read first; signature
@@ -29,6 +30,7 @@
 //
 // Not a DFU member. Ledger A (WB).
 import { _b64url, SIG_BYTES, SKEW_S, ID_RE } from './identityToken.js';
+import { bodyMeasureValid } from './bossBody.js';   // INT14: the count's measure, carried
 
 /** The only version this file reads or writes. It names the algorithm, so the payload cannot. */
 export const RECEIPT_V = 'r1';
@@ -61,6 +63,7 @@ export function receiptValid(c) {
   if (!RECEIPT_EARNED.includes(c.x)) return false;
   if (c.l !== undefined && !(Number.isSafeInteger(c.l) && c.l >= 1 && c.l <= RECEIPT_LV_MAX)) return false;   // AUDIT WBX S2: optional - a receipt minted before it carries none
   if (c.r !== undefined && (c.r !== 1 || c.x === 'rite')) return false;   // WB12d: a fighter who broke the rite; a rite's own receipt is its ember already
+  if (c.m !== undefined && !bodyMeasureValid(c.m)) return false;   // INT14: optional - a receipt minted before it carries none
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i || c.e - c.i > RECEIPT_TTL_S) return false;
   return true;
@@ -69,12 +72,12 @@ export function receiptValid(c) {
 /** AUDIT WBX S2: the most a receipt's level may say (the brain clamps its own claims far lower). */
 export const RECEIPT_LV_MAX = 999;
 /** The claims in the order the minter writes them - one byte string for one receipt.
- * @param {{d: number, b: string, s: string, c: number, x: string, l?: number, r?: number}} what @param {number} nowS */
-const claimsOf = ({ d, b, s, c, x, l, r }, nowS) => ({ d, b, s, c, x, ...(l !== undefined ? { l } : {}), ...(r === 1 ? { r } : {}), i: nowS, e: nowS + RECEIPT_TTL_S });
+ * @param {{d: number, b: string, s: string, c: number, x: string, l?: number, r?: number, m?: number[]}} what @param {number} nowS */
+const claimsOf = ({ d, b, s, c, x, l, r, m }, nowS) => ({ d, b, s, c, x, ...(l !== undefined ? { l } : {}), ...(r === 1 ? { r } : {}), ...(m !== undefined ? { m } : {}), i: nowS, e: nowS + RECEIPT_TTL_S });
 
 /**
  * MINT. The relay's half. With no key the receipt goes out unsigned (`r1.<body>.`) - the seed still rides it.
- * @param {{d: number, b: string, s: string, c: number, x: string, l?: number, r?: number}} what
+ * @param {{d: number, b: string, s: string, c: number, x: string, l?: number, r?: number, m?: number[]}} what
  * @param {CryptoKey|null} privateKey an Ed25519 private key, or null for none
  * @param {{subtle: SubtleCrypto, nowS: number}} env
  * @returns {Promise<string>}

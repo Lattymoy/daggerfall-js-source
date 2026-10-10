@@ -117,10 +117,10 @@ export async function claimSerpent({ db, nowS, subtle, rand }, player, { receipt
   const res = await db.batch([
     // THE ROW, stamped with this claim's nonce - RETURNING it only when it was written
     db.prepare(
-      `INSERT OR IGNORE INTO serpent_kills (day, account, boss, hull, char_id, xp, nonce, at, stones)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)
+      `INSERT OR IGNORE INTO serpent_kills (day, account, boss, hull, char_id, xp, nonce, at, stones, body)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)
        RETURNING nonce`,
-    ).bind(c.d, player.id, c.b, c.h, character, xp, nonce, nowS, embers),
+    ).bind(c.d, player.id, c.b, c.h, character, xp, nonce, nowS, embers, c.m ? JSON.stringify(c.m) : null),   // INT14: the relay's count, kept
     // THE HOUR SPENT and THE CREDIT DECIDED - by THIS claim's row alone (raids.js's statement)
     db.prepare(
       `UPDATE players SET

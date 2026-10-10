@@ -147,7 +147,10 @@ and a client folds its own site's alone (AUDIT SERPENT S1, AUDIT SERPENT 2 F1). 
 
 The brain says each attack's shape, its landing time and its target (`atk` words). Every client tests its own ship and
 its own feet against it (`systems/serpentStrike.js`). The relay never learns a ship's hurts: this is co-op's victim's
-law, which the naval fight already keeps.
+law, which the naval fight already keeps. INT13 (2026-10-10, `06-Systems/Integrity-Arc.md` section 6): beside it the
+relay now judges each blow on her captain's pose itself and keeps its own count of her hull (`net/bossRef.js`
+judgeSerpent, `net/bossBody.js`), her word of it (`vt`) a patch out of a budget - measured first; once staff enforce
+it, a ship the count wrecks is wrecked.
 
 | attack | phase | shape | wind-up | what it does |
 |---|---|---|---|---|
@@ -470,6 +473,7 @@ After the kill the bar holds a moment and fades.
   fought at.
 - A level claim is never above the token's character level.
 - The struck ship's hurts never leave its machine. A client that ignores a blow cheats only itself (co-op's law).
+  INT13 (2026-10-10): no longer only itself - the relay counts her hull itself (section 5).
 - A receipt is signed. The service verifies it and keys it on the day and the account, never on its seed.
 
 ## 11. Versions and deploy order

@@ -1,0 +1,422 @@
+[
+  {
+    "name": "AINT15-RELAY-GATE-VT-ON-BLOWS",
+    "file": "server/src/index.js",
+    "old": "if (m.k === 'vt' ? !this._spend(ws, now, bodyWordRelayGate, 'bodyBucket', 'bodyDrops', 'too many body words') : !this._spend(ws, now, gateGate,",
+    "new": "if (false ? !this._spend(ws, now, bodyWordRelayGate, 'bodyBucket', 'bodyDrops', 'too many body words') : !this._spend(ws, now, gateGate,",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT15-RELAY-SERPENT-VT-ON-BLOWS",
+    "file": "server/src/index.js",
+    "old": "if (m.k === 'vt' ? !this._spend(ws, now, bodyWordRelayGate, 'bodyBucket', 'bodyDrops', 'too many body words') : !this._spend(ws, now, serpentGate,",
+    "new": "if (false ? !this._spend(ws, now, bodyWordRelayGate, 'bodyBucket', 'bodyDrops', 'too many body words') : !this._spend(ws, now, serpentGate,",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT15-RELAY-SD-VT-ON-BLOWS",
+    "file": "server/src/index.js",
+    "old": "if (m.k === 'vt' ? !this._spend(ws, now, bodyWordRelayGate, 'bodyBucket', 'bodyDrops', 'too many body words') : !this._spend(ws, now, sdFightRelayGate,",
+    "new": "if (false ? !this._spend(ws, now, bodyWordRelayGate, 'bodyBucket', 'bodyDrops', 'too many body words') : !this._spend(ws, now, sdFightRelayGate,",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT15-RELAY-NO-BURST",
+    "file": "src/net/wire.js",
+    "old": "tokenGate(bucket, nowMs, BODY_WORD_HZ_MAX, BODY_WORD_HZ_MAX + 4)",
+    "new": "tokenGate(bucket, nowMs, BODY_WORD_HZ_MAX)",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT15-PACE-UNPINNED",
+    "file": "src/net/wire.js",
+    "old": "export const BODY_WORD_HZ_MAX = 4;",
+    "new": "export const BODY_WORD_HZ_MAX = 5;",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT15-CLIENT-GATE-VT-ON-BLOWS",
+    "file": "src/net/online.js",
+    "old": "    if (g.k === 'vt') return this._bodySend('gate', g, this._ws, this.bossOk);   // AUDIT INT15: my body's word, on its own bucket\n",
+    "new": "",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT15-CLIENT-SD-VT-ON-BLOWS",
+    "file": "src/net/online.js",
+    "old": "    if (w.k === 'vt') return this._bodySend('sd', w, this._ws, this.bossOk);   // AUDIT INT15: my body's word, on its own bucket\n",
+    "new": "",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT15-HALO-ON-PRIMARY-WORD",
+    "file": "src/net/online.js",
+    "old": "cell === this.room ? this.bossOk : !!halo?.bossOk",
+    "new": "this.bossOk",
+    "tests": [
+      "test/int_lane3_audit.test.js",
+      "test/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "AINT15-HALO-WORD-NEVER-KEPT",
+    "file": "src/net/online.js",
+    "old": "      else { const h = this._halo.get(room); if (h) h.bossOk = relaySupportsBossRef(relayV); }   // AUDIT INT15: a halo's own (a serpent's cell may be one)\n",
+    "new": "",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT15-PROMOTED-WORD-LOST",
+    "file": "src/net/online.js",
+    "old": "      this.bossOk = !!h.bossOk;   // AUDIT INT15: nor the count's - a body's word goes by the socket it leaves on\n",
+    "new": "",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT15-DEMOTED-WORD-LOST",
+    "file": "src/net/online.js",
+    "old": "wildOk: this.wildOk, bossOk: this.bossOk };",
+    "new": "wildOk: this.wildOk };",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT15-BODY-BUCKET-NOT-SPENT",
+    "file": "src/net/online.js",
+    "old": "    this._bodyBucket = gate.bucket; this.stats.sent++;\n",
+    "new": "    this.stats.sent++;\n",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT15-HOST-ASKS-PRIMARY",
+    "file": "src/scenes/serpentHost.js",
+    "old": "const sayHull = bodySayer((v) => !!live && !!deps.online?.send?.(",
+    "new": "const sayHull = bodySayer((v) => !!live && !!deps.online?.bossOk?.() && !!deps.online?.send?.(",
+    "tests": [
+      "test/int_lane3_audit.test.js",
+      "test/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "AINT11-POSAT-FIRST-AFTER",
+    "file": "src/net/bossRef.js",
+    "old": "  return q ? [q[1], q[2]] : null;",
+    "new": "  return q ? [q[1], q[2]] : (b.tr[0] ? [b.tr[0][1], b.tr[0][2]] : [b.x, b.z]);",
+    "tests": [
+      "test/int_lane3_audit.test.js",
+      "test/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "AINT11-WAKE-READ-AS-STILL",
+    "file": "server/src/index.js",
+    "old": "    return Date.now() - this._trailsAt < BODY_TRAIL_MS ? [] : undefined;",
+    "new": "    return undefined;",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT11-WATCHERS-TRAILED",
+    "file": "server/src/index.js",
+    "old": "    if (isGateRoom(a.key)) { const f = this._fight; return !!f?.players?.[sub] && !f.fell && !f.wrath; }",
+    "new": "    if (isGateRoom(a.key)) return true;",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT11-FALLEN-SERPENT-TRAILED",
+    "file": "server/src/index.js",
+    "old": "    for (const f of this._serpents.values()) if (f.players?.[sub] && !f.fell && !f.gone) return true;",
+    "new": "    for (const f of this._serpents.values()) if (f.players?.[sub] && !f.gone) return true;",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT11-TRAIL-BY-ACCOUNT",
+    "file": "server/src/index.js",
+    "old": "    const tr = this._trails?.get(ws);\n    if (tr?.length)",
+    "new": "    const mine = this._all().get(ws)?.sub;\n    const tr = [...(this._trails ?? new Map())].filter(([k]) => this._all().get(k)?.sub === mine).flatMap(([, t]) => t).sort((x, y) => x[0] - y[0]);\n    if (tr?.length)",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT11-DECOY-VOLLEY-LANDS",
+    "file": "server/src/index.js",
+    "old": "const pose = a.pose && !a.pose.dd && !sunk && own ?",
+    "new": "const pose = a.pose && !a.pose.dd && !sunk ?",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT11-IN-NOT-SEEDED",
+    "file": "server/src/index.js",
+    "old": "      this._trailSeed(ws, a, now);   // AUDIT INT11\n      const r = f.rc?.[a.sub];",
+    "new": "      const r = f.rc?.[a.sub];",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT11-SD-IN-NOT-SEEDED",
+    "file": "server/src/index.js",
+    "old": "me: 1 }));   // SD8c: `me` - the page blows into a fight that answered it alone\n      this._trailSeed(ws, a, now);   // AUDIT INT11\n",
+    "new": "me: 1 }));   // SD8c: `me` - the page blows into a fight that answered it alone\n",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT11-SERPENT-IN-NOT-SEEDED",
+    "file": "server/src/index.js",
+    "old": "serpentBrain.serpentStateOf(f) }));\n    this._trailSeed(ws, a, now);   // AUDIT INT11\n",
+    "new": "serpentBrain.serpentStateOf(f) }));\n",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT11-HELLO-NOT-TRAILED",
+    "file": "server/src/index.js",
+    "old": "      if (!chat && m.pose && this._trailing({ key: a.key, sub: who.subject })) this._trailPose(ws, m.pose, now);",
+    "new": "",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT11-TRAIL-OUTLIVES-SOCKET",
+    "file": "server/src/index.js",
+    "old": "    this._trails?.delete(ws);   // AUDIT INT11: its trail with it\n",
+    "new": "",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT13-HULL-KEPT-ACROSS-ABSENCE",
+    "file": "server/src/index.js",
+    "old": "    bodyLife(p, now, this._bodyLine().hull);\n",
+    "new": "",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT13-EVERY-SHIP-NEW",
+    "file": "server/src/index.js",
+    "old": "!(now - (p.seenAt ?? p.joinedAt) > serpentBrain.SERPENT_ABSENT_RETIRE_MS)) return;",
+    "new": "false) return;",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT11-ALLY-HEAL-UNCOUNTED",
+    "file": "server/src/index.js",
+    "old": "        if (got > 0) bodyHealed(me, got / healRef(me.lv), now, line.body, { enforce: line.enforce });\n",
+    "new": "",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT11-HEAL-BUDGET-NOT-BACK",
+    "file": "src/net/bossBody.js",
+    "old": "  b.m += back; b.h -= back;",
+    "new": "  b.h -= back;",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT11-HEAL-PAST-LINE-KEPT",
+    "file": "src/net/bossBody.js",
+    "old": "b.o = Math.max(0, b.o - k);",
+    "new": "b.o = Math.max(0, b.o);",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT11-HEAL-RAISES-FALLEN",
+    "file": "src/net/bossBody.js",
+    "old": "  if (b.dn && enforce) return 0;\n  const k = Math.min(share, b.u);",
+    "new": "  const k = Math.min(share, b.u);",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT11-HEAL-FIRST-UNHEARD",
+    "file": "src/net/bossBody.js",
+    "old": "  b.v = Math.min(1, b.v + (share - k - back));",
+    "new": "  b.v = Math.min(1, b.v);",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT13-REFLOAT-FLOATS-NOBODY",
+    "file": "server/src/index.js",
+    "old": "    serpentBrain.serpentWreck(f, sub, 0, now, out);\n",
+    "new": "",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT13-HELD-WORD-DROPPED",
+    "file": "server/src/index.js",
+    "old": "      else me.wf = 1;\n",
+    "new": "",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT13-COUNT-WRECK-UNMARKED",
+    "file": "server/src/index.js",
+    "old": "    if (serpentBrain.serpentWreck(f, sub, 1, now, out)) f.players[sub].cw = 1;",
+    "new": "    serpentBrain.serpentWreck(f, sub, 1, now, out);",
+    "tests": [
+      "test/int_lane3_audit.test.js",
+      "test/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "AINT13-OWN-WRECK-KEEPS-MARK",
+    "file": "server/src/index.js",
+    "old": "if (m.w || !sunk) { delete me.cw; delete me.wf;",
+    "new": "if (m.w || !sunk) { delete me.wf;",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT13-VT-WAKES-FIGHT",
+    "file": "server/src/index.js",
+    "old": "    const line = this._bodyLine();\n    if (m.k === 'vt') {\n      bodySaid(f.players[a.sub]",
+    "new": "    const line = this._bodyLine();\n    await this._serpentSay(fights, id, f, serpentBrain.serpentResume(f, now), now);\n    if (m.k === 'vt') {\n      bodySaid(f.players[a.sub]",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT11-GATE-NOT-TOLD-AGAIN",
+    "file": "server/src/index.js",
+    "old": "      this._bodyTell('gate', f, now);",
+    "new": "",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT11-SD-NOT-TOLD-AGAIN",
+    "file": "server/src/index.js",
+    "old": "      this._bodyTell('sd', f, now);",
+    "new": "",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT11-TELL-PAST-DEATH",
+    "file": "src/net/bossBody.js",
+    "old": "  if (!enforce || !b?.dn || b.dd != null || now",
+    "new": "  if (!enforce || !b?.dn || now",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT11-TELL-EVERY-BEAT",
+    "file": "src/net/bossBody.js",
+    "old": "now - (b.ta ?? -Infinity) < BODY_TELL_MS) return false;",
+    "new": "false) return false;",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT11-TELL-UNENFORCED",
+    "file": "src/net/bossBody.js",
+    "old": "  if (!enforce || !b?.dn ||",
+    "new": "  if (!b?.dn ||",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT11-FIRST-TELLING-UNSTAMPED",
+    "file": "server/src/index.js",
+    "old": "      p.bd.ta = now;   // AUDIT INT11: told - bodyTellOwed's clock\n",
+    "new": "",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT11-GATE-BODIES-TWICE",
+    "file": "server/src/index.js",
+    "old": "bodies = this._gateBodies(f), census = () => bodyCensus(f, bodies, now, line.body, line.enforce);",
+    "new": "bodies = null, census = () => bodyCensus(f, bodies ?? this._gateBodies(f), now, line.body, line.enforce);",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT11-SD-BODIES-TWICE",
+    "file": "server/src/index.js",
+    "old": "bodies = this._sdFightBodies(f, now), census = () => bodyCensus(f, bodies, now,",
+    "new": "bodies = null, census = () => bodyCensus(f, bodies ?? this._sdFightBodies(f, now), now,",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT11-SERPENT-BODIES-TWICE",
+    "file": "server/src/index.js",
+    "old": "serpentBrain.stepSerpentBrain(f, now, this._bodiesBare(bodies), rand01);",
+    "new": "serpentBrain.stepSerpentBrain(f, now, this._serpentBodies(f), rand01);",
+    "tests": [
+      "test/int_lane3_audit.test.js"
+    ]
+  },
+  {
+    "name": "AINT14-RANK-ROUNDED-WRONG",
+    "file": "server-account/src/review.js",
+    "old": "Math.min(n - 1, Math.ceil(q * n) - 1)",
+    "new": "Math.min(n - 1, Math.floor(q * n))",
+    "tests": [
+      "test/int_lane3_audit.test.js",
+      "test/int12_body_relay.test.js",
+      "test/int6_review.test.js"
+    ]
+  }
+]

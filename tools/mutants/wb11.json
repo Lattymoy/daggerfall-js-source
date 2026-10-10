@@ -327,10 +327,11 @@
   {
     "name": "WB11-the-blow-judged-on-him",
     "file": "server/src/index.js",
-    "old": "else if (m.k === 'ahit') this._gateFan(applyHostHit(f, a.sub, m.i, m.d, m.r, a.pose && !a.pose.dd ? this._courtOf(a.pose) : null, now, m.q));",
-    "new": "else if (m.k === 'ahit') applyHit(f, a.sub, m.d, m.r, a.pose && !a.pose.dd ? this._courtOf(a.pose) : null, now, m.q);",
+    "old": "else if (m.k === 'ahit') this._gateFan(applyHostHit(f, a.sub, m.i, m.d, m.r, at, now, m.q));",
+    "new": "else if (m.k === 'ahit') applyHit(f, a.sub, m.d, m.r, at, now, m.q);",
     "tests": [
       "test/wb11_gate_host.test.js"
-    ]
+    ],
+    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. "
   }
 ]
