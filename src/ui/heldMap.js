@@ -573,6 +573,7 @@ export class HeldMapWindow {
     this._itRefusal = null;
     this._gotoPlace = null;              // one-shot, consumed on first tick
     this._openedOnPlace = false;         // FIND-FIRST: this open was a journal's place - the map is not on me
+    this._findMeFirst = false;           // FIND-FIRST: one-shot, the host's word (openOnMe)
     this._ticked = false;
 
     this._size = deps.mapSize ?? { width: MAP_WIDTH, height: MAP_HEIGHT };
@@ -757,6 +758,8 @@ export class HeldMapWindow {
 
   /** GotoPlace: pending, consumed on the first tick. */
   gotoPlace(place) { this._gotoPlace = place; }
+  /** FIND-FIRST: the host's word that this open is the player's own map - it opens as a press of Find me. */
+  openOnMe() { this._findMeFirst = true; }
 
   /** GetTravelMapSaveData: a LIVE open panel's toggles win, exactly
    *  as the classic window hands its live popup. */
@@ -1669,9 +1672,9 @@ export class HeldMapWindow {
   /** FIND-FIRST (FIELD BUGS 2026-10-10, the Discord: "make 'Find me' the standard functionality on the world map when
    *  I first open it"): the player's own world map opens as a press of Find me - unless the open was for somewhere
    *  else: a journal's place, a journey Travel Options centres (MAP2) or asks to resume, a teleport's pick, a driver's
-   *  map. The host says which opens are the player's own (`deps.findMeFirst`). */
+   *  map. The host says which opens are the player's own (`openOnMe`). */
   _findsMeFirst() {
-    return !!this.deps.findMeFirst && this._slot.live === 'world' && !this._zoneMap && !this._openedOnPlace
+    return this._findMeFirst && !this._zoneMap && !this._openedOnPlace
       && !this.teleportationTravel && !this._it && !this._to?.isTravelActive && this._top !== 'resume';
   }
   /** FINDME: glide to my pixel and blink a red cross over it for three seconds. */

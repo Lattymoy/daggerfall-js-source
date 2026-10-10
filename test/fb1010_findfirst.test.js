@@ -31,13 +31,17 @@ function withDocument(fn) {
 /** A bay big enough that a view on my pixel is not the rest view (on a sheet that holds the bay whole, the clamp centres
  *  the bay whatever is asked), and me well off its middle. */
 const ME = { x: 700, y: 300 };
-const mkWin = (extra = {}) => new HeldMapWindow({
-  getPlayerPixel: () => ME, getClimateIndex: () => CLIMATES.Woodlands,
-  woods: { heightMapBuffer: new Uint8Array(500000).fill(10) }, mapSize: { width: 1000, height: 500 },
-  gold: () => 10000, goldPieces: () => 10000, hasHorse: false, hasCart: false, hasShip: false,
-  diseaseCount: () => 0, poisonCount: () => 0,
-  ...extra,
-});
+const mkWin = ({ findMeFirst = false, ...extra } = {}) => {
+  const win = new HeldMapWindow({
+    getPlayerPixel: () => ME, getClimateIndex: () => CLIMATES.Woodlands,
+    woods: { heightMapBuffer: new Uint8Array(500000).fill(10) }, mapSize: { width: 1000, height: 500 },
+    gold: () => 10000, goldPieces: () => 10000, hasHorse: false, hasCart: false, hasShip: false,
+    diseaseCount: () => 0, poisonCount: () => 0,
+    ...extra,
+  });
+  if (findMeFirst) win.openOnMe();   // the host's word, as world.js's toggleTravelMap says it
+  return win;
+};
 const journey = (mod) => () => ({ settings: {}, destinationName: 'Wayrest', isTravelActive: false, ...mod });
 
 test('FIND-FIRST: the player\'s own world map opens as a press of Find me - the same glide to my pixel, the same red cross', () => withDocument(() => {
@@ -80,6 +84,7 @@ test('FIND-FIRST: an open for somewhere else is left as it was - a journal\'s pl
 
 test('FIND-FIRST: the world host asks it of the player\'s own map alone - the key and the journal, never a teleport, a portal stone or a driver\'s map', () => {
   const w = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
-  assert.match(w, /_travelMap = buildTravelMapWindow\(\{ findMeFirst: true, onTravel: /, 'toggleTravelMap\'s open');
-  assert.equal(w.match(/findMeFirst/g).length, 1, 'and no other door');
+  const door = w.slice(w.indexOf('const toggleTravelMap = (gotoPlace = null) => {'), w.indexOf('townTalk.showOverlay(_travelMap);'));
+  assert.ok(door.indexOf('_travelMap.openOnMe?.();') > door.indexOf('_travelMap = buildTravelMapWindow('), 'toggleTravelMap\'s open, on the window it built');
+  assert.equal(w.match(/\.openOnMe\b/g).length, 1, 'and no other door');
 });

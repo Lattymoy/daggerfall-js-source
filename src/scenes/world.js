@@ -15543,7 +15543,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // PARTY-TRAVEL (2026-09-25, Mac: "Implementing a prompt for online to travel to party leader"): a member away from
     // the leader is asked first whether the journey is to the leader - No opens the map (systems/partyTravel.js mapOffer)
     if (!gotoPlace && partyTravel?.mapOffer()) return false;
-    _travelMap = buildTravelMapWindow({ findMeFirst: true, onTravel: (pick, opts, computed) => {   // FIND-FIRST: the player's own map opens on them
+    _travelMap = buildTravelMapWindow({ onTravel: (pick, opts, computed) => {
       if (TEST_GODMODE && staffPowers().god && pick?.pixel) { teleportTo(pick); return; }   // TESTBUILD: god mode - the map's journey is instant, from anywhere to anywhere
       // HALL-HERE (the owner: "happens only when youre already on the dungeon and press begin journey on the pixel where
       // you are"): a journey to the zone hall I already stand at is no journey - said, and nothing begun
@@ -15560,6 +15560,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (isOnlinePage() && !opts?.travelShip) { townTalk.say(ONLINE_LAND_TRAVEL_REFUSAL); hudFade.clearFade(); } else fastTravelTo(pick, opts, computed);   // AUDIT TRAVEL-ONLINE T7: online a trip over land is never the teleport - the floor under the room's switches (systems/onlineLane.js)
     } });
     if (!_travelMap) { townTalk.say('(the travel map art is unavailable)'); return false; }
+    _travelMap.openOnMe?.();   // FIND-FIRST: the player's own map opens on them (the held map's; the classic keeps DFU's open)
     if (_travelGoto) { _travelMap.gotoPlace(_travelGoto); _travelGoto = null; }   // GotoPlace (:214-217), consumed on the map's first tick - AUDIT PARTY-UI2 1: this open's, or one a refused open kept
     townTalk.showOverlay(_travelMap);
     return true;

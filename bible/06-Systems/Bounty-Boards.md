@@ -49,6 +49,8 @@ Each is quoted where the code keeps it, beside the line it decided.
   the board window (`ui/bountyWindow.js` through `ui/bountyDoor.js`) in the Enhanced Plus stone and brass on every
   skin - the window lays its own sheet on the classic skins, the Broker's precedent. The other boards open DFU's
   rumour exactly as before (`systems/bulletinBoard.js`; the ROAD A9 pins hold).
+  SPAM-TAKE (`01-Overview/Field-Bugs-2026-10-10.md`): a take moves the window's card on to the next open notice, so
+  Take pressed again and again takes the four in order; Give up asks twice and stands at the card's left.
 - **Every bounty board of a town posts the SAME four hunts**, and every player reads the same four. A posting is a
   pure function of (the day, the town's pixel, the slot): where it is, which of its tier's beasts, how many, which
   story, who pinned it. The notices turn over each game day.
