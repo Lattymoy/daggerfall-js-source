@@ -44,9 +44,10 @@ export const DB_ROOT = Symbol('db-root');
 
 /** SCALE4d (2026-10-10, Mac: "we just hit 500 online people. I think its time to scale up our server and improve
  *  performance for more people"): THE ROUTES WHOSE READS A D1 READ REPLICA MAY SERVE. The token's mint is a dozen
- *  reads and no write of its own (a stale session's touch aside), and a relay deploy asks it of every player in the same
- *  minute: the wave that overloaded the one primary on 2026-10-06 (STORM-SHED). Every other route stays on the binding,
- *  the primary, as before. */
+ *  reads, and a relay deploy asks it of every player in the same minute: the wave that overloaded the one primary on
+ *  2026-10-06 (STORM-SHED). Its writes are the primary's - a stale session's touch, and a region's chapters, written
+ *  only over the version they read (npcHalls.js) - and its one read-then-write, the arena's and Iliac Hand's #1 counted
+ *  again and stored, runs on the binding (index.js, AUDIT SCALE4d A1). Every other route stays on the binding. */
 export const REPLICA_ROUTES = new Set(['/v1/auth/token']);
 /** SCALE4d: where a replica session's FIRST statement goes - the primary. A mint's first statement is the session
  *  lookup, and every statement after it is served by a replica at least as new as that answer (D1's Sessions API: one

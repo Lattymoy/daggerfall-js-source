@@ -120,26 +120,6 @@
     "note": "a socket that said no hello told who joined"
   },
   {
-    "name": "SCALE5a-re-never-said",
-    "file": "server/src/index.js",
-    "old": "...(replaced ? { re: 1 } : {}) }, who));",
-    "new": "...({}) }, who));",
-    "tests": [
-      "test/scale5a.test.js"
-    ],
-    "note": "a reconnect's join says nothing - the cut roster counts a player for each blip"
-  },
-  {
-    "name": "SCALE5a-re-always-said",
-    "file": "server/src/index.js",
-    "old": "...(replaced ? { re: 1 } : {}) }, who));",
-    "new": "...({ re: 1 }) }, who));",
-    "tests": [
-      "test/scale5a.test.js"
-    ],
-    "note": "every join a reconnect - a new player past the cut never counted"
-  },
-  {
     "name": "SCALE5a-unread-never-said",
     "file": "server/src/index.js",
     "old": "this._refuse(ws, 'busy', CLOSE_BUSY, BUSY_TOKEN_UNREAD); return; }   // SCALE5a",
@@ -212,32 +192,22 @@
   {
     "name": "SCALE5a-leave-past-the-cut-uncounted",
     "file": "src/net/online.js",
-    "old": "(this._rooms.get(room)?.has(m.id) || !this.peers.has(m.id))) this.roomCount",
-    "new": "(this._rooms.get(room)?.has(m.id))) this.roomCount",
+    "old": "else if (this._rooms.get(room)?.has(m.id) || !this.peers.has(m.id)) this.roomCount",
+    "new": "else if (this._rooms.get(room)?.has(m.id)) this.roomCount",
     "tests": [
       "test/rosterg.test.js"
     ],
-    "note": "a leave by one past the welcome's cut never comes off the count"
-  },
-  {
-    "name": "SCALE5a-re-ignored",
-    "file": "src/net/online.js",
-    "old": "!this.peers.has(m.id) && m.re !== 1) this.roomCount++;",
-    "new": "!this.peers.has(m.id)) this.roomCount++;",
-    "tests": [
-      "test/rosterg.test.js"
-    ],
-    "note": "a reconnect past the cut counted as another player"
+    "note": "AUDIT SCALE5a (re-aimed by content): the arithmetic for a relay that says no count. a leave by one past the welcome's cut never comes off the count"
   },
   {
     "name": "SCALE5a-own-leave-counted",
     "file": "src/net/online.js",
-    "old": "if (this.roomCount != null && m.id !== this.id && (",
-    "new": "if (this.roomCount != null && (",
+    "old": "if (this.roomCount != null && m.id !== this.id) { if (Number.isSafeInteger(m.n)",
+    "new": "if (this.roomCount != null) { if (Number.isSafeInteger(m.n)",
     "tests": [
       "test/rosterg.test.js"
     ],
-    "note": "my own id's leave taken off the count"
+    "note": "AUDIT SCALE5a (re-aimed by content): my own id's leave, its count and all, moves nothing. my own id's leave taken off the count"
   },
   {
     "name": "SCALE5a-unopened-a-no-op",
@@ -258,5 +228,100 @@
       "test/scale5a.test.js"
     ],
     "note": "one room's word reopens every room - a room the token did open handed it again, refused as a replay"
+  },
+  {
+    "name": "AUDIT-SCALE5a-n-off-the-join",
+    "file": "server/src/index.js",
+    "old": "sub: who.subject, n: others.length + 1 }, who));",
+    "new": "sub: who.subject }, who));",
+    "tests": [
+      "test/scale5a.test.js",
+      "test/rosterg.test.js"
+    ],
+    "note": "a channel's join says no count - a reconnect past the cut (C3) counted again"
+  },
+  {
+    "name": "AUDIT-SCALE5a-n-off-the-leave",
+    "file": "server/src/index.js",
+    "old": "...(isChatRoom(a.key) ? { n: this._namedCount() } : {})",
+    "new": "...({})",
+    "tests": [
+      "test/scale5a.test.js",
+      "test/rosterg.test.js"
+    ],
+    "note": "a channel's leave says no count - a claim's closed tab (C1) and a failed welcome's leave (C2) taken off twice"
+  },
+  {
+    "name": "AUDIT-SCALE5a-n-counts-the-dead",
+    "file": "server/src/index.js",
+    "old": "if (b.id && !this._dead.has(ws) && !this._gone.has(ws)) n++; return n; }",
+    "new": "if (b.id && !this._gone.has(ws)) n++; return n; }",
+    "tests": [
+      "test/scale5a.test.js",
+      "test/rosterg.test.js"
+    ],
+    "note": "a socket the object closed counted until its leave - the count says one the welcome did not"
+  },
+  {
+    "name": "AUDIT-SCALE5a-client-join-by-arithmetic",
+    "file": "src/net/online.js",
+    "old": "if (Number.isSafeInteger(m.n) && m.n >= 1) this.roomCount = m.n; else if (!this.peers.has(m.id)) this.roomCount++;",
+    "new": "if (!this.peers.has(m.id)) this.roomCount++;",
+    "tests": [
+      "test/scale5a.test.js",
+      "test/rosterg.test.js"
+    ],
+    "note": "the join's count ignored - kept by arithmetic, it drifts"
+  },
+  {
+    "name": "AUDIT-SCALE5a-client-leave-by-arithmetic",
+    "file": "src/net/online.js",
+    "old": "{ if (Number.isSafeInteger(m.n) && m.n >= 1) this.roomCount = m.n; else if (this._rooms.get(room)?.has(m.id) || !this.peers.has(m.id)) this.roomCount = Math.max(0, this.roomCount - 1); }",
+    "new": "{ if (this._rooms.get(room)?.has(m.id) || !this.peers.has(m.id)) this.roomCount = Math.max(0, this.roomCount - 1); }",
+    "tests": [
+      "test/scale5a.test.js",
+      "test/rosterg.test.js"
+    ],
+    "note": "the leave's count ignored - kept by arithmetic, it drifts"
+  },
+  {
+    "name": "AUDIT-SCALE5a-count-kept-past-the-room",
+    "file": "src/net/online.js",
+    "old": "    if (room === this.room) this.roomCount = null;   // AUDIT SCALE5a (lens C, pre-existing)",
+    "new": "    // AUDIT SCALE5a (lens C, pre-existing)",
+    "tests": [
+      "test/scale5a.test.js"
+    ],
+    "note": "a superseded World tab says the room's old count over an empty list"
+  },
+  {
+    "name": "AUDIT-SCALE5a-D4-halo-not-handed-back",
+    "file": "src/net/online.js",
+    "old": "        this._tokenUnread(ws, room, ev);   // SCALE5a: a busy refusal before the token was read leaves it this room's to carry again",
+    "new": "        // SCALE5a",
+    "tests": [
+      "test/scale5a.test.js"
+    ],
+    "note": "a halo's unread token kept spent - its retry mints"
+  },
+  {
+    "name": "AUDIT-SCALE5a-D7-empty-set-kept",
+    "file": "server/src/index.js",
+    "old": "if (s) { s.delete(ws); if (!s.size) m.delete(from); }",
+    "new": "if (s) { s.delete(ws); }",
+    "tests": [
+      "test/scale5a.test.js"
+    ],
+    "note": "a key whose last socket left kept for the object's life"
+  },
+  {
+    "name": "AUDIT-SCALE5a-D16-bound-unread",
+    "file": "server/src/index.js",
+    "old": "if (list.length > ACCOUNT_TABS_MAX) { const idx = this._all();",
+    "new": "if (list.length > ACCOUNT_TABS_MAX * 1000) { const idx = this._all();",
+    "tests": [
+      "test/scale5a.test.js"
+    ],
+    "note": "an account past ACCOUNT_TABS_MAX answered whole"
   }
 ]

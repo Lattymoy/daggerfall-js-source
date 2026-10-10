@@ -795,6 +795,9 @@ export class Room {
     for (const [other, b] of this._all()) if (other !== ws && b.id && !this._dead.has(other) && !this._gone.has(other)) out.push(b);
     return out;
   }
+  /** AUDIT SCALE5a C1-C3: how many the room can name - hello'd, never a socket this object closed or whose leave is said
+   *  (`_othersOf`'s rule, the joiner's own socket counted): the welcome's `n`, said again on a channel's every leave. */
+  _namedCount() { let n = 0; for (const [ws, b] of this._all()) if (b.id && !this._dead.has(ws) && !this._gone.has(ws)) n++; return n; }
   /** One frame to every hello'd socket but `ws` - the index walked in place, never copied: a failed send forgets its
    *  socket mid-walk (`_closed`), which a Map's own iteration takes (the entry gone is not visited), and nothing here
    *  adopts one. */
@@ -1872,7 +1875,12 @@ export class Room {
         // stale here is not five minutes fresh there
         const tr = isRegionRoom(a.key) ? others.filter((b) => b.tm && now - b.tm.at <= TRAV_STALE_MS).slice(0, TRAV_WELCOME_MAX).map((b) => { const p = { ...b.tm }; delete p.at; return badged({ id: b.id, name: b.name, sub: b.sub, p, ag: Math.max(0, Math.floor((now - b.tm.at) / 1000)) }, b); }) : [];
         if (!this._send(ws, JSON.stringify({ t: 'welcome', id: m.id, peers: named, n: others.length + 1, v: RELAY_VERSION, now: Date.now(), ...(ev ? { ev } : {}), ...(tr.length ? { tr } : {}) }))) return;   // AUDIT SOC B7: the relay's clock rides the channel's welcome too (WORLD5's `now`), so the hub link reads last-seen and an invite's lapse on the relay's time without waiting on the presence session's welcome
-        const said = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name, sub: who.subject, ...(replaced ? { re: 1 } : {}) }, who));   // SCALE5a: `re` - a reconnect, its old socket replaced and no leave said for it: a roster cut at CHAT_ROSTER_MAX counts no new player for it
+        // AUDIT SCALE5a C1-C3: AND THE ROOM'S COUNT, as the welcome says it (`n`). A client whose roster the welcome cut at
+        // CHAT_ROSTER_MAX kept the count by arithmetic, a join +1 and a leave -1, and every door that says one without the
+        // other moved it for good: a claim's closed tab (its leave said after the claimer's welcome had counted it out), a
+        // joiner whose welcome failed (its leave said, no join), a reconnect after its old socket's leave. The count each
+        // join and leave carries is the room's own, so nothing can drift (SCALE5a's `re` retired with it).
+        const said = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name, sub: who.subject, n: others.length + 1 }, who));
         this._fanBut(ws, said);   // SCALE5a: the index walked in place, by a method of its own
         // SOC1: the account, in the hub - after the welcome and the join, so a client's session has reset on the
         // welcome before its picture lands; a hello naming none is a build before this slice, admitted as it was
@@ -3076,7 +3084,7 @@ export class Room {
     this._raidTownsUp.delete(ws);   // SCALE2b: an upload its socket never finished goes with it
     if (!last) { try { await this.state.storage.delete([lookKey(a.id), secretKey(a.id)]); } catch { /* the room forgets it on the next empty hello */ } }
     // ROSTER-G: a channel says its leaves now, as it says its joins - the roster beside the chat is everyone online
-    const out = JSON.stringify({ t: 'leave', id: a.id });
+    const out = JSON.stringify({ t: 'leave', id: a.id, ...(isChatRoom(a.key) ? { n: this._namedCount() } : {}) });   // AUDIT SCALE5a C1-C3: a channel's leave says the room's count, as its join does
     this._fanBut(ws, out);   // SCALE5a: in place, as the join's
     this._travOwed.delete(a.id);   // AUDIT DEEP2 C2: the leave takes the mark out - an owed clear of it is said
     if (!isChatRoom(a.key) && this._leads(a, ws)) this._sayHost({ skip: ws, except: ws });   // WORLD1: the host left - the next-longest in the room is the host now, said to everyone (ROSTER-G: a channel has no host)

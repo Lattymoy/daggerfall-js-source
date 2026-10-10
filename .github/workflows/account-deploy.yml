@@ -481,14 +481,17 @@ jobs:
         run: |
           set -uo pipefail
           acct=$(grep -oP '^account_id\s*=\s*"\K[^"]+' server-account/wrangler.toml)
+          # AUDIT SCALE4d A3: curl's own -w says 000 when it reaches nothing - `|| echo 000` printed it twice
           code=$(curl -sS --max-time 20 -o /tmp/replicas.json -w '%{http_code}' -X PUT \
             "https://api.cloudflare.com/client/v4/accounts/$acct/d1/database/${{ steps.d1.outputs.id }}" \
             -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H 'content-type: application/json' \
-            -d '{"read_replication":{"mode":"auto"}}' || echo 000)
+            -d '{"read_replication":{"mode":"auto"}}') || true
+          code=${code:-000}
           if [ "$code" = "200" ] && jq -e '.success == true' /tmp/replicas.json >/dev/null 2>&1; then
-            echo "read replication: $(jq -r '.result.read_replication.mode // "auto"' /tmp/replicas.json)"
+            echo "read replication: $(jq -r '.result.read_replication.mode // "not said"' /tmp/replicas.json)"
           else
             echo "::warning::could not turn on the database's read replicas (HTTP $code) - every statement stays on the primary"
+            jq -c '.errors // empty' /tmp/replicas.json 2>/dev/null || true
           fi
 
       # ── 3. DEPLOY, AND IT COMES BEFORE THE KEY ───────────────────

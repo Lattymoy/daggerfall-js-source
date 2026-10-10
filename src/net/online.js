@@ -946,6 +946,7 @@ export class OnlineSession {
   _forgetRoom(room) {
     const s = this._rooms.get(room);
     this._rooms.delete(room);
+    if (room === this.room) this.roomCount = null;   // AUDIT SCALE5a (lens C, pre-existing): a room let go takes its count with it - a superseded World tab said 'Online - 600' over an empty list
     this._inChat.delete(room);   // CHAT-G: a room let go takes its bucket with it, or a long session accumulates one per cell it ever walked through
     this._inSocial.delete(room); this._inNote.delete(room); this._inParty.delete(room);   // AUDIT SOC B3: and the hub's three
     for (const k of [...this._inQuest.keys()]) if (k.startsWith(`${room}|`)) this._inQuest.delete(k);   // AUDIT DROPS C2: keyed room|acct
@@ -2795,16 +2796,17 @@ export class OnlineSession {
       // WORLD3: a door, a lever or a platform moved by another in my world room - never my own back, never outside one
       if (primary && isWorldRoom(this.room) && typeof m.id === 'string' && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this._deliver('act', () => this.onAct?.(m.id, m.data));
     } else if (m.t === 'join') {
-      // SCALE5a: but never a reconnect's (`re`, the relay's word that this hello replaced the id's own socket - which said
-      // no leave): one past the welcome's cut is unknown here, and each of its blips counted another player online
-      if (typeof m.id === 'string' && m.id !== this.id) { if (this.roomCount != null && !this.peers.has(m.id) && m.re !== 1) this.roomCount++; this._member(room, m.id, m, now); }   // ROSTER-G: a cut count follows the joins
+      // AUDIT SCALE5a C1-C3: THE ROOM'S OWN COUNT, when the join says it (`n`, as the welcome does) - kept by arithmetic it
+      // drifted at every door that says a join without a leave or a leave without a join; a relay before it, the old rule
+      if (typeof m.id === 'string' && m.id !== this.id) { if (this.roomCount != null) { if (Number.isSafeInteger(m.n) && m.n >= 1) this.roomCount = m.n; else if (!this.peers.has(m.id)) this.roomCount++; } this._member(room, m.id, m, now); }   // ROSTER-G: a cut count follows the joins
       // AUDIT DEEP T3-3: a join is a FRESH socket, which holds no mark - one that replaced its own older socket (a blip's
       // reconnect) said no leave, so the old socket's mark is taken out here; its first mark follows its join
       if (typeof m.id === 'string' && m.id !== this.id && isRegionRoom(room)) this._deliver('travellers', () => this.onTravellerLeft?.(m.id));
     } else if (m.t === 'leave') {
-      // SCALE5a: AND AN UNNAMED ONE'S LEAVE COUNTS TOO - one past the welcome's cut was counted in its `n` and never named
-      // here, so its leave never came off the count: past CHAT_ROSTER_MAX the World tab's number only climbed
-      if (typeof m.id === 'string') { if (this.roomCount != null && m.id !== this.id && (this._rooms.get(room)?.has(m.id) || !this.peers.has(m.id))) this.roomCount = Math.max(0, this.roomCount - 1); this._unmember(room, m.id); }   // WORLD6b-iii(b): gone from THIS room - kept while another holds it; ROSTER-G: and a cut count follows the leaves
+      // AUDIT SCALE5a C1-C3: the room's own count when the leave says it (`n`); a relay before it, arithmetic - and an
+      // unnamed one's leave counts too (one past the welcome's cut was counted in its `n` and never named here, so its leave
+      // never came off: past CHAT_ROSTER_MAX the World tab's number only climbed)
+      if (typeof m.id === 'string') { if (this.roomCount != null && m.id !== this.id) { if (Number.isSafeInteger(m.n) && m.n >= 1) this.roomCount = m.n; else if (this._rooms.get(room)?.has(m.id) || !this.peers.has(m.id)) this.roomCount = Math.max(0, this.roomCount - 1); } this._unmember(room, m.id); }   // WORLD6b-iii(b): gone from THIS room - kept while another holds it; ROSTER-G: and a cut count follows the leaves
       if (typeof m.id === 'string' && isRegionRoom(room)) this._deliver('travellers', () => this.onTravellerLeft?.(m.id));   // TV3: and their mark with them
     } else if (m.t === 'trav') {
       // TV3: a traveller's mark in my region - at TRAV_IN_HZ_MAX per room (the room's own fan budget, with twice its burst

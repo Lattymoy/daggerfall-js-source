@@ -11,7 +11,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { fakeRoom } from './fakeRoom.mjs';
-import { SOCIAL_ROOM, CHAT_HELLO_HZ_MAX, CLOSE_BUSY, BUSY_TOKEN_UNREAD, ACCOUNT_TABS_MAX, SERPENT_INTERNAL_FELL, SERPENT_RC_PREFIX } from '../src/net/wire.js';
+import { SOCIAL_ROOM, CHAT_HELLO_HZ_MAX, CLOSE_BUSY, BUSY_TOKEN_UNREAD, ACCOUNT_TABS_MAX, SERPENT_INTERNAL_FELL, SERPENT_RC_PREFIX, CHAT_WORLD_ROOM, CHAT_ROSTER_MAX } from '../src/net/wire.js';
+import { rosterRows } from '../src/net/roster.js';
 import { OnlineSession } from '../src/net/online.js';
 import { accountTokenMinter, SESSION_KEY } from '../src/net/accountClient.js';
 import { mintSerpentReceipt } from '../src/net/serpentReceipt.js';
@@ -52,8 +53,10 @@ function walkOtherTabs(room, sub, ws, id) {
   return out;
 }
 
-/** A story of hub hellos and drops: ids that reconnect, players with tabs that claim the seat or do not, hub profiles
- *  several players share (so an account can run past ACCOUNT_TABS_MAX), the clock walked past the index's trust. */
+/** A story of hub hellos and drops: ids that reconnect, players with tabs that claim the seat or do not, the clock walked
+ *  past the index's trust. The hub's account is the token's verified subject and ONE-SEAT gives it one hub socket, so
+ *  here every set holds at most one (AUDIT SCALE5a D9: this said profiles shared ran an account past its bound - they do
+ *  not); the order, the bound and the dead are `indexStory`'s, at the index's own doors. */
 async function story(seed, { steps = 160, ids = 24, subs = 10, accts = 3 } = {}) {
   return onClock(async ({ tick }) => {
     const rnd = roll(seed), pick = (n) => Math.floor(rnd() * n);
@@ -125,6 +128,8 @@ async function indexStory(seed, steps = 400) {
         if ((room._byAcct().get(acct)?.size ?? 0) > ACCOUNT_TABS_MAX) over++;
         checks++;
       }
+      // AUDIT SCALE5a D7: a kept index lives as long as the object - a key whose last socket left goes with it
+      for (const m of [room._acctIdx, room._subIdx]) if (m) for (const [k, set] of m) assert.ok(set.size > 0, `seed ${seed} step ${i}: an empty set kept for ${k}`);
       for (const sub of ['player-0', 'player-1', 'player-2', 'player-3']) {
         const all = [...room._all().keys()], ws = all[pick(all.length || 1)] ?? null, id = ws ? room._attach(ws).id : null;
         assert.deepEqual(room._otherTabsOf(sub, ws, id).map(name), walkOtherTabs(room, sub, ws, id).map(name), `seed ${seed} step ${i}: ${sub}`);
@@ -201,20 +206,105 @@ test('SCALE5a the join and the leave reach every hello\'d socket but the one the
   });
 });
 
-test('SCALE5a a channel\'s join says `re` when it replaced the id\'s own socket - a reconnect, no leave said - and nothing on a fresh one (mutants: `re` never said; said on every join)', async () => {
+// ═══ AUDIT SCALE5a C1-C3: THE WORLD TAB'S COUNT PAST THE CUT ═════════════════════════════════════════════════════════════
+
+/** The room's own count: hello'd sockets neither closed by the object nor said gone - the welcome's `n`. */
+function trueCount(room) { let n = 0; for (const [w, b] of room._all()) if (b.id && !room._dead.has(w) && !room._gone.has(w)) n++; return n; }
+
+/** A channel link (the real OnlineSession) fed exactly what the relay sent the relay-side socket it is attached to. */
+function observer(id, now) {
+  const { FakeWS, sockets } = fakeSocketClass();
+  const s = new OnlineSession({ url: 'wss://relay.test', name: id, id, secret: 'secret-of-' + id, WebSocketImpl: FakeWS, now, presence: false });
+  s.join(CHAT_WORLD_ROOM, null); sockets[0].open();
+  const c = { s, sockets, rws: null, fed: 0, id, sub: `acct-${id}` };
+  c.attach = (rws) => { c.rws = rws; c.fed = 0; };
+  c.pump = () => { const ws = sockets[sockets.length - 1]; if (!c.rws) return; while (c.fed < c.rws.sent.length) ws.receive(c.rws.sent[c.fed++]); };
+  c.total = () => rosterRows(s).total;
+  return c;
+}
+
+/** AUDIT SCALE5a (lens C's story, in the suite): the real hub past CHAT_ROSTER_MAX and three real channel links whose
+ *  welcome it cut, then seeded doors - fresh joins, clean leaves, reconnects that replace and that come back after a drop,
+ *  claims from another device (the links' own players' too), a socket whose send fails and whose id comes back, a joiner
+ *  whose welcome fails - and, `lingering`, a runtime that keeps a socket the object closed listed until later (AUDIT
+ *  ONESEAT R4). Answers every link's worst drift from the room's own count over the story. */
+async function countStory(seed, ops, lingering) {
+  return onClock(async ({ tick, now }) => {
+    const rnd = roll(seed), pick = (a) => a[Math.floor(rnd() * a.length)];
+    const r = fakeRoom(CHAT_WORLD_ROOM);
+    const pending = new Set();
+    const connect = () => { const ws = r.connect(); if (lingering) ws.close = function (code, reason) { this.closed = { code, reason }; pending.add(this); }; return ws; };
+    const settle = () => { for (const ws of pending) { const i = r.sockets.indexOf(ws); if (i >= 0) r.sockets.splice(i, 1); } pending.clear(); };
+    const live = new Map();
+    let next = 0;
+    const fresh = () => `c${String(next++).padStart(5, '0')}`;
+    const welcomed = (ws) => ws.sent.some((f) => f.t === 'welcome');
+    const join = async (id, sub, extra = {}) => { const ws = connect(); tick(25); await r.hello(ws, id, null, { tokenSub: sub, ...extra }); return ws; };
+    for (let i = 0; i < CHAT_ROSTER_MAX + 6; i++) { const id = fresh(); if (i % 40 === 39) tick(1000); live.set(id, { ws: await join(id, `acct-${id}`, { cl: 1 }), sub: `acct-${id}` }); }
+    tick(1000);
+    const obs = [];
+    for (let k = 0; k < 3; k++) { const c = observer(`obs-${k}`, now); const ws = connect(); c.attach(ws); tick(25); await r.hello(ws, c.id, null, { tokenSub: c.sub, cl: 1 }); c.pump(); obs.push(c); }
+    let worst = 0;
+    for (let n = 0; n < ops; n++) {
+      const u = rnd(), ids = [...live.keys()];
+      if (u < 0.16) { const id = fresh(); const ws = await join(id, `acct-${id}`, { cl: 1 }); if (welcomed(ws)) live.set(id, { ws, sub: `acct-${id}` }); }
+      else if (u < 0.32) { const id = pick(ids), e = live.get(id); live.delete(id); tick(25); await r.drop(e.ws); }
+      else if (u < 0.44) { const id = pick(ids), e = live.get(id); const ws = await join(id, e.sub); if (welcomed(ws)) e.ws = ws; else live.delete(id); }
+      else if (u < 0.52) { const id = pick(ids), e = live.get(id); tick(25); await r.drop(e.ws); tick(1500); const ws = await join(id, e.sub); if (welcomed(ws)) e.ws = ws; else live.delete(id); }
+      else if (u < 0.62) { const id = pick(ids), e = live.get(id); const id2 = fresh(); const ws = await join(id2, e.sub, { cl: 1 }); live.delete(id); if (welcomed(ws)) live.set(id2, { ws, sub: e.sub }); }   // C1: a claim closes the other device's tab
+      else if (u < 0.70) { const id = pick(ids), e = live.get(id); e.ws.send = () => { throw new Error('gone'); }; const f = fresh(); const w0 = await join(f, `acct-${f}`, { cl: 1 }); if (welcomed(w0)) live.set(f, { ws: w0, sub: `acct-${f}` }); tick(1500); const ws = await join(id, e.sub); if (welcomed(ws)) e.ws = ws; else live.delete(id); }   // C3: its leave said, then its id back
+      else if (u < 0.76) { const id = fresh(); const ws = connect(); ws.send = () => { throw new Error('gone'); }; tick(25); await r.hello(ws, id, null, { tokenSub: `acct-${id}`, cl: 1 }); }   // C2: a joiner whose welcome fails
+      else if (u < 0.82) {   // a link's player claims from another device: a new link, the old one superseded
+        const k = Math.floor(rnd() * obs.length), old = obs[k];
+        const c = observer(`${old.id.split('-n')[0]}-n${n}`, now); c.sub = old.sub;
+        const ws = connect(); c.attach(ws); tick(25); await r.hello(ws, c.id, null, { tokenSub: c.sub, cl: 1 }); obs[k] = c;
+      } else if (u < 0.88) { tick(15000); for (const c of obs) c.s.tick(); }
+      else { tick(1200); settle(); }
+      for (const c of obs) { c.pump(); c.s.tick(); }
+      if (lingering && rnd() < 0.3) settle();
+      const t = trueCount(r.room);
+      for (const c of obs) worst = Math.max(worst, Math.abs(c.total() - t));
+    }
+    return { worst, total: trueCount(r.room) };
+  });
+}
+
+test('AUDIT SCALE5a C1-C3: past the roster\'s cut the World tab holds the ROOM\'S OWN COUNT - a channel\'s join and leave say it (`n`), so a claim\'s closed tab (C1), a joiner whose welcome failed (C2) and a reconnect after its old socket\'s leave (C3) move nothing; seeded stories of real channel links over the real hub, with and without a runtime that keeps a closed socket listed (mutants: `n` off the join; off the leave; counted with the dead; the client\'s count by arithmetic)', async () => {
+  for (const [seed, lingering] of [[1, false], [2, true]]) {
+    const { worst, total } = await countStory(seed, 220, lingering);
+    assert.ok(total > CHAT_ROSTER_MAX, `the welcome was cut (${total} in the room)`);
+    assert.equal(worst, 0, `seed ${seed}${lingering ? ', closes lingering' : ''}: every link's count is the room's after every door`);
+  }
+});
+
+test('AUDIT SCALE5a C1-C3: EACH channel leave says the count the room can name - two sockets that die in one fan are both closed before either\'s leave is said, and neither leave counts the other (mutant: the count with the dead)', async () => {
   await onClock(async ({ tick }) => {
-    const r = fakeRoom(SOCIAL_ROOM);
-    const a = r.connect(); tick(25); await r.hello(a, 'peer-0001', null, { tokenSub: 'player-1', cl: 1 });
-    const b = r.connect(); tick(25); await r.hello(b, 'peer-0002', null, { tokenSub: 'player-2', cl: 1 });
-    const fresh = a.sent.find((f) => f.t === 'join' && f.id === 'peer-0002');
-    assert.ok(fresh && !('re' in fresh), 'a fresh join: no `re`');
-    const b2 = r.connect(); tick(25); await r.hello(b2, 'peer-0002', null, { tokenSub: 'player-2', cl: 1 });
-    const again = a.sent.filter((f) => f.t === 'join' && f.id === 'peer-0002');
-    assert.equal(again.length, 2);
-    assert.equal(again[1].re, 1, 'the reconnect\'s join says `re`');
-    assert.equal(a.sent.some((f) => f.t === 'leave' && f.id === 'peer-0002'), false, 'and no leave was said for the socket it replaced');
+    const r = fakeRoom(CHAT_WORLD_ROOM);
+    const socks = [];
+    for (let i = 0; i < 6; i++) { const ws = r.connect(); tick(25); await r.hello(ws, `peer-${String(i).padStart(4, '0')}`, null, { tokenSub: `player-${i}`, cl: 1 }); socks.push(ws); }
+    for (const k of [2, 4]) {
+      socks[k].send = () => { throw new Error('gone'); };
+      socks[k].close = function (code, reason) { this.closed = { code, reason }; };   // listed until its close completes (AUDIT ONESEAT R4) - in the index, id and all, while the other's leave is said
+    }
+    socks[0].sent.length = 0;
+    const j = r.connect(); tick(25); await r.hello(j, 'peer-0100', null, { tokenSub: 'player-100', cl: 1 });   // its join's fan finds both dead
+    const leaves = socks[0].sent.filter((f) => f.t === 'leave');
+    assert.deepEqual(leaves.map((f) => f.id).sort(), ['peer-0002', 'peer-0004'], 'both leaves said at the reap');
+    assert.deepEqual(leaves.map((f) => f.n), [5, 5], 'each says the five the room can name - never the other dead one');
+    assert.equal(trueCount(r.room), 5);
   });
 });
+
+test('AUDIT SCALE5a (lens C, pre-existing): a room let go takes its count with it - a World tab superseded by another device\'s claim said "Online - 600" over an empty list (mutant: the count kept past the room)', () => quiet(() => {
+  const { FakeWS, sockets } = fakeSocketClass();
+  const s = new OnlineSession({ url: 'wss://relay.test', name: 'Mac', id: 'mac-0001', secret: 'secret-of-mac-0001', WebSocketImpl: FakeWS, now: () => 1e6, presence: false });
+  s.join(CHAT_WORLD_ROOM, null); sockets[0].open();
+  sockets[0].receive({ t: 'welcome', id: 'mac-0001', peers: [{ id: 'aaaa-0001', name: 'Alpha' }], n: 600, v: 'world189' });
+  assert.equal(rosterRows(s).total, 600, 'the cut welcome\'s count');
+  sockets[0].drop(4000, 'online in another tab, window or device');
+  assert.equal(s.roomCount, null, 'superseded: the count goes with the room');
+  assert.equal(rosterRows(s).total, rosterRows(s).rows.length, 'and the tab counts what it lists');
+}));
 
 // ═══ THE BUSY REFUSAL THAT MINTS NOTHING ═══════════════════════════════════════════════════════════════════════════════
 
@@ -292,6 +382,21 @@ test('SCALE5a the session hands its hello\'s token back when the close says it w
   };
   assert.deepEqual(await run(BUSY_TOKEN_UNREAD), [['opened', 'chat:world', 'TOKEN-A'], ['unopened', 'chat:world', 'TOKEN-A']], 'unread: handed back');
   assert.deepEqual(await run('busy'), [['opened', 'chat:world', 'TOKEN-A']], 'busy alone (a gate after the token, or a relay before this): kept spent');
+});
+
+test('AUDIT SCALE5a D4: a HALO hands its hello\'s token back on the same word - the halo\'s own room, its own token (mutant: the halo\'s close hands nothing back)', async () => {
+  const { FakeWS, sockets } = fakeSocketClass();
+  const log = [];
+  const mintToken = Object.assign(async (room) => `TOKEN-${room}`, { opened: (r, t) => log.push(['opened', r, t]), unopened: (r, t) => log.push(['unopened', r, t]), coolMs: () => 0, lastWhy: null });
+  const s = new OnlineSession({ url: 'wss://relay.test', name: 'Mac', id: 'mac-0001', secret: 'secret-of-mac-0001', WebSocketImpl: FakeWS, now: () => 1e6, mintToken });
+  await quiet(async () => {
+    s.join('world:2,12', { x: 0, y: 0, z: 0, yaw: 0, pitch: 0 });
+    s.setHalo(['world:3,12']);
+    sockets[1].open();
+    for (let i = 0; i < 10; i++) await Promise.resolve();
+    sockets[1].drop(CLOSE_BUSY, BUSY_TOKEN_UNREAD);
+  });
+  assert.deepEqual(log.filter((e) => e[1] === 'world:3,12'), [['opened', 'world:3,12', 'TOKEN-world:3,12'], ['unopened', 'world:3,12', 'TOKEN-world:3,12']], 'the halo\'s token, handed back for the halo\'s room');
 });
 
 // ═══ THE SERPENT'S RECEIPT, ASKED ONCE ═════════════════════════════════════════════════════════════════════════════════

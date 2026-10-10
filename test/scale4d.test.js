@@ -16,6 +16,7 @@ import { REPLICA_ROUTES, REPLICA_CONSTRAINT, replicaDb, DB_ROOT } from '../serve
 import { countedDb } from '../server-account/src/metrics.js';
 import { budgetConfig, forgetBudgetConfig } from '../server-account/src/budget.js';
 import { verifyToken } from '../src/net/identityToken.js';
+import { readFileSync } from 'node:fs';
 
 const { subtle } = globalThis.crypto;
 const realNow = Date.now;
@@ -44,7 +45,7 @@ async function stood(extra = {}) {
   return { S, who, R };
 }
 
-test('SCALE4d the mint runs on ONE D1 session opened first-primary - its first statement the session lookup, every statement of the request through it and none on the binding (mutants: the route set emptied; the route left on the binding; the constraint first-unconstrained)', async () => {
+test('SCALE4d the mint runs on ONE D1 session opened first-primary - its first statement the session lookup, every claim read through it; AUDIT SCALE4d A1: the honours (a #1 counted again and STORED) on the binding (mutants: the route set emptied; the route left on the binding; the constraint first-unconstrained; the honours on the session)', async () => {
   assert.deepEqual([...REPLICA_ROUTES], ['/v1/auth/token'], 'the token alone');
   assert.equal(REPLICA_CONSTRAINT, 'first-primary');
   const { S, who, R } = await stood();
@@ -59,17 +60,28 @@ test('SCALE4d the mint runs on ONE D1 session opened first-primary - its first s
   assert.equal(s.constraint, 'first-primary', 'its first statement the primary\'s');
   assert.match(s.statements[0], /FROM sessions s LEFT JOIN players p/, 'and that first statement is the session lookup');
   assert.ok(s.statements.length >= 8, `a realm character's mint - the session, its arena, Renown, guild, three realm rows, rating and house - rides it (${s.statements.length})`);
-  assert.deepEqual(asked, [], 'nothing of the mint on the binding');
+  // AUDIT SCALE4d A1: the arena's and Iliac Hand's honours - the one read-then-write a mint makes (a stale #1 counted
+  // again and stored) - on the binding, and nothing else of the mint
+  // (the board a #1 is counted over reads arena_pvp, as the token's own rating read does - that one is a claim read, and
+  // rides the session; the honours' own tables are the Grand Champion's, the kept #1s and Iliac Hand's)
+  const honours = /arena_pve|arena_champions|iliac_/, onBinding = /arena_pve|arena_champions|arena_pvp|iliac_/;
+  assert.ok(asked.some((q) => honours.test(q)), 'the honours read on the binding');
+  assert.deepEqual(asked.filter((q) => !onBinding.test(q)), [], 'nothing but the honours on the binding');
+  assert.deepEqual(s.statements.filter((q) => honours.test(q)), [], 'and none of them on the session');
 });
 
 test('SCALE4d every other route stays on the binding - no session opened (mutant: every route on a session)', async () => {
   const { S, who, R } = await stood();
   const raw = S.env.DB;
   raw._sessions.length = 0;
-  for (const [path, body] of [['/v1/account/played', {}], ['/v1/heartbeat', { parts: { box: {} } }], ['/v1/realm/list', {}], ['/v1/renown/state', { character: R.id }]]) {
+  // AUDIT SCALE4d D3: real routes, each answered 200 (two of these four were routes the service never served - a 404 opens
+  // no session either, so they proved nothing)
+  for (const [path, body] of [['/v1/account/played', {}], ['/v1/heartbeat', { parts: { box: {} } }], ['/v1/renown/xp', { character: R.id, xp: 1 }]]) {
     const r = await S.call(path, body, who.secret);
-    assert.ok(r.status < 500, `${path} answered (${r.status})`);
+    assert.equal(r.status, 200, `${path} answered (${JSON.stringify(r.body)})`);
   }
+  const list = await S.fetch('https://accounts.invalid/v1/realm', { method: 'GET', headers: { authorization: `Bearer ${who.secret}` } });
+  assert.equal(list.status, 200, 'the realm\'s list answered');
   assert.equal(raw._sessions.length, 0, 'no session for any of them');
 });
 
@@ -91,12 +103,15 @@ test('SCALE4d a mint on a session is still a mint\'s statements on its metrics p
   const points = [];
   const { S, who, R } = await stood({ METRICS: { writeDataPoint: (p) => points.push(p) } });
   const raw = S.env.DB;
+  const { db, asked } = direct(raw);
+  S.env.DB = db;
   raw._sessions.length = 0;
   points.length = 0;
   assert.equal((await S.call('/v1/auth/token', { character: R.id, guild: true }, who.secret)).status, 200);
   const p = points.find((x) => x.indexes[0] === '/v1/auth/token');
   assert.ok(p, 'the mint wrote its point');
-  assert.equal(p.doubles[2], raw._sessions[0].statements.length, 'every statement the session ran, counted');
+  assert.ok(raw._sessions[0].statements.length >= 8);
+  assert.equal(p.doubles[2], raw._sessions[0].statements.length + asked.length, 'every statement the session ran, counted - beside the honours\' on the binding (AUDIT SCALE4d A1)');
   assert.ok(p.doubles[2] >= 8, `a realm character's mint (${p.doubles[2]})`);
 });
 
@@ -126,4 +141,21 @@ test('SCALE4d the wealth budget\'s config is kept by the binding, never by the P
   forgetBudgetConfig(countedDb(raw, { n: 0 }));
   await budgetConfig(countedDb(raw, t3));
   assert.equal(t3.n, 1, 'a staff change forgets it for every request');
+});
+
+test('AUDIT SCALE4d D5: the deploy turns the database\'s read replication ON - after the migrations, before the Worker; a PUT of mode auto to the database the deploy resolved, with the deploy\'s own token; a refusal a warning, never a stop (mutants: the mode disabled; the step a GET)', () => {
+  const wf = readFileSync(new URL('../.github/workflows/account-deploy.yml', import.meta.url), 'utf8');
+  const names = [...wf.matchAll(/^      - name: (.+)$/gm)].map((m) => m[1]);
+  const at = (re) => names.findIndex((n) => re.test(n));
+  const step = at(/^Turn on the database's read replicas$/);
+  assert.ok(step > at(/^Apply migrations$/) && at(/^Apply migrations$/) >= 0, 'after the migrations');
+  assert.ok(step < at(/^Deploy/), 'and before the Worker that reads through it');
+  const body = wf.split(/\n      - name: /).find((x) => x.startsWith("Turn on the database's read replicas"));
+  const live = body.split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
+  assert.match(live, /-X PUT \\\n\s*"https:\/\/api\.cloudflare\.com\/client\/v4\/accounts\/\$acct\/d1\/database\/\$\{\{ steps\.d1\.outputs\.id \}\}"/, 'a PUT to the database the deploy resolved');
+  assert.match(live, /-d '\{"read_replication":\{"mode":"auto"\}\}'/, 'mode auto');
+  assert.match(live, /Authorization: Bearer \$CLOUDFLARE_API_TOKEN/);
+  assert.match(live, /set -uo pipefail/, 'no -e: a refusal cannot stop the deploy');
+  assert.match(live, /::warning::/);
+  assert.equal(/\bexit [1-9]/.test(live), false, 'and nothing in it stops one');
 });

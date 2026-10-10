@@ -331,12 +331,12 @@
   {
     "name": "S37-picture-before-the-welcome",
     "file": "server/src/index.js",
-    "old": "        const said = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name, sub: who.subject, ...(replaced ? { re: 1 } : {}) }, who));",
-    "new": "        const said = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name, sub: who.subject, ...(replaced ? { re: 1 } : {}) }, who));\n        if (isSocialRoom(a.key) && m.acct) { try { await this._helloAccount(ws, m, now); } catch (e) { console.warn('[hub] account hello failed', e?.message ?? e); } }",
+    "old": "        const said = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name, sub: who.subject, n: others.length + 1 }, who));",
+    "new": "        const said = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name, sub: who.subject, n: others.length + 1 }, who));\n        if (isSocialRoom(a.key) && m.acct) { try { await this._helloAccount(ws, m, now); } catch (e) { console.warn('[hub] account hello failed', e?.message ?? e); } }",
     "tests": [
       "test/soc1_hub.test.js"
     ],
-    "note": "SCALE5a (re-aimed by content): the join says `re` for a reconnect."
+    "note": "AUDIT SCALE5a (re-aimed by content): the join says the room's count. SCALE5a (re-aimed by content): the join says `re` for a reconnect."
   },
   {
     "name": "S38-version-not-bumped",
