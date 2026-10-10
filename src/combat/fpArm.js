@@ -46,7 +46,7 @@ import { seatRequestFor } from '../player/seatPose.js';   // CARDS2b: the seat i
 import { fieldOfView } from '../ui/viewSettings.js';   // CLIMB6: the world lens the arm's hands are matched to
 import { MW_ARM_PIXEL, CHAR_SPRITE_RT_SIZE } from '../render/renderer.js';
 import {
-  sampleTrack, resetClip, advanceClip, getTextKeyTime,
+  sampleTrack, resetClip, advanceClip, getTextKeyTime, getStartTime,
 } from '../formats/mwAnim.js';
 import { accumRootRef, buildSkeleton } from '../formats/mwSkin.js';
 import { nodeTransformOf } from '../formats/mwCharacter.js';
@@ -69,6 +69,7 @@ import {
   jumpAnimState,
   sourcesKeyTime, sourceVelocityOf,
   magicEffectRecords, vfxStaticRecords,   // MW-SPELLFX1: the magic effects and the statics their visuals are
+  posePartClocks, WEAPON_CLASS, MW_WEAPON_CLASS,   // MW-BOW1: the weapon's own clock
 } from '../formats/mwFirstPerson.js';
 import { PART_BONES, dfRaceKeyOf } from '../formats/mwNpc.js';
 import { portraitFeatures, headFeatures, hairFeatures, matchFace, FACE_MATCH_VERSION } from '../formats/mwFaceMatch.js';
@@ -1684,10 +1685,15 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
               const skelBone = arrowAttachBone(mwType);
               const onActor = skelBone && skeletonHasBone(skeletonBytes, skelBone);
               let pre = null;
+              let preClip = null;
               let arrowBone = skelBone;
               if (!onActor) {
-                pre = nodeTransformOf(parseNifOnce(weaponBytes), ARROW_FALLBACK_NODE);
+                const weaponNif = parseNifOnce(weaponBytes);
+                pre = nodeTransformOf(weaponNif, ARROW_FALLBACK_NODE);
                 arrowBone = pre ? bone : null;
+                // MW-BOW1: and the node MOVES - the bow's own clock carries the ArrowBone from the quiver to the
+                // string and back (formats/mwPartClock.js). `pre` is its rest; the clock poses it each frame.
+                if (pre) preClip = { nif: weaponNif, node: ARROW_FALLBACK_NODE };
               }
               if (!arrowBone) {
                 notes.push(`arrow: neither this skeleton's "${skelBone}" bone nor an `
@@ -1697,7 +1703,7 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
                   // MW-D34: `ammo` marks the one part attachArrow
                   // instances BARE - no BoneOffset of its own
                   // (weaponanimation.cpp:87-93, getInstance direct).
-                  slot: 'arrow', bones: [arrowBone], bytes: ammoArc.get(ammoPath).slice(), preTransform: pre,
+                  slot: 'arrow', bones: [arrowBone], bytes: ammoArc.get(ammoPath).slice(), preTransform: pre, preClip,
                   ammo: true,
                 });
                 arrowInfo = {
@@ -3014,6 +3020,23 @@ export function createFpArm() {
   // `hitAt` and `seconds` from its first frame), how far into it the arm is (`clock`), and the playing section's
   // `rate`. Null while the arm keeps the record's own pace (a bow, a peer with no schedule, a viewer).
   let blowPlan = null;
+  // MW-BOW1: THE WEAPON CLOCK - WeaponAnimationTime (weaponanimation.cpp): the weapon group's playhead, from the
+  // group's first key for a ranged weapon ("controllers for ranged weapon should use time for beginning of animation
+  // to play shooting properly", character.cpp setWeaponGroup), the file's own time for the rest. The group's state
+  // outlives its section (the reference plays equip and attacks with autodisable false), so the clock HOLDS where the
+  // last section left it; a group with no state yet reads 0. `partClock` is frame time, an AutoPlay node's.
+  let weaponClock = { group: null, value: 0 };
+  let partClock = 0;
+  const WEAPON_SECTIONS = new Set([UPPER_BODY.Equipping, UPPER_BODY.Unequipping, UPPER_BODY.AttackWindUp, UPPER_BODY.AttackRelease, UPPER_BODY.AttackEnd]);
+  /** MW-BOW1: the weapon group's playhead, noted while one of its sections plays (a cast's is the spell's group). */
+  function noteWeaponClock() {
+    if (!actionState || !weaponGroup || !built || !built.ok || !WEAPON_SECTIONS.has(upper)) return;
+    const ranged = WEAPON_CLASS[built.mwType] === MW_WEAPON_CLASS.Ranged;
+    const start = ranged ? getStartTime((actionSource || rig()).keys, weaponGroup) : 0;
+    weaponClock = { group: weaponGroup, value: poseTime(actionState) - start };
+  }
+  /** MW-BOW1: WeaponAnimationTime::getValue - the noted playhead while its group is still the weapon's, else 0. */
+  const weaponClockValue = () => (weaponClock.group && weaponClock.group === weaponGroup ? weaponClock.value : 0);
   // mAimingFactor (npcanimation.cpp:712-719). It is STATE, not a
   // per-frame function: it snaps to 1 while aiming and ramps back down
   // at 0.5 a second, so it has to survive between frames.
@@ -4037,7 +4060,7 @@ export function createFpArm() {
         wornEquipKey = wornEquipKeyOf(opts && opts.armor);
         lastBuildOpts = opts ? { ...opts } : null;
         buildDeps = (opts && opts.deps) || null;
-        idleState = null; actionState = null; idleGroup = null; weaponGroup = null;
+        idleState = null; actionState = null; idleGroup = null; weaponGroup = null; weaponClock = { group: null, value: 0 };   // MW-BOW1: no group, no state
         movementState = null; movementGroup = null; movementSource = null; movementBase = null;
         jumpState = null; jumpGroup = null; jumpSource = null; jumpStance = null; jumpKind = null;   // MW-D39
         lastYaw = null; turnDir = 0; turnHold = 0;
@@ -4098,7 +4121,7 @@ export function createFpArm() {
       movementState = null; movementGroup = null; movementSource = null; movementBase = null;
       jumpState = null; jumpGroup = null; jumpSource = null; jumpStance = null; jumpKind = null;   // MW-D39
       lastYaw = null; turnDir = 0; turnHold = 0;
-      idleState = null; actionState = null; idleGroup = null; weaponGroup = null;
+      idleState = null; actionState = null; idleGroup = null; weaponGroup = null; weaponClock = { group: null, value: 0 };   // MW-BOW1: no group, no state
       upper = UPPER_BODY.None; attackType = null; holdWindUp = false;
       weaponShown = false; arrowShown = false;
       notes.length = 0; aimFactor = 0; sneaking = false;
@@ -4516,6 +4539,9 @@ export function createFpArm() {
       // not in the equip section, and why reloadCrossbow stays the
       // only other way in.
       if (type === MW_SHOOT_ATTACK && built.arrow) arrowShown = true;
+      // BOW-CLOCK: and a release this draw has not reached is not this draw's. A shot the rig let go on its ceiling
+      // leaves its own release key to land later, unasked - and the next draw's arrow took it and left at the click.
+      if (type === MW_SHOOT_ATTACK) shootReleased = false;
       if (!playAction(k.windUp.start, k.windUp.stop, 0, attackReversed)) {
         upper = UPPER_BODY.WeaponEquipped;
         attackType = null;
@@ -4869,6 +4895,15 @@ export function createFpArm() {
       return true;
     },
 
+    /** BOW-CLOCK: the hands cannot begin a draw yet - the weapon still coming up, or the last shot still drawn or
+     *  loosed ("shoot start" through "shoot release"; attack() takes only an idle or following-through arm). The rig
+     *  starts no shot while it answers true, so one click is one draw and one arrow. Every state it names ends as its
+     *  section plays out: a rig that waits on it waits for the arm, never for ever. */
+    shotBusy() {
+      if (!built || !built.ok) return false;
+      return upper === UPPER_BODY.Equipping || upper === UPPER_BODY.AttackWindUp || upper === UPPER_BODY.AttackRelease;
+    },
+
     release() {
       if (upper !== UPPER_BODY.AttackWindUp) return false;
       holdWindUp = false;
@@ -4896,6 +4931,7 @@ export function createFpArm() {
      *  camera node every frame). */
     update(dt, { pose = true, effectsDt = dt } = {}) {
       if (!built || !built.ok || !renderer) return;
+      partClock += dt;   // MW-BOW1: frame time, an AutoPlay node's clock
       const cam = camera && camera();
       sneaking = !!(cam && cam.sneaking);
       // CLIMB6: the climb's limbs, every frame (a frame that does not pose still walks the gait: a peer's travel)
@@ -4928,6 +4964,7 @@ export function createFpArm() {
         // CAST-SPEED: a cast plays at its own rate, where OpenMW plays the spellcast group at 1
         const speed = paced ? blowPlan.rate : upper === UPPER_BODY.Casting ? castRate : weapSpeed;
         advanceClip(actionState, (actionSource || rig()).keys, dt * speed, onActionKey);
+        noteWeaponClock();   // MW-BOW1: before stepUpper ends the section - the group's state keeps its last time
         stepUpper();
       }
       // MW-D39: jump refreshes BEFORE movement, the reference's own
@@ -4989,6 +5026,7 @@ export function createFpArm() {
         // skin, upload and bounds; the clips above advanced all the
         // same, so the next posing frame lands where the clock is.
         if (pose) {
+          posePartClocks(t.arm, weaponClockValue(), { frameTime: partClock });   // MW-BOW1: the bow draws, the arrow with it
           poseAssembly(t.arm, {
             tracks: tOverlay ? overlayFor(tBase, t.leftArm) : tBase,
             sampleTrack: tOverlay ? overlaySample : sampleTrack,
@@ -5042,6 +5080,7 @@ export function createFpArm() {
         const hm = heldTracksFor(fTracks, fSampler);
         fTracks = hm.tracks; fSampler = hm.sampler;
       }
+      posePartClocks(built.arm, weaponClockValue(), { frameTime: partClock });   // MW-BOW1: the bow draws, the arrow with it
       poseAssembly(built.arm, {
         tracks: fTracks,
         sampleTrack: fSampler,
@@ -5659,6 +5698,7 @@ export function createFpArm() {
         weaponGroup,
         upper,
         upperName: UPPER_BODY_NAME[upper],
+        weaponClock: weaponClockValue(),   // MW-BOW1: the time the weapon's own controllers read
         aimFactor,
         attackType,
         attackReversed: reversedNow(),   // MS1: the backhand in flight

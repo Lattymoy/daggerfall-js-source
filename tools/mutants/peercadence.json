@@ -74,8 +74,8 @@
   {
     "name": "PEERCADENCE-the-rig-poses-whatever-the-flag",
     "file": "src/combat/fpArm.js",
-    "old": "        if (pose) {\n          poseAssembly(t.arm, {",
-    "new": "        if (true) {\n          poseAssembly(t.arm, {",
+    "old": "        if (pose) {\n          posePartClocks(t.arm, weaponClockValue(), { frameTime: partClock });",
+    "new": "        if (true) {\n          posePartClocks(t.arm, weaponClockValue(), { frameTime: partClock });",
     "tests": [
       "test/peercadence.test.js"
     ]
