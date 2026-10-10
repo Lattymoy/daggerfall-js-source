@@ -48,7 +48,7 @@
 import {
   WAGON_MODE, HORSE_MODE, INTERIOR_ACCESS, LAST_MOUNT, STORAGE_CONTEXT, HORSE_ACTIVATION, TRANSPORT, ACTIVATE_MODE, MATHF_EPSILON,
   V_FORWARD, V_ZERO, vadd, vsub, vscale, vsqr, vnorm, vdot, vlerp, horizontalForward, horizontalRight, horizontalDistance, isWithinHorizontalDistance,
-  sceneToWorld, worldToScene, applyLocalOffsetToWorld, newSaveData, copySaveData, normalizeSaveData, normalizeHorseName, resolveHorseNameInput,
+  sceneToWorld, worldToScene, applyLocalOffsetToWorld, castWorldCoordinate, newSaveData, copySaveData, normalizeSaveData, normalizeHorseName, resolveHorseNameInput,
   reconcileHorseNameOwnership, resolvePersistenceDisabledState, resolvePersistenceEnabledState, isWagonInventoryAccessible, isDungeonExitWagonAccessAllowed,
   interiorAccessRequiresMapPixelMatch, isUsableDungeonEntranceDoorPosition, isHitchedTeamFollowing, isAutonomousHorseFollowing, isDirectHitchedTeamMount,
   isPhysicalTeamWithinMountDistances, isPhysicalTransportStateValid, canRefreshDirectCartTransport, resolveQuickMountMode, resolveHorseActivation,
@@ -61,7 +61,8 @@ import {
   GROUND_RETRY_SECONDS, POSE_POSITION_TOLERANCE_SQ, POSE_ANGLE_TOLERANCE_DEG, signedLongitudinalTravel, wheelRotationDegrees, wrapWheelAngle, cargoTier,
   stepHorseWalk, freshHorseWalk, hccActionRows,   // ACT-MENU: the plaque's rows over my three activators
 } from './horseCartLaw.js';
-import { HorseFollowController, WagonHitch, hitchedPoseStep, hitchJumpReach, tryFindGround } from './horseFollow.js';   // WAGON-HITCH: the moving wagon on its shafts (the IL's WagonTrail / groundedPoseStep stay in horseFollow.js as the record)
+import { HorseFollowController, WagonHitch, hitchedPoseStep, hitchJumpReach, tryFindGround } from './horseFollow.js';
+import { thrownTo } from './wagonWarden.js';   // WARDEN1: where a thrown wagon's save goes   // WAGON-HITCH: the moving wagon on its shafts (the IL's WagonTrail / groundedPoseStep stay in horseFollow.js as the record)
 import { yawed } from './horseFollow.js';   // WAGONS2: the bogie's turn
 import { quatLookRotation, quatForward, quatFromBasis, quatRotate, UNITY_QUAT_IDENTITY } from '../world/quat.js';
 
@@ -901,6 +902,27 @@ export function createHorseCartRuntime(deps) {
     changed();
     return { ok: true, text: hasCart && hasHorse ? HCC_TEXT.sentBoth : hasCart ? HCC_TEXT.sentWagon : HCC_TEXT.sentHorse };
   }
+  /**
+   * WARDEN1 (systems/wagonWarden.js - the port's own, no IL twin): THE TOWN WATCH THREW MY PARKED WAGON from `from` to `to`
+   * ([x, z] natives - net/wire.js validParkYeet, or the offline watch's own). The wagon moves by the throw, turned as it
+   * stood, its horse kept in its shafts; a horse left standing beside it is thrown with it, by the same move. Only while
+   * the save still parks the wagon where it was thrown from (thrownTo - a wagon since driven off, summoned or sent away is
+   * not the one thrown) and the persistence keeps it in the world. Both stand again at the landing (their presentations
+   * dropped, the next frame grounds them there). Answers whether it moved.
+   */
+  function adoptYeet(from, to) {
+    if (!physicalPersistenceEnabled || wagonState.Mode !== WAGON_MODE.Deployed) return false;
+    const at = thrownTo([wagonState.WorldX, wagonState.WorldZ], from, to);
+    if (!at) return false;
+    const dx = at[0] - wagonState.WorldX, dz = at[1] - wagonState.WorldZ;
+    const hm = wagonState.HorseMode, loose = hm === HORSE_MODE.LooseStationary;
+    const hx = wagonState.HorseWorldX + dx, hz = wagonState.HorseWorldZ + dz, hh = savedHorseHeading();
+    commitDeployment(castWorldCoordinate(at[0]), castWorldCoordinate(at[1]), savedHeading(), hm);
+    if (loose) setHorseLoose(castWorldCoordinate(hx), castWorldCoordinate(hz), hh);
+    destroyAllStationaryPresentations();
+    changed();
+    return true;
+  }
   /** HOLDINGS: the horse renamed from the Stable page - the name prompt's own law (resolveHorseNameInput: an empty or
    *  unprintable name keeps the old one). Answers the name it has now, or null with no horse. */
   function renameHorse(input) {
@@ -1495,6 +1517,7 @@ export function createHorseCartRuntime(deps) {
     handleHorseTransportButton: () => { tryUseTransport(TRANSPORT.Horse); }, handleCartTransportButton: () => { tryUseTransport(TRANSPORT.Cart); },
     handleQuickMountOrDismount, handleSummonTransport,
     summonTransport, sendTransportAway, renameHorse, stableView,   // HOLDINGS: the Stable page's four
+    adoptYeet,   // WARDEN1: the town watch threw my parked wagon
     canAccessWagonStorage, canAccessWagonInventory, canAccessWagonFromDungeonExit, consumeWagonSelectionRequest,
     handleDeployedWagonActivation, handleFollowingWagonActivation, handleStationaryHorseActivation, openHorseNamePrompt, actionRows,
     ownsStationaryHorseActivator,

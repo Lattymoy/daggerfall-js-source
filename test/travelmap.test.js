@@ -325,7 +325,9 @@ test('U41: the world host mounts the art window and keeps performFastTravel\'s o
   // 10563 on main, 10533 on the arc's branch, 10685 merged)
   // PIN MOVED (AUDIT ENVIRONS I2), 10800 -> 11600: the snow, the wind and the haze ride `state.initOffset` beside the
   // boats, with their note, above the last needle (it stands at 11306)
-  const core = src.slice(k, k + 11600);
+  // PIN MOVED (WARDEN1), 11600 -> 11800: the re-anchor's teardown ends a town watch's throw in flight too
+  // (`wardenShows?.destroyAll()`), one line above the same needles.
+  const core = src.slice(k, k + 11800);
   for (const needle of ['destroyPixel(bx, by)', 'state.init(px, py)', 'awaitedBuild(first.px']) {
     assert.ok(core.includes(needle), `the core carries ${needle}`);
   }

@@ -376,7 +376,7 @@ test('HCC-PARK / RIDE hosts: the owner\'s word names the character, is ticked wi
   assert.match(w, /const data = word \? \{ c, \.\.\.word \} : \{ c \};/);
   assert.match(w, /const rejoin = online\.room !== _parkRoom \|\| online\.welcomes !== _parkWelcomes;/);
   assert.match(w, /const via = online\.sendPark\(data, cell\);/);
-  assert.match(w, /online\.onPark = \(room, e\) => hcc\.applyKept\(room, e, campToScene, performance\.now\(\)\);/);
+  assert.match(w, /online\.onPark = \(room, e\) => \{ wagonWarden\?\.keptWord\(room, e\); hcc\.applyKept\(room, e, campToScene, performance\.now\(\)\); \};/);   // PIN MOVED (WARDEN1): a throw it had not said is played before the pool takes the word
   assert.match(w, /online\.onParks = \(room, list\) => hcc\.replaceKept\(room, list, campToScene, performance\.now\(\)\);/);
   assert.match(w, /hcc\.pruneKept\(isCellRoom\(online\.room\) \? \[online\.room, \.\.\.online\.haloRooms\(\)\] : \[\], now\);/);
   assert.match(w, /peerRiders\.sync\(seen, onlineToScene,[^\n]*\n\s+const afoot = seen\.filter\(\(d\) => !peerRiders\.isRiding\(d\.id\)[^;]*\);[^\n]*\n\s+peerBodies\.sync\(afoot,/);
@@ -391,5 +391,5 @@ test('HCC-PARK / RIDE hosts: the owner\'s word names the character, is ticked wi
   const s = rd('server/src/index.js');
   assert.match(s, /if \(path === PARK_INTERNAL_REG \|\| path === PARK_INTERNAL_DROP\) return this\._parkInternal\(path, request\);/);
   assert.match(s, /const k = await parkKeyOf\(a\.sub, m\.data\.c\);/);
-  assert.match(s, /if \(m\.data\.r && cell === here\) await this\._parkStore\(k, a\.sub, a\.id, a\.name \?\? '', m\.data\.r, now\);/);
+  assert.match(s, /if \(m\.data\.r && cell === here\) \{\n\s*const thrown = await this\._parkStore\(k, a\.sub, a\.id, a\.name \?\? '', m\.data\.r, now\);/);   // PIN MOVED (WARDEN1): the store answers a thrown team its owner re-said
 });

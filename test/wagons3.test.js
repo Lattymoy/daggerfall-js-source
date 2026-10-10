@@ -447,7 +447,7 @@ test('WAGONS3 THE PARKED BOX NEVER HOLDS ME (Mac: "Spawning the wagon can trap y
   assert.match(src, /const \[wx, wz\] = toWorld\(vsub\(playerPosition\(\), vscale\(heading, deploySetback\(\)\)\)\);/);
   assert.match(src, /const wg = tryFindGround\(phys, vsub\(grounded, vscale\(fwd, hitchSetback\(\)\)\)\);/);
   const pool = rd('src/scenes/horseCartPool.js');
-  assert.match(pool, /standWagonCollider\(parked && !capsuleInBox\(parked, myParts\) \? parked : null, myParts\);/);
+  assert.match(pool, /standWagonCollider\(parked && !capsuleInBox\(parked, myParts\) && !_held\.has\(''\) \? parked : null, myParts\);/);   // PIN MOVED (WARDEN1): nor while the town watch carries it
   assert.match(pool, /if \(parts !== _bucketParts\) \{ _bucketKey = standBox\(WAGON_BUCKET, null, _bucketKey, parts\); _bucketParts = parts; \}/);
 });
 

@@ -15,8 +15,8 @@ the method and the old one is named as corrected.*
 superseded page was written as an audit's evidence file and carried its
 166 confirmed defects inline; this one carries none, because they are
 closed and their record is `Audit-44.md`. What this page is for is the
-three lists at the bottom: the **19 open flags** (17 stand after Wave E,
-the ship landing, ROAD-F, QX1/TP2 and SUMMON-SYNC, thirteen of them AUDIT 29's, PROF4's, SEAT1a's, ARENA2's, AUDIT TELL's, LEGACY1's, CARDS2's, AUDIT CARDS's, MERCHANT-YARDS's and AUDIT WAGONS3's four, added since, ARENA2's closed by ARENA-FIX and CARDS2's by TAVERN-TABLE - list 1 strikes the rest, and
+three lists at the bottom: the **19 open flags** (18 stand after Wave E,
+the ship landing, ROAD-F, QX1/TP2 and SUMMON-SYNC, thirteen of them AUDIT 29's, PROF4's, SEAT1a's, ARENA2's, AUDIT TELL's, LEGACY1's, CARDS2's, AUDIT CARDS's, MERCHANT-YARDS's, AUDIT WAGONS3's four and WARDEN1's, added since, ARENA2's closed by ARENA-FIX and CARDS2's by TAVERN-TABLE - list 1 strikes the rest, and
 `node tools/regenOpenFlags.mjs --check` is the arbiter) with the blocker the
 closeout triage assigned each, the **Port-Ledger section C rows still
 routed and not struck**, and the **deliberate departures that are not on
@@ -34,8 +34,8 @@ class AUDIT 44 named - and what remains is no longer a list of defects
 but a list of **nineteen sites with a named blocker, fourteen ledger
 rows that still owe work - six of them stale under the campaign that
 ran past them - and a set of departures that were never on the road.**
-Wave E and the closures after it worked that list down to **seventeen sites
-and six rows** (six, and AUDIT 29's, PROF4's, SEAT1a's, ARENA2's, AUDIT TELL's, LEGACY1's, CARDS2's, AUDIT CARDS's, MERCHANT-YARDS's and AUDIT WAGONS3's four added since, AUDIT 29's struck by CLASSIC-PAGES, ARENA2's by ARENA-FIX, CARDS2's by TAVERN-TABLE) (five, since OT1 struck `:687`),
+Wave E and the closures after it worked that list down to **eighteen sites
+and six rows** (six, and AUDIT 29's, PROF4's, SEAT1a's, ARENA2's, AUDIT TELL's, LEGACY1's, CARDS2's, AUDIT CARDS's, MERCHANT-YARDS's, AUDIT WAGONS3's four and WARDEN1's added since, AUDIT 29's struck by CLASSIC-PAGES, ARENA2's by ARENA-FIX, CARDS2's by TAVERN-TABLE) (five, since OT1 struck `:687`),
 which is what lists 1 and 2 now record; the paragraph above is the
 measurement as taken, kept because the two lists are read against it.
 
@@ -49,7 +49,7 @@ measurement as taken, kept because the two lists are read against it.
 | `src/` lines | 164,220 | **186,438** | same list, concatenated through `wc -l` |
 | test files | 529 | **588** | `git ls-tree -r <sha> --name-only \| grep -c '^test/.*\.test\.js$'` |
 | suite | 5,110 tests | **6,050 tests, 5,841 pass, 0 fail, 208 data-gated skips** | `node --test` at the close |
-| open flags | 151 | **17** | `node tools/regenOpenFlags.mjs --check` answers 17 (AUDIT WAGONS3 added four - WAGONS3's own limits, written only in Wagons.md until it: the Small Cart's saddle, Eye Of The Beholder's standing driver, a peer's pair drawn whole for want of a count, the harness's ends on a picture; MERCHANT-YARDS added one, the `?exterior` bench's yards; RW1 added one, the interior glass read off 0xff - unverified without the player's data; "11 entries, up to date" - TAVERN-TABLE retired CARDS2's, the card table's one nameable model id: the card table is a prop of its own; AUDIT CARDS added the twelfth, the sprite lane standing at its seat (`player/seatPose.js`); CARDS2 added the eleventh, the card table's one nameable model id (`world/cardTables.js`); LEGACY1 added the tenth, the fixed city keeping DFU's death (`scenes/world.js`: no streamer to birth an heir into - Legacy-Arc.md section 3 names it FLAGGED); AUDIT TELL added the ninth, the dungeon stream's gap (`scenes/dungeonContext.js`: it carries none of the street record's `z`, `nm`, `yd`, `ex`, `sp` - Feud-Arc.md 10.1 and 32 name it FLAGGED); SEAT1a added the eighth, the fixed city's seat banners (`scenes/seatBanners.js`: the bench runs no account service, so no seat is open there - Seats-Arc 15.1 names it FLAGGED); ARENA2's came and, at ARENA-FIX, went - ONLINE-DUNGEON-FOES came and, at SUMMON-SYNC, went; AUDIT 29 added the seventh, the classic skin's pause with no professions pages, `ui/profPages.js`, and CLASSIC-PAGES retired it; PROF4 the eighth, the woods' pictures untinted, `net/professionLaw.js`). It answered 19 when this table was taken - 17 at `c3c12ee`, plus the two the closeout tail's spell-hand port added - Wave E then retired six, named in list 1, the ship landing a seventh, ROAD-F three more (GS1 `scenes/worldModes.js`, GS2 `systems/skills.js`, DR1 `scenes/dungeonContext.js`), and QX1 the next (`scenes/exterior.js`'s PX3, struck in list 1); the same grep over `git show 6881171:bible/Home.md` returns 151 |
+| open flags | 151 | **18** | `node tools/regenOpenFlags.mjs --check` answers 18 (WARDEN1 added one, the `?exterior` bench's town watch; AUDIT WAGONS3 added four - WAGONS3's own limits, written only in Wagons.md until it: the Small Cart's saddle, Eye Of The Beholder's standing driver, a peer's pair drawn whole for want of a count, the harness's ends on a picture; MERCHANT-YARDS added one, the `?exterior` bench's yards; RW1 added one, the interior glass read off 0xff - unverified without the player's data; "11 entries, up to date" - TAVERN-TABLE retired CARDS2's, the card table's one nameable model id: the card table is a prop of its own; AUDIT CARDS added the twelfth, the sprite lane standing at its seat (`player/seatPose.js`); CARDS2 added the eleventh, the card table's one nameable model id (`world/cardTables.js`); LEGACY1 added the tenth, the fixed city keeping DFU's death (`scenes/world.js`: no streamer to birth an heir into - Legacy-Arc.md section 3 names it FLAGGED); AUDIT TELL added the ninth, the dungeon stream's gap (`scenes/dungeonContext.js`: it carries none of the street record's `z`, `nm`, `yd`, `ex`, `sp` - Feud-Arc.md 10.1 and 32 name it FLAGGED); SEAT1a added the eighth, the fixed city's seat banners (`scenes/seatBanners.js`: the bench runs no account service, so no seat is open there - Seats-Arc 15.1 names it FLAGGED); ARENA2's came and, at ARENA-FIX, went - ONLINE-DUNGEON-FOES came and, at SUMMON-SYNC, went; AUDIT 29 added the seventh, the classic skin's pause with no professions pages, `ui/profPages.js`, and CLASSIC-PAGES retired it; PROF4 the eighth, the woods' pictures untinted, `net/professionLaw.js`). It answered 19 when this table was taken - 17 at `c3c12ee`, plus the two the closeout tail's spell-hand port added - Wave E then retired six, named in list 1, the ship landing a seventh, ROAD-F three more (GS1 `scenes/worldModes.js`, GS2 `systems/skills.js`, DR1 `scenes/dungeonContext.js`), and QX1 the next (`scenes/exterior.js`'s PX3, struck in list 1); the same grep over `git show 6881171:bible/Home.md` returns 151 |
 | ARENA2-gated tests | 199 | **207** | the runner's own `# skipped` line |
 
 Both volume figures reproduce the superseded page exactly at its own
@@ -373,14 +373,14 @@ became Wave D's 42 slices.
 
 # What remains
 
-## 1. The nineteen open flags this was measured over - SEVENTEEN STAND
+## 1. The nineteen open flags this was measured over - EIGHTEEN STAND
 
 The list is `bible/Home.md`'s "Open flags", regenerated from `src/` by
 `tools/regenOpenFlags.mjs` and pinned both ways by
 `test/audit18_bible_docs.test.js`. It cannot be edited into agreement.
 The nineteen sorted, AS MEASURED, into the four groups below; each
 bullet a later slice closed is struck at its own entry, and what stands
-unstruck here is the seventeen the tool answers today (GP3, 2026-09-11, retired the joystick flag; ONLINE-DUNGEON-FOES, 2026-09-20, added one after this page's measurement, and SUMMON-SYNC, 2026-09-27, retired it; AUDIT 29, 2026-09-28, added one, which CLASSIC-PAGES struck; PROF4, SEAT1a, AUDIT TELL, LEGACY1, CARDS2, AUDIT CARDS, RW1 and MERCHANT-YARDS one each since, and AUDIT WAGONS3 four, listed last; TAVERN-TABLE, 2026-10-08, retired CARDS2's, and its entry went with it).
+unstruck here is the eighteen the tool answers today (GP3, 2026-09-11, retired the joystick flag; ONLINE-DUNGEON-FOES, 2026-09-20, added one after this page's measurement, and SUMMON-SYNC, 2026-09-27, retired it; AUDIT 29, 2026-09-28, added one, which CLASSIC-PAGES struck; PROF4, SEAT1a, AUDIT TELL, LEGACY1, CARDS2, AUDIT CARDS, RW1 and MERCHANT-YARDS one each since, AUDIT WAGONS3 four and WARDEN1 one, listed last; TAVERN-TABLE, 2026-10-08, retired CARDS2's, and its entry went with it).
 Ten carry a **blocked** verdict from the closeout triage
 (`closeout-audit.json`, `triage` rows with `verdict: "blocked"`); six
 are the **narrowed remainders** Wave D recorded rather than shipped
@@ -675,7 +675,7 @@ when this was measured, over the 19 the list then held. Every bullet the
 tree has closed since is struck at its own entry above, and the sites
 still standing there are the six `bible/Home.md` listed then (GP3 retired the seventh); the one added above after
 this page was measured is struck too (SUMMON-SYNC), and AUDIT 29, PROF4, SEAT1a, ARENA2, AUDIT TELL and LEGACY1 added one each, listed last (CLASSIC-PAGES struck AUDIT 29's, ARENA-FIX ARENA2's) - ten in all, which is what the tool answers. **As of Wave E, the ship
-landing, ROAD-F (GS1, GS2, DR1), QX1/TP2, SUMMON-SYNC, AUDIT 29, PROF4, CLASSIC-PAGES, SEAT1a, ARENA2 (the `?exterior` host's bout driver, flagged by name), ARENA-FIX (that host wired), AUDIT TELL (the dungeon stream's gap, flagged by name) LEGACY1 (the fixed city's death, flagged by name) CARDS2 (the card table's one nameable id, flagged by name), AUDIT CARDS (the sprite lane at its seat, flagged by name), TAVERN-TABLE (CARDS2's retired: the card table is a prop of its own), MERCHANT-YARDS (the `?exterior` bench stands no yard, flagged by name) and AUDIT WAGONS3 (WAGONS3's four own limits stood at their lines), `node tools/regenOpenFlags.mjs --check` answers 17**,
+landing, ROAD-F (GS1, GS2, DR1), QX1/TP2, SUMMON-SYNC, AUDIT 29, PROF4, CLASSIC-PAGES, SEAT1a, ARENA2 (the `?exterior` host's bout driver, flagged by name), ARENA-FIX (that host wired), AUDIT TELL (the dungeon stream's gap, flagged by name) LEGACY1 (the fixed city's death, flagged by name) CARDS2 (the card table's one nameable id, flagged by name), AUDIT CARDS (the sprite lane at its seat, flagged by name), TAVERN-TABLE (CARDS2's retired: the card table is a prop of its own), MERCHANT-YARDS (the `?exterior` bench stands no yard, flagged by name), AUDIT WAGONS3 (WAGONS3's four own limits stood at their lines) and WARDEN1 (the `?exterior` bench runs no town watch, flagged by name), `node tools/regenOpenFlags.mjs --check` answers 18**,
 and no count in
 this file or in `Road-To-1-1.md` may state another figure: the tool is
 the measurement, and `test/citedrift.test.js` holds both documents to
@@ -858,6 +858,13 @@ that was a claim once and is a pointer at a stranger now.
   the sentence goes.*
 - **`src/scenes/horseCartPool.js:"FLAGGED: the horses are billboards"`** - the harness's ends on a picture. *The day
   the horses are bodies, the sentence goes.*
+
+**Recorded by WARDEN1 (2026-10-10).**
+
+- **`src/scenes/wagonWardenHost.js:"FLAGGED: the single-town bench runs no town watch"`** - the `?exterior` bench's watch.
+  *`06-Systems/Wagon-Warden.md`: a wagon parked too long on a town's road, or past its fourth, is thrown out of town in
+  the streaming host; the single-town bench stamps no wagon and throws none. The day it runs the watch, the sentence
+  goes.*
 
 **Recorded by MERCHANT-YARDS (2026-10-10).**
 
@@ -1145,7 +1152,7 @@ into a module-and-host one costs.
 
 What is genuinely left is small, and it is now named to the line.
 
-**seventeen sites carry a blocker** - the seventeen `node
+**eighteen sites carry a blocker** - the eighteen `node
 tools/regenOpenFlags.mjs --check` answers and `bible/Home.md` lists.
 Three cannot move at all while the surrounding decisions stand: there
 is no `PlayerTorch.prefab` anywhere in the reference tree (twice), and

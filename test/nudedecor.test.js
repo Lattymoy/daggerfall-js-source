@@ -205,6 +205,7 @@ const NO_PERSON = Object.freeze({
   'src/scenes/lefayMonumentHost.js': 'flowers thrown at Julian LeFay\'s monument (TEXTURE.254\'s roses)',   // LEFAY1
   'src/scenes/magicCandle.js': 'the Light effect\'s candle',
   'src/scenes/merchantYardsHost.js': 'a yard\'s keeper as a walker (PERSON_TEXTURES, never the table\'s flats) and the Stable\'s horses',   // MERCHANT-YARDS
+  'src/scenes/wagonWardenShow.js': 'the town watch\'s guard as a walker (GUARD_TEXTURE, the city guards\' own picture - never the table\'s flats) and the horses it carries',   // WARDEN1
   'src/scenes/navalCrew.js': 'crews as mobile units',
   'src/scenes/navalFlames.js': 'a ship\'s flames',
   'src/scenes/portalFx.js': 'a portal',

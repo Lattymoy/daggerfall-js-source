@@ -2,8 +2,8 @@
   {
     "name": "PARK-store-from-anywhere",
     "file": "server/src/index.js",
-    "old": "      if (m.data.r && cell === here) await this._parkStore(",
-    "new": "      if (m.data.r) await this._parkStore(",
+    "old": "      if (m.data.r && cell === here) {",
+    "new": "      if (m.data.r) {",
     "tests": [
       "test/hcc_park.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PARK-superseded-kept",
     "file": "server/src/index.js",
-    "old": "      else if (here && cell !== here) await this._parkDrop(k);",
-    "new": "      else if (false) await this._parkDrop(k);",
+    "old": "      } else if (here && cell !== here) await this._parkDrop(k);",
+    "new": "      } else if (false) await this._parkDrop(k);",
     "tests": [
       "test/hcc_park.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "PARK-account-leaked",
     "file": "server/src/index.js",
-    "old": "  _parkPublic(v) { return { k: v.k, id: v.id, name: v.name ?? '', r: v.r, at: v.at }; }",
-    "new": "  _parkPublic(v) { return { k: v.k, id: v.id, name: v.name ?? '', r: v.r, at: v.at, sub: v.sub }; }",
+    "old": "  _parkPublic(v) { return { k: v.k, id: v.id, name: v.name ?? '', r: v.r, at: v.at, ...(Number.isFinite(v.y) ? { y: v.y } : {}) }; }",
+    "new": "  _parkPublic(v) { return { k: v.k, id: v.id, name: v.name ?? '', r: v.r, at: v.at, ...(Number.isFinite(v.y) ? { y: v.y } : {}), sub: v.sub }; }",
     "tests": [
       "test/hcc_park.test.js"
     ]
