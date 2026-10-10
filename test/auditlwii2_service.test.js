@@ -568,3 +568,26 @@ test('AUDIT LW-II-2 LW15P-guild-hall: A GUILD\'S HALL STANDS NO PATRONS\' TRADER
   const ls = s.raw.prepare('SELECT id, seller, price, item, at FROM market_listings').all().map((r) => ({ id: r.id, seller: r.seller, price: Number(r.price), at: Number(r.at), worth: patronWorth(JSON.parse(r.item), itemWorth) }));
   assert.ok(patronHours(null, T0, _now).some((h) => patronHour(ls, h, { salt: s.salt }).length > 0), 'a home of the same stock would have sold');
 });
+
+test('AUDIT LW-II-2 S9: THE WIRE FLOORS A BOOK AT ITS FILE\'S PRICE AND A RECIPE AT ITS POTION\'S - never at the template\'s: a book minted at 300-800 crossed the wire at 2500, and a recipe at its sheet\'s, so a counter\'s book set down in a room\'s container sold back for more than it cost and a patron judged it by the same; a book or a recipe sent at nothing is floored at its own price, and every other piece at itemBaseValue still (AUDIT WORLD6a B1\'s dai-katana)', () => {
+  const roll = seededRng(99);
+  for (const id of SHELF_BOOK_IDS) setBookPrice(id, 300 + Math.floor(roll() * 501));
+  for (let s = 1; s <= 12; s++) {
+    const book = JSON.parse(JSON.stringify(createShelfBook(seededRng(s))));
+    assert.ok(book.value >= 300 && book.value <= 800, `the shelf's book minted at its file's price (${book.value})`);
+    assert.equal(validLootList([book])[0].value, book.value, 'across the wire it keeps its own price');
+    assert.equal(validLootList([{ ...book, value: 0 }])[0].value, book.value, 'sent at nothing, floored at its own price');
+    assert.equal(patronWorth(validLootList([book])[0], itemWorth), book.value, 'and a patron judges it by that price');
+  }
+  for (let s = 1; s <= 12; s++) {
+    const got = [];
+    const recipe = JSON.parse(JSON.stringify(randomlyAddPotionRecipe(100, got, seededRng(s))));
+    const price = potionRecipeByKey(recipe.potionRecipeKey).price;
+    assert.equal(recipe.value, price, 'a recipe minted at its potion\'s price');
+    assert.equal(validLootList([recipe])[0].value, price, 'across the wire it keeps it');
+    assert.equal(validLootList([{ ...recipe, value: 0 }])[0].value, price, 'sent at nothing, floored at its potion\'s');
+  }
+  const katana = JSON.parse(JSON.stringify(createWeapon(123, 9, seededRng(4))));   // a Daedric dai-katana (Dai_Katana 123, Daedric 9)
+  const wired = validLootList([{ ...katana, value: 0 }])[0];
+  assert.ok(wired.value > 1000, `every other piece is still floored at what the port mints it at (${wired.value})`);
+});

@@ -367,5 +367,41 @@
     "tests": [
       "test/auditlwii2_service.test.js"
     ]
+  },
+  {
+    "name": "AUDITLWII2-S9-book",
+    "file": "src/systems/loot.js",
+    "old": "  if (item.group === 'Books' && item.templateIndex === BOOK_TEMPLATE) return bookValue(item.message);",
+    "new": "  if (item.group === 'Books' && item.templateIndex === BOOK_TEMPLATE) return itemBaseValue(item);",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S9-recipe",
+    "file": "src/systems/loot.js",
+    "old": "&& item.potionRecipeKey != null) return potionValue(item.potionRecipeKey, item);",
+    "new": "&& item.potionRecipeKey != null) return itemBaseValue(item);",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S9-floor",
+    "file": "src/systems/loot.js",
+    "old": "  out.value = Math.max(Number.isFinite(out.value) ? out.value : 0, wireFloorOf(out));",
+    "new": "  out.value = Math.max(Number.isFinite(out.value) ? out.value : 0, itemBaseValue(out));",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-S9-others",
+    "file": "src/systems/loot.js",
+    "old": "  return itemBaseValue(item);\n};",
+    "new": "  return 1;\n};",
+    "tests": [
+      "test/auditlwii2_service.test.js"
+    ]
   }
 ]

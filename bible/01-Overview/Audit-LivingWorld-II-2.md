@@ -70,6 +70,42 @@ All FIXED:
 Seen and left for Mac: the hold-up stands on the player's deeds alone - a caravan whose only guard the character
 struck down before hiring on yields as they walk beside it, and C2 then ends the contract unpaid.
 
+## S (with W6, P1, P3, P8) - the patrons' service (`test/auditlwii2_service.test.js`, 14; `auditlwii2_service.json`, 45)
+
+All FIXED:
+
+- **S1 (HIGH) - a patron paid more than an online counter asks, so buying at a counter and stocking a trader printed
+  gold.** REALM P0.4 shut that loop for a counter's own buy-back; the patrons reopened it. A book's floor is its
+  template's 2500 where its price is its file's 300-800 (fourteen bought at a bookseller held 2.02 times their cost),
+  and six tenths of any other piece's floor stands over what a good haggler pays at a quality-1 counter (a fifth up at
+  the least; far more in a cheap region or a festival). FIXED (the lead's call, Mac's to overrule - the share is still
+  his call 2): the worth is the lower of the floor and the record's own price, and a piece bought at a counter online is
+  never a patron's (`counterBought`, stamped at both Buy doors, kept by the save, the item law, a listing, a merge and a
+  split). The reviewer's farms after: no counter's piece sells to a patron at any quality. The mark is the client's to
+  write, as `value` is.
+- **S9 (found fixing S1) - the wire lifted a book to its template's 2500 and a recipe to its sheet's** (`loot.js
+  wireLootItem`, AUDIT WORLD6a B1's floor): a book set down in a room's shared container and taken up again sold back
+  for more than it cost. FIXED: the wire floors a book at its file's price and a recipe at its potion's.
+- **S2 - a patron's sale never told the INT4 duplicate ledger**: the piece's escrow row and its claim stood for good,
+  so a duper sold one copy for minted gold and kept the other uncharged. FIXED: the claimant charged, the row gone (or
+  deleted).
+- **S3 - P8's switch fix was incomplete**: reopening paid the shut hours, a developer's read under `dev` reckoned every
+  seller of the region, and the migration's unmarked listings would have been paid for the hours before the patrons
+  existed. FIXED: the reckoning asks the switch itself, the shut hours are marked, the migration marks them.
+- **S4 - a door open a minute an hour took a whole hour of patrons.** FIXED: marked to the hour it opens in; a door
+  leaving public reckons its town first.
+- **S5 - held sellers crowded a town every hour** (worse than the first audit's NOT CHANGED said: never added to the
+  hour's gone, drawn again every hour). FIXED: no candidates.
+- **S6 / P8 - the faucet was written where no measure read it** (decision 7). FIXED: the realm's budget and its review
+  tool name the patron gold.
+- **S7 - a trader's read told another player's patron sales from a same-id trader.** FIXED: its own house's.
+- **S8 - one listing that threw stopped the cron for every town.** FIXED: each judged in its own try;
+  `validAffix` reads `Object.hasOwn`.
+- **W6 - a town's trader list was the region's 300 newest listings**: an older trader lost its browsers. FIXED: every
+  public trader house named.
+- **P1, P3 - PINNED**: P7's door in a town of two traders; a listing's first whole hour and its expiry; a guild's hall
+  never a patrons' trader. The P lane's four records carried, all dead.
+
 ## C and H (with P2, P5, P11) - the outlaws (`test/auditlwii2_outlaws.test.js`, 10; `auditlwii2_outlaws.json`, 47)
 
 All FIXED:

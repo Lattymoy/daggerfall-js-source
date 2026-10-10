@@ -838,12 +838,24 @@ errand in `dayPlan.js`.
   the record's own `value`, which is the client's to write and the judge reads up to a generous ceiling - a found
   Broadsword written at 1e9 was worth 11,840, a patron's 7,104); with r the price over the cap, the hour's odds are 0.25 at r <= 0.5,
   0.12 at r <= 0.75, 0.05 at r <= 1, and none above it (PATRON_ODDS). Nothing for nothing: a price under 1, or a
-  piece with no cap, never sells.
+  piece with no cap, never sells. AUDIT LW-II-2 S1: THE WORTH IS THE LOWER OF THE FLOOR AND THE RECORD'S OWN PRICE
+  (`value` x its stack - a client lowering it only cheats itself; no price, no worth): a book's floor is its template's
+  2500 where its own price is its file's 300-800, a recipe's its sheet's where its own is its potion's - bought at a
+  bookseller and listed at the cap, fourteen books held 2.02 times what they cost. S9 (found fixing it): the wire's
+  value floor (`loot.js wireLootItem`, AUDIT WORLD6a B1's) lifted every book to its template's 2500 and every recipe
+  to its sheet's - a counter's book set down in a room's shared container and taken up again sold back for more than
+  it cost; the wire floors a book at its file's price and a recipe at its potion's now (`wireFloorOf`).
 - **A CRAFTED PIECE NO DEARER** (`patronWorth`): its worth is no more than the piece it was made as - the crafted
   marks off (`provenance`, `quality`, `hand`, `kitMetal`, `fieldKit`, `potent`), its value nothing. Shops are the
   floor, crafting the ceiling: a patron never pays a crafter more than a found piece fetches.
 - **NEVER** a quest's piece or a keepsake (`patronTakes`: `questItem`, `livingKeepsake`, the keepsake's template
-  1800); and the item law and the market's own law are read again at the sale, as a buy reads them (`lawfulItem`,
+  1800), nor a PIECE BOUGHT AT A COUNTER ONLINE (AUDIT LW-II-2 S1: `counterBought`, `PATRON_COUNTER_MARK`, stamped at
+  both of worldModes.js's Buy doors - every shelf, the guilds', a street merchant's and the caravan's counter walk one -
+  online only, kept by the save, the item law (`itemFields.js`), a listing, a stack merged (either part's) and split.
+  REALM P0.4's law, whole: online a counter's sale never beats what it asks, and a patron paid more than a good
+  haggler pays at a quality-1 counter - buying there and stocking a trader printed gold, a fifth up at the least, far
+  more in a cheap region or a festival. The mark is the client's to write, as `value` is: a modified client can strip
+  it, as it can raise a book's price to its floor); and the item law and the market's own law are read again at the sale, as a buy reads them (`lawfulItem`,
   `goodRefusal` - AUDIT LW-II P3: read only at the listing).
 - **THE TOWN'S DEMAND IS SHARED** (`patronHour`): the hour's sales are the lowest draws under their odds
   (`patronCands`; `patronDraw`, the listing's, the hour's and the service's SECRET - AUDIT LW-II P10: on the listing
@@ -869,11 +881,19 @@ errand in `dayPlan.js`.
   failure stops the town at the last hour it finished (P11: every failure counted as a pass, past an unsold hour); the listing `sold`; the 5% tax and 1% fee burnt
   (`goldSaleOf`), the rest to the seller's held gold (`market_gold`); the gold written to the service's own faucet
   (`budget.js faucetStatement`, kind `patron`, table `realm_faucets` by the hour), for staff to read before a budget is
-  enforced. No delivery: the piece leaves the realm.
+  enforced (AUDIT LW-II-2 S6: and read - `/v1/mod/realm-budget`'s measure names the window's faucet gold, and
+  `tools/realmReview.mjs` prints it; nothing read the table). No delivery: the piece leaves the realm; the INT4
+  duplicate ledger is told (AUDIT LW-II-2 S2: `ledger.js escrowSpentSteps` - a claimant charged as a player's buy
+  charges it, the row gone; else the row deleted - a patron's sale left the piece's escrow row and its claim for good,
+  so a duper sold one copy for minted gold and kept the other uncharged).
 - **WHEN**: lazily on every read of a trader - `/v1/market/vendor` (its town), `/vendors` (its region), `/myvendors`
   (the owner's towns) - and in the hour's cron (HOUR_JOBS `patrons`: PATRON_CRON_TOWNS (40) towns a firing, the longest
   waiting first, inside the job's share of the firing's statements; only while the market is open to everyone,
-  `marketOpenFor` - AUDIT LW-II P8: shut, every route answered 'market-closed' and the clock paid patrons anyway). A
+  `marketOpenFor` - AUDIT LW-II P8: shut, every route answered 'market-closed' and the clock paid patrons anyway).
+  AUDIT LW-II-2 S3: and only then - `reckonPatrons` asks the switch itself (a developer's read under `dev` reckoned
+  every seller of the region), while it is shut the hour's job MARKS every open trader listing to the hour
+  (`markPatronsShut`), so reopening pays none of the shut hours, and the migration marks every open trader listing to
+  the hour before it runs, so no hour before the patrons existed is paid. A
   reckoning its budget stops marks the last whole hour it reached, so firing by firing a town nobody reads is reckoned
   through. The dice are pure: reckoned late, the same sales as reckoned every hour (`reckonPatrons(ctx, opts, env)`).
 - **BOUNDED** (AUDIT LW-II P5: one region's read two days behind ran 5,826 statements, where D1 answers an invocation a
@@ -881,19 +901,26 @@ errand in `dayPlan.js`.
   nothing), one counts query an hour with a candidate (`PATRON_COUNTS_SQL`), PATRON_READ_STATEMENTS (200) a read and
   the rest the next's, the mark written only where it moves.
 - **A DOOR OPENED** to the town opens its trader FROM NOW (AUDIT LW-II P7, `homes.js setHomeEntry`): its listings are
-  marked reckoned to the last whole hour - twenty pieces stocked behind a private door all sold, at its opening, in the
-  hours before it. A town whose traders all stand behind shut doors is marked as it is read.
+  marked reckoned to the hour it opens in (AUDIT LW-II-2 S4: to the hour before, so a door opened at :59 and read at
+  :00 took a whole hour of patrons), and a door leaving public reckons its town first - twenty pieces stocked behind a
+  private door all sold, at its opening, in the hours before it. A town whose traders all stand behind shut doors is
+  marked as it is read.
 - **KEPT** with the market's history: pruned by `pruneMarketHistory` at MARKET_KEEP_DAYS, indexed for the region's read
   (`region, at`) and the hour's counts (`day`) (AUDIT LW-II P6: the region's read walked the table whole, and nothing
   pruned it).
 - **TOLD**: within PATRON_TOLD_S (a day), newest first, each `{ listing, map, vendor, buildingKey, hour, minute, seed,
-  price, name }` - a trader's read its own, the region's read its region's (a trader sold out still tells its last
-  day's); `/myvendors` answers `patronSold`, each with `patron: { map, seed, hour, minute }`.
+  price, name }` - a trader's read its own house's (AUDIT LW-II-2 S7: two traders of one id in a town both told each
+  other's), the region's read its region's (a trader sold out still tells its last day's); `/vendors` names every public
+  trader house of the region, the board's 300 newest rows and one row more for each house they left out (AUDIT LW-II-2
+  W6: a town's older trader dropped off the 300 and lost its browsers); `/myvendors` answers `patronSold`, each with `patron: { map, seed, hour, minute }`.
 - Built differently from the design: the sale is its own table, not a `market_sales` row whose buyer is the patron's
   mark (`market_sales.buyer` is a player's key), keyed by the listing rather than `(buyer, rid)`.
-- NOT CHANGED: a held seller's piece is refused in the write, not left out of the hour's choice, so it can take one of
-  the town's slots that hour - another seller's sale lost that hour, never gold, and the held seller sells nothing.
-  A reckoning handed no `env` (the tests' direct calls alone) reads the public dice.
+- A HELD OR UNJUDGED SELLER IS NO CANDIDATE (AUDIT LW-II-2 S5: the first audit left its pieces in the hour's choice,
+  refused only in the write - never added to the hour's gone, they were drawn again every hour and took the town's
+  slots while their stock stood: an honest seller beside four held ones sold 6 where alone 22); the write keeps its
+  guard. Each listing is judged in its own try (S8: one that threw stopped the cron for every town after it), and
+  `lootRarity.js validAffix` reads `Object.hasOwn`. A reckoning handed no `env` (the tests' direct calls alone) reads
+  the public dice.
 
 ### 8.3 Drawn, by the client
 
@@ -949,6 +976,13 @@ words; the host's seams; and AUDIT LW-II P1-P11 each through the real Worker (th
 reads at once, the floor's worth, the laws read again, the held seller, the read bounded, the sales told once and
 pruned, the door opened from now, the switch, the secret, the failure unmarked). Mutants: `tools/mutants/lw15.json`
 (106).
+
+AUDIT LW-II-2: `test/auditlwii2_service.test.js` (14), `tools/mutants/auditlwii2_service.json` (45). The counter's mark:
+`worldModes.js` WIRED at both Buy doors (`commitTrade`'s Buy arm, `doBuy`); `world.js` through it (the caravan's counter
+is `openRoadTrade`); `exterior.js` and `dungeonContext.js` none (no counter's Buy). Moved: `lw15_patrons` (P7's door marks
+the hour it opens in, S4), `auditscale` D7 (the shut market's hours marked - twenty-two statements an hour, S3);
+re-aimed by content: `lw15.json`'s takes-keepsake, P2-floor, told, cron-job, P3-law, P3-refusal and P8-switch (its
+tests the service lane's file too - the reckoning asks the switch itself now).
 
 ## 9. LW16 - the word travels (BUILT 2026-10-09)
 
