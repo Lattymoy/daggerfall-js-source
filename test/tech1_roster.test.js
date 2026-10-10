@@ -18,6 +18,9 @@ import { rollCorpseKit } from '../src/systems/foeLootCap.js';
 import { seedTestLoot, TECHNIQUE_TEST_BASES } from '../src/systems/testRoom.js';
 import { THUNDERLOCK_TEMPLATE, PELLET_TEMPLATE } from '../src/characters/thunderlockIds.js';
 import { validLootItem } from '../src/systems/loot.js';
+import { ACCOUNT_VERSION } from '../server-account/src/service.js';
+import { ARENA_SPEED_MAX, ARENA_HIT_HZ_MAX } from '../src/net/arenaLaw.js';
+import { SIEGE_SPEED } from '../src/net/siegeRef.js';
 
 const lcg = (seed) => { let s = (seed >>> 0) || 1; return () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; }; };
 const on = () => { _resetForTests(); setPref('lootRarity', true); LR._setTechniqueForTests(null); };
@@ -48,6 +51,8 @@ test('TECH1 THE ROSTER: twelve techniques, two to each family that swings (a gun
   assert.equal(fam(THUNDERLOCK_TEMPLATE), 'thunderlock', 'the gun, its own family - no volley of pellets');
   assert.equal(fam(131), null, 'an arrow is no weapon that swings');
   assert.equal(fam(PELLET_TEMPLATE), null, 'nor a Dwemer Pellet');
+  // AUDIT TECH1: a Roleplay & Realism weapon keeps its family with its mod's switch off (this suite runs with the mods off)
+  assert.deepEqual([fam(513), fam(514)], ['axe', 'blunt'], 'the Archer\'s Axe and the Light Flail - their class, whatever the switch');
   assert.equal(RO.techniqueFamily(gauntlets()), 'handToHand');
   assert.equal(RO.techniqueFamily(cuirass()), null);
   assert.equal(RO.techniqueFamily(ring()), null);
@@ -65,11 +70,21 @@ test('TECH1 THE NUMBERS: one power band for every technique, the per-mille at a 
   assert.equal(RO.techniqueMult(1.4, 0), 1.4);
   assert.ok(Math.abs(RO.techniqueMult(1.4, 25) - 1.75) < 1e-12);
   assert.ok(Math.abs(RO.techniqueMult(0.5, 50) - 0.75) < 1e-12);
-  assert.equal(RO.TECHNIQUE_MAX_SPEED, 16, 'under the relay\'s 18 m/s step (net/siegeRef.js)');
+  // AUDIT TECH1: under EVERY referee's step - the arena's 12.5 m/s (16 had a Lunge's poses refused there and its landing
+  // measured from a stale one), the siege's and the open zone's 18
+  assert.equal(RO.TECHNIQUE_MAX_SPEED, 12);
+  assert.ok(RO.TECHNIQUE_MAX_SPEED < ARENA_SPEED_MAX && RO.TECHNIQUE_MAX_SPEED < SIEGE_SPEED.mps);
+  // AUDIT TECH1: a Volley's shafts a frame wider apart than the arena's four a second - none of the six refused there
+  const v = RO.TECHNIQUES.volley;
+  assert.ok(v.spread / (v.arrows - 1) >= 1 / ARENA_HIT_HZ_MAX + 1 / 60, `${v.spread / (v.arrows - 1)} s a shaft`);
   assert.equal(RO.techniqueBrief('volley', 22), 'Aim: 6 arrows rain on 3.5 m, 61% each. 6 fatigue, 16s');
   assert.equal(RO.techniqueBrief('execute', 0), 'Strike for 120%, to 220% on the wounded. 5 fatigue, 11s');
   assert.equal(RO.techniqueBrief('leap', 50), 'Aim: leap 9 m, strike all in 2.5 m, 210%. 5 fatigue, 12s');
   assert.equal(RO.techniqueBrief('nonesuch', 10), '');
+  // AUDIT TECH1: no blow is 'sure' (law 1), and the Gauntlets' two say they are the bare hand's
+  assert.equal(RO.techniqueBrief('crush', 0), 'One heavy blow, 160%, +30 to hit. 5 fatigue, 10s');
+  assert.equal(RO.techniqueBrief('haymaker', 0), 'Bare-handed: one heavy blow, 180%, +30 to hit. 4 fatigue, 9s');
+  assert.equal(RO.techniqueBrief('kick', 0), 'Bare-handed, aim: leap 6 m, strike all in 2 m, 130%. 4 fatigue, 10s');
 });
 
 test('TECH1 THE LINE: a kind of its own, appended last, a weapon\'s or the Gauntlets\' - its params the piece\'s family\'s, its label the technique\'s name and power, a name it never gives (mutants: a technique in the numbers\' pool, the proc pool, the Exalted\'s or the curse\'s; another family\'s param)', () => {
@@ -249,6 +264,13 @@ test('TECH1 THE CARD: the line with its band, then what a press does with its nu
 test('TECH1 THE LAW: a technique of the piece\'s family, one, last of its own lines, in its tier\'s band - every honest shape lawful, each forgery named; the law moved to 2 (mutants: the count; the place; the family; the band)', () => {
   on();
   assert.equal(ITEM_LAW_VERSION, 2);
+  // AUDIT TECH1: THE LAW MOVES THE SERVICE. The account Worker's judge IS this law (judge.js JUDGE_VERSION), and a site
+  // deploy waits only on ACCOUNT_VERSION (.github/workflows/deploy.yml) - a law moved without it ships the site before the
+  // judge that knows it, and an honest piece reads as a forgery (a hold and a strike) in the gap. Each law version names
+  // the first service that carries it; a law with no entry here, or a service older than its entry, fails.
+  const LAW_SERVICE = { 1: 0, 2: 105 };
+  assert.ok(Number.isInteger(LAW_SERVICE[ITEM_LAW_VERSION]), `item law ${ITEM_LAW_VERSION} names no account service - bump ACCOUNT_VERSION with it and record it here`);
+  assert.ok(Number(/^acct(\d+)$/.exec(ACCOUNT_VERSION)?.[1]) >= LAW_SERVICE[ITEM_LAW_VERSION], `${ACCOUNT_VERSION} predates item law ${ITEM_LAW_VERSION}`);
   const lawful = [
     withTech(() => createWeapon(130, 1), 'pierce', 20), withTech(() => createWeapon(116, 1), 'lunge', 10, 'magic'),
     withTech(gauntlets, 'kick', 25), withTech(() => createWeapon(126, 1), 'slam', 45, 'legendary'),

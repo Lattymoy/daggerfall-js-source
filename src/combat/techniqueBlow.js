@@ -24,6 +24,10 @@ export const TECH_REACH_UP = 2.2;
 /** The foe at your feet is in every arc - a body this close is struck whichever way you face. */
 export const TECH_POINT_BLANK = 0.6;
 
+/** A body's radius (AUDIT TECH1): its record's own, or a big body's on its AI (the court's boss, a crystal, one of his
+ *  host - dungeonContext.js's stand-ins keep it there), else a foe's capsule. */
+export const bodyRadius = (foe) => (Number.isFinite(foe?.radius) ? foe.radius : Number.isFinite(foe?.ai?.radius) ? foe.ai.radius : TECH_BODY_RADIUS);
+
 /** A body that is a player's - a duel's, a siege's or the open zone's (marked `duel` - world.js duelArrowTargets), or an
  *  arena rival's stand-in (`rival` - dungeonContext.js arenaRivalBody). A technique never meets one (TECH law 3): it is
  *  struck, if at all, as the plain swing or shot strikes it. */
@@ -38,7 +42,7 @@ export const playerBody = (foe) => !!foe && (foe.rival != null || foe.duel === t
 export function blowReaches(blow, foe, sight) {
   if (!blow || !sight?.losClear) return false;
   const f = foe?.ai?.feet;
-  const r = Number.isFinite(foe?.radius) ? foe.radius : TECH_BODY_RADIUS;
+  const r = bodyRadius(foe);
   const level = (y) => !blow.feet || Math.abs(y - blow.feet[1]) <= TECH_REACH_UP;
   if (blow.lane) {
     if (!f || !level(f[1])) return false;
@@ -47,12 +51,16 @@ export function blowReaches(blow, foe, sight) {
     const across = Math.abs(rx * L.dir[1] - rz * L.dir[0]);
     return along >= -0.5 && along <= L.len + r && across <= L.halfW + r;
   }
-  if (blow.arc === 'view') return !!sight.inView && sight.dist <= blow.reach;
+  // AUDIT TECH1: a blow with a TARGET (Shadowstep's) is that foe's alone, all round within its reach - the dash lands it
+  // behind the foe, and no view or other body decides it
+  if (blow.target && foe !== blow.target) return false;
+  const arc = blow.target ? 'all' : blow.arc;
+  if (arc === 'view') return !!sight.inView && sight.dist <= blow.reach;
   if (!f || !blow.feet) return sight.dist <= blow.reach;
   const dx = f[0] - blow.feet[0], dz = f[2] - blow.feet[2], d = Math.hypot(dx, dz);
   // the capsule's edge within reach on the level - or, a big body (the court's boss), its surface by the host's own sight
   if (!((d - r <= blow.reach && level(f[1])) || sight.dist <= blow.reach)) return false;
-  if (blow.arc === 'all' || d < TECH_POINT_BLANK) return true;
+  if (arc === 'all' || d < TECH_POINT_BLANK) return true;
   const cos = (dx * Math.sin(blow.yaw ?? 0) + dz * Math.cos(blow.yaw ?? 0)) / d;
   return cos >= Math.cos(/** @type {number} */ (blow.arc));
 }

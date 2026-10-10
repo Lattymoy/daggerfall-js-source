@@ -4053,8 +4053,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // technique's shafts (the boss, the crystals, the host and the foes meet them as any shaft) and its own fatigue door
     technique: {
       motor: () => opts.technique?.motor?.() ?? null,
-      face: (p) => opts.technique?.face?.(p),
-      fireArrow: (from, dir, o) => fireArrow(from, dir, playerWeapon.weapon, true, null, null, o?.sky ? { world: [...from] } : weaponRig.thunderlockMuzzle(fieldOfView()), { technique: o?.technique ?? null, ...(o?.speedScale ? { speedScale: o.speedScale } : {}) }),
+      face: (p, from) => opts.technique?.face?.(p, from),   // AUDIT TECH1: from where the body lands
+      fireArrow: (from, dir, o) => fireArrow(from, dir, o?.weapon ?? playerWeapon.weapon, true, null, null, o?.sky ? { world: [...from] } : weaponRig.thunderlockMuzzle(fieldOfView()), { technique: o?.technique ?? null, ...(o?.speedScale ? { speedScale: o.speedScale } : {}) }),
       drainFatigue: (n) => drainFatigue(n),
     },
   });

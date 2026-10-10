@@ -381,7 +381,7 @@ test('AUDIT DISC19 W5 by source: every host that offers one swing to more than o
   assert.match(w, /if \(exteriorFoes\.resolvePlayerHit\([^\n]*guardHitSound, \{ swing \}\)\) \{/);
   assert.match(w, /\{ onMurder: \(\) => _crimeResponse\(\), onHitSound: guardHitSound, swing \}\)\.then/);
   const e = rd('src/scenes/exterior.js');
-  assert.equal((e.match(/guardHitSound, \{ swing \}\)\)/g) ?? []).length, 2, 'the fixed-city host\'s two pools');
+  assert.equal((e.match(/guardHitSound, \{ swing \}\)\)/g) ?? []).length, 3, 'the fixed-city host\'s two pools - and a technique\'s offer of the encounter pool after the watch took it, the same token');   // PIN MOVED (TECH1 AUDIT): an area technique's blow is offered every pool it reaches (bible/05-Combat/Weapon-Techniques.md)
   assert.match(e, /onHitSound: guardHitSound, swing \}\)\.then/);
   const m = rd('src/scenes/worldModes.js');
   assert.equal((m.match(/interiorHitSound, \{ swing \}\)\)/g) ?? []).length, 2, 'the interior\'s two pools');

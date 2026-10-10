@@ -87,7 +87,7 @@ import { liveStat } from '../systems/statMods.js';   // WW1: the widget's speed 
 import { castRate } from '../systems/castSpeed.js';   // CAST-SPEED: the rate both lanes' hands cast at
 import './swingLaw.js';   // AUDIT PRE-MERGE 0929 S5: SWING-LAW's reader of the weapon in the hand, registered as it loads - every rig's
 import { walkSpeed } from '../player/motor.js';   // WW1: GetBaseSpeed's walk arm
-import { stepTechnique, claimShot, TECHNIQUE_ACTION } from './techniques.js';   // TECH1: the technique key - every host's rig steps the one runner
+import { stepTechnique, claimShot, techniqueFlying, TECHNIQUE_ACTION } from './techniques.js';   // TECH1: the technique key - every host's rig steps the one runner
 
 /**
  * TR2: THE ARMS-BUILD OPTS, ONE HOME. The pause card and the Test
@@ -1419,6 +1419,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     clickAttack() {
       if (playerWeapon.sheathed || (entity?.equipCountdown ?? 0) > 0 || _climbing) return;   // CLIMB4: no swing with the hands on the wall
       if (armCannotDraw()) return;   // BOW-CLOCK: nor a shot the Morrowind arm cannot draw yet
+      if (techniqueFlying()) return;   // AUDIT TECH1: nor a touch swing while a technique's leap or dash is in the air - its strike is the landing's
       const strike = playerWeapon.clickAttack();
       if (strike) fpAttack(strike);
     },
@@ -1589,14 +1590,17 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         cam: camNow?.pos && camNow?.feet ? { pos: camNow.pos, yaw: camNow.yaw ?? 0, pitch: camNow.pitch ?? 0, feet: camNow.feet } : null,
         collider: collider?.() ?? null,
         held: !!actionDown?.(TECHNIQUE_ACTION),
-        ready: !paralyzed && !!c && canAttack && !armLoosing && !!camNow?.pos && !!camNow?.feet,
+        ready: !paralyzed && !!c && canAttack && !armLoosing && !_heldHit && !!camNow?.pos && !!camNow?.feet,   // AUDIT TECH1: and no plain shot's hit still held for the arm (MW-D42) - the click path's own gate
         cancel: !!activateHeld(),
+        paralyzed: !!paralyzed,   // AUDIT TECH1: a held body's machine is frozen - and so is its technique's clock
+        blocked: !!technique?.blocked?.(),   // AUDIT TECH1: a window holds the world (the host's gamePaused) - and the key
         holding: !!_heldHit,   // MW-D42: a shot's hit held for the Morrowind arm's release - the loose is still to come
         startSwing: (s) => { if (!playerWeapon.techniqueStrike(s)) return false; fpAttack(s, dt); return true; },
         door: technique, say, noteShot: noteShotHere,
       };
       stepTechnique(dt, _techCtx);
-      const strike = !paralyzed && c && canAttack && !armLoosing
+      // AUDIT TECH1: no gesture while a technique's leap or dash is in the air - its strike is the landing's
+      const strike = !paralyzed && c && canAttack && !armLoosing && !techniqueFlying()
         ? playerWeapon.gesture(_dx, _dy, _held, dt, Math.max(c.clientWidth, c.clientHeight), { cancelHeld: activateHeld() })   // AUDIT 28 W12
         : null;
       if (strike) fpAttack(strike, dt);

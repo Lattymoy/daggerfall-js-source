@@ -42,9 +42,12 @@ through the doors a swing or a shot already goes through, in every host.
 5. **Off is DFU exactly** (Loot-II law 6). With the ladder off nothing rolls one, and a found line sleeps: the key says
    "Weapon techniques need the loot ladder, which is off." rather than doing nothing silently (Loot-II law 8, no dead
    lines).
-6. **Nothing it moves outruns the referee.** A leap or a dash flies at most `TECHNIQUE_MAX_SPEED` (16 m/s) along the
-   ground; a refereed room clips a body's step at 18 m/s (`net/siegeRef.js`). A Volley's six shafts fall over 0.85 s,
-   under the relay's ten hits a second on a puppet (`HIT_HZ_MAX`).
+6. **Nothing it moves outruns the referee.** A leap or a dash flies at most `TECHNIQUE_MAX_SPEED` (12 m/s) along the
+   ground, under every referee's step: the arena's 12.5 m/s pose to pose (`net/arenaLaw.js` `ARENA_SPEED_MAX`), the
+   siege's and the open zone's 18 (`net/siegeRef.js`). A Volley's six shafts fall 0.27 s apart, over 1.35 s - never
+   five in a second, so an arena's referee (four blows a second, `ARENA_HIT_HZ_MAX`) and the relay's puppets (ten,
+   `HIT_HZ_MAX`) land them all. (AUDIT TECH1: it was 16 m/s and 0.85 s, and an arena bout refused a Lunge's poses and
+   two of a Volley's six.)
 7. **Paid like a swing.** Fatigue through the host's own drain (its exhaustion law with it), arrows through
    `spendAmmoFor` - one a shaft - and the skill through `tallySwingSkills`, a tally a shaft; then the cooldown, in
    seconds of play.
@@ -58,7 +61,7 @@ a technique as they ride a click.
 
 | technique | family | does | x | to hit | fatigue | cooldown |
 | --- | --- | --- | --- | --- | --- | --- |
-| **Volley** | bows | aim a disc 6-28 m off; the bow looses and 6 real arrows fall on 3.5 m from above, 0.55 s after, over 0.85 s | 0.5 each | (the shot's) | 6 | 16 s |
+| **Volley** | bows | aim a disc 6-28 m off; the bow looses and 6 real arrows fall on 3.5 m from above, 0.55 s after, over 1.35 s | 0.5 each | (the shot's) | 6 | 16 s |
 | **Piercing Shot** | bows, the Thunderlock | aim a lane; one shot at 1.6x speed through up to 5 foes, each struck once | 1.2 | (the shot's) | 4 | 10 s |
 | **Leap Strike** | long blades | aim a foe (or the ground) 3-9 m off; leap onto it, StrikeDown on every foe within 2.5 m of the landing | 1.4 | +20 | 5 | 12 s |
 | **Whirlwind** | long blades | StrikeLeft on every foe within 3 m, all round | 1.0 | +15 | 5 | 10 s |
@@ -78,8 +81,10 @@ never a Volley of pellets. **Arrows and every ammunition** take none. The **bare
 its techniques ride DFU's **Gauntlets** (template 103, any material) worn while fighting unarmed - the one piece the
 fists are already dressed in. A werebeast's claws answer "The beast knows no technique."
 
-**Fatigue** is in the sheet's points, FATIGUE_MULTIPLIER (64) units each, the units a swing's own drain is billed in;
-`techniqueFatigue` never scales it (a technique's price is the price).
+**Fatigue** is in the sheet's points, FATIGUE_MULTIPLIER (64) of the entity's own units each (a plain swing's drain is
+eight units, an eighth of a point - `SWING_FATIGUE_COST`); `techniqueFatigue` never scales it (a technique's price is the
+price), and a technique never spends the last of a body: the key refuses while the price and the blow's own drain after
+it would leave nothing (exhaustion with a foe near is death - `systems/rest.js`).
 
 ## The line
 
@@ -110,7 +115,9 @@ existing seed draws what it drew. It comes from its own pass alone.
   Exalted's, a curse's - goes before it (`withLine`).
 - **The Reforge** turns a technique only into another of its family's (its pool is the technique alone) and makes
   nothing else one (the pools hold none); the **Hone** walks its value to its band's top; an **Exalted** Legendary's
-  own line stays the Reforge's (`reforgeableLines` steps back over a gem's line, then a technique's).
+  own line stays the Reforge's (`reforgeableLines` steps back over a gem's line, then a technique's). On a Legendary that
+  is not Exalted the technique's line is the find's alone - neither honed nor reforged, as the item law has it (`honed`
+  is an Exalted Legendary's) - though its card shows the Legendary band it was rolled in.
 - **The item law** (`systems/itemLaw.js`, `ITEM_LAW_VERSION` 2 - the account service's judge reads the same file, so
   `JUDGE_VERSION` moves with it): at most one technique line, of a technique the piece's family knows, the last of its
   own lines, its value in its tier's band. A Legendary's signature and extra-line counts are taken without it, as the
@@ -170,15 +177,24 @@ machine's own strike (`techniqueStrike` - machineAttack, the arm's fpAttack); th
 frame and goes when the machine is idle again. A **shot** starts the bow's StrikeDown; its hit frame is claimed as the
 loose (`claimShot`), and under the Morrowind arm, whose rig holds a bow's hit for the string's release (MW-D42), the act
 waits for it (`holding`) rather than giving up at idle - so a held loose can never leak a plain arrow. A **Piercing
-Shot** is one shaft along the look, leaving where a plain shot leaves. A **Volley** spends up to six arrows (as many as the quiver gives),
-and queues them to fall on the aimed disc from 16 m - or from under the ceiling indoors, at least 1.6 m - spread on a
-sunflower's spiral and coming in from the archer's side. A **flight** (leap, dash) launches the motor
+Shot** is one shaft along the look, leaving where a plain shot leaves. A **Volley** spends up to six arrows (as many as
+the quiver gives), and queues them to fall on the aimed disc from 16 m - or from under the ceiling indoors, at least
+1.6 m - spread on a sunflower's spiral and coming in from the archer's side, each pulled down its own line to start
+short of a beam, a wall or a ceiling over its point, and each carrying the bow that loosed it whatever is in hand when it
+falls. A **flight** (leap, dash) launches the motor
 (`player/motor.js` `techniqueLaunch`) on a ballistic arc to the aimed point (`launchTo`: a leap's apex 1.6 m, a
-Flying Kick's 1.2 m, a dash's 0.25 m, raised until the ground speed is under 16 m/s), and starts the strike so its hit
+Flying Kick's 1.2 m, a dash's 0.25 m - each at least 0.4 m over the landing - raised until the ground speed is under
+12 m/s; lowered, where a ceiling stands over the path, to the highest that fits, `flightApex`), and starts the strike so its hit
 lands WITH the body - when the time left in the air is the swing's own time to its hit, asked of the machine's
 schedule (`blowSchedule`). The collider stops the body; gravity lands it; the fall is a jump's (DFU's fall law measures
-the landing). Air control does not steer a technique's flight (`techFlight`). A Shadowstep turns the view on the foe
-before its strike (the door's `face`).
+the landing). Air control does not steer a technique's flight (`techFlight`), and no click starts a swing while it is in
+the air (`techniqueFlying` - the rig asks no gesture), so the landing's strike is never thrown away; at the strike the
+swing's own gate is asked again (sheathed, a spell readied, paralyzed, a weapon changed in the air: no blow). A
+Shadowstep turns the view on the foe from where the body lands behind it (the door's `face(point, from)`), and its blow
+is that foe's alone, all round within its reach (`blow.target`). A paralysis freezes a swing's or a shot's clock with the
+machine, so a long one never lets the hit it waits on leak as a plain shot. A window over the street (the outdoor
+doors' `blocked`, the host's `gamePaused`) holds the key, sets an aim aside unloosed and stops the clock; a building's and
+a dungeon's rigs are not stepped under one at all.
 
 **The aim** (`aimFor`): every look it casts meets the world through `rayHit` - the nearer of the collider's meshes and
 the terrain, marched along the look in quarter metres and halved down to the crossing (outdoors the ground is the
@@ -186,8 +202,12 @@ collider's `surfaceAt`/`heightAt`, never a mesh; indoors and underground the mes
 the look meets the ground within 28 m, refused under 6. A Leap Strike or
 a Flying Kick lands just in front of the foe under the look (its radius and 0.55 m short), or on the ground where the
 look meets it. A Shadowstep tries behind the foe, then each side, then in front - the first spot no wall stands between
-and a floor stands under. A Lunge runs to the first wall less 0.6 m. A landing more than 4 m below the feet or 2.5 m
-above them is refused - a body leaps down a little and up less.
+and a floor stands under. A Lunge runs to the first wall (or a rise it cannot run) less 0.6 m. A landing more than 4 m
+below the feet or 2.5 m above them is refused - a body leaps down a little and up less - and so is a flight with no room
+over its path ("No room to leap."). The foe a leap or a Shadowstep picks is never an ally, a companion or a foe at peace
+(friendly protection, `friendlyProtected`), and a body's radius is read where its stand-in keeps it (`bodyRadius`: a
+record's own, or a big body's `ai.radius`). The court's boss is not among the player door's foes, so a leap is aimed at
+the ground beside him - and its landing ring strikes him there.
 
 ## The blow
 
@@ -242,13 +262,22 @@ swing its techniques and say "Not here." for the rest; none of the four is such 
 ## Online
 
 - **The foes** are hit through the doors they already have: a live foe through the player door (`playerDoor.js`), a
-  puppet through its owner, a world boss through the relay's boss bucket and the referee's clip - nothing new crosses
-  the wire.
+  puppet through its owner, a world boss through the relay's boss bucket and the referee's clip - no new message. An
+  item record does carry a new kind of line: an older build reads a list holding a technique piece as from a newer
+  version (`loot.js` `validLootList`'s own message), and the account service's judge must know the law - so the item
+  law's version 2 moved `ACCOUNT_VERSION` to acct105, and a site deploy waits for that service (AUDIT TECH1; a law moved
+  without it ships the site first, and an honest technique piece reads as a forgery - a hold and a strike - in the gap).
+  `test/tech1_roster.test.js` holds each law version to the first service that carries it.
+- **What a referee clips, silently.** The arena's and the court's referees count a blow by its sequence: a Piercing
+  Shot that meets its bodies in different frames spends one each, so in a long fight its fifth can find the bucket
+  empty; a watchman's owner measures a melee blow from the striker's pose (`WEAPON_REACH` and a leap's slack), so a
+  Lunge's far end can pass a watchman it ran by. Nothing records a strike for either - the number is not dealt.
 - **A peer sees** what a plain swing or shot shows: the body leaping or dashing (the motor's own flight, on the pose
   stream), the swing (`swingN`), the shot (`noteShot`, once for a Volley's loose).
-- **Never at a player** (law 3): a duel, an arena bout between players and any other `sigilDueling()` room refuse the
-  key; a body marked `duel` (a duel's, a siege's, the open zone's) and an arena rival's stand-in take a plain swing's
-  test and number and are passed by a technique's shaft.
+- **Never at a player** (law 3): a duel and an arena bout between players (`sigilDueling()`) refuse the key; in a siege,
+  the Royal Tourney and the open zone it works against the room's other foes, and every player's body there - marked
+  `duel`, or an arena rival's stand-in, `rival` - takes a plain swing's test and number and is passed by a technique's
+  shaft. A leap's flight stays under those rooms' 18 m/s; the Royal ring pulls back a contender who leaps out of it.
 - **The referee** (law 6): the speed cap and the hit rate are under the relay's.
 
 ## What it does not do (TECH2's)
@@ -260,6 +289,53 @@ swing its techniques and say "Not here." for the rest; none of the four is such 
 - **The classic HUD has no chip**: the message line says a refusal and a technique ready again.
 - **No spell has one**, and no armour but the Gauntlets carries one. (A Staff is a blunt weapon by its skill, and rolls
   the blunt techniques.)
+
+## AUDIT TECH1 (2026-10-10, the owner: "Audit this and ensure perfection")
+
+Four lanes read the change against the running game, not its tests - the hosts' wiring and units, the online
+referees and the services, the item's every path, the runner's own logic - and one finding came from the first read of
+the real collider. What they found, and what was done:
+
+| finding | severity | done |
+| --- | --- | --- |
+| The outdoor ground was invisible to every aim: `raycast` meets meshes alone, and outdoors the ground is the collider's terrain sampler - a Volley outdoors, a ground leap, answered "Out of reach" (the tests' fake collider let its ray meet the ground) | blocker | `rayHit` marches the terrain; THE GROUND OUTDOORS on the real Collider |
+| `ACCOUNT_VERSION` did not move with the item law: a site deploy could ship before the judge that knows a technique line, and an honest piece read as a forgery (a hold, a strike) | blocker | acct105; the law-to-service pin (`test/tech1_roster.test.js`) |
+| Shadowstep turned the view from mid-dash, so the body landed behind the foe looking away, and its 'view' blow struck nothing - its price paid; its `target` was read by nothing | major | the turn from the landing (`face(point, from)`); a target's blow is the target's alone |
+| A leap under a ceiling turned back at it and landed metres short (2.8 m: a 9 m leap came down at 3.75 m) | major | `flightApex` lowers the apex to fit, or refuses with "No room to leap." |
+| A click in the air (or the touch Attack button) started a plain swing, and the landing's strike had no machine to start on | major | no gesture and no touch swing while `techniqueFlying()` |
+| An all-round reach widened DFU's protected fallback (the look ray's stand-in) to the whole ring: a foe at peace behind, an ally beside, struck | major | a protected foe only on the plain look; the pick skips allies, companions, foes at peace |
+| The street's rig steps under a window, and the mouse's side button reaches `keys` there: a press behind a talk window or the pack ran the technique in the street | major | the outdoor doors' `blocked` (`gamePaused`) holds the key, the aim and the clock |
+| An arena bout: a Lunge or a Shadowstep past the referee's 12.5 m/s, and two of a Volley's six past its four blows a second | major | 12 m/s; 0.27 s a shaft |
+| A long paralysis mid-shot gave up the act and let the frozen hit loose a plain arrow | minor | the clock stops with the machine |
+| The leap's strike skipped the swing's gate (sheathed, a spell, a bow swapped in) | minor | asked again at the strike |
+| A Morrowind arm's held plain hit could be claimed as a technique's loose | minor | `!_heldHit` in the gate |
+| A Volley's shafts took the weapon in hand when they fell, and could be born inside a wall or over a beam | minor | the loosing bow carried; each shaft pulled into the open |
+| A big body's radius read from the wrong field (`ai.radius`) | minor | `bodyRadius` |
+| The open water let a leap launch; a technique could spend the last of a body; a load kept the moment before it - the cooldowns, a held aim, a flight or a volley in the air (the player's entity is one object, refilled in place, so a new character is a load too) | minor | refused; price plus the blow's drain; the state starts fresh at each load (`systems/save.js` `restoresSoFar`, the count every load passes) |
+| An area technique outdoors met the watch's pool only (a struck watchman kept it from the bandits in the ring) | minor | every pool is offered a technique's blow, one token |
+| A Roleplay & Realism weapon lost its family with its mod's switch off - its line a forgery to the law, its Reforge refused | minor (offline) | the family from the class table |
+| An unidentified piece's technique was named by the chip and the lines its card hides; "One sure blow" contradicted law 1; the Gauntlets' line said nothing of bare hands; a chat post spent its length on the detail line | minor | "Your technique"; "One heavy blow, +30 to hit"; "Bare-handed"; the detail stays on the card |
+
+**Left as they are, and why.** A Piercing Shot in an arena or the court is counted a blow per body it meets in a later
+frame (a pinned line of the dungeon lane gives each its sequence; its fifth may find the bucket empty - nothing is
+recorded against the player); a Lunge's far end can pass a watchman measured from the striker's pose; two overlapping
+gate bodies where the first was struck by a piercing shaft let it fly past the second (both lines pinned by other arcs);
+the reforge window shows a technique's label, not its brief (the card does). A finding outside this change, recorded
+for its own slice: `test/importGraph.mjs` strips block comments before line comments, and two line comments carrying a
+stray `/*` hide nine files the account Worker bundles from the deploy filter's walk (`systems/loot.js`,
+`systems/artifactEffects.js` - pre-existing; the walk sees every TECH1 file). The corpse kit's callers that draw after
+it (the street's sigil stamps and death rolls) draw later in their stream by the technique pass's draws, as the socket
+pass already made them - the kit's own pieces are what they were (law 9).
+
+**Tests** `test/tech1_audit.test.js` (11) - one a finding, on the real classes; the outdoor ground in
+`test/tech1_runner.test.js` THE GROUND OUTDOORS. **Mutants** 39 audit records in `tools/mutants/tech1.json`, all dead (the
+first run left the walled shaft alive: its test's flat ceiling was the one the middle's ray already saw - a beam over
+part of the disc kills it). `TECH1-the-cap-past-the-referee` (16 m/s raised past the siege's 18) is retired: the cap is 12
+now, and `TECH1-AUDIT-the-run-past-the-arena` (12 raised to 16) is the stricter record on the same line. Re-aimed by content, their laws unchanged: `fb1009g_bowclock.json` (the gesture's gate
+carries the flight's), `gatekeys.json` and `fb1004d_knight_house.json` (acct105), and this list's own `TECH1-the-turn-unmade`
+(the turn now takes the landing point). One pin moved, marked `PIN MOVED (AUDIT TECH1)`: `test/mwattackclip.test.js`
+MW-D12 reads the gesture's gate with the flight's term (no line around it could carry the term without breaking the
+pin's own shape).
 
 ## The Test Room
 
@@ -287,7 +363,7 @@ Gauntlets' Flying Kick and Haymaker) - every technique a press away.
 - `test/honestItems.mjs` - the honest-producers sweep forces a technique on every weapon and Gauntlets through every
   producer (a technique, then an Exalted, a curse, a hone and a reforge after it), saved and sent over the wire, and the
   item law finds nothing.
-- Mutants `tools/mutants/tech1.json` (70, all dead). The first run left five alive, and each was a gap: a Legendary's
+- Mutants `tools/mutants/tech1.json` (70 at TECH1, all dead; AUDIT TECH1 retired one and added 39 - 108). The first run left five alive, and each was a gap: a Legendary's
   band on the card, a door crossed mid-aim, a shaft's tally, the release's second asking (four pins added), and an
   ammunition check that could never change an answer (an arrow and a pellet swing with no skill), deleted.
 

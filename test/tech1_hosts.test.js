@@ -45,7 +45,11 @@ test('TECH1 THE RIG: the one runner stepped AHEAD of the gesture on the swing\'s
   const gesture = rig.indexOf('? playerWeapon.gesture(_dx, _dy, _held, dt');
   assert.ok(step > 0 && gesture > step, 'the technique first: a click\'s strike and a technique\'s are one machine');
   assert.match(rig, /held: !!actionDown\?\.\(TECHNIQUE_ACTION\)/);
-  assert.match(rig, /ready: !paralyzed && !!c && canAttack && !armLoosing && !!camNow\?\.pos && !!camNow\?\.feet/);
+  assert.match(rig, /ready: !paralyzed && !!c && canAttack && !armLoosing && !_heldHit && !!camNow\?\.pos && !!camNow\?\.feet/, 'AUDIT TECH1: and no plain shot\'s hit held for the arm');
+  assert.match(rig, /paralyzed: !!paralyzed,/, 'AUDIT TECH1: a held body\'s clock stops');
+  assert.match(rig, /blocked: !!technique\?\.blocked\?\.\(\),/, 'AUDIT TECH1: a window holds the key');
+  assert.match(rig, /const strike = !paralyzed && c && canAttack && !armLoosing && !techniqueFlying\(\)\s*\? playerWeapon\.gesture\(/, 'AUDIT TECH1: no gesture while a leap or a dash is in the air');
+  assert.match(rig, /if \(techniqueFlying\(\)\) return;[^\n]*\n\s*const strike = playerWeapon\.clickAttack\(\);/, 'AUDIT TECH1: nor the touch button\'s swing');
   assert.match(rig, /startSwing: \(s\) => \{ if \(!playerWeapon\.techniqueStrike\(s\)\) return false; fpAttack\(s, dt\); return true; \}/);
   assert.match(rig, /return claimShot\(held\.evs, _techCtx\);/);
   assert.match(rig, /holding: !!_heldHit,/, 'a Morrowind arm\'s held hit is a loose still to come (MW-D42)');
@@ -57,7 +61,7 @@ test('TECH1 THE FOUR HOSTS: exterior.js, world.js, worldModes.js\' interior arm 
     'src/scenes/exterior.js': { open: 'const weaponRig = createWeaponRig({', lane: 'arrows.fire(', drain: 'drainExteriorFatigue(n)' },
     'src/scenes/world.js': { open: 'const weaponRig = createWeaponRig({', lane: 'arrows.fire(', drain: 'drainExteriorFatigue(n)' },
     'src/scenes/worldModes.js': { open: 'const interiorWeapon = createWeaponRig({', lane: 'interiorArrows.fire(', drain: 'drainInteriorFatigue(n)' },
-    'src/scenes/dungeonContext.js': { open: 'const weaponRig = createWeaponRig({', lane: 'fireArrow(from, dir, playerWeapon.weapon, true', drain: 'drainFatigue(n)' },
+    'src/scenes/dungeonContext.js': { open: 'const weaponRig = createWeaponRig({', lane: 'fireArrow(from, dir, o?.weapon ?? playerWeapon.weapon, true', drain: 'drainFatigue(n)' },
   };
   for (const [file, h] of Object.entries(hosts)) {
     const src = code(file);
@@ -67,6 +71,8 @@ test('TECH1 THE FOUR HOSTS: exterior.js, world.js, worldModes.js\' interior arm 
     assert.ok(bag.includes(h.lane), `${file}: its own lane`);
     assert.ok(bag.includes(h.drain), `${file}: its own fatigue door`);
     assert.match(bag, /o\?\.sky \? \{ world: \[\.\.\.from\] \}/, `${file}: a Volley's shaft from the sky's own point`);
+    assert.match(bag, /o\?\.weapon \?\? (?:weaponRig|interiorWeapon)?\.?playerWeapon\.weapon/, `${file}: AUDIT TECH1: the bow that loosed it`);
+    assert.match(bag, /face: \(p, from\) =>/, `${file}: AUDIT TECH1: the turn from where the body lands`);
   }
   // the ground pass: every host that draws a foe's wind-up draws the player's marks with it
   for (const file of ['src/scenes/exterior.js', 'src/scenes/world.js', 'src/scenes/worldModes.js', 'src/scenes/dungeon.js']) {
@@ -79,9 +85,16 @@ test('TECH1 THE FOUR HOSTS: exterior.js, world.js, worldModes.js\' interior arm 
   // the pass draws a mark at its own size: its quad and its numbers set over its kind's, after the kind's own
   const pass = code('src/render/foeTelegraph.js');
   assert.match(pass, /else gl\.uniform4f\(U\.uP, P\.r, P\.ahead, 0, 0\);\s*if \(b\.technique\) \{\s*gl\.uniform1f\(U\.uHalf, techniqueQuadHalf\(b\)\);\s*gl\.uniform4f\(U\.uP, \.\.\.techniqueUniform\(b\)\);\s*\}/);
+  // AUDIT TECH1: an area technique's blow is offered every pool it reaches - the watch's taking it no longer keeps it from
+  // the encounter foes in its ring (the street's two hosts, a building's)
+  assert.match(code('src/scenes/world.js'), /\} else if \(weaponRig\.playerWeapon\.techniqueBlow\) \{\s*if \(exteriorFoes\.resolvePlayerHit\(weaponRig\.playerWeapon, cam\.pos, lookFwd, player\.pos, makeInView\(proj, view, multiply\), guardHitSound, \{ swing \}\)\) surfacePlayer\(\);/);
+  assert.match(code('src/scenes/exterior.js'), /\} else if \(weaponRig\.playerWeapon\.techniqueBlow\) \{\s*if \(exteriorFoes\.resolvePlayerHit\(weaponRig\.playerWeapon, eye, fwd, player\.pos, makeInView\(proj, view, multiply\), guardHitSound, \{ swing \}\)\) surfacePlayer\(\);/);
+  assert.match(code('src/scenes/worldModes.js'), /if \(interiorWeapon\.playerWeapon\.techniqueBlow\) interiorFoes\?\.resolvePlayerHit\(interiorWeapon\.playerWeapon, cam\.pos, eyeDir\(\), player\.pos, makeInView\(proj, view, multiply\), interiorHitSound, \{ swing \}\);\s*continue;/);
   // the dungeon's outer hosts hand it their motor and view
-  assert.match(code('src/scenes/dungeonContext.js'), /motor: \(\) => opts\.technique\?\.motor\?\.\(\) \?\? null,\s*face: \(p\) => opts\.technique\?\.face\?\.\(p\),/);
-  assert.match(code('src/scenes/worldModes.js'), /technique: \{ motor: \(\) => player, face: \(p\) => \{ if \(Array\.isArray\(p\)\) cam\.yaw = Math\.atan2\(p\[0\] - player\.pos\[0\], p\[2\] - player\.pos\[2\]\); \} \},/);
+  assert.match(code('src/scenes/dungeonContext.js'), /motor: \(\) => opts\.technique\?\.motor\?\.\(\) \?\? null,\s*face: \(p, from\) => opts\.technique\?\.face\?\.\(p, from\),/);
+  assert.match(code('src/scenes/worldModes.js'), /technique: \{ motor: \(\) => player, face: \(p, from\) => \{ if \(!Array\.isArray\(p\)\) return; const o = Array\.isArray\(from\) \? from : player\.pos; cam\.yaw = Math\.atan2\(p\[0\] - o\[0\], p\[2\] - o\[2\]\); \} \},/);
+  // AUDIT TECH1: the outdoor hosts hold the key under a window (their rig steps under one; the interior's and the dungeon's do not)
+  for (const file of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.match(rigBag(code(file), 'const weaponRig = createWeaponRig({'), /blocked: \(\) => gamePaused\(\),/, file);
   assert.match(code('src/scenes/dungeon.js'), /technique: \{ motor: \(\) => _motorRef, face:/);
   // the dungeon's lane meets a technique's shaft: struck once each, a piercing shot on through, a rival passed by
   const dc = code('src/scenes/dungeonContext.js');

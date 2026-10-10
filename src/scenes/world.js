@@ -11096,9 +11096,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // modes hand their own rigs their own doors (worldModes.js).
     technique: {
       motor: () => player,
-      fireArrow: (from, dir, o) => arrows.fire(from, dir, { fromPlayer: true, weapon: weaponRig.playerWeapon.weapon, muzzle: o?.sky ? { world: [...from] } : weaponRig.thunderlockMuzzle(fieldOfView()), technique: o?.technique ?? null, ...(o?.speedScale ? { speedScale: o.speedScale } : {}) }),
+      fireArrow: (from, dir, o) => arrows.fire(from, dir, { fromPlayer: true, weapon: o?.weapon ?? weaponRig.playerWeapon.weapon, muzzle: o?.sky ? { world: [...from] } : weaponRig.thunderlockMuzzle(fieldOfView()), technique: o?.technique ?? null, ...(o?.speedScale ? { speedScale: o.speedScale } : {}) }),
       drainFatigue: (n) => drainExteriorFatigue(n),
-      face: (p) => { if (!Array.isArray(p)) return; cam.yaw = Math.atan2(p[0] - player.pos[0], p[2] - player.pos[2]); lookFilter.settle(); },
+      face: (p, from) => { if (!Array.isArray(p)) return; const o = Array.isArray(from) ? from : player.pos; cam.yaw = Math.atan2(p[0] - o[0], p[2] - o[2]); lookFilter.settle(); },   // AUDIT TECH1: from where the body lands
+      blocked: () => gamePaused(),   // AUDIT TECH1: a window holds the world - and the technique's key (the mouse's side button reaches `keys` under any window)
     },
   });
   // PROF1/PROF2 (bible/06-Systems/Professions-Arc.md 22, 23): THE GATHERING PROFESSIONS IN THE STREAMING WORLD - the day's
@@ -33663,6 +33664,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
             // AUDIT 29g: a swing that stopped on a spared body (r.spared) met someone - no door behind him is bashed
             else if (r?.spared || !modes?.attemptExteriorDoorBash?.(cam.pos, lookFwd)) audio.playOneShot(swingSoundFor(weaponRig.playerWeapon.weapon), 1.1);
           }).catch((e) => console.error('[civil]', e));
+        } else if (weaponRig.playerWeapon.techniqueBlow) {
+          // TECH1 (AUDIT): the watch took the swing - and a technique's blow strikes all it reaches, so the encounter foes
+          // in its ring are offered it too (one swing: the watch's pool already tallied it and rolled its grunt - `swing`)
+          if (exteriorFoes.resolvePlayerHit(weaponRig.playerWeapon, cam.pos, lookFwd, player.pos, makeInView(proj, view, multiply), guardHitSound, { swing })) surfacePlayer();
         }
       }
     }

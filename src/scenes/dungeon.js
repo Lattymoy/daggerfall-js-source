@@ -157,7 +157,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height, fallFrom: _motorRef.falling ? _motorRef.fallStart : null } : null),   // AUDIT SD III (D1): the fall under way, for the walked trail
       // TECH1 (bible/05-Combat/Weapon-Techniques.md): the weapon technique's door - this host's motor (late-bound, as the pose
       // is) and its view turned on a foe; the context lands its own shafts and drains its own fatigue
-      technique: { motor: () => _motorRef, face: (p) => { if (_poseCam && _motorRef && Array.isArray(p)) _poseCam.yaw = Math.atan2(p[0] - _motorRef.pos[0], p[2] - _motorRef.pos[2]); } },
+      technique: { motor: () => _motorRef, face: (p, from) => { if (!_poseCam || !_motorRef || !Array.isArray(p)) return; const o = Array.isArray(from) ? from : _motorRef.pos; _poseCam.yaw = Math.atan2(p[0] - o[0], p[2] - o[2]); } },   // AUDIT TECH1: from where the body lands
       placePlayer: placeLoadedPlayer,   // DIAL-LOAD: the host's load law, for every load the context runs - not routeKey's alone
       // MAC1 J: this host's canvas, for the pause door's relock. The
       // context owns none of its own (dungeonContext.js:"(dungeon.js's tail)"), so each

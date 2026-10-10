@@ -1711,9 +1711,9 @@ export function createWorldModes(host) {
     // body, every mode), this arm's own arrow lane, its fatigue door (its collapse law), the view turned on a foe
     technique: {
       motor: () => player,
-      fireArrow: (from, dir, o) => interiorArrows.fire(from, dir, { fromPlayer: true, weapon: interiorWeapon.playerWeapon.weapon, muzzle: o?.sky ? { world: [...from] } : interiorWeapon.thunderlockMuzzle(fieldOfView()), technique: o?.technique ?? null, ...(o?.speedScale ? { speedScale: o.speedScale } : {}) }),
+      fireArrow: (from, dir, o) => interiorArrows.fire(from, dir, { fromPlayer: true, weapon: o?.weapon ?? interiorWeapon.playerWeapon.weapon, muzzle: o?.sky ? { world: [...from] } : interiorWeapon.thunderlockMuzzle(fieldOfView()), technique: o?.technique ?? null, ...(o?.speedScale ? { speedScale: o.speedScale } : {}) }),
       drainFatigue: (n) => drainInteriorFatigue(n),
-      face: (p) => { if (Array.isArray(p)) cam.yaw = Math.atan2(p[0] - player.pos[0], p[2] - player.pos[2]); },
+      face: (p, from) => { if (!Array.isArray(p)) return; const o = Array.isArray(from) ? from : player.pos; cam.yaw = Math.atan2(p[0] - o[0], p[2] - o[2]); },   // AUDIT TECH1: from where the body lands
     },
   });
   // C13: the interior arrow flights (collider late-resolved - each
@@ -9220,7 +9220,7 @@ export function createWorldModes(host) {
           motorState: () => ({ eyeLevel: player.eye[1] - player.pos[1], capsule: player.height, fallFrom: player.falling ? player.fallStart : null }),   // AUDIT SD III (D1): and the fall under way - where it began - for the walked trail
           // TECH1 (bible/05-Combat/Weapon-Techniques.md): the weapon technique's door underground - the street's motor (the
           // dungeon's rig lands its own shafts and drains its own fatigue - dungeonContext.js) and the view turned on a foe
-          technique: { motor: () => player, face: (p) => { if (Array.isArray(p)) cam.yaw = Math.atan2(p[0] - player.pos[0], p[2] - player.pos[2]); } },
+          technique: { motor: () => player, face: (p, from) => { if (!Array.isArray(p)) return; const o = Array.isArray(from) ? from : player.pos; cam.yaw = Math.atan2(p[0] - o[0], p[2] - o[2]); } },   // AUDIT TECH1: from where the body lands
           playerSpare: () => host.arenaPlayerSpare?.() ?? null,   // ARENA2: a blow taken in my bout on the sand leaves me at 1 (the duel's spare)
           makeArenaWindow: (page) => host.makeArenaWindow?.(page) ?? null, arenaJoined: () => !!host.arenaJoined?.(),   // ARENA3: the pause window's Arena door underground (the undercroft too)
           // AUDIT 26 F222/F223/F101: the host's half of the pose -
@@ -10685,6 +10685,8 @@ export function createWorldModes(host) {
       const swing = {};   // AUDIT DISC19: one swing, one attack grunt - the two pools rolled one each
       if (interiorGuards?.resolvePlayerHit(interiorWeapon.playerWeapon, cam.pos, eyeDir(), player.pos,
         makeInView(proj, view, multiply), interiorHitSound, { swing })) {
+        // TECH1 (AUDIT): a technique's blow strikes all it reaches - the building's foes in its ring are offered it too
+        if (interiorWeapon.playerWeapon.techniqueBlow) interiorFoes?.resolvePlayerHit(interiorWeapon.playerWeapon, cam.pos, eyeDir(), player.pos, makeInView(proj, view, multiply), interiorHitSound, { swing });
         continue;   // resolvePlayerHit runs DFU's tally arm itself (AUDIT 23 combat-4)
       }
       if (interiorFoes?.resolvePlayerHit(interiorWeapon.playerWeapon, cam.pos, eyeDir(), player.pos,

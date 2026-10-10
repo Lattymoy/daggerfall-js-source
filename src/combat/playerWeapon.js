@@ -692,7 +692,9 @@ export class PlayerWeapon {
       const sight = canSee(foe);
       const { dist, inView, losClear } = sight;
       if (!(techOn(foe) ? blowReaches(tb, foe, sight) : playerMeleeCanHit(dist, inView, losClear))) continue;
-      if (friendlyProtected(foe, protection === undefined ? {} : { protection })) { protectedInReach.push({ foe, dist }); continue; }
+      // AUDIT TECH1: the fallback below stands in for DFU's look ray (the first collider it meets) - a technique's
+      // all-round reach never widens it, so an ally or a foe at peace is struck only where a plain swing would strike it
+      if (friendlyProtected(foe, protection === undefined ? {} : { protection })) { if (!techOn(foe) || playerMeleeCanHit(dist, inView, losClear)) protectedInReach.push({ foe, dist }); continue; }
       if (tb?.single && techOn(foe)) { singles.push({ foe, dist }); continue; }   // TECH1: the one blow waits for the nearest
       strike(foe);
     }

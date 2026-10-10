@@ -1926,6 +1926,8 @@ registerWeaponDamageMod(LOOT_RARITY_FOLD, affixWeaponDamage);
  *  unenchanted item is always identified. Kept local so this leaf
  *  stays importable from the formulas without a cycle. */
 const identified = (item) => !enchanted(item) || item?.isIdentified === true;
+/** TECH1 (AUDIT): whether a piece is known as its card reads it - the technique key says no more than the card. */
+export const rarityKnown = (item) => identified(item);
 
 /** The tier line and the affix lines a tooltip or a card shows, in
  *  order: "Rare", then each affix, then the DFU enchantment's name.

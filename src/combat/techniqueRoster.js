@@ -20,6 +20,7 @@
 import { weaponSkillUsed } from '../characters/weapons.js';
 import { THUNDERLOCK_TEMPLATE } from '../characters/thunderlockIds.js';
 import { SKILLS } from '../systems/skills.js';
+import { RRI_CLASSES } from '../systems/rriItems.js';   // AUDIT TECH1: an RRI class answers its family whatever its switch says
 
 /** DFU's Gauntlets (ItemEnums.Armor.Gauntlets) - the one piece a bare-handed fighter's technique rides. */
 export const GAUNTLETS_TEMPLATE = 103;
@@ -40,7 +41,11 @@ export function techniqueFamily(item) {
   if (item.group === 'Armor') return item.templateIndex === GAUNTLETS_TEMPLATE ? 'handToHand' : null;
   if (item.group !== 'Weapons' || !Number.isInteger(item.templateIndex)) return null;
   if (item.templateIndex === THUNDERLOCK_TEMPLATE) return 'thunderlock';
-  return FAMILY_OF_SKILL.get(weaponSkillUsed(item.templateIndex) ?? -1) ?? null;
+  // AUDIT TECH1: a Roleplay & Realism class is its class with its switch off too - the piece in the pack is still that
+  // weapon, and a family that came and went with a mod's switch made its line read as a forgery and its Reforge refuse
+  const rri = RRI_CLASSES[item.templateIndex];
+  const skill = weaponSkillUsed(item.templateIndex) ?? (rri?.group === 'Weapons' && rri.weaponSkillUsed ? SKILLS[rri.weaponSkillUsed] : null);
+  return FAMILY_OF_SKILL.get(skill ?? -1) ?? null;
 }
 
 /** THE POWER BANDS - the line's value, `+N%` on the technique's own multiplier, per rolled tier ([min, max]
@@ -77,13 +82,15 @@ export const techniqueMult = (base, value) => base * (1 + Math.max(0, value | 0)
 //             what it reached or passed
 //   swing   - one strike, its reach and arc the technique's: all around (`arc` 'all'), a half-angle (radians) about
 //             the look, or DFU's own camera view ('view'); `single` the nearest foe alone
-// Speeds never pass TECHNIQUE_MAX_SPEED: a refereed room caps a body's step at 18 m/s (net/siegeRef.js), and a
-// technique moves no body faster than the relay will believe.
-export const TECHNIQUE_MAX_SPEED = 16;
+// Speeds never pass TECHNIQUE_MAX_SPEED: a technique moves no body faster than any room's referee believes - the
+// arena's 12.5 m/s on the level, measured pose to pose with half a metre of slack (net/arenaLaw.js ARENA_SPEED_MAX; AUDIT
+// TECH1: it was 16, and a Lunge or a Shadowstep in an arena bout was refused a pose and its landing measured from the
+// stale one), the siege's and the open zone's 18 (net/siegeRef.js).
+export const TECHNIQUE_MAX_SPEED = 12;
 const DEG = Math.PI / 180;
 export const TECHNIQUES = Object.freeze({
   volley: Object.freeze({ name: 'Volley', families: Object.freeze(['archery']), mech: 'rain', aim: 'ground', base: 0.5, fatigue: 6, cooldown: 16,
-    arrows: 6, radius: 3.5, range: Object.freeze([6, 28]), height: 16, delay: 0.55, spread: 0.85 }),
+    arrows: 6, radius: 3.5, range: Object.freeze([6, 28]), height: 16, delay: 0.55, spread: 1.35 }),   // AUDIT TECH1: 0.27 s a shaft - never five in a second (an arena's referee lands four: net/arenaLaw.js ARENA_HIT_HZ_MAX)
   pierce: Object.freeze({ name: 'Piercing Shot', families: Object.freeze(['archery', 'thunderlock']), mech: 'pierce', aim: 'lane', base: 1.2, fatigue: 4, cooldown: 10,
     through: 5, length: 30, speed: 1.6 }),
   leap: Object.freeze({ name: 'Leap Strike', families: Object.freeze(['longBlade']), mech: 'leap', aim: 'target', base: 1.4, fatigue: 5, cooldown: 12,
@@ -131,13 +138,15 @@ export function techniqueBrief(id, value) {
     switch (id) {
       case 'volley': return `Aim: ${t.arrows} arrows rain on ${t.radius} m, ${pct(m)} each`;
       case 'pierce': return `Aim: a shot through ${t.through} foes, ${pct(m)} each`;
-      case 'leap': case 'kick': return `Aim: leap ${t.range[1]} m, strike all in ${t.radius} m, ${pct(m)}`;
+      case 'leap': return `Aim: leap ${t.range[1]} m, strike all in ${t.radius} m, ${pct(m)}`;
+      case 'kick': return `Bare-handed, aim: leap ${t.range[1]} m, strike all in ${t.radius} m, ${pct(m)}`;   // AUDIT TECH1: the Gauntlets' - say they sleep with a weapon drawn
       case 'shadowstep': return `Aim a foe: dash behind it and strike, ${pct(m)}`;
       case 'lunge': return `Dash ${t.length} m, striking all you pass, ${pct(m)}`;
       case 'whirlwind': case 'slam': return `Strike all within ${t.reach} m, ${pct(m)}`;
       case 'cleave': return `Strike all in a wide arc, ${pct(m)}`;
       case 'execute': return `Strike for ${pct(m)}, to ${pct(m + (t.wounded ?? 0))} on the wounded`;
-      case 'crush': case 'haymaker': return `One sure blow, ${pct(m)}`;
+      case 'crush': return `One heavy blow, ${pct(m)}, +${t.toHit} to hit`;   // AUDIT TECH1: never 'sure' - a miss is still a miss (law 1)
+      case 'haymaker': return `Bare-handed: one heavy blow, ${pct(m)}, +${t.toHit} to hit`;
       default: return `${pct(m)}`;
     }
   })();

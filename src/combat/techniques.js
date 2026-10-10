@@ -28,17 +28,18 @@
 // A host that hands none still swings its techniques; it cannot leap, dash or shoot one (said so).
 
 import { techniqueById, techniqueMult, TECHNIQUE_MAX_SPEED } from './techniqueRoster.js';
-import { techniqueLineOf, lootRarityOn } from '../systems/lootRarity.js';
+import { techniqueLineOf, lootRarityOn, rarityKnown } from '../systems/lootRarity.js';
 import { EQUIP_SLOTS } from '../systems/equip.js';
 import { sigilDueling } from '../systems/sigil.js';
 import { FATIGUE_MULTIPLIER } from '../systems/statMods.js';
 import { spendAmmoFor, ammoCountFor } from '../systems/inventory.js';
-import { tallySwingSkills } from '../scenes/hostCombat.js';
+import { tallySwingSkills, SWING_FATIGUE_COST } from '../scenes/hostCombat.js';
 import { playerDoor } from '../systems/playerDoor.js';
 import { GRAVITY } from '../player/motor.js';
+import { restoresSoFar } from '../systems/save.js';   // AUDIT TECH1: every load passes the one door (PORTAL1's count)
 import { blowSchedule } from '../characters/weaponStates.js';
-import { WEAPON_REACH } from './playerWeapon.js';
-import { playerBody, TECH_BODY_RADIUS } from './techniqueBlow.js';
+import { WEAPON_REACH, friendlyProtected } from './playerWeapon.js';
+import { playerBody, bodyRadius } from './techniqueBlow.js';
 
 /** The registry action (systems/inputActions.js). */
 export const TECHNIQUE_ACTION = 'WeaponTechnique';
@@ -63,6 +64,11 @@ export const NO_FOE_TEXT = 'No foe there.';
 export const CANNOT_LEAP_TEXT = 'You cannot leap from here.';
 export const NOT_HERE_TEXT = 'Not here.';
 export const BEAST_TEXT = 'The beast knows no technique.';
+export const GAUNTLETS_TEXT = 'Your gauntlets\' technique is for bare hands.';
+export const NO_ROOM_TEXT = 'No room to leap.';
+/** AUDIT TECH1: what a technique is called before its piece is known - an unidentified Rare's card names no line, and the
+ *  key, the chip and the lines say no more than the card (DFU's IsIdentified). The technique works all the same. */
+export const UNKNOWN_TECHNIQUE = 'Your technique';
 export const notReadyText = (name, s) => `${name} is not ready (${s}s).`;
 export const readyAgainText = (name) => `${name} is ready again.`;
 
@@ -80,6 +86,9 @@ const fresh = () => ({
   owner: null,
   /** the last say door handed in */
   say: null,
+  /** the loads it has seen (AUDIT TECH1: a load starts it fresh - systems/save.js restoresSoFar, the count every load
+   *  moves; the player's entity is one object for the page's life, refilled in place) */
+  restores: null,
 });
 let _s = fresh();
 
@@ -97,8 +106,10 @@ export function techniqueInHand(entity, pw) {
   const item = techniqueItem(entity, pw);
   const line = techniqueLineOf(item);
   const tech = line ? techniqueById(line.param) : null;
-  return tech ? { id: line.param, value: line.value, tech, item } : null;
+  return tech ? { id: line.param, value: line.value, tech, item, known: rarityKnown(item) } : null;
 }
+/** The name a technique is said by: its own once its piece is known, else UNKNOWN_TECHNIQUE (AUDIT TECH1). */
+export const techniqueName = (hand) => (hand?.known === false ? UNKNOWN_TECHNIQUE : hand?.tech?.name ?? UNKNOWN_TECHNIQUE);
 /** Seconds left on a technique's cooldown (0 ready). */
 export const techniqueWait = (id) => Math.max(0, _s.wait.get(id) ?? 0);
 /** The fatigue a technique costs, in the entity's own units (the sheet's points x FATIGUE_MULTIPLIER). A technique is a
@@ -194,7 +205,7 @@ export function groundAim(eye, look, feet, collider, range) {
 export function foeUnderLook(eye, look, range, collider, foes = playerDoor()?.foes?.() ?? []) {
   let best = null, score = Infinity;
   for (const f of foes) {
-    if (!f || f.dead || !f.ai?.feet || playerBody(f)) continue;
+    if (!f || f.dead || !f.ai?.feet || playerBody(f) || f.companion != null || friendlyProtected(f)) continue;   // AUDIT TECH1: never an ally, a companion, a foe at peace
     const c = [f.ai.feet[0], f.ai.feet[1] + (f.ai.height ?? 1.8) * 0.5, f.ai.feet[2]];
     const v = [c[0] - eye[0], c[1] - eye[1], c[2] - eye[2]];
     const dist = Math.hypot(v[0], v[1], v[2]);
@@ -253,16 +264,52 @@ export function swingBlow(id, value, cam, extra = {}) {
   };
 }
 
+/** A dash's own apex: a low hop (raised by launchTo while the run would pass TECHNIQUE_MAX_SPEED). */
+export const DASH_APEX = 0.25;
+/** Whether a flight's arc keeps the body's top (`bodyH` over the feet) under whatever stands over its path - sampled along
+ *  the arc, a ray up from inside the body at each sample. */
+function flightFits(from, fl, bodyH, collider) {
+  for (let i = 1; i < 8; i++) {
+    const t = (fl.time * i) / 8;
+    const p = [from[0] + fl.dir[0] * fl.along * t, from[1] + fl.up * t - 0.5 * GRAVITY * t * t, from[2] + fl.dir[2] * fl.along * t];
+    if (Number.isFinite(rayHit([p[0], p[1] + 0.3, p[2]], [0, 1, 0], Math.max(0.1, bodyH - 0.2), collider))) return false;
+  }
+  return true;
+}
+/**
+ * THE ROOM A FLIGHT NEEDS (AUDIT TECH1): the highest apex - the technique's own, then lower, down to a dash's hop - whose
+ * arc fits under every ceiling along it; null when none does. A leap that met a beam turned back at it (the motor reverses
+ * a rising body at a ceiling) and landed metres short, its price paid: under a 2.8 m ceiling a 9 m Leap Strike came down
+ * at 3.75 m. A long leap under a low roof now asks for an apex the run's speed cap needs, finds no room, and says so.
+ */
+export function flightApex(from, to, apex, bodyH, collider) {
+  for (const a of [apex, apex * 0.6, apex * 0.35, DASH_APEX]) {
+    if (a > apex + 1e-9) continue;
+    if (flightFits(from, launchTo(from, to, a), bodyH, collider)) return a;
+  }
+  return null;
+}
+
 // ── the aim ─────────────────────────────────────────────────────────
 /**
- * WHAT AN AIMING TECHNIQUE AIMS AT NOW, off the look: `{ ok, point, foe, lane, why }`.
+ * WHAT AN AIMING TECHNIQUE AIMS AT NOW, off the look: `{ ok, point, foe, lane, why, apex }` - a flight's aim carries the
+ * apex that fits the room over its path (flightApex), or is no aim at all (NO_ROOM_TEXT).
+ */
+export function aimFor(tech, cam, collider, foes = undefined) {
+  const res = aimAt(tech, cam, collider, foes);
+  if (!res.ok || !res.point || (tech.mech !== 'leap' && tech.mech !== 'dash') || !cam?.feet || !cam?.pos) return res;
+  const apex = flightApex(cam.feet, res.point, tech.mech === 'leap' ? tech.apex : DASH_APEX, Math.max(1, cam.pos[1] - cam.feet[1] + 0.15), collider);
+  return apex == null ? { ...res, ok: false, why: NO_ROOM_TEXT } : { ...res, apex };
+}
+/**
+ * The aim off the look, before the room is asked:
  *   ground (Volley)          the ground the look meets, within its range
  *   target (Leap, Kick)      the foe under the crosshair - the ground before it - or the ground the look meets
  *   foe (Shadowstep)         the foe under the crosshair, and the ground behind it (beside it if a wall stands there)
  *   lane (Piercing, Lunge)   the look's way from the feet - a shot's to its length or the first wall, a dash's on the level
  * A landing too far below or above the feet, or past the reach, is no aim (`ok` false, `why` the line said on release).
  */
-export function aimFor(tech, cam, collider, foes = undefined) {
+function aimAt(tech, cam, collider, foes) {
   const eye = cam.pos, feet = cam.feet, look = lookOf(cam);
   if (!eye || !feet) return { ok: false, why: NOT_HERE_TEXT };
   const level = (p) => p[1] - feet[1] >= -TECH_DROP_MAX && p[1] - feet[1] <= TECH_RISE_MAX;
@@ -291,7 +338,7 @@ export function aimFor(tech, cam, collider, foes = undefined) {
   const foe = foeUnderLook(eye, look, tech.range[1], collider, foes);
   if (tech.aim === 'foe' && !foe) return { ok: false, why: NO_FOE_TEXT };
   if (foe) {
-    const f = foe.ai.feet, r = (Number.isFinite(foe.radius) ? foe.radius : TECH_BODY_RADIUS) + 0.55;
+    const f = foe.ai.feet, r = bodyRadius(foe) + 0.55;
     const toward = flatDist(feet, f) > 1e-6 ? [(f[0] - feet[0]) / flatDist(feet, f), 0, (f[2] - feet[2]) / flatDist(feet, f)] : flatOf(cam.yaw ?? 0);
     const spots = tech.aim === 'foe'
       ? (() => { const fy = foe.ai.yaw ?? 0, back = flatOf(fy + Math.PI), side = flatOf(fy + Math.PI / 2); return [at(f, back, tech.behind ?? 1), at(f, side, tech.behind ?? 1), at(f, side, -(tech.behind ?? 1)), at(f, toward, -r)]; })()
@@ -324,19 +371,30 @@ export function aimFor(tech, cam, collider, foes = undefined) {
  *   ready          the rig's own gate - drawn, no spell, no cast, no climb, no equip pause, no act's tool, not paralyzed
  *   startSwing(s)  start the machine's strike `s` (and the arm's): true when it began
  *   cancel         the press that sets an aim aside (ActivateCenterObject held - the drawn bow's own un-draw)
+ *   paralyzed      the body is held: a swing's or a shot's clock stops with the machine (AUDIT TECH1)
+ *   blocked        a window holds the world (the host's gamePaused): the key, the aim and the clock with it (AUDIT TECH1)
  *   door, say, noteShot(weapon)
  */
 export function stepTechnique(dt, ctx) {
   if (!ctx || !ctx.entity || !ctx.pw) return;
   if (_s.owner !== ctx.rig) { _s.owner = ctx.rig; _s.aim = null; endAct(ctx.pw); }
+  const loads = restoresSoFar();
+  if (_s.restores !== loads) {   // AUDIT TECH1: a load - nothing of the moment before it flies on, falls, or waits
+    if (_s.restores != null) { _s.aim = null; endAct(ctx.pw); _s.wait.clear(); }
+    _s.restores = loads;
+  }
   _s.say = ctx.say ?? _s.say;
+  // AUDIT TECH1: A WINDOW HOLDS IT ALL. The world under a talk window, the pack or a map is held (the host's gamePaused);
+  // so is the key - a press there is the window's - the aim, the act and the clock. A key still down as the window closes
+  // asks to be pressed again.
+  if (ctx.blocked) { _s.aim = null; _s.prev = true; return; }
   const step = Number.isFinite(dt) && dt > 0 ? Math.min(dt, 0.25) : 0;
   for (const [id, left] of _s.wait) {
     const next = left - step;
     if (next > 0) { _s.wait.set(id, next); continue; }
     _s.wait.delete(id);
     const hand = techniqueInHand(ctx.entity, ctx.pw);
-    if (hand?.id === id) say(readyAgainText(hand.tech.name));   // the classic HUD has no chips: the line says it
+    if (hand?.id === id) say(readyAgainText(techniqueName(hand)));   // the classic HUD has no chips: the line says it
   }
   const held = !!ctx.held, pressed = held && !_s.prev, released = !held && _s.prev;
   _s.prev = held;
@@ -367,15 +425,17 @@ export function stepTechnique(dt, ctx) {
 export function refusal(hand, ctx) {
   const pw = ctx.pw;
   if (pw?.weapon?.werecreatureClaws) return BEAST_TEXT;
-  if (!hand) return NO_TECHNIQUE_TEXT;
+  if (!hand) return pw?.weapon && techniqueLineOf(ctx.entity?.equip?.slots?.[EQUIP_SLOTS.Gloves]) ? GAUNTLETS_TEXT : NO_TECHNIQUE_TEXT;   // AUDIT TECH1: the gauntlets' line sleeps while a weapon is drawn - say so
   if (!lootRarityOn()) return LADDER_OFF_TEXT;   // Loot-II law 6: off is DFU exactly - a found line sleeps
   if (sigilDueling()) return DUEL_TEXT;   // TECH law 3: never at a player - every power that sleeps in a duel, or a bout between players, sleeps
   if (pw.sheathed) return SHEATHED_TEXT;
   if (_s.act) return true;   // one at a time
   if (!ctx.ready || pw.machine?.state !== 'Idle' || (pw.machine.now < pw.machine.cooldownUntil)) return true;   // mid-swing, a bow's recovery, a spell's hands
   const left = techniqueWait(hand.id);
-  if (left > 0) return notReadyText(hand.tech.name, Math.ceil(left));
-  if ((ctx.entity.fatigue ?? 0) < techniqueFatigue(hand.tech)) return TIRED_TEXT;
+  if (left > 0) return notReadyText(techniqueName(hand), Math.ceil(left));
+  // AUDIT TECH1: the price AND the blow's own drain after it - a technique never spends the last of a body (exhaustion
+  // with a foe near is death: systems/rest.js)
+  if ((ctx.entity.fatigue ?? 0) <= techniqueFatigue(hand.tech) + SWING_FATIGUE_COST) return TIRED_TEXT;
   const t = hand.tech;
   if (t.mech === 'rain' || t.mech === 'pierce') {
     if (!ctx.door?.fireArrow) return NOT_HERE_TEXT;
@@ -384,7 +444,7 @@ export function refusal(hand, ctx) {
   if (t.mech === 'leap' || t.mech === 'dash') {
     const m = ctx.door?.motor?.();
     if (!m) return NOT_HERE_TEXT;
-    if (m.climb?.isClimbing || m._wall || m._pkMove || m.swimming || m.levitating || m.slowFalling || m.riding || m.isDown?.() || !m.grounded) return CANNOT_LEAP_TEXT;
+    if (m.climb?.isClimbing || m._wall || m._pkMove || m.swimming || m.onExteriorWater || m.isPlayerSwimming || m.levitating || m.slowFalling || m.riding || m.isDown?.() || !m.grounded) return CANNOT_LEAP_TEXT;   // AUDIT TECH1: the open water too - DFU refuses a jump there
   }
   return null;
 }
@@ -419,7 +479,7 @@ function execute(hand, ctx, target) {
   const m = ctx.door?.motor?.();
   const from = ctx.cam.feet;
   if (!m || !from || !target?.point) return;
-  const apex = t.mech === 'leap' ? t.apex : 0.25;
+  const apex = target.apex ?? (t.mech === 'leap' ? t.apex : DASH_APEX);   // AUDIT TECH1: the apex that fits the room (aimFor)
   const fl = launchTo(from, target.point, apex);
   if (!m.techniqueLaunch?.(fl.dir, fl.along, fl.up)) { say(CANNOT_LEAP_TEXT); return; }
   pay(hand, ctx);
@@ -431,6 +491,9 @@ function execute(hand, ctx, target) {
 function stepAct(dt, ctx) {
   const a = _s.act;
   if (!a) return;
+  // AUDIT TECH1: a paralysis freezes the machine, and with it a swing's or a shot's clock - the give-up never fires under
+  // a long one, so the hit it waits for is still the technique's (claimShot), never a plain arrow's or a plain swing's
+  if (ctx.paralyzed && (a.kind === 'swing' || a.kind === 'shot')) return;
   a.t += dt;
   const pw = ctx.pw;
   if (a.kind === 'swing') {
@@ -448,7 +511,7 @@ function stepAct(dt, ctx) {
   if (a.kind === 'rain') {
     while (a.queue.length && a.queue[0].at <= a.t) {
       const q = a.queue.shift();
-      ctx.door?.fireArrow?.(q.from, q.dir, { sky: true, technique: { id: a.hand.id, mult: a.mult, pierce: 1 } });
+      ctx.door?.fireArrow?.(q.from, q.dir, { sky: true, weapon: a.weapon, technique: { id: a.hand.id, mult: a.mult, pierce: 1 } });   // AUDIT TECH1: the bow that loosed it, whatever is in hand now
     }
     if (!a.queue.length && a.t >= a.until) _s.act = null;
     return;
@@ -460,7 +523,12 @@ function stepAct(dt, ctx) {
     const hitAt = strikeHitAt(pw, a.hand.tech.strike, dt);
     if (!a.struck && (landed || a.time - a.t <= hitAt || a.t > a.time + 0.6)) {
       a.struck = true;
-      if (a.foe && a.hand.tech.mech === 'dash' && !a.lane) ctx.door?.face?.(a.foe.ai?.feet ?? null);   // Shadowstep: turn on the foe behind which you land
+      // AUDIT TECH1: the swing's own gate at the strike, as at the press - sheathed, a spell readied, paralyzed, the weapon
+      // changed in the air: no blow (a bow swapped in would have looked a plain shot on landing)
+      if (!ctx.ready || techniqueInHand(ctx.entity, pw)?.item !== a.hand.item) { endAct(pw); return; }
+      // Shadowstep: turn on the foe - FROM WHERE YOU LAND (AUDIT TECH1: turned from mid-dash, the view looked on along the
+      // dash and the body landed behind the foe facing away from it)
+      if (a.foe && a.hand.tech.mech === 'dash' && !a.lane) ctx.door?.face?.(a.foe.ai?.feet ?? null, a.target?.point ?? null);
       const blow = swingBlow(a.hand.id, a.hand.value, ctx.cam, a.lane ? { lane: a.lane, arc: 'all', reach: a.lane.len }
         : a.hand.tech.mech === 'dash' && a.foe ? { target: a.foe } : {});
       pw.techniqueBlow = blow;
@@ -504,7 +572,7 @@ function loose(a, ctx) {
     if (!spendAmmoFor(items, weapon)) { _s.act = null; return; }
     tallySwingSkills(ctx.entity, weapon);
     const look = lookOf(ctx.cam);
-    ctx.door?.fireArrow?.(ctx.cam.pos, look, { sky: false, technique: { id: hand.id, mult, pierce: t.through }, speedScale: t.speed });
+    ctx.door?.fireArrow?.(ctx.cam.pos, look, { sky: false, weapon, technique: { id: hand.id, mult, pierce: t.through }, speedScale: t.speed });
     ctx.noteShot?.(weapon);
     _s.act = null;
     return;
@@ -520,11 +588,16 @@ function loose(a, ctx) {
   try { const up = ctx.collider?.raycast?.([c[0], c[1] + 0.3, c[2]], [0, 1, 0], t.height); if (Number.isFinite(up)) h = Math.max(1.6, up + 0.3 - 0.4); } catch { /* the sky */ }
   const toMe = flatDist(c, feet) > 1e-6 ? [(feet[0] - c[0]) / flatDist(c, feet), (feet[2] - c[2]) / flatDist(c, feet)] : [0, 0];
   const queue = volleyPoints(c, t.radius, n, Math.random()).map((p, i) => {
-    const from = [p[0] + toMe[0] * h * 0.25, c[1] + h, p[2] + toMe[1] * h * 0.25];   // they come in from the archer's side
+    let from = [p[0] + toMe[0] * h * 0.25, c[1] + h, p[2] + toMe[1] * h * 0.25];   // they come in from the archer's side
+    // AUDIT TECH1: each shaft starts in the open - pulled down its own line to short of a beam, a wall or a ceiling over its
+    // point (the one ray up from the disc's middle never saw a corridor's walls; a shaft born inside one died on its first step)
+    const base = [p[0], p[1] + 0.3, p[2]], back = [from[0] - base[0], from[1] - base[1], from[2] - base[2]], bl = Math.hypot(back[0], back[1], back[2]) || 1;
+    const blocked = rayHit(base, [back[0] / bl, back[1] / bl, back[2] / bl], bl, ctx.collider);
+    if (Number.isFinite(blocked)) from = at(base, [back[0] / bl, back[1] / bl, back[2] / bl], Math.max(0.6, blocked - 0.4));
     const d = [p[0] - from[0], p[1] - from[1], p[2] - from[2]], l = Math.hypot(d[0], d[1], d[2]) || 1;
     return { at: t.delay + (n > 1 ? (t.spread * i) / (n - 1) : 0), from, dir: [d[0] / l, d[1] / l, d[2] / l], to: p };
   });
-  _s.act = { kind: 'rain', hand, point: c, t: 0, queue, mult, until: t.delay + t.spread + h / 25 + 0.2 };
+  _s.act = { kind: 'rain', hand, point: c, t: 0, queue, mult, until: t.delay + t.spread + h / 25 + 0.2, weapon };
 }
 
 // ── what the screen shows ──────────────────────────────────────────
@@ -561,7 +634,7 @@ export function techniqueHudChips(entity, pw, keyName = '') {
   const hand = techniqueInHand(entity, pw);
   if (!hand || !lootRarityOn()) return [];
   const left = techniqueWait(hand.id);
-  return [{ key: 'technique', set: 'technique', name: hand.tech.name, text: left > 0 ? `${Math.ceil(left)}s` : (keyName || 'ready'), state: left > 0 ? 'recovering' : 'active' }];
+  return [{ key: 'technique', set: 'technique', name: techniqueName(hand), text: left > 0 ? `${Math.ceil(left)}s` : (keyName || 'ready'), state: left > 0 ? 'recovering' : 'active' }];
 }
 /** AUDIT TACT D3's law for the player's own marks: a floating-origin recentre moves the aim, the flight and the fall. */
 export function offsetTechniques(offset) {
@@ -578,6 +651,9 @@ export function offsetTechniques(offset) {
     for (const q of act.queue ?? []) { move(q.from); move(q.to); }
   }
 }
+/** A leap or a dash in the air (AUDIT TECH1): the rig asks no gesture while it is - a click in the air started a plain
+ *  swing, and the strike the technique was flying to land had no machine to start on. */
+export const techniqueFlying = () => _s.act?.kind === 'flight';
 /** What is in flight (tests, probes): the aim, the act's kind, the cooldowns. */
 export const techniqueState = () => ({ aiming: !!_s.aim, aim: _s.aim?.target ?? null, act: _s.act?.kind ?? null, wait: new Map(_s.wait) });
 /** Tests only: everything fresh. */

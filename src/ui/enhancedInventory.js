@@ -133,7 +133,7 @@ import { survivalInfoTokens, potionMacroName, potionRecipeIngredientNames } from
 import { isSurvivalItem } from '../systems/survival/items.js';
 import { hoodCapable, hoodUp } from '../systems/survival/temperature.js';   // HOOD-SAID: the one hood law, on the card and the panel
 import { heirloomLine } from '../systems/legacy/heirloom.js';   // LEGACY4: Project Legacy's heirlooms, named on the card
-import { rarityAttr, rarityLines, lootRarityOn } from '../systems/lootRarity.js';   // LR1: the row's tier attribute and the card's lines
+import { rarityAttr, rarityLines, lootRarityOn, techniqueDetail, techniqueLineOf } from '../systems/lootRarity.js';   // LR1: the row's tier attribute and the card's lines
 import { pieceLines } from '../net/recipeLaw.js';   // PROF3: a crafted piece's quality and maker, above its powers
 import { craftedJewelPoints } from '../systems/enchanting.js';   // AUDIT PROF-541 R2-C4: a jewel's points as the item maker reads them
 import { sigilCard } from './sigilCard.js';   // SIGIL-UI: the sigil's own block on the card
@@ -2995,7 +2995,11 @@ export function itemChatText(item, d = deps) {
   const line = itemLine(item, d?.entity);
   const parts = [line.damage != null ? `Damage ${line.damage}` : null, line.armour != null ? `Armour ${line.armour}` : null,
     ...itemBriefLines(item, d)].filter(Boolean);
-  const text = `[${line.name}]${parts.length ? ` ${parts.join(' · ')}` : ''}`;
+  // TECH1 (AUDIT): a technique's "what a press does" line stays on the card - the post names the line itself, and keeps
+  // the room under CHAT_MAX for the piece's other lines (a gem's, a set's) that it would have cut
+  const told = techniqueDetail(techniqueLineOf(item));
+  const said = told ? parts.filter((p) => p !== told) : parts;
+  const text = `[${line.name}]${said.length ? ` ${said.join(' · ')}` : ''}`;
   if (text.length <= CHAT_MAX) return text;
   const cut = text.slice(0, CHAT_MAX - 3);
   return `${cut.slice(0, Math.max(cut.lastIndexOf(' '), line.name.length + 2)).replace(/[\s·]+$/, '')}...`;

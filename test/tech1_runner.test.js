@@ -444,10 +444,11 @@ test('TECH1 THE AIM SET ASIDE: the Activate press, a weapon changed, another rig
   // another rig steps mid-swing: the swing's blow comes off the first weapon
   reset();
   const pw1 = weaponOf(piece(() => createWeapon(120, 1), 'whirlwind'));
-  const a = rig({ pw: pw1, entity: player() });
+  const one = player();   // one character through a door: the next host's rig steps the same player
+  const a = rig({ pw: pw1, entity: one });
   T.stepTechnique(1 / 60, a.ctx(true));
   assert.ok(pw1.techniqueBlow);
-  const b = rig({ pw: weaponOf(createWeapon(120, 1)), entity: player(), rigId: R2 });
+  const b = rig({ pw: weaponOf(createWeapon(120, 1)), entity: one, rigId: R2 });
   T.stepTechnique(1 / 60, b.ctx(false));
   assert.equal(pw1.techniqueBlow, null);
   assert.equal(T.techniqueState().act, null);
