@@ -572,8 +572,9 @@ Four lanes read the newest part, The card's block, against the running game, and
 card's code on every surface an item's lines reach, its look at four screen sizes and every Plus theme (Chromium, the
 pack's own cards, measured before and after against the tree it was built on), the patch notes and the page against the
 source, and the tests against mutants applied in a worktree. Every finding was reproduced before it was fixed; each fix
-is pinned in `test/techcard1.test.js` and mutated (`tools/mutants/techcard1.json`). main (#752 PERF-PRIORITY, #754
-BENCH-CAM + YARDS-FOUND) was merged in first.
+is pinned in `test/techcard1.test.js` and mutated (`tools/mutants/techcard1.json` - 275 records run on the files it
+touched: 274 dead, 1 equivalent as recorded). main (#752 PERF-PRIORITY, #754 BENCH-CAM + YARDS-FOUND) was merged in
+first.
 
 | finding | what was wrong | now |
 | --- | --- | --- |
@@ -641,7 +642,10 @@ Gauntlets' Flying Kick and Haymaker) - every technique a press away.
   its blue and its place in the block; the pack's hover card, detail card and Info box, executed on a sigil weapon (the
   block's place, the key); the HUD's chip and its frame; FINAL AUDIT's key word, chip and sheet.
 - Mutants `tools/mutants/techcard1.json` (26 at TECH-CARD, all dead; with the two lists it re-aimed in, `cardfit.json` and
-  `trade_info.json`, 83 run - 83 dead; FINAL AUDIT added 26 - 52). Three records re-aimed by content at the lines the
+  `trade_info.json`, 83 run - 83 dead; FINAL AUDIT added 26 - 52, all dead). FINAL AUDIT's run: every record on the
+  card, the glyph, the key's word, the runner, the roster and the Plus sheet, the card's three lists and the world host's
+  key word - 275: 274 dead, 1 equivalent as recorded (`techfx1.json` the-hit-twice); its sweep of every test file that
+  imports a module it changed (1,406 files, 14,057 tests) none failing. Three records re-aimed by content at the lines the
   card's and the Info box's calls moved, their laws unchanged: `cardfit.json` CARDFIT-the-lore-back-on-the-card and
   CARDFIT-a-line-said-twice, `trade_info.json` TRADE-INFO-card-on-the-tiers-alone; FINAL AUDIT re-aimed
   TECHCARD-the-key-never-read and `techfx1.json` TECHFX1-AUDIT-the-world-word-uncached. Pins moved: nine marked
