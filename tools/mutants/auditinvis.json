@@ -38,8 +38,8 @@
   {
     "name": "AINV-B-horse-plain",
     "file": "src/scenes/horseCartPool.js",
-    "old": "b.conceal = p.look; } }",
-    "new": "} }",
+    "old": "if (owner) b.conceal = conceal; }",
+    "new": "}",
     "tests": [
       "test/disc20.test.js"
     ]

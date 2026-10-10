@@ -523,6 +523,8 @@ function stealCost() {
  *  five effects are unchanged; only the ask in front of them is new. */
 function doSteal() {
   if (!inBuy() || !(stealCost() > 0)) return;
+  const refused = deps.stealRefusal?.() ?? null;   // AUDIT MERCHANT-YARDS Y1: a yard's keeper never looks away
+  if (refused) { deps.say?.(refused, 2); return; }
   box = {
     rows: [{ text: 'Steal these goods rather than pay for them?', center: true }],
     buttons: 'YesNo',
@@ -544,7 +546,7 @@ function deliverFurniture(list, one = null) {
 
 function runSteal() {
   const items = stealTargets();
-  if (!items.length) return;
+  if (!items.length || deps.stealRefusal?.()) return;   // AUDIT MERCHANT-YARDS Y1
   const ctx = deps.priceCtx?.() ?? {};
   const out = shopliftAttempt({ basket: items, pickpocketSkill: deps.pickpocketSkill?.() ?? 0, shopQuality: ctx.quality ?? 0 });
   deps.tallyPickpocket?.(1);
@@ -900,7 +902,7 @@ function footer() {
   const bar = el('div', 'remoteacts trade-footer');
   const { cost: c, modeActionEnabled } = cost();
   bar.append(el('span', 'meta trade-cost', `Cost: ${c}   Gold: ${deps.gold?.() ?? 0}`));
-  if (inBuy()) {
+  if (inBuy() && !deps.stealRefusal?.()) {   // AUDIT MERCHANT-YARDS Y1: no Steal at a counter whose keeper never looks away
     const steal = el('button', 'act', 'Steal');
     steal.disabled = !(stealCost() > 0);
     steal.onclick = doSteal;

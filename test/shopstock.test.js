@@ -60,12 +60,13 @@ test('shopStock: the stock law - rarity gate, chance, gender swap, horse+cart', 
     const t = ITEM_TEMPLATES[it.templateIndex];
     assert.ok(t.rarity <= 1, `${t.name} rarity ${t.rarity} on a quality-1 shelf`);
   }
-  // general stores ALWAYS shelve the horse + small cart - and books
-  // ride the quality ladder with NO Dice100 gate (q5 -> 3 books)
+  // books ride the quality ladder with NO Dice100 gate (q5 -> 3 books)
   const gs = stockShopShelf({ buildingType: BUILDING_TYPES.GeneralStore, quality: 5 }, { level: 1 }, { rolls: () => 0.999 });
-  assert.deepEqual(gs.map((it) => it.templateIndex), [TRANSPORT_HORSE, TRANSPORT_SMALL_CART, TRANSPORT_SMALL_CART, TRANSPORT_SMALL_CART, 277, 541, 531, PELLET_TEMPLATE, 83]);   // PIN MOVED (WAGONS1, 2026-10-09): the Open Wagon and the Caravan beside the cart - the cart's own item, marked
-  assert.deepEqual(gs.slice(1, 4).map((it) => [it.wagonKind ?? null, it.value]), [[null, 150], ['openWagon', 900], ['caravan', 2500]], 'WAGONS1: the Small Cart unmarked at its template\'s price, its two big siblings marked and valued');   // PIN MOVED (SHOP-PELLETS, 2026-10-07): and the counter's Dwemer Pellets (561), after DFU's draws and the provisions, before the healing supply   // PIN MOVED (ENDLESS PROVISIONS, 2026-10-04): the counter's Campfire Kit (541) and Rations (531), every tier, before the healing supply   // POTION-COMMON: and its day of Potions of Healing (the Glass Bottle, 83) at the shelf's end   // AUDIT-RR2 G10: AddItem merges the three same-message books into one stack (ItemCollection.cs:224-228, :710)
-  assert.equal(gs[4].stackCount, 3);   // PIN MOVED (WAGONS1): two wagons before the books
+  // PIN MOVED (MERCHANT-YARDS, 2026-10-10): no horse, no cart and no wagon - the town's Stable and Wagon Yard sell them
+  // (test/merchantyards1.test.js holds what they sell); DFU's general store shelved the horse and the cart first
+  assert.deepEqual(gs.map((it) => it.templateIndex), [277, 541, 531, PELLET_TEMPLATE, 83]);   // PIN MOVED (WAGONS1, 2026-10-09): the Open Wagon and the Caravan had stood beside the cart
+  assert.equal(gs.some((it) => it.group === 'Transportation' || it.templateIndex === TRANSPORT_HORSE || it.templateIndex === TRANSPORT_SMALL_CART), false, 'MERCHANT-YARDS: nothing of the Transportation group');   // PIN MOVED (SHOP-PELLETS, 2026-10-07): and the counter's Dwemer Pellets (561), after DFU's draws and the provisions, before the healing supply   // PIN MOVED (ENDLESS PROVISIONS, 2026-10-04): the counter's Campfire Kit (541) and Rations (531), every tier, before the healing supply   // POTION-COMMON: and its day of Potions of Healing (the Glass Bottle, 83) at the shelf's end   // AUDIT-RR2 G10: AddItem merges the three same-message books into one stack (ItemCollection.cs:224-228, :710)
+  assert.equal(gs[0].stackCount, 3);   // PIN MOVED (MERCHANT-YARDS): the books first now; (WAGONS1): two wagons had stood before them
   // the gender swap: a female player sees WomensClothing at the clothier
   const cs = stockShopShelf({ buildingType: BUILDING_TYPES.ClothingStore, quality: 21 }, { level: 1, gender: 'female' }, { rolls: () => 0 });
   assert.ok(cs.some((it) => it.group === 'WomensClothing'));
@@ -122,6 +123,10 @@ test('shopStock: storeBuysItemType verbatim (E3 sell gating)', () => {
   assert.deepEqual([...SHOP_BUYS_GROUPS[BUILDING_TYPES.WeaponSmith]], ['Armor', 'Weapons']);
   assert.equal(SHOP_BUYS_GROUPS[BUILDING_TYPES.PawnShop].length, 10);
   assert.equal(SHOP_BUYS_GROUPS[BUILDING_TYPES.Alchemist].length, 9);
+  // MERCHANT-YARDS (2026-10-10): the general store no longer buys DFU's Transportation - the town's yards buy a horse, a cart
+  // and a wagon back (systems/merchantYards.js yardBuysItem)
+  assert.deepEqual([...SHOP_BUYS_GROUPS[BUILDING_TYPES.GeneralStore]], ['Books', 'MensClothing', 'WomensClothing', 'Jewellery', 'Weapons', 'UselessItems2']);
+  assert.equal(shopBuysItem(BUILDING_TYPES.GeneralStore, { group: 'Transportation', templateIndex: TRANSPORT_HORSE }), false);
   // the gate: a weaponsmith takes a sword, never a book or gold
   assert.ok(shopBuysItem(BUILDING_TYPES.WeaponSmith, { group: 'Weapons' }));
   assert.ok(!shopBuysItem(BUILDING_TYPES.WeaponSmith, { group: 'Books' }));

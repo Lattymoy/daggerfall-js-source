@@ -65,8 +65,8 @@
   {
     "name": "WAGON-HITCH-following-team-grown",
     "file": "src/scenes/horseCartPool.js",
-    "old": "      const g = s.wagon.kind === HCC_WIRE_KIND.Trailing && s.wagon.hitch ? selfGrow : 1;",
-    "new": "      const g = s.wagon.hitch ? selfGrow : 1;",
+    "old": "      const driven = s.wagon.kind === HCC_WIRE_KIND.Trailing && !!s.wagon.hitch;",
+    "new": "      const driven = !!s.wagon.hitch;",
     "tests": [
       "test/wagonhitch.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "AUDIT-WAGON-HITCH-A1-grown-off-the-drawn-position",
     "file": "src/scenes/horseCartPool.js",
-    "old": "      const at = g > 1 && s.wagon.axle ? grownHitchedPosition(s.wagon.axle, s.wagon.hitch, g, groundYAt, s.wagon.axle[1]) : grownHitchedPosition(s.wagon.position, s.wagon.hitch, g, groundYAt);",
-    "new": "      const at = grownHitchedPosition(s.wagon.position, s.wagon.hitch, g, groundYAt);",
+    "old": "      const at = g > 1 && axle ? grownHitchedPosition(axle, hitch, g, groundYAt, axle[1]) : grownHitchedPosition(position, hitch, g, groundYAt);",
+    "new": "      const at = grownHitchedPosition(position, hitch, g, groundYAt);",
     "tests": [
       "test/wagonhitch.test.js"
     ]

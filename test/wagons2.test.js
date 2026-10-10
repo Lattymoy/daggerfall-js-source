@@ -18,7 +18,7 @@ import {
   CARAVAN_FRONT_WINDOW, SIDE_Y0, SIDE_Y1,
 } from '../src/world/wagonArt.js';
 import { caravanRoomModel, CARAVAN_ROOM, CARAVAN_ENTER, CARAVAN_LANTERN, ceilingArc } from '../src/world/caravanRoomModel.js';
-import { wagonGeometry, MEASURED, LIFT } from '../src/world/wagonModels.js';
+import { wagonGeometry, MEASURED, LIFT, rigGrowOf } from '../src/world/wagonModels.js';
 import { caravanRoomBlock, CARAVAN_ROOM_MODEL_ID, roomToSaved, savedToRoom, turnCaravanScene, readCaravanRoom } from '../src/systems/caravanRoom.js';
 import { caravanRoomEntry, caravanRoomRecords, caravanRoomPictures, paintCaravanRoom, serveRoomModels, CARAVAN_LIVE_CHOICE } from '../src/scenes/caravanRoom.js';
 import { buildInteriorContext } from '../src/scenes/interiorContext.js';
@@ -82,7 +82,7 @@ test('WAGONS2 THE PAINT\'S LAW: six choices a list, the first the wagon as built
 
 test('WAGONS2 THE PAINTS\' PICTURES: each choice past the first painted to its own records, a stride from the built ones, the same bytes every time and not the built picture; the caravan\'s glass a hole - its sides\' and its room\'s windows exactly where the side\'s picture puts them, its front\'s round window - and nothing else of any picture see-through (mutants: the glass left opaque, a paint\'s picture its built one)', () => {
   const built = new Map(wagonArt());
-  assert.equal(built.size, 20);
+  assert.equal(built.size, 21);   // PIN MOVED (WAGONS3): and the harness
   for (const [list, names] of [...Object.entries(WAGON_OUTSIDE_LOOKS), ...Object.entries(CARAVAN_INSIDE_LOOKS)]) {
     assert.deepEqual(wagonLookArt(list, 0, names[0]), [], 'the built choice paints nothing here');
     for (let i = 1; i < names.length; i++) {
@@ -389,7 +389,7 @@ test('WAGONS2 THE OVERWORLD\'S SEATS: a wagon is drawn grown with its rider unde
   pool.draw(r, null, { selfGrow: 8, grow: () => 8 });
   const body = r.draws[0].m, seat = pool.partsOf('openWagon').seats[1];
   const s = pool.seatDrawn('', 1);
-  assert.equal(s.g, 8);
+  assert.equal(s.g, rigGrowOf(8, 'openWagon'));   // PIN MOVED (WAGONS3): the rig's own grow - a rider on horseback's length, not the traveller's eight
   const want = [0, 1, 2].map((k) => body[k] * seat.feet[0] + body[4 + k] * seat.feet[1] + body[8 + k] * seat.feet[2] + body[12 + k]);
   assert.ok(s.feet.every((v, k) => near(v, want[k], 1e-4)), `the seat where the grown body puts it: ${s.feet} vs ${want}`);
   assert.ok(Math.abs(s.feet[2] - pool.mySeat(1).feet[2]) > 10, 'and far from the true seat a grown wagon is drawn past');
@@ -416,7 +416,7 @@ test('WAGONS2 THE OVERWORLD\'S SEATS: a wagon is drawn grown with its rider unde
   const k0 = peerPool.peerSeat('ann', 0);
   assert.ok(k0, 'their seat here');
   const sd = peerPool.puppetSeatDrawn('ann', [k0.feet[0] + 0.3, k0.feet[1], k0.feet[2]]);
-  assert.ok(sd && sd.g === 8 && sd.feet.every((v, k) => near(v, peerPool.seatDrawn('ann', 0).feet[k])), 'its seat as drawn');
+  assert.ok(sd && sd.g === rigGrowOf(8, 'openWagon') && sd.feet.every((v, k) => near(v, peerPool.seatDrawn('ann', 0).feet[k])), 'its seat as drawn');   // PIN MOVED (WAGONS3): at the rig's grow
   assert.equal(peerPool.puppetSeatDrawn('ann', [k0.feet[0], k0.feet[1], k0.feet[2] - 4]), null, 'standing off every seat (behind the wagon): where it stands');
   assert.equal(peerPool.puppetSeatDrawn('ann', [k0.feet[0], k0.feet[1] - PUPPET_SEAT_RISE - 0.1, k0.feet[2]]), null, 'WAGONS2 (AUDIT): under the seat, not on it - where it stands');
   assert.equal(PUPPET_SEAT_REACH, 0.75);
@@ -579,6 +579,10 @@ test('WAGONS2 (AUDIT) THE CARAVAN KEPT: the wagon a player drives while it holds
   assert.deepEqual(itemFindings(caravan), [], 'a shelf\'s caravan is lawful');
   assert.deepEqual(itemFindings({ ...caravan, wagonLook: { o: 2, w: 5 } }), [], 'painted too');
   assert.ok(itemFindings({ ...caravan, value: 150 }).includes('wagon'), 'a caravan at the cart\'s price');
+  // WAGON-PRICE (2026-10-10): the law reads each kind's floor, not its price - a wagon bought before the price rose
+  // stays lawful, and a cent under that floor does not (mutants: the law reads the price, the floor raised)
+  assert.deepEqual([itemFindings({ ...caravan, value: 2500 }), itemFindings(newWagonItem('openWagon')), itemFindings({ ...newWagonItem('openWagon'), value: 900 })], [[], [], []], 'a caravan and an open wagon at their old prices, and a shelf\'s open wagon');
+  assert.deepEqual([itemFindings({ ...caravan, value: 2499 }), itemFindings({ ...newWagonItem('openWagon'), value: 899 })].map((f) => f.includes('wagon')), [true, true], 'under its floor');
   assert.ok(itemFindings({ ...sword, wagonKind: 'cart' }).includes('wagon'), 'a mark on anything but the cart');
   assert.ok(itemFindings({ ...sword, wagonLook: { o: 1 } }).includes('wagon'), 'a paint on anything but the cart');
   assert.ok(itemFindings({ ...sword, wagonEntry: 'public' }).includes('wagon'), 'a door on anything but the cart');
@@ -635,7 +639,7 @@ test('WAGONS2 (FINAL AUDIT) THE SEATS AT THE OVERWORLD\'S PACE: a player whose O
   peerPool.frame(1 / 60, [0, 0, 0]);
   peerPool.draw(r, null, { selfGrow: 8, grow: () => 8 });
   const word = peerPool.wordSeat('ann', 0).feet, far = [word[0] - 30, word[1], word[2] - 30];
-  assert.ok(peerPool.puppetSeatDrawn('ann', far, [word[0] + 0.2, word[1], word[2]])?.g === 8, 'its record on the word\'s seat: seated, drawn on the grown seat');
+  assert.ok(peerPool.puppetSeatDrawn('ann', far, [word[0] + 0.2, word[1], word[2]])?.g === rigGrowOf(8, 'openWagon'), 'its record on the word\'s seat: seated, drawn on the grown seat');   // PIN MOVED (WAGONS3): at the rig's grow
   assert.equal(peerPool.puppetSeatDrawn('ann', far, far), null, 'its record off every seat: where it stands');
   assert.equal(peerPool.puppetSeatDrawn('ann', far), null, 'no record: its drawn feet alone');
 });
