@@ -490,8 +490,8 @@
   {
     "name": "LW15-town-replan",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "(e.pv ?? 0) !== this._patronV())",
-    "new": "false)",
+    "old": "(e.pb !== undefined && e.pv !== this._patronV() && !this._patronsKept(e, res, day))",
+    "new": "false",
     "tests": [
       "test/lw15_patrons.test.js"
     ]
@@ -509,8 +509,8 @@
   {
     "name": "LW15-host-online",
     "file": "src/scenes/world.js",
-    "old": "if (!params.has('online') || !marketBook || _livingPatronsBusy || nowS - _livingPatronsAt < PATRON_READ_S) return;",
-    "new": "if (!marketBook || _livingPatronsBusy || nowS - _livingPatronsAt < PATRON_READ_S) return;",
+    "old": "if (!params.has('online') || !marketBook) return;",
+    "new": "if (!marketBook) return;",
     "tests": [
       "test/lw15_patrons.test.js"
     ]
@@ -912,8 +912,8 @@
   {
     "name": "LW15-AUDIT-B12-holders",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "for (const v of patronVisits(p.told ?? [], day, this.peopleOf(day))) {",
-    "new": "for (const v of patronVisits(p.told ?? [], day, this.residents)) {",
+    "old": "const res = by.get(v.resId) ?? null;",
+    "new": "const res = this.residents.find((r) => r.id === v.resId) ?? null;",
     "tests": [
       "test/lw15_patrons.test.js",
       "test/lw16_word.test.js"
@@ -922,8 +922,8 @@
   {
     "name": "LW15-AUDIT-B12-named",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "    return patronOf(seed, this.peopleOf(this.dayOf(t) + PATRON_DELAY_DAYS));",
-    "new": "    return patronOf(seed, this.residents);",
+    "old": "return place ? this._householdsOf(this.dayOf(t) + PATRON_DELAY_DAYS).get(place.id) ?? null : null;",
+    "new": "return place;",
     "tests": [
       "test/lw15_patrons.test.js",
       "test/lw16_word.test.js"

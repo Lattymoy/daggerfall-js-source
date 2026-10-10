@@ -3138,7 +3138,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (performance.now() - t0 >= budgetMs) return;
         let r;
         try { r = e.gen.next(); } catch (err) { console.warn('[living] the carried word', /** @type {any} */ (err)?.message ?? err); r = { done: true, value: null }; }   // AUDIT LW-II B13: a throw wedged the slice for good
-        if (r.done) { e.visits = r.value ?? Object.assign([], { partial: true }); e.at = performance.now(); }
+        if (r.done) { e.visits = r.value ?? Object.assign([], { partial: true }); e.at = performance.now(); _livingCarriedLast.set(e.map, e.visits); }   // AUDIT LW-II-2 W7: the town's last word, the next day's told it until its own is done
       }
     }
   };
@@ -3509,17 +3509,42 @@ export async function bootWorld(canvas, renderer, params, status) {
   // while a living town stands online; each town's LivingTown asks its own (`patronsOf`): the sales told as sky minutes
   // (an online sky day is a real hour), the traders' doors
   const PATRON_READ_S = 600;
+  /** AUDIT LW-II-2 W3: a region's read that failed is asked again this soon (real seconds), never a whole PATRON_READ_S on. */
+  const PATRON_RETRY_S = 60;
   /** @type {Map<number, { v: number, told: { door: number, t: number, seed: number }[], traders: number[] }>} */
   const _livingPatrons = new Map();
-  let _livingPatronsAt = -Infinity, _livingPatronsV = 0, _livingPatronsBusy = false;
+  /** AUDIT LW-II-2 W3/H8: EACH REGION'S LAST READ - its real second, and whether it failed. One clock for every region left
+   *  a region crossed into unread up to PATRON_READ_S (four living hours online: no browser, no patron walking in, where a
+   *  reader who stood there longer had them), and a region asked while a read was out was dropped (ASYNC NEVER DROPS: it
+   *  is remembered, `_livingPatronsWant`, and read once the one out settles). @type {Map<number, { at: number, failed: boolean }>} */
+  const _livingPatronsRead = new Map();
+  let _livingPatronsV = 0, _livingPatronsBusy = false, _livingPatronsNow = 0;
+  /** AUDIT LW-II-2 W3: the region asked while a read was out - read once it settles. @type {number|null} */
+  let _livingPatronsWant = null;
+  /** AUDIT LW-II-2 W3: a region never read, or read PATRON_READ_S ago (a failed read PATRON_RETRY_S), is read now. */
+  const livingPatronsDue = (region, nowS) => { const r = _livingPatronsRead.get(region); return !r || nowS - r.at >= (r.failed ? PATRON_RETRY_S : PATRON_READ_S); };
+  /** AUDIT LW-II-2 W11: the region whose traders are read - the one the player stands in, while a living town stands (a
+   *  built LivingTown) alone: in the wilderness none (a read there was /vendors and up to PATRON_READ_STATEMENTS of the
+   *  service's reckoning each PATRON_READ_S, for towns nobody walks). */
+  const livingPatronsRegion = () => {
+    for (const b of built.values()) if (b.population instanceof LivingTown) { const p = playerTravelPixel(); return p ? maps.getRegionIndexAt(p.x, p.y) : null; }
+    return null;
+  };
   const livingPatronsStep = (nowS, regionOf) => {
-    if (!params.has('online') || !marketBook || _livingPatronsBusy || nowS - _livingPatronsAt < PATRON_READ_S) return;
+    if (!params.has('online') || !marketBook) return;
+    _livingPatronsNow = nowS;
     const region = regionOf();
-    if (region == null || region < 0) return;
+    if (region == null || region < 0 || !livingPatronsDue(region, nowS)) return;
+    if (_livingPatronsBusy) { _livingPatronsWant = region; return; }   // AUDIT LW-II-2 W3: read when the one out settles
+    livingPatronsRead(region, nowS);
+  };
+  /** LW15: a region's traders read - AUDIT LW-II-2 W3: marked read now, and failed where the service answered none. */
+  const livingPatronsRead = (region, nowS) => {
     _livingPatronsBusy = true;
-    _livingPatronsAt = nowS;
+    const mark = { at: nowS, failed: false };
+    _livingPatronsRead.set(region, mark);
     Promise.resolve(marketBook.vendors(region)).then((r) => {
-      if (!r?.ok) return;
+      if (!r?.ok) { mark.failed = true; return; }
       const rows = r.data?.rows ?? [];
       const byMap = new Map();
       for (const row of rows) {
@@ -3547,7 +3572,12 @@ export async function bootWorld(canvas, renderer, params, status) {
         _livingPatrons.set(map, { v: ++_livingPatronsV, told, traders, region, sig });
       }
       for (const [map, e] of _livingPatrons) if (e.region === region && !byMap.has(map)) _livingPatrons.delete(map);
-    }).catch(() => {}).finally(() => { _livingPatronsBusy = false; });
+    }).catch(() => { mark.failed = true; }).finally(() => {
+      _livingPatronsBusy = false;
+      const want = _livingPatronsWant;   // AUDIT LW-II-2 W3: the region asked while it was out, read now (still due)
+      _livingPatronsWant = null;
+      if (want != null && livingPatronsDue(want, _livingPatronsNow)) livingPatronsRead(want, _livingPatronsNow);
+    });
   };
   /** LW15: who of a town a patron's sale names, for the Vendor page - its LivingTown's dealt resident where the town
    *  stands (AUDIT LW-II B12: the one holding the place the day they come), else a townsperson of it.
@@ -31651,6 +31681,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       raidingPartiesFrame(gamePaused() ? 0 : dt);   // RAID1: indoors too - the day's roll, the region's news, a raid running out; nothing is stood (FindCurrentRaid wants the street)
       if (_bandChase.size) bandDrop();   // AUDIT OW4 B5: a door ends every chase, spent - the band frame never runs indoors, and a chase froze there to take up again on the way out
       caravanStep(dt);   // AUDIT LW-II C5b: the reports carried in and the escort, indoors and below too
+      if (livingWorldOn()) livingCarriedStep(LIVING_CARRIED_SLICE_MS);   // AUDIT LW-II-2 H7: the word carried worked indoors and below too - a town first asked from a room (a save loaded in its tavern, a day begun abed) told none all its stay
       heatHaze.suppress();   // HAZE1: inside is no exterior - the strength is 0 at once (HeatHazeMod.Update), and eases up again outside
       { const _wfPx = playerTravelPixel(); windfall.frame({ dt: gamePaused() ? 0 : dt * worldTimeScale(), outside: false, weather, minutes: skyMinutes(), climate: maps.getClimateIndex(_wfPx.x, _wfPx.y), mapPixel: _wfPx, feet: player.pos, height: player.height }); }   // WINDFALL1: WindMod.Update indoors - the gust eases out, the sources fade, the leaves stop (AUDIT ENVIRONS W1: on the game's seconds)
       { const _snPx = playerTravelPixel(); _snowPixels.clear(); snowfall.frame({ now: now / 1000, inside: true, player: null, weather, seconds: worldMinutes() * 60, winter: season === SEASON.Winter, climate: maps.getClimateIndex(_snPx.x, _snPx.y), corpses: snowBodies }); }   // SNOWFALL1: DynamicSnowController.Update indoors - the surfaces hidden, the snowpack and the refill kept by the event clock
@@ -33510,7 +33541,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     caravanStep(dt);   // LW11: the hold-ups, the reports carried in, the escort - anywhere (a report lands, an escort ends, indoors too)
     if (livingWorldOn() && _mode() === 'exterior' && !tvf) { livingHideoutsHostOf().frame(dt); livePersonBatches.push(...livingHideoutsHostOf().batches()); }   // LW12: a band's hideout near, stood
     else _livingHideoutsHost?.clear();
-    if (livingWorldOn() && _mode() === 'exterior') livingPatronsStep(Date.now() / 1000, () => { const p = playerTravelPixel(); return p ? maps.getRegionIndexAt(p.x, p.y) : null; });   // LW15: the region's patrons, now and then
+    if (livingWorldOn() && _mode() === 'exterior') livingPatronsStep(Date.now() / 1000, livingPatronsRegion);   // LW15: the region's patrons, now and then (AUDIT LW-II-2 W11: while a living town stands)
     if (livingWorldOn()) livingCarriedStep(LIVING_CARRIED_SLICE_MS);   // LW16: the word carried, worked a slice a frame
     if (livingWorldOn()) { livingWatchStep(); livingPeerWatchStep(); }   // LW7 / WATCH-FIX: the turned watch followed, mine and a peer's
     if (livingIndoors?.size || livingIndoors?.spots().length) livingIndoors.clear();   // LW8: the street again - the room's residents freed (LW-FIX1: and an empty room's sounding)

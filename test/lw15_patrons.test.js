@@ -361,7 +361,7 @@ test('LW15 drawn: the seed dealt to one of the town\'s households alike by every
 
 test('LW15 the host\'s seams: the region\'s patrons read online alone, now and then; each town\'s LivingTown its own; its errands and browsers in a household\'s plan; the Vendor page\'s buyer named (mutants: each seam)', () => {
   const w = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
-  assert.match(w, /if \(!params\.has\('online'\) \|\| !marketBook \|\| _livingPatronsBusy \|\| nowS - _livingPatronsAt < PATRON_READ_S\) return;/);
+  assert.match(w, /if \(!params\.has\('online'\) \|\| !marketBook\) return;/);   // PIN MOVED (AUDIT LW-II-2 W3): online alone here - each region's read keeps its own clock (auditlwii2_town)
   assert.match(w, /if \(row\.home\?\.entry !== 'public'\) continue;/);
   assert.match(w, /const door = p\.buildingKey;\n\s+if \(!Number\.isSafeInteger\(door\)\) continue;/);
   assert.match(w, /byMap\.get\(p\.map\)\.told\.push\(\{ door, t: skyClassicMinutes\(\(p\.hour \* 3600 \+ p\.minute \* 60\) \* 1000\), seed: p\.seed \}\);/);   // PIN MOVED (AUDIT LW-II B5): the service's instant, no machine offset
@@ -374,7 +374,7 @@ test('LW15 the host\'s seams: the region\'s patrons read online alone, now and t
   assert.match(w, /patronName: \(pt\) => livingPatronName\(pt\),/);
   const lt = readFileSync(new URL('../src/systems/livingWorld/livingTown.js', import.meta.url), 'utf8');
   assert.match(lt, /plan = dayPlan\(res, this\.places, day, \{ mpm: this\.o\.mpm, away, watch: this\._watchSize, bandOf: this\._bandOf, \.\.\.this\._patronsFor\(res, day\) \}\);/);   // PIN MOVED (the merge): CHAP5b's bands beside it
-  assert.match(lt, /\(e\.pv \?\? 0\) !== this\._patronV\(\)\)/);
+  assert.match(lt, /\(e\.pb !== undefined && e\.pv !== this\._patronV\(\) && !this\._patronsKept\(e, res, day\)\)\)/);   // PIN MOVED (AUDIT LW-II-2 W1/W5): asked of a plan that read the word alone, made again where what it read moved
   const m = readFileSync(new URL('../server-account/src/market.js', import.meta.url), 'utf8');
   // PIN MOVED (AUDIT LW-II P10): each read hands the reckoning the service's env - its secret, the draw's
   assert.match(m, /await reckonPatrons\(ctx, \{ maps: \[vend\.map\] \}, env\)\.catch\(\(\) => null\);/);
