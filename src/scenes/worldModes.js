@@ -8058,6 +8058,7 @@ export function createWorldModes(host) {
           variantPerson: (pn) => rrVariantPerson(pn, {
             buildingType: building?.buildingType ?? -1, quality: building?.quality ?? 0,
             nameSeed: staticNpcData(pn, { ...(questSceneCtx?.() ?? {}), buildingKey: building?.buildingKey ?? 0 }).nameSeed,
+            region: hit.dfLocation?.regionIndex ?? null,   // REGIONAL-FOLK: a Redguard region's residents are Redguards
             worldClimate: hit.dfLocation?.climate?.worldClimate ?? null,   // AUDIT-RR F13: `climate` IS the settings object; its worldClimate (223-232) is what GetWorldClimateSettings takes - climateType (0-3) fell to the Breton arm everywhere
           }),
           // ROAD-C c2/S9: SetupBeacons(door)'s building arm - the

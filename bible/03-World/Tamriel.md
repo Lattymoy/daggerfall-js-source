@@ -94,7 +94,8 @@ else (`test/tamriel.test.js` sweeps for a second copy), so the probe's correctio
 
 - The world sheet hands `frame` (the continent's box in the Bay's coordinates) and `_limits()` carries it as
   `mapW`/`mapH` with `mapX0`/`mapY0`; `clampView` takes the origin (absent, zero - every other sheet unchanged). The
-  home view is the Bay's fit centred on the Bay (`homeView`), so the map still opens on the whole Bay; `-` and the
+  home view is the Bay's fit centred on the Bay (`homeView`), so the map's rest is the whole Bay (the player's own map
+  then glides to them - FIND-FIRST, `01-Overview/Field-Bugs-2026-10-10.md`); `-` and the
   wheel go out from there to the frame's contain. The zone map (WILD2) holds its own limits and the continent is never
   painted under it.
 - The switch is read ONCE at open (`this._tamriel`), the Features row's "takes effect the next time a map is opened".

@@ -165,7 +165,7 @@ skins cannot drift:
   every port's mark ~~at the mid and near bands while the mod restricts
   ship travel to ports~~ - PORT-MAP (2026-10-04, Mac: "Also ports don't
   show on my map"): at EVERY band, beside the mark the band inks and ON
-  the place where it inks none (the map opens far, which inks the cities
+  the place where it inks none (the map at rest is far, which inks the cities
   alone), haloed then inked in the full pen (`HARBOUR_HALO`,
   `HARBOUR_PEN`), whether or not the mod restricts ship travel - the
   quays stand at every port (`03-World/Holdings.md` 7);

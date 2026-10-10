@@ -360,6 +360,9 @@ export function seedTestLoot(entity, rolls = Math.random) {
   // to set in them from the pack's card - after every draw the room made before
   { const b = applyRarity(base(TEST_LOOT_BASES[3]), 'rare', rolls); b.sockets = Array(socketMax(b)).fill(SOCKET_EMPTY); put(b); }
   for (const id of TEST_GEMS) put(/** @type {any} */ (mintGem(id)));
+  // TRUE-CURSE (01-Overview/Field-Bugs-2026-10-10.md): a damned Legendary weapon, known - its bite at every blow tried,
+  // and the temple's refusal; after every draw the room made before
+  { const d = LEGENDARIES.find((rec) => rec.group === 'Weapons'); if (d) { const it = legendaryItem(d); cursePiece(it, rolls, { damned: true }); put(it); } }
   // TECH1 (bible/05-Combat/Weapon-Techniques.md): THE TECHNIQUES - one Rare a technique, on a piece of its family (a Long
   // Bow's two, a Longsword's, a Dagger's, a Battle Axe's, a Mace's, the Gauntlets' for the bare hand), its line at the
   // band's middle, so every one can be tried on its key; after every draw the room made before

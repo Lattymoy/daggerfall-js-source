@@ -569,6 +569,8 @@ half health", "everyone in the zone should see the same ... that the big giant i
 - FINDME (the owner's screenshot: a full-width red cross): a "Find me" button left of Close - the view glides to my
   pixel and a red cross blinks over it for three seconds (`_findMe`, `heldMap.js:"_findMe() {"`), on the world map and
   the zone map. Not the zone's alone.
+  FIND-FIRST (FIELD BUGS 2026-10-10, the Discord: "make 'Find me' the standard functionality on the world map when I
+  first open it"): the player's own world map opens as this press (`01-Overview/Field-Bugs-2026-10-10.md`).
 
 ## 19. The mountains walkable (MOUNTAINS WALKABLE)
 

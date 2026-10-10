@@ -84,10 +84,10 @@
     ]
   },
   {
-    "name": "TECH1-the-pass-before-the-gem-find",
+    "name": "TECH1-the-pass-before-the-damning",
     "file": "src/systems/lootRarity.js",
-    "old": "  items.push(...(_gemFind?.({ ...source, luck }, rolls) ?? []));   // GEM2: and a graded gem, last of all (systems/gems.js)\n  techniquePass(minted, rolls);",
-    "new": "  techniquePass(minted, rolls);\n  items.push(...(_gemFind?.({ ...source, luck }, rolls) ?? []));   // GEM2: and a graded gem, last of all (systems/gems.js)",
+    "old": "  damnPass(minted, rolls);   // TRUE-CURSE: a cursed Legendary weapon damned, after every draw the door made, the gem's too (law 9)\n  techniquePass(minted, rolls);",
+    "new": "  techniquePass(minted, rolls);\n  damnPass(minted, rolls);   // TRUE-CURSE: a cursed Legendary weapon damned, after every draw the door made, the gem's too (law 9)",
     "tests": [
       "test/tech1_roster.test.js"
     ]

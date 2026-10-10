@@ -959,6 +959,11 @@ export const BOUNTY_CSS = `/* ── BOUNTY1: THE BOUNTY BOARD ── */
 .bounty-win { width: min(960px, 96vw); max-height: 92vh; display: flex; flex-direction: column; overflow: hidden;
   border: 2px solid; background: rgba(14,12,11,0.96); }
 .bounty-win.bounty-noticewin { width: min(560px, 94vw); }
+/* AUDIT FB1010 A3: the board's window is one height whatever it holds - the note line, a list grown by a take, a long
+   story - so a press at Take's place stays on Take; the list and the notice's page scroll inside it */
+.bounty-win:not(.bounty-noticewin) { height: min(600px, 92vh); }
+.bounty-win:not(.bounty-noticewin) .bounty-body { flex: 1 1 auto; overflow: hidden; }
+.bounty-win:not(.bounty-noticewin) .bounty-side { min-height: 0; overflow: auto; }
 .bounty-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 12px 16px; border-bottom: 2px solid rgba(5,6,8,0.6); }
 .bounty-title { flex: 1 1 280px; min-width: 0; }
 .bounty-title h2 { margin: 0; font-size: 20px; letter-spacing: 0.12em; text-transform: uppercase; color: #efe0b8; text-shadow: 2px 2px 0 #050608; }
@@ -983,7 +988,9 @@ export const BOUNTY_CSS = `/* ── BOUNTY1: THE BOUNTY BOARD ── */
 .bounty-empty { padding: 10px; font-size: 13px; color: #b9ab93; font-style: italic; }
 .bounty-heldhead { margin: 10px 0 2px; font-family: inherit; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: #b9ab93; }
 .bounty-heldrow { display: flex; flex-direction: column; padding: 4px 10px; border-left: 2px solid #c08a3e; background: rgba(243,207,134,0.05); }
-.bounty-card { flex: 1 1 50%; min-width: 0; margin: 0; padding: 12px 14px; border: 2px solid; align-self: flex-start; }
+.bounty-card { flex: 1 1 50%; min-width: 0; min-height: 0; margin: 0; padding: 12px 14px; border: 2px solid; align-self: stretch;
+  display: flex; flex-direction: column; gap: 8px; }
+.bounty-cardpage { flex: 1 1 auto; min-height: 0; overflow: auto; }
 .bounty-card h3 { margin: 0 0 8px; font-family: inherit; font-size: 16px; color: #efe8d6; }
 .bounty-tier { margin: -4px 0 8px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #c9a86a; }
 .bounty-story { margin: 0 0 6px; font-size: 13px; line-height: 1.5; color: #e6dccb; }
@@ -996,6 +1003,7 @@ export const BOUNTY_CSS = `/* ── BOUNTY1: THE BOUNTY BOARD ── */
 .bounty-progress, .bounty-mates, .bounty-why { margin: 0 0 8px; font-size: 12px; color: #9fe8b4; }
 .bounty-why { color: #b9ab93; }
 .bounty-acts { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.bounty-acts .bounty-drop { margin-right: auto; }
 .bounty-noticebody { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px 16px; overflow: auto; }
 .bounty-noticebody .bounty-story { font-size: 14px; }
 .bounty-rewardbox { display: flex; flex-direction: column; gap: 3px; align-self: stretch; }
@@ -1003,6 +1011,8 @@ export const BOUNTY_CSS = `/* ── BOUNTY1: THE BOUNTY BOARD ── */
 @media (max-width: 720px) {
   .bounty-shell { padding: 8px; }
   .bounty-body { flex-direction: column; padding: 10px 12px 12px; }
+  .bounty-win:not(.bounty-noticewin) .bounty-side { flex: 0 1 auto; max-height: 45%; }
+  .bounty-card { flex: 1 1 auto; }
   .bounty-title h2 { font-size: 17px; letter-spacing: 0.08em; }
 }
 @media (pointer: coarse) { .bounty-post { min-height: 44px; } }`;

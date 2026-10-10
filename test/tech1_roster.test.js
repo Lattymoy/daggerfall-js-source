@@ -151,7 +151,7 @@ test('TECH1 ADD: a technique of the piece\'s family, its band, its worth, set be
   assert.ok(LR.isTechniqueAffix(g.affixes.at(-2)));
 });
 
-test('TECH1 THE DOOR: one roll a piece at its tier\'s chance, the door\'s LAST draw - every earlier draw is what it was, and a tier with no chance draws nothing (mutants: the chance; the roll before the late finds; a draw at no chance)', () => {
+test('TECH1 THE DOOR: one roll a piece at its tier\'s chance, the door\'s LAST draw - every earlier draw is what it was, and a tier with no chance draws nothing (mutants: the chance; the roll before the damning; a draw at no chance)', () => {
   on();
   // the chance: Magic about one in eight, Rare three in ten, Legendary nine in twenty, over the real roll
   const hit = { magic: 0, rare: 0, legendary: 0 }, n = { magic: 0, rare: 0, legendary: 0 };
@@ -184,6 +184,21 @@ test('TECH1 THE DOOR: one roll a piece at its tier\'s chance, the door\'s LAST d
     a.forEach((it, i) => { if (LR.techniqueLineOf(it)) tech++; assert.deepEqual(noTech(it), b[i], `seed ${seed}: piece ${i} its seed's but the technique`); });
   }
   assert.ok(tech > 10, `the corpse door minted techniques (${tech})`);
+  // TRUE-CURSE's damning draws before it (merged from main): every cursed piece's damning roll is its seed's - the curse
+  // forced on, so a door's Legendary weapons are cursed and the damning draws for each
+  LR._setCurseForTests(1);
+  let damned = 0;
+  try {
+    for (let seed = 1; seed < 400; seed++) {
+      const make = () => [createWeapon(120, 1), createWeapon(130, 1), createWeapon(118, 1), createWeapon(126, 1)];
+      const a = make(); LR.rollLootRarity(a, src, { rolls: lcg(seed) });
+      LR._setTechniqueForTests({});
+      const b = make(); LR.rollLootRarity(b, src, { rolls: lcg(seed) });
+      LR._setTechniqueForTests(null);
+      a.forEach((it, i) => { if (LR.isDamned(it)) damned++; assert.deepEqual(noTech(it), b[i], `seed ${seed}: piece ${i}, damned or not, its seed's`); });
+    }
+  } finally { LR._setCurseForTests(null); }
+  assert.ok(damned > 10, `the damning drew and damned (${damned})`);
   // the seeded doors: the gate's, the Abyss's, the serpent's, a town's thanks - and a body's kit
   for (let seed = 1; seed < 80; seed++) {
     const doors = [() => rollSpoils(seed, 14), () => rollSdSpoils(seed, 20), () => rollSerpentSpoils(seed, 14, 'dealt'), () => rollRaidSpoils(seed, 14, 2)];
@@ -282,6 +297,15 @@ test('TECH1 THE LAW: a technique of the piece\'s family, one, last of its own li
   const cu = withTech(() => createWeapon(120, 1), 'leap', 20);
   LR.cursePiece(cu, lcg(4));
   assert.deepEqual(itemFindings(cu), [], 'a curse after it, the same');
+  // TECH1 at the TRUE-CURSE merge: a door damns a cursed Legendary weapon (damnPass) and then rolls its technique - the
+  // damned curse's line stays its own line, the technique after it, and the law and the damning both stand
+  const rec = LR.LEGENDARIES.find((l) => l.group === 'Weapons' && (!l.templates || l.templates.includes(120)));
+  const dm = LR.applyRarity(createWeapon(120, 1), 'legendary', () => 0, [rec]);
+  LR.cursePiece(dm, () => 0.9, { damned: true });
+  LR._setTechniqueForTests({ legendary: 1000 });
+  try { LR.techniquePass([dm], () => 0.5); } finally { LR._setTechniqueForTests(null); }
+  assert.ok(LR.isDamned(dm) && LR.isTechniqueAffix(dm.affixes.at(-1)), 'damned, and a technique its last line');
+  assert.deepEqual(itemFindings(dm), [], 'a damned Legendary weapon with a technique after its damning: lawful');
   const forged = (fn) => { const it = withTech(() => createWeapon(120, 1), 'leap', 20); fn(it); return itemFindings(it); };
   assert.ok(forged((it) => { it.affixes.at(-1).param = 'volley'; }).includes('affixes'), 'a sword\'s volley');
   assert.ok(forged((it) => { it.affixes.push({ id: 'technique', param: 'whirlwind', value: 20 }); }).includes('affixes'), 'two techniques');

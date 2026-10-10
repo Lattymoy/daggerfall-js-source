@@ -102,8 +102,8 @@ existing seed draws what it drew. It comes from its own pass alone.
   nor a Gilded record (the Hourlock).
 - **The worth**: 30 gold a point (`AFFIX_WORTH.technique`) - a Rare's +23% is 690.
 - **The doors**: `rollLootRarity` (every host's list - a corpse, a pile, a chest, a searchable, World of Daggerfall's
-  sites) after its late finds, the weapons' own sockets and the world's gem find (GEM1, GEM2); the corpse kit
-  (`foeLootCap.js` `rollCorpseKit`) after its socket passes; the gate's, the Abyss Dungeon's and the serpent's spoils
+  sites) after its late finds, the weapons' own sockets, the world's gem find (GEM1, GEM2) and the damning
+  (TRUE-CURSE); the corpse kit (`foeLootCap.js` `rollCorpseKit`) after its socket passes and its damning; the gate's, the Abyss Dungeon's and the serpent's spoils
   after their card, their socket passes and their boss gems; the raid's after its last pass. Each calls
   `techniquePass` LAST, so a seeded door's earlier draws mint what they did (pinned by running every door with the
   pass off and on, piece for piece).
@@ -385,7 +385,14 @@ the sockets" set a technique's line and worth aside; the find's "nothing after i
 source pin reads the pass after its gems), `serpentset` (seed 2's broadsword now rolls Leap Strike after the last
 pass's castSpeed line), and in `loot16_curses`, `loot20_sockets`, `loot21_stones`, `gilded1_gilded`, `sd9e_spoils` and
 `lr1_lootrarity` both arcs' moves together (`cards9_sources` reads the gem arc's passes after the card, as the gem arc
-moved it). `TECH1-the-pass-before-the-late-finds` is re-aimed as `TECH1-the-pass-before-the-gem-find`. The Reforge's
+moved it). `TECH1-the-pass-before-the-late-finds` is re-aimed as `TECH1-the-pass-before-the-gem-find`.
+**Merging FIELD BUGS 2026-10-10 (#743).** TRUE-CURSE's `damnPass` is another last draw at the host door and the corpse
+kit, so the technique pass follows it too, and `test/fb1010_truecurse.test.js` reads it there (`PIN MOVED (TECH1)`: the
+two doors' source pins, and the Test Room's damned weapon last but the twelve technique pieces). The order record is
+re-aimed as `TECH1-the-pass-before-the-damning`; the first run left it alive (a door's seeds seldom made a cursed
+Legendary weapon, so the damning seldom drew), and THE DOOR now forces the curse over 399 seeds and holds every piece,
+damned or not, to its seed. THE LAW adds the shape the merge makes possible - a damned Legendary weapon whose technique
+is rolled after its damning, lawful. The Reforge's
 Exalted line on a Legendary counts back from the gems' lines (GEM1) and then past a technique's (TECH1).
 The ledger row, set at the foot of section A, moved sections B, C and D down one line: their line cites were
 re-resolved by `tools/citeShift.mjs` (and the numbered and inline `:NNN` identifiers of Port-Status section 2 by hand,
