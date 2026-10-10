@@ -3,10 +3,11 @@
 *The owner: "Real quick, performance must be highest priority now, it even runs shoppy on my nasa pc xD - prob caused
 by placed objects by players, crowded places and render range".*
 
-Five changes, each a cost that grew with one of the three things named and none of them a change to the picture:
+Six changes, each a cost that grew with one of the three things named and none of them a change to the picture:
 PERF-V8 (the world host's frame, a function V8 never optimized), PERF-YARD (the yards' placed pieces culled - the homes'
 and the merchants'), PERF-INST (the shadow pass's memory of a model's copies), PERF-COL2 (the collider's streamed
-pixels) and PERF-FACE (a lantern's six faces copied for one mover). Then what is left, ranked - the levers that do move
+pixels), PERF-FACE (a lantern's six faces copied for one mover) and PERF-NAMES (the crowd's names laid out at every
+move). Then what is left, ranked - the levers that do move
 the picture are the owner's.
 
 AUDITED the same day (the owner: "Lets do an audit on this"): five cold lanes over a frozen snapshot, every finding
@@ -232,6 +233,24 @@ copies the faces it was drawn into, not six, and a mover gone copies those back 
 by face now. Mutants: `tools/mutants/perfface.json`, 6 - 5 dead, 1 equivalent as recorded (an emptied slot's faces
 marked unknown: its cache flag is cleared beside them, so its next use copies all six whatever they say).
 
+## PERF-NAMES — a name moves by its transform
+
+**Found** (`tools/nameLayerBrowserProbe.mjs`, PERF-ON2's probe, given the main thread's whole task beside its layout;
+headless Chromium, 72 names walking with the eye, 600 frames, three runs): the name layer is ~1.9 ms of the page's
+main thread a frame - the layout PERF-ON2 read (0.12-0.18 ms) is a tenth of it; the style, the paint and the commit
+are the rest. Each name's `left` and `top` lay the tag out again at every move, and a turn of the camera moves every
+name on the screen.
+
+**The fix.** `ui/nameLayer.js` places a tag by one `transform` - the point, then the sheet's own `translate(-50%,
+-100%)` - in place of `left` and `top`. The same pixels: the two ways' screenshots in Chromium compared byte for byte at
+three frames of sixty names, on its default GL and on SwiftShader. Names standing while the eye turns: 1.52 -> 1.15 ms
+of main thread a frame (three runs each, their layout 0.11 -> 0). Names walking nearer and farther: within the noise
+(1.99 against 1.81) - their font size moves every frame and lays them out by itself, as PERF-ON2 found.
+
+Pins: `test/name1_bubbles.test.js` reads the place from the transform (and never `left`/`top`). Mutants:
+`tools/mutants/name1.json`'s gap and stack mutants re-aimed at the transform (the sheet's own translate is now the
+place's until the first write); 67 dead, 3 equivalent as recorded.
+
 ## What is left, ranked
 
 Each with what was found and whether it moves the picture (those are the owner's).
@@ -262,7 +281,13 @@ Each with what was found and whether it moves the picture (those are the owner's
    footsteps, mobile and riding clocks run every frame, seen or not; `online.tick` lerps (and allocates) a pose for
    every peer of every room held open. A far tier changes what a far player sees.
 6. **The Living World's dodge** walks the whole pool for each walker each frame, with an array and a sort a walker
-   (`livingTown.js _dodge`). Nothing a player sees.
+   (`livingTown.js _dodge`). Nothing a player sees - and measured small: a street's frame is 0.2 ms mean in the great
+   city (`tools/livingPerfProbe.mjs`, the pool 96 at most), the dodge a part of it.
+6b. **The name layer's size and its layers** (PERF-NAMES' probe): a name's font size moves with its distance every frame
+   it walks, and lays it out and repaints its text by itself - the rest of the layer's ~1.9 ms at 72 names. Two levers,
+   both the owner's because both change pixels: each tag on a layer of its own (`will-change: transform` - 60 names
+   turning 1.48 -> 0.88 ms, but 2.4% of the screen's pixels differ, glyph edges softened by up to 95 of 255 on a channel)
+   and the size in coarser steps (a name's size would step as it nears).
 
 **The placed pieces.**
 7. **A furnished room's lights** - every lit piece joins the room's lights and indoors every light casts
@@ -280,4 +305,4 @@ governor - each the owner's.
 - **The A/B this branch owes**: on a machine with the data, `ARENA2_PATH=... node tools/frameProbe.mjs knight night`
   with `TREE=` the base, then this branch (`node tools/frameAb.mjs` reads the two) - the frame's own script time
   is what PERF-V8 moves, and a crowded town with yards is where PERF-YARD, PERF-INST and PERF-COL2 show.
-- **The picture's levers** above (1, 4, 5, 7) are yours: each trades a little of what is seen for frame time.
+- **The picture's levers** above (1, 4, 5, 6b, 7) are yours: each trades a little of what is seen for frame time.
