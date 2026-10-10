@@ -151,6 +151,20 @@ test('BAL2 one rule for every striker: a foe\'s weapon skill counts x1.5 to hit,
   assert.deepEqual(blow(100, 0.15), [20, true], 'a foe\'s crit multiplies by 1 + 20 x 0.05 = 2, the player\'s own (it was 1.5)');
   assert.deepEqual(blow(100, 0.24), [2 * blow(0, 0.24)[0], true], 'crit / (4 - 0) = 25%: 0.24 crits, and doubles');
   assert.equal(blow(100, 0.25)[1], false, 'and 0.25 does not (a foe\'s was crit / 5)');
+  // and a landed crit's aim: on a player who dodges at 100, Long Blade 0 lands at the 3% floor - a crit's +25 lands every
+  // one of the quarter of rolls that crit (it was +10: twelve)
+  const dodger = mkPlayer({ skills: skillsAll(40, { [SKILLS.Dodging]: 100 }) });
+  const landedOn = (crit) => {
+    let n = 0;
+    for (let i = 0; i < 100; i++) {
+      const notes = { hit: false };
+      pcaaoAttackDamage(knight(0, crit), dodger, { weapon: sword, rolls: fixed(i / 100 + 0.001), dfRand: () => 0, modules: M, notes });
+      if (notes.hit) n++;
+    }
+    return n;
+  };
+  assert.equal(landedOn(0), 3, 'the floor');
+  assert.equal(landedOn(100), 25, 'crit / 4 = +25 to hit on every crit');
   // the source: one line for the hit, none of the old arms left
   const src = rd('src/combat/pcaao.js');
   assert.match(src, /^ {2}chanceToHitMod = Math\.ceil\(F\(skill\(attacker, skillID\) \* F\(1\.5\)\)\);$/m);
@@ -193,6 +207,8 @@ test('BAL3 progressionScaling: the place\'s veteran times the foe\'s share, or t
   const half = progressionScaling(none, 0, 0.5, 1);
   assert.deepEqual([half.healthMult, half.damageMult, half.skillGain, half.challengeLevels], [1 + V.health / 2, 1 + V.damage / 2, V.skill / 2, 3]);
   assert.equal(half.place, 1); assert.equal(half.share, 0, 'the Master Skills share is its own');
+  assert.equal(progressionScaling(none, 0, 1, 3).healthMult, 1 + V.health, 'a place past whole reads whole');
+  assert.equal(progressionScaling(none, 0, 1, -1), null, 'and under none, none');
   // Master Skills' veteran a floor beside the place: whichever is more
   const vet = { veteran: 1, edge: 0 };
   assert.equal(progressionScaling(vet, 1, 1, 0.5).healthMult, 1 + V.health, 'the player\'s veteran over a lesser place');
@@ -360,4 +376,6 @@ test('BAL4 a real cost for dying offline: a death Project Legacy will raise stat
   const reset = w.slice(w.indexOf('function legacyDeathReset() {'), w.indexOf('function openLegacySuccession('));
   assert.match(reset, /if \(!\(_deathWasOnline \?\? _onlineWorldSession\(\)\)\) forgetLastSlew\(\);\n\s*respawnOnlinePlayer\(\);/);
   assert.doesNotMatch(reset, /stateDeathLoss\(0\)/, 'no word of "none" over the screen\'s');
+  // the dungeon the mode machine builds is handed the same word its screen reads (dungeonContext's `rises: opts.legacyWillRise`)
+  assert.match(rd('src/scenes/worldModes.js'), /legacyWillRise: \(\) => host\.legacyWillRise\?\.\(\) \?\? false,/);
 });

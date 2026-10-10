@@ -113,7 +113,13 @@ pile's odds are that place's. The veteran layer now reads the same grade: the pl
 from 4 to 12, so a rat stays a rat; a class foe in full). The wilderness stands as the dungeons it reads like -
 SOFTCAP5's own equivalence, "by day like a cemetery or a ruined castle, at night like a prison or a harpy nest" - at
 tier 5 by day and 7 at night (`wildernessThreat`). Towns, interiors and `exterior.js`'s fixed city never scale (the
-two seams never run there). No gate: offline, with Master Skills off, at any level, mentoring or not.
+two seams never run there). Offline, with Master Skills off, at any level, mentoring or not.
+
+THE GATE IS THE LADDER'S. The grading is the loot ladder's, so the layer stands while the ladder does (`lootRarityOn`,
+on by default, forced on online - LR5): the ladder off, the place hands 0 and a dungeon's foes are DFU's again, as
+the ladder's champions (LOOT7) and now its elites (section 6) are. The hosts read the switch at every spawn, so
+turning the ladder off mid-dungeon reaches the next foe built. `skillSoftcap.js` stays pure (it cannot import the
+ladder: `skills.js` imports it and the ladder imports `skills.js`) - the host hands the place's veteran in, or 0.
 
 | tier | places | health | damage | skill |
 | --- | --- | --- | --- | --- |
@@ -145,7 +151,66 @@ the fixed city is a town's ground (its pool passes no `inLocation`, so the wilds
 
 ## 6. BAL4 - the offline defaults
 
-Written in its slice (section 10), from its own measurement.
+Section 2's fourth and fifth causes: the hard content was online's, and failing cost little offline. Three changes,
+each a default the port already ships online or a rule it already keeps, extended to the lane it skipped.
+
+**THE ELITES.** `eliteFoes.js` elitesAllowed: online always (an online page, a host in a room), and offline wherever
+the loot ladder stands. An elite's drop is the ladder's (eliteLoot's tiers) and its gate is the champions'
+(`systems/champions.js`), so with the ladder off no foe is ever one - DFU's lane. Nothing else about them moves:
+ELITE-RATES' one foe in twenty in the open world (off `Math.random`, never the encounter's dice), at most one in a
+plain dungeon one time in five and three or four in an Elite Dungeon (a pure pick by the dungeon's id), never under
+level 3 (ELITE-FLOOR), never the watch, an ally, a quest's foe or a retype. They compound with the place: the hosts
+promote first (x5 health, x3 damage), then the place scales the elite (an elite in a Dragon's Den stands at x10
+health, x3.75 damage) - as an elite and the Master Skills veteran always compounded online. Offline, Mac's
+2026-10-01 "elite enemies are online mode only" stood until this arc measured that offline fielded nothing past
+DFU's own foes; Mac's 2026-10-10 "Do everything" (of "smarter AI and elites offline") is the word that turns it.
+
+**THE ENHANCED AI.** `features.js` 'enhanced-ai': `initial: true` (it was false - "DFU's classic motor is the 1:1
+law"); `online: true` stands, so every room still forces it on. What it brings (`12-Enhanced-AI/`): attack tokens
+and the ring (two swinging at once, the rest holding - a crowd is LESS deadly than the classic motor's, where every
+foe swings), backing off and fleeing, archers keeping their range, telegraphed blows to stagger or punish, iron
+blows that cannot be stopped, cover for sight and missiles, and the dungeon navmesh. Net difficulty is mixed by
+design (TACT5's field report softened it: "New monster AI is painful"); it is turned on because it is the port's
+game, played online by everyone, and the offline lane was the only place it was not.
+
+The shelf (PREF1, `uiPrefs.js`): a shelf stamped since 2026-09-15 never stored the old default (a default is never
+written), so the flip reaches it unasked - and a player who pressed it Off after pressing it On cannot be told apart
+from one who never chose, which PREF1 already accepts for every default. An UNSTAMPED shelf materialised every
+default as if chosen; the row shipped Off on 2026-09-14, one day before the stamp, so its `false` is the shelf's
+writing and not an answer. `enhancedAI` joins `PREF1_ADOPT_NEW_DEFAULT` beside `lootRarity`: adopted once, never
+again over a real choice. No `SHELF_REV` bump (the adoption reads the stamp's absence).
+
+Pins that leaned on the old default without saying so (LR5's trap): `enemymotor` P17 (fixed stepping - the tactics
+brain is a real-time layer on TACT2's wall clock and `Math.random`, so a 10 fps and a 60 fps foe do not take the
+same path under it; P17's law is the classic motor's), FALL-HOLD and CRATE-FREE now set the switch Off outright.
+
+**A REAL COST FOR DYING OFFLINE.** Measured: an offline death cost nothing a save did not already hold. With Project
+Legacy on (its default) an Enduring member rises (LEGACY2, 2026-10-05: the online respawn's own `respawnOnlinePlayer`
+- half health, drains cleared, the nearest temple, town or graveyard, or the dungeon's door), and the rise took
+Arkay's years alone (a Breton 5 of a 90-year span a death: fourteen rises, the fifteenth final) - and the ageless (a
+vampire, a werewolf - AGELESS-CURSE) paid nothing at all. No XP, no skill, no gold, no item. The online rule was
+written for exactly that gap ("Online, a death RESPAWNS you ... and that is free, which is the gap this closes" -
+`deathPenalty.js`), and its reason for being online-only ("offline a death ends the run") stopped being true at
+LEGACY2. So the rule is the respawn's now, not the lane's: an offline rise takes the same tenth of the purse -
+rounded down, never the bank, never a letter of credit, capped at the purse, exactly what the death screen said.
+
+Where: `ui/deathScreen.js` takes `rises`, a predicate the host hands when its reset asks Project Legacy first -
+`world.js`'s street (`legacyHost.willRise`), `worldModes.js`'s buildings (`host.legacyWillRise`) and the dungeon the
+mode machine builds (its opts' `legacyWillRise`). Legacy's outcome is decided before the screen goes up (its
+`onDeath` runs first in `playerEntity.js` hearDeath), so the screen reads it once, states the tenth
+(`stateDeathLoss`), and SAYS SO: the classic face's hint reads `ENTER rise` (riseHint), the enhanced face's plate
+`Rise` and its line "Your body falls. The Bay is not done with you yet." - where both said "End the journey" and
+"Your tale in the Iliac Bay ends here" over a death that raised the player (a screen that misled, found by this
+measurement). `legacyDeathReset` no longer states 0 offline (the revenant's theft stays online's, `forgetLastSlew`);
+Privateer's Hold's start-marker arm pays the tenth on every rise it takes. The fixed city and the standalone dungeon
+hand no `rises` and never rise. Legacy off, or Bloodline's fall: the run ends (or the Succession opens) and nothing
+is taken - there is no purse after it.
+
+What it leaves: F11 on the screen still loads the last save (the port's own affordance) - the player pays in lost
+progress instead of gold, and Arkay's years stay paid (Legacy writes them before the screen). Recorded, not built: a
+gold cost tied to the Toll setting (two gold rules, and a setting labelled in years costing gold); wear on worn gear
+at a death (a broken legendary, nothing on the screen to say it); skill-tally loss (unseen, two leveling systems,
+and FormulaHelper is 1:1).
 
 ## 7. Before and after
 
@@ -174,6 +239,15 @@ thirteen. The simulation leaves out the formulas' tail (an elite, the mentor, a 
   the Master Skills layers' weighting, the tier the place's; both stand, each for its own layer.
 - **A dungeon's allies.** `buildFoeAt` scales before a foe is allied, so a summoned ally in a deep dungeon stands
   stronger too - as it already did online under Master Skills.
+- **The Elite and Super dungeons compound.** Their own scale (an Elite dungeon's x2, a Super dungeon's x4 health)
+  is applied before the place's, as it was before Master Skills' layer online; a Super dungeon in a Dragon's Den's
+  grade stands at x8 health. Online, a player with veteran skills already met that; now every player does.
+- **The tactics brain is not fixed-step.** It runs on its own wall clock (`tactics.js` tacticsNow) and rolls
+  `Math.random` for its slots, beats and blows (TACT2), so two foes at 10 and 60 frames a second part ways under it
+  where the classic motor's P17 keeps them on one path. By design, and online's since TACT2; recorded because BAL4
+  turns it on offline.
+- **An offline crime chase still ends at a rise** (`respawnOnlinePlayer` clears the crime and abandons the arrest,
+  in both lanes). A death is not a free escape any more - it costs the tenth - but the chase is not carried over.
 
 ## 9. The slices
 
@@ -186,4 +260,38 @@ thirteen. The simulation leaves out the formulas' tail (an elite, the mentor, a 
 
 ## 10. What shipped
 
-Written as each slice lands.
+All four slices in one pull request, each with its pins and mutants (`test/bal_arc.test.js`, 10 tests;
+`tools/mutants/bal.json`, 45 mutants).
+
+**BAL1** - `combat/pcaao.js` pcaaoAlterDamageBasedOnWepCondition and pcaaoAlterArmorReducBasedOnItemCondition take
+`sharpEdge` (default on: the mod's); the blow, `condOf` and `combat/combatStats.js` hand
+`modules.equipmentDamageEnhanced`. Pinned: every band at 0-100% both ways, edged and blunt, weapon and armour; through
+`pcaaoAttackDamage` (400 seeded swings of a fresh longsword at an Orc Warlord: x1.3 with the wear, x1 without; a
+foe's blow on fresh plate: more taken without the wear's 0.85); the stats card's headline swing (x1.3 / x1).
+`test/pcaao.test.js` (the mod's own numbers, its wear on) unmoved.
+
+**BAL2** - one line for the hit (`chanceToHitMod = Math.ceil(F(skill(attacker, skillID) * F(1.5)))`), one roll for the
+crit (`crit / (4 - luckTerm)`), one multiplier and aim (`1 + floor(crit / 5) * 0.05`, `+floor(crit / 4)`), one classic
+arm without the module (`crit / 3` for `+crit / 3`). Pinned by execution: a class foe's landing over a hundred
+evenly spaced rolls on a bare player (Long Blade 20: 62; ten more skill, fifteen more to hit; the 97 clamp), its crit
+doubling a blow (10 -> 20) at the player's quarter (0.24 crits, 0.25 does not), and a crit's +25 to hit on a player
+who dodges at 100 (the 3% floor -> 25). PIN MOVED in `test/pcaao.test.js`: a monster's classic crit roll (crit/3 for
++crit/3) and its divisor (90 / (4 - 2) = 45%).
+
+**BAL3** - `systems/skillSoftcap.js` PLACE_THREAT, placeVeteran, wildernessThreat and progressionScaling's `place`;
+`characters/enemyEntity.js` records `progression.place`; the two seams gated on `lootRarityOn`. Pinned: the numbers
+and the section 5 table; every dungeon kind at its ladder tier; the max rule, the foe's share, the clamp, the overcap,
+three arguments SOFTCAP2's own; the wilds by execution (a crafted MONSTER.BSA, an Orc Warlord at midnight: x1.214
+health with the ladder, DFU's with it off or on a location's ground); the dungeon's seam and the four hosts by
+source (world.js's wilds pass the location rect; exterior.js's city and worldModes.js's interiors pass none).
+
+**BAL4** - `systems/eliteFoes.js` elitesAllowed; `systems/features.js` 'enhanced-ai' `initial: true`; `systems/uiPrefs.js`
+PREF1_ADOPT_NEW_DEFAULT; `ui/deathScreen.js` `rises` and riseHint, `ui/enhancedDeath.js` deathKeys' Rise; the hosts'
+`rises` (`world.js`, `worldModes.js` and its dungeon opts, `dungeonContext.js`); `legacyDeathReset`; Privateer's Hold;
+`systems/deathPenalty.js`'s header. Pinned: elites by the ladder and the lane, and the open world's own roll by
+execution; the AI's default, the brain's and the cover's switch; the death cost by execution (a rising screen states
+34 of 345 and the respawn takes it from a purse that grew; no rise, nothing; online, the room's), the plates and the
+line. PIN MOVED: FT5's row; FT18's online lock (on the dungeon sizes' row, the forced row that still ships Off);
+UXB1-E's card (the player's own Off); PREF1's control; deathpenalty (2), AUDIT 28 B5, FEUD H2, LEGACY B5, D-ONLINE1
+(3), FIX-E (2), AUDIT 21 F6, DISC19-C. Made explicit (the classic motor): enemymotor, FALL-HOLD, CRATE-FREE. Mutants
+re-aimed by content: `bounty1.json` DEATH-PENALTY-3 and -5, `legacy1.json`'s street reset.

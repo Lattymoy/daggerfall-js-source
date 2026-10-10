@@ -13481,6 +13481,10 @@ THE HOLDINGS ARC above left "the gold lost on death (the original pillars 5 and 
 
 - **Why online alone**: offline a death ends the run (`endRunToTitleMenu` - the video, the title, F11 for the last
   save), so there is no purse that goes on. Online a death RESPAWNS the player (D-ONLINE1), and that was free.
+  **BAL4 (2026-10-10, `05-Combat/Balance-Arc.md` section 6)**: a respawn is the rule, not the lane. LEGACY2 gave an
+  Enduring member an offline rise (the same respawn), free but for Arkay's years, so an offline rise now takes the
+  same tenth, stated on its death screen (`ui/deathScreen.js` `rises`, handed by the hosts whose reset asks Project
+  Legacy). A death with no rise (Legacy off, Bloodline's fall, the fixed city) still takes nothing.
 - **What** (`src/systems/deathPenalty.js`): a tenth of the purse (`goldPieces`, the counter), rounded down in the
   player's favour - nine coins lose nothing, a hundred lose ten. **DEATH-TENTH** (2026-10-03, Mac: "Reduce gold loss
   on death"): it was a quarter, Mac's first 25%; `DEATH_GOLD_FRACTION` 0.25 to 0.1, nothing else moved (the screen's
@@ -13488,7 +13492,8 @@ THE HOLDINGS ARC above left "the gold lost on death (the original pillars 5 and 
   trade-off the penalty exists to make) and not letters of credit. No switch: an online rule a player could turn off
   would be none.
 - **Where**: `respawnOnlinePlayer` (`scenes/world.js`), once a death - the `_respawning` latch is what makes it once -
-  and Privateer's Hold's in-place respawn (`scenes/worldModes.js`, online-gated). The waking line says it: "Death
+  and Privateer's Hold's in-place respawn (`scenes/worldModes.js`, online-gated; BAL4: every rise it takes, online or
+  Legacy's). The waking line says it: "Death
   claimed N gold from your purse."
 - **The death screen** reads the loss once, and STATES it (`stateDeathLoss`): the respawn takes exactly what the screen
   said, capped at the purse (AUDIT 28 B5: the purse CAN change while the player lies dead - a mate's bounty clear pays
