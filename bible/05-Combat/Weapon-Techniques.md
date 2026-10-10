@@ -252,7 +252,7 @@ The card's tier list carried a technique as two more lines, in the affixes' own 
 key read like one more `+17 Dodging`, and its second line broke mid-clause wherever the card's width fell
 (`... 172%. 5` / `fatigue, 12s`). On the Enhanced card it is now a **block of its own**, under the tier list and before
 the sigil's and the set's - the piece's own line, so the first of the blocks - drawn by `ui/techniqueCard.js` from
-`systems/lootRarity.js` `techniqueView`:
+`systems/lootRarity.js` `techniqueCardView`:
 
 | Part | What it says |
 |---|---|
@@ -274,7 +274,7 @@ the Info box's (`{ full: true }`) adds the two sentences. **Where it is not:** t
 (its `reforge-detail` line) and the trade window's strip keep the two lines, and a chat post the line alone (AUDIT
 TECH1) - `rarityLines` keeps them by default, and only a card that draws the block asks without (`technique: false`, which leaves out exactly the line
 `techniqueLineOf` answers and nothing else). **When it is not:** wherever the tier list says nothing of the line - the
-ladder off, a Common, a piece not yet identified (its `Unidentified` hides every line) - `techniqueView` is null and
+ladder off, a Common, a piece not yet identified (its `Unidentified` hides every line) - `techniqueCardView` is null and
 there is no block.
 
 **The facts once.** `techniqueParts(id, value)` is what a press does in its parts (`what`, `mult`, `fatigue`,

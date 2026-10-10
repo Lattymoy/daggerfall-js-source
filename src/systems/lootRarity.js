@@ -2149,7 +2149,7 @@ export const rarityKnown = (item) => identified(item);
  *  roll and the band it was rolled in, and what a press does (techniqueParts): `{ id, name, value, band, base, what,
  *  mult, fatigue, cooldown, aims }`. Null wherever the tier list says nothing of it - the ladder off, a Common, a piece
  *  not yet identified (its "Unidentified" hides the technique as it hides every line) - and for a piece with none. */
-export function techniqueView(item) {
+export function techniqueCardView(item) {
   if (!lootRarityOn() || !item || rarityOf(item) === 'common' || !identified(item)) return null;
   const line = techniqueLineOf(item);
   const parts = line ? techniqueParts(line.param, line.value) : null;

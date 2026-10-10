@@ -1,6 +1,6 @@
 // TECH-CARD (2026-10-10, the owner, of the card's two technique lines: "it needs its own unique glyph as its own
 // element. Like how set pieces and sigils get their own sections") - bible/05-Combat/Weapon-Techniques.md "The card's
-// block". The parts (combat/techniqueRoster.js techniqueParts), the view (systems/lootRarity.js techniqueView), the
+// block". The parts (combat/techniqueRoster.js techniqueParts), the view (systems/lootRarity.js techniqueCardView), the
 // tier list that leaves the line to the block, the block in its two dresses (ui/techniqueCard.js) on the fake document
 // (test/invdrag.mjs), the glyph (ui/techniqueGlyph.js), and the pack's card, its Info box and the HUD's chip EXECUTED.
 import './modsOff.js';
@@ -59,17 +59,17 @@ test('TECH-CARD the parts: what a press does, its multiplier, its price and whet
 test('TECH-CARD the view: the line techniqueLineOf answers with its roll, its band and its parts - none where the tier list says nothing of it: the ladder off, a Common, a piece not yet known, or no line (mutants: the unknown piece told; the ladder off told; a Common told; the band off another line)', () => {
   on();
   const sword = withTech(120, 'leap', 23);
-  const v = LR.techniqueView(sword);
+  const v = LR.techniqueCardView(sword);
   assert.deepEqual(v, { id: 'leap', name: 'Leap Strike', value: 23, band: [15, 30], base: 1.4, what: 'Aim: leap 9 m, strike all in 2.5 m, 172%', mult: 1.4 * 1.23, fatigue: 5, cooldown: 12, aims: true });
-  assert.deepEqual(LR.techniqueView(withTech(120, 'leap', 41, 'legendary')).band, [30, 50], 'a Legendary\'s line reads its band');
+  assert.deepEqual(LR.techniqueCardView(withTech(120, 'leap', 41, 'legendary')).band, [30, 50], 'a Legendary\'s line reads its band');
   sword.isIdentified = false;
-  assert.equal(LR.techniqueView(sword), null, 'a piece not yet identified hides it, as its "Unidentified" hides every line');
+  assert.equal(LR.techniqueCardView(sword), null, 'a piece not yet identified hides it, as its "Unidentified" hides every line');
   sword.isIdentified = true;
-  assert.equal(LR.techniqueView({ ...sword, rarity: 'common' }), null, 'a Common has no lines');
-  assert.equal(LR.techniqueView(LR.applyRarity(createWeapon(120, 1), 'rare', lcg(7))), null, 'no technique, no block');
-  assert.equal(LR.techniqueView(null), null);
+  assert.equal(LR.techniqueCardView({ ...sword, rarity: 'common' }), null, 'a Common has no lines');
+  assert.equal(LR.techniqueCardView(LR.applyRarity(createWeapon(120, 1), 'rare', lcg(7))), null, 'no technique, no block');
+  assert.equal(LR.techniqueCardView(null), null);
   setPref('lootRarity', false);
-  assert.equal(LR.techniqueView(sword), null, 'the ladder off says no line at all');
+  assert.equal(LR.techniqueCardView(sword), null, 'the ladder off says no line at all');
   _resetForTests();
 });
 

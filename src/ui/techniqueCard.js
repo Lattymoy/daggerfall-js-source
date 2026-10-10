@@ -9,12 +9,12 @@
 // are: the glyph (ui/techniqueGlyph.js - the HUD's chip wears the same one) in the blue the technique's marks wear on
 // the ground, the word and the technique's name, its roll and the band it was rolled in; what a press does; and a foot
 // of three cells - the key and how it is pressed, the fatigue, and the recovery in the dashed frame the HUD's
-// recovering chip wears. The facts are systems/lootRarity.js techniqueView's; this file only draws them.
+// recovering chip wears. The facts are systems/lootRarity.js techniqueCardView's; this file only draws them.
 //
 // TWO DRESSES, the sigil's law (CARD-FIT): the CARD's block (the default) is what a glance needs; the INFO box's,
 // `{ full: true }`, adds the sentences - how the power was rolled onto the technique's own blow, and how the key is
 // pressed.
-import { techniqueView } from '../systems/lootRarity.js';
+import { techniqueCardView } from '../systems/lootRarity.js';
 import { sigilDueling } from '../systems/sigil.js';
 import { TECHNIQUE_GLYPH_SVG } from './techniqueGlyph.js';
 
@@ -35,12 +35,12 @@ export const TECH_DUEL_NOTE = 'Sleeps in a duel: never at a player.';
 
 /**
  * The technique's block for an item's card, or null for an item whose tier list would say nothing of one
- * (techniqueView). `keyWord` names the bound key ('' when none is - the foot says so). CARD-FIT: the card's dress by
+ * (techniqueCardView). `keyWord` names the bound key ('' when none is - the foot says so). CARD-FIT: the card's dress by
  * default, the Info box's whole with `full`.
  * @param {any} item @param {{ full?: boolean, keyWord?: string }} [opts]
  */
 export function techniqueCard(item, { full = false, keyWord = '' } = {}) {
-  const v = techniqueView(item);
+  const v = techniqueCardView(item);
   if (!v || typeof document === 'undefined') return null;
   const asleep = sigilDueling();
   const box = el('section', full ? 'techbox' : 'techbox compact');
