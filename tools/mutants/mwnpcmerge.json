@@ -207,5 +207,23 @@
   "tests": [
    "test/mwnpc_mainmerge.test.js"
   ]
+ },
+ {
+  "name": "MWNPCMERGE-view-out-cast-only-world",
+  "file": "src/scenes/world.js",
+  "old": "        fb.castOnly = false;\n        flats.push(fb);",
+  "new": "        flats.push(fb);",
+  "tests": [
+   "test/mwnpc_mainmerge.test.js"
+  ]
+ },
+ {
+  "name": "MWNPCMERGE-view-out-cast-only-exterior",
+  "file": "src/scenes/exterior.js",
+  "old": "      for (const b of flats) b.castOnly = false;",
+  "new": "      for (const b of flats) void b;",
+  "tests": [
+   "test/mwnpc_mainmerge.test.js"
+  ]
  }
 ]

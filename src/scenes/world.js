@@ -27726,6 +27726,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       for (const fb of p.batches) {
         if (aabbOutside(planes, fb._box, t[0], t[1], t[2]) || !farFlatVisibleAt(ring, fb.farH ?? fb.size?.h ?? 0, fb.frame != null)) continue;
         fb.origin = t;
+        // MWNPC8b x RW1: no Morrowind body stands in the view out, so a standing person's flat is drawn here, never left
+        // cast-only by the street frame's last mark (it was, for the people nearest the house); the street marks it anew
+        fb.castOnly = false;
         flats.push(fb);
       }
     }

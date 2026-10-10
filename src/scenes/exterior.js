@@ -4206,6 +4206,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       for (const d of drawList) if (d.mesh && d.matrix && !(d.box && aabbOutside(planes, d.box))) r.drawMesh(d.mesh, d.matrix, d.texRemap ?? texRemap);
       r.drawTerrain(groundSurface, identityMatrix, r.tileArrays.get(groundArchive), tilemapTex, 6.4);
       const flats = billboardBatches.filter((b) => !(b._box && aabbOutside(planes, b._box)));
+      for (const b of flats) b.castOnly = false;   // MWNPC8c x RW1: no body stands in the view out - a standing person's flat is drawn (the street marks it anew)
       if (flats.length) r.drawBillboards(flats, new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]), UP_Y);
     },
   });
