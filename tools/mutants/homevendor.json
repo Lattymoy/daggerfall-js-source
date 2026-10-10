@@ -237,18 +237,20 @@
   },
   {
     "name": "HOMEVENDOR-a-trader-offered-offline",
+    "note": "WAGONS2 (FINAL AUDIT, PIN MOVED): re-aimed by content - a hired trader is offered and sold in a home alone (a caravan's or a ship's had it paid for, never working).",
     "file": "src/ui/decorPanel.js",
-    "old": "!(PROF_STATIONS.includes(k) || k === VENDOR_STATION) || forgeOffered()",
-    "new": "!PROF_STATIONS.includes(k) || forgeOffered()",
+    "old": "(k === VENDOR_STATION ? trader && forgeOffered() : ",
+    "new": "(k === VENDOR_STATION ? trader : ",
     "tests": [
       "test/audit29_client.test.js"
     ]
   },
   {
     "name": "HOMEVENDOR-a-trader-sold-offline",
+    "note": "WAGONS2 (FINAL AUDIT, PIN MOVED): re-aimed by content - a hired trader is offered and sold in a home alone (a caravan's or a ship's had it paid for, never working).",
     "file": "src/scenes/decorTool.js",
-    "old": "    if (want === VENDOR_STATION && !forgeOffered()) { deps.say?.(VENDOR_COLD_LINE); return false; }   // HOME-VENDOR: nor a trader",
-    "new": "    void VENDOR_COLD_LINE;   // HOME-VENDOR: nor a trader",
+    "old": "    if (want === VENDOR_STATION && (r?.kind !== 'home' || !forgeOffered())) { deps.say?.(VENDOR_COLD_LINE); return false; }",
+    "new": "    void VENDOR_COLD_LINE;",
     "tests": [
       "test/audit29_client.test.js"
     ]

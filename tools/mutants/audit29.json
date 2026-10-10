@@ -293,9 +293,10 @@
   },
   {
     "name": "AUDIT29-B2-a-forge-sold-anywhere",
+    "note": "WAGONS2 (FINAL AUDIT, PIN MOVED): re-aimed by content - a hired trader is offered and sold in a home alone (a caravan's or a ship's had it paid for, never working).",
     "file": "src/ui/decorPanel.js",
-    "old": "export const stationsOffered = () => DECOR_STATIONS.filter((k) => !(PROF_STATIONS.includes(k) || k === VENDOR_STATION) || forgeOffered());",
-    "new": "export const stationsOffered = () => DECOR_STATIONS.filter(() => true);",
+    "old": "export const stationsOffered = (trader = true) => DECOR_STATIONS.filter((k) => (k === VENDOR_STATION ? trader && forgeOffered() : !PROF_STATIONS.includes(k) || forgeOffered()));",
+    "new": "export const stationsOffered = (trader = true) => DECOR_STATIONS.filter(() => trader || true);",
     "tests": [
       "test/audit29_client.test.js"
     ]

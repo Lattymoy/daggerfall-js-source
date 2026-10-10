@@ -1,7 +1,8 @@
 // HCC: THE RUNTIME'S FAKE HOST - a flat world at y = 0 around a player who walks and mounts, the eight settings at
 // their defaults, the hotkeys, the windows' questions. One home for test/hcc_runtime.test.js and the branch audit's
 // pins (test/audit_hcc_branch.test.js). `w.noGround` takes the ground away (a spot the probe cannot hit yet); `w.ground`
-// is its height, `w.slope` a side slope in degrees (WAGON-HITCH's audit).
+// is its height, `w.slope` a side slope in degrees (WAGON-HITCH's audit). `presentation` stands a real pool's in for the
+// fake parts (WAGONS2: Mac's wagons, as the pool mints them).
 import { createHorseCartRuntime } from '../src/systems/horseCart.js';
 import { TRANSPORT } from '../src/systems/horseCartLaw.js';
 
@@ -9,7 +10,7 @@ export const RATIO = 40, WX0 = 100000, WZ0 = 200000;
 export const PARTS = { wheelLeftPivot: [-0.9, 0.5, -0.6], wheelRightPivot: [0.9, 0.5, -0.6], wheelRadius: 0.5, bounds: { min: [-1, 0, -1.6], max: [1, 1.3, 1] } };
 
 /** A flat world at y = 0 around a player who owns what `items` says, the mod's settings at their defaults. */
-export function makeWorld({ cart = true, horse = true, settings = {}, ground = 0 } = {}) {
+export function makeWorld({ cart = true, horse = true, settings = {}, ground = 0, presentation = null } = {}) {
   const w = {
     mode: TRANSPORT.Foot, items: { cart, horse }, inside: false, dungeon: false, building: false, buildingKey: 7, dungeonId: 99,
     pos: [0, 0.9, 0], yaw: 0, said: [], mid: [], now: 0, keys: new Set(), prompt: null, openedInv: 0, activateMode: 'grab', travelOpt: null, changed: 0,
@@ -43,7 +44,7 @@ export function makeWorld({ cart = true, horse = true, settings = {}, ground = 0
     worldCoordToMapPixel: () => ({ x: 0, y: 0 }),
     openInventoryWithWagon: () => { w.openedInv++; },
     openNamePrompt: (o) => { w.prompt = { ...o, open: true }; return { isOpen: () => !!w.prompt?.open }; },
-    phys, presentation: { wagonParts: () => PARTS, horseArt: { ensureStationary: () => true, ensureWalk: () => {}, hasWalk: () => true }, onChanged: () => { w.changed++; } },
+    phys, presentation: presentation ?? { wagonParts: () => PARTS, horseArt: { ensureStationary: () => true, ensureWalk: () => {}, hasWalk: () => true }, onChanged: () => { w.changed++; } },
     log: { warn: (m) => w.log.push(m), error: (m) => w.log.push(m), info: () => {} },
   };
   const rt = createHorseCartRuntime(deps);

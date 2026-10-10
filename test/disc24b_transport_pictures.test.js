@@ -16,7 +16,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { inventoryItemImage, inventoryItemModel, GROUP_TEMPLATE_INDICES, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from '../src/systems/itemTemplates.js';
-import { WAGON_MODEL_ID } from '../src/systems/horseCartLaw.js';
+import { WAGON_KINDS, newWagonItem } from '../src/systems/wagonKinds.js';
+// PIN MOVED (WAGONS1, 2026-10-09): the cart's picture is Mac's Wagon Cart, the world's wagon since WAGONS1 - drawn off
+// the port's own build under its own id (ui/modelIcon.js's port door), no longer classic model 41214
+const WAGON_MODEL_ID = WAGON_KINDS.cart.icon;
 import { bakeModelIcon, requestModelIcon, requestModelIconUrl, _resetModelIcons, ICON_SIZE } from '../src/ui/modelIcon.js';
 import { makeIconDrawer, MODEL_ICON_ARCHIVE } from '../src/ui/itemScroller.js';
 import { itemLine, linePictureUrl } from '../src/ui/enhancedInventory.js';
@@ -56,6 +59,7 @@ test('DISC24-B: the Horse draws its own record again; the cart and the boats sti
     assert.equal(inventoryItemImage({ templateIndex: i, group: 'Transportation' }), null, `template ${i}: the Wine Rack is not its picture`);
   }
   assert.equal(inventoryItemModel(cartItem()), WAGON_MODEL_ID, 'the cart is pictured by the wagon the world draws');
+  assert.deepEqual(['openWagon', 'caravan'].map((k) => inventoryItemModel(newWagonItem(k))), [WAGON_KINDS.openWagon.icon, WAGON_KINDS.caravan.icon], 'WAGONS1: each wagon pictured by its own kind');
   assert.equal(inventoryItemModel(horseItem()), null, 'the horse has art of its own');
   assert.equal(inventoryItemModel({ templateIndex: 95 }), null, 'no boat is sold, so none is pictured');
   assert.equal(inventoryItemModel({ templateIndex: 121, group: 'Weapons' }), null);

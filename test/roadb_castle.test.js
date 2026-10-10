@@ -265,7 +265,7 @@ test('ROAD-B B4: the mode host latches both flags at the door and publishes all 
   // locals, committed with the context below the landing test.
   assert.match(wm, /const insideTavern = isTavern\(building\?\.buildingType \?\? BUILDING_TYPES\.None\);/);
   assert.match(wm, /const insideResidence = isResidence\(building\?\.buildingType \?\? BUILDING_TYPES\.None\);/);
-  assert.match(wm, /interiorBuilding = building;\n\s*privateVisitRoom = restore\?\.privateRoom \?\? null;\n\s*privateVisitOwner = restore\?\.cabinOwner \?\? null;\n\s*interiorCabin = hit\.sailingCabin \?\? null;\n\s*if \(interiorCabin && !privateVisitRoom\) addPermanentScene\(sceneCache\(\), cabinSceneName\(interiorCabin\.uid\)\);\n\s*_insideTavern = insideTavern;\n\s*_insideResidence = insideResidence;\n\s*_insidePartyRestExempt = partyRestExempt;/);
+  assert.match(wm, /interiorBuilding = building;\n\s*privateVisitRoom = restore\?\.privateRoom \?\? null;\n\s*privateVisitOwner = restore\?\.cabinOwner \?\? null;\n\s*interiorCabin = hit\.sailingCabin \?\? null;\n\s*if \(interiorCabin && !privateVisitRoom\) addPermanentScene\(sceneCache\(\), privateRoomSceneName\(interiorCabin\)\);\n\s*_insideTavern = insideTavern;\n\s*_insideResidence = insideResidence;\n\s*_insidePartyRestExempt = partyRestExempt;/);
   assert.match(wm, /get insideTavern\(\) \{ return _insideTavern; \}/);
   assert.match(wm, /get insideResidence\(\) \{ return _insideResidence; \}/);
   assert.match(wm, /get insideOpenShop\(\) \{ return !!interiorBuilding\?\.insideOpenShop; \}/);

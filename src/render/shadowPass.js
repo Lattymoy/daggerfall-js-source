@@ -948,11 +948,13 @@ export class ShadowPass {
     const bb = opts.build(opts.vs.bb, DEPTH_BB_FS);
     const char = opts.vs.char ? opts.build(opts.vs.char, DEPTH_FS) : null;   // EL7: the rigs' own vertex layout
     const meshCut = opts.build(opts.vs.mesh, DEPTH_CUT_FS);   // AUDIT BAY A12
+    const meshCutout = opts.build(opts.vs.mesh, DEPTH_BB_FS);   // RW1: a cutout picture's sub-mesh - its holes cast no shadow (the flats' own half-alpha cut)
     const copy = opts.build(DEPTH_COPY_VS, DEPTH_COPY_FS);   // CACHE-COPY: the cache into the live layers (_blitSlot)
     this.programs = {
       copy: { p: copy, cache: u(copy, 'uCache'), layer: u(copy, 'uLayer') },
       mesh: { p: mesh, proj: u(mesh, 'uProj'), view: u(mesh, 'uView'), model: u(mesh, 'uModel') },
       meshCut: { p: meshCut, proj: u(meshCut, 'uProj'), view: u(meshCut, 'uView'), model: u(meshCut, 'uModel'), cut: u(meshCut, 'uDissolveCut') },
+      meshCutout: { p: meshCutout, proj: u(meshCutout, 'uProj'), view: u(meshCutout, 'uView'), model: u(meshCutout, 'uModel'), tex: u(meshCutout, 'uTex') },   // RW1
       char: char ? { p: char, proj: u(char, 'uProj'), view: u(char, 'uView'), model: u(char, 'uModel') } : null,
       terrain: { p: terrain, proj: u(terrain, 'uProj'), view: u(terrain, 'uView'), model: u(terrain, 'uModel') },
       bb: {
@@ -2102,7 +2104,7 @@ export class ShadowPass {
         let vaoBound = false;
         // LA-AUDIT A1: a static batch with shadow cells replays its cells, not its sub-meshes - the same triangles in
         // the cells' own buffer (staticBatch.js shadowCells), each culled by its own sphere
-        const cells = r.bounded ? mesh.shadowCells : null;
+        const cells = r.bounded && !mesh._evAnyCut ? mesh.shadowCells : null;   // RW1: a mesh with a cutout picture replays its sub-meshes - a cell mixes pictures
         const subs = cells ?? mesh.subMeshes;
         const vao = cells ? mesh.shadowVao : mesh.vao;
         // PERF-EXT2 (2026-09-25, the players' "fps issues in the exterior
@@ -2120,13 +2122,22 @@ export class ShadowPass {
         let runAt = -1, runEnd = -1;
         for (let k = 0; k < subs.length; k++) {
           if (cells ? !sphereInPlanes(planes, r.cellSpheres[k * 4], r.cellSpheres[k * 4 + 1], r.cellSpheres[k * 4 + 2], r.cellSpheres[k * 4 + 3]) : !subMeshVisible(planes, r, k)) { this.stats.culled++; continue; }
+          const sm = subs[k], n = sm.primitiveCount * 3;
+          if (!cells && sm._evCut && sm._evTex) {   // RW1: a cutout picture (renderer.js _markCutout) - its holes cast nothing: its own draw, its picture's half-alpha cut
+            if (runAt >= 0) { gl.drawElements(gl.TRIANGLES, runEnd - runAt, gl.UNSIGNED_INT, runAt * 4); draws++; runAt = -1; runEnd = -1; }
+            use(P.meshCutout); gl.uniformMatrix4fv(P.meshCutout.model, false, r.matrix);
+            gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, sm._evTex); gl.uniform1i(P.meshCutout.tex, 0);
+            f.bindVao(vao);
+            gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_INT, sm.startIndex * 4); draws++;
+            vaoBound = false;   // the record's own program again for the next run
+            continue;
+          }
           if (!vaoBound) {
             const prog = r.cut > 0 ? P.meshCut : P.mesh;   // AUDIT BAY A12: a fading ship's share of her depth
             use(prog); gl.uniformMatrix4fv(prog.model, false, r.matrix);
             if (r.cut > 0) gl.uniform1f(prog.cut, r.cut);
             f.bindVao(vao); vaoBound = true;
           }
-          const sm = subs[k], n = sm.primitiveCount * 3;
           if (sm.startIndex === runEnd) { runEnd += n; continue; }
           if (runAt >= 0) { gl.drawElements(gl.TRIANGLES, runEnd - runAt, gl.UNSIGNED_INT, runAt * 4); draws++; }
           runAt = sm.startIndex; runEnd = runAt + n;

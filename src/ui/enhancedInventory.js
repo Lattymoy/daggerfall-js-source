@@ -109,8 +109,9 @@ import { noticeHold, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE
 // U56/U57: DFU's transfer ladder and DFU's remote side, both extracted
 // from the classic window so this pane runs them rather than a second
 // reading of them.
+import { wagonKgFor } from '../systems/wagonKinds.js';   // WAGONS1: the driven wagon's capacity
 import {
-  planStore, planTake, applyTransfer, planDropGold, WAGON_KG_LIMIT,
+  planStore, planTake, applyTransfer, planDropGold,
   HOW_MANY_ITEMS, parseSplitAmount,   // DISC25-F: the split popup's law, as the card's field
   sendQuestItemClick,   // WHERE-ROBES: DFU's remote-click quest send, one home for every door onto a loot row
 } from '../systems/itemTransfer.js';
@@ -364,7 +365,7 @@ export function remoteModel(deps = {}, state = {}) {
     // ItemHelper.WagonKgLimit is DFU's only capacity a remote list has -
     // the ground and a corpse hold anything; COMPANION-WEIGHT: a
     // companion's pack carries what a person of his strength can.
-    capacity: kind === 'wagon' ? WAGON_KG_LIMIT : kind === 'bag' ? BAG_KG_LIMIT : (storeCapacityOf(deps, state)?.kg ?? null),   // BAG1: the bag's 300
+    capacity: kind === 'wagon' ? wagonKgFor(deps.entity) : kind === 'bag' ? BAG_KG_LIMIT : (storeCapacityOf(deps, state)?.kg ?? null),   // BAG1: the bag's 300
     // LOOT-STACK: the bodies piled with this one, as tabs
     // (player/lootStack.js lootPile) - on the body's own frame only, never
     // over the wagon or a reward tray the same session can show.
@@ -884,7 +885,7 @@ function stowIntent(item) {
     remote: remote.items, usingWagon: session.usingWagon, chooseOne: session.chooseOne,
     dryRun: true,   // as canStow's own note says: the quest rung WRITES, and a label must not
     groundRefusal: groundRefusalOf(deps, session),   // HOUSE-DROP
-    capacity: storeCapacityOf(deps, session), bagLoaded: !bagMayLeave(deps.entity),   // COMPANION-WEIGHT
+    capacity: storeCapacityOf(deps, session), bagLoaded: !bagMayLeave(deps.entity), wagonKg: wagonKgFor(deps.entity),   // COMPANION-WEIGHT
   });
   // A refusal that speaks is still worth releasing on - the player gets
   // the sentence. One that cannot speak is shown as refused and does
@@ -1515,7 +1516,7 @@ function canStow(item) {
     remote: remote.items, usingWagon: session.usingWagon, chooseOne: session.chooseOne,
     dryRun: true,
     groundRefusal: groundRefusalOf(deps, session),   // HOUSE-DROP
-    capacity: storeCapacityOf(deps, session), bagLoaded: !bagMayLeave(deps.entity),   // COMPANION-WEIGHT
+    capacity: storeCapacityOf(deps, session), bagLoaded: !bagMayLeave(deps.entity), wagonKg: wagonKgFor(deps.entity),   // COMPANION-WEIGHT
   });
   return plan.ok || !!plan.refusal.text;
 }
@@ -1525,7 +1526,7 @@ function canStow(item) {
 function splitMax(item, dir) {
   if (dir === 'store' && bagRefuses(item)) return 0;   // AUDIT BAG1: no how-many field for what the bag refuses
   const plan = dir === 'store'
-    ? planStore(item, { remote: remote.items, usingWagon: session.usingWagon, chooseOne: session.chooseOne, dryRun: true, groundRefusal: groundRefusalOf(deps, session), capacity: storeCapacityOf(deps, session), bagLoaded: !bagMayLeave(deps.entity) })
+    ? planStore(item, { remote: remote.items, usingWagon: session.usingWagon, chooseOne: session.chooseOne, dryRun: true, groundRefusal: groundRefusalOf(deps, session), capacity: storeCapacityOf(deps, session), bagLoaded: !bagMayLeave(deps.entity), wagonKg: wagonKgFor(deps.entity) })
     : planTake(item, {
       bag: deps.items?.() ?? [], entity: deps.entity, mode: 'remove',
       chooseOne: session.chooseOne, usingWagon: session.usingWagon, dryRun: true,
@@ -1579,7 +1580,7 @@ function stow(item) {
     remote: to, usingWagon: session.usingWagon, chooseOne: session.chooseOne,
     getQuest: deps.getQuest ?? null,
     groundRefusal: groundRefusalOf(deps, session),   // HOUSE-DROP: a floor that refuses a drop
-    capacity: storeCapacityOf(deps, session), bagLoaded: !bagMayLeave(deps.entity),   // COMPANION-WEIGHT: a companion's pack takes what fits
+    capacity: storeCapacityOf(deps, session), bagLoaded: !bagMayLeave(deps.entity), wagonKg: wagonKgFor(deps.entity),   // COMPANION-WEIGHT: a companion's pack takes what fits
   });
   if (!plan.ok) return refuse(plan.refusal);
   // AUDIT INV2 B-F2: THE MAP IS AN INTERCEPTION, not a transfer. AUDIT
@@ -1740,7 +1741,7 @@ function dropGold(text) {
   const plan = planDropGold(text, {
     carried: goldAmount(player), usingWagon: session.usingWagon, remote: to,
     groundRefusal: groundRefusalOf(deps, session),   // HOUSE-DROP
-    capacity: storeCapacityOf(deps, session), bagLoaded: !bagMayLeave(deps.entity),   // COMPANION-WEIGHT
+    capacity: storeCapacityOf(deps, session), bagLoaded: !bagMayLeave(deps.entity), wagonKg: wagonKgFor(deps.entity),   // COMPANION-WEIGHT
   });
   if (plan.notice) notice = plan.notice;
   else if (!plan.ok && plan.refusal?.reason === 'ground') notice = plan.refusal.text;   // HOUSE-DROP: the floor's refusal is said

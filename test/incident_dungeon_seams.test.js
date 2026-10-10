@@ -28,6 +28,7 @@ import { fileURLToPath } from 'node:url';
 import { identity } from '../src/world/mat4.js';
 import { Renderer, SKY_CLEAR, INTERIOR_CLEAR } from '../src/render/renderer.js';
 import { TextureFile } from '../src/formats/textureFile.js';
+import { RW_MAIN_CUTOUT } from '../src/render/realWindows.js';   // RW1: the one alpha cut a model may wear - a picture's own, behind its flag
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -90,6 +91,10 @@ test('seams 1: the model shader carries no alpha clip; the billboard shader keep
   const model = r.slice(r.indexOf('const FS = `'), r.indexOf('const CHAR_FS = `'));
   assert.doesNotMatch(model, /tex\.a < 0\.5\) discard/, 'DaggerfallDefault.shader is Opaque with no clip()');
   assert.doesNotMatch(model, /if \(tex\.a[^\n]*discard/);
+  // RW1 (2026-10-09): the law narrowed, not broken - a picture uploaded { cutout: true } (the caravan's glass) cuts, and
+  // only behind its own flag; every other picture keeps DaggerfallDefault.shader's no-clip
+  assert.match(RW_MAIN_CUTOUT, /^  if \(uCutout > 0\.5 && tex\.a < 0\.5\) discard;/, 'the one cut is the flag\'s');
+  assert.equal(model.split('${RW_MAIN_CUTOUT}').length, 2, 'and it stands once');
   const bb = r.slice(r.indexOf('const BB_FS = `'), r.indexOf('const WATER_FS = `'));
   assert.match(bb, /discard/, 'the billboard shader still cuts its transparent texels');
 });

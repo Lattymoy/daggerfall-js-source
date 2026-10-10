@@ -226,7 +226,7 @@ export function layoutInterior(dfBlock, blockIndex, recordIndex, getModel) {
       markers.push({ type: obj.textureRecord, x, y, z });
       continue;
     }
-    flats.push({ archive: obj.textureArchive, record: obj.textureRecord, x, y, z });
+    flats.push({ archive: obj.textureArchive, record: obj.textureRecord, x, y, z, ...(obj.hang === true ? { hang: true } : {}) });   // WAGONS2: a flat the port's own block hangs from a ceiling (systems/caravanRoom.js) - no RMB record carries the field
   }
 
   // AddActionDoors. Placed closed; openRotation is for the Player arc.

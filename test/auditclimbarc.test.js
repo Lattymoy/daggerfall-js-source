@@ -135,7 +135,7 @@ test('AUDIT CLIMB-ARC F2/F4: a held frame replays no climb - holdFrame clears th
   assert.equal(shots.length, before, 'an overlay up after a catch replays no catch');
   // the hosts: the feel is held exactly when the motor is
   const world_ = src('scenes/world.js'), ext = src('scenes/exterior.js'), modes = src('scenes/worldModes.js');
-  assert.match(world_, /if \(_overlayHeld \|\| _seasonHeld\) player\.holdFrame\(\);/);
+  assert.match(world_, /if \(_overlayHeld \|\| _seasonHeld \|\| _rideHeld\) player\.holdFrame\(\);/);   // PIN MOVED (WAGONS1): a rider's held motor too
   assert.match(world_, /climbFeel\.frame\(dt, _overlayHeld \|\| _seasonHeld\);/, 'world.js: held under the overlay and the season');
   assert.match(ext, /if \(_overlayHeld\) player\.holdFrame\(\);/);
   assert.match(ext, /climbFeel\.frame\(dt, _overlayHeld\);/, 'exterior.js: held under the overlay');

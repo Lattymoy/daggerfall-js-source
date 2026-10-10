@@ -40,6 +40,8 @@
 import { validItemField, ITEM_FIELDS } from './itemFields.js';
 import { ITEM_TEMPLATES, templateByIndex, itemBaseValue, isAmmunition } from './itemTemplates.js';
 import { GROUP_TEMPLATE_INDICES } from './itemTemplatesData.js';
+import { WAGON_KINDS } from './wagonKinds.js';   // WAGONS2 (AUDIT): a wagon's kind and its price
+import { TRANSPORT_SMALL_CART } from './itemTemplates.js';
 import {
   AFFIX_KINDS, AFFIX_RANGES, AFFIX_COUNTS, RARE_FLAVOURS, kindParams, validAffix, legendaryById, legendariesFor, isGarment,
   CLOTHING_GROUPS, validImprint, validCurse, validSocket, isCursed, affixesWorth, RARE_ENCHANT_WORTH, EXALTED_WORTH, rarityOf,
@@ -222,6 +224,10 @@ export function itemFindings(v, opts = {}) {
   if (has(item, 'card') && !(item.templateIndex === ILIAC_CARD_TEMPLATE && cardById(item.card))) out.add('card');
   if (has(item, 'decks') && !(item.templateIndex === CARD_BINDER_TEMPLATE && Array.isArray(item.decks) && item.decks.length <= BINDER_DECKS_MAX
     && item.decks.every((/** @type {any} */ d) => Array.isArray(d?.cards) && d.cards.every((/** @type {string} */ c) => cardById(c))))) out.add('card');
+  // ── a wagon's mark: on DFU's Small Cart alone, and a marked kind at its own price (WAGONS2 AUDIT: a row marked a
+  //    Caravan at the cart's 150 sold as a Caravan at the cart's price) ──
+  if ((has(item, 'wagonKind') || has(item, 'wagonLook') || has(item, 'wagonEntry')) && item.templateIndex !== TRANSPORT_SMALL_CART) out.add('wagon');
+  if (has(item, 'wagonKind') && item.wagonKind !== 'cart' && !(item.value >= (WAGON_KINDS[item.wagonKind]?.value ?? Infinity))) out.add('wagon');
   // ── the Broker's binding ────────────────────────────────────────────
   if (has(item, 'stonesPaid') && !(item.bound === true && BROKER_STONES.has(item.stonesPaid))) out.add('bound');
   // ── the ladder, the records, the sigil and the enchantments ──────────

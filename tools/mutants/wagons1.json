@@ -1,0 +1,310 @@
+[
+  {
+    "name": "WAGONS1-a-rank-flipped",
+    "file": "src/systems/wagonKinds.js",
+    "old": "    if (r > rank) { best = it; rank = r; }",
+    "new": "    if (rank < 0 || r < rank) { best = it; rank = r; }",
+    "tests": ["test/wagons1.test.js"]
+  },
+  {
+    "name": "WAGONS1-a-capacity-moved",
+    "file": "src/systems/wagonKinds.js",
+    "old": "kg: 1500,",
+    "new": "kg: 1600,",
+    "tests": ["test/wagons1.test.js"]
+  },
+  {
+    "name": "WAGONS1-the-mark-unread",
+    "file": "src/systems/wagonKinds.js",
+    "old": "export const wagonKindOf = (item) => validWagonKind(item?.wagonKind) ?? 'cart';",
+    "new": "export const wagonKindOf = (item) => (void item, 'cart');",
+    "tests": ["test/wagons1.test.js"]
+  },
+  {
+    "name": "WAGONS1-the-750-still-read",
+    "file": "src/systems/itemTransfer.js",
+    "old": "effectiveUnitWeightInKg(item), wagonKg, totalWeight(remote)",
+    "new": "effectiveUnitWeightInKg(item), WAGON_KG_LIMIT, totalWeight(remote)",
+    "tests": ["test/wagons1.test.js"]
+  },
+  {
+    "name": "WAGONS1-a-seed-from-the-clock",
+    "file": "src/world/wagonArt.js",
+    "old": "r = mulberry32(0xa32);",
+    "new": "r = mulberry32((performance.now() * 1e6) | 0);",
+    "tests": ["test/wagons1.test.js"]
+  },
+  {
+    "name": "WAGONS1-the-lift-dropped",
+    "file": "src/world/wagonModels.js",
+    "old": "pivot: [pivot[0], pivot[1] - LIFT, pivot[2]], radius: R",
+    "new": "pivot: [pivot[0], pivot[1], pivot[2]], radius: R",
+    "tests": ["test/wagons1.test.js"]
+  },
+  {
+    "name": "WAGONS1-a-wheel-not-re-based",
+    "file": "src/world/wagonModels.js",
+    "old": "benchPart(bench, part, { offset: pivot, role: part.role,",
+    "new": "benchPart(bench, part, { offset: [0, 0, 0], role: part.role,",
+    "tests": ["test/wagons1.test.js"]
+  },
+  {
+    "name": "WAGONS1-a-front-wheel-taken-for-a-rear",
+    "file": "src/world/wagonModels.js",
+    "old": "const rearLeft = wheels.find((w) => w.role === 'wheelRearLeft')",
+    "new": "const rearLeft = wheels.find((w) => w.role === 'wheelFrontLeft') ?? wheels.find((w) => w.role === 'wheelRearLeft')",
+    "tests": ["test/wagons1.test.js"]
+  },
+  {
+    "name": "WAGONS1-a-measure-moved-off-the-model",
+    "file": "src/world/wagonModels.js",
+    "old": "rearZ: -0.7077,",
+    "new": "rearZ: -0.75,",
+    "tests": ["test/wagons1.test.js"]
+  },
+  {
+    "name": "WAGONS1-front-and-rear-swapped",
+    "file": "src/world/wagonModels.js",
+    "old": "rec: n[2] > 0 ? TEX.caravanFront : TEX.caravanRear,",
+    "new": "rec: n[2] > 0 ? TEX.caravanRear : TEX.caravanFront,",
+    "tests": ["test/wagons1.test.js"]
+  },
+  {
+    "name": "WAGONS1-a-side-tiled",
+    "file": "src/world/wagonModels.js",
+    "old": "if (Math.abs(n[0]) > 0.95) return banded('caravanSide');",
+    "new": "if (Math.abs(n[0]) > 0.95) return tiled(TEX.caravanSide);",
+    "tests": ["test/wagons1.test.js"]
+  },
+  {
+    "name": "WAGONS1-the-cargo-out-of-the-bed",
+    "file": "src/world/wagonModels.js",
+    "old": "mid + (d.position[2] - classicMid) * stretch]",
+    "new": "(d.position[2] - classicMid) * stretch]",
+    "tests": ["test/wagons1.test.js"]
+  },
+  {
+    "name": "WAGONS1-a-seat-facing-along",
+    "file": "src/world/wagonModels.js",
+    "old": "[-x, 0.1, 90]",
+    "new": "[-x, 0.1, 0]",
+    "tests": ["test/wagons1.test.js"]
+  },
+  {
+    "name": "WAGONS1-the-kind-unread",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "const myKind = () => validWagonKind(wagonKind?.()) ?? 'cart';",
+    "new": "const myKind = () => 'cart';",
+    "tests": ["test/wagons1.test.js"]
+  },
+  {
+    "name": "WAGONS1-the-hitch-the-mods-for-every-kind",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "return bakedWagon && !_baked.get(k)?.failed ? wagonHitchOf(k) : HITCHED_HORSE_LOCAL_Z;",
+    "new": "return HITCHED_HORSE_LOCAL_Z;",
+    "tests": ["test/wagons1.test.js"]
+  },
+  {
+    "name": "WAGONS1-no-fall-back",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "      e.failed = err?.message ?? String(err);",
+    "new": "      void err;",
+    "tests": ["test/wagons1.test.js"]
+  },
+  {
+    "name": "WAGONS1-the-tilt-unread",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "const pitch = hitched ? parts.hitchPitch ?? 0 : 0;",
+    "new": "const pitch = 0;",
+    "tests": ["test/wagons1.test.js"]
+  },
+  {
+    "name": "WAGONS1-the-row-on-every-wagon",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "(parked && enterCaravan && WAGON_KINDS[myKind()]?.enterable ?",
+    "new": "(parked && enterCaravan ?",
+    "tests": ["test/wagons1.test.js"]
+  },
+  {
+    "name": "WAGONS1-the-kind-dropped",
+    "file": "src/systems/horseCartWire.js",
+    "old": "    if (wk) out.wk = wk;",
+    "new": "    void wk;",
+    "tests": ["test/wagons1.test.js"]
+  },
+  {
+    "name": "WAGONS1-a-bad-passenger-list-seating-anyone",
+    "file": "src/systems/horseCartWire.js",
+    "old": "passengers: validPassengers(raw.ps) ?? [] };",
+    "new": "passengers: validPassengers(raw.ps) ?? raw.ps ?? [] };",
+    "tests": ["test/wagons1.test.js"]
+  },
+  {
+    "name": "WAGONS1-a-role-dropped",
+    "file": "tools/bakeWagons.mjs",
+    "old": "const parts = Object.entries(spec.roles).map(([name, r]) => {",
+    "new": "const parts = Object.entries(spec.roles).slice(1).map(([name, r]) => {",
+    "tests": ["test/wagons1_bake.test.js"]
+  },
+  {
+    "name": "WAGONS1-the-frame-unread",
+    "file": "tools/bakeWagons.mjs",
+    "old": "const place = (p) => toWagon(p, spec.frame);",
+    "new": "const place = (p) => toWagon(p, wagons[0].frame);",
+    "tests": ["test/wagons1_bake.test.js"]
+  },
+  {
+    "name": "WAGONS1-a-wagon-not-written",
+    "file": "tools/bakeWagons.mjs",
+    "old": "    out[spec.key] = { bake: 'tools/bakeWagons.mjs',",
+    "new": "    if (spec.key !== 'caravan') out[spec.key] = { bake: 'tools/bakeWagons.mjs',",
+    "tests": ["test/wagons1_bake.test.js"]
+  },
+  {
+    "name": "WAGONS1-the-forward-unread",
+    "file": "tools/bakeWagons.mjs",
+    "old": "if (frame.forward === '-Y') return",
+    "new": "if (frame.forward) return",
+    "tests": ["test/wagons1_bake.test.js"]
+  },
+  {
+    "name": "WAGONS1-the-ground-off",
+    "file": "tools/bakeWagons.mjs",
+    "old": "[(frame.centre - x) * s, (z - frame.ground) * s, (frame.rear - y) * s]",
+    "new": "[(frame.centre - x) * s, z * s, (frame.rear - y) * s]",
+    "tests": ["test/wagons1_bake.test.js"]
+  },
+  {
+    "name": "WAGONS1-the-rear-off",
+    "file": "tools/bakeWagons.mjs",
+    "old": "[(x - frame.centre) * s, (z - frame.ground) * s, (y - frame.rear) * s]",
+    "new": "[(x - frame.centre) * s, (z - frame.ground) * s, y * s]",
+    "tests": ["test/wagons1_bake.test.js"]
+  },
+  {
+    "name": "WAGONS1-a-skip-unchecked",
+    "file": "tools/bakeWagons.mjs",
+    "old": "if (skip) { const fault = skipFault(o, skip, wagons); if (fault) throw new Error(fault); continue; }",
+    "new": "if (skip) { continue; }",
+    "tests": ["test/wagons1_bake.test.js"]
+  },
+  {
+    "name": "WAGONS1-the-box-unchecked",
+    "file": "tools/bakeWagons.mjs",
+    "old": "if (!(far <= BOX_SLACK)) throw",
+    "new": "if (!(far <= Infinity)) throw",
+    "tests": ["test/wagons1_bake.test.js"]
+  },
+  {
+    "name": "WAGONS1-the-frame-unchecked",
+    "file": "tools/bakeWagons.mjs",
+    "old": "    assertFrame(spec, byName);",
+    "new": "    void assertFrame;",
+    "tests": ["test/wagons1_bake.test.js"]
+  },
+  {
+    "name": "WAGONS1-a-seat-past-four",
+    "file": "src/systems/wagonSeats.js",
+    "old": "raw.s[1] >= 0 && raw.s[1] < MAX_SEATS",
+    "new": "raw.s[1] >= 0 && raw.s[1] <= MAX_SEATS",
+    "tests": ["test/wagons1_seats.test.js"]
+  },
+  {
+    "name": "WAGONS1-a-rider-twice",
+    "file": "src/systems/wagonSeats.js",
+    "old": "if (seats.has(e[1]) || riders.has(e[0])) return null;",
+    "new": "if (seats.has(e[1])) return null;",
+    "tests": ["test/wagons1_seats.test.js"]
+  },
+  {
+    "name": "WAGONS1-a-re-ask-let-straight-back",
+    "file": "src/systems/wagonSeats.js",
+    "old": "declined.set(rider, now + RIDE_REASK_MS);",
+    "new": "declined.set(rider, now);",
+    "tests": ["test/wagons1_seats.test.js"]
+  },
+  {
+    "name": "WAGONS1-an-ask-never-lapsing",
+    "file": "src/systems/wagonSeats.js",
+    "old": "if (now - at > RIDE_ASK_TTL_MS) { asks.delete(r); out.push(r); }",
+    "new": "if (now - at > Infinity) { asks.delete(r); out.push(r); }",
+    "tests": ["test/wagons1_seats.test.js"]
+  },
+  {
+    "name": "WAGONS1-seated-without-the-owners-word",
+    "file": "src/scenes/wagonRiders.js",
+    "old": "const mine = r.passengers.find((e) => e[0] === me() && e[1] < seats);",
+    "new": "const mine = r.passengers.find((e) => e[0] === me() && e[1] < seats) ?? [me(), 0];",
+    "tests": ["test/wagons1_seats.test.js"]
+  },
+  {
+    "name": "WAGONS1-the-seat-not-pinned",
+    "file": "src/scenes/wagonRiders.js",
+    "old": "    if (at) deps.pin(at.feet, at.yaw);",
+    "new": "    void at;",
+    "tests": ["test/wagons1_seats.test.js"]
+  },
+  {
+    "name": "WAGONS1-jump-ignored",
+    "file": "src/scenes/wagonRiders.js",
+    "old": "    if (ride.seat != null && !deps.traveling?.() && deps.jumpPressed?.()) { getDown(); return; }",
+    "new": "    void deps.jumpPressed;",
+    "tests": ["test/wagons1_seats.test.js"]
+  },
+  {
+    "name": "WAGONS1-every-frame-a-journey",
+    "file": "src/scenes/wagonRiders.js",
+    "old": "if (r.go && r.go[2] !== ride.go) {",
+    "new": "if (r.go) {",
+    "tests": ["test/wagons1_seats.test.js"]
+  },
+  {
+    "name": "WAGONS1-the-seat-dropped-mid-journey",
+    "file": "src/scenes/wagonRiders.js",
+    "old": "if (!deps.traveling?.() && !((ride.wait ?? 0) > now) && now - ride.lost >= RIDE_LOST_GRACE_MS) getDown(RIDE_TEXT.ownerGone); }",
+    "new": "getDown(RIDE_TEXT.ownerGone); }",
+    "tests": ["test/wagons1_seats.test.js"]
+  },
+  {
+    "name": "WAGONS1-no-go-with-riders-aboard",
+    "file": "src/scenes/wagonRiders.js",
+    "old": "    if (!book.passengers().length) return false;\n    go = [to.x | 0, to.y | 0, ++goSeq];",
+    "new": "    if (!book.passengers().length) return false;\n    void goSeq;",
+    "tests": ["test/wagons1_seats.test.js"]
+  },
+  {
+    "name": "WAGONS1-the-sweep-mid-journey",
+    "file": "src/scenes/wagonRiders.js",
+    "old": "const journey = go && deps.now() - goAt < GO_HOLD_MS;",
+    "new": "const journey = false;",
+    "tests": ["test/wagons1_seats.test.js"]
+  },
+  {
+    "name": "WAGONS1-the-gate-gone",
+    "file": "src/characters/enemyMotor.js",
+    "old": "    const seat = this.seat?.();\n    if (seat) {",
+    "new": "    const seat = null;\n    if (seat) {",
+    "tests": ["test/wagons1_seats.test.js"]
+  },
+  {
+    "name": "WAGONS1-the-seat-handle-unset",
+    "file": "src/scenes/crewAshore.js",
+    "old": "rec.ai.seat = deps.seat ? seatOf(i, list.length) : null;",
+    "new": "rec.ai.seat = null; void seatOf;",
+    "tests": ["test/wagons1_seats.test.js"]
+  },
+  {
+    "name": "WAGONS1-another-block",
+    "file": "src/systems/caravanRoom.js",
+    "old": "export const CARAVAN_BLOCK = 'CARAVAN [WAGONS2]';",
+    "new": "export const CARAVAN_BLOCK = 'SHIPAA00.RMB';",
+    "tests": ["test/wagons1_seats.test.js"]
+  },
+  {
+    "name": "WAGONS1-the-doors-landing-unground",
+    "file": "src/scenes/caravanRoom.js",
+    "old": "return { position: deps.ground ? deps.ground(at) : at, yaw: room.yaw };",
+    "new": "return { position: at, yaw: room.yaw };",
+    "tests": ["test/wagons1_seats.test.js"]
+  }
+]
