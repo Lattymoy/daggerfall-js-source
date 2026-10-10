@@ -137,11 +137,12 @@
   {
     "name": "LW14-way-out",
     "file": "src/systems/livingWorld/deepRoute.js",
-    "old": "  const path = [...legs.map((l) => ({ x: l.stop.x, z: l.stop.z })).reverse(), { x: entry.x, z: entry.z }];",
-    "new": "  const path = [...legs.map((l) => ({ x: l.stop.x, z: l.stop.z })).reverse()];",
+    "old": "  const path = [...legs.map((l) => ({ x: l.stop.x, z: l.stop.z, ...yOf(l.stop) })).reverse(), { x: entry.x, z: entry.z, ...yOf(entry) }];",
+    "new": "  const path = [...legs.map((l) => ({ x: l.stop.x, z: l.stop.z, ...yOf(l.stop) })).reverse()];",
     "tests": [
       "test/lw14_deep.test.js"
-    ]
+    ],
+    "note": "AUDIT LW-II (re-aimed by content)."
   },
   {
     "name": "LW14-stop-nearer",
@@ -173,11 +174,12 @@
   {
     "name": "LW14-see",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "if (d <= DEEP_NEAR_M || (d <= DEEP_SEE_M && (deps.clearLine?.(L.feet, at) ?? false)))",
-    "new": "if (d <= DEEP_NEAR_M || d <= DEEP_SEE_M)",
+    "old": "(d <= DEEP_NEAR_M || (d <= DEEP_SEE_M && (deps.clearLine?.(L.feet, at) ?? false)))",
+    "new": "(d <= DEEP_NEAR_M || d <= DEEP_SEE_M)",
     "tests": [
       "test/lw14_deep.test.js"
-    ]
+    ],
+    "note": "AUDIT LW-II (re-aimed by content)."
   },
   {
     "name": "LW14-hold",
@@ -290,11 +292,12 @@
   {
     "name": "LW14-half",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "if (c.allies.size && c.size > 1 && standing.length * 2 < c.size)",
-    "new": "if (c.allies.size && c.size > 1 && standing.length === 0)",
+    "old": "if (!c.pending && c.size > 1 && standing.length * 2 < c.size)",
+    "new": "if (!c.pending && c.size > 1 && standing.length === 0)",
     "tests": [
       "test/lw14_deep.test.js"
-    ]
+    ],
+    "note": "AUDIT LW-II (re-aimed by content)."
   },
   {
     "name": "LW14-keep",
@@ -353,29 +356,32 @@
   {
     "name": "LW14-remains-place",
     "file": "src/scenes/deepRemains.js",
-    "old": "        const at = deps.placeOf?.(r) ?? spots[restAt(r.key, spots.length)];",
-    "new": "        const at = spots[restAt(r.key, spots.length)];",
+    "old": "        const at = deps.placeOf?.(r) ?? (spots.length ? spots[restAt(r.key, spots.length)] : null);",
+    "new": "        const at = spots.length ? spots[restAt(r.key, spots.length)] : null;",
     "tests": [
       "test/lw14_deep.test.js"
-    ]
+    ],
+    "note": "AUDIT LW-II (re-aimed by content)."
   },
   {
     "name": "LW14-activate",
     "file": "src/player/mobileEnemyActivate.js",
-    "old": "  if (mode !== 'steal' && openLiving && foe.living?.res && foe.shipmate === true && openLiving(foe)) return true;",
-    "new": "  if (openLiving && foe.living?.res && foe.shipmate === true && openLiving(foe)) return true;",
+    "old": "  if (mode !== 'steal' && mode !== 'info' && openLiving && foe.living?.res && foe.shipmate === true) {",
+    "new": "  if (mode !== 'info' && openLiving && foe.living?.res && foe.shipmate === true) {",
     "tests": [
       "test/lw14_deep.test.js"
-    ]
+    ],
+    "note": "AUDIT LW-II (re-aimed by content)."
   },
   {
     "name": "LW14-build-dead",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    f.entity.items = [];\n    setFoeDead(f, true);\n  }\n  _layoutStood = true;",
-    "new": "    setFoeDead(f, true);\n  }\n  _layoutStood = true;",
+    "old": "    f.entity.items = [];\n    setFoeDead(f, true);\n  }\n  for (const [i, p] of lootPiles",
+    "new": "    setFoeDead(f, true);\n  }\n  for (const [i, p] of lootPiles",
     "tests": [
       "test/lw14_deep.test.js"
-    ]
+    ],
+    "note": "AUDIT LW-II (re-aimed by content)."
   },
   {
     "name": "LW14-build-pile",
@@ -409,6 +415,169 @@
     "file": "src/scenes/world.js",
     "old": "    return deepClearedOf(dives.map((tr) => deepRouteOf(stops, from, tr)), tBuild);",
     "new": "    return deepClearedOf([], tBuild);",
+    "tests": [
+      "test/lw14_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW14-AUDIT-D2-strength-stood",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "        c.size++;\n",
+    "new": "",
+    "tests": [
+      "test/lw14_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW14-AUDIT-D2-pending",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "if (!c.pending && c.size > 1 && standing.length * 2 < c.size)",
+    "new": "if (c.size > 1 && standing.length * 2 < c.size)",
+    "tests": [
+      "test/lw14_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW14-AUDIT-D4-arrive",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "< (rec.ai.follow?.stop ?? DIVER_HEEL_M) + DIVER_ARRIVE_SLACK_M)) {",
+    "new": "< 3)) {",
+    "tests": [
+      "test/lw14_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW14-AUDIT-D4-fellback",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "rec.ai.follow = { feet: () => feet, stop: 1.5 + (rec.heel ?? 0) * 0.8 }; rec.fellBack = false; }",
+    "new": "rec.ai.follow = { feet: () => feet, stop: 1.5 + (rec.heel ?? 0) * 0.8 }; }",
+    "tests": [
+      "test/lw14_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW14-AUDIT-D6-way-out",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "    if (!s?.at && !s?.between) return null;",
+    "new": "",
+    "tests": [
+      "test/lw14_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW14-AUDIT-D7-floor",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "const floor = Math.abs(at[1] - L.feet[1]) <= DEEP_FLOOR_DY;",
+    "new": "const floor = true;",
+    "tests": [
+      "test/lw14_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW14-AUDIT-D8-parted-kept",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "parted: !!was?.parted, said: new Set() };",
+    "new": "parted: false, said: new Set() };",
+    "tests": [
+      "test/lw14_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW14-AUDIT-D8-hp-kept",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "        if (hp != null && rec.entity?.maxHealth > 0) rec.entity.health",
+    "new": "        if (false) rec.entity.health",
+    "tests": [
+      "test/lw14_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW14-AUDIT-D8-hostile-kept",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "if (c.at && L && c.mode !== 'join' && ![...c.foes.values()].some((rec) => !rec.dead)) {",
+    "new": "if (c.at && L && c.mode !== 'join') {",
+    "tests": [
+      "test/lw14_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW14-AUDIT-D12-once",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "if (!c.said.has(c.pile.at.key)) { c.said.add(c.pile.at.key); deps.say?.(POACHED_LINE(firstNameOf(head.name))); }",
+    "new": "deps.say?.(POACHED_LINE(firstNameOf(head.name)));",
+    "tests": [
+      "test/lw14_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW14-AUDIT-D13-no-spots",
+    "file": "src/scenes/deepRemains.js",
+    "old": "        if (!at) continue;   // AUDIT LW-II D13",
+    "new": "        if (!at && false) continue;   // AUDIT LW-II D13",
+    "tests": [
+      "test/lw14_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW14-AUDIT-D11-reach",
+    "file": "src/player/mobileEnemyActivate.js",
+    "old": "    if (far) { midScreen?.(TOO_FAR_AWAY_TEXT); return true; }\n    if (openLiving(foe)) return true;",
+    "new": "    if (openLiving(foe)) return true;",
+    "tests": [
+      "test/lw14_deep.test.js"
+    ],
+    "note": ""
+  },
+  {
+    "name": "LW14-AUDIT-D11-info",
+    "file": "src/player/mobileEnemyActivate.js",
+    "old": "if (mode !== 'steal' && mode !== 'info' && openLiving",
+    "new": "if (mode !== 'steal' && openLiving",
+    "tests": [
+      "test/lw14_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW14-AUDIT-D7-out-y",
+    "file": "src/systems/livingWorld/deepRoute.js",
+    "old": "return s.out ? { x: s.out.x, z: s.out.z, y: s.out.y } : null;",
+    "new": "return s.out ? { x: s.out.x, z: s.out.z, y: undefined } : null;",
+    "tests": [
+      "test/lw14_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW14-AUDIT-D1-at-end",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  for (const [i, p] of lootPiles.entries()) if (p.stopKey && _deepCleared.has(p.stopKey) && !p.items.length) settleLootFlat(i);\n",
+    "new": "",
+    "tests": [
+      "test/lw14_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW14-AUDIT-D3-block",
+    "file": "src/scenes/dungeonContext.js",
+    "old": ".map((s) => `${s.block}:${s.loadID}`));",
+    "new": ".map((s) => `${s.loadID}`));",
+    "tests": [
+      "test/lw14_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW14-AUDIT-D5-online",
+    "file": "src/scenes/world.js",
+    "old": "if (!livingWorldOn() || params.has('online') || !stops?.length",
+    "new": "if (!livingWorldOn() || !stops?.length",
+    "tests": [
+      "test/lw14_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW14-AUDIT-D9-kept",
+    "file": "src/scenes/world.js",
+    "old": "          if (_livingRemainsPlace.has(r.key)) return _livingRemainsPlace.get(r.key);\n",
+    "new": "",
     "tests": [
       "test/lw14_deep.test.js"
     ]

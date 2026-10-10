@@ -50,6 +50,11 @@ export const DEEP_NEAR_M = 15;
 export const DEEP_SEE_M = 35;
 export const DEEP_HEAR_M = 60;
 export const DEEP_KEEP_M = 70;
+/** AUDIT LW-II D7: a company on another floor - more than this above or below the player - is neither met nor seen. */
+export const DEEP_FLOOR_DY = 3;
+/** AUDIT LW-II D4: LEAD ON's arrival - each member within its own follow stop and this of the stop's floor (the motor
+ *  halts at its stop and stands within it and a step more). */
+export const DIVER_ARRIVE_SLACK_M = 2;
 /** LW14: steel rings this often (real seconds) from a fight heard. */
 export const DEEP_RING_S = 2.5;
 /** LW14: a member under this share of their health falls back (m further behind). */
@@ -109,8 +114,17 @@ export function createDungeonDivers(deps) {
   let lastT = 0;   // LW14: the frame's minute (the door's choices read it)
 
   const takeOut = (rec) => { try { if (deps.inPool(rec)) deps.remove(rec); } catch (e) { console.warn('[divers] a body would not leave', /** @type {any} */ (e)?.message ?? e); } };
+  /** AUDIT LW-II D8: each company let go, as it was left - parted or not, each member's share of health (met again
+   *  further on, it was stood whole and asked again) - the dungeon's visit's own. @type {Map<string, { parted: boolean, hp: Map<string, number> }>} */
+  const leftAs = new Map();
   function letGo(id) {
     const c = companies.get(id);
+    if (c) {
+      if (leftAs.size > 64) leftAs.clear();
+      const hp = new Map();
+      for (const [mid, rec] of c.allies) if (!rec.dead && rec.entity?.maxHealth > 0) hp.set(mid, rec.entity.health / rec.entity.maxHealth);
+      leftAs.set(id, { parted: c.parted, hp });
+    }
     if (!c) return;
     for (const rec of c.allies.values()) if (!rec.dead) takeOut(rec);   // AUDIT-C4: one cut down is the pool's own (their body, to be found)
     for (const rec of c.foes.values()) if (!rec.dead) takeOut(rec);   // LW7b: one cut down is the pool's own
@@ -136,7 +150,12 @@ export function createDungeonDivers(deps) {
     const L0 = deps.leader();
     if (!L0) return;
     const L = at ? { feet: at, yaw: Math.atan2(L0.feet[0] - at[0], L0.feet[2] - at[2]) } : L0;
-    const c = { trip, allies: new Map(), foes: new Map(), fell: new Set(), met: true, mode: at ? 'hold' : 'join', at, size: members.filter((m) => m.cls != null).length, going: null, pile: null, parted: false };
+    // AUDIT LW-II D2: its strength is who STOOD (`size`, counted as each body arrives - the bodies come one by one, an enemy
+    // keeps away, a spawn can fail), and it is read only once none is still coming (`pending`): the armed counted before
+    // any arrived, the first body in made the company "had enough" with nobody hurt (and paid its regard and spared its
+    // fated for nothing)
+    const was = leftAs.get(trip.id) ?? null;   // AUDIT LW-II D8: met again, as it was left
+    const c = { trip, allies: new Map(), foes: new Map(), fell: new Set(), met: true, mode: at ? 'hold' : 'join', at, size: 0, pending: 0, going: null, pile: null, parted: !!was?.parted, said: new Set() };
     companies.set(trip.id, c);
     const rel = deps.relations?.();
     const standing = (m) => rel?.standing(m.id, deps.day()) ?? 'neutral';
@@ -166,16 +185,21 @@ export function createDungeonDivers(deps) {
       const back = at ? 1.5 + Math.floor(i / 3) : DIVER_STAND_M + Math.floor(i / 3);   // LW14: met at their place, about it
       const dx = -Math.sin(L.yaw) * back + Math.cos(L.yaw) * side, dz = -Math.cos(L.yaw) * back - Math.sin(L.yaw) * side;
       const feet = deps.spot(L.feet, dx, dz);
+      c.pending++;
       Promise.resolve(deps.spawn(m.cls, feet, { yaw: L.yaw, level: m.level ?? 1, gender: m.sex ?? 'male' })).then((rec) => {
+        c.pending--;
         if (!rec) return;
         if (companies.get(trip.id) !== c) { takeOut(rec); return; }
+        c.size++;
+        const hp = was?.hp.get(m.id);   // AUDIT LW-II D8: hurt when it was left, hurt still
+        if (hp != null && rec.entity?.maxHealth > 0) rec.entity.health = Math.max(1, Math.round(rec.entity.maxHealth * hp));
         rec.shipmate = true;
         rec.living = { id: m.id, res: m, town: deps.door ?? null };
         if (rec.entity) { rec.entity.name = m.name; rec.entity.team = 'PlayerAlly'; rec.entity.mobileTeam = 'PlayerAlly'; }
         rec.heel = i;
         if (rec.ai && !at) rec.ai.follow = heelOf(i);   // LW14: along the trail; met at their place, they hold it
         c.allies.set(m.id, rec);
-      }).catch(() => {});
+      }).catch(() => { c.pending--; });
     });
     const name = trip.company?.name ?? `${trip.leader.name}'s company`;
     deps.say?.(at ? `You come upon ${name}, at work in ${trip.to?.name ?? 'the deep'}.` : `You meet ${name}, come down into ${trip.to?.name ?? 'the deep'}.`);
@@ -212,6 +236,7 @@ export function createDungeonDivers(deps) {
     const route = deps.route?.(c.trip);
     if (!route) return null;
     const s = stopAt(route, t);
+    if (!s?.at && !s?.between) return null;   // AUDIT LW-II D6: on the way out (or not inside) - no stop ahead (legs[0], passed hours ago, was charged as their find)
     const now = s?.at ?? (s?.between ? s.between[1] : null);
     const i = now ? route.legs.findIndex((l) => l.stop === now) : -1;
     return route.legs[s?.at ? i + 1 : Math.max(0, i)]?.stop ?? null;
@@ -223,14 +248,14 @@ export function createDungeonDivers(deps) {
     const s = from >= 0 ? route?.legs[from + 1]?.stop ?? null : nextStop(c, t);
     if (!s) return false;
     const feet = deps.floor ? deps.floor(s.x, s.y, s.z) : [s.x, s.y, s.z];
-    for (const rec of c.allies.values()) if (rec.ai && !rec.dead) rec.ai.follow = { feet: () => feet, stop: 1.5 + (rec.heel ?? 0) * 0.8 };
+    for (const rec of c.allies.values()) if (rec.ai && !rec.dead) { rec.ai.follow = { feet: () => feet, stop: 1.5 + (rec.heel ?? 0) * 0.8 }; rec.fellBack = false; }   // AUDIT LW-II D4: a new walk, a new chance to fall back
     c.going = { stop: s, feet };
     c.mode = 'lead';
     return true;
   }
   /** LW14: join us - they follow the player along the trail. */
   function join(c) {
-    for (const rec of c.allies.values()) if (rec.ai && !rec.dead) rec.ai.follow = heelOf(rec.heel ?? 0);
+    for (const rec of c.allies.values()) if (rec.ai && !rec.dead) { rec.ai.follow = heelOf(rec.heel ?? 0); rec.fellBack = false; }
     c.mode = 'join'; c.going = null;
   }
 
@@ -254,9 +279,12 @@ export function createDungeonDivers(deps) {
         // LW14: where its route has it - met near, or seen; else heard at its fight
         const p = pointAt(route, t);
         if (!p || !L) continue;
+        // AUDIT LW-II D9: the floor's five rays only for a company within hearing (every listed company, every frame)
+        if (Math.hypot(p.x - L.feet[0], p.z - L.feet[2]) > DEEP_HEAR_M + DIVER_STAND_M) continue;
         const at = deps.floor ? deps.floor(p.x, p.y ?? L.feet[1], p.z) : [p.x, p.y ?? L.feet[1], p.z];
         const d = Math.hypot(at[0] - L.feet[0], at[2] - L.feet[2]);
-        if (d <= DEEP_NEAR_M || (d <= DEEP_SEE_M && (deps.clearLine?.(L.feet, at) ?? false))) { meet(trip, members, at); continue; }
+        const floor = Math.abs(at[1] - L.feet[1]) <= DEEP_FLOOR_DY;   // AUDIT LW-II D7: on the player's floor - one below or above is heard, never met
+        if (floor && (d <= DEEP_NEAR_M || (d <= DEEP_SEE_M && (deps.clearLine?.(L.feet, at) ?? false)))) { meet(trip, members, at); continue; }
         const s = stopAt(route, t);
         if (s?.fighting && d <= DEEP_HEAR_M) {
           const now = realNow();
@@ -277,7 +305,7 @@ export function createDungeonDivers(deps) {
         if (t >= c.trip.backT0 || !listed.has(id)) { makeOut(id, c, `${name} make for the surface.`); continue; }   // their hours done
         // LW14: HURT - one under RETREAT_HP falls back; under half its strength the company makes for the way out
         const standing = [...c.allies.values()].filter((rec) => !rec.dead);
-        if (c.allies.size && c.size > 1 && standing.length * 2 < c.size) { makeOut(id, c, `${name} have had enough - they make for the way out.`); continue; }
+        if (!c.pending && c.size > 1 && standing.length * 2 < c.size) { makeOut(id, c, `${name} have had enough - they make for the way out.`); continue; }
         for (const rec of standing) {
           const e = rec.entity;
           if (!e || !rec.ai?.follow || rec.fellBack || !(e.maxHealth > 0) || e.health / e.maxHealth >= RETREAT_HP) continue;
@@ -286,7 +314,7 @@ export function createDungeonDivers(deps) {
           rec.ai.follow = { ...f, stop: (f.stop ?? DIVER_HEEL_M) + RETREAT_BACK_M };
         }
         // LW14: LEAD ON - at the stop, on to the next (the player along); none left, they hold
-        if (c.mode === 'lead' && c.going && standing.every((rec) => !rec.ai?.feet || Math.hypot(rec.ai.feet[0] - c.going.feet[0], rec.ai.feet[2] - c.going.feet[2]) < 3)) {
+        if (c.mode === 'lead' && c.going && standing.every((rec) => !rec.ai?.feet || Math.hypot(rec.ai.feet[0] - c.going.feet[0], rec.ai.feet[2] - c.going.feet[2]) < (rec.ai.follow?.stop ?? DIVER_HEEL_M) + DIVER_ARRIVE_SLACK_M)) {
           if (!leadOn(c, t)) c.mode = 'hold';
         }
         // LW14: A RIVAL minds its finds - the treasure at the stop it makes for, taken by the player before them
@@ -301,13 +329,13 @@ export function createDungeonDivers(deps) {
             const near = Math.hypot(c.pile.at.x - L.feet[0], c.pile.at.z - L.feet[2]) < 4;
             if (n < c.pile.n && near) {
               for (const rec of standing) rel?.note(rec.living.res.id, 'poached', deps.day());
-              deps.say?.(POACHED_LINE(firstNameOf(head.name)));
+              if (!c.said.has(c.pile.at.key)) { c.said.add(c.pile.at.key); deps.say?.(POACHED_LINE(firstNameOf(head.name))); }   // AUDIT LW-II D12: said once a pile, not once an item
             }
             c.pile.n = n;
           }
         }
         // LW14: left behind - let go, to be met again further on its way
-        if (c.at && L && c.mode !== 'join') {
+        if (c.at && L && c.mode !== 'join' && ![...c.foes.values()].some((rec) => !rec.dead)) {   // AUDIT LW-II D8: one drawing on the player is never let go (outrun, it stood again whole)
           const ref = c.going?.feet ?? c.at;
           if (Math.hypot(ref[0] - L.feet[0], ref[2] - L.feet[2]) > DEEP_KEEP_M) letGo(id);
         }
@@ -342,7 +370,7 @@ export function createDungeonDivers(deps) {
     /** LW14: the player's trail (the pins). */
     trail: () => trail,
     /** Every company forgotten (the dungeon left; a sweep) - its pool goes with it. */
-    clear() { for (const id of [...companies.keys()]) letGo(id); ended.clear(); heard.clear(); rings.clear(); trail.length = 0; leaderWas = null; },
+    clear() { for (const id of [...companies.keys()]) letGo(id); leftAs.clear(); ended.clear(); heard.clear(); rings.clear(); trail.length = 0; leaderWas = null; },
     get size() { return companies.size; },
   };
 }

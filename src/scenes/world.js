@@ -3194,7 +3194,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     return r;
   };
   const livingDeepCleared = (loc, stops, entry) => {
-    if (!livingWorldOn() || !stops?.length || !loc?.mapTableData) return null;
+    // AUDIT LW-II D5: online none - a room's dungeon is the room's (its stream says which foe is dead and what a pile
+    // holds), and a read at each reader's own build minute over its own book (cold, it has the ways still to ask) cannot
+    // promise every reader the same set: the authority's dead reached a joiner as kit-rolled corpses, a joiner's were
+    // stood up again by the stream with their packs emptied
+    if (!livingWorldOn() || params.has('online') || !stops?.length || !loc?.mapTableData) return null;
     livingDungeonsIndex();
     const here = _livingDungeonById.get(loc.mapTableData.mapId >>> 0);
     if (!here) return null;
@@ -3263,11 +3267,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     items.push(mintKeepsake(res));   // LW6c: their own keepsake, for their household
     return d.layRemains(items, feet, { archive: corpse.archive, record: corpse.record });
   };
+  /** AUDIT LW-II D9: where each of the dungeon's remains lies (placeOf), by its key - this dungeon's. */
+  const _livingRemainsPlace = new Map();
   const livingRemainsStep = (now) => {
     const d = _dungeonPool();
     if (!d?.layRemains || !livingWorldOn()) { if (livingRemains) { livingRemains.clear(); livingRemains = null; } return; }
     if (livingRemains?.pool !== d) {
       livingRemains?.clear();
+      _livingRemainsPlace.clear();
       livingRemains = Object.assign(createDeepRemains({
         spots: () => d.restingSpots(),
         laid: (key) => livingRelations.turns().laid.has(key),
@@ -3279,7 +3286,14 @@ export async function bootWorld(canvas, renderer, params, status) {
         say: (text) => d.hudSay?.(text),
         townName: (res) => livingTownOfId(res.town)?.name ?? '',
         // LW14: where the dice's end fell - the stop on the dive's route its minute reaches, on its floor
-        placeOf: (r) => { const s = stopOfMinute(livingDeepRoute(r.trip), r.t); return s ? d.floorAt?.(s.x, s.y, s.z) ?? null : null; },
+        placeOf: (r) => {   // AUDIT LW-II D9: kept by the remains' key (the floor's five rays once, not each beat)
+          if (_livingRemainsPlace.has(r.key)) return _livingRemainsPlace.get(r.key);
+          const s = stopOfMinute(livingDeepRoute(r.trip), r.t);
+          const at = s ? d.floorAt?.(s.x, s.y, s.z) ?? null : null;
+          if (_livingRemainsPlace.size > 256) _livingRemainsPlace.clear();
+          _livingRemainsPlace.set(r.key, at);
+          return at;
+        },
       }), { pool: d });
       _livingRemainsAt = -Infinity;
     }

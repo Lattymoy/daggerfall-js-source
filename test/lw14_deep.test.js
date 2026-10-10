@@ -13,7 +13,9 @@ import {
 } from '../src/systems/livingWorld/deepRoute.js';
 import {
   createDungeonDivers, DEEP_NEAR_M, DEEP_SEE_M, DEEP_HEAR_M, DEEP_KEEP_M, RETREAT_HP, RETREAT_BACK_M, POACHED_LINE, DIVER_TRAIL_STEP_M, DIVER_TRAIL_MAX,
+  DEEP_FLOOR_DY, DIVER_ARRIVE_SLACK_M,
 } from '../src/scenes/dungeonDivers.js';
+import { TREASURE_ACTIVATION_DISTANCE } from '../src/player/activate.js';
 import { createDeepRemains } from '../src/scenes/deepRemains.js';
 import { activateMobileEnemy } from '../src/player/mobileEnemyActivate.js';
 import { createRelations, EVENTS } from '../src/systems/livingWorld/relations.js';
@@ -145,9 +147,9 @@ test('LW14 the dives a build reads: every party of the towns within reach whose 
 });
 
 /** A divers host over one company with a route, its deps recorded. */
-function diversOver({ player = [0, 0, 0], clear = false, rel = createRelations(), route = null } = {}) {
+function diversOver({ player = [0, 0, 0], clear = false, rel = createRelations(), route = null, extra = {}, n = 3 } = {}) {
   const trip = { id: 'L1.t1:7', leader: { id: 'L1.t1', name: 'Ada Lark' }, party: [], to: { name: 'Mournoth' }, backT0: 1e9, dive: { t0: 0, t1: 1e9 }, company: { name: 'The Lantern Company' } };
-  const members = [0, 1, 2].map((i) => ({ id: `L1.t${i + 1}`, name: `Mem${i} Lark`, cls: 140 + i, level: 5 + i, sex: 'male' }));
+  const members = Array.from({ length: n }, (_, i) => ({ id: `L1.t${i + 1}`, name: `Mem${i} Lark`, cls: 140 + i, level: 5 + i, sex: 'male' }));
   trip.party = members;
   const st = { feet: player, said: [], rung: [], spawned: [], chose: null, now: 0 };
   const deps = {
@@ -158,7 +160,7 @@ function diversOver({ player = [0, 0, 0], clear = false, rel = createRelations()
     route: () => route, floor: (x, y, z) => [x, 0, z], clearLine: () => clear, ring: (f) => st.rung.push(f),
     choose: (lines, options) => { st.chose = { lines, options }; }, stopPile: (key) => st.piles?.[key] ?? null, realNow: () => st.now,
   };
-  return { host: createDungeonDivers(deps), st, trip, members, rel };
+  return { host: createDungeonDivers({ ...deps, ...extra }), st, trip, members, rel };
 }
 const tick = () => new Promise((r) => setImmediate(r));
 /** A route of three stops along x - a foe at 10, a treasure at 30, a foe at 60 - and the minutes at each. */
@@ -330,7 +332,7 @@ test('LW14 the host\'s seams: the build\'s stops and its cleared set (the outer 
   const d = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
   assert.match(d, /const _deepStops = stopsOf\(dungeon\.blocks, RDB_SIDE, dungeon\.startMarker \?\? null\);/);
   assert.match(d, /const _deepCleared = opts\.deepCleared\?\.\(dfLocation, _deepStops, dungeon\.startMarker \?\? null\) \?\? new Set\(\);/);
-  assert.match(d, /if \(!f\.entity \|\| f\.src\?\.fixed \|\| !_deepFoeCleared\.has\(f\.src\?\.loadID\)\) continue;\n\s*f\.entity\.items = \[\];\n\s*setFoeDead\(f, true\);/);
+  assert.match(d, /if \(!f\.entity \|\| f\.src\?\.fixed \|\| !_deepFoeCleared\.has\(`\$\{f\.src\?\.blockIndex\}:\$\{f\.src\?\.loadID\}`\)\) continue;\n\s*f\.entity\.items = \[\];\n\s*setFoeDead\(f, true\);/);   // PIN MOVED (AUDIT LW-II D1/D3): by the placed block, at the build's end
   assert.match(d, /if \(stopKey && _deepCleared\.has\(stopKey\)\) items\.length = 0;/);
   assert.match(d, /deepStops: \(\) => _deepStops,/);
   assert.match(d, /stopPile: \(key\) => lootPiles\.find\(\(p\) => p\.stopKey === key\) \?\? null,/);
@@ -342,6 +344,152 @@ test('LW14 the host\'s seams: the build\'s stops and its cleared set (the outer 
   assert.match(w, /return deepClearedOf\(dives\.map\(\(tr\) => deepRouteOf\(stops, from, tr\)\), tBuild\);/);
   assert.match(w, /deepCleared: \(loc, stops, entry\) => livingDeepCleared\(loc, stops, entry\),/);
   assert.match(w, /route: livingDeepRoute,/);
-  assert.match(w, /placeOf: \(r\) => \{ const s = stopOfMinute\(livingDeepRoute\(r\.trip\), r\.t\); return s \? d\.floorAt\?\.\(s\.x, s\.y, s\.z\) \?\? null : null; \},/);
+  assert.match(w, /const s = stopOfMinute\(livingDeepRoute\(r\.trip\), r\.t\);\n\s+const at = s \? d\.floorAt\?\.\(s\.x, s\.y, s\.z\) \?\? null : null;/);   // PIN MOVED (AUDIT LW-II D9): kept by the remains' key
   assert.match(w, /openLivingDiver: \(rec\) => \(livingWorldOn\(\) && rec\?\.living \? !!livingDivers\?\.offers\(rec,/);
+});
+
+test('AUDIT LW-II LW14: a company\'s strength is who stood (the bodies come one by one, an enemy keeps away) - none had enough before one fell; LEAD ON arrives each at its own stop; on the way out nothing ahead is theirs; another floor heard, never met; let go and met again as left, one drawing on the player never let go; the rival\'s word once a pile; remains with no resting places; the door at the treasure\'s reach, never in Info; the way out on its floors (mutants: D2, D4, D6, D7, D8, D11, D12, D13)', async () => {
+  const route = lineRoute();
+  // D2: the bodies arrive one by one - nobody hurt, nobody leaves
+  const later = [];
+  const slow = diversOver({ player: [10, 0, 5], route, extra: { spawn: (type, feet) => new Promise((res) => later.push(() => res({ type, feet, dead: false, ai: { feet: [...feet] }, entity: { health: 100, maxHealth: 100 } }))) } });
+  slow.host.frame([{ trip: slow.trip, members: slow.members }], 20);
+  later.shift()();
+  await tick();
+  slow.host.frame([{ trip: slow.trip, members: slow.members }], 21);
+  assert.equal(slow.host.size, 1, 'the first in: still a company');
+  while (later.length) later.shift()();
+  await tick();
+  slow.host.frame([{ trip: slow.trip, members: slow.members }], 22);
+  assert.deepEqual([slow.host.size, slow.host.companies()[0].size], [1, 3]);
+  assert.ok(!slow.st.said.some((x) => /had enough/.test(x)));
+  // ...nor while any is still coming: three in of five, two of them down - the two coming yet
+  const later5 = [];
+  const five = diversOver({ player: [10, 0, 5], route, n: 5, extra: { spawn: (type, feet) => new Promise((res) => later5.push(() => res({ type, feet, dead: false, ai: { feet: [...feet] }, entity: { health: 100, maxHealth: 100 } }))) } });
+  five.host.frame([{ trip: five.trip, members: five.members }], 20);
+  for (let i = 0; i < 3; i++) later5.shift()();
+  await tick();
+  const in3 = [...five.host.companies()[0].allies.values()];
+  in3[0].dead = true; in3[1].dead = true;
+  five.host.frame([{ trip: five.trip, members: five.members }], 21);
+  assert.equal(five.host.size, 1, 'two still coming: not yet beaten');
+  while (later5.length) later5.shift()();
+  await tick();
+  five.host.frame([{ trip: five.trip, members: five.members }], 22);
+  assert.equal(five.host.size, 1, 'three of five standing');
+  // ...an enemy kept away is no strength it lost
+  const e = diversOver({ player: [10, 0, 5], route });
+  while (e.rel.standing(e.members[2].id, 0) !== 'enemy') e.rel.note(e.members[2].id, 'struck', 0);
+  assert.equal(e.rel.standing(e.members[2].id, 0), 'enemy');
+  e.host.frame([{ trip: e.trip, members: e.members }], 20);
+  await tick();
+  e.host.frame([{ trip: e.trip, members: e.members }], 21);
+  assert.deepEqual([e.host.size, e.st.spawned.length], [1, 2], 'two stood, none gone');
+  // D4: LEAD ON - each at its own follow stop and a step more has arrived; a new walk, a new chance to fall back
+  const l = diversOver({ player: [10, 0, 5], route });
+  l.host.frame([{ trip: l.trip, members: l.members }], 20);
+  await tick();
+  l.st.spawned.forEach((r, i) => { r.living = { id: l.members[i].id, res: l.members[i] }; });
+  l.st.spawned[2].fellBack = true;
+  l.host.offers({ living: l.st.spawned[0].living }, () => {});
+  l.st.chose.options[1].action();
+  assert.ok(l.st.spawned.every((r) => !r.fellBack), 'lead on: fallen back no longer');
+  for (const r of l.st.spawned) r.ai.feet = [30 + r.ai.follow.stop + DIVER_ARRIVE_SLACK_M - 0.6, 0, 0];
+  l.host.frame([{ trip: l.trip, members: l.members }], 25);
+  assert.ok(l.st.spawned.every((r) => r.ai.follow.feet()[0] === 60), 'arrived, each at its stop: on to the next');
+  // D6: on the way out nothing ahead is theirs - a pile they passed is the player's
+  const tr = lineRoute();
+  tr.legs[0].stop.kind = 'treasure';
+  const w = diversOver({ player: [30, 0, 1], route: tr });   // at 250 they walk out past 30
+  w.st.piles = { '0:1': { items: [1, 2] } };
+  w.host.frame([{ trip: w.trip, members: w.members }], 250);
+  await tick();
+  assert.equal(w.host.size, 1, 'met on the way out');
+  w.st.spawned.forEach((r, i) => { r.living = { id: w.members[i].id, res: w.members[i] }; });
+  w.st.feet = [10, 0, 1];   // at the pile of the stop they passed
+  w.host.frame([{ trip: w.trip, members: w.members }], 251);
+  w.st.piles['0:1'].items.pop();
+  w.host.frame([{ trip: w.trip, members: w.members }], 252);
+  assert.ok(!w.st.said.some((x) => /ours to find/.test(x)), 'on the way out');
+  assert.ok(w.members.every((m) => w.rel.regard(m.id, 0) === 0));
+  // D7: another floor - heard, never met
+  assert.equal(DEEP_FLOOR_DY, 3);
+  const up = diversOver({ player: [10, DEEP_FLOOR_DY + 3, 5], route });
+  up.host.frame([{ trip: up.trip, members: up.members }], 20);
+  assert.equal(up.host.size, 0, 'a floor above');
+  assert.deepEqual(up.st.said, ['You hear fighting ahead.']);
+  const same = diversOver({ player: [10, 1, 5], route });
+  same.host.frame([{ trip: same.trip, members: same.members }], 20);
+  assert.equal(same.host.size, 1);
+  // D8: let go and met again as it was left - parted, and hurt
+  const k = diversOver({ player: [10, 0, 5], route });
+  k.host.frame([{ trip: k.trip, members: k.members }], 20);
+  await tick();
+  k.st.spawned.forEach((r, i) => { r.living = { id: k.members[i].id, res: k.members[i] }; });
+  k.st.spawned[1].entity.health = 40;
+  k.host.offers({ living: k.st.spawned[0].living }, () => {});
+  k.st.chose.options[2].action();   // part ways
+  k.st.feet = [10, 0, DEEP_KEEP_M + 5];
+  k.host.frame([{ trip: k.trip, members: k.members }], 21);
+  assert.equal(k.host.size, 0, 'let go');
+  k.st.feet = [10, 0, 5];
+  k.host.frame([{ trip: k.trip, members: k.members }], 22);
+  await tick();
+  const again = k.st.spawned.slice(3);
+  again.forEach((r, i) => { r.living = { id: k.members[i].id, res: k.members[i] }; });
+  assert.equal(k.host.offers({ living: again[0].living }, () => {}), false, 'parted still');
+  assert.equal(again[1].entity.health, 40, 'hurt still');
+  // ...one drawing on the player is never let go behind them
+  const h = diversOver({ player: [10, 0, 5], route, extra: { spawnFoe: (type, feet) => Promise.resolve({ type, feet, dead: false, ai: { feet: [...feet] }, entity: {} }) } });
+  while (h.rel.standing(h.members[0].id, 0) !== 'hostile') h.rel.note(h.members[0].id, 'struck', 0);
+  assert.equal(h.rel.standing(h.members[0].id, 0), 'hostile');
+  h.host.frame([{ trip: h.trip, members: h.members }], 20);
+  await tick();
+  h.st.feet = [10, 0, DEEP_KEEP_M + 50];
+  h.host.frame([{ trip: h.trip, members: h.members }], 21);
+  assert.equal(h.host.size, 1, 'outrun, it is still after you');
+  // D12: the rival's word once a pile (its regard once a day as ever)
+  const r = diversOver({ player: [12, 0, 1], route });
+  r.st.piles = { '0:2': { items: [1, 2, 3] } };
+  r.host.frame([{ trip: r.trip, members: r.members }], 20);
+  await tick();
+  r.st.spawned.forEach((x, i) => { x.living = { id: r.members[i].id, res: r.members[i] }; });
+  r.st.feet = [30, 0, 1];
+  r.host.frame([{ trip: r.trip, members: r.members }], 20.5);
+  for (let i = 0; i < 3; i++) { r.st.piles['0:2'].items.pop(); r.host.frame([{ trip: r.trip, members: r.members }], 21 + i); }
+  assert.equal(r.st.said.filter((x) => /ours to find/.test(x)).length, 1);
+  // D13: no resting places - the route's place still lays them; none at all, none laid (never a throw)
+  const laid = [];
+  const rem = createDeepRemains({ spots: () => [], laid: () => false, mark: () => {}, lay: (res, feet) => { laid.push(feet); return {}; }, there: () => true, feet: () => null, say: () => {}, townName: () => '', placeOf: (x) => (x.key === 'deep:a' ? [70, 0, 7] : null) });
+  rem.frame([{ key: 'deep:a', res: { name: 'A' } }, { key: 'deep:b', res: { name: 'B' } }]);
+  assert.deepEqual(laid, [[70, 0, 7]]);
+  // D11: the door at the treasure's reach, never in Info
+  let opened = 0;
+  const said = [];
+  const foe = { living: { id: 'x', res: { name: 'X' } }, shipmate: true, entity: { name: 'X' } };
+  assert.equal(activateMobileEnemy(foe, TREASURE_ACTIVATION_DISTANCE + 1, 'talk', {}, { openLiving: () => { opened++; return true; }, hud: () => {}, midScreen: (x) => said.push(x) }), true);
+  assert.deepEqual([opened, said.length], [0, 1], 'too far');
+  activateMobileEnemy(foe, 1, 'info', {}, { openLiving: () => { opened++; return true; }, hud: () => {}, midScreen: () => {} });
+  assert.equal(opened, 0, 'Info sees him');
+  // D7: the way out on its floors
+  const stops = [{ key: '0:1', kind: 'treasure', x: 10, y: -8, z: 0, block: 0, loadID: 1 }];
+  const ro = routeOf(stops, { x: 0, z: 0 }, { id: 'T', dive: { t0: 0, t1: 600 }, seed: 1 });
+  assert.equal(ro.out.path[0].y, -8);
+  const mid = (ro.out.t0 + ro.out.t1) / 2;
+  assert.equal(pointAt(ro, mid).y, -8, 'floored where it walks');
+});
+
+test('AUDIT LW-II LW14: the build\'s clear at its END, every binding a corpse reads stood before it, keyed by the placed block; the piles it passed lie picked over; online none - the room\'s dungeon is the room\'s; the remains\' places kept (mutants: D1, D3, D5, D9, D10)', () => {
+  const d = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
+  const clear = d.indexOf('for (const f of foes) {\n    if (!f.entity || f.src?.fixed || !_deepFoeCleared.has(');
+  assert.ok(clear > 0);
+  for (const bound of ['const _wallNow = () =>', 'const billboardBatches = [];', 'const flatAnims = new FlatAnimator();', 'let _ctxDead = false;', 'function settleLootFlat(i) {']) {
+    assert.ok(d.indexOf(bound) > 0 && d.indexOf(bound) < clear, `${bound} stands before the clear`);
+  }
+  assert.ok(clear < d.lastIndexOf('  return api;'), 'and the build returns after it');
+  assert.match(d, /\.map\(\(s\) => `\$\{s\.block\}:\$\{s\.loadID\}`\)\);/);
+  assert.match(d, /for \(const \[i, p\] of lootPiles\.entries\(\)\) if \(p\.stopKey && _deepCleared\.has\(p\.stopKey\) && !p\.items\.length\) settleLootFlat\(i\);/);
+  const w = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
+  assert.match(w, /if \(!livingWorldOn\(\) \|\| params\.has\('online'\) \|\| !stops\?\.length \|\| !loc\?\.mapTableData\) return null;/);
+  assert.match(w, /if \(_livingRemainsPlace\.has\(r\.key\)\) return _livingRemainsPlace\.get\(r\.key\);/);
 });

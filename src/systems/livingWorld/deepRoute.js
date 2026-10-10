@@ -41,7 +41,7 @@ const DEEP = 0x64656570;   // 'deep'
  * @typedef {{ key: string, kind: 'foe'|'treasure', x: number, y: number, z: number, block: number, loadID: number }} Stop -
  *   the dungeon's frame; `key` `<block>:<marker position>`, `loadID` the marker's own (a foe's identity)
  * @typedef {{ stop: Stop, tIn: number, tOut: number, fight: boolean }} Leg
- * @typedef {{ legs: Leg[], entry: { x: number, z: number }, out: { t0: number, t1: number, path: { x: number, z: number }[] }, t0: number }} Route
+ * @typedef {{ legs: Leg[], entry: { x: number, z: number }, out: { t0: number, t1: number, path: { x: number, z: number, y?: number }[] }, t0: number }} Route
  */
 
 /**
@@ -133,7 +133,8 @@ export function routeOf(stops, entry, trip) {
       while (legs.length && legs[legs.length - 1].tOut > mid + DEEP_FIGHT_MIN) legs.pop();
     }
   }
-  const path = [...legs.map((l) => ({ x: l.stop.x, z: l.stop.z })).reverse(), { x: entry.x, z: entry.z }];
+  const yOf = (/** @type {any} */ o) => (Number.isFinite(o?.y) ? { y: o.y } : {});   // AUDIT LW-II D7: each point its floor, where known
+  const path = [...legs.map((l) => ({ x: l.stop.x, z: l.stop.z, ...yOf(l.stop) })).reverse(), { x: entry.x, z: entry.z, ...yOf(entry) }];
   let back = 0;
   for (let i = 1; i < path.length; i++) back += walkMin(path[i - 1], path[i]);
   const last = legs.length ? legs[legs.length - 1].tOut : dive.t0;
@@ -162,10 +163,11 @@ export function stopAt(route, t) {
   for (let i = 1; i < p.length; i++) { const d = Math.hypot(p[i].x - p[i - 1].x, p[i].z - p[i - 1].z); seg.push(d); total += d; }
   let goal = total * ((t - route.out.t0) / Math.max(1e-9, route.out.t1 - route.out.t0));
   for (let i = 0; i < seg.length; i++) {
-    if (goal <= seg[i]) { const f = seg[i] ? goal / seg[i] : 0; return { out: { x: p[i].x + (p[i + 1].x - p[i].x) * f, z: p[i].z + (p[i + 1].z - p[i].z) * f } }; }
+    if (goal <= seg[i]) { const f = seg[i] ? goal / seg[i] : 0, y = p[i + 1].y ?? p[i].y; return { out: { x: p[i].x + (p[i + 1].x - p[i].x) * f, z: p[i].z + (p[i + 1].z - p[i].z) * f, ...(y != null ? { y } : {}) } }; }
     goal -= seg[i];
   }
-  return { out: { x: p[p.length - 1].x, z: p[p.length - 1].z } };
+  const last = p[p.length - 1];
+  return { out: { x: last.x, z: last.z, ...(last.y != null ? { y: last.y } : {}) } };
 }
 
 /** A route's point at `t` (the dungeon's frame), or null. @param {Route | null} route @param {number} t */
@@ -174,7 +176,7 @@ export function pointAt(route, t) {
   if (!s) return null;
   if (s.at) return { x: s.at.x, z: s.at.z, y: s.at.y };
   if (s.between) { const [a, b] = s.between; return { x: a.x + (b.x - a.x) * s.f, z: a.z + (b.z - a.z) * s.f, y: /** @type {any} */ (b).y }; }
-  return s.out ? { x: s.out.x, z: s.out.z, y: undefined } : null;
+  return s.out ? { x: s.out.x, z: s.out.z, y: s.out.y } : null;
 }
 
 /**

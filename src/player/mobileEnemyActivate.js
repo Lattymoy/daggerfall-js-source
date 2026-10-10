@@ -123,7 +123,12 @@ export function activateMobileEnemy(foe, distance, mode, player, {
     if (openCompanion(foe)) return true;
   }
   // LW14: one of a company of the living world beside the player - its door (join us, lead on, part ways)
-  if (mode !== 'steal' && openLiving && foe.living?.res && foe.shipmate === true && openLiving(foe)) return true;
+  // AUDIT LW-II D11: at the treasure's reach, as his pack's (the HUD's one refusal past it), and never in Info ("You see")
+  if (mode !== 'steal' && mode !== 'info' && openLiving && foe.living?.res && foe.shipmate === true) {
+    const far = distance > TREASURE_ACTIVATION_DISTANCE;
+    if (far) { midScreen?.(TOO_FAR_AWAY_TEXT); return true; }
+    if (openLiving(foe)) return true;
+  }
   if (mode !== 'steal') {
     // :814-826 - Info, Grab and Talk all pop the one line, with no
     // distance gate of any kind.

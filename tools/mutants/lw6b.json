@@ -264,11 +264,12 @@
   {
     "name": "LW6b-places",
     "file": "src/scenes/deepRemains.js",
-    "old": "      if (!spots.length) return;",
-    "new": "      void 0;",
+    "old": "        if (!at) continue;   // AUDIT LW-II D13",
+    "new": "        void 0;   // AUDIT LW-II D13",
     "tests": [
       "test/lw6b_remains.test.js"
-    ]
+    ],
+    "note": "AUDIT LW-II (re-aimed by content): the route's places beside it."
   },
   {
     "name": "LW6b-stood-member",

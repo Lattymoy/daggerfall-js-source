@@ -62,10 +62,10 @@ export function createDeepRemains(deps) {
      */
     frame(remains) {
       const spots = deps.spots();
-      if (!spots.length) return;
       const feet = deps.feet();
       for (const r of remains) {
-        const at = deps.placeOf?.(r) ?? spots[restAt(r.key, spots.length)];   // LW14: where it fell, on the dive's route
+        const at = deps.placeOf?.(r) ?? (spots.length ? spots[restAt(r.key, spots.length)] : null);   // LW14: where it fell, on the dive's route
+        if (!at) continue;   // AUDIT LW-II D13: no place at all (a dungeon of treasure stops alone still has the route's)
         const away = !feet || Math.hypot(at[0] - feet[0], at[2] - feet[2]) > DEEP_LAY_M;
         if (!deps.laid(r.key) && !here.has(r.key)) {
           if (!(arriving || away)) continue;

@@ -1078,7 +1078,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // emptied, their piles built empty
   const _deepStops = stopsOf(dungeon.blocks, RDB_SIDE, dungeon.startMarker ?? null);
   const _deepCleared = opts.deepCleared?.(dfLocation, _deepStops, dungeon.startMarker ?? null) ?? new Set();
-  const _deepFoeCleared = new Set(_deepStops.filter((s) => s.kind === 'foe' && _deepCleared.has(s.key)).map((s) => s.loadID));
+  // AUDIT LW-II D3: a foe's LoadID is its RDB block's (blockData.Position + the object's), so two placed copies of one block
+  // share every LoadID - the stop is the PLACED block's: keyed by its index and the LoadID together
+  const _deepFoeCleared = new Set(_deepStops.filter((s) => s.kind === 'foe' && _deepCleared.has(s.key)).map((s) => `${s.block}:${s.loadID}`));
   // PVPDUNGEONS: a hall of the zone holds the high tiers alone - every rat, bat and orc of its template's tables swapped
   // for its ring's own (systems/wildDungeons.js wildHallFoes: a pure pick by the hall's id, the same on every client)
   if (dfLocation?.wildRing > 0) {
@@ -1624,12 +1626,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (f.src?.arenaChained == null || !f.entity) continue;
     f.entity.bout = chainTag(f.src.arenaChained, () => hudText.add(ARENA_TEXT.undercroft.chained));
     f.entity.items = [];
-  }
-  // LW14: A COMPANY WAS HERE FIRST - a random foe at a stop a dive passed stands dead where it stood, its pack emptied
-  for (const f of foes) {
-    if (!f.entity || f.src?.fixed || !_deepFoeCleared.has(f.src?.loadID)) continue;
-    f.entity.items = [];
-    setFoeDead(f, true);
   }
   _layoutStood = true;   // OH-E: every foe stood from here on is a spawn (GameManager.OnEnemySpawn's, with its own LoadID)
   // REST-SYNC (2026-09-26, Mac: "when resting in a dungeon it spawns enemys that are out of sync with others"; asked,
@@ -10440,6 +10436,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // AUDIT SD IV (S1): the end stood as the level is built - every door shut, every platform home - before a save's state
   // or the room's (applyWorld, a peer's act) can open one: where the Rift, the Return and the landing back stand is the
   // layout's alone, the same on every client, whatever window held the first frame back
+  // LW14: A COMPANY WAS HERE FIRST - a random foe at a stop a dive passed stands dead where it stood, its pack emptied,
+  // and a pile it passed lies picked over (its flat gone, as one the player emptied). AUDIT LW-II D1: at the build's END -
+  // setFoeDead's corpse reads the relay's clock (`_wallNow`), the batches and the animator, every one declared further
+  // down the build than the stand: the clear where it stood threw in each corpse's mint, and each foe it cleared went
+  // dead with no body (vanished, never respawned)
+  for (const f of foes) {
+    if (!f.entity || f.src?.fixed || !_deepFoeCleared.has(`${f.src?.blockIndex}:${f.src?.loadID}`)) continue;
+    f.entity.items = [];
+    setFoeDead(f, true);
+  }
+  for (const [i, p] of lootPiles.entries()) if (p.stopKey && _deepCleared.has(p.stopKey) && !p.items.length) settleLootFlat(i);
   if (sdEnd && !_sdEndAsked) { _sdEndAsked = true; standSdEnd(); }
   return api;
 }
