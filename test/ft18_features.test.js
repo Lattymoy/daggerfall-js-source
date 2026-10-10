@@ -256,15 +256,18 @@ test('FEATURES-DEFAULTS (issue #399): Defaults puts every tile, its drawer and a
 test('FEATURES-DEFAULTS (issue #399): online the room\'s rows stay as the room has them; the button sits beside All off and asks first (mutant: the lock ignored, or the confirm skipped)', () => {
   fresh();
   try {
+    // PIN MOVED (BAL4, bible/05-Combat/Balance-Arc.md section 6): the Enhanced AI ships On now, so the room's row that
+    // still ships Off is the dungeon sizes' - the same lock, the same lane
+    const forced = 'world-dungeon-sizes';
     globalThis.location = { search: '' };
-    tileStates(row('enhanced-ai')).set(1);   // the player's own, offline - it ships Off
+    tileStates(row(forced)).set(1);   // the player's own, offline - it ships Off
     globalThis.location = { search: '?online=1' };
-    const st = tileStates(row('enhanced-ai'));
-    assert.ok(st.locked && defaultSegment(row('enhanced-ai'), st) === 0, 'the room forces it On online, where it ships Off');
+    const st = tileStates(row(forced));
+    assert.ok(st.locked && defaultSegment(row(forced), st) === 0, 'the room forces it On online, where it ships Off');
     featuresDefaults();
-    assert.equal(label('enhanced-ai'), 'On', 'forced on online');
+    assert.equal(label(forced), 'On', 'forced on online');
     globalThis.location = { search: '' };
-    assert.equal(label('enhanced-ai'), 'On', 'and its shelf untouched - offline it is still the player\'s own, not the Off it ships');
+    assert.equal(label(forced), 'On', 'and its shelf untouched - offline it is still the player\'s own, not the Off it ships');
   } finally { delete globalThis.location; fresh(); }
   assert.match(RESET_ALL_ASK, /key bindings are kept\./, 'and it says what it leaves');
   // ORG2: the button is the Settings toolbar's one reset - beside All off, asked first - and it runs this

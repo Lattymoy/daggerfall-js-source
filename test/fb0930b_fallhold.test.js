@@ -30,6 +30,11 @@ import { createExteriorFoes } from '../src/scenes/exteriorFoes.js';
 import { createCityGuards } from '../src/scenes/cityGuards.js';
 import { areEnemiesNearby } from '../src/systems/encounters.js';
 import { TERRAIN_SIZE } from '../src/world/terrainSampler.js';
+import { setPref } from '../src/systems/uiPrefs.js';   // BAL4: the switch this file's pins assumed
+
+// BAL4 (bible/05-Combat/Balance-Arc.md section 6): the Enhanced AI ships On now; this file pins the classic motor's hold and swing (the tactics brain's tokens and recovery are TACT's own pins),
+// so it says Off outright where it used to read the default (LR5's trap: a pin that leaned on a default moves with it)
+setPref('enhancedAI', false);
 
 const rd = (p) => readFileSync(join(import.meta.dirname, '..', p), 'utf8');
 const settle = async () => { for (let i = 0; i < 4; i++) await new Promise((r) => setTimeout(r, 0)); };

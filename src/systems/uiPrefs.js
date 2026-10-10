@@ -19,7 +19,7 @@ const SHELF_REV = 2;
  *  already materialised the old one, adopted once on an unstamped
  *  shelf. A key joins this list only when the old stored value cannot
  *  honestly be read as the player's answer - see loadPrefs. */
-const PREF1_ADOPT_NEW_DEFAULT = Object.freeze(['lootRarity']);
+const PREF1_ADOPT_NEW_DEFAULT = Object.freeze(['lootRarity', 'enhancedAI']);   // BAL4: and the Enhanced AI - see loadPrefs
 
 import { appStorage } from './appStorage.js';   // DA1: the storage seam
 import { onlineForcedPref } from './onlineLane.js';   // OL1: the online lane's forcing, read before the shelf
@@ -198,13 +198,20 @@ export function loadPrefs() {
         // since changed its mind, and the shelf is stamped so this
         // runs exactly once per player.
         //
-        // Only `lootRarity` is on that list, and the reasoning is
+        // `lootRarity` went on that list first, and the reasoning is
         // bounded rather than hopeful: the row shipped OFF on
         // 2026-09-14 and LR5 turned it ON one day later, so a stored
         // `false` in an unstamped shelf was written by the shelf and
         // not by a player. After this load the player's own answer -
         // including pressing it back off - differs from the default
         // and is persisted as the choice it is.
+        //
+        // BAL4 (2026-10-10, 05-Combat/Balance-Arc.md section 6) adds
+        // `enhancedAI` on the same reasoning: the row shipped OFF on
+        // 2026-09-14 (FT5), one day before this stamp, so an unstamped
+        // shelf's `false` is the shelf's writing of that default, not a
+        // player's answer - and a stamped shelf never wrote it at all
+        // (a default is never stored), so the flip reaches it unasked.
         if (p[SHELF_STAMP] === undefined) {
           for (const k of PREF1_ADOPT_NEW_DEFAULT) {
             if (p[k] !== undefined && p[k] !== PREF_DEFAULTS[k]) _prefs[k] = PREF_DEFAULTS[k];

@@ -6779,7 +6779,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // online" a frame later; and not on the reset, which a fast F11
       // reaches before that frame. The reset reads this snapshot.
       _deathWasOnline = _onlineWorldSession();
-      townTalk.showOverlay(new DeathScreen({ eyeHeight: player.eye[1] - player.pos[1], capsuleHeight: player.height, onReset: () => (legacyDeathReset() || (_deathWasOnline ? respawnOnlinePlayer() : endRunToTitleMenu(renderer))) }));   // D1; D-ONLINE1: online play respawns instead of ending the run; LEGACY1: Project Legacy asked first
+      townTalk.showOverlay(new DeathScreen({ eyeHeight: player.eye[1] - player.pos[1], capsuleHeight: player.height, onReset: () => (legacyDeathReset() || (_deathWasOnline ? respawnOnlinePlayer() : endRunToTitleMenu(renderer))), rises: () => legacyHost?.willRise() ?? false }));   // D1; D-ONLINE1: online play respawns instead of ending the run; LEGACY1: Project Legacy asked first; BAL4: and the screen knows a rise is coming (the respawn's loss stated)
       // RISE-STUCK (Ninilac: "fast travelling while playing online ...
       // climb a wall that was in the way and died"): A DEATH ENDS THE
       // JOURNEY - the mod's own "pauseTravel" message (TravelOptionsMod
@@ -13958,9 +13958,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   function legacyDeathReset() {
     const out = legacyHost?.deathOutcome() ?? { kind: 'none' };
     if (out.kind === 'rise') {
-      // LEGACY2: OFFLINE THE TOLL IS THE PRICE. The respawn is D-ONLINE1's own; offline nothing was said on the death
-      // screen (no loss shown), so the purse it takes is that word - none - and a revenant's theft stays online's (RVN8)
-      if (!(_deathWasOnline ?? _onlineWorldSession())) { stateDeathLoss(0); forgetLastSlew(); }
+      // LEGACY2: the respawn is D-ONLINE1's own. BAL4 (bible/05-Combat/Balance-Arc.md section 6): OFFLINE THE TOLL AND
+      // THE TENTH - the death screen stated the respawn's loss (DeathScreen `rises`), and the respawn takes it, as online;
+      // a revenant's theft stays online's (RVN8)
+      if (!(_deathWasOnline ?? _onlineWorldSession())) forgetLastSlew();
       respawnOnlinePlayer();
       townTalk.say(out.line);   // Arkay's years, on the notices over the waking
       return true;

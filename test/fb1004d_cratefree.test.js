@@ -43,6 +43,11 @@ import { Arch3dFile } from '../src/formats/arch3dFile.js';
 import { ClassFile } from '../src/formats/classFile.js';
 import { collectDungeonEnemies } from '../src/characters/dungeonEnemies.js';
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
+import { setPref } from '../src/systems/uiPrefs.js';   // BAL4: the switch this file's pins assumed
+
+// BAL4 (bible/05-Combat/Balance-Arc.md section 6): the Enhanced AI ships On now; this file pins the classic motor's restore and walk (the navmesh motor's are NAV's own pins),
+// so it says Off outright where it used to read the default (LR5's trap: a pin that leaned on a default moves with it)
+setPref('enhancedAI', false);
 import { EnemyAI } from '../src/characters/enemyMotor.js';
 import { enemyControllerHeight, flyerStandFeet, keepRebuiltSpawn } from '../src/characters/enemyAnchor.js';
 import { lodgedIn, freeLodgedFeet, clearPast, bodyFits, FREE_RINGS } from '../src/characters/foeSpacing.js';

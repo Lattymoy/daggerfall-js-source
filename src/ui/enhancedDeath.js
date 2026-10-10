@@ -52,10 +52,11 @@ const el = (tag, cls, text) => {
 /** What the keys do, from the screen's own hint - a host with no
  *  quickload passes 'ENTER end' and gets no F11 plate (FIX-E's law: a
  *  hint that is a lie is worse than none). Online, Enter and F11 both
- *  RESPAWN (world.js D-ONLINE1), so one plate says so. */
-export function deathKeys(hint, online) {
+ *  RESPAWN (world.js D-ONLINE1), so one plate says so. BAL4: offline, a
+ *  death Project Legacy will raise rises on Enter - F11 still loads. */
+export function deathKeys(hint, online, rises = false) {
   if (online) return [{ key: 'Enter', word: 'Rise now', confirm: true }];
-  const keys = [{ key: 'Enter', word: 'End the journey', confirm: true }];
+  const keys = [{ key: 'Enter', word: rises ? 'Rise' : 'End the journey', confirm: true }];
   if (/F11/i.test(String(hint ?? ''))) keys.push({ key: 'F11', word: 'Load last save' });
   return keys;
 }
@@ -77,11 +78,11 @@ function build(screen) {
   // mode"): a death that costs gold says so IN the line's place, in the line's own italic serif, rather than
   // under it in a second face. A death that costs nothing (offline, or a purse under ten coins) keeps its words.
   const lossLine = screen.goldLoss > 0 ? (screen.goldLossLine || deathPenaltyLine(screen.goldLoss)) : '';
-  const line = el('p', `dth-line${lossLine ? ' dth-lossline' : ''}`, lossLine || (online
+  const line = el('p', `dth-line${lossLine ? ' dth-lossline' : ''}`, lossLine || (online || screen.rises
     ? 'Your body falls. The Bay is not done with you yet.'
     : 'Your tale in the Iliac Bay ends here.'));
   const keys = el('div', 'dth-keys');
-  for (const k of deathKeys(screen.hint, online)) {
+  for (const k of deathKeys(screen.hint, online, !!screen.rises)) {
     const b = el(k.confirm ? 'button' : 'span', 'dth-key');
     b.append(el('span', 'dth-cap', k.key), el('span', 'dth-word', k.word));
     // A phone has no Enter: the plate is the key, through the screen's

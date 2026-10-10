@@ -1226,7 +1226,7 @@ export function createWorldModes(host) {
       // z-index 13) left in the slot stayed in the DOM over the death,
       // the video and whatever followed, eating every pointer event.
       interiorOverlay?.dispose?.();
-      interiorOverlay = new DeathScreen({ eyeHeight: player.eye[1] - player.pos[1], capsuleHeight: player.height, onReset: () => { if (!host.onlineRespawn?.()) endRunToTitleMenu(renderer); } });   // D1; D-ONLINE1: online play respawns instead of ending the run
+      interiorOverlay = new DeathScreen({ eyeHeight: player.eye[1] - player.pos[1], capsuleHeight: player.height, onReset: () => { if (!host.onlineRespawn?.()) endRunToTitleMenu(renderer); }, rises: () => host.legacyWillRise?.() ?? false });   // D1; D-ONLINE1: online play respawns instead of ending the run; BAL4: a Legacy rise offline is one (its loss stated)
     }
   };
   // AUDIT 23 (hosts-1): this constructor runs AFTER the exterior host
@@ -8977,6 +8977,7 @@ export function createWorldModes(host) {
           // two exterior death sites), so that draft's Privateer's Hold
           // branch could not fire for a real dungeon death and always
           // fell through to host.onlineRespawn.
+          legacyWillRise: () => host.legacyWillRise?.() ?? false,   // BAL4: the dungeon's death screen asks it - an offline rise states its loss
           onlineRespawn: () => {
             const isPrivateersHold = isStartDungeon(dfLocation);
             // AUDIT LEGACY B5: an offline death Project Legacy will raise is a respawn too - here, at the start marker,
@@ -8993,7 +8994,7 @@ export function createWorldModes(host) {
                 player.stopAutorun();   // AUDIT 27h S2: SEA-RISE's law for every rise
                 reviveForPlay(playerEntity, { force: true });   // DEATHLOOP1: the drains go with the heal
                 surfacePlayer();
-                const goldLost = online ? applyDeathPenalty(playerEntity) : 0;   // DEATH-PENALTY: Privateer's Hold is an online death like any other; offline there is none
+                const goldLost = applyDeathPenalty(playerEntity);   // DEATH-PENALTY: Privateer's Hold is an online death like any other; BAL4: and an offline Legacy rise pays the same tenth (the screen stated it)
                 endPlayerFights();   // AUDIT FEUD (RVN10): the death ended every fight
                 const took = online ? revenantTakes(playerEntity, { online: true }) : null;   // AUDIT FEUD (RVN8, Feud-Arc.md 19): its killer's theft, once a death - the world host's respawn's own
                 const rise = legacyRise ? host.legacyRiseLine?.() ?? null : null;   // AUDIT LEGACY B5: the toll's word, the outcome presented

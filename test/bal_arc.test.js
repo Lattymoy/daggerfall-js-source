@@ -9,7 +9,8 @@
 // BAL3: the place sets the threat - the veteran layer reads the loot ladder's grading of the place a foe stands in (a
 // town's 4 nothing, a Dragon's Den's 18 the whole row), Master Skills' own layers kept beside it, the ladder's switch
 // its gate.
-// BAL4: the offline defaults - elites wherever the ladder stands.
+// BAL4: the offline defaults - elites wherever the ladder stands, the Enhanced AI on (an unstamped shelf adopting it),
+// and an offline Project Legacy rise paying the online respawn's tenth, stated on its death screen.
 //
 // Pinned by execution through the real blow (pcaaoAttackDamage), the stats card, the scaling and the open world's own
 // spawn pool; the dungeon's seam by its source, beside the arena and the hosts' own pins of the same lines.
@@ -35,6 +36,13 @@ import {
 import { DUNGEON_RARITY_TIER, dungeonRarityTier } from '../src/systems/lootRarity.js';
 import { elitesAllowed, isEliteFoe } from '../src/systems/eliteFoes.js';
 import { createExteriorFoes } from '../src/scenes/exteriorFoes.js';
+import { PREF_DEFAULTS, getPref } from '../src/systems/uiPrefs.js';
+import { FEATURES } from '../src/systems/features.js';
+import { tacticsSwitchOn } from '../src/ai/tactics.js';
+import { coverSwitchOn } from '../src/ai/cover.js';
+import { DeathScreen, riseHint } from '../src/ui/deathScreen.js';
+import { deathKeys } from '../src/ui/enhancedDeath.js';
+import { stateDeathLoss, statedDeathLoss, applyDeathPenalty } from '../src/systems/deathPenalty.js';
 
 _wearScaleForTests(1);   // the mod's wear verbatim (BALANCE1's scale is test/balance1.test.js's)
 
@@ -295,4 +303,61 @@ test('BAL4 elites offline: wherever the loot ladder stands - online always, offl
   assert.equal(isEliteFoe(await spawn(true, 0.06)), false, 'and 0.06 does not');
   assert.equal(isEliteFoe(await spawn(false, 0.01)), false, 'the ladder off: never');
   ladder(true);
+});
+
+test('BAL4 the Enhanced AI ships On: the row, the shelf\'s default, the brain and the cover read it at once; Off is one press, the classic motor whole', () => {
+  _resetForTests();
+  const row = FEATURES.find((f) => f.id === 'enhanced-ai');
+  assert.equal(row.control.initial, true);
+  assert.equal(row.control.online, true, 'and forced on online, as it always was');
+  assert.equal(PREF_DEFAULTS.enhancedAI, true);
+  assert.equal(getPref('enhancedAI'), true, 'a fresh shelf');
+  assert.equal(tacticsSwitchOn(), true, 'the tactics brain');
+  assert.equal(coverSwitchOn(), true, 'the cover');
+  setPref('enhancedAI', false);
+  assert.equal(tacticsSwitchOn(), false, 'Off: the classic motor');
+  assert.equal(coverSwitchOn(), false);
+  _resetForTests();
+  assert.match(rd('src/systems/uiPrefs.js'), /const PREF1_ADOPT_NEW_DEFAULT = Object\.freeze\(\['lootRarity', 'enhancedAI'\]\);/, 'an unstamped shelf\'s materialised Off adopts it (test/pref1_shelf.test.js runs it)');
+});
+
+test('BAL4 a real cost for dying offline: a death Project Legacy will raise states and takes the online respawn\'s tenth, says Rise where it said End the journey; a death with no rise takes nothing', () => {
+  const who = () => ({ goldPieces: 345, raceId: 1, gender: 0 });
+  // a rise offline: the host hands `rises`, the screen states a tenth of the purse
+  stateDeathLoss(null);
+  const me = who();
+  const rising = new DeathScreen({ eyeHeight: 1.6, capsuleHeight: 1.8, entity: me, online: false, rises: () => true });
+  assert.equal(rising.rises, true);
+  assert.equal(rising.goldLoss, 34, 'a tenth of 345, rounded down');
+  assert.equal(statedDeathLoss(), 34, 'stated for the respawn');
+  assert.equal(rising.hint, 'ENTER end   F11 load', 'the host\'s hint is kept');
+  assert.equal(riseHint(rising.hint), 'ENTER rise   F11 load', 'and the classic face draws Enter as the rise');
+  me.goldPieces = 400;   // whatever the purse did while the player lay dead
+  assert.equal(applyDeathPenalty(me), 34, 'the respawn takes what the screen said');
+  assert.equal(me.goldPieces, 366);
+  // no rise (Legacy off, Bloodline's fall, the fixed city): the run ends, nothing is said or taken
+  for (const rises of [null, () => false]) {
+    stateDeathLoss(null);
+    const ends = new DeathScreen({ eyeHeight: 1.6, capsuleHeight: 1.8, entity: who(), online: false, rises });
+    assert.equal(ends.rises, false);
+    assert.equal(ends.goldLoss, 0);
+    assert.equal(statedDeathLoss(), null, 'nothing stated');
+  }
+  // online the rise is the room's respawn - `rises` is offline's word alone, the loss the same tenth
+  stateDeathLoss(null);
+  const room = new DeathScreen({ eyeHeight: 1.6, capsuleHeight: 1.8, entity: who(), online: true, rises: () => true });
+  assert.equal(room.rises, false, 'online: the respawn countdown, never the Legacy word');
+  assert.equal(room.goldLoss, 34);
+  stateDeathLoss(null);
+  // the enhanced face's plates
+  assert.deepEqual(deathKeys('ENTER end   F11 load', false, true).map((k) => k.word), ['Rise', 'Load last save']);
+  assert.deepEqual(deathKeys('ENTER end   F11 load', false, false).map((k) => k.word), ['End the journey', 'Load last save']);
+  assert.deepEqual(deathKeys('ENTER end', false, true).map((k) => k.word), ['Rise'], 'no F11 where there is no quickload');
+  assert.deepEqual(deathKeys('ENTER end   F11 load', true, true).map((k) => k.word), ['Rise now']);
+  assert.match(rd('src/ui/enhancedDeath.js'), /lossLine \|\| \(online \|\| screen\.rises\n\s*\? 'Your body falls\. The Bay is not done with you yet\.'/, 'and the line is the rise\'s, not "your tale ends here"');
+  // the street's rise takes it: the offline arm keeps only the revenant's theft online's
+  const w = rd('src/scenes/world.js');
+  const reset = w.slice(w.indexOf('function legacyDeathReset() {'), w.indexOf('function openLegacySuccession('));
+  assert.match(reset, /if \(!\(_deathWasOnline \?\? _onlineWorldSession\(\)\)\) forgetLastSlew\(\);\n\s*respawnOnlinePlayer\(\);/);
+  assert.doesNotMatch(reset, /stateDeathLoss\(0\)/, 'no word of "none" over the screen\'s');
 });

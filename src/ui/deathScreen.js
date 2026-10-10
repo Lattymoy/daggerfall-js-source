@@ -89,8 +89,11 @@ export function fallCurve(elapsed) {
  *  death lands you; F11 still quickloads, the port's own affordance
  *  and the reason the hint is drawn. `drop` is read by each host's
  *  frame to sink its camera - one player, one death, one law. */
+/** BAL4: the classic face's hint over a death Project Legacy will raise - its Enter raises the player (F11 still loads). */
+export const riseHint = (hint) => String(hint ?? '').replace(/ENTER end/, 'ENTER rise');
+
 export class DeathScreen {
-  constructor({ eyeHeight, capsuleHeight, onReset = null, entity = playerEntity, hint = 'ENTER end   F11 load', online = undefined } = {}) {
+  constructor({ eyeHeight, capsuleHeight, onReset = null, entity = playerEntity, hint = 'ENTER end   F11 load', online = undefined, rises = null } = {}) {
     this.done = false;
     // RISE-STUCK: the screen keeps the top of its host's stack until it
     // goes - a box pushed while it is up waits beneath (ui/windowStack.js
@@ -107,12 +110,18 @@ export class DeathScreen {
     // AUDIT 28 B5: a host whose death never respawns online (the fixed city, the standalone dungeon) says so - its
     // screen counts no online respawn down and shows no loss it will never take
     this.online = online ?? isOnlinePage();
+    // BAL4 (bible/05-Combat/Balance-Arc.md section 6): AN OFFLINE DEATH PROJECT LEGACY WILL RAISE IS A RESPAWN TOO. The
+    // host whose reset asks Legacy first hands `rises` (the outcome is decided before this screen goes up - Legacy's
+    // onDeath runs first, playerEntity.js hearDeath); the fixed city and the standalone dungeon hand none, and never
+    // rise. Read once, here: the screen says Rise where it said End the journey, and states the respawn's loss.
+    this.rises = !this.online && !!rises?.();
     // DEATH-PENALTY (Mac: "and it should be shown in the death screen"): the gold the respawn will take,
     // read HERE, once - and STATED (systems/deathPenalty.js stateDeathLoss): the respawn takes exactly this, capped
     // at the purse, whatever the purse did while the player lay dead (AUDIT 28 B5: a mate's bounty clear pays the
-    // dead too, and the respawn took its share of the bigger purse). Offline there is no respawn and no penalty.
-    this.goldLoss = this.online ? deathGoldLoss(goldPiecesOf(entity)) : 0;
-    if (this.online) stateDeathLoss(this.goldLoss);
+    // dead too, and the respawn took its share of the bigger purse). A death with no respawn (the run ends) takes none.
+    const respawns = this.online || this.rises;
+    this.goldLoss = respawns ? deathGoldLoss(goldPiecesOf(entity)) : 0;
+    if (respawns) stateDeathLoss(this.goldLoss);
     this.goldLossLine = deathPenaltyLine(this.goldLoss);   // drawn ONCE: the enhanced face redraws every frame and the words must not change under the player
     this.clock = 0;   // DEATH4: the enhanced screen's own clock (the sequence's stops short of its reset)
     this.eyeHeight = Number.isFinite(eyeHeight) ? eyeHeight : EYE_HEIGHT;
@@ -188,7 +197,7 @@ export class DeathScreen {
     if (isEnhanced() && typeof document !== 'undefined') { drawEnhancedDeath(this, fade); return; }
     const t = 'YOU HAVE DIED';
     drawText(renderer, font, t, (canvas.width - measureText(font.fnt, t) * s) / 2, canvas.height / 2 - 10 * s, s, [0.9, 0.2, 0.15, 1]);
-    const hint = this.online ? (this.wild ? `RISING IN ${this.respawnIn}` : `RISING IN ${this.respawnIn}   ENTER now`) : this.hint;   // WILD1: no Enter in the zone   // AUDIT CONTRIB A5: the hold said out loud, as the enhanced face's "Rising in"
+    const hint = this.online ? (this.wild ? `RISING IN ${this.respawnIn}` : `RISING IN ${this.respawnIn}   ENTER now`) : this.rises ? riseHint(this.hint) : this.hint;   // WILD1: no Enter in the zone   // AUDIT CONTRIB A5: the hold said out loud, as the enhanced face's "Rising in"   // BAL4: a Legacy rise's Enter raises
     drawText(renderer, font, hint, (canvas.width - measureText(font.fnt, hint) * s) / 2, canvas.height / 2 + 6 * s, s, DIM);
     // WILD1: the zone's lines on the classic face, under the hold (the enhanced face draws its own)
     let wy = canvas.height / 2 + (this.goldLoss > 0 ? 38 : 22) * s;

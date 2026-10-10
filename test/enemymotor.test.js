@@ -12,6 +12,11 @@ import { GLOBAL_SCALE } from '../src/world/meshReader.js';
 import { Collider } from '../src/player/collider.js';
 import { MISSILE_SPEED, MISSILE_COLLIDER_RADIUS } from '../src/systems/spellcast.js';
 import { ARROW_ARM_LENGTH } from '../src/characters/weaponStates.js';
+import { setPref } from '../src/systems/uiPrefs.js';   // BAL4: the switch this file's pins assumed
+
+// BAL4 (bible/05-Combat/Balance-Arc.md section 6): the Enhanced AI ships On now; this file pins the classic motor's own laws (P17's fixed stepping among them - the tactics brain is a real-time layer on the wall clock, TACT2),
+// so it says Off outright where it used to read the default (LR5's trap: a pin that leaned on a default moves with it)
+setPref('enhancedAI', false);
 
 const approx = (a, b, eps = 1e-4) => assert.ok(Math.abs(a - b) < eps, `${a} !~ ${b}`);
 const seqRolls = (v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };

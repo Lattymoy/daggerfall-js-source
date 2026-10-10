@@ -84,9 +84,12 @@ test('PREF1: a player who presses the ladder OFF keeps it off, across any number
 
 test('PREF1: an UNSTAMPED shelf adopts the new default once - and never again', () => {
   // the shape every existing player has: the old default, materialised by some unrelated save
-  withShelf({ skin: 'enhanced', showFps: true, lootRarity: false, enhancedAI: false });
+  // PIN MOVED (BAL4, bible/05-Combat/Balance-Arc.md section 6): the Enhanced AI joined the list (it shipped Off the day
+  // before this stamp, and turned On); the control is a key the port did NOT change its mind about
+  withShelf({ skin: 'enhanced', showFps: true, lootRarity: false, enhancedAI: false, worldDungeonSizes: true });
   assert.equal(P.getPref('lootRarity'), true, 'LR5 reaches a player who never chose anything');
-  assert.equal(P.getPref('enhancedAI'), false, 'and a key the port did NOT change its mind about is left alone');
+  assert.equal(P.getPref('enhancedAI'), true, 'BAL4 does too');
+  assert.equal(P.getPref('worldDungeonSizes'), true, 'and a key the port did NOT change its mind about is left alone');
 
   P.setPref('showFps', false);                       // any save stamps the shelf
   assert.equal(shelf()._rev, 2, 'the shelf is stamped');   // HB-LYCFREE: rev 2 (PIN MOVED)

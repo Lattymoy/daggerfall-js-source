@@ -21,14 +21,15 @@ import { tierOf } from '../src/systems/settings.js';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
 
-test('FT5: the registry row - Enhanced only, over the pref, off by default, sound', () => {
+test('FT5: the registry row - Enhanced only, over the pref, on by default (BAL4), sound', () => {
   const f = FEATURES.find((x) => x.id === 'enhanced-ai');
   assert.ok(f);
   assert.deepEqual(f.kinds, ['enhanced'], 'the port\'s own; DFU\'s EnhancedCombatAI is a different thing and wears no label here');
   // PIN MOVED (TELL9: the row carries the telegraph contrast as its one part - the player's, online too)
-  assert.deepEqual(f.control, { store: 'prefs', key: 'enhancedAI', initial: false, online: true,   // RF4: the row declares its default and the lane's answer
+  // PIN MOVED (BAL4, bible/05-Combat/Balance-Arc.md section 6: ON by default offline, as it always was online)
+  assert.deepEqual(f.control, { store: 'prefs', key: 'enhancedAI', initial: true, online: true,   // RF4: the row declares its default and the lane's answer
     also: [{ store: 'prefs', key: 'telegraphContrast', initial: false, online: 'player' }], parts: [{ key: 'telegraphContrast', label: 'Telegraph contrast' }] });
-  assert.equal(PREF_DEFAULTS.enhancedAI, false, 'off by default: the classic motor is the 1:1 law');
+  assert.equal(PREF_DEFAULTS.enhancedAI, true, 'BAL4: on by default - the classic motor one choice away');
   assert.equal(f.effect, 'At once - the dungeon pathfinding from the next dungeon you enter.');   // AUDIT TACT D7: the tactics, cover and blows read the switch live; only the navmesh waits
   assert.deepEqual(checkFeature(f), []);
   assert.equal(featureForControl('prefs', 'enhancedAI'), f);
