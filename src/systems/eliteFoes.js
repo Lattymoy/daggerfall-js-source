@@ -18,7 +18,7 @@
 // PURE but for the item minters - the hosts call in.
 import { createRandomWeapon, createRandomArmor } from './loot.js';
 import { mintCondition, setItemFields } from './itemTemplates.js';
-import { applyRarity, rarityEligible, rarityChances, championSource, corpseSource } from './lootRarity.js';   // ELITE-RARE: the champion's blue the elite's Rare is read off
+import { applyRarity, rarityEligible, rarityChances, championSource, corpseSource, lootRarityOn } from './lootRarity.js';   // ELITE-RARE: the champion's blue the elite's Rare is read off; BAL4: the ladder's switch, offline
 import { goldStack } from './inventory.js';
 import { isAmmunition } from './itemTemplates.js';
 import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';   // ELITE-FLOOR: the watch is never an elite
@@ -71,9 +71,12 @@ export const eliteEligible = (entity, { checkLevel = true } = {}) => !!entity
   && entity.mobileType !== KNIGHT_CITY_WATCH
   && entity.team !== 'PlayerAlly' && entity.mobileTeam !== 'PlayerAlly';
 
-/** ONLINE ONLY (Mac: "elite enemies are online mode only"): elites stand in online play alone - an online page, or a
- *  host in a room. Offline and single-player, no foe is ever an elite. */
-export const elitesAllowed = ({ onlinePage = false, inRoom = false } = {}) => !!(onlinePage || inRoom);
+/** Where elites stand: online - an online page, or a host in a room - always; and BAL4 (bible/05-Combat/Balance-Arc.md
+ *  section 6; Mac, 2026-10-10: "Do everything", of "smarter AI and elites offline") offline too, wherever the loot ladder
+ *  is on - an elite's drop is the ladder's (eliteLoot's tiers), so with the ladder off no foe is ever one and the 1:1
+ *  lane is DFU exactly, as a champion's is (systems/champions.js). It was online only (Mac, 2026-10-01: "elite enemies
+ *  are online mode only"), until offline was found to field nothing past DFU's own foes. */
+export const elitesAllowed = ({ onlinePage = false, inRoom = false } = {}) => !!(onlinePage || inRoom) || lootRarityOn();
 
 /** Is this entity an elite foe? */
 export const isEliteFoe = (entity) => !!entity?.eliteFoe;
