@@ -206,7 +206,7 @@ test('AUDIT 23 wts-1/2: the sky season arm and the weather-scaled ambient', () =
   }
 });
 
-test('AUDIT 23 characters-4/5: the population takes the climate race and the REGION name bank', () => {
+test('AUDIT 23 characters-4/5: the population takes walkerRace (the climate race, a Redguard region\'s Redguard) and the REGION name bank', () => {
   for (const [name, text] of [['exterior', EXTERIOR], ['world', WORLD]]) {
     // REGIONAL-FOLK (FIELD BUGS 2026-10-10, PIN MOVED): the People map is characters/mobilePerson.js's, asked through
     // walkerRace with the climate's People and the region (test/fb1010_regionalfolk.test.js holds the rule)

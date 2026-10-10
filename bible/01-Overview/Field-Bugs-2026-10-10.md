@@ -168,9 +168,15 @@ behaviour ones with node against the real modules and, for the board, in Chromiu
 | E3 | records | the damning drew inside the curse's pass, so every later curse and socket of the door drew one place on (law 9) | its own pass, after every draw a door makes |
 | E | records | "every pack came with its author's permission"; the indoors key; the Lift press's words; the hosts' line; Tamriel, Held-Map-Arc, Living-World, Roleplay-Realism, Loot-II-Arc and Testing.md's audit23 row stale; the patch notes' caveats (the Enhanced map; R&R's Variant Residents); two code comments | corrected |
 
-Pre-existing survivors met on the way, each surviving on main as well, left as they stand: `loot16.json`
-LOOT16-a-row-of-nothing (Bad Reactions From fits every piece, so the curse's row filter is never empty), `auditmap.json`
-glide-unclamped, `audit625.json` AUDIT625-D3-a-range-the-tools-cannot-read; and `auditlegacy3.json`
+The other lists aimed at the files this branch touched were run on it as well: loot16, rr2, auditloot, auditloot2,
+audit28, em1 and auditmap (281 dead), then the 42 more aimed at the board, the legacy host, the census, the corpse kit,
+the Test Room, the Reforge window, the lifting, the walkers' tables and R&R (1,488 dead, 3 equivalent as recorded).
+Pre-existing survivors met on the way, each judged again alone on main and surviving there the same, left as they stand
+- none is in a file or a test this branch touches but the first two: `loot16.json` LOOT16-a-row-of-nothing (Bad
+Reactions From fits every piece, so the curse's row filter is never empty), `auditmap.json` glide-unclamped,
+`audit625.json` AUDIT625-D3-a-range-the-tools-cannot-read, `auditsetc.json` AUDIT-SET-the-card-never-fitted,
+`loot18.json` LOOT18-the-counter-at-a-buy, `loot15.json` LOOT15-the-minute-drops-the-host, `legacy7.json`
+LEGACY7-model-rewritten and `legacy7wed.json` LEGACY7W-partner-dead-or-lineless; and `auditlegacy3.json`
 AUDIT-LEGACY-III-A2-newer-save-drops-the-stores-facts does not parse on main either. Records this branch's lines moved,
 re-aimed by content: `loot16.json` LOOT16-wire-uncarried, -the-curse-said-unknown, -the-curse-never-said, -lift-unknown
 and -the-line-worthless; `rr2.json` RR2-7 (R&R's Nord arm, now the one table's). Pins moved: LR3's Test Room count

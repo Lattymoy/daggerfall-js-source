@@ -4788,7 +4788,7 @@ export async function bootExterior(canvas, renderer, params, status) {
 
   // T1 TOWNS: the wandering population (PopulationManager verbatim -
   // 10Hz pool, 24/16-blocks clamp, daytime only, anti-skate hidden
-  // first move). Race: the CLIMATE's People, live a dozen lines below
+  // first move). Race: the CLIMATE's People (a Redguard region's Redguard - REGIONAL-FOLK, walkerRace), live a dozen lines below
   // since AUDIT 23 (characters-4) - PopulationManager.cs:94's
   // populationRace through GetEntityRace's Redguard/Nord/default-Breton
   // switch (:320-335) over FactionFile.cs:612-615's numbering, so
