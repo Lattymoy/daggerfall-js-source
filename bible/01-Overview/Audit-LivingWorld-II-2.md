@@ -234,3 +234,31 @@ D3 (the road fixer's): see R.
 - **P13 / D12** - Testing.md's lw14, lw15 and lw16 mutant counts; **P14** - the Port-Ledger's LW6 and LW14 rows and
   Living-World.md's LW6b sentence; **P15** - the moved pins no record named; **P16** - Active-Arcs' "each its own pull
   request", section 10's retired items.
+
+## The integration
+
+- Each lane's branch merged onto the head in turn, its records written as it landed; two moved pins only the whole
+  suite could see were moved after the merges, each marked where it stands: `test/fixtures/time1_census.json` (C15's
+  line in `livingRoadCaught`, named by its text) and `tv7_bands` TV7 host (the modal arm's window, 7000 to 7600: H7's
+  word worked indoors and D2's wrapped steps).
+- The whole suite on the merged tree, then every record of the six new lists: 247 of 247 dead, none surviving, none
+  stale, every record applying.
+- Measured on a quiet machine (`tools/livingPerfProbe.mjs`): a hideout's stand frame 0.09-0.66 ms reading no trip, its
+  chest worked over the next one to three frames, every frame after at most 4.28 ms (C5's budget 6); THE WORD CARRIED,
+  its section alone three runs a tree, the worst slice 7.7-8.6 ms against the head's 7.2-7.4 (none over its 10 ms on
+  either; the mean cold day read 4% dearer, the road's fixes' cost), and in the whole probe a collection lifted one slice
+  to 14-19 ms in two of three runs (the head's two runs 7.2 and 5.6) - the record's "a collection lifts one to 15 now and
+  then", a little more often.
+
+## The record
+
+- Findings by id: R 11, C 15, D 13, S 9 (S9 found by the fix), W 11, H 10, P 17 - 86, 78 once the eight a second lens
+  saw are counted once. Every code finding FIXED or PINNED; the records-only ones corrected (R10, W9, H10, P13-P16, D12).
+- Pins: `test/auditlwii2_door.test.js` 13, `_deep` 15, `_outlaws` 10, `_service` 14, `_town` 11, `_road` 17 - 80
+  (`09-Testing/Testing.md`). Mutants: `tools/mutants/auditlwii2_door.json` 44, `_deep` 34, `_outlaws` 47, `_service` 45,
+  `_town` 32, `_road` 45 - 247, all dead; the P lane's 47 survivors among them, each now killed by its pin. The earlier
+  records the fixes moved were re-aimed by content, their names kept (each lane's section of `06-Systems/Living-World-II.md`
+  names them).
+- Left for Mac: section 11's calls 2 (S1's mark is the lead's call beside his numbers) and 9 (a band-robbed escort's
+  pay; the hold-up on the player's deeds alone).
+
