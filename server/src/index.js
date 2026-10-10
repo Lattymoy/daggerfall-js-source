@@ -179,7 +179,7 @@
 // token seam is the one piece that has to be paid for, and it is paid
 // once here rather than a little at a time.
 import { routeStaffTeleport } from './staffTeleport.js';
-import { privateInteriorOf, privateInteriorAdmits } from '../../src/net/privateInterior.js';
+import { privateInteriorOf, privateInteriorAdmits, caravanKeyOf } from '../../src/net/privateInterior.js';   // WAGONS2-VISIT: and a caravan's own room
 import { isStaff } from '../../src/net/staffCommands.js';
 import { verifyToken, verifyOrder, verifyStakeOrderAnyAge, importPublicKeyB64, MAX_TTL_S, ORDER_TTL_S, renownIssuable, deckDigest, remainsDigest } from '../../src/net/identityToken.js';   // MOD1: and the mute order, checked with the same key
 /** ACC1d/F8: the most spent signatures one room remembers. Every entry
@@ -278,7 +278,7 @@ import { mintArenaReceipt } from '../../src/net/arenaReceipt.js';
 import { owIdInCell, owRowInCell, owRowSane, owFoldSpent, owFoldRows, owRowsBehind, owPrune, owLedgerOf, owLedgerEmpty, toWelcome } from '../../src/net/overworldLaw.js';
 
 import { serpentGate, validSerpentOut, SERPENT_INTERNAL_FELL, SERPENT_TELL_RETRY_MS, SERPENT_FIGHT_KEY, SERPENT_FIGHTS_KEY, SERPENT_SITES_MAX, serpentFightId, SERPENT_FELLS_KEY, SERPENT_FELLS_MAX, SERPENT_RC_PREFIX } from './relay.js';   // SERPENT1: the serpent's frame and its doors (the wire's, through relay.js - walked last, as ever)
-import { roomOf, parseClient, inRange, inRangeOf, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, OWN_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, amapShareGate, AMAP_ROOM_HZ_MAX, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, wedGate, WED_HZ_MAX, renownGate, renownRoomGate, lookGate, eventGate, EVENT_KEY, validLiveEvent, gateGate, siegeGate, SIEGE_IN_MS, GATE_INTERNAL_FELL, SOCIAL_ROOM, validGateOut, HELLO_WAIT_MS, GATE_TELL_RETRY_MS, gateReceiptKey, GATE_BRAIN_MIN, GATE_HERE_HOLD_MS, guildGate, guildRoomGate, GUILD_CHAT_ROOM_HZ_MAX, SEAT_ELSEWHERE, raidGate, RAID_INTERNAL_CLEAN, RAID_INTERNAL_DAY, RAID_DAY_ASK_MS, raidTownsGate, RAID_TELL_RETRY_MS, RAID_CLEANS_MAX, RAID_LEDGER_PREFIX, raidLedgerKey, RAID_RC_PREFIX, raidReceiptKeyOf, RAID_RC_KEEP, RAID_RC_KEEP_MS, mapPixelOfWire, validRaidOut, worldRoom, sharedClassicMinutes, wallMsForClassicMinutes, isRegionRoom, travHubGate, travRoomGate, TRAV_STALE_MS, TRAV_WELCOME_MAX, owGate, owRoomGate, OW_LEDGER_KEY, REALM_DOOR_WORD, riteRelayGate, validRiteOut, sanitizeName, RITE_INTERNAL_BROKEN, RITE_INTERNAL_DAY, RITE_TELL_RETRY_MS, RITE_KEY, RITE_BY_MAX, RITE_CIRCLES_MAX, RITE_HUB_CIRCLES_MAX, RITE_ASK_EVERY_MS, RITE_ASK_TIMEOUT_MS, arenaGate } from './relay.js';
+import { roomOf, parseClient, inRange, inRangeOf, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, OWN_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, amapShareGate, AMAP_ROOM_HZ_MAX, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, CARAVAN_DECOR_KEY, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, CARAVAN_DOC_MIN_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, wedGate, WED_HZ_MAX, renownGate, renownRoomGate, lookGate, eventGate, EVENT_KEY, validLiveEvent, gateGate, siegeGate, SIEGE_IN_MS, GATE_INTERNAL_FELL, SOCIAL_ROOM, validGateOut, HELLO_WAIT_MS, GATE_TELL_RETRY_MS, gateReceiptKey, GATE_BRAIN_MIN, GATE_HERE_HOLD_MS, guildGate, guildRoomGate, GUILD_CHAT_ROOM_HZ_MAX, SEAT_ELSEWHERE, raidGate, RAID_INTERNAL_CLEAN, RAID_INTERNAL_DAY, RAID_DAY_ASK_MS, raidTownsGate, RAID_TELL_RETRY_MS, RAID_CLEANS_MAX, RAID_LEDGER_PREFIX, raidLedgerKey, RAID_RC_PREFIX, raidReceiptKeyOf, RAID_RC_KEEP, RAID_RC_KEEP_MS, mapPixelOfWire, validRaidOut, worldRoom, sharedClassicMinutes, wallMsForClassicMinutes, isRegionRoom, travHubGate, travRoomGate, TRAV_STALE_MS, TRAV_WELCOME_MAX, owGate, owRoomGate, OW_LEDGER_KEY, REALM_DOOR_WORD, riteRelayGate, validRiteOut, sanitizeName, RITE_INTERNAL_BROKEN, RITE_INTERNAL_DAY, RITE_TELL_RETRY_MS, RITE_KEY, RITE_BY_MAX, RITE_CIRCLES_MAX, RITE_HUB_CIRCLES_MAX, RITE_ASK_EVERY_MS, RITE_ASK_TIMEOUT_MS, arenaGate } from './relay.js';
 import { holdemGate, holdemSitRoomGate } from './relay.js';   // CARDS5: the card table's gate; AUDIT CARDS-3 A4: the room's sits
 import { newTable, topUp as holdemTopUp, sit as holdemSit, sitRefusal as holdemSitRefusal, stand as holdemStand, actAt as holdemAct, tick as holdemTick, nextAt as holdemNextAt, emptyTable as holdemEmpty, tableLook as holdemLook, stateDelta as holdemDelta, holdemGoldTable } from '../../src/net/holdemTable.js';   // CARDS5: THE RELAY DEALS - the room's card tables (holdemTable.js imports only cardLaw.js, which imports only dice.js)
 // WILD1 (2026-10-07, the owner: "Wrothgarian mountains need to be turned into a open pvp zone"): ONE FILE JOINS THE
@@ -289,6 +289,11 @@ import { wildGate, wildDirected, WILD_HZ_MAX, WDUN_HZ_MAX, WDUN_HERE_MS, WDUN_IN
 import { WDUN_KEY, wdunOf, wdunPrune, wdunEnter, wdunHere, wdunLeave, wdunDie, wdunGone, wdunState, wdunCrows, wdunBound, wdunGiantDie, wdunGiants } from '../../src/net/wildLaw.js';   // PVPDUNGEONS: the zone's halls, kept by the hub
 import { validSdRecord, sdRelayGate, validSdFoundTell, chatRegionRoom, SD_INTERNAL_CENSUS, SD_INTERNAL_FOUND, SD_INTERNAL_LIVE, SD_TELL_RETRY_MS, SD_KEY, SD_FOUND_KEY, SD_REALM_KEY, sdDeadKey, SD_REGION_COUNT, SD_FIGHTERS_MAX, sdPzRelayGate, SD_ORRERY_KEY, sdFightRelayGate, SD_BRAIN_MIN, SD_NO_WORDS, SD_FIGHT_KEY, SD_INTERNAL_FELL, validSdFellTell, SD_RC_PREFIX, sdReceiptKey, SD_HERE_HOLD_MS, SD_SLOT_KEY, SD_HELD_KEY } from './relay.js';   // SD3: the Super dungeon's frame, its record and its doors (the wire's, through relay.js)
 import { sdFirst, sdRise, sdFind, sdFell, sdGone, sdDue, pickSdRegion, sdFindBelieved, sdNearSite, sdHolds, sdAdmits, isSdRoom, sdSlotOfRoom, SD_NO_CLOSED, SD_NO_FULL, SD_NO_FALLEN } from '../../src/net/sdLaw.js';   // SD3: the Super dungeon's law - the director's moves, the census's pick, the find, the realm's room
+// SD-HERALD (2026-10-09, the owner: "We need to add discord integration to abyss dungeons"): TWO FILES JOIN THE BUNDLE -
+// net/sdHerald.js (the Abyss Dungeon's Discord posts and when they are owed, pure law - it imports sdLaw.js and
+// gateHerald.js, both here) and formats/mapsTables.js (MapsFile's verbatim tables, which import nothing - the region a
+// post names). The hub posts off its own alarm, after the director's beat.
+import { sdHeraldDue, sdHeraldPost, readSdHeraldState } from '../../src/net/sdHerald.js';
 import { sdMarksOf } from '../../src/net/sdMarks.js';   // SD18a: a Hollow's marks by its slot - the Remnant's profile and the Orrery's fray
 import { orreryOf, orreryStep, orreryLit, orreryFresh, orreryTurn, orreryShortest, orreryRightsFresh, orreryTurnerOf, orreryMayTurn, orreryTurned, orreryLashed, stoneInReach, dungeonToRealm, SD_STONES, SD_HOURS, SD_FRAY_MAX, SD_STONE_REACH_SLACK, SD_STONE_SETTLE_MS } from '../../src/net/sdBrain.js';   // SD6b: the Orrery's law - the realm judges every turn by it; AUDIT SD II (L7 H2): and who may turn while others turn
 import { newRemnantFight, joinRemnant, applyRemnantHit, applyEchoHit, applyHeartHit, stepRemnant, remnantStateOf, arenaOf, inArena, SD_ARENA_SLACK, SD_LOST_MS, SD_POSE_FRESH_MS } from '../../src/net/sdRemnant.js';   // SD8b: the Brass Remnant's law - the realm runs its fight by it
@@ -879,6 +884,36 @@ export class Room {
   /** AUDIT ATTACH: one socket's meters - its arms' buckets and strike counts, its junk, the funnels onto it - made on
    *  first use and gone with the socket (a WeakMap) or with a wake (the constructor's note says why that is safe). */
   _meterOf(ws) { let m = this._meters.get(ws); if (!m) this._meters.set(ws, m = {}); return m; }
+  /** WAGONS2-VISIT (FINAL AUDIT): A CARAVAN'S DOCUMENT IS OWED TO ITS VISITORS UNTIL IT IS FANNED. The fan is charged as an
+   *  act's is - the sender's own borrowing bucket (`abytes`, ACT_SENDER_BYTES_PER_S) first, then the room's
+   *  (ACT_ROOM_BYTES_PER_S), a refusal by the room charging the sender nothing. A refused fan was dropped whole, and
+   *  nothing said it again (the owner's client says an unchanged document once, and an unchanged one is fanned to
+   *  nobody), so its visitors kept the old layout until they walked in again; it waits for the alarm at the time its
+   *  bucket has repaid now, and goes then - the last document said, `d` null a forgetting. */
+  async _caravanFan(now) {
+    const from = this._cvOwed;
+    if (!from) return;
+    const out = `{"t":"caravan","data":${this._cvDoc ?? 'null'}}`;
+    const listeners = [...this._all()].filter(([other, b]) => other !== from && b.id);
+    const cost = out.length * listeners.length;
+    const meters = this._meterOf(from);
+    const mine = byteGate(meters.abytes, now, cost, ACT_SENDER_BYTES_PER_S, true);
+    let refused = mine.pass ? null : { bytes: mine.bucket.bytes, rate: ACT_SENDER_BYTES_PER_S };
+    if (!refused) {
+      const room = byteGate(this._roomActBytes, now, cost, ACT_ROOM_BYTES_PER_S, true);
+      this._roomActBytes = room.bucket;
+      if (!room.pass) refused = { bytes: room.bucket.bytes, rate: ACT_ROOM_BYTES_PER_S };
+    }
+    if (refused) {
+      if (!mine.pass) meters.abytes = mine.bucket;
+      this._cvOwedAt = now + Math.ceil((-refused.bytes / refused.rate) * 1000) + 1;
+      await this.state.storage.setAlarm(this._cvOwedAt);
+      return;
+    }
+    meters.abytes = mine.bucket;
+    this._cvOwed = null;
+    for (const [other] of listeners) this._send(other, out);
+  }
   /** AUDIT ATTACH: ONE ARM'S METER, SPENT - its bucket (`bucketKey`) through `gate`; over the rate the frame is dropped
    *  and a strike counted (`strikesKey`), a pass forgives them, and past `max` the socket is closed with `why`. True
    *  when the frame is taken. Every meter below is this one with its own gate, fields and words. */
@@ -1182,11 +1217,21 @@ export class Room {
    *  drain, re-armed by every later one - unless someone is in the room when it fires: a world parked in a room
    *  nobody plays would cost storage for ever, and the rooms a client can name are many. */
   async alarm() {
-    if (await this.state.storage.get('hub')) { await this._sweepHub(Date.now()); await this._heraldBeat(Date.now()); await this._serpentHeraldBeat(Date.now()); await this._sdBeat(Date.now()); return; }   // AUDIT SOC A3: the hub's alarm is its sweep, whoever is in the room; DISCORD-GATES: and its herald's posts; SERPENT2: and the serpent's; SD3: and the Super dungeon's director
+    if (await this.state.storage.get('hub')) { await this._sweepHub(Date.now()); await this._heraldBeat(Date.now()); await this._serpentHeraldBeat(Date.now()); await this._sdBeat(Date.now()); await this._sdHeraldBeat(Date.now()); return; }   // AUDIT SOC A3: the hub's alarm is its sweep, whoever is in the room; DISCORD-GATES: and its herald's posts; SERPENT2: and the serpent's; SD3: and the Super dungeon's director; SD-HERALD: and its herald's, after the director's moves
     // AUDIT 68 X8-park-registry-unbounded: an owner's registry (HCC-PARK) is one object per account and character a
     // client names - its word goes PARK_TTL_MS after it was said, as the cell's record it points at does
     const reg = await this.state.storage.get('reg');
     if (reg) { const due = reg.at + PARK_TTL_MS; if (Date.now() >= due) await this.state.storage.delete('reg'); else await this.state.storage.setAlarm(due); return; }
+    // WAGONS2-VISIT: a caravan's room forgets what its owner placed PARK_TTL_MS after they last said it, as the cell forgets the caravan
+    const cv = await this.state.storage.get(CARAVAN_DECOR_KEY);
+    if (cv) {
+      const now = Date.now(), due = (cv.at ?? 0) + PARK_TTL_MS;
+      if (now >= due) { this._cvDoc = null; this._cvOwed = null; await this.state.storage.delete(CARAVAN_DECOR_KEY); return; }
+      if (this._cvOwed) await this._caravanFan(now);   // FINAL AUDIT: a fan owed goes when its bucket has repaid
+      await this.state.storage.setAlarm(this._cvOwed ? Math.min(due, this._cvOwedAt) : due);
+      return;
+    }
+    if (this._cvOwed) { await this._caravanFan(Date.now()); return; }   // a forgetting (`d` null) owed - no document kept to arm for
     if (await this._gateTick()) return;   // WB3: a gate room's alarm is its boss's beat
     if (await this._siegeTick()) return;   // PVP-REF: a siege room's alarm is its fallen fighters' waves
     if (await this._arenaTick()) return;   // ARENA4: a bout's beat, or the hall's queue
@@ -1861,6 +1906,8 @@ export class Room {
           for (const [id, f] of fights) if (b && !f.fell && !f.gone && this._serpentHears(id, f, b)) { await this._serpentArm(Date.now()); break; }
         } catch (e) { console.warn('[serpent] hello arm failed', e?.message ?? e); }
       }
+      // WAGONS2-VISIT: a caravan's room hands its joiner what its owner placed in it (the `caravan` frame's), after the welcome
+      if (caravanKeyOf(a.key)) { const cv = await this.state.storage.get(CARAVAN_DECOR_KEY); if (cv && Date.now() - (cv.at ?? 0) < PARK_TTL_MS && !this._send(ws, JSON.stringify({ t: 'caravan', data: cv.d }))) return; }
       // WILD1: a place room's remains, after the welcome (a halo's hello too - a body across the seam lies there for me
       // as well): every live one, in its chunks
       if (streamsFoes(a.key)) { try { await this._wildHello(ws, Date.now()); } catch (e) { console.warn('[wild] hello failed', e?.message ?? e); } }
@@ -2231,6 +2278,37 @@ export class Room {
       if (m.data.r && cell === here) await this._parkStore(k, a.sub, a.id, a.name ?? '', m.data.r, now);
       else if (here && cell !== here) await this._parkDrop(k);   // mine here is superseded: nothing parked, or it stands elsewhere
       await this._parkRegister(k, cell, now);
+      return;
+    }
+    if (m.t === 'caravan') {
+      // WAGONS2-VISIT (net/wire.js validCaravanData): WHAT A CARAVAN'S OWNER PLACED IN IT, kept by its room - from a
+      // hello'd socket in a caravan's room (net/privateInterior.js caravanKeyOf), on the acts' bucket, and from the
+      // caravan's OWNER alone: the account the token verified and the character the frame names hash to the room's own
+      // key (parkKeyOf - the key the cell's record of the parked caravan carries); anyone else's is junk. The last is
+      // kept until PARK_TTL_MS after it was said (the alarm forgets it), handed to every joiner after its welcome, and
+      // fanned to everyone else here; `d` null forgets it.
+      const now = Date.now();
+      a = this._meterActs(ws, a, now); if (!a) return;
+      const ck = caravanKeyOf(a.key);
+      if (!ck || typeof a.sub !== 'string' || !a.sub || (await parkKeyOf(a.sub, m.data.c)) !== ck) { this._junk(ws); return; }
+      // WAGONS2-VISIT (AUDIT): one document a second from a socket at most (CARAVAN_DOC_MIN_MS - its owner's client says
+      // one at most every 1.5 s); an unchanged one neither fanned nor stored again until its lease wants renewing
+      // (PARK_REFRESH_MS); and the fan charged to the sender's own act bytes as an act's is - a hostile owner's
+      // documents were stored and fanned at the acts' 5 Hz, uncharged
+      // FINAL AUDIT: the second is the ROOM's, not a socket's (the owner's account may hello as many sockets into its own
+      // room as SOCKETS_MAX lets it, each passing the owner's check - a socket's own second was theirs times N)
+      if (now - (this._cvSaidAt ?? -Infinity) < CARAVAN_DOC_MIN_MS) return;
+      this._cvSaidAt = now;
+      if (m.data.d === null) { this._cvDoc = null; await this.state.storage.delete(CARAVAN_DECOR_KEY); }
+      else {
+        const doc = JSON.stringify(m.data.d), changed = doc !== this._cvDoc;
+        if (!changed && now - (this._cvAt ?? 0) < PARK_REFRESH_MS) return;
+        this._cvDoc = doc; this._cvAt = now;
+        await this.state.storage.put(CARAVAN_DECOR_KEY, { at: now, d: m.data.d }); await this.state.storage.setAlarm(now + PARK_TTL_MS);
+        if (!changed) return;
+      }
+      this._cvOwed = ws;
+      await this._caravanFan(now);
       return;
     }
     if (m.t === 'gate') {
@@ -5244,7 +5322,8 @@ export class Room {
       const hook = heraldWebhook(this.env?.GATE_DISCORD_WEBHOOK);
       if (!hook && this.env?.GATE_DISCORD_WEBHOOK) console.warn('[herald] GATE_DISCORD_WEBHOOK is not a Discord webhook\'s URL - nothing is posted');
       // SERPENT2: and the role the serpent's bells ping - SERPENT_DISCORD_ROLE when the operator names one, else the gate's
-      this._herald = hook ? { hook, role: heraldRole(this.env?.GATE_DISCORD_ROLE), serpentRole: serpentHeraldRole(this.env?.SERPENT_DISCORD_ROLE, this.env?.GATE_DISCORD_ROLE) } : null;
+      // SD-HERALD: and the role the Abyss Dungeon's rise and find ping - SD_DISCORD_ROLE, else the gate's (the serpent's law)
+      this._herald = hook ? { hook, role: heraldRole(this.env?.GATE_DISCORD_ROLE), serpentRole: serpentHeraldRole(this.env?.SERPENT_DISCORD_ROLE, this.env?.GATE_DISCORD_ROLE), sdRole: serpentHeraldRole(this.env?.SD_DISCORD_ROLE, this.env?.GATE_DISCORD_ROLE) } : null;
     }
     return this._herald;
   }
@@ -5293,12 +5372,13 @@ export class Room {
     if (had == null || had > at) await this.state.storage.setAlarm(at);
   }
   /** The alarm armed for the herald's next post, when it owes one before the sweep's - the gate's, and SERPENT2: the
-   *  serpent's (_serpentHeraldArm). */
+   *  serpent's (_serpentHeraldArm), and SD-HERALD: the Abyss Dungeon's (_sdHeraldArm). */
   async _heraldArm(now) {
     if (!this._heraldOf()) return;
     const at = this._heraldNextAt(await this._heraldState(), now);
     if (at != null) await this._hubArm(at);
     await this._serpentHeraldArm(now);
+    await this._sdHeraldArm(now);
   }
   /** A gate's kill, owed to the channel once a day while it is news: kept first (the alarm posts it, and posts it again
    *  until Discord takes it - one poster, so never twice), the alarm armed now. */
@@ -5420,6 +5500,42 @@ export class Room {
     } catch (e) { console.warn('[herald] serpent beat failed', e?.message ?? e); await this._hubArm(now + HERALD_RETRY_MS); }
   }
 
+  // ───────────────────────────── SD-HERALD: THE ABYSS DUNGEON'S HERALD ─────────────────────────────
+  // net/sdHerald.js. The gate's channel and door (_heraldOf, _heraldSend); its own state (`sdherald`: the last slot whose
+  // rise, find and end went, or were let go), and every moment read off the director's own record (_sdOf) - the herald
+  // keeps nothing else.
+  /** What the Abyss Dungeon's herald has posted: the last slot whose rise, find and end went (or were let go). */
+  async _sdHeraldState() {
+    return readSdHeraldState(await this.state.storage.get('sdherald'));
+  }
+  /** The alarm armed now when the herald owes a post - at the first hello, and at a find or a fall, which the hub hears
+   *  off its alarm (a rise and a fade are the director's own moves, posted by the beat after the one that made them). */
+  async _sdHeraldArm(now) {
+    if (!this._heraldOf()) return;
+    if (sdHeraldDue(await this._sdOf(), await this._sdHeraldState(), now).kind) await this._hubArm(now);
+  }
+  /** THE ABYSS DUNGEON'S HERALD'S BEAT, on the hub's alarm after the director's: each moment owed posted in the Hollow's
+   *  order, every one no longer so let go, and the alarm armed again HERALD_RETRY_MS on for a post Discord did not take. */
+  async _sdHeraldBeat(now) {
+    const h = this._heraldOf();
+    if (!h) return;
+    try {
+      let st = await this._sdHeraldState();
+      const was = JSON.stringify(st);
+      let retry = null;
+      for (let step = 0; step < 3; step++) {
+        const rec = await this._sdOf();
+        const due = sdHeraldDue(rec, st, now);
+        st = due.st;
+        if (!due.kind) break;
+        if (!(await this._heraldSend(sdHeraldPost(due.kind, rec, h.sdRole)))) { retry = now + HERALD_RETRY_MS; break; }
+        st[due.kind === 'fell' || due.kind === 'fade' ? 'end' : due.kind] = rec.s;
+      }
+      if (JSON.stringify(st) !== was) await this.state.storage.put('sdherald', st);   // the alarm alone writes it (its beats never overlap)
+      if (retry != null) await this._hubArm(retry);
+    } catch (e) { console.warn('[herald] abyss beat failed', e?.message ?? e); await this._hubArm(now + HERALD_RETRY_MS); }
+  }
+
   // ───────────────────────────── SD3: THE SUPER DUNGEON ─────────────────────────────
   // bible/11-Multiplayer/Super-Dungeons.md sections 2-4 and 14. THE HUB keeps the one record (SD_KEY) and moves it on with
   // net/sdLaw.js's moves on its alarm, beside the sweep and the heralds: the first beat (a hub with no record waits
@@ -5522,6 +5638,7 @@ export class Room {
     if (sdFindBelieved(rec, now, c, c)) {
       const found = sdFind(rec, now, c.fb);
       if (found) { await this._sdSave(found); this._sdFan(found); }
+      if (found) await this._sdHeraldArm(now);   // SD-HERALD: and to the channel
     }
     const held = await this._sdOf();
     return json({ ok: true, s: held?.s ?? 0, ...(Number.isSafeInteger(held?.next) ? { next: held.next } : {}) });   // AUDIT SD III (R3): and when the next may rise
@@ -5947,6 +6064,7 @@ export class Room {
       const was = rec.ph === 'gone' && rec.fellAt == null && rec.foundAt != null && c.at < rec.until ? { ...rec, ph: 'found' } : rec;
       const fell = sdFell(was, Math.min(c.at, Date.now()), { top: c.top, n: c.n });   // AUDIT SD: at the fall's own instant - a kill heard late is no kill after its Hour
       if (fell) { await this._sdSave(fell); this._sdFan(fell); await this._sdArm(Date.now()); }   // AUDIT SD: and the director's next move armed from it (its collapse, its rest)
+      if (fell) await this._sdHeraldArm(Date.now());   // SD-HERALD: and to the channel
     }
     await this._sdKeepReceipts(c, Date.now());   // SD9a
     return json({ ok: true });

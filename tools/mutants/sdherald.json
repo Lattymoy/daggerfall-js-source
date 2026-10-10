@@ -1,0 +1,308 @@
+[
+  {
+    "name": "SD-HERALD-rise-pings-nobody",
+    "file": "src/net/sdHerald.js",
+    "old": "content: `${ping(role)}**A bell rings",
+    "new": "content: `**A bell rings",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-every-mention",
+    "file": "src/net/sdHerald.js",
+    "old": "const mentions = (role) => (role ? { roles: [role] } : { parse: [] });",
+    "new": "const mentions = (role) => ({ parse: ['everyone', 'roles', 'users'] });",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-found-pings-nobody",
+    "file": "src/net/sdHerald.js",
+    "old": "content: `${ping(role)}**${sdFoundLine(",
+    "new": "content: `**${sdFoundLine(",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-fell-pings",
+    "file": "src/net/sdHerald.js",
+    "old": "collapses. The next may rise ${heraldStamp(rec.next, 'R')}.`,\n    allowed_mentions: { parse: [] },",
+    "new": "collapses. The next may rise ${heraldStamp(rec.next, 'R')}.`,\n    allowed_mentions: { parse: ['everyone'] },",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-fell-role-passed",
+    "file": "src/net/sdHerald.js",
+    "old": "if (kind === 'fell') return sdFellPost({ rec });",
+    "new": "if (kind === 'fell') return { ...sdFellPost({ rec }), allowed_mentions: { roles: [role] } };",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-others-miscounted",
+    "file": "src/net/sdHerald.js",
+    "old": "Math.max(0, rec.n - 1)",
+    "new": "Math.max(0, rec.n)",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-top-taken-raw",
+    "file": "src/net/sdHerald.js",
+    "old": "heraldName(rec.top) || 'Someone'",
+    "new": "String(rec.top ?? '') || 'Someone'",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-finder-taken-raw",
+    "file": "src/net/sdHerald.js",
+    "old": "who: heraldName(rec.fb) || 'Someone'",
+    "new": "who: String(rec.fb ?? '') || 'Someone'",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-city-name-said-bare",
+    "file": "src/net/sdHerald.js",
+    "old": "return named.includes('\\u0000') ? null : named;",
+    "new": "return sdNameOf(s, '');",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-found-region-unnamed",
+    "file": "src/net/sdHerald.js",
+    "old": "region: sdRegionName(rec.r) })",
+    "new": "region: '' })",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-region-one-off",
+    "file": "src/net/sdHerald.js",
+    "old": "REGION_NAMES[r] ?? ''",
+    "new": "REGION_NAMES[r + 1] ?? ''",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-rise-fade-stamp-next",
+    "file": "src/net/sdHerald.js",
+    "old": "Unfound, it fades ${heraldStamp(rec.until, 'R')}",
+    "new": "Unfound, it fades ${heraldStamp(rec.next, 'R')}",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-fell-next-stamp-until",
+    "file": "src/net/sdHerald.js",
+    "old": "collapses. The next may rise ${heraldStamp(rec.next, 'R')}",
+    "new": "collapses. The next may rise ${heraldStamp(rec.until, 'R')}",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-rise-after-find",
+    "file": "src/net/sdHerald.js",
+    "old": "if (phase === 'risen') return { kind: 'rise', st: out };",
+    "new": "if (phase !== 'gone') return { kind: 'rise', st: out };",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-rise-twice",
+    "file": "src/net/sdHerald.js",
+    "old": "if (s > out.rise) {",
+    "new": "if (s >= out.rise) {",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-find-after-fall",
+    "file": "src/net/sdHerald.js",
+    "old": "if (phase === 'found') return { kind: 'found', st: out };",
+    "new": "if (phase !== 'gone') return { kind: 'found', st: out };",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-find-twice",
+    "file": "src/net/sdHerald.js",
+    "old": "if (s > out.found && rec.foundAt != null) {",
+    "new": "if (s >= out.found && rec.foundAt != null) {",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-find-never-let-go",
+    "file": "src/net/sdHerald.js",
+    "old": "    out.found = s;\n",
+    "new": "",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-stale-fall-posted",
+    "file": "src/net/sdHerald.js",
+    "old": "if (now < rec.fellAt + SD_COLLAPSE_MS + HERALD_FELL_KEEP_MS) return { kind: 'fell', st: out };",
+    "new": "return { kind: 'fell', st: out };",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-unfound-fade-posted",
+    "file": "src/net/sdHerald.js",
+    "old": "if (rec.foundAt != null && now < rec.until + SD_FADE_GRACE_MS + HERALD_FELL_KEEP_MS) return { kind: 'fade', st: out };",
+    "new": "if (now < rec.until + SD_FADE_GRACE_MS + HERALD_FELL_KEEP_MS) return { kind: 'fade', st: out };",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-fade-before-the-hub",
+    "file": "src/net/sdHerald.js",
+    "old": "} else if (rec.ph === 'gone') {",
+    "new": "} else if (phase === 'gone') {",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-slot-zero-let-go",
+    "file": "src/net/sdHerald.js",
+    "old": "if (!rec || !Number.isSafeInteger(rec.s) || rec.s < 1) return { kind: null, st: out };",
+    "new": "if (!rec) return { kind: null, st: out };",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-state-read-raw",
+    "file": "src/net/sdHerald.js",
+    "old": "const slot = (x) => (Number.isSafeInteger(x) && x >= -1 ? x : -1);",
+    "new": "const slot = (x) => (x ?? -1);",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-beat-off-alarm",
+    "file": "server/src/index.js",
+    "old": "await this._sdBeat(Date.now()); await this._sdHeraldBeat(Date.now()); return; }",
+    "new": "await this._sdBeat(Date.now()); return; }",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-beat-before-director",
+    "file": "server/src/index.js",
+    "old": "await this._sdBeat(Date.now()); await this._sdHeraldBeat(Date.now()); return; }",
+    "new": "await this._sdHeraldBeat(Date.now()); await this._sdBeat(Date.now()); return; }",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-own-role-unread",
+    "file": "server/src/index.js",
+    "old": "sdRole: serpentHeraldRole(this.env?.SD_DISCORD_ROLE, this.env?.GATE_DISCORD_ROLE)",
+    "new": "sdRole: heraldRole(this.env?.GATE_DISCORD_ROLE)",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-hello-unarmed",
+    "file": "server/src/index.js",
+    "old": "    await this._serpentHeraldArm(now);\n    await this._sdHeraldArm(now);\n",
+    "new": "    await this._serpentHeraldArm(now);\n",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-find-unarmed",
+    "file": "server/src/index.js",
+    "old": "      if (found) await this._sdHeraldArm(now);   // SD-HERALD: and to the channel\n",
+    "new": "",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-fall-unarmed",
+    "file": "server/src/index.js",
+    "old": "      if (fell) await this._sdHeraldArm(Date.now());   // SD-HERALD: and to the channel\n",
+    "new": "",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-refusal-marked-posted",
+    "file": "server/src/index.js",
+    "old": "if (!(await this._heraldSend(sdHeraldPost(due.kind, rec, h.sdRole)))) { retry = now + HERALD_RETRY_MS; break; }",
+    "new": "await this._heraldSend(sdHeraldPost(due.kind, rec, h.sdRole));",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-retry-unarmed",
+    "file": "server/src/index.js",
+    "old": "      if (retry != null) await this._hubArm(retry);\n",
+    "new": "",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-state-never-kept",
+    "file": "server/src/index.js",
+    "old": "if (JSON.stringify(st) !== was) await this.state.storage.put('sdherald', st);",
+    "new": "if (false) await this.state.storage.put('sdherald', st);",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-door-ignored",
+    "file": "server/src/index.js",
+    "old": "  async _sdHeraldBeat(now) {\n    const h = this._heraldOf();\n    if (!h) return;\n",
+    "new": "  async _sdHeraldBeat(now) {\n    const h = this._heraldOf() ?? { sdRole: null };\n",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  },
+  {
+    "name": "SD-HERALD-arm-without-herald",
+    "file": "server/src/index.js",
+    "old": "  async _sdHeraldArm(now) {\n    if (!this._heraldOf()) return;\n",
+    "new": "  async _sdHeraldArm(now) {\n",
+    "tests": [
+      "test/sdherald.test.js"
+    ]
+  }
+]

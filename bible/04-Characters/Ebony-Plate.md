@@ -1,9 +1,9 @@
 # The Ebony Plate - the port's own ebony armour set
 
-`tools/bakeEbonyPlate.mjs` (the bake) on `tools/bakeSteelPlate.mjs`'s machinery (the bind, the rigs, `HELM_LIFT`) +
+`tools/bakeEbonyPlate.mjs` (the bake) on `tools/bakeSteelPlate.mjs`'s machinery (the bind, the rigs) +
 `tools/skinWeights.mjs` (jointWeights, the hang OVER its joints) + `tools/fbxMesh.mjs` (earClipRepeated) +
 `src/characters/ownArmorModels.js` (the ebony plate's rows) + `src/formats/mwItemMap.js` (composeWornArmor)
-(MW-EBONY1, Mac, 2026-10-09)
+(MW-EBONY1, Mac, 2026-10-09; MW-FIT1, the upper arms and the helm, from a player's report, the same day)
 
 > "This is next 1. The ebony armor set and its textures"
 
@@ -43,8 +43,8 @@ of the middle with no mirror; they are its own surface.
 
 ## The rig
 
-Each piece takes its steel twin's rig (`EBONY_RIG`), the helm the closed helm's (rigid on the head, raised
-`HELM_LIFT` as MW-STEEL5 raised the steel helms). One difference: the ebony breastplate carries its own tassets, down
+Each piece takes its steel twin's rig (`EBONY_RIG`), the helm the closed helm's (rigid on the head, and since MW-FIT1
+where Mac fitted it - it was raised `HELM_LIFT` as MW-STEEL5 raised the steel helms, and rode off the collar). One difference: the ebony breastplate carries its own tassets, down
 to the thighs, where the steel one stops at the waist. So the breastplate's rig adds both thighs and **hangs over its
 joints** - `jointWeights`' new `mode: 'over'`: above `top` (84) the joint law alone (the spine, the clavicles), below
 it the joint law's answer keeps 1 - share and the thighs take the share, 0.7 at the hem (62), split across the middle's
@@ -56,16 +56,27 @@ stays one surface. The ebony skirt is the steel skirt's rig hung to its own hem 
 
 `ebonyPlate()` in `ownArmorModels.js` - the steel plate's rows through one factory (`plate(material)`), so each ebony
 piece fills exactly the slots its steel twin fills and hides what it hides: the breastplate the cuirass and its skirt,
-each gauntlet its hand over the wrist and forearm, the greaves the upper legs, each boot its foot over the ankle and
-knee, the helm the HAIR (one helm - Mac sent no open one, so the Steel Helm switch has nothing to switch here).
+each gauntlet its hand over the wrist and forearm, each pauldron its pauldron over the upper arm (MW-FIT1), the greaves
+the upper legs, each boot its foot over the ankle and knee, the helm the HAIR over the head (MW-FIT1: it is closed - a
+visor, an eye slit, a mail coif - so no head is drawn under it; one helm - Mac sent no open one, so the Steel Helm
+switch has nothing to switch here).
 
 ## How it was proven
 
 `test/mwebony1.test.js` (5): the bake byte for byte from the committed files, each DDS its painting, the export's
-hash and object names; the scene placement, the helm lifted, the shapes named for rule 15, weights summing to one, the
+hash and object names; the scene placement (the helm lifted then, where Mac fitted it since MW-FIT1), the shapes named for rule 15, weights summing to one, the
 tasset law exactly, and the left boot's island dropped and nothing of it across the middle; Ebony alone, the
 composer's adds and shadows, Mithril and Adamantium keep retail; through the binder on the vendored retail skeleton -
 idle placements, and in a stride the right tassets (the same vertices at rest and posed) move with the leg, less than
 its knee, while the chest stays; and earClipRepeated's door. Rendered posed on the retail rig, idle and striding,
 before it shipped. `tools/mutants/mwebony1.json` (10, all dead); the island's door in `tools/mutants/auditmwcloak.json`. `test/mwsteel1.test.js` keeps its census to Steel and
 no longer expects Ebony to keep retail's record.
+
+## MW-FIT1: the upper arms and the helm
+
+A player's report on 2026-10-09, passed on by Mac over the paperdoll ("the ebony armor gets the same issue" - the
+upper arm through the pauldron - "and the helmet elevation is too much", "the coif has to cover the neck"), fixed for
+both sets at once and recorded in `04-Characters/Steel-Plate.md` (MW-FIT1): each pauldron, a sleeve to the elbow,
+hides its upper arm in the third person; the helm, closed, hides the head and stands where Mac fitted it, unlifted -
+in retail's idle its coif and the breastplate close round the neck from the collar up, where raised `HELM_LIFT` they
+left a band of it bare. `ebony_plate_helm.nif` is the one ebony file the bake re-made.

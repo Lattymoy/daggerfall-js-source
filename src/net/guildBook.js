@@ -105,7 +105,7 @@ export class GuildBook {
    *        heraldry) - the host reads that town's homes again, so its door and its banners say it now
    * @param {(() => void)|null} [opts.onRank]  AUDIT PROF-541 G1: a look found the character's guild, rank or hall moved
    *        (a keeper made or unmade) - the host reads the town again, so a hall's `keeper` follows
-   * @param {{ items: () => any[], add: (rec: any) => void, changed: () => void, reach?: () => boolean }|null} [opts.pack]
+   * @param {{ items: () => any[], add: (rec: any) => void, changed: () => void, reach?: () => boolean, refuses?: (item: any) => string|null }|null} [opts.pack]
    *        GUILD2b: the pack a vault's piece leaves and arrives in, and whether the vault is reached here (a town) - the
    *        host's; null offline
    */
@@ -358,6 +358,7 @@ export class GuildBook {
     const pick = items.indexOf(item);
     const stack = Number.isSafeInteger(item?.stackCount) && item.stackCount >= 1 ? item.stackCount : 1;
     const n = count == null ? stack : count;
+    if (this.pack.refuses?.(item)) return { ok: false, error: 'vault-goods' };   // WAGONS2 (AUDIT): the pack's own refusal - the loaded wagon stays
     if (pick < 0) return { ok: false, error: 'vault-goods' };   // AUDIT2 GUILD2 K15: the pack no longer holds it - never "more than the stack holds"
     if (!Number.isSafeInteger(n) || n < 1 || n > stack) return { ok: false, error: 'bad-vault-count' };
     const offer = JSON.parse(JSON.stringify(item));

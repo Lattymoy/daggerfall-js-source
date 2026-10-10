@@ -550,8 +550,9 @@ export function dfWornArmor(slots, EQUIP_SLOTS, ARMOR_ENUM) {
  * COMPOSE the worn armor onto the body's part rows. Pure: takes the
  * player's pieces, the parsed ARMO records, the BODY pool, and the
  * sex; answers what to ADD (part meshes on their sided bones), what
- * to SHADOW (skin slots or single sides the armor hides), and NOTES
- * for everything that keeps its sprite instead. Never throws: a
+ * to SHADOW (skin slots or single sides the armor hides - `shadows`
+ * the third person's, `fpShadows` the first person's, MW-FIT1), and
+ * NOTES for everything that keeps its sprite instead. Never throws: a
  * missing record, an unknown INDX, a ref with no id for this sex -
  * each is a note, the skin stands, the law is never-traps.
  */
@@ -571,11 +572,13 @@ export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = f
   // a skirt RESERVES its slot list at its priority - occupation
   // without a mesh - hiding the skin and any lesser garment there,
   // refs or no refs.
-  const slots = Array.from({ length: ARMO_PART.length }, () => ({ prio: 1, add: null, shadow: false }));
-  const claim = (part, prio, add) => {
+  // MW-FIT1: `under` - the part a `hides` occupation lies under (an own model's), so the first person, which draws
+  // only the arm-bone parts (fpWornAdds), keeps the skin a part it does not draw would hide (`fpShadows`, below)
+  const slots = Array.from({ length: ARMO_PART.length }, () => ({ prio: 1, add: null, shadow: false, under: null }));
+  const claim = (part, prio, add, under = null) => {
     const slot = slots[part];
     if (!slot || prio <= slot.prio) return;
-    slot.prio = prio; slot.add = add; slot.shadow = true;
+    slot.prio = prio; slot.add = add; slot.shadow = true; slot.under = under;
   };
   const ordered = [...(pieces ?? [])].sort((a, b) => wornOrder(a) - wornOrder(b));
   let hairHidden = 0;
@@ -631,11 +634,12 @@ export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = f
       for (const p of ownArmorParts(own, { helmStyle })) {   // MW-STEEL1: the style the Steel Helm switch asks for
         const at = ARMO_PART.findIndex((r) => r.name === p.part);
         const row = ARMO_PART[at];
-        claim(at, prio, { slot: `${row.name} (${own.id})`, partName: row.name, bones: row.bones, model: p.model, recordId: own.id, piece,
-          ...(own.skinFrom ? { skinFrom: own.skinFrom, fitTo: own.fitTo ?? null } : {}) });   // MW-BRIG2: skinned from the body under it; MW-BRIG3: fitted onto the part it hides. MW-STEEL4: a model shipped skinned (the steel plate) carries neither - its mesh is bound as a retail part's is
+        const add = { slot: `${row.name} (${own.id})`, partName: row.name, bones: row.bones, model: p.model, recordId: own.id, piece,
+          ...(own.skinFrom ? { skinFrom: own.skinFrom, fitTo: own.fitTo ?? null } : {}) };   // MW-BRIG2: skinned from the body under it; MW-BRIG3: fitted onto the part it hides. MW-STEEL4: a model shipped skinned (the steel plate) carries neither - its mesh is bound as a retail part's is
+        claim(at, prio, add);
         // MW-STEEL1: what the part covers beyond its own slot is OCCUPIED with no mesh (reserveIndividualPart), so its
-        // skin is not drawn under the plate - at the armour's priority, the law's own gate
-        for (const h of p.hides ?? []) claim(ARMO_PART.findIndex((r) => r.name === h), prio, null);
+        // skin is not drawn under the plate - at the armour's priority, the law's own gate. MW-FIT1: under that part
+        for (const h of p.hides ?? []) claim(ARMO_PART.findIndex((r) => r.name === h), prio, null, add);
       }
       continue;
     }
@@ -673,14 +677,19 @@ export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = f
   if (hairHidden) claim(1, hairHidden, null);
   const adds = [];
   const shadows = new Set();
+  const fpShadows = new Set();
   for (let i2 = 0; i2 < slots.length; i2++) {
     if (!slots[i2].shadow) continue;
     if (slots[i2].add) adds.push(slots[i2].add);
     const key = ARMO_PART[i2].shadows;
     if (key) shadows.add(key);
+    // MW-FIT1: A PART THE FIRST PERSON DOES NOT DRAW HIDES NOTHING FROM IT. A pauldron sleeves the upper arm, but it
+    // hangs on the clavicle and the first person draws the arm-bone parts alone - so there the upper arm under it is
+    // the skin's, not a hole. Every other occupation is the third person's and the first person's alike.
+    if (key && !(slots[i2].under && !fpWornAdds([slots[i2].under]).length)) fpShadows.add(key);
   }
   if (cloakAdd) adds.push(cloakAdd);
-  return { adds, shadows: [...shadows], notes };
+  return { adds, shadows: [...shadows], fpShadows: [...fpShadows], notes };
 }
 
 /** NUDE-FLATS, THE MORROWIND BODY'S HALF: DFU's upper weld (PaperDollRenderer.BlitBody's `!IsUpperClothed()`, the

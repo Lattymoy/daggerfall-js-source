@@ -24,12 +24,12 @@
     "note": "The ebony skirt hangs to the steel skirt's hem, not its own."
   },
   {
-    "name": "MWEBONY1-the-helm-left-down",
+    "name": "MWEBONY1-the-helm-lifted-again",
     "file": "tools/bakeEbonyPlate.mjs",
-    "old": "[[-6.31, -6.64, 112.1], [6.31, 10.19, 133.37]])], HELM_LIFT),",
-    "new": "[[-6.31, -6.64, 112.1], [6.31, 10.19, 133.37]])]),",
+    "old": "[[-6.31, -6.64, 112.1], [6.31, 10.19, 133.37]])]),",
+    "new": "[[-6.31, -6.64, 112.1], [6.31, 10.19, 133.37]])], 4),",
     "tests": ["test/mwebony1.test.js"],
-    "note": "The helm where the scene fitted it: the steel helms' lesson (MW-STEEL5) forgotten."
+    "note": "MW-FIT1 re-aimed it (it was MWEBONY1-the-helm-left-down, when the helm was lifted): the closed helm raised onto the game's head as the open steel helm is - the coif off the collar, the neck bare under it, the player's \"the helmet elevation is too much\"."
   },
   {
     "name": "MWEBONY1-mithril-wears-it",

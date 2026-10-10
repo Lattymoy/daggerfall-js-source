@@ -791,6 +791,12 @@ Relay world123 (world126 on its branch, renumbered at the merge with main). Pinn
 too. Its beat runs on the hub's alarm after this one. `test/discordgates.test.js` stubs it, so the pins above are the
 gate's alone.
 
+**In the Abyss (SD-HERALD, 2026-10-09).** The Abyss Dungeon has its own herald on the same door and channel
+(`net/sdHerald.js`; `Super-Dungeons.md` SD-HERALD). It posts a Hollow's rise and its find, pinging `SD_DISCORD_ROLE` or
+else this role, and its fall and a found one's fade, pinging nobody - each read off the director's record, so it needs
+no vote: the find names the record's region, never the city. Its beat runs on the hub's alarm after the director's.
+`test/discordgates.test.js` seeds the director with a rise ten years off, so it owes nothing there.
+
 ## 13. The Warden's marks (WB8, 2026-09-28)
 
 Mac: "Make the oblivion gate boss not be able to be pacified, continue to refine and add detail to his encounters, and

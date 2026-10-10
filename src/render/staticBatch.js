@@ -122,8 +122,13 @@ export function shadowCells(positions, indices, size) {
 export const SHADOW_CELL_SIZE = 16;
 
 export class StaticBatchBuilder {
-  /** @param {{ shadowCell?: number }} [opts] shadowCell: LA-AUDIT A1's cell side; 0 (the default) builds no cells */
-  constructor({ shadowCell = 0 } = {}) {
+  /** @param {{ shadowCell?: number, pieces?: boolean }} [opts] shadowCell: LA-AUDIT A1's cell side; 0 (the default)
+   *  builds no cells. pieces: RW1 - every merged sub-mesh also carries one sphere per model that went into it
+   *  (`pieces`, [cx, cy, cz, r] each), so a window's glass measured on the screen is that model's, not the whole batch's
+   *  (render/realWindows.js: the view out is cropped to the glass a frame met). Off by default: a city pixel's batch
+   *  never measures them. */
+  constructor({ shadowCell = 0, pieces = false } = {}) {
+    this.pieces = !!pieces;
     this.chunks = [];        // [{positions, normals, uvs, base}] one per model, already transformed
     this.groups = new Map(); // resolved key -> [Uint32Array index runs, already offset by base]
     this.vertexCount = 0;
@@ -235,7 +240,13 @@ export class StaticBatchBuilder {
       const start = at;
       for (const run of runs) { indices.set(run, at); at += run.length; }
       const [archive, record] = key.split('_').map(Number);   // the resolved key is `${archive}_${record}`, drawMesh's own spelling
-      subMeshes.push({ textureArchive: archive, textureRecord: record, startIndex: start, primitiveCount: (at - start) / 3 });
+      const sub = { textureArchive: archive, textureRecord: record, startIndex: start, primitiveCount: (at - start) / 3 };
+      if (this.pieces) {   // RW1: one sphere a model that went into this sub-mesh
+        const pieces = new Float32Array(runs.length * 4);
+        runs.forEach((run, i) => pieces.set(boundsOf(positions, run), i * 4));
+        sub.pieces = pieces;
+      }
+      subMeshes.push(sub);
       if (withBounds) { subs.push(boundsOf(positions, indices, start, at - start)); yield; }
     }
     const merged = /** @type {any} */ ({ positions, normals, uvs, indices, subMeshes, vertexCount: this.vertexCount, triangles: this.triangles, models: this.models });

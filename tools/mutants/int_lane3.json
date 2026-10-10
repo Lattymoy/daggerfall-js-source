@@ -786,8 +786,8 @@
   {
     "name": "INT11-WIRE-OLDER-RELAY",
     "file": "src/net/wire.js",
-    "old": "export const BOSS_REF_RELAY_MIN = 186;",
-    "new": "export const BOSS_REF_RELAY_MIN = 185;",
+    "old": "export const BOSS_REF_RELAY_MIN = 188;",
+    "new": "export const BOSS_REF_RELAY_MIN = 187;",
     "tests": [
       "test/int12_body_relay.test.js"
     ]

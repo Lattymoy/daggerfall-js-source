@@ -76,6 +76,7 @@ import { waterBedDepths } from '../world/waterBed.js';   // WATER-NEXT 2: the be
 import { createRipples, createRippleStir, RIPPLE_SPAN, RIPPLE_CELLS, BOAT_STIR, BOAT_WAKE_SPEED } from '../world/waterRipples.js';   // WATER-NEXT 4: the rings and wakes
 import { waterCorners, WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';   // GRASS-WET1: the one table that says which of a tile's corners stand in water - the DRAW's, because a blade in a puddle is a picture, not a physics
 import { windowEmissionRGB } from '../render/windowEmission.js';
+import { realWindowsMode, VIEW_RINGS, VIEW_CLIP_PAD, clockFogColor } from '../render/realWindows.js';   // RW1: the rooms behind the glass, and the street a building's glass looks out on
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights, capFadeColors, capFadePairs, fillLanternPool, rangesFor } from '../world/cityLights.js';
 import { isHearthFlat, HEARTH_NEAR } from '../systems/survival/hearth.js';   // HEARTH1: which of those lanterns is a fire you could cook on, and how far one can matter
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
@@ -528,6 +529,7 @@ import { raidMapMarks } from '../ui/eventMapMarks.js';   // EVENT-TIP: the towns
 import { StreamingWorldState, TerrainSlots, worldCoordToMapPixel, locationWorldRect, isInLocationRect, mapPixelToWorldCoords, SCENE_MAP_RATIO, nearestFirstFrom } from '../world/streamingWorld.js';   // HCC: StreamingWorld.SceneMapRatio; AUDIT BRANCH (WoD) L1-3: DFU's terrain array; AUDIT 68 S22: the load list's one order
 import { horseNameTooltip } from '../ui/horseNameTooltip.js';   // AUDIT HCC U6: the mod's HUD label, both skins
 import { createHorseCartPool, ownedLine } from './horseCartPool.js';
+import { wagonPoolDeps } from '../world/wagonModels.js';   // WAGONS1: the pool's two words, one seam for both hosts
 import { createPeerRiders, createPeerWalkers, createEotbArt } from '../net/peerRiders.js';   // RIDE: another player in the saddle   // HCC: Horse Cart and Cargo's presentation - the wagon's five pieces, the horse's eight views, the peers' teams
 import { createHorseCartRuntime } from '../systems/horseCart.js';   // HCC: TrailingWagonRuntime over this host's seams
 import { setForagingHost } from '../systems/foragingInstall.js';   // FORAGE1: Foraging's reaches into the world, answered by this host
@@ -560,6 +562,10 @@ import { boatTriggers, boatMenuRows, boatMenuStart, pressBoatVerb, BOAT_VERB } f
 import { linkBankCabin, readBankCabinLink, bankCabinCandidates } from '../systems/boatCabinOwnership.js';
 import { hasSailingCabin, savedCabinBoat, cabinSceneName } from '../systems/sailingCabin.js';
 import { createSailingCabinAccess } from './sailingCabin.js';
+import { createCaravanAccess, parkedCaravanAt } from './caravanRoom.js';   // WAGONS1: the caravan's room
+import { createWagonRiders, GO_LEAD_MS } from './wagonRiders.js';   // WAGONS1: the seats in the back
+import { HCC_WIRE_KIND } from '../systems/horseCartWire.js';   // WAGONS1: which way my wagon goes (my companions ride while it goes with me)
+import { RIDE_TEXT, RIDE_ASK_TTL_MS } from '../systems/wagonSeats.js';
 import { createSailingCabinLink } from '../net/sailingCabinLink.js';
 import { capsuleFits } from '../player/parkour.js';
 import { TRIGGER_MODEL as CSA_TRIGGER_MODEL, setLights as csaSetLights, HULL_NAMES as CSA_HULL_NAMES, nodeOf as csaNodeOf, AUDIO_CLIPS as CSA_AUDIO_CLIPS, colliderBoundsInChildren as csaColliderBoundsInChildren, animatorOf as csaAnimatorOf, meshLocalBounds as csaMeshLocalBounds } from '../systems/comeSailAwayBoat.js';   // CSA-B: the probe's lanterns; CSA-D: the plaque's word for a boat; CSA-G: the loops' objects and the five clips; CSA-J: Eye of the Beholder's Collider.bounds
@@ -620,7 +626,9 @@ import { questBoardIndices, bountyDungeons } from '../systems/bountyBoard.js';  
 import { createBountyOverlay, closeBountyDoor, bountyDoorOpen } from '../ui/bountyDoor.js';   // BOUNTY1: the board's window and the payday notice
 import { isQualifyingThreatState } from '../systems/horseFollow.js';   // HCC: CollectThreats' qualification, the mod's own five-term test
 import { totalWeight } from '../systems/inventory.js';   // HCC: PlayerEntity.WagonWeight
-import { WAGON_KG_LIMIT, planTake, CANNOT_CARRY_TEXT } from '../systems/itemTransfer.js';   // HCC: ItemHelper.WagonKgLimit; SET7: the Broker's sale asks the pack's own carry gate
+import { planTake, CANNOT_CARRY_TEXT } from '../systems/itemTransfer.js';   // SET7: the Broker's sale asks the pack's own carry gate
+import { wagonKgFor, activeWagonItem, activeWagonKind, WAGON_KINDS } from '../systems/wagonKinds.js';   // WAGONS1: HCC's ItemHelper.WagonKgLimit, the driven wagon's
+import { wagonLookOf, paintDrivenWagon } from '../systems/wagonLooks.js';   // WAGONS2: the driven wagon's paint
 import { giveNavalItems } from '../systems/naval/navalTransfer.js';
 import { InputMessageBoxWindow } from '../ui/inputMessageBox.js';   // HCC: the horse's name (DaggerfallInputMessageBox)
 import { getBool, getInt, getFloat } from '../systems/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
@@ -639,7 +647,7 @@ import { createCoverIndex, isCoverFlat, coverProxy, coverProxies, FELLED } from 
 import { noteLocalPlayer, tacticsNow, tickTactics, offsetTactics } from '../ai/tactics.js';   // TACT2; TACT4: the brain's clock; AUDIT TACT: its tick, the recentre's shift
 import { drawableBlows, registerBlowDodgedListener } from '../ai/foeBlows.js';   // TACT4; AUDIT ARENA-LADDER: a dodge told
 import { landViewRead } from '../world/landView.js';   // LV1: the enhanced lane's own streamed radius; FT2: the read is the module's
-import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, hourOf, daylightScale, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
+import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, hourOf, daylightScale, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime, viewOutLight } from '../world/worldClock.js';
 import { dungeonLocationFor } from '../world/smallerDungeons.js';   // AUDIT 28 F-B2: the quest layer sees the sized dungeon
 import { audio, QuestAudioSource, logarithmicRolloff, plainSourceGain } from '../systems/audio.js';   // E6: the QuestMachine's own DaggerfallAudioSource (PlaySound's busy-skip)
 import { music } from '../systems/music.js';
@@ -751,6 +759,13 @@ import { partyCompassPoints } from '../ui/partyMapMarks.js';   // COMPASS-PARTY:
 import { SocialState, accountId, accountSecret } from '../net/social.js';   // SOC2: the friends and the party, as the hub says them; the account the hub's hello carries; SOC3: and the two colours a name wears in the DOM - my party's green, a friend's blue
 import { SOCIAL_ROOM, PARTY_SEND_MS, chatRegionRoom, relaySupportsRite, relaySupportsCage } from '../net/wire.js';   // CHAT-CHAN: a region's channel
 import { cellRoomOfWire } from '../net/wire.js';   // HCC-PARK: the cell a parked team's anchor stands in
+import { parkKeyOf } from '../net/wire.js';   // WAGONS2-VISIT: my caravan's room is named by my park key
+import { caravanRoomOf, caravanKeyOf } from '../net/privateInterior.js';   // WAGONS2-VISIT: a caravan's own room
+import { CARAVAN_TEXT } from '../systems/caravanRoom.js';   // WAGONS2 (FINAL AUDIT): a caravan's save that cannot come back, said
+import { caravanEntryOf, setDrivenCaravanEntry, caravanMayEnter, CARAVAN_VISIT_TEXT } from '../systems/caravanVisit.js';   // WAGONS2-VISIT: who may enter a caravan, and a visit to another's
+import { HOME_ENTRY_WORDS, homeNextEntry } from '../systems/onlineHomes.js';   // WAGONS2-VISIT: a caravan's door is turned as a home's is
+import { createCaravanVisitLink } from '../net/caravanVisitLink.js';   // WAGONS2-VISIT: the visited caravan's cell, heard from inside it
+import { RECEIVER_MARKS } from '../net/realmTradeLaw.js';   // WAGONS2-VISIT (AUDIT): the last owner's marks, never carried to the next
 import { GATE_BRAIN_V } from '../net/wire.js';   // AUDIT WBX R7: the brain's law this client knows, said on every `in`
 import { characterIdOf } from '../systems/characterId.js';   // AUDIT HCC-PARK: my parked team is my CHARACTER's (the relay keys it by the account and this)
 import { chooseTable, tableMoveSpeed } from '../player/eotbBillboard.js';   // AUDIT RIDE: the rider's gallop is the table the rider's own sprite shows
@@ -780,7 +795,7 @@ import { composePartyFx } from '../net/partyBuffs.js';   // PARTY-BUFFS: my effe
 import { stampItemIds, tradeHeldNotice } from '../systems/itemIds.js';   // INT4: a valuable piece's id, minted at a realm checkpoint; INT3: the hold, said
 import { checkpointAllowed, checkpointDue, checkpointedTradePack, createSaveSoon } from '../systems/onlineCheckpoint.js';   // REALM P0.5: the character saved as it plays online; PROF-SAVE: and at once after a professions act
 import { createTradeManager, TRADE_RANGE_M, inTradeRange, tradeDistance } from '../net/tradeSession.js';   // TRADE1: the player-to-player trade's state machine (pure)
-import { createTradePack, tradeRefusal, createMarketGoods } from '../systems/tradePack.js';   // TRADE1: the trade's door into the real pack; PROF5: what may not be sold; MARKET-ANY: the pack's side of a piece from the pack
+import { createTradePack, tradeRefusal, packTradeRefusal, createMarketGoods } from '../systems/tradePack.js';   // TRADE1: the trade's door into the real pack; PROF5: what may not be sold; MARKET-ANY: the pack's side of a piece from the pack
 import { isLocked } from '../systems/itemLock.js';   // PROF5: a locked piece is not listed
 import { createPlayerTradeWindow, playerTradeReady } from '../ui/playerTradeDoor.js';   // TRADE1: the enhanced window two players share
 import { createPeerMenuReader } from '../systems/peerMenuBind.js';   // PEERMENU1: the player menu opens on a bind (hold E / hold A)
@@ -4569,13 +4584,13 @@ export async function bootWorld(canvas, renderer, params, status) {
   const _dwBreathState = { tally: 0 };
   const _dwSurfaceList = [];
   let _waterU = null;   // WATER-NEXT 2: the frame's water uniforms, set where the terrain's water draws
-  function drawDeepWatersSurfaces(nowMs) {
+  function drawDeepWatersSurfaces(nowMs, cells = null) {
     const f = _dwFrame;
     if (!f || !f.s.spawnSurfaces) return;
     _dwSurfaceList.length = 0;
-    for (const p of built.values()) {
+    for (const p of cells ?? built.values()) {   // RW1 x WAGONS2 (FINAL AUDIT): `cells` the view out's own, culled by its own planes (the street frame's _visible is the street's)
       const h = p.deepWaters?.gpu;
-      if (p._visible && h?.surface) _dwSurfaceList.push({ h, model: p._pixelMatrix });
+      if ((cells || p._visible) && h?.surface) _dwSurfaceList.push({ h, model: p._pixelMatrix });
     }
     if (!_dwSurfaceList.length) return;
     // WATER-NEXT 2: from above, the sea is the water's own - the swell, the depth to the floor the mod carved, the
@@ -7648,13 +7663,41 @@ export async function bootWorld(canvas, renderer, params, status) {
   const hccRuntimeOn = () => (hccOn() ? hccRuntime : null);
   /** CollectThreats [IL_2230]: every live enemy that is hostile, not an ally, targeting ME and has detected me. */
   const hccThreats = () => exteriorFoePool().filter((f) => !f.dead && f.ai?.feet && isQualifyingThreatState(true, !!f.ai.isHostile, f.entity?.team === 'PlayerAlly', isLocalPlayerTarget(f.ai.target), !!f.ai.detected)).map((f) => [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]]);
+  /** WAGONS1: the seats in the back (scenes/wagonRiders.js) - made just below the pool, which reads them through this. */
+  let wagonRiders = null;
   const hcc = createHorseCartPool({
+    riders: { passengers: () => wagonRiders?.passengers() ?? [], go: () => wagonRiders?.go() ?? null, declined: () => wagonRiders?.declined() ?? [], acts: (o, k, kept) => wagonRiders?.acts(o, k, kept) ?? [], press: (o, id, d) => wagonRiders?.press(o, id, d) ?? false, sitsIn: (p, o, k) => wagonRiders?.sitsIn(p, o, k) ?? false },   // WAGONS1; FINAL AUDIT: a rider's own word seats them
     renderer, meshes: { getGpuMesh, cpuModels }, collider: () => collider, now: () => performance.now() / 1000,
     threats: hccThreats, selfId: () => online?.id ?? null, peerName: (id) => peerName(id),
-    onChanged: () => { _hccDirty = true; }, toWire: (p) => campToWire(p), log: console, peerAnchor: (id) => { const sh = _peerMapPoses.get(id); return sh && (sh.rd | 0) === 2 ? onlineToScene(sh) : null; },   // AUDIT HCC O5: the change key in the wire frame (campToWire is the pose's law, declared with the stream below; read only once frames run); WAGON-HITCH: where another player's cart rider stands as drawn this frame (`rd` 2, the cart - the pose peerRiders stands them on, boat-adjusted; the online frame fills the map before the pool steps), so their trailing wagon hangs from the rider seen here rather than easing apart from it
+    onChanged: () => { _hccDirty = true; }, toWire: (p) => campToWire(p), log: console, ...wagonPoolDeps(() => playerEntity.items ?? []), enterCaravan: () => caravanRooms.enter(),   // WAGONS1: Mac's wagons, by the one the player drives; the caravan's door
+    wagonEntry: () => caravanEntryWord(),   // WAGONS2-VISIT: who may enter my caravan, on its word
+    caravanEntry: { row: () => caravanEntryRow(), turn: () => caravanEntryTurn() },   // WAGONS2-VISIT: my caravan's "Who may enter"
+    visit: { may: (t) => caravanVisitMay(t), enter: (t) => caravanVisitEnter(t) },   // WAGONS2-VISIT: another's caravan, open to me
+    peerAnchor: (id) => { const sh = _peerMapPoses.get(id); return sh && (sh.rd | 0) === 2 ? onlineToScene(sh) : null; },   // AUDIT HCC O5: the change key in the wire frame (campToWire is the pose's law, declared with the stream below; read only once frames run); WAGON-HITCH: where another player's cart rider stands as drawn this frame (`rd` 2, the cart - the pose peerRiders stands them on, boat-adjusted; the online frame fills the map before the pool steps), so their trailing wagon hangs from the rider seen here rather than easing apart from it
   });
   hcc.setPeerLook((id) => (_hiddenPeers.has(id) ? 'hidden' : (_veils.get(id) ?? null)));   // AUDIT (pre-merge) I-B: a concealed owner's team is concealed with it (last frame's word - the pool steps before the peers sync)
   hccGroundMoved = hcc.groundMoved;   // DISC20-C
+  // RW1 x WAGONS2: the wagons stand in the street a window looks out on - all but the caravan whose room I stand in
+  renderer.outsideViewDraws?.add(({ renderer: r }) => { if (!hccOn()) return; const room = modes?.caravanRoom ?? null; hcc.drawOutside(r, room ? caravanRooms.fromNative(room.origin) : null); });
+  // WAGONS1: the seats in the back of my wagon and of another's - asks and answers on the foes frame, a rider pinned to
+  // their seat with the motor held, the owner's journey followed (the party's own, landing beside the owner's wagon)
+  wagonRiders = createWagonRiders({
+    selfId: () => online?.id ?? null, name: (id) => peerName(id) ?? 'Someone', now: () => performance.now(), say: (l) => townTalk.say(l), pool: hcc,
+    pin: (feet) => player.pinFeet(feet[0], feet[1], feet[2]),
+    unpin: (feet) => { if (feet) player.pinFeet(feet[0], repositionFeetY(player.collider.heightAt(feet[0], feet[2]), feet[1]), feet[2]); },
+    feet: () => player.pos,   // WAGONS2 (AUDIT): a body moved off its seat (a load, a respawn, a teleport) is not stood back beside the wagon
+    world: (p) => { const w = state.worldCoords(p); return [w.x / SCENE_MAP_RATIO, p[1], w.z / SCENE_MAP_RATIO]; },   // FINAL AUDIT: and a teleport while seated ends the ride (a rebase moves nothing in this frame)
+    changed: () => { _hccDirty = true; },   // my `wr` moved: the next foes frame carries it
+    jumpPressed: () => !gamePaused() && !pointerSurfaces.size && pressed(latch.edge, keys, 'Jump'),
+    traveling: () => _traveling, canTravel: () => !partyTravelRefusal(),
+    travel: (to, besideAt, ownerName) => {
+      const fare = partyTripFare(to, travelMapPopUpState());
+      const where = partyPlaceName(to);
+      return partyTravelJourney({ pixel: { x: to.x, y: to.y }, name: where, besideAt, besideText: `You ride with ${ownerName} to ${where}.` }, fare.opts, { ...fare.computed, totalCost: 0, piecesCost: 0 });   // WAGONS2 (AUDIT): the owner's wagon carries me - no fare (the party's journey charged the rider the map's); its time is the map's
+    },
+    prompt: { render: () => ridePrompt?.render() },
+    drawAt: (feet) => { player.drawFeet = feet; },   // WAGONS2: my body drawn on my seat in a wagon drawn grown under the Overworld
+  });
   const hccRuntime = createHorseCartRuntime({
     ready: () => walkMode && playerSpawned && !_teleporting && !_traveling,   // TryGetGameManager: a game in progress, the player standing, the world up
     transport: {
@@ -7672,7 +7715,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       isPlayerInside: () => _mode() !== 'exterior', isPlayerInsideDungeon: () => _mode() === 'dungeon', isPlayerInsideBuilding: () => _mode() === 'interior',
       buildingKey: () => modes?.interiorBuilding?.buildingKey ?? 0, dungeonId: () => modes?.roomIdentity?.()?.mapId ?? null,
     },
-    entity: { wagonWeight: () => totalWeight(playerEntity.wagonItems ?? []), wagonKgLimit: () => WAGON_KG_LIMIT },
+    entity: { wagonWeight: () => totalWeight(playerEntity.wagonItems ?? []), wagonKgLimit: () => wagonKgFor(playerEntity) },   // WAGONS1: the driven wagon's
     activateMode: () => getInteractionMode(),
     fadeInProgress: () => false,   // the port fades no transition
     say: (l) => townTalk.say(l), setMidScreenText: (t, seconds) => setMidScreenText(t, seconds), tooFarText: () => TOO_FAR_AWAY_TEXT,
@@ -8100,6 +8143,54 @@ export async function bootWorld(canvas, renderer, params, status) {
     fromNative: (p) => { const [x, z] = state.localFromWorld(p[0], p[2]); return [x, p[1] + state.compensation[1], z]; },
     enterInterior: (cabin) => modes?.enterSailingCabin(cabin), say: (line) => townTalk.say(line), log: (e) => console.error('[sailing cabin]', e),
   });
+  /** WAGONS1: my parked caravan's room (scenes/caravanRoom.js) - the cabin's door law, the caravan's pose its anchor. */
+  const caravanRooms = createCaravanAccess({
+    available: () => !!modes && hccOn(), mode: () => modes?.mode ?? 'exterior', busy: () => worldMoveBusy() || !!wagonRiders?.seated(),   // WAGONS2 (AUDIT): never from a seat in another's wagon
+    parked: () => hcc.parkedDoor(), ownsCaravan: () => activeWagonKind(playerEntity.items ?? []) === 'caravan',
+    parkedAt: () => parkedCaravanAt(hccRuntime.view().state),   // WAGONS2 (AUDIT): where my caravan stands parked now - a Recall's room only on it
+    look: () => wagonLookOf(activeWagonItem(playerEntity.items ?? [])),   // WAGONS2: the room in my caravan's paint
+    paint: (part, i) => { const r = paintDrivenWagon(playerEntity.items ?? [], part, i); if (r.ok) _hccDirty = true; return r; },   // WAGONS2: its inside painted from the decorator
+    toNative: (p) => { const w = state.worldCoords(p); return [w.x, p[1] - state.compensation[1], w.z]; },
+    fromNative: (p) => { const [x, z] = state.localFromWorld(p[0], p[2]); return [x, p[1] + state.compensation[1], z]; },
+    ground: (p) => [p[0], repositionFeetY(collider.heightAt(p[0], p[2]), p[1]), p[2]],   // the door's landing law, on the street's own collider
+    enterInterior: (room, visit = null) => modes?.enterCaravanRoom(room, null, visit), say: (line) => townTalk.say(line), log: (e) => console.error('[caravan]', e),   // WAGONS2-VISIT: and another's, a visit
+  });
+  /** WAGONS2 (FINAL AUDIT): WHERE A SAVE OR AN ANCHOR MADE IN A CARAVAN LANDS WHEN ITS ROOM CANNOT COME BACK (a visit's -
+   *  their room is theirs to stand - the caravan moved, sold, the mod off): the ground behind the rear door it was made by,
+   *  as the room's own door lets out - it fell to the building's no-door arm, the teleport's landing at the pixel's centre
+   *  (a town's roof, or half a kilometre off in the wilds), or a Recall stood inside the wagon's body. Null for any other. */
+  const caravanDoorLanding = (interior) => (interior?.caravanRoom ? caravanRooms.returnToWagon(interior.caravanRoom) : null);
+  // ═══ WAGONS2-VISIT (2026-10-09, Mac: "People should be able to use the interior just like houses, like crafting and
+  // such"; who comes in, "Like an online home") - A CARAVAN'S DOOR ONLINE (systems/caravanVisit.js) ═══════════════════
+  /** Who may enter my caravan, as its word says it (`we`), with my guild's tag when it is my guild's (`wg`) - null
+   *  offline (the room is then the save's alone) or with no caravan driven. */
+  const caravanEntryWord = () => {
+    if (!onlineOn || activeWagonKind(playerEntity.items ?? []) !== 'caravan') return null;
+    const entry = caravanEntryOf(activeWagonItem(playerEntity.items ?? []));
+    return { entry, guild: entry === 'guild' ? myGuildTag() : null };
+  };
+  /** My parked caravan's row: "Who may enter: Only me" (a home's own words, systems/onlineHomes.js HOME_ENTRY_WORDS). */
+  const caravanEntryRow = () => { const w = caravanEntryWord(); return w ? CARAVAN_VISIT_TEXT.entryRow(HOME_ENTRY_WORDS[w.entry]) : null; };
+  /** Its press: who may enter moved on, round as a home's door turns (homeNextEntry) - kept on the caravan, said on its
+   *  word at once - and said. */
+  const caravanEntryTurn = () => {
+    const w = caravanEntryWord();
+    const next = w ? setDrivenCaravanEntry(playerEntity.items ?? [], homeNextEntry(w.entry)) : null;
+    if (!next) return null;
+    _hccDirty = true;
+    return CARAVAN_VISIT_TEXT.entryLine(HOME_ENTRY_WORDS[next]);
+  };
+  /** Whether another's parked caravan opens to me: online at a relay that keeps caravans' rooms, outdoors, its owner's
+   *  word read as a home's door reads it - my party's handles (the relay's), my guild's tag. */
+  const caravanDoorOpen = (t) => caravanMayEnter(t, { partyNames: (social?.others?.() ?? []).map((m) => m.name).filter((n) => typeof n === 'string' && n.length > 0), guild: myGuildTag() });
+  const caravanVisitMay = (t) => !!online?.caravanOk && online.status === 'open' && (modes?.mode ?? 'exterior') === 'exterior' && caravanDoorOpen(t)
+    && !wagonRiders?.seated();   // WAGONS2-VISIT (AUDIT): never from a seat in another's wagon (its row offered, its press said nothing)
+  /** Its press: into it, through the same door as my own (scenes/caravanRoom.js visit) - its room the record's key. */
+  const caravanVisitEnter = (t) => {
+    const room = caravanRoomOf(t?.k);
+    if (!room || !caravanVisitMay(t)) { townTalk.say(CARAVAN_VISIT_TEXT.shut(t?.owner || 'another player')); return false; }
+    return caravanRooms.visit(t, room);
+  };
   /** BOAT-MENU: a boat of mine's boxes and its rows (systems/csaBoatMenu.js) - what the plaque lists and the picker. */
   const _csaBoxes = new WeakMap();   // BOAT-MENU: boat -> { root, variant, boxes } - the walk once per hull and style, not each frame the plaque asks
   // CABIN-TITLES: and the Fleet's book - HOLDINGS took a ship's deed out of the pack into it, so a ship laid up there
@@ -9439,7 +9530,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     changed: () => surfacePlayer(),
   }) : null;
   setHoldingsProvider({
-    ...stableProviderFor({ runtime: hccRuntime, on: hccOn, hasHorse: () => hasTransport(TRANSPORT_HORSE), hasCart: () => hasTransport(TRANSPORT_SMALL_CART) }),
+    ...stableProviderFor({ runtime: hccRuntime, on: hccOn, hasHorse: () => hasTransport(TRANSPORT_HORSE), hasCart: () => hasTransport(TRANSPORT_SMALL_CART), wagonKind: () => activeWagonKind(playerEntity.items ?? []), items: () => playerEntity.items ?? [], onPainted: () => { _hccDirty = true; } }),   // WAGONS1: the Stable names the wagon driven - WAGONS2: and paints it
     fleet: fleetHost ? { model: () => fleetHost.model(), offer: (uid) => fleetHost.offer(uid), act: (uid, verb, arg) => fleetHost.act(uid, verb, arg) } : null,
   });
   /** The sea emptied: a transition, a teleport, the arc switched off - its window with it. */
@@ -9865,12 +9956,18 @@ export async function bootWorld(canvas, renderer, params, status) {
     const r = by ? revenantFelled(playerEntity, by, ally) : null;
     if (r) revenantSay(revenantFelledEvent(r, ally, { archive: by.archive ?? by.mobileArchive ?? null }), (l) => townTalk.say(l));
   };
+  /** WAGONS1: whether my wagon goes with me now - trailing my cart, or my team following me: my companions ride in its
+   *  back (systems/wagonSeats.js companionSeats); parked, they get down and walk at heel. */
+  const wagonCarriesCompanions = () => { const k = hcc.shown()?.wagon?.kind; return k === HCC_WIRE_KIND.Trailing || k === HCC_WIRE_KIND.Following; };
+  const crewCount = () => (navalOn() ? naval?.companions?.party?.length ?? 0 : 0);
   const crewAshore = createCrewAshore({
     party: () => (navalOn() ? naval?.companions ?? null : null),
     place: companionPlace,
     leader: () => (playerSpawned ? { feet: [player.pos[0], player.pos[1], player.pos[2]], yaw: cam.yaw, grounded: !!player.grounded && !player.levitating && !player.swimming } : null),   // AUDIT CC-A3: on a floor or not
     now: () => Math.floor(playerTicker.ownMinutes),
     onKnocked: (c, by) => { naval?.companionKnocked?.(c); felledBy(by, c.name); },   // RVN10: a special foe's blow fells him - a deed on it
+    seat: (i) => wagonRiders?.companionSeat(i, wagonCarriesCompanions()) ?? null,   // WAGONS1: the crew's hands take the seats in my wagon's back first
+    seatDraw: (i) => wagonRiders?.companionSeatDrawn(i, wagonCarriesCompanions()) ?? null,   // WAGONS2: and drawn there as the wagon is drawn (grown under the Overworld)
   });
   // COMPANION-SLOTS: the crew's hands ashore take the player's side's slots with the sworn
   registerCompanionCount('crew', () => (navalOn() ? naval?.companions?.party?.length ?? 0 : 0));
@@ -9903,6 +10000,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       rec.revenantCompanion = c.name;
       if (_revenantArrivals.delete(c.name)) revenantCompanionSay('arrive', c.name);
     },
+    seat: (i) => wagonRiders?.companionSeat(crewCount() + i, wagonCarriesCompanions()) ?? null,   // WAGONS1: the sworn take the seats after the crew's
+    seatDraw: (i) => wagonRiders?.companionSeatDrawn(crewCount() + i, wagonCarriesCompanions()) ?? null,   // WAGONS2
   });
   /** REVENANT-COMPANION: a sworn one called to the player's side - it says so as it steps through. */
   const noteRevenantArrival = (id) => _revenantArrivals.add(id);
@@ -10092,6 +10191,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // IsPlayingGame (no window, no surface holding the mouse), and only where the enhanced plaque is not already naming it
     const tipOn = hcc.enabled && walkMode && _mode() === 'exterior' && !worldPlaqueOn() && !gamePaused() && !pointerSurfaces.size;
     horseNameTooltip.set(tipOn ? hcc.tooltipText(cam.pos, [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)], collider) : '');
+    if (_mode() === 'exterior') wagonRiders?.frame();   // WAGONS1: my riders kept to my seats, and me to my seat in another's wagon, as the pool just stood them
+    if (_mode() !== 'exterior' || !(playerEntity.health > 0)) wagonRiders?.leave();   // WAGONS2 (AUDIT): a door, a death - out of the ride where I stand (the outdoors again would pin me back on the seat)
   };
   /** The mod's ModSettingsChanged: the shelf has no event, so the eight keys are re-read once a second. */
   const hccPollSettings = (nowMs) => {
@@ -13657,7 +13758,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // RestorePositionHelper's three arms (PlayerEnterExit.cs
       // :622-655), in its own order: dungeon first, then building
       // with doors, then outside.
-      let landed = false;
+      let landed = false, outOfCaravan = null;
       if (plan.arrive === 'dungeon') {
         // The dungeon mount - StartDungeonInterior through the ONE
         // door the quest respawner uses (:626-630 RespawnPlayer with
@@ -13682,15 +13783,18 @@ export async function bootWorld(canvas, renderer, params, status) {
         // teleport's landing, never the inside position on the
         // outside collider.
         landed = !!(await modes?.restoreInterior?.(a.interior ? { ...a.interior, layout: a.layout } : a.interior, anchorLanding(a)));   // WD3 (AUDIT WD3 S5): with the layout the anchor was set in
-        if (!landed) townTalk.say('Building has no exterior doors. Repositioning player.');
+        if (!landed && !(outOfCaravan = caravanDoorLanding(a.interior))) townTalk.say('Building has no exterior doors. Repositioning player.');
+        else if (!landed) townTalk.say(CARAVAN_TEXT.outside);
       }
       if (!landed) _wodInside = false;   // WOD6: it landed outside after all
       if (landed) {
         cam.pos = player.eyeAt();   // EV1: the interpolated render eye
       } else if (plan.arrive !== 'dungeon') {
         // The exterior landing: the anchor's native coordinates back
-        // through the arrival origin, the quickload's own shape.
-        const [lx, ly, lz] = anchorLanding(a);
+        // through the arrival origin, the quickload's own shape - or,
+        // an anchor set in a caravan, the ground behind its rear door
+        // (the native point is inside the wagon's body)
+        const [lx, ly, lz] = outOfCaravan?.position ?? anchorLanding(a);
         if (walkMode) { player.spawn(lx, ly, lz); playerSpawned = true; }
         cam.pos = [lx, ly + (walkMode ? 0 : 40), lz];
       }
@@ -14106,6 +14210,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (_respawning) return;   // and a second death mid-flight cannot start a second respawn
     _respawning = true;
     endPlayerFights();   // RVN10 (Feud-Arc.md 21.2): the death ended every fight - the respawn's jump routs nobody (a death no hurt told)
+    wagonRiders?.leave();   // WAGONS2 (AUDIT): a death ends a ride in another's wagon - the risen body is never pinned back on its seat
     // WILD1: a death in the open zone rises OUT of it - the nearest town beyond the mountains - its body's offer over and
     // its cell let go (the ghost), the team brought along whatever its settings say
     const wildRise = !!wildDeath();
@@ -14216,9 +14321,15 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** PARTY-TRAVEL: a pick may carry `besideAt` - a follower's journey to the party leader lands beside them, read once
    *  the core has built the pixel - and `besideText`, the arrival's line when it did. True once the journey arrived;
    *  nothing (falsy) when it never left. */
+  let _goLeadBusy = false;   // WAGONS2 (AUDIT): fastTravelTo is waiting out GO_LEAD_MS for my riders' clients to hear `go`
   async function fastTravelTo(pick, opts, computed) {
     if (worldMoveBusy()) return;   // AUDIT 68 S22: before the gold goes
     if (_traveling) return;
+    if (_goLeadBusy) return;   // WAGONS2 (AUDIT): a journey already telling my riders - `_traveling` rises only past the lead, and a second ask in it set out twice
+    // WAGONS2 (FINAL AUDIT): a rider seated in another's wagon goes where it goes - their own fast travel (a map's, a
+    // ship's passage) teleported the pinned body away, its motor held at the far end until the owner's word lapsed. The
+    // journey that follows the owner is the party's own (`besideAt`)
+    if (typeof pick.besideAt !== 'function' && wagonRiders?.seated()) { tvSay(TRAVEL_VIEW_TEXT.rider); hudFade.clearFade(); return false; }
     const wildTrip = wildTravelGate(pick.pixel, computed?.piecesCost ?? 0);   // WILD3: never into or out of the open zone; inside it, the fee and the wait
     if (!wildTrip.ok) { hudFade.clearFade(); return false; }
     // HCC (AUDIT HCC H2): DaggerfallTravelPopUp.OnPreFastTravel [IL_a1d8] - the mod's ONE subscription for a
@@ -14234,6 +14345,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     _partyTravelOriginBoat = departure?.boat ?? null;
     _partyArrivalPending = partyArrival;
     let hccPostDue = false;
+    // WAGONS1: riders in my wagon go where I go - told before I leave the room (their clients set out on the word)
+    // FINAL AUDIT: and only when my wagon goes too - a parked one, or a following team left at the departure, keeps
+    // none (its riders were carried off and landed with no wagon, their motor held till the owner's word lapsed)
+    if (!partyArrival && !hccRuntimeOn()?.wagonGoesOnJourney?.() && wagonRiders?.release()) _hccDirty = true;
+    if (!partyArrival && wagonRiders?.announce(pick.pixel)) { _hccDirty = true; _goLeadBusy = true; try { await new Promise((r) => setTimeout(r, GO_LEAD_MS)); } finally { _goLeadBusy = false; } }
     try {
       hccRuntimeOn()?.handlePreFastTravel();
       hccPostDue = true;   // the Post is owed once the Pre ran
@@ -14954,6 +15070,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (!extras) { townTalk.say('Save version mismatch.'); return; }
       autoBuildArms(playerEntity);   // MWA1: the loaded character's arms (a boot into ?load has no chargenDone until here)
       hccRuntime.handleStartLoad();   // AUDIT HCC H3: SaveLoadManager.OnStartLoad [IL_a714] - the old character's horse, name and parked wagon end HERE, before any await, on every branch below
+      wagonRiders?.clear();   // WAGONS2 (AUDIT): a load ends every ride - mine in another's wagon, and my riders' seats (the loaded character's wagon is the save's)
       // CameraRecoiler's SaveLoadManager_OnStartLoad (:185-191): the
       // incoming character does not inherit the old one's reel.
       cameraRecoiler.reset();
@@ -15017,6 +15134,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // too - it suppresses its own marker-foe walk while the record
         // is landing (GameObjectHelper.cs:1073-1076) and overlays the
         // saved pools once the fresh ones are minted.
+        if (extras.interior?.caravanRoom) extras.interior = { ...extras.interior, caravanAt: parkedCaravanAt(extras.modData?.[HCC_VENDOR] ?? null) };   // WAGONS2 (AUDIT): the save's caravan where it was parked (the runtime's is restored after)
         const inside = extras.interior
           ? await (modes?.restoreInterior?.(extras.interior, [lx, ly, lz], {
             fromNative: (nx, nz) => state.localFromWorld(nx, nz), yOffset: state.compensation[1],
@@ -15028,7 +15146,14 @@ export async function bootWorld(canvas, renderer, params, status) {
           playerSpawned = true;
           cam.pos = [lx, ly, lz];
         } else if (extras.interior) {
-          townTalk.say('Building has no exterior doors. Repositioning player.');
+          const out = caravanDoorLanding(extras.interior);
+          if (!out) townTalk.say('Building has no exterior doors. Repositioning player.');
+          else {   // WAGONS2 (FINAL AUDIT): a caravan's room that cannot come back stands its player behind its rear door
+            townTalk.say(CARAVAN_TEXT.outside);
+            const [x, y, z] = out.position;
+            if (walkMode) { player.spawn(x, y, z); playerSpawned = true; }
+            cam.pos = [x, y + (walkMode ? 0 : 40), z];
+          }
         } else {
           if (walkMode) { player.spawn(lx, ly, lz); playerSpawned = true; }
           cam.pos = [lx, ly + (walkMode ? 0 : 40), lz];
@@ -15936,6 +16061,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT FB1007b C2: from a wall the pick is answered with the refusal - never DFU's fast travel in its stead (the
     // callers fall through to it on false)
     if (climbingNow()) { tvSay(TRAVEL_VIEW_TEXT.climbing); return true; }
+    // WAGONS2 (FINAL AUDIT): nor from a seat in another's wagon - the classic arm (First-Person Travel off the roads, the
+    // classic skin) set out with the motor held, the world's time raised and the body pinned to the seat
+    if (wagonRiders?.seated()) { tvSay(TRAVEL_VIEW_TEXT.rider); return true; }
     if (coords) travelOptions.beginTravelToCoords(pick.pixel, !!opts?.speedCautious);
     else {
       travelOptions.beginTravel({
@@ -19534,6 +19662,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   let socialMenu = null;
   let profileWin = null;   // INSPECT1: the profile over a player the F key found - made beside the F-menu it opens from
   let pageWin = null;   // JOURNAL1: the page a player held out to me, read - made beside the profile, under its gate
+  let ridePrompt = null;   // WAGONS1: a rider's ask for a seat in my wagon, the duel strip's twin
   let duelPrompt = null;   // DUEL1: the challenge at me, as a strip at the top of the screen - made beside the profile
   const pageOffers = new PageOffers();   // JOURNAL1: the pages held out to me, one per writer, waiting to be read
   let _letterPending = null;   // JOURNAL1: { draft, at } - a page sent as a letter, waiting for the chronicle to come down so the letters can open on it
@@ -19623,6 +19752,25 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!via) return;
     _parkSent = { key, word, via, c }; _parkSentAt = now; _parkRoom = online.room; _parkWelcomes = online.welcomes;
   };
+  // WAGONS2-VISIT: WHAT I HAVE PLACED IN MY CARAVAN, SAID TO ITS ROOM (net/wire.js validCaravanData) - while I stand in it
+  // online: the interior host's document of its pieces (unturned - systems/caravanVisit.js caravanDecorDoc) on every
+  // welcome of the room, and again when it changed, read at most once in CARAVAN_DECOR_MIN_MS. The relay keeps the last
+  // for my visitors, whether I am there or not.
+  const CARAVAN_DECOR_MIN_MS = 1500;
+  let _cvSent = null, _cvWelcomes = -1, _cvRoom = null, _cvReadAt = -Infinity;
+  const caravanDecorTick = (now) => {
+    if (!online || online.status !== 'open' || !online.caravanOk || !caravanKeyOf(online.room)) return;
+    const fresh = online.welcomes !== _cvWelcomes || online.room !== _cvRoom;
+    if (!fresh && now - _cvReadAt < CARAVAN_DECOR_MIN_MS) return;
+    _cvReadAt = now;
+    const d = modes?.myCaravanDecor?.() ?? null;   // null unless I stand in my own caravan
+    const c = characterIdOf(playerEntity);
+    if (!d || !c) return;
+    const key = JSON.stringify(d);
+    if (!fresh && key === _cvSent) return;
+    if (!online.sendCaravan({ c, d })) return;
+    _cvSent = key; _cvWelcomes = online.welcomes; _cvRoom = online.room;
+  };
   const foesStream = (now) => {
     if (!online || online.status !== 'open') return false;
     // WORLD6b: in a CELL everyone streams their own foes; in a world room the host alone
@@ -19644,7 +19792,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const seaRaidMoved = cell && seaRaidWord(null, full);   // OW6: and a raider's at sea
     const frame = cell ? ((modes?.mode ?? 'exterior') === 'exterior' ? exteriorFoes.foesFrame(full, _hccDirty || csaMoved || csaAboardMoved || bandMoved || navalMoved || seaRaidMoved) : null) : modes?.dungeonFoesFrame?.(full);
     if (!frame) return false;
-    if (cell && full) frame.c = camps.wireRecords(campToWire); if (cell && (full || _hccDirty)) { frame.hv = hcc.wireRecord(campToWire); _hccDirty = false; } if (cell) duelRingWord(frame, full); if (cell) csaWord(frame, full); if (cell) csaAboardWord(frame, full); if (cell) bandWord(frame, full); if (cell) navalWord(frame, full); if (cell) seaRaidWord(frame, full); if (cell) { const rk = raidWireWord(); if (rk) frame.rk = rk; } if (cell) portalWord(frame, full);   // HCC-ONLINE: my horse and wagon as shown (null: none stand) ride beside the camps - on every full frame, and on a moved word between them   // AUDIT SURV B: an empty list says "none stand" - the last camp packed reaches the peers   // SURV3: my camps ride my full frame - a shared world object in the cell's own way; RAID2: my word on the raids I run or fought - my share of their deaths, and my claim; PORTAL1: my portal, on every full frame while it stands and I stand near it
+    if (cell && full) frame.c = camps.wireRecords(campToWire); if (cell && (full || _hccDirty)) { frame.hv = hcc.wireRecord(campToWire); _hccDirty = false; } if (cell) duelRingWord(frame, full); if (cell) csaWord(frame, full); if (cell) csaAboardWord(frame, full); if (cell) bandWord(frame, full); if (cell) navalWord(frame, full); if (cell) seaRaidWord(frame, full); if (cell) { const rk = raidWireWord(); if (rk) frame.rk = rk; } if (cell) portalWord(frame, full); if (cell && frame.hv !== undefined) frame.wr = wagonRiders?.word() ?? null;   // HCC-ONLINE: my horse and wagon as shown (null: none stand) ride beside the camps - on every full frame, and on a moved word between them   // AUDIT SURV B: an empty list says "none stand" - the last camp packed reaches the peers   // SURV3: my camps ride my full frame - a shared world object in the cell's own way; RAID2: my word on the raids I run or fought - my share of their deaths, and my claim; PORTAL1: my portal, on every full frame while it stands and I stand near it; WAGONS1: my ask for a seat in another's wagon, or the seat I sit in - beside my team's word, on its clock (sent whenever `hv` is)
     if (!online.sendFoes(frame)) { _foesFullAt = -Infinity; return false; }   // AUDIT WORLD2 A9: a refused frame's deltas were already committed - the next frame carries every foe
     if (full) _foesFullAt = now;
     return true;
@@ -19799,6 +19947,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   const staffGlyphs = () => _staffGlyphs;
   let _privateSource = null, _privatePrefix = null;
   function privateRoomHere(identity) {
+    if (modes?.caravanRoom) {
+      if (caravanRelayOk()) return caravanRoomHere(identity);   // WAGONS2-VISIT: a caravan's own room - mine, or the one I visit
+      if (caravanKeyOf(identity?.privateRoom)) return null;   // a visit at an older relay keeps no caravan's room (none is entered there)
+    }   // WAGONS2-VISIT (AUDIT): and my own caravan at an older relay - the owned room, as before it (it left me in none)
     // Old relays accept arbitrary room names without this room's owner gate.
     // Never advertise personal presence through one of those relays.
     if (!chatLinks.get('world')?.staffTeleportOk || !social?.acct || !realmSession?.id) return null;
@@ -19813,6 +19965,30 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (identity?.boatUid) return privateBoatRoom(_privatePrefix, identity.boatUid);
     return privateInteriorRoom(_privatePrefix, _questLoc()?.mapTableData?.mapId, identity?.buildingKey);
   }
+  // WAGONS2-VISIT: THE CARAVAN'S ROOM ON THE RELAY (net/privateInterior.js caravanRoomOf) - `caravan:<k>`, `k` its owner's
+  // park key (net/wire.js parkKeyOf: the account the token verified and the character - the key the cell's record of the
+  // parked caravan carries). Mine is worked out once an account and character (the digest is async: no room until it
+  // lands); a visit's is the one its record named (the identity's `privateRoom`). An older relay keeps no caravan's room,
+  // and is asked for none. WAGONS2's caravan room had none at all in the wilderness (no town's map id) and a town
+  // building's (`owned:...:<map>.<key>`) in a town - its party lost it either way, and no visitor could find it.
+  let _caravanKeyFor = null, _caravanKey = null;
+  function myCaravanRoom() {
+    const c = characterIdOf(playerEntity);
+    if (!social?.acct || !c) return null;
+    const source = `${social.acct}\n${c}`;
+    if (_caravanKeyFor !== source) {
+      _caravanKeyFor = source; _caravanKey = null;
+      parkKeyOf(social.acct, c).then((k) => { if (_caravanKeyFor === source) _caravanKey = k; }).catch(() => { if (_caravanKeyFor === source) _caravanKeyFor = null; });
+    }
+    return caravanRoomOf(_caravanKey);
+  }
+  // WAGONS2-VISIT (FINAL AUDIT): a fresh session (a load inside my caravan, online turned on in it) has had no welcome
+  // to say its relay - and with no room it is never welcomed - so the world channel's word stands for it, as the owned
+  // rooms' staffTeleportOk does; the frame itself still waits for the primary's own (online.js sendCaravan)
+  const caravanRelayOk = () => !!(online?.caravanOk || chatLinks?.get('world')?.caravanOk);
+  function caravanRoomHere(identity) {   // its one caller asks the relay first (privateRoomHere's caravanRelayOk)
+    return caravanKeyOf(identity?.privateRoom) ? identity.privateRoom : myCaravanRoom();
+  }
   /** STAFF-TP: x/z are native world coordinates outdoors/in buildings;
    * dungeon/court positions are local to that exact instance. y never grounds. */
   function staffDestination() {
@@ -19824,8 +20000,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT FB1007b H3: the tutorial dungeon is each character's own (HOLD-SOLO) - staff sent there landed in their own
     // empty copy, told they stood at the player's exact position
     if (identity?.solo) return { error: 'unavailable' };
-    const privateRoom = identity?.private ? privateRoomHere(identity) : null;
-    if (mode === 'interior' && (!identity?.buildingKey || (identity.private && !privateRoom))) return { error: 'private' };
+    // WAGONS2 (FINAL AUDIT): a caravan's room is no building a door of the street walks into (staff sent there were told
+    // the instance could not be entered) - staff land behind its rear door, outside, where its owner steps out
+    const caravanRoom = mode === 'interior' ? modes?.caravanRoom ?? null : null;
+    const caravanOut = caravanRoom ? caravanDoorLanding({ caravanRoom }) : null;
+    if (caravanRoom && !caravanOut) return { error: 'private' };
+    const privateRoom = identity?.private && !caravanOut ? privateRoomHere(identity) : null;
+    if (mode === 'interior' && !caravanOut && (!identity?.buildingKey || (identity.private && !privateRoom))) return { error: 'private' };
     const inside = modes?.anchorContext?.();
     const inDungeon = mode === 'dungeon';
     const wc = inDungeon ? null : state.worldCoords(player.pos);
@@ -19835,7 +20016,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       pos: inDungeon ? [...player.pos] : [wc.x, player.pos[1] - state.compensation[1], wc.z],
       yaw: cam.yaw, pitch: cam.pitch,
     };
-    if (mode === 'interior') {
+    if (caravanOut) {
+      const c = state.worldCoords(caravanOut.position);
+      dest = { ...dest, kind: 'exterior', pos: [c.x, caravanOut.position[1] - state.compensation[1], c.z], yaw: caravanOut.yaw };
+    } else if (mode === 'interior') {
       const door = inside?.interior?.door;
       dest.door = door && { ...door, buildingKey: door.buildingKey >>> 0 };
       dest.layout = identity?.layout ?? 'classic';
@@ -20169,6 +20353,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     behaviourFor: (tag) => questBehaviourFor(questBridge?.machine, tag),
     adoptsOrphan: (from, f) => !!social?.party && adoptsOrphanQuestFoe({ myId: online?.id ?? null, myFeet: player.feetAt(), foeFeet: f.ai?.feet, partyPeers: (peersNear() ?? []).filter((p) => p.id !== from && social.isPartyPeer(p.id)) }),
   };
+  // WAGONS2-VISIT: the caravan I visit stands while its cell says so (net/caravanVisitLink.js) - moved on or gone, I am
+  // stood outside behind its door and told; painted again, its room wears it
+  const caravanVisitLink = createCaravanVisitLink({
+    onGone: (why) => modes?.leaveCaravanVisit?.(why === 'shut' ? CARAVAN_VISIT_TEXT.closed(modes?.caravanVisit?.cabinOwner || 'Its owner') : CARAVAN_VISIT_TEXT.gone) ?? true,
+    may: (w, visit) => caravanDoorOpen({ owner: visit.owner, entry: w.entry ?? 'private', guild: w.guild ?? null }),   // WAGONS2-VISIT (AUDIT): its door as its record says it now
+    onLook: (look) => { modes?.repaintCaravanVisit?.(look); },
+  });
   const cabinLink = createSailingCabinLink({
     frame: () => {
       const frame = exteriorFoes.emptyFoesFrame();
@@ -20276,6 +20467,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     exteriorFoes.setOnSites((from, sites) => wodPeerSites(from, sites), wodSprungList);   // WOD7: a peer's sprung markers - mine are spent; mine ride my full frames
     exteriorFoes.setOnCamps((from, c, at) => camps.applyOwner(from, c, campToScene, at));   // SURV3: a peer's camps, off their foes frame past the pool's own room test, through validCampRecord
     exteriorFoes.setOnHcc((from, hv, at) => hcc.applyOwner(from, hv, campToScene, at), () => hcc.clearPeers());
+    exteriorFoes.setOnRide((from, wr) => wagonRiders?.hear(from, wr));   // WAGONS1: a rider's ask, or the seat they sit in
+    exteriorFoes.setPuppetSeatDraw((f) => (hccOn() && (f.companion != null || f.shipmate) ? hcc.puppetSeatDrawn(f.puppet, f.ai?.feet, f._pup?.wire ?? null) : null));   // WAGONS2: a peer's seated companion drawn in their grown wagon
     exteriorFoes.setOnBands((from, bd) => bandHear(from, bd));   // TV7b: a peer's band chases, off their foes frame past the room test
     exteriorFoes.setOnSeaRaiders((from, sr) => seaRaidHear(from, sr));   // OW6: and their raider chases at sea, the same way
     exteriorFoes.setOnCsa((from, sa, at) => csaPeers.applyOwner(from, sa, campToScene, at), () => csaPeers.clearPeers());   // CSA-J: a peer's boats, off their foes frame past the room test, through validCsaRecord
@@ -20289,6 +20482,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     exteriorFoes.setOnPortals((from, r) => { const p = online?.peers?.get(from); portalGates.applyOwner(from, r, p?.shown ? onlineToScene(p.shown) : null); });   // PORTAL1: a peer's portal - believed only near the peer's own feet (AUDIT PORTAL1 O1), kept to its own time
     exteriorFoes.setOnDuel((from, r, at) => { const rec = r === null ? null : validRingRecord(r); if (rec) _duelRings.set(from, { rec, at }); else _duelRings.delete(from); }, () => _duelRings.clear());   // DUEL1: a peer's ring, for the wall
     online.onPark = (room, e) => hcc.applyKept(room, e, campToScene, performance.now());   // HCC-PARK: a cell's word about a parked team (mine or a halo's cell), its owner here or not
+    online.onCaravan = (room, doc) => modes?.applyCaravanDecor?.(room, doc);   // WAGONS2-VISIT: what the caravan I visit holds, from its room
     online.onParks = (room, list) => hcc.replaceKept(room, list, campToScene, performance.now());   // HCC-PARK: and a cell's whole memory, after its welcome   // HCC-ONLINE: a peer's horse and wagon, the same frame, the same room test, through validHccRecord; and the peers' teams go wherever the pool's puppets go (a room change, a leave)
     online.onTrade = (id, data) => { tradeMgr.onFrame(id, data); };
     online.onPeerDeath = (peer, pose, room) => {
@@ -20467,6 +20661,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       peerRiders?.destroy();   // RIDE
       peerWalkers?.destroy();   // DISC23-B
     });
+    globalThis.addEventListener?.('pagehide', () => caravanVisitLink.close());   // WAGONS2-VISIT: and the visited caravan's listener goes with the page
   };
   // CHAT1 (Mac: "the live chat in enhanced format ... one world tab with
   // the ability to add more tabs at a later time"): one channel session
@@ -20940,8 +21135,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       door: accountGuilds({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }),
       // GUILD2b (bible/11-Multiplayer/Guild-Overhaul.md): the pack a vault's piece leaves and arrives in - the item made
       // whole as the save's loader makes one (setItemFields), added as DFU's AddItem adds; the one checkpoint asked
-      pack: { items: () => (playerEntity.items ??= []), add: (rec) => { addItem((playerEntity.items ??= []), setItemFields(rec), 'back'); }, changed: () => { saveSoon.changed(); },
-        reach: () => _storesReached() },   // GUILD2b: the vault is reached in a town, as the Stores are (BAG1)
+      pack: { items: () => (playerEntity.items ??= []), add: (rec) => { const it = { ...rec }; for (const k of RECEIVER_MARKS) delete it[k]; addItem((playerEntity.items ??= []), setItemFields(it), 'back'); }, changed: () => { saveSoon.changed(); },   // WAGONS2-VISIT (AUDIT): a piece from the vault comes without the last owner's marks (a caravan's door among them)
+        reach: () => _storesReached(), refuses: (it) => packTradeRefusal(it, playerEntity) },   // GUILD2b: the vault is reached in a town, as the Stores are (BAG1); WAGONS2 (AUDIT): what the pack keeps - the loaded wagon
       marks: marksBook,   // MARKS1: the guild's Marks treasury moves through the account's Marks
       // PROF6: the guild Stores and the Officers' writ budget, through the writs' book, while the professions are this
       // account's
@@ -21054,6 +21249,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       asks: () => duelMgr.asks(), now: () => performance.now(), name: (id) => peerName(id) ?? 'Someone', touch: isTouchDevice(), doc: document,
       accept: (id) => { const r = duelMgr.accept(id); if (!r.ok) tradeSay(r.why === 'try again' ? TRY_AGAIN_TEXT : `You cannot accept: ${r.why}.`); },
       decline: (id) => { duelMgr.decline(id); },
+    });
+    // WAGONS1: a rider's ask for a seat in my wagon's back - the duel's strip, its own words
+    ridePrompt = createDuelPrompt({
+      asks: () => wagonRiders?.asks() ?? [], now: () => performance.now(), name: (id) => peerName(id) ?? 'Someone', touch: isTouchDevice(), doc: document,
+      accept: (id) => { wagonRiders?.accept(id); _hccDirty = true; }, decline: (id) => { wagonRiders?.decline(id); _hccDirty = true; },
+      line: (_peer, who) => RIDE_TEXT.asked(who), ttlMs: RIDE_ASK_TTL_MS, second: true,   // WAGONS2 (FINAL AUDIT): below the duel's strip, never over it
     });
     // JOURNAL1: the page window, beside the profile and under the same gate - the F-menu's 'Read their page' opens it
     // over a page held out to me (pageOffers), and F again puts it away (socialInteract). Keep files the page it shows
@@ -26146,6 +26347,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  where the feet read mid-move, up to a kilometre from where they land (AUDIT OW3 D2's own law for the find). */
   const walkFree = () => !!travelOptions && (modes?.mode ?? 'exterior') === 'exterior' && playerSpawned && playerEntity.health > 0 && !modes?.deathUp?.()
     && !worldMoveBusy() && !townTalk.overlay && !gamePaused() && !(modes?.modalWindowUp?.() ?? false) && pointerSurfaces.size === 0 && !walkDanger()
+    && !wagonRiders?.seated()   // WAGONS2: nor a rider seated in another's wagon - its driver steers (a party walk's Yes walked a held motor)
     // AUDIT OW5 P1: and only where the Overworld's own doors would let me set out - its gate (the enhanced interface, never
     // underwater: THE OVERHAUL's lane) and a passenger's refusal (travelViewCanGo: the helmsman steers). A passenger said
     // Yes and was walked off the leader's deck toward the first land leg; a classic-skin member was walked a route
@@ -26997,6 +27199,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT ONESEAT H3: offline now - the sigil in hand drinks nothing and a weapon won here is won offline (SIGIL1), and
     // the Renown layer is off, as it is for every offline character (RENOWN1); Play online here puts both back
     setSigilOnline(false); setRenownLayer(playerEntity, null); computeEntityMods(playerEntity);   // SET3 (main's, at the merge): the sets sleep with the sigils - their stat tiers folded out now, as a Renown rise folds them in
+    wagonRiders?.clear();   // WAGONS2 (FINAL AUDIT): offline, nobody rides with me nor I with anyone - my riders' seats were kept for the gone, my companions walking at heel and every journey waiting GO_LEAD_MS on them
+    caravanVisitLink.close();   // WAGONS2-VISIT: and the visited caravan's listener goes with the seat
     seatLock?.release();
     console.info('[online] another tab, window or device has the seat - this one is offline');
   };
@@ -27204,6 +27408,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       ...climbPoseOf(player),   // CLIMB5: my climb and the way my body faces on it, so the others turn me to the wall, pose me off the ground and hear me climb - absent off the wall
     };   // the wire's move bit: 1 walking, 2 running (the peers' bodies pick the clip off it)
     if (seated) arm.st = seated.st;   // CARDS2b: seated, and the table's top above the feet - absent standing, the wire's omission law
+    if (!modes?.caravanVisit) caravanVisitLink.close();   // WAGONS2-VISIT: no visit, no listener - closed before my primary joins the cell it heard (never replaced by my own id)
     if (!key) { if (online.room) online.leave(); }   // AUDIT ONLINE D4: a place the host cannot name is no room, not the old one in the wrong frame
     // AUDIT WORLD2 C8: a world room's edge is never a churn - the hold delayed every handover and let one dungeon's stream land in another
     // AUDIT WORLD6b-iii(b) B1/B8: a cell crossing is joined the moment the cell is HELD (the halo's socket promotes in
@@ -27256,9 +27461,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     modes?.setDungeonAuthority?.(dungeonAuthority(now));   // AUDIT WORLD2 C2: the seat re-read every frame - a dead socket, a terminal close or a silent host hands the foes back
     hccParkTick(now);   // HCC-PARK: my parked team's word to the cell it stands in, when it changed
     overworldLedgerFrame(now);   // OW6L: what I spent and my spawns' clocks, to the cell that keeps them
+    caravanDecorTick(now);   // WAGONS2-VISIT: what I placed in my caravan, to its room, when it changed
+    caravanVisitLink.tick(key ? online : null, modes?.caravanVisit ?? null);   // WAGONS2-VISIT: the visited caravan's cell, heard from inside it (after my primary's own join and tick)
     if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) camps.sweepOwners(ids, now, FOES_STALE_MS); }   // PERF11: the same list   // SURV3: a peer's camps go as their puppets do - the same liveness, the same answer-gate   // AUDIT WORLD6b-iii(b) C3/B5: no answer (the socket not open) is not "nobody" - it pruned every owner while the halos kept feeding frames, a spawn-and-discard loop per frame   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
     if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) hcc.sweepOwners(ids, now, FOES_STALE_MS); }   // HCC-ONLINE: a peer's team goes as their puppets and camps do - the same memoised list, the same liveness   // PERF11: the same list   // SURV3: a peer's camps go as their puppets do - the same liveness, the same answer-gate   // AUDIT WORLD6b-iii(b) C3/B5: no answer (the socket not open) is not "nobody" - it pruned every owner while the halos kept feeding frames, a spawn-and-discard loop per frame   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
     if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) csaPeers.sweepOwners(ids, now, FOES_STALE_MS); }   // CSA-J: a peer's boats go as their team does - the same memoised list, the same liveness
+    if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) wagonRiders?.sweep(ids); }   // WAGONS1: a rider of mine gone from the room gets down with them
     if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) csaAboard.sweepRiders(ids, now, FOES_STALE_MS); }   // CSA-K: and their place aboard a boat
     hcc.pruneKept(isCellRoom(online.room) ? [online.room, ...online.haloRooms()] : [], now);   // HCC-PARK: a kept team is its CELL's - it stands while I hold that cell's socket (mine or a halo's), and its welcome brings it back
     // INVIS-NET (2026-09-27, Mac relaying reports: "Other player's still see other players who are suppose to be
@@ -27275,7 +27483,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const peerYaw = travelView?.active && travelView.camera ? travelView.camera.yaw : cam.yaw;
     const peerEye = travelView?.eye ?? cam.pos, peerRight = [Math.cos(peerYaw), 0, -Math.sin(peerYaw)];
     const tvGrow = travelView?.active ? peerGrow : null;   // OW-PEERS: the others grown under the Overworld, as the traveller is
-    const drawable = isCellRoom(online.room) && csaOn() ? csaAboard.glue(online.drawable(), { poseOf: (o, i) => csaPoseAhead(o, i, dt), toWire: campToWire, dt }) : online.drawable();   // CSA-K: a peer aboard a boat stands on its deck as it is drawn here - its owner's (mine among them) or the one led here - never a stride behind it
+    const drawable = isCellRoom(online.room) && csaOn() ? csaAboard.glue(online.drawable(), { poseOf: (o, i) => csaPoseAhead(o, i, dt), toWire: campToWire, dt }) : online.drawable(); if (hccOn()) hcc.seatGlue(drawable, { toWire: campToWire });   // WAGONS2: the others seated in a wagon's back drawn on its seats as it is drawn here   // CSA-K: a peer aboard a boat stands on its deck as it is drawn here - its owner's (mine among them) or the one led here - never a stride behind it
     _peerMapPoses.clear();
     for (const d of drawable) if (d?.shown) _peerMapPoses.set(d.id, d.shown);
     const visiblePeers = gateCrowd.cut(cabin ? drawable : drawable.filter((d) => !csaPeers.isBelowDeck(d.id)), { on: modes?.gateArenaDay?.() != null, me: player.pos, at: (d) => onlineToScene(d.shown), max: gateCrowdMax(getPref('gateCrowd')), mate: (id) => !!social?.isPartyPeer(id) });   // GATE-CROWD (2026-10-07, Mac: "some type of filter when there are too many people"): in a gate's court, past the count on the Other players card only the nearest are drawn, my party always (net/gateCrowd.js) - the rest stand nowhere on this screen this frame: no body, sprite, name, light, cast or step (their map marks, above, are kept)
@@ -27464,6 +27672,99 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (covered) { sayNetStatus(null); return; }
     sayNetStatus(online?.statusLine());   // AUDIT ONLINE D12/E11: connecting, reconnecting, refused, replaced - said, not silent (FONT1: in the enhanced face)
   };
+  // RW1 (render/realWindows.js): THE STREET THROUGH A BUILDING'S GLASS - what the interior's view out draws (the mode
+  // machine asks, renderer.outsideViewFrame runs it): the clock's light over the exterior the last street frame kept,
+  // and the pixels' merged statics, odd models, ground and flats out to VIEW_RINGS, culled to the glass's own frustum.
+  // The building the player stands in is left out by its box (`clip`: the model the door's matrix stands, every door
+  // of a building carrying the building's own matrix) - from inside, its shell would stand between the pane and the street.
+  let _rwClipDoor = null, _rwClip = null;
+  const outsideViewClip = (doorMatrix) => {
+    if (doorMatrix === _rwClipDoor) return _rwClip;
+    _rwClipDoor = doorMatrix; _rwClip = null;
+    if (!doorMatrix) return null;
+    let best = -1;
+    for (const p of built.values()) {
+      const t = state.pixelTranslation(p.px, p.py);
+      for (const m of p.models) {
+        const l = m.local, b = m._box;
+        if (!l || !b || Math.abs(l[12] + t[0] - doorMatrix[12]) > 0.01 || Math.abs(l[13] + t[1] - doorMatrix[13]) > 0.01 || Math.abs(l[14] + t[2] - doorMatrix[14]) > 0.01) continue;
+        const vol = (b[3] - b[0]) * (b[4] - b[1]) * (b[5] - b[2]);
+        if (vol <= best) continue;
+        best = vol;
+        _rwClip = [b[0] + t[0] - VIEW_CLIP_PAD, b[1] + t[1] - VIEW_CLIP_PAD, b[2] + t[2] - VIEW_CLIP_PAD, b[3] + t[0] + VIEW_CLIP_PAD, b[4] + t[1] + VIEW_CLIP_PAD, b[5] + t[2] + VIEW_CLIP_PAD];
+      }
+    }
+    return _rwClip;
+  };
+  /** RW1 (AUDIT): the town's lanterns as the street frame lights them - its pool refilled, the nearest the installed set
+   *  takes - for a street looked out on after dark (the kept frame's were the hour the player went in). */
+  const outsideLanterns = (r) => {
+    const pool = fillLanternPool(built.values(), (p) => state.pixelTranslation(p.px, p.py, _lightT), _sceneLights, _litRanges, worldLightAnimator.ranges, null);
+    _litRanges = pool.ranges;
+    return nearestLights(_sceneLights, cam.pos, r.maxPointLights, _litRanges, null, 0, pool.n);
+  };
+  const drawOutsideStreet = (r, planes) => {
+    const ground = [], flats = [];
+    for (const p of built.values()) {
+      const ring = Math.max(Math.abs(p.px - state.current.x), Math.abs(p.py - state.current.y));
+      if (ring > VIEW_RINGS) continue;
+      const t = state.pixelTranslation(p.px, p.py, p._t || (p._t = [0, 0, 0]));
+      let pixelMatrix = p._pixelMatrix;
+      if (!pixelMatrix) pixelMatrix = p._pixelMatrix = identity();
+      if (pixelMatrix[12] !== t[0] || pixelMatrix[13] !== t[1] || pixelMatrix[14] !== t[2]) {
+        pixelMatrix[12] = t[0]; pixelMatrix[13] = t[1]; pixelMatrix[14] = t[2];
+        p._worldGen = (p._worldGen | 0) + 1;
+      }
+      if (p._box && aabbOutside(planes, p._box, t[0], t[1], t[2])) continue;
+      if (p.staticBatch) r.drawMesh(p.staticBatch, pixelMatrix, null);
+      for (const m of p.models) {
+        if (m._batched || aabbOutside(planes, m._box, t[0], t[1], t[2])) continue;
+        if (m._worldGen !== p._worldGen || !m._world) { m._world = multiply(pixelMatrix, m.local, m._world || new Float32Array(16)); m._worldGen = p._worldGen | 0; }
+        r.drawMesh(m.gpu, m._world, m.texRemap ?? p.texRemap);
+      }
+      ground.push(p);   // FINAL AUDIT: a pure-ocean pixel too - its ground hidden, its seafloor and its sea drawn (below), as the street frame does
+      for (const fb of p.batches) {
+        if (aabbOutside(planes, fb._box, t[0], t[1], t[2]) || !farFlatVisibleAt(ring, fb.farH ?? fb.size?.h ?? 0, fb.frame != null)) continue;
+        fb.origin = t;
+        flats.push(fb);
+      }
+    }
+    for (const cell of ground) if (!cell.deepWaters?.hide) r.drawTerrain(cell.dwTerrain ?? cell.terrain, cell._pixelMatrix, r.tileArrays.get(cell.groundArchive), cell.tilemapTex, 6.4, !!cell._dwBytes, ecoDraw(cell));   // DW-C: a pure-ocean pixel's ground is not drawn
+    // RW1 (AUDIT): AND THE WATER, as the street frame draws it - the seafloor under a carved cell's holes (a pure-ocean
+    // pixel's whole floor - FINAL AUDIT: it was left out, the sea the sky), then the surfaces over the bed on the frame's
+    // last uniforms (a waterfront looked out on showed the dry bed)
+    if (deepWaters) { drawDeepWatersFloors(ground); r.markForeignPass(); }   // FINAL AUDIT: the mod's floors ran their own programs - the renderer's bookkeeping told, as the street frame's sky span tells it
+    if (waterOn && _waterU) {
+      let n = 0;
+      for (const p of ground) {
+        if (!p.water || p.deepWaters?.hide) continue;   // DW-C: a hidden cap takes its water with it
+        const row = _waterRows[n++] ??= [null, null, null, null];
+        row[0] = p.water; row[1] = p._pixelMatrix; row[2] = r.tileArrays.get(p.groundArchive); row[3] = p.tilemapTex;
+      }
+      r.drawWaterSurfaces(_waterRows, n, 6.4, _waterU);
+      for (let i = 0; i < n; i++) _waterRows[i].fill(null);
+    }
+    if (flats.length) r.drawBillboards(flats, new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]), UP_Y);
+    // FINAL AUDIT: and the carved sea's top - Deep Waters' (on by default), the street frame's transparent queue after
+    // every cut-out flat: the view out drew the bed under it dry
+    if (deepWaters) drawDeepWatersSurfaces(performance.now(), ground);
+  };
+  const outsideView = (doorMatrix) => ({
+    clip: outsideViewClip(doorMatrix),
+    setup: (r) => {   // the clock's light: an hour spent indoors is an hour later outside
+      const clockMinute = minuteNow();
+      const keptFog = r._fogColor, keptSun = r._sunScale;   // RW1 (AUDIT): the air the street was kept in, at the light it was kept at
+      // WAGONS2 (FINAL AUDIT): and the weather's - the street frame's own terms (world/worldClock.js viewOutLight), so the clock's
+      // air below compares a dimmed sun with a dimmed sun
+      const light = viewOutLight(clockMinute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), weatherTerms().sun, sky.sunFactor());
+      r.setLighting(withMoonAmbient(light.ambient, sky.moonlight()), light.sun, SUN_RIG_COLOR);
+      r.setFogColor(clockFogColor(keptFog, keptSun, r._sunScale));   // RW1 (AUDIT): ...re-lit by the clock - the sky behind the glass with it
+      r.setWindowEmission(windowEmissionRGB(windowStyleForTime(clockMinute)));
+      r.setPointLights(lightsOnAt(clockMinute) ? outsideLanterns(r) : new Float32Array(0), CITY_LIGHT_COLOR_F32);   // RW1 (AUDIT): the town's lanterns by the clock - never the player's own light, which stays indoors with them
+      return sunDirection(clockMinute);
+    },
+    draw: ({ renderer: r, planes }) => drawOutsideStreet(r, planes),
+  });
   // VAR, not const: the pointer and wheel listeners far above close over
   // this binding and are live before it is assigned, so it must exist
   // and read undefined rather than throw a TDZ ReferenceError. Every
@@ -27471,6 +27772,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // what test/audit24_wave37.test.js asserts, both ways.
   var modes = createWorldModes({
     climbFeel,   // CLIMB4: the one body's climb camera - the modal frames take it after their own motor step
+    outsideView,   // RW1: the street through a building's glass (render/realWindows.js)
     seatedPeers: () => seatedPeerFeet(),   // CARDS2b (AUDIT CARDS B3): the others' seated feet, in this room's scene - their seats are taken
     cardOnline: { ok: () => !!online?.holdemOk, send: (w) => !!online?.sendHoldem(w), id: () => online?.id ?? null, welcomes: () => online?.holdemWelcomes ?? 0, room: () => online?.room ?? null },   // CARDS5: the relay that deals - a word to the room's card table, and who I am at it; CARDS6: the room a stake names
     cardStakes,   // CARDS6: a realm character's stakes at a relay's gold table (null off the realm)
@@ -27493,6 +27795,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     },
     iliacClaims,
     sailingCabin: sailingCabins,
+    caravanRoom: caravanRooms,   // WAGONS1
     linkedBankCabin: () => readBankCabinLink(playerEntity.boatCabinLink),
     enterLinkedBankCabin: () => enterLinkedBankCabin(),
     // WEATHER3b / AUDIT WEATHER3 R3: the world weather map over the place the player is inside - the building's pixel,
@@ -29302,6 +29605,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (climbingNow()) { tvSay(TRAVEL_VIEW_TEXT.climbing); return false; }   // AUDIT FB1007b C2
     if (duelEnemyNear() || areEnemiesNearby(exteriorFoePool())) { tvSay(TRAVEL_VIEW_TEXT.enemies); return false; }   // AUDIT DEEP2 B-4: a live duel too (DUEL1: no journey out of a duel)
     if (csaAboard.aboard) { tvSay(TRAVEL_VIEW_TEXT.passenger); return false; }   // OWS2: aboard another's boat, its helmsman steers
+    if (wagonRiders?.seated()) { tvSay(TRAVEL_VIEW_TEXT.rider); return false; }   // WAGONS2: seated in another's wagon, its driver steers - the Overworld's journeys and its walk carried a held motor
     return true;
   }
   /** OW-PATH: THE TRAVELLER IN A TOWN'S NEIGHBOURHOOD - inside its rect grown by TV_NEAR_REACH: from here every ground
@@ -31041,6 +31345,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // through the half-built world onto a model collider or the terrain as each went in, and the frame billed it.
       // The landing re-anchors the fall (player.spawn), so a held body arrives with none.
       const _seasonHeld = _partyArrivalPending || _seasonHoldKey !== null || _seasonStraightening;
+      const _rideHeld = !!wagonRiders?.seated();   // WAGONS1: a rider in another's wagon goes where it goes (pinned to their seat each frame, scenes/wagonRiders.js)
       if (!playerSpawned && built.has(startKey)) {
         // FIX-C: THE FIRST STAND IS DFU'S. StartNewCharacter
         // (StartGameBehaviour.cs:404-409) puts an exterior start through
@@ -31296,8 +31601,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         _dwLastForward = paralyzed ? 0 : axes.forward;   // DW-D: the shore exit's InputManager.Vertical, for the next frame's driver
         _csaAxes = { h: axes.strafe, v: axes.forward };   // CSA-D: InputManager.Horizontal / Vertical for the helm's inputTarget - CSA-J (the audit): InputManager has no paralysis gate, only the motors do
         playerBlowFrame({ motor: player, entity: playerEntity, shake: (k) => betterAmbience.weaponKick(k), hurt: (n) => { hurtPlayer(playerEntity, n); flashPlayerDamage(n); surfacePlayer(); } });   // TELL6e: a landing's push, rattle, knockdown and bleed
-        if (_overlayHeld || _seasonHeld) player.holdFrame();   // DISC8-G: a held motor reports no landing and no jump
-        if (!_overlayHeld && !_seasonHeld) player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: held(keys, 'Run'), autoRun: held(keys, 'AutoRun'), back: mv.backwards, sneak: held(keys, 'Sneak') || walkModeOn(), jump: false, up: false, down: false, crouch: crouchPress } : {
+        if (_overlayHeld || _seasonHeld || _rideHeld) player.holdFrame();   // DISC8-G: a held motor reports no landing and no jump
+        if (!_overlayHeld && !_seasonHeld && !_rideHeld) player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: held(keys, 'Run'), autoRun: held(keys, 'AutoRun'), back: mv.backwards, sneak: held(keys, 'Sneak') || walkModeOn(), jump: false, up: false, down: false, crouch: crouchPress } : {
           forward: axes.forward,   // TO1: the autopilot's force while a journey runs, else the player's own   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
           strafe: axes.strafe,
           run: held(keys, 'Run'),
@@ -32357,6 +32662,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
 
     // WM2b: read the eased wind ONCE a frame, not once a mill.
     const windNow = sky.wind();
+    renderer.setWindowRooms(realWindowsMode());   // RW1 (render/realWindows.js): this frame's rooms behind the town's glass - a frame's, asked after its beginFrame; and the street as it stands, kept for a building's view out
     // GHOST1 (2026-09-19): NORMALISED, because `_planes` now serves TWO
     // tests. EV3's `aabbOutside` only reads the sign of `a*px+b*py+c*pz+d`
     // and dividing all four coefficients by a positive length cannot

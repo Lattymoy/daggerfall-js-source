@@ -29,7 +29,7 @@
   {
     "name": "LA-AUDIT-A1-4-the-replay-by-sub-mesh",
     "file": "src/render/shadowPass.js",
-    "old": "        const cells = r.bounded ? mesh.shadowCells : null;",
+    "old": "        const cells = r.bounded && !mesh._evAnyCut ? mesh.shadowCells : null;   // RW1: a mesh with a cutout picture replays its sub-meshes - a cell mixes pictures",
     "new": "        const cells = null;",
     "tests": [
       "test/la_audit.test.js"

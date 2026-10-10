@@ -545,7 +545,7 @@ volleys land nothing until the count floats her again.
 Each fight's client says its body at most every BODY_SAY_MS (250), at once when it moves a thousandth, every
 BODY_SAY_KEEP_MS (3 s) however still (bodySayer): the court's (`scenes/gateCourt.js` sendBody) while it stands alive in
 a fight that lives, the Hour's through its realm's socket while the fight answered it, the serpent's host her hull
-through her cell. Only to a relay that counts (`BOSS_REF_RELAY_MIN` 186 - an older one's words know no `vt`). No
+through her cell. Only to a relay that counts (`BOSS_REF_RELAY_MIN` 188 - an older one's words know no `vt`). No
 brain's version moved: a tab from before it says no body, is refused nothing, and measures nothing.
 
 ### Decisions (2026-10-10)
@@ -600,13 +600,14 @@ the clock, and the legacy record held to its own law.
   the deposit that needs the service's order, the token's `wa`, the order kinds, the hour's sweeps (twenty), the version
   pins at acct104 and world185. The account Worker bundles the zone's drop law (`.github/workflows/account-deploy.yml`).
 - **INT11-INT15 (2026-10-10): lane 3, boss fights - built, measuring first (section 6).** Migration `0105_body` (each
-  boss kill's row keeps the relay's measure); `ACCOUNT_VERSION` acct105 and `RELAY_VERSION` world186 (`net/bossBody.js`,
+  boss kill's row keeps the relay's measure); `ACCOUNT_VERSION` acct105 and `RELAY_VERSION` world188 (world186 on its branch, renumbered past SD-HERALD's world186
+  and WAGONS1's world187 at the merge of main; `net/bossBody.js`,
   `net/bossRef.js`, `net/gateStrike.js` with `world/segment.js`, and `systems/serpentStrike.js` join the relay's bundle;
   `net/bossBody.js` the account Worker's, through the receipts). Pins: `test/int11_body.test.js` (the law and the three
   judges), `test/int12_body_relay.test.js` (the relay over the real Room, measured and enforced; the receipts; the
   service and the review; the client's glue). Mutants `tools/mutants/int_lane3.json`: 92, all dead - the run's five
   survivors each pinned since (a sweep read at one end; the relay's pose trail; a wreck's volleys, which a lone ship's
-  wreck had hidden by taking the serpent's last health out with her share; the review's lost receipts; world186 the
+  wreck had hidden by taking the serpent's last health out with her share; the review's lost receipts; world188 the
   first relay that counts); the nineteen older records the lane moved re-aimed by content, all dead. Pins moved (each marked PIN MOVED
   where it stands): the gate's, the Abyss Dungeon's and the serpent's word kinds (`vt` in, `bd` out), the Hour's census
-  and its receipts' and the gate's receipts' mint by source, the version pins at acct105 and world186.
+  and its receipts' and the gate's receipts' mint by source, the version pins at acct105 and world188.

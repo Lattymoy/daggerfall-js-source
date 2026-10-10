@@ -50,6 +50,7 @@ import { prepareRealmRecord, realmActFirst, recordMovedOf, mustChange, dropObjec
 import { GUILD_OPS_MAX, GUILD_OPS_WINDOW_S, GUILD_RANK_MASTER, guildMay, GUILD_MEMBER_RE } from '../../src/net/guildLaw.js';
 import { vaultStanding, vaultMayPut, vaultMayTake, vaultGrantOf, guildVaultSlots, GUILD_VAULT_LOG_SHOWN, GUILD_VAULT_SLOTS, GUILD_VAULT_HALL_SLOTS } from '../../src/net/guildVaultLaw.js';
 import { takeTradeGoods, giveTradeGoods, recordCount, REALM_TRADE_RECORD_MAX } from '../../src/net/realmTradeLaw.js';
+import { wagonItemName } from '../../src/systems/wagonKinds.js';   // WAGONS2 (FINAL AUDIT): a marked wagon named by its kind (already in this graph, by itemLaw.js)
 import { lawfulItem } from '../../src/systems/itemLaw.js';   // INT1 (AUDIT INT): a piece put before the law read the vault, read as it is taken
 
 const DAY_S = 86_400;
@@ -59,7 +60,7 @@ const standingOf = (m) => vaultStanding(Number(m.rank), m.vault_level == null ? 
 /** What a member took out today (UTC). */
 const takenToday = (m, nowS) => (Number(m.vault_day) === Math.floor(nowS / DAY_S) ? Number(m.vault_taken ?? 0) : 0);
 /** A piece's name as the vault's lines say it: its own, bounded. */
-const pieceName = (rec) => String(rec?.name ?? 'an item').slice(0, 64);
+const pieceName = (rec) => String(wagonItemName(rec) ?? rec?.name ?? 'an item').slice(0, 64);   // WAGONS2 (FINAL AUDIT): a Caravan's row and its log line said "Small Cart" (its record's name)
 /** Whether the guild holds a hall (its cupboards add the vault's second shelves). */
 const holdsHall = async (db, gid) => !!(await db.prepare('SELECT 1 FROM homes WHERE guild_id = ?').bind(gid).first());
 /** AUDIT2 GUILD2 S3: the vault's bound as the batch reads it (`?1` the guild) - the shelves, and the hall's while it holds

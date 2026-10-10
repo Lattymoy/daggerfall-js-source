@@ -60,7 +60,7 @@ async function risen(W) {
 }
 
 test('SD3 the wire: the frame\'s one kind each way, projected; the record\'s law moved beside it (net/sdLaw.js re-exports it); the relay that keeps it - world176 (mutants: a slot of 0 believed; a pixel off the map; the record\'s s 0 fanned; the version gate a version early)', () => {
-  assert.equal(RELAY_VERSION, 'world186');   // PIN MOVED: world186, INT11-INT14 (the INTEGRITY arc's lane 3); PIN MOVED: world183, CHAP4c (the chapters' seats' titles on the token - past THE WROTHGARIAN ZONE's world177, TAVERN CARDS' world178, HOURS-FIRST's world179, TAVERN-TABLES' world180, TV-BEYOND's world181 and CARDS10's world182 at the merges); SUPER-DUNGEONS - world171 on its branch, then world172 and world175, renumbered past main's CRYSTAL-FIST, WATCH-FIX, SERPENT3, LEGACY7 and TEXT-F1 at the merges (PIN MOVED)
+  assert.equal(RELAY_VERSION, 'world188');   // PIN MOVED: world188, INT11-INT14 (the INTEGRITY arc's lane 3 - world186 on its branch, renumbered past SD-HERALD's world186 and WAGONS1's world187 at the merge); PIN MOVED: world183, CHAP4c (the chapters' seats' titles on the token - past THE WROTHGARIAN ZONE's world177, TAVERN CARDS' world178, HOURS-FIRST's world179, TAVERN-TABLES' world180, TV-BEYOND's world181 and CARDS10's world182 at the merges); SUPER-DUNGEONS - world171 on its branch, then world172 and world175, renumbered past main's CRYSTAL-FIST, WATCH-FIX, SERPENT3, LEGACY7 and TEXT-F1 at the merges (PIN MOVED)
   assert.equal(SD_RELAY_MIN, 176, 'the Super Dungeons arc\'s one version (world171 on its branch, then world172 and world175; main\'s CRYSTAL-FIST, WATCH-FIX, SERPENT3, LEGACY7 and TEXT-F1 took world171-world175)');
   assert.equal(relaySupportsSd(RELAY_VERSION), true);
   assert.equal(relaySupportsSd('world174'), false, 'LEGACY7\'s relay closes the socket on `sd`');
@@ -347,7 +347,7 @@ test('SD3 the session: a find goes down the socket of the cell its pixel is in, 
 
 test('SD3 the relay by source: the hub\'s alarm beats the director beside the sweep and the heralds, its first account hello arms it, its welcome says the record; a cell\'s alarm tells a find owed beside the rite\'s; the Worker asks the hub after the socket\'s own check; the internal doors routed; the census counts registered accounts alone (mutants: each seam removed)', () => {
   const r = read('server/src/index.js');
-  assert.match(r, /await this\._serpentHeraldBeat\(Date\.now\(\)\); await this\._sdBeat\(Date\.now\(\)\); return; \}/);
+  assert.match(r, /await this\._serpentHeraldBeat\(Date\.now\(\)\); await this\._sdBeat\(Date\.now\(\)\); await this\._sdHeraldBeat\(Date\.now\(\)\); return; \}/);   // SD-HERALD (PIN MOVED): the Abyss Dungeon's herald after the director's beat
   assert.match(r, /await this\._sdArm\(now\);   \/\/ SD3/);
   assert.match(r, /if \(isSocialRoom\(a\.key\)\) \{ try \{ const r = await this\._sdOf\(\); if \(r && r\.s > 0\) this\._send\(ws, JSON\.stringify\(\{ t: 'sd', k: 'ev', \.\.\.r \}\)\); \}/);
   assert.match(r, /const sdOwed = await this\._sdTellHub\(Date\.now\(\)\);/);

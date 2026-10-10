@@ -265,6 +265,7 @@ on:
       - "src/systems/travelPace.js"
       - "src/systems/travelPaths.js"
       - "src/systems/uiPrefs.js"
+      - "src/systems/wagonKinds.js"
       - "src/systems/walletItem.js"
       - "src/world/buildingNames.js"
       - "src/world/meshReader.js"

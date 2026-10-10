@@ -65,8 +65,8 @@
   {
     "name": "COMPANION-WEIGHT-enhanced-store-without-it",
     "file": "src/ui/enhancedInventory.js",
-    "old": "    capacity: storeCapacityOf(deps, session), bagLoaded: !bagMayLeave(deps.entity),   // COMPANION-WEIGHT: a companion's pack takes what fits\n",
-    "new": "    bagLoaded: !bagMayLeave(deps.entity),\n",
+    "old": "    capacity: storeCapacityOf(deps, session), bagLoaded: !bagMayLeave(deps.entity), wagonKg: wagonKgFor(deps.entity),   // COMPANION-WEIGHT: a companion's pack takes what fits\n",
+    "new": "    bagLoaded: !bagMayLeave(deps.entity), wagonKg: wagonKgFor(deps.entity),\n",
     "tests": [
       "test/companion_weight.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "COMPANION-WEIGHT-header-without-it",
     "file": "src/ui/enhancedInventory.js",
-    "old": "    capacity: kind === 'wagon' ? WAGON_KG_LIMIT : kind === 'bag' ? BAG_KG_LIMIT : (storeCapacityOf(deps, state)?.kg ?? null),",
-    "new": "    capacity: kind === 'wagon' ? WAGON_KG_LIMIT : kind === 'bag' ? BAG_KG_LIMIT : null,",
+    "old": "    capacity: kind === 'wagon' ? wagonKgFor(deps.entity) : kind === 'bag' ? BAG_KG_LIMIT : (storeCapacityOf(deps, state)?.kg ?? null),",
+    "new": "    capacity: kind === 'wagon' ? wagonKgFor(deps.entity) : kind === 'bag' ? BAG_KG_LIMIT : null,",
     "tests": [
       "test/companion_weight.test.js"
     ]

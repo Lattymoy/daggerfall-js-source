@@ -56,9 +56,9 @@ test('INT11 THE WIRE: a body\'s word (`vt`, thousandths of its whole) a new kind
   assert.equal(relaySupportsBossRef(`world${BOSS_REF_RELAY_MIN}`), true);
   assert.equal(relaySupportsBossRef('nonsense'), false);
   assert.ok(relayVersionAtLeast(BOSS_REF_RELAY_MIN), 'the relay this tree builds counts');
-  assert.equal(BOSS_REF_RELAY_MIN, 186, 'world186 the first that counts');
-  assert.equal(relaySupportsBossRef('world185'), false, 'lane 2\'s relay counts nothing - its gate words know no `vt`');
-  assert.equal(RELAY_VERSION, 'world186');
+  assert.equal(BOSS_REF_RELAY_MIN, 188, 'world188 the first that counts (world186 on its branch, renumbered at the merge of main)');
+  assert.equal(relaySupportsBossRef('world187'), false, 'the relay before it counts nothing - its gate words know no `vt`');
+  assert.equal(RELAY_VERSION, 'world188');
 });
 
 // ═══ THE GATE ═══════════════════════════════════════════════════════════════════

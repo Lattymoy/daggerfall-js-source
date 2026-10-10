@@ -62,7 +62,7 @@ test('DISC8-G by source: every host that holds its motor clears the report on th
   // PIN MOVED (AUDIT CLIMB-ARC F2): and no climb events - the shape is held whole by test/auditclimbarc.test.js F2
   assert.match(m, /holdFrame\(\) \{\n\s*this\.jumped = false;\n\s*this\.parkoured = null;\n\s*this\.landedFallDistance = 0;\n(?:\s*\/\/[^\n]*\n)*\s*if \(this\.climbEvents\.length\) this\.climbEvents = \[\];\n\s*\}/, 'CLIMB1: a held frame reports no mantle either');
   assert.match(m, /this\._heightReset\(\);[^\n]*\n\s*this\.holdFrame\(\);[^\n]*\n\s*\}/, 'spawn clears the report');
-  assert.match(rd('src/scenes/world.js'), /if \(_overlayHeld \|\| _seasonHeld\) player\.holdFrame\(\);[^\n]*\n\s*if \(!_overlayHeld && !_seasonHeld\) player\.update\(/);
+  assert.match(rd('src/scenes/world.js'), /if \(_overlayHeld \|\| _seasonHeld \|\| _rideHeld\) player\.holdFrame\(\);[^\n]*\n\s*if \(!_overlayHeld && !_seasonHeld && !_rideHeld\) player\.update\(/);   // PIN MOVED (WAGONS1): a rider's held motor too
   assert.match(rd('src/scenes/exterior.js'), /if \(_overlayHeld\) player\.holdFrame\(\);[^\n]*\n\s*if \(!_overlayHeld\) player\.update\(/);
 });
 

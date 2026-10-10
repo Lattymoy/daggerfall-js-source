@@ -315,6 +315,8 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   let _onCamps = null;          // SURV3: (from, records, nowMs) - a peer's camps off their foes frame, once the frame has passed the room test
   let _onHcc = null;            // HCC-ONLINE: (from, record | null, nowMs) - a peer's horse and wagon off the same frame (systems/horseCartWire.js)
   let _onHccClear = null;       // HCC-ONLINE: called wherever clearPuppets runs - the peers' teams go with the puppets
+  let _onRide = null;           // WAGONS1: (from, word | null) - a peer's word on a seat in a wagon's back (systems/wagonSeats.js `wr`)
+  let _puppetSeatDraw = null;   // WAGONS2: (puppet) -> { feet, g } | null - where a peer's companion seated in their wagon's back is DRAWN
   let _onRaids = null;          // RAID2: (from, word, nowMs) - a peer's word on its raids (systems/raidingParties.js raidPeerWord)
   let _onCsa = null;            // CSA-J: (from, record | null, nowMs) - a peer's boats off the same frame (systems/comeSailAwayWire.js)
   let _onCsaClear = null;       // CSA-J: called wherever the teams' clear runs - the peers' boats go with the puppets
@@ -2024,7 +2026,13 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const szG = szE * wildGiantSize(f.entity);   // WILD3: a giant of the open zone, four times over
       const sz = szG === 1 ? sz0 : { w: sz0.w * szG, h: sz0.h * szG };
       f.batch.record = rkey;
-      f.batch.size = { w: o.flip ? -sz.w : sz.w, h: sz.h };
+      // WAGONS2: a companion seated in my wagon's back is DRAWN where the wagon is drawn - grown with it under the
+      // Overworld (scenes/crewAshore.js ai.seatDraw, the pool's seatDrawn); its body stays on the seat itself
+      const _sd = f.ai?.seatDraw?.() ?? (f.puppet && _puppetSeatDraw ? _puppetSeatDraw(f) : null), _sg = _sd?.g > 1 ? _sd.g : 1;   // and a peer's, on their wagon as drawn here
+      f.batch.size = { w: (o.flip ? -sz.w : sz.w) * _sg, h: sz.h * _sg };
+      // WAGONS2 (AUDIT): grown, it casts no shadow - OW-BIG's law for every grown figure (a 16 m companion's shadow lay
+      // over the view); the flag the grow set let go when it ends, unless the dissolve holds it (systems/dissolve.js [4])
+      if (_sg > 1) { f.batch.noShadow = true; f._seatShadow = true; } else if (f._seatShadow) { f._seatShadow = false; if (!f.batch.dissolve?.[4]) f.batch.noShadow = undefined; }
       // INCIDENT 2026-09-04: a flyer or swimmer keeps its CENTRE across
       // records (DaggerfallMobileUnit.cs:407-410); a walker its feet.
       const _bh = f.mobile.basics.behaviour ?? 'General';
@@ -2032,7 +2040,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         const org = f._origin ?? (f._origin = [0, 0, 0]);
         org[0] = f.ai.feet[0]; org[1] = spriteOriginY(f.ai.feet[1], f.idleH, sz.h, _bh); org[2] = f.ai.feet[2];
         f.batch.origin = org;
-      } else f.batch.origin = f.ai.feet;
+      } else f.batch.origin = _sg > 1 ? _sd.feet : f.ai.feet;
       out.push(f.batch);
     }
     return [...out, ...corpseBatches.map((c) => c.batch), ...portals.batches()];   // COMPANION-PORTAL: and the portals
@@ -2334,6 +2342,8 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   function reclaimSite(site) { _lostSites.delete(site); }
   function setOnCamps(fn) { _onCamps = typeof fn === 'function' ? fn : null; }
   function setOnHcc(fn, onClear = null) { _onHcc = typeof fn === 'function' ? fn : null; _onHccClear = typeof onClear === 'function' ? onClear : null; }   // HCC-ONLINE
+  function setOnRide(fn) { _onRide = typeof fn === 'function' ? fn : null; }   // WAGONS1
+  function setPuppetSeatDraw(fn) { _puppetSeatDraw = typeof fn === 'function' ? fn : null; }   // WAGONS2
   function setOnBands(fn) { _onBands = typeof fn === 'function' ? fn : null; }   // TV7b
   function setOnSeaRaiders(fn) { _onSeaRaiders = typeof fn === 'function' ? fn : null; }   // OW6
   function setOnRaids(fn) { _onRaids = typeof fn === 'function' ? fn : null; }   // RAID2
@@ -2601,7 +2611,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (data.nv !== undefined) _onNaval?.(from, data.nv, _now());   // NAV-G: the owner's sea (null: none) - the ships they stand, their last volleys and barrels; past the same room test
     if (data.pg !== undefined) _onPortals?.(from, data.pg);   // PORTAL1: the owner's portal - a frame without it leaves the copy to run out on its own time; past the same room test
     if (data.hv !== undefined) _onHcc?.(from, data.hv, _now());   // HCC-ONLINE: the owner's horse and wagon (null: none stand) - a frame without the field leaves the last word standing; past the same room test the camps pass
-    if (Array.isArray(data.c)) _onCamps?.(from, data.c, _now());   // SURV3: the owner's camps ride the same frame, past the same room test - the host's pool lands them
+    if (Array.isArray(data.c)) _onCamps?.(from, data.c, _now()); if (data.wr !== undefined) _onRide?.(from, data.wr);   // SURV3: the owner's camps ride the same frame, past the same room test - the host's pool lands them; WAGONS1: their ask for a seat in my wagon, or the seat they sit in - the same room test
     return true;
   }
   /** One streamed record onto its puppet: the target pose - kept in the WORLD frame and converted every step (AUDIT
@@ -3169,6 +3179,8 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     setOnSeaRaiders,   // OW6
     setOnCsaAboard,   // CSA-K
     setOnNaval,   // NAV-G
+    setOnRide,   // WAGONS1: the seats' word
+    setPuppetSeatDraw,   // WAGONS2: a peer's seated companion, drawn in their grown wagon
     setOnPortals,   // PORTAL1
     setOnCamps, setOnHcc, setOnDuel };   // SURV3; HCC-ONLINE
 }

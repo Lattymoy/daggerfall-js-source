@@ -145,5 +145,5 @@ test('AUDIT 29 B2: a home\'s Forge station is offered, and sold, only where a Fo
   setProfessionsPages(null);
   const src = (await import('node:fs')).readFileSync(new URL('../src/scenes/decorTool.js', import.meta.url), 'utf8');
   assert.match(src, /if \(PROF_STATIONS\.includes\(want\) && !forgeOffered\(\)\) \{ deps\.say\?\.\(stationColdLine\(want\)\); return false; \}/, 'the tool sells none where the panel offers none (PROF4: a workbench neither)');
-  assert.match(src, /if \(want === VENDOR_STATION && !forgeOffered\(\)\) \{ deps\.say\?\.\(VENDOR_COLD_LINE\); return false; \}/, 'HOME-VENDOR: nor a trader');
+  assert.match(src, /if \(want === VENDOR_STATION && \(r\?\.kind !== 'home' \|\| !forgeOffered\(\)\)\) \{ deps\.say\?\.\(VENDOR_COLD_LINE\); return false; \}/, 'HOME-VENDOR: nor a trader - WAGONS2 (FINAL AUDIT): and in a home alone');
 });
