@@ -20,6 +20,8 @@
 // refills it. The numbers below are the first setting, a guess the measure exists to replace.
 // ═══════════════════════════════════════════════════════════════════
 
+import { DB_ROOT } from './service.js';   // SCALE4d: the binding a request's counted Proxy wraps - what the config is kept by
+
 /** The first setting, by level band: `upTo` the band's top level, `rate` the gold an hour of play may add, `cap` the most
  *  the bucket holds (hours of rate). OPEN, every one - the measure sets them. */
 export const BUDGET_DEFAULT = Object.freeze({
@@ -53,19 +55,24 @@ export function budgetConfigOf(/** @type {unknown} */ v) {
 export const BUDGET_CONFIG_KEEP_MS = 60_000;
 /** @type {WeakMap<object, { at: number, config: any }>} */
 const kept = new WeakMap();
+/** SCALE4d: KEPT BY THE BINDING, never by the object a request hands in (STORM-SHED's DB_ROOT). A deployed service counts
+ *  every request's statements through a Proxy made for that request (metrics.js countedDb), so keyed by `db` this kept
+ *  nothing past its own request: every realm checkpoint read the config again, the minute it was meant to keep it. */
+const keyOf = (/** @type {any} */ db) => (db && typeof db === 'object' ? db[DB_ROOT] ?? db : null);
 /** The config standing: staff's, else the first setting. */
 export async function budgetConfig(/** @type {any} */ db) {
-  const k = kept.get(db);
+  const k = kept.get(keyOf(db) ?? {});
   if (k && Date.now() - k.at < BUDGET_CONFIG_KEEP_MS) return k.config;
   const row = await db.prepare("SELECT value FROM realm_config WHERE key = 'budget'").first();
   let c = null;
   try { c = budgetConfigOf(JSON.parse(row?.value ?? 'null')); } catch { c = null; }
   const config = c ?? BUDGET_DEFAULT;
-  if (db && typeof db === 'object') kept.set(db, { at: Date.now(), config });
+  const key = keyOf(db);
+  if (key) kept.set(key, { at: Date.now(), config });
   return config;
 }
 /** A staff change made here: the next read asks the database. */
-export const forgetBudgetConfig = (/** @type {any} */ db) => { if (db && typeof db === 'object') kept.delete(db); };
+export const forgetBudgetConfig = (/** @type {any} */ db) => { const key = keyOf(db); if (key) kept.delete(key); };
 /** The band a level plays in: the first whose top it does not pass, else the last. */
 export const bandOf = (/** @type {{ bands: readonly any[] }} */ config, /** @type {number} */ level) => config.bands.find((b) => level <= b.upTo) ?? config.bands[config.bands.length - 1];
 

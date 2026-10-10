@@ -10,10 +10,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { standService, T0 } from './accountDb.mjs';
+import { standService, T0, d1 } from './accountDb.mjs';
 import { seatRealm } from './realmSeat.mjs';
 import { REPLICA_ROUTES, REPLICA_CONSTRAINT, replicaDb, DB_ROOT } from '../server-account/src/service.js';
 import { countedDb } from '../server-account/src/metrics.js';
+import { budgetConfig, forgetBudgetConfig } from '../server-account/src/budget.js';
 import { verifyToken } from '../src/net/identityToken.js';
 
 const { subtle } = globalThis.crypto;
@@ -113,4 +114,16 @@ test('SCALE4d the session answers DB_ROOT with the binding it came from, through
   const old = { prepare: () => ({}) };
   assert.equal(replicaDb(old), old, 'no sessions: the binding itself');
   assert.equal(replicaDb(null), null);
+});
+
+test('SCALE4d the wealth budget\'s config is kept by the binding, never by the Proxy a request hands in - a deployed service makes one a request (countedDb), and keyed by it the minute kept nothing: every realm checkpoint read the config again (mutant: kept by the object handed in)', async () => {
+  const raw = d1();
+  const t1 = { n: 0 }, t2 = { n: 0 }, t3 = { n: 0 };
+  await budgetConfig(countedDb(raw, t1));
+  assert.equal(t1.n, 1, 'the first request reads it');
+  await budgetConfig(countedDb(raw, t2));
+  assert.equal(t2.n, 0, 'the next request, through a Proxy of its own, reads nothing');
+  forgetBudgetConfig(countedDb(raw, { n: 0 }));
+  await budgetConfig(countedDb(raw, t3));
+  assert.equal(t3.n, 1, 'a staff change forgets it for every request');
 });

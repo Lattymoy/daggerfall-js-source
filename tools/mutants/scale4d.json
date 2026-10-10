@@ -4,7 +4,9 @@
     "file": "server-account/src/service.js",
     "old": "export const REPLICA_ROUTES = new Set(['/v1/auth/token']);",
     "new": "export const REPLICA_ROUTES = new Set([]);",
-    "tests": ["test/scale4d.test.js"],
+    "tests": [
+      "test/scale4d.test.js"
+    ],
     "note": "no route on a session - the reconnect wave's mints back on the one primary"
   },
   {
@@ -12,7 +14,9 @@
     "file": "server-account/src/index.js",
     "old": "    const db = REPLICA_ROUTES.has(path) && request.method === 'POST' ? replicaDb(env.DB) : env.DB;",
     "new": "    const db = env.DB;",
-    "tests": ["test/scale4d.test.js"],
+    "tests": [
+      "test/scale4d.test.js"
+    ],
     "note": "the mint left on the binding"
   },
   {
@@ -20,7 +24,9 @@
     "file": "server-account/src/index.js",
     "old": "    const db = REPLICA_ROUTES.has(path) && request.method === 'POST' ? replicaDb(env.DB) : env.DB;",
     "new": "    const db = replicaDb(env.DB);",
-    "tests": ["test/scale4d.test.js"],
+    "tests": [
+      "test/scale4d.test.js"
+    ],
     "note": "every route on a session - a write's reads served by a replica the route never reasoned about"
   },
   {
@@ -28,7 +34,9 @@
     "file": "server-account/src/service.js",
     "old": "export const REPLICA_CONSTRAINT = 'first-primary';",
     "new": "export const REPLICA_CONSTRAINT = 'first-unconstrained';",
-    "tests": ["test/scale4d.test.js"],
+    "tests": [
+      "test/scale4d.test.js"
+    ],
     "note": "the session lookup on any replica - a guest made a moment ago refused `auth`, which the client takes as final"
   },
   {
@@ -36,7 +44,9 @@
     "file": "server-account/src/metrics.js",
     "old": "      if (key === 'withSession') {",
     "new": "      if (key === 'withSession-') {",
-    "tests": ["test/scale4d.test.js"],
+    "tests": [
+      "test/scale4d.test.js"
+    ],
     "note": "a session opened past the counter - a mint's metrics point says it ran nothing"
   },
   {
@@ -44,7 +54,9 @@
     "file": "server-account/src/service.js",
     "old": "      if (key === DB_ROOT) return root;",
     "new": "      if (key === DB_ROOT) return target;",
-    "tests": ["test/scale4d.test.js"],
+    "tests": [
+      "test/scale4d.test.js"
+    ],
     "note": "DB_ROOT the session - what an isolate keeps beside its database split per request"
   },
   {
@@ -52,7 +64,19 @@
     "file": "server-account/src/service.js",
     "old": "  if (typeof open !== 'function') return db;\n  const root = db[DB_ROOT] ?? db;",
     "new": "  const root = db[DB_ROOT] ?? db;",
-    "tests": ["test/scale4d.test.js"],
+    "tests": [
+      "test/scale4d.test.js"
+    ],
     "note": "a binding with no sessions throws at the mint"
+  },
+  {
+    "name": "SCALE4d-budget-kept-by-proxy",
+    "file": "server-account/src/budget.js",
+    "old": "const keyOf = (/** @type {any} */ db) => (db && typeof db === 'object' ? db[DB_ROOT] ?? db : null);",
+    "new": "const keyOf = (/** @type {any} */ db) => (db && typeof db === 'object' ? db : null);",
+    "tests": [
+      "test/scale4d.test.js"
+    ],
+    "note": "the budget's config kept by the request's Proxy - kept nothing past its request in a deployed service"
   }
 ]

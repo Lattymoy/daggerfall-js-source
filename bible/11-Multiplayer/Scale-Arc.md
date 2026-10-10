@@ -600,6 +600,10 @@ N^2/2 join frames. `_message` is past V8's optimizing ceiling (PERF-RELAY1), so 
   `PUT /accounts/{account}/d1/database/{id}` with `{"read_replication":{"mode":"auto"}}`, the same token that creates
   the database. A PUT of the mode it already has changes nothing. A refusal is a warning, never a stop: without
   replicas, every statement of a session is the primary's, which is exactly today.
+- **The wealth budget's config, kept by the binding** (`budget.js`, found reading the caches for this slice). It kept
+  its config a minute by the `db` object a request handed in. A deployed service counts every request through a Proxy
+  made for that request (`countedDb`), so it kept nothing past its own request, and every realm checkpoint read
+  `realm_config` again. It is keyed by DB_ROOT now, as STORM-SHED's seat rows are.
 - **Unmeasured.** The account Worker runs under Smart Placement, beside its primary (SCALE1). Whether a replica takes
   the mint's reads from there, or the nearest instance is the primary itself, is Cloudflare's to say. The service's
   metrics will show whether a deploy's wave still overloads the primary. Correctness does not depend on it: a
@@ -690,10 +694,11 @@ A hello's floor is its token's Ed25519 verify, the same in both arms. What is le
 
 ### Pins
 
-- **`test/scale4d.test.js` (5).** The mint runs on one session opened `first-primary`, the session lookup first, every
+- **`test/scale4d.test.js` (6).** The mint runs on one session opened `first-primary`, the session lookup first, every
   statement through it and none on the binding. No other route opens one. The claims are byte for byte the binding's,
   the same token. The metrics point counts the session's statements. DB_ROOT is the binding, through the counter too,
-  and a binding with no sessions is answered as it stands.
+  and a binding with no sessions is answered as it stands. The budget's config is read once across two requests'
+  Proxies, and forgotten for both by a staff change.
 - **`test/scale5a.test.js` (10).**
   - The kept account and subject indexes answer EXACTLY what the old walks answered: over six seeded stories of the
     hub's own doors (hellos, reconnects, claims, drops) and four at the index's own doors. The latter adopt, set,
@@ -708,10 +713,10 @@ A hello's floor is its token's Ed25519 verify, the same in both arms. What is le
   - The minter's `unopened`, and the session's hand-back on that reason alone.
   - The serpent receipt is asked once, and handed over once one is written.
   - The drain is told while the runtime still lists the last socket.
-- **`tools/mutants/scale4d.json`**: 7 mutants, 7 dead. **`tools/mutants/scale5a.json`**: 26 mutants, 26 dead.
+- **`tools/mutants/scale4d.json`**: 8 mutants, 8 dead. **`tools/mutants/scale5a.json`**: 26 mutants, 26 dead.
 - **PIN MOVED:**
   - ACCOUNT_VERSION's pins (acct106), 18 files and KNIGHT-HOUSE-version-unmoved.
-  - RELAY_VERSION's pins (world189), 39 files, `disc7`'s list, `soc1.json`'s version record, and `relayversion`'s row.
+  - RELAY_VERSION's pins (world189), 38 files, `disc7`'s list, `soc1.json`'s version record, and `relayversion`'s row.
   - `accountdeploy`'s verifier pin reads a step's live lines (the replicas' PUT is no `v1/` of the service's).
   - ROSTER-G's count pin: a leave for an id the cut list never held now counts.
   - SOC1's and AUDIT DEEP2 C's source pins (`_fanBut`, `_othersOf`).
