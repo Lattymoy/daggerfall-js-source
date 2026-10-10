@@ -31300,6 +31300,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // the movement half of the same law, not this one.
     player.paralyzed = paralyzed;
 
+    const motorStep = () => {   // PERF-V8
     if (walkMode) {
       // ROAD-Ar (R0): the season re-skin's hold, released the moment
       // the player's own pixel is BUILT again - the same shape as the
@@ -32071,9 +32072,12 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       if (keys.has('KeyA')) for (let a = 0; a < 3; a++) cam.pos[a] -= right[a] * speed;   // fly-cam (dev)
       if (keys.has('KeyD')) for (let a = 0; a < 3; a++) cam.pos[a] += right[a] * speed;   // fly-cam (dev)
     }
+    };
+    motorStep();
 
     // Streaming step: recentre, enqueue new pixels, drop far ones.
     spendRestrides();   // STREAM1: a promoted pixel's grid, one a frame, off the crossing's own frame
+    const dwTerrainPassStep = () => {   // PERF-V8
     if (deepWaters) {
       // DW-E1: StreamingWorld's terrain pass (OnUpdateTerrainsStart / End) is the stream's own busy spell here
       const _dwPass = !!(building || queue.length || inFlight.size);
@@ -32089,8 +32093,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       }
       if (oceanHoles) ohFrame(dt);   // OH-B: OceanHoles.Update - its DefaultExecutionOrder(32002) puts it after every Update of the sea's own
     }
+    };
+    dwTerrainPassStep();
     const wasMapPixel = { x: state.current.x, y: state.current.y };   // state.update overwrites it; PlayerGPS's lastMapPixelX/Y
     const r = state.update(cam.pos);
+    const originShiftStep = () => {   // PERF-V8
     if (r.offset) {
       // FloatingOrigin.OffsetPlayerController (:176-181) adjusts the
       // fall start BEFORE it moves the controller - without it a
@@ -32166,6 +32173,9 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       if (peerBodies) peerBodies.offsetAll(r.offset);   // MWBODY1 (AUDIT MWBODY B2): the bodies' feet follow the origin as the dolls do
       familyStreet?.offsetAll(r.offset);   // LEGACY7 part four: and the line's in the street
     }
+    };
+    originShiftStep();
+    const pixelChangedStep = () => {   // PERF-V8
     if (r.pixelChanged) {
       // P1: PlayerGPS.Update (:329-339). The map pixel changed, so
       // the world has moved on - "Clear non-permanent scenes from
@@ -32262,6 +32272,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         }
       }
     }
+    };
+    pixelChangedStep();
     try { bountyHost?.tick(dt); } catch (e) { console.warn('[bounty] tick', e); }   // BOUNTY1: the hunts - packs stood and counted, a purse paid, a notice raised
     try { legacyStep(dt); } catch (e) { console.warn('[legacy] tick', e); }   // LEGACY1: the seat, the elder, the estate, a dead load
     try { gatherHost?.tick(dt); } catch (e) { console.warn('[prof] tick', e); }   // PROF1: the patches, the prompt, the act, the answers
@@ -32446,6 +32458,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (jump || weatherArrivalStamp() !== seenArrival) { distantStorms.reset(); stormLights.reset(); }   // AUDIT WEATHER3 R5: any landing, the word moved or not; BOLT: the strikes burning were the old place's
     seenArrival = weatherArrivalStamp();
     const struckFar = [];   // BOLT: the distant strikes fired this frame, in host metres
+    const distantStormStep = () => {   // PERF-V8
     if (isEnhanced() && !weatherOverride && !sunbaby.on) {   // SUNBABY1: no storm anywhere under the sun baby
       const ds = distantStorms.tick({ systems: currentMapSystems(), at: fieldXZ(), minutes: playerTicker.classicMinutes, seconds: now / 1000, ground: mapGroundHere });
       const hostOf = (x, z) => { const n = nativeFromField(x, z); return state.localFromWorld(n[0], n[1]); };
@@ -32454,15 +32467,20 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       for (const s of ds.sounds) { const h = hostOf(s.x, s.z); audio.play3d(s.clip, thunderSourceAt(cam.pos, h[0], h[1]), s.volume, { refDistance: THUNDER_SOURCE_M, maxDistance: THUNDER_SOURCE_M * 8, far: true }); }   // DISC17-B: held at its bearing from the ear, so walking or a recentre never cuts it off
       for (const s of ds.strikes) { const h = hostOf(s.x, s.z); struckFar.push({ x: h[0], z: h[1], seed: s.seed, kind: s.kind, strength: s.strength }); }
     }
+    };
+    distantStormStep();
     // EVENT1: THE RED STORM - the dread's strikes on the shared clock (every player online sees one in the same
     // second, each around themselves), their channels and light through the same field as the weather's, in the
     // event's colours; the thunder on both skins, its distance over the speed of sound later, from its side
     if (jump) { dreadStorm.reset(); gateStorm.reset(); }
+    const dreadStormStep = () => {   // PERF-V8
     {
       const ds = dreadStorm.tick({ sharedMs: Date.now() + _sharedOffsetMs, eye: tvStand, weight: dreadW });
       if (isEnhanced()) for (const s of ds.strikes) struckFar.push({ ...s, flashColor: DREAD_FLASH_COLOR });
       for (const s of ds.sounds) audio.play3d(s.clip, thunderSourceAt(cam.pos, s.x, s.z), s.volume, { refDistance: THUNDER_SOURCE_M, maxDistance: THUNDER_SOURCE_M * 8, far: true });
     }
+    };
+    dreadStormStep();
     // SUNBABY2: THE FIRE - under the wrath the sun baby's fireballs fall round the traveller on the shared clock (every
     // player online sees one drop in the same second, each round themselves), drawn by the spell engine, burning no one
     if (jump) sunbabyRain.reset();
@@ -32470,12 +32488,15 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // WBX8: THE GATE'S RED STORM - the same strikes' law on a schedule of its own, round the gate's site (so its
     // lightning shows where the gate stands), its thunder from each strike's distance to the ear; ticked every frame,
     // at nothing when no gate burns, so a gate coming into reach fires no backlog
+    const gateStormStep = () => {   // PERF-V8
     {
       if (gateSky) { _gateStormC[0] = gateSky.x; _gateStormC[2] = gateSky.z; }
       const gs = gateStorm.tick({ sharedMs: Date.now() + _sharedOffsetMs, eye: tvStand, weight: gateSky?.weight ?? 0, centre: gateSky ? _gateStormC : null });
       if (isEnhanced()) for (const s of gs.strikes) struckFar.push({ ...s, flashColor: DREAD_FLASH_COLOR });
       for (const s of gs.sounds) audio.play3d(s.clip, thunderSourceAt(cam.pos, s.x, s.z), s.volume, { refDistance: THUNDER_SOURCE_M, maxDistance: THUNDER_SOURCE_M * 8, far: true });
     }
+    };
+    gateStormStep();
     // BOLT: THE STRIKES THEMSELVES - a ground strike's channel from its cloud's base to the land, far or overhead, and
     // the light a near one throws on it (systems/lightning.js). Enhanced only. Under Dynamic Skies too: the mod draws no
     // channel, and its own flash keeps the light (setFlashLight below takes the mod's first).
@@ -32569,6 +32590,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // QUAYS: the quays' lanterns, in the lanterns' hours, scene lights beside the boats' in the town lanterns' colour -
     // AUDIT HOLDINGS Q3: never the player's extras, which are never cut and pushed the street's nearest out of the cap
     if (lightsOnAt(minute)) for (const l of quays?.lights() ?? []) csaLit.push({ x: l.x, y: l.y, z: l.z, range: l.range, color: CITY_LIGHT_COLOR_F32 });
+    const lanternsStep = () => {   // PERF-V8
     if (lightsOnAt(minute)) {
       worldLightAnimator.tick(dt);
       // YARD-LIGHT: the yards' lamps - the town's own (homeYards.js yardLampOf: an outdoor lamp is the town's) - scene lights beside
@@ -32612,6 +32634,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       if (wodSel) _wodSetLights(lit, wodSel);
       else renderer.setPointLights(lit, CITY_LIGHT_COLOR_F32);
     }
+    };
+    lanternsStep();
     csaPoolFrame(dt);   // CSA-B/C: the sails' FixDeformations (LateUpdate) and the lanterns' two behaviours, on Time.deltaTime; the lights they decide reach the next frame's list (the mod's own Update and LateUpdate ran after the motor: csaUpdate)
     warmAshesFrame(gamePaused() ? 0 : dt * worldTimeScale());   // WA1: TransportToShipWithDelay's WaitForSeconds, held by a pause, scaled with the world
     crewAshoreTick();   // CREW-COMPANIONS: the party stood on the street
@@ -32723,6 +32747,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     _pixelOrder.length = 0;
     for (const p of built.values()) { p._dist2 = (p.px - state.current.x) ** 2 + (p.py - state.current.y) ** 2; _pixelOrder.push(p); }
     _pixelOrder.sort((a, b) => a._dist2 - b._dist2);
+    const pixelWalkStep = () => {   // PERF-V8
     for (const p of _pixelOrder) {
       // EV2: the pixel's frame matrix caches on the built entry and
       // refreshes only when its translation actually changes (a
@@ -32838,6 +32863,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         (off ? castBatches : allBatches).push(b);   // SHADOW-REACH: the maps alone, or the frame
       }
     }
+    };
+    pixelWalkStep();
     // SNOWFALL1 (AUDIT ENVIRONS G7): THE SNOW BEFORE THE GROUND UNDER IT - GROUND-LAST's own law a layer up: an opaque
     // surface over the ground (SNOW_LAYER keeps it over whichever is drawn first), so a ground fragment under the snow
     // fails the depth test before its shader runs, and the picture is the same. By the ground's own program, the
@@ -32892,6 +32919,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // the air (rain, snow, heavy fog); its light state is the frame's
     // own, already installed by setLighting/beginFrame above. It
     // shares the EV6 seam mark below - one foreign span, two passes.
+    const ringStep = () => {   // PERF-V8
     if (farRing && fogNow.mode === 'linear') {
       if (farRing.needsRebuild(state.current.x, state.current.y)) {
         farRing.build({
@@ -32919,6 +32947,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         fovY: fieldOfView() + climbFeel.fovRad(), aspect: worldAspect,   // CLIMB4: the lens the world took
       });
     }
+    };
+    ringStep();
     if (deepWaters) dwRender.drawSkyFog();   // DW-C: the distance fog over the sky's pixels (and the ring's), before anything blends over them - a no-op while it is off
     renderer.markForeignPass();   // EV6: the sky (and EV8's ring) changed programs behind the shadows' back
     // WATER1: THE WATER, after every pixel's opaque ground and models and
@@ -32927,6 +32957,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // uniform set a frame: the clock, the eased wind (the same vector the
     // cloud deck and the mills take; null = calm), the front's rain, and
     // the dome's own two colours to reflect.
+    const waterStep = () => {   // PERF-V8
     if (waterOn) {
       stirRipples(dt, now);   // WATER-NEXT 4
       const wu = _waterU = waterUniforms({ seconds: now / 1000, wind: windNow, rain: precipMode === 'rain' || precipMode === 'storm' ? fx.intensity : 0, sky: sky.waterSky() });   // WATER-NEXT 2: the sea's draw takes the frame's too
@@ -32939,6 +32970,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       renderer.drawWaterSurfaces(_waterRows, n, 6.4, wu);
       for (let i = 0; i < n; i++) _waterRows[i].fill(null);   // a scratch keeps no evicted pixel's surface alive
     }
+    };
+    waterStep();
     meterFor(renderer.gl)?.markCpu('flats');   // PERF-CPU: submitting the billboards - the draws themselves, from JS. ABOVE setFlatWind, not between it and the draw: WIND3 pins the two as ADJACENT, and the wind is part of this phase anyway.
     yards?.drawDecals(renderer);   // HOME-YARD: the lot's marked edge while a piece is placed
     renderer.drawFoeTelegraphs?.(drawableBlows(tacticsNow(), walkMode && playerSpawned ? player.pos : cam.pos));   // TACT4: a foe's wind-up on the ground, under the bodies
@@ -32964,6 +32997,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // reads as the thunk answering false. Edge-triggered: the exit
     // event fires ONCE, and PlayerEntity's handler clears the crime
     // (PlayerEntity.cs:2449-2453).
+    const locationRectStep = () => {   // PERF-V8
     {
       const _inRect = _musicInLocationRect();
       if (_wasInLocationRect && !_inRect) clearCrimeOnLocationExit(playerEntity);
@@ -33019,6 +33053,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       }
       _wasInLocationRect = _inRect;
     }
+    };
+    locationRectStep();
     // MAC1 (Mac: "sprites jittery when slowing down to talk to you").
     // MobilePersonMotor's gate reads PlayerMotor.IsStandingStill -
     // grounded over a ZERO moveDirection (:113-125), the motor's own
@@ -33036,6 +33072,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     meterFor(renderer.gl)?.markCpu('people');   // PERF-CPU: the towns' own pools
     _livePersons.length = 0;   // T3b: rebuilt each frame in WORLD space   // PERF-TOWN1: the SAME array and the same entries, refilled
     familyStreet?.begin();   // LEGACY7 part four: the line's own bodies, stood again this frame
+    const populationStep = () => {   // PERF-V8
     for (const p of built.values()) {
       if (!p.population) continue;
       const t = state.pixelTranslation(p.px, p.py);
@@ -33080,6 +33117,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         livePersonBatches.push(batch);
       }
     }
+    };
+    populationStep();
     // AUDIT LEGACY III W4: held under a talk window, as the street is (the member met walked on the spot behind their card)
     if (familyStreet) { familyStreet.end(townTalk.overlayActive ? 0 : dt, cam.pos); livePersonBatches.push(...familyStreet.batches()); }
     // LW3: THE ROADS - the living world's parties near, in file by day and about their fires by night (scenes/
@@ -33116,6 +33155,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const _pf = walkMode && playerSpawned ? player.pos : cam.pos;
     if (!townTalk.overlayActive) runEncounterTick(_pf);
     wildFoesFrame(foeDt);   // WILD-ALERT: who in the wilderness has noticed a fast traveller - before the pools move
+    const poolsStep = () => {   // PERF-V8
     if ((modes?.mode ?? 'exterior') === 'exterior') {
       if (_deckBodies.size) navalCarry();   // DECK-WALK: the bodies on a ship's deck carried by her - after the ships moved, before the foes do
       exteriorFoes.update(foeDt, _pf, cam.pos, _foeSenses());   // WINFOE1: a window no longer zeroes the foes' clock (QUEST-POPUP-PAUSE: offline, a quest box does)
@@ -33131,6 +33171,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       if (playerSpawned) raidingPartiesFrame(gamePaused() ? 0 : foeDt);   // RAID1: the raids' Update - after the pools moved (a death counts on the frame it falls) and the watch answered, its clocks held by a pause (fix 7)
       markFoeReach([...cityGuards.guards, ...exteriorFoes.foes], { aboard: playerAfloat() && !(walkMode && playerSpawned && player.isPlayerSwimming), seaY: tvSeaY() });   // WATER-FOES: aboard and dry, a foe in the water reaches no one - no enemy nearby (the pools, the watch and the raids done)
     }
+    };
+    poolsStep();
     droppedLoot.tickFlats(dt);   // FA1 slice 3
     livePersonBatches.push(...droppedLoot.batches());   // U8e: the ground piles
     // AUDIT 24 (wave 39): the blood splashes, on the same axis. Their
@@ -33257,6 +33299,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // than 60m from the scatter's centre. Drawn with the lab's own draw:
     // the game's sun, ambient and colour in the lab's uniforms, the same
     // integrated wind the rain reads, and the lab's weather dim.
+    const grassStep = () => {   // PERF-V8
     if (labGrass && !tvf) {   // TV1: from 150 m up a blade is under a pixel - the field waits for the traveller's eye
       const ex = cam.pos[0]; const ez = cam.pos[2];
       // GR5: THE FIELD IS ANCHORED TO THE WORLD. GR2's walk placed every
@@ -33416,10 +33459,13 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       meterFor(renderer.gl)?.mark('world');
       renderer.markForeignPass();   // EV6: the grass changed programs behind the shadows' back
     }
+    };
+    grassStep();
     // GUILD1d: THE HALLS' BANNERS - opaque cloth after the grass, from the view's own eye, lit by the frame's sun and
     // fogged as the ground is, swaying on the weather's wind (render/bannerPass.js). AUDIT GUILD1d R3: BEFORE the veiled
     // bodies, the duel walls and the gate's fire - an opaque pass that writes depth drawn after them painted over every
     // glow in front of it. AUDIT GUILD1d R1: the wind's own 0..1 (`strength01`), never the lab's 0..200 slider
+    const bannersStep = () => {   // PERF-V8
     if (hallBanners || seatBanners) {
       const hung = bannersHung();   // SEAT1a: the seats' banners with the halls'
       if (hung.length && bannerPass.draw(hung, proj, view, new Float32Array(mwv.eye), now / 1000, {
@@ -33428,12 +33474,15 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         fog: { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos, dw: renderer._dwFog, focus: renderer._focus },
       })) renderer.markForeignPass();
     }
+    };
+    bannersStep();
     // HAZE1: HEAT HAZE - the mod's GrabPass at Transparent-100: the opaque world whole (the ground, the models, the flats,
     // the grass and the banners), what falls and every translucent thing still to come. Not under the travel view's
     // camera: the ring stands round the player's feet, and that eye is hundreds of metres over them.
     // WINDFALL1: WINDFALL's LEAVES AND SNOW - cutouts that write depth, so with the opaque world and before the haze grabs
     // it; lit as the flats round the player are. Not under the travel view's camera (they ride the player's place).
     if (windfall.particles && !tvf && windfall.draw(proj, view, renderer.flatLightAt(walkMode && playerSpawned ? player.pos : cam.pos))) renderer.markForeignPass();
+    const hazeStep = () => {   // PERF-V8
     if (hazeGl) {
       const _hzFoot = walkMode && playerSpawned ? player.pos : cam.pos;
       const _hzPx = playerTravelPixel();
@@ -33441,6 +33490,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         foot: _hzFoot, grounded: !walkMode || !!player.grounded, settings: hazeFrameSettings() });   // AUDIT ENVIRONS W4: the ease on the real clock (unscaledDeltaTime), the shimmer on the game's (_Time.y)
       if (hz.visible && !tvf && hazeGl.draw(hz, proj, view, renderer.worldViewportPx ?? [0, 0, renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight], hz.seconds)) renderer.markForeignPass();
     }
+    };
+    hazeStep();
     drawFalling();   // RAIN-OVER-GRASS: after the grass and the banners, before the translucent bodies and the fires
     drawVeiledPeerBodies();   // INVIS-LOOK: the concealed peers' bodies, translucent - after the opaque world, the flats and the grass
     // DUEL1: THE RINGS' WALLS - my own duel's, rising in and dying away, and every duel the cells around me say stands
@@ -33472,6 +33523,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // TV4 (bible/06-Systems/Travel-View.md): THE CURTAINS FROM ABOVE - the weather map's falling cells as veils stood in
     // the world, under the travel view alone (at the eye the sky map's own curtains stand on the horizon); the same
     // cells the clouds draw, at the shared minute (render/rainCurtains.js)
+    const curtainsStep = () => {   // PERF-V8
     if (tvf && rainCurtains) {
       if (_tvFootMemo.gen !== tvGroundGenNow()) { _tvFootMemo.gen = tvGroundGen; _tvFootMemo.map.clear(); }   // PERF-TV: the veils' lowest land, kept while the ground holds
       const curtains = curtainsOf(sky.drawnCells?.() ?? fieldCellsHere(), {   // AUDIT DEEP2 D3: the cells the sky DRAWS (picked, by quality) - never a veil under a clear sky
@@ -33480,6 +33532,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       if (curtains.length && rainCurtains.draw(curtains, proj, view, mwv.eye, now / 1000,
         { light: lit, fade: Math.min(1, tvf.blend * 1.5), fog: { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, camPos: renderer._camPos, focus: renderer._focus, dw: renderer._dwFog } })) renderer.markForeignPass();
     }
+    };
+    curtainsStep();
     // C13: streaming-world arrows fly against the live pixel
     // collider (lost on geometry/terrain, as DFU misses are). Drawn
     // without a remap - the streaming pixels each carry their own,
@@ -33578,6 +33632,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // arrows.update call above hands foeTargets both live pools. A
     // sentence with one true clause kept two false ones alive.
     meterFor(renderer.gl)?.markCpu('rig');   // PERF-ZONE2: the magic, the weapon rig's frame and its draw - the Morrowind arm's pose, pack and upload live here
+    const spellsStep = () => {   // PERF-V8
     if (walkMode && playerSpawned) {
       // M2: the armed click's cast fires with the LIVE look; missiles
       // fly through this host's world every walk frame.
@@ -33654,6 +33709,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         }
       }
     }
+    };
+    spellsStep();
     // AUDIT 21 (hosts lane, F7): THE HUD, which this host did not have.
     //
     // ?world and ?exterior drew no status bar at all - no health, no fatigue,
@@ -33675,6 +33732,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // forever, so the enhanced skin had no vitals for the first
     // frames and none at all when MAIN/HUD could not be read.
     meterFor(renderer.gl)?.markCpu('hud');   // PERF-ZONE2: the HUD's preparation and its draw; PERF-READ1: it ends at the next mark below, not at the next frame's first
+    const hudStep = () => {   // PERF-V8
     {
       const _hfw = [-view[2], -view[10]];
       // X4: the Detect markers. Exterior mode's nearby pool is the
@@ -33801,6 +33859,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           weaponSheathed: !!weaponRig.playerWeapon.sheathed });   // AUDIT 28 W2: the arrow counter's drawn-bow gate   // U38 + X4 + U43
       csaDrawWindWidget();   // CSA-E: over the HUD
     }
+    };
+    hudStep();
     meterFor(renderer.gl)?.markCpu('ui');   // PERF-READ1: the travel panel, the talk layer and everything else the frame draws over the HUD, to the frame's end
     // TO1: THE TRAVEL PANEL, on the HUD layer and after it - a journey's
     // controls sit over the vitals and under the talk layer, so a
@@ -33834,6 +33894,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (socialLink()?.status === 'open' && social) syncWaypointGroups({ party: social.party?.id ?? null, guild: myGuildTag() });
     if (travelControlUI?.isShowing) setPaceGround(!!travelControlUI.onRoad);
     else if (travelView?.state === 'up') setPaceGround(travellerOnRoad());
+    const paceStep = () => {   // PERF-V8
     if (isEnhanced() && typeof document !== 'undefined') {
       hidePaceBox();   // PACE-DIALS: the enhanced skins carry their own dials (the journey bar, the Overworld's block)
       if (travelControlUI?.isShowing || _junctionUp) {
@@ -33870,6 +33931,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         travelJunctionMap.drawPanel(renderer, canvas);   // over the strip when it is up - TravelControlUI.Draw's own extra call (:185-186)
       }
     }
+    };
+    paceStep();
     townTalk.frame(dt);   // T3b: HUD lines + the talk overlay, above everything
     renderer.resolveFrame();   // AUDIT RETRO1 E5/C8: a frame that drew no screen quad (the enhanced skin, a sheathed weapon) is shown NOW, not at the next beginFrame
     // SS1: the frame's LAST draw is behind us - deliver a pending save
