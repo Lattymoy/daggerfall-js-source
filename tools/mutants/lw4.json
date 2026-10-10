@@ -281,8 +281,8 @@
   {
     "name": "LW4-fallen-come-home",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "    out.push({ t0: tr.outT0, t1: fell ? Infinity : tr.backT1, yaw: leavingYaw(tr), armed: res.cls != null, dock: !!tr.sea });",
-    "new": "    out.push({ t0: tr.outT0, t1: tr.backT1, yaw: leavingYaw(tr), armed: res.cls != null, dock: !!tr.sea });",
+    "old": "    out.push({ t0, t1: fell ? Infinity : tr.backT1, yaw: leavingYaw(tr), armed: res.cls != null, dock: !!tr.sea });",
+    "new": "    out.push({ t0, t1: tr.backT1, yaw: leavingYaw(tr), armed: res.cls != null, dock: !!tr.sea });",
     "tests": [
       "test/lw4_trouble.test.js"
     ]
