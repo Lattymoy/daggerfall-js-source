@@ -20,8 +20,8 @@ crafting materials in the inventory itself." And: "This is something I really wa
   Bag", DFU's own Backpack picture (ItemTemplates 89: TEXTURE.205 record 44 - law 6, the picture is DFU's), weightless
   as the Small Cart is (`hasNoEncumbrance`), one to a slot. **Owning one is holding one**, as DFU's HasCart reads the
   cart in the pack.
-- **Bought** at every General Store, online, after the horse and the cart (`systems/shopStock.js`) - on every shelf,
-  whoever stocks it, as the horse and the cart are (BAG-SHELF, section 13: the first shelf alone, left off for a
+- **Bought** at every General Store, online (`systems/shopStock.js`) - on every shelf, whoever stocks it, as the horse
+  and the cart were until MERCHANT-YARDS moved them to the town's Stable and Wagon Yard (BAG-SHELF, section 13: the first shelf alone, left off for a
   character who carried one, hid it - a shelf's stock is the room's for the day); and it never sells out - a bag bought
   is back on its shelf, online, and no shop buys one back (ENDLESS-STOCK, section 13); one to a character - a second is
   refused by the take ladder and the keyed shelf (ONE-BAG, section 13). Its base price is **250**; DFU's shop price is 2 x (cost x (quality - 10) / 100 + cost), so **500 gold**

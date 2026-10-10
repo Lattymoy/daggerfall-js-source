@@ -143,6 +143,8 @@ let pendingClicks = 0;
  */
 export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, raycast = null, spherecast = null, eyeOverride = null, seaReach = 0, ...state }) {
   standInEdge({ fpEye, feet, yaw, pitch });   // BEAST-SELF: the view carried across the arm's stand-aside
+  benchSeated = !!state.seated;   // WAGONS3: the host's word that the player drives from a wagon's bench, either lane
+  // FLAGGED: Eye Of The Beholder has no sitting art - on that lane the driver's sprite stands on the bench's footboard, still (bible/06-Systems/Wagons.md WAGONS3).
   // FIELD BUGS 2026-09-29 (the sea) #3: the helm's reach (player/seaZoom.js; 0 off it) to both cameras, every frame -
   // the host's word for the hull sailed, and off the helm a distance past either's own far end comes back to it
   mwCamera.setSeaReach(seaReach);
@@ -349,6 +351,15 @@ function mwIntoHead() {
 // that rides the seam gets the rule and none has to know it.
 let mounted = false;
 
+// WAGONS3 (2026-10-10, Mac: "Using a wagon doesnt allow you to zoom out into 3rd person when mounted"; "sit on the wagon
+// itself, the ledge its built for"): THE DRIVER ON THE BENCH IS NOT IN THE SADDLE. A host whose player drives a wagon
+// from its bench (scenes/horseCartPool.js driverSeat - the Open Wagon's and the Caravan's) hands the frame `seated` and
+// `riding` false: the body sits on the bench (player/seatPose.js, the CARDS2b seat) and the team pulls in front of it,
+// so RIDE-POV's rule - no saddle to show - does not hold it in the head, and the wheel takes it out as it does on foot.
+// The first-person horse (player/mountRig.js, DFU's cart picture) is the saddle's view, not the bench's: it hides
+// (mwViewHides). The Small Cart has no bench - its driver rides its horse, and RIDE-POV stands for it.
+let benchSeated = false;
+
 // ═══ AUDIT-EOTB2: THE FOUR DOORS THE BODY'S OTHER HALF NEEDED ════════
 //
 // Each is the seam's answer to a question ONE consumer asks, routed by
@@ -438,8 +449,8 @@ export function mwViewWagonActivate(mode, doors) {
 export function mwViewHides() {
   // TV1: under the travel view the camera is hundreds of metres up - no first-person hand, horse or weapon belongs on it
   if (heldThird) return { weapon: true, horse: true, spellHands: true };
-  if (!eotbLane()) return { weapon: false, horse: false, spellHands: false };
-  return eotbBody.hides();
+  const hides = eotbLane() ? eotbBody.hides() : { weapon: false, horse: false, spellHands: false };
+  return benchSeated ? { ...hides, horse: true } : hides;   // WAGONS3: on the bench the team is in the world, not on the screen
 }
 
 /** The third-person body composite, after the host's world draw. A
