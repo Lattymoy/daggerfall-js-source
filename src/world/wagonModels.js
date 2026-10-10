@@ -177,6 +177,7 @@ export const teamSidesOf = (kind) => (WAGON_KINDS[kind]?.horses === 2 ? [-TEAM.s
  *  the hips). Null for a kind with no bench - the Small Cart's driver rides its horse, the mod's own way. The seat a
  *  pool stands is this one (buildBakedWagonParts `driver`), drawn under the cart's tilt as a back seat is (none tilts:
  *  the cart has none). */
+// FLAGGED: the Small Cart has no bench (Mac's choice) - its driver rides its horse the mod's way, and RIDE-POV keeps the Morrowind body in the head on it (bible/06-Systems/Wagons.md WAGONS3).
 export function driverSeatFor(kind) {
   const b = MEASURED[kind]?.bench;
   if (!b) return null;
@@ -268,7 +269,10 @@ export function wagonGeometry(bake) {
       axleBox = boxOfPoints(pointsOf(part));   // WAGONS3: the front axle's own reach - the parked box's, the pole's left out
     } else {
       benchPart(statics, part, { offset: [0, 0, 0], role: part.role, keep: null, skin: (role, n, c) => wagonFaceSkin(kind, role, n, c) });
-      if (part.role === 'body') cabinBox = boxOfPoints(pointsOf(part));   // WAGONS3: the body's own box - a third-person camera's wall
+      // WAGONS3: the body's own box - a third-person camera's wall. AUDIT WAGONS3 B1: the caravan's alone (`enterable`,
+      // a room with walls and a roof) - the open wagon's body is its two hoops, and their box stood 5.6 cm behind its
+      // bench, so every cast back from the driver's head met it at once and the camera never left the head
+      if (part.role === 'body' && WAGON_KINDS[kind].enterable) cabinBox = boxOfPoints(pointsOf(part));
     }
   }
   if (rear !== 2) throw new Error(`the ${kind} has ${rear} rear wheels`);

@@ -326,17 +326,18 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
     // longer in general shop"): DFU's `items.AddItem(Horse)` and `items.AddItem(Small_cart)` are gone from here, and the
     // two wagons WAGONS1 shelved beside the cart with them - the Stable sells the horse and the Wagon Yard the cart and
     // the wagons (systems/merchantYards.js yardStock), every city and town standing both. A departure from DFU.
-    // BAG1 (bible/06-Systems/Materials-Bag.md): THE MATERIALS BAG beside the cart, at every General Store - online alone,
-    // where the professions are (nothing offline gathers into it), and by name, as the horse and the cart are.
+    // BAG1 (bible/06-Systems/Materials-Bag.md): THE MATERIALS BAG at every General Store (beside the cart, until
+    // MERCHANT-YARDS took the cart to the Wagon Yard) - online alone, where the professions are (nothing offline gathers
+    // into it), and by name.
     // BAG-SHELF (FIELD BUGS 2026-10-04, "nobody can find material bags in store"): on EVERY shelf, whoever stocks it, as
-    // the horse and the cart are. AUDIT2 H8 had put it on the first shelf alone, and BAG1 left it off a shelf stocked by a
+    // the horse and the cart were. AUDIT2 H8 had put it on the first shelf alone, and BAG1 left it off a shelf stocked by a
     // character who carried one - but online a shelf's stock is the room's for the day, so one bag-owner's open hid it
     // from everyone, and the first shelf is just the first model the building lists
     if (isOnlinePage()) add({ group: 'UselessItems2', templateIndex: BAG_TEMPLATE });
     // SURV2: the provisions shelf - rations, bread, fruit, skins, fire
     // kits, and camping gear and a skillet in a better shop. Minted by
     // their own module (their templates are the port's), after the
-    // horse and the cart so the shelf reads travel first, then food.
+    // bag, so the shelf reads travel first, then food.
     // AUDIT REST II H8: the Campfires on the counter's shelf alone (as the rest supplies and the healing supply below) - every
     // shelf model is its own container stocked whole, so a store of four shelves sold sixteen, not "two to four"
     if (survivalOn()) for (const it of provisionsStock(quality, rolls, { campfires: shelfIndex === 0 })) items.push(it);

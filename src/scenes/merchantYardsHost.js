@@ -26,8 +26,9 @@
 // the same yard with the same keeper.
 //
 // THE FOUR HOSTS (bible/Home.md): scenes/world.js - WIRED (each town pixel's build places its yards and carves the
-// people's navgrid round them; the pool is made beside the monument, framed, drawn, its flats on the live axis, taken
-// down at a change of place, a re-anchor and a load). scenes/worldModes.js - WIRED for the press both exterior hosts
+// people's navgrid round them; the pool is made beside the monument, framed, drawn - in the street and in the view out
+// of a window (AUDIT MERCHANT-YARDS G5) - its flats on the live axis, taken down at a re-anchor and a load; through a
+// door it stands as it stood, for the street a window shows). scenes/worldModes.js - WIRED for the press both exterior hosts
 // share (`yardTargets` in the street's one ray, the `yard:` arm with the too-far refusal and the plaque's lit row) and
 // for the trade window (`openYardTrade`); its interiors stand no yard.
 // scenes/exterior.js - FLAGGED: the single-town bench stands no yard; the streaming host is where its towns are played.
@@ -111,12 +112,13 @@ function turnedBox(cx, cz, forward, size, center) {
  *   eye?: () => (number[]|null), feet?: () => (number[]|null),
  *   horseArt?: (() => boolean)|null, showWagon?: ((r: any, texRemap: any, position: number[], rotation: number[], kind: string) => boolean)|null,
  *   wagonBox?: ((kind: string) => (number[]|null))|null,
- *   open?: (site: any, mode: 'Buy'|'Sell') => boolean, say?: (text: string) => void, midText?: (text: string) => void,
+ *   open?: (site: any, mode: 'Buy'|'Sell', name?: string) => boolean, say?: (text: string) => void, midText?: (text: string) => void,
  *   now?: () => number,
  * }} deps  `sites` every yard standing this frame, the scene's x, z of its middle and the frame's vertical compensation
  *   (`comp` - a change re-reads the ground); `horseArt()` true once the standing horse's views are uploaded (the HCC
  *   pool's own loader); `showWagon`/`wagonBox` the HCC pool's wagon of a kind - drawn, and its box ([x0, y0, z0, x1,
- *   y1, z1] in its own frame, null while it builds); `open(site, mode)` the host's trade window
+ *   y1, z1] in its own frame, null while it builds); `open(site, mode, name)` the host's trade window, named for the
+ *   yard (AUDIT MERCHANT-YARDS Y5)
  */
 export function createMerchantYards({
   renderer = null, getTexture = null, uploadRecordFrame = null, sites, groundAt, collider = () => null,
@@ -369,7 +371,7 @@ export function createMerchantYards({
       }
       if (verb == null && mode === 'steal') { midText(YARD_TEXT.steal); return true; }
       const trade = verb === 'sell' && (p.what === 'keeper' || p.what === 'sign') ? 'Sell' : 'Buy';
-      if (!open(p.y.site, trade)) midText(YARD_TEXT.shut);
+      if (!open(p.y.site, trade, p.y.name)) midText(YARD_TEXT.shut);   // AUDIT MERCHANT-YARDS Y5: the counter named for its keeper
       return true;
     },
     /** For the tests and the probes. */

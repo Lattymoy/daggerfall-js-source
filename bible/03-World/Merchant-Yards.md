@@ -19,19 +19,26 @@ building record, no automap byte, no deed and no quest place - and the whole of 
 
 **The ground** (`world/merchantYardSites.js`). The town's own navgrid (`world/cityNavigation.js`, DFU's CityNavigation
 carve: every automap byte a building, a tree or a lamp draws is closed, the water with it), always on the enhanced
-lane's water table as LEFAY1's monument reads it, and over it what the streaming host measures of the town's blocks
-(`scenes/world.js` `merchantYardSitesFor`):
+lane's water table as LEFAY1's monument reads it, and over it what the town's blocks put in a yard's way
+(`world/merchantYardSites.js` `yardMeasuresOf`, handed its measures by `scenes/world.js` `merchantYardSitesFor`):
 
-- every **building**'s box (its ARCH3D size, `staticBuildingBox`, no mesh built) kept `BUILDING_CLEAR_M` (6 m) away -
+- every **building**'s box (its ARCH3D size, `staticBuildingBox`, no mesh built; a registered model's own geometry -
+  `placedModelBox`) kept `BUILDING_CLEAR_M` (6 m) away -
   HOME-YARD's lot margin (`scenes/homeYards.js` `YARD_MARGIN`), so no yard stands on a lot a home's or a guild hall's
   owner may decorate, nor before anyone's door;
-- every **other model** (a wall, a well, a fence, a stall, a mod's carriage) `PROP_CLEAR_M` (1 m) away, and every
-  **flat** (a tree, a lamp, a sign, a person) `FLAT_CLEAR_M` (0.8 m) round its foot;
-- a **palace's block** left whole (no yard in a castle's court), and LEFAY1's **monument** its own ground
+- every **other model** (a wall, a well, a fence, a stall, a mod's carriage - and the town mods' boulders, stalls,
+  hills, docks and city walls, which no ARCH3D record holds: measured by their own geometry, an alias by its classic
+  model) `PROP_CLEAR_M` (1 m) away; a **crop field** (`world/flatFields.js`) by the ground its plants are sown over
+  (`fieldRect`); every **flat** (a tree, a lamp, a sign, a person, and the editor's markers - a traveller's start
+  marker, a quest's) `FLAT_CLEAR_M` (0.8 m) round its foot;
+- a **palace's block** left whole (no yard in a castle's court - a palace read off the block's real buildings,
+  `talkTopics.js` `blockBuildingCount`), the **colosseum's** block too (`world/arenaCity.js` `ARENA_BLOCK` - its model
+  is built over the player's own, so it is never measured here), and LEFAY1's **monument** its own ground
   (`MONUMENT_KEEP_M`).
 
-The measures are read off a layout laid out the same on every lane (the enhanced skin's, the mills stood), so a classic
-client and an enhanced one stand each yard on one spot.
+The measures are read off a layout laid out the same on every lane (the enhanced skin's, the mills stood - the pixel
+build's own where it is that one), so a classic client and an enhanced one stand each yard on one spot; the sites are
+kept per town while its measures stand (a rebuild of the pixel places nothing again).
 
 **The place.** A yard is a rectangle (`YARD_FOOT`: the Stable 14 m by 11.5, the Wagon Yard 18 m by 13.5; its front, the
 gate's side, along its +z), turned to one of the four axes (`YARD_TURNS`). Its own ground must be open and off every
@@ -39,7 +46,7 @@ road and path (the street stays clear); a ring of `YARD_PAD_M` (one cell, 1.6 m)
 there - a yard stands beside a street. Of every place that fits, the one nearest the middle of the town's block grid
 wins, a place whose front faces no road within `FRONT_ROAD_CELLS` costing `NO_ROAD_COST` (12 cells) more; ties to the
 lower row, then the lower column, then the lower turn (`yardSite`, over summed-area tables: a whole city in tens of
-milliseconds). The Stable is placed first, the Wagon Yard on what is left, `YARD_GAP_M` (3 m) clear of it
+milliseconds; every distance `Math.sqrt` of an exact sum, never `Math.hypot`, which each engine may approximate). The Stable is placed first, the Wagon Yard on what is left, `YARD_GAP_M` (3 m) clear of it
 (`yardSitesOn`). The wandering people's navgrid is closed over each yard's ground (`carveYards`).
 
 A town with no room for one stands none of it - said once in the console (`[yards] <town>: no room for ...`) - never a
@@ -84,9 +91,11 @@ client meets the same keeper - and the yard is named for them: "Moorhart's Stabl
 - **Each buys back its own and nothing else** (`yardBuysItem`): the Stable a horse, the Wagon Yard a cart or a wagon of
   any kind - a loaded wagon refused at the counter as everywhere (`systems/tradeModes.js` `sellGuardOf`). Online a sale
   is capped at half the least ask, as at every counter, so buying back never pays.
-- **One counter's law.** The trade window a shop's counter opens, priced at `YARD_QUALITY` (10, the same in every
-  town, so no yard is a cheaper one to buy at and a dearer one to sell to); the yard's counter tells it what it buys
-  (`yardCounter`'s `accepts` - `scenes/worldModes.js` `openTradeWindow` asks it before DFU's table).
+- **One counter's law.** The trade window a shop's counter opens, priced at `YARD_QUALITY` (10) and at
+  `YARD_PRICE_INDEX` (DFU's neutral 1000, both ways, never the region's walk), so no yard is a cheaper one to buy at and
+  a dearer one to sell to; the yard's counter tells it what it buys (`yardCounter`'s `accepts` - `scenes/worldModes.js`
+  `openTradeWindow` asks it before DFU's table) and carries its name over the window (`yardName`). A regional
+  holiday still halves a buy (DFU's holiday law); online the sale's cap, half the least ask, holds that to even.
 - **The General Store no longer shelves or buys a horse, a cart or a wagon** (`systems/shopStock.js`: DFU's two
   `AddItem`s and WAGONS1's two wagons gone from its stock, `Transportation` gone from what it buys). The Stable page's
   empty line says where to go instead (`ui/holdingsPages.js`).
@@ -95,16 +104,20 @@ client meets the same keeper - and the yard is named for them: "Moorhart's Stabl
 
 On the keeper or the signboard: the plaque names the yard, its keeper and its trade, with two rows - **Buy** (or a
 press with no row lit) opens the yard's stock in the trade window, **Sell** opens it to sell to the yard; Info names the
-keeper ("the stablemaster", "the wagonwright"); Steal takes nothing ("The keeper never takes an eye off the stock").
+keeper ("the stablemaster", "the wagonwright"); Steal takes nothing ("The keeper never takes an eye off the stock") - at
+the press and in the trade window alike (`yardCounter`'s `noSteal`: the classic window's Steal says it and moves
+nothing, the enhanced window stands no Steal).
 A horse or a wagon on show is named on the plaque (a wagon with what it carries) and its press opens the Buy. Too far
 speaks the street's refusal; the reach is a static NPC's (6.4 m). A press before the counter's art and font are loaded
-(a yard is in the street, where no shop's entry may have loaded them) waits for them, once (`openYardTrade`).
+(a yard is in the street, where no shop's entry may have loaded them) waits for them - one press waiting, the latest -
+and opens only where it was pressed: the street, its slot still free (`openYardTrade`).
 
 ## The four hosts
 
 - `scenes/world.js` - WIRED: each town pixel's build places its yards and carves the people's navgrid round them; the
-  pool (`scenes/merchantYardsHost.js`) is made beside the monument, framed, drawn, its keepers and horses on the flats'
-  axis, taken down at a re-anchor and a load; the hover names it; the press is handed to it.
+  pool (`scenes/merchantYardsHost.js`) is made beside the monument, framed, drawn - in the street and in the view out of
+  a window (`renderer.outsideViewDraws`) - its keepers and horses on the flats' axis, taken down at a re-anchor and a
+  load; the hover names it; the press is handed to it.
 - `scenes/worldModes.js` - WIRED: the street's one ray reaches the yards (`yardTargets`), the `yard:` arm (the
   too-far refusal, the plaque's lit row) and the counter (`openYardTrade`). Its interiors stand no yard.
 - `scenes/exterior.js` - FLAGGED: the single-town bench stands no yard.
@@ -139,5 +152,40 @@ map and the "Where is" directory do not name the yards yet.
 `test/merchantyards1.test.js` - the towns, the stock, what each buys, the General Store's shelf and list, the keeper,
 the place (its ground, its ring, its front, the turns), the measures, both yards apart and a laid-out town read as the
 people's navgrid, the carve, the timber, the sign read from both sides, the art, the pool (standing, the wagons'
-boxes coming in, a yard gone, no ground), the hold-back, the press and the plaque, the yard's frame, and the four hosts.
-Its mutants: `tools/mutants/merchantyards1.json`.
+boxes coming in, a yard gone, no ground), the hold-back, the press and the plaque, the yard's frame, and the four hosts;
+the audit's: the blocks' measures (`yardMeasuresOf`, `placedModelBox`, `fieldRect`), the tie-break, the yard's own
+window (no Steal), the counter's index, name and word, the keepers' race, bank and outfits. Its mutants:
+`tools/mutants/merchantyards1.json`, `tools/mutants/merchantyards1_audit.json`.
+
+## AUDIT MERCHANT-YARDS (2026-10-10, five lenses over PR #748)
+
+Five read-only lenses over the merged branch (the bench, the team and the harness, the yards' ground and pool, the trade
+and the law, the merge and the records), then every finding traced from a real caller and fixed with its pin and its
+mutant. The yards' findings:
+
+- **Y1 (major) - the window's Steal.** Only the press refused a steal; the Buy window a yard opens is the shop counter's,
+  and its Steal ran - a Caravan (25000) stolen at 11% risk for a master pickpocket, the press again minting another,
+  each sold back at any Wagon Yard: gold without end, online too. `yardCounter`'s `noSteal`, through
+  `openTradeWindow`'s `stealRefusal` to both windows (`ui/nativeTrade.js` `_doSteal`, `ui/enhancedTrade.js`).
+- **Y2 (major) - the regions' prices.** A yard was priced at its region's walk, both ways; with endless, weightless
+  stock, a Caravan bought where the index stood low sold where it stood high paid without end (ENDLESS-STOCK's loop).
+  `YARD_PRICE_INDEX`, read by `shopAdjustment` off the counter.
+- **G1 (major) - the town mods' ground.** Placement measured models by their ARCH3D record alone, so the town mods'
+  boulders, stalls, walls and crop fields (no record, and fields sown only with a nature archive) were nothing to it, and
+  a Stable could stand over a boulder or a field. `placedModelBox`, `fieldRect`; the colosseum's block left whole.
+- **G2 - the engines and the cost.** `Math.hypot` decided ties (engines may approximate it - two browsers could stand a
+  yard in two places) and the documented tie-break was not the one run (an early skip at an equal distance took the
+  first turn found); the sites were placed again on every rebuild of the pixel. `Math.sqrt` of exact sums, the skip at a
+  greater distance only, the sites kept per town while its measures stand.
+- **G3** - the palace read past the block's real buildings into garbage slots (`blockBuildingCount`). **G4** - the
+  editor's markers dropped, so a start marker could fall in a paddock. **G5** - the view out of a window drew no yard.
+  **G6** - the host's header claimed a take-down at a change of place it does not make.
+- **Y3** - the press waiting for the counter's art opened a window per press, wherever the player then was (over an
+  interior's slot, over a talk). One wait, the latest press, the street's slot free or nothing. **Y5** - the counter had
+  no name (" - Buy" over the window). **Y6** - the Holdings page promised a yard in every town.
+- **Records and pins** - the keepers' race at the pool (R1: a Breton outfit for every keeper survived), the measures the
+  host made itself (R2, now `yardMeasuresOf`), the keepers' bank and outfits (R4), the General Store's old claims in the
+  ledger, Active-Arcs and three source comments (R5).
+
+The online side was checked sound: no route in `server/` or `server-account/` sees a counter trade, so a `yard:*` type
+and key 0 are refused or mis-logged nowhere; the item law's verdicts are unchanged by the price rise (`floor`).

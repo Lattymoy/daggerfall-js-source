@@ -610,7 +610,13 @@ picture (`src/player/mountRig.js`) - is the saddle's view: on the bench it
 hides (mwViewHides), the team being in the world in front of the eye. The
 moving wagon stands no collider, so the camera behind the driver stood inside
 the caravan: its body is a wall to the camera on the bench (cameraHit, the
-body part's own box, beside the collider's ray and sphere).
+body part's own box, beside the collider's ray and sphere). AUDIT WAGONS3 B1:
+the caravan's alone (an open wagon's body is its two hoops, and their box
+stood 5.6 cm behind its bench - the camera never left the head), stood where
+the wagon is drawn, as the seat is. The bench is the wagon KIND's
+(`benchKind`), never this frame's seat: a journey, a teleport and a load's
+first frames stand none, and a frame read as the saddle took the body into
+the head for good (B2).
 
 FLAGGED: the Small Cart has no bench (Mac's choice), so its driver rides its
 horse the mod's way, and RIDE-POV still keeps the Morrowind body in the head
@@ -625,6 +631,8 @@ bought - MERCHANT-YARDS took the horse off the General Store's shelf,
 `bible/03-World/Merchant-Yards.md`); wagonTeamShort says why the wagon driven
 cannot be hitched - "Your Caravan needs two horses to pull it. Buy another at a
 town's Stable." - or nothing. No horse at all is the mod's own refusal, said where it says it.
+A short team's one horse is a horse (AUDIT WAGONS3 T3, horseCart.js `drivableCart`): its press and its plaque's rows
+ride it and the mount hotkey takes it - they answered Drive and Follow, both refused, and it could not be taken.
 
 The runtime (`src/systems/horseCart.js`, its `teamShort` dep) refuses a short
 team wherever a team is hitched: the transport window's row
@@ -641,7 +649,8 @@ afoot beside it (reconcileTeam).
 the mod's billboard. A pair stands either side of the pole
 (`src/world/wagonModels.js` TEAM.side). Driven, it stands at the hitch facing
 down the pole (a four-wheeler's turned by its steer); parked in harness, the
-runtime's horse leads its mate beside it; a following team walks two abreast.
+runtime's horse leads its mate beside it - a mate I own: one horse left in
+harness stands alone beside the pole (AUDIT WAGONS3 T2); a following team walks two abreast.
 While I ride, lead or leave the first horse, my parked pair keeps its second
 in harness - I own two. The Small Cart's driven horse is its driver's mount:
 no billboard. The billboards turn to the eye that draws them (faceTeams -
@@ -708,7 +717,10 @@ push no body out - held the player in it.
 - The parked box stops at the body and the front axle: the pair's pole and
   the team stand outside it (`src/world/wagonModels.js` boundsOf).
 - The box is never stood round my capsule (capsuleInBox): a wagon laid where
-  I stand stands its box once I have stepped out of it.
+  I stand stands its box once I have stepped out of it. In is
+  CAPSULE_BOX_SKIN past touching (AUDIT WAGONS3 T1: in at contact, every body
+  leaning on the wagon took its box down, walked through it and stood again
+  on the far side; feet on the caravan's roof dropped into it).
 - A box stands again when the model under it changes (the classic wagon's
   while Mac's bake loaded, then his).
 
@@ -741,6 +753,54 @@ inside the body's and the rear axle's). Pins moved (PIN MOVED, WAGONS3):
 `boat_map_marker`, `disc20`, `fbsea_zoom`, `gatecrowd`, `hcc_hosts`,
 `invisnet`, `mwbody1`, `tv1_travel_view`, `wagonhitch`, `wagons1`, `wagons2`,
 `wagons2_wheels`.
+
+### AUDIT WAGONS3 (2026-10-10, five lenses over PR #748)
+
+WAGONS3 landed beside MERCHANT-YARDS (`03-World/Merchant-Yards.md`, its own
+audit section there), and the merged branch was audited through five
+read-only lenses: the bench, the team and the harness, the yards' ground, the
+trade and the law, the merge and the records. Every finding was traced from a
+real caller and fixed with its pin and its mutant
+(`tools/mutants/wagons3_audit.json`). WAGONS3's:
+
+- **B1 (major) - the open wagon's camera.** The camera's wall was every
+  bench wagon's body box, and the open wagon's body is its two hoops: the
+  front one's box stood 5.6 cm behind the bench, every cast back from the
+  focal met it at once, and the camera never left the head (Mac's 5 unmet on
+  that wagon). The wall is the caravan's alone (`cabin`, `enterable`), stood
+  where the wagon is drawn (it stood on the stepped pose, a step from the
+  drawn seat, and the camera leapt between the head and its distance). The
+  pin casts from the camera's own focal (`FOCAL_HEIGHT`), which stands over
+  the caravan's roof: a level cast is free there, a cast looking up meets the
+  front.
+- **T1 (major) - walking through my own wagon.** The parked box came down at
+  contact (`CAPSULE_BOX_SKIN` outside the radius), and the collider rests a
+  body against a face at exactly its radius: every body leaning on the wagon
+  took its box down and walked through it. In is now the skin past touching;
+  the pin walks a body into each kind with the real collider, and the old law
+  let it out 3.7 m the far side.
+- **B2** - third person lost after every journey, teleport or load (the
+  frames with no seat read as the saddle): `benchKind`. **B3** - another
+  player's driver drawn a frame behind their wagon and reins (the glue read
+  last frame's hang): the glue hangs their wagon from this frame's puller
+  first. **B4 (noted, unchanged)** - streaming's origin follows the bench, up
+  to a hitch's length behind the capsule; nothing found broken by it.
+- **T2** - a short team in harness drawn as a pair; **T3** - its one horse
+  could not be ridden or taken by the hotkey; **T4** - only the pole's middle
+  answered the press over a pair (the outer half of each horse answered
+  nothing): the press over the team in harness, a horse out of harness its own
+  box.
+- **Y4 - the wealth measure.** A Caravan's worth ceiling was DFU's cart's
+  (12,200), under its own 25,000: an honest Caravan sold was counted a gain
+  from nowhere. A marked wagon's ceiling is its kind's price
+  (`src/systems/itemLaw.js` worthCeiling); `WEALTH_VERSION` 2, so every stored
+  record is measured again and the change is no one's gain. The account
+  service deploys with it (itemLaw.js is in its graph, and this branch changes
+  it already).
+- **Records and pins** - the horse count pinned against items above the
+  Horse's template (R3), the fixed city's frame order pinned again (R6), a
+  rope's single leaping end (R7), and WAGONS3's four FLAGGED limits stood at
+  their lines in `src/` so the open flags carry them (R8).
 
 ## The relay
 

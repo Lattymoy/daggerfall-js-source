@@ -39,7 +39,7 @@ import { attachTouch } from '../ui/touch.js';
 import { attachGamepad } from '../ui/gamepadInput.js';   // GP1: the pad speaks the same hooks
 import { BlocksFile } from '../formats/blocksFile.js';
 import { bindWorldDataBlocks } from '../formats/worldDataReplacement.js';   // RR3b
-import { isClimateFreeModel, NO_CLIMATE_REMAP } from '../world/customModels.js';   // ARENA1: RuntimeMaterials' ApplyClimate 0 - the colosseum wears its own pictures
+import { isClimateFreeModel, NO_CLIMATE_REMAP, customModelFor, hasCustomModel, customModelNeeds, classicModelIdOf } from '../world/customModels.js';   // ARENA1: RuntimeMaterials' ApplyClimate 0 - the colosseum wears its own pictures; AUDIT MERCHANT-YARDS G1: the yards measure the registered models
 import { isUndercroftDoor, undercroftLocation, isArenaUndercroft, isArenaCity, inArenaCell, ARENA_REGION, ARENA_LOCATION, ARENA_BLOCK, ARENA_GATE_PEOPLE, arenaTownLandmark } from '../world/arenaCity.js';   // ARENA1: the undercroft's stair and its record, the city's cell; ARENA2: the colosseum's block in a built pixel, the Herald's place; ARENA-MAP: its name on the town map
 import { isFurnishing } from '../systems/decorFurnish.js';   // ARENA2: a moved house's furniture back among the furnishings
 import { createArenaBouts } from './arenaBouts.js';   // ARENA2: the bout on this screen - its law over real bodies, its crowd, its HUD
@@ -91,7 +91,7 @@ import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda ri
 import { FarRingRenderer, ringDisabled, ringHeight } from '../render/farRing.js';   // EV8: the province's mountains on the horizon
 import { syncLightingLane, lanternColor } from '../render/enhancedLighting.js';   // EL1: the Enhanced Lighting lane, installed at mount
 import { collectBlockFlats, billboardSize, mobileBillboardSize, centredBase, classicBillboardSize, isNatureArchive, NATURE_FLATS_Y } from '../world/rmbFlats.js'; import { blockHillSeat, seatNatureFlat } from '../world/townStandIns.js';   // TREES-SEATED: a block's trees on the hills drawn under them
-import { blockSolids } from '../world/flatFields.js';   // FIELD BUGS 2026-10-04d CROPS: a crop field keeps a metre off the block's solids
+import { blockSolids, flatFieldFor } from '../world/flatFields.js';   // FIELD BUGS 2026-10-04d CROPS: a crop field keeps a metre off the block's solids; AUDIT MERCHANT-YARDS G1: and a yard off the field
 import { textureReplacementEnabled, hasTextureReplacement, preloadTextureRecord, decodePng, decodedTextureTopDown } from '../systems/textureReplacement.js';   // DW-E2: a decoration's replacement (UnderwaterDecorationReplacementCache)
 import { SeasonHelper, archivePrefix as seasonPrefixOf } from '../systems/seasonsIliacBay.js';   // SIB1: Seasons of the Iliac Bay's SeasonHelper; WINDFALL1: and its atlases' prefixes, which Windfall's own tables key on
 import { loadSeasonsTextures, seasonsInstalled } from '../systems/seasonsIliacBayAssets.js';   // SIB1: its textures, from the player's own copy of the mod
@@ -290,7 +290,7 @@ import { createQuayPool } from './quayPool.js';   // QUAYS: a harbour's quays, s
 import { createLefayMonument } from './lefayMonumentHost.js';   // LEFAY1: the monument to Julian LeFay in Gothway Garden, and the flowers laid at it
 import { isLefayTown, lefaySpotOf, carveLefay } from '../world/lefayMonument.js';   // LEFAY1: its town, its spot off the town's navgrid, and the people's navgrid carved round it
 import { createMerchantYards } from './merchantYardsHost.js';   // MERCHANT-YARDS: every city's and town's Stable and Wagon Yard, and their trade
-import { yardSitesOf, carveYards, MONUMENT_KEEP_M } from '../world/merchantYardSites.js';   // MERCHANT-YARDS: where they stand off the town's layout, and the people's navgrid carved round them
+import { yardSitesOf, carveYards, MONUMENT_KEEP_M, yardMeasuresOf, placedModelBox } from '../world/merchantYardSites.js';   // MERCHANT-YARDS: where they stand off the town's layout, and the people's navgrid carved round them
 import { isYardTown, yardKeeper, YARD_KIND_ORDER } from '../systems/merchantYards.js';   // MERCHANT-YARDS: the towns that stand them, who keeps them, the town's people
 import { HARBOUR_REACH } from '../systems/naval/shipLife.js';   // AUDIT HOLDINGS O1: the harbour's scan reach, its pixels built before it is sounded
 import { createHarbourBook } from '../systems/naval/harbourBook.js';   // HARBOUR-BOOK: the harbours near the player, the quays' and the sea's
@@ -519,7 +519,7 @@ import { testEntryById, applyTestCharacter, seedTestMount, seedTestLoot, testRoo
 import { publishBootParams, refuseOnlinePowerFlags, BOOT_DOOR_KEYS } from '../systems/onlineLane.js';   // AUDIT SET D4: a refused Test Room boot drops `online` from the URL the lane reads; REALM P0.1: the URL's powers stay offline
 import { preloadChargenArt } from '../ui/chargenArt.js';   // U10
 import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
-import { buildingDataForDoor, locationBuildings, BUILDING_KEY_0, makeBuildingKey } from '../systems/talkTopics.js';   // E2: the shop identity   // H2: every building, with its key   // AUDIT 58: BuildingDirectory.buildingKey0, the key both ship interiors are filed under
+import { buildingDataForDoor, locationBuildings, BUILDING_KEY_0, makeBuildingKey, blockBuildingCount } from '../systems/talkTopics.js';   // E2: the shop identity   // H2: every building, with its key   // AUDIT 58: BuildingDirectory.buildingKey0, the key both ship interiors are filed under
 import { hitSoundFor, swingSoundFor, ENEMY_HIT_VOLUME, PLAYER_HIT_VOLUME } from '../systems/soundClips.js';   // AUDIT 58: DFU's two hit volumes
 import { isInvisible, entityIsParalyzed, concealBits } from '../systems/effects.js';   // AUDIT 39: the S19 gate is host-agnostic in DFU
 import { hasActiveEffect } from '../systems/effects.js';   // PEERLIGHT2: my Light spell, for the pose
@@ -3366,29 +3366,52 @@ export async function bootWorld(canvas, renderer, params, status) {
   };
   /** MERCHANT-YARDS: A TOWN'S TWO YARDS (world/merchantYardSites.js) - off a layout laid out the same on every lane
    *  (the enhanced skin's, the mills stood: a classic client measures the ground an enhanced one sees, so both stand a
-   *  yard on one spot), every model measured by its ARCH3D size (no mesh built), every flat by its foot, a palace's
-   *  block left whole, the monument's ground kept. Each site in the location's frame, keyed by the town and its kind,
-   *  with its keeper (systems/merchantYards.js yardKeeper) and the town's people. */
-  function merchantYardSitesFor(dfLocation, lefaySpot, people) {
+   *  yard on one spot; the build's own `loc` where it is that layout), every model measured by its box (no mesh built),
+   *  every flat by its foot, a palace's block left whole, the monument's ground kept. Each site in the location's frame,
+   *  keyed by the town and its kind, with its keeper (systems/merchantYards.js yardKeeper) and the town's people.
+   *  AUDIT MERCHANT-YARDS (the measures now merchantYardSites.js yardMeasuresOf's, pinned there): G1 - a registered
+   *  model is measured by its own geometry (placedModelBox; an alias by its classic model) and a crop field by the
+   *  ground it sows (the town mods' boulders, stalls and fields have no ARCH3D record, and a Stable stood over them);
+   *  a model built over the player's own (the colosseum) is not built here - its block is left whole, as a palace's;
+   *  G3 - a palace read off the block's real buildings (talkTopics.js blockBuildingCount; the slots past it are
+   *  garbage); G2 - the sites kept per town while its measures stand (a rebuild of the pixel placed it all again, a
+   *  tenth of a second in the build, and said "no room" each time). */
+  const _yardMemo = new Map();   // mapId -> { sig, sites }, the latest few towns
+  const _yardBoxes = new Map();   // a registered model's local box, by id
+  const palaceIn = (b) => {
+    const list = b.dfBlock?.rmbBlock?.fldHeader?.buildingDataList ?? [];
+    const n = Math.min(list.length, blockBuildingCount(b.dfBlock));
+    for (let i = 0; i < n; i++) if (list[i]?.buildingType === TALK_BUILDING_TYPES.Palace) return true;
+    return false;
+  };
+  function merchantYardSitesFor(dfLocation, lefaySpot, people, loc = null) {
     try {
-      const yl = layoutLocation(dfLocation, maps, blocks, { enhanced: true, windmills: true });
-      const buildings = [], props = [], flats = [], closedBlocks = [];
-      for (const b of yl.blocks) {
-        const origin = trs(b.originX, 0, b.originZ, 0, 0, 0);
-        if ((b.dfBlock?.rmbBlock?.fldHeader?.buildingDataList ?? []).some((d) => d?.buildingType === TALK_BUILDING_TYPES.Palace)) closedBlocks.push([b.x, b.y]);
-        for (const m of b.layout.models) {
-          const sz = dfMeshSize(m.modelIdNum);
-          if (!sz) continue;
-          const { min, max } = staticBuildingWorldAabb(staticBuildingBox(sz), multiply(origin, m.matrix));
-          (m.recordIndex != null ? buildings : props).push([min[0], min[2], max[0], max[2]]);
-        }
-        for (const w of b.layout.windmills) { const box = transformedAabb(archAabb('millBody', BODY.positions), multiply(origin, w.matrix)); buildings.push([box[0], box[2], box[3], box[5]]); }
-        for (const fl of collectBlockFlats(b.dfBlock, 0)) if (!fl.editor) flats.push([b.originX + fl.x, b.originZ + fl.z]);
-      }
-      const sites = yardSitesOf(yl, { buildings, props, flats, closedBlocks, keep: lefaySpot ? [[lefaySpot.x, lefaySpot.z, MONUMENT_KEEP_M]] : [] });
+      const yl = loc && isEnhanced() && windmillsOn() ? loc : layoutLocation(dfLocation, maps, blocks, { enhanced: true, windmills: true });
+      const measures = {
+        ...yardMeasuresOf(yl, {
+          boxOf: (id, at) => placedModelBox(id, at, {
+            custom: (cid) => (hasCustomModel(cid) && !customModelNeeds(cid).length ? customModelFor(cid)?.positions ?? null : null),
+            classic: (cid) => dfMeshSize(classicModelIdOf(cid)),
+            cache: _yardBoxes,
+          }),
+          fieldOf: (id) => flatFieldFor(id),
+          millBox: (at) => { const box = transformedAabb(archAabb('millBody', BODY.positions), at); return [box[0], box[2], box[3], box[5]]; },
+          flatsOf: (b) => collectBlockFlats(b.dfBlock, 0),
+          closedBlock: (b) => b.blockName === ARENA_BLOCK || palaceIn(b),
+        }),
+        keep: lefaySpot ? [[lefaySpot.x, lefaySpot.z, MONUMENT_KEEP_M]] : [],
+      };
       const mapId = (dfLocation.mapTableData?.mapId ?? 0) >>> 0, regionIndex = dfLocation.regionIndex ?? 0, race = walkerRace(people, dfLocation.regionIndex);
-      if (sites.length < YARD_KIND_ORDER.length) console.log(`[yards] ${dfLocation.name}: no room for ${YARD_KIND_ORDER.filter((k) => !sites.some((t) => t.kind === k)).join(' or ')}`);
-      return sites.map((t) => ({ ...t, key: `${mapId}:${t.kind}`, mapId, regionIndex, race, keeper: yardKeeper(mapId, t.kind, regionIndex) }));
+      const sig = JSON.stringify(measures);
+      let memo = _yardMemo.get(mapId);
+      if (!memo || memo.sig !== sig) {
+        memo = { sig, sites: yardSitesOf(yl, measures) };
+        _yardMemo.delete(mapId);
+        _yardMemo.set(mapId, memo);
+        while (_yardMemo.size > 8) _yardMemo.delete(_yardMemo.keys().next().value);
+        if (memo.sites.length < YARD_KIND_ORDER.length) console.log(`[yards] ${dfLocation.name}: no room for ${YARD_KIND_ORDER.filter((k) => !memo.sites.some((t) => t.kind === k)).join(' or ')}`);
+      }
+      return memo.sites.map((t) => ({ ...t, key: `${mapId}:${t.kind}`, mapId, regionIndex, race, keeper: yardKeeper(mapId, t.kind, regionIndex) }));
     } catch (e) { console.warn('[yards] the town\'s yards would not place', e?.message ?? e); return []; }
   }
   /** FB1009 HOME-FOOT: each model's ground seen from above (homeYards.js modelFootRects), in its own frame - measured once. */
@@ -5162,7 +5185,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const loc = layoutLocation(dfLocation, maps, blocks, { enhanced: isEnhanced(), windmills: windmillsOn() });   // WM3: the pack's own switch
       locBlocks = loc.blocks;
       if (isLefayTown(dfLocation)) lefaySpot = lefaySpotOf(loc);   // LEFAY1: the open ground nearest the town's middle, off its own navgrid
-      if (isYardTown(dfLocation)) yardSites = merchantYardSitesFor(dfLocation, lefaySpot, climate?.people);   // MERCHANT-YARDS: the town's open ground, clear of its buildings, roads and lots
+      if (isYardTown(dfLocation)) yardSites = merchantYardSitesFor(dfLocation, lefaySpot, climate?.people, loc);   // MERCHANT-YARDS: the town's open ground, clear of its buildings, roads and lots
       const tilePos = getLocationTerrainTileOrigin(dfLocation);
       const locLocal = [tilePos.x * tileSide, avg * worldHeight + 2.0 * 0.025, tilePos.y * tileSide];
       // T3d: EVERY location pixel keeps its origin (the population
@@ -7719,6 +7742,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   hccGroundMoved = hcc.groundMoved;   // DISC20-C
   // RW1 x WAGONS2: the wagons stand in the street a window looks out on - all but the caravan whose room I stand in
   renderer.outsideViewDraws?.add(({ renderer: r }) => { if (!hccOn()) return; const room = modes?.caravanRoom ?? null; hcc.drawOutside(r, room ? caravanRooms.fromNative(room.origin) : null); });
+  renderer.outsideViewDraws?.add(({ renderer: r }) => { merchantYards?.draw(r); });   // AUDIT MERCHANT-YARDS G5: the yards' timber and their wagons on show in the street a window looks out on (the view out drew empty ground where a Stable stood)
   // WAGONS1: the seats in the back of my wagon and of another's - asks and answers on the foes frame, a rider pinned to
   // their seat with the motor held, the owner's journey followed (the party's own, landing beside the owner's wagon)
   wagonRiders = createWagonRiders({
@@ -16138,8 +16162,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       gold: () => totalGoldAmount(playerEntity),
       goldPieces: () => goldAmount(playerEntity),
       // Items.Contains(Transportation, Horse / Small_cart)
-      // (DaggerfallTravelPopUp.cs:216-217) - the general store sells
-      // both, so the calculator's transport modifier is real.
+      // (DaggerfallTravelPopUp.cs:216-217) - a town's Stable and Wagon
+      // Yard sell both (MERCHANT-YARDS; DFU's General Store did), so the
+      // calculator's transport modifier is real.
       hasHorse: () => hasTransport(TRANSPORT_HORSE),
       hasCart: () => hasTransport(TRANSPORT_SMALL_CART),
       // `DaggerfallBankManager.OwnsShip || GuildManager.FreeShipTravel()`
@@ -24459,7 +24484,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     horseArt: () => !!hcc.presentation.horseArt.ensureStationary(),
     showWagon: (r, texRemap, position, rotation, kind) => hcc.drawShowWagon(r, texRemap, position, rotation, kind),
     wagonBox: (kind) => hcc.partsOf(kind)?.box ?? null,
-    open: (site, mode) => modes?.openYardTrade?.(site.kind, site.regionIndex, mode) ?? false,
+    open: (site, mode, name) => modes?.openYardTrade?.(site.kind, site.regionIndex, mode, name) ?? false,
     say: (text) => townTalk.say(text), midText: (text) => setMidScreenText(text),
   });
   /** WB1: the compass's mark - the gate's spot in THIS scene, while the gate stands and the player is in its ring. */
@@ -32386,7 +32411,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const mwv0 = mwViewFrame({
       eyeOverride: travelView?.eye ?? null,
       fpEye: cam.pos, feet: player.feetAt(), yaw: cam.yaw, pitch: cam.pitch,
-      dt, riding: !!player.riding && !_driverSeat,   // AUDIT-EOTB F3/F4: the host's own clock, and the one state only it has; WAGONS3: the bench is no saddle
+      dt, riding: !!player.riding && !_driverSeat && !(player.transportMode === TRANSPORT_MODES.Cart && hcc.benchKind()),   // AUDIT-EOTB F3/F4: the host's own clock, and the one state only it has; WAGONS3: the bench is no saddle (AUDIT WAGONS3 B2: on a frame with no seat either)
       ...(_driverSeat ? { seated: true, stopped: true, feet: _driverSeat.feet } : {}),   // WAGONS3: seated on it, still on it (the sprite plays no stride), the camera's feet the seat's (after `feet`: it wins)
       cart: player.transportMode === TRANSPORT_MODES.Cart, onExteriorPath: _surfPath,   // EOTB-IL: UpdateWagon's two host facts
       raycast: (o, d, m) => Math.min(collider.raycast(o, d, m, camFilter), hcc.cameraHit(o, d, m)),   // WAGONS3: my driven wagon's body a wall to the camera on its bench

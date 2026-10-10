@@ -10,7 +10,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { makeWorld } from './hccWorld.mjs';
-import { TRANSPORT, WAGON_MODE, HORSE_MODE, HITCHED_HORSE_LOCAL_Z, DEPLOY_CLEARANCE, HORSE_BOX_SIZE } from '../src/systems/horseCartLaw.js';
+import { TRANSPORT, WAGON_MODE, HORSE_MODE, HITCHED_HORSE_LOCAL_Z, DEPLOY_CLEARANCE, HORSE_BOX_SIZE, HCC_ACTION_TEXT } from '../src/systems/horseCartLaw.js';
 import { createHorseCartPool, CAPSULE_BOX_SKIN, TEAM_MAX, WAGON_BUCKET } from '../src/scenes/horseCartPool.js';
 import { HCC_WIRE_KIND } from '../src/systems/horseCartWire.js';
 import {
@@ -25,6 +25,8 @@ import { SEATED_HIP_HEIGHT, SEAT_HIP_DROP, SEAT_PELVIS_HEIGHT, seatedMotion, sea
 import { ROPE, newRope, layRope, stepRope, restSag, tubeModel, tubeInto, tubeVertexCount } from '../src/systems/wagonRopes.js';
 import { TEX, WAGON_ARCHIVE, wagonArt } from '../src/world/wagonArt.js';
 import { quatAngleAxis, UNITY_QUAT_IDENTITY, quatRotate as quatRotateT, quatForward } from '../src/world/quat.js';
+import { FOCAL_HEIGHT } from '../src/player/mwCamera.js';   // AUDIT WAGONS3 B1: the camera's own focal over the seat
+import { MW_UNITS_PER_METER } from '../src/formats/mwFirstPerson.js';
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const bakeOf = (kind) => JSON.parse(rd(`src/assets/wagons/${kind}.json`));
@@ -76,9 +78,13 @@ test('WAGONS3 THE TEAM\'S LAW: the two bench wagons take a pair, the Small Cart 
   assert.deepEqual(Object.fromEntries(Object.values(WAGON_KINDS).map((k) => [k.key, k.horses])), { cart: 1, openWagon: 2, caravan: 2 });
   assert.equal(wagonHorsesOf('caravan'), 2);
   assert.equal(wagonHorsesOf('nonsense'), 1, 'a kind the law does not know: the Small Cart\'s');
-  assert.equal(horseCountOf([...horseItems(2), { templateIndex: 1 }]), 2);
+  // AUDIT WAGONS3 R3: items on both sides of the Horse's template (a dagger's 113, a book's 277 above it) - each Horse
+  // counted by its own template, never a range
+  const others = [{ templateIndex: 1 }, { group: 'Weapons', templateIndex: 113 }, { group: 'Books', templateIndex: 277 }, newWagonItem('cart')];
+  assert.equal(horseCountOf([...horseItems(2), ...others]), 2);
+  assert.equal(horseCountOf(others), 0, 'none of them a horse');
   assert.equal(horseCountOf(null), 0);
-  const pack = (kind, horses) => [newWagonItem(kind), ...horseItems(horses)];
+  const pack = (kind, horses) => [newWagonItem(kind), ...horseItems(horses), ...others];
   assert.equal(wagonTeamShort(pack('openWagon', 1)), 'Your Open Wagon needs two horses to pull it. Buy another at a town\'s Stable.');
   assert.equal(wagonTeamShort(pack('caravan', 1)), WAGON_TEAM_TEXT.short('caravan'));
   assert.equal(wagonTeamShort(pack('caravan', 2)), null, 'a pair');
@@ -190,6 +196,14 @@ test('WAGONS3 THE ROPES: a rope is laid at rest - its ends pinned, its middle hu
   stepRope(r, [100, 2, 0], [100, 2, 3], 1 / 60);
   close(2 - mid(r), restSag(3, ROPE.rein.slack), 1e-9, 'a leap lays it again');
   assert.ok(Math.abs(r.p[3] - 100) < 1e-9 && Math.abs(r.q[3] - 100) < 1e-9, 'with no velocity');
+  // AUDIT WAGONS3 R7: either end leaping ALONE lays it again too (the other end held, the span the same)
+  for (const which of ['a', 'b']) {
+    const lr = newRope('rein');
+    for (let i = 0; i < 120; i++) stepRope(lr, [0, 2, 0], [0, 2, 3], 1 / 60);
+    stepRope(lr, which === 'a' ? [0, 2, 6] : [0, 2, 0], which === 'b' ? [0, 2, -3] : [0, 2, 3], 1 / 60);
+    close(2 - mid(lr), restSag(3, ROPE.rein.slack), 1e-9, `its ${which} end alone leapt: laid again`);
+    assert.deepEqual([...lr.p], [...lr.q], `its ${which} end alone leapt: no velocity`);
+  }
   // grown: the same shape at the scale
   const s = newRope('trace'), g = newRope('trace');
   stepRope(s, [0, 2, 0], [0, 2, 2], 1 / 60); stepRope(g, [0, 20, 0], [0, 20, 20], 1 / 60, 10);
@@ -416,10 +430,15 @@ test('WAGONS3 THE PARKED BOX NEVER HOLDS ME (Mac: "Spawning the wagon can trap y
     assert.equal(pool.capsuleInBox(m, pool.partsOf(kind)), false);
     buckets.length = 0; pool.frame(1 / 30, [0, 2, 0], 0);
     assert.ok(buckets.some(([op]) => op === 'add'), `${kind}: stood once I stepped out`);
-    // touching it within the skin is in it
+    // AUDIT WAGONS3 T1: a body the collider rests against a face (its spine at its radius) is outside - the box holds
+    // it; one reaching in past the skin is in
     const b = pool.partsOf(kind).bounds;
-    capsule = { feet: [s.wagon.position[0] + b.max[0] + 0.35 + CAPSULE_BOX_SKIN / 2, 0, s.wagon.position[2]], height: 1.8, radius: 0.35 };
-    assert.equal(pool.capsuleInBox(m, pool.partsOf(kind)), true, 'a body touching it');
+    capsule = { feet: [s.wagon.position[0] + b.max[0] + 0.35, 0, s.wagon.position[2]], height: 1.8, radius: 0.35 };
+    assert.equal(pool.capsuleInBox(m, pool.partsOf(kind)), false, 'a body resting against it');
+    capsule = { feet: [s.wagon.position[0] + b.max[0] + 0.35 - CAPSULE_BOX_SKIN / 2, 0, s.wagon.position[2]], height: 1.8, radius: 0.35 };
+    assert.equal(pool.capsuleInBox(m, pool.partsOf(kind)), false, 'within the skin: still outside');
+    capsule = { feet: [s.wagon.position[0] + b.max[0] + 0.35 - 2 * CAPSULE_BOX_SKIN, 0, s.wagon.position[2]], height: 1.8, radius: 0.35 };
+    assert.equal(pool.capsuleInBox(m, pool.partsOf(kind)), true, 'past the skin: in it');
   }
   // the classic wagon keeps the mod's own 2.5 m
   const src = rd('src/systems/horseCart.js');
@@ -430,6 +449,34 @@ test('WAGONS3 THE PARKED BOX NEVER HOLDS ME (Mac: "Spawning the wagon can trap y
   const pool = rd('src/scenes/horseCartPool.js');
   assert.match(pool, /standWagonCollider\(parked && !capsuleInBox\(parked, myParts\) \? parked : null, myParts\);/);
   assert.match(pool, /if \(parts !== _bucketParts\) \{ _bucketKey = standBox\(WAGON_BUCKET, null, _bucketKey, parts\); _bucketParts = parts; \}/);
+});
+
+test('AUDIT WAGONS3 T1: THE PARKED BOX HOLDS A BODY THAT WALKS INTO IT - the real collider rests a capsule against the box at its radius, and the box stays standing under that rest, so the walk stops at the wagon\'s side and never comes out the other (it was taken down at contact, and the body walked through); feet on its top keep it standing too (mutants: in at contact)', async () => {
+  const { Collider } = await import('../src/player/collider.js');
+  const { CAPSULE_RADIUS, CAPSULE_HEIGHT } = await import('../src/player/motor.js');
+  for (const kind of ['cart', 'caravan']) {
+    const col = new Collider(() => 0);
+    let feet = [0, 0, 0];
+    const world = await wagonWorld(kind, { collider: () => col, playerCapsule: () => ({ feet, height: CAPSULE_HEIGHT, radius: CAPSULE_RADIUS }) });
+    const { w, rt, step, pool } = world;
+    w.items.cart = true; w.items.horse = true;
+    w.mode = TRANSPORT.Foot; w.pos = [0, 0.9, 0]; w.yaw = 0;
+    step(2); rt.handleSummonTransport(); step(2);
+    pool.frame(1 / 30, [0, 2, 0], 0);
+    const s = pool.shown();
+    assert.equal(s.wagon.kind, HCC_WIRE_KIND.Deployed, `${kind}: parked`);
+    const b = pool.partsOf(kind).bounds, side = s.wagon.position[0] + b.max[0];
+    // walk from 3 m off its right side, straight across it, at a stride a step
+    feet = [side + 3, 0, s.wagon.position[2] + (b.min[2] + b.max[2]) / 2];
+    for (let i = 0; i < 80; i++) {
+      pool.frame(1 / 60, [0, 2, 0], 0);
+      col.move(feet, -0.1, 0, 0, CAPSULE_HEIGHT);   // the feet moved in place, as the motor's
+    }
+    assert.ok(feet[0] > side, `${kind}: stopped at its side (${feet[0].toFixed(3)} against ${side.toFixed(3)})`);
+    close(feet[0], side + CAPSULE_RADIUS, 0.02, `${kind}: resting against it at the capsule's radius`);
+    const { mat4FromQuatPos } = await import('../src/world/quat.js');
+    assert.equal(pool.capsuleInBox(mat4FromQuatPos(s.wagon.rotation, s.wagon.position), pool.partsOf(kind)), false, `${kind}: and the box still stands under that rest`);
+  }
 });
 
 test('WAGONS3 TWO HORSES TO PULL A PAIR\'S WAGON: short of its pair the wagon is refused by the transport window, the hotkey and the plaque alike, with the team\'s own word; a team that falls short while it pulls stops where it is - the wagon parked in harness, its driver afoot beside it (mutants: the window\'s gate dropped, the press\'s, the hitch\'s, the reconcile)', async () => {
@@ -463,6 +510,47 @@ test('WAGONS3 TWO HORSES TO PULL A PAIR\'S WAGON: short of its pair the wagon is
   w.pos = [world.rt.view().horse.position[0] + 1.2, 0.9, world.rt.view().horse.position[2]]; step(1);
   assert.equal(rt.tryUseTransport(TRANSPORT.Cart).succeeded, false);
   assert.ok(w.said.length > said && w.said.at(-1) === w.short);
+  // AUDIT WAGONS3 T2: the one horse I own stands in harness alone, beside the pole, with its own two traces (its mate
+  // was a horse I do not own)
+  world.pool.frame(1 / 30, [0, 2, -5], 0);
+  const one = world.pool.teamOf('');
+  assert.deepEqual(one.map((h) => [h.hitched, h.drawn]), [[true, true]], 'one horse in harness');
+  assert.equal(one[0].side, teamSidesOf('caravan')[0], 'beside the pole, not on it');
+  assert.equal(world.pool.harness.get('')?.ropes.length, 2, 'its two traces');
+  // ...and the other: the pair, with its four (the pool's count read)
+  const pair = await wagonWorld('caravan', { horses: () => 2 });
+  drive(pair);
+  pair.w.short = WAGON_TEAM_TEXT.short('caravan'); pair.step(1); pair.w.short = null;   // a team that fell short parks in harness...
+  pair.pool.frame(1 / 30, [0, 2, -5], 0);
+  assert.deepEqual(pair.pool.teamOf('').map((h) => h.side), teamSidesOf('caravan'), '...and two owned stand as a pair');
+  // AUDIT WAGONS3 T4: the horse's press and hover reach over both of the pair, not the pole's middle alone
+  const press = pair.pool.targets().filter((t) => t.key === 'hccHorse');
+  assert.equal(press.length, 1, 'one target, the horse\'s');
+  for (const h of pair.pool.teamOf('')) {
+    for (const k of [0, 2]) assert.ok(press[0].aabb.min[k] <= h.position[k] - 0.5 && press[0].aabb.max[k] >= h.position[k] + 0.5, `the ${h.side} horse inside the press (axis ${k})`);
+  }
+  // ...and a horse out of harness its own box: ridden away and left, its mate waiting at the parked wagon - a press over
+  // both would span the road between them
+  assert.equal(pair.rt.tryUseTransport(TRANSPORT.Horse).succeeded, true, 'the first horse ridden off');
+  pair.step(2);
+  for (let i = 0; i < 80; i++) { pair.w.pos[0] += 0.2; pair.step(); }
+  pair.w.mode = TRANSPORT.Foot; pair.step(3);
+  pair.pool.frame(1 / 30, [0, 2, -5], 0);
+  const apart = pair.pool.teamOf('');
+  assert.deepEqual(apart.map((h) => h.hitched), [false, true], 'the one left loose, its mate in harness');
+  assert.ok(Math.abs(apart[0].position[0] - apart[1].position[0]) > 10, 'far apart');
+  const loose = pair.pool.targets().find((t) => t.key === 'hccHorse');
+  assert.ok(loose.aabb.max[0] - loose.aabb.min[0] < 2, `the loose horse's own box (${loose.aabb.min[0].toFixed(1)}..${loose.aabb.max[0].toFixed(1)})`);
+  // AUDIT WAGONS3 T3: that horse is taken as a horse - its rows Ride (no Drive or Follow the short team refuses), the
+  // mount hotkey the horse
+  const rows = rt.actionRows('horse').map((r) => r.label);
+  assert.equal(rows[0], HCC_ACTION_TEXT.ride, `the press rides it (${rows})`);
+  assert.equal(rows.includes(HCC_ACTION_TEXT.followTeam), false, 'no team to follow');
+  w.pos = [world.rt.view().horse.position[0] + 1.2, 0.9, world.rt.view().horse.position[2]]; step(1);
+  w.said.length = 0;
+  rt.handleQuickMountOrDismount(); step(2);
+  assert.equal(w.said.includes(w.short), false, `the hotkey never asks for the wagon (${w.said})`);
+  assert.equal(w.mode, TRANSPORT.Horse, 'it takes the horse');
   const src = rd('src/systems/horseCart.js');
   assert.match(src, /function hitchDeployedWagon\(\) \{\n\s+if \(refuseShortTeam\(\)\) return;/, 'the plaque\'s and the horse\'s hitch refuse it too');
   assert.match(src, /function startFollowingHitchedTeam\(\) \{\n\s+if \(refuseShortTeam\(\)\) return;/);
@@ -475,31 +563,59 @@ test('WAGONS3 TWO HORSES TO PULL A PAIR\'S WAGON: short of its pair the wagon is
   }
 });
 
-test('WAGONS3 THE CAMERA\'S WALL ON THE BENCH: a ray from my seat back into my driven wagon\'s body stops at it, less the camera\'s radius; one ahead, one starting inside it, a parked wagon and the Small Cart have none (mutants: the wall\'s frame unturned, inside taken for a hit, the radius unread)', async () => {
-  const world = await wagonWorld('caravan');
+test('WAGONS3 THE CAMERA\'S WALL ON THE BENCH: a ray from the camera\'s focal over my seat back into my driven caravan\'s body stops at it, less the camera\'s radius; one ahead, one starting inside it, a parked wagon and the Small Cart have none; AUDIT WAGONS3 B1: the open wagon\'s hoops are no wall (the camera leaves the head), and the wall stands where the wagon is drawn (mutants: the wall\'s frame unturned, inside taken for a hit, the radius unread, every body a cabin, the stepped pose)', async () => {
+  const FOCAL = FOCAL_HEIGHT / MW_UNITS_PER_METER;   // player/mwCamera.js: the focal the camera casts back from, over the feet
+  let shift = null;
+  const world = await wagonWorld('caravan', { renderShift: () => shift });
   drive(world);
   world.pool.frame(1 / 30, [0, 2, -5], 0);
   const s = world.pool.shown(), parts = world.pool.partsOf('caravan');
   const seat = world.pool.driverSeat();
-  const eye = [seat.feet[0], seat.feet[1] + 1.4, seat.feet[2]];
+  const eye = [seat.feet[0], seat.feet[1] + FOCAL, seat.feet[2]];
+  // the focal stands over the caravan's roof (a level cast back clears it - the camera free); looking up at the driver
+  // the cast falls back and down, onto the body's front under the roof
+  const BACK = [0, -0.6, -0.8];
   const front = s.wagon.position[2] + parts.cabin.max[2];
-  close(world.pool.cameraHit(eye, [0, 0, -1], 10), eye[2] - front, 1e-6, 'back into the body: its front');
-  close(world.pool.cameraHit(eye, [0, 0, -1], 10, 0.2), eye[2] - front - 0.2, 1e-6, 'less the radius');
-  assert.equal(world.pool.cameraHit(eye, [0, 0, 1], 10), Infinity, 'ahead: the team, no wall');
-  assert.equal(world.pool.cameraHit(eye, [0, 0, -1], 0.1), Infinity, 'out of reach');
+  assert.ok(eye[1] - s.wagon.position[1] - (eye[2] - front) * 0.75 < parts.cabin.max[1], 'the cast meets the front under the roof');
+  close(world.pool.cameraHit(eye, BACK, 10), (eye[2] - front) / 0.8, 1e-6, 'back into the body: its front');
+  close(world.pool.cameraHit(eye, BACK, 10, 0.2), (eye[2] - front) / 0.8 - 0.2, 1e-6, 'less the radius');
+  assert.equal(world.pool.cameraHit(eye, [0, 0, -1], 10), Infinity, 'level, over the roof: free');
+  assert.equal(world.pool.cameraHit(eye, [0, -0.6, 0.8], 10), Infinity, 'ahead: the team, no wall');
+  assert.equal(world.pool.cameraHit(eye, BACK, 0.1), Infinity, 'out of reach');
   assert.equal(world.pool.cameraHit([s.wagon.position[0], s.wagon.position[1] + 1, s.wagon.position[2] + 1], [0, 0, -1], 10), Infinity, 'from inside it: none');
   // the wagon turned: the wall turns with it
   turnDrive(world);
   world.pool.frame(1 / 30, [0, 2, -5], 0);
-  const t = world.pool.shown(), ts = world.pool.driverSeat(), back = qr(t.wagon.rotation, [0, 0, -1]);
-  const teye = [ts.feet[0], ts.feet[1] + 1.4, ts.feet[2]];
+  const t = world.pool.shown(), ts = world.pool.driverSeat(), back = qr(t.wagon.rotation, BACK);
+  const teye = [ts.feet[0], ts.feet[1] + FOCAL, ts.feet[2]];
   const lz = qr([-t.wagon.rotation[0], -t.wagon.rotation[1], -t.wagon.rotation[2], t.wagon.rotation[3]], [teye[0] - t.wagon.position[0], teye[1] - t.wagon.position[1], teye[2] - t.wagon.position[2]])[2];
-  close(world.pool.cameraHit(teye, back, 10), lz - parts.cabin.max[2], 1e-6, 'straight back along the turned wagon: its front');
+  close(world.pool.cameraHit(teye, back, 10), (lz - parts.cabin.max[2]) / 0.8, 1e-6, 'straight back along the turned wagon: its front');
   world.w.mode = TRANSPORT.Foot; world.step(3); world.pool.frame(1 / 30, [0, 2, -5], 0);
-  assert.equal(world.pool.cameraHit(eye, [0, 0, -1], 10), Infinity, 'parked: a collider of its own');
+  assert.equal(world.pool.cameraHit(eye, BACK, 10), Infinity, 'parked: a collider of its own');
   const cart = await wagonWorld('cart');
   drive(cart); cart.pool.frame(1 / 30, [0, 2, -5], 0);
   assert.equal(cart.pool.cameraHit([0, 2, 3], [0, 0, -1], 10), Infinity, 'the Small Cart: no bench');
+  // AUDIT WAGONS3 B1: the open wagon - its body is its two hoops, the front one 5.6 cm behind the bench: no cabin, so a
+  // cast back from its focal runs its whole length (it met the hoops' box at once, and the camera never left the head)
+  const open = await wagonWorld('openWagon');
+  assert.equal(open.pool.partsOf('openWagon').cabin, null, 'the open wagon stands no cabin');
+  assert.ok(parts.cabin, 'the caravan does');
+  drive(open); open.pool.frame(1 / 30, [0, 2, -5], 0);
+  const os = open.pool.driverSeat();
+  assert.ok(os, 'on its bench');
+  for (const d of [[0, 0, -1], BACK, [0, 0.5, -0.866]]) assert.equal(open.pool.cameraHit([os.feet[0], os.feet[1] + FOCAL, os.feet[2]], d, 2.74), Infinity, `its camera free to the full distance (${d})`);
+  // the wall where the wagon is DRAWN: the motor's step interpolated moves the seat, and the wall with it
+  const mid = await wagonWorld('caravan', { renderShift: () => shift });
+  drive(mid); mid.pool.frame(1 / 30, [0, 2, -5], 0);
+  const ms = mid.pool.driverSeat(), mp = mid.pool.shown().wagon.position;
+  const meye = [ms.feet[0], ms.feet[1] + FOCAL, ms.feet[2]];
+  const still = mid.pool.cameraHit(meye, BACK, 10);
+  close(still, (meye[2] - (mp[2] + parts.cabin.max[2])) / 0.8, 1e-6, 'unshifted: the stepped pose');
+  shift = [0, 0, -0.08];
+  const ds = mid.pool.driverSeat();
+  close(ds.feet[2], ms.feet[2] - 0.08, 1e-9, 'a step behind, the seat drawn there');
+  close(mid.pool.cameraHit([ds.feet[0], ds.feet[1] + FOCAL, ds.feet[2]], BACK, 10), still, 1e-6, 'and the wall drawn with it: the same reach from the drawn seat');
+  shift = null;
   void quatAngleAxis; void UNITY_QUAT_IDENTITY;
 });
 
@@ -530,6 +646,15 @@ test('WAGONS3 ANOTHER PLAYER ON THEIR BENCH: a peer driving a bench wagon (their
   const w = rd('src/scenes/world.js');
   assert.match(w, /for \(const d of drawable\) if \(d\?\.shown\) _peerMapPoses\.set\(d\.id, d\.shown\);\n\s*if \(hccOn\(\)\) hcc\.driverGlue\(drawable, \{ toWire: campToWire \}\);/, 'glued after the map\'s poses - where peerAnchor reads the puller');
   assert.match(rd('src/net/remotePlayers.js'), /const rd = \(peer\.shown\?\.rd \| 0\) \|\| \(peer\.shown\?\.bench === 2 \? 2 : 0\);/, 'the cart still heard');
+  // AUDIT WAGONS3 B3: the glue runs before this pool's frame - their puller moved on this frame, and their seat goes
+  // with it, never a frame behind it
+  anchor = [0, 0.9, 10.6];
+  const moved = [{ id: 'ann', shown: { x: anchor[0], y: anchor[1], z: anchor[2], yaw: 1, rd: 2, mv: 1 } }];
+  pool.driverGlue(moved);
+  close(moved[0].shown.z - seat.feet[2], 0.6, 1e-6, 'the seat moved with this frame\'s puller');
+  close(moved[0].shown.x, seat.feet[0], 1e-6, 'straight on');
+  pool.frame(1 / 30, [0, 2, -5]);
+  close(pool.driverDrawn('ann').feet[2], moved[0].shown.z, 1e-6, 'and the frame\'s own hang finds the wagon where the glue laid it');
   anchor = null;
 });
 
@@ -560,7 +685,7 @@ test('WAGONS3 THE HOSTS SIT ME ON THE BENCH: the wagon\'s LateUpdate before the 
     assert.match(s, /_driverSeat = walkMode [^\n]*player\.transportMode === TRANSPORT_MODES\.Cart && !\(townTalk\.overlay instanceof DeathScreen\) \? hcc\.driverSeat\(\) : null;/, `${host}: driving, never over a death's sink`);
     assert.match(s, /if \(_driverSeat\) cam\.pos = \[_driverSeat\.feet\[0\], _driverSeat\.feet\[1\] \+ SEATED_EYE_HEIGHT, _driverSeat\.feet\[2\]\];/, `${host}: the seated eye`);
 
-    assert.match(s, /riding: !!player\.riding && !_driverSeat,/, `${host}: the bench is no saddle`);
+    assert.match(s, /riding: !!player\.riding && !_driverSeat && !\(player\.transportMode === TRANSPORT_MODES\.Cart && hcc\.benchKind\(\)\),/, `${host}: the bench is no saddle - on a frame with no seat either (AUDIT WAGONS3 B2)`);
     assert.match(s, /\.\.\.\(_driverSeat \? \{ seated: true, stopped: true, feet: _driverSeat\.feet \} : \{\}\),/, `${host}: seated, still, the camera's feet the seat's`);
     assert.ok(s.indexOf('feet: player.feetAt(), yaw: cam.yaw, pitch: cam.pitch,') < s.indexOf('...(_driverSeat ? { seated: true, stopped: true, feet: _driverSeat.feet } : {}),'), `${host}: the seat's feet after the smoothed ones - the later key wins`);
     assert.match(s, /raycast: \(o, d, m\) => Math\.min\(collider\.raycast\(o, d, m(?:, camFilter)?\), hcc\.cameraHit\(o, d, m\)\),/, `${host}: the wall`);
@@ -599,5 +724,14 @@ test('WAGONS3 THIRD PERSON FROM THE BENCH (Mac: "Using a wagon doesnt allow you 
   assert.match(src, /benchSeated = !!state\.seated;/);
   assert.match(src, /mounted = !!state\.riding;\n\s*if \(mounted\)/, 'RIDE-POV unchanged: the saddle holds the head');
   assert.match(rd('src/player/mountRig.js'), /!mwViewHides\(\)\.horse\) \{/, 'the mount\'s picture asks the hides');
+  // AUDIT WAGONS3 B2: the bench is the KIND's - a journey, a teleport or a load's first frames stand no seat, and the
+  // third person stays out of the head through them
+  for (const [kind, bench] of [['caravan', true], ['openWagon', true], ['cart', false]]) {
+    const pool = createHorseCartPool({ renderer: fakeRenderer(), meshes: null, collider: () => null, now: () => 0, wagonKind: () => kind, bakedWagon: async () => null, log: QUIET });
+    assert.equal(pool.driverSeat(), null, `${kind}: no seat stood (nothing driven, no bake)`);
+    assert.equal(pool.benchKind(), bench, `${kind}: driven from ${bench ? 'a bench' : 'the saddle'}`);
+    pool.setEnabled(false);
+    assert.equal(pool.benchKind(), false, `${kind}: the mod off - DFU's cart`);
+  }
   void buildBakedWagonParts;
 });

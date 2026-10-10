@@ -180,6 +180,10 @@ test('HCC hosts: exterior.js mirrors the same seams over the fixed city (no stre
     /\(key\) => hcc\.hoverName\(key\),/, /horseCart: pickActivatableHit\(cam\.pos, _hd, hcc\.targets\(\), collider\),/,
     /horseCart: hccRuntimeOn,/, /horseCart: \(\) => hccRuntimeOn\(\),/,
   ]) assert.match(e, re, `exterior.js lost ${re}`);
+  // AUDIT WAGONS3 R6: the fixed city's LateUpdate before the camera and before the world pass too (the pin WAGONS3 moved
+  // off the clear colour for world.js alone)
+  { const at = e.indexOf('    hccTick(dt, now);\n    _driverSeat'), cam0 = e.indexOf('? mwViewFrame({ fpEye: cam.pos, feet: player.feetAt(), yaw: cam.yaw, pitch: cam.pitch,'), clear = e.indexOf('renderer.setClearColor(SKY_CLEAR);   // INCIDENT 2026-09-04');
+    assert.ok(at > 0 && at < cam0 && cam0 < clear, 'exterior.js: hccTick, then the camera, then the world pass'); }
   assert.doesNotMatch(e, /wireRecord|applyOwner|sweepOwners/, 'no room, no wire on this host');
   assert.doesNotMatch(e, /travelOptions/, 'and no Travel Options seam (ENH-NOTICE3 A: the journey is world.js\'s alone) - the runtime reads the absent seam as "no such mod"');
 });

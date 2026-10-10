@@ -9,12 +9,13 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   YARD_KIND_ORDER, YARD_KINDS, YARD_QUALITY, YARD_TOWN_TYPES, YARD_TEXT, YARD_ROWS, isYardTown, yardStock, yardBuysItem,
-  yardKeeper, yardName, yardCounter, validYardKind,
+  yardKeeper, yardName, yardCounter, validYardKind, YARD_PRICE_INDEX,
 } from '../src/systems/merchantYards.js';
 import {
   YARD_FOOT, YARD_PAD_M, BUILDING_CLEAR_M, PROP_CLEAR_M, FLAT_CLEAR_M, YARD_GAP_M, FRONT_ROAD_CELLS, NO_ROAD_COST, YARD_TURNS,
-  yardSpans, yardGround, yardSite, yardSitesOn, yardSitesOf, carveYards,
+  yardSpans, yardGround, yardSite, yardSitesOn, yardSitesOf, carveYards, yardMeasuresOf, placedModelBox, fieldRect,
 } from '../src/world/merchantYardSites.js';
+import { staticBuildingBox, staticBuildingWorldAabb } from '../src/world/staticBuildings.js';   // AUDIT MERCHANT-YARDS R2
 import { buildYardModel, SIGN_BOARD, STABLE_YARD, WAGON_YARD, YARD_FLOOR_Y, signBoxOf, yardPoints } from '../src/world/merchantYardModels.js';
 import { yardArt, yardSignArt, YARD_ARCHIVE, YARD_REC, SIGN_GLYPHS, signGlyph, SIGN_ART_W, SIGN_ART_H, YARD_ART_SIZE } from '../src/world/merchantYardArt.js';
 import { createMerchantYards, yardToScene, yardBoxToScene, feetInYard, YARD_REACH } from '../src/scenes/merchantYardsHost.js';
@@ -68,6 +69,11 @@ test('MERCHANT-YARDS WHAT EACH BUYS: the Stable a horse alone, the Wagon Yard a 
   assert.deepEqual([yardBuysItem('barn', horse), yardBuysItem('stable', null)], [false, false]);
   const c = yardCounter('transport', 17);
   assert.deepEqual([c.buildingType, c.quality, c.regionIndex, c.yard, c.buildingKey], ['yard:transport', YARD_QUALITY, 17, 'transport', 0]);
+  // AUDIT MERCHANT-YARDS Y2, Y5, Y1: its own index, its name (the kind's title where none is given), its word on a steal
+  assert.deepEqual([c.priceIndex, c.name, c.noSteal], [1000, 'The Wagon Yard', YARD_TEXT.steal]);
+  assert.equal(YARD_PRICE_INDEX, 1000, 'DFU\'s neutral index (shopStock.js calculateCost\'s)');
+  assert.equal(yardCounter('stable', 3, 'Moorhart\'s Stables').name, 'Moorhart\'s Stables');
+  assert.equal(yardCounter('stable', 3, '  ').name, 'The Stables');
   assert.deepEqual([c.accepts(caravan), c.accepts(horse)], [true, false]);
   assert.equal(YARD_QUALITY, 10, 'a middling counter, the same in every town');
   assert.equal(SHOP_BUYS_GROUPS[c.buildingType], undefined, 'no table of Daggerfall\'s is keyed by a yard\'s type');
@@ -89,7 +95,7 @@ test('MERCHANT-YARDS THE GENERAL STORE: no horse, no cart and no wagon on any sh
   assert.equal(shopBuysItem(BUILDING_TYPES.GeneralStore, { group: 'Books', templateIndex: 277 }), true, 'the rest of its list stands');
 });
 
-test('MERCHANT-YARDS THE KEEPER: named on the region\'s bank on the town and the kind\'s seed - the same keeper on every client, DFU\'s stream put back; the yard named for them', () => {
+test('MERCHANT-YARDS THE KEEPER: named on the region\'s bank on the town and the kind\'s seed - the same keeper on every client, DFU\'s stream put back; the yard named for them; AUDIT R4: the bank the region\'s, every outfit worn (mutants: the region unread, the outfit\'s bits cut)', async () => {
   setSeed(12345);
   const a = yardKeeper(4242, 'stable', 17), b = yardKeeper(4242, 'stable', 17), c = yardKeeper(4242, 'transport', 17);
   assert.equal(getSeed(), 12345, 'the global stream untouched');
@@ -101,6 +107,23 @@ test('MERCHANT-YARDS THE KEEPER: named on the region\'s bank on the town and the
   assert.equal(yardName('stable', ''), 'The Stables');
   // the race table itself is REGIONAL-FOLK's (test/fb1010_regionalfolk.test.js pins it both ways)
   assert.ok(PERSON_TEXTURES[walkerRace(0, null)].male.length === 4, 'four outfits to a race and sex - the variant\'s range');
+  // AUDIT MERCHANT-YARDS R4: the name is the REGION's bank's - two regions on one bank name one keeper, two banks two
+  // (the region unread named every keeper a Breton); the outfit any of the race's four, the sex either, over the towns
+  const { getNameBankOfRegion } = await import('../src/characters/nameHelper.js');
+  const { REGION_RACES } = await import('../src/formats/mapsTables.js');
+  const byBank = new Map();
+  REGION_RACES.forEach((_, i) => { const k = getNameBankOfRegion(i); if (!byBank.has(k)) byBank.set(k, []); byBank.get(k).push(i); });
+  const banks = [...byBank.values()].filter((rs) => rs.length >= 2);
+  assert.ok(banks.length >= 2, 'two banks with two regions each');
+  const [[p0, p1], [q0]] = banks;
+  assert.equal(yardKeeper(4242, 'stable', p0).name, yardKeeper(4242, 'stable', p1).name, 'one bank, one keeper');
+  const differ = [...Array(40).keys()].filter((m) => yardKeeper(m, 'stable', p0).name !== yardKeeper(m, 'stable', q0).name).length;
+  assert.ok(differ >= 30, `another bank, another keeper (${differ} of 40)`);
+  const seen = new Set(), sexes = new Set();
+  for (let m = 0; m < 200; m++) { const k = yardKeeper(m, 'transport', 17); seen.add(k.variant); sexes.add(k.sex); }
+  assert.deepEqual([...seen].sort(), [0, 1, 2, 3], 'every outfit worn somewhere');
+  assert.deepEqual([...sexes].sort(), ['female', 'male']);
+  assert.match(read('src/scenes/world.js'), /const mapId = \(dfLocation\.mapTableData\?\.mapId \?\? 0\) >>> 0, regionIndex = dfLocation\.regionIndex \?\? 0, race = walkerRace\(people, dfLocation\.regionIndex\);/, 'the town\'s own region - its keepers\' bank and its counter\'s');
 });
 
 test('MERCHANT-YARDS THE PLACE: its own ground open and off every road, a ring round it open (a road allowed there), its front onto a road, nearest the middle (mutants: a road under it; the ring unread; the front unread)', () => {
@@ -261,7 +284,7 @@ function rig({ sites = null, ground = 2, feet = null, horses = true } = {}) {
   const st = {
     sites: sites ?? [
       { key: '7:stable', kind: 'stable', x: 100, z: 50, yaw: 0, comp: 0, regionIndex: 17, race: 'Breton', keeper },
-      { key: '7:transport', kind: 'transport', x: 140, z: 50, yaw: 90, comp: 0, regionIndex: 17, race: 'Breton', keeper: { name: 'Jalib', sex: 'male', variant: 0 } },
+      { key: '7:transport', kind: 'transport', x: 140, z: 50, yaw: 90, comp: 0, regionIndex: 17, race: 'Redguard', keeper: { name: 'Jalib', sex: 'male', variant: 2 } },   // AUDIT R1: a Redguard keeper beside a Breton
     ],
     ground, feet, boxes: new Map(), horses, open: true, t: 1000,
   };
@@ -289,6 +312,12 @@ test('MERCHANT-YARDS THE POOL STANDS THEM - each on its site\'s ground, its timb
   const state = y.state();
   assert.deepEqual(state.map((s) => [s.kind, s.keeper, s.horses, s.name]), [['stable', true, 3, 'Moorhart\'s Stables'], ['transport', true, 0, 'Jalib\'s Wagon Yard']]);
   assert.equal(y.batches().length, 1 + 3 + 1, 'two keepers and the Stable\'s three horses');
+  // AUDIT MERCHANT-YARDS R1: each keeper wears its site's race, its sex and its outfit (the walkers' law, walkerRace's -
+  // the host hands it) - a Breton stablemaster in her second outfit, a Redguard wagonwright in his third
+  const archives = log.batches.map((b) => b.a);
+  assert.ok(archives.includes(PERSON_TEXTURES.Breton.female[1]), `the stablemaster (${archives})`);
+  assert.ok(archives.includes(PERSON_TEXTURES.Redguard.male[2]), `the wagonwright, a Redguard (${archives})`);
+  assert.equal(archives.includes(PERSON_TEXTURES.Breton.male[2]), false, 'never the Breton\'s outfit for him');
   assert.equal(y.draw(deps.renderer), 2, 'the timber; no wagon yet (its box not in)');
   // the ray's boxes: each keeper and sign, the three horses; their reach a static NPC's
   const keys = y.targets().map((t) => t.key);
@@ -382,8 +411,17 @@ test('MERCHANT-YARDS THE YARD\'S FRAME IN THE SCENE: a point and a box turned wi
 test('MERCHANT-YARDS THE FOUR HOSTS - world.js places, stands, draws and names them and hands the press; worldModes\' street ray reaches them and opens their counter; exterior.js flagged; the dungeon none', () => {
   const world = read('src/scenes/world.js'), modes = read('src/scenes/worldModes.js'), host = read('src/scenes/merchantYardsHost.js');
   const ext = read('src/scenes/exterior.js'), dungeon = read('src/scenes/dungeonContext.js');
-  assert.match(world, /if \(isYardTown\(dfLocation\)\) yardSites = merchantYardSitesFor\(dfLocation, lefaySpot, climate\?\.people\);/);
-  assert.match(world, /layoutLocation\(dfLocation, maps, blocks, \{ enhanced: true, windmills: true \}\)/, 'one layout for every lane');
+  assert.match(world, /if \(isYardTown\(dfLocation\)\) yardSites = merchantYardSitesFor\(dfLocation, lefaySpot, climate\?\.people, loc\);/);
+  assert.match(world, /const yl = loc && isEnhanced\(\) && windmillsOn\(\) \? loc : layoutLocation\(dfLocation, maps, blocks, \{ enhanced: true, windmills: true \}\);/, 'one layout for every lane (the build\'s own where it is that one)');
+  // AUDIT MERCHANT-YARDS G1, G3, G4, G2: the measures the host hands yardMeasuresOf, and the sites kept per town
+  assert.match(world, /custom: \(cid\) => \(hasCustomModel\(cid\) && !customModelNeeds\(cid\)\.length \? customModelFor\(cid\)\?\.positions \?\? null : null\),/, 'a registered model measured by its own geometry');
+  assert.match(world, /classic: \(cid\) => dfMeshSize\(classicModelIdOf\(cid\)\),/, 'an alias by its classic model');
+  assert.match(world, /fieldOf: \(id\) => flatFieldFor\(id\),/, 'a field by the ground it sows');
+  assert.match(world, /flatsOf: \(b\) => collectBlockFlats\(b\.dfBlock, 0\),/, 'every flat, the markers too');
+  assert.match(world, /closedBlock: \(b\) => b\.blockName === ARENA_BLOCK \|\| palaceIn\(b\),/, 'a palace\'s block and the colosseum\'s left whole');
+  assert.match(world, /const n = Math\.min\(list\.length, blockBuildingCount\(b\.dfBlock\)\);\n\s*for \(let i = 0; i < n; i\+\+\) if \(list\[i\]\?\.buildingType === TALK_BUILDING_TYPES\.Palace\) return true;/, 'a palace among the block\'s real buildings');
+  assert.match(world, /if \(!memo \|\| memo\.sig !== sig\) \{\n\s*memo = \{ sig, sites: yardSitesOf\(yl, measures\) \};/, 'placed again only when its measures moved');
+  assert.match(world, /renderer\.outsideViewDraws\?\.add\(\(\{ renderer: r \}\) => \{ merchantYards\?\.draw\(r\); \}\);/, 'and in the view out of a window (AUDIT G5)');
   assert.match(world, /if \(yardSites\?\.length\) carveYards\(nav, yardSites\);/, 'the people walk round them');
   assert.match(world, /merchantYards: yardSites,/);
   assert.match(world, /merchantYards = createMerchantYards\(\{/);
@@ -394,7 +432,8 @@ test('MERCHANT-YARDS THE FOUR HOSTS - world.js places, stands, draws and names t
   assert.match(world, /\(key\) => merchantYards\?\.hoverName\(key\) \?\? null,/);
   assert.match(world, /yardTargets: \(\) => merchantYards\?\.targets\(\) \?\? \[\],/);
   assert.match(world, /activateYard: \(key, mode, verb\) => merchantYards\?\.activate\(key, mode, verb\) \?\? false,/);
-  assert.match(world, /open: \(site, mode\) => modes\?\.openYardTrade\?\.\(site\.kind, site\.regionIndex, mode\) \?\? false,/);
+  assert.match(world, /open: \(site, mode, name\) => modes\?\.openYardTrade\?\.\(site\.kind, site\.regionIndex, mode, name\) \?\? false,/);
+  assert.match(host, /if \(!open\(p\.y\.site, trade, p\.y\.name\)\) midText\(YARD_TEXT\.shut\);/, 'the counter named for its keeper (AUDIT Y5)');
   assert.match(world, /showWagon: \(r, texRemap, position, rotation, kind\) => hcc\.drawShowWagon\(r, texRemap, position, rotation, kind\),/);
   assert.match(world, /race: walkerRace\(climate\?\.people, dfLocation\.regionIndex\),/, 'the walkers...');
   assert.match(world, /race = walkerRace\(people, dfLocation\.regionIndex\);/, '...and the keepers one race law (a Redguard region\'s Redguard - REGIONAL-FOLK)');
@@ -402,9 +441,127 @@ test('MERCHANT-YARDS THE FOUR HOSTS - world.js places, stands, draws and names t
   assert.match(modes, /key\.startsWith\('yard:'\)\) \{[^\n]*\n\s*if \(_hitDist > _hitReach\) \{ setMidScreenText\(TOO_FAR_AWAY_TEXT\); return true; \}\n\s*return host\.activateYard\?\.\(key, getInteractionMode\(\), plaqueActionFor\(key\)\) \?\? true;/);
   assert.match(modes, /accepts: \(it\) => \(typeof b\.accepts === 'function' \? b\.accepts\(it\) : shopBuysItem\(b\.buildingType, it\)\),/, 'the counter asks the yard what it buys');
   assert.match(modes, /const win = openTradeWindow\(\{ items: tradeMode === 'Sell' \? \[\] : yardStock\(kind\) \}, b, tradeMode === 'Sell' \? 'Sell' : 'Buy'\);\n\s*if \(!win\) return true;[^\n]*\n\s*mountServiceWindow\(win\);/, 'the counter in the street\'s slot, never the interior\'s (undrawn outdoors)');
-  assert.match(modes, /ensureShopFont\(\)\.then\(\(\) => \{ if \(!openYardTrade\(kind, regionIndex, tradeMode, true\)\) setMidScreenText\(YARD_TEXT\.shut\); \}\);/, 'a press before the counter\'s art waits for it, once');
+  // AUDIT MERCHANT-YARDS Y3: one press waits (the latest), and opens only where it was pressed - the street, its slot free
+  assert.match(modes, /if \(!validYardKind\(kind\) \|\| mode !== 'exterior'\) return false;/, 'a yard\'s counter is the street\'s');
+  assert.match(modes, /const first = !_yardWait;\n\s*_yardWait = \{ kind, regionIndex, tradeMode, name \};\n\s*if \(first\) \{\n\s*ensureShopFont\(\)\.then\(\(\) => \{/, 'a press before the counter\'s art waits for it - one wait, the latest press');
+  assert.match(modes, /const w = _yardWait;\n\s*_yardWait = null;\n\s*if \(!w \|\| mode !== 'exterior' \|\| townTalk\?\.overlay\) return;\n\s*if \(!tradeDoorReady\(\) \|\| \(!isEnhanced\(\) && !_shopFont\)\) \{ setMidScreenText\(YARD_TEXT\.shut\); return; \}\n\s*openYardCounter\(w\.kind, w\.regionIndex, w\.tradeMode, w\.name\);/, 'opened where it was pressed, or not at all; a folder that gives no art says so');
+  assert.match(modes, /if \(Number\.isFinite\(b\?\.priceIndex\)\) return b\.priceIndex;/, 'a counter\'s own index (AUDIT Y2)');
+  assert.match(modes, /stealRefusal: \(\) => b\.noSteal \?\? null,/, 'the counter\'s word on a steal, to the window (AUDIT Y1)');
   assert.match(modes, /    openYardTrade,/);
   assert.match(host, /scenes\/exterior\.js - FLAGGED/);
   assert.equal(/merchantYard|openYardTrade/.test(ext), false, 'the bench stands none (flagged)');
   assert.equal(/merchantYard|yard:/.test(dungeon), false, 'the dungeon host stands no street');
+});
+
+test('AUDIT MERCHANT-YARDS Y1: THE YARD\'S WINDOW TAKES NO STEAL - the classic window\'s Steal says the keeper\'s word and nothing is rolled, tallied, moved or closed (a roll that would get away with anything), the enhanced window stands no Steal; a shop\'s counter keeps both (mutants: the classic\'s refusal unread, the enhanced\'s button kept)', async () => {
+  const { NativeTradeWindow, TRADE_RECTS } = await import('../src/ui/nativeTrade.js');
+  const { mountEnhancedTrade } = await import('../src/ui/enhancedTrade.js');
+  const { withDom } = await import('./invdrag.mjs');
+  const b = yardCounter('transport', 17, 'Moorhart\'s Wagon Yard');
+  const counter = (refuse) => {
+    const log = [], shelf = yardStock('transport'), pack = [];
+    const hooks = {
+      mode: 'Buy', shelfItems: () => shelf, packItems: () => pack, otherItems: () => [], isEquipped: () => false, accepts: b.accepts,
+      enchanted: () => false, priceCtx: () => ({ quality: b.quality, priceAdjustment: b.priceIndex, skills: {} }), gold: () => 1e6, rows: () => [],
+      weight: () => ({ carriedWeightKg: 0, maxEncumbranceKg: 500 }), commit: () => true,
+      icons: { getTexture: async () => ({ recordCount: 0 }), uploadRecord: () => {}, textures: new Map() }, entity: { stats: { strength: 50 } },
+      pickpocketSkill: () => 100, tallyPickpocket: (n) => log.push(['pickpocket', n]), tallyCrimeGuild: (a, n) => log.push(['guild', a, n]),
+      crimeTheft: () => log.push(['theft']), spawnCityGuards: (f) => log.push(['guards', f]), say: (l, sec) => log.push(['say', l, sec]),
+      shopName: b.name, ...(refuse ? { stealRefusal: () => b.noSteal } : {}),
+    };
+    return { log, shelf, pack, hooks };
+  };
+  const steal = (w) => {
+    const real = Math.random;
+    Math.random = () => 0.999;   // the roll gets away with anything
+    try { const [x, y, rw, rh] = TRADE_RECTS.steal; w.click(x + rw / 2, y + rh / 2); } finally { Math.random = real; }
+  };
+  const yard = counter(true), yw = new NativeTradeWindow(yard.hooks);
+  yw._pickRemote(0);
+  assert.equal(yw.basket.length, 1, 'staged');
+  steal(yw);
+  assert.deepEqual(yard.log, [['say', YARD_TEXT.steal, 2]], 'the keeper\'s word, and nothing else');
+  assert.deepEqual([yard.pack.length, yw.basket.length, yw.done], [0, 1, false], 'nothing moved, the window open');
+  const shop = counter(false), sw = new NativeTradeWindow(shop.hooks);
+  sw._pickRemote(0);
+  steal(sw);
+  assert.deepEqual([shop.pack.length, sw.done], [1, true], 'a shop\'s Steal stands, as DFU\'s');
+  const buttons = (refuse) => {
+    let names = [];
+    withDom((dom) => {
+      const host = dom.mk('div');
+      dom.body.append(host);
+      const view = mountEnhancedTrade(host, counter(refuse).hooks);
+      names = host.querySelectorAll('button').map((n) => n.textContent);
+      view.unmount?.();
+    });
+    return names;
+  };
+  assert.equal(buttons(true).includes('Steal'), false, 'the enhanced window stands no Steal at a yard');
+  assert.equal(buttons(false).includes('Steal'), true, '...and one at a shop');
+});
+
+test('AUDIT MERCHANT-YARDS G1 + G3 + G4 + R2: WHAT THE BLOCKS PUT IN A YARD\'S WAY (yardMeasuresOf) - a building\'s model a building, any other a prop, a registered model by its own geometry (the town mods\' boulders and stalls have no ARCH3D record), a crop field by the ground it sows, a mill a building, every flat (the markers too), a block left whole; and a yard placed off a boulder it stood on (mutants: a field unread, the markers dropped, a registered model unread, every model a prop)', () => {
+  const classic = (id) => (id === 100 ? { x: 400, y: 200, z: 400 } : null);   // a 10 m house (an ARCH3D size, in its units)
+  const boulder = Float32Array.of(-1.5, 0, -1, 1.5, 2, 1);
+  const custom = (id) => (id === 200 ? boulder : null);
+  const field = { rangeX: 20, rangeZ: 10, spacing: 2, noise: 0.5 };
+  const yl = {
+    blocks: [
+      { x: 0, y: 0, originX: 0, originZ: 0, dfBlock: {}, layout: {
+        models: [
+          { modelIdNum: 100, recordIndex: 0, matrix: trs(10, 0, 10, 0, 0, 0) },
+          { modelIdNum: 100, matrix: trs(60, 0, 60, 0, 0, 0) },
+          { modelIdNum: 200, matrix: trs(30, 0, 30, 0, 90, 0) },
+          { modelIdNum: 53214, matrix: trs(50, 0, 20, 0, 0, 0) },
+          { modelIdNum: 999, matrix: trs(5, 0, 5, 0, 0, 0) },
+        ],
+        windmills: [{ matrix: trs(80, 0, 80, 0, 0, 0) }],
+      } },
+      { x: 1, y: 0, originX: 102.4, originZ: 0, blockName: 'COLOSSEUM', dfBlock: {}, layout: { models: [], windmills: [] } },
+    ],
+  };
+  const cache = new Map();
+  const m = yardMeasuresOf(yl, {
+    boxOf: (id, at) => placedModelBox(id, at, { custom, classic, cache }),
+    fieldOf: (id) => (id === 53214 ? field : null),
+    millBox: (at) => [at[12] - 2, at[14] - 2, at[12] + 2, at[14] + 2],
+    flatsOf: (b) => (b.x === 0 ? [{ x: 1, z: 2 }, { x: 3, z: 4, editor: true }] : [{ x: 0.5, z: 0.5, editor: true }]),
+    closedBlock: (b) => b.blockName === 'COLOSSEUM',
+  });
+  const house = staticBuildingWorldAabb(staticBuildingBox({ x: 400, y: 200, z: 400 }), trs(10, 0, 10, 0, 0, 0));
+  const r = (a) => a.map((v) => Math.round(v * 1e6) / 1e6);
+  assert.deepEqual(m.buildings.map(r), [r([house.min[0], house.min[2], house.max[0], house.max[2]]), [78, 78, 82, 82]], 'the house (its record) and the mill');
+  assert.equal(m.props.length, 3, 'the classic model with no record, the boulder and the field - the unknown model none');
+  assert.deepEqual(r(m.props[1]), [29, 28.5, 31, 31.5], 'the boulder by its own geometry, turned');
+  assert.deepEqual(m.props[2], [39.5, 14.5, 60.5, 25.5], 'the field: half its range and its noise round its point');
+  assert.deepEqual(fieldRect(field, trs(50, 0, 20, 0, 0, 0)), m.props[2]);
+  assert.deepEqual(m.flats, [[1, 2], [3, 4], [102.9, 0.5]], 'every flat, the editor\'s markers too');
+  assert.deepEqual(m.closedBlocks, [[1, 0]], 'the colosseum\'s block left whole');
+  assert.ok(cache.has(200), 'a registered model\'s box measured once');
+  assert.equal(placedModelBox(999, trs(0, 0, 0, 0, 0, 0), { custom, classic }), null, 'neither knows it');
+  assert.deepEqual(r(placedModelBox(200, trs(0, 0, 0, 0, 0, 0), { custom, classic: () => ({ x: 4000, y: 4000, z: 4000 }) })), [-1.5, -1, 1.5, 1], 'a registered model before the ARCH3D record its id may share');
+  // a boulder in the best place moves the yard off it
+  const W = 40, H = 40, ground = () => ({ width: W, height: H, blocked: new Uint8Array(W * H), road: new Uint8Array(W * H) });
+  const free = yardSite(ground(), 'stable');
+  const at = [free.x, free.z];
+  const g = yardGround({ width: W, height: H, weightAt: () => 1 }, { props: [[at[0] - 1, at[1] - 1, at[0] + 1, at[1] + 1]] });
+  const moved = yardSite(g, 'stable');
+  assert.ok(moved && (moved.gx !== free.gx || moved.gy !== free.gy), 'the yard stands off the boulder');
+  const half = [moved.nx * NAV_CELL / 2, moved.nz * NAV_CELL / 2];
+  assert.ok(Math.abs(moved.x - at[0]) > half[0] + PROP_CLEAR_M || Math.abs(moved.z - at[1]) > half[1] + PROP_CLEAR_M - NAV_CELL, 'clear of it');
+});
+
+test('AUDIT MERCHANT-YARDS G2: THE TIE-BREAK IS THE DOCUMENTED ONE AND THE SAME ON EVERY ENGINE - two places as near the middle, both facing a road: the lower row wins whatever its turn (the loop found the other turn first and skipped it), and the distance is sqrt over an exact sum, never Math.hypot (mutants: the early skip at an equal distance)', () => {
+  const W = 40, H = 40, blocked = new Uint8Array(W * H).fill(1), road = new Uint8Array(W * H);
+  const open = (x0, y0, x1, y1) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) blocked[y * W + x] = 0; };
+  // A: turn 1 (8 x 9 cells) at (19, 7), its pad ring open, a road along its front (+x) ring; B: turn 0 (9 x 8) at (7, 19)
+  open(18, 6, 28, 16);
+  for (let y = 7; y <= 15; y++) road[y * W + 27] = 1;
+  open(6, 18, 16, 27);
+  for (let x = 7; x <= 15; x++) road[27 * W + x] = 1;
+  const s = yardSite({ width: W, height: H, blocked, road }, 'stable');
+  assert.deepEqual([s.gx, s.gy, s.turn], [19, 7, 1], 'the lower row, though its turn came second');
+  const src = read('src/world/merchantYardSites.js');
+  assert.equal(/Math\.hypot/.test(src.replace(/\/\/[^\n]*/g, '')), false, 'no Math.hypot decides a place');
 });

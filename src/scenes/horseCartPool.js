@@ -86,7 +86,7 @@ import { WAGON_HOVER_TEXT } from '../player/eotbWagon.js';   // the hover word f
 import { hccWireRecord, validHccRecord, hccRecordKey, easeToward, HCC_WIRE_KIND } from '../systems/horseCartWire.js';
 import { decodePng } from '../systems/textureReplacement.js';
 import { toColor32 } from '../formats/color32Order.js';
-import { wagonGeometry, buildBakedWagonParts, rendererModelOf, pitchedPoint, teamSidesOf, TEAM, rigGrowOf } from '../world/wagonModels.js';   // WAGONS1: Mac's wagons; WAGONS3: the team, the rig's grow
+import { wagonGeometry, buildBakedWagonParts, rendererModelOf, pitchedPoint, teamSidesOf, TEAM, rigGrowOf, driverSeatFor } from '../world/wagonModels.js';   // WAGONS1: Mac's wagons; WAGONS3: the team, the rig's grow, the bench
 import { seatRigInput, seatTopByte } from '../player/seatPose.js';   // WAGONS3: the driver's hands, and a seated peer's `st`
 import { newRope, stepRope, tubeModel, tubeInto, tubeVertexCount, ROPE } from '../systems/wagonRopes.js';   // WAGONS3: the harness
 import { wagonArt, WAGON_ARCHIVE, wagonLookArt, isGlassRecord, LOOK_RECORDS, lookRecord, TEX as WAGON_TEX } from '../world/wagonArt.js';
@@ -143,8 +143,10 @@ export const SEAT_GLUE_REACH = 3;
 /** RW1 x WAGONS2: how near the room the player stands in a wagon stands to be that room's caravan (m) - its pose and the
  *  room's are one point, set as it parked. */
 export const OUTSIDE_SKIP_REACH = 1.5;
-/** WAGONS3: how near my capsule's skin may come to my parked wagon's box before the box is not stood (m) - the motor's
- *  own contact margin, so a body touching the box is a body the box would hold. */
+/** WAGONS3: how far my capsule must reach INTO my parked wagon's box before the box is not stood (m). AUDIT WAGONS3 T1:
+ *  the collider rests a body against a face at exactly its radius (collider.js _resolveSphere), so a box taken down at
+ *  contact was taken down by every body leaning on it - it stood again only once I had walked through the wagon, and
+ *  feet on the caravan's roof dropped me into it. Only a body the wagon was laid round reaches in past this. */
 export const CAPSULE_BOX_SKIN = 0.05;
 const ZERO3 = Object.freeze([0, 0, 0]);
 const HORSE_LOCAL_BOX = Object.freeze([
@@ -410,14 +412,15 @@ export function createHorseCartPool({
     if (parts !== _bucketParts) { _bucketKey = standBox(WAGON_BUCKET, null, _bucketKey, parts); _bucketParts = parts; }
     _bucketKey = standBox(WAGON_BUCKET, m, _bucketKey, parts);
   }
-  /** WAGONS3 (Mac: "Spawning the wagon can trap you under the wagon"): WHETHER MY CAPSULE STANDS IN (or touches) A BOX OF
-   *  `parts` AT MATRIX `m` - the box's faces are two-sided and push no body out, so it is never stood round one: a wagon
-   *  laid where I stand (a summon, a dismount, a door) stands its box once I have stepped clear of it. The capsule's
-   *  spine sampled foot to head, each point's distance to the box in its own frame. */
+  /** WAGONS3 (Mac: "Spawning the wagon can trap you under the wagon"): WHETHER MY CAPSULE STANDS IN A BOX OF `parts` AT
+   *  MATRIX `m` - the box's faces are two-sided and push no body out, so it is never stood round one: a wagon laid where
+   *  I stand (a summon, a dismount, a door) stands its box once I have stepped clear of it. The capsule's spine sampled
+   *  foot to head, each point's distance to the box in its own frame; in is CAPSULE_BOX_SKIN past touching (AUDIT
+   *  WAGONS3 T1: a body resting against the box is outside it, and the box holds it). */
   function capsuleInBox(m, parts) {
     const c = playerCapsule?.();
     if (!c?.feet || !m || !parts?.bounds) return false;
-    const b = usableBounds(parts.bounds), r = c.radius ?? 0.35, h = Math.max(2 * r, c.height ?? 1.8), reach = r + CAPSULE_BOX_SKIN;
+    const b = usableBounds(parts.bounds), r = c.radius ?? 0.35, h = Math.max(2 * r, c.height ?? 1.8), reach = r - CAPSULE_BOX_SKIN;
     for (let i = 0; i <= 4; i++) {
       const y = c.feet[1] + r + ((h - 2 * r) * i) / 4;
       const d = [c.feet[0] - m[12], y - m[13], c.feet[2] - m[14]];
@@ -837,7 +840,12 @@ export function createHorseCartPool({
     const out = [];
     const inHarness = !!lone && !!w && (w.kind === HCC_WIRE_KIND.Following || (w.kind === HCC_WIRE_KIND.Deployed && !!w.hitched));
     if (inHarness && parts) {
-      for (const x of pair ? teamSidesOf(w.model) : [0]) {
+      // AUDIT WAGONS3 T2: my pair's wagon left in harness with one horse (a horse sold from under the team, an older
+      // save) stands that one beside the pole - its mate was a horse I do not own. A peer's word says no count, so
+      // their pair stands.
+      // FLAGGED: a peer's word does not say how many horses they own - their parked pair is drawn whole, and their second horse is not drawn at their parked wagon while they ride the first (bible/06-Systems/Wagons.md WAGONS3).
+      const sides = pair ? teamSidesOf(w.model) : [0];
+      for (const x of mine && pair && (horses?.() ?? 1) < 2 ? sides.slice(0, 1) : sides) {
         const f0 = lone.forward;
         out.push({ ...lone, position: [lone.position[0] + f0[2] * x, lone.position[1], lone.position[2] - f0[0] * x], g: 1, drawn: true, hitched: true, side: x });
       }
@@ -873,6 +881,10 @@ export function createHorseCartPool({
   /** WAGONS3: my seat on my driven bench wagon where it truly stands (ungrown) - the hosts stand my camera and my body
    *  on it - or null while I drive none. */
   const driverSeat = () => driverDrawn('', {});
+  /** AUDIT WAGONS3 B2: whether the wagon I drive is driven from a bench - its KIND's (wagonModels.js driverSeatFor, no
+   *  bake needed), never this frame's seat: a journey, a teleport and a load's first frames stand no seat, and a frame
+   *  read as the saddle took the third-person body into the head (RIDE-POV) for good. */
+  const benchKind = () => enabled && !!driverSeatFor(myKind());
   /**
    * WAGONS3: ANOTHER PLAYER DRIVING A BENCH WAGON, DRAWN ON ITS BENCH - seatGlue's law for the driver: each entry of
    * `drawable` whose pose says the cart (`rd` 2 - their capsule at the puller, where their trailing wagon hangs from,
@@ -886,6 +898,14 @@ export function createHorseCartPool({
     for (let i = 0; i < drawable.length; i++) {
       const d = drawable[i];
       if (!d?.shown || (d.shown.rd | 0) !== 2 || !_peers.has(d.id)) continue;
+      // AUDIT WAGONS3 B3: their wagon hung from THIS frame's anchor first - the glue runs in the host's online frame,
+      // before this pool's frame hangs it, and the seat read last frame's hang: the driver slid off their bench by a
+      // frame of their travel (metres under a journey's pace) and their hands off the reins. The shafts' own law at no
+      // time passed: the place, never the easing; the frame's own hang after it finds it there.
+      const p = _peers.get(d.id);
+      retarget(p);
+      const anchor = p.wagon?.kind === HCC_WIRE_KIND.Trailing && !p.hidden ? peerAnchor(p.ownerId ?? d.id) : null;
+      if (anchor) hitchPeerWagon(p, anchor, 0);
       const seat = driverDrawn(d.id, grows);
       if (!seat) continue;
       const w = toWire(seat.feet);
@@ -898,6 +918,7 @@ export function createHorseCartPool({
     const m = f.g > 1 ? mat4FromQuatPosScale(f.rotation, f.at, [f.g, f.g, f.g]) : wagonMatrix(f.at, f.rotation);
     return pitchedMatrix(m, parts, f.hitched ? parts.hitchPitch ?? 0 : 0);
   }
+  // FLAGGED: the horses are billboards, so a trace's collar and a rein's bit are measured points on the picture, not on a body - from some angles a trace meets the picture beside the horse's chest (bible/06-Systems/Wagons.md WAGONS3).
   /**
    * WAGONS3: THE HARNESS'S ENDS FOR AN OWNER THIS FRAME - `[{ kind, a, b, g }]`: each hitched horse's two traces from its
    * collar to their roots on the wagon (a pair's singletrees, turned with the pole; the Small Cart's shafts' roots,
@@ -966,14 +987,19 @@ export function createHorseCartPool({
    * WAGONS3 (Mac: "Using a wagon doesnt allow you to zoom out into 3rd person"): HOW FAR ALONG A RAY MY DRIVEN WAGON'S
    * BODY STANDS - the third-person camera's wall while I sit its bench (the moving wagon stands no collider, so the
    * camera behind me stood inside the caravan). From `o` along unit `d` up to `max` m, less `radius` (the camera's
-   * sphere); Infinity where the ray misses it, starts inside it, or no bench wagon of mine is driven.
+   * sphere); Infinity where the ray misses it, starts inside it, or no bench wagon of mine with a cabin (the caravan's
+   * - wagonModels.js wagonGeometry) is driven. AUDIT WAGONS3 B1: the wall stands where the wagon is DRAWN
+   * (drawnFrameOf - the motor's step interpolated, `renderShift`), as the seat the camera's focal rises from does: a
+   * wall on the wagon's stepped pose stood up to a step's travel from the drawn seat, and the camera leapt between the
+   * head and its full distance on a display faster than the step.
    */
   function cameraHit(o, d, max, radius = 0) {
-    const w = shown()?.wagon;
+    const s = shown(), w = s?.wagon;
     if (!w || w.kind !== HCC_WIRE_KIND.Trailing) return Infinity;
     const parts = partsOf(w.model), box = parts?.cabin;
     if (!box || !parts.driver) return Infinity;
-    const m = wagonMatrix(w.position, w.rotation);
+    const f = drawnFrameOf('', {}, s);
+    const m = wagonMatrix(f?.at ?? w.position, f?.rotation ?? w.rotation);
     const t = [o[0] - m[12], o[1] - m[13], o[2] - m[14]];
     const lo = [m[0] * t[0] + m[1] * t[1] + m[2] * t[2], m[4] * t[0] + m[5] * t[1] + m[6] * t[2], m[8] * t[0] + m[9] * t[1] + m[10] * t[2]];
     const ld = [m[0] * d[0] + m[1] * d[1] + m[2] * d[2], m[4] * d[0] + m[5] * d[1] + m[6] * d[2], m[8] * d[0] + m[9] * d[1] + m[10] * d[2]];
@@ -990,6 +1016,21 @@ export function createHorseCartPool({
 
   // ── the ray: the activation targets (RegisterCustomActivation at 3.2 - the runtime's ACTIVATION_REACH)
   const horseBox = (horse) => transformedAabb(HORSE_LOCAL_BOX, mat4FromQuatPos(quatLookRotation(horse.forward), horse.position));
+  /** AUDIT WAGONS3 T4: the press and the hover over an owner's horse take every horse drawn of its team in harness this
+   *  frame (a pair stands TEAM.side either side of the pole, past the one horse's box at its middle - the outer half of
+   *  each answered nothing); the horse alone, its own box - and a horse out of harness its own box too (my first horse
+   *  led away while the second waits at the parked wagon: a box over both would span the road between them). */
+  function teamAabb(owner, horse) {
+    const box = aabbOf(horseBox(horse));
+    const team = _teams.get(owner) ?? [];
+    if (team.some((h) => !h.hitched)) return box;
+    for (const h of team) {
+      if (!h.drawn) continue;
+      const b = aabbOf(horseBox(h));
+      for (let k = 0; k < 3; k++) { box.min[k] = Math.min(box.min[k], b.min[k]); box.max[k] = Math.max(box.max[k], b.max[k]); }
+    }
+    return box;
+  }
   function targets() {
     const out = [];
     const s = shown();
@@ -999,7 +1040,7 @@ export function createHorseCartPool({
       if (s.wagon.kind === HCC_WIRE_KIND.Deployed) out.push({ key: KEY_WAGON, aabb: aabbOf(box), distance: RAY_DISTANCE, reach: ACTIVATION_REACH });
       else if (s.wagon.kind === HCC_WIRE_KIND.Following && s.interaction) out.push({ key: KEY_FOLLOWING_WAGON, aabb: aabbOf(box), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true });
     }
-    if (s?.horse) out.push({ key: KEY_HORSE, aabb: aabbOf(horseBox(s.horse)), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true });
+    if (s?.horse) out.push({ key: KEY_HORSE, aabb: teamAabb('', s.horse), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true });
     for (const [owner, p] of _peers) {
       // PR-WAGON1 (2026-09-24, a player's report Mac relayed: "Players can grief other players with the wagon by
       // putting it in front of dungeon entryways and building entrances"; Mac's choice: "Others' wagons don't
@@ -1021,7 +1062,7 @@ export function createHorseCartPool({
         out.push({ key: peerKey(owner, 'w'), aabb: aabbOf(transformedAabb(theirs.box, pm)), obb: { m: pm, box: theirs.box }, distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true, yields: true });
       }
       // AUDIT HCC O9: a horse not drawn (its art still loading, or failed) is not named or pressed
-      if (p.horse && p.shownHorse && _stillReady) out.push({ key: peerKey(owner, 'h'), aabb: aabbOf(horseBox({ ...p.horse, position: p.shownHorse })), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true, yields: true });
+      if (p.horse && p.shownHorse && _stillReady) out.push({ key: peerKey(owner, 'h'), aabb: teamAabb(owner, { ...p.horse, position: p.shownHorse }), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true, yields: true });
     }
     return out;
   }
@@ -1427,7 +1468,7 @@ export function createHorseCartPool({
     frame, batches, draw, targets, hoverName, tooltipText, activate, offsetAll, destroyAll, clearPeers, shown, groundMoved,
     wireRecord, applyOwner, sweepOwners, applyKept, replaceKept, pruneKept, parkWord, parkedDoor, mySeat, peerSeat, peerRide, mySeatCount, mySeatsKnown,
     seatDrawn, seatGlue, drawnFrameOf, puppetSeatDrawn, wordSeat,   // WAGONS2: the seats as drawn - the Overworld's grown wagons
-    teamOf, driverDrawn, driverSeat, driverGlue, cameraHit, harnessEnds, faceTeams,   // WAGONS3: the team, the driver, the harness, the camera's wall
+    teamOf, driverDrawn, driverSeat, benchKind, driverGlue, cameraHit, harnessEnds, faceTeams,   // WAGONS3: the team, the driver, the harness, the camera's wall
     get harness() { return _harness; }, capsuleInBox,
     visitTarget,   // WAGONS2-VISIT
     drawOutside,   // RW1 x WAGONS2: the wagons in the street a window looks out on

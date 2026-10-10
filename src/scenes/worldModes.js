@@ -3347,15 +3347,33 @@ export function createWorldModes(host) {
    *  merchant's openBuy, RR3's door), or Sell into a basket of its own, the yard buying what yardBuysItem says and nothing
    *  else; priced by the counter's one law at YARD_QUALITY. The counter's art and font come in first, the press waiting
    *  for them (ASYNC NEVER DROPS) - once: a game folder that will not give them opens nothing, and says so. Answers
-   *  whether the press was handled. */
-  function openYardTrade(kind, regionIndex, tradeMode = 'Buy', waited = false) {
-    if (!validYardKind(kind)) return false;
+   *  whether the press was handled. `name` the yard's (merchantYards.js yardName), over the window.
+   *  AUDIT MERCHANT-YARDS Y3: ONE press waits - the latest, coalesced (two presses during the load opened two
+   *  windows) - and when the art comes in it opens only where it was pressed: the street, its slot still free. A door
+   *  gone through or a talk opened meanwhile makes the press the player's past, and nothing opens (a window opened
+   *  then took the interior's slot over whatever stood there, or the talk's in the street). */
+  let _yardWait = null;
+  function openYardTrade(kind, regionIndex, tradeMode = 'Buy', name = '') {
+    if (!validYardKind(kind) || mode !== 'exterior') return false;
     if (!tradeDoorReady() || (!isEnhanced() && !_shopFont)) {
-      if (waited) return false;
-      ensureShopFont().then(() => { if (!openYardTrade(kind, regionIndex, tradeMode, true)) setMidScreenText(YARD_TEXT.shut); });
+      const first = !_yardWait;
+      _yardWait = { kind, regionIndex, tradeMode, name };
+      if (first) {
+        ensureShopFont().then(() => {
+          const w = _yardWait;
+          _yardWait = null;
+          if (!w || mode !== 'exterior' || townTalk?.overlay) return;
+          if (!tradeDoorReady() || (!isEnhanced() && !_shopFont)) { setMidScreenText(YARD_TEXT.shut); return; }
+          openYardCounter(w.kind, w.regionIndex, w.tradeMode, w.name);
+        });
+      }
       return true;
     }
-    const b = yardCounter(kind, regionIndex);
+    return openYardCounter(kind, regionIndex, tradeMode, name);
+  }
+  /** The yard's counter itself, its art and font in. */
+  function openYardCounter(kind, regionIndex, tradeMode, name) {
+    const b = yardCounter(kind, regionIndex, name);
     const win = openTradeWindow({ items: tradeMode === 'Sell' ? [] : yardStock(kind) }, b, tradeMode === 'Sell' ? 'Sell' : 'Buy');
     if (!win) return true;   // DISC10-E L3: the trade door refused the beast (and said so) - handled, nothing to mount
     mountServiceWindow(win);   // the street's slot (townTalk's) - the interior's is never drawn outdoors
@@ -3509,6 +3527,7 @@ export function createWorldModes(host) {
       // the window owns; these are only the effects. The HUD lines go
       // at AddHUDText's 2-second delay (:918, :925), the same seam the
       // shop-quality lines take.
+      stealRefusal: () => b.noSteal ?? null,   // AUDIT MERCHANT-YARDS Y1: a counter whose keeper never looks away (a yard's) answers the window's Steal with its word, and nothing moves
       pickpocketSkill: () => skillValue(playerEntity, SKILLS.Pickpocket),
       tallyPickpocket: (n) => tallySkill(playerEntity, SKILLS.Pickpocket, n),
       tallyCrimeGuild: (a, n) => tallyCrimeGuildRequirements(playerEntity, a, n),
@@ -3711,6 +3730,7 @@ export function createWorldModes(host) {
   // multiplier of its own on the shop's price adjustment (never regionPriceAdjustment's region-wide index), for what the
   // player BUYS and has REPAIRED alone; what a shop pays for a sale is the shop's own
   function shopAdjustment(b, mode) {
+    if (Number.isFinite(b?.priceIndex)) return b.priceIndex;   // AUDIT MERCHANT-YARDS Y2: a counter that names its own index (a yard's, systems/merchantYards.js YARD_PRICE_INDEX) is priced at it, both ways
     const adj = regionPriceAdjustment(playerEntity, b?.regionIndex ?? 0);
     const f = mode === 'Buy' || mode === 'Repair' ? host.seatShopFactor?.(b) ?? 1 : 1;
     return f === 1 ? adj : Math.round(adj * f);

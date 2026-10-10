@@ -48,6 +48,12 @@ export const validYardKind = (k) => (typeof k === 'string' && Object.prototype.h
 /** The quality every yard's counter prices at (a shop's 1..20 - systems/shopStock.js calculateTradePrice): a middling
  *  shop's, the same in every town, so no yard is a cheaper one to buy at and a dearer one to sell to. */
 export const YARD_QUALITY = 10;
+/** AUDIT MERCHANT-YARDS Y2: the price index every yard's counter prices at, both ways - DFU's neutral 1000
+ *  (shopStock.js calculateCost's), never the region's walk. A yard never sells out and its goods weigh nothing, so a
+ *  Caravan bought where the index stood low and sold back where it stood high paid without end (11,250 a Caravan for
+ *  the best haggler between 450 and 2100) - the loop ENDLESS-STOCK shut at the shelf. At one index the online cap (half
+ *  the least ask) holds every sale at or under its buy; a regional holiday's halved buy breaks even, no more. */
+export const YARD_PRICE_INDEX = 1000;
 
 /** The towns that stand the two yards: Daggerfall's cities and its towns (hamlets). */
 export const YARD_TOWN_TYPES = Object.freeze([LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet]);
@@ -97,10 +103,18 @@ export function yardName(kind, keeperName) {
 }
 
 /** The yard's counter as the trade window reads a building's: its kind's own word for a type (never a DFU building
- *  type - no table of Daggerfall's is keyed by it), the yard's quality, the town's region, and what it buys. */
-export function yardCounter(kind, regionIndex) {
+ *  type - no table of Daggerfall's is keyed by it), the yard's quality, the town's region, and what it buys. AUDIT
+ *  MERCHANT-YARDS: its price index (Y2, YARD_PRICE_INDEX), its name over the window (Y5 - the window's heading read
+ *  " - Buy" and the classic popups' %cpn nothing; the kind's own title where none is given), and its word on a steal
+ *  (Y1 - the window's own Steal, not only the street's: a yard never sells out, and a Caravan stolen from its Buy and
+ *  sold back was gold without end). */
+export function yardCounter(kind, regionIndex, name = '') {
   const k = validYardKind(kind) ?? 'stable';
-  return { buildingType: `yard:${k}`, quality: YARD_QUALITY, regionIndex: regionIndex ?? 0, buildingKey: 0, yard: k, accepts: (/** @type {any} */ it) => yardBuysItem(k, it) };
+  return {
+    buildingType: `yard:${k}`, quality: YARD_QUALITY, regionIndex: regionIndex ?? 0, buildingKey: 0, yard: k,
+    name: (typeof name === 'string' && name.trim()) || `The ${YARD_KINDS[k].title}`, priceIndex: YARD_PRICE_INDEX, noSteal: YARD_TEXT.steal,
+    accepts: (/** @type {any} */ it) => yardBuysItem(k, it),
+  };
 }
 
 /** What the yards say: Info on a keeper, Steal at a yard, a press on a horse or a wagon on show, a window that would not

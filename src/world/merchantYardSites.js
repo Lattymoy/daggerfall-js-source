@@ -23,6 +23,9 @@
 //
 // Pure: no renderer, no GL, no clock. Not a DFU member. Ledger A (MERCHANT-YARDS).
 import { CityNavigation, NAV_CELL, NAV_CELLS_PER_BLOCK } from './cityNavigation.js';
+import { trs, multiply } from './mat4.js';   // AUDIT MERCHANT-YARDS R2: the blocks' measures, here where they are pinned
+import { staticBuildingBox, staticBuildingWorldAabb } from './staticBuildings.js';
+import { localAabb, transformedAabb } from '../render/frustum.js';
 import { ROAD_WEIGHT } from '../systems/gothwayBoards.js';
 import { YARD_KIND_ORDER } from '../systems/merchantYards.js';
 
@@ -99,8 +102,12 @@ export function yardGround(nav, { buildings = [], props = [], flats = [], closed
     if (![x, z, r].every(Number.isFinite)) return;
     const gx0 = Math.max(0, Math.floor((x - r) / NAV_CELL)), gx1 = Math.min(W - 1, Math.floor((x + r) / NAV_CELL));
     const gy0 = Math.max(0, Math.floor((z - r) / NAV_CELL)), gy1 = Math.min(H - 1, Math.floor((z + r) / NAV_CELL));
+    const reach = (r + NAV_CELL / 2) ** 2;
     for (let gy = gy0; gy <= gy1; gy++) for (let gx = gx0; gx <= gx1; gx++) {
-      if (Math.hypot((gx + 0.5) * NAV_CELL - x, (gy + 0.5) * NAV_CELL - z) <= r + NAV_CELL / 2) blocked[gy * W + gx] = 1;
+      // AUDIT MERCHANT-YARDS G2: squared, never Math.hypot - ECMA-262 lets each engine approximate it, and two browsers
+      // closing one cell differently stood a yard in two places
+      const dx = (gx + 0.5) * NAV_CELL - x, dz = (gy + 0.5) * NAV_CELL - z;
+      if (dx * dx + dz * dz <= reach) blocked[gy * W + gx] = 1;
     }
   };
   for (const b of buildings) closeBox(b, BUILDING_CLEAR_M);
@@ -140,8 +147,10 @@ export function yardSite(g, kind) {
     for (let gy = pad; gy + nz + pad <= H; gy++) {
       for (let gx = pad; gx + nx + pad <= W; gx++) {
         const cx = gx + nx / 2, cy = gy + nz / 2;
-        const d = Math.hypot(cx - mx, cy - my);
-        if (d >= bestScore) continue;   // facing a road only lowers the score to d: a place already further cannot win
+        // AUDIT MERCHANT-YARDS G2: Math.sqrt of an exact sum (half-cells squared), the same on every engine - Math.hypot
+        // is approximated per engine, and put genuine ties (3.5, 3) and (4.5, 1) a rounding apart
+        const d = Math.sqrt((cx - mx) * (cx - mx) + (cy - my) * (cy - my));
+        if (d > bestScore) continue;   // facing a road only lowers the score to d: a place already further cannot win (one as far may tie, and ties go by the rule below)
         if (closed(gx - pad, gy - pad, gx + nx + pad, gy + nz + pad) !== 0) continue;
         if (roads(gx, gy, gx + nx, gy + nz) !== 0) continue;
         const s = frontStrip(gx, gy, nx, nz, turn);
@@ -197,6 +206,69 @@ export function yardSitesOf(loc, measures = {}) {
     nav.setBlockData(b.x, b.y, fld.autoMapData, (tx, ty) => tiles[tx][ty].textureRecord, { enhancedWater: true });
   }
   return yardSitesOn(yardGround(nav, measures));
+}
+
+/**
+ * AUDIT MERCHANT-YARDS R2 (the host measured these itself, and nothing pinned a line of it): WHAT A TOWN'S BLOCKS PUT IN
+ * A YARD'S WAY, off its layout (layoutLocation's) - yardGround's `buildings`, `props`, `flats` and `closedBlocks`, each
+ * in the location frame. Pure; the caller hands the measures:
+ *   boxOf(modelIdNum, matrix) -> [x0, z0, x1, z1] | null  a placed model's box (placedModelBox below)
+ *   fieldOf(modelIdNum) -> spec | null                   AUDIT G1: a field of flats (world/flatFields.js - the town mods'
+ *                                                        crops: no mesh, and sown only with a nature archive), closed as
+ *                                                        the ground its plants are sown over (fieldRect)
+ *   millBox(matrix) -> [x0, z0, x1, z1] | null           a mill's body (a building - its sails turn over the street)
+ *   flatsOf(block) -> [{ x, z }]                         the block's flats in its own frame - AUDIT G4: every one, the
+ *                                                        editor's markers too (a start marker in a yard put the traveller
+ *                                                        down inside its paddock)
+ *   closedBlock(block) -> boolean                        a block left whole (a palace's court, the colosseum's)
+ * A model with a recordIndex is a building's (BUILDING_CLEAR_M); any other a prop (PROP_CLEAR_M).
+ * @param {any} yl
+ * @param {{boxOf?: (id: number, at: ArrayLike<number>) => (number[]|null), fieldOf?: (id: number) => any, millBox?: (at: ArrayLike<number>) => (number[]|null),
+ *   flatsOf?: (block: any) => any[], closedBlock?: (block: any) => boolean}} [measure]
+ */
+export function yardMeasuresOf(yl, { boxOf = () => null, fieldOf = () => null, millBox = () => null, flatsOf = () => [], closedBlock = () => false } = {}) {
+  const buildings = [], props = [], flats = [], closedBlocks = [];
+  for (const b of yl?.blocks ?? []) {
+    const origin = trs(b.originX, 0, b.originZ, 0, 0, 0);
+    if (closedBlock(b)) closedBlocks.push([b.x, b.y]);
+    for (const m of b.layout?.models ?? []) {
+      const at = multiply(origin, m.matrix);
+      const field = fieldOf(m.modelIdNum);
+      if (field) { props.push(fieldRect(field, at)); continue; }
+      const box = boxOf(m.modelIdNum, at);
+      if (box) (m.recordIndex != null ? buildings : props).push(box);
+    }
+    for (const w of b.layout?.windmills ?? []) { const box = millBox(multiply(origin, w.matrix)); if (box) buildings.push(box); }
+    for (const fl of flatsOf(b) ?? []) flats.push([b.originX + fl.x, b.originZ + fl.z]);
+  }
+  return { buildings, props, flats, closedBlocks };
+}
+/** AUDIT MERCHANT-YARDS G1: the ground a field of flats sows over, [x0, z0, x1, z1] - round the misc model's own point
+ *  (`at`, its turn never read), half its range each way (flatFields.js sowField's `trunc(range / 2)`) and its noise.
+ *  @param {any} spec @param {ArrayLike<number>} at */
+export function fieldRect(spec, at) {
+  const n = Number.isFinite(spec?.noise) ? spec.noise : 0;
+  const hx = Math.trunc((spec?.rangeX ?? 0) / 2) + n, hz = Math.trunc((spec?.rangeZ ?? 0) / 2) + n;
+  return [at[12] - hx, at[14] - hz, at[12] + hx, at[14] + hz];
+}
+/** AUDIT MERCHANT-YARDS G1: A PLACED MODEL'S BOX under `at`, [x0, z0, x1, z1] - a registered model's own geometry first
+ *  (`custom(id)` its positions: the town mods' boulders, stalls, walls and domes, which no ARCH3D record holds and which
+ *  were measured as nothing), else its ARCH3D size (`classic(id)`, the DaggerfallStaticBuildings box, inflated as DFU's)
+ *  - or null where neither knows it. `cache` keeps a model's local box.
+ *  @param {number} id @param {ArrayLike<number>} at
+ *  @param {{custom?: (id: number) => (ArrayLike<number>|null), classic?: (id: number) => any, cache?: Map<number, number[]>|null}} [measure] */
+export function placedModelBox(id, at, { custom = () => null, classic = () => null, cache = null } = {}) {
+  const p = custom(id);
+  if (p?.length) {
+    let box = cache?.get(id);
+    if (!box) { box = localAabb(p); cache?.set(id, box); }
+    const w = transformedAabb(box, at);
+    return [w[0], w[2], w[3], w[5]];
+  }
+  const sz = classic(id);
+  if (!sz) return null;
+  const { min, max } = staticBuildingWorldAabb(staticBuildingBox(sz), at);
+  return [min[0], min[2], max[0], max[2]];
 }
 
 /** Close the yards' own ground on the wandering people's navgrid, so they walk round them (the gate's gap is no road

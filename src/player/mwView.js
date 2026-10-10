@@ -144,6 +144,7 @@ let pendingClicks = 0;
 export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, raycast = null, spherecast = null, eyeOverride = null, seaReach = 0, ...state }) {
   standInEdge({ fpEye, feet, yaw, pitch });   // BEAST-SELF: the view carried across the arm's stand-aside
   benchSeated = !!state.seated;   // WAGONS3: the host's word that the player drives from a wagon's bench, either lane
+  // FLAGGED: Eye Of The Beholder has no sitting art - on that lane the driver's sprite stands on the bench's footboard, still (bible/06-Systems/Wagons.md WAGONS3).
   // FIELD BUGS 2026-09-29 (the sea) #3: the helm's reach (player/seaZoom.js; 0 off it) to both cameras, every frame -
   // the host's word for the hull sailed, and off the helm a distance past either's own far end comes back to it
   mwCamera.setSeaReach(seaReach);

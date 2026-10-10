@@ -201,7 +201,7 @@ export function drawStablePage(detail, rerender, { el, divider, meter = null } =
   const words = stableWords(m);
   detail.append(divider('Stable'));
   if (!words.horse && !words.wagon) {
-    detail.append(el('p', 'px-note', 'You own no horse and no wagon. Every city and town has a Stable that sells horses to ride, and a Wagon Yard that sells carts and wagons to carry what your back cannot.'));
+    detail.append(el('p', 'px-note', 'You own no horse and no wagon. A city\'s or town\'s Stable sells horses to ride, and its Wagon Yard carts and wagons to carry what your back cannot.'));
     return;
   }
   const v = m.hcc ? m.view : null;

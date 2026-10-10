@@ -9,8 +9,9 @@
 // transport window, the trade window's loaded-wagon refusal), and Horse Cart and Cargo's whole machine runs on it. The
 // two new wagons are that same item, marked: a template-93 item carries `wagonKind` ('openWagon' or 'caravan'; absent,
 // the Small Cart), its own name and its own value - so every one of those laws keeps answering, a save carries the mark
-// as it carries any field (systems/save.js spreads each item), and a shop mints them on the General Store's shelf beside
-// the cart (MERCHANT-YARDS, 2026-10-10: the Wagon Yard's counter now - systems/merchantYards.js yardStock). A player who owns more than one drives the best (`activeWagonItem`): buying a wagon is the upgrade, and the
+// as it carries any field (systems/save.js spreads each item), and a town's Wagon Yard mints all three at its counter
+// (MERCHANT-YARDS, 2026-10-10 - systems/merchantYards.js yardStock; the General Store's shelf, WAGONS1's, sells none
+// now). A player who owns more than one drives the best (`activeWagonItem`): buying a wagon is the upgrade, and the
 // cart left over is an empty cart to sell.
 //
 // Pure: no DOM, no renderer, no clock. Not a DFU member. Ledger A (WAGONS1).
@@ -92,7 +93,7 @@ export function wagonTeamShort(items) {
   return have > 0 && have < wagonHorsesOf(kind) ? WAGON_TEAM_TEXT.short(kind) : null;
 }
 
-/** A new wagon of a kind, as a shelf mints it (systems/shopStock.js add): the Small Cart DFU's own template item, the
+/** A new wagon of a kind, as a counter mints it (systems/merchantYards.js yardStock): the Small Cart DFU's own template item, the
  *  others that item marked and valued - its name stays the template's (every minted row carries the template's
  *  ItemName - test/audit18_systems_items.test.js), and the kind's is what the item SAYS (systems/itemInfo.js
  *  resolveItemName, `wagonItemName`). */

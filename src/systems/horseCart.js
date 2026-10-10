@@ -372,6 +372,10 @@ export function createHorseCartRuntime(deps) {
   const teamShort = () => deps.teamShort?.() ?? null;
   /** WAGONS3: a hitch the team cannot make - said, and answered true (the caller does nothing more). */
   const refuseShortTeam = () => { const t = teamShort(); if (t) say(t); return !!t; };
+  /** AUDIT WAGONS3 T3: a wagon the team I own can pull - the cart the horse's own press, its plaque's rows and the mount
+   *  hotkey read. A short team's horse answers as a horse with no wagon (Ride, and the hotkey the horse): with the cart
+   *  they answered Drive and Follow, both refused, and the horse could not be taken at all. */
+  const drivableCart = () => tm().hasCart() && !teamShort();
   /** WAGONS3: A TEAM SHORT OF ITS WAGON'S HORSES WHILE IT PULLS IT (a horse sold or given away with the wagon driven or
    *  following) STOPS WHERE IT IS - the wagon parked with the horse left in harness, its driver on foot beside it. */
   function reconcileTeam() {
@@ -848,7 +852,7 @@ export function createHorseCartRuntime(deps) {
     if (mode === TRANSPORT.Horse || mode === TRANSPORT.Cart) { tm().set(TRANSPORT.Foot); return; }   // the direct set; ObserveTransportMode reads it next frame
     if (mode !== TRANSPORT.Foot) { say(HCC_TEXT.quickMountUnavailable); return; }
     if (pee().isPlayerInside() || tm().isOnShip()) { say(HCC_TEXT.mountOutdoorsOnly); return; }
-    const target = resolveQuickMountMode(wagonState.LastMount, tm().hasHorse(), tm().hasCart());
+    const target = resolveQuickMountMode(wagonState.LastMount, tm().hasHorse(), drivableCart());   // AUDIT WAGONS3 T3
     if (target === TRANSPORT.Foot) { say(HCC_TEXT.doNotOwnHorseOrWagon); return; }
     tryUseTransport(target);
   }
@@ -1111,7 +1115,7 @@ export function createHorseCartRuntime(deps) {
     if (pee().isPlayerInside()) return true;
     const activate = mode ?? deps.activateMode();
     if (isHorseNamingMode(activate)) { openHorseNamePrompt(); return true; }
-    const decision = resolveHorseActivation(wagonState.Mode, wagonState.HorseMode, tm().hasCart(), isHorseCommandMode(activate));
+    const decision = resolveHorseActivation(wagonState.Mode, wagonState.HorseMode, drivableCart(), isHorseCommandMode(activate));   // AUDIT WAGONS3 T3
     switch (decision) {
       case HORSE_ACTIVATION.Follow: startFollowingHorse(); return true;
       case HORSE_ACTIVATION.Wait: stopFollowingHorse(); return true;
@@ -1124,7 +1128,7 @@ export function createHorseCartRuntime(deps) {
   /** ACT-MENU: the plaque's rows over one of my three activators (hccActionRows), off the state the press will read. */
   function actionRows(target) {
     if (!physicalPersistenceEnabled || !ready()) return [];
-    return hccActionRows(target, { wagonMode: wagonState.Mode, horseMode: wagonState.HorseMode, ownsCart: tm().hasCart() });
+    return hccActionRows(target, { wagonMode: wagonState.Mode, horseMode: wagonState.HorseMode, ownsCart: drivableCart() });   // AUDIT WAGONS3 T3
   }
   function startFollowingHorse() {
     const pose = stationaryHorseVisual?.tryGetGroundedPose();
