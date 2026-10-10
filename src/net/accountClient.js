@@ -1013,7 +1013,12 @@ export const MINT_COOL_MAX_MS = 60_000;
  * @param {(() => string|null)|null} [io.character]
  * @param {(() => number)} [io.now]
  * @param {(() => number)} [io.rand]  Math.random's shape - the cooldown's jitter
- * @returns {((room?: string|null) => Promise<string|null>) & { lastWhy: string|null, coolMs: () => number, opened: (room: string|null, token: string) => void }}
+ * SCALE5a: a hello the relay refused BEFORE it read the token (a busy room's hello gate - the close's reason says so, wire.js
+ * BUSY_TOKEN_UNREAD) did not spend it there: the session says so (`minter.unopened(room, token)`), and that room may be
+ * handed the token again within TOKEN_REUSE_MS - the retry mints nothing. A relay deploy's reconnect wave was a mint a
+ * player and another a busy refusal; it is a mint a player.
+ *
+ * @returns {((room?: string|null) => Promise<string|null>) & { lastWhy: string|null, coolMs: () => number, opened: (room: string|null, token: string) => void, unopened: (room: string|null, token: string) => void }}
  */
 export function accountTokenMinter({ fetch, storage, onIssued = null, character = null, now = () => Date.now(), rand = Math.random }) {
   /** @type {{ token: string, secret: string, character: string|null, at: number, rooms: Set<string> } | null} */
@@ -1063,6 +1068,12 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
      *  session's wait opened nothing, and marking it spent at the mint made that room's every retry mint again. */
     opened: (/** @type {string|null} */ room, /** @type {string} */ token) => {
       if (held && room != null && held.token === token) held.rooms.add(room);
+    },
+    /** SCALE5a: the relay refused the hello that carried `token` into `room` before reading it (wire.js
+     *  BUSY_TOKEN_UNREAD) - unspent there, so the room may be handed it again. Only the token this minter holds: an
+     *  older one is past its reuse already. */
+    unopened: (/** @type {string|null} */ room, /** @type {string} */ token) => {
+      if (held && room != null && held.token === token) held.rooms.delete(room);
     },
     /** STORM-SHED: how long this sign-in's next mint is still held off, ms (0 for none). */
     coolMs: () => {

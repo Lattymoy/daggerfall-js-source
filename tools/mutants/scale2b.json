@@ -18,7 +18,7 @@
   {
     "name": "SCALE2b-socket-not-adopted",
     "file": "server/src/index.js",
-    "old": "  _adopt(ws, att) { this._idx?.set(ws, att); }",
+    "old": "  _adopt(ws, att) { if (!this._idx) return; if (!this._idx.has(ws)) this._enter(ws); this._idx.set(ws, att); }",
     "new": "  _adopt(ws, att) { void ws; void att; }",
     "tests": [
       "test/scale2b.test.js",
@@ -29,7 +29,7 @@
       "test/soc1_hub.test.js",
       "test/auditsoc.test.js"
     ],
-    "note": "A socket opened since the last walk is unknown to the index - a room full of silent sockets is never given back."
+    "note": "SCALE5a (re-aimed by content): a socket adopted takes its place in the index's order (`_enter`). A socket opened since the last walk is unknown to the index - a room full of silent sockets is never given back."
   },
   {
     "name": "SCALE2b-walk-keeps-the-unlisted",

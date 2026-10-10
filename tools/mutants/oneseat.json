@@ -47,11 +47,12 @@
   {
     "name": "ONESEAT-own-socket-counted",
     "file": "server/src/index.js",
-    "old": "b.id && b.id !== id && b.sub === sub && !this._dead",
-    "new": "b.id && b.sub === sub && !this._dead",
+    "old": "b?.id && b.id !== id && b.sub === sub && !this._dead",
+    "new": "b?.id && b.sub === sub && !this._dead",
     "tests": [
       "test/oneseat.test.js"
-    ]
+    ],
+    "note": "SCALE5a (re-aimed by content): ONE-SEAT's other tabs read off the subject index (`_otherTabsOf`)."
   },
   {
     "name": "ONESEAT-claim-dropped-at-door",

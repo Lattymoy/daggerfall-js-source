@@ -417,11 +417,12 @@
   {
     "name": "CARDS10-service-honours-door",
     "file": "server-account/src/index.js",
-    "old": "      if (ARENA_HONOUR_PATHS.has(path)) who.player = await withIliacHonours(ctx, who.player, nowS);",
+    "old": "      if (ARENA_HONOUR_PATHS.has(path)) who.player = await withIliacHonours(honoursCtx, who.player, nowS);",
     "new": "",
     "tests": [
       "test/cards10_service.test.js"
-    ]
+    ],
+    "note": "AUDIT SCALE5a (re-aimed by content): the honours on the binding (A1)."
   },
   {
     "name": "CARDS10-service-season-played",

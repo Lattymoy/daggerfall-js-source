@@ -372,7 +372,10 @@ test('ACC1-CI: the deploy is verified BY CONTENT, and reads the host and version
   assert.match(live, /workers\\\.dev.*GITHUB_OUTPUT|GITHUB_OUTPUT[\s\S]{0,200}deployed to/,
     'the deploy step no longer publishes the URL it deployed to');
 
-  const steps = wf.split(/\n      - name: /).slice(1);
+  // PIN MOVED (SCALE4d): a step's LIVE lines - the split hands each step the comment block written above the next one,
+  // and the read replicas' PUT (a curl to Cloudflare's API, no `v1/` of this service) read as a verifier because the
+  // deploy step's comment below it names `/v1/` routes
+  const steps = wf.split(/\n      - name: /).slice(1).map((s) => s.split('\n').filter((l) => !/^\s*#/.test(l)).join('\n'));
   const verifiers = steps.filter((s) => /curl/.test(s) && /v1\//.test(s));
   assert.ok(verifiers.length >= 2, `expected the health and pubkey checks - found ${verifiers.length}`);
   for (const v of verifiers) {

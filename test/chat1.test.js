@@ -127,7 +127,7 @@ test('CHAT1 / AUDIT CHAT: the Room as a CHANNEL - a hello keeps the secret and n
   assert.deepEqual(a.sent[0], { t: 'welcome', id: 'aaaa-0001', peers: [], n: 1, v: RELAY_VERSION, now: a.sent[0].now });   // SRV-N: and the deploy's name, on a channel's welcome too - the only welcome a chat link ever gets; AUDIT SOC B7: and the relay's clock
   assert.equal(typeof a.sent[0].now, 'number');
   assert.deepEqual(b.sent, [{ t: 'welcome', id: 'bbbb-0002', peers: [{ id: 'aaaa-0001', name: 'aaaa-0001', sub: 'acct-aaaa-0001' }], n: 2, v: RELAY_VERSION, now: b.sent[0].now }], 'b is told who is in the channel - a, by name and verified account (MOD1: what /mute names), no look, no pose');
-  assert.deepEqual(ofType(a, 'join'), [{ t: 'join', id: 'bbbb-0002', name: 'bbbb-0002', sub: 'acct-bbbb-0002' }], 'and a hears b join - the name and the verified account (MOD1), nothing else');
+  assert.deepEqual(ofType(a, 'join'), [{ t: 'join', id: 'bbbb-0002', name: 'bbbb-0002', sub: 'acct-bbbb-0002', n: 2 }], 'and a hears b join - the name and the verified account (MOD1), and the room\'s count (PIN MOVED, AUDIT SCALE5a C1-C3), nothing else');
   assert.equal(r.store.has('secret:aaaa-0001'), true, 'the secret is kept');
   assert.equal(r.store.has('look:aaaa-0001'), false, 'the look is not: nobody is drawn from a channel');
   assert.equal(r.store.has('hellos'), false, 'SCALE2b: the hello bucket is the instance\'s now, never stored');
@@ -157,7 +157,7 @@ test('CHAT1 / AUDIT CHAT: the Room as a CHANNEL - a hello keeps the secret and n
   assert.deepEqual(c.sent.at(-1), { t: 'error', m: 'id taken' });
   const d = r.connect(); await r.hello(d, 'dddd-0004');
   await r.drop(b);
-  assert.deepEqual(ofType(d, 'leave'), [{ t: 'leave', id: 'bbbb-0002' }], 'ROSTER-G: a channel says its leaves, as it says its joins');
+  assert.deepEqual(ofType(d, 'leave'), [{ t: 'leave', id: 'bbbb-0002', n: 1 }], 'ROSTER-G: a channel says its leaves, as it says its joins - and the count it leaves, d alone (PIN MOVED, AUDIT SCALE5a C1-C3)');
   assert.equal(ofType(d, 'host').length, 0, 'and still no host word - a channel has no host');
   assert.equal(r.store.has('secret:bbbb-0002'), false, 'the secret goes with the socket');
   assert.equal(r.store.has('secret:dddd-0004'), true, 'and no one else\'s');

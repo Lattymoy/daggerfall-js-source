@@ -31,13 +31,13 @@ test('ROSTER-G: the channel\'s welcome NAMES who is in it - id and name, no look
     assert.deepEqual(a.sent[0], { t: 'welcome', id: 'aaaa-0001', peers: [], n: 1, v: RELAY_VERSION, now: a.sent[0].now }, 'first in: nobody to name, and the count says one');
     assert.equal(typeof a.sent[0].now, 'number', 'AUDIT SOC B7: the relay\'s clock rides the channel\'s welcome too');
     assert.deepEqual(b.sent[0], { t: 'welcome', id: 'bbbb-0002', peers: [{ id: 'aaaa-0001', name: 'Alpha', sub: 'acct-aaaa-0001' }], n: 2, v: RELAY_VERSION, now: b.sent[0].now }, 'second in: told the first, by name and its verified account (MOD1: what /mute names)');
-    assert.deepEqual(ofType(a, 'join'), [{ t: 'join', id: 'bbbb-0002', name: 'Bravo', sub: 'acct-bbbb-0002' }], 'the first hears the second join - the name and the account, nothing else');
+    assert.deepEqual(ofType(a, 'join'), [{ t: 'join', id: 'bbbb-0002', name: 'Bravo', sub: 'acct-bbbb-0002', n: 2 }], 'the first hears the second join - the name and the account, and the room\'s count (PIN MOVED, AUDIT SCALE5a C1-C3: `n` on a channel\'s join and leave), nothing else');
     await r.hello(c, 'cccc-0003', null, { name: 'Charlie' }); clock += 100;
     assert.deepEqual(c.sent[0].peers.map((p) => p.id).sort(), ['aaaa-0001', 'bbbb-0002']); assert.equal(c.sent[0].n, 3);
     for (const p of c.sent[0].peers) assert.deepEqual(Object.keys(p).sort(), ['id', 'name', 'sub'], 'a channel names; it does not dress or place');
     await r.drop(b);
-    assert.deepEqual(ofType(a, 'leave'), [{ t: 'leave', id: 'bbbb-0002' }], 'and says the leave');
-    assert.deepEqual(ofType(c, 'leave'), [{ t: 'leave', id: 'bbbb-0002' }]);
+    assert.deepEqual(ofType(a, 'leave'), [{ t: 'leave', id: 'bbbb-0002', n: 2 }], 'and says the leave, with the count it leaves (PIN MOVED, AUDIT SCALE5a C1-C3)');
+    assert.deepEqual(ofType(c, 'leave'), [{ t: 'leave', id: 'bbbb-0002', n: 2 }]);
     assert.equal(ofType(a, 'host').length + ofType(c, 'host').length, 0, 'a channel has no host, so the leave of the longest-in says no host');
     assert.equal(r.store.has('look:aaaa-0001'), false, 'and still no look in storage: the hello path stays as cheap as CHAT1 priced it');
   } finally { Date.now = realNow; }
@@ -79,9 +79,19 @@ test('ROSTER-G: a channel link (presence: false) HOLDS the roster it is told - t
   rr = rosterRows(s); assert.equal(rr.total, 600, 'the count is the room\'s'); assert.ok(rr.rows.length <= ROSTER_ROWS_MAX);
   assert.equal(rosterTitle(rr.total), 'Online — 600');
   ws.receive({ t: 'leave', id: 'aaaa-0001' }); assert.equal(rosterRows(s).total, 599, 'a leave the channel says takes one off the count');
-  ws.receive({ t: 'leave', id: 'nobody-known' }); assert.equal(rosterRows(s).total, 599, 'a leave for someone this list never held moves nothing');
-  ws.receive({ t: 'join', id: 'dddd-0004', name: 'Delta' }); assert.equal(rosterRows(s).total, 600, 'a join adds one');
-  ws.receive({ t: 'join', id: 'dddd-0004', name: 'Delta' }); assert.equal(rosterRows(s).total, 600, 'the same join again adds nothing');
+  // PIN MOVED (SCALE5a): this said a leave for an id the list never held moves nothing - but the relay says a leave only for
+  // a socket that said hello in the room, so an id this list never held is one the welcome CUT, counted in its 600; its
+  // leave never came off, and past CHAT_ROSTER_MAX the header only climbed (the client audit of 2026-10-10)
+  ws.receive({ t: 'leave', id: 'past-the-cut' }); assert.equal(rosterRows(s).total, 598, 'a leave for one past the cut takes one off too');
+  ws.receive({ t: 'join', id: 'dddd-0004', name: 'Delta' }); assert.equal(rosterRows(s).total, 599, 'a join adds one');
+  ws.receive({ t: 'join', id: 'dddd-0004', name: 'Delta' }); assert.equal(rosterRows(s).total, 599, 'the same join again adds nothing');
+  // AUDIT SCALE5a C1-C3: THE ROOM'S OWN COUNT, when a join or a leave says it (`n`) - whatever the arithmetic above made of
+  // it (the lines without one are a relay from before it, and keep the arithmetic)
+  ws.receive({ t: 'join', id: 'eeee-0005', name: 'Echo', n: 650 }); assert.equal(rosterRows(s).total, 650, 'a join that says the room\'s count is believed');
+  ws.receive({ t: 'leave', id: 'past-the-cut-2', n: 640 }); assert.equal(rosterRows(s).total, 640, 'and a leave');
+  ws.receive({ t: 'join', id: 'eeee-0005', name: 'Echo', n: 641 }); assert.equal(rosterRows(s).total, 641, 'a join of one already held: the room\'s count still');
+  ws.receive({ t: 'leave', id: 'mac-0001', n: 1 }); assert.equal(rosterRows(s).total, 641, 'never my own id');
+  ws.receive({ t: 'join', id: 'ffff-0006', name: 'Foxtrot', n: 0 }); assert.equal(rosterRows(s).total, 642, 'a count that is no count: the arithmetic');
   assert.equal(s.drawable().length, 0, 'nothing is drawn from a channel: no pose, nothing shown');
 }));
 

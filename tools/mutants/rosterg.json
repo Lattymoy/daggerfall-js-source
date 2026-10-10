@@ -12,12 +12,13 @@
   {
     "name": "G2-channel-join-not-said",
     "file": "server/src/index.js",
-    "old": "        for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, said);\n",
+    "old": "        this._fanBut(ws, said);   // SCALE5a: the index walked in place, by a method of its own\n",
     "new": "",
     "tests": [
       "test/rosterg.test.js",
       "test/chat1.test.js"
-    ]
+    ],
+    "note": "SCALE5a (re-aimed by content): the fans walk the index in place (`_fanBut`, `_sayLine`)."
   },
   {
     "name": "G3-channel-leave-skipped-again",
@@ -32,12 +33,13 @@
   {
     "name": "G4-channel-join-carries-the-look",
     "file": "server/src/index.js",
-    "old": "        const said = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name, sub: who.subject }, who));",
-    "new": "        const said = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name, sub: who.subject, look: m.look }, who));",
+    "old": "        const said = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name, sub: who.subject, n: others.length + 1 }, who));",
+    "new": "        const said = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name, sub: who.subject, look: m.look, n: others.length + 1 }, who));",
     "tests": [
       "test/rosterg.test.js",
       "test/chat1.test.js"
-    ]
+    ],
+    "note": "AUDIT SCALE5a (re-aimed by content): the join says the room's count beside it. SCALE5a (re-aimed by content): the join says `re` for a reconnect beside it."
   },
   {
     "name": "G5-cut-removed",
@@ -116,19 +118,21 @@
   {
     "name": "G13-count-not-moved-by-leave",
     "file": "src/net/online.js",
-    "old": "if (this.roomCount != null && this._rooms.get(room)?.has(m.id)) this.roomCount = Math.max(0, this.roomCount - 1); ",
+    "old": "if (this.roomCount != null && m.id !== this.id) { if (Number.isSafeInteger(m.n) && m.n >= 1) this.roomCount = m.n; else if (this._rooms.get(room)?.has(m.id) || !this.peers.has(m.id)) this.roomCount = Math.max(0, this.roomCount - 1); } ",
     "new": "",
     "tests": [
       "test/rosterg.test.js"
-    ]
+    ],
+    "note": "AUDIT SCALE5a (re-aimed by content): the leave takes the room's count when it says one. SCALE5a (re-aimed by content): a leave past the cut counts too."
   },
   {
     "name": "G14-count-moved-by-a-repeat-join",
     "file": "src/net/online.js",
-    "old": "if (this.roomCount != null && !this.peers.has(m.id)) this.roomCount++;",
-    "new": "if (this.roomCount != null) this.roomCount++;",
+    "old": "else if (!this.peers.has(m.id)) this.roomCount++;",
+    "new": "else this.roomCount++;",
     "tests": [
       "test/rosterg.test.js"
-    ]
+    ],
+    "note": "AUDIT SCALE5a (re-aimed by content): the arithmetic stands for a relay that says no count. SCALE5a (re-aimed by content): a reconnect's join (`re`) counts nothing."
   }
 ]

@@ -46,12 +46,18 @@ export function routeLabel(/** @type {string} */ path) {
 
 /** D1 with its statements counted: a statement prepared is one, a batch counts each of its own (they were prepared
  *  already, and are not counted twice - `prepare` inside a batch's list is what counts them). Every other member is
- *  the binding's own. STORM-SHED: and DB_ROOT the binding itself, which outlives this request's Proxy. */
+ *  the binding's own. STORM-SHED: and DB_ROOT the binding itself, which outlives this request's Proxy. SCALE4d: and a
+ *  session opened through it (`withSession`, service.js replicaDb) is counted into the same tally - a mint served by a
+ *  replica is still a mint's dozen statements on its metrics point. */
 export function countedDb(/** @type {any} */ db, /** @type {{ n: number }} */ tally) {
   return new Proxy(db, {
     get(target, key) {
       if (key === DB_ROOT) return Reflect.get(target, DB_ROOT) ?? target;
       if (key === 'prepare') return (/** @type {any[]} */ ...args) => { tally.n += 1; return target.prepare(...args); };
+      if (key === 'withSession') {
+        const open = Reflect.get(target, key);
+        return typeof open === 'function' ? (/** @type {any[]} */ ...args) => countedDb(open.apply(target, args), tally) : open;
+      }
       const v = Reflect.get(target, key);
       return typeof v === 'function' ? v.bind(target) : v;
     },

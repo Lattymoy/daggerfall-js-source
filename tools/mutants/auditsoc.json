@@ -177,20 +177,22 @@
   {
     "name": "A10-bound-keeps-the-stalest-tabs",
     "file": "server/src/index.js",
-    "old": "s.sort((x, y) => (idx.get(y)?.since ?? 0) - (idx.get(x)?.since ?? 0)); m.set(acct, s.slice(0, ACCOUNT_TABS_MAX));",
-    "new": "m.set(acct, s.slice(0, ACCOUNT_TABS_MAX));",
+    "old": "list.sort((x, y) => (idx.get(y)?.since ?? 0) - (idx.get(x)?.since ?? 0)); list = list.slice(0, ACCOUNT_TABS_MAX);",
+    "new": "list = list.slice(0, ACCOUNT_TABS_MAX);",
     "tests": [
       "test/auditsoc.test.js"
-    ]
+    ],
+    "note": "SCALE5a (re-aimed by content): the account index kept as sets, its bound read off them (`_socketsOf`)."
   },
   {
     "name": "A10-bound-off",
     "file": "server/src/index.js",
-    "old": "for (const [acct, s] of m) if (s.length > ACCOUNT_TABS_MAX) {",
-    "new": "for (const [acct, s] of m) if (false) {",
+    "old": "if (list.length > ACCOUNT_TABS_MAX) {",
+    "new": "if (false) {",
     "tests": [
       "test/auditsoc.test.js"
-    ]
+    ],
+    "note": "SCALE5a (re-aimed by content): the account index kept as sets, its bound read off them (`_socketsOf`)."
   },
   {
     "name": "B9-any-tab-speaks-for-the-seat",
@@ -433,8 +435,8 @@
   {
     "name": "C9-touch-button-ungated",
     "file": "src/ui/touch.js",
-    "old": "if (hooks.socialInteract) socialBtn = button('\u263a',",
-    "new": "socialBtn = button('\u263a',",
+    "old": "if (hooks.socialInteract) socialBtn = button('☺',",
+    "new": "socialBtn = button('☺',",
     "tests": [
       "test/soc5_interact.test.js",
       "test/audit39_uicore.test.js"

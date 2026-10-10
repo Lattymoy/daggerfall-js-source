@@ -45,7 +45,27 @@ export function d1() {
       db.exec('BEGIN');
       try { const out = list.map((st) => st._result()); db.exec('COMMIT'); return out; } catch (e) { db.exec('ROLLBACK'); throw e; }
     },
+    /** SCALE4d: D1's Sessions API - a session over the same database. A fake has no replica, so every statement is the
+     *  primary's, as on a database whose read replication is off. Each session opened is recorded - its constraint and
+     *  the statements prepared through it - so a pin can say which statements a route ran on one. */
+    _sessions: [],
+    withSession(constraint) {
+      const rec = { constraint, statements: [] };
+      this._sessions.push(rec);
+      return new FakeD1Session(this, rec);
+    },
   };
+}
+
+/** SCALE4d: D1's session as the runtime makes one - a class whose methods read its own private fields, so a method
+ *  called off its object (an unbound `prepare`) throws, as workerd's D1DatabaseSession's does (AUDIT SCALE4d D8: a fake
+ *  of plain closures let a wrapper that dropped the binding pass). */
+class FakeD1Session {
+  #db; #rec;
+  constructor(db, rec) { this.#db = db; this.#rec = rec; }
+  prepare(sql) { this.#rec.statements.push(sql); return this.#db.prepare(sql); }
+  batch(list) { return this.#db.batch(list); }
+  getBookmark() { return null; }
 }
 
 /** A UTC day's middle. */

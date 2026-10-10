@@ -442,12 +442,12 @@
   {
     "name": "AUDIT-DEEP2-C-welcome-ghosts",
     "file": "server/src/index.js",
-    "old": " && !this._dead.has(other) && !this._gone.has(other)) others.push(b);",
-    "new": ") others.push(b);",
+    "old": " && !this._dead.has(other) && !this._gone.has(other)) out.push(b);",
+    "new": ") out.push(b);",
     "tests": [
       "test/tv3_travellers.test.js"
     ],
-    "note": "A joiner in the moment a socket is closing is handed its mark and holds a ghost for five minutes."
+    "note": "SCALE5a (re-aimed by content): the welcome's others listed by a method of its own (`_othersOf`). A joiner in the moment a socket is closing is handed its mark and holds a ghost for five minutes."
   },
   {
     "name": "OVERWORLD-NAMES-wire-drops-renown",
