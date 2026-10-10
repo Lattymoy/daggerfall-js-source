@@ -14,7 +14,7 @@
 // cart left over is an empty cart to sell.
 //
 // Pure: no DOM, no renderer, no clock. Not a DFU member. Ledger A (WAGONS1).
-import { TRANSPORT_SMALL_CART } from './itemTemplates.js';
+import { TRANSPORT_SMALL_CART, TRANSPORT_HORSE } from './itemTemplates.js';
 
 /** The Small Cart's capacity, DFU's ItemHelper.WagonKgLimit (systems/itemTransfer.js WAGON_KG_LIMIT reads it here). */
 export const SMALL_CART_KG = 750;
@@ -25,11 +25,14 @@ export const SMALL_CART_KG = 750;
  * (metres - the classic wagon's 3.1, HITCHED_HORSE_LOCAL_Z, measured for model 41214; each of Mac's is measured for its
  * own length, world/wagonModels.js), `seats` how many ride in its back, `enterable` whether it opens as a room, `icon`
  * the model id its picture is drawn from (ui/modelIcon.js's port door), `rank` which of two owned is driven.
+ * WAGONS3 (2026-10-10, Mac: "sit on the wagon itself, the ledge its built for and requiring 2 horses to use"; asked,
+ * "Open Wagon + Caravan"): `horses` how many horses pull it - the two built with a front bench take a pair, the driver
+ * on the bench (world/wagonModels.js driverSeatFor); the Small Cart keeps one between its shafts.
  */
 export const WAGON_KINDS = Object.freeze({
-  cart: Object.freeze({ key: 'cart', name: 'Small Cart', kg: SMALL_CART_KG, value: 150, hitch: 3.8, seats: 0, enterable: false, icon: 112490, rank: 0 }),
-  openWagon: Object.freeze({ key: 'openWagon', name: 'Open Wagon', kg: 1500, value: 900, hitch: 7.1, seats: 4, enterable: false, icon: 112491, rank: 1 }),
-  caravan: Object.freeze({ key: 'caravan', name: 'Caravan', kg: 2000, value: 2500, hitch: 7.7, seats: 0, enterable: true, icon: 112492, rank: 2 }),
+  cart: Object.freeze({ key: 'cart', name: 'Small Cart', kg: SMALL_CART_KG, value: 150, hitch: 3.8, seats: 0, enterable: false, icon: 112490, rank: 0, horses: 1 }),
+  openWagon: Object.freeze({ key: 'openWagon', name: 'Open Wagon', kg: 1500, value: 900, hitch: 7.1, seats: 4, enterable: false, icon: 112491, rank: 1, horses: 2 }),
+  caravan: Object.freeze({ key: 'caravan', name: 'Caravan', kg: 2000, value: 2500, hitch: 7.7, seats: 0, enterable: true, icon: 112492, rank: 2, horses: 2 }),
 });
 /** The kinds in the order a shop shelves them and the Stable ranks them. */
 export const WAGON_KIND_ORDER = Object.freeze(['cart', 'openWagon', 'caravan']);
@@ -65,6 +68,23 @@ export const wagonKgLimitOf = (kind) => WAGON_KINDS[validWagonKind(kind) ?? 'car
 export const wagonKgFor = (entity) => wagonKgLimitOf(activeWagonKind(entity?.items ?? []));
 /** How far ahead of a kind's rear axle its horse is hitched (m). */
 export const wagonHitchOf = (kind) => WAGON_KINDS[validWagonKind(kind) ?? 'cart'].hitch;
+/** WAGONS3: how many horses pull a kind (the Small Cart's one for a kind the law does not know). */
+export const wagonHorsesOf = (kind) => WAGON_KINDS[validWagonKind(kind) ?? 'cart'].horses;
+/** WAGONS3: how many horses a pack holds - each Horse is its own item (DFU's ItemGroups.Transportation.Horse; a shop
+ *  sells as many as are bought). */
+export const horseCountOf = (items) => { let n = 0; for (const it of items ?? []) if (it?.templateIndex === TRANSPORT_HORSE) n++; return n; };
+/** WAGONS3: the word a short team is refused with. */
+export const WAGON_TEAM_TEXT = Object.freeze({
+  short: (kind) => `Your ${WAGON_KINDS[validWagonKind(kind) ?? 'cart'].name} needs ${wagonHorsesOf(kind) === 2 ? 'two horses' : 'a horse'} to pull it. Buy another at a General Store.`,
+});
+/** WAGONS3: why the wagon a pack drives cannot be hitched - its team is short of the horses it takes (one owned, two
+ *  needed) - or null. No horse at all is the mod's own refusal (horseCart.js `needHorseToPull`), said where it says it. */
+export function wagonTeamShort(items) {
+  const kind = activeWagonKind(items);
+  if (!kind) return null;
+  const have = horseCountOf(items);
+  return have > 0 && have < wagonHorsesOf(kind) ? WAGON_TEAM_TEXT.short(kind) : null;
+}
 
 /** A new wagon of a kind, as a shelf mints it (systems/shopStock.js add): the Small Cart DFU's own template item, the
  *  others that item marked and valued - its name stays the template's (every minted row carries the template's

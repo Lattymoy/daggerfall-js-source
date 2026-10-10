@@ -65,12 +65,12 @@ test('WAGONS1 THE CAPACITY: the wagon store takes what the DRIVEN wagon holds - 
   assert.equal(p.ok, true); assert.equal(p.amount, 8, 'the open wagon: 800 kg free, eight of them');
 });
 
-test('WAGONS1 THE PICTURES: twenty - the wagons\' fifteen and the caravan\'s room\'s five - each 64 x 64, painted from numbers to the same bytes every time under the wagons\' own archive (mutant: a seed from the clock)', () => {
+test('WAGONS1 THE PICTURES: twenty-one - the wagons\' fifteen, the caravan\'s room\'s five and the harness\'s leather (WAGONS3) - each 64 x 64, painted from numbers to the same bytes every time under the wagons\' own archive (mutant: a seed from the clock)', () => {
   const hash = () => createHash('sha256').update(Buffer.concat(wagonArt().map(([, p]) => Buffer.from(p.data)))).digest('hex');
   assert.equal(hash(), hash());
   const art = wagonArt();
   assert.deepEqual(art.map(([r]) => r), Object.values(TEX).sort((a, b) => a - b));
-  assert.equal(art.length, 20, 'the title\'s count (FINAL AUDIT: it said fifteen)');
+  assert.equal(art.length, 21, 'the title\'s count (FINAL AUDIT: it said fifteen; PIN MOVED, WAGONS3: and the harness)');
   for (const [, p] of art) { assert.equal(p.width, 64); assert.equal(p.height, 64); assert.equal(p.data.length, 64 * 64 * 4); }
   assert.equal(WAGON_ARCHIVE, 38181);
   assert.deepEqual([SIDE_Y0, SIDE_Y1], [0.94, 3.06]);
@@ -180,7 +180,7 @@ function fakeRuntime(view) {
 const loader = async (kind) => bakeOf(kind);
 const deployed = (pos = [10, 1, 10]) => ({ isGrounded: true, position: pos, rotation: [0, 0, 0, 1], cargoTier: 90 });
 
-test('WAGONS1 THE POOL: the wagon drawn is the kind driven - its statics and every wheel (WAGONS2: and the caravan\'s room inside its body), the wagons\' twenty pictures uploaded once and opaque (WAGONS2: the four with glass cut-outs); the horse hitched its own length ahead; a bake that will not load gives the classic wagon its place (mutants: the kind unread, the hitch the mod\'s for every kind, no fall back)', async () => {
+test('WAGONS1 THE POOL: the wagon drawn is the kind driven - its statics and every wheel (WAGONS2: and the caravan\'s room inside its body), the wagons\' twenty-one pictures uploaded once and opaque (WAGONS2: the four with glass cut-outs); the horse hitched its own length ahead; a bake that will not load gives the classic wagon its place (mutants: the kind unread, the hitch the mod\'s for every kind, no fall back)', async () => {
   let kind = 'caravan';
   const r = fakeRenderer();
   const pool = createHorseCartPool({ renderer: r, meshes: null, collider: () => null, now: () => 0, wagonKind: () => kind, bakedWagon: loader });
@@ -189,7 +189,7 @@ test('WAGONS1 THE POOL: the wagon drawn is the kind driven - its statics and eve
   await flush();
   const parts = pool.partsOf('caravan');
   assert.ok(parts?.gpu?.body && parts.gpu.wheels.length === 4);
-  assert.equal([...r.textures.keys()].filter((k) => k.startsWith(`${WAGON_ARCHIVE}_`)).length, 20);
+  assert.equal([...r.textures.keys()].filter((k) => k.startsWith(`${WAGON_ARCHIVE}_`)).length, 21);   // PIN MOVED (WAGONS3): and the harness
   assert.deepEqual([...r.textures.entries()].filter(([, t]) => !t.o?.opaque).map(([k, t]) => [k, !!t.o?.cutout]), [11, 12, 15, 16].map((rec) => [`${WAGON_ARCHIVE}_${rec}`, true]), 'the glass is cut out (WAGONS2), every other picture opaque');
   r.draws.length = 0;
   assert.equal(pool.draw(r), 1);

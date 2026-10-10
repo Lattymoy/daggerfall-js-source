@@ -537,6 +537,8 @@ test('AUDIT pre-merge I-B executed: a concealed owner\'s team is concealed with 
   looks.set('follow', { mode: 1, alpha: 0.3, t: 0, phase: 0 });
   assert.equal(drawn(), 2, 'the enhanced lane draws its owner - and the wagon with it');
   const src = readFileSync(new URL('../src/scenes/horseCartPool.js', import.meta.url), 'utf8');
-  assert.match(src, /if \(_stillReady && !p\.hidden\) \{ const b = horseBatch\(owner\); if \(b\) \{ poseHorseBatch\([^\n]*\); b\.conceal = p\.look; \} \}\n\s*else if \(p\.hidden\) dropHorseBatch\(owner\);/, 'the horse: nowhere for a hidden owner, in its look for a concealed one');
+  // PIN MOVED (WAGONS3): the horse is its owner's TEAM now (a pair draws two) - posed by poseTeam with the owner's look
+  assert.match(src, /if \(p\.hidden\) \{ dropTeamBatches\(owner\); _teams\.delete\(owner\); \} else poseTeam\(owner, teamOf\(owner, null, dt\), cameraPos, p\.look\);/, 'the horse: nowhere for a hidden owner, in its look for a concealed one');
+  assert.match(src, /if \(b\) \{ poseHorseBatch\(b, cameraPos, h, h\.g\); if \(owner\) b\.conceal = conceal; \}/, 'each of the team in its owner\'s look');
   assert.match(readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8'), /hcc\.setPeerLook\(\(id\) => \(_hiddenPeers\.has\(id\) \? 'hidden' : \(_veils\.get\(id\) \?\? null\)\)\);/, 'the host hands the peers\' looks');
 });

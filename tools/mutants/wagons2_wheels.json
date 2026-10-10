@@ -65,11 +65,13 @@
   {
     "name": "WAGONS2-the-bogie-out-of-the-bounds",
     "file": "src/world/wagonModels.js",
-    "old": "  if (geo.bogie) take(geo.bogie.geometry.positions, [0, 0, 0]);\n",
+    "old": "  if (geo.bogie?.reach) take([...geo.bogie.reach.min, ...geo.bogie.reach.max], [0, 0, 0]);\n",
     "new": "",
     "tests": [
       "test/wagons2_wheels.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "WAGONS3: the bounds take the bogie's FRONT AXLE alone (the pole stands outside the parked box), and its reach lies inside the body's and the rear axle's - x 1.60 the rear axle's too, z and y inside the body - so no bake this repository holds moves a bound by it; the line stands for a front axle that would poke out"
   },
   {
     "name": "WAGONS2-the-bogie-out-of-the-icon",

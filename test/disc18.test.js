@@ -77,6 +77,6 @@ test('DISC18: every host draws the body at the body\'s feet and still hands the 
     const draws = [...s.matchAll(/mwViewDrawBody\(canvas, \{[^}]*\}\)/g)].map((m) => m[0]);
     assert.equal(draws.length, n, `${host}: ${n} body draw(s)`);
     for (const d of draws) assert.match(d, /feet: player\.bodyFeetAt\(\)/, `${host}: ${d}`);
-    for (const m of s.matchAll(/mwViewFrame\(\{[^}]*?feet: ([^,]+),/g)) assert.equal(m[1], 'player.feetAt()', `${host}: the camera keeps the smoothed feet`);
+    for (const m of s.matchAll(/mwViewFrame\(\{[^}]*?feet: ([^,]+),/g)) assert.ok(['player.feetAt()', '_driverSeat ? _driverSeat.feet : player.feetAt()'].includes(m[1]), `${host}: the camera keeps the smoothed feet (${m[1]})`);   // PIN MOVED (WAGONS3): or a wagon's bench, where the body sits
   }
 });

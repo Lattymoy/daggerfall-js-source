@@ -124,7 +124,7 @@ test('EOTB-IL: the rig registers the WHOLE record - the motion bag and what Late
     assert.ok(reg[1].includes(f), `the record carries ${f}`);
   }
   for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) {
-    assert.match(rd(h), /move: (?:motionBagOf\(player\)|_fpMove)/, `${h}: the thunk carries the bag`);
+    assert.match(rd(h), /move: (?:motionBagOf\(player\)|_fpMove|_driver(?:Body)?Seat \? seatedMotion\(motionBagOf\(player\)\) : motionBagOf\(player\))/, `${h}: the thunk carries the bag`);   // PIN MOVED (WAGONS3): still on a wagon's bench
   }
   // the bag: the sneak, FreezeMotor, OnExteriorWater == Swimming, the live capsule height
   const bag = motionBagOf({ moveForward: 1, isSneaking: true, freezeMotor: 0.2, onExteriorWater: true, height: 0.9, grounded: true });

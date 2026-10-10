@@ -556,7 +556,7 @@ test('AUDIT DEEP T1-7/X-1/X-2/T1-5: a look key let go in a text box still stops 
   assert.ok(door > 0 && door < frame.indexOf('if (modes.frame(dt, now)) {'), 'the door cut precedes the modal branch');
   assert.ok(door < frame.indexOf('travelView?.steer(dt);'), 'and the steer - no turn from indoors');
   // R-2: the traveller's own sprite turns its quad to the VIEW's eye and leans with the flats
-  assert.match(w, /const tvFace = tvf \? \{ yaw: tvf\.yaw, up: tvf\.up, grow: tvf\.grow \} : null;/);
+  assert.match(w, /const tvFace = tvf \? \{ yaw: tvf\.yaw, up: tvf\.up, grow: player\.drawGrow \?\? tvf\.grow \} : null;/);
   assert.match(w, /mwViewDrawBody\(canvas, \{ proj, view, eye: mwv\.eye, feet: player\.bodyFeetAt\(\), yaw: player\.bodyYawFor\(cam\.yaw\), viewYaw: cam\.yaw, face: tvFace \}\);/);
   assert.match(rd('src/player/mwView.js'), /if \(eotbLane\(\)\) \{ const drawn = drawEotbBody\(canvas, \{ proj, view, eye, feet, yaw: viewYaw, face \}\);/);   // AUDIT CLIMB-ARC N1: the sprite lane on the VIEW's yaw
   const eb = rd('src/player/eotbBody.js');
@@ -653,7 +653,7 @@ test('TV1 focus: setFocus writes w 1 with the point and w 0 without it, moving t
 test('TV1 host wiring: the frame draws from the view\'s eye risen out of the body\'s own camera, the fog from the traveller\'s head, the sky and the flats turned to the view, no grass, hand or crosshair plaque from the air', () => {
   const w = rd('src/scenes/world.js');
   assert.match(w, /const mwv0 = mwViewFrame\(\{\n\s*eyeOverride: travelView\?\.eye \?\? null,\n/);
-  assert.match(w, /const tvHeadEye = mwViewHoldChanged\(\) \? cam\.pos : \(mwv0\.ownEye \?\? mwv0\.eye\);\n\s*const tvf = travelView\?\.frame\(dt, \{ eye: tvHeadEye, fwd \}\) \?\? null;\n\s*const mwv = tvf \? \{ \.\.\.mwv0, eye: tvf\.eye \} : mwv0\.ownEye \? \{ \.\.\.mwv0, eye: tvHeadEye \} : mwv0;[^\n]*\n\s*const viewFwd = tvf \? tvf\.fwd : fwd;\n\s*const tvFace = [^\n]*\n\s*setFlatLean\([^\n]*\n\s*renderer\.setFocus\(tvf \? cam\.pos : null, !!tvf && tvf\.blend >= 0\.5\);/);
+  assert.match(w, /const tvHeadEye = mwViewHoldChanged\(\) \? cam\.pos : \(mwv0\.ownEye \?\? mwv0\.eye\);\n\s*const tvf = travelView\?\.frame\(dt, \{ eye: tvHeadEye, fwd \}\) \?\? null;\n\s*const mwv = tvf \? \{ \.\.\.mwv0, eye: tvf\.eye \} : mwv0\.ownEye \? \{ \.\.\.mwv0, eye: tvHeadEye \} : mwv0;[^\n]*\n\s*const viewFwd = tvf \? tvf\.fwd : fwd;\n(?:\s*\/\/ [^\n]*\n|\s*_driverBodySeat = [^\n]*\n|\s*if \(_driverBodySeat\) [^\n]*\n|\s*else player\.drawYaw = null;\n)*\s*const tvFace = [^\n]*\n\s*setFlatLean\([^\n]*\n\s*renderer\.setFocus\(tvf \? cam\.pos : null, !!tvf && tvf\.blend >= 0\.5\);/);
   const setAt = w.indexOf('renderer.setFocus(tvf ? cam.pos : null, !!tvf && tvf.blend >= 0.5);');
   assert.ok(setAt > 0 && setAt < w.indexOf('renderer.beginFrame(proj, view, sunDirection(minute), WORLD_FRAME);'), 'AUDIT TV B1: BEFORE beginFrame - its lane replay and its sun maps read the focus (AUDIT DEEP2: and the line must be there - a -1 passed this)');
   assert.match(w, /lookAt\(mwv\.eye, \[mwv\.eye\[0\] \+ viewFwd\[0\], mwv\.eye\[1\] \+ viewFwd\[1\], mwv\.eye\[2\] \+ viewFwd\[2\]\], \[0, 1, 0\]\)/);

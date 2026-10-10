@@ -627,7 +627,8 @@ import { createBountyOverlay, closeBountyDoor, bountyDoorOpen } from '../ui/boun
 import { isQualifyingThreatState } from '../systems/horseFollow.js';   // HCC: CollectThreats' qualification, the mod's own five-term test
 import { totalWeight } from '../systems/inventory.js';   // HCC: PlayerEntity.WagonWeight
 import { planTake, CANNOT_CARRY_TEXT } from '../systems/itemTransfer.js';   // SET7: the Broker's sale asks the pack's own carry gate
-import { wagonKgFor, activeWagonItem, activeWagonKind, WAGON_KINDS } from '../systems/wagonKinds.js';   // WAGONS1: HCC's ItemHelper.WagonKgLimit, the driven wagon's
+import { wagonKgFor, activeWagonItem, activeWagonKind, WAGON_KINDS, horseCountOf, wagonTeamShort } from '../systems/wagonKinds.js';   // WAGONS1: HCC's ItemHelper.WagonKgLimit, the driven wagon's
+import { SEATED_EYE_HEIGHT, seatedMotion } from '../player/seatPose.js';   // WAGONS3: the driver's seated eye, and the body still on the bench
 import { wagonLookOf, paintDrivenWagon } from '../systems/wagonLooks.js';   // WAGONS2: the driven wagon's paint
 import { giveNavalItems } from '../systems/naval/navalTransfer.js';
 import { InputMessageBoxWindow } from '../ui/inputMessageBox.js';   // HCC: the horse's name (DaggerfallInputMessageBox)
@@ -7662,6 +7663,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   const hccThreats = () => exteriorFoePool().filter((f) => !f.dead && f.ai?.feet && isQualifyingThreatState(true, !!f.ai.isHostile, f.entity?.team === 'PlayerAlly', isLocalPlayerTarget(f.ai.target), !!f.ai.detected)).map((f) => [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]]);
   /** WAGONS1: the seats in the back (scenes/wagonRiders.js) - made just below the pool, which reads them through this. */
   let wagonRiders = null;
+  /** WAGONS3: my seat on my driven wagon's bench this frame (hcc.driverSeat - the eye's and the camera's), and where the
+   *  body is drawn on it (grown with the rig under the Overworld - the third-person body's seat) - null off a bench. */
+  let _driverSeat = null, _driverBodySeat = null;
   const hcc = createHorseCartPool({
     riders: { passengers: () => wagonRiders?.passengers() ?? [], go: () => wagonRiders?.go() ?? null, declined: () => wagonRiders?.declined() ?? [], acts: (o, k, kept) => wagonRiders?.acts(o, k, kept) ?? [], press: (o, id, d) => wagonRiders?.press(o, id, d) ?? false, sitsIn: (p, o, k) => wagonRiders?.sitsIn(p, o, k) ?? false },   // WAGONS1; FINAL AUDIT: a rider's own word seats them
     renderer, meshes: { getGpuMesh, cpuModels }, collider: () => collider, now: () => performance.now() / 1000,
@@ -7670,6 +7674,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     wagonEntry: () => caravanEntryWord(),   // WAGONS2-VISIT: who may enter my caravan, on its word
     caravanEntry: { row: () => caravanEntryRow(), turn: () => caravanEntryTurn() },   // WAGONS2-VISIT: my caravan's "Who may enter"
     visit: { may: (t) => caravanVisitMay(t), enter: (t) => caravanVisitEnter(t) },   // WAGONS2-VISIT: another's caravan, open to me
+    horses: () => horseCountOf(playerEntity.items ?? []),   // WAGONS3: my parked pair keeps its second horse while I own two
+    playerCapsule: () => (walkMode && playerSpawned ? { feet: player.pos, height: player.height, radius: CAPSULE_RADIUS } : null),   // WAGONS3: my parked wagon's box never stands round me
+    renderShift: () => { if (!walkMode || !playerSpawned) return null; const f = player.feetAt(); return [f[0] - player.pos[0], 0, f[2] - player.pos[2]]; },   // WAGONS3: my driven wagon drawn where I am drawn
     peerAnchor: (id) => { const sh = _peerMapPoses.get(id); return sh && (sh.rd | 0) === 2 ? onlineToScene(sh) : null; },   // AUDIT HCC O5: the change key in the wire frame (campToWire is the pose's law, declared with the stream below; read only once frames run); WAGON-HITCH: where another player's cart rider stands as drawn this frame (`rd` 2, the cart - the pose peerRiders stands them on, boat-adjusted; the online frame fills the map before the pool steps), so their trailing wagon hangs from the rider seen here rather than easing apart from it
   });
   hcc.setPeerLook((id) => (_hiddenPeers.has(id) ? 'hidden' : (_veils.get(id) ?? null)));   // AUDIT (pre-merge) I-B: a concealed owner's team is concealed with it (last frame's word - the pool steps before the peers sync)
@@ -7693,7 +7700,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       return partyTravelJourney({ pixel: { x: to.x, y: to.y }, name: where, besideAt, besideText: `You ride with ${ownerName} to ${where}.` }, fare.opts, { ...fare.computed, totalCost: 0, piecesCost: 0 });   // WAGONS2 (AUDIT): the owner's wagon carries me - no fare (the party's journey charged the rider the map's); its time is the map's
     },
     prompt: { render: () => ridePrompt?.render() },
-    drawAt: (feet) => { player.drawFeet = feet; },   // WAGONS2: my body drawn on my seat in a wagon drawn grown under the Overworld
+    drawAt: (feet, g = 1) => { player.drawFeet = feet; player.drawGrow = feet && g > 1 ? g : null; if (!feet) player.drawYaw = null; },   // WAGONS2: my body drawn on my seat in a wagon drawn grown under the Overworld; WAGONS3: at the wagon's grow - and none (a door, a death, off a seat) is off my bench too (the exterior frame stands me back on it after)
   });
   const hccRuntime = createHorseCartRuntime({
     ready: () => walkMode && playerSpawned && !_teleporting && !_traveling,   // TryGetGameManager: a game in progress, the player standing, the world up
@@ -7702,6 +7709,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       hasCart: () => hasTransport(TRANSPORT_SMALL_CART), hasHorse: () => hasTransport(TRANSPORT_HORSE),
       isOnShip: () => isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel()),
     },
+    teamShort: () => wagonTeamShort(playerEntity.items ?? []),   // WAGONS3: a pair's wagon takes its pair
     player: { position: hccPlayerCentre, forward: hccForward, movement: () => ({ position: hccPlayerCentre(), forward: hccForward() }) },
     gps: {
       worldX: () => state.worldCoords(player.pos).x, worldZ: () => state.worldCoords(player.pos).z,
@@ -10190,6 +10198,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     horseNameTooltip.set(tipOn ? hcc.tooltipText(cam.pos, [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)], collider) : '');
     if (_mode() === 'exterior') wagonRiders?.frame();   // WAGONS1: my riders kept to my seats, and me to my seat in another's wagon, as the pool just stood them
     if (_mode() !== 'exterior' || !(playerEntity.health > 0)) wagonRiders?.leave();   // WAGONS2 (AUDIT): a door, a death - out of the ride where I stand (the outdoors again would pin me back on the seat)
+    if (_mode() !== 'exterior') { _driverSeat = null; _driverBodySeat = null; }   // WAGONS3: a door - off my bench (the exterior frame stands me back on it)
   };
   /** The mod's ModSettingsChanged: the shelf has no event, so the eight keys are re-read once a second. */
   const hccPollSettings = (nowMs) => {
@@ -11064,11 +11073,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     // has. Morrowind's Sneak STANCE, which is DFU's Sneak binding; its
     // Crouch is a collider height, not an animation state.
     camera: () => ({ pos: player.eyeAt(), yaw: cam.yaw, pitch: cam.pitch, sneaking: !!player.isSneaking, feet: player.pos, climbing: !!(player.climb?.isClimbing || player.mantling || player.onWall),   // HT1: the body's centre and the climb, for the torch
+      seat: _driverBodySeat ? { feet: _driverBodySeat.feet, yaw: _driverBodySeat.yaw, top: _driverBodySeat.top } : null,   // WAGONS3: on my wagon's bench, the body seated (player/seatPose.js through the climb rig)
       // IG1: the head bob's VERTICAL feeds the first-person offset (the
       // reference's head_bobbing.lua drives setFirstPersonOffset's z
       // only); bobOffset[1] is the raw vertical, un-rotated.
       bob: [0, player.bobOffset ? player.bobOffset[1] : 0],
-      move: motionBagOf(player),   // MW-D26: the movement-settings vector, the reference's own selection source; MW-D39 added the jump-state inputs; WW2: the one bag (a partial copy left the bob's idle gate unsent)
+      move: _driverBodySeat ? seatedMotion(motionBagOf(player)) : motionBagOf(player),   // MW-D26: the movement-settings vector, the reference's own selection source; MW-D39 added the jump-state inputs; WW2: the one bag (a partial copy left the bob's idle gate unsent); WAGONS3: still on the bench
       climb: climbRigInput(player, cam.yaw) }),   // CLIMB6: the climb's snapshot - the body's limbs on the stone (player/climbPose.js)
     spellArmed: () => magic.spellArmed(), abortSpell: () => magic.abortReadySpell(),   // M2; MAC-O1: WeaponManager.Update:251 - the ReadyWeapon key puts a readied spell away and draws
     // MAP-WEAPON: the enhanced map is a SPRITE with alpha around it,
@@ -27465,6 +27475,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const drawable = isCellRoom(online.room) && csaOn() ? csaAboard.glue(online.drawable(), { poseOf: (o, i) => csaPoseAhead(o, i, dt), toWire: campToWire, dt }) : online.drawable(); if (hccOn()) hcc.seatGlue(drawable, { toWire: campToWire });   // WAGONS2: the others seated in a wagon's back drawn on its seats as it is drawn here   // CSA-K: a peer aboard a boat stands on its deck as it is drawn here - its owner's (mine among them) or the one led here - never a stride behind it
     _peerMapPoses.clear();
     for (const d of drawable) if (d?.shown) _peerMapPoses.set(d.id, d.shown);
+    if (hccOn()) hcc.driverGlue(drawable, { toWire: campToWire });   // WAGONS3: a driver on their bench, drawn seated there - after the map's poses, where `peerAnchor` reads the puller their wagon hangs from
     const visiblePeers = gateCrowd.cut(cabin ? drawable : drawable.filter((d) => !csaPeers.isBelowDeck(d.id)), { on: modes?.gateArenaDay?.() != null, me: player.pos, at: (d) => onlineToScene(d.shown), max: gateCrowdMax(getPref('gateCrowd')), mate: (id) => !!social?.isPartyPeer(id) });   // GATE-CROWD (2026-10-07, Mac: "some type of filter when there are too many people"): in a gate's court, past the count on the Other players card only the nearest are drawn, my party always (net/gateCrowd.js) - the rest stand nowhere on this screen this frame: no body, sprite, name, light, cast or step (their map marks, above, are kept)
     peerCastVisuals(visiblePeers);   // SPELLFX1: a peer's new cast, drawn once
     if (modes?.gateArenaDay?.() != null) gateCourt?.stepsIn(drawable, (d) => (d?.shown ? onlineToScene(d.shown) : null));   // AUDIT GATE-FBX C3: a player stepping out of the court's way in opens it - every one in the room, the crowd's cut or not (the fire is the court's, not a body this screen draws)
@@ -32283,6 +32294,14 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // TV1: under the travel view the sprite turns to the view's eye (`eyeOverride`: last frame's - a lag nobody sees)
     // VIEW-TOGGLE (Mac: "a force first person/third person toggle"): the other view, on the press edge of its action (the
     // mouse's forward side button by default) - under no window, and never mid-load (hccActionPressed's gate)
+    // AUDIT HCC H1: LateUpdate - after the motor and the recentre, before the world pass draws the wagon. WAGONS3: and
+    // before the camera, which sits on the bench of the wagon it just stood (`_driverSeat`)
+    hccTick(dt, now);
+    // WAGONS3 (Mac: "sit on the wagon itself, the ledge its built for"): DRIVING FROM A BENCH - my seat where my wagon
+    // is drawn this frame (scenes/horseCartPool.js driverSeat): the eye on it in first person, the body on it in third
+    // (the capsule stays at the puller, where the mod's horse is - the team stands round it); never over a death's sink
+    _driverSeat = walkMode && playerSpawned && player.transportMode === TRANSPORT_MODES.Cart && !(townTalk.overlay instanceof DeathScreen) ? hcc.driverSeat() : null;
+    if (_driverSeat) cam.pos = [_driverSeat.feet[0], _driverSeat.feet[1] + SEATED_EYE_HEIGHT, _driverSeat.feet[2]];
     if (hccActionPressed('TogglePerspective')) mwViewTogglePerspective();
     // FIELD BUGS 2026-09-29 (the sea) #3: AT A HELM the wheel zooms out to frame the hull sailed (player/seaZoom.js) and
     // the camera's casts pass her own buckets by - her masts, rails and deckhouses pinned it at the wheel and held the
@@ -32291,11 +32310,12 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const camFilter = csaHelm ? csaCameraFilter(csaHelm) : null;
     const mwv0 = mwViewFrame({
       eyeOverride: travelView?.eye ?? null,
-      fpEye: cam.pos, feet: player.feetAt(), yaw: cam.yaw, pitch: cam.pitch,
-      dt, riding: !!player.riding,   // AUDIT-EOTB F3/F4: the host's own clock, and the one state only it has
+      fpEye: cam.pos, feet: _driverSeat ? _driverSeat.feet : player.feetAt(), yaw: cam.yaw, pitch: cam.pitch,   // WAGONS3: on the bench, the seat's feet
+      dt, riding: !!player.riding && !_driverSeat,   // AUDIT-EOTB F3/F4: the host's own clock, and the one state only it has; WAGONS3: the bench is no saddle
+      ...(_driverSeat ? { seated: true, stopped: true } : {}),   // WAGONS3: seated on it, and still on it (the sprite plays no stride)
       cart: player.transportMode === TRANSPORT_MODES.Cart, onExteriorPath: _surfPath,   // EOTB-IL: UpdateWagon's two host facts
-      raycast: (o, d, m) => collider.raycast(o, d, m, camFilter),
-      spherecast: (o, r, d, m) => { const h = collider.sphereCast(o, r, d, m, camFilter).dist; return Number.isFinite(h) ? h : null; },   // MAC-A: castSphere's seam beside the ray - the camera's two obstacle guards are sphere casts (camera.cpp:186, :200)
+      raycast: (o, d, m) => Math.min(collider.raycast(o, d, m, camFilter), hcc.cameraHit(o, d, m)),   // WAGONS3: my driven wagon's body a wall to the camera on its bench
+      spherecast: (o, r, d, m) => { const h = Math.min(collider.sphereCast(o, r, d, m, camFilter).dist, hcc.cameraHit(o, d, m, r)); return Number.isFinite(h) ? h : null; },   // MAC-A: castSphere's seam beside the ray - the camera's two obstacle guards are sphere casts (camera.cpp:186, :200)
       seaReach: csaHelm ? csaSeaReach(csaHelm) : 0,   // #3
     });
     if (yards?.flying()) { const c = { pos: mwv0.eye }; yards.cameraOverride(c); mwv0.eye = c.pos; }   // HOME-YARD: the decorator's free eye, while a piece is placed outside (no travel view is up then)
@@ -32310,7 +32330,13 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const tvf = travelView?.frame(dt, { eye: tvHeadEye, fwd }) ?? null;
     const mwv = tvf ? { ...mwv0, eye: tvf.eye } : mwv0.ownEye ? { ...mwv0, eye: tvHeadEye } : mwv0;   // AUDIT TV B6: the frame the view came down in draws from the head, never from last frame's sky
     const viewFwd = tvf ? tvf.fwd : fwd;
-    const tvFace = tvf ? { yaw: tvf.yaw, up: tvf.up, grow: tvf.grow } : null;   // AUDIT DEEP R-2: the traveller's own sprite turns its quad to the travel view's eye
+    // WAGONS3: MY BODY ON MY BENCH - drawn on it as the wagon is drawn (grown with the rig under the Overworld), facing the
+    // way it is driven, at the rig's grow (player/motor.js drawFeet / drawYaw / drawGrow - WAGONS2's seat in another's
+    // wagon is drawn the same way, its drawAt); the fixed-city host's twin is exterior.js's
+    _driverBodySeat = _driverSeat ? (tvf ? hcc.driverDrawn('', { selfGrow: tvf.grow, grow: peerGrow }) ?? _driverSeat : _driverSeat) : null;
+    if (_driverBodySeat) { player.drawFeet = _driverBodySeat.feet; player.drawYaw = _driverBodySeat.yaw; player.drawGrow = _driverBodySeat.g > 1 ? _driverBodySeat.g : null; }
+    else player.drawYaw = null;
+    const tvFace = tvf ? { yaw: tvf.yaw, up: tvf.up, grow: player.drawGrow ?? tvf.grow } : null;   // AUDIT DEEP R-2: the traveller's own sprite turns its quad to the travel view's eye; WAGONS3: seated in a rig, the rig's grow
     setFlatLean(tvf ? Math.hypot(tvf.up[0], tvf.up[2]) : 0);   // AUDIT DEEP R-7: the flats' cull spheres grown by the lean, before any cull
     renderer.setFocus(tvf ? cam.pos : null, !!tvf && tvf.blend >= 0.5);   // AUDIT DEEP2 D7: the cascades grow half way up, where the picture has
     // AUDIT NAV1 (the helm): THE BROADSIDE CAMERA - while a broadside is laid the eye eases out over that side, her ports,
@@ -32610,7 +32636,6 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     warmAshesFrame(gamePaused() ? 0 : dt * worldTimeScale());   // WA1: TransportToShipWithDelay's WaitForSeconds, held by a pause, scaled with the world
     crewAshoreTick();   // CREW-COMPANIONS: the party stood on the street
     revenantAshoreTick();   // REVENANT-COMPANION: and the sworn
-    hccTick(dt, now);   // AUDIT HCC H1: LateUpdate - after the motor and the recentre, before the world pass draws the wagon
     renderer.setClearColor(SKY_CLEAR);   // INCIDENT 2026-09-04 / REVIEW 2026-09-05: this frame is the EXTERIOR's (the mode frames returned above and clear black in worldModes) - CameraClearManager.cs:51-57
     renderer.setFlashLight(sky.lightningLight() ?? boltFrame.flash);   // DS1: Dynamic Skies' LightningFlash, composed first on the point-light channel just stored; BOLT: else a near ground strike's own light, from where it struck
     renderer.setWorldViewport(worldViewportRect(canvas.clientWidth, canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
@@ -32619,6 +32644,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (deepWaters) { _dwNowMs = now; beginDeepWatersFrame(minute); }   // DW-C: the look and the distance fog - a frame's, so after the clear of both
     // MW-D24: the player's own body, in third person only.
     renderer.setCloudShadow(sky?.cloudShadow ?? null);   // VC4: the frame's deck, for the body and everything before the pixel loop
+    hcc.faceTeams(mwv.eye);   // WAGONS3: the team's billboards turned to the eye that draws them (the bench's, the third person's, the travel view's)
     mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw, face: tvFace });   // DISC18: the body at the capsule's own feet, not the camera's smoothed ones
     drawPeerBodies(proj, view, mwv.eye, tvf ? tvFace : null);   // MWBODY1: the others' bodies, the same pass; OW-PEERS: grown under the Overworld
     mwViewDrawWagon(renderer);   // EOTB-IL: the cart, when the transport is the cart

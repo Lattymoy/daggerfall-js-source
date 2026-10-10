@@ -976,7 +976,7 @@ export class RemotePlayers {
    *  the peers' own falloff. Gated with their footsteps ('peerFootsteps' - hooves are a mount's steps). */
   _syncRidingSound(peer, toScene, dt, eye = null, poseAgeMs = null) {
     const audio = this.deps?.audio;
-    const rd = peer.shown?.rd | 0;
+    const rd = (peer.shown?.rd | 0) || (peer.shown?.bench === 2 ? 2 : 0);   // WAGONS3: a driver glued onto their bench (scenes/horseCartPool.js driverGlue) still drives the cart
     if (!audio?.setLoop3d || !rd || getPref('peerFootsteps') === false) {
       this._stopRidingSound(peer.id);
       if (!rd) this._onFoot.add(peer.id);   // AUDIT DISC7 B4: seen on foot - a mount after this is a real one
