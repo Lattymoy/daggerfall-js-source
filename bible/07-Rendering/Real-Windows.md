@@ -124,7 +124,7 @@ stands at HEAD, not the view out's).
 
 - **The weather.** The view out is lit by the street frame's own terms - the
   clock's minute and the weather's sun and the cloud's (`viewOutLight`,
-  `src/render/realWindows.js`; the moon's ambient the host's). It was lit as a
+  `src/world/worldClock.js`; the moon's ambient the host's). It was lit as a
   clear day: a rainy noon looked out on at five times the street's ambient, a
   storm's at sixteen, and `clockFogColor`, handed a clear sun against the
   dimmed one the street was kept at, brightened the air with no minute gone.

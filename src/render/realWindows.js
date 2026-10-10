@@ -36,7 +36,6 @@ import {
   ROOM_TEXELS_PER_M, ROOM_STYLES, ROOM_PIECES, ROOM_FABRICS, ROOM_LIT_SHARE, ROOM_CURTAIN_SHARE, ROOM_HEARTH_GLOW,
   roomColorTable,
 } from '../world/windowRoomArt.js';
-import { exteriorAmbient, sunScale } from '../world/worldClock.js';   // WAGONS2 (FINAL AUDIT): the view out lit as the street frame lights
 
 // ---------------------------------------------------------------------------------------------------------------
 // THE SWITCH
@@ -378,16 +377,6 @@ export function clockFogColor(kept, keptSun, nowSun) {
   const day = (s) => 0.1 + 0.9 * Math.min(1, Math.max(0, (Number.isFinite(s) ? s : 0) / 0.6));
   const k = day(nowSun) / day(keptSun);
   return Float32Array.from([0, 1, 2], (i) => Math.min(1, Math.max(0, (kept?.[i] ?? 0) * k)));
-}
-/** WAGONS2 (FINAL AUDIT): THE STREET'S LIGHT BY THE CLOCK AND THE WEATHER - the street frame's own terms at the clock's
- *  minute (world.js's and exterior.js's setLighting): the ambient at the weather's sun (exteriorAmbient squares it), the
- *  key the clock's sun times the weather's and the cloud's (`sunFactor`, the sky's). The view out was lit as a clear
- *  day - a rainy noon's street looked out on at five times its ambient, a storm's at sixteen, and clockFogColor, given
- *  a clear sun against the weather-dimmed one the street was kept at, brightened the air with no minute gone. Both
- *  terms 1 on a clear day; the moon's ambient is the host's (withMoonAmbient). */
-export function viewOutLight(minute, nightScale, weatherSun = 1, sunFactor = 1) {
-  const w = Number.isFinite(weatherSun) ? Math.max(0, weatherSun) : 1, c = Number.isFinite(sunFactor) ? Math.max(0, sunFactor) : 1;
-  return { ambient: exteriorAmbient(minute, nightScale, w), sun: sunScale(minute) * w * c };
 }
 export const VIEW_MAX_SIDE = 1024;
 export const VIEW_BUCKET = 64;

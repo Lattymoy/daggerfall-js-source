@@ -23,8 +23,8 @@ import { planStore } from '../src/systems/itemTransfer.js';
 import { takeTradeGoods } from '../src/net/realmTradeLaw.js';
 import { validLootItem } from '../src/systems/loot.js';
 import { createWeapon } from '../src/combat/enemyEquipment.js';
-import { viewOutLight, clockFogColor, realWindowsGlsl, RW_SEED_GLSL } from '../src/render/realWindows.js';
-import { exteriorAmbient, sunScale } from '../src/world/worldClock.js';
+import { clockFogColor, realWindowsGlsl, RW_SEED_GLSL } from '../src/render/realWindows.js';
+import { exteriorAmbient, sunScale, viewOutLight } from '../src/world/worldClock.js';
 import { EMIT_MESH_FS } from '../src/render/airPass.js';
 import { ROOM_LIT_SHARE } from '../src/world/windowRoomArt.js';
 
@@ -114,7 +114,7 @@ test('WAGONS2 (FINAL AUDIT) A HIRED TRADER IN A HOME ALONE: the trader is offere
 test('WAGONS2 (FINAL AUDIT) THE HOSTS\' LAST TWO SEAMS: the fixed city\'s windows show its wagons in the street (world.js had them, exterior.js none); and staff sent to a player standing in a caravan land behind its rear door, outside - a caravan\'s room is no building a street\'s door walks into, and every such teleport failed (mutants: the fixed city\'s hook, the staff\'s landing)', () => {
   assert.match(read('src/scenes/exterior.js'), /renderer\.outsideViewDraws\?\.add\(\(\{ renderer: r \}\) => \{ if \(hccOn\(\)\) hcc\.drawOutside\(r, null\); \}\);/);
   const w = read('src/scenes/world.js');
-  assert.match(w, /const caravanOut = mode === 'interior' && modes\?\.caravanRoom \? caravanDoorLanding\(\{ caravanRoom: modes\.caravanRoom \}\) : null;/);
+  assert.match(w, /const caravanRoom = mode === 'interior' \? modes\?\.caravanRoom \?\? null : null;\n\s+const caravanOut = caravanRoom \? caravanDoorLanding\(\{ caravanRoom \}\) : null;/);
   assert.match(w, /if \(caravanOut\) \{\n\s+const c = state\.worldCoords\(caravanOut\.position\);\n\s+dest = \{ \.\.\.dest, kind: 'exterior', pos: \[c\.x, caravanOut\.position\[1\] - state\.compensation\[1\], c\.z\], yaw: caravanOut\.yaw \};\n\s+\} else if \(mode === 'interior'\) \{/);
 });
 

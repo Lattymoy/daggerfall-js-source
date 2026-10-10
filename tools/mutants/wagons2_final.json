@@ -92,7 +92,7 @@
   {
     "name": "WAGONS2-FINAL-the-staff-told-no-instance",
     "file": "src/scenes/world.js",
-    "old": "    const caravanOut = mode === 'interior' && modes?.caravanRoom ? caravanDoorLanding({ caravanRoom: modes.caravanRoom }) : null;",
+    "old": "    const caravanOut = caravanRoom ? caravanDoorLanding({ caravanRoom }) : null;",
     "new": "    const caravanOut = null;",
     "tests": [
       "test/wagons2_final.test.js"
@@ -334,7 +334,7 @@
   },
   {
     "name": "WAGONS2-FINAL-the-view-out-clear-skied",
-    "file": "src/render/realWindows.js",
+    "file": "src/world/worldClock.js",
     "old": "  return { ambient: exteriorAmbient(minute, nightScale, w), sun: sunScale(minute) * w * c };",
     "new": "  return { ambient: exteriorAmbient(minute, nightScale, 1), sun: sunScale(minute) * c };",
     "tests": [
@@ -343,7 +343,7 @@
   },
   {
     "name": "WAGONS2-FINAL-the-cloud-unread",
-    "file": "src/render/realWindows.js",
+    "file": "src/world/worldClock.js",
     "old": "sun: sunScale(minute) * w * c };",
     "new": "sun: sunScale(minute) * w };",
     "tests": [
