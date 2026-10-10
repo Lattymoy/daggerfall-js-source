@@ -547,6 +547,19 @@ Gauntlets' Flying Kick and Haymaker) - every technique a press away.
 - Mutants `tools/mutants/tech1.json` (70 at TECH1, all dead; AUDIT TECH1 retired one and added 39 - 108; THE FOLLOW-UP added 6 - 114). The first run left five alive, and each was a gap: a Legendary's
   band on the card, a door crossed mid-aim, a shaft's tally, the release's second asking (four pins added), and an
   ammunition check that could never change an answer (an arrow and a pellet swing with no skill), deleted.
+- `test/techfx1.test.js` (13) - THE FEEL: the table read as the peaks the screen reaches, the springs, comfort, every
+  moment on the real runner in the rig's own frame order on the motor's typed feet, the camera's channel, the hands'
+  dip, the thirteen bursts, the four hosts' doors, the setting, and the frame's allocation at rest and in flight.
+- `test/techfx1_audit.test.js` (7) - AUDIT TECH-FX, one test a finding: the motor's feet, the arm's dip, the roll on the
+  screen, the hit off the machine, a recentre in flight, the chip and the key (and the held poll's index), the offset
+  in place and the one speed.
+- Mutants `tools/mutants/techfx1.json` (54 at TECH-FX, all dead; AUDIT TECH-FX re-aimed 14 by content and added 29 -
+  83: 82 dead, 1 equivalent as recorded - the hit's own once-flag, the machine handing one hit a strike). The audit's
+  run re-ran every record aimed at the files it changed (the runner, THE FEEL, the climb's feel, the rig, the impact
+  engine, the input poll, and the renderer's and the loot line's touched lines - 339): 338 dead, 1 equivalent; its one
+  survivor (the exported marks call's fresh list, unmeasured once the hosts' call short-circuited before it) is pinned
+  and dead. `tech1.json`'s five records on the rig's context and the load, and `uxb1.json`'s two on the held poll, were
+  re-aimed by content.
 
 **Pins moved** (each marked `PIN MOVED (TECH1)` where it stands): the ladder's own oracles and source pins for the pass
 at a door's end (`cards9_sources`, `gilded1_gilded`, `sd9e_spoils`, `set6_aetheric`, `loot2_exalted`, `loot4_procs`,
