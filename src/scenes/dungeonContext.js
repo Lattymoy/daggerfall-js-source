@@ -4071,6 +4071,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       face: (p, from) => opts.technique?.face?.(p, from),   // AUDIT TECH1: from where the body lands
       fireArrow: (from, dir, o) => fireArrow(from, dir, o?.weapon ?? playerWeapon.weapon, true, null, null, o?.sky ? { world: [...from] } : weaponRig.thunderlockMuzzle(fieldOfView()), { technique: o?.technique ?? null, ...(o?.speedScale ? { speedScale: o.speedScale } : {}) }),
       drainFatigue: (n) => drainFatigue(n),
+      fx: (recipe, at, o) => magic.techniqueFx?.(recipe, at, o),   // TECH-FX: a technique's burst, in this dungeon's cast engine's impact pass
+      shake: (k) => opts.shakeCamera?.(k),   // TECH-FX: the outer host's shaker, as a stagger's and an execution's kick
+      sound: (clip, volume, pitch) => audio.playOneShot(clip, volume, pitch),   // TECH-FX: the technique's layer over the swing's own
     },
   });
   const playerWeapon = weaponRig.playerWeapon;   // the dungeon-side combat consumers read it

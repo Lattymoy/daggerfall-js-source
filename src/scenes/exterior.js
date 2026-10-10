@@ -2511,6 +2511,9 @@ export async function bootExterior(canvas, renderer, params, status) {
       drainFatigue: (n) => drainExteriorFatigue(n),
       face: (p, from) => { if (!Array.isArray(p)) return; const o = Array.isArray(from) ? from : player.pos; cam.yaw = Math.atan2(p[0] - o[0], p[2] - o[2]); lookFilter.settle(); },   // AUDIT TECH1: from where the body lands
       blocked: () => gamePaused(),   // AUDIT TECH1: a window holds the world - and the technique's key (the mouse's side button reaches `keys` under any window)
+      fx: (recipe, at, o) => magic.techniqueFx?.(recipe, at, o),   // TECH-FX: a technique's burst, in this host's cast engine's impact pass
+      shake: (k) => betterAmbience.weaponKick(k),   // TECH-FX: the one shaker, under Better Ambience's own switch and cap
+      sound: (clip, volume, pitch) => audio.playOneShot(clip, volume, pitch),   // TECH-FX: the technique's layer over the swing's own
     },
   });
   autoBuildArms(playerEntity);   // MWA1: the arms at boot, when the switch is on and the archives are attached

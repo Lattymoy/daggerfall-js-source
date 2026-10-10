@@ -2675,7 +2675,16 @@ function portRowsGame({ pause = false } = {}) {
   };
   ctl.append(b, el('span', `tier ${can ? 'live' : 'unavailable'}`));
   row.append(ctl);
-  return [row];
+  return [row, techniqueMotionRow()];
+}
+/** TECH-FX (bible/05-Combat/Weapon-Techniques.md THE FEEL): how much a weapon technique moves the screen - every device,
+ *  both skins; Settings > Accessibility > Motion lists it (ui/settingsMap.js). */
+function techniqueMotionRow() {
+  const row = choiceRow('techniqueMotion', 'Technique camera motion',
+    'How much a weapon technique shakes and tilts the view and pushes your hands.',
+    [[1, 'Full'], [0.75, '75%'], [0.5, 'Half'], [0.25, 'Low'], [0, 'Off']]);
+  if (row?.dataset) { row.dataset.opt = 'techniqueMotion'; row.dataset.pref = 'techniqueMotion'; }   // ORG2: the map finds it by its key
+  return row;
 }
 
 /** FPS-VSYNC: a key the desktop shell reads at its next launch does something here too - drawn flat with the live

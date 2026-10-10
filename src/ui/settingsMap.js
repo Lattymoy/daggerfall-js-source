@@ -175,7 +175,7 @@ export const CATEGORIES = Object.freeze([
   ]),
   tab("accessibility", "Accessibility", [
     sec("motion", "Motion", [
-      "Controls/HeadBobbing", "Controls/CameraRecoilStrength", "Effects/MotionBlurEnable", "Effects/MotionBlurShutterAngle",
+      "Controls/HeadBobbing", "Controls/CameraRecoilStrength", "port:techniqueMotion", "Effects/MotionBlurEnable", "Effects/MotionBlurShutterAngle",
       "Effects/MotionBlurSampleCount", "Effects/VignetteEnable", "Effects/VignetteIntensity", "Effects/VignetteSmoothness", "Effects/VignetteRoundness",
       "Effects/VignetteRounded"]),
     sec("reading", "Readability", [

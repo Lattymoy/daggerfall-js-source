@@ -244,10 +244,93 @@ the technique's name and the seconds left, or the key's name when it is ready. T
 (an interior's, a dungeon's) when one owns the frame. When the world recentres, the aim, a leap's landing and a
 Volley's falling shafts shift with it (`offsetTechniques`, beside the foes' own - AUDIT TACT D3).
 
+## THE FEEL (TECH-FX, 2026-10-10, the owner: "lets do code driven design for each technique, like real detail and ensure performance remains in tact")
+
+A technique swings, shoots and leaps with the weapon's own animation (the classic sprite's strike frames, the Morrowind
+arm's chop, slash or shoot - `fpAttack`), so on its own a Whirlwind reads as one plain slash. THE FEEL gives each one a
+body of its own, drawn in code from what the engine already has - no new art, no new draw pass, nothing a peer is sent.
+
+**The moments** (`combat/techniques.js` cues them; `combat/techniqueFx.js` holds what each technique does at each):
+
+| moment | when |
+| --- | --- |
+| `release` | the press goes: a swing starts, a shot is drawn, a leap or a dash leaves the ground |
+| `hit` | the swing's hit frame (`strikeHitAt`) - a leap's and a dash's strike land with the body, so this is the landing too |
+| `loose` | a Piercing Shot's or a Volley's arrow leaves the string (`claimShot`) |
+| `shaft` | each of a Volley's six arrows meets the ground it was aimed at |
+| `close` | a Volley's last arrow down |
+
+**The channels**, each through a seam that already carries its kind in all four hosts:
+
+- **The camera** - a pitch, a roll, an eye dip and a field-of-view kick, each a critically damped spring kicked at the
+  moment and settling back (`techniqueView`). It rides the climb's own view step (`player/climbFeel.js`
+  `createClimbFeelHost`: its `view` folds it into the view matrix first person only, its `fovRad` adds the kick to
+  every lens, its `pitch` hands the sky the same pitch) - the four view lines, pinned by CLIMB4, are untouched.
+- **The shake** - `betterAmbience.weaponKick` (the dungeon's `opts.shakeCamera`), the one shaker every host already
+  applies, under Better Ambience's own switch and `maxShake`.
+- **The hands** - a push of the whole first-person layer (the weapon, the shield, the torch hand, the Morrowind arm)
+  through the renderer's screen offset, the seam retro mode's pillarbox places it with (`techniqueHands`; the rig's
+  `drawInner` wraps its draw, `drawLayer`, in it, in screen heights of the layer's own canvas, and puts the offset back
+  however the layer leaves). The classic draw itself - `drawFpsWeapon`, the clone's quad,
+  the gun's frame - is untouched, as FIELD-GUN12 wants it.
+- **The world** - sparks, shock rings, ground glow and a brief light from the spells' own impact engine
+  (`render/spellImpactFx.js` `technique(recipe, at, o)`, through each host's cast engine, `techniqueFx`): one instanced
+  draw already made every frame, its caps (1500 sparks, 160 rings) over a technique's few dozen. The technique's blue
+  (`TECH_FX_LOOK.energy`, its `TECH_COLOR`) and warm stone sparks thrown off the ground (`TECH_FX_LOOK.stone`).
+- **The sound** - a layer over the swing's own, from the game's own table (`SOUND`): a low whoosh, a deeper loose, a
+  landing's thud, each at its own pitch; under the Sound Enhancements switch (`enhancedSoundsOn`), as the climb's
+  whoosh is.
+
+**Each technique** (camera peaks in degrees, metres and degrees of field of view; the hands' push in screen heights):
+
+| technique | release | hit (the landing, for a leap or a dash) | the world |
+| --- | --- | --- | --- |
+| Volley | look lifts 0.9°, field narrows 2°; hands kick down | - | a flare at the bow; a spark and a small ring where each arrow lands; the circle closes in a ring over the disc |
+| Piercing Shot | look kicks up 1.4°, field narrows 3.5°, a light shake; hands kick down | - | a muzzle flare and a tracer of sparks down the shot's lane |
+| Leap Strike | field widens 7°, look dips; a low whoosh; hands rise | look slams down 3°, the eye dips 12 cm, a heavy shake, a thud; hands drop | a shock ring to its 2.5 m, a glow under it, stone sparks thrown up and blue ones racing out |
+| Flying Kick | field widens 6°; a whoosh | look down 2.2°, the eye dips 9 cm, a shake, a lighter thud | a shock ring to 2 m and fewer sparks |
+| Whirlwind | the view rolls 7° into the spin; hands swing right | rolls back 5°; hands sweep left; a light shake | a ring to its 3 m and sparks flung round it, tangent to the spin |
+| Ground Slam | look lifts 2° (the raise); hands rise; a low whoosh | look slams down 3.5°, the eye dips 14 cm, field narrows, the heaviest shake, a deep thud | two shock rings to its 3.5 m, a glow, the most stone thrown and blue racing out along the floor |
+| Skull Crack | look lifts 1.2°; hands rise | look down 2.2°, a sharp shake | a star of light where the blow falls and a spray of sparks |
+| Haymaker | field narrows 3°, the view leans 3°; hands draw back | look down 1.2°, field opens; hands punch out; a shake | a star, sparks and a ring standing in the air, facing you |
+| Cleave | the view leans 4°; hands draw left | leans back 4°; hands sweep right; a shake | a fan of sparks along its 160° arc |
+| Headsman's Chop | look lifts 1.6°; hands rise | look down 2.8°, the eye dips 6 cm, a shake | a star where it falls, sparks, a small ring under it |
+| Shadowstep | field widens 8°, the view leans 4°; a quick high whisk | field back, lean back; a shake | a ring and rising sparks where you left; a star where you strike |
+| Lunge | field widens 7°; a whoosh | look down 1.4°, field narrows 3°; a shake | a trail of sparks down the lane you ran |
+
+**Comfort.** `techniqueMotion` (Settings > Accessibility > Motion, "Technique camera motion", 0 to 100%, 100 by
+default) scales the camera's springs, the shake and the hands' push; at 0 a technique moves nothing on the screen but
+its sparks. Better Ambience's switch and `maxShake` still bound the shake. Third person: the camera's channel is
+first person only (the climb's own rule) and the hands' push has no hands to move.
+
+**Performance.** THE FEEL costs nothing while no technique is in the air: its springs are a preallocated typed array
+(critically damped, stepped by their closed form - the same curve at any frame rate, put to exact rest when settled),
+its outputs two objects filled in place, its step and the view fold return at once at rest, and the marks' and the
+chip's empty lists are one frozen list (the runner made a fresh empty array a frame before). A moment allocates at the
+moment, never a frame: a burst into the impact engine's one draw (at most 39 sparks - Ground Slam's; a Volley arrow's
+5 - up to three rings and one light, under the engine's own caps) and a sound. While the hands move, the push sets
+the screen offset and puts it back through the renderer's own setter (two small arrays a frame, as retro mode's
+pillarbox costs every frame). `test/techfx1.test.js` measures the frame (L2 F9's measure, the least of six windows in a
+child with a 64 MB young space, against a control that must show): at rest the step, the fold, the lens, the sky's
+pitch, the hands, the marks and the chip; with all six springs in flight the step, the fold and the hands - each under
+2 bytes a frame. The measure found two costs and both are gone:
+
+- **The outputs' shape.** The outputs were object literals, `{ x, y }` and `{ pitch, roll, eye, fov }` - shapes the
+  engine shares with every such literal the game makes; once one of those held anything but a number, the field went
+  general and every write here boxed its number (32 bytes a frame in flight). They are a class each now
+  (`TechView`, `TechHands`): their own shape, numbers alone, written in place.
+- **The fold's eye.** `applyClimbView` read the eye with a destructure (`const [ex, ey, ez] = fx.eye`), which made an
+  iterator a call - 16 bytes a frame whenever the climb or a technique moved the view. It reads by index now.
+
+The lens's two numbers (`fovRad`, `pitch`) are returned as numbers: at rest 0, which costs nothing; while a spring
+moves, a call the engine does not inline boxes its answer (16 bytes, as the climb's own kick has since CLIMB4).
+
 ## THE FOUR HOSTS
 
 Every host hands its rig the technique's **door** - `{ motor(), fireArrow(from, dir, { sky, technique, speedScale }),
-drainFatigue(n), face(point) }` - and draws the marks in its ground pass:
+drainFatigue(n), face(point) }`, and THE FEEL's three ends, `fx(recipe, at, o)` (its cast engine's `techniqueFx`),
+`shake(k)` (`betterAmbience.weaponKick`; the dungeon's `opts.shakeCamera`, its outer host's) and `sound(clip, volume,
+pitch)` (its `audio.playOneShot`) - and draws the marks in its ground pass:
 
 | host | motor | the shaft's lane | fatigue | the view's turn | marks |
 | --- | --- | --- | --- | --- | --- |

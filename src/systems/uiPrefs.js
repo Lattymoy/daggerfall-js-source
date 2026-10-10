@@ -81,6 +81,9 @@ export const PREF_DEFAULTS = Object.freeze({
   // PAD-CURSOR: the controller cursor's assisted feel (systems/padCursor.js) - its curve, ramp, boost and the pull to
   // a control; off is DFU's linear cursor, on both skins
   padCursorAssist: true,
+  // TECH-FX (bible/05-Combat/Weapon-Techniques.md THE FEEL): how much a weapon technique moves the screen - its camera
+  // springs, its shake and the hands' push (combat/techniqueFx.js techniqueMotion); 0 moves nothing but its sparks
+  techniqueMotion: 1,
   // PEERMENU1: the player menu's two binds, keyboard and controller, each { code, hold } (null = the defaults: hold E,
   // hold A - systems/peerMenuBind.js). Online only.
   peerMenuKey: null, peerMenuPad: null,

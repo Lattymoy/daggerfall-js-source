@@ -1714,6 +1714,9 @@ export function createWorldModes(host) {
       fireArrow: (from, dir, o) => interiorArrows.fire(from, dir, { fromPlayer: true, weapon: o?.weapon ?? interiorWeapon.playerWeapon.weapon, muzzle: o?.sky ? { world: [...from] } : interiorWeapon.thunderlockMuzzle(fieldOfView()), technique: o?.technique ?? null, ...(o?.speedScale ? { speedScale: o.speedScale } : {}) }),
       drainFatigue: (n) => drainInteriorFatigue(n),
       face: (p, from) => { if (!Array.isArray(p)) return; const o = Array.isArray(from) ? from : player.pos; cam.yaw = Math.atan2(p[0] - o[0], p[2] - o[2]); },   // AUDIT TECH1: from where the body lands
+      fx: (recipe, at, o) => magic?.techniqueFx?.(recipe, at, o),   // TECH-FX: a technique's burst, in the world's cast engine's impact pass (an interior's is the world's)
+      shake: (k) => betterAmbience.weaponKick(k),   // TECH-FX: the one shaker, under Better Ambience's own switch and cap
+      sound: (clip, volume, pitch) => audio.playOneShot(clip, volume, pitch),   // TECH-FX: the technique's layer over the swing's own
     },
   });
   // C13: the interior arrow flights (collider late-resolved - each

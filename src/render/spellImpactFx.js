@@ -56,6 +56,17 @@ export const FX_LOOK = Object.freeze({
 
 const TAU = Math.PI * 2;
 
+/** TECH-FX (bible/05-Combat/Weapon-Techniques.md THE FEEL): a weapon technique's two looks - its ENERGY, in the
+ *  technique's own blue (combat/techniques.js TECH_COLOR, the marks' and the HUD chip's), and the STONE its blows throw
+ *  off the ground, warm and short-lived. Not elements: no art replaces them and `artColours` never lists them. */
+export const TECH_FX_LOOK = Object.freeze({
+  energy: Object.freeze({ hot: [0.92, 0.98, 1.0], main: [0.35, 0.78, 1.0], end: [0.06, 0.2, 0.55], light: [0.55, 1.1, 1.9], range: 6, lightS: 0.32 }),
+  stone: Object.freeze({ hot: [1.0, 0.93, 0.78], main: [0.82, 0.62, 0.4], end: [0.22, 0.15, 0.09], light: [1.2, 0.9, 0.6], range: 4, lightS: 0.3 }),
+});
+/** TECH-FX: the recipes `technique` knows. */
+export const TECH_FX_RECIPES = Object.freeze(['shock', 'land', 'sweep', 'arc', 'star', 'chop', 'punch', 'vanish', 'trail', 'tracer', 'flare', 'shaft', 'close']);
+
+
 /**
  * ART-COLOUR (the player: "magic spells are also greenish ... i dont know if the violet effects fit"): A LOOK OUT OF THE
  * ELEMENT'S OWN ART. `rgb` the colour sampled off the element's missile archive (375-379, the player's own ARENA2 -
@@ -431,6 +442,146 @@ export class SpellImpactFx {
     } else if (p.onLand === 'splat') {
       this._decal(p.look, p.p, { shape: FX_SHAPE.pool, r0: 0.05, r1: 0.32, life: 1.1, I: 0.8 });
       if (this.rng() < 0.7) this._part(p.look, [p.p[0], p.p[1] + 0.02, p.p[2]], [0, this.r(0.3, 0.7), 0], { delay: this.r(0.05, 0.4), life: this.r(0.4, 0.7), w: 0.03, g: 0, drag: 1, streak: 0, I: 0.9 });
+    }
+  }
+
+  /**
+   * TECH-FX: A WEAPON TECHNIQUE'S BURST (bible/05-Combat/Weapon-Techniques.md THE FEEL). `recipe` one of TECH_FX_RECIPES,
+   * `at` where (scene frame): the feet for a ring, the blow's point for a star, the eye for a tracer, the start of a
+   * trail. `ground` the floor's height (default `at`'s), `yaw` the facing (forward on the floor is [sin, 0, cos]), `r` a
+   * ring's reach, `dir` a shot's or a punch's unit direction, `len` a tracer's length, `to` a trail's end, `spin` +1 or
+   * -1. The same sparks, rings and light the spells' landings are made of, in the technique's blue and the stone's warm
+   * grey, under this engine's own caps. Answers whether it drew anything.
+   */
+  technique(recipe, at, { ground = null, yaw = 0, r = 2.5, dir = null, len = 0, to = null, spin = 1 } = {}) {
+    if (!Array.isArray(at) || at.length < 3 || !at.every(Number.isFinite)) return false;
+    const E = TECH_FX_LOOK.energy, S = TECH_FX_LOOK.stone;
+    const R = (a, b) => this.r(a, b);
+    const gy = Number.isFinite(ground) ? Math.min(ground, at[1]) : at[1];
+    const floor = [at[0], gy + 0.04, at[2]];
+    const fx = Math.sin(yaw), fz = Math.cos(yaw);
+    const reach = Math.max(0.5, Math.min(6, Number.isFinite(r) ? r : 2.5));
+    const D = Array.isArray(dir) && dir.every(Number.isFinite) && Math.hypot(dir[0], dir[1], dir[2]) > 1e-6 ? dir : [fx, 0, fz];
+    const flare = (p, w, life, I) => this._part(E, p, [0, 0, 0], { life, w, w1: 1.8, g: 0, shape: FX_SHAPE.flare, streak: 0, I });
+    const star = (p, w) => { this._part(E, p, [0, 0, 0], { life: 0.18, w, w1: 1.4, g: 0, shape: FX_SHAPE.star, streak: 0, I: 2.2 }); flare(p, w * 1.3, 0.15, 1.4); };
+    const spray = (p, n, lo, hi, life) => {
+      for (let i = 0; i < n; i++) {
+        const a = R(0, TAU), up = R(-0.5, 1);
+        this._part(E, p, [Math.cos(a) * R(lo, hi), up * R(lo, hi) * 0.6, Math.sin(a) * R(lo, hi)], { life: R(life * 0.7, life * 1.2), w: R(0.016, 0.03), g: 6, drag: 1.1, streak: 0.06, maxLen: 0.45, gy: gy + 0.02, I: R(1.2, 1.8) });
+      }
+    };
+    const debris = (n, rr, hi) => {   // stone thrown up off the floor round the blow, settling where it falls
+      for (let i = 0; i < n; i++) {
+        const a = R(0, TAU), out = R(1.2, 4.2) * Math.sqrt(rr / 2.5);
+        this._part(S, [at[0] + Math.cos(a) * 0.4, gy + 0.08, at[2] + Math.sin(a) * 0.4], [Math.cos(a) * out, R(hi * 0.5, hi), Math.sin(a) * out],
+          { life: R(0.7, 1.2), w: R(0.024, 0.048), g: 13, drag: 0.6, streak: 0.03, maxLen: 0.25, gy: gy + 0.02, bounce: 0.35, bounces: 1, linger: R(0.2, 0.5), I: R(0.9, 1.4) });
+      }
+    };
+    const racers = (n, rr) => {   // the blow's energy racing out along the floor to its reach
+      for (let i = 0; i < n; i++) {
+        const a = R(0, TAU), sp = R(6, 9) * (rr / 3);
+        this._part(E, [at[0], gy + 0.06, at[2]], [Math.cos(a) * sp, R(0.2, 0.7), Math.sin(a) * sp], { life: R(0.26, 0.4), w: R(0.02, 0.034), g: 2, drag: 1.2, streak: 0.09, maxLen: 0.7, gy: gy + 0.02, I: R(1.3, 1.9) });
+      }
+    };
+    switch (recipe) {
+      case 'shock': {   // Ground Slam: the floor struck - two rings to its reach, a glow, the most stone and blue
+        flare([at[0], gy + 0.35, at[2]], 0.9, 0.2, 1.6);
+        this._decal(E, floor, { shape: FX_SHAPE.ring, r0: 0.3, r1: reach, life: 0.45, band: 0.16, I: 1.5, hot: true });
+        this._decal(E, floor, { shape: FX_SHAPE.ring, r0: 0.2, r1: reach * 0.7, life: 0.5, band: 0.1, delay: 0.09, I: 1.0 });
+        this._decal(E, floor, { shape: FX_SHAPE.pool, r0: 0.3, r1: reach * 0.55, life: 0.7, I: 0.6 });
+        debris(26, reach, 6.5); racers(12, reach);
+        this._light(E, floor, 1.1, { life: 0.4 });
+        return true;
+      }
+      case 'land': {   // a leap's landing: one ring to its reach, a glow, stone and blue
+        flare([at[0], gy + 0.3, at[2]], 0.7, 0.18, 1.4);
+        this._decal(E, floor, { shape: FX_SHAPE.ring, r0: 0.2, r1: reach, life: 0.4, band: 0.13, I: 1.35, hot: true });
+        this._decal(E, floor, { shape: FX_SHAPE.pool, r0: 0.25, r1: reach * 0.45, life: 0.55, I: 0.5 });
+        debris(16, reach, 5.5); racers(8, reach);
+        this._light(E, floor, 0.8, { life: 0.35 });
+        return true;
+      }
+      case 'sweep': {   // Whirlwind: a ring to its reach and sparks flung round it, tangent to the spin
+        this._decal(E, floor, { shape: FX_SHAPE.ring, r0: 0.5, r1: reach, life: 0.35, band: 0.1, I: 1.2, hot: true });
+        const sg = spin < 0 ? -1 : 1;
+        for (let i = 0; i < 24; i++) {
+          const a = (i / 24) * TAU + R(-0.1, 0.1), rr = reach * R(0.6, 0.85), sp = R(5, 8);
+          this._part(E, [at[0] + Math.cos(a) * rr, gy + R(0.8, 1.3), at[2] + Math.sin(a) * rr], [-Math.sin(a) * sp * sg, R(0, 0.6), Math.cos(a) * sp * sg],
+            { life: R(0.25, 0.4), w: R(0.018, 0.03), g: 1.5, drag: 0.8, streak: 0.12, maxLen: 0.8, I: R(1.2, 1.8) });
+        }
+        this._light(E, [at[0], gy + 0.6, at[2]], 0.6, { life: 0.3 });
+        return true;
+      }
+      case 'arc': {   // Cleave: a fan of sparks along its arc in front, swept across it
+        const half = 80 * Math.PI / 180;
+        for (let i = 0; i < 20; i++) {
+          const a = yaw - half + (2 * half * i) / 19, rr = reach * R(0.45, 0.7), sp = R(4, 7);
+          const p = [at[0] + Math.sin(a) * rr, gy + R(0.9, 1.3), at[2] + Math.cos(a) * rr];
+          this._part(E, p, [Math.cos(a) * sp, R(-0.2, 0.4), -Math.sin(a) * sp], { delay: (i / 19) * 0.08, life: R(0.22, 0.36), w: R(0.018, 0.03), g: 2, drag: 0.9, streak: 0.1, maxLen: 0.7, I: R(1.2, 1.8) });
+        }
+        flare([at[0] + fx * reach * 0.55, gy + 1.1, at[2] + fz * reach * 0.55], 0.6, 0.16, 1.2);
+        return true;
+      }
+      case 'star':   // a heavy blow's point: a star of light and a spray
+        star(at, 0.4); spray(at, 12, 2, 5, 0.3);
+        this._light(E, at, 0.5, { life: 0.22 });
+        return true;
+      case 'chop':   // Headsman's Chop: the star, the spray and a small ring under it
+        star(at, 0.42); spray(at, 12, 2, 5, 0.3);
+        this._decal(E, [at[0], gy + 0.04, at[2]], { shape: FX_SHAPE.ring, r0: 0.1, r1: 0.9, life: 0.3, band: 0.08, I: 1.1, hot: true });
+        this._light(E, at, 0.5, { life: 0.22 });
+        return true;
+      case 'punch': {   // Haymaker: the star and a ring standing in the air, facing the one who threw it
+        star(at, 0.45);
+        this._decal(E, at, { n: D, shape: FX_SHAPE.ring, r0: 0.05, r1: 0.7, life: 0.22, band: 0.08, I: 1.3, hot: true });
+        for (let i = 0; i < 10; i++) this._part(E, at, [D[0] * R(3, 6) + R(-1, 1), D[1] * R(3, 6) + R(-0.5, 1), D[2] * R(3, 6) + R(-1, 1)], { life: R(0.2, 0.32), w: R(0.016, 0.028), g: 4, drag: 1, streak: 0.07, maxLen: 0.5, I: R(1.2, 1.7) });
+        return true;
+      }
+      case 'vanish': {   // Shadowstep's leaving: a ring where you stood, the light of you rising out of it
+        this._decal(E, floor, { shape: FX_SHAPE.ring, r0: 0.2, r1: 1.1, life: 0.3, band: 0.08, I: 1.1, hot: true });
+        for (let i = 0; i < 14; i++) {
+          const a = R(0, TAU), rr = R(0, 0.35);
+          this._part(E, [at[0] + Math.cos(a) * rr, gy + R(0.2, 1.6), at[2] + Math.sin(a) * rr], [0, R(0.5, 1.5), 0], { life: R(0.35, 0.6), w: R(0.016, 0.028), g: -1.5, drag: 1, streak: 0.06, maxLen: 0.4, fadeIn: 0.05, I: R(1, 1.5) });
+        }
+        flare([at[0], gy + 1.1, at[2]], 0.6, 0.18, 1.2);
+        return true;
+      }
+      case 'trail': {   // Lunge: sparks down the lane you ran, left behind in the order you passed
+        if (!Array.isArray(to) || !to.every(Number.isFinite)) return false;
+        const lx = to[0] - at[0], lz = to[2] - at[2], L = Math.hypot(lx, lz);
+        if (!(L > 0.3)) return false;
+        const n = Math.min(18, Math.max(4, Math.round(L / 0.35)));
+        for (let i = 0; i < n; i++) {
+          const u = i / (n - 1), p = [at[0] + lx * u + R(-0.25, 0.25), gy + R(0.4, 1.4), at[2] + lz * u + R(-0.25, 0.25)];
+          this._part(E, p, [(-lx / L) * R(0.5, 1.5), R(0, 0.4), (-lz / L) * R(0.5, 1.5)], { delay: u * 0.12, life: R(0.25, 0.45), w: R(0.016, 0.03), g: 0.5, drag: 1, streak: 0.08, maxLen: 0.5, I: R(1, 1.6) });
+        }
+        return true;
+      }
+      case 'tracer': {   // a Piercing Shot: a flare at the bow and sparks down the shot's lane, laid as it flies
+        flare(at, 0.45, 0.12, 1.6);
+        const L = Math.max(1, Math.min(32, Number.isFinite(len) ? len : 12));
+        const n = Math.min(20, Math.round(L / 1.2));
+        for (let i = 1; i <= n; i++) {
+          const d = (i / n) * L, p = [at[0] + D[0] * d, at[1] + D[1] * d, at[2] + D[2] * d];
+          this._part(E, p, [D[0] * 2, D[1] * 2, D[2] * 2], { delay: d / 40, life: 0.22, w: 0.02, g: 0, drag: 2, streak: 0.1, maxLen: 0.8, I: 1.5 });
+        }
+        return true;
+      }
+      case 'flare':   // a Volley's loose: a flare at the bow
+        flare(at, 0.4, 0.12, 1.4);
+        for (let i = 0; i < 6; i++) this._part(E, at, [D[0] * R(2, 4) + R(-0.6, 0.6), R(1, 3), D[2] * R(2, 4) + R(-0.6, 0.6)], { life: R(0.2, 0.3), w: 0.018, g: 3, drag: 1, streak: 0.06, maxLen: 0.4, I: 1.4 });
+        return true;
+      case 'shaft':   // one of a Volley's arrows down: a puff of stone and a small ring
+        this._decal(E, floor, { shape: FX_SHAPE.ring, r0: 0.1, r1: 0.5, life: 0.25, band: 0.05, I: 0.9 });
+        debris(5, 1, 3);
+        return true;
+      case 'close':   // a Volley done: the circle closes in a ring over its disc
+        this._decal(E, floor, { shape: FX_SHAPE.ring, r0: reach * 0.2, r1: reach, life: 0.45, band: 0.1, I: 1.3, hot: true });
+        this._decal(E, floor, { shape: FX_SHAPE.pool, r0: 0.3, r1: reach * 0.6, life: 0.5, I: 0.45 });
+        this._light(E, floor, 0.6, { life: 0.35 });
+        return true;
+      default:
+        return false;
     }
   }
 

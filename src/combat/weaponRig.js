@@ -88,6 +88,7 @@ import { castRate } from '../systems/castSpeed.js';   // CAST-SPEED: the rate bo
 import './swingLaw.js';   // AUDIT PRE-MERGE 0929 S5: SWING-LAW's reader of the weapon in the hand, registered as it loads - every rig's
 import { walkSpeed } from '../player/motor.js';   // WW1: GetBaseSpeed's walk arm
 import { stepTechnique, claimShot, techniqueFlying, TECHNIQUE_ACTION } from './techniques.js';   // TECH1: the technique key - every host's rig steps the one runner
+import { techniqueHands } from './techniqueFx.js';   // TECH-FX: a technique's push of the first-person layer
 
 /**
  * TR2: THE ARMS-BUILD OPTS, ONE HOME. The pause card and the Test
@@ -1873,7 +1874,19 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     /** DISC6: the rig's frame is handed to another mode's rig - its torch loop falls silent (handheldTorches silence). */
     silenceTorch() { handheld.silence(); },
   };
-  function drawInner({ paralyzed = false } = {}) {
+  /** TECH-FX (bible/05-Combat/Weapon-Techniques.md THE FEEL): THE HANDS' PUSH - a technique's spring moves the whole
+   *  first-person layer (the weapon, the shield, the torch hand, the Morrowind arm) through the renderer's screen offset,
+   *  the seam retro mode's pillarbox places it with (ui/uiScreen.js onUiScreen); at rest the layer draws as it always has,
+   *  and the offset is put back however the layer leaves. The classic draws themselves are untouched (FIELD-GUN12). */
+  function drawInner(o) {
+    const h = techniqueHands();
+    if ((!h.x && !h.y) || typeof renderer?.setScreenOffset !== 'function') return drawLayer(o);
+    const ch = cv()?.height ?? 0;
+    const ox = renderer.screenOffset?.[0] ?? 0, oy = renderer.screenOffset?.[1] ?? 0;
+    renderer.setScreenOffset(ox + h.x * ch, oy + h.y * ch);
+    try { return drawLayer(o); } finally { renderer.setScreenOffset(ox, oy); }
+  }
+  function drawLayer({ paralyzed = false } = {}) {
     {
       bindArm();    // AUDIT 39: the DRAWING rig owns it too - the arm renders through it
       bowArrowGuard();

@@ -1600,6 +1600,9 @@ export function createPlayerMagic({
     /** ART-COLOUR: each element's burst colour as drawn now, and whether it came from the art - for the console. */
     fxColours: () => fx.artColours(),
     candleLight: () => candle.light() ?? fx.light(),   // IMPACTFX: a landing spell lights the walls for a moment (never over the Light effect's candle)
+    /** TECH-FX (bible/05-Combat/Weapon-Techniques.md THE FEEL): a weapon technique's burst, into this engine's own impact
+     *  sparks (render/spellImpactFx.js `technique`) - the one pass drawFx already draws; the host's technique door calls it. */
+    techniqueFx: (recipe, at, o) => fx.technique(recipe, at, o),
     /** IMPACTFX: THE BURSTS' PASS - the hosts call this right after this engine's billboards, in their world pass,
      *  under the renderer's own camera and fog. Answers whether it drew (it marks the foreign pass itself). */
     drawFx() {

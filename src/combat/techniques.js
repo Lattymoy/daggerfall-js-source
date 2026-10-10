@@ -40,6 +40,7 @@ import { restoresSoFar } from '../systems/save.js';   // AUDIT TECH1: every load
 import { blowSchedule } from '../characters/weaponStates.js';
 import { WEAPON_REACH, friendlyProtected } from './playerWeapon.js';
 import { playerBody, bodyRadius } from './techniqueBlow.js';
+import { techniqueCue, resetTechniqueFx, TECH_FX, TECH_ARROW_MPS } from './techniqueFx.js';   // TECH-FX: what each moment looks, moves and sounds like (bible/05-Combat/Weapon-Techniques.md THE FEEL)
 
 /** The registry action (systems/inputActions.js). */
 export const TECHNIQUE_ACTION = 'WeaponTechnique';
@@ -122,6 +123,30 @@ const lookOf = (cam) => {
   return [Math.sin(y) * Math.cos(p), Math.sin(p), Math.cos(y) * Math.cos(p)];
 };
 const flatOf = (yaw) => [Math.sin(yaw), 0, Math.cos(yaw)];
+/** TECH-FX: where a moment's burst stands (combat/techniqueFx.js TECH_FX names the recipe): a ring at the feet, a star
+ *  where the blow falls in front, a flare and a tracer from the bow down the look, a trail from where a dash began, a
+ *  Volley's arrow where it lands. null: no burst for this moment. */
+function fxPlace(id, moment, ctx, extra = null) {
+  const burst = TECH_FX[id]?.[moment]?.burst, f = ctx.cam?.feet;
+  if (!burst || !Array.isArray(f)) return null;
+  const yaw = ctx.cam.yaw ?? 0, fw = flatOf(yaw);
+  switch (burst) {
+    case 'star': case 'chop': case 'punch':
+      return { at: [f[0] + fw[0] * 1.2, f[1] + 1.1, f[2] + fw[2] * 1.2], ground: f[1], yaw, dir: [-fw[0], 0, -fw[2]] };
+    case 'tracer': case 'flare': {
+      const look = lookOf(ctx.cam), e = Array.isArray(ctx.cam.pos) ? ctx.cam.pos : [f[0], f[1] + 1.6, f[2]];
+      return { at: [e[0] + look[0] * 0.9, e[1] + look[1] * 0.9 - 0.15, e[2] + look[2] * 0.9], ground: f[1], yaw, dir: look, len: extra?.len ?? 0 };
+    }
+    case 'trail':
+      return Array.isArray(extra?.from) ? { at: extra.from, to: [f[0], f[1], f[2]], ground: f[1], yaw } : null;
+    case 'shaft': case 'close':
+      return Array.isArray(extra?.at) ? { at: extra.at, ground: extra.at[1], yaw, r: extra.r ?? 2.5 } : null;
+    default:   // shock, land, sweep, arc, vanish: at the feet
+      return { at: [f[0], f[1], f[2]], ground: f[1], yaw, spin: id === 'whirlwind' ? -1 : 1 };
+  }
+}
+/** TECH-FX: a moment cued - the springs, the shake, the burst and the sound (combat/techniqueFx.js techniqueCue). */
+const cue = (hand, moment, ctx, extra = null) => techniqueCue(hand.id, moment, ctx.door, fxPlace(hand.id, moment, ctx, extra));
 const at = (o, d, s) => [o[0] + d[0] * s, o[1] + d[1] * s, o[2] + d[2] * s];
 const flatDist = (a, b) => Math.hypot(b[0] - a[0], b[2] - a[2]);
 
@@ -381,6 +406,7 @@ export function stepTechnique(dt, ctx) {
   const loads = restoresSoFar();
   if (_s.restores !== loads) {   // AUDIT TECH1: a load - nothing of the moment before it flies on, falls, or waits
     if (_s.restores != null) { _s.aim = null; endAct(ctx.pw); _s.wait.clear(); }
+    if (_s.restores != null) resetTechniqueFx();   // TECH-FX: and no spring of the moment before it still moving the view
     _s.restores = loads;
   }
   _s.say = ctx.say ?? _s.say;
@@ -466,6 +492,7 @@ function execute(hand, ctx, target) {
     if (!ctx.startSwing?.(t.strike)) { pw.techniqueBlow = null; return; }
     pay(hand, ctx);
     _s.act = { kind: 'swing', hand, blow, pw, t: 0 };
+    cue(hand, 'release', ctx);   // TECH-FX
     return;
   }
   if (t.mech === 'rain' || t.mech === 'pierce') {
@@ -473,6 +500,7 @@ function execute(hand, ctx, target) {
     if (!ctx.startSwing?.('StrikeDown')) return;
     pay(hand, ctx);
     _s.act = { kind: 'shot', hand, target, pw, t: 0, loosed: false, weapon: pw.weapon };
+    cue(hand, 'release', ctx);   // TECH-FX
     return;
   }
   // a leap or a dash: the body flies first, and the strike is started to land with it
@@ -484,7 +512,9 @@ function execute(hand, ctx, target) {
   if (!m.techniqueLaunch?.(fl.dir, fl.along, fl.up)) { say(CANNOT_LEAP_TEXT); return; }
   pay(hand, ctx);
   const lane = t.aim === 'lane' && target.lane ? { from: target.lane.from, dir: target.lane.dir, len: target.lane.len, halfW: target.lane.halfW } : null;
-  _s.act = { kind: 'flight', hand, target, pw, t: 0, time: fl.time, struck: false, lane, foe: target.foe ?? null };
+  // TECH-FX: `from` - where the leap or the dash began (a Lunge's trail runs from it)
+  _s.act = { kind: 'flight', hand, target, pw, t: 0, time: fl.time, struck: false, lane, foe: target.foe ?? null, from: [from[0], from[1], from[2]] };
+  cue(hand, 'release', ctx);   // TECH-FX
 }
 
 /** The flight, the swing, the shot and the fall, a frame on. */
@@ -499,6 +529,9 @@ function stepAct(dt, ctx) {
   if (a.kind === 'swing') {
     // the blow follows the feet to its hit frame (a leap's landing, a step in the swing), then waits for the machine
     if (a.blow && !a.blow.lane && ctx.cam?.feet) { a.blow.feet = [...ctx.cam.feet]; if (a.blow.arc !== 'all' && !a.blow.target) a.blow.yaw = ctx.cam.yaw ?? a.blow.yaw; }
+    // TECH-FX: the hit frame's moment - the machine's own schedule for this strike, asked once (a leap's lands with the body)
+    if (a.hitAt == null) a.hitAt = strikeHitAt(pw, a.hand.tech.strike, dt);
+    if (!a.hitCued && a.t >= a.hitAt) { a.hitCued = true; cue(a.hand, 'hit', ctx, { from: a.from }); }
     if ((a.t > 0 && pw.machine?.state === 'Idle') || a.t > SWING_GIVE_UP_S) endAct(pw);
     return;
   }
@@ -509,6 +542,9 @@ function stepAct(dt, ctx) {
     return;
   }
   if (a.kind === 'rain') {
+    // TECH-FX: each shaft's landing, and the circle closing with the last (before the act can end)
+    while (a.lands && a.li < a.lands.length && (a.lands[a.li].t <= a.t || a.t >= a.until)) { cue(a.hand, 'shaft', ctx, { at: a.lands[a.li].at }); a.li++; }
+    if (a.lands && a.li === a.lands.length && !a.closed) { a.closed = true; cue(a.hand, 'close', ctx, { at: a.point, r: a.hand.tech.radius }); }
     while (a.queue.length && a.queue[0].at <= a.t) {
       const q = a.queue.shift();
       ctx.door?.fireArrow?.(q.from, q.dir, { sky: true, weapon: a.weapon, technique: { id: a.hand.id, mult: a.mult, pierce: 1 } });   // AUDIT TECH1: the bow that loosed it, whatever is in hand now
@@ -532,7 +568,8 @@ function stepAct(dt, ctx) {
       const blow = swingBlow(a.hand.id, a.hand.value, ctx.cam, a.lane ? { lane: a.lane, arc: 'all', reach: a.lane.len }
         : a.hand.tech.mech === 'dash' && a.foe ? { target: a.foe } : {});
       pw.techniqueBlow = blow;
-      if (ctx.startSwing?.(a.hand.tech.strike)) _s.act = { kind: 'swing', hand: a.hand, blow, pw, t: 0 };
+      // TECH-FX: the landing's strike knows where the body left (`from` - a Lunge's trail runs from it)
+      if (ctx.startSwing?.(a.hand.tech.strike)) _s.act = { kind: 'swing', hand: a.hand, blow, pw, t: 0, from: a.from };
       else { pw.techniqueBlow = null; _s.act = null; }
     }
   }
@@ -574,6 +611,7 @@ function loose(a, ctx) {
     const look = lookOf(ctx.cam);
     ctx.door?.fireArrow?.(ctx.cam.pos, look, { sky: false, weapon, technique: { id: hand.id, mult, pierce: t.through }, speedScale: t.speed });
     ctx.noteShot?.(weapon);
+    cue(hand, 'loose', ctx, { len: a.target?.lane?.len ?? t.length });   // TECH-FX: the shot's kick, its flare and its tracer
     _s.act = null;
     return;
   }
@@ -582,6 +620,7 @@ function loose(a, ctx) {
   for (; n < t.arrows; n++) { if (!spendAmmoFor(items, weapon)) break; tallySwingSkills(ctx.entity, weapon); }
   if (!n || !a.target?.point) { _s.act = null; return; }
   ctx.noteShot?.(weapon);
+  cue(hand, 'loose', ctx);   // TECH-FX: the bow's flare
   const c = a.target.point, feet = ctx.cam.feet ?? c;
   // the height they fall from: the sky outdoors, under the ceiling indoors
   let h = t.height;
@@ -598,6 +637,9 @@ function loose(a, ctx) {
     return { at: t.delay + (n > 1 ? (t.spread * i) / (n - 1) : 0), from, dir: [d[0] / l, d[1] / l, d[2] / l], to: p };
   });
   _s.act = { kind: 'rain', hand, point: c, t: 0, queue, mult, until: t.delay + t.spread + h / 25 + 0.2, weapon };
+  // TECH-FX: when each shaft meets the ground it was aimed at - its loose plus its flight (TECH_ARROW_MPS), in order
+  _s.act.lands = queue.map((q) => ({ t: q.at + Math.hypot(q.to[0] - q.from[0], q.to[1] - q.from[1], q.to[2] - q.from[2]) / TECH_ARROW_MPS, at: q.to })).sort((x, y) => x.t - y.t);
+  _s.act.li = 0;
 }
 
 // ── what the screen shows ──────────────────────────────────────────
@@ -609,7 +651,10 @@ const mark = (kind, origin, yaw, sizes, t, flash, ok = true) => ({
 /** THE PLAYER'S MARKS on the ground now: the aim while the key is held (a disc where a Volley falls or a leap lands, the
  *  foe a Shadowstep goes behind, the lane a shot flies or a dash runs - red where it cannot be reached), the Volley's disc
  *  while it falls, a ring about the feet through a swing that strikes all round. */
+/** TECH-FX: the list a frame with nothing to show answers - one, frozen, so a frame at rest makes nothing. */
+const NONE = Object.freeze([]);
 export function techniqueMarks(now = 0) {
+  if (!_s.aim && !_s.act) return NONE;   // TECH-FX: no aim and no act - no mark, and no new list a frame
   const out = [];
   const pulse = 0.55 + 0.25 * Math.sin(now * 6);
   const a = _s.aim;
@@ -632,7 +677,7 @@ export const techniqueMarksNow = (now = undefined) => techniqueMarks(now ?? (typ
  *  recovers - or its key while ready. [] with none in hand, or with the ladder off. */
 export function techniqueHudChips(entity, pw, keyName = '') {
   const hand = techniqueInHand(entity, pw);
-  if (!hand || !lootRarityOn()) return [];
+  if (!hand || !lootRarityOn()) return NONE;   // TECH-FX: no technique in hand - the frozen empty list, never a new one a frame
   const left = techniqueWait(hand.id);
   return [{ key: 'technique', set: 'technique', name: techniqueName(hand), text: left > 0 ? `${Math.ceil(left)}s` : (keyName || 'ready'), state: left > 0 ? 'recovering' : 'active' }];
 }
@@ -657,4 +702,4 @@ export const techniqueFlying = () => _s.act?.kind === 'flight';
 /** What is in flight (tests, probes): the aim, the act's kind, the cooldowns. */
 export const techniqueState = () => ({ aiming: !!_s.aim, aim: _s.aim?.target ?? null, act: _s.act?.kind ?? null, wait: new Map(_s.wait) });
 /** Tests only: everything fresh. */
-export function _resetTechniquesForTests() { _s = fresh(); }
+export function _resetTechniquesForTests() { _s = fresh(); resetTechniqueFx(); }
