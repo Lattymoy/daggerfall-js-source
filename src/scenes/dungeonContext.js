@@ -244,7 +244,7 @@ import { collectDungeonEnemies, expandEliteEnemies, enemyHierarchyOrder } from '
 import { isOnlinePage } from '../systems/onlineLane.js';   // ELITE FOES: online play only
 import { wildHallFoes } from '../systems/wildDungeons.js';   // PVPDUNGEONS: a hall's high tiers
 import { isWildRegion, applyWildFoe, wildLootOpts, wildPileMore, wildRingAt, wildMask, WILD_RINGS } from '../systems/wildZone.js';   // WILD1: the open zone's dungeons (WILD2: by their ring)
-import { elitesAllowed, pickDungeonElites, promoteEliteFoe, grantEliteLoot, eliteGlow, setBatchEliteGlow, eliteSize, isEliteCorpse, markEliteCorpseBatch, eliteCorpseSize } from '../systems/eliteFoes.js';   // ELITE FOES: 3-4 champions in an Elite Dungeon
+import { elitesAllowed, pickDungeonElites, promoteEliteFoe, grantEliteLoot, eliteGlow, setBatchEliteGlow, eliteSize, isEliteCorpse, markEliteCorpseBatch, eliteCorpseSize, ELITE_FOE_SIZE } from '../systems/eliteFoes.js';   // ELITE FOES: 3-4 champions in an Elite Dungeon
 import { ELITE_FOE_MULTIPLIER, ELITE_HEALTH_SCALE, ELITE_DAMAGE_SCALE, ELITE_LOOT_DROP_MULT, ELITE_LOOT_QUALITY_MULT } from '../world/spawnedDungeons.js';   // ELITE: an elite spawn's foe count and strength
 import { superFoeLevel, scaleSuperFoe, SUPER_ELITE_FOES, SUPER_LOOT_OPTS, SUPER_LOOT_DROP_MULT, SUPER_LOOT_QUALITY_MULT, sdEndMarks, sdRiftPlace, sdReturnPlace, sdLandingPlace } from '../world/sdDungeon.js';   // SD4a: a Super dungeon's difficulty; SD4b: its end's place
 import { dungeonEndOf } from '../world/dungeonEnd.js';   // SD4b: RVN7d's lair law, lifted - the lair's stand and a Super dungeon's end read one law
@@ -7820,7 +7820,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // MWNPC5b: a class foe is offered to its body, dressed as its billboard is - concealed, flashing, its tells; the
         // billboard draws until the lane says the body stands (below), and casts its shadow either way
         f.batch.castOnly = false;
-        if (npcLane && isBodyFoe(f)) { npcLane.stand('foe', foeActor(f), f.batch.conceal ?? null, f.batch.hitFlash || 0, foeFx(f)); _npcStood.push(f); }
+        if (npcLane && isBodyFoe(f)) { npcLane.stand('foe', foeActor(f, foeId(f), { scale: szE }), f.batch.conceal ?? null, f.batch.hitFlash || 0, foeFx(f)); _npcStood.push(f); }   // AUDIT MW-NPC D3: the size its sprite is
         _mobileBatches.push(f.batch);
         continue;
       }
@@ -7849,7 +7849,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (f.corpseBatch) f.corpseBatch.castOnly = false;
       // the body from the kill (f.corpse, raised at the death - the flat is minted after its texture warms), until the
       // corpse is freed
-      if (npcLane && f.dead && f.corpse && isBodyFoe(f) && f.ai) { npcLane.stand('foe', foeActor(f), null, 0, foeFx(f, f.corpseBatch)); _npcStood.push(f); }
+      if (npcLane && f.dead && f.corpse && isBodyFoe(f) && f.ai) { npcLane.stand('foe', foeActor(f, foeId(f), { scale: isEliteCorpse(f.entity) ? ELITE_FOE_SIZE : 1 }), null, 0, foeFx(f, f.corpseBatch)); _npcStood.push(f); }   // an elite's body as large as its corpse
     }
     if (npcLane) {
       npcLane.end(dt, eye);
@@ -8626,6 +8626,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  townTalk to draw a second time - the popup column stood too.
      *  The branch says it now, in one call that owns both. */
     hideHudText: () => hideHudTextSurfaces(hudText),
+    /** AUDIT MW-NPC C6: a frame that draws the flats but no foe (a window up: the host returns before drawFoes, the
+     *  only place a body is drawn) shows every corpse flat - none left cast-only by the last frame's mark (a dead
+     *  person under an open window was drawn nowhere). drawFoes marks them anew. */
+    showBodyFlats: () => { for (const f of foes) if (f.corpseBatch) f.corpseBatch.castOnly = false; },
     hudSay: (t, delayInSeconds = undefined) => hudText.add(t, delayInSeconds),   // R1: the host's one-line channel (the F1-F4 mode line)   // AT2: AddHUDText's delay arg rides through, as townTalk.say's does - Ambient Text sets it per line (textDisplayTime)
     hudBox: (rows) => pushDungeonWindow(new ActionTextBox(rows)),   // AUDIT 63 F33: DaggerfallUI.MessageBox, for the enemy arm's success boxes
     randomText: (id) => textRsc?.randomTextById(id, Math.random) ?? '',   // AUDIT 63 F33: TextProvider.GetRandomText (:250-269) - the 8999 pool

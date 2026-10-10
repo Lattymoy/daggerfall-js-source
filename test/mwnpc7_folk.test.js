@@ -126,7 +126,9 @@ test('MWNPC7d THE POPULATION HOSTS, enumerated and by source: every host that wa
   for (const f of readdirSync(new URL('../src/scenes', import.meta.url))) if (f.endsWith('.js') && /population\.update\(/.test(rd(`src/scenes/${f}`))) hosts.push(`src/scenes/${f}`);
   assert.deepEqual(hosts.sort(), ['src/scenes/exterior.js', 'src/scenes/world.js'], 'a new host walking a population is named here');
   const sites = {
-    'src/scenes/world.js': ['const _folkOn = folkStreet.frame();', 'if (_folkOn) folkStreet.offer(folkActor(person, batch.origin, p.population.race), batch);', 'folkStreet.draw(canvas, proj, view, mwv.eye, townTalk.overlayActive ? 0 : dt);', 'if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, bbUp);', 'folkStreet.drawVeiled();'],
+    // PIN MOVED (AUDIT MW-NPC C4): world.js's walker dressed as a living resident stands as that resident (rosterBodies.js
+    // residentWalkerActor); exterior.js walks no living town
+    'src/scenes/world.js': ['const _folkOn = folkStreet.frame();', 'if (_folkOn) folkStreet.offer(person.living?.res ? residentWalkerActor(person, batch.origin) : folkActor(person, batch.origin, p.population.race), batch);', 'folkStreet.draw(canvas, proj, view, mwv.eye, townTalk.overlayActive ? 0 : dt);', 'if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, bbUp);', 'folkStreet.drawVeiled();'],
     'src/scenes/exterior.js': ['const _folkOn = !!population && folkStreet.frame();', 'if (_folkOn) folkStreet.offer(folkActor(person, batch.origin, population.race), batch);', 'folkStreet.draw(canvas, proj, view, eye, popDt);', 'if (personBatches.length) renderer.drawBillboards(personBatches, camRight, UP_Y);', 'folkStreet.drawVeiled();'],
   };
   for (const [file, [frame, offer, draw, flats, veiled]] of Object.entries(sites)) {

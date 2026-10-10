@@ -103,8 +103,8 @@
  {
   "name": "MWNPCMERGE-clock-morph-uncounted",
   "file": "src/formats/mwFirstPerson.js",
-  "old": "      posePartBatch(p.clip.nif, p.clip.batch, value, p.source, p.sourceNormals, frameTime);\n      p.sourceGen = (p.sourceGen | 0) + 1;\n",
-  "new": "      posePartBatch(p.clip.nif, p.clip.batch, value, p.source, p.sourceNormals, frameTime);\n",
+  "old": "      posePartBatch(p.clip.nif, p.clip.batch, t, p.source, p.sourceNormals);\n      p._clockAt = t;\n      p.sourceGen = (p.sourceGen | 0) + 1;\n",
+  "new": "      posePartBatch(p.clip.nif, p.clip.batch, t, p.source, p.sourceNormals);\n      p._clockAt = t;\n",
   "tests": [
    "test/mwnpc_mainmerge.test.js"
   ]

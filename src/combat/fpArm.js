@@ -927,6 +927,19 @@ export function releaseCharacterTexture(renderer, tex) {
   return true;
 }
 
+/**
+ * AUDIT MW-NPC D6: THE MASTERS IN LOAD ORDER - Morrowind.esm, Tribunal.esm, Bloodmoon.esm, then any other (a mod, after
+ * the masters it names), each run of them as stored. The store answers its keys alphabetically (Bloodmoon, Morrowind,
+ * Tribunal), and both record walks below let the last record of an id win "as the engine's load order does" - so an
+ * expansion's record lost to Morrowind's own. dataSource.js ranks the .bsa files by the same three names, the other way
+ * round: there the first archive that has a path answers it.
+ * @param {string[]} names
+ */
+export function esmLoadOrder(names) {
+  const rank = (n) => { const l = n.toLowerCase(); return l.startsWith('morrowind') ? 0 : l.startsWith('tribunal') ? 1 : l.startsWith('bloodmoon') ? 2 : 3; };
+  return names.map((n, i) => [n, i]).sort((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1]).map(([n]) => n);
+}
+
 export const NIF_COPY_CAP = 384;
 const NIF_COPIES = new WeakMap();   // archive -> Map(path -> bytes), insertion-ordered: the oldest first
 export function nifBytes(arc, path) {
@@ -2030,7 +2043,7 @@ async function buildCreatureBody({ creature, deps = null }) {
     const d = deps || await import('../scenes/dataSource.js');
     const archives = await d.loadMorrowindArchives();
     if (!archives.length) return { ok: false, stage: 'data', error: 'no Morrowind .bsa attached' };
-    const esmNames = (await d.storedMorrowindNames()).filter((n) => /\.esm$/i.test(n));
+    const esmNames = esmLoadOrder((await d.storedMorrowindNames()).filter((n) => /\.esm$/i.test(n)));   // AUDIT MW-NPC D6
     if (!esmNames.length) return { ok: false, stage: 'data', error: 'no Morrowind .esm attached - the creature records live there' };
     const gen = adoptMemoGeneration(d.morrowindDataGeneration);
     const found = new Map();
@@ -2156,8 +2169,8 @@ export async function buildFpArm({
     //
     // Reading all of them is also what the engine does - later masters
     // add to and override earlier ones - so this is the load order
-    // rather than a workaround for it.
-    const esmNames = (await d.storedMorrowindNames()).filter((n) => /\.esm$/i.test(n));
+    // rather than a workaround for it. AUDIT MW-NPC D6: in that order - the store answers alphabetically.
+    const esmNames = esmLoadOrder((await d.storedMorrowindNames()).filter((n) => /\.esm$/i.test(n)));
     if (!esmNames.length) {
       return { ok: false, stage: 'data', error: 'no Morrowind .esm attached - the body records live there, not in the .bsa' };
     }

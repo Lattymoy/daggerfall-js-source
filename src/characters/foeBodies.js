@@ -36,15 +36,19 @@ function mix(h) {
   h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
   return (h ^ (h >>> 16)) >>> 0;
 }
-/** The foe's seed: its species and where its layout stood it (`marker`, the dungeon's; the encounter's spawn point
- *  otherwise) - facts every machine in the room shares, so a foe is the same person on each. A foe with neither takes
- *  its own sequence number (a watchman his pool's id). */
+/** The foe's seed: its species and where its layout stood it (`marker`, the dungeon's), else its number on the wire
+ *  (`seq` - the encounter pool's, its owner's and every puppet's of it alike) - facts every machine in the room shares,
+ *  so a foe is the same person on each; a foe with neither takes its own id. AUDIT MW-NPC C5: a watchman is numbered
+ *  the first time he rides (exteriorFoes.js, WATCH1) - his seed follows the number once he has one, so the man his
+ *  owner draws is the man his puppet is (it was memoised off his local id first, and every peer drew another). */
 export function foeSeed(f) {
-  if (f._mwSeed != null) return f._mwSeed;
-  const at = f.marker ?? f.spawnAt ?? null;
+  const n = f.marker ? null : (f.seq ?? null);
+  if (f._mwSeed != null && f._mwSeedOf === n) return f._mwSeed;
+  const at = f.marker ?? null;
   let h = mix((f.mobileType | 0) + 0x9e3779b9);
   if (at) for (const v of [at[0], at[2]]) h = mix(h ^ (Math.round((v || 0) * 10) | 0));
-  else h = mix(h ^ ((f.seq ?? f.id ?? 0) | 0));   // MWNPC6: a watchman has no layout point and rides the wire late - his own number
+  else h = mix(h ^ ((n ?? f.id ?? 0) | 0));   // MWNPC6: a watchman has no layout point and rides the wire late - his number
+  f._mwSeedOf = n;
   return (f._mwSeed = h);
 }
 const pick = (list, h) => list[h % list.length];
@@ -100,7 +104,8 @@ export function foeLook(f) {
   // no allocation) is the same look; only a change composes it again
   const slots = equipTableOf(e);
   const held = f._mwLookSlots;
-  if (f._mwLook && held && held.length === slots.length) {
+  const h = foeSeed(f);   // AUDIT MW-NPC C5: a seed that moved (a watchman's first number) is another look
+  if (f._mwLook && held && held.length === slots.length && f._mwLookSeed === h) {
     let same = true;
     for (let i = 0; i < slots.length; i++) if (slots[i] !== held[i]) { same = false; break; }
     if (same) return f._mwLook;
@@ -108,8 +113,8 @@ export function foeLook(f) {
   f._mwLookSlots = slots.slice();
   const worn = composeLook(e, { eotbSet: null }).items;
   const wornKey = worn.map((it) => `${it.equipSlot}:${it.templateIndex}:${it.material ?? ''}:${it.dye ?? ''}`).join('|');
-  if (f._mwLook && f._mwLookKey === wornKey) return f._mwLook;
-  const h = foeSeed(f);
+  if (f._mwLook && f._mwLookKey === wornKey && f._mwLookSeed === h) return f._mwLook;
+  f._mwLookSeed = h;
   const bay = bayPerson(h), faceIndex = bay.faceIndex;
   const race = ORC_MOBILES.has(f.mobileType) ? 'Orc' : bay.race;   // MWNPC12: an orc in Morrowind's Orc body
   const gender = f.gender === 'female' ? 'female' : 'male';
@@ -135,14 +140,17 @@ export const foeId = (f) => f.seq ?? (f._mwId ??= ++_ids);
  *   - THE DEATH: dead, the death's roll + 1 off its seed.
  * @param {any} f
  */
-export function foeActor(f, id = foeId(f)) {   // MWNPC6: `id` a population's own (the watch's pool id - its wire number comes late)
+export function foeActor(f, id = foeId(f), { scale = 1 } = {}) {   // MWNPC6: `id` a population's own (the watch's pool id - its wire number comes late)
   if (f._hfAt != null && f._hfAt !== f._mwHitAt) { f._mwHitAt = f._hfAt; f._mwHits = ((f._mwHits | 0) + 1) & 0xffff; }
   const swings = (f._atkA | 0) >> 1;
   return {
     id,
     look: isPersonFoe(f) ? foeLook(f) : creatureLook(f),   // MWNPC9: a creature's is its Morrowind creature; MWNPC12: an orc a person's
-    feet: f.ai.feet,
+    // AUDIT MW-NPC D1: the dead where the corpse lies - every host lays it on the floor below (C12: a flyer dies mid-air;
+    // the dungeon's corpsePos, the marker's pos outdoors, carried by a deck that moves) - never the air it died in
+    feet: f.dead ? (f.corpsePos ?? f.corpseMarker?.pos ?? f.ai.feet) : f.ai.feet,
     yaw: f.ai.yaw,
+    scale: scale > 0 ? scale : 1,   // AUDIT MW-NPC D3: drawn the size its sprite is (an elite's quarter, a last stand's tenth, the wild giant)
     moving: !!f.ai.moving,
     running: !!f.ai.moving && f.ai.giveUpTimer > 0,   // pursuing (EnemyMotor's GiveUpTimer running): a Morrowind NPC runs at its foe
     drawn: true,   // a class foe's weapon is out - Daggerfall's foes never sheathe

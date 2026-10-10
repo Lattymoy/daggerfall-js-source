@@ -170,7 +170,7 @@ import { GRAPH_ROOT, ACCUM_ROOT_NAMES } from './mwSkin.js';
 import { transferSkin, sourceSkin, fitLift, liftBatch } from './mwSkinTransfer.js';   // MW-BRIG2: a worn model skinned from the body under it; MW-BRIG3: and fitted onto it
 import { getTextKeyTime, animVelocity } from './mwAnim.js';
 import { mat33Mul } from './mwNifMesh.js';   // AUDIT 68 S11-affine-dup: the one row-major 3x3 product
-import { batchMoves, posePartBatch, nodeAffineAt } from './mwPartClock.js';   // MW-BOW1: a part's own clock
+import { batchMoves, posePartBatch, nodeAffineAt, nodeClockAt, clockFor } from './mwPartClock.js';   // MW-BOW1: a part's own clock
 import { applyClimbRig } from '../combat/climbRig.js';   // CLIMB6: the climb's pose on the rig's own bones
 
 /** The four parts allowed to fall back to a third-person mesh when the
@@ -2172,16 +2172,20 @@ export async function assembleCreature({ modelBytes, parseNif = null }) {
   }
   if (bound.missingBones.length) notes.push(`creature: its skin names no node ${bound.missingBones.map((b) => `"${b}"`).join(', ')} - those influences are skipped (rule 40)`);
   const pieces = [];
+  // AUDIT MW-NPC (MW-SMOOTH): a creature lit by its own normals, as a person's parts are - a skinned piece's posed by
+  // skinBatch, a rigid one's turned by its pre-transform once here and placed with its vertices each pose
   for (const batch of bound.skinned) {
     pieces.push({ slot: 'creature', bone: null, kind: 'skinned', mirrored: false, batch, source: null, attachRef: null,
       uvs: batch.uvs || null, colors: batch.colors || null, material: batch.material || null,
-      positions: new Float32Array(batch.positions.length), indices: batch.indices });
+      positions: new Float32Array(batch.positions.length), indices: batch.indices, normals: posedNormals(batch) });
   }
   for (const { batch, attachRef, pre } of bound.rigid) {
+    const normals = posedNormals(batch);
     pieces.push({ slot: 'creature', bone: null, kind: 'rigid', mirrored: false, tag: null, hang: null,
       batch: null, source: applyPre(batch.positions, pre), attachRef, boneOffset: null,
       uvs: batch.uvs || null, colors: batch.colors || null, material: batch.material || null, shape: batch.name || null,
-      positions: new Float32Array(batch.positions.length), indices: batch.indices });
+      positions: new Float32Array(batch.positions.length), indices: batch.indices,
+      sourceNormals: normals ? applyPreNormals(batch.normals, pre) : null, normals });
   }
   const effects = bound.effects.map(({ desc, attachRef, pre }) => ({ slot: 'creature', bone: null, mirrored: false, tag: null, hang: null,
     attachRef, boneOffset: null, pre, desc, material: desc.material }));
@@ -2668,15 +2672,23 @@ export function posePartClocks(assembly, value, { frameTime = value, slots = WEA
   let moved = 0;
   for (const p of assembly.pieces ?? []) {
     if (p.kind !== 'rigid' || !slots.has(p.slot)) continue;
+    // AUDIT MW-NPC: a part whose clock reads the time it was last posed at stands where that pose put it - an idle or a
+    // sheathed bow's clock holds still (WeaponAnimationTime answers its group's playhead, or 0), so it is neither posed
+    // again nor counted, and a GPU body re-streams nothing for it
     if (p.preClip) {
-      const pre = nodeAffineAt(p.preClip.nif, p.preClip.node, value, frameTime);
-      if (!pre) continue;
+      const t = nodeClockAt(p.preClip.nif, p.preClip.node, value, frameTime);
+      if (t === null || t === p._clockAt) continue;
+      const pre = nodeAffineAt(p.preClip.nif, p.preClip.node, t);
       writePre(p.preClip.local, pre, p.source);
       if (p.sourceNormals && p.preClip.localNormals) writePreNormals(p.preClip.localNormals, pre, p.sourceNormals);
+      p._clockAt = t;
       p.sourceGen = (p.sourceGen | 0) + 1;   // MWNPC1: the GPU stream re-streams this piece's corners (mwGpuSkin.js restreamMovedRows)
       moved++;
     } else if (p.clip && batchMoves(p.clip.nif, p.clip.batch)) {
-      posePartBatch(p.clip.nif, p.clip.batch, value, p.source, p.sourceNormals, frameTime);
+      const t = clockFor(p.clip.batch.animFlags | 0, value, frameTime);
+      if (t === p._clockAt) continue;
+      posePartBatch(p.clip.nif, p.clip.batch, t, p.source, p.sourceNormals);
+      p._clockAt = t;
       p.sourceGen = (p.sourceGen | 0) + 1;
       moved++;
     }

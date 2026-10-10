@@ -43,8 +43,14 @@ test('MWNPC6a the watch\'s own caps: the same switch\'s tiers, a third of the fo
   const m = man(3);
   assert.equal(foeActor(m, m.id).id, 3, 'the actor by the id the population names');
   const s = foeSeed(m);
+  // PIN MOVED (AUDIT MW-NPC C5): his wire number, once it arrives, is his seed - the number every puppet of him carries,
+  // so each machine draws one man (MWNPC5b's law). Kept off his local id, his owner drew one man and every peer another.
+  // It changes him once, the moment he first rides (online, a frame or two after he stands, as a rule before his body is built)
   m.seq = 41;
-  assert.equal(foeSeed(m), s, 'and his wire number arriving later changes nobody');
+  assert.notEqual(foeSeed(m), s, 'his number arrived: his seed is the one his puppets have');
+  const puppet = { id: 99, seq: 41, mobileType: GUARD_MOBILE_TYPE, entity: { isClass: true, items: [] }, ai: { feet: [5, 0, 5], yaw: 0 } };
+  assert.equal(foeSeed(m), foeSeed(puppet), 'the man his owner draws is the man a peer draws');
+  assert.equal(foeSeed(m), foeSeed(m), 'and kept');
 });
 
 test('MWNPC6b the pool: a dead watchman offered dead from the kill, under the watch\'s lane name, the corpse flat cast-only under his body after the sync; the lane gone with clearLive, the origin followed', () => {

@@ -37,11 +37,23 @@ test('MW-BOW1 x MWNPC1: a part re-posed on its own clock counts it, and the GPU 
   assert.equal(piece.sourceGen, 1, 'counted');
   posePartClocks({ pieces: [piece] }, T.release);
   assert.equal(piece.sourceGen, 2);
+  // AUDIT MW-NPC: a clock that reads the time the part was last posed at moves nothing - an idle or sheathed bow holds
+  // its group's playhead still, whatever the frame time does (the limb is not AutoPlay) - so it is neither posed nor
+  // counted, and a GPU body re-streams nothing for it
+  const held = Float32Array.from(piece.source);
+  assert.equal(posePartClocks({ pieces: [piece] }, T.release, { frameTime: 123.4 }), 0, 'the same clock: nothing moved');
+  assert.equal(piece.sourceGen, 2, 'and nothing counted');
+  piece.source.fill(7);
+  posePartClocks({ pieces: [piece] }, T.release, { frameTime: 99 });
+  assert.equal(piece.source[0], 7, 'nor posed again');
+  piece.source.set(held);
   // the arrow on the bow's ArrowBone - the clock's other branch (resolveWeaponParts' preClip) - counted the same
   const arrowLocal = flattenNif(parseNif(f('arrow.nif')))[0].positions;
   const arrow = { kind: 'rigid', slot: 'arrow', source: Float32Array.from(arrowLocal), preClip: { nif: moving, node: ARROW_FALLBACK_NODE, local: arrowLocal } };
   assert.equal(posePartClocks({ pieces: [arrow] }, T.maxAttack), 1);
   assert.equal(arrow.sourceGen, 1, 'the arrow counted');
+  assert.equal(posePartClocks({ pieces: [arrow] }, T.maxAttack, { frameTime: 5 }), 0, 'and held where its clock holds');
+  assert.equal(arrow.sourceGen, 1);
   const still = parseNif(f('bowmesh.nif'));
   const stillPiece = { kind: 'rigid', slot: 'weapon', source: Float32Array.from(flattenNif(still)[0].positions), clip: { nif: still, batch: flattenNif(still)[0] } };
   posePartClocks({ pieces: [stillPiece] }, T.maxAttack);
@@ -200,7 +212,7 @@ test('WAGONS2 x MWNPC5c: a companion drawn grown on a wagon under the Overworld 
   assert.deepEqual(seated.batch.origin, [20, 4, 30]);
   g = 1;
   pool.batches();
-  assert.deepEqual(lane.offered, [3], 'on the ground at its seat: its body');
+  assert.deepEqual(lane.offered, [seated.uid], 'on the ground at its seat: its body');
 });
 
 test('RW1 x MWNPC8b/8c: the view out through a building\'s glass draws no Morrowind body, so every flat it draws is shown - a standing person\'s never left cast-only by the street frame\'s last mark (by source: both exterior hosts\' view outs; the interiors\' host draws its exterior host\'s, and a dungeon has no glass)', () => {

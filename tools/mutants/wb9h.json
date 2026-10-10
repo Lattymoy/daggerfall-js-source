@@ -130,7 +130,7 @@
   {
     "name": "WB9h-the-swap-never-timed",
     "file": "src/net/peerBodies.js",
-    "old": "    if (victim.goneAt == null) this._swappedAt = this._now();\n",
+    "old": "    if (!unseen) this._swappedAt = this._now();\n",
     "new": "",
     "tests": [
       "test/wb9h_crowd_bodies.test.js"

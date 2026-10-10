@@ -156,6 +156,9 @@
  * @property {(batch: BillboardBatch|null) => void} [destroyBillboardBatch]
  * @property {(batch: BillboardBatch|null, centers: number[][]) => boolean} [moveBillboardBatch] BLOOD1b: rewrite a dynamic batch's centres in place - the one thing in this tree that flies
  * @property {Map<string, any>} [textures] the live texture cache, keyed `archive_record` - read to skip a re-upload
+ * @property {() => void} [beginCharacterSpriteBatch] MWNPC2: every body's picture after this in one bind of the sprite target
+ * @property {() => number} [flushCharacterSpriteBatch] MWNPC2: the batch drawn - its binds
+ * @property {boolean} [characterSpriteBatchOpen] MWNPC2: between the two (AUDIT MW-NPC A1: a batch a host holds is its own)
  */
 
 export {};

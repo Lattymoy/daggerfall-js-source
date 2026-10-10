@@ -57,8 +57,12 @@ export const NPC_FRAME_TIERS = Object.freeze({
 /** MWNPC11: a standing body keeps its place this much past the frame's cut - the cut moves as the crowd does, and a
  *  body on its edge must not stand and fall frame by frame (each fall and stand a skin). */
 export const NPC_BUDGET_HYSTERESIS = 1.15;
-/** MWNPC11: a lane's report older than this (ms) is a lane no longer drawn - it takes no share of the frame. */
-export const NPC_BUDGET_STALE_MS = 250;
+/** MWNPC11 (AUDIT MW-NPC B4): a lane's report is the frame's while it is of this ROUND of reports or the last - a round
+ *  ends when a lane reports again, as each lane does once a frame - so a lane no longer drawn takes no share once the
+ *  others have reported twice without it. Rounds, not milliseconds: a report older than 250 ms was a lane no longer
+ *  drawn, and a long frame (a hitch, a tab come back to) made every report that old - each lane then cut alone, stood
+ *  to its own cap, and queued builds for bodies the next frame would not stand. */
+export const NPC_BUDGET_ROUNDS = 1;
 
 /**
  * MWNPC11: THE FRAME BUDGET THE NPC LANES SHARE. Each lane reports, as it syncs, the squared distances of the actors it
@@ -69,25 +73,26 @@ export const NPC_BUDGET_STALE_MS = 250;
  * with a body in the cut, the rest by its share of them, so the frame's sum is the budget's (or one a lane where more
  * lanes than that stand). The lanes sync at their hosts' own points in the frame, so a report is at most a frame old.
  * No allocation a frame: a lane's distances live in its own buffer.
- * @param {{ now?: () => number }} [o]
  */
-export function createFrameBudget({ now = () => performance.now() } = {}) {
-  /** @type {Map<any, { d2: Float64Array, n: number, at: number, i: number, inCut: number }>} */
+export function createFrameBudget() {
+  /** @type {Map<any, { d2: Float64Array, n: number, round: number, i: number, inCut: number }>} */
   const lanes = new Map();
   /** @type {any[]} */
   const live = [];
   let cutD2 = Infinity;
+  let round = 0;   // AUDIT MW-NPC B4: the round of reports - a lane reporting twice in one begins the next
   const fresh = () => {
     live.length = 0;
-    const t = now();
-    for (const r of lanes.values()) if (t - r.at <= NPC_BUDGET_STALE_MS && r.n > 0) live.push(r);
+    for (const r of lanes.values()) if (r.round >= round - NPC_BUDGET_ROUNDS && r.n > 0) live.push(r);
   };
   return {
     /** This lane's candidates this frame: `d2` its own buffer, the first `n` sorted ascending. */
     report(lane, d2, n) {
       let r = lanes.get(lane);
-      if (!r) lanes.set(lane, (r = { d2, n: 0, at: 0, i: 0, inCut: 0 }));
-      r.d2 = d2; r.n = n; r.at = now();
+      if (!r) lanes.set(lane, (r = { d2, n: 0, round: -1, i: 0, inCut: 0 }));
+      if (r.round === round) round++;
+      r.d2 = d2; r.n = n; r.round = round;
+      r.inCut = 0;   // AUDIT MW-NPC B2: a lane reporting none (all past its range) takes no share - never its last cut's
     },
     /** A lane let go. */
     drop(lane) { lanes.delete(lane); },
@@ -203,10 +208,13 @@ export function createNpcBodies({ renderer, enabled = () => true, generation = (
     if (d2s.length < cap) d2s = new Float64Array(cap);
     let n = 0;
     for (const p of peers) {
-      const dx = p.shown.x - eye[0], dy = p.shown.y - eye[1], dz = p.shown.z - eye[2];
+      // AUDIT MW-NPC B2: ON THE GROUND'S PLANE, as PeerBodies measures the range the cut becomes (peerBodies.js dist2) -
+      // ranked in 3D, an eye raised above the crowd (a wall top, a dungeon's gallery, the Overworld) stood every body the
+      // flat range let in, past the budget
+      const dx = p.shown.x - eye[0], dz = p.shown.z - eye[2];
       // one that holds a body ranks as near as the hysteresis it is held to (its body falls only past range x it), so
       // the cut counts the frame's bodies exactly - the held ones among them
-      const d2 = (dx * dx + dy * dy + dz * dz) / (b.holds(p.id) ? h2 : 1);
+      const d2 = (dx * dx + dz * dz) / (b.holds(p.id) ? h2 : 1);
       if (!(d2 <= r2) || (n === cap && d2 >= d2s[n - 1])) continue;
       let j = n < cap ? n++ : n - 1;
       while (j > 0 && d2s[j - 1] > d2) { d2s[j] = d2s[j - 1]; j--; }

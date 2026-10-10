@@ -822,7 +822,7 @@ import { setHudZone } from '../ui/enhancedHud.js';
 import { setZoneEntity } from '../ui/hudActiveSpells.js';   // WILD1: the classic row's zone glyph
 import { createWedManager, wedWhyText, wedMineText } from '../net/wedSession.js';   // LEGACY7 part three: two players wed - the handshake's state machine (pure)
 import { createFamilyBodies, familyRoomSprites } from '../world/familyBodies.js';
-import { createPopulationLane } from '../characters/npcBodies.js'; import { folkActor } from '../characters/folkBodies.js';
+import { createPopulationLane } from '../characters/npcBodies.js'; import { folkActor } from '../characters/folkBodies.js'; import { residentWalkerActor } from '../characters/rosterBodies.js';
 import { personLook, personActor } from '../characters/peopleBodies.js'; import { staticNpcData } from '../characters/staticNpc.js';   // MWNPC8b: the street's standing people   // MWNPC7: the street's walkers in Morrowind bodies   // LEGACY7 part four: the line drawn in its own body, as an online peer is
 import { houseLine } from '../net/houseLaw.js'; import { houseWord } from '../systems/legacy/houseName.js';   // LEGACY7 part three: the house a proposal comes from, on its prompt; LEGACY-NAME: a seat's house said once
 import { createDuelRecords, duelUncountedText } from '../net/duelRecord.js';   // DUEL1: the Inspect card's duelling record, asked and kept
@@ -33121,7 +33121,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         const kin = person.living?.res;
         if (kin?.look && (familyStreet ??= makeFamilyBodies()).stand(kin, batch.origin, person.yaw, person.state === 'move')) continue;
         livePersonBatches.push(batch);
-        if (_folkOn) folkStreet.offer(folkActor(person, batch.origin, p.population.race), batch);   // MWNPC7: a walker offered their body - the billboard casts alone where it stands
+        if (_folkOn) folkStreet.offer(person.living?.res ? residentWalkerActor(person, batch.origin) : folkActor(person, batch.origin, p.population.race), batch);   // MWNPC7: a walker offered their body; AUDIT MW-NPC C4: a living resident as themselves - the billboard casts alone where it stands
         else batch.castOnly = false;
       }
     }

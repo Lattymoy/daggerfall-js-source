@@ -11,7 +11,7 @@
  {
   "name": "MWNPC11-stale-kept",
   "file": "src/characters/npcBodies.js",
-  "old": "if (t - r.at <= NPC_BUDGET_STALE_MS && r.n > 0) live.push(r);",
+  "old": "if (r.round >= round - NPC_BUDGET_ROUNDS && r.n > 0) live.push(r);",
   "new": "if (r.n > 0) live.push(r);",
   "tests": [
    "test/mwnpc11_budget.test.js"
@@ -38,8 +38,8 @@
  {
   "name": "MWNPC11-report-whole-buffer",
   "file": "src/characters/npcBodies.js",
-  "old": "      r.d2 = d2; r.n = n; r.at = now();",
-  "new": "      r.d2 = d2; r.n = d2.length; r.at = now();",
+  "old": "      r.d2 = d2; r.n = n; r.round = round;",
+  "new": "      r.d2 = d2; r.n = d2.length; r.round = round;",
   "tests": [
    "test/mwnpc11_budget.test.js"
   ]
@@ -110,8 +110,8 @@
  {
   "name": "MWNPC11-held-not-ranked",
   "file": "src/characters/npcBodies.js",
-  "old": "      const d2 = (dx * dx + dy * dy + dz * dz) / (b.holds(p.id) ? h2 : 1);",
-  "new": "      const d2 = dx * dx + dy * dy + dz * dz;",
+  "old": "      const d2 = (dx * dx + dz * dz) / (b.holds(p.id) ? h2 : 1);",
+  "new": "      const d2 = dx * dx + dz * dz;",
   "tests": [
    "test/mwnpc11_budget.test.js"
   ]

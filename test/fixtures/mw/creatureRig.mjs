@@ -26,8 +26,9 @@ const I3 = [1, 0, 0, 0, 1, 0, 0, 0, 1];
 export const QUARTER_Z = [0, -1, 0, 1, 0, 0, 0, 0, 1];
 const tri = (o) => [o[0], o[1], o[2], o[0] + 1, o[1], o[2], o[0], o[1] + 1, o[2]];
 
-/** The model. `bones` names the nodes (a test renames one to miss it); the triangles are each shape's own. */
-export function creatureModel({ withTriBip = true } = {}) {
+/** The model. `bones` names the nodes (a test renames one to miss it); the triangles are each shape's own. `normals`
+ *  (AUDIT MW-NPC, MW-SMOOTH): the body and the head author their normals, as a retail creature's shapes do. */
+export function creatureModel({ withTriBip = true, normals = false } = {}) {
   const r = [];
   const add = (rec) => { r.push(rec); return r.length - 1; };
   const root = add({ type: 'NiNode', name: 'Creature', children: [] });
@@ -40,13 +41,13 @@ export function creatureModel({ withTriBip = true } = {}) {
   const spine = add({ type: 'NiNode', name: 'Spine', translation: [0, 0, 5], children: [] });
   r[bip].children.push(spine);
   // Tri Body: skinned, its vertices in the file root's space (Spine's at z 15, Bip01's at z 10)
-  const bodyData = add({ type: 'NiTriShapeData', positions: [0, 0, 15, 1, 0, 15, 0, 0, 10], normals: null, uvs: null, indices: [0, 1, 2] });
+  const bodyData = add({ type: 'NiTriShapeData', positions: [0, 0, 15, 1, 0, 15, 0, 0, 10], normals: normals ? [0, -1, 0, 0.6, -0.8, 0, 0, -0.8, -0.6] : null, uvs: null, indices: [0, 1, 2] });
   const body = add({ type: 'NiTriShape', name: 'Tri Body', data: bodyData, skin: -1 });
   r[spine].children.push(body);
   const head = add({ type: 'NiNode', name: 'Head', translation: [4, 0, 2], rotation: QUARTER_Z, children: [] });
   const tail = add({ type: 'NiNode', name: 'Tail', translation: [-4, 0, 0], children: [] });
   r[spine].children.push(head, tail);
-  const hd = add({ type: 'NiTriShapeData', positions: tri([0, 0, 0]), normals: null, uvs: null, indices: [0, 1, 2] });
+  const hd = add({ type: 'NiTriShapeData', positions: tri([0, 0, 0]), normals: normals ? [0, 0, 1, 0.6, 0, 0.8, 0, 0.6, 0.8] : null, uvs: null, indices: [0, 1, 2] });
   r[head].children.push(add({ type: 'NiTriShape', name: 'Tri Head', translation: [1, 0, 0], data: hd }));
   const td = add({ type: 'NiTriShapeData', positions: tri([0, 0, 0]), normals: null, uvs: null, indices: [0, 1, 2] });
   r[tail].children.push(add({ type: 'NiTriShape', name: 'Tri Tail', data: td }));

@@ -69,35 +69,37 @@ test('MWNPC10a-2 the court offers him and his host their creatures, each on the 
     wantBodies: () => true, makeBodies: () => (lane = recordingLane()),
   });
   const frame = (t, st) => { if (st) link.st = st; clock.t = t; c.frame(); };
-  // an Imp (matched: scamp) and a Flesh Atronach (a sapper under venom - no match)
-  const st = stOf({ md: ['venom', 'legion', 'echoing'], lg: { ads: [ad({ i: 1, x: 20, z: 6 }), ad({ i: 2, k: HOST.sapper, x: -20, z: 6 })], gone: [] } });
+  // PIN MOVED (AUDIT MW-NPC D4): a Daedroth (a bearer under venom - matched), a Flesh Atronach (a sapper under venom - no
+  // match) and an Imp (a harrier - no match now: Daggerfall's imp flies, Morrowind's scamp walks)
+  const st = stOf({ md: ['venom', 'legion', 'echoing'], lg: { ads: [ad({ i: 1, k: HOST.bearer, x: 20, z: 6 }), ad({ i: 2, k: HOST.sapper, x: -20, z: 6 }), ad({ i: 3, x: 0, z: 12 })], gone: [] } });
   frame(1000, st);
   await new Promise((r) => setTimeout(r, 0));
   frame(1016);
   c.drawBodies({}, null, null, [0, 0, 0], 1 / 60);
   const ids = lane.offered.map((o) => o.id);
-  assert.ok(ids.includes('boss') && ids.includes('host:1'), `him and the Imp (${ids})`);
+  assert.ok(ids.includes('boss') && ids.includes('host:1'), `him and the Daedroth (${ids})`);
   assert.ok(!ids.includes('host:2'), 'the Flesh Atronach keeps its sprite (a declared miss)');
+  assert.ok(!ids.includes('host:3'), 'and the Imp, a flyer (a declared miss)');
   const boss = lane.offered.find((o) => o.id === 'boss'), imp = lane.offered.find((o) => o.id === 'host:1');
   assert.deepEqual(boss.look, { creature: ['dremora_lord'] }, 'the Daedra Lord, as the match has him');
-  assert.deepEqual(imp.look, { creature: ['scamp'] });
+  assert.deepEqual(imp.look, { creature: ['daedroth'] });
   assert.ok(Math.abs(boss.scale - BOSS_LOOKS.ruhn.scale * profileOf(st).size) < 1e-9 && boss.scale >= 3, `three times a man, as his sprite is (${boss.scale})`);
   assert.equal(imp.scale, 1);
   const bossBatch = c.batches().find((b) => b.origin === boss.feet);
   assert.ok(bossBatch, 'his feet are his billboard\'s');
-  // his body standing: his billboard casts alone; the Imp's not standing draws
+  // his body standing: his billboard casts alone; the Daedroth's not standing draws
   lane.standing.add('gate:boss');
   const impBatch = c.batches().find((b) => b.origin === imp.feet);
   c.drawBodies({}, null, null, [0, 0, 0], 1 / 60);
   assert.equal(bossBatch.castOnly, true);
   assert.equal(impBatch.castOnly, false);
-  // a blow of the relay's on the Imp: a swing; mine on it: a recoil
-  frame(1100, stOf({ md: ['venom', 'legion', 'echoing'], lg: { ads: [ad({ i: 1, x: 20, z: 6, atk: { at: 1900, x: 0, z: 5 } }), ad({ i: 2, k: HOST.sapper, x: -20, z: 6 })], gone: [] } }));
+  // a blow of the relay's on the Daedroth: a swing; mine on it: a recoil
+  frame(1100, stOf({ md: ['venom', 'legion', 'echoing'], lg: { ads: [ad({ i: 1, k: HOST.bearer, x: 20, z: 6, atk: { at: 1900, x: 0, z: 5 } }), ad({ i: 2, k: HOST.sapper, x: -20, z: 6 })], gone: [] } }));
   c.hostHit({ i: 1, d: 10, r: 0 }, 1100);
   c.drawBodies({}, null, null, [0, 0, 0], 1 / 60);
   const imp2 = lane.offered.find((o) => o.id === 'host:1');
   assert.ok(imp2.swings >= 1 && imp2.hits >= 1, `swung and struck (${imp2.swings}, ${imp2.hits})`);
-  // the Imp falls: offered dead while it falls, then gone
+  // the Daedroth falls: offered dead while it falls, then gone
   frame(2000, stOf({ md: ['venom', 'legion', 'echoing'], lg: { ads: [ad({ i: 2, k: HOST.sapper, x: -20, z: 6 })], gone: [{ i: 1, k: 0, x: 20, z: 6, w: 0, n: 'Ann', at: 1990 }] } }));
   c.drawBodies({}, null, null, [0, 0, 0], 1 / 60);
   assert.ok(lane.offered.find((o) => o.id === 'host:1')?.dead > 0, 'falling: dead');

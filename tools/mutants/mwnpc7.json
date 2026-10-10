@@ -164,8 +164,8 @@
  {
   "name": "MWNPC7-world-unoffered",
   "file": "src/scenes/world.js",
-  "old": "        if (_folkOn) folkStreet.offer(folkActor(person, batch.origin, p.population.race), batch);",
-  "new": "        if (false) folkStreet.offer(folkActor(person, batch.origin, p.population.race), batch);",
+  "old": "        if (_folkOn) folkStreet.offer(person.living?.res ? residentWalkerActor(",
+  "new": "        if (false) folkStreet.offer(person.living?.res ? residentWalkerActor(",
   "tests": [
    "test/mwnpc7_folk.test.js"
   ]

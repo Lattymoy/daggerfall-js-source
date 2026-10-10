@@ -83,7 +83,7 @@
  {
   "name": "MWNPC5b-look-not-kept",
   "file": "src/characters/foeBodies.js",
-  "old": "  if (f._mwLook && f._mwLookKey === wornKey) return f._mwLook;",
+  "old": "  if (f._mwLook && f._mwLookKey === wornKey && f._mwLookSeed === h) return f._mwLook;",
   "new": "  if (false) return f._mwLook;",
   "tests": [
    "test/mwnpc5_foes.test.js"
@@ -92,8 +92,8 @@
  {
   "name": "MWNPC5b-look-kept-past-change",
   "file": "src/characters/foeBodies.js",
-  "old": "  if (f._mwLook && f._mwLookKey === wornKey) return f._mwLook;",
-  "new": "  if (f._mwLook) return f._mwLook;",
+  "old": "  if (f._mwLook && f._mwLookKey === wornKey && f._mwLookSeed === h) return f._mwLook;",
+  "new": "  if (f._mwLook && f._mwLookSeed === h) return f._mwLook;",
   "tests": [
    "test/mwnpc5_foes.test.js"
   ]
@@ -236,7 +236,7 @@
  {
   "name": "MWNPC5b-host-not-offered",
   "file": "src/scenes/dungeonContext.js",
-  "old": "        if (npcLane && isBodyFoe(f)) { npcLane.stand('foe', foeActor(f), f.batch.conceal ?? null, f.batch.hitFlash || 0, foeFx(f)); _npcStood.push(f); }",
+  "old": "        if (npcLane && isBodyFoe(f)) { npcLane.stand('foe', foeActor(f, foeId(f), { scale: szE }), f.batch.conceal ?? null, f.batch.hitFlash || 0, foeFx(f)); _npcStood.push(f); }",
   "new": "        if (npcLane && isBodyFoe(f)) _npcStood.push(f);",
   "tests": [
    "test/mwnpc5_dungeon.test.js"

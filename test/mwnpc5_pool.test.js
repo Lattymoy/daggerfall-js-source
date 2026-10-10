@@ -56,12 +56,15 @@ test('MWNPC5c the pool offers its class foes dressed, the dead from the kill, sy
   const out = pool.batches();
   assert.equal(made, 1, 'the lane made the first frame it is wanted');
   assert.ok(out.includes(knight.batch) && out.includes(rat.batch), 'every live billboard still in the pass (it casts either way)');
-  assert.deepEqual(lane.offered.map((o) => o.actor.id), [7, 9], 'the class foe and the dead class foe - never the unmatched creature');
+  // PIN MOVED (AUDIT MW-NPC B1): a body's id is the pool's own entry id (idOf, `uid`) - never `seq`, which a puppet
+  // shares with its owner's foes
+  assert.ok(knight.uid != null && fallen.uid != null && knight.uid !== fallen.uid);
+  assert.deepEqual(lane.offered.map((o) => o.actor.id), [knight.uid, fallen.uid], 'the class foe and the dead class foe - never the unmatched creature');
   assert.ok(lane.offered[0].flash > 0.5 && lane.offered[0].flash === knight.batch.hitFlash, `dressed as its billboard is (${lane.offered[0].flash})`);
   assert.equal(lane.offered[0].actor.hits, 1, 'and the hit is a recoil');
   assert.equal(lane.offered[1].actor.dead > 0, true, 'the dead offered dead');
   assert.equal(knight.batch.castOnly, false, 'drawn until the lane says otherwise');
-  lane.standing.add('foe:7'); lane.standing.add('foe:9');
+  lane.standing.add(`foe:${knight.uid}`); lane.standing.add(`foe:${fallen.uid}`);
   pool.drawBodies({}, null, null, [1, 2, 3], 1 / 60);
   assert.deepEqual(lane.calls.slice(1), [['end', 1 / 60, [1, 2, 3]], ['draw', [1, 2, 3]]], 'synced, then drawn with the host\'s eye');
   assert.equal(knight.batch.castOnly, true, 'its body stands: the billboard casts alone');
@@ -82,7 +85,7 @@ test('MWNPC5c the pool offers its class foes dressed, the dead from the kill, sy
   pool.offsetAll([10, 0, -5]);
   assert.deepEqual(lane.offsets, [[10, 0, -5]], 'the bodies follow the origin');
   // not wanted: the lane let go, nothing offered, every billboard drawn
-  lane.standing.add('foe:7');
+  lane.standing.add(`foe:${knight.uid}`);
   pool.batches(); pool.drawBodies({}, null, null, [0, 0, 0], 1 / 60);
   assert.equal(knight.batch.castOnly, true);
   want = false;

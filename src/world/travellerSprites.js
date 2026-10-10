@@ -191,6 +191,10 @@ export function createTravellerSprites({ renderer, getTexture, uploadRecordFrame
         bodiesLane.offer(rosterActor(b, { id: b.id, look: b.look, feet: b.batch.origin, yaw: b.yaw, moving: b.moving, swingKey: b.swings || null,
           dead: b.flat && !b.talk ? b.roll : 0, drawn: !!b.unit }), b.batch);
       }
+    } else {
+      // AUDIT MW-NPC C3: under the Overworld no body stands, so every sprite draws - a batch the last ground frame left
+      // cast-only (its body stood) is a party member drawn nowhere, its shadow alone
+      for (const b of shown) if (b.batch) b.batch.castOnly = false;
     }
     bodiesLane.draw(canvas, proj, view, eye, dt);
   }

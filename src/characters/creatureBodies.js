@@ -15,7 +15,9 @@ import { BaseImageFile } from '../formats/baseImageFile.js';   // MWNPC13: the s
  *  @type {Readonly<Record<number, { creature?: string[], miss?: string, veil?: boolean }>>} */
 export const CREATURE_MATCH = Object.freeze({
   [M.Rat]: { creature: ['rat'] },
-  [M.Imp]: { creature: ['scamp'] },                       // the small winged daedra of the Bay is Morrowind's scamp
+  // AUDIT MW-NPC D4: Daggerfall's imp FLIES (its behaviour, its hover at the gate) and Morrowind's scamp walks - stood,
+  // it paddled its walk cycle in the air; a flyer with no Morrowind flyer keeps its sprite, as the bat and the harpy do
+  [M.Imp]: { miss: 'a flyer - Morrowind\'s scamp walks, and no imp flies there' },
   [M.Spriggan]: { creature: ['bm_spriggan'] },
   [M.GiantBat]: { miss: 'no bat walks Morrowind' },
   [M.GrizzlyBear]: { creature: ['bm_bear_black'] },        // Bloodmoon's grizzly
@@ -55,7 +57,7 @@ export const CREATURE_MATCH = Object.freeze({
   [M.IceAtronach]: { creature: ['atronach_frost'] },
   [M.Horse_Invalid]: { miss: 'not a foe' },
   [M.Dragonling_Alternate]: { miss: 'no dragon' },
-  [M.Dreugh]: { creature: ['dreugh'] },
+  [M.Dreugh]: { miss: 'a water creature - the swimming groups are not driven yet' },   // AUDIT MW-NPC D5: the slaughterfish's law - it swims (Aquatic), and its body walked through the water
   [M.Lamia]: { miss: 'no lamia' },
 });
 
@@ -74,6 +76,10 @@ const LOOKS = new Map(Object.entries(CREATURE_MATCH).filter(([, m]) => m.creatur
  *  @param {any} f a foe record (its `mobileType`) */
 export function creatureLook(f) {
   const look = (f && LOOKS.get(f.mobileType)) ?? null;
+  // AUDIT MW-NPC D2: a Daedra Seducer in her MORTAL GUISE - the woman Daggerfall draws until SeducerTransformBehaviour
+  // completes (MobileUnit.specialTransformationCompleted) - keeps her sprite: the match is the winged daedra she becomes,
+  // which would give her away (the Sigil Broker's law, section 15a). A record with no mobile (the gate's host) is the daedra.
+  if (f?.mobileType === M.DaedraSeducer && f.mobile && !f.mobile.specialTransformationCompleted) return null;
   if (look?.veil) {
     // MWNPC13: a NAMED spectral - Lysandus, placed by his quest in his own archive (473) - keeps his own sprite: the
     // body is the stock ghost's, and he is no stock ghost

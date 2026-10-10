@@ -218,8 +218,8 @@
  {
   "name": "MWNPC9b-dungeon-living-class-only",
   "file": "src/scenes/dungeonContext.js",
-  "old": "        if (npcLane && isBodyFoe(f)) { npcLane.stand('foe', foeActor(f),",
-  "new": "        if (npcLane && isClassFoe(f)) { npcLane.stand('foe', foeActor(f),",
+  "old": "        if (npcLane && isBodyFoe(f)) { npcLane.stand('foe', foeActor(f, foeId(f), { scale: szE }),",
+  "new": "        if (npcLane && isClassFoe(f)) { npcLane.stand('foe', foeActor(f, foeId(f), { scale: szE }),",
   "tests": [
    "test/mwnpc9b_creaturerig.test.js"
   ]
@@ -227,8 +227,8 @@
  {
   "name": "MWNPC9b-pool-dead-class-only",
   "file": "src/scenes/exteriorFoes.js",
-  "old": "if (f.dead && f.corpse && isBodyFoe(f) && f.ai) { npcLane.stand('foe', foeActor(f), null, 0, foeFx(f, f.corpseMarker?.batch));",
-  "new": "if (f.dead && f.corpse && isClassFoe(f) && f.ai) { npcLane.stand('foe', foeActor(f), null, 0, foeFx(f, f.corpseMarker?.batch));",
+  "old": "if (f.dead && f.corpse && isBodyFoe(f) && f.ai) { npcLane.stand('foe', foeActor(f, idOf(f), { scale: (isEliteCorpse",
+  "new": "if (f.dead && f.corpse && isClassFoe(f) && f.ai) { npcLane.stand('foe', foeActor(f, idOf(f), { scale: (isEliteCorpse",
   "tests": [
    "test/mwnpc9b_creaturerig.test.js"
   ]

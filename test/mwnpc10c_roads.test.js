@@ -133,6 +133,7 @@ test('MWNPC10c-3 the sprites: each body on the ground offered as its sprite show
   sp.sync(list, { ground: false, fade: 1, dt: 1 });
   sp.drawBodies({}, null, null, [0, 0, 0], 1 / 60);
   assert.equal(lane.offered.length, 0, 'none under the Overworld');
+  assert.equal(sp.bodyOf('a').batch.castOnly, false, 'AUDIT MW-NPC C3: and every sprite drawn - the one whose body stood on the ground no longer cast-only');
   // another person at the same key: a new body, a new id
   sp.sync(list);
   const was = sp.bodyOf('w').id;

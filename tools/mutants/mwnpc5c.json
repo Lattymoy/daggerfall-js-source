@@ -2,7 +2,7 @@
  {
   "name": "MWNPC5c-pool-not-offered",
   "file": "src/scenes/exteriorFoes.js",
-  "old": "      if (npcLane && _sg === 1 && isBodyFoe(f)) { npcLane.stand('foe', foeActor(f), f.batch.conceal ?? null, f.batch.hitFlash || 0, foeFx(f)); _npcStood.push(f); }",
+  "old": "      if (npcLane && _sg === 1 && isBodyFoe(f)) { npcLane.stand('foe', foeActor(f, idOf(f), { scale: szG }), f.batch.conceal ?? null, f.batch.hitFlash || 0, foeFx(f)); _npcStood.push(f); }",
   "new": "      if (npcLane && _sg === 1 && isBodyFoe(f)) _npcStood.push(f);",
   "tests": [
    "test/mwnpc5_pool.test.js"
@@ -20,8 +20,8 @@
  {
   "name": "MWNPC5c-pool-undressed",
   "file": "src/scenes/exteriorFoes.js",
-  "old": "npcLane.stand('foe', foeActor(f), f.batch.conceal ?? null, f.batch.hitFlash || 0, foeFx(f));",
-  "new": "npcLane.stand('foe', foeActor(f), null, 0, null);",
+  "old": "npcLane.stand('foe', foeActor(f, idOf(f), { scale: szG }), f.batch.conceal ?? null, f.batch.hitFlash || 0, foeFx(f));",
+  "new": "npcLane.stand('foe', foeActor(f, idOf(f), { scale: szG }), null, 0, null);",
   "tests": [
    "test/mwnpc5_pool.test.js"
   ]
@@ -29,8 +29,8 @@
  {
   "name": "MWNPC5c-pool-castonly-sticks",
   "file": "src/scenes/exteriorFoes.js",
-  "old": "      f.batch.castOnly = false;\n      if (npcLane && _sg === 1 && isBodyFoe(f))",
-  "new": "      if (npcLane && _sg === 1 && isBodyFoe(f))",
+  "old": "      f.batch.castOnly = false;\n      // AUDIT MW-NPC B1",
+  "new": "      // AUDIT MW-NPC B1",
   "tests": [
    "test/mwnpc5_pool.test.js"
   ]
@@ -47,8 +47,8 @@
  {
   "name": "MWNPC5c-pool-corpse-never-cast",
   "file": "src/scenes/exteriorFoes.js",
-  "old": "const b = f.dead ? f.corpseMarker?.batch : f.batch; if (b) b.castOnly = lane.has('foe', foeId(f));",
-  "new": "const b = f.dead ? null : f.batch; if (b) b.castOnly = lane.has('foe', foeId(f));",
+  "old": "const b = f.dead ? f.corpseMarker?.batch : f.batch; if (b) b.castOnly = lane.has('foe', idOf(f));",
+  "new": "const b = f.dead ? null : f.batch; if (b) b.castOnly = lane.has('foe', idOf(f));",
   "tests": [
    "test/mwnpc5_pool.test.js"
   ]
@@ -56,7 +56,7 @@
  {
   "name": "MWNPC5c-pool-castonly-all",
   "file": "src/scenes/exteriorFoes.js",
-  "old": "if (b) b.castOnly = lane.has('foe', foeId(f)); }",
+  "old": "if (b) b.castOnly = lane.has('foe', idOf(f)); }",
   "new": "if (b) b.castOnly = true; }",
   "tests": [
    "test/mwnpc5_pool.test.js"

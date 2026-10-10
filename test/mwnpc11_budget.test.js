@@ -8,7 +8,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { createFrameBudget, createNpcBodies, NPC_FRAME_TIERS, NPC_BODY_TIERS, WATCH_BODY_TIERS, NPC_BUDGET_STALE_MS } from '../src/characters/npcBodies.js';
+import { createFrameBudget, createNpcBodies, NPC_FRAME_TIERS, NPC_BODY_TIERS, WATCH_BODY_TIERS, NPC_BUDGET_ROUNDS } from '../src/characters/npcBodies.js';
 import { PeerBodies } from '../src/net/peerBodies.js';
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -16,8 +16,9 @@ const flush = () => new Promise((r) => setTimeout(r, 0));
 const F = (...v) => Float64Array.from(v);
 
 test('MWNPC11-1 the budget: the cut is the k-th nearest across every lane\'s report, Infinity while fewer stand; a stale lane or a dropped one takes no share; the skins one a lane with a body in the cut and the rest by share - their sum the budget\'s, or one a lane where more lanes stand', () => {
-  const clock = { t: 0 };
-  const b = createFrameBudget({ now: () => clock.t });
+  // PIN MOVED (AUDIT MW-NPC B4): a lane reports once a frame, and the frames are written out - a report is the frame's
+  // while it is of this round of reports or the last (NPC_BUDGET_ROUNDS), never by the clock
+  const b = createFrameBudget();
   const A = {}, B = {}, C = {};
   b.report(A, F(1, 4, 9, 16), 4);
   b.report(B, F(2, 3, 100), 3);
@@ -26,24 +27,29 @@ test('MWNPC11-1 the budget: the cut is the k-th nearest across every lane\'s rep
   assert.equal(b.cut(7), 100);
   assert.equal(b.cut(8), Infinity, 'fewer than eight: every one stands');
   assert.equal(b.lanes, 2);
-  b.report(A, F(1, 4, 9, 16, 99), 2);
+  b.report(A, F(1, 4, 9, 16, 99), 2);   // the next frame: A first, B's of the last round still the frame's
   assert.equal(b.cut(3), 3, 'only the first n of a buffer');
   assert.equal(b.cut(5), 100);
+  b.report(B, F(2, 3, 100), 3);
   // the skins under a cut of 9: A has 1, 4, 9 in it (3), B 2, 3 (2) - a budget of 7: one each, five by share
-  b.report(A, F(1, 4, 9, 16), 4);
+  b.report(A, F(1, 4, 9, 16), 4);   // a frame on
   b.cut(5);
   assert.deepEqual([b.skins(A, 7), b.skins(B, 7)], [1 + Math.floor(5 * 3 / 5), 1 + Math.floor(5 * 2 / 5)]);
   assert.ok(b.skins(A, 7) + b.skins(B, 7) <= 7, 'the sum the budget\'s');
   assert.equal(b.skins(C, 7), 0, 'a lane with no report none');
   // more lanes than skins: one each
   const many = Array.from({ length: 5 }, () => ({}));
-  const m = createFrameBudget({ now: () => 0 });
+  const m = createFrameBudget();
   for (const l of many) m.report(l, F(1), 1);
   m.cut(10);
   assert.deepEqual(many.map((l) => m.skins(l, 3)), [1, 1, 1, 1, 1], 'one a lane where more lanes than skins stand');
-  // stale and dropped
-  clock.t = NPC_BUDGET_STALE_MS + 1;
+  // stale and dropped: B ends A's frame, then reports alone - one frame on, A of the last round still stands; two, it is
+  // not drawn of late, and takes no share (a frame of any length stales nothing - only rounds the others report)
   b.report(B, F(2, 3, 100), 3);
+  b.report(B, F(2, 3, 100), 3);
+  assert.equal(b.lanes, 2, 'A one round back: still the frame\'s');
+  b.report(B, F(2, 3, 100), 3);
+  assert.equal(NPC_BUDGET_ROUNDS, 1);
   assert.equal(b.lanes, 1, 'A and C not drawn of late: no share');
   assert.equal(b.cut(2), 3);
   b.drop(B);
@@ -81,12 +87,14 @@ test('MWNPC11-2 PeerBodies\' limits: moved by the frame (a body past the new ran
   list[0] = peer('a', 11);
   pb.sync(list, toScene, 1 / 60, [0, 0, 0]);
   assert.equal(pb.has('a'), true, 'held past the range by the hysteresis');
+  assert.equal(pb.holds('a'), true, 'held: the budget ranks it by the hysteresis it is held to');
   list[0] = peer('a', 13);
   pb.sync(list, toScene, 1 / 60, [0, 0, 0]);
   assert.equal(pb.has('a'), false);
   list[0] = peer('a', 11);
   pb.sync(list, toScene, 1 / 60, [0, 0, 0]);
   assert.equal(pb.has('a'), false, 'a far one comes back only within the range');
+  assert.equal(pb.holds('a'), false, 'and holds no body: ranked by its own distance, it takes no place in the cut it would not stand in');
   list[0] = peer('a', 9);
   pb.sync(list, toScene, 1 / 60, [0, 0, 0]);
   assert.equal(pb.has('a'), true);
@@ -122,8 +130,7 @@ async function twoLanes(budget, frameTiers = { off: null, near: { bodies: 6, ski
 }
 
 test('MWNPC11-3 two lanes on one budget: the six nearest across both stand, whoever\'s; two skins a frame between them; no rig built past the cut\'s reach; and alone, each lane its own caps (24 standing, 8 skins) - what the budget saves; a lane let go hands the frame to the other', async () => {
-  const clock = { t: 0 };
-  const shared = createFrameBudget({ now: () => clock.t });
+  const shared = createFrameBudget();
   const on = await twoLanes(shared);
   assert.equal(on.standing.length, 6, `six standing across both lanes (${on.standing})`);
   assert.ok([2, 3, 4, 5].every((z) => on.standing.includes(z)) && on.standing.every((z) => z <= 8), `the nearest, whoever\'s - one held at the edge at most (${on.standing})`);
@@ -136,6 +143,7 @@ test('MWNPC11-3 two lanes on one budget: the six nearest across both stand, whoe
   assert.ok(off.log.skins / 30 > 2, `alone: each lane its own skins (${off.log.skins / 30})`);
   // the walkers' lane let go: the foes take the whole frame - their six nearest
   on.folk.destroy();
+  assert.equal(shared.lanes, 1, 'its share gone at once - not a round of reports on');
   on.folk.begin = () => {}; on.folk.end = () => {};
   for (let i = 0; i < 30; i++) await on.frame();
   const foesUp = on.fa.filter((a) => on.foes.has('foe', a.id)).map((a) => -a.feet[2]);
@@ -155,7 +163,7 @@ test('MWNPC11-4 the frame\'s tiers sit below what MWNPC7 summed for the foes, th
 });
 
 test('MWNPC11-5 a lane reports what it could stand - its nearest within its range, to its cap, in whatever order it offers them: the six nearest stand from a shuffled crowd; a lane whose people are all past its range takes no skin of the frame\'s', async () => {
-  const shared = createFrameBudget({ now: () => 0 });
+  const shared = createFrameBudget();
   const logA = { skins: 0, draws: 0, rigs: 0 }, logB = { skins: 0, draws: 0, rigs: 0 };
   const tiers = { off: null, near: { max: 12, range: 30, skinBudget: 4, spareMax: 0 }, all: null };
   const frameTiers = { off: null, near: { bodies: 6, skins: 2 }, all: null };
@@ -175,7 +183,7 @@ test('MWNPC11-5 a lane reports what it could stand - its nearest within its rang
   assert.equal(logB.rigs, 0, 'nothing built past the range');
   // a frame with room for twenty: the crowd's twelve all stand (fewer than twenty could), and the frame's two skins
   // are all the crowd's - the lane whose people are past its range reports none, so takes none
-  const roomy = createFrameBudget({ now: () => 0 });
+  const roomy = createFrameBudget();
   const roomyTiers = { off: null, near: { bodies: 20, skins: 2 }, all: null };
   const logC = { skins: 0, draws: 0, rigs: 0 };
   const C = createNpcBodies({ renderer: {}, tier: () => 'near', tiers, createRig: counting(logC), now: () => 1000, budget: roomy, frameTiers: roomyTiers });

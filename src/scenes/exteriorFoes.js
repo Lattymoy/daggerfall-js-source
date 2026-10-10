@@ -102,7 +102,7 @@ import { setBatchDissolve } from '../systems/dissolve.js';   // DISSOLVE: burnt 
 import { createPortalSet } from './portalFx.js';   // COMPANION-PORTAL
 import { QUARRY_BLOW } from '../systems/livingWorld/quarry.js';
 import { createHostNpcBodies, npcBodiesOn } from '../characters/npcBodies.js';   // MWNPC5c: the pool's foes in their Morrowind bodies
-import { isBodyFoe, foeActor, foeFx, foeId } from '../characters/foeBodies.js';   // WATCH-PROTECTS: a townsperson's one blow
+import { isBodyFoe, foeActor, foeFx } from '../characters/foeBodies.js';   // WATCH-PROTECTS: a townsperson's one blow
 import { elitesAllowed, promoteEliteFoe, rollOverworldElite, grantEliteLoot, eliteGlow, setBatchEliteGlow, eliteSize, isEliteCorpse, markEliteCorpseBatch, ELITE_FOE_SIZE } from '../systems/eliteFoes.js';   // ELITE FOES: 5% of the wilds' foes   // HITFLASH1
 
 // The port's allocation-owner guards (classic self-limits through the
@@ -2066,12 +2066,14 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // the body stands, and casts its shadow either way. One drawn grown on a wagon under the Overworld (WAGONS2) keeps
       // its sprite - the far view's, as the roads' bands are (MWNPC10c)
       f.batch.castOnly = false;
-      if (npcLane && _sg === 1 && isBodyFoe(f)) { npcLane.stand('foe', foeActor(f), f.batch.conceal ?? null, f.batch.hitFlash || 0, foeFx(f)); _npcStood.push(f); }
+      // AUDIT MW-NPC B1: the body's id is the pool's own (idOf, one an entry) - a puppet carries its owner's number (`seq`),
+      // so my foe 1 and a peer's foe 1 were one body and both billboards cast-only: one foe drawn nowhere
+      if (npcLane && _sg === 1 && isBodyFoe(f)) { npcLane.stand('foe', foeActor(f, idOf(f), { scale: szG }), f.batch.conceal ?? null, f.batch.hitFlash || 0, foeFx(f)); _npcStood.push(f); }   // AUDIT MW-NPC D3: the size its sprite is
       out.push(f.batch);
     }
     // MWNPC5c: the dead from the kill until the corpse is collected, the corpse flat casting alone under the body
     for (const c of corpseBatches) c.batch.castOnly = false;
-    if (npcLane) for (const f of foes) if (f.dead && f.corpse && isBodyFoe(f) && f.ai) { npcLane.stand('foe', foeActor(f), null, 0, foeFx(f, f.corpseMarker?.batch)); _npcStood.push(f); }
+    if (npcLane) for (const f of foes) if (f.dead && f.corpse && isBodyFoe(f) && f.ai) { npcLane.stand('foe', foeActor(f, idOf(f), { scale: (isEliteCorpse(f.entity) ? ELITE_FOE_SIZE : 1) * wildGiantSize(f.entity) }), null, 0, foeFx(f, f.corpseMarker?.batch)); _npcStood.push(f); }   // as large as its corpse (the marker's sizeScale)
     return [...out, ...corpseBatches.map((c) => c.batch), ...portals.batches()];   // COMPANION-PORTAL: and the portals
   }
 
@@ -2145,7 +2147,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (!lane || !_npcOffered) return;   // nothing offered this frame (a frame the host drew no pool): nothing synced again
     _npcOffered = false;
     lane.end(dt, eye);
-    for (const f of _npcStood) { const b = f.dead ? f.corpseMarker?.batch : f.batch; if (b) b.castOnly = lane.has('foe', foeId(f)); }
+    for (const f of _npcStood) { const b = f.dead ? f.corpseMarker?.batch : f.batch; if (b) b.castOnly = lane.has('foe', idOf(f)); }
     renderer.beginCharacterSpriteBatch?.();
     try { lane.draw(canvas, { proj, view, eye }); } finally { renderer.flushCharacterSpriteBatch?.(); }
   }

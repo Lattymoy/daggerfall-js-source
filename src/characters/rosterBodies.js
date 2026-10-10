@@ -66,3 +66,22 @@ export function residentLook(rec, res, { still = false } = {}) {
   }
   return folkLookOf({ archive: res.civvies ?? res.archive, personFaceRecordId: res.face ?? 0, gender: res.gender ?? 0, guard: false }, res.race ?? 'Breton', seed);   // WATCH-DAY: off duty in his own clothes, as his sprite is
 }
+
+/**
+ * AUDIT MW-NPC C4: A RESIDENT WALKING THE STREET - a pooled walker the living town dressed as one of its residents
+ * (systems/livingWorld/livingTown.js _dress: `person.living.res`) - stands as that resident: their own id and
+ * residentLook's look off it, never the pool row's spawn. folkActor seeded the look off the row (folkBodies.js
+ * spawnOf's shell), so one resident wore other dyes on another row, another face indoors or on the road, and another
+ * on another machine. Read once a resident (`person._mwRes`, until the row is dressed as someone else); walking as the
+ * walker walks, facing its way, carrying what their sprite carries.
+ * @param {any} person @param {number[]} feet
+ */
+export function residentWalkerActor(person, feet) {
+  const res = person.living.res;
+  let k = person._mwRes;
+  if (!k || k.res !== res) k = person._mwRes = { res, look: null };
+  k.look ??= residentLook(k, res);
+  return rosterActor(k, { id: `res:${res.id}`, look: k.look, feet, yaw: Number.isFinite(person.yaw) ? person.yaw : (person.facingYaw ?? 0),
+    moving: person.state === 'move', drawn: res.cls != null });
+}
+

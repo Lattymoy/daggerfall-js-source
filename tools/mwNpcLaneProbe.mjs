@@ -41,7 +41,7 @@ const rigOf = (c) => () => {
 export async function runStreet(tier, shared, { frames = 600, warm = 120 } = {}) {
   const c = { skins: 0, draws: 0, builds: 0, binds: 0 };
   let t = 0;
-  const budget = shared ? createFrameBudget({ now: () => t }) : null;
+  const budget = shared ? createFrameBudget() : null;
   // a bind of the sprite target is a lane's flush with a picture queued (renderer.js flushCharacterSpriteBatch binds
   // nothing for an empty one): a lane that drew a body this frame
   let drawsAtBegin = 0;

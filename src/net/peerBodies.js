@@ -546,7 +546,7 @@ export class PeerBodies {
    *  it would wait on the one queue, the body it took already gone. */
   _maySwap(w, now) {
     if (w.pri) return true;
-    for (const b of this._bodies.values()) if (b.goneAt != null) return true;
+    for (const b of this._bodies.values()) if (b.goneAt != null || (this._buildInRange && b.far)) return true;   // AUDIT MW-NPC B3: an NPC lane's body past the cut is its sprite already - nothing is seen to go
     if (now - w.since < SWAP_DWELL_MS || now - this._swappedAt < SWAP_EVERY_MS) return false;
     if (this._hasSpare(w.key)) return true;
     for (const b of this._bodies.values()) if (b.state === 'building') return false;
@@ -559,7 +559,9 @@ export class PeerBodies {
   _yield(d2, pri = false, key = null) {
     let victim = null, stranger = null;
     for (const b of this._bodies.values()) {
-      if (b.goneAt != null) { victim = b; break; }
+      // AUDIT MW-NPC B3: in an NPC lane (`buildInRange`) a body past the cut stands as its sprite already - it gives its
+      // slot up first, as a lingering one does: kept, its twelve slots held a lane's nearer actors as sprites for good
+      if (b.goneAt != null || (this._buildInRange && b.far)) { victim = b; break; }
       if (b.pri && !pri) continue;   // AUDIT PARTY8: a stranger never takes a party mate's slot
       if (!victim || b.d2 > victim.d2) victim = b;
       if (!b.pri && (!stranger || b.d2 > stranger.d2)) stranger = b;
@@ -567,10 +569,11 @@ export class PeerBodies {
     if (!victim) return false;
     // AUDIT PARTY8: a party mate takes the farthest stranger's slot outright, margin or none
     if (pri && stranger && victim.goneAt == null) { this._release(stranger.id, true, key); this._swappedAt = this._now(); return true; }
-    if (victim.goneAt == null && !(victim.d2 > d2 * SWAP_MARGIN * SWAP_MARGIN)) return false;
+    const unseen = victim.goneAt != null || (this._buildInRange && victim.far);
+    if (!unseen && !(victim.d2 > d2 * SWAP_MARGIN * SWAP_MARGIN)) return false;
     // WB9h: a standing body given up is kept for its body's next wearer, and the hand-over is timed (a lingering one's
-    // peer is gone - nothing is seen to go)
-    if (victim.goneAt == null) this._swappedAt = this._now();
+    // peer is gone, a far one's is its sprite - nothing is seen to go)
+    if (!unseen) this._swappedAt = this._now();
     this._release(victim.id, true, key);   // MW-CROWD: a LINGERING body is kept too - its peer mounted or dropped out of the list a moment, and came back to a whole rebuild (_release spares only a built, skinned rig)
     return true;
   }
@@ -740,6 +743,10 @@ export class PeerBodies {
 
   async _build(b, look, shown = null, glyphs = null) {
     if (this._bodies.get(b.id) !== b) return;   // released before its turn: no parse for a body already gone
+    // AUDIT MW-NPC B4 (MWNPC11's NO RIG PAST THE RANGE): an NPC lane's body whose actor fell past the cut while it waited
+    // its turn on the one queue is let go unbuilt - it would stand as its sprite (a scene's first frame, a hitch's, cut
+    // before the other lanes had reported, queued more than the frame's bodies); offered within it again, it is queued again
+    if (this._buildInRange && b.far) { this._release(b.id); return; }
     let res = null, reason = 'threw';
     // WEREWOLF1: the form it was keyed on rides the build - a wolf's body is built as the wolf
     try { const opts = this._buildOpts(look, b.wolf ? { ...shown, wb: 1 } : null, glyphs); b.weapon = opts.weapon ?? null; res = await b.rig.build(opts); } catch (e) { res = null; reason = `threw: ${e?.message ?? e}`; }
@@ -778,7 +785,13 @@ export class PeerBodies {
    *  - the one `draw` was handed. Nothing before the body pass has drawn this frame: nothing. */
   drawVeiled() {
     const c = this._cam;
-    return c ? this._drawBodies(c.canvas, c.proj, c.view, c.eye, true, c.flashOf) : 0;
+    if (!c) return 0;
+    // AUDIT MW-NPC A1 (MWNPC2's law, for the veiled): every concealed or spectral body's picture in ONE bind of the
+    // sprite target - each quad still blends as its own veil says (drawCharacterSpriteQuad, per quad, in this order).
+    // Since MWNPC13 every ghost is veiled: a crypt's six took six binds a frame. A batch a host already holds is its own.
+    const r = this.renderer, own = !!r?.beginCharacterSpriteBatch && !r.characterSpriteBatchOpen;
+    if (own) r.beginCharacterSpriteBatch();
+    try { return this._drawBodies(c.canvas, c.proj, c.view, c.eye, true, c.flashOf); } finally { if (own) r.flushCharacterSpriteBatch(); }
   }
 
   /** The standing bodies of one kind - the open (`veiled` false) or the concealed. */
