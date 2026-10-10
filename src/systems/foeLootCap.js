@@ -34,6 +34,7 @@
 import {
   corpseSource, rarityRank, lootRarityOn, rarityEligible, rollRarity, applyRarity, lastPass, legendaryFindMult, isGarment, RARITIES,
   cursePass,   // LOOT16
+  damnPass,   // TRUE-CURSE
   socketPass,   // LOOT20
   weaponSocketPass,   // GEM1
 } from './lootRarity.js';
@@ -194,6 +195,7 @@ export function rollCorpseKit(entity, opts = {}) {
   cursePass(kit, opts.rolls ?? Math.random);   // LOOT16: a body's own Rares and Legendaries, one in twelve cursed - after all of it
   socketPass(kit, opts.rolls ?? Math.random);   // LOOT20: and a socket, after the curse
   weaponSocketPass(kit, opts.rolls ?? Math.random);   // GEM1: and a weapon's own sockets, after that (law 9)
+  damnPass(kit, opts.rolls ?? Math.random);   // TRUE-CURSE: a cursed Legendary weapon damned, after every draw the kit made (law 9)
   return kit;
 }
 /** The first arc's kit roll, whole: every piece of the kit but its garments. */

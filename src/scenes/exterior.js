@@ -118,7 +118,7 @@ import { createWeatherFront, blendTerms, soundWeather, fallTerms } from '../syst
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
 import { CityNavigation } from '../world/cityNavigation.js';   // T1 towns
 import { TownPopulation } from '../systems/townPopulation.js';
-import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES, personWantsToStop } from '../characters/mobilePerson.js';
+import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES, personWantsToStop, walkerRace } from '../characters/mobilePerson.js';
 import { createTownTalk, rayPersonDistance, nearestPerson } from './townTalk.js';   // T3b   // AUDIT 63 F33 (review): the townsfolk's own pick distance, the enemy arm's rival
 import { createPlayerMagic } from './hostMagic.js';   // M2: spellcasting above ground
 import { preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in)
@@ -4644,7 +4644,9 @@ export async function bootExterior(canvas, renderer, params, status) {
       spellsByIndex: () => spellsByIndex,
       now: () => Math.floor(playerTicker.ownMinutes),
       sinks: {
-        hurt: (n) => { if (n > 0) hurtPlayer(playerEntity, n); },
+        // AUDIT FB1010 D1: an enchantment's own bite (a Damned blade's Health Leech, a curse's round) on the arena's sand
+        // holds me at 1 as every blow there does - the floor's dungeon mounts no ctx of its own (enchantCtx: false)
+        hurt: (n) => { if (n > 0) hurtPlayer(playerEntity, n, arenaBouts.playerSpare() ?? {}); },
         heal: (n) => { if (n > 0) { playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + n); surfacePlayer(); } },
       },
       playerSpellSinks,
@@ -4786,7 +4788,7 @@ export async function bootExterior(canvas, renderer, params, status) {
 
   // T1 TOWNS: the wandering population (PopulationManager verbatim -
   // 10Hz pool, 24/16-blocks clamp, daytime only, anti-skate hidden
-  // first move). Race: the CLIMATE's People, live a dozen lines below
+  // first move). Race: the CLIMATE's People (a Redguard region's Redguard - REGIONAL-FOLK, walkerRace), live a dozen lines below
   // since AUDIT 23 (characters-4) - PopulationManager.cs:94's
   // populationRace through GetEntityRace's Redguard/Nord/default-Breton
   // switch (:320-335) over FactionFile.cs:612-615's numbering, so
@@ -4803,7 +4805,8 @@ export async function bootExterior(canvas, renderer, params, status) {
   // AUDIT 23 (characters-4) - PopulationManager.cs:94: the wandering
   // race is the CLIMATE's People (Redguard deserts, Nord mountains);
   // it was hardcoded Breton. FACTION_RACES numbers -> texture keys.
-  const populationRace = ({ 0: 'Nord', 2: 'Redguard', 3: 'Breton' })[dfLocation.climate?.people] ?? 'Breton';
+  // REGIONAL-FOLK: and a Redguard region's walkers are Redguards.
+  const populationRace = walkerRace(dfLocation.climate?.people, dfLocation.regionIndex);
   const personArchives = [...PERSON_TEXTURES[populationRace].male, ...PERSON_TEXTURES[populationRace].female, GUARD_TEXTURE];
   const personTex = new Map();
   if (populated) await Promise.all(personArchives.map(async (a) => personTex.set(a, await getTexture(a))));

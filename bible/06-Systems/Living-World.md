@@ -35,7 +35,9 @@ Taken at the design, in the request's own order; each is Mac's to overrule.
    rate turns it into the clock's minutes (`CLASSIC_MINUTES_PER_SECOND`, twelve a real minute; the sky's
    `skyMinutesPerMsAt`, twenty-four), so a resident beside the player keeps pace with them and every day is lived at
    walking speed. A journey's time scale speeds the calendar and the people with it.
-4. **A RESIDENT IS A DFU TOWNSPERSON WHO KEEPS THEIR IDENTITY FOR LIFE.** The billboard race is the climate's people,
+4. **A RESIDENT IS A DFU TOWNSPERSON WHO KEEPS THEIR IDENTITY FOR LIFE.** The billboard race is the climate's people
+   (REGIONAL-FOLK, `01-Overview/Field-Bugs-2026-10-10.md`: a Redguard region's are Redguards - its residents were
+   re-dressed once, at that update, their names and days kept),
    the outfit one of `PERSON_TEXTURES`' four, the talk portrait `PERSON_FACE_RECORDS`' own law, the name `fullName` on
    the region's bank with DFRandom's state saved and put back (`shipCrew.js handName`'s pattern) - every part DFU's, but
    drawn once from the resident's seed instead of at every spawn.
@@ -111,7 +113,7 @@ Taken at the design, in the request's own order; each is Mac's to overrule.
   homemakers, a city's beggars); `CENSUS_MAX` 260, the common hands trimmed first. `townCensus` gives the watch the
   palace and every traveller a house (an adventurer the tavern a quarter of the time) - LW-WALLS: of the buildings whose
   doors open onto the town's street, where the town knows them. Identity is `mintResident`'s:
-  the climate's people (`raceOfPeople`), half female, an outfit of `PERSON_TEXTURES`, a face of
+  the climate's people - a Redguard region's Redguard (`walkerRace`, REGIONAL-FOLK) - half female, an outfit of `PERSON_TEXTURES`, a face of
   `PERSON_FACE_RECORDS` + 0..23, a name on the region's bank (`residentName`), the watch GUARD_TEXTURE male outfit 0
   (RandomiseNPC's arms, every part); a temper (lark, day, owl) weighted by the job, three leanings (company, piety,
   drink), a class for the armed (an adventurer any of the eighteen, a sellsword the fighting seven, a courier the

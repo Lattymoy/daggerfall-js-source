@@ -247,8 +247,8 @@
   {
     "name": "LOOT16-the-line-worthless",
     "file": "src/systems/lootRarity.js",
-    "old": "  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + affixesWorth([line], item);\n  return true;\n}\n/** THE CURSE'S PASS",
-    "new": "  item.value = Number.isFinite(item.value) ? item.value : itemBaseValue(item);\n  return true;\n}\n/** THE CURSE'S PASS",
+    "old": "  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + affixesWorth([line], item);\n  if (damned) damnPiece(item);",
+    "new": "  item.value = Number.isFinite(item.value) ? item.value : itemBaseValue(item);\n  if (damned) damnPiece(item);",
     "tests": [
       "test/loot16_curses.test.js"
     ]
@@ -311,7 +311,7 @@
   {
     "name": "LOOT16-wire-uncarried",
     "file": "src/systems/lootRarity.js",
-    "old": "  return Array.isArray(item.enchantments) && item.enchantments.some((e) => e?.type === c.type && e?.param === c.param);\n}",
+    "old": "  return carried;\n}",
     "new": "  return true;\n}",
     "tests": [
       "test/loot16_curses.test.js"
@@ -329,8 +329,8 @@
   {
     "name": "LOOT16-the-curse-said-unknown",
     "file": "src/systems/lootRarity.js",
-    "old": "  const cursed = isCursed(item) && identified(item) ? CURSED_WORD : '';",
-    "new": "  const cursed = isCursed(item) ? CURSED_WORD : '';",
+    "old": "  const cursed = isCursed(item) && identified(item) ? (isDamned(item) ? DAMNED_WORD : CURSED_WORD) : '';",
+    "new": "  const cursed = isCursed(item) ? (isDamned(item) ? DAMNED_WORD : CURSED_WORD) : '';",
     "tests": [
       "test/loot16_curses.test.js"
     ]
@@ -338,7 +338,7 @@
   {
     "name": "LOOT16-the-curse-never-said",
     "file": "src/systems/lootRarity.js",
-    "old": "  const cursed = isCursed(item) && identified(item) ? CURSED_WORD : '';",
+    "old": "  const cursed = isCursed(item) && identified(item) ? (isDamned(item) ? DAMNED_WORD : CURSED_WORD) : '';",
     "new": "  const cursed = '';",
     "tests": [
       "test/loot16_curses.test.js"
@@ -473,8 +473,8 @@
   {
     "name": "LOOT16-lift-unknown",
     "file": "src/systems/lootCurse.js",
-    "old": "  if (!itemIsIdentified(item)) return 'unknown';\n  if (isEquipped(item)) return 'worn';",
-    "new": "  if (isEquipped(item)) return 'worn';",
+    "old": "  if (!itemIsIdentified(item)) return 'unknown';\n  if (isDamned(item)) return 'damned';",
+    "new": "  if (isDamned(item)) return 'damned';",
     "tests": [
       "test/loot16_curses.test.js"
     ]

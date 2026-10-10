@@ -125,7 +125,7 @@ import { travellerRoster, mintResident } from '../systems/livingWorld/census.js'
 import { townTrips, visitorsOf as tripVisitorsOf, awayOf as tripAwayOf, placeCycle, setsOut, newsOf, paceScale, NEWS_DAYS, diversAt, cycleOf, handsOn, nativeDry, divesIn, TRIP_REACH_PX } from '../systems/livingWorld/trips.js';   // LW3: the roads, pure; LW4: the places' cycles, the town's news; LW7: a townsperson's cycle, a trip's hand deaths; LW-DRY: the ground a party stops on
 import { createDryGround } from '../world/dryGround.js';   // LW-DRY: the height map's own dry ground, every client's alike
 import { placeAt, turnKey } from '../systems/livingWorld/lives.js';   // LW4: who holds a traveller's place
-import { peoplePage } from '../systems/livingWorld/people.js';   // LW7c: the chronicle's People page
+import { peoplePage, residentOfId } from '../systems/livingWorld/people.js';   // LW7c: the chronicle's People page; AUDIT FB1010 C1: a betrothed as the census mints them
 import { troubleOf, troubledTrip } from '../systems/livingWorld/trouble.js';   // LW4: trouble on the road
 import { foeWord } from '../systems/livingWorld/lines.js';   // LW4: a foe's word for the town's talk and a mark
 import { portPackets, berthOf, sailorAt, crewsAshore } from '../systems/livingWorld/portCrews.js';   // LW5: the Bay's sailors
@@ -153,7 +153,7 @@ import { goldStack } from '../systems/inventory.js';   // LW6b: ...and their pur
 import { mintKeepsake } from '../systems/livingWorld/keepsake.js'; import { lwRng, textSeed } from '../systems/livingWorld/seed.js';   // LW6c: ...and their keepsake, carried home; AUDIT-C5: their goods their key's own (on this line, so no cite below it moves)
 import { createLivingIndoors } from './livingIndoors.js';   // LW8: the residents inside the building the player is in
 import { createTravellerSprites, classLookOf } from '../world/travellerSprites.js';   // LW3: their bodies, and the armed walk's sprite
-import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES, PERSON_MOVE_SPEED } from '../characters/mobilePerson.js';
+import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES, PERSON_MOVE_SPEED, walkerRace } from '../characters/mobilePerson.js';
 import { bowDamageArrow, weaponOfMaterial, armorOfMaterial } from '../combat/enemyEquipment.js';   // MAC-N1: the recovered shaft is CreateWeapon's arrow, value and all; OH-E: UpgradeLoot's SetItem + ApplyWeaponMaterial / ApplyArmorSettings
 import { createTownTalk, rayPersonDistance, nearestPerson } from './townTalk.js';   // AUDIT 63 F33 (review): the townsfolk's own pick distance, the enemy arm's rival
 import { createPlayerMagic } from './hostMagic.js';   // M2: spellcasting above ground
@@ -5905,7 +5905,8 @@ export async function bootWorld(canvas, renderer, params, status) {
           totalBlocks: loc.width * loc.height,
           // AUDIT 23 (characters-4/5): billboard race = the climate's
           // People; the NAME bank = the REGION's (MobilePersonNPC.cs:214).
-          race: ({ 0: 'Nord', 2: 'Redguard', 3: 'Breton' })[climate?.people] ?? 'Breton',
+          // REGIONAL-FOLK: and a Redguard region's walkers are Redguards.
+          race: walkerRace(climate?.people, dfLocation.regionIndex),
           nameBank: getNameBankOfRegion(dfLocation.regionIndex),
           makePerson: (archive, guard) => {
             const person = new MobilePerson(nav, {
@@ -12591,7 +12592,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       spellsByIndex: () => spellsByIndex,
       now: () => Math.floor(playerTicker.ownMinutes),
       sinks: {
-        hurt: (n) => { if (n > 0) hurtPlayer(playerEntity, n); },
+        // AUDIT FB1010 D1: an enchantment's own bite (a Damned blade's Health Leech, a curse's round) on the arena's sand
+        // holds me at 1 as every blow there does - the floor's dungeon mounts no ctx of its own (enchantCtx: false)
+        hurt: (n) => { if (n > 0) hurtPlayer(playerEntity, n, arenaBouts.playerSpare() ?? {}); },
         heal: (n) => { if (n > 0) { playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + n); surfacePlayer(); } },
       },
       playerSpellSinks,
@@ -15940,6 +15943,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (isOnlinePage() && !opts?.travelShip) { townTalk.say(ONLINE_LAND_TRAVEL_REFUSAL); hudFade.clearFade(); } else fastTravelTo(pick, opts, computed);   // AUDIT TRAVEL-ONLINE T7: online a trip over land is never the teleport - the floor under the room's switches (systems/onlineLane.js)
     } });
     if (!_travelMap) { townTalk.say('(the travel map art is unavailable)'); return false; }
+    _travelMap.openOnMe?.();   // FIND-FIRST: the player's own map opens on them (the held map's; the classic keeps DFU's open)
     if (_travelGoto) { _travelMap.gotoPlace(_travelGoto); _travelGoto = null; }   // GotoPlace (:214-217), consumed on the map's first tick - AUDIT PARTY-UI2 1: this open's, or one a refused open kept
     townTalk.showOverlay(_travelMap);
     return true;
@@ -26278,6 +26282,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   };
   legacyHost = createLegacyHost({
     entity: playerEntity,
+    residentNow: (id) => residentOfId(id, livingTownOfId),   // AUDIT FB1010 C1: the betrothed as the census mints them now, for the wedding
     storage: () => appStorage(),
     tab: () => tabStorage(),
     on: () => legacyOn(),
