@@ -208,7 +208,9 @@ test('AUDIT 23 wts-1/2: the sky season arm and the weather-scaled ambient', () =
 
 test('AUDIT 23 characters-4/5: the population takes the climate race and the REGION name bank', () => {
   for (const [name, text] of [['exterior', EXTERIOR], ['world', WORLD]]) {
-    assert.ok(/\{ 0: 'Nord', 2: 'Redguard', 3: 'Breton' \}/.test(text), `${name}: the People map`);
+    // REGIONAL-FOLK (FIELD BUGS 2026-10-10, PIN MOVED): the People map is characters/mobilePerson.js's, asked through
+    // walkerRace with the climate's People and the region (test/fb1010_regionalfolk.test.js holds the rule)
+    assert.ok(/walkerRace\([^)]*people, dfLocation\.regionIndex\)/.test(text), `${name}: the People map, through walkerRace`);
     assert.ok(text.includes('nameBank: getNameBankOfRegion('), `${name}: the region bank`);
   }
   // ...and TownPopulation honors the bank for names while the race
