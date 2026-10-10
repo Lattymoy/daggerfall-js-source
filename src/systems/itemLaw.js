@@ -40,7 +40,7 @@
 import { validItemField, ITEM_FIELDS } from './itemFields.js';
 import { ITEM_TEMPLATES, templateByIndex, itemBaseValue, isAmmunition } from './itemTemplates.js';
 import { GROUP_TEMPLATE_INDICES } from './itemTemplatesData.js';
-import { WAGON_KINDS } from './wagonKinds.js';   // WAGONS2 (AUDIT): a wagon's kind and its price
+import { WAGON_KINDS, validWagonKind } from './wagonKinds.js';   // WAGONS2 (AUDIT): a wagon's kind and its price
 import { TRANSPORT_SMALL_CART } from './itemTemplates.js';
 import {
   AFFIX_KINDS, AFFIX_RANGES, AFFIX_COUNTS, RARE_FLAVOURS, kindParams, validAffix, legendaryById, legendariesFor, isGarment,
@@ -229,9 +229,10 @@ export function itemFindings(v, opts = {}) {
   if (has(item, 'decks') && !(item.templateIndex === CARD_BINDER_TEMPLATE && Array.isArray(item.decks) && item.decks.length <= BINDER_DECKS_MAX
     && item.decks.every((/** @type {any} */ d) => Array.isArray(d?.cards) && d.cards.every((/** @type {string} */ c) => cardById(c))))) out.add('card');
   // ── a wagon's mark: on DFU's Small Cart alone, and a marked kind at its own price (WAGONS2 AUDIT: a row marked a
-  //    Caravan at the cart's 150 sold as a Caravan at the cart's price) ──
+  //    Caravan at the cart's 150 sold as a Caravan at the cart's price) - its floor, the price it was first shelved at
+  //    (WAGON-PRICE: one bought before the price rose stays lawful) ──
   if ((has(item, 'wagonKind') || has(item, 'wagonLook') || has(item, 'wagonEntry')) && item.templateIndex !== TRANSPORT_SMALL_CART) out.add('wagon');
-  if (has(item, 'wagonKind') && item.wagonKind !== 'cart' && !(item.value >= (WAGON_KINDS[item.wagonKind]?.value ?? Infinity))) out.add('wagon');
+  if (has(item, 'wagonKind') && item.wagonKind !== 'cart' && !(item.value >= (WAGON_KINDS[item.wagonKind]?.floor ?? Infinity))) out.add('wagon');
   // ── the Broker's binding ────────────────────────────────────────────
   if (has(item, 'stonesPaid') && !(item.bound === true && BROKER_STONES.has(item.stonesPaid))) out.add('bound');
   // ── the ladder, the records, the sigil and the enchantments ──────────
@@ -544,11 +545,15 @@ function makerFindings(/** @type {any} */ item, /** @type {any[]} */ rows, /** @
 /** A generous ceiling on an item's honest price: its base (doubled twice over - a fur, a shelf potion, a quality), its
  *  lines', a Rare's and an Exalted's worth, an Aetheric's or a Gilded's, and a margin for a soul, a jewel's gem and a
  *  potent brew. A MAGIC.DEF item's own price is the player's data's, never this tree's: its ceiling is the margin's
- *  tenfold. */
+ *  tenfold. AUDIT WAGON-PRICE Y4: a marked wagon's base is its kind's price (wagonKinds.js WAGON_KINDS `value`), never
+ *  DFU's cart's 150 - a Caravan's ceiling stood at 12,200, under its own 25,000, and an honest one sold was counted a
+ *  gain from nowhere (server-account/src/judge.js WEALTH_VERSION moved with it). */
 export const WORTH_MARGIN = 10_000;
+/** A marked wagon's own price (its kind's), or 0. */
+const wagonPriceOf = (/** @type {any} */ item) => (item.templateIndex === TRANSPORT_SMALL_CART && validWagonKind(item.wagonKind) ? WAGON_KINDS[item.wagonKind].value : 0);
 export function worthCeiling(/** @type {any} */ item) {
   if (!item || typeof item !== 'object' || !lawTemplate(item.templateIndex)) return 0;
-  const base = itemBaseValue(item, lawTemplate) * 4;
+  const base = Math.max(itemBaseValue(item, lawTemplate), wagonPriceOf(item)) * 4;
   const lines = affixesWorth(Array.isArray(item.affixes) ? item.affixes.filter(validAffix) : [], item);
   const legacy = item.magic === true || item.artifact === true ? WORTH_MARGIN * 10 : 0;
   return base + lines + RARE_ENCHANT_WORTH + EXALTED_WORTH + (aethericById(item.aetheric) ? AETHERIC_WORTH : 0) + (has(item, 'gilded') ? GILDED_WORTH : 0) + WORTH_MARGIN + legacy;

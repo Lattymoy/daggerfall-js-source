@@ -129,8 +129,8 @@ export function testEntryById(id) {
   return preset ? { preset, ride: false } : null;
 }
 
-/** TSR4: put a horse in the pack, minted the way the general store's
- *  shelf mints one (shopStock's add: mintCondition over the template's
+/** TSR4: put a horse in the pack, minted the way a shelf mints one (the
+ *  Stable's since MERCHANT-YARDS - systems/merchantYards.js yardStock) (shopStock's add: mintCondition over the template's
  *  own name and base value) - so the T window, the travel card and the
  *  pack all answer hasHorse the way they would for a bought one. Once:
  *  a pack that already carries a horse is left alone. */

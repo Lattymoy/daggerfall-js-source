@@ -145,7 +145,7 @@ test('SD11d THE HOSTS SAY THROUGH THE VOICE, from the world host\'s own text: it
   assert.match(W, /const sdSay = \(t, rank = SD_VOICE_RANK\.turn, key = null\) => \{ sdVoice\.say\(t, rank, key\); return true; \};/);
   assert.match(W, /warn: \(text\) => sdSay\(text, SD_VOICE_RANK\.readout\),/, 'the collapse\'s and the fade\'s readouts');
   assert.match(W, /const sdSpoilsBurst = sdFightLink \? createSdSpoils\(\{[\s\S]{0,700}?say: \(t\) => sdSay\(t, SD_VOICE_RANK\.note\),/, 'the floor\'s word');
-  assert.match(W, /const sdFrame = \(\) => \{[^\n]*sdFightFrame\(\); sdVoiceFrame\(\); \};/, 'framed with the arc');
+  assert.match(W, /const sdFrame = \(\) => \{[^\n]*sdFightFrame\(\); sdBodyFrame\(\); sdVoiceFrame\(\); \};/, 'framed with the arc');   // PIN MOVED (INT15): the Hour's body word's own step between
   assert.match(W, /sdSay: \(t, rank\) => sdSay\(t, rank\),/, 'handed to the mode machine');
   const WM = read('src/scenes/worldModes.js'), D = read('src/scenes/dungeonContext.js');
   assert.match(WM, /sdSay: \(t, rank\) => host\.sdSay\?\.\(t, rank\) \?\? false,/);

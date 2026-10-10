@@ -134,7 +134,7 @@ test('GATE-CROWD the host\'s crowd: out of a court every peer, the same list, an
 // ── the host: the crowd's cut in the online frame ─────────────────────────────────────────────────────────────────
 
 test('GATE-CROWD the online frame: the drawn list cut after the map\'s poses are kept and before a cast, a light or a body is drawn - in a gate\'s court alone, at the card\'s count, my party always; the doors that answer a player on this screen ask the cut too (mutants: cut everywhere; the count unread; the party unasked; the pick, the gift and the spark uncut; every player drawn here)', () => {
-  const m = lift(/\n\s*for \(const d of drawable\) if \(d\?\.shown\) _peerMapPoses\.set\(d\.id, d\.shown\);\n\s*const visiblePeers = gateCrowd\.cut\(cabin \? drawable : drawable\.filter\(\(d\) => !csaPeers\.isBelowDeck\(d\.id\)\), (\{ on: [^\n]*?\})\);[^\n]*\n\s*peerCastVisuals\(visiblePeers\);/, 'the crowd\'s cut');
+  const m = lift(/\n\s*for \(const d of drawable\) if \(d\?\.shown\) _peerMapPoses\.set\(d\.id, d\.shown\);\n(?:\s*if \(hccOn\(\)\) hcc\.driverGlue\(drawable, \{ toWire: campToWire \}\);[^\n]*\n)?\s*const visiblePeers = gateCrowd\.cut\(cabin \? drawable : drawable\.filter\(\(d\) => !csaPeers\.isBelowDeck\(d\.id\)\), (\{ on: [^\n]*?\})\);[^\n]*\n\s*peerCastVisuals\(visiblePeers\);/, 'the crowd\'s cut');
   assert.match(WORLD, /const gateCrowd = createGateCrowd\(\);/);
   // the cut's question, evaluated as the frame asks it
   const ask = new Function('d', `const { modes, player, onlineToScene, gateCrowdMax, getPref, social } = d; return ${m[1]};`);

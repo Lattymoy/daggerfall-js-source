@@ -384,7 +384,7 @@ swing its techniques and say "Not here." for the rest; none of the four is such 
   puppet through its owner, a world boss through the relay's boss bucket and the referee's clip - no new message. An
   item record does carry a new kind of line: an older build reads a list holding a technique piece as from a newer
   version (`loot.js` `validLootList`'s own message), and the account service's judge must know the law - so the item
-  law's version 2 moved `ACCOUNT_VERSION` to acct105, and a site deploy waits for that service (AUDIT TECH1; a law moved
+  law's version 2 moved `ACCOUNT_VERSION` to acct106 (acct105 on this branch, renumbered past THE INTEGRITY ARC lane 3's acct105 at the #745 merge), and a site deploy waits for that service (AUDIT TECH1; a law moved
   without it ships the site first, and an honest technique piece reads as a forgery - a hold and a strike - in the gap).
   `test/tech1_roster.test.js` holds each law version to the first service that carries it.
 - **What a referee counts.** The arena's and the court's referees count a blow by its sequence. A Piercing Shot is one
@@ -421,7 +421,7 @@ the real collider. What they found, and what was done:
 | finding | severity | done |
 | --- | --- | --- |
 | The outdoor ground was invisible to every aim: `raycast` meets meshes alone, and outdoors the ground is the collider's terrain sampler - a Volley outdoors, a ground leap, answered "Out of reach" (the tests' fake collider let its ray meet the ground) | blocker | `rayHit` marches the terrain; THE GROUND OUTDOORS on the real Collider |
-| `ACCOUNT_VERSION` did not move with the item law: a site deploy could ship before the judge that knows a technique line, and an honest piece read as a forgery (a hold, a strike) | blocker | acct105; the law-to-service pin (`test/tech1_roster.test.js`) |
+| `ACCOUNT_VERSION` did not move with the item law: a site deploy could ship before the judge that knows a technique line, and an honest piece read as a forgery (a hold, a strike) | blocker | acct106 (acct105 until the #745 merge renumbered it past INT11-INT14's); the law-to-service pin (`test/tech1_roster.test.js`) |
 | Shadowstep turned the view from mid-dash, so the body landed behind the foe looking away, and its 'view' blow struck nothing - its price paid; its `target` was read by nothing | major | the turn from the landing (`face(point, from)`); a target's blow is the target's alone |
 | A leap under a ceiling turned back at it and landed metres short (2.8 m: a 9 m leap came down at 3.75 m) | major | `flightApex` lowers the apex to fit, or refuses with "No room to leap." |
 | A click in the air (or the touch Attack button) started a plain swing, and the landing's strike had no machine to start on | major | no gesture and no touch swing while `techniqueFlying()` |
@@ -449,7 +449,7 @@ pass already made them - the kit's own pieces are what they were (law 9).
 first run left the walled shaft alive: its test's flat ceiling was the one the middle's ray already saw - a beam over
 part of the disc kills it). `TECH1-the-cap-past-the-referee` (16 m/s raised past the siege's 18) is retired: the cap is 12
 now, and `TECH1-AUDIT-the-run-past-the-arena` (12 raised to 16) is the stricter record on the same line. Re-aimed by content, their laws unchanged: `fb1009g_bowclock.json` (the gesture's gate
-carries the flight's), `gatekeys.json` and `fb1004d_knight_house.json` (acct105), and this list's own `TECH1-the-turn-unmade`
+carries the flight's), `gatekeys.json` and `fb1004d_knight_house.json` (acct105, then acct106 at the #745 merge), and this list's own `TECH1-the-turn-unmade`
 (the turn now takes the landing point). One pin moved, marked `PIN MOVED (AUDIT TECH1)`: `test/mwattackclip.test.js`
 MW-D12 reads the gesture's gate with the flight's term (no line around it could carry the term without breaking the
 pin's own shape).

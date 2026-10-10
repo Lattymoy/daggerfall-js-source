@@ -283,7 +283,7 @@ test('TECH1 THE LAW: a technique of the piece\'s family, one, last of its own li
   // deploy waits only on ACCOUNT_VERSION (.github/workflows/deploy.yml) - a law moved without it ships the site before the
   // judge that knows it, and an honest piece reads as a forgery (a hold and a strike) in the gap. Each law version names
   // the first service that carries it; a law with no entry here, or a service older than its entry, fails.
-  const LAW_SERVICE = { 1: 0, 2: 105 };
+  const LAW_SERVICE = { 1: 0, 2: 106 };   // PIN MOVED (TECH1 at the #745 merge): law 2 is acct106's - main's acct105 is THE INTEGRITY ARC lane 3's, which never carried it
   assert.ok(Number.isInteger(LAW_SERVICE[ITEM_LAW_VERSION]), `item law ${ITEM_LAW_VERSION} names no account service - bump ACCOUNT_VERSION with it and record it here`);
   assert.ok(Number(/^acct(\d+)$/.exec(ACCOUNT_VERSION)?.[1]) >= LAW_SERVICE[ITEM_LAW_VERSION], `${ACCOUNT_VERSION} predates item law ${ITEM_LAW_VERSION}`);
   const lawful = [

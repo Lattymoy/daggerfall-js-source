@@ -322,7 +322,9 @@ So a claim of level 1 brings less health and may deal less; a claim of 60 brings
 claim the fastest possible kill is `(BOSS_TTK_S - BUCKET_DEPTH_X) / BUCKET_RATE_X` of full-rate damage - seventy-five
 seconds of the whole room at the cap (the bucket's burst, then its rate; the pins measure it at levels 1 to 60).
 A modified client can still refuse to take damage (a player owns their body - co-op's law); it cannot kill the boss
-alone, faster, or for anyone else.
+alone, faster, or for anyone else. INT11 (2026-10-10, `06-Systems/Integrity-Arc.md` section 6): the relay now judges his
+blows no save answers on the poses it holds and keeps its own count of each fighter's body (`net/bossRef.js`,
+`net/bossBody.js`) - measured first, on each receipt; once staff enforce it, a fighter the count fells is fallen.
 
 ### A blow on the boss
 
@@ -510,7 +512,7 @@ ships in ONE slice.
   later came - under the Legion-Lord trial the relay runs his host, section 17; every other fight has none.)
 - The boss does not path. The arena is an open disc so that it never needs to.
 - A modified client can refuse the boss's damage to itself, and a modified client can give itself anything offline
-  (saves are the player's). What Option B protects is the SHARED outcome and the RECORD: nobody kills the boss alone
+  (saves are the player's). INT11 (2026-10-10): the relay counts the blows no save answers itself (above, section 5). What Option B protects is the SHARED outcome and the RECORD: nobody kills the boss alone
   or faster than the numbers allow, nobody is credited a kill the relay did not see, and no account is credited twice.
 - Instanced difficulty dungeons: the next arc.
 

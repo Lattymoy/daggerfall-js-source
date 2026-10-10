@@ -94,8 +94,8 @@
   {
     "name": "AUDIT-BRANCH-0925-P1-my-horse-yields",
     "file": "src/scenes/horseCartPool.js",
-    "old": "out.push({ key: KEY_HORSE, aabb: aabbOf(horseBox(s.horse)), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true });",
-    "new": "out.push({ key: KEY_HORSE, aabb: aabbOf(horseBox(s.horse)), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true, yields: true });",
+    "old": "out.push({ key: KEY_HORSE, aabb: teamAabb('', s.horse), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true });",
+    "new": "out.push({ key: KEY_HORSE, aabb: teamAabb('', s.horse), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true, yields: true });",
     "tests": [
       "test/prwagon1.test.js",
       "test/hcc_pool.test.js"

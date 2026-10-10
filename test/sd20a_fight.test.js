@@ -196,7 +196,9 @@ test('SD20a A FROZEN PAGE IS ABSENT (F3): a fighter\'s pose in the Hour is stamp
     await cell.pose(mara, doorPose(11));
     assert.equal(cell.room._all().get(mara).pAt, undefined, 'a cell\'s pose: no stamp');
   });
-  assert.match(RELAY, /this\._sdFightFan\(stepRemnant\(f, now, this\._sdFightBodies\(f, now\), rand01\)\);/);
+  // PIN MOVED (INT12): the census as the relay's count has it (net/bossBody.js bodyCensus) - read at the beat's own instant still
+  assert.match(RELAY, /bodies = this\._sdFightBodies\(f, now\), census = \(\) => bodyCensus\(f, bodies, now, line\.body, line\.enforce, \{ lives: false \}\);/);   // PIN MOVED (AUDIT INT11): the bodies read once a beat, at its own instant still
+  assert.match(RELAY, /this\._sdFightFan\(stepRemnant\(f, now, this\._bodiesBare\(census\(\)\), rand01\)\);/);
 });
 
 // ── F4: a blow strikes a fighter ───────────────────────────────────────

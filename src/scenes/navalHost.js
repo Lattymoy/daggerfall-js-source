@@ -4625,7 +4625,7 @@ export function createNavalHost(deps) {
       return {
         boat, hull: boat.hull, root: [pose.position[0], pose.position[2]], yaw,
         pos: [pose.position[0] + Math.sin(yaw) * mid, pose.position[1], pose.position[2] + Math.cos(yaw) * mid],
-        hl: (b.bowZ - b.aftZ) / 2, hw: b.halfWidth, maxHull: st.damage.maxHull, maxSail: st.damage.maxSail,
+        hl: (b.bowZ - b.aftZ) / 2, hw: b.halfWidth, maxHull: st.damage.maxHull, maxSail: st.damage.maxSail, hullNow: st.damage.hull,   // INT15: her hull as it stands, for the relay's count
         atHelm: boat === myBoat(), wrecked: st.damage.state === SHIP_STATES.wrecked,
       };
     },

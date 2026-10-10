@@ -675,8 +675,8 @@
   {
     "name": "TECH1-AUDIT-the-service-behind-the-law",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct105';",
-    "new": "export const ACCOUNT_VERSION = 'acct104';",
+    "old": "export const ACCOUNT_VERSION = 'acct106';",
+    "new": "export const ACCOUNT_VERSION = 'acct105';",
     "tests": [
       "test/tech1_roster.test.js"
     ]

@@ -440,6 +440,10 @@ export class PlayerMotor {
     this.stats = stats;
     /** @type {number[]|null} WAGONS2: where the body is DRAWN instead of its capsule (bodyFeetAt) - a seat of a wagon drawn grown under the Overworld (scenes/wagonRiders.js drawAt); null, the capsule's own */
     this.drawFeet = null;
+    /** @type {number|null} WAGONS3: the way the body is DRAWN facing instead (bodyYawFor) - a wagon's bench, the way it is driven (scenes/world.js); null, the body's own */
+    this.drawYaw = null;
+    /** @type {number|null} WAGONS3: how many times its size the body is drawn under the Overworld when it sits in a rig grown apart from the traveller (world/wagonModels.js rigGrowOf - its bench, a seat in its back); null, the traveller's own grow */
+    this.drawGrow = null;
     this.jumpBoost = jumpBoost;    // () => AcrobatMotor jumpSpeedMultiplier (systems/skills owns the formula)
     // AUDIT 64 F2: () => PlayerEntity.IsEnhancedJumping (DaggerfallEntity
     // .cs:85, raised/cleared by Jumping.cs:84/:94 - the plain Jump
@@ -1802,7 +1806,7 @@ export class PlayerMotor {
   }
   /** CLIMB5: the yaw the body is drawn at (third person) for a view at `viewYaw` - the view's own, except on the climb
    *  and the moment after it, when it turns to the wall and back (BODY_TURN_TAU). */
-  bodyYawFor(viewYaw) { return this._bodyYaw ?? (this._bodyYawOff == null ? viewYaw : viewYaw + this._bodyYawOff); }
+  bodyYawFor(viewYaw) { return this.drawYaw ?? this._bodyYaw ?? (this._bodyYawOff == null ? viewYaw : viewYaw + this._bodyYawOff); }   // WAGONS3: a bench's facing first
   /** CLIMB2: hanging from a lip. */
   get hanging() { return this._wall?.mode === 'hang'; }
   /** CLIMB2: the grip the HUD shows ({ amount, low }) - on the wall, and while it comes back after; null otherwise. */

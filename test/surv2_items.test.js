@@ -182,10 +182,10 @@ test('SURV2: the camp gear hands itself to the host, the skillet explains itself
   assert.equal(useItem(gear, [gear], { entity: e, nowMinute: now }).kind, 'pitchCamp');
 });
 
-test('SURV2: the general store shelves provisions after the horse and cart, and a new character sets out with the kit', () => {
+test('SURV2: the general store shelves provisions (no horse or cart since MERCHANT-YARDS), and a new character sets out with the kit', () => {
   const items = stockShopShelf({ buildingType: BUILDING_TYPES.GeneralStore, quality: 10 }, { level: 1 }, { rolls: () => 0.5 });
   const idx = (t) => items.findIndex((i) => i.templateIndex === t);
-  assert.ok(idx(TEMPLATE.Rations) > idx(94) && idx(94) >= 0, 'rations after the horse');
+  assert.ok(idx(TEMPLATE.Rations) >= 0 && idx(94) === -1, 'rations on it; no horse');   // PIN MOVED (MERCHANT-YARDS, 2026-10-10): the horse and the cart are the town's Stable's and Wagon Yard's now - the provisions stand where they did, after DFU's draws
   for (const t of [TEMPLATE.Bread, TEMPLATE.Waterskin, TEMPLATE.Campfire, TEMPLATE.CampingEquipment, TEMPLATE.Skillet]) assert.ok(idx(t) >= 0, `a quality-10 store carries ${templateByIndex(t).name}`);
   assert.ok(items.find((i) => i.templateIndex === TEMPLATE.Waterskin).water === 0, 'sold empty');
   assert.ok(items.every((i) => i.name && i.value != null), 'every row minted with a name and a value');

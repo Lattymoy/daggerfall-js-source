@@ -17,6 +17,8 @@
 //   deps = {
 //     ready() -> bool                    TryGetGameManager: a game in progress, the player standing, the world up
 //     transport: { get(), set(mode), hasCart(), hasHorse(), isOnShip() }      TransportManager
+//     teamShort() -> string | null       WAGONS3: why the wagon driven cannot be hitched - its team short of the horses
+//                                        it takes (systems/wagonKinds.js wagonTeamShort); absent, never short
 //     player: { position() -> [x,y,z] (the capsule's centre), forward(), movement() -> { position, forward } }
 //     gps: { worldX(), worldZ(), scenePosition(), currentMapPixel() -> {x,y} }   PlayerGPS
 //     streaming: { isReady(), isInit(), mapPixelX(), mapPixelY(), ratio() }      StreamingWorld
@@ -53,7 +55,7 @@ import {
   isHorseCommandMode, isHorseNamingMode, resolveInteriorEntryMode, isCartInteriorDeployment, shouldDeployIndependentHorseForInterior,
   horseTravelsWithFastTravel, resolveFastTravelDepartureModes, shouldReconcileAfterTravelOptions, clampHorseFollowDistance, clampInteriorWagonAccessDistance,
   isWithinInteriorEntranceDistance, formatHorseSubject, formatHorseAndWagonSubject, horseTargetLabel, HCC_TEXT, pickGround, angleBetween,
-  WAGON_FOLLOW_DISTANCE, HORSE_NAME_MAX, DEPLOYED_SPAWN_RETRY_SECONDS, DIRECT_CART_AUDIO_REFRESH_DELAY, HORSE_MENU_MOUNT_DISTANCE, HORSE_WAGON_HITCH_DISTANCE,
+  WAGON_FOLLOW_DISTANCE, DEPLOY_CLEARANCE, HORSE_NAME_MAX, DEPLOYED_SPAWN_RETRY_SECONDS, DIRECT_CART_AUDIO_REFRESH_DELAY, HORSE_MENU_MOUNT_DISTANCE, HORSE_WAGON_HITCH_DISTANCE,
   WAGON_INVENTORY_DISTANCE, DEFAULT_HORSE_FOLLOW_DISTANCE, DEFAULT_INTERIOR_ACCESS_DISTANCE, HORSE_DISMOUNT_REAR_OFFSET,
   HITCHED_HORSE_LOCAL_X, HITCHED_HORSE_LOCAL_Z, ACTIVATION_REACH, WAGON_SAVE_VERSION, TOO_FAR_SECONDS, STATIONARY_PROBE_HEIGHT, STATIONARY_PROBE_DISTANCE,
   GROUND_RETRY_SECONDS, POSE_POSITION_TOLERANCE_SQ, POSE_ANGLE_TOLERANCE_DEG, signedLongitudinalTravel, wheelRotationDegrees, wrapWheelAngle, cargoTier,
@@ -357,6 +359,37 @@ export function createHorseCartRuntime(deps) {
 
   /** WAGONS1: the wagon's own length ahead of its axle to its horse - the presentation's (its model's), else the mod's. */
   function hitchZ() { const z = deps.presentation?.hitchOf?.(); return Number.isFinite(z) && z > 0 ? z : HITCHED_HORSE_LOCAL_Z; }
+  /** WAGONS3 (Mac: "Spawning the wagon can trap you under the wagon"): WHERE A WAGON LAID FRESH STANDS ITS REAR AXLE
+   *  BEHIND THE PLAYER - a summon, a dismount with no trailing pose cached, a door left with the wagon. The mod's 2.5 m
+   *  (WAGON_FOLLOW_DISTANCE) was its own wagon's, 3.1 m long; Mac's run 3.1, 6.1 and 6.7 m forward of their axles, so at
+   *  2.5 m every one of them stood round the player's capsule - and the box a parked wagon stands, two-sided faces, held
+   *  them inside it. A longer wagon stands its hitch's length behind them and DEPLOY_CLEARANCE more, its front clear of
+   *  the capsule; the classic wagon keeps the mod's own. */
+  function deploySetback() { const z = hitchZ(); return z > HITCHED_HORSE_LOCAL_Z ? z + DEPLOY_CLEARANCE : WAGON_FOLLOW_DISTANCE; }
+  /** ...and a hitched wagon re-laid behind its horse (a following team's arrival): its own hitch, as it trails. */
+  function hitchSetback() { const z = hitchZ(); return z > HITCHED_HORSE_LOCAL_Z ? z : WAGON_FOLLOW_DISTANCE; }
+  /** WAGONS3 (Mac: "requiring 2 horses to use"): the host's word on a team short of its wagon's horses, or null. */
+  const teamShort = () => deps.teamShort?.() ?? null;
+  /** WAGONS3: a hitch the team cannot make - said, and answered true (the caller does nothing more). */
+  const refuseShortTeam = () => { const t = teamShort(); if (t) say(t); return !!t; };
+  /** AUDIT WAGONS3 T3: a wagon the team I own can pull - the cart the horse's own press, its plaque's rows and the mount
+   *  hotkey read. A short team's horse answers as a horse with no wagon (Ride, and the hotkey the horse): with the cart
+   *  they answered Drive and Follow, both refused, and the horse could not be taken at all. */
+  const drivableCart = () => tm().hasCart() && !teamShort();
+  /** WAGONS3: A TEAM SHORT OF ITS WAGON'S HORSES WHILE IT PULLS IT (a horse sold or given away with the wagon driven or
+   *  following) STOPS WHERE IT IS - the wagon parked with the horse left in harness, its driver on foot beside it. */
+  function reconcileTeam() {
+    const short = teamShort();
+    if (!short) return;
+    if (!physicalPersistenceEnabled) { if (tm().get() === TRANSPORT.Cart) { setTransportMode(TRANSPORT.Foot); say(short); } return; }
+    if (isTeamFollowing()) {
+      const live = tryGetLiveFollowingWagonPose();
+      if (live) { const [wx, wz] = toWorld(live.position); commitDeployment(wx, wz, live.heading, HORSE_MODE.HitchedToWagon); say(short); }
+      return;
+    }
+    // a team already pulling (the cart the mode a frame since): a fresh set of the cart is ObserveTransportMode's to turn back
+    if (tm().get() === TRANSPORT.Cart && previousTransportMode === TRANSPORT.Cart && wagonState.Mode === WAGON_MODE.WithPlayer && !pee().isPlayerInside()) { deployFromBestAvailablePose(HORSE_MODE.HitchedToWagon); setTransportMode(TRANSPORT.Foot); say(short); }
+  }
   /** WAGONS2 (AUDIT): THE WAGON'S LENGTH IN THE MOD'S DISTANCES. The mod measures its team's reaches - the player 5 m
    *  from the wagon, the horse 3.5 m from it - from the wagon's anchor, its rear axle, and stands its horse 3.1 m ahead of
    *  that (HITCHED_HORSE_LOCAL_Z), inside its own 3.5. Mac's wagons hitch theirs 3.8, 7.1 and 7.7 m ahead: out of that
@@ -470,11 +503,12 @@ export function createHorseCartRuntime(deps) {
     if (deployedHorseMode !== HORSE_MODE.LooseStationary && deployedHorseMode !== HORSE_MODE.FollowingPlayer) { wagonState.HorseWorldX = 0; wagonState.HorseWorldZ = 0; wagonState.HorseHeadingX = 0; wagonState.HorseHeadingZ = 1; }
     clearPendingInteriorState(); hasMovingWorldPose = false; clearMovingPresentation(); destroyDeployedWagonPresentation();
   }
-  /** CaptureBestAvailableDeploymentPose [IL_7820]: the trailing wagon's last cached world pose, else 2.5 m behind the player. */
+  /** CaptureBestAvailableDeploymentPose [IL_7820]: the trailing wagon's last cached world pose, else 2.5 m behind the
+   *  player - WAGONS3: a wagon's own setback behind them (deploySetback). */
   function captureBestAvailableDeploymentPose() {
     if (hasMovingWorldPose) return { wx: movingWorldX, wz: movingWorldZ, heading: [...movingWorldHeading] };
     const heading = horizontalForward(deps.player.forward());
-    const [wx, wz] = toWorld(vsub(playerPosition(), vscale(heading, WAGON_FOLLOW_DISTANCE)));
+    const [wx, wz] = toWorld(vsub(playerPosition(), vscale(heading, deploySetback())));
     return { wx, wz, heading };
   }
   function deployFromBestAvailablePose(horseMode) { const p = captureBestAvailableDeploymentPose(); commitDeployment(p.wx, p.wz, p.heading, horseMode); }
@@ -509,6 +543,7 @@ export function createHorseCartRuntime(deps) {
     hasObservedTransportMode = true; previousTransportMode = mode;
   }
   function hitchDeployedWagon() {
+    if (refuseShortTeam()) return;   // WAGONS3: a pair's wagon takes its pair
     // WAGON-HITCH: where the wagon stands as the team is mounted - the parked one's grounded pose, or the following
     // one's - so the trailing wagon is driven off from there, not laid fresh behind the camera (taken before the
     // teardown below forgets it, kept after the teardown's own clear)
@@ -749,6 +784,7 @@ export function createHorseCartRuntime(deps) {
   }
   function canUseCartTransport() {
     if (!ready() || !tm().hasCart()) return deny(HCC_TEXT.doNotOwnWagon);
+    if (teamShort()) return deny(teamShort());   // WAGONS3: a pair's wagon takes its pair
     if (!physicalPersistenceEnabled) return allow();
     if (!tm().hasHorse()) return deny(HCC_TEXT.needHorseToPull);
     if (wagonState.Mode === WAGON_MODE.WithPlayer && (wagonState.HorseMode === HORSE_MODE.WithPlayer || wagonState.HorseMode === HORSE_MODE.HitchedToWagon)) return allow();
@@ -757,6 +793,7 @@ export function createHorseCartRuntime(deps) {
   }
   function tryUseCartTransport() {
     if (!ready()) return unsupported(HCC_TEXT.notReady);
+    if (teamShort()) return denyTransportAction(teamShort());   // WAGONS3
     if (!physicalPersistenceEnabled) { if (tm().hasCart()) { setTransportMode(TRANSPORT.Cart); return success(); } return denyTransportAction(HCC_TEXT.doNotOwnWagon); }
     if (canMountNearbyDeployedCart()) { hitchDeployedWagon(); return success(); }
     if (!tryPrepareCartMount()) return denyTransportAction(HCC_TEXT.wagonAndHorseMustBeWithYou);
@@ -781,6 +818,7 @@ export function createHorseCartRuntime(deps) {
     if (!hasObservedTransportMode) {
       hasObservedTransportMode = true; previousTransportMode = mode; rememberLastMount(mode);
       if (mode !== TRANSPORT.Cart) rememberValidNonCartMode(mode);
+      if (mode === TRANSPORT.Cart && teamShort()) { rejectTransportChange(TRANSPORT.Foot, teamShort()); return; }   // WAGONS3
       if (mode === TRANSPORT.Cart && !tryPrepareCartMount()) { rejectTransportChange(TRANSPORT.Foot, HCC_TEXT.wagonNotWithYou); return; }
       if (mode === TRANSPORT.Horse && !tryPrepareHorseMount(HORSE_MENU_MOUNT_DISTANCE)) { rejectTransportChange(TRANSPORT.Foot, `${horseSubject(true)} is not close enough.`); return; }
       if (mode === TRANSPORT.Horse) deployWagonBeforeHorseTravel();
@@ -788,6 +826,7 @@ export function createHorseCartRuntime(deps) {
     }
     if (mode === previousTransportMode) return;
     const prev = previousTransportMode;
+    if (mode === TRANSPORT.Cart && teamShort()) { rejectTransportChange(prev, teamShort()); return; }   // WAGONS3
     if (mode === TRANSPORT.Cart && !tryPrepareCartMount()) { rejectTransportChange(prev, HCC_TEXT.wagonNotWithYou); return; }
     if (mode === TRANSPORT.Horse && prev !== TRANSPORT.Cart && !tryPrepareHorseMount(HORSE_MENU_MOUNT_DISTANCE)) { rejectTransportChange(prev, `${horseSubject(true)} is not close enough.`); return; }
     if (mode === TRANSPORT.Horse && prev !== TRANSPORT.Cart) deployWagonBeforeHorseTravel();
@@ -813,7 +852,7 @@ export function createHorseCartRuntime(deps) {
     if (mode === TRANSPORT.Horse || mode === TRANSPORT.Cart) { tm().set(TRANSPORT.Foot); return; }   // the direct set; ObserveTransportMode reads it next frame
     if (mode !== TRANSPORT.Foot) { say(HCC_TEXT.quickMountUnavailable); return; }
     if (pee().isPlayerInside() || tm().isOnShip()) { say(HCC_TEXT.mountOutdoorsOnly); return; }
-    const target = resolveQuickMountMode(wagonState.LastMount, tm().hasHorse(), tm().hasCart());
+    const target = resolveQuickMountMode(wagonState.LastMount, tm().hasHorse(), drivableCart());   // AUDIT WAGONS3 T3
     if (target === TRANSPORT.Foot) { say(HCC_TEXT.doNotOwnHorseOrWagon); return; }
     tryUseTransport(target);
   }
@@ -829,7 +868,7 @@ export function createHorseCartRuntime(deps) {
     if (mode === TRANSPORT.Cart || (mode === TRANSPORT.Horse && !hasCart)) return { ok: false, text: HCC_TEXT.alreadyWithYou };
     const fwd = horizontalForward(deps.player.forward());
     if (hasCart) {
-      const [wx, wz] = toWorld(vsub(playerPosition(), vscale(fwd, WAGON_FOLLOW_DISTANCE)));
+      const [wx, wz] = toWorld(vsub(playerPosition(), vscale(fwd, deploySetback())));   // WAGONS3: clear of the player
       const hm = hasHorse ? (mode === TRANSPORT.Horse ? HORSE_MODE.WithPlayer : HORSE_MODE.HitchedToWagon) : HORSE_MODE.None;
       commitDeployment(wx, wz, fwd, hm); destroyStationaryHorsePresentation();
     } else { deployHorseBehindPlayer(); destroyStationaryHorsePresentation(); }
@@ -957,7 +996,7 @@ export function createHorseCartRuntime(deps) {
     if (hadWagon) resetWagonState(WAGON_MODE.WithPlayer);
     if (hadHorse) setHorseWithPlayer();
     if (ready() && !pee().isPlayerInside()) {
-      if (entryMode === TRANSPORT.Cart && tm().hasCart() && tm().hasHorse()) { wagonState.HorseMode = HORSE_MODE.HitchedToWagon; wagonState.HorseWorldX = 0; wagonState.HorseWorldZ = 0; wagonState.HorseHeadingX = 0; wagonState.HorseHeadingZ = 1; setTransportMode(TRANSPORT.Cart); }
+      if (entryMode === TRANSPORT.Cart && tm().hasCart() && tm().hasHorse() && !teamShort()) { wagonState.HorseMode = HORSE_MODE.HitchedToWagon; wagonState.HorseWorldX = 0; wagonState.HorseWorldZ = 0; wagonState.HorseHeadingX = 0; wagonState.HorseHeadingZ = 1; setTransportMode(TRANSPORT.Cart); }
       else if (entryMode === TRANSPORT.Horse && tm().hasHorse()) { setHorseWithPlayer(); setTransportMode(TRANSPORT.Horse); }
     }
     log.info?.('[TrailingWagon] failed interior transition rolled back pending physical deployments.');
@@ -1076,7 +1115,7 @@ export function createHorseCartRuntime(deps) {
     if (pee().isPlayerInside()) return true;
     const activate = mode ?? deps.activateMode();
     if (isHorseNamingMode(activate)) { openHorseNamePrompt(); return true; }
-    const decision = resolveHorseActivation(wagonState.Mode, wagonState.HorseMode, tm().hasCart(), isHorseCommandMode(activate));
+    const decision = resolveHorseActivation(wagonState.Mode, wagonState.HorseMode, drivableCart(), isHorseCommandMode(activate));   // AUDIT WAGONS3 T3
     switch (decision) {
       case HORSE_ACTIVATION.Follow: startFollowingHorse(); return true;
       case HORSE_ACTIVATION.Wait: stopFollowingHorse(); return true;
@@ -1089,7 +1128,7 @@ export function createHorseCartRuntime(deps) {
   /** ACT-MENU: the plaque's rows over one of my three activators (hccActionRows), off the state the press will read. */
   function actionRows(target) {
     if (!physicalPersistenceEnabled || !ready()) return [];
-    return hccActionRows(target, { wagonMode: wagonState.Mode, horseMode: wagonState.HorseMode, ownsCart: tm().hasCart() });
+    return hccActionRows(target, { wagonMode: wagonState.Mode, horseMode: wagonState.HorseMode, ownsCart: drivableCart() });   // AUDIT WAGONS3 T3
   }
   function startFollowingHorse() {
     const pose = stationaryHorseVisual?.tryGetGroundedPose();
@@ -1110,6 +1149,7 @@ export function createHorseCartRuntime(deps) {
     say(`${horseSubject(true)} waits here.`);
   }
   function startFollowingHitchedTeam() {
+    if (refuseShortTeam()) return;   // WAGONS3
     const hp = stationaryHorseVisual?.tryGetGroundedPose(), wp = deployedVisual?.tryGetGroundedPose();
     if (!hp || !wp) { say(`${horseAndWagonSubject(true)} are not ready to move yet.`); return; }
     [wagonState.WorldX, wagonState.WorldZ] = toWorld(wp.position);
@@ -1192,7 +1232,7 @@ export function createHorseCartRuntime(deps) {
     wagonState.HorseWorldX = hx; wagonState.HorseWorldZ = hz; wagonState.HorseHeadingX = fwd[0]; wagonState.HorseHeadingZ = fwd[2];
     if (!wasTeam) wagonState.HorseMode = HORSE_MODE.FollowingPlayer;
     else {
-      const wg = tryFindGround(phys, vsub(grounded, vscale(fwd, WAGON_FOLLOW_DISTANCE)));
+      const wg = tryFindGround(phys, vsub(grounded, vscale(fwd, hitchSetback())));   // WAGONS3: a hitched wagon its own hitch behind its horse
       if (!wg) return;   // the flags stay set: retried next frame (the mod's own order - the horse fields already written)
       [wagonState.WorldX, wagonState.WorldZ] = toWorld(wg);
       wagonState.HeadingX = fwd[0]; wagonState.HeadingZ = fwd[2];
@@ -1380,7 +1420,7 @@ export function createHorseCartRuntime(deps) {
     refreshHorseNameInputState();
     applyPendingPersistenceWork();
     const ownsCart = tm().hasCart(), ownsHorse = tm().hasHorse();
-    reconcileCartOwnership(ownsCart, ownsHorse); reconcileHorseOwnership(ownsHorse);
+    reconcileCartOwnership(ownsCart, ownsHorse); reconcileHorseOwnership(ownsHorse); reconcileTeam();   // WAGONS3: and a team short of its horses
     observeTransportMode(); updatePendingTransportModeRefresh(); handleConfiguredHotkeys();
     validateInteriorAccessContext(); updateTravelOptionsCompatibility();
     const weight = deps.entity?.wagonWeight?.() ?? 0, limit = deps.entity?.wagonKgLimit?.() ?? 750;

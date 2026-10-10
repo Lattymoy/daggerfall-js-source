@@ -217,8 +217,10 @@ import { newDuelRef, duelNote, duelOpen, duelBoutOf, duelBlow, duelPose, duelEnd
 import { newWildRef, wildZone, wildPose, wildBlow, wildPick, wildSigned, wildStep, wildVitals, wildGone, wildCarry, wildCarryOf, wildSignNow, wildFallOf, WILD_FALL_PREFIX, WILD_REF } from '../../src/net/wildRef.js';   // INT9: the open zone refereed
 import { mintWildReceipt } from '../../src/net/wildReceipt.js';   // INT9: a fall, signed
 import { mintDuelReceipt } from '../../src/net/duelReceipt.js';   // INT8: a duel won, signed
-import { newFight, joinFight, applyHit, applyCrystalHit, applyHostHit, applyHeal, stepBrain, stateOf, earned, earnedBy, COURT_CENTRE, BRAIN_TICK_MS, CHECKPOINT_MS, GATE_FIGHTERS_MAX } from '../../src/net/gateBrain.js';
+import { newFight, joinFight, applyHit, applyCrystalHit, applyHostHit, applyHeal, healRef, stepBrain, stateOf, earned, earnedBy, COURT_CENTRE, BRAIN_TICK_MS, CHECKPOINT_MS, GATE_FIGHTERS_MAX } from '../../src/net/gateBrain.js';
 import { mintReceipt, importReceiptKey, readReceipt, RECEIPT_TTL_S } from '../../src/net/gateReceipt.js';
+import { bodyConfig, bodyStruck, bodySaid, bodyHealed, bodyLife, bodyCensus, bodyMeasure, bodyOut, bodyDown, bodyTellOwed, HULL_REFLOAT, BODY_TRAIL_MS, BODY_TRAIL_MAX } from '../../src/net/bossBody.js';   // INT11: the body counted
+import { judgeGate, judgeRemnant, judgeSerpent } from '../../src/net/bossRef.js';   // INT11-INT13: the boss's blows judged here
 // SERPENT1 (2026-10-04, Mac: "a new world event that requires players with a ship to meet up and take on a large scale
 // sea serpent in the ocean"): FOUR FILES JOIN THE BUNDLE - net/serpentLaw.js (the day's window - it imports wire.js and
 // gateLaw.js, both here), net/serpentBody.js and net/serpentBrain.js (the body and the fight, pure law - they import
@@ -276,7 +278,7 @@ import { mintArenaReceipt } from '../../src/net/arenaReceipt.js';
 import { owIdInCell, owRowInCell, owRowSane, owFoldSpent, owFoldRows, owRowsBehind, owPrune, owLedgerOf, owLedgerEmpty, toWelcome } from '../../src/net/overworldLaw.js';
 
 import { serpentGate, validSerpentOut, SERPENT_INTERNAL_FELL, SERPENT_TELL_RETRY_MS, SERPENT_FIGHT_KEY, SERPENT_FIGHTS_KEY, SERPENT_SITES_MAX, serpentFightId, SERPENT_FELLS_KEY, SERPENT_FELLS_MAX, SERPENT_RC_PREFIX } from './relay.js';   // SERPENT1: the serpent's frame and its doors (the wire's, through relay.js - walked last, as ever)
-import { roomOf, parseClient, inRange, inRangeOf, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, OWN_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, amapShareGate, AMAP_ROOM_HZ_MAX, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, CARAVAN_DECOR_KEY, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, CARAVAN_DOC_MIN_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, wedGate, WED_HZ_MAX, renownGate, renownRoomGate, lookGate, eventGate, EVENT_KEY, validLiveEvent, gateGate, siegeGate, SIEGE_IN_MS, GATE_INTERNAL_FELL, SOCIAL_ROOM, validGateOut, HELLO_WAIT_MS, GATE_TELL_RETRY_MS, gateReceiptKey, GATE_BRAIN_MIN, GATE_HERE_HOLD_MS, guildGate, guildRoomGate, GUILD_CHAT_ROOM_HZ_MAX, SEAT_ELSEWHERE, raidGate, RAID_INTERNAL_CLEAN, RAID_INTERNAL_DAY, RAID_DAY_ASK_MS, raidTownsGate, RAID_TELL_RETRY_MS, RAID_CLEANS_MAX, RAID_LEDGER_PREFIX, raidLedgerKey, RAID_RC_PREFIX, raidReceiptKeyOf, RAID_RC_KEEP, RAID_RC_KEEP_MS, mapPixelOfWire, validRaidOut, worldRoom, sharedClassicMinutes, wallMsForClassicMinutes, isRegionRoom, travHubGate, travRoomGate, TRAV_STALE_MS, TRAV_WELCOME_MAX, owGate, owRoomGate, OW_LEDGER_KEY, REALM_DOOR_WORD, riteRelayGate, validRiteOut, sanitizeName, RITE_INTERNAL_BROKEN, RITE_INTERNAL_DAY, RITE_TELL_RETRY_MS, RITE_KEY, RITE_BY_MAX, RITE_CIRCLES_MAX, RITE_HUB_CIRCLES_MAX, RITE_ASK_EVERY_MS, RITE_ASK_TIMEOUT_MS, arenaGate } from './relay.js';
+import { roomOf, parseClient, inRange, inRangeOf, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, OWN_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, amapShareGate, AMAP_ROOM_HZ_MAX, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, CARAVAN_DECOR_KEY, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, CARAVAN_DOC_MIN_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, wedGate, WED_HZ_MAX, renownGate, renownRoomGate, lookGate, eventGate, EVENT_KEY, validLiveEvent, gateGate, siegeGate, SIEGE_IN_MS, GATE_INTERNAL_FELL, SOCIAL_ROOM, validGateOut, HELLO_WAIT_MS, GATE_TELL_RETRY_MS, gateReceiptKey, GATE_BRAIN_MIN, GATE_HERE_HOLD_MS, guildGate, guildRoomGate, GUILD_CHAT_ROOM_HZ_MAX, SEAT_ELSEWHERE, raidGate, RAID_INTERNAL_CLEAN, RAID_INTERNAL_DAY, RAID_DAY_ASK_MS, raidTownsGate, RAID_TELL_RETRY_MS, RAID_CLEANS_MAX, RAID_LEDGER_PREFIX, raidLedgerKey, RAID_RC_PREFIX, raidReceiptKeyOf, RAID_RC_KEEP, RAID_RC_KEEP_MS, mapPixelOfWire, validRaidOut, worldRoom, sharedClassicMinutes, wallMsForClassicMinutes, isRegionRoom, travHubGate, travRoomGate, TRAV_STALE_MS, TRAV_WELCOME_MAX, owGate, owRoomGate, OW_LEDGER_KEY, REALM_DOOR_WORD, riteRelayGate, validRiteOut, sanitizeName, RITE_INTERNAL_BROKEN, RITE_INTERNAL_DAY, RITE_TELL_RETRY_MS, RITE_KEY, RITE_BY_MAX, RITE_CIRCLES_MAX, RITE_HUB_CIRCLES_MAX, RITE_ASK_EVERY_MS, RITE_ASK_TIMEOUT_MS, arenaGate, bodyWordRelayGate } from './relay.js';   // AUDIT INT15: bodyWordRelayGate - a body's word on a bucket of its own
 import { holdemGate, holdemSitRoomGate } from './relay.js';   // CARDS5: the card table's gate; AUDIT CARDS-3 A4: the room's sits
 import { newTable, topUp as holdemTopUp, sit as holdemSit, sitRefusal as holdemSitRefusal, stand as holdemStand, actAt as holdemAct, tick as holdemTick, nextAt as holdemNextAt, emptyTable as holdemEmpty, tableLook as holdemLook, stateDelta as holdemDelta, holdemGoldTable } from '../../src/net/holdemTable.js';   // CARDS5: THE RELAY DEALS - the room's card tables (holdemTable.js imports only cardLaw.js, which imports only dice.js)
 // WILD1 (2026-10-07, the owner: "Wrothgarian mountains need to be turned into a open pvp zone"): ONE FILE JOINS THE
@@ -586,6 +588,10 @@ export class Room {
     // CHECKPOINT_MS, so an eviction loses that much of it and not the fight; undefined = not read yet, null = none
     this._fight = undefined;
     this._fightSavedAt = 0;
+    // INT11: the boss fights' trails of their bodies' poses, by socket (_trailPose) - in memory alone. AUDIT INT11: and when
+    // this instance began keeping them: until a trail's span on, a body with none is not known to stand anywhere (_trailOf)
+    this._trails = null;
+    this._trailsAt = Date.now();
     this._siege = undefined;   // PVP-REF: a siege room's fighters, by account (storage's `siege` after a wake)
     this._siegeSavedAt = 0;
     this._helloBy = new Map();   // AUDIT-SEATS R3: a battle room's hello buckets, by verified account (_battleHelloGate) - a wake forgets them, as the meters
@@ -1545,6 +1551,7 @@ export class Room {
     // bout takes beats the bouts - a fighter gone or out ends its bout on the next frame anyone sends
     if (posed && this._duelRef?.bouts.size) { duelPose(this._duelRef, a.sub, m.p, now); await this._duelBeat(now); }
     if (posed && this._wildRef?.fighters.has(a.sub)) { wildPose(this._wildRef, a.sub, m.p, now); await this._wildBeat(now); }   // INT9: the zone's believed place, and a fall waiting on a pick
+    if (posed && this._trailing(a)) this._trailPose(ws, m.p, now);   // INT11: where a boss fight's body stood, as its poses came - AUDIT INT11: its socket's, in a fight that lives
     // AUDIT-SEATS T2 (Seats-Arc 6.6: "no body drawn to fighters, no collider, excluded from every banner count, a free
     // camera over the town"): A SPECTATOR IS NO BODY - in a battle room a socket that is no fighter (a spectator's pass,
     // or a fighter's before its `in`) keeps its camera on its own attachment and is drawn to nobody: the fan below said
@@ -1777,6 +1784,7 @@ export class Room {
       // the sand when its join makes it one (`_sessionShow`)
       const shown = isArenaPrivateRoom(a.key) ? { shown: (await this._sessionOf())?.members?.[who.subject] ? 1 : 0 } : {};
       if (!this._setAttach(ws, { ...a, ...placed, ...shown, id: m.id, name: who.name, title: who.title, ...(who.ts ? { ts: who.ts } : {}), glyphs: who.glyphs, gx: who.gx, au: who.au, ...(who.rb ? { rb: who.rb } : {}), lv: who.lv, ...guild, ...(who.hn ? { hn: who.hn, hc: who.hc, hb: who.hb, hg: who.hg } : {}), ...(who.ci && !chat && !isSocialRoom(a.key) ? { ci: who.ci } : {}), ...(armsOk(who.wa) && !chat && !isSocialRoom(a.key) ? { wa: who.wa } : {}), gio: who.gio, sub: who.subject, ...(siegeSide ? { sd: siegeSide } : {}), mu: who.mu, pose: chat ? null : m.pose, since: replaced?.since ?? now, ...arena, ...charLv, ...linked })) { this._refuse(ws, 'hello too large'); return; }   // MOD1: `sub` the verified account (what a mute names), `mu` until when it may not talk   // RENOWN1: `lv` the Renown level the token carried
+      if (!chat && m.pose && this._trailing({ key: a.key, sub: who.subject })) this._trailPose(ws, m.pose, now);   // AUDIT INT11: a fighter's socket new to the room stands where its hello put it, from now - on its trail, or none says when
       // SRV-N: `v` rides EVERY welcome, a channel's included. A player in the enhanced skin holds a presence socket
       // and one chat socket per tab; whichever reconnects first after a hand deploy is the one that notices, and the
       // client's detector (net/updateNotice.js) is a Set so the rest of them say nothing. SLAM13 (AUDIT SLAM A5): and
@@ -2315,7 +2323,8 @@ export class Room {
       // (net/gateBrain.js applyHit): the relay reads the damage a client claims and believes as much of it as the
       // claimed level's bucket allows, from where the socket's own pose stands.
       const now = Date.now();
-      if (!this._spend(ws, now, gateGate, 'gateBucket', 'gateDrops', 'too many gate frames')) return;
+      // AUDIT INT15: a body's word (`vt`) on a bucket of its own - never the blows' (net/wire.js bodyWordRelayGate)
+      if (m.k === 'vt' ? !this._spend(ws, now, bodyWordRelayGate, 'bodyBucket', 'bodyDrops', 'too many body words') : !this._spend(ws, now, gateGate, 'gateBucket', 'gateDrops', 'too many gate frames')) return;
       // AUDIT WBX S1: a receipt's spoils taken - the hub forgets its kept copy of that day's (its own word, the account's
       // own socket; anywhere else a `spent` is junk, as any gate frame outside a gate room is)
       if (m.k === 'spent') {
@@ -2372,7 +2381,7 @@ export class Room {
       // raid's law: its own cell's socket or a halo's), whose object holds the fight (net/serpentBrain.js). On its own
       // bucket, in a cell alone (anywhere else junk), credited to the VERIFIED account (`sub`, off the token)
       const now = Date.now();
-      if (!this._spend(ws, now, serpentGate, 'serpentBucket', 'serpentDrops', 'too many serpent frames')) return;
+      if (m.k === 'vt' ? !this._spend(ws, now, bodyWordRelayGate, 'bodyBucket', 'bodyDrops', 'too many body words') : !this._spend(ws, now, serpentGate, 'serpentBucket', 'serpentDrops', 'too many serpent frames')) return;   // AUDIT INT15: a hull's word on its own
       // SERPENT2: where this account's game found the serpent the clock is about - the hub's alone (the gate's `site` law)
       if (m.k === 'site') {
         if (!isSocialRoom(a.key) || typeof a.sub !== 'string' || !a.sub) { this._junk(ws); return; }
@@ -2406,8 +2415,8 @@ export class Room {
       }
       // SD8b: THE LAST MOMENT'S FIGHT - in a Hollow's realm alone (anywhere else junk), on the fight's own bucket: an `in`
       // joins it, a blow is believed by the Remnant's law from where the socket's own pose stands (_sdFightFrame)
-      if (m.k === 'in' || m.k === 'hit' || m.k === 'ehit' || m.k === 'xhit') {
-        if (!this._spend(ws, now, sdFightRelayGate, 'sdFightBucket', 'sdFightDrops', 'too many fight frames')) return;
+      if (m.k === 'in' || m.k === 'hit' || m.k === 'ehit' || m.k === 'xhit' || m.k === 'vt') {   // INT12: `vt` - its body, in its own word
+        if (m.k === 'vt' ? !this._spend(ws, now, bodyWordRelayGate, 'bodyBucket', 'bodyDrops', 'too many body words') : !this._spend(ws, now, sdFightRelayGate, 'sdFightBucket', 'sdFightDrops', 'too many fight frames')) return;   // AUDIT INT15: a body's word on its own
         if (!isSdRoom(a.key)) { this._junk(ws); return; }
         try { await this._sdFightFrame(ws, a, m, now); } catch (e) { console.warn('[sd] fight failed', e?.message ?? e); }
         return;
@@ -2980,6 +2989,7 @@ export class Room {
     this._gone.add(ws);
     this._dead.delete(ws);
     const a = this._attach(ws);
+    this._trails?.delete(ws);   // AUDIT INT11: its trail with it
     // AUDIT CHAT A7: a room that drained sweeps its own storage on the way out - the empty-hello sweep never
     // runs in a channel, which is never empty on the way in; what an unclean close left behind goes here
     const listed = this.state.getWebSockets();
@@ -4642,12 +4652,89 @@ export class Room {
    *  its last pose stands, and whether that pose says it died. */
   _gateBodies(f) {
     const newest = new Map();
-    for (const [, b] of this._all()) {
+    for (const [ws, b] of this._all()) {
       if (!b.id || !b.sub || !b.pose || !f.players[b.sub]) continue;
       const had = newest.get(b.sub);
-      if (!had || (b.since ?? 0) >= (had.since ?? 0)) newest.set(b.sub, b);
+      if (!had || (b.since ?? 0) >= (had[1].since ?? 0)) newest.set(b.sub, [ws, b]);
     }
-    return [...newest.values()].map((b) => { const c = this._courtOf(b.pose); return { sub: b.sub, x: c.x, z: c.z, dead: !!b.pose.dd }; });
+    return [...newest.values()].map(([ws, b]) => { const c = this._courtOf(b.pose); return { sub: b.sub, x: c.x, z: c.z, dead: !!b.pose.dd, tr: this._trailOf(ws, (p) => this._courtOf(p)) }; });   // INT11: and its trail - AUDIT INT11: the trail of the socket that speaks for it
+  }
+  // ── INT11-INT13: THE BODY COUNTED (net/bossBody.js, net/bossRef.js; bible/06-Systems/Integrity-Arc.md section 6) ──
+  /** The line the boss fights' count runs by - the BOSS_BODY var (bodyConfig: a mistyped one is the default, which
+   *  measures and enforces nothing), read once an instance. */
+  _bodyLine() { return (this._bodyCfg ??= bodyConfig(this.env?.BOSS_BODY)); }
+  /**
+   * AUDIT INT11: DOES THIS SOCKET'S POSE GO ON A TRAIL? A socket of an account a fight here counts, while that fight lives
+   * - a gate's court, an Abyss Dungeon's realm, a serpent's waters in its cell (the fights the instance holds awake). A cell
+   * whose serpent fell hours ago kept every pose of every player on a trail nobody read, on the path PERF-RELAY1 made its
+   * own; a court's watchers too.
+   */
+  _trailing(a) {
+    const sub = a?.sub;
+    if (typeof sub !== 'string' || !sub) return false;
+    if (isGateRoom(a.key)) { const f = this._fight; return !!f?.players?.[sub] && !f.fell && !f.wrath; }
+    if (isSdRoom(a.key)) { const f = this._sdFight; return !!f?.players?.[sub] && !f.fell && !f.lost; }
+    if (!this._serpents?.size) return false;
+    for (const f of this._serpents.values()) if (f.players?.[sub] && !f.fell && !f.gone) return true;
+    return false;
+  }
+  /** A boss fight's body's pose, kept on its SOCKET's trail (the last BODY_TRAIL_MS, BODY_TRAIL_MAX at most) - where it
+   *  stood as its poses came, which the relay judges a landing by (net/bossRef.js posAt). AUDIT INT11: by socket, never by
+   *  account - a cell holds an account's sockets apart (a reconnect's, a modified client's second), and one trail of them
+   *  all read whichever stood nearest the landing: decoys far off, and no blow ever counted. The census reads the trail of
+   *  the socket that speaks for the body. */
+  _trailPose(ws, p, now) {
+    const all = (this._trails ??= new Map());
+    const tr = all.get(ws) ?? [];
+    tr.push([now, p.x, p.y ?? 0, p.z]);
+    while (tr.length > BODY_TRAIL_MAX || now - tr[0][0] > BODY_TRAIL_MS) tr.shift();
+    all.delete(ws); all.set(ws, tr);
+    if (all.size > 256) all.delete(all.keys().next().value);   // the longest silent goes first
+  }
+  /** A socket's trail in a fight's own frame (`frame` - a pose to `{x, z}`). None kept: undefined - it sent no pose since
+   *  this instance began keeping them, so it stands where its last put it (posAt); AUDIT INT11: unless the instance is
+   *  younger than a trail (woken, its trails lost to its sleep), when where it stood is not known: `[]`. */
+  _trailOf(ws, frame) {
+    const tr = this._trails?.get(ws);
+    if (tr?.length) return tr.map(([t, x, y, z]) => { const c = frame({ x, y, z }); return [t, c.x, c.z]; });
+    return Date.now() - this._trailsAt < BODY_TRAIL_MS ? [] : undefined;
+  }
+  /** AUDIT INT11: a socket that has just become a fighter stands where its last pose put it FROM NOW - on its trail, so a
+   *  landing before it is not read off a pose that may have come after. */
+  _trailSeed(ws, a, now) { if (a?.pose && !this._trails?.has(ws) && this._trailing(a)) this._trailPose(ws, a.pose, now); }
+  /** The fight's bodies for its brain - its census as the count has it, without the trails the judge read. */
+  _bodiesBare(bodies) { return bodies.map((b) => { const bare = { ...b }; delete bare.tr; return bare; }); }
+  /**
+   * The blows the relay judged (net/bossRef.js) taken off each struck fighter's count (`line` - a body's or a hull's);
+   * a fall by the count, once `enforce` holds, made the fight's own (`fell` - the Abyss Dungeon's one life, a ship's
+   * wreck) and told to the fighter's game (`{t, k: 'bd'}` and `extra`) on each of its sockets here.
+   */
+  async _bodyCount(t, f, hits, now, line, fell = null, extra = {}) {
+    const cfg = this._bodyLine();
+    for (const { sub, share } of hits) {
+      const p = f.players[sub];
+      if (!p || !bodyStruck(p, share, now, line) || !cfg.enforce) continue;
+      if (fell) await fell(sub);
+      p.bd.ta = now;   // AUDIT INT11: told - bodyTellOwed's clock
+      this._bodyWord(t, sub, extra);
+    }
+  }
+  /** The count's fall (`{t, k: 'bd'}` and `extra`) to each of the fighter's sockets here. */
+  _bodyWord(t, sub, extra = {}) {
+    const word = JSON.stringify({ t, k: 'bd', ...extra });
+    for (const [ws, b] of [...this._all()]) if (b.id && b.sub === sub) this._send(ws, word);
+  }
+  /** AUDIT INT11: THE FALL TOLD AGAIN to each fighter it is owed (bodyTellOwed - fallen by the count, its game not yet
+   *  dead by it; `owed` the fight's own acknowledgement besides), once a beat at most every BODY_TELL_MS. */
+  _bodyTell(t, f, now, extra = {}, owed = () => true) {
+    if (!this._bodyLine().enforce) return;
+    for (const [sub, p] of Object.entries(f.players)) if (owed(p) && bodyTellOwed(p, now, true)) this._bodyWord(t, sub, extra);
+  }
+  /** A fighter's measure for its receipt (bodyMeasure - `kept` the fight's own earning law, asked of it as it stood at
+   *  the count's first fall), as the receipt's optional `m`. */
+  _bodyMeasureOf(f, sub, earnedFn) {
+    const m = bodyMeasure(f.players[sub], (q) => earnedFn({ ...f, players: { ...f.players, [sub]: q } }, sub));
+    return m ? { m } : {};
   }
   /** The brain's frames to everyone in the room, in order. */
   _gateFan(frames) {
@@ -4685,12 +4772,17 @@ export class Room {
         return;
       }
       this._send(ws, JSON.stringify({ t: 'gate', ...stateOf(f) }));
+      this._trailSeed(ws, a, now);   // AUDIT INT11
       const r = f.rc?.[a.sub];
       if (r) this._send(ws, JSON.stringify({ t: 'gate', k: 'rcpt', r }));
       if (joined) await this._gateSave(f, now, true);   // AUDIT WB A3: at once for a newcomer alone - a reconnect storm was a write a frame
       if (!f.fell && !f.wrath) await this._gateArm(now);
       return;
     }
+    // INT11: ITS BODY, in its own word - more than the count is a mend, believed out of its budget (net/bossBody.js); a
+    // word from one no fight here counts is no junk (its `in` may be on its way) - it is not heard
+    const line = this._bodyLine();
+    if (m.k === 'vt') { if (f?.players[a.sub]) bodySaid(f.players[a.sub], m.v / 1000, now, line.body, { enforce: line.enforce }); return; }
     // a blow: from a fighter (a correct client says `in` first), from where its own pose stands - the dead strike nothing
     if (!f || !f.players[a.sub]) { this._junk(ws); return; }
     // GATE-HEAL: what another's spell healed in this fighter, and whose - the socket in this room the peer id names
@@ -4698,20 +4790,26 @@ export class Room {
     // (net/gateBrain.js applyHeal). A figure for the round-up alone: it keeps no beat and wakes nothing.
     if (m.k === 'heal') {
       const pose = a.pose ? this._courtOf(a.pose) : null;   // the fallen too: a heal before a fall may be said after it
+      const me = f.players[a.sub];
       for (const [by, n] of m.h) {
         const healer = [...this._all()].find(([, b]) => b.id === by)?.[1]?.sub ?? null;
-        if (healer) applyHeal(f, a.sub, healer, n, pose, now);
+        // AUDIT INT11: and what was believed, the count's too - an ally's mend, never its own budget's (net/bossBody.js
+        // bodyHealed), at the brain's own reference health (healRef - generous, so the share it reads is the least)
+        const got = healer ? applyHeal(f, a.sub, healer, n, pose, now) : 0;
+        if (got > 0) bodyHealed(me, got / healRef(me.lv), now, line.body, { enforce: line.enforce });
       }
       return;
     }
     // WB9c: a blow on a crystal of Oblivion - the brain's caps as a blow on him; a crystal broken, and the Reckoning
     // broken with the last of them, said to the court at once (its health goes out on the beat)
-    if (m.k === 'xhit') this._gateFan(applyCrystalHit(f, a.sub, m.c, m.d, m.r, a.pose && !a.pose.dd ? this._courtOf(a.pose) : null, now, m.q));
+    // INT11: and one the count has fallen strikes nothing once `enforce` holds - the relay's word, as the pose's `dd` is
+    const at = a.pose && !a.pose.dd && !bodyOut(f.players[a.sub], line.enforce) ? this._courtOf(a.pose) : null;
+    if (m.k === 'xhit') this._gateFan(applyCrystalHit(f, a.sub, m.c, m.d, m.r, at, now, m.q));
     // WB11b: a blow on one of his host (the Legion-Lord's) - the same caps; one slain said to the court at once (its
     // health goes out on the beat)
-    else if (m.k === 'ahit') this._gateFan(applyHostHit(f, a.sub, m.i, m.d, m.r, a.pose && !a.pose.dd ? this._courtOf(a.pose) : null, now, m.q));
+    else if (m.k === 'ahit') this._gateFan(applyHostHit(f, a.sub, m.i, m.d, m.r, at, now, m.q));
     else {
-      applyHit(f, a.sub, m.d, m.r, a.pose && !a.pose.dd ? this._courtOf(a.pose) : null, now, m.q);   // AUDIT WB11 W3: the blow's sequence - once a blow
+      applyHit(f, a.sub, m.d, m.r, at, now, m.q);   // AUDIT WB11 W3: the blow's sequence - once a blow
       if (f.fell && !f.said) { await this._gateFall(f, now); return; }
     }
     // AUDIT WBX R6: a blow keeps the beat as an `in` does - a court that emptied slept until its day's end, and a client
@@ -4730,7 +4828,13 @@ export class Room {
     const end = gateTimes(f.day).wrathAt + GATE_COLLAPSE_MS;
     if (now >= end) { this._fight = null; await this.state.storage.delete('gatefight'); return true; }
     try {
-      this._gateFan(stepBrain(f, now, this._gateBodies(f), rand01));
+      // INT11: HIS BLOWS JUDGED HERE first, on the census as the count has it (the blows in flight are the ones every
+      // screen drew - judged before the brain moves on from them), then the brain steps over it as it stands after
+      // AUDIT INT11: the bodies read once a beat - the census run over them again for the brain, after the count moved
+      const line = this._bodyLine(), bodies = this._gateBodies(f), census = () => bodyCensus(f, bodies, now, line.body, line.enforce);
+      await this._bodyCount('gate', f, judgeGate(f, census(), now), now, line.body);
+      this._bodyTell('gate', f, now);   // AUDIT INT11: a fall its game has not taken, told again
+      this._gateFan(stepBrain(f, now, this._bodiesBare(census()), rand01));
       this._riteAskAhead(f, now);   // AUDIT WB12d (R2, L3): the rite's helpers asked of the hub ahead of the kill, never awaited by the beat
       if (f.fell && !f.said) await this._gateFall(f, now);
       else if (f.said && !f.told) await this._gateTellHubOnce(f, now);   // AUDIT WB A10: the hub told until it answers
@@ -4766,7 +4870,7 @@ export class Room {
     f.rc = {};
     for (const sub of Object.keys(f.players)) {
       if (!earned(f, sub)) continue;
-      try { f.rc[sub] = await mintReceipt({ d: f.day, b: f.boss, s: sub, c: rand32(), x: earnedBy(f, sub), l: f.players[sub].lv, ...(helped.has(sub) ? { r: 1 } : {}) }, key, { subtle: crypto.subtle, nowS }); }   // AUDIT WBX S2: the level the fight admitted it at
+      try { f.rc[sub] = await mintReceipt({ d: f.day, b: f.boss, s: sub, c: rand32(), x: earnedBy(f, sub), l: f.players[sub].lv, ...(helped.has(sub) ? { r: 1 } : {}), ...this._bodyMeasureOf(f, sub, earned) }, key, { subtle: crypto.subtle, nowS }); }   // AUDIT WBX S2: the level the fight admitted it at; INT14: the count's measure
       catch (e) { console.warn('[gate] receipt refused', e?.message ?? e); }
     }
     // WB12d: one who broke the rite and took no part in the fight - a receipt of the rite alone (its ember, and nothing else)
@@ -4957,14 +5061,45 @@ export class Room {
   /** A fight's bodies about its waters now: one a fighter (its NEWEST socket speaks for it - AUDIT SOC B9's law, the
    *  roll call's own _siegeSockets), where its last pose stands in the site frame, whether that pose says it died, and
    *  when its sender said it (`ts` - AUDIT SHIPS A1: the serpent leads its marks by the way she makes between them). */
-  _serpentBodies(f) {
+  _serpentBodies(f, trailed = false) {
     const out = [];
-    for (const [sub, [, b]] of this._siegeSockets()) {
+    for (const [sub, [ws, b]] of this._siegeSockets()) {
       if (!b.pose || !f.players[sub] || f.players[sub].stale) continue;   // AUDIT SHIPS C2: nor gone at
       const c = this._serpentFrameOf(f, b.pose);
-      out.push({ sub, x: c.x, z: c.z, dead: !!b.pose.dd, ...(Number.isFinite(b.pose.ts) ? { ts: b.pose.ts } : {}) });   // AUDIT SHIPS A1: the pose's send time - the brain reads her way off it
+      out.push({ sub, x: c.x, z: c.z, dead: !!b.pose.dd, ...(Number.isFinite(b.pose.ts) ? { ts: b.pose.ts } : {}), ...(trailed ? { tr: this._trailOf(ws, (p) => this._serpentFrameOf(f, p)) } : {}) });   // AUDIT SHIPS A1: the pose's send time - the brain reads her way off it; INT13: `trailed`, the trail of the socket that speaks for her (AUDIT INT11)
     }
     return out;
+  }
+  /** INT13: a ship the count has wrecked, once `enforce` holds - wrecked by the relay's word (serpentWreck: her share out,
+   *  her coil let go), said to the fight. AUDIT INT13: and noted as the count's (`cw`) - the count floats her again, not
+   *  her own word, which her game says once, as she floats, and may have said while the count still held her. */
+  async _serpentCountWreck(fights, id, f, sub, now) {
+    const out = [];
+    if (serpentBrain.serpentWreck(f, sub, 1, now, out)) f.players[sub].cw = 1;
+    await this._serpentSay(fights, id, f, out, now);
+  }
+  /** AUDIT INT13: a ship at (`x`, `z`, the site's frame) back at the fight after SERPENT_ABSENT_RETIRE_MS away is a new
+   *  hull (bodyLife, her measure kept) - and a wreck the count held her in, afloat (_serpentRefloat). Asked by the beat and
+   *  by her `in`, whichever sees her back first (each refreshes `seenAt`). */
+  async _serpentHullBack(fights, id, f, sub, x, z, now) {
+    const p = f.players[sub];
+    if (!p?.bd || Math.hypot(x, z) > serpentBrain.ENGAGE_R || !(now - (p.seenAt ?? p.joinedAt) > serpentBrain.SERPENT_ABSENT_RETIRE_MS)) return;
+    bodyLife(p, now, this._bodyLine().hull);
+    await this._serpentRefloat(fights, id, f, sub, now);
+  }
+  /** AUDIT INT13: A SHIP THE COUNT WRECKED, FLOATED BY IT AGAIN (her patches past HULL_REFLOAT, or a new hull - back from
+   *  her yard): afloat by the relay's word, her share back - when the wreck is still the count's (`cw`: her game never
+   *  said one of its own), or her own `wr 0` came while the count held her (`wf`, kept). Her game says `wr 0` ONCE, as her
+   *  machine floats her, and the count's float comes a word later: unheard, it was never said again, and the relay kept
+   *  her a wreck for the fight - her share out, never gone at, never struck again. Answers whether she floated. */
+  async _serpentRefloat(fights, id, f, sub, now) {
+    const p = f.players[sub];
+    if (!(p?.cw || p?.wf) || bodyDown(p)) return false;
+    delete p.cw; delete p.wf;
+    const out = [];
+    serpentBrain.serpentWreck(f, sub, 0, now, out);
+    await this._serpentSay(fights, id, f, out, now);
+    return true;
   }
   /**
    * Does this socket hear the fight `id`? AUDIT SERPENT S1: a socket whose `in` named a site this day (`sps` - a ship
@@ -5037,13 +5172,37 @@ export class Room {
     if (!by) return;
     const [id, f] = by;
     if (f.players[a.sub]?.stale) return;   // AUDIT SHIPS C2: a game told to reload is not heard until it has
+    // INT13: HER HULL, in her own word (net/bossBody.js - its line the hull's: her carpenters' patches, believed out of a
+    // budget, and afloat again past HULL_REFLOAT); and once `enforce` holds a ship the count wrecked fires nothing, nor
+    // floats again by her word alone. AUDIT INT13: heard before the fight is taken up - a hull's word, four a second, is no
+    // engagement: it woke a sleeping fight and returned before its beat was armed (the serpent swimming, striking nothing)
+    const line = this._bodyLine();
+    if (m.k === 'vt') {
+      bodySaid(f.players[a.sub], m.v / 1000, now, line.hull, { enforce: line.enforce, up: HULL_REFLOAT, hull: true });
+      const me = f.players[a.sub];
+      if (!(me?.cw || me?.wf) || bodyDown(me)) return;
+      await this._serpentSay(fights, id, f, serpentBrain.serpentResume(f, now), now);
+      await this._serpentRefloat(fights, id, f, a.sub, now);   // AUDIT INT13: the count floated her
+      if (!f.fell && !f.gone) await this._serpentArm(now);
+      return;
+    }
     await this._serpentSay(fights, id, f, serpentBrain.serpentResume(f, now), now);   // SERPENT3: judged on a fight taken up, never one asleep
+    const sunk = line.enforce && !!f.players[a.sub]?.bd?.dn;
     if (m.k === 'hit') {
-      const pose = a.pose && !a.pose.dd ? this._serpentFrameOf(f, a.pose) : null;   // the dead strike nothing
+      // AUDIT INT11: and from the socket that speaks for her body alone (the census's - its newest here): a second socket of
+      // hers in this cell, posing far off as the one judged, struck from near
+      const own = this._siegeSocketOf(a.sub)?.[0] === ws;
+      const pose = a.pose && !a.pose.dd && !sunk && own ? this._serpentFrameOf(f, a.pose) : null;   // the dead strike nothing
       // the kill is said by _serpentFall alone, its receipts minted and kept first (AUDIT WB A10's law) - never the brain's word of it here
       await this._serpentSay(fights, id, f, serpentBrain.applySerpentHit(f, a.sub, m.d, m.z, pose, now).filter((o) => o.k !== 'fell'), now);
       if (f.fell && !f.said) { await this._serpentFall(id, f, now); return; }
-    } else if (m.k === 'wr') { const out = []; serpentBrain.serpentWreck(f, a.sub, m.w, now, out); await this._serpentSay(fights, id, f, out, now); }   // AUDIT 2 XC5: a coil holding her lets her go
+    } else if (m.k === 'wr') {
+      // AUDIT 2 XC5: a coil holding her lets her go. AUDIT INT13: her own word of a wreck makes it hers (`cw` gone - the
+      // count's float floats her no more); her `wr 0` while the count holds her is kept (`wf`) for the float it waits on
+      const me = f.players[a.sub];
+      if (m.w || !sunk) { delete me.cw; delete me.wf; const out = []; serpentBrain.serpentWreck(f, a.sub, m.w, now, out); await this._serpentSay(fights, id, f, out, now); }
+      else me.wf = 1;
+    }
     else await this._serpentSay(fights, id, f, serpentBrain.coilWord(f, a.sub, m.k, m.i, m.x, m.z, now), now);
     if (!f.fell && !f.gone) await this._serpentArm(now);
   }
@@ -5092,6 +5251,7 @@ export class Room {
     const present = new Set();
     for (const [, sock] of this._all()) if (sock.id && sock.sub) present.add(sock.sub);   // the accounts about the cell now - a full fight frees a seat no one holds
     const joined = !f.players[a.sub];
+    if (!joined) await this._serpentHullBack(fights, id, f, a.sub, at.x, at.z, now);   // AUDIT INT13: back from her yard - before the join counts her seen
     const lv = Number.isSafeInteger(a.cl) && a.cl >= 1 ? Math.min(m.lv, a.cl) : m.lv;
     if (!serpentBrain.joinSerpentFight(f, a.sub, a.name ?? '', lv, m.hl, now, serpentAdmits(t.day, now), present, off <= serpentBrain.ENGAGE_R)) {
       this._send(ws, JSON.stringify({ t: 'serpent', ...serpentBrain.serpentStateOf(f) }));
@@ -5099,6 +5259,7 @@ export class Room {
       return;
     }
     this._send(ws, JSON.stringify({ t: 'serpent', ...serpentBrain.serpentStateOf(f) }));
+    this._trailSeed(ws, a, now);   // AUDIT INT11
     if (joined || born) await this._serpentSave(id, f, now, true);
     if (!f.fell && !f.gone) await this._serpentArm(now);
   }
@@ -5121,7 +5282,16 @@ export class Room {
         // still, its kill and its hub's answer saved as they come; every kept one was written again every 2 s
         const stepped = !f.fell && !f.gone;
         if (stepped) {
-          const said = serpentBrain.stepSerpentBrain(f, now, this._serpentBodies(f), rand01);
+          // INT13: ITS BLOWS ON HER HULL JUDGED HERE first (net/bossRef.js judgeSerpent) - a wreck by the count, enforced,
+          // the fight's own (_serpentCountWreck) and told to her game
+          const line = this._bodyLine(), bodies = this._serpentBodies(f, true);   // AUDIT INT11: read once a beat
+          // AUDIT INT13: A SHIP BACK AT THE FIGHT after SERPENT_ABSENT_RETIRE_MS away is a NEW HULL - she sailed for her yard,
+          // or came on another; the count of the hull she left with is not hers (bodyLife, her measure kept). Kept, a yard's
+          // whole hull read as a patch past the line, and the count wrecked a ship whose hull stood at seven tenths
+          for (const b of bodies) if (!b.dead) await this._serpentHullBack(fights, id, f, b.sub, b.x, b.z, now);
+          await this._bodyCount('serpent', f, judgeSerpent(f, bodies, now), now, line.hull, (sub) => this._serpentCountWreck(fights, id, f, sub, now), { sx: f.sx, sz: f.sz });
+          this._bodyTell('serpent', f, now, { sx: f.sx, sz: f.sz }, (p) => !!p.cw);   // AUDIT INT11: her game has not wrecked her (her own `wr 1` takes `cw`)
+          const said = serpentBrain.stepSerpentBrain(f, now, this._bodiesBare(bodies), rand01);
           // AUDIT 2 XB6 (2026-10-06): kept before it is said when a word lays its track (_serpentSay's law, the beat's
           // own checkpoint with it - written once; its sounding's `gone` is one, so it is written at once)
           await this._serpentSave(id, f, now, serpentBrain.serpentSaysTrack(said));
@@ -5155,7 +5325,7 @@ export class Room {
     for (const sub of Object.keys(f.players)) {
       if (!serpentBrain.serpentEarned(f, sub)) continue;
       const p = f.players[sub];
-      try { f.rc[sub] = await mintSerpentReceipt({ d: f.day, b: f.boss, s: sub, c: rand32(), x: serpentBrain.serpentEarnedBy(f, sub), h: p.hl, l: p.lv }, key, { subtle: crypto.subtle, nowS }); }
+      try { f.rc[sub] = await mintSerpentReceipt({ d: f.day, b: f.boss, s: sub, c: rand32(), x: serpentBrain.serpentEarnedBy(f, sub), h: p.hl, l: p.lv, ...this._bodyMeasureOf(f, sub, serpentBrain.serpentEarned) }, key, { subtle: crypto.subtle, nowS }); }   // INT14: the count's measure
       catch (e) { console.warn('[serpent] receipt refused', e?.message ?? e); }
     }
     f.said = true;   // said once, whatever the next beat finds
@@ -5711,8 +5881,10 @@ export class Room {
   /** SD-ONELIFE (Mac: "A death within the rift casts you out and youre unable to re enter. You get one life to prove your
    *  worth"): the account whose dying pose (PCORPSE1's `dd`) came through a realm is kept as dead there - every hello of
    *  its after is refused (SD_NO_FALLEN), whatever its page says. */
-  async _sdMarkFallen(key, sub) {
-    const realm = await this._sdRealmOf(sdSlotOfRoom(key));
+  async _sdMarkFallen(key, sub) { return this._sdMarkFallenAt(sdSlotOfRoom(key), sub); }
+  /** INT12: the same, by the realm's slot - a fall by the relay's count (enforced) is the one life's, as a `dd` is. */
+  async _sdMarkFallenAt(s, sub) {
+    const realm = await this._sdRealmOf(s);
     if (realm.dead.includes(sub)) return;
     if (realm.dead.length >= SD_FIGHTERS_MAX) { await this.state.storage.put(sdDeadKey(sub), 1); return; }   // AUDIT SD III (R2): past the list, one key an account - never forgotten
     realm.dead.push(sub);
@@ -5802,13 +5974,13 @@ export class Room {
    *  SD_POSE_FRESH_MS (its hello's time until it has posed) speaks for no body - a frozen page is absent, not standing. */
   _sdFightBodies(f, now = Date.now()) {
     const newest = new Map();
-    for (const [, b] of this._all()) {
+    for (const [ws, b] of this._all()) {
       if (!b.id || !b.sub || !b.pose || !f.players[b.sub]) continue;
       if (now - (b.pAt ?? b.since ?? 0) > SD_POSE_FRESH_MS) continue;
       const had = newest.get(b.sub);
-      if (!had || (b.since ?? 0) >= (had.since ?? 0)) newest.set(b.sub, b);
+      if (!had || (b.since ?? 0) >= (had[1].since ?? 0)) newest.set(b.sub, [ws, b]);
     }
-    return [...newest.values()].map((b) => { const c = this._arenaPoseOf(b.pose); return { sub: b.sub, x: c.x, z: c.z, dead: !!b.pose.dd }; });
+    return [...newest.values()].map(([ws, b]) => { const c = this._arenaPoseOf(b.pose); return { sub: b.sub, x: c.x, z: c.z, dead: !!b.pose.dd, tr: this._trailOf(ws, (p) => this._arenaPoseOf(p)) }; });   // INT12: and its trail - AUDIT INT11: its socket's
   }
   /** The fight's frames to everyone in the realm, in order. */
   _sdFightFan(frames) {
@@ -5875,10 +6047,14 @@ export class Room {
       const lv = Number.isSafeInteger(a.cl) && a.cl >= 1 ? a.cl : m.lv;
       if (!joinRemnant(f, a.sub, a.name ?? '', lv, now, present)) { no(f.ended ? SD_NO_WORDS[1] : SD_NO_WORDS[2]); return; }
       this._send(ws, JSON.stringify({ t: 'sd', ...remnantStateOf(f), me: 1 }));   // SD8c: `me` - the page blows into a fight that answered it alone
+      this._trailSeed(ws, a, now);   // AUDIT INT11
       await this._sdFightSave(f, now, fresh || !known);   // AUDIT SD: a known fighter's `in` again is no write (the gate's AUDIT WB A3)
       await this._sdFightArm(now);
       return;
     }
+    // INT12: ITS BODY, in its own word (net/bossBody.js) - asked of no hub; from one this fight does not count, not heard
+    // (never junk: its `in` may be on its way)
+    if (m.k === 'vt') { const p = f?.players[a.sub], line = this._bodyLine(); if (p) bodySaid(p, m.v / 1000, now, line.body, { enforce: line.enforce }); return; }
     if (!f || !f.players[a.sub]) { this._junk(ws); return; }
     // AUDIT SD: no blow lands once the Hour no longer holds its slot (a page that stayed past its cast-out) - a hub that does
     // not answer stops none
@@ -5890,7 +6066,9 @@ export class Room {
     if (this._sdFight !== f) return;
     now = Date.now();
     if (live !== undefined && !(live && live.s === s && sdHolds(live, now))) return;
-    const pose = a.pose && !a.pose.dd ? this._arenaPoseOf(a.pose) : null;
+    // INT12: a blow from one the count has fallen lands nothing once `enforce` holds
+    const line = this._bodyLine();
+    const pose = a.pose && !a.pose.dd && !bodyOut(f.players[a.sub], line.enforce) ? this._arenaPoseOf(a.pose) : null;
     if (m.k === 'ehit') this._sdFightFan(applyEchoHit(f, a.sub, m.e, m.d, m.r, pose, now, m.q));
     else if (m.k === 'xhit') this._sdFightFan(applyHeartHit(f, a.sub, m.c, m.d, m.r, pose, now, m.q));
     else {
@@ -5908,7 +6086,12 @@ export class Room {
     if (!f || f.lost || (f.said && f.told)) return false;
     const now = Date.now();
     try {
-      this._sdFightFan(stepRemnant(f, now, this._sdFightBodies(f, now), rand01));
+      // INT12: ITS BLOWS JUDGED HERE first, on the census as the count has it - one life: a fall by the count, enforced,
+      // is the realm's own (_sdMarkFallenAt), and no death rises again here
+      const line = this._bodyLine(), bodies = this._sdFightBodies(f, now), census = () => bodyCensus(f, bodies, now, line.body, line.enforce, { lives: false });   // AUDIT INT11: read once a beat
+      await this._bodyCount('sd', f, judgeRemnant(f, census(), now), now, line.body, (sub) => this._sdMarkFallenAt(f.s, sub));
+      this._bodyTell('sd', f, now);   // AUDIT INT11: a fall its game has not taken, told again
+      this._sdFightFan(stepRemnant(f, now, this._bodiesBare(census()), rand01));
       if (f.fell && !f.said) await this._sdFightFall(f, now);
       else if (f.said && !f.told) await this._sdTellFellOnce(f, now);
       await this._sdFightSave(f, now, !!f.lost);
@@ -5932,7 +6115,7 @@ export class Room {
     const key = await this._receiptKeyOf(), nowS = Math.floor(now / 1000);
     f.rc = {};
     for (const sub of Object.keys(f.players).filter((x) => earned(f, x))) {
-      try { f.rc[sub] = await mintSdReceipt({ d: f.s, s: sub, c: rand32(), x: earnedBy(f, sub), l: f.players[sub].lv }, key, { subtle: crypto.subtle, nowS }); }
+      try { f.rc[sub] = await mintSdReceipt({ d: f.s, s: sub, c: rand32(), x: earnedBy(f, sub), l: f.players[sub].lv, ...this._bodyMeasureOf(f, sub, earned) }, key, { subtle: crypto.subtle, nowS }); }   // INT14: the count's measure
       catch (e) { console.warn('[sd] receipt refused', e?.message ?? e); }
     }
     f.said = true;   // kept before it is said
