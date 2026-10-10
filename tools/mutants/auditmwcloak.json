@@ -116,8 +116,8 @@
   {
     "name": "AUDITMWCLOAK-a-stale-follow-kept",
     "file": "src/formats/mwCloakFit.js",
-    "old": "  assembly.afterPose = null;\n  if (!cloak) return null;",
-    "new": "  if (!cloak) return null;",
+    "old": "  assembly.afterPose = null;\n  for (const p of assembly.pieces) if (p.followAt)",
+    "new": "  for (const p of assembly.pieces) if (p.followAt)",
     "tests": ["test/auditmwcloak.test.js"],
     "note": "A body that took its cloak off keeps the last cloak's follow."
   },
@@ -172,8 +172,8 @@
   {
     "name": "AUDITMWCLOAK-the-hook-never-run",
     "file": "src/formats/mwFirstPerson.js",
-    "old": "if (assembly.afterPose) assembly.afterPose(assembly);",
-    "new": "if (false) assembly.afterPose(assembly);",
+    "old": "which reads the cloak where this pose just put it\n  if (assembly.afterPose) assembly.afterPose(assembly);",
+    "new": "which reads the cloak where this pose just put it\n  if (false) assembly.afterPose(assembly);",
     "tests": ["test/auditmwcloak.test.js", "test/mwcloak1.test.js"],
     "note": "poseAssembly never runs the follow: every frame the gear hangs where its bone puts it."
   },

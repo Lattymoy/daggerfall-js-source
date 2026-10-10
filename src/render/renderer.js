@@ -237,10 +237,12 @@ void main() {
 //   - uSkin 1 (one influence pair) or 2 (two): the position is BLENDED here off the palette (formats/mwGpuSkin.js -
 //     its skinPoint is this function in JS, and the pins hold the two together): the influences' rows accumulated
 //     in slot order, the post composed onto the sum once (MW-D31), the result applied to the stream position;
-//   - `vNormalV` and `vRel`: the authored normal under its old name's job, and the posed position in the model's
-//     own axes with no translation - the fragment shader takes the face normal off vRel's derivatives
-//     (skinFaceFs), which are the world's (a translation has none) and stay small however far the floating
-//     origin has drifted.
+//   - `vNormalV` and `vRel`: the normal under its old name's job, and the posed position in the model's own axes
+//     with no translation - the fragment shader takes the face normal off vRel's derivatives (skinFaceFs), which
+//     are the world's (a translation has none) and stay small however far the floating origin has drifted;
+//   - MW-SMOOTH x MWNPC1 (the arc's merge of main, 2026-10-10): a skinned corner's AUTHORED normal turned by the
+//     same composed 3x3 that moves its position and renormalised (skinBatch's law - mwGpuSkin.js skinNormal is
+//     this in JS), zero where it has none to light by; the fragment lights by it, and by the face where it is zero.
 // The palette is RGBA32F, three texels an entry, SKIN_PAL_ROW entries a row; texelFetch reads it unfiltered.
 const CHAR_SKIN_VS = `#version 300 es
 layout(location=0) in vec3 aPos;
@@ -272,7 +274,7 @@ void skinEntry(float e, out vec4 r0, out vec4 r1, out vec4 r2) {
   r1 = texelFetch(uSkinPalette, ivec2(col + 1, row), 0);
   r2 = texelFetch(uSkinPalette, ivec2(col + 2, row), 0);
 }
-vec3 skinned(vec3 p) {
+void skinRows(out vec4 c0, out vec4 c1, out vec4 c2) {
   vec4 a0 = vec4(0.0);
   vec4 a1 = vec4(0.0);
   vec4 a2 = vec4(0.0);
@@ -291,16 +293,24 @@ vec3 skinned(vec3 p) {
   }
   vec4 q0; vec4 q1; vec4 q2;
   skinEntry(aSkinPost, q0, q1, q2);
-  vec4 c0 = q0.x * a0 + q0.y * a1 + q0.z * a2 + vec4(0.0, 0.0, 0.0, q0.w);
-  vec4 c1 = q1.x * a0 + q1.y * a1 + q1.z * a2 + vec4(0.0, 0.0, 0.0, q1.w);
-  vec4 c2 = q2.x * a0 + q2.y * a1 + q2.z * a2 + vec4(0.0, 0.0, 0.0, q2.w);
-  return vec3(dot(c0.xyz, p) + c0.w, dot(c1.xyz, p) + c1.w, dot(c2.xyz, p) + c2.w);
+  c0 = q0.x * a0 + q0.y * a1 + q0.z * a2 + vec4(0.0, 0.0, 0.0, q0.w);
+  c1 = q1.x * a0 + q1.y * a1 + q1.z * a2 + vec4(0.0, 0.0, 0.0, q1.w);
+  c2 = q2.x * a0 + q2.y * a1 + q2.z * a2 + vec4(0.0, 0.0, 0.0, q2.w);
 }
 void main() {
-  vec3 p = uSkin > 0.5 ? skinned(aPos) : aPos;
+  vec3 p = aPos;
+  vec3 n = aNormal;
+  if (uSkin > 0.5) {
+    vec4 c0; vec4 c1; vec4 c2;
+    skinRows(c0, c1, c2);
+    p = vec3(dot(c0.xyz, aPos) + c0.w, dot(c1.xyz, aPos) + c1.w, dot(c2.xyz, aPos) + c2.w);
+    vec3 m = vec3(dot(c0.xyz, aNormal), dot(c1.xyz, aNormal), dot(c2.xyz, aNormal));
+    float l2 = dot(m, m);
+    n = l2 > 1e-24 ? m * inversesqrt(l2) : vec3(0.0);
+  }
   vColor = aColor;
   vEmissive = aEmissive;
-  vNormalV = mat3(uModel) * aNormal;
+  vNormalV = mat3(uModel) * n;
   vRel = mat3(uModel) * p;
   vUV = aUV;
   vec4 world = uModel * vec4(p, 1.0);
@@ -387,6 +397,7 @@ vec3 vNormal;
 vec3 charFaceNormal() {
   vec3 d = cross(dFdx(vRel), dFdy(vRel));
   if (uSkin < 0.5) return vNormalV;
+  if (dot(vNormalV, vNormalV) > 1e-20) return vNormalV;
   bool ccw = gl_FrontFacing != (uFrontCW > 0.5);
   vec3 nw = ccw ? d : -d;
   if (dot(nw, nw) < 1e-36) return vec3(0.0, 1.0, 0.0);
@@ -3206,13 +3217,14 @@ export class Renderer {
     const stride = floats * 4;
     gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, stride, 0);    // position
     gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, stride, 12);   // diffuse
-    gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 2, gl.FLOAT, false, stride, 24);   // UV
-    gl.enableVertexAttribArray(4); gl.vertexAttribPointer(4, 3, gl.FLOAT, false, stride, 32);   // emission
-    gl.enableVertexAttribArray(5); gl.vertexAttribPointer(5, 4, gl.FLOAT, false, stride, 44);   // the first pair's entries
-    gl.enableVertexAttribArray(6); gl.vertexAttribPointer(6, 4, gl.FLOAT, false, stride, 60);   // and weights
+    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 3, gl.FLOAT, false, stride, 24);   // the authored normal (MW-SMOOTH x MWNPC1)
+    gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 2, gl.FLOAT, false, stride, 36);   // UV
+    gl.enableVertexAttribArray(4); gl.vertexAttribPointer(4, 3, gl.FLOAT, false, stride, 44);   // emission
+    gl.enableVertexAttribArray(5); gl.vertexAttribPointer(5, 4, gl.FLOAT, false, stride, 56);   // the first pair's entries
+    gl.enableVertexAttribArray(6); gl.vertexAttribPointer(6, 4, gl.FLOAT, false, stride, 72);   // and weights
     if (pairs > 1) {
-      gl.enableVertexAttribArray(7); gl.vertexAttribPointer(7, 4, gl.FLOAT, false, stride, 76);
-      gl.enableVertexAttribArray(8); gl.vertexAttribPointer(8, 4, gl.FLOAT, false, stride, 92);
+      gl.enableVertexAttribArray(7); gl.vertexAttribPointer(7, 4, gl.FLOAT, false, stride, 88);
+      gl.enableVertexAttribArray(8); gl.vertexAttribPointer(8, 4, gl.FLOAT, false, stride, 104);
     }
     gl.enableVertexAttribArray(9); gl.vertexAttribPointer(9, 1, gl.FLOAT, false, stride, (floats - 1) * 4);   // the post
     this._bindVao(null);
@@ -3228,6 +3240,15 @@ export class Renderer {
     this._activeTexture(gl.TEXTURE0);
     return { vao, count: stream.length / floats, buffers: [vbo], vbo, floats, bounds: null,
       skin: { tex, pairs, width, height } };
+  }
+
+  /** MW-BOW1 x MWNPC1: a part that moved on its own clock - its corners alone put back into the static stream at
+   *  `offset` floats (formats/mwGpuSkin.js restreamMovedRows). Nothing else of the body is re-sent. */
+  updateSkinStream(mesh, offset, data) {
+    const gl = this.gl;
+    if (!mesh || !mesh.skin || !mesh.vbo) return;
+    gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vbo);
+    gl.bufferSubData(gl.ARRAY_BUFFER, offset * 4, data);
   }
 
   /** MWNPC1: a pose - the palette re-uploaded, and nothing else (`data` is the layout's palette, width x height

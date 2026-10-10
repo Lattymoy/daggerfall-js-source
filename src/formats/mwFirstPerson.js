@@ -2673,9 +2673,11 @@ export function posePartClocks(assembly, value, { frameTime = value, slots = WEA
       if (!pre) continue;
       writePre(p.preClip.local, pre, p.source);
       if (p.sourceNormals && p.preClip.localNormals) writePreNormals(p.preClip.localNormals, pre, p.sourceNormals);
+      p.sourceGen = (p.sourceGen | 0) + 1;   // MWNPC1: the GPU stream re-streams this piece's corners (mwGpuSkin.js restreamMovedRows)
       moved++;
     } else if (p.clip && batchMoves(p.clip.nif, p.clip.batch)) {
       posePartBatch(p.clip.nif, p.clip.batch, value, p.source, p.sourceNormals, frameTime);
+      p.sourceGen = (p.sourceGen | 0) + 1;
       moved++;
     }
   }
@@ -2710,6 +2712,9 @@ export function poseAssembly(assembly, { tracks = null, sampleTrack = null,
     assembly.pose = pose;
     assembly.mats = mats;
     assembly.time = time;
+    // AUDIT MW-CLOAK x MWNPC1: the stowed gear goes with the cloak on this pose too - the follow reads the cloak where
+    // the pose puts it and hands each turned piece's placement to the palette (formats/mwCloakFit.js applyCloakFollow)
+    if (assembly.afterPose) assembly.afterPose(assembly);
     return assembly;
   }
   for (const p of pieces) {

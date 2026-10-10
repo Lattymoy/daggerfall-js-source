@@ -27,9 +27,26 @@
 //   - a rigid piece's mirror and BoneOffset (rule 13, rule 14) are facts about the FILE, fixed at bind, so they are
 //     baked into its stream positions here, and its entry is the placement placeAtBone applies - the bone's
 //     attachment affine, or hangAffine's for a part that hangs (HT-WAIST). The products are placeAtBone's own.
-// The face normal is NOT in the stream: packFpArm writes each triangle's cross product of the POSED corners, which
-// a vertex cannot know. The fragment shader takes it off the triangle's own screen derivatives instead
-// (renderer.js skinFaceFs) - the same plane, exactly, because a position varying is linear across its triangle.
+// THE NORMAL (MW-SMOOTH x MWNPC1, met at the arc's merge of main, 2026-10-10). Main's MW-SMOOTH lights every
+// Morrowind mesh by the normals its file authored, posed with it (skinBatch turns one by the composed 3x3, a rigid
+// part's is placed as its vertices are - placeNormalsAtBone), and by its face only where a mesh authored none or a
+// corner's is zero (packFpArm). The stream carries the AUTHORED normal in the pack's own lanes (a rigid part's
+// mirrored with its vertex, as placeNormalsAtBone mirrors it), and the vertex shader turns it by the same composed
+// 3x3 it moves the position by and renormalises it - skinBatch's law, entry for entry. A corner with no normal to
+// light by (a mesh with none: a zero stream normal; a vertex the collapse took: a zero 3x3) falls to the face normal,
+// which a vertex cannot know - packFpArm writes each triangle's cross product of the POSED corners - so the fragment
+// shader takes it off the triangle's own screen derivatives (renderer.js skinFaceFs), the same plane, exactly,
+// because a position varying is linear across its triangle. ONE difference, stated: the pack lights a triangle that
+// has one zero corner by its face at that corner alone, and the shader's interpolated normal shortens towards it -
+// the face takes over only where it has all but vanished. A zero corner is a collapsed vertex (rule 40), which no
+// retail body is meant to show.
+//
+// A PART THAT MOVES ON ITS OWN CLOCK (MW-BOW1 x MWNPC1, the same merge). A bow's limbs and string, and the arrow on
+// its ArrowBone, are rigid pieces whose SOURCE the weapon clock re-poses before each pose (mwFirstPerson.js
+// posePartClocks) - not an affine a palette entry could carry: a morph bends the string. Each re-pose counts the
+// piece's `sourceGen`; the layout keeps the count it streamed, and restreamMovedRows re-writes a moved piece's
+// corners alone, for the caller to upload into its range of the buffer (renderer.updateSkinStream) - a bow's few
+// hundred corners while it draws, never the body.
 //
 // WHAT THE CPU SKIN STILL DOES. The first-person arm keeps it (one body, drawn lens-local, its held sheet and
 // its muzzle read posed vertices every frame), and so does any body this layout refuses: a vertex blended by more
@@ -54,9 +71,10 @@ export { SKIN_PAL_ROW };
 
 /** The influences a vertex may carry: two vec4 pairs. More is refused, never trimmed (rule 39). */
 export const SKIN_MAX_INFLUENCES = 8;
-/** The corner's static floats: position 3, diffuse 3, UV 2, emission 3 - packFpArm's lanes less its normal. */
-export const SKIN_STATIC_FLOATS = 11;
-/** Floats a corner for `pairs` influence pairs: the static eleven, four indices and four weights a pair, the post. */
+/** The corner's static floats: position 3, diffuse 3, normal 3, UV 2, emission 3 - packFpArm's corner, lane for lane
+ *  (fpArm.js FP_FLOATS), its position and normal the AUTHORED ones the shader poses (MW-SMOOTH x MWNPC1). */
+export const SKIN_STATIC_FLOATS = 14;
+/** Floats a corner for `pairs` influence pairs: the static fourteen, four indices and four weights a pair, the post. */
 export const skinStreamFloats = (pairs) => SKIN_STATIC_FLOATS + 8 * pairs + 1;
 
 const IDENTITY = Object.freeze({ a: Float32Array.from([1, 0, 0, 0, 1, 0, 0, 0, 1]), t: Object.freeze([0, 0, 0]) });
@@ -157,32 +175,27 @@ export function skinLayout(pieces) {
           grow(b, x, y, z);
         }
       }
-      rows.push({ piece: p, kind: 'skinned', n, post, boneEntry, pos, infE, infW, postE,
+      // MW-SMOOTH: the authored normals, when the piece poses them (packFpArm reads `p.normals` beside its positions)
+      const nrm = p.normals && p.normals.length === pos.length && batch.normals && batch.normals.length === pos.length ? batch.normals : null;
+      rows.push({ piece: p, kind: 'skinned', n, post, boneEntry, pos, nrm, batch, infE, infW, postE,
         boxes, untouched: untouched.minX <= untouched.maxX ? untouched : null, collapse, negative,
-        wMin: Number.isFinite(wMin) ? wMin : 1, wMax: Number.isFinite(wMax) ? wMax : 1 });
+        wMin: Number.isFinite(wMin) ? wMin : 1, wMax: Number.isFinite(wMax) ? wMax : 1, corner0: 0, sub: null });
     } else {
       const src = p.source;
       if (!src) return { ok: false, reason: `${p.slot}: a rigid piece with no authored positions` };
       const n = src.length / 3;
       const entry = next++;
-      // rule 13 + rule 14, baked: placeAtBone's own (mirror ? -x : x) + offset, in its order
-      const o = p.boneOffset;
-      const ox = o ? o[0] : 0, oy = o ? o[1] : 0, oz = o ? o[2] : 0;
-      const pos = new Float32Array(src.length);
-      const box = emptyBox();
-      for (let v = 0; v < src.length; v += 3) {
-        pos[v] = (p.mirrored ? -src[v] : src[v]) + ox;
-        pos[v + 1] = src[v + 1] + oy;
-        pos[v + 2] = src[v + 2] + oz;
-        grow(box, pos[v], pos[v + 1], pos[v + 2]);
-      }
       const infE = new Int32Array(n * SKIN_MAX_INFLUENCES);
       const infW = new Float32Array(n * SKIN_MAX_INFLUENCES);
       for (let v = 0; v < n; v++) { infE[v * SKIN_MAX_INFLUENCES] = entry; infW[v * SKIN_MAX_INFLUENCES] = 1; }
-      rows.push({ piece: p, kind: 'rigid', n, entry, pos, infE, infW, postE: new Int32Array(n),
-        boxes: new Map(n ? [[entry, box]] : []), untouched: null, collapse: false, negative: false, wMin: 1, wMax: 1 });
+      const row = { piece: p, kind: 'rigid', n, entry, pos: new Float32Array(src.length), nrm: null, gen: -1, infE, infW, postE: new Int32Array(n),
+        boxes: new Map(), untouched: null, collapse: false, negative: false, wMin: 1, wMax: 1, corner0: 0, sub: null };
+      syncRigidRow(row);
+      rows.push(row);
     }
   }
+  let corner = 0;
+  for (const r of rows) { r.corner0 = corner; corner += Math.floor(r.piece.indices.length / 3) * 3; }
   if (!list.length) return { ok: false, reason: 'no drawable piece' };
   const entries = next;
   const width = 3 * Math.min(entries, SKIN_PAL_ROW);
@@ -192,13 +205,51 @@ export function skinLayout(pieces) {
   return { ok: true, entries, pairs: most > 4 ? 2 : 1, most, width, height, rows, pieces: list, byPiece, palette };
 }
 
-/** True when `layout` was laid out of exactly these drawable pieces, in order - packFpArm's sameRanges question. */
+/**
+ * A RIGID ROW'S STREAM POSITIONS AND NORMALS off its piece's source, when the source has moved since (`sourceGen`):
+ * rule 13 + rule 14 baked - placeAtBone's own (mirror ? -x : x) + offset, in its order - and the normals mirrored as
+ * placeNormalsAtBone mirrors them (an offset moves no normal); the box rule 42 carries for its one entry. Answers
+ * whether it moved.
+ */
+function syncRigidRow(r) {
+  const p = r.piece;
+  const gen = p.sourceGen | 0;
+  if (r.gen === gen) return false;
+  r.gen = gen;
+  const src = p.source, pos = r.pos;
+  const o = p.boneOffset;
+  const ox = o ? o[0] : 0, oy = o ? o[1] : 0, oz = o ? o[2] : 0;
+  const box = emptyBox();
+  for (let v = 0; v < pos.length; v += 3) {
+    pos[v] = (p.mirrored ? -src[v] : src[v]) + ox;
+    pos[v + 1] = src[v + 1] + oy;
+    pos[v + 2] = src[v + 2] + oz;
+    grow(box, pos[v], pos[v + 1], pos[v + 2]);
+  }
+  r.boxes.clear();
+  if (r.n) r.boxes.set(r.entry, box);
+  const sn = p.normals && p.normals.length === pos.length && p.sourceNormals && p.sourceNormals.length === pos.length ? p.sourceNormals : null;
+  if (!sn) r.nrm = null;
+  else {
+    const nrm = r.nrm || (r.nrm = new Float32Array(pos.length));
+    for (let v = 0; v < nrm.length; v += 3) { nrm[v] = p.mirrored ? -sn[v] : sn[v]; nrm[v + 1] = sn[v + 1]; nrm[v + 2] = sn[v + 2]; }
+  }
+  return true;
+}
+
+/**
+ * True when `layout` was laid out of exactly these drawable pieces, in order - packFpArm's sameRanges question - and
+ * each skinned one still skins by the batch it was laid out from: a cloak seated swaps its batch for one whose thighs
+ * weigh less (mwCloakFit.js seatCloak), and the stream carries the weights (AUDIT MW-CLOAK x MWNPC1).
+ */
 export function skinSamePieces(layout, pieces) {
   if (!layout || !layout.ok) return false;
   let k = 0;
   for (const p of pieces ?? []) {
     if (!drawable(p)) continue;
+    const r = layout.rows[k];
     if (layout.pieces[k++] !== p) return false;
+    if (r.kind === 'skinned' && r.batch !== p.batch) return false;
   }
   return k === layout.pieces.length;
 }
@@ -220,35 +271,63 @@ export function packSkinStream(layout, lanesOf) {
   const stream = new Float32Array(corners * floats);
   const ranges = [];
   let o = 0;
-  let first = 0;
   for (const r of layout.rows) {
     const p = r.piece;
-    const idx = p.indices;
-    const lanes = lanesOf(p);
+    if (r.kind === 'rigid') syncRigidRow(r);   // a source re-posed since the layout (MW-BOW1) streams where it is now
+    if (o !== r.corner0 * floats) throw new Error(`MWNPC1: ${p.slot}'s corners begin at ${o / floats}, the layout says ${r.corner0}`);
+    o = writeRowCorners(layout, r, lanesOf(p), stream, o);
     const textured = !!(p.uvs && p.material && p.material.textureFile);
-    let l = 0;
-    for (let i = 0; i + 2 < idx.length; i += 3) {
-      for (let k = 0; k < 3; k++) {
-        const v = idx[i + k];
-        stream[o++] = r.pos[v * 3]; stream[o++] = r.pos[v * 3 + 1]; stream[o++] = r.pos[v * 3 + 2];
-        stream[o++] = lanes[l]; stream[o++] = lanes[l + 1]; stream[o++] = lanes[l + 2];
-        stream[o++] = lanes[l + 3]; stream[o++] = lanes[l + 4];
-        stream[o++] = lanes[l + 5]; stream[o++] = lanes[l + 6]; stream[o++] = lanes[l + 7];
-        l += 8;
-        const base = v * SKIN_MAX_INFLUENCES;
-        for (let pr = 0; pr < layout.pairs; pr++) {
-          for (let s = 0; s < 4; s++) stream[o++] = r.infE[base + pr * 4 + s];
-          for (let s = 0; s < 4; s++) stream[o++] = r.infW[base + pr * 4 + s];
-        }
-        stream[o++] = r.postE[v];
-      }
-    }
-    const count = Math.floor(idx.length / 3) * 3;   // the corners written - a whole triangle list, as every retail piece is
-    ranges.push({ first, count, slot: p.slot, piece: p, textureFile: textured ? p.material.textureFile : null, tex: null, hidden: false });
-    first += count;
+    const count = Math.floor(p.indices.length / 3) * 3;   // the corners written - a whole triangle list, as every retail piece is
+    ranges.push({ first: r.corner0, count, slot: p.slot, piece: p, textureFile: textured ? p.material.textureFile : null, tex: null, hidden: false });
   }
   if (o !== stream.length) throw new Error(`MWNPC1: the skin stream wrote ${o} of ${stream.length} floats (${slots} slots a corner)`);
   return { stream, floats, ranges };
+}
+
+/** One row's corners into `out` from float `o`, in packFpArm's corner order and lanes (the stream's own law above);
+ *  answers the float after its last. */
+function writeRowCorners(layout, r, lanes, out, o) {
+  const idx = r.piece.indices;
+  const pos = r.pos, nrm = r.nrm;
+  let l = 0;
+  for (let i = 0; i + 2 < idx.length; i += 3) {
+    for (let k = 0; k < 3; k++) {
+      const v = idx[i + k];
+      out[o++] = pos[v * 3]; out[o++] = pos[v * 3 + 1]; out[o++] = pos[v * 3 + 2];
+      out[o++] = lanes[l]; out[o++] = lanes[l + 1]; out[o++] = lanes[l + 2];
+      if (nrm) { out[o++] = nrm[v * 3]; out[o++] = nrm[v * 3 + 1]; out[o++] = nrm[v * 3 + 2]; } else { out[o++] = 0; out[o++] = 0; out[o++] = 0; }
+      out[o++] = lanes[l + 3]; out[o++] = lanes[l + 4];
+      out[o++] = lanes[l + 5]; out[o++] = lanes[l + 6]; out[o++] = lanes[l + 7];
+      l += 8;
+      const base = v * SKIN_MAX_INFLUENCES;
+      for (let pr = 0; pr < layout.pairs; pr++) {
+        for (let s = 0; s < 4; s++) out[o++] = r.infE[base + pr * 4 + s];
+        for (let s = 0; s < 4; s++) out[o++] = r.infW[base + pr * 4 + s];
+      }
+      out[o++] = r.postE[v];
+    }
+  }
+  return o;
+}
+
+/**
+ * MW-BOW1 x MWNPC1: THE ROWS WHOSE SOURCE MOVED since they were streamed (a part on its own clock - the header), each
+ * re-synced and its corners re-written into a buffer of its own: answers `[{ offset, data }]` - the float offset of its
+ * range in the stream and the floats to put there (renderer.updateSkinStream). The list and each buffer are reused
+ * across poses; a body with nothing that moves answers an empty list and writes nothing.
+ */
+export function restreamMovedRows(layout, lanesOf) {
+  const out = layout._moved || (layout._moved = []);
+  out.length = 0;
+  const floats = skinStreamFloats(layout.pairs);
+  for (const r of layout.rows) {
+    if (r.kind !== 'rigid' || !syncRigidRow(r)) continue;
+    const size = Math.floor(r.piece.indices.length / 3) * 3 * floats;
+    if (!r.sub || r.sub.length !== size) r.sub = new Float32Array(size);
+    writeRowCorners(layout, r, lanesOf(r.piece), r.sub, 0);
+    out.push({ offset: r.corner0 * floats, data: r.sub });
+  }
+  return out;
 }
 
 /** Write one affine into palette entry `e`: three texels, rows [a0 a1 a2 t0] [a3 a4 a5 t1] [a6 a7 a8 t2]. */
@@ -291,7 +370,9 @@ export function writeSkinPalette(layout, assembly, pal = layout.palette) {
         putEntry(pal, r.boneEntry[j], affineMulInto(mats.get(bone.ref), bone.invBind, _bone));
       }
     } else {
-      const at = fns.attachmentTransform(mats, p.attachRef);
+      // AUDIT MW-CLOAK x MWNPC1: stowed gear the cloak turned this pose (mwCloakFit.js applyCloakFollow) is placed where
+      // the follow put it - the bone's attachment turned about the bone - as the CPU path places it
+      const at = p.followAt ?? fns.attachmentTransform(mats, p.attachRef);
       putEntry(pal, r.entry, p.hang ? hangAffine(at, p.hang) : at);
     }
   }
@@ -380,7 +461,7 @@ const _acc = new Float32Array(12);
 const _cmp = new Float32Array(12);
 
 /**
- * ONE vertex by the vertex shader's law (renderer.js CHAR_SKIN_VS skinned()): the influences' rows accumulated in
+ * ONE vertex by the vertex shader's law (renderer.js CHAR_SKIN_VS skinRows): the influences' rows accumulated in
  * slot order, the post composed onto the sum, the result applied to the stream position. For the readers that ask
  * for ONE posed point of a GPU-skinned body - the third-person muzzle (fpArm.js weaponMuzzle) - and for the pins,
  * which hold this law against skinBatch and placeAtBone. Null when the piece is not in the layout.
@@ -394,20 +475,56 @@ export function skinnedVertex(layout, piece, v, pal = layout.palette, out = [0, 
   return skinPoint(pal, slots, r.postE[v], r.pos[v * 3], r.pos[v * 3 + 1], r.pos[v * 3 + 2], out);
 }
 
+/** MW-SMOOTH x MWNPC1: ONE vertex's normal by the shader's law - its authored normal through the composed 3x3,
+ *  renormalised; zero where it has none (the face lights it then). Null when the piece is not in the layout. */
+export function skinnedNormal(layout, piece, v, pal = layout.palette, out = [0, 0, 0]) {
+  const r = layout.byPiece.get(piece);
+  if (!r || v < 0 || v >= r.n) return null;
+  if (!r.nrm) { out[0] = 0; out[1] = 0; out[2] = 0; return out; }
+  const base = v * SKIN_MAX_INFLUENCES;
+  const slots = new Array(SKIN_MAX_INFLUENCES);
+  for (let s = 0; s < SKIN_MAX_INFLUENCES; s++) slots[s] = [r.infE[base + s], r.infW[base + s]];
+  return skinNormal(pal, slots, r.postE[v], r.nrm[v * 3], r.nrm[v * 3 + 1], r.nrm[v * 3 + 2], out);
+}
+
 /**
  * The stream's corner `c` by the shader's law - read off the STREAM exactly as the vertex attributes are, so a pin
- * holds the packing and the law together.
+ * holds the packing and the law together. `normal` asks for its normal instead (MW-SMOOTH x MWNPC1): the authored
+ * normal through the same composed 3x3, renormalised - zero where there is none to light by (the face's then).
  */
-export function skinStreamCorner(stream, floats, pairs, c, pal, out = [0, 0, 0]) {
+export function skinStreamCorner(stream, floats, pairs, c, pal, out = [0, 0, 0], { normal = false } = {}) {
   const o = c * floats;
   const slots = [];
   for (let pr = 0; pr < pairs; pr++) {
     for (let s = 0; s < 4; s++) slots.push([stream[o + SKIN_STATIC_FLOATS + pr * 8 + s], stream[o + SKIN_STATIC_FLOATS + pr * 8 + 4 + s]]);
   }
+  if (normal) return skinNormal(pal, slots, stream[o + floats - 1], stream[o + 6], stream[o + 7], stream[o + 8], out);
   return skinPoint(pal, slots, stream[o + floats - 1], stream[o], stream[o + 1], stream[o + 2], out);
 }
 
+/** The shader's normal: the composed 3x3 (skinPoint's, its translation never added) on the authored normal,
+ *  renormalised as skinBatch renormalises - and zero, never a NaN, where the 3x3 or the normal is (CHAR_SKIN_VS). */
+function skinNormal(pal, slots, postEntry, x, y, z, out) {
+  composeAt(pal, slots, postEntry);
+  const nx = _cmp[0] * x + _cmp[1] * y + _cmp[2] * z;
+  const ny = _cmp[4] * x + _cmp[5] * y + _cmp[6] * z;
+  const nz = _cmp[8] * x + _cmp[9] * y + _cmp[10] * z;
+  const l2 = nx * nx + ny * ny + nz * nz;
+  const k = l2 > 1e-24 ? 1 / Math.sqrt(l2) : 0;
+  out[0] = nx * k; out[1] = ny * k; out[2] = nz * k;
+  return out;
+}
+
 function skinPoint(pal, slots, postEntry, x, y, z, out) {
+  composeAt(pal, slots, postEntry);
+  out[0] = _cmp[0] * x + _cmp[1] * y + _cmp[2] * z + _cmp[3];
+  out[1] = _cmp[4] * x + _cmp[5] * y + _cmp[6] * z + _cmp[7];
+  out[2] = _cmp[8] * x + _cmp[9] * y + _cmp[10] * z + _cmp[11];
+  return out;
+}
+
+/** The influences' rows accumulated in slot order and the post composed onto the sum, into _cmp (rows [a | t]). */
+function composeAt(pal, slots, postEntry) {
   _acc.fill(0);
   for (const [e, w] of slots) {
     const o = Math.round(e) * 12;
@@ -421,8 +538,4 @@ function skinPoint(pal, slots, postEntry, x, y, z, out) {
       _cmp[row * 4 + col] = p0 * _acc[col] + p1 * _acc[4 + col] + p2 * _acc[8 + col] + (col === 3 ? pt : 0);
     }
   }
-  out[0] = _cmp[0] * x + _cmp[1] * y + _cmp[2] * z + _cmp[3];
-  out[1] = _cmp[4] * x + _cmp[5] * y + _cmp[6] * z + _cmp[7];
-  out[2] = _cmp[8] * x + _cmp[9] * y + _cmp[10] * z + _cmp[11];
-  return out;
 }

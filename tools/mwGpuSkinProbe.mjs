@@ -9,6 +9,11 @@
 // light, and the two pictures read back and compared texel by texel. A wrong sign in the blend, a post composed per
 // bone, a mirrored piece's flip lost, a face normal from the wrong side of the winding: each is a different picture.
 //
+// MW-SMOOTH x MWNPC1 (the arc's merge of main, 2026-10-10): the fixture authors no normals, so the four shots light
+// every corner by its face. Three more give both rigs' pieces the same AUTHORED normals (each vertex's from its piece's
+// middle - every corner a different direction): the CPU skin poses them (skinBatch, placeNormalsAtBone) and the shader
+// turns them by the palette, and the two pictures must still agree texel for texel, in many more shades than two.
+//
 // What it canNOT see, stated so nobody mistakes green for finished: the fixture body is an arm's worth of pieces,
 // not a retail body, and SwiftShader is not a GPU - the probe proves the law, not the frame time.
 //
@@ -117,6 +122,36 @@ try {
     ok(s.covC > 200 && s.shades >= 2, `shot ${i}: the CPU picture is a lit body (${s.covC} texels, ${s.shades} shades)`);
     ok(s.cover <= Math.max(4, s.covC * 0.01), `shot ${i}: the GPU skin covers the same texels (${s.cover} of ${s.covC} differ)`);
     ok(s.maxd <= 6 && s.meand < 0.5, `shot ${i}: and lights them alike - the face normal off the derivatives (max ${s.maxd}, mean ${s.meand.toFixed(3)})`);
+  }
+  // MW-SMOOTH x MWNPC1: the same authored normals on both rigs - a skinned piece's on a new batch (the GPU body is laid
+  // out again: its stream carries them), a rigid one's on its source, counted (the GPU body re-streams it)
+  await page.evaluate(() => {
+    const give = (arm) => {
+      for (const rg of arm.thirdMesh().ranges) {
+        const p = rg.piece;
+        const src = p.kind === 'skinned' ? p.batch.positions : p.source;
+        const n = src.length / 3;
+        let cx = 0, cy = 0, cz = 0;
+        for (let v = 0; v < n; v++) { cx += src[v * 3] / n; cy += src[v * 3 + 1] / n; cz += src[v * 3 + 2] / n; }
+        const nrm = new Float32Array(src.length);
+        for (let v = 0; v < n; v++) {
+          const d = [src[v * 3] - cx, src[v * 3 + 1] - cy + 0.3, src[v * 3 + 2] - cz];
+          const l = Math.hypot(...d) || 1;
+          nrm[v * 3] = d[0] / l; nrm[v * 3 + 1] = d[1] / l; nrm[v * 3 + 2] = d[2] / l;
+        }
+        p.normals = new Float32Array(src.length);
+        if (p.kind === 'skinned') p.batch = { ...p.batch, normals: nrm };
+        else { p.sourceNormals = nrm; p.sourceGen = (p.sourceGen | 0) + 1; }
+      }
+    };
+    give(window.__gpu); give(window.__cpu);
+  });
+  for (const [i, [dt, yaw, light]] of [[0.2, 20, [0.3, -0.9, 0.2]], [0.5, 60, [0.1, -0.8, -0.5]], [0.9, 340, [-0.4, -0.85, 0.2]]].entries()) {   // lights on the side the camera sees
+    const s = await shot(dt, yaw, light);
+    ok(s.gpuSkin && s.cpuSkin && s.gStatus === 'gpu' && s.cStatus === 'cpu', `smooth ${i}: one body on each skin (${s.gStatus} / ${s.cStatus})`);
+    ok(s.covC > 200 && s.shades >= 8, `smooth ${i}: the CPU picture is lit by its own normals (${s.covC} texels, ${s.shades} shades)`);
+    ok(s.cover <= Math.max(4, s.covC * 0.01), `smooth ${i}: the GPU skin covers the same texels (${s.cover} of ${s.covC} differ)`);
+    ok(s.maxd <= 6 && s.meand < 0.5, `smooth ${i}: and lights them alike - the authored normal through the palette (max ${s.maxd}, mean ${s.meand.toFixed(3)})`);
   }
   ok(crashes.length === 0, `no page errors (${crashes.join(' | ')})`);
 } finally {

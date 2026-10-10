@@ -16,8 +16,8 @@ import { parseNif } from '../src/formats/mwNifFile.js';
 import { extractTracks, sampleTrack } from '../src/formats/mwAnim.js';
 import { accumRootRef } from '../src/formats/mwSkin.js';
 import { assembleFirstPersonArm, poseAssembly } from '../src/formats/mwFirstPerson.js';
-import { skinLayout, skinSamePieces, packSkinStream, writeSkinPalette, skinnedVertex, skinStreamCorner, skinStreamFloats,
-  SKIN_MAX_INFLUENCES, SKIN_PAL_ROW } from '../src/formats/mwGpuSkin.js';
+import { skinLayout, skinSamePieces, packSkinStream, writeSkinPalette, skinnedVertex, skinnedNormal, skinStreamCorner, skinStreamFloats,
+  SKIN_MAX_INFLUENCES, SKIN_PAL_ROW, SKIN_STATIC_FLOATS } from '../src/formats/mwGpuSkin.js';
 import { SKIN_PAL_ROW as ROW_HOME, SKIN_PALETTE_UNIT } from '../src/render/skinPalette.js';
 import { packFpArm, pieceLanes, createFpArm, FP_FLOATS, gpuSkinOn } from '../src/combat/fpArm.js';
 import { skinNormalMatrix, skinFaceFs } from '../src/render/renderer.js';
@@ -52,7 +52,8 @@ async function fixtureArm() {
  *  alone (the collapse too), by NO bone (untouched: the authored position), and by weights summing past one - with a
  *  rotated, translated skin transform, a shape transform and UVs that are not symmetric; a skinned one with a
  *  NEGATIVE weight (its own piece: the box law takes another branch for it); a RIGID one, mirrored, with a
- *  BoneOffset; a rigid one that HANGS. */
+ *  BoneOffset; a rigid one that HANGS. MW-SMOOTH x MWNPC1 (the arc's merge of main): each of those four authors its
+ *  normals (unnormalised, and one of the skinned piece's ZERO), as a retail mesh does; the box cases author none. */
 function casesPieces(refs) {
   const R = rng(7);
   const m3 = () => Array.from({ length: 9 }, () => R());
@@ -60,10 +61,11 @@ function casesPieces(refs) {
   const positions = Float32Array.from({ length: 7 * 3 }, () => R() * 5);
   const bone = (ref, indices, weights) => ({ ref, indices: Uint16Array.from(indices), weights: Float32Array.from(weights), invBind: { a: m3(), t: [R(), R(), R()] } });
   const uvs = Float32Array.from({ length: 7 * 2 }, () => R());
+  const normals = Float32Array.from({ length: 7 * 3 }, (_, i) => (i >= 18 ? 0 : R() * 2));   // vertex 6 authors a zero normal
   const skinned = {
     slot: 'cases', bone: 'x', kind: 'skinned', mirrored: false, source: null, attachRef: null, uvs, colors: null, material: null,
     batch: {
-      positions, uvs, colors: null, material: null, indices: Uint16Array.from([0, 1, 2, 3, 4, 5, 6, 0, 1]),
+      positions, normals, uvs, colors: null, material: null, indices: Uint16Array.from([0, 1, 2, 3, 4, 5, 6, 0, 1]),
       skin: {
         transform: tr(), shapeTransform: tr(), skeletonRoot: -1, rootBone: -1,
         bones: [
@@ -77,23 +79,24 @@ function casesPieces(refs) {
         ],
       },
     },
-    positions: new Float32Array(21), indices: Uint16Array.from([0, 1, 2, 3, 4, 5, 6, 0, 1]),
+    positions: new Float32Array(21), normals: new Float32Array(21), indices: Uint16Array.from([0, 1, 2, 3, 4, 5, 6, 0, 1]),
   };
   const src = Float32Array.from({ length: 4 * 3 }, () => R() * 2);
+  const srcN = Float32Array.from({ length: 4 * 3 }, () => R());
   const rigid = { slot: 'casesRigid', bone: 'y', kind: 'rigid', mirrored: true, boneOffset: [0.3, -0.2, 0.7], hang: null,
-    batch: null, source: src, attachRef: refs[2], uvs: null, colors: null, material: null,
-    positions: new Float32Array(12), indices: Uint16Array.from([0, 1, 2, 2, 3, 0]) };
+    batch: null, source: src, sourceNormals: srcN, attachRef: refs[2], uvs: null, colors: null, material: null,
+    positions: new Float32Array(12), normals: new Float32Array(12), indices: Uint16Array.from([0, 1, 2, 2, 3, 0]) };
   const hang = { rot: Float32Array.from([0, -1, 0, 1, 0, 0, 0, 0, 1]), hookLocal: [0.1, 0.2, 0.3], anchor: [0.05, 0, 0.4] };
   const hanging = { slot: 'casesHang', bone: 'z', kind: 'rigid', mirrored: false, boneOffset: null, hang,
-    batch: null, source: Float32Array.from(src), attachRef: refs[3], uvs: null, colors: null, material: null,
-    positions: new Float32Array(12), indices: Uint16Array.from([0, 1, 2]) };
+    batch: null, source: Float32Array.from(src), sourceNormals: Float32Array.from(srcN), attachRef: refs[3], uvs: null, colors: null, material: null,
+    positions: new Float32Array(12), normals: new Float32Array(12), indices: Uint16Array.from([0, 1, 2]) };
   const negPos = Float32Array.from({ length: 3 * 3 }, () => R() * 4);
   const negative = {
     slot: 'casesNeg', bone: 'w', kind: 'skinned', mirrored: false, source: null, attachRef: null, uvs: null, colors: null, material: null,
-    batch: { positions: negPos, uvs: null, colors: null, material: null, indices: Uint16Array.from([0, 1, 2]),
+    batch: { positions: negPos, normals: Float32Array.from({ length: 9 }, () => R()), uvs: null, colors: null, material: null, indices: Uint16Array.from([0, 1, 2]),
       skin: { transform: tr(), shapeTransform: null, skeletonRoot: -1, rootBone: -1,
         bones: [bone(refs[1], [0, 1, 2], [0.7, 1.2, 0.5]), bone(refs[2], [1, 2], [-0.4, 0.5])] } },
-    positions: new Float32Array(9), indices: Uint16Array.from([0, 1, 2]),
+    positions: new Float32Array(9), normals: new Float32Array(9), indices: Uint16Array.from([0, 1, 2]),
   };
   // THE BOX'S CASES, where the general matrices above would hide them inside a loose hull: one bone that turns
   // little (an identity inverse bind) carrying vertices far from the origin - three at full weight, one at a fifth (the
@@ -110,9 +113,11 @@ function casesPieces(refs) {
     positions: new Float32Array(18), indices: Uint16Array.from([0, 1, 2, 3, 4, 5]),
   };
   // and the fifth-weight vertex again, on a piece with nothing else to widen its box: only the scaled hull holds it
+  // MW-SMOOTH x MWNPC1: and a file whose normals do not match its vertices - posedNormals gives the piece none, so the
+  // pack lights it by its faces, and so must the stream
   const scaled = {
     slot: 'casesScale', bone: 'u', kind: 'skinned', mirrored: false, source: null, attachRef: null, uvs: null, colors: null, material: null,
-    batch: { positions: Float32Array.from([30, 31, 29, 31, 30, 30, 29, 30, 31, 30, 30, 30]), uvs: null, colors: null, material: null,
+    batch: { positions: Float32Array.from([30, 31, 29, 31, 30, 30, 29, 30, 31, 30, 30, 30]), normals: Float32Array.from([0, 0, 1]), uvs: null, colors: null, material: null,
       indices: Uint16Array.from([0, 1, 2, 1, 2, 3]),
       skin: { transform: { rotation: [1, 0, 0, 0, 1, 0, 0, 0, 1], translation: [1, 2, 3], scale: 1 }, shapeTransform: null, skeletonRoot: -1, rootBone: -1,
         bones: [{ ref: refs[1], indices: Uint16Array.from([0, 1, 2, 3]), weights: Float32Array.from([1, 1, 1, 0.2]), invBind: I3 }] } },
@@ -149,12 +154,14 @@ test('MWNPC1a the layout: entry 0 the identity, a post and a live bone each a sk
   assert.equal(L.palette.length, L.width * L.height * 4);
 });
 
-test('MWNPC1b the law: every vertex and every stream corner, by the shader\'s law off the palette, lands where the CPU skin and the pack put it - at several poses', async () => {
+test('MWNPC1b the law: every vertex and every stream corner, by the shader\'s law off the palette, lands where the CPU skin and the pack put it - at several poses; and (MW-SMOOTH x MWNPC1) is lit by the normal the pack lights it by', async () => {
   const { arm, tracks, accumRoot } = await fixtureArm();
   const L = skinLayout(arm.pieces);
   const packed = packSkinStream(L, pieceLanes);
   assert.equal(packed.floats, skinStreamFloats(L.pairs));
+  assert.equal(SKIN_STATIC_FLOATS, FP_FLOATS, 'the stream\'s static floats are the pack\'s corner, lane for lane');
   let cpu = null;
+  let lit = 0, faced = 0;
   for (const time of [0, 0.37, 1.1, 2.6]) {
     poseAssembly(arm, { tracks, sampleTrack, time, accumRoot });
     cpu = packFpArm(arm.pieces, cpu);
@@ -163,6 +170,10 @@ test('MWNPC1b the law: every vertex and every stream corner, by the shader\'s la
       for (let v = 0; v < r.n; v++) {
         const got = skinnedVertex(L, r.piece, v);
         for (let k = 0; k < 3; k++) assert.ok(close(got[k], r.piece.positions[v * 3 + k]), `t ${time} ${r.piece.slot} v${v}[${k}]: ${got[k]} vs ${r.piece.positions[v * 3 + k]}`);
+        // MW-SMOOTH x MWNPC1: its normal is the one skinBatch / placeNormalsAtBone posed (zero where that is zero)
+        const n = skinnedNormal(L, r.piece, v);
+        const want = r.piece.normals ? [...r.piece.normals.subarray(v * 3, v * 3 + 3)] : [0, 0, 0];
+        for (let k = 0; k < 3; k++) assert.ok(close(n[k], want[k], 1e-4), `t ${time} ${r.piece.slot} v${v} normal[${k}]: ${n[k]} vs ${want[k]}`);
       }
     }
     const corners = cpu.packed.length / FP_FLOATS;
@@ -171,11 +182,30 @@ test('MWNPC1b the law: every vertex and every stream corner, by the shader\'s la
       const got = skinStreamCorner(packed.stream, packed.floats, L.pairs, c, L.palette);
       const o = c * FP_FLOATS, s = c * packed.floats;
       for (let k = 0; k < 3; k++) assert.ok(close(got[k], cpu.packed[o + k]), `t ${time} corner ${c}[${k}]: ${got[k]} vs ${cpu.packed[o + k]}`);
-      // the static lanes: the pack's diffuse (3-5), UV (9-10) and emission (11-13), bit for bit
-      assert.deepEqual([...packed.stream.subarray(s + 3, s + 11)], [...cpu.packed.subarray(o + 3, o + 6), ...cpu.packed.subarray(o + 9, o + 14)], `corner ${c}: the static floats are the pack's`);
+      // the static lanes: the pack's diffuse (3-5), UV (9-10) and emission (11-13), bit for bit - PIN MOVED (MW-SMOOTH x
+      // MWNPC1): its normal lanes (6-8) hold the AUTHORED normal, which the shader turns
+      assert.deepEqual([...packed.stream.subarray(s + 3, s + 6), ...packed.stream.subarray(s + 9, s + 14)], [...cpu.packed.subarray(o + 3, o + 6), ...cpu.packed.subarray(o + 9, o + 14)], `corner ${c}: the static floats are the pack's`);
+      // the corner's normal by the shader's law: the pack's posed vertex normal - or zero where the pack lit the corner by
+      // its triangle's face, which the fragment then takes off the derivatives (MWNPC1f holds that half)
+      const n = skinStreamCorner(packed.stream, packed.floats, L.pairs, c, L.palette, [0, 0, 0], { normal: true });
+      const pn = [...cpu.packed.subarray(o + 6, o + 9)];
+      if (n[0] !== 0 || n[1] !== 0 || n[2] !== 0) {
+        for (let k = 0; k < 3; k++) assert.ok(close(n[k], pn[k], 1e-4), `t ${time} corner ${c} normal[${k}]: ${n[k]} vs ${pn[k]}`);
+        lit++;
+      } else {
+        const t0 = c - (c % 3), q = (i) => [...cpu.packed.subarray((t0 + i) * FP_FLOATS, (t0 + i) * FP_FLOATS + 3)];
+        const a = q(0), b = q(1), d = q(2);
+        const range = cpu.ranges.find((rg) => c >= rg.first && c < rg.first + rg.count);
+        const fc = cross([b[0] - a[0], b[1] - a[1], b[2] - a[2]], [d[0] - a[0], d[1] - a[1], d[2] - a[2]]);
+        // a triangle the collapse folded to nothing has no face: the pack's up (it covers no pixel to light)
+        const face = Math.hypot(...fc) > 1e-8 ? norm(fc).map((x) => x * (range.piece.mirrored ? -1 : 1)) : [0, 1, 0];
+        for (let k = 0; k < 3; k++) assert.ok(close(pn[k], face[k], 1e-3), `t ${time} corner ${c}: zero by the law, so the pack lit it by its face`);
+        faced++;
+      }
     }
   }
   assert.deepEqual(packed.ranges.map((r) => [r.first, r.count, r.slot, r.piece, r.textureFile]), cpu.ranges.map((r) => [r.first, r.count, r.slot, r.piece, r.textureFile]), 'the ranges are the pack\'s');
+  assert.ok(lit >= 40 && faced >= 40, `both halves seen: ${lit} corners lit by their own normal, ${faced} by their face`);
 });
 
 test('MWNPC1c the boxes (rule 42): off the palette alone, every piece\'s box holds the CPU fold\'s, and the union the assembly\'s bounds - at every pose; a CPU-skinned pose keeps its exact fold', async () => {
@@ -298,15 +328,19 @@ test('MWNPC1g the GLSL says what its JS law says: the blend, the post composed o
     'a0 += r0 * w; a1 += r1 * w; a2 += r2 * w;',
     'if (uSkin > 1.5) {',
     'skinEntry(aSkinPost, q0, q1, q2);',
-    'vec4 c0 = q0.x * a0 + q0.y * a1 + q0.z * a2 + vec4(0.0, 0.0, 0.0, q0.w);',
-    'return vec3(dot(c0.xyz, p) + c0.w, dot(c1.xyz, p) + c1.w, dot(c2.xyz, p) + c2.w);',
-    'vec3 p = uSkin > 0.5 ? skinned(aPos) : aPos;',
+    // PIN MOVED (MW-SMOOTH x MWNPC1): the composed rows are made once and move both the position and the normal
+    '  c0 = q0.x * a0 + q0.y * a1 + q0.z * a2 + vec4(0.0, 0.0, 0.0, q0.w);',
+    '    p = vec3(dot(c0.xyz, aPos) + c0.w, dot(c1.xyz, aPos) + c1.w, dot(c2.xyz, aPos) + c2.w);',
+    '    vec3 m = vec3(dot(c0.xyz, aNormal), dot(c1.xyz, aNormal), dot(c2.xyz, aNormal));',
+    '    n = l2 > 1e-24 ? m * inversesqrt(l2) : vec3(0.0);',
+    'vNormalV = mat3(uModel) * n;',
     'vRel = mat3(uModel) * p;',
     'vec4 world = uModel * vec4(p, 1.0);',
   ]) assert.ok(vs.includes(line), `CHAR_SKIN_VS: ${line}`);
   for (const line of [
     'vec3 d = cross(dFdx(vRel), dFdy(vRel));',
     'if (uSkin < 0.5) return vNormalV;',
+    'if (dot(vNormalV, vNormalV) > 1e-20) return vNormalV;',   // MW-SMOOTH x MWNPC1: the skinned normal first, the face where it is zero
     'bool ccw = gl_FrontFacing != (uFrontCW > 0.5);',
     'vec3 nw = ccw ? d : -d;',
     'return normalize(uSkinFlip * (uSkinNrm * nw));',
@@ -346,6 +380,7 @@ function skinRenderer() {
   r.createCharacterMesh = (packed, opts) => { if (opts && opts.bounds === false) r.c.thirdPacked++; return plain(packed, opts); };
   r.createSkinnedCharacterMesh = (stream, o) => { r.c.skinMeshes++; return { vao: {}, buffers: [], count: stream.length / o.floats, floats: o.floats, skin: { tex: {}, ...o } }; };
   r.updateSkinPalette = (mesh, data) => { r.c.palettes++; r.lastPalette = Float32Array.from(data); };
+  r.updateSkinStream = () => { r.c.streams = (r.c.streams | 0) + 1; };   // MW-BOW1 x MWNPC1: a moved part's corners
   r.releaseCharacterSkin = () => {};
   return r;
 }

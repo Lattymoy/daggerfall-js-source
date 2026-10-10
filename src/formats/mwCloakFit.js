@@ -520,6 +520,7 @@ export function fitStowedGear(assembly, { isCloak, isGear, clearance = CLOAK_CLE
         src[v] = r[0] + dl[0] - o[0]; src[v + 1] = r[1] + dl[1] - o[1]; src[v + 2] = r[2] + dl[2] - o[2];
       }
       p.source = src;
+      p.sourceGen = (p.sourceGen | 0) + 1;   // MWNPC1: a GPU stream laid out of the old source streams this one (mwGpuSkin.js)
       if (lin && p.sourceNormals) {
         const nrm = new Float32Array(p.sourceNormals.length);
         for (let v = 0; v < nrm.length; v += 3) {
@@ -552,6 +553,7 @@ export function fitStowedGear(assembly, { isCloak, isGear, clearance = CLOAK_CLE
 export function followCloak(assembly, { isCloak, isGear, clearance = CLOAK_CLEARANCE }) {
   const cloak = assembly.pieces.find((p) => p.kind === 'skinned' && isCloak(p));
   assembly.afterPose = null;
+  for (const p of assembly.pieces) if (p.followAt) p.followAt = null;   // MWNPC1: a placement the last follow left goes with it
   if (!cloak) return null;
   const rest = poseOf(assembly);
   const C = rest.place(cloak); const T = cloak.indices;
@@ -688,8 +690,16 @@ function mulInto(p, q, out) {
   return out;
 }
 
-/** The follow, one pose: each group turned (and slid) the least that keeps its contacts' gaps, and re-placed. */
+/**
+ * The follow, one pose: each group turned (and slid) the least that keeps its contacts' gaps, and re-placed.
+ * MWNPC1 (met at the MW-NPC arc's merge of main, 2026-10-10): a pose the GPU skins (`cpuSkinned` false) blends no
+ * piece on the CPU, so the cloak alone is skinned here for the contacts to read - its few hundred vertices, by the
+ * same law the shader draws it by - and each turned piece's placement is left on it (`followAt`) for the palette
+ * (mwGpuSkin.js writeSkinPalette) instead of placing its vertices no one draws.
+ */
 export function applyCloakFollow(assembly, follow) {
+  const gpu = assembly.cpuSkinned === false;
+  if (gpu) assembly.fns.skinBatch(follow.cloak.batch, assembly.skeleton, assembly.pose, assembly.mats, follow.cloak.positions, null);
   const C = follow.cloak.positions; const T = follow.cloak.indices;
   const { rounds, sweeps, slideCost, maxTurn, maxSlide } = FOLLOW;
   for (const g of follow.groups) {
@@ -751,6 +761,8 @@ export function applyCloakFollow(assembly, follow) {
     mulInto(R, at.a, g.A);
     g.t[0] = at.t[0] + tr[0]; g.t[1] = at.t[1] + tr[1]; g.t[2] = at.t[2] + tr[2];
     for (const p of g.pieces) {
+      p.followAt = g.at;
+      if (gpu) continue;
       placeAtBone(p.source, g.at, p.mirrored, p.positions, p.boneOffset);
       if (p.normals && p.sourceNormals) placeNormalsAtBone(p.sourceNormals, g.at, p.mirrored, p.normals);
     }

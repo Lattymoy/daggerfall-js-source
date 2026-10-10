@@ -181,6 +181,10 @@ WHAT IT IS NOW.
   winding against the renderer's CW front face, and carried through
   sign(det M) M M^T and the mirror's flip back to the packed path's
   `mat3(uModel) x n` (a race's unequal weight and height included).
+  AMENDED AT THE MERGE OF MAIN (section 22): main's MW-SMOOTH lights a
+  mesh by its own normals, so the stream carries the authored normal and
+  the vertex shader turns it; the face normal is the fallback where a
+  corner has none.
 - THE LAWS KEPT: a missing bone skipped, nothing renormalised (rules 39,
   40), a vertex touched only by missing bones or zero weights collapsing
   onto the post, an untouched one keeping its authored position, a rigid
@@ -1419,3 +1423,102 @@ Mac: "Do a deep audit and ensure perfection."
   picture, the broker's guise, the Overworld's far bands, and three that
   draw nothing). A new population drawn without either fails the suite.
 
+## 22. THE MERGE OF MAIN (2026-10-10)
+
+The arc's branch forked at #723; main landed 290 commits (#723-#744)
+before it was picked up again. Fifteen files conflicted (the merge
+commit says how each was taken). Five of main's slices met the arc on the
+merged tree without a conflict to say so - three do per-pose work on the
+CPU skin that MWNPC1's GPU pose never ran, so on the merged tree every
+GPU-skinned body (the player's third person, every peer, the family, the
+card regulars and every NPC lane) would have dropped it:
+
+- MW-SMOOTH x MWNPC1: THE NORMALS. Main's MW-SMOOTH lights every Morrowind
+  mesh by the normals its file authored, posed with it (skinBatch turns a
+  normal by the composed 3x3, placeNormalsAtBone a rigid part's), and by
+  its face only where a mesh has none or a corner's is zero (packFpArm).
+  The GPU skin lit everything by its face, off the derivatives: every body
+  in the world faceted again. Now the stream's first fourteen floats are
+  packFpArm's corner, lane for lane (`formats/mwGpuSkin.js`
+  SKIN_STATIC_FLOATS = fpArm.js FP_FLOATS), the normal lanes holding the
+  AUTHORED normal (a rigid part's mirrored with its vertex, as
+  placeNormalsAtBone mirrors it); CHAR_SKIN_VS composes the rows once
+  (`skinRows`) and turns the position and the normal by them, the normal
+  renormalised as skinBatch does and zero where the 3x3 or the normal is
+  (a collapsed vertex, a mesh with none); skinFaceFs lights by it, and by
+  the face where it is zero. ONE stated difference: the pack lights a
+  triangle with one zero corner by its face at that corner alone, and the
+  shader's interpolated normal shortens towards it - the face takes over
+  only where it has all but vanished. A zero corner is a collapsed vertex
+  (rule 40), which no retail body is meant to show. COST: three floats a
+  corner more in the static stream (23 a corner for one influence pair,
+  was 20; 31 for two, was 28), uploaded once; nothing a pose.
+- MW-BOW1 x MWNPC1: A PART ON ITS OWN CLOCK. Main's MW-BOW1 re-poses a
+  bow's limbs and string (a morph - no affine a palette entry could carry)
+  and the arrow on its ArrowBone before each pose, writing the pieces'
+  sources (mwFirstPerson.js posePartClocks); the GPU stream was laid out
+  once, so on a GPU-skinned body the bow never drew. Each re-pose now
+  counts the piece's `sourceGen` (and so does the cloak's stowed-gear fit,
+  which replaces a source); the layout keeps the count it streamed, and
+  `restreamMovedRows` re-writes a moved piece's corners alone, into a
+  buffer of its own, for `renderer.updateSkinStream` to put into its range
+  of the mesh's buffer - a bow's few hundred corners while it draws, never
+  the body (fpArm.js uploadThirdMesh). Its box moves with it (rule 42).
+- AUDIT MW-CLOAK x MWNPC1: THE SEATED CLOAK AND THE GEAR THAT GOES WITH
+  IT. Seated, main swaps the cloak's batch for one whose thighs weigh less
+  (mwCloakFit.js seatCloak); the stream carries the weights, so a layout
+  is the same body only while each skinned piece skins by the batch it was
+  laid out from (`skinSamePieces`) - a seat lays the body out again, once.
+  And main turns the stowed gear with the cloak after every pose (the
+  assembly's `afterPose`, applyCloakFollow), reading the CPU-posed cloak
+  and re-placing the gear on the CPU: the GPU pose returned before it. Now
+  the GPU pose runs the hook too; on it the follow skins the cloak alone
+  on the CPU (by the same law the shader draws it) for its contacts, and
+  leaves each turned piece's placement on it (`followAt`) for
+  writeSkinPalette, which places a rigid entry by it - where the CPU
+  places it. A re-fit clears what the last follow left. No NPC wardrobe
+  holds a cloak (folkBodies.js, peopleBodies.js, the foes' equipment), so
+  this is the players' bodies' (and a cloaked peer's).
+- WAGONS2 x MWNPC5c: a companion seated in a wagon's back is drawn grown
+  with it under the Overworld (scenes/exteriorFoes.js `_sg`); that sprite
+  is the far view's, as the roads' bands are (section 15c), so the lane
+  stands a foe-pool actor only at `_sg === 1`. At its true seat it is
+  offered its body - standing, as its sprite stands (NOT HERE: a seated
+  body for a companion in a wagon - player/seatPose.js poses the peers').
+- ORG2 x MWNPC5b: main's one Settings screen places every Features row on
+  a tab; the Morrowind People row stands in Combat > With Morrowind data,
+  beside the Steel Helm and the Spell Effects (section 10b).
+
+READ AND FOUND SOUND: MW-FIT1's occupation (which parts a pauldron or a
+closed helm hides) is decided at build, before a layout; REGIONAL-FOLK's
+Redguard towns reach the walkers' bodies (the population's race is
+walkerRace) and the living residents' (the census's); PERF-VAO1 caches the
+renderer's VAO binder and the skinned mesh binds through it; CHAR_VS and
+CHAR_FS did not move on main, so CHAR_SKIN_VS is still CHAR_VS line for
+line plus the skin; the census (section 21) holds on the merged tree.
+
+PROVEN. `test/mwnpc_mainmerge.test.js` (5): the clock counted on the
+limb's morph and on the arrow's ArrowBone and never on a still bow; a
+moved rigid part re-streamed alone, at its range, as a fresh stream would
+hold it, once, posed where the CPU places it, its box holding the CPU's
+fold; the rig sending that range into the same mesh and no whole stream;
+the seated cloak's layout not the standing one's and back; the gear
+placed by the palette where a CPU pose places it at two strides (the cloak
+alone skinned on the CPU, no gear placed there, a placement the follow
+turned), and a re-fit with no cloak letting go; the grown companion's
+sprite and its body at the true seat; the Settings row. PIN MOVED
+(`test/mwnpc1_gpuskin.test.js` MWNPC1b, MWNPC1g): the hand-built pieces
+author normals (one zero, and one file whose normals do not match its
+vertices), every vertex's and every corner's normal by the shader's law is
+the one the CPU skin and the pack light it by - or zero where the pack
+lit the corner by its face, both halves seen - and the GLSL's lines.
+`tools/mutants/mwnpcmerge.json`: 23 mutants, 22 dead and one equivalent
+as recorded (posedNormals mints a piece's normals exactly when its batch's
+match, so the guard's two halves are one fact); four records re-aimed by
+content (MWNPC1's post and UV lanes, AUDIT MW-CLOAK's stale follow and
+its hook), and MW-BOW1's, MW-SMOOTH's, MW-CLOAK's and AUDIT MW-CLOAK's
+lists judged again on the merged tree: 59 dead. And in a real browser:
+`tools/mwGpuSkinProbe.mjs` gives both rigs the same authored normals and
+renders three more shots - 32 to 77 shades, 0 texels apart; with the
+fragment's skinned normal taken out by hand it fails all three (max 125
+apart).

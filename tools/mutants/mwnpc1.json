@@ -101,8 +101,8 @@
  {
   "name": "MWNPC1-stream-post-lost",
   "file": "src/formats/mwGpuSkin.js",
-  "old": "        stream[o++] = r.postE[v];",
-  "new": "        stream[o++] = 0;",
+  "old": "      out[o++] = r.postE[v];",
+  "new": "      out[o++] = 0;",
   "tests": [
    "test/mwnpc1_gpuskin.test.js"
   ]
@@ -110,8 +110,8 @@
  {
   "name": "MWNPC1-stream-uv-swapped",
   "file": "src/formats/mwGpuSkin.js",
-  "old": "stream[o++] = lanes[l + 3]; stream[o++] = lanes[l + 4];",
-  "new": "stream[o++] = lanes[l + 4]; stream[o++] = lanes[l + 3];",
+  "old": "out[o++] = lanes[l + 3]; out[o++] = lanes[l + 4];",
+  "new": "out[o++] = lanes[l + 4]; out[o++] = lanes[l + 3];",
   "tests": [
    "test/mwnpc1_gpuskin.test.js"
   ]
