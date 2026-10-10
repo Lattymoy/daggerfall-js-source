@@ -147,7 +147,7 @@ const keyOn = (map, res, trip) => {
   return turnKey(place, placeCycle(place, roster, Math.floor(trip.outT0 / DAY_MIN), 1));
 };
 /** The same trip minted again over the character's turns - its hand deaths laid on by the map's `fate`. */
-const remint = (turns, got) => (townTrips(livingMap({ turns }).byId.get(got.town.mapId), got.noon, livingMap({ turns }).world, O()) ?? []).find((x) => x.id === got.trip.id);
+const remint = (turns, got) => { const m = livingMap({ turns }); return (townTrips(m.byId.get(got.town.mapId), got.noon, m.world, O()) ?? []).find((x) => x.id === got.trip.id); };
 
 /** A caravan a band robs on its way out - the trouble's own encounter over a band's hold-up (the host's `bandAt`, in
  *  outlaws.js bandTrouble's shape), the trip as troubledTrip leaves it. */
