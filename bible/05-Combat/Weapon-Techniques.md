@@ -109,7 +109,9 @@ existing seed draws what it drew. It comes from its own pass alone.
   pass off and on, piece for piece).
 - **The card** prints the line as `<name> +N%` with its band (`Leap Strike +15% [15-30]`) and, under it, what a press
   does with that line's own numbers (`techniqueBrief`): `Aim: leap 9 m, strike all in 2.5 m, 161%. 5 fatigue, 12s`.
-  A Rare is read once it is identified, as DFU reads it; its technique works all the same.
+  A Rare is read once it is identified, as DFU reads it; its technique works all the same. The Enhanced card and its
+  Info box draw it as a **block of its own** instead (TECH-CARD, below - "The card's block"); the classic tooltip, the
+  Reforge and the trade window's strip keep the two lines (a chat post, the line alone - AUDIT TECH1).
 - **The name** never changes: with no slot, `nameAround` never puts it in a piece's name - a `Warrior's Longsword of
   Skill` that takes Leap Strike is still a `Warrior's Longsword of Skill`.
 - **Its place** is the piece's last own line, before a set gem's (`addTechniqueLine`); a line added after the mint - an
@@ -239,10 +241,46 @@ its own quad and numbers over its kind's (`techniqueQuadHalf`, `techniqueUniform
 before, by the same lines.
 
 **On the Enhanced HUD**, a chip after the set powers' (`techniqueHudChips`, handed to the HUD by `world.js` through a
-seam of its own, `setHudTechniqueChips`; `TECH_CHIP_COLOUR`):
-the technique's name and the seconds left, or the key's name when it is ready. The world host's rig, or the mode's
+seam of its own, `setHudTechniqueChips`; `TECH_CHIP_COLOUR`), wearing the technique's own glyph (TECH-CARD: it wore the
+sigil's rune in blue): the technique's name and the seconds left, or the key's name when it is ready. The world host's rig, or the mode's
 (an interior's, a dungeon's) when one owns the frame. When the world recentres, the aim, a leap's landing and a
 Volley's falling shafts shift with it (`offsetTechniques`, beside the foes' own - AUDIT TACT D3).
+
+## The card's block (TECH-CARD, 2026-10-10, the owner: "it needs its own unique glyph as its own element. Like how set pieces and sigils get their own sections")
+
+The card's tier list carried a technique as two more lines, in the affixes' own colour - an active move on its own
+key read like one more `+17 Dodging`, and its second line broke mid-clause wherever the card's width fell
+(`... 172%. 5` / `fatigue, 12s`). On the Enhanced card it is now a **block of its own**, under the tier list and before
+the sigil's and the set's - the piece's own line, so the first of the blocks - drawn by `ui/techniqueCard.js` from
+`systems/lootRarity.js` `techniqueView`:
+
+| Part | What it says |
+|---|---|
+| The head | the **glyph**; `TECHNIQUE` and the roll with its band (`+23% [15-30]`, its title "Rolled in 15-30") on one row; the name the whole width under them, so a long one (`Headsman's Chop`) never shares a row with the roll |
+| The effect | what a press does with the line's own numbers - `techniqueParts`' `what`, whole on its line (`Aim: leap 9 m, strike all in 2.5 m, 172%`) |
+| The foot | the key as a keycap (the live binding through `tagText`, the HUD chip's own law; `no key bound` when there is none), how it is pressed (`hold to aim` for the six that aim, `press` for the rest), the fatigue, and the recovery in the dashed frame the HUD's recovering chip wears |
+| The Info box only | the two numbers tied together - `+23% rolled (15-30) on its 140% blow: 172% of a plain blow.` - and the press in words (`Hold MOUSE3 to aim its mark, and let go to strike; a tap strikes where you look.` / `Press G to strike.` / `Bind Weapon technique in Controls to use it.`) |
+| A duel | law 3 sleeps the key in a duel and a bout between players (`sigilDueling`): the block greys (`data-state="asleep"`) and says `Sleeps in a duel: never at a player.` |
+
+**The glyph** (`ui/techniqueGlyph.js`, a leaf as the sigil's rune is): three strokes of a strike on the diagonal, the
+long one between two short, each sharp at both ends - on the 16px grid, a row a string (`TECHNIQUE_GLYPH_ROWS`), each run
+of pixels a unit rectangle so it is never smoothed. Not the sigil's ring, nor the open zone's crossed blades
+(`STATUS_GLYPHS.wild`). On the card it takes the text's colour and the blue's glow; on a tile (the HUD's chip,
+`techniqueGlyphTileSrc`) it is outlined in the kit's black, the corner rune's law. Its blue is `TECH_CHIP_COLOUR` - the
+chip's, the block's `--tech` and the marks' on the ground - pinned equal.
+
+**Two dresses**, the sigil's law (CARD-FIT): the card's (the hover card and the pack's detail) is what a glance needs;
+the Info box's (`{ full: true }`) adds the two sentences. **Where it is not:** the classic tooltip and list, the Reforge
+(its `reforge-detail` line) and the trade window's strip keep the two lines, and a chat post the line alone (AUDIT
+TECH1) - `rarityLines` keeps them by default, and only a card that draws the block asks without (`technique: false`, which leaves out exactly the line
+`techniqueLineOf` answers and nothing else). **When it is not:** wherever the tier list says nothing of the line - the
+ladder off, a Common, a piece not yet identified (its `Unidentified` hides every line) - `techniqueView` is null and
+there is no block.
+
+**The facts once.** `techniqueParts(id, value)` is what a press does in its parts (`what`, `mult`, `fatigue`,
+`cooldown`, `aims`); `techniqueBrief` is them as the classic line. `TECHNIQUE_ACTION` lives in the roster (the leaf) so
+the card names the key without importing the runner; `combat/techniques.js` exports it on. The sheet is
+`enhancedPlusStyle.js` `TECH_BLOCK_CSS`, laid after the set's block, every colour the block's own property.
 
 ## THE FEEL (TECH-FX, 2026-10-10, the owner: "lets do code driven design for each technique, like real detail and ensure performance remains in tact")
 
@@ -560,6 +598,14 @@ Gauntlets' Flying Kick and Haymaker) - every technique a press away.
   survivor (the exported marks call's fresh list, unmeasured once the hosts' call short-circuited before it) is pinned
   and dead. `tech1.json`'s five records on the rig's context and the load, and `uxb1.json`'s two on the held poll, were
   re-aimed by content.
+- `test/techcard1.test.js` (7) - TECH-CARD: the parts and the line they make; the view (and where it is null); the tier
+  list's `technique: false`, exactly the block's line; the block in both dresses on the fake document (the key, no key,
+  a press, a duel); the glyph's pixels and its blue; the pack's card and Info box and the HUD's chip, executed.
+- Mutants `tools/mutants/techcard1.json` (26 at TECH-CARD, all dead; with the two lists it re-aimed in, `cardfit.json` and
+  `trade_info.json`, 83 run - 83 dead). Three records re-aimed by content at the lines the card's
+  call moved, their laws unchanged: `cardfit.json` CARDFIT-the-lore-back-on-the-card and CARDFIT-a-line-said-twice,
+  `trade_info.json` TRADE-INFO-card-on-the-tiers-alone. Pins moved (`PIN MOVED (TECH-CARD)`): the card's and the Info
+  box's calls and `itemPowerLines`' signature in `cardfit`, `lr1_lootrarity`, `set5_ui`, `sigilui1` and `tradeinfo`.
 
 **Pins moved** (each marked `PIN MOVED (TECH1)` where it stands): the ladder's own oracles and source pins for the pass
 at a door's end (`cards9_sources`, `gilded1_gilded`, `sd9e_spoils`, `set6_aetheric`, `loot2_exalted`, `loot4_procs`,

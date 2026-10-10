@@ -861,7 +861,7 @@ export const TECH_BLOCK_CSS = `.techbox { --tech: #59c7ff; --tech-hi: #c4ecff; -
 .tech-glyph { grid-area: glyph; display: inline-flex; width: 20px; height: 20px; color: var(--tech);
   filter: drop-shadow(0 0 4px rgba(var(--tech-rgb),0.8)) drop-shadow(1px 1px 0 #050608); }
 .tech-glyph svg { width: 100%; height: 100%; image-rendering: pixelated; }
-.tech-word { grid-area: word; font-size: 10px; line-height: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: #9fd3f0; }
+.tech-word { grid-area: word; font-size: 11px; line-height: 12px; letter-spacing: 0.3em; text-transform: uppercase; color: #9fd3f0; }
 .tech-name { grid-area: name; min-width: 0; font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tech);
   text-shadow: 1px 1px 0 #050608, 0 0 8px rgba(var(--tech-rgb),0.55); }
 .tech-roll { grid-area: roll; white-space: nowrap; font-size: 11px; color: var(--tech-hi); font-variant-numeric: tabular-nums;
