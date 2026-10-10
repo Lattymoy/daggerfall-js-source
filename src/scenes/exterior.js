@@ -118,7 +118,7 @@ import { createWeatherFront, blendTerms, soundWeather, fallTerms } from '../syst
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
 import { CityNavigation } from '../world/cityNavigation.js';   // T1 towns
 import { TownPopulation } from '../systems/townPopulation.js';
-import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES, personWantsToStop } from '../characters/mobilePerson.js';
+import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES, personWantsToStop, peopleRaceOf } from '../characters/mobilePerson.js';
 import { createTownTalk, rayPersonDistance, nearestPerson } from './townTalk.js';   // T3b   // AUDIT 63 F33 (review): the townsfolk's own pick distance, the enemy arm's rival
 import { createPlayerMagic } from './hostMagic.js';   // M2: spellcasting above ground
 import { preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in)
@@ -4803,7 +4803,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // AUDIT 23 (characters-4) - PopulationManager.cs:94: the wandering
   // race is the CLIMATE's People (Redguard deserts, Nord mountains);
   // it was hardcoded Breton. FACTION_RACES numbers -> texture keys.
-  const populationRace = ({ 0: 'Nord', 2: 'Redguard', 3: 'Breton' })[dfLocation.climate?.people] ?? 'Breton';
+  const populationRace = peopleRaceOf(dfLocation.climate?.people);   // MERCHANT-YARDS: the one export (characters/mobilePerson.js)
   const personArchives = [...PERSON_TEXTURES[populationRace].male, ...PERSON_TEXTURES[populationRace].female, GUARD_TEXTURE];
   const personTex = new Map();
   if (populated) await Promise.all(personArchives.map(async (a) => personTex.set(a, await getTexture(a))));

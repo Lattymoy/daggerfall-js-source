@@ -38,6 +38,10 @@ export const PERSON_TEXTURES = Object.freeze({
   Breton: { male: [385, 386, 391, 394], female: [453, 454, 455, 456] },
 });
 export const GUARD_TEXTURE = 399;
+/** The race a town's walkers are drawn as, by its climate's `people` (the FACTION_RACES numbers the climate carries ->
+ *  PERSON_TEXTURES' keys): 0 the Nords, 2 the Redguards, every other the Bretons. MERCHANT-YARDS: one export - both
+ *  exterior hosts' populations and the towns' yard keepers (systems/merchantYards.js) read it. */
+export const peopleRaceOf = (people) => ({ 0: 'Nord', 2: 'Redguard', 3: 'Breton' })[people] ?? 'Breton';
 /** ROAD-D D10 - SetPerson's face tables (MobilePersonNPC.cs:30-39),
  *  digit for digit and in the SAME outfit-variant order as
  *  PERSON_TEXTURES above (DFU's own comments pair them off texture by

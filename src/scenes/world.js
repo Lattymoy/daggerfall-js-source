@@ -142,7 +142,7 @@ import { goldStack } from '../systems/inventory.js';   // LW6b: ...and their pur
 import { mintKeepsake } from '../systems/livingWorld/keepsake.js'; import { lwRng, textSeed } from '../systems/livingWorld/seed.js';   // LW6c: ...and their keepsake, carried home; AUDIT-C5: their goods their key's own (on this line, so no cite below it moves)
 import { createLivingIndoors } from './livingIndoors.js';   // LW8: the residents inside the building the player is in
 import { createTravellerSprites, classLookOf } from '../world/travellerSprites.js';   // LW3: their bodies, and the armed walk's sprite
-import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES, PERSON_MOVE_SPEED } from '../characters/mobilePerson.js';
+import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES, PERSON_MOVE_SPEED, peopleRaceOf } from '../characters/mobilePerson.js';   // MERCHANT-YARDS: the climate's People, one export
 import { bowDamageArrow, weaponOfMaterial, armorOfMaterial } from '../combat/enemyEquipment.js';   // MAC-N1: the recovered shaft is CreateWeapon's arrow, value and all; OH-E: UpgradeLoot's SetItem + ApplyWeaponMaterial / ApplyArmorSettings
 import { createTownTalk, rayPersonDistance, nearestPerson } from './townTalk.js';   // AUDIT 63 F33 (review): the townsfolk's own pick distance, the enemy arm's rival
 import { createPlayerMagic } from './hostMagic.js';   // M2: spellcasting above ground
@@ -289,6 +289,9 @@ import { createFleetHost } from './fleetHost.js';   // HOLDINGS: the Fleet page'
 import { createQuayPool } from './quayPool.js';   // QUAYS: a harbour's quays, stood off its berths, and the gangways
 import { createLefayMonument } from './lefayMonumentHost.js';   // LEFAY1: the monument to Julian LeFay in Gothway Garden, and the flowers laid at it
 import { isLefayTown, lefaySpotOf, carveLefay } from '../world/lefayMonument.js';   // LEFAY1: its town, its spot off the town's navgrid, and the people's navgrid carved round it
+import { createMerchantYards } from './merchantYardsHost.js';   // MERCHANT-YARDS: every city's and town's Stable and Wagon Yard, and their trade
+import { yardSitesOf, carveYards, MONUMENT_KEEP_M } from '../world/merchantYardSites.js';   // MERCHANT-YARDS: where they stand off the town's layout, and the people's navgrid carved round them
+import { isYardTown, yardKeeper, YARD_KIND_ORDER } from '../systems/merchantYards.js';   // MERCHANT-YARDS: the towns that stand them, who keeps them, the town's people
 import { HARBOUR_REACH } from '../systems/naval/shipLife.js';   // AUDIT HOLDINGS O1: the harbour's scan reach, its pixels built before it is sounded
 import { createHarbourBook } from '../systems/naval/harbourBook.js';   // HARBOUR-BOOK: the harbours near the player, the quays' and the sea's
 import { withdrawIntoPack, materialLabel, materialCountLabel } from '../systems/profItems.js';   // PROF1: a Stores material as DFU's own item
@@ -1482,6 +1485,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   let bountyFarms = null;   // BOUNTY-FARM: the farm pool, made beside the bounty pack's stander; read late (a transition, a load, the frame)
   let quays = null;   // QUAYS: the harbours' quays (scenes/quayPool.js), made beside the farms; read late (a transition, a load, the frame)
   let lefay = null;   // LEFAY1: the monument to Julian LeFay (scenes/lefayMonumentHost.js), made beside the Sigil Broker; read late (a transition, a load, the frame)
+  let merchantYards = null;   // MERCHANT-YARDS: the towns' Stables and Wagon Yards (scenes/merchantYardsHost.js), made beside the monument; read late as it is
   const _bountyFarmLocs = [];   // BOUNTY-FARM: the game's own farmsteads - the nearest lends a farm bounty its buildings
   const _bountyDungeonPixels = new Map();   // BOUNTY1: the game's own dungeons, by pixel -> name, for a board's underground hunts
   const _bountyGraveyardPixels = new Set();   // BOUNTY-GRAVEYARD: the game's own graveyards, by pixel - a board's hunt there stands outside
@@ -3359,6 +3363,33 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!b) archAabbs.set(id, b = localAabb(positions));
     return b;
   };
+  /** MERCHANT-YARDS: A TOWN'S TWO YARDS (world/merchantYardSites.js) - off a layout laid out the same on every lane
+   *  (the enhanced skin's, the mills stood: a classic client measures the ground an enhanced one sees, so both stand a
+   *  yard on one spot), every model measured by its ARCH3D size (no mesh built), every flat by its foot, a palace's
+   *  block left whole, the monument's ground kept. Each site in the location's frame, keyed by the town and its kind,
+   *  with its keeper (systems/merchantYards.js yardKeeper) and the town's people. */
+  function merchantYardSitesFor(dfLocation, lefaySpot, people) {
+    try {
+      const yl = layoutLocation(dfLocation, maps, blocks, { enhanced: true, windmills: true });
+      const buildings = [], props = [], flats = [], closedBlocks = [];
+      for (const b of yl.blocks) {
+        const origin = trs(b.originX, 0, b.originZ, 0, 0, 0);
+        if ((b.dfBlock?.rmbBlock?.fldHeader?.buildingDataList ?? []).some((d) => d?.buildingType === TALK_BUILDING_TYPES.Palace)) closedBlocks.push([b.x, b.y]);
+        for (const m of b.layout.models) {
+          const sz = dfMeshSize(m.modelIdNum);
+          if (!sz) continue;
+          const { min, max } = staticBuildingWorldAabb(staticBuildingBox(sz), multiply(origin, m.matrix));
+          (m.recordIndex != null ? buildings : props).push([min[0], min[2], max[0], max[2]]);
+        }
+        for (const w of b.layout.windmills) { const box = transformedAabb(archAabb('millBody', BODY.positions), multiply(origin, w.matrix)); buildings.push([box[0], box[2], box[3], box[5]]); }
+        for (const fl of collectBlockFlats(b.dfBlock, 0)) if (!fl.editor) flats.push([b.originX + fl.x, b.originZ + fl.z]);
+      }
+      const sites = yardSitesOf(yl, { buildings, props, flats, closedBlocks, keep: lefaySpot ? [[lefaySpot.x, lefaySpot.z, MONUMENT_KEEP_M]] : [] });
+      const mapId = (dfLocation.mapTableData?.mapId ?? 0) >>> 0, regionIndex = dfLocation.regionIndex ?? 0, race = peopleRaceOf(people);
+      if (sites.length < YARD_KIND_ORDER.length) console.log(`[yards] ${dfLocation.name}: no room for ${YARD_KIND_ORDER.filter((k) => !sites.some((t) => t.kind === k)).join(' or ')}`);
+      return sites.map((t) => ({ ...t, key: `${mapId}:${t.kind}`, mapId, regionIndex, race, keeper: yardKeeper(mapId, t.kind, regionIndex) }));
+    } catch (e) { console.warn('[yards] the town\'s yards would not place', e?.message ?? e); return []; }
+  }
   /** FB1009 HOME-FOOT: each model's ground seen from above (homeYards.js modelFootRects), in its own frame - measured once. */
   const modelFeet = new Map();
   const modelFeetOf = (id, cpu) => {
@@ -5110,6 +5141,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     let population = null;   // T2 towns: this pixel's wandering pool
     let locOrigin = null;    // the location origin, pixel-local
     let lefaySpot = null;    // LEFAY1: Gothway Garden's monument - its spot in the location frame (world/lefayMonument.js lefaySpot), null in any other town
+    let yardSites = null;    // MERCHANT-YARDS: a city's or a town's Stable and Wagon Yard - their sites in the location frame, null in any other place
     let personBatches = null;
     let locBlocks = null;    // T3d: the layout blocks for the Where-is directory
     let homeTown = 0;        // HOME-LOOK: the town's map id, and its homes as heard at the build
@@ -5129,6 +5161,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const loc = layoutLocation(dfLocation, maps, blocks, { enhanced: isEnhanced(), windmills: windmillsOn() });   // WM3: the pack's own switch
       locBlocks = loc.blocks;
       if (isLefayTown(dfLocation)) lefaySpot = lefaySpotOf(loc);   // LEFAY1: the open ground nearest the town's middle, off its own navgrid
+      if (isYardTown(dfLocation)) yardSites = merchantYardSitesFor(dfLocation, lefaySpot, climate?.people);   // MERCHANT-YARDS: the town's open ground, clear of its buildings, roads and lots
       const tilePos = getLocationTerrainTileOrigin(dfLocation);
       const locLocal = [tilePos.x * tileSide, avg * worldHeight + 2.0 * 0.025, tilePos.y * tileSide];
       // T3d: EVERY location pixel keeps its origin (the population
@@ -5440,6 +5473,7 @@ export async function bootWorld(canvas, renderer, params, status) {
             (tx, ty) => srcTiles[tx][ty].textureRecord, { enhancedWater: waterSwitchOn() });
         }
         if (lefaySpot) carveLefay(nav, lefaySpot);   // LEFAY1: the people walk round the monument, never through it
+        if (yardSites?.length) carveYards(nav, yardSites);   // MERCHANT-YARDS: and round the yards
         personBatches = new Map();   // person -> batch (destroyed with the pixel)
         made.personBatches = personBatches;   // BUILD-FAIL1
         const personCollider = {
@@ -5527,7 +5561,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           totalBlocks: loc.width * loc.height,
           // AUDIT 23 (characters-4/5): billboard race = the climate's
           // People; the NAME bank = the REGION's (MobilePersonNPC.cs:214).
-          race: ({ 0: 'Nord', 2: 'Redguard', 3: 'Breton' })[climate?.people] ?? 'Breton',
+          race: peopleRaceOf(climate?.people),   // the climate's People (characters/mobilePerson.js) - MERCHANT-YARDS: one export, the yards' keepers read it too
           nameBank: getNameBankOfRegion(dfLocation.regionIndex),
           makePerson: (archive, guard) => {
             const person = new MobilePerson(nav, {
@@ -5934,6 +5968,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       groundNormals: labGrass && stride === 1 ? normals : null,   // GRASS-LIT2: the near grid's vertex normals - the grass reads its slope off them; AUDIT B1: only where there is grass (200 KB a pixel)
       population, locOrigin, personBatches,   // T2 towns
       lefay: lefaySpot,   // LEFAY1: the monument's spot, location frame (locOrigin + its x, z) - null off Gothway Garden
+      merchantYards: yardSites,   // MERCHANT-YARDS: the Stable's and the Wagon Yard's sites, location frame - null off a city or a town
       npcs: pixelNpcs,   // AUDIT 26 (F019): RMBLayout's street StaticNPCs, pixel-local
       npcBatches: [], npcQuestPass: false,   // E3: their billboards (a subset of `batches`) and the one-shot SetupIndividualStaticNPC latch
       boards: pixelBoards,   // the block's bulletin boards (41739), pixel-local boxes
@@ -10266,6 +10301,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // rite's (WB12d holds those two together) and before another player's (PEER-PLAQUE1's, the array's last): its press
     // is the street's (worldModes.tryEnter, the ladder's last family), and it answers its own key alone
     (key) => lefay?.hoverName(key) ?? null,
+    (key) => merchantYards?.hoverName(key) ?? null,   // MERCHANT-YARDS: a yard by its name and its keeper's, a horse or a wagon on show by its own
     // PEER-PLAQUE1: another player, by the session's own name - the port's
     // own family (DFU has no other players), so it sits with the cart and
     // the camps ABOVE the mod's switch, as the names over heads already do.
@@ -13258,6 +13294,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     bountyFarms?.destroyAll();   // BOUNTY-FARM: the frame moves under it - it stands again from the bounty, in the new one
     quays?.destroyAll();   // QUAYS: and the quays - stood again off the harbours found in the new one
     lefay?.destroyAll();   // LEFAY1: and the monument - stood again the next frame that finds Gothway Garden built
+    merchantYards?.destroyAll();   // MERCHANT-YARDS: and the yards - stood again the next frame, in the new frame
     riteHost?.destroyAll();   // WB12d: and the faithful's circle - its faithful went with the live pools; it stands again the next frame
     csaReanchor(state.initOffset);   // FIELD-CSA1: and every placed boat with it
     // AUDIT ENVIRONS I2: AND THE SNOW, THE WIND AND THE HAZE, by the same move. Each keeps scene places a recentre
@@ -15167,6 +15204,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         bountyFarms?.destroyAll();   // BOUNTY-FARM: a load - the farms stand again from the loaded bounties
         quays?.destroyAll();   // QUAYS: and the quays, off the harbours found again
         lefay?.destroyAll();   // LEFAY1: and the monument - its collider down, stood again off the loaded world (a flower in the air lands nowhere: thrown before the restore - AUDIT LEFAY1 B1)
+        merchantYards?.destroyAll();   // MERCHANT-YARDS: and the yards, their colliders down, stood again off the loaded world
         camps.dropOwn();   // AUDIT SURV-TIERS (the third pass): the save says which camps are mine - the pitch after it is undone, not kept beside the gear it gave back
         camps.restore(restandAt('pos')(w.camps), campFromNatives);   // SURV3
         // F216/F217: the pools re-mint through their one spawn chain,
@@ -24381,6 +24419,34 @@ export async function bootWorld(canvas, renderer, params, status) {
     sound: () => audio.playOneShot(SOUND.SwingHighPitch, 0.4),   // the hand's swing, as a thrown torch's (systems/handheldTorches.js CLIPS.throwSwing)
     restores: restoresSoFar,   // AUDIT LEFAY1 B1: a flower thrown before a load, whichever load, lands nowhere
   });
+  // MERCHANT-YARDS: THE TOWNS' STABLES AND WAGON YARDS (scenes/merchantYardsHost.js) - each where its pixel's build
+  // placed it (`p.merchantYards`, the location frame), carried by the live floating-origin translation; its horses Horse
+  // Cart and Cargo's standing horse, its wagons on show the pool's own wagons; its trade the modes' counter
+  const _yardT = [0, 0, 0], _yardSites = [];
+  merchantYards = createMerchantYards({
+    renderer, getTexture, uploadRecordFrame, collider: () => collider,
+    sites: () => {
+      _yardSites.length = 0;
+      if (_mode() !== 'exterior') return _yardSites;
+      for (const p of built.values()) {
+        if (!p.merchantYards?.length || !p.locOrigin) continue;
+        const t = state.pixelTranslation(p.px, p.py, _yardT);
+        for (const s of p.merchantYards) {
+          const at = (s.scene ??= { ...s });
+          at.x = t[0] + p.locOrigin[0] + s.x; at.z = t[2] + p.locOrigin[2] + s.z; at.comp = state.compensation[1];
+          _yardSites.push(at);
+        }
+      }
+      return _yardSites;
+    },
+    groundAt: (x, z) => surfaceAt(x, z),   // the drawn ground, as the monument stands on
+    eye: () => cam.pos, feet: () => (walkMode && playerSpawned ? player.feetAt() : null),
+    horseArt: () => !!hcc.presentation.horseArt.ensureStationary(),
+    showWagon: (r, texRemap, position, rotation, kind) => hcc.drawShowWagon(r, texRemap, position, rotation, kind),
+    wagonBox: (kind) => hcc.partsOf(kind)?.box ?? null,
+    open: (site, mode) => modes?.openYardTrade?.(site.kind, site.regionIndex, mode) ?? false,
+    say: (text) => townTalk.say(text), midText: (text) => setMidScreenText(text),
+  });
   /** WB1: the compass's mark - the gate's spot in THIS scene, while the gate stands and the player is in its ring. */
   // GUIDE5: a quest target's place to its map pixel (the held map's own goto law) - AUDIT GUIDE O3: through the host's
   // one memo, which the look's map question shares, so the compass (every street frame) and the held map's poll never
@@ -28555,6 +28621,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     activateGrave: (g, mode) => activateGrave(g, mode),   // SEARCH1
     monumentTargets: () => lefay?.targets() ?? [],   // LEFAY1: the monument to Julian LeFay, in the street's one ray
     activateMonument: (key, mode, verb) => lefay?.activate(key, mode, verb) ?? false,   // LEFAY1: read it, or throw it a flower
+    yardTargets: () => merchantYards?.targets() ?? [],   // MERCHANT-YARDS: the yards' keepers, signs, horses and wagons on show, in the street's one ray
+    activateYard: (key, mode, verb) => merchantYards?.activate(key, mode, verb) ?? false,   // MERCHANT-YARDS: buy from a yard, or sell to it
     boardTargets: () => {
       const out = [];
       for (const p of built.values()) {
@@ -32551,6 +32619,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (_mode() === 'exterior') camps.ride(dt);   // DECK-CAMP: the camps on a boat's deck posed off her - after she moved, before the lights (a fire's) and the world pass
     try { quays?.frame(); } catch (e) { console.warn('[quays] pool', e?.message ?? e); }   // QUAYS: the harbours' quays stood or taken down, before the lights (their lanterns) and the world pass
     try { lefay?.frame(); } catch (e) { console.warn('[lefay] monument', e?.message ?? e); }   // LEFAY1: the monument stood where Gothway Garden is built, its flowers in flight and laid
+    try { merchantYards?.frame(); } catch (e) { console.warn('[yards] the yards', e?.message ?? e); }   // MERCHANT-YARDS: each town's Stable and Wagon Yard stood where it is built
     // Lanterns on 17:00-08:00, flickering verbatim; pixel-local lights
     // placed under the current compensation, nearest 16 to the camera.
     // WOD2: the mod's lights burn at every hour and each carries its own
@@ -32633,6 +32702,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     quays?.draw(renderer);   // QUAYS: the harbours' quays and the gangways to my ships made fast
     yards?.draw(renderer);   // HOME-YARD: the pieces outside the town's homes, and the one being placed
     lefay?.draw(renderer);   // LEFAY1: the monument to Julian LeFay
+    merchantYards?.draw(renderer);   // MERCHANT-YARDS: the yards' timber and the Wagon Yards' wagons on show
     if (csaOn()) csa.draw(renderer);   // CSA-B: the boats - the hulls, the classic models their helpers stand, the baked sails
     // SERPENT1: the sea serpent's body with the opaque world, before the sea's top (its humps break it, the rest shows
     // dark through it); its frame made once here, its sea's marks drawn from it after the sea
@@ -33139,6 +33209,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (_mode() === 'exterior') livePersonBatches.push(...portalGates.batches());   // PORTAL1: the vortexes on the flats' axis
     if (sigilBroker && _mode() === 'exterior') livePersonBatches.push(...sigilBroker.batches());   // SET7: the Broker on the flats' axis, as a foe stands
     if (lefay && _mode() === 'exterior') livePersonBatches.push(...lefay.batches());   // LEFAY1: the flowers laid at the monument, and the ones in flight
+    if (merchantYards && _mode() === 'exterior') livePersonBatches.push(...merchantYards.batches());   // MERCHANT-YARDS: the keepers and the Stables' horses on the flats' axis
     if (riteHost && _mode() === 'exterior') { riteHost.tick(dt); livePersonBatches.push(...riteHost.batches()); }   // WB12d: the braziers' flames and the faithful's fire
     // HCC: the horse billboards on the flats' axis (the runtime ticked above, hccTick - AUDIT HCC H1)
     if (hcc.enabled && _mode() === 'exterior') livePersonBatches.push(...hcc.batches());

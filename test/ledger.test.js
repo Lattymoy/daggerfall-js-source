@@ -204,7 +204,7 @@ test('TC1 ledger: the six re-measured section-C rows are struck, and each names 
       file: 'src/systems/regionPower.js', built: /rumorMill\?\.addNonQuestRumor\?\./ },
     // Fast travel: transport ownership, the mint the row said nothing had.
     { head: /~~FAST TRAVEL residue~~/, slice: /TC1 2026-09-02/,
-      file: 'src/systems/shopStock.js', built: /add\(\{ group: 'Transportation', templateIndex: TRANSPORT_SMALL_CART \}\);/ },   // DISC24-B: the constant's home is itemTemplates.js now; the SHELVING the row names is here
+      file: 'src/systems/merchantYards.js', built: /return \[mint\(\{ group: 'Transportation', templateIndex: TRANSPORT_HORSE \}\)\];/ },   // DISC24-B: the constant's home is itemTemplates.js now; MERCHANT-YARDS: the SELLING the row names is the Stable's now (the General Store's shelf until 2026-10-10)
     { head: /~~PatchRegionIndex legacy-save fix~~/, slice: /U32 \+ U41/,
       file: 'src/formats/mapsFile.js', built: /export function patchRegionIndex\(regionIndex, canonicalRegionName\)/ },
     { head: /~~Biography GP arm ledger note/, slice: /TC1 2026-09-02/,

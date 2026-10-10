@@ -9,6 +9,8 @@
 //   Books ride the quality ladder ((q+3)/5, the >=4 step-down, +1);
 //   general stores always shelve a Horse and a Small Cart; clothing
 //   swaps to the player's gender; Furniture/UselessItems1 skip.
+//   MERCHANT-YARDS (2026-10-10): the horse and the cart no longer -
+//   the town's Stable and Wagon Yard sell them (systems/merchantYards.js).
 // - THE COST LAW (verbatim): clamp value to >=1, apply the regional
 //   price adjustment (value*adj/1000, floor 1), then
 //   2*(cost*(quality-10)/100 + cost) in C# integer math.
@@ -58,7 +60,6 @@ import { turnOnConditionFlag, turnOffConditionFlag, REGION_FLAGS, REGION_COUNT }
 import { isOnlinePage } from './onlineLane.js';   // REALM P0.4: online, a shop pays at most half what it asks
 import { BAG_TEMPLATE, isBagItem } from '../net/bagLaw.js';   // BAG1: the Materials Bag, at every General Store online
 import { createPellets } from './thunderlock.js';   // SHOP-PELLETS: the gun's shot on the counter - the shot alone, never the gun
-import { newWagonItem } from './wagonKinds.js';   // WAGONS1: the Open Wagon and the Caravan, minted beside the cart
 
 // ItemGroups ids used by the shelf tables (DaggerfallUnityEnums).
 const GROUP_NAMES = Object.freeze({
@@ -133,7 +134,8 @@ export const SHOP_BUYS_GROUPS = Object.freeze({
   [BUILDING_TYPES.ClothingStore]: ['MensClothing', 'WomensClothing'],
   [BUILDING_TYPES.FurnitureStore]: ['Furniture'],
   [BUILDING_TYPES.GemStore]: ['Gems', 'Jewellery'],
-  [BUILDING_TYPES.GeneralStore]: ['Books', 'MensClothing', 'WomensClothing', 'Transportation', 'Jewellery', 'Weapons', 'UselessItems2'],
+  // MERCHANT-YARDS: and it no longer buys them - DFU's Transportation is out of its list; the yards buy them back
+  [BUILDING_TYPES.GeneralStore]: ['Books', 'MensClothing', 'WomensClothing', 'Jewellery', 'Weapons', 'UselessItems2'],
   [BUILDING_TYPES.PawnShop]: ['Armor', 'Books', 'MensClothing', 'WomensClothing', 'Gems', 'Jewellery', 'ReligiousItems', 'Weapons', 'UselessItems2', 'Paintings'],
   [BUILDING_TYPES.WeaponSmith]: ['Armor', 'Weapons'],
 });
@@ -320,12 +322,10 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
     if (shelfIndex === 0) for (const r of ALCHEMIST_ALWAYS) add({ ...r });
   }
   if (buildingType === BUILDING_TYPES.GeneralStore) {
-    add({ group: 'Transportation', templateIndex: TRANSPORT_HORSE });
-    add({ group: 'Transportation', templateIndex: TRANSPORT_SMALL_CART });
-    // WAGONS1 (2026-10-09, Mac's two new wagons, asked: "Bought like the Small Cart"): the Open Wagon and the Caravan
-    // beside it, on every General Store's every shelf as the cart is - the cart's own item, marked with its kind
-    // (systems/wagonKinds.js newWagonItem), named and valued, so every "owns a cart" law answers for them
-    for (const kind of ['openWagon', 'caravan']) add(newWagonItem(kind));
+    // MERCHANT-YARDS (2026-10-10, asked: "Transport merchants hold all carts and wagons. The stable holds horses. No
+    // longer in general shop"): DFU's `items.AddItem(Horse)` and `items.AddItem(Small_cart)` are gone from here, and the
+    // two wagons WAGONS1 shelved beside the cart with them - the Stable sells the horse and the Wagon Yard the cart and
+    // the wagons (systems/merchantYards.js yardStock), every city and town standing both. A departure from DFU.
     // BAG1 (bible/06-Systems/Materials-Bag.md): THE MATERIALS BAG beside the cart, at every General Store - online alone,
     // where the professions are (nothing offline gathers into it), and by name, as the horse and the cart are.
     // BAG-SHELF (FIELD BUGS 2026-10-04, "nobody can find material bags in store"): on EVERY shelf, whoever stocks it, as

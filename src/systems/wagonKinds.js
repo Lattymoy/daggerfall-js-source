@@ -10,7 +10,7 @@
 // two new wagons are that same item, marked: a template-93 item carries `wagonKind` ('openWagon' or 'caravan'; absent,
 // the Small Cart), its own name and its own value - so every one of those laws keeps answering, a save carries the mark
 // as it carries any field (systems/save.js spreads each item), and a shop mints them on the General Store's shelf beside
-// the cart. A player who owns more than one drives the best (`activeWagonItem`): buying a wagon is the upgrade, and the
+// the cart (MERCHANT-YARDS, 2026-10-10: the Wagon Yard's counter now - systems/merchantYards.js yardStock). A player who owns more than one drives the best (`activeWagonItem`): buying a wagon is the upgrade, and the
 // cart left over is an empty cart to sell.
 //
 // Pure: no DOM, no renderer, no clock. Not a DFU member. Ledger A (WAGONS1).

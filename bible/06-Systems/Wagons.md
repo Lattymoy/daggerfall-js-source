@@ -90,8 +90,10 @@ shelved at (150, 900, 2500), which the item law reads below.
 
 How the kinds are wired in:
 
-- **Shop**: the General Store shelves all three
-  (`src/systems/shopStock.js`).
+- **Shop**: the Wagon Yard every city and town stands sells all three, and
+  buys them back (MERCHANT-YARDS, `src/systems/merchantYards.js` yardStock;
+  `bible/03-World/Merchant-Yards.md`). The General Store shelved them until
+  then.
 - **Names**: a marked row keeps the template's name, as every minted row
   does; what it shows is the kind's name (`wagonItemName`, read first by
   `src/systems/itemInfo.js` resolveItemName) - and, since the final audit,

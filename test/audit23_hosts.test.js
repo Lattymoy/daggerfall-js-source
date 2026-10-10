@@ -17,6 +17,7 @@ import { BANK_TYPES } from '../src/characters/nameHelper.js';
 import { NORMALIZE_INTERVAL_MINUTES } from '../src/systems/court.js';
 import { SKILLS } from '../src/systems/skills.js';
 import { maxFatigue, FATIGUE_LOSS, FATIGUE_DRAIN_SCALE } from '../src/systems/statMods.js';   // AUDIT 64 F7: the two running bands
+import { peopleRaceOf } from '../src/characters/mobilePerson.js';   // MERCHANT-YARDS: the People map's one export
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = (f) => readFileSync(join(root, f), 'utf8');
@@ -207,8 +208,9 @@ test('AUDIT 23 wts-1/2: the sky season arm and the weather-scaled ambient', () =
 });
 
 test('AUDIT 23 characters-4/5: the population takes the climate race and the REGION name bank', () => {
+  assert.deepEqual([0, 2, 3, 1, undefined].map(peopleRaceOf), ['Nord', 'Redguard', 'Breton', 'Breton', 'Breton'], 'the People map (characters/mobilePerson.js)');
   for (const [name, text] of [['exterior', EXTERIOR], ['world', WORLD]]) {
-    assert.ok(/\{ 0: 'Nord', 2: 'Redguard', 3: 'Breton' \}/.test(text), `${name}: the People map`);
+    assert.ok(/peopleRaceOf\((climate|dfLocation\.climate)\?\.people\)/.test(text), `${name}: the People map`);   // PIN MOVED (MERCHANT-YARDS, 2026-10-10): one export now, read by both hosts
     assert.ok(text.includes('nameBank: getNameBankOfRegion('), `${name}: the region bank`);
   }
   // ...and TownPopulation honors the bank for names while the race
