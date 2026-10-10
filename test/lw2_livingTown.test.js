@@ -275,7 +275,7 @@ test('LW2 the streaming host: where the row is on, the population block stands a
   assert.ok(lines.indexOf('livingLinePoints(') < lines.indexOf('drawCrewLines('), 'merged before the one draw');
   // PIN MOVED (LEGACY-HOME): the doors gained `kin` - one of Project Legacy's line met before the words (test/legacyhome.test.js)
   // PIN MOVED (LW11): a caravan's door after the kin's
-  assert.match(w, /livingTalk: \{ refuses: \(person\) => person\?\.living\?\.town\?\.refuses\(person\) \?\? null, talked: \(person\) => person\?\.living\?\.town\?\.talked\(person\), caught: \(person\) => person\?\.living\?\.town\?\.caught\?\.\(person\),\n\s*kin: \(person, talk\) => legacyMeetKin\(person, talk\),[^\n]*\n\s*offers: \(person, talk\) => \(livingWorldOn\(\) \? caravanHostOf\(\)\.offers\(person, talk\) \|\| !!livingDivers\?\.offers\(person, talk\) : false\) \},/);
+  assert.match(w, /livingTalk: \{ refuses: \(person\) => person\?\.living\?\.town\?\.refuses\(person\) \?\? null, talked: \(person\) => person\?\.living\?\.town\?\.talked\(person\), caught: \(person\) => person\?\.living\?\.town\?\.caught\?\.\(person\),\n\s*kin: \(person, talk\) => legacyMeetKin\(person, talk\),[^\n]*\n\s*offers: \(person, talk\) => \(livingWorldOn\(\) \? caravanHostOf\(\)\.offers\(person, talk\) \|\| \(_mode\(\) === 'dungeon' && !!livingDivers\?\.offers\(person, talk\)\) : false\) \},/);   // PIN MOVED (AUDIT LW-II-2 D4): a company below answers below alone
   const tt = rd('src/scenes/townTalk.js');
   const act = tt.slice(tt.indexOf('function activate(target, dist)'));
   assert.ok(act.indexOf('livingTalk?.refuses?.(target.person)') > 0 && act.indexOf('livingTalk?.refuses?.(target.person)') < act.indexOf('const eng0 = engine();'), 'the refusal before the conversation');

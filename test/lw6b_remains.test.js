@@ -197,7 +197,7 @@ test('LW6b the dungeon and the streaming host: the dungeon\'s resting places (it
   assert.match(dc, /layRemains: \(items, feet, icon\) => droppedLoot\.dropPile\(items, feet, null, icon\),/);
   assert.match(dc, /pileNear: \(feet, r\) => droppedLoot\._piles\.some\(\(p\) => Math\.hypot\(p\.pos\[0\] - feet\[0\], p\.pos\[2\] - feet\[2\]\) <= r && Math\.abs\(p\.pos\[1\] - feet\[1\]\) <= 2\),/);
   const w = rd('src/scenes/world.js');
-  assert.match(w, /livingRemainsStep\(now\);   \/\/ LW6b/);
+  assert.match(w, /try \{ livingRemainsStep\(now\); \} catch \(e\) \{ console\.warn\('\[remains\] step', e\); \}   \/\/ LW6b/);   // PIN MOVED (AUDIT LW-II-2): wrapped as its neighbours are - a throw never kills the frame loop
   assert.match(w, /return !turns\.fallen\.has\(key\) && !turns\.spared\.has\(key\) && !turns\.slain\.has\(key\) && !turns\.died\.has\(key\) && !livingDivers\?\.stood\(r\.trip\.id, r\.res\.id\);/);   // LW-FIX1: and the player's own dead
   assert.match(w, /laid: \(key\) => livingRelations\.turns\(\)\.laid\.has\(key\),\n\s+mark: \(key\) => livingRelations\.turn\('laid', key\),/);
   assert.match(w, /return d\.layRemains\(items, feet, \{ archive: corpse\.archive, record: corpse\.record \}\);/);

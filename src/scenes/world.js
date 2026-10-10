@@ -142,7 +142,7 @@ import { townTrips as tripsOfTown, partyAt as livingPartyAt } from '../systems/l
 import { createRoadFights, LIVE_M } from './roadFights.js';   // LW4b: a beset party's fight, stood live
 import { createRoadStands, FIGHT_NEAR_M } from './roadStands.js';   // LW7b: the armed beyond the walls - a hostile drawing, a friend at the player's side
 import { createDungeonDivers } from './dungeonDivers.js';   // LW6: the divers met in the dungeon
-import { createDeepRemains } from './deepRemains.js';   // LW6b: the fallen of a dive, found in its dungeon
+import { createDeepRemains, apartOf as deepRemainsApartOf } from './deepRemains.js';   // LW6b: the fallen of a dive, found in its dungeon (AUDIT LW-II-2 D6: one dive's laid apart)
 import { watchStep } from './livingWatch.js';   // LW-FIX2: a struck watchman's guard followed to his end
 import { fallenIn } from '../systems/livingWorld/trips.js';   // LW6b: ...the deep's word of them
 import { innGuestsOf, patrolCover, placeName, INN_TYPE } from '../systems/livingWorld/trips.js';   // LW9: the inn's guests, the patrol's cover; AUDIT LW-II E7: a trip's end in the talk
@@ -3235,6 +3235,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // promise every reader the same set: the authority's dead reached a joiner as kit-rolled corpses, a joiner's were
     // stood up again by the stream with their packs emptied
     if (!livingWorldOn() || params.has('online') || !stops?.length || !loc?.mapTableData) return null;
+    // AUDIT LW-II-2 D7: nor the Ocean Holes abyss - a CLONE of its template (cloneDungeon keeps the template's map table;
+    // RenameDungeon writes the abyss's own id only once the build stands), so its dives were the template's. The build's
+    // one mark is the mod's own word on its loot (ShouldUpgradeLoot: the abyss building, bound, or a Recall landing in it)
+    if (ohAbyss?.shouldUpgradeLoot()) return null;
     livingDungeonsIndex();
     const here = _livingDungeonById.get(loc.mapTableData.mapId >>> 0);
     if (!here) return null;
@@ -3326,6 +3330,10 @@ export async function bootWorld(canvas, renderer, params, status) {
           if (_livingRemainsPlace.has(r.key)) return _livingRemainsPlace.get(r.key);
           const s = stopOfMinute(livingDeepRoute(r.trip), r.t);
           const at = s ? d.floorAt?.(s.x, s.y, s.z) ?? null : null;
+          // AUDIT LW-II-2 D6: one dive's fallen share its minute, so its stop - each a pace apart (deepRemains.js apartOf),
+          // walked out from the stop's floor as the divers' own `spot` is (never into a wall)
+          const dx = at ? deepRemainsApartOf(r) : 0;
+          if (dx) { try { d.collider?.move(at, dx, 0, 0, 1.8); } catch { /* the stop's own floor */ } }
           if (_livingRemainsPlace.size > 256) _livingRemainsPlace.clear();
           _livingRemainsPlace.set(r.key, at);
           return at;
@@ -7353,7 +7361,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // own town answers both: systems/livingWorld/livingTown.js)
     livingTalk: { refuses: (person) => person?.living?.town?.refuses(person) ?? null, talked: (person) => person?.living?.town?.talked(person), caught: (person) => person?.living?.town?.caught?.(person),
       kin: (person, talk) => legacyMeetKin(person, talk),   // LEGACY-HOME: one of the player's line, met
-      offers: (person, talk) => (livingWorldOn() ? caravanHostOf().offers(person, talk) || !!livingDivers?.offers(person, talk) : false) },   // LW11: a caravan's merchant, a pedlar, a carter asks first; LW14: a company below
+      offers: (person, talk) => (livingWorldOn() ? caravanHostOf().offers(person, talk) || (_mode() === 'dungeon' && !!livingDivers?.offers(person, talk)) : false) },   // LW11: a caravan's merchant, a pedlar, a carter asks first; LW14: a company below - AUDIT LW-II-2 D4: below alone (one met there and left holding never answers the street's talk)
     legacyTopics: (person) => legacyTopicRows(person),   // LEGACY5: courting, the proposal, the wedding, the family
     livingTone: (person, tone) => person?.living?.town?.toned?.(person, tone),   // LW7: a question's tone, in a resident's regard
     // RP1: a GETTER, not startLoc's number - see the note above. It is
@@ -31558,7 +31566,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // the whole indoor visit, swept only on the first frame back
     // outside. DestroyLightSources_OnTransition is an EVENT in the mod
     // (0x7d1), not a frame-tail chore.
-    if (restoresSoFar() !== _portalRestores) { _portalRestores = restoresSoFar(); portalGates.clear(); }   // PORTAL1: A LOAD ENDS EVERY PORTAL STANDING - asked at the one door every load passes (save.js restorePlayer: the world's, a classic import, a dungeon's own), so no branch of any load keeps one (AUDIT PORTAL1 U9); the save's pack is the truth
+    if (restoresSoFar() !== _portalRestores) { _portalRestores = restoresSoFar(); portalGates.clear(); livingDivers?.clear(); livingRemains?.clear(); _livingRemainsPlace.clear(); }   // PORTAL1: A LOAD ENDS EVERY PORTAL STANDING - asked at the one door every load passes (save.js restorePlayer: the world's, a classic import, a dungeon's own), so no branch of any load keeps one (AUDIT PORTAL1 U9); the save's pack is the truth. AUDIT LW-II-2 D2: and LETS THE DEEP'S LAYERS GO - a same-dungeon load keeps the pool, so the divers read the bodies its rewind cut as cut down beside the player (a death, a slaying, in the loaded game) and the remains a pile it wiped as taken (spent); met and laid again from the save's world
     if (_bootLoaded) { const gift = takePortalGiftNotice(); if (gift) townTalk.say(PORTAL_TEXT.gift(gift)); }   // PORTAL-GIFT: the stones a load gave, said once the world stands - every load's (the boot's, F9's, a dungeon's own), in every mode
     if (_mode() !== _torchesMode) { droppedTorches.destroyAll(); weaponRig.silenceTorch();   /* DISC6: the street's rig leaves (or retakes) the frame - its torch loop falls silent, and the rig that ticks starts its own */ if (_torchesMode === 'exterior') { closeBrokerDoor(); sigilBroker?.destroyAll(); }   /* AUDIT SET W2: the street left (the gate's court entered under the veil's 1.2 s, an interior, a travel) - her window shut and her post down, never carried in */ if (_torchesMode === 'exterior') lefay?.destroyAll();   /* LEFAY1: the monument's collider down, never carried in */ portalGates.forgetSteps(); _torchesMode = _mode(); }   // HT1; PORTAL1: the step forgotten at every change of place
     if (modes.frame(dt, now)) {
@@ -31581,8 +31589,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       if (livingRoads) livingRoads.clear();   // LW3: indoors, underground - the road's bodies freed with the open world they stood in
       familyStreet?.clear();   // AUDIT LEGACY III W6: the line's street rigs too
       livingWays.frame(); livingMemoFresh();   // AUDIT-E2: the ways asked indoors too - a load made in a tavern or below asked once and never again
-      livingDiversStep(now);   // LW6: underground, the companies diving here met
-      livingRemainsStep(now);   // LW6b: ...and the dead the deep kept there
+      try { livingDiversStep(now); } catch (e) { console.warn('[divers] step', e); }   // LW6: underground, the companies diving here met (AUDIT LW-II-2: wrapped as its neighbours are - a throw never kills the frame loop)
+      try { livingRemainsStep(now); } catch (e) { console.warn('[remains] step', e); }   // LW6b: ...and the dead the deep kept there
       livingIndoorsStep(townTalk.overlayActive ? 0 : dt);   // LW8: in a building, the residents whose day has them inside (AUDIT-E3: held under a talk, as the street's)
       if (dwPlayer) {
         audio.setListenerLowPass(0);   // DW-D: UpdateAudioFilter's IsPlayerInside - RemoveAudioFilter
@@ -33499,6 +33507,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (livingWorldOn()) { livingWatchStep(); livingPeerWatchStep(); }   // LW7 / WATCH-FIX: the turned watch followed, mine and a peer's
     if (livingIndoors?.size || livingIndoors?.spots().length) livingIndoors.clear();   // LW8: the street again - the room's residents freed (LW-FIX1: and an empty room's sounding)
     if (livingRemains) { livingRemains.clear(); livingRemains = null; }   // LW6b: ...and the deep's layer let go with its dungeon
+    if (livingDivers) { livingDivers.clear(); livingDivers = null; }   // AUDIT LW-II-2 D4 / H5: ...and the divers' - a company left holding below kept its door on the street's talk
     // G1: the guards drive + draw on the same flats' axis. WINFOE1
     // (2026-09-17, Mac: "enemies should still be able to do damage"): the
     // ENEMY pools no longer freeze under a window - a rest, the

@@ -226,7 +226,7 @@ test('LW-FIX6 the hosts: the ways asked in the modal frame too (a load made in a
   const modal = w.slice(at, w.indexOf('\n      return;\n    }\n', at));
   assert.ok(modal.length > 0 && modal.length < 20000, 'the modal frame');
   const ways = modal.indexOf('      livingWays.frame(); livingMemoFresh();   // AUDIT-E2');
-  assert.ok(ways > 0 && ways < modal.indexOf('      livingDiversStep(now);'), 'asked before the deep and the rooms read the trips');
+  assert.ok(ways > 0 && ways < modal.indexOf('      try { livingDiversStep(now); }'), 'asked before the deep and the rooms read the trips');   // PIN MOVED (AUDIT LW-II-2): the divers' step wrapped as its neighbours are
   assert.match(modal, /\n\s*livingIndoorsStep\(townTalk\.overlayActive \? 0 : dt\);/, 'held under a talk');
   assert.match(w, /livingRoadsOf\(\)\.frame\(townTalk\.overlayActive \? 0 : dt, /, 'as the road and the street are');
   // a room stepped at nought runs nothing: nobody stirs, no word runs out

@@ -732,8 +732,8 @@
   {
     "name": "PORTAL1-a-load-keeps-portals",
     "file": "src/scenes/world.js",
-    "old": "if (restoresSoFar() !== _portalRestores) { _portalRestores = restoresSoFar(); portalGates.clear(); }",
-    "new": "if (restoresSoFar() !== _portalRestores) { _portalRestores = restoresSoFar(); }",
+    "old": "{ _portalRestores = restoresSoFar(); portalGates.clear(); livingDivers?.clear();",
+    "new": "{ _portalRestores = restoresSoFar(); livingDivers?.clear();",
     "tests": [
       "test/portal1_stone.test.js"
     ]

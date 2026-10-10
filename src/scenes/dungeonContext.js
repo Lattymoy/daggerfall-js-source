@@ -6022,6 +6022,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (canon === _lootOpenKey) { n++; continue; }   // C1: not under an open window
       held.length = 0;
       for (const it of items) held.push(it);
+      if (canon.startsWith('loot:')) { const p = lootPiles[Number(canon.slice(5))]; p.roomWords = (p.roomWords ?? 0) + 1; }   // AUDIT LW-II-2 D5: the room's word counted on the pile - a company minding it (dungeonDivers.js) reads it again, and charges no peer's take to this player
       if (canon.startsWith('loot:')) settleLootFlat(Number(canon.slice(5)));
       n++;
     }

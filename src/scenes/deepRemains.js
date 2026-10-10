@@ -10,7 +10,8 @@
 // bodies are the pool's own corpses), one the player saw spared, and any of a company the player met this time (its end
 // is what happened, LW6).
 // WHERE. At one of the places the dungeon's own foes stand (`spots()`: its random enemy markers' floors), the one their
-// key deals (`restAt`) - every reader the same.
+// key deals (`restAt`) - every reader the same. AUDIT LW-II-2 D6: at the dice's end on the dive's route (LW14 `placeOf`),
+// the fallen of one dive share its minute and so its stop - each laid a pace apart (`apartOf`), as the road's are.
 // WHAT. Their body - their class's corpse picture - with what they carried (`lay`: a pile of the dungeon's own, the
 // same goods every time, its key's). AUDIT-C5: laid each visit until the player has TAKEN from them (`laid`, `mark`: the
 // relations' `laid` - spent); a dungeon keeps nothing past its leaving, so marked on laying they lay one visit, most often
@@ -31,6 +32,21 @@ export const DEEP_LAY_M = 15;
 
 /** The resting place a fallen's key deals among `n` (-1: none). @param {string} key @param {number} n */
 export const restAt = (key, n) => (n > 0 ? lwSeed(textSeed(key), 0x72657374) % n : -1);   // 'rest'
+
+/** AUDIT LW-II-2 D6: the pace the fallen of one dive lie apart at its stop (m) - the road's (trips.js remainsOfTown: 60
+ *  native units, 1.5 m across the way). */
+export const DEEP_APART_M = 1.5;
+/**
+ * AUDIT LW-II-2 D6: where remains `r` (trips.js fallenIn's: `{ res, trip }`) lie beside the dive's other fallen - the metres
+ * off their shared stop, side by side in the order the deep took them (the trip's fallen inside, as the road lays its own
+ * across the way); 0 for one alone.
+ * @param {{ res: any, trip?: any }} r @returns {number}
+ */
+export function apartOf(r) {
+  const fell = (r.trip?.fallen ?? []).filter((/** @type {any} */ f) => f.inside && !f.hand);
+  const i = fell.findIndex((/** @type {any} */ f) => f.res?.id === r.res?.id);
+  return i < 0 ? 0 : (i - (fell.length - 1) / 2) * DEEP_APART_M;
+}
 
 /**
  * @param {{

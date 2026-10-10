@@ -110,8 +110,8 @@
   {
     "name": "LW14-fight-fated",
     "file": "src/systems/livingWorld/deepRoute.js",
-    "old": "  if (trip.enc) return null;   // a fated trouble is the dive's own (trouble.js diveTrouble)\n",
-    "new": "",
+    "old": "  if (trip.enc?.inside) return null;",
+    "new": "  if (false) return null;",
     "tests": [
       "test/lw14_deep.test.js"
     ]
@@ -302,7 +302,7 @@
   {
     "name": "LW14-keep",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "          if (Math.hypot(ref[0] - L.feet[0], ref[2] - L.feet[2]) > DEEP_KEEP_M) letGo(id);",
+    "old": "          if (away > DEEP_KEEP_M) letGo(id);",
     "new": "",
     "tests": [
       "test/lw14_deep.test.js"
@@ -320,8 +320,8 @@
   {
     "name": "LW14-rival-near",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "            if (n < c.pile.n && near) {",
-    "new": "            if (n < c.pile.n) {",
+    "old": "            if (taken.length && near) {",
+    "new": "            if (taken.length) {",
     "tests": [
       "test/lw14_deep.test.js"
     ]
