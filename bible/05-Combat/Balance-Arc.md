@@ -276,8 +276,8 @@ thirteen. The simulation leaves out the formulas' tail (an elite, the mentor, a 
 
 ## 10. What shipped
 
-All four slices in one pull request, each with its pins and mutants (`test/bal_arc.test.js`, 10 tests;
-`tools/mutants/bal.json`, 45 mutants).
+All four slices in one pull request, each with its pins and mutants (`test/bal_arc.test.js`, 14 tests since AUDIT
+BAL, below; `tools/mutants/bal.json`, 61 mutants).
 
 **BAL1** - `combat/pcaao.js` pcaaoAlterDamageBasedOnWepCondition and pcaaoAlterArmorReducBasedOnItemCondition take
 `sharpEdge` (default on: the mod's); the blow, `condOf` and `combat/combatStats.js` hand
@@ -315,3 +315,32 @@ line. PIN MOVED: FT5's row; FT18's online lock (on the dungeon sizes' row, the f
 UXB1-E's card (the player's own Off); PREF1's control; deathpenalty (2), AUDIT 28 B5, FEUD H2, LEGACY B5, D-ONLINE1
 (3), FIX-E (2), AUDIT 21 F6, DISC19-C. Made explicit (the classic motor): enemymotor, FALL-HOLD, CRATE-FREE. Mutants
 re-aimed by content: `bounty1.json` DEATH-PENALTY-3 and -5, `legacy1.json`'s street reset.
+
+**AUDIT BAL** (2026-10-10, Mac: "We need to audit this and ensure perfection") - four independent lanes (the balance
+code, the gem code, the tests and mutants, the docs and every number) read the pull request at its head; each finding
+was checked against the code before it was fixed:
+
+- **A saved dungeon's elites were the build's pick, not the save's.** The pick follows the ladder's switch offline, so a
+  save made before offline elites (or with the ladder set the other way) met a pick that crowned a foe it held plain:
+  the glow, the title and x3 blows on the save's plain health, its elite drop overwritten. `collectWorld` writes each
+  foe's `eliteFoe`; `applyWorld` rebuilds a foe whose pick disagrees as the record has it (the species arm's path); a
+  save without the field is plain offline, and online and on the wire the pick stands (`validSharedFoe` carries none).
+- **ELITE-FLOOR missed class foes offline** - a class foe counted as Infinity, so a level-1 character's Human Stronghold
+  could hold a level-1 x5 Knight. `pickDungeonElites` takes `classLevel`: offline the level class foes are built at;
+  online Infinity, the pick every client's.
+- **A search woke an elite with the ladder off** - `rollSearchElite` asks `elitesAllowed` after its roll (a search's
+  dice the same either way).
+- **All off stood the AI up** - a shelf in the Features page's All off stored nothing for the AI while Off was its
+  default; `loadPrefs` keeps it Off while the All-off keep stands and the shelf holds no word of its own.
+- **A dungeon's puppets took no place** - a peer's copy of the host's foe struck at DFU's own while the host's struck
+  at the place's; the place is every client's, so a puppet takes it (and none of its owner's standing). The wilds'
+  puppets are recorded in section 8.
+- **The port's own stages read as Crypts** (the arena's floor, the gate's court, the Shattered Hour wear type 0) - they
+  never scale.
+- **A kit's comment promised a sharp edge BAL1 took** (`net/recipeLaw.js` KIT-CEILING) - it says so now.
+- **The pins** (lane C): the dungeon's seam, the saved elites, the class floor, the search and the ground run by
+  execution in `bal_arc`; the enhanced death face drawn (its plates and line); the AI's three classic-motor pins each
+  got a brain-On twin that ticks the brain's clock as the hosts do (`enemymotor` P17, FALL-HOLD, CRATE-FREE) - the
+  "wall clock" this page first said was wrong, the clock is the foes' own time; `pref1_shelf`'s All off. The docs
+  (lane D): the builds stated whole, the 18%-through figure, a rat's 62, the Port-Ledger's PROJECT LEGACY and PCO1
+  rows, the PCAAO page's counts and the fourth departure's arms, the patch notes' paths and their "up to".
