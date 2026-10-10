@@ -6,16 +6,25 @@
 // Each draw scanned every placement its mesh had - N copies of one model, N x N distances a frame - and past 128 every
 // further copy read as moved for ever, replayed as a dynamic caster into every lantern near it, every frame: a town of
 // yards furnished with the same chair, a room of two hundred placed pieces. Past SHADOW_INSTANCE_LINEAR placements the
-// memory is filed on an XZ grid and a draw asks the 3x3 cells round it; the cap is 4096.
+// memory is filed on a grid of cubes in the origin's frame; a draw asks its own cube for the exact placement first,
+// then the 3x3x3 round it; the cap is 1024.
 //
 // ONE: the answer is the scan's - the scan as it shipped is the oracle, run beside the pass over seeded stories (still
 // copies, stacked copies, copies within the reach of each other, swings, jumps, new copies, copies left undrawn, origin
 // shifts, a full memory's evictions), every draw's verdict and the memory after each frame compared. TWO: a draw reads
 // only the placements filed round it - a copy across the town is never measured. THREE: a thousand still copies are
 // still - none dynamic past the old 128.
+//
+// AUDIT PERF-INST (2026-10-10, the owner: "Lets do an audit on this"): the first cut's grid was XZ columns re-filed
+// whole at every floating-origin shift, its loop ran by cell coordinate (`gx <= cx + 1` - for ever past 2^53 cells),
+// and a full memory walked every placement at every miss. FOUR: ties and exact matches across a cube's face, a
+// placement re-filed into a cube already holding a later one, and a draw past any cube a number can step - each the
+// scan's answer. FIVE: the grid holds each placement once, in the cube it stands in, with no empty cube - after shifts
+// whose float32 rounding carries placements over a face. SIX: a stack's still copy reads its own cube; a full memory's
+// misses read each placement's age from a queue made once a frame.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ShadowPass, SHADOW_INSTANCE_MAX, SHADOW_INSTANCE_REACH, SHADOW_INSTANCE_LINEAR, SHADOW_STILL_EPS, SHADOW_DYNAMIC_HOLD } from '../src/render/shadowPass.js';
+import { ShadowPass, SHADOW_INSTANCE_MAX, SHADOW_INSTANCE_REACH, SHADOW_INSTANCE_LINEAR, SHADOW_INSTANCE_PHASE, SHADOW_STILL_EPS, SHADOW_DYNAMIC_HOLD } from '../src/render/shadowPass.js';
 
 const mul = (a) => () => { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 const at = (x, y, z, turn = 0) => new Float32Array([Math.cos(turn), 0, -Math.sin(turn), 0, 0, 1, 0, 0, Math.sin(turn), 0, Math.cos(turn), 0, x, y, z, 1]);
@@ -143,18 +152,20 @@ test('PERF-INST: a copy walking a unit a frame across many cells stays its own p
   assert.equal(mine._shInst.length, others.length + 1, 'the walker one placement, followed');
 });
 
-test('PERF-INST: a full memory evicts as the scan did - the stalest placement not drawn for a hold, after a frame that found every placement live (mutants: a live placement evicted; no eviction; the frame\'s "all live" kept past its frame)', () => {
+test('PERF-INST: a full memory evicts as the scan did - the least recently drawn placement not drawn for a hold (the earliest remembered of those), passing over one drawn since, after a frame that found every placement live (mutants: a live placement evicted; no eviction; the frame\'s queue kept past its frame; the queue by remembered order alone; a placement drawn since it was queued evicted)', () => {
   const max = SHADOW_INSTANCE_MAX;
   const all = Array.from({ length: max + 20 }, (_, i) => [i * 5, 0, 0]);
-  const frames = [all, all, all];   // full, and the twenty past it dynamic: every placement live
+  const frames = [all, all, all.slice(0, max - 5)];   // full, and the twenty past it dynamic: every placement live; the last five remembered left undrawn a frame early - the stalest
   for (let f = 0; f < SHADOW_DYNAMIC_HOLD + 2; f++) frames.push([]);   // nothing drawn for a hold
-  frames.push([[-100, 0, 0], [-200, 0, 0], ...all.slice(0, 10)]);   // two new copies first: each evicts the stalest
-  frames.push([[-100, 0, 0], [-200, 0, 0], ...all.slice(0, 10)]);
+  // a new copy evicts the stalest (the earliest of the five); the next stalest is drawn - live again, passed over; the
+  // next new copy takes the one after it
+  frames.push([[-100, 0, 0], all[max - 4], [-200, 0, 0], ...all.slice(0, 10)]);
+  frames.push([[-100, 0, 0], [-200, 0, 0], [-300, 0, 0], ...all.slice(0, 10)]);
   const { mine } = twin(frames, max);
   assert.equal(mine._shInst.length, max, 'full, not grown');
 });
 
-test('PERF-INST: past SHADOW_INSTANCE_LINEAR the filed memory answers every draw as the scan did - still, stacked and near copies, swings, steps, jumps, new copies, undrawn copies, origin shifts - verdict by verdict, and holds the same placements in the same order (mutants: the nearest unclaimed tie to the latest; a claimed placement taken; a moved placement left filed where it stood; the shift not refiled; the 3x3 a cross)', () => {
+test('PERF-INST: past SHADOW_INSTANCE_LINEAR the filed memory answers every draw as the scan did - still, stacked and near copies, swings, steps, jumps, new copies, undrawn copies, origin shifts - verdict by verdict, and holds the same placements in the same order (mutants: the nearest unclaimed tie to the latest; a claimed placement taken; a moved placement left filed where it stood; the 3x3x3 a cross)', () => {
   assert.equal(SHADOW_INSTANCE_LINEAR, 64);
   let total = 0;
   for (const seed of [1, 2, 3, 4, 5, 6]) total += story(seed, { n: 120, span: 160, frames: 40 }).verdicts;
@@ -184,4 +195,128 @@ test('PERF-INST: a draw measures only the placements filed round it - a copy acr
   assert.equal(reads, 0, 'the placement across town was never measured');
   pass._moved(mesh, at(...xs[999]));
   assert.ok(reads > 0, 'its own draw finds it');
+});
+
+/** The cube a place stands in, as the pass files it: its cell coordinates in the origin's frame (`shift` the pass's
+ *  cumulative one), ten bits each. */
+const R = SHADOW_INSTANCE_REACH;
+const cubeOf = (m, shift) => ((Math.floor((m[12] - shift[0]) / R + SHADOW_INSTANCE_PHASE) & 0x3ff) << 20)
+  | ((Math.floor((m[13] - shift[1]) / R + SHADOW_INSTANCE_PHASE) & 0x3ff) << 10) | (Math.floor((m[14] - shift[2]) / R + SHADOW_INSTANCE_PHASE) & 0x3ff);
+/** The x of the face between cube k - 1 and cube k. */
+const face = (k) => (k - SHADOW_INSTANCE_PHASE) * R;
+
+test('PERF-INST (AUDIT): the scan\'s memory never fills - SHADOW_INSTANCE_LINEAR is under the cap, so a full memory is the filed path\'s alone; the cap is 1024 (~0.6 KB a placement, a full mesh\'s memory kept for the session)', () => {
+  assert.equal(SHADOW_INSTANCE_MAX, 1024);
+  assert.ok(SHADOW_INSTANCE_LINEAR < SHADOW_INSTANCE_MAX, 'the scan runs under the cap');
+  assert.ok(SHADOW_INSTANCE_PHASE > 0 && SHADOW_INSTANCE_PHASE < 1, 'the cubes stand off the round numbers by less than one');
+});
+
+test('PERF-INST (AUDIT): a draw equally near two placements in two cubes takes the earlier remembered, whichever cube is asked first (mutants: the nearest tie to the first cube asked; to the last)', () => {
+  const others = still(SHADOW_INSTANCE_LINEAR + 4);
+  for (const pair of [[[1, 0, 0], [-1, 0, 0]], [[-1, 0, 0], [1, 0, 0]]]) {   // either side of the face at x = -0.76: both orders
+    assert.notEqual(cubeOf(at(...pair[0]), [0, 0, 0]), cubeOf(at(...pair[1]), [0, 0, 0]), 'the two in two cubes');
+    twin([[...others, ...pair], [...others, [0, 0, 0]], [...others, [0, 0, 0]]]);
+  }
+});
+
+test('PERF-INST (AUDIT): a draw exactly the reach from a placement is a placement of its own, as the scan\'s strict test made it - nearer than the reach, the placement\'s (mutant: a draw at the reach taken when nothing nearer stands)', () => {
+  const others = still(SHADOW_INSTANCE_LINEAR + 4);
+  const { mine } = twin([[...others, [0, 0, 0]], [...others, [R, 0, 0]], [...others, [R, 0, 0], [0.5, 0, R - 0.5]]]);
+  assert.equal(mine._shInst.length, others.length + 2, 'the draw at the reach a new placement');
+});
+
+test('PERF-INST (AUDIT): a draw within the epsilon of placements on both sides of a cube\'s face takes the earliest remembered - from the cube past the face, when the draw stands within two epsilons of it (mutants: the face\'s neighbour unasked; the exact one the last found; no early out kept to the earliest)', () => {
+  const others = still(SHADOW_INSTANCE_LINEAR + 4);
+  const xf = face(1), e = SHADOW_STILL_EPS;
+  const A = [xf + 0.6 * e, 0, 0], B = [xf - 0.6 * e, 0, 0], C = [xf - 0.1 * e, 0, 0.9 * e];
+  assert.notEqual(cubeOf(at(...A), [0, 0, 0]), cubeOf(at(...B), [0, 0, 0]), 'A and B either side of the face');
+  twin([
+    [...others, A, B],   // A remembered first, past the face; B more than the epsilon from it, a placement of its own
+    [...others, [xf - 0.1 * e, 0, 0]],   // within the epsilon of both, in B's cube: A is the scan's
+    [...others, [xf - 0.1 * e, 0, 0]],
+  ]);
+  twin([
+    [...others, C, B, A],   // three within the epsilon of a draw, the earliest in the draw's own cube
+    [...others, [xf - 0.3 * e, 0, 0.4 * e]],
+    [...others, [xf + 0.2 * e, 0, 0.4 * e]],   // the draw past the face: the earliest is behind it
+  ]);
+});
+
+test('PERF-INST (AUDIT): a placement filed again into a cube that holds a later one stands before it - the first within the epsilon in a cube is its earliest (mutant: a placement filed at its cube\'s end)', () => {
+  const others = still(SHADOW_INSTANCE_LINEAR + 4);
+  twin([
+    [...others, [0, 0, 0], [0.0015, 0, 0]],   // B, then C beside it - more than the epsilon apart
+    [...others, [0.0015, 0, 0], [1.5, 0, 0]],   // C drawn first; B steps into the next cube
+    [...others, [0.0015, 0, 0], [0, 0, 0]],   // and back: filed again before C
+    [...others, [0.00075, 0, 0]],   // within the epsilon of both: B, the earlier
+  ]);
+});
+
+test('PERF-INST (AUDIT): a translation past any cube a number can step, or not finite, answers as the scan did, and returns (the first cut\'s `gx <= cx + 1` never ended past 2^53 cells)', { timeout: 20000 }, () => {
+  const others = still(SHADOW_INSTANCE_LINEAR + 4);
+  twin([[...others], [...others, [Infinity, 0, 0], [0, 0, -Infinity], [NaN, 0, 0], [1e17, 0, 0], [-3e38, 0, 5], [0, 3e38, 0]], [...others, [1e17, 0, 0], [-3e38, 0, 5]]]);
+});
+
+test('PERF-INST (AUDIT): the grid holds each placement once, in the cube it stands in in the origin\'s frame, and no empty cube - walkers, and shifts whose float32 rounding carries placements over a face (mutants: the shift not refiled; a placement left in the cube it left; an emptied cube kept)', () => {
+  const pass = bare(), mine = {}, theirs = {};
+  // a hundred copies each a hair short of a face (0 to 2.4e-4 short): a shift of a few thousand units rounds some over
+  const copies = Array.from({ length: 100 }, (_, i) => ({ x: face(i * 3) - i * 2.4e-6, y: 0.5, z: 0.5 }));
+  const home = copies.map((c) => cubeOf(at(c.x, c.y, c.z), [0, 0, 0]));   // the cube each stands in before any shift
+  const walker = { x: -20, y: 0.5, z: 30 };
+  const check = (label) => {
+    const grid = mine._shInstGrid;
+    let n = 0;
+    for (const [k, cell] of grid) {
+      assert.ok(cell.length > 0, `${label}: no empty cube`);
+      for (const s of cell) { assert.equal(s.key, k, `${label}: filed under its key`); assert.equal(k, cubeOf(s.m, pass._shiftNow), `${label}: in the cube it stands in`); }
+      n += cell.length;
+    }
+    assert.equal(n, mine._shInst.length, `${label}: each placement filed once`);
+  };
+  let crossed = 0;
+  for (let f = 0; f < 12; f++) {
+    pass.frameNo++;
+    if (f % 3 === 2) {   // the host recentres
+      const d = 819.2 * (f + 1);
+      pass._shiftNow[0] += d; pass._shiftNow[2] -= d; pass._shiftGen++;
+      for (const c of [...copies, walker]) { c.x += d; c.z -= d; }
+    }
+    walker.x += 1.3; walker.z -= 0.9;
+    for (const c of [walker, ...copies]) {
+      const m = at(c.x, c.y, c.z);
+      assert.equal(pass._moved(mine, m), scanMoved(pass, theirs, m, SHADOW_INSTANCE_MAX), `frame ${f}: the verdict is the scan's`);
+    }
+    assert.deepEqual(memory(mine), memory(theirs), `frame ${f}: the memory is the scan's`);
+    check(`frame ${f}`);
+    crossed = mine._shInst.slice(1).filter((s, i) => cubeOf(s.m, pass._shiftNow) !== home[i]).length;
+  }
+  assert.ok(crossed > 0, `the rounding carried placements over a face (${crossed} of ${copies.length})`);
+});
+
+test('PERF-INST (AUDIT): a still copy is found in its own cube - each draw of a stack of six hundred copies one above another measures the few in its cube, not a column of them (mutants: the exact pass skipped)', () => {
+  const pass = bare(), mesh = {};
+  const stack = Array.from({ length: 600 }, (_, i) => [0.3, i * 0.5, 0.3]);
+  pass.frameNo++;
+  for (const p of stack) pass._moved(mesh, at(...p));
+  let reads = 0;
+  for (const s of mesh._shInst) { const m = s.m; Object.defineProperty(s, 'm', { get() { reads++; return m; }, configurable: true }); }
+  pass.frameNo++;
+  for (const p of stack) assert.equal(pass._moved(mesh, at(...p)), false, `the copy at y ${p[1]} is still`);
+  // four copies to a cube: a draw measures its cube up to itself, and its own placement once more
+  assert.ok(reads <= stack.length * 5, `${reads} placements measured for ${stack.length} draws`);
+});
+
+test('PERF-INST (AUDIT): a full memory\'s misses take the stalest from a queue made once a frame - two thousand new copies after a hold away read each placement\'s age a few times in all, not once a miss (mutant: the queue made again at every miss)', () => {
+  const pass = bare(), mesh = {};
+  const max = SHADOW_INSTANCE_MAX;
+  pass.frameNo++;
+  for (let i = 0; i < max; i++) pass._moved(mesh, at((i % 32) * 5, 0, Math.floor(i / 32) * 5));
+  assert.equal(mesh._shInst.length, max, 'full');
+  pass.frameNo += SHADOW_DYNAMIC_HOLD + 1;   // a hold away
+  let reads = 0;
+  for (const s of mesh._shInst) { let seen = s.seen; Object.defineProperty(s, 'seen', { get() { reads++; return seen; }, set(v) { seen = v; }, configurable: true }); }
+  let still = 0;
+  for (let i = 0; i < 2000; i++) if (!pass._moved(mesh, at(5000 + (i % 40) * 5, 0, Math.floor(i / 40) * 5))) still++;
+  assert.equal(still, max, 'every placement given up once, the rest dynamic');
+  assert.ok(reads < 30 * max, `${reads} ages read for 2000 misses of a memory of ${max}`);
 });

@@ -145,10 +145,13 @@ test('DISC24-C: a lamp whose rank changes takes the card in, or lets it go, on T
   // the player walks east: the far lamp becomes the nearest, the west lamp the farthest (DISC29-E: the card goes too -
   // its lamps are ranked from where IT stands)
   setEye(6, 1.6, 0); self.origin = [6, 0, 0];
+  const held = [...sp._faceDyn.slice(west * 6, west * 6 + 6)].filter(Boolean).length;   // PERF-FACE: the west faces the card was drawn into
+  assert.ok(held > 0, 'the west lamp held the card');
   let st = frame();
   const w = slotWork(sp, st.calls, west), e = slotWork(sp, st.calls, east);
   assert.equal(w.draws, 0, 'the west lamp draws nothing more');
-  assert.equal(w.blits, 6, 'and its map is put back to the cache at once - the card it held is gone this frame');
+  assert.equal(w.blits, held, 'and its map is put back to the cache at once - every face that held the card (PERF-FACE, PIN MOVED: not six), so the card it held is gone this frame');
+  assert.deepEqual([...sp._faceDyn.slice(west * 6, west * 6 + 6)], [0, 0, 0, 0, 0, 0], 'every west face the cache again');
   assert.ok(e.draws > 0, 'the east lamp takes the card in this frame');
   // the next frames: the west lamp is quiet (the card is no reason to redraw it), the east one redraws every frame
   for (let f = 0; f < SHADOW_FAR_CASTER_EVERY; f++) {

@@ -151,7 +151,9 @@ const SPHERE_Y_SLACK = 1e-3;
  *  asked by every query, as before. The walk's ORDER is the Map's (insertion) order, always: candidates are sorted
  *  back into it, so a tie between two buckets and the order the sphere's pushes land in are exactly what they were.
  *  A bucket the query box does not reach is one whose own box test would have answered "no" - the same answers.
- *  The index is a cache of the boxes: addMesh and removeBucket drop it, and the next query files again. */
+ *  The index is a cache of the boxes: removeBucket drops it, and the next query files again; addMesh files its bucket
+ *  into a standing index (PERF-COL2, AUDIT: a pixel streams in a mesh a breather's slice, and the whole filing made
+ *  again for each was 0.2 ms of a frame at the default view). */
 const BROAD_CELL = 8;
 /** A standing bucket over more broad cells than this is asked by every query rather than filed (the dungeon's). */
 const BROAD_SPAN_MAX = 64;
@@ -177,7 +179,7 @@ const FRAME_OF = new WeakMap();
  * origin (StreamingWorldState pixelTranslation) is one. A bucket so marked, and not turned, is filed by its box in the
  * world where it stood when filed - and the filing is made again the first query after its frame moved (one bucket of
  * the frame is asked where it stands, each query: the frame's sentinel). Without it, every streamed pixel's bucket was
- * asked by every ray and every sphere - a capsule's move ~0.03 ms with one pixel streamed, ~0.14 at the default view
+ * asked by every ray and every sphere - a capsule's move 16-25 us with one pixel streamed, ~0.14 ms at the default view
  * (121 pixels) and ~0.2 at the widest (169), for the player and every foe, every step. Answers `translation`.
  */
 export function onFloatingFrame(frame, translation) {
@@ -186,47 +188,85 @@ export function onFloatingFrame(frame, translation) {
 }
 const RAY_NEAR = [];      // raycastHit's candidates
 const SPHERE_NEAR = [];   // the sphere walks' (never nested in a ray's walk, nor a ray in theirs)
+/** Where a bucket is filed (`bucket.lvl`): nothing yet, the fine cells, the coarse cells, `always`. A bucket's box only
+ *  grows, so its level only rises - and at a level, the cells it covers only gain. */
+const FILED_NONE = 0, FILED_FINE = 1, FILED_COARSE = 2, FILED_ALWAYS = 3;
 /** File `bucket` under every cell of `size` its XZ box (moved by ox, oz) covers, in `into` - or answer false when that is
- *  over `spanMax` cells (or not finite) and nothing was filed. */
-function fileBox(bucket, ox, oz, size, spanMax, into) {
+ *  over `spanMax` cells (or not finite) and nothing was filed. PERF-COL2 (AUDIT): a bucket filed at this level before
+ *  (`bucket.lvl`, its cells then `bucket.bx0`..`bz1`) is filed under the cells its grown box gained alone; one filed at
+ *  a level past this one is not filed back. The cells are walked by offset - a box past 2^53 cells steps nowhere. */
+function fileBox(bucket, ox, oz, size, spanMax, into, lvl) {
+  if (bucket.lvl > lvl) return false;
   const mn = bucket.min, mx = bucket.max;
   const x0 = Math.floor((mn[0] + ox - BOX_SKIN) / size), x1 = Math.floor((mx[0] + ox + BOX_SKIN) / size);
   const z0 = Math.floor((mn[2] + oz - BOX_SKIN) / size), z1 = Math.floor((mx[2] + oz + BOX_SKIN) / size);
   if (!((x1 - x0 + 1) * (z1 - z0 + 1) <= spanMax)) return false;   // too big - or not finite
-  for (let gx = x0; gx <= x1; gx++) {
-    for (let gz = z0; gz <= z1; gz++) {
+  const was = bucket.lvl === lvl;
+  for (let i = 0, nx = x1 - x0; i <= nx; i++) {
+    const gx = x0 + i;
+    for (let j = 0, nz = z1 - z0; j <= nz; j++) {
+      const gz = z0 + j;
+      if (was && gx >= bucket.bx0 && gx <= bucket.bx1 && gz >= bucket.bz0 && gz <= bucket.bz1) continue;   // filed there already
       const k = cellKey(gx, gz);
       let list = into.get(k);
       if (!list) { list = []; into.set(k, list); }
       list.push(bucket);
     }
   }
+  bucket.lvl = lvl; bucket.bx0 = x0; bucket.bx1 = x1; bucket.bz0 = z0; bucket.bz1 = z1;
   return true;
+}
+/** File one bucket into `broad` (buildBroad's step, and addMesh's into a standing filing): `always` if it moves and
+ *  rides no frame, or turns; else under the fine cells its world box covers, the coarse ones past those, `always` past
+ *  both. A bucket filed before keeps the cells it had (a cell a grown box left behind at a finer level only hands a
+ *  query one more box to test, which answers no). */
+function fileBucket(broad, bucket) {
+  let ox = 0, oz = 0;
+  if (bucket.moves) {
+    if (bucket.frame === null || bucket.r) { fileAlways(broad, bucket); return; }
+    // PERF-COL2: riding a floating frame, unturned - filed where it stands now, while its frame stands
+    const t = bucket.t();
+    if (!(Number.isFinite(t[0]) && Number.isFinite(t[1]) && Number.isFinite(t[2]))) { fileAlways(broad, bucket); return; }
+    ox = t[0]; oz = t[2];
+    if (!broad.frames.some((f) => f.frame === bucket.frame)) broad.frames.push({ frame: bucket.frame, bucket, x: t[0], z: t[2] });
+  }
+  const mn = bucket.min, mx = bucket.max;
+  if (!(mn[0] <= mx[0] && mn[1] <= mx[1] && mn[2] <= mx[2])) return;   // no triangle (an inverted box): every box test answers no
+  if (fileBox(bucket, ox, oz, BROAD_CELL, BROAD_SPAN_MAX, broad.cells, FILED_FINE)) return;
+  if (fileBox(bucket, ox, oz, BROAD_COARSE_CELL, BROAD_COARSE_SPAN_MAX, broad.coarseCells, FILED_COARSE)) return;   // PERF-COL2
+  fileAlways(broad, bucket);
+}
+/** `always` in the walk's order, each bucket once (PERF-COL2, AUDIT: a bucket a grown box carried here comes later). */
+function fileAlways(broad, bucket) {
+  if (bucket.lvl === FILED_ALWAYS) return;
+  const a = broad.always;
+  let at = a.length;
+  while (at > 0 && a[at - 1].ord > bucket.ord) at--;
+  a.splice(at, 0, bucket);
+  bucket.lvl = FILED_ALWAYS;
 }
 /** File the collider's buckets: `all` in Map order (each bucket's `ord` its place in it), `always` the buckets every
  *  query asks, `cells` the standing ones by broad cell, `coarseCells` (PERF-COL2) the ones too wide for those by coarse cell,
  *  and `frames` (PERF-COL2) one sentinel a floating frame - a bucket riding it, and where it stood when filed. */
 function buildBroad(buckets) {
-  const all = [], always = [], cells = new Map(), coarseCells = new Map(), frames = [];
+  const broad = { all: [], always: [], cells: new Map(), coarseCells: new Map(), frames: [] };
   for (const bucket of buckets.values()) {
-    bucket.ord = all.length;
-    all.push(bucket);
-    let ox = 0, oz = 0;
-    if (bucket.moves) {
-      if (bucket.frame === null || bucket.r) { always.push(bucket); continue; }
-      // PERF-COL2: riding a floating frame, unturned - filed where it stands now, while its frame stands
-      const t = bucket.t();
-      if (!(Number.isFinite(t[0]) && Number.isFinite(t[1]) && Number.isFinite(t[2]))) { always.push(bucket); continue; }
-      ox = t[0]; oz = t[2];
-      if (!frames.some((f) => f.frame === bucket.frame)) frames.push({ frame: bucket.frame, bucket, x: t[0], y: t[1], z: t[2] });
-    }
-    const mn = bucket.min, mx = bucket.max;
-    if (!(mn[0] <= mx[0] && mn[1] <= mx[1] && mn[2] <= mx[2])) continue;   // no triangle (an inverted box): every box test answers no
-    if (fileBox(bucket, ox, oz, BROAD_CELL, BROAD_SPAN_MAX, cells)) continue;
-    if (fileBox(bucket, ox, oz, BROAD_COARSE_CELL, BROAD_COARSE_SPAN_MAX, coarseCells)) continue;   // PERF-COL2
-    always.push(bucket);
+    bucket.ord = broad.all.length;
+    broad.all.push(bucket);
+    bucket.lvl = FILED_NONE;
+    fileBucket(broad, bucket);
   }
-  return { all, always, cells, coarseCells, frames };
+  return broad;
+}
+/** PERF-COL2: has a floating frame moved under `broad` since it was filed - one of its sentinels standing elsewhere? Only
+ *  the XZ place files a bucket, so a vertical recentre moves none. */
+function framesMoved(broad) {
+  const fr = broad.frames;
+  for (let i = 0; i < fr.length; i++) {
+    const f = fr[i], t = f.bucket.t();
+    if (t[0] !== f.x || t[2] !== f.z) return true;
+  }
+  return false;
 }
 
 /** OW-WOD-LAG (2026-09-29, Mac: "When near mountains from WOD, the game lags insane"): THE WIDE TRIANGLES IN A TREE.
@@ -580,13 +620,7 @@ export class Collider {
    *  either, are asked by every query. */
   _near(x0, x1, z0, z1, out, afterOrd = -1) {
     let broad = this._broad;
-    if (broad !== null) {   // PERF-COL2: a floating frame that moved since the filing - its buckets filed again where they stand
-      const fr = broad.frames;
-      for (let i = 0; i < fr.length; i++) {
-        const f = fr[i], t = f.bucket.t();
-        if (t[0] !== f.x || t[1] !== f.y || t[2] !== f.z) { broad = null; break; }
-      }
-    }
+    if (broad !== null && framesMoved(broad)) broad = null;   // PERF-COL2: a floating frame that moved since the filing - its buckets filed again where they stand
     if (broad === null) broad = this._broad = buildBroad(this._buckets);
     out.length = 0;
     const cx0 = Math.floor(x0 / BROAD_CELL), cx1 = Math.floor(x1 / BROAD_CELL);
@@ -596,8 +630,8 @@ export class Collider {
       for (let i = afterOrd + 1; i < all.length; i++) out.push(all[i]);
       return out;
     }
-    for (const b of broad.always) if (b.ord > afterOrd) out.push(b);
     const stamp = ++BROAD_STAMP;
+    for (const b of broad.always) if (b.ord > afterOrd) { b._broadStamp = stamp; out.push(b); }   // PERF-COL2 (AUDIT): stamped - a bucket a grown box carried here is in finer cells too
     let sorted = true;
     for (let gx = cx0; gx <= cx1; gx++) {
       for (let gz = cz0; gz <= cz1; gz++) {
@@ -615,9 +649,9 @@ export class Collider {
     if (broad.coarseCells.size) {   // PERF-COL2: the wide buckets, by the coarse cells the query's box covers
       const kx0 = Math.floor(x0 / BROAD_COARSE_CELL), kx1 = Math.floor(x1 / BROAD_COARSE_CELL);
       const kz0 = Math.floor(z0 / BROAD_COARSE_CELL), kz1 = Math.floor(z1 / BROAD_COARSE_CELL);
-      for (let gx = kx0; gx <= kx1; gx++) {
-        for (let gz = kz0; gz <= kz1; gz++) {
-          const list = broad.coarseCells.get(cellKey(gx, gz));
+      for (let i = 0, nx = kx1 - kx0; i <= nx; i++) {   // AUDIT: by offset, as the filing
+        for (let j = 0, nz = kz1 - kz0; j <= nz; j++) {
+          const list = broad.coarseCells.get(cellKey(kx0 + i, kz0 + j));
           if (!list) continue;
           for (let i = 0; i < list.length; i++) {
             const b = list[i];
@@ -693,15 +727,15 @@ export class Collider {
    */
   addMesh(bucketKey, positions, indices, matrix, translation = null, rotation = null) {
     let bucket = this._buckets.get(bucketKey);
+    const fresh = !bucket;
     if (!bucket) {
       // AUDIT NAME1 F2: `min`/`max` are the bucket's own bounds in ITS
       // OWN space (the translation is applied to the RAY, as the DDA
       // already does), kept as the triangles go in - one compare per
       // vertex, paid once at load, against a walk paid per ray.
-      bucket = { key: bucketKey, moves: !!(translation || rotation), frame: FRAME_OF.get(translation) ?? null, ord: -1, _broadStamp: 0, tris: [], yLo: [], yHi: [], part: [], parts: 0, rayMark: null, grid: new Map(), wide: [], wideTree: null, t: translation || (() => ZERO3), r: rotation, min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] };   // AUDIT BRANCH (WoD) B1; OW-WOD-LAG: the wide triangles, and their tree (built when first asked); FB0930-FRAME: its key, whether it moves, its place in the walk
+      bucket = { key: bucketKey, moves: !!(translation || rotation), frame: FRAME_OF.get(translation) ?? null, ord: -1, _broadStamp: 0, lvl: FILED_NONE, bx0: 0, bx1: -1, bz0: 0, bz1: -1, tris: [], yLo: [], yHi: [], part: [], parts: 0, rayMark: null, grid: new Map(), wide: [], wideTree: null, t: translation || (() => ZERO3), r: rotation, min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] };   // AUDIT BRANCH (WoD) B1; OW-WOD-LAG: the wide triangles, and their tree (built when first asked); FB0930-FRAME: its key, whether it moves, its place in the walk
       this._buckets.set(bucketKey, bucket);
     }
-    this._broad = null;   // FB0930-FRAME: a new bucket, or a box that grows - filed again at the next query
     const m = matrix;
     const tx = (i) => {
       const x = positions[i * 3];
@@ -748,6 +782,17 @@ export class Collider {
           if (!cell) { cell = []; bucket.grid.set(k, cell); }
           cell.push(idx);
         }
+      }
+    }
+    // FB0930-FRAME: a new bucket, or a box that grows, is filed again before the next query. PERF-COL2 (AUDIT): into the
+    // standing filing, where its frames stand where they were filed - a new bucket at the walk's end, a grown one under
+    // the cells it gained; else the whole filing is made again at the next query, as it was for every mesh.
+    const broad = this._broad;
+    if (broad !== null) {
+      if (framesMoved(broad)) this._broad = null;
+      else {
+        if (fresh) { bucket.ord = broad.all.length; broad.all.push(bucket); }
+        fileBucket(broad, bucket);
       }
     }
   }

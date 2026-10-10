@@ -82,7 +82,7 @@ test('AUDIT REACH B1: two still placements of one mesh closer than the reach are
 
 test('AUDIT REACH B2: the memory holds SHADOW_INSTANCE_MAX placements and EVICTS one not drawn for a hold when a new one comes - a session\'s dungeons no longer fill it (the first cut capped at 64 for ever, every door after dynamic); with every placement live the new one is dynamic, never wrong (mutants: no eviction; a live placement evicted)', () => {
   const { r, sp, room, door, tile, frame } = stand();
-  assert.equal(SHADOW_INSTANCE_MAX, 4096);   // PERF-INST: 128 until the placements were filed by place (test/perfinst.test.js)
+  assert.equal(SHADOW_INSTANCE_MAX, 1024);   // PERF-INST: 128 until the placements were filed by place (test/perfinst.test.js)
   const many = (n, from = 0) => () => { r.drawMesh(room, I, null); r.drawTerrain(tile, I, {}, {}, 6.4); for (let i = 0; i < n; i++) r.drawMesh(door, at(from + i * 3, 0, 40), null); };
   frame(many(SHADOW_INSTANCE_MAX)); frame(many(SHADOW_INSTANCE_MAX));
   assert.equal(door._shInst.length, SHADOW_INSTANCE_MAX, 'full');

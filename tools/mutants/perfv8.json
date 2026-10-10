@@ -2,22 +2,57 @@
   {
     "name": "PERF-V8-a-the-motor-folded-back",
     "file": "src/scenes/world.js",
-    "old": "    const motorStep = () => {   // PERF-V8: each `// PERF-V8` statement runs as a closure of its own, so the frame stays under V8's optimizing ceiling (bible/07-Rendering/Performance-Priority.md)\n    if (walkMode) {",
+    "old": "    const frameMotor = () => {   // PERF-V8: each `// PERF-V8` statement runs as a closure of its own, so the frame stays under V8's optimizing ceiling (bible/07-Rendering/Performance-Priority.md)\n    if (walkMode) {",
     "new": "    {\n    if (walkMode) {",
     "tests": ["test/perfv8.test.js"]
   },
   {
     "name": "PERF-V8-b-the-pixel-walk-folded-back",
     "file": "src/scenes/world.js",
-    "old": "    const pixelWalkStep = () => {   // PERF-V8\n    for (const p of _pixelOrder) {",
+    "old": "    const framePixelWalk = () => {   // PERF-V8\n    for (const p of _pixelOrder) {",
     "new": "    {\n    for (const p of _pixelOrder) {",
     "tests": ["test/perfv8.test.js"]
   },
   {
     "name": "PERF-V8-c-a-closure-made-and-never-called",
     "file": "src/scenes/world.js",
-    "old": "    };\n    hudStep();",
-    "new": "    };\n    void hudStep;",
+    "old": "    };\n    frameHud();",
+    "new": "    };\n    void frameHud;",
+    "tests": ["test/perfv8.test.js"]
+  },
+  {
+    "name": "PERF-V8-d-a-closure-called-twice-by-an-optional-call",
+    "file": "src/scenes/world.js",
+    "old": "    };\n    frameHud();",
+    "new": "    };\n    frameHud();\n    frameHud?.();",
+    "tests": ["test/perfv8.test.js"]
+  },
+  {
+    "name": "PERF-V8-e-the-haze-folded-back",
+    "file": "src/scenes/world.js",
+    "old": "    const frameHaze = () => {   // PERF-V8\n    if (hazeGl) {",
+    "new": "    {\n    if (hazeGl) {",
+    "tests": ["test/perfv8.test.js"]
+  },
+  {
+    "name": "PERF-V8-f-a-return-moved-into-a-closure",
+    "file": "src/scenes/world.js",
+    "old": "      const _hzFoot = walkMode && playerSpawned ? player.pos : cam.pos;\n",
+    "new": "      if (now < 0) { requestAnimationFrame(frame); return; }\n      const _hzFoot = walkMode && playerSpawned ? player.pos : cam.pos;\n",
+    "tests": ["test/perfv8.test.js"]
+  },
+  {
+    "name": "PERF-V8-g-a-var-hoisted-out-of-the-frame",
+    "file": "src/scenes/world.js",
+    "old": "      const _hzFoot = walkMode && playerSpawned ? player.pos : cam.pos;\n",
+    "new": "      var _hzFoot = walkMode && playerSpawned ? player.pos : cam.pos;\n",
+    "tests": ["test/perfv8.test.js"]
+  },
+  {
+    "name": "PERF-V8-h-a-second-statement-in-a-closure",
+    "file": "src/scenes/world.js",
+    "old": "    };\n    frameHaze();",
+    "new": "      void 0;\n    };\n    frameHaze();",
     "tests": ["test/perfv8.test.js"]
   }
 ]

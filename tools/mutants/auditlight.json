@@ -29,8 +29,8 @@
   {
     "name": "sc1-one-placement-per-mesh",
     "file": "src/render/shadowPass.js",
-    "old": "      if (inst.length >= SHADOW_INSTANCE_MAX) {\n        if (!oldest ||",
-    "new": "      if (inst.length >= 1) {\n        if (!oldest ||",
+    "old": "    if (!s) {\n      inst.push(",
+    "new": "    if (!s) {\n      if (inst.length >= 1) return true;\n      inst.push(",
     "tests": [
       "test/audit_lighting.test.js"
     ]
