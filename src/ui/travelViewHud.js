@@ -840,6 +840,27 @@ export function strangerHelm(g, x, y) {
   g.fillRect(x - 4, y - 6, 2.5, 1);       // the crown's light
   g.fillStyle = fill;
 }
+/** YARDS-FOUND: THE YARDS' MARK, by the emblem each yard's signboard paints (world/merchantYardArt.js) - the Wagon
+ *  Yard's wheel (the carriage towns' own, a little smaller: OW-HUBS' wheelPath), the Stable's horseshoe with its opening
+ *  up for luck and its nail holes - in `color` on the marks' black edge, about (x, y). */
+export const TV_YARD_R = 4.5;
+export function yardGlyph(g, x, y, kind, color) {
+  if (kind === 'transport') {
+    wheelPath(g, x, y, TV_YARD_R);
+    g.lineWidth = 3; g.strokeStyle = '#000'; g.stroke();
+    g.lineWidth = 1.5; g.strokeStyle = color; g.stroke();
+    return;
+  }
+  g.beginPath(); g.arc(x, y - 1, TV_YARD_R, 0, Math.PI);   // the lower half: a U, open at the top
+  g.lineCap = 'round';
+  g.lineWidth = 4.5; g.strokeStyle = '#000'; g.stroke();
+  g.lineWidth = 2.5; g.strokeStyle = color; g.stroke();
+  g.lineCap = 'butt';
+  const fill = g.fillStyle;
+  g.fillStyle = '#000';
+  for (const a of [0.35, 0.95, 1.55, 2.2, 2.8]) g.fillRect(x + Math.cos(a) * TV_YARD_R - 0.5, y - 1 + Math.sin(a) * TV_YARD_R - 0.5, 1, 1);   // the nail holes
+  g.fillStyle = fill;
+}
 /** OWS1: a mark at sea, by its kind. */
 export const isShipKind = (m) => /\bship\b/.test(m.kind ?? '');
 /** A mark's look, by its kind's first word. */
@@ -850,6 +871,7 @@ const lookOf = (m) => {
   if (k === 'wayfarer') return k;   // LW3: the living world's parties on the road
   if (k === 'waypoint') return k;   // WAYPOINTS: a flag
   if (k === 'stranger') return k;   // WILD3: another player in the open zone - an enemy
+  if (k === 'yard') return k;   // YARDS-FOUND: a town's Stable or Wagon Yard
   return k === 'place' || k === 'far' || k === 'dest' || k === 'target' || k === 'party' || k === 'lair' || k === 'band' || k === 'raider' || k === 'camp' ? k : 'traveller';
 };
 /** OW-THEME (2026-09-28, Mac: "The overworld ui needs to follow enhanced ui theme"): the plates' stone - the Enhanced
@@ -1143,6 +1165,8 @@ function drawMarks(marks, vw, vh, dpr, feet = null) {
       strangerHelm(g, x, y);
     } else if (look === 'camp') {   // OW6: a camp - a tent's peak, not a band's dot
       g.beginPath(); g.moveTo(x, y - 6); g.lineTo(x + 6, y + 5); g.lineTo(x - 6, y + 5); g.closePath(); g.fill(); g.stroke();
+    } else if (look === 'yard') {   // YARDS-FOUND: a town's yard by its signboard's emblem - the Wagon Yard's wheel, the Stable's horseshoe (its opening up)
+      yardGlyph(g, x, y, /\btransport\b/.test(m.kind ?? '') ? 'transport' : 'stable', C.brass);
     } else if ((look === 'place' || look === 'far') && m.hub) {   // OW-HUBS: a carriage town - its wheel, brass on a dark edge
       wheelPath(g, x, y, TV_WHEEL_R);
       g.lineWidth = 3; g.strokeStyle = '#000'; g.stroke();

@@ -107,6 +107,7 @@ test('MAC-A: every host hands the seam over, off its own collider', () => {
     // null for a miss, so the seam translates rather than leaking it.
     assert.match(s, /Number\.isFinite\(h\) \? h : null/, `${f}: a clear sweep is a MISS, not an infinite distance`);
   }
-  // ...and mwView passes it through rather than inventing one.
-  assert.match(rd('src/player/mwView.js'), /mwCamera\.eye\(\{ fpEye, feet, yaw, pitch, heightScale, raycast, spherecast \}\)/);
+  // ...and mwView passes it through rather than inventing one. PIN MOVED (BENCH-CAM, 2026-10-10): the bench's
+  // `pivotFloor` rides the same call after the two seams (bible/06-Systems/Wagons.md BENCH-CAM)
+  assert.match(rd('src/player/mwView.js'), /mwCamera\.eye\(\{ fpEye, feet, yaw, pitch, heightScale, raycast, spherecast(?:, pivotFloor)? \}\)/);
 });

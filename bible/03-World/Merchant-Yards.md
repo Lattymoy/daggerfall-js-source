@@ -9,8 +9,8 @@ towns and which signs: outdoor yards, cities and towns, the port's own drawn sig
 
 Daggerfall has neither: every General Store shelves the Horse and the Small Cart, and a town's blocks are fixed data in
 which every building is already a home, a shop or a hall. So the two merchants are YARDS, not buildings - they take no
-building record, no automap byte, no deed and no quest place - and the whole of it is a departure, Ledger A
-(MERCHANT-YARDS).
+building record, no deed and no quest place, and the blocks' own automap bytes are untouched (the town map draws a yard
+over a copy - YARDS-FOUND, below) - and the whole of it is a departure, Ledger A (MERCHANT-YARDS).
 
 ## Where they stand
 
@@ -117,7 +117,8 @@ and opens only where it was pressed: the street, its slot still free (`openYardT
 - `scenes/world.js` - WIRED: each town pixel's build places its yards and carves the people's navgrid round them; the
   pool (`scenes/merchantYardsHost.js`) is made beside the monument, framed, drawn - in the street and in the view out of
   a window (`renderer.outsideViewDraws`) - its keepers and horses on the flats' axis, taken down at a re-anchor and a
-  load; the hover names it; the press is handed to it.
+  load; the hover names it; the press is handed to it. YARDS-FOUND: the town map, the talk directory and the
+  Overworld's marks are handed its yards.
 - `scenes/worldModes.js` - WIRED: the street's one ray reaches the yards (`yardTargets`), the `yard:` arm (the
   too-far refusal, the plaque's lit row) and the counter (`openYardTrade`). Its interiors stand no yard.
 - `scenes/exterior.js` - FLAGGED: the single-town bench stands no yard.
@@ -144,8 +145,7 @@ taken REGIONAL-FOLK (`01-Overview/Field-Bugs-2026-10-10.md`). Three seams were s
 
 This container holds no ARENA2, so no real town was laid out here: the yards' places are proven on synthetic grids
 (`test/merchantyards1.test.js`) and the yards themselves in a software render of their own geometry, never in a
-Daggerfall town. Where a town's open ground falls is for the owner's eyes - a town that finds no room logs it. The town
-map and the "Where is" directory do not name the yards yet.
+Daggerfall town. Where a town's open ground falls is for the owner's eyes - a town that finds no room logs it.
 
 ## Tests
 
@@ -189,3 +189,51 @@ mutant. The yards' findings:
 
 The online side was checked sound: no route in `server/` or `server-account/` sees a counter trade, so a `yard:*` type
 and key 0 are refused or mis-logged nowhere; the item law's verdicts are unchanged by the price rise (`floor`).
+
+## YARDS-FOUND (2026-10-10, from play)
+
+The owner: "The new stable and transport merchant shops dont show on town maps/overworld", and "Ensure these
+locations appear when talking to NPCs". The town maps draw a town off its blocks' automap bytes and letter the
+buildings of its list, the Overworld marks places and parties, and the talk window's Where-is page lists the
+directory's buildings. A yard is none of those, so a Stable stood in the street and no map, mark or person knew it.
+
+**The talk directory** (`systems/merchantYards.js` yardDirectoryRows). Each yard is a row of its town's directory, in
+the shape `systems/talkTopics.js` buildBuildingDirectory mints: its name ("Moorhart's Stables"), its counter's type
+(`yard:stable`), YARD_QUALITY, its middle in the location's frame. Its key is YARD_KEY_BASE (1 << 25) and its kind's
+place in YARD_KIND_ORDER - past every building's key (under 1 << 19 in the largest city) and past BUILDING_KEY_0
+(1 << 24). `scenes/townTalk.js` rebuildDirectory joins the rows to the buildings', off the host's `yards`
+(`scenes/world.js` syncTopics hands `cur.merchantYards`). The directory is the one list that answers for a building:
+
+- the Where-is page: `systems/topicTree.js` assembleTopicListLocation stands a group each, "Stables" and "Wagon yards"
+  (YARD_TALK_GROUPS), after the shops' groups and before General and Regional. Each row is asked as a building is
+  (LocalBuilding, its key). The groups take their own variable, so C#'s shared one flows into the General section and
+  the palace arm untouched. Without an engine, townTalk's own fallback (directoryByCategory) groups them the same way;
+- the answer: the knowledge roll takes the yard's key as a building's, "%di of here" reads its middle off the
+  directory (`systems/talk.js` buildingCompassDirection), and "Let me just mark %loc here on your map" discovers it by
+  its key (`systems/answerPipeline.js` markKeySubjectLocationOnMap).
+
+**The town map** (`world/merchantYardMap.js` yardTownBlocks, laid once at `ui/townMapDoor.js` createTownMapWindow for
+whichever map the skin wears). The Arena's own law (ARENA-MAP), taken for the yards:
+
+- every cell of a yard's ground is drawn in YARD_MAP_BYTE - the General Store's byte, the counter that sold the horse
+  and the cart before the yards took them - so both maps wash it in the shop quarter's colour. The data rows run
+  against +z as the navgrid's do, so the cells drawn are the ones the people's navgrid closes;
+- its name is a `places` entry of the block its middle stands in, beside the block's `landmark`. Both the classic
+  window (`ui/exteriorAutomapWindow.js` buildPlates) and the held map's sheet (`ui/townSheet.js` named) letter it
+  always, in a shop's ink, and no record renames it;
+- the rows are copies: a block a yard touches has its bytes copied, never written in place. The block's own bytes are
+  the navgrid's and the next build's.
+
+**The Overworld** (`scenes/merchantYardsHost.js` overworldMarks, pushed in `scenes/world.js` travelViewMarks). Each yard
+standing is a mark: its name over its ground (YARD_MARK_LIFT, 4 m), and its kind is the look's (`yard stable`,
+`yard transport`). The HUD draws its signboard's emblem (`ui/travelViewHud.js` yardGlyph): the Wagon Yard's wheel and
+the Stable's horseshoe, opening up. The marks go with the Towns switch and are never counted as a town
+(`systems/travelViewFilters.js` markGroup, countGroups). Only the yards of the towns built about the player stand;
+a town beyond that build shows its plate, not its yards.
+
+THE FOUR HOSTS (YARDS-FOUND): `scenes/world.js` - WIRED (the town map, the directory, the Overworld).
+`scenes/exterior.js` - stands no yard (FLAGGED above), so it has none to hand. `scenes/worldModes.js` - its interiors'
+talk window reads the same directory, so a yard is asked after indoors too (the compass's indoor arm measures from the
+building). `scenes/dungeonContext.js` - no town.
+
+Pins: `test/yardsfound1.test.js`. Mutants: `tools/mutants/yardsfound1.json`. Not seen in a real town (no ARENA2 here).
