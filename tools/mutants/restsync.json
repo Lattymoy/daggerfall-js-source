@@ -139,7 +139,7 @@
   {
     "name": "RESTSYNC-a-shed-record-counts-as-sent",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      for (const r of shared.slice(n)) { const f = _sharedById.get(r.i); if (f) { f._sentKey = null; f._maxSent = undefined; } }   // AUDIT SETS M1: and its maximum, if it carried one, is owed\n",
+    "old": "      for (const r of shared.slice(n)) { const f = _sharedById.get(r.i); if (f) { f._sentKey = null; f._maxSent = undefined; f._lsSent = undefined; } }   // AUDIT SETS M1: and its maximum, if it carried one, is owed\n",
     "new": "",
     "tests": [
       "test/restsync.test.js"
@@ -202,8 +202,8 @@
   {
     "name": "RESTSYNC-the-puppet-never-kept",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    f._encId = r.i;\n    _sharedById.set(r.i, f);\n",
-    "new": "    f._encId = r.i;\n",
+    "old": "    f._mwWire = 'seed'; applyWireLook(f, newest);   // AUDIT MW-NPC II K3: the host's man - its seed, not the feet it was first streamed at (its `marker` here)\n    _sharedById.set(r.i, f);\n",
+    "new": "    f._mwWire = 'seed'; applyWireLook(f, newest);   // AUDIT MW-NPC II K3: the host's man - its seed, not the feet it was first streamed at (its `marker` here)\n",
     "tests": [
       "test/restsync.test.js"
     ]
@@ -391,8 +391,8 @@
   {
     "name": "SETS-M1-shed-kept-as-paid",
     "file": "src/scenes/dungeonContext.js",
-    "old": "if (f) { f._sentKey = null; f._maxSent = undefined; } }",
-    "new": "if (f) { f._sentKey = null; } }",
+    "old": "if (f) { f._sentKey = null; f._maxSent = undefined; f._lsSent = undefined; } }",
+    "new": "if (f) { f._sentKey = null; f._lsSent = undefined; } }",
     "tests": [
       "test/restsync.test.js"
     ]

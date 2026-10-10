@@ -111,6 +111,8 @@ export function familyRoomSprites(sprites, family, living = null) {
     batches: () => [...sprites.batches(), ...family.batches()],
     persons: () => [...sprites.persons(), ...seats],
     bodyOf: (/** @type {string} */ key) => sprites.bodyOf?.(key) ?? null,
+    /** MWNPC10c: the rest's Morrowind bodies (the line's are the family's). */
+    drawBodies(canvas, proj, view, eye, dt) { sprites.drawBodies?.(canvas, proj, view, eye, dt); },
     clear() { sprites.clear(); family.clear(); seats.length = 0; persons.clear(); },
     get size() { return (sprites.size ?? 0) + family.size; },
   };

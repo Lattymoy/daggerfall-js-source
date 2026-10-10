@@ -77,7 +77,7 @@ test('MF1: the build clock names the reach SWEEP as its own span', () => {
   const arm = read('src/combat/fpArm.js');
   assert.match(arm, /const spans = \{ archives: 0, esm: 0, meshes: 0, textures: 0, sweep: 0 \};/);
   const i = arm.indexOf("    stage('meshes');   // MF1");
-  const j = arm.indexOf('const sweep = clipSweepTimes(sources, idleCheck);');
+  const j = arm.indexOf('const sweep = reachSweep ? clipSweepTimes(sources, idleCheck) : null;');   // PIN MOVED (MWNPC3): a rig never looked out of skips the sweep
   const k = arm.indexOf("    stage('sweep');");
   assert.ok(i > 0 && j > i && k > j, 'meshes closes before the sweep begins, and the sweep closes after the reaches are measured');
   assert.match(arm, /sweep: Math\.round\(spans\.sweep\),/);

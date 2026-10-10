@@ -1,0 +1,173 @@
+[
+ {
+  "name": "MWNPC5c-pool-not-offered",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "      if (npcLane && _sg === 1 && isBodyFoe(f)) { npcLane.stand('foe', foeActor(f, idOf(f), { scale: szG }), f.batch.conceal ?? null, f.batch.hitFlash || 0, foeFx(f)); _npcStood.push(f); }",
+  "new": "      if (npcLane && _sg === 1 && isBodyFoe(f)) _npcStood.push(f);",
+  "tests": [
+   "test/mwnpc5_pool.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5c-pool-creature-offered",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "      if (npcLane && _sg === 1 && isBodyFoe(f)) { npcLane.stand('foe'",
+  "new": "      if (npcLane && _sg === 1) { npcLane.stand('foe'",
+  "tests": [
+   "test/mwnpc5_pool.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5c-pool-undressed",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "npcLane.stand('foe', foeActor(f, idOf(f), { scale: szG }), f.batch.conceal ?? null, f.batch.hitFlash || 0, foeFx(f));",
+  "new": "npcLane.stand('foe', foeActor(f, idOf(f), { scale: szG }), null, 0, null);",
+  "tests": [
+   "test/mwnpc5_pool.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5c-pool-castonly-sticks",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "      f.batch.castOnly = false;\n      // AUDIT MW-NPC B1",
+  "new": "      // AUDIT MW-NPC B1",
+  "tests": [
+   "test/mwnpc5_pool.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5c-pool-dead-unoffered",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "    if (npcLane) for (const f of foes) if (f.dead && f.corpse && isBodyFoe(f) && f.ai) {",
+  "new": "    if (false) for (const f of foes) if (f.dead && f.corpse && isBodyFoe(f) && f.ai) {",
+  "tests": [
+   "test/mwnpc5_pool.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5c-pool-corpse-never-cast",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "const b = f.dead ? f.corpseMarker?.batch : f.batch; if (b) b.castOnly = lane.has('foe', idOf(f));",
+  "new": "const b = f.dead ? null : f.batch; if (b) b.castOnly = lane.has('foe', idOf(f));",
+  "tests": [
+   "test/mwnpc5_pool.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5c-pool-castonly-all",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "if (b) b.castOnly = lane.has('foe', idOf(f)); }",
+  "new": "if (b) b.castOnly = true; }",
+  "tests": [
+   "test/mwnpc5_pool.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5c-pool-unsynced",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "    lane.end(dt, eye);\n    for (const f of _npcStood)",
+  "new": "    for (const f of _npcStood)",
+  "tests": [
+   "test/mwnpc5_pool.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5c-pool-undrawn",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "    try { lane.draw(canvas, { proj, view, eye }); } finally",
+  "new": "    try { /* none */ } finally",
+  "tests": [
+   "test/mwnpc5_pool.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5c-pool-veiled-undrawn",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "  function drawVeiledBodies() { _npcLane?.drawVeiled(); }",
+  "new": "  function drawVeiledBodies() {}",
+  "tests": [
+   "test/mwnpc5_pool.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5c-pool-lane-kept-off",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "    if (!npcLane && _npcLane) { _npcLane.destroy(); _npcLane = null; }\n    _npcStood.length = 0;\n    npcLane?.begin();",
+  "new": "    _npcStood.length = 0;\n    npcLane?.begin();",
+  "tests": [
+   "test/mwnpc5_pool.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5c-pool-lane-outlives",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "    _npcLane?.destroy(); _npcLane = null;   // MWNPC5c: the bodies with them",
+  "new": "    // MWNPC5c: the bodies with them",
+  "tests": [
+   "test/mwnpc5_pool.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5c-pool-origin-left",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "    _npcLane?.offsetAll(offset);   // MWNPC5c",
+  "new": "    // MWNPC5c",
+  "tests": [
+   "test/mwnpc5_pool.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5c-host-world-unwired",
+  "file": "src/scenes/world.js",
+  "old": "    exteriorFoes.drawBodies(canvas, proj, view, mwv.eye, foeDt);",
+  "new": "",
+  "tests": [
+   "test/mwnpc5_pool.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5c-host-modes-unwired",
+  "file": "src/scenes/worldModes.js",
+  "old": "      interiorFoes.drawBodies(canvas, proj, view, mwv.eye, foeDt);",
+  "new": "",
+  "tests": [
+   "test/mwnpc5_pool.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5c-host-exterior-unwired",
+  "file": "src/scenes/exterior.js",
+  "old": "      exteriorFoes.drawBodies(canvas, proj, view, eye, foeDt);",
+  "new": "",
+  "tests": [
+   "test/mwnpc5_pool.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5c-look-copied-each-frame",
+  "file": "src/characters/foeBodies.js",
+  "old": "    if (same) return f._mwLook;\n  }\n  f._mwLookSlots = slots.slice();",
+  "new": "    if (same) { f._mwLookSlots = slots.slice(); return f._mwLook; }\n  }\n  f._mwLookSlots = slots.slice();",
+  "tests": [
+   "test/mwnpc5_foes.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5c-look-compare-blind",
+  "file": "src/characters/foeBodies.js",
+  "old": "    for (let i = 0; i < slots.length; i++) if (slots[i] !== held[i]) { same = false; break; }",
+  "new": "",
+  "tests": [
+   "test/mwnpc5_foes.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5c-pool-resyncs-unoffered",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "    if (!lane || !_npcOffered) return;",
+  "new": "    if (!lane) return;",
+  "tests": [
+   "test/mwnpc5_pool.test.js"
+  ]
+ }
+]

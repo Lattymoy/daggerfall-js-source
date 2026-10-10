@@ -163,11 +163,11 @@ function chainTo(nif, name) {
 }
 
 /**
- * THE NODE A PART HANGS FROM, AT `value`: the affine ({a: rotation*scale, t}, nodeTransformOf's shape) from the file
- * root to the named node - the ArrowBone the arrow is instanced under. Null when the file has no such node, or nothing
- * on its chain moves (the rest pose nodeTransformOf already bakes stands).
+ * AUDIT MW-NPC (2026-10-10): THE TIME THE NAMED NODE'S CHAIN IS READ AT - the part's clock, or frame time under an
+ * AutoPlay node - or null when nothing on its chain moves. nodeAffineAt's own choice, answered alone, so a caller can
+ * tell a node that stands where the last pose put it (mwFirstPerson.js posePartClocks) without posing it again.
  */
-export function nodeAffineAt(nif, name, value, frameTime = value) {
+export function nodeClockAt(nif, name, value, frameTime = value) {
   const pc = partClockOf(nif);
   if (!pc.animated) return null;
   const chain = chainTo(nif, name);
@@ -175,7 +175,18 @@ export function nodeAffineAt(nif, name, value, frameTime = value) {
   // the node's own AutoPlay is the nearest animation node's flag above it, as flattenNif carries animFlags down
   let flags = 0;
   for (const r of chain) if (r.type === 'NiBSAnimationNode' || r.type === 'NiBSParticleNode') flags = r.flags | 0;
-  const w = chainAt(pc, chain, clockFor(flags, value, frameTime));
+  return clockFor(flags, value, frameTime);
+}
+
+/**
+ * THE NODE A PART HANGS FROM, AT `value`: the affine ({a: rotation*scale, t}, nodeTransformOf's shape) from the file
+ * root to the named node - the ArrowBone the arrow is instanced under. Null when the file has no such node, or nothing
+ * on its chain moves (the rest pose nodeTransformOf already bakes stands).
+ */
+export function nodeAffineAt(nif, name, value, frameTime = value) {
+  const t = nodeClockAt(nif, name, value, frameTime);
+  if (t === null) return null;
+  const w = chainAt(partClockOf(nif), chainTo(nif, name), t);
   const a = new Float32Array(9);
   for (let i = 0; i < 9; i++) a[i] = w.rotation[i] * w.scale;
   return { a, t: [w.translation[0], w.translation[1], w.translation[2]] };

@@ -146,7 +146,7 @@
   {
     "name": "LW-LOOKS-walker-identity",
     "file": "src/characters/residentWalker.js",
-    "old": " this.cls = null; this.stillLook = null; this._stillAnim = null; }",
+    "old": " this.cls = null; this.stillLook = null; this.stillRole = null; this._stillAnim = null; }",
     "new": " }",
     "tests": [
       "test/lwlooks_town.test.js"
@@ -200,8 +200,8 @@
   {
     "name": "LW-LOOKS-still-unseen",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "          else if (!row.visible || allowChange) { const look = this.o.flatOf?.(want) ?? null; if (look) p.still(look); }",
-    "new": "          else { const look = this.o.flatOf?.(want) ?? null; if (look) p.still(look); }",
+    "old": "          else if (!row.visible || allowChange) { const look = this.o.flatOf?.(want) ?? null; if (look) p.still(look, role); }",
+    "new": "          else { const look = this.o.flatOf?.(want) ?? null; if (look) p.still(look, role); }",
     "tests": [
       "test/lwlooks_town.test.js"
     ]

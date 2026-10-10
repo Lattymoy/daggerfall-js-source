@@ -364,8 +364,11 @@ function skinScratch(batch, n) {
 
 /** PERF-RIG1: affineMul's arithmetic, written into `out` instead of a
  *  fresh affine - the same products in the same order into a Float32Array
- *  `a` and a plain-number `t`, so the result is bit-for-bit affineMul's. */
-function affineMulInto(p, l, out) {
+ *  `a` and a plain-number `t`, so the result is bit-for-bit affineMul's.
+ *  MWNPC1: exported - the GPU skin's palette (mwGpuSkin.js) writes each
+ *  bone's product through this same function, so the two skins blend the
+ *  same per-bone matrices. */
+export function affineMulInto(p, l, out) {
   const a = out.a;
   for (let r = 0; r < 3; r++) {
     for (let c = 0; c < 3; c++) {
@@ -380,11 +383,14 @@ function affineMulInto(p, l, out) {
 }
 
 /**
- * CPU-skin one batch (from flattenNif, carrying batch.skin) into out
- * arrays. positionsOut/normalsOut must be sized like the batch's own.
+ * The piece's POST: the transform composed ONCE onto a vertex's blended
+ * affine (MW-D31) - NiSkinData's root transform after the skin-to-skeleton
+ * cancel, and the shape's own transform after that (MW-D20, below).
+ * MWNPC1: one home for both skins - the CPU blend below and the GPU
+ * palette (mwGpuSkin.js) apply this same affine, so a body drawn either way
+ * stands in the same place.
  */
-export function skinBatch(batch, skeleton, pose, skelMats, positionsOut, normalsOut) {
-  const skin = batch.skin;
+export function skinPost(skin, skeleton, pose) {
   // MW-D20: THE SHAPE'S OWN TRANSFORM APPLIES. The blend's output rides
   // the render chain, and the trishape's own transform node is the one
   // part of that chain the reference never cancels: the rebound
@@ -400,6 +406,16 @@ export function skinBatch(batch, skeleton, pose, skelMats, positionsOut, normals
     skinToSkelMatrix(skeleton, pose, skin.skeletonRoot, skin.rootBone),
   );
   if (skin.shapeTransform) post = affineMul(affineOfTransform(skin.shapeTransform), post);
+  return post;
+}
+
+/**
+ * CPU-skin one batch (from flattenNif, carrying batch.skin) into out
+ * arrays. positionsOut/normalsOut must be sized like the batch's own.
+ */
+export function skinBatch(batch, skeleton, pose, skelMats, positionsOut, normalsOut) {
+  const skin = batch.skin;
+  const post = skinPost(skin, skeleton, pose);   // MW-D20 / MWNPC1: the one home of the post
   const n = batch.positions.length / 3;
   // PERF-RIG1 (2026-09-21, Mac: "continue looking into fixing exterior
   // performance issues"): THE ACCUMULATORS ARE THE BATCH'S. This runs

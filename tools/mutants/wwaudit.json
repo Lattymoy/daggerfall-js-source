@@ -302,7 +302,7 @@
   {
     "name": "WWAUDIT-C2-version-left",
     "file": "src/formats/mwFirstPerson.js",
-    "old": "export const ARM_RECORDS_VERSION = 4;",
+    "old": "export const ARM_RECORDS_VERSION = 6;",
     "new": "export const ARM_RECORDS_VERSION = 2;",
     "tests": [
       "test/werewolf1.test.js"

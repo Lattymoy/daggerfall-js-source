@@ -1,0 +1,291 @@
+[
+ {
+  "name": "MWNPC1-zero-weight-kept",
+  "file": "src/formats/mwGpuSkin.js",
+  "old": "if (boneEntry[j] < 0 || bone.weights[k] === 0) continue;",
+  "new": "if (boneEntry[j] < 0) continue;",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-missing-bone-untouched",
+  "file": "src/formats/mwGpuSkin.js",
+  "old": "          touched[v] = 1;\n          if (boneEntry[j] < 0",
+  "new": "          if (boneEntry[j] < 0",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-untouched-weight-zero",
+  "file": "src/formats/mwGpuSkin.js",
+  "old": "          infW[v * SKIN_MAX_INFLUENCES] = 1;\n          postE[v] = 0;",
+  "new": "          infW[v * SKIN_MAX_INFLUENCES] = 0;\n          postE[v] = 0;",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-touched-no-post",
+  "file": "src/formats/mwGpuSkin.js",
+  "old": "        postE[v] = post;\n",
+  "new": "        postE[v] = 0;\n",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-rigid-mirror-lost",
+  "file": "src/formats/mwGpuSkin.js",
+  "old": "pos[v] = (p.mirrored ? -src[v] : src[v]) + ox;",
+  "new": "pos[v] = src[v] + ox;",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-rigid-offset-lost",
+  "file": "src/formats/mwGpuSkin.js",
+  "old": "pos[v + 1] = src[v + 1] + oy;",
+  "new": "pos[v + 1] = src[v + 1];",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-hang-ignored",
+  "file": "src/formats/mwGpuSkin.js",
+  "old": "putEntry(pal, r.entry, p.hang ? hangAffine(at, p.hang) : at);",
+  "new": "putEntry(pal, r.entry, at);",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-post-identity",
+  "file": "src/formats/mwGpuSkin.js",
+  "old": "putEntry(pal, r.post, skinPost(skin, skeleton, pose));",
+  "new": "putEntry(pal, r.post, IDENTITY);",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-bone-product-reversed",
+  "file": "src/formats/mwGpuSkin.js",
+  "old": "affineMulInto(mats.get(bone.ref), bone.invBind, _bone)",
+  "new": "affineMulInto(bone.invBind, mats.get(bone.ref), _bone)",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-law-post-translation-lost",
+  "file": "src/formats/mwGpuSkin.js",
+  "old": "(col === 3 ? pt : 0)",
+  "new": "0",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-law-weights-ignored",
+  "file": "src/formats/mwGpuSkin.js",
+  "old": "for (let i = 0; i < 12; i++) _acc[i] += pal[o + i] * w;",
+  "new": "for (let i = 0; i < 12; i++) _acc[i] += pal[o + i];",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-stream-post-lost",
+  "file": "src/formats/mwGpuSkin.js",
+  "old": "      out[o++] = r.postE[v];",
+  "new": "      out[o++] = 0;",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-stream-uv-swapped",
+  "file": "src/formats/mwGpuSkin.js",
+  "old": "out[o++] = lanes[l + 3]; out[o++] = lanes[l + 4];",
+  "new": "out[o++] = lanes[l + 4]; out[o++] = lanes[l + 3];",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-one-pair-always",
+  "file": "src/formats/mwGpuSkin.js",
+  "old": "pairs: most > 4 ? 2 : 1,",
+  "new": "pairs: most > 8 ? 2 : 1,",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-box-signed-extent",
+  "file": "src/formats/mwGpuSkin.js",
+  "old": "const ex = Math.abs(a[0]) * hx + Math.abs(a[1]) * hy + Math.abs(a[2]) * hz;",
+  "new": "const ex = a[0] * hx + a[1] * hy + a[2] * hz;",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-box-weight-hull-lost",
+  "file": "src/formats/mwGpuSkin.js",
+  "old": "          hull = scaleHull(hull, Math.min(r.wMin, 1), Math.max(r.wMax, 1));",
+  "new": "          hull = scaleHull(hull, 1, 1);",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-box-collapse-lost",
+  "file": "src/formats/mwGpuSkin.js",
+  "old": "      if (r.collapse) { getEntry(pal, r.post, _post); grow(box, _post.t[0], _post.t[1], _post.t[2]); }",
+  "new": "      if (false) { getEntry(pal, r.post, _post); grow(box, _post.t[0], _post.t[1], _post.t[2]); }",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-box-untouched-lost",
+  "file": "src/formats/mwGpuSkin.js",
+  "old": "      if (r.untouched) unionInto(box, r.untouched);",
+  "new": "      if (false) unionInto(box, r.untouched);",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-box-over-cpu-fold",
+  "file": "src/formats/mwGpuSkin.js",
+  "old": "if (assembly.cpuSkinned === false) assembly.bounds = skinBoxes(layout, pal);",
+  "new": "assembly.bounds = skinBoxes(layout, pal);",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-nine-carried",
+  "file": "src/formats/mwGpuSkin.js",
+  "old": "if (k8 > SKIN_MAX_INFLUENCES) {",
+  "new": "if (k8 > SKIN_MAX_INFLUENCES + 1) {",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-same-pieces-always",
+  "file": "src/formats/mwGpuSkin.js",
+  "old": "  return k === layout.pieces.length;\n}",
+  "new": "  return true;\n}",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-pose-skins-anyway",
+  "file": "src/formats/mwFirstPerson.js",
+  "old": "  assembly.cpuSkinned = skin !== false;",
+  "new": "  assembly.cpuSkinned = true;",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-nrm-no-det-sign",
+  "file": "src/render/renderer.js",
+  "old": "  const sg = det < 0 ? -1 : 1;",
+  "new": "  const sg = 1;",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-nrm-transposed-product",
+  "file": "src/render/renderer.js",
+  "old": "out[3] = sg * (a * d + b * e + c * f);",
+  "new": "out[3] = sg * (a * b + d * e + g * h);",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-fs-winding-equal",
+  "file": "src/render/renderer.js",
+  "old": "bool ccw = gl_FrontFacing != (uFrontCW > 0.5);",
+  "new": "bool ccw = gl_FrontFacing == (uFrontCW > 0.5);",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-shadow-records-skin",
+  "file": "src/render/shadowPass.js",
+  "old": "    if (mesh && mesh.skin) return;\n",
+  "new": "\n",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-rig-cpu-skin-too",
+  "file": "src/combat/fpArm.js",
+  "old": "            skin: !thirdSkinReady(t),",
+  "new": "            skin: (thirdSkinReady(t), true),",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-rig-no-palette",
+  "file": "src/combat/fpArm.js",
+  "old": "      renderer.updateSkinPalette(thirdMesh, thirdSkin.palette);\n",
+  "new": "\n",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-door-inverted",
+  "file": "src/combat/fpArm.js",
+  "old": "pageParam('gpuskin', search) !== 'off'",
+  "new": "pageParam('gpuskin', search) === 'off'",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-door-ignores-renderer",
+  "file": "src/combat/fpArm.js",
+  "old": "return !!(renderer && typeof renderer.createSkinnedCharacterMesh === 'function') && pageParam",
+  "new": "return !!renderer && pageParam",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-unit-unset",
+  "file": "src/render/renderer.js",
+  "old": "    gl.uniform1i(gl.getUniformLocation(program, 'uSkinPalette'), SKIN_PALETTE_UNIT);\n",
+  "new": "\n",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC1-skin-on-every-draw",
+  "file": "src/render/renderer.js",
+  "old": "    if (skin) {\n      gl.uniform1f(c.skin, skin.pairs);",
+  "new": "    gl.uniform1f(c.skin, skin ? skin.pairs : 0);\n    if (skin) {",
+  "tests": [
+   "test/mwnpc1_gpuskin.test.js",
+   "test/la_cost.test.js"
+  ]
+ }
+]

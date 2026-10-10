@@ -16,6 +16,7 @@ import {
   extractArmRecords, isArmRecords, ARM_RECORDS_VERSION, ARM_GMST_IDS, GMST_SNEAK_DELTA,
   bodyParts, raceRecords, armorRecords, clothingRecords, weaponRecords, lightRecords, gmstValue,
   magicEffectRecords, vfxStaticRecords,   // MW-SPELLFX1
+  creatureRecords, CREA_FLAG,   // MWNPC9
 } from '../src/formats/mwFirstPerson.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -77,6 +78,10 @@ const handBuilt = () => new Uint8Array([
   ...rec('MGEF', [sub('INDX', u32(75)), sub('MEDT', medt({ school: 5, rgb: [0, 255, 0] })), sub('CVFX', z('VFX_RestoreCast')), sub('HVFX', z('Restore_Glow'))]),   // a hit an MGEF names off the VFX_ family
   ...rec('MGEF', [sub('MEDT', medt())]),   // no INDX: dropped
   ...rec('STAT', [sub('NAME', z('VFX_DestructCast')), sub('MODL', [...enc('e'), 0x5c, ...z('magic_cast_dst.nif')])]),
+  // MWNPC9: the creatures - FLAG's low byte (the blood type above it), XSCL, 1 without one; a modelless one dropped
+  ...rec('CREA', [sub('NAME', z('Rat')), sub('MODL', [...enc('r'), 0x5c, ...z('Rat.NIF')]), sub('FNAM', z('Rat')), sub('NPDT', new Array(96).fill(0)), sub('FLAG', u32(0x48 | (1 << 10)))]),
+  ...rec('CREA', [sub('NAME', z('skeleton')), sub('MODL', [...enc('r'), 0x5c, ...z('Skeleton.NIF')]), sub('FLAG', u32(0x49)), sub('XSCL', Array.from(new Uint8Array(new Float32Array([1.25]).buffer)))]),
+  ...rec('CREA', [sub('NAME', z('modelless_crea')), sub('FLAG', u32(8))]),
   ...rec('STAT', [sub('NAME', z('VFX_Hands')), sub('MODL', [...enc('e'), 0x5c, ...z('magic_hands_std.nif')])]),
   ...rec('STAT', [sub('NAME', z('restore_glow')), sub('MODL', [...enc('e'), 0x5c, ...z('magic_hit_rst.nif')])]),
   ...rec('STAT', [sub('NAME', z('furn_chair_01')), sub('MODL', [...enc('f'), 0x5c, ...z('chair.nif')])]),   // furniture: not an effect's
@@ -93,6 +98,7 @@ const sixWays = (bytes) => ({
   lights: lightRecords(bytes),   // MW-D51
   magicEffects: magicEffectRecords(bytes),   // MW-SPELLFX1
   statics: vfxStaticRecords(bytes),   // MW-SPELLFX1
+  creatures: creatureRecords(bytes),   // MWNPC9
   gmst: Object.fromEntries(ARM_GMST_IDS.map((id) => [id, gmstValue(bytes, id)]).filter(([, v]) => v !== null)),
 });
 
@@ -123,6 +129,13 @@ test('MW-LOAD: extractArmRecords equals the six per-kind readers on every fixtur
   ], 'Harmful (0x10) is a hard-coded flag the legacy format does not let a file set; NegativeLight is the file\'s');
   assert.deepEqual(one.statics, [{ id: 'vfx_destructcast', model: 'e/magic_cast_dst.nif' }, { id: 'vfx_hands', model: 'e/magic_hands_std.nif' }, { id: 'restore_glow', model: 'e/magic_hit_rst.nif' }],
     'the VFX_ family and the id an MGEF names; furniture stays in the master');
+  // MWNPC9: the creatures - id and model lowercased, the model's slashes forward, FLAG's low byte alone, XSCL or 1
+  assert.deepEqual(one.creatures, [
+    { id: 'rat', model: 'r/rat.nif', name: 'Rat', flags: 0x48, scale: 1 },
+    { id: 'skeleton', model: 'r/skeleton.nif', name: '', flags: 0x49, scale: 1.25 },
+  ], 'the blood type (FLAG >> 8) is not a flag; a modelless creature is dropped');
+  assert.equal(one.creatures[1].flags & CREA_FLAG.Bipedal, CREA_FLAG.Bipedal, 'Bipedal is bit 0 (loadcrea.hpp)');
+  assert.equal(one.creatures[0].flags & CREA_FLAG.Bipedal, 0);
 });
 
 test('MW-LOAD: the answer survives JSON whole, and the envelope is refused when it is not this shape', () => {
@@ -139,7 +152,10 @@ test('MW-LOAD: the answer survives JSON whole, and the envelope is refused when 
   // a master that carries nothing the build asks for still answers the shape
   const empty = extractArmRecords(new Uint8Array([...rec('TES3', [sub('HEDR', new Array(300).fill(0))])]));
   assert.ok(isArmRecords(empty));
-  assert.deepEqual(empty, { version: ARM_RECORDS_VERSION, parts: [], races: [], armors: [], clothes: [], weapons: [], lights: [], magicEffects: [], statics: [], gmst: {} });
+  // PIN MOVED (MWNPC9, bible/04-Characters/Morrowind-NPCs.md section 14): the shape carries the creatures (v5)
+  assert.deepEqual(empty, { version: ARM_RECORDS_VERSION, parts: [], races: [], armors: [], clothes: [], weapons: [], lights: [], magicEffects: [], statics: [], creatures: [], gmst: {} });
+  assert.equal(isArmRecords({ ...back, creatures: undefined }), false, 'MWNPC9: a set from before the creatures (v4) is not this shape - and its version says so first');
+  assert.equal(isArmRecords({ ...back, version: 4 }), false, 'MWNPC9: the version moved past it');
   assert.equal(isArmRecords({ ...back, magicEffects: undefined }), false, 'MW-SPELLFX1: a set from before the magic effects (v3) is not this shape - and its version says so first');
   assert.equal(isArmRecords({ ...back, version: 3 }), false, 'MW-SPELLFX1: the version moved past it, so a v3 set is refused before its shape is read');
   assert.equal(isArmRecords({ ...back, lights: undefined }), false, 'MW-D51: a set from before the lights (v1) is not this shape - and its version says so first');

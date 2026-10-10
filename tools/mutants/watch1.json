@@ -305,7 +305,7 @@
   {
     "name": "AUDIT-ALL-A1-a-pending-builds-species-is-the-latest-word",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (_pupPending.has(key)) { _pupPending.set(key, { ...r, t: _pupPending.get(key).t, _site: _pupPending.get(key)._site, _deep: _pupPending.get(key)._deep, _quest: _pupPending.get(key)._quest, _raid: _pupPending.get(key)._raid, _camp: campTags.get(r.i) ?? _pupPending.get(key)._camp }); continue; }",
+    "old": "      if (_pupPending.has(key)) { _pupPending.set(key, { ...r, ls: r.ls ?? _pupPending.get(key).ls, lw: r.lw ?? _pupPending.get(key).lw, t: _pupPending.get(key).t, _site: _pupPending.get(key)._site, _deep: _pupPending.get(key)._deep, _quest: _pupPending.get(key)._quest, _raid: _pupPending.get(key)._raid, _camp: campTags.get(r.i) ?? _pupPending.get(key)._camp }); continue; }",
     "new": "      if (_pupPending.has(key)) { _pupPending.set(key, r); continue; }",
     "tests": [
       "test/watch1.test.js"

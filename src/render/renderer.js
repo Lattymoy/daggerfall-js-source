@@ -227,6 +227,183 @@ void main() {
   gl_Position = uProj * uView * world;
 }`;
 
+// MWNPC1 (2026-10-09, Mac: "I wanna do everything and ensure that performance isnt affected"): THE WORLD'S
+// CHARACTER VERTEX SHADER, AND THE SKIN IN IT. CHAR_VS above stays what it was and is the shadow pass's alone (its
+// depth program reads none of what this one adds, and a skinned body never casts - drawCharacter records none
+// under the sprite target). This is CHAR_VS line for line, plus:
+//   - the OPTIONAL skin channels 5-9, additive as aUV and aEmissive are: a VAO that never enables them reads
+//     constants, and `uSkin` 0 never looks at them - every voxel rig and every CPU-skinned mesh draws exactly what
+//     it drew;
+//   - uSkin 1 (one influence pair) or 2 (two): the position is BLENDED here off the palette (formats/mwGpuSkin.js -
+//     its skinPoint is this function in JS, and the pins hold the two together): the influences' rows accumulated
+//     in slot order, the post composed onto the sum once (MW-D31), the result applied to the stream position;
+//   - `vNormalV` and `vRel`: the normal under its old name's job, and the posed position in the model's own axes
+//     with no translation - the fragment shader takes the face normal off vRel's derivatives (skinFaceFs), which
+//     are the world's (a translation has none) and stay small however far the floating origin has drifted;
+//   - MW-SMOOTH x MWNPC1 (the arc's merge of main, 2026-10-10): a skinned corner's AUTHORED normal turned by the
+//     same composed 3x3 that moves its position and renormalised (skinBatch's law - mwGpuSkin.js skinNormal is
+//     this in JS), zero where it has none to light by; the fragment lights by it, and by the face where it is zero.
+// The palette is RGBA32F, three texels an entry, SKIN_PAL_ROW entries a row; texelFetch reads it unfiltered.
+const CHAR_SKIN_VS = `#version 300 es
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec3 aColor;
+layout(location=2) in vec3 aNormal;
+layout(location=3) in vec2 aUV;
+layout(location=4) in vec3 aEmissive;
+layout(location=5) in vec4 aSkinI0;
+layout(location=6) in vec4 aSkinW0;
+layout(location=7) in vec4 aSkinI1;
+layout(location=8) in vec4 aSkinW1;
+layout(location=9) in float aSkinPost;
+uniform mat4 uProj;
+uniform mat4 uView;
+uniform mat4 uModel;
+uniform float uSkin;
+uniform highp sampler2D uSkinPalette;
+out vec3 vColor;
+out vec3 vNormalV;
+out vec3 vRel;
+out vec3 vWorldPos;
+out vec2 vUV;
+out vec3 vEmissive;
+void skinEntry(float e, out vec4 r0, out vec4 r1, out vec4 r2) {
+  int g = int(e + 0.5);
+  int row = g / ${SKIN_PAL_ROW};
+  int col = (g - row * ${SKIN_PAL_ROW}) * 3;
+  r0 = texelFetch(uSkinPalette, ivec2(col, row), 0);
+  r1 = texelFetch(uSkinPalette, ivec2(col + 1, row), 0);
+  r2 = texelFetch(uSkinPalette, ivec2(col + 2, row), 0);
+}
+void skinRows(out vec4 c0, out vec4 c1, out vec4 c2) {
+  vec4 a0 = vec4(0.0);
+  vec4 a1 = vec4(0.0);
+  vec4 a2 = vec4(0.0);
+  vec4 r0; vec4 r1; vec4 r2;
+  for (int k = 0; k < 4; k++) {
+    float w = aSkinW0[k];
+    skinEntry(aSkinI0[k], r0, r1, r2);
+    a0 += r0 * w; a1 += r1 * w; a2 += r2 * w;
+  }
+  if (uSkin > 1.5) {
+    for (int k = 0; k < 4; k++) {
+      float w = aSkinW1[k];
+      skinEntry(aSkinI1[k], r0, r1, r2);
+      a0 += r0 * w; a1 += r1 * w; a2 += r2 * w;
+    }
+  }
+  vec4 q0; vec4 q1; vec4 q2;
+  skinEntry(aSkinPost, q0, q1, q2);
+  c0 = q0.x * a0 + q0.y * a1 + q0.z * a2 + vec4(0.0, 0.0, 0.0, q0.w);
+  c1 = q1.x * a0 + q1.y * a1 + q1.z * a2 + vec4(0.0, 0.0, 0.0, q1.w);
+  c2 = q2.x * a0 + q2.y * a1 + q2.z * a2 + vec4(0.0, 0.0, 0.0, q2.w);
+}
+void main() {
+  vec3 p = aPos;
+  vec3 n = aNormal;
+  if (uSkin > 0.5) {
+    vec4 c0; vec4 c1; vec4 c2;
+    skinRows(c0, c1, c2);
+    p = vec3(dot(c0.xyz, aPos) + c0.w, dot(c1.xyz, aPos) + c1.w, dot(c2.xyz, aPos) + c2.w);
+    vec3 m = vec3(dot(c0.xyz, aNormal), dot(c1.xyz, aNormal), dot(c2.xyz, aNormal));
+    float l2 = dot(m, m);
+    n = l2 > 1e-24 ? m * inversesqrt(l2) : vec3(0.0);
+  }
+  vColor = aColor;
+  vEmissive = aEmissive;
+  vNormalV = mat3(uModel) * n;
+  vRel = mat3(uModel) * p;
+  vUV = aUV;
+  vec4 world = uModel * vec4(p, 1.0);
+  vWorldPos = world.xyz;
+  gl_Position = uProj * uView * world;
+}`;
+
+/**
+ * MWNPC2: THE TILES. Pack items[start..] - each `{ pw, ph }` - into a `size` x `size` target, writing each one's
+ * `tx`/`ty`: shelves left to right, a row as tall as its tallest, a texel of gutter between neighbours (a NEAREST
+ * sample at a tile's far edge reads its own last texel - the gutter is the margin that rounding never crosses).
+ * Answers how many fit, at least one: a picture is never larger than the target (drawRigSpriteBox clamps it there),
+ * so the first always fits, alone if it must. Pure.
+ */
+/** MWNPC2: a tile's clear, transparent black - the lone pass's clear colour, written by value (clearBufferfv). */
+const SPRITE_CLEAR = new Float32Array([0, 0, 0, 0]);
+
+export function packSpriteTiles(items, start, size, gutter = 1) {
+  let x = 0, y = 0, row = 0, n = 0;
+  for (let i = start; i < items.length; i++) {
+    const it = items[i];
+    if (x > 0 && x + it.pw > size) { x = 0; y += row + gutter; row = 0; }
+    if (n > 0 && y + it.ph > size) break;
+    it.tx = x; it.ty = y;
+    x += it.pw + gutter;
+    if (it.ph > row) row = it.ph;
+    n++;
+  }
+  return n;
+}
+
+/**
+ * MWNPC1: the skinned body's normal matrix for a model matrix (column-major mat4): sign(det M) x M x M^T over its
+ * 3x3 - the matrix that takes the world's face normal back to the packed path's mat3(uModel) x n (skinFaceFs).
+ * Symmetric, so its column-major upload is its row-major one. Written into `out`.
+ */
+export function skinNormalMatrix(m, out = new Float32Array(9)) {
+  const a = m[0], b = m[4], c = m[8];    // row 0 of the 3x3
+  const d = m[1], e = m[5], f = m[9];    // row 1
+  const g = m[2], h = m[6], k = m[10];   // row 2
+  const det = a * (e * k - f * h) - b * (d * k - f * g) + c * (d * h - e * g);
+  const sg = det < 0 ? -1 : 1;
+  out[0] = sg * (a * a + b * b + c * c); out[3] = sg * (a * d + b * e + c * f); out[6] = sg * (a * g + b * h + c * k);
+  out[1] = out[3]; out[4] = sg * (d * d + e * e + f * f); out[7] = sg * (d * g + e * h + f * k);
+  out[2] = out[6]; out[5] = out[7]; out[8] = sg * (g * g + h * h + k * k);
+  return out;
+}
+
+/**
+ * MWNPC1: A LANE'S CHARACTER FRAGMENT SHADER, TAUGHT THE SKINNED BODY'S FACE NORMAL. packFpArm writes each
+ * triangle's normal as the cross product of its POSED corners (times the mirror's flip), and the vertex shader
+ * cannot know a triangle's other corners. The fragment can: vRel is linear across its triangle, so
+ * cross(dFdx(vRel), dFdy(vRel)) is that triangle's plane normal exactly - its SIGN set by the triangle's winding on
+ * the screen, which gl_FrontFacing reports against the renderer's front face (CW - the projection mirrors x). For a
+ * corner winding a, b, c counter-clockwise on the screen, cross(b - a, c - a) = 2 x area x the derivatives' cross,
+ * whatever the lens does, so `ccw ? d : -d` IS the posed corners' cross in the world's axes.
+ *
+ * The CPU path then drew mat3(uModel) x n_model, and the world cross is cof(M) x n_model = det(M) M^-T n_model - so
+ * n_model = M^T n_world / det(M), and the CPU's normal is sign(det M) x M M^T x n_world. `uSkinNrm` is exactly that
+ * matrix (drawCharacter, per draw) and `uSkinFlip` the range's mirror (rigid left-side parts, packFpArm's `flip`):
+ * with them the skinned body is lit as the packed one was, a race's unequal weight and height included.
+ *
+ * The edit is to the SOURCE, once per lane set: the vNormal input becomes a global the top of main() fills -
+ * before any discard, so the derivatives run in uniform control flow - and every line after reads it as it read
+ * the input. A lane without exactly one `in vec3 vNormal;` and one `void main() {` throws: a silent no-op here is a
+ * body lit by a zero normal.
+ */
+export function skinFaceFs(fs) {
+  const decl = 'in vec3 vNormal;';
+  const main = 'void main() {';
+  const n = (needle) => fs.split(needle).length - 1;
+  if (n(decl) !== 1 || n(main) !== 1) {
+    throw new Error(`MWNPC1: a character fragment shader needs one "${decl}" and one "${main}" (has ${n(decl)} and ${n(main)})`);
+  }
+  return fs.replace(decl, SKIN_FACE_DECL).replace(main, `${main}\n  vNormal = charFaceNormal();`);
+}
+const SKIN_FACE_DECL = `in vec3 vNormalV;
+in vec3 vRel;
+uniform float uSkin;
+uniform mat3 uSkinNrm;
+uniform float uSkinFlip;
+uniform float uFrontCW;
+vec3 vNormal;
+vec3 charFaceNormal() {
+  vec3 d = cross(dFdx(vRel), dFdy(vRel));
+  if (uSkin < 0.5) return vNormalV;
+  if (dot(vNormalV, vNormalV) > 1e-20) return vNormalV;
+  bool ccw = gl_FrontFacing != (uFrontCW > 0.5);
+  vec3 nw = ccw ? d : -d;
+  if (dot(nw, nw) < 1e-36) return vec3(0.0, 1.0, 0.0);
+  return normalize(uSkinFlip * (uSkinNrm * nw));
+}`;
+
 // MAC-Q (2026-09-17): THE PARTICLE QUAD, osgParticle's own (ParticleSystem
 // .cpp:360-403): a camera-facing quad of half-extent `size` on the view's
 // x and y axes, textured, times the particle's colour with its alpha. The
@@ -1288,6 +1465,7 @@ import { WATER_LAYER_UNITS, WATER_SCENE_UNIT, WATER_SCENE_DEPTH_UNIT, NO_BED_DEP
 import { WATER_BED_GLSL, waterBedMix } from './waterBedGlsl.js';   // WATER-NEXT 2: the ground under the water is a bed
 import { packWaterMask, WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';   // MAC2: the corner table's one home; WATER-DRAW1: the PASS takes the draw's table, not the feet's
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
+import { SKIN_PAL_ROW, SKIN_PALETTE_UNIT } from './skinPalette.js';   // MWNPC1: the GPU skin's palette shape
 import { ecotoneGlsl, ECO_UNITS } from './ecotoneGlsl.js';   // ECOTONE1: the ground's share of its neighbours - the chunk, and the units their tile sets bind on
 import { SNOW_VS, snowTerrainFs, SNOW_UNITS, SNOW_LAYER } from './snowfallGlsl.js';   // SNOWFALL1: the mod's snow surface, lit as the ground is
 const SNOW_UNIT_LIST = Object.entries(SNOW_UNITS);   // AUDIT ENVIRONS P1: the five pictures' units, listed once
@@ -1436,6 +1614,11 @@ export class Renderer {
     this.maxPointLights = CLASSIC_MAX_LIGHTS;
     this._decA = new Float32Array(3); this._decB = new Float32Array(3); this._decC = new Float32Array(3);   // AUDIT F4: three, because one site decodes the ambient, the moon AND the sun and holds all three   // EL1: the decode scratch (two, for the billboard tint's two terms)
     this._pointColorDec = new Float32Array(CLASSIC_MAX_LIGHTS * 3);
+    this.stats = { draws: 0, programBinds: 0, vaoBinds: 0, texBinds: 0, bbCulled: 0, spriteBinds: 0 };   // PERF-CROWD2: bbCulled, the billboards this frame did NOT submit; MWNPC2: spriteBinds, the body batch's binds of the sprite target; MWNPC1: made before the first world set is built - its character program is bound through _use there
+    this._skinNrm = new Float32Array(9);   // MWNPC1: drawCharacter's normal-matrix scratch (skinNormalMatrix)
+    this._spriteBatch = { items: [], open: false, depth: 0 };   // MWNPC2: the body pass's pictures, queued for one bind (beginCharacterSpriteBatch)
+    /** @type {WebGLTexture|null} */ this._skinIdentity = null;    // MWNPC1: the identity palette (_skinIdentityTex) - before the first set is built, which makes it
+    /** @type {WebGLTexture|null} */ this._skinUnitHolds = null;   // MWNPC1: what SKIN_PALETTE_UNIT holds, by our own binds
     this._classicSet = this._buildWorldSet({ key: 'classic', meshFs: FS, bbFs: BB_FS, terrainFs: TERRAIN_FS, charFs: CHAR_FS, decalFs: DECAL_FS });   // MAC-BUG W6: and the decal pass, its fifth
     this._installWorldSet(this._classicSet);
     this._ambientTri = null;
@@ -1505,7 +1688,6 @@ export class Renderer {
     // were invisible here, which made the counter blind to exactly the
     // terrain culling it exists to measure. texBinds counts the binds a
     // DRAW pays; upload-time binds are creation cost, not frame cost.
-    this.stats = { draws: 0, programBinds: 0, vaoBinds: 0, texBinds: 0, bbCulled: 0 };   // PERF-CROWD2: the billboards this frame did NOT submit
     this._perf = perfOn() ? setMeter(gl, new PerfMeter(gl, perfZones(), perfCpu())) : null;   // EL8: `?perf` - a GPU-timed line every PERF_EVERY world frames; VC6d: `?perf=zones` per pass, and the meter is findable by its context (the sky's march marks its own span); PERF-CPU: `?perf=cpu` tiles the same zones on the MAIN THREAD's clock, which is the one a script-bound frame is losing
     this._perfOpen = false;   // AUDIT 68 S16-perf-no-resolve-leak: a world frame's meter frame begun and not yet closed (_perfClose)
     this._frameStamp = 0;      // PERF3: bumped by beginFrame (and the state restores) - the terrain program's frame-constant block is uploaded once per stamp; LA-COST1: and the billboard's, the decal's and the character's, and bumped by every setter and seam that moves a value in any of the four (the law: test/la_cost.test.js)
@@ -1688,7 +1870,7 @@ export class Renderer {
     // the mirrored projection MUST bracket CULL_FACE off around its
     // draw - the screen-quad (2D UI) and sky passes learned that the
     // hard way (the sky-blue-screen regression; tools/cullProbe.mjs).
-    gl.frontFace(gl.CW);
+    gl.frontFace(gl.CW);   // MWNPC1: and the character program's uFrontCW says so (_charSkinProgram)
     gl.clearColor(0.53, 0.7, 0.92, 1.0); // pale Iliac Bay sky
     // EV6: the JS shadow of that clear colour - the sprite pass used
     // to gl.getParameter(COLOR_CLEAR_VALUE) it back, a synchronous
@@ -1958,7 +2140,7 @@ export class Renderer {
     return {
       key: src.key,
       mesh: this._buildProgram(VS, src.meshFs),
-      char: this._buildProgram(CHAR_VS, src.charFs),
+      char: this._charSkinProgram(src.charFs),   // MWNPC1: the skin in the world's character program
       bb: this._buildProgram(bbVertexShader(src.bbVs), src.bbFs),   // LA-COST3: a lane may add to the billboard VS (its flat's sun, once a quad)
       terrain: this._buildProgram(TERRAIN_VS, src.terrainFs),
       // FAR-CLIP1: and the terrain's CLIP variant (terrainClipFs, above), built from this set's own terrain shader the
@@ -1979,6 +2161,23 @@ export class Renderer {
       decalLights: src.decalFs ? (src.maxLights ?? CLASSIC_MAX_LIGHTS) : CLASSIC_MAX_LIGHTS,
       locate: null,   // LA-COST7: its programs' uniform locations, looked up once (_locations)
     };
+  }
+
+  /** MWNPC1: A SET'S CHARACTER PROGRAM - CHAR_SKIN_VS over the lane's shader taught the face normal (skinFaceFs) -
+   *  and its two constants, set ONCE at link and held by the program for its life: the palette's unit, and the front
+   *  face gl_FrontFacing is read against (1: the constructor's gl.frontFace(gl.CW), the renderer's for its life - the
+   *  projection mirrors x). Set here, so a draw sends neither (LA-COST1: a character call sends its own and nothing
+   *  of the frame's); and the identity palette goes onto its unit, where every unskinned draw leaves it. Bound through
+   *  _use (EV6: every program bind funnels through the shadow) - the stats it counts into are made before any set. */
+  _charSkinProgram(fs) {
+    const gl = this.gl;
+    const program = this._buildProgram(CHAR_SKIN_VS, skinFaceFs(fs));
+    this._use(program);
+    gl.uniform1i(gl.getUniformLocation(program, 'uSkinPalette'), SKIN_PALETTE_UNIT);
+    gl.uniform1f(gl.getUniformLocation(program, 'uFrontCW'), 1);
+    this._skinIdentityTex();
+    this._activeTexture(gl.TEXTURE0);
+    return program;
   }
 
   /** LA-COST7 (2026-09-27, Mac: "performance improvements"): THE SET'S LOCATIONS, LOOKED UP ONCE. _installWorldSet
@@ -2093,6 +2292,9 @@ export class Renderer {
       tex: gl.getUniformLocation(cp, 'uTex'),
       useTex: gl.getUniformLocation(cp, 'uUseTex'),
       alphaCut: gl.getUniformLocation(cp, 'uAlphaCut'),
+      skin: gl.getUniformLocation(cp, 'uSkin'),   // MWNPC1: the GPU skin's three a draw (the palette's unit and the front face are the program's, _charSkinProgram)
+      skinNrm: gl.getUniformLocation(cp, 'uSkinNrm'),
+      skinFlip: gl.getUniformLocation(cp, 'uSkinFlip'),
     };
     this._charFog = this._fogLocs(cp);
     this.bbProgram = set.bb;
@@ -3000,6 +3202,100 @@ export class Renderer {
   }
 
   /**
+   * MWNPC1: A GPU-SKINNED CHARACTER MESH - formats/mwGpuSkin.js packSkinStream's static stream, uploaded ONCE, and
+   * its palette texture (RGBA32F, `width` x `height`, three texels an entry). A pose re-uploads the palette alone
+   * (updateSkinPalette); drawCharacter blends the stream in CHAR_SKIN_VS. `pairs` is the influence pairs a corner
+   * carries (1 or 2). No sphere: the body is drawn only through the sprite target, which never casts (MW-CROWD).
+   */
+  createSkinnedCharacterMesh(stream, { floats, pairs, width, height }) {
+    const gl = this.gl;
+    const vao = gl.createVertexArray();
+    this._bindVao(vao);
+    const vbo = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+    gl.bufferData(gl.ARRAY_BUFFER, stream, gl.STATIC_DRAW);
+    const stride = floats * 4;
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, stride, 0);    // position
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, stride, 12);   // diffuse
+    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 3, gl.FLOAT, false, stride, 24);   // the authored normal (MW-SMOOTH x MWNPC1)
+    gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 2, gl.FLOAT, false, stride, 36);   // UV
+    gl.enableVertexAttribArray(4); gl.vertexAttribPointer(4, 3, gl.FLOAT, false, stride, 44);   // emission
+    gl.enableVertexAttribArray(5); gl.vertexAttribPointer(5, 4, gl.FLOAT, false, stride, 56);   // the first pair's entries
+    gl.enableVertexAttribArray(6); gl.vertexAttribPointer(6, 4, gl.FLOAT, false, stride, 72);   // and weights
+    if (pairs > 1) {
+      gl.enableVertexAttribArray(7); gl.vertexAttribPointer(7, 4, gl.FLOAT, false, stride, 88);
+      gl.enableVertexAttribArray(8); gl.vertexAttribPointer(8, 4, gl.FLOAT, false, stride, 104);
+    }
+    gl.enableVertexAttribArray(9); gl.vertexAttribPointer(9, 1, gl.FLOAT, false, stride, (floats - 1) * 4);   // the post
+    this._bindVao(null);
+    const tex = gl.createTexture();
+    this._activeTexture(gl.TEXTURE0 + SKIN_PALETTE_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, width, height, 0, gl.RGBA, gl.FLOAT, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    this._skinUnitHolds = tex;
+    this._activeTexture(gl.TEXTURE0);
+    return { vao, count: stream.length / floats, buffers: [vbo], vbo, floats, bounds: null,
+      skin: { tex, pairs, width, height } };
+  }
+
+  /** MW-BOW1 x MWNPC1: a part that moved on its own clock - its corners alone put back into the static stream at
+   *  `offset` floats (formats/mwGpuSkin.js restreamMovedRows). Nothing else of the body is re-sent. */
+  updateSkinStream(mesh, offset, data) {
+    const gl = this.gl;
+    if (!mesh || !mesh.skin || !mesh.vbo) return;
+    gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vbo);
+    gl.bufferSubData(gl.ARRAY_BUFFER, offset * 4, data);
+  }
+
+  /** MWNPC1: a pose - the palette re-uploaded, and nothing else (`data` is the layout's palette, width x height
+   *  texels of four floats). */
+  updateSkinPalette(mesh, data) {
+    const gl = this.gl;
+    const skin = mesh && mesh.skin;
+    if (!skin) return;
+    this._activeTexture(gl.TEXTURE0 + SKIN_PALETTE_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, skin.tex);
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, skin.width, skin.height, gl.RGBA, gl.FLOAT, data);
+    this._skinUnitHolds = skin.tex;
+    this._activeTexture(gl.TEXTURE0);
+  }
+
+  /** MWNPC1: the palette's owner lets it go - with the identity put back on the unit first, so no draw after it
+   *  reads a deleted texture. (The VAO, buffers and range textures go through the mesh's own release.) */
+  releaseCharacterSkin(mesh) {
+    const skin = mesh && mesh.skin;
+    if (!skin || !skin.tex) return;
+    const gl = this.gl;
+    if (this._skinUnitHolds === skin.tex) {
+      this._activeTexture(gl.TEXTURE0 + SKIN_PALETTE_UNIT);
+      gl.bindTexture(gl.TEXTURE_2D, this._skinIdentityTex());
+      this._skinUnitHolds = this._skinIdentity;
+      this._activeTexture(gl.TEXTURE0);
+    }
+    gl.deleteTexture(skin.tex);
+    skin.tex = null;
+  }
+
+  /** MWNPC1: the one-entry identity palette every unskinned character draw leaves on the unit. Lazy, kept. */
+  _skinIdentityTex() {
+    if (this._skinIdentity) return this._skinIdentity;
+    const gl = this.gl;
+    const tex = gl.createTexture();
+    this._activeTexture(gl.TEXTURE0 + SKIN_PALETTE_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, 3, 1, 0, gl.RGBA, gl.FLOAT, new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0]));
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    this._skinIdentity = tex;
+    this._skinUnitHolds = tex;
+    return tex;
+  }
+
+  /**
    * MW-D11: upload one decoded texture for the character path.
    * `mips` is decodeDds's output shape ({width, height, rgba}[]), and
    * the wrap mode is the NIF's own clamp mode, mapped by the caller.
@@ -3213,6 +3509,24 @@ export class Renderer {
     }
     gl.disable(gl.CULL_FACE);
     this._bindVao(mesh.vao);
+    // MWNPC1: THE SKIN, per skinned draw - and nothing for any other (LA-COST1). The palette sampler always reads a
+    // complete RGBA32F texture on its own unit - this body's palette for its draw, the identity every other draw finds
+    // there (put back after each skinned one) - because a sampler is used whether or not its branch runs (the MW-D11
+    // lesson below). `uSkin` is the program's, 0 until a skinned draw sets it and back to 0 after. A skinned body's
+    // normal matrix is sign(det M) M M^T (skinFaceFs: the packed path's mat3(uModel) x n, from the world's face normal).
+    const skin = mesh.skin || null;
+    if (skin) {
+      gl.uniform1f(c.skin, skin.pairs);
+      this._activeTexture(gl.TEXTURE0 + SKIN_PALETTE_UNIT);
+      gl.bindTexture(gl.TEXTURE_2D, skin.tex);
+      this._skinUnitHolds = skin.tex;
+      this.stats.texBinds++;
+      gl.uniformMatrix3fv(c.skinNrm, false, skinNormalMatrix(modelMatrix, this._skinNrm));
+    } else if (this._skinUnitHolds !== this._skinIdentity) {
+      this._activeTexture(gl.TEXTURE0 + SKIN_PALETTE_UNIT);   // never on a frame of ours: a skinned draw puts it back
+      gl.bindTexture(gl.TEXTURE_2D, this._skinIdentityTex());
+      this._skinUnitHolds = this._skinIdentity;
+    }
     // MW-D11: a textured mesh carries RANGES - one per piece, each with
     // its own texture - because a Morrowind arm is several meshes with
     // several textures and this path issues drawArrays. Without ranges
@@ -3231,6 +3545,7 @@ export class Renderer {
         // (rule 57), and a sheathed weapon has to come back without a
         // repack.
         if (r.hidden) continue;
+        if (skin) gl.uniform1f(c.skinFlip, r.piece && r.piece.mirrored ? -1 : 1);   // MWNPC1: packFpArm's flip, per piece
         gl.uniform1f(c.useTex, r.tex ? 1 : 0);
         gl.uniform1f(c.alphaCut, r.alphaCut || 0);
         gl.bindTexture(gl.TEXTURE_2D, r.tex || this._blackTex);
@@ -3250,6 +3565,14 @@ export class Renderer {
     this._tex0Bound = null;   // PERF-TEX3: this path owns unit 0 - the shadow may not speak for it
     gl.uniform1f(c.useTex, 0);
     gl.uniform1f(c.alphaCut, 0);
+    if (skin) {
+      // MWNPC1: the identity back on the unit - this body's palette may be deleted before the next character draws
+      gl.uniform1f(c.skin, 0);
+      this._activeTexture(gl.TEXTURE0 + SKIN_PALETTE_UNIT);
+      gl.bindTexture(gl.TEXTURE_2D, this._skinIdentityTex());
+      this._skinUnitHolds = this._skinIdentity;
+    }
+    this._activeTexture(gl.TEXTURE0);
     this._bindVao(null);
     // MAC-Q: the rig's particle effects, over the body, in the same pass -
     // never recorded for the shadows (a flame casts none in the reference
@@ -3438,6 +3761,100 @@ export class Renderer {
     return cs.tex;
   }
 
+  /**
+   * MWNPC2 (2026-10-09, the MW-NPC arc's second slice, `04-Characters/Morrowind-NPCs.md` section 7): ONE OFFSCREEN BIND
+   * FOR EVERY SEEN BODY. Every Morrowind body is a picture taken into the shared sprite target and composited as a
+   * quad (render/characterSprite.js drawRigSpriteBox) - and every one took its own pass: the target bound, a corner
+   * cleared, the body drawn, the frame's framebuffer and viewport put back, the character block re-sent. Two
+   * framebuffer switches a body a frame - on a tiler, each a resolve - which a crowd multiplies (WB9h, MW-CROWD:
+   * "batching every seen body into one bind of the target ... is the next slice").
+   *
+   * A host opens a batch around its body pass. While it is open, drawRigSpriteBox measures each body exactly as
+   * before and QUEUES its picture - its mesh and model, its camera, its size, its quad - and the flush takes them all
+   * in one bind: each body packed into its own tile of the target (packSpriteTiles, a shelf a row, a texel of gutter),
+   * cleared and drawn there under its own camera and its own character block (the lone pass's block, so each picture
+   * is the one it was), then the frame's framebuffer back ONCE, and every quad drawn sampling its own tile. A batch
+   * the target cannot hold is taken in as many binds as it needs. Nothing a body's picture reads can move between its
+   * queueing and the flush: each body's mesh, palette and range flags are its own rig's, set by its update before its
+   * draw. Answers the binds it took.
+   */
+  beginCharacterSpriteBatch() {
+    const b = this._spriteBatch;
+    // AUDIT MW-NPC II: A BATCH OPENED INSIDE AN OPEN ONE JOINS IT - opened again, the outer pass's queue was dropped
+    // unseen (its bodies' quads never drawn); the inner flush is the outer's to make
+    if (b.open) { b.depth++; return; }
+    b.items.length = 0;
+    b.open = true;
+    b.depth = 0;
+  }
+
+  /** MWNPC2: true between begin and flush - drawRigSpriteBox's question. */
+  get characterSpriteBatchOpen() { return this._spriteBatch.open; }
+
+  /** MWNPC2: one body's picture, measured: { mesh, model, proj, view, pw, ph, quad: { at, halfW, halfH, right,
+   *  hitFlash, conceal, up } }. Its tile is written by the flush. */
+  queueCharacterSprite(item) { this._spriteBatch.items.push(item); }
+
+  flushCharacterSpriteBatch() {
+    const b = this._spriteBatch;
+    if (!b.open) return 0;
+    if (b.depth > 0) { b.depth--; return 0; }   // a nested batch's flush: the outer one draws them all
+    b.open = false;
+    const items = b.items;
+    let at = 0, binds = 0;
+    try {
+      while (at < items.length) {
+        const n = packSpriteTiles(items, at, CHAR_SPRITE_RT_SIZE);
+        const tex = this._renderCharacterSpriteTiles(items, at, at + n);
+        binds++;
+        for (let i = at; i < at + n; i++) {
+          const it = items[i], q = it.quad;
+          this.drawCharacterSpriteQuad(tex, q.at, q.halfW, q.halfH, q.right, it.pw / CHAR_SPRITE_RT_SIZE, it.ph / CHAR_SPRITE_RT_SIZE,
+            q.hitFlash, q.conceal, q.up, [it.tx / CHAR_SPRITE_RT_SIZE, it.ty / CHAR_SPRITE_RT_SIZE], q.fx);   // MWNPC5: and its tells
+        }
+        at += n;
+      }
+    } finally {
+      items.length = 0;
+    }
+    this.stats.spriteBinds += binds;
+    return binds;
+  }
+
+  /** MWNPC2: the tiles items[from..to) were packed into, drawn in ONE bind of the sprite target - each cleared and
+   *  drawn as _renderCharacterSprite draws its corner (the fog borrowed off, its own camera, its own block), every
+   *  borrow returned in one finally. The clear is by value (clearBufferfv), so the clear colour is not borrowed at all. */
+  _renderCharacterSpriteTiles(items, from, to) {
+    const gl = this.gl;
+    const cs = this._charSpriteRT();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, cs.fbo);
+    gl.enable(gl.SCISSOR_TEST);
+    const sp = this._proj, sv = this._view, sf = this._fogMode;
+    const sw = this._dwFog[0];
+    this._fogMode = 0; this._dwFog[0] = 0;
+    this._spriteDepth++;
+    try {
+      for (let i = from; i < to; i++) {
+        const it = items[i];
+        gl.viewport(it.tx, it.ty, it.pw, it.ph);
+        gl.scissor(it.tx, it.ty, it.pw, it.ph);
+        gl.clearBufferfv(gl.COLOR, 0, SPRITE_CLEAR);   // transparent, by value: the clear colour (AUDIT 26 F034's borrow) is never touched
+        gl.clear(gl.DEPTH_BUFFER_BIT);
+        this._proj = it.proj; this._view = it.view;
+        this._cFrameStamp = -1;   // LA-COST1: its own camera's block, as the lone pass sends it
+        this.drawCharacter(it.mesh, it.model);
+      }
+    } finally {
+      gl.disable(gl.SCISSOR_TEST);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this._frameFbo ?? null);
+      this._restoreWorldViewport();
+      this._proj = sp; this._view = sv; this._fogMode = sf; this._dwFog[0] = sw;
+      this._spriteDepth--;
+      this._cFrameStamp = -1;
+    }
+    return cs.tex;
+  }
+
   /** MW-D36: the same sprite render, READ BACK as pixels - the enhanced
    *  inventory's figure panel is DOM, not a world quad, so the body has
    *  to leave the GPU as an image. Y is flipped on the way out (GL rows
@@ -3504,7 +3921,9 @@ export class Renderer {
    *  phase draws a concealed foe. None, and the quad is the opaque cut-out it always was. */
   /** AUDIT OW4 J6: `up`, optional - the quad's vertical when it leans (the travel view's leaned up, characterSprite.js
    *  drawRigSpriteBox); none, world up - every vertex exactly where it stood. */
-  drawCharacterSpriteQuad(tex, center, halfW, halfH, right, u1 = 1, v1 = 1, hitFlash = 0, conceal = null, up = null) {
+  /** MWNPC5: `fx`, optional - a foe's tells on its body ({ glint: [r, g, b, a] | null, elite: pulse (0 none; negative a
+   *  corpse's rim), time: seconds, dissolve: [share, r, g, b] | null }); none, the quad draws as it did. */
+  drawCharacterSpriteQuad(tex, center, halfW, halfH, right, u1 = 1, v1 = 1, hitFlash = 0, conceal = null, up = null, origin = null, fx = null) {
     this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const gl = this.gl;
     this._ensureCharQuadProgram();
@@ -3526,6 +3945,11 @@ export class Renderer {
     this._uploadFog(this._charQuad);
     gl.uniform4f(c.conceal, conceal ? conceal.mode : 0, conceal ? conceal.alpha : 0, conceal ? conceal.t : 0, conceal ? conceal.phase : 0);   // INVIS-LOOK: plain unless a concealed body says otherwise
     gl.uniform2f(c.span, u1, v1);   // INVIS-LOOK: the RT's sub-rect, so the ripple is the sprite's own
+    gl.uniform2f(c.origin, origin ? origin[0] : 0, origin ? origin[1] : 0);   // MWNPC2: and where it starts
+    const g = fx?.glint, d = fx?.dissolve;   // MWNPC5: the tells - none for every body without them
+    gl.uniform4f(c.glint, g ? g[0] : 0, g ? g[1] : 0, g ? g[2] : 0, g ? g[3] : 0);
+    gl.uniform2f(c.elite, fx?.elite || 0, fx?.time || 0);
+    gl.uniform4f(c.dissolve, d ? d[0] : 0, d ? d[1] : 0, d ? d[2] : 0, d ? d[3] : 0);
     this._bindVao(this._charQuadVAO);
     gl.bindBuffer(gl.ARRAY_BUFFER, this._charQuadVBO);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, v);
@@ -3561,10 +3985,68 @@ uniform vec2 uFogRange;
 uniform vec3 uCamPos;
 uniform vec4 uConceal;   // INVIS-LOOK: ECV1's record - the mode, the opacity, the clock, the phase (0: plain)
 uniform vec2 uSpan;      // INVIS-LOOK: the sub-rect of the RT the picture fills
+uniform vec2 uOrigin;    // MWNPC2: where that sub-rect starts - a batched body's tile (0,0 for the corner every lone pass draws in)
 uniform float uHitFlash;   // HITFLASH1: a Morrowind body struck
+// MWNPC5 (bible/04-Characters/Morrowind-NPCs.md section 10): A FOE'S TELLS ON ITS BODY - the three the billboard shader
+// draws on a foe that this quad did not: the wind-up's glint (TELL2), the elite's glow, outline and embers (ELITE FOES),
+// and the burn or the portal's gathering (DISSOLVE). The colour terms are the billboards' own (GLINT_GLSL,
+// ELITE_GLOW_GLSL); the texel reads - the outline, the embers, the grain - are their twins inside the picture's TILE, so
+// a batched body's outline never reads its neighbour's (MWNPC2's tiles stand a texel apart; the box is padded for the
+// room the outline and the embers take - characterSprite.js bodyFxPad)
+uniform vec4 uGlint;      // TELL2: rgb the blow's colour, a its strength (0 off)
+uniform vec2 uElite;      // ELITE FOES: x the glow's pulse (0 off; negative an elite's corpse - the rim alone), y seconds
+uniform vec4 uDissolve;   // DISSOLVE: x the share gone (0 whole, 1 gone), yzw the edge's colour
 out vec4 outColor;
 ${FOG_GLSL}
 ${HIT_FLASH_GLSL}
+${ELITE_GLOW_GLSL}
+${GLINT_GLSL}
+ivec2 tileLo() { return ivec2(floor(uOrigin * vec2(textureSize(uTex, 0)) + 0.5)); }
+ivec2 tileSize() { return ivec2(floor(uSpan * vec2(textureSize(uTex, 0)) + 0.5)); }
+// eliteAlphaAt's twin: the base texel's alpha, 0 outside the TILE (not the target)
+float tileAlpha(ivec2 p) {
+  ivec2 lo = tileLo(), hi = lo + tileSize();
+  if (p.x < lo.x || p.y < lo.y || p.x >= hi.x || p.y >= hi.y) return 0.0;
+  return texelFetch(uTex, p, 0).a;
+}
+// eliteRim's twin: a texel within 2 of the silhouette (dx*dx + dy*dy <= 4)
+float bodyRim(ivec2 p) {
+  for (int dy = -2; dy <= 2; dy++) {
+    for (int dx = -2; dx <= 2; dx++) {
+      if ((dx == 0 && dy == 0) || dx * dx + dy * dy > 4) continue;
+      if (tileAlpha(p + ivec2(dx, dy)) >= 0.5) return 1.0;
+    }
+  }
+  return 0.0;
+}
+// eliteEmber's twin: its column the tile's own (a column of the picture, wherever the tile stands this frame)
+float bodyEmber(ivec2 p, float secs) {
+  int col = p.x - tileLo().x;
+  float c = float(col);
+  float d = -1.0;
+  for (int i = 1; i <= 18; i++) {
+    int y = p.y - i;
+    if (y < tileLo().y) break;
+    if (tileAlpha(ivec2(p.x, y)) >= 0.5) { d = float(i); break; }
+  }
+  if (d < 3.0) return 0.0;
+  float speed = 5.0 + 7.0 * eliteHash(vec2(c, 1.7));
+  float cyc = secs * speed / ELITE_RISE + eliteHash(vec2(c, 9.1));
+  float n = floor(cyc);
+  if (eliteHash(vec2(c, n + 3.0)) > 0.3) return 0.0;
+  float h = 3.0 + floor(fract(cyc) * ELITE_RISE);
+  if (d != h) return 0.0;
+  return 1.0 - fract(cyc);
+}
+// FLAT_DISSOLVE_GLSL's grain, in the tile's own texels (two-texel grains) and its height (v 0 the feet: they go first)
+float bodyGrain(ivec2 p, float v) {
+  vec2 cell = floor(vec2(p - tileLo()) * 0.5);
+  float h = fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453);
+  return h * 0.72 + v * 0.28;
+}
+vec4 bodyFogged(vec3 c) { return vec4(dwWaterFog(mix(uFogColor, c, fogFactorAt(vWorld)), vWorld), 1.0); }
+// the target texel under the fragment - asked only by a body with a tell, so a plain body reads exactly what it did
+ivec2 bodyTexel(vec2 uv) { return ivec2(floor((uOrigin + uv) * vec2(textureSize(uTex, 0)))); }
 void main() {
   // INVIS-LOOK: the billboard shader's ripple (BB_FS), measured in the picture's own span of the RT
   vec2 uv = vUV;
@@ -3573,11 +4055,32 @@ void main() {
     uv.x += sin(n.y * 28.0 + uConceal.z * 7.0 + uConceal.w) * 0.008 * uSpan.x;
     if (uv.x < 0.0 || uv.x > uSpan.x) discard;
   }
-  vec4 t = texture(uTex, uv);
-  if (t.a < (uConceal.x > 0.0 ? 0.1 : 0.5)) discard;
+  vec4 t = texture(uTex, uOrigin + uv);
+  if (t.a < (uConceal.x > 0.0 ? 0.1 : 0.5)) {
+    // MWNPC5: the outline and the embers stand where the body does not - never on a concealed body nor one burning away
+    if (uConceal.x == 0.0 && uDissolve.x <= 0.0) {
+      if (uGlint.a > 0.0 && bodyRim(bodyTexel(uv)) > 0.0) { outColor = bodyFogged(glintRimColor(uGlint)); return; }
+      if (uElite.x != 0.0) {
+        ivec2 p = bodyTexel(uv);
+        if (bodyRim(p) > 0.0) { outColor = bodyFogged(eliteRimColor(eliteRimK(uElite.x, uElite.y))); return; }
+        float em = uElite.x > 0.0 ? bodyEmber(p, uElite.y) : 0.0;
+        if (em > 0.0) { outColor = bodyFogged(eliteRimColor(uElite.x) * (0.55 + 0.6 * em)); return; }
+      }
+    }
+    discard;
+  }
+  float edge = 0.0;
+  if (uDissolve.x > 0.0) {   // MWNPC5: burnt away, the feet first - and the edge it burns along (dissolveEdge)
+    float g = bodyGrain(bodyTexel(uv), uv.y / max(uSpan.y, 1e-6)) - (uDissolve.x * 1.1 - 0.05);   // dissolveCutAt
+    if (g < 0.0) discard;
+    edge = (1.0 - smoothstep(0.0, 0.09, g)) * min(1.0, uDissolve.x * 8.0);
+  }
   vec3 rgb = t.rgb;
   if (uConceal.x == 2.0) rgb *= ${SHADE_DARK};   // INVIS-LOOK: a shade, ECV1's dark
+  rgb = eliteGlowLit(rgb, t.rgb, max(uElite.x, 0.0));   // MWNPC5: the elite's warmth (never a corpse)
+  rgb = glintLit(rgb, t.rgb, uGlint);   // MWNPC5: lifted toward the blow's colour as it winds up
   rgb = hitFlashLit(rgb, t.rgb, uHitFlash);   // HITFLASH1: over any concealment, never instead of it (the billboards' law)
+  if (edge > 0.0) rgb = mix(rgb, uDissolve.yzw * 1.6, edge);   // MWNPC5: the edge blazes (dissolveLit)
   outColor = vec4(dwWaterFog(mix(uFogColor, rgb, fogFactorAt(vWorld)), vWorld), uConceal.x > 0.0 ? t.a * uConceal.y : 1.0);   // DW-C
 }`;
       this.charQuadProgram = this._buildProgram(vs, fs);
@@ -3595,7 +4098,11 @@ void main() {
         dwFog: gl.getUniformLocation(P, 'uDwFog'),   // DW-C
         conceal: gl.getUniformLocation(P, 'uConceal'),   // INVIS-LOOK
         span: gl.getUniformLocation(P, 'uSpan'),   // INVIS-LOOK
+        origin: gl.getUniformLocation(P, 'uOrigin'),   // MWNPC2: the tile
         hitFlash: gl.getUniformLocation(P, 'uHitFlash'),   // HITFLASH1
+        glint: gl.getUniformLocation(P, 'uGlint'),   // MWNPC5: a foe's tells on its body
+        elite: gl.getUniformLocation(P, 'uElite'),
+        dissolve: gl.getUniformLocation(P, 'uDissolve'),
       };
       const vao = gl.createVertexArray();
       this._bindVao(vao);
@@ -5710,11 +6217,13 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // DISC29-E: the shadow record's `_shAnim` (a flat animating in place, which the lo tier keeps) - a boolean, born
     // undefined as `_shMovedAt` (AUDIT PRE-MERGE 0929 E1: `_shPlacedAt`, the stillness it was once judged by, is gone).
     // IDLER-STICKY: `_shIdler`, a flat whose look changed where it stands - a mover for good (shadowPass.js), born undefined.
+    // MWNPC5b: `castOnly` - a foe standing in its Morrowind body: the billboard casts its shadow and draws nothing, born undefined.
     return {
       vao, indexCount: count * 6, archive, record, size, buffers: [vb, ib], origin: null, frame: null, bounds, _quads: count, _dyn: !!dynamic,
       _scales: scales ?? null, lptProto: undefined, farH: undefined,
       _place: count > 1 && !dynamic ? placementGrid(centers) : null,
       _box: undefined, sway: undefined, windfall: undefined, tip: undefined, conceal: undefined, hitFlash: undefined, eliteGlow: undefined, eliteTime: undefined, elitePad: undefined, glint: undefined, dissolve: undefined, tint: undefined, noShadow: undefined, selfCard: undefined, _dead: undefined, _moveScratch: undefined, dwColumn: undefined,
+      castOnly: undefined,
       _bbKey: undefined, _bbKeyId: undefined, _bbKeyRecord: undefined, _bbKeyFrame: undefined, _bbKeyArchive: undefined,
       _shGen: undefined, _shAx: NaN, _shAy: NaN, _shAz: NaN, _shSeen: undefined, _shOx: NaN, _shOy: NaN, _shOz: NaN, _shFrame: undefined,
       _shRec: undefined, _shFlip: undefined, _shDyn: undefined, _shSway: undefined, _shMovedAt: undefined, _shId: undefined,
@@ -7028,6 +7537,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // SHADOW-REACH records without drawing (recordShadowBillboards) - the
     // one this pass never saw, and so never keyed.
     for (const b of batches) {
+      if (b.castOnly) continue;   // MWNPC5b: a foe stood in its Morrowind body - its billboard casts the shadow (recorded above) and draws nothing
       if (isSpectralArchive(b.archive) || b.conceal) continue;
       if (bbCull && !this._bbVisible(b)) { this.stats.bbCulled++; continue; }   // PERF-CROWD2
       billboardKey(b);
@@ -7061,7 +7571,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // shader reads only when uConceal says plain.
     let blended = null;
     for (const b of batches) {
-      if (!(b.conceal || isSpectralArchive(b.archive))) continue;
+      if (b.castOnly || !(b.conceal || isSpectralArchive(b.archive))) continue;   // MWNPC5b: nor in the blended phase
       if (bbCull && !this._bbVisible(b)) { this.stats.bbCulled++; continue; }   // PERF-CROWD2: the ghosts and the concealed too
       (blended ??= []).push(b);
     }

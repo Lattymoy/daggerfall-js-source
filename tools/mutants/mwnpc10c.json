@@ -1,0 +1,335 @@
+[
+ {
+  "name": "MWNPC10c-unarmed",
+  "file": "src/characters/foeBodies.js",
+  "old": ": vampire || wolf ? [] : [rosterBlade(h)]);",
+  "new": ": vampire || wolf ? [] : []);",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-one-handers-only",
+  "file": "src/characters/foeBodies.js",
+  "old": "function rosterBlade(h, two = mix(h ^ 0xb1) & 1) {",
+  "new": "function rosterBlade(h, two = 0) {",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-range-short",
+  "file": "src/characters/foeBodies.js",
+  "old": "lo + (mix(h ^ 0xb2) % (hi + 1 - lo))",
+  "new": "lo + (mix(h ^ 0xb2) % (hi - lo))",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-all-iron",
+  "file": "src/characters/foeBodies.js",
+  "old": "material: mix(h ^ 0xb3) & 1 };",
+  "new": "material: 0 };",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-blade-left",
+  "file": "src/characters/foeBodies.js",
+  "old": "group: 'Weapons', equipSlot: EQUIP_SLOTS.RightHand,",
+  "new": "group: 'Weapons', equipSlot: EQUIP_SLOTS.LeftHand,",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-race-ignored",
+  "file": "src/characters/foeBodies.js",
+  "old": "race: orc ? 'Orc' : race ?? bay.race,",
+  "new": "race: orc ? 'Orc' : bay.race,",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-race-unkept",
+  "file": "src/characters/foeBodies.js",
+  "old": " && rec._mwRosterRace === race) return rec._mwRosterLook;",
+  "new": ") return rec._mwRosterLook;",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-always-drawn",
+  "file": "src/characters/rosterBodies.js",
+  "old": "a.drawn = !!drawn;",
+  "new": "a.drawn = true;",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-class-a-walker",
+  "file": "src/characters/rosterBodies.js",
+  "old": "  if (cls != null) return rosterLook(rec,",
+  "new": "  if (false) return rosterLook(rec,",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-class-race-bay",
+  "file": "src/characters/rosterBodies.js",
+  "old": "seed, race: res.race });",
+  "new": "seed });",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-class-all-men",
+  "file": "src/characters/rosterBodies.js",
+  "old": "gender: res.sex === 'female' ? 'female' : 'male', seed,",
+  "new": "gender: 'male', seed,",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-still-unread",
+  "file": "src/characters/rosterBodies.js",
+  "old": "  const kind = still ? STILL_WARDROBE[res.job] : undefined;",
+  "new": "  const kind = undefined;",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-still-always",
+  "file": "src/characters/rosterBodies.js",
+  "old": "  const kind = still ? STILL_WARDROBE[res.job] : undefined;",
+  "new": "  const kind = STILL_WARDROBE[res.job];",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-courtier-common",
+  "file": "src/characters/rosterBodies.js",
+  "old": "courtier: 'noble',",
+  "new": "courtier: 'merchant',",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-still-undyed",
+  "file": "src/characters/rosterBodies.js",
+  "old": "dye = (k) => W.dyes[((seed ^ k) >>> 0) % W.dyes.length];",
+  "new": "dye = () => W.dyes[0];",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-folk-one-seed",
+  "file": "src/characters/rosterBodies.js",
+  "old": "res.race ?? 'Breton', seed);   // WATCH-DAY",
+  "new": "res.race ?? 'Breton', 0);   // WATCH-DAY",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-guard-on-duty-off",
+  "file": "src/characters/rosterBodies.js",
+  "old": "archive: guard ? res.archive : (res.civvies ?? res.archive),",
+  "new": "archive: res.archive,",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-sprites-no-offer",
+  "file": "src/world/travellerSprites.js",
+  "old": "        bodiesLane.offer(rosterActor(b, { id: b.id,",
+  "new": "        void (rosterActor(b, { id: b.id,",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-sprites-overworld",
+  "file": "src/world/travellerSprites.js",
+  "old": "    if (_ground) {\n      for (const b of shown) {",
+  "new": "    if (true) {\n      for (const b of shown) {",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-sprites-unmatched-offered",
+  "file": "src/world/travellerSprites.js",
+  "old": "        if (!b.look) continue;\n        bodiesLane.offer(",
+  "new": "        if (b.look === 0) continue;\n        bodiesLane.offer(",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-sprites-blow-each-frame",
+  "file": "src/world/travellerSprites.js",
+  "old": "      if (m.striking && !b.striking) b.swings++;",
+  "new": "      if (m.striking) b.swings++;",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-sprites-no-blows",
+  "file": "src/world/travellerSprites.js",
+  "old": "swingKey: b.swings || null,",
+  "new": "swingKey: null,",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-sprites-undying",
+  "file": "src/world/travellerSprites.js",
+  "old": "dead: b.flat && !b.talk ? b.roll : 0,",
+  "new": "dead: 0,",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-sprites-court-dead",
+  "file": "src/world/travellerSprites.js",
+  "old": "dead: b.flat && !b.talk ? b.roll : 0,",
+  "new": "dead: b.flat ? b.roll : 0,",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-sprites-armed-sheathed",
+  "file": "src/world/travellerSprites.js",
+  "old": "drawn: !!b.unit }), b.batch);",
+  "new": "drawn: false }), b.batch);",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-sprites-still-plain",
+  "file": "src/world/travellerSprites.js",
+  "old": "{ still: !!b.flat && b.talk }",
+  "new": "{ still: false }",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-sprites-standing-still",
+  "file": "src/world/travellerSprites.js",
+  "old": "yaw: b.yaw, moving: b.moving,",
+  "new": "yaw: b.yaw, moving: false,",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-sprites-one-id",
+  "file": "src/world/travellerSprites.js",
+  "old": "id: `${laneName}:${++_ids}`,",
+  "new": "id: `${laneName}:${m.key}`,",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-sprites-lane-kept",
+  "file": "src/world/travellerSprites.js",
+  "old": "shown.length = 0; bodiesLane.destroy(); },",
+  "new": "shown.length = 0; },",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-sprites-origin-left",
+  "file": "src/world/travellerSprites.js",
+  "old": "    offsetBodies(o) { bodiesLane.offsetAll(o); },",
+  "new": "    offsetBodies(o) { void o; },",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-room-not-handed",
+  "file": "src/world/familyBodies.js",
+  "old": "    drawBodies(canvas, proj, view, eye, dt) { sprites.drawBodies?.(canvas, proj, view, eye, dt); },",
+  "new": "    drawBodies() {},",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-roads-undrawn",
+  "file": "src/scenes/world.js",
+  "old": "      livingRoads.drawBodies(canvas, proj, view, mwv.eye, townTalk.overlayActive ? 0 : dt);",
+  "new": "      void 0;",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-room-undrawn",
+  "file": "src/scenes/worldModes.js",
+  "old": "    host.drawLivingBodies?.(canvas, proj, view, mwv.eye, dt);",
+  "new": "    void 0;",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-room-host-mute",
+  "file": "src/scenes/world.js",
+  "old": "drawLivingBodies: (canvas, proj, view, eye, dt) => { livingIndoors?.drawBodies(canvas, proj, view, eye, dt); },",
+  "new": "drawLivingBodies: () => {},",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-roads-origin-left",
+  "file": "src/scenes/world.js",
+  "old": "      livingRoads?.offsetBodies(r.offset);",
+  "new": "      void 0;",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-roads-host-mute",
+  "file": "src/scenes/livingRoads.js",
+  "old": "    drawBodies(canvas, proj, view, eye, dt) { deps.sprites.drawBodies?.(canvas, proj, view, eye, dt); },",
+  "new": "    drawBodies() {},",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC10c-indoors-host-mute",
+  "file": "src/scenes/livingIndoors.js",
+  "old": "    drawBodies(canvas, proj, view, eye, dt) { deps.sprites.drawBodies?.(canvas, proj, view, eye, dt); },",
+  "new": "    drawBodies() {},",
+  "tests": [
+   "test/mwnpc10c_roads.test.js"
+  ]
+ }
+]

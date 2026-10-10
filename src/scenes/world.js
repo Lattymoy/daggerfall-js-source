@@ -755,7 +755,7 @@ import { RemotePlayers, composeLook, createSightCache, NAME_RANGE } from '../net
 import { createNameLayer, nameLayerWanted } from '../ui/nameLayer.js';   // NAME1 + BUBBLE1: the names and the chat bubbles, in the enhanced face; AUDIT NAME1 F7: and who gets that face
 import { enhancedHudScale, setHudSetChips, enhancedHudBottom, enhancedHudQuick } from '../ui/enhancedHud.js';   // AUDIT NAME1 F3: the player's own HUD scale, which the names wear like every other enhanced surface; SET5: the set powers' chips
 import { makeHitPend } from '../net/hitPend.js';   // AUDIT FOES FOE2: a blow the wire refused waits and goes
-import { PeerBodies, peerIsWolf } from '../net/peerBodies.js';   // MWBODY1: the others in the Morrowind body; WEREWOLF1: and in Bloodmoon's wolf
+import { PeerBodies, peerIsWolf, BODY_BUILD_GATE } from '../net/peerBodies.js';   // MWBODY1: the others in the Morrowind body; WEREWOLF1: and in Bloodmoon's wolf
 import { ChatLog, CHAT_REJOIN_MS } from '../net/chat.js';   // CHAT1: the tabs and their lines
 import { oocText, localLineHeard, nextRegionRoom, regionJoinedText, CHAN_OLD_RELAY_TEXT, ROLL_OLD_RELAY_TEXT, EMOTE_OLD_RELAY_TEXT, GUILD_OLD_RELAY_TEXT, NO_GUILD_TEXT, SOLO_LOCAL_TEXT, partyNoteTab } from '../net/chat.js';   // CHAT-CHAN: the channels' own laws (a second chat import: CHAT1's pin holds the first as it stands)
 import { parseChatLine, HELP_LINES, CHAT_GREETING_TEXT, unknownCommandText, emptyCommandText, hostMisuseText, badRollText, expandShortcodes, EMOTE_LINES } from '../net/chatCommands.js';   // CHAT-CHAN: what a typed line IS; DICE1: and a roll; EMOTE1: an action, a gesture, a shortcode
@@ -827,7 +827,9 @@ import { stacksWith } from '../systems/inventory.js';
 import { setHudZone } from '../ui/enhancedHud.js';
 import { setZoneEntity } from '../ui/hudActiveSpells.js';   // WILD1: the classic row's zone glyph
 import { createWedManager, wedWhyText, wedMineText } from '../net/wedSession.js';   // LEGACY7 part three: two players wed - the handshake's state machine (pure)
-import { createFamilyBodies, familyRoomSprites } from '../world/familyBodies.js';   // LEGACY7 part four: the line drawn in its own body, as an online peer is
+import { createFamilyBodies, familyRoomSprites } from '../world/familyBodies.js';
+import { createPopulationLane, holdNpcBodies } from '../characters/npcBodies.js'; import { folkActor } from '../characters/folkBodies.js'; import { residentWalkerActor } from '../characters/rosterBodies.js';
+import { personLook, personActor } from '../characters/peopleBodies.js'; import { staticNpcData } from '../characters/staticNpc.js';   // MWNPC8b: the street's standing people   // MWNPC7: the street's walkers in Morrowind bodies   // LEGACY7 part four: the line drawn in its own body, as an online peer is
 import { houseLine } from '../net/houseLaw.js'; import { houseWord } from '../systems/legacy/houseName.js';   // LEGACY7 part three: the house a proposal comes from, on its prompt; LEGACY-NAME: a seat's house said once
 import { createDuelRecords, duelUncountedText } from '../net/duelRecord.js';   // DUEL1: the Inspect card's duelling record, asked and kept
 import { createDuelPrompt } from '../ui/duelPrompt.js';   // DUEL1: the challenge, as the challenged player sees it
@@ -3149,12 +3151,26 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  look drawn as an online peer is, by layers of the line's own for each place (the street's, a room's): a RemotePlayers
    *  with no sound - a townsperson's steps are the town's - and a PeerBodies behind the enhanced lane's own gate. */
   let familyStreet = null, familyRoom = null;
+  // MWNPC7 (bible/04-Characters/Morrowind-NPCs.md section 12): THE STREET'S WALKERS IN MORROWIND BODIES - every town's
+  // population offered as the street walks it, on the 'folk' lane under the switch's tier (the line's own members keep
+  // the family's bodies, above)
+  const folkStreet = createPopulationLane({ laneName: 'folk', renderer, collider: () => collider });
+  // MWNPC8b (section 13b): AND THE STREET'S STANDING PEOPLE - each StaticNPC flat its own batch (standPixelNpcs), offered
+  // from the near rings as the pixels are walked, read as the buildings' are (their data, their faction's row)
+  const streetPeople = createPopulationLane({ laneName: 'people', renderer, collider: () => collider });
+  const offerStreetPerson = (a, b) => streetPeople.offer(a, b);   // AUDIT MW-NPC II P1: the yards' keepers offered on it
+  const streetLook = (pn) => {
+    if (pn._mwLook !== undefined) return pn._mwLook;
+    const dict = _questStore()?.dict ?? null;
+    if (!dict) return null;   // never before the faction table: asked again
+    return personLook(pn, staticNpcData(pn, { getFaction: (id) => dict.get(id) ?? null, raceOfCurrentRegion: () => REGION_RACES[_questRegionIndex()] + 1 }), dict.get(pn.factionID) ?? null);
+  };
   /** CARDS4b: THE REGULARS AT THE CARD TABLE (world/cardRegulars.js) - stood by the interior host each frame on layers of
    *  their own, seated through the pose's `st` as a seated peer is; what they say, over their heads. */
   let cardRegularBodies = null, _cardBarks = [];
   const makeFamilyBodies = () => createFamilyBodies({
     dolls: new RemotePlayers({ renderer, deps: { fetchBytes, palette, getTexture, uploadRecordFrame } }),
-    bodies: new PeerBodies({ renderer, enabled: () => isEnhanced() && morrowindDataCount() > 0, generation: morrowindDataGeneration, collider: () => collider }),
+    bodies: new PeerBodies({ renderer, enabled: () => isEnhanced() && morrowindDataCount() > 0, generation: morrowindDataGeneration, collider: () => collider, gate: BODY_BUILD_GATE }),   // MWNPC4: on the page's one build queue
   });
   const _livingIndoorsDoor = {
     refuses: (p) => livingIndoors?.town()?.refuses(p) ?? null,
@@ -3170,7 +3186,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const livingIndoorsStep = (dt) => {
     if (!livingWorldOn() || _mode() !== 'interior') { if (livingIndoors?.size || livingIndoors?.spots().length) livingIndoors.clear(); return; }   // LW-FIX1: a room with nobody in it let go too (a house asleep) - the next way in sounds it again
     livingIndoors ??= createLivingIndoors({
-      sprites: familyRoomSprites(createTravellerSprites({ renderer, getTexture, uploadRecordFrame, living: _livingIndoorsDoor }), (familyRoom ??= makeFamilyBodies()), _livingIndoorsDoor),   // LEGACY7 part four: the line in its own body, the rest as before
+      sprites: familyRoomSprites(createTravellerSprites({ renderer, getTexture, uploadRecordFrame, living: _livingIndoorsDoor, laneName: 'room' }), (familyRoom ??= makeFamilyBodies()), _livingIndoorsDoor),   // LEGACY7 part four: the line in its own body, the rest as before
       building: () => {
         const b = modes?.interiorBuilding;
         const town = b ? livingTownOfMap(b.townMapId ?? 0) : null;
@@ -6223,23 +6239,23 @@ export async function bootWorld(canvas, renderer, params, status) {
       renderer.destroyBatch(b);
     }
     entry.npcBatches = [];
-    const npcGroups = new Map();
+    // MWNPC8b (bible/04-Characters/Morrowind-NPCs.md section 13b): ONE BATCH A PERSON - it was one per archive/record
+    // over the active NPCs; a person's own lets their Morrowind body take their place and their billboard cast alone.
+    // The pixel's list, its cull and its teardown carry them as they carried the groups.
     for (const pn of entry.npcs) {
+      pn.standBatch = null;
       if (!pn.active) continue;
-      const k = `${pn.drawArchive ?? pn.textureArchive}_${pn.drawRecord ?? pn.textureRecord}`;   // NUDE-FLATS: the picture the build chose
-      if (!npcGroups.has(k)) npcGroups.set(k, []);
-      npcGroups.get(k).push([pn.x, pn.y, pn.z]);
-    }
-    for (const [k, centers] of npcGroups) {
-      const [archive, record] = k.split('_').map(Number);
+      const archive = pn.drawArchive ?? pn.textureArchive, record = pn.drawRecord ?? pn.textureRecord;   // NUDE-FLATS: the picture the build chose
       const t = await getTexture(archive);
       if (built.get(`${entry.px},${entry.py}`) !== entry) return;   // AUDIT (49faf853) B2: torn down during the await - a batch made now would be nobody's
       if (!t || record >= t.recordCount) continue;
       (entry.placeHold ?? pipeline).uploadRecord(archive, record);   // FIELD BUGS 2026-10-04d PLACE-LRU: the street's people are the pixel's to hold
       const size = billboardSize(t, record);
+      const centers = [[pn.x, pn.y, pn.z]];
       const batch = renderer.createBillboardBatch(archive, record, size, centers);
       batch._box = flatBatchAabb(centers, size);   // EV3
       armFlatAnim(batch, t, archive, record, entry.flatAnims, (entry.placeHold ?? pipeline).uploadRecordFrame);
+      pn.standBatch = batch;
       entry.npcBatches.push(batch);
       entry.batches.push(batch);
     }
@@ -20709,7 +20725,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     remotePlayers = new RemotePlayers({ renderer, deps: { fetchBytes, palette, getTexture, uploadRecordFrame, audio } });   // 2026-09-17: uploadRecordFrame added for the class-enemy billboard path (net/remotePlayers.js _buildMobile/_syncMobilePeer) - the doll path never touches it
     // MWBODY1: the enhanced skin with Morrowind data attached puts every peer in a body of its own; otherwise the doll
     const enhanced = isEnhanced();   // the skin cannot change without a reload (switchSkin), so it is read once, not per frame
-    peerBodies = new PeerBodies({ renderer, enabled: () => enhanced && morrowindDataCount() > 0, generation: morrowindDataGeneration, collider: () => collider });   // MWA4: attached is on   // CLIMB6: the floor under a hanging peer
+    peerBodies = new PeerBodies({ renderer, enabled: () => enhanced && morrowindDataCount() > 0, generation: morrowindDataGeneration, collider: () => collider, gate: BODY_BUILD_GATE });   // MWA4: attached is on   // CLIMB6: the floor under a hanging peer
     const eotbArt = createEotbArt({ renderer });   // DISC23-B: one store for the riders' and the walkers' art
     peerRiders = createPeerRiders({ renderer, art: eotbArt });   // RIDE: the others in the saddle
     peerWalkers = createPeerWalkers({ renderer, art: eotbArt, enabled: () => getPref('peerClassSprites') !== false });   // DISC23-B: the others on foot, as the set they chose - the 'Other players' card's sprite side
@@ -27838,6 +27854,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       for (const fb of p.batches) {
         if (aabbOutside(planes, fb._box, t[0], t[1], t[2]) || !farFlatVisibleAt(ring, fb.farH ?? fb.size?.h ?? 0, fb.frame != null)) continue;
         fb.origin = t;
+        // MWNPC8b x RW1: no Morrowind body stands in the view out, so a standing person's flat is drawn here, never left
+        // cast-only by the street frame's last mark (it was, for the people nearest the house); the street marks it anew
+        fb.castOnly = false;
         flats.push(fb);
       }
     }
@@ -27956,6 +27975,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     csaActivationPick: (eye, dir) => csaActivationPick(eye, dir),   // CSA-D: ...and the one ray on it, in the building's or the dungeon's ladder
     csaActivate: (pick) => csaActivate(pick),
     livingBillboards: () => (livingIndoors?.batches() ?? []),   // LW8: the residents inside, on the building's own pass
+    drawLivingBodies: (canvas, proj, view, eye, dt) => { livingIndoors?.drawBodies(canvas, proj, view, eye, dt); },   // MWNPC10c: and their Morrowind bodies, before it
     cardRegularBillboards: () => cardRegularBodies?.batches() ?? [],   // CARDS4b: the card table's regulars, on the building's pass beside them
     drawCardRegulars: ({ proj, view, eye }) => cardRegularBodies?.draw(canvas, { proj, view, eye }),   // CARDS4b: their bodies, after the peers'
     cardRegulars: (list, dt, eye) => {
@@ -28039,6 +28059,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     },
     // WB4: the telegraph on the court's floor, in the dungeon arm's world pass - fogged as the floor is; WB6b: and the
     // air's life after it (the embers and the ash, render/deadlands.js drawLife), in the same air and the sky's light
+    drawGateBodies: (canvas, proj, view, eye, dt) => { gateCourt?.drawBodies(canvas, proj, view, eye, dt); },   // MWNPC10: the court's creatures in their Morrowind bodies
     drawGateCourt: ({ proj, view, eye }) => {
       const fog = courtFogNow();
       const told = gateCourt?.drawPass(proj, view, eye, performance.now() / 1000, fog);
@@ -31386,6 +31407,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       warmAshesFrame(gamePaused() ? 0 : dt * worldTimeScale());   // WA1: the mod's coroutine clock, in every mode (a MonoBehaviour's Time.deltaTime)
       raidingPartiesFrame(gamePaused() ? 0 : dt);   // RAID1: indoors too - the day's roll, the region's news, a raid running out; nothing is stood (FindCurrentRaid wants the street)
       if (_bandChase.size) bandDrop();   // AUDIT OW4 B5: a door ends every chase, spent - the band frame never runs indoors, and a chase froze there to take up again on the way out
+      folkStreet.destroy();   // MWNPC7: indoors, the walkers' bodies let go with the street they walked
+      streetPeople.destroy();   // MWNPC8b: and the standing people's
       heatHaze.suppress();   // HAZE1: inside is no exterior - the strength is 0 at once (HeatHazeMod.Update), and eases up again outside
       { const _wfPx = playerTravelPixel(); windfall.frame({ dt: gamePaused() ? 0 : dt * worldTimeScale(), outside: false, weather, minutes: skyMinutes(), climate: maps.getClimateIndex(_wfPx.x, _wfPx.y), mapPixel: _wfPx, feet: player.pos, height: player.height }); }   // WINDFALL1: WindMod.Update indoors - the gust eases out, the sources fade, the leaves stop (AUDIT ENVIRONS W1: on the game's seconds)
       { const _snPx = playerTravelPixel(); _snowPixels.clear(); snowfall.frame({ now: now / 1000, inside: true, player: null, weather, seconds: worldMinutes() * 60, winter: season === SEASON.Winter, climate: maps.getClimateIndex(_snPx.x, _snPx.y), corpses: snowBodies }); }   // SNOWFALL1: DynamicSnowController.Update indoors - the surfaces hidden, the snowpack and the refill kept by the event clock
@@ -32322,6 +32345,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       if (_onlineLast) { _onlineLast[0] += r.offset[0]; _onlineLast[1] += r.offset[1]; _onlineLast[2] += r.offset[2]; }
       if (peerBodies) peerBodies.offsetAll(r.offset);   // MWBODY1 (AUDIT MWBODY B2): the bodies' feet follow the origin as the dolls do
       familyStreet?.offsetAll(r.offset);   // LEGACY7 part four: and the line's in the street
+      folkStreet.offsetAll(r.offset);   // MWNPC7: and the walkers'
+      streetPeople.offsetAll(r.offset);   // MWNPC8b: and the standing people's
+      livingRoads?.offsetBodies(r.offset);   // MWNPC10c: and the road's people's
+      navalCrew.offsetBodies(r.offset); siegeNpcs?.offsetBodies(r.offset);   // MWNPC10: and the crews' and the siege's
     }
     };
     frameOriginShift();
@@ -32514,6 +32541,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       const _dp = _lockChest ? projectToScreen(_lockChest, canvas.clientWidth, canvas.clientHeight, proj, view, worldViewportRect(canvas.clientWidth, canvas.clientHeight)) : null;
       touch.setLockDot(_dp && _dp.front ? _dp.x : null, _dp?.y);
     }
+    holdNpcBodies(!!tvf);   // AUDIT MW-NPC II H2: UNDER THE OVERWORLD NO NPC BODY STANDS (C3's law, every lane's) - a figure a few pixels tall, drawn upright under the flats' lean
     // World clock (R5): sun, ambient, window style, sky frame by time.
     const minute = minuteNow();
     // A1: DaggerfallLocation.Update's season poll (:118-130), on the
@@ -32815,9 +32843,12 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     meterFor(renderer.gl)?.markCpu('bodies');   // PERF-ZONE2: the Morrowind bodies - the player's, every peer's - the wagon and the camps, which the renderer's own 'world' mark used to swallow
     if (deepWaters) { _dwNowMs = now; beginDeepWatersFrame(minute); }   // DW-C: the look and the distance fog - a frame's, so after the clear of both
     // MW-D24: the player's own body, in third person only.
-    renderer.setCloudShadow(sky?.cloudShadow ?? null);   // VC4: the frame's deck, for the body and everything before the pixel loop
-    mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw, face: tvFace });   // DISC18: the body at the capsule's own feet, not the camera's smoothed ones
-    drawPeerBodies(proj, view, mwv.eye, tvf ? tvFace : null);   // MWBODY1: the others' bodies, the same pass; OW-PEERS: grown under the Overworld
+    renderer.beginCharacterSpriteBatch?.();
+    try {
+      renderer.setCloudShadow(sky?.cloudShadow ?? null);   // VC4: the frame's deck, for the body and everything before the pixel loop
+      mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw, face: tvFace });   // DISC18: the body at the capsule's own feet, not the camera's smoothed ones
+      drawPeerBodies(proj, view, mwv.eye, tvf ? tvFace : null);   // MWBODY1: the others' bodies, the same pass; OW-PEERS: grown under the Overworld
+    } finally { renderer.flushCharacterSpriteBatch?.(); }   // MWNPC2: every body's picture in one bind of the sprite target
     mwViewDrawWagon(renderer);   // EOTB-IL: the cart, when the transport is the cart
     riteHost?.draw(renderer, null, mwv.eye);   // WB12d: the faithful's circle and their tents - AUDIT WB12d (G6): its sigil from near the eye alone
     sigilBroker?.draw(renderer);   // BROKER-CAGE: the Sigil Broker's cage beside it, and its door
@@ -32912,6 +32943,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // test before its shader runs. The order is the pixel's grid
     // distance from the player's own pixel - a hundred-odd integers,
     // sorted into a scratch array kept across frames, no allocation.
+    const _peopleOn = streetPeople.frame();   // MWNPC8b
     _pixelOrder.length = 0;
     for (const p of built.values()) { p._dist2 = (p.px - state.current.x) ** 2 + (p.py - state.current.y) ** 2; _pixelOrder.push(p); }
     _pixelOrder.sort((a, b) => a._dist2 - b._dist2);
@@ -33030,9 +33062,22 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         b.origin = t;
         (off ? castBatches : allBatches).push(b);   // SHADOW-REACH: the maps alone, or the frame
       }
+      // MWNPC8b: the street's standing people offered their bodies - the near rings' alone (a billboard's cast-only is
+      // read at the draw, so after the walk does as well as before it)
+      if (p.npcs) for (const pn of p.npcs) {
+        if (!pn.standBatch) continue;
+        const look = _peopleOn && ring <= 1 ? streetLook(pn) : null;
+        if (!look) { pn.standBatch.castOnly = false; continue; }
+        const f = pn._mwFeet ??= [0, 0, 0];
+        f[0] = pn.x + t[0]; f[1] = pn.y + t[1]; f[2] = pn.z + t[2];
+        streetPeople.offer(personActor(pn, look, f, mwv.eye, dt), pn.standBatch);
+      }
     }
     };
     framePixelWalk();
+    if (merchantYards && _mode() === 'exterior') merchantYards.offerBodies(offerStreetPerson, mwv.eye, townTalk.overlayActive ? 0 : dt);   // AUDIT MW-NPC II P1: the Stables' and the Wagon Yards' keepers, standing people (their flats ride livePersonBatches)
+    streetPeople.draw(canvas, proj, view, mwv.eye, townTalk.overlayActive ? 0 : dt);   // MWNPC8b: the standing people's bodies - before the flats draw
+    siegeNpcs?.drawBodies(canvas, proj, view, mwv.eye, dt);   // MWNPC10: and the siege's fighters' (their batches ride the flats)
     // SNOWFALL1 (AUDIT ENVIRONS G7): THE SNOW BEFORE THE GROUND UNDER IT - GROUND-LAST's own law a layer up: an opaque
     // surface over the ground (SNOW_LAYER keeps it over whichever is drawn first), so a ground fragment under the snow
     // fails the depth test before its shader runs, and the picture is the same. By the ground's own program, the
@@ -33240,6 +33285,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     meterFor(renderer.gl)?.markCpu('people');   // PERF-CPU: the towns' own pools
     _livePersons.length = 0;   // T3b: rebuilt each frame in WORLD space   // PERF-TOWN1: the SAME array and the same entries, refilled
     familyStreet?.begin();   // LEGACY7 part four: the line's own bodies, stood again this frame
+    const _folkOn = folkStreet.frame();   // MWNPC7: and the walkers', when wanted
     const framePopulation = () => {   // PERF-V8
     for (const p of built.values()) {
       if (!p.population) continue;
@@ -33283,12 +33329,15 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         const kin = person.living?.res;
         if (kin?.look && (familyStreet ??= makeFamilyBodies()).stand(kin, batch.origin, person.yaw, person.state === 'move')) continue;
         livePersonBatches.push(batch);
+        if (_folkOn) { const a = person.living?.res ? residentWalkerActor(person, batch.origin) : folkActor(person, batch.origin, p.population.race); if (a) folkStreet.offer(a, batch); else batch.castOnly = false; }   // MWNPC7: a walker offered their body; AUDIT MW-NPC C4: a living resident as themselves - the billboard casts alone where it stands   // AUDIT MW-NPC II K1: a beggar's picture keeps the street (null)
+        else batch.castOnly = false;
       }
     }
     };
     framePopulation();
     // AUDIT LEGACY III W4: held under a talk window, as the street is (the member met walked on the spot behind their card)
     if (familyStreet) { familyStreet.end(townTalk.overlayActive ? 0 : dt, cam.pos); livePersonBatches.push(...familyStreet.batches()); }
+    folkStreet.draw(canvas, proj, view, mwv.eye, townTalk.overlayActive ? 0 : dt);   // MWNPC7: the walkers' bodies - held under a talk, as the street is
     // LW3: THE ROADS - the living world's parties near, in file by day and about their fires by night (scenes/
     // livingRoads.js), on the ground and grown under the Overworld; the planner asked a few ways a frame
     livingWays.frame(); livingMemoFresh();   // LW3: a new network, new ways (AUDIT-B8: and the memo's bound)
@@ -33296,6 +33345,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (livingWorldOn() && _mode() === 'exterior') {
       livingRoadsOf().frame(townTalk.overlayActive ? 0 : dt, cam.pos, { overworld: tvf ? { grow: tvf.grow, blend: tvf.blend } : null });
       livePersonBatches.push(...livingRoads.batches());
+      livingRoads.drawBodies(canvas, proj, view, mwv.eye, townTalk.overlayActive ? 0 : dt);   // MWNPC10c: the road's people in their bodies - before the person billboards draw
     } else if (livingRoads) livingRoads.clear();
     if (livingWorldOn()) { livingWatchStep(); livingPeerWatchStep(); }   // LW7 / WATCH-FIX: the turned watch followed, mine and a peer's
     if (livingIndoors?.size || livingIndoors?.spots().length) livingIndoors.clear();   // LW8: the street again - the room's residents freed (LW-FIX1: and an empty room's sounding)
@@ -33376,6 +33426,9 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       }
       livePersonBatches.length = keep;
     }
+    navalCrew.drawBodies(canvas, proj, view, mwv.eye, foeDt);   // MWNPC10: the crews' hands on their decks
+    cityGuards.drawBodies(canvas, proj, view, mwv.eye, foeDt);   // MWNPC6: and the watch's, the same way
+    exteriorFoes.drawBodies(canvas, proj, view, mwv.eye, foeDt);   // MWNPC5c: the foes in their bodies - what batches() offered this frame, before the billboards draw (cast-only where a body stands)
     if (deepWaters && livePersonBatches.length) dwFlagColumnFlats(livePersonBatches);   // DW-F: the foes, the corpses and the piles in a carved sea take the column's share
     if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, bbUp);
     if (castBatches.length) renderer.recordShadowBillboards(castBatches, camRight, UP_Y);   // SHADOW-REACH: the flats the view cull rejected, for the maps alone (the wind is the frame's, set above)
@@ -33662,6 +33715,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     };
     frameHaze();
     drawFalling();   // RAIN-OVER-GRASS: after the grass and the banners, before the translucent bodies and the fires
+    exteriorFoes.drawVeiledBodies();   // MWNPC5c: the concealed foes' bodies, beside the peers'
+    cityGuards.drawVeiledBodies();   // MWNPC6: and the watch's
+    navalCrew.drawVeiledBodies();   // MWNPC10: and a concealed owner's crew
+    livingRoads?.drawVeiledBodies();   // MWNPC13: and a road's ghosts
+    folkStreet.drawVeiled();   // MWNPC7: and the walkers'
     drawVeiledPeerBodies();   // INVIS-LOOK: the concealed peers' bodies, translucent - after the opaque world, the flats and the grass
     // DUEL1: THE RINGS' WALLS - my own duel's, rising in and dying away, and every duel the cells around me say stands
     // (each once: both duellists say it). After the grass, from the view's own eye (mwv.eye, the bolts' law), fogged as

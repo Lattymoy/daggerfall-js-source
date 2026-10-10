@@ -146,8 +146,8 @@
   {
     "name": "MWBOW1-the-chain-is-not-carried",
     "file": "src/formats/mwNifMesh.js",
-    "old": "      if (inside && !skipGeometryName(rec.name, hasMarkers)) emit(rec, nextWorld, nextProps, nextChain, animFlags);\n",
-    "new": "      if (inside && !skipGeometryName(rec.name, hasMarkers)) emit(rec, nextWorld, nextProps, [rec], animFlags);\n",
+    "old": "      if (inside && !skipGeometryName(rec.name, hasMarkers)) emit(rec, nextWorld, nextProps, nextChain, animFlags, parentRef);\n",
+    "new": "      if (inside && !skipGeometryName(rec.name, hasMarkers)) emit(rec, nextWorld, nextProps, [rec], animFlags, parentRef);\n",
     "tests": [
       "test/mwbow1.test.js"
     ]

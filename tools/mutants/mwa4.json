@@ -74,8 +74,8 @@
   {
     "name": "MWA4-the-peer-bodies-without-the-data",
     "file": "src/scenes/world.js",
-    "old": "enabled: () => enhanced && morrowindDataCount() > 0, generation: morrowindDataGeneration, collider: () => collider });",
-    "new": "enabled: () => enhanced, generation: morrowindDataGeneration, collider: () => collider });",
+    "old": "enabled: () => enhanced && morrowindDataCount() > 0, generation: morrowindDataGeneration, collider: () => collider, gate: BODY_BUILD_GATE });",
+    "new": "enabled: () => enhanced, generation: morrowindDataGeneration, collider: () => collider, gate: BODY_BUILD_GATE });",
     "tests": [
       "test/mwbody1.test.js",
       "test/mwarms_fps.test.js"

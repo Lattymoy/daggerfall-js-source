@@ -12,6 +12,7 @@ import { readFileSync } from 'node:fs';
 import * as acorn from 'acorn';
 import { validFoeRecord, FOE_HEALTH_MAX, FOE_LEVEL_MAX, CELL_FRAME_RECORDS_MAX, CELL_LOOSE_PUPPETS, FOES_FRAME_MAX } from '../src/net/wire.js';
 import { validQuestTags, questMarkerYields, QUEST_PUPPETS_MAX, validLooseSeqs, companionNames } from '../src/scenes/exteriorFoes.js';
+import { foeSeed, applyWireLook } from '../src/characters/foeBodies.js';   // AUDIT MW-NPC II K3: the dungeon context's look seed, in the mounted scope
 
 const D = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
 const WM = readFileSync(new URL('../src/scenes/worldModes.js', import.meta.url), 'utf8');
@@ -74,6 +75,7 @@ function side(self, { layout = [], own = [] } = {}) {
     adoptsOrphan: () => false,
   };
   const state = {
+    foeSeed, applyWireLook,   // AUDIT MW-NPC II K3: the records' look seed (roomRecord, applyFoeRecord, the puppets' stands)
     opts: { selfId: () => self, questShare: () => share },
     _layoutFoes: layout.length, foes, _authority: true, _encId: undefined, _ctxDead: false, _locationKey: 'dungeon:7',
     _ownSeq: 0, _ownFrameSeq: 0, _ownGen: 0, _ownPups: new Map(), _ownPending: new Map(), _ownOwners: new Map(), _ownPendLoose: new Set(), _ownAdopted: new Map(), _ownKept: new Map(),
@@ -450,6 +452,7 @@ test('AUDIT pre-merge D1: the removal door (Dispel\'s, a quest\'s) refuses a pup
   const removed = [];
   const layout = foe(), pup = foe({ _ownFrom: 'aaa-0001', _ownI: 3 }), mine = foe({ questBehaviour: { notifyDestroyed() { removed.push('quest'); } } });
   const state = {
+    foeSeed, applyWireLook,   // AUDIT MW-NPC II K3: the records' look seed (roomRecord, applyFoeRecord, the puppets' stands)
     foes: [layout, pup, mine], _layoutFoes: 1, _authority: false, _encId: undefined, _wallNow: () => 5,
     renderer: { destroyBillboardBatch: () => removed.push('batch') }, dropCandidate: () => {}, damageFoe: () => {},
   };

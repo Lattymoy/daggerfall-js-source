@@ -239,7 +239,11 @@ test('SHADOW-FANG on the rig: the wolf built with a skin hangs skinned copies on
   assert.equal(wolf.painted, true, 'every range\'s skin painted by the build, none left to the frame (AUDIT D2)');
   const entries = new Map([...wolf.res.textures, ...wolf.res.third.textures]);
   assert.equal(entries.size, 3, 'the body\'s texture, the head\'s own and the first-person hand\'s own');
-  assert.ok(wolf.uploads.length >= 4, `both views hung (${wolf.uploads.length})`);
+  // PIN MOVED (MWNPC3): a picture is uploaded ONCE a renderer (acquireCharacterTexture) - the body's fur both views wear
+  // hangs one copy, where each range hung its own. Three uploads of three pictures is both views hung: the head's is the
+  // third person's alone, the hand's the first's alone.
+  assert.equal(wolf.uploads.length, 3, `both views hung, each picture once (${wolf.uploads.length})`);
+  assert.equal(new Set(wolf.uploads).size, 3, 'three pictures');
   const own = new Set([...entries.values()].map((e) => e.image.mips));
   assert.ok(wolf.uploads.every((m) => !own.has(m)), 'a copy on every range of the wolf');
   const head = wolf.uploads.find((m) => m[0].width === 64);

@@ -109,7 +109,9 @@ import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39
 import { combatVisualsOn, foeDraw, markConcealedHit } from '../systems/combatVisuals.js';   // ECV1: what the enhanced skin draws for a concealed foe
 import { registerFoeDoor } from '../systems/artifactEffects.js';   // AUDIT PSCALE1 DOORS-2: Namira's reflection on a watchman through his own door
 import { foeHitFlash, setBatchHitFlash, setBatchGlint, prefersReducedMotion } from '../systems/hitFlash.js';   // HITFLASH1; TELL2: a wind-up's glint
-import { reportPlayerKill } from '../systems/playerKills.js';   // SET2: my own kills, told
+import { reportPlayerKill } from '../systems/playerKills.js';
+import { createHostNpcBodies, npcBodiesOn, WATCH_BODY_TIERS } from '../characters/npcBodies.js';   // MWNPC6: the watch in Morrowind bodies
+import { isClassFoe, foeActor, foeFx } from '../characters/foeBodies.js';   // SET2: my own kills, told
 
 // PlayerEntity.Crimes (the two this module levies - the enum lives
 // whole in systems/court.js).
@@ -144,6 +146,8 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   hitEffects = null, groundStands = null,   // AUDIT 24 (wave 39): the host's one blood/effect pool; FALL-HOLD: exteriorFoes.js's ground law - the watch has no distance cull at all
   levelBonus = null,   // SEAT1d (Seats-Arc 7.6): CURFEW - () => the levels a watchman is posted stronger (at night in a Curfew town)
   guardScale = null,   // ZONE-WATCH: () => how many times as strong a watchman is posted (the open zone's towns: ten)
+  // MWNPC6: the watch's Morrowind bodies - whether the lane is wanted and how one is made; a test hands its own
+  wantNpcBodies = npcBodiesOn, makeNpcBodies = null,
   shake = null,   // AUDIT TELL H6: the host's camera kick (its player's maxShake), for my blow that staggers a watchman
   // GameObjectHelper.CreateEnemyCorpseMarker (:836-839) hands an
   // OUTSIDE corpse to StreamingWorld.TrackLooseObject, which stamps it
@@ -1322,6 +1326,15 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     // have acted - the encounter pool's order (exteriorFoes.js
     // batches(), read after its update has driven every foe).
     const out = [];
+    // MWNPC6 (bible/04-Characters/Morrowind-NPCs.md section 11): THE WATCH IN ITS BODIES - the encounter pool's law
+    // (section 10c) on its own lane and its own caps (WATCH_BODY_TIERS): every watchman offered dressed as his
+    // billboard, by his pool id (his wire number comes late); the dead from the kill until the corpse is collected;
+    // drawBodies syncs, marks the cast-only and draws
+    const npcLane = wantNpcBodies() ? (_npcLane ??= (makeNpcBodies ? makeNpcBodies() : createHostNpcBodies({ renderer, collider: () => collider, tiers: WATCH_BODY_TIERS }))) : null;
+    if (!npcLane && _npcLane) { _npcLane.destroy(); _npcLane = null; }
+    _npcStood.length = 0;
+    npcLane?.begin();
+    _npcOffered = !!npcLane;
     for (const g of guards) {
       if (g.dead) continue;   // WATCH-SWING: whatever the frame's doors did, after all of them
       // A5 - EntityConcealmentBehaviour.Update/MakeConcealed (:36-43,
@@ -1342,6 +1355,8 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       g.batch.record = rkey;
       g.batch.size = { w: o.flip ? -sz.w : sz.w, h: sz.h };
       g.batch.origin = g.ai.feet;
+      g.batch.castOnly = false;   // MWNPC6: drawn until drawBodies says his body stands
+      if (npcLane && isClassFoe(g)) { npcLane.stand('watch', foeActor(g, g.id), g.batch.conceal ?? null, g.batch.hitFlash || 0, foeFx(g)); _npcStood.push(g); }
       out.push(g.batch);
     }
     // AUDIT 39: THE PRUNE, on the encounter pool's schedule
@@ -1361,8 +1376,31 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       if (c) playEnemyClip(audio, { clip: ENEMY_BASICS[GUARD_MOBILE_TYPE].barkSound, volume: enemySoundOccluded(collider, c.g.ai.feet, playerFeet) ? OCCLUDED_VOLUME_SCALE : 1 }, c.g.ai.feet, acuteHearingMultiplier(playerEntity));
     }
     for (let i = guards.length - 1; i >= 0; i--) if (guards[i].dead && !guards[i].corpse) guards.splice(i, 1);
+    // MWNPC6: the dead watch from the kill until the corpse is collected, the corpse flat casting alone under the body
+    for (const c of corpseBatches) c.batch.castOnly = false;
+    if (npcLane) for (const g of guards) if (g.dead && g.corpse && isClassFoe(g) && g.ai) { npcLane.stand('watch', foeActor(g, g.id), null, 0, foeFx(g, g.corpseMarker?.batch)); _npcStood.push(g); }
     return [...out, ...corpseBatches.map((c) => c.batch)];
   }
+
+  // MWNPC6: the watch's lane, the watchmen offered to it this frame, and whether update() offered since the last draw
+  let _npcLane = null;
+  const _npcStood = [];
+  let _npcOffered = false;
+  /** MWNPC6: the bodies update() offered this frame - the lane synced, each offered watchman's billboard (a corpse's
+   *  flat for the dead) cast-only where his body stands, the bodies drawn in one bind. A host calls it after update()
+   *  and BEFORE it draws the batches update() returned.
+   *  @param {any} canvas @param {Float32Array} proj @param {Float32Array} view @param {number[]} eye @param {number} dt */
+  function drawBodies(canvas, proj, view, eye, dt) {
+    const lane = _npcLane;
+    if (!lane || !_npcOffered) return;
+    _npcOffered = false;
+    lane.end(dt, eye);
+    for (const g of _npcStood) { const b = g.dead ? g.corpseMarker?.batch : g.batch; if (b) b.castOnly = lane.has('watch', g.id); }
+    renderer.beginCharacterSpriteBatch?.();
+    try { lane.draw(canvas, { proj, view, eye }); } finally { renderer.flushCharacterSpriteBatch?.(); }
+  }
+  /** MWNPC6: the concealed watchmen's bodies, translucent - after the host's opaque world. */
+  function drawVeiledBodies() { _npcLane?.drawVeiled(); }
 
   /** RAID-GUARDS (2026-09-29, Mac: "Raids shouldnt let you damage the guards"): THE GUARDS THE PLAYER'S BLOWS PASS
    *  BY. A defender - DISC19-F's watch fighting beside the player, a raid's own among them - under friendly
@@ -1683,6 +1721,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     for (const c of corpseBatches) renderer.destroyBillboardBatch(c.batch);
     corpseBatches.length = 0;
     guards.length = 0;
+    _npcLane?.destroy(); _npcLane = null;   // MWNPC6: the bodies with them (an interior's watch is torn down here)
   }
 
   /** AUDIT 17e F23 / THE FOUR HOSTS RULE: the ?world host recenters
@@ -1709,6 +1748,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       c.batch = renderer.createBillboardBatch(c.archive, c.record, c.size, [c.pos]);
       c.batch.frame = 0;   // FA1 slice 3: a REBUILT batch is a new object - it needs the frame too
     }
+    _npcLane?.offsetAll(offset);   // MWNPC6: the bodies' feet with the origin
   }
 
   /** AUDIT LANDFORMS II G1: THE GROUND MOVED UNDER A PIXEL - a rebuild the reference never makes (the road network
@@ -1784,7 +1824,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     releaseGuardBatch(g);
     g.dead = true;   // no `corpse` - a removed guard is destroyed, not killed
   }
-  return { guards, spawnCityGuards, makeNpcGuardsIntoEnemies, anyWatchStanding, frighten, guardSeesPlayer, update, offsetAll, groundMoved, collectPixel, clearLive, resolvePlayerHit, resolveCivilianHit, playerSpares, playerSparesPerson, activeCount, summonDefenders, standDefender, dismissDefenders, defenderCount, lootTargets, hoverName, hoverContents, liveTargets, liveHoverName, takeLoot, pileBody: (key) => pileBody(corpseEntryFor(guards, key, 'guardCorpse', corpseLens)), physicalCorpses: () => physicalCorpseSources(guards, 'guardCorpse', corpseLens), snapshotWorld, restoreWorld, removeGuard, handleAttackFromPlayer,   // LOOT-STACK: a body as the loot window's tab; PI1: physicalCorpses, the bodies whose items stand round them (scenes/physicalItemsLayer.js)
+  return { guards, spawnCityGuards, makeNpcGuardsIntoEnemies, anyWatchStanding, frighten, guardSeesPlayer, update, offsetAll, groundMoved, collectPixel, clearLive, resolvePlayerHit, resolveCivilianHit, drawBodies, drawVeiledBodies, playerSpares, playerSparesPerson, activeCount, summonDefenders, standDefender, dismissDefenders, defenderCount, lootTargets, hoverName, hoverContents, liveTargets, liveHoverName, takeLoot, pileBody: (key) => pileBody(corpseEntryFor(guards, key, 'guardCorpse', corpseLens)), physicalCorpses: () => physicalCorpseSources(guards, 'guardCorpse', corpseLens), snapshotWorld, restoreWorld, removeGuard, handleAttackFromPlayer,   // LOOT-STACK: a body as the loot window's tab; PI1: physicalCorpses, the bodies whose items stand round them (scenes/physicalItemsLayer.js)
     /** RR2: PlayerEntity.SpawnCityGuard(position, direction) (PlayerEntity.cs:678-694) for a caller
      *  outside the watch's own call - the ONE watchman minted where a walker stood, facing their
      *  way, hostile to the player. Resolves to the guard record (or null when the world moved on). */

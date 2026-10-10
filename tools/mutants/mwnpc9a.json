@@ -1,0 +1,146 @@
+[
+ {
+  "name": "MWNPC9a-shape-parent-lost",
+  "file": "src/formats/mwNifMesh.js",
+  "old": "if (child >= 0) walk(child, nextWorld, nextProps, false, inside, animFlags, nextChain, ref);",
+  "new": "if (child >= 0) walk(child, nextWorld, nextProps, false, inside, animFlags, nextChain);",
+  "tests": [
+   "test/mwnpc9_creatures.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9a-shape-parent-unemitted",
+  "file": "src/formats/mwNifMesh.js",
+  "old": "emit(rec, nextWorld, nextProps, nextChain, animFlags, parentRef);",
+  "new": "emit(rec, nextWorld, nextProps, nextChain, animFlags);",
+  "tests": [
+   "test/mwnpc9_creatures.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9a-effect-parent-lost",
+  "file": "src/formats/mwCharacter.js",
+  "old": "if (d) effects.push(Object.assign(d, { parentRef: bundle.parentRef ?? -1 }));",
+  "new": "if (d) effects.push(d);",
+  "tests": [
+   "test/mwnpc9_creatures.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9a-rest-not-undone",
+  "file": "src/formats/mwCharacter.js",
+  "old": "return { attachRef: ref, pre: at ? affineInverse(at) : null };",
+  "new": "return { attachRef: ref, pre: null };",
+  "tests": [
+   "test/mwnpc9_creatures.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9a-all-on-the-root",
+  "file": "src/formats/mwCharacter.js",
+  "old": "const ref = skeleton.nodes.has(parentRef) ? parentRef : root;",
+  "new": "const ref = root;",
+  "tests": [
+   "test/mwnpc9_creatures.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9a-tri-bip-kept",
+  "file": "src/formats/mwCharacter.js",
+  "old": "const keep = (b) => { if (!isTriBip(b.name)) return true; dropped.push(b.name); return false; };",
+  "new": "const keep = () => true;",
+  "tests": [
+   "test/mwnpc9_creatures.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9a-tri-bip-anywhere",
+  "file": "src/formats/mwCharacter.js",
+  "old": ".toLowerCase().startsWith('tri bip');",
+  "new": ".toLowerCase().includes('bip');",
+  "tests": [
+   "test/mwnpc9_creatures.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9a-creature-pieces-mirrored",
+  "file": "src/formats/mwFirstPerson.js",
+  "old": "pieces.push({ slot: 'creature', bone: null, kind: 'rigid', mirrored: false,",
+  "new": "pieces.push({ slot: 'creature', bone: null, kind: 'rigid', mirrored: true,",
+  "tests": [
+   "test/mwnpc9_creatures.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9a-rigid-source-raw",
+  "file": "src/formats/mwFirstPerson.js",
+  "old": "batch: null, source: applyPre(batch.positions, pre), attachRef, boneOffset: null,",
+  "new": "batch: null, source: batch.positions, attachRef, boneOffset: null,",
+  "tests": [
+   "test/mwnpc9_creatures.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9a-skinned-dropped",
+  "file": "src/formats/mwFirstPerson.js",
+  "old": "  for (const batch of bound.skinned) {\n    pieces.push({ slot: 'creature'",
+  "new": "  for (const batch of []) {\n    pieces.push({ slot: 'creature'",
+  "tests": [
+   "test/mwnpc9_creatures.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9a-sources-never-bipedal",
+  "file": "src/formats/mwFirstPerson.js",
+  "old": "return animSourcesFor(bipedal ? TP_BASE_MODEL : null, modelPath, exists);",
+  "new": "return animSourcesFor(null, modelPath, exists);",
+  "tests": [
+   "test/mwnpc9_creatures.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9a-flag-blood-kept",
+  "file": "src/formats/mwFirstPerson.js",
+  "old": ".getInt32(0, true) & 0xff;",
+  "new": ".getInt32(0, true);",
+  "tests": [
+   "test/mwload_records.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9a-scale-unread",
+  "file": "src/formats/mwFirstPerson.js",
+  "old": "else if (sub.name === 'XSCL' && sub.len >= 4) e.scale",
+  "new": "else if (sub.name === 'XSCLx' && sub.len >= 4) e.scale",
+  "tests": [
+   "test/mwload_records.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9a-creatures-unextracted",
+  "file": "src/formats/mwFirstPerson.js",
+  "old": "      case 'CREA': { const e = readCreature(bytes, rec); if (e) out.creatures.push(e); break; }   // MWNPC9\n",
+  "new": "",
+  "tests": [
+   "test/mwload_records.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9a-shape-without-creatures",
+  "file": "src/formats/mwFirstPerson.js",
+  "old": "'magicEffects', 'statics', 'creatures'].every((k) => Array.isArray(r[k]))",
+  "new": "'magicEffects', 'statics'].every((k) => Array.isArray(r[k]))",
+  "tests": [
+   "test/mwload_records.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9a-version-unbumped",
+  "file": "src/formats/mwFirstPerson.js",
+  "old": "export const ARM_RECORDS_VERSION = 6;",
+  "new": "export const ARM_RECORDS_VERSION = 4;",
+  "tests": [
+   "test/mwload_records.test.js"
+  ]
+ }
+]

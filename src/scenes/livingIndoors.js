@@ -719,6 +719,8 @@ export function createLivingIndoors(deps) {
     seats: () => deps.sprites.persons(),
     /** This frame's drawn bodies (the building's billboard pass). */
     batches: () => deps.sprites.batches(),
+    /** MWNPC10c: their Morrowind bodies, before the building's billboard pass. */
+    drawBodies(canvas, proj, view, eye, dt) { deps.sprites.drawBodies?.(canvas, proj, view, eye, dt); },
     /** The town the room's residents belong to (the host's door asks it), or null. */
     town: () => deps.building()?.town ?? null,
     /**

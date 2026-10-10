@@ -36,7 +36,9 @@ test('DQ1: the target walk and the click each have ONE home', () => {
   assert.equal([...s.matchAll(/key: `questflat:\$\{i\}`/g)].length, 1,
     'the questflat target key is minted in exactly one place');
   // DISC29-H: the record is built in ONE place inside the click (npcData) - the stamp reads it, and so does the Info
-  // look's name (StaticNPC.DisplayName off the same layout data)
+  // look's name (StaticNPC.DisplayName off the same layout data). PIN MOVED (MWNPC8c, bible/04-Characters/
+  // Morrowind-NPCs.md section 13c): the one place is `questStandNpcData`, which the click's npcData and the stand's
+  // Morrowind body both call - still built once
   assert.equal([...s.matchAll(/questBridge\.layoutNpcData\(/g)].length, 1, 'and the NPCData likewise');
   assert.equal([...s.matchAll(/setLastNPCClicked\(npcData\(\)\)/g)].length, 1, 'stamped once');
 });
@@ -84,10 +86,14 @@ test('DQ1: the click stamps LastNPCClicked BEFORE DoClick, and only for a Person
   const doClick = click.indexOf('s.behaviour?.doClick()');
   assert.ok(stamp > 0 && doClick > stamp, 'StaticNPCClick:1521 stamps first');
   assert.match(click, /if \(questBridge && person\?\.isPerson\) \{/, 'an ITEM stamps nothing');
+  // PIN MOVED (MWNPC8c, bible/04-Characters/Morrowind-NPCs.md section 13c): the record's fields are read in its one
+  // builder, `questStandNpcData`, which the click calls (the stand's Morrowind body reads the same record)
+  assert.match(click, /const npcData = \(\) => questStandNpcData\(s, person, buildingKey\);/, 'the click builds through it');
+  const build = body.slice(body.indexOf('const questStandNpcData = (s, person, buildingKey) => {'), body.indexOf('const questStandLook = (s, buildingKey) => {'));
   // the hash is the TRUNCATED marker ints, not the stood position
-  assert.match(click, /positionHash\(Math\.trunc\(s\.marker\.x\), Math\.trunc\(s\.marker\.y\), Math\.trunc\(s\.marker\.z\)\)/);
-  assert.match(click, /nameSeed: person\.nameSeed \?\? -1,/, '-1 falls back to the hash');
-  assert.match(click, /mapID: 0,/, 'never written by SetLayoutData');
+  assert.match(build, /positionHash\(Math\.trunc\(s\.marker\.x\), Math\.trunc\(s\.marker\.y\), Math\.trunc\(s\.marker\.z\)\)/);
+  assert.match(build, /nameSeed: person\.nameSeed \?\? -1,/, '-1 falls back to the hash');
+  assert.match(build, /mapID: 0,/, 'never written by SetLayoutData');
   // DoClick's bool is kept, not dropped
   assert.match(click, /const foundInActiveQuest = s\.behaviour\?\.doClick\(\) \?\? false;/);
 });

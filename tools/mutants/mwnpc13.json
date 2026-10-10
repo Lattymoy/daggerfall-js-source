@@ -1,0 +1,110 @@
+[
+ {
+  "name": "MWNPC13-ghost-a-miss",
+  "file": "src/characters/creatureBodies.js",
+  "old": "  [M.Ghost]: { creature: ['ancestor_ghost'], veil: true },",
+  "new": "  [M.Ghost]: { miss: 'x' },",
+  "tests": [
+   "test/mwnpc13_spectral.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC13-wraith-opaque",
+  "file": "src/characters/creatureBodies.js",
+  "old": "  [M.Wraith]: { creature: ['ancestor_ghost'], veil: true },",
+  "new": "  [M.Wraith]: { creature: ['ancestor_ghost'] },",
+  "tests": [
+   "test/mwnpc13_spectral.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC13-veil-opaque",
+  "file": "src/characters/creatureBodies.js",
+  "old": "alpha: BaseImageFile.SPECTRAL_ALPHA / 255,",
+  "new": "alpha: 1,",
+  "tests": [
+   "test/mwnpc13_spectral.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC13-veil-tinted",
+  "file": "src/characters/creatureBodies.js",
+  "old": "export const SPECTRAL_VEIL = Object.freeze({ mode: 3,",
+  "new": "export const SPECTRAL_VEIL = Object.freeze({ mode: 2,",
+  "tests": [
+   "test/mwnpc13_spectral.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC13-look-unveiled",
+  "file": "src/characters/creatureBodies.js",
+  "old": ", ...(m.veil ? { veil: SPECTRAL_VEIL } : {}), ...(m.flies",
+  "new": ", ...(m.flies",
+  "tests": [
+   "test/mwnpc13_spectral.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC13-named-reskinned",
+  "file": "src/characters/creatureBodies.js",
+  "old": "    if (a != null && b && a !== b.maleTexture && a !== b.femaleTexture) return null;",
+  "new": "    void a; void b;",
+  "tests": [
+   "test/mwnpc13_spectral.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC13-named-dungeon-only",
+  "file": "src/characters/creatureBodies.js",
+  "old": "    const a = f.mobileArchive ?? f.archive, b",
+  "new": "    const a = f.mobileArchive, b",
+  "tests": [
+   "test/mwnpc13_spectral.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC13-lane-ignores-veil",
+  "file": "src/characters/npcBodies.js",
+  "old": "      conceal ??= actor.look.veil ?? null;",
+  "new": "      void 0;",
+  "tests": [
+   "test/mwnpc13_spectral.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC13-lane-veil-over-host",
+  "file": "src/characters/npcBodies.js",
+  "old": "      conceal ??= actor.look.veil ?? null;",
+  "new": "      conceal = actor.look.veil ?? conceal;",
+  "tests": [
+   "test/mwnpc13_spectral.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC13-roads-veiled-unforwarded",
+  "file": "src/world/travellerSprites.js",
+  "old": "    drawVeiledBodies() { bodiesLane.drawVeiled(); },",
+  "new": "    drawVeiledBodies() {},",
+  "tests": [
+   "test/mwnpc13_spectral.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC13-roads-host-mute",
+  "file": "src/scenes/livingRoads.js",
+  "old": "    drawVeiledBodies() { deps.sprites.drawVeiledBodies?.(); },",
+  "new": "    drawVeiledBodies() {},",
+  "tests": [
+   "test/mwnpc13_spectral.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC13-world-roads-veiled-undrawn",
+  "file": "src/scenes/world.js",
+  "old": "    livingRoads?.drawVeiledBodies();   // MWNPC13",
+  "new": "    void 0;   // MWNPC13",
+  "tests": [
+   "test/mwnpc13_spectral.test.js"
+  ]
+ }
+]

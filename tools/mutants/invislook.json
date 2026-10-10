@@ -147,8 +147,8 @@
   {
     "name": "INVISLOOK-late-pass-no-camera",
     "file": "src/net/peerBodies.js",
-    "old": "    const c = this._cam ?? (this._cam = { canvas: null, proj: null, view: null, eye: null, flashOf: null, grow: null, up: null });\n",
-    "new": "    const c = { canvas: null, proj: null, view: null, eye: null, flashOf: null, grow: null, up: null };\n",
+    "old": "    const c = this._cam ?? (this._cam = { canvas: null, proj: null, view: null, eye: null, flashOf: null, grow: null, up: null, fxOf: null, scaleOf: null });\n",
+    "new": "    const c = { canvas: null, proj: null, view: null, eye: null, flashOf: null, grow: null, up: null, fxOf: null, scaleOf: null };\n",
     "tests": [
       "test/invislook.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "INVISLOOK-fs-half-cut",
     "file": "src/render/renderer.js",
-    "old": "  if (t.a < (uConceal.x > 0.0 ? 0.1 : 0.5)) discard;",
-    "new": "  if (t.a < 0.5) discard;",
+    "old": "  if (t.a < (uConceal.x > 0.0 ? 0.1 : 0.5)) {",
+    "new": "  if (t.a < 0.5) {",
     "tests": [
       "test/invislook.test.js"
     ]

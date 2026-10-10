@@ -186,8 +186,8 @@
   {
     "name": "OW4-J6-quad-upright",
     "file": "src/combat/fpArm.js",
-    "old": "{ center, halfW, halfH, anchor, hitFlash, conceal, up }, proj, view, eye, MW_ARM_PIXEL);",
-    "new": "{ center, halfW, halfH, anchor, hitFlash, conceal }, proj, view, eye, MW_ARM_PIXEL);",
+    "old": "{ center, halfW, halfH, anchor, hitFlash, conceal, up, fx }, proj, view, eye, MW_ARM_PIXEL);",
+    "new": "{ center, halfW, halfH, anchor, hitFlash, conceal, fx }, proj, view, eye, MW_ARM_PIXEL);",
     "tests": [
       "test/prbow1_bow.test.js"
     ],

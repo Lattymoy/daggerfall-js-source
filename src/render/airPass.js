@@ -1898,7 +1898,7 @@ export class AirPass {
         }
       } else if (r.kind === 2) {
         for (const b of r.batches) {
-          if (!b?.vao || b._dead || b.conceal || b.emissionOff) continue;   // CSA-B: a flat whose emission is black has nothing to bloom
+          if (!b?.vao || b._dead || b.conceal || b.castOnly || b.emissionOff) continue;   // MWNPC5b: a cast-only flat (a foe in its body) blooms nothing either   // CSA-B: a flat whose emission is black has nothing to bloom
           if (!batchVisible(planes, b)) continue;   // EL5
           const key = billboardKey(b);
           const emis = f.emissionTextures.get(key);

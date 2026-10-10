@@ -70,6 +70,7 @@
  * @property {number[]} [_box]                        EV3: the host's cull box [minX, minY, minZ, maxX, maxY, maxZ] (flatBatchAabb)
  * @property {boolean} [noShadow]                     F2: a thing lying on the ground casts nothing (a loot pile)
  * @property {boolean} [selfCard]                     DISC24-C: the player's own body card - it casts as drawn
+ * @property {boolean} [castOnly]                     MWNPC5b: a foe standing in its Morrowind body - the billboard casts its shadow and draws nothing
  * @property {boolean} [_dead]                        EL2: freed - a shadow record from the last frame may still hold it
  * @property {boolean} [dwColumn]                     DW-F: the host's - one flat standing in a carved sea's column (the water column's share)
  * @property {string} [_bbKey]                        FA1/MAC4: the texture key, re-minted when a field it is made of moves (billboardKey.js)
@@ -155,6 +156,9 @@
  * @property {(batch: BillboardBatch|null) => void} [destroyBillboardBatch]
  * @property {(batch: BillboardBatch|null, centers: number[][]) => boolean} [moveBillboardBatch] BLOOD1b: rewrite a dynamic batch's centres in place - the one thing in this tree that flies
  * @property {Map<string, any>} [textures] the live texture cache, keyed `archive_record` - read to skip a re-upload
+ * @property {() => void} [beginCharacterSpriteBatch] MWNPC2: every body's picture after this in one bind of the sprite target
+ * @property {() => number} [flushCharacterSpriteBatch] MWNPC2: the batch drawn - its binds
+ * @property {boolean} [characterSpriteBatchOpen] MWNPC2: between the two (AUDIT MW-NPC A1: a batch a host holds is its own)
  */
 
 export {};

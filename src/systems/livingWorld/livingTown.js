@@ -1247,9 +1247,9 @@ export class LivingTown {
         const role = !p.moving && this._inCircle.get(res.id)?.spot !== w.e.at && !(this._stirring(res.id) && this._inStir.get(res.id)?.spot === w.e.at) ? stillRoleOf(res, w.e) : null;   // a walk's none (stillRoleOf); AUDIT LW-STIR B4: nor one of an incident at its spot while it runs - a still picture faces nobody
         const want = role ? stillFlatOf(res, role) : null;
         const has = p.stillLook;
-        if ((want?.archive ?? -1) !== (has?.archive ?? -1) || (want?.record ?? -1) !== (has?.record ?? -1)) {
+        if ((want?.archive ?? -1) !== (has?.archive ?? -1) || (want?.record ?? -1) !== (has?.record ?? -1) || (want && (p.stillRole ?? null) !== role)) {   // AUDIT MW-NPC II K1: two kinds share a picture - the kind is the body's
           if (!want) p.still(null);
-          else if (!row.visible || allowChange) { const look = this.o.flatOf?.(want) ?? null; if (look) p.still(look); }
+          else if (!row.visible || allowChange) { const look = this.o.flatOf?.(want) ?? null; if (look) p.still(look, role); }   // AUDIT MW-NPC II K1: and its kind, for the body
         }
       }
       if (row.scheduleRecycle && allowChange) { this._free(row); continue; }

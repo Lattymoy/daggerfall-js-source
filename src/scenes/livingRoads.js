@@ -365,6 +365,12 @@ export function createLivingRoads(deps) {
     talkSeats: () => deps.sprites.persons(),
     /** This frame's drawn bodies (the exterior's billboard pass). */
     batches: () => deps.sprites.batches(),
+    /** MWNPC10c: their Morrowind bodies, before the exterior's billboard pass. */
+    drawBodies(canvas, proj, view, eye, dt) { deps.sprites.drawBodies?.(canvas, proj, view, eye, dt); },
+    /** MWNPC10c: the floating origin moved - the bodies' feet follow it. @param {number[]} o */
+    offsetBodies(o) { deps.sprites.offsetBodies?.(o); },
+    /** MWNPC13: the veiled ones (a ghost besetting a party), after the opaque world. */
+    drawVeiledBodies() { deps.sprites.drawVeiledBodies?.(); },
     /** The parties read about the player (the probes; the pins). */
     parties: () => parties,
     /** The person's town: the roads note a word in the resident's regard ... */

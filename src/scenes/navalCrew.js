@@ -18,6 +18,7 @@ import { NPC_FLAT_ARCHIVES } from '../world/rdbLayout.js';
 import { intoDeck, outOfDeck, mainLevel, DECK_STEP } from '../systems/naval/navalDeck.js';
 import { createCrewLife, CREW_MUSTER_M } from '../systems/naval/crewLife.js';
 import { createPersonTextureKeys } from './townScratch.js';
+import { createPopulationLane } from '../characters/npcBodies.js'; import { rosterLook } from '../characters/foeBodies.js'; import { rosterActor } from '../characters/rosterBodies.js';   // MWNPC10: the crews in their Morrowind bodies
 
 /** Her main deck's level - the deck's own (navalDeck.js), read here by the suites as it always was. */
 export { mainLevel };
@@ -62,9 +63,12 @@ export function peopleFlatsOf(boat) {
 
 /**
  * The crew host.
- * @param {{ renderer: any, getTexture: (archive: number) => Promise<any>, uploadRecordFrame: (a: number, r: number, f: number) => void, rand?: () => number }} o
+ * @param {{ renderer: any, getTexture: (archive: number) => Promise<any>, uploadRecordFrame: (a: number, r: number, f: number) => void, rand?: () => number,
+ *   wantBodies?: () => boolean, makeBodies?: (() => any) | null }} o
  */
-export function createNavalCrew({ renderer, getTexture, uploadRecordFrame, rand = Math.random }) {
+export function createNavalCrew({ renderer, getTexture, uploadRecordFrame, rand = Math.random, wantBodies = undefined, makeBodies = null }) {   // MWNPC10: the body lane's seams
+  const bodiesLane = createPopulationLane({ laneName: 'crew', renderer, ...(wantBodies ? { want: wantBodies } : {}), make: makeBodies });   // MWNPC10 (section 15b): the crews' Morrowind bodies
+  let _crewIds = 0;
   /** @type {Map<any, any>} key -> { key, boat, deck, life, sprites: Map<member, sprite>, flats } */
   const ships = new Map();
   const _dir = [0, 0, 0], _fw = [0, 0, 0];
@@ -80,7 +84,7 @@ export function createNavalCrew({ renderer, getTexture, uploadRecordFrame, rand 
     const basics = ENEMY_BASICS[member.mobile];
     if (!basics) return null;
     const archive = member.gender === 'female' ? basics.femaleTexture : basics.maleTexture;
-    const s = { archive, tex: null, unit: null, batch: null, origin: [0, 0, 0], dead: false };
+    const s = { id: `crew:${++_crewIds}`, archive, tex: null, unit: null, batch: null, origin: [0, 0, 0], dead: false, yaw: 0, swings: 0, swinging: false };   // MWNPC10: its lane id, its world facing and its blows
     getTexture(archive).then((tex) => {
       if (s.dead || !tex) return;
       s.tex = tex;
@@ -126,7 +130,7 @@ export function createNavalCrew({ renderer, getTexture, uploadRecordFrame, rand 
         const flats = peopleFlatsOf(w.boat).filter((f) => f.feet[1] >= main - DECK_STEP);   // never the rowers below her deck
         for (const f of flats) { f.was = f.renderer.m_Enabled; f.renderer.m_Enabled = false; }
         const life = createCrewLife({ deck: w.deck, roster: w.hold ? [] : w.rosterOf(), seed: w.seed, places: flats.map((f) => f.feet), faction: w.faction ?? null });
-        ship = { key: w.key, boat: w.boat, deck: w.deck, life, flats, sprites: new Map(), battle: false, held: !!w.hold };
+        ship = { key: w.key, boat: w.boat, deck: w.deck, life, flats, sprites: new Map(), battle: false, held: !!w.hold, seed: w.seed | 0 };   // MWNPC10: her seed, her hands' looks
         for (const m of life.members) ship.sprites.set(m, sprite(m));
         ships.set(w.key, ship);
       }
@@ -174,7 +178,10 @@ export function createNavalCrew({ renderer, getTexture, uploadRecordFrame, rand 
         _dir[0] = m[0] * _fw[0] + m[8] * _fw[2]; _dir[2] = m[2] * _fw[0] + m[10] * _fw[2];
         _motion.moving = member.moving;
         _motion.striking = !!member.swing;   // SHIP-WATCH: a swing at his work - his class's attack
-        const out = s.unit.update(dt, _motion, Math.atan2(_dir[0], _dir[2]), s.origin, eye);
+        s.yaw = Math.atan2(_dir[0], _dir[2]);   // MWNPC10: kept - his body faces it
+        if (member.swing && !s.swinging) s.swings++;   // MWNPC10: each swing begun, one blow
+        s.swinging = !!member.swing;
+        const out = s.unit.update(dt, _motion, s.yaw, s.origin, eye);
         if (!renderer.textures?.has?.(textureKey(s.archive, out.record, out.frame))) uploadRecordFrame(s.archive, out.record, out.frame);
         const sz = mobileBillboardSize(s.tex, out.record);
         s.batch.record = recordKey(out.record, out.frame);
@@ -186,6 +193,26 @@ export function createNavalCrew({ renderer, getTexture, uploadRecordFrame, rand 
         s.head[0] = s.origin[0]; s.head[1] = s.origin[1] + sz.h + 0.25; s.head[2] = s.origin[2];
       }
     }
+  }
+
+  /**
+   * MWNPC10 (bible/04-Characters/Morrowind-NPCs.md section 15b): EVERY STANDING HAND IN HIS MORROWIND BODY, before the
+   * world's people pass draws his sprite - his class's look off his ship's seed and his place in her roster (a creature
+   * hand its creature), walking as he walks, each swing at his work a blow, concealed with his ship's owner.
+   */
+  function drawBodies(canvas, proj, view, eye, dt) {
+    bodiesLane.frame();
+    for (const ship of ships.values()) {
+      let i = 0;
+      for (const [m, s] of ship.sprites) {
+        i++;
+        if (!s?.batch || !s.unit || m.below) continue;   // turned in below her deck: kept, not drawn (a gone hand's sprite is already dropped)
+        const look = rosterLook(s, { mobileType: m.mobile, gender: m.gender, seed: Math.imul((ship.seed | 0) + i, 0x9e3779b1) >>> 0 });
+        if (!look) continue;
+        bodiesLane.offer(rosterActor(s, { id: s.id, look, feet: s.origin, yaw: s.yaw, moving: !!m.moving, swingKey: s.swings || null }), s.batch, ship.boat.conceal ?? null);
+      }
+    }
+    bodiesLane.draw(canvas, proj, view, eye, dt);
   }
 
   /** Every standing crewman's sprite, for the world's people pass. */
@@ -229,6 +256,11 @@ export function createNavalCrew({ renderer, getTexture, uploadRecordFrame, rand 
 
   return {
     sync, frame, batches, speech, take,
+    drawBodies,   // MWNPC10
+    /** MWNPC10: the concealed hands' bodies, translucent, after the people pass. */
+    drawVeiledBodies() { bodiesLane.drawVeiled(); },
+    /** MWNPC10: the floating origin moved - the bodies' feet follow it. */
+    offsetBodies(o) { bodiesLane.offsetAll(o); },
     /** `take` by her boat (the naval host knows a ship by her boat). */
     takeByBoat(boat, n, opts) { for (const ship of ships.values()) if (ship.boat === boat) return take(ship.key, n, opts); return []; },
     /** A crew stood down and forgotten - the next sync stands her again whole (my hands home from a fight). */
@@ -238,6 +270,6 @@ export function createNavalCrew({ renderer, getTexture, uploadRecordFrame, rand 
     /** The standing crews (a probe's and a test's). */
     ships: () => [...ships.values()],
     /** Every crew stood down, the flats all back. */
-    clear() { for (const ship of ships.values()) standDown(ship); ships.clear(); },
+    clear() { for (const ship of ships.values()) standDown(ship); ships.clear(); bodiesLane.destroy(); },   // MWNPC10: and their bodies
   };
 }

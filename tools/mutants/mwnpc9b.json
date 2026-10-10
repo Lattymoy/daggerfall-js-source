@@ -1,0 +1,247 @@
+[
+ {
+  "name": "MWNPC9b-build-never-a-creature",
+  "file": "src/combat/fpArm.js",
+  "old": "  if (creature) return buildCreatureBody({ creature, flies, deps });   // MWNPC9\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc9b_creaturerig.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9b-first-record-wins",
+  "file": "src/combat/fpArm.js",
+  "old": "for (const c of list) if (ids.includes(c.id)) found.set(c.id, c);",
+  "new": "for (const c of list) if (ids.includes(c.id) && !found.has(c.id)) found.set(c.id, c);",
+  "tests": [
+   "test/mwnpc9b_creaturerig.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9b-last-candidate-wins",
+  "file": "src/combat/fpArm.js",
+  "old": "const rec = ids.map((i) => found.get(i)).find(Boolean) ?? null;",
+  "new": "const rec = ids.map((i) => found.get(i)).reverse().find(Boolean) ?? null;",
+  "tests": [
+   "test/mwnpc9b_creaturerig.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9b-never-bipedal",
+  "file": "src/combat/fpArm.js",
+  "old": "const bipedal = (rec.flags & CREA_FLAG.Bipedal) !== 0;",
+  "new": "const bipedal = false;",
+  "tests": [
+   "test/mwnpc9b_creaturerig.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9b-scale-unworn",
+  "file": "src/combat/fpArm.js",
+  "old": "      raceScale: { weight: scale, height: scale },",
+  "new": "      raceScale: { weight: 1, height: 1 },",
+  "tests": [
+   "test/mwnpc9b_creaturerig.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9b-height-unscaled",
+  "file": "src/combat/fpArm.js",
+  "old": "const height = bb ? ((bb.maxZ - Math.min(bb.minZ, 0)) * scale) / MW_UNITS_PER_METER : null;",
+  "new": "const height = bb ? (bb.maxZ - Math.min(bb.minZ, 0)) / MW_UNITS_PER_METER : null;",
+  "tests": [
+   "test/mwnpc9b_creaturerig.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9b-stands-in-first",
+  "file": "src/combat/fpArm.js",
+  "old": "viewMode = res && res.ok && res.creature && thirdBuilt ? 'third' : 'first';",
+  "new": "viewMode = 'first';",
+  "tests": [
+   "test/mwnpc9b_creaturerig.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9b-first-person-allowed",
+  "file": "src/combat/fpArm.js",
+  "old": "      if (want === 'first' && built && built.creature) return false;   // MWNPC9: a creature has no first person\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc9b_creaturerig.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9b-stance-suffixed",
+  "file": "src/combat/fpArm.js",
+  "old": "return nonBiped() && !isRealWeapon(t) ? MW_WEAPON_TYPE.None : t;",
+  "new": "return t;",
+  "tests": [
+   "test/mwnpc9b_creaturerig.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9b-idle-under-the-walk",
+  "file": "src/combat/fpArm.js",
+  "old": "    if (nonBiped() && ((upper !== UPPER_BODY.None && upper !== UPPER_BODY.WeaponEquipped) || movementState || hitState)) {",
+  "new": "    if (false) {",
+  "tests": [
+   "test/mwnpc9b_creaturerig.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9b-turns-on-the-spot",
+  "file": "src/combat/fpArm.js",
+  "old": "thirdPerson: viewMode === 'third' && !nonBiped(),",
+  "new": "thirdPerson: viewMode === 'third',",
+  "tests": [
+   "test/mwnpc9b_creaturerig.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9b-attack-unrolled",
+  "file": "src/combat/fpArm.js",
+  "old": "const g = chooseRandomGroup('attack', roll);",
+  "new": "const g = chooseRandomGroup('attack', 0);",
+  "tests": [
+   "test/mwnpc9b_creaturerig.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9b-attack-not-a-follow",
+  "file": "src/combat/fpArm.js",
+  "old": "    upper = UPPER_BODY.AttackEnd;\n    attackType = g;",
+  "new": "    upper = UPPER_BODY.WeaponEquipped;\n    attackType = g;",
+  "tests": [
+   "test/mwnpc9b_creaturerig.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9b-pace-to-the-end",
+  "file": "src/combat/fpArm.js",
+  "old": "? blowRate(hit - st.startTime, blow.hitAt) :",
+  "new": "? blowRate(st.stopTime - st.startTime, blow.seconds) :",
+  "tests": [
+   "test/mwnpc9b_creaturerig.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9b-attack-as-a-person",
+  "file": "src/combat/fpArm.js",
+  "old": "      if (nonBiped()) return creatureAttack(roll, blow);   // MWNPC9: claws and jaws - one of its attacks by the roll\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc9b_creaturerig.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9b-cast-as-a-person",
+  "file": "src/combat/fpArm.js",
+  "old": "      if (nonBiped()) return creatureAttack(++creatureCasts, null) !== null;\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc9b_creaturerig.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9b-height-unasked",
+  "file": "src/combat/fpArm.js",
+  "old": "    bodyHeight: () => (built && built.ok && built.creature && built.creature.height > 0 ? built.creature.height : null),",
+  "new": "    bodyHeight: () => null,",
+  "tests": [
+   "test/mwnpc9b_creaturerig.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9b-key-a-person",
+  "file": "src/net/peerBodies.js",
+  "old": "  if (look?.creature) return `crea|${look.creature}${look.flies ? '|flies' : ''}`;",
+  "new": "",
+  "tests": [
+   "test/mwnpc9b_creaturerig.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9b-built-a-person",
+  "file": "src/net/peerBodies.js",
+  "old": "  if (look?.creature) return { creature: look.creature, reachSweep: false, ...(look.flies ? { flies: true } : {}) };",
+  "new": "",
+  "tests": [
+   "test/mwnpc9b_creaturerig.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9b-blow-unrolled",
+  "file": "src/net/peerBodies.js",
+  "old": "blow: b.pending.blow ?? null, roll: b.swing }",
+  "new": "blow: b.pending.blow ?? null }",
+  "tests": [
+   "test/mac7.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9b-cull-by-capsule",
+  "file": "src/net/peerBodies.js",
+  "old": "    const h = (b.rig.bodyHeight?.() ?? CAPSULE_HEIGHT * (b.rig.raceHeightScale?.() ?? 1)) * grow;",
+  "new": "    const h = CAPSULE_HEIGHT * (b.rig.raceHeightScale?.() ?? 1) * grow;",
+  "tests": [
+   "test/mwnpc9b_creaturerig.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9b-rat-unmatched",
+  "file": "src/characters/creatureBodies.js",
+  "old": "  [M.Rat]: { creature: ['rat'] },",
+  "new": "  [M.Rat]: { miss: 'none at all' },",
+  "tests": [
+   "test/mwnpc9b_creaturerig.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9b-actor-a-person",
+  "file": "src/characters/foeBodies.js",
+  "old": "    look: isPersonFoe(f) ? foeLook(f) : creatureLook(f),",
+  "new": "    look: foeLook(f),",
+  "tests": [
+   "test/mwnpc9b_creaturerig.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9b-creatures-not-body-foes",
+  "file": "src/characters/foeBodies.js",
+  "old": "export const isBodyFoe = (f) => isPersonFoe(f) || !!creatureLook(f);",
+  "new": "export const isBodyFoe = (f) => isPersonFoe(f);",
+  "tests": [
+   "test/mwnpc9b_creaturerig.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9b-dungeon-living-class-only",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "        if (npcLane && isBodyFoe(f)) { npcLane.stand('foe', foeActor(f, foeId(f), { scale: szE }),",
+  "new": "        if (npcLane && isClassFoe(f)) { npcLane.stand('foe', foeActor(f, foeId(f), { scale: szE }),",
+  "tests": [
+   "test/mwnpc9b_creaturerig.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9b-pool-dead-class-only",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "if (f.dead && f.corpse && isBodyFoe(f) && f.ai) { npcLane.stand('foe', foeActor(f, idOf(f), { scale: (isEliteCorpse",
+  "new": "if (f.dead && f.corpse && isClassFoe(f) && f.ai) { npcLane.stand('foe', foeActor(f, idOf(f), { scale: (isEliteCorpse",
+  "tests": [
+   "test/mwnpc9b_creaturerig.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC9b-creature-armed-as-a-person",
+  "file": "src/net/peerBodies.js",
+  "old": "    if (look && !look.creature) {   // MWNPC9: a creature's claws are its body\n",
+  "new": "    if (look) {   // MWNPC9: a creature's claws are its body\n",
+  "tests": [
+   "test/mwnpc9b_creaturerig.test.js"
+  ],
+  "equivalent": true,
+  "why": "A creature look's stub (peerStubEntity) carries no weapon, so peerWeaponOf answers null, which is the body's weapon already, and no setWeapon is asked: the hand is the same either way. The guard is kept because it spares every creature body a stub composed each frame."
+ }
+]

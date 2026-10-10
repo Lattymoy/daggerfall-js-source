@@ -436,7 +436,7 @@ export function flattenNif(nif, opts = {}) {
   const excludeNode = opts.excludeNode ? String(opts.excludeNode).toLowerCase() : null;
   const batches = [];
 
-  function emit(shape, world, props, chain, animFlags) {
+  function emit(shape, world, props, chain, animFlags, parentRef = -1) {
     const data = deref(nif, shape.data);
     if (!data || !data.vertices) return;
     let indices;
@@ -540,6 +540,7 @@ export function flattenNif(nif, opts = {}) {
       colors: data.colors ? Float32Array.from(data.colors) : null,
       indices,
       material: resolveMaterial(nif, props, !!data.colors),
+      parentRef,   // MWNPC9: the node the shape hangs under - a creature's rigid piece rides it (mwCharacter.js bindCreatureModel)
     });
   }
 
@@ -547,7 +548,7 @@ export function flattenNif(nif, opts = {}) {
   // nowhere else, then carried down the whole traversal.
   let hasMarkers = false;
 
-  function walk(ref, world, props, isRoot = false, inside = !underNode, animFlags = 0, chain = []) {
+  function walk(ref, world, props, isRoot = false, inside = !underNode, animFlags = 0, chain = [], parentRef = -1) {   // MWNPC9: and the node above
     const rec = deref(nif, ref);
     if (!rec) return;
     const nextChain = [...chain, rec];   // MW-BOW1: the records from the root down
@@ -588,14 +589,14 @@ export function flattenNif(nif, opts = {}) {
       // been composed. The node is still walked - it simply emits
       // nothing - which is the difference between skipping a drawable
       // and pruning a subtree.
-      if (inside && !skipGeometryName(rec.name, hasMarkers)) emit(rec, nextWorld, nextProps, nextChain, animFlags);
+      if (inside && !skipGeometryName(rec.name, hasMarkers)) emit(rec, nextWorld, nextProps, nextChain, animFlags, parentRef);
       return;
     }
     if (PARTICLE_TYPES.has(rec.type)) {
       // MAC-Q: a particle system takes the same gates a shape does (the
       // hidden flag above, the name skip here) and goes to the sink whole.
       if (inside && opts.effects && !skipGeometryName(rec.name, hasMarkers)) {
-        opts.effects.push({ ref, rec, world: nextWorld, props: nextProps, animFlags });
+        opts.effects.push({ ref, rec, world: nextWorld, props: nextProps, animFlags, parentRef });
       }
       return;
     }
@@ -610,11 +611,11 @@ export function flattenNif(nif, opts = {}) {
       const only = selectedChild(rec);
       if (only !== null) {
         const child = rec.children[only];
-        if (child !== undefined && child >= 0) walk(child, nextWorld, nextProps, false, inside, animFlags, nextChain);
+        if (child !== undefined && child >= 0) walk(child, nextWorld, nextProps, false, inside, animFlags, nextChain, ref);
         return;
       }
       for (const child of rec.children) {
-        if (child >= 0) walk(child, nextWorld, nextProps, false, inside, animFlags, nextChain);
+        if (child >= 0) walk(child, nextWorld, nextProps, false, inside, animFlags, nextChain, ref);
       }
     }
   }

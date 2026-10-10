@@ -133,6 +133,7 @@ import { WEAPON_REACH, weaponPoseOf, applyWeaponPose as setWeaponPose } from '..
 import { inflictPoison } from '../systems/poisons.js';   // AUDIT 39 (#64/#65): a poisoned shaft doses its mark
 import { tallySkill, skillValue, SKILLS, permanentSkillValue } from '../systems/skills.js';
 import { tallySwingSkills, SWING_FATIGUE_COST, playPlayerVoice, playerPainVoice, makeEnemiesHostile, isBowWeapon, aimedBlowInfo, playerBlowFrame } from './hostCombat.js';   // AUDIT 21 hosts F8: the swing law, shared with the dungeon and the guards; IF: the pain cry   // ROAD-B: GameManager.MakeEnemiesHostile
+import { createPopulationLane } from '../characters/npcBodies.js'; import { personLook, personActor } from '../characters/peopleBodies.js';   // MWNPC8a: the building's standing people in Morrowind bodies
 import { createExteriorFoes } from './exteriorFoes.js'; import { INTERIOR_CLEAR } from '../render/renderer.js';   // IF: the ONE foe-pool factory - see interiorFoes below; REVIEW 2026-09-05: the mode frames clear BLACK (CameraClearManager.cs:23-25)
 import { createCityGuards } from './cityGuards.js';   // ROAD-B: SpawnCityGuards' INDOOR arm needs a watch pool in the building
 import { createDroppedLoot, droppedLootHooks, containerDropPos } from './droppedLoot.js';
@@ -1804,6 +1805,62 @@ export function createWorldModes(host) {
    * building is invalidated by leaving.
    */
   let interiorFoes = null;
+  // MWNPC8a (bible/04-Characters/Morrowind-NPCs.md section 13): THE BUILDING'S STANDING PEOPLE IN THEIR BODIES - on the
+  // 'people' lane under the switch's tier; a person's look read once (their StaticNPC data and their faction's row),
+  // never while the faction table is still loading; let go with the room
+  const peopleBodies = createPopulationLane({ laneName: 'people', renderer });
+  const standingLook = (pn) => {
+    if (pn._mwLook !== undefined) return pn._mwLook;
+    const dict = townTalk?.factionDict ?? null;
+    if (!dict) return null;
+    return personLook(pn, staticNpcData(pn, staticNpcSceneCtx(pn)), dict.get(pn.factionID) ?? null);
+  };
+  /** MWNPC8c (section 13c): A QUEST'S STOOD PERSON (standQuestFlatIn - Azura summoned, a questor at a marker) read as
+   *  the click reads them (clickQuestFlat: the Person's gender, faction and name seed through the bridge's SetLayoutData,
+   *  the marker's hash), their born billboard pair for the child's law. An item's or a foe's stand is no one. */
+  /** DQ1: A QUEST STAND'S NPCData, BUILT IN ONE PLACE - SetLayoutData(marker position, person) (GameObjectHelper:1062 ->
+   *  StaticNPC.cs:245-255): the hash from the SCALED marker ints truncated, flags/nameSeed from the Person (-1 falls back
+   *  to the hash), buildingKey from the runtime data, mapID never written. The click stamps and names off it; MWNPC8c's
+   *  body reads it. */
+  const questStandNpcData = (s, person, buildingKey) => {
+    const hash = positionHash(Math.trunc(s.marker.x), Math.trunc(s.marker.y), Math.trunc(s.marker.z));
+    // AUDIT 24 (the seven-slice sweep): through the bridge's
+    // SetLayoutData, not a hand-rolled literal. The literal carried
+    // eight of NPCData's thirteen fields - no race (so QuestMCP.Oath's
+    // clicked-NPC arm, the one the main quests lean on before a
+    // questor is set, read undefined every time) and no context.
+    return questBridge.layoutNpcData({
+      hash,
+      gender: person.gender,
+      factionID: person.factionId ?? 0,
+      nameSeed: person.nameSeed ?? -1,
+      buildingKey,
+      mapID: 0,
+    });
+  };
+  const questStandLook = (s, buildingKey) => {
+    if (s._mwLook !== undefined) return s._mwLook;
+    const person = s.behaviour?.targetResource ?? null;
+    if (!person) return null;   // asked again
+    if (person.isPerson !== true) return (s._mwLook = null);
+    const dict = townTalk?.factionDict ?? null;
+    if (!dict || !questBridge) return null;   // never before the faction table
+    const data = { ...questStandNpcData(s, person, buildingKey), billboardArchiveIndex: s.archive, billboardRecordIndex: s.record };   // the born pair: the child's law
+    return personLook(s, data, dict.get(person.factionId ?? 0) ?? null);
+  };
+  /** MWNPC8c: a list of quest stands offered on `lane` - a stood, active person at their base where the marker they ride
+   *  has carried them (questStandBox's base); every other stand's billboard drawn. */
+  const offerQuestStands = (list, lane, on, buildingKey, eye, dt) => {
+    for (const s of list) {
+      if (!s.batch) continue;
+      const look = on && s.active !== false && !s.dead ? questStandLook(s, buildingKey) : null;
+      if (!look) { s.batch.castOnly = false; continue; }
+      const f = s._mwFeet ??= [0, 0, 0], o = s.off;
+      f[0] = o ? s.x + o[0] : s.x; f[1] = o ? s.y + o[1] : s.y; f[2] = o ? s.z + o[2] : s.z;
+      lane.offer(personActor(s, look, f, eye, dt), s.batch);
+    }
+  };
+  const offerDungeonQuestStands = (lane, on, eye, dt) => offerQuestStands(dungeonQuestFlats, lane, on, 0, eye, dt);   // MWNPC8c: drawPeople's `also`
   /**
    * IF: CreateFoeSpawner's punishment wave - the summoning window's
    * refusal (DaggerfallDaedraSummonedWindow.cs:125) and the coven
@@ -2679,22 +2736,7 @@ export function createWorldModes(host) {
     // truncated, flags/nameSeed from the Person (-1 falls back to the
     // hash), buildingKey from the runtime data, mapID never written.
     const person = s.behaviour?.targetResource;
-    const npcData = () => {
-      const hash = positionHash(Math.trunc(s.marker.x), Math.trunc(s.marker.y), Math.trunc(s.marker.z));
-      // AUDIT 24 (the seven-slice sweep): through the bridge's
-      // SetLayoutData, not a hand-rolled literal. The literal carried
-      // eight of NPCData's thirteen fields - no race (so QuestMCP.Oath's
-      // clicked-NPC arm, the one the main quests lean on before a
-      // questor is set, read undefined every time) and no context.
-      return questBridge.layoutNpcData({
-        hash,
-        gender: person.gender,
-        factionID: person.factionId ?? 0,
-        nameSeed: person.nameSeed ?? -1,
-        buildingKey,
-        mapID: 0,
-      });
-    };
+    const npcData = () => questStandNpcData(s, person, buildingKey);   // MWNPC8c: the one builder, which the body reads too
     // DISC29-H: INFO LOOKS, IT DOES NOT TOUCH. The quest-resource arm
     // clicks "only ... when not in info mode" (PlayerActivate.cs:
     // 334-338), and a static NPC in Info is PresentNPCInfo's one line
@@ -8619,6 +8661,7 @@ export function createWorldModes(host) {
     cacheInteriorScene();
     host.onInteriorLeave?.();   // WORLD6a: the room's memory goes out while the building still stands
     teardownQuestFlats();   // Q4-v: OnDestroy for the quest stands, before the batch teardown
+    peopleBodies.destroy();   // MWNPC8a: the room's people's bodies with it
     interiorCtx.destroy();
     dropViewOut();   // RW1 (AUDIT)
     _intShared = null;
@@ -9008,6 +9051,7 @@ export function createWorldModes(host) {
       const ctx = await buildDungeonContext(
         { renderer, arch, getGpuMesh: dungeonHold.getGpuMesh, cpuModels, getTexture, uploadRecord: dungeonHold.uploadRecord, uploadRecordFrame: dungeonHold.uploadRecordFrame, palette, placeHold: dungeonHold },
         dfLocation, hit.blocksFile ?? blocks, dfLocation.climate.climateType, {   // WB3b: the court's blocks file answers its one made block
+          standingLook,   // MWNPC8b: the dungeon's people read for their bodies as the building's are (dungeonContext.js drawPeople)
           automapFromLoad: fromLoad,   // MAP-KEEP: a load enters the saved record on the LOAD arm - its colour tier kept, nothing stamped or pruned
           placePlayer: placeLoadedPlayer,   // DIAL-LOAD: the host's load law, for every load the context runs - not routeKey's alone
           onStartLoad: () => host.cameraRecoilReset?.(),   // AUDIT DISC28: OnStartLoad's reel reset, the world's own camera (its load resets it too)
@@ -10346,8 +10390,11 @@ export function createWorldModes(host) {
       renderer.setClearColor(INTERIOR_CLEAR);   // REVIEW 2026-09-05 (PR #55 review): the world-hosted dungeon/interior frame is THIS one - the host's own setClearColor sits after its `modes.frame` return
       renderer.setWorldViewport(worldViewportRect(canvas.clientWidth, canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
       renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);   // AUDIT-EL F5: a WORLD frame - the lane replays its records for this one
-      mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });   // MW-D24; DISC18: the body at the capsule's own feet, not the camera's smoothed ones
-      host.drawPeerBodies?.({ proj, view, eye: mwv.eye });   // MWBODY1: the others' bodies, after the player's own
+      renderer.beginCharacterSpriteBatch?.();
+      try {
+        mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });   // MW-D24; DISC18: the body at the capsule's own feet, not the camera's smoothed ones
+        host.drawPeerBodies?.({ proj, view, eye: mwv.eye });   // MWBODY1: the others' bodies, after the player's own
+      } finally { renderer.flushCharacterSpriteBatch?.(); }   // MWNPC2: every body's picture in one bind of the sprite target
       if (dungeonCtx.staticBatch) renderer.drawMesh(dungeonCtx.staticBatch, BATCH_IDENTITY, null);   // PERF5: the level's static models, one call per texture
       for (const d of dungeonCtx.drawList) if (!d._batched) renderer.drawMesh(d.mesh, d.matrix, d.texRemap ?? dungeonCtx.texRemap);   // AUDIT PRE-MERGE 1003 W4: a climate-free model's own table
       for (const d of dungeonCtx.dynamicDraws) if (!d.hidden && !d.culled) renderer.drawMesh(d.gpu, d.object.matrix, d.texRemap ?? dungeonCtx.texRemap, d.noShadow ? DRAW_NO_SHADOW : DRAW_SHADOW);   // AUDIT SD II (L2 F11): a draw that says it is hidden (the Hour's gone steps and bodies) is no draw, and no shadow's record; SD-LOOK: a draw's own texRemap (a state's records), `noShadow` (a part that turns rebuilds no cube) and `culled` (a stage out of sight) - each read only where a draw carries it
@@ -10358,7 +10405,10 @@ export function createWorldModes(host) {
       if (isSdRealm(dungeonLoc)) host.drawSdSky?.({ proj, view, eye: mwv.eye });   // SD5b: the Hour's sky - after its islands, before its flats (PERF2's law)
       dungeonCtx.flatAnims.tick(dt);   // FA1
       renderer.drawFoeTelegraphs?.(drawableBlows(tacticsNow(), player.pos));   // TACT4: a foe's wind-up on the ground
+      if (isGateArena(dungeonLoc)) host.drawGateBodies?.(canvas, proj, view, mwv.eye, dt);   // MWNPC10: the court's creatures in their bodies (their batches ride extraBillboards)
+      if (dungeonCtx.uiOverlayActive) dungeonCtx.showBodyFlats?.();   // AUDIT MW-NPC C6: no body is drawn under a window - its corpse flat is
       dungeonCtx.bloodMarks?.draw?.(camRight, UP_Y);   // BLOOD1a: the dungeon's own marks, on this host's pass   // BLOOD1b: and its chunks, on this host's own basis
+      dungeonCtx.drawPeople?.(canvas, proj, view, mwv.eye, dt, offerDungeonQuestStands);   // MWNPC8b: the people in their bodies - before the level's billboards draw; MWNPC8c: and the quest's
       renderer.drawBillboards([...dungeonCtx.billboardBatches, ...dungeonCtx.campBatches(), ...dungeonCtx.torchBatches(), ...(host.extraBillboards?.() ?? [])], camRight, UP_Y);   // ONLINE1: the peers on the dungeon's own pass; HT1 the dropped torches; SURV3 the campfires
       host.drawLootLines?.({ proj, view, eye: mwv.eye, finds: () => dungeonCtx.lootFinds?.() ?? [] });   // LOOT11: the lines of light over the dungeon's finds
       if (isGateArena(dungeonLoc)) host.drawGateCourt?.({ proj, view, eye: mwv.eye });
@@ -10472,9 +10522,12 @@ export function createWorldModes(host) {
     renderer.setWorldViewport(worldViewportRect(canvas.clientWidth, canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);   // AUDIT-EL F5: a WORLD frame - the lane replays its records for this one
     renderer.setGlassView(_rwView);   // RW1: the street (or the sky) behind the glass, its texels cut to it - and this frame's glass measured for the next
-    mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });   // MW-D24; DISC18: the body at the capsule's own feet, not the camera's smoothed ones
-    host.drawPeerBodies?.({ proj, view, eye: mwv.eye });   // MWBODY1: the others' bodies, after the player's own
-    host.drawCardRegulars?.({ proj, view, eye: mwv.eye });   // CARDS4b: the card table's regulars, in their chairs
+    renderer.beginCharacterSpriteBatch?.();
+    try {
+      mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });   // MW-D24; DISC18: the body at the capsule's own feet, not the camera's smoothed ones
+      host.drawPeerBodies?.({ proj, view, eye: mwv.eye });   // MWBODY1: the others' bodies, after the player's own
+      host.drawCardRegulars?.({ proj, view, eye: mwv.eye });   // CARDS4b: the card table's regulars, in their chairs
+    } finally { renderer.flushCharacterSpriteBatch?.(); }   // MWNPC2: every body's picture in one bind of the sprite target
     if (interiorCtx.staticBatch) renderer.drawMesh(interiorCtx.staticBatch, BATCH_IDENTITY, null);   // PERF6: the room's static models, one call per texture
     for (const d of interiorCtx.drawList) if (!d._batched) renderer.drawMesh(d.mesh, d.matrix, interiorCtx.texRemap);
     // WM4b: the mill's machinery turns at Kamer's rate, in here too.
@@ -10577,6 +10630,17 @@ export function createWorldModes(host) {
     iliacGame?.draw(performance.now());   // CARDS10: an Iliac game's cards on the cloth
     for (const w of cardWatches.values()) if (w.remote.state) w.draw.draw(w.scene.poses(performance.now() / 1000, w.remote.view()));   // CARDS5: and the tables this player watches
     interiorCtx.flatAnims.tick(dt);   // FA1
+    // MWNPC8a: the standing people offered their bodies, before the room's billboards draw (cast-only where one stands)
+    const _peopleOn = peopleBodies.frame();
+    for (const pn of interiorCtx.people) {
+      if (!pn.standBatch) continue;
+      const look = _peopleOn ? standingLook(pn) : null;
+      if (look) peopleBodies.offer(personActor(pn, look, pn._mwFeet ??= [pn.x, pn.y, pn.z], mwv.eye, dt), pn.standBatch);
+      else pn.standBatch.castOnly = false;
+    }
+    offerQuestStands(questFlats, peopleBodies, _peopleOn, interiorBuilding?.buildingKey ?? 0, mwv.eye, dt);   // MWNPC8c: and the quest's
+    peopleBodies.draw(canvas, proj, view, mwv.eye, dt);
+    host.drawLivingBodies?.(canvas, proj, view, mwv.eye, dt);   // MWNPC10c: the residents the day has in here, in their bodies (their batches ride livingBillboards)
     // BLOOD1 AUDIT (2026-09-20): THE INTERIOR'S OWN MARKS, and they
     // were missing. This host builds a pool like the other three,
     // feeds it, ticks it and clears it on the way out - and never drew
@@ -10622,6 +10686,7 @@ export function createWorldModes(host) {
     // the exterior host makes for its foes.
     if (interiorFoes) {
       const _foeBatches = interiorFoes.batches();
+      interiorFoes.drawBodies(canvas, proj, view, mwv.eye, foeDt);   // MWNPC5c: the foes in their bodies - before their billboards draw (cast-only where a body stands)
       if (_foeBatches.length) renderer.drawBillboards(_foeBatches, camRight, UP_Y);
     }
     // ROAD-B: the indoor WATCH drives and draws on the same axis, in
@@ -10637,6 +10702,7 @@ export function createWorldModes(host) {
       // (EnemyBasics.cs), so a watchman chasing the player through a
       // shop opens the inner door exactly as a dungeon guard does.
       if (!overlayHeld) openInteriorDoors(interiorGuards.guards);
+      interiorGuards.drawBodies(canvas, proj, view, mwv.eye, foeDt);   // MWNPC6: the watch in its bodies - before its billboards draw
       if (_guardBatches.length) renderer.drawBillboards(_guardBatches, camRight, UP_Y);
     }
     // TACT3 (bible/12-Enhanced-AI/Tactics-Arc.md; Mac's call: the classic lane too): the watch called in and the
@@ -10662,6 +10728,8 @@ export function createWorldModes(host) {
     if (interiorCtx.animateChars) interiorCtx.animateChars((performance.now() - _charT0) / 1000, _charAnimMode);
     for (const d of interiorCtx.charDraws) renderer.drawCharacter(d.mesh, d.matrix);
     host.drawVeiledPeerBodies?.();   // INVIS-LOOK: the concealed peers' bodies, translucent - after the room's opaque draws, before the weapon's screen quads
+    interiorFoes?.drawVeiledBodies();   // MWNPC5c: the concealed foes' bodies, beside the peers'
+    interiorGuards?.drawVeiledBodies();   // MWNPC6: and the watch's
     host.drawLootLines?.({ proj, view, eye: mwv.eye, finds: () => [...interiorDropped.lootFinds(), ...(interiorFoes?.lootFinds?.() ?? [])] });   // LOOT11: the lines of light over a building's finds - additive, after the veiled bodies
     // C9: the interior FP weapon - gesture/swing/sounds through the
     // rig; the strike frame runs the WeaponEnvDamage ray against the
@@ -12953,6 +13021,7 @@ export function createWorldModes(host) {
         // than replacing, so a suspended rest under a message box is a
         // real thing to drop. The clear() below carries the dispose.
         teardownQuestFlats();
+        peopleBodies.destroy();   // MWNPC8a
         interiorCtx.destroy();
         dropViewOut();   // RW1 (AUDIT): the forced way out too
         interiorFoes?.destroy?.();

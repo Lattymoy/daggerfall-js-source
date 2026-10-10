@@ -425,5 +425,6 @@ test('MW-STEEL4: the plate is a part like any retail part - its adds carry nothi
   for (const gone of ['solvePose', 'solveOn', 'bindPoseMats', 'skeletonBindSkins', 'fitShift', 'rebindSkin', 'skeletonNif']) assert.equal(binder.includes(gone), false, `mwFirstPerson.js: no ${gone}`);
   const fp = sourceText('src/combat/fpArm.js');
   for (const gone of ['tpSkeletonBytes', 'ownFp', 'fitFrom', 'solvePose']) assert.equal(fp.includes(gone), false, `fpArm.js: no ${gone}`);
-  assert.match(fp, /partBytes\.push\(\{ slot: add\.slot, partName: add\.partName, bones: add\.bones, bytes: arc\.get\(path\)\.slice\(\) \}\);/, 'the first person\'s adds go to the binder as retail\'s do');
+  // PIN MOVED (MWNPC3): the bytes are the archive's one copy (nifBytes), as every part's now are
+  assert.match(fp, /partBytes\.push\(\{ slot: add\.slot, partName: add\.partName, bones: add\.bones, bytes: nifBytes\(arc, path\) \}\);/, 'the first person\'s adds go to the binder as retail\'s do');
 });
