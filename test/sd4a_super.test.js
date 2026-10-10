@@ -150,7 +150,8 @@ test('SD4a the host by source: the tier read once by its one law before the fire
   assert.match(DC, /const enemies = dfLocation\?\.elite \|\| _superTier[^\n]*\n {4}\? expandEliteEnemies\(_layoutEnemies, \{\n {6}copies: ELITE_FOE_MULTIPLIER,/);
   assert.match(DC, /\n {2}if \(_superTier\) for \(const e of enemies\) e\.superTier = true;/);
   assert.ok(DC.indexOf('if (_superTier) for (const e of enemies) e.superTier = true;') < DC.indexOf('if (elitesAllowed({ onlinePage: isOnlinePage()'), 'marked before the pick and every build');
-  assert.match(DC, /pickDungeonElites\(enemies, [^\n]*\{ elite: !!dfLocation\?\.elite, count: _superTier \? SUPER_ELITE_FOES : null \}\);/);
+  // PIN MOVED (AUDIT BAL, bible/05-Combat/Balance-Arc.md section 10): and offline the class foes' built level for ELITE-FLOOR
+  assert.match(DC, /pickDungeonElites\(enemies, [^\n]*\{ elite: !!dfLocation\?\.elite, count: _superTier \? SUPER_ELITE_FOES : null, classLevel: _eliteOnline \? Infinity : [^\n]*\}\);/);
   assert.match(DC, /generateLootItems\(lootKey, [^\n]*, undefined, _superTier \? \{ itemChanceScale: SUPER_LOOT_DROP_MULT \} : elite \? \{ itemChanceScale: ELITE_LOOT_DROP_MULT \} : \{\}\);/);
   assert.match(DC, /qualityMult: _superTier \? SUPER_LOOT_QUALITY_MULT : elite \? ELITE_LOOT_QUALITY_MULT : 1,/);
   assert.match(read('bible/11-Multiplayer/Super-Dungeons.md'), /### SD4a - shipped 2026-10-07/);

@@ -84,10 +84,10 @@
     ]
   },
   {
-    "name": "TECH1-the-pass-before-the-late-finds",
+    "name": "TECH1-the-pass-before-the-gem-find",
     "file": "src/systems/lootRarity.js",
-    "old": "  items.push(...rollLateFinds({ ...source, luck }, rolls));   // LOOT21: the late finds - the Ayleid stones - last of all\n  techniquePass(minted, rolls);",
-    "new": "  techniquePass(minted, rolls);\n  items.push(...rollLateFinds({ ...source, luck }, rolls));   // LOOT21: the late finds - the Ayleid stones - last of all",
+    "old": "  items.push(...(_gemFind?.({ ...source, luck }, rolls) ?? []));   // GEM2: and a graded gem, last of all (systems/gems.js)\n  techniquePass(minted, rolls);",
+    "new": "  techniquePass(minted, rolls);\n  items.push(...(_gemFind?.({ ...source, luck }, rolls) ?? []));   // GEM2: and a graded gem, last of all (systems/gems.js)",
     "tests": [
       "test/tech1_roster.test.js"
     ]

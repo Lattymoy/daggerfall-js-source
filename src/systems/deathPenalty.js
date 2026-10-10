@@ -1,13 +1,22 @@
 // DEATH PENALTY (2026-09-24, Mac: "add deathpenalty 25% of the gold you
 // have with you" - "online mode only ofc").
 //
-// WHY ONLINE ONLY IS THE WHOLE SHAPE. Offline, a death ends the run
+// WHY A RESPAWN IS THE WHOLE SHAPE. A death that ends the run
 // (endRunToTitleMenu: the video, then the title, or F11 for the last
-// save), so there is no continuing purse to take from. Online, a death
-// RESPAWNS you (D-ONLINE1) - half health, the nearest safe place - and
-// that is free, which is the gap this closes: the fall now costs a
-// tenth of the coin you were carrying (a quarter until 2026-10-03, Mac:
-// "Reduce gold loss on death").
+// save) leaves no continuing purse to take from. A death that RESPAWNS
+// you - online (D-ONLINE1), half health, the nearest safe place - was
+// free, which is the gap this closes: the fall now costs a tenth of the
+// coin you were carrying (a quarter until 2026-10-03, Mac: "Reduce gold
+// loss on death").
+//
+// BAL4 (2026-10-10, bible/05-Combat/Balance-Arc.md section 6; Mac: "Do
+// everything", of "a real cost for dying offline"): IT WAS ONLINE ONLY
+// UNTIL OFFLINE RESPAWNED TOO. LEGACY2 (2026-10-05) gave Project
+// Legacy's Enduring member an offline rise - the same respawn - and it
+// cost nothing but Arkay's years (and nothing at all to the ageless).
+// An offline rise now takes the same tenth, stated on the death screen
+// (ui/deathScreen.js `rises`) as online. A death with no rise (Legacy
+// off, Bloodline's fall, the fixed city) still takes nothing.
 //
 // "WITH YOU" IS THE PURSE. player.goldPieces is the counter (systems/
 // inventory.js, E4). Not the bank account (the bank is where a careful
@@ -16,8 +25,9 @@
 // separately).
 //
 // ROUNDED DOWN, in the player's favour: 9 gold loses nothing, 100 loses 10.
-// There is no switch: an online rule the player could turn off would be no
-// rule, and offline nothing reads it.
+// There is no switch: a rule the player could turn off would be no rule.
+// Offline it stands wherever a death respawns - Project Legacy's own
+// switch decides that (off, the run ends, and nothing is taken).
 import { goldPiecesOf } from './inventory.js';
 
 /** AUDIT DEATH-TENTH: the share as a divisor - `g / 10` is exact for every whole purse, where `g * 0.1` rounds up past

@@ -35,7 +35,7 @@
 import { DOOR_ACTIVATION_DISTANCE } from '../player/activate.js';
 import { isShopShelfModel } from './shopStock.js';
 import { registerModSaveData } from './modSaveData.js';
-import { eliteHash, eliteRng } from './eliteFoes.js';
+import { eliteHash, eliteRng, elitesAllowed } from './eliteFoes.js';   // AUDIT BAL: and where elites stand at all
 import { goldStack } from './inventory.js';
 import { createRandomWeapon, createRandomArmor, createRandomJewellery, createRandomReligiousItem, createRandomGem, createRandomClothing, createRandomPotion } from './loot.js';
 import { createRandomBook } from './books.js';
@@ -132,7 +132,10 @@ export const SEARCH_FOES_PER_PLAYER = 2;
 /** How far apart two of them stand, and how far off the room's door may be to take the overflow (metres). */
 export const SEARCH_FOE_SPACING = 0.9;
 export const SEARCH_DOOR_REACH_M = 30;
-export const rollSearchElite = (rolls = Math.random) => rolls() < SEARCH_ELITE_CHANCE;
+/** AUDIT BAL (bible/05-Combat/Balance-Arc.md section 10): only where elites stand (eliteFoes.js elitesAllowed - online,
+ *  or offline under the loot ladder; an elite's drop is the ladder's) - the roll drawn first, so a search's dice are
+ *  the same either way. With the ladder off a search woke an elite and its ladder-tier drop, the one door that did. */
+export const rollSearchElite = (rolls = Math.random) => rolls() < SEARCH_ELITE_CHANCE && elitesAllowed();
 
 // ── the loot ────────────────────────────────────────────────────────
 export const SEARCH_LOOT_MIN = 1;

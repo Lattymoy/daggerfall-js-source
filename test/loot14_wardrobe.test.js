@@ -260,7 +260,8 @@ test('LOOT14: the doors - the host door rolls its garments after every draw it m
   const ownLines = (it) => { const own = it.affixes?.filter((a) => !LR.isTechniqueAffix(a)); return JSON.stringify(it.cursed ? own.slice(0, -1) : own ?? null); };
   // PIN MOVED (LOOT21, section 13): a late find - an Ayleid stone - may follow the garments, the door's very last draw
   // (law 9), so the pieces are the list's first two and the garments its next two, by place, and what follows is a stone
-  const lateFind = (it) => isWelkyndStone(it) || isVarlaStone(it);
+  // PIN MOVED (GEM2, bible/06-Systems/Gem-Sockets.md): and a graded gem, the door's very last draw since
+  const lateFind = (it) => isWelkyndStone(it) || isVarlaStone(it) || !!LR.gemKindOf(it);
   for (let seed = 1; seed < 40; seed++) {
     const alone = pieces();
     LR.rollLootRarity(alone, src, { rolls: lcg(seed) });

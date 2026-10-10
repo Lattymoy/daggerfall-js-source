@@ -228,12 +228,12 @@ test('CARDS9 THE BOSSES\' OWN: the Warden\'s, Sethrakul\'s and the Brass Remnant
     const sl = serpentSpoilsList(k, 10, 'dealt'), s = rollSerpentSpoils(k, 10, 'dealt');
     if (s.card) assert.deepEqual([sl[s.pieces.length].item.card, sl[s.pieces.length].tier], ['sethrakul', 'aetheric']);
     const al = sdSpoilsList(k, 10), a = rollSdSpoils(k, 10);
-    if (a.card) { assert.equal(al.at(-2).item.card, 'brass-remnant'); assert.ok(validLootItem(JSON.parse(JSON.stringify(al.at(-2).item))), 'the crash record\'s door takes it'); }
+    if (a.card) { assert.equal(al[a.pieces.length].item.card, 'brass-remnant'); assert.ok(validLootItem(JSON.parse(JSON.stringify(al[a.pieces.length].item))), 'the crash record\'s door takes it'); }   // GEM2 (PIN MOVED): right after the pieces, the Remnant's gems after it
   }
   // by source: each draw sits after the hoard's last piece's
-  // PIN MOVED (TECH1, bible/05-Combat/Weapon-Techniques.md): a weapon's technique is the door's draw after the card's
-  // (Loot-II law 9 - the card's draw and every one before it stand where they were); the card still follows the last pass
-  assert.match(read('src/systems/gateSpoils.js'), /lastPass\(pieces\.map\(\(p\) => p\.item\), rolls\);\s*(\/\/[^\n]*\n\s*)*const card = bossCardRoll\('gate', rolls\);\s*(\/\/[^\n]*\n\s*)*techniquePass\(pieces\.map\(\(p\) => p\.item\), rolls\);\s*return \{ gold, pieces, sigil: sigilStone\(\), card \};/);
+  // GEM1/GEM2 (bible/06-Systems/Gem-Sockets.md, PIN MOVED): the card is the last draw BEFORE the gem arc's - the sockets'
+  // passes and the boss's gems follow it (law 9); test/gem1_sockets.test.js pins them
+  assert.match(read('src/systems/gateSpoils.js'), /lastPass\(pieces\.map\(\(p\) => p\.item\), rolls\);\s*(\/\/[^\n]*\n\s*)*const card = bossCardRoll\('gate', rolls\);\s*(\/\/[^\n]*\n\s*)*socketPass\(pieces\.map/);
   assert.match(read('src/systems/serpentSpoils.js'), /if \(coil\) pieces\.push\(\{ item: coil, tier: coil\.rarity \}\);\s*(\/\/[^\n]*\n\s*)*const card = dealt \? bossCardRoll\('serpent', rolls\) : null;/);
   assert.match(read('src/systems/sdSpoils.js'), /if \(hourlock\) pieces\.push\(\{ item: hourlock, tier: hourlock\.rarity \}\);\s*(\/\/[^\n]*\n\s*)*const card = bossCardRoll\('abyss', rolls\);/);
 });

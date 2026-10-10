@@ -36,11 +36,12 @@ import { BOOK_TEMPLATE, createBook } from './books.js';   // EB3: books in the p
 import { BOOK_ID_TITLES } from './booksData.js';
 import { setPref } from './uiPrefs.js';   // LR3: the loot door turns the ladder on for the session
 import { setModSetting } from './modSettings.js';   // FIELD BUGS 2026-09-29 (the sea) #5: the sea door turns Come Sail Away on
-import { applyRarity, LEGENDARIES, ROLLED_TIERS, exaltLegendary, WARDROBE_LEGENDARIES, cursePiece, SOCKET_EMPTY, GEM_IDS, addTechniqueLine } from './lootRarity.js';   // LR3: one of everything the ladder can mint; LOOT2: and an Exalted; LOOT15: the wardrobe's; LOOT16: a curse; TECH1: a technique
+import { applyRarity, LEGENDARIES, ROLLED_TIERS, exaltLegendary, WARDROBE_LEGENDARIES, cursePiece, SOCKET_EMPTY, GEM_IDS, socketMax, addTechniqueLine } from './lootRarity.js';   // LR3: one of everything the ladder can mint; LOOT2: and an Exalted; LOOT15: the wardrobe's; LOOT16: a curse; TECH1: a technique
 import { TECHNIQUE_IDS, TECHNIQUES, GAUNTLETS_TEMPLATE } from '../combat/techniqueRoster.js';   // TECH1: one piece a technique, to try them all
 import { AETHERIC_RECORDS, mintAetheric } from './aetheric.js';   // SET6: the Aetheric rung - Ruhn's Regalia, whole (RAID4b: and the raiding parties' three sets)
 import { mintHourlock } from './gilded.js';   // GILDED1: the top rung's one record, to be seen and fired (its shot: createPellets, below)
 import { welkyndStone, varlaStone } from './ayleidStones.js';   // LOOT21: the Ayleid stones
+import { mintGem } from './gems.js';   // GEM2: the graded gems
 import { createThunderlock, createPellets, THUNDERLOCK_TEMPLATE, PELLET_TEMPLATE } from './thunderlock.js';   // TSR-GUN: the port's own weapon, and the import IS its registration
 
 /** The prebuilt characters. `race` is the DF race key (races.js RACES
@@ -262,6 +263,8 @@ export const TECHNIQUE_TEST_BASES = Object.freeze({
 
 /** LR3: the ladder's bases - ten items across the three groups the
  *  ladder rolls, each minted the way the loot factories mint them. */
+/** GEM2: the graded gems the loot ladder's door lays beside the socketed bow - one of each grade the port adds. */
+export const TEST_GEMS = Object.freeze(['chipped-emerald', 'flawed-amber', 'flawless-ruby', 'perfect-diamond']);
 export const TEST_LOOT_BASES = Object.freeze([
   { kind: 'weapon', label: 'Steel Longsword', templateIndex: WEAPONS_ENUM.Longsword, material: 1 },
   { kind: 'weapon', label: 'Steel Dagger', templateIndex: WEAPONS_ENUM.Dagger, material: 1 },
@@ -344,7 +347,7 @@ export function seedTestLoot(entity, rolls = Math.random) {
   { const r = applyRarity(base(TEST_LOOT_BASES[0]), 'rare', rolls); cursePiece(r, rolls); put(r); }
   if (LEGENDARIES.length) { const l = legendaryItem(LEGENDARIES[0]); cursePiece(l, rolls); put(l); }
   // LOOT20 (section 12): a Rare with an empty socket and a Ruby to set in it, at the Mages Guild's Reforge
-  { const s = applyRarity(base(TEST_LOOT_BASES[0]), 'rare', rolls); s.socket = SOCKET_EMPTY; put(s); }
+  { const s = applyRarity(base(TEST_LOOT_BASES[0]), 'rare', rolls); s.sockets = [SOCKET_EMPTY]; put(s); }   // GEM1: the socket list
   put(mintCondition(setItemFields({ group: 'Gems', templateIndex: GEM_IDS.indexOf('ruby') })));
   // LOOT21 (section 13): the two Ayleid stones, found at the deepest sources - here to be used
   put(welkyndStone());
@@ -353,6 +356,10 @@ export function seedTestLoot(entity, rolls = Math.random) {
   // drops it - and a stack of its shot, so the toll can be heard; after every draw the room made before
   put(mintHourlock());
   put(createPellets(30));
+  // GEM1/GEM2 (bible/06-Systems/Gem-Sockets.md): a Rare long bow with its size's three wells, empty, and four graded gems
+  // to set in them from the pack's card - after every draw the room made before
+  { const b = applyRarity(base(TEST_LOOT_BASES[3]), 'rare', rolls); b.sockets = Array(socketMax(b)).fill(SOCKET_EMPTY); put(b); }
+  for (const id of TEST_GEMS) put(/** @type {any} */ (mintGem(id)));
   // TECH1 (bible/05-Combat/Weapon-Techniques.md): THE TECHNIQUES - one Rare a technique, on a piece of its family (a Long
   // Bow's two, a Longsword's, a Dagger's, a Battle Axe's, a Mace's, the Gauntlets' for the bare hand), its line at the
   // band's middle, so every one can be tried on its key; after every draw the room made before

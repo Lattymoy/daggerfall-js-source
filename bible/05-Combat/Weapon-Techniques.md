@@ -102,10 +102,11 @@ existing seed draws what it drew. It comes from its own pass alone.
   nor a Gilded record (the Hourlock).
 - **The worth**: 30 gold a point (`AFFIX_WORTH.technique`) - a Rare's +23% is 690.
 - **The doors**: `rollLootRarity` (every host's list - a corpse, a pile, a chest, a searchable, World of Daggerfall's
-  sites) after its late finds; the corpse kit (`foeLootCap.js` `rollCorpseKit`) after its socket pass; the gate's, the
-  Abyss Dungeon's and the serpent's spoils after their card; the raid's after its last pass. Each calls `techniquePass`
-  LAST, so a seeded door's earlier draws mint what they did (pinned by running every door with the pass off and on,
-  piece for piece).
+  sites) after its late finds, the weapons' own sockets and the world's gem find (GEM1, GEM2); the corpse kit
+  (`foeLootCap.js` `rollCorpseKit`) after its socket passes; the gate's, the Abyss Dungeon's and the serpent's spoils
+  after their card, their socket passes and their boss gems; the raid's after its last pass. Each calls
+  `techniquePass` LAST, so a seeded door's earlier draws mint what they did (pinned by running every door with the
+  pass off and on, piece for piece).
 - **The card** prints the line as `<name> +N%` with its band (`Leap Strike +15% [15-30]`) and, under it, what a press
   does with that line's own numbers (`techniqueBrief`): `Aim: leap 9 m, strike all in 2.5 m, 161%. 5 fatigue, 12s`.
   A Rare is read once it is identified, as DFU reads it; its technique works all the same.
@@ -376,6 +377,16 @@ item law's version and its producers' count (`int1_itemlaw`), the input registry
 re-aimed by content at the lines they guard, their laws unchanged: `disc10.json` DISC10-E-L2 (the swing's options are
 read into `opts` before the technique's to-hit joins them) and `auditclimbarc.json` L3 (the air arm's guard now names the
 technique's flight beside the parkour leap's).
+**Merging GEM1-GEM3 (#741).** The gem arc added its own last draws at the same doors - the weapons' sockets and the
+world's gem find at the host door, the socket passes and the boss's gems in a boss's spoils - so the technique pass now
+draws after them (law 9 both ways: every draw the gem arc shipped is its seed's, and the technique is a door's last).
+Its pins moved with it, each marked `PIN MOVED (TECH1)`: `gem1_sockets` (the weapons' pass and the bosses' "the same but
+the sockets" set a technique's line and worth aside; the find's "nothing after it" holds the technique off; the gate's
+source pin reads the pass after its gems), `serpentset` (seed 2's broadsword now rolls Leap Strike after the last
+pass's castSpeed line), and in `loot16_curses`, `loot20_sockets`, `loot21_stones`, `gilded1_gilded`, `sd9e_spoils` and
+`lr1_lootrarity` both arcs' moves together (`cards9_sources` reads the gem arc's passes after the card, as the gem arc
+moved it). `TECH1-the-pass-before-the-late-finds` is re-aimed as `TECH1-the-pass-before-the-gem-find`. The Reforge's
+Exalted line on a Legendary counts back from the gems' lines (GEM1) and then past a technique's (TECH1).
 The ledger row, set at the foot of section A, moved sections B, C and D down one line: their line cites were
 re-resolved by `tools/citeShift.mjs` (and the numbered and inline `:NNN` identifiers of Port-Status section 2 by hand,
 with section A's tally, now 300 rows) - `test/citedrift.test.js` CD1, CD3 and CD5.

@@ -31,7 +31,8 @@
 // Not a DFU member. Ledger A (SERPENT1).
 import { seededRng } from './wind.js';
 import { spoilsBase, magicOrBetter, sigilStone } from './gateSpoils.js';
-import { applyRarity, lastPass, techniquePass } from './lootRarity.js';   // TECH1: the technique pass, a door's last draw
+import { applyRarity, lastPass, socketPass, weaponSocketPass, techniquePass } from './lootRarity.js';   // GEM1: the sockets' passes; TECH1: the technique pass, a door's last draw
+import { bossGems } from './gems.js';   // GEM2: the Old Coil's gem
 import { rollSerpentSetPiece } from './aetheric.js';   // SERPENT-SET: the Old Coil's own
 import { SERPENT_EMBERS } from '../net/serpentHoardLaw.js';   // SERPENT-SET: the gate's currency
 import { bossCardRoll } from './bossCards.js';   // CARDS9: Sethrakul's own card, the hoard's last draw
@@ -73,7 +74,7 @@ export function serpentEmbers() {
 }
 
 /**
- * THE HOARD for one player: `{ gold, pieces: [{ item, tier }], embers }` - the Rare-or-better piece first, SERPENT-SET's
+ * THE HOARD for one player: `{ gold, pieces: [{ item, tier }], embers, card, gems }` - the Rare-or-better piece first, SERPENT-SET's
  * Coilscale piece (when one drops) last; `embers` the stack of the gate's currency every hoard carries. The same seed,
  * level, earning and world answer the same hoard.
  * @param {number} seed the receipt's `c` @param {number} level the level it fought at @param {string} earned the receipt's `x`
@@ -93,8 +94,13 @@ export function rollSerpentSpoils(seed, level, earned = 'dealt') {
   // CARDS9 (Tavern-Cards section 32): SETHRAKUL'S OWN CARD - a dealer's alone, one draw more after the set piece's, so
   // every hoard before it is what it was; kept beside the pieces
   const card = dealt ? bossCardRoll('serpent', rolls) : null;
-  techniquePass(pieces.map((p) => p.item), rolls);   // TECH1: a weapon's technique - LAST of all, after the card (law 9); a set piece takes none
-  return { gold, pieces, embers: serpentEmbers(), card };
+  // GEM1/GEM2 (bible/06-Systems/Gem-Sockets.md section 4): the sockets' passes over the pieces, then the Old Coil's gem -
+  // a dealer's alone - LAST of all (after the card), so every hoard before them is what it was for its seed
+  socketPass(pieces.map((p) => p.item), rolls);
+  weaponSocketPass(pieces.map((p) => p.item), rolls);
+  const gems = dealt ? bossGems('serpent', rolls) : [];
+  techniquePass(pieces.map((p) => p.item), rolls);   // TECH1: a weapon's technique - after even the Old Coil's gem (law 9); a set piece takes none
+  return { gold, pieces, embers: serpentEmbers(), card, gems };
 }
 
 /** The hoard as the spoils pool hands it over (scenes/spoilsPool.js's pieces): each item, then (SERPENT-SET) the embers,
@@ -105,6 +111,7 @@ export function serpentSpoilsList(seed, level, earned) {
   return [
     ...s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier })),
     ...(s.card ? [{ kind: 'item', item: s.card, tier: 'aetheric' }] : []),   // CARDS9: the Old Coil's card, after the pieces
+    ...s.gems.map((g) => ({ kind: 'item', item: g, tier: 'common' })),   // GEM2: the Old Coil's gem, after the card
     ...(s.embers ? [{ kind: 'item', item: s.embers, tier: 'artifact' }] : []),
     { kind: 'gold', gold: s.gold, tier: 'common' },
   ];
