@@ -8,7 +8,7 @@
 // read off the town's layout as the team parks - THE STAMP (wardenStamp): where the wagon stands (its anchor, the save's
 // natives), when it came to stand there (the wall clock), the TOWN it stands in (a city's, a hamlet's or a village's map
 // id - WARDEN_TOWN_TYPES; anywhere else no watch keeps the street), whether it stands ON A ROAD (a third of its footprint
-// on the town's road cells - roadShare, the walk grid's ROAD_WEIGHT), and where a throw LANDS (landingOf: straight out
+// on the town's road cells - footprintRoadShare, the walk grid's ROAD_WEIGHT), and where a throw LANDS (landingOf: straight out
 // through the town's nearest edge, WARDEN_LAND_PAST beyond it). The park word carries it (wardenWordOf), so the cell can
 // throw a team whose owner is away. A lone horse is no cart: only a parked wagon is stamped.
 // OFFLINE THE CLIENT IS THE WATCH (offlineDue): the road's rule alone (a town holds nobody else's team), on the stamp's
@@ -51,7 +51,7 @@ export const WARDEN_TEXT = Object.freeze({
  * @param {(gx: number, gy: number) => number} weightAt @param {number} width @param {number} height @param {number} cell
  * @param {number[]} at @param {number[]} forward @param {number[]} half
  */
-export function roadShare(weightAt, width, height, cell, at, forward, half) {
+export function footprintRoadShare(weightAt, width, height, cell, at, forward, half) {
   const fl = Math.sqrt(forward[0] * forward[0] + forward[1] * forward[1]) || 1;
   const fx = forward[0] / fl, fz = forward[1] / fl;
   const n = WARDEN_FOOT_STEPS;

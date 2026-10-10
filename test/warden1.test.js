@@ -17,7 +17,7 @@ import {
 } from '../src/net/wire.js';
 import { fakeRooms } from './fakeRoom.mjs';
 import {
-  WARDEN_TOWN_TYPES, isWardenTown, roadShare, landingOf, strayOf, wardenStamp, validWardenStamp, stampFits, wardenWordOf,
+  WARDEN_TOWN_TYPES, isWardenTown, footprintRoadShare, landingOf, strayOf, wardenStamp, validWardenStamp, stampFits, wardenWordOf,
   offlineDue, thrownRecord, thrownTo, WARDEN_LAND_PAST, WARDEN_LAND_SCATTER, WARDEN_ROAD_SHARE, WARDEN_SAME_NATIVES, WARDEN_TEXT,
 } from '../src/systems/wagonWarden.js';
 import { ROAD_WEIGHT } from '../src/systems/gothwayBoards.js';
@@ -258,14 +258,14 @@ test('WARDEN1 law: the watch keeps a city, a hamlet and a village; a third of th
   assert.equal(isWardenTown(LOCATION_TYPES.TownCity), true); assert.equal(isWardenTown(LOCATION_TYPES.HomeFarms), false);
   // a 10 x 10 grid of 1 m cells, a road down the column gx 4
   const weightAt = (gx) => (gx === 4 ? ROAD_WEIGHT : 8);
-  assert.equal(roadShare(weightAt, 10, 10, 1, [4.5, 5], [0, 1], [1, 2]), 1 / 3, 'its middle column of samples on the road: a third');
-  assert.ok(roadShare(weightAt, 10, 10, 1, [4.5, 5], [0, 1], [1, 2]) >= WARDEN_ROAD_SHARE);
-  assert.equal(roadShare(weightAt, 10, 10, 1, [5.5, 5], [0, 1], [1, 2]), 1 / 3, 'its left column');
-  assert.ok(roadShare(weightAt, 10, 10, 1, [6.5, 5], [0, 1], [1, 2]) < WARDEN_ROAD_SHARE, 'a wheel off the road is not on it');
-  assert.equal(roadShare(weightAt, 10, 10, 1, [2, 5], [0, 1], [0.5, 2]), 0, 'off it');
-  assert.equal(roadShare(weightAt, 10, 10, 1, [4.5, 5], [1, 0], [0.4, 0.4]), 1, 'wholly on it');
-  assert.equal(roadShare(() => ROAD_WEIGHT, 10, 10, 1, [-5, 5], [0, 1], [1, 1]), 0, 'off the grid stands on no road');
-  assert.equal(roadShare((gx, gy) => (gy === 5 ? ROAD_WEIGHT : 8), 10, 10, 1, [5, 5.5], [1, 0], [0.4, 3]), 1, 'turned along x: its length lies along the road at gy 5');
+  assert.equal(footprintRoadShare(weightAt, 10, 10, 1, [4.5, 5], [0, 1], [1, 2]), 1 / 3, 'its middle column of samples on the road: a third');
+  assert.ok(footprintRoadShare(weightAt, 10, 10, 1, [4.5, 5], [0, 1], [1, 2]) >= WARDEN_ROAD_SHARE);
+  assert.equal(footprintRoadShare(weightAt, 10, 10, 1, [5.5, 5], [0, 1], [1, 2]), 1 / 3, 'its left column');
+  assert.ok(footprintRoadShare(weightAt, 10, 10, 1, [6.5, 5], [0, 1], [1, 2]) < WARDEN_ROAD_SHARE, 'a wheel off the road is not on it');
+  assert.equal(footprintRoadShare(weightAt, 10, 10, 1, [2, 5], [0, 1], [0.5, 2]), 0, 'off it');
+  assert.equal(footprintRoadShare(weightAt, 10, 10, 1, [4.5, 5], [1, 0], [0.4, 0.4]), 1, 'wholly on it');
+  assert.equal(footprintRoadShare(() => ROAD_WEIGHT, 10, 10, 1, [-5, 5], [0, 1], [1, 1]), 0, 'off the grid stands on no road');
+  assert.equal(footprintRoadShare((gx, gy) => (gy === 5 ? ROAD_WEIGHT : 8), 10, 10, 1, [5, 5.5], [1, 0], [0.4, 3]), 1, 'turned along x: its length lies along the road at gy 5');
   const R = [0, 0, 100, 200];
   assert.deepEqual(landingOf(R, [10, 100]), [-WARDEN_LAND_PAST, 100], 'west');
   assert.deepEqual(landingOf(R, [95, 100]), [100 + WARDEN_LAND_PAST, 100], 'east');

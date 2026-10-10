@@ -18,7 +18,7 @@ city, a hamlet or a village (`systems/wagonWarden.js` `WARDEN_TOWN_TYPES`, MAPS.
 `TownVillage`); a wagon on a road between towns, at a farm or a dungeon's mouth stands as long as it likes.
 
 **The road.** A wagon stands ON THE ROAD when a third of its footprint (`WARDEN_ROAD_SHARE`) lies on the town's road
-cells: its own box, turned as it stands, sampled on a 3 x 3 grid corners included (`roadShare`), over the town's walk
+cells: its own box, turned as it stands, sampled on a 3 x 3 grid corners included (`footprintRoadShare`), over the town's walk
 grid (`world/cityNavigation.js` - the cells its people walk; a road cell weighs `ROAD_WEIGHT`, GOTHWAY-BOARDS' one
 home). A wagon on a road `WARDEN_ROAD_MS` (ten real minutes) after it came to stand there is thrown.
 

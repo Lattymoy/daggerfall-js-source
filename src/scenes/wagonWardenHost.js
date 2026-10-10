@@ -25,7 +25,7 @@
 // The streaming host is where towns are played and parked in, online and off.
 //
 // Not a DFU member. Ledger A (WARDEN1).
-import { wardenStamp, validWardenStamp, stampFits, wardenWordOf, offlineDue, roadShare, landingOf, strayOf, WARDEN_ROAD_SHARE, WARDEN_TEXT } from '../systems/wagonWarden.js';
+import { wardenStamp, validWardenStamp, stampFits, wardenWordOf, offlineDue, footprintRoadShare, landingOf, strayOf, WARDEN_ROAD_SHARE, WARDEN_TEXT } from '../systems/wagonWarden.js';
 import { findTownPath, pathLine } from '../systems/livingWorld/townPaths.js';
 import { NAV_CELL } from '../world/cityNavigation.js';
 import { WAGON_MODE } from '../systems/horseCartLaw.js';
@@ -80,7 +80,7 @@ export function createWagonWarden({
     const cx = (box[0] + box[3]) / 2, cz = (box[2] + box[5]) / 2;
     const mid = [t.local[0] + cx * fz + cz * fx, t.local[1] - cx * fx + cz * fz];
     const nav = t.nav;
-    const share = roadShare((gx, gy) => nav.weightAt(gx, gy), nav.width, nav.height, NAV_CELL, mid, [fx, fz], [(box[3] - box[0]) / 2, (box[5] - box[2]) / 2]);
+    const share = footprintRoadShare((gx, gy) => nav.weightAt(gx, gy), nav.width, nav.height, NAV_CELL, mid, [fx, fz], [(box[3] - box[0]) / 2, (box[5] - box[2]) / 2]);
     const land = landingOf([0, 0, nav.width * NAV_CELL, nav.height * NAV_CELL], mid, strayOf(a));
     const s = t.toScene(land[0], land[1]);
     const w = toWire([s[0], 0, s[1]]);
