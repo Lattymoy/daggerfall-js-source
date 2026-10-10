@@ -28,6 +28,7 @@ export const TEX = Object.freeze({
   openSide: 8, tilt: 9, tiltInner: 10,
   caravanSide: 11, caravanFront: 12, caravanRear: 13, caravanRoof: 14,
   roomSide: 15, roomFront: 16, roomRear: 17, roomCeiling: 18, roomFloor: 19,   // WAGONS2: the caravan's room (world/caravanRoomModel.js)
+  harness: 20,   // WAGONS3: the traces and the reins (systems/wagonRopes.js)
 });
 /** How far each tiling picture repeats (metres a tile, u then v - world/galleonMesh.js planarUv's); a livery's u alone
  *  (its v is its height, `BANDS`); 0 where the picture is laid whole on its face (a wheel's, an end's). */
@@ -36,6 +37,7 @@ export const WAGON_TILE = Object.freeze({
   iron: [1, 1], openSide: [1.3, 0], tilt: [1.3, 1.3], tiltInner: [1.3, 1.3], caravanSide: [2.9, 0], caravanFront: [0, 0],
   caravanRear: [0, 0], caravanRoof: [1.6, 1.6],
   roomSide: [2.9, 0], roomFront: [0, 0], roomRear: [0, 0], roomCeiling: [1.6, 1.6], roomFloor: [1.6, 1.6],
+  harness: [0, 0.5],   // WAGONS3: round the strap once, half a metre of it a tile along it
 });
 /** The two sides' liveries: one slice each over the wagons' side walls' height (both bodies stand 0.94 to 3.06 m - the
  *  bake's, test/wagons1.test.js pins it), `recs` top down. */
@@ -142,6 +144,19 @@ function beamArt() {
     let c = mix(C.oakDark, C.oak, 0.6 * n(x, y));
     if (((y * 7 + Math.floor(x / 9)) % 13) === 0) c = shade(c, 0.78);   // the grain's lines along it
     if (r() < 0.015) c = C.tar;
+    put(img, x, y, c);
+  }
+  return img;
+}
+
+/** WAGONS3: the harness's leather - traces and reins, laid round each strap (u) and along it (v): a tanned brown, darker
+ *  at its edges where it folds, a stitched seam down it and the wear of the road. */
+function harnessArt() {
+  const img = picture(S, S), n = noise(0xa71, S, S, 4, 16);
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const edge = Math.min(x, S - 1 - x) < 6 ? 0.72 : 1;
+    let c = shade(mix([92, 58, 32], [128, 84, 48], 0.55 * n(x, y)), edge);
+    if ((x === 20 || x === 43) && y % 6 < 3) c = [176, 150, 108];   // the stitching
     put(img, x, y, c);
   }
   return img;
@@ -426,6 +441,7 @@ export function wagonArt() {
     openSide: openSideArt, tilt: () => tiltArt(false), tiltInner: () => tiltArt(true),
     caravanSide: () => caravanSideArt(), caravanFront: () => caravanEndArt(false), caravanRear: () => caravanEndArt(true), caravanRoof: () => caravanRoofArt(),
     roomSide: () => roomSideArt(), roomFront: () => roomEndArt(false), roomRear: () => roomEndArt(true), roomCeiling: () => roomCeilingArt(), roomFloor: () => roomFloorArt(),
+    harness: harnessArt,
   };
   return Object.entries(TEX).map(([key, rec]) => /** @type {[number, any]} */ ([rec, painters[key]()])).sort((a, b) => a[0] - b[0]);
 }

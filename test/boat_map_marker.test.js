@@ -17,7 +17,7 @@ function markers(raw, drawn, hidden = new Set()) {
   const start = world.indexOf('    _peerMapPoses.clear();');
   const stop = world.indexOf('    const visiblePeers =', start);
   // eslint-disable-next-line no-new-func
-  new Function('_peerMapPoses', 'drawable', world.slice(start, stop))(_peerMapPoses, drawable);
+  new Function('_peerMapPoses', 'drawable', 'hccOn', 'hcc', 'campToWire', world.slice(start, stop))(_peerMapPoses, drawable, () => false, null, (q) => q);   // PIN MOVED (WAGONS3): the drivers' glue after the map's poses - no wagons here
   // eslint-disable-next-line no-new-func
   return new Function('online', '_peerMapPoses', '_hiddenPeers', `
     const marks = [], near = new Set(), sharing = new Map(), _veils = new Map();
