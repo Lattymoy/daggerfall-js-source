@@ -220,8 +220,8 @@
   {
     "name": "LW3-away-armed",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "    out.push({ t0: tr.outT0, t1: fell ? Infinity : tr.backT1, yaw: leavingYaw(tr), armed: res.cls != null, dock: !!tr.sea });",
-    "new": "    out.push({ t0: tr.outT0, t1: fell ? Infinity : tr.backT1, yaw: leavingYaw(tr), armed: true, dock: !!tr.sea });",
+    "old": "    out.push({ t0, t1: fell ? Infinity : tr.backT1, yaw: leavingYaw(tr), armed: res.cls != null, dock: !!tr.sea });",
+    "new": "    out.push({ t0, t1: fell ? Infinity : tr.backT1, yaw: leavingYaw(tr), armed: true, dock: !!tr.sea });",
     "tests": [
       "test/lw3_roads.test.js"
     ]

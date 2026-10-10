@@ -26,7 +26,7 @@ import { partiesOfTown, partyAt, wayAt, membersAt, remainsOfTown, NATIVE_PER_M, 
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 import { circleLine, lineMinutes, ROUND_S } from '../systems/livingWorld/meetups.js';
 import { ROAD_GREETINGS, ROAD_PASS_SCRIPTS, ROAD_PASS_WARNINGS, BAND_WARNINGS, COMPANY_GREETINGS, fillLine, firstNameOf } from '../systems/livingWorld/lines.js';
-import { byRole, headOf } from '../systems/livingWorld/companies.js';   // LW13: a company in file by role, its head's word
+import { byRole, headOf, companiesOf, namedIn } from '../systems/livingWorld/companies.js';   // LW13: a company in file by role, its head's word; AUDIT LW-II-2 R8: a hired one's name
 import { FIRE_FLAT } from '../systems/survival/camp.js';
 import { teamOf, trainOf, campTeam } from '../systems/livingWorld/wagons.js';   // LW10: the wagon trains
 import { lwSeed, textSeed } from '../systems/livingWorld/seed.js';
@@ -94,12 +94,13 @@ const ROAD_LABELS = Object.freeze({
 /**
  * LW9: THE CAMPS SHARED - the night's camps (the parties camped, none at an inn) within CAMP_SHARE_N of one another, one
  * camp: the earliest party's (by trip id) its place, every one of them a place in its ring in order. A drawing's law:
- * no party's timeline moves.
- * @param {{ trip: any, at: any, members?: any[] }[]} camped @returns {Map<string, { x: number, z: number, i0: number, n: number, first: boolean }>}
+ * no party's timeline moves. AUDIT LW-II-2 R4: a party halted at its camp is of it still (`lit`: whether its fire burns -
+ * a party of it not halted).
+ * @param {{ trip: any, at: any, members?: any[] }[]} camped @returns {Map<string, { x: number, z: number, i0: number, n: number, first: boolean, lit: boolean }>}
  */
 export function campGroups(camped) {
   const list = [...camped].sort((a, b) => (a.trip.id < b.trip.id ? -1 : a.trip.id > b.trip.id ? 1 : 0));
-  /** @type {Map<string, { x: number, z: number, i0: number, n: number, first: boolean }>} */
+  /** @type {Map<string, { x: number, z: number, i0: number, n: number, first: boolean, lit: boolean }>} */
   const out = new Map();
   const done = new Set();
   for (const p of list) {
@@ -113,9 +114,10 @@ export function campGroups(camped) {
       }
     }
     const n = group.reduce((a, g) => a + (g.members?.length ?? g.trip.party.length), 0);
+    const lit = group.some((g) => !g.at.halt);   // AUDIT LW-II-2 R4: its fire burns while a party of it is not halted
     let i0 = 0;
     group.forEach((g, gi) => {
-      out.set(g.trip.id, { x: p.at.x, z: p.at.z, i0, n, first: gi === 0 });
+      out.set(g.trip.id, { x: p.at.x, z: p.at.z, i0, n, first: gi === 0, lit });
       i0 += g.members?.length ?? g.trip.party.length;
     });
   }
@@ -125,6 +127,7 @@ export function campGroups(camped) {
 /**
  * LW9: THE PARTIES PASSING - each pair of parties walking (out or home, no halt, no camp) within PASS_N of each other
  * this minute, the lower trip id first, and its words: the road's, or a warning where either has met trouble behind it.
+ * AUDIT LW-II-2 R2: a warned pair the warned party first - its warning the script's first line.
  * @param {{ trip: any, at: any }[]} walking @param {number} t
  * @returns {{ a: any, b: any, script: readonly string[], warned: any }[]}
  */
@@ -138,10 +141,42 @@ export function passingPairs(walking, t) {
       const seed = lwSeed(textSeed(a.trip.id), textSeed(b.trip.id), 0x70617373);   // 'pass'
       const warned = [a, b].find((p) => p.trip.enc && p.trip.enc.t1 <= t && p.trip.enc.foes?.length);
       const pool = warned ? ROAD_PASS_WARNINGS : ROAD_PASS_SCRIPTS;
-      out.push({ a, b, script: pool[seed % pool.length], warned: warned ?? null });
+      // AUDIT LW-II-2 R2: the warned party speaks first - before, the lower trip id always did, and where the other had
+      // met the trouble the one that met nothing warned of it ("{foe} back the way we came")
+      const [first, second] = warned === b ? [b, a] : [a, b];
+      out.push({ a: first, b: second, script: pool[seed % pool.length], warned: warned ?? null });
     }
   }
   return out;
+}
+
+/** AUDIT LW-II-2 R2: a party walking at minute `m` - out or home, no halt, no camp, not lodged, and (R1) somebody of it
+ *  standing - its place, else null. @param {any} trip @param {number} m */
+export function walkingAt(trip, m) {
+  const at = partyAt(trip, m);
+  return (at.phase === 'out' || at.phase === 'back') && !at.halt && !at.camp && !at.inn && membersAt(trip, m).length ? at : null;
+}
+
+/**
+ * AUDIT LW-II-2 R2: THE LINE OF A PASSING a pair says at minute `t` - its script's lines in order, a line a beat (`lineMin`,
+ * the clock's beats from its zero), from the first beat that began with the two walking within PASS_N: stepped back a
+ * beat at a time from `t`'s while they were, at most the script's length - and none past the script, nor in the beat
+ * they came near in. -1 for none. Pure, so every reader at `t` hears the same line. Before, the line was the clock's beat
+ * round the script (`floor(t / lineMin) % length`): the exchange said over and over while two parties walked near (a pair
+ * of trains at one pace, for hours), as often begun on its reply as on its first line.
+ * @param {{ a: { trip: any }, b: { trip: any }, script: readonly string[] }} pair @param {number} t @param {number} lineMin
+ * @returns {number}
+ */
+export function passingLine(pair, t, lineMin) {
+  const near = (/** @type {number} */ m) => {
+    const a = walkingAt(pair.a.trip, m), b = walkingAt(pair.b.trip, m);
+    return !!a && !!b && Math.hypot(/** @type {number} */ (a.x) - /** @type {number} */ (b.x), /** @type {number} */ (a.z) - /** @type {number} */ (b.z)) <= PASS_N;
+  };
+  const beat = Math.floor(t / lineMin);
+  if (!near(beat * lineMin)) return -1;
+  let k = 0;
+  while (k < pair.script.length && near((beat - k - 1) * lineMin)) k++;
+  return k < pair.script.length ? k : -1;
 }
 
 /**
@@ -186,8 +221,9 @@ export function foePlaces(trip, at) {
 export function partyPlaces(trip, at, ring = null) {
   const out = [];
   const n = trip.party.length;
-  // LW9: a camp shared with another party - its people a stretch of the one ring about the first's fire
-  if (ring && at.camp && !at.halt) {
+  // LW9: a camp shared with another party - its people a stretch of the one ring about the first's fire; AUDIT LW-II-2
+  // R4: at a halt there too (its fight done, its wounds bound) - before, the ring of its own, turned its own way
+  if (ring && at.camp) {
     const r = CAMP_RING_N + Math.max(0, ring.n - 4) * CAMP_RING_STEP_N;
     for (let i = 0; i < n; i++) {
       const a = ((ring.i0 + i) / ring.n) * Math.PI * 2;
@@ -328,7 +364,13 @@ export function createLivingRoads(deps) {
       const camped = [];
       for (const p of parties) {
         const at = partyAt(p.trip, t);
-        if ((at.phase === 'out' || at.phase === 'back') && at.camp && !at.halt && !at.inn) camped.push({ trip: p.trip, at, members: membersAt(p.trip, t) });
+        // AUDIT LW-II-2 R4: a party halted at its camp (a camp trouble's fight, its wounds bound) keeps its place in the
+        // ring - before, it left the camp's groups for the halt, and every party of a shared camp took a new place in it
+        // (and the lone one stood a ring turned another way), and took its old one back after
+        if ((at.phase === 'out' || at.phase === 'back') && at.camp && !at.inn) {
+          const members = membersAt(p.trip, t);
+          if (members.length) camped.push({ trip: p.trip, at, members });   // AUDIT LW-II-2 R1: nobody standing, no camp of theirs
+        }
       }
       const groups = campGroups(camped);
       const rate = deps.baseRate?.() ?? 0;
@@ -338,12 +380,17 @@ export function createLivingRoads(deps) {
         if (at.inn) continue;   // LW9: lodged at the inn on the road - indoors, the inn's own guests
         if (Math.hypot(/** @type {number} */ (at.x) - here.x, /** @type {number} */ (at.z) - here.z) / NATIVE_PER_M > reach + 40) continue;
         const members = membersAt(p.trip, t);
+        // AUDIT LW-II-2 R1: A PARTY WITH NOBODY STANDING LAYS NOTHING - no bodies, no team, no fire. Before, a caravan
+        // struck down to the last (LW7's hands) walked its horse and its wagon on along the road with nobody, and camped
+        // them at night round a fire nobody sat at, for the rest of its trip (its mark, marks(), already said nobody)
+        if (!members.length) continue;
         const fight = !!at.fight;
         const live = !!fights?.stood(p.trip.id);   // LW4b: its foes and its armed the pool's bodies now
         const allies = live ? fights?.alliesOf(p.trip.id) : null;
         // AUDIT-B6: a peer stands it - its armed are the peer's allies, come through the stream (drawn here too, doubled)
         const peerLive = fight && !live && !!fights && !overworld && fights.peerStands({ x: /** @type {number} */ (at.x), z: /** @type {number} */ (at.z) }, here);
-        const ring = fight ? null : groups.get(p.trip.id) ?? null;
+        const camp = groups.get(p.trip.id) ?? null;   // the camp it is of (AUDIT LW-II-2 R4: at its halt too)
+        const ring = fight ? null : camp;
         // LW10: A TEAM'S TRAIN - its people in the train's places on the march (and at a halt, standing), its horses and its
         // wagons where the train has them; at camp the ring as any party's, its wagons parked beyond it
         const team = teamOf(p.trip);
@@ -358,18 +405,22 @@ export function createLivingRoads(deps) {
           for (const w of train.wagons) wagons.push({ ...w, moving: w.moving && !fight });
         } else {
           places = fight ? fightPlaces(p.trip, at, members) : partyPlaces(members === p.trip.party ? p.trip : { ...p.trip, party: members }, at, ring);
-          if (hasTeam && at.camp && !fight) {
-            const cx = ring ? ring.x : /** @type {number} */ (at.x), cz = ring ? ring.z : /** @type {number} */ (at.z);
-            const r = ring ? CAMP_RING_N + Math.max(0, ring.n - 4) * CAMP_RING_STEP_N : CAMP_RING_N;
+          // AUDIT LW-II-2 R4: PARKED WHENEVER IT IS CAMPED, its fight too - a caravan beset at its camp by night lost its
+          // wagons and its horses for the fight's minutes, and they stood parked again once it was done
+          if (hasTeam && at.camp) {
+            const cx = camp ? camp.x : /** @type {number} */ (at.x), cz = camp ? camp.z : /** @type {number} */ (at.z);
+            const r = camp ? CAMP_RING_N + Math.max(0, camp.n - 4) * CAMP_RING_STEP_N : CAMP_RING_N;
             const parked = campTeam(trip, cx, cz, r, t);
             for (const h of parked.horses) horses.push({ ...h, speed: 0 });
             wagons.push(...parked.wagons);
           }
         }
-        // LW9: A FIRE AT EVERY CAMP - the camps' own flame (survival/camp.js FIRE_FLAT), one to a shared camp
+        // LW9: A FIRE AT EVERY CAMP - the camps' own flame (survival/camp.js FIRE_FLAT), one to a shared camp, none on the
+        // march (no camp's); AUDIT LW-II-2 R4: the camp's while a party of it is not halted (a lone party's none at its
+        // halt, as before) - a shared camp's first halted, its fire went out, or stood at the next party's place
         let fire = null;
-        if (at.camp && !at.halt && !fight && (!ring || ring.first)) {
-          fire = { x: ring ? ring.x : /** @type {number} */ (at.x), z: ring ? ring.z : /** @type {number} */ (at.z) };
+        if (camp?.lit && camp.first) {
+          fire = { x: camp.x, z: camp.z };
         }
         drawn.push({ p, at, fight, live, allies, peerLive, places, fire });
       }
@@ -432,7 +483,23 @@ export function createLivingRoads(deps) {
   /** LW13: the company a traveller walks with at `t` - its name and its head (the highest level walking) - or null. @param {string} id @param {number} t */
   function companyAt(id, t) {
     const p = parties.find((q) => q.trip.company && q.trip.party.some((x) => x.id === id));
-    return p ? { name: p.trip.company.name, head: headOf(membersAt(p.trip, t)) } : null;
+    return p ? { name: p.trip.company.name, head: headOf(membersAt(p.trip, t)) } : hiredAt(id, t);
+  }
+
+  /** AUDIT LW-II-2 R8: A COMPANY HIRED ON A TRAIN is a company still (trips.js formCaravans' `hiredBy`, its key) - its name
+   *  off its town's deal (namedIn, as its own trip's), its head among its places walking; the merchant and the train's
+   *  joiners none of it. Before, nothing read `hiredBy`: hired, a company greeted as strangers do, and each of it answered
+   *  by their own regard. Null for one of no hired company. @param {string} id @param {number} t */
+  function hiredAt(id, t) {
+    for (const q of parties) {
+      if (!q.trip.hiredBy) continue;
+      const c = companiesOf(deps.world.rosterOf(q.trip.from)).find((x) => x.key === q.trip.hiredBy);
+      const slots = new Set(c?.places.map((x) => x.slot) ?? []);
+      const of = (/** @type {any} */ m) => slots.has(m.slot);   // its places' holders (the train is its town's: a slot one place)
+      if (!c || !q.trip.party.some((x) => x.id === id && of(x))) continue;
+      return { name: namedIn(c, q.trip.from?.name ?? '').name, head: headOf(membersAt(q.trip, t).filter(of)) };
+    }
+    return null;
   }
 
   /** A word to the player passing close - by regard, once in ROAD_GREET_REST_MIN of the clock. */
@@ -478,14 +545,16 @@ export function createLivingRoads(deps) {
       const b = deps.sprites.bodyOf(g.id);
       if (b && near(b.person)) out.push({ person: b.person, text: g.text, kind: /** @type {'talk'} */ ('talk') });
     }
-    // LW9: PARTIES PASSING - a word from each, the first's then the second's, a line a beat
+    // LW9: PARTIES PASSING - a word from each, the first's then the second's, a line a beat; AUDIT LW-II-2 R2: once, in
+    // order, from the beat they came near (passingLine)
     const walking = [];
     for (const p of parties) {
-      const at = partyAt(p.trip, t);
-      if ((at.phase === 'out' || at.phase === 'back') && !at.halt && !at.camp && !at.inn) walking.push({ trip: p.trip, at });
+      const at = walkingAt(p.trip, t);
+      if (at) walking.push({ trip: p.trip, at });
     }
     for (const pair of passingPairs(walking, t)) {
-      const k = Math.floor(t / lineMin) % pair.script.length;
+      const k = passingLine(pair, t, lineMin);
+      if (k < 0) continue;
       const who = membersAt((k % 2 ? pair.b : pair.a).trip, t)[0];
       const b = who ? deps.sprites.bodyOf(who.id) : null;
       const foe = pair.warned ? (pair.warned.trip.enc.bandName ?? deps.foeName?.(pair.warned.trip.enc.foes[0], 2) ?? 'foes') : '';   // LW12: a band by its name

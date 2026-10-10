@@ -272,7 +272,7 @@
   {
     "name": "LW9-fire",
     "file": "src/scenes/livingRoads.js",
-    "old": "        if (at.camp && !at.halt && !fight && (!ring || ring.first)) {",
+    "old": "        if (camp?.lit && camp.first) {",
     "new": "        if (false) {",
     "tests": [
       "test/lw9_traffic.test.js"
@@ -434,8 +434,8 @@
   {
     "name": "LW9-AUDIT-E5-light",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "return walked('out', light,",
-    "new": "return walked('out', trip.outT0,",
+    "old": "if (t < trip.outT1) return walked('out', light,",
+    "new": "if (t < trip.outT1) return walked('out', trip.outT0,",
     "tests": [
       "test/lw9_traffic.test.js"
     ]
@@ -525,8 +525,8 @@
   {
     "name": "LW9-AUDIT-F2-rider",
     "file": "src/systems/livingWorld/trips.js",
-    "old": ": res.job === 'patrol' ? world.rosterOf(home).filter((r) => r.job === 'patrol' && r.slot !== res.slot) : [];",
-    "new": ": [];",
+    "old": ": res.job === 'patrol' ? world.rosterOf(home).filter((r) => r.job === 'patrol' && r.slot !== res.slot)\n",
+    "new": ": res.job === 'patrol' ? []\n",
     "tests": [
       "test/lw9_traffic.test.js",
       "test/lw4_trouble.test.js"
@@ -535,8 +535,8 @@
   {
     "name": "LW9-AUDIT-F4-shared-fire",
     "file": "src/scenes/livingRoads.js",
-    "old": "        if (at.camp && !at.halt && !fight && (!ring || ring.first)) {",
-    "new": "        if (at.camp && !at.halt && !fight) {",
+    "old": "        if (camp?.lit && camp.first) {",
+    "new": "        if (camp?.lit) {",
     "tests": [
       "test/lw9_traffic.test.js"
     ]
@@ -544,8 +544,8 @@
   {
     "name": "LW9-AUDIT-F4-march-fire",
     "file": "src/scenes/livingRoads.js",
-    "old": "        if (at.camp && !at.halt && !fight && (!ring || ring.first)) {",
-    "new": "        if (!at.halt && !fight && (!ring || ring.first)) {",
+    "old": "        if ((at.phase === 'out' || at.phase === 'back') && at.camp && !at.inn) {",
+    "new": "        if ((at.phase === 'out' || at.phase === 'back') && !at.inn) {",
     "tests": [
       "test/lw9_traffic.test.js"
     ]

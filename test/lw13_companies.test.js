@@ -13,7 +13,7 @@ import {
 } from '../src/systems/livingWorld/companies.js';
 import {
   ownTrip, townTrips, formCaravans, leaderOf, placeCycle, cycleOf, awayOf, holyTrip, CALENDAR_MPM, DIVE_CHANCE, HOLY_IN_H, WALK_FROM_H, TRIP_PACE, NATIVE_PER_M,
-  TRIP_CHANCE,
+  TRIP_CHANCE, whenWalked,
 } from '../src/systems/livingWorld/trips.js';
 import { travellerRoster } from '../src/systems/livingWorld/census.js';
 import { lwRng } from '../src/systems/livingWorld/seed.js';
@@ -125,7 +125,7 @@ test('LW13 one trip a cycle: a company\'s places ride its first\'s (leaderOf, pl
       assert.deepEqual(tr.party.map((m) => m.slot), c.places.map((p) => p.slot), 'every place walking');
       assert.equal(tr.company.key, c.key);
       assert.equal(tr.company.name, namedIn(c, home.name).name);
-      for (const m of tr.party) assert.equal(awayOf(m, [tr])[0].t0, tr.outT0, 'away with it');
+      for (const m of tr.party) assert.equal(awayOf(m, [tr])[0].t0, whenWalked(tr.outT0, 0), 'away with it');   // PIN MOVED (AUDIT LW-II-2 R5): out at the leg's first light - a company setting out at six is at home on the road till seven (AUDIT LW-II E5), and its town now has it gone then, not at six
     }
   }
   assert.ok(seen > 3, `${seen} company trips`);
@@ -276,7 +276,7 @@ test('LW13 seen: a company in file by role (warriors, thieves, mages), its mark 
   const roads = readFileSync(new URL('../src/scenes/livingRoads.js', import.meta.url), 'utf8');
   assert.match(roads, /const word = company\?\.head\?\.id \?\? m\.res\.id;/);
   assert.match(roads, /const s = rel\.standing\(companyAt\(id, deps\.clock\(\)\)\?\.head\?\.id \?\? id, dayOf\(deps\.clock\(\)\)\);/);
-  assert.match(roads, /return p \? \{ name: p\.trip\.company\.name, head: headOf\(membersAt\(p\.trip, t\)\) \} : null;/);
+  assert.match(roads, /return p \? \{ name: p\.trip\.company\.name, head: headOf\(membersAt\(p\.trip, t\)\) \} : hiredAt\(id, t\);/);   // PIN MOVED (AUDIT LW-II-2 R8): one of no company walking its own trip - a company hired on a train (hiredAt)
   // the People page: the companies the known walk with
   const home = town(1, 100, 100, 40);
   home.name = 'Wayrest';

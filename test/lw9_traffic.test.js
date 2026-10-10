@@ -322,9 +322,10 @@ test('LW9 the night\'s camps shared round one fire: camps within CAMP_SHARE_N on
   const party = (id, n) => ({ id, party: Array.from({ length: n }, (_, i) => ({ id: `${id}.${i}`, cls: null })), way: { pts: [[0, 0], [1, 0]], cum: [0, 1], len: 1, kinds: [] } });
   const A = { trip: party('a', 2), at: { x: 0, z: 0, camp: true } }, B = { trip: party('b', 3), at: { x: 1200, z: 0, camp: true } }, C = { trip: party('c', 1), at: { x: 9000, z: 0, camp: true } };
   const g = campGroups([C, B, A]);
-  assert.deepEqual(g.get('a'), { x: 0, z: 0, i0: 0, n: 5, first: true });
-  assert.deepEqual(g.get('b'), { x: 0, z: 0, i0: 2, n: 5, first: false });
-  assert.deepEqual(g.get('c'), { x: 9000, z: 0, i0: 0, n: 1, first: true });
+  // PIN MOVED (AUDIT LW-II-2 R4): each camp says whether its fire burns (`lit`: a party of it not halted)
+  assert.deepEqual(g.get('a'), { x: 0, z: 0, i0: 0, n: 5, first: true, lit: true });
+  assert.deepEqual(g.get('b'), { x: 0, z: 0, i0: 2, n: 5, first: false, lit: true });
+  assert.deepEqual(g.get('c'), { x: 9000, z: 0, i0: 0, n: 1, first: true, lit: true });
   const places = [...partyPlaces(A.trip, A.at, g.get('a')), ...partyPlaces(B.trip, B.at, g.get('b'))];
   const r = CAMP_RING_N + 1 * CAMP_RING_STEP_N;
   for (const p of places) assert.ok(Math.abs(Math.hypot(p.x, p.z) - r) < 1e-6, 'on the one ring');
