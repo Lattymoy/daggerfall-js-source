@@ -9,7 +9,7 @@
   {
     "name": "PERF-COL2-b-the-coarse-cells-unasked",
     "file": "src/player/collider.js",
-    "old": "    if (broad.coarse.size) {   // PERF-COL2: the wide buckets, by the coarse cells the query's box covers",
+    "old": "    if (broad.coarseCells.size) {   // PERF-COL2: the wide buckets, by the coarse cells the query's box covers",
     "new": "    if (false) {   // PERF-COL2: the wide buckets, by the coarse cells the query's box covers",
     "tests": ["test/perfcol2.test.js"]
   },

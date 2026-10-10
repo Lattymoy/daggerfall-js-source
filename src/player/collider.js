@@ -204,10 +204,10 @@ function fileBox(bucket, ox, oz, size, spanMax, into) {
   return true;
 }
 /** File the collider's buckets: `all` in Map order (each bucket's `ord` its place in it), `always` the buckets every
- *  query asks, `cells` the standing ones by broad cell, `coarse` (PERF-COL2) the ones too wide for those by coarse cell,
+ *  query asks, `cells` the standing ones by broad cell, `coarseCells` (PERF-COL2) the ones too wide for those by coarse cell,
  *  and `frames` (PERF-COL2) one sentinel a floating frame - a bucket riding it, and where it stood when filed. */
 function buildBroad(buckets) {
-  const all = [], always = [], cells = new Map(), coarse = new Map(), frames = [];
+  const all = [], always = [], cells = new Map(), coarseCells = new Map(), frames = [];
   for (const bucket of buckets.values()) {
     bucket.ord = all.length;
     all.push(bucket);
@@ -223,10 +223,10 @@ function buildBroad(buckets) {
     const mn = bucket.min, mx = bucket.max;
     if (!(mn[0] <= mx[0] && mn[1] <= mx[1] && mn[2] <= mx[2])) continue;   // no triangle (an inverted box): every box test answers no
     if (fileBox(bucket, ox, oz, BROAD_CELL, BROAD_SPAN_MAX, cells)) continue;
-    if (fileBox(bucket, ox, oz, BROAD_COARSE_CELL, BROAD_COARSE_SPAN_MAX, coarse)) continue;   // PERF-COL2
+    if (fileBox(bucket, ox, oz, BROAD_COARSE_CELL, BROAD_COARSE_SPAN_MAX, coarseCells)) continue;   // PERF-COL2
     always.push(bucket);
   }
-  return { all, always, cells, coarse, frames };
+  return { all, always, cells, coarseCells, frames };
 }
 
 /** OW-WOD-LAG (2026-09-29, Mac: "When near mountains from WOD, the game lags insane"): THE WIDE TRIANGLES IN A TREE.
@@ -612,12 +612,12 @@ export class Collider {
         }
       }
     }
-    if (broad.coarse.size) {   // PERF-COL2: the wide buckets, by the coarse cells the query's box covers
+    if (broad.coarseCells.size) {   // PERF-COL2: the wide buckets, by the coarse cells the query's box covers
       const kx0 = Math.floor(x0 / BROAD_COARSE_CELL), kx1 = Math.floor(x1 / BROAD_COARSE_CELL);
       const kz0 = Math.floor(z0 / BROAD_COARSE_CELL), kz1 = Math.floor(z1 / BROAD_COARSE_CELL);
       for (let gx = kx0; gx <= kx1; gx++) {
         for (let gz = kz0; gz <= kz1; gz++) {
-          const list = broad.coarse.get(cellKey(gx, gz));
+          const list = broad.coarseCells.get(cellKey(gx, gz));
           if (!list) continue;
           for (let i = 0; i < list.length; i++) {
             const b = list[i];
