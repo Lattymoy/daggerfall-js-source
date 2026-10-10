@@ -17,6 +17,8 @@
 //
 // Every act moves the row's `judge_rev`: a checkpoint judging the row as it stood before the act writes no verdict over it.
 //   /v1/mod/realm-budget     the measure (gain an hour of play, by level band) and the budget's config; `set` writes it
+//   /v1/mod/realm-bodies     INT14: the boss fights' count - each fight's receipts, the mends claimed a minute, and what the
+//                            line standing would have cost (bodiesMeasure)
 //
 // THE MEASURE (Mac: "Measure 7 days, then enforce"). realm_wealth_hours keeps each character's hour - the gain no witness
 // explained and the seconds it played. The report reads every hour with play enough to say something (MEASURE_PLAYED_MIN),
@@ -82,6 +84,7 @@ export async function reviewAct({ db, bucket, nowS }, player, env, act, body = {
     }
     return measure(db, nowS, Number.isSafeInteger(body.days) && body.days >= 1 && body.days <= 30 ? body.days : 7);
   }
+  if (act === 'bodies') return bodiesMeasure(db, nowS, Number.isSafeInteger(body.days) && body.days >= 1 && body.days <= 30 ? body.days : 7);
   const row = await rowOf(db, body.id);
   if (!row) return typeof body.id === 'string' ? { error: 'no-realm-character' } : { error: 'body' };
   const note = noteOf(body.note);
@@ -132,6 +135,15 @@ export async function reviewAct({ db, bucket, nowS }, player, env, act, body = {
   return { error: 'body' };
 }
 
+/** AUDIT INT14: THE RANKS OF `n` ROWS - each of MEASURE_QUANTILES and the most, every one read by its rank in order (`at`,
+ *  one row a rank, asked of the database). The wealth's measure and the boss fights' read their rates by it alike (the
+ *  second had copied the first's loop, rank rounding and all). @param {number} n @param {(rank: number) => Promise<any>} at */
+async function ranked(n, at) {
+  const quantiles = [];
+  for (const q of MEASURE_QUANTILES) quantiles.push([q, n ? await at(Math.min(n - 1, Math.ceil(q * n) - 1)) : null]);
+  return { quantiles, most: n ? await at(n - 1) : null };
+}
+
 /**
  * THE MEASURE over the last `days`: every character-hour that played MEASURE_PLAYED_MIN or more, as gold an hour of play,
  * by the budget's own bands - each band's count, quantiles and most - and the `measure` findings in the window by band
@@ -151,12 +163,44 @@ export async function measure(db, nowS, days) {
     const n = Number((await db.prepare(`SELECT COUNT(*) AS n FROM realm_wealth_hours WHERE ${where}`).bind(since, MEASURE_PLAYED_MIN, lo, b.upTo).first())?.n ?? 0);
     const at = async (/** @type {number} */ rank) => (await db.prepare(`SELECT ${rate} AS r FROM realm_wealth_hours WHERE ${where} ORDER BY r LIMIT 1 OFFSET ?5`)
       .bind(since, MEASURE_PLAYED_MIN, lo, b.upTo, rank).first())?.r ?? null;
-    const quantiles = [];
-    for (const q of MEASURE_QUANTILES) quantiles.push([q, n ? await at(Math.min(n - 1, Math.ceil(q * n) - 1)) : null]);
+    const { quantiles, most } = await ranked(n, at);
     const overs = Number((await db.prepare("SELECT COUNT(*) AS n FROM realm_findings WHERE at >= ?1 AND kind IN ('measure', 'budget') AND json_extract(detail, '$.level') > ?2 AND json_extract(detail, '$.level') <= ?3")
       .bind(since, lo, b.upTo).first())?.n ?? 0);
-    bands.push({ from: lo + 1, upTo: b.upTo, rate: b.rate, cap: b.cap, hours: n, quantiles, most: n ? await at(n - 1) : null, overs });
+    bands.push({ from: lo + 1, upTo: b.upTo, rate: b.rate, cap: b.cap, hours: n, quantiles, most, overs });
     lo = b.upTo;
   }
   return { days, config, isDefault: config === BUDGET_DEFAULT, bands };
+}
+
+/** INT14: the fights whose receipts carry the relay's count, by the table their claims keep it in. */
+export const BODY_TABLES = Object.freeze([['gate', 'gate_kills'], ['sd', 'sd_kills'], ['serpent', 'serpent_kills']]);
+/** A measure's own seconds stood under this are read as this many (a short stand says too little of a rate). */
+export const BODY_MEASURE_S_MIN = 60;
+
+/**
+ * INT14 - THE BOSS FIGHTS' MEASURE over the last `days` (Mac, 2026-10-10: "Measure, then enforce"): for each fight, the
+ * receipts that carried the relay's count (net/bossBody.js bodyMeasure, kept as each kill row's `body`), the mends
+ * each claimed a minute it stood (believed and past the line together, thousandths of a whole - the rate the line is
+ * set from) by quantile and at most, how many claimed past the line standing, how many the count felled, and how many
+ * receipts it would have cost had a fall by it been a fall (`lost`). The line itself is the relay's (its BOSS_BODY var).
+ * @param {any} db @param {number} nowS @param {number} days
+ */
+export async function bodiesMeasure(db, nowS, days) {
+  const since = nowS - days * 24 * 3600;
+  const rate = `CAST(ROUND((json_extract(body, '$[1]') + json_extract(body, '$[2]')) * 60.0 / MAX(json_extract(body, '$[5]'), ${BODY_MEASURE_S_MIN})) AS INTEGER)`;
+  const fights = [];
+  for (const [fight, table] of BODY_TABLES) {
+    const where = 'at >= ?1 AND body IS NOT NULL';
+    const count = async (/** @type {string} */ more) => Number((await db.prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE ${where}${more}`).bind(since).first())?.n ?? 0);
+    const n = await count('');
+    const at = async (/** @type {number} */ rank) => (await db.prepare(`SELECT ${rate} AS r FROM ${table} WHERE ${where} ORDER BY r LIMIT 1 OFFSET ?2`).bind(since, rank).first())?.r ?? null;
+    const { quantiles, most } = await ranked(n, at);
+    fights.push({
+      fight, receipts: n, quantiles, most,
+      over: await count(" AND json_extract(body, '$[2]') > 0"),
+      fell: await count(" AND json_extract(body, '$[3]') > 0"),
+      lost: await count(" AND json_extract(body, '$[4]') = 0"),
+    });
+  }
+  return { days, fights };
 }

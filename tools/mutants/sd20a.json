@@ -137,11 +137,12 @@
   {
     "name": "SD20A-F3-the-census-at-another-instant",
     "file": "server/src/index.js",
-    "old": "stepRemnant(f, now, this._sdFightBodies(f, now), rand01)",
-    "new": "stepRemnant(f, now, this._sdFightBodies(f), rand01)",
+    "old": "bodies = this._sdFightBodies(f, now), census",
+    "new": "bodies = this._sdFightBodies(f), census",
     "tests": [
       "test/sd20a_fight.test.js"
-    ]
+    ],
+    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. "
   },
   {
     "name": "SD20A-F4-every-page-judged",

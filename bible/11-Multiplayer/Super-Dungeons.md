@@ -1557,7 +1557,10 @@ Hand outrun or shaded, the Volley's discs and its burning brass, the Pulse, the 
 ### SD8d - shipped 2026-10-07 (the Brass Remnant's blows on me)
 
 Section 10's blows, on the struck player's own machine - the gate's law (co-op's: an enemy's strike on a client is applied
-by that client); the relay never learns who was struck.
+by that client); the relay never learns who was struck. INT12 (2026-10-10, `06-Systems/Integrity-Arc.md` section 6): it
+does now, beside it - the realm judges the Remnant's blows no save answers and the Hour's own on the poses it holds and
+keeps its own count of each fighter's body (`net/bossRef.js` judgeRemnant), measured first; once staff enforce it, the
+count's fall takes the one life.
 
 - **Judged on my feet** (`net/sdStrike.js` `sdBlowVerdict`, pure, over the geometry the law shares - `stompRingAt`,
   `ringPassed`, `handSwept`, `behindPillar`): each part of each blow once, a share of my own maximum health and its base

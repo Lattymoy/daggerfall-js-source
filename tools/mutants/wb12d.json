@@ -78,12 +78,13 @@
   {
     "name": "WB12d-r-dropped",
     "file": "src/net/gateReceipt.js",
-    "old": "...(r === 1 ? { r } : {}), i: nowS",
-    "new": "i: nowS",
+    "old": "...(r === 1 ? { r } : {}), ...(m !== undefined ? { m } : {}), i: nowS",
+    "new": "...(m !== undefined ? { m } : {}), i: nowS",
     "tests": [
       "test/wb12d_rite_law.test.js",
       "test/wb12d_rite_relay.test.js"
-    ]
+    ],
+    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. "
   },
   {
     "name": "WB12d-r-on-the-rite-s-own",
@@ -3161,11 +3162,12 @@
   {
     "name": "MERGE-WB12d-the-rite-s-row-takes-the-region",
     "file": "server-account/src/accounts.js",
-    "old": ".bind(c.d, player.id, c.b, c.x, nowS, c.x !== 'rite' && seatRegionOk(region) ? region : null, embers);",
-    "new": ".bind(c.d, player.id, c.b, c.x, nowS, seatRegionOk(region) ? region : null, embers);",
+    "old": "nowS, c.x !== 'rite' && seatRegionOk(region) ? region : null, embers, c.m",
+    "new": "nowS, seatRegionOk(region) ? region : null, embers, c.m",
     "tests": [
       "test/wb12d_rite_law.test.js"
-    ]
+    ],
+    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. "
   },
   {
     "name": "MERGE-WB12d-the-rite-credits-a-seat",
@@ -3179,10 +3181,11 @@
   {
     "name": "MERGE-WB12d-the-row-without-its-embers",
     "file": "server-account/src/accounts.js",
-    "old": "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)')\n    .bind(c.d, player.id, c.b, c.x, nowS, c.x !== 'rite' && seatRegionOk(region) ? region : null, embers);",
-    "new": "VALUES (?1, ?2, ?3, ?4, ?5, ?6, 1)')\n    .bind(c.d, player.id, c.b, c.x, nowS, c.x !== 'rite' && seatRegionOk(region) ? region : null, embers);",
+    "old": "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)')\n    .bind(c.d, player.id, c.b, c.x, nowS, c.x !== 'rite' && seatRegionOk(region) ? region : null, embers, c.m",
+    "new": "VALUES (?1, ?2, ?3, ?4, ?5, ?6, 1, ?8)')\n    .bind(c.d, player.id, c.b, c.x, nowS, c.x !== 'rite' && seatRegionOk(region) ? region : null, embers, c.m",
     "tests": [
       "test/wb12d_rite_law.test.js"
-    ]
+    ],
+    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. "
   }
 ]

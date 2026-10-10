@@ -7,6 +7,7 @@
 //         d the Hollow's slot (net/sdLaw.js - the record's `s`)   b the boss ('remnant')   s the account (the identity sub)
 //         c the spoils' seed (32 bits, the relay's CSPRNG)   x how it was earned ('dealt' | 'stood' - net/gateBrain.js earnedBy)
 //         l the level the fight admitted it at   i issued, epoch seconds   e expires (i + SD_RECEIPT_TTL_S)
+//         m the relay's count of the account's body through the fight (INT14 - net/bossBody.js bodyMeasure; optional)
 //
 // ONE KEY, NEVER CONFUSED. The relay's one secret (GATE_SIGNING_KEY) signs this as it signs a gate's kill, a raid's
 // cleanse and a serpent's, and the version is INSIDE the signed bytes: `h1` is refused by every other verifier and theirs
@@ -19,6 +20,7 @@
 //
 // PURE, and all three ends import it. Not a DFU member. Ledger A (SUPER-DUNGEONS).
 import { _b64url, SIG_BYTES, SKEW_S, ID_RE } from './identityToken.js';
+import { bodyMeasureValid } from './bossBody.js';   // INT14: the count's measure, carried
 
 /** The only version this file reads or writes. */
 export const SD_RECEIPT_V = 'h1';
@@ -51,6 +53,7 @@ export function sdReceiptValid(c) {
   if (!Number.isSafeInteger(c.c) || c.c < 0 || c.c > 0xffffffff) return false;
   if (!SD_EARNED.includes(c.x)) return false;
   if (!Number.isSafeInteger(c.l) || c.l < 1 || c.l > SD_RECEIPT_LV_MAX) return false;
+  if (c.m !== undefined && !bodyMeasureValid(c.m)) return false;   // INT14: optional - a receipt minted before it carries none
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i || c.e - c.i > SD_RECEIPT_TTL_S) return false;
   return true;
@@ -58,14 +61,14 @@ export function sdReceiptValid(c) {
 
 /**
  * MINT - the relay's half. With no key the receipt goes out unsigned (`h1.<body>.`) - the seed still rides it.
- * @param {{d: number, s: string, c: number, x: string, l: number}} what
+ * @param {{d: number, s: string, c: number, x: string, l: number, m?: number[]}} what
  * @param {CryptoKey|null} privateKey an Ed25519 private key (net/gateReceipt.js importReceiptKey), or null for none
  * @param {{subtle: SubtleCrypto, nowS: number}} env
  * @returns {Promise<string>}
  */
-export async function mintSdReceipt({ d, s, c, x, l }, privateKey, { subtle, nowS }) {
+export async function mintSdReceipt({ d, s, c, x, l, m }, privateKey, { subtle, nowS }) {
   if (!Number.isSafeInteger(nowS)) throw new TypeError('mintSdReceipt needs an integer epoch-seconds clock');
-  const claims = { d, b: SD_RECEIPT_BOSS, s, c, x, l, i: nowS, e: nowS + SD_RECEIPT_TTL_S };
+  const claims = { d, b: SD_RECEIPT_BOSS, s, c, x, l, ...(m !== undefined ? { m } : {}), i: nowS, e: nowS + SD_RECEIPT_TTL_S };
   if (!sdReceiptValid(claims)) throw new TypeError('mintSdReceipt refused a claim set it could not verify');
   const body = _b64url.encode(enc.encode(JSON.stringify(claims)));
   if (!privateKey) return `${SD_RECEIPT_V}.${body}.`;

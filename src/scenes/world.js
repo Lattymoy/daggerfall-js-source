@@ -669,6 +669,7 @@ import { isOnFoot } from '../systems/transport.js';   // TransportManager.IsOnFo
 import { floorLanding, doorWorldPosition, dungeonEntranceLanding, repositionFeetY, openGroundNear, heldInSolid } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27); SD2b: where a Hollow's mouth stands, to find it at
 import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../systems/skills.js';   // TO1: the avoid-encounter roll reads skillValue live (imported above) Stealth   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
 import { playerEntity, surfacePlayer, hurtPlayer, forcePlayerDeath, playerBlowCameToNothing, setDeathPresenter, presentPlayerDeath, setDeathListener, setAvoidDeathHook, setStaffPowers, staffPowers, registerLevitateWard, registerFreeFlight } from '../characters/playerEntity.js';   // AUDIT-SEATS G5: a siege's ward on Levitate   // AUDIT-SEATS G4: a spectator's flight
+import { bodySayer } from '../net/bossBody.js';   // INT15: my body, said to a boss fight's room
 import { SOUND } from '../systems/soundClips.js';
 import { createWeaponRig, autoBuildArms, armIdentityOf, armBuiltFor, armsReady, sheetHolderOf, buildArmsFor, prebuildArmsForSave } from '../combat/weaponRig.js';   // MWA1: the arms at boot; MWA3: the identity the arm should stand for, beside the one it does; MW-EARLY: and before the world is read
 import { weaponPoseOf, applyWeaponPose, mergeWeaponPose, playerMeleeCanHit, registerPlayerSwingListener, WEAPON_REACH } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
@@ -1040,6 +1041,8 @@ const GATE_SAVES = Object.freeze({
   magic: Object.freeze([ELEMENTS.Magic, EFFECT_FLAGS.Magic]),   // SD18b: the Underking's Ending - the Remnant's blows in magic
 });
 
+/** INT11/INT12: the line as the relay's count fells me in a boss fight (`bd`). */
+export const BOSS_COUNT_FELL_TEXT = 'The fight counts you fallen.';
 // Milestone 9 scene: floating-origin streaming world. Terrain pixels
 // stream in nearest-first around the camera within TERRAIN_DISTANCE,
 // locations appear on their pixels, and crossing a pixel boundary
@@ -20637,11 +20640,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (w?.k === 'gone') { remainsGone(w.r); forgetMine(w.r); }   // WILD-WAYPOINT: all taken, or let go - the flag goes with them; WILD-KEEP: and the kept record
     };
     online.onWed = (id, d, sub = null, sc = null) => { wedMgr.onFrame(id, d, sub, sc); };   // LEGACY7 part three: a wed frame at me - the wedding's law decides; AUDIT LEGACY III O1: `sc` their realm character as the relay stamped it
-    online.onGate = (g) => gateLink?.word(g);   // WB3b: the court's room's word about its boss
+    online.onGate = (g) => { if (g?.k === 'bd') bossCountFell(modes?.gateArenaDay?.() != null); else gateLink?.word(g); };   // WB3b: the court's room's word about its boss; INT11: the relay's count's fall of me
     online.onSdHall = (w) => sdHallHeard(w);   // SD6c: the realm's word on the Orrery's hall - the stones, the fray, the Concord; the snap's lash
     online.onSdFight = (w) => sdFightHeard(w);   // SD8c: the realm's word on the Last Moment's fight
     online.onSdReceipt = (r, room) => { sdClaims?.add(r); sdSpoilsReceipt(r, room); };   // SD9b: my Hour receipt (my realm's at the fall, the hub's at a hello) - to the account service, kept until it is counted; SD9e: and its spoils
-    online.onSerpent = (w) => serpentLink?.word(w);   // SERPENT1: the sea serpent's cell's word (on my cell's socket or a halo's) - its fight, its swim, its blows, my receipt
+    online.onSerpent = (w) => { if (w?.k === 'bd') serpentHost?.wrecked?.(w); else serpentLink?.word(w); };   // SERPENT1: the sea serpent's cell's word (on my cell's socket or a halo's) - its fight, its swim, its blows, my receipt
     online.onRaid = (f, room) => raidRelayWord(f, room);   // RAID3: a town cell's word about its raid - the ledger, the cleanse, my receipt
     online.onRite = (w) => riteHost?.onBroken(w);   // WB12d: the hub's broken rite
     online.onWatch = (r) => { seatBook?.keepWatch(r); motherlodeBook?.watch(r); };   // SEAT1b: the Watch's tick, kept where it stands in a seat's pixel; PROF2b: and where it stands on a Motherlode's
@@ -23379,6 +23382,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     sendCrystal: (hit) => !!online?.sendGate?.({ k: 'xhit', ...hit }),   // WB9c: a blow of mine on a crystal of Oblivion
     sendHost: (hit) => !!online?.sendGate?.({ k: 'ahit', ...hit }),   // WB11c: a blow of mine on one of his host
     sendHeal: (heal) => !!online?.sendGate?.({ k: 'heal', ...heal }),   // GATE-HEAL: what my mates' spells healed in me, and whose
+    sendBody: (v) => !!online?.bossOk && !!online?.sendGate?.({ k: 'vt', v }),   // INT15: my body, to a relay that counts it
     portalDoor: (door) => { modes?.dungeonCtx?.exitDoors?.push?.(door); },   // WBX2: its door, for the exit's ray and name - and (SS3) its press, the one way through it
     // WBX7: a soul trap of mine still on him as he fell - the port's own kill roll (EnemyEntity.AttemptSoulTrap), his soul
     // into an empty gem of my pack, its words; the tether's arm is not his (the relay has already killed him)
@@ -23866,7 +23870,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** SD2b: the Hollow stood or taken down, its find, its lines. SD2d: called from the online frame, above the modal
    *  return, in every mode - a Hollow's end reaches a player standing inside it. It stood in the exterior's half of the
    *  frame, which the dungeon's frame never reaches: underground nothing moved the Hollow on. */
-  const sdFrame = () => { try { sdHost?.frame(); } catch (e) { console.warn('[sd] host', e?.message ?? e); } sdRealmFrame(); sdAloneFrame(); sdFightFrame(); sdVoiceFrame(); };
+  const sdFrame = () => { try { sdHost?.frame(); } catch (e) { console.warn('[sd] host', e?.message ?? e); } sdRealmFrame(); sdAloneFrame(); sdFightFrame(); sdBodyFrame(); sdVoiceFrame(); };   // INT15: and my body, said
   /** SD5a: OUT OF AN HOUR THAT WILL NOT HAVE ME - its room's hello refused for good (the Rift's own words, SD3's
    *  _sdAdmit: the Hour full, or closed) or its socket replaced: cast out before the Hollow's door (the mode machine's own
    *  exit - the realm's way out lands there) with the relay's words, once, as the court casts out (ejectFromCourt) -
@@ -24186,12 +24190,28 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** SD9e: the floor a press, a plaque and the ray ask of - the Hour's pool in the Hour, the court's anywhere else (the two
    *  are never stood in at once). */
   const floorPool = () => (modes?.sdRealmSlot?.() != null ? sdSpoilsPool : spoilsPool);
+  /** INT11/INT12: THE RELAY'S COUNT HAS FALLEN ME (`bd` - a gate's court's or the Hour's word, once its BOSS_BODY line
+   *  enforces; net/bossBody.js): a death, the relay's word, whatever this machine's health says - the zone referee's own
+   *  door (forcePlayerDeath: no death save, no AvoidDeath). Heard in the fight it came from alone (`inFight`). */
+  function bossCountFell(inFight) {
+    if (!inFight || !(playerEntity.health > 0)) return;
+    setMidScreenText(BOSS_COUNT_FELL_TEXT);
+    forcePlayerDeath(playerEntity);
+  }
   function sdFightHeard(w) {
     const slot = modes?.sdRealmSlot?.();
+    if (w?.k === 'bd') { bossCountFell(slot != null); return; }   // INT12: the relay's count's fall of me - the Hour's one life
     if (!sdFightLink || slot == null || (w.k === 'st' && w.s !== slot)) return;
     _sdFightHeld = true;
     sdFightLink.word(w);
   }
+  const _sdSayBody = bodySayer((v) => !!online?.sendSdBlow?.('vt', { v }));   // INT15: my body, said to the realm
+  /** INT15: MY BODY, in my own word, while I fight alive in the Hour's fight that answered me - to a relay that counts it
+   *  (net/bossBody.js bodySayer's pace). A frame step of its own beside the fight's. */
+  const sdBodyFrame = () => {
+    if (!sdFightLink || modes?.sdRealmSlot?.() == null || !online?.bossOk) return;
+    if (playerEntity.health > 0 && playerEntity.maxHealth > 0 && sdFightLink.joined()) _sdSayBody(playerEntity.health / playerEntity.maxHealth, performance.now());
+  };
   /** One online frame of the fight: forgotten out of the realm; its bar (ui/sdRemnantBar.js - the gate's, in brass) over
    *  the screen while I stand near the arena and its fight is one to fight, put away otherwise. */
   let _sdPassesWarm = false;

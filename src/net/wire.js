@@ -1283,7 +1283,8 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world187';   // WAGONS1 (2026-10-09, world182, world183, world185 then world186 on its branch - renumbered past main's CARDS10 world182 at the first merge, past CHAP4c world183 and PERF-RELAY1 world184 at the second, past INT7-INT10 world185 at the third and past SD-HERALD world186 at the fourth; NOT YET DEPLOYED - one deploy with TV-BEYOND's world181, CARDS10's world182, CHAP4c's world183, PERF-RELAY1's world184, INT7-INT10's world185 and SD-HERALD's world186, below, if they have not gone): a parked wagon's park record keeps its kind and its horse in harness (validParkData `wk`, `wh` - systems/horseCartWire.js), so the cell remembers a caravan as a caravan; an older relay drops both and the cell remembers a cart. WAGONS2 (re-hashed in place, the same undeployed version): and its paint (`wl`, 1..PARK_WAGON_LOOK_MAX - systems/wagonLooks.js), or the cell remembers it as built. No frame changes shape. WAGONS2-VISIT (re-hashed in place again, still undeployed): a caravan's own room, `caravan:<k>` (net/privateInterior.js caravanRoomOf - its owner's park key), keeps what its owner placed in it - the new frame `caravan` (validCaravanData; relaySupportsCaravan, CARAVAN_RELAY_MIN 187 - an older relay closes the socket on it), stored from the owner alone (parkKeyOf of the token's account and the frame's character is the room's key), handed to every joiner after its welcome, fanned, and forgotten PARK_TTL_MS after it was said (the alarm); and a parked caravan's record keeps who may enter it (`we` 1..PARK_WAGON_ENTRY_MAX, `wg` the guild's tag with the guild's). WAGONS2-VISIT AUDIT (re-hashed in place again, still undeployed): the `caravan` frame metered - one a second a socket (CARAVAN_DOC_MIN_MS), an unchanged document neither stored again nor fanned until its lease wants renewing, the fan charged to the sender's act bytes; and a caravan's door (`wagonEntry`) among the receiver's marks the wire's clamp leaves behind (net/realmTradeLaw.js RECEIVER_MARKS). WAGONS2 FINAL AUDIT (re-hashed in place again, still undeployed): the `caravan` frame's second the ROOM's (CARAVAN_DOC_MIN_MS - an owner's N sockets were N seconds), its fan charged to the room's act bytes after the sender's, and a fan refused in debt owed to the alarm at the repay, never dropped (its visitors kept the old layout). TV-BEYOND, world181 (2026-10-09, world180 on its branch - renumbered past main's TAVERN-TABLES world180 at the merge; the field: "if i bug the game outside of the bay i can become invisible to everyone and everyone becomes invisible to me"; bible/01-Overview/Field-Bugs-2026-10-09.md; NOT YET DEPLOYED): the world's pixels on the wire are TAMRIEL2's, not the Bay's (WORLD_PIXEL_BOUND) - a pose past 1024 pixels no longer refused (the relay closed the socket), a cell west or north of the Bay a cell (CELL_ROOM, cellHaloFor), a traveller's mark, a party pose and its walk, a duel's point and a park's anchor past the Bay carried; deploy relay before clients.
+export const RELAY_VERSION = 'world188';   // INT11-INT14 (2026-10-10, world186 on its branch - renumbered past main's SD-HERALD world186 and WAGONS1 world187 at the merge; the INTEGRITY arc's lane 3 - bible/06-Systems/Integrity-Arc.md section 6; Mac: "I want to do everything and do it properly", and "Measure, then enforce"; NOT YET DEPLOYED): THE BODY COUNTED - the relay judges each boss's blows no save answers on the poses it holds (net/bossRef.js: a gate's, the Abyss Dungeon's Remnant, the serpent's on a hull - each landing on the pose trail before and after it, in the struck player's favour) and keeps its own count of each fighter's body or hull (net/bossBody.js): a fighter's word of its body (`vt`, the gate's, `sd`'s and `serpent`'s new kind) believed as a mend out of a budget; the count's measure carried on each boss receipt (`m`), for the account service (acct105) to keep - deploy this relay first. MEASURE FIRST: the BOSS_BODY var's line enforces nothing until staff set `enforce` (then a fall by the count is a fall: `bd` to the fallen, the Abyss Dungeon's one life, a ship wrecked). Four new files in its bundle: net/bossBody.js, net/bossRef.js, net/gateStrike.js, systems/serpentStrike.js.
+// world187:   WAGONS1 (2026-10-09, world182, world183, world185 then world186 on its branch - renumbered past main's CARDS10 world182 at the first merge, past CHAP4c world183 and PERF-RELAY1 world184 at the second, past INT7-INT10 world185 at the third and past SD-HERALD world186 at the fourth; NOT YET DEPLOYED - one deploy with TV-BEYOND's world181, CARDS10's world182, CHAP4c's world183, PERF-RELAY1's world184, INT7-INT10's world185 and SD-HERALD's world186, below, if they have not gone): a parked wagon's park record keeps its kind and its horse in harness (validParkData `wk`, `wh` - systems/horseCartWire.js), so the cell remembers a caravan as a caravan; an older relay drops both and the cell remembers a cart. WAGONS2 (re-hashed in place, the same undeployed version): and its paint (`wl`, 1..PARK_WAGON_LOOK_MAX - systems/wagonLooks.js), or the cell remembers it as built. No frame changes shape. WAGONS2-VISIT (re-hashed in place again, still undeployed): a caravan's own room, `caravan:<k>` (net/privateInterior.js caravanRoomOf - its owner's park key), keeps what its owner placed in it - the new frame `caravan` (validCaravanData; relaySupportsCaravan, CARAVAN_RELAY_MIN 187 - an older relay closes the socket on it), stored from the owner alone (parkKeyOf of the token's account and the frame's character is the room's key), handed to every joiner after its welcome, fanned, and forgotten PARK_TTL_MS after it was said (the alarm); and a parked caravan's record keeps who may enter it (`we` 1..PARK_WAGON_ENTRY_MAX, `wg` the guild's tag with the guild's). WAGONS2-VISIT AUDIT (re-hashed in place again, still undeployed): the `caravan` frame metered - one a second a socket (CARAVAN_DOC_MIN_MS), an unchanged document neither stored again nor fanned until its lease wants renewing, the fan charged to the sender's act bytes; and a caravan's door (`wagonEntry`) among the receiver's marks the wire's clamp leaves behind (net/realmTradeLaw.js RECEIVER_MARKS). WAGONS2 FINAL AUDIT (re-hashed in place again, still undeployed): the `caravan` frame's second the ROOM's (CARAVAN_DOC_MIN_MS - an owner's N sockets were N seconds), its fan charged to the room's act bytes after the sender's, and a fan refused in debt owed to the alarm at the repay, never dropped (its visitors kept the old layout). TV-BEYOND, world181 (2026-10-09, world180 on its branch - renumbered past main's TAVERN-TABLES world180 at the merge; the field: "if i bug the game outside of the bay i can become invisible to everyone and everyone becomes invisible to me"; bible/01-Overview/Field-Bugs-2026-10-09.md; NOT YET DEPLOYED): the world's pixels on the wire are TAMRIEL2's, not the Bay's (WORLD_PIXEL_BOUND) - a pose past 1024 pixels no longer refused (the relay closed the socket), a cell west or north of the Bay a cell (CELL_ROOM, cellHaloFor), a traveller's mark, a party pose and its walk, a duel's point and a park's anchor past the Bay carried; deploy relay before clients.
 // world186:   SD-HERALD (2026-10-09, world185 on its branch - renumbered past main's INT7-INT10 world185 at the merge; the owner: "We need to add discord integration to abyss dungeons"; bible/11-Multiplayer/Super-Dungeons.md SD-HERALD; NOT YET DEPLOYED - a deploy drops every player once): the Abyss Dungeon's Discord herald - the hub posts a Hollow's rise and its find (pinging SD_DISCORD_ROLE, else the gate's role), its fall and a found one's fade to the gate's channel, off the director's own record after its beat (net/sdHerald.js and formats/mapsTables.js join the bundle). No frame changes shape, and no client change rides it.
 // world185:   INT7-INT10 (2026-10-09, the INTEGRITY arc's lane 2 - bible/06-Systems/Integrity-Arc.md; Mac: "I want to do everything and do it properly"; NOT YET DEPLOYED - world183, then world184, on its branch, renumbered past main's CHAP4c (world183) and PERF-RELAY1 (world184) at the merges; re-hashed in place, through its audit): PVP REFEREED EVERYWHERE - the token's signed arms (`wa`) clip every referee's blow; a duel refereed by the relay (net/duelRef.js: its vitality, every blow and cast, the ring, the end, the `dref` word and a signed `d1` result - DUEL_REF_RELAY_MIN 185); a duel's strike and spell carry the striker's number for the referee, never a sheet for the defender. Before it, world184: PERF-RELAY1 (2026-10-09, world183 on its branch - renumbered past main's CHAP4c world183 at the merge; Mac: "Yes and audit everything", of PERF-NEXT item 15; bible/11-Multiplayer/Scale-Arc.md PERF-RELAY1; NOT YET DEPLOYED - a deploy drops every player once, so it goes in a window Mac announces): the room's pose path is a method of its own (Room._poseFrame, under V8's ceiling where `_message` is not), walking the socket index in place and asking the range of the sender's own pixel once (inRangeOf) - every pose fanned to exactly whom it was; and POSE_FAR_SHARE's doc corrected (AUDIT 637 C2). The bundle's behaviour unchanged.
 // world184:   PERF-RELAY1 (2026-10-09, world183 on its branch - renumbered past main's CHAP4c world183 at the merge; Mac: "Yes and audit everything", of PERF-NEXT item 15; bible/11-Multiplayer/Scale-Arc.md PERF-RELAY1; NOT YET DEPLOYED - a deploy drops every player once, so it goes in a window Mac announces): the room's pose path is a method of its own (Room._poseFrame, under V8's ceiling where `_message` is not), walking the socket index in place and asking the range of the sender's own pixel once (inRangeOf) - every pose fanned to exactly whom it was; and POSE_FAR_SHARE's doc corrected (AUDIT 637 C2). The bundle's behaviour unchanged.
@@ -3513,6 +3514,10 @@ export function validDuelData(d) {
  *  would be routed for a defender that no longer resolves them. */
 export const DUEL_REF_RELAY_MIN = 185;   // world183, then world184, on its branch, renumbered past CHAP4c's world183 and PERF-RELAY1's world184 at the merges
 export const relaySupportsDuelRef = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= DUEL_REF_RELAY_MIN; };
+/** INT11: the relay that first COUNTS a boss fight's bodies (net/bossBody.js) - a client meeting an older one says no
+ *  `vt` (an older relay's gate, `sd` and `serpent` words know no such kind, and its socket would be struck for junk). */
+export const BOSS_REF_RELAY_MIN = 188;   // world186 on its branch, renumbered past SD-HERALD's world186 and WAGONS1's world187 at the merge
+export const relaySupportsBossRef = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= BOSS_REF_RELAY_MIN; };
 /** INT8: the referee's word kinds (`{t:'dref', k, s, ...}`, the relay's alone - it routes none a client sends). */
 export const DUEL_REF_KINDS = Object.freeze(['bout', 'hp', 'end', 'no']);
 /** INT8: the longest receipt the referee hands over (net/duelReceipt.js DUEL_RECEIPT_MAX, pinned equal). */
@@ -3881,7 +3886,7 @@ export function validWildOut(m) {
  *  device, a second browser or a private window rolled the same spoils again). DISCORD-GATES' `site`, to the hub alone:
  *  where this game found the gate the clock is about (systems/gateSite.js) - the hub names the place in its Discord
  *  posts once two accounts agree (net/gateHerald.js). */
-export const GATE_KINDS = Object.freeze(['in', 'hit', 'spent', 'site', 'xhit', 'ahit', 'heal']);   // WB9c: `xhit` - a blow on a crystal of Oblivion; WB11b: `ahit` - a blow on one of his host; GATE-HEAL: `heal` - what healed me, and by whom
+export const GATE_KINDS = Object.freeze(['in', 'hit', 'spent', 'site', 'xhit', 'ahit', 'heal', 'vt']);   // INT11: `vt` - my body, in my own word (net/bossBody.js)   // WB9c: `xhit` - a blow on a crystal of Oblivion; WB11b: `ahit` - a blow on one of his host; GATE-HEAL: `heal` - what healed me, and by whom
 /** AUDIT WBX R7: THE BRAIN'S LAW, by number - said on every `in` (`bv`) and refused below GATE_BRAIN_MIN: a client that
  *  does not know the brain's attacks (a tab loaded before a deploy) judged each new one a miss, fighting immune to it.
  *  1 is WB3's six attacks; 2 is WBX5's nine; 3 is WB8b's marks - a client that does not know them would judge a
@@ -3894,7 +3899,7 @@ export const GATE_BRAIN_V = 5;
 export const GATE_BRAIN_MIN = 5;
 /** What the room says back (the client drops any other kind). WB8b: `fed` - a fallen challenger fed a Soul-Hungry
  *  Warden (their name, his health after). */
-export const GATE_OUT_KINDS = Object.freeze(['st', 'mv', 'atk', 'hp', 'ph', 'wrath', 'fell', 'rcpt', 'no', 'fed', 'cx', 'cxh', 'cxb', 'stun', 'ad', 'amv', 'aatk', 'ah', 'adie']);   // WB9c: the crystals grown, their health, one broken, the Reckoning broken and he stunned; WB11b: his host risen, walking, striking, its health, gone
+export const GATE_OUT_KINDS = Object.freeze(['st', 'mv', 'atk', 'hp', 'ph', 'wrath', 'fell', 'rcpt', 'no', 'fed', 'cx', 'cxh', 'cxb', 'stun', 'ad', 'amv', 'aatk', 'ah', 'adie', 'bd']);   // INT11: `bd` - the relay's count has fallen me (enforced)   // WB9c: the crystals grown, their health, one broken, the Reckoning broken and he stunned; WB11b: his host risen, walking, striking, its health, gone
 /** A level claim on the wire - the brain clamps it to its own 1..60; past this it is not a level at all. */
 export const GATE_LV_WIRE_MAX = 999;
 /** One blow's claimed damage on the wire - the brain caps a blow far lower (HIT_CAP_X); past this it is no blow. */
@@ -3905,6 +3910,17 @@ export const GATE_SEQ_MAX = 0x7fffffff;
  *  AUDIT WB11 W3: a blow is a frame a BODY it met (one `q` - net/gateBrain.js BLOW_GROUP_MS), and a swing through a
  *  pack of his host is six of them: 16, two such blows a second (8 refused the sixth frame of the second swing). */
 export const GATE_HZ_MAX = 16;
+/** INT11: a body's (or a hull's) share in its own word (`vt` - the gate's, the Abyss Dungeon's, the serpent's), in
+ *  thousandths of the whole (net/bossBody.js bodySaid reads v / 1000). */
+export const BODY_WORD_MAX = 1000;
+/** AUDIT INT15 (2026-10-10): A BODY'S WORD ON A BUCKET OF ITS OWN, never a fight's blows' - at bodySayer's pace (a
+ *  quarter second, net/bossBody.js BODY_SAY_MS, pinned equal) it took four of the gate's sixteen a second (a swing's
+ *  frames through a pack of his host refused for it) and, a hull under her carpenters, four of the serpent's ten (a
+ *  coil's `held` and `esc`, never said again, refused). The client's at the pace; the relay's holds a burst the way
+ *  bunched. */
+export const BODY_WORD_HZ_MAX = 4;
+export const bodyWordGate = (bucket, nowMs) => tokenGate(bucket, nowMs, BODY_WORD_HZ_MAX);
+export const bodyWordRelayGate = (bucket, nowMs) => tokenGate(bucket, nowMs, BODY_WORD_HZ_MAX, BODY_WORD_HZ_MAX + 4);
 export const gateGate = (bucket, nowMs) => tokenGate(bucket, nowMs, GATE_HZ_MAX);
 /** The first relay that runs a gate's boss room. An older one CLOSES the socket on the frame (the cast arm's law), and
  *  holds no fight - so the gate's door answers "not yet" at it (scenes/gatePool.js ready). */
@@ -3990,6 +4006,7 @@ export function validGateIn(m) {
   if (!m || typeof m !== 'object' || !GATE_KINDS.includes(m.k)) return null;
   if (m.k === 'in') return Number.isSafeInteger(m.lv) && m.lv >= 1 && m.lv <= GATE_LV_WIRE_MAX ? { k: 'in', lv: m.lv, ...(Number.isSafeInteger(m.bv) && m.bv >= 0 && m.bv <= 999 ? { bv: m.bv } : {}) } : null;
   if (m.k === 'spent') return Number.isSafeInteger(m.d) && m.d >= 0 ? { k: 'spent', d: m.d } : null;   // AUDIT WBX S1
+  if (m.k === 'vt') return intIn(m.v, 0, BODY_WORD_MAX) ? { k: 'vt', v: m.v } : null;   // INT11: my body's share, thousandths
   if (m.k === 'heal') {   // GATE-HEAL: what my mates healed in me - each caster by peer id in the room, once (allies only)
     if (!Array.isArray(m.h) || m.h.length < 1 || m.h.length > GATE_HEAL_ROWS_MAX) return null;
     const h = m.h.map((t) => (Array.isArray(t) && t.length === 2 && typeof t[0] === 'string' && ID_RE.test(t[0]) && intIn(t[1], 1, GATE_HEAL_WIRE_MAX) ? [t[0], t[1]] : null));
@@ -4216,6 +4233,7 @@ const gateFell = (x) => {
  */
 export function validGateOut(m) {
   if (!m || typeof m !== 'object' || !GATE_OUT_KINDS.includes(m.k)) return null;
+  if (m.k === 'bd') return { k: /** @type {const} */ ('bd') };   // INT11: no fields - the fall is mine, the socket's own
   switch (m.k) {
     case 'st': {
       if (!Number.isSafeInteger(m.d) || m.d < 0 || typeof m.b !== 'string' || !GATE_BOSS_RE.test(m.b)) return null;
@@ -4573,11 +4591,11 @@ export function validOwOut(m) {
 /** What a client may say to the serpent's cell - and SERPENT2's `site`, to the HUB alone: the day, the site's native
  *  point to the whole unit and the port it lies off, so the hub's Discord herald names the place and posts the kill at
  *  the site the most accounts agree on (net/serpentHerald.js). */
-export const SERPENT_KINDS = Object.freeze(['in', 'hit', 'held', 'esc', 'wr', 'site']);
+export const SERPENT_KINDS = Object.freeze(['in', 'hit', 'held', 'esc', 'wr', 'site', 'vt']);   // INT13: `vt` - my hull, in my own word
 /** What the cell (or the hub) says back (the client drops any other kind): the whole state, a leg of its swim, a change
  *  in how it rides the sea, an attack begun, its health, a phase's turn, a coil wound / its health / broken / crushed /
  *  slipped, the maelstrom formed, the kill, the sounding, a refusal, a receipt. */
-export const SERPENT_OUT_KINDS = Object.freeze(['st', 'sw', 'dv', 'atk', 'hp', 'ph', 'coil', 'ch', 'cb', 'cr', 'cx', 'mael', 'fell', 'gone', 'no', 'rcpt']);
+export const SERPENT_OUT_KINDS = Object.freeze(['st', 'sw', 'dv', 'atk', 'hp', 'ph', 'coil', 'ch', 'cb', 'cr', 'cx', 'mael', 'fell', 'gone', 'no', 'rcpt', 'bd']);   // INT13: `bd` - the relay's count has wrecked my ship (enforced)
 /** The serpent frames' own bucket: the brain's SERPENT_HIT_HZ_MAX (6) gathered volleys, the `in`, a coil's word, slack. */
 export const SERPENT_HZ_MAX = 10;
 export const serpentGate = (bucket, nowMs) => tokenGate(bucket, nowMs, SERPENT_HZ_MAX);
@@ -4651,6 +4669,7 @@ export function validSerpentIn(m) {
   }
   if (m.k === 'hit') return finite(m.d) && m.d > 0 && m.d <= SERPENT_DMG_WIRE_MAX && intIn(m.z, 0, 2) ? { k: 'hit', d: m.d, z: m.z } : null;
   if (m.k === 'wr') return m.w === 0 || m.w === 1 ? { k: 'wr', w: m.w } : null;
+  if (m.k === 'vt') return intIn(m.v, 0, BODY_WORD_MAX) ? { k: 'vt', v: m.v } : null;   // INT13: my hull's share, thousandths
   if (m.k === 'site') {   // SERPENT2: the day, the site's native point to the whole unit, the port it lies off (gatePlaceWire's law)
     if (!Number.isSafeInteger(m.d) || m.d < 0 || !Number.isSafeInteger(m.sx) || !Number.isSafeInteger(m.sz) || Math.abs(m.sx) > POSE_BOUND || Math.abs(m.sz) > POSE_BOUND || typeof m.pl !== 'string') return null;
     return /^[A-Za-z]/.test(m.pl) && gatePlaceWire(m.pl) === m.pl ? { k: 'site', d: m.d, sx: m.sx, sz: m.sz, pl: m.pl } : null;
@@ -4717,6 +4736,7 @@ export function validSerpentOut(m) {
 }
 /** A word's own fields (validSerpentOut). */
 function serpentOutOf(m) {
+  if (m.k === 'bd') return { k: /** @type {const} */ ('bd') };   // INT13: no fields of its own - its site is the word's
   switch (m.k) {
     case 'st': {
       if (!Number.isSafeInteger(m.d) || m.d < 0 || typeof m.b !== 'string' || !SERPENT_BOSS_RE.test(m.b)) return null;
@@ -4842,10 +4862,10 @@ export function validSdRecord(v) {
 
 /** What a client may say: `found`, to the cell its Hollow stands in; `pz` (SD6b), a turn in the realm's Orrery; SD8b: the
  *  Last Moment's fight - `in`, and a blow on the Remnant (`hit`), an Echo (`ehit`), a Heart (`xhit`). */
-export const SD_KINDS = Object.freeze(['found', 'pz', 'in', 'hit', 'ehit', 'xhit', 'spent']);
+export const SD_KINDS = Object.freeze(['found', 'pz', 'in', 'hit', 'ehit', 'xhit', 'spent', 'vt']);   // INT12: `vt` - my body, in my own word
 /** What the relay says: `ev`, the hub's record; `pz` (SD6b), the realm's Orrery; SD8b: the fight's words (a client drops
  *  any other kind). */
-export const SD_OUT_KINDS = Object.freeze(['ev', 'pz', 'st', 'mv', 'atk', 'hp', 'ph', 'ec', 'cx', 'cxh', 'cxb', 'stun', 'fell', 'lost', 'no', 'rcpt']);
+export const SD_OUT_KINDS = Object.freeze(['ev', 'pz', 'st', 'mv', 'atk', 'hp', 'ph', 'ec', 'cx', 'cxh', 'cxb', 'stun', 'fell', 'lost', 'no', 'rcpt', 'bd']);   // INT12: `bd` - the relay's count has fallen me (enforced)
 /** SD8b: THE FIGHT'S BRAIN, by number (the gate's law, AUDIT WBX R7) - said on every `in`, refused below SD_BRAIN_MIN: a
  *  client that does not know the Remnant's blows would judge each a miss. 1 is SD8's: the Walking Hour, the Dragon Break,
  *  the Last Moment, the Hour's own blows. */
@@ -4896,6 +4916,7 @@ export function validSdIn(m) {
   if (m.k === 'pz') return intIn(m.i, 0, SD_PZ_STONES - 1) && (m.a === 1 || m.a === -1) && intIn(m.q, 0, SD_PZ_Q_MAX) ? { k: 'pz', i: m.i, a: m.a, q: m.q } : null;
   if (m.k === 'found') return intIn(m.s, 1, SD_SLOT_MAX) && intIn(m.px, 0, 999) && intIn(m.py, 0, 499) ? { k: 'found', s: m.s, px: m.px, py: m.py } : null;
   if (m.k === 'spent') return intIn(m.s, 1, SD_SLOT_MAX) ? { k: 'spent', s: m.s } : null;   // SD9a: a slot's spoils taken
+  if (m.k === 'vt') return intIn(m.v, 0, BODY_WORD_MAX) ? { k: 'vt', v: m.v } : null;   // INT12: my body's share, thousandths
   // SD8b: the fight - an `in` (my level; my game's brain), else a blow (its number, its damage, its kind - the gate's bounds)
   if (m.k === 'in') return intIn(m.lv, 1, GATE_LV_WIRE_MAX) ? { k: 'in', lv: m.lv, ...(intIn(m.bv, 0, 999) ? { bv: m.bv } : {}) } : null;
   if (!intIn(m.q, 0, GATE_SEQ_MAX) || !finite(m.d) || m.d <= 0 || m.d > GATE_DMG_WIRE_MAX || (m.r !== 0 && m.r !== 1 && m.r !== 2)) return null;
@@ -4991,6 +5012,7 @@ function validSdFightOut(m) {
  *  or null. */
 export function validSdOut(m) {
   if (!m || typeof m !== 'object' || !SD_OUT_KINDS.includes(m.k)) return null;
+  if (m.k === 'bd') return { k: /** @type {const} */ ('bd') };   // INT12: no fields - the fall is mine, the socket's own
   if (m.k === 'pz') {
     if (!intIn(m.s, 1, SD_SLOT_MAX) || !Array.isArray(m.st) || m.st.length !== SD_PZ_STONES || !m.st.every((h) => intIn(h, 0, SD_PZ_HOURS - 1))) return null;
     if (!intIn(m.f, 0, SD_PZ_FRAY_MAX) || !intIn(m.lit, 0, SD_PZ_STONES) || typeof m.ok !== 'boolean') return null;
