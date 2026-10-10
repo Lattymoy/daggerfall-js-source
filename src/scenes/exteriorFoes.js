@@ -38,7 +38,7 @@ import { silenceBlocksCast, attemptSoulTrap, SOUL_TRAP_TEXT, fillEmptyTrap, peer
 import { isAzurasStarEquipped, registerFoeDoor } from '../systems/artifactEffects.js';   // V3: the Star's kill capture; AUDIT PSCALE1 DOORS-2: Namira's reflection through this pool's door
 import { EnemyAttack } from '../characters/enemyAttack.js';
 import { makeEnemyEntity, loadMonsterCareer, KNIGHT_CITYWATCH_ID, applyProgressionScaling } from '../characters/enemyEntity.js';
-import { combatStanding, foeShare, progressionScaling, wildernessShare } from '../systems/skillSoftcap.js';   // SOFTCAP5: tougher foes in the wilds
+import { combatStanding, foeShare, progressionScaling, wildernessShare, placeVeteran, wildernessThreat } from '../systems/skillSoftcap.js';   // SOFTCAP5: tougher foes in the wilds; BAL3: the wilds' own threat
 import { isNight } from '../world/worldClock.js';   // SOFTCAP5: the wilds' night share   // AUDIT WATCH1 A1: the watch's own puppet allowance
 import { MobileUnit, MOBILE_DAEDRA_SEDUCER, SeducerTransformBehaviour } from '../characters/mobileUnit.js';   // A5: the Seducer transform pair + its trigger
 import { ClassFile } from '../formats/classFile.js';
@@ -77,7 +77,7 @@ import { floorLanding } from '../player/enterExit.js';   // REVENANT-FATE (the 2
 import { renownFoeStruck, renownFoeDied } from '../net/renownTracker.js';   // RENOWN1: a foe the player fought pays its Renown XP when it dies, by any hand
 import { reportPlayerKill } from '../systems/playerKills.js';   // SET2: my own kills, told
 import { partyFoeLoses, partyFoeHits, partyFoeHeals, noteFighter, foeFighters, takeWholeBlow, PARTY_ME } from '../systems/partyScale.js';   // PSCALE1: a shared foe weighs whoever fights it
-import { stampWonWeapons } from '../systems/lootRarity.js';   // SIGIL1: a body's weapons won online
+import { stampWonWeapons, lootRarityOn } from '../systems/lootRarity.js';   // SIGIL1: a body's weapons won online; BAL3: the ladder's switch, the wilds' threat's
 import { corpseName, mobileEntityName, liveEntityName } from '../systems/worldTooltips.js'; import { questFoeSubs } from '../systems/questFoeLine.js';   // QUEST-FOE-LINE: a quest's foe says whose it is; WORLD-HOVER: "<who> (dead)", the mod's own word (.cs:526); H2: and a LIVE one's, when it is not hostile (.cs:304-312)
 import { enemyDisplayName } from '../characters/enemyBasics.js';   // GetLocalizedEnemyName, the index law in one place
 import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
@@ -320,6 +320,8 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   let _onCamps = null;          // SURV3: (from, records, nowMs) - a peer's camps off their foes frame, once the frame has passed the room test
   let _onHcc = null;            // HCC-ONLINE: (from, record | null, nowMs) - a peer's horse and wagon off the same frame (systems/horseCartWire.js)
   let _onHccClear = null;       // HCC-ONLINE: called wherever clearPuppets runs - the peers' teams go with the puppets
+  let _onRide = null;           // WAGONS1: (from, word | null) - a peer's word on a seat in a wagon's back (systems/wagonSeats.js `wr`)
+  let _puppetSeatDraw = null;   // WAGONS2: (puppet) -> { feet, g } | null - where a peer's companion seated in their wagon's back is DRAWN
   let _onRaids = null;          // RAID2: (from, word, nowMs) - a peer's word on its raids (systems/raidingParties.js raidPeerWord)
   let _onCsa = null;            // CSA-J: (from, record | null, nowMs) - a peer's boats off the same frame (systems/comeSailAwayWire.js)
   let _onCsaClear = null;       // CSA-J: called wherever the teams' clear runs - the peers' boats go with the puppets
@@ -424,13 +426,14 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // ELITE-RATES: ELITE-RARITY's gate (one standing at a time, a 180-minute gap, never a loose stand) is gone.
       if (eliteFoe === true && !allied) promoteEliteFoe(entity);   // a saved foe's classification, restored before its HP/items overlay - never re-rolled
       else if (eliteFoe === undefined && !puppet && !allied && !questBehaviour && !replacing && !team && !inLocation() && elitesAllowed({ onlinePage: isOnlinePage(), inRoom: _net != null })
-        && (revenant ? revenant.elite : rollOverworldElite(Math.random))) promoteEliteFoe(entity);   // REVENANT: a returning revenant stands as what it was - an elite's glow where elites stand, never a fresh roll   // ONLINE ONLY
+        && (revenant ? revenant.elite : rollOverworldElite(Math.random))) promoteEliteFoe(entity);   // REVENANT: a returning revenant stands as what it was - an elite's glow where elites stand, never a fresh roll   // BAL4: online, and offline under the loot ladder
       // SOFTCAP5: THE WILDS ARE AN AREA TOO - the dungeons' law, with the wilderness's share (22% by day, 44% at night):
       // my own foes only (a puppet is its owner's build), never an ally, never on a location's ground
       if (!puppet && !allied && !inLocation()) {
         let night = false;
         try { night = isNight((skyMinute ?? currentMinute)()); } catch { /* no clock: day */ }   // TIME1: the sky's night
-        applyProgressionScaling(entity, progressionScaling(combatStanding(playerEntity), wildernessShare(night), foeShare(basics?.level ?? entity.level, isClass)));
+        // BAL3 (bible/05-Combat/Balance-Arc.md section 5): and the wilds' own threat - tier 5 by day, a harpy nest's 7 at night - while the ladder stands
+        applyProgressionScaling(entity, progressionScaling(combatStanding(playerEntity), wildernessShare(night), foeShare(basics?.level ?? entity.level, isClass), lootRarityOn() ? placeVeteran(wildernessThreat(night)) : 0));
       }
       // DW-E4: SetEnemyTeam - Entity.Team alone (the treasure guards' Undead), the MobileEnemy copy kept
       if (team) entity.team = team;
@@ -2044,7 +2047,13 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const szG = szE * wildGiantSize(f.entity);   // WILD3: a giant of the open zone, four times over
       const sz = szG === 1 ? sz0 : { w: sz0.w * szG, h: sz0.h * szG };
       f.batch.record = rkey;
-      f.batch.size = { w: o.flip ? -sz.w : sz.w, h: sz.h };
+      // WAGONS2: a companion seated in my wagon's back is DRAWN where the wagon is drawn - grown with it under the
+      // Overworld (scenes/crewAshore.js ai.seatDraw, the pool's seatDrawn); its body stays on the seat itself
+      const _sd = f.ai?.seatDraw?.() ?? (f.puppet && _puppetSeatDraw ? _puppetSeatDraw(f) : null), _sg = _sd?.g > 1 ? _sd.g : 1;   // and a peer's, on their wagon as drawn here
+      f.batch.size = { w: (o.flip ? -sz.w : sz.w) * _sg, h: sz.h * _sg };
+      // WAGONS2 (AUDIT): grown, it casts no shadow - OW-BIG's law for every grown figure (a 16 m companion's shadow lay
+      // over the view); the flag the grow set let go when it ends, unless the dissolve holds it (systems/dissolve.js [4])
+      if (_sg > 1) { f.batch.noShadow = true; f._seatShadow = true; } else if (f._seatShadow) { f._seatShadow = false; if (!f.batch.dissolve?.[4]) f.batch.noShadow = undefined; }
       // INCIDENT 2026-09-04: a flyer or swimmer keeps its CENTRE across
       // records (DaggerfallMobileUnit.cs:407-410); a walker its feet.
       const _bh = f.mobile.basics.behaviour ?? 'General';
@@ -2052,11 +2061,12 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         const org = f._origin ?? (f._origin = [0, 0, 0]);
         org[0] = f.ai.feet[0]; org[1] = spriteOriginY(f.ai.feet[1], f.idleH, sz.h, _bh); org[2] = f.ai.feet[2];
         f.batch.origin = org;
-      } else f.batch.origin = f.ai.feet;
+      } else f.batch.origin = _sg > 1 ? _sd.feet : f.ai.feet;
       // MWNPC5c: a class foe offered to its body, dressed as its billboard is; the billboard draws until drawBodies says
-      // the body stands, and casts its shadow either way
+      // the body stands, and casts its shadow either way. One drawn grown on a wagon under the Overworld (WAGONS2) keeps
+      // its sprite - the far view's, as the roads' bands are (MWNPC10c)
       f.batch.castOnly = false;
-      if (npcLane && isBodyFoe(f)) { npcLane.stand('foe', foeActor(f), f.batch.conceal ?? null, f.batch.hitFlash || 0, foeFx(f)); _npcStood.push(f); }
+      if (npcLane && _sg === 1 && isBodyFoe(f)) { npcLane.stand('foe', foeActor(f), f.batch.conceal ?? null, f.batch.hitFlash || 0, foeFx(f)); _npcStood.push(f); }
       out.push(f.batch);
     }
     // MWNPC5c: the dead from the kill until the corpse is collected, the corpse flat casting alone under the body
@@ -2379,6 +2389,8 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   function reclaimSite(site) { _lostSites.delete(site); }
   function setOnCamps(fn) { _onCamps = typeof fn === 'function' ? fn : null; }
   function setOnHcc(fn, onClear = null) { _onHcc = typeof fn === 'function' ? fn : null; _onHccClear = typeof onClear === 'function' ? onClear : null; }   // HCC-ONLINE
+  function setOnRide(fn) { _onRide = typeof fn === 'function' ? fn : null; }   // WAGONS1
+  function setPuppetSeatDraw(fn) { _puppetSeatDraw = typeof fn === 'function' ? fn : null; }   // WAGONS2
   function setOnBands(fn) { _onBands = typeof fn === 'function' ? fn : null; }   // TV7b
   function setOnSeaRaiders(fn) { _onSeaRaiders = typeof fn === 'function' ? fn : null; }   // OW6
   function setOnRaids(fn) { _onRaids = typeof fn === 'function' ? fn : null; }   // RAID2
@@ -2646,7 +2658,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (data.nv !== undefined) _onNaval?.(from, data.nv, _now());   // NAV-G: the owner's sea (null: none) - the ships they stand, their last volleys and barrels; past the same room test
     if (data.pg !== undefined) _onPortals?.(from, data.pg);   // PORTAL1: the owner's portal - a frame without it leaves the copy to run out on its own time; past the same room test
     if (data.hv !== undefined) _onHcc?.(from, data.hv, _now());   // HCC-ONLINE: the owner's horse and wagon (null: none stand) - a frame without the field leaves the last word standing; past the same room test the camps pass
-    if (Array.isArray(data.c)) _onCamps?.(from, data.c, _now());   // SURV3: the owner's camps ride the same frame, past the same room test - the host's pool lands them
+    if (Array.isArray(data.c)) _onCamps?.(from, data.c, _now()); if (data.wr !== undefined) _onRide?.(from, data.wr);   // SURV3: the owner's camps ride the same frame, past the same room test - the host's pool lands them; WAGONS1: their ask for a seat in my wagon, or the seat they sit in - the same room test
     return true;
   }
   /** One streamed record onto its puppet: the target pose - kept in the WORLD frame and converted every step (AUDIT
@@ -3214,6 +3226,8 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     setOnSeaRaiders,   // OW6
     setOnCsaAboard,   // CSA-K
     setOnNaval,   // NAV-G
+    setOnRide,   // WAGONS1: the seats' word
+    setPuppetSeatDraw,   // WAGONS2: a peer's seated companion, drawn in their grown wagon
     setOnPortals,   // PORTAL1
     setOnCamps, setOnHcc, setOnDuel };   // SURV3; HCC-ONLINE
 }

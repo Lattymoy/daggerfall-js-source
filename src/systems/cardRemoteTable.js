@@ -28,6 +28,10 @@ export const CATCH_UP_MS = 20000;
 // AUDIT CARDS-4 C5: and the stake's and the table kind's - a gold sit at a chips table, a stake spent (a new socket's
 // sit after the old seat was cashed out), refused or another's: the chair is never mine, so pending it was said for ever
 export const SIT_REFUSALS = Object.freeze(['taken', 'no such chair', 'bad table', 'table differs', 'account seated', 'busy', 'gold table', 'friendly table', 'bad stake', 'stake spent', 'stake refused', 'stake elsewhere', 'stakes closed', 'cashed out']);
+/** AUDIT CARDS-6 E8: the cloth plays Iliac Hand (CARDS10: one game a cloth) - a refusal of its own: the chair is lost,
+ *  never asked again (in neither list, the sit was said every 1.5 s for as long as the game went on), and the host offers
+ *  the game that is played there instead of standing him up. */
+export const SIT_OTHER_GAME = 'other game';
 
 export class RemoteCardTable {
   /**
@@ -43,7 +47,7 @@ export class RemoteCardTable {
     this.seenHand = 0;     // the last hand an event (or a catch-up) introduced
     this.error = /** @type {string|null} */ (null);
     this.confirmed = false;   // AUDIT CARDS-3 B2: a table state has shown my id in `chair`
-    this.lost = /** @type {{chair: number, why: 'refused'|'broke'|'stood'}|null} */ (null);
+    this.lost = /** @type {{chair: number, why: 'refused'|'broke'|'stood'|'other game'}|null} */ (null);
     this.said = 0;            // AUDIT CARDS-3 B3: bumped by a refusal - the panel repaints for it, though no event came
     this.needLook = false;    // CARDS-TIDY: a delta came with no table to lay it on - the whole is to be asked for
     this.n = /** @type {number|null} */ (null);   // AUDIT CARDS-4 D1: the number of the room frame the state is
@@ -90,6 +94,7 @@ export class RemoteCardTable {
       this.error = f.error;
       this.said++;
       if (!this.confirmed && this.chair >= 0 && SIT_REFUSALS.includes(f.error)) this._lose('refused');
+      if (!this.confirmed && this.chair >= 0 && f.error === SIT_OTHER_GAME) this._lose(SIT_OTHER_GAME);   // AUDIT CARDS-6 E8
       return;
     }
     if (f.hole) { this.hole = f.hole; return; }

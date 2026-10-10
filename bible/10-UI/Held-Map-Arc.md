@@ -165,7 +165,7 @@ skins cannot drift:
   every port's mark ~~at the mid and near bands while the mod restricts
   ship travel to ports~~ - PORT-MAP (2026-10-04, Mac: "Also ports don't
   show on my map"): at EVERY band, beside the mark the band inks and ON
-  the place where it inks none (the map opens far, which inks the cities
+  the place where it inks none (the map at rest is far, which inks the cities
   alone), haloed then inked in the full pen (`HARBOUR_HALO`,
   `HARBOUR_PEN`), whether or not the mod restricts ship travel - the
   quays stand at every port (`03-World/Holdings.md` 7);
@@ -1318,3 +1318,13 @@ rectangle and joined to the Bay's own coast; a hover beyond the Bay names the pr
 press there picks nothing. The sheet's limits carry the continent's frame (`clampView` takes an origin), the home view
 stays the Bay's fit, and past CONTINENT_BELOW of it the Bay's own ink thins (CONTINENT_BAND). Built once, painted
 only when the view leaves the Bay. The record is `03-World/Tamriel.md`.
+
+## MAP-SCALE - the map's text and icons grow with the screen (FIELD BUGS 2026-10-09e)
+
+A 1440p player: "icons and text too small on high resolutions". The paper fits the screen, and its names, glyphs and
+marks were inked in fixed paper pixels, its chrome in fixed CSS pixels - at 1440p the paper grew by a third and nothing
+on it did. `ui/mapScale.js` mapUiScale is the map's scale: Auto is the screen's height over 1080 to the twentieth, held
+to 1-2 (1 at 1080p and under, as it was), or the player's own 0.75-2 on the Interface tab's Maps row, "Map text and
+icons" (prefs `mapScale`). `_layout` inks on the fitted paper over the scale at full device resolution, and the
+pointer, the hover card and the hands lane come back over it; the chrome is zoomed by `--hm-ui`, each of its
+viewport-relative bounds divided by it. The record: `01-Overview/Field-Bugs-2026-10-09e.md`.

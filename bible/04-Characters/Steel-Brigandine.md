@@ -3,7 +3,7 @@
 `tools/bakeBrigandine.mjs` + `src/characters/ownArmorModels.js` +
 `src/formats/mwItemMap.js` (composeWornArmor) +
 `src/formats/mwSkinTransfer.js` (transferSkin, fitLift) + `src/formats/mwFirstPerson.js` (bindSkinnedFromBody)
-(MW-BRIG1, Mac, 2026-09-29; MW-BRIG2; MW-BRIG3)
+(MW-BRIG1, Mac, 2026-09-29; MW-BRIG2; MW-BRIG3; MW-BRIG4, every metal in its own painting, 2026-10-09)
 
 > "This is for the morrowind model. The steel brigantine"
 
@@ -24,10 +24,11 @@ light set mints any plate material as **Brigandine** (`rriItems.js`
 `lightWord`), so its Jerkin (template 520) in Steel is the "Brigandine
 Jerkin" - and on the Morrowind body it wore retail's `steel_cuirass`
 (MW-ASSIGN: the jerkin resolves by the cuirass row). Mac's answer,
-asked: **the Steel Brigandine only**. Every other material of the jerkin
-- Silver included, though it shares Steel's Morrowind token - keeps what
-it had. (The classic Steel Cuirass wears Mac's steel plate since
-MW-STEEL1 - `04-Characters/Steel-Plate.md`.)
+asked, was **the Steel Brigandine only** - until MW-BRIG4 (below): every
+metal the jerkin is a brigandine in, Iron to Daedric, wears it now, each
+in its own painting; the leather and fur jerkins keep retail's cuirass.
+(The classic Steel Cuirass wears Mac's steel plate since MW-STEEL1 -
+`04-Characters/Steel-Plate.md`.)
 
 ## The file, read
 
@@ -156,10 +157,11 @@ first person keeps only arm bones, so the brigandine is a third-person,
 peer and paperdoll garment, as a retail cuirass is.
 
 The files ship through `systems/ownMwAssets.js` like the Thunderlock's:
-`meshes/brigandine_steel.nif`, `textures/brigandine_steel.dds`, ranked after the player's loose files
-(so a player's own file of the same name wins) and before every BSA.
-`itemMapCoverage` answers the Steel jerkin as `own`, inside the mod's
-armour space.
+`meshes/brigandine_<metal>.nif`, `textures/brigandine_<metal>.dds` - Steel's
+since MW-BRIG1, every brigandine metal's since MW-BRIG4 - ranked after the
+player's loose files (so a player's own file of the same name wins) and
+before every BSA. `itemMapCoverage` answers each brigandine metal's jerkin
+as `own`, inside the mod's armour space.
 
 ## The texture is painted, not baked
 
@@ -167,16 +169,19 @@ The Thunderlock's DDS was grown from its geometry because its export
 had no texture. This one carries `Steel.png` and UVs laid out for it,
 so the DDS is that PNG, mip-chained (`mipChain`/`writeDds`,
 uncompressed), and the NIFs name it as a bare `brigandine_steel.dds`
-that `correctTexturePath` re-roots under `textures/`. The suite decodes
+that `correctTexturePath` re-roots under `textures/` (since MW-BRIG4 each
+metal's NIF names its own, `brigandine_<metal>.dds`). The suite decodes
 it back through `collectArmTextures` to the PNG pixel for pixel.
 
 ## Reproducible, and where the sources are from
 
 `src/assets/mw/source/Brigandine_Steel.fbx` and `Brigandine_Steel.png`
 are Mac's two files, renamed for the asset, committed beside what they
-make; `node tools/bakeBrigandine.mjs` re-makes both shipped files
-and `test/mwbrig2.test.js` holds them to the bytes and the sources to
-their SHA-256. The FBX records its texture's original location as a
+make; `node tools/bakeBrigandine.mjs` re-makes the shipped files - since
+MW-BRIG4 a NIF and a DDS for every brigandine metal, twenty in all, from
+the FBX and each metal's painting - and `test/mwbrig2.test.js` holds
+Steel's to the bytes and its sources to their SHA-256, `test/mwbrig4.test.js`
+every metal's. The FBX records its texture's original location as a
 `Downloads\brigandine\` folder; the doctrine rows call these files
 SUPPLIED (Mac's, given for the port) rather than OURS, and whether the
 mesh and painting are Mac's own work or a download with a licence of
@@ -200,3 +205,67 @@ its own is **Mac's to confirm**.
 - **Female bodies** wear the same mesh, skinned from their own body parts
   and lifted to their own chest (MW-BRIG3); its shape is the one it was
   fitted with.
+
+## MW-BRIG4: every metal, in its own painting
+
+Mac, 2026-10-09: "Also for the integrated brigadine chest piece, we need
+each of these textures implemented" - nine paintings of the brigandine's
+own unwrap (256x256, the Steel one's layout at twice its size), in five
+cloths - tan, light blue, red, green and deep blue - four of them painted
+twice, the same cloth with different rivets.
+Asked which brigandine wears which, he took the map offered: **one per
+metal** the jerkin is a brigandine in, Steel keeping MW-BRIG1's red.
+
+| metal | painting (in the order Mac attached them) |
+|---|---|
+| Iron | 1 - tan, dark rivets |
+| Steel | MW-BRIG1's red (`Brigandine_Steel.png`, 128x128) |
+| Silver | 7 - deep blue, silver rivets |
+| Elven | 6 - green, white rivets |
+| Dwarven | 9 - deep blue, gold rivets |
+| Mithril | 3 - light blue, teal rivets |
+| Adamantium | 2 - tan, red rivets |
+| Ebony | 8 - red, light rivets |
+| Orcish | 5 - green, dark rivets |
+| Daedric | 4 - red, dark rivets |
+
+(AUDIT MW-BRIG4: the question that settled the map called 5 "dark green",
+9 "blue" and 4 "bright red" beside 6, 7 and 8. Measured, each pair - Iron
+and Adamantium, Elven and Orcish, Silver and Dwarven, Ebony and Daedric -
+is one cloth, the same to a level in every channel, and only its rivets
+differ; the map was offered and taken on the rivets, which the question
+named right. In game each pair reads as one colour but up close.)
+
+**The table.** `ownArmorModels.js` `BRIGANDINE_METALS` is every plate
+material (`isPlate`, Iron to Daedric - `rriItems.js` lightWord's "Iron and
+up", in the ladder's order), and each is a row of its own
+(`daggerfall_brigandine_<metal>`, "<Metal> Brigandine"): the one piece
+worn as a cuirass, skinned from the chest, groin, thighs and knees
+(MW-BRIG2) and fitted to the chest (MW-BRIG3) as the Steel row is, its
+mesh `brigandine_<metal>.nif`. A jerkin wears the brigandine exactly when
+the mod's own word calls it one - pinned both ways over every material and
+both `message` values, so the leather and fur jerkins keep retail's
+cuirass. Silver, which wore retail's steel cuirass by Morrowind's token,
+wears its own painting now.
+
+**The bake.** `tools/bakeBrigandine.mjs` bakes the mesh once and writes it
+once per metal (`bakeBrigandineMetals`), each NIF naming its metal's DDS
+and each DDS that metal's painting mip-chained - the ten NIFs the same
+mesh to the byte but for the name of the painting. Mac's nine are
+committed as he sent them under their metals' names
+(`src/assets/mw/source/Brigandine_<Metal>.png`, `PAINTING`); Steel's files
+bake to the bytes they were.
+
+**How it was proven.** `test/mwbrig4.test.js`: the metals are the ten
+plate materials, and a jerkin wears the brigandine exactly when its name
+says Brigandine; each metal's row the Steel row's skin and fit, composed
+into the cuirass slot with its own mesh and the chest's shadow; every
+metal's NIF and DDS re-made byte for byte, each NIF naming its own
+painting over the Steel brigandine's positions, UVs and indices, each DDS
+resolved through the lane's ladder and decoded back to its painting pixel
+for pixel; each painting held to its SHA-256 under the metal the map gave
+it; each NIF's material named for its metal (AUDIT MW-BRIG4: all ten said
+Steel); a metal with no painting refused by name. `tools/mutants/mwbrig4.json`
+(8, all dead). Not yet seen in game: the paintings are on the unwrap the
+Steel one has been worn on since MW-BRIG1, drawn and looked at off the
+tree (front, each metal) - the pictures are not committed.

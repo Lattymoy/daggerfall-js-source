@@ -41,8 +41,13 @@ src/net/nodeLaw.js (the nodes). Appendix B lists them in one place.
    be laundered into the server's economy. **What may enter the Stores**, the whole list: a harvest the service
    rolled (section 6), a craft the service made (section 9), a market purchase or a buy order filled (10.2-10.3), a
    writ's return or refund (section 11), the Board's two counters - the Weavers' and the Apothecaries' (4.5) - a Siege
-   Honour's Spoils of War (4.7), and Disenchanting's Essence from a provenance item (9.3). Nothing else - no pack item,
-   however it was come by. **Every Stores unit carries its origin** (section 7): **own** (this character's harvest or
+   Honour's Spoils of War (4.7), and Disenchanting's Essence from a provenance item (9.3). BAG1 restated it over the
+   service's carried count (`Materials-Bag.md` 5); BAG-CRAFT (2026-10-09, Mac: "I just want players to also be able to
+   craft from their inventory, not just the store") opened one door past it: **a station's shortfall**, put in from the
+   bag and the pack counted or not, as **loose** (`Materials-Bag.md` 14) - so a station takes the client's word for what
+   its pack holds. AUDIT BAG-CRAFT (A1, `Materials-Bag.md` 15) walled that door to the stations: a loose unit, and all a
+   station makes of it, reaches no writ, guild Stores, Drakes sale or carried count, so the guarantee above stands for
+   the economy - what a modified client gains through it is a craft's XP. **Every Stores unit carries its origin** (section 7): **own** (this character's harvest or
    craft) or **bought** (everything else); only own units raise a seat's influence at their value (section 11).
    **RESTATED BY BAG1** (2026-10-03, `Materials-Bag.md`; Mac: "instead of the current go straight into your storage"):
    a harvest goes into the Materials Bag or the pack now, and what the service handed to a save may come BACK into the
@@ -420,8 +425,8 @@ else Foraging's Fish (1605). A **trophy** is the species' own Deep Waters templa
   flat for a tree, a plant flat or an open patch for an herb). The **service** knows the id is real from the law; it
   knows the pixel's **climate and region** only from **the witnessed world** (SEAT0 3.2): the harvest request carries
   the pixel's climate and region as the client derived them, and the service keeps them as a witnessed row. A pixel
-  **confirmed** by 3 accounts yields its whole table; an **unconfirmed** pixel yields tiers 1-2 only (so a lie about a
-  pixel nobody else has walked buys little); a **disputed** pixel (two witnesses agreeing on another answer) keeps its confirmed table until a moderator settles it (SEAT0 3.2).
+  **confirmed** by 3 accounts yields its whole table; an **unconfirmed** pixel yields tiers 1-2 only - its veins 1-3
+  since UNWITNESSED-ORE, below - (so a lie about a pixel nobody else has walked buys little); a **disputed** pixel (two witnesses agreeing on another answer) keeps its confirmed table until a moderator settles it (SEAT0 3.2).
 - **How many** - per wilderness map pixel per day, never inside a location's rect:
 
 | Climate | Trees | Herb patches | Veins | Boulders (quarry) |
@@ -439,6 +444,8 @@ else Foraging's Fish (1605). A **trophy** is the species' own Deep Waters templa
 BOULDERS (FIELD BUGS 2026-10-01, Mac: "Fix the rest"; the service's acct47): the boulders were 1 / 2 / 3 / 1 / 0 / 0 / 1 / 3 - a rock field stood one or two a day in the woods. The fields' pieces now hold a node on each side (ROCK-SHARE, section 23), so the counts are raised; the Swamp and the Rainforest keep none (their Court writs ask no stone).
 
 MORE-NODES (2026-10-02, Mac: "increase all profession nodes", asked: "Double"; the service's acct48): the trees, the herb patches and the veins twice what they were, every climate (the table above). The day's sixty a profession (and the account's bound) are unchanged, so what doubles is how close the next node stands, not what a day yields (CAP-OFF, 2026-10-07: the sixty and the account's bound are gone - the nodes and the walk between them are the day's whole bound). A signature region's veins stand in the slots after the climate's (a Mountain's thirteenth, Daggerfall's fifth and sixth in the woods).
+
+UNWITNESSED-ORE (FIELD BUGS 2026-10-09e, the Discord's "Mining veins": "I mined about 200-300 veins of iron, but there were not a single vein of silver, gold, platinum or mithril in the mountains ... maybe Mountain area and MountainWoods area are bugged"; the service's acct102): not a bug - the law. A vein on a pixel nobody else had vouched for was held to tier 2, and the Mountain's table holds Iron at 1 and nothing again until Silver at 3: every mountain pixel a lone miner worked stood Iron alone, the Mountain Woods never its Silver, and a lone miner's word confirms nothing (three accounts a week old, the witnessed world above), so the far mountains never came to the rest. A vein on such ground is held where a dungeon's deep vein already is on anyone's word - `UNCONFIRMED_VEIN_TIER`, 3 (`net/nodeLaw.js`, the one cap the wilderness vein, the deep vein and the Court's vein metals read) - so the Mountain stands Silver beside its Iron (73 : 27 by the weights) and the Mountain Woods its Silver beside its three; no other climate's table holds a tier 3, so no other ground moves. Gold, Platinum, Mithril and a region's signature still wait on the witnesses, and a lie about a pixel buys Silver at most - what a dungeon's vein already gives it. The herbs and the trees keep 2. The Mining page says so in the player's words (`ui/profPages.js` MINING_GROUND_LINE). PIN MOVED: PROF2's "an unconfirmed Mountain pixel yields Iron alone" (`test/prof2_law.test.js`). Pinned by `test/fb1009e_unwitnessedore.test.js`; `tools/mutants/fb1009e_unwitnessedore.json` (4, all dead).
 
 GATHER-OW (2026-10-02, Mac: "allow them to appear in the overworld without being overwhelming, maybe a glyph marker showing where a group of them are"; asked: "Groups nearby"): on the Overworld each profession's group on a stood pixel - its nodes not yet worked today, as NODE-MARKS would mark them - is one diamond in its compass colour at their middle, its count beside it ("Mining ×6"), the nearest twelve within 3 km (the land streams three pixels out), read again twice a second; the view's filters have a Gathering switch. Not a click of its own: a click there walks to the ground under it. None with the professions shut, nor underground; Hunting's bodies are no group. `scenes/gatherHost.js` overworldGroups, `systems/travelViewFilters.js`, `ui/travelViewHud.js`, `scenes/world.js` travelViewMarks.
 
@@ -490,11 +497,15 @@ GATHER-OW (2026-10-02, Mac: "allow them to appear in the overworld without being
   the code says **`profStores`** (tables `prof_stores`, `guild_prof_stores`) - FACT, `src/systems/features.js`
   already exports a `STORES` (the three preference stores), and one word must not name two things.
 - **The Stores tab** (section 8) is the only place a Stores material is seen. Moving to the pack is allowed (one-way, law 3);
-  a pack item never moves into the Stores. BAG1 (`Materials-Bag.md`): a unit the service handed out and still counts
-  as carried moves back (law 3, restated); the Stores are **kept in town** - put in and taken out in any town, read
+  a pack item moves into the Stores only by BAG1's and BAG-CRAFT's doors (`Materials-Bag.md` 5, 14): a unit the service
+  handed out and still counts as carried moves back (law 3, restated), and a station's shortfall moves what the pack
+  holds, counted or not, as loose (a station's alone); the Stores are **kept in town** - put in and taken out in any town, read
   anywhere - and a harvest goes into the Materials Bag or the pack, never straight into them.
 - **Origin.** Every unit is **own** or **bought** - or, GOLD-MARKET (10.8), **gold**: bought on the market with gold,
-  which goes to the pack or back on the market for gold and to nothing else. Own: this character's harvest (section 6), a craft whose every input
+  which goes to the pack or back on the market for gold and to nothing else - or, AUDIT BAG-CRAFT (`Materials-Bag.md`
+  15), **loose**: a station's put-in from the pack that the service never handed out, which goes to a station (spent
+  first) or back to the pack uncounted and to nothing else; a smelt's products of it are loose, a craft's piece of it
+  lists for gold alone. Own: this character's harvest (section 6), a craft whose every input
   was own (section 9), Disenchanting's Essence from an own provenance item (one this character made, never sold), a
   Siege Honour's Spoils. Bought: a market purchase, a filled buy order, a counter's goods (4.5), a craft with any
   bought input, Essence from any other provenance item. A craft spends bought units first, so a character's own stay
@@ -1224,7 +1235,7 @@ the billboard cull's shadow arm, no board's), left to their own arcs. Probe: `no
   1.2, and Renown XP 25 x tier x units / 10 (MERGE 2: at main's RENOWN-ACCOUNT rate, three quarters floored -
   `net/professionLaw.js` writRenown - and to the delivering character's own track since RENOWN-CHAR; MERGE 2 had paid
   the ACCOUNT's one Renown). Each writ is filled once, by the first to deliver; at most **3** an
-  account a day. (The economy model, Appendix C, set 3 and 1.2: at 5 and 1.5 the Marks minted ran at 2.3 times the
+  account a day (CHAP2a: hall writs and Court writs together, one allowance - Chapters-Arc CALL 8; CHAP3a: and a member's own writ for its chapter). (The economy model, Appendix C, set 3 and 1.2: at 5 and 1.5 the Marks minted ran at 2.3 times the
   Marks burnt.)
 - **Guild and seat writs**: their pay is escrowed from the guild's Marks treasury, so posting one is a withdrawal:
   the **Guildmaster** posts them (GUILD1's law: only the Guildmaster withdraws), or an **Officer** within a weekly
@@ -1259,12 +1270,12 @@ of Makers; commissions; regional prices to haul between; and every seat on the m
 | A modified client fakes a craft | The service crafts; the client only receives (9.1) |
 | A modified client plays a perfect act | Capped at one quality step and +50% yield, never past the rank (5.1) |
 | A save-edited item enters the economy | The Stores are one-way (law 3); only a provenance id's owner lists it, one listing at a time (10.2, 18) |
-| A save-edited or looted material deposited from the Materials Bag | Only the service's carried count moves into the Stores, cut to what the pack holds and never raised (law 3 restated; `Materials-Bag.md` 5) |
+| A save-edited or looted material deposited from the Materials Bag | The Stores page, a writ and the market move only the service's carried count, cut to what the pack holds and never raised (law 3 restated; `Materials-Bag.md` 5). A station's shortfall moves the rest, as loose - a station's alone, walled from every writ, guild and Drakes door, its products walled with it (BAG-CRAFT, the owner's call; AUDIT BAG-CRAFT A1; `Materials-Bag.md` 14, 15) |
 | Fake gold buys the market | The market is in Marks (10.5); a gold listing is a realm character's alone, bought off its record on the service in the sale's own batch, and what gold bought never becomes Marks (10.8) |
 | Marks inflate | Faucets from witnessed acts, each capped - SILVER-FINDS' two bounded by the day (30 and 20 an account, 10.5); the weekly report; the Bank's spread and every fee burn |
 | A modified client claims loot finds it never opened | SILVER-FINDS: bounded, not witnessed - the service's dice say what a find strikes, and 20 silver an account a UTC day is the most a lie is paid (10.5) |
 | Bots farm nodes | Per-character nodes, ~~daily caps,~~ travel, the hour's writes (CAP-OFF, 2026-10-07: no day's cap - Mac's call) |
-| A modified client claims a rich node on a pixel nobody walks | The witnessed world: an unconfirmed pixel yields tiers 1-2 only (section 6) |
+| A modified client claims a rich node on a pixel nobody walks | The witnessed world: an unconfirmed pixel yields tiers 1-2 only, its veins 1-3 (section 6, UNWITNESSED-ORE: a dungeon vein's Silver at most) |
 | A modified client claims kills it never made | Hunting is bounded, not witnessed: ~~30 hides a day,~~ 3 of tiers 5-6 a day (section 6; CAP-OFF, 2026-10-07: the thirty of any tier gone, the three kept, Mac's word); hides mint no writ's Marks (no Court writ asks for them, section 11) - a hunt finds silver only as every harvest may (SILVER-FINDS: the service's dice, 30 an account a UTC day, 10.5) |
 | A modified client claims hauls from water it is not in | Fishing is bounded: ~~40 hauls a day an account~~ by the hour's writes (CAP-OFF, 2026-10-07); no Pearl or Slaughterfish on an unconfirmed pixel; fish mint no writ's Marks (section 6, 11) - a haul finds silver only as every harvest may (SILVER-FINDS, 10.5) |
 | ~~A modified client gathers at night~~ | RETIRED (ANY-HOUR, 2026-10-01): every client gathers at night - no hour is refused |
@@ -1671,7 +1682,8 @@ instruction), and what was found (FACT):
   68, Sulphur 69, Lead 70, Iron 71, Copper 72, Silver 73, Gold 74, Platinum 75 - FACT, `itemTemplatesData.js`) at 4.1's
   tier, the six new ores at theirs (Moonstone 4, Dwarven Scrap 4, Mithril 5, Adamantium 6, Ebony 6, Orichalcum 6). A
   vein's tier is drawn over the tiers its climate's table holds by section 6's weights renormalised (a Woodlands vein
-  is Iron, Copper or Tin at 40 : 25 against Lodestone), held to tier 2 on a pixel not confirmed, and its metal evenly
+  is Iron, Copper or Tin at 40 : 25 against Lodestone), held to tier 3 on a pixel not confirmed (UNWITNESSED-ORE,
+  section 6 - it was 2, and the Mountain stood Iron alone), and its metal evenly
   among that tier's. "Deep veins" (4.1, 4.6) are the dungeon veins.
 - **The signatures** (4.7): on a **confirmed** pixel of the kingdom, a signature stands BESIDE the climate's veins, in
   the slots after them (AUDIT 29: it took the first vein's place, so a Swamp's one vein was a crown's rare ore and a
@@ -1679,7 +1691,7 @@ instruction), and what was found (FACT):
   Kingdom of Daggerfall's Moonstone **two** ("twice the usual rate"), Wayrest's Mithril, Sentinel's Ebony,
   the Orsinium Area's and the Wrothgarian Mountains' Orichalcum (found nowhere else), the Isle of Balfiera's
   Adamantium (the only open-world surface Adamantium). On a pixel not confirmed the slot is an ordinary vein - a
-  signature is tier 4 to 6 and such a pixel is worth tiers 1-2. The Marches keep their +25%.
+  signature is tier 4 to 6 and such a pixel's veins are worth tiers 1-3 (UNWITNESSED-ORE). The Marches keep their +25%.
 - **Where a node stands** (section 6: "the nearest suitable anchor"). FACT: World of Daggerfall is forced on for the
   online lane (`src/systems/onlineLane.js`) and 209,436 of its 227,938 instances are `Rocks` layouts, 2,502
   `Mountains` (`03-World/World-Of-Daggerfall.md`), so every client of a room stands the same rock pieces. DECIDED: a
@@ -1745,7 +1757,7 @@ instruction), and what was found (FACT):
   the Stores page. FACT: the service cannot see the forge (as it cannot see the board, section 22): the inputs are the
   Stores' and their units are the bound.
 - **The Court writs** ask metal and stone too: a witnessed pixel's vein metals (a confirmed pixel's all, an unconfirmed
-  one's tiers 1-2), its region's signature ore on a confirmed pixel of that kingdom, and Rough Stone where its climate
+  one's tiers 1-3 since UNWITNESSED-ORE - what its veins stand), its region's signature ore on a confirmed pixel of that kingdom, and Rough Stone where its climate
   has boulders. Never an ingot, Cut Stone or a gem (smelted, cut or found, not the ground's). A metal's or stone's writ
   XP is Mining's.
 - **The Prospector** (3.3): the veins stood within 200 m are marked on the compass, both skins, beside the party's
@@ -3628,7 +3640,7 @@ between a modified client and an unbounded claim go with it: **"Keep both"**.
   id is the client's word) and three hides of tiers 5-6 an account a day (section 6: the tier is the client's claim) -
   each still decided in the INSERT and refused at its count, past every old day. And the rest of section 6 and 20: each
   node once a character a day, the travel between them, the hour's 600 writes (`PROF_OPS_MAX`), the Stores' 5,000 a
-  material, SILVER-FINDS' 30 silver a day from gathering (10.5), the three Court writs a day.
+  material, SILVER-FINDS' 30 silver a day from gathering (10.5), the three Court writs a day (CHAP2a: the Court's and the halls' together).
 - **DECIDED.** The four refusals' words stay in the client, without the numbers they no longer hold, for a client that
   meets a service not yet redeployed - ANY-HOUR's way with `prof-night` (the site's deploy waits for the service's
   version, so it is a short window). The chip stays: it still says the rank and the day's count while a node is under the
@@ -4050,7 +4062,7 @@ At dusk the hub warns of a Motherlode in the Wrothgarian foothills in ten minute
 | Auctions (PROF5b) | Masterworks only; 24 h; opening bid 1-1,000,000 Marks, a bid up to 10,000,000 (the Marks cap); the next bid the opening, else the standing bid + max(1, ceil(5%)); a bid within 120 s of the end adds 120 s, as often as bids come; fee a listing's on the opening, tax a sale's on the winning bid; among the account's 30; twenty closed a read |
 | A piece's wear (PROF5) | its condition over its most, in thousandths (1-1,000); the buyer's piece minted at that share, at least 1; read "worn to N%", 99 at most (AUDIT 30) |
 | Marks | ~10 gold of play; balance cap 10,000,000; Bank: 1 Mark -> 8 gold, 300 a day |
-| Faucets | Court writs 3 a day (from PROF1); gate 50 a receipt, raid 30 a receipt, together at most 150 a UTC day an account (SILVER-WAYS - the gate was 2 a day); a guild deed 25 to the treasury, 3 accounts of 7 days on one raid or gate, 4 a guild a day; Honours 50 / 25; Motherlode 10, one a day |
+| Faucets | Court writs 3 a day (from PROF1; CHAP2a: hall writs inside the same 3; CHAP3a: a member's own writ too); gate 50 a receipt, raid 30 a receipt, together at most 150 a UTC day an account (SILVER-WAYS - the gate was 2 a day); a guild deed 25 to the treasury, 3 accounts of 7 days on one raid or gate, 4 a guild a day; Honours 50 / 25; Motherlode 10, one a day |
 | Guild contracts (SILVER-WAYS) | raids alone; 1-50 silver a defender, 1-500 defenders, 7 days, 5 open a guild, 3 paid a claim (the best first); the Officers' one writ budget; the 5% running tax; never the posting guild's Officers or Guildmaster |
 | Court writs | 6 x max(1, ceil(active / 100)) a region a day, witnessed materials only, 10-50 units, pay x 1.2, Renown 25 x tier x units / 10 at three quarters (MERGE 2), the account's |
 | Writ influence | own units at their value, from a 7-day member bound to the guild; bought at Tribute's rate in its cap; counter goods never; a Siege Camp spent at the Turning (a Ram Kit to the siege it won, the rest burnt) |

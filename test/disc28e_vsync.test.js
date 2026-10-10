@@ -104,9 +104,10 @@ test('FPS-VSYNC by source: the shell asks before the app is ready, over the page
   const lineOf = (head) => { const at = menu.indexOf(head); assert.ok(at >= 0, head); return menu.slice(at, menu.indexOf('\n', at)); };
   const fnOf = (head) => { const at = menu.indexOf(head); assert.ok(at >= 0, head); return menu.slice(at, menu.indexOf('\n}\n', at) + 3); };
   codeHasOnce(lineOf('function drawsFlat(key) {'), /function drawsFlat\(key\) \{ const t = tierOf\(key\); return t === 'live' \|\| t === 'restart'; \}/);
-  codeHasOnce(fnOf('function categoryRows(catId) {'), /for \(const key of keys\) if \(drawsFlat\(key\)\) \{ const r = settingRow\(key\); if \(r\) out\.push\(r\); \}/);
-  codeHasOnce(lineOf('const liveCount = (catId) =>'), /paneKeys\(catId\)\.filter\(drawsFlat\)\.length;/, 'the sub-rail counts what is drawn');
-  codeHasOnce(fnOf('function paneQuickSettings(pane) {'), /const liveKeys = paneKeys\(cat\.id\)\.filter\(\(key\) => tierOf\(key\) === 'live'\);/, 'Quick Settings keeps to what applies at once');
+  // ORG2: one screen draws every tab, the pause window's too - a key draws where drawsHere says, flat with the live ones
+  codeHasOnce(lineOf('const drawsHere = (key, pause) =>'), /const drawsHere = \(key, pause\) => \(pause \? tierOf\(key\) === 'live' : drawsFlat\(key\)\);/, 'the pause window keeps to what applies at once');
+  codeHasOnce(fnOf('function itemNodes(item, ctx) {'), /if \(!drawsHere\(item, pause\)\) \{/);
+  codeHasOnce(fnOf('function tabCount(tab, ctx) {'), /if \(isSettingItem\(item\)\) \{ if \(!featureForControl\('settings', item\) && drawsHere\(item, ctx\.pause\)\) n\+\+; \}/, 'the sub-rail counts what is drawn');
 });
 
 // THE PACER (AUDIT 28e, the frame lane: "with VSync off, the Frame Rate Cap cannot hold frames above the screen"). A

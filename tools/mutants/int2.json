@@ -1,0 +1,128 @@
+[
+  {
+    "name": "INT2-the-claim-unread",
+    "file": "server-account/src/judge.js",
+    "old": "else if (summary && summary.level != null && summary.level !== level) out.push({ code: 'level-claim' });",
+    "new": "",
+    "tests": [
+      "test/int2_judge.test.js"
+    ]
+  },
+  {
+    "name": "INT2-attributes-uncapped",
+    "file": "server-account/src/judge.js",
+    "old": "if (v != null && !(Number.isInteger(v) && v >= 0 && v <= MAX_STAT_VALUE)) out.push({ code: 'stat', at: k });",
+    "new": "if (v != null && !(Number.isInteger(v) && v >= 0)) out.push({ code: 'stat', at: k });",
+    "tests": [
+      "test/int2_judge.test.js"
+    ]
+  },
+  {
+    "name": "INT2-the-world-owned",
+    "file": "server-account/src/judge.js",
+    "old": "    if (rooms.has(sc) || rented.has(sc?.sceneName)) for (const c of arrayOf(sc?.lootContainers))",
+    "new": "    for (const c of arrayOf(sc?.lootContainers))",
+    "tests": [
+      "test/int2_judge.test.js"
+    ]
+  },
+  {
+    "name": "INT2-the-loan-unowed",
+    "file": "server-account/src/judge.js",
+    "old": "  const w = Math.trunc(purse + banks - Math.min(owed, realmLoanOwedMax(Number(level))) + deeds + goods);",
+    "new": "  const w = Math.trunc(purse + banks + deeds + goods);",
+    "tests": [
+      "test/int2_judge.test.js"
+    ]
+  },
+  {
+    "name": "INT2-the-bound-worth",
+    "file": "server-account/src/judge.js",
+    "old": "      goods += liquid > 0 ? liquid : worthless(it) ? 0 : itemWorth(it);",
+    "new": "      goods += liquid > 0 ? liquid : itemWorth(it);",
+    "tests": [
+      "test/int2_judge.test.js"
+    ]
+  },
+  {
+    "name": "INT3-no-hold-for-law",
+    "file": "server-account/src/verdict.js",
+    "old": "  if (law > 0 || (prev === 'law' && strikes >= STRIKES_FOR_REVIEW)) return 'law';",
+    "new": "  if (prev === 'law' && strikes >= STRIKES_FOR_REVIEW) return 'law';",
+    "tests": [
+      "test/int2_judge.test.js"
+    ]
+  },
+  {
+    "name": "INT3-strikes-forgotten",
+    "file": "server-account/src/verdict.js",
+    "old": "  if (law > 0 || (prev === 'law' && strikes >= STRIKES_FOR_REVIEW)) return 'law';",
+    "new": "  if (law > 0) return 'law';",
+    "tests": [
+      "test/int2_judge.test.js"
+    ]
+  },
+  {
+    "name": "INT3-the-outbound-unasked",
+    "file": "server-account/src/realm.js",
+    "old": "  if (outbound) {\n    const held = holdRefusal(row);\n    if (held) return held;\n  }\n",
+    "new": "",
+    "tests": [
+      "test/int2_judge.test.js"
+    ]
+  },
+  {
+    "name": "INT3-the-unjudged-moves",
+    "file": "server-account/src/realm.js",
+    "old": "  if (row.judged_seq == null) return { error: 'record-unjudged' };\n",
+    "new": "",
+    "tests": [
+      "test/int2_judge.test.js"
+    ]
+  },
+  {
+    "name": "INT3-the-trade-unheld",
+    "file": "server-account/src/realmTrade.js",
+    "old": "  if (heldBy) return refuse(db, sid, heldBy.error, playerId, asker, true);\n",
+    "new": "",
+    "tests": [
+      "test/int2_judge.test.js"
+    ]
+  },
+  {
+    "name": "INT3-a-listing-inbound",
+    "file": "server-account/src/market.js",
+    "old": "  }, { outbound: true, escrow: true });   // INT3: a listing hands the piece to the market's buyers",
+    "new": "  }, { escrow: true });   // INT3: a listing hands the piece to the market's buyers",
+    "tests": [
+      "test/int2_judge.test.js"
+    ]
+  },
+  {
+    "name": "INT5-the-write-unwitnessed",
+    "file": "server-account/src/realm.js",
+    "old": ".bind(at.seq + 1, bytes, key, nowS, wealthOf(save) - before, at.id, playerId, at.lease, at.seq),",
+    "new": ".bind(at.seq + 1, bytes, key, nowS, 0, at.id, playerId, at.lease, at.seq),",
+    "tests": [
+      "test/int2_judge.test.js"
+    ]
+  },
+  {
+    "name": "INT6-the-clean-dropped",
+    "file": "server-account/src/realm.js",
+    "old": "  const keep = new Set([key, row.obj, stood.clean_obj].filter(Boolean));",
+    "new": "  const keep = new Set([key, row.obj].filter(Boolean));",
+    "tests": [
+      "test/int2_judge.test.js"
+    ]
+  },
+  {
+    "name": "INT6-review-for-anyone",
+    "file": "server-account/src/review.js",
+    "old": "  if (!isDeveloper(player, env)) return { error: 'not-developer' };\n",
+    "new": "",
+    "tests": [
+      "test/int2_judge.test.js"
+    ]
+  }
+]

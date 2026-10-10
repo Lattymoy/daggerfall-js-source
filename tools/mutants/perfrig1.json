@@ -131,8 +131,8 @@
  {
   "name": "PERF-RIG1-mirror-flip-dropped",
   "file": "src/combat/fpArm.js",
-  "old": "    const flip = p.mirrored ? -1 : 1;\n    const textured",
-  "new": "    const flip = 1;\n    const textured",
+  "old": "    const flip = p.mirrored ? -1 : 1;\n    const nrm",
+  "new": "    const flip = 1;\n    const nrm",
   "tests": [
    "test/perfrig1.test.js",
    "test/fparm.test.js"

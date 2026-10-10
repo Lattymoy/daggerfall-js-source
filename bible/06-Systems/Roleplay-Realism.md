@@ -161,7 +161,8 @@ its arms to `rrInstall.js`.
   past 12. The resident (:862-932): a faction-0 person of a known
   gender (GetGender182/184's tables verbatim), `faceVariant = nameSeed
   % 29` under 24 (four in five), `outfitVariant = nameSeed % 4`, the
-  climate race's walker archive (Redguard, Nord, else Breton - GetClimateRace)
+  climate race's walker archive (Redguard, Nord, else Breton - GetClimateRace; REGIONAL-FOLK, a departure: a region
+  FALL.EXE calls Redguard has Redguard residents, as its street - `characters/mobilePerson.js` walkerRace)
   at the idle record, and `flatsDict[bornFlat] = { faceIndex }` - the
   port's `setFlatFaceOverride`, which `dataPipeline.flatFaceIndex`
   reads before FLATS.CFG. The Villager Variety arm (:948-978) has no

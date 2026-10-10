@@ -17,6 +17,11 @@ import { holdCursor } from '../src/player/pointerLock.js';
 import { nearestFreeSeat, takenSeats } from '../src/world/cardTables.js';
 import { regularsToStand, regularBark, BARK_MS } from '../src/world/cardRegulars.js';
 import { RemoteCardTable, CATCH_UP_MS } from '../src/systems/cardRemoteTable.js';
+import { cardPackPrice, buyCardPack } from '../src/systems/cardSources.js';   // CARDS9: the house's packs at the table
+import { openIliacTableGame } from '../src/scenes/iliacTableGame.js';   // CARDS10: the other game at the table
+import { iliacGrade } from '../src/systems/iliacPatrons.js';
+import { skillValue, SKILLS } from '../src/systems/skills.js';
+import { liveStat } from '../src/systems/statMods.js';
 import { newTable, sit, stand, actAt, tick, tableLook, validHoldemIn, HOLDEM_FIRST_MS, HOLDEM_CLOCK_MS } from '../src/net/holdemTable.js';
 
 const seeded = (seed = 99) => { let x = seed >>> 0; return () => { x ^= x << 13; x >>>= 0; x ^= x >>> 17; x ^= x << 5; return x >>>= 0; }; };
@@ -161,7 +166,9 @@ function host(relay, id, name, { seats = 4, pos = [0, 0, 0] } = {}) {
     tablePlaces: (frame, s, seatOf) => ({ seatOf, seats: seatOf.map(() => ({})) }), tableFrame: () => ({ centre: [0, 0.8, 0], axisYaw: 0, halfLong: 1, halfShort: 0.5 }), hashSeed: (...x) => x.join(':'),
     registerPlayerHurtListener: () => {}, isOnlinePage: () => true,
     mwViewFirstPerson: () => {}, homeTownOf: (b) => b?.townMapId || 0, worldMinutes: () => 0, MINUTES_PER_DAY: 1440,
-    RemoteCardTable, mode: 'interior', regularsToStand, regularBark, BARK_MS, showdownWinners: hudm.showdownWinners, HOLDEM_REFUSALS: hudm.HOLDEM_REFUSALS, performance: { now: performanceNow },
+    RemoteCardTable, mode: 'interior', regularsToStand, regularBark, BARK_MS, showdownWinners: hudm.showdownWinners, HOLDEM_REFUSALS: hudm.HOLDEM_REFUSALS,
+    // PIN MOVED (CARDS9/10): the block prices a pack at the table and opens Iliac Hand on the seat - their names, real
+    cardPackPrice, buyCardPack, openIliacTableGame: (o) => openIliacTableGame({ ...o, doc }), iliacGrade, skillValue, SKILLS, liveStat, performance: { now: performanceNow },
   };
   const state = { interiorCtx: { tables: [{ aabb: {} }, { aabb: {} }], collider: null }, interiorBuilding: { buildingKey: 7, quality: 10, regionIndex: 17, townMapId: 1 } };
   const api = new Function('S', ...Object.keys(scope), `let interiorCtx = S.interiorCtx, interiorBuilding = S.interiorBuilding;\n${BLOCK}\n

@@ -31,10 +31,12 @@
 import { seededRng } from './wind.js';
 import { createRandomWeapon, createRandomArmor, ITEM_GROUPS } from './loot.js';
 import { setItemFields, isAmmunition, mintCondition, registerCustomTemplates, templateByIndex } from './itemTemplates.js';
-import { applyRarity, rarityChances, lastPass } from './lootRarity.js';
+import { applyRarity, rarityChances, lastPass, socketPass, weaponSocketPass } from './lootRarity.js';   // GEM1: the sockets' passes, the spoils' last but the gems
+import { bossGems } from './gems.js';   // GEM2: the Warden's gem
 import { rollRegalia } from './aetheric.js';   // SET6: Ruhn's Regalia - the spoils' last roll
 import { stacksWith, addItem } from './inventory.js';   // SS1: the fold of a pack saved before the stone stacked; PORTAL-GIFT: the gift joins the pack's stack
 import { wearableItem } from './equip.js';   // RARITY-WEAR: a spoils piece is one a slot takes
+import { bossCardRoll } from './bossCards.js';   // CARDS9: the Warden's own card, the hoard's last draw
 
 /** Gold a level of the player's, before the seed's variation (0.8 to 1.2 of it). */
 export const SPOILS_GOLD_PER_LEVEL = 250;
@@ -212,7 +214,7 @@ export function sigilStone() {
 }
 
 /**
- * THE SPOILS of one kill for one player: `{ gold, pieces: [{ item, tier }], sigil }` - the pieces in the order they
+ * THE SPOILS of one kill for one player: `{ gold, pieces: [{ item, tier }], sigil, card, gems }` - the pieces in the order they
  * leave him (the Rare-or-better first; SET6: a Regalia piece, when one drops, last). The same seed, level and world
  * answer the same spoils.
  * @param {number} seed the receipt's `c` @param {number} level the player's
@@ -232,7 +234,16 @@ export function rollSpoils(seed, level) {
   // LOOT2 (bible/06-Systems/Loot-Arc.md section 4): the ladder's last pass - a Legendary among them Exalted one time in
   // ten - rolled after the Regalia, so every spoils before it is what it was for its seed
   lastPass(pieces.map((p) => p.item), rolls);
-  return { gold, pieces, sigil: sigilStone() };
+  // CARDS9 (bible/11-Multiplayer/Tavern-Cards.md section 32): THE WARDEN'S OWN CARD - one draw more, LAST of all (after
+  // the last pass), so every spoils before it is what it was for its seed; kept beside the pieces, never among them
+  const card = bossCardRoll('gate', rolls);
+  // GEM1/GEM2 (bible/06-Systems/Gem-Sockets.md section 4): the sockets' passes over the pieces - LOOT20's, then the
+  // weapons' own - and the Warden's gem at a boss's grade, LAST of all (after the card), so every spoils before them is
+  // what it was for its seed
+  socketPass(pieces.map((p) => p.item), rolls);
+  weaponSocketPass(pieces.map((p) => p.item), rolls);
+  const gems = bossGems('gate', rolls);
+  return { gold, pieces, sigil: sigilStone(), card, gems };
 }
 
 /** A piece laddered to its tier and known - a Legendary with no record for its kind falls to Rare (applyRarity's own

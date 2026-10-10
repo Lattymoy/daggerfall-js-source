@@ -1457,6 +1457,8 @@ import {
 import { armorRecords, clothingRecords, raceBeastFlag, pickWeaponRecord, facePools, MOD_WEAPON_TO_MW } from '../src/formats/mwFirstPerson.js';
 import { OWN_MW_MODELS } from '../src/characters/ownWeaponModels.js';   // FIELD-GUN-MW2: counted off the table, not typed
 import { OWN_MW_ARMOR } from '../src/characters/ownArmorModels.js';   // MW-BRIG1: and the armour
+import { CLOAK_NAMES } from '../src/characters/ownClothingModels.js';   // MW-CLOAK1: and the cloak
+import { CLOTHING_NAME } from '../src/formats/mwItemMap.js';
 import { ARMOR_ENUM } from '../src/combat/enemyEquipment.js';
 import { ARMOR_MATERIAL } from '../src/systems/armorMaterials.js';
 
@@ -1484,7 +1486,11 @@ test('MW-D28: the map is TOTAL - every DF equippable x material answers, or the 
   // empty hands in Morrowind first person.
   const own = cover.filter((c) => c.kind === 'own');
   // MW-BRIG1: and the port's own ARMOUR, one row per template x material it dresses, inside the mod's space
-  assert.equal(own.length, Object.keys(OWN_MW_MODELS).length + OWN_MW_ARMOR.length, 'every own-model weapon and armour piece answers a row');
+  // MW-CLOAK1: and the port's own CLOAK, one row per garment index that wears it (a man's and a woman's of each)
+  const cloakIndices = Object.entries(CLOTHING_NAME).filter(([, n]) => CLOAK_NAMES.includes(n)).map(([i]) => Number(i));
+  assert.deepEqual(cloakIndices, [154, 155, 191, 192], 'the Casual and Formal Cloak, a man\'s and a woman\'s');
+  assert.equal(own.length, Object.keys(OWN_MW_MODELS).length + OWN_MW_ARMOR.length + cloakIndices.length, 'every own-model weapon, armour piece and cloak answers a row');
+  assert.deepEqual(own.filter((o) => o.own === 'ownClothingModels').map((o) => o.index), cloakIndices);
   assert.ok(own.every((o) => o.model && o.item), 'an own row names its mesh and its item');
   // MW-STEEL1: the classic walk comes first, so the Steel plate's seven rows stand before the mod's brigandine - a set,
   // compared as one

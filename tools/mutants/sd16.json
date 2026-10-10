@@ -227,8 +227,8 @@
   {
     "name": "SD16-not-forgotten",
     "file": "src/scenes/sdFx.js",
-    "old": "    leave() { k = null; bursts.length = 0; flashAt = -Infinity; },",
-    "new": "    leave() { k = null; },",
+    "old": "    leave() { k = null; bursts.length = 0; flashAt = -Infinity; here = false; },",
+    "new": "    leave() { k = null; here = false; },",
     "tests": [
       "test/sd16_fx.test.js"
     ]

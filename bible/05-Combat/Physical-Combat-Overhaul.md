@@ -43,11 +43,11 @@ its `modsettings.json`:
 | --- | --- | --- |
 | `Awake` / `InitMod` | reads the seven switches, resolves the dependent ones (fading needs enhanced wear; critical, condition and soft-material need the redone armour formula), registers the overrides, reads Roleplay Realism's `advancedArchery` and Meaner Monsters' presence | `pcaaoModules(read)` - the ladder, read LIVE from the Mods pane store; `installPcaao()` - the three registrations, called from `systems/worldTick.js` for every host; each registered arm declines (returns `undefined`) when its switch is off so the stock formula stands |
 | `DamageModifier` | `(STR - 50) / 10`, floored | `pcaaoDamageModifier`; registered on `formulas.damageModifier` (the character sheet and DFU's own damage path read it too, as in DFU); the overhaul's own arithmetic always uses it, being the class's static |
-| `CalculateAttackDamage` | the whole blow: the enemy's weapon-vs-natural swap, the material gate (or the soft-material multiplier), the 150% player skill, the critical strike, the player's swing/proficiency/racial/backstab terms, the struck part, the hand-to-hand / monster-loop / weapon branches, the crit and material multipliers, the natural resistance, the shield roll, the condition multiplier, the wear, the armour reductions, the Ring of Namira, the VCEH event | `pcaaoAttackDamage`; registered as `calculateAttackDamage`'s CORE - the port's tail (concealment, the Strikes payload, the racial hit hook, the struck hook that IS the Ring of Namira here, the HUD report) is DFU's callers' work and runs after either core |
+| `CalculateAttackDamage` | the whole blow: the enemy's weapon-vs-natural swap, the material gate (or the soft-material multiplier), the 150% skill (the player's in the mod; every striker's since BAL2, the fourth departure), the critical strike, the player's swing/proficiency/racial/backstab terms, the struck part, the hand-to-hand / monster-loop / weapon branches, the crit and material multipliers, the natural resistance, the shield roll, the condition multiplier, the wear, the armour reductions, the Ring of Namira, the VCEH event | `pcaaoAttackDamage`; registered as `calculateAttackDamage`'s CORE - the port's tail (concealment, the Strikes payload, the racial hit hook, the struck hook that IS the Ring of Namira here, the HUD report) is DFU's callers' work and runs after either core |
 | `CalculateSwingModifiers` | DFU's own table | the callers' `damageMod`/`toHitMod` (playerAttackOptions, SWING_MODS) - the same numbers |
 | `CalculateProficiencyModifiers` / `CalculateRacialModifiers` | stat-driven per weapon skill and race, on the C#'s else-if ladders | `pcaaoProficiencyModifiers`, `pcaaoRacialModifiers` |
 | `CalculateWeaponToHit` | material x2 + 2 ("+14, not +60") | `pcaaoWeaponToHit` |
-| `CalculateArmorToHit` / `AdrenalineRush` / `StatDiffs` / `Skills` / `Adjustments` / `SuccessfulHit` | the player 100 less the enchantment channels, a class enemy 60, a monster its part; a sixth of health and +8/+12; luck/10, agility/4, speed/8 less the target's luck rounded; dodging halved; +50 for a monster target, -50 always; the sum, its 3..97 clamp (DISCARDED by the C#, APPLIED here - the one departure, below), Dice100 | `pcaaoArmorToHit` ... `pcaaoSuccessfulHit` |
+| `CalculateArmorToHit` / `AdrenalineRush` / `StatDiffs` / `Skills` / `Adjustments` / `SuccessfulHit` | the player 100 less the enchantment channels, a class enemy 60, a monster its part; a sixth of health and +8/+12; luck/10, agility/4, speed/8 less the target's luck rounded; dodging halved; +50 for a monster target, -50 always; the sum, its 3..97 clamp (DISCARDED by the C#, APPLIED here - the first departure, below), Dice100 | `pcaaoArmorToHit` ... `pcaaoSuccessfulHit` |
 | `CalculateStruckBodyPart` | twenty slots, feet likelier than the head | `PCAAO_BODY_PARTS`, `pcaaoStruckBodyPart` |
 | `CriticalStrikeHandler` | luck's `Mathf.Floor((luck-50)/25f)` term (clamp discarded) bending the divisor | `pcaaoCriticalStrike` |
 | `GetBonusOrPenaltyByEnemyType` | willpower's `Random.Range(0, n)` bonus and the level penalty on the career's Bonus/Phobia bits, the Humanoid arm on GetEnemyGroup | `pcaaoBonusOrPenaltyByEnemyType` |
@@ -109,7 +109,8 @@ Daedric cuirass's 6.4-10.6 a monster's blow -> 0 and an armed foe's 6.4 ->
 
 **Below the reduction (AUDIT ECON W1, 2026-10-01).** DFU's member is handed
 the damage the blow DEALT - after the overhaul's armour reduction, as the
-duel already read it (`scenes/world.js`, the defender's own damage). DFU's
+duel already read it (`scenes/world.js`, the defender's own damage - INT8, 2026-10-09: the duel's blow is the relay's
+since, and its wear the striker's on what the referee let land). DFU's
 armour turns a blow aside, and the blow wears nothing; the redone formula
 lets nearly every blow land (a Knight's on a steel-clad player 0.70 -> 0.97
 of his swings) and takes its share off instead, so the share it took wears
@@ -183,6 +184,43 @@ DFU's, kept. Roleplay Realism's `equipDamage` has no screen (its tile
 carries four dials); were it on, its slot inside DFU's member would take
 its x5 on the overhaul's path too, as DFU does with both mods installed.
 
+## The third departure: the sharp edge rides the wear (BAL1, 2026-10-10)
+
+Mac, 2026-10-09: "bring up the difficulty without implementing a band aid
+fix" (`05-Combat/Balance-Arc.md` section 3). Condition-based effectiveness
+strikes with a blade at x1.3 at 92% condition and over and x1.1 at 76-91%
+(a blunt weapon x1.1 at 92%), and lets a piece of armour over 92% reduce
+at 0.85 (0.95 at 76-91%). The mod pays that for keeping gear sharp against
+its own fast wear. With the second departure (above) the wear is DFU's,
+every weapon sits on one pool (WEAPON-POOL - the Warhammer's 1,600 through
+the material ladder), and a monster's
+claws wear no armour at all - so a fresh steel longsword took 128 landed
+hits on an Orc Warlord to fall under 92%, and the edge was every fight's.
+`pcaaoAlterDamageBasedOnWepCondition` and
+`pcaaoAlterArmorReducBasedOnItemCondition` take a `sharpEdge` (default the
+mod's: on), and every caller hands them `modules.equipmentDamageEnhanced` -
+the blow, the armour rows' `condOf`, the stats card. With the wear module
+off, a weapon at 76% and over strikes at its own damage and a piece
+reduces at its own factor; the bands under 76% (worn gear's cost) stand
+whatever the wear. Turning the module on puts the mod back whole.
+
+## The fourth departure: one rule for every striker (BAL2, 2026-10-10)
+
+The mod gave the player's weapon skill x1.5 to hit and a foe's x1; rolled
+the player's crit at `crit / (4 - luck)` and a foe's at `crit / (5 -
+luck)`; and multiplied the player's landed crit by `1 + floor(crit / 5) *
+0.05` (+`crit / 4` to hit) and a foe's by `1 + floor(crit / 5) * 0.025`
+(+`crit / 10`). Without the crit module, the player rolled `crit / 3` for
+`+crit / 3` and a monster rolled `crit`% for `+crit / 10`. A foe's Long Blade and
+Critical Strike are the same skills as the player's, so they are read
+the same way now: every striker takes the player's rule
+(`Balance-Arc.md` section 4). The armour term is NOT made one rule. The
+player reads a flat 100, a class enemy a flat 60 and a monster its part's
+value, and every even version of that measured easier. That split is the
+mod's premise: armour reduces damage and never the chance to be hit. The
+fight against a foe at the 97% clamp moves through the crit (damage taken
+about 14% more), and against a lower foe through the to-hit.
+
 ## What is kept bug for bug
 
 - `Mathf.Round` rounds half to EVEN (`unityRound`), and every float the
@@ -254,7 +292,7 @@ its x5 on the overhaul's path too, as DFU does with both mods installed.
   the switch** - DFU rewrites the table at Awake; the port overlays the
   row at mint.
 
-## Pinned (`test/pcaao.test.js`, 24)
+## Pinned (`test/pcaao.test.js`, 26)
 
 The ladder; the half-to-even round through a float32 half; DamageModifier
 and the material hit bonus; every hit helper against a hand-worked cell;
@@ -386,7 +424,8 @@ can't keep the numbers as is"), and what is left for another pass:
 - **The overhaul's sharp edge lasts with the pool.** Condition-based effectiveness (on by default) strikes x1.3 at 92%
   and up and x1.1 at 76-91%, and blunts a blade below 61%; a share lasts as many more blows as the pool is deeper, so an
   iron dagger strikes at x1.3 for 65 blows of 20 damage (it was 3), and a long bow for 16 times its old count - as a
-  warhammer always did.
+  warhammer always did. DONE (BAL1, 2026-10-10): the bands over 75% ride the mod's wear module - the third departure,
+  above.
 - **Two point-by-point enchantments scale the other way.** Repairs Objects mends 1 point every four rounds on the first
   piece below its condition in the pack, so a dagger found at 20% holds it 32 times as long; Item Deteriorates (a side
   effect that pays 3,000, 1,500 or 500 points) wears 1 every four rounds, so a dagger taking it lasts 6,400 rounds (it

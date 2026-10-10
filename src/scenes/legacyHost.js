@@ -170,6 +170,7 @@ export function mergeFamily(stored, saved, cid) {
  *   inheritHouse?:(row:any, fallen:any) => ('given'|'waits'|'gone'|'asking'|null),
  *   hasSave?:(characterId:string) => boolean, livingWorld?:() => boolean,
  *   templeOf?:() => (number|null), askWed?:(name:string, house:string, done:(takeName:boolean) => void) => boolean,
+ *   residentNow?:(id:string) => any,   // AUDIT FB1010 C1: the census's resident as minted now (the wedding's look)
  *   regards?:() => any, regardDay?:() => number, sky?:() => number,
  *   killerOf?:(characterId:string, ownAt:number) => any, inheritFoe?:(rec:any) => boolean,
  *   stored?:(family:any) => void, tombstone?:(why?:'fell'|'retired') => (boolean|Promise<boolean>),
@@ -1009,7 +1010,11 @@ export function createLegacyHost(deps) {
     if (!family || spouseOf(family, p) || !betrothalOf(p)) return null;
     // AUDIT LEGACY III A1: one of the house already - another member wed them first: the betrothal is over, and said
     if (residentInHouse(family, rid)) { forgetCourtship(p, rid); touch(family); store(); deps.say(LEGACY_TEXT.wedElsewhere(splitName(c.name)[0])); return null; }
-    const s = wed(family, p, { id: rid, name: c.name, sex: c.sex, race: c.race, face: c.face, mapId: c.mapId }, deps.now(), { takeName });
+    // AUDIT FB1010 C1: the body and the face the census mints today (REGIONAL-FOLK re-dressed a Redguard region's residents,
+    // and a courtship begun before kept the old look in its copy); the copy's where the host cannot mint them
+    const now = deps.residentNow?.(rid) ?? null;
+    const look = now?.race ? { race: now.race, face: now.face } : { race: c.race, face: c.face };
+    const s = wed(family, p, { id: rid, name: c.name, sex: c.sex, ...look, mapId: c.mapId }, deps.now(), { takeName });
     if (!s) return null;
     p.childDay = ownDay();
     tellNews('wed', fullNameOf(s.given, s.surname), c.mapId);

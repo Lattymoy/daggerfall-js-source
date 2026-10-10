@@ -48,7 +48,7 @@ import { CLOTHING_DYES } from '../characters/dyes.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { MINUTES_PER_DAY, dayOfYear } from './gameDate.js';   // X6: the soul-gem stock's daily seed; A2: CreateStockedDate's day term
 import { SOUL_TRAP_TEMPLATE } from './mysticism.js';   // X6: one home for the template id (X5 put it there with fillEmptyTrap)
-import { ILIAC_CARD_TEMPLATE } from './iliacItems.js';   // AUDIT CARDS-5 C2: the collectible card, which no shop buys
+import { ILIAC_CARD_TEMPLATE, CARD_PACK_TEMPLATE } from './iliacItems.js';   // AUDIT CARDS-5 C2: the collectible card, which no shop buys; CARDS9: nor its pack
 import { OIL_TEMPLATE, addItem } from './inventory.js';   // AUDIT-RR2 G10: the shelf's AddItem   // AUDIT 58: UselessItems2.Oil (ItemEnums.cs:357) - one home for the id
 import { getBool } from './settings.js';   // AUDIT 58: DaggerfallUnity.Settings.PlayerTorchFromItems, read where DFU reads it
 import { FACTION_TYPES } from '../formats/factionFile.js';        // S41: UpdateRegionalPrices' type-7 region walk
@@ -58,6 +58,7 @@ import { turnOnConditionFlag, turnOffConditionFlag, REGION_FLAGS, REGION_COUNT }
 import { isOnlinePage } from './onlineLane.js';   // REALM P0.4: online, a shop pays at most half what it asks
 import { BAG_TEMPLATE, isBagItem } from '../net/bagLaw.js';   // BAG1: the Materials Bag, at every General Store online
 import { createPellets } from './thunderlock.js';   // SHOP-PELLETS: the gun's shot on the counter - the shot alone, never the gun
+import { newWagonItem } from './wagonKinds.js';   // WAGONS1: the Open Wagon and the Caravan, minted beside the cart
 
 // ItemGroups ids used by the shelf tables (DaggerfallUnityEnums).
 const GROUP_NAMES = Object.freeze({
@@ -139,6 +140,9 @@ export const SHOP_BUYS_GROUPS = Object.freeze({
 export const shopBuysItem = (buildingType, item) => (SHOP_BUYS_GROUPS[buildingType] ?? []).includes(item.group)
   // AUDIT CARDS-5 C2: no shop buys a collectible card - every character is given thirty, and a shelf is no card's market
   && item.templateIndex !== ILIAC_CARD_TEMPLATE
+  // CARDS9: nor a sealed pack - the tavern sells it at its counter's price, and no shelf buys it back (a pack bought
+  // well and sold dear was the gold-for-nothing ENDLESS-STOCK shut)
+  && item.templateIndex !== CARD_PACK_TEMPLATE
   // AUDIT ENDLESS-STOCK F1/F2: online no shop buys back what never sells out - bought at a cheap shop and sold at a dear one
   // (the online asking price is halved, the buy-back cap is not) it was gold for nothing, and a sold one made any shelf endless
   && !(isOnlinePage() && isEndlessStock(item));
@@ -318,6 +322,10 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
   if (buildingType === BUILDING_TYPES.GeneralStore) {
     add({ group: 'Transportation', templateIndex: TRANSPORT_HORSE });
     add({ group: 'Transportation', templateIndex: TRANSPORT_SMALL_CART });
+    // WAGONS1 (2026-10-09, Mac's two new wagons, asked: "Bought like the Small Cart"): the Open Wagon and the Caravan
+    // beside it, on every General Store's every shelf as the cart is - the cart's own item, marked with its kind
+    // (systems/wagonKinds.js newWagonItem), named and valued, so every "owns a cart" law answers for them
+    for (const kind of ['openWagon', 'caravan']) add(newWagonItem(kind));
     // BAG1 (bible/06-Systems/Materials-Bag.md): THE MATERIALS BAG beside the cart, at every General Store - online alone,
     // where the professions are (nothing offline gathers into it), and by name, as the horse and the cart are.
     // BAG-SHELF (FIELD BUGS 2026-10-04, "nobody can find material bags in store"): on EVERY shelf, whoever stocks it, as

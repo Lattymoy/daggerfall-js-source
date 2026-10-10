@@ -321,8 +321,8 @@
   {
     "name": "ARENA4-CAP-CRIT-DOUBLE",
     "file": "src/net/arenaLaw.js",
-    "old": "return 2 * ((wmax != null ? wmax + mat : ARENA_HAND_MAX) + ARENA_MOD_MAX);",
-    "new": "return 1 * ((wmax != null ? wmax + mat : ARENA_HAND_MAX) + ARENA_MOD_MAX);",
+    "old": "return 2 * (reach + ARENA_MOD_MAX);",
+    "new": "return 1 * (reach + ARENA_MOD_MAX);",
     "tests": [
       "test/arena4_relay.test.js"
     ]
@@ -583,7 +583,7 @@
   {
     "name": "ARENA4-REF-CAP",
     "file": "src/net/arenaBrain.js",
-    "old": "Math.floor(Math.min(want, arenaBlowCap({ r, w, m }), M.bucket))",
+    "old": "Math.floor(Math.min(want, arenaBlowCap({ r, w, m, wa }), M.bucket))",
     "new": "Math.floor(Math.min(want, M.bucket))",
     "tests": [
       "test/arena4_relay.test.js"
@@ -1393,8 +1393,8 @@
   {
     "name": "ARENA4-STANDS-POSE-NOBODY",
     "file": "server/src/index.js",
-    "old": "        if (cur.af) { try { const st = await this._boutOf();",
-    "new": "        if (!cur.af) return; { try { const st = await this._boutOf();",
+    "old": "      if (cur.af) { try { const st = await this._boutOf();",
+    "new": "      if (!cur.af) return; { try { const st = await this._boutOf();",
     "tests": [
       "test/arena4_relay.test.js",
       "test/hotfix1003_stands.test.js"
@@ -1656,8 +1656,8 @@
   {
     "name": "ARENA4-SVC-RATING-LAST",
     "file": "server-account/src/arena.js",
-    "old": "ORDER BY at DESC, k DESC LIMIT 1) AS last,",
-    "new": "ORDER BY at ASC, k ASC LIMIT 1) AS last,",
+    "old": "ORDER BY k DESC LIMIT 1) AS last,",
+    "new": "ORDER BY k ASC LIMIT 1) AS last,",
     "tests": [
       "test/arena4_service.test.js"
     ]

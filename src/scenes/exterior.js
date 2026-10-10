@@ -77,6 +77,7 @@ import { setAmbientTextHost, tickAmbientText } from '../systems/ambientText.js';
 import { setDefaultEnchantCtx } from '../systems/enchantments.js';   // AUDIT 58 (f2/hosts): the session's ONE enchant ctx - this host mounted none
 import { createEnchantCtx, standLooseFoe, LOOSE_FOE_PLACE_ATTEMPTS } from './hostEnchant.js';   // FS1 (wave D): the ONE ctx body + SD1's loose-foe placement
 import { windowEmissionRGB } from '../render/windowEmission.js';
+import { realWindowsMode, VIEW_CLIP_PAD, clockFogColor } from '../render/realWindows.js';   // RW1: the rooms behind the glass, and the street a building's glass looks out on
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
 import { isHearthFlat } from '../systems/survival/hearth.js';   // HEARTH1: which of those lanterns is a fire you could cook on
 import { syncLightingLane, lanternColor } from '../render/enhancedLighting.js';   // EL1
@@ -95,11 +96,12 @@ import { modSetting, modSettingsOf } from '../systems/modSettings.js';
 import { timeScale as hccTimeScale } from '../systems/timeScale.js';   // AUDIT HCC: the runtime's Time.deltaTime rides Time.timeScale, as the motor's does   // SIB1: the mod's own switch; HCC: Horse Cart and Cargo's eight
 import { horseNameTooltip } from '../ui/horseNameTooltip.js';   // AUDIT HCC U6: the mod's HUD label, both skins
 import { createHorseCartPool } from './horseCartPool.js';   // HCC: the presentation, world.js's twin on this host
+import { wagonPoolDeps } from '../world/wagonModels.js';   // WAGONS1: the pool's two words, one seam for both hosts
 import { createHorseCartRuntime } from '../systems/horseCart.js';   // HCC: TrailingWagonRuntime over this host's seams
 import { setHoldingsProvider, stableProviderFor } from '../ui/holdingsPages.js';   // HOLDINGS: the Stable page over this host's horse and wagon (no boats here)
 import { isQualifyingThreatState } from '../systems/horseFollow.js';   // HCC: CollectThreats' qualification
 import { totalWeight } from '../systems/inventory.js';   // HCC: PlayerEntity.WagonWeight
-import { WAGON_KG_LIMIT } from '../systems/itemTransfer.js';   // HCC: ItemHelper.WagonKgLimit
+import { wagonKgFor, activeWagonKind } from '../systems/wagonKinds.js';   // HCC: ItemHelper.WagonKgLimit - WAGONS1: the driven wagon's
 import { InputMessageBoxWindow } from '../ui/inputMessageBox.js';   // HCC: the horse's name
 import { isLocalPlayerTarget } from '../characters/enemyTargets.js';   // HCC: CollectThreats' `senses.Target == player`
 import { SeasonHelper, archivePrefix as seasonPrefixOf } from '../systems/seasonsIliacBay.js';   // SIB1: Seasons of the Iliac Bay's SeasonHelper; WINDFALL1: and its atlases' prefixes, which Windfall's own tables key on
@@ -109,14 +111,14 @@ import { makeCityGate, updateCityGate } from '../world/cityGate.js';   // AUDIT 
 import { staticBuildingBox, staticBuildingWorldAabb } from '../world/staticBuildings.js';   // AUDIT 64 F11: RMBLayout's StaticBuilding array
 import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs
 import { drawnFlat } from '../characters/nudeFlats.js';   // NUDE-FLATS: Show Nudity off draws a nude figure's clothed stand-in
-import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
+import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime, viewOutLight } from '../world/worldClock.js';
 import { audio } from '../systems/audio.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
 import { createWeatherFront, blendTerms, soundWeather, fallTerms } from '../systems/weatherFront.js';   // WX2: the front reaches the ground; RAIN-SPRINKLE: the look of what falls
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
 import { CityNavigation } from '../world/cityNavigation.js';   // T1 towns
 import { TownPopulation } from '../systems/townPopulation.js';
-import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES, personWantsToStop } from '../characters/mobilePerson.js';
+import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES, personWantsToStop, walkerRace } from '../characters/mobilePerson.js';
 import { createTownTalk, rayPersonDistance, nearestPerson } from './townTalk.js';   // T3b   // AUDIT 63 F33 (review): the townsfolk's own pick distance, the enemy arm's rival
 import { createPlayerMagic } from './hostMagic.js';   // M2: spellcasting above ground
 import { preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in)
@@ -286,7 +288,7 @@ import { buildingSummaries } from '../world/buildingSummaries.js';   // ROAD-C c
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';   // ROAD-C c2/S10: the plate rename's input box
 import { discoveredBuildings, setDiscoveredBuildingCustomName, discoverLocation, undiscoverBuilding } from '../systems/discovery.js';   // A2: the nameplates' gate; c2/S10: the plate rename; QX1: RevealLocation's filing
 import { activeMemberships } from '../systems/guilds.js';   // F117
-import { revealGuildHallsOnMap } from '../systems/guildHallReveal.js';   // AUDIT 63 F9: ThievesGuild/DarkBrotherhood RevealGuildHallOnMap
+import { revealGuildHallsOnMap, revealingMemberships } from '../systems/guildHallReveal.js';   // AUDIT 63 F9: ThievesGuild/DarkBrotherhood RevealGuildHallOnMap; AUDIT CHAP2 D4: either book's
 import { avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // F117: Stendarr
 import { dungeonLocationFor } from '../world/smallerDungeons.js';   // QX1/AUDIT 28 F-B2: the quest layer sees the SIZED dungeon
 import { ensureFactionRep, getReputation, changeReputation } from '../systems/factionRep.js';   // QX1: the quest layer's reputation doors
@@ -1703,7 +1705,11 @@ export async function bootExterior(canvas, renderer, params, status) {
   const hcc = createHorseCartPool({
     renderer, meshes: { getGpuMesh, cpuModels }, collider: () => collider, now: () => performance.now() / 1000,
     threats: hccThreats, selfId: () => null, peerName: () => null, onChanged: null, log: console,
+    ...wagonPoolDeps(() => playerEntity.items ?? []),   // WAGONS1: Mac's wagons, by the one the player drives
   });
+  // RW1 x WAGONS2 (FINAL AUDIT): the wagons stand in the street a window looks out on, as world.js has them - the fixed
+  // city stands no caravan room, so none is left out
+  renderer.outsideViewDraws?.add(({ renderer: r }) => { if (hccOn()) hcc.drawOutside(r, null); });
   const hccRuntime = createHorseCartRuntime({
     ready: () => walkMode,
     transport: {
@@ -1717,7 +1723,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       isPlayerInside: () => _mode() !== 'exterior', isPlayerInsideDungeon: () => _mode() === 'dungeon', isPlayerInsideBuilding: () => _mode() === 'interior',
       buildingKey: () => modes?.interiorBuilding?.buildingKey ?? 0, dungeonId: () => modes?.roomIdentity?.()?.mapId ?? null,
     },
-    entity: { wagonWeight: () => totalWeight(playerEntity.wagonItems ?? []), wagonKgLimit: () => WAGON_KG_LIMIT },
+    entity: { wagonWeight: () => totalWeight(playerEntity.wagonItems ?? []), wagonKgLimit: () => wagonKgFor(playerEntity) },   // WAGONS1: the driven wagon's
     activateMode: () => getInteractionMode(), fadeInProgress: () => false,
     say: (l) => townTalk.say(l), setMidScreenText: (t, seconds) => setMidScreenText(t, seconds), tooFarText: () => TOO_FAR_AWAY_TEXT,
     settings: hccSettings, actionPressed: hccActionPressed, now: () => performance.now() / 1000,
@@ -1743,7 +1749,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // HOLDINGS (bible/03-World/Holdings.md): world.js's twin - the Stable page over this host's pair; no Fleet (this host
   // stands no Come Sail Away)
   setHoldingsProvider({
-    ...stableProviderFor({ runtime: hccRuntime, on: hccOn, hasHorse: () => hasHorse(playerEntity.items ?? []), hasCart: () => hasCart(playerEntity.items ?? []) }),
+    ...stableProviderFor({ runtime: hccRuntime, on: hccOn, hasHorse: () => hasHorse(playerEntity.items ?? []), hasCart: () => hasCart(playerEntity.items ?? []), wagonKind: () => activeWagonKind(playerEntity.items ?? []), items: () => playerEntity.items ?? [] }),   // WAGONS1: the Stable names the wagon driven - WAGONS2: and paints it
     fleet: null,
   });
   /** AUDIT HCC H1: LateUpdate once a frame in every mode, before the world pass draws the wagon (world.js's twin). */
@@ -3787,6 +3793,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // window frees, the RMB swing tests `!townTalk.overlayActive`).
     paused: () => gamePaused(),
     cardTable: () => !!modes?.cardSeated?.(),   // CARDS-TOUCH: seated at a card table, the finger is the table's (ui/touch.js)
+    cardHeld: () => !!modes?.cardPressHeld?.(),   // AUDIT CARDS-6 E1: a finger the cards took is never the stick (ui/touch.js)
   };
   const touch = attachTouch(canvas, inputHooks);
   const gamepad = attachGamepad(canvas, inputHooks);   // GP1: null without the Gamepad API
@@ -4162,6 +4169,47 @@ export async function bootExterior(canvas, renderer, params, status) {
   questBridge.onInitWorld();   // QuestMachine's OnInitWorld - this route's ONE city is its world
   if (_questStartPending) questInitAtGameStart();   // chargen got here first
 
+  // RW1 (render/realWindows.js): THE STREET THROUGH A BUILDING'S GLASS - world.js's twin over this host's one town: its
+  // models, its ground and its flats culled to the glass's own frustum, the clock's light over the street the last
+  // frame kept, and the building the player stands in left out by its box (the model the door's matrix stands).
+  let _rwClipDoor = null, _rwClip = null;
+  const outsideViewClip = (doorMatrix) => {
+    if (doorMatrix === _rwClipDoor) return _rwClip;
+    _rwClipDoor = doorMatrix; _rwClip = null;
+    if (!doorMatrix) return null;
+    let best = -1;
+    for (const d of drawList) {
+      const m = d.matrix, b = d.box;
+      if (!m || !b || Math.abs(m[12] - doorMatrix[12]) > 0.01 || Math.abs(m[13] - doorMatrix[13]) > 0.01 || Math.abs(m[14] - doorMatrix[14]) > 0.01) continue;
+      const vol = (b[3] - b[0]) * (b[4] - b[1]) * (b[5] - b[2]);
+      if (vol <= best) continue;
+      best = vol;
+      _rwClip = [b[0] - VIEW_CLIP_PAD, b[1] - VIEW_CLIP_PAD, b[2] - VIEW_CLIP_PAD, b[3] + VIEW_CLIP_PAD, b[4] + VIEW_CLIP_PAD, b[5] + VIEW_CLIP_PAD];
+    }
+    return _rwClip;
+  };
+  const outsideView = (doorMatrix) => ({
+    clip: outsideViewClip(doorMatrix),
+    setup: (r) => {   // the clock's light: an hour spent indoors is an hour later outside
+      const clockMinute = minuteNow();
+      const keptFog = r._fogColor, keptSun = r._sunScale;   // RW1 (AUDIT): the air the street was kept in, at the light it was kept at
+      // WAGONS2 (FINAL AUDIT): and the weather's - the street frame's own terms (world/worldClock.js viewOutLight), so the clock's
+      // air below compares a dimmed sun with a dimmed sun
+      const light = viewOutLight(clockMinute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), weatherTerms().sun, sky.sunFactor());
+      r.setLighting(withMoonAmbient(light.ambient, sky.moonlight()), light.sun, SUN_RIG_COLOR);
+      r.setFogColor(clockFogColor(keptFog, keptSun, r._sunScale));   // RW1 (AUDIT): ...re-lit by the clock
+      r.setWindowEmission(windowEmissionRGB(windowStyleForTime(clockMinute)));
+      r.setPointLights(lightsOnAt(clockMinute) ? nearestLights(cityLights, cam.pos, r.maxPointLights, lightAnimator.ranges) : new Float32Array(0), CITY_LIGHT_COLOR_F32);   // RW1 (AUDIT): the town's lanterns by the clock - never the player's own light
+      return sunDirection(clockMinute);
+    },
+    draw: ({ renderer: r, planes }) => {
+      for (const d of drawList) if (d.mesh && d.matrix && !(d.box && aabbOutside(planes, d.box))) r.drawMesh(d.mesh, d.matrix, d.texRemap ?? texRemap);
+      r.drawTerrain(groundSurface, identityMatrix, r.tileArrays.get(groundArchive), tilemapTex, 6.4);
+      const flats = billboardBatches.filter((b) => !(b._box && aabbOutside(planes, b._box)));
+      if (flats.length) r.drawBillboards(flats, new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]), UP_Y);
+    },
+  });
+
   // P7: the exterior scene hosts the same mode machine as ?world -
   // E on a building door enters its interior, E on a DUNGEON_ENTRANCE
   // door drops into the location's crawl, exits land verbatim.
@@ -4175,6 +4223,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   var modes = createWorldModes({
     climbFeel,   // AUDIT CLIMB-ARC F11 (THE FOUR HOSTS RULE): the interiors and dungeons of ?exterior take the climb's camera as the world host's do
     shakeCamera: (k) => betterAmbience.weaponKick(k),   // AUDIT TELL H6: the stagger's kick indoors and underground (and an execution's), as the world host gives its modes
+    outsideView,   // RW1: the street through a building's glass (render/realWindows.js)
     // DISC29-F: TransportManager.HandleTransition's dismount at a door (TR5) reaches the mount through this seam, as
     // the world host's does - without it the fixed city walked a rider into a building still on horseback
     setTransportMode: (mode) => mountRig.setMode(mode),
@@ -4624,7 +4673,9 @@ export async function bootExterior(canvas, renderer, params, status) {
       spellsByIndex: () => spellsByIndex,
       now: () => Math.floor(playerTicker.ownMinutes),
       sinks: {
-        hurt: (n) => { if (n > 0) hurtPlayer(playerEntity, n); },
+        // AUDIT FB1010 D1: an enchantment's own bite (a Damned blade's Health Leech, a curse's round) on the arena's sand
+        // holds me at 1 as every blow there does - the floor's dungeon mounts no ctx of its own (enchantCtx: false)
+        hurt: (n) => { if (n > 0) hurtPlayer(playerEntity, n, arenaBouts.playerSpare() ?? {}); },
         heal: (n) => { if (n > 0) { playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + n); surfacePlayer(); } },
       },
       playerSpellSinks,
@@ -4766,7 +4817,7 @@ export async function bootExterior(canvas, renderer, params, status) {
 
   // T1 TOWNS: the wandering population (PopulationManager verbatim -
   // 10Hz pool, 24/16-blocks clamp, daytime only, anti-skate hidden
-  // first move). Race: the CLIMATE's People, live a dozen lines below
+  // first move). Race: the CLIMATE's People (a Redguard region's Redguard - REGIONAL-FOLK, walkerRace), live a dozen lines below
   // since AUDIT 23 (characters-4) - PopulationManager.cs:94's
   // populationRace through GetEntityRace's Redguard/Nord/default-Breton
   // switch (:320-335) over FactionFile.cs:612-615's numbering, so
@@ -4783,7 +4834,8 @@ export async function bootExterior(canvas, renderer, params, status) {
   // AUDIT 23 (characters-4) - PopulationManager.cs:94: the wandering
   // race is the CLIMATE's People (Redguard deserts, Nord mountains);
   // it was hardcoded Breton. FACTION_RACES numbers -> texture keys.
-  const populationRace = ({ 0: 'Nord', 2: 'Redguard', 3: 'Breton' })[dfLocation.climate?.people] ?? 'Breton';
+  // REGIONAL-FOLK: and a Redguard region's walkers are Redguards.
+  const populationRace = walkerRace(dfLocation.climate?.people, dfLocation.regionIndex);
   const personArchives = [...PERSON_TEXTURES[populationRace].male, ...PERSON_TEXTURES[populationRace].female, GUARD_TEXTURE];
   const personTex = new Map();
   if (populated) await Promise.all(personArchives.map(async (a) => personTex.set(a, await getTexture(a))));
@@ -4873,7 +4925,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // (Guild.cs:170-176), so it waits on the faction file the way the
   // static-NPC door does (worldModes.js's ensureFactions arm).
   Promise.resolve(townTalk.ensureFactions?.()).then(() => {
-    revealGuildHallsOnMap(activeMemberships(playerEntity),
+    revealGuildHallsOnMap(revealingMemberships(playerEntity),   // AUDIT CHAP2 D4: either book's
       `${dfLocation.regionIndex}:${dfLocation.name ?? locationName}`,
       buildingSummaries(dfLocation.exterior?.buildings ?? [], loc.blocks,
         { locationName: dfLocation.name ?? locationName, regionName: maps.getRegionName(dfLocation.regionIndex), locationIndex: dfLocation.locationIndex ?? 0 }),
@@ -5677,6 +5729,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     hcc.draw(renderer, texRemap);   // HCC: the wagon and its cargo
     try { lefay.frame(); } catch (e) { console.warn('[lefay] monument', e?.message ?? e); }   // LEFAY1: stood, its flowers in flight and laid
     lefay.draw(renderer);   // LEFAY1: the monument to Julian LeFay
+    renderer.setWindowRooms(realWindowsMode());   // RW1 (render/realWindows.js): this frame's rooms behind the town's glass, asked after its beginFrame (world.js's twin); and the street kept for a building's view out
     // GROUND-LAST (2026-09-21): the ground is drawn AFTER every opaque
     // mesh - the buildings, the mills, the rig, the arrows - below, just
     // before the sky. See world.js's note at its ground queue.

@@ -14,6 +14,10 @@
 // and a small burst in its tier's colour where each piece comes to rest, a Rare-or-better's brighter (FX_KINDS.spoils,
 // spoilRest, spoilRestRare).
 //
+// AUDIT SD IV (R3): A FLOOR WITH AN EDGE. A burst may say where its floor ends (`edge` - its centre's x, z and its
+// radius; the Shattered Hour's arena is a disc over the void): a spark past it rests on nothing - one that crossed it
+// flying flies on down, one that crossed it at rest slides off and falls. None said, the floor has no edge (the court's).
+//
 // The duel wall's law (render/duelWall.js): fixed geometry (a strip of seeds for the sparks, one quad for the stone and
 // its trail) placed by uniforms; added onto the frame (ONE, ONE); tested against the depth the court wrote and never
 // writing it; fogged to the frame's fog. Pure where it can be: `fxBurstOf`, `meteorFall` and `sparkAt` (the shader's own
@@ -90,13 +94,23 @@ function fract(x) { return x - Math.floor(x); }
 /**
  * WHERE SPARK `i` OF A BURST IS, `t` seconds after it (the shader's own flight, in JS): out along its bearing, up, and
  * falling - `[x, y, z]` from the burst's origin, and its life's share spent (1 gone). WB9f: `floorRel` the floor's
- * height under the origin (0 a burst on the floor; below it for one out of his chest), where a fallen spark rests. Pure.
+ * height under the origin (0 a burst on the floor; below it for one out of his chest), where a fallen spark rests.
+ * AUDIT SD IV (R3): `edge` the floor's edge, `[x, z, radius]` - its centre from the origin - past which it rests on
+ * nothing (null: none). Pure.
  */
-export function sparkAt(i, t, power = 1, floorRel = 0) {
+export function sparkAt(i, t, power = 1, floorRel = 0, edge = null) {
   const [a, b] = sparkSeed(i);
   const bearing = a * Math.PI * 2, out = (3 + 7 * b) * power, up = (4 + 6 * fract(a * 7.31 + b)) * Math.sqrt(power);
   const life = (0.55 + 0.45 * fract(b * 5.17 + a)) * (FX_BURST_MS / 1000);
-  return { at: [Math.sin(bearing) * out * t, Math.max(floorRel + 0.05, up * t - 0.5 * FX_GRAVITY * t * t), Math.cos(bearing) * out * t], spent: Math.min(1, t / life) };   // at rest on the floor once fallen
+  const g = 0.5 * FX_GRAVITY, rest = floorRel + 0.05;
+  let y = Math.max(rest, up * t - g * t * t);   // at rest on the floor once fallen
+  if (edge && edge[2] > 0) {
+    const ox = -edge[0], oz = -edge[1], dx = Math.sin(bearing) * out, dz = Math.cos(bearing) * out;
+    const dd = Math.max(dx * dx + dz * dz, 1e-6), bq = ox * dx + oz * dz, cq = ox * ox + oz * oz - edge[2] * edge[2];
+    const tc = cq >= 0 ? 0 : (-bq + Math.sqrt(Math.max(bq * bq - dd * cq, 0))) / dd;   // when its run out crosses the edge
+    if (t > tc) y = up * tc - g * tc * tc > rest ? up * t - g * t * t : rest - g * (t - tc) * (t - tc);
+  }
+  return { at: [Math.sin(bearing) * out * t, y, Math.cos(bearing) * out * t], spent: Math.min(1, t / life) };
 }
 
 /**
@@ -119,6 +133,7 @@ export const FX_SPARK_VS = HEAD + `layout(location = 0) in float aI;
 uniform mat4 uVP;
 uniform vec3 uAt;        // the burst's origin in the scene
 uniform float uFloor;    // WB9f: the floor's height under it, where a fallen spark rests
+uniform vec3 uEdge;      // AUDIT SD IV (R3): where that floor ends - its centre's x, z and its radius (0: it never does)
 uniform float uT;        // seconds since it
 uniform float uPower;
 uniform float uPxPerM;
@@ -134,6 +149,12 @@ void main() {
   float life = (0.55 + 0.45 * fr(b * 5.17 + a)) * ${(FX_BURST_MS / 1000).toFixed(3)};
   float t = uT, spent = clamp(t / life, 0.0, 1.0);
   vec3 p = uAt + vec3(sin(bearing) * outv * t, max(upv * t - ${(0.5 * FX_GRAVITY).toFixed(3)} * t * t, uFloor - uAt.y + 0.05), cos(bearing) * outv * t);
+  if (uEdge.z > 0.0) {   // AUDIT SD IV (R3): past the floor's edge it rests on nothing - flying, it flies on down; at rest, it slides off
+    vec2 o = uAt.xz - uEdge.xy, d = vec2(sin(bearing), cos(bearing)) * outv;
+    float dd = max(dot(d, d), 1e-6), bq = dot(o, d), cq = dot(o, o) - uEdge.z * uEdge.z;
+    float tc = cq >= 0.0 ? 0.0 : (-bq + sqrt(max(bq * bq - dd * cq, 0.0))) / dd, rest = uFloor - uAt.y + 0.05, g = ${(0.5 * FX_GRAVITY).toFixed(3)};
+    if (t > tc) p.y = uAt.y + (upv * tc - g * tc * tc > rest ? upv * t - g * t * t : rest - g * (t - tc) * (t - tc));
+  }
   vWorld = p;
   vec4 cp = uVP * vec4(p, 1.0);
   gl_Position = cp;
@@ -225,7 +246,7 @@ export class GateFxRenderer {
     this.sparks = buildProgram(gl, FX_SPARK_VS, FX_SPARK_FS, 'gate sparks');
     this.meteor = buildProgram(gl, FX_METEOR_VS, FX_METEOR_FS, 'gate meteor');
     this.us = {}; this.um = {};
-    for (const n of ['uVP', 'uAt', 'uFloor', 'uT', 'uPower', 'uPxPerM', 'uColor', 'uGrit', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) this.us[n] = gl.getUniformLocation(this.sparks, n);
+    for (const n of ['uVP', 'uAt', 'uFloor', 'uEdge', 'uT', 'uPower', 'uPxPerM', 'uColor', 'uGrit', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) this.us[n] = gl.getUniformLocation(this.sparks, n);
     for (const n of ['uVP', 'uKind', 'uHead', 'uDir', 'uLen', 'uW', 'uEye', 'uColor', 'uTime', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) this.um[n] = gl.getUniformLocation(this.meteor, n);
     this.sparkVao = gl.createVertexArray();
     gl.bindVertexArray(this.sparkVao);
@@ -245,8 +266,8 @@ export class GateFxRenderer {
   }
 
   /**
-   * Draw the frame's bursts (`[{ at: [x, y, z] the scene's, t: seconds since, kind: FX_KINDS entry, color, floor? }]` - WB9f:
-   * `floor` the floor's height under a burst above it - at most
+   * Draw the frame's bursts (`[{ at: [x, y, z] the scene's, t: seconds since, kind: FX_KINDS entry, color, floor?, edge? }]` -
+   * WB9f: `floor` the floor's height under a burst above it; AUDIT SD IV (R3): `edge` where it ends ([x, z, radius]) - at most
    * FX_BURSTS_MAX, those whose sparks are all spent skipped) and its meteor (`{ at: [x, y, z] the scene's, color }` or
    * null). `viewH` the world image's height in pixels (the sparks' size). Nothing to draw, nothing touched.
    */
@@ -280,6 +301,7 @@ export class GateFxRenderer {
       }
       gl.uniform3f(S.uAt, b.at[0], b.at[1], b.at[2]);
       gl.uniform1f(S.uFloor, Number.isFinite(b.floor) ? b.floor : b.at[1]);   // WB9f: on the floor unless it says where the floor is
+      gl.uniform3f(S.uEdge, b.edge ? b.edge[0] : 0, b.edge ? b.edge[1] : 0, b.edge ? b.edge[2] : 0);   // AUDIT SD IV (R3): and where it ends, if it says
       gl.uniform1f(S.uT, b.t);
       gl.uniform1f(S.uPower, b.kind?.power ?? 1);
       gl.uniform1i(S.uGrit, b.kind?.grit ? 1 : 0);

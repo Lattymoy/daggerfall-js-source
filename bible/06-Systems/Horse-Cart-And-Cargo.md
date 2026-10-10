@@ -772,3 +772,12 @@ they are; the fast-travel line points here; the scope table names the six retire
 the page says so beside the count. The pack's half - the filter's layout, its reset, the latch - is `10-UI/UI-Arc.md`'s
 AUDIT WAGON-FILTER AND SHIFT-STOW.
 
+
+## WAGONS1 - three wagons on this machine (2026-10-09)
+
+Mac's three wagons ride on everything above. The Small Cart is now drawn as his
+Wagon Cart instead of model 41214. The Open Wagon (1500 kg, four seats in the
+back) and the Caravan (2000 kg, a room inside) are the same template-93 item
+marked by kind. Each wagon is hitched at its own measured length, not 3.1 m
+(`horseCart.js` `hitchZ()`). The record, its departures and the four hosts are
+`06-Systems/Wagons.md`.

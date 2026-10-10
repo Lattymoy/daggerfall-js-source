@@ -23,8 +23,9 @@ import { WIND_PARTS, windRead, windWrite, quickSlotsRead, quickSlotsWrite, BLOOD
 import { OUTDOORS_TIERS } from '../src/world/outdoors.js';
 import { getPref, setPref, _resetForTests as resetPrefs } from '../src/systems/uiPrefs.js';
 import { _resetForTests as resetSettings } from '../src/systems/settings.js';
-import { _resetModSettings } from '../src/systems/modSettings.js';
-import { tileStates, classicSegment, allOffPlan, featuresAllOff, featuresRestore, featureTile, barReading, FEATURES_RESTORE_PREF, ALL_OFF_ASK } from '../src/ui/enhancedMenu.js';
+import { _resetModSettings, MOD_SETTINGS, modSetting, setModSetting } from '../src/systems/modSettings.js';
+import { tileStates, classicSegment, allOffPlan, featuresAllOff, featuresRestore, featureTile, barReading, FEATURES_RESTORE_PREF, ALL_OFF_ASK, defaultSegment, featuresDefaults, RESET_ALL_ASK } from '../src/ui/enhancedMenu.js';
+import { modModules } from '../src/systems/features.js';
 import { renderScaleSetting, _resetRenderScaleDoor } from '../src/systems/renderScale.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -51,7 +52,7 @@ test('FT18: ten rows are four, and nothing they offered is lost - every key, def
   for (const gone of ['grass-density', 'grass-style', 'wind-wisps', 'flora-sway', 'quickslot-diamond', 'quickbar-style', 'blood-marks', 'blood-overkill', 'blood-screen', 'blood-gore']) {
     assert.equal(row(gone), undefined, `${gone} is condensed`);
   }
-  assert.equal(FEATURES.length, 97);   // MWNPC5b's Morrowind People (2026-10-09); TAMRIEL2's Land beyond the Bay and TAMRIEL1's Tamriel on the map (2026-10-08); SNOWFALL1's Snowfall, HAZE1's Heat Haze and WINDFALL1's Windfall (2026-10-08, at AUDIT ENVIRONS' merge of main); WATER-NEXT's Water quality (2026-10-07, at the Super Dungeons arc's merge of main); PI1's Physical Items and MW-SPELLFX1's Morrowind Spell Effects (2026-10-07, at the Super Dungeons arc's merge of main); VERGE1's clear roadsides and ECOTONE1's blended climates (2026-10-07); LANDFORM1's Landforms (2026-10-06); MW-STEEL1's Steel Helm (2026-10-06); SD-ONLINE (2026-10-05): the world's dungeon sizes; LEGACY1's Project Legacy (2026-10-05); LW2's living world (2026-10-04); THE DELVE ARC (2026-10-05): medium dungeons, the look round, the lever echoes, the way out, the quest guidance tiers; LOAD1's loading screens (2026-10-05); LPT1's Low Poly Trees (2026-10-05); FIELD BUGS 2026-10-04e: the road's encounters (WILD-ROAD); NEARBY-QUESTS (2026-10-04); IT1's Immersive Travel row (2026-10-04); WD3's Beautiful Villages and Beautiful Cities (2026-10-01); FOREST1's real forests (2026-10-01); CLIMB1's enhanced climbing (2026-09-30); GUIDE5's quest marks, GUIDE4's quest tracker and GUIDE3's quest herald (2026-09-29); NAV's Naval Combat row the port's own (2026-09-28); FORAGE1's Foraging row (2026-09-28, MERGE 2); IIL1-T's modded lighting (2026-09-27); PERF-SCALE's render scale (2026-09-25) is the one row added since; the sea update's four mod rows (AS1, DS1, WA1, DW-D) came with its merge, OH-A's Ocean Holes row after it, and CSA-A's Come Sail Away row; EM3-3D's 3D dungeon map (2026-09-27); RAID1's World Events - Raiding Parties (2026-09-27)
+  assert.equal(FEATURES.length, 98);   // MWNPC5b's Morrowind People (2026-10-09, at MW-NPC's merge of main); RW1's Real windows (2026-10-09); TAMRIEL2's Land beyond the Bay and TAMRIEL1's Tamriel on the map (2026-10-08); SNOWFALL1's Snowfall, HAZE1's Heat Haze and WINDFALL1's Windfall (2026-10-08, at AUDIT ENVIRONS' merge of main); WATER-NEXT's Water quality (2026-10-07, at the Super Dungeons arc's merge of main); PI1's Physical Items and MW-SPELLFX1's Morrowind Spell Effects (2026-10-07, at the Super Dungeons arc's merge of main); VERGE1's clear roadsides and ECOTONE1's blended climates (2026-10-07); LANDFORM1's Landforms (2026-10-06); MW-STEEL1's Steel Helm (2026-10-06); SD-ONLINE (2026-10-05): the world's dungeon sizes; LEGACY1's Project Legacy (2026-10-05); LW2's living world (2026-10-04); THE DELVE ARC (2026-10-05): medium dungeons, the look round, the lever echoes, the way out, the quest guidance tiers; LOAD1's loading screens (2026-10-05); LPT1's Low Poly Trees (2026-10-05); FIELD BUGS 2026-10-04e: the road's encounters (WILD-ROAD); NEARBY-QUESTS (2026-10-04); IT1's Immersive Travel row (2026-10-04); WD3's Beautiful Villages and Beautiful Cities (2026-10-01); FOREST1's real forests (2026-10-01); CLIMB1's enhanced climbing (2026-09-30); GUIDE5's quest marks, GUIDE4's quest tracker and GUIDE3's quest herald (2026-09-29); NAV's Naval Combat row the port's own (2026-09-28); FORAGE1's Foraging row (2026-09-28, MERGE 2); IIL1-T's modded lighting (2026-09-27); PERF-SCALE's render scale (2026-09-25) is the one row added since; the sea update's four mod rows (AS1, DS1, WA1, DW-D) came with its merge, OH-A's Ocean Holes row after it, and CSA-A's Come Sail Away row; EM3-3D's 3D dungeon map (2026-09-27); RAID1's World Events - Raiding Parties (2026-09-27)
   const want = { grassDensity: 1, grassStyle: 'meadow', floraSway: true, windWisps: true, quickbarStyle: 'hotbar', quickslots: true,   // HB-LYCFREE: the hotbar by default (PIN MOVED); MEADOW1: the meadow by default (PIN MOVED); GRASS-ON: the grass Full by default again, where AUDIT MEADOW1 had it Off (PIN MOVED)
     'blood-gore': 'normal', 'blood-marks': true, 'blood-overkill': true, 'blood-screen': true };
   for (const [k, v] of Object.entries(want)) assert.equal(FEATURE_PREF_DEFAULTS[k], v, `${k} keeps its default`);
@@ -214,8 +215,66 @@ test('FT18: online, All off leaves the room\'s rows as the room has them (mutant
     featuresAllOff();
     assert.equal(getPref('lootRarity'), true, 'forced on online, and untouched');
     assert.ok(!Object.hasOwn(getPref(FEATURES_RESTORE_PREF) ?? {}, 'loot-rarity'), 'and not kept - nothing to restore');
-    assert.match(ALL_OFF_ASK, /online the rows the room decides stay on/);
   } finally { delete globalThis.location; fresh(); }
+});
+
+test('FEATURES-DEFAULTS (issue #399): Defaults puts every tile, its drawer and a mod\'s modules back to how the game ships them - where All off then Restore only brings back the player\'s own (mutant: a tile, a part or a module left, or the keep kept)', () => {
+  fresh();
+  globalThis.location = { search: '' };
+  try {
+    const stock = Object.fromEntries(FEATURES.filter((f) => tileStates(f)).map((f) => [f.id, label(f.id)]));
+    for (const f of FEATURES) {   // a fresh shelf stands at every tile's default segment
+      const st = tileStates(f);
+      if (st && defaultSegment(f, st) >= 0) assert.equal(defaultSegment(f, st), st.at, `${f.id}'s default is the segment a fresh shelf reads`);
+    }
+    // the issue's player: they tinkered, then pressed All off and Restore - and got their own tinkering back
+    tileStates(row('blood')).set(3);
+    tileStates(row('quick-slots')).set(1);   // the Diamond - the Hotbar is how it ships
+    tileStates(row('dungeon-wall-style')).set(3);
+    tileStates(row('cloud-quality')).set(2);
+    setPref('grassStyle', 'smooth');
+    const vendor = FEATURES.map((f) => resolveControl(f)).find((c) => c?.store === 'mods' && modModules(c.vendor).some((k) => typeof MOD_SETTINGS[c.vendor].keys[k].default === 'boolean'))?.vendor;
+    assert.ok(vendor, 'a mod tile with a switchable module');
+    const mod = modModules(vendor).find((k) => typeof MOD_SETTINGS[vendor].keys[k].default === 'boolean');
+    setModSetting(vendor, mod, !MOD_SETTINGS[vendor].keys[mod].default);
+    featuresAllOff();
+    featuresRestore();
+    assert.equal(label('blood'), 'Heavy', 'Restore is the player\'s own, not the game\'s');
+
+    const n = featuresDefaults();
+    assert.ok(n >= 6, `it moved ${n}`);
+    for (const [id, l] of Object.entries(stock)) assert.equal(label(id), l, `${id} is back to how it ships`);
+    assert.equal(getPref('grassStyle'), 'meadow', 'a drawer\'s choice too');
+    assert.equal(modSetting(vendor, mod), MOD_SETTINGS[vendor].keys[mod].default, 'and a mod\'s module');
+    featuresAllOff();
+    featuresDefaults();
+    assert.equal(getPref(FEATURES_RESTORE_PREF), null, 'the All off keep is spent - there is nothing to go back to');
+    assert.equal(featuresDefaults(), 0, 'a second press moves nothing');
+  } finally { delete globalThis.location; fresh(); _resetRenderScaleDoor(); }
+});
+
+test('FEATURES-DEFAULTS (issue #399): online the room\'s rows stay as the room has them; the button sits beside All off and asks first (mutant: the lock ignored, or the confirm skipped)', () => {
+  fresh();
+  try {
+    // PIN MOVED (BAL4, bible/05-Combat/Balance-Arc.md section 6): the Enhanced AI ships On now, so the room's row that
+    // still ships Off is the dungeon sizes' - the same lock, the same lane
+    const forced = 'world-dungeon-sizes';
+    globalThis.location = { search: '' };
+    tileStates(row(forced)).set(1);   // the player's own, offline - it ships Off
+    globalThis.location = { search: '?online=1' };
+    const st = tileStates(row(forced));
+    assert.ok(st.locked && defaultSegment(row(forced), st) === 0, 'the room forces it On online, where it ships Off');
+    featuresDefaults();
+    assert.equal(label(forced), 'On', 'forced on online');
+    globalThis.location = { search: '' };
+    assert.equal(label(forced), 'On', 'and its shelf untouched - offline it is still the player\'s own, not the Off it ships');
+  } finally { delete globalThis.location; fresh(); }
+  assert.match(RESET_ALL_ASK, /key bindings are kept\./, 'and it says what it leaves');
+  // ORG2: the button is the Settings toolbar's one reset - beside All off, asked first - and it runs this
+  const menu = read('src/ui/enhancedMenu.js');
+  const bar = menu.slice(menu.indexOf('function optionsToolbar('), menu.indexOf('\n}', menu.indexOf('function optionsToolbar(')));
+  assert.match(bar, /\{ label: 'Reset everything to defaults', onClick: \(\) => ask\('Reset Everything', RESET_ALL_ASK, 'Reset', \(\) => \{ resetEverything\(\); \}\) \}/, 'Defaults is asked first');
+  assert.match(menu, /function resetEverything\(\) \{\s*\n\s*resetToDefaults\(\); _eff = null;\s*\n\s*featuresDefaults\(\);\s*\n\}/, 'and puts every tile back');
 });
 
 test('FT18: the outdoors bar is a switch - its Off says Off - so its tile reads off and takes the Off fill (mutant: the long label back)', () => {
@@ -270,15 +329,19 @@ test('FT18: a condensed tile opens its parts - switches as chips, a choice as a 
 
 test('FT18 by source: the pane\'s search filters in place and All off asks first; the query is per mount; the Morrowind card draws no bare row (mutant: a repaint on every key, the confirm skipped, or the null back)', () => {
   const menu = read('src/ui/enhancedMenu.js');
-  const pane = menu.slice(menu.indexOf('function paneFeatures(body) {'), menu.indexOf('\n}', menu.indexOf('function paneFeatures(body) {')));
-  assert.match(pane, /search\.type = 'search';/);
-  assert.match(pane, /search\.oninput = \(\) => \{ featureQuery = search\.value; applyQuery\(\); \};/, 'typing filters, it does not repaint - the field keeps its keys');
-  assert.match(pane, /const hit = matchesFeatureQuery\(f, featureQuery\); t\.hidden = !hit;/);
-  assert.match(pane, /g\.head\.hidden = !n;\s*\n\s*g\.grid\.hidden = !n;/, 'a group left with nothing goes too');
-  assert.match(pane, /none\.hidden = shown > 0;/, 'and an empty search says so');
-  assert.match(pane, /\{ label: 'All off', onClick: \(\) => ask\('Turn Everything Off', ALL_OFF_ASK, 'All off', \(\) => \{ featuresAllOff\(\); \}\) \}/, 'All off is asked first');
-  assert.match(pane, /\.\.\.\(kept && typeof kept === 'object' \? \[\{ label: 'Restore',/, 'Restore only while there is something to restore');
-  assert.match(menu, /featureQuery = '';   \/\/ FT18: a fresh visit searches nothing/);
+  // ORG2: the search is the Settings toolbar's, over every tab - it repaints the BODY under it in place, never the
+  // screen, so the field keeps its keys and its caret
+  const bar = menu.slice(menu.indexOf('function optionsToolbar('), menu.indexOf('\n}', menu.indexOf('function optionsToolbar(')));
+  assert.match(bar, /search\.type = 'search';/);
+  const typing = bar.slice(bar.indexOf('search.oninput = () => {'), bar.indexOf('\n  };', bar.indexOf('search.oninput = () => {')));
+  assert.match(typing, /optQuery = search\.value;[^\n]*\n\s*paintOptionsBody\(body, \{ pause \}\);/, 'typing filters the body');
+  assert.doesNotMatch(typing, /\brender\(\)/, 'it does not repaint the screen - the field keeps its keys');
+  assert.match(menu, /if \(item\.startsWith\('feat:'\)\) \{ const f = FEATURES\.find\(\(x\) => x\.id === item\.slice\(5\)\); return f \? featureSearchText\(f\) : ''; \}/, 'a row is found by the words the Features search read');
+  assert.match(menu, /\.flatMap\(\(item\) => itemNodes\(item, \{ \.\.\.ctx, any: true \}\)\);\s*\n\s*if \(!nodes\.length\) continue;/, 'a section left with nothing goes too');
+  assert.match(menu, /if \(!found\) body\.append\(empty\('No matches'\)\);/, 'and an empty search says so');
+  assert.match(bar, /\{ label: 'All off', onClick: \(\) => ask\('Turn Everything Off', ALL_OFF_ASK, 'All off', \(\) => \{ featuresAllOff\(\); \}\) \}/, 'All off is asked first');
+  assert.match(bar, /\.\.\.\(kept && typeof kept === 'object' \? \[\{ label: 'Restore',/, 'Restore only while there is something to restore');
+  assert.match(menu, /optQuery = '';   \/\/ FT18: a fresh visit searches nothing/);
   // the menu's own key handler stands down for a text field, so typing in the search never walks the menu
   assert.match(menu, /if \(t && \(t\.tagName === 'INPUT' \|\| t\.tagName === 'TEXTAREA' \|\| t\.isContentEditable\)\) return;/);
   // MWA4: the card draws no switch row at all now - Attach and Remove data alone - so none can be a moved key's null
@@ -288,6 +351,5 @@ test('FT18 by source: the pane\'s search filters in place and All off asks first
   assert.doesNotMatch(card, /prefRow\(/, 'MWA4: no switch row on the card, so no bare row');
   assert.doesNotMatch(card, /prefRow\('mwSheathing'/);
   const css = read('src/ui/enhancedStyle.js');
-  assert.match(css, /\.ft-tile\[hidden\], \.ft-grid\[hidden\], \.ft-grouphead\[hidden\], \.ft-none\[hidden\] \{ display: none; \}/, 'a hidden tile is gone whatever its own display rule says');
   assert.match(read('src/systems/uiPrefs.js'), /featuresRestore: null,/, 'the keep is a pref: Restore survives a relaunch');
 });

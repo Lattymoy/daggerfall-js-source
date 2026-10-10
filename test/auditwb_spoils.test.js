@@ -87,7 +87,7 @@ test('AUDIT WB A7 the crash records are a list, one a day and character: a secon
   const got = [];
   // AUDIT WBX S3: a record of this build is cleared by the save that holds it - never by a clock: a slot stamped after
   // it holds nothing the record knows of
-  assert.equal(recoverSpoils(store, (p) => got.push(p), { who: 'char-2', saves: [info('char-2', WALL + 5), info('char-1', WALL + 5)] }), 5, 'char-2\'s own, whatever either clock says');
+  assert.equal(recoverSpoils(store, (p) => got.push(p), { who: 'char-2', saves: [info('char-2', WALL + 5), info('char-1', WALL + 5)] }), 7, 'char-2\'s own, whatever either clock says');   // PIN MOVED (CARDS9): seed 12's hoard carries the Warden's own card; PIN MOVED (GEM2): and his gem
   assert.equal(store.get(SPOILS_STORE_KEY).length, 2, 'both kept: no save of char-2 has landed');
   assert.equal(a.p.saved('char-1'), 1, 'char-1\'s save, its pieces in the pack, clears char-1\'s record');
   assert.deepEqual(store.get(SPOILS_STORE_KEY).map((r) => r.who), ['char-2'], 'char-1\'s cleared, char-2\'s waits');

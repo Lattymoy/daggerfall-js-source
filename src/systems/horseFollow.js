@@ -505,6 +505,56 @@ export function hitchAxle(from, hitch, length, fallbackForward) {
   return { axle: [hitch[0] - dir[0] * length, hitch[1], hitch[2] - dir[2] * length], dir };
 }
 
+// ─── WAGONS2: THE FOUR-WHEELER'S TURN (a departure, 2026-10-09) ───────────────────────────────────────────────
+
+/** WAGONS2 (2026-10-09, Mac: "Real wheel movement"): the signed turn (degrees, about +y, Unity's sense - +z toward +x)
+ *  from horizontal direction `from` to `to`. `yawed(from, yawBetween(from, to))` points along `to`. Pure. */
+export const yawBetween = (from, to) => (Math.atan2(from[2] * to[0] - from[0] * to[2], from[0] * to[0] + from[2] * to[2]) * 180) / Math.PI;
+/** `v` turned `deg` degrees about +y (quatAngleAxis(deg, up)'s turn, written out). Pure. */
+export function yawed(v, deg) {
+  const a = (deg * Math.PI) / 180, c = Math.cos(a), s = Math.sin(a);
+  return [v[0] * c + v[2] * s, v[1], -v[0] * s + v[2] * c];
+}
+/** A steer held to the bogie's lock (`limit` degrees either way). */
+export const clampSteer = (steer, limit) => Math.max(-limit, Math.min(limit, steer));
+
+/**
+ * WAGONS2: THE TWO-STAGE TRAILER LAW - a four-wheeled wagon's front axle turns on a kingpin under its body and its pole
+ * hangs from that axle, so it is two bars, not one: the KINGPIN follows the hitch on the pole (`length` - the kind's
+ * hitch - less the wheelbase) by the trailer law, and the body's REAR AXLE follows the kingpin on the wheelbase by the
+ * same law. The steer is the turn from the body's forward to the pole's (`yawBetween`), held to the bogie's lock
+ * (`bogie.steerLimit`, measured off the model - world/wagonModels.js steerLimitOf: past it a front wheel's rim would
+ * cut into the body beside it); at the lock the pole keeps the hitch's line and the body is laid at the lock off it, as
+ * a wagon whose front wheels can turn no further is dragged round as one bent bar. `kingpinFrom` null lays the wagon
+ * straight on the line from `axleFrom` to the hitch (an unplaced wagon, a leap) - exactly where the single bar would
+ * stand it. Returns `{ axle, kingpin, dir }` (dir the body's facing) and `steer` (degrees). Pure.
+ * @param {number[]} axleFrom @param {number[] | null} kingpinFrom @param {number[]} hitch @param {number} length
+ * @param {{ wheelbase: number, steerLimit: number }} bogie @param {number[]} fallbackForward
+ */
+export function bogieAxle(axleFrom, kingpinFrom, hitch, length, bogie, fallbackForward) {
+  const wb = bogie.wheelbase, pole = length - wb;
+  if (!kingpinFrom) {
+    const { axle, dir } = hitchAxle(axleFrom, hitch, length, fallbackForward);
+    return { axle, kingpin: [hitch[0] - dir[0] * pole, hitch[1], hitch[2] - dir[2] * pole], dir, steer: 0 };
+  }
+  const k = hitchAxle(kingpinFrom, hitch, pole, fallbackForward);
+  const a = hitchAxle(axleFrom, k.axle, wb, k.dir);
+  const steer = yawBetween(a.dir, k.dir);
+  const held = clampSteer(steer, bogie.steerLimit);
+  if (held === steer) return { axle: a.axle, kingpin: k.axle, dir: a.dir, steer };
+  const dir = yawed(k.dir, -held);
+  return { axle: [k.axle[0] - dir[0] * wb, k.axle[1], k.axle[2] - dir[2] * wb], kingpin: k.axle, dir, steer: held };
+}
+
+/** WAGONS2: the steer of a four-wheeler whose body stands at `axle` facing `forward` and whose pole reaches toward
+ *  `hitch` - the turn from its forward to the line from its kingpin (a wheelbase ahead of the axle) to the hitch, held
+ *  to the lock. What a wagon drawn off an eased pose (another player's following team) is steered by. Pure. */
+export function steerToward(axle, forward, hitch, bogie) {
+  const f = horizontalForward(forward);
+  const to = [hitch[0] - (axle[0] + f[0] * bogie.wheelbase), 0, hitch[2] - (axle[2] + f[2] * bogie.wheelbase)];
+  return vsqr(to) > 1e-8 ? clampSteer(yawBetween(f, to), bogie.steerLimit) : 0;
+}
+
 /** The pose a hitched wagon takes this frame. `w` is the wagon's pose state (groundedPoseStep's shape, plus `up`, the
  *  eased ground normal, `hitch`, the point it hangs from, and `axle`, where its wheels stand on the ground); `hitch` where the shafts meet the horse; `hitchForward`
  *  the way the team faces, read only to lay a wagon that has nowhere to be pulled from yet; `seed` where an unplaced
@@ -513,15 +563,28 @@ export function hitchAxle(from, hitch, length, fallbackForward) {
  *  is sought under it from 8 m above the hitch's height, 40 m down, the surface nearest that height (the mod's own
  *  probe); the wagon stands NORMAL_GROUND_OFFSET up the normal, facing the hitch along the ground's plane. Where no
  *  ground answers yet, a wagon that has stood keeps its last height and stays on its shafts; one that never stood
- *  stays hidden (`active` false), as the mod's SetActive(false). Pure; returns the next state. */
-export function hitchedPoseStep(phys, w, hitch, hitchForward, length, dt, seed = null) {
+ *  stays hidden (`active` false), as the mod's SetActive(false). Pure; returns the next state.
+ *  WAGONS2: `bogie` (a four-wheeler's - world/wagonModels.js: `{ wheelbase, steerLimit }`) makes it two bars
+ *  (`bogieAxle`): the axle is the REAR axle, the facing the body's, and the state carries `steer` (degrees) - its
+ *  kingpin is a wheelbase ahead of the axle along the body. Without one - the Small Cart, the classic wagon - the one
+ *  bar, as before, its `steer` 0. WAGONS2 (AUDIT): `seedForward` the way the seeded wagon's body faced (a parked one's)
+ *  - its kingpin pulled from a wheelbase ahead along it, so the bogie is driven off at the steer it rested at, not
+ *  snapped straight with the body swung. */
+export function hitchedPoseStep(phys, w, hitch, hitchForward, length, dt, seed = null, bogie = null, seedForward = null) {
   const next = { ...w, hitch: [...hitch] };
   // AUDIT WAGON-HITCH A1: the shafts pull from where the WHEELS stood (`axle`), never from the drawn position - that
   // stands a metre up the ground's normal, which on a slope leans downhill, and fed back it swung the wagon round its
   // hitch frame by frame until it hung straight down the hill (a 3 degree side slope: 75 degrees in two seconds, the
   // rider standing still; and more the higher the frame rate)
   const from = w.active ? (w.axle ?? w.position) : (seed ?? vsub(hitch, vscale(horizontalForward(hitchForward), length)));
-  const { axle, dir } = hitchAxle(from, hitch, length, hitchForward);
+  const two = bogie && length > bogie.wheelbase;
+  // WAGONS2: the kingpin pulls from where it stood - a wheelbase ahead of the axle along the body (where the two bars
+  // left it); an unplaced wagon is laid straight
+  const bodyFrom = w.active ? quatForward(w.rotation) : seed && seedForward ? seedForward : null;
+  const kingpinFrom = two && bodyFrom ? vadd(from, vscale(horizontalForward(bodyFrom), bogie.wheelbase)) : null;
+  const turn = two ? bogieAxle(from, kingpinFrom, hitch, length, bogie, hitchForward) : null;
+  const { axle, dir } = turn ?? hitchAxle(from, hitch, length, hitchForward);
+  next.steer = turn?.steer ?? 0;
   const best = pickGround(phys.raycastAll(vadd(axle, [0, GROUND_RAY_HEIGHT, 0]), [0, -1, 0], GROUND_RAY_DISTANCE), hitch[1]);
   let ground = null;
   if (best) {

@@ -1691,6 +1691,12 @@ ${badgeCss()}
   font-family: var(--body, sans-serif); color: var(--bone);
 }
 .hmroot:active { cursor: grabbing; }
+/* FIELD BUGS 2026-10-09e MAP-SCALE ("icons and text too small on high resolutions"): THE MAP'S SCALE (ui/mapScale.js,
+   set on the root by ui/heldMap.js _layout as --hm-ui) - every piece over the sheet is zoomed by it as one, as the
+   sheet's own ink is drawn at it. A zoomed box multiplies its viewport units too (standardized CSS zoom), so every
+   bound below that is written in vw or vh divides by it: a bound stays the screen's, its margins the chrome's. */
+.hmroot { --hm-ui: 1; }
+.hmroot > :not(.hmstage) { zoom: var(--hm-ui, 1); }
 /* MAP3: the hands lane - the Morrowind arm and the world show through,
    the ink canvas lies on the held paper under its matrix3d */
 .hmroot.hmlanehands .hmink { will-change: transform; }
@@ -1700,7 +1706,7 @@ ${badgeCss()}
 .hmroot .hmfoot { background: rgba(10, 12, 17, 0.94); padding: 6px 10px; border-radius: 4px;
   /* EM3-3D fix (Mac's shot: the key tips ran into the HUD's bars): near-opaque, so the vitals and the HUD's words
      under the window do not read through the line, and never wider than the screen - it wraps instead */
-  max-width: calc(100vw - 36px); flex-wrap: wrap; row-gap: 4px; }
+  max-width: calc(100vw / var(--hm-ui, 1) - 36px); flex-wrap: wrap; row-gap: 4px; }
 .hmstage { position: absolute; will-change: transform; }
 /* the painting is 1448x1086 and is only ever shown SMALLER than that, so
    it is scaled smooth - a pixelated downscale would alias its dither.
@@ -1734,7 +1740,7 @@ ${badgeCss()}
 .hmsearch input:focus { outline: none; border-color: var(--brass); }
 .hmresults {
   display: none; position: absolute; top: 100%; left: 0; right: 0;
-  margin: 4px 0 0; padding: 0; list-style: none; max-height: 46vh;
+  margin: 4px 0 0; padding: 0; list-style: none; max-height: calc(46vh / var(--hm-ui, 1));
   overflow: auto; background: rgba(10, 13, 17, 0.94);
   border: 1px solid var(--iron); z-index: 1;
 }
@@ -1749,7 +1755,7 @@ ${badgeCss()}
 .hmfindme { pointer-events: auto; margin-right: 8px; }
 .hmcard {
   display: none; position: absolute; right: 18px; bottom: 18px;
-  width: min(340px, calc(100vw - 36px)); padding: 18px 20px;
+  width: min(340px, calc(100vw / var(--hm-ui, 1) - 36px)); padding: 18px 20px;
   background: rgba(10, 13, 17, 0.92); border: 1px solid var(--iron);
   margin-bottom: env(safe-area-inset-bottom);
 }
@@ -1800,7 +1806,7 @@ ${badgeCss()}
 .hmports.on { color: var(--brass); border-color: var(--brass); }
 .hmbox {
   display: none; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-  width: min(460px, calc(100vw - 36px)); max-height: 70vh; overflow: auto; padding: 18px 22px;
+  width: min(460px, calc(100vw / var(--hm-ui, 1) - 36px)); max-height: calc(70vh / var(--hm-ui, 1)); overflow: auto; padding: 18px 22px;
   background: rgba(10, 13, 17, 0.94); border: 1px solid var(--iron); z-index: 2;
 }
 .hmbox.open { display: block; }
@@ -1817,7 +1823,7 @@ ${badgeCss()}
   .hmsearch { flex: 1 1 100%; order: 3; }
   .hmhint { display: none; }
   .hmcard { right: 12px; bottom: 76px; }
-  .hmfoot { left: 12px; bottom: 12px; flex-wrap: wrap; max-width: calc(100vw - 24px); }
+  .hmfoot { left: 12px; bottom: 12px; flex-wrap: wrap; max-width: calc(100vw / var(--hm-ui, 1) - 24px); }
   /* AUDIT GUIDE K6: the legend wraps inside the foot - it ran nowrap off a phone's edge, the quest's word first lost */
   .hmlegend { flex: 1 1 auto; flex-wrap: wrap; min-width: 0; }
 }
@@ -3504,17 +3510,22 @@ ${paceControlsCss('tview')}
    (112 + 146*4)/1024 = 68%, not 73%. So the module WRITES the real
    number: ui/enhancedHudText.js sets --hudmid-top in CSS pixels from
    the same floored arithmetic, off the same canvas, and 73% is the
-   fallback for a frame that has not been drawn yet. */
+   fallback for a frame that has not been drawn yet.
+
+   AUDIT SD IV (T5): ITS WIDTH ITS OWN - a fixed box at left 50% with no width shrinks to the half of the screen right of
+   it, so the 86vw cap never held: a phone wrapped every line at 195 px, the Hour's longest into four rows over the
+   ground's warning. max-content to the cap - divided by the HUD scale, which grows the box after it is laid out (a
+   line at scale 2 ran off both sides). The prison's line, never scaled, keeps the cap whole. */
 .hudmid { position: fixed; left: 50%; top: var(--hudmid-top, 73%); transform: translateX(-50%) scale(var(--hud-scale, 1));
   transform-origin: top center; z-index: 4; pointer-events: none; text-align: center;
-  max-width: min(680px, 86vw); font-size: 15px; letter-spacing: 0.04em;
+  width: max-content; max-width: calc(min(680px, 86vw) / var(--hud-scale, 1)); font-size: 15px; letter-spacing: 0.04em;
   font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;
   font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
   color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
 /* AUDIT FONT3 F4: THE PRISON'S LINE is the prison screen's, not the HUD's - it rides the native panel (its size is the
    panel's 7-row cell at the panel's scale, ui/prisonScreen.js), never the HUD scale (which takes it to 7.5px at 0.5),
    in DaggerfallCourtWindow's own colour and shadow (DAYS_LABEL_COLOR / DAYS_LABEL_SHADOW). */
-.hudmid.hudprison { transform: translateX(-50%); font-size: var(--prison-px, 22px); letter-spacing: 0.06em;
+.hudmid.hudprison { transform: translateX(-50%); max-width: min(680px, 86vw); font-size: var(--prison-px, 22px); letter-spacing: 0.06em;
   color: rgb(232,196,76); text-shadow: 2px 2px 0 rgb(48,36,20); }
 
 /* FONT1: THE ONLINE STATUS LINE - the socket's own word (connecting,
@@ -3898,7 +3909,7 @@ ${paceControlsCss('tview')}
      tools/enhancedMenuProbe.mjs had been red since FT14 and so nobody
      saw it. Sized here rather than in the FT block below, because this
      is where the law lives and the next control added must find it. */
-  .ft-segb, .ft-mchip, .ft-tile-more, .ft-search { min-height: 44px; }   /* FT18: the search is a thumb's target too */
+  .ft-segb, .ft-mchip, .ft-tile-more, .opt-search, .opt-filters .chip, .sec-jumpbtn { min-height: 44px; }   /* FT18: the search is a thumb's target too (ORG2: and the filters and the jumps) */
   .ft-keys-to { min-height: 44px; }   /* UXB1-F: the keys' door is a control too */
 }
 .shell .step { border: 2px solid rgba(125,116,96,0.55); border-radius: 0; background: none;
@@ -5239,7 +5250,7 @@ ${paceControlsCss('tview')}
 .px-setwrap .subrail { display: flex; flex-direction: row; flex-wrap: wrap; gap: 2px;
   width: auto; border-right: 0; border-bottom: 2px solid rgba(125,116,96,0.45);
   padding: 4px 6px 6px; overflow: visible; }
-.px-setwrap .subbtn { min-height: 44px; padding: 6px 12px; font-size: 14px;
+.px-setwrap .subbtn { width: auto; min-height: 40px; padding: 6px 12px; font-size: 14px;   /* ORG2: a strip of tabs, not a column */
   display: flex; align-items: center; gap: 8px;
   color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 .px-setwrap .subbtn.on { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
@@ -5352,7 +5363,7 @@ ${paceControlsCss('tview')}
 .hmbox-row, .hmbox-grid { color: #c5bda2; }
 /* EVENT-TIP: a world event's card at the pointer - the gate's ring, a raided town (ui/eventMapMarks.js) - in the
    pixel home's plaque language; placed in viewport pixels over the root (ui/heldMap.js _showTip) */
-.hmtip { position: absolute; z-index: 3; display: none; pointer-events: none; max-width: min(320px, calc(100vw - 16px));
+.hmtip { position: absolute; z-index: 3; display: none; pointer-events: none; max-width: min(320px, calc(100vw / var(--hm-ui, 1) - 16px));
   padding: 8px 12px; background: rgba(10,12,17,0.9); border: 2px solid rgba(216,207,174,0.7);
   outline: 2px solid rgba(125,116,96,0.35); outline-offset: 2px; color: #d8cfae; font-family: inherit;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
@@ -5367,7 +5378,7 @@ ${paceControlsCss('tview')}
    hover card's rule is: the key was born in the pixel home. Its toggles wear that home's frame at the foot's size -
    the gold pair while their kinds are shown, the ghost frame and a struck word while the store's flag hides them -
    and the glyphs' words are in the rows' bone. */
-.hmkey { position: absolute; left: 0; bottom: calc(100% + 4px); width: max-content; max-width: calc(100vw - 36px);
+.hmkey { position: absolute; left: 0; bottom: calc(100% + 4px); width: max-content; max-width: calc(100vw / var(--hm-ui, 1) - 36px);
   display: grid; grid-template-columns: max-content auto; gap: 3px 10px; align-items: center;
   padding: 6px 10px; border-radius: 4px; background: rgba(10, 12, 17, 0.94); pointer-events: auto; }
 .hmkeyrow { display: contents; }
@@ -5389,7 +5400,7 @@ ${paceControlsCss('tview')}
    stand and the zone's laws, in the held map's plaque language (the hover card's frame, the key's bone and brass): a
    panel on the right of the paper, the room the zone map's view leaves it (ZONE_LEGEND_W). Each ring's swatch is its
    fill on the sheet; the ring I stand in wears the brass edge. A solid panel, so a press on it is never a drag. */
-.hmwild { position: absolute; z-index: 2; top: 76px; right: 18px; width: min(300px, calc(100vw - 36px));
+.hmwild { position: absolute; z-index: 2; top: 76px; right: 18px; width: min(300px, calc(100vw / var(--hm-ui, 1) - 36px));
   max-height: calc(100% - 170px); overflow: hidden; padding: 12px 14px 14px; pointer-events: auto;
   display: flex; flex-direction: column;   /* LEGEND-FIT: the laws scroll, the foot's buttons never leave the panel */
   background: rgba(10,12,17,0.92); border: 2px solid rgba(216,207,174,0.7); outline: 2px solid rgba(125,116,96,0.35);
@@ -5419,13 +5430,13 @@ ${paceControlsCss('tview')}
 .hmroot .act.hmkeyzone { border-color: var(--cinnabar); color: #f3d7c9; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
 @media (max-width: 860px) {
   /* a phone keeps the paper: the legend a compact strip of the four rings under the search, the laws left to the HUD */
-  .hmwild { top: 128px; bottom: auto; right: 12px; left: 12px; width: auto; max-height: 30vh; padding: 8px 10px 10px; }
+  .hmwild { top: 128px; bottom: auto; right: 12px; left: 12px; width: auto; max-height: calc(30vh / var(--hm-ui, 1)); padding: 8px 10px 10px; }
   .hmwild-rules, .hmwild-depth { display: none; }
   .hmwild-ring { padding: 3px 8px; }
   .hmwild-title { font-size: 15px; }
 }
 @media (max-width: 860px) {
-  .hmkey { max-width: calc(100vw - 24px); }
+  .hmkey { max-width: calc(100vw / var(--hm-ui, 1) - 24px); }
   .hmkeyname { display: none; }   /* a phone keeps the toggles and the glyphs; each glyph's title names it */
   /* the card rides up to clear the foot row here (bottom: 76px), which is where the key stands: while a place is
      picked the key steps aside, or it would lie over the card's own Travel button */
@@ -5460,43 +5471,62 @@ ${paceControlsCss('tview')}
    alone. A CHOICE (no Off segment) keeps the grey block: it has no
    off to be red about. A forced switch keeps its fill - the brass
    edge and the "online" tag say it is forced. */
-/* FT18: the search and All off, one row over the tiles; a tile, a grid or a group head the search took away is
-   gone whatever display its own rule gives it (the UA's [hidden] loses to a class's display). */
-.ft-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: -4px 0 16px; }
-.ft-tools .acts { margin: 0; }
-.ft-search { flex: 1 1 220px; min-width: 0; min-height: 46px; padding: 0 12px; background: var(--ink);
+/* ── ORG2 (2026-10-09, Mac: "Graphic settings needs its own tab, etc. I really need you to go all in"): ONE SETTINGS
+   SCREEN ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   The Features home's tiles are ROWS of the one screen now: the name, the labels and the note's first sentence on the
+   left, the bar on the right - the settings list's own shape - and the drawer under both. The bar keeps every law it
+   had (DISC23-C's fills, the forced brass, Off first), and the left edge keeps the state stripe: emerald on, brass
+   forced, iron off. Over the rows: the toolbar (one search over every tab, the filters, the actions) stuck to the top of
+   the list, the tab's head, the jump strip and the sections' heads. A row changed from how the game ships wears a
+   small CHANGED mark after its name. */
+.opt-tools { position: sticky; top: 0; z-index: 3; display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+  padding: 10px 18px; background: rgba(14,17,22,0.97); border-bottom: 1px solid #20262e; }
+.opt-search { flex: 1 1 100%; min-width: 0; min-height: 38px; padding: 0 12px; background: var(--ink);
   border: 1px solid var(--iron); color: var(--bone); font: inherit; font-size: 14px; }
-.ft-search::placeholder { color: var(--dim); }
-.ft-search:focus-visible { outline: none; border-color: var(--brass); }
-.ft-tile[hidden], .ft-grid[hidden], .ft-grouphead[hidden], .ft-none[hidden] { display: none; }
-.ft-panes { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 22px; align-items: start; }
-.ft-main { min-width: 0; }
-.ft-grouphead { display: flex; align-items: baseline; gap: 10px; margin: 18px 0 8px; }
-.ft-grouphead:first-child { margin-top: 0; }
-.ft-grouphead h2 { font-family: var(--data); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--bone); margin: 0; font-weight: 600; }
-.ft-gn { font-family: var(--data); font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; }
-.ft-gline { flex: 1; height: 1px; background: var(--iron); }
+.opt-search::placeholder { color: var(--dim); }
+.opt-search:focus-visible { outline: none; border-color: var(--brass); }
+.opt-filters { display: flex; flex-wrap: wrap; gap: 4px; }
+.opt-filters .chip { padding: 5px 9px; font-size: 11px; }
+.opt-tools .acts { margin: 0 0 0 auto; gap: 6px; }
+.opt-tools .act { min-height: 30px; padding: 5px 10px; font-size: 11px; letter-spacing: 0.08em; }
+.opt-body > .card { margin: 12px 18px; }
+.opt-bindings { padding: 6px 18px 18px; }
+.sec-jump { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px 18px 12px; border-bottom: 1px solid #20262e; }
+.sec-jumpbtn { font-family: var(--data); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim);
+  background: none; border: 1px solid var(--iron); padding: 5px 9px; cursor: pointer; }
+.sec-jumpbtn:hover { color: var(--bone); border-color: var(--dim); }
+.sec-jumpbtn:focus-visible { outline: 2px solid var(--brass); outline-offset: 1px; }
+.sec-head { padding: 22px 18px 8px; scroll-margin-top: 100px; border-bottom: 1px solid #20262e; }
+.sec-title { display: flex; align-items: baseline; gap: 8px; }
+.sec-head h3 { margin: 0; font-family: var(--data); font-size: 13px; letter-spacing: 0.08em; color: var(--brass); font-weight: 600; }
+.sec-head .count { font-size: 11px; color: #8b8578; font-variant-numeric: tabular-nums; }
+.row.changed .row-name::after, .ft-tile.changed .ft-tile-name::after { content: 'Changed'; margin-left: 8px; padding: 1px 5px;
+  font-family: var(--data); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--brass);
+  border: 1px solid rgba(201,162,39,0.6); vertical-align: 2px; }
+.opt-preset .ft-segb { min-width: 64px; }
+.opt-preset .ft-segb.custom { color: var(--brass); background: rgba(0,0,0,0.35); cursor: default; display: inline-flex; align-items: center; justify-content: center; }
 
-.ft-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(212px, 1fr)); gap: 8px; }
-
-.ft-tile { position: relative; background: var(--slate); border: 1px solid var(--iron);
-  padding: 9px 10px 9px 13px; display: flex; flex-direction: column; gap: 7px; cursor: pointer; }
-.ft-tile::before { content: ''; position: absolute; left: 0; top: -1px; bottom: -1px; width: 3px;
-  background: var(--iron); }
+/* the Features row */
+.ft-tile { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, auto); column-gap: 16px; row-gap: 6px;
+  align-items: center; padding: 11px 18px 11px 20px; border-bottom: 1px solid #20262e; }
+.ft-tile::before { content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; background: var(--iron); }
 .ft-tile[data-on="1"]::before { background: var(--emerald); }
 .ft-tile[data-locked="1"]::before { background: var(--brass); }
-.ft-tile:hover, .ft-tile.sel { border-color: var(--dim); }
-.ft-tile.sel { background: var(--iron); }
-.ft-tile:focus-visible { outline: 2px solid var(--brass); outline-offset: 1px; }
-.ft-tile-name { font-family: var(--data); font-size: 14.5px; color: var(--bone); line-height: 1.2; letter-spacing: 0; }   /* AUDIT FONT3 L4: a mod's "X by Author" on one line where it fits - the tiles' rows stay even */
-.ft-tile-meta { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.ft-tile:hover { background: rgba(0,0,0,0.18); }
+.ft-tile.sel { background: rgba(0,0,0,0.3); }
+.ft-tile-main { grid-column: 1; min-width: 0; text-align: left; background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; }
+.ft-tile-main:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+.ft-tile-name { font-size: 14px; color: var(--bone); line-height: 1.25; letter-spacing: 0; }   /* AUDIT FONT3 L4: a mod's "X by Author" on one line where it fits */
+.ft-tile-meta { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; margin-top: 5px; }
+.ft-tile-meta .kind { font-size: 11px; padding: 1px 5px; }
 .ft-tile-lock { font-family: var(--data); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--brass); }
+.ft-tile-ctl { grid-column: 2; justify-self: end; max-width: 440px; }
+.ft-tile-more, .ft-tile-drawer { grid-column: 1 / -1; }
 
 /* the bar */
 .ft-seg { display: flex; flex-wrap: wrap; background: var(--ink); border: 1px solid var(--iron); padding: 2px; gap: 2px; }
 .ft-segb { font-family: var(--data); font-size: 11.5px; letter-spacing: 0.03em; color: var(--dim);
-  background: none; border: 0; padding: 3px 8px; cursor: pointer; flex: 1 1 auto; white-space: nowrap; }
+  background: none; border: 0; padding: 5px 10px; cursor: pointer; flex: 1 1 auto; white-space: nowrap; }
 .ft-segb:hover:not(:disabled) { color: var(--bone); }
 .ft-segb[aria-pressed="true"] { background: var(--iron); color: var(--bone); }
 .ft-seg.locked .ft-segb[aria-pressed="true"] { color: var(--brass); }
@@ -5506,7 +5536,7 @@ ${paceControlsCss('tview')}
 .ft-segb:focus-visible { outline: 2px solid var(--brass); outline-offset: -2px; }
 
 /* the drawer's door, and the drawer */
-.ft-tile-more { font-family: var(--data); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+.ft-tile-more { justify-self: start; font-family: var(--data); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
   color: var(--dim); background: none; border: 0; padding: 2px 0; cursor: pointer; text-align: left; }
 .ft-tile-more:hover { color: var(--bone); }
 .ft-tile-car { display: inline-block; }
@@ -5519,19 +5549,17 @@ ${paceControlsCss('tview')}
 .ft-mchip[aria-pressed="true"] { color: var(--verdigris); border-color: var(--verdigris); }
 .ft-mchip:hover { color: var(--bone); }
 .ft-tile-drawer .row { padding: 4px 0; border: 0; }
-.ft-tile-drawer .row-note, .ft-tile-drawer .row-sub { display: none; }   /* the rail carries the words */
-/* UXB1-F: a mod's keys on its tile - read-only, the key in a dashed box (a
+.ft-tile-drawer .row-note, .ft-tile-drawer .row-sub { display: none; }   /* the help pane carries the words */
+/* UXB1-F: a mod's keys on its row - read-only, the key in a dashed box (a
    key's face, not a button), and one press through to Controls. */
 .ft-key { font-family: var(--data); font-size: 11px; letter-spacing: 0.08em; color: var(--bone);
   border: 1px dashed var(--iron); padding: 2px 8px; min-width: 28px; text-align: center; }
 .ft-keys-to { align-self: flex-start; font-size: 11px; padding: 4px 10px; }
 
-/* the reading rail */
-.ft-rail { position: sticky; top: 8px; background: var(--slate); border: 1px solid var(--iron);
-  padding: 12px 13px; display: flex; flex-direction: column; gap: 9px; }
-.ft-rail-k { font-family: var(--data); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); }
-.ft-rail h3 { font-family: var(--display); font-size: 19px; color: var(--bone); margin: 0; line-height: 1.15; }
-.ft-rail-note { font-size: 12.5px; line-height: 1.5; color: var(--bone); margin: 0; opacity: 0.85; }
+/* a Features row's card in the help pane */
+.ft-card { display: flex; flex-direction: column; gap: 9px; }
+.ft-rail-k { font-family: var(--data); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
+.ft-rail-note { font-size: 13px; line-height: 1.55; color: var(--bone); margin: 0; opacity: 0.9; }
 .ft-rail-effect { font-size: 12px; line-height: 1.45; color: var(--dim); margin: 0;
   border-left: 2px solid var(--brass); padding-left: 8px; }
 .ft-rail-kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; margin: 0;
@@ -5541,44 +5569,47 @@ ${paceControlsCss('tview')}
 .ft-rail-kv dd { margin: 0; font-size: 12px; color: var(--bone); opacity: 0.85; }
 
 @media (max-width: 860px) {
-  .ft-panes { grid-template-columns: minmax(0, 1fr); }
-  .ft-rail { position: static; order: -1; }
+  .ft-tile { grid-template-columns: minmax(0, 1fr); padding: 11px 14px 11px 16px; }
+  .ft-tile-ctl { grid-column: 1; justify-self: stretch; max-width: none; }
+  .opt-tools { padding: 8px 12px; }
+  .sec-jump { top: 0; position: static; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 6px 12px; }
+  .sec-jump::-webkit-scrollbar { display: none; }
+  .sec-jumpbtn { flex: none; white-space: nowrap; }
+  .sec-head { scroll-margin-top: 60px; padding: 18px 14px 8px; }
+  /* the help pane is a SHEET over the rows on a phone: the shell's see-through scrim let the rows read through it */
+  .shell .detail { background: rgb(10,12,17); border-left: 0; }
 }
+/* the pause window: the list is narrower than the screen, so the bar goes under the words there too */
+.px-setwrap .ft-tile { grid-template-columns: minmax(0, 1fr); }
+.px-setwrap .ft-tile-ctl { grid-column: 1; justify-self: stretch; max-width: none; }
+.px-setwrap .opt-tools { background: rgba(10,12,17,0.97); }
+.px-setwrap .sec-head { padding: 14px 4px 6px; scroll-margin-top: 90px; }
+.px-setwrap .sec-head h3 { font-size: 13px; }
+.px-setwrap .opt-tools { padding: 8px 4px; }
+.opt-note { padding: 8px 18px; font-size: 12.5px; color: var(--dim); }
 
 /* -- FT16 (2026-09-15, Mac: "make the new feature UI elements have the
    same transparent design as the list we used to have") -----------
-   THE PASS FT14 NEVER WROTE. Every component family on this screen has
-   two paints: the base tokens above, and a .shell override for PX11,
-   where the boot door stands on the live sky and every painted panel
-   colour comes off (.shell .pane, .shell .list, .shell .row -
-   transparent grounds, low-alpha scrims, and 2px rules in the brass
-   line rather than 1px iron). FT14 wrote the first paint and stopped,
-   so the feature tiles drew SOLID --slate boxes with hairline borders
-   while the list they replaced had been see-through over the stars -
-   which is the whole of Mac's report. Not a new design: the old one,
-   applied to the new elements.
-
-   The pause window is NOT in this scope and must not be: .px-win
-   panels are opaque on purpose, there being a game behind them, so the
-   base paint above is already right there. That is why this is scoped
-   to .shell rather than written into the tokens.
-
-   The left edge keeps its state stripe (emerald on, brass forced,
-   iron off) and moves out over the 2px border so it still reads flush.
-   A switch's filled segment (DISC23-C) outranks the translucent press
-   below, so it reads the same on the shell as on the pause window. */
-.shell .ft-tile { background: none; border: 2px solid rgba(125,116,96,0.3); }
-.shell .ft-tile:hover, .shell .ft-tile.sel { background: rgba(0,0,0,0.25); border-color: rgba(125,116,96,0.55); }
-.shell .ft-tile::before { left: -2px; top: -2px; bottom: -2px; }
-.shell .ft-gline { height: 2px; background: rgba(125,116,96,0.3); }
+   Every component family on this screen has two paints: the base tokens above, and a .shell override for PX11, where
+   the boot door stands on the live sky and every painted panel colour comes off (.shell .pane, .shell .list, .shell
+   .row - transparent grounds, low-alpha scrims, and 2px rules in the brass line rather than 1px iron). The pause window
+   is NOT in this scope: .px-win panels are opaque on purpose, there being a game behind them. A switch's filled
+   segment (DISC23-C) outranks the translucent press below, so it reads the same on the shell as on the pause window. */
+.shell .ft-tile { border-bottom: 2px solid rgba(125,116,96,0.3); }
+.shell .ft-tile:hover { background: rgba(0,0,0,0.25); }
+.shell .ft-tile-name { text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 .shell .ft-seg { background: rgba(0,0,0,0.3); border: 2px solid rgba(125,116,96,0.35); }
 .shell .ft-segb[aria-pressed="true"] { background: rgba(0,0,0,0.45); }
 .shell .ft-mchip { background: rgba(0,0,0,0.3); border: 2px solid rgba(125,116,96,0.35); }
 .shell .ft-mchip[aria-pressed="true"] { border-color: var(--verdigris); }
-.shell .ft-search { background: rgba(0,0,0,0.3); border: 2px solid rgba(125,116,96,0.35); }   /* FT18: the search, in the shell's paint */
+.shell .opt-search { background: rgba(0,0,0,0.3); border: 2px solid rgba(125,116,96,0.35); }   /* FT18: the search, in the shell's paint */
+.shell .opt-tools { background: rgba(10,12,17,0.94); border-bottom: 2px solid rgba(125,116,96,0.35); }
 .shell .ft-tile-drawer { border-top: 2px solid rgba(125,116,96,0.3); }
-.shell .ft-rail { background: rgba(10,12,17,0.55); border: 2px solid rgba(125,116,96,0.35); }
 .shell .ft-rail-kv { border-top: 2px solid rgba(125,116,96,0.3); }
+.shell .sec-jump { border-bottom: 2px solid rgba(125,116,96,0.35); }
+.shell .sec-jumpbtn { border: 2px solid rgba(125,116,96,0.35); text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.shell .sec-head { border-bottom: 2px solid rgba(125,116,96,0.3); }
+.shell .sec-head h3 { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
 
 /* ── OVH1: THE OVERHAULS (2026-09-24, Mac: "3 large panels ... directional arrows allowing you to switch being
    different feature sets") ─────────────────────────────────────────────────────────────────────────────────────

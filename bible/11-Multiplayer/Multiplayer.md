@@ -30,9 +30,12 @@ fighting beside each other against NPCs.
 
 **It is not** PvP, an MMO, or a shared campaign - with ONE door through the first: a DUEL (DUEL1, 2026-09-24, Mac:
 "I want to be the foundation of pvp"), consensual and bounded - two players who both said yes, in a ring of light,
-until one falls to 1 health, and both are healed after (`06-Systems/Community-Arc.md` DUEL1) - and, since WILD1
+until one falls (INT8, 2026-10-09: the relay referees it on its own vitality and signs its result - the save's health
+is never touched, nobody drops to 1 health and nothing is healed: `06-Systems/Integrity-Arc.md` 5;
+`06-Systems/Community-Arc.md` DUEL1) - and, since WILD1
 (2026-10-07), ONE PLACE where it is not consensual: the Wrothgarian Mountains, an open zone where players may fight,
-a death drops the bag and the cart and a killer takes one worn piece (`11-Multiplayer/Wild-Zone.md`). Nobody's save changes
+a death drops the bag and the cart and a killer takes one worn piece (`11-Multiplayer/Wild-Zone.md`; INT9: the relay
+referees its fights and the account service takes the drop off the record). Nobody's save changes
 shape because they played with a friend - and the one online progression, RENOWN (RENOWN1, 2026-09-24,
 Mac: "seperate unique to online but compatible"; named: "Lets officially call this Renown"), is a second level per character kept by the account service, never
 in the save, adding health and magicka only while online (`06-Systems/Accounts-And-Cloud-Saves-Arc.md` RENOWN1). It IS, since WORLD1
@@ -161,6 +164,23 @@ where that stops being true is a SIEGE's (`siege:<seat>:<week>`), where a
 town's Charter changes hands - there the relay holds every fighter's
 vitality and judges every blow, cast and step (`src/net/siegeRef.js`,
 `11-Multiplayer/Seats-Arc.md` 6.1). Everywhere else this section stands.
+
+INT1-INT6 (2026-10-09, `06-Systems/Integrity-Arc.md`, Mac: "I want to do
+everything and do it properly"): what a REALM character carries away from
+any room is judged at its checkpoint - the item law over every piece, the
+ids' ledger, the wealth budget - and a breach holds its trade, so an
+impossible piece, or a copy that keeps its id, reaches no other player
+through the service. Lawful loot past what play earns is the budget's: it
+measures first, and holds once staff turn it on.
+
+INT7-INT10 (2026-10-09, the same arc's lane 2): a DUEL's room and the OPEN
+ZONE's are the next exceptions - there too the relay holds both fighters'
+vitality and judges every blow, cast and step against the arms the judged
+pack holds; a duel's result and a fall in the zone are its signed
+receipts, and a death's drop in the zone is taken by the account service
+off the fallen's judged record, never handed over by the fallen's game.
+Every spell between players is capped by a referee. The bosses (lane 3)
+are next.
 
 ### The state model is the save
 

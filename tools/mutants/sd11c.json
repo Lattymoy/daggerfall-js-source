@@ -32,8 +32,8 @@
   {
     "name": "SD11c-L1F2-the-refused-way-out-said",
     "file": "src/scenes/world.js",
-    "old": "      if (!modes?.unstuck?.()) return false;\n      if (hour) gateVeil?.flash('brass');",
-    "new": "      modes?.unstuck?.();\n      if (hour) gateVeil?.flash('brass');",
+    "old": "      if (!modes?.unstuck?.()) return false;\n      if (hour) gateVeil?.flash('hourCast');",
+    "new": "      modes?.unstuck?.();\n      if (hour) gateVeil?.flash('hourCast');",
     "tests": [
       "test/sd11c_page.test.js",
       "test/sd2d_castout.test.js"
@@ -51,7 +51,7 @@
   {
     "name": "SD11c-L1F9-no-veil",
     "file": "src/scenes/world.js",
-    "old": "      if (hour) gateVeil?.flash('brass');\n      sdSay(SD_CAST_OUT_LINE);",
+    "old": "      if (hour) gateVeil?.flash('hourCast');   // SD-LOOK: forced out - the Hour's face shattered\n      sdSay(SD_CAST_OUT_LINE);",
     "new": "      void hour;\n      sdSay(SD_CAST_OUT_LINE);",
     "tests": [
       "test/sd11c_page.test.js",
@@ -170,8 +170,8 @@
   {
     "name": "SD11c-L6F18-boxed-in-nowhere",
     "file": "src/world/sdDungeon.js",
-    "old": "    if (at && Math.hypot(at[0] - rift.at[0], at[2] - rift.at[2]) > len) return at;\n  }\n  return [ret[0], ret[1], ret[2]];",
-    "new": "    if (at && Math.hypot(at[0] - rift.at[0], at[2] - rift.at[2]) > len) return at;\n  }\n  return null;",
+    "old": "      if (at && Math.hypot(at[0] - rift.at[0], at[2] - rift.at[2]) >= riftClear) return at;\n    }\n  }\n  return [ret[0], ret[1], ret[2]];",
+    "new": "      if (at && Math.hypot(at[0] - rift.at[0], at[2] - rift.at[2]) >= riftClear) return at;\n    }\n  }\n  return null;",
     "tests": [
       "test/sd11c_page.test.js"
     ]
@@ -401,7 +401,7 @@
   {
     "name": "SD11c-L6F4-no-veil",
     "file": "src/scenes/world.js",
-    "old": "      if (diedInHour) { gateVeil?.flash('brass'); kind = 'hour'; }",
+    "old": "      if (diedInHour) { gateVeil?.flash('hourCast'); kind = 'hour'; }",
     "new": "      if (diedInHour) { kind = 'hour'; }",
     "tests": [
       "test/sd11c_page.test.js"
@@ -410,8 +410,8 @@
   {
     "name": "SD11c-L6F4-the-dungeons-words",
     "file": "src/scenes/world.js",
-    "old": "      if (diedInHour) { gateVeil?.flash('brass'); kind = 'hour'; }",
-    "new": "      if (diedInHour) { gateVeil?.flash('brass'); }",
+    "old": "      if (diedInHour) { gateVeil?.flash('hourCast'); kind = 'hour'; }",
+    "new": "      if (diedInHour) { gateVeil?.flash('hourCast'); }",
     "tests": [
       "test/sd11c_page.test.js"
     ]

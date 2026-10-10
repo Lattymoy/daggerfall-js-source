@@ -299,8 +299,8 @@
   {
     "name": "SD17-the-pelvis-in-the-torso",
     "file": "src/world/sdRemnantModel.js",
-    "old": "  box(into('pelvis'), W.joint, 0, B.legH, 0, B.hipW, B.hipH, B.hipD);",
-    "new": "  box(into('torso'), W.joint, 0, B.legH, 0, B.hipW, B.hipH, B.hipD);",
+    "old": "  lathe(f, W.joint, 0, 0, [[0, B.legH], [1.18, B.legH],",
+    "new": "  lathe(into('torso'), W.joint, 0, 0, [[0, B.legH], [1.18, B.legH],",
     "tests": [
       "test/sd17_body.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "SD17-the-legs-swapped",
     "file": "src/world/sdRemnantModel.js",
-    "old": "for (const s of [-1, 1]) box(into(s > 0 ? 'legR' : 'legL')",
-    "new": "for (const s of [-1, 1]) box(into(s > 0 ? 'legL' : 'legR')",
+    "old": "    const f = into(s > 0 ? 'legR' : 'legL'), x = s * B.legX;",
+    "new": "    const f = into(s > 0 ? 'legL' : 'legR'), x = s * B.legX;",
     "tests": [
       "test/sd17_body.test.js"
     ]

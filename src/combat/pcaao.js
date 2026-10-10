@@ -358,14 +358,14 @@ export function pcaaoStatDiffsToHit(attacker, target) {
 
 /** CalculateSkillsToHit: dodging halved (DFU quarters it), and WITHOUT
  *  the critical-strike module the classic crit roll - the player's at
- *  crit/3 for +crit/3, a monster's at crit for +crit/10. */
+ *  crit/3 for +crit/3, a monster's at crit for +crit/10.
+ *  BAL2 (bible/05-Combat/Balance-Arc.md section 4): A DEPARTURE - one roll for every striker, the player's: crit/3 for
+ *  +crit/3 (a monster's every-blow roll for a tenth was a nudge the player's own third outclassed). */
 export function pcaaoSkillsToHit(attacker, target, rolls, modules, notes = null) {
   let mod = -int(skill(target, SKILLS.Dodging) / 2);
   if (!modules.criticalStrikesIncreaseDamage) {
     const crit = skill(attacker, SKILLS.CriticalStrike);
-    if (isPlayer(attacker)) {
-      if (dice100(int(crit / 3), rolls())) { mod += int(crit / 3); if (notes) notes.critical = true; }
-    } else if (dice100(crit, rolls())) { mod += int(crit / 10); if (notes) notes.critical = true; }
+    if (dice100(int(crit / 3), rolls())) { mod += int(crit / 3); if (notes) notes.critical = true; }   // BAL2: every striker's
   }
   return mod;
 }
@@ -426,12 +426,13 @@ export function pcaaoBackstabDamage(damage, backstabbingLevel, rolls, say) {
 
 /** CriticalStrikeHandler: luck's term `Mathf.Floor((luck - 50) / 25f)`,
  *  its `Mathf.Clamp(num, -2, 2)` computed and discarded; the player rolls crit / (4 - luckTerm),
- *  a monster crit / (5 - luckTerm). */
+ *  a monster crit / (5 - luckTerm).
+ *  BAL2 (bible/05-Combat/Balance-Arc.md section 4): A DEPARTURE - every striker rolls the player's crit / (4 - luckTerm):
+ *  a foe's Critical Strike is the same skill as the player's and lands as often. */
 export function pcaaoCriticalStrike(attacker, rolls) {
   const luckTerm = Math.floor(F((stat(attacker, 'luck') - 50) / 25));
   const crit = skill(attacker, SKILLS.CriticalStrike);
-  if (isPlayer(attacker)) return dice100(int(crit / (4 - luckTerm)), rolls());
-  return dice100(int(crit / (5 - luckTerm)), rolls());
+  return dice100(int(crit / (4 - luckTerm)), rolls());   // BAL2: one roll for every striker
 }
 
 // ── damage ────────────────────────────────────────────────────────
@@ -522,10 +523,16 @@ export function pcaaoWeaponAttackDamage(attacker, target, damageModifier, weapon
 
 // ── condition ─────────────────────────────────────────────────────
 /** AlterDamageBasedOnWepCondition: the weapon's condition band scales
- *  its damage - a blunt weapon loses less. Mathf.Round, half to even. */
-export function pcaaoAlterDamageBasedOnWepCondition(damage, bluntWep, weapon) {
+ *  its damage - a blunt weapon loses less. Mathf.Round, half to even.
+ *  BAL1 (bible/05-Combat/Balance-Arc.md section 3): THE SHARP EDGE IS THE MOD'S WEAR'S REWARD. The bands over 75% (a
+ *  blade x1.3 and x1.1, a blunt weapon x1.1) pay for keeping gear sharp against the mod's own fast wear; with that
+ *  module off (WEAR-VANILLA, the port's default) and every weapon on the shared pool (WEAPON-POOL), a blade sat at
+ *  x1.3 for hundreds of blows - a reward with no upkeep. `sharpEdge` (the mod's wear module) keeps them; without it
+ *  the top reads the normal band, and the bands under it - worn gear's cost - stand whatever the wear. */
+export function pcaaoAlterDamageBasedOnWepCondition(damage, bluntWep, weapon, sharpEdge = true) {
   const pct = conditionPercentage(weapon);
   const r = (m) => unityRound(F(damage * F(m)));
+  if (pct >= 76 && !sharpEdge) return damage;   // BAL1: no edge without the wear that earns it
   if (bluntWep) {
     if (pct >= 92) return r(1.1);
     if (pct >= 76) return damage;
@@ -547,10 +554,13 @@ export function pcaaoAlterDamageBasedOnWepCondition(damage, bluntWep, weapon) {
 }
 /** AlterArmorReducBasedOnItemCondition: the multiplier on an armour
  *  piece's reduction factor - worn armour reduces less. A null piece
- *  is 1. */
-export function pcaaoAlterArmorReducBasedOnItemCondition(armor) {
+ *  is 1.
+ *  BAL1: the same edge - a piece over 75% reduces better (0.85, 0.95) only while the mod's wear is on; a monster's
+ *  natural blow wears no armour at all with it off (WEAR-VANILLA), so the 0.85 was every fight's. */
+export function pcaaoAlterArmorReducBasedOnItemCondition(armor, sharpEdge = true) {
   if (!armor) return 1;
   const pct = conditionPercentage(armor);
+  if (pct >= 76 && !sharpEdge) return 1;   // BAL1: no edge without the wear that earns it
   if (pct >= 92) return F(0.85);
   if (pct >= 76) return F(0.95);
   if (pct >= 61) return 1;
@@ -844,7 +854,7 @@ const AVERAGE_SHIELD_ROWS = { 1: [0.68, 0.81], 2: [0.64, 0.77], 3: [0.58, 0.7], 
 const AVERAGE_ARMOR_ROWS = { 1: [0.83, 0.93], 2: [0.81, 0.93], 3: [0.86, 0.92], 4: [0.78, 0.9], 5: [0.73, 0.87], 6: [0.65, 0.84], 7: [0.58, 0.81], 8: [0.51, 0.76], 9: [0.42, 0.65], 10: [0.35, 0.56] };
 export const PCAAO_REDUCTION_ROWS = Object.freeze({ UNARMED_ROWS, BLUNT_ROWS, EDGED_ROWS, SHIELD_UNARMED_ROWS, SHIELD_BLUNT_ROWS, SHIELD_EDGED_ROWS, AVERAGE_SHIELD_ROWS, AVERAGE_ARMOR_ROWS });
 
-const condOf = (item, modules) => (modules.conditionBasedEffectiveness ? pcaaoAlterArmorReducBasedOnItemCondition(item) : 1);
+const condOf = (item, modules) => (modules.conditionBasedEffectiveness ? pcaaoAlterArmorReducBasedOnItemCondition(item, modules.equipmentDamageEnhanced) : 1);   // BAL1: the edge rides the mod's wear
 
 /** ShieldDamageReductionCalculation: the blocking shield's row, by the
  *  attack's kind. */
@@ -1057,18 +1067,18 @@ export function pcaaoAttackDamage(attacker, target, {
   } else {
     skillID = SKILLS.HandToHand;
   }
-  chanceToHitMod = isPlayer(attacker) ? Math.ceil(F(skill(attacker, skillID) * F(1.5))) : skill(attacker, skillID);
+  // BAL2 (bible/05-Combat/Balance-Arc.md section 4): A DEPARTURE - ONE RULE FOR EVERY STRIKER. The mod gave the player
+  // half his skill again to hit and a foe its skill alone, and the player's crit twice the foe's damage and two and a
+  // half times its aim; a foe's Long Blade and Critical Strike are the same skills as the player's and are read the same
+  // way now (a duel was always both players'). The armour term is NOT made one rule: the player's flat 100 is the mod's
+  // premise (armour reduces damage, never the chance to be hit), and every even version of it eases the fight.
+  chanceToHitMod = Math.ceil(F(skill(attacker, skillID) * F(1.5)));
   if (modules.criticalStrikesIncreaseDamage) {
     critSuccess = pcaaoCriticalStrike(attacker, rolls);
     if (critSuccess) {
       const crit = skill(attacker, SKILLS.CriticalStrike);
-      if (isPlayer(attacker)) {
-        critDamMulti = F(F(int(crit / 5) * F(0.05)) + 1);
-        critHitAddi = int(crit / 4);
-      } else {
-        critDamMulti = F(F(int(crit / 5) * F(0.025)) + 1);
-        critHitAddi = int(crit / 10);
-      }
+      critDamMulti = F(F(int(crit / 5) * F(0.05)) + 1);
+      critHitAddi = int(crit / 4);
       chanceToHitMod += critHitAddi;
       if (notes) notes.critical = true;
     }
@@ -1155,7 +1165,7 @@ export function pcaaoAttackDamage(attacker, target, {
     if (shieldBlockSuccess) shieldBlockSuccess = pcaaoCompareShieldToUnderArmor(target, struckBodyPart, naturalDamResist, modules);
   }
   if (modules.conditionBasedEffectiveness && isPlayer(attacker) && weapon) {
-    damage = pcaaoAlterDamageBasedOnWepCondition(damage, bluntWep, weapon);
+    damage = pcaaoAlterDamageBasedOnWepCondition(damage, bluntWep, weapon, modules.equipmentDamageEnhanced);   // BAL1: the edge rides the mod's wear
   }
   if (damage < 1) return damage;
   // The CLASS's own DamageEquipment (`DamageEquipment(attacker, target,

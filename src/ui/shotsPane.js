@@ -22,6 +22,7 @@ import { isEnhanced } from '../systems/uiSkin.js';
 import { bindings } from './input.js';
 import { codeForAction } from '../systems/inputActions.js';
 import { buttonText } from '../systems/controlsConfig.js';
+import { optionPath } from './settingsMap.js';   // ORG2
 
 const el = (t, cls, txt) => {
   const n = document.createElement(t);
@@ -79,8 +80,8 @@ export function shotKeyName(store = bindings()) {
 
 export const LOADING_WORDS = Object.freeze({
   shots: 'Loading screens show the screenshots marked for them below.',
-  art: 'Loading screens show the night sky - choose Your screenshots on the Loading screens tile under Features to show these.',
-  off: 'Loading screens are off - turn them on with the Loading screens tile under Features.',
+  art: `Loading screens show the night sky - choose Your screenshots on Loading screens (${optionPath('feat:loading-screen')}) to show these.`,   // ORG2
+  off: `Loading screens are off - turn them on in ${optionPath('feat:loading-screen')}.`,
   classic: 'Loading screens are drawn under the enhanced UI - the classic UI keeps Daggerfall\u2019s loads.',
 });
 /** Which of the words above stands: the skin first (the classic UI draws no loading screen), then the row. */

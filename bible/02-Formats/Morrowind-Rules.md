@@ -958,11 +958,33 @@ in hand, in the stance the drawn weapon composes, running the equip,
 attack and sheathe sections of that weapon's own group. The three
 sentences that stood here - "untextured", "no weapon", "bare Idle
 forever" - are retired with the flags they described (MW-D11, MW-D12).
-Flat shading still comes from a face normal computed per triangle at pack
-time, and for a MIRRORED piece that normal is NEGATED, because rule 13's
-X negation reverses the winding and without it the left arm lights
-inside-out. That is rule 13's rendering consequence, which MW8 also
-lacked.
+SHADING (MW-SMOOTH, 2026-10-09, Mac: "Can we also enable smooth shading
+for the morrowind models? Not sure what type of shading is used now"):
+every Morrowind mesh - the arms, the third-person and peer bodies, worn
+armour, held weapons, item pictures - is lit per pixel by the character
+program's N.L, and until MW-SMOOTH it was fed ONE NORMAL A TRIANGLE, its
+face's, computed at pack time: flattenNif kept each NIF's per-vertex
+normals and poseAssembly posed positions alone, so every surface came
+out faceted, the smooth normals of our own baked armour (the steel
+plate's, the brigandine's) thrown away. The reference lights a NIF by
+the normals the file authors and makes none ("[C] Vertex/normal/colour
+arrays are set from array EMPTINESS, never from mNumVertices, and OpenMW
+generates nothing", below). So a piece
+now carries its mesh's normals through the pose (`p.normals`): a skinned
+piece's skinned by skinBatch's normal path, a rigid part's mirrored and
+turned with it (`placeNormalsAtBone`, after the part's pre-transform),
+a brigandine's solved through its transferred skin as its positions are
+(`transferSkin`); and packFpArm writes each corner its vertex's normal.
+A surface the modeller smoothed is lit smooth; an edge kept hard (the
+Thunderlock's faces, split per face in its file) stays hard. A PORT
+DECISION: a mesh that authors NO normals is lit by its faces as before,
+and so is a corner whose normal is ZERO (rule 40's collapse, or a file's
+own) where the reference would hand the shader a normal it cannot
+normalise - one cross product a triangle, NEGATED on a MIRRORED piece because rule
+13's X negation reverses the winding and the left arm would light
+inside-out (rule 13's rendering consequence, which MW8 also lacked); a
+posed vertex normal was mirrored with its vertex and takes no flip. Pins
+`test/mwsmooth.test.js`, `tools/mutants/mwsmooth.json`.
 
 THE PORT MAPPER IS RETIRED (MW-D10), AND RULE 54 IS THE PLACEMENT. The
 mapper solved a uniform scale from the arm's clip bounds, pushed it a
@@ -3823,7 +3845,7 @@ There are rules about skinning and materials but none about geometry. Unread: `c
 
 **8. Three different animation clocks on one actor.**
 
-`npcanimation.cpp:857-867`: the head's internal controllers get `mHeadAnimationTime`, `PRT_Weapon` gets `mWeaponAnimationTime`, and **every other attached part** gets `mAnimationTimePtr[0]` — the LOWER-BODY winner's clock, not its own bone group's. `weaponanimation.cpp:25-49`: `mWeaponAnimationTime` returns `getCurrentTime(mWeaponGroup) - mStartTime`, and `mStartTime` is `getStartTime(group)` only when relative — which `character.cpp:943-945` sets true **only for Ranged** weapons, with a comment about mods rotating throwing projectiles. The doc has one clock.
+`npcanimation.cpp:857-867`: the head's internal controllers get `mHeadAnimationTime`, `PRT_Weapon` gets `mWeaponAnimationTime`, and **every other attached part** gets `mAnimationTimePtr[0]` — the LOWER-BODY winner's clock, not its own bone group's. `weaponanimation.cpp:25-49`: `mWeaponAnimationTime` returns `getCurrentTime(mWeaponGroup) - mStartTime`, and `mStartTime` is `getStartTime(group)` only when relative — which `character.cpp:943-945` sets true **only for Ranged** weapons, with a comment about mods rotating throwing projectiles. The doc has one clock. (MW-BOW1, 2026-10-10, ported the WEAPON's - the bow's own motion, below; the head's and the lower body's stay unported.)
 
 **9. Ranged aim pitch, and its unresolved first-person form.**
 
@@ -6308,6 +6330,14 @@ A silent arm - a .kf without the key - falls through a 1.2s ceiling
 rather than swallowing the shot, because the whole classic release is
 seven frames at a 0.0625 tick, about 0.44s, so a real release always
 wins that race.
+BOW-CLOCK (FIELD BUGS 2026-10-09g) found that race lost: a Morrowind
+draw runs at the WEAP record's pace, not the classic release's, and a
+draw past 1.2s let the arrow go mid-draw and left its release key over
+for the next draw, whose arrow then left at the click. The ceiling now
+waits while the arm is still drawing (`fpArm.shotBusy`, to a 4s cap), a
+draw clears a release it has not reached, and no shot STARTS while the
+arm cannot draw it - the machine's cycle had outrun the draw and fired
+two arrows from one (`01-Overview/Field-Bugs-2026-10-09g.md`).
 
 THE NOCK. Rule 24's "shoot attach" still drives the arrow wherever the
 data carries it, but the arrow may no longer DEPEND on that key
@@ -6478,6 +6508,38 @@ base meshes attached resolves the iron arrow, carries it as a piece
 and leaves no arrow note; and the console line fires once per reason,
 never without ammunition; every preload and resolve passes the one
 directory.
+
+## MW-BOW1 (2026-10-10): the weapon's own clock
+
+The owner, a fourth time about the bow: "the arrow on the morrowind weapon isnt shown be drawn and shot, or it's
+misalligned", then "Find a way to grab the data yourself and figure it out". The retail files are not free; OpenMW's
+own tracker is, and it names what MW-D16, MW-D42 and MW-D50 could not see on fixtures that never move: "arrow fetching
+animation is baked into bow mesh" (issue 5642), the bow "deforming while string is being pulled" in step with the
+character "by the means of a primitive frame offset counted from the beginning of the whole animation group" (issue
+9322). Section 8 of the audit above already listed the clock as unported: `PRT_Weapon` takes `mWeaponAnimationTime`.
+
+**The law, ported.** `WeaponAnimationTime::getValue` (weaponanimation.cpp): the weapon group's current time, less
+`getStartTime(group)` - the group's first key, rule 46 - when relative; 0 when the group has no state. Relative for
+the Ranged class alone (character.cpp setWeaponGroup: "controllers for ranged weapon should use time for beginning of
+animation to play shooting properly"). The group's state outlives its section - equip and attack play with autodisable
+false - so the clock holds where the last section left it. `combat/fpArm.js` notes it as each weapon-group section
+advances (`noteWeaponClock`), and answers 0 once the stance's group is another (`weaponClockValue`).
+
+**What runs on it** (`formats/mwPartClock.js`): any record's first active NiKeyframeController, its track over its
+rest through the controller's own function ([B]: no rotation keys is the rest rotation); an unskinned shape's first
+active NiGeomMorpherController whose base morph has the shape's vertex count and more than one morph, positions =
+base + sum(weight_i x morph_i), each weight its own keys at the controller's time (handleMorphGeometry,
+MorphGeometry::cull, GeomMorpherController); an AutoPlay node's controllers on frame time instead (setupController).
+`flattenNif` now records each batch's record chain from the file root and its authored vertices, and
+`posePartClocks` (`formats/mwFirstPerson.js`) re-poses the weapon slot's moving pieces before every pose, in both
+views, and puts the arrow under the ArrowBone where the clock has it - the arrow's `preTransform` is that node's REST,
+which is what it was drawn at before.
+
+**Not ported:** every other part's controllers (the lower body's clock, `mAnimationTimePtr[0]`), the head's
+(`mHeadAnimationTime`), and releaseArrow's launch point - the projectile leaves from DFU's GetAimPosition, not the
+ammunition node's world position. Not seen on a retail bow: pinned on `test/fixtures/mw/bowClip.mjs`, a fixture bow
+that carries both controllers (`test/mwbow1.test.js`; `tools/mutants/mwbow1.json`).
+`01-Overview/Field-Bugs-2026-10-09g.md`.
 
 ## MW-D51 (2026-09-16): the held torch
 

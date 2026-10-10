@@ -19,7 +19,7 @@
  },
  {
   "name": "REST6-the-bedroll-stacks",
-  "file": "src/systems/restItems.js",
+  "file": "src/systems/restItemRows.js",
   "old": "  row(REST_ITEM.Bedroll, 'Bedroll', 2.5, BEDROLL_NIGHTS, 80, 1, [204, 8], false),",
   "new": "  row(REST_ITEM.Bedroll, 'Bedroll', 2.5, BEDROLL_NIGHTS, 80, 1, [204, 8], true),",
   "tests": [

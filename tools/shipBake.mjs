@@ -119,8 +119,10 @@ const quarterTurn = (deg) => { const q = Math.round(deg / 90) * 90; return Math.
 
 /** Every Mesh model with its Geometry, materials and placement, from a parsed FBX: `local` its mesh's own vertices (as
  *  Blender holds them - AUDIT GN-B1 cuts its faces there), `scene` the same placed in Mac's scene, `origin` where its
- *  own origin stands in the scene (AUDIT GN-B6). */
-export function sceneObjects(tree) {
+ *  own origin stands in the scene (AUDIT GN-B6). GATE-FBX: `read` names the objects a bake will bake (every one, for a
+ *  ship's); one it declines is placed for its box alone (`unread`, no polygons) - its faces are never baked, so their
+ *  sense is never asked (the gate is one object of a scene of 1,905, and one of the others is mirrored). */
+export function sceneObjects(tree, read = () => true) {
   const objects = nodeAt(tree.nodes, 'Objects');
   if (!objects) throw new Error('no Objects section in this FBX');
   assertExportAxes(tree);
@@ -147,17 +149,24 @@ export function sceneObjects(tree) {
     const R = eulerXYZ((property70(model, 'Lcl Rotation') ?? [0, 0, 0]).map(Number).map(quarterTurn));
     const T = (property70(model, 'Lcl Translation') ?? [0, 0, 0]).map(Number);
     const m = frame.m;
-    // AUDIT GN-B5: a transform that mirrors (a negative scale, an odd number of them) turns every face it carries
-    // inside out - the bake's own mirror reverses each polygon's corners on the strength of the frame alone. The
-    // determinant of the whole linear map, the file's frame times R times S, says so whatever the rotation.
-    const det = det3([0, 1, 2].flatMap((r) => [0, 1, 2].map((c) => (m[r * 3] * R[c] + m[r * 3 + 1] * R[3 + c] + m[r * 3 + 2] * R[6 + c]) * S[c])));
-    if (!(det > 0)) throw new Error(`${name}'s transform ${det < 0 ? 'mirrors it' : 'flattens it'} (scale ${JSON.stringify(S)}, determinant ${det.toPrecision(4)}) - ${det < 0 ? 'its faces would bake inside out' : 'it would bake flat'}; apply the scale in Blender (Ctrl+A) before exporting`);
     // the object's T*R*S into FBX world space, then the file's frame into the scene (metres, Z up)
     const place = (p) => {
       const s = [p[0] * S[0], p[1] * S[1], p[2] * S[2]];
       const w = [R[0] * s[0] + R[1] * s[1] + R[2] * s[2] + T[0], R[3] * s[0] + R[4] * s[1] + R[5] * s[2] + T[1], R[6] * s[0] + R[7] * s[1] + R[8] * s[2] + T[2]];
       return [m[0] * w[0] + m[1] * w[1] + m[2] * w[2], m[3] * w[0] + m[4] * w[1] + m[5] * w[2], m[6] * w[0] + m[7] * w[1] + m[8] * w[2]];
     };
+    if (!read(name)) {
+      const raw = childNamed(geo, 'Vertices')?.props[0] ?? [];
+      const scene = [];
+      for (let i = 0; i < raw.length; i += 3) scene.push(place([raw[i], raw[i + 1], raw[i + 2]]));
+      out.push({ name, unread: true, local: [], scene, origin: place([0, 0, 0]), polygons: [], polyMaterial: [], materials });
+      continue;
+    }
+    // AUDIT GN-B5: a transform that mirrors (a negative scale, an odd number of them) turns every face it carries
+    // inside out - the bake's own mirror reverses each polygon's corners on the strength of the frame alone. The
+    // determinant of the whole linear map, the file's frame times R times S, says so whatever the rotation.
+    const det = det3([0, 1, 2].flatMap((r) => [0, 1, 2].map((c) => (m[r * 3] * R[c] + m[r * 3 + 1] * R[3 + c] + m[r * 3 + 2] * R[6 + c]) * S[c])));
+    if (!(det > 0)) throw new Error(`${name}'s transform ${det < 0 ? 'mirrors it' : 'flattens it'} (scale ${JSON.stringify(S)}, determinant ${det.toPrecision(4)}) - ${det < 0 ? 'its faces would bake inside out' : 'it would bake flat'}; apply the scale in Blender (Ctrl+A) before exporting`);
     const raw = childNamed(geo, 'Vertices')?.props[0];
     const pvi = childNamed(geo, 'PolygonVertexIndex')?.props[0];
     if (!raw || !pvi) throw new Error(`${name}'s Geometry carries no Vertices/PolygonVertexIndex`);
@@ -214,15 +223,17 @@ export const mm = (b) => [b.min.map((v) => Math.round(v * 1000) / 1000 + 0), b.m
  * One part: its scene polygons over a subset of the object's vertices, re-indexed, into the boat's frame (`frame`) -
  * the positions (the source's corners and no others), each polygon's corners in the port's winding, its triangles,
  * which polygon each triangle is of, and (AUDIT GN-B7) `split`: how many of its polygons were cut, four corners or
- * more - the rest were triangles already.
+ * more - the rest were triangles already. WAGONS1: `frame` is a ship's (toBoat), or a function taking a scene point
+ * to the part's own frame - a wagon's (tools/bakeWagons.mjs toWagon); either way a MIRROR, so the winding below holds.
  */
 export function bakePart(role, object, polyIds, frame) {
+  const place = typeof frame === 'function' ? frame : (p) => toBoat(p, frame);
   const remap = new Map();
   const positions = [];
   const take = (vi) => {
     if (!remap.has(vi)) {
       remap.set(vi, positions.length / 3);
-      positions.push(...toBoat(object.scene[vi], frame).map(round4));
+      positions.push(...place(object.scene[vi]).map(round4));
     }
     return remap.get(vi);
   };

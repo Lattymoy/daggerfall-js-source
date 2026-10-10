@@ -2,8 +2,8 @@
   {
     "name": "MWSTEEL1-silver-wears-the-plate",
     "file": "src/characters/ownArmorModels.js",
-    "old": "  id, name, templateIndex, material: ARMOR_MATERIAL.Steel, parts: Object.freeze(parts),\n",
-    "new": "  id, name, templateIndex, material: ARMOR_MATERIAL.Silver, parts: Object.freeze(parts),\n",
+    "old": "const steel = plate(ARMOR_MATERIAL.Steel);",
+    "new": "const steel = plate(ARMOR_MATERIAL.Silver);",
     "tests": [
       "test/mwsteel1.test.js"
     ]
@@ -27,10 +27,10 @@
     ]
   },
   {
-    "name": "MWSTEEL1-helm-hides-the-head",
+    "name": "MWSTEEL1-helm-in-the-head-slot",
     "file": "src/characters/ownArmorModels.js",
-    "old": "const helmClosed = Object.freeze([part('hair', 'steel_plate_helm_closed.nif')]);",
-    "new": "const helmClosed = Object.freeze([part('head', 'steel_plate_helm_closed.nif')]);",
+    "old": "const helmClosed = Object.freeze([part('hair', 'steel_plate_helm_closed.nif', ['head'])]);",
+    "new": "const helmClosed = Object.freeze([part('head', 'steel_plate_helm_closed.nif', ['head'])]);",
     "tests": [
       "test/mwsteel1.test.js"
     ]
@@ -38,7 +38,7 @@
   {
     "name": "MWSTEEL1-hides-dropped",
     "file": "src/formats/mwItemMap.js",
-    "old": "        for (const h of p.hides ?? []) claim(ARMO_PART.findIndex((r) => r.name === h), prio, null);\n",
+    "old": "        for (const h of p.hides ?? []) claim(ARMO_PART.findIndex((r) => r.name === h), prio, null, add);\n",
     "new": "",
     "tests": [
       "test/mwsteel1.test.js"

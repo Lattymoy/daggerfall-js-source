@@ -20,7 +20,8 @@ test('CARDS8 the tiers are the loot\'s, and the painter\'s emblems are the list 
   assert.deepEqual(CARD_EMBLEMS, ['beast', 'undead', 'ghost', 'vampire', 'lich', 'were', 'orc', 'giant', 'centaur',
     'harpy', 'nymph', 'dreugh', 'daedra', 'atronach', 'dragon', 'knight', 'mage', 'thief', 'assassin', 'priest', 'warrior',
     'noble', 'prince', 'artifact', 'fire', 'frost', 'shock', 'heal', 'shadow', 'city', 'desert', 'fortress', 'dungeon', 'sea',
-    'razor', 'staff', 'book', 'claymore', 'rose', 'daedric', 'scorpion', 'bat', 'boar', 'tree', 'gargoyle', 'banish', 'recall', 'sun']);
+    'razor', 'staff', 'book', 'claymore', 'rose', 'daedric', 'scorpion', 'bat', 'boar', 'tree', 'gargoyle', 'banish', 'recall', 'sun',
+    'gate', 'serpent', 'gear']);   // PIN MOVED (CARDS9): the bosses' own pictures
   assert.deepEqual([...CARD_EMBLEMS], [...EMBLEM_KEYS], 'AUDIT CARDS-5 B: the catalog\'s list is the painter\'s, no glyph drawn for no card');
   for (const list of [ILIAC_TIERS, ILIAC_TAGS, CARD_EMBLEMS, ILIAC_CARDS, ILIAC_LOCATIONS, STARTER_DECK]) assert.ok(Object.isFrozen(list));
   const used = new Set(ALL.map((c) => c.emblem));
@@ -119,9 +120,9 @@ test('CARDS8 the holdings: the Iliac Bay\'s places, each with its own rule', () 
 
 test('CARDS8 the first set, counted by kind and tier - a card added is a card meant', () => {
   const by = (key) => ILIAC_CARDS.reduce((m, c) => ({ ...m, [c[key]]: (m[c[key]] ?? 0) + 1 }), {});
-  assert.deepEqual(by('kind'), { unit: 57, spell: 14, prince: 11 });
-  assert.deepEqual(by('tier'), { common: 26, magic: 23, rare: 13, legendary: 12, aetheric: 2, artifact: 6 });
-  assert.equal(ILIAC_CARDS.length, 82);
+  assert.deepEqual(by('kind'), { unit: 60, spell: 14, prince: 11 });   // PIN MOVED (CARDS9): the three bosses' own, units
+  assert.deepEqual(by('tier'), { common: 26, magic: 23, rare: 13, legendary: 12, aetheric: 5, artifact: 6 });
+  assert.equal(ILIAC_CARDS.length, 85);
 });
 
 test('CARDS8 power and cost follow what the thing is in the game', () => {
@@ -136,7 +137,7 @@ test('CARDS8 power and cost follow what the thing is in the game', () => {
   assert.deepEqual(ILIAC_CARDS.filter((x) => x.cost === 1 && x.kind !== 'spell').map((x) => x.id).sort(),
     ['giant-bat', 'imp', 'mages-guild-apprentice', 'rat', 'thieves-guild-filcher']);
   // The legendary-or-higher cards: the Princes, the artifacts, and the Bay's few legends.
-  assert.deepEqual(ILIAC_CARDS.filter((x) => rank(x.tier) >= rank('legendary') && x.kind === 'unit').map((x) => x.id), ['ancient-vampire', 'ancient-lich', 'king-gothryd']);
+  assert.deepEqual(ILIAC_CARDS.filter((x) => rank(x.tier) >= rank('legendary') && x.kind === 'unit').map((x) => x.id), ['ancient-vampire', 'ancient-lich', 'king-gothryd', 'valkynaz-ruhn', 'sethrakul', 'brass-remnant']);   // PIN MOVED (CARDS9): the bosses' own, aetheric
 });
 
 test('CARDS8 the starter deck: thirty, clean by the deck\'s law, common and magic alone', () => {
@@ -154,6 +155,6 @@ test('AUDIT CARDS-5: the catalog\'s rules are the ones looked at - every card\'s
   const { createHash } = await import('node:crypto');
   const rec = (c) => [c.id, c.name, c.kind, c.cost, c.power, c.tier, c.tags, c.fx];
   const body = JSON.stringify({ cards: ILIAC_CARDS.map(rec), locations: ILIAC_LOCATIONS.map(rec), starter: STARTER_DECK });
-  assert.deepEqual([ILIAC_CARDS.length, ILIAC_LOCATIONS.length, STARTER_DECK.length], [82, 11, 30]);
-  assert.equal(createHash('sha256').update(body).digest('hex'), 'e28e35bca3b3ef0608cf037541b1929289f29c45163ed242751be9bc6954d9ca');
+  assert.deepEqual([ILIAC_CARDS.length, ILIAC_LOCATIONS.length, STARTER_DECK.length], [85, 11, 30]);   // PIN MOVED (CARDS9): the bosses' three
+  assert.equal(createHash('sha256').update(body).digest('hex'), '0c59ec4a45e4c81a3e95b960d6b758169cb097b445f6c300924ef5f8640ea1d4');   // PIN MOVED (CARDS9): the bosses' three cards
 });

@@ -10,8 +10,9 @@ import { bc7Decode, decodeBc7Block } from '../src/formats/bc7.js';
 import { TEXTURE_FORMAT } from '../src/formats/unityBundle.js';
 import {
   setDfmodSources, clearDfmodSources, attachedDfmods, hasOwnDoor, dfmodStoreKey, dfmodIndexKey,
-  xmlRect, xmlScale, hasDfmodImg, hasDfmodCifRci, dfmodImgImage, dfmodCifRciImage, resampleRgba, dfmodGeneration,
+  xmlRect, xmlScale, hasDfmodImg, hasDfmodCifRci, dfmodImgImage, dfmodCifRciImage, dfmodCifRciRect, resampleRgba, dfmodGeneration,
 } from '../src/systems/dfmodTextures.js';
+import { altBox } from '../src/ui/paperDoll.js';
 import { hasTextureReplacement, preloadTextureRecord, decodedTexture, textureReplacementRect, bundleTextureCount } from '../src/systems/textureReplacement.js';
 import { billboardXmlScale } from '../src/world/billboardXml.js';
 import { textureStoreKey } from '../src/scenes/dataSource.js';
@@ -133,6 +134,29 @@ test('DFMOD1 door: names onto the bundle tier by dye and map, xml onto the billb
   assert.equal(billboardXmlScale(210, 1), null, 'the removed mod takes its xml with it');
   clearDfmodSources();
   assert.equal(bundleTextureCount(), 0);
+});
+
+test('FACE-RECT (issue #639): a replaced face takes the <rect> its xml gives - PaperDollRenderer.DrawTexture(head) runs OverridePaperdollItemRect too', async () => {
+  // Paperdoll Enhanced's faces were squeezed into FACE*.CIF's classic box: the door kept a CIF/RCI picture's name and
+  // dropped its sidecar's rect, which DFU applies to the head as to any item (item null, MakeName's CIF arm).
+  setValue('Enhancements', 'AssetInjection', 'True');
+  const bundles = {
+    'dfmod/faces.dfmod': fakeBundle('Faces', [['FACE00I0.CIF_3-0', 128, 160], ['FACE00I0.CIF_4-0', 64, 64]],
+      { 'FACE00I0.CIF_3-0': '<info><rect scale="4"><x>136</x><y>8</y><width>128</width><height>160</height></rect></info>' }),
+  };
+  const open = async (bytes) => bundles[new TextDecoder().decode(bytes)];
+  const load = async (k) => (bundles[k] ? new TextEncoder().encode(k) : null);
+  await setDfmodSources(['dfmod/faces.dfmod'], load, { open, saveIndex: async () => {}, background: false });
+  try {
+    assert.deepEqual(dfmodCifRciRect('face00i0.cif', 3, 0), { x: 34, y: 2, width: 32, height: 40 }, 'the sidecar\'s rect, in the doll\'s space');
+    assert.equal(dfmodCifRciRect('FACE00I0.CIF', 4, 0), null, 'a face with no sidecar keeps the classic box');
+    const bmp = { width: 29, height: 31 }, off = { x: 228, y: 12 };
+    assert.deepEqual(altBox({ bmp, off, rect: dfmodCifRciRect('FACE00I0.CIF', 3, 0) }), { width: 32, height: 40, off: { x: 34, y: 2, paperdoll: true } },
+      'the doll draws the face into that rect');
+    assert.deepEqual(altBox({ bmp, off, rect: null }), { width: 29, height: 31, off }, 'without one, the classic record\'s size at its offset, as before');
+  } finally { clearDfmodSources(); }
+  assert.match(src('ui/paperDoll.js'), /head: \{ bmp: headBmp, off: face\.getOffset\(fi\), alt: [^\n]*rect: dfmodCifRciRect\(art\.heads, fi, 0\) \}/, 'the racial face asks its rect');
+  assert.match(src('ui/paperDoll.js'), /art\.rect = dfmodCifRciRect\(file, record, 0\);/, 'and so does a racial override\'s head');
 });
 
 test('DFMOD1 wiring: the boot, the pick, the doll, the portraits and the packs card', () => {

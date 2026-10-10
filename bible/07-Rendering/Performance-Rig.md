@@ -66,7 +66,8 @@ transcribed as the reference.
 - **The pack keeps each piece's static lanes.** Of the fourteen floats a
   corner, eight never change between frames - the diffuse, the UV and
   the emission are the authored vertex's - and only the position and
-  the face normal follow the pose. The eight are resolved ONCE per piece
+  the normal follow the pose (the face normal then; since MW-SMOOTH the
+  mesh's own posed normal where it authors one). The eight are resolved ONCE per piece
   through the same `diffuseAt`/`emissiveAt` (one home for the colour
   law) into a lane buffer on the piece, keyed on the arrays they were
   read from, so a wardrobe rebuild that hands the piece new colours

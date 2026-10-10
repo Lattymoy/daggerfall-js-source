@@ -2,8 +2,8 @@
  {
   "name": "MWNPC9a-shape-parent-lost",
   "file": "src/formats/mwNifMesh.js",
-  "old": "if (child >= 0) walk(child, nextWorld, nextProps, false, inside, animFlags, ref);",
-  "new": "if (child >= 0) walk(child, nextWorld, nextProps, false, inside, animFlags);",
+  "old": "if (child >= 0) walk(child, nextWorld, nextProps, false, inside, animFlags, nextChain, ref);",
+  "new": "if (child >= 0) walk(child, nextWorld, nextProps, false, inside, animFlags, nextChain);",
   "tests": [
    "test/mwnpc9_creatures.test.js"
   ]
@@ -11,8 +11,8 @@
  {
   "name": "MWNPC9a-shape-parent-unemitted",
   "file": "src/formats/mwNifMesh.js",
-  "old": "emit(rec, nextWorld, nextProps, parentRef);",
-  "new": "emit(rec, nextWorld, nextProps);",
+  "old": "emit(rec, nextWorld, nextProps, nextChain, animFlags, parentRef);",
+  "new": "emit(rec, nextWorld, nextProps, nextChain, animFlags);",
   "tests": [
    "test/mwnpc9_creatures.test.js"
   ]

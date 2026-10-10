@@ -26,7 +26,7 @@
 // wire's relaySupportsGate, WB3), and nothing else happens.
 //
 // Not a DFU member. Ledger A (WB).
-import { buildGateModel, gateArchProfile, GATE_ARCHIVE, GATE_HEIGHT, PORTAL_CENTRE_Y, ARCH_Y0, ARCH_Y1, ARCH_PROFILE_N, HORN_SPINE, HORN_ROOT_R, HORN_DEPTH } from '../world/gateModel.js';
+import { buildGateModel, gateArchProfile, insideGateStone, GATE_ARCHIVE, GATE_HEIGHT, GATE_HALF_W, PORTAL_CENTRE_Y, ARCH_Y0, ARCH_Y1, ARCH_PROFILE_N } from '../world/gateModel.js';
 import { gateArt } from '../world/gateArt.js';
 import { GatePassRenderer, gateSpinRate } from '../render/gatePass.js';
 import { gateSceneXZ } from '../systems/gateOmen.js';
@@ -34,6 +34,7 @@ import { gateYaw, gatePhase, gateCountdown, countdownText, countdownWords, gateM
 import { marksCardModel } from '../ui/gateMarksView.js';   // WB9a: tonight's marks, over the screen before the gate is entered
 import { trs } from '../world/mat4.js';
 import { RAY_DISTANCE } from '../player/activate.js';
+import { CAPSULE_RADIUS } from '../player/motor.js';
 
 /** The collider's bucket for the gate's stone. */
 export const GATE_BUCKET = 'wb:gate';
@@ -48,6 +49,10 @@ export const GATE_LIGHT_RANGE = 24;
 export const GATE_OPEN_EASE = 0.6;
 /** AUDIT WB C7: the one empty answer for no gate - the host asks for the lights and the targets every frame. */
 const NO_GATE = Object.freeze([]);
+/** AUDIT GATE-FBX E3: how far under the ground the stone's crown waits before it rises, metres - its lintel's flat top
+ *  sank to the ground's own plane and shimmered through it for the rise's first second, and on a slope across the arch
+ *  the lintel's downhill end stood out of the ground before the rise began (the ground at its ends is asked too). */
+export const RISE_SLACK_M = 0.3;
 /** A refusal said again no sooner than this (a player pressing at a sealed gate hears it once a while). */
 export const GATE_SAY_MS = 3000;
 /** How close to the fire's plane a step through it counts (metres either side). */
@@ -86,7 +91,14 @@ export function gatePlacement(g, { pixelTranslation, heightAt, now, groundAt = n
   }
   if (phase === 'gone' || phase === 'quiet' || phase === 'omen') return null;
   const eased = rise * rise * (3 - 2 * rise);   // it heaves out of the ground and settles, not at a constant crawl
-  return { day: g.day, phase, origin: [x, ground - (1 - eased) * GATE_HEIGHT, z], ground, yaw: gateYaw(g.day), fade, risen: rise >= 1, coarse };
+  const yaw = gateYaw(g.day);
+  // AUDIT GATE-FBX E3: sunk whole before it rises - its crown under the ground at the middle, and at both its ends
+  let sunk = GATE_HEIGHT + RISE_SLACK_M;
+  if (rise < 1 && !coarse) for (const e of [-GATE_HALF_W, GATE_HALF_W]) {
+    const h = heightAt(x + Math.cos(yaw) * e, z - Math.sin(yaw) * e);
+    if (Number.isFinite(h)) sunk = Math.max(sunk, GATE_HEIGHT + RISE_SLACK_M + (ground - h));
+  }
+  return { day: g.day, phase, origin: [x, ground - (1 - eased) * sunk, z], ground, yaw, fade, risen: rise >= 1, coarse };
 }
 
 /** The half-width of the fire's opening at a height over the gate's foot (the arch's own profile, as the pass reads it). */
@@ -109,18 +121,19 @@ export function fireBox(place, profile, halfW = null) {
   return { min, max };
 }
 
-/** AUDIT WBX W1 (2026-09-26, Mac: "Do a comprehensive audit on everything so far"): THE HORNS' ROOTS, where a player
- *  standing the moment the stone comes up whole is SEALED IN - the stone rises for GATE_RISE_MS with no collider, and
- *  stands whole on it in one frame: a capsule inside a horn's shell was held there by the shell's own push, out of reach
- *  of the fire, and /unstuck answers nothing outdoors. The gate-local ellipse about each root (its radius and depth, and
- *  a body's width more), under the horns' first bend. */
-export const ROOT_TRAP = Object.freeze({ x: Math.abs(HORN_SPINE[0][0]), rx: HORN_ROOT_R + 1.3, rz: HORN_ROOT_R * HORN_DEPTH + 0.6, top: 8 });
-/** Whether feet at `p` (the scene's frame) stand inside one of the horns' roots of the gate at `place`. Pure. */
+/** AUDIT WBX W1 (2026-09-26, Mac: "Do a comprehensive audit on everything so far"): A BODY SEALED IN THE STONE - the
+ *  stone rises for GATE_RISE_MS with no collider, and stands whole on it in one frame: a capsule inside the stone's shell
+ *  was held there by the shell's own push, out of reach of the fire, and /unstuck answers nothing outdoors. AUDIT GATE-FBX
+ *  E1/E2: asked of the stone itself now (world/gateModel.js insideGateStone, its closed pieces) at the capsule's axis -
+ *  its foot's sphere, its middle and its head's sphere (player/motor.js: 1.8 m, CAPSULE_RADIUS) - as high as the stone
+ *  stands. The ellipse WB2's horns took, refitted to Mac's feet, held 2.8 m and no higher: a body on a hillside in a
+ *  pillar, or held up in one as it rose, was sealed in until the collapse; and it took the threshold's free edge and
+ *  the ground before a foot, and set those players down before the gate. */
+export const SEALED_AT = Object.freeze([CAPSULE_RADIUS, 0.9, 1.8 - CAPSULE_RADIUS]);
+/** Whether a body with its feet at `p` (the scene's frame) is sealed in the stone of the gate at `place`. Pure. */
 export function inGateRoot(place, p) {
   const [lx, ly, lz] = gateLocal(place, p);
-  if (!(ly < ROOT_TRAP.top)) return false;
-  const dx = (Math.abs(lx) - ROOT_TRAP.x) / ROOT_TRAP.rx, dz = lz / ROOT_TRAP.rz;
-  return dx * dx + dz * dz <= 1;
+  return SEALED_AT.some((h) => insideGateStone([lx, ly + h, lz]));
 }
 
 /** A point in the gate's own frame (x across the arch, y up from its foot, z through the fire) - trs's R_y undone. */
@@ -174,7 +187,7 @@ export function createGatePool({
     try {
       for (const [rec, art] of gateArt()) {
         renderer.uploadTexture?.(GATE_ARCHIVE, rec, art.albedo);
-        renderer.uploadEmissionTexture?.(GATE_ARCHIVE, rec, art.emission);
+        renderer.uploadEmissionTexture?.(GATE_ARCHIVE, rec, art.emission, { white: true });   // AUDIT GATE-FBX G4: its fire its own colour, never the window's
       }
       mesh = renderer.createMesh(model);
     } catch (e) { console.warn('[gate] the stone would not build', e?.message ?? e); mesh = null; }
@@ -194,7 +207,7 @@ export function createGatePool({
     if (!want) return;
     col.addMesh(GATE_BUCKET, model.positions, model.indices, want);
     colliderAt = want;
-    // AUDIT WBX W1: the stone stood whole under a player in a horn's root - they are set down before the gate, not left
+    // AUDIT WBX W1: the stone stood whole under a player in a pillar's root - they are set down before the gate, not left
     // inside it (the host's landing, the way home's own). Asked at every stand: its first, and a stand where it moved
     // (AUDIT WBX2 M7: a `first` read after the clear was always true - this is what it did, now said)
     const f = feet();
@@ -268,7 +281,7 @@ export function createGatePool({
       if (!place || place.coarse || place.fade <= 0) return NO_GATE;
       return [{ x: place.origin[0], y: place.origin[1] + GATE_LIGHT_UP, z: place.origin[2], range: GATE_LIGHT_RANGE * place.fade * (0.5 + 0.5 * open) }];
     },
-    /** The eye's box: the FIRE, not the stone - a player standing on the plinth is inside the gate's own bounds, and a
+    /** The eye's box: the FIRE, not the stone - a player standing in the threshold is inside the gate's own bounds, and a
      *  box they stand in would win every press they made there. The opening's slab, turned with the gate. */
     targets() {
       if (!place || !place.risen || place.coarse) return NO_GATE;

@@ -1,0 +1,74 @@
+[
+  {
+    "name": "PERF-RELAY1-the-range-a-pixel-wider",
+    "file": "src/net/wire.js",
+    "old": "  return (to) => !!to && Math.max(Math.abs(fx - Math.floor(to.x / PIXEL_UNITS)), Math.abs(fy - Math.floor(to.z / PIXEL_UNITS))) <= RANGE_PIXELS;",
+    "new": "  return (to) => !!to && Math.max(Math.abs(fx - Math.floor(to.x / PIXEL_UNITS)), Math.abs(fy - Math.floor(to.z / PIXEL_UNITS))) <= RANGE_PIXELS + 1;",
+    "tests": [
+      "test/perfrelay1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-RELAY1-an-absent-listener-in-range",
+    "file": "src/net/wire.js",
+    "old": "  return (to) => !!to && Math.max(",
+    "new": "  return (to) => !to || Math.max(",
+    "tests": [
+      "test/perfrelay1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-RELAY1-an-absent-sender-heard",
+    "file": "src/net/wire.js",
+    "old": "  if (!from) return () => false;\n  const [fx, fy] = pixelOf(from);",
+    "new": "  if (!from) return () => true;\n  const [fx, fy] = pixelOf(from);",
+    "tests": [
+      "test/perfrelay1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-RELAY1-a-non-world-room-culled",
+    "file": "src/net/wire.js",
+    "old": "  if (!String(roomKey ?? '').startsWith('world:')) return () => true;\n  if (!from) return () => false;",
+    "new": "  if (!String(roomKey ?? '').startsWith('world:')) return (to) => !!to;\n  if (!from) return () => false;",
+    "tests": [
+      "test/perfrelay1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-RELAY1-the-axes-crossed",
+    "file": "src/net/wire.js",
+    "old": "Math.abs(fx - Math.floor(to.x / PIXEL_UNITS)), Math.abs(fy - Math.floor(to.z / PIXEL_UNITS))) <= RANGE_PIXELS;",
+    "new": "Math.abs(fx - Math.floor(to.z / PIXEL_UNITS)), Math.abs(fy - Math.floor(to.x / PIXEL_UNITS))) <= RANGE_PIXELS;",
+    "tests": [
+      "test/perfrelay1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-RELAY1-the-range-from-the-senders-last-pose",
+    "file": "server/src/index.js",
+    "old": "    const reach = inRangeOf(a.key ?? '', m.p);",
+    "new": "    const reach = inRangeOf(a.key ?? '', a.pose);",
+    "tests": [
+      "test/perfrelay1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-RELAY1-the-sender-in-its-own-fan",
+    "file": "server/src/index.js",
+    "old": "    for (const [other, b] of this._all()) {\n      if (other === ws || !b.id || (S && !S.members[b.sub])) continue;\n      if (reach(b.pose)) heard.push([other, b]);",
+    "new": "    for (const [other, b] of this._all()) {\n      if (!b.id || (S && !S.members[b.sub])) continue;\n      if (reach(b.pose)) heard.push([other, b]);",
+    "tests": [
+      "test/perfrelay1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-RELAY1-an-id-less-socket-heard",
+    "file": "server/src/index.js",
+    "old": "    for (const [other, b] of this._all()) {\n      if (other === ws || !b.id || (S && !S.members[b.sub])) continue;",
+    "new": "    for (const [other, b] of this._all()) {\n      if (other === ws || (S && !S.members[b.sub])) continue;",
+    "tests": [
+      "test/perfrelay1.test.js"
+    ]
+  }
+]

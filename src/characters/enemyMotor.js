@@ -1576,6 +1576,14 @@ export class EnemyAI {
    *  (transform1 sets Behaviour = Flying) and could be shoved out of
    *  its own transformation. */
   update(dt, playerFeet, senses = null, paralyzed = false, paused = false) {
+    // WAGONS1: a companion riding in the back of the player's wagon (scenes/crewAshore.js `seat`) takes no step - its
+    // feet are the seat's, wherever the wagon carries it, and it neither falls, walks nor fights until it gets down
+    const seat = this.seat?.();
+    if (seat) {
+      this.feet[0] = seat.feet[0]; this.feet[1] = seat.feet[1]; this.feet[2] = seat.feet[2];
+      this.yaw = seat.yaw; this.velY = 0; this.moving = false; this.isGrounded = true; this._acc = 0;
+      return;
+    }
     this._acc = (this._acc ?? 0) + Math.min(dt, MAX_FRAME_DT);
     while (this._acc >= FIXED_DT) {
       this._acc -= FIXED_DT;
@@ -2095,7 +2103,11 @@ export class EnemyAI {
       // A5: `flies` ALONE opens it (:925) - a levitator gets no floor
       // lift, which is why the arm is spelled out rather than folded
       // into the branch condition above.
-      if (this.flies && this.avoidObstaclesTimer <= 0 && d[1] < 0) {
+      // CEIL-GHOST (FIELD BUGS 2026-10-09c, "Ghost companion isn't showing health bar - clipping into ceiling"): AND
+      // DURING COMBAT - never while following. A companion steers its feet at the leader's (_followTicks), so a leader a
+      // hair below it read as a descent, the lift turned it up, and it climbed till its feet were a metre off the floor
+      // or its body met the ceiling - a ghost's whole height (2.6 m) into the roof, its bar over it and hidden.
+      if (this.flies && !this._following && this.avoidObstaclesTimer <= 0 && d[1] < 0) {
         const hit = this.collider.raycast(
           this._centre(), [0, -1, 0],   // FindGroundPosition rays from transform.position (:224)
           this.height / 2 + FLYER_FLOOR_CLEARANCE);

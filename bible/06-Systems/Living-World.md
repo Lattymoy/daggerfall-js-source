@@ -23,12 +23,17 @@ Taken at the design, in the request's own order; each is Mac's to overrule.
    hour). Every resident, every plan, trip, caravan, camp, encounter and dive is a PURE FUNCTION of the world's own data
    (MAPS, BLOCKS, the roads), a seed and that clock - so every player on a page sees the same baker walk to the same
    oven at the same minute, and not a byte crosses the relay. A rest, a wait, a fast travel or a prison sentence moves
-   the clock and the world with it: the people are where their day has taken them.
+   the clock and the world with it: the people are where their day has taken them. CHAP5b (2026-10-09; Chapters-Arc 9)
+   NARROWS IT BY ONE INPUT: online, the chapter sheet the playing tab holds (`net/chapterSheet.js`, the service's) - a
+   guild's evenings at its hall by its chapter's band, the town's talk of a chapter not Steady - so every player reading
+   one sheet sees one hall; with no sheet (offline, the sheet unread, a chapter it does not name) it is the world above.
 3. **PEOPLE WALK AT THEIR OWN PACE.** On the street a resident walks DFU's 1.3 m/s (`PERSON_MOVE_SPEED`); the clock's
    rate turns it into the clock's minutes (`CLASSIC_MINUTES_PER_SECOND`, twelve a real minute; the sky's
    `skyMinutesPerMsAt`, twenty-four), so a resident beside the player keeps pace with them and every day is lived at
    walking speed. A journey's time scale speeds the calendar and the people with it.
-4. **A RESIDENT IS A DFU TOWNSPERSON WHO KEEPS THEIR IDENTITY FOR LIFE.** The billboard race is the climate's people,
+4. **A RESIDENT IS A DFU TOWNSPERSON WHO KEEPS THEIR IDENTITY FOR LIFE.** The billboard race is the climate's people
+   (REGIONAL-FOLK, `01-Overview/Field-Bugs-2026-10-10.md`: a Redguard region's are Redguards - its residents were
+   re-dressed once, at that update, their names and days kept),
    the outfit one of `PERSON_TEXTURES`' four, the talk portrait `PERSON_FACE_RECORDS`' own law, the name `fullName` on
    the region's bank with DFRandom's state saved and put back (`shipCrew.js handName`'s pattern) - every part DFU's, but
    drawn once from the resident's seed instead of at every spawn.
@@ -104,7 +109,7 @@ Taken at the design, in the request's own order; each is Mac's to overrule.
   homemakers, a city's beggars); `CENSUS_MAX` 260, the common hands trimmed first. `townCensus` gives the watch the
   palace and every traveller a house (an adventurer the tavern a quarter of the time) - LW-WALLS: of the buildings whose
   doors open onto the town's street, where the town knows them. Identity is `mintResident`'s:
-  the climate's people (`raceOfPeople`), half female, an outfit of `PERSON_TEXTURES`, a face of
+  the climate's people - a Redguard region's Redguard (`walkerRace`, REGIONAL-FOLK) - half female, an outfit of `PERSON_TEXTURES`, a face of
   `PERSON_FACE_RECORDS` + 0..23, a name on the region's bank (`residentName`), the watch GUARD_TEXTURE male outfit 0
   (RandomiseNPC's arms, every part); a temper (lark, day, owl) weighted by the job, three leanings (company, piety,
   drink), a class for the armed (an adventurer any of the eighteen, a sellsword the fighting seven, a courier the
@@ -211,7 +216,8 @@ the trample (`retire`), the probes.
   (`systems/livingWorld/ways.js createWayBook`) - not by the host, whose one construction seam is the player's journey
   (TO-ROADS) - on the game's own ground alone (the climate and the heightmap: never a player's attached World of
   Daggerfall massifs, which only that player has). Once a pair in ONE direction - the lower map id first, the other its
-  reverse - so every client walks the same way, `WAYS_PER_FRAME` (2) new pairs a frame; a new network clears the book
+  reverse - so every client walks the same way, `WAYS_PER_FRAME` (2) new pairs a frame at the least, and more while the
+  frame's asking has taken under 2 ms (PERF-WAYS1, below); a new network clears the book
   and the host's trips with it (`generation`). Two players on different road networks see their travellers on their
   own roads. `wayOf` lays it through its pixels' centres, which is the road itself; each end is trimmed by the town's
   half-width and a block (`townTrim`), so a party walks out of the town's edge.
@@ -1945,6 +1951,48 @@ PLEA_SCRIPTS, WATCH_CALLS, STALL_CRIES, BEGGAR_CRIES, DRINKING_SONGS).
   `lwspace.json` LW-SPACE-alone-turns-untried, whose pin was the street's own measure of bodies inside another, its
   scene moved by the incidents: pinned now in `lwspace_street`'s aloneStands (one whose own place is taken stands on
   another bearing), dead; `lwtalk.json` and `lwstir.json` judged again after the last edits, all dead.
+
+## PERF-WAYS1 - the ways asked while the asking is cheap (2026-10-09)
+
+Mac: "I want to continue working to increase performance across the board, especially for online". The real game
+measured online for the first time (`tools/onlineFrameProbe.mjs`, `07-Rendering/Performance-Online.md`): at
+Knightstale with nobody else there, the world host's frame was 36.5 ms of this container's CPU against 13.5 offline,
+and 17 ms of the difference was this arc's. Offline at the same town the probe found the town's trips already known
+when it measured (its street and its roads' layer ran, its trips were not planned again); online they were not, all the
+quarter hour it watched. The Living World is on by default in both lanes; the online probe measured fifty frames after
+its boot, the offline one after its grass settled (AUDIT PERF-ON4 - `07-Rendering/Performance-Online.md`).
+
+- **The waiting was the dear part.** `livingTown.js _roadsOf` asks the host's `tripsOf` each frame until a day's word
+  comes, and `world.js livingTripsOf` answers undefined while any way a trip needs is unasked (LW3). Each of those
+  frames planned every trip of every town within reach again - `visitorsOf` over the towns within TRIP_REACH_PX, their
+  rosters, `ownTrip`'s weights and picks for every traveller still waiting - and the roads' layer (`livingRoads.js
+  sweepOn`, `partiesOfTown`, `remainsOfTown`) did the same for its towns: the two readers 14.4 ms and 3.0 ms of the
+  frame, 16.8 of it the trips planned again, with 3.5 MB allocated, frame after frame. The ways came at WAYS_PER_FRAME (2) a frame, and a region asks hundreds of pairs: at the
+  probe's half a frame a second the town waited the whole quarter hour it was watched (16.8 ms, 12.2 at six minutes, 8.2
+  at fourteen); at 60 fps the same pairs are seconds of such frames on every arrival. The planner itself is not dear:
+  on the real map's ground (AUDIT PERF-ON4, 20,000 of the 231,819 town pairs within 18 pixels) a pair is 0.16 ms on
+  Hazelnut's roads and 0.22 on the generated network on average, p99 0.8 and 1.1, one in a thousand on the roads and
+  three on the generated network over 2 ms (the dearest 18), and a network's first unroutable pair about 180 (its land
+  pieces folded, once) - so a frame's asking can run past its time by one pair, as LW3's two could.
+- **The two stay the floor; past them, the frame's time.** `ways.js createWayBook` asks LW3's two a frame whatever they
+  cost, then asks on while the frame's asking has taken under WAYS_MS_PER_FRAME (2 ms, the book's own clock, `now`) and
+  never past WAYS_MAX_PER_FRAME (32 - a browser's clock is coarse, and a pair it read as nothing would let a frame ask
+  without end). The same pairs, planned by the same planner on the same network in the same direction: every way is the
+  one it was, and every reader's trips, visitors and parties with it. Over a synthetic region of 81 towns
+  (`test/lwRoads.mjs synthMap`, a tenth of a millisecond a pair) a town's trips and visitors were known in 64 frames
+  where they took 656, its 1,311 pairs the same pairs, and the frames' work 0.8 s against 7.4 s of this container's CPU.
+  Online, the same boot and save: the ways and the trips known by the first window measured, the Living World 17.4 ->
+  1.4 ms of the frame and the frame 36.5 -> 19.4 alone (39.5 -> 28.3 with sixty round the player).
+- **Left:** a frame that waits still plans every trip near again - shorter now, not gone. Keeping a waiting traveller's
+  work beside the pair it waits on would end it, and is its own slice.
+
+Pinned by `test/perfways1.test.js` (3) and `tools/mutants/perfways1.json` (13, all dead - AUDIT PERF-ON4 added the
+calls past the floor held to the floor's direction, network and ground, the time's edge, the cap's exact value, and the
+shipped clock, `performance.now`, which no pin had run); `test/lw3_roads.test.js`'s
+budget pin moved onto a clock where a pair takes the frame's whole asking time (`tools/mutants/lw3.json`
+LW3-ways-budget-unspent re-aimed by content). The four hosts: `world.js` holds the book and calls its `frame()` (both
+arms, unchanged); `exterior.js` keeps DFU's pool and has no roads; `worldModes.js` and `dungeonContext.js` reach the
+ways only through world.js.
 
 ## The four hosts
 

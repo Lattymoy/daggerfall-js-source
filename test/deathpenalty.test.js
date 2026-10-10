@@ -30,21 +30,24 @@ test('the penalty comes off the purse counter and answers what it took', () => {
   assert.equal(deathPenaltyText(0), '');
 });
 
-test('it is taken by BOTH online respawn paths, once, and never by the offline end of run', () => {
+test('it is taken by BOTH respawn paths, once - online, and offline at a Project Legacy rise (BAL4) - and never by the offline end of run', () => {
   const world = read('src/scenes/world.js');
   const modes = read('src/scenes/worldModes.js');
   assert.match(world, /reviveForPlay\(playerEntity, \{ force: true \}\);\s*\n\s*surfacePlayer\(\);\s*\n\s*player\.stopAutorun\(\);[^\n]*\n\s*const goldLost = wildRise \? 0 : applyDeathPenalty\(playerEntity\);/,
     'respawnOnlinePlayer, after the _respawning guard');   // WILD GOLD: a death in the open zone pays none here - its half goes into the remains (wildDeath)
   // PIN MOVED (RVN8: a revenant's theft rides the same box, after the price - bible/12-Enhanced-AI/Feud-Arc.md 19)
   assert.match(world, /\[respawnFlavorText\(kind\), deathPenaltyText\(goldLost\)(?:, took\?\.line)?\]\.filter\(Boolean\)/, 'and says so on waking');
-  assert.match(modes, /const goldLost = online \? applyDeathPenalty\(playerEntity\) : 0;[\s\S]*?say\(deathPenaltyText\(goldLost\)\)/, "Privateer's Hold's in-place respawn");   // PIN MOVED (AUDIT LEGACY B5): online's alone - an offline Project Legacy rise there pays none
+  // PIN MOVED (BAL4, bible/05-Combat/Balance-Arc.md section 6): the arm runs online or at a Legacy rise, and both pay the tenth
+  assert.match(modes, /const goldLost = applyDeathPenalty\(playerEntity\);[\s\S]*?say\(deathPenaltyText\(goldLost\)\)/, "Privateer's Hold's in-place respawn");   // PIN MOVED (AUDIT LEGACY B5): online's alone, until BAL4
   const end = /function endRunToTitleMenu[\s\S]*?\n\}/.exec(read('src/scenes/shared.js'))?.[0] ?? '';
   assert.doesNotMatch(end, /applyDeathPenalty/, 'offline a death ends the run - nothing to take');
 });
 
-test('the death screen shows the loss - online only, and only when there is one', () => {
+test('the death screen shows the loss - wherever the death respawns (online, or a Legacy rise offline), and only when there is one', () => {
   const ds = read('src/ui/deathScreen.js');
-  assert.match(ds, /this\.goldLoss = this\.online \? deathGoldLoss\(goldPiecesOf\(entity\)\) : 0;/);
+  // PIN MOVED (BAL4, bible/05-Combat/Balance-Arc.md section 6): a Project Legacy rise offline respawns too
+  assert.match(ds, /const respawns = this\.online \|\| this\.rises;\n\s*this\.goldLoss = respawns \? deathGoldLoss\(goldPiecesOf\(entity\)\) : 0;\n\s*if \(respawns\) stateDeathLoss\(this\.goldLoss\);/);
+  assert.match(ds, /this\.rises = !this\.online && !!rises\?\.\(\);/, 'the rise is the host\'s word, offline');
   assert.match(ds, /if \(this\.goldLoss > 0\) \{[\s\S]*?DEATH CLAIMS \$\{this\.goldLoss\} GOLD/, 'classic face');
   const en = read('src/ui/enhancedDeath.js');
   assert.match(en, /const lossLine = screen\.goldLoss > 0 \? \(screen\.goldLossLine \|\| deathPenaltyLine\(screen\.goldLoss\)\) : '';/);

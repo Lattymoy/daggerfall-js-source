@@ -13,7 +13,11 @@ import { courtSaySeconds } from '../src/scenes/gateCourt.js';
 import { createSdFightLink, SD_FIGHT_TEXT, SD_HEARTS_KEY } from '../src/net/sdFightLink.js';
 import { SD_BLOWS, SD_BODY, SD_ECHO_PAIR_MS, newRemnantFight, joinRemnant, remnantStateOf } from '../src/net/sdRemnant.js';
 import { validSdOut } from '../src/net/wire.js';
-import { SD_ARENA, realmToDungeon } from '../src/net/sdBrain.js';
+import { SD_ARENA, realmToDungeon, SD_TURN_WAIT_LINE } from '../src/net/sdBrain.js';
+import { SD_ENDINGS, sdEndingOf, sdMarksOf } from '../src/net/sdMarks.js';
+import { sdMarksLine, sdHourLine } from '../src/systems/sdOmen.js';
+import { SD_CLAIM_TEXT } from '../src/net/sdClaims.js';
+import { SD_MARK_TIPS } from '../src/ui/sdMarksView.js';
 import { createSdRemnantBlows, SD_BLOWS_TEXT, SD_BLOW_CUES, SD_HEART_LATE_MS } from '../src/scenes/sdRemnantBlows.js';
 import { arenaToDungeon } from '../src/scenes/sdRemnant.js';
 import { BOSS_CUES, FIRE_CAST_ID } from '../src/world/gateBoss.js';
@@ -70,8 +74,9 @@ test('SD11d THE HOUR\'S VOICE: a line said with nothing standing shows at once f
   r.set(r.shown[1].at + 200); r.v.say('The Last Moment! The Remnant returns.');
   assert.equal(r.last(), 'The Last Moment! The Remnant returns.', 'more urgent: at once');
   // the readout waited past its life: let go, and the note behind the turn shown
+  // PIN MOVED (AUDIT SD IV T2): and the note the turn cut 200 ms in said again first, whole - cut, it was lost (sd26_text)
   r.across(30_000);
-  assert.deepEqual(r.shown.map((x) => x.text), [a, 'Your spoils spill across the arena floor.', 'The Last Moment! The Remnant returns.', 'The spoils of the Last Moment are in your pack.'], `a readout ${SD_VOICE_WAIT_MS[SD_VOICE_RANK.readout]} ms stale is let go`);
+  assert.deepEqual(r.shown.map((x) => x.text), [a, 'Your spoils spill across the arena floor.', 'The Last Moment! The Remnant returns.', 'Your spoils spill across the arena floor.', 'The spoils of the Last Moment are in your pack.'], `a readout ${SD_VOICE_WAIT_MS[SD_VOICE_RANK.readout]} ms stale is let go`);
   // the same line waits once
   const q = voice();
   q.v.say(a); q.v.say('The Hour casts you back.'); q.v.say('The Hour casts you back.');
@@ -136,7 +141,7 @@ test('SD11d THE KILL READ WHOLE (L6 F2): the fall, the collapse\'s first readout
 });
 
 test('SD11d THE HOSTS SAY THROUGH THE VOICE, from the world host\'s own text: its one voice on the label\'s door at each line\'s length; the readouts a readout, the floor\'s words a note, the fight\'s a turn with its thread; the Hall\'s and the Rift\'s through the mode machine\'s door; a frame of the voice each frame of the arc; what waits let go as the Hour is left, once (mutants: the readouts a turn; the voice unframed; the leave never letting go; the hall around it)', () => {
-  assert.match(W, /const sdVoice = createSdVoice\(\{ show: \(t, secs\) => setMidScreenText\(t, secs\), now: \(\) => performance\.now\(\) \}\);/);
+  assert.match(W, /const sdVoice = createSdVoice\(\{ show: \(t, secs\) => setMidScreenText\(t, secs\), now: \(\) => performance\.now\(\), covered: sdVoiceCovered \}\);/);   // PIN MOVED (AUDIT SD IV T3): covered while a window is up over the label (sd26_text)
   assert.match(W, /const sdSay = \(t, rank = SD_VOICE_RANK\.turn, key = null\) => \{ sdVoice\.say\(t, rank, key\); return true; \};/);
   assert.match(W, /warn: \(text\) => sdSay\(text, SD_VOICE_RANK\.readout\),/, 'the collapse\'s and the fade\'s readouts');
   assert.match(W, /const sdSpoilsBurst = sdFightLink \? createSdSpoils\(\{[\s\S]{0,700}?say: \(t\) => sdSay\(t, SD_VOICE_RANK\.note\),/, 'the floor\'s word');
@@ -255,8 +260,12 @@ test('SD11d THE HEARTS HEARD AND SAID (L6 F7): the Reset\'s call counts its Hear
   gone.word({ k: 'cx', i: I, m: 500, c: SPOTS });
   gone.to(gone.now() + 16);
   gone.sounds.length = 0;
-  gone.word({ k: 'stun', until: gone.now() + 8000, at: gone.now() });
-  gone.to(gone.now() + 9000);
+  // PIN MOVED (AUDIT SD IV A2): framed while the stun's word is late - one step of nine seconds is a page away, and a
+  // page away takes the Hearts again in silence whatever the stun (sd26_audio); the word itself late is this law's
+  const stunAt = gone.now();
+  for (let k = 0; k < 9; k++) gone.to(gone.now() + 1000);
+  gone.word({ k: 'stun', until: stunAt + 8000, at: stunAt });
+  gone.to(gone.now() + 16);
   assert.equal(gone.sounds.filter((x) => x.clip === BOSS_CUES.crystalBreak.clip).length, 0, 'the stun over before this screen looked: nothing shatters late');
   // a Reset first heard late (a hello mid-wind-up): no rise
   const late = hearts();
@@ -438,10 +447,14 @@ test('SD11d THE HOUR\'S OWN VEIL (L6 F8; Mac, of the Hour: "not oblivion, someth
   for (const fire of ['vec3(0.98, 0.3, 0.03)', 'vec3(1.0, 0.72, 0.34)', 'vec3(1.0, 0.84, 0.56)', 'vec3(1.0, 0.76, 0.38)']) assert.ok(GATE_VEIL_FS.includes(`mix(${fire}, `), `the fire's ${fire} first, the brass mixed over it`);
   // every way through the Hour asks it
   const WM = read('src/scenes/worldModes.js');
-  assert.match(WM, /async function stepThroughFire\(go, look = 'fire'\) \{[\s\S]{0,200}if \(veil\) await veil\.cover\(look\);/);
-  assert.equal((W.match(/\}, 'brass'\);/g) ?? []).length, 2, 'the Rift\'s step in and the way back');
-  assert.equal((W.match(/gateVeil\?\.flash\('brass'\)/g) ?? []).length, 4, 'a death, the cast-out, the Hour\'s eject, the way home');
-  assert.match(W, /if \(hour\) gateVeil\?\.flash\('brass'\);\s*\n\s*sdSay\(SD_CAST_OUT_LINE\);/, 'the cast-out from the Hour, never from the Hollow');
+  // PIN MOVED (SD-LOOK S5, Super-Dungeons-Look.md section 3): the Hour's own veil (render/sdVeil.js) - in through its
+  // blades closing on the Rift, back in silver, home mended, forced out shattered; the brass whirl stays a theme
+  assert.match(WM, /async function stepThroughFire\(go, look = 'fire', opts = undefined\) \{[\s\S]{0,200}if \(veil\) await veil\.cover\(look, opts\);/);
+  assert.equal((W.match(/\}, 'hourIn'\);/g) ?? []).length, 1, 'the Rift\'s step in');
+  assert.equal((W.match(/\}, 'hourBack'\);/g) ?? []).length, 1, 'the way back');
+  assert.equal((W.match(/gateVeil\?\.flash\('hourCast'\)/g) ?? []).length, 3, 'a death, the cast-out, the Hour\'s eject');
+  assert.equal((W.match(/gateVeil\?\.flash\('hourHome'\)/g) ?? []).length, 1, 'the way home');
+  assert.match(W, /if \(hour\) gateVeil\?\.flash\('hourCast'\);[^\n]*\n\s*sdSay\(SD_CAST_OUT_LINE\);/, 'the cast-out from the Hour, never from the Hollow');
 });
 
 // ── the chart (L6 F11) ────────────────────────────────────────────────
@@ -488,6 +501,16 @@ function arcLines() {
   for (const hour of [true, false]) for (const first of [true, false]) add(`collapse.${hour}.${first}`, sdCollapseLine(SD_COLLAPSE_MS, { hour, first }));
   add('fadeR', sdFadeReadout(60_000, { hour: true }));
   add('fight.dragonBreak.15', SD_FIGHT_TEXT.dragonBreak(SD_ECHO_PAIR_MS)); add('fight.dragonBreak.10', SD_FIGHT_TEXT.dragonBreak(10_000));   // AUDIT SD III (T14): its window's words, read
+  // PIN MOVED (AUDIT SD IV T9): and every line the arc has said since SD11 - the marks line with every find (each Ending's;
+  // it hung its signature between dashes), the last hour's, the turn's wait, the claim's words, the card's tips (two
+  // dash asides and an "X, not Y"). The law's scope: what is SAID - a chat line, a voice's line, a plaque's row, a tip.
+  // A label and its value keep their dash (the bar's chips, the card's wake line "Sunfall - the Ending of Sentinel", the
+  // ground's "Brass Stomp - jump!", the Timers' rows), as the gate's own do.
+  for (const E of SD_ENDINGS) { const s = Array.from({ length: 216 }, (_, i) => i + 1).find((k) => sdEndingOf(sdMarksOf(k))?.id === E.id); add(`marks.${E.id}`, sdMarksLine({ name: 'The Stopped Bell', s })); }
+  add('hour.near', sdHourLine({ name: 'The Stopped Bell', near: 'Copperham' })); add('hour.region', sdHourLine({ region: 'Alik\'r Desert' }));
+  add('turnWait', SD_TURN_WAIT_LINE);
+  add('claim.recorded', SD_CLAIM_TEXT.recorded(3)); for (const k of ['title', 'aura', 'guest']) add(`claim.${k}`, SD_CLAIM_TEXT[k]);
+  walk('tip', SD_MARK_TIPS);
   return out;
 }
 

@@ -104,10 +104,11 @@ test('NUDE-FLATS, the Morrowind body: a woman\'s bare chest wears the plainest s
   // Show Nudity on, or a man: composed as it always was
   assert.deepEqual(ids(wear([], true, true)), [], 'Show Nudity on: the body as Morrowind drew it');
   assert.deepEqual(ids(wear([], false, false)), [], 'a man\'s bare chest is left as it is');
-  // a chest something covers takes no weld: a worn shirt, a cuirass, a cloak's robe
+  // a chest something covers takes no weld: a worn shirt, a cuirass
   assert.deepEqual(ids(wear([{ kind: 'clothing', templateIndex: 165, name: 'Short Shirt' }], true, false)), ['b_shirt', 'b_sleeve']);
   assert.deepEqual(ids(wear([{ kind: 'armor', templateIndex: ARMOR_ENUM.Cuirass, material: ARMOR_MATERIAL.Iron }], true, false)), ['b_cu'], 'the cuirass, no shirt under it');
-  assert.deepEqual(ids(wear([{ kind: 'clothing', templateIndex: 154, name: 'Casual Cloak' }], true, false)), ['b_robe'], 'the robe, no shirt under it');
+  // MW-CLOAK1: a cloak is the port's own and hangs down the back - the chest under it takes the weld
+  assert.deepEqual(ids(wear([{ kind: 'clothing', templateIndex: 154, name: 'Casual Cloak' }], true, false)), ['b_shirt', 'b_sleeve', 'daggerfall_cloak'], 'the cloak, the shirt under it');
   assert.equal(MODESTY_SHIRT.name, 'Short Shirt');
   // the switch at the build: the viewer's own setting, the one the classic doll reads
   assert.match(src('src/combat/fpArm.js'), /: composeWornModest\(\{ pieces: armor \?\? \[\], armors: armors \?\? \[\], clothes: clothes \?\? \[\], bodyPool: parts, female, colourOf, helmStyle \}, showNudity\(\)\);/);   // MW-STEEL1: and the Steel Helm switch

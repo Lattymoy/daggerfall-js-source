@@ -29,7 +29,7 @@
   {
     "name": "LOOT21-the-door-never-finds-them",
     "file": "src/systems/lootRarity.js",
-    "old": "  items.push(...rollLateFinds({ ...source, luck }, rolls));   // LOOT21: the late finds - the Ayleid stones - last of all\n",
+    "old": "  items.push(...rollLateFinds({ ...source, luck }, rolls));   // LOOT21: the late finds - the Ayleid stones - after all of it\n",
     "new": "",
     "tests": [
       "test/loot21_stones.test.js"

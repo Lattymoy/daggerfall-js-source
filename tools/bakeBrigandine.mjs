@@ -1,8 +1,17 @@
-// THE STEEL BRIGANDINE'S MORROWIND ASSETS, in one command.
+// THE BRIGANDINE'S MORROWIND ASSETS, every metal's, in one command.
 //
-//     node tools/bakeBrigandine.mjs [--fbx=src/assets/mw/source/Brigandine_Steel.fbx]
-//                                   [--png=src/assets/mw/source/Brigandine_Steel.png]
-//                                   [--sheets]
+//     node tools/bakeBrigandine.mjs [--fbx=src/assets/mw/source/Brigandine_Steel.fbx] [--sheets]
+//
+// MW-BRIG4 (2026-10-09, Mac: "Also for the integrated brigadine chest piece, we need each of these textures
+// implemented", nine paintings of the same unwrap; asked which metal wears which, he took the map offered - one per
+// metal): the one mesh is baked once and written once PER METAL the Jerkin is a brigandine in (ownArmorModels.js
+// BRIGANDINE_METALS, Iron to Daedric), each NIF naming its metal's DDS. Steel keeps MW-BRIG1's red; the nine are Mac's,
+// committed under their metals' names (PAINTING) as he sent them - in the order he attached them, 1 Iron (tan, dark
+// rivets), 2 Adamantium (tan, red rivets), 3 Mithril (light blue, teal rivets), 4 Daedric (red, dark rivets),
+// 5 Orcish (green, dark rivets), 6 Elven (green, white rivets), 7 Silver (deep blue, silver rivets), 8 Ebony (red,
+// light rivets), 9 Dwarven (deep blue, gold rivets): four cloths painted twice, the rivets alone telling each pair
+// apart. Each metal's NIF names its material for its metal (AUDIT MW-BRIG4: every one said Steel); Steel's bytes are
+// MW-BRIG1's.
 //
 // MW-BRIG1 (2026-09-29, Mac: "This is for the morrowind model. The steel
 // brigantine"). The second of the port's own Morrowind models, and the
@@ -46,22 +55,28 @@ import { meshToNif } from './nifWrite.mjs';
 import { previewSheet } from './meshSheets.mjs';
 import { readPng, writePng } from './pngIO.mjs';
 import { isMain } from './lib/isMain.mjs';
+import { BRIGANDINE_METALS } from '../src/characters/ownArmorModels.js';
 
 /** Mac's Blender export and the texture it names, committed so the bake
  *  is reproducible. (The FBX points at the PNG as "Steel.png"; it is
  *  kept under the asset's own name here.) */
 export const SOURCE_FBX = 'src/assets/mw/source/Brigandine_Steel.fbx';
-export const SOURCE_PNG = 'src/assets/mw/source/Brigandine_Steel.png';
 
-export const OUT = Object.freeze({
-  mesh: 'src/assets/mw/meshes/brigandine_steel.nif',
-  texture: 'src/assets/mw/textures/brigandine_steel.dds',
-});
+/** MW-BRIG4: each brigandine metal's painting - Steel's the FBX's own (MW-BRIG1), the nine others Mac's (2026-10-09). */
+export const PAINTING = Object.freeze(Object.fromEntries(BRIGANDINE_METALS.map((m) => [m, `src/assets/mw/source/Brigandine_${m}.png`])));
+export const SOURCE_PNG = PAINTING.Steel;
 
-/** The DDS's name as the NIFs spell it: a BARE file, which
+/** The DDS's name as a metal's NIF spells it: a BARE file, which
  *  `correctTexturePath` re-roots under `textures/` - the ladder the whole
  *  lane uses (the Thunderlock's own convention). */
-export const TEXTURE_NAME = 'brigandine_steel.dds';
+export const textureNameFor = (metal) => `brigandine_${metal.toLowerCase()}.dds`;
+/** A metal's shipped files. ownMwAssets.js serves `src/assets/mw/` as a Data Files tree, so these ARE their game paths. */
+export const outFor = (metal) => Object.freeze({
+  mesh: `src/assets/mw/meshes/brigandine_${metal.toLowerCase()}.nif`,
+  texture: `src/assets/mw/textures/${textureNameFor(metal)}`,
+});
+export const OUT = outFor('Steel');
+export const TEXTURE_NAME = textureNameFor('Steel');
 
 export const SETTINGS = Object.freeze({
   placement: 'scene',
@@ -76,35 +91,61 @@ export const SETTINGS = Object.freeze({
 
 const save = (path, bytes) => { mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, bytes); };
 
-export function bakeBrigandine(fbxBytes, pngBytes, { sheets = false } = {}) {
-  const mesh = bakeMesh(readFbx(fbxBytes), {
-    name: 'Steel Brigandine',
-    placement: SETTINGS.placement, forward: SETTINGS.forward, up: SETTINGS.up,
-  });
+/** The mesh, in the scene's placement, turned to Morrowind's front. */
+export const bakeBrigandineMesh = (fbxBytes) => bakeMesh(readFbx(fbxBytes), {
+  name: 'Steel Brigandine',
+  placement: SETTINGS.placement, forward: SETTINGS.forward, up: SETTINGS.up,
+});
+
+/** One metal's files: its painting mip-chained to a DDS, and the mesh written naming it - and naming its material for
+ *  the metal ("Iron BrigandineMaterial"), Steel's the mesh's own name as MW-BRIG1 wrote it. */
+function paint(mesh, metal, pngBytes, sheets) {
   const png = readPng(pngBytes);
   const dds = writeDds(mipChain({ width: png.width, height: png.height, data: png.data }));
-  const out = { mesh, dds, png, nif: meshToNif(mesh, { texture: TEXTURE_NAME, node: 'Brigandine' }), sheets: null };
+  const named = mesh.name === `${metal} Brigandine` ? mesh : { ...mesh, name: `${metal} Brigandine` };
+  const out = { metal, png, dds, nif: meshToNif(named, { texture: textureNameFor(metal), node: 'Brigandine' }), sheets: null };
   if (sheets) {
     out.sheets = { preview: writePng(previewSheet(mesh, 360, { width: png.width, height: png.height, data: png.data })) };
   }
   return out;
 }
 
+/** One metal's bake (Steel's by default - MW-BRIG1's). */
+export function bakeBrigandine(fbxBytes, pngBytes, { sheets = false, metal = 'Steel' } = {}) {
+  const mesh = bakeBrigandineMesh(fbxBytes);
+  return { mesh, ...paint(mesh, metal, pngBytes, sheets) };
+}
+
+/** MW-BRIG4: every metal's - the mesh baked once, `pngs` by metal (PAINTING's keys). Pure: bytes in, bytes out. */
+export function bakeBrigandineMetals(fbxBytes, pngs, { sheets = false } = {}) {
+  const mesh = bakeBrigandineMesh(fbxBytes);
+  return {
+    mesh,
+    metals: BRIGANDINE_METALS.map((metal) => {
+      if (!pngs[metal]) throw new Error(`no painting for the ${metal} brigandine (${PAINTING[metal]})`);
+      return paint(mesh, metal, pngs[metal], sheets);
+    }),
+  };
+}
+
 if (isMain(import.meta.url)) {
   const args = process.argv.slice(2);
   const opt = (k, d) => args.find((a) => a.startsWith(`--${k}=`))?.split('=')[1] ?? d;
   const fbx = opt('fbx', SOURCE_FBX);
-  const png = opt('png', SOURCE_PNG);
+  if (opt('png', null)) { console.error('--png is gone (MW-BRIG4): each metal\'s painting is PAINTING\'s, src/assets/mw/source/Brigandine_<Metal>.png'); process.exit(2); }
   const wantSheets = args.includes('--sheets');
-  const r = bakeBrigandine(readFileSync(fbx), readFileSync(png), { sheets: wantSheets });
-  save(OUT.mesh, r.nif);
-  save(OUT.texture, r.dds);
+  const r = bakeBrigandineMetals(readFileSync(fbx), Object.fromEntries(Object.entries(PAINTING).map(([m, p]) => [m, readFileSync(p)])), { sheets: wantSheets });
   const b = r.mesh.bake;
-  console.log(`${fbx} + ${png}`);
+  console.log(fbx);
   console.log(`  ${b.polygons} polygons (${b.clipped} ear-clipped) -> ${r.mesh.indices.length / 3} triangles, placed at ${b.sceneTranslation.join(', ')}`);
-  console.log(`  z ${r.mesh.bounds.min[2].toFixed(2)}..${r.mesh.bounds.max[2].toFixed(2)}  -> ${OUT.mesh}  ${r.nif.length} bytes`);
-  console.log(`  texture ${r.png.width}x${r.png.height} -> ${OUT.texture}  ${r.dds.length} bytes`);
-  if (wantSheets) {
-    for (const [k, bytes] of Object.entries(r.sheets)) { save(`scratch/brigandine-${k}.png`, bytes); console.log(`  scratch/brigandine-${k}.png`); }
+  console.log(`  z ${r.mesh.bounds.min[2].toFixed(2)}..${r.mesh.bounds.max[2].toFixed(2)}`);
+  for (const m of r.metals) {
+    const out = outFor(m.metal);
+    save(out.mesh, m.nif);
+    save(out.texture, m.dds);
+    console.log(`  ${m.metal.padEnd(11)} ${PAINTING[m.metal]} ${m.png.width}x${m.png.height} -> ${out.mesh}  ${m.nif.length} bytes, ${out.texture}  ${m.dds.length} bytes`);
+    if (wantSheets) {
+      for (const [k, bytes] of Object.entries(m.sheets)) save(`scratch/brigandine-${m.metal.toLowerCase()}-${k}.png`, bytes);
+    }
   }
 }

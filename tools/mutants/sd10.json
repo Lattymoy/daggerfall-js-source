@@ -83,8 +83,8 @@
   {
     "name": "SD10-the-returns-words-in-the-hour",
     "file": "src/scenes/sdEnd.js",
-    "old": "      if (key === SD_RETURN_KEY && ret) return { title: retTitle, subs: [retTo] };",
-    "new": "      if (key === SD_RETURN_KEY && ret) return { title: SD_END_TEXT.ret, subs: [SD_END_TEXT.retTo] };",
+    "old": "      if (key === SD_RETURN_KEY && ret) { ret.hoverAt = now(); return { title: retTitle, subs: [retTo] }; }",
+    "new": "      if (key === SD_RETURN_KEY && ret) { ret.hoverAt = now(); return { title: SD_END_TEXT.ret, subs: [SD_END_TEXT.retTo] }; }",
     "tests": [
       "test/sd10_collapse.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SD10-stood-twice",
     "file": "src/scenes/sdEnd.js",
-    "old": "      if (ret || !at) return false;\n      const ago",
-    "new": "      if (!at) return false;\n      const ago",
+    "old": "      if (ret || !at) return false;",
+    "new": "      if (!at) return false;",
     "tests": [
       "test/sd10_collapse.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SD10-carried-off-where-it-rises",
     "file": "src/scenes/sdEnd.js",
-    "old": "      ret = { at: [...at], batch: batchAt(RETURN_ARCHIVE, at, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h), risesAt: now() - ago, pressed: true };\n      wasRet = null;\n",
-    "new": "      ret = { at: [...at], batch: batchAt(RETURN_ARCHIVE, at, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h), risesAt: now() - ago, pressed: true };\n",
+    "old": "      ret = { ...standRet(at, yaw, scale ?? (rift?.hollow ? SD_HOME_SCALE : 1), ago < SD_HOME_RISE_MS), risesAt: now() - ago, pressed: true, up: false, lift: 0 };\n      wasRet = null;\n",
+    "new": "      ret = { ...standRet(at, yaw, scale ?? (rift?.hollow ? SD_HOME_SCALE : 1), ago < SD_HOME_RISE_MS), risesAt: now() - ago, pressed: true, up: false, lift: 0 };\n",
     "tests": [
       "test/sd10_collapse.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "SD10-the-way-home-unstood",
     "file": "src/scenes/dungeonContext.js",
-    "old": "if (home && !sdEnd.ret) sdEnd.standReturn(home, opts.sdHomeAge?.() ?? Infinity);",
-    "new": "if (home && !sdEnd.ret) void home;",
+    "old": "if (home && !sdEnd.hasRet) sdEnd.standReturn(home, opts.sdHomeAge?.() ?? Infinity, { dynamicDraws });",
+    "new": "if (home && !sdEnd.hasRet) void home;",
     "tests": [
       "test/sd10_collapse.test.js"
     ]
@@ -121,7 +121,7 @@
   {
     "name": "SD10-never-taken-down",
     "file": "src/scenes/dungeonContext.js",
-    "old": "else if (!home && sdEnd.ret) sdEnd.returnOut(); }",
+    "old": "else if (!home && sdEnd.hasRet) sdEnd.returnOut(); }",
     "new": "}",
     "tests": [
       "test/sd10_collapse.test.js"
@@ -130,8 +130,8 @@
   {
     "name": "SD10-the-hollows-check-in-the-hour",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    else if (sdEnd.ret && t >= _sdEndCheckAt) {",
-    "new": "    if (sdEnd.ret && t >= _sdEndCheckAt) {",
+    "old": "    else if (sdEnd.hasRet && t >= _sdEndCheckAt) {",
+    "new": "    if (sdEnd.hasRet && t >= _sdEndCheckAt) {",
     "tests": [
       "test/sd10_collapse.test.js"
     ]
@@ -166,7 +166,7 @@
   {
     "name": "SD10-out-with-no-veil",
     "file": "src/scenes/world.js",
-    "old": "    gateVeil?.flash('brass');\n    if (!modes?.unstuck?.()) return false;",
+    "old": "    gateVeil?.flash('hourHome');   // SD-LOOK: the way home's veil - its crack mended\n    if (!modes?.unstuck?.()) return false;",
     "new": "    if (!modes?.unstuck?.()) return false;",
     "tests": [
       "test/sd10_collapse.test.js"

@@ -79,12 +79,12 @@ test('BS1: the interior shelf click routes - bookshelf in the three types, loot 
   assert.ok(!wm.includes('Library/Guild/Temple bookshelves + owned-house storage pend'),
     'the old flag sentence is gone (the house half is re-flagged in place)');
   // the pick opens the reader on the id, through the one book hook
-  assert.match(wm, /_openBookById\(\{ message: shelf\.books\[i\] \}\);/);
+  assert.match(wm, /_openBookById\(\{ message: shelf\.books\[roll \? i - 1 : i\] \}\);/);   // PIN MOVED (CHAP5a): the hall's roll, online, the shelf's first book
   assert.match(wm, /const _openBookById = makeOpenBookHook\(\{ fetchBytes, showReader: \(w\) => \{ interiorOverlay = w; \} \}\);/);
   // the shelf's book list is lazy and PER SHELF, the stock idiom
   assert.match(wm, /shelf\.books \?\?= populateBookshelf\(\);/);
   // the refusal is DFU's box, not a silent return
-  assert.match(wm, /interiorOverlay = new ActionTextBox\(\[access\.text\]\);/);
+  assert.match(wm, /interiorOverlay = roll \? chapterRollWindow\(\{ \.\.\.roll, lines: \[\.\.\.roll\.lines, access\.text\] \}\) : new ActionTextBox\(\[access\.text\]\);/);   // PIN MOVED (CHAP5a): a stranger to the guild reads its roll alone, online; (AUDIT CHAP4 D4) DFU's refusal said under it
 });
 
 test('F198: the health box decision, arm by arm - over the entries the PRODUCER mints (MAC-ILL1)', () => {

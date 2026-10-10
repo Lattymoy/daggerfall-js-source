@@ -76,10 +76,10 @@ SKIN's names (Enhanced Plus, Enhanced lighting and the rest are the
 port's own departures, not the product); `daggerfall-enhanced/custom-class`,
 the format every exported class file carries - rename it and each of
 those files is refused on import; the Patreon page and the Discord
-invite (`dfenhanced`), accounts outside the tree; and the repository, the
-domain, the appId and the `Daggerfall JavaScript` userData folder as BR1
-left them, so an update installs over the copy that is there and the
-saves stay where they are.
+invite (`dfenhanced` then; `jM2JdwSM8w` since 2026-10-09), accounts
+outside the tree; and the repository, the domain, the appId and the
+`Daggerfall JavaScript` userData folder as BR1 left them, so an update
+installs over the copy that is there and the saves stay where they are.
 
 IN THE ART, for Mac: the tops of "The Elder Scrolls" touch the file's
 top edge and are cut flat there - a re-export with a few pixels of
@@ -18680,6 +18680,18 @@ the disposer takes the listener and a pending delivery; the refused request aske
 with no shell left alone; the bridge by source); `kb1_keybinds.test.js`'s sweep carries the reservation. Mutants
 `tools/mutants/esc_lock.json` (8, all dead). `01-Overview/Field-Bugs-2026-09-27.md`.
 
+**A THIRD RULE - GECKO ENDS A LOCK ON A TOUCH (TOUCH-UNLOCK, FIELD BUGS 2026-10-09c).** On Firefox for Android and its
+forks every tap opened the pause ("Touching anywhere onscreen in mobile opens the system menu"; Chrome played). Gecko
+grants a tap's lock - a tap is a user activation, and the hosts' canvas arm asks on every pointerdown - and ends ANY
+lock on the next touch event (`PresShell.cpp`, `PointerLockManager::Unlock("TouchEvent")`), posting the change after
+that touch's own dispatch: a loss the page did not ask for, with nothing up - this section's swallowed Escape. The pause
+then relocked on its close, for the next tap to end. Blink never ends a lock on a touch, which is why "a finger never
+holds a lock" (AUDIT 62 F6, PL3) held there. `bindCursorToggle` now hears the four touch events on the document's
+capture phase, and a loss within `TOUCH_UNLOCK_MS` (500 ms) of one is the finger's - never delivered; a loss with no
+touch near is the player's Escape as before, so a mouse and a keyboard are untouched (and a Firefox touchscreen laptop,
+the layer off, is covered too). Not proven on a device. Pinned in `test/fb1009c_touchunlock.test.js` (2);
+`tools/mutants/fb1009c_touchunlock.json` (4, all dead; `esc_lock.json`'s relock record re-aimed by content).
+
 ## CARD-FIT - the item card fits its window and says what a glance needs (2026-09-28)
 
 The Discord (#bug-reports, Cruor): *"New sigil items descriptor is a bit long! ... all the buttons on it's pop-up card
@@ -19212,3 +19224,13 @@ hourglass is: `ui/enhancedPost.js`.
 - Pins: `test/serverpost_client.test.js`; PIN MOVED: `test/outsideTap.test.js` (five scrims, the envelope inside the
   pause face's; the face under the account window inert; the window's place reset on a tap outside).
 
+
+## EVERY-STANDING - every organization's standing, a setting (FIELD BUGS 2026-10-09e)
+
+A player expelled from the Mages Guild: "since I don't am part of the guild anymore, I can't see how is my standing with
+them ... I personally feel that could be a setting". The enhanced Standing page listed the guilds the player belongs to
+alone. With the Interface tab's Character sheet row on, "Every faction's standing" (prefs `standingAll`, off by
+default), it lists every organization's reputation from the live faction store under its divider
+(`systems/factionStanding.js` standingGroups, drawn by `enhancedMenu.js` statsEveryStanding): the guilds, the temples,
+the knightly orders, the kingdoms, the covens, the vampire clans, the Daedric Princes - a membership under Guilds above,
+with its rank, never twice. The classic skin's sheet is untouched. The record: `01-Overview/Field-Bugs-2026-10-09e.md`.

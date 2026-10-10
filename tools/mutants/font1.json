@@ -316,8 +316,8 @@
   {
     "name": "midscreen-label-in-the-launcher-face",
     "file": "src/ui/enhancedStyle.js",
-    "old": "  max-width: min(680px, 86vw); font-size: 15px; letter-spacing: 0.04em;\n  font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;",
-    "new": "  max-width: min(680px, 86vw); font-size: 15px; letter-spacing: 0.04em;\n  font-family: var(--data); -webkit-font-smoothing: antialiased;",
+    "old": "  width: max-content; max-width: calc(min(680px, 86vw) / var(--hud-scale, 1)); font-size: 15px; letter-spacing: 0.04em;\n  font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;",
+    "new": "  width: max-content; max-width: calc(min(680px, 86vw) / var(--hud-scale, 1)); font-size: 15px; letter-spacing: 0.04em;\n  font-family: var(--data); -webkit-font-smoothing: antialiased;",
     "tests": [
       "test/hudtext.test.js"
     ]

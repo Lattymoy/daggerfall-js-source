@@ -466,7 +466,8 @@ export const guildKeepsSql = (p) => `(EXISTS (SELECT 1 FROM guild_prof_stores WH
   OR EXISTS (SELECT 1 FROM homes WHERE guild_id = ${p})   -- GUILD1d: and its hall - sold first, its deed share into the treasury
   OR EXISTS (SELECT 1 FROM guild_vault WHERE guild_id = ${p})   -- GUILD2b: and its vault's pieces - taken out first, they are its members'
   OR EXISTS (SELECT 1 FROM town_seat_holds WHERE guild_id = ${p})   -- SEAT1c: a Charter it holds - relinquished first (SEAT0 16)
-  OR EXISTS (SELECT 1 FROM town_seat_rights WHERE (guild_id = ${p} OR against = ${p}) AND ${SEAT_BATTLE_PENDING}))`;   // SEAT1c: a battle it is named in, still to come
+  OR EXISTS (SELECT 1 FROM town_seat_rights WHERE (guild_id = ${p} OR against = ${p}) AND ${SEAT_BATTLE_PENDING})   -- SEAT1c: a battle it is named in, still to come
+  OR EXISTS (SELECT 1 FROM npc_chapter_patron_bids WHERE guild_id = ${p} AND state = 'open'))`;   // AUDIT CHAP5 E4: a bid for a chapter's patronage, its escrow burnt with the guild
 
 /** The guild going: its Marks swept to the guildmaster (marks.js guildMarksSweep) and the row deleted, IN ONE BATCH -
  *  the delete only once the guild's gold treasury is empty and its Marks treasury has been emptied into the
@@ -501,7 +502,8 @@ async function whyNotGone(db, guildId, { alone = false } = {}) {
   if (g && await db.prepare('SELECT 1 FROM homes WHERE guild_id = ?1').bind(guildId).first()) return 'guild-hall';   // GUILD1d: its hall, sold first
   if (g && await db.prepare('SELECT 1 FROM guild_vault WHERE guild_id = ?1').bind(guildId).first()) return 'guild-vault';   // GUILD2b: its vault, emptied first
   if (g && await db.prepare('SELECT 1 FROM town_seat_holds WHERE guild_id = ?1').bind(guildId).first()) return 'guild-seat';   // SEAT1c: a Charter, relinquished first
-  if (g && await db.prepare(`SELECT 1 FROM town_seat_rights WHERE (guild_id = ?1 OR against = ?1) AND ${SEAT_BATTLE_PENDING}`).bind(guildId).first()) return 'guild-battle';   // SEAT1c: a battle the Turning named it in
+  if (g && await db.prepare(`SELECT 1 FROM town_seat_rights WHERE (guild_id = ?1 OR against = ?1) AND ${SEAT_BATTLE_PENDING}`).bind(guildId).first()) return 'guild-battle';
+  if (g && await db.prepare("SELECT 1 FROM npc_chapter_patron_bids WHERE guild_id = ?1 AND state = 'open'").bind(guildId).first()) return 'guild-patron';   // AUDIT CHAP5 E4: a patron's bid, decided at the Season's Turning   // SEAT1c: a battle the Turning named it in
   return g ? 'marks-full' : 'no-guild';
 }
 
@@ -594,7 +596,7 @@ async function realmTreasury(ctx, player, me, at, kind, gold, region, letter = f
   const { db, bucket, nowS } = ctx;
   const prep = await prepareRealmRecord(ctx, player.id, at, (save) => (kind === 'deposit'
     ? (payFromSave(save, gold, region) ? null : 'realm-gold')
-    : (creditSave(save, gold, { letter }) ? null : 'bad-gold')));
+    : (creditSave(save, gold, { letter }) ? null : 'bad-gold')), { outbound: kind === 'deposit' });   // INT3: a deposit hands the gold to the guild's
   if (prep.error) return prep;
   const move = kind === 'deposit'
     ? db.prepare('UPDATE guilds SET treasury = treasury + ?1, realm_gold = realm_gold + ?1, moved_by = ?4, moved_at = ?5 WHERE id = ?2 AND treasury + ?1 <= ?3').bind(gold, me.guild_id, GUILD_TREASURY_MAX, displayName(player), nowS)

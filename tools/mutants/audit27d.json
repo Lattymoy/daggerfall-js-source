@@ -323,7 +323,7 @@
   {
     "name": "AUDIT-F4-in-settings",
     "file": "src/systems/partyRestLaw.js",
-    "old": "Turn on \"Rest with my party\" (Features, Other players) to rest with them.",
+    "old": "Turn on \"Rest with my party\" (${optionPath('card:peerSprites')}) to rest with them.",
     "new": "Turn on \"Rest with my party\" in Settings to rest with them.",
     "tests": [
       "test/audit27d.test.js"

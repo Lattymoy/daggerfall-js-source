@@ -85,7 +85,7 @@
 // worn by a row nobody has looked at since.
 // ═══════════════════════════════════════════════════════════════════
 
-import { TITLES, GLYPHS, AURAS, SEAT_TITLES } from '../../src/net/identityToken.js';
+import { TITLES, GLYPHS, AURAS, SEAT_TITLES, CHAPTER_TITLES } from '../../src/net/identityToken.js';
 import { insigniaHeld, insigniaKeys } from '../../src/net/insignia.js';   // WB9g: the Broker's insignia - a title and an aura bought
 import { patreonTitlesOf } from './patreon.js';   // PATREON-LINK: a Patreon tier's title, held by the pledge
 import { SD_HONOUR_TITLE, SD_HONOUR_AURA } from './sds.js';   // SD9b: the Hour's grants on the row
@@ -310,6 +310,11 @@ export function titlesHeld(player, env) {
   // account's guildmaster characters' guilds hold (seatTurning.js seatTitlesOf), read by the caller and laid on the row
   // as `seatTitles` for this request alone
   if (Array.isArray(player?.seatTitles)) for (const t of player.seatTitles) if (SEAT_TITLES.includes(t) && !held.includes(t)) held.push(t);
+  // CHAP4c (Chapters-Arc 6): AND A CHAPTER'S SEAT'S - its Master, an officer, a Master who lost the seat this Season
+  // (CHAP6e: and a Master's of a whole Season, kept for good; a High Master is signed in the Master's place, never held) -
+  // derived from the account's characters' seats (npcChapters.js chapterTitlesOfAccount), laid on the row as
+  // `chapterTitles` for this request alone, while CHAPTER_TITLES is on
+  if (Array.isArray(player?.chapterTitles)) for (const t of player.chapterTitles) if (CHAPTER_TITLES.includes(t) && !held.includes(t)) held.push(t);
   // ARENA4 (2026-10-02, Mac: "Being a top rank PvE fighter comes with it's own title. Being the #1 pvp arena player comes
   // with it's own temporary title/glyph"): THE ARENA'S TWO, derived from the arena's rows as the founder is from a date -
   // read onto the row (`arena`, server-account/src/arena.js arenaHonoursOf) where a token is minted or a wardrobe shown.
@@ -317,6 +322,7 @@ export function titlesHeld(player, env) {
   // the season's #1, so it passes to whoever takes the top and lapses by itself. A row read without them holds neither.
   if (player?.arena?.grand === true) held.push('grandchampion');
   if (player?.arena?.champion === true) held.push('arenachampion');
+  if (player?.iliac?.champion === true) held.push('iliacchampion');   // CARDS10: Iliac Hand's season #1 (iliac.js), while they hold the top
   // SD9b: HOURBREAKER - rolled on a Brass Remnant's kill's first write and laid on the row (sds.js claimSd, `sd_honours`),
   // held for good. A guest's kill is never written, so a guest row holds none
   if (typeof player?.handle === 'string' && player.handle && (Number(player?.sd_honours) & SD_HONOUR_TITLE)) held.push('hourbreaker');

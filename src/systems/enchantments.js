@@ -63,7 +63,7 @@ import { applyDressStanding } from './clothingStanding.js';   // DRESS1 (2026-09
 import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';
 import { SOCIAL_GROUP_COUNT } from '../formats/factionFile.js';   // AUDIT 63 F6: PlayerEntity.cs:128-129 sizes reactionMods at socialGroupCount = 11
 import { regenBarred } from './courtRules.js';   // WBX6: the Burning Court keeps no regeneration
-import { ITEM_TEMPLATES, templateByIndex, mendOrder } from './itemTemplates.js';   // MEND-WORN: the mend order's one home, and the smith's refusal
+import { ITEM_TEMPLATES, templateByIndex, mendOrder, mintCondition } from './itemTemplates.js';   // MEND-WORN: the mend order's one home, and the smith's refusal
 import { WEAPONS, WEAPON_CONDITION_POOL } from '../characters/weapons.js';   // MEND-WORN: a pool weapon's tick is the classic Dagger's share
 import { repoolWeapon } from './conditionRepair.js';   // MEND-WORN: a weapon on its row's pool moves before a mend on the pool, as before a wear
 export { ENCHANTMENT_TYPES };
@@ -287,11 +287,35 @@ export function assignHeldSpell(record, entity, item, { ctx = null, nowMinutes =
   // Cast-When-Held power stands BESIDE its first. The remove-first half is RerollItemEffects' own, ONCE per item
   // (:2012-2021 - enchantmentMagicRound below); stripped per ROW, each power took the one before it off.
   _fx.applySpell?.(record, entity.level ?? 1, entity, ctx?.sinks ?? {}, ctx?.rolls ?? Math.random, { entity }, { bypassSavingThrows: true, heldItem: item });
-  if (!recast) {
+  if (!recast && !ctx?.heldEquipFree) {
     const skillOf = ctx?.castingSkillOf ?? ((sk) => skillValue(entity, sk));
-    enchantLowerCondition(item, classicCastingCost(record, skillOf), entity, ctx);
+    const bill = heldEquipBill(item, classicCastingCost(record, skillOf));
+    if (bill > 0) enchantLowerCondition(item, bill, entity, ctx);
   }
   item.timeEffectsLastRerolled = nowMinutes;
+}
+
+/** HELD-REWEAR (FIELD BUGS 2026-10-09f, BigOOF: "My 'Cast on held' gear is breaking sometimes IMMEDIATELY when
+ *  re-equipping ... I swapped something out with an amulet and it auto-broke the other one"; a DEPARTURE, Port-Ledger A).
+ *  DFU bills a Cast-When-Held spell's whole casting cost in condition at EVERY equip (CastWhenHeld.cs
+ *  InstantiateSpellBundle) - a hundred-odd points on an 800-point amulet - so a piece swapped on and off (the hotbar's
+ *  wear slots, a ring traded for an amulet and back) was spent by the swapping, and one whose bill passed what it had
+ *  left broke the moment it went on, repaired or not. Two laws now: */
+/** (1) A piece re-worn within REROLL_MINIMUM_HOURS of its spell's last casting (`timeEffectsLastRerolled`, the stamp
+ *  every equip and reroll writes) pays nothing: its spell is still fresh, the clock DFU itself recasts it by. */
+export function heldEquipIsFree(item, nowMinutes) {
+  const at = item?.timeEffectsLastRerolled;
+  if (!Number.isFinite(at) || !Number.isFinite(nowMinutes)) return false;
+  const since = nowMinutes - at;
+  return since >= 0 && since < REROLL_MINIMUM_HOURS * MINUTES_PER_HOUR;
+}
+/** (2) The equip bill never breaks the piece: it stops at 1 condition. What wears a held piece out is its wear while
+ *  worn (the MagicRound arm, 1 every 4 rounds), as DFU's own comment says it should "die of use". */
+export function heldEquipBill(item, cost) {
+  // the condition lowerCondition will lower: minted, and a weapon on its row's pool moved to the one pool first
+  if (item && Object.isExtensible(item)) { mintCondition(item); repoolWeapon(item); }
+  const left = Number.isFinite(item?.currentCondition) ? item.currentCondition : Infinity;
+  return Math.max(0, Math.min(cost, left - 1));
 }
 
 function instantiateHeldSpell({ param, entity, item, ctx, nowMinutes }, recast) {
@@ -1032,7 +1056,11 @@ setEnchantmentHooks({
   // unmounted host equips at minute 0, the headless charter.
   onItemEquipped: (entity, item) => {
     if (!isEnchantedItem(item)) return;
-    doItemEnchantmentPayloads(PAYLOAD.Equipped | PAYLOAD.Held, item, { entity, nowMinutes: mergeCtx(null)?.now?.() ?? 0 });
+    const nowMinutes = mergeCtx(null)?.now?.() ?? 0;
+    // HELD-REWEAR: decided ONCE for the piece, before its first held power restamps the clock - an item with two
+    // Cast-When-Held powers is billed for both or for neither
+    const ctx = heldEquipIsFree(item, nowMinutes) ? { heldEquipFree: true } : null;
+    doItemEnchantmentPayloads(PAYLOAD.Equipped | PAYLOAD.Held, item, { entity, nowMinutes, ctx });
   },
   onItemUnequipped: (entity, item) => {
     if (!isEnchantedItem(item)) return;

@@ -1,0 +1,100 @@
+[
+  {
+    "name": "TAMRIEL4-the-lines-stay-straits",
+    "file": "src/ui/tamrielTrace.js",
+    "old": "  closeBorderLines(land, province, w, h);   // TAMRIEL4: the picker's border lines are land, not straits",
+    "new": "  void closeBorderLines;",
+    "tests": ["test/tamriel4.test.js"]
+  },
+  {
+    "name": "TAMRIEL4-a-channel-is-a-border",
+    "file": "src/ui/tamrielTrace.js",
+    "old": "        if (!((land[i - 1] && land[i + 1] && province[i - 1] !== province[i + 1]) || (land[i - w] && land[i + w] && province[i - w] !== province[i + w]))) continue;",
+    "new": "        if (!((land[i - 1] && land[i + 1]) || (land[i - w] && land[i + w]))) continue;",
+    "tests": ["test/tamriel4.test.js"]
+  },
+  {
+    "name": "TAMRIEL4-one-pass",
+    "file": "src/ui/tamrielTrace.js",
+    "old": "  for (let pass = 0; pass < 4; pass++) {\n    const add = [];",
+    "new": "  for (let pass = 0; pass < 1; pass++) {\n    const add = [];",
+    "tests": ["test/tamriel4.test.js"]
+  },
+  {
+    "name": "TAMRIEL4-the-dabs-stay-lakes",
+    "file": "src/ui/tamrielTrace.js",
+    "old": "  fillSpecks(land, province, w, h);   // TAMRIEL4: and the painting's dabs of blue in the land are not lakes",
+    "new": "  void fillSpecks;",
+    "tests": ["test/tamriel4.test.js"]
+  },
+  {
+    "name": "TAMRIEL4-a-lake-is-a-dab",
+    "file": "src/ui/tamrielTrace.js",
+    "old": "    if (p.edge || p.cells.length >= maxPx) continue;",
+    "new": "    if (p.edge || p.cells.length > maxPx) continue;",
+    "tests": ["test/tamriel4.test.js"]
+  },
+  {
+    "name": "TAMRIEL4-the-fit-scores-no-seam",
+    "file": "src/world/tamrielLand.js",
+    "old": "        const value = seam / edge + (FIT_AREA_WEIGHT * score) / (cols * rows);",
+    "new": "        const value = (FIT_AREA_WEIGHT * score) / (cols * rows);",
+    "tests": ["test/tamriel4.test.js"]
+  },
+  {
+    "name": "TAMRIEL4-the-fit-scores-no-inside",
+    "file": "src/world/tamrielLand.js",
+    "old": "export const FIT_AREA_WEIGHT = 0.25;",
+    "new": "export const FIT_AREA_WEIGHT = 0;",
+    "tests": ["test/tamriel4.test.js"]
+  },
+  {
+    "name": "TAMRIEL4-the-saddle-left-open",
+    "file": "src/ui/tamrielInk.js",
+    "old": "        case 10: seg(T, L); seg(B, R); break;   // a and c land",
+    "new": "        case 10: break;",
+    "tests": ["test/tamriel4.test.js"]
+  },
+  {
+    "name": "TAMRIEL4-chaikinCapped-moves-the-ends",
+    "file": "src/ui/tamrielInk.js",
+    "old": "      out.push(src[0]);\n      for (let i = 0; i < m - 1; i++) {",
+    "new": "      for (let i = 0; i < m - 1; i++) {",
+    "tests": ["test/tamriel4.test.js"]
+  },
+  {
+    "name": "TAMRIEL4-chaikinCapped-uncapped",
+    "file": "src/ui/tamrielInk.js",
+    "old": "t = len > 0 ? Math.min(0.25, maxCut / len) : 0.25;",
+    "new": "t = 0.25;",
+    "tests": ["test/tamriel4.test.js"]
+  },
+  {
+    "name": "TAMRIEL4-borders-end-short-of-the-coast",
+    "file": "src/ui/tamrielInk.js",
+    "old": "chaikinCapped(snapEnds(simplifyChain(c, COAST_SIMPLIFY_PX), coastPic), SMOOTH_PASSES, COAST_CUT_PX)",
+    "new": "chaikinCapped(simplifyChain(c, COAST_SIMPLIFY_PX), SMOOTH_PASSES, COAST_CUT_PX)",
+    "tests": ["test/tamriel4.test.js"]
+  },
+  {
+    "name": "TAMRIEL4-the-frame-inked-as-shore",
+    "file": "src/ui/tamrielInk.js",
+    "old": "for (const piece of clipOutsideRect(c, rect)) coast.push(...dropEdgeRuns(piece, rect));",
+    "new": "for (const piece of clipOutsideRect(c, rect)) coast.push(piece);",
+    "tests": ["test/tamriel4.test.js"]
+  },
+  {
+    "name": "TAMRIEL4-lore-rivers-on-the-picture",
+    "file": "src/ui/tamrielInk.js",
+    "old": "  if (!traced) for (const rv of RIVERS)",
+    "new": "  if (true) for (const rv of RIVERS)",
+    "tests": ["test/tamriel4.test.js"]
+  },
+  {
+    "name": "TAMRIEL4-the-stitch-reach-of-old",
+    "file": "src/ui/tamrielInk.js",
+    "old": "export const STITCH_REACH = 64;",
+    "new": "export const STITCH_REACH = 40;",
+    "tests": ["test/tamriel4.test.js", "test/tamriel.test.js"]
+  }
+]

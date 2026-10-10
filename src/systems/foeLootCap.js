@@ -34,14 +34,20 @@
 import {
   corpseSource, rarityRank, lootRarityOn, rarityEligible, rollRarity, applyRarity, lastPass, legendaryFindMult, isGarment, RARITIES,
   cursePass,   // LOOT16
+  damnPass,   // TRUE-CURSE
   socketPass,   // LOOT20
+  weaponSocketPass,   // GEM1
 } from './lootRarity.js';
 import { isGoldPieces } from './inventory.js';
 import { wildFoeLoot } from './wildZone.js';   // WILD1: a foe of the open zone carries twice as much past its cap
 import { isPotion } from './useItem.js';   // CAP-SUPPLIES: a potion IS the glass bottle - DFU's IsPotion, its one export (AUDIT 625 L7)
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // KIT-ROLL: the row every host hands its spawn
-import { renownLootQuarters, lootEased } from './renownLoot.js';   // RENOWN-LOOT: the plain ladder by the roller's Renown
+import { renownLootQuarters, lootEased } from './renownLoot.js';
+import { isCardRecord } from '../net/cardWorthLaw.js';   // CARDS9: a foe's card   // RENOWN-LOOT: the plain ladder by the roller's Renown
 
+/** CARDS9 (Tavern-Cards section 32): A FOE'S CARD IS KEPT AS A MAGIC PIECE - its one rare draw is never thrown away for a
+ *  common blade (rank 2: past a supply's 1 and a Common piece's 0, level with a Magic piece's). */
+export const CARD_CAP_RANK = 2;
 /** The most a plain foe's body carries, gold included. */
 export const PLAIN_FOE_LOOT_CAP = 3;
 /** ...and a plain foe's in an Elite Dungeon. */
@@ -116,7 +122,7 @@ const GARMENT_UNDER_SUPPLY = 0.5;
 // AUDIT LOOT II A9: with the ladder on - off, a garment ranks as it always did (a DFU magic shirt, Magic by its
 // enchantment, over a potion: law 6)
 const garmentRank = (it) => (lootRarityOn() && isGarment(it) && rarityRank(it) > 0 && rarityRank(it) < RARITIES.legendary.rank ? GARMENT_UNDER_SUPPLY : null);
-const capRank = (it) => { const r = rarityRank(it); const g = garmentRank(it); if (g != null) return g; return r > 0 ? 1 + r : (isLootSupply(it) ? 1 : 0); };
+const capRank = (it) => { if (isCardRecord(it)) return CARD_CAP_RANK; const r = rarityRank(it); const g = garmentRank(it); if (g != null) return g; return r > 0 ? 1 + r : (isLootSupply(it) ? 1 : 0); };
 
 /**
  * CAP A LIST IN PLACE: gold first (every coin stack folded into the first - one item, its count the sum), then a quest's
@@ -188,6 +194,8 @@ export function rollCorpseKit(entity, opts = {}) {
   const kit = [...rollKitPieces(entity, opts), ...rollKitGarments(entity, opts)];   // LOOT14: the garments after every draw the kit made
   cursePass(kit, opts.rolls ?? Math.random);   // LOOT16: a body's own Rares and Legendaries, one in twelve cursed - after all of it
   socketPass(kit, opts.rolls ?? Math.random);   // LOOT20: and a socket, after the curse
+  weaponSocketPass(kit, opts.rolls ?? Math.random);   // GEM1: and a weapon's own sockets, after that (law 9)
+  damnPass(kit, opts.rolls ?? Math.random);   // TRUE-CURSE: a cursed Legendary weapon damned, after every draw the kit made (law 9)
   return kit;
 }
 /** The first arc's kit roll, whole: every piece of the kit but its garments. */

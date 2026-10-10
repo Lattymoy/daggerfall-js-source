@@ -17,8 +17,11 @@
 // FRAME_ROLES: a card a panel, a picture a well, a state a chip) - this sheet writes geometry and
 // the words' colours alone, as the Companions page's does.
 
+import { stableWagonName, WAGON_KINDS } from '../systems/wagonKinds.js';   // WAGONS1: the Stable's card names the wagon driven
+import { paintDrivenWagon, outsidePaintRow, LOOK_TEXT } from '../systems/wagonLooks.js';   // WAGONS2: and paints it
 import { requestFittedIcon, fittedImg } from './textureCanvas.js';
 import { WAGON_MODE, HORSE_MODE, TRANSPORT, HORSE_NAME_MAX } from '../systems/horseCartLaw.js';
+import { optionPath } from './settingsMap.js';   // ORG2: a switch named in a window says where it lives
 
 export const STABLE_PAGE_SECTIONS = Object.freeze([Object.freeze(['stable', 'Stable'])]);
 export const HOLDINGS_STYLE_ID = 'holdings-pages-css';
@@ -35,10 +38,12 @@ export function _setHoldingsIconForTests(fn) { _icon = fn ?? ((p, box, onReady) 
  * @property {boolean} hcc   Horse Cart and Cargo is on: the pair stands in the world (else the classic transport)
  * @property {boolean} hasHorse @property {boolean} hasCart
  * @property {any} [view]   the runtime's stableView() while `hcc`
+ * @property {string|null} [kind]   WAGONS1: the wagon driven ('cart', 'openWagon', 'caravan' - systems/wagonKinds.js)
+ * @property {{ choices: string[], current: number }|null} [paint]   WAGONS2: its outside's paints, and its paint now
  *
  * @typedef {Object} HoldingsProvider
  * @property {() => StableModel} [stable]   the horse and the wagon
- * @property {(verb: 'summon'|'away'|'rename', arg?: string) => { ok: boolean, text: string }} [stableAct]
+ * @property {(verb: 'summon'|'away'|'rename'|'paint', arg?: any) => { ok: boolean, text: string }} [stableAct]
  * @property {any} [fleet]   the fleet's model and acts (ui/fleetPage.js)
  */
 let _provider = /** @type {HoldingsProvider|null} */ (null);
@@ -48,13 +53,15 @@ export const holdingsProvider = () => _provider;
 /**
  * THE ONE CONSTRUCTION SEAM (Home.md) for the two hosts that stand Horse Cart and Cargo (scenes/world.js,
  * scenes/exterior.js): the Stable's half of the provider over a host's runtime - `on()` the mod's switch, `hasHorse()`
- * and `hasCart()` the pack's two items.
+ * and `hasCart()` the pack's two items. WAGONS2: `items()` the pack (the driven wagon painted in it - systems/
+ * wagonLooks.js paintDrivenWagon) and `onPainted()` the host told (its word moved).
  */
-export function stableProviderFor({ runtime, on, hasHorse, hasCart }) {
+export function stableProviderFor({ runtime, on, hasHorse, hasCart, wagonKind = () => null, items = () => [], onPainted = () => {} }) {
   return {
-    stable: () => ({ hcc: !!on(), hasHorse: !!hasHorse(), hasCart: !!hasCart(), view: on() ? runtime.stableView() : null }),
+    stable: () => ({ hcc: !!on(), hasHorse: !!hasHorse(), hasCart: !!hasCart(), view: on() ? runtime.stableView() : null, kind: wagonKind() ?? null, paint: outsidePaintRow(items()) }),   // WAGONS1: which wagon; WAGONS2: its paint
     stableAct: (verb, arg) => {
-      if (!on()) return { ok: false, text: 'Turn on Horse Cart and Cargo (Features) to call your horse and wagon.' };
+      if (verb === 'paint') { const r = paintDrivenWagon(items(), 'outside', Number(arg) | 0); if (r.ok) onPainted(); return r; }   // WAGONS2: free, any time, the mod on or off - the paint is the wagon's
+      if (!on()) return { ok: false, text: `Turn on Horse Cart and Cargo (${optionPath('feat:mod-horse-cart-and-cargo')}) to call your horse and wagon.` };   // ORG2: where it lives, from the map
       if (verb === 'summon') return runtime.summonTransport();
       if (verb === 'away') return runtime.sendTransportAway();
       // AUDIT HOLDINGS C5: a horse never named answers '' - his own, not none
@@ -226,7 +233,18 @@ export function drawStablePage(detail, rerender, { el, divider, meter = null } =
   if (words.wagon) {
     const extra = [];
     if (v && v.limit > 0) extra.push(holdingMeter(el, meter, 'Load', v.kg, v.limit, 'thin'));
-    list.append(card(el, { art: WAGON_ART, glyph: '☸', name: 'Your wagon', words: words.wagon, sub: null, extra, rerender }).item);
+    if (m.paint) {   // WAGONS2: its outside's paints, a button each - pressed, painted
+      const row = el('div', 'hld-acts');
+      row.append(el('span', 'hld-sub', `${LOOK_TEXT.paint}:`));
+      m.paint.choices.forEach((name, i) => {
+        const b = el('button', i === m.paint.current ? 'act primary' : 'act', name);
+        b.setAttribute('aria-pressed', i === m.paint.current ? 'true' : 'false');
+        b.onclick = () => act('paint', i);
+        row.append(b);
+      });
+      extra.push(row);
+    }
+    list.append(card(el, { art: WAGON_ART, glyph: '☸', name: stableWagonName(m.kind), words: words.wagon, sub: m.kind && m.kind !== 'cart' ? WAGON_KINDS[m.kind]?.name ?? null : null, extra, rerender }).item);   // WAGONS1: the wagon driven, by its kind
   }
   detail.append(list);
   // THE ACTS - the pair's, as the mod's summon is (both answer together)
@@ -251,8 +269,8 @@ export function drawStablePage(detail, rerender, { el, divider, meter = null } =
   }
   if (acts.childNodes?.length ?? acts.children?.length) detail.append(acts);
   detail.append(el('p', 'hld-foot', m.hcc
-    ? (v?.persistence ? 'Your horse and wagon stand in the world: summoned to your side, or sent back to the stable.' : 'Turn on physical persistence (Features > Horse Cart and Cargo) to have them stand in the world.')
-    : 'Turn on Horse Cart and Cargo (Features) to have your horse and wagon stand in the world.'));
+    ? (v?.persistence ? 'Your horse and wagon stand in the world: summoned to your side, or sent back to the stable.' : `Turn on physical persistence (Horse Cart and Cargo\u2019s options, ${optionPath('feat:mod-horse-cart-and-cargo')}) to have them stand in the world.`)
+    : `Turn on Horse Cart and Cargo (${optionPath('feat:mod-horse-cart-and-cargo')}) to have your horse and wagon stand in the world.`));
 }
 
 /** A visit's words forgotten (an act's answer, an open name field) - the pause menu's every mount. */

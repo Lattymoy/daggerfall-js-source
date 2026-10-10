@@ -436,7 +436,7 @@ export function flattenNif(nif, opts = {}) {
   const excludeNode = opts.excludeNode ? String(opts.excludeNode).toLowerCase() : null;
   const batches = [];
 
-  function emit(shape, world, props, parentRef = -1) {
+  function emit(shape, world, props, chain, animFlags, parentRef = -1) {
     const data = deref(nif, shape.data);
     if (!data || !data.vertices) return;
     let indices;
@@ -524,6 +524,14 @@ export function flattenNif(nif, opts = {}) {
     }
     batches.push({
       name: shape.name || '',
+      // MW-BOW1: where the shape hangs - its record and every record from the file root down to it - and its
+      // vertices as authored, so a part whose own controllers move it (a bow's string and its ArrowBone, on the weapon
+      // clock - formats/mwPartClock.js) can be posed again at another time. References, never copies.
+      ref: shape,
+      chain,
+      animFlags,
+      local: data.vertices,
+      localNormals: data.normals ?? null,
       skinned,
       skin,
       positions,
@@ -540,9 +548,10 @@ export function flattenNif(nif, opts = {}) {
   // nowhere else, then carried down the whole traversal.
   let hasMarkers = false;
 
-  function walk(ref, world, props, isRoot = false, inside = !underNode, animFlags = 0, parentRef = -1) {   // MWNPC9: and the node above
+  function walk(ref, world, props, isRoot = false, inside = !underNode, animFlags = 0, chain = [], parentRef = -1) {   // MWNPC9: and the node above
     const rec = deref(nif, ref);
     if (!rec) return;
+    const nextChain = [...chain, rec];   // MW-BOW1: the records from the root down
     if (ANIM_FLAG_NODES.has(rec.type)) animFlags = rec.flags | 0;   // MAC-Q: nifloader.cpp:786-787
     const lname = String(rec.name || '').toLowerCase();
     if (excludeNode && lname === excludeNode) return;   // WS1: the masked subtree
@@ -580,7 +589,7 @@ export function flattenNif(nif, opts = {}) {
       // been composed. The node is still walked - it simply emits
       // nothing - which is the difference between skipping a drawable
       // and pruning a subtree.
-      if (inside && !skipGeometryName(rec.name, hasMarkers)) emit(rec, nextWorld, nextProps, parentRef);
+      if (inside && !skipGeometryName(rec.name, hasMarkers)) emit(rec, nextWorld, nextProps, nextChain, animFlags, parentRef);
       return;
     }
     if (PARTICLE_TYPES.has(rec.type)) {
@@ -602,11 +611,11 @@ export function flattenNif(nif, opts = {}) {
       const only = selectedChild(rec);
       if (only !== null) {
         const child = rec.children[only];
-        if (child !== undefined && child >= 0) walk(child, nextWorld, nextProps, false, inside, animFlags, ref);
+        if (child !== undefined && child >= 0) walk(child, nextWorld, nextProps, false, inside, animFlags, nextChain, ref);
         return;
       }
       for (const child of rec.children) {
-        if (child >= 0) walk(child, nextWorld, nextProps, false, inside, animFlags, ref);
+        if (child >= 0) walk(child, nextWorld, nextProps, false, inside, animFlags, nextChain, ref);
       }
     }
   }

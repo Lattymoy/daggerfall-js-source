@@ -24,9 +24,9 @@ export const PANEL_CARD_H = 45;
 
 /**
  * The panel's model.
- * @param {{phase: 'buyin'|'playing'|'over', view?: any, legal?: any, buyIn?: {min: number, max: number}|null, stakes: {sb: number, bb: number}, friendly?: boolean, log?: string[], why?: string|null, refused?: string|null, online?: {waiting: boolean, clock: number, error: string|null, regulars?: boolean, gold?: boolean}|null, gold?: boolean, staking?: boolean, topUp?: number|null}} p
+ * @param {{phase: 'buyin'|'playing'|'over', view?: any, legal?: any, buyIn?: {min: number, max: number}|null, stakes: {sb: number, bb: number}, friendly?: boolean, log?: string[], why?: string|null, refused?: string|null, online?: {waiting: boolean, clock: number, error: string|null, regulars?: boolean, gold?: boolean}|null, gold?: boolean, staking?: boolean, topUp?: number|null, iliac?: boolean, packPrice?: number|null}} p
  */
-export function cardHudModel({ phase, view = null, legal = null, buyIn = null, stakes, friendly = false, log = [], why = null, online = null, gold = false, staking = false, topUp = null, refused = null }) {
+export function cardHudModel({ phase, view = null, legal = null, buyIn = null, stakes, friendly = false, log = [], why = null, online = null, gold = false, staking = false, topUp = null, iliac = false, packPrice = null, refused = null }) {
   const unit = friendly ? 'chips' : 'gold';
   const title = `Card table - ${stakes.sb}/${stakes.bb} ${unit}`;
   // CARDS6: online, a realm character's table plays for gold - the realm holds the stake, the relay deals
@@ -39,7 +39,12 @@ export function cardHudModel({ phase, view = null, legal = null, buyIn = null, s
       // CARDS-SAID (Tavern-Cards section 31): a stake the realm refused, said here until the next press - never the panel
       // as it was, as though the press did nothing
       message: staking ? 'The realm is holding your stake...' : refused ? `${refused}${buyIn ? ` (Buy in for ${buyIn.min}-${buyIn.max} ${unit}.)` : ''}` : buyIn ? `Buy in for ${buyIn.min}-${buyIn.max} ${unit}.` : `You need ${BUY_IN_MIN_BB * stakes.bb} ${unit} to sit in at these stakes.`,
-      actions: [{ id: 'deal', label: 'Deal me in', enabled: !!buyIn && !staking }, { id: 'stand', label: 'Stand up', enabled: true }],   // CARDS6: one stake at a time
+      actions: [
+        { id: 'deal', label: 'Deal me in', enabled: !!buyIn && !staking },   // CARDS6: one stake at a time
+        ...(iliac ? [{ id: 'iliac', label: 'Play Iliac Hand', enabled: !staking }] : []),   // CARDS10: the other game at this table
+        ...(packPrice ? [{ id: 'pack', label: `Buy a card pack (${packPrice} gold)`, enabled: !staking }] : []),   // CARDS9: the house sells packs
+        { id: 'stand', label: 'Stand up', enabled: true },
+      ],
     };
   }
   const hand = view?.hand ?? null;
@@ -75,9 +80,17 @@ export function cardHudModel({ phase, view = null, legal = null, buyIn = null, s
   // CARDS5: alone at the relay's table, the regulars are a game too
   if (online?.waiting && online.regulars !== false) actions.push({ id: 'regulars', label: 'Play the regulars', enabled: true });   // AUDIT CARDS-3 B11: only with a chair for one
   if (phase === 'playing' && topUp > 0) actions.push({ id: 'topup', label: `Top up ${topUp}`, enabled: !staking });   // CARDS6 follow-up: between hands, a gold seat
+  // AUDIT CARDS-6 E7: the other game and the house's packs whenever he is not in a hand at the relay's table - it sits
+  // him at once (no buy-in panel, where alone they stood), so a player online never saw "Play Iliac Hand"; and on the
+  // panel that says a cloth plays Iliac Hand already (E8: 'other game')
+  const inHand = !!hand && view.handSeats.includes(you);
+  if ((online && !inHand) || (phase === 'over' && why === 'other game')) {
+    if (iliac) actions.push({ id: 'iliac', label: 'Play Iliac Hand', enabled: !staking });
+    if (packPrice) actions.push({ id: 'pack', label: `Buy a card pack (${packPrice} gold)`, enabled: !staking });
+  }
   actions.push({ id: 'stand', label: phase === 'over' ? 'Leave the table' : 'Stand up', enabled: true });
   const message = phase === 'over'
-    ? (why === 'broke' ? 'You are out of chips.' : why === 'empty' ? 'The table has emptied - every patron is broke.' : why === 'stood' ? 'The table stood you up.' : 'You leave the table.')
+    ? (why === 'broke' ? 'You are out of chips.' : why === 'empty' ? 'The table has emptied - every patron is broke.' : why === 'stood' ? 'The table stood you up.' : why === 'other game' ? HOLDEM_REFUSALS['other game'] : 'You leave the table.')
     : sd ? showdownLine(sd, view.seats.map((x) => x.name), you)
       : online?.waiting ? 'Waiting for another player to sit down.'
       : !hand ? 'The next hand is being dealt...' : legal ? (online?.clock ? `Your turn - ${online.clock} s.` : 'Your turn.') : `Waiting on ${seats.find((s) => s.state === 'to act')?.name ?? 'the table'}...`;
@@ -120,8 +133,9 @@ export function showdownLine(sd, names, you = -1) {
   return lines.length ? lines.join(' ') : 'The hand is over.';
 }
 
-/** CARDS5: the relay's refusals as the panel says them. */
-export const HOLDEM_REFUSALS = Object.freeze({ taken: 'That chair is taken.', seated: 'You already sit at this table.', 'not your turn': 'It is not your turn.', refused: 'The table refused that.', 'no table': 'The table has closed.', 'bad table': 'The table cannot open.', 'no such chair': 'No such chair.', 'no hand': 'No hand is being played.', 'table differs': 'That table is laid for other chairs or stakes.', 'account seated': 'You already sit at a table here.', busy: 'The table is busy - try again.', 'gold table': 'That table plays for gold - a realm character\'s stake sits at it.', 'friendly table': 'That table plays for chips.', 'bad stake': 'That stake is outside the table\'s buy-in.', 'stake spent': 'That stake has been spent - buy in again to sit.', 'stake refused': 'The table will not take that stake.', 'stake elsewhere': 'That stake was for another table - it comes back to you.', 'stakes closed': 'The table cannot take stakes right now.', 'stake too old': 'That stake is too old to give back here.', 'cashed out': 'Your stake there has gone home - buy in again to sit.', 'in hand': 'Top up between hands.', 'not seated': 'You are not seated at that table.' });
+/** CARDS5: the relay's refusals as the panel says them. AUDIT CARDS-6 E8: and 'other game' - the cloth plays Iliac Hand
+ *  (the relay's own word; iliacTableGame.js says its mirror), said on a panel of its own that offers that game. */
+export const HOLDEM_REFUSALS = Object.freeze({ 'other game': 'Iliac Hand is being played at this table.', taken: 'That chair is taken.', seated: 'You already sit at this table.', 'not your turn': 'It is not your turn.', refused: 'The table refused that.', 'no table': 'The table has closed.', 'bad table': 'The table cannot open.', 'no such chair': 'No such chair.', 'no hand': 'No hand is being played.', 'table differs': 'That table is laid for other chairs or stakes.', 'account seated': 'You already sit at a table here.', busy: 'The table is busy - try again.', 'gold table': 'That table plays for gold - a realm character\'s stake sits at it.', 'friendly table': 'That table plays for chips.', 'bad stake': 'That stake is outside the table\'s buy-in.', 'stake spent': 'That stake has been spent - buy in again to sit.', 'stake refused': 'The table will not take that stake.', 'stake elsewhere': 'That stake was for another table - it comes back to you.', 'stakes closed': 'The table cannot take stakes right now.', 'stake too old': 'That stake is too old to give back here.', 'cashed out': 'Your stake there has gone home - buy in again to sit.', 'in hand': 'Top up between hands.', 'not seated': 'You are not seated at that table.' });
 
 /** A one-line account of a session event for the panel's log (`names` this.seats' names; `you` the player's index, said in
  *  the second person - AUDIT CARDS-2 L10). */

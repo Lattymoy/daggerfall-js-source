@@ -74,7 +74,7 @@ test('INVIS-LOOK executed: the doll and the body - a concealed peer\'s doll carr
   // the class sprite takes the same two lines as the doll (its path builds off the enemy art, so it is read by source)
   const src = rd('src/net/remotePlayers.js');
   assert.equal((src.match(/entry\.batch\.conceal = veil;/g) ?? []).length, 2, 'the doll and the class sprite');
-  assert.equal((src.match(/if \(!veil\) this\._shown\.push\(\{ peer, height: (?:bodyH|entry\.doll\.h \* g|entry\.height) \}\);/g) ?? []).length, 3, 'no name: the body, the doll and the class sprite');   // PIN MOVED (OW-PEERS): the doll's height grown under the Overworld
+  assert.equal((src.match(/if \(!veil\) this\._shown\.push\(\{ peer, height: (?:bodyH|entry\.doll\.h \* g - sink|entry\.height - sink) \}\);/g) ?? []).length, 3, 'no name: the body, the doll and the class sprite');   // PIN MOVED (OW-PEERS): the doll's height grown under the Overworld; PIN MOVED (CARDS2c): a seated sprite's sink taken off it
   assert.match(src, /this\._syncMobilePeer\(peer, bundle, toScene, dt, eye, veil\); continue; \}/);
 });
 
@@ -253,7 +253,7 @@ test('INVIS-LOOK by source: the host - the look read once a frame and handed to 
   const flats = w.indexOf('if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, bbUp);');   // TV1: bbUp, the flats' lean under the travel view
   assert.ok(flats > 0 && grass > flats && late > grass && wall > late, 'the exterior: after the flats and the grass, before the foreign passes that follow');
   const m = rd('src/scenes/worldModes.js');
-  assert.match(m, /lateWorldDraw: \(\) => host\.drawVeiledPeerBodies\?\.\(\),/, 'the dungeon: through its context');
+  assert.match(m, /lateWorldDraw: \(\) => \{ host\.drawVeiledPeerBodies\?\.\(\); [^\n]*\},/, 'the dungeon: through its context');   // PIN MOVED (AUDIT SD IV R1): the Hour's light after them, in the same slot
   assert.match(m, /for \(const d of interiorCtx\.charDraws\) renderer\.drawCharacter\(d\.mesh, d\.matrix\);\n\s*host\.drawVeiledPeerBodies\?\.\(\);/, 'the building: after its last opaque draw');
   const d = rd('src/scenes/dungeonContext.js');
   const foes = d.indexOf('renderer.drawBillboards([..._mobileBatches, ..._dropBatches, ..._spellBatches],');

@@ -421,6 +421,34 @@ const PUBLIC_ALLOWLIST = new Map([
   ['src/assets/mw/source/Brigandine_Steel.png', "SUPPLIED - the brigandine's texture as Mac supplied it with the mesh (the FBX's Steel.png), committed as the DDS's source"],
   ['src/assets/mw/meshes/brigandine_steel.nif', 'SUPPLIED - the brigandine, baked to a Morrowind NIF by tools/bakeBrigandine.mjs (skinned from the body at bind time, MW-BRIG2); a Bethesda format, no Bethesda data'],
   ['src/assets/mw/textures/brigandine_steel.dds', 'SUPPLIED - Brigandine_Steel.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  // MW-BRIG4 (2026-10-09): Mac's nine paintings of the brigandine's unwrap, one per metal the jerkin is a brigandine in
+  ['src/assets/mw/source/Brigandine_Iron.png', "SUPPLIED - the Iron brigandine's painting as Mac sent it (2026-10-09, his 1 of nine - tan with dark rivets), committed as its DDS's source"],
+  ['src/assets/mw/meshes/brigandine_iron.nif', 'SUPPLIED - the brigandine mesh written naming the Iron painting by tools/bakeBrigandine.mjs (MW-BRIG4); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/textures/brigandine_iron.dds', 'SUPPLIED - Brigandine_Iron.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/source/Brigandine_Silver.png', "SUPPLIED - the Silver brigandine's painting as Mac sent it (2026-10-09, his 7 of nine - deep blue with silver rivets), committed as its DDS's source"],
+  ['src/assets/mw/meshes/brigandine_silver.nif', 'SUPPLIED - the brigandine mesh written naming the Silver painting by tools/bakeBrigandine.mjs (MW-BRIG4); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/textures/brigandine_silver.dds', 'SUPPLIED - Brigandine_Silver.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/source/Brigandine_Elven.png', "SUPPLIED - the Elven brigandine's painting as Mac sent it (2026-10-09, his 6 of nine - green with white rivets), committed as its DDS's source"],
+  ['src/assets/mw/meshes/brigandine_elven.nif', 'SUPPLIED - the brigandine mesh written naming the Elven painting by tools/bakeBrigandine.mjs (MW-BRIG4); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/textures/brigandine_elven.dds', 'SUPPLIED - Brigandine_Elven.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/source/Brigandine_Dwarven.png', "SUPPLIED - the Dwarven brigandine's painting as Mac sent it (2026-10-09, his 9 of nine - deep blue with gold rivets), committed as its DDS's source"],
+  ['src/assets/mw/meshes/brigandine_dwarven.nif', 'SUPPLIED - the brigandine mesh written naming the Dwarven painting by tools/bakeBrigandine.mjs (MW-BRIG4); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/textures/brigandine_dwarven.dds', 'SUPPLIED - Brigandine_Dwarven.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/source/Brigandine_Mithril.png', "SUPPLIED - the Mithril brigandine's painting as Mac sent it (2026-10-09, his 3 of nine - light blue with teal rivets), committed as its DDS's source"],
+  ['src/assets/mw/meshes/brigandine_mithril.nif', 'SUPPLIED - the brigandine mesh written naming the Mithril painting by tools/bakeBrigandine.mjs (MW-BRIG4); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/textures/brigandine_mithril.dds', 'SUPPLIED - Brigandine_Mithril.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/source/Brigandine_Adamantium.png', "SUPPLIED - the Adamantium brigandine's painting as Mac sent it (2026-10-09, his 2 of nine - tan with red rivets), committed as its DDS's source"],
+  ['src/assets/mw/meshes/brigandine_adamantium.nif', 'SUPPLIED - the brigandine mesh written naming the Adamantium painting by tools/bakeBrigandine.mjs (MW-BRIG4); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/textures/brigandine_adamantium.dds', 'SUPPLIED - Brigandine_Adamantium.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/source/Brigandine_Ebony.png', "SUPPLIED - the Ebony brigandine's painting as Mac sent it (2026-10-09, his 8 of nine - red with light rivets), committed as its DDS's source"],
+  ['src/assets/mw/meshes/brigandine_ebony.nif', 'SUPPLIED - the brigandine mesh written naming the Ebony painting by tools/bakeBrigandine.mjs (MW-BRIG4); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/textures/brigandine_ebony.dds', 'SUPPLIED - Brigandine_Ebony.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/source/Brigandine_Orcish.png', "SUPPLIED - the Orcish brigandine's painting as Mac sent it (2026-10-09, his 5 of nine - green with dark rivets), committed as its DDS's source"],
+  ['src/assets/mw/meshes/brigandine_orcish.nif', 'SUPPLIED - the brigandine mesh written naming the Orcish painting by tools/bakeBrigandine.mjs (MW-BRIG4); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/textures/brigandine_orcish.dds', 'SUPPLIED - Brigandine_Orcish.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/source/Brigandine_Daedric.png', "SUPPLIED - the Daedric brigandine's painting as Mac sent it (2026-10-09, his 4 of nine - red with dark rivets), committed as its DDS's source"],
+  ['src/assets/mw/meshes/brigandine_daedric.nif', 'SUPPLIED - the brigandine mesh written naming the Daedric painting by tools/bakeBrigandine.mjs (MW-BRIG4); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/textures/brigandine_daedric.dds', 'SUPPLIED - Brigandine_Daedric.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
   // MW-STEEL1 (2026-10-06): Mac's steel plate, the whole classic set for the Morrowind body, supplied as two Blender
   // exports of one scene (New_Ship.fbx, the open helm; New_Ship1.fbx, the closed). His scene also carried the body it
   // was fitted on - Morrowind's own Breton head and neck, out of a "Morrowind_TPose_Models" pack - and those are
@@ -434,8 +462,8 @@ const PUBLIC_ALLOWLIST = new Map([
   // re-makes every mesh and texture below from these sources, and test/mwsteel1.test.js holds it to the bytes. MW-STEEL4
   // (2026-10-07): every mesh is skinned at the bake to Morrowind's Bip01 bones, its inverse binds the bind of the vendored
   // retail skeleton (vendor/weapon-sheathing, Greatness7's, credited) - numbers of a skeleton, no Bethesda geometry.
-  ['src/assets/mw/source/Steel_Plate.fbx', "SUPPLIED - Mac's Blender export of the steel plate with the open helm (New_Ship.fbx, 2026-10-06), the Morrowind Breton head and neck it was fitted on stripped out by tools/fbxStrip.mjs (the plate skirt kept since MW-STEEL2); committed so the files below are a DERIVATION the gate can re-run"],
-  ['src/assets/mw/source/Steel_Plate_Closed_Helm.fbx', "SUPPLIED - the closed helm and its visor out of Mac's second export (New_Ship1.fbx, 2026-10-06), every other object stripped by tools/fbxStrip.mjs (the shared pieces are the first export's, measured the same); a DERIVATION's source"],
+  ['src/assets/mw/source/Steel_Plate.fbx', "SUPPLIED - Mac's Blender export of the steel plate with the closed helm (steel_armor.fbx, 2026-10-09 - MW-STEEL5), committed as it came: it carries no Morrowind head or neck; committed so the files below are a DERIVATION the gate can re-run"],
+  ['src/assets/mw/source/Steel_Plate_Open_Helm.fbx', "SUPPLIED - the open helm alone out of Mac's first export (New_Ship.fbx, 2026-10-06), every other object - and the Morrowind Breton head and neck it was fitted on - stripped by tools/fbxStrip.mjs (MW-STEEL5); a DERIVATION's source"],
   ['src/assets/mw/source/Steel_Plate_Cuirass.png', "SUPPLIED - the breastplate's painting as Mac sent it (his steelbreastplate texture), committed as its DDS's source"],
   ['src/assets/mw/source/Steel_Plate_Pauldron.png', "SUPPLIED - the pauldrons' painting as Mac sent it (his steelpauldrons texture), committed as its DDS's source"],
   ['src/assets/mw/source/Steel_Plate_Gauntlet.png', "SUPPLIED - the gauntlets' painting as Mac sent it (his newgloves texture), committed as its DDS's source"],
@@ -464,6 +492,58 @@ const PUBLIC_ALLOWLIST = new Map([
   ['src/assets/mw/textures/steel_plate_helm.dds', 'SUPPLIED - Steel_Plate_Helm.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
   ['src/assets/mw/textures/steel_plate_visor.dds', 'SUPPLIED - Steel_Plate_Visor.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
   ['src/assets/mw/textures/steel_plate_skirt.dds', 'SUPPLIED - Steel_Plate_Skirt.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  // MW-EBONY1 (2026-10-09): Mac's ebony plate - one Blender export with nothing of Bethesda's in it, seven paintings
+  ['src/assets/mw/source/Ebony_Plate.fbx', "SUPPLIED - Mac's Blender export of the ebony plate (ebony_armor.fbx, 2026-10-09), committed as it came: it carries no Morrowind head or neck; committed so the files below are a DERIVATION the gate can re-run"],
+  ['src/assets/mw/source/Ebony_Plate_Cuirass.png', "SUPPLIED - the ebony cuirass's painting as Mac sent it (his ebonybreastplate texture, matched to its piece by the UV islands it traces), committed as its DDS's source"],
+  ['src/assets/mw/source/Ebony_Plate_Skirt.png', "SUPPLIED - the ebony skirt's painting as Mac sent it (his EBONYPELVIS texture, matched to its piece by the UV islands it traces), committed as its DDS's source"],
+  ['src/assets/mw/source/Ebony_Plate_Pauldron.png', "SUPPLIED - the ebony pauldron's painting as Mac sent it (his ebonyshoulders texture, matched to its piece by the UV islands it traces), committed as its DDS's source"],
+  ['src/assets/mw/source/Ebony_Plate_Gauntlet.png', "SUPPLIED - the ebony gauntlet's painting as Mac sent it (his ebonygauntlets texture, matched to its piece by the UV islands it traces), committed as its DDS's source"],
+  ['src/assets/mw/source/Ebony_Plate_Greave.png', "SUPPLIED - the ebony greave's painting as Mac sent it (his ebonypants texture, matched to its piece by the UV islands it traces), committed as its DDS's source"],
+  ['src/assets/mw/source/Ebony_Plate_Boot.png', "SUPPLIED - the ebony boot's painting as Mac sent it (his ebonyboots texture, matched to its piece by the UV islands it traces), committed as its DDS's source"],
+  ['src/assets/mw/source/Ebony_Plate_Helm.png', "SUPPLIED - the ebony helm's painting as Mac sent it (his ebony helmet texture, matched to its piece by the UV islands it traces), committed as its DDS's source"],
+  ['src/assets/mw/meshes/ebony_plate_cuirass.nif', 'SUPPLIED - the ebony cuirass, baked from Ebony_Plate.fbx by tools/bakeEbonyPlate.mjs, skinned to the retail bind (MW-EBONY1); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/meshes/ebony_plate_skirt.nif', 'SUPPLIED - the ebony skirt, baked from Ebony_Plate.fbx by tools/bakeEbonyPlate.mjs, skinned to the retail bind (MW-EBONY1); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/meshes/ebony_plate_pauldron_right.nif', 'SUPPLIED - the ebony pauldron right, baked from Ebony_Plate.fbx by tools/bakeEbonyPlate.mjs, skinned to the retail bind (MW-EBONY1); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/meshes/ebony_plate_pauldron_left.nif', 'SUPPLIED - the ebony pauldron left, baked from Ebony_Plate.fbx by tools/bakeEbonyPlate.mjs, skinned to the retail bind (MW-EBONY1); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/meshes/ebony_plate_gauntlet_right.nif', 'SUPPLIED - the ebony gauntlet right, baked from Ebony_Plate.fbx by tools/bakeEbonyPlate.mjs, skinned to the retail bind (MW-EBONY1); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/meshes/ebony_plate_gauntlet_left.nif', 'SUPPLIED - the ebony gauntlet left, baked from Ebony_Plate.fbx by tools/bakeEbonyPlate.mjs, skinned to the retail bind (MW-EBONY1); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/meshes/ebony_plate_greave_right.nif', 'SUPPLIED - the ebony greave right, baked from Ebony_Plate.fbx by tools/bakeEbonyPlate.mjs, skinned to the retail bind (MW-EBONY1); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/meshes/ebony_plate_greave_left.nif', 'SUPPLIED - the ebony greave left, baked from Ebony_Plate.fbx by tools/bakeEbonyPlate.mjs, skinned to the retail bind (MW-EBONY1); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/meshes/ebony_plate_boot_right.nif', 'SUPPLIED - the ebony boot right, baked from Ebony_Plate.fbx by tools/bakeEbonyPlate.mjs, skinned to the retail bind (MW-EBONY1); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/meshes/ebony_plate_boot_left.nif', 'SUPPLIED - the ebony boot left, baked from Ebony_Plate.fbx by tools/bakeEbonyPlate.mjs, skinned to the retail bind (MW-EBONY1); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/meshes/ebony_plate_helm.nif', 'SUPPLIED - the ebony helm, baked from Ebony_Plate.fbx by tools/bakeEbonyPlate.mjs, skinned to the retail bind (MW-EBONY1); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/textures/ebony_plate_cuirass.dds', 'SUPPLIED - Ebony_Plate_Cuirass.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/textures/ebony_plate_skirt.dds', 'SUPPLIED - Ebony_Plate_Skirt.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/textures/ebony_plate_pauldron.dds', 'SUPPLIED - Ebony_Plate_Pauldron.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/textures/ebony_plate_gauntlet.dds', 'SUPPLIED - Ebony_Plate_Gauntlet.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/textures/ebony_plate_greave.dds', 'SUPPLIED - Ebony_Plate_Greave.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/textures/ebony_plate_boot.dds', 'SUPPLIED - Ebony_Plate_Boot.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/textures/ebony_plate_helm.dds', 'SUPPLIED - Ebony_Plate_Helm.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/source/Cloak.fbx', "SUPPLIED - Mac's Blender export of the cloak (New_Ship-1.fbx, 2026-10-09 - MW-CLOAK1), committed as it came: the cloak alone, no Morrowind body; committed so the files below are a DERIVATION the gate can re-run"],
+  ['src/assets/mw/source/Cloak_Blue.png', "SUPPLIED - Mac's blue painting of the cloak (2026-10-09 - MW-CLOAK1), committed as it came"],
+  ['src/assets/mw/source/Cloak_Grey.png', "SUPPLIED - Mac's grey painting of the cloak (2026-10-09 - MW-CLOAK1), committed as it came"],
+  ['src/assets/mw/source/Cloak_Red.png', "SUPPLIED - Mac's red painting of the cloak (2026-10-09 - MW-CLOAK1), committed as it came"],
+  ['src/assets/mw/source/Cloak_Dark_Brown.png', "SUPPLIED - Mac's dark brown painting of the cloak (2026-10-09 - MW-CLOAK1), committed as it came"],
+  ['src/assets/mw/source/Cloak_Purple.png', "SUPPLIED - Mac's purple painting of the cloak (2026-10-09 - MW-CLOAK1), committed as it came"],
+  ['src/assets/mw/source/Cloak_Light_Brown.png', "SUPPLIED - Mac's light brown painting of the cloak (2026-10-09 - MW-CLOAK1), committed as it came"],
+  ['src/assets/mw/source/Cloak_White.png', "SUPPLIED - Mac's white painting of the cloak (2026-10-09 - MW-CLOAK1), committed as it came"],
+  ['src/assets/mw/source/Cloak_Green.png', "SUPPLIED - Mac's green painting of the cloak (2026-10-09 - MW-CLOAK1), committed as it came"],
+  ['src/assets/mw/meshes/cloak_blue.nif', 'SUPPLIED - the cloak in its blue painting, baked from Cloak.fbx by tools/bakeCloak.mjs, skinned to the retail bind (MW-CLOAK1); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/meshes/cloak_grey.nif', 'SUPPLIED - the cloak in its grey painting, baked from Cloak.fbx by tools/bakeCloak.mjs, skinned to the retail bind (MW-CLOAK1); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/meshes/cloak_red.nif', 'SUPPLIED - the cloak in its red painting, baked from Cloak.fbx by tools/bakeCloak.mjs, skinned to the retail bind (MW-CLOAK1); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/meshes/cloak_dark_brown.nif', 'SUPPLIED - the cloak in its dark brown painting, baked from Cloak.fbx by tools/bakeCloak.mjs, skinned to the retail bind (MW-CLOAK1); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/meshes/cloak_purple.nif', 'SUPPLIED - the cloak in its purple painting, baked from Cloak.fbx by tools/bakeCloak.mjs, skinned to the retail bind (MW-CLOAK1); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/meshes/cloak_light_brown.nif', 'SUPPLIED - the cloak in its light brown painting, baked from Cloak.fbx by tools/bakeCloak.mjs, skinned to the retail bind (MW-CLOAK1); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/meshes/cloak_white.nif', 'SUPPLIED - the cloak in its white painting, baked from Cloak.fbx by tools/bakeCloak.mjs, skinned to the retail bind (MW-CLOAK1); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/meshes/cloak_green.nif', 'SUPPLIED - the cloak in its green painting, baked from Cloak.fbx by tools/bakeCloak.mjs, skinned to the retail bind (MW-CLOAK1); a Bethesda format, no Bethesda data'],
+  ['src/assets/mw/textures/cloak_blue.dds', 'SUPPLIED - Cloak_Blue.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/textures/cloak_grey.dds', 'SUPPLIED - Cloak_Grey.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/textures/cloak_red.dds', 'SUPPLIED - Cloak_Red.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/textures/cloak_dark_brown.dds', 'SUPPLIED - Cloak_Dark_Brown.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/textures/cloak_purple.dds', 'SUPPLIED - Cloak_Purple.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/textures/cloak_light_brown.dds', 'SUPPLIED - Cloak_Light_Brown.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/textures/cloak_white.dds', 'SUPPLIED - Cloak_White.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/textures/cloak_green.dds', 'SUPPLIED - Cloak_Green.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
   // GALLEON (2026-10-01): the new galleon, Mac's own model of hull 2 (the
   // Small Ship), supplied as three Blender exports of one scene - the same
   // geometry, only their creation stamps differ, so one is committed. The
@@ -482,6 +562,20 @@ const PUBLIC_ALLOWLIST = new Map([
   ['src/assets/ships/source/Tiny_Ship.fbx', "SUPPLIED - Mac's Blender export of the new carrack and the new large boat in one scene (2026-10-07; the newest of the three he sent), committed so carrack.json and largeBoat.json are DERIVATIONS the gate can re-run"],
   ['src/assets/ships/carrack.json', 'SUPPLIED - Tiny_Ship.fbx\'s carrack baked to the boat\'s frame by tools/bakeCarrack.mjs; geometry only, no ARENA2 or Come Sail Away data'],
   ['src/assets/ships/largeBoat.json', 'SUPPLIED - Tiny_Ship.fbx\'s large boat baked to the boat\'s frame by tools/bakeLargeBoat.mjs; geometry only, no ARENA2 or Come Sail Away data'],  ['src/assets/sunbaby/todd.jpg', 'SUPPLIED - a photograph of Todd Howard that Mac supplied for the sun baby event (SUNBABY3, 2026-10-04), cropped to the face and recompressed by ImageMagick; no ARENA2 pixel in it - a third-party photo, not the port own art, kept at his explicit request'],
+  // GATE-FBX (2026-10-09, Mac: "replace the oblivion gate model with this handcrafted model which also needs texturing"):
+  // MAC'S OBLIVION GATE, supplied as one Blender export of his whole "Oblivion Models" scene - the gate one object of
+  // it, committed whole as the ships' scenes are. tools/bakeGate.mjs re-makes the JSON from it (tools/shipBake.mjs), and
+  // test/gatefbx.test.js holds it to the bytes. Its pictures carry no file: world/gateArt.js paints them at load.
+  ['src/assets/gate/source/Oblivion_Gate.fbx', "SUPPLIED - Mac's Blender export of his Oblivion models' scene, the gate (Cube.1688) among them (2026-10-09), committed so oblivionGate.json is a DERIVATION the gate can re-run"],
+  ['src/assets/gate/oblivionGate.json', 'SUPPLIED - Oblivion_Gate.fbx\'s gate baked to the gate\'s frame by tools/bakeGate.mjs; geometry only, no ARENA2 data'],
+  // WAGONS1 (2026-10-09, Mac: "Here are 3 new models that will need to be textured"): MAC'S THREE WAGONS, supplied as
+  // four saves of one Blender scene ("wagons.blend") - the newest committed whole, as the ships' scenes are.
+  // tools/bakeWagons.mjs re-makes the three JSONs from it (tools/shipBake.mjs), and test/wagons1_bake.test.js holds them
+  // to the bytes. Their pictures carry no file: world/wagonArt.js paints them at load.
+  ['src/assets/wagons/source/Wagon_Cart_Tiny_1.fbx', "SUPPLIED - Mac's Blender export of his wagons' scene, the Wagon Cart, the Open Wagon and the Caravan among its stations (2026-10-09; the newest of the four he sent), committed so the three wagon JSONs are DERIVATIONS the gate can re-run"],
+  ['src/assets/wagons/cart.json', "SUPPLIED - Wagon_Cart_Tiny_1.fbx's Wagon Cart baked to the wagon's frame by tools/bakeWagons.mjs; geometry only, no ARENA2 or Horse Cart and Cargo data"],
+  ['src/assets/wagons/openWagon.json', "SUPPLIED - Wagon_Cart_Tiny_1.fbx's Open Wagon baked to the wagon's frame by tools/bakeWagons.mjs; geometry only, no ARENA2 or Horse Cart and Cargo data"],
+  ['src/assets/wagons/caravan.json', "SUPPLIED - Wagon_Cart_Tiny_1.fbx's Caravan baked to the wagon's frame by tools/bakeWagons.mjs; geometry only, no ARENA2 or Horse Cart and Cargo data"],
   // MEADOW1 (2026-10-06, Mac: "These are 4 textures I want to blend into our grass system", then a bush): THE
   // MEADOW'S FIVE SPRITES, supplied by Mac as indexed PNGs and committed as he supplied them. Nothing ships them:
   // tools/bakeMeadow.mjs bakes them into render/meadowArt.js, and test/grassmeadow.test.js holds that module to

@@ -1,0 +1,127 @@
+[
+  {
+    "name": "PERF-WAYS1-no-time-past-the-floor",
+    "file": "src/systems/livingWorld/ways.js",
+    "old": "        if (budget <= 0 && !(spent < spendMs && asked < WAYS_MAX_PER_FRAME)) return undefined;",
+    "new": "        if (budget <= 0) return undefined;",
+    "tests": [
+      "test/perfways1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAYS1-no-floor-past-the-time",
+    "file": "src/systems/livingWorld/ways.js",
+    "old": "        if (budget <= 0 && !(spent < spendMs && asked < WAYS_MAX_PER_FRAME)) return undefined;",
+    "new": "        if (!(spent < spendMs && asked < WAYS_MAX_PER_FRAME)) return undefined;",
+    "tests": [
+      "test/perfways1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAYS1-no-cap",
+    "file": "src/systems/livingWorld/ways.js",
+    "old": "        if (budget <= 0 && !(spent < spendMs && asked < WAYS_MAX_PER_FRAME)) return undefined;",
+    "new": "        if (budget <= 0 && !(spent < spendMs)) return undefined;",
+    "tests": [
+      "test/perfways1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAYS1-the-time-never-renewed",
+    "file": "src/systems/livingWorld/ways.js",
+    "old": "    frame(n = WAYS_PER_FRAME, ms = WAYS_MS_PER_FRAME) { budget = n; asked = 0; spent = 0; spendMs = ms; },",
+    "new": "    frame(n = WAYS_PER_FRAME, ms = WAYS_MS_PER_FRAME) { budget = n; asked = 0; spendMs = ms; },",
+    "tests": [
+      "test/perfways1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAYS1-the-time-not-counted",
+    "file": "src/systems/livingWorld/ways.js",
+    "old": "        spent += now() - t0;",
+    "new": "",
+    "tests": [
+      "test/perfways1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAYS1-a-pair-planned-on-another-network",
+    "file": "src/systems/livingWorld/ways.js",
+    "old": "        way = plan({ x: p.px, y: p.py }, { x: q.px, y: q.py }, { roads: raw.roads ?? null, tracks: raw.tracks ?? null, ...ground() }) ?? null;",
+    "new": "        way = plan({ x: p.px, y: p.py }, { x: q.px, y: q.py }, { roads: null, tracks: raw.tracks ?? null, ...ground() }) ?? null;",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAYS1-past-the-floor-the-higher-id-first",
+    "file": "src/systems/livingWorld/ways.js",
+    "old": "        way = plan({ x: p.px, y: p.py }, { x: q.px, y: q.py }, { roads: raw.roads ?? null, tracks: raw.tracks ?? null, ...ground() }) ?? null;",
+    "new": "        way = (budget < 0 ? plan({ x: q.px, y: q.py }, { x: p.px, y: p.py }, { roads: raw.roads ?? null, tracks: raw.tracks ?? null, ...ground() }) : plan({ x: p.px, y: p.py }, { x: q.px, y: q.py }, { roads: raw.roads ?? null, tracks: raw.tracks ?? null, ...ground() })) ?? null;",
+    "tests": [
+      "test/perfways1.test.js",
+      "test/lw3_roads.test.js"
+    ],
+    "note": "AUDIT PERF-ON4 (ways lens 1): it survived both suites before test 1 logged every call"
+  },
+  {
+    "name": "PERF-WAYS1-past-the-floor-no-network",
+    "file": "src/systems/livingWorld/ways.js",
+    "old": "        way = plan({ x: p.px, y: p.py }, { x: q.px, y: q.py }, { roads: raw.roads ?? null, tracks: raw.tracks ?? null, ...ground() }) ?? null;",
+    "new": "        way = plan({ x: p.px, y: p.py }, { x: q.px, y: q.py }, { roads: budget < 0 ? null : raw.roads ?? null, tracks: raw.tracks ?? null, ...ground() }) ?? null;",
+    "tests": [
+      "test/perfways1.test.js",
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAYS1-past-the-floor-no-ground",
+    "file": "src/systems/livingWorld/ways.js",
+    "old": "        way = plan({ x: p.px, y: p.py }, { x: q.px, y: q.py }, { roads: raw.roads ?? null, tracks: raw.tracks ?? null, ...ground() }) ?? null;",
+    "new": "        way = plan({ x: p.px, y: p.py }, { x: q.px, y: q.py }, { roads: raw.roads ?? null, tracks: raw.tracks ?? null, ...(budget < 0 ? {} : ground()) }) ?? null;",
+    "tests": [
+      "test/perfways1.test.js",
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAYS1-the-times-edge-taken",
+    "file": "src/systems/livingWorld/ways.js",
+    "old": "if (budget <= 0 && !(spent < spendMs && asked < WAYS_MAX_PER_FRAME)) return undefined;",
+    "new": "if (budget <= 0 && !(spent <= spendMs && asked < WAYS_MAX_PER_FRAME)) return undefined;",
+    "tests": [
+      "test/perfways1.test.js",
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAYS1-the-cap-sixteen",
+    "file": "src/systems/livingWorld/ways.js",
+    "old": "export const WAYS_MAX_PER_FRAME = 32;",
+    "new": "export const WAYS_MAX_PER_FRAME = 16;",
+    "tests": [
+      "test/perfways1.test.js",
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAYS1-the-cap-sixty-four",
+    "file": "src/systems/livingWorld/ways.js",
+    "old": "export const WAYS_MAX_PER_FRAME = 32;",
+    "new": "export const WAYS_MAX_PER_FRAME = 64;",
+    "tests": [
+      "test/perfways1.test.js",
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAYS1-a-shipped-clock-reading-nothing",
+    "file": "src/systems/livingWorld/ways.js",
+    "old": "plan = planRoute, now = () => performance.now() })",
+    "new": "plan = planRoute, now = () => 0 })",
+    "tests": [
+      "test/perfways1.test.js",
+      "test/lw3_roads.test.js"
+    ]
+  }
+]

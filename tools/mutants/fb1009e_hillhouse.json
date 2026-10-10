@@ -1,0 +1,51 @@
+[
+  {
+    "name": "HILL-HOUSE-never-moved",
+    "file": "src/world/curatedPlacements.js",
+    "old": "    sub.xPos = r.to.xPos; sub.zPos = r.to.zPos; sub.yRotation = r.to.yRotation;",
+    "new": "    void sub;",
+    "tests": ["test/fb1009e_hillhouse.test.js"]
+  },
+  {
+    "name": "HILL-HOUSE-header-left-behind",
+    "file": "src/world/curatedPlacements.js",
+    "old": "    if (pos) { pos.xPos = r.to.xPos; pos.zPos = r.to.zPos; pos.yRotation = r.to.yRotation; }",
+    "new": "    void pos;",
+    "tests": ["test/fb1009e_hillhouse.test.js"]
+  },
+  {
+    "name": "HILL-HOUSE-automap-unstamped",
+    "file": "src/world/curatedPlacements.js",
+    "old": "      for (let y = r0; y <= r1; y++) for (let x = c0; x <= c1; x++) map[y * 64 + x] = type + 1;",
+    "new": "      void c0;",
+    "tests": ["test/fb1009e_hillhouse.test.js"]
+  },
+  {
+    "name": "HILL-HOUSE-automap-the-type-not-plus-one",
+    "file": "src/world/curatedPlacements.js",
+    "old": "map[y * 64 + x] = type + 1;",
+    "new": "map[y * 64 + x] = type;",
+    "tests": ["test/fb1009e_hillhouse.test.js"]
+  },
+  {
+    "name": "HILL-HOUSE-any-placement",
+    "file": "src/world/curatedPlacements.js",
+    "old": "    if (!sub || sub.xPos !== r.from.xPos || sub.zPos !== r.from.zPos || sub.yRotation !== r.from.yRotation || first?.modelIdNum !== r.model) continue;",
+    "new": "    if (!sub) continue;",
+    "tests": ["test/fb1009e_hillhouse.test.js"]
+  },
+  {
+    "name": "HILL-HOUSE-any-pack",
+    "file": "src/world/curatedPlacements.js",
+    "old": "export const curatedPlacementsOf = (name, vendor) => CURATED_PLACEMENTS.filter((r) => r.vendor === vendor && r.block === name);",
+    "new": "export const curatedPlacementsOf = (name, vendor) => CURATED_PLACEMENTS.filter((r) => r.block === name);",
+    "tests": ["test/fb1009e_hillhouse.test.js"]
+  },
+  {
+    "name": "HILL-HOUSE-the-cached-path-uncurated",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "  curateBlockPlacements(dfBlock, liveAsset(blockReplacementFilename(blockName, variant))?.vendor);\n  cacheBlock(blockKey, dfBlock);",
+    "new": "  cacheBlock(blockKey, dfBlock);",
+    "tests": ["test/fb1009e_hillhouse.test.js"]
+  }
+]

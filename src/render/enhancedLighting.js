@@ -74,6 +74,7 @@ import { HIT_FLASH_GLSL, ELITE_GLOW_GLSL, GLINT_GLSL } from '../systems/hitFlash
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 import { ecotoneGlsl } from './ecotoneGlsl.js';   // ECOTONE1: the ground's share of its neighbours, both terrain programs' one chunk
 import { WATER_BED_GLSL, waterBedMix } from './waterBedGlsl.js';   // WATER-NEXT 2: under the enhanced water the ground is a bed
+import { realWindowsGlsl, RW_MAIN_DERIVS, RW_MAIN_CUTOUT, RW_MAIN_GLASS, RW_MAIN_ROOM } from './realWindows.js';   // RW1: the real windows, the classic FS's own block on the lane's codec
 
 /** The lane's light cap - the classic lane's sixteen, tripled. Forty-eight
  *  vec4 + forty-eight vec3 are 96 uniform vectors; ES 3.0 guarantees 224
@@ -566,15 +567,18 @@ ${EL_GLSL}
 ${SHADOW_GLSL}
 ${AIR_CONTACT_GLSL}
 ${EL_FOG_GLSL}
+${realWindowsGlsl('elDecode(c)')}
 ${EL_POINT_LIT_GLSL}
 ${DISSOLVE_GLSL}
 out vec4 outColor;
 void main() {
+${RW_MAIN_DERIVS}
   int amMode = int(uAutomapMode + 0.5);
   if (amMode >= 3) { if (vWorldPos.y <= uClipY) discard; }
   else if (vWorldPos.y > uClipY) discard;
   dissolveCut();   // SHIP-FADE: a ship sailing into the world or out of it, her share of her fragments (orderedDither.js)
   vec4 tex = texture(uTex, vUV);
+${RW_MAIN_CUTOUT}
   vec3 n = normalize(vNormal);
   // PERF-SUN2 (2026-09-19, Mac: "over 1000 calls and looking up in the sky
   // restores frame rate"): THE SUN'S SHADOW IS NOT READ WHERE THE SUN
@@ -594,10 +598,12 @@ void main() {
   float l3diff = max(dot(n, uLight3Dir), 0.0);
   // emission cancels other light (DaggerfallDefault.shader:83-85), in linear
   vec3 emission = elDecode(texture(uEmissionTex, vUV).rgb) * uEmissionColor;
+${RW_MAIN_GLASS}
   vec3 albedo = max(elDecode(tex.rgb) - emission, vec3(0.0));
   vec3 ambient = uTrilight > 0.5 ? (n.y >= 0.0 ? mix(uAmbient, uAmbientSky, n.y) : mix(uAmbient, uAmbientGround, -n.y)) : uAmbient;   // EL6: the crevice loses its light at the resolve, off the frame's depth
   vec3 lit = albedo * (ambient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)
     + uLight3Color * (uLight3Scale * l3diff) + elPointLit(vWorldPos, n) + elIndirectLit(vWorldPos, n));
+${RW_MAIN_ROOM}
   outColor = vec4(elFinish(lit + emission, vWorldPos), 1.0);
   if (amMode > 0) {
     if (vWorldPos.y <= uAutomapWaterLevel) {
@@ -1184,13 +1190,23 @@ export function dungeonAmbient(on, rgb) {
  *  Ambience's fog colour is the colour its trilight is lerped toward, so a
  *  scaled ambient under an unscaled fog put the far end of a hall BRIGHTER
  *  than its near walls. The underwater override is not this one's. */
-export function dungeonFog(on, fog) {
+export function dungeonFog(on, fog, into = null) {
   if (!on || !fog?.color) return fog;
   const c = fog.color;
+  if (into) {   // AUDIT SD IV (R5): a frame's, into the host's kept record (applyFog's fields) - its own loop, never a helper's: a
+    // helper fed both a fog's frozen colour and a trilight's numbers boxed every number it read (9 a frame)
+    into.mode = fog.mode; into.density = fog.density; into.start = fog.start; into.end = fog.end;
+    for (let k = 0; k < 3; k++) into.color[k] = c[k] * EL_DUNGEON_AMBIENT_SCALE;
+    return into;
+  }
   return { ...fog, color: [c[0] * EL_DUNGEON_AMBIENT_SCALE, c[1] * EL_DUNGEON_AMBIENT_SCALE, c[2] * EL_DUNGEON_AMBIENT_SCALE] };
 }
-export function dungeonTrilight(on, tri) {
+export function dungeonTrilight(on, tri, into = null) {
   if (!on || !tri) return tri;
+  if (into) {   // AUDIT SD IV (R5): the same
+    for (let k = 0; k < 3; k++) { into.sky[k] = tri.sky[k] * EL_DUNGEON_AMBIENT_SCALE; into.equator[k] = tri.equator[k] * EL_DUNGEON_AMBIENT_SCALE; into.ground[k] = tri.ground[k] * EL_DUNGEON_AMBIENT_SCALE; }
+    return into;
+  }
   const k = (c) => [c[0] * EL_DUNGEON_AMBIENT_SCALE, c[1] * EL_DUNGEON_AMBIENT_SCALE, c[2] * EL_DUNGEON_AMBIENT_SCALE];
   return { sky: k(tri.sky), equator: k(tri.equator), ground: k(tri.ground) };
 }

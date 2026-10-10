@@ -617,7 +617,9 @@ export class AudioEngine {
    *  (streamingWorld.js, 819.2 m at every map pixel crossed) moved the ear over 800 m from the stand-in in one
    *  frame - the thunder fell 35 dB mid-roll, which is the abrupt end. A `far` shot keeps its offset from the listener
    *  (setListener moves it) until its clip has run out, so its distance and its bearing hold, as they do for a
-   *  sound kilometres off. */
+   *  sound kilometres off. AUDIT SD IV (A5): `far` a name - the place's that played it, which fadeFar lets go.
+   *  @param {number} index @param {number[]} pos @param {number} [volume]
+   *  @param {{ refDistance?: number, maxDistance?: number, distanceModel?: string, pitch?: number, far?: boolean | string }} [opts] */
   play3d(index, pos, volume = 1, { refDistance = 1, maxDistance = 500, distanceModel = 'inverse', pitch = 1, far = false } = {}) {
     if (!this._ready()) return undefined;
     const buf = this._buffer(index);
@@ -632,9 +634,32 @@ export class AudioEngine {
     src.start();
     if (far) {   // DISC17-B: its offset from the ear, held until the clip has run out
       const L = this._listener;
-      (this._far ??= []).push({ pan, off: [pos[0] - L.x, pos[1] - L.y, pos[2] - L.z], until: this.ctx.currentTime + buf.duration / pitch });
+      (this._far ??= []).push({ pan, off: [pos[0] - L.x, pos[1] - L.y, pos[2] - L.z], until: this.ctx.currentTime + buf.duration / pitch, src, gain, tag: far === true ? null : far });
     }
     return buf.duration;   // A3: the ambient channel's busy clock
+  }
+
+  /** AUDIT SD IV (A5): A PLACE'S FAR SHOTS LET GO WITH IT - each `far` one-shot played under `tag` and still sounding
+   *  fades to nothing over `seconds` (its beds' fade) and stops, and the ear lets it go. The Hour's air let its beds
+   *  go as it was left, and a moan or a bell sounding then rang on at the ear in the street for seconds. A shot with no
+   *  name (a distant storm's thunder) is never touched. */
+  fadeFar(tag, seconds = BED_FADE_S) {
+    const far = this._far;
+    if (!tag || !far?.length) return;
+    let n = 0;
+    for (const f of far) {
+      if (f.tag !== tag) { far[n++] = f; continue; }
+      try {
+        const t = this.ctx.currentTime;
+        f.gain.gain.cancelScheduledValues(t);
+        f.gain.gain.setValueAtTime(f.gain.gain.value, t);
+        f.gain.gain.linearRampToValueAtTime(0, t + seconds);
+        f.src.stop(t + seconds + 0.05);
+      } catch {
+        try { f.src.stop(); } catch { /* already stopped */ }
+      }
+    }
+    far.length = n;
   }
 
   /** Looping positional source (A2 torches: DFU AddTorchAudioSource -

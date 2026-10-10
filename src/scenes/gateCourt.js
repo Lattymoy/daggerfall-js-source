@@ -18,9 +18,9 @@
 // Not a DFU member. Ledger A (WB).
 import { ATTACK_BY_ID, ATTACKS, COURT_CENTRE, COURTS, COURT_R, HIT_KINDS, POOL_TICK_MS, PHASE_NAMES, profileOf, nearestCourt, windupOf, CRYSTAL_R, CRYSTAL_H, inCourt, POSE_SLACK, RECKON_CLOSE_MS, WALKS, walkFormed, HOST_BLOWS, hostBlowUnder } from '../net/gateBrain.js';
 import { strikeVerdict, blowOf, strikeDamage, savedShare, landingPools, poolUnder, inAttack, chargeHead, segmentDistance } from '../net/gateStrike.js';
-import { GATE_BOSSES, gateBossOf } from '../net/gateLaw.js';
+import { GATE_BOSSES, gateBossOf, gateTimes, GATE_COLLAPSE_MS } from '../net/gateLaw.js';   // GATE-FBX: and when the court comes apart
 import { bossAct, bossFrame, bossGlow, bossPlace, bossHop, bossLookOf, bossStandIn, bossCue, BOSS_CUES, BOSS_STRIDE_M, GROWL_EVERY_MS, HURT_GAP_MS, HURT_SHARE, QUAKE_ON, THUD_AT_MS, WARD_COLOR, EMBER_COLOR, poolColor, emberColor, attackColor, crystalStandIn, crystalColor, groundStepCue, hostPulseColor, gateHitFlash, GATE_FLASH_SHARE, RELEASE_LEAD_MS, landShake, LANDING_LIGHT_Y, CORPSE_SCALE, WAKE_LEAD_MS, LOW_HEALTH } from '../world/gateBoss.js';
-import { courtToDungeon, portalDoor, PORTAL_AFTER_MS, PORTAL_RISE_MS, PORTAL_DROP, COURT_TEXT } from '../world/gateArena.js';
+import { courtToDungeon, portalDoor, PORTAL_AFTER_MS, PORTAL_RISE_MS, PORTAL_DROP, COURT_TEXT, WAY_IN_Z, WAY_IN_HOLD_MS, WAY_IN_NEAR_M, ARRIVE_Z, COURT_SILENT_MS, COURT_FRAME_GAP_MS, wayInStep, portalFade } from '../world/gateArena.js';
 import { GateTelegraphRenderer, telegraphShape, markShape, poolShapes, telegraphEdge, TELEGRAPH_STYLE, TELEGRAPH_EDGE, TELEGRAPH_NOW_MS } from '../render/gateTelegraph.js';
 import { CourtCrystalRenderer, crystalGrowth, CRYSTAL_GROW_MS, CRYSTAL_SHATTER_MS, CRYSTAL_FLASH_MS, CRYSTALS_DRAW_MAX } from '../render/courtCrystals.js';   // WB9c: the crystals of Oblivion, drawn
 import { GateFxRenderer, fxBurstOf, meteorFall, FX_BURST_MS, FX_BURSTS_MAX, FX_KINDS, FX_LIGHT_MS } from '../render/gateFx.js';   // WB9e: his blows seen landing
@@ -252,8 +252,8 @@ export const HEAL_SEND_MS = 1000;
  *   spells healed in me, and whose, to the court's room (the wire's `heal`).
  *   WB8b: `save` answers the saving throw against `el` (his aspect's element - fire, frost, shock, poison) and `strike`
  *   is told the element it landed with. WBX2: `portalDoor` lays the risen portal's door into the court's exit doors, once, so the exit's own ray, name and
- *   press take it - the way home, the bridge membrane's own (SS3: the court no longer takes a way home of its own - the
- *   portal is never walked through). WBX7:
+ *   press take it - the way home (SS3: the portal is never walked through; GATE-FBX: and the court's only door - the
+ *   bridge's membrane is gone). WBX7:
  *   `soulTrap` rolls a soul trap of mine still on him at his fall (the host's attemptSoulTrap - a gem filled with his soul,
  *   and its words). GATE-UX: `me` my name on the relay (net/online.js `name`) - my row of the damage chart is marked.
  */
@@ -335,6 +335,18 @@ export function createGateCourt({
    *  pass and the arch's opening (made the first time one stands), its fire's turn, and whether its door is laid and its
    *  rising said */
   let portal = null, portalPass = null, portalTried = false, profile = null, spin = 0, portalLaid = false, portalSaid = false;
+  /** GATE-FBX: THE WAY IN at the bridge's foot - how far its fire stands (0 shut .. 1 whole), until when it is held open
+   *  (a fighter just stepped out of it), and whether my own step out of it has been counted on this fight's state */
+  let wayIn = 0, wayInHeld = -Infinity, wayInMine = false;
+  /** AUDIT GATE-FBX C1/C3/C4: THE COURT AS THIS SCREEN STANDS IN IT, state or none - when I stepped out of the fire, the
+   *  fight's last word a frame of mine saw (its `heardAt`) and when, my last frame; and the players seen in the court last
+   *  call and this one (stepsIn), and whether the first look has been taken */
+  let arrivedAt = null, heardSeen = null, wordAt = null, frameAt = null, peersPrimed = false;
+  let _peersWere = new Set(), _peersNow = new Set();
+  const ARRIVAL = courtToDungeon(0, 0, ARRIVE_Z);
+  /** GATE-FBX: the court's fires this frame - the way home and the way in - one list, refilled (AUDIT WB D10's law) */
+  const _fires = [], _portalFire = { origin: [0, 0, 0], yaw: 0, open: 1, fade: 0, spin: 0 };
+  const _wayIn = { origin: courtToDungeon(0, -PORTAL_DROP, WAY_IN_Z), yaw: 0, open: 1, fade: 0, spin: 0, fireOnly: true };
   /** WBX7: my soul trap on him - its chance (frozen at the cast) and when it runs out on the relay's clock - and whether
    *  his fall has rolled it */
   let trapMark = null, trapJudged = null;   // AUDIT WBX F6: the day whose fall rolled it - once a fight, across a walk out and back
@@ -375,6 +387,7 @@ export function createGateCourt({
     marksSaid = false; fedHeard = null; marksAt = null; chartAt = null;   // GATE-UX
     healOwed.clear();   // GATE-HEAL
     portal = null; spin = 0; portalLaid = false; portalSaid = false;
+    wayIn = 0; wayInHeld = -Infinity; wayInMine = false;   // GATE-FBX
     rk = null; rkDone = null; stunHeard = 0; crystalIns.length = 0; _targets.length = 0; _crystalDraw.length = 0;   // WB9c
     _bursts.length = 0; _fxLive.length = 0; meteorNow = null;   // WB9e
     groundName = ''; groundColor = null; biteAt = -Infinity; biteColor = null;   // WB9d
@@ -390,23 +403,52 @@ export function createGateCourt({
   }
 
   /** WBX2: THE PORTAL HOME - PORTAL_AFTER_MS into his fall it stands where he fell and rises; its door is laid into the
-   *  court's exit doors once (the ray, the plaque's name and the PRESS - the bridge membrane's own way home), and the
+   *  court's exit doors once (the ray, the plaque's name and the PRESS - the court's one door), and the
    *  rising is said once. SS3 (2026-09-27, a player through Mac, "Oblivion gate exit on touch prevents looting": "I was
    *  close to the guy when he died, got zoned out by touching the gate before I could pick up loot"): it is never WALKED
    *  through. It stands where he fell - where his spoils leave him and land - so a player going for them stepped through
    *  its fire and out of the court with the floor still full (gathered into the pack on the way out, never seen fall). */
   function portalFrame(s, t, dt) {
+    wayInFrame(t, dt);   // GATE-FBX: the way in, before and after his fall alike
+    if (wayIn > 0 || (s.fell && t >= s.fell.at + PORTAL_AFTER_MS)) firePass(dt);
     if (!s.fell || t < s.fell.at + PORTAL_AFTER_MS) { portal = null; return; }
     const at = bossPlace(s, s.fell.at);
-    portal = { at, rise: Math.min(1, (t - s.fell.at - PORTAL_AFTER_MS) / PORTAL_RISE_MS), origin: courtToDungeon(at[0], -PORTAL_DROP, at[1]) };
+    portal = { at, rise: Math.min(1, (t - s.fell.at - PORTAL_AFTER_MS) / PORTAL_RISE_MS), origin: courtToDungeon(at[0], -PORTAL_DROP, at[1]),
+      fade: portalFade(t, s.fell.at, gateTimes(s.day).wrathAt + GATE_COLLAPSE_MS) };   // GATE-FBX: risen, and closing as the court comes apart
+    if (!portalLaid) { portalLaid = true; layPortalDoor(portalDoor(at)); }
+    if (!portalSaid) { portalSaid = true; if (t < s.fell.at + PORTAL_AFTER_MS + PORTAL_RISE_MS + 1000) say(COURT_TEXT.portal); }   // said as it rises, never long after
+  }
+
+  /** The court's fire - the gate's own pass (made the first time a portal stands) on the arch's opening, and its turn. */
+  function firePass(dt) {
     profile ??= gateArchProfile();   // the arch's opening - the fire's shape and the step's bound, with or without a GL
     if (!portalTried && gl) {
       portalTried = true;
       try { portalPass = new GatePassRenderer(gl, profile); } catch (e) { console.warn('[gate] the portal would not build', e?.message ?? e); portalPass = null; }
     }
     spin = (spin + gateSpinRate(1) * Math.max(0, dt)) % 1;
-    if (!portalLaid) { portalLaid = true; layPortalDoor(portalDoor(at)); }
-    if (!portalSaid) { portalSaid = true; if (t < s.fell.at + PORTAL_AFTER_MS + PORTAL_RISE_MS + 1000) say(COURT_TEXT.portal); }   // said as it rises, never long after
+  }
+
+  /** GATE-FBX (2026-10-09, Mac: "remove the portal that players walk through on the inside and just use a portal that
+   *  opens and closes. Like at the end of the fight"): THE WAY IN - the gate's own fire at the bridge's foot, where WB3b's
+   *  membrane stood: whole as I step out of it, held WAY_IN_HOLD_MS from then and closing behind me (world/gateArena.js
+   *  wayInStep) - AUDIT GATE-FBX C4: from my arrival (courtWatch), however late the fight's first word comes; a word that
+   *  comes after the hold finds it shut. Opened again for another stepping out of it (stepsIn). No door: it does not
+   *  take anyone back. */
+  function wayInFrame(t, dt) {
+    if (!wayInMine && arrivedAt !== null) { wayInMine = true; wayInHeld = Math.max(wayInHeld, arrivedAt + WAY_IN_HOLD_MS); if (t < wayInHeld) wayIn = 1; }
+    wayIn = wayInStep(wayIn, dt * 1000, t < wayInHeld);
+  }
+
+  /** AUDIT GATE-FBX C1/C4: THE COURT AS THIS SCREEN STANDS IN IT, before any state - my arrival is the frame the step's
+   *  veil lifts with my feet in the court; the fight's silence is counted on my own frames from the last word they saw
+   *  (a frame COURT_FRAME_GAP_MS after the last - a screen asleep - counts none). Out of the court, all forgotten. */
+  function courtWatch(s, t) {
+    if (!feet()) { arrivedAt = null; heardSeen = null; wordAt = null; frameAt = null; peersPrimed = false; _peersWere.clear(); return; }
+    if (arrivedAt === null) { if (veiled()) return; arrivedAt = t; wordAt = t; }
+    if (frameAt !== null && t - frameAt > COURT_FRAME_GAP_MS) wordAt = t;
+    frameAt = t;
+    if (s && s.day !== null && s.heardAt !== heardSeen) { heardSeen = s.heardAt; wordAt = t; }
   }
 
   function sound(cue, s, t, atk, point = null) {
@@ -825,8 +867,12 @@ export function createGateCourt({
     frame() {
       blowMet.clear();   // AUDIT WB11 W3: a frame ends my blow
       const s = link.state(), t = now();
+      courtWatch(s, t);   // AUDIT GATE-FBX C1/C4: my arrival and the fight's silence, state or none
       if (!s || s.day === null) { if (day !== null) this.leave(); return; }
       if (s.day !== day) reset(s.day);
+      // AUDIT GATE-FBX C5: the court's one door first - before any of the fight's own steps, whose throw (swallowed by
+      // the host each frame) would leave it never laid
+      portalFrame(s, t, Number.isFinite(prevT) ? Math.max(0, t - prevT) / 1000 : 0);   // WBX2: the way home, once he has fallen
       const P = profileOf(s);   // WB8b: the fight's marks, as law - the relay's word of them
       judge(s, t, P);
       judgeTrap(s);   // WBX7: a soul trap of mine on him, rolled at his fall
@@ -840,7 +886,6 @@ export function createGateCourt({
       drawBody(s, t, P);
       burst(s, t);
       spoils?.frame(onSpoilRest);   // WB9f: each piece's landing sparks
-      portalFrame(s, t, Number.isFinite(prevT) ? Math.max(0, t - prevT) / 1000 : 0);   // WBX2: the way home, once he has fallen
       shape = s.fell ? null : telegraphShape(s.atk, s.phase, t, P);
       // WBX4: his mark under him, while he stands; WBX5: the burning ground (WB8b: his aspect's)
       if (_markOf !== P) { _markOf = P; const ember = emberColor(P); markEmber = ember === EMBER_COLOR ? MARK_COLOR : markColorOf(ember); _mark = markShape([0, 0], 0, markEmber, P.bossR); }
@@ -1038,8 +1083,14 @@ export function createGateCourt({
         if (!fxTried && gl) { fxTried = true; try { fxPass = new GateFxRenderer(gl); } catch (e) { console.warn('[gate] his effects would not build', e?.message ?? e); fxPass = null; } }
         if (fxPass) { fxPass.draw(_fxLive, meteorNow, proj, view, eye, seconds, fog); drew = drew || fxPass.bursts > 0 || fxPass.meteors > 0; }
       }
-      if (portal && portalPass) {   // WBX2: the portal home's fire and its beacon, rising where he fell
-        portalPass.draw([{ origin: portal.origin, yaw: 0, open: 1, fade: portal.rise, spin }], proj, view, eye, seconds, fog);
+      _fires.length = 0;
+      if (portal) {   // WBX2: the portal home's fire and its beacon, rising where he fell (GATE-FBX: and closing as the court comes apart)
+        _portalFire.origin = portal.origin; _portalFire.fade = portal.fade; _portalFire.spin = spin;
+        _fires.push(_portalFire);
+      }
+      if (wayIn > 0) { _wayIn.fade = wayIn; _wayIn.spin = spin; _fires.push(_wayIn); }   // GATE-FBX: the way in, its fire alone
+      if (_fires.length && portalPass) {
+        portalPass.draw(_fires, proj, view, eye, seconds, fog);
         drew = drew || portalPass.drawn > 0;
       }
       const lit = !!spoils?.drawPass(proj, view, eye, seconds, fog);
@@ -1047,7 +1098,8 @@ export function createGateCourt({
     },
     /** What the driver holds, for the tests and the stats. */
     state: () => ({
-      day, judgedI: judged.i, cuedI: cued.i, landedI: landed.i, phaseHeard, fellCued, wrathLanded, body: !!body?.tex, batch: !!batch && batchShown, shape, mark, pools: pools.map((p) => ({ ...p })), portal: portal ? { at: [...portal.at], rise: portal.rise, laid: portalLaid } : null,
+      day, judgedI: judged.i, cuedI: cued.i, landedI: landed.i, phaseHeard, fellCued, wrathLanded, body: !!body?.tex, batch: !!batch && batchShown, shape, mark, pools: pools.map((p) => ({ ...p })), portal: portal ? { at: [...portal.at], rise: portal.rise, fade: portal.fade, laid: portalLaid } : null,
+      wayIn,   // GATE-FBX: how far the way in stands
       // WB9c: the crystals as this screen holds them; WB9d: the ground I stand in and the last bite's moment
       crystals: rk ? { i: rk.i, n: rk.n, ended: rk.ended, brokeAt: [...rk.brokeAt], hp: [...rk.hp], grewAt: rk.grewAt } : null, drawn: _crystalDraw.map((d) => ({ ...d })), inFire, biteAt,
       // WB9e: the sparks flying and the meteor falling
@@ -1078,6 +1130,37 @@ export function createGateCourt({
         host.offerBodies(bodiesLane);
       }
       bodiesLane.draw(canvas, proj, view, eye, dt);
+    },
+    /** GATE-FBX: how far the way in stands (0 shut .. 1 whole). */
+    wayIn: () => wayIn,
+    /**
+     * AUDIT GATE-FBX C3: THE PLAYERS THIS SCREEN SEES IN THE COURT (the online frame's list, `at` a player's place in the
+     * dungeon's frame): one here now and not last call, standing within WAY_IN_NEAR_M of where the players arrive, has
+     * just stepped out of the way in - it opens for them. The first look after my arrival only learns who is here. The
+     * relay's count of fighters it replaces came STATE_SEND_MS late, and never rose for a fighter walking back in.
+     * @param {Iterable<{id: string}>} list @param {(d: any) => (number[]|null)} at
+     */
+    stepsIn(list, at) {
+      if (arrivedAt === null) return;
+      const t = now();
+      _peersNow.clear();
+      for (const d of list) {
+        if (!d) continue;
+        _peersNow.add(d.id);
+        if (!peersPrimed || _peersWere.has(d.id)) continue;
+        const p = at(d);
+        if (p && Math.hypot(p[0] - ARRIVAL[0], p[2] - ARRIVAL[2]) <= WAY_IN_NEAR_M) wayInHeld = Math.max(wayInHeld, t + WAY_IN_HOLD_MS);
+      }
+      [_peersWere, _peersNow] = [_peersNow, _peersWere];
+      peersPrimed = true;
+    },
+    /** AUDIT GATE-FBX C1: whether the court has gone silent on this screen - I stand in it, its fight lives (or never said
+     *  a word), and my frames have seen no word of it for COURT_SILENT_MS. The host casts me out (scenes/world.js). */
+    silent() {
+      if (arrivedAt === null || wordAt === null || frameAt === null) return false;
+      const s = link.state();
+      if (s && s.day !== null && (s.fell || s.wrath != null)) return false;   // a fallen Warden's court says nothing more, and its portal stands
+      return frameAt - wordAt > COURT_SILENT_MS;
     },
     /** Out of the court: the body put away, the bar hidden, the fight forgotten (the texture is kept - the next court wears it). */
     leave() {

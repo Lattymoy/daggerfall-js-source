@@ -264,7 +264,7 @@ test('SD20e THE HOUR\'S READOUTS WAIT FOR THE VEIL (T18), run from the world hos
   const veil = { busy: true }, drawn = [], bars = [];
   const env = {
     modes: { sdRealmSlot: () => 3 }, sdFightLink: { leave() {}, state: () => ({}), now: () => 0 }, _sdReceipts: new Map(), sdReceiptsLeft() {},
-    sdSpoilsBurst: { leave() {}, frame() {} }, sdBlows: { leave() {}, frame() {} }, sdFx: { leave() {}, frame() {} }, saveSoon: { changed() {} },
+    sdSpoilsBurst: { leave() {}, frame() {} }, sdBlows: { leave() {}, frame() {} }, sdFx: { leave() {}, frame() {}, away() {} }, saveSoon: { changed() {} },   // AUDIT SD V (L5, PIN MOVED): `away`
     player: { pos: [0, 0, 0] }, playerEntity: { health: 10, maxHealth: 10 }, sdDungeonToRealm: () => [0, 0, 0], sdBarNear: () => true,
     remnantBarModel: () => ({ bar: true }), drawGateBossBar: (m, o) => bars.push(!!o?.hidden), gamePaused: () => false, townTalk: { hudHidden: false },
     sdRemVoice: { leave() {}, frame() {} }, cam: { yaw: 0 }, SD_ARENA: { x: 0, z: 0 }, sdPerilAt: () => null, sdGroundModel: () => null,

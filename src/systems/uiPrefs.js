@@ -19,7 +19,7 @@ const SHELF_REV = 2;
  *  already materialised the old one, adopted once on an unstamped
  *  shelf. A key joins this list only when the old stored value cannot
  *  honestly be read as the player's answer - see loadPrefs. */
-const PREF1_ADOPT_NEW_DEFAULT = Object.freeze(['lootRarity']);
+const PREF1_ADOPT_NEW_DEFAULT = Object.freeze(['lootRarity', 'enhancedAI']);   // BAL4: and the Enhanced AI - see loadPrefs
 
 import { appStorage } from './appStorage.js';   // DA1: the storage seam
 import { onlineForcedPref } from './onlineLane.js';   // OL1: the online lane's forcing, read before the shelf
@@ -35,6 +35,13 @@ export const PREF_DEFAULTS = Object.freeze({
   // to scale - so it belongs in the port's own prefs, beside the other
   // things only this port has.
   hudScale: 1,
+  // MAP-SCALE (FIELD BUGS 2026-10-09e, "Desktop client in-game map icons and text too small on high resolutions"): the
+  // held map's interface scale - 'auto' (the screen's height over 1080) or a number (ui/mapScale.js).
+  mapScale: 'auto',
+  // EVERY-STANDING (FIELD BUGS 2026-10-09e, "Could we have a setting to see our reputation with every guild/kingdoms?"):
+  // the character sheet's Standing page lists every organization's standing, not only the player's memberships
+  // (systems/factionStanding.js).
+  standingAll: false,
   // HUD-MOVE (2026-10-01, Mac: "make chat, hp mana stamina bar segment and all the element moveable and add a reset UI
   // and lock UI in the settings (lock should be on by default)"): the Enhanced Plus HUD's own layout. `hudLocked` is the
   // lock (on: nothing moves, the HUD is pointer-transparent as ever); `hudLayout` is { id: { x, y } }, each piece's
@@ -191,13 +198,20 @@ export function loadPrefs() {
         // since changed its mind, and the shelf is stamped so this
         // runs exactly once per player.
         //
-        // Only `lootRarity` is on that list, and the reasoning is
+        // `lootRarity` went on that list first, and the reasoning is
         // bounded rather than hopeful: the row shipped OFF on
         // 2026-09-14 and LR5 turned it ON one day later, so a stored
         // `false` in an unstamped shelf was written by the shelf and
         // not by a player. After this load the player's own answer -
         // including pressing it back off - differs from the default
         // and is persisted as the choice it is.
+        //
+        // BAL4 (2026-10-10, 05-Combat/Balance-Arc.md section 6) adds
+        // `enhancedAI` on the same reasoning: the row shipped OFF on
+        // 2026-09-14 (FT5), one day before this stamp, so an unstamped
+        // shelf's `false` is the shelf's writing of that default, not a
+        // player's answer - and a stamped shelf never wrote it at all
+        // (a default is never stored), so the flip reaches it unasked.
         if (p[SHELF_STAMP] === undefined) {
           for (const k of PREF1_ADOPT_NEW_DEFAULT) {
             if (p[k] !== undefined && p[k] !== PREF_DEFAULTS[k]) _prefs[k] = PREF_DEFAULTS[k];
@@ -210,6 +224,12 @@ export function loadPrefs() {
         // diamond's style, and so stays Off. Diamond was the old default and left no trace: it moves to the hotbar
         // with everyone who never chose.
         if ((p[SHELF_STAMP] ?? 0) < 2 && p.quickbarStyle === undefined && p.quickslots === false) _prefs.quickbarStyle = 'quickbar';
+        // AUDIT BAL (bible/05-Combat/Balance-Arc.md section 10): ALL OFF STAYS ALL OFF. The Enhanced AI's default turned
+        // On (BAL4), and a shelf that pressed the Features page's All off while it shipped Off stored nothing for it - Off
+        // was its default, and this shelf writes no default - so the flip would stand the AI up over "everything off".
+        // While the All-off keep stands (`featuresRestore`, spent by Restore) and the shelf holds no word of its own on
+        // the AI, it stays Off; Off differs from the default now, so the next save writes it as the choice it is.
+        if (p.featuresRestore && typeof p.featuresRestore === 'object' && p.enhancedAI === undefined) _prefs.enhancedAI = false;
         // GRASS-ON (2026-10-07, Mac: "Can you please turn grass on by default"): THE GRASS IS FULL BY DEFAULT AGAIN
         // (features.js 'grass', grassDensity 0 to 1), and AUDIT MEADOW1's adoption that stood here - an unstamped
         // shelf's `grassDensity: 1` moved to its Off - went with the Off: that Full is the default again. Nothing stored

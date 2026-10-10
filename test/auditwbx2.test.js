@@ -182,8 +182,9 @@ test('AUDIT WBX2 M6 an older build\'s mark for anyone still refuses the spoils h
   assert.deepEqual(spent, [701], 'b\'s own: said again, for a hub that missed it');
 });
 
-test('AUDIT WBX2 M7 the stone asks for a player in a horn\'s root at every stand - its first, and one where it has moved (the gate of another place) - never while it stands still (mutants: the first stand only)', async () => {
-  const { createGatePool, ROOT_TRAP } = await import('../src/scenes/gatePool.js');
+test('AUDIT WBX2 M7 the stone asks for a player sealed in it at every stand - its first, and one where it has moved (the gate of another place) - never while it stands still (mutants: the first stand only)', async () => {
+  const { createGatePool } = await import('../src/scenes/gatePool.js');
+  const FOOT = 2.3;   // GATE-FBX: in a foot's sole (its inner edge 1.47 m out, its outer 3.03)
   const { gateYaw } = await import('../src/net/gateLaw.js');
   const T = gateTimes(2000);
   let now = T.riseAt + 20_001;
@@ -193,9 +194,9 @@ test('AUDIT WBX2 M7 the stone asks for a player in a horn\'s root at every stand
   let shift = [0, 0, 0], feetAt = null;
   const pool = createGatePool({ collider: () => col, standing: () => g, pixelTranslation: () => shift, heightAt: () => 0, now: () => now, feet: () => feetAt, landBefore: (gg) => { landed.push(gg.day); return true; } });
   pool.frame(0.016);
-  assert.deepEqual(landed, [], 'stood with nobody in its roots');
+  assert.deepEqual(landed, [], 'stood with nobody in its stone');
   const yaw = gateYaw(2000), c = Math.cos(yaw), s = Math.sin(yaw);
-  feetAt = [64 + c * ROOT_TRAP.x, 0.5, -s * ROOT_TRAP.x];   // where a root will stand once the gate stands 64 m on
+  feetAt = [64 + c * FOOT, 0.5, -s * FOOT];   // where a foot will stand once the gate stands 64 m on
   now += 16; pool.frame(0.016);
   assert.deepEqual(landed, [], 'standing still, it asks nothing');
   shift = [64, 0, 0];

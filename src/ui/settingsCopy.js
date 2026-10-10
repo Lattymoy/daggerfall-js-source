@@ -284,8 +284,8 @@ export const INSTEAD = Object.freeze({
   'Daggerfall/MyDaggerfallUnityScreenshotsPath': 'Pictures go wherever your browser puts downloads.',
   'Video/ResolutionWidth': 'The picture already fills the window you give it.',
   'Video/ResolutionHeight': 'The picture already fills the window you give it.',
-  'Video/ExclusiveFullscreen': "Use your browser's own fullscreen - F11 on a desktop.",
-  'Video/Fullscreen': "Use your browser's own fullscreen - F11 on a desktop.",
+  'Video/ExclusiveFullscreen': "Use your browser's own fullscreen, from its menu - F11 is the game's Quick Load. In the desktop app: View > Toggle Full Screen (Alt+Enter on Windows and Linux).",   // DEATH-LOAD (issue #642): F11 never was fullscreen here - the page and the shell spend it on QuickLoad
+  'Video/Fullscreen': "Use your browser's own fullscreen, from its menu - F11 is the game's Quick Load. In the desktop app: View > Toggle Full Screen (Alt+Enter on Windows and Linux).",   // DEATH-LOAD (issue #642): F11 never was fullscreen here - the page and the shell spend it on QuickLoad
   'Video/VSync': 'Frames always wait for your screen. To run slower than it, set a Frame Rate Cap.',
 });
 

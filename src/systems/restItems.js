@@ -31,7 +31,7 @@
 // (the Ember Jar and the Tonic, 4 each). The Bedroll stays the counter's - online's own rest point, bought.
 // ═══════════════════════════════════════════════════════════════════
 import { registerCustomTemplates, registerItemUseHandler, templateByIndex, mintCondition, setItemFields } from './itemTemplates.js';
-import { ICON_TWIGS } from '../net/professionLaw.js';
+import { REST_ITEM, REST_ITEM_GROUP, BEDROLL_NIGHTS, CANDLE_USES, SALTS_USES, REST_ITEM_ROWS, isRestItem } from './restItemRows.js';   // INT1: the rows' leaf - the item law reads them headless
 import { isOnlinePage } from './onlineLane.js';
 import { survivalOn } from './survival/switch.js';
 import { survivalOf, sleepStage, wakingHeld, WAKING_DEBT_HOURS } from './survival/needs.js';
@@ -41,9 +41,6 @@ import { registerTabledLootHandler, registerEnemyLootExtra } from './loot.js';
 import { registerLootSupply } from './foeLootCap.js';   // CAP-SUPPLIES: the seven are supplies to a body's cap
 import { renownLootQuarters, lootEased } from './renownLoot.js';   // RENOWN-LOOT: the chances by the roller's Renown
 
-/** The block (Rest-Arc.md section 6: 1700-1709, the last three spare). */
-export const REST_ITEM = Object.freeze({ Bedroll: 1700, EmberJar: 1701, Firewood: 1702, Tonic: 1703, Candle: 1704, Salts: 1705, Draught: 1706 });
-export const REST_ITEM_GROUP = 'UselessItems2';
 /** The online sources' switch (shelves, piles, foes, recipes) - false for the release the templates shipped in, on since
  *  (REST-LOOT, 2026-10-05). Off again is the way back if an older client ever meets one it cannot read. */
 export const REST_ITEMS_ONLINE = true;
@@ -57,43 +54,23 @@ export function _setRestItemsOnlineForTests(on) { _restItemsOnline = on == null 
  *  provisions shelf is); online while the switch is on. */
 export const restItemsAvailable = (online = isOnlinePage()) => (online ? restItemsOnline() : survivalOn());
 
-export const BEDROLL_NIGHTS = 10;
 export const BEDROLL_CHANNEL_SECONDS = 10;
 export const EMBER_JAR_MINUTES = 180;
 export const FIREWOOD_NIGHTS = 3;
 export const TONIC_FATIGUE = 0.4;
 export const TONIC_SLEEP_HOURS = 4;
 export const CANDLE_MAGICKA = 0.5;
-export const CANDLE_USES = 3;
 export const SALTS_MINUTES = 60;
 export const SALTS_DEBT_HOURS = WAKING_DEBT_HOURS;   // the law's (survival/needs.js landWakingDebt)
-export const SALTS_USES = 3;
 export const DRAUGHT_SPENT_MINUTES = 60;   // AUDIT REST F3: an hour's rest under it spends it - a stopped channel keeps it
 
-const row = (index, name, baseWeight, hitPoints, basePrice, rarity, icon, stackable) => Object.freeze({
-  index, name, baseWeight, hitPoints, capacityOrTarget: 0, basePrice, enchantmentPoints: 0, rarity, variants: 0,
-  drawOrderOrEffect: 0, isBluntWeapon: false, isLiquid: false, isOneHanded: false, isIngredient: false,
-  worldTextureArchive: icon[0], worldTextureRecord: icon[1], playerTextureArchive: 0, playerTextureRecord: 0, stackable,
-  // AUDIT REST II H7: a supply's charges are its uses, never wear a smith mends - a repair counter recharged a Bedroll's
-  // nights, a Candle's and the Salts' doses for less than the supply costs (DFU's ItemTemplate.isNotRepairable)
-  isNotRepairable: !stackable,
-});
-/** The rows, in DFU's ItemTemplates.txt columns - charges as hitPoints (mintCondition), stacking unless they carry
- *  charges. The pictures are DFU's own: the camping bundle, the Clay Jar, the twigs, the Glass Bottle, the Candle, the
- *  Glass Jar, the Holy Water's flask. */
-export const REST_ITEM_ROWS = Object.freeze([
-  row(REST_ITEM.Bedroll, 'Bedroll', 2.5, BEDROLL_NIGHTS, 80, 1, [204, 8], false),
-  row(REST_ITEM.EmberJar, 'Ember Jar', 0.5, 1, 15, 1, [218, 0], true),
-  row(REST_ITEM.Firewood, 'Firewood', 1.5, 1, 8, 1, ICON_TWIGS, true),
-  row(REST_ITEM.Tonic, 'Restorative Tonic', 0.2, 1, 30, 2, [205, 11], true),
-  row(REST_ITEM.Candle, 'Meditation Candle', 0.3, CANDLE_USES, 35, 3, [210, 3], false),
-  row(REST_ITEM.Salts, 'Waking Salts', 0.1, SALTS_USES, 40, 3, [205, 3], false),
-  row(REST_ITEM.Draught, 'Sleeping Draught', 0.2, 1, 45, 3, [211, 49], true),
-]);
+export { REST_ITEM, REST_ITEM_GROUP, BEDROLL_NIGHTS, CANDLE_USES, SALTS_USES, REST_ITEM_ROWS };
 registerCustomTemplates(REST_ITEM_ROWS);
 
 const INDICES = new Set(Object.values(REST_ITEM));
-export const isRestItem = (item) => !!item && INDICES.has(item.templateIndex);
+// INT9: the predicate's home is systems/restItemRows.js (the rows' leaf - a death in the zone's drop reads it on the account
+// Worker), re-exported here
+export { isRestItem };
 registerLootSupply('REST', isRestItem);   // CAP-SUPPLIES: a full body's cap keeps one before a Common piece (foeLootCap.js)
 export const isBedroll = (item) => item?.templateIndex === REST_ITEM.Bedroll;
 export const isEmberJar = (item) => item?.templateIndex === REST_ITEM.EmberJar;

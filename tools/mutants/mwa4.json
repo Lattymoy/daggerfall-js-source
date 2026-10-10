@@ -45,10 +45,10 @@
     ]
   },
   {
-    "name": "MWA4-the-card-off-the-head-of-the-list",
-    "file": "src/ui/enhancedMenu.js",
-    "old": "  if (featureKind == null || featureKind === 'mod') body.append(morrowindCard());   // MWA4: the assets card heads the list\n",
-    "new": "",
+    "name": "MWA4-the-card-off-the-head-of-the-files-page",
+    "file": "src/ui/settingsMap.js",
+    "old": "      \"card:morrowind\", \"card:packs\"]),",
+    "new": "      \"card:packs\"]),",
     "tests": [
       "test/features.test.js"
     ]

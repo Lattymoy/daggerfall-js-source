@@ -1,0 +1,191 @@
+[
+  {
+    "name": "AC6-A1-pack-uncounted",
+    "file": "src/net/cardWorthLaw.js",
+    "old": ": isPackRecord(rec) ? CARD_PACK_WORTH * stackOf(rec) : 0);",
+    "new": ": 0);",
+    "tests": [
+      "test/auditcards6_a.test.js"
+    ]
+  },
+  {
+    "name": "AC6-A1-pack-worth",
+    "file": "src/net/cardWorthLaw.js",
+    "old": "export const CARD_PACK_WORTH = 171;",
+    "new": "export const CARD_PACK_WORTH = 170;",
+    "tests": [
+      "test/auditcards6_a.test.js"
+    ]
+  },
+  {
+    "name": "AC6-A1-customs-blind-to-packs",
+    "file": "src/systems/realmCustoms.js",
+    "old": "  const unit = (/** @type {any} */ rec) => cardRecordWorth({ ...rec, stackCount: 1 });",
+    "new": "  const unit = (/** @type {any} */ rec) => (isCardRecord(rec) ? cardRecordWorth({ ...rec, stackCount: 1 }) : 0);",
+    "tests": [
+      "test/auditcards6_a.test.js"
+    ]
+  },
+  {
+    "name": "AC6-A1-birth-takes-a-pack",
+    "file": "server-account/src/realm.js",
+    "old": " && cardPacksOf(save) === 0 ? null : { error: 'realm-birth' };",
+    "new": " ? null : { error: 'realm-birth' };",
+    "tests": [
+      "test/auditcards6_a.test.js"
+    ]
+  },
+  {
+    "name": "AC6-A2-decor-uncounted",
+    "file": "src/net/cardWorthLaw.js",
+    "old": "  for (const { rec } of decorOwnOf(snap)) n += cardRecordWorth(rec);\n",
+    "new": "",
+    "tests": [
+      "test/auditcards6_a.test.js"
+    ]
+  },
+  {
+    "name": "AC6-A2-decor-untaken",
+    "file": "src/systems/realmCustoms.js",
+    "old": "  for (const { scene, id, rec } of decorOwnOf(snap)) {",
+    "new": "  for (const { scene, id, rec } of []) {",
+    "tests": [
+      "test/auditcards6_a.test.js"
+    ]
+  },
+  {
+    "name": "AC6-A2-decor-piece-stands",
+    "file": "src/systems/realmCustoms.js",
+    "old": "        if (Array.isArray(scene.decor)) scene.decor = scene.decor.filter((/** @type {any} */ p) => p?.id !== id);\n",
+    "new": "",
+    "tests": [
+      "test/auditcards6_a.test.js"
+    ]
+  },
+  {
+    "name": "AC6-A3-joiner-no-card",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "stampWonWeapons(f.entity.items, f._fightN ?? 1); dropFoeCard(f.entity);",
+    "new": "stampWonWeapons(f.entity.items, f._fightN ?? 1);",
+    "tests": [
+      "test/auditcards6_a.test.js"
+    ]
+  },
+  {
+    "name": "AC6-A3-arrival-no-card",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "stampWonWeapons(f.entity.items, 1); dropFoeCard(f.entity);",
+    "new": "stampWonWeapons(f.entity.items, 1);",
+    "tests": [
+      "test/auditcards6_a.test.js"
+    ]
+  },
+  {
+    "name": "AC6-A4-no-walk",
+    "file": "src/systems/cardSources.js",
+    "old": "  const divine = getDivine(factionDict, factionId);",
+    "new": "  const divine = getDivine(null, factionId);",
+    "tests": [
+      "test/auditcards6_a.test.js"
+    ]
+  },
+  {
+    "name": "AC6-A4-host-table-unread",
+    "file": "src/scenes/world.js",
+    "old": "    const id = guildCardRoll(q.factionId, rank, Math.random, dict);",
+    "new": "    const id = guildCardRoll(q.factionId, rank, Math.random);",
+    "tests": [
+      "test/auditcards6_a.test.js"
+    ]
+  },
+  {
+    "name": "AC6-latent-bare-uid",
+    "file": "src/scenes/world.js",
+    "old": "    const key = `${playerEntity.characterId ?? ''}|${quest}`;",
+    "new": "    const key = quest;",
+    "tests": [
+      "test/auditcards6_a.test.js"
+    ]
+  },
+  {
+    "name": "AC6-A5-classic-gate",
+    "file": "src/systems/itemInfo.js",
+    "old": "isCardBinder(item) || isCardPack(item)) record = survivalInfoTokens(item);",
+    "new": "isCardBinder(item)) record = survivalInfoTokens(item);",
+    "tests": [
+      "test/auditcards6_a.test.js"
+    ]
+  },
+  {
+    "name": "AC6-A5-enhanced-gate",
+    "file": "src/systems/itemInfo.js",
+    "old": "isCardBinder(item) || isCardPack(item);   // AUDIT CARDS-6 A5",
+    "new": "isCardBinder(item);   // AUDIT CARDS-6 A5",
+    "tests": [
+      "test/auditcards6_a.test.js"
+    ]
+  },
+  {
+    "name": "AC6-A6-split-coin",
+    "file": "src/systems/inventory.js",
+    "old": "    if (w > 0) picked.value = w;\n",
+    "new": "",
+    "tests": [
+      "test/auditcards6_a.test.js"
+    ]
+  },
+  {
+    "name": "AC6-A6-load-pack-alone",
+    "file": "src/systems/save.js",
+    "old": "  for (const list of repairLists) cleanBinders(list);\n",
+    "new": "",
+    "tests": [
+      "test/auditcards6_a.test.js"
+    ]
+  },
+  {
+    "name": "AC6-A7-stored-name",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "(isIliacCard(item) ? iliacCardName(item) : item.name)",
+    "new": "(item.name)",
+    "tests": [
+      "test/auditcards6_a.test.js"
+    ]
+  },
+  {
+    "name": "AC6-A8-gate-card-before-gold",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "  const gold = { kind: 'gold', gold: s.gold, tier: 'common', record: flat() };\n",
+    "new": "  const gold = { kind: 'gold', gold: s.gold, tier: 'common', record: s.card ? (flat(), flat()) : flat() };\n",
+    "tests": [
+      "test/auditcards6_a.test.js"
+    ]
+  },
+  {
+    "name": "AC6-A8-abyss-card-before-gold",
+    "file": "src/systems/sdSpoils.js",
+    "old": "  const gold = { kind: 'gold', gold: s.gold, tier: 'common', record: flat() };\n",
+    "new": "  const gold = { kind: 'gold', gold: s.gold, tier: 'common', record: s.card ? (flat(), flat()) : flat() };\n",
+    "tests": [
+      "test/auditcards6_a.test.js"
+    ]
+  },
+  {
+    "name": "AC6-A9-every-copy-spare",
+    "file": "src/systems/realmCustoms.js",
+    "old": "(have.get(h.rec.card) ?? 0) > (need.get(h.rec.card) ?? 0)",
+    "new": "true",
+    "tests": [
+      "test/auditcards6_a.test.js"
+    ]
+  },
+  {
+    "name": "AC6-A9-break-unsaid",
+    "file": "src/systems/realmCustoms.js",
+    "old": "  const decksShort = decks.filter((d) => deckHeldRefusal(d.cards, snap.items)).length;",
+    "new": "  const decksShort = 0;",
+    "tests": [
+      "test/auditcards6_a.test.js"
+    ]
+  }
+]

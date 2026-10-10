@@ -231,8 +231,8 @@
   {
     "name": "AUDIT1003-S8-the-inbox-s-senders-bare",
     "file": "server-account/src/letters.js",
-    "old": "for (const p of await withArenaHonoursAll({ db }, found, nowS)) rows.set(p.id, p);",
-    "new": "for (const p of found) rows.set(p.id, p);",
+    "old": "    for (const p of await withIliacHonoursAll({ db }, await withArenaHonoursAll({ db }, found, nowS), nowS)) rows.set(p.id, p);   // AUDIT PRE-MERGE 1003 S8: the Grand Champion's title, the #1's laurel\n",
+    "new": "    for (const p of await withIliacHonoursAll({ db }, found, nowS)) rows.set(p.id, p);   // AUDIT PRE-MERGE 1003 S8: the Grand Champion's title, the #1's laurel\n",
     "tests": [
       "test/audit1003_server.test.js"
     ]
@@ -240,8 +240,8 @@
   {
     "name": "AUDIT1003-S8-the-opened-letter-s-sender-bare",
     "file": "server-account/src/letters.js",
-    "old": "const row = await withArenaHonours({ db }, await db.prepare('SELECT * FROM players WHERE id = ?').bind(l.from_id).first(), nowS);",
-    "new": "const row = await db.prepare('SELECT * FROM players WHERE id = ?').bind(l.from_id).first();",
+    "old": "const row = await withIliacHonours({ db }, await withArenaHonours({ db }, await db.prepare('SELECT * FROM players WHERE id = ?').bind(l.from_id).first(), nowS), nowS);",
+    "new": "const row = await withIliacHonours({ db }, await db.prepare('SELECT * FROM players WHERE id = ?').bind(l.from_id).first(), nowS);",
     "tests": [
       "test/audit1003_server.test.js"
     ]
@@ -249,8 +249,8 @@
   {
     "name": "AUDIT1003-S8-the-board-s-authors-bare",
     "file": "server-account/src/board.js",
-    "old": "for (const p of await withArenaHonoursAll({ db }, found, nowS)) rows.set(p.id, p);",
-    "new": "for (const p of found) rows.set(p.id, p);",
+    "old": "    for (const p of await withIliacHonoursAll({ db }, await withArenaHonoursAll({ db }, found, nowS), nowS)) rows.set(p.id, p);   // AUDIT PRE-MERGE 1003 S8: the Grand Champion's title, the #1's laurel\n",
+    "new": "    for (const p of await withIliacHonoursAll({ db }, found, nowS)) rows.set(p.id, p);   // AUDIT PRE-MERGE 1003 S8: the Grand Champion's title, the #1's laurel\n",
     "tests": [
       "test/audit1003_server.test.js"
     ]

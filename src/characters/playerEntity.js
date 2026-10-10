@@ -293,6 +293,22 @@ function tellHurt(entity, dmg, before, after, saved = false) {
 }
 
 /**
+ * INT9 (AUDIT): A DEATH ANOTHER'S WORD DECIDED - the open zone's referee's fall (net/wildRef.js): no withholding, no guild's
+ * AvoidDeath, no death save - the referee called it, and its drop follows it whatever this machine says (hurtPlayer's
+ * doors turned it aside, and the fallen stood up with a fall already called on it). OnDeath's subscribers and the
+ * presenter, as the transition always tells them. Answers whether it was a death.
+ * @param {any} entity
+ */
+export function forcePlayerDeath(entity) {
+  if (!((entity?.health ?? 0) > 0)) return false;
+  entity.health = 0;
+  surfacePlayer();
+  hearDeath(entity);
+  _deathPresenter?.(entity);
+  return true;
+}
+
+/**
  * DUEL1: `spare` - A DUEL'S BLOW NEVER KILLS. Mac: "Loser drops to 1HP". A blow that would take a live player to zero
  * leaves them at ONE instead, and `spare(entity)` is told (the duel's law: the side that falls says so and has lost);
  * the avoid-death hook and the death presenter are never reached, because nobody died. Only the duel's own doors pass

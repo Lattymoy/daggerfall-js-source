@@ -14,7 +14,7 @@ import { seededRng } from '../src/systems/wind.js';
 import {
   tierColour, spoilsLineVertices, SpoilsGlowRenderer, SPOILS_LINE_H, SPOILS_LINE_W, SPOILS_LINE_MIN_RAD, SPOILS_GLOW_MAX, SPOILS_GLOW_FS, SPOILS_GLOW_VS, lineHeight,
 } from '../src/render/spoilsGlow.js';
-import { RARITIES, RARITY_ORDER, rarityChances } from '../src/systems/lootRarity.js';
+import { RARITIES, RARITY_ORDER, rarityChances, gemKindOf } from '../src/systems/lootRarity.js';   // GEM2: the Warden's gem
 import {
   rollSpoils, spoilsBase, magicOrBetter, sigilStone, isSigilStone, SPOILS_GOLD_PER_LEVEL, SPOILS_LEGENDARY, SPOILS_SOURCE, SIGIL_STONE, SIGIL_STONE_TEMPLATE,
 } from '../src/systems/gateSpoils.js';
@@ -223,12 +223,12 @@ test('WB5 the floor: the burst leaves one piece at a time from his chest, each c
   const h = pool({ feet: () => me.at });
   assert.equal(h.p.spew({ day: 700, seed: 99, level: 8, at: [0, 3.1, 0], bearing: 0 }), true);
   const list = spoilsList(99, 8);
-  assert.equal(list.length, 5); assert.equal(list[3].tier, SIGIL_TIER); assert.ok(isSigilStone(list[3].item)); assert.equal(list[4].kind, 'gold');
+  assert.equal(list.length, 6); assert.ok(gemKindOf(list[3].item), 'GEM2 (PIN MOVED): the Warden\'s gem after the pieces'); assert.equal(list[4].tier, SIGIL_TIER); assert.ok(isSigilStone(list[4].item)); assert.equal(list[5].kind, 'gold');
   for (const q of list) assert.ok(RANDOM_TREASURE_ICONS.includes(q.record), 'dressed in a treasure flat');
   const burst = { v: SPOILS_RECORD_V, id: `700:char-1:${WALL}`, day: 700, at: WALL, who: 'char-1', pieces: JSON.parse(JSON.stringify(list)) };   // AUDIT WBX S3: its version and id
   assert.deepEqual(h.st.get(SPOILS_STORE_KEY), [burst], 'the record, at the burst: the pieces as rolled, when and whose');
   run(h, 100);
-  assert.deepEqual(h.p.state().pieces.map((q) => q.left), [true, false, false, false, false], 'one at a time');
+  assert.deepEqual(h.p.state().pieces.map((q) => q.left), [true, false, false, false, false, false], 'one at a time');
   run(h, 4000);
   const s = h.p.state().pieces;
   assert.ok(s.every((q) => q.left && q.rest), 'all out and at rest');
@@ -249,8 +249,8 @@ test('WB5 the floor: the burst leaves one piece at a time from his chest, each c
   assert.deepEqual(h.st.get(SPOILS_STORE_KEY), [burst], 'taking changes nothing in the record: the pack is only as safe as the last save');
   me.at = null;
   const before = h.pack.length;
-  assert.equal(h.p.gather(), 5 - before, 'leaving gathers the rest');
-  assert.equal(h.pack.length, 5, 'every piece in the pack');
+  assert.equal(h.p.gather(), 6 - before, 'leaving gathers the rest');
+  assert.equal(h.pack.length, 6, 'every piece in the pack');
   assert.equal(h.said.at(-1), SPOILS_TEXT.gathered);
   assert.deepEqual(h.st.get(SPOILS_STORE_KEY), [burst], 'and the record stands until a save holds them');
   assert.ok(h.pack.some((q) => q.kind === 'gold' && q.gold === rollSpoils(99, 8).gold));
@@ -288,23 +288,24 @@ test('WB5 a crash loses nothing: at boot the record\'s pieces AS KEPT (not a re-
   assert.equal(typeof mem.get(SPOILS_STORE_KEY), 'string');
   const info = (who, t) => ({ characterId: who, characterName: 'Mac', dateAndTime: { realTime: t } });
   const got = [];
-  assert.equal(recoverSpoils(st, (p) => got.push(p), { who: 'char-1', saves: [info('char-1', WALL - 1)] }), 5, 'no save since: every piece, taken or not');
+  assert.equal(recoverSpoils(st, (p) => got.push(p), { who: 'char-1', saves: [info('char-1', WALL - 1)] }), kept.length, 'no save since: every piece, taken or not');
   assert.equal(got[0].item.name, 'As Kept', 'the pieces as kept, never a re-roll');
   assert.deepEqual(got.map((p) => (p.kind === 'gold' ? p.gold : p.item.name)), kept.map((p) => (p.kind === 'gold' ? p.gold : p.item.name)));
   assert.ok(st.get(SPOILS_STORE_KEY), 'and the record stays: a second crash before a save loses nothing either');
   assert.equal(recoverSpoils(st, (p) => got.push(p), { who: 'char-2', saves: [] }), 0, 'another character\'s record waits');
   assert.ok(st.get(SPOILS_STORE_KEY));
-  assert.equal(recoverSpoils(st, (p) => got.push(p), { who: 'char-1', saves: [info('char-2', WALL + 5)] }), 5, 'another character\'s save holds nothing of mine');
+  assert.equal(recoverSpoils(st, (p) => got.push(p), { who: 'char-1', saves: [info('char-2', WALL + 5)] }), kept.length, 'another character\'s save holds nothing of mine');
   assert.equal(recoverSpoils(st, () => assert.fail('a save since holds them'), { who: 'char-1', saves: new Map([[3, info('char-1', WALL + 5)]]).values() }), 0);
   assert.equal(st.get(SPOILS_STORE_KEY), null, 'and the record clears');
   assert.equal(savedSince([info('a', 10)], 'a', 9), true); assert.equal(savedSince([info('a', 9)], 'a', 9), false); assert.equal(savedSince([info(null, 10)], null, 9), false, 'no one is no one\'s save');
   // a piece the validator refuses is not handed over; the rest are
   const bad = JSON.parse(JSON.stringify(spoilsList(42, 6)));
   bad[0].item.templateIndex = 99999;
-  bad[4].gold = -5;
+  bad[bad.length - 1].gold = -5;   // GEM2 (PIN MOVED): the gold is last, after the Warden's gem and the ember
   st.set(SPOILS_STORE_KEY, { day: 701, at: WALL, who: 'char-1', pieces: bad });
   const got2 = [];
-  assert.equal(recoverSpoils(st, (p) => got2.push(p), { who: 'char-1' }), 3, 'no template, no item; no gold below one');
+  assert.equal(bad.at(-1).kind, 'gold');
+  assert.equal(recoverSpoils(st, (p) => got2.push(p), { who: 'char-1' }), bad.length - 2, 'no template, no item; no gold below one');
   mem.set(SPOILS_STORE_KEY, '{not json');
   assert.equal(recoverSpoils(st, () => assert.fail('junk hands over nothing')), 0);
   st.set(SPOILS_STORE_KEY, { day: 700, pieces: 'no' });

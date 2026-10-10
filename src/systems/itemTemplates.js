@@ -9,7 +9,7 @@
 import { clampArmorVariant } from './armorMaterials.js';   // AUDIT 23 (items-6)
 import { conditionMultipliersByMaterial, valueMultipliersByMaterial, WEAPONS, WEAPON_CONDITION_POOL } from '../characters/weapons.js';   // AUDIT 23 (items-5); AUDIT 68 S27-weightForMaterial-dup: ItemBuilder's value ladder and the Weapons enum, one home each; WEAPON-POOL: the one pool
 import { GROUP_TEMPLATE_INDICES } from './itemTemplatesData.js';
-import { WAGON_MODEL_ID } from './horseCartLaw.js';   // DISC24-B: the cart's picture is the wagon's model
+import { WAGON_KINDS, wagonKindOf } from './wagonKinds.js';   // WAGONS1: a wagon's picture is Mac's wagon of its kind (read at call time - wagonKinds.js reads this module's TRANSPORT_SMALL_CART)
 import TEMPLATES_JSON from '../characters/itemTemplates.json' with { type: 'json' };
 import { playerArchiveFor, resolvePaperdollRecord } from '../characters/paperdollArt.js';   // AUDIT 17f: SetRace, one home; NT3 (F006): the record law too
 import { itemDyeColor, itemDyeTarget } from './itemDye.js';
@@ -108,9 +108,11 @@ export const materialValue = (basePrice, material) => basePrice * 3 * (valueMult
 /** The item's BASE VALUE for cost math (DaggerfallUnityItem.value
  *  after ItemBuilder): weapons/plate = basePrice * 3 * mult[material];
  *  chain armor doubles; everything else is the template basePrice.
- *  Armor materials arrive as the 0x0000/0x0100/0x02xx enum. */
-export function itemBaseValue(item) {
-  const t = templateByIndex(item.templateIndex);
+ *  Armor materials arrive as the 0x0000/0x0100/0x02xx enum.
+ *  INT1: `lookup` the template reader - the item law's (systems/itemLaw.js lawTemplate) knows the rows a headless reader
+ *  never registers. */
+export function itemBaseValue(item, lookup = templateByIndex) {
+  const t = lookup(item.templateIndex);
   if (!t) return 1;
   // AUDIT 17e F14: CreateWeapon's arrow branch never applies the
   // material multiplier (ItemBuilder.cs) - an arrow is worth its
@@ -185,11 +187,6 @@ export const TRANSPORT_HORSE = 94;        // Transportation.Horse (template)
  *  animal archive's horse (TEXTURE.201 records 0-1 are the horses the
  *  world draws - systems/soundClips.js keys their neigh by it). */
 const BORROWED_ART_INDICES = new Set((GROUP_TEMPLATE_INDICES.Transportation ?? []).filter((i) => i !== TRANSPORT_HORSE));
-/** DISC24-B: the classic model a template's picture is baked from when it
- *  has no art of its own - the Small Cart's is the wagon itself, model
- *  41214 (systems/horseCartLaw.js WAGON_MODEL_ID, the one Horse Cart and
- *  Cargo trails behind the player). */
-const ITEM_MODEL_PICTURES = new Map([[TRANSPORT_SMALL_CART, WAGON_MODEL_ID]]);
 
 /** UseWorldTexture verbatim. */
 export function usesWorldTexture(item, template = templateByIndex(item.templateIndex)) {
@@ -310,7 +307,11 @@ export function mintCondition(item) {
  *  answers null for it) - the Small Cart's wagon. Null for every other
  *  item. */
 export function inventoryItemModel(item) {
-  return ITEM_MODEL_PICTURES.get(item?.templateIndex) ?? null;
+  // DISC24-B: the classic model a template's picture is baked from when it has no art of its own - the Small Cart's was
+  // the wagon Horse Cart and Cargo trails (model 41214); WAGONS1: Mac's wagon of its kind (ui/modelIcon.js's port door),
+  // the Small Cart's his Wagon Cart. No other template is pictured by a model.
+  if (item?.templateIndex === TRANSPORT_SMALL_CART) return WAGON_KINDS[wagonKindOf(item)].icon;
+  return null;
 }
 
 // ---- THUNDERLOCK-ART: a port-owned item's own pictures, by job ----------

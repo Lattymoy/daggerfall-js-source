@@ -184,8 +184,8 @@ test('GILDED1 THE DROP: ONE draw, always - under GILDED_CHANCE the Hourlock, els
   const lcg = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return (seed >>> 8) / 0x800000; };
   for (let i = 0; i < 20000; i++) if (rollHourlock(lcg)) n++;
   assert.ok(Math.abs(n / 20000 - GILDED_CHANCE) < 0.004, `${n} of 20000`);
-  // the Brass Remnant's spoils are where it falls - its last roll (sd9e_spoils.test.js pins the order)
-  assert.match(strip(read('src/systems/sdSpoils.js')), /const brass = rollNumidiumPiece\(rolls\);\s*if \(brass\) pieces\.push\(\{ item: brass, tier: brass\.rarity \}\);\s*const hourlock = rollHourlock\(rolls\);\s*if \(hourlock\) pieces\.push\(\{ item: hourlock, tier: hourlock\.rarity \}\);\s*return \{ gold, pieces \};/);
+  // the Brass Remnant's spoils are where it falls - its last piece's roll, the Remnant's card after it (sd9e_spoils.test.js pins the order)
+  assert.match(strip(read('src/systems/sdSpoils.js')), /const brass = rollNumidiumPiece\(rolls\);\s*if \(brass\) pieces\.push\(\{ item: brass, tier: brass\.rarity \}\);\s*const hourlock = rollHourlock\(rolls\);\s*if \(hourlock\) pieces\.push\(\{ item: hourlock, tier: hourlock\.rarity \}\);\s*const card = bossCardRoll\('abyss', rolls\);\s*socketPass\(pieces\.map\(\(p\) => p\.item\), rolls\);\s*weaponSocketPass\(pieces\.map\(\(p\) => p\.item\), rolls\);\s*const gems = bossGems\('abyss', rolls\);\s*return \{ gold, pieces, card, gems \};/);   // PIN MOVED (CARDS9): the Brass Remnant's own card one draw after the Hourlock's; PIN MOVED (GEM1/GEM2, bible/06-Systems/Gem-Sockets.md): then the sockets' passes and its gems, last of all
 });
 
 // ── the power ─────────────────────────────────────────────────────────

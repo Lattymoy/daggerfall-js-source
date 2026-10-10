@@ -21,6 +21,7 @@
 // line at all. MiscItems is four special templates before its
 // default. The final `default:` arm catches potions (a filled glass
 // bottle) before falling back to the misc record.
+import { wagonItemName } from './wagonKinds.js';   // WAGONS1: the Open Wagon's and the Caravan's names
 import { unitWeightInKg } from './inventory.js';   // AUDIT 23 (items-8)
 import { enemyDisplayName } from '../characters/enemyBasics.js';   // X5: %hs, the trapped soul's name
 import { itemIsIdentified } from './tradeModes.js';   // X7: the DERIVED identified state
@@ -42,7 +43,7 @@ import { hasArtifactEffect, hasArtifactSubtype, ARTIFACTS } from './artifactEffe
 import { isRestItem, restItemLines } from './restItems.js'; import { isPortalStone, portalStoneLines } from './portalStone.js';   // REST6: the seven's cards; PORTAL1: and the Portal Stone's
 import { maskText } from '../net/nameFilter.js';   // TEXT-F1: a name a player typed, its words starred
 import { isWalletItem, WALLET_CARD_LINES } from './walletItem.js';   // WALLET1: the wallet's card
-import { isIliacCard, isCardBinder, iliacCardName, iliacCardLines, BINDER_CARD_LINES } from './iliacItems.js';   // CARDS8: a card's name and lines, the binder's
+import { isIliacCard, isCardBinder, iliacCardName, iliacCardLines, BINDER_CARD_LINES, isCardPack, CARD_PACK_LINES } from './iliacItems.js';   // CARDS8: a card's name and lines, the binder's
 import { isSurvivalItem, isCampingEquipment, isCampfireKit, isSkillet } from './survival/items.js';   // SURV5: the survival items' own info box
 import { isFood, foodOf, foodStage, foodSatiety, isWaterskin, waterIn, WATERSKIN_CAPACITY_KG, STAGE_WORDS } from './survival/food.js';   // ROAD-U: the identity DFU reads off the item's own record
 import { makerMark, PROVENANCE_RE } from '../net/recipeLaw.js';   // AUDIT 30 C7: a maker's mark as the law writes it
@@ -526,6 +527,8 @@ export function shownItemName(item) {
 }
 export function resolveItemName(item) {
   const templateName = templateByIndex(item?.templateIndex)?.name ?? '';
+  const wagon = wagonItemName(item);   // WAGONS1: a marked wagon says its kind (systems/wagonKinds.js) - its row keeps the Small Cart's ItemName
+  if (wagon) return wagon;
   if (!itemIsIdentified(item)) return templateName;
   const short = shownItemName(item) ?? templateName;
   if (item?.artifact) return short;
@@ -728,6 +731,7 @@ export function survivalInfoTokens(item) {
   else if (isWalletItem(item)) for (const text of WALLET_CARD_LINES) out.push({ text, center: true });   // WALLET1
   else if (isIliacCard(item)) for (const text of iliacCardLines(item)) out.push({ text, center: true });   // CARDS8
   else if (isCardBinder(item)) for (const text of BINDER_CARD_LINES) out.push({ text, center: true });   // CARDS8
+  else if (isCardPack(item)) for (const text of CARD_PACK_LINES) out.push({ text, center: true });   // CARDS9: the sealed pack
   return out;
 }
 
@@ -739,7 +743,7 @@ export function itemInfoRows(item, rows, macros = {}) {
   // BUILT tokens rather than a record id, so both bypass `rows(id)`.
   if (isPotionRecipe(item)) record = potionRecipeTokens();
   if (isSurvivalItem(item) || isRestItem(item)) record = survivalInfoTokens(item);
-  if (isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item)) record = survivalInfoTokens(item);   // CARDS8: and a card's and the binder's   // PORTAL1: the stone's card, built the same way; WALLET1: and the wallet's   // SURV5: built tokens, like the recipe's - the custom rows have no TEXT.RSC record
+  if (isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item) || isCardPack(item)) record = survivalInfoTokens(item);   // AUDIT CARDS-6 A5: and the sealed pack's (CARD_PACK_LINES had no gate to show them); CARDS8: and a card's and the binder's   // PORTAL1: the stone's card, built the same way; WALLET1: and the wallet's   // SURV5: built tokens, like the recipe's - the custom rows have no TEXT.RSC record
   if (!painting && item?.group === 'Paintings' && _paintFile) {
     // ROAD-A7: every one of the painting reads is GetRandomTokens with
     // dfRand TRUE (InitPaintingInfo :65 and the four macro readers
@@ -871,7 +875,7 @@ export function itemStatRows(item) {
   // arrow, a helm or shield under HelmAndShieldMaterialDisplay - so the
   // panel never names a metal the pack withholds; push drops an empty.
   push('Material', itemNameParts(item).material);
-  const survival = isSurvivalItem(item) || isRestItem(item) || isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item);   // CARDS8   // REST6: the seven's lines too; PORTAL1: and the Portal Stone's; WALLET1: and the wallet's
+  const survival = isSurvivalItem(item) || isRestItem(item) || isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item) || isCardPack(item);   // AUDIT CARDS-6 A5: and the pack's; CARDS8   // REST6: the seven's lines too; PORTAL1: and the Portal Stone's; WALLET1: and the wallet's
   if (survival) for (const t of survivalInfoTokens(item).slice(2)) push('', t.text);
   else if ((item.maxCondition ?? 0) > 0) push('Condition', `${conditionWord(item)} (${conditionPercentage(item)}%)`);
   // The weight is the STACK's, as `weightString` has it and as the

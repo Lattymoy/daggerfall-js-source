@@ -683,7 +683,7 @@
  {
   "name": "AUDIT-SEATS-R2-gate-not-first",
   "file": "server/src/index.js",
-  "old": "      if (battle && !this._spend(ws, now, poseGate, 'bucket', 'drops', 'too many poses')) return;\n",
+  "old": "    if (battle && !this._spend(ws, now, poseGate, 'bucket', 'drops', 'too many poses')) return;\n",
   "new": "",
   "tests": [
    "test/audit_seats_relay.test.js",
@@ -694,7 +694,7 @@
  {
   "name": "AUDIT-SEATS-T2-eye-fanned",
   "file": "server/src/index.js",
-  "old": "      if (step === 'eye') return;\n",
+  "old": "    if (step === 'eye') return;\n",
   "new": "",
   "tests": [
    "test/audit_seats_relay.test.js",

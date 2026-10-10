@@ -86,7 +86,8 @@ import {
 // AUDIT 26's quest arm is a rung of it and travelled with it, so the
 // window no longer carries the settings or quest-resource imports it
 // needed to run that rung itself.
-import { planStore, planTake, applyTransfer, planDropGold, WAGON_KG_LIMIT as WAGON_KG_LIMIT_LOCAL, HOW_MANY_ITEMS, SPLIT_INPUT_MAX, parseSplitAmount, splitRequired, sendQuestItemClick } from '../systems/itemTransfer.js';
+import { wagonKgFor } from '../systems/wagonKinds.js';   // WAGONS1: the driven wagon's capacity
+import { planStore, planTake, applyTransfer, planDropGold, HOW_MANY_ITEMS, SPLIT_INPUT_MAX, parseSplitAmount, splitRequired, sendQuestItemClick } from '../systems/itemTransfer.js';
 import { shiftDrop } from '../systems/physicalItems.js';   // PI1: Physical Items' shift-drop, one law for both packs
 // U57: which list is the remote one, and what opening and closing
 // this window decide.
@@ -546,7 +547,7 @@ export class NativeInventoryWindow {
     if (this.usingWagon) {
       return {
         container: CONTAINER_IMAGES.Wagon,
-        label: targetIconWeightText(totalWeight(this._remote()), WAGON_KG_LIMIT_LOCAL),
+        label: targetIconWeightText(totalWeight(this._remote()), wagonKgFor(this.hooks.entity)),   // WAGONS1: the driven wagon's
       };
     }
     const loot = this.hooks.loot;
@@ -877,6 +878,7 @@ export class NativeInventoryWindow {
           remote: this._remote(),
           groundRefusal: groundRefusalOf(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }),   // HOUSE-DROP
           capacity: storeCapacityOf(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }),   // COMPANION-WEIGHT
+          wagonKg: wagonKgFor(this.hooks.entity),   // WAGONS1: the driven wagon's capacity
         });
         if (plan.notice) this.boxes = [{ rows: [{ text: plan.notice, center: true }] }];
         if (!plan.ok) { if (plan.refusal?.reason === 'ground') this._refuse(plan.refusal); return; }   // HOUSE-DROP: the floor's refusal is said
@@ -996,6 +998,7 @@ export class NativeInventoryWindow {
         getQuest: this.hooks.getQuest ?? null,
         groundRefusal: groundRefusalOf(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }),   // HOUSE-DROP: a floor that refuses a drop
         capacity: storeCapacityOf(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }),   // COMPANION-WEIGHT: a companion's pack takes what fits
+        wagonKg: wagonKgFor(this.hooks.entity),   // WAGONS1: the driven wagon's capacity
         bagLoaded: !bagMayLeave(this.hooks.entity),   // BAG1: a loaded Materials Bag never leaves the pack (AUDIT2 H11: the one test)
       });
       if (!plan.ok) { this._refuse(plan.refusal); return; }

@@ -25,6 +25,11 @@ import * as hudm from '../src/ui/cardTableHud.js';
 import { holdCursor } from '../src/player/pointerLock.js';
 import { regularsToStand, regularBark, BARK_MS } from '../src/world/cardRegulars.js';
 import { fakeDoc } from './decorFakes.mjs';
+import { cardPackPrice, buyCardPack } from '../src/systems/cardSources.js';   // CARDS9: the house's packs at the table
+import { openIliacTableGame } from '../src/scenes/iliacTableGame.js';   // CARDS10: the other game at the table
+import { iliacGrade } from '../src/systems/iliacPatrons.js';
+import { skillValue, SKILLS } from '../src/systems/skills.js';
+import { liveStat } from '../src/systems/statMods.js';
 import { fakeRoom } from './fakeRoom.mjs';
 
 const { subtle } = webcrypto;
@@ -193,7 +198,7 @@ test('TAVERN-TABLES the relay by source: the index\'s law before the table\'s ch
   const src = read('server/src/index.js');
   const law = src.indexOf("      if (!back && !!stake !== holdemGoldTable(m.table)) { await no(stake ? 'friendly table' : 'gold table'); return; }");
   assert.ok(law > 0 && law > src.indexOf('      const no = async (why) => {') && law < src.indexOf("await no('table differs')"), 'after the stake is spent (its refusal hands it back), before the chairs');
-  assert.ok(read('src/net/wire.js').includes("// world180:   TAVERN-TABLES (2026-10-09"), 'TAVERN-TABLES bumped it (world180) - PIN MOVED: TV-BEYOND renumbered past it to world181 at its merge, and TAVERN-TABLES\' line is the history beneath');
+  assert.ok(read('src/net/wire.js').includes("// world180:   TAVERN-TABLES (2026-10-09"), 'TAVERN-TABLES bumped it (world180) - PIN MOVED: TV-BEYOND renumbered past it to world182 at its merge, and TAVERN-TABLES\' line is the history beneath');
 });
 
 // THE HOST (scenes/worldModes.js's card block, sliced and run as test/auditcards2_host.test.js runs it): the two tables
@@ -228,6 +233,8 @@ function host({ online = true, relay = true, realm = false }) {
     mwViewFirstPerson: () => {}, homeTownOf: (b) => b?.townMapId || 0,
     worldMinutes: () => 0, MINUTES_PER_DAY: 1440,
     RemoteCardTable, mode: 'interior', regularsToStand, regularBark, BARK_MS, showdownWinners: hudm.showdownWinners, HOLDEM_REFUSALS: hudm.HOLDEM_REFUSALS,
+    // PIN MOVED (CARDS9/10, at the merge): the block prices a pack at the table and opens Iliac Hand on the seat - their names, real
+    cardPackPrice, buyCardPack, openIliacTableGame: (o) => openIliacTableGame({ ...o, doc }), iliacGrade, skillValue, SKILLS, liveStat,
   };
   const state = { interiorCtx: { tables: [{ aabb: {} }, { aabb: {}, gold: true }], collider: null }, interiorBuilding: { buildingKey: 7, quality: 10, regionIndex: 17, townMapId: 1111 } };
   const api = new Function('S', ...Object.keys(scope), `let interiorCtx = S.interiorCtx, interiorBuilding = S.interiorBuilding;\n${BLOCK}\n

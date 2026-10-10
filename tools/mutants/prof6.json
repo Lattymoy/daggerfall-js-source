@@ -383,7 +383,7 @@
   {
     "name": "PROF6-svc-owner-kept",
     "file": "server-account/src/writs.js",
-    "old": "    db.prepare(`UPDATE products SET owner = (SELECT poster FROM commissions WHERE id = ?1 AND fn = ?2), listed = 0",
+    "old": "    db.prepare(`UPDATE products SET credited = 0, owner = (SELECT poster FROM commissions WHERE id = ?1 AND fn = ?2), listed = 0",
     "new": "    db.prepare(`UPDATE products SET listed = 0",
     "tests": [
       "test/prof6_service.test.js",
@@ -694,11 +694,12 @@
   {
     "name": "PROF6-host-herbalism-always",
     "file": "src/scenes/world.js",
-    "old": "    const prof = professionName(d.track?.profession) || 'profession';\n    return `Writ filled: ${Number(d.pay ?? 0).toLocaleString('en-US')} silver struck to your account, ${Number(d.renown?.credited ?? 0).toLocaleString('en-US')} Renown and ${Number(d.pay ?? 0) * 2} ${prof} XP.${rose}`;",
-    "new": "    return `Writ filled: ${Number(d.pay ?? 0).toLocaleString('en-US')} silver struck to your account, ${Number(d.renown?.credited ?? 0).toLocaleString('en-US')} Renown and ${Number(d.pay ?? 0) * 2} Herbalism XP.${rose}`;",
+    "old": "    const prof = professionName(d.track?.profession) || 'profession';\n",
+    "new": "    const prof = 'Herbalism';\n",
     "tests": [
       "test/prof6_client.test.js"
-    ]
+    ],
+    "note": "CHAP2a: re-aimed by content - the hall writ's lines stand between the profession and the line."
   },
   {
     "name": "PROF6-pieces-any-recipe",

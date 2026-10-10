@@ -461,9 +461,11 @@ test('AUDIT REALM2 C5: a tile\'s class name past Latin-1 rides the checkpoint\'s
   const names = ['Łowca', 'Маг', 'Blade ⚔', 'Mage’s Aide', 'Dragon 🐉', 'Épéiste', 'Spell\\u0041sword "x"'];
   for (const className of names) {
     const made = (await realmCreate(dev.io, 'Nystul')).data;
-    const summary = realmSummaryOf({ level: 3, career: { name: className }, race: 'Breton', gender: 'female', faceIndex: 1 });
+    // INT2 (PIN MOVED): the tile's level the save's own (a birth's, 1 - the judge holds a summary claiming another), and the
+    // answer saying the hold
+    const summary = realmSummaryOf({ level: 1, career: { name: className }, race: 'Breton', gender: 'female', faceIndex: 1 });
     const put = await realmPut(dev.io, made.id, { lease: made.lease, seq: 1, summary }, JSON.stringify(freshSave({ v: 1 })));   // world.js realmBirth's (AUDIT REALM2 S1: a new character's)
-    assert.deepEqual(put, { ok: true, data: { ok: true, seq: 1 } }, `${className}: the birth's put lands`);
+    assert.deepEqual(put, { ok: true, data: { ok: true, seq: 1, tradeHeld: null } }, `${className}: the birth's put lands`);
     const row = (await realmList(dev.io)).characters.find((ch) => ch.id === made.id);
     assert.equal(row.summary.className, className, `${className}: the service reads the name back`);
     const boot = await openRealmBoot({ io: dev.io, id: made.id });
@@ -515,11 +517,15 @@ test('AUDIT REALM2 C6: a realm home\'s sale gives the owner\'s own things back t
 test('AUDIT REALM2 C7: the pause menu\'s Exit ends a duel first and passes P0.5\'s gate - the last checkpoint is the healed character, never the duel\'s 1 health or the opponent\'s spells, and none out of the seat (mutants: realmCheckpoint straight, no duelLeaveNow)', async () => {
   const run = async ({ seatOut = false } = {}) => {
     const log = [];
-    const playerEntity = { health: 1, maxHealth: 80, fatigue: 3, magicka: 2, maxMagicka: 40, activeEffects: [{ bundleDuel: true, name: 'Opponent\'s Poison' }, { name: 'Mine' }] };
+    // PIN MOVED (INT8, 2026-10-09 - bible/06-Systems/Integrity-Arc.md lane 2): a duel is the relay's to referee - its bar
+    // is the referee's vitality, never the save's health, and no opponent's spell lands on my sheet - so the exit has no
+    // duel's damage to heal (duelHeal is gone): the duel ends, and the checkpoint is the character as it stands
+    const playerEntity = { health: 80, maxHealth: 80, fatigue: 3, magicka: 2, maxMagicka: 40, activeEffects: [{ name: 'Mine' }] };
     const duelMgr = { duel: { live: true }, reset() { log.push('duel ended'); this.duel = null; } };
     const state = {
       playerEntity, duelMgr, log, checkpointAllowed, online: {}, playerSpawned: true, seatOut: () => seatOut, performance: { now: () => 1 },
       ownWalkWaiting: () => false,   // AUDIT LIVED1b S1: no raise waiting
+      stampItemIds: () => 0,   // INT4 (PIN MOVED): a checkpoint stamps the valuable pieces' ids first - a name the fragment now reads
       townTalk: { overlay: null, say: () => {} }, DeathScreen: class {}, QUICK_SAVE_NAME: 'QuickSave', exitAutosaveNames: () => [], worldQuickSave: null,
       modes: { deathUp: () => false, quickSaveNow: () => { log.push({ health: playerEntity.health, effects: playerEntity.activeEffects.map((a) => a.name) }); return true; } },
       maxFatigue: () => 50, surfacePlayer: () => {}, console: { error() {} },
@@ -530,7 +536,6 @@ test('AUDIT REALM2 C7: the pause menu\'s Exit ends a duel first and passes P0.5\
     state.setBeforeTitleExit = (f) => { hook = f; };
     mount(`
       let _checkpointAt = -Infinity;
-      ${W.decl('duelHeal')}
       ${W.decl('duelLeaveNow')}
       ${W.decl('onlineCheckpoint')}
       ${W.fn('realmCheckpoint')}
@@ -539,7 +544,7 @@ test('AUDIT REALM2 C7: the pause menu\'s Exit ends a duel first and passes P0.5\
     await hook();
     return log;
   };
-  assert.deepEqual(await run(), ['duel ended', { health: 80, effects: ['Mine'] }, 'leave'], 'the duel ends and heals, then the checkpoint, then the leave');
+  assert.deepEqual(await run(), ['duel ended', { health: 80, effects: ['Mine'] }, 'leave'], 'the duel ends, then the checkpoint, then the leave');
   assert.deepEqual(await run({ seatOut: true }), ['duel ended', 'leave'], 'out of the seat: no checkpoint (P0.5), the leave still goes');
 });
 
@@ -594,6 +599,7 @@ test('AUDIT REALM2 M5: realmCheckpoint answers what its composer did - a save th
   const realmCheckpoint = mount(`${W.fn('realmCheckpoint')}\nreturn realmCheckpoint;`, {
     realmSession: { lost: null }, townTalk: { overlay: null }, DeathScreen: class {}, playerEntity: { health: 10 }, QUICK_SAVE_NAME: 'QuickSave',
     modes: { deathUp: () => false, quickSaveNow: () => answer }, worldQuickSave: null,
+    stampItemIds: () => 0,   // INT4 (PIN MOVED): a checkpoint stamps the valuable pieces' ids first - a name the fragment now reads
   });
   assert.equal(realmCheckpoint(), false, 'the composer refused: no checkpoint');
   const session = { transact: () => new Promise(() => {}), abandon() {} };

@@ -69,6 +69,7 @@ const REAL = {
   team: 'PlayerEnemy', mobileTeam: 'PlayerEnemy', wabbajackActive: false, specialTransformationCompleted: false,
   abyssDestroyed: true,   // AUDIT OH-F B1: the save's alone - sharedWorld strips it, and the door does not admit it
   noBody: true,   // REVENANT-FATE (the 2026-10-02 audit): a foe gone with no body - the save's alone too, stripped the same way
+  eliteFoe: true,   // AUDIT BAL (bible/05-Combat/Balance-Arc.md section 10): the save's word on an elite - its alone, stripped the same way (every client's pick is the room's)
 };
 
 test('RESPAWN1: the door admits the record the dungeon really publishes - every field, by the type the publisher writes', () => {

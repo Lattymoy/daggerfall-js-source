@@ -239,16 +239,26 @@ test('worldModes exit caches the cabin, tears down the room, and lands at deck h
     questBridge: null, npcSession: null, unleveledLootExteriorTransition: noop, console: { log: noop, error: assert.fail },
     standFromCardTable: noop,   // CARDS4: the door cashes the card table out
     peopleBodies: { destroy: noop },   // PIN MOVED (MWNPC8a): the room's people's Morrowind bodies leave with it
+    isCaravanRoom: (room) => room?.kind === 'caravan', CARAVAN_TEXT: { notHere: 'Your caravan is not here.' },   // WAGONS1: the caravan's room shares the slot
+    dropViewOut: () => actions.push('view out dropped'),   // RW1 (AUDIT): the view out goes with the building
   };
   const exit = new Function(...Object.keys(scope), `return (${functionSource('exitInteriorNow')});`)(...Object.values(scope));
   assert.equal(exit(), true);
-  assert.deepEqual(actions, ['cache', 'destroy', [101, 39, 202], 'exterior', 'sailing transition']);
+  assert.deepEqual(actions, ['cache', 'destroy', 'view out dropped', [101, 39, 202], 'exterior', 'sailing transition']);   // RW1 (AUDIT): the view out goes with the room
   assert.equal(scope.cam.yaw, 0.7);
   actions.length = 0;
   scope.host = { sailingCabin: { returnToDeck: () => null } };
   const missing = new Function(...Object.keys(scope), `return (${functionSource('exitInteriorNow')});`)(...Object.values(scope));
   assert.equal(missing(), false);
   assert.deepEqual(actions, ['Your ship is not available at this location.'], 'a missing boat does not destroy the saved room or spawn in the sea');
+  // WAGONS1: the caravan's room leaves by its own door - the landing its access hands back (grounded there), as given
+  actions.length = 0;
+  Object.assign(scope, { interiorCabin: { v: 1, kind: 'caravan', origin: [0, 0, 0], step: [5, 2, 6], yaw: 1 }, interiorCtx: { destroy: () => actions.push('destroy') },
+    host: { caravanRoom: { returnToWagon: (room) => ({ position: room.step, yaw: room.yaw }) }, sailingCabin: { returnToDeck: () => assert.fail('a caravan is no ship') }, onTransitionExterior: noop } });
+  const caravanExit = new Function(...Object.keys(scope), `return (${functionSource('exitInteriorNow')});`)(...Object.values(scope));
+  assert.equal(caravanExit(), true);
+  assert.deepEqual(actions.slice(0, 4), ['cache', 'destroy', 'view out dropped', [5, 2, 6]], 'out behind the caravan');
+  assert.equal(scope.cam.yaw, 1);
 });
 
 test('a cabin reload takes the same interior enemy/pool restoration path and never searches for a town door', async () => {

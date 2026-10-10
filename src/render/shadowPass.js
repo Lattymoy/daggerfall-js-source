@@ -317,9 +317,11 @@ export const SHADOW_SWAY_EVERY = 4;
  *  shadow map (with dynamic shadows) for the lo map (static only) from one frame to the next, and (b) lifts the lo
  *  tier's rebuild budget. Costs GPU time; turn off Settings > Features > Steady shadows (or from the console,
  *  window.__DF_SHADOW_TUNING.override = false; null hands it back to the row) to get EL8's schedule back. */
-export const SHADOW_TUNING = { steady: true, override: null, debug: false, debugForce: null, selfLamps: null, calmForce: null, facePrepass: true };
+export const SHADOW_TUNING = { steady: true, override: null, debug: false, debugForce: null, selfLamps: null, calmForce: null, facePrepass: true, sunPrepass: true };
 // PERF-SHADOW1: `facePrepass` false walks every lantern face and dynamic scan over every record, as before the pre-pass
 // (_casterCandidates) - the pins' oracle and an A/B's off arm (console: window.__DF_SHADOW_TUNING.facePrepass = false).
+// PERF-SUN3: `sunPrepass` false walks every sun cascade over every record, as before its own pre-pass (_sunCandidates) -
+// the same oracle and off arm for the sun (window.__DF_SHADOW_TUNING.sunPrepass = false).
 // AUDIT 637 B8: declared here, where the console finds it.
 /** STEADY-BALANCE (2026-10-04, Discord: "shadows too dark and too light where they should be normal ... light of candles too
  *  bright ... it fixed the flickering tho"): THE PLAYER'S OWN CARD CASTS INTO THE TWO LAMPS NEAREST IT AGAIN, steady or not.
@@ -946,11 +948,13 @@ export class ShadowPass {
     const bb = opts.build(opts.vs.bb, DEPTH_BB_FS);
     const char = opts.vs.char ? opts.build(opts.vs.char, DEPTH_FS) : null;   // EL7: the rigs' own vertex layout
     const meshCut = opts.build(opts.vs.mesh, DEPTH_CUT_FS);   // AUDIT BAY A12
+    const meshCutout = opts.build(opts.vs.mesh, DEPTH_BB_FS);   // RW1: a cutout picture's sub-mesh - its holes cast no shadow (the flats' own half-alpha cut)
     const copy = opts.build(DEPTH_COPY_VS, DEPTH_COPY_FS);   // CACHE-COPY: the cache into the live layers (_blitSlot)
     this.programs = {
       copy: { p: copy, cache: u(copy, 'uCache'), layer: u(copy, 'uLayer') },
       mesh: { p: mesh, proj: u(mesh, 'uProj'), view: u(mesh, 'uView'), model: u(mesh, 'uModel') },
       meshCut: { p: meshCut, proj: u(meshCut, 'uProj'), view: u(meshCut, 'uView'), model: u(meshCut, 'uModel'), cut: u(meshCut, 'uDissolveCut') },
+      meshCutout: { p: meshCutout, proj: u(meshCutout, 'uProj'), view: u(meshCutout, 'uView'), model: u(meshCutout, 'uModel'), tex: u(meshCutout, 'uTex') },   // RW1
       char: char ? { p: char, proj: u(char, 'uProj'), view: u(char, 'uView'), model: u(char, 'uModel') } : null,
       terrain: { p: terrain, proj: u(terrain, 'uProj'), view: u(terrain, 'uView'), model: u(terrain, 'uModel') },
       bb: {
@@ -1045,6 +1049,10 @@ export class ShadowPass {
     this._candOpen = new Int32Array(SHADOW_POINT_CASTERS);
     this._candQuads = new Uint8Array(SHADOW_POINT_CASTERS);
     this._candWalked = false;   // AUDIT 637 B3: this frame's walk made (render clears it; _candFor makes it on the first ask)
+    // PERF-SUN3: each sun cascade's candidates this frame (_sunCandidates) - the lanterns' shape - with the planes they
+    // were found by, one set a cascade
+    this._sunCands = SHADOW_CASCADES.map(() => ({ n: 0, hw: 0, rec: new Int32Array(64), bb: [] }));
+    this._sunCandPlanes = SHADOW_CASCADES.map(() => new Float32Array(24));
     this._sunPlanes = SHADOW_CASCADES.map(() => new Float32Array(24));   // SHADOW-REACH: the cascades' frusta, for the hosts' reach test
     this._sunPlanesFrame = -1;
     this._shiftGen = 0;                 // AUDIT SC1: the floating origin's generation (shiftOrigin)
@@ -1449,6 +1457,7 @@ export class ShadowPass {
     // AUDIT 637 B4: and the lanterns' candidate lists, as far as they were ever filled - a list holds batches, and one
     // kept past the frame kept a destroyed batch's placement grid (or a dungeon's, into the daylight) with it
     for (const c of this._cands) { for (let j = 0; j < c.hw; j++) { const l = c.bb[j]; if (l) l.length = 0; } c.n = 0; c.hw = 0; }
+    for (const c of this._sunCands) { for (let j = 0; j < c.hw; j++) { const l = c.bb[j]; if (l) l.length = 0; } c.n = 0; c.hw = 0; }   // PERF-SUN3: the cascades' too
   }
 
 
@@ -1498,6 +1507,7 @@ export class ShadowPass {
       const rl = Math.hypot(ld[2], ld[0]) || 1;
       this._right[0] = ld[2] / rl; this._right[1] = 0; this._right[2] = -ld[0] / rl;
       const last = SHADOW_CASCADES.length - 1;
+      const sunCand = SHADOW_TUNING.sunPrepass !== false ? this._sunCandidates(this._sunVPNew) : null;   // PERF-SUN3
       for (let c = 0; c < SHADOW_CASCADES.length; c++) {
         // EL8: the far cascade every other frame (its map keeps its matrix until it is drawn again); a cascade never drawn is drawn now
         if (c === last && this._sunDrawn[c] && !SHADOW_TUNING.steady && this.frameNo % SHADOW_FAR_CASCADE_EVERY !== 0) continue;
@@ -1505,7 +1515,7 @@ export class ShadowPass {
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.sunFbos[c]);
         gl.viewport(0, 0, SHADOW_SUN_SIZE, SHADOW_SUN_SIZE);
         gl.clear(gl.DEPTH_BUFFER_BIT);
-        this.stats.sunDraws += this.replay(f, this.sunVP[c], null, false, SHADOW_CASCADE_MIN_RADIUS_TEXELS * sunTexelWorld(c, k), sunTexelWorld(c, k));   // F5: the small solids; WEEDS1: and the small SPRITES, which F5's sphere test cannot see casters skipped by the cascade's texel
+        this.stats.sunDraws += this.replay(f, this.sunVP[c], null, false, SHADOW_CASCADE_MIN_RADIUS_TEXELS * sunTexelWorld(c, k), sunTexelWorld(c, k), REPLAY_ALL, true, sunCand ? sunCand[c] : null);   // F5: the small solids; WEEDS1: and the small SPRITES, which F5's sphere test cannot see casters skipped by the cascade's texel
         this._sunDrawn[c] = 1; this.stats.cascadesDrawn++;
       }
       for (let c = 0; c < SHADOW_CASCADES.length; c++) { this.sunParams[c] = SHADOW_CASCADES[c] * k; this.sunTexel[c] = sunTexelWorld(c, k); this._sunVPFlat.set(this.sunVP[c], c * 16); }
@@ -1993,6 +2003,70 @@ export class ShadowPass {
   }
 
   /**
+   * PERF-SUN3 (2026-10-09, Mac: "I want to continue working to increase performance across the board, especially for
+   * online"): THE SUN'S CASCADES SHARE ONE WALK - PERF-SHADOW1's half for the sun (PERF-NEXT item 1). Every cascade's
+   * replay walked every record and every flat of the frame, three walks of the whole list, to draw what stood within
+   * 12, 48 and 240 units of the eye: the frame's records are what the view DREW, out to the draw distance.
+   *
+   * The cascades are one view and one depth (sunCascadeMatrices: the same eye, light and up, an orthographic box each,
+   * SHADOW_SUN_DEPTH either side of the eye along the light), nested by radius - so their planes are the same planes
+   * but for the four at the sides, each cascade's standing inside the next one's by the difference of their radii less
+   * each box's own texel snap (about 36 units, 144 at the travel view's scale). ONE walk tests every record and flat
+   * against the FAR cascade by the very test its replay asks (recordVisible, batchVisible, on the planes spherePlanes
+   * makes of the same matrix); each nearer cascade's list is then found from the next one out's, by its own planes. A
+   * sphere outside a cascade is outside every cascade within it - the depth planes are one plane, the sides are tens of
+   * units in, and float32 rounds a plane by far less at the game's coordinates (a ten-thousandth by the floating
+   * origin, under a hundredth 120 km out) - so each list holds exactly what its cascade's sphere test takes. The
+   * replay walks its list in the records' own order and still asks every question it asked (the planes again, F5's
+   * radius, WEEDS1's height, the placements), so a cascade draws exactly what it drew.
+   *
+   * Every list is filled as the lanterns' are (_casterCandidates' shape: record indices and, of a billboard list, the
+   * flats); discard() empties them. Answers this._sunCands, one list a cascade.
+   * @param {ArrayLike<Float32Array>} vps  this frame's cascade matrices (the far cascade's even on a frame it is held)
+   */
+  _sunCandidates(vps) {
+    const out = this._sunCands, planes = this._sunCandPlanes, last = SHADOW_CASCADES.length - 1;
+    for (let c = 0; c <= last; c++) { spherePlanes(vps[c], planes[c]); out[c].n = 0; }
+    const add = (c, i) => {
+      const L = out[c];
+      if (L.n === L.rec.length) { const g = new Int32Array(L.rec.length * 2); g.set(L.rec); L.rec = g; }
+      L.rec[L.n] = i;
+      const j = L.n++;
+      if (L.bb[j]) L.bb[j].length = 0; else L.bb[j] = [];
+      return j;
+    };
+    // the far cascade: every record, every flat
+    const P = planes[last];
+    for (let i = 0; i < this.count; i++) {
+      const r = this.records[i];
+      if (r.kind !== REC_BB) { if (recordVisible(P, r)) add(last, i); continue; }
+      let j = -1;
+      for (const b of r.batches) {
+        if (!b || !batchVisible(P, b)) continue;   // the replay's first question drops a null one too
+        if (j < 0) j = add(last, i);
+        out[last].bb[j].push(b);
+      }
+    }
+    // each nearer cascade: the next one out's list, by its own planes
+    for (let c = last - 1; c >= 0; c--) {
+      const from = out[c + 1], Q = planes[c];
+      for (let t = 0; t < from.n; t++) {
+        const i = from.rec[t], r = this.records[i];
+        if (r.kind !== REC_BB) { if (recordVisible(Q, r)) add(c, i); continue; }
+        const list = from.bb[t];
+        let j = -1;
+        for (let u = 0; u < list.length; u++) {
+          const b = list[u];
+          if (!batchVisible(Q, b)) continue;
+          if (j < 0) j = add(c, i);
+          out[c].bb[j].push(b);
+        }
+      }
+    }
+    for (let c = 0; c <= last; c++) if (out[c].n > out[c].hw) out[c].hw = out[c].n;   // AUDIT 637 B4's law: as far as discard() must empty
+    return out;
+  }
+  /**
    * DISC24-C (icebreyker on Discord, 2026-09-24, "Lights/shadows are still bugged": "i am still getting this problem
    * with Enhanced Lighting" - the flicker of DISC13-A, in a lit interior, the player's whole silhouette thrown on the
    * wall): THE SELF CARD. The player's own sprite body (player/eotbBody.js - "Shadows Only" in first person, the body
@@ -2034,7 +2108,7 @@ export class ShadowPass {
         let vaoBound = false;
         // LA-AUDIT A1: a static batch with shadow cells replays its cells, not its sub-meshes - the same triangles in
         // the cells' own buffer (staticBatch.js shadowCells), each culled by its own sphere
-        const cells = r.bounded ? mesh.shadowCells : null;
+        const cells = r.bounded && !mesh._evAnyCut ? mesh.shadowCells : null;   // RW1: a mesh with a cutout picture replays its sub-meshes - a cell mixes pictures
         const subs = cells ?? mesh.subMeshes;
         const vao = cells ? mesh.shadowVao : mesh.vao;
         // PERF-EXT2 (2026-09-25, the players' "fps issues in the exterior
@@ -2052,13 +2126,22 @@ export class ShadowPass {
         let runAt = -1, runEnd = -1;
         for (let k = 0; k < subs.length; k++) {
           if (cells ? !sphereInPlanes(planes, r.cellSpheres[k * 4], r.cellSpheres[k * 4 + 1], r.cellSpheres[k * 4 + 2], r.cellSpheres[k * 4 + 3]) : !subMeshVisible(planes, r, k)) { this.stats.culled++; continue; }
+          const sm = subs[k], n = sm.primitiveCount * 3;
+          if (!cells && sm._evCut && sm._evTex) {   // RW1: a cutout picture (renderer.js _markCutout) - its holes cast nothing: its own draw, its picture's half-alpha cut
+            if (runAt >= 0) { gl.drawElements(gl.TRIANGLES, runEnd - runAt, gl.UNSIGNED_INT, runAt * 4); draws++; runAt = -1; runEnd = -1; }
+            use(P.meshCutout); gl.uniformMatrix4fv(P.meshCutout.model, false, r.matrix);
+            gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, sm._evTex); gl.uniform1i(P.meshCutout.tex, 0);
+            f.bindVao(vao);
+            gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_INT, sm.startIndex * 4); draws++;
+            vaoBound = false;   // the record's own program again for the next run
+            continue;
+          }
           if (!vaoBound) {
             const prog = r.cut > 0 ? P.meshCut : P.mesh;   // AUDIT BAY A12: a fading ship's share of her depth
             use(prog); gl.uniformMatrix4fv(prog.model, false, r.matrix);
             if (r.cut > 0) gl.uniform1f(prog.cut, r.cut);
             f.bindVao(vao); vaoBound = true;
           }
-          const sm = subs[k], n = sm.primitiveCount * 3;
           if (sm.startIndex === runEnd) { runEnd += n; continue; }
           if (runAt >= 0) { gl.drawElements(gl.TRIANGLES, runEnd - runAt, gl.UNSIGNED_INT, runAt * 4); draws++; }
           runAt = sm.startIndex; runEnd = runAt + n;

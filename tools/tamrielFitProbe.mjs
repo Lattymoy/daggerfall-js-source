@@ -133,7 +133,7 @@ else {
   console.log(`trace: ${landPx} land pixels of ${trace.w * trace.h}; by province: ${Object.entries(byProvince).map(([k, n]) => `${k} ${n}`).join(', ')}`);
   const t0 = Date.now();
   const fit = fitBayToPicture({ bayLand: dataLand, trace });
-  console.log(`fit: the Bay at picture (${fit.ox}, ${fit.oy}) x${fit.ppu} - ${fit.score} of ${fit.cells} cells agree (${Math.round((100 * fit.score) / fit.cells)}%), ${Date.now() - t0} ms; authored (${(BAY_ORIGIN.x / PIXELS_PER_PICTURE_UNIT).toFixed(1)}, ${(BAY_ORIGIN.y / PIXELS_PER_PICTURE_UNIT).toFixed(1)}) x${PIXELS_PER_PICTURE_UNIT}`);
+  console.log(`fit: the Bay at picture (${fit.ox}, ${fit.oy}) x${fit.ppu} - ${fit.score} of ${fit.cells} cells agree (${Math.round((100 * fit.score) / fit.cells)}%), ${fit.seam} of ${fit.edge} edge cells (TAMRIEL4), ${Date.now() - t0} ms; authored (${(BAY_ORIGIN.x / PIXELS_PER_PICTURE_UNIT).toFixed(1)}, ${(BAY_ORIGIN.y / PIXELS_PER_PICTURE_UNIT).toFixed(1)}) x${PIXELS_PER_PICTURE_UNIT}`);
   setTamrielTrace(trace);
   setTamrielFit({ ox: fit.ox * fit.ppu, oy: fit.oy * fit.ppu, ppu: fit.ppu });
   seam((x, y) => { const [px, py] = bayToPicture(x, y); return provinceKeyAt(px, py) !== null; }, 'traced');

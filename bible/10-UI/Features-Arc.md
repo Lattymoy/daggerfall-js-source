@@ -313,7 +313,8 @@ DIFFERENT feature the port does not run (Ledger A). A player reading
 "Enhanced AI" beside an unavailable "Smarter Enemies" could take them
 for one thing.
 
-**The row.** Enhanced alone, over the pref, off by default. The note
+**The row.** Enhanced alone, over the pref, off by default (ON since
+BAL4, 2026-10-10 - `05-Combat/Balance-Arc.md` section 6). The note
 keeps its claims and gains one sentence: this is the port's own, not
 DFU's Smarter Enemies, which the port does not run. The claims are
 PINNED AGAINST THE ARC, not remembered: the test reads the arc's
@@ -1117,3 +1118,82 @@ fact it held: `features` (the ceiling), `ft1`, `ft2`, `ft4`, `ft5`, `ft6`,
 `auditworld6bii`, `chatroster_namefilter`, `disc25d_guild_share`,
 `modsonline`, `onlinelane`, `raid2_raidsOnline`, `realm0`,
 `tv3_travellers`, `world6`, `world6b`.
+
+## FEATURES-DEFAULTS - BACK TO HOW IT SHIPS (2026-10-09, issue #399)
+
+Issue #399 (megaboyx90): "if you've tinkered with the settings, it remains that way, and clicking 'all off' before
+clicking 'restore' just puts it back to the post-modified feature settings ... An option to put them back as stock
+values would be nice." FT18's pair is a round trip by design - Restore returns what All off moved, the player's own -
+so nothing on the home ever reached the game's own values again.
+
+**Defaults**, the third button beside All off and Restore (`ui/enhancedMenu.js` `featuresDefaults`, asked first with
+`DEFAULTS_ASK` - there is no keep to undo it):
+
+- every tile to the segment it ships at (`defaultSegment`): a prefs row's `default` (a lane's, in its tiers'
+  vocabulary) else its `initial` else the shelf's `PREF_DEFAULTS`; a settings row's `defaultOf` (the port's default
+  over DFU's - `systems/settings.js`, now exported for it); a mod's shipped `Enabled`;
+- its drawer with it: a condensed row's parts to `PREF_DEFAULTS`, a mod's modules and curated dials to their
+  declared defaults;
+- online, a tile or key the room decides is not touched - its shelf keeps the player's own for offline;
+- All off's keep is spent.
+
+Pins: `test/ft18_features.test.js` (2, FEATURES-DEFAULTS) - the issue's own path (tinker, All off, Restore, then
+Defaults), a fresh shelf reading every tile's default segment, the online lock read back offline, the confirm.
+
+## ORG1 - ONE GROUP AT A TIME, IN SECTIONS (2026-10-09)
+
+> **SUPERSEDED the same day by ORG2 (below):** the Features home is the Settings screen's tabs now.
+
+Mac: "I want to reorganize settings and features to not be horrible to scroll through. Proper organization and
+detail." The home was ninety-six tiles under seven thin headings in one scroll 8,010 pixels tall at 1440x900; The
+world alone was thirty-four tiles in registry order, a dungeon's size beside a ship's rigging, and the Morrowind card
+above and the footer's four cards below stood around whichever part the player was reading.
+
+- **Three panes: the groups, the tiles, the rail.** A rail of the groups with their counts (All, then GROUP_ORDER)
+  shows ONE group at a time - the first on a first visit; All shows every one. On a narrow screen and in the pause
+  window the rail is a strip over the tiles.
+- **Each group says what it holds** (`GROUPS[g].blurb`) and is **cut into sections** (`systems/features.js`
+  `FEATURE_SECTIONS`), each a small head with a count and a line. The order in the map is the tiles' order on the
+  page; `featureSections` cuts a group's rows by it, and a row the map does not place is drawn under a last More
+  rather than lost. The map is total and disjoint over the registry - a row added without a section fails
+  `test/org1_sections.test.js` (DELETED by ORG2), as a settings key without a category always has. A group of one section (Sound, Your
+  character) is its own heading.
+- **The search reaches every tile.** While it holds a word the group is set aside: every group shows its matches, a
+  section or group with none goes, and the groups' buttons count the matches so they say where to look. The search
+  still hides in place (FT18), so the field keeps its keys.
+- **What you attach is a page of its own: Your files & packs** - the Morrowind assets card (MWA4) at its head, then
+  FT14's footer (other players' look, the packs, the night's sounds, DFU's own mod system). All shows it after the
+  tiles; the search, which reaches tiles, sets it aside. Combat's "With Morrowind data" section points there.
+- **The rail says where a tile stands** - Found in: the group and its section - for a tile the search found.
+
+World measured at 1440x900 after the change: 2,605 pixels (was the whole home's 8,010); Combat 1,358; Your
+character fits the screen. Pins: `test/org1_sections.test.js` (5, DELETED by ORG2); FT0/FT14's source pins
+(`test/features.test.js`) and FT18's (`test/ft18_features.test.js`) re-aimed at the groups, the sections and the
+files page.
+
+## ORG2 - THE HOME IS SETTINGS' TABS (2026-10-09)
+
+Mac, on ORG1: "You can do better than this. Graphic settings needs its own tab, etc. I really need you to go all in."
+The Features home and Settings were two doors over one subject. There is ONE screen now - Settings, its tabs by subject
+(Graphics, Gameplay, Combat, World, Interface, Audio, Controls, Accessibility, Mods & files) - and every Features row
+is a row of it, beside the DFU keys and port rows about the same thing: the grass, the clouds and the water under
+Graphics beside the field of view and the frame cap, the dungeon sizes under Gameplay, the mods that change a fight
+under Combat. `10-UI/Settings-Screen-Spec.md` section 11 is the screen's record; what changed for the rows:
+
+- **No Features door** on any rail or in the pause's System page; a request still named `features` lands on Settings.
+- **A tile is a row**: name, labels, the bar on the right, the drawer under it - no note in the list (ORG2b, Mac:
+  "Wayyyy too much overexplaining"). The reading rail is the help pane, and a row is PRESSED to be read there
+  (`featureCard`: where it lives, its note, the effect, a mod's keys) - a hover is no gesture on a phone.
+- **The kind chips are the toolbar's filters** over every tab, beside All and Changed; the search is the toolbar's,
+  over every tab, by the same words (`featureSearchText`). All off and Restore stand there; FEATURES-DEFAULTS'
+  Defaults is "Reset everything to defaults", DFU's settings with it, and each tab's card restores that tab alone.
+- **Graphics' quality preset** sets five of these rows at once (`systems/graphicsPresets.js`); High is their defaults.
+- **The files and packs** are the Mods & files tab's, with Every mod - each mod, where its options live, its switch.
+- `GROUPS`/`GROUP_ORDER` stay the registry's fields (the search reads a row's group); ORG1's `FEATURE_SECTIONS`,
+  `featureSections` and `sectionOfFeature` are gone - `ui/settingsMap.js` places every row.
+
+In Chromium (`tools/featuresProbe.mjs`, rewritten for the screen, 33 checks): all 96 rows drawn once across the nine
+tabs, each wearing a label, each tab's rail count the rows it drew; Low writes the five rows and DFU's TerrainDistance;
+a row moved off reads Custom; the search finds Immersive Footsteps under Audio > Sounds. `tools/featureRailProbe.mjs`
+reads all 96 rows' help panes (tallest note 242px). Pins: `test/org2_options.test.js`; FT0/FT14/FT16/FT18's pins
+re-aimed at the one screen.
