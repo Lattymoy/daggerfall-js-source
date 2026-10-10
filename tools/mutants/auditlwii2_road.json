@@ -278,5 +278,159 @@
       "test/auditlwii2_road.test.js"
     ],
     "note": "the NEAREST WAGONS_DRAWN - the pin hands them in distance order already (lens P's LW10P-nearest-sort; R11's pin hands them farthest first)"
+  },
+  {
+    "name": "AUDITLWII2-P6-LW9P-cover-days-before",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  const lo = trip.outT0 - PATROL_COVER_DAYS * DAY_MIN, hi = trip.backT1;",
+    "new": "  const lo = trip.outT0, hi = trip.backT1;",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ],
+    "note": "PATROL_COVER_DAYS: a round that walked within two days BEFORE the trip set out covers it",
+    "lane": "AUDIT LW-II-2 lens P"
+  },
+  {
+    "name": "AUDITLWII2-P17-LW9P-more-pilgrim-blocks",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "    pilgrim: b >= 4 ? 1 : 0,",
+    "new": "    pilgrim: b >= 3 ? 1 : 0,",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ],
+    "note": "moreCounts: a pilgrim more FROM FOUR BLOCKS",
+    "lane": "AUDIT LW-II-2 lens P"
+  },
+  {
+    "name": "AUDITLWII2-P17-LW9P-more-courier-blocks",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "    courier: b >= 9 ? 1 : 0,",
+    "new": "    courier: b >= 5 ? 1 : 0,",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ],
+    "note": "moreCounts: a courier more FROM NINE",
+    "lane": "AUDIT LW-II-2 lens P"
+  },
+  {
+    "name": "AUDITLWII2-P17-LW9P-hunter-classes",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "export const HUNTER_CLASSES = Object.freeze([MOBILE_TYPES.Archer, MOBILE_TYPES.Ranger]);",
+    "new": "export const HUNTER_CLASSES = Object.freeze([MOBILE_TYPES.Archer, MOBILE_TYPES.Nightblade]);",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ],
+    "note": "a hunter an Archer or a Ranger (doc table)",
+    "lane": "AUDIT LW-II-2 lens P"
+  },
+  {
+    "name": "AUDITLWII2-P17-LW9P-retainer-classes",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "export const RETAINER_CLASSES = Object.freeze([MOBILE_TYPES.Knight, MOBILE_TYPES.Warrior, MOBILE_TYPES.Archer]);",
+    "new": "export const RETAINER_CLASSES = Object.freeze([MOBILE_TYPES.Knight, MOBILE_TYPES.Warrior, MOBILE_TYPES.Thief]);",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ],
+    "note": "a retainer a Knight, Warrior or Archer (doc table)",
+    "lane": "AUDIT LW-II-2 lens P"
+  },
+  {
+    "name": "AUDITLWII2-P17-LW9P-retainer-level",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "  else if (job === 'retainer') { cls = pickOf(rng, RETAINER_CLASSES); level = rollInt(rng, 4, 12); }",
+    "new": "  else if (job === 'retainer') { cls = pickOf(rng, RETAINER_CLASSES); level = rollInt(rng, 4, 20); }",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ],
+    "note": "retainer level 4-12",
+    "lane": "AUDIT LW-II-2 lens P"
+  },
+  {
+    "name": "AUDITLWII2-P17-LW9P-hunter-level",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "  else if (job === 'hunter') { cls = pickOf(rng, HUNTER_CLASSES); level = rollInt(rng, 2, 8); }",
+    "new": "  else if (job === 'hunter') { cls = pickOf(rng, HUNTER_CLASSES); level = rollInt(rng, 2, 18); }",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ],
+    "note": "hunter level 2-8",
+    "lane": "AUDIT LW-II-2 lens P"
+  },
+  {
+    "name": "AUDITLWII2-P17-LW9P-wild-tries",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "export const WILD_TRIES = 6;",
+    "new": "export const WILD_TRIES = 1;",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ],
+    "note": "the first of WILD_TRIES seeded tries",
+    "lane": "AUDIT LW-II-2 lens P"
+  },
+  {
+    "name": "AUDITLWII2-P17-LW9P-inn-trouble-walk-minute",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "    wm = walkWm; t0 = walkT0; camp = false;",
+    "new": "    camp = false;",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ],
+    "note": "a night lodged: the camp trouble falls on that day's WALK (its minute and place)",
+    "lane": "AUDIT LW-II-2 lens P"
+  },
+  {
+    "name": "AUDITLWII2-P17-LW9P-inn-ends",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "      if (t.type !== INN_TYPE || t.mapId === home.mapId || t.mapId === to.mapId || found.has(t.mapId)) continue;",
+    "new": "      if (t.type !== INN_TYPE || found.has(t.mapId)) continue;",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ],
+    "note": "an inn on the way: other than its two ends",
+    "lane": "AUDIT LW-II-2 lens P"
+  },
+  {
+    "name": "AUDITLWII2-P17-LW10P-tail-value",
+    "file": "src/systems/livingWorld/wagons.js",
+    "old": "export const WAGON_TAIL_N = 110;",
+    "new": "export const WAGON_TAIL_N = 0;",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ],
+    "note": "WAGON_TAIL_N (2.75 m) - a second team stands inside the first wagon",
+    "lane": "AUDIT LW-II-2 lens P"
+  },
+  {
+    "name": "AUDITLWII2-P17-LW10P-park-value",
+    "file": "src/systems/livingWorld/wagons.js",
+    "old": "export const CAMP_PARK_N = 120;",
+    "new": "export const CAMP_PARK_N = 0;",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ],
+    "note": "CAMP_PARK_N (3 m) beyond the ring",
+    "lane": "AUDIT LW-II-2 lens P"
+  },
+  {
+    "name": "AUDITLWII2-P17-LW13P-holy-last-edge",
+    "file": "src/systems/livingWorld/companies.js",
+    "old": "  for (let d = day0 + 1; d < day0 + days - 1; d++) {",
+    "new": "  for (let d = day0 + 1; d < day0 + days; d++) {",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ],
+    "note": "holyDayOf: from its second day to its LAST BUT ONE",
+    "lane": "AUDIT LW-II-2 lens P"
+  },
+  {
+    "name": "AUDITLWII2-P17-LW13P-pilgrim-evening",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "      I('temple', fav.temple, h(PILGRIM_TEMPLE_H[1]), rollInt(rng, 90, 120));",
+    "new": "      I('temple', fav.temple, h(18), rollInt(rng, 90, 120));",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ],
+    "note": "PILGRIM_TEMPLE_H 8:30 for the morning AND 15:30",
+    "lane": "AUDIT LW-II-2 lens P"
   }
 ]

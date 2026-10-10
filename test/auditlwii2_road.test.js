@@ -3,19 +3,19 @@
 // census's rosters, townTrips, livingMap's lives and trouble as the host composes them). No game data.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { livingMap, synthMap } from './lwRoads.mjs';
+import { livingMap } from './lwRoads.mjs';
 import {
-  townTrips, partyAt, membersAt, handsOn, awayOf, whenWalked, ownTrip, setsOut, memoTrip, leaderOf, wildTrip, innsAlong, innAhead,
-  innGuestsOf, divesIn, patrolCover, walkedMinutes, wayOf, CALENDAR_MPM, INN_TYPE, HALT_CATCH_UP, NATIVE_PIXEL, NATIVE_PER_M,
-  WILD_TRIES, PATROL_COVER_DAYS, ROAD_TRIP_CHANCE, ROAD_RANGE_PX,
+  townTrips, partyAt, membersAt, handsOn, awayOf, whenWalked, ownTrip, setsOut, memoTrip, leaderOf, wildTrip, innAhead, innGuestsOf,
+  divesIn, patrolCover, walkedMinutes, CALENDAR_MPM, INN_TYPE, HALT_CATCH_UP, NATIVE_PIXEL, NATIVE_PER_M, WILD_TRIES, PATROL_COVER_DAYS,
+  ROAD_TRIP_CHANCE, WALK_TO_H,
 } from '../src/systems/livingWorld/trips.js';
-import { troubleOf, CAMP_SHARE } from '../src/systems/livingWorld/trouble.js';
-import { createLivingRoads, campGroups, passingPairs, walkingAt, passingLine, PASS_N, CAMP_SHARE_N } from '../src/scenes/livingRoads.js';
+import { CAMP_SHARE } from '../src/systems/livingWorld/trouble.js';
+import { createLivingRoads, campGroups, passingPairs, walkingAt, PASS_N } from '../src/scenes/livingRoads.js';
 import { createRoadTeams, WAGONS_DRAWN } from '../src/world/roadTeams.js';
-import { trainOf, teamOf, WAGON_TAIL_N, CAMP_PARK_N, HITCH_N } from '../src/systems/livingWorld/wagons.js';
+import { trainOf, teamOf, WAGON_TAIL_N, CAMP_PARK_N } from '../src/systems/livingWorld/wagons.js';
 import { companiesOf, namedIn, headOf, holyDayOf } from '../src/systems/livingWorld/companies.js';
 import { stopsOf, routeOf, clearedOf } from '../src/systems/livingWorld/deepRoute.js';
-import { travellerRoster, moreCounts, HUNTER_CLASSES, RETAINER_CLASSES } from '../src/systems/livingWorld/census.js';
+import { travellerRoster, townCensus, moreCounts, HUNTER_CLASSES, RETAINER_CLASSES } from '../src/systems/livingWorld/census.js';
 import { fillLine, COMPANY_GREETINGS, ROAD_GREETINGS } from '../src/systems/livingWorld/lines.js';
 import { lineMinutes } from '../src/systems/livingWorld/meetups.js';
 import { createRelations } from '../src/systems/livingWorld/relations.js';
@@ -26,7 +26,6 @@ import { getHolidayId, holidayRegion } from '../src/systems/holidays.js';
 import { CLASSIC_MINUTES_PER_SECOND } from '../src/systems/worldTick.js';
 import { synthTown } from './lwTown.mjs';
 import { townPlaces } from '../src/systems/livingWorld/places.js';
-import { townCensus } from '../src/systems/livingWorld/census.js';
 
 const RATE = CLASSIC_MINUTES_PER_SECOND;
 const O = () => ({ mpm: CALENDAR_MPM, memo: new Map() });
@@ -35,7 +34,7 @@ const onRoad = (at) => at.phase === 'out' || at.phase === 'back';
 /**
  * The roads' layer read once at minute `t` about the player's place `here` (native): what it hands its sprites (each body
  * and fire by key, its feet) and its teams (each horse and wagon).
- * @param {any} world @param {number} t @param {{ x: number, z: number }} here @param {{ relations?: any, eye?: number[] }} [o]
+ * @param {any} world @param {number} t @param {{ x: number, z: number }} here @param {{ relations?: any }} [o]
  */
 function layOut(world, t, here, { relations = createRelations() } = {}) {
   const lists = [], synced = [];
@@ -231,31 +230,40 @@ function innMap() {
   return map;
 }
 
-test('AUDIT LW-II-2 R3: a trouble met while a party still lodges at its inn of a morning falls as it sets out again, at the inn\'s place - no step back into its halt, never lodged again after it, and the inn\'s guest out as it sets out, after its last lodged minute (mutants: R3 the move, R3 the minute, R3 the place)', () => {
+/** THE INN MAP READ ONCE for the pins on it: every party of its towns over days 300 to 330, each once. */
+let innRead = null;
+function innTrips() {
+  if (innRead) return innRead;
   const map = innMap();
   const o = O();
-  const seen = new Set();
-  let lodged = 0, checked = 0;
+  const trips = new Map();
   for (let day = 300; day < 330; day++) {
     for (const town of map.towns) {
       if (town.type === INN_TYPE) continue;
-      for (const tr of townTrips(town, day * DAY_MIN + 720, map.world, o) ?? []) {
-        if (seen.has(tr.id) || tr.sea || !tr.halt || !tr.way.inns) continue;
-        seen.add(tr.id);
-        checked++;
-        const h = tr.halt, dir = h.leg === 'out' ? 1 : -1;
-        const before = partyAt(tr, h.t0 - 1), at = partyAt(tr, h.t0);
-        assert.ok(dir * (at.s - before.s) >= -1e-6, `${tr.id}: no step back into its halt (${((at.s - before.s) / NATIVE_PER_M).toFixed(1)} m)`);
-        if (!before.inn) continue;
-        lodged++;
-        for (let m = h.t0; m < h.t1 + 240; m++) assert.equal(partyAt(tr, m).inn, undefined, `${tr.id}: never back in the inn (${m - h.t0} min on)`);
-        const inn = map.towns.find((t) => t.mapId === before.inn.mapId);
-        const g = (innGuestsOf(inn, Math.floor((h.t0 - DAY_START_MIN) / DAY_MIN), map.world, o) ?? []).find((x) => x.trip.id === tr.id);
-        assert.ok(g, `${tr.id}: the inn's guest`);
-        assert.equal(g.outT, h.t0, 'out as it sets out, into its halt');
-        for (let m = g.outT; m < g.outT + 300; m++) assert.notEqual(partyAt(tr, m).inn?.mapId, inn.mapId, `${tr.id}: gone from its inn ${m - g.outT} min after its going`);
-      }
+      for (const tr of townTrips(town, day * DAY_MIN + 720, map.world, o) ?? []) if (!trips.has(tr.id) && !tr.sea) trips.set(tr.id, tr);
     }
+  }
+  innRead = { map, o, trips: [...trips.values()] };
+  return innRead;
+}
+
+test('AUDIT LW-II-2 R3: a trouble met while a party still lodges at its inn of a morning falls as it sets out again, at the inn\'s place - no step back into its halt, never lodged again after it, and the inn\'s guest out as it sets out, after its last lodged minute (mutants: R3 the move, R3 the minute, R3 the place)', () => {
+  const { map, o, trips } = innTrips();
+  let lodged = 0, checked = 0;
+  for (const tr of trips) {
+    if (!tr.halt || !tr.way.inns) continue;
+    checked++;
+    const h = tr.halt, dir = h.leg === 'out' ? 1 : -1;
+    const before = partyAt(tr, h.t0 - 1), at = partyAt(tr, h.t0);
+    assert.ok(dir * (at.s - before.s) >= -1e-6, `${tr.id}: no step back into its halt (${((at.s - before.s) / NATIVE_PER_M).toFixed(1)} m)`);
+    if (!before.inn) continue;
+    lodged++;
+    for (let m = h.t0; m < h.t1 + 240; m++) assert.equal(partyAt(tr, m).inn, undefined, `${tr.id}: never back in the inn (${m - h.t0} min on)`);
+    const inn = map.towns.find((t) => t.mapId === before.inn.mapId);
+    const g = (innGuestsOf(inn, Math.floor((h.t0 - DAY_START_MIN) / DAY_MIN), map.world, o) ?? []).find((x) => x.trip.id === tr.id);
+    assert.ok(g, `${tr.id}: the inn's guest`);
+    assert.equal(g.outT, h.t0, 'out as it sets out, into its halt');
+    for (let m = g.outT; m < g.outT + 300; m++) assert.notEqual(partyAt(tr, m).inn?.mapId, inn.mapId, `${tr.id}: gone from its inn ${m - g.outT} min after its going`);
   }
   assert.ok(checked > 100 && lodged > 0, `troubles on ways with an inn (${checked}), of them met as a party set out from its inn (${lodged})`);
 });
@@ -492,4 +500,124 @@ test('AUDIT LW-II-2 D3: a dive turned home on the road before it came to its dun
   assert.ok(route.legs.every((l) => l.tOut <= inside.enc.t0), 'its reach ends before its turning');
   const cleared = clearedOf([route], inside.enc.t1 + 30);
   assert.deepEqual([...cleared].sort(), route.legs.map((l) => l.stop.key).sort(), 'what it cleared, the stops it reached before it turned');
+});
+
+test('AUDIT LW-II-2 P6: a patrol keeps the road behind it - a trip from or to a town its round went from or to, setting out within PATROL_COVER_DAYS of the round\'s coming home (none walking while it does), is covered; past them, not (mutants: P6 the days before)', () => {
+  assert.equal(PATROL_COVER_DAYS, 2);
+  const map = livingMap();
+  const o = O();
+  let checked = 0;
+  for (const city of map.towns) {
+    if (city.type !== 0 || city.blocks < 16) continue;
+    const roster = map.world.rosterOf(city);
+    const first = roster.find((r) => r.job === 'patrol' && !leaderOf(r, roster));
+    for (let k = 20; first && k < 30; k++) {
+      const holder = map.world.holderOf(first, k);
+      const round = holder && memoTrip(holder, city, k, map.world, o);
+      if (!round) continue;
+      const trip = (days) => ({ id: `x:${k}`, from: city, to: round.to, outT0: round.backT1 + days * DAY_MIN, backT1: round.backT1 + days * DAY_MIN + 60, party: [] });
+      // past the days: no round of any patrol keeps it (so none walks in the days before it either, nor while it does)
+      if (patrolCover(trip(PATROL_COVER_DAYS + 0.5), map.world, o) !== false) continue;
+      assert.equal(patrolCover(trip(1), map.world, o), true, `${round.id}: a trip setting out the day after its round came home, covered`);
+      assert.equal(patrolCover(trip(PATROL_COVER_DAYS - 0.05), map.world, o), true, 'to the last of its days');
+      checked++;
+    }
+  }
+  assert.ok(checked > 3, `rounds come home with no other walking after (${checked})`);
+});
+
+test('AUDIT LW-II-2 P17: the road\'s census - a pilgrim more from four blocks and a courier more from nine (moreCounts); a hunter an Archer or a Ranger of levels 2 to 8, a retainer a Knight, a Warrior or an Archer of levels 4 to 12, every one of them dealt (mutants: P17 the pilgrim\'s blocks, the courier\'s, the hunter\'s classes and level, the retainer\'s)', () => {
+  assert.deepEqual([3, 4, 5, 8, 9].map((blocks) => moreCounts({ mapId: 1, blocks })), [
+    { pedlar: 1, pilgrim: 0, courier: 0 }, { pedlar: 1, pilgrim: 1, courier: 0 }, { pedlar: 1, pilgrim: 1, courier: 0 },
+    { pedlar: 1, pilgrim: 1, courier: 0 }, { pedlar: 1, pilgrim: 1, courier: 1 },
+  ]);
+  assert.deepEqual([...HUNTER_CLASSES], [MOBILE_TYPES.Archer, MOBILE_TYPES.Ranger]);
+  assert.deepEqual([...RETAINER_CLASSES], [MOBILE_TYPES.Knight, MOBILE_TYPES.Warrior, MOBILE_TYPES.Archer]);
+  const hunters = [], retainers = [];
+  for (let i = 0; i < 300; i++) {
+    hunters.push(...travellerRoster({ mapId: 20000 + i, px: 10, py: 10, blocks: 1, type: 3, region: 17, people: 3 }).filter((r) => r.job === 'hunter'));
+    retainers.push(...travellerRoster({ mapId: 30000 + i, px: 10, py: 10, blocks: 16, type: 0, region: 17, people: 3 }).filter((r) => r.job === 'retainer'));
+  }
+  const spread = (list) => ({ cls: [...new Set(list.map((r) => r.cls))].sort((a, b) => a - b), lo: Math.min(...list.map((r) => r.level)), hi: Math.max(...list.map((r) => r.level)) });
+  assert.deepEqual(spread(hunters), { cls: [...HUNTER_CLASSES].sort((a, b) => a - b), lo: 2, hi: 8 }, 'the hunters dealt');
+  assert.deepEqual(spread(retainers), { cls: [...RETAINER_CLASSES].sort((a, b) => a - b), lo: 4, hi: 12 }, 'the retainers dealt');
+});
+
+test('AUDIT LW-II-2 P17: a hunter\'s wild is the first of WILD_TRIES seeded tries that stands dry - a first try into the wet is followed by the next (mutants: P17 the tries)', () => {
+  assert.equal(WILD_TRIES, 6);
+  const home = { mapId: 41, px: 100, py: 100, blocks: 1, type: 3, region: 17, people: 3, name: 'Farm' };
+  const hx = 100.5 * NATIVE_PIXEL;
+  const world = { townsNear: (px, py, r) => (Math.max(Math.abs(px - 100), Math.abs(py - 100)) <= r ? [home] : []), dryAt: (nx) => nx > hx };   // dry east of the farm, wet west
+  const hunter = travellerRoster(home).find((r) => r.job === 'hunter');
+  // the tries' own dice, scripted: west (wet), then east (dry); then the day, the hour, the morning's hunt
+  const rolls = [0.75, 0.5, 0.25, 0.5, 0, 0.5, 0.5];
+  let i = 0;
+  const trip = wildTrip(hunter, home, 3, /** @type {any} */ (world), { start: 12, len: 4, pace: 260, rng: () => rolls[i++] });
+  assert.ok(trip, 'the second try\'s point');
+  assert.ok(trip.wild.x > hx + 2 * NATIVE_PIXEL - 1, 'east, two pixels on (the second try)');
+  assert.equal(i, rolls.length, 'every roll read: the second try taken');
+});
+
+test('AUDIT LW-II-2 P17: a night lodged at an inn meets no trouble at a camp - the camp\'s share of a trouble falls on that day\'s WALK instead, at its own seeded minute and place (or, met while the party still lodges, as it sets out again: R3) (mutants: P17 the inn\'s walk minute)', () => {
+  const { map, o, trips } = innTrips();
+  let diverted = 0;
+  for (const tr of trips) {
+    if (!tr.enc || tr.dive || !tr.way.inns) continue;
+    if (tr.party.some((m) => map.trouble.diced(m, tr) || map.trouble.dies(m, tr))) continue;   // (a fated trouble's dice are its own)
+    // the trouble's own stream (trouble.js troubleOf): its roll, its leg, its walk's minute, the camp's share
+    const rng = lwRng(textSeed(tr.id), 0x54524f55);   // 'TROU'
+    rng(); rng();
+    const leg = tr.enc.leg, dir = leg === 'out' ? 1 : -1;
+    const legStart = leg === 'out' ? tr.outT0 : tr.backT0;
+    const walkMin = (tr.way.len - tr.trim0 - tr.trim1) / tr.pace;
+    const wm = (0.15 + 0.7 * rng()) * walkMin;
+    const firstLight = whenWalked(legStart, 0);
+    const firstDay = Math.max(0, Math.floor(firstLight / DAY_MIN) * DAY_MIN + WALK_TO_H * 60 - firstLight);
+    if (!(rng() < CAMP_SHARE && firstDay > 0 && firstDay < walkMin)) continue;   // no camp's share
+    const sCamp = leg === 'out' ? tr.trim0 + tr.pace * firstDay : tr.way.len - tr.trim1 - tr.pace * firstDay;
+    if (!innAhead(tr.way, sCamp, dir, tr.trim0, tr.way.len - tr.trim1)) continue;   // a camp's night, not an inn's
+    diverted++;
+    // the walk's own minute - or, the party lodged then (the trip as the dice found it), the minute it sets out again
+    const raw = memoTrip(tr.leader, tr.from, tr.k, map.world, o);
+    let t0 = whenWalked(legStart, wm);
+    let s = leg === 'out' ? tr.trim0 + tr.pace * wm : tr.way.len - tr.trim1 - tr.pace * wm;
+    if (partyAt(raw, t0).inn) { for (t0 = Math.ceil(t0); partyAt(raw, t0).inn; t0++); s = partyAt(raw, t0).s; }
+    assert.equal(tr.enc.camp, false, `${tr.id}: no camp's trouble at an inn's night`);
+    assert.ok(Math.abs(tr.enc.t0 - t0) < 1e-6 && Math.abs(tr.enc.s - s) < 1e-6, `${tr.id}: met on its walk, at its own minute and place`);
+  }
+  assert.ok(diverted > 0, `troubles whose camp was an inn's night (${diverted})`);
+});
+
+test('AUDIT LW-II-2 P17: an inn on a way is never one of its own ends - a trip to a roadside tavern lodges at no inn of its own end on the way (mutants: P17 the ends)', () => {
+  const { trips } = innTrips();
+  let toInn = 0;
+  for (const tr of trips) {
+    assert.ok(!tr.way.inns?.some((i) => i.town.mapId === tr.to.mapId || i.town.mapId === tr.from.mapId), `${tr.id}: no end of its own an inn on its way`);
+    if (tr.to.type === INN_TYPE) toInn++;
+  }
+  assert.ok(toInn > 0, `trips to a roadside tavern (${toInn})`);
+});
+
+test('AUDIT LW-II-2 P17: the train\'s spacings and the camp\'s park as the record has them - a second team WAGON_TAIL_N (2.75 m) behind the first wagon\'s axle, a parked wagon CAMP_PARK_N (3 m) beyond the camp\'s ring (mutants: P17 the tail, the park)', () => {
+  assert.equal(WAGON_TAIL_N / NATIVE_PER_M, 2.75);
+  assert.equal(CAMP_PARK_N / NATIVE_PER_M, 3);
+});
+
+test('AUDIT LW-II-2 P17: a pilgrims\' holy day is one from its cycle\'s second day to its LAST BUT ONE - never its last; a pilgrim come to a temple town keeps its temple again before the evening, from PILGRIM_TEMPLE_H\'s 15:30 (mutants: P17 the holy day\'s last edge, the pilgrim\'s evening)', () => {
+  // the region's own: day 2 of the year is Scour Day for region 24 (holidays.js's tables), the first every region's
+  const t24 = { mapId: 2, region: 24 };
+  const Y = 410 * 360;
+  assert.equal(holidayRegion(getHolidayId((Y + 1) * DAY_MIN + 720, 24)), 25);
+  assert.equal(holyDayOf([t24], Y - 1, 4)?.day, Y + 1, 'its last but one');
+  assert.equal(holyDayOf([t24], Y - 1, 3), null, 'never its last');
+  // the evening's visit
+  const { nav, buildings, doors } = synthTown();
+  const places = townPlaces(nav, doors, buildings);
+  const census = townCensus({ mapId: 4242, blocks: 9, region: 17, people: 3 }, buildings);
+  const home = census.find((r) => r.home != null && places.doors.get(r.home));
+  const day = 200, D0 = day * DAY_MIN + DAY_START_MIN;
+  const plan = dayPlan({ ...home, job: 'pilgrim', cls: null, pious: 0.1 }, places, day, { mpm: CALENDAR_MPM, visitor: true, home: places.doors.get(home.home), away: [{ t0: D0 - DAY_MIN, t1: D0 + 2 * 60, exit: places.exits[0] ?? null, armed: false }, { t0: D0 + 20 * 60, t1: D0 + 2 * DAY_MIN, exit: places.exits[0] ?? null, armed: false }] });
+  const evening = plan.filter((e) => e.kind === 'temple' && e.t0 >= D0 + 10 * 60);
+  assert.equal(PILGRIM_TEMPLE_H[1], 15.5);
+  assert.ok(evening.length && evening.every((e) => e.t0 >= day * DAY_MIN + 15 * 60 && e.t0 <= day * DAY_MIN + 15.5 * 60), `before the evening, from half past three (${evening.map((e) => ((e.t0 % DAY_MIN) / 60).toFixed(2))})`);
 });
