@@ -228,11 +228,15 @@ fated that cycle sends the round out, as a company's member does (AUDIT LW-II F2
 `tools/livingPerfProbe.mjs` THE TRAFFIC: on the synthetic map, mixed as the game's is (some of its places farms,
 villages, hamlets and roadside taverns), the parties about four points at 08:00, 12:00 and 18:00 over fourteen days.
 
-| | before LW9 | with LW9 |
-|---|---|---|
-| parties within 1 px | 0.49 | 0.71 (x1.45) |
-| parties within 3 px | 1.73 | 2.65 (x1.53) |
-| the roads' layer, any frame | 1.81 ms worst | 0.90-2.83 ms worst (budget 6) |
+| | before LW9 | with LW9 | after AUDIT LW-II (2026-10-10) |
+|---|---|---|---|
+| parties within 1 px | 0.49 | 0.71 (x1.45) | 0.43 before, 0.67 with (x1.53) |
+| parties within 3 px | 1.73 | 2.65 (x1.53) | 1.54 before, 2.49 with (x1.62) |
+| the roads' layer, any frame | 1.81 ms worst | 0.90-2.83 ms worst (budget 6) | 1.30 ms worst |
+
+Re-measured after the audit, on the law as it stands now - LW13's companies walk as one, a party is home until its
+first light (E5), the minstrels travel (F2) - both columns read the same day's law, the first roster's traffic alone
+and with LW9's.
 
 The synthetic map's towns stand five pixels apart, so its carters find no market within their two pixels and none are
 counted. The game's farms stand by their towns, so carters will add more. The real-map targets (2.6 of the design: a
@@ -555,7 +559,7 @@ a region's towns, its roads, a seed and the clock); the hideout is stood by `src
 
 Measure (`tools/livingPerfProbe.mjs`, THE OUTLAWS): the synthetic map's region of 81 towns places its 3 hideouts in
 about 1.2 ms, once a network; a fortnight's 341 troubles, 7 a band's (5 robbed); the roads' layer at a hideout stays at
-1.4 ms at its worst frame (the budget 6).
+1.2-1.4 ms at its worst frame (the budget 6; 1.23 ms re-measured after the audit).
 
 Moved pins: `lw4_trouble` (HALT_MIN, FIGHT_MIN, ROAD_NEWS's ends), `lw6b_remains` and `lw6d_word` (MARK_KINDS,
 TALE_KINDS).
@@ -917,7 +921,8 @@ the host's is `scenes/world.js` (the visits, worked a slice a frame).
   70-85 ms - in one frame that was a hitch, the base day read itself 45-50 ms cold - now in at most 1,352 slices, the
   worst 3-6 ms (a collection lifts one to 15 now and then); the word told, a minute's read, 0.05 ms - AUDIT LW-II B3:
   a visit's deeds read once and kept with the turns (each minute's read ran every visit's and relay's turns again:
-  18-80 ms a frame once a sky minute for a character of many deeds; the 0.05 ms was measured with none).
+  18-80 ms a frame once a sky minute for a character of many deeds; the 0.05 ms was measured with none). Re-measured
+  after the audit: the worst town's word 78 ms in 1,367 slices, the worst slice 4.6 ms, a minute's read 0.03 ms.
 
 ### 9.4 The four hosts, the pins
 

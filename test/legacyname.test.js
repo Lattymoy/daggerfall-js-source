@@ -124,7 +124,9 @@ test('LEGACY-NAME the words: a seat\'s house says itself once - the pages, the s
     for (const s of scripts) for (const line of s) assert.doesNotMatch(line, /\{who\} \{house\}/, `${kind}: "${line}"`);
   }
   assert.equal(fillLine(KIN_NEWS.died[2][0], { who: firstNameOf('Ysolde Hlaalu'), house: 'Hlaalu' }), 'Ysolde, gone. I saw them in the market not a week past.');
-  assert.match(rd('src/systems/livingWorld/meetups.js'), /who: told \? firstNameOf\(told\.item\.who\) : null/, 'the renderer\'s own fill');
+  // PIN MOVED (AUDIT LW-II B14): a band's rout is told by its whole name ("the Red Hand" - its first word was "the"); every
+  // other tale, the house's news among them, by the first name still
+  assert.match(rd('src/systems/livingWorld/meetups.js'), /who: told \? \(told\.item\.kind === 'routed' \? told\.item\.who : firstNameOf\(told\.item\.who\)\) : null/, 'the renderer\'s own fill');
   // the pages read the one title (by source - drawn in test/legacysheet and test/legacy3_familytab)
   const pages = rd('src/ui/familyPages.js');
   assert.doesNotMatch(pages, /House of \$\{(family|f)\.surname\}/, 'no page says the raw surname after "House of"');
