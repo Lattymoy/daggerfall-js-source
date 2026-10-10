@@ -655,7 +655,7 @@
   {
     "name": "TECHFX1-AUDIT-the-world-word-uncached",
     "file": "src/scenes/world.js",
-    "old": "if (_techKey === null || _techKeyStore !== b || _techKeyRev !== rev) {",
+    "old": "if (_techKey === null || _techKeyStore !== b || _techKeyRev !== rev || _techKeyPad !== pad) {",
     "new": "if (true) {",
     "tests": [
       "test/tech1_hosts.test.js"

@@ -709,17 +709,20 @@ export function techniqueMarks(now = 0) {
 export const techniqueMarksNow = (now = undefined) => (!_s.aim && !_s.act ? NONE : techniqueMarks(now ?? (typeof performance !== 'undefined' ? performance.now() / 1000 : 0)));   // AUDIT TECH-FX: at rest, no clock read (its number boxed a frame)
 /** AUDIT TECH-FX: the HUD's one chip and its list, filled in place (the HUD reads them into its tiles each frame and
  *  keeps neither), and the seconds' word made once a second. */
+/** FINAL AUDIT: the ready chip's foot with no key bound (the card's block says "no key bound"; the chip's foot is short). */
+export const CHIP_UNBOUND = 'unbound';
 const _chip = { key: 'technique', set: 'technique', name: '', text: '', state: 'active' };
 const _chips = Object.freeze([_chip]);
 let _chipSecs = -1, _chipSecsText = '';
 /** The HUD's chip for the technique in hand (ui/enhancedHud.js setHudSetChips' shape): its name, and its seconds while it
  *  recovers - or its key while ready. `keyName` the key's word, or a function that answers it - asked only when ready
- *  (AUDIT TECH-FX: the host's key lookup walked every binding a frame, whether a technique was in hand or not). [] with
- *  none in hand, or with the ladder off.
+ *  (AUDIT TECH-FX: the host's key lookup walked every binding a frame, whether a technique was in hand or not); with no
+ *  key bound, `CHIP_UNBOUND`. [] with none in hand, with the ladder off, or in a duel (FINAL AUDIT).
  *  @param {any} entity @param {any} pw @param {string | (() => string)} [keyName] */
 export function techniqueHudChips(entity, pw, keyName = '') {
   const hand = techniqueInHand(entity, pw);
   if (!hand || !lootRarityOn()) return NONE;   // TECH-FX: no technique in hand - the frozen empty list, never a new one a frame
+  if (sigilDueling()) return NONE;   // FINAL AUDIT: nor while a duel sleeps the key (law 3) - the set powers' chips' law, none while they sleep; the card's block says why
   const left = techniqueWait(hand.id);
   _chip.name = techniqueName(hand);
   if (left > 0) {
@@ -727,7 +730,7 @@ export function techniqueHudChips(entity, pw, keyName = '') {
     if (secs !== _chipSecs) { _chipSecs = secs; _chipSecsText = `${secs}s`; }
     _chip.text = _chipSecsText; _chip.state = 'recovering';
   } else {
-    _chip.text = (typeof keyName === 'function' ? keyName() : keyName) || 'ready'; _chip.state = 'active';
+    _chip.text = (typeof keyName === 'function' ? keyName() : keyName) || CHIP_UNBOUND; _chip.state = 'active';   // FINAL AUDIT: nothing bound says so - "ready" named no key to press
   }
   return _chips;
 }

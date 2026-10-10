@@ -7,13 +7,17 @@
 // affixes' own colour, so an active move on its own key read like one more "+17 Dodging", and its second line broke
 // mid-clause wherever the card's width fell. This is its own block under the tier list, as the sigil's and the set's
 // are: the glyph (ui/techniqueGlyph.js - the HUD's chip wears the same one) in the blue the technique's marks wear on
-// the ground, the word and the technique's name, its roll and the band it was rolled in; what a press does; and a foot
-// of three cells - the key and how it is pressed, the fatigue, and the recovery in the dashed frame the HUD's
-// recovering chip wears. The facts are systems/lootRarity.js techniqueCardView's; this file only draws them.
+// the ground, the technique's name, its roll and the band it was rolled in; what a press does; and a foot - the key
+// and how it is pressed, then its price: the fatigue and the recovery (in the dashed frame the HUD's recovering chip
+// wears), one group that wraps whole. The facts are systems/lootRarity.js techniqueCardView's, and whether a duel
+// sleeps the key is the runner's own question (sigil.js sigilDueling - combat/techniques.js refuses on it); this file
+// draws them.
 //
-// TWO DRESSES, the sigil's law (CARD-FIT): the CARD's block (the default) is what a glance needs; the INFO box's,
-// `{ full: true }`, adds the sentences - how the power was rolled onto the technique's own blow, and how the key is
-// pressed.
+// TWO DRESSES, the sigil's law (CARD-FIT): the CARD's block (the default) is what a glance needs, its head ONE row -
+// the glyph, the name, the roll (FINAL AUDIT: the word over the name made the block 111px where its two lines had been
+// 59, and six of the Test Room's twelve detail cards scrolled; the glyph says what it is, as the HUD's chip does). The
+// INFO box's, `{ full: true }`, sets the word "Technique" over the name and adds the sentences - how the power was
+// rolled onto the technique's own blow, and how the key is pressed.
 import { techniqueCardView } from '../systems/lootRarity.js';
 import { sigilDueling } from '../systems/sigil.js';
 import { TECHNIQUE_GLYPH_SVG } from './techniqueGlyph.js';
@@ -47,26 +51,30 @@ export function techniqueCard(item, { full = false, keyWord = '' } = {}) {
   box.dataset.state = asleep ? 'asleep' : 'ready';
   box.dataset.technique = v.id;
   box.setAttribute('aria-label', `Technique, ${v.name}`);
-  // the head: the glyph beside two rows - the word with the roll and its band at the right, then the name the whole
-  // width (a long one, "Headsman's Chop", never shares its row with the roll)
+  // the head: the card's one row - the glyph, the name, the roll and its band at the right; the Info box's two - the
+  // word with the roll, then the name the whole width
   const head = el('div', 'tech-head');
   const glyph = el('span', 'tech-glyph');
   glyph.innerHTML = TECHNIQUE_GLYPH_SVG;
   glyph.setAttribute('aria-hidden', 'true');
   const roll = el('span', 'tech-roll', `+${v.value}%`);
   if (v.band) { roll.append(el('span', 'tech-band', ` [${v.band[0]}-${v.band[1]}]`)); roll.title = `Rolled in ${v.band[0]}-${v.band[1]}`; }
-  head.append(glyph, el('span', 'tech-word', 'Technique'), roll, el('span', 'tech-name', v.name));
+  if (full) head.append(glyph, el('span', 'tech-word', 'Technique'), roll, el('span', 'tech-name', v.name));
+  else head.append(glyph, el('span', 'tech-name', v.name), roll);
   box.append(head);
   // what a press does, whole on its own line - never cut mid-clause by the price after it
   box.append(el('p', 'tech-effect', v.what));
-  // the foot: the key and how it is pressed; the fatigue; the recovery
+  // the foot: the key and how it is pressed; then the price - the fatigue and the recovery, one group that wraps whole
+  // and stays at the right (a long key, "LSHIFT+MOUSE3", left the recovery alone on a line of its own)
   const foot = el('div', 'tech-foot');
   const key = el('span', keyWord ? 'tech-key' : 'tech-key unbound', keyWord || TECH_UNBOUND);
   const how = el('span', 'tech-how', v.aims ? TECH_HOW.aims : TECH_HOW.press);
   const cost = el('span', 'tech-cost', `${v.fatigue} fatigue`);
   const every = el('span', 'tech-every', `${v.cooldown}s`);
   every.title = `Ready again ${v.cooldown} seconds after a use`;
-  foot.append(key, how, cost, every);
+  const price = el('span', 'tech-price');
+  price.append(cost, every);
+  foot.append(key, how, price);
   box.append(foot);
   if (full) {
     // the two numbers the card shows, tied together: the roll is on the technique's own blow

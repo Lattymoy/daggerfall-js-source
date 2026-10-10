@@ -2,7 +2,8 @@
 
 `src/combat/techniqueRoster.js` (the roster, a leaf) + `src/combat/techniques.js` (the runner) +
 `src/combat/techniqueBlow.js` (the blow, a leaf) + the line in `src/systems/lootRarity.js` (`AFFIX_KINDS.technique`) +
-`src/combat/techniqueFx.js` (THE FEEL) (the owner, 2026-10-10)
+`src/combat/techniqueFx.js` (THE FEEL) + `src/ui/techniqueCard.js` and `src/ui/techniqueGlyph.js` (The card's block)
+(the owner, 2026-10-10)
 
 > "I want to talk about implementing detailed weapon skill affixes for each weapon type. For example, a bow could
 > roll with an attack that allows you to aim and place a telegraph that shoots a volley of arrows, or a sword attack
@@ -242,8 +243,11 @@ before, by the same lines.
 
 **On the Enhanced HUD**, a chip after the set powers' (`techniqueHudChips`, handed to the HUD by `world.js` through a
 seam of its own, `setHudTechniqueChips`; `TECH_CHIP_COLOUR`), wearing the technique's own glyph (TECH-CARD: it wore the
-sigil's rune in blue): the technique's name and the seconds left, or the key's name when it is ready. The world host's rig, or the mode's
-(an interior's, a dungeon's) when one owns the frame. When the world recentres, the aim, a leap's landing and a
+sigil's rune in blue): the technique's name and the seconds left, or the key's name when it is ready - the key that
+answers, as the card's block names it (`actionKeyWord`: the primary binding or the secondary, a pad's button by its name
+while a pad is in hand), and `unbound` with none (FINAL AUDIT: it said "ready"). None while a duel sleeps the key, the
+set powers' chips' law (FINAL AUDIT). The world host's rig, or the mode's (an interior's, a dungeon's) when one owns the
+frame. When the world recentres, the aim, a leap's landing and a
 Volley's falling shafts shift with it (`offsetTechniques`, beside the foes' own - AUDIT TACT D3).
 
 ## The card's block (TECH-CARD, 2026-10-10, the owner: "it needs its own unique glyph as its own element. Like how set pieces and sigils get their own sections")
@@ -256,31 +260,37 @@ the sigil's and the set's - the piece's own line, so the first of the blocks - d
 
 | Part | What it says |
 |---|---|
-| The head | the **glyph**; `TECHNIQUE` and the roll with its band (`+23% [15-30]`, its title "Rolled in 15-30") on one row; the name the whole width under them, so a long one (`Headsman's Chop`) never shares a row with the roll |
+| The head | the **glyph**, the name, and the roll with its band at the right (`+23% [15-30]`, its title "Rolled in 15-30") - one row on the card (a name too long for it puts the roll under it, never the name); in the Info box the word `TECHNIQUE` and the roll on one row, the name the whole width under them |
 | The effect | what a press does with the line's own numbers - `techniqueParts`' `what`, whole on its line (`Aim: leap 9 m, strike all in 2.5 m, 172%`) |
-| The foot | the key as a keycap (the live binding through `tagText`, the HUD chip's own law; `no key bound` when there is none), how it is pressed (`hold to aim` for the six that aim, `press` for the rest), the fatigue, and the recovery in the dashed frame the HUD's recovering chip wears |
+| The foot | the key as a keycap - the key that answers (`actionKeyWord`, `ui/quickslotTags.js`: the primary binding or the secondary, as the router answers either; a pad's button by its name while a pad is in hand, `Square`, `RB`), `no key bound` when there is none - and how it is pressed (`hold to aim` for the six that aim, `press` for the rest); then the price, one group at the right that wraps whole: the fatigue, and the recovery in the dashed frame the HUD's recovering chip wears (its title "Ready again 12 seconds after a use") |
 | The Info box only | the two numbers tied together - `+23% rolled (15-30) on its 140% blow: 172% of a plain blow.` - and the press in words (`Hold MOUSE3 to aim its mark, and let go to strike; a tap strikes where you look.` / `Press G to strike.` / `Bind Weapon technique in Controls to use it.`) |
-| A duel | law 3 sleeps the key in a duel and a bout between players (`sigilDueling`): the block greys (`data-state="asleep"`) and says `Sleeps in a duel: never at a player.` |
+| A duel | law 3 sleeps the key in a duel and a bout between players (`sigilDueling`, the runner's own refusal): both dresses grey (`data-state="asleep"`) and say `Sleeps in a duel: never at a player.`; the HUD's chip goes |
 
 **The glyph** (`ui/techniqueGlyph.js`, a leaf as the sigil's rune is): three strokes of a strike on the diagonal, the
 long one between two short, each sharp at both ends - on the 16px grid, a row a string (`TECHNIQUE_GLYPH_ROWS`), each run
-of pixels a unit rectangle so it is never smoothed. Not the sigil's ring, nor the open zone's crossed blades
+of pixels a unit rectangle so it is never smoothed; the card draws it at 16px, one screen pixel a grid pixel (FINAL
+AUDIT: at 20px every fourth row doubled). Not the sigil's ring, nor the open zone's crossed blades
 (`STATUS_GLYPHS.wild`). On the card it takes the text's colour and the blue's glow; on a tile (the HUD's chip,
 `techniqueGlyphTileSrc`) it is outlined in the kit's black, the corner rune's law. Its blue is `TECH_CHIP_COLOUR` - the
-chip's, the block's `--tech` and the marks' on the ground - pinned equal.
+chip's and the block's `--tech` (and `--tech-rgb`), pinned equal, and the marks' on the ground (`TECH_COLOR`), pinned by
+value.
 
-**Two dresses**, the sigil's law (CARD-FIT): the card's (the hover card and the pack's detail) is what a glance needs;
-the Info box's (`{ full: true }`) adds the two sentences. **Where it is not:** the classic tooltip and list, the Reforge
-(its `reforge-detail` line) and the trade window's strip keep the two lines, and a chat post the line alone (AUDIT
-TECH1) - `rarityLines` keeps them by default, and only a card that draws the block asks without (`technique: false`, which leaves out exactly the line
-`techniqueLineOf` answers and nothing else). **When it is not:** wherever the tier list says nothing of the line - the
-ladder off, a Common, a piece not yet identified (its `Unidentified` hides every line) - `techniqueCardView` is null and
-there is no block.
+**Two dresses**, the sigil's law (CARD-FIT): the card's (the hover card and the pack's detail; the merchant's counter
+hovers the same card) is what a glance needs; the Info box's (`{ full: true }`) sets the word over the name and adds the
+two sentences. **Its share of the shrink steps** (CARD-FIT, AUDIT SET U13): a card that will not fit sheds how the key is
+pressed and the duel's note at the first step, the whole foot at the second (the Info box carries every word). **Where it
+is not:** the classic tooltip and list, the Reforge (its `reforge-detail` line), the player trade window's strip and
+row and the home vendor's look (`world.js`) keep the two lines, and a chat post the line alone (AUDIT TECH1)
+- `rarityLines` keeps them by default, and only a card that draws the block asks without (`technique: false`, which
+leaves out exactly the line `techniqueLineOf` answers and the press under it, nothing else). **When it is not:** wherever
+the tier list says nothing of the line - the ladder off, a Common, a piece not yet identified (its `Unidentified` hides
+every line) - `techniqueCardView` is null and there is no block.
 
 **The facts once.** `techniqueParts(id, value)` is what a press does in its parts (`what`, `mult`, `fatigue`,
 `cooldown`, `aims`); `techniqueBrief` is them as the classic line. `TECHNIQUE_ACTION` lives in the roster (the leaf) so
-the card names the key without importing the runner; `combat/techniques.js` exports it on. The sheet is
-`enhancedPlusStyle.js` `TECH_BLOCK_CSS`, laid after the set's block, every colour the block's own property.
+the card's host (`enhancedInventory.js` `techniqueKeyWord`) names the key without importing the runner;
+`combat/techniques.js` exports it on. The sheet is `enhancedPlusStyle.js` `TECH_BLOCK_CSS`, laid after the set's block,
+every rule its own class (`.techbox`, `.tech-*`).
 
 ## THE FEEL (TECH-FX, 2026-10-10, the owner: "lets do code driven design for each technique, like real detail and ensure performance remains in tact")
 
@@ -556,6 +566,33 @@ Kept, with the reason:
   preference to an in-game camera.
 - **The aim's own cost while the key is held** (TECH1's rays and points, under 8 KB a frame) - only while held.
 
+## FINAL AUDIT (2026-10-10, the owner: "Audit this a final time")
+
+Four lanes read the newest part, The card's block, against the running game, and the whole PR against its records: the
+card's code on every surface an item's lines reach, its look at four screen sizes and every Plus theme (Chromium, the
+pack's own cards, measured before and after against the tree it was built on), the patch notes and the page against the
+source, and the tests against mutants applied in a worktree. Every finding was reproduced before it was fixed; each fix
+is pinned in `test/techcard1.test.js` and mutated (`tools/mutants/techcard1.json`). main (#752 PERF-PRIORITY, #754
+BENCH-CAM + YARDS-FOUND) was merged in first.
+
+| finding | what was wrong | now |
+| --- | --- | --- |
+| MAJOR: the card scrolled | the block stood 111px (128 asleep) where its two lines had been 59 - six of the Test Room's twelve detail cards scrolled past both fit steps (none had), the comparison under them hidden; a hover card on a short window lost 75px more | the card's dress is one row at the head (the glyph, the name, the roll - the word is the Info box's), 70-86px; it sheds how the key is pressed and the duel's note at the first step, the foot at the second: all twelve fit |
+| MINOR: the key named was not the key that answers | `getBinding` reads the primary list alone, and a key answers from either (the classic Controls window's second column, the Plus pad's bind rows): "no key bound" of a bound key, and "Bind ... in Controls" to a player who had; a pad player was told to hold MOUSE3 | `actionKeyWord` (`ui/quickslotTags.js`, the quickslot tag's law): the primary or the secondary, a pad's button by its name while a pad is in hand - the card and the HUD's chip both (the chip's cache asks again when a pad is taken up or put down) |
+| MINOR: the HUD chip against the block | the chip said "ready" with no key bound, and stood ready through a duel the block (and the key's own refusal) calls asleep | `unbound` with none; no chip in a duel - the set powers' chips' law |
+| MINOR: the price split | a long key ("LSHIFT+MOUSE3", "no key bound") wrapped the recovery alone onto a line of its own at the left | the fatigue and the recovery are one group (`.tech-price`) that wraps whole and stays at the right |
+| MINOR: the card's head | `gap: 7px` on a grid set the row gap too (7px between the word and the name, 1 in the Info box); the glyph stood at 20px, every fourth row doubled | the card's head is a flex row with its own column gap; its glyph 16px, a screen pixel a grid pixel |
+| MINOR: records | the patch notes said the trade window keeps the two lines (the merchant's counter hovers the pack's card - the block) and a chat post both lines (the line alone); "five pins" (nine, in five files); the marks' blue "pinned equal" (it was a comment); "every colour the block's own property"; the page's head named no card file; comments on the roster's action, the card's foot ("three cells"), the compact glyph, and a doc left above the wrong function | each said as it is; the marks' blue pinned by value; the docs moved to their functions |
+| MINOR: tests that held nothing | the foot's words compared with their own constants; the Info box's key, its place, its duel; the glyph in the block (the fake document drops what is written into a node); the hover card's path; the block's place against a sigil's; the band on a piece with a gem; the HUD chip's frame; the sheet's rules - each a mutant that lived | literals; a sigil weapon through the hover card, the detail card and the Info box; the glyph read on a document that keeps it; a gem's line after the technique's; the sheet pinned - AUDIT SET U9's law for the block's lines among them |
+| NIT: dead CSS | rules for the Info box's lines under `.pack-shell` (the Info box stands outside the pack), a margin repeated, a font size always overridden, `image-rendering` on an inline SVG | gone |
+
+**Kept, with the reason:** the block reads the duel when it is built, as the set's block does - a duel begun with a card
+open says so at the card's next repaint (the key's own refusal is live). A forged piece with two technique lines draws
+the first in the block and lists the second (the item law allows one; the classic tooltip always did). The roll's and
+the recovery's titles are not reached in the hover card (it takes no pointer) - the Info box says both in words. A phone
+player with the touch layer's **Tech** button is named the bound key, as the HUD's chip names it (the touch layer has no
+binding of its own to name).
+
 ## The Test Room
 
 `systems/testRoom.js` `seedTestLoot` lays twelve identified Rares in the pack, one a technique, each on a piece of its
@@ -598,14 +635,19 @@ Gauntlets' Flying Kick and Haymaker) - every technique a press away.
   survivor (the exported marks call's fresh list, unmeasured once the hosts' call short-circuited before it) is pinned
   and dead. `tech1.json`'s five records on the rig's context and the load, and `uxb1.json`'s two on the held poll, were
   re-aimed by content.
-- `test/techcard1.test.js` (7) - TECH-CARD: the parts and the line they make; the view (and where it is null); the tier
-  list's `technique: false`, exactly the block's line; the block in both dresses on the fake document (the key, no key,
-  a press, a duel); the glyph's pixels and its blue; the pack's card and Info box and the HUD's chip, executed.
+- `test/techcard1.test.js` (10) - TECH-CARD: the parts and the line they make; the view (and where it is null, and the
+  band with a gem's line after it); the tier list's `technique: false`, exactly the block's line; the block in both
+  dresses on the fake document (the key, no key, a press, a duel in both, the words as literals); the glyph's pixels,
+  its blue and its place in the block; the pack's hover card, detail card and Info box, executed on a sigil weapon (the
+  block's place, the key); the HUD's chip and its frame; FINAL AUDIT's key word, chip and sheet.
 - Mutants `tools/mutants/techcard1.json` (26 at TECH-CARD, all dead; with the two lists it re-aimed in, `cardfit.json` and
-  `trade_info.json`, 83 run - 83 dead). Three records re-aimed by content at the lines the card's
-  call moved, their laws unchanged: `cardfit.json` CARDFIT-the-lore-back-on-the-card and CARDFIT-a-line-said-twice,
-  `trade_info.json` TRADE-INFO-card-on-the-tiers-alone. Pins moved (`PIN MOVED (TECH-CARD)`): the card's and the Info
-  box's calls and `itemPowerLines`' signature in `cardfit`, `lr1_lootrarity`, `set5_ui`, `sigilui1` and `tradeinfo`.
+  `trade_info.json`, 83 run - 83 dead; FINAL AUDIT added 26 - 52). Three records re-aimed by content at the lines the
+  card's and the Info box's calls moved, their laws unchanged: `cardfit.json` CARDFIT-the-lore-back-on-the-card and
+  CARDFIT-a-line-said-twice, `trade_info.json` TRADE-INFO-card-on-the-tiers-alone; FINAL AUDIT re-aimed
+  TECHCARD-the-key-never-read and `techfx1.json` TECHFX1-AUDIT-the-world-word-uncached. Pins moved: nine marked
+  `PIN MOVED (TECH-CARD)` (the card's and the Info box's calls and `itemPowerLines`' signature, in `cardfit`,
+  `lr1_lootrarity`, `set5_ui`, `sigilui1` and `tradeinfo`) and one `PIN MOVED (FINAL AUDIT)` (`tech1_hosts`, the world
+  host's key word).
 
 **Pins moved** (each marked `PIN MOVED (TECH1)` where it stands): the ladder's own oracles and source pins for the pass
 at a door's end (`cards9_sources`, `gilded1_gilded`, `sd9e_spoils`, `set6_aetheric`, `loot2_exalted`, `loot4_procs`,

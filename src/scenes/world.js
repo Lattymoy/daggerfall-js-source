@@ -844,7 +844,7 @@ import { AuraRingRenderer, auraWearers, auraLookOf, auraBeastStep, auraMotionSte
 import { duelAttackerOf, duelWeaponOf, duelSwingOf, resolveDuelStrike, duelWearDamage, duelStub } from '../combat/duelCombat.js';   // DUEL1: the blow between two duellists - INT8/INT9: the striker's half alone, the relay referees
 import { createPageWindow, pageView } from '../ui/pageWindow.js';   // JOURNAL1: a page another player holds out, read and kept
 import { PageOffers, pageOfferText, pageShownText, pageTooFarText, keptPageTokens, keptLetterTokens, letterOfPage, PAGE_UNSUPPORTED_TEXT, PAGE_NO_READERS_TEXT, PAGE_GONE_TEXT } from '../net/journalPage.js';   // JOURNAL1: a page of the journal shown, and one shown to me kept
-import { quickslotTag, quickslotHand, tagText } from '../ui/quickslotTags.js';   // JOURNAL1: the F-menu's own key, named off the live bindings
+import { quickslotTag, quickslotHand, tagText, actionKeyWord } from '../ui/quickslotTags.js';   // JOURNAL1: the F-menu's own key, named off the live bindings
 import { isTouchDevice } from '../ui/touchDevice.js';   // JOURNAL1: ...or a tap, where a finger points
 import { composeCard, createCardAnswerGate, CARD_WAIT_MS } from '../net/profileCard.js';   // INSPECT1: my card when asked, and how often one asker is answered
 import { relayVersionSeen, buildUpdateSeen, fetchLiveBuildTag, RELAY_RESTART_TEXT, BUILD_UPDATE_TEXT, BUILD_POLL_MS } from '../net/updateNotice.js';   // SRV-N: the relay moved, or the build did
@@ -1147,10 +1147,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   // rig (indoors and underground world.js's own is never readied; the live arm names the one in hand)
   // AUDIT TECH-FX: the key's word only when the chip is ready, and looked up once a binding change (the store's `rev`) -
   // asked each frame, getBinding walked every binding (10 KB and 11 us a frame, a technique in hand or none)
-  let _techKey = null, _techKeyStore = null, _techKeyRev = -1;
+  // FINAL AUDIT (TECH-CARD): the card's word (quickslotTags.js actionKeyWord) - the key that answers, primary or secondary,
+  // and the pad's button while a pad is in hand - asked again when the pad is taken up or put down
+  let _techKey = null, _techKeyStore = null, _techKeyRev = -1, _techKeyPad = null;
   const techniqueKeyWord = () => {
-    const b = bindings(), rev = b?.rev ?? 0;
-    if (_techKey === null || _techKeyStore !== b || _techKeyRev !== rev) { _techKeyStore = b; _techKeyRev = rev; _techKey = tagText(getBinding(b, TECHNIQUE_ACTION) ?? ''); }
+    const b = bindings(), rev = b?.rev ?? 0, pad = controllerLook() ? (padFamily() ?? 'xbox') : null;
+    if (_techKey === null || _techKeyStore !== b || _techKeyRev !== rev || _techKeyPad !== pad) { _techKeyStore = b; _techKeyRev = rev; _techKeyPad = pad; _techKey = actionKeyWord(TECHNIQUE_ACTION, { bindings: b, controller: pad !== null, family: pad ?? 'xbox' }); }
     return _techKey;
   };
   setHudTechniqueChips((e) => techniqueHudChips(e, (modes?.liveArm?.()?.rig ?? weaponRig)?.playerWeapon, techniqueKeyWord));

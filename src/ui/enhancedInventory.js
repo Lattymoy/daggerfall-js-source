@@ -139,8 +139,7 @@ import { craftedJewelPoints } from '../systems/enchanting.js';   // AUDIT PROF-5
 import { sigilCard } from './sigilCard.js';   // SIGIL-UI: the sigil's own block on the card
 import { techniqueCard } from './techniqueCard.js';   // TECH-CARD: a technique's own block on the card
 import { TECHNIQUE_ACTION } from '../combat/techniqueRoster.js';   // TECH-CARD: the key its block names (the leaf, never the runner)
-import { getBinding } from '../systems/inputActions.js';
-import { tagText } from './quickslotTags.js';
+import { actionKeyWord } from './quickslotTags.js';   // FINAL AUDIT: the word for the key that answers - the HUD chip's too
 import { validSigil } from '../systems/sigil.js';   // SIGIL-UI: the tile's corner rune
 import { setCard, setStrip, markSetFrame } from './setCard.js';   // SET5: a set piece's set on its card, the worn sets on the doll's column, a set piece's rune
 import { setIdOf, setById, setLines, setSigilLines } from '../systems/sigilSets.js';   // CARD-FIT U4/U10: a set piece and its sigil in a line each
@@ -150,7 +149,7 @@ import { isBound, BOUND_LINE, boundRefusesPut, boundText, isPackOnly, packOnlyTe
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
 import { repaintKeepingScroll } from './domRepaint.js';
-import { overlayAction, eventActions, bindings } from './input.js';   // MAC-C: and the REGISTRY's answer for the two window keys; TECH-CARD: the live store, for the technique's key
+import { overlayAction, eventActions } from './input.js';   // MAC-C: and the REGISTRY's answer for the two window keys
 import { audio } from '../systems/audio.js';   // MAC-O6: the pack's own transfer cue - this window carried none at all
 import { dismantleStones, dismantleRefusal, dismantleWare, dismantleAsk, DISMANTLED, DISMANTLE_WORN } from '../systems/sigilBroker.js';   // SS5: a Broker ware back into stones
 import { salvageShards, salvageRefusal, salvagePiece, shardsText } from '../systems/reforge.js';   // LOOT9: a laddered piece broken into Welkynd Shards
@@ -3072,13 +3071,12 @@ function socketBlock(item, live, ready) {
  *  is refused its setting), for "Set in...". */
 const gemHomes = () => (deps.items?.() ?? []).filter((it) => emptySockets(it) > 0 && itemIsIdentified(it));   // AUDIT GEM: never a piece the setting refuses (an unknown one)
 
+/** TECH-CARD: the technique key's word off the live bindings, as the HUD's chip names it (scenes/world.js
+ *  techniqueKeyWord): FINAL AUDIT - the key that ANSWERS, primary or secondary, and the pad's button while a pad is in
+ *  hand (quickslotTags.js actionKeyWord); '' when nothing is bound, and the block's foot says so. */
+const techniqueKeyWord = () => actionKeyWord(TECHNIQUE_ACTION);
 /** PLUS7: the item's card WITHOUT its buttons - the detail column's, the hover card's. CARD-FIT: `body` puts its words
  *  in a body of their own (`.card-body`), so the detail column can hang its buttons under it, never inside it. */
-/** TECH-CARD: the technique key's name off the live bindings, as the HUD's chip names it (scenes/world.js
- *  techniqueKeyWord - `tagText`, the chip's law); '' when nothing is bound, and the block's foot says so. */
-function techniqueKeyWord() {
-  try { const code = getBinding(bindings(), TECHNIQUE_ACTION); return code ? tagText(code) : ''; } catch { return ''; }
-}
 function infoCard(picked, side, ready = render, { body = false } = {}) {
   // AUDIT GEM: a well's open chooser, its asked Shatter and a gem's "Set in..." list are the SELECTION's - another piece
   // picked and this one picked again starts clean, never a stale question answered by one press

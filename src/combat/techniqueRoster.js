@@ -62,8 +62,8 @@ export const TECHNIQUE_PER_MILLE = Object.freeze({ magic: 120, rare: 300, legend
  *  marks on the ground wear (combat/techniques.js TECH_COLOR, [0.35, 0.78, 1]). Here, in the leaf, because the HUD never
  *  imports a runtime that reaches half the game. */
 export const TECH_CHIP_COLOUR = '#59c7ff';
-/** The registry action (systems/inputActions.js) - here, in the leaf, so the card (ui/techniqueCard.js) names the key
- *  without importing the runner; combat/techniques.js answers it and exports it on. */
+/** The registry action (systems/inputActions.js) - here, in the leaf, so the card's host (ui/enhancedInventory.js
+ *  techniqueKeyWord) names the key without importing the runner; combat/techniques.js answers it and exports it on. */
 export const TECHNIQUE_ACTION = 'WeaponTechnique';
 
 /** What a line's `value` makes of the technique's own multiplier: `base * (1 + value/100)`. */

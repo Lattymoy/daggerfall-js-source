@@ -29,6 +29,7 @@ import { buttonText } from '../systems/controlsConfig.js';
 import { unityButtonGlyph, padFamily } from './padGlyphs.js';
 import { controllerLook } from '../player/lookFilter.js';   // AUDIT DUEL1 D3: GP1's latch - the chip a pad player sees is a glyph
 import { bindings } from './input.js';   // DISC21-C: the live store, for quickslotHand's default
+import { hdGlyphName } from './padGlyphsHD.js';   // FINAL AUDIT (TECH-CARD): a pad button's name in words, for a line that says it
 
 /** Which action each cell of the diamond announces. The off hand's is
  *  decided by what is IN it, so it is a function of the kind rather
@@ -83,6 +84,17 @@ export function quickslotTag(action, { bindings = null, controller = false, fami
   if (key) return { kind: 'key', text: tagText(key) };
   if (pad) return { kind: 'glyph', family, code: pad };
   return null;
+}
+
+/** FINAL AUDIT (TECH-CARD): THE WORD FOR THE KEY AN ACTION ANSWERS, for a line that names it in words - a technique's
+ *  block on the card and its chip on the HUD. The tag's own law (quickslotTag): the primary binding or the secondary, as
+ *  the router answers either (the classic Controls window's second column and the Plus pad's bind rows write the
+ *  secondary - the primary alone said "no key bound" of a key that answers), and the pad's button while a pad is in
+ *  hand, named in words (padGlyphsHD.js hdGlyphName - "A", "Triangle", "RB"; a pad player was told to hold MOUSE3).
+ *  '' when nothing is bound. */
+export function actionKeyWord(action, { bindings: store = bindings(), controller = controllerLook(), family = padFamily() ?? 'xbox' } = {}) {
+  const tag = quickslotTag(action, { bindings: store, controller, family });
+  return !tag ? '' : tag.kind === 'key' ? tag.text : hdGlyphName(tag.family, tag.code);
 }
 
 /** The off-hand cell's action, by what is standing in it: a lit torch

@@ -2158,6 +2158,10 @@ export function techniqueCardView(item) {
     base: techniqueById(line.param).base, ...parts };
 }
 
+/** SET6: the lore of a fixed record the ladder does not hold - an Aetheric piece's (systems/aetheric.js registers the
+ *  Regalia's; it imports this file, so this one cannot import it). `fn(item) -> string | null`. */
+let _aethericLore = null;
+export function registerAethericLore(fn) { _aethericLore = typeof fn === 'function' ? fn : null; }
 /** The tier line and the affix lines a tooltip or a card shows, in
  *  order: "Rare", then each affix, then the DFU enchantment's name.
  *  Empty with the switch off, for a Common item, or while the item is
@@ -2166,10 +2170,6 @@ export function techniqueCardView(item) {
  *  that draws the sigil as its own block (ui/sigilCard.js). TECH-CARD:
  *  `technique: false` leaves the technique's line and what a press does
  *  out, for a card that draws its block (ui/techniqueCard.js). */
-/** SET6: the lore of a fixed record the ladder does not hold - an Aetheric piece's (systems/aetheric.js registers the
- *  Regalia's; it imports this file, so this one cannot import it). `fn(item) -> string | null`. */
-let _aethericLore = null;
-export function registerAethericLore(fn) { _aethericLore = typeof fn === 'function' ? fn : null; }
 export function rarityLines(item, { sigil = true, set = true, lore = true, technique = true } = {}) {
   if (!lootRarityOn() || !item) return [];
   const tier = rarityOf(item);

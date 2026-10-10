@@ -113,7 +113,7 @@ test('TECH1 THE WORLD HOST\'S OWN: the chip off the MODE\'s rig with its key\'s 
   const w = code('src/scenes/world.js');
   // PIN MOVED (AUDIT TECH-FX): the key's word through a thunk the chip asks only when ready, cached on the store's rev
   assert.match(w, /setHudTechniqueChips\(\(e\) => techniqueHudChips\(e, \(modes\?\.liveArm\?\.\(\)\?\.rig \?\? weaponRig\)\?\.playerWeapon, techniqueKeyWord\)\);/);
-  assert.match(w, /if \(_techKey === null \|\| _techKeyStore !== b \|\| _techKeyRev !== rev\) \{ _techKeyStore = b; _techKeyRev = rev; _techKey = tagText\(getBinding\(b, TECHNIQUE_ACTION\) \?\? ''\); \}/);
+  assert.match(w, /const b = bindings\(\), rev = b\?\.rev \?\? 0, pad = controllerLook\(\) \? \(padFamily\(\) \?\? 'xbox'\) : null;\s*if \(_techKey === null \|\| _techKeyStore !== b \|\| _techKeyRev !== rev \|\| _techKeyPad !== pad\) \{ _techKeyStore = b; _techKeyRev = rev; _techKeyPad = pad; _techKey = actionKeyWord\(TECHNIQUE_ACTION, \{ bindings: b, controller: pad !== null, family: pad \?\? 'xbox' \}\); \}/);   // PIN MOVED (FINAL AUDIT): the card's word (actionKeyWord - the key that answers, a pad's button while a pad is in hand), asked again when the pad is taken up or put down
   assert.match(code('src/ui/enhancedHud.js'), /const powers = setPowerChips\(vitals\);\s*powers\.push\(\.\.\.techniqueChips\(vitals\)\);/, 'the chip after the set powers\'');
   assert.match(w, /offsetTactics\(r\.offset\);\s*offsetTechniques\(r\.offset\);/);
   assert.equal(TECH_CHIP_COLOUR, '#59c7ff');
