@@ -22,8 +22,36 @@
 // every cell object's are; a reader converts at landing and every frame after (the floating origin, AUDIT
 // ONLINE D5). The orientation the horse billboard shows is the READER's camera's, computed there
 // (horseCartLaw calculateHorseOrientation) - a sprite faces whoever looks at it.
-import { POSE_BOUND, POSE_Y_BOUND, sanitizeLabel } from '../net/wire.js';
+//
+// WAGONS1 (2026-10-09): AND WHICH WAGON. Mac's three wagons (systems/wagonKinds.js) are drawn by their owner's kind, so
+// the word says it - `wk`, the kind's code (1 the Open Wagon, 2 the Caravan; absent, the Small Cart: every word before
+// WAGONS1 said a cart, and still reads as one) - and `wh` 1 when a horse is in a parked wagon's shafts (the cart is
+// borne level then, and rests tipped on its shafts without one - world/wagonModels.js). Both ride beside `w` at the
+// record's top, where an older reader drops what it does not know (validHccRecord rebuilds its record from w, h and n),
+// so an older client still draws the wagon, as the classic one; the reader here folds them into `w` (`model`,
+// `hitched`), where every copy of the word carries them.
+import { POSE_BOUND, POSE_Y_BOUND, sanitizeLabel, MAP_PIXELS_X, MAP_PIXELS_Y } from '../net/wire.js';
 import { HORSE_NAME_MAX, CARGO_TIERS } from './horseCartLaw.js';
+import { wagonKindCode, wagonKindOfCode } from './wagonKinds.js';
+import { validPassengers, validPeerId, MAX_SEATS } from './wagonSeats.js';
+import { wagonLookCode, wagonLookOfCode, WAGON_LOOK_CODE_MAX } from './wagonLooks.js';
+import { caravanEntryCode, caravanEntryOfCode, caravanGuildTag, CARAVAN_GUILD_CODE } from './caravanVisit.js';
+
+// WAGONS2 (2026-10-09): AND ITS PAINT. A wagon's paint (systems/wagonLooks.js - its outside, and a caravan's inside)
+// is one number, `wl`, beside `wk` at the record's top (absent: the wagon as built - every word before WAGONS2), folded
+// into `w` as `look`; an older reader drops it and draws the wagon as built.
+
+// WAGONS2-VISIT (2026-10-09): AND WHO MAY ENTER IT. A caravan's door is its owner's to open (systems/caravanVisit.js):
+// `we`, the entry's code (1 the owner's party, 2 anyone, 3 the owner's guild; absent, the owner alone - every word before
+// it), and with the guild's `wg`, the owner's guild tag - beside `wk` at the record's top, folded into `w` as `entry` and
+// `guild`; an older reader drops both, and to it every caravan is its owner's alone.
+
+// WAGONS1: AND WHO RIDES IN IT (systems/wagonSeats.js's word). An owner's word says who sits in which seat of their
+// wagon's back (`ps`, `[[peer, seat], ...]`), who they turned away this moment (`pn`, peer ids - the rider's client says
+// so at once rather than waiting out the ask), and a journey their riders go on with them (`go`, `[x, y, n]`: the map
+// pixel of a fast travel the owner is setting out on, `n` counting the owner's journeys, so one is followed once).
+/** A journey names a pixel of the travel map, the only place one sets out from (the Bay's, MapsFile's 1000 x 500 -
+ *  WAGONS2 AUDIT: 4096 a side let a word send its riders off the map). */
 
 /** What the wagon shown is: the team's trailing wagon behind the cart, the parked wagon, the following team's. */
 export const HCC_WIRE_KIND = Object.freeze({ Trailing: 1, Deployed: 2, Following: 3 });
@@ -38,7 +66,7 @@ const inBounds = (p) => Math.abs(p[0]) <= POSE_BOUND && Math.abs(p[2]) <= POSE_B
  * My word: the pool's view of the runtime as the wire says it. `view` is scenes/horseCartPool.js's
  * `shown()` - `{ wagon: { kind, position, rotation, tier, angle } | null, horse: { position, forward, walking } | null,
  * name }` in scene units; `toWire` converts a scene point to the wire frame.
- * @returns {{ w?: number[], h?: number[], n?: string } | null} null when nothing stands (the reader drops mine)
+ * @returns {{ w?: number[], h?: number[], n?: string, wk?: number, wh?: number, wl?: number, we?: number, wg?: string, ps?: any[], go?: number[], pn?: string[] } | null} null when nothing stands (the reader drops mine)
  */
 export function hccWireRecord(view, toWire = (p) => p) {
   if (!view) return null;
@@ -47,7 +75,18 @@ export function hccWireRecord(view, toWire = (p) => p) {
   if (w && finite3(w.position) && Array.isArray(w.rotation) && w.rotation.length === 4) {
     const p = toWire(w.position);
     out.w = [w.kind | 0, r2(p[0]), r2(p[1]), r2(p[2]), r4(w.rotation[0]), r4(w.rotation[1]), r4(w.rotation[2]), r4(w.rotation[3]), w.tier | 0, r2(w.angle ?? 0)];
+    const wk = wagonKindCode(w.model);   // WAGONS1
+    if (wk) out.wk = wk;
+    if (w.hitched && (w.kind | 0) === HCC_WIRE_KIND.Deployed) out.wh = 1;
+    const wl = wagonLookCode(w.look);   // WAGONS2: its paint
+    if (wl) out.wl = wl;
+    const we = caravanEntryCode(w.entry);   // WAGONS2-VISIT: who may enter it, and with the guild's, the guild's tag
+    if (we) { out.we = we; const wg = we === CARAVAN_GUILD_CODE ? caravanGuildTag(w.guild) : null; if (wg) out.wg = wg; }
+    const ps = validPassengers(w.passengers);   // WAGONS1
+    if (ps?.length) out.ps = ps;
   }
+  if (Array.isArray(view.go) && view.go.length === 3 && view.go.every(Number.isInteger)) out.go = [...view.go];   // WAGONS1
+  if (Array.isArray(view.declined) && view.declined.length) out.pn = view.declined.filter(validPeerId).slice(0, MAX_SEATS * 2);
   const h = view.horse;
   if (h && finite3(h.position) && finite3(h.forward)) {
     const p = toWire(h.position);
@@ -55,7 +94,7 @@ export function hccWireRecord(view, toWire = (p) => p) {
   }
   const n = hccHorseNameOnWire(view.name);
   if (n && out.h) out.n = n;
-  return out.w || out.h ? out : null;
+  return out.w || out.h || out.go || out.pn ? out : null;
 }
 
 /** The horse's name as the wire carries it: the label door at the mod's 31 (NormalizeHorseName's bound); '' when
@@ -78,8 +117,12 @@ export function validHccRecord(raw) {
     const len = Math.hypot(q[0], q[1], q[2], q[3]);
     if (!(len > 0.5 && len < 2)) return null;
     if (!TIERS.has(w[8])) return null;
-    out.w = { kind: w[0], position: p, rotation: q.map((v) => v / len), tier: w[8], angle: ((w[9] % 360) + 360) % 360 };
+    out.w = { kind: w[0], position: p, rotation: q.map((v) => v / len), tier: w[8], angle: ((w[9] % 360) + 360) % 360, model: wagonKindOfCode(raw.wk ?? 0), hitched: raw.wh === 1, look: wagonLookOfCode(Number.isInteger(raw.wl) && raw.wl > 0 && raw.wl <= WAGON_LOOK_CODE_MAX ? raw.wl : 0), passengers: validPassengers(raw.ps) ?? [] };   // WAGONS1: an unknown kind is drawn as the cart; a passenger list that is not one seats nobody
+    out.w.entry = caravanEntryOfCode(raw.we); out.w.guild = out.w.entry === 'guild' ? caravanGuildTag(raw.wg) : null;   // WAGONS2-VISIT: who may enter it - the owner alone for anything the law does not know
   }
+  // WAGONS1: a journey the owner's riders go on, and who was turned away - each dropped alone when it is not one
+  if (Array.isArray(raw.go) && raw.go.length === 3 && raw.go.every(Number.isInteger) && raw.go[0] >= 0 && raw.go[0] < MAP_PIXELS_X && raw.go[1] >= 0 && raw.go[1] < MAP_PIXELS_Y && raw.go[2] >= 0) out.go = [...raw.go];
+  if (Array.isArray(raw.pn) && raw.pn.length <= MAX_SEATS * 2) out.pn = raw.pn.filter(validPeerId);
   if (raw.h !== undefined) {
     const h = raw.h;
     if (!Array.isArray(h) || h.length !== 6 || !h.every(Number.isFinite)) return null;
@@ -94,14 +137,14 @@ export function validHccRecord(raw) {
     if (typeof raw.n !== 'string' || raw.n.length > HORSE_NAME_MAX * 4) return null;
     out.n = hccHorseNameOnWire(raw.n);
   }
-  if (!out.w && !out.h) return null;
+  if (!out.w && !out.h && !out.go && !out.pn?.length) return null;
   return out;
 }
 
 /** A change key, so a frame carries the record only when the word moved (the full frame always does). */
 export function hccRecordKey(rec) {
   if (!rec) return '';
-  return JSON.stringify([rec.w ?? 0, rec.h ?? 0, rec.n ?? '']);
+  return JSON.stringify([rec.w ?? 0, rec.h ?? 0, rec.n ?? '', rec.wk ?? 0, rec.wh ?? 0, rec.ps ?? 0, rec.go ?? 0, rec.pn ?? 0, rec.wl ?? 0, rec.we ?? 0, rec.wg ?? '']);
 }
 
 /** The snap-or-ease a reader shows between two words: a step past `snap` metres is a teleport (the owner

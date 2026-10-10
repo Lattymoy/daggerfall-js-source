@@ -55,7 +55,14 @@ export const companionKeyOf = (c) => c.key ?? `${c.boat}:${c.name}`;
  *   now: () => number,
  *   onKnocked?: (c: any, by: any) => void,
  *   onStood?: (c: any, rec: any) => void,
+ *   seat?: (i: number, n: number) => ({ feet: number[], yaw: number } | null),
+ *   seatDraw?: (i: number, n: number) => ({ feet: number[], yaw: number, g: number } | null),
  * }} deps
+ *
+ * WAGONS1: `seat(i, n)` - where the `i`th of `n` rides when the player's wagon carries companions in its back
+ * (systems/wagonSeats.js companionSeats; null: on foot, at heel). A body with a seat takes no step (characters/
+ * enemyMotor.js update) and is never caught up: it is where the wagon is. WAGONS2: `seatDraw(i, n)` - where that seat
+ * is DRAWN (the wagon grown under the Overworld): the sprite stands there, the body on the seat itself.
  */
 export function createCrewAshore(deps) {
   /** @type {Map<string, { c: any, rec: any, remove: (rec: any) => void, has: ((rec: any) => boolean) | null, fx: any }>} */
@@ -101,6 +108,10 @@ export function createCrewAshore(deps) {
     const [dx, dz] = companionSlot(L.yaw, i, n);
     return place.spot ? place.spot(L.feet, dx, dz) : [L.feet[0] + dx, L.feet[1], L.feet[2] + dz];
   }
+  /** WAGONS1: the motor's seat handle - the host's seat for the `i`th of `n`, read each step. */
+  const seatOf = (i, n) => () => deps.seat?.(i, n) ?? null;
+  /** WAGONS2: and where the draw stands it - the host's seat as the wagon is drawn (grown under the Overworld), or null. */
+  const seatDrawOf = (i, n) => () => deps.seatDraw?.(i, n) ?? null;
   /** The motor's follow handle: the leader's live feet, and how near this one keeps. */
   const followOf = (i) => ({ feet: () => deps.leader()?.feet ?? null, stop: HEEL_M + i * HEEL_STEP_M, trail: () => trail });   // COMPANION-TRAIL
 
@@ -136,7 +147,9 @@ export function createCrewAshore(deps) {
       }
       rec.shipmate = true;
       rec.ai.follow = followOf(i);
-      if (place && L) {
+      rec.ai.seat = deps.seat ? seatOf(i, list.length) : null;   // WAGONS1
+      rec.ai.seatDraw = deps.seatDraw ? seatDrawOf(i, list.length) : null;   // WAGONS2: drawn in the grown wagon
+      if (place && L && !rec.ai.seat?.()) {
         const f = rec.ai.feet;
         // AUDIT CC-A3: a floor away counts only while the leader stands on one - levitating, swimming or in the air, the
         // body stood at his height would only fall and be stood up there again

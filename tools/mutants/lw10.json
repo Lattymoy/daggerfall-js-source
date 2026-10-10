@@ -65,8 +65,8 @@
   {
     "name": "LW10-hitch",
     "file": "src/systems/livingWorld/wagons.js",
-    "old": "      const axle = s - dir * HITCH_N;",
-    "new": "      const axle = s - dir * HITCH_N * 2;",
+    "old": "      const axle = s - dir * hitchN;",
+    "new": "      const axle = s - dir * hitchN * 2;",
     "tests": [
       "test/lw10_wagons.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "LW10-AUDIT-E8-wheels-home",
     "file": "src/systems/livingWorld/wagons.js",
-    "old": "s: back ? trip.way.len - axle : axle });",
-    "new": "s: axle });",
+    "old": "s: back ? trip.way.len - axle : axle, hitched: true });",
+    "new": "s: axle, hitched: true });",
     "tests": [
       "test/lw10_wagons.test.js"
     ]
@@ -211,6 +211,96 @@
     "file": "src/scenes/livingRoads.js",
     "old": "places = fight ? fightPlaces(p.trip, at, members) : train.people;",
     "new": "places = fight ? fightPlaces(p.trip, at, members) : partyPlaces(members === p.trip.party ? p.trip : { ...p.trip, party: members }, at, null);",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-WAGONS1-kind",
+    "file": "src/world/roadTeams.js",
+    "old": "{ angle: w.angle }, w.grow, ROAD_WAGON_KIND, w.hitched)",
+    "new": "{ angle: w.angle }, w.grow, undefined, w.hitched)",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-WAGONS1-parts",
+    "file": "src/world/roadTeams.js",
+    "old": "(pres?.partsOf ? pres.partsOf(ROAD_WAGON_KIND) : pres?.wagonParts?.())",
+    "new": "(pres?.partsOf ? pres.partsOf() : pres?.wagonParts?.())",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-WAGONS1-turn",
+    "file": "src/world/roadTeams.js",
+    "old": "w.tier, { angle: w.angle }, w.grow,",
+    "new": "w.tier, w.angle, w.grow,",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-WAGONS1-hitched",
+    "file": "src/world/roadTeams.js",
+    "old": "grow, hitched: w.hitched !== false });",
+    "new": "grow, hitched: true });",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-WAGONS1-hitch",
+    "file": "src/world/roadTeams.js",
+    "old": "return Number.isFinite(m) && m > 0 ? m * NATIVE_PER_M : HITCH_N;",
+    "new": "return HITCH_N;",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-WAGONS1-pool-hitch",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "partsOf, hitchOfKind: hitchOf },",
+    "new": "partsOf, hitchOfKind: () => hitchOf(myKind()) },",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-WAGONS1-train-hitch",
+    "file": "src/systems/livingWorld/wagons.js",
+    "old": "      const axle = s - dir * hitchN;",
+    "new": "      const axle = s - dir * HITCH_N;",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-WAGONS1-camp-hitched",
+    "file": "src/systems/livingWorld/wagons.js",
+    "old": "tier: cargoOf(trip, t), s: 0, hitched: false });",
+    "new": "tier: cargoOf(trip, t), s: 0, hitched: true });",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-WAGONS1-roads-hitch",
+    "file": "src/scenes/livingRoads.js",
+    "old": "trainOf(trip, at, members, t, deps.teams?.hitchN?.());",
+    "new": "trainOf(trip, at, members, t);",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-WAGONS1-roads-hitched",
+    "file": "src/scenes/livingRoads.js",
+    "old": "s: w.s, hitched: w.hitched, distM: near(w) })),",
+    "new": "s: w.s, distM: near(w) })),",
     "tests": [
       "test/lw10_wagons.test.js"
     ]

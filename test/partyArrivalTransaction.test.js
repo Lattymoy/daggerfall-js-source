@@ -55,6 +55,7 @@ function host({ safe = true, target = true, failBuild = false, boat = false, own
     raisePlayerSkills: no, ActionTextBox: class {}, YesNoBoxWindow: class {}, announceLevelUp: no,
     makeCharSheetWindow: no, setCrimeCommitted: () => events.push('crime-cleared'), CRIMES: { None: 0 },
     arrestFlow: { crimeCleared: no }, warmAshesPostTravel: no,
+    wagonRiders: null, GO_LEAD_MS: 0, _hccDirty: false, _goLeadBusy: false,   // WAGONS1: no rider in my wagon's back - a journey sets out at once; WAGONS2: no journey telling its riders
   };
   // Execute the complete production travel function, with explicit host seams.
   const api = new Function(...Object.keys(deps), travelSource + '\nreturn { run: fastTravelTo, flags: () => [_traveling, _partyArrivalPending, _partyTravelOriginBoat] };')(...Object.values(deps));

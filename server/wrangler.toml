@@ -93,6 +93,15 @@ GATE_DISCORD_ROLE = "1555589839825670258"
 # LEGAL STATE: the bells ping the gate's role (GATE_DISCORD_ROLE); name
 # one here to give the serpent its own.
 SERPENT_DISCORD_ROLE = ""
+# ═══ SD-HERALD: THE ROLE AN ABYSS DUNGEON'S RISE AND FIND PING ══════
+#
+# The Discord id of the opt-in role the hub pings when an Abyss
+# Dungeon rises and when it is found (net/sdHerald.js) - posted to the
+# gate's channel, through the gate's webhook above; its fall and its
+# fade ping nobody. EMPTY IS A LEGAL STATE: the posts ping the gate's
+# role (GATE_DISCORD_ROLE); name one here to give the Abyss Dungeon
+# its own.
+SD_DISCORD_ROLE = ""
 
 # ═══ WB3: THE RELAY'S ONE SECRET ═══════════════════════════════════
 #

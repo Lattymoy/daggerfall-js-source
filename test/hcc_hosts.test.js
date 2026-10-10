@@ -121,7 +121,7 @@ test('HCC hosts: world.js - the frame, the draw, the origin, the ray, the plaque
     /ready: \(\) => walkMode && playerSpawned && !_teleporting && !_traveling/,
     /isOnShip: \(\) => isOnShip\(playerEntity, playerEntity\.boardShipPosition \?\? null, playerTravelPixel\(\)\)/,
     /ratio: \(\) => SCENE_MAP_RATIO/, /dungeonId: \(\) => modes\?\.roomIdentity\?\.\(\)\?\.mapId \?\? null/,
-    /wagonWeight: \(\) => totalWeight\(playerEntity\.wagonItems \?\? \[\]\), wagonKgLimit: \(\) => WAGON_KG_LIMIT/,
+    /wagonWeight: \(\) => totalWeight\(playerEntity\.wagonItems \?\? \[\]\), wagonKgLimit: \(\) => wagonKgFor\(playerEntity\)/,   // PIN MOVED (WAGONS1): the driven wagon's capacity
     /travelOptionsActive: \(\) => \(travelOptions \? !!travelOptions\.isTravelActive : null\)/,
     /new InputMessageBoxWindow\(\{ lines: \[\], label, value, maxCharacters/,
     /isQualifyingThreatState\(true, !!f\.ai\.isHostile, f\.entity\?\.team === 'PlayerAlly', isLocalPlayerTarget\(f\.ai\.target\), !!f\.ai\.detected\)/,

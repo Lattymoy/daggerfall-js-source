@@ -27,6 +27,7 @@ import { mintCondition } from '../src/systems/itemTemplates.js';
 import { equipItem } from '../src/systems/equip.js';
 import { validLootItem } from '../src/systems/loot.js';
 import { seedTestLoot } from '../src/systems/testRoom.js';
+import { rollGemFind } from '../src/systems/gems.js';   // GEM2: the gem find, held off and put back
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const on = () => { _resetForTests(); setPref('lootRarity', true); };
@@ -75,21 +76,30 @@ test('LOOT21: the finds - late, from tier 6 and tier 10, never in rollUniqueFind
   LR.rollLateFinds({ kind: 'corpse', tier: 8, luck: 50 }, () => { drawn++; return 0.999; });
   assert.equal(drawn, 1, 'a find under its tier costs a seed no draw');
   // the door: the stones are its last two draws - each seed's draws recorded, then replayed with the last two found and
-  // not found: everything before them the seed's own
+  // not found: everything before them the seed's own. GEM1/GEM2 (bible/06-Systems/Gem-Sockets.md, PIN MOVED): the gem
+  // arc's draws come after the stones (law 9) - the weapons' sockets and the gem find - so they are held off here, and
+  // test/gem1_sockets.test.js pins that they follow
+  LR._setWeaponSocketsForTests({ first: 0, more: 0 });
+  LR.registerGemFind(null);
   const src = { kind: 'corpse', tier: 21, boss: true, family: null };
-  for (let seed = 1; seed < 30; seed++) {
-    const base = lcg(seed);
-    const rec = [];
-    LR.rollLootRarity([createWeapon(120, 1)], src, { rolls: () => { const v = base(); rec.push(v); return v; } });
-    const head = rec.slice(0, -2);
-    const replay = (tail) => { let k = 0; return () => (k < head.length ? head[k++] : tail[(k++) - head.length] ?? 0.5); };
-    const a = [createWeapon(120, 1)];
-    LR.rollLootRarity(a, src, { rolls: replay([0, 0]) });
-    const b = [createWeapon(120, 1)];
-    LR.rollLootRarity(b, src, { rolls: replay([0.999, 0.999]) });
-    assert.deepEqual(a.slice(-2).map((it) => it.name), ['Welkynd Stone', 'Varla Stone'], `seed ${seed}: last`);
-    assert.ok(!b.some((it) => isWelkyndStone(it) || isVarlaStone(it)));
-    assert.deepEqual(JSON.stringify(a.slice(0, b.length)), JSON.stringify(b), `seed ${seed}: the rest the seed's own`);
+  try {
+    for (let seed = 1; seed < 30; seed++) {
+      const base = lcg(seed);
+      const rec = [];
+      LR.rollLootRarity([createWeapon(120, 1)], src, { rolls: () => { const v = base(); rec.push(v); return v; } });
+      const head = rec.slice(0, -2);
+      const replay = (tail) => { let k = 0; return () => (k < head.length ? head[k++] : tail[(k++) - head.length] ?? 0.5); };
+      const a = [createWeapon(120, 1)];
+      LR.rollLootRarity(a, src, { rolls: replay([0, 0]) });
+      const b = [createWeapon(120, 1)];
+      LR.rollLootRarity(b, src, { rolls: replay([0.999, 0.999]) });
+      assert.deepEqual(a.slice(-2).map((it) => it.name), ['Welkynd Stone', 'Varla Stone'], `seed ${seed}: last`);
+      assert.ok(!b.some((it) => isWelkyndStone(it) || isVarlaStone(it)));
+      assert.deepEqual(JSON.stringify(a.slice(0, b.length)), JSON.stringify(b), `seed ${seed}: the rest the seed's own`);
+    }
+  } finally {
+    LR._setWeaponSocketsForTests(null);
+    LR.registerGemFind(rollGemFind);
   }
   // off: nothing
   _resetForTests();

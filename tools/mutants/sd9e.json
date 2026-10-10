@@ -92,8 +92,8 @@
   {
     "name": "SD9E-the-list-gold-first",
     "file": "src/systems/sdSpoils.js",
-    "old": "  return [\n    ...pieces,\n    ...card,   // CARDS9: the Remnant's card, after the pieces\n    gold,\n  ];",
-    "new": "  return [\n    gold,\n    ...pieces,\n    ...card,   // CARDS9: the Remnant's card, after the pieces\n  ];",
+    "old": "  return [\n    ...pieces,\n    ...card,   // CARDS9: the Remnant's card, after the pieces\n    ...gems,   // GEM2: the Remnant's gems, after the card\n    gold,\n  ];",
+    "new": "  return [\n    gold,\n    ...pieces,\n    ...card,   // CARDS9: the Remnant's card, after the pieces\n    ...gems,   // GEM2: the Remnant's gems, after the card\n  ];",
     "tests": [
       "test/sd9e_spoils.test.js"
     ]

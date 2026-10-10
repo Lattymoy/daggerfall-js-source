@@ -10,7 +10,10 @@
 // cart itself - classic model 41214, the wagon Horse Cart and Cargo
 // trails behind the player (systems/horseCartLaw.js WAGON_MODEL_ID). So
 // the cart's picture is that model, drawn once: textured, three-quarter
-// on, lit from the upper left, at item-picture size.
+// on, lit from the upper left, at item-picture size. (WAGONS1: Mac's
+// wagons since - the Small Cart's his Wagon Cart, each kind its own model
+// through the port's door below; systems/itemTemplates.js
+// inventoryItemModel.)
 //
 // A CPU RASTERISER, NOT A GPU PASS, for the reason ui/meshStamp.js gives
 // for its own: the list is a CPU composition and this picture is made
@@ -33,6 +36,13 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { color32Canvas } from './bitmapCanvas.js';
+import { WAGON_KINDS } from '../systems/wagonKinds.js';
+
+/** WAGONS1: THE PORT'S OWN MODELS. Mac's wagons (world/wagonModels.js) are no ARCH3D record, so their pictures are
+ *  drawn off the port's own build - an id of systems/wagonKinds.js WAGON_KINDS `icon` answers there, every other id
+ *  out of the player's ARCH3D as before. The build is imported when first asked for, so a list never loads it. */
+const PORT_ICON_KINDS = new Map(Object.values(WAGON_KINDS).map((k) => [k.icon, k.key]));
+const portSource = (id) => import('../world/wagonModels.js').then((m) => m.wagonIconSource(PORT_ICON_KINDS.get(id)));
 
 /** The view: a quarter turn off the model's side and a look down onto it - the angle an item picture is drawn at. */
 export const ICON_YAW = -0.6;
@@ -163,6 +173,7 @@ let _source = null;
 function arena2Source() {
   let arch = null;
   return async (id) => {
+    if (PORT_ICON_KINDS.has(id)) return portSource(id);   // WAGONS1
     const [{ getBytes }, { Arch3dFile }, { dfMeshToModel }, { textureArchive }, repl] = await Promise.all([
       import('../scenes/dataSource.js'),
       import('../formats/arch3dFile.js'),

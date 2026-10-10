@@ -161,6 +161,9 @@ const find = (n, cls, out = []) => {
 
 test('UXB1-E: the Online pane\'s card - what differs, now and then, one press to sync, and Undo after it; nothing to press when nothing differs', () => {
   fresh();
+  // PIN MOVED (BAL4, bible/05-Combat/Balance-Arc.md section 6): the Enhanced AI ships On offline as in every room, so a
+  // default shelf no longer differs there - the player who turned it Off does
+  setPref('enhancedAI', false);
   globalThis.document = { createElement: fakeEl };
   try {
     let card = onlineSyncCard();
@@ -171,7 +174,7 @@ test('UXB1-E: the Online pane\'s card - what differs, now and then, one press to
     assert.equal(rows.length, differ.length);
     assert.deepEqual(rows.map((r) => find(r, 'svsync-name')[0].textContent), differ.map((r) => r.label));
     const ai = rows.find((r) => find(r, 'svsync-name')[0].textContent === 'Enhanced AI');
-    assert.ok(ai, 'a default shelf differs from the room in Enhanced AI - off offline, on in every room');
+    assert.ok(ai, 'a shelf with the Enhanced AI turned off differs from the room - on in every room');
     assert.deepEqual([find(ai, 'svsync-was')[0].textContent, find(ai, 'svsync-to')[0].textContent], ['Off', 'On']);
     const [go] = find(card, 'svsync-go');
     assert.equal(go.textContent, `Sync ${differ.length} setting${differ.length === 1 ? '' : 's'}`);

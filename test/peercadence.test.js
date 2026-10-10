@@ -255,7 +255,8 @@ test('PEER-CADENCE: by source - the clips advance ABOVE the pose gate, the parti
   for (const clip of ['advanceClip(actionState', 'advanceClip(movementState', 'advanceClip(jumpState', 'advanceClip(idleState', 'advanceClip(torchState']) {
     const at = upd.indexOf(clip); assert.ok(at > 0 && at < third, `${clip} advances before the branch, so before the gate`);
   }
-  assert.match(upd, /if \(pose\) \{\s*poseAssembly\(t\.arm, \{[\s\S]*?\}\);\s*uploadThirdMesh\(t\);[\s\S]*?stepRigEffects\(t\.arm, \{ dt: effectsDt,[\s\S]*?frames\+\+;[^\n]*\n\s*\}\s*if \(!thirdMesh\) return;[^\n]*\n[\s\S]*?for \(const r of thirdMesh\.ranges\) \{/, 'skin, upload, particles on the banked dt and the frame count inside the gate; the hidden loop outside it, guarded for a mesh that was never minted');
+  // PIN MOVED (MW-BOW1): the weapon's own clock poses its pieces first, inside the same gate - a skipped frame poses neither
+  assert.match(upd, /if \(pose\) \{\s*posePartClocks\(t\.arm, [^\n]*\n\s*poseAssembly\(t\.arm, \{[\s\S]*?\}\);\s*uploadThirdMesh\(t\);[\s\S]*?stepRigEffects\(t\.arm, \{ dt: effectsDt,[\s\S]*?frames\+\+;[^\n]*\n\s*\}\s*if \(!thirdMesh\) return;[^\n]*\n[\s\S]*?for \(const r of thirdMesh\.ranges\) \{/, 'skin, upload, particles on the banked dt and the frame count inside the gate; the hidden loop outside it, guarded for a mesh that was never minted');
   const fp = upd.slice(upd.indexOf('const fBase = poseSource'), upd.indexOf('frames++', upd.indexOf('const fBase = poseSource')));
   assert.doesNotMatch(fp, /if \(pose\)|if \(!pose\)|\bpose \?|effectsDt/, 'the first-person branch never reads the flag or the bank');
   const pb = rd('src/net/peerBodies.js');

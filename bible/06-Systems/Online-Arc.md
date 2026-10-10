@@ -13474,13 +13474,17 @@ stands owns it, else the lowest living, online holder on its pixel; the hunt's k
 pays every holder of that hunt who held it before the clear - a peer's word paying gold into the save, FLAGGED there by
 name. Until the branch reaches main (and with it the relay's deploy) a bounty is hunted alone.
 
-## DEATH-PENALTY (2026-09-24, Mac: "add deathpenalty 25% of the gold you have with you"; "online mode only ofc"; "and it should be shown in the death screen") - an online death costs a tenth of the purse
+## DEATH-PENALTY (2026-09-24, Mac: "add deathpenalty 25% of the gold you have with you"; "online mode only ofc"; "and it should be shown in the death screen") - an online death costs a tenth of the purse (and, since BAL4, an offline Project Legacy rise)
 
 THE HOLDINGS ARC above left "the gold lost on death (the original pillars 5 and 6)" out with respawning at a hub
 ("That'll be a seperate idea"). This is Mac's later word on the gold, and it stands; the hub respawn stays out. A Ledger A departure (AN ONLINE DEATH COSTS A TENTH OF THE PURSE).
 
 - **Why online alone**: offline a death ends the run (`endRunToTitleMenu` - the video, the title, F11 for the last
   save), so there is no purse that goes on. Online a death RESPAWNS the player (D-ONLINE1), and that was free.
+  **BAL4 (2026-10-10, `05-Combat/Balance-Arc.md` section 6)**: a respawn is the rule, not the lane. LEGACY2 gave an
+  Enduring member an offline rise (the same respawn), free but for Arkay's years, so an offline rise now takes the
+  same tenth, stated on its death screen (`ui/deathScreen.js` `rises`, handed by the hosts whose reset asks Project
+  Legacy). A death with no rise (Legacy off, Bloodline's fall, the fixed city) still takes nothing.
 - **What** (`src/systems/deathPenalty.js`): a tenth of the purse (`goldPieces`, the counter), rounded down in the
   player's favour - nine coins lose nothing, a hundred lose ten. **DEATH-TENTH** (2026-10-03, Mac: "Reduce gold loss
   on death"): it was a quarter, Mac's first 25%; `DEATH_GOLD_FRACTION` 0.25 to 0.1, nothing else moved (the screen's
@@ -13488,7 +13492,8 @@ THE HOLDINGS ARC above left "the gold lost on death (the original pillars 5 and 
   trade-off the penalty exists to make) and not letters of credit. No switch: an online rule a player could turn off
   would be none.
 - **Where**: `respawnOnlinePlayer` (`scenes/world.js`), once a death - the `_respawning` latch is what makes it once -
-  and Privateer's Hold's in-place respawn (`scenes/worldModes.js`, online-gated). The waking line says it: "Death
+  and Privateer's Hold's in-place respawn (`scenes/worldModes.js`, online-gated; BAL4: every rise it takes, online or
+  Legacy's). The waking line says it: "Death
   claimed N gold from your purse."
 - **The death screen** reads the loss once, and STATES it (`stateDeathLoss`): the respawn takes exactly what the screen
   said, capped at the purse (AUDIT 28 B5: the purse CAN change while the player lies dead - a mate's bounty clear pays

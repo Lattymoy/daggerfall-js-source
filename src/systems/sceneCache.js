@@ -168,6 +168,30 @@ export function restoreCachedScene(cache, sceneName) {
   return data;
 }
 
+/** WAGONS2 (AUDIT): A TRAVELLING ROOM'S OTHER LAYOUTS FOLDED BACK. A ship's cabin boarded in a town laid out by another
+ *  mod was kept apart, its visits there saved beside it (`layoutSceneName` - WD3); since a room that travels is no
+ *  town's (scenes/worldModes.js restoreInteriorScene), those visits are folded into the room itself - their placed
+ *  pieces, what those hold, the owner's own things, the floor's piles, torches and camps, the furniture taken out -
+ *  each piece once (by its id), and the copies forgotten. A room with none is left as it is. */
+export function foldLayoutCopies(cache, sceneName) {
+  const copies = [...cache.scenes.keys()].filter((n) => n.startsWith(`${sceneName}|`));
+  for (const n of [...cache.permanent].filter((k) => k.startsWith(`${sceneName}|`))) cache.permanent.delete(n);
+  if (!copies.length) return 0;
+  const base = copySceneEntry(cache.scenes.get(sceneName) ?? {});
+  for (const n of copies) {
+    const c = copySceneEntry(cache.scenes.get(n));
+    cache.scenes.delete(n);
+    const ids = new Set(base.decor.map((pc) => pc.id)), added = new Set();
+    for (const pc of c.decor) if (!ids.has(pc.id)) { base.decor.push(pc); ids.add(pc.id); added.add(String(pc.id)); }
+    for (const [id, list] of Object.entries(c.decorItems)) if (added.has(id)) base.decorItems[id] = list;   // what a piece of its own holds, with it
+    for (const [id, item] of Object.entries(c.decorOwn)) if (!(id in base.decorOwn)) base.decorOwn[id] = item;
+    base.droppedPiles.push(...c.droppedPiles); base.droppedTorches.push(...c.droppedTorches); base.camps.push(...c.camps);
+    for (const k of c.hiddenBase) if (!base.hiddenBase.includes(k)) base.hiddenBase.push(k);
+  }
+  cache.scenes.set(sceneName, base);
+  return copies.length;
+}
+
 /** DECOR1e: A SOLD ROOM'S PLACED PIECES, taken out of its scene and answered as they were - none of them stands again
  *  and none is paid back twice (the offline house's and the ship's live here, DECOR1c). What they held stays in the
  *  scene and goes with it at the next clearing, as a sold house's own containers' things do. */

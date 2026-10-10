@@ -252,10 +252,11 @@ test('AUDIT LEGACY B6: a switch and a retirement never go on without their save'
   assert.equal(w.host.mantleRefusal(), null);
 });
 
-test('AUDIT LEGACY B5: Privateer\'s Hold - a death Project Legacy will raise respawns at the start marker offline too, the toll said, no online penalty', () => {
+test('AUDIT LEGACY B5: Privateer\'s Hold - a death Project Legacy will raise respawns at the start marker offline too, the toll said, and (BAL4) the tenth paid', () => {
   const m = rd('src/scenes/worldModes.js');
   assert.match(m, /const legacyRise = host\.legacyWillRise\?\.\(\) \?\? false;\n\s+const online = host\.dungeonOnline\?\.\(\) \?\? false;\n\s+if \(isPrivateersHold && \(online \|\| legacyRise\)\) \{/);
-  assert.match(m, /const goldLost = online \? applyDeathPenalty\(playerEntity\) : 0;/);
+  // PIN MOVED (BAL4, bible/05-Combat/Balance-Arc.md section 6): an offline rise pays the same tenth (it was "no online penalty")
+  assert.match(m, /const goldLost = applyDeathPenalty\(playerEntity\);/);
   assert.match(rd('src/scenes/world.js'), /legacyRiseLine: \(\) => \{ const o = legacyHost\?\.deathOutcome\(\); return o\?\.kind === 'rise' \? o\.line : null; \},/);
 });
 

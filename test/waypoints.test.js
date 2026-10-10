@@ -279,7 +279,7 @@ test('WILD-WAYPOINT: my remains in the open zone plant one followed red flag, ke
   assert.equal(W.markRemains({ mx: -5, my: 3, until: 1e15 }), null, 'off the map: no flag');
   // the host
   const src = rd('src/scenes/world.js');
-  assert.match(src, /online\.onWildRoom = \(w, room\) => \{\n\s*if \(room !== online\.room\) return;\n\s*wildRemains\.setRoom\(room\);\n\s*wildRemains\.onWord\(w\);\n\s*if \(w\?\.k === 'gone'\) \{ remainsGone\(w\.r\);/, 'WILD-SEEN: the room first, so a near relay\'s hello is never cleared as another room\'s by the frame after it');
+  assert.match(src, /online\.onWildRoom = \(w, room\) => \{\n\s*if \(!online\.heldRooms\(\)\.includes\(room\)\) return;\n\s*wildRemains\.setRooms\(online\.heldRooms\(\)\);\n\s*wildRemains\.onWord\(w, room\);\n\s*if \(w\?\.k === 'gone'\) \{ remainsGone\(w\.r\);/, 'WILD-SEEN + HALO-REMAINS: the rooms first, so a near relay\'s hello is never cleared as another room\'s by the frame after it');
   // PIN MOVED (INT9): the remains are the service's records, deposited on its order - the flag is planted as they go out
   assert.match(src, /if \(at\) markRemains\(\{ mx: at\.mx, my: at\.my, until: _wildMine\.until, r: dep\.r \}\);/, 'the death plants it where they lie');
   assert.match(src, /remainsMarkTick\(Date\.now\(\)\);/, 'and the frame takes it down at its time');

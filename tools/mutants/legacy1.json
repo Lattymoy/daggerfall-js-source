@@ -166,11 +166,12 @@
   {
     "name": "LEGACY1-street-reset-skips-legacy",
     "file": "src/scenes/world.js",
-    "old": "onReset: () => (legacyDeathReset() || (_deathWasOnline ? respawnOnlinePlayer() : endRunToTitleMenu(renderer))) }));",
-    "new": "onReset: () => ((_deathWasOnline ? respawnOnlinePlayer() : endRunToTitleMenu(renderer))) }));",
+    "old": "onReset: () => (legacyDeathReset() || (_deathWasOnline ? respawnOnlinePlayer() : endRunToTitleMenu(renderer))), rises:",
+    "new": "onReset: () => ((_deathWasOnline ? respawnOnlinePlayer() : endRunToTitleMenu(renderer))), rises:",
     "tests": [
       "test/legacy1_family.test.js"
-    ]
+    ],
+    "note": "BAL4 (PIN MOVED): the street's screen is handed the Legacy rise after its reset; re-aimed by content."
   },
   {
     "name": "LEGACY4-heirloom-found-again",

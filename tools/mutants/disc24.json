@@ -48,12 +48,13 @@
   {
     "name": "D24B-cart-has-no-model",
     "file": "src/systems/itemTemplates.js",
-    "old": "new Map([[TRANSPORT_SMALL_CART, WAGON_MODEL_ID]])",
-    "new": "new Map()",
+    "old": "  if (item?.templateIndex === TRANSPORT_SMALL_CART) return WAGON_KINDS[wagonKindOf(item)].icon;\n",
+    "new": "",
     "tests": [
       "test/disc24b_transport_pictures.test.js",
       "test/audit63_items_loot.test.js"
-    ]
+    ],
+    "note": "WAGONS2 (FINAL AUDIT, PIN MOVED): re-aimed by content - the cart's model map was unreachable past WAGONS1's arm and went; the arm is the cart's model now."
   },
   {
     "name": "D24B-classic-drawer-no-fallback",

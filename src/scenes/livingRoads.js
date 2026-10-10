@@ -352,7 +352,7 @@ export function createLivingRoads(deps) {
         const speed = (p.trip.pace / NATIVE_PER_M) * rate;   // a horse's pace (m a real second)
         let places;
         if (hasTeam && !at.camp) {
-          const train = trainOf(trip, at, members, t);
+          const train = trainOf(trip, at, members, t, deps.teams?.hitchN?.());   // WAGONS1: the drawn wagon's own hitch
           places = fight ? fightPlaces(p.trip, at, members) : train.people;
           for (const h of train.horses) horses.push({ ...h, moving: h.moving && !fight, speed });
           for (const w of train.wagons) wagons.push({ ...w, moving: w.moving && !fight });
@@ -414,7 +414,7 @@ export function createLivingRoads(deps) {
         const near = (/** @type {{ x: number, z: number }} */ q) => Math.hypot(q.x - here.x, q.z - here.z) / NATIVE_PER_M;
         deps.teams.sync(
           horses.filter((h) => near(h) <= reach).map((h) => ({ key: h.key, feet: deps.sceneOf(h.x, h.z), yaw: h.yaw, moving: h.moving, speed: h.speed, distM: near(h) })),
-          wagons.filter((w) => near(w) <= reach).map((w) => ({ key: w.key, feet: deps.sceneOf(w.x, w.z), front: deps.sceneOf(w.x + Math.sin(w.yaw) * WAGON_FRONT_N, w.z + Math.cos(w.yaw) * WAGON_FRONT_N), yaw: w.yaw, moving: w.moving, tier: w.tier, s: w.s, distM: near(w) })),
+          wagons.filter((w) => near(w) <= reach).map((w) => ({ key: w.key, feet: deps.sceneOf(w.x, w.z), front: deps.sceneOf(w.x + Math.sin(w.yaw) * WAGON_FRONT_N, w.z + Math.cos(w.yaw) * WAGON_FRONT_N), yaw: w.yaw, moving: w.moving, tier: w.tier, s: w.s, hitched: w.hitched, distM: near(w) })),
           { dt, eye, grow: overworld?.grow ?? 1, ground: !overworld });
       }
       for (const r of remains) {

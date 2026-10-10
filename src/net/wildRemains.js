@@ -37,7 +37,7 @@ export const WILD_NO_STORE = Object.freeze({ kg: 0, name: 'These remains' });
 
 /**
  * @param {object} o
- * @param {(data: any) => boolean} o.send                  online.sendWild
+ * @param {(data: any, room?: string|null) => boolean} o.send   online.sendWild - a take to the room that keeps the pile (HALO-REMAINS)
  * @param {() => any} o.pool                                the host's dropped-loot pool I stand in now (or null)
  * @param {(p: number[]) => number[]} o.toScene              a room point to this scene's
  * @param {(rec: { os: string|null, oid: string|null }) => boolean} o.mine   is this remains mine
@@ -56,7 +56,8 @@ export const WILD_NO_STORE = Object.freeze({ kg: 0, name: 'These remains' });
 export function createWildRemains({ send, pool, toScene, mine, pack, mint, addItem, stacksWith, unequip = () => {}, unpurse = () => 0, canTake = () => true, say = () => {}, now = () => Date.now(), nameOf = () => 'it', me = () => null }) {
   /** @type {Map<string, any>} */
   const recs = new Map();     // r -> { r, p, nm, os, oid, until, items[], end, pile, seen: Map<obj, {i, n}>, mine }
-  let room = null;
+  // HALO-REMAINS: the rooms I hold - my own and the halo's (the cells beside mine); each record is its room's
+  let rooms = new Set();
   let poolNow = null;
   /** @type {Map<string, number>} */
   const asked = new Map();    // `${r}:${i}` -> takes in flight
@@ -118,7 +119,7 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
   const askMine = (/** @type {any} */ rec) => {
     const it = rec.wk && rec.wk === me() ? rec.items[rec.wi] : null;
     const key = `${rec.r}:${rec.wi}`;
-    if (it && !asked.has(key) && send({ k: 'take', r: rec.r, i: rec.wi, n: Math.max(1, it.stackCount ?? 1) })) asked.set(key, 1);
+    if (it && !asked.has(key) && send({ k: 'take', r: rec.r, i: rec.wi, n: Math.max(1, it.stackCount ?? 1) }, rec.room)) asked.set(key, 1);   // HALO-REMAINS: to the room that keeps it
   };
 
   const book = {
@@ -131,11 +132,18 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
     /** Whether any remains of mine stand here - the loot lines' door with the rarity row off (scenes/lootLines.js). */
     hasMine() { for (const r of recs.values()) if (r.mine && r.items.some(Boolean)) return true; return false; },
     /** The room I stand in changed (or I left the world): every pile goes; the new room says its own at its hello. */
-    setRoom(key) {
-      if (key === room) return;
-      room = key;
-      for (const rec of recs.values()) unseed(rec);
-      recs.clear(); asked.clear();
+    setRoom(key) { book.setRooms(key == null ? [] : [key]); },
+    /** HALO-REMAINS: the rooms I hold now (my own and the halo's). A room let go takes its piles; a room still held
+     *  keeps them - a crossing into a halo's cell PROMOTES its socket, and no hello says its remains again. */
+    setRooms(keys) {
+      const next = new Set((keys ?? []).filter((k) => k != null));
+      if (next.size === rooms.size && [...next].every((k) => rooms.has(k))) return;
+      rooms = next;
+      for (const rec of [...recs.values()]) {
+        if (rooms.has(rec.room)) continue;
+        unseed(rec); recs.delete(rec.r);
+        for (const k of [...asked.keys()]) if (k.startsWith(`${rec.r}:`)) asked.delete(k);
+      }
     },
     /** The host I stand in changed under the same room (a recentre, a mode): the piles are stood again in its pool. */
     setPool(p) {
@@ -143,12 +151,12 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
       poolNow = p;
       for (const rec of recs.values()) seed(rec);
     },
-    /** The room's word (net/wire.js validWildOut). */
-    onWord(w) {
+    /** The room's word (net/wire.js validWildOut) - `from` the room that said it (mine, when there is one and none is named). */
+    onWord(w, from = rooms.size === 1 ? [...rooms][0] : null) {
       if (w.k === 'ri') {
         let rec = recs.get(w.r);
         if (!rec) {
-          rec = { r: w.r, p: w.p, nm: w.nm, os: w.os, oid: w.oid, until: now() + w.ttl, items: [], end: 0, pile: null, poolOf: null, seen: new Map(), mine: false, wk: typeof w.wk === 'string' ? w.wk : null, wi: Number.isInteger(w.wi) ? w.wi : -1 };
+          rec = { r: w.r, room: from, p: w.p, nm: w.nm, os: w.os, oid: w.oid, until: now() + w.ttl, items: [], end: 0, pile: null, poolOf: null, seen: new Map(), mine: false, wk: typeof w.wk === 'string' ? w.wk : null, wi: Number.isInteger(w.wi) ? w.wi : -1 };
           rec.mine = !!mine(rec);
           recs.set(w.r, rec);
         }
@@ -206,7 +214,7 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
           if (cur >= info.n) continue;
           const k = info.n - cur;
           lift(obj, k);
-          if (!send({ k: 'take', r: rec.r, i: info.i, n: k })) {
+          if (!send({ k: 'take', r: rec.r, i: info.i, n: k }, rec.room)) {   // HALO-REMAINS: to the room that keeps it
             // the ask never left (the socket, the gate): it goes back on the pile as it was, and nothing was lost
             obj.stackCount = info.n > 1 || obj.stackCount != null ? info.n : obj.stackCount;
             if (!there) rec.pile.items.push(obj);
@@ -220,7 +228,7 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
       }
     },
     /** Every pile down (the host is going). */
-    clear() { for (const rec of recs.values()) unseed(rec); recs.clear(); asked.clear(); room = null; },
+    clear() { for (const rec of recs.values()) unseed(rec); recs.clear(); asked.clear(); rooms = new Set(); },
   };
   return book;
 }

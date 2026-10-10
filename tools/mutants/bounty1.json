@@ -204,13 +204,14 @@
   {
     "name": "DEATH-PENALTY-3-the-offline-screen-claims-gold",
     "file": "src/ui/deathScreen.js",
-    "old": "this.goldLoss = this.online ? deathGoldLoss(goldPiecesOf(entity)) : 0;",
+    "old": "this.goldLoss = respawns ? deathGoldLoss(goldPiecesOf(entity)) : 0;",
     "new": "this.goldLoss = deathGoldLoss(goldPiecesOf(entity));",
     "tests": [
       "test/deathpenalty.test.js",
       "test/donline1_respawn.test.js",
       "test/risestuck.test.js"
-    ]
+    ],
+    "note": "BAL4 (PIN MOVED): a death that respawns - online, or a Project Legacy rise offline - states the loss; one with no respawn still claims none. Re-aimed by content."
   },
   {
     "name": "DEATH-PENALTY-4-the-respawn-takes-nothing",
@@ -226,14 +227,14 @@
   {
     "name": "DEATH-PENALTY-5-privateers-hold-is-free",
     "file": "src/scenes/worldModes.js",
-    "old": "                const goldLost = online ? applyDeathPenalty(playerEntity) : 0;   // DEATH-PENALTY: Privateer's Hold",
+    "old": "                const goldLost = applyDeathPenalty(playerEntity);   // DEATH-PENALTY: Privateer's Hold",
     "new": "                const goldLost = 0;   // DEATH-PENALTY: Privateer's Hold",
     "tests": [
       "test/deathpenalty.test.js",
       "test/donline1_respawn.test.js",
       "test/risestuck.test.js"
     ],
-    "note": "AUDIT LEGACY (PIN MOVED): its line changed with the audit's fixes (the death at the door, the Succession the death's screen, Privateer's Hold's Legacy arm); re-aimed by content. "
+    "note": "AUDIT LEGACY (PIN MOVED): its line changed with the audit's fixes (the death at the door, the Succession the death's screen, Privateer's Hold's Legacy arm); re-aimed by content. BAL4 (PIN MOVED): the arm runs online or at a Legacy rise, and both pay the tenth now; re-aimed by content."
   },
   {
     "name": "DEATH-PENALTY-6-times-a-tenth",

@@ -182,11 +182,12 @@ test('SET6 the floor and the card: a Regalia piece is laid as an item in its tie
   while (seed < 500 && rollSpoils(seed, 12).pieces.length !== 4) seed++;
   assert.ok(seed < 500, 'a kill whose spoils carry a Regalia piece, within the first five hundred seeds');
   const list = spoilsList(seed, 12);
-  assert.equal(list.length, 6, 'three graded pieces, the Regalia piece, the stone, the gold');
+  assert.equal(list.length, 7, 'three graded pieces, the Regalia piece, (GEM2, PIN MOVED) the Warden\'s gem, the stone, the gold');
   assert.equal(list[3].kind, 'item');
   assert.equal(list[3].tier, 'aetheric');
-  assert.equal(list[4].item.name, 'Deadlands Ember');
-  assert.equal(list[5].kind, 'gold');
+  assert.equal(list[4].item.group, 'Gems');
+  assert.equal(list[5].item.name, 'Deadlands Ember');
+  assert.equal(list[6].kind, 'gold');
   assert.ok(SPOILS_LINE_H.aetheric > SPOILS_LINE_H.legendary && SPOILS_LINE_H.aetheric < SPOILS_LINE_H.artifact);
   assert.deepEqual(tierColour('aetheric').map((c) => Math.round(c * 255)), [0xbf, 0xe8, 0xff]);
   setPref('lootRarity', true);

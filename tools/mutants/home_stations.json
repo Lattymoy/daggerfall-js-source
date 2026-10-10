@@ -94,11 +94,12 @@
   {
     "name": "HOME-STATIONS-chooser-stuck",
     "file": "src/ui/decorPanel.js",
-    "old": "const o = stationsOffered(); stationOffer = o[(o.indexOf(stationOffer) + 1) % o.length];",
-    "new": "const o = stationsOffered(); stationOffer = o[0];",
+    "old": "const o = stationsOffered(view?.trader !== false); stationOffer = o[(o.indexOf(stationOffer) + 1) % o.length];",
+    "new": "const o = stationsOffered(view?.trader !== false); stationOffer = o[0];",
     "tests": [
       "test/homestations.test.js"
-    ]
+    ],
+    "note": "WAGONS2 (FINAL AUDIT, PIN MOVED): re-aimed by content."
   },
   {
     "name": "HOME-STATIONS-never-pressed",

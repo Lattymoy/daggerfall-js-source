@@ -137,7 +137,7 @@ test('REALM P2.1 law: a save\'s record may leave in a trade exactly when the pac
   for (const sid of ['abc123', 'k3j4h5g6f7', 'A1B2C3D4E5F6G7H8', 'ab', 'a-b-c-d', 'x'.repeat(17)]) {
     assert.equal(REALM_TRADE_SID_RE.test(sid), validTradeData({ k: 'ask', to: 'peerAAAA', s: sid }) !== null, `sid ${sid}: the wire's own shape`);
   }
-  assert.deepEqual(TRADE_VOLATILE_FIELDS, ['stackCount', 'value', 'equipSlot', 'questItem', 'acquired']);
+  assert.deepEqual(TRADE_VOLATILE_FIELDS, ['stackCount', 'value', 'equipSlot', 'questItem', 'acquired', 'wagonEntry']);   // WAGONS2-VISIT (AUDIT): a caravan's door, its owner's word
   assert.equal(realmTradeHalfOf({ give: { items: [], gold: 0 }, get: { items: [], gold: 0 } }), null, 'an empty-for-empty trade is none');
   assert.equal(realmTradeHalfOf({ give: { items: new Array(TRADE_ITEMS_MAX + 1).fill({ templateIndex: 1 }) }, get: {} }), null, 'past the wire\'s sixteen');
   assert.equal(realmTradeHalfOf({ give: { gold: -1 }, get: { gold: 5 } }), null);

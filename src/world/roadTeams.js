@@ -18,8 +18,14 @@ import { mat4FromQuatPos, quatLookRotation } from './quat.js';
 import { usableBounds } from '../systems/wagon41214.js';
 import { boxTriangles, HORSE_ARCHIVE, horseStillRecord, HORSE_BILLBOARD_WIDTH, HORSE_BILLBOARD_HEIGHT } from '../scenes/horseCartPool.js';
 import { stepHorseWalk, freshHorseWalk, NORMAL_GROUND_OFFSET } from '../systems/horseCartLaw.js';
-import { wheelAngleAt } from '../systems/livingWorld/wagons.js';
+import { wheelAngleAt, HITCH_N } from '../systems/livingWorld/wagons.js';
+import { NATIVE_PER_M } from '../systems/travelDungeons.js';
 
+/** WAGONS1 x LW10: THE LIVING WORLD'S WAGON is the Small Cart - the classic transport's kind (Mac's wagon of it where
+ *  his are drawn, Daggerfall's 41214 where they are not), whatever the player drives: the pool's draw and parts default
+ *  to the player's own kind, and a merchant's caravan wore the player's caravan, its wheels still (the draw's `turn` an
+ *  object now). */
+export const ROAD_WAGON_KIND = 'cart';
 /** The most wagons drawn at once (the nearest) - each is five meshes and up to twelve cargo pieces. */
 export const WAGONS_DRAWN = 6;
 /** The collider's bucket for a standing wagon. @param {string} key */
@@ -27,8 +33,9 @@ export const wagonBucket = (key) => `lwWagon:${key}`;
 
 /**
  * @typedef {{ key: string, feet: number[], yaw: number, moving: boolean, speed: number, distM: number }} HorseShown - scene
- * @typedef {{ key: string, feet: number[], front: number[], yaw: number, moving: boolean, tier: number, s: number, distM: number }} WagonShown -
- *   `feet` the axle's ground (scene), `front` the ground a wagon's length before it (the tilt's), `s` the distance walked (native)
+ * @typedef {{ key: string, feet: number[], front: number[], yaw: number, moving: boolean, tier: number, s: number, distM: number, hitched?: boolean }} WagonShown -
+ *   `feet` the axle's ground (scene), `front` the ground a wagon's length before it (the tilt's), `s` the distance walked
+ *   (native), `hitched` its horse in its shafts (wagons.js)
  */
 
 /**
@@ -42,7 +49,7 @@ export function createRoadTeams({ renderer, presentation, collider = () => null 
   const boxes = new Map();
   /** @type {any[]} */
   const drawn = [];
-  /** @type {{ position: number[], rotation: number[], tier: number, angle: number, grow: number }[]} */
+  /** @type {{ position: number[], rotation: number[], tier: number, angle: number, grow: number, hitched: boolean }[]} */
   let wagons = [];
 
   function dropHorse(key) {
@@ -84,7 +91,7 @@ export function createRoadTeams({ renderer, presentation, collider = () => null 
     }
     for (const key of [...horses.keys()]) if (!seen.has(key)) dropHorse(key);
     // the wagons: the nearest, each its pose; a standing one's box on the collider
-    const parts = pres?.wagonParts?.() ?? null;
+    const parts = (pres?.partsOf ? pres.partsOf(ROAD_WAGON_KIND) : pres?.wagonParts?.()) ?? null;   // the road's kind's, never the driven
     wagons = [];
     const near = [...wagonList].sort((a, b) => a.distM - b.distM).slice(0, WAGONS_DRAWN);
     const stand = new Set();
@@ -94,7 +101,7 @@ export function createRoadTeams({ renderer, presentation, collider = () => null 
       const forward = len > 1e-6 ? [up[0] / len, up[1] / len, up[2] / len] : [Math.sin(w.yaw), 0, Math.cos(w.yaw)];
       const rotation = quatLookRotation(forward, [0, 1, 0]);
       const position = [w.feet[0], w.feet[1] + NORMAL_GROUND_OFFSET, w.feet[2]];
-      wagons.push({ position, rotation, tier: w.tier, angle: parts ? wheelAngleAt(w.s, parts.wheelRadius) : 0, grow });
+      wagons.push({ position, rotation, tier: w.tier, angle: parts ? wheelAngleAt(w.s, parts.wheelRadius) : 0, grow, hitched: w.hitched !== false });
       if (!w.moving && ground && grow <= 1 && parts) {
         stand.add(w.key);
         const m = mat4FromQuatPos(rotation, position);
@@ -116,6 +123,12 @@ export function createRoadTeams({ renderer, presentation, collider = () => null 
 
   return {
     sync,
+    /** The axle's way back from its horse for the road's wagon (native): the pool's own for its kind (WAGONS1 - Mac's
+     *  Small Cart stands 3.8 m behind its horse, the classic 3.1), the mod's HITCH_N while there is no pool. */
+    hitchN() {
+      const m = presentation()?.hitchOfKind?.(ROAD_WAGON_KIND);
+      return Number.isFinite(m) && m > 0 ? m * NATIVE_PER_M : HITCH_N;
+    },
     /** This frame's horse billboards (the exterior's billboard pass). */
     batches: () => drawn,
     /** The wagons, in the host's world mesh pass. @param {any} r @param {any} [texRemap] */
@@ -123,7 +136,8 @@ export function createRoadTeams({ renderer, presentation, collider = () => null 
       const pres = presentation();
       if (!pres?.drawWagon) return 0;
       let n = 0;
-      for (const w of wagons) if (pres.drawWagon(r, texRemap, w.position, w.rotation, w.tier, w.angle, w.grow)) n++;
+      // WAGONS2's draw: its wheels' `turn` an object, the kind the road's, hitched as it stands (unhitched at camp)
+      for (const w of wagons) if (pres.drawWagon(r, texRemap, w.position, w.rotation, w.tier, { angle: w.angle }, w.grow, ROAD_WAGON_KIND, w.hitched)) n++;
       return n;
     },
     /** What stands this frame (the probes; the pins). */

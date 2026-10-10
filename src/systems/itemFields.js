@@ -123,6 +123,7 @@ export const ITEM_FIELDS = Object.freeze({
   honed: int({ min: 1, max: 63 }),   // LOOT17 (bible/06-Systems/Loot-II-Arc.md section 9): the hones a piece has taken - what the next costs (reforge.js honePrice), or absent
   cursed: rec(validEnchantment),   // LOOT16 (bible/06-Systems/Loot-II-Arc.md section 8): a cursed find's drawback - the enchantment the temple lifts, or absent (loot.js validLootItem: lootRarity.js validCurse)
   socket: oneOf(SOCKET_VALUES),   // LOOT20 (bible/06-Systems/Loot-II-Arc.md section 12): a piece's socket - 'empty' or the gem set in it, or absent (loot.js validLootItem: lootRarity.js validSocket)
+  sockets: list((v) => SOCKET_VALUES.includes(v)),   // GEM1 (bible/06-Systems/Gem-Sockets.md section 6): a piece's sockets in order, each 'empty' or the gem set in it, or absent - LOOT20's `socket` is still read (lootRarity.js socketsOf; validSocket: never both, never past its socketCap)
   // SIGIL1: an online win's sigil (systems/sigil.js) - its power, the fight that won it, what it has drunk
   sigil: rec(validSigil),
   // LOCK1: the player's lock (systems/itemLock.js) - true, or absent
@@ -173,6 +174,13 @@ export const ITEM_FIELDS = Object.freeze({
   // ACQUIRE1 (bible/10-UI/Loot-Banner.md): the piece has stood in the player's own keeping (systems/acquireWatch.js) - true,
   // or absent. The RECEIVER's mark, as equipSlot and questItem are: loot.js validLootItem strips it off the wire
   acquired: bool(),
+  // WAGONS1/WAGONS2 (bible/06-Systems/Wagons.md): which wagon a Small Cart item is (systems/wagonKinds.js - absent, the
+  // cart) and its paint (systems/wagonLooks.js: `{ o, w, f, c }`, each one of six - absent, as built)
+  wagonKind: oneOf(['cart', 'openWagon', 'caravan']),
+  wagonLook: rec((l) => Object.keys(l).every((k) => ['o', 'w', 'f', 'c'].includes(k) && Number.isInteger(l[k]) && l[k] >= 0 && l[k] < 6)),
+  // WAGONS2-VISIT: who may enter a caravan (systems/caravanVisit.js - an online home's entries, net/homeLaw.js
+  // HOME_ENTRIES; absent, its owner alone)
+  wagonEntry: oneOf(['private', 'party', 'public', 'guild']),
 });
 
 /** The declared names, and those of one kind. */

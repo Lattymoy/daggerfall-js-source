@@ -39,8 +39,9 @@ export const CAMP_HORSE_SIDE_N = 70;
 /**
  * @typedef {{ wagons: number, packs: number }} Team - the trip's: its wagons (each with its horse) and its pack horses
  * @typedef {{ key: string, x: number, z: number, yaw: number, moving: boolean }} HorsePlace - native; `yaw` a world yaw
- * @typedef {{ key: string, x: number, z: number, yaw: number, moving: boolean, tier: number, s: number }} WagonPlace - the
- *   axle's place (native), the way it faces, its cargo tier and the distance it has walked (its wheels')
+ * @typedef {{ key: string, x: number, z: number, yaw: number, moving: boolean, tier: number, s: number, hitched: boolean }} WagonPlace - the
+ *   axle's place (native), the way it faces, its cargo tier, the distance it has walked (its wheels') and whether its
+ *   horse is in its shafts (WAGONS1's `hitched`: a cart borne level on the march, at rest at camp)
  */
 
 /** WHO HAS WHAT: a merchant's caravan its wagon (two from a great house), a noble's procession its baggage wagon, a
@@ -62,11 +63,13 @@ export function cargoOf(trip, t) {
 
 /**
  * THE TRAIN IN FILE at a moment of its walk - each member's place (the van before, the leader at the first horse's head,
- * the rest behind), each horse's, each wagon's. `members` the party standing (trips.js membersAt); `at` partyAt's.
- * @param {any} trip @param {any} at @param {any[]} members @param {number} t
+ * the rest behind), each horse's, each wagon's. `members` the party standing (trips.js membersAt); `at` partyAt's;
+ * `hitchN` the axle's way back from its horse (native) - the wagon drawn's own (WAGONS1: Mac's Small Cart's 3.8 m where
+ * his wagon is drawn), the mod's HITCH_N unsaid.
+ * @param {any} trip @param {any} at @param {any[]} members @param {number} t @param {number} [hitchN]
  * @returns {{ people: { res: any, x: number, z: number, yaw: number, moving: boolean }[], horses: HorsePlace[], wagons: WagonPlace[] }}
  */
-export function trainOf(trip, at, members, t) {
+export function trainOf(trip, at, members, t, hitchN = HITCH_N) {
   const team = teamOf(trip);
   const back = at.phase === 'back';
   const dir = back ? -1 : 1;   // the way it walks, along the way's own s
@@ -94,10 +97,10 @@ export function trainOf(trip, at, members, t) {
   for (let i = 0; i < teams; i++) {
     horses.push({ key: `${trip.id}:h${i}`, ...place(s), moving });
     if (i < team.wagons) {
-      const axle = s - dir * HITCH_N;
+      const axle = s - dir * hitchN;
       // AUDIT LW-II E8: the distance walked the way the wagon faces - home, from the far end (the mod turns its wheels by
       // travel along the wagon's forward: the way's own s, falling home, spun them backwards)
-      wagons.push({ key: `${trip.id}:w${i}`, ...place(axle), moving, tier: cargoOf(trip, t), s: back ? trip.way.len - axle : axle });
+      wagons.push({ key: `${trip.id}:w${i}`, ...place(axle), moving, tier: cargoOf(trip, t), s: back ? trip.way.len - axle : axle, hitched: true });
       s = axle - dir * WAGON_TAIL_N;
     } else s -= dir * WALK_GAP_N;
   }
@@ -125,7 +128,7 @@ export function campTeam(trip, cx, cz, r, t) {
     const x = cx + Math.sin(a) * d, z = cz + Math.cos(a) * d;
     const face = Math.atan2(cx - x, cz - z);   // to the fire
     if (i < team.wagons) {
-      wagons.push({ key: `${trip.id}:w${i}`, x, z, yaw: face, moving: false, tier: cargoOf(trip, t), s: 0 });
+      wagons.push({ key: `${trip.id}:w${i}`, x, z, yaw: face, moving: false, tier: cargoOf(trip, t), s: 0, hitched: false });
       horses.push({ key: `${trip.id}:h${i}`, x: x + Math.cos(face) * CAMP_HORSE_SIDE_N, z: z - Math.sin(face) * CAMP_HORSE_SIDE_N, yaw: face + Math.PI / 2, moving: false });
     } else horses.push({ key: `${trip.id}:h${i}`, x, z, yaw: face + Math.PI / 2, moving: false });
   }

@@ -11,7 +11,8 @@ import {
   teamOf, cargoOf, trainOf, campTeam, wheelAngleAt, GREAT_HOUSE_BLOCKS, WALK_GAP_N, LEAD_N, HITCH_N, WAGON_TAIL_N, CARGO_FULL, CARGO_SOLD,
   CARGO_BOUGHT, CARGO_ROBBED, CAMP_PARK_N, CAMP_HORSE_SIDE_N,
 } from '../src/systems/livingWorld/wagons.js';
-import { createRoadTeams, WAGONS_DRAWN, wagonBucket } from '../src/world/roadTeams.js';
+import { createRoadTeams, WAGONS_DRAWN, wagonBucket, ROAD_WAGON_KIND } from '../src/world/roadTeams.js';
+import { createHorseCartPool } from '../src/scenes/horseCartPool.js';
 import { wayAt, wayOf, NATIVE_PER_M, NATIVE_PIXEL, partyAt, townTrips, membersAt, CALENDAR_MPM } from '../src/systems/livingWorld/trips.js';
 import { HITCHED_HORSE_LOCAL_Z, wheelRotationDegrees, wrapWheelAngle, NORMAL_GROUND_OFFSET } from '../src/systems/horseCartLaw.js';
 import { createLivingRoads, CAMP_RING_N } from '../src/scenes/livingRoads.js';
@@ -118,7 +119,7 @@ test('LW10 the teams drawn: each horse its own billboard batch posed by the pool
     horseArt: { ensureStationary: () => true, ensureWalk: () => {}, hasWalk: () => true },
     poseHorse: (b, eye, horse) => { posed.push(horse); b.size = { w: 3, h: 2 }; },
     wagonParts: () => ({ wheelRadius: 0.4, bounds: { min: [-1, 0, -2], max: [1, 1.5, 2] } }),
-    drawWagon: (r, tex, pos, rot, tier, angle, grow) => { drawnWagons.push({ pos, rot, tier, angle, grow }); return true; },
+    drawWagon: (r, tex, pos, rot, tier, turn, grow, kind, hitched) => { drawnWagons.push({ pos, rot, tier, angle: turn.angle, grow, kind, hitched }); return true; },   // PIN MOVED (WAGONS1 x LW10): WAGONS2's draw - `turn` an object, the kind, hitched
   };
   const col = { addMesh: (k) => buckets.set(k, true), removeBucket: (k) => buckets.delete(k) };
   const teams = createRoadTeams({ renderer, presentation: () => pres, collider: () => col });
@@ -187,7 +188,8 @@ test('LW10 the roads\' layer lays the teams: a caravan on the road its train (it
   assert.match(host, /teams: createRoadTeams\(\{ renderer, presentation: \(\) => hcc\.presentation, collider: \(\) => collider \}\)/);
   assert.match(host, /if \(livingRoads && livingWorldOn\(\) && _mode\(\) === 'exterior'\) livingRoads\.drawTeams\(renderer\);/);
   const pool = readFileSync(new URL('../src/scenes/horseCartPool.js', import.meta.url), 'utf8');
-  assert.match(pool, /presentation: \{ wagonParts, horseArt, onChanged: \(\) => onChanged\?\.\(\), drawWagon, poseHorse: poseHorseBatch \}/);
+  // PIN MOVED (WAGONS1 x LW10): the runtime's hitch the driven wagon's; the road's wagon a kind's parts and hitch
+  assert.match(pool, /presentation: \{ wagonParts, horseArt, hitchOf: \(\) => hitchOf\(myKind\(\)\), onChanged: \(\) => onChanged\?\.\(\), drawWagon, poseHorse: poseHorseBatch, partsOf, hitchOfKind: hitchOf \}/);
 });
 
 test('AUDIT LW-II LW10: the wheels turn forward on the way home - the distance walked the way the wagon faces; the roads\' layer lays a train on the march in the train\'s own places, and a camped caravan\'s wagons parked CAMP_PARK_N beyond its ring, facing its fire (mutants: E8 the wheels home, F3 the people in the train, F3 the park)', () => {
@@ -244,4 +246,45 @@ test('AUDIT LW-II LW10: the wheels turn forward on the way home - the distance w
     assert.ok(Math.abs(Math.hypot(wg.feet[0] - fire.feet[0], wg.feet[2] - fire.feet[2]) - (ring + CAMP_PARK_N / 40)) < 1e-6, 'parked CAMP_PARK_N beyond the ring');
     assert.equal(wg.moving, false);
   }
+});
+
+test('WAGONS1 x LW10: the living world\'s wagon is the Small Cart whatever the player drives - its parts and its hitch the kind\'s own (Mac\'s cart stands 3.8 m behind its horse, a driven caravan 7.7), its wheels turned by WAGONS2\'s draw, hitched on the march and at rest at camp; the train laid at the drawn wagon\'s hitch (mutants: the kind, the parts, the turn, the hitched, the hitch)', async () => {
+  assert.equal(ROAD_WAGON_KIND, 'cart');
+  const bake = (kind) => JSON.parse(readFileSync(new URL(`../src/assets/wagons/${kind}.json`, import.meta.url), 'utf8'));
+  const r = { draws: [], createMesh: (m) => ({ m }), drawMesh: (gpu, m) => r.draws.push(gpu), uploadTexture() {}, createBillboardBatch: () => ({ origin: [0, 0, 0] }), destroyBillboardBatch() {} };
+  const pool = createHorseCartPool({ renderer: r, meshes: null, collider: () => null, now: () => 0, wagonKind: () => 'caravan', bakedWagon: async (k) => bake(k) });
+  assert.equal(pool.presentation.hitchOf(), 7.7, 'the runtime\'s: the driven caravan');
+  assert.equal(pool.presentation.hitchOfKind(ROAD_WAGON_KIND), 3.8, 'the road\'s: the cart');
+  const calls = [];
+  const pres = { ...pool.presentation, poseHorse() {}, drawWagon: (...a) => { calls.push(a); return pool.presentation.drawWagon(...a); } };
+  const teams = createRoadTeams({ renderer: r, presentation: () => pres, collider: () => null });
+  assert.equal(teams.hitchN(), 3.8 * NATIVE_PER_M);
+  assert.equal(createRoadTeams({ renderer: r, presentation: () => null }).hitchN(), HITCH_N, 'no pool: the mod\'s');
+  const list = [{ key: 'w0', feet: [0, 0, 0], front: [0, 0, 1.5], yaw: 0, moving: true, tier: 90, s: 4000, distM: 3, hitched: true },
+    { key: 'w1', feet: [9, 0, 0], front: [9, 0, 1.5], yaw: 0, moving: false, tier: 50, s: 0, distM: 4, hitched: false }];
+  teams.sync([], list, { eye: [0, 1.6, -5] });
+  for (let i = 0; i < 8; i++) await new Promise((res) => setTimeout(res, 0));   // the cart's bake
+  teams.sync([], list, { eye: [0, 1.6, -5] });
+  const cart = pool.partsOf('cart');
+  assert.ok(cart?.gpu?.body && cart !== pool.partsOf('caravan'), 'the cart built, not the caravan');
+  assert.equal(teams.draw(r), 2);
+  assert.deepEqual(calls.map((a) => a[7]), ['cart', 'cart'], 'the road\'s kind, never the driven');
+  assert.deepEqual(calls.map((a) => a[8]), [true, false], 'hitched on the march, at rest at camp');
+  assert.deepEqual(calls[0][5], { angle: wheelAngleAt(4000, cart.wheelRadius) }, 'the wheels\' turn, as WAGONS2\'s draw reads it');
+  assert.notEqual(calls[0][5].angle, 0);
+  assert.ok(r.draws.length > 0 && r.draws.every((g) => g !== pool.partsOf('caravan')?.gpu?.body), 'drawn with the cart\'s meshes');
+  // the train laid at the drawn wagon's hitch, and a camp's wagon at rest
+  const way = straight();
+  const leader = res('m');
+  const trip = { id: 'L1.t0:9', kind: 'merchant', from: { blocks: 4 }, leader, party: [leader], way, backT0: 1e9 };
+  const at = { phase: 'out', s: 30000 };
+  const hitchN = 3.8 * NATIVE_PER_M;
+  const w = trainOf(trip, at, [leader], 1, hitchN).wagons[0];
+  assert.ok(Math.abs(Math.hypot(w.x - wayAt(way, 30000 - LEAD_N - hitchN).x, w.z - wayAt(way, 30000 - LEAD_N - hitchN).z)) < 1e-6, 'the axle the cart\'s hitch behind its horse');
+  assert.equal(w.hitched, true);
+  assert.ok(Math.abs(trainOf(trip, at, [leader], 1).wagons[0].x - wayAt(way, 30000 - LEAD_N - HITCH_N).x) < 1e-6, 'unsaid, the mod\'s');
+  assert.equal(campTeam(trip, 0, 0, 100, 1).wagons[0].hitched, false);
+  const host = readFileSync(new URL('../src/scenes/livingRoads.js', import.meta.url), 'utf8');
+  assert.match(host, /const train = trainOf\(trip, at, members, t, deps\.teams\?\.hitchN\?\.\(\)\);/);
+  assert.match(host, /tier: w\.tier, s: w\.s, hitched: w\.hitched, distM: near\(w\)/);
 });

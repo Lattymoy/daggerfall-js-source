@@ -217,7 +217,7 @@ test('WBX3 each piece is itself on the floor: an item stands as its own picture 
   for (let i = 0; i < 400; i++) { clock.t += 16; p.frame(); }
   const st = p.state();
   const items = st.pieces.filter((x) => x.kind === 'item'), gold = st.pieces.find((x) => x.kind === 'gold');
-  assert.ok(items.length === 4 && items.every((x) => x.rest && x.icon), 'every item rests as its own picture');
+  assert.ok(items.length === 5 && items.every((x) => x.rest && x.icon), 'every item rests as its own picture');   // PIN MOVED (GEM2, bible/06-Systems/Gem-Sockets.md): three pieces, the Warden's gem and the ember
   assert.ok(gold.rest && !gold.icon, 'gold keeps its pile');
   assert.ok(uploads.length >= 1 && uploads.every((u) => u[0] === SPOILS_ICON_ARCHIVE && u[1] === 'icon:207_3'), 'uploaded under the pool\'s pseudo-archive, keyed by the picture');
   const size = iconSize(30, 20);

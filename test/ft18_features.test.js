@@ -52,7 +52,7 @@ test('FT18: ten rows are four, and nothing they offered is lost - every key, def
   for (const gone of ['grass-density', 'grass-style', 'wind-wisps', 'flora-sway', 'quickslot-diamond', 'quickbar-style', 'blood-marks', 'blood-overkill', 'blood-screen', 'blood-gore']) {
     assert.equal(row(gone), undefined, `${gone} is condensed`);
   }
-  assert.equal(FEATURES.length, 96);   // TAMRIEL2's Land beyond the Bay and TAMRIEL1's Tamriel on the map (2026-10-08); SNOWFALL1's Snowfall, HAZE1's Heat Haze and WINDFALL1's Windfall (2026-10-08, at AUDIT ENVIRONS' merge of main); WATER-NEXT's Water quality (2026-10-07, at the Super Dungeons arc's merge of main); PI1's Physical Items and MW-SPELLFX1's Morrowind Spell Effects (2026-10-07, at the Super Dungeons arc's merge of main); VERGE1's clear roadsides and ECOTONE1's blended climates (2026-10-07); LANDFORM1's Landforms (2026-10-06); MW-STEEL1's Steel Helm (2026-10-06); SD-ONLINE (2026-10-05): the world's dungeon sizes; LEGACY1's Project Legacy (2026-10-05); LW2's living world (2026-10-04); THE DELVE ARC (2026-10-05): medium dungeons, the look round, the lever echoes, the way out, the quest guidance tiers; LOAD1's loading screens (2026-10-05); LPT1's Low Poly Trees (2026-10-05); FIELD BUGS 2026-10-04e: the road's encounters (WILD-ROAD); NEARBY-QUESTS (2026-10-04); IT1's Immersive Travel row (2026-10-04); WD3's Beautiful Villages and Beautiful Cities (2026-10-01); FOREST1's real forests (2026-10-01); CLIMB1's enhanced climbing (2026-09-30); GUIDE5's quest marks, GUIDE4's quest tracker and GUIDE3's quest herald (2026-09-29); NAV's Naval Combat row the port's own (2026-09-28); FORAGE1's Foraging row (2026-09-28, MERGE 2); IIL1-T's modded lighting (2026-09-27); PERF-SCALE's render scale (2026-09-25) is the one row added since; the sea update's four mod rows (AS1, DS1, WA1, DW-D) came with its merge, OH-A's Ocean Holes row after it, and CSA-A's Come Sail Away row; EM3-3D's 3D dungeon map (2026-09-27); RAID1's World Events - Raiding Parties (2026-09-27)
+  assert.equal(FEATURES.length, 97);   // RW1's Real windows (2026-10-09); TAMRIEL2's Land beyond the Bay and TAMRIEL1's Tamriel on the map (2026-10-08); SNOWFALL1's Snowfall, HAZE1's Heat Haze and WINDFALL1's Windfall (2026-10-08, at AUDIT ENVIRONS' merge of main); WATER-NEXT's Water quality (2026-10-07, at the Super Dungeons arc's merge of main); PI1's Physical Items and MW-SPELLFX1's Morrowind Spell Effects (2026-10-07, at the Super Dungeons arc's merge of main); VERGE1's clear roadsides and ECOTONE1's blended climates (2026-10-07); LANDFORM1's Landforms (2026-10-06); MW-STEEL1's Steel Helm (2026-10-06); SD-ONLINE (2026-10-05): the world's dungeon sizes; LEGACY1's Project Legacy (2026-10-05); LW2's living world (2026-10-04); THE DELVE ARC (2026-10-05): medium dungeons, the look round, the lever echoes, the way out, the quest guidance tiers; LOAD1's loading screens (2026-10-05); LPT1's Low Poly Trees (2026-10-05); FIELD BUGS 2026-10-04e: the road's encounters (WILD-ROAD); NEARBY-QUESTS (2026-10-04); IT1's Immersive Travel row (2026-10-04); WD3's Beautiful Villages and Beautiful Cities (2026-10-01); FOREST1's real forests (2026-10-01); CLIMB1's enhanced climbing (2026-09-30); GUIDE5's quest marks, GUIDE4's quest tracker and GUIDE3's quest herald (2026-09-29); NAV's Naval Combat row the port's own (2026-09-28); FORAGE1's Foraging row (2026-09-28, MERGE 2); IIL1-T's modded lighting (2026-09-27); PERF-SCALE's render scale (2026-09-25) is the one row added since; the sea update's four mod rows (AS1, DS1, WA1, DW-D) came with its merge, OH-A's Ocean Holes row after it, and CSA-A's Come Sail Away row; EM3-3D's 3D dungeon map (2026-09-27); RAID1's World Events - Raiding Parties (2026-09-27)
   const want = { grassDensity: 1, grassStyle: 'meadow', floraSway: true, windWisps: true, quickbarStyle: 'hotbar', quickslots: true,   // HB-LYCFREE: the hotbar by default (PIN MOVED); MEADOW1: the meadow by default (PIN MOVED); GRASS-ON: the grass Full by default again, where AUDIT MEADOW1 had it Off (PIN MOVED)
     'blood-gore': 'normal', 'blood-marks': true, 'blood-overkill': true, 'blood-screen': true };
   for (const [k, v] of Object.entries(want)) assert.equal(FEATURE_PREF_DEFAULTS[k], v, `${k} keeps its default`);
@@ -256,15 +256,18 @@ test('FEATURES-DEFAULTS (issue #399): Defaults puts every tile, its drawer and a
 test('FEATURES-DEFAULTS (issue #399): online the room\'s rows stay as the room has them; the button sits beside All off and asks first (mutant: the lock ignored, or the confirm skipped)', () => {
   fresh();
   try {
+    // PIN MOVED (BAL4, bible/05-Combat/Balance-Arc.md section 6): the Enhanced AI ships On now, so the room's row that
+    // still ships Off is the dungeon sizes' - the same lock, the same lane
+    const forced = 'world-dungeon-sizes';
     globalThis.location = { search: '' };
-    tileStates(row('enhanced-ai')).set(1);   // the player's own, offline - it ships Off
+    tileStates(row(forced)).set(1);   // the player's own, offline - it ships Off
     globalThis.location = { search: '?online=1' };
-    const st = tileStates(row('enhanced-ai'));
-    assert.ok(st.locked && defaultSegment(row('enhanced-ai'), st) === 0, 'the room forces it On online, where it ships Off');
+    const st = tileStates(row(forced));
+    assert.ok(st.locked && defaultSegment(row(forced), st) === 0, 'the room forces it On online, where it ships Off');
     featuresDefaults();
-    assert.equal(label('enhanced-ai'), 'On', 'forced on online');
+    assert.equal(label(forced), 'On', 'forced on online');
     globalThis.location = { search: '' };
-    assert.equal(label('enhanced-ai'), 'On', 'and its shelf untouched - offline it is still the player\'s own, not the Off it ships');
+    assert.equal(label(forced), 'On', 'and its shelf untouched - offline it is still the player\'s own, not the Off it ships');
   } finally { delete globalThis.location; fresh(); }
   assert.match(RESET_ALL_ASK, /key bindings are kept\./, 'and it says what it leaves');
   // ORG2: the button is the Settings toolbar's one reset - beside All off, asked first - and it runs this

@@ -395,7 +395,11 @@ export const FEATURES = Object.freeze([
   }),
   // FT5 (2026-09-14): ENHANCED AI - the navmesh-driven enemy motor
   // (12-Enhanced-AI/Enhanced-AI-Arc.md), off by default because DFU's
-  // classic motor is the 1:1 law. The words are AUDIT 59 F3's, kept
+  // classic motor is the 1:1 law - until BAL4 (2026-10-10,
+  // 05-Combat/Balance-Arc.md section 6; Mac: "Do everything", of
+  // "smarter AI and elites offline") turned it ON offline as it always
+  // was online: the port's game is the one it plays, the classic motor
+  // one choice away and All off's. The words are AUDIT 59 F3's, kept
   // true by test/ft5_enhancedai.test.js against the arc's own list of
   // what is still ahead. NOT a merge with DFU's Enhancements/
   // EnhancedCombatAI ("Smarter Enemies", UNAVAILABLE in settings.js: the port runs the
@@ -413,7 +417,7 @@ export const FEATURES = Object.freeze([
     effect: 'At once - the dungeon pathfinding from the next dungeon you enter.',   // AUDIT TACT D7: the tactics, cover and blows read the switch live
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({
-      store: 'prefs', key: 'enhancedAI', initial: false, online: true,   // OFF by default and it stays off: DFU's classic motor is the 1:1 law, this the port's departure (as EnhancedCombatAI is DFU's own opt-in)
+      store: 'prefs', key: 'enhancedAI', initial: true, online: true,   // BAL4: ON by default (it was off - DFU's classic motor the 1:1 law); the lane forces it on online as it always did; an unstamped shelf adopts it (uiPrefs.js PREF1_ADOPT_NEW_DEFAULT)
       // TELL9 (bible/12-Enhanced-AI/Feud-Arc.md 11.3): telegraph contrast - thicker lines, a white keyline, a pattern for
       // every guard (render/foeTelegraph.js telegraphContrastOn); what THIS screen draws, so the player's online too
       also: Object.freeze([Object.freeze({ store: 'prefs', key: 'telegraphContrast', initial: false, online: 'player' })]),
@@ -566,6 +570,20 @@ export const FEATURES = Object.freeze([
     effect: 'Takes effect when the world next loads.',
     kinds: Object.freeze(['enhanced', 'classic']),
     control: Object.freeze({ store: 'prefs', key: 'groundSharpness', initial: 'default', online: 'player', tiers: Object.freeze([['off', 'Off'], ['default', 'Default (4x)'], ['max', 'Maximum']]) }),
+  }),
+  // RW1 (2026-10-09, Mac: "allowing players to see inside/outside of house windows"): REAL WINDOWS - from the street a
+  // room behind every house window, from inside the real world through the glass (render/realWindows.js carries the
+  // law; `?windows=off|rooms|full` the kill door). Rooms only drops the costly half - the view out is a second pass over
+  // the street. The player's own online: it is this screen's pixels. A preset row (systems/graphicsPresets.js).
+  Object.freeze({
+    id: 'real-windows',
+    group: 'sight',
+    title: 'Real windows',
+    note: 'From the street, house windows show the rooms behind them, lit warm at night; from inside, the windows '
+      + 'look out on the world. Rooms only is lighter on your machine; Off is the flat glass of the original.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'realWindows', initial: 'full', online: 'player', tiers: Object.freeze([['full', 'Full'], ['rooms', 'Rooms only'], ['off', 'Off']]) }),   // RW1: render/realWindows.js realWindowsMode reads it
   }),
   // PERF-SCALE (2026-09-25, two players via Mac: "One user is reporting fps issues in the exterior but fine in the
   // interior ... GPU is NVIDIA GeForce RTX 4060 Ti", "me too my friend.. don't know why. I got a RX6600"): THE

@@ -170,6 +170,7 @@ import { GRAPH_ROOT, ACCUM_ROOT_NAMES } from './mwSkin.js';
 import { transferSkin, sourceSkin, fitLift, liftBatch } from './mwSkinTransfer.js';   // MW-BRIG2: a worn model skinned from the body under it; MW-BRIG3: and fitted onto it
 import { getTextKeyTime, animVelocity } from './mwAnim.js';
 import { mat33Mul } from './mwNifMesh.js';   // AUDIT 68 S11-affine-dup: the one row-major 3x3 product
+import { batchMoves, posePartBatch, nodeAffineAt } from './mwPartClock.js';   // MW-BOW1: a part's own clock
 import { applyClimbRig } from '../combat/climbRig.js';   // CLIMB6: the climb's pose on the rig's own bones
 
 /** The four parts allowed to fall back to a third-person mesh when the
@@ -2306,6 +2307,13 @@ export function bindPartsInto(assembly, parts) {
                 : (bound.boneOffset || null),
             uvs: batch.uvs || null, colors: batch.colors || null, material: batch.material || null,
             shape: batch.name || null,   // SHADOW-FANG (AUDIT F2): the shape's own name - a skinned piece keeps its batch, a rigid one only this (an eye names itself)
+            // MW-BOW1: the file and the batch's chain, for a part whose own controllers move it on the weapon clock
+            // (formats/mwPartClock.js posePartBatch) - the weapon's slots alone, so no other part keeps its parsed
+            // file alive; and, for a part instanced under a node of ANOTHER file (the arrow under the bow's
+            // ArrowBone), that file and node with the part's own vertices before the node's chain - so the node can
+            // move it. Nothing is copied: references to what the walk already made.
+            clip: WEAPON_CLOCK_SLOTS.has(part.slot) ? { nif, batch } : null,
+            preClip: part.preClip ? { ...part.preClip, local: batch.positions, localNormals: batch.normals ?? null } : null,
             positions: new Float32Array(batch.positions.length), indices: batch.indices,
             // MW-SMOOTH: the mesh's own normals, turned as its vertices are - the pre-transform once, here, and the
             // bone and the mirror each frame (placeNormalsAtBone)
@@ -2530,6 +2538,37 @@ export function applyFirstPersonNeck(skeleton, pose, rootRef, skelMats, pitch, a
   }
   pose.set(ref, { rotation, translation, scale: local.scale });
   return true;
+}
+
+/** MW-BOW1: the slots whose own controllers run on the WEAPON clock - the weapon's (PRT_Weapon takes
+ *  mWeaponAnimationTime, npcanimation.cpp) and the arrow instanced under a node of it. Every other part's controllers
+ *  run on the lower body's clock in the reference, which this port does not drive. */
+export const WEAPON_CLOCK_SLOTS = Object.freeze(new Set(['weapon', 'arrow']));
+
+/**
+ * MW-BOW1: THE WEAPON MOVES ON ITS OWN CLOCK. Before a pose, every rigid weapon piece whose file's controllers move
+ * it is re-posed at `value` (the weapon group's playhead, from the group's start for a ranged weapon -
+ * WeaponAnimationTime), and the arrow under the bow's ArrowBone takes the node where the clock has it - the arrow
+ * drawn to the string and loosed off it, as the mesh carries it. `frameTime` is an AutoPlay node's clock. A file with
+ * nothing that moves keeps its rest pose untouched. Written in place: a rigid piece's source is its own bind's
+ * flattened copy, and the pose reads the file's own vertices (`batch.local`), never it. Answers how many pieces moved.
+ */
+export function posePartClocks(assembly, value, { frameTime = value, slots = WEAPON_CLOCK_SLOTS } = {}) {
+  let moved = 0;
+  for (const p of assembly.pieces ?? []) {
+    if (p.kind !== 'rigid' || !slots.has(p.slot)) continue;
+    if (p.preClip) {
+      const pre = nodeAffineAt(p.preClip.nif, p.preClip.node, value, frameTime);
+      if (!pre) continue;
+      writePre(p.preClip.local, pre, p.source);
+      if (p.sourceNormals && p.preClip.localNormals) writePreNormals(p.preClip.localNormals, pre, p.sourceNormals);
+      moved++;
+    } else if (p.clip && batchMoves(p.clip.nif, p.clip.batch)) {
+      posePartBatch(p.clip.nif, p.clip.batch, value, p.source, p.sourceNormals, frameTime);
+      moved++;
+    }
+  }
+  return moved;
 }
 
 export function poseAssembly(assembly, { tracks = null, sampleTrack = null,
@@ -2839,6 +2878,27 @@ function posedNormals(batch) {
 }
 
 /** MW-SMOOTH: a part's pre-transform (MW-D16) applied to its normals - turned, never moved. */
+/** MW-BOW1: applyPre into a buffer the piece owns - the per-frame form. */
+function writePre(positions, pre, out) {
+  for (let v = 0; v + 2 < positions.length && v + 2 < out.length; v += 3) {
+    const x = positions[v]; const y = positions[v + 1]; const z = positions[v + 2];
+    out[v] = pre.a[0] * x + pre.a[1] * y + pre.a[2] * z + pre.t[0];
+    out[v + 1] = pre.a[3] * x + pre.a[4] * y + pre.a[5] * z + pre.t[1];
+    out[v + 2] = pre.a[6] * x + pre.a[7] * y + pre.a[8] * z + pre.t[2];
+  }
+}
+/** MW-BOW1: applyPreNormals into a buffer the piece owns. */
+function writePreNormals(normals, pre, out) {
+  for (let v = 0; v + 2 < normals.length && v + 2 < out.length; v += 3) {
+    const x = normals[v]; const y = normals[v + 1]; const z = normals[v + 2];
+    const nx = pre.a[0] * x + pre.a[1] * y + pre.a[2] * z;
+    const ny = pre.a[3] * x + pre.a[4] * y + pre.a[5] * z;
+    const nz = pre.a[6] * x + pre.a[7] * y + pre.a[8] * z;
+    const len = Math.hypot(nx, ny, nz) || 1;
+    out[v] = nx / len; out[v + 1] = ny / len; out[v + 2] = nz / len;
+  }
+}
+
 function applyPreNormals(normals, pre) {
   if (!pre) return normals;
   const out = new Float32Array(normals.length);

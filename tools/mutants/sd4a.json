@@ -155,11 +155,12 @@
   {
     "name": "SD4A-the-host's-pick-the-Elite's",
     "file": "src/scenes/dungeonContext.js",
-    "old": "count: _superTier ? SUPER_ELITE_FOES : null });",
-    "new": "count: null });",
+    "old": "count: _superTier ? SUPER_ELITE_FOES : null, classLevel:",
+    "new": "count: null, classLevel:",
     "tests": [
       "test/sd4a_super.test.js"
-    ]
+    ],
+    "note": "AUDIT BAL/GEM (PIN MOVED, 2026-10-10): its line changed with the audit's fix; re-aimed by content."
   },
   {
     "name": "SD4A-the-host's-Super-scale-lost",

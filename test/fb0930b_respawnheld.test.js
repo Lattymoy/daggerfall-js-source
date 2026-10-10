@@ -117,8 +117,8 @@ test('RESPAWN-HELD the latch: the arrival\'s latch is up from the teleport\'s fi
   assert.equal(new Function('_seasonHoldKey', '_seasonStraightening', '_partyArrivalPending', `return ${HELD[1]};`)(null, false, true), true, 'party validation also holds the motor');
   assert.equal(heldWhile(true), true, 'an arrival holds the motor');
   assert.equal(heldWhile(false), false, 'and nothing else here does');
-  assert.match(W, /if \(_overlayHeld \|\| _seasonHeld\) player\.holdFrame\(\);/);
-  assert.match(W, /if \(!_overlayHeld && !_seasonHeld\) player\.update\(dt,/);
+  assert.match(W, /if \(_overlayHeld \|\| _seasonHeld \|\| _rideHeld\) player\.holdFrame\(\);/);   // PIN MOVED (WAGONS1): a rider's held motor too
+  assert.match(W, /if \(!_overlayHeld && !_seasonHeld && !_rideHeld\) player\.update\(dt,/);
   assert.match(W, /if \(!_seasonHeld\) applyFallLanding\(playerEntity, player\.landedFallDistance,/);
   // why the dungeon needed it: its death screen is the mode's own, and the exit takes it before the await
   const r0 = W.indexOf('  function respawnOnlinePlayer() {');

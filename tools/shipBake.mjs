@@ -223,15 +223,17 @@ export const mm = (b) => [b.min.map((v) => Math.round(v * 1000) / 1000 + 0), b.m
  * One part: its scene polygons over a subset of the object's vertices, re-indexed, into the boat's frame (`frame`) -
  * the positions (the source's corners and no others), each polygon's corners in the port's winding, its triangles,
  * which polygon each triangle is of, and (AUDIT GN-B7) `split`: how many of its polygons were cut, four corners or
- * more - the rest were triangles already.
+ * more - the rest were triangles already. WAGONS1: `frame` is a ship's (toBoat), or a function taking a scene point
+ * to the part's own frame - a wagon's (tools/bakeWagons.mjs toWagon); either way a MIRROR, so the winding below holds.
  */
 export function bakePart(role, object, polyIds, frame) {
+  const place = typeof frame === 'function' ? frame : (p) => toBoat(p, frame);
   const remap = new Map();
   const positions = [];
   const take = (vi) => {
     if (!remap.has(vi)) {
       remap.set(vi, positions.length / 3);
-      positions.push(...toBoat(object.scene[vi], frame).map(round4));
+      positions.push(...place(object.scene[vi]).map(round4));
     }
     return remap.get(vi);
   };

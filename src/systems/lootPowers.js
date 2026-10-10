@@ -49,7 +49,7 @@ import { registerCastSpeedMod } from './castSpeed.js';   // CAST-SPEED: the cast
 import { registerPlayerBlowLanded, pendingPlayerBlow, REACH_RISE_M } from './sigilSetPowers.js';
 import { playerDoor } from './playerDoor.js';
 import { careerTolerance, EFFECT_FLAGS } from './spellcast.js';
-import { lootRarityOn, validAffix, powerOf, registerLegendaryFind } from './lootRarity.js';
+import { lootRarityOn, validAffix, powerOf, registerLegendaryFind, readLines } from './lootRarity.js';   // GEM1: readLines, law 6's reading
 import { equipTableOf } from './equip.js';
 import { registerPlayerDamageMod, registerPlayerDeathSave, registerPlayerHurtListener, playerEntity } from '../characters/playerEntity.js';
 import { registerPlayerKillListener } from './playerKills.js';
@@ -79,7 +79,7 @@ const mine = (e) => !!e?.isPlayer && !e.peer;
 /** A piece's valid lines of one kind - none with the switch off (off is DFU exactly). */
 export function linesOf(item, id) {
   if (!lootRarityOn() || !Array.isArray(item?.affixes)) return [];
-  return item.affixes.filter((a) => a?.id === id && validAffix(a));
+  return readLines(item).filter((a) => a?.id === id && validAffix(a));   // GEM1: a piece's gems as law 6 holds them (bible/06-Systems/Gem-Sockets.md)
 }
 /** What MY entity wears - the equip table's pieces. */
 export const wornPieces = (entity) => (entity ? equipTableOf(entity).filter(Boolean) : []);
