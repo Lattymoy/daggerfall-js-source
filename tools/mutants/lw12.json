@@ -389,8 +389,8 @@
   {
     "name": "LW12-host-keep",
     "file": "src/scenes/hideouts.js",
-    "old": "        if (d > BAND_KEEP_M) { letGo(); return; }",
-    "new": "        if (d > BAND_KEEP_M * 10) { letGo(); return; }",
+    "old": "        if (d > BAND_KEEP_M && !stood.foes.some(",
+    "new": "        if (d > BAND_KEEP_M * 10 && !stood.foes.some(",
     "tests": [
       "test/lw12_outlaws.test.js"
     ]
@@ -425,7 +425,7 @@
   {
     "name": "LW12-host-looted-read",
     "file": "src/scenes/hideouts.js",
-    "old": "if (!rel()?.turns?.()?.looted?.has(band.key) && c.items.length) {",
+    "old": "if (!rel()?.turns?.()?.looted?.has(s.band.key) && c.items.length) {",
     "new": "if (c.items.length) {",
     "tests": [
       "test/lw12_outlaws.test.js"
@@ -749,8 +749,8 @@
   {
     "name": "LW12-AUDIT-C3-thanks",
     "file": "src/scenes/hideouts.js",
-    "old": "stood.robbed = c.robbed;   // its robbed parties, looted or not",
-    "new": "stood.robbed = rel()?.turns?.()?.looted?.has(band.key) ? [] : c.robbed;   // its robbed parties, looted or not",
+    "old": "s.robbed = c.robbed;   // its robbed parties, looted or not",
+    "new": "s.robbed = rel()?.turns?.()?.looted?.has(s.band.key) ? [] : c.robbed;   // its robbed parties, looted or not",
     "tests": [
       "test/lw12_outlaws.test.js"
     ]
@@ -785,7 +785,7 @@
   {
     "name": "LW12-AUDIT-C8-wire",
     "file": "src/scenes/world.js",
-    "old": "    resolved: () => { _livingFates.clear(); _livingTripMemo.clear(); },\n",
+    "old": "    resolved: () => { _livingFates.clear(); _livingTripMemo.clear(); _livingToldKept.clear(); _livingVisitorsKept.clear(); for (const x of _livingCarried.values()) if (x.visits) _livingCarriedLast.set(x.map, x.visits); _livingCarried.clear(); },\n",
     "new": "",
     "tests": [
       "test/lw12_outlaws.test.js"
@@ -821,7 +821,7 @@
   {
     "name": "LW12-AUDIT-C11b-takeup",
     "file": "src/scenes/hideouts.js",
-    "old": "        if (stood.band && !stood.owned && !stood.routed && deps.owner(deps.sceneOf(stood.h.x, stood.h.z))) standPeople(stood, t);\n",
+    "old": "          if (mine && !stood.owned) standPeople(stood, t);\n",
     "new": "",
     "tests": [
       "test/lw12_outlaws.test.js"
@@ -830,8 +830,8 @@
   {
     "name": "LW12-AUDIT-C11b-once",
     "file": "src/scenes/hideouts.js",
-    "old": "if (stood.band && !stood.owned && !stood.routed && deps.owner(",
-    "new": "if (stood.band && !stood.routed && deps.owner(",
+    "old": "if (mine && !stood.owned) standPeople(stood, t);",
+    "new": "if (mine) standPeople(stood, t);",
     "tests": [
       "test/lw12_outlaws.test.js"
     ]

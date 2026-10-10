@@ -133,10 +133,10 @@ import { createWayBook } from '../systems/livingWorld/ways.js';   // LW3: the tr
 import { createLivingRoads } from './livingRoads.js';   // LW3: the parties on the road near the player
 import { createRoadTeams } from '../world/roadTeams.js';   // LW10: their horses and wagons
 import { createCaravanHost, travellerOf, tripOfId } from './caravanHost.js';   // LW11: the caravan's door
-import { createHideouts, createHideoutBook, BAND_LIVE_M } from './hideouts.js';   // LW12: a band's hideout, stood
+import { createHideouts, createHideoutBook, bandChest, BAND_KEEP_M } from './hideouts.js';   // LW12: a band's hideout, stood
 import { patronWords } from '../systems/livingWorld/patrons.js';   // LW15: a patron named (the town deals them - LivingTown patronOfSale)
 import { routeOf as deepRouteOf, clearedOf as deepClearedOf, stopOfMinute, DIVE_CLEAR_MIN } from '../systems/livingWorld/deepRoute.js';   // LW14: a company's way through the deep
-import { hideoutsOf, outlawBandAt, bandTrouble, takeOf as outlawTakeOf, TAKE_DAYS as OUTLAW_TAKE_DAYS } from '../systems/livingWorld/outlaws.js';   // LW12: the outlaws
+import { hideoutsOf, outlawBandAt, bandTrouble } from '../systems/livingWorld/outlaws.js';   // LW12: the outlaws
 import { stockShopShelf } from '../systems/shopStock.js';   // LW11: a caravan's counter, the shops' own roll
 import { townTrips as tripsOfTown, partyAt as livingPartyAt } from '../systems/livingWorld/trips.js';   // LW11: a merchant's trip, and where a party is
 import { createRoadFights, LIVE_M } from './roadFights.js';   // LW4b: a beset party's fight, stood live
@@ -2944,11 +2944,14 @@ export async function bootWorld(canvas, renderer, params, status) {
   // LW12 (bible/06-Systems/Living-World-II.md): THE OUTLAWS' HIDEOUTS - each region's, once its legs' roads are planned
   // (kept for the network's generation), and the character's routs (relations.js `routed`). AUDIT LW-II C8: a region
   // waiting on its roads is asked again now and then (hideouts.js HIDEOUTS_ASK_MS), and its bands found, the troubles
-  // read band-less meanwhile are made again - every reader's the band's alike, however late its roads were planned
+  // read band-less meanwhile are made again - every reader's the band's alike, however late its roads were planned.
+  // AUDIT LW-II-2 H3: and LW16's word kept off them (its told trips, its visitors, its carried visits): the late reader's
+  // towns told the band-less news they read while it waited. As livingWordFresh makes it again - B11's last word told
+  // while it is worked
   const livingHideoutsOf = createHideoutBook({
     of: (region) => hideoutsOf(region, livingTripWorld),
     generation: () => livingWays.generation,
-    resolved: () => { _livingFates.clear(); _livingTripMemo.clear(); },
+    resolved: () => { _livingFates.clear(); _livingTripMemo.clear(); _livingToldKept.clear(); _livingVisitorsKept.clear(); for (const x of _livingCarried.values()) if (x.visits) _livingCarriedLast.set(x.map, x.visits); _livingCarried.clear(); },
   });
   const livingRouts = () => livingRelations.turns().routed;
   /** The hideouts about native (`x`, `z`): of the regions of the towns within eight pixels. */
@@ -3546,19 +3549,19 @@ export async function bootWorld(canvas, renderer, params, status) {
   // LW12 (bible/06-Systems/Living-World-II.md): A BAND'S HIDEOUT STOOD (scenes/hideouts.js) - its tents and fire, its
   // people as the encounter pool's foes, its chest a ground pile of its take; the rout the character's tale
   let _livingHideoutsHost = null;
-  /** The chest of a band: its take (outlaws.js takeOf) over the troubled trips of its leg's two towns of late - goods off
-   *  a general store's roll (the band's own seed: the same chest each time it is stood) and the gold. */
-  const livingBandChest = (band, t) => {
-    const towns = [band.hideout.a, band.hideout.b].map((id) => livingTownOfId(id)).filter(Boolean);
-    const trips = [];
-    for (let d = 0; d <= OUTLAW_TAKE_DAYS; d++) for (const town of towns) trips.push(...(tripsOfTown(town, t - d * 1440, livingTripWorld, livingTripO()) ?? []));
-    const take = outlawTakeOf(band, trips, t);
-    const items = take.goods ? stockShopShelf({ buildingType: TALK_BUILDING_TYPES.GeneralStore, quality: 10 }, playerEntity, { rolls: lwRng(textSeed(band.key), 0x63687374) }).slice(0, take.goods) : [];   // 'chst'
-    if (take.gold > 0) items.push(goldStack(take.gold));
-    return { items, robbed: take.robbed };
-  };
-  /** The fights' own election: the lowest id of those within BAND_LIVE_M of it stands it (offline always). */
-  const livingHideoutOwner = (feet) => amGroupRollOwner(online?.id ?? null, player.feetAt(), (peersNear() ?? []).filter((p) => Math.hypot(p.feet[0] - feet[0], p.feet[2] - feet[2]) <= BAND_LIVE_M), Infinity);
+  /** The chest of a band (hideouts.js bandChest - AUDIT LW-II-2 C4/C5/P5): its take over the troubled trips of its leg's
+   *  two towns of late, worked a town-day a step by the host's frame - goods drawn off a general store's roll on the
+   *  band's own seed (the same chest each time it is stood) and the gold. */
+  const livingBandChest = (band, t) => bandChest(band, t, {
+    townOf: (id) => livingTownOfId(id),
+    tripsOf: (town, at) => tripsOfTown(town, at, livingTripWorld, livingTripO()),
+    shelf: (o) => stockShopShelf({ buildingType: TALK_BUILDING_TYPES.GeneralStore, quality: 10 }, playerEntity, o),
+    gold: (n) => goldStack(n),
+  });
+  /** The fights' own election: the lowest id of those within BAND_KEEP_M of it stands it (offline always) - AUDIT
+   *  LW-II-2 C13: KEEP, not LIVE: one standing it from past BAND_LIVE_M is still standing it, and a reader who saw none
+   *  within LIVE stood its people beside them. */
+  const livingHideoutOwner = (feet) => amGroupRollOwner(online?.id ?? null, player.feetAt(), (peersNear() ?? []).filter((p) => Math.hypot(p.feet[0] - feet[0], p.feet[2] - feet[2]) <= BAND_KEEP_M), Infinity);
   const livingHideoutsHostOf = () => (_livingHideoutsHost ??= createHideouts({
     hideoutsNear: livingHideoutsNear,
     bandAt: (h, t) => outlawBandAt(h, t, livingRouts()),
@@ -3577,6 +3580,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     chest: livingBandChest,
     dropPile: (items, feet) => droppedLoot.seedPile(items, feet, { archive: TREASURE_PILE_ARCHIVE, record: 0 }, null, null, { unsaved: true, owner: 'lw-hideout' }),
     removePile: (pile) => droppedLoot.removePile(pile),
+    engaged: (f) => !!f.ai?.detected && f.ai.targetIsLocalPlayer !== false,   // AUDIT LW-II-2 C14: on me - the pool's cull's own spare
     renderer, meshes: { getGpuMesh, cpuModels }, getTexture, uploadRecordFrame,
   }));
   const livingRoadsOf = () => (livingRoads ??= createLivingRoads({
@@ -13609,6 +13613,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // this pool is built with no `onSpawn`, so it owns its splash
     // batches and this is the one place they are freed.
     hitEffects.clear();
+    // AUDIT LW-II-2 H9: AND A BAND'S HIDEOUT STOOD, let go beside the camps - its tents, fire and pile in the old frame, its
+    // people the old place's. The open-world frame let it go a second later, the camp stood in the new frame meanwhile
+    _livingHideoutsHost?.clear();
     // AUDIT SURV-TIERS (the third pass): AND THE CAMPS, the same frame's. A camp stands in scene space too, spared by
     // the pixel sweep (AUDIT SURV B: the pool outlives the streaming), and `state.init` below moved the origin under it
     // with no offset to ride: a tent pitched by Daggerfall stood beside the traveller in Wayrest, and the next save
@@ -32511,6 +32518,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       droppedLoot.offsetAll(r.offset);
       dwFish?.offsetAll(r.offset);   // DW-E3: the fish and their schools' centres (Port-Ledger A, the Iliac Puddle row)
       droppedTorches.offsetAll(r.offset);   // HT1: the torches too
+      _livingHideoutsHost?.offsetAll(r.offset);   // AUDIT LW-II-2 H2: a band's hideout stood - its tents and its fire stood 819.2 behind every crossing
       camps.offsetAll(r.offset);   // SURV3: and the camps
       hcc.offsetAll(r.offset);   // HCC: FloatingOrigin.OnPositionUpdate - every scene point the runtime holds, the peers' teams, the parked wagon's collider
       if (csaRuntime) csaCall(() => csaRuntime.OnPositionUpdate(r.offset)); else csa.offsetAll(r.offset);

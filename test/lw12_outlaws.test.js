@@ -293,13 +293,13 @@ function hostOver({ band = null, here = null, t = 12 * 60, owner = true, looted 
     spawn: (type, feet, o) => { const rec = { type, feet, o, dead: false, entity: {} }; log.spawned.push(rec); return Promise.resolve(rec); },
     remove: (rec) => log.removed.push(rec), inPool: (rec) => log.spawned.includes(rec) && !log.removed.includes(rec),
     relations: () => rel, say: (s) => log.said.push(s),
-    chest: () => ({ items: items(), robbed }),
+    chest: function* () { return { items: items(), robbed }; },   // PIN MOVED (AUDIT LW-II-2 C5): the chest a generator, worked after the stand frame
     dropPile: (items) => { const pile = { items: [...items] }; log.piles.push(pile); return pile; },
     removePile: (p) => log.removedPiles.push(p),
   };
   return { host: createHideouts(deps), log, clock, rel, h, deps };
 }
-const tick = async (host, n = 1) => { for (let i = 0; i < n; i++) { host.frame(1.01); await new Promise((r) => setImmediate(r)); } };
+const tick = async (host, n = 1) => { for (let i = 0; i < n; i++) { host.frame(1.01); host.frame(0); await new Promise((r) => setImmediate(r)); } };   // PIN MOVED (AUDIT LW-II-2 C5): and the frame after each second's - the chest is worked after the frame that stood it
 const someBand = () => ({ key: 'O17.0~3', gen: 3, heir: 0, name: 'the Black Hand', people: [0, 1, 2, 3, 4].map((i) => ({ id: `O17.0~3.${i}`, name: `Out ${i}`, cls: 138, level: 5 + i, sex: 'male' })) });
 
 test('LW12 the hideout stood: on foot within BAND_LIVE_M, the one standing it - its tents about a fire, its people as the pool\'s foes by name and level (by night half), its chest of its take; an empty hideout its tents alone; let go past BAND_KEEP_M - the living taken out, a chest taken from looted for the character (mutants: the reach, the night, the chest, the looted, the let-go)', async () => {
@@ -445,13 +445,13 @@ test('LW12 a caravan the outlaws held up: its purse theirs (a sale refused), hal
   assert.equal(opened.allow('Buy', [], 1), true);
 });
 
-test('LW12 the host\'s wiring: the trouble world\'s bands over the trip\'s two regions and the character\'s routs, a region\'s towns, the hideouts kept by the network\'s generation, the host stood in the open world and freed indoors, its tents drawn, its rumoured marks, the news by the band\'s name (mutants: each wire)', () => {
+test('LW12 the host\'s wiring: the trouble world\'s bands over the trip\'s two regions and the character\'s routs, a region\'s towns, the hideouts kept by the network\'s generation, the host stood in the open world and let go under the Overworld or with the living world off (AUDIT LW-II-2 H10: indoors the open world waits as it stood), its tents drawn, its rumoured marks, the news by the band\'s name (mutants: each wire)', () => {
   const w = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
   assert.match(w, /bandAt: \(trip, px, py, t\) => bandTrouble\(trip, px, py, t, \[\.\.\.livingHideoutsOf\(trip\.from\?\.region\), \.\.\.\(trip\.to\?\.region != null && trip\.to\.region !== trip\.from\?\.region \? livingHideoutsOf\(trip\.to\.region\) : \[\]\)\], livingRouts\(\)\),/);
   assert.match(w, /townsIn: \(region\) => livingTownsOfRegion\(region\),/);
   // PIN MOVED (AUDIT LW-II C8): the hideouts kept by hideouts.js createHideoutBook - by the network's generation, a
   // region waiting asked again now and then, the troubles read band-less made again once its bands are found
-  assert.match(w, /const livingHideoutsOf = createHideoutBook\(\{\n\s*of: \(region\) => hideoutsOf\(region, livingTripWorld\),\n\s*generation: \(\) => livingWays\.generation,\n\s*resolved: \(\) => \{ _livingFates\.clear\(\); _livingTripMemo\.clear\(\); \},\n\s*\}\);/);
+  assert.match(w, /const livingHideoutsOf = createHideoutBook\(\{\n\s*of: \(region\) => hideoutsOf\(region, livingTripWorld\),\n\s*generation: \(\) => livingWays\.generation,\n\s*resolved: \(\) => \{ _livingFates\.clear\(\); _livingTripMemo\.clear\(\); [^\n]*\},\n\s*\}\);/);   // PIN MOVED (AUDIT LW-II-2 H3): and LW16's kept word (test/auditlwii2_outlaws.test.js runs it)
   assert.match(w, /const livingRouts = \(\) => livingRelations\.turns\(\)\.routed;/);
   assert.match(w, /if \(livingWorldOn\(\) && _mode\(\) === 'exterior' && !tvf\) \{ livingHideoutsHostOf\(\)\.frame\(dt\); livePersonBatches\.push\(\.\.\.livingHideoutsHostOf\(\)\.batches\(\)\); \}/);
   assert.match(w, /\n\s*else _livingHideoutsHost\?\.clear\(\);/);
