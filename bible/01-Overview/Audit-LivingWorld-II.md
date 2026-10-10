@@ -58,6 +58,10 @@ the day before on this branch and not yet on main.
   company's later member, saved within one cycle before the release, is read a cycle off: that member can stand again
   for up to one cycle, or a vacancy come a cycle late. Once, at the release that carries LW13; a load-time re-key by
   each turn's minute would need the turns' minutes mapped to the first member's cycle, which the record does not keep.
+  AUDIT LW-II-2 R10: understated. Every turn keyed by a place and its cycle (world.js `livingTripTurnKey`) moves with
+  it - the road's own `spared` and `fallen` as well as the hand's, so a member the player saved can fall after all
+  within that cycle - and a `won` or `lost` written on a later member's own trip, which LW13 no longer makes, is never
+  read again. Still once, at the release; still not changed.
 
 ## LW11, LW12 - the door and the outlaws (C)
 
@@ -164,4 +168,6 @@ All FIXED (`06-Systems/Living-World-II.md` 8.3, 9.1-9.4):
 - Pins: lw9 17, lw10 9, lw11 21, lw12 16, lw13 10, lw14 12, lw15 12, lw16 8 (`09-Testing/Testing.md`).
 - Mutants, every one dead or recorded equivalent: lw9 62, lw10 34, lw11 98, lw12 93, lw13 45, lw14 64, lw15
   106, lw16 73; and the records in other slices' files a fix moved (lw3, lw4, lw6b, lw7b, lwfix4), re-aimed by content.
+- Pins in other files the fixes moved, each marked where it stands: `lwtalk_town` (E7), `fb1004d_placelru` (D1),
+  `auditscale` (P6, P8), `legacyname` (B14) - left off this record until AUDIT LW-II-2 P15.
 - `06-Systems/Living-World-II.md` and `01-Overview/Port-Ledger.md` corrected where they claimed what the code did not.

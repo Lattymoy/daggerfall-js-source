@@ -330,6 +330,9 @@ Measure: the roads' layer with the teams laid stays inside its 6 ms on the probe
 pool's: at most WAGONS_DRAWN wagons of five meshes and their cargo a frame. A real-GPU frame is measured in a browser
 (`tools/travelViewPerf.mjs`); the container has none.
 
+Moved pins (AUDIT LW-II-2 P15 - unrecorded until then): `lw3_roads` (a caravan's Overworld mark is its wagon),
+`lw4b_roadFights` (the roads' `clear()` clears the teams beside the fights).
+
 Pins: `test/lw10_wagons.test.js` (9 - AUDIT LW-II: the roads' layer at a camp, its bodies and its parked teams;
 WAGONS1 x LW10 through a real pool). Mutants: `tools/mutants/lw10.json` (34).
 
@@ -459,7 +462,8 @@ Measure: the step reads the roads' parties already read (a few a second), the ch
 contract. Nothing per frame.
 
 Moved pins: `lw3_roads` (the caught hand's door), `lw7_deeds` (the road's slay), `lw7b_beyond` and `lwfix4_turns`
-(the stands' slay) - each now through the LW11 wrapper, which calls the old.
+(the stands' slay) - each now through the LW11 wrapper, which calls the old; `lw2_livingTown` and `legacyhome` (the
+talk's doors: a caravan's after the kin's - AUDIT LW-II-2 P15, unrecorded until then).
 
 Moved by the audit: `lwfix4_turns`' records (a hold-up's robbery carried at the leg's end, C9).
 
@@ -561,7 +565,9 @@ a region's towns, its roads, a seed and the clock); the hideout is stood by `src
 ### 5.5 The four hosts, the measure, the pins
 
 - `scenes/world.js`: WIRED (the trips' world's `townsIn`, the trouble world's `bandAt`, the hideouts kept, the host
-  stood in the open world and freed indoors, its tents in the world mesh pass, its fire in the billboards, its marks,
+  stood in the open world and waiting indoors as it stood (5.3; AUDIT LW-II-2 H10: this line said "freed indoors", and
+  the pin's title with it - the open-world frame's let-go never runs indoors), its tents in the world mesh pass, its fire
+  in the billboards, its marks,
   the greeting's warning, the news by the band's name).
 - `scenes/worldModes.js`, `scenes/dungeonContext.js`: none (no road). `scenes/exterior.js`: FLAGGED.
 
@@ -570,7 +576,7 @@ about 1.2 ms, once a network; a fortnight's 341 troubles, 7 a band's (5 robbed);
 1.2-1.4 ms at its worst frame (the budget 6; 1.23 ms re-measured after the audit).
 
 Moved pins: `lw4_trouble` (HALT_MIN, FIGHT_MIN, ROAD_NEWS's ends), `lw6b_remains` and `lw6d_word` (MARK_KINDS,
-TALE_KINDS).
+TALE_KINDS); `nudedecor` (the band's camp fire among the billboards that are no person - AUDIT LW-II-2 P15).
 
 Pins: `test/lw12_outlaws.test.js` (16 - AUDIT LW-II: the chest kept by its minting, the rout by blows, the book asked
 again and its two readers alike, the robbery at the leg's end, the camp every reader's). Mutants:
@@ -638,7 +644,9 @@ Moved pins: `lw4_trouble` (a fated member's place sends its company's first), `l
   they lived by their own: a hand's turn (`slain`, `died`) on such a place saved within one cycle before the release
   that carries LW13 is read a cycle off - its member can stand again for up to one cycle, or a vacancy come a cycle
   late. Once, at that release. A load-time re-key would need each turn's minute mapped to the first's cycle, which the
-  record does not keep.
+  record does not keep. AUDIT LW-II-2 R10: every turn keyed by place and cycle moves so (`livingTripTurnKey` - the
+  road's `spared` and `fallen` too, so a member saved can fall after all in that cycle), and a `won`/`lost` on a later
+  member's own trip, which LW13 no longer makes, is never read again.
 
 Pins: `test/lw13_companies.test.js` (10 - AUDIT LW-II: one company to a train; the holy day on its own draw).
 Mutants: `tools/mutants/lw13.json` (45).
@@ -852,7 +860,8 @@ errand in `dayPlan.js`.
 - `scenes/world.js`: WIRED (the region's traders read, each town's `patronsOf`, the Vendor page's `patronName`).
 - `scenes/worldModes.js`, `scenes/dungeonContext.js`, `scenes/exterior.js`: none.
 - The service: migration `0105_patrons.sql` (`market_listings.patron_hour`, `market_patron_sales` and its indexes,
-  `realm_faucets`), `market.js` (the reckoning, the reads, the prune), `homes.js` (a door opened marks its trader),
+  `realm_faucets`; the account's version `acct105`, and `accountworker`'s table list and every `ACCOUNT_VERSION` pin
+  moved with it - AUDIT LW-II-2 P15), `market.js` (the reckoning, the reads, the prune), `homes.js` (a door opened marks its trader),
   `cron.js` (HOUR_JOBS `patrons`, behind the market's switches), `budget.js` (FAUCET_KINDS,
   `faucetStatement`), `.github/workflows/account-deploy.yml` (the law's file among the paths that deploy the Worker,
   `test/accountdeploy.test.js` ACC1-CI). The account service redeploys on merge.
@@ -903,7 +912,11 @@ the host's is `scenes/world.js` (the visits, worked a slice a frame).
   knows it (the day's word is read at its noon - a fight turned, its party home at eleven, counted at five).
 - **A STRANGER'S REGARD** (`regardOf`; the talk's rows, `world.js livingRegardOf`): one with no regard of their own
   takes the town's repute, the sum held between REPUTE_MIN and REPUTE_MAX (ENEMY_AT + 1, FRIEND_AT - 1): read, never
-  stored - a name heard makes nobody a friend or an enemy. A known face keeps their own.
+  stored - a name heard makes nobody a friend or an enemy. A known face keeps their own. AUDIT LW-II-2 W9: WHAT IT
+  MOVES TODAY IS NOTHING A PLAYER SEES. Held inside the two lines, the regard reads `neutral` for every greeting (the
+  greeting asks the resident's own standing), and its one reader, the talk's Legacy rows (`legacyTopicRows` ->
+  `marriage.js topicsFor`), asks a friend's regard for its court topic, which the bound never reaches. What is seen is
+  the deeds the repute carries, in the heard greeting below. Mac's call 7 asks what it should move.
 - **A STRANGER WHO HAS HEARD** greets the character by it (`greetingFor`, `heardOf`): HEARD_SHARE (0.5) of a stranger's
   words, one of the deeds known (HEARD_GREETINGS: "You're the one who drove off {foe} on the road to {place}?", "I
   know who you are. I heard about {who}.").
@@ -956,19 +969,14 @@ seams. `test/lw11_caravan.test.js` (the tale on the charge, void none, a murder 
 
 ## 10. Found on the way (not changed by this design)
 
-1. `Living-World.md` LW6b says "the scene's cache keeps it". This has been stale since LW-FIX5: a dungeon keeps no
-   scene cache (`systems/sceneCache.js` is keyed by buildings and world pixels only).
-2. `01-Overview/Port-Ledger.md`'s LW6 row still says "Not yet: the fallen of a dive lying in the dungeon to be found".
-   LW6b built it.
-3. A home's trader: the service checks that a buy names the stall and that the stall stands. It does not check that
+1. A home's trader: the service checks that a buy names the stall and that the stall stands. It does not check that
    the buyer stands in the house; that gate is the client's alone (`worldModes.js openHomeVendor`). An item for the
    Integrity arc's later lanes.
-4. A diving company's loose stands reach a peer as nameless puppets not flagged as allies: the own frame flags allies
+2. A diving company's loose stands reach a peer as nameless puppets not flagged as allies: the own frame flags allies
    only for `companion`, and divers set `shipmate` and team PlayerAlly. LW14 should flag a living ally on the wire,
    with its name. That is a change to the relay's law and its version.
-5. LW0's model says "hours inside room to room". It was never built until LW14.
-6. A roadside pickpocket caught still sets `crimeCommitted` (`talk.js pickpocket` sets it when given no target). LW11
-   clears it at the road's door (DONE, LW11: `livingRoadCaught`).
+3. LW0's model says "hours inside room to room". LW14 built a dive's hours stop by stop, block by block - no room
+   graph: the block grid is the plan (7.1).
 
 ## 11. Mac's calls (open)
 
@@ -982,7 +990,8 @@ seams. `test/lw11_caravan.test.js` (the tale on the charge, void none, a murder 
 6. LW9: an arrest on the road - a patrol that halts a wanted player taking them to the nearest town's court, rather
    than drawing on them (2.4).
 7. The repute's numbers (9.2): REPUTE, HEARD_SHARE and CARRIED_SHARE, and whether a heard name should ever carry a
-   stranger past a friend's or an enemy's regard (built: never).
+   stranger past a friend's or an enemy's regard (built: never). And what the repute's regard should move: today it
+   moves nothing a player sees (AUDIT LW-II-2 W9) - only the heard greeting shows the deeds.
 8. LW11: the plaque rows (Trade, Talk, Steal, Hire on on the World Tooltips plaque) and stealing from the wagon (its
    cargo a loot list on `shopliftAttempt`, NIGHT_STEAL by night) were designed and not built: the ChoiceWindow and
    the counter's own steal stand in (4.1, 4.3). Build them, or keep the door as it is?
