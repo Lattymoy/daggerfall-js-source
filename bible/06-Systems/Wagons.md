@@ -610,10 +610,9 @@ picture (`src/player/mountRig.js`) - is the saddle's view: on the bench it
 hides (mwViewHides), the team being in the world in front of the eye. The
 moving wagon stands no collider, so the camera behind the driver stood inside
 the caravan: its body is a wall to the camera on the bench (cameraHit, the
-body part's own box, beside the collider's ray and sphere). AUDIT WAGONS3 B1:
-the caravan's alone (an open wagon's body is its two hoops, and their box
-stood 5.6 cm behind its bench - the camera never left the head), stood where
-the wagon is drawn, as the seat is. The bench is the wagon KIND's
+body part's own box, beside the collider's ray and sphere), stood where the
+wagon is drawn, as the seat is - BENCH-CAM (below): both bench wagons' body
+(the `shell`), and the camera turns about a pivot over its top. The bench is the wagon KIND's
 (`benchKind`), never this frame's seat: a journey, a teleport and a load's
 first frames stand none, and a frame read as the saddle took the body into
 the head for good (B2).
@@ -801,6 +800,65 @@ real caller and fixed with its pin and its mutant
   Horse's template (R3), the fixed city's frame order pinned again (R6), a
   rope's single leaping end (R7), and WAGONS3's four FLAGGED limits stood at
   their lines in `src/` so the open flags carry them (R8).
+
+## BENCH-CAM (2026-10-10, from play)
+
+Temegast, on Discord, with a screenshot of Eye Of The Beholder's sprite
+filling the screen from a hand's breadth behind its head: "this is what i see
+when i use my carriage"; the owner: "Thirs person view isnt working properly
+for wagon traversal".
+
+**The cause.** Both third-person cameras turn about a point on the driver:
+the sprite's camera (`src/player/eotbCamera.js`) about the head itself, the
+Morrowind camera (`src/player/mwCamera.js`) about its focal, FOCAL_HEIGHT
+over the feet. On the Caravan's bench the head stands 0.43 m under the roof
+and the room's front wall 0.37 m behind the seat. The sprite camera's cast
+back met that wall at once, its bound came out under the mod's own clearance
+(two eye radii), and the camera stood in the head - 0.52 m from it, measured.
+The Morrowind focal stood 12 cm over the roof, so a level look was free, but
+any look up cast it into the roof and back to the focal. On the Open Wagon
+AUDIT WAGONS3 B1 had taken the wall away (its front hoop stood 5.6 cm behind
+the bench), which left both cameras inside its canvas tilt.
+
+**The fix (a departure, Ledger A).** While I sit a bench the camera turns
+about a pivot over the wagon:
+
+- `src/world/wagonModels.js` wagonGeometry: the body's box is the `shell` of
+  every bench wagon (`MEASURED[kind].bench`) - the Caravan's room and the
+  Open Wagon's tilt alike. The Small Cart has none.
+- `src/scenes/horseCartPool.js` cameraFloor: the shell's top where the wagon
+  is drawn (its highest corner, the wagon pitched as it stands) and
+  SHELL_CLEAR_M (0.35 m) over it - 0.78 m over the seated eye on the
+  Caravan, 1.72 m on the Open Wagon. cameraHit's wall is the same shell
+  (drivenShell, the one place both read it).
+- `src/player/mwView.js` mwViewFrame takes the host's `pivotFloor` and hands
+  it to whichever camera answers. The sprite's camera lifts the head it reads
+  to it, so its casts, its target and its line of sight start there; the
+  body's frame, which the minimum distance is measured in, stays on the feet.
+  The Morrowind camera lifts its focal to it. First person reads nothing.
+- The hosts (`src/scenes/world.js`, `src/scenes/exterior.js`) hand
+  `pivotFloor: _driverSeat ? hcc.cameraFloor() : null`.
+
+Measured on the fake world (`test/benchcam1.test.js`): the sprite's camera on
+the Caravan stands its whole two metres level and looking down, and comes in
+no lower than the roof looking up. The Morrowind camera keeps its base
+distance (2.74 m) level and looking down, and holds 1.69 m looking up 0.2
+rad (0.54 m before). On the Open Wagon both stand their full distance from
+the pivot.
+
+THE FOUR HOSTS (BENCH-CAM): `src/scenes/world.js` and `src/scenes/exterior.js`
+wired; `src/scenes/worldModes.js` and `src/scenes/dungeonContext.js` drive no
+wagon.
+
+Pins: `test/benchcam1.test.js`; `test/wagons3.test.js`'s camera wall (PIN
+MOVED: the open wagon's tilt is a wall, its camera free from the pivot over
+it). Mutants: `tools/mutants/benchcam1.json`. Record retired:
+`AUDIT-WAGONS3-B1-every-body-a-cabin` (its law - the caravan's body alone a
+wall - is the one this slice reverses; BENCH-CAM-the-tilt-no-shell holds the
+new one).
+
+Not seen in a browser: this container has no ARENA2 data. How high the pivot
+sits is for the owner's eyes - SHELL_CLEAR_M is one constant.
 
 ## The relay
 
