@@ -218,8 +218,8 @@
   {
     "name": "DISCORD-GATES-the-herald-ignores-its-door",
     "file": "server/src/index.js",
-    "old": "this._herald = hook ? { hook, role: heraldRole(this.env?.GATE_DISCORD_ROLE), serpentRole: serpentHeraldRole(this.env?.SERPENT_DISCORD_ROLE, this.env?.GATE_DISCORD_ROLE) } : null;",
-    "new": "this._herald = { hook: String(this.env?.GATE_DISCORD_WEBHOOK), role: heraldRole(this.env?.GATE_DISCORD_ROLE), serpentRole: serpentHeraldRole(this.env?.SERPENT_DISCORD_ROLE, this.env?.GATE_DISCORD_ROLE) };",
+    "old": "this._herald = hook ? { hook, role: heraldRole(this.env?.GATE_DISCORD_ROLE), serpentRole: serpentHeraldRole(this.env?.SERPENT_DISCORD_ROLE, this.env?.GATE_DISCORD_ROLE), sdRole: serpentHeraldRole(this.env?.SD_DISCORD_ROLE, this.env?.GATE_DISCORD_ROLE) } : null;",
+    "new": "this._herald = { hook: String(this.env?.GATE_DISCORD_WEBHOOK), role: heraldRole(this.env?.GATE_DISCORD_ROLE), serpentRole: serpentHeraldRole(this.env?.SERPENT_DISCORD_ROLE, this.env?.GATE_DISCORD_ROLE), sdRole: serpentHeraldRole(this.env?.SD_DISCORD_ROLE, this.env?.GATE_DISCORD_ROLE) };",
     "tests": [
       "test/discordgates.test.js"
     ]
