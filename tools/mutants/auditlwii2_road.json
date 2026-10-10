@@ -1,0 +1,209 @@
+[
+  {
+    "name": "AUDITLWII2-R1-laying",
+    "file": "src/scenes/livingRoads.js",
+    "old": "        if (!members.length) continue;\n        const fight = !!at.fight;",
+    "new": "        const fight = !!at.fight;",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-R1-camp",
+    "file": "src/scenes/livingRoads.js",
+    "old": "          if (members.length) camped.push({ trip: p.trip, at, members });",
+    "new": "          camped.push({ trip: p.trip, at, members });",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-R4-park",
+    "file": "src/scenes/livingRoads.js",
+    "old": "          if (hasTeam && at.camp) {",
+    "new": "          if (hasTeam && at.camp && !fight) {",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-R4-park-camp",
+    "file": "src/scenes/livingRoads.js",
+    "old": "            const cx = camp ? camp.x : /** @type {number} */ (at.x), cz = camp ? camp.z : /** @type {number} */ (at.z);",
+    "new": "            const cx = ring ? ring.x : /** @type {number} */ (at.x), cz = ring ? ring.z : /** @type {number} */ (at.z);",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-R4-halt-camp",
+    "file": "src/scenes/livingRoads.js",
+    "old": "        if ((at.phase === 'out' || at.phase === 'back') && at.camp && !at.inn) {",
+    "new": "        if ((at.phase === 'out' || at.phase === 'back') && at.camp && !at.halt && !at.inn) {",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-R4-halt-ring",
+    "file": "src/scenes/livingRoads.js",
+    "old": "  if (ring && at.camp) {",
+    "new": "  if (ring && at.camp && !at.halt) {",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-R4-lit",
+    "file": "src/scenes/livingRoads.js",
+    "old": "    const lit = group.some((g) => !g.at.halt);",
+    "new": "    const lit = true;",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-R4-lit-shared",
+    "file": "src/scenes/livingRoads.js",
+    "old": "    const lit = group.some((g) => !g.at.halt);",
+    "new": "    const lit = !p.at.halt;",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-R2-once",
+    "file": "src/scenes/livingRoads.js",
+    "old": "      const k = passingLine(pair, t, lineMin);\n      if (k < 0) continue;",
+    "new": "      const k = Math.floor(t / lineMin) % pair.script.length;",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-R2-beat-met",
+    "file": "src/scenes/livingRoads.js",
+    "old": "  if (!near(beat * lineMin)) return -1;\n",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-R2-silence",
+    "file": "src/scenes/livingRoads.js",
+    "old": "  return k < pair.script.length ? k : -1;",
+    "new": "  return k % pair.script.length;",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-R2-warned-first",
+    "file": "src/scenes/livingRoads.js",
+    "old": "      const [first, second] = warned === b ? [b, a] : [a, b];",
+    "new": "      const [first, second] = [a, b];",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-R2-nobody",
+    "file": "src/scenes/livingRoads.js",
+    "old": " && !at.inn && membersAt(trip, m).length ? at : null;",
+    "new": " && !at.inn ? at : null;",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-R2-near-reach",
+    "file": "src/scenes/livingRoads.js",
+    "old": ") <= PASS_N;\n  };",
+    "new": ") <= PASS_N * 100;\n  };",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-R3-move",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "  if (!camp && partyAt(trip, t0).inn) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-R3-minute",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "    for (t0 = Math.ceil(t0); t0 < end && partyAt(trip, t0).inn; t0++);\n",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-R3-place",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "    s = partyAt(trip, t0).s ?? s;",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-R5-light",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    const t0 = tr.sea ? tr.outT0 : whenWalked(tr.outT0, 0);",
+    "new": "    const t0 = tr.outT0;",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-R5-tide",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    const t0 = tr.sea ? tr.outT0 : whenWalked(tr.outT0, 0);",
+    "new": "    const t0 = whenWalked(tr.outT0, 0);",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-R6-walk-on",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    if (end - s1 > 1 && on(t) < end) return walked('out', light, on);\n",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-R6-pace",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "Math.min(end, s1 + (1 + HALT_CATCH_UP) * pace * walkedMinutes(trip.outT1, m))",
+    "new": "Math.min(end, s1 + HALT_CATCH_UP * pace * walkedMinutes(trip.outT1, m))",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-R6-held",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "s1 = h && h.leg === 'out' && h.t1 >= trip.outT1 ? h.s : sOut(trip.outT1);",
+    "new": "s1 = sOut(trip.outT1);",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-R7-retainers",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    : res.job === 'noble' ? world.rosterOf(home).filter((r) => r.job === 'retainer' && leaderOf(r, world.rosterOf(home))?.slot === res.slot) : [];",
+    "new": "    : [];",
+    "tests": [
+      "test/auditlwii2_road.test.js"
+    ]
+  }
+]
