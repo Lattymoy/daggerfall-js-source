@@ -269,7 +269,7 @@ test('LW2 the streaming host: where the row is on, the population block stands a
   assert.match(w, /clock: skyMinutes, rate: livingRate, mpm: PERSON_MOVE_SPEED \/ livingBaseRate\(\),/);
   assert.match(w, /const livingBaseRate = \(\) => \(params\.has\('online'\) \? skyMinutesPerMsAt\(Date\.now\(\) \+ _sharedOffsetMs\) \* 1000 : CLASSIC_MINUTES_PER_SECOND\);/);
   assert.match(w, /const livingRate = \(\) => \(params\.has\('online'\) \? livingBaseRate\(\) : CLASSIC_MINUTES_PER_SECOND \* worldTimeScale\(\)\);/);
-  assert.match(w, /registerModSaveData\(LIVING_WORLD_VENDOR, \{\n\s+newSaveData: \(\) => null,\n\s+getSaveData: \(\) => livingRelations\.snapshot\(\),\n\s+restoreSaveData: \(rec\) => \{ livingRelations = createRelations\(rec\); \},/);
+  assert.match(w, /registerModSaveData\(LIVING_WORLD_VENDOR, \{\n\s+newSaveData: \(\) => null,\n(?:\s+\/\/[^\n]*\n)*\s+getSaveData: \(\) => \{ _caravanHost\?\.flush\(\); return livingRelations\.snapshot\(\); \},\n\s+restoreSaveData: \(rec\) => \{ livingRelations = createRelations\(rec\); \},/);   // PIN MOVED (AUDIT LW-II-2 C3): the caravan host's counters written into the record before its snapshot
   const lines = w.slice(w.indexOf('function navalCrewLines('), w.indexOf('function livingLinePoints('));
   assert.match(lines, /livingLinePoints\(points, w, h, rect, proj, view, eye\);/);
   assert.ok(lines.indexOf('livingLinePoints(') < lines.indexOf('drawCrewLines('), 'merged before the one draw');

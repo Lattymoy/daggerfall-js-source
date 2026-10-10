@@ -92,8 +92,8 @@
   {
     "name": "LW11-report-cut",
     "file": "src/systems/livingWorld/caravanDoor.js",
-    "old": "(t < trip.outT1 && !trip.turned ? trip.outT1 : trip.backT1)",
-    "new": "(t <= trip.outT1 && !trip.turned ? trip.outT1 : trip.backT1)",
+    "old": "(t < trip.outT1 && !trip.turned && !trip.wild ? trip.outT1 : trip.backT1)",
+    "new": "(t <= trip.outT1 && !trip.turned && !trip.wild ? trip.outT1 : trip.backT1)",
     "tests": [
       "test/lw11_caravan.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "LW11-report-turned",
     "file": "src/systems/livingWorld/caravanDoor.js",
-    "old": "(t < trip.outT1 && !trip.turned ? trip.outT1 : trip.backT1)",
-    "new": "(t < trip.outT1 ? trip.outT1 : trip.backT1)",
+    "old": "(t < trip.outT1 && !trip.turned && !trip.wild ? trip.outT1 : trip.backT1)",
+    "new": "(t < trip.outT1 && !trip.wild ? trip.outT1 : trip.backT1)",
     "tests": [
       "test/lw11_caravan.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "LW11-gone-sorted",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "[id, [...w.gone].sort((a, b) => a - b), w.coin, w.robbed]",
-    "new": "[id, [...w.gone], w.coin, w.robbed]",
+    "old": "const goneOut = (w) => [...[...w.gone].sort((a, b) => a - b), ",
+    "new": "const goneOut = (w) => [...[...w.gone], ",
     "tests": [
       "test/lw11_caravan.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "LW11-host-witness-dead",
     "file": "src/scenes/caravanHost.js",
-    "old": "const witnesses = membersAt(trip, t).filter((m) => !deps.deadAt(m, t)).map((m) => m.id);",
-    "new": "const witnesses = membersAt(trip, t).map((m) => m.id);",
+    "old": "const witnesses = membersAt(trip, t).filter((m) => !deps.deadAt(m, t) && m.id !== victim).map((m) => m.id);",
+    "new": "const witnesses = membersAt(trip, t).filter((m) => m.id !== victim).map((m) => m.id);",
     "tests": [
       "test/lw11_caravan.test.js"
     ]
@@ -505,11 +505,11 @@
   },
   {
     "name": "LW11-wire-caught",
-    "file": "src/scenes/world.js",
-    "old": "caravanHostOf().caught(p.living.res, skyMinutes()); setCrimeCommitted(playerEntity, CRIMES.None); }",
-    "new": "caravanHostOf().caught(p.living.res, skyMinutes()); }",
+    "file": "src/scenes/townTalk.js",
+    "old": " else playerEntity.crimeCommitted = crimeWas; }",
+    "new": " }",
     "tests": [
-      "test/lw11_caravan.test.js"
+      "test/auditlwii2_door.test.js"
     ]
   },
   {
@@ -623,7 +623,7 @@
   {
     "name": "LW11-AUDIT-C4-road",
     "file": "src/systems/livingWorld/caravanDoor.js",
-    "old": "  const left = membersAt(trip, t);",
+    "old": "  const left = trip.party.filter((m) => !trip.fallen?.some((f) => f.res.id === m.id && f.t <= t && !f.hand));",
     "new": "  const left = trip.party;",
     "tests": [
       "test/lw11_caravan.test.js"
@@ -794,8 +794,8 @@
   {
     "name": "LW11-AUDIT-C7-session-coin",
     "file": "src/scenes/caravanHost.js",
-    "old": "        r.setWares?.(id, goneOf(sh), sh.coin, sh.robbed);",
-    "new": "        r.setWares?.(id, goneOf(sh), 0, null);",
+    "old": "      r.setWares?.(id, wareOf(sh), sh.coin, sh.robbed);",
+    "new": "      r.setWares?.(id, wareOf(sh), 0, null);",
     "tests": [
       "test/lw11_caravan.test.js"
     ]
@@ -848,8 +848,8 @@
   {
     "name": "LW11-AUDIT-C10-trip",
     "file": "src/scenes/caravanHost.js",
-    "old": "at: reportAt(trip, t), who, witnesses, trip: trip.id })",
-    "new": "at: reportAt(trip, t), who, witnesses })",
+    "old": "at: reportAt(trip, t), who, witnesses, trip: trip.id },",
+    "new": "at: reportAt(trip, t), who, witnesses },",
     "tests": [
       "test/lw11_caravan.test.js"
     ]

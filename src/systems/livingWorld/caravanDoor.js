@@ -73,8 +73,9 @@ export function keepsCounter(trip, res, t) {
 }
 
 /** WHERE A WITNESS CARRIES IT: the minute the party next reaches a town - the one it set out for on the way out (a
- *  party turned home: home), else home. @param {any} trip @param {number} t */
-export const reportAt = (trip, t) => (t < trip.outT1 && !trip.turned ? trip.outT1 : trip.backT1);
+ *  party turned home: home), else home. AUDIT LW-II-2 R9: a hunter's way out ends in the wild (`wild`, no town) - its
+ *  word lands when it comes home, never at its camp. @param {any} trip @param {number} t */
+export const reportAt = (trip, t) => (t < trip.outT1 && !trip.turned && !trip.wild ? trip.outT1 : trip.backT1);
 
 /**
  * THE HOLD-UP: the party's armed the road left standing at `t` are all down by the host's word, and its leader stands -
@@ -82,10 +83,13 @@ export const reportAt = (trip, t) => (t < trip.outT1 && !trip.turned ? trip.outT
  * AUDIT LW-II C4: the armed BEATEN - those the road left it (its own fallen are the road's: a party that lost its guards
  * to the dice had nobody for the player to beat, and yielded to whoever passed); `down` the host's word, the player's own
  * hand (a sellsword who died fighting beside the player, or one another hand took, was never beaten by them).
+ * AUDIT LW-II-2 C1: the party less the ROAD's own fallen alone (`hand` unset) - the hand deaths the host lays on the trip
+ * it mints (world.js fate, trips.js handsOn) are the very armed the player beat: read out with the road's (membersAt),
+ * the party had no armed left the second its last guard fell, and never yielded.
  * @param {any} trip @param {number} t @param {(res: any) => boolean} [down] - one down by the host's word (the player's hand)
  */
 export function yields(trip, t, down = () => false) {
-  const left = membersAt(trip, t);
+  const left = trip.party.filter((m) => !trip.fallen?.some((f) => f.res.id === m.id && f.t <= t && !f.hand));
   if (!left.some((m) => m.cls != null)) return false;
   const standing = left.filter((m) => !down(m));
   return !standing.some((m) => m.cls != null) && standing.some((m) => m.id === trip.leader?.id);

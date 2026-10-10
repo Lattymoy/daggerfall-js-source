@@ -2676,7 +2676,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   });
   registerModSaveData(LIVING_WORLD_VENDOR, {
     newSaveData: () => null,
-    getSaveData: () => livingRelations.snapshot(),
+    // AUDIT LW-II-2 C3: the caravan host's counters written first - what left a shelf reached the record only at its next
+    // step, and a save inside that second shelved the piece again beside the one in the pack
+    getSaveData: () => { _caravanHost?.flush(); return livingRelations.snapshot(); },
     restoreSaveData: (rec) => { livingRelations = createRelations(rec); },
     // LEGACY6: a new character knows nobody - unless born of the house on this page: the birth's share of the parent's
     // regard (legacyHost.seedRegards), whichever of the birth and this reset lands first
@@ -3444,6 +3446,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     return town ? (tripsOfTown(town, t, livingTripWorld, livingTripO()) ?? []).find((tr) => tr.leader?.id === res.id && t < tr.backT1) ?? null : null;
   };
   let _caravanHost = null, _caravanT = 0;
+  /** AUDIT LW-II-2 C6/H1: the travel map's refusal of a journey (toggleTravelMap's AreEnemiesNearby, DUEL1's duel, NAV-H's
+   *  hostile ship) - travelled on with a caravan refused as every journey is. */
+  const livingTravelEnemies = () => duelEnemyNear() || areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]) || navalHostileNear();
   /** LW11: the caravan host's step once a second - in the open world and (AUDIT LW-II C5b) the modal frame's too: an
    *  escort waited out indoors was never asked where its escort was, and paid at the town. */
   const caravanStep = (dt) => { if (livingWorldOn() && (_caravanT -= dt) <= 0) { _caravanT = 1; caravanHostOf().step(); } };
@@ -3472,12 +3477,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     goldItem: (n) => goldStack(n),
     online: () => params.has('online'),
     // offline the escort travels on with the caravan to its next stop: the one clock moved as a journey moves it, the
-    // player set down beside the party (online the world's clock is everyone's - LIVED1)
+    // player set down beside the party (online the world's clock is everyone's - LIVED1). AUDIT LW-II-2 C6/H1: AS A
+    // JOURNEY GOES - offered only outdoors with nothing near (`travelFree`: the travel map's IsPlayerInside, then its
+    // AreEnemiesNearby, a duel, a hostile ship) and refused here the same; reached inside all the same, out to the open
+    // world first, as every teleport here goes (a lodged party's door at an inn moved the open world under the building),
+    // and the teleport's failure caught. AUDIT LW-II-2 C7: at its town the party has no place (`stay`) - set down where it last walked
+    travelFree: () => _mode() === 'exterior' && !livingTravelEnemies(),
     travelWith: (trip, until) => {
       if (params.has('online')) return false;
+      if (livingTravelEnemies()) { townTalk.say(CANNOT_TRAVEL_ENEMIES_TEXT); return false; }
+      if (_mode() !== 'exterior') modes?.forceExitToExterior();
       advanceOwnMinutes(Math.max(0, until - skyMinutes()));
-      const at = livingPartyAt(trip, until);
-      if (at.x != null) ohTeleportToWorld(/** @type {number} */ (at.x) + 120, /** @type {number} */ (at.z));
+      const at = livingPartyAt(trip, Math.min(until, trip.outT1 - 1));
+      if (at.x != null) ohTeleportToWorld(/** @type {number} */ (at.x) + 120, /** @type {number} */ (at.z)).catch(() => {});
       return true;
     },
   }));
@@ -3537,10 +3549,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** LW7/LW11: a traveller struck down - the hand's turn, and the road's report of it. */
   const livingRoadSlay = (res, t, seen) => { livingSlay(res, t, seen); caravanHostOf().slain(res, t); };
   /** LW3/LW11: a hand caught in a traveller's purse - their regard, and the road's report; no watch, so no town's crime
-   *  (talk.js pickpocket sets one whenever it is handed no target: the road's door clears it) */
+   *  (talk.js pickpocket sets one whenever it is handed no target: AUDIT LW-II-2 C15, townTalk puts back the flag that
+   *  stood before it - this door cleared it to None, and any crime standing before the pickpocket with it) */
   const livingRoadCaught = (p) => {
     const id = livingRoads?.caught(p) ?? null;
-    if (p?.living?.res) { caravanHostOf().caught(p.living.res, skyMinutes()); setCrimeCommitted(playerEntity, CRIMES.None); }
+    if (p?.living?.res) caravanHostOf().caught(p.living.res, skyMinutes());
     return id;
   };
   // LW12 (bible/06-Systems/Living-World-II.md): A BAND'S HIDEOUT STOOD (scenes/hideouts.js) - its tents and fire, its

@@ -71,6 +71,14 @@ export const REPORTS_MAX = 40;
  *  (regionConditions.js REGION_COUNT) - a save's or a host's any integer charged legalRep[-7] = NaN. */
 const CRIME_KINDS = new Set(Object.values(CRIMES).filter((c) => c !== CRIMES.None));
 const reportOk = (crime, region) => CRIME_KINDS.has(crime) && Number.isSafeInteger(region) && region >= 0 && region < REGION_COUNT;
+/** A counter's place (a ware's on its first roll). */
+const placeOk = (i) => Number.isSafeInteger(i) && i >= 0 && i < 1000;
+/** AUDIT LW-II-2 C3: A STACK PARTLY TAKEN - `[place, count]` among a counter's gone, the count what is left of it on the
+ *  shelf (an add-only form: an older reader keeps the whole places alone, and shelved the stack whole again, as before).
+ *  The places partly taken, by place. @param {any[]} list */
+const leftOf = (list) => new Map(list.filter((e) => Array.isArray(e) && placeOk(e[0]) && Number.isSafeInteger(e[1]) && e[1] >= 1 && e[1] < 1e6).map((e) => [e[0], e[1]]));
+/** A counter's gone as the record writes it - the places whole, then (C3) the stacks partly taken. @param {{ gone: Set<number>, left: Map<number, number> }} w */
+const goneOut = (w) => [...[...w.gone].sort((a, b) => a - b), ...[...w.left].sort((a, b) => a[0] - b[0])];
 
 /** What moves a regard, and by how much. `talk` counts once a day per resident, and each tone of word (`polite`,
  *  `insulted`) once a day. LW7: one of their own slain turns them HOSTILE (an armed one draws on you beyond the walls). */
@@ -117,7 +125,8 @@ export function createRelations(record = null) {
   const allTurns = /** @type {{ spared: Set<string>, fallen: Set<string>, won: Set<string>, lost: Set<string>, slain: Map<string, Hand>, died: Map<string, Hand>, killed: Map<string, Hand>, laid: Set<string>, heard: Set<string>, looted: Set<string>, home: Map<string, Hand>, routed: Map<string, Hand>, held: Map<string, Hand> }} */ (/** @type {any} */ ({ ...turns, ...hands, ...marks, ...tales }));
   let turnsVersion = 0;
   const turnOk = (key) => typeof key === 'string' && key.length > 0 && key.length <= 80;
-  /** LW11: the road's records @type {Map<string, { gone: Set<number>, coin: number, robbed: number | null }>} */
+  /** LW11: the road's records - AUDIT LW-II-2 C3 `left` the stacks partly taken (place -> what is left)
+   *  @type {Map<string, { gone: Set<number>, left: Map<number, number>, coin: number, robbed: number | null }>} */
   const wares = new Map();
   /** @type {{ crime: number, region: number, at: number, who: string, witnesses: string[], trip?: string }[]} AUDIT LW-II C10:
    *  `trip` the party's (its own fallen read at the town) */
@@ -130,7 +139,7 @@ export function createRelations(record = null) {
     if (Array.isArray(road.wares)) {
       for (const e of road.wares.slice(-WARES_MAX)) {
         const [id, gone, coin, robbed] = Array.isArray(e) ? e : [];
-        if (turnOk(id) && Array.isArray(gone)) wares.set(id, { gone: new Set(gone.filter((i) => Number.isSafeInteger(i) && i >= 0 && i < 1000)), coin: Number.isFinite(Number(coin)) ? Math.max(0, Number(coin)) : 0, robbed: robbed != null && Number.isFinite(Number(robbed)) ? Number(robbed) : null });
+        if (turnOk(id) && Array.isArray(gone)) wares.set(id, { gone: new Set(gone.filter(placeOk)), left: leftOf(gone), coin: Number.isFinite(Number(coin)) ? Math.max(0, Number(coin)) : 0, robbed: robbed != null && Number.isFinite(Number(robbed)) ? Number(robbed) : null });
       }
     }
     if (Array.isArray(road.reports)) {
@@ -278,14 +287,17 @@ export function createRelations(record = null) {
     /** LW4: bumped at each new turn (the host's books read through them are made again). */
     turnsVersion: () => turnsVersion,
     /** LW11: a caravan's counter as this character left it - the goods gone from its shelf (their places in it) and the
-     *  coin its purse has paid out; none, null. @param {string} tripId */
+     *  coin its purse has paid out; none, null. AUDIT LW-II-2 C3: `left` the stacks partly taken, what is left of each.
+     *  @param {string} tripId */
     wares: (tripId) => wares.get(tripId) ?? null,
     /** LW11: the counter left so - kept WARES_MAX newest (the last written the newest); `robbed` the minute the
-     *  character robbed it (null: never). @param {string} tripId @param {Iterable<number>} gone @param {number} coin @param {number|null} [robbed] */
+     *  character robbed it (null: never). AUDIT LW-II-2 C3: a stack partly taken among the gone as `[place, count]`.
+     *  @param {string} tripId @param {Iterable<number | [number, number]>} gone @param {number} coin @param {number|null} [robbed] */
     setWares(tripId, gone, coin, robbed = null) {
       if (!turnOk(tripId)) return;
       wares.delete(tripId);
-      wares.set(tripId, { gone: new Set([...gone].filter((i) => Number.isSafeInteger(i) && i >= 0 && i < 1000)), coin: Math.max(0, Number(coin) || 0), robbed: robbed != null && Number.isFinite(robbed) ? robbed : null });
+      const list = [...gone];
+      wares.set(tripId, { gone: new Set(/** @type {number[]} */ (list.filter(placeOk))), left: leftOf(list), coin: Math.max(0, Number(coin) || 0), robbed: robbed != null && Number.isFinite(robbed) ? robbed : null });
       // AUDIT LW-II C7: A ROBBERY IS THE LAST FORGOTTEN - the oldest counter not robbed leaves first, while the robbed are
       // half the book or fewer (the oldest of WARES_MAX / 2 robberies is long home): pushed out by forty trades, a robbed
       // caravan restocked its shelf and its purse and was robbed again
@@ -299,11 +311,14 @@ export function createRelations(record = null) {
     reports: () => reports,
     /** LW11: a crime a witness carries - charged at `at` (the host's), void if every witness is dead by then; AUDIT LW-II
      *  C10 the law's crime, the map's region, and the party's `trip`.
-     *  @param {{ crime: number, region: number, at: number, who?: string, witnesses: string[], trip?: string }} r */
-    report(r) {
+     *  @param {{ crime: number, region: number, at: number, who?: string, witnesses: string[], trip?: string }} r
+     *  @param {((r: any) => boolean) | null} [isVoid] - AUDIT LW-II-2 C8: a report nobody lives to carry (the host's word) */
+    report(r, isVoid = null) {
       if (!reportOk(r?.crime, r?.region) || !Number.isFinite(r?.at) || !Array.isArray(r?.witnesses)) return false;
       reports.push({ crime: r.crime, region: r.region, at: r.at, who: nameOk(r.who), witnesses: r.witnesses.filter(ok), ...(turnOk(r.trip) ? { trip: /** @type {string} */ (r.trip) } : {}) });
-      while (reports.length > REPORTS_MAX) reports.shift();
+      // AUDIT LW-II-2 C8: THE BOOK FULL, A VOID REPORT LEAVES FIRST - the oldest only while every one is witnessed: forty
+      // reports the character made void (whole parties cut down) pushed a witnessed murder out before its party came in
+      while (reports.length > REPORTS_MAX) { const i = isVoid ? reports.findIndex(isVoid) : -1; reports.splice(Math.max(0, i), 1); }
       return true;
     },
     /** LW11: a report charged or void. @param {any} r */
@@ -334,7 +349,7 @@ export function createRelations(record = null) {
       const t = any ? { turns: { ...Object.fromEntries(TURN_KINDS.map((k) => [k, [...turns[k]]])), ...handsOut, ...marksOut, ...talesOut } } : {};
       // LW11: the road's records, each only once there is one
       const roadOut = {
-        ...(wares.size ? { wares: [...wares].map(([id, w]) => (w.robbed != null ? [id, [...w.gone].sort((a, b) => a - b), w.coin, w.robbed] : [id, [...w.gone].sort((a, b) => a - b), w.coin])) } : {}),
+        ...(wares.size ? { wares: [...wares].map(([id, w]) => (w.robbed != null ? [id, goneOut(w), w.coin, w.robbed] : [id, goneOut(w), w.coin])) } : {}),
         ...(reports.length ? { reports: reports.map((r) => (r.trip ? [r.crime, r.region, r.at, r.who, r.witnesses.join(','), r.trip] : [r.crime, r.region, r.at, r.who, r.witnesses.join(',')])) } : {}),
         ...(escort ? { escort: escort.near != null ? [escort.trip, escort.t, escort.pay, escort.fights, escort.leader, escort.to, escort.near] : [escort.trip, escort.t, escort.pay, escort.fights, escort.leader, escort.to] } : {}),
       };

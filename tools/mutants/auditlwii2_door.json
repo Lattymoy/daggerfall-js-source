@@ -1,0 +1,410 @@
+[
+  {
+    "name": "AUDITLWII2-C1-hand-dead",
+    "file": "src/systems/livingWorld/caravanDoor.js",
+    "old": "f.t <= t && !f.hand));",
+    "new": "f.t <= t));",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C1-members-again",
+    "file": "src/systems/livingWorld/caravanDoor.js",
+    "old": "  const left = trip.party.filter((m) => !trip.fallen?.some((f) => f.res.id === m.id && f.t <= t && !f.hand));",
+    "new": "  const left = membersAt(trip, t);",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C2-robbed",
+    "file": "src/scenes/caravanHost.js",
+    "old": "if ((robbedAt != null && robbedAt >= c.t) || trip.party.some(",
+    "new": "if (trip.party.some(",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C2-slain",
+    "file": "src/scenes/caravanHost.js",
+    "old": " || trip.party.some((/** @type {any} */ m) => deps.slainAt(m, t) && !deps.slainAt(m, c.t))) {",
+    "new": ") {",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C2-hire-minute",
+    "file": "src/scenes/caravanHost.js",
+    "old": "deps.slainAt(m, t) && !deps.slainAt(m, c.t)",
+    "new": "deps.slainAt(m, t)",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C2-line",
+    "file": "src/scenes/caravanHost.js",
+    "old": "betrayed: (name) => `${name} hired you to keep the caravan, not to turn on it. There is no pay.`,",
+    "new": "betrayed: (name) => `${name} hired you to keep up. The contract is broken.`,",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C3-part",
+    "file": "src/scenes/caravanHost.js",
+    "old": "const wareOf = (s) => [...goneOf(s), ...partOf(s)];",
+    "new": "const wareOf = (s) => [...goneOf(s)];",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C3-part-count",
+    "file": "src/scenes/caravanHost.js",
+    "old": "(it.stackCount ?? 1) < s.rolled[it[WARE_KEY]]).map(",
+    "new": "(it.stackCount ?? 1) < 0).map(",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C3-read",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "gone: new Set(gone.filter(placeOk)), left: leftOf(gone),",
+    "new": "gone: new Set(gone.filter(placeOk)), left: new Map(),",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C3-set",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "left: leftOf(list), coin:",
+    "new": "left: new Map(), coin:",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C3-write",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "const goneOut = (w) => [...[...w.gone].sort((a, b) => a - b), ...[...w.left].sort((a, b) => a[0] - b[0])];",
+    "new": "const goneOut = (w) => [...[...w.gone].sort((a, b) => a - b)];",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C3-left-count",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "&& e[1] >= 1 && e[1] < 1e6)",
+    "new": "&& e[1] >= 0 && e[1] < 1e6)",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C3-shelf",
+    "file": "src/scenes/caravanHost.js",
+    "old": "      for (const [place, n] of w?.left ?? []) if (all[place] && n < rolled[place]) all[place].stackCount = n;\n",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C3-keep",
+    "file": "src/scenes/caravanHost.js",
+    "old": "const gone = s ? wareOf(s) : [...(w?.gone ?? []), ...(w?.left ?? [])];",
+    "new": "const gone = s ? goneOf(s) : [...(w?.gone ?? []), ...(w?.left ?? [])];",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C3-flush",
+    "file": "src/scenes/caravanHost.js",
+    "old": "    flush: () => flush(),",
+    "new": "    flush: () => {},",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C3-save-flush",
+    "file": "src/scenes/world.js",
+    "old": "    getSaveData: () => { _caravanHost?.flush(); return livingRelations.snapshot(); },",
+    "new": "    getSaveData: () => livingRelations.snapshot(),",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C3-save-order",
+    "file": "src/scenes/world.js",
+    "old": "    getSaveData: () => { _caravanHost?.flush(); return livingRelations.snapshot(); },",
+    "new": "    getSaveData: () => { const s = livingRelations.snapshot(); _caravanHost?.flush(); return s; },",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C6-door",
+    "file": "src/scenes/caravanHost.js",
+    "old": "deps.travelWith && deps.travelFree?.() && t < trip.outT1",
+    "new": "deps.travelWith && t < trip.outT1",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C6-host-gate",
+    "file": "src/scenes/world.js",
+    "old": "    travelFree: () => _mode() === 'exterior' && !livingTravelEnemies(),",
+    "new": "    travelFree: () => true,",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C6-host-gate-enemies",
+    "file": "src/scenes/world.js",
+    "old": "    travelFree: () => _mode() === 'exterior' && !livingTravelEnemies(),",
+    "new": "    travelFree: () => _mode() === 'exterior',",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C6-enemies",
+    "file": "src/scenes/world.js",
+    "old": "const livingTravelEnemies = () => duelEnemyNear() || areEnemiesNearby(",
+    "new": "const livingTravelEnemies = () => areEnemiesNearby(",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C6-refusal",
+    "file": "src/scenes/world.js",
+    "old": "      if (livingTravelEnemies()) { townTalk.say(CANNOT_TRAVEL_ENEMIES_TEXT); return false; }\n",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C6-exit",
+    "file": "src/scenes/world.js",
+    "old": "      if (_mode() !== 'exterior') modes?.forceExitToExterior();\n      advanceOwnMinutes(",
+    "new": "      advanceOwnMinutes(",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C6-catch",
+    "file": "src/scenes/world.js",
+    "old": "/** @type {number} */ (at.z)).catch(() => {});",
+    "new": "/** @type {number} */ (at.z));",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C7-last-minute",
+    "file": "src/scenes/world.js",
+    "old": "const at = livingPartyAt(trip, Math.min(until, trip.outT1 - 1));",
+    "new": "const at = livingPartyAt(trip, until);",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C8-evict",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "const i = isVoid ? reports.findIndex(isVoid) : -1;",
+    "new": "const i = -1;",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C8-host-word",
+    "file": "src/scenes/caravanHost.js",
+    "old": "trip: trip.id }, (/** @type {any} */ rep) => voidNow(rep, t)) ?? false;",
+    "new": "trip: trip.id }) ?? false;",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C8-void-word",
+    "file": "src/scenes/caravanHost.js",
+    "old": "return w && !deps.deadAt(w, t); });",
+    "new": "return w && !deps.deadAt(w, t) && false; });",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C8-drop",
+    "file": "src/scenes/caravanHost.js",
+    "old": "        if (t < rep.at && voidNow(rep, t)) { r.dropReport(rep); continue; }\n",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C8-victim",
+    "file": "src/scenes/caravanHost.js",
+    "old": "!deps.deadAt(m, t) && m.id !== victim)",
+    "new": "!deps.deadAt(m, t))",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C8-victim-named",
+    "file": "src/scenes/caravanHost.js",
+    "old": "report(trip, t, CRIMES.Murder, res.name, res.id)",
+    "new": "report(trip, t, CRIMES.Murder, res.name)",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C9-robbed-word",
+    "file": "src/scenes/caravanHost.js",
+    "old": "deps.say(bandTook(trip, end) ? CARAVAN_LINES.paidRobbed(name, gold) : CARAVAN_LINES.paid(name, gold));",
+    "new": "deps.say(CARAVAN_LINES.paid(name, gold));",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C10-classic",
+    "file": "src/ui/nativeTrade.js",
+    "old": "    if (refused) return;\n",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C10-enhanced",
+    "file": "src/ui/enhancedTrade.js",
+    "old": "  if (refused) { render(); return; }\n",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C12-late-half",
+    "file": "src/scenes/caravanHost.js",
+    "old": "    } else if (!s.lost.size && bandTook(trip, t)) {",
+    "new": "    } else if (false) {",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C15-flag-before",
+    "file": "src/scenes/townTalk.js",
+    "old": "const crimeWas = playerEntity.crimeCommitted;",
+    "new": "const crimeWas = 0;",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-C15-door-clears",
+    "file": "src/scenes/world.js",
+    "old": "    if (p?.living?.res) caravanHostOf().caught(p.living.res, skyMinutes());",
+    "new": "    if (p?.living?.res) { caravanHostOf().caught(p.living.res, skyMinutes()); setCrimeCommitted(playerEntity, CRIMES.None); }",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-R9-wild",
+    "file": "src/systems/livingWorld/caravanDoor.js",
+    "old": "&& !trip.turned && !trip.wild ?",
+    "new": "&& !trip.turned ?",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLWII2-P7-LW11P-travel-stop-trouble",
+    "file": "src/scenes/caravanHost.js",
+    "old": "    if (trip.enc && trip.enc.t0 > t && trip.enc.t0 < trip.outT1) stops.push(trip.enc.t0 - 1);\n",
+    "new": "",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ],
+    "note": "decision 6: \"stops at the trouble the trip carries\"",
+    "lane": "AUDIT LW-II-2 lens P"
+  },
+  {
+    "name": "AUDITLWII2-P4-LW11P-wire-pay",
+    "file": "src/scenes/world.js",
+    "old": "    pay: (gold) => addGoldPieces(playerEntity, gold),",
+    "new": "    pay: () => {},",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ],
+    "note": "the escort's pay reaches the purse",
+    "lane": "AUDIT LW-II-2 lens P"
+  },
+  {
+    "name": "AUDITLWII2-P4-LW11P-wire-level",
+    "file": "src/scenes/world.js",
+    "old": "    level: () => playerEntity.level ?? 1,\n    pay: (gold) => addGoldPieces(playerEntity, gold),",
+    "new": "    level: () => 1,\n    pay: (gold) => addGoldPieces(playerEntity, gold),",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ],
+    "note": "ESCORT_GOLD_LEVEL a level of the PLAYER's",
+    "lane": "AUDIT LW-II-2 lens P"
+  },
+  {
+    "name": "AUDITLWII2-P4-LW11P-wire-region",
+    "file": "src/scenes/world.js",
+    "old": "    regionAt: (x, z) => maps.getRegionIndexAt(Math.floor(x / 32768), 499 - Math.floor(z / 32768)),",
+    "new": "    regionAt: () => maps.getRegionIndexAt(0, 0),",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ],
+    "note": "decision 5: the region at the deed's map pixel (maps.getRegionIndexAt)",
+    "lane": "AUDIT LW-II-2 lens P"
+  },
+  {
+    "name": "AUDITLWII2-P4-LW11P-wire-stock-seed",
+    "file": "src/scenes/world.js",
+    "old": "{ rolls: lwRng(textSeed(trip.id), 0x77617265) }",
+    "new": "{ rolls: Math.random }",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ],
+    "note": "ITS STOCK seeded by the trip - the same all trip; the WARES record names places in that roll",
+    "lane": "AUDIT LW-II-2 lens P"
+  },
+  {
+    "name": "AUDITLWII2-P4-LW11P-counter-region",
+    "file": "src/scenes/caravanHost.js",
+    "old": "      regionIndex: deps.regionAt(/** @type {number} */ (at.x ?? 0), /** @type {number} */ (at.z ?? 0)), roadDiscount: friend ? FRIEND_DISCOUNT : 0 };",
+    "new": "      regionIndex: 0, roadDiscount: friend ? FRIEND_DISCOUNT : 0 };",
+    "tests": [
+      "test/auditlwii2_door.test.js"
+    ],
+    "note": "the window's building: the region at the party's place (prices with the region's adjustment)",
+    "lane": "AUDIT LW-II-2 lens P"
+  }
+]

@@ -17,7 +17,7 @@ import { travellerRoster, mintResident } from '../src/systems/livingWorld/census
 import { placeAt } from '../src/systems/livingWorld/lives.js';
 import { troubleOf, troubledTrip } from '../src/systems/livingWorld/trouble.js';
 import { DAY_MIN } from '../src/systems/livingWorld/dayPlan.js';
-import { townTrips, partyAt, whenWalked, CALENDAR_MPM, NATIVE_PER_M, NATIVE_PIXEL, WALK_FROM_H, WALK_TO_H } from '../src/systems/livingWorld/trips.js';
+import { townTrips, partyAt, whenWalked, handsOn, CALENDAR_MPM, NATIVE_PER_M, NATIVE_PIXEL, WALK_FROM_H, WALK_TO_H } from '../src/systems/livingWorld/trips.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
 import { partyLabel } from '../src/scenes/livingRoads.js';
 import { CRIMES } from '../src/systems/crimes.js';
@@ -200,6 +200,7 @@ function hostOver(trip, { now, rel = createRelations(), dead = new Set(), slain 
     goldItem: (n) => ({ gold: n }),
     online: () => online,
     travelWith: (tr, until) => { log.travelled.push(until); return true; },
+    travelFree: () => true,   // PIN MOVED (AUDIT LW-II-2 C6): R offered only where a journey may go - the host says so (outdoors, nothing near)
   };
   return { host: createCaravanHost(deps), log, clock, rel, dead, slain, deps };
 }
@@ -323,8 +324,9 @@ test('LW11 a deed reported: a hand caught in the goods turns the party against t
 });
 
 test('LW11 the hold-up: the party\'s armed all down, its leader standing - it yields once, its robbery the character\'s (its cargo a quarter, LW10), a theft reported, the counter its goods and the rest of its purse open to take (mutants: the yield, the robbed minute, the take)', () => {
-  const trip = armedCaravan();
-  const t = walkingOut(trip);
+  const raw = armedCaravan();
+  const t = walkingOut(raw);
+  const trip = handsOn(raw, (m) => (m.cls != null ? t - 1 : null));   // AUDIT LW-II-2 C1: the trip as the host mints it - its guards' hand deaths on it (world.js fate, trips.js handsOn)
   const at = partyAt(trip, t);
   const { host, log, rel, slain } = hostOver(trip, { now: t, here: { x: at.x, z: at.z } });   // PIN MOVED (AUDIT LW-II C4): there, its armed by the player's hand
   for (const m of trip.party) if (m.cls != null) slain.add(m.id);
@@ -450,7 +452,7 @@ test('LW11 the host\'s wiring: the road\'s trade window (its counter\'s discount
   assert.match(world, /\n {4}caravanStep\(dt\);   \/\/ LW11: the hold-ups/, 'the open world\'s');   // PIN MOVED (AUDIT LW-II C5b): one step, two frames
   assert.match(world, /offers: \(person, talk\) => \(livingWorldOn\(\) \? caravanHostOf\(\)\.offers\(person, talk\) \|\| !!livingDivers\?\.offers\(person, talk\) : false\)/);   // PIN MOVED (LW14): and a company below
   assert.match(world, /robbed: \(tripId\) => caravanHostOf\(\)\.robbed\(tripId\),/);
-  assert.match(world, /if \(p\?\.living\?\.res\) \{ caravanHostOf\(\)\.caught\(p\.living\.res, skyMinutes\(\)\); setCrimeCommitted\(playerEntity, CRIMES\.None\); \}/);
+  assert.match(world, /if \(p\?\.living\?\.res\) caravanHostOf\(\)\.caught\(p\.living\.res, skyMinutes\(\)\);\n/);   // PIN MOVED (AUDIT LW-II-2 C15): the road's door clears no crime flag - townTalk puts back the one standing before the pickpocket
   assert.match(world, /const livingRoadSlay = \(res, t, seen\) => \{ livingSlay\(res, t, seen\); caravanHostOf\(\)\.slain\(res, t\); \};/);
   assert.match(world, /charge: \(region, crime\) => \{ lowerRepForCrime\(playerEntity, region, crime\); tallyCrimeGuildRequirements\(playerEntity, false, 1\); \}/);
   // the Overworld's mark of a caravan the character robbed
@@ -531,8 +533,9 @@ test('AUDIT LW-II C4: the hold-up is the player\'s for armed the player\'s own h
   const at = partyAt(trip, t);
   const by = (m) => ({ x: at.x + m * NATIVE_PER_M, z: at.z });
   const armed = trip.party.filter((m) => m.cls != null);
+  const minted = handsOn(trip, (m) => (m.cls != null ? t - 1 : null));   // AUDIT LW-II-2 C1: the trip as the host mints it - the guards' hand deaths on it (world.js fate, trips.js handsOn)
   // died fighting beside the player: dead to the lives, never slain by them
-  const died = hostOver(trip, { now: t, here: by(0) });
+  const died = hostOver(minted, { now: t, here: by(0) });
   for (const m of armed) died.dead.add(m.id);
   died.host.step();
   assert.deepEqual([died.rel.wares(trip.id), died.rel.reports().length, died.log.said.length], [null, 0, 0], 'none of the player\'s');
@@ -542,16 +545,16 @@ test('AUDIT LW-II C4: the hold-up is the player\'s for armed the player\'s own h
   road.host.step();
   assert.equal(road.rel.wares(trip.id), null, 'the road\'s');
   // slain by the player, the party off beyond the reach
-  const far = hostOver(trip, { now: t, here: by(ESCORT_KEEP_M + 10) });
+  const far = hostOver(minted, { now: t, here: by(ESCORT_KEEP_M + 10) });
   for (const m of armed) far.slain.add(m.id);
   far.host.step();
   assert.equal(far.rel.wares(trip.id), null, 'far off');
-  const none = hostOver(trip, { now: t, here: null });
+  const none = hostOver(minted, { now: t, here: null });
   for (const m of armed) none.slain.add(m.id);
   none.host.step();
   assert.equal(none.rel.wares(trip.id), null, 'nowhere (indoors)');
   // slain by the player, there: it yields
-  const own = hostOver(trip, { now: t, here: by(ESCORT_KEEP_M - 10) });
+  const own = hostOver(minted, { now: t, here: by(ESCORT_KEEP_M - 10) });
   for (const m of armed) own.slain.add(m.id);
   own.host.step();
   assert.equal(own.rel.wares(trip.id).robbed, t);
@@ -694,7 +697,7 @@ test('AUDIT LW-II C6/C7: a caravan the band robbed first has no purse left for t
   const t = walkingOut(base);
   const at = partyAt(base, t);
   // C6: held up by a band an hour before, then by the player
-  const trip = { ...base, robbed: { t: t - 60, by: 'O17.0~0' } };
+  const trip = handsOn({ ...base, robbed: { t: t - 60, by: 'O17.0~0' } }, (m) => (m.cls != null ? t - 1 : null));   // AUDIT LW-II-2 C1: its guards' hand deaths on it, as the host mints it
   const h = hostOver(trip, { now: t, here: { x: at.x, z: at.z } });
   for (const m of trip.party) if (m.cls != null) h.slain.add(m.id);
   h.host.step();
@@ -713,7 +716,7 @@ test('AUDIT LW-II C6/C7: a caravan the band robbed first has no purse left for t
   assert.equal(r.wares('rob:1'), null, 'past half the book robbed, the oldest robbery goes');
   assert.equal([...r.snapshot().road.wares].filter((w) => w[3] != null).length, WARES_MAX / 2, 'robberies kept to half the book: the trades the rest');
   // the session's write-back: a robbed counter taken from, its record forgotten - written again as the session holds it
-  const s = hostOver(base, { now: t, here: { x: at.x, z: at.z } });
+  const s = hostOver(handsOn(base, (m) => (m.cls != null ? t - 1 : null)), { now: t, here: { x: at.x, z: at.z } });   // AUDIT LW-II-2 C1: as the host mints it
   for (const m of base.party) if (m.cls != null) s.slain.add(m.id);
   s.host.step();
   s.host.offers({ living: { res: base.leader } }, () => {});

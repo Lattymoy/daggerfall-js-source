@@ -33,9 +33,11 @@ export const CARAVAN_LINES = Object.freeze({
   bandTook: (name) => `${name}: "Coin? The outlaws took every septim we had, and half the goods besides."`,   // LW12
   yield: (name) => `${name}: "Take it! Take what you want - just let us be!"`,
   paid: (name, gold) => `${name}: "We're in, and in one piece. ${gold} gold, as agreed."`,
+  paidRobbed: (name, gold) => `${name}: "We're in - robbed, but alive. ${gold} gold, as agreed."`,   // AUDIT LW-II-2 C9
   broken: (name) => `${name} hired you to keep up. The contract is broken.`,
   turned: (name) => `${name}'s caravan turned back. There is no pay for a road not finished.`,
   fell: (name) => `${name} did not live to pay you.`,
+  betrayed: (name) => `${name} hired you to keep the caravan, not to turn on it. There is no pay.`,   // AUDIT LW-II-2 C2
 });
 
 /** LW12: whether a band held the trip up by minute `t` (trouble.js `robbed`, `by` the band) - its purse and half its
@@ -82,15 +84,17 @@ export function tripOfId(id, t, townOf, tripsOf) {
  *   choose: (lines: string[], options: { code: string, label: string, action: () => void }[]) => void, say: (text: string) => void,
  *   regionAt: (x: number, z: number) => number, charge: (region: number, crime: number) => void, deadAt: (res: any, t: number) => boolean,
  *   here: () => ({ x: number, z: number } | null), level: () => number, pay: (gold: number) => void, goldItem: (n: number) => any,
- *   online: () => boolean, travelWith?: (trip: any, until: number) => boolean,
+ *   online: () => boolean, travelWith?: (trip: any, until: number) => boolean, travelFree?: () => boolean,
  * }} deps - `tripById(id, t)` undefined while the trips wait on their ways; AUDIT LW-II C4 `slainAt(res, t)` whether the
- *   player's own hand struck `res` down by `t` (relations.js `slain`)
+ *   player's own hand struck `res` down by `t` (relations.js `slain`); AUDIT LW-II-2 C6 `travelFree()` whether a journey
+ *   may go from where the player stands (the travel map's own refusals: outdoors, no enemy, duel or hostile ship near)
  */
 export function createCaravanHost(deps) {
   /** The counters this session: a trip's shelf, its first roll's items each with its place (`WARE_KEY`); LW12 `lost` the
    *  places a band took (never the character's); AUDIT LW-II C7 the coin its purse paid out and the minute the character
    *  robbed it, as this session knows them (written back as they are - never a forgotten record's nothing), and `sig` the
-   *  shelf as last written. @type {Map<string, { items: any[], all: any[], lost: Set<number>, coin: number, robbed: number | null, sig: string }>} */
+   *  shelf as last written; AUDIT LW-II-2 C3 `rolled` each place's stack as its roll made it.
+   *  @type {Map<string, { items: any[], all: any[], rolled: number[], lost: Set<number>, coin: number, robbed: number | null, sig: string }>} */
   const shelves = new Map();
   /** The parties already seen to yield this session (their robbery written). */
   const yielded = new Set();
@@ -106,8 +110,13 @@ export function createCaravanHost(deps) {
   const robbedOf = (tripId) => { const r = rel(); return shelves.get(tripId)?.robbed ?? r?.wares?.(tripId)?.robbed ?? null; };
   /** The places gone from a shelf - its first roll's, no longer on it (the band's never the character's). @param {any} s */
   const goneOf = (s) => s.all.filter((/** @type {any} */ it) => !s.items.includes(it) && !s.lost.has(it[WARE_KEY])).map((/** @type {any} */ it) => it[WARE_KEY]);
+  /** AUDIT LW-II-2 C3: the stacks of a shelf's first roll partly taken - `[place, count]`, what is left of each on it (a
+   *  part of a stack taken was never gone: the whole stack came back after a load). @param {any} s */
+  const partOf = (s) => s.all.filter((/** @type {any} */ it) => s.items.includes(it) && (it.stackCount ?? 1) < s.rolled[it[WARE_KEY]]).map((/** @type {any} */ it) => [it[WARE_KEY], it.stackCount ?? 1]);
+  /** What left a shelf, as its record keeps it: the places gone whole and the stacks partly taken. @param {any} s */
+  const wareOf = (s) => [...goneOf(s), ...partOf(s)];
   /** A shelf as its record holds it - its gone, its coin, its robbery. @param {any} s */
-  const sigOf = (s) => `${goneOf(s).join(',')}|${s.coin}|${s.robbed}`;
+  const sigOf = (s) => `${JSON.stringify(wareOf(s))}|${s.coin}|${s.robbed}`;
 
   /** A trip's counter as this character left it: its roll, less what is gone. */
   function shelfOf(trip, counter, t = deps.clock()) {
@@ -115,12 +124,19 @@ export function createCaravanHost(deps) {
     let s = shelves.get(trip.id);
     if (!s) {
       const all = deps.stock(counter, trip).map((it, i) => { it[WARE_KEY] = i; return it; });
+      // AUDIT LW-II-2 C3: each place's stack as rolled, and one partly taken left as the record keeps it
+      const rolled = all.map((it) => it.stackCount ?? 1);
+      for (const [place, n] of w?.left ?? []) if (all[place] && n < rolled[place]) all[place].stackCount = n;
       // LW12: a band's hold-up took half the goods (every other place) - the band's, never the character's
       const lost = new Set(bandTook(trip, t) ? all.filter((it) => it[WARE_KEY] % 2 === 1).map((it) => it[WARE_KEY]) : []);
-      s = { all, lost, items: all.filter((it) => !w?.gone?.has(it[WARE_KEY]) && !lost.has(it[WARE_KEY])), coin: w?.coin ?? 0, robbed: w?.robbed ?? null, sig: '' };
+      s = { all, rolled, lost, items: all.filter((it) => !w?.gone?.has(it[WARE_KEY]) && !lost.has(it[WARE_KEY])), coin: w?.coin ?? 0, robbed: w?.robbed ?? null, sig: '' };
       s.sig = sigOf(s);
       if (shelves.size > 64) shelves.delete(/** @type {string} */ (shelves.keys().next().value));
       shelves.set(trip.id, s);
+    } else if (!s.lost.size && bandTook(trip, t)) {
+      // AUDIT LW-II-2 C12: the band's hold-up after the shelf was made - its half gone from the shelf now (it stayed the
+      // session, and the next shelved the caravan without it: two shelves for one caravan)
+      for (const it of s.all) if (it[WARE_KEY] % 2 === 1) { s.lost.add(it[WARE_KEY]); const i = s.items.indexOf(it); if (i >= 0) s.items.splice(i, 1); }
     }
     return s;
   }
@@ -129,21 +145,39 @@ export function createCaravanHost(deps) {
   function keep(trip, extraCoin = 0, robbed = undefined) {
     const s = shelves.get(trip.id);
     const w = rel()?.wares?.(trip.id) ?? null;
-    const gone = s ? goneOf(s) : [...(w?.gone ?? [])];
+    const gone = s ? wareOf(s) : [...(w?.gone ?? []), ...(w?.left ?? [])];   // AUDIT LW-II-2 C3: and the stacks partly taken
     const coin = (s ? s.coin : (w?.coin ?? 0)) + extraCoin;
     const was = robbed === undefined ? (s ? s.robbed : (w?.robbed ?? null)) : robbed;
     if (s) { s.coin = coin; s.robbed = was; s.sig = sigOf(s); }
     rel()?.setWares?.(trip.id, gone, coin, was);
   }
+  /** THE COUNTERS: what left a shelf this session (bought, stolen, taken) kept in the character's record - AUDIT LW-II C7:
+   *  with the session's own coin and robbery, never a forgotten record's nothing (a robbed counter's record pushed out of
+   *  the book came back unrobbed, its purse whole); one gone from the book is written again while it is robbed. The
+   *  step's, and (AUDIT LW-II-2 C3) the save's. */
+  function flush(r = rel()) {
+    if (!r) return;
+    for (const [id, sh] of shelves) {
+      const sig = sigOf(sh);
+      if (sig === sh.sig && (sh.robbed == null || r.wares?.(id))) continue;
+      sh.sig = sig;
+      r.setWares?.(id, wareOf(sh), sh.coin, sh.robbed);
+    }
+  }
 
+  /** AUDIT LW-II-2 C8: a report nobody lives to carry - its every witness dead now (a hand's death is for good: dead now,
+   *  dead at the town). @param {any} rep @param {number} t */
+  const voidNow = (rep, t) => !rep.witnesses.some((/** @type {string} */ id) => { const w = deps.resOf(id); return w && !deps.deadAt(w, t); });
   /** A deed's report: the region where the party is, carried by those of it still standing (AUDIT LW-II C10: the trip
-   *  named, so the dice's own deaths on the way are read at the town). */
-  function report(trip, t, crime, who = '') {
+   *  named, so the dice's own deaths on the way are read at the town) - AUDIT LW-II-2 C8: never by `victim`, the one
+   *  struck down (the hand's turn is made in the slay's own frame, and the lives' book of places read it a frame late:
+   *  the victim carried word of their own murder); the book full, a void report leaves it first. */
+  function report(trip, t, crime, who = '', victim = '') {
     const at = partyAt(trip, t);
     if (at.x == null) return false;
-    const witnesses = membersAt(trip, t).filter((m) => !deps.deadAt(m, t)).map((m) => m.id);
+    const witnesses = membersAt(trip, t).filter((m) => !deps.deadAt(m, t) && m.id !== victim).map((m) => m.id);
     if (!witnesses.length) return false;
-    return rel()?.report?.({ crime, region: deps.regionAt(/** @type {number} */ (at.x), /** @type {number} */ (at.z)), at: reportAt(trip, t), who, witnesses, trip: trip.id }) ?? false;
+    return rel()?.report?.({ crime, region: deps.regionAt(/** @type {number} */ (at.x), /** @type {number} */ (at.z)), at: reportAt(trip, t), who, witnesses, trip: trip.id }, (/** @type {any} */ rep) => voidNow(rep, t)) ?? false;
   }
   /** The party a resident is one of, among the roads' read. */
   const partyOf = (res) => deps.roads()?.parties?.().find((p) => p.trip.party.some((m) => m.id === res?.id))?.trip ?? null;
@@ -229,7 +263,9 @@ export function createCaravanHost(deps) {
       }
       // AUDIT LW-II C5e: never the road of a party the character robbed
       if (!contract && !robbed && escortOffer(trip, t)) options.push({ code: 'KeyH', label: `H - hire on (${escortPay(trip, deps.level(), 0, t)} gold)`, action: () => hire(trip, res, t) });
-      if (contract?.trip === trip.id && !deps.online() && deps.travelWith && t < trip.outT1) options.push({ code: 'KeyR', label: 'R - travel on with them', action: () => travel(trip, nextStop(trip, t)) });
+      // AUDIT LW-II-2 C6: only where a journey may go - outdoors, nothing near (a lodged party's door at an inn moved the open
+      // world under the building)
+      if (contract?.trip === trip.id && !deps.online() && deps.travelWith && deps.travelFree?.() && t < trip.outT1) options.push({ code: 'KeyR', label: 'R - travel on with them', action: () => travel(trip, nextStop(trip, t)) });
       if (!options.length) return false;
       options.push({ code: 'KeyA', label: 'A - talk', action: () => talk() });
       options.push({ code: 'Escape', label: 'Esc - goodbye', action: () => {} });
@@ -237,7 +273,7 @@ export function createCaravanHost(deps) {
       return true;
     },
     /** A traveller struck down by the player: a murder, reported. @param {any} res @param {number} t */
-    slain(res, t) { const trip = partyOf(res); return trip ? report(trip, t, CRIMES.Murder, res.name) : false; },
+    slain(res, t) { const trip = partyOf(res); return trip ? report(trip, t, CRIMES.Murder, res.name, res.id) : false; },
     /** A hand caught in a traveller's purse: a pickpocketing, reported. @param {any} res @param {number} t */
     caught(res, t) { const trip = partyOf(res); return trip ? report(trip, t, CRIMES.Pickpocketing, res.name ?? '') : false; },   // LW16: the one robbed, for the tale
     /** The minute the character robbed a trip (its cargo a quarter), or null. @param {string} tripId */
@@ -249,15 +285,7 @@ export function createCaravanHost(deps) {
       const t = deps.clock();
       const r = rel();
       if (!r) return;
-      // THE COUNTERS: what left a shelf this session (bought, stolen, taken) kept in the character's record - AUDIT LW-II
-      // C7: with the session's own coin and robbery, never a forgotten record's nothing (a robbed counter's record pushed
-      // out of the book came back unrobbed, its purse whole); one gone from the book is written again while it is robbed
-      for (const [id, sh] of shelves) {
-        const sig = sigOf(sh);
-        if (sig === sh.sig && (sh.robbed == null || r.wares?.(id))) continue;
-        sh.sig = sig;
-        r.setWares?.(id, goneOf(sh), sh.coin, sh.robbed);
-      }
+      flush(r);
       // THE HOLD-UP - AUDIT LW-II C4: the party's armed beaten by the player's own hand, the player there (it yielded to
       // whoever was within the roads' read when its guards fell to the dice, or died fighting beside the player)
       const here = deps.here();
@@ -275,6 +303,9 @@ export function createCaravanHost(deps) {
       // THE REPORTS carried in - charged, or void when nobody lived to carry them (AUDIT LW-II C10: nor one the road took
       // on the way - its trip's own fallen, which the hand deaths never read)
       for (const rep of [...(r.reports?.() ?? [])]) {
+        // AUDIT LW-II-2 C8: one whose every witness is dead now is void now, and dropped (forty such pushed a witnessed
+        // murder out of the book before its party came in)
+        if (t < rep.at && voidNow(rep, t)) { r.dropReport(rep); continue; }
         if (t < rep.at) continue;
         const trip = rep.trip ? deps.tripById(rep.trip, rep.at) : null;
         if (trip === undefined) continue;   // its trips wait on their ways: asked again
@@ -295,6 +326,10 @@ export function createCaravanHost(deps) {
       const lead = c.leader;
       const leader = deps.resOf(lead);
       const name = firstNameOf(leader?.name ?? '');
+      // AUDIT LW-II-2 C2: an escort who robbed the caravan, or struck one of its people down, after the hire is paid nothing
+      // - the contract ends there (cut down and robbed, it paid them at the town with its thanks)
+      const robbedAt = robbedOf(trip.id);
+      if ((robbedAt != null && robbedAt >= c.t) || trip.party.some((/** @type {any} */ m) => deps.slainAt(m, t) && !deps.slainAt(m, c.t))) { deps.say(CARAVAN_LINES.betrayed(name)); r.setEscort(null); return; }
       const end = Math.min(t, trip.outT1);
       // the leader fallen - a hand's death, or (AUDIT LW-II C5d) the road's own, which the hand deaths never read
       if ((leader && deps.deadAt(leader, end)) || !membersAt(trip, end).some((m) => m.id === lead)) { deps.say(CARAVAN_LINES.fell(name)); r.setEscort(null); return; }
@@ -317,10 +352,16 @@ export function createCaravanHost(deps) {
         const gold = c.pay + ESCORT_FIGHT * c.fights;
         deps.pay(gold);
         for (const m of membersAt(trip, end)) r.note(m.id, 'helped', deps.day(t));
-        deps.say(CARAVAN_LINES.paid(name, gold));
+        // AUDIT LW-II-2 C9 (the lead's call, for Mac): a caravan a band robbed under the escort pays all the same - its
+        // people came through - but never "in one piece"
+        deps.say(bandTook(trip, end) ? CARAVAN_LINES.paidRobbed(name, gold) : CARAVAN_LINES.paid(name, gold));
         r.setEscort(null);
       }
     },
+    /** AUDIT LW-II-2 C3: the session's counters written into the character's record now - the save's, before its
+     *  snapshot (what left a shelf reached the record only at the next step: a save inside that second shelved the piece
+     *  again beside the one in the pack). */
+    flush: () => flush(),
     /** A trip's counter as this session holds it (the probes; the pins). @param {any} trip */
     shelfOf: (trip) => { const c = counterOf(trip); return c ? shelfOf(trip, c) : null; },
     /** The session forgotten (a load: the records are the character's, read again). */
