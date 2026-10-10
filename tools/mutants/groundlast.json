@@ -29,8 +29,8 @@
  {
   "name": "NEAR-FIRST-the-walk-is-insertion-order-again",
   "file": "src/scenes/world.js",
-  "old": "    _pixelOrder.sort((a, b) => a._dist2 - b._dist2);\n    for (const p of _pixelOrder) {",
-  "new": "    for (const p of built.values()) {",
+  "old": "    _pixelOrder.sort((a, b) => a._dist2 - b._dist2);\n    const framePixelWalk = () => {   // PERF-V8\n    for (const p of _pixelOrder) {",
+  "new": "    const framePixelWalk = () => {   // PERF-V8\n    for (const p of built.values()) {",
   "tests": [
    "test/perf2.test.js"
   ]

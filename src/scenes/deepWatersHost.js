@@ -56,6 +56,7 @@ import { sampleDepthMeters } from '../world/deepBathymetry.js';
 import { scaledSliderValue } from '../world/deepWaterLook.js';   // DW-E2: GetScaledSliderValue, one home
 import { POPULATE_RADIUS } from './deepWatersEncounters.js';   // DEEP-SHARE: the populate radius is the share's
 import { amGroupRollOwner } from '../systems/campEncounters.js';   // DEEP-SHARE: the camps' election
+import { onFloatingFrame } from '../player/collider.js';   // PERF-COL2 (AUDIT): the walls' bucket rides the floating origin
 
 export const DEEP_WATERS_VENDOR = 'iliac-puddle-no-more';
 
@@ -198,6 +199,7 @@ export function wallColliderIndices(floor) {
  * @param {() => {x: number, y: number}} deps.currentPixel - the player's pixel (PlayerGPS.CurrentMapPixel)
  * @param {object} deps.collider - the world's Collider
  * @param {(px: number, py: number, out: number[]) => number[]} deps.pixelTranslation
+ * @param {() => any} [deps.floatingFrame] - PERF-COL2 (AUDIT): the frame pixelTranslation rides (player/collider.js onFloatingFrame)
  * @param {object} deps.gpu - {create(entry, result) -> handle, destroy(handle), setTilemap(entry, bytes)}
  * @param {object} [deps.client] - test seam: an openDeepWaters-shaped client
  * @param {() => boolean} [deps.canRunHeavy] - DeepWaterRuntime.CanRunHeavyRuntimeWork (the settings callback's rebuild gate)
@@ -207,7 +209,7 @@ export function wallColliderIndices(floor) {
  * @param {() => boolean} [deps.canMutateTerrainData] - OH-B: DeepWaterRuntime.CanMutateTerrainData, RefreshLoadedTile's gate
  * @param {() => number} [deps.clock] - milliseconds (performance.now), for the promote timing
  */
-export function createDeepWatersHost({ woods, woodsBytes = null, locations = [], maps = null, blocks = null, built, climateAt, currentPixel, collider = null, pixelTranslation = null, gpu = null, client = null,
+export function createDeepWatersHost({ woods, woodsBytes = null, locations = [], maps = null, blocks = null, built, climateAt, currentPixel, collider = null, pixelTranslation = null, floatingFrame = null, gpu = null, client = null,
   canRunHeavy = () => true, onFloorRefreshed = null, onSeafloorBuilt = null, canMutateTerrainData = () => true, clock = () => performance.now() }) {
   const dw = client ?? openDeepWaters({ woods, woodsBytes, rects: deepWatersLocationRects(woods, locations, maps, blocks) });
   let bake = null;
@@ -269,7 +271,8 @@ export function createDeepWatersHost({ woods, woodsBytes = null, locations = [],
     if (wall && collider && pixelTranslation) {
       state.bucket = `${keyOf(entry)}:deepwaters`;
       const o = [0, 0, 0];
-      collider.addMesh(state.bucket, state.floor.positions, wall, IDENTITY, () => pixelTranslation(entry.px, entry.py, o));
+      const t = () => pixelTranslation(entry.px, entry.py, o);
+      collider.addMesh(state.bucket, state.floor.positions, wall, IDENTITY, floatingFrame ? onFloatingFrame(floatingFrame(), t) : t);   // PERF-COL2 (AUDIT): filed by place, as the pixel's own
       wallBuckets.add(state.bucket);
     }
   }
