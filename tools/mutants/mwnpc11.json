@@ -1,0 +1,218 @@
+[
+ {
+  "name": "MWNPC11-tiers-raised",
+  "file": "src/characters/npcBodies.js",
+  "old": "near: Object.freeze({ bodies: 24, skins: 8 }),",
+  "new": "near: Object.freeze({ bodies: 28, skins: 10 }),",
+  "tests": [
+   "test/mwnpc11_budget.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC11-stale-kept",
+  "file": "src/characters/npcBodies.js",
+  "old": "if (t - r.at <= NPC_BUDGET_STALE_MS && r.n > 0) live.push(r);",
+  "new": "if (r.n > 0) live.push(r);",
+  "tests": [
+   "test/mwnpc11_budget.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC11-cut-nearest-first-lost",
+  "file": "src/characters/npcBodies.js",
+  "old": "for (const r of live) if (r.i < r.n && (!best || r.d2[r.i] < best.d2[best.i])) best = r;",
+  "new": "for (const r of live) if (r.i < r.n && !best) best = r;",
+  "tests": [
+   "test/mwnpc11_budget.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC11-cut-none-when-few",
+  "file": "src/characters/npcBodies.js",
+  "old": "        if (!best) { cutD2 = Infinity; break; }",
+  "new": "        if (!best) break;",
+  "tests": [
+   "test/mwnpc11_budget.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC11-report-whole-buffer",
+  "file": "src/characters/npcBodies.js",
+  "old": "      r.d2 = d2; r.n = n; r.at = now();",
+  "new": "      r.d2 = d2; r.n = d2.length; r.at = now();",
+  "tests": [
+   "test/mwnpc11_budget.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC11-drop-kept",
+  "file": "src/characters/npcBodies.js",
+  "old": "    drop(lane) { lanes.delete(lane); },",
+  "new": "    drop(lane) { void lane; },",
+  "tests": [
+   "test/mwnpc11_budget.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC11-skins-no-floor",
+  "file": "src/characters/npcBodies.js",
+  "old": "      return 1 + Math.floor((Math.max(0, skins - lanesIn) * mine) / total);",
+  "new": "      return Math.floor((skins * mine) / total);",
+  "tests": [
+   "test/mwnpc11_budget.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC11-skins-whole-each",
+  "file": "src/characters/npcBodies.js",
+  "old": "      return 1 + Math.floor((Math.max(0, skins - lanesIn) * mine) / total);",
+  "new": "      return skins;",
+  "tests": [
+   "test/mwnpc11_budget.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC11-skins-none-given",
+  "file": "src/characters/npcBodies.js",
+  "old": "      if (!mine) return 0;",
+  "new": "      if (!mine) return skins;",
+  "tests": [
+   "test/mwnpc11_budget.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC11-host-alone",
+  "file": "src/characters/npcBodies.js",
+  "old": "collider, tiers, budget: NPC_FRAME_BUDGET });",
+  "new": "collider, tiers });",
+  "tests": [
+   "test/mwnpc11_budget.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC11-lane-unshared",
+  "file": "src/characters/npcBodies.js",
+  "old": "      if (budget && eye) share(b, eye);",
+  "new": "      if (false) share(b, eye);",
+  "tests": [
+   "test/mwnpc11_budget.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC11-lane-builds-far",
+  "file": "src/characters/npcBodies.js",
+  "old": "limits: budget ? { ...limits, buildInRange: true, hysteresis: NPC_BUDGET_HYSTERESIS } : limits,",
+  "new": "limits: budget ? { ...limits, hysteresis: NPC_BUDGET_HYSTERESIS } : limits,",
+  "tests": [
+   "test/mwnpc11_budget.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC11-held-not-ranked",
+  "file": "src/characters/npcBodies.js",
+  "old": "      const d2 = (dx * dx + dy * dy + dz * dz) / (b.holds(p.id) ? h2 : 1);",
+  "new": "      const d2 = dx * dx + dy * dy + dz * dz;",
+  "tests": [
+   "test/mwnpc11_budget.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC11-report-past-range",
+  "file": "src/characters/npcBodies.js",
+  "old": "      if (!(d2 <= r2) || (n === cap && d2 >= d2s[n - 1])) continue;",
+  "new": "      if (n === cap && d2 >= d2s[n - 1]) continue;",
+  "tests": [
+   "test/mwnpc11_budget.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC11-report-unsorted",
+  "file": "src/characters/npcBodies.js",
+  "old": "      while (j > 0 && d2s[j - 1] > d2) { d2s[j] = d2s[j - 1]; j--; }",
+  "new": "      void 0;",
+  "tests": [
+   "test/mwnpc11_budget.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC11-range-unmoved",
+  "file": "src/characters/npcBodies.js",
+  "old": "range: Math.min(lim.range, Math.sqrt(cut) * (1 + 1e-9)),",
+  "new": "range: lim.range,",
+  "tests": [
+   "test/mwnpc11_budget.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC11-range-exact-root",
+  "file": "src/characters/npcBodies.js",
+  "old": "Math.sqrt(cut) * (1 + 1e-9)",
+  "new": "Math.sqrt(cut)",
+  "tests": [
+   "test/mwnpc11_budget.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC11-skins-unmoved",
+  "file": "src/characters/npcBodies.js",
+  "old": "skinBudget: Math.min(lim.skinBudget, budget.skins(self, ft.skins)) });",
+  "new": "skinBudget: lim.skinBudget });",
+  "tests": [
+   "test/mwnpc11_budget.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC11-destroy-kept-share",
+  "file": "src/characters/npcBodies.js",
+  "old": "standing = null; budget?.drop(self); },",
+  "new": "standing = null; },",
+  "tests": [
+   "test/mwnpc11_budget.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC11-pb-limits-ignored",
+  "file": "src/net/peerBodies.js",
+  "old": "  setLimits(o) { if (o.range >= 0) this._range = o.range; if (o.skinBudget >= 0) this._skinBudget = o.skinBudget; }",
+  "new": "  setLimits(o) { void o; }",
+  "tests": [
+   "test/mwnpc11_budget.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC11-pb-builds-far",
+  "file": "src/net/peerBodies.js",
+  "old": "      if (this._buildInRange && d2 > this._range * this._range) continue;",
+  "new": "      void 0;",
+  "tests": [
+   "test/mwnpc11_budget.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC11-pb-no-hysteresis",
+  "file": "src/net/peerBodies.js",
+  "old": "(b.far ? 1 : this._hyst * this._hyst);",
+  "new": "1;",
+  "tests": [
+   "test/mwnpc11_budget.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC11-pb-hysteresis-both-ways",
+  "file": "src/net/peerBodies.js",
+  "old": "(b.far ? 1 : this._hyst * this._hyst);",
+  "new": "this._hyst * this._hyst;",
+  "tests": [
+   "test/mwnpc11_budget.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC11-pb-holds-far",
+  "file": "src/net/peerBodies.js",
+  "old": "  holds(id) { const b = this._bodies.get(id); return !!b && b.goneAt == null && !b.far; }",
+  "new": "  holds(id) { const b = this._bodies.get(id); return !!b && b.goneAt == null; }",
+  "tests": [
+   "test/mwnpc11_budget.test.js"
+  ]
+ }
+]

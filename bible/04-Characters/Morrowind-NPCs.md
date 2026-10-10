@@ -84,10 +84,19 @@ Each line is a slice's acceptance, not an aspiration:
    classic sprite stands. AMENDED BY MWNPC4 (section 9): one BUILD queue for
    every lane, and caps per lane that SUM - not one pool - so a townsperson
    never takes a player's body; the frame's bound is the sum, stated there.
+   AMENDED AGAIN BY MWNPC11 (section 16): ten slices made the sum a port's
+   street's eight lanes; the NPC lanes now share ONE FRAME BUDGET
+   (NPC_FRAME_TIERS - 24 bodies and 8 skins at Near, 48 and 16 at All),
+   the nearest across every lane, below what MWNPC7 summed for three. The
+   peers keep theirs: a townsperson still never takes a player's body.
 5. MEASURED. A probe drives a town's walkers, a watch and a dungeon's foes
    through the real lane and reports skins, uploads, offscreen binds and
    builds per frame (counts, as WB9h's - the fixtures understate retail
    milliseconds); the `?perf=cpu` `bodies` zone is the field's readout.
+   MET BY MWNPC11 (section 16): `tools/mwNpcLaneProbe.mjs`. The field's
+   `bodies` zone reads the peers' pass; each NPC lane draws at its host's
+   own point, inside that host's zone (the meter's zones tile the frame,
+   so a lane's time is never counted twice) - the probe is the measure.
 6. A SWITCH. The pause card carries the lane (Off / Near / All) on the port's
    prefs shelf, so a machine that cannot hold it gives it back.
 
@@ -104,6 +113,7 @@ Each line is a slice's acceptance, not an aspiration:
 | MWNPC7 TOWNSFOLK | walkers and living residents, a wardrobe by FACTION sgroup that actually varies (distinct records and dyes per persona) (the WALKERS SHIPPED, section 12: a wardrobe per outfit variant, dyed per spawn - the living residents indoors are MWNPC8's standing people) | world.js, exterior.js, worldModes.js (living residents indoors) |
 | MWNPC8 STANDING PEOPLE | street, interior, dungeon and quest StaticNPCs; children and vampires keep their sprite; `drawnFlat`'s nudity law honoured (8a SHIPPED, section 13a: the buildings' people; 8b SHIPPED, section 13b: the dungeons' and the street's; 8c SHIPPED, section 13c: exterior.js's and the quests' stands) | all four |
 | MWNPC9 CREATURES | CREA records, creature skeletons and their own .kf, the match table with its declared misses (9a SHIPPED, section 14a: the body; 9b SHIPPED, section 14b: the rig, the match, the hosts) | dungeonContext.js, world.js, worldModes.js, exterior.js |
+| MWNPC11 ONE FRAME | every NPC lane on one frame budget - the nearest bodies across all of them, the skins shared out - and the lanes probe (SHIPPED, section 16) | every lane (createHostNpcBodies) |
 | MWNPC10 THE REST | crews, road parties, siege, gate court, the broker (10a SHIPPED, section 15a: the gate court; the broker keeps her guise. 10b SHIPPED, section 15b: the siege and the crews. 10c SHIPPED, section 15c: the roads' parties and the living residents indoors) | their hosts |
 
 Click and talk boxes keep the billboard's size (they are the classic
@@ -387,7 +397,10 @@ the way Morrowind shows them; and the NPCs need a lane of their own.
   (AMENDED BY MWNPC6, section 11: the watch's lane adds 2 skins at Near and
   4 at All - 10 and 16 a frame on a street with all three. AMENDED AGAIN BY
   MWNPC7, section 12: the walkers' lane adds 4 at Near and 8 at All - 14
-  and 24 a frame on a street with all four.)
+  and 24 a frame on a street with all four. AMENDED BY MWNPC11, section 16:
+  no longer summed - every NPC lane shares one frame budget, so at Near a
+  frame skins at most the peers' 4 and the NPCs' 8, at All 4 and 16,
+  however many lanes stand.)
 
 PROVEN. `test/mwnpc4_npclane.test.js` (5), on a fixture rig whose clip file
 is MW-CAST1's with the fists' group and the reaction groups appended (two
@@ -799,7 +812,10 @@ and the quests' (dungeonContext.js) are 8b's.
   is no person in clothes. A coven's witch is mortal and is dressed.
 - The bound is the lane's: the 'people' lanes take NPC_BODY_TIERS, and
   only one of the three ever runs a frame (the building, the dungeon or
-  the street - the scene is one of them).
+  the street - the scene is one of them). (AMENDED BY MWNPC11, section
+  16: true of the three 'people' lanes, not of the street's lanes
+  together - the street's people stand beside its foes, watch and
+  walkers. Every NPC lane now shares one frame budget.)
 
 PROVEN. `test/mwnpc8b_streetdungeon.test.js` (4): the dungeon by source
 (a person out of the groups, their batch base-centred off the born sprite
@@ -1149,3 +1165,78 @@ with the blade).
 THE HOSTS for MWNPC10: the gate court (15a), the siege and the crews
 (15b), the roads and the rooms (15c) WIRED; the broker keeps her guise
 (15a).
+
+## 16. MWNPC11 - ONE FRAME FOR EVERY NPC LANE (SHIPPED 2026-10-10)
+
+WHY. Each slice gave its population a lane under its own caps, and law 4
+as amended made the frame's bound their sum. By MWNPC10 a port's street in
+a siege with a party on the road runs seven NPC lanes at once - the foes',
+the watch's, the walkers', the standing people's, the siege's, the
+crew's, the road's - and the sum was 76 bodies and 26 skins a frame at
+Near. MEASURED (`tools/mwNpcLaneProbe.mjs`, below): 45 standing and 21
+skins a frame on that street at Near, 91 and 37 at All.
+
+- THE BUDGET (`characters/npcBodies.js` createFrameBudget, the page's one
+  NPC_FRAME_BUDGET, NPC_FRAME_TIERS by the switch's tier: 24 bodies and 8
+  skins at Near, 48 and 16 at All - below the 28 and 10, 56 and 20 MWNPC7
+  summed for the foes, the watch and the walkers, so no lane wired since
+  adds a body or a skin). Each lane, as it syncs, reports the squared
+  distances of what it could stand - its nearest within its own range, to
+  its own cap, a sorted insertion into its own buffer (no allocation a
+  frame) - and the budget's cut is the k-th nearest across every lane's
+  last report (a lane syncs at its host's own point in the frame, so a
+  report is at most a frame old; one older than NPC_BUDGET_STALE_MS, or a
+  lane let go, takes no share). The lane stands its bodies within the cut
+  (PeerBodies `setLimits`: the range), so the frame's bodies are the
+  nearest k, whoever's; those tied at the cut stand together.
+- THE EDGE HELD. A body standing keeps its place to NPC_BUDGET_HYSTERESIS
+  (1.15) past the range, and a far one returns only within it - the cut
+  moves as the crowd does, and each fall and stand was a skin. The lane
+  ranks a body it holds (PeerBodies `holds`) by that hysteresis in its
+  report, so the cut counts the held among the k: the bound stays exact.
+  The range is set a hair past the cut, so the body AT it is never lost to
+  the root's rounding and back the next frame.
+- THE SKINS SHARED. Each lane with a body in the cut takes one skin a frame
+  and the rest go by its share of them - the frame's sum the budget's, or
+  one a lane where more lanes than that stand; a lane under its own cap
+  keeps the lesser.
+- NO RIG PAST THE RANGE. An NPC lane's PeerBodies builds no body for one
+  past its range (`buildInRange`) - their sprites stand - so the one build
+  queue is never spent on bodies the frame would not stand. The peers keep
+  their own instance as it was: no budget, no hysteresis, a rig for a peer
+  far off, ready.
+- MEASURED (law 5). `node tools/mwNpcLaneProbe.mjs` drives the REAL lanes
+  (createPopulationLane over createNpcBodies over PeerBodies) on stub rigs
+  that count a skin, a drawn body, a rig built and a bind of the sprite
+  target, over 600 frames of that street walking round the eye 2-70 m out:
+
+  | tier | lanes | bodies/frame | skins/frame | draws/frame | binds/frame | rigs built |
+  |---|---|---|---|---|---|---|
+  | near | each alone | 45.0 | 21.00 | 45.0 | 7.00 | 70 |
+  | near | one budget | 24.0 | 6.50 | 24.0 | 7.00 | 35 |
+  | all | each alone | 91.0 | 37.33 | 91.0 | 7.00 | 99 |
+  | all | one budget | 48.0 | 12.00 | 48.0 | 7.00 | 67 |
+
+  A skin is a palette upload (MWNPC1) and a body drawn a tile of the sprite
+  target (MWNPC2); their milliseconds are PEER-CADENCE's and PERF-RIG1's
+  per body, times these counts.
+
+NOT HERE: ONE BIND A FRAME (law 2) holds per lane, not per frame - a bind
+of the sprite target for each lane that draws a body (seven on that
+street; an empty lane's flush binds nothing). A bind is a target switch
+and a tile clear, not a body's cost; one bind for every lane would draw
+every lane's quads at one point of the frame, past their hosts' own draw
+order.
+
+PROVEN. `test/mwnpc11_budget.test.js` (5): the budget alone (the k-th
+nearest across reports, Infinity while fewer, only a buffer's first n, a
+stale or dropped lane none, the skins one a lane and the rest by share,
+one each where more lanes than skins); PeerBodies' limits (a body past the
+new range its sprite again, no rig past the range for a lane that builds
+in range, the hysteresis held one way and not the other, a peers'
+instance as it was); two lanes on one budget against each alone (six
+standing, the nearest, two skins, the rigs - and 24 standing alone; a lane
+let go hands the frame to the other, its six nearest exactly); the tiers
+below MWNPC7's sum and every host's lane on the page's budget; a shuffled
+crowd's six nearest, and a lane past its range taking no skin.
+`tools/mutants/mwnpc11.json`: 24 mutants, 24 dead.

@@ -44,6 +44,86 @@ export const WATCH_BODY_TIERS = Object.freeze({
 /** The tier a player who never chose stands under. */
 export const NPC_BODIES_DEFAULT = 'near';
 
+/** MWNPC11 (bible/04-Characters/Morrowind-NPCs.md section 16): EVERY NPC LANE'S ONE FRAME, by the same tier - the most
+ *  bodies standing (stepped, skinned on their cadence, drawn) across every population's lane, nearest first, and the
+ *  most skins a frame among them. Below what MWNPC7 stated for the three lanes it summed (the foes', the watch's and the
+ *  walkers': 28 bodies and 10 skins at Near, 56 and 20 at All), so no lane wired since adds a body or a skin to a frame -
+ *  a port's street in a siege with a party on the road stands what a street of foes, watch and walkers did. */
+export const NPC_FRAME_TIERS = Object.freeze({
+  off: null,
+  near: Object.freeze({ bodies: 24, skins: 8 }),
+  all: Object.freeze({ bodies: 48, skins: 16 }),
+});
+/** MWNPC11: a standing body keeps its place this much past the frame's cut - the cut moves as the crowd does, and a
+ *  body on its edge must not stand and fall frame by frame (each fall and stand a skin). */
+export const NPC_BUDGET_HYSTERESIS = 1.15;
+/** MWNPC11: a lane's report older than this (ms) is a lane no longer drawn - it takes no share of the frame. */
+export const NPC_BUDGET_STALE_MS = 250;
+
+/**
+ * MWNPC11: THE FRAME BUDGET THE NPC LANES SHARE. Each lane reports, as it syncs, the squared distances of the actors it
+ * could stand (its nearest within its own range and cap, sorted - one already holding a body ranked by the hysteresis
+ * it is held to, NPC_BUDGET_HYSTERESIS, so the held count among the k); `cut(k)` is the squared distance of the k-th nearest
+ * across every lane's last report (Infinity while fewer stand) - each lane then stands its bodies within it, so the
+ * frame's bodies are the nearest k whoever's they are; `skins` a lane's share of the frame's skins - one for each lane
+ * with a body in the cut, the rest by its share of them, so the frame's sum is the budget's (or one a lane where more
+ * lanes than that stand). The lanes sync at their hosts' own points in the frame, so a report is at most a frame old.
+ * No allocation a frame: a lane's distances live in its own buffer.
+ * @param {{ now?: () => number }} [o]
+ */
+export function createFrameBudget({ now = () => performance.now() } = {}) {
+  /** @type {Map<any, { d2: Float64Array, n: number, at: number, i: number, inCut: number }>} */
+  const lanes = new Map();
+  /** @type {any[]} */
+  const live = [];
+  let cutD2 = Infinity;
+  const fresh = () => {
+    live.length = 0;
+    const t = now();
+    for (const r of lanes.values()) if (t - r.at <= NPC_BUDGET_STALE_MS && r.n > 0) live.push(r);
+  };
+  return {
+    /** This lane's candidates this frame: `d2` its own buffer, the first `n` sorted ascending. */
+    report(lane, d2, n) {
+      let r = lanes.get(lane);
+      if (!r) lanes.set(lane, (r = { d2, n: 0, at: 0, i: 0, inCut: 0 }));
+      r.d2 = d2; r.n = n; r.at = now();
+    },
+    /** A lane let go. */
+    drop(lane) { lanes.delete(lane); },
+    /** The squared distance the `k` nearest candidates across the lanes stand within (Infinity: fewer than k). */
+    cut(k) {
+      fresh();
+      for (const r of live) r.i = 0;
+      cutD2 = Infinity;
+      for (let c = 0; c < k; c++) {
+        let best = null;
+        for (const r of live) if (r.i < r.n && (!best || r.d2[r.i] < best.d2[best.i])) best = r;
+        if (!best) { cutD2 = Infinity; break; }
+        cutD2 = best.d2[best.i++];
+      }
+      return cutD2;
+    },
+    /** This lane's skins of `skins` under the last cut: one each lane with a body in it, the rest by its share. */
+    skins(lane, skins) {
+      let lanesIn = 0, total = 0;
+      for (const r of live) {
+        let c = 0;
+        while (c < r.n && r.d2[c] <= cutD2) c++;
+        r.inCut = c;
+        if (c) { lanesIn++; total += c; }
+      }
+      const mine = lanes.get(lane)?.inCut ?? 0;
+      if (!mine) return 0;
+      return 1 + Math.floor((Math.max(0, skins - lanesIn) * mine) / total);
+    },
+    /** The lanes reporting now (the probe's, a test's). */
+    get lanes() { fresh(); return live.length; },
+  };
+}
+/** MWNPC11: the page's one - every host's lane (createHostNpcBodies) shares it. */
+export const NPC_FRAME_BUDGET = createFrameBudget();
+
 /** An actor's id among the body layers': its lane and its own id - never a relay id (the wire's ID_RE has no colon)
  *  nor a family member's (`fam:`). */
 export const npcPeerId = (lane, id) => `npc:${lane}:${id}`;
@@ -78,9 +158,11 @@ const sceneOf = (/** @type {any} */ s) => [s.x, s.y, s.z];
  * The lane, stood each frame between `begin` and `end` - `stand` every actor a population offers, `end` syncs the
  * bodies, the body pass `draw`s them, and the host asks `has` before it draws its own billboard.
  * @param {{ renderer: any, enabled?: () => boolean, generation?: () => number, tier?: () => string, createRig?: Function,
- *   now?: () => number, warn?: (m: string) => void, collider?: () => any, tiers?: Record<string, any> }} p
+ *   now?: () => number, warn?: (m: string) => void, collider?: () => any, tiers?: Record<string, any>,
+ *   budget?: ReturnType<typeof createFrameBudget> | null, frameTiers?: Record<string, any> }} p
  */
-export function createNpcBodies({ renderer, enabled = () => true, generation = () => 0, tier = () => NPC_BODIES_DEFAULT, createRig, now, warn, collider, tiers = NPC_BODY_TIERS }) {   // MWNPC5b: `tiers` a table of the caller's (a test's)
+export function createNpcBodies({ renderer, enabled = () => true, generation = () => 0, tier = () => NPC_BODIES_DEFAULT, createRig, now, warn, collider, tiers = NPC_BODY_TIERS,   // MWNPC5b: `tiers` a table of the caller's (a test's)
+  budget = null, frameTiers = NPC_FRAME_TIERS }) {   // MWNPC11: the frame budget the lane shares (null: none - a test's lane alone), and its tiers
   /** @type {PeerBodies|null} */
   let bodies = null;
   let standing = null;   // the tier the lane stands under
@@ -104,12 +186,38 @@ export function createNpcBodies({ renderer, enabled = () => true, generation = (
     if (want !== standing) {
       bodies?.destroy();
       const limits = tiers[want] ?? null;
-      bodies = limits ? new PeerBodies({ renderer, enabled, generation, limits, gate: BODY_BUILD_GATE, ...(createRig ? { createRig } : {}), ...(now ? { now } : {}), ...(warn ? { warn } : {}), ...(collider ? { collider } : {}) }) : null;
+      bodies = limits ? new PeerBodies({ renderer, enabled, generation, limits: budget ? { ...limits, buildInRange: true, hysteresis: NPC_BUDGET_HYSTERESIS } : limits, gate: BODY_BUILD_GATE, ...(createRig ? { createRig } : {}), ...(now ? { now } : {}), ...(warn ? { warn } : {}), ...(collider ? { collider } : {}) }) : null;
       standing = want;
     }
     return bodies;
   };
-  return {
+  /** MWNPC11: this lane's candidates' squared distances, its own buffer (grown, never a frame's garbage) */
+  let d2s = new Float64Array(0);
+  /** MWNPC11: share the frame - report the nearest this lane could stand (within its range, to its cap: a sorted
+   *  insertion into its own buffer, a held body ranked by its hysteresis), take its range and skins from the cut. */
+  const share = (b, eye) => {
+    const lim = tiers[standing], ft = frameTiers[standing];
+    if (!lim || !ft) return;
+    const r2 = lim.range * lim.range, cap = lim.max, h2 = NPC_BUDGET_HYSTERESIS * NPC_BUDGET_HYSTERESIS;
+    if (d2s.length < cap) d2s = new Float64Array(cap);
+    let n = 0;
+    for (const p of peers) {
+      const dx = p.shown.x - eye[0], dy = p.shown.y - eye[1], dz = p.shown.z - eye[2];
+      // one that holds a body ranks as near as the hysteresis it is held to (its body falls only past range x it), so
+      // the cut counts the frame's bodies exactly - the held ones among them
+      const d2 = (dx * dx + dy * dy + dz * dz) / (b.holds(p.id) ? h2 : 1);
+      if (!(d2 <= r2) || (n === cap && d2 >= d2s[n - 1])) continue;
+      let j = n < cap ? n++ : n - 1;
+      while (j > 0 && d2s[j - 1] > d2) { d2s[j] = d2s[j - 1]; j--; }
+      d2s[j] = d2;
+    }
+    budget.report(self, d2s, n);
+    const cut = budget.cut(ft.bodies);
+    // the range a hair past the cut: the body AT it (often the held one whose rank set it) stands, never lost to the
+    // root's rounding and back the next frame
+    b.setLimits({ range: Math.min(lim.range, Math.sqrt(cut) * (1 + 1e-9)), skinBudget: Math.min(lim.skinBudget, budget.skins(self, ft.skins)) });
+  };
+  const self = {
     /** A frame begins: nobody stands yet. */
     begin() {
       peers.length = 0;
@@ -133,8 +241,14 @@ export function createNpcBodies({ renderer, enabled = () => true, generation = (
       r.conceal = conceal; r.flash = flash > 0 ? flash : 0; r.fx = fx; r.dead = !!actor.dead; r.frame = frame;
       r.scale = actor.scale > 0 ? actor.scale : 1;   // MWNPC10
     },
-    /** The frame's actors to their bodies. @param {number} dt @param {number[]|null} eye */
-    end(dt, eye) { lane()?.sync(peers, sceneOf, dt, eye, syncOpts); },
+    /** The frame's actors to their bodies - MWNPC11: under the frame's budget, shared with every other lane.
+     *  @param {number} dt @param {number[]|null} eye */
+    end(dt, eye) {
+      const b = lane();
+      if (!b) return;
+      if (budget && eye) share(b, eye);
+      b.sync(peers, sceneOf, dt, eye, syncOpts);
+    },
     /** Does this actor stand in a body - so its host draws no billboard for it? @param {string} laneName @param {any} id */
     has(laneName, id) { return !!bodies?.has(npcPeerId(laneName, id)); },
     /** The bodies, in the body pass (inside its batch - renderer.js beginCharacterSpriteBatch). @param {any} canvas @param {any} o */
@@ -148,12 +262,13 @@ export function createNpcBodies({ renderer, enabled = () => true, generation = (
     /** The floating origin moved (the peer layers' law, AUDIT ONLINE D5). @param {number[]} o */
     offsetAll(o) { bodies?.offsetAll(o); },
     /** Everything let go (the place left, the lane switched off). */
-    destroy() { peers.length = 0; info.clear(); bodies?.destroy(); bodies = null; standing = null; },
+    destroy() { peers.length = 0; info.clear(); bodies?.destroy(); bodies = null; standing = null; budget?.drop(self); },   // MWNPC11: and its share of the frame
     /** How many actors were offered this frame. */
     get offered() { return peers.length; },
     /** The tier the lane stands under (after the last `end`). */
     get tier() { return standing; },
   };
+  return self;
 }
 
 /** MWNPC5b: is the lane wanted - the enhanced skin, Morrowind data attached, and the player's tier not Off (the
@@ -164,7 +279,7 @@ export function npcBodiesOn() {
 
 /** MWNPC5b: a host's lane - the gate, the data generation and the tier read as every host reads them. */
 export function createHostNpcBodies({ renderer, collider = () => null, tiers = NPC_BODY_TIERS }) {   // MWNPC6: `tiers` a population's own caps (WATCH_BODY_TIERS)
-  return createNpcBodies({ renderer, enabled: npcBodiesOn, generation: morrowindDataGeneration, tier: () => getPref('mwNpcBodies') ?? NPC_BODIES_DEFAULT, collider, tiers });
+  return createNpcBodies({ renderer, enabled: npcBodiesOn, generation: morrowindDataGeneration, tier: () => getPref('mwNpcBodies') ?? NPC_BODIES_DEFAULT, collider, tiers, budget: NPC_FRAME_BUDGET });   // MWNPC11: every host's lane on the one frame
 }
 
 /**

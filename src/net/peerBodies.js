@@ -317,9 +317,10 @@ export class PeerBodies {
    * @param {() => number} [p.generation] HARD3: the Morrowind data's generation. Destructured since MWBODY1 and never documented, which is how a caller finds out a parameter exists - by reading the destructuring.
    * @param {(m: string) => void} [p.warn] HARD3: likewise - the injected warn a test reads instead of the console.
    * @param {() => any} [p.collider] CLIMB6: the scene's collider, for a peer's floor under its climb (climbPose.js floorGapAt).
-   * @param {{max?: number, range?: number, skinBudget?: number, spareMax?: number}} [p.limits] MWNPC3: this instance's own
+   * @param {{max?: number, range?: number, skinBudget?: number, spareMax?: number, buildInRange?: boolean, hysteresis?: number}} [p.limits] MWNPC3: this instance's own
    *   caps - the most bodies, the range they stand to, the skins a frame, the spares kept. Every one defaults to the
    *   module's constant, so the peers, the family and the card table read what they read; the NPC lane sets its own.
+   *   MWNPC11: `buildInRange` no rig for one past the range, `hysteresis` how far past it a standing body is held.
    * @param {{chain: Promise<any>}|null} [p.gate] MWNPC4: the build queue, SHARED - BODY_BUILD_GATE, which every body lane
    *   the hosts stand passes, so one body builds at a time on the page however many lanes ask; none, the instance's own.
    */
@@ -329,6 +330,8 @@ export class PeerBodies {
     this._range = limits?.range ?? BODY_RANGE;
     this._skinBudget = limits?.skinBudget ?? SKIN_BUDGET;
     this._spareMax = limits?.spareMax ?? SPARE_MAX;
+    this._buildInRange = !!limits?.buildInRange;   // MWNPC11: an NPC lane builds no body for one past its range (it keeps its sprite)
+    this._hyst = limits?.hysteresis > 1 ? limits.hysteresis : 1;   // MWNPC11: a standing body keeps its place this much past the range
     this._collider = collider;   // CLIMB6: the host's, for the floor under a hanging peer's feet
     this.enabled = enabled;
     this._generation = generation;   // the Morrowind data's generation: a re-attach releases every body built from the last (weaponRig's fpRecheck, for the peers)
@@ -360,6 +363,14 @@ export class PeerBodies {
 
   /** Is this body standing for its peer: built, in range, its peer present, the rig live? */
   _standing(b) { return !!(b && b.state === 'ok' && b.goneAt == null && !b.far && b.feet && (b.rig.thirdActive?.() ?? true)); }
+
+  /** MWNPC11: the frame's limits - the range a body stands within and the skins it may take - moved by the NPC lanes'
+   *  one frame budget (characters/npcBodies.js). @param {{ range?: number, skinBudget?: number }} o */
+  setLimits(o) { if (o.range >= 0) this._range = o.range; if (o.skinBudget >= 0) this._skinBudget = o.skinBudget; }
+
+  /** MWNPC11: does this peer hold a body within the range (built or building, not far, not leaving) - one the frame's
+   *  budget ranks by the hysteresis it is held to? @param {string} id */
+  holds(id) { const b = this._bodies.get(id); return !!b && b.goneAt == null && !b.far; }
 
   /** Does this peer stand in a body (so the doll is not drawn for it)? */
   has(id) { return this._standing(this._bodies.get(id)); }
@@ -470,8 +481,10 @@ export class PeerBodies {
       const f = this._failed.get(fkey);
       if (f) { if (now < f.until) continue; this._failed.delete(fkey); }
       const p = toScene(peer.shown);
+      const d2 = near ? dist2(p, near) : 0;
+      if (this._buildInRange && d2 > this._range * this._range) continue;   // MWNPC11: past the range, no rig built - its sprite stands
       const w = this._wantPool[n] ?? (this._wantPool[n] = { peer: null, key: '', d2: 0, pri: false, since: 0 });
-      w.peer = peer; w.key = fkey; w.d2 = near ? dist2(p, near) : 0; w.pri = priority ? !!priority(peer.id) : false;
+      w.peer = peer; w.key = fkey; w.d2 = d2; w.pri = priority ? !!priority(peer.id) : false;
       w.since = this._wanted(id, now);   // WB9h
       want[n++] = w;
     }
@@ -576,7 +589,7 @@ export class PeerBodies {
     // (see online.js lerpAngle), and a loop over a large one never falls.
     b.yaw += wrapAngle(peerBodyYaw(peer.shown) - b.yaw) * (dt > 0 ? Math.min(1, dt * YAW_EASE) : 1);   // CLIMB5: to the wall, on the climb
     b.d2 = near ? dist2(f, near) : 0;
-    b.far = !!near && b.d2 > this._range * this._range;
+    b.far = !!near && b.d2 > this._range * this._range * (b.far ? 1 : this._hyst * this._hyst);   // MWNPC11: a standing body held to the hysteresis past the range, a far one back within it
     b.cam = peerCamera(peer.shown, f, b.speed, b.cam, b.yaw);
     // CLIMB6: the climb the body's limbs take - the hold rebuilt from the pose, a move from its kind, lip and time
     b.cam.climb = (b.climbTrack ??= new PeerClimbTrack()).input(peer.shown, f, b.yaw, this._now(), this._collider());
