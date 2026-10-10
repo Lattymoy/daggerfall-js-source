@@ -39,7 +39,7 @@ import { createRipples, createRippleStir, RIPPLE_SPAN, RIPPLE_CELLS } from '../w
 import { GROUND_OFFSET, GROUND_TILE_DIM } from '../world/rmbLayout.js';
 import { GROUND_RECORD_LIMIT } from '../world/terrainTiles.js';   // AUDIT WATER-NEXT m8: MeshReader.cs:487's marker, one home
 import { climbRigInput } from '../player/climbPose.js';   // CLIMB6: the body's limbs on the climb
-import { PlayerMotor, startRestGroundedCheck, motionBagOf } from '../player/motor.js';   // the rest gate's grounded input, one home; WW2: the one motion bag
+import { PlayerMotor, startRestGroundedCheck, motionBagOf, CAPSULE_RADIUS } from '../player/motor.js';   // the rest gate's grounded input, one home; WW2: the one motion bag
 import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER, exteriorSwimming } from '../player/exteriorSurface.js';   // ROAD-B (b3): PlayerMotor's three exterior surface methods; OT1: IsPlayerSwimming above ground
 import { isOnFoot, TRANSPORT_MODES, hasHorse, hasCart } from '../systems/transport.js';   // HCC: TransportManager.HasHorse / HasCart   // TransportManager.IsOnFoot - the raycast's reach and the mounted footstep gate
 import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../systems/skills.js';   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
@@ -101,7 +101,8 @@ import { createHorseCartRuntime } from '../systems/horseCart.js';   // HCC: Trai
 import { setHoldingsProvider, stableProviderFor } from '../ui/holdingsPages.js';   // HOLDINGS: the Stable page over this host's horse and wagon (no boats here)
 import { isQualifyingThreatState } from '../systems/horseFollow.js';   // HCC: CollectThreats' qualification
 import { totalWeight } from '../systems/inventory.js';   // HCC: PlayerEntity.WagonWeight
-import { wagonKgFor, activeWagonKind } from '../systems/wagonKinds.js';   // HCC: ItemHelper.WagonKgLimit - WAGONS1: the driven wagon's
+import { wagonKgFor, activeWagonKind, horseCountOf, wagonTeamShort } from '../systems/wagonKinds.js';   // HCC: ItemHelper.WagonKgLimit - WAGONS1: the driven wagon's
+import { SEATED_EYE_HEIGHT } from '../player/seatPose.js';   // WAGONS3: the driver's seated eye
 import { InputMessageBoxWindow } from '../ui/inputMessageBox.js';   // HCC: the horse's name
 import { isLocalPlayerTarget } from '../characters/enemyTargets.js';   // HCC: CollectThreats' `senses.Target == player`
 import { SeasonHelper, archivePrefix as seasonPrefixOf } from '../systems/seasonsIliacBay.js';   // SIB1: Seasons of the Iliac Bay's SeasonHelper; WINDFALL1: and its atlases' prefixes, which Windfall's own tables key on
@@ -1706,7 +1707,12 @@ export async function bootExterior(canvas, renderer, params, status) {
     renderer, meshes: { getGpuMesh, cpuModels }, collider: () => collider, now: () => performance.now() / 1000,
     threats: hccThreats, selfId: () => null, peerName: () => null, onChanged: null, log: console,
     ...wagonPoolDeps(() => playerEntity.items ?? []),   // WAGONS1: Mac's wagons, by the one the player drives
+    horses: () => horseCountOf(playerEntity.items ?? []),   // WAGONS3: my parked pair keeps its second horse while I own two
+    playerCapsule: () => (walkMode ? { feet: player.pos, height: player.height, radius: CAPSULE_RADIUS } : null),   // WAGONS3: my parked wagon's box never stands round me
+    renderShift: () => { if (!walkMode) return null; const f = player.feetAt(); return [f[0] - player.pos[0], 0, f[2] - player.pos[2]]; },   // WAGONS3: my driven wagon drawn where I am drawn
   });
+  /** WAGONS3: my seat on my driven wagon's bench this frame (world.js's twin) - null off a bench. */
+  let _driverSeat = null;
   // RW1 x WAGONS2 (FINAL AUDIT): the wagons stand in the street a window looks out on, as world.js has them - the fixed
   // city stands no caravan room, so none is left out
   renderer.outsideViewDraws?.add(({ renderer: r }) => { if (hccOn()) hcc.drawOutside(r, null); });
@@ -1716,6 +1722,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       get: () => player.transportMode, set: (m) => mountRig.setMode(m),
       hasCart: () => hasCart(playerEntity.items ?? []), hasHorse: () => hasHorse(playerEntity.items ?? []), isOnShip: () => false,
     },
+    teamShort: () => wagonTeamShort(playerEntity.items ?? []),   // WAGONS3: a pair's wagon takes its pair
     player: { position: hccPlayerCentre, forward: hccForward, movement: () => ({ position: hccPlayerCentre(), forward: hccForward() }) },
     gps: { worldX: () => _anchorNative(player.pos).x, worldZ: () => _anchorNative(player.pos).z, scenePosition: hccPlayerCentre, currentMapPixel: () => _locPixel },
     streaming: { isReady: () => true, isInit: () => false, mapPixelX: () => _locPixel.x, mapPixelY: () => _locPixel.y, ratio: () => 1 / GLOBAL_SCALE },
@@ -1757,6 +1764,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     hcc.setEnabled(hccOn()); if (hcc.enabled) hccPollSettings(nowMs); hcc.frame(dt, cam.pos, gamePaused() ? 0 : dt * hccTimeScale());   // AUDIT HCC (branch audit): the runtime's Time.deltaTime - held by the pause, scaled with the world
     const tipOn = hcc.enabled && walkMode && modeNow() === 'exterior' && !worldPlaqueOn() && !gamePaused();   // AUDIT HCC U6: world.js's twin
     horseNameTooltip.set(tipOn ? hcc.tooltipText(cam.pos, [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)], collider) : '');
+    if (modeNow() !== 'exterior') { _driverSeat = null; player.drawFeet = null; player.drawYaw = null; }   // WAGONS3: a door - off the bench
   };
   const hccPollSettings = (nowMs) => {
     if (nowMs - _hccSettingsAt < 1000) return;
@@ -2527,6 +2535,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // named reason rather than an arm at the world origin.
     // MW-D10: rule 54's neck pitch; MW-D15: rule 32(a)'s sneak sink.
     camera: () => ({ pos: player.eyeAt(), yaw: cam.yaw, pitch: cam.pitch, sneaking: !!player.isSneaking, feet: player.pos, climbing: !!(player.climb?.isClimbing || player.mantling || player.onWall),   // HT1
+      seat: _driverSeat ? { feet: _driverSeat.feet, yaw: _driverSeat.yaw, top: _driverSeat.top } : null,   // WAGONS3: on my wagon's bench, the body seated (still on it - combat/fpArm.js seatedCamera)
       bob: [0, player.bobOffset ? player.bobOffset[1] : 0],   // IG1: the bob's vertical feeds the first-person offset
       move: motionBagOf(player),   // MW-D26: the movement-settings vector, the reference's own selection source; MW-D39 added the jump-state inputs; WW2: the one bag (a partial copy left the bob's idle gate unsent)
       climb: climbRigInput(player, cam.yaw) }),   // CLIMB6: the climb's snapshot - the body's limbs on the stone (player/climbPose.js)
@@ -5332,6 +5341,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         });
       }
       cam.pos = player.eyeAt();   // EV1: the interpolated render eye
+      if (_driverSeat && player.transportMode === TRANSPORT_MODES.Cart) cam.pos = [_driverSeat.feet[0], _driverSeat.feet[1] + SEATED_EYE_HEIGHT, _driverSeat.feet[2]];   // WAGONS3: on my bench (last frame's seat until the wagon steps) - the picks aim from the eye on the screen
       // DC1: PlayerDeath.Update's camera sink (per-frame off the fresh eye array).
       if (townTalk.overlay instanceof DeathScreen) cam.pos[1] -= townTalk.overlay.drop;
       if (townTalk.overlay instanceof DeathScreen) townTalk.overlay.tiltView(cam);   // DEATH3
@@ -5526,6 +5536,12 @@ export async function bootExterior(canvas, renderer, params, status) {
       if (keys.has('KeyD')) for (let a = 0; a < 3; a++) cam.pos[a] += right[a] * speed;   // fly-cam (dev)
     }
 
+    // AUDIT HCC H1: LateUpdate - before the world pass draws the wagon. WAGONS3: and before the camera, which sits on
+    // the bench of the wagon it just stood (world.js's twin: the eye on the seat in first person, the body in third)
+    hccTick(dt, now);
+    _driverSeat = walkMode && player.transportMode === TRANSPORT_MODES.Cart && !(townTalk.overlay instanceof DeathScreen) ? hcc.driverSeat() : null;
+    if (_driverSeat) cam.pos = [_driverSeat.feet[0], _driverSeat.feet[1] + SEATED_EYE_HEIGHT, _driverSeat.feet[2]];
+    player.drawFeet = _driverSeat ? _driverSeat.feet : null; player.drawYaw = _driverSeat ? _driverSeat.yaw : null;   // WAGONS3: the body drawn on the bench (player/motor.js bodyFeetAt / bodyYawFor)
     // Shot vantage scales with the location extent.
     const riding = tpMode && walkMode && !!rig;
     const TP_DIST = 3.2;   // third-person pull-back along the view ray (camera-terrain clip: open, noted in the arc)
@@ -5534,10 +5550,11 @@ export async function bootExterior(canvas, renderer, params, status) {
     // ride-view predates the machine and is its own recorded law).
     const mwv = (!shotMode || walkMode) && !riding
       ? mwViewFrame({ fpEye: cam.pos, feet: player.feetAt(), yaw: cam.yaw, pitch: cam.pitch,
-          dt, riding: !!player.riding,   // AUDIT-EOTB F3/F4: the host's own clock, and the one state only it has
+          dt, riding: !!player.riding && !_driverSeat && !(player.transportMode === TRANSPORT_MODES.Cart && hcc.benchKind()),   // AUDIT-EOTB F3/F4: the host's own clock, and the one state only it has; WAGONS3: the bench is no saddle (AUDIT WAGONS3 B2: on a frame with no seat either)
+          ...(_driverSeat ? { seated: true, stopped: true, feet: _driverSeat.feet } : {}),   // WAGONS3: seated on it, still on it, the camera's feet the seat's (after `feet`: it wins)
           cart: player.transportMode === TRANSPORT_MODES.Cart, onExteriorPath: _surfPath,   // EOTB-IL: UpdateWagon's two host facts
-          raycast: (o, d, m) => collider.raycast(o, d, m),
-          spherecast: (o, r, d, m) => { const h = collider.sphereCast(o, r, d, m).dist; return Number.isFinite(h) ? h : null; } })   // MAC-A: castSphere's seam beside the ray - the camera's two obstacle guards are sphere casts (camera.cpp:186, :200)
+          raycast: (o, d, m) => Math.min(collider.raycast(o, d, m), hcc.cameraHit(o, d, m)),   // WAGONS3: my driven wagon's body a wall to the camera on its bench
+          spherecast: (o, r, d, m) => { const h = Math.min(collider.sphereCast(o, r, d, m).dist, hcc.cameraHit(o, d, m, r)); return Number.isFinite(h) ? h : null; } })   // MAC-A: castSphere's seam beside the ray - the camera's two obstacle guards are sphere casts (camera.cpp:186, :200)
       : { eye: cam.pos, thirdPerson: false };
     const target = shotMode && !walkMode && !_shotPosed
       ? [extentX * 0.46, 6, extentZ * 0.5]
@@ -5549,6 +5566,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       : riding
         ? [cam.pos[0] - fwd[0] * TP_DIST, cam.pos[1] - fwd[1] * TP_DIST, cam.pos[2] - fwd[2] * TP_DIST]
         : mwv.eye;
+    hcc.faceTeams(eye);   // WAGONS3: the team's billboards turned to the eye that draws them
     // ROAD-E E5: the DOCKED large HUD shrinks the world pass rather
     // than covering it (ViewportChanger.cs:56-62), and Unity derives a
     // camera's aspect from its viewport - so the lens takes the bar's
@@ -5718,7 +5736,6 @@ export async function bootExterior(canvas, renderer, params, status) {
     // WOD4: what withPlayerLights prepended wears the shared colour, the selection its own (world.js's _wodSetLights)
     renderer.setPointLights(lit, CITY_LIGHT_COLOR_F32,
       holdSel ? wodLightColors(lit.length / 4, lit.length / 4 - holdSel.data.length / 4, holdSel.colors, CITY_LIGHT_COLOR_F32) : null);
-    hccTick(dt, now);   // AUDIT HCC H1: LateUpdate - before the world pass draws the wagon
     renderer.setClearColor(SKY_CLEAR);   // INCIDENT 2026-09-04 / REVIEW 2026-09-05: this frame is the EXTERIOR's (the mode frames returned above and clear black in worldModes) - CameraClearManager.cs:51-57
     renderer.setFlashLight(sky.lightningLight() ?? boltFrame.flash);   // DS1: Dynamic Skies' LightningFlash, composed first on the point-light channel just stored; BOLT: else a near ground strike's own light
     renderer.setWorldViewport(worldViewportRect(canvas.clientWidth, canvas.clientHeight));   // E5: ViewportChanger.Update, every frame

@@ -129,7 +129,7 @@ test('FIELD BUGS 2026-09-29 (the sea) #3: THE HELM\'S REACH AND HER OWN HULL - t
   }
   // the world's wiring
   assert.match(WORLD, /const csaHelm = csaOn\(\) && csaRuntime\?\.isSailing\(\) \? csaRuntime\.state\.CurrentBoat : null;\n\s+const camFilter = csaHelm \? csaCameraFilter\(csaHelm\) : null;/);
-  assert.match(WORLD, /raycast: \(o, d, m\) => collider\.raycast\(o, d, m, camFilter\),\n\s+spherecast: \(o, r, d, m\) => \{ const h = collider\.sphereCast\(o, r, d, m, camFilter\)\.dist;/);
+  assert.match(WORLD, /raycast: \(o, d, m\) => Math\.min\(collider\.raycast\(o, d, m, camFilter\), hcc\.cameraHit\(o, d, m\)\),[^\n]*\n\s+spherecast: \(o, r, d, m\) => \{ const h = Math\.min\(collider\.sphereCast\(o, r, d, m, camFilter\)\.dist, hcc\.cameraHit\(o, d, m, r\)\);/);   // PIN MOVED (WAGONS3): and my driven wagon's body a wall to the camera on its bench
   assert.match(WORLD, /seaReach: csaHelm \? csaSeaReach\(csaHelm\) : 0,/);
   assert.match(WORLD, /for \(const \[key, b\] of _csaBuckets\) if \(b\.boat === boat\) skip\.push\(key\);/, 'her own buckets, and no other boat\'s');
 });

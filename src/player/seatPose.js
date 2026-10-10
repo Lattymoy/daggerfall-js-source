@@ -29,6 +29,10 @@ export const SEAT_TOP_DEFAULT = 0.8;
  *  its pelvis stands at 1.09 m, its thigh is 0.46 m and its shin 0.53 m, so a drop of 0.48 m puts the hips level with
  *  the knees over shins standing straight - a chair's sitter. Scaled by the race's height. */
 export const SEAT_HIP_DROP = 0.48;
+/** WAGONS3: the measured biped's pelvis over its feet standing (above), and so its seated hips' height over the floor
+ *  its feet rest on - a seat's top stands this far over the seated feet (world/wagonModels.js driverSeatFor). */
+export const SEAT_PELVIS_HEIGHT = 1.09;
+export const SEATED_HIP_HEIGHT = SEAT_PELVIS_HEIGHT - SEAT_HIP_DROP;
 /** The seated eye above the floor: the standing eye (motor.js EYE_HEIGHT) lowered by the hips' drop, so the first
  *  person looks from where the measured biped's seated head is (the port's standing eye is one height for every race,
  *  and so is this). */
@@ -51,6 +55,13 @@ export const SEAT_ANKLE = 0.08;
  *  forearm's thickness over the top. */
 export const SEAT_HAND_SIDE = 0.2;
 export const SEAT_HAND_OVER = 0.04;
+
+/** WAGONS3: a body seated on a moving seat (a wagon's bench) is still on it - the motor's bag (player/motor.js
+ *  motionBagOf) with its stride taken out, so the third-person body poses the seat and plays no walk under it. */
+export const seatedMotion = (bag) => ({ ...bag, forward: 0, strafe: 0, running: false, speed: 0, standing: true, riding: false, jumping: false });
+/** WAGONS3: a rig's camera snapshot as the body reads it - seated (`seat`, a wagon's bench or a table's chair), its
+ *  motion bag still (combat/fpArm.js update: the hosts hand the motor's bag whole, WW2's one bag). */
+export const seatedCamera = (cam) => (cam && cam.seat && cam.move ? { ...cam, move: seatedMotion(cam.move) } : cam);
 
 /** The table's top above the feet as the wire's byte. */
 export const seatTopByte = (top) => Math.min(POSE_SEAT_TOP_MAX, Math.max(1, Math.round((Number(top) || 0) / SEAT_TOP_STEP)));

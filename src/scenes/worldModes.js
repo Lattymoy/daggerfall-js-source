@@ -105,6 +105,7 @@ import { lookAt, perspective, mirrorProjectionX, trs, multiply, identity, UP_Y }
 const BATCH_IDENTITY = identity();   // PERF5: the merged level is in world space already
 import { pressed, released, routeKey, routeKeyUp, actionOf, held, moveHeld, anyMove, swallowBrowserKey, isSwingButton, swingHeld, installContextMenuGuard, swingKeyHeld } from '../ui/input.js';
 import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's centred label
+import { validYardKind, yardCounter, yardStock, YARD_TEXT } from '../systems/merchantYards.js';   // MERCHANT-YARDS: a town's Stable and Wagon Yard - their counters
 import { makeWindowStack, pauseWhileOpen, hidesHud } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot; ROAD-tail: and its PAUSE; AUDIT PRE-MERGE 0928 U8: and the HUD's outright hide
 import { createActivateGate, activateFrame } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { FootstepMachine, pickFootstepSet, pickFootstepKind } from '../systems/footsteps.js';   // FS-slice; AUDIT DROPS E2: the kind the pose carries
@@ -2464,12 +2465,18 @@ export function createWorldModes(host) {
     return win;
   }
   let _shopFont = null;
+  let _shopFontLoad = null;   // MERCHANT-YARDS: the font's fetch in flight, so a wait can be had on it
+  /** The counter's art and font. MERCHANT-YARDS: answers when both have come in (or failed) - a yard's counter is opened in
+   *  the street, where no shop's entry may have loaded them yet, and its press waits for them (ASYNC NEVER DROPS). */
   const ensureShopFont = () => {
-    preloadTradeArt({ renderer, fetchBytes, palette });   // U8c: the trade screen art rides shop entry too
-    if (_shopFont) return;
-    fetchBytes('FONT0003.FNT')
-      .then((b) => { _shopFont = makeFont(renderer, new FntFile().load(b), 'FONT0003'); })
-      .catch(() => console.warn('[shop] FONT0003.FNT unavailable; the shelf browse is disabled'));
+    const art = preloadTradeArt({ renderer, fetchBytes, palette });   // U8c: the trade screen art rides shop entry too
+    if (!_shopFont && !_shopFontLoad) {
+      _shopFontLoad = fetchBytes('FONT0003.FNT')
+        .then((b) => { _shopFont = makeFont(renderer, new FntFile().load(b), 'FONT0003'); })
+        .catch(() => console.warn('[shop] FONT0003.FNT unavailable; the shelf browse is disabled'))
+        .finally(() => { _shopFontLoad = null; });
+    }
+    return Promise.all([art, _shopFontLoad]).then(() => {}, () => {});
   };
   // U23: the guild popup's own art. It rides EVERY interior entry, not
   // just a shop's - a guild hall, a temple and a knightly order are
@@ -3377,6 +3384,43 @@ export function createWorldModes(host) {
       },
     }, playerEntity);
   }
+  /** MERCHANT-YARDS: A YARD'S COUNTER (systems/merchantYards.js) - the Stable's or the Wagon Yard's, opened from the
+   *  street (scenes/merchantYardsHost.js): Buy over the yard's whole stock, minted fresh (a yard never sells out - a custom
+   *  merchant's openBuy, RR3's door), or Sell into a basket of its own, the yard buying what yardBuysItem says and nothing
+   *  else; priced by the counter's one law at YARD_QUALITY. The counter's art and font come in first, the press waiting
+   *  for them (ASYNC NEVER DROPS) - once: a game folder that will not give them opens nothing, and says so. Answers
+   *  whether the press was handled. `name` the yard's (merchantYards.js yardName), over the window.
+   *  AUDIT MERCHANT-YARDS Y3: ONE press waits - the latest, coalesced (two presses during the load opened two
+   *  windows) - and when the art comes in it opens only where it was pressed: the street, its slot still free. A door
+   *  gone through or a talk opened meanwhile makes the press the player's past, and nothing opens (a window opened
+   *  then took the interior's slot over whatever stood there, or the talk's in the street). */
+  let _yardWait = null;
+  function openYardTrade(kind, regionIndex, tradeMode = 'Buy', name = '') {
+    if (!validYardKind(kind) || mode !== 'exterior') return false;
+    if (!tradeDoorReady() || (!isEnhanced() && !_shopFont)) {
+      const first = !_yardWait;
+      _yardWait = { kind, regionIndex, tradeMode, name };
+      if (first) {
+        ensureShopFont().then(() => {
+          const w = _yardWait;
+          _yardWait = null;
+          if (!w || mode !== 'exterior' || townTalk?.overlay) return;
+          if (!tradeDoorReady() || (!isEnhanced() && !_shopFont)) { setMidScreenText(YARD_TEXT.shut); return; }
+          openYardCounter(w.kind, w.regionIndex, w.tradeMode, w.name);
+        });
+      }
+      return true;
+    }
+    return openYardCounter(kind, regionIndex, tradeMode, name);
+  }
+  /** The yard's counter itself, its art and font in. */
+  function openYardCounter(kind, regionIndex, tradeMode, name) {
+    const b = yardCounter(kind, regionIndex, name);
+    const win = openTradeWindow({ items: tradeMode === 'Sell' ? [] : yardStock(kind) }, b, tradeMode === 'Sell' ? 'Sell' : 'Buy');
+    if (!win) return true;   // DISC10-E L3: the trade door refused the beast (and said so) - handled, nothing to mount
+    mountServiceWindow(win);   // the street's slot (townTalk's) - the interior's is never drawn outdoors
+    return true;
+  }
   /** U40: the merchant's own Sell screen. DFU's merchant popup sells
    *  into the SHOP rather than into a shelf, so the goods land on the
    *  building's first shelf - the same place the shelf flow puts
@@ -3470,7 +3514,7 @@ export function createWorldModes(host) {
       otherItems: () => (playerEntity.otherItems ??= []),
       repairItems: () => repairJobsAt(playerEntity, b.buildingKey ?? 0, Math.floor(ownMinutes()), homeTownOf(b)),
       nowMinutes: () => Math.floor(ownMinutes()),
-      accepts: (it) => shopBuysItem(b.buildingType, it),
+      accepts: (it) => (typeof b.accepts === 'function' ? b.accepts(it) : shopBuysItem(b.buildingType, it)),   // MERCHANT-YARDS: a yard's counter says what it buys (systems/merchantYards.js yardCounter)
       enchanted: (it) => isEnchanted(it),
       isBeingRepaired: (it) => isBeingRepaired(it),
       allowMagicRepairs: getBool('Controls', 'AllowMagicRepairs'),
@@ -3525,6 +3569,7 @@ export function createWorldModes(host) {
       // the window owns; these are only the effects. The HUD lines go
       // at AddHUDText's 2-second delay (:918, :925), the same seam the
       // shop-quality lines take.
+      stealRefusal: () => b.noSteal ?? null,   // AUDIT MERCHANT-YARDS Y1: a counter whose keeper never looks away (a yard's) answers the window's Steal with its word, and nothing moves
       pickpocketSkill: () => skillValue(playerEntity, SKILLS.Pickpocket),
       tallyPickpocket: (n) => tallySkill(playerEntity, SKILLS.Pickpocket, n),
       tallyCrimeGuild: (a, n) => tallyCrimeGuildRequirements(playerEntity, a, n),
@@ -3727,6 +3772,7 @@ export function createWorldModes(host) {
   // multiplier of its own on the shop's price adjustment (never regionPriceAdjustment's region-wide index), for what the
   // player BUYS and has REPAIRED alone; what a shop pays for a sale is the shop's own
   function shopAdjustment(b, mode) {
+    if (Number.isFinite(b?.priceIndex)) return b.priceIndex;   // AUDIT MERCHANT-YARDS Y2: a counter that names its own index (a yard's, systems/merchantYards.js YARD_PRICE_INDEX) is priced at it, both ways
     const adj = regionPriceAdjustment(playerEntity, b?.regionIndex ?? 0);
     const f = mode === 'Buy' || mode === 'Repair' ? host.seatShopFactor?.(b) ?? 1 : 1;
     return f === 1 ? adj : Math.round(adj * f);
@@ -6840,6 +6886,9 @@ export function createWorldModes(host) {
     // LEFAY1 (scenes/lefayMonumentHost.js): Gothway Garden's monument to Julian LeFay - both exterior hosts stand it
     // (their `monumentTargets`), its steps' box and its column's met at its stone, its reach a static NPC's beside the ray's
     for (const t of host.monumentTargets?.() ?? []) targets.push(t);
+    // MERCHANT-YARDS (scenes/merchantYardsHost.js): every city's and town's Stable and Wagon Yard - the streaming host's
+    // (its `yardTargets`; the bench stands none): a keeper, a signboard, a horse, a wagon on show, each its own box
+    for (const t of host.yardTargets?.() ?? []) targets.push(t);
     _extList = { entries, npcs, boards, graves, targets };
     _extMark = mark;
     return _extList;
@@ -7322,6 +7371,10 @@ export function createWorldModes(host) {
     if (typeof key === 'string' && key.startsWith('lefay:')) {   // LEFAY1: the monument - too far speaks the refusal; the plaque's lit row is the verb
       if (_hitDist > _hitReach) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }
       return host.activateMonument?.(key, getInteractionMode(), plaqueActionFor(key)) ?? true;
+    }
+    if (typeof key === 'string' && key.startsWith('yard:')) {   // MERCHANT-YARDS: a yard - too far speaks the refusal; the plaque's lit row (Buy, Sell) is the verb
+      if (_hitDist > _hitReach) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }
+      return host.activateYard?.(key, getInteractionMode(), plaqueActionFor(key)) ?? true;
     }
     if (_hitDist > _hitReach) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }   // AUDIT 65 MC-2: ActivateStaticDoor's OWN first statement (:501-504), before the bash sound and the lock ladder; the board arm keeps its gate inside activateBulletinBoard (:709-712), as C# does
     return activateStaticDoor(entries[key], entries, false, { verb: plaqueActionFor(key) });   // HOME2: the verb the door's plaque lit, if it listed any
@@ -13581,6 +13634,7 @@ export function createWorldModes(host) {
     exteriorActivationDistance,   // AUDIT 63 F33 (review): the rival distance the living-foe arm must beat
     exteriorHoverPick,   // WORLD-HOVER: the plaque's winner, raced exactly as the press's is
     exteriorHoverName,   // ...and what that winner is called
+    openYardTrade,   // MERCHANT-YARDS: a yard's counter, opened from the street (scenes/world.js merchantYards' `open`)
     attemptExteriorDoorBash,   // ROAD-B: WeaponEnvDamage's static-door arm (PlayerActivate.cs:1056-1079)
     frame,
     installShotProbes,

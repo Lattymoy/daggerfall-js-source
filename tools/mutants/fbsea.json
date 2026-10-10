@@ -128,8 +128,8 @@
   {
     "name": "FBSEA-3-the-own-hull-unskipped",
     "file": "src/scenes/world.js",
-    "old": "raycast: (o, d, m) => collider.raycast(o, d, m, camFilter),",
-    "new": "raycast: (o, d, m) => collider.raycast(o, d, m),",
+    "old": "raycast: (o, d, m) => Math.min(collider.raycast(o, d, m, camFilter), hcc.cameraHit(o, d, m)),",
+    "new": "raycast: (o, d, m) => Math.min(collider.raycast(o, d, m), hcc.cameraHit(o, d, m)),",
     "tests": [
       "test/fbsea_zoom.test.js"
     ]

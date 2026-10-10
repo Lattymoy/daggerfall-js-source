@@ -42,7 +42,7 @@
 import { lookAt, multiply, ortho, perspective, transformPoint, trs, wrapAngle } from '../world/mat4.js';
 import { ClimbPose } from '../player/climbPose.js';   // CLIMB6: the climb's limbs, in the world
 import { climbRequestToRig, climbRequestToFirstPerson } from './climbRig.js';   // CLIMB6: ...and in each rig's space
-import { seatRequestFor } from '../player/seatPose.js';   // CARDS2b: the seat in the rig's space
+import { seatRequestFor, seatedCamera } from '../player/seatPose.js';   // CARDS2b: the seat in the rig's space; WAGONS3: and the body still on it
 import { fieldOfView } from '../ui/viewSettings.js';   // CLIMB6: the world lens the arm's hands are matched to
 import { MW_ARM_PIXEL, CHAR_SPRITE_RT_SIZE } from '../render/renderer.js';
 import {
@@ -5290,7 +5290,7 @@ export function createFpArm() {
     update(dt, { pose = true, effectsDt = dt } = {}) {
       if (!built || !built.ok || !renderer) return;
       partClock += dt;   // MW-BOW1: frame time, an AutoPlay node's clock
-      const cam = camera && camera();
+      const cam = seatedCamera(camera && camera());   // WAGONS3: seated (a wagon's bench), the body plays no stride under the seat
       sneaking = !!(cam && cam.sneaking);
       // CLIMB6: the climb's limbs, every frame (a frame that does not pose still walks the gait: a peer's travel)
       const climbWorld = climbLaw.update(dt, (cam && cam.climb) || null);

@@ -53,8 +53,9 @@ export const JUDGE_LEVEL_MAX = 1000;
 export const STRIKES_FOR_REVIEW = 3;
 /** THE WEALTH MEASURE'S VERSION (wealthOf, itemLaw.js itemWorth, realmGoldLaw.js deedsOf's prices): moved whenever any of
  *  them counts a save differently, so a character's next checkpoint measures its stored record again under the new one
- *  and the change is no gain the budget charges (AUDIT INT: an open number moved was every character's gain at once). */
-export const WEALTH_VERSION = 1;
+ *  and the change is no gain the budget charges (AUDIT INT: an open number moved was every character's gain at once).
+ *  2: AUDIT WAGON-PRICE Y4 - a marked wagon counted at its kind's price (itemLaw.js worthCeiling). */
+export const WEALTH_VERSION = 2;
 /** How many findings one judgement keeps for staff to read - a save of ten thousand forged pieces is one verdict. */
 export const FINDINGS_KEPT = 40;
 

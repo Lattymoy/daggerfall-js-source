@@ -238,3 +238,23 @@ function dfuMagicDef() {
   }
   return buf;
 }
+
+test('AUDIT WAGON-PRICE Y4: a marked wagon counts to the wealth measure at its own price - the Open Wagon 9000, the Caravan 25000 (its ceiling stood at 12,200, under it), one bought before the rise at what it cost, a forged price no further than its kind\'s ceiling, DFU\'s cart as it was; the measure\'s version moved with it (mutants: the kind\'s price unread)', async () => {
+  const { newWagonItem, WAGON_KINDS } = await import('../src/systems/wagonKinds.js');
+  const { setItemFields, mintCondition } = await import('../src/systems/itemTemplates.js');
+  const { WEALTH_VERSION } = await import('../server-account/src/judge.js');
+  const mint = (k) => mintCondition(setItemFields(newWagonItem(k)));
+  for (const k of ['openWagon', 'caravan']) {
+    const w = mint(k);
+    assert.equal(w.value, WAGON_KINDS[k].value);
+    assert.equal(lawfulItem(w), true, `${k}: lawful`);
+    assert.equal(itemWorth(w), WAGON_KINDS[k].value, `${k}: counted at its price`);
+    assert.equal(itemWorth({ ...w, value: WAGON_KINDS[k].floor }), Math.max(WAGON_KINDS[k].floor, itemBaseValue(w, lawTemplate)), `${k}: bought before the rise, at what it cost (never under the template's base - a mod's cart may stand dearer)`);
+    assert.equal(itemWorth({ ...w, value: 1e12 }), worthCeiling(w), `${k}: a forged price no further than the ceiling`);
+    assert.ok(worthCeiling(w) >= 4 * WAGON_KINDS[k].value, `${k}: the ceiling its price doubled twice over`);
+  }
+  const cart = mint('cart');
+  assert.equal(worthCeiling(cart), worthCeiling({ ...cart, wagonKind: 'nonsense' }), 'a kind the law does not know: DFU\'s cart');
+  assert.equal(itemWorth(cart), cart.value, 'the Small Cart as it was');
+  assert.equal(WEALTH_VERSION, 2, 'the measure moved: every stored record measured again, no gain charged');
+});
