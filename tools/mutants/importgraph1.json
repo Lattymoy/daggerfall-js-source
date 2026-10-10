@@ -1,0 +1,56 @@
+[
+  {
+    "name": "IMPORT-GRAPH1-a-re-export-unread",
+    "file": "test/importGraph.mjs",
+    "old": "(node.type === 'ImportDeclaration' || node.type === 'ExportAllDeclaration' || ",
+    "new": "(node.type === 'ImportDeclaration' || ",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ]
+  },
+  {
+    "name": "IMPORT-GRAPH1-a-named-re-export-unread",
+    "file": "test/importGraph.mjs",
+    "old": " || node.type === 'ExportNamedDeclaration' || ",
+    "new": " || ",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ]
+  },
+  {
+    "name": "IMPORT-GRAPH1-a-dynamic-import-unread",
+    "file": "test/importGraph.mjs",
+    "old": " || node.type === 'ImportExpression')) found.push",
+    "new": ")) found.push",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ]
+  },
+  {
+    "name": "IMPORT-GRAPH1-a-table-parsed",
+    "file": "test/importGraph.mjs",
+    "old": "  if (!/\\.m?js$/.test(file)) return [];\n",
+    "new": "",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ]
+  },
+  {
+    "name": "IMPORT-GRAPH1-a-package-walked",
+    "file": "test/importGraph.mjs",
+    "old": ".map((s) => s.value).filter((s) => s.startsWith('.'));",
+    "new": ".map((s) => s.value);",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ]
+  },
+  {
+    "name": "IMPORT-GRAPH1-the-nine-unlisted",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "      - \"src/systems/lootThemes.js\"\n",
+    "new": "",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ]
+  }
+]

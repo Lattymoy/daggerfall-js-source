@@ -119,7 +119,7 @@ import { createWeapon, bowDamageArrow } from '../combat/enemyEquipment.js';   //
 import { setDefaultEnchantCtx } from '../systems/enchantments.js';   // FS1 (wave D): this host mounts the enchant ctx too
 import { createEnchantCtx, standLooseFoe } from './hostEnchant.js';   // FS1 (wave D): the ONE ctx body + SD1's loose-foe placement
 import { playerArrowHitFoe } from '../combat/arrowFlight.js';   // AUDIT 39 (#64) wave D: the FOURTH host calls the shared player-arrow law rather than carrying a fourth body of it
-import { techniquePierces } from '../combat/arrowFlight.js';   // TECH1: a piercing technique shaft flies on (bible/05-Combat/Weapon-Techniques.md)
+import { techniquePierces, shaftSequence } from '../combat/arrowFlight.js';   // TECH1: a piercing technique shaft flies on (bible/05-Combat/Weapon-Techniques.md)
 import {
   hasBowAttack, isBowWeapon, backstabChanceOf,
   tallySwingSkills, zeroDamageHitSound, SWING_FATIGUE_COST,
@@ -4679,8 +4679,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             continue;
           }
           // WB9c: a shaft meets a crystal by its whole body - the one player-arrow law against its stand-in (no blood)
-          const cr = gateCrystalBodies().find((q) => missileHitsCapsule(m.pos, q.ai.feet, q.ai.height, q.ai.radius));
-          if (cr && !struckBy(cr)) {   // TECH1: a piercing shot flies on through a crystal it has struck
+          const cr = gateCrystalBodies().find((q) => !struckBy(q) && missileHitsCapsule(m.pos, q.ai.feet, q.ai.height, q.ai.radius));   // TECH1: a piercing shot flies on through a crystal it has struck (AUDIT TECH1: and meets the next one under it, overlapping)
+          if (cr) {
             // AUDIT WB11 W2: no backstab - a crystal faces nowhere (its `yaw` 0 made every shaft from its -z side one)
             playerArrowHitFoe(m, cr, { playerEntity, playerWeapon, playerFeet: null, audio, hitEffects: null, say: (l) => hudText.add(l), dealDamage: (t, d) => landOnCrystal(cr, d, HIT_KINDS.Shaft) });
             if (techniquePierces(m, cr)) continue;
@@ -4688,8 +4688,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             continue;
           }
           // WB11c: a shaft meets one of his host by its whole body - the one player-arrow law against its stand-in
-          const hb = gateHostBodies().find((q) => missileHitsCapsule(m.pos, q.ai.feet, q.ai.height, q.ai.radius));
-          if (hb && !struckBy(hb)) {   // TECH1: and one of his host it has struck
+          const hb = gateHostBodies().find((q) => !struckBy(q) && missileHitsCapsule(m.pos, q.ai.feet, q.ai.height, q.ai.radius));   // TECH1: and one of his host it has struck (AUDIT TECH1: the next one under it met)
+          if (hb) {
             // AUDIT WB11 W2: no backstab, as no swing on one has (its `yaw` 0 is no facing - every shaft from its -z side was
             // a backstab, x3 and a Backstabbing use); W5: its blood laddered against its own whole (`bloodOf`)
             playerArrowHitFoe(m, hb, { playerEntity, playerWeapon, playerFeet: null, audio, hitEffects, say: (l) => hudText.add(l), dealDamage: (t, d) => landOnHost(hb, d, HIT_KINDS.Shaft) });
@@ -4702,6 +4702,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             if (struckBy(f)) continue;   // TECH1: a piercing shot flies past a foe it has struck
             if (missileHitsFoe(m.pos, f)) {   // ROAD-H tail: DaggerfallMissile.cs:339's SphereCast meets the foe's CAPSULE (REVIEW 2026-09-05 had its centre as a point)
               nextArenaQ();   // ARENA4b: each shaft its own blow to the referee (a relay's fighter's puppet - damageFoe's lane)
+              _arenaQ = shaftSequence(m, _arenaQ);   // AUDIT TECH1: a piercing shaft's later bodies ride its first one's sequence while it is the newest - one shaft, one blow
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's

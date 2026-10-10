@@ -977,5 +977,59 @@
     "tests": [
       "test/tech1_roster.test.js"
     ]
+  },
+  {
+    "name": "TECH1-AUDIT-the-shaft-each-body",
+    "file": "src/combat/arrowFlight.js",
+    "old": "  t.seq = t.struck?.length > 0 && t.seq === back ? back : q;\n",
+    "new": "  t.seq = q;\n",
+    "tests": [
+      "test/tech1_audit.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-AUDIT-the-newest-unasked",
+    "file": "src/combat/arrowFlight.js",
+    "old": "t.struck?.length > 0 && t.seq === back ? back : q;",
+    "new": "t.struck?.length > 0 ? t.seq : q;",
+    "tests": [
+      "test/tech1_audit.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-AUDIT-the-lane-unsequenced",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "              _arenaQ = shaftSequence(m, _arenaQ);   // AUDIT TECH1: a piercing shaft's later bodies ride its first one's sequence while it is the newest - one shaft, one blow\n",
+    "new": "",
+    "tests": [
+      "test/tech1_hosts.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-AUDIT-the-struck-crystal-in-the-way",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "const cr = gateCrystalBodies().find((q) => !struckBy(q) && missileHitsCapsule(",
+    "new": "const cr = gateCrystalBodies().find((q) => missileHitsCapsule(",
+    "tests": [
+      "test/tech1_hosts.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-AUDIT-the-struck-host-in-the-way",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "const hb = gateHostBodies().find((q) => !struckBy(q) && missileHitsCapsule(",
+    "new": "const hb = gateHostBodies().find((q) => missileHitsCapsule(",
+    "tests": [
+      "test/tech1_hosts.test.js"
+    ]
+  },
+  {
+    "name": "TECH1-AUDIT-the-word-left-off",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "      if (told) li.append(el('span', 'reforge-detail', told));\n",
+    "new": "",
+    "tests": [
+      "test/tech1_audit.test.js"
+    ]
   }
 ]

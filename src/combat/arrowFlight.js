@@ -48,6 +48,18 @@ export function techniquePierces(m, ref) {
   (t.struck ??= []).push(ref);
   return t.struck.length < t.pierce;
 }
+/** AUDIT TECH1: A PIERCING SHAFT IS ONE SHAFT to a referee that counts blows by their sequence (net/arenaBrain.js refBlow -
+ *  ARENA4b: "each shaft its own blow", a swing through three bodies one). `q` the sequence the lane has just taken for
+ *  this body (one past the last); answers the one it is struck under - the sequence its first body took, while that is
+ *  still the newest (this body's own taking undone), else `q`: any blow between, and the body is a blow of its own. A
+ *  shaft that is no technique's is `q` always. */
+export function shaftSequence(m, q) {
+  const t = m?.technique;
+  if (!t) return q;
+  const back = (q - 1) & 0x7fffffff;
+  t.seq = t.struck?.length > 0 && t.seq === back ? back : q;
+  return t.seq;
+}
 
 /** The oriented arrow transform (dungeonContext.arrowMatrix law). */
 export function arrowMatrix(pos, dir) {

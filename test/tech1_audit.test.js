@@ -22,6 +22,12 @@ import { EQUIP_SLOTS } from '../src/systems/equip.js';
 import { SWING_FATIGUE_COST } from '../src/scenes/hostCombat.js';
 import { itemChatText, itemBriefLines } from '../src/ui/enhancedInventory.js';
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
+import { techniquePierces, shaftSequence } from '../src/combat/arrowFlight.js';
+import { mountReforgeWindow } from '../src/ui/reforgeWindow.js';
+import { withDom } from './invdrag.mjs';
+import { openBout, joinBout, stepBout, poseOf, refBlow } from '../src/net/arenaBrain.js';
+import { ARENA_HIT, ARENA_HIT_HZ_MAX, ARENA_TICK_MS, ARENA_FLOOR_CENTRE } from '../src/net/arenaLaw.js';
+import { boutLive } from '../src/systems/arenaBout.js';
 
 const lcg = (seed) => { let s = (seed >>> 0) || 1; return () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; }; };
 const stats = () => ({ strength: 60, intelligence: 50, willpower: 50, agility: 50, endurance: 50, personality: 50, speed: 50, luck: 50 });
@@ -308,4 +314,59 @@ test('AUDIT TECH1 A BIG BODY: its radius is read where its stand-in keeps it (th
   const boss = { ai: { feet: [3.2, 0, 3], radius: 3 } };   // his middle 3.2 m off the lane, his body over it
   assert.equal(blowReaches(lane, boss, { dist: 4, inView: true, losClear: true }), true);
   assert.equal(blowReaches(lane, { ai: { feet: [3.2, 0, 3] } }, { dist: 4, inView: true, losClear: true }), false, 'a foe that size would be wide of it');
+});
+
+test('AUDIT TECH1 THE ONE SHAFT: a Piercing Shot through a Grand Melee\'s three fighters is ONE blow to the arena\'s referee (ARENA4b: each shaft its own blow, a swing through three one) - its later bodies ride its first one\'s sequence, so three plain shots after it in the second all land; a blow between, and the next body is its own (mutants: the sequence each body\'s; the newest unasked)', () => {
+  let now = 10_000;
+  const st = openBout({ o: '0000000000000abd', kind: 'pve', f: [{ sub: 'acct-ceryn', name: 'Ceryn', lv: 20, cl: 20 }], tier: 9, bout: 0, now });
+  joinBout(st, 'acct-ceryn', 'f', now);
+  for (let i = 0; i < 400 && !boutLive(st.b); i++) { now += ARENA_TICK_MS; stepBout(st, now, () => 0.5); }
+  assert.ok(boutLive(st.b) && st.ai.length === 3, 'the Grand Melee, three of the relay\'s fighters');
+  const C = ARENA_FLOOR_CENTRE;
+  poseOf(st, 'p0', C[0], C[2], now);
+  for (const a of st.ai) { a.pos = [C[0] + 4, C[2]]; a.mv = null; a.atk = null; a.nextAt = Infinity; }
+  // the dungeon lane's own numbering (scenes/dungeonContext.js nextArenaQ, then shaftSequence for a technique's shaft)
+  let Q = 0;
+  const next = () => (Q = (Q + 1) & 0x7fffffff);
+  const shot = (to, m) => { next(); if (m) Q = shaftSequence(m, Q); return refBlow(st, 'p0', { i: to, d: 1, r: ARENA_HIT.Shaft, w: 130, m: 1, q: Q }, now).got > 0; };
+  const pierce = { technique: { pierce: 5 } };
+  let landed = 0;
+  for (const a of st.ai) { if (shot(a.id, pierce)) landed++; techniquePierces(pierce, a); now += 30; }
+  assert.equal(landed, 3, 'the shaft through all three');
+  for (let k = 0; k < ARENA_HIT_HZ_MAX - 1; k++) { if (shot(st.ai[k].id, null)) landed++; now += 60; }
+  assert.equal(landed, 3 + (ARENA_HIT_HZ_MAX - 1), 'and every plain shot after it in the second - the shaft spent the rate once');
+  // the helper's two answers
+  const m = { technique: { pierce: 5 } };
+  assert.equal(shaftSequence(m, 7), 7, 'a shaft\'s first body takes its own');
+  techniquePierces(m, 'a');
+  assert.equal(shaftSequence(m, 8), 7, 'its next body rides it while it is the newest');
+  techniquePierces(m, 'b');
+  assert.equal(shaftSequence(m, 10), 10, 'a blow between (9), and the body is a blow of its own');
+  assert.equal(shaftSequence({}, 11), 11, 'a plain shaft its own always');
+  assert.equal(shaftSequence({ technique: { pierce: 1 } }, 12), 12, 'a Volley\'s shaft (it strikes one) its own');
+});
+
+test('AUDIT TECH1 THE REFORGE\'S WORD: the Reforge\'s card says what a technique\'s line does under it, as the item card does - read before it is reforged or honed - and no other line grows a word (mutants: the word left off)', () => {
+  reset();
+  const kids = (n, cls) => (n?.children ?? []).flatMap((c) => [...(c.classList?.contains(cls) ? [c] : []), ...kids(c, cls)]);
+  withDom((dom) => {
+    const blade = piece(() => createWeapon(120, 1), 'leap', 23);
+    const me = { items: [blade], goldPieces: 100000 };
+    const host = dom.mk('div');
+    dom.body.append(host);
+    const view = mountReforgeWindow(host, {
+      items: () => me.items, payer: () => me, gold: () => me.goldPieces, picture: () => null, nameOf: (it) => it.name,
+      reforge: () => ({ ok: false }), salvage: () => ({ ok: false }),
+    });
+    try {
+      const shell = kids(host, 'reforge-shell')[0];
+      kids(shell, 'broker-offer')[0].onclick();
+      const card = kids(shell, 'reforge-card')[0];
+      const words = kids(card, 'reforge-detail');
+      assert.equal(words.length, 1, 'one word, the technique\'s');
+      assert.equal(words[0].textContent, LR.techniqueDetail(LR.techniqueLineOf(blade)));
+      const line = kids(card, 'reforge-line').find((li) => kids(li, 'reforge-detail').length);
+      assert.equal(line.dataset.line, String(blade.affixes.indexOf(LR.techniqueLineOf(blade))), 'under the technique\'s own line');
+    } finally { view?.destroy?.(); }
+  });
 });

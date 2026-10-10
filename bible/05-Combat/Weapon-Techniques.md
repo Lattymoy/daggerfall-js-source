@@ -269,10 +269,13 @@ swing its techniques and say "Not here." for the rest; none of the four is such 
   law's version 2 moved `ACCOUNT_VERSION` to acct105, and a site deploy waits for that service (AUDIT TECH1; a law moved
   without it ships the site first, and an honest technique piece reads as a forgery - a hold and a strike - in the gap).
   `test/tech1_roster.test.js` holds each law version to the first service that carries it.
-- **What a referee clips, silently.** The arena's and the court's referees count a blow by its sequence: a Piercing
-  Shot that meets its bodies in different frames spends one each, so in a long fight its fifth can find the bucket
-  empty; a watchman's owner measures a melee blow from the striker's pose (`WEAPON_REACH` and a leap's slack), so a
-  Lunge's far end can pass a watchman it ran by. Nothing records a strike for either - the number is not dealt.
+- **What a referee counts.** The arena's and the court's referees count a blow by its sequence. A Piercing Shot is one
+  shaft and one blow to both: the court's `blowQ` keeps a blow's sequence until a body repeats, and the arena's lane
+  gives a piercing shaft's later bodies its first one's (`arrowFlight.js` `shaftSequence`, while that is still the
+  newest - any blow between, and the body is its own). A watchman's owner measures a melee blow from the striker's pose
+  (`WEAPON_REACH` and the pose's slack), so the last half-metre or so of a Lunge's lane can pass a watchman it ran by -
+  kept: the owner's reach is the watch's guard against every melee claim, and widening it for a Lunge widens it for
+  all. Nothing records a strike - the number is not dealt.
 - **A peer sees** what a plain swing or shot shows: the body leaping or dashing (the motor's own flight, on the pose
   stream), the swing (`swingN`), the shot (`noteShot`, once for a Volley's loose).
 - **Never at a player** (law 3): a duel and an arena bout between players (`sigilDueling()`) refuse the key; in a siege,
@@ -317,18 +320,13 @@ the real collider. What they found, and what was done:
 | A Roleplay & Realism weapon lost its family with its mod's switch off - its line a forgery to the law, its Reforge refused | minor (offline) | the family from the class table |
 | An unidentified piece's technique was named by the chip and the lines its card hides; "One sure blow" contradicted law 1; the Gauntlets' line said nothing of bare hands; a chat post spent its length on the detail line | minor | "Your technique"; "One heavy blow, +30 to hit"; "Bare-handed"; the detail stays on the card |
 
-**Left as they are, and why.** A Piercing Shot in an arena or the court is counted a blow per body it meets in a later
-frame (a pinned line of the dungeon lane gives each its sequence; its fifth may find the bucket empty - nothing is
-recorded against the player); a Lunge's far end can pass a watchman measured from the striker's pose; two overlapping
-gate bodies where the first was struck by a piercing shaft let it fly past the second (both lines pinned by other arcs);
-the reforge window shows a technique's label, not its brief (the card does). A finding outside this change, recorded
-for its own slice: `test/importGraph.mjs` strips block comments before line comments, and two line comments carrying a
-stray `/*` hide nine files the account Worker bundles from the deploy filter's walk (`systems/loot.js`,
-`systems/artifactEffects.js` - pre-existing; the walk sees every TECH1 file). The corpse kit's callers that draw after
+**Left as they were at the audit** - and settled by THE FOLLOW-UP below: a Piercing Shot counted a blow per body by the
+arena's referee, two overlapping court bodies, the reforge window's word, the Lunge past a watchman (kept, and why), and
+a finding outside this change (`test/importGraph.mjs` - fixed there). The corpse kit's callers that draw after
 it (the street's sigil stamps and death rolls) draw later in their stream by the technique pass's draws, as the socket
 pass already made them - the kit's own pieces are what they were (law 9).
 
-**Tests** `test/tech1_audit.test.js` (11) - one a finding, on the real classes; the outdoor ground in
+**Tests** `test/tech1_audit.test.js` (11 at the audit, 13 after THE FOLLOW-UP) - one a finding, on the real classes; the outdoor ground in
 `test/tech1_runner.test.js` THE GROUND OUTDOORS. **Mutants** 39 audit records in `tools/mutants/tech1.json`, all dead (the
 first run left the walled shaft alive: its test's flat ceiling was the one the middle's ray already saw - a beam over
 part of the disc kills it). `TECH1-the-cap-past-the-referee` (16 m/s raised past the siege's 18) is retired: the cap is 12
@@ -337,6 +335,25 @@ carries the flight's), `gatekeys.json` and `fb1004d_knight_house.json` (acct105)
 (the turn now takes the landing point). One pin moved, marked `PIN MOVED (AUDIT TECH1)`: `test/mwattackclip.test.js`
 MW-D12 reads the gesture's gate with the flight's term (no line around it could carry the term without breaking the
 pin's own shape).
+
+## THE FOLLOW-UP (2026-10-10, the owner: "Make your own decisions and take care of any issues")
+
+What the audit had left, and what it found outside this change, each decided:
+
+| item | decision |
+| --- | --- |
+| A Piercing Shot through the arena's fighters spent the referee's rate a body each (a Grand Melee's three: three of its four blows a second, ARENA4b's own law says one) | fixed: `arrowFlight.js` `shaftSequence` - a piercing shaft's later bodies ride its first one's sequence while it is the newest; the lane's pinned `nextArenaQ()` stands, the shaft's sequence on the line after it. THE ONE SHAFT runs it on the real referee |
+| Two court bodies overlapping under a piercing shaft: the first, struck, hid the second (`find` met it first, every frame) | fixed: the court's crystal and host `find`s pass a struck body; their `if` lines are what they were before TECH1 (`wb11_gate_host` WB11's host pin `PIN MOVED`) |
+| The Reforge's card named a technique's line and not what it does | fixed: the line's "what a press does" under it (`reforge-detail`), as the item card says it |
+| A Lunge's last half-metre past a watchman on another's watch | kept: the owner's melee reach is the watch's guard against every claim; a Lunge's lane is 5 m and the reach with its slack about 4.5 m plus the watchman's own motion |
+| `test/importGraph.mjs` (found by the audit, outside this change): nine files the account Worker bundles never reached its deploy filter | fixed (IMPORT-GRAPH1, `06-Systems/Accounts-And-Cloud-Saves-Arc.md`): the walk parses, the nine are listed, and each Worker's graph is held to esbuild's own inputs |
+| `loot16.json` LOOT16-a-row-of-nothing, surviving on main | recorded `equivalent` with its reason: three drawback rows fit every piece, so the filter it removes is never empty |
+| Other players do not see a Volley's falling shafts or the marks (TECH2) | not in this change: it needs a wire field and a relay version bump - its own slice |
+
+Tests: THE ONE SHAFT and THE REFORGE'S WORD in `test/tech1_audit.test.js`; the court's `find`s and the lane's sequence in
+`test/tech1_hosts.test.js`. Mutants: six more in `tools/mutants/tech1.json` (the shaft each body, the newest unasked, the
+lane unsequenced, a struck crystal and a struck host in the way, the word left off), all dead; IMPORT-GRAPH1's six in
+`tools/mutants/importgraph1.json`, all dead.
 
 ## The Test Room
 
@@ -364,7 +381,7 @@ Gauntlets' Flying Kick and Haymaker) - every technique a press away.
 - `test/honestItems.mjs` - the honest-producers sweep forces a technique on every weapon and Gauntlets through every
   producer (a technique, then an Exalted, a curse, a hone and a reforge after it), saved and sent over the wire, and the
   item law finds nothing.
-- Mutants `tools/mutants/tech1.json` (70 at TECH1, all dead; AUDIT TECH1 retired one and added 39 - 108). The first run left five alive, and each was a gap: a Legendary's
+- Mutants `tools/mutants/tech1.json` (70 at TECH1, all dead; AUDIT TECH1 retired one and added 39 - 108; THE FOLLOW-UP added 6 - 114). The first run left five alive, and each was a gap: a Legendary's
   band on the card, a door crossed mid-aim, a shaft's tally, the release's second asking (four pins added), and an
   ammunition check that could never change an answer (an arrow and a pellet swing with no skill), deleted.
 
