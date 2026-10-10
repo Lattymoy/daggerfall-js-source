@@ -1022,7 +1022,7 @@
   },
   {
    "file": "src/scenes/world.js",
-   "has": "if (p?.living?.res) { caravanHostOf().caught(p.living.res, skyMinutes()); setCrimeCommitted(playerEntity, CRIMES.None); }",
+   "has": "if (p?.living?.res) caravanHostOf().caught(p.living.res, skyMinutes());",
    "clock": "sky",
    "why": "LW11: a hand caught on the road - its report carried on the living world's clock"
   },
