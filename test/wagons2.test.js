@@ -579,6 +579,10 @@ test('WAGONS2 (AUDIT) THE CARAVAN KEPT: the wagon a player drives while it holds
   assert.deepEqual(itemFindings(caravan), [], 'a shelf\'s caravan is lawful');
   assert.deepEqual(itemFindings({ ...caravan, wagonLook: { o: 2, w: 5 } }), [], 'painted too');
   assert.ok(itemFindings({ ...caravan, value: 150 }).includes('wagon'), 'a caravan at the cart\'s price');
+  // WAGON-PRICE (2026-10-10): the law reads each kind's floor, not its price - a wagon bought before the price rose
+  // stays lawful, and a cent under that floor does not (mutants: the law reads the price, the floor raised)
+  assert.deepEqual([itemFindings({ ...caravan, value: 2500 }), itemFindings(newWagonItem('openWagon')), itemFindings({ ...newWagonItem('openWagon'), value: 900 })], [[], [], []], 'a caravan and an open wagon at their old prices, and a shelf\'s open wagon');
+  assert.deepEqual([itemFindings({ ...caravan, value: 2499 }), itemFindings({ ...newWagonItem('openWagon'), value: 899 })].map((f) => f.includes('wagon')), [true, true], 'under its floor');
   assert.ok(itemFindings({ ...sword, wagonKind: 'cart' }).includes('wagon'), 'a mark on anything but the cart');
   assert.ok(itemFindings({ ...sword, wagonLook: { o: 1 } }).includes('wagon'), 'a paint on anything but the cart');
   assert.ok(itemFindings({ ...sword, wagonEntry: 'public' }).includes('wagon'), 'a door on anything but the cart');

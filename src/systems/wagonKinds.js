@@ -24,12 +24,17 @@ export const SMALL_CART_KG = 750;
  * law takes it from there, systems/shopStock.js calculateCost), `hitch` how far ahead of its rear axle the horse stands
  * (metres - the classic wagon's 3.1, HITCHED_HORSE_LOCAL_Z, measured for model 41214; each of Mac's is measured for its
  * own length, world/wagonModels.js), `seats` how many ride in its back, `enterable` whether it opens as a room, `icon`
- * the model id its picture is drawn from (ui/modelIcon.js's port door), `rank` which of two owned is driven.
+ * the model id its picture is drawn from (ui/modelIcon.js's port door), `rank` which of two owned is driven, `floor` the
+ * least value a lawful one carries (systems/itemLaw.js) - the price it was first shelved at, so a wagon bought before
+ * WAGON-PRICE stays lawful.
+ *
+ * WAGON-PRICE (2026-10-10, asked: "Raise the price", then "More" - ten times): the Open Wagon 900 -> 9000, the Caravan
+ * 2500 -> 25000. The Small Cart keeps DFU's template value.
  */
 export const WAGON_KINDS = Object.freeze({
-  cart: Object.freeze({ key: 'cart', name: 'Small Cart', kg: SMALL_CART_KG, value: 150, hitch: 3.8, seats: 0, enterable: false, icon: 112490, rank: 0 }),
-  openWagon: Object.freeze({ key: 'openWagon', name: 'Open Wagon', kg: 1500, value: 900, hitch: 7.1, seats: 4, enterable: false, icon: 112491, rank: 1 }),
-  caravan: Object.freeze({ key: 'caravan', name: 'Caravan', kg: 2000, value: 2500, hitch: 7.7, seats: 0, enterable: true, icon: 112492, rank: 2 }),
+  cart: Object.freeze({ key: 'cart', name: 'Small Cart', kg: SMALL_CART_KG, value: 150, floor: 150, hitch: 3.8, seats: 0, enterable: false, icon: 112490, rank: 0 }),
+  openWagon: Object.freeze({ key: 'openWagon', name: 'Open Wagon', kg: 1500, value: 9000, floor: 900, hitch: 7.1, seats: 4, enterable: false, icon: 112491, rank: 1 }),
+  caravan: Object.freeze({ key: 'caravan', name: 'Caravan', kg: 2000, value: 25000, floor: 2500, hitch: 7.7, seats: 0, enterable: true, icon: 112492, rank: 2 }),
 });
 /** The kinds in the order a shop shelves them and the Stable ranks them. */
 export const WAGON_KIND_ORDER = Object.freeze(['cart', 'openWagon', 'caravan']);

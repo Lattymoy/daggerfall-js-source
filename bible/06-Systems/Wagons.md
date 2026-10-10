@@ -81,8 +81,12 @@ template, so the new wagons are that same item with a mark: `wagonKind`
 (`openWagon` or `caravan`; absent means the Small Cart). The kinds:
 
 - **Small Cart**: 750 kg, value 150, hitched 3.8 m, no seats.
-- **Open Wagon**: 1500 kg, value 900, hitched 7.1 m, four seats.
-- **Caravan**: 2000 kg, value 2500, hitched 7.7 m, enterable.
+- **Open Wagon**: 1500 kg, value 9000, hitched 7.1 m, four seats.
+- **Caravan**: 2000 kg, value 25000, hitched 7.7 m, enterable.
+
+WAGON-PRICE (2026-10-10) raised the two new kinds' values ten times, from
+900 and 2500. Each kind also carries a `floor`, the price it was first
+shelved at (150, 900, 2500), which the item law reads below.
 
 How the kinds are wired in:
 
@@ -432,8 +436,9 @@ Items and economy, motion and drawing, the caravan's room, and online.
   traded away had left 2000 kg on a 750 kg cart.
 - **The item law reads a wagon's mark.** `wagonKind` and `wagonLook` are
   declared fields (`src/systems/itemFields.js`). A mark on anything but the
-  Small Cart, or a marked kind below its own price, is a `wagon` finding
-  (`src/systems/itemLaw.js`).
+  Small Cart, or a marked kind below its own floor, is a `wagon` finding
+  (`src/systems/itemLaw.js`). The floor is the price the kind was first
+  shelved at, so a wagon bought before WAGON-PRICE stays lawful.
 - **A room only onto its caravan.** A room is restored only while the
   caravan stands parked where it was entered (`CARAVAN_STANDS_NATIVES`): the
   runtime's place at a Recall, the save's own record at a load. It is never

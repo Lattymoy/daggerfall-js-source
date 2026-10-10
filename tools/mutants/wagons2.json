@@ -63,7 +63,7 @@
   {"name": "WAGONS2-AUDIT-the-seats-door-open", "file": "src/scenes/world.js", "old": "busy: () => worldMoveBusy() || !!wagonRiders?.seated(),", "new": "busy: () => worldMoveBusy(),", "tests": ["test/wagons2.test.js"]},
   {"name": "WAGONS2-AUDIT-the-layouts-copies-left-apart", "file": "src/scenes/worldModes.js", "old": "if (interiorCabin) foldLayoutCopies(sceneCache(), name);", "new": "if (false) foldLayoutCopies(sceneCache(), name);", "tests": ["test/wagons2.test.js"]},
   {"name": "WAGONS2-AUDIT-a-piece-folded-twice", "file": "src/systems/sceneCache.js", "old": "for (const pc of c.decor) if (!ids.has(pc.id)) {", "new": "for (const pc of c.decor) if (true) {", "tests": ["test/wagons2.test.js"]},
-  {"name": "WAGONS2-AUDIT-a-cheap-caravan-lawful", "file": "src/systems/itemLaw.js", "old": "&& !(item.value >= (WAGON_KINDS[item.wagonKind]?.value ?? Infinity))) out.add('wagon');", "new": "&& false) out.add('wagon');", "tests": ["test/wagons2.test.js"]},
+  {"name": "WAGONS2-AUDIT-a-cheap-caravan-lawful", "file": "src/systems/itemLaw.js", "old": "&& !(item.value >= (WAGON_KINDS[item.wagonKind]?.floor ?? Infinity))) out.add('wagon');", "new": "&& false) out.add('wagon');", "tests": ["test/wagons2.test.js"]},
   {"name": "WAGONS2-AUDIT-a-mark-on-anything", "file": "src/systems/itemLaw.js", "old": "&& item.templateIndex !== TRANSPORT_SMALL_CART) out.add('wagon');", "new": "&& false) out.add('wagon');", "tests": ["test/wagons2.test.js"]},
   {"name": "WAGONS2-AUDIT-an-unknown-paint-lawful", "file": "src/systems/itemFields.js", "old": "&& l[k] >= 0 && l[k] < 6)),", "new": "&& l[k] >= 0)),", "tests": ["test/wagons2.test.js"]},
   {"name": "WAGONS2-AUDIT-the-keyed-shop-listing-it", "file": "src/scenes/worldModes.js", "old": "if (loadedWagonHeld(sellable[i])) sellable.splice(i, 1);", "new": "if (false) sellable.splice(i, 1);", "tests": ["test/wagons2.test.js"]},
@@ -71,5 +71,7 @@
   {"name": "WAGONS2-VISIT-AUDIT-an-unknown-door-lawful", "file": "src/systems/itemFields.js", "old": "wagonEntry: oneOf(['private', 'party', 'public', 'guild']),", "new": "wagonEntry: str(),", "tests": ["test/wagons2.test.js"]},
   {"name": "RW1xWAGONS2-the-rooms-caravan-drawn", "file": "src/scenes/horseCartPool.js", "old": "(skipAt && Math.hypot(f.at[0] - skipAt[0], f.at[2] - skipAt[2]) < OUTSIDE_SKIP_REACH)", "new": "false", "tests": ["test/wagons2.test.js"]},
   {"name": "RW1xWAGONS2-the-peers-left-out", "file": "src/scenes/horseCartPool.js", "old": "for (const [owner, p] of _peers) frames.push(", "new": "for (const [owner, p] of []) frames.push(", "tests": ["test/wagons2.test.js"]},
-  {"name": "RW1xWAGONS2-the-hook-unwired", "file": "src/scenes/world.js", "old": "hcc.drawOutside(r, room ? caravanRooms.fromNative(room.origin) : null); });", "new": "void r; void room; });", "tests": ["test/wagons2.test.js"]}
+  {"name": "RW1xWAGONS2-the-hook-unwired", "file": "src/scenes/world.js", "old": "hcc.drawOutside(r, room ? caravanRooms.fromNative(room.origin) : null); });", "new": "void r; void room; });", "tests": ["test/wagons2.test.js"]},
+  {"name": "WAGON-PRICE-the-law-reads-the-price", "file": "src/systems/itemLaw.js", "old": "!(item.value >= (WAGON_KINDS[item.wagonKind]?.floor ?? Infinity))", "new": "!(item.value >= (WAGON_KINDS[item.wagonKind]?.value ?? Infinity))", "tests": ["test/wagons2.test.js"]},
+  {"name": "WAGON-PRICE-the-floor-raised", "file": "src/systems/wagonKinds.js", "old": "value: 25000, floor: 2500,", "new": "value: 25000, floor: 2501,", "tests": ["test/wagons2.test.js"]}
 ]
