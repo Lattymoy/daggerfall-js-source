@@ -1,0 +1,102 @@
+[
+  {
+    "name": "SPAMTAKE-card-stays",
+    "file": "src/ui/bountyWindow.js",
+    "old": "        if (done.ok) picked = nextOpenNotice(deps.rows(), picked);",
+    "new": "        if (false) picked = nextOpenNotice(deps.rows(), picked);",
+    "tests": ["test/fb1010_spamtake.test.js"]
+  },
+  {
+    "name": "SPAMTAKE-next-not-open",
+    "file": "src/ui/bountyWindow.js",
+    "old": "    if (rows[i]?.state === 'open') return i;",
+    "new": "    if (rows[i]) return i;",
+    "tests": ["test/fb1010_spamtake.test.js"]
+  },
+  {
+    "name": "SPAMTAKE-next-no-wrap",
+    "file": "src/ui/bountyWindow.js",
+    "old": "    const i = (from + k) % rows.length;",
+    "new": "    const i = from + k;",
+    "tests": ["test/fb1010_spamtake.test.js"]
+  },
+  {
+    "name": "SPAMTAKE-give-up-once",
+    "file": "src/ui/bountyWindow.js",
+    "old": "        if (armed !== heldId) { armed = heldId; render(); return; }",
+    "new": "",
+    "tests": ["test/fb1010_spamtake.test.js"]
+  },
+  {
+    "name": "SPAMTAKE-pick-keeps-arm",
+    "file": "src/ui/bountyWindow.js",
+    "old": "      const pick = () => { picked = i; word = null; armed = null; render(); };",
+    "new": "      const pick = () => { picked = i; word = null; render(); };",
+    "tests": ["test/fb1010_spamtake.test.js"]
+  },
+  {
+    "name": "SPAMTAKE-give-up-under-take",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".bounty-acts .bounty-drop { margin-right: auto; }",
+    "new": "",
+    "tests": ["test/fb1010_spamtake.test.js"]
+  },
+  {
+    "name": "FINDFIRST-never",
+    "file": "src/ui/heldMap.js",
+    "old": "            else if (this._findsMeFirst()) this._findMe();   // FIND-FIRST: the world map opens as Find me",
+    "new": "",
+    "tests": ["test/fb1010_findfirst.test.js"]
+  },
+  {
+    "name": "FINDFIRST-every-open",
+    "file": "src/ui/heldMap.js",
+    "old": "    return !!this.deps.findMeFirst && this._slot.live === 'world'",
+    "new": "    return this._slot.live === 'world'",
+    "tests": ["test/fb1010_findfirst.test.js"]
+  },
+  {
+    "name": "FINDFIRST-over-the-place",
+    "file": "src/ui/heldMap.js",
+    "old": "this._gotoPlace = null; this._openedOnPlace = true; }",
+    "new": "this._gotoPlace = null; }",
+    "tests": ["test/fb1010_findfirst.test.js"]
+  },
+  {
+    "name": "FINDFIRST-over-the-teleport",
+    "file": "src/ui/heldMap.js",
+    "old": "      && !this.teleportationTravel && !this._it",
+    "new": "      && !this._it",
+    "tests": ["test/fb1010_findfirst.test.js"]
+  },
+  {
+    "name": "FINDFIRST-over-the-journey",
+    "file": "src/ui/heldMap.js",
+    "old": " && !this._to?.isTravelActive && this._top !== 'resume';",
+    "new": " && this._top !== 'resume';",
+    "tests": ["test/fb1010_findfirst.test.js"]
+  },
+  {
+    "name": "FINDFIRST-over-the-resume",
+    "file": "src/ui/heldMap.js",
+    "old": " && !this._to?.isTravelActive && this._top !== 'resume';",
+    "new": " && !this._to?.isTravelActive;",
+    "tests": ["test/fb1010_findfirst.test.js"]
+  },
+  {
+    "name": "FINDFIRST-host-unasked",
+    "file": "src/scenes/world.js",
+    "old": "buildTravelMapWindow({ findMeFirst: true, onTravel: ",
+    "new": "buildTravelMapWindow({ onTravel: ",
+    "tests": ["test/fb1010_findfirst.test.js"]
+  },
+  {
+    "name": "FINDFIRST-any-sheet",
+    "file": "src/ui/heldMap.js",
+    "old": "    return !!this.deps.findMeFirst && this._slot.live === 'world' && !this._zoneMap",
+    "new": "    return !!this.deps.findMeFirst && !this._zoneMap",
+    "tests": ["test/fb1010_findfirst.test.js"],
+    "equivalent": true,
+    "why": "belt and braces: the one door that asks it (world.js toggleTravelMap) hands no town or automap sheet, so its window holds the world sheet alone - the guard keeps a later door that adds a sheet from opening it on me"
+  }
+]

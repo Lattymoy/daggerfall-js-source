@@ -996,6 +996,7 @@ export const BOUNTY_CSS = `/* ── BOUNTY1: THE BOUNTY BOARD ── */
 .bounty-progress, .bounty-mates, .bounty-why { margin: 0 0 8px; font-size: 12px; color: #9fe8b4; }
 .bounty-why { color: #b9ab93; }
 .bounty-acts { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.bounty-acts .bounty-drop { margin-right: auto; }
 .bounty-noticebody { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px 16px; overflow: auto; }
 .bounty-noticebody .bounty-story { font-size: 14px; }
 .bounty-rewardbox { display: flex; flex-direction: column; gap: 3px; align-self: stretch; }

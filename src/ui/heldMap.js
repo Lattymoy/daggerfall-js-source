@@ -572,6 +572,7 @@ export class HeldMapWindow {
     this._it = deps.immersive ?? null;
     this._itRefusal = null;
     this._gotoPlace = null;              // one-shot, consumed on first tick
+    this._openedOnPlace = false;         // FIND-FIRST: this open was a journal's place - the map is not on me
     this._ticked = false;
 
     this._size = deps.mapSize ?? { width: MAP_WIDTH, height: MAP_HEIGHT };
@@ -888,7 +889,7 @@ export class HeldMapWindow {
       this._ticked = true;
       this._layout();
       this._tryHands();   // MAP3: the Morrowind arm takes the sheet, if it is drawn
-      if (this._gotoPlace) { this._consumeGotoPlace(); this._gotoPlace = null; }
+      if (this._gotoPlace) { this._consumeGotoPlace(); this._gotoPlace = null; this._openedOnPlace = true; }
       // MAP2 (TravelOptionsMapWindow.cs:322-345): opened during a journey,
       // the sheet centres on the player; opened with a destination still
       // pending, the mod asks whether to resume it. Once per open.
@@ -943,7 +944,10 @@ export class HeldMapWindow {
         // the map opens on the zone's own map - the world map one button (World map) away
         if (!this._zoneFirstTried && this._paper?.w > 1 && this._view && this._sheet) {
           this._zoneFirstTried = true;
-          try { if (this.deps.zoneFirst?.() && this._openZoneMap()) this._centerOnMe(); } catch (e) { console.warn('[map] zone map', e?.message ?? e); }
+          try {
+            if (this.deps.zoneFirst?.() && this._openZoneMap()) this._centerOnMe();
+            else if (this._findsMeFirst()) this._findMe();   // FIND-FIRST: the world map opens as Find me
+          } catch (e) { console.warn('[map] zone map', e?.message ?? e); }
         }
         this._setRaise(clamp(this._t / OPEN_S, 0, 1));
         if (this._t >= OPEN_S) { this._phase = 'map'; this._t = 0; this._renderCard(); }
@@ -1661,6 +1665,14 @@ export class HeldMapWindow {
     if (!h || !mask || !this._view) return false;
     const [mx, my] = toMap(this._view, h.sx, h.sy);
     return wildInside(mask, mx, my);
+  }
+  /** FIND-FIRST (FIELD BUGS 2026-10-10, the Discord: "make 'Find me' the standard functionality on the world map when
+   *  I first open it"): the player's own world map opens as a press of Find me - unless the open was for somewhere
+   *  else: a journal's place, a journey Travel Options centres (MAP2) or asks to resume, a teleport's pick, a driver's
+   *  map. The host says which opens are the player's own (`deps.findMeFirst`). */
+  _findsMeFirst() {
+    return !!this.deps.findMeFirst && this._slot.live === 'world' && !this._zoneMap && !this._openedOnPlace
+      && !this.teleportationTravel && !this._it && !this._to?.isTravelActive && this._top !== 'resume';
   }
   /** FINDME: glide to my pixel and blink a red cross over it for three seconds. */
   _findMe() {

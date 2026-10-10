@@ -50,6 +50,15 @@ export function stateWord(row) {
   if (row.state === 'full') return 'Hands full';
   return row.mates?.length ? `${row.mates[0]} is hunting` : 'Open';
 }
+/** SPAM-TAKE (FIELD BUGS 2026-10-10, the Discord's "Bounty Board: Click order"): the notice the card moves on to after a
+ *  take - the next open one below `from`, around to the top, or `from` itself when none is open. */
+export function nextOpenNotice(rows, from) {
+  for (let k = 1; k < rows.length; k++) {
+    const i = (from + k) % rows.length;
+    if (rows[i]?.state === 'open') return i;
+  }
+  return from;
+}
 /** How often the board re-reads the world while it stands (the clock, a kill made elsewhere, a mate's share). */
 export const BOUNTY_REPAINT_MS = 5_000;
 
@@ -114,6 +123,7 @@ export function mountBountyBoard(host, deps) {
   let picked = 0;
   let card = null;
   let word = null;
+  let armed = null;   // SPAM-TAKE: the held bounty whose Give up was pressed once - the second press gives it up
   let alive = true;
 
   /** AUDIT 28 B11: the key the focus sits on (a notice's row, the card's act), kept through a repaint - every five
@@ -143,7 +153,7 @@ export function mountBountyBoard(host, deps) {
       const main = el('div', 'bounty-post-body');
       main.append(el('span', 'bounty-post-title', p.title), el('span', 'bounty-post-meta', `Tier ${p.tier} · ${p.count} ${p.foes} · ${p.graveyard ? 'graveyard' : p.kind === 'dungeon' ? 'dungeon' : p.far} · ${p.gold} gold`));
       li.append(main, el('span', `bounty-state st-${r.state}`, stateWord(r)));
-      const pick = () => { picked = i; word = null; render(); };
+      const pick = () => { picked = i; word = null; armed = null; render(); };
       li.onclick = pick;
       li.onkeydown = (e) => { if (e.target === li && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault?.(); pick(); } };
       list.append(li);
@@ -178,10 +188,23 @@ export function mountBountyBoard(host, deps) {
       acts.append(button('primary bounty-take', r.mates?.length ? 'Join the hunt' : 'Take bounty', () => {
         const done = deps.take(p.id);
         word = done.ok ? { ok: true, text: `Taken: ${p.title}. Look for the black circle on your map.` } : { ok: false, text: done.text ?? 'You cannot take that.' };
+        // SPAM-TAKE: the card moves on to the next open notice, so Take stands where it stood - a run of presses takes
+        // the notices in order, where the card used to stay and turn Take into Give up under the cursor
+        if (done.ok) picked = nextOpenNotice(deps.rows(), picked);
+        armed = null;
         render();
       }));
     } else if (r.state === 'held') {
       const heldId = deps.held().find((h) => h.posting.slotKey === p.slotKey)?.id ?? p.id;
+      // SPAM-TAKE: Give up twice, as the journal's Abandon (the first press arms it), and first in the row - the card's
+      // left, never where Take stood (BOUNTY_CSS)
+      acts.append(button('bounty-drop', armed === heldId ? 'Click again to give up' : 'Give up', () => {
+        if (armed !== heldId) { armed = heldId; render(); return; }
+        armed = null;
+        deps.drop(heldId);
+        word = { ok: false, text: `You gave up the hunt for the ${p.foes}.` };
+        render();
+      }));
       if (deps.inParty() && !r.held?.shared) acts.append(button('bounty-share', 'Share with party', () => {
         const done = deps.share(heldId);
         // BOUNTY-TIER: name the mates the bounty's tier shuts out
@@ -189,7 +212,6 @@ export function mountBountyBoard(host, deps) {
         word = { ok: !shut.length, text: shut.length ? `Shared. ${shut.join('; ')}.` : 'Shared with your party.' };
         render();
       }));
-      acts.append(button('bounty-drop', 'Give up', () => { deps.drop(heldId); word = { ok: false, text: `You gave up the hunt for the ${p.foes}.` }; render(); }));
     } else {
       const why = el('p', 'bounty-why', r.state === 'paid' ? 'You have already claimed this bounty today.' : `You can hold no more than ${BOUNTY_ACTIVE_MAX} bounties at once.`);
       acts.append(why);
