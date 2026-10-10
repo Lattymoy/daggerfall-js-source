@@ -23,7 +23,7 @@ export const CREATURE_MATCH = Object.freeze({
   [M.Spider]: { miss: 'no giant spider (the centurion spider is a Dwemer machine)' },
   [M.Orc]: { miss: 'an orc is a person - Morrowind\'s Orc (MWNPC12, foeBodies.js isPersonFoe), never a creature' },
   [M.Centaur]: { miss: 'no centaur' },
-  [M.Werewolf]: { miss: 'the werewolf is the player\'s wolf (WEREWOLF1), not yet a foe\'s body' },
+  [M.Werewolf]: { miss: 'a werewolf is a person in its beast form - Bloodmoon\'s wolf (MWNPC15, foeBodies.js isPersonFoe), never a creature' },
   [M.Nymph]: { miss: 'no nymph' },
   [M.Slaughterfish]: { miss: 'a water creature - the swimming groups are not driven yet' },
   [M.OrcSergeant]: { miss: 'an orc is a person' },

@@ -136,7 +136,7 @@ const count = (v) => (Number.isFinite(v) ? v | 0 : 0);
  *   feet [x,y,z], yaw (radians), moving, running, drawn (weapon out), swings (a count: each new one a blow), strike (the
  *   blow's POSE_STRIKES index), casts (a count: each new one a cast), castRange (the cast's range type - the rig's
  *   castSpell takes it as the wire's `cr`), hits (a count: each new one a recoil),
- *   dead (0 standing, else the death's roll + 1).
+ *   dead (0 standing, else the death's roll + 1); MWNPC15 `wb` 1 for a look that is a werewolf's.
  * @param {any} a
  */
 export function npcShown(a) {
@@ -149,6 +149,7 @@ export function npcShown(a) {
     cn: count(a.casts), cr: count(a.castRange),
     ht: count(a.hits),
     dd: count(a.dead),
+    wb: a.look?.wolf ? 1 : 0,   // MWNPC15: a werewolf's look - the wire's own wolf bit, so PeerBodies builds Bloodmoon's wolf (WEREWOLF1)
   };
 }
 

@@ -2,8 +2,8 @@
  {
   "name": "MWNPC10c-unarmed",
   "file": "src/characters/foeBodies.js",
-  "old": ": vampire ? [] : [rosterBlade(h)]);",
-  "new": ": vampire ? [] : []);",
+  "old": ": vampire || wolf ? [] : [rosterBlade(h)]);",
+  "new": ": vampire || wolf ? [] : []);",
   "tests": [
    "test/mwnpc10c_roads.test.js"
   ]

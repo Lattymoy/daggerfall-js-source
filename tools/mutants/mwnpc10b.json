@@ -29,7 +29,7 @@
  {
   "name": "MWNPC10b-creature-a-person",
   "file": "src/characters/foeBodies.js",
-  "old": "  if (!orc && !vampire && !(mobileType >= 128)) return (rec._mwRosterLook = creatureLook({ mobileType }));\n",
+  "old": "  if (!orc && !vampire && !wolf && !(mobileType >= 128)) return (rec._mwRosterLook = creatureLook({ mobileType }));\n",
   "new": "",
   "tests": [
    "test/mwnpc10b_rosters.test.js"

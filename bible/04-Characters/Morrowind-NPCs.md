@@ -113,6 +113,7 @@ Each line is a slice's acceptance, not an aspiration:
 | MWNPC7 TOWNSFOLK | walkers and living residents, a wardrobe by FACTION sgroup that actually varies (distinct records and dyes per persona) (the WALKERS SHIPPED, section 12: a wardrobe per outfit variant, dyed per spawn - the living residents indoors are MWNPC8's standing people) | world.js, exterior.js, worldModes.js (living residents indoors) |
 | MWNPC8 STANDING PEOPLE | street, interior, dungeon and quest StaticNPCs; children and vampires keep their sprite; `drawnFlat`'s nudity law honoured (8a SHIPPED, section 13a: the buildings' people; 8b SHIPPED, section 13b: the dungeons' and the street's; 8c SHIPPED, section 13c: exterior.js's and the quests' stands) | all four |
 | MWNPC9 CREATURES | CREA records, creature skeletons and their own .kf, the match table with its declared misses (9a SHIPPED, section 14a: the body; 9b SHIPPED, section 14b: the rig, the match, the hosts) | dungeonContext.js, world.js, worldModes.js, exterior.js |
+| MWNPC15 THE WEREWOLF | the werewolf foe in Bloodmoon's wolf - its look marked wolf, the pose the wire's own wolf bit (SHIPPED, section 20) | the lanes (npcShown); every foe host through foeBodies.js |
 | MWNPC14 THE VAMPIRES | the vampire foes as people with their race's vampire head - the BODY record's vampire flag read, getVampireHead's choice built (SHIPPED, section 19) | the format layer, the rig, the peer layer; every foe host through foeBodies.js |
 | MWNPC13 THE SPECTRAL DEAD | the ghost and the wraith as Morrowind's ancestor ghost under a standing veil at the spectral sprite's opacity (SHIPPED, section 18) | every foe host (each draws its veiled bodies), the roads |
 | MWNPC12 STEEL AND ORCS | the steel no look ever wore (material 1 named none) worn; the four orcs as people in Morrowind's Orc body (SHIPPED, section 17) | foeBodies.js, folkBodies.js, peopleBodies.js - every foe host and roster through them |
@@ -1284,8 +1285,8 @@ crowd's six nearest, and a lane past its range taking no skin.
   match - matchFaceFor stands the walk). A body that fails to build keeps
   the sprite, as every lane's does.
 
-NOT HERE: the werewolf foe keeps its sprite (section 14b); the ghost and
-the wraith are section 18's, the vampires section 19's.
+NOT HERE: none of section 14b's people misses remain - the ghost and the
+wraith are section 18's, the vampires 19's, the werewolf 20's.
 
 PROVEN. `test/mwnpc12_steelorcs.test.js` (3): the guard's, the knight's,
 the warrior's and the watch's every armour piece resolved to steel by
@@ -1377,4 +1378,27 @@ face thread (the picker's options take `vampire`); mutant records
 re-aimed by content: the three ARM_RECORDS_VERSION records (MWNPC9a,
 MW-SPELLFX1, WW-AUDIT C2) and the foe and roster records MWNPC14's lines
 touched (MWNPC5b, MWNPC10b, MWNPC10c, MWNPC12).
+
+## 20. MWNPC15 - THE WEREWOLF (SHIPPED 2026-10-10)
+
+- A PERSON IN ITS BEAST FORM. The player's werewolf (WEREWOLF1) and a
+  peer's already stand in Bloodmoon's wolf: PeerBodies builds the wolf for
+  a pose whose `wb` bit is 1 (its skeleton, head, hair and robe, its own
+  .kf - nothing held), and where the data has no wolf it refuses it once,
+  at the skeleton, for the data (AUDIT E2), and the sprite stands. A
+  werewolf foe (`characters/foeBodies.js` WOLF_MOBILE, isPersonFoe) is a
+  person whose look is marked `wolf`; the lane hands PeerBodies the wire's
+  own bit for it (`characters/npcBodies.js` npcShown `wb`), so it is built
+  and keyed as the wolf a transformed player wears (`wolf|`). Bare-handed;
+  a roster's or a road's the same. The wereboar keeps its sprite:
+  Bloodmoon has no boar.
+
+PROVEN. `test/mwnpc15_werewolf.test.js` (2): the werewolf a person marked
+wolf, its pose's bit 1 and every other's 0, never a creature, the boar
+none, a roster's and a road's; a lane of stub rigs building it as the
+werewolf and standing it, and - where the wolf is refused at its skeleton
+- refused once and its sprite standing, the man beside it unaffected.
+`tools/mutants/mwnpc15.json`: 7 mutants, 7 dead. Pin moved: MWNPC4d's
+pose (`wb` 0 for a person); mutant records re-aimed by content: MWNPC10b's
+creature, MWNPC10c's unarmed and five of MWNPC14's.
 

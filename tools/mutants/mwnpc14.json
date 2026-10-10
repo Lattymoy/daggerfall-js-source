@@ -128,8 +128,8 @@
  {
   "name": "MWNPC14-foes-not-people",
   "file": "src/characters/foeBodies.js",
-  "old": " || VAMPIRE_MOBILES.has(f?.mobileType);",
-  "new": ";",
+  "old": " || VAMPIRE_MOBILES.has(f?.mobileType) ||",
+  "new": " ||",
   "tests": [
    "test/mwnpc14_vampires.test.js"
   ]
@@ -137,8 +137,8 @@
  {
   "name": "MWNPC14-foe-living-face",
   "file": "src/characters/foeBodies.js",
-  "old": ", ...(VAMPIRE_MOBILES.has(f.mobileType) ? { vampire: true } : {}) });   // MWNPC14",
-  "new": " });   // MWNPC14",
+  "old": ", ...(VAMPIRE_MOBILES.has(f.mobileType) ? { vampire: true } : {}), ...(f.mobileType === WOLF_MOBILE",
+  "new": ", ...(f.mobileType === WOLF_MOBILE",
   "tests": [
    "test/mwnpc14_vampires.test.js"
   ]
@@ -146,8 +146,8 @@
  {
   "name": "MWNPC14-roster-vampire-creature",
   "file": "src/characters/foeBodies.js",
-  "old": "  if (!orc && !vampire && !(mobileType >= 128))",
-  "new": "  if (!orc && !(mobileType >= 128))",
+  "old": "  if (!orc && !vampire && !wolf && !(mobileType >= 128))",
+  "new": "  if (!orc && !wolf && !(mobileType >= 128))",
   "tests": [
    "test/mwnpc14_vampires.test.js"
   ]
@@ -155,8 +155,8 @@
  {
   "name": "MWNPC14-roster-vampire-armed",
   "file": "src/characters/foeBodies.js",
-  "old": ": vampire ? [] : [rosterBlade(h)]);",
-  "new": ": [rosterBlade(h)]);",
+  "old": ": vampire || wolf ? [] : [rosterBlade(h)]);",
+  "new": ": wolf ? [] : [rosterBlade(h)]);",
   "tests": [
    "test/mwnpc14_vampires.test.js"
   ]
@@ -164,8 +164,8 @@
  {
   "name": "MWNPC14-roster-living-face",
   "file": "src/characters/foeBodies.js",
-  "old": ", ...(vampire ? { vampire: true } : {}) });",
-  "new": " });",
+  "old": ", ...(vampire ? { vampire: true } : {}), ...(wolf",
+  "new": ", ...(wolf",
   "tests": [
    "test/mwnpc14_vampires.test.js"
   ]
