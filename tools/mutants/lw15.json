@@ -92,8 +92,8 @@
   {
     "name": "LW15-draw-hour",
     "file": "src/net/patronLaw.js",
-    "old": "fnv(`${listing}:${hour}:draw`)",
-    "new": "fnv(`${listing}:draw`)",
+    "old": "fnv(`${salt}${listing}:${hour}:draw${salt}`)",
+    "new": "fnv(`${salt}${listing}:draw${salt}`)",
     "tests": [
       "test/lw15_patrons.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "LW15-door",
     "file": "server-account/src/market.js",
-    "old": "AND h.entry = 'public'\n  AND h.player = l.seller",
-    "new": "AND h.entry IN ('public', 'private')\n  AND h.player = l.seller",
+    "old": "h.entry = 'public' AND h.player = l.seller",
+    "new": "h.entry IN ('public', 'private') AND h.player = l.seller",
     "tests": [
       "test/lw15_patrons.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "LW15-purse",
     "file": "server-account/src/market.js",
-    "old": "AND l.price = ?11 AND COALESCE((SELECT gold FROM market_gold WHERE player = l.seller AND char_id = l.char_id), 0) + ?8 <= ?12`)",
-    "new": "AND l.price = ?11`)",
+    "old": "AND l.price = ?11 AND COALESCE((SELECT gold FROM market_gold WHERE player = l.seller AND char_id = l.char_id), 0) + ?8 <= ?12\n",
+    "new": "AND l.price = ?11\n",
     "tests": [
       "test/lw15_patrons.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "LW15-must",
     "file": "server-account/src/market.js",
-    "old": "              .bind(l.id, map, hour, sale.minute, sale.seed, tax, fee, gets, at, day, sale.price, MARKET_GOLD_HELD_MAX),\n            mustChange(db),\n",
-    "new": "              .bind(l.id, map, hour, sale.minute, sale.seed, tax, fee, gets, at, day, sale.price, MARKET_GOLD_HELD_MAX),\n",
+    "old": "MARKET_GOLD_HELD_MAX, l.bkey),\n                mustChange(db),\n",
+    "new": "MARKET_GOLD_HELD_MAX, l.bkey),\n",
     "tests": [
       "test/lw15_patrons.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "LW15-gets",
     "file": "server-account/src/market.js",
-    "old": "ON CONFLICT (player, char_id) DO UPDATE SET gold = market_gold.gold + excluded.gold`).bind(l.seller, l.char, gets),\n            faucetStatement",
-    "new": "ON CONFLICT (player, char_id) DO UPDATE SET gold = market_gold.gold + excluded.gold`).bind(l.seller, l.char, sale.price),\n            faucetStatement",
+    "old": "excluded.gold`).bind(l.seller, l.char, gets),",
+    "new": "excluded.gold`).bind(l.seller, l.char, sale.price),",
     "tests": [
       "test/lw15_patrons.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "LW15-reached",
     "file": "server-account/src/market.js",
-    "old": "      reached = hour;\n    }\n",
-    "new": "    }\n",
+    "old": "        reached = hour;\n      }\n",
+    "new": "      }\n",
     "tests": [
       "test/lw15_patrons.test.js"
     ]
@@ -281,7 +281,7 @@
   {
     "name": "LW15-vendor-reckon",
     "file": "server-account/src/market.js",
-    "old": "  await reckonPatrons(ctx, { maps: [vend.map] }).catch(() => null);",
+    "old": "  await reckonPatrons(ctx, { maps: [vend.map] }, env).catch(() => null);",
     "new": "  void 0;",
     "tests": [
       "test/lw15_patrons.test.js"
@@ -290,7 +290,7 @@
   {
     "name": "LW15-vendors-reckon",
     "file": "server-account/src/market.js",
-    "old": "  await reckonPatrons(ctx, { region }).catch(() => null);",
+    "old": "  await reckonPatrons(ctx, { region }, env).catch(() => null);",
     "new": "  void region;",
     "tests": [
       "test/lw15_patrons.test.js"
@@ -299,7 +299,7 @@
   {
     "name": "LW15-my-reckon",
     "file": "server-account/src/market.js",
-    "old": "  await reckonPatrons(ctx, { maps: [...new Set(traders.map((v) => Number(v.map_id)))] }).catch(() => null);",
+    "old": "  await reckonPatrons(ctx, { maps: [...new Set(traders.map((v) => Number(v.map_id)))] }, env).catch(() => null);",
     "new": "  void 0;",
     "tests": [
       "test/lw15_patrons.test.js"
@@ -353,7 +353,7 @@
   {
     "name": "LW15-cron-job",
     "file": "server-account/src/cron.js",
-    "old": "['patrons', async (ctx) => (await reckonPatrons(ctx, {})).sold]",
+    "old": "['patrons', async (ctx, env) => (marketOpenFor(null, env) ? (await reckonPatrons(ctx, {}, env)).sold : 0)]",
     "new": "['patrons', async () => 0]",
     "tests": [
       "test/lw15_patrons.test.js"
@@ -563,6 +563,285 @@
     "file": "src/net/patronLaw.js",
     "old": "patronOdds(l.price / patronCap(l.worth))",
     "new": "patronOdds(l.price / Math.max(1, patronCap(l.worth)))",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P1-town",
+    "file": "server-account/src/market.js",
+    "old": "                    AND (SELECT COUNT(*) FROM market_patron_sales WHERE map = ?2 AND hour = ?3) < ${PATRON_TOWN_HOUR}\n",
+    "new": "",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P1-seller-hour",
+    "file": "server-account/src/market.js",
+    "old": "                    AND (SELECT COUNT(*) FROM market_patron_sales WHERE seller = l.seller AND day = ?10 AND hour = ?3) < ${PATRON_SELLER_HOUR}\n",
+    "new": "",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P1-seller-day",
+    "file": "server-account/src/market.js",
+    "old": "                    AND (SELECT COALESCE(SUM(price), 0) FROM market_patron_sales WHERE seller = l.seller AND day = ?10) + l.price <= ${PATRON_SELLER_DAY_GOLD}\n",
+    "new": "",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P2-floor",
+    "file": "src/net/patronLaw.js",
+    "old": "  const worth = worthOf({ ...item, value: 0 });",
+    "new": "  const worth = worthOf(item);",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P3-law",
+    "file": "server-account/src/market.js",
+    "old": "takes: patronTakes(item) && lawfulItem(item) && !goodRefusal(item) });",
+    "new": "takes: patronTakes(item) && !goodRefusal(item) });",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P3-refusal",
+    "file": "server-account/src/market.js",
+    "old": "takes: patronTakes(item) && lawfulItem(item) && !goodRefusal(item) });",
+    "new": "takes: patronTakes(item) && lawfulItem(item) });",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P4-held",
+    "file": "server-account/src/market.js",
+    "old": "(c.held IS NOT NULL OR c.judged_seq IS NULL)",
+    "new": "(c.judged_seq IS NULL)",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P4-unjudged",
+    "file": "server-account/src/market.js",
+    "old": "(c.held IS NOT NULL OR c.judged_seq IS NULL)",
+    "new": "(c.held IS NOT NULL)",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P5-dice-first",
+    "file": "server-account/src/market.js",
+    "old": "        if (cands.length) {\n",
+    "new": "        if (cands.length || open.length) {\n",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P5-read-share",
+    "file": "server-account/src/market.js",
+    "old": "  const budget = ctx.budget ?? (() => tally.n < PATRON_READ_STATEMENTS);",
+    "new": "  const budget = ctx.budget ?? (() => true);",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P5-read-constant",
+    "file": "server-account/src/market.js",
+    "old": "export const PATRON_READ_STATEMENTS = 200;",
+    "new": "export const PATRON_READ_STATEMENTS = 400;",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P5-mark-moved",
+    "file": "server-account/src/market.js",
+    "old": "    if (mark != null && rows.some((r) => !gone.has(r.id) && (r.patron_hour == null || Number(r.patron_hour) < mark))) {",
+    "new": "    if (mark != null) {",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P5-order",
+    "file": "server-account/src/market.js",
+    "old": "      GROUP BY l.vendor_map ORDER BY MIN(COALESCE(l.patron_hour, l.at / ${PATRON_HOUR_S})), l.vendor_map LIMIT ${PATRON_CRON_TOWNS}`)",
+    "new": "      GROUP BY l.vendor_map LIMIT ${PATRON_CRON_TOWNS}`)",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P6-prune",
+    "file": "server-account/src/market.js",
+    "old": "    bounded('market_patron_sales', 'day < ?1', keepFrom),\n",
+    "new": "",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P6-region-index",
+    "file": "server-account/migrations/0105_patrons.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_patron_sales_region ON market_patron_sales (region, at);",
+    "new": "CREATE INDEX IF NOT EXISTS idx_patron_sales_region ON market_patron_sales (at);",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P6-day-index",
+    "file": "server-account/migrations/0105_patrons.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_patron_sales_day ON market_patron_sales (day);",
+    "new": "",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P6-counts-day",
+    "file": "server-account/src/market.js",
+    "old": "FROM market_patron_sales WHERE day = ?3 AND seller IN",
+    "new": "FROM market_patron_sales WHERE (hour = ?2 OR day = ?3) AND seller IN",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P7-door",
+    "file": "server-account/src/homes.js",
+    "old": "  if (entry === 'public' && Number.isSafeInteger(nowS)) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P7-opens",
+    "file": "server-account/src/homes.js",
+    "old": "AND guild_id IS NULL AND entry != 'public')`)",
+    "new": "AND guild_id IS NULL)`)",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P7-shut-town",
+    "file": "server-account/src/market.js",
+    "old": "    const hours = [...new Set(ls.flatMap(",
+    "new": "    if (!ls.length) continue;\n    const hours = [...new Set(ls.flatMap(",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P8-switch",
+    "file": "server-account/src/cron.js",
+    "old": "(marketOpenFor(null, env) ? (await reckonPatrons(ctx, {}, env)).sold : 0)",
+    "new": "(await reckonPatrons(ctx, {}, env)).sold",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P9-told-join",
+    "file": "server-account/src/market.js",
+    "old": "FROM market_patron_sales s JOIN market_listings l ON l.id = s.listing WHERE ${where}",
+    "new": "FROM market_patron_sales s JOIN market_listings l ON l.id = s.listing LEFT JOIN home_decor d ON d.map_id = l.vendor_map AND d.id = l.vendor_id WHERE ${where}",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P9-house",
+    "file": "server-account/src/market.js",
+    "old": "MARKET_GOLD_HELD_MAX, l.bkey),",
+    "new": "MARKET_GOLD_HELD_MAX, null),",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P10-secret",
+    "file": "server-account/src/market.js",
+    "old": "  if (!key) return '';\n  const hash",
+    "new": "  return '';\n  const hash",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P10-draw",
+    "file": "src/net/patronLaw.js",
+    "old": "fnv(`${salt}${listing}:${hour}:draw${salt}`)",
+    "new": "fnv(`${listing}:${hour}:draw`)",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P10-draw-after",
+    "file": "src/net/patronLaw.js",
+    "old": "fnv(`${salt}${listing}:${hour}:draw${salt}`)",
+    "new": "fnv(`${salt}${listing}:${hour}:draw`)",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P10-cands",
+    "file": "server-account/src/market.js",
+    "old": "const cands = patronCands(open, hour, salt).map((c) => c.l);",
+    "new": "const cands = patronCands(open, hour).map((c) => c.l);",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P10-route",
+    "file": "server-account/src/market.js",
+    "old": "  await reckonPatrons(ctx, { maps: [vend.map] }, env).catch(() => null);",
+    "new": "  await reckonPatrons(ctx, { maps: [vend.map] }).catch(() => null);",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P11-failure",
+    "file": "server-account/src/market.js",
+    "old": "              if (!guardRefused(e)) throw e;",
+    "new": "              void e;",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P11-guard",
+    "file": "server-account/src/market.js",
+    "old": "/moved = expected/.test(",
+    "new": "/moved = nothing/.test(",
+    "tests": [
+      "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-P11-partial",
+    "file": "server-account/src/market.js",
+    "old": "      partial = true;\n      console.warn('[patrons]",
+    "new": "      console.warn('[patrons]",
     "tests": [
       "test/lw15_patrons.test.js"
     ]

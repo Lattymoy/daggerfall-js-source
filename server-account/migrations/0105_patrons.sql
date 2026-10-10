@@ -20,10 +20,16 @@ CREATE TABLE IF NOT EXISTS market_patron_sales (
   gets     INTEGER NOT NULL CHECK (gets >= 0),
   at       INTEGER NOT NULL,
   day      INTEGER NOT NULL,
+  -- AUDIT LW-II P9: the house the trader stood in at the sale, kept with it - a piece's id is its owner's client's, so
+  -- another's piece of the same id in the same town told every sale twice, once at its own door
+  building_key INTEGER,
   FOREIGN KEY (seller) REFERENCES players(id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS idx_patron_sales_town ON market_patron_sales (map, hour);
 CREATE INDEX IF NOT EXISTS idx_patron_sales_seller ON market_patron_sales (seller, day);
+-- AUDIT LW-II P6: the region's read of its last day's sales (it walked the table whole), and the market's prune by the day
+CREATE INDEX IF NOT EXISTS idx_patron_sales_region ON market_patron_sales (region, at);
+CREATE INDEX IF NOT EXISTS idx_patron_sales_day ON market_patron_sales (day);
 CREATE TABLE IF NOT EXISTS realm_faucets (
   hour  INTEGER NOT NULL,
   kind  TEXT NOT NULL,
