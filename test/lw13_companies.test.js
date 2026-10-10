@@ -13,6 +13,7 @@ import {
 } from '../src/systems/livingWorld/companies.js';
 import {
   ownTrip, townTrips, formCaravans, leaderOf, placeCycle, cycleOf, awayOf, holyTrip, CALENDAR_MPM, DIVE_CHANCE, HOLY_IN_H, WALK_FROM_H, TRIP_PACE, NATIVE_PER_M,
+  TRIP_CHANCE,
 } from '../src/systems/livingWorld/trips.js';
 import { travellerRoster } from '../src/systems/livingWorld/census.js';
 import { lwRng } from '../src/systems/livingWorld/seed.js';
@@ -138,7 +139,7 @@ test('LW13 a fated member sends the company out, whatever its first\'s chance sa
   const first = c.places[0], follower = c.places[1];
   let forced = 0;
   for (let k = 500; k < 700; k++) {
-    if (lwRng(first.town, first.slot, k, 0x74726970)() < 0.7) continue;   // its own chance sent it anyway (TRIP_CHANCE.adventurer)
+    if (lwRng(first.town, first.slot, k, 0x74726970)() < TRIP_CHANCE.adventurer) continue;   // its own chance sent it anyway (AUDIT LW-II F6: the table's, never a copy of it)
     const own = ownTrip(first, home, k, { ...world, fated: () => false }, O());
     const fatedTrip = ownTrip(first, home, k, { ...world, fated: (r) => r.slot === follower.slot }, O());
     assert.equal(own, null);
@@ -226,7 +227,7 @@ test('LW13 the holy day: a pilgrim\'s cycle with a temple town\'s own holy day (
   const world = miniWorld([home, temple]);
   const pilgrims = world.rosterOf(home).filter((r) => r.job === 'pilgrim');
   assert.ok(pilgrims.length >= 2);
-  let found = 0, drawnOut = 0;
+  let found = 0, drawnOut = 0, overChance = 0;
   const outs = new Map();
   const holyDays = [];
   for (let d = 0; d < 360; d++) { const id = getHolidayId(d * DAY_MIN + 720, 24); if (id && holidayRegion(id) === 25) holyDays.push(d); }
@@ -240,8 +241,11 @@ test('LW13 the holy day: a pilgrim\'s cycle with a temple town\'s own holy day (
       const tr = holyTrip(p, home, c.k, world, { start: c.start, len: c.len, pace: TRIP_PACE.pilgrim * CALENDAR_MPM * NATIVE_PER_M });
       if (!tr) continue;
       found++;
+      // AUDIT LW-II F7: the cycle's trip IS the pilgrimage, whatever the cycle's own chance said - the holy day's draw alone
+      // (before, behind TRIP_CHANCE.pilgrim: half the drawn stayed home)
       const own = ownTrip(p, home, c.k, world, O());
-      if (own) assert.deepEqual(own, tr, 'its cycle\'s trip the pilgrimage');
+      assert.deepEqual(own, tr, 'its cycle\'s trip the pilgrimage');
+      if (lwRng(p.town, p.slot, c.k, 0x74726970)() >= TRIP_CHANCE.pilgrim) overChance++;
       assert.equal(tr.to.mapId, 2);
       assert.equal(tr.holy.day, day);
       assert.ok(tr.outT1 <= day * DAY_MIN + HOLY_IN_H * 60, 'in by the morning');
@@ -252,7 +256,7 @@ test('LW13 the holy day: a pilgrim\'s cycle with a temple town\'s own holy day (
       outs.set(day, tr.outT0);
     }
   }
-  assert.ok(found >= 3 && drawnOut >= 1, `${found} pilgrimages, ${drawnOut} kept home by their draw`);
+  assert.ok(found >= 3 && drawnOut >= 1 && overChance >= 1, `${found} pilgrimages (${overChance} where the cycle's chance said stay), ${drawnOut} kept home by their draw`);
 });
 
 test('LW13 seen: a company in file by role (warriors, thieves, mages), its mark by name ("The Lantern Company, to Mournoth"), its greeting naming it, its word its head\'s; the People page\'s companies (mutants: the order, the label, the greeting, the head, the page)', () => {
@@ -303,4 +307,30 @@ test('LW13 a pilgrim come to a temple town keeps its temple - the morning long a
   assert.ok(temple.reduce((a, e) => a + (e.t1 - e.t0), 0) >= 150, 'the morning long');
   assert.ok(temple.some((e) => e.t0 >= D0 + 4 * 60 && e.t0 <= D0 + 6 * 60), 'from half past eight');
   assert.equal(visit('courier').filter((e) => e.kind === 'temple').length, 0, 'a visitor of little piety keeps none');
+});
+
+test('AUDIT LW-II LW13: one company to a train - two companies setting out with a merchant\'s train that hires no sellsword: the first in the deal\'s order hired on it, the second walking its own trip, named; nobody dropped (mutants: E4 the one company)', () => {
+  // a town of a merchant and four adventurers dealt into two companies
+  let roster = null, cs = null, T = null;
+  for (let id = 1; id < 500 && !T; id++) {
+    roster = [{ id: `L${id}.t0`, town: id, slot: 0, job: 'merchant', cls: null, name: 'Mo Merchant', level: 1 }];
+    for (let s = 1; s <= 4; s++) roster.push({ id: `L${id}.t${s}`, town: id, slot: s, job: 'adventurer', cls: [128, 140, 135, 141][s - 1], name: `Ad Venturer${s}`, level: s });
+    cs = companiesOf(roster);
+    if (cs.length === 2) T = { mapId: id, name: 'Home', blocks: 12 };
+  }
+  assert.ok(T, 'a town of two companies');
+  const day = 3000;
+  const mk = (r, minute) => ({ id: `${r.id}:${cycleOf(r, day, 1).k}`, k: cycleOf(r, day, 1).k, kind: r.job, leader: r, party: [r], from: T, to: { mapId: 77, name: 'There' }, outT0: day * DAY_MIN + minute, outT1: day * DAY_MIN + 900, backT0: (day + 2) * DAY_MIN, backT1: (day + 3) * DAY_MIN });
+  const made = [mk(roster[0], 480), ...cs.map((c) => mk(c.places[0], 400 + c.places[0].slot))];
+  const tripOf = (r, k) => made.find((t) => t.leader.slot === r.slot && t.k === k) ?? null;
+  const out = formCaravans(T, made, roster, tripOf, 1);
+  const walking = new Set(out.flatMap((tr) => tr.party.map((m) => m.slot)));
+  for (const c of cs) assert.ok(c.places.every((p) => walking.has(p.slot)), `${c.key}: every place walking`);
+  const train = out.find((tr) => tr.kind === 'merchant');
+  assert.equal(train.hiredBy, cs[0].key, 'the first company hired');
+  assert.deepEqual(train.party.map((m) => m.slot), [0, ...cs[0].places.map((p) => p.slot)]);
+  const own = out.find((tr) => tr.company?.key === cs[1].key);
+  assert.ok(own, 'the second its own trip, named');
+  assert.deepEqual(own.party.map((m) => m.slot), cs[1].places.map((p) => p.slot));
+  assert.equal(out.length, 2);
 });

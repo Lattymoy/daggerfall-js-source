@@ -308,8 +308,8 @@
   {
     "name": "LW7b-roads-fight",
     "file": "src/scenes/livingRoads.js",
-    "old": "          if ((at.phase !== 'out' && at.phase !== 'back') || at.fight || at.inn) continue;   // LW9: lodged at an inn, indoors",
-    "new": "          if ((at.phase !== 'out' && at.phase !== 'back') || at.inn) continue;   // LW9: lodged at an inn, indoors",
+    "old": "          if (d.fight) continue;   // LW4b: at its fight - the fights'",
+    "new": "          // LW4b: at its fight - the fights'",
     "tests": [
       "test/lw7b_beyond.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "LW7b-roads-sky",
     "file": "src/scenes/livingRoads.js",
-    "old": "      if (here && !overworld) {\n        for (const p of parties) {",
-    "new": "      if (here) {\n        for (const p of parties) {",
+    "old": "      if (here && !overworld) {\n        for (const d of drawn) {",
+    "new": "      if (here) {\n        for (const d of drawn) {",
     "tests": [
       "test/lw7b_beyond.test.js"
     ]

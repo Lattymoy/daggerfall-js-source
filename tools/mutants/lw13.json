@@ -155,8 +155,8 @@
   {
     "name": "LW13-fated",
     "file": "src/systems/livingWorld/trips.js",
-    "old": " && !company?.places.slice(1).some((p) => world.fated?.(p, k))) return null;",
-    "new": ") return null;",
+    "old": "const riders = company ? company.places.slice(1) :",
+    "new": "const riders = company ? [] :",
     "tests": [
       "test/lw13_companies.test.js"
     ]
@@ -375,6 +375,34 @@
     "new": "  stranger: Object.freeze(['You\\'ve heard of us?', 'Make way for {company}.', 'Good road. We\\'re {company}.']),",
     "tests": [
       "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-AUDIT-E4-one-company",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    return first && first.places[0].slot === ct.leader.slot ? mt : null;",
+    "new": "    return mt;",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-AUDIT-F7-holy-own-draw",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  if (!goes && !holyCycle) return null;",
+    "new": "  if (!goes) return null;",
+    "tests": [
+      "test/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW13-AUDIT-F7-holy-else-stay",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    if (!goes) return null;   // AUDIT LW-II F7",
+    "new": "    // AUDIT LW-II F7",
+    "tests": [
+      "test/lw13_companies.test.js",
+      "test/lw4_trouble.test.js"
     ]
   }
 ]

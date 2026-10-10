@@ -12,9 +12,10 @@ import {
   CARGO_BOUGHT, CARGO_ROBBED, CAMP_PARK_N, CAMP_HORSE_SIDE_N,
 } from '../src/systems/livingWorld/wagons.js';
 import { createRoadTeams, WAGONS_DRAWN, wagonBucket } from '../src/world/roadTeams.js';
-import { wayAt, wayOf, NATIVE_PER_M, NATIVE_PIXEL, partyAt, townTrips, CALENDAR_MPM } from '../src/systems/livingWorld/trips.js';
+import { wayAt, wayOf, NATIVE_PER_M, NATIVE_PIXEL, partyAt, townTrips, membersAt, CALENDAR_MPM } from '../src/systems/livingWorld/trips.js';
 import { HITCHED_HORSE_LOCAL_Z, wheelRotationDegrees, wrapWheelAngle, NORMAL_GROUND_OFFSET } from '../src/systems/horseCartLaw.js';
-import { createLivingRoads } from '../src/scenes/livingRoads.js';
+import { createLivingRoads, CAMP_RING_N } from '../src/scenes/livingRoads.js';
+import { synthMap } from './lwRoads.mjs';
 import { createRelations } from '../src/systems/livingWorld/relations.js';
 import { travellerRoster } from '../src/systems/livingWorld/census.js';
 import { DAY_MIN } from '../src/systems/livingWorld/dayPlan.js';
@@ -187,4 +188,60 @@ test('LW10 the roads\' layer lays the teams: a caravan on the road its train (it
   assert.match(host, /if \(livingRoads && livingWorldOn\(\) && _mode\(\) === 'exterior'\) livingRoads\.drawTeams\(renderer\);/);
   const pool = readFileSync(new URL('../src/scenes/horseCartPool.js', import.meta.url), 'utf8');
   assert.match(pool, /presentation: \{ wagonParts, horseArt, onChanged: \(\) => onChanged\?\.\(\), drawWagon, poseHorse: poseHorseBatch \}/);
+});
+
+test('AUDIT LW-II LW10: the wheels turn forward on the way home - the distance walked the way the wagon faces; the roads\' layer lays a train on the march in the train\'s own places, and a camped caravan\'s wagons parked CAMP_PARK_N beyond its ring, facing its fire (mutants: E8 the wheels home, F3 the people in the train, F3 the park)', () => {
+  // E8: on the way home the axle's distance grows as the train walks on, so its wheels turn the way it goes
+  const way = straight();
+  const leader = res('m');
+  const trip = { id: 'L1.t0:9', kind: 'merchant', from: { blocks: 4 }, leader, party: [leader], way, backT0: 0 };
+  const a = trainOf(trip, { phase: 'back', s: 30000 }, [leader], 1).wagons[0], b = trainOf(trip, { phase: 'back', s: 29000 }, [leader], 1).wagons[0];
+  assert.ok(b.s - a.s === 1000, 'a thousand on, a thousand walked');
+  const out = trainOf(trip, { phase: 'out', s: 29000 }, [leader], 1).wagons[0], on = trainOf(trip, { phase: 'out', s: 30000 }, [leader], 1).wagons[0];
+  assert.ok(on.s - out.s === 1000, 'and on the way out');
+  const r = 0.45, step = (x, y) => ((wheelAngleAt(y, r) - wheelAngleAt(x, r) + 540) % 360) - 180;
+  assert.ok(Math.sign(step(a.s, b.s)) === Math.sign(step(out.s, on.s)) && step(a.s, b.s) !== 0, 'the wheels turn the same way out and home');
+  // F3: the layer, on the synthetic map - a caravan walking and one camped, near the player
+  const { towns, world } = synthMap();
+  const o = { mpm: CALENDAR_MPM, memo: new Map() };
+  const find = (h, ok) => {
+    for (let day = 300; day < 420; day++) {
+      const t = day * DAY_MIN + h * 60;
+      for (const tn of towns) for (const tr of townTrips(tn, t, world, o) ?? []) { const at = partyAt(tr, t); if (tr.kind === 'merchant' && (at.phase === 'out' || at.phase === 'back') && !at.halt && !at.inn && ok(at, tr)) return { tr, at, t }; }
+    }
+    return null;
+  };
+  const lay = ({ t, at }) => {
+    const synced = [], lists = [];
+    const teams = { sync: (hs, ws) => synced.push({ hs, ws }), batches: () => [], draw: () => 0, clear: () => {} };
+    const sprites = { sync: (list) => lists.push(list.map((m) => ({ ...m }))), batches: () => [], persons: () => [], bodyOf: () => null, clear: () => {} };
+    const roads = createLivingRoads({ world, mpm: CALENDAR_MPM, clock: () => t, baseRate: () => CLASSIC_MINUTES_PER_SECOND, sceneOf: (nx, nz) => [nx / 40, 0, nz / 40], here: () => ({ x: at.x, z: at.z }), sprites: /** @type {any} */ (sprites), relations: () => createRelations(), memo: o.memo, teams: /** @type {any} */ (teams) });
+    roads.frame(1 / 30, [at.x / 40, 1.6, at.z / 40]);
+    return { list: lists[lists.length - 1], team: synced[synced.length - 1] };
+  };
+  const walking = find(12, (at, tr) => !at.camp && tr.party.length > 1);
+  assert.ok(walking, 'a caravan on the march');
+  const w = lay(walking);
+  const train = trainOf(walking.tr, walking.at, membersAt(walking.tr, walking.t), walking.t);
+  for (const p of train.people) {
+    const body = w.list.find((m) => m.key === p.res.id);
+    assert.ok(body, `${p.res.id} drawn`);
+    assert.ok(Math.abs(body.feet[0] - p.x / 40) < 1e-9 && Math.abs(body.feet[2] - p.z / 40) < 1e-9, `${p.res.id} in the train's place`);
+  }
+  const camped = find(23, (at) => at.camp);
+  assert.ok(camped, 'a caravan camped');
+  const c = lay(camped);
+  const ws = c.team.ws.filter((x) => x.key.startsWith(`${camped.tr.id}:w`));
+  assert.ok(ws.length > 0, 'its wagons handed to the teams');
+  const fires = c.list.filter((m) => /^fire:/.test(m.key));
+  const people = c.list.filter((m) => camped.tr.party.some((p) => p.id === m.key));
+  assert.ok(people.length > 0);
+  for (const wg of ws) {
+    const fire = fires.reduce((best, f) => (!best || Math.hypot(f.feet[0] - wg.feet[0], f.feet[2] - wg.feet[2]) < Math.hypot(best.feet[0] - wg.feet[0], best.feet[2] - wg.feet[2]) ? f : best), null);
+    assert.ok(fire, 'its camp\'s fire');
+    const ring = Math.hypot(people[0].feet[0] - fire.feet[0], people[0].feet[2] - fire.feet[2]);
+    assert.ok(ring >= CAMP_RING_N / 40 - 1e-9, 'its people on the ring');
+    assert.ok(Math.abs(Math.hypot(wg.feet[0] - fire.feet[0], wg.feet[2] - fire.feet[2]) - (ring + CAMP_PARK_N / 40)) < 1e-6, 'parked CAMP_PARK_N beyond the ring');
+    assert.equal(wg.moving, false);
+  }
 });

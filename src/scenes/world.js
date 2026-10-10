@@ -144,7 +144,7 @@ import { createDungeonDivers } from './dungeonDivers.js';   // LW6: the divers m
 import { createDeepRemains } from './deepRemains.js';   // LW6b: the fallen of a dive, found in its dungeon
 import { watchStep } from './livingWatch.js';   // LW-FIX2: a struck watchman's guard followed to his end
 import { fallenIn } from '../systems/livingWorld/trips.js';   // LW6b: ...the deep's word of them
-import { innGuestsOf, patrolCover, INN_TYPE } from '../systems/livingWorld/trips.js';   // LW9: the inn's guests, the patrol's cover
+import { innGuestsOf, patrolCover, placeName, INN_TYPE } from '../systems/livingWorld/trips.js';   // LW9: the inn's guests, the patrol's cover; AUDIT LW-II E7: a trip's end in the talk
 import { PATROL_HALT_LINES } from '../systems/livingWorld/lines.js';   // LW9: the law beyond the walls
 import { lwSeed } from '../systems/livingWorld/seed.js';   // LW9: the halt's word, the hour's
 import { enemyLootTableKey } from '../systems/loot.js';   // LW6b: ...what they carried, their class's table
@@ -2944,6 +2944,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     const regions = new Set(livingTripWorld.townsNear(px, py, 8).map((t) => t.region | 0));
     return [...regions].flatMap((r) => livingHideoutsOf(r));
   };
+  // AUDIT LW-II E1: a patrol's cover still waiting on a round's way (patrolCover's undefined) - the trouble read meanwhile is
+  // no answer: it is never kept (`fate`), so every reader's trouble is the one read with every round known
+  let _livingCoverPending = false;
+  const livingCovered = (c) => { if (c === undefined) _livingCoverPending = true; return !!c; };
   const livingTroubleWorld = {
     climateAt: (px, py) => maps.getClimateIndex(px, py),
     foesOf: ({ climateIndex, dungeonType, minute, level, size, rolls }) => (dungeonType != null
@@ -2953,7 +2957,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     dies: (res, trip) => { const pl = livingTripPlace(res, trip); return pl.dies && pl.hand == null; },   // LW7: one a hand took first the road's trouble never takes
     diced: (res, trip) => livingTripPlace(res, trip).diced,   // AUDIT-B1: the dice's own death - the trouble's shape, never a turn's
     turnOf: (id) => { const t = livingRelations.turns(); return t.won.has(id) ? 'won' : t.lost.has(id) ? 'lost' : null; },
-    covered: (trip) => patrolCover(trip, livingTripWorld, { mpm: PERSON_MOVE_SPEED / livingBaseRate(), memo: _livingTripMemo }),   // LW9: a patrol keeps the road
+    covered: (trip) => livingCovered(patrolCover(trip, livingTripWorld, { mpm: PERSON_MOVE_SPEED / livingBaseRate(), memo: _livingTripMemo })),   // LW9: a patrol keeps the road
     // LW12: THE OUTLAWS - a band's hold-up, over the hideouts of the trip's two regions and the character's routs
     bandAt: (trip, px, py, t) => bandTrouble(trip, px, py, t, [...livingHideoutsOf(trip.from?.region), ...(trip.to?.region != null && trip.to.region !== trip.from?.region ? livingHideoutsOf(trip.to.region) : [])], livingRouts()),
   };
@@ -2963,7 +2967,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     const key = `${trip.id}|${trip.party.map((m) => m.id).join(',')}`;
     let f = _livingFates.get(key);
     if (!f) {
-      f = troubledTrip(trip, troubleOf(trip, livingTroubleWorld));
+      const was = _livingCoverPending;
+      _livingCoverPending = false;
+      const enc = troubleOf(trip, livingTroubleWorld);
+      const waits = _livingCoverPending;
+      _livingCoverPending = was;   // a trouble read inside another's keeps that one's word
+      if (waits) return undefined;   // AUDIT LW-II E1: a way still asked - townTrips waits, as for any way
+      f = troubledTrip(trip, enc);
       f = handsOn(f, (m) => livingPlaceOf(m, livingCycleOf(m, Math.floor((trip.outT0 - 240) / 1440))).hand);   // LW7: its hand deaths, gone from that minute
       if (_livingFates.size > 20000) _livingFates.clear();
       _livingFates.set(key, f);
@@ -3000,7 +3010,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // LW4: the town's news of the road - its own parties' troubles of the last days, each known once they were home
     const { told, news } = livingRoadNewsAt(town, noon, o);
     // LW-TALK: the towns of its road - where its people's trips of these days were bound - for its talk's {place}
-    const places = [...new Set([...trips, ...told].map((tr) => tr.to?.name).filter(Boolean))].sort();
+    const places = [...new Set([...trips, ...told].map((tr) => placeName(tr.to)).filter(Boolean))].sort();   // AUDIT LW-II E7: never "the wild" (a hunter's: no town)
     return { away, visitors, holders, news, places };
   };
   /** LW4: a town's news of the road at minute `t` - its own parties' troubles of the last NEWS_DAYS days, each known once
