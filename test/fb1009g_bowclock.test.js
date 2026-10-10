@@ -1,4 +1,4 @@
-// BOW-CLOCK (FIELD BUGS 2026-10-09f, a player's "Archery is weird when turning off 'draw weapon' animation and double
+// BOW-CLOCK (FIELD BUGS 2026-10-09g, a player's "Archery is weird when turning off 'draw weapon' animation and double
 // shot bug", and the owner beside it: "the arrow on the morrowind weapon isnt shown be drawn and shot, or it's
 // misalligned"). Under the Morrowind arm a shot's hit waits for the arm's "shoot release" (MW-D42), and the machine's
 // cycle could end while the arm was still drawing: the next click started a shot the arm refused to draw, its arrow rode

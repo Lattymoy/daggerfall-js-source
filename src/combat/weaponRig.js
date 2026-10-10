@@ -1230,7 +1230,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   }
 
   /**
-   * BOW-CLOCK (FIELD BUGS 2026-10-09f, "Archery is weird ... and double shot bug"): ONE CLICK, ONE DRAW, ONE ARROW.
+   * BOW-CLOCK (FIELD BUGS 2026-10-09g, "Archery is weird ... and double shot bug"): ONE CLICK, ONE DRAW, ONE ARROW.
    * Under the Morrowind arm a shot's hit waits for the arm's release key (MW-D42), but the machine's cycle - the instant
    * shot's four ticks and a Speed-driven cooldown, ~1.2s at Speed 90 - can end while the arm is still drawing the last
    * one. The next click then started a shot the arm refused to draw (attack() takes only an idle or following-through

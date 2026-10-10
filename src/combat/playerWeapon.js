@@ -448,7 +448,7 @@ export class PlayerWeapon {
         if (rise && m.state !== 'StrikeUp' && machineAttack(m, 'StrikeUp')) return 'StrikeUp';
         return null;
       }
-      // BOW-CLOCK (FIELD BUGS 2026-10-09f, the owner's call on a player's "there is no way to actually just 'hold
+      // BOW-CLOCK (FIELD BUGS 2026-10-09g, the owner's call on a player's "there is no way to actually just 'hold
       // attack' and continue to shoot arrows"): THE INSTANT SHOT REPEATS WHILE HELD - a DEPARTURE from DFU's
       // released-since-the-last-shot gate, for BowDrawback off alone. The machine still decides when: its cooldown
       // and its Idle refuse every frame until the bow is ready, so a held button looses the moment it is, at DFU's own

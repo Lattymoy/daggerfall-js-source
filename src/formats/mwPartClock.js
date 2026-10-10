@@ -1,4 +1,4 @@
-// MW-BOW1 (FIELD BUGS 2026-10-09f, the owner: "the arrow on the morrowind weapon isnt shown be drawn and shot, or it's
+// MW-BOW1 (FIELD BUGS 2026-10-09g, the owner: "the arrow on the morrowind weapon isnt shown be drawn and shot, or it's
 // misalligned", after MW-D16, MW-D42 and MW-D50 each found the arrow placed by the reference and the report came back):
 // A PART THAT MOVES ON ITS OWN CLOCK.
 //

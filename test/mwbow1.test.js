@@ -1,4 +1,4 @@
-// MW-BOW1 (FIELD BUGS 2026-10-09f, the owner: "the arrow on the morrowind weapon isnt shown be drawn and shot, or it's
+// MW-BOW1 (FIELD BUGS 2026-10-09g, the owner: "the arrow on the morrowind weapon isnt shown be drawn and shot, or it's
 // misalligned"; then "Im tired of you avoiding the morrowind arrow case"): A MORROWIND BOW DRAWS ON ITS OWN CLOCK. The
 // retail bow mesh carries its limbs and string morphing and its ArrowBone keyframed through the BowAndArrow group
 // (OpenMW issues 5642 and 9322), on WeaponAnimationTime: the weapon group's playhead, from the group's first key for a

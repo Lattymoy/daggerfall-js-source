@@ -5,7 +5,7 @@
     "old": "const strike = !paralyzed && c && canAttack && !armLoosing\n",
     "new": "const strike = !paralyzed && c && canAttack\n",
     "tests": [
-      "test/fb1009f_bowclock.test.js"
+      "test/fb1009g_bowclock.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "!!m.ranged && m.state === 'Idle' && (",
     "new": "!!m.ranged && (",
     "tests": [
-      "test/fb1009f_bowclock.test.js"
+      "test/fb1009g_bowclock.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      if (armCannotDraw()) return;   // BOW-CLOCK: nor a shot the Morrowind arm cannot draw yet\n",
     "new": "",
     "tests": [
-      "test/fb1009f_bowclock.test.js"
+      "test/fb1009g_bowclock.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "(_heldHitAge >= HELD_HIT_MAX_S && !fpArm.shotBusy())",
     "new": "_heldHitAge >= HELD_HIT_MAX_S",
     "tests": [
-      "test/fb1009f_bowclock.test.js"
+      "test/fb1009g_bowclock.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": " || _heldHitAge >= HELD_HIT_CAP_S) {",
     "new": ") {",
     "tests": [
-      "test/fb1009f_bowclock.test.js"
+      "test/fb1009g_bowclock.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      if (type === MW_SHOOT_ATTACK) shootReleased = false;\n",
     "new": "",
     "tests": [
-      "test/fb1009f_bowclock.test.js"
+      "test/fb1009g_bowclock.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "return upper === UPPER_BODY.Equipping || ",
     "new": "return ",
     "tests": [
-      "test/fb1009f_bowclock.test.js"
+      "test/fb1009g_bowclock.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": " || upper === UPPER_BODY.AttackRelease;\n",
     "new": ";\n",
     "tests": [
-      "test/fb1009f_bowclock.test.js"
+      "test/fb1009g_bowclock.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "upper === UPPER_BODY.Equipping || upper === UPPER_BODY.AttackWindUp || ",
     "new": "upper === UPPER_BODY.Equipping || ",
     "tests": [
-      "test/fb1009f_bowclock.test.js"
+      "test/fb1009g_bowclock.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "if (held && machineAttack(m, 'StrikeDown')) { this.lastDrawMs",
     "new": "if (rise && machineAttack(m, 'StrikeDown')) { this.lastDrawMs",
     "tests": [
-      "test/fb1009f_bowclock.test.js"
+      "test/fb1009g_bowclock.test.js"
     ]
   }
 ]

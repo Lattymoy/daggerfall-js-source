@@ -84,9 +84,9 @@ test('audit24 combat: the bow RISE edge, the tracking reset, and the angle sign'
   // "after the button was RELEASED since the last shot"
   // (lastAttackHand == Hand.None), so an OR - or a missing edge - turns
   // one held button into a machine gun.
-  // PIN MOVED (BOW-CLOCK, FIELD BUGS 2026-10-09f): onto the DRAWN bow, which
+  // PIN MOVED (BOW-CLOCK, FIELD BUGS 2026-10-09g): onto the DRAWN bow, which
   // keeps the edge. The instant shot (BowDrawback off) repeats while held now -
-  // the owner's departure, pinned in fb1009f_bowclock.test.js.
+  // the owner's departure, pinned in fb1009g_bowclock.test.js.
   const DRAWN = { bowDrawback: true };
   const bow = new PlayerWeapon({ weapon: { name: 'Long Bow', templateIndex: 130 }, liveSpeed: 50 });
   bow.sheathed = false;
