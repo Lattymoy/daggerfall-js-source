@@ -1,0 +1,163 @@
+[
+  {
+    "name": "PERF-INST-a-the-nearest-tie-to-the-latest",
+    "file": "src/render/shadowPass.js",
+    "old": "(d < bestD || (d === bestD && best !== null && p.ord < best.ord))",
+    "new": "(d < bestD || (d === bestD && best !== null))",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-b-a-claimed-placement-taken",
+    "file": "src/render/shadowPass.js",
+    "old": "                if (p.seen === this.frameNo) continue;\n",
+    "new": "",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-c-a-moved-placement-left-where-it-stood",
+    "file": "src/render/shadowPass.js",
+    "old": "    if (!same) { m.set(matrix); s.at = this.frameNo; _file(o, s, shift); }",
+    "new": "    if (!same) { m.set(matrix); s.at = this.frameNo; }",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-d-the-shift-not-refiled",
+    "file": "src/render/shadowPass.js",
+    "old": "      if (o._shInstGrid) for (const p of inst) if (_instKeyOf(p, this._shiftNow) !== p.key) _file(o, p, this._shiftNow);\n",
+    "new": "",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-e-the-3x3x3-a-cross",
+    "file": "src/render/shadowPass.js",
+    "old": "              const cell = grid.get(instKey(cx + dx, cy + dy, cz + dz));",
+    "new": "              const cell = dx && dz ? null : grid.get(instKey(cx + dx, cy + dy, cz + dz));",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-f-a-live-placement-evicted",
+    "file": "src/render/shadowPass.js",
+    "old": "if (this.frameNo - inst[i].seen >= SHADOW_DYNAMIC_HOLD) list.push(inst[i]);",
+    "new": "list.push(inst[i]);",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-g-no-eviction",
+    "file": "src/render/shadowPass.js",
+    "old": "        s = this._stalest(o, inst);\n        if (s === null) return true;",
+    "new": "        return true;",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-h-the-queue-kept-past-its-frame",
+    "file": "src/render/shadowPass.js",
+    "old": "    if (!q || q.frame !== this.frameNo) {",
+    "new": "    if (!q) {",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-i-the-grid-unasked",
+    "file": "src/render/shadowPass.js",
+    "old": "    if (inst.length > SHADOW_INSTANCE_LINEAR) return this._movedFiled(o, inst, matrix);   // PERF-INST",
+    "new": "    if (inst.length > Infinity) return this._movedFiled(o, inst, matrix);   // PERF-INST",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-j-the-cap-back-to-128",
+    "file": "src/render/shadowPass.js",
+    "old": "export const SHADOW_INSTANCE_MAX = 1024;",
+    "new": "export const SHADOW_INSTANCE_MAX = 128;",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-k-the-nearest-tie-to-the-first-cube-asked",
+    "file": "src/render/shadowPass.js",
+    "old": "(d < bestD || (d === bestD && best !== null && p.ord < best.ord))",
+    "new": "(d < bestD)",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-l-the-queue-made-again-at-every-miss",
+    "file": "src/render/shadowPass.js",
+    "old": "    if (!q || q.frame !== this.frameNo) {",
+    "new": "    if (true) {",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-m-the-queue-by-remembered-order-alone",
+    "file": "src/render/shadowPass.js",
+    "old": "list.sort((a, b) => a.seen - b.seen || a.ord - b.ord);",
+    "new": "list.sort((a, b) => a.ord - b.ord);",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-n-a-placement-drawn-since-it-was-queued-evicted",
+    "file": "src/render/shadowPass.js",
+    "old": "if (q.list[i].seen === q.seen[i]) return q.list[i];",
+    "new": "return q.list[i];",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-o-the-exact-one-the-first-cube-found",
+    "file": "src/render/shadowPass.js",
+    "old": "if (exact !== null && p.ord > exact.ord) break;",
+    "new": "if (exact !== null) break;",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-p-the-exact-one-the-last-cube-found",
+    "file": "src/render/shadowPass.js",
+    "old": "              if (exact !== null && p.ord > exact.ord) break;   // past the earliest found: nothing earlier in this cube\n",
+    "new": "",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-q-the-face-neighbour-unasked",
+    "file": "src/render/shadowPass.js",
+    "old": "const m0 = 2 * SHADOW_STILL_EPS / R;",
+    "new": "const m0 = -1;",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-r-a-placement-filed-at-its-cube-end",
+    "file": "src/render/shadowPass.js",
+    "old": "  while (at > 0 && cell[at - 1].ord > s.ord) at--;\n",
+    "new": "",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-s-a-placement-left-in-the-cube-it-left",
+    "file": "src/render/shadowPass.js",
+    "old": "if (i >= 0) was.splice(i, 1); if (!was.length) grid.delete(s.key);",
+    "new": "if (!was.length) grid.delete(s.key);",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-t-an-emptied-cube-kept",
+    "file": "src/render/shadowPass.js",
+    "old": "if (i >= 0) was.splice(i, 1); if (!was.length) grid.delete(s.key);",
+    "new": "if (i >= 0) was.splice(i, 1);",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-u-the-exact-pass-skipped",
+    "file": "src/render/shadowPass.js",
+    "old": "      for (let dx = x0; dx <= x1; dx++) {",
+    "new": "      for (let dx = x0; dx < x0; dx++) {",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-v-the-cubes-in-the-scene-frame",
+    "file": "src/render/shadowPass.js",
+    "old": "return instKey(Math.floor((s.m[12] - shift[0]) / R + SHADOW_INSTANCE_PHASE),",
+    "new": "return instKey(Math.floor((s.m[12]) / R + SHADOW_INSTANCE_PHASE),",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-w-a-draw-at-the-reach-taken",
+    "file": "src/render/shadowPass.js",
+    "old": "                if (d < bestD || (d === bestD && best !== null && p.ord < best.ord)) { bestD = d; best = p; }",
+    "new": "                if (d < bestD || (d === bestD && (best === null || p.ord < best.ord))) { bestD = d; best = p; }",
+    "tests": ["test/perfinst.test.js"]
+  }
+]

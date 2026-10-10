@@ -22,8 +22,8 @@
   {
     "name": "placement-no-eviction",
     "file": "src/render/shadowPass.js",
-    "old": "        if (!oldest || this.frameNo - oldest.seen < SHADOW_DYNAMIC_HOLD) return true;   // every placement live: dynamic, never wrong",
-    "new": "        return true;",
+    "old": "        s = this._stalest(o, inst);",
+    "new": "        s = null;",
     "tests": [
       "test/audit_reach.test.js"
     ]
@@ -31,8 +31,8 @@
   {
     "name": "placement-live-evicted",
     "file": "src/render/shadowPass.js",
-    "old": "        if (!oldest || this.frameNo - oldest.seen < SHADOW_DYNAMIC_HOLD) return true;   // every placement live: dynamic, never wrong",
-    "new": "        if (!oldest) return true;",
+    "old": "if (this.frameNo - inst[i].seen >= SHADOW_DYNAMIC_HOLD) list.push(inst[i]);",
+    "new": "if (this.frameNo - inst[i].seen >= 0) list.push(inst[i]);",
     "tests": [
       "test/audit_reach.test.js"
     ]

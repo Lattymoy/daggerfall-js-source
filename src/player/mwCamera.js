@@ -254,13 +254,16 @@ export function createMwCamera() {
      * new seam; a host that hands only `raycast` keeps the old line
      * (the headless pins, and any caller written before this).
      */
-    eye({ fpEye, feet, yaw, pitch, heightScale = 1, raycast = null, spherecast = null }) {
+    eye({ fpEye, feet, yaw, pitch, heightScale = 1, raycast = null, spherecast = null, pivotFloor = null }) {
       if (firstPerson) {
         cameraDistance = 0;   // camera.cpp:165-169
         return { eye: fpEye, thirdPerson: false, distance: 0, focal: null };
       }
       const u = 1 / MW_UNITS_PER_METER;
-      const focal = [feet[0], feet[1] + FOCAL_HEIGHT * heightScale * u, feet[2]];
+      // BENCH-CAM (2026-10-10): on a wagon's bench the focal stands at least at the host's `pivotFloor` (over the wagon's
+      // roof) - over the caravan's room by 12 cm it stood, and any look up cast the camera into it and back to the
+      // focal; under the open wagon's tilt it stood inside the canvas. A departure from camera.cpp, Ledger A.
+      const focal = [feet[0], Math.max(feet[1] + FOCAL_HEIGHT * heightScale * u, pivotFloor ?? -Infinity), feet[2]];
       // MAC-A: the cast is a SPHERE where the host has one
       // (castSphere, camera.cpp:186); the ray is the fallback for a
       // host that hands no sphere seam.

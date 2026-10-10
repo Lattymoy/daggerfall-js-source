@@ -400,8 +400,8 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
       const vp = nameViewportScale(viewport);   // AUDIT NAME1 F3: the frame's own height, against the reference
       for (const p of points) {
         if (!p || typeof p.id !== 'string') continue;
-        // AUDIT NAME1 F11: a point that is not a number is not a place. `left: NaNpx` is a declaration the browser
-        // DROPS, which leaves the element wherever the last frame put it - a name standing over the wrong head,
+        // AUDIT NAME1 F11: a point that is not a number is not a place. `translate(NaNpx, ...)` is a declaration the
+        // browser DROPS, which leaves the element wherever the last frame put it - a name standing over the wrong head,
         // which reads worse than no name at all. The surrounding code guards its numbers (nameScaleFor,
         // projectToScreen's `front`); so does this one, and a peer whose point went bad loses their element with
         // everybody else's the frame it happens.
@@ -410,11 +410,15 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
         let tag = tags.get(p.id);
         if (!tag) { tag = makeTag(); tags.set(p.id, tag); }
         setCls(tag.node, p.kind === 'board' ? 'dfname dfname-board' : 'dfname');   // NOTICE1: a Notice Board's count, not a person
-        setStyle(tag.node, 'left', `${Math.round(p.x)}px`);
         // NAME_GAP_PX is taken HERE and not inside namePoints because it is a screen-pixel clearance and the point
         // is a projected head: the anchor stays the head for anything else that wants it, and the label's bottom
         // edge lands the gap above it.
-        setStyle(tag.node, 'top', `${Math.round(p.y - NAME_GAP_PX)}px`);
+        // PERF-NAMES (2026-10-10, the owner: "prob caused by ... crowded places"): the place is a TRANSFORM, the sheet's
+        // translate(-50%, -100%) after it - the same pixels as `left`/`top` (a browser's screenshots compared, byte for
+        // byte), in one write and with no layout: a tag's `left` and `top` laid it out again at every move, and a turn
+        // of the camera moves every name on the screen (60 names turning: 1.75 -> 1.48 ms of the page's main thread a
+        // frame in headless Chromium, its layout 0.11 -> 0).
+        setStyle(tag.node, 'transform', `translate(${Math.round(p.x)}px, ${Math.round(p.y - NAME_GAP_PX)}px) translate(-50%, -100%)`);
         setStyle(tag.node, 'fontSize', `${namePixelSize(p.scale ?? 1, vp, hudScale).toFixed(1)}px`);
         setText(tag.lv, renownText(p.lv) ?? '');   // RENOWN1: "12" in its box, or nothing
         setText(tag.name, p.name ?? '');

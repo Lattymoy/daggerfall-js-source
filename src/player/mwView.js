@@ -139,9 +139,13 @@ let pendingClicks = 0;
  * mode (setViewMode + force refresh, npcanimation.cpp:295-317 /
  * character.cpp:2798), and answers the frame's eye (camera.cpp:160-209).
  *
+ * BENCH-CAM (2026-10-10): `pivotFloor` - a world height the third-person camera's pivot (the sprite camera's head
+ * origin, the Morrowind camera's focal) stands at least at: the host's word while I drive from a wagon's bench
+ * (scenes/horseCartPool.js cameraFloor - over the wagon's roof), null everywhere else. First person never reads it.
+ *
  * @returns {{eye:number[], thirdPerson:boolean, distance:number}}
  */
-export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, raycast = null, spherecast = null, eyeOverride = null, seaReach = 0, ...state }) {
+export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, raycast = null, spherecast = null, eyeOverride = null, seaReach = 0, pivotFloor = null, ...state }) {
   standInEdge({ fpEye, feet, yaw, pitch });   // BEAST-SELF: the view carried across the arm's stand-aside
   benchSeated = !!state.seated;   // WAGONS3: the host's word that the player drives from a wagon's bench, either lane
   // FLAGGED: Eye Of The Beholder has no sitting art - on that lane the driver's sprite stands on the bench's footboard, still (bible/06-Systems/Wagons.md WAGONS3).
@@ -172,7 +176,7 @@ export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, rayca
     // at all. Found by a test helper that span forever waiting for it.
     pendingClicks = 0;
     eotbCamera.tick(frame);
-    const out = eotbCamera.eye({ fpEye, feet, yaw, pitch, raycast, ...frame });
+    const out = eotbCamera.eye({ fpEye, feet, yaw, pitch, raycast, pivotFloor, ...frame });   // BENCH-CAM: the pivot over my wagon's roof
     // EOTB-IL: the billboard's three Unity phases, handed the frame's
     // camera - `PlayerBillboard` reads mainCamera's position and forward
     // in LateUpdate (IL_3d86-IL_3dbf, IL_455d), and its FEET are the
@@ -215,7 +219,7 @@ export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, rayca
   } else {
     fpArm.setViewMode('first');
   }
-  const eye = mwCamera.eye({ fpEye, feet, yaw, pitch, heightScale, raycast, spherecast });   // MAC-A: the obstacle guards are castSphere's, where the host has one
+  const eye = mwCamera.eye({ fpEye, feet, yaw, pitch, heightScale, raycast, spherecast, pivotFloor });   // MAC-A: the obstacle guards are castSphere's, where the host has one; BENCH-CAM: the pivot over my wagon's roof
   return eyeOverride ? { ...eye, eye: eyeOverride, ownEye: eye.eye } : eye;   // TV1: the travel view's eye, the rig's frame run all the same
 }
 

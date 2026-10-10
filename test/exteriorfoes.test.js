@@ -166,7 +166,7 @@ test('exteriorfoes: the FIXED-CITY host carries the catch-up loop too, both host
   assert.match(e, /if \(!townTalk\.overlayActive\) runEncounterTick\(walkMode \? player\.pos : cam\.pos\);/);
   assert.ok(fn.includes("inside: _m !== 'exterior', inDungeon: _m === 'dungeon', isResting: false,"), 'the fixed city hands the mode to the roll');
   assert.ok(wfn.includes("inside: _m !== 'exterior', inDungeon: _m === 'dungeon', isResting: false,"), 'the world host too');
-  assert.match(w, /const _pf = walkMode && playerSpawned \? player\.pos : cam\.pos;\n\s*if \(!townTalk\.overlayActive\) runEncounterTick\(_pf\);\n\s*wildFoesFrame\(foeDt\);[^\n]*\n\s*if \(\(modes\?\.mode \?\? 'exterior'\) === 'exterior'\) \{/, 'the world host rolls before its exterior-only pool update (WILD-ALERT: the gate\'s frame between the two)');
+  assert.match(w, /const _pf = walkMode && playerSpawned \? player\.pos : cam\.pos;\n\s*if \(!townTalk\.overlayActive\) runEncounterTick\(_pf\);\n\s*wildFoesFrame\(foeDt\);[^\n]*\n\s*(?:const frame\w+ = \(\) => \{   \/\/ PERF-V8\n\s*)?if \(\(modes\?\.mode \?\? 'exterior'\) === 'exterior'\) \{/, 'the world host rolls before its exterior-only pool update (WILD-ALERT: the gate\'s frame between the two)');   // PERF-V8 (PIN MOVED): the pool update a closure of its own
   // AUDIT 62 F11: EXTERIOR only - the population is inactive indoors
   // (PlayerEntity.cs:653-654, :776-777 over a disabled ExteriorParent)
   // and there is no location object underground (:768-770).

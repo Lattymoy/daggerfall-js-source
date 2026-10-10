@@ -668,11 +668,16 @@ export function createEotbCamera() {
      *   posCurrent = MoveTowards(posCurrent, posTarget, dt * s)
      *   then the MinimumDistance floor, in the BODY's frame.
      */
-    eye({ fpEye, feet, yaw, pitch, dt = 0, raycast = null, ...state }) {
+    eye({ fpEye, feet, yaw, pitch, dt = 0, raycast = null, pivotFloor = null, ...state }) {
       lastEye = fpEye;
       lastDt = dt;
       if (!offset) return { eye: fpEye, thirdPerson: false, distance: 0, focal: null };
-      const headLocal = [0, fpEye[1] - feet[1], 0];
+      // BENCH-CAM (2026-10-10, from play: "this is what i see when i use my carriage"): on a wagon's bench the head the
+      // camera turns about stands under the wagon's roof, 0.4 m in front of the caravan's room - every cast back met it,
+      // the bound came out under the mod's own clearance, and the camera stood in the sprite's head. The host's
+      // `pivotFloor` (over the roof) lifts the head the camera reads - the casts, the target and the line of sight all
+      // start there - and leaves the body's frame (the minimum distance's) on the feet. A departure, Ledger A.
+      const headLocal = [0, Math.max(fpEye[1], pivotFloor ?? -Infinity) - feet[1], 0];
       const origin = add(feet, bodyVector(headLocal, yaw));
 
       // the shoulder's own revert probe runs BEFORE CheckBounds, as in

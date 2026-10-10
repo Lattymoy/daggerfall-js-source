@@ -109,14 +109,16 @@ async function run(mode) {
   const after = Object.fromEntries((await cdp.send('Performance.getMetrics')).metrics.map((m) => [m.name, m.value]));
   await browser.close();
   const d = (k) => (after[k] ?? 0) - (before[k] ?? 0);
+  // PERF-NAMES (2026-10-10): and the main thread's WHOLE work - TaskDuration, the paint and the commit with the layout
+  // and the style: the layout alone was 0.12 ms a frame here, and the layer's whole cost twenty times it
   return { layout: d('LayoutDuration') * 1000, style: d('RecalcStyleDuration') * 1000, script: d('ScriptDuration') * 1000,
-    layoutCount: d('LayoutCount'), styleCount: d('RecalcStyleCount'), frames: d('Frames') };
+    task: d('TaskDuration') * 1000, layoutCount: d('LayoutCount'), styleCount: d('RecalcStyleCount'), frames: d('Frames') };
 }
 
 console.log(`\n${NAMES} names, ${FRAMES} frames, Chromium 1600x900 - Performance.getMetrics, main-thread ms\n`);
-console.log('mode             layout ms   style ms   script ms   layouts   recalcs   layout ms/frame');
+console.log('mode             layout ms   style ms   script ms   layouts   recalcs   layout ms/frame   task ms/frame');
 for (const mode of ['lefttop+font', 'transform+font', 'lefttop', 'transform', 'transform+scale']) {
   const r = await run(mode);
-  console.log(`${mode.padEnd(16)} ${r.layout.toFixed(1).padStart(9)} ${r.style.toFixed(1).padStart(10)} ${r.script.toFixed(1).padStart(11)} ${String(r.layoutCount).padStart(9)} ${String(r.styleCount).padStart(9)} ${(r.layout / FRAMES).toFixed(3).padStart(17)}`);
+  console.log(`${mode.padEnd(16)} ${r.layout.toFixed(1).padStart(9)} ${r.style.toFixed(1).padStart(10)} ${r.script.toFixed(1).padStart(11)} ${String(r.layoutCount).padStart(9)} ${String(r.styleCount).padStart(9)} ${(r.layout / FRAMES).toFixed(3).padStart(17)} ${(r.task / FRAMES).toFixed(3).padStart(15)}`);
 }
 console.log('');

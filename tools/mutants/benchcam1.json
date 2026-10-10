@@ -1,0 +1,12 @@
+[
+  {"name": "BENCH-CAM-the-tilt-no-shell", "file": "src/world/wagonModels.js", "old": "if (part.role === 'body' && MEASURED[kind]?.bench) shellBox = boxOfPoints(pointsOf(part));", "new": "if (part.role === 'body' && WAGON_KINDS[kind].enterable) shellBox = boxOfPoints(pointsOf(part));", "tests": ["test/benchcam1.test.js", "test/wagons3.test.js"]},
+  {"name": "BENCH-CAM-the-wall-reads-no-shell", "file": "src/scenes/horseCartPool.js", "old": "const parts = partsOf(w.model), box = parts?.shell;", "new": "const parts = partsOf(w.model), box = parts?.cabin;", "tests": ["test/benchcam1.test.js", "test/wagons3.test.js"]},
+  {"name": "BENCH-CAM-the-clearance-dropped", "file": "src/scenes/horseCartPool.js", "old": "return top + SHELL_CLEAR_M;", "new": "return top;", "tests": ["test/benchcam1.test.js"]},
+  {"name": "BENCH-CAM-the-roof-read-level", "file": "src/scenes/horseCartPool.js", "old": "top = Math.max(top, transformPoint(m, x, y, z)[1]);", "new": "top = Math.max(top, m[13] + y);", "tests": ["test/benchcam1.test.js"]},
+  {"name": "BENCH-CAM-the-sprites-head-unlifted", "file": "src/player/eotbCamera.js", "old": "const headLocal = [0, Math.max(fpEye[1], pivotFloor ?? -Infinity) - feet[1], 0];", "new": "const headLocal = [0, fpEye[1] - feet[1], 0];", "tests": ["test/benchcam1.test.js"]},
+  {"name": "BENCH-CAM-the-focal-unlifted", "file": "src/player/mwCamera.js", "old": "Math.max(feet[1] + FOCAL_HEIGHT * heightScale * u, pivotFloor ?? -Infinity)", "new": "feet[1] + FOCAL_HEIGHT * heightScale * u", "tests": ["test/benchcam1.test.js"]},
+  {"name": "BENCH-CAM-the-seam-drops-it-sprite", "file": "src/player/mwView.js", "old": "eotbCamera.eye({ fpEye, feet, yaw, pitch, raycast, pivotFloor, ...frame });", "new": "eotbCamera.eye({ fpEye, feet, yaw, pitch, raycast, ...frame });", "tests": ["test/benchcam1.test.js"]},
+  {"name": "BENCH-CAM-the-seam-drops-it-morrowind", "file": "src/player/mwView.js", "old": "heightScale, raycast, spherecast, pivotFloor });", "new": "heightScale, raycast, spherecast });", "tests": ["test/benchcam1.test.js"]},
+  {"name": "BENCH-CAM-world-hands-none", "file": "src/scenes/world.js", "old": "      pivotFloor: _driverSeat ? hcc.cameraFloor() : null,", "new": "      pivotFloor: null,", "tests": ["test/benchcam1.test.js"]},
+  {"name": "BENCH-CAM-exterior-hands-none", "file": "src/scenes/exterior.js", "old": "          pivotFloor: _driverSeat ? hcc.cameraFloor() : null,", "new": "          pivotFloor: null,", "tests": ["test/benchcam1.test.js"]}
+]

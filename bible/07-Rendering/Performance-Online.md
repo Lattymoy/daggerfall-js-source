@@ -160,11 +160,13 @@ It is made once, for the life of the renderer: the same call. No gain measured. 
 - **Inbound messages**: 8.7-9.1 ms of two seconds at 20 and 60 (the client's pose rate falls with the crowd), most of it
   JSON.parse - PERF-NEXT 13: a relay deploy.
 - **Native time with a crowd**: the profile's `(program)` - the browser's own work, layout and style among it - grows
-  from 4.8 ms a frame alone to 18-20 with company. Not attributed by a CPU profile; a trace of the name layer's writes
-  (`style.left`/`top` a name a frame) is the next measurement.
-- **The world host's `frame`** is 105,613 bytes of bytecode now (node 22's V8, compiled eagerly - `--no-lazy
-  --print-bytecode` over world.js; 99,547 at PERF-NEXT, Chromium's; V8 optimizes nothing past 61,440):
-  0.98 ms of its own a frame here, interpreted, and its loops allocate (about 70 KB a frame). PERF-NEXT 22 stands.
+  from 4.8 ms a frame alone to 18-20 with company. Not attributed by a CPU profile. The name layer's share, measured
+  since (PERF-NAMES, `Performance-Priority.md`, headless Chromium): ~1.9 ms of main thread a frame at 72 names walking,
+  most of it their sizes' layout and paint; a name moves by its transform now (a quarter off while they stand).
+- **The world host's `frame`** was 105,613 bytes of bytecode then (node 22's V8, compiled eagerly - `--no-lazy
+  --print-bytecode` over world.js; 99,547 at PERF-NEXT, Chromium's; V8 optimizes nothing past 61,440): 0.98 ms of its
+  own a frame here, interpreted, and its loops allocated about 70 KB a frame. Under the line since 2026-10-10 (PERF-V8,
+  `Performance-Priority.md`: 39,965 bytes; PERF-NEXT 22 built, its A/B owed).
 - **A waiting frame of the Living World** still plans every trip near again: keeping a waiting traveller's work beside
   the pair it waits on would end it - its own slice.
 

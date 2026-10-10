@@ -1103,13 +1103,15 @@ export class ExteriorAutomapWindow {
     }
     // ARENA-MAP: a block's LANDMARK - a named place that is no building of the list (the Arena, world/arenaCity.js
     // arenaTownLandmark) - lettered by this same plate law, always: no door discovers it, no record renames it
-    // (_renameAt). The arena's own departure (Ledger A, its ARENA1 row).
+    // (_renameAt). The arena's own departure (Ledger A, its ARENA1 row). YARDS-FOUND: and its PLACES by the same law -
+    // the town's Stable and Wagon Yard standing in it (world/merchantYardMap.js yardTownBlocks)
     for (const bl of this.deps.blocks ?? []) {
-      const lm = bl?.landmark;
-      if (!lm?.name) continue;
-      const anchor = nameplateAnchor(bl.x, bl.y, lm.position);
-      const [sx, sy] = toPanelScreen(this.cam, rect, anchor[0] - this.layoutW / 2, anchor[1] - this.layoutH / 2);
-      out.push({ x: sx, y: sy, w: measureText(font.fnt, lm.name) * scale, h: lineH, text: lm.name, name: lm.name, scale, buildingKey: 0, isResidence: false, landmark: true });
+      for (const lm of [bl?.landmark, ...(bl?.places ?? [])]) {
+        if (!lm?.name) continue;
+        const anchor = nameplateAnchor(bl.x, bl.y, lm.position);
+        const [sx, sy] = toPanelScreen(this.cam, rect, anchor[0] - this.layoutW / 2, anchor[1] - this.layoutH / 2);
+        out.push({ x: sx, y: sy, w: measureText(font.fnt, lm.name) * scale, h: lineH, text: lm.name, name: lm.name, scale, buildingKey: 0, isResidence: false, landmark: true });
+      }
     }
     return out;
   }

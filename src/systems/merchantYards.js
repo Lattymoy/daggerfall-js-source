@@ -9,9 +9,11 @@
 // not a village, a farm or a manor) stands two open-air yards the port adds: a STABLE, a fenced paddock with its horses
 // and its stablemaster, and a WAGON YARD, a wagonwright's yard with a cart and its two wagons drawn up to be seen. They
 // are not buildings: Daggerfall's towns are its own fixed blocks, every building in them already a home, a shop or a
-// hall, and a yard takes none of them - no building key, no automap byte, no deed, no quest place. Where each stands
-// is the town's own open ground (world/merchantYardSites.js); what it looks like is the port's own
-// (world/merchantYardModels.js, world/merchantYardArt.js); the host stands both (scenes/merchantYardsHost.js).
+// hall, and a yard takes none of them - no building record, no deed, no quest place. Where each stands is the town's
+// own open ground (world/merchantYardSites.js); what it looks like is the port's own (world/merchantYardModels.js,
+// world/merchantYardArt.js); the host stands both (scenes/merchantYardsHost.js). YARDS-FOUND: it is found as a shop is -
+// a row of the town's talk directory under a key no Daggerfall building can hold (`yardDirectoryRows`), its ground and
+// its name on the town map (world/merchantYardMap.js), a mark on the Overworld (the host's `overworldMarks`).
 //
 // THE TRADE (here): the Stable sells the Horse and buys one back; the Wagon Yard sells the Small Cart, the Open Wagon
 // and the Caravan (systems/wagonKinds.js) and buys any of them back - a loaded wagon refused at the counter as
@@ -128,3 +130,41 @@ export const YARD_ROWS = Object.freeze([
   Object.freeze({ id: 'buy', label: 'Buy' }),
   Object.freeze({ id: 'sell', label: 'Sell' }),
 ]);
+
+/**
+ * YARDS-FOUND (2026-10-10, from play: "The new stable and transport merchant shops dont show on town maps/overworld",
+ * "Ensure these locations appear when talking to NPCs"): A YARD IN THE TOWN'S TALK DIRECTORY. The directory is the one
+ * list the Where-is page, the compass's "%di of here" (systems/talk.js buildingCompassDirection), the knowledge roll and
+ * the map's mark ("Let me just mark %loc here on your map" - systems/discovery.js discoverBuilding) all read a building
+ * from, so a yard joins it as a shop's row does and every one of them answers it unchanged.
+ *
+ * Its key is one no building of Daggerfall's can hold: a building's is (layoutX << 16) + (layoutY << 8) + record, under
+ * 1 << 19 in the largest city, and the key 0 is BUILDING_KEY_0, 1 << 24 (systems/talkTopics.js makeBuildingKey) - a
+ * yard's is YARD_KEY_BASE (1 << 25) and its kind's place in YARD_KIND_ORDER. Its type is its counter's (`yard:<kind>`,
+ * never a DFU building type - no table of Daggerfall's is keyed by it, and no DFU group, regional row or quest place
+ * takes it).
+ */
+export const YARD_KEY_BASE = 1 << 25;
+/** A yard's key in its town's directory. */
+export const yardBuildingKey = (kind) => YARD_KEY_BASE + Math.max(0, YARD_KIND_ORDER.indexOf(validYardKind(kind) ?? 'stable'));
+/** YARDS-FOUND: the Where-is page's group for each yard, as DFU's are worded ("General stores", "Taverns"). */
+export const YARD_TALK_GROUPS = Object.freeze({ stable: 'Stables', transport: 'Wagon yards' });
+/**
+ * YARDS-FOUND: a town's yards as rows of its talk directory - the shape systems/talkTopics.js buildBuildingDirectory
+ * mints (`name`, `buildingType`, `factionId`, `quality`, `position` in the location's frame, `buildingKey`), and `yard`
+ * its kind. `sites` the host's (world/merchantYardSites.js yardSite's, the keeper beside each - scenes/world.js
+ * merchantYardSitesFor); none, or none a kind the law knows, is no row. Pure; a fresh list.
+ * @param {Array<any>|null|undefined} sites
+ */
+export function yardDirectoryRows(sites) {
+  const out = [];
+  for (const s of sites ?? []) {
+    const kind = validYardKind(s?.kind);
+    if (!kind || !Number.isFinite(s.x) || !Number.isFinite(s.z)) continue;
+    out.push({
+      name: yardName(kind, s.keeper?.name), buildingType: `yard:${kind}`, factionId: 0, quality: YARD_QUALITY,
+      position: [s.x, 0, s.z], buildingKey: yardBuildingKey(kind), yard: kind,
+    });
+  }
+  return out;
+}
