@@ -42,7 +42,7 @@
 // RESTORE's rewind) runs nothing: a write in the rewind's minute would vanish with it.
 // ═══════════════════════════════════════════════════════════════════
 
-import { closeAuctions, pruneMarketHistory, SETTLE_MAX, reckonPatrons, marketOpenFor } from './market.js';
+import { closeAuctions, pruneMarketHistory, SETTLE_MAX, reckonPatrons, marketOpenFor, markPatronsShut } from './market.js';
 import { closeGuildWrits } from './writs.js';
 import { closeContracts } from './contracts.js';
 import { settleDue } from './seatTurning.js';
@@ -181,9 +181,10 @@ export const HOUR_JOBS = Object.freeze([
     'DELETE FROM wild_falls WHERE r IN (SELECT r FROM wild_falls WHERE at < ?1 LIMIT ?2)', ctx.nowS - WILD_FALLS_KEEP_S), SWEEP_ROWS)],
   // LW15 (bible/06-Systems/Living-World-II.md): the towns' patrons at their traders, the towns waiting (a read reckons its
   // own). AUDIT LW-II P8: while the market is open to everyone (market.js marketOpenFor, no account's - every switch
-  // `on`); shut, its every route answers 'market-closed', and the clock paid patrons' gold anyway. Behind `dev`, a
-  // developer's read reckons its own towns
-  ['patrons', async (ctx, env) => (marketOpenFor(null, env) ? (await reckonPatrons(ctx, {}, env)).sold : 0)],
+  // `on`); shut, its every route answers 'market-closed', and the clock paid patrons' gold anyway. AUDIT LW-II-2 S3: and
+  // while it is not, every trader's hours are marked as they pass (markPatronsShut), so opening it pays none of them -
+  // behind `dev` too: no read reckons then (reckonPatrons asks the switch itself)
+  ['patrons', async (ctx, env) => (marketOpenFor(null, env) ? (await reckonPatrons(ctx, {}, env)).sold : markPatronsShut(ctx))],
 ]);
 
 /** The jobs a schedule runs - none for a schedule this service does not keep (said, so a trigger renamed in

@@ -67,6 +67,8 @@ import {
 } from '../../src/net/patronLaw.js';   // LW15: the patrons
 import { countedDb } from './metrics.js';   // AUDIT LW-II P5: a read's reckoning counted, as the cron's is
 import { faucetStatement } from './budget.js';   // LW15: the service's own faucet, measured
+import { ledgerKeyOf } from './judge.js';   // AUDIT LW-II-2 S2: a patron's piece's key in the ledger
+import { escrowSpentSteps } from './ledger.js';   // AUDIT LW-II-2 S2: and the ledger told it is gone
 import { payFromSave, creditSave } from '../../src/net/realmGoldLaw.js';   // GOLD-MARKET: a gold sale moves a realm record's gold
 import { CHAR_ID_RE } from './service.js';
 import { MARKS_MAX, MARK_WORTH_GOLD, utcDay } from '../../src/net/marksLaw.js';
@@ -1823,7 +1825,9 @@ export async function marketVendor(ctx, player, env, { vendor = null } = {}) {
   await reckonPatrons(ctx, { maps: [vend.map] }, env).catch(() => null);   // LW15: the town's patrons first, lazily
   const { results = [] } = await db.prepare(`SELECT * FROM market_listings WHERE vendor_map = ?1 AND vendor_id = ?2 AND state = 'open'
     AND expires_at > ?3 AND seller = ?4 ORDER BY at DESC LIMIT ${VENDOR_STOCK_SHOWN}`).bind(vend.map, vend.id, nowS, v.player).all();
-  const patrons = (await patronsTold(db, [vend.map], nowS).catch(() => [])).filter((p) => p.vendor === vend.id);
+  // AUDIT LW-II-2 S7: its own house's sales alone - a piece's id is its owner's client's, so another's trader of the same
+  // id in the town told its sales at this one's stall (AUDIT LW-II P9's case, at the trader's own read)
+  const patrons = (await patronsTold(db, [vend.map], nowS).catch(() => [])).filter((p) => p.vendor === vend.id && p.buildingKey === Number(v.building_key));
   return { ok: true, vendor: vendorView(v, player.id), rows: results.map((l) => listingView(l, player.id)), patrons };
 }
 
@@ -1843,16 +1847,28 @@ export async function marketVendors(ctx, player, env, { region, character = null
   if (!regionOk(region)) return { error: 'bad-region' };
   await reckonPatrons(ctx, { region }, env).catch(() => null);   // LW15: the region's patrons first, lazily
   const me = typeof character === 'string' && CHAR_ID_RE.test(character) ? character : '';
-  const { results = [] } = await db.prepare(`SELECT l.*, d.map_id AS v_map, d.id AS v_id, h.building_key AS v_key, h.owner_name AS v_owner, h.player AS v_player,
+  const columns = `l.*, d.map_id AS v_map, d.id AS v_id, h.building_key AS v_key, h.owner_name AS v_owner, h.player AS v_player,
       h.entry AS v_entry, (h.player = ?3 AND h.char_id = ?4) AS v_mine,
       (h.entry = 'guild' AND EXISTS (SELECT 1 FROM guild_members a JOIN guild_members b ON b.guild_id = a.guild_id
         WHERE a.player = h.player AND a.char_id = h.char_id AND b.player = ?3 AND b.char_id = ?4)) AS v_guildmate,
-      (SELECT MAX(r.until) FROM home_rooms r WHERE r.map_id = h.map_id AND r.building_key = h.building_key AND r.tenant = ?3 AND r.tenant_char = ?4 AND r.until > ?1) AS v_tenancy
+      (SELECT MAX(r.until) FROM home_rooms r WHERE r.map_id = h.map_id AND r.building_key = h.building_key AND r.tenant = ?3 AND r.tenant_char = ?4 AND r.until > ?1) AS v_tenancy`;
+  const { results: newest = [] } = await db.prepare(`SELECT ${columns}
     FROM market_listings l JOIN home_decor d ON d.map_id = l.vendor_map AND d.id = l.vendor_id
     JOIN homes h ON h.map_id = d.map_id AND h.building_key = d.building_key
     WHERE l.state = 'open' AND l.expires_at > ?1 AND l.vendor_id IS NOT NULL AND h.region = ?2 AND h.player = l.seller AND d.yard = 0
       AND h.guild_id IS NULL AND json_extract(d.place, '$.station') = '${VENDOR_STATION}'
     ORDER BY l.at DESC LIMIT ${VENDOR_BOARD_SHOWN}`).bind(nowS, region, player.id, me).all();
+  // AUDIT LW-II-2 W6: AND EVERY PUBLIC TRADER OF THE REGION its patrons may buy of - each such house's newest piece, where
+  // the board's VENDOR_BOARD_SHOWN newest left the house out: the towns' word reads its traders off these rows (world.js
+  // livingPatronsStep), and a quieter trader under a busier region's newest three hundred stood in no town - no browser
+  // came, and its town's word was forgotten. Bounded as the board is: a house a row, VENDOR_BOARD_SHOWN of them
+  const { results: houses = [] } = await db.prepare(`SELECT * FROM (SELECT ${columns},
+      ROW_NUMBER() OVER (PARTITION BY d.map_id, d.building_key, d.id ORDER BY l.at DESC, l.id) AS v_rank
+    ${PATRON_FROM} WHERE ${PATRON_SQL} AND l.expires_at > ?1 AND h.region = ?2) WHERE v_rank = 1
+    ORDER BY at DESC LIMIT ${VENDOR_BOARD_SHOWN}`).bind(nowS, region, player.id, me).all();
+  const traderOf = (/** @type {any} */ l) => `${l.v_map}:${l.v_key}:${l.v_id}`;
+  const shown = new Set(newest.map(traderOf));
+  const results = [...newest, ...houses.filter((l) => !shown.has(traderOf(l)))];
   return {
     ok: true, region,
     patrons: await patronsTold(db, { region }, nowS).catch(() => []),   // LW15: the region's patrons' purchases, for its towns to draw
@@ -1925,13 +1941,18 @@ const PATRON_HOME_SQL = `h.entry = 'public' AND h.player = l.seller AND d.yard =
 const PATRON_SQL = `l.state = 'open' AND l.vendor_id IS NOT NULL AND l.currency = 'gold' AND l.kind = 'item' AND ${PATRON_HOME_SQL}`;
 const PATRON_FROM = `FROM market_listings l JOIN home_decor d ON d.map_id = l.vendor_map AND d.id = l.vendor_id
   JOIN homes h ON h.map_id = d.map_id AND h.building_key = d.building_key`;
+/** AUDIT LW-II P4: a listing's seller the judge holds (realm.js holdRefusal's own: held, or a record no checkpoint has
+ *  read) - `l` the listing. Asked in the sale's write; AUDIT LW-II-2 S5: and with the town's listings, so a held seller's
+ *  pieces are no candidates - refused in the write alone they stayed the hour's lowest draws, every hour, and an honest
+ *  seller beside four held ones sold a fraction of what it sold alone. */
+const PATRON_HELD_SQL = `EXISTS (SELECT 1 FROM realm_characters c WHERE c.id = l.char_id AND c.player = l.seller AND (c.held IS NOT NULL OR c.judged_seq IS NULL))`;
 /** A TOWN'S TRADERS' LISTINGS, every open one its reckoning's mark moves - each once, with the house a patron may walk into
- *  for it (`bkey`; none, a listing no patron sees). AUDIT LW-II P7: a town whose traders stand all in homes no patron
- *  may enter is marked too, so its hours never wait to be paid when a door opens; AUDIT LW-II P5: and the mark is
- *  written only where one would move. */
+ *  for it (`bkey`; none, a listing no patron sees) and whether its seller is held (`held`). AUDIT LW-II P7: a town whose
+ *  traders stand all in homes no patron may enter is marked too, so its hours never wait to be paid when a door opens;
+ *  AUDIT LW-II P5: and the mark is written only where one would move. */
 const PATRON_TOWN_SQL = `SELECT l.id, l.seller, l.char_id, l.kind, l.price, l.item, l.at, l.expires_at, l.patron_hour,
     (SELECT h.building_key FROM home_decor d JOIN homes h ON h.map_id = d.map_id AND h.building_key = d.building_key
-      WHERE d.map_id = l.vendor_map AND d.id = l.vendor_id AND ${PATRON_HOME_SQL} LIMIT 1) AS bkey
+      WHERE d.map_id = l.vendor_map AND d.id = l.vendor_id AND ${PATRON_HOME_SQL} LIMIT 1) AS bkey, ${PATRON_HELD_SQL} AS held
   FROM market_listings l WHERE l.vendor_map = ?1 AND l.state = 'open' AND l.vendor_id IS NOT NULL AND l.currency = 'gold'`;
 /** AUDIT LW-II P5/P6: AN HOUR'S COUNTS, ONE ASK - the town's sales in the hour (`seller` NULL) and each of the hour's
  *  candidates' sellers' sales in it and gold that real day, by the day (idx_patron_sales_seller): `?1` the town, `?2` the
@@ -1969,9 +1990,13 @@ const guardRefused = (/** @type {any} */ e) => /moved = expected/.test(`${e?.mes
  * same sales (the dice are the listing's, the hour's and the service's secret's - `env`'s, patronSalt). `maps` the
  * towns to reckon, `region` a region's, else (the hour's cron) the towns waiting, PATRON_CRON_TOWNS of them - the
  * longest waiting first. A read (no `ctx.budget`) runs PATRON_READ_STATEMENTS at most.
+ * AUDIT LW-II-2 S3: only while the market is open to EVERYONE (marketOpenFor, no account's) - behind `dev` a developer's
+ * read of a region reckoned every seller's towns, their pieces sold and their gold minted while each of their own routes
+ * answered 'market-closed' (the hour's cron marks the hours instead: markPatronsShut).
  * @param {any} ctx @param {{ maps?: number[] | null, region?: number | null }} [o] @param {any} [env]
  */
 export async function reckonPatrons(ctx, { maps = null, region = null } = {}, env = null) {
+  if (!marketOpenFor(null, env)) return { sold: 0, towns: 0 };
   const { nowS } = ctx;
   const tally = { n: 0 };
   const db = ctx.budget ? ctx.db : countedDb(ctx.db, tally);
@@ -1996,11 +2021,19 @@ export async function reckonPatrons(ctx, { maps = null, region = null } = {}, en
     for (const r of rows) {
       if (r.bkey == null || r.kind !== 'item') continue;   // no patron sees it: its mark moves, and nothing else
       const item = goodOf(r.item);
-      ls.push({ id: r.id, seller: r.seller, char: r.char_id, price: Number(r.price), at: Number(r.at), expires: Number(r.expires_at), last: r.patron_hour == null ? null : Number(r.patron_hour),
-        bkey: Number(r.bkey), worth: item ? patronWorth(item, itemWorth) : 0,
+      // AUDIT LW-II-2 S8: each listing judged alone - a piece the judge throws on (one listed before a law, read again by
+      // it) is passed by, never the reckoning of every town the cron reaches after it (its town waited longest, so the
+      // job threw there every firing and no town was reckoned)
+      let worth = 0, takes = false, key = null;
+      try {
+        worth = item ? patronWorth(item, itemWorth) : 0;
         // AUDIT LW-II P3: the item law's re-reading, as a player's buy asks it (marketBuy: a piece listed before the law,
-        // or one a later law refuses, is sold to nobody)
-        takes: patronTakes(item) && lawfulItem(item) && !goodRefusal(item) });
+        // or one a later law refuses, is sold to nobody); AUDIT LW-II-2 S5: never a held seller's
+        takes = !Number(r.held) && patronTakes(item) && lawfulItem(item) && !goodRefusal(item);
+        key = item ? ledgerKeyOf(item) : null;   // AUDIT LW-II-2 S2: the piece the ledger follows
+      } catch { worth = 0; takes = false; }
+      ls.push({ id: r.id, seller: r.seller, char: r.char_id, price: Number(r.price), at: Number(r.at), expires: Number(r.expires_at), last: r.patron_hour == null ? null : Number(r.patron_hour),
+        bkey: Number(r.bkey), worth, takes, key });
     }
     const hours = [...new Set(ls.flatMap((l) => patronHours(l.last, l.at, nowS)))].sort((a, b) => a - b);
     const gone = new Set();
@@ -2024,6 +2057,9 @@ export async function reckonPatrons(ctx, { maps = null, region = null } = {}, en
             const l = /** @type {any} */ (cands.find((x) => x.id === sale.id));
             const { tax, fee, gets } = goldSaleOf(0, sale.price);
             const at = hour * PATRON_HOUR_S + sale.minute * 60;
+            // AUDIT LW-II-2 S2: a piece the ledger follows lies in its escrow (INT4 - listed, the market's): the claim standing
+            // on it, read for the sale to tell the ledger the piece is gone
+            const claim = l.key ? ((await db.prepare("SELECT claim_char FROM item_uids WHERE uid = ?1 AND state = 'escrow'").bind(l.key).first())?.claim_char ?? null) : null;
             try {
               await db.batch([
                 // THE DECISION: the listing open at its price, its seller's held gold with room - the sale its own row, once.
@@ -2037,13 +2073,15 @@ export async function reckonPatrons(ctx, { maps = null, region = null } = {}, en
                     AND (SELECT COUNT(*) FROM market_patron_sales WHERE map = ?2 AND hour = ?3) < ${PATRON_TOWN_HOUR}
                     AND (SELECT COUNT(*) FROM market_patron_sales WHERE seller = l.seller AND day = ?10 AND hour = ?3) < ${PATRON_SELLER_HOUR}
                     AND (SELECT COALESCE(SUM(price), 0) FROM market_patron_sales WHERE seller = l.seller AND day = ?10) + l.price <= ${PATRON_SELLER_DAY_GOLD}
-                    AND NOT EXISTS (SELECT 1 FROM realm_characters c WHERE c.id = l.char_id AND c.player = l.seller AND (c.held IS NOT NULL OR c.judged_seq IS NULL))`)
+                    AND NOT ${PATRON_HELD_SQL}`)
                   .bind(l.id, map, hour, sale.minute, sale.seed, tax, fee, gets, at, day, sale.price, MARKET_GOLD_HELD_MAX, l.bkey),
                 mustChange(db),
                 db.prepare(`UPDATE market_listings SET own = 0, bought = 0, state = 'sold', closed_at = ?2 WHERE id = ?1`).bind(l.id, at),
                 db.prepare(`INSERT INTO market_gold (player, char_id, gold) VALUES (?1, ?2, ?3)
                   ON CONFLICT (player, char_id) DO UPDATE SET gold = market_gold.gold + excluded.gold`).bind(l.seller, l.char, gets),
                 faucetStatement(db, 'patron', hour, gets),
+                // AUDIT LW-II-2 S2: the ledger told - the piece out of the realm, a copy claiming it charged to its claimant
+                ...(l.key ? escrowSpentSteps(db, l.key, claim, nowS) : []),
               ]);
               gone.add(l.id);
               sold++;
@@ -2070,6 +2108,16 @@ export async function reckonPatrons(ctx, { maps = null, region = null } = {}, en
     }
   }
   return { sold, towns: towns.length };
+}
+
+/** AUDIT LW-II-2 S3: THE HOURS THE MARKET STOOD SHUT - while it is not open to everyone (shut, or its developers' alone)
+ *  the hour's cron sells to no patron and MARKS every open trader listing reckoned to the hour it runs in, so the hours
+ *  it stood shut are never paid when it opens (shut thirty hours, its first firing after opening paid every one of them:
+ *  P8 stopped the selling, not the hours waiting). Answers the listings marked. @param {any} ctx */
+export async function markPatronsShut({ db, nowS }) {
+  const r = await db.prepare(`UPDATE market_listings SET patron_hour = ?1 WHERE state = 'open' AND kind = 'item' AND vendor_id IS NOT NULL AND currency = 'gold'
+    AND (patron_hour IS NULL OR patron_hour < ?1)`).bind(Math.floor(nowS / PATRON_HOUR_S)).run();
+  return Number(r?.meta?.changes ?? 0);
 }
 
 /** LW15: a town's patrons' purchases told to a reader (the client deals each seed to a resident and draws them coming

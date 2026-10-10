@@ -5,6 +5,10 @@
 -- from the realm; and the gold the service's own faucets pay is kept by the hour and kind, for the wealth measure
 -- (budget.js FAUCET_KINDS).
 ALTER TABLE market_listings ADD COLUMN patron_hour INTEGER;
+-- AUDIT LW-II-2 S3: every open trader listing standing when this runs reckoned to the hour before it - left NULL, a
+-- listing's first reckoning paid patrons for up to PATRON_RECKON_HOURS hours before there were any
+UPDATE market_listings SET patron_hour = CAST(strftime('%s', 'now') AS INTEGER) / 3600 - 1
+  WHERE state = 'open' AND vendor_id IS NOT NULL AND currency = 'gold';
 CREATE TABLE IF NOT EXISTS market_patron_sales (
   listing  TEXT PRIMARY KEY,
   map      INTEGER NOT NULL,

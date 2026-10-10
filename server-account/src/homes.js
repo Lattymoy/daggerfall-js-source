@@ -44,6 +44,7 @@ import {
   homeDeedOf,   // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: the deed a record holds to a building, as the door reads it
 } from '../../src/net/homeLaw.js';
 import { PATRON_HOUR_S } from '../../src/net/patronLaw.js';   // AUDIT LW-II P7: a door opened marks its trader's patrons' hours
+import { reckonPatrons } from './market.js';   // AUDIT LW-II-2 S4: a door leaving public reckons its town first
 import { GUILD_TREASURY_MAX } from '../../src/net/guildLaw.js';   // ARENA4b: a hall's pieces paid back, into a treasury under its cap
 import { DECOR_OPS_MAX, DECOR_OPS_WINDOW_S } from '../../src/net/decorLaw.js';   // HOME-LOOK: a repaint counts as a decorator's write
 import { hallMay } from '../../src/net/hallLaw.js';   // GUILD1d: a hall's keepers
@@ -351,16 +352,23 @@ export async function releaseHome(ctx, player, { mapId, buildingKey, realm = nul
  * marked reckoned to the last whole hour (market.js reckonPatrons; never back) before the door moves, so the hours it
  * stood shut are never paid when it opens (twenty pieces stocked behind a private door all sold, at its opening, in the
  * hours before it). Asked only where it was not open already: a door set public again leaves its hours to reckon.
- * @param {{db: any, nowS?: number}} ctx
+ * AUDIT LW-II-2 S4: to the hour it opens IN - to the one before, a door kept shut and opened at :59 of every hour (shut
+ * again a minute later) was paid each hour as a door open all of it. And a door LEAVING public reckons its town first
+ * (market.js reckonPatrons), so the whole hours it stood open are paid before it shuts, and none after.
+ * @param {{db: any, nowS?: number}} ctx @param {any} player @param {any} [body] @param {any} [env]
  */
-export async function setHomeEntry({ db, nowS }, player, { mapId, buildingKey, entry } = {}) {
+export async function setHomeEntry(ctx, player, { mapId, buildingKey, entry } = {}, env = null) {
+  const { db, nowS } = ctx;
   if (!homeEntryOk(entry)) return { error: 'bad-entry' };
   if (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey)) return { error: 'no-home' };
   if (entry === 'public' && Number.isSafeInteger(nowS)) {
     await db.prepare(`UPDATE market_listings SET patron_hour = ?4 WHERE vendor_map = ?1 AND seller = ?3 AND state = 'open'
       AND vendor_id IN (SELECT id FROM home_decor WHERE map_id = ?1 AND building_key = ?2) AND (patron_hour IS NULL OR patron_hour < ?4)
       AND EXISTS (SELECT 1 FROM homes WHERE map_id = ?1 AND building_key = ?2 AND player = ?3 AND guild_id IS NULL AND entry != 'public')`)
-      .bind(mapId, buildingKey, player.id, Math.floor(/** @type {number} */ (nowS) / PATRON_HOUR_S) - 1).run();
+      .bind(mapId, buildingKey, player.id, Math.floor(/** @type {number} */ (nowS) / PATRON_HOUR_S)).run();
+  } else if (Number.isSafeInteger(nowS) && await db.prepare("SELECT 1 FROM homes WHERE map_id = ?1 AND building_key = ?2 AND player = ?3 AND guild_id IS NULL AND entry = 'public'")
+    .bind(mapId, buildingKey, player.id).first()) {
+    await reckonPatrons(ctx, { maps: [mapId] }, env).catch(() => null);
   }
   const r = await db.prepare('UPDATE homes SET entry = ? WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL')
     .bind(entry, mapId, buildingKey, player.id).run();   // GUILD1d: a hall's entry is its guild's (halls.js setHallEntry)

@@ -226,8 +226,10 @@ test('AUDIT SCALE D7: on a quiet world the clock is six statements a minute and 
   // once - none, so no town read; twenty-one. PIN MOVED (AUDIT LW-II P6, P8): the market's history prunes a patron's
   // sales too (ten), and the patrons are asked nothing while the market is not open to everyone (this world's Marks and
   // board switches are off) - twenty-one still
-  assert.deepEqual(hour.map((j) => [j.name, j.statements]), [['board', 2], ['guild-board', 1], ['harvests', 2], ['market-history', 10], ['rate-limits', 1], ['sessions', 1], ['guild-invites', 1], ['realm-findings', 1], ['realm-wealth-hours', 1], ['wild-falls', 1], ['patrons', 0]]);
-  assert.equal(minute.reduce((n, j) => n + j.statements, 0) + hour.reduce((n, j) => n + j.statements, 0), 6 + 21);
+  // PIN MOVED (AUDIT LW-II-2 S3): while the market is not open to everyone the patrons' job marks every trader's hours
+  // as they pass (market.js markPatronsShut - one statement), so opening it pays none of them - twenty-two
+  assert.deepEqual(hour.map((j) => [j.name, j.statements]), [['board', 2], ['guild-board', 1], ['harvests', 2], ['market-history', 10], ['rate-limits', 1], ['sessions', 1], ['guild-invites', 1], ['realm-findings', 1], ['realm-wealth-hours', 1], ['wild-falls', 1], ['patrons', 1]]);
+  assert.equal(minute.reduce((n, j) => n + j.statements, 0) + hour.reduce((n, j) => n + j.statements, 0), 6 + 22);   // PIN MOVED (AUDIT LW-II-2 S3)
   // behind `dev` the Motherlodes are a developer's: never picked by the clock
   const dev = await standService({ PROFESSIONS_OPEN: 'dev' });
   _resetCronForTests();

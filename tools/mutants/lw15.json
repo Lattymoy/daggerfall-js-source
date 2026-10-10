@@ -56,8 +56,8 @@
   {
     "name": "LW15-takes-keepsake",
     "file": "src/net/patronLaw.js",
-    "old": " && item.templateIndex !== PATRON_KEEPSAKE_TEMPLATE;",
-    "new": ";",
+    "old": " && item.templateIndex !== PATRON_KEEPSAKE_TEMPLATE\n",
+    "new": "\n",
     "tests": [
       "test/lw15_patrons.test.js"
     ]
@@ -308,7 +308,7 @@
   {
     "name": "LW15-told",
     "file": "server-account/src/market.js",
-    "old": "  const patrons = (await patronsTold(db, [vend.map], nowS).catch(() => [])).filter((p) => p.vendor === vend.id);",
+    "old": "  const patrons = (await patronsTold(db, [vend.map], nowS).catch(() => [])).filter((p) => p.vendor === vend.id && p.buildingKey === Number(v.building_key));",
     "new": "  const patrons = [];",
     "tests": [
       "test/lw15_patrons.test.js"
@@ -353,7 +353,7 @@
   {
     "name": "LW15-cron-job",
     "file": "server-account/src/cron.js",
-    "old": "['patrons', async (ctx, env) => (marketOpenFor(null, env) ? (await reckonPatrons(ctx, {}, env)).sold : 0)]",
+    "old": "['patrons', async (ctx, env) => (marketOpenFor(null, env) ? (await reckonPatrons(ctx, {}, env)).sold : markPatronsShut(ctx))]",
     "new": "['patrons', async () => 0]",
     "tests": [
       "test/lw15_patrons.test.js"
@@ -599,8 +599,8 @@
   {
     "name": "LW15-AUDIT-P2-floor",
     "file": "src/net/patronLaw.js",
-    "old": "  const worth = worthOf({ ...item, value: 0 });",
-    "new": "  const worth = worthOf(item);",
+    "old": "  const worth = Math.min(worthOf({ ...item, value: 0 }), ownPrice(item));",
+    "new": "  const worth = Math.min(worthOf(item), ownPrice(item));",
     "tests": [
       "test/lw15_patrons.test.js"
     ]
@@ -608,8 +608,8 @@
   {
     "name": "LW15-AUDIT-P3-law",
     "file": "server-account/src/market.js",
-    "old": "takes: patronTakes(item) && lawfulItem(item) && !goodRefusal(item) });",
-    "new": "takes: patronTakes(item) && !goodRefusal(item) });",
+    "old": "patronTakes(item) && lawfulItem(item) && !goodRefusal(item);",
+    "new": "patronTakes(item) && !goodRefusal(item);",
     "tests": [
       "test/lw15_patrons.test.js"
     ]
@@ -617,8 +617,8 @@
   {
     "name": "LW15-AUDIT-P3-refusal",
     "file": "server-account/src/market.js",
-    "old": "takes: patronTakes(item) && lawfulItem(item) && !goodRefusal(item) });",
-    "new": "takes: patronTakes(item) && lawfulItem(item) });",
+    "old": "patronTakes(item) && lawfulItem(item) && !goodRefusal(item);",
+    "new": "patronTakes(item) && lawfulItem(item);",
     "tests": [
       "test/lw15_patrons.test.js"
     ]
@@ -752,10 +752,11 @@
   {
     "name": "LW15-AUDIT-P8-switch",
     "file": "server-account/src/cron.js",
-    "old": "(marketOpenFor(null, env) ? (await reckonPatrons(ctx, {}, env)).sold : 0)",
+    "old": "(marketOpenFor(null, env) ? (await reckonPatrons(ctx, {}, env)).sold : markPatronsShut(ctx))",
     "new": "(await reckonPatrons(ctx, {}, env)).sold",
     "tests": [
-      "test/lw15_patrons.test.js"
+      "test/lw15_patrons.test.js",
+      "test/auditlwii2_service.test.js"
     ]
   },
   {

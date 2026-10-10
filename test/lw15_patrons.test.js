@@ -616,7 +616,7 @@ test('AUDIT LW-II P7: A DOOR OPENED OPENS ITS TRADER FROM NOW - set public throu
   const opened = Math.floor(_now / 3600);
   const e = await s.call('/v1/homes/entry', { mapId: 6001, buildingKey: 10, entry: 'public' }, eve.secret);
   assert.equal(e.status, 200, JSON.stringify(e.body));
-  assert.deepEqual(s.marks(6001), [opened - 1], 'its hours to the last whole one');
+  assert.deepEqual(s.marks(6001), [opened], 'its hours to the one it opens in');   // PIN MOVED (AUDIT LW-II-2 S4): to the hour it opens IN - opened at :59, the hour before was paid whole
   _now = T0 + 40 * 3600;
   await s.call('/v1/market/vendor', { vendor: shut }, eve.secret);
   assert.ok(s.sales().length >= 1, 'open, it sells');
