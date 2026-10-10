@@ -165,7 +165,15 @@ export function skinLayout(pieces) {
           continue;
         }
         postE[v] = post;
-        if (fill[v] === 0) { collapse = true; continue; }
+        // AUDIT MW-NPC II G1: THE CPU SKIN'S COLLAPSE, by its own test - a touched vertex whose live weights sum to none
+        // or less (mwSkin.js skinBatch: `wsum[v] > 0 ? composePost(o) : touched[v] ? collapse : null`) lands on the
+        // post's translation; its influences zeroed, the shader's accumulator is the CPU's zero one. The layout
+        // collapsed only a vertex with no live influence, and blended a +0.5/-0.5 one the CPU had collapsed.
+        if (fill[v] === 0 || !(wsum[v] > 0)) {
+          for (let s = 0; s < fill[v]; s++) infW[v * SKIN_MAX_INFLUENCES + s] = 0;
+          collapse = true;
+          continue;
+        }
         if (wsum[v] < wMin) wMin = wsum[v];
         if (wsum[v] > wMax) wMax = wsum[v];
         for (let s = 0; s < fill[v]; s++) {

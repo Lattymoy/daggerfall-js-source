@@ -51,7 +51,8 @@ test('PSCALE-OWN: my shared quest\'s foe underground is as tough as the party st
   }
   // the record: the own lane's (roomRecord), `n` because it is shared - what a party member's puppet reads
   assert.match(strip(D), /if \(!f\.dead && _sharedFoe\(f\)\) \{ const n = fightN\(f\); if \(n > 1\) r\.n = n; \}/);
-  assert.match(strip(D), /const r = roomRecord\(f, f\._ownSeq, full \|\| !!heirOf\);/, 'the own lane\'s frame is that record');
+  // PIN MOVED (AUDIT MW-NPC II K3): the own lane's records carry the owner's look seed (`true`, roomRecord's `seeded`)
+  assert.match(strip(D), /const r = roomRecord\(f, f\._ownSeq, full \|\| !!heirOf, true\);/, 'the own lane\'s frame is that record');
 });
 
 test('PSCALE-OWN: a party member\'s quest foe stood here reads its owner\'s count - its blow on me weighed by it, a heal left to its owner, never counted on my screen (seat or none)', () => {

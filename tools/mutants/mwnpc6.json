@@ -20,8 +20,8 @@
  {
   "name": "MWNPC6-seed-no-id",
   "file": "src/characters/foeBodies.js",
-  "old": "  else h = mix(h ^ ((n ?? f.id ?? 0) | 0));",
-  "new": "  else h = mix(h ^ ((n ?? 0) | 0));",
+  "old": "    h = mix(h ^ ((f.seq ?? f.id ?? 0) | 0));",
+  "new": "    h = mix(h ^ ((f.seq ?? 0) | 0));",
   "tests": [
    "test/mwnpc6_watch.test.js"
   ]

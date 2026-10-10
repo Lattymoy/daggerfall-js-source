@@ -242,7 +242,7 @@ export function createNpcBodies({ renderer, enabled = () => true, generation = (
      * @param {string} laneName @param {any} actor @param {any} [conceal] @param {number} [flash] @param {any} [fx]
      */
     stand(laneName, actor, conceal = null, flash = 0, fx = null) {
-      if (!actor?.look || !actor.feet) return;
+      if (!actor?.look || !actor.feet || npcBodiesHeld()) return;   // AUDIT MW-NPC II H2: none under the Overworld
       conceal ??= actor.look.veil ?? null;   // MWNPC13: a spectral's standing veil - the host's concealment first
       const id = npcPeerId(laneName, actor.id);
       peers.push({ id, name: '', told: true, look: actor.look, shown: npcShown(actor) });
@@ -280,6 +280,23 @@ export function createNpcBodies({ renderer, enabled = () => true, generation = (
   };
   return self;
 }
+
+let _heldUntil = -Infinity;
+/** AUDIT MW-NPC II H2: the hold lasts this long past the frame that asked it (ms) - world.js renews it every frame the
+ *  travel view is up, so a frame that never asks (a room's, a dungeon's - the modes' own frame) is never held by it. */
+export const NPC_HOLD_MS = 250;
+/**
+ * AUDIT MW-NPC II H2: THE OVERWORLD'S HOLD. Under the travel view the eye stands hundreds of metres up: the frame's cut is
+ * still planar about its ground point, so every lane stood its bodies at the foot of the picture - a few pixels tall,
+ * drawn upright where their flats lean to the view (the peers' bodies take the lean, AUDIT OW4 J6), their flats hidden
+ * under them. C3 kept the roads' bodies off it; the hold keeps every lane's: while it is on, a lane stands nobody, so
+ * every body falls to its sprite and every host's mark shows the flat. world.js asks it each frame (the travel view up,
+ * or not), and it lapses NPC_HOLD_MS after the last frame that asked.
+ * @param {boolean} on @param {number} [now]
+ */
+export function holdNpcBodies(on, now = performance.now()) { _heldUntil = on ? now + NPC_HOLD_MS : -Infinity; }
+/** Is the Overworld's hold on? @param {number} [now] */
+export const npcBodiesHeld = (now = performance.now()) => now < _heldUntil;
 
 /** MWNPC5b: is the lane wanted - the enhanced skin, Morrowind data attached, and the player's tier not Off (the
  *  Features row, `mwNpcBodies`)? A host asks each frame; false, it stands no lane and lets go of the one it had. */

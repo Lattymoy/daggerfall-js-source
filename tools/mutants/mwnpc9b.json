@@ -2,7 +2,7 @@
  {
   "name": "MWNPC9b-build-never-a-creature",
   "file": "src/combat/fpArm.js",
-  "old": "  if (creature) return buildCreatureBody({ creature, deps });   // MWNPC9\n",
+  "old": "  if (creature) return buildCreatureBody({ creature, flies, deps });   // MWNPC9\n",
   "new": "",
   "tests": [
    "test/mwnpc9b_creaturerig.test.js"
@@ -155,7 +155,7 @@
  {
   "name": "MWNPC9b-key-a-person",
   "file": "src/net/peerBodies.js",
-  "old": "  if (look?.creature) return `crea|${look.creature}`;",
+  "old": "  if (look?.creature) return `crea|${look.creature}${look.flies ? '|flies' : ''}`;",
   "new": "",
   "tests": [
    "test/mwnpc9b_creaturerig.test.js"
@@ -164,7 +164,7 @@
  {
   "name": "MWNPC9b-built-a-person",
   "file": "src/net/peerBodies.js",
-  "old": "  if (look?.creature) return { creature: look.creature, reachSweep: false };",
+  "old": "  if (look?.creature) return { creature: look.creature, reachSweep: false, ...(look.flies ? { flies: true } : {}) };",
   "new": "",
   "tests": [
    "test/mwnpc9b_creaturerig.test.js"

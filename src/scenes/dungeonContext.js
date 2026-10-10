@@ -289,7 +289,7 @@ import { UnderwaterFog } from '../render/underwaterFog.js';   // ROAD-B (b3): Un
 import { NavClient } from '../ai/navClient.js';   // ENHANCED AI 3b
 import { getPref } from '../systems/uiPrefs.js';
 import { createHostNpcBodies, npcBodiesOn } from '../characters/npcBodies.js';   // MWNPC5b: the foes in their Morrowind bodies
-import { isBodyFoe, foeActor, foeFx, foeId } from '../characters/foeBodies.js';
+import { isBodyFoe, foeActor, foeFx, foeId, foeSeed, applyWireLook } from '../characters/foeBodies.js';
 import { createPopulationLane } from '../characters/npcBodies.js'; import { personActor } from '../characters/peopleBodies.js';   // MWNPC8b: the dungeon's standing people   // ENHANCED AI 3b: the Enhanced tab's switch
 import { raiseEnemyDeath, playRareDrop, pileBody, sayEnemyDied } from './corpseMarker.js';   // UL1: OnEnemyDeath; LR3: the drop chime; LOOT-STACK: a body as the loot window's tab; LOOT7-CHECK DUNGEON-DIED: the kill notice
 import { rollCorpseKit, capFoeLoot } from '../systems/foeLootCap.js';   // KIT-ROLL: a foe's kit, laddered at its death by every body door; AUDIT 625 L5: a copy's cap
@@ -2191,6 +2191,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // the lane has synced
   let _npcLane = null;
   const _npcStood = [];
+  /** AUDIT MW-NPC II H3: the corpse flats the level's pass drew cast-only this frame (the hosts draw them before drawFoes),
+   *  and of them the ones whose body has gone by the sync - drawn on the foes' own pass, so none is a frame unseen. */
+  const _corpseWasCast = [];
+  const _corpseLate = [];
   const _peopleLane = createPopulationLane({ laneName: 'people', renderer });   // MWNPC8b: the dungeon's standing people (drawPeople)
   let _ctxDead = false;
   function pushDungeonWindow(win) {
@@ -4147,6 +4151,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     armFlatAnim(batch, t, ct.archive, ct.record, flatAnims, uploadRecordFrame);
     if (isEliteCorpse(f.entity)) markEliteCorpseBatch(batch);   // ELITE FOES: the blue outline stays, the embers stop
     f.corpseBatch = batch;   // SL2: the rewind frees a corpse BY ITS FOE
+    batch.castOnly = !!_npcLane?.has('foe', foeId(f));   // AUDIT MW-NPC II H3: the body stands from the kill - the flat minted under it casts alone from its first frame (the level's pass draws it before drawFoes marks it)
     billboardBatches.push(batch);   // hosts draw + destroy() frees
   }
   function playerAttackInput(dx, dy, held) {   // host mouse events buffer here
@@ -4964,7 +4969,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     for (const [id, f] of _sharedById) if ((f.dead && !f.corpse) || !foes.includes(f)) _sharedById.delete(id);   // Destroy()ed or gone: the room forgets it, and a full frame takes every puppet of it down
     for (const f of [..._sharedById.values()].sort((a, b) => (a.dead ? 1 : 0) - (b.dead ? 1 : 0))) {   // the standing before the bodies
       if (shared.length >= SHARED_FOES_MAX) break;
-      const r = roomRecord(f, f._encId, full);
+      const r = roomRecord(f, f._encId, full, true);
       if (r) shared.push(r);
     }
     // AUDIT WORLD34 B3: a FULL frame goes even when it carries nothing - it is the seat's heartbeat (FOES_STALE_MS
@@ -4980,7 +4985,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (shared.length) {
       let room = FOES_FRAME_MAX - FOES_FRAME_SLACK - JSON.stringify(frame).length;
       for (const r of shared) { const len = JSON.stringify(r).length + 1; if (len > room) break; room -= len; n++; }
-      for (const r of shared.slice(n)) { const f = _sharedById.get(r.i); if (f) { f._sentKey = null; f._maxSent = undefined; } }   // AUDIT SETS M1: and its maximum, if it carried one, is owed
+      for (const r of shared.slice(n)) { const f = _sharedById.get(r.i); if (f) { f._sentKey = null; f._maxSent = undefined; f._lsSent = undefined; } }   // AUDIT SETS M1: and its maximum, if it carried one, is owed
       if (n) frame.x = shared.slice(0, n);
     }
     if (full && n === shared.length) frame.xf = 1;
@@ -5009,7 +5014,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   }
   /** WORLD2: one foe's streamed record, or null when nothing it streams changed since its last (every one when full).
    *  `i` the layout's index - REST-SYNC: or a shared encounter's id. */
-  function roomRecord(f, i, full) {
+  function roomRecord(f, i, full, seeded = false) {   // AUDIT MW-NPC II K3: `seeded` - a foe stood off a record elsewhere (not the layout's), whose seed rides
     // WORLD3: g the target ('.' the host, an id a peer, '' none), c the cast count with s its spell, x the gender
     // AUDIT SET P-M3: `v` the joiner whose blow killed it, on its death's record - the host applies a joiner's blow
     // (applyHit), so the kill happened HERE and the striker's own door never saw its foe die: a set's "each kill of
@@ -5039,6 +5044,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const owesMax = max != null && f._maxSent !== max && _maxLeft > 0;
     if (!full && f._sentKey === key && !owesMax) return null;
     if (owesMax) { r.k = max; f._maxSent = max; _maxLeft--; }
+    if (seeded && (full || f._lsSent === undefined)) { r.ls = foeSeed(f); f._lsSent = r.ls; }   // AUDIT MW-NPC II K3: on its first record and every full frame (a joiner since learns it)
     f._sentKey = key;
     return r;
   }
@@ -5201,7 +5207,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (r.t == null || r.t === f.mobileType) { applyFoeRecord(f, r); continue; }
         dropSharedFoe(r.i, f);   // AUDIT PRE-MERGE 0928 M1: another species by that number (the host's abyss replaced it) stands anew, as the own lane's does
       }
-      if (_sharedPending.has(r.i)) { _sharedPending.set(r.i, r); continue; }
+      if (_sharedPending.has(r.i)) { const was = _sharedPending.get(r.i); _sharedPending.set(r.i, { ...r, ls: r.ls ?? was.ls }); continue; }   // AUDIT MW-NPC II K3: a newer word keeps the owner's seed the first one carried
       if (r.d === 1 || r.t == null || !r.f || !canStandFoe(r.t)) continue;   // a body never seen standing, or a record that cannot stand one
       _sharedPending.set(r.i, r);
       standSharedPuppet(r).catch((e) => { _sharedPending.delete(r.i); console.error('[online] the room\'s encounter could not stand here:', e); });
@@ -5217,6 +5223,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!f) return null;
     if (_ctxDead || _sharedById.has(r.i)) { dropSharedFoe(null, f); return null; }
     f._encId = r.i;
+    f._mwWire = 'seed'; applyWireLook(f, newest);   // AUDIT MW-NPC II K3: the host's man - its seed, not the feet it was first streamed at (its `marker` here)
     _sharedById.set(r.i, f);
     if (!_authority) applyFoeRecord(f, newest);
     return f;
@@ -5285,13 +5292,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const qt = ownQuestTag(f);
       if (!qt && !ownLoose(f)) continue;   // SUMMON-SYNC: a shared quest's foe, or a loose stand - nothing else past the run
       if (f._ownSeq == null) f._ownSeq = ++_ownSeq;
-      const r = roomRecord(f, f._ownSeq, full || !!heirOf);
+      const r = roomRecord(f, f._ownSeq, full || !!heirOf, true);
       if (!r) continue;
       if (heirOf && !f.dead) { const h = f.entity?.revenant?.id ? null : (heirOf(f) ?? null); f._heir = h; if (h) r.e = h; }   // REVENANT-HEIR (exteriorFoes' twin): my revenant (a lair's stand) is never handed on - an heir holds no record of it, and killed it as a plain foe
       out.push(r); src.push([f, qt]);
     }
     let whole = full || !!heirOf;
-    if (out.length > CELL_FRAME_RECORDS_MAX) { for (const [f] of src.slice(CELL_FRAME_RECORDS_MAX)) { f._sentKey = null; f._heir = null; f._maxSent = undefined; } out.length = src.length = CELL_FRAME_RECORDS_MAX; whole = false; }   // the relay's bound: the rest go next frame (AUDIT SETS M1: a maximum with them), and this one lists no whole
+    if (out.length > CELL_FRAME_RECORDS_MAX) { for (const [f] of src.slice(CELL_FRAME_RECORDS_MAX)) { f._sentKey = null; f._heir = null; f._maxSent = undefined; f._lsSent = undefined; } out.length = src.length = CELL_FRAME_RECORDS_MAX; whole = false; }   // the relay's bound: the rest go next frame (AUDIT SETS M1: a maximum with them), and this one lists no whole
     if (!out.length && !whole) return null;
     const qf = [], lf = [], cp = [], cn = [];
     src.forEach(([f, qt], k) => {
@@ -5352,7 +5359,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const took = f ? null : _ownAdopted.get(key);
       if (took) { _ownAdopted.delete(key); if (r.d !== 1 && !took.dead && !took._gone) letGoOwn(took); }
       if (f) { applyOwnRecord(f, r, share); if ((lo && comp.has(r.i)) || f.companion != null) companionPuppet(f, lo && comp.has(r.i), compNames.get(r.i)); f._heirElse = ownHeirElse(r); if (ownHeirIsMe(r) && f.companion == null) adoptOwn(from, f, share); continue; }
-      if (_ownPending.has(key)) { _ownPending.set(key, r); continue; }
+      if (_ownPending.has(key)) { const was = _ownPending.get(key); _ownPending.set(key, { ...r, ls: r.ls ?? was.ls }); continue; }   // AUDIT MW-NPC II K3: a newer word keeps the owner's seed the first one carried
       if (r.d === 1 || r.t == null || !r.f || !canStandFoe(r.t) || ownPuppetsOf(from, lo) >= (lo ? LOOSE_PUPPETS_MAX : QUEST_PUPPETS_MAX)) continue;
       _ownPending.set(key, { ...r, _comp: lo && comp.has(r.i), _compName: compNames.get(r.i) ?? null });
       if (lo) _ownPendLoose.add(key);
@@ -5386,6 +5393,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const heirOrphan = kept && !_ctxDead && !_ownPups.has(key) && _ownOwners.get(from)?.gen !== gen && (ownHeirIsMe(newest) || !!newest._orphanMine);
     if (!heirOrphan && (_ctxDead || _ownPups.has(key) || _ownOwners.get(from)?.gen !== gen)) { dropOwnPuppet(null, f); return null; }
     f._ownFrom = from; f._ownI = r.i; f._pupQuest = qt; f._pupLoose = !!lo;   // SUMMON-SYNC: a loose stand's puppet
+    f._mwWire = 'seed'; applyWireLook(f, newest);   // AUDIT MW-NPC II K3: its owner's man - its seed, not the feet it was first streamed at
     _ownPups.set(key, f);
     const share = ownShare();
     applyOwnRecord(f, newest, share);
@@ -5611,6 +5619,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   function applyFoeRecord(f, raw) {
     const r = validFoeRecord(raw);
     if (!r) return;
+    if (f._mwWire) applyWireLook(f, r);   // AUDIT MW-NPC II K3: a puppet's owner's seed (a layout copy's is its layout point's, every machine's)
     const p = f._pup ?? (f._pup = { feet: [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]], yaw: f.ai.yaw, moving: false, hurt: false, hurtUntil: 0, strike: null, a: null, target: null, c: null, cast: null });
     if (typeof r.g === 'string') p.target = r.g;   // WORLD3: whose blow this puppet's is
     if (r.d !== 1) f._fightN = r.n ?? 1;   // AUDIT PSCALE1: the host's count of who fights it (a record without one: one). SIGIL1: a LIVE record's - a body's carries none, and the fight it died in was the last live count (its Renown bonus, its sigils)
@@ -7845,7 +7854,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // shadow alone while the body lies there; the living stand first (the lane's priority). Then the frame's bodies,
     // synced, drawn in one bind of the sprite target (MWNPC2), and every offered foe's billboard cast-only where its
     // body stands - after the sync, so a body arriving or leaving is never a frame drawn twice or not at all.
+    _corpseWasCast.length = 0; _corpseLate.length = 0;
     for (const f of foes) {
+      if (f.corpseBatch?.castOnly) _corpseWasCast.push(f.corpseBatch);
       if (f.corpseBatch) f.corpseBatch.castOnly = false;
       // the body from the kill (f.corpse, raised at the death - the flat is minted after its texture warms), until the
       // corpse is freed
@@ -7857,6 +7868,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       renderer.beginCharacterSpriteBatch?.();
       try { npcLane.draw(canvas, { proj, view, eye }); } finally { renderer.flushCharacterSpriteBatch?.(); }
     }
+    for (const b of _corpseWasCast) if (!b.castOnly) _corpseLate.push(b);   // AUDIT MW-NPC II H3: its body gone this frame (the cut, the switch) - its flat on this frame after all
+    if (_corpseLate.length) renderer.drawBillboards(_corpseLate, new Float32Array([-view[0], -view[4], -view[8]]), UP_Y);   // (the level's pass drew it cast-only, ahead of the sync)
     // C11: the sprite mobiles draw as one billboard pass. The right
     // axis is the NEGATED view row - the same (cos yaw, 0, -sin yaw)
     // axis every host passes for its static flats. That axis carries

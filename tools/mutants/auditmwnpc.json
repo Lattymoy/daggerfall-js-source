@@ -157,8 +157,8 @@
  {
   "name": "AUDITMWNPC-C4-resident-as-spawn",
   "file": "src/scenes/world.js",
-  "old": "folkStreet.offer(person.living?.res ? residentWalkerActor(person, batch.origin) : folkActor(",
-  "new": "folkStreet.offer(person.living?.res ? folkActor(person, batch.origin, p.population.race) : folkActor(",
+  "old": "const a = person.living?.res ? residentWalkerActor(person, batch.origin) : folkActor(",
+  "new": "const a = person.living?.res ? folkActor(person, batch.origin, p.population.race) : folkActor(",
   "tests": [
    "test/mwnpc7_folk.test.js"
   ]
@@ -175,17 +175,17 @@
  {
   "name": "AUDITMWNPC-C4-resident-look-kept-across",
   "file": "src/characters/rosterBodies.js",
-  "old": "  if (!k || k.res !== res) k = person._mwRes = { res, look: null };",
-  "new": "  if (!k) k = person._mwRes = { res, look: null };",
+  "old": "  if (!k || k.res !== res || k.cls !== cls || k.guard !== guard || k.still !== still) k = person._mwRes = { res, look: null, cls, guard, still };",
+  "new": "  if (!k || k.cls !== cls || k.guard !== guard || k.still !== still) k = person._mwRes = { res, look: null, cls, guard, still };",
   "tests": [
    "test/mwnpc_audit.test.js"
   ]
  },
  {
-  "name": "AUDITMWNPC-C5-seed-never-follows",
+  "name": "AUDITMWNPC-C5-seed-minted-again",
   "file": "src/characters/foeBodies.js",
-  "old": "  const n = f.marker ? null : (f.seq ?? null);",
-  "new": "  const n = null;",
+  "old": "  if (f._mwSeed != null) return f._mwSeed;",
+  "new": "  if (false) return f._mwSeed;",
   "tests": [
    "test/mwnpc_audit.test.js",
    "test/mwnpc6_watch.test.js"

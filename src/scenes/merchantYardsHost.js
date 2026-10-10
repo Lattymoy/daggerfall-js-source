@@ -42,6 +42,10 @@ import { buildYardModel, signBoxOf, yardPoints } from '../world/merchantYardMode
 import { yardArt, YARD_ARCHIVE } from '../world/merchantYardArt.js';
 import { PERSON_TEXTURES, PERSON_IDLE_RECORD, PERSON_IDLE_FPS } from '../characters/mobilePerson.js';
 import { mobileBillboardSize } from '../world/rmbFlats.js';
+import { folkLookOf } from '../characters/folkBodies.js';   // AUDIT MW-NPC II P1: a keeper's body, in the outfit their picture wears
+import { personActor } from '../characters/peopleBodies.js';   // AUDIT MW-NPC II P1: and turned to the eye as a standing person is
+import { GENDERS } from '../characters/nameHelper.js';
+import { textSeed } from '../systems/livingWorld/seed.js';
 import { RAY_DISTANCE, STATIC_NPC_ACTIVATION_DISTANCE, presentNpcInfoText } from '../player/activate.js';
 import { trs } from '../world/mat4.js';
 import { quatAngleAxis } from '../world/quat.js';
@@ -315,6 +319,26 @@ export function createMerchantYards({
         }
       }
       return n;
+    },
+    /**
+     * AUDIT MW-NPC II P1 (bible/04-Characters/Morrowind-NPCs.md section 23): EACH KEEPER OFFERED THEIR MORROWIND BODY - a
+     * standing person of the town's race in the street's outfit their own picture wears (folkBodies.js folkLookOf: its
+     * archive), off the yard's own key, so every client stands the same keeper; turned to the eye as a standing person
+     * is (peopleBodies.js personActor). `offer(actor, batch)` is the host's lane's (world.js streetPeople), the keeper's
+     * billboard cast-only where the body stands.
+     * @param {(actor: any, batch: any) => void} offer @param {number[]} eyeAt @param {number} dt
+     */
+    offerBodies(offer, eyeAt, dt) {
+      for (const y of yards.values()) {
+        const b = y.keeperBatch;
+        if (!y.at || !b) continue;
+        const archive = keeperArchive(y.site), race = y.site.race ?? 'Breton', key = `${archive}|${race}`;
+        if (y._mwLookKey !== key) {
+          y._mwLookKey = key;
+          y._mwLook = folkLookOf({ archive, personFaceRecordId: 0, gender: y.site.keeper?.sex === 'female' ? GENDERS.Female : GENDERS.Male, guard: false }, race, textSeed(String(y.key)));
+        }
+        offer(personActor(y, y._mwLook, b.origin, eyeAt, dt), b);
+      }
     },
     /** The keepers and the horses, for the host's flats. */
     batches() {

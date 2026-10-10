@@ -5,9 +5,11 @@
 // region's), a gender off their record's flags, a faction whose social group and guild say who they are. The body wears
 // THAT: a wardrobe by the faction (a temple's priest in priest's robes, a mage in robes, a knight or a fighter in steel,
 // a noble in a formal tunic or a fine skirt, a merchant in a tunic and breeches, the underworld in dark plain clothes,
-// everyone else the street's own outfits), dyed off their name seed. A child keeps their sprite, and so does a vampire
-// (the plan's law: neither has a Morrowind body of their own here). They stand idle and turn to face the player, as
-// Daggerfall's billboards always did, at a person's pace.
+// everyone else the street's own outfits), dyed off their name seed. A child keeps their sprite (no Morrowind body is a
+// child's), and so does a vampire's people: AUDIT MW-NPC II K6 - MWNPC14 gave a vampire its race's vampire head where
+// the look KNOWS it is one (a foe's mobile, a roster's), but a standing person's faction row is all that says it here,
+// and the supernatural social group is wider than the vampires; they keep their pictures rather than a guess (section
+// 21's NOT HERE). They stand idle and turn to face the player, as Daggerfall's billboards always did, at a person's pace.
 import { GENDERS } from './nameHelper.js';
 import { isChildNPCData } from './staticNpc.js';
 import { RACES } from '../systems/races.js';
@@ -42,8 +44,8 @@ function mix(h) {
 }
 
 /** What a faction makes a person wear: 'priest', 'mage', 'steel', 'noble', 'merchant', 'underworld', 'scholar', or
- *  'common' (the street's outfits); 'none' for a vampire, a Daedra, a god, Oblivion's or the Fey's - who keep their
- *  sprites. @param {any} f the FACTION.TXT row */
+ *  'common' (the street's outfits); 'none' for a vampire's people (the header: a faction row is all that says it), a
+ *  Daedra, a god, Oblivion's or the Fey's - who keep their sprites. @param {any} f the FACTION.TXT row */
 export function wardrobeOf(f) {
   if (!f) return 'common';
   if (f.type === FACTION_TYPES.VampireClan || f.ggroup === GUILD_GROUPS.Vampires || f.sgroup === SOCIAL_GROUPS.SupernaturalBeings) return 'none';

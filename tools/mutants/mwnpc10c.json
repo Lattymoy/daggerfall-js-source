@@ -74,7 +74,7 @@
  {
   "name": "MWNPC10c-class-a-walker",
   "file": "src/characters/rosterBodies.js",
-  "old": "  if (res.cls != null) return rosterLook(rec,",
+  "old": "  if (cls != null) return rosterLook(rec,",
   "new": "  if (false) return rosterLook(rec,",
   "tests": [
    "test/mwnpc10c_roads.test.js"
@@ -146,7 +146,7 @@
  {
   "name": "MWNPC10c-guard-on-duty-off",
   "file": "src/characters/rosterBodies.js",
-  "old": "archive: res.civvies ?? res.archive,",
+  "old": "archive: guard ? res.archive : (res.civvies ?? res.archive),",
   "new": "archive: res.archive,",
   "tests": [
    "test/mwnpc10c_roads.test.js"

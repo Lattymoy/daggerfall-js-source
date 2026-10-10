@@ -1125,7 +1125,7 @@ export function createGateCourt({
           const t = now(), act = bossAct(s, t, hurtAt);
           bodiesLane.offer(rosterActor(bossRec, { id: 'boss', look, feet: shown.origin, yaw: s.yaw, moving: act.act === 'walk' || act.act === 'run', running: act.act === 'run',
             swingKey: s.fell ? null : (s.atk?.at ?? null), hitKey: s.fell ? null : Math.max(hurtAt, courtFlashAt), dead: s.fell ? 2 : 0,
-            scale: (body.scale ?? 1) * (profileOf(s).size ?? 1) }), shown);
+            scale: (body.scale ?? 1) * (profileOf(s).size ?? 1) }), shown, null, shown.hitFlash || 0);   // AUDIT MW-NPC II H5: WB13d's flash (mine whole, the court's light) on the body - the billboard is cast-only
         }
         host.offerBodies(bodiesLane);
       }

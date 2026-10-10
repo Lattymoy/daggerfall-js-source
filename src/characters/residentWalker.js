@@ -58,6 +58,9 @@ export class ResidentWalker extends MobilePerson {
     this.classArchive = opts.archive;
     /** @type {{ archive: number, record: number, frameCount: number } | null} */
     this.stillLook = null;
+    /** AUDIT MW-NPC II K1: the still picture's kind (looks.js stillRoleOf - 'beggar', a stall's, 'priest'), null with none:
+     *  what the Morrowind body reads (characters/rosterBodies.js residentWalkerActor). @type {string|null} */
+    this.stillRole = null;
     /** @type {FlatAnim|null} */
     this._stillAnim = null;
     /** WATCH-PROTECTS: the walk wheel's cadence as a share of the walk's - the living town's run, twice (livingTown.js
@@ -75,7 +78,7 @@ export class ResidentWalker extends MobilePerson {
   release() {}
 
   /** A resident's own outfit (the body is dressed as another resident - livingTown.js `_dress`). @param {number} archive @param {boolean} guard */
-  setIdentity(archive, guard) { super.setIdentity(archive, guard); this.ownArchive = archive; this.classArchive = archive; this.unit = null; this.armed = false; this.cls = null; this.stillLook = null; this._stillAnim = null; }
+  setIdentity(archive, guard) { super.setIdentity(archive, guard); this.ownArchive = archive; this.classArchive = archive; this.unit = null; this.armed = false; this.cls = null; this.stillLook = null; this.stillRole = null; this._stillAnim = null; }
 
   /**
    * LW3: into their gear - `look` the class sprite ({ mobileType, basics, archive, frameCount, sex }) - or, null, out of
@@ -100,10 +103,11 @@ export class ResidentWalker extends MobilePerson {
 
   /**
    * LW-LOOKS: standing as a still picture - `look` an NPC flat ({ archive, record, frameCount }) - or, null, themselves
-   * again (their class's sprite, or their outfit).
-   * @param {{ archive: number, record: number, frameCount: number } | null} look
+   * again (their class's sprite, or their outfit). AUDIT MW-NPC II K1: `role` the picture's kind.
+   * @param {{ archive: number, record: number, frameCount: number } | null} look @param {string|null} [role]
    */
-  still(look) {
+  still(look, role = null) {
+    this.stillRole = look ? role : null;
     if (look) {
       this.stillLook = look;
       this._stillAnim = new FlatAnim(look.archive, look.frameCount);

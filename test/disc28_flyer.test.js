@@ -27,6 +27,7 @@ import { EnemyAI } from '../src/characters/enemyMotor.js';
 import { freeLodgedFeet } from '../src/characters/foeSpacing.js';   // FIELD BUGS 2026-10-04d CRATE-FREE: the build's stand (a free name there, the module's own import)
 import { Collider } from '../src/player/collider.js';
 import { effectiveLevel } from '../src/systems/mentorMode.js';   // SOFTCAP2: the mentor's level the spawn sites read (a free name there, the module's own import)
+import { foeSeed, applyWireLook } from '../src/characters/foeBodies.js';   // AUDIT MW-NPC II K3: the dungeon context's look seed, in the mounted scope
 
 const I = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 function box(x0, y0, z0, x1, y1, z1) {
@@ -71,6 +72,7 @@ const mount = (body, state) => new Function('__s', `with (__s) { ${body} }`)(sco
 function context(collider, idleH) {
   const foes = [];
   const state = {
+    foeSeed, applyWireLook,   // AUDIT MW-NPC II K3: the records' look seed (roomRecord, applyFoeRecord, the puppets' stands)
     ENEMY_BASICS, collider, foes, flyerStandFeet, enemyControllerHeight,
     freeLodgedFeet,   // FIELD BUGS 2026-10-04d CRATE-FREE: the build's stand, the real one (no flyer here stands in a model)
     MobileUnit: class { static resolveGender(g) { return g === 'female' ? 'female' : 'male'; } },

@@ -927,6 +927,8 @@ export function releaseCharacterTexture(renderer, tex) {
   return true;
 }
 
+/** The masters in their load order. */
+const ESM_MASTERS = Object.freeze(['morrowind.esm', 'tribunal.esm', 'bloodmoon.esm']);
 /**
  * AUDIT MW-NPC D6: THE MASTERS IN LOAD ORDER - Morrowind.esm, Tribunal.esm, Bloodmoon.esm, then any other (a mod, after
  * the masters it names), each run of them as stored. The store answers its keys alphabetically (Bloodmoon, Morrowind,
@@ -936,7 +938,9 @@ export function releaseCharacterTexture(renderer, tex) {
  * @param {string[]} names
  */
 export function esmLoadOrder(names) {
-  const rank = (n) => { const l = n.toLowerCase(); return l.startsWith('morrowind') ? 0 : l.startsWith('tribunal') ? 1 : l.startsWith('bloodmoon') ? 2 : 3; };
+  // AUDIT MW-NPC II G2: the masters by their WHOLE names - by prefix, "Morrowind Patch.esm" ranked as Morrowind's own
+  // and, stored before it (' ' sorts before '.'), lost every record it patched to the master it patches
+  const rank = (n) => { const i = ESM_MASTERS.indexOf(String(n).split(/[\\/]/).pop().toLowerCase()); return i < 0 ? ESM_MASTERS.length : i; };
   return names.map((n, i) => [n, i]).sort((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1]).map(([n]) => n);
 }
 
@@ -2037,7 +2041,7 @@ async function buildTpBody({
  * buildTpBody's so the rig, the GPU skin and the sprite take it unchanged, standing also as `built` (no arm), with the
  * record (`creature`) and XSCL as a uniform scale (Creature::adjustScale - weight and height alike).
  */
-async function buildCreatureBody({ creature, deps = null }) {
+async function buildCreatureBody({ creature, flies = false, deps = null }) {
   const ids = [].concat(creature).map((c) => String(c || '').toLowerCase());   // the candidates, in the match's order (characters/creatureBodies.js)
   try {
     const d = deps || await import('../scenes/dataSource.js');
@@ -2061,6 +2065,10 @@ async function buildCreatureBody({ creature, deps = null }) {
     }
     const rec = ids.map((i) => found.get(i)).find(Boolean) ?? null;   // the first candidate the masters carry
     if (!rec) return { ok: false, stage: 'record', error: `no CREA record ${ids.map((i) => `"${i}"`).join(' or ')} in ${esmNames.join(', ')}` };
+    // AUDIT MW-NPC II K5: A FLYER STANDS ONLY IN A CREATURE THAT FLIES - D4's law asked of the data itself: a walker's legs
+    // paddle its walk cycle where the flyer hangs (the transformed Seducer flies, mobileUnit.js), so a record without
+    // CREA's Flies flag is refused at the record, and the sprite stands
+    if (flies && (rec.flags & CREA_FLAG.Flies) === 0) return { ok: false, stage: 'record', error: `"${rec.id}" does not fly - a flyer keeps its sprite` };
     const exists = (p) => archives.some((a) => a.has(p));
     const find = (p) => findLoaded(archives, p);
     const modelPath = correctActorModelPath(`meshes/${rec.model}`, exists);
@@ -2122,8 +2130,9 @@ export async function buildFpArm({
   reachSweep = true,   // MWNPC3: PX27's every-clip reach sweep - the first-person far plane's; false for a rig that never draws first person
   creature = null,   // MWNPC9: a CREA id, or the match's candidates in order - a creature's body instead (buildCreatureBody)
   vampire = false,   // MWNPC14: a vampire's face - the race's vampire head
+  flies = false,   // AUDIT MW-NPC II K5: a creature body that must fly (its CREA record's Flies flag)
 } = {}) {
-  if (creature) return buildCreatureBody({ creature, deps });   // MWNPC9
+  if (creature) return buildCreatureBody({ creature, flies, deps });   // MWNPC9
   const d = deps || await import('../scenes/dataSource.js');
   // WEREWOLF1: THE WOLF HOLDS NOTHING. setWerewolf's unequipAll empties both hands and every slot
   // (mechanicsmanagerimp.cpp:1896-1901), and the player's items are refused while transformed - so no weapon, no

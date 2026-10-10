@@ -254,8 +254,8 @@
  {
   "name": "MWNPC4-gate-ignored",
   "file": "src/net/peerBodies.js",
-  "old": "        if (this._gate) this._queue = this._gate.chain = this._gate.chain.then(build).catch(() => null);",
-  "new": "        if (false) this._queue = this._gate.chain = this._gate.chain.then(build).catch(() => null);",
+  "old": "        if (this._gate) this._queue = gateBuild(this._gate, build, this._buildInRange);",
+  "new": "        if (false) this._queue = gateBuild(this._gate, build, this._buildInRange);",
   "tests": [
    "test/mwnpc4_npclane.test.js"
   ]
@@ -299,8 +299,8 @@
  {
   "name": "MWNPC4-lane-offers-lookless",
   "file": "src/characters/npcBodies.js",
-  "old": "      if (!actor?.look || !actor.feet) return;",
-  "new": "      if (!actor?.feet) return;",
+  "old": "      if (!actor?.look || !actor.feet || npcBodiesHeld()) return;",
+  "new": "      if (!actor?.feet || npcBodiesHeld()) return;",
   "tests": [
    "test/mwnpc4_npclane.test.js"
   ]

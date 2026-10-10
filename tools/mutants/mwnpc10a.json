@@ -65,8 +65,8 @@
  {
   "name": "MWNPC10a-host-fallen-alive",
   "file": "src/scenes/gateHost.js",
-  "old": "dead: dead ? 1 + ((b.i | 0) % 3) : 0 }), b.batch);",
-  "new": "dead: 0 }), b.batch);",
+  "old": "dead: dead ? 1 + ((b.i | 0) % 3) : 0 }), b.batch,",
+  "new": "dead: 0 }), b.batch,",
   "tests": [
    "test/mwnpc10_gate.test.js"
   ]
@@ -92,8 +92,8 @@
  {
   "name": "MWNPC10a-boss-life-size",
   "file": "src/scenes/gateCourt.js",
-  "old": "scale: (body.scale ?? 1) * (profileOf(s).size ?? 1) }), shown);",
-  "new": "scale: 1 }), shown);",
+  "old": "scale: (body.scale ?? 1) * (profileOf(s).size ?? 1) }), shown,",
+  "new": "scale: 1 }), shown,",
   "tests": [
    "test/mwnpc10_gate.test.js"
   ]

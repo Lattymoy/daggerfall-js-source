@@ -38,8 +38,8 @@
  {
   "name": "MWNPC13-look-unveiled",
   "file": "src/characters/creatureBodies.js",
-  "old": ", ...(m.veil ? { veil: SPECTRAL_VEIL } : {}) })]));",
-  "new": " })]));",
+  "old": ", ...(m.veil ? { veil: SPECTRAL_VEIL } : {}), ...(m.flies",
+  "new": ", ...(m.flies",
   "tests": [
    "test/mwnpc13_spectral.test.js"
   ]

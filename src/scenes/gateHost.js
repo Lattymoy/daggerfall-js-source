@@ -266,7 +266,7 @@ export function createGateHost({ renderer = null, getTexture = null, uploadRecor
         if (goneSeen.has(key)) continue;
         goneSeen.add(key);
         if (g.k === HOST.bearer && g.w === 0) bearersLeft--;
-        const b = bodies.get(g.i) ?? { look: hostLookOf(g.k, P.aspect.id), batch: null, shown: false, seed: 0 };
+        const b = bodies.get(g.i) ?? { i: g.i, look: hostLookOf(g.k, P.aspect.id), batch: null, shown: false, seed: 0 };   // AUDIT MW-NPC II H4: its number - two first seen falling were one body (`host:undefined`)
         bodies.delete(g.i);
         if (g.w === 1) destroyBatch(b);
         else falling.set(key, { ...b, g });
@@ -308,7 +308,8 @@ export function createGateHost({ renderer = null, getTexture = null, uploadRecor
         const look = b.shown && b.batch ? creatureLook({ mobileType: b.look.mobile }) : null;
         if (!look) return;   // never offered, so never cast-only - its sprite draws
         lane.offer(rosterActor(b, { id: `host:${b.i}`, look, feet: b.batch.origin, yaw: b.yaw ?? 0, moving: b.act === 'walk',
-          swingKey: dead ? null : b.wound, hitKey: dead ? null : Math.max(b.hurtAt ?? -Infinity, b.courtAt ?? -Infinity), dead: dead ? 1 + ((b.i | 0) % 3) : 0 }), b.batch);
+          swingKey: dead ? null : b.wound, hitKey: dead ? null : Math.max(b.hurtAt ?? -Infinity, b.courtAt ?? -Infinity), dead: dead ? 1 + ((b.i | 0) % 3) : 0 }), b.batch,
+        null, b.batch.hitFlash || 0);   // AUDIT MW-NPC II H5: WB13d's flash on the body - the billboard that carries it is cast-only
       };
       for (const b of bodies.values()) one(b, false);
       for (const b of falling.values()) one(b, true);

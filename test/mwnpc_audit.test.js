@@ -10,11 +10,12 @@ import { skinLayout, packSkinStream, writeSkinPalette, skinStreamCorner } from '
 import { pieceLanes, createFpArm, esmLoadOrder } from '../src/combat/fpArm.js';
 import { creatureModel, creatureDeps, creaRec } from './fixtures/mw/creatureRig.mjs';
 import { countingRenderer } from './fixtures/mw/bodyRig.mjs';
-import { foeActor, isBodyFoe, foeLook } from '../src/characters/foeBodies.js';
+import { foeActor, isBodyFoe, foeLook, foeWireLook, applyWireLook } from '../src/characters/foeBodies.js';
 import { GUARD_MOBILE_TYPE } from '../src/scenes/cityGuards.js';
 import { residentLook, residentWalkerActor } from '../src/characters/rosterBodies.js';
 import { CREATURE_MATCH } from '../src/characters/creatureBodies.js';
 import { ELITE_FOE_SIZE } from '../src/systems/eliteFoes.js';
+import { WILD_GIANT_SIZE } from '../src/systems/wildZone.js';   // AUDIT MW-NPC II P4
 import { createNpcBodies, createPopulationLane, createFrameBudget, NPC_BODY_TIERS, WATCH_BODY_TIERS, NPC_FRAME_TIERS } from '../src/characters/npcBodies.js';
 import { creatureLook } from '../src/characters/creatureBodies.js';
 import { MOBILE_TYPES as M } from '../src/characters/mobileTypes.js';
@@ -88,6 +89,7 @@ test('AUDIT MW-NPC A1 (MWNPC2\'s law, for the veiled): every concealed or spectr
   renderer.open = true; renderer.opens = 0; renderer.flushes = 0; log.length = 0;
   lane.drawVeiled();
   assert.deepEqual([renderer.opens, renderer.flushes, renderer.open], [0, 0, true]);
+  assert.equal(log.length, 3, 'AUDIT MW-NPC II P7: the three drawn - `every` holds of none');
   assert.ok(log.every((d) => d.batched));
   lane.destroy();
 });
@@ -231,9 +233,10 @@ test('AUDIT MW-NPC D2: a Daedra Seducer in her mortal guise keeps her sprite - t
   assert.equal(creatureLook(her), null, 'in her guise: no body');
   assert.equal(isBodyFoe(her), false);
   her.mobile.specialTransformationCompleted = true;
-  assert.deepEqual(creatureLook(her), { creature: ['winged twilight'] });
+  // PIN MOVED (AUDIT MW-NPC II K5): transformed she flies - her look asks a record that flies (mwnpc_audit2.test.js K5)
+  assert.deepEqual(creatureLook(her), { creature: ['winged twilight'], flies: true });
   assert.equal(isBodyFoe(her), true);
-  assert.deepEqual(creatureLook({ mobileType: M.DaedraSeducer }), { creature: ['winged twilight'] });
+  assert.deepEqual(creatureLook({ mobileType: M.DaedraSeducer }), { creature: ['winged twilight'], flies: true });
 });
 
 test('AUDIT MW-NPC D3: a foe\'s body is drawn the size its sprite is - an elite\'s quarter, a last stand\'s tenth, the wild giant - and the pool hands its sprite\'s size to it', () => {
@@ -246,6 +249,20 @@ test('AUDIT MW-NPC D3: a foe\'s body is drawn the size its sprite is - an elite\
   pool.foes.push(elite);
   pool.batches();
   assert.equal(L.offered[0].scale, ELITE_FOE_SIZE, 'the elite as large as its sprite');
+  // AUDIT MW-NPC II P4: the giant and the dead too - a living elite's sprite size and its giant's are one number, so the
+  // pool's `szG` and `szE` were the same to every pin; the wild zone's giant, and the corpse's size, each its own
+  const giant = poolFoe(130, [4, 0, 3]);
+  giant.entity.wildGiant = true;
+  const deadElite = poolFoe(131, [6, 0, 3], { dead: true, corpse: true });
+  deadElite.entity.eliteFoe = true;
+  const deadGiant = poolFoe(132, [8, 0, 3], { dead: true, corpse: true });
+  deadGiant.entity.wildGiant = true;
+  pool.foes.push(giant, deadElite, deadGiant);
+  pool.batches();
+  const by = (f) => L.offered.find((a) => a.feet[0] === f.ai.feet[0] || a.feet === f.ai.feet);
+  assert.equal(by(giant).scale, WILD_GIANT_SIZE, 'the open zone\'s giant four times a man, as its sprite');
+  assert.equal(by(deadElite).scale, ELITE_FOE_SIZE, 'a dead elite as large as its corpse');
+  assert.equal(by(deadGiant).scale, WILD_GIANT_SIZE, 'a dead giant too');
 });
 
 test('AUDIT MW-NPC D4/D5: no creature that flies or swims in Daggerfall stands in a Morrowind creature that walks - the imp (a flyer; the scamp walks) and the dreugh (a swimmer) keep their sprites, as the bat, the harpy and the slaughterfish do; the table holds it for every row', () => {
@@ -289,15 +306,26 @@ test('AUDIT MW-NPC C4: a living resident walking the street is ONE person - thei
 });
 
 test('AUDIT MW-NPC C5: a watchman\'s look follows his number on the wire once he rides - the look a peer\'s puppet of him wears; a foe of the encounter pool is its number from its spawn, its owner\'s and its puppets\' alike', () => {
+  // PIN MOVED (AUDIT MW-NPC II K3/K4): one man on both machines by the OWNER'S WORD - the seed is minted once at his own
+  // foe and rides the record (`ls`), a person's kit with it (`lw`); a copy stood off a record (`_mwWire`) takes them
   const man = (id, seq) => ({ id, seq, mobileType: GUARD_MOBILE_TYPE, gender: 'male', entity: { isClass: true, items: [] }, ai: { feet: [0, 0, 0], yaw: 0 } });
   const mine = man(3, null);
-  foeLook(mine);   // drawn before he first rides: off his local id
+  const before = foeLook(mine);   // drawn before he first rides
   mine.seq = 41;
-  const theirs = man(77, 41);   // a peer's puppet of him: his number, its own local id
+  assert.equal(foeLook(mine), before, 'his number arriving changes him not at all');
+  const theirs = { ...man(77, 41), puppet: 'peer-a', _mwWire: 'kit' };   // a peer's puppet of him: his number, its own local id
+  assert.equal(foeLook(theirs), null, 'no body before the owner\'s word - its sprite');
+  const w = foeWireLook(mine);
+  applyWireLook(theirs, { ls: w.seed, lw: w.worn });
   assert.deepEqual(foeLook(mine), foeLook(theirs), 'one man on both machines');
   assert.equal(foeLook(mine), foeLook(mine), 'kept, a compare a frame');
+  const was = foeLook(theirs);
+  applyWireLook(theirs, { ls: (w.seed ^ 0x5bd1e995) >>> 0 });   // the owner says another seed (the memo holds the pieces alone)
+  assert.notDeepEqual(foeLook(theirs), was, 'the owner\'s word moved: another man, not the memo\'s');
   const a = { id: 1, seq: 5, mobileType: 130, gender: 'male', entity: { isClass: true, items: [] }, ai: { feet: [0, 0, 0], yaw: 0 } };
-  const b = { ...a, id: 2, puppet: 'peer-a', entity: { isClass: true, items: [] } };
+  const b = { ...a, id: 2, puppet: 'peer-a', _mwWire: 'kit', entity: { isClass: true, items: [] } };
+  const wa = foeWireLook(a);
+  applyWireLook(b, { ls: wa.seed, lw: wa.worn });
   assert.deepEqual(foeLook(a), foeLook(b), 'the encounter pool\'s foe and its puppet one person');
 });
 

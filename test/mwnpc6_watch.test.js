@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createCityGuards, GUARD_MOBILE_TYPE } from '../src/scenes/cityGuards.js';
 import { NPC_BODY_TIERS, WATCH_BODY_TIERS } from '../src/characters/npcBodies.js';
-import { foeActor, foeSeed } from '../src/characters/foeBodies.js';
+import { foeActor, foeSeed, applyWireLook } from '../src/characters/foeBodies.js';
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -45,12 +45,16 @@ test('MWNPC6a the watch\'s own caps: the same switch\'s tiers, a third of the fo
   const s = foeSeed(m);
   // PIN MOVED (AUDIT MW-NPC C5): his wire number, once it arrives, is his seed - the number every puppet of him carries,
   // so each machine draws one man (MWNPC5b's law). Kept off his local id, his owner drew one man and every peer another.
-  // It changes him once, the moment he first rides (online, a frame or two after he stands, as a rule before his body is built)
+  // PIN MOVED again (AUDIT MW-NPC II K3/K4): the seed is MINTED ONCE and rides the wire (the record's `ls`) - his number
+  // arriving changes nothing, and his puppets take the very seed (mwnpc_audit2.test.js K4)
   m.seq = 41;
-  assert.notEqual(foeSeed(m), s, 'his number arrived: his seed is the one his puppets have');
+  assert.equal(foeSeed(m), s, 'his number arrived: he is the same man - the seed his puppets are handed');
   const puppet = { id: 99, seq: 41, mobileType: GUARD_MOBILE_TYPE, entity: { isClass: true, items: [] }, ai: { feet: [5, 0, 5], yaw: 0 } };
+  applyWireLook(puppet, { ls: foeSeed(m) });   // the record's `ls` (exteriorFoes.js foesFrame, applyPuppetRecord)
   assert.equal(foeSeed(m), foeSeed(puppet), 'the man his owner draws is the man a peer draws');
-  assert.equal(foeSeed(m), foeSeed(m), 'and kept');
+  // AUDIT MW-NPC II P7: "and kept" compared the seed with itself - kept as he walks is the law
+  m.ai.feet = [40, 0, -12];
+  assert.equal(foeSeed(m), s, 'and kept wherever he walks');
 });
 
 test('MWNPC6b the pool: a dead watchman offered dead from the kill, under the watch\'s lane name, the corpse flat cast-only under his body after the sync; the lane gone with clearLive, the origin followed', () => {

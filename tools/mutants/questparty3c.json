@@ -39,8 +39,8 @@
   {
     "name": "QP3C-quiet-says-all",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      const r = roomRecord(f, f._ownSeq, full || !!heirOf);",
-    "new": "      const r = roomRecord(f, f._ownSeq, true);",
+    "old": "      const r = roomRecord(f, f._ownSeq, full || !!heirOf, true);",
+    "new": "      const r = roomRecord(f, f._ownSeq, true, true);",
     "tests": ["test/questparty3c.test.js"]
   },
   {
@@ -292,8 +292,8 @@
   {
     "name": "SETS-M1-own-shed-kept-as-paid",
     "file": "src/scenes/dungeonContext.js",
-    "old": "f._sentKey = null; f._heir = null; f._maxSent = undefined; }",
-    "new": "f._sentKey = null; f._heir = null; }",
+    "old": "f._sentKey = null; f._heir = null; f._maxSent = undefined; f._lsSent = undefined; }",
+    "new": "f._sentKey = null; f._heir = null; f._lsSent = undefined; }",
     "tests": ["test/questparty3c.test.js"]
   }
 ]

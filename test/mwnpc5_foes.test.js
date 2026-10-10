@@ -25,7 +25,9 @@ test('MWNPC5b-1 the class foe alone; its look - the same foe the same person, th
   assert.deepEqual(foeLook(a), foeLook(b), 'and the same person');
   assert.notEqual(foeSeed(foe({ marker: [3, 0, 8] })), foeSeed(a), 'another place, another seed');
   assert.notEqual(foeSeed(foe({ mobileType: 131 })), foeSeed(a), 'another species, another seed');
-  assert.equal(foeSeed({ mobileType: 130, seq: 4 }), foeSeed({ mobileType: 130, seq: 4 }), 'no marker: its sequence');
+  // AUDIT MW-NPC II P7: this compared one seed with itself - no marker, its NUMBER is what draws it (and, minted once, it
+  // rides the wire: mwnpc_audit2.test.js K3/K4)
+  assert.notEqual(foeSeed({ mobileType: 130, seq: 4 }), foeSeed({ mobileType: 130, seq: 5 }), 'no marker: its sequence');
   // the mix: a thousand foes draw every race, near their weights; faces 0..9
   const count = new Map(), faces = new Set();
   for (let i = 0; i < 1000; i++) { const l = foeLook(foe({ marker: [i * 1.3, 0, i * 0.7] })); count.set(l.race, (count.get(l.race) ?? 0) + 1); faces.add(l.faceIndex); }

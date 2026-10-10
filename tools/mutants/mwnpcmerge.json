@@ -23,10 +23,9 @@
   "old": "const nrm = p.normals && p.normals.length === pos.length && batch.normals",
   "new": "const nrm = batch.normals",
   "tests": [
-   "test/mwnpc1_gpuskin.test.js"
-  ],
-  "equivalent": true,
-  "why": "posedNormals (mwFirstPerson.js) mints p.normals exactly when batch.normals matches the positions, so the guard's two halves are one fact for every piece a producer makes; the p.normals half keeps the stream's question the pack's own (packFpArm asks p.normals)"
+   "test/mwnpc1_gpuskin.test.js",
+   "test/mwnpc_audit2.test.js"
+  ]
  },
  {
   "name": "MWNPCMERGE-normal-not-renormalised",

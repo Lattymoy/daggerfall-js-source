@@ -81,9 +81,45 @@ import { JUMP_UNITS, stepPeerPace } from './peerPace.js'; import { peerBodyYaw, 
 
 /** The most peers in a Morrowind body at once; the rest keep the paperdoll. */
 export const BODIES_MAX = 8;
+/** AUDIT MW-NPC II L1: a build that has held the gate this long lets the next one go (it still lands, on its own) -
+ *  one that never answers held every lane's body behind it, the peers' too. */
+export const BODY_GATE_STALL_MS = 20000;
+/**
+ * A build queue: one build at a time, in TWO waiting lines - `high` (a peer's body, the family's, the card table's: a
+ * player waits on it) before `low` (an NPC lane's - characters/npcBodies.js, a lane that builds in range). AUDIT MW-NPC
+ * II L1: on one line a street's whole cut queued at once (24 builds at Near, 48 at All) and a peer arriving after it
+ * waited behind every one - 5 s to 48 s for a body it got in a build's time before MWNPC4.
+ * @returns {{ busy: boolean, high: Array<() => Promise<any>>, low: Array<() => Promise<any>> }}
+ */
+export function createBuildGate() { return { busy: false, high: [], low: [] }; }
 /** MWNPC4: THE PAGE'S ONE BUILD QUEUE - every body lane a host stands (the peers, the family, the card table, the NPCs)
  *  passes it as `gate`, so the lanes' builds run one after another as one lane's always did. */
-export const BODY_BUILD_GATE = { chain: Promise.resolve() };
+export const BODY_BUILD_GATE = createBuildGate();
+/**
+ * `build` run through `gate` when its turn comes - `low` an NPC lane's, waiting behind every `high` one. Answers when it
+ * has run (its own result swallowed, as the lanes' queues always were).
+ * @param {{ busy: boolean, high: Array<() => Promise<any>>, low: Array<() => Promise<any>> }} gate
+ * @param {() => any} build @param {boolean} [low]
+ * @returns {Promise<void>}
+ */
+export function gateBuild(gate, build, low = false) {
+  return new Promise((resolve) => {
+    (low ? gate.low : gate.high).push(() => Promise.resolve().then(build).catch(() => null).then(() => resolve()));
+    pumpGate(gate);
+  });
+}
+/** @param {{ busy: boolean, high: Array<() => Promise<any>>, low: Array<() => Promise<any>> }} gate */
+function pumpGate(gate) {
+  if (gate.busy) return;
+  const next = gate.high.shift() ?? gate.low.shift();
+  if (!next) return;
+  gate.busy = true;
+  let done = false;
+  const release = () => { if (done) return; done = true; clearTimeout(stall); gate.busy = false; pumpGate(gate); };
+  const stall = setTimeout(release, BODY_GATE_STALL_MS);
+  /** @type {any} */ (stall)?.unref?.();
+  next().then(release, release);
+}
 /** A body that failed to build is not tried again before this. */
 export const BODY_RETRY_MS = 30000;
 /** A peer gone from the drawable set keeps its body this long before it is released. */
@@ -199,7 +235,7 @@ function wolfLookKey(look) {
  *  equip table tore the standing wolf down and built it again ten seconds on (a second refusal and warning, where it
  *  was refused). */
 export function peerBodyKey(look, shown = null, glyphs = null) {
-  if (look?.creature) return `crea|${look.creature}`;   // MWNPC9: a creature is its record - every one of a kind one body, never a person's
+  if (look?.creature) return `crea|${look.creature}${look.flies ? '|flies' : ''}`;   // MWNPC9: a creature is its record - every one of a kind one body, never a person's; AUDIT MW-NPC II K5: one asked to fly another
   if (look?.vampire && !peerIsWolf(shown)) return `vamp|${bodyLookKey(look)}`;   // MWNPC14: a vampire's face is its own body - never a living look's spare
   return peerIsWolf(shown) ? `wolf|${wolfLookKey(look)}|${werewolfSkinOf(glyphs) ?? ''}` : bodyLookKey(look);   // SHADOW-FANG: and the wolf's skin
 }
@@ -221,7 +257,7 @@ function bodyLookKey(look) {
 }
 
 export function peerBuildOpts(look, shown = null, glyphs = null) {
-  if (look?.creature) return { creature: look.creature, reachSweep: false };   // MWNPC9: its CREA record (fpArm buildCreatureBody) - nothing worn or held
+  if (look?.creature) return { creature: look.creature, reachSweep: false, ...(look.flies ? { flies: true } : {}) };   // MWNPC9: its CREA record (fpArm buildCreatureBody) - nothing worn or held; AUDIT MW-NPC II K5: a flyer's must fly
   const stub = peerStubEntity(look);
   const wolf = peerIsWolf(shown);
   const skin = wolf ? werewolfSkinOf(glyphs) : null;   // SHADOW-FANG: the glyphs the relay read off the peer's own token
@@ -323,8 +359,9 @@ export class PeerBodies {
    *   caps - the most bodies, the range they stand to, the skins a frame, the spares kept. Every one defaults to the
    *   module's constant, so the peers, the family and the card table read what they read; the NPC lane sets its own.
    *   MWNPC11: `buildInRange` no rig for one past the range, `hysteresis` how far past it a standing body is held.
-   * @param {{chain: Promise<any>}|null} [p.gate] MWNPC4: the build queue, SHARED - BODY_BUILD_GATE, which every body lane
-   *   the hosts stand passes, so one body builds at a time on the page however many lanes ask; none, the instance's own.
+   * @param {ReturnType<typeof createBuildGate>|null} [p.gate] MWNPC4: the build queue, SHARED - BODY_BUILD_GATE, which every
+   *   body lane the hosts stand passes, so one body builds at a time on the page however many lanes ask; none, the
+   *   instance's own. AUDIT MW-NPC II L1: an NPC lane's (`buildInRange`) waits behind every peer's and family's.
    */
   constructor({ renderer, enabled = () => true, createRig = createFpArm, buildOpts = peerBuildOpts, now = () => Date.now(), generation = () => 0, warn = (m) => console.warn(m), collider = () => null, limits = null, gate = null }) {
     this.renderer = renderer;
@@ -459,7 +496,10 @@ export class PeerBodies {
       b.veil = conceal ? (conceal(id) ?? null) : null;   // INVIS-LOOK: a concealed peer's body keeps standing, drawn translucent (drawVeiled)
       this._place(b, peer, toScene, dt, near);
       if (b.state === 'ok' && !b.far && dt > 0) { b.peer = peer; due.push(b); } else {
-        b.posed = false; b.stale = false; b.owed = false;   // AUDIT PEER-CADENCE F2: far (or a frozen frame) - whatever skin stands is stale by the time it is stepped again
+        // AUDIT MW-NPC II L2: an NPC lane's frozen frame (a talk window holds the street - its hosts pass dt 0) keeps the
+        // skin: nothing moved under it, and forgotten, every standing body was owed a pose on the frame the window shut -
+        // 20 skins against the frame's 8 at Near, 37 against 16 at All. Far (or a peer's frozen frame), stale as ever.
+        if (b.far || dt > 0 || !this._buildInRange) { b.posed = false; b.stale = false; b.owed = false; }   // AUDIT PEER-CADENCE F2: far (or a frozen frame) - whatever skin stands is stale by the time it is stepped again
         if (b.swing != null) { b.swing = peer.shown.an | 0; b.cast = peer.shown.cn | 0; b.pending = null; }
         if (b.hit != null) { b.hit = peer.shown.ht | 0; if ((peer.shown.dd | 0) !== b.dead) b.dead = null; }   // MWNPC4: and the reactions - a recoil out of sight is not played, a death out of sight is a corpse on waking   // AUDIT WORLD C7: not arming (far, or frozen) - the counts follow, so a blow out of sight is not replayed on waking
       }
@@ -520,7 +560,7 @@ export class PeerBodies {
         // MWNPC4: through the page's gate when the host gave one - a peer's body, the family's and an NPC's wait their turn
         // on ONE queue, so two lanes never build at once (a build's synchronous spans - the bind, the skin transfer -
         // were one lane's stutter at a time; two lanes doubled it)
-        if (this._gate) this._queue = this._gate.chain = this._gate.chain.then(build).catch(() => null);
+        if (this._gate) this._queue = gateBuild(this._gate, build, this._buildInRange);   // AUDIT MW-NPC II L1: an NPC's behind a player's
         else this._queue = this._queue.then(build).catch(() => null);
       }
       else {
@@ -567,9 +607,10 @@ export class PeerBodies {
       if (!b.pri && (!stranger || b.d2 > stranger.d2)) stranger = b;
     }
     if (!victim) return false;
-    // AUDIT PARTY8: a party mate takes the farthest stranger's slot outright, margin or none
-    if (pri && stranger && victim.goneAt == null) { this._release(stranger.id, true, key); this._swappedAt = this._now(); return true; }
     const unseen = victim.goneAt != null || (this._buildInRange && victim.far);
+    // AUDIT PARTY8: a party mate takes the farthest stranger's slot outright, margin or none - AUDIT MW-NPC II L3: unless an
+    // unseen body gives one up first (B3's law; `goneAt` alone let the living newcomer take a standing corpse's slot)
+    if (pri && stranger && !unseen) { this._release(stranger.id, true, key); this._swappedAt = this._now(); return true; }
     if (!unseen && !(victim.d2 > d2 * SWAP_MARGIN * SWAP_MARGIN)) return false;
     // WB9h: a standing body given up is kept for its body's next wearer, and the hand-over is timed (a lingering one's
     // peer is gone, a far one's is its sprite - nothing is seen to go)

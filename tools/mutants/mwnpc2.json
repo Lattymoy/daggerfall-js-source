@@ -65,8 +65,8 @@
  {
   "name": "MWNPC2-batch-left-open",
   "file": "src/render/renderer.js",
-  "old": "    if (!b.open) return 0;\n    b.open = false;",
-  "new": "    if (!b.open) return 0;",
+  "old": "    b.open = false;\n    const items = b.items;",
+  "new": "    const items = b.items;",
   "tests": [
    "test/mwnpc2_onepass.test.js"
   ]

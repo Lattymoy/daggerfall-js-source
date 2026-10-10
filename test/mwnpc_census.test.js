@@ -26,6 +26,7 @@ const WIRED = Object.freeze([
   'src/scenes/exteriorFoes.js',    // MWNPC5c: the encounter pool (both instances)
   'src/scenes/gateCourt.js',       // MWNPC10a: the gate's boss
   'src/scenes/gateHost.js',        // MWNPC10a: his host
+  'src/scenes/merchantYardsHost.js', // AUDIT MW-NPC II P1: the yards' keepers (main's MERCHANT-YARDS)
   'src/scenes/navalCrew.js',       // MWNPC10b: the crews
   'src/scenes/siegeNpcs.js',       // MWNPC10b: the siege
   'src/scenes/world.js',           // MWNPC7: the street's walkers (and the peers' PeerBodies)

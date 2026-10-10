@@ -25,6 +25,7 @@ import { regionPriceAdjustment } from '../src/systems/shopStock.js';   // ECON1
 import { seededRng } from '../src/systems/wind.js';
 import { MERCHANTS_FACTION_ID } from '../src/systems/guilds.js';
 import { FACTION_TYPES } from '../src/formats/factionFile.js';
+import { foeSeed } from '../src/characters/foeBodies.js';   // AUDIT MW-NPC II K2-K4: the record's look seed
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 const at = (px, pz) => ({ x: px * PIXEL_UNITS + 10, y: 0, z: pz * PIXEL_UNITS + 10, yaw: 0, pitch: 0, mv: 0 });
@@ -176,7 +177,10 @@ test('WORLD6b: the pool streams MINE - numbered from one, every changed foe (eve
   const rat = await pool.spawnFoe(0, [10, 0, 10], { yaw: 1.5, feetGiven: true });
   assert.ok(rat, 'the rat stands on the crafted career'); assert.equal(rat.seq, 1, 'mine, numbered from one'); assert.equal(rat.puppet, null);
   const f1 = pool.foesFrame(false);
-  assert.deepEqual(f1, { n: 1, k: 'world:3,12', full: 0, f: [{ i: 1, t: 0, x: rat.gender === 'female' ? 1 : 0, f: [10, 0, 10], y: 1.5, h: rat.entity.health, k: rat.entity.maxHealth, d: 0, a: 0, b: '', m: 0, g: '', l: rat.entity.level | 0, w: null, c: 0, s: 0, u: '', o: 0 }] }, 'the first frame carries the rat (WORLD6b-ii: and its target - none yet, AUDIT WORLD6b-ii A8; its level and no weapon, B2; WORLD6b-iii: no cast yet; AUDIT WORLD6b-iii(a) A3: no blow and no cast at anyone yet)');
+  // PIN MOVED (AUDIT MW-NPC II K2-K4): the first record carries the look its owner stands it in - its seed (`ls`; a rat
+  // is no person, so no kit `lw`), minted once on its own foe
+  assert.equal(f1.f[0].ls, foeSeed(rat), 'its look\'s seed, the one every puppet of it takes');
+  assert.deepEqual(f1, { n: 1, k: 'world:3,12', full: 0, f: [{ i: 1, t: 0, x: rat.gender === 'female' ? 1 : 0, f: [10, 0, 10], y: 1.5, h: rat.entity.health, k: rat.entity.maxHealth, d: 0, a: 0, b: '', m: 0, g: '', l: rat.entity.level | 0, w: null, c: 0, s: 0, u: '', o: 0, ls: foeSeed(rat) }] }, 'the first frame carries the rat (WORLD6b-ii: and its target - none yet, AUDIT WORLD6b-ii A8; its level and no weapon, B2; WORLD6b-iii: no cast yet; AUDIT WORLD6b-iii(a) A3: no blow and no cast at anyone yet)');
   assert.equal(pool.foesFrame(false), null, 'nothing changed: nothing goes');
   const full = pool.foesFrame(true);
   assert.equal(full.n, 2); assert.equal(full.full, 1); assert.equal(full.f.length, 1, 'a full frame carries every foe of mine');

@@ -1,0 +1,481 @@
+[
+ {
+  "name": "AUDITMWNPC2-K2-puppet-own-table",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "      if (f.puppet) f._mwWire = 'kit';",
+  "new": "      if (false) f._mwWire = 'kit';",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-K2-record-unread",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "    applyWireLook(f, r);   // AUDIT MW-NPC II K2-K4",
+  "new": "    // AUDIT MW-NPC II K2-K4",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-K2-look-never-sent",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "if (full || f._lkSent !== lk.key) { r.ls = lk.seed;",
+  "new": "if (false) { r.ls = lk.seed;",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-K2-said-never-kept",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "if (f) f._lkSent = f._lkPend; }",
+  "new": "if (f) f._lkSent = undefined; }",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-K2-pending-forgets-look",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "{ ...r, ls: r.ls ?? _pupPending.get(key).ls, lw: r.lw ?? _pupPending.get(key).lw, t:",
+  "new": "{ ...r, t:",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-K2-puppet-wears-own",
+  "file": "src/characters/foeBodies.js",
+  "old": "  const worn = f._mwWire === 'kit' ? f._mwWornWire : composeLook(e, { eotbSet: null }).items;",
+  "new": "  const worn = composeLook(e, { eotbSet: null }).items;",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-K2-body-before-word",
+  "file": "src/characters/foeBodies.js",
+  "old": "  if (f._mwWire && (f._mwSeedWire == null || (f._mwWire === 'kit' && f._mwWornWire == null))) return null;",
+  "new": "",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-K2-wire-drops-seed",
+  "file": "src/net/wire.js",
+  "old": "if (!Number.isInteger(r.ls) || r.ls < 0 || r.ls > 0xffffffff) return null; out.ls = r.ls; }",
+  "new": "if (!Number.isInteger(r.ls) || r.ls < 0 || r.ls > 0xffffffff) return null; }",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-K2-wire-slot-past-table",
+  "file": "src/net/wire.js",
+  "old": "if (slot < 0 || slot >= WORN_PIECES_MAX ||",
+  "new": "if (slot < 0 || slot > WORN_PIECES_MAX ||",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-K2-wire-group-unbounded",
+  "file": "src/net/wire.js",
+  "old": "g < 0 || g >= LOOK_GROUPS.length ||",
+  "new": "g < 0 ||",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-K4-seed-minted-again",
+  "file": "src/characters/foeBodies.js",
+  "old": "  if (f._mwSeed != null) return f._mwSeed;\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-K4-twins",
+  "file": "src/characters/foeBodies.js",
+  "old": "    if (p) for (const v of [p[0], p[2]]) h = mix(h ^ (Math.round((v || 0) * 10) | 0));   // AUDIT MW-NPC II K4",
+  "new": "    // AUDIT MW-NPC II K4",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-K3-owner-seed-ignored",
+  "file": "src/characters/foeBodies.js",
+  "old": "  if (f._mwSeedWire != null) return f._mwSeedWire;\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-K4-heir-streams-own-kit",
+  "file": "src/characters/foeBodies.js",
+  "old": "    if (f._mwWornWireRaw) worn = f._mwWornWireRaw;",
+  "new": "    if (false) worn = f._mwWornWireRaw;",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-K3-dungeon-seed-unsent",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "if (seeded && (full || f._lsSent === undefined)) { r.ls = foeSeed(f); f._lsSent = r.ls; }",
+  "new": "",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-K3-dungeon-puppet-unwired",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "    f._encId = r.i;\n    f._mwWire = 'seed'; applyWireLook(f, newest);",
+  "new": "    f._encId = r.i;\n    applyWireLook(f, newest);",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-K1-class-of-the-resident",
+  "file": "src/characters/rosterBodies.js",
+  "old": "  const cls = person.stillLook ? null : (person.cls ?? null);",
+  "new": "  const cls = person.stillLook ? null : (res.cls ?? null);",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-K1-never-on-duty",
+  "file": "src/characters/rosterBodies.js",
+  "old": "  const guard = !!person.guard;",
+  "new": "  const guard = false;",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-K1-beggar-stood",
+  "file": "src/characters/rosterBodies.js",
+  "old": "  if (role === 'beggar') return null;\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-K1-dress-read-once",
+  "file": "src/characters/rosterBodies.js",
+  "old": "  if (!k || k.res !== res || k.cls !== cls || k.guard !== guard || k.still !== still) k = person._mwRes = { res, look: null, cls, guard, still };",
+  "new": "  if (!k || k.res !== res) k = person._mwRes = { res, look: null, cls, guard, still };",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-K1-uniform-unworn",
+  "file": "src/characters/rosterBodies.js",
+  "old": "personFaceRecordId: res.face ?? 0, gender: res.gender ?? 0, guard }, res.race ?? 'Breton', seed);",
+  "new": "personFaceRecordId: res.face ?? 0, gender: res.gender ?? 0, guard: false }, res.race ?? 'Breton', seed);",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ],
+  "equivalent": true,
+  "why": "census.js mints every watchman's on-duty archive as GUARD_TEXTURE, and folkLookOf (folkBodies.js) reads that archive as the watch's uniform whatever `guard` says - the flag keeps the law said where the look is chosen, for a guard's archive that is not the stock one"
+ },
+ {
+  "name": "AUDITMWNPC2-K1-picture-unstill",
+  "file": "src/characters/rosterBodies.js",
+  "old": "  k.look ??= residentLook(k, res, { still, cls, guard });",
+  "new": "  k.look ??= residentLook(k, res, { cls, guard });",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-P1-keeper-unoffered",
+  "file": "src/scenes/merchantYardsHost.js",
+  "old": "        offer(personActor(y, y._mwLook, b.origin, eyeAt, dt), b);",
+  "new": "",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-P1-world-never-offers",
+  "file": "src/scenes/world.js",
+  "old": "    if (merchantYards && _mode() === 'exterior') merchantYards.offerBodies(offerStreetPerson,",
+  "new": "    if (false) merchantYards.offerBodies(offerStreetPerson,",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-K5-flyer-in-a-walker",
+  "file": "src/combat/fpArm.js",
+  "old": "    if (flies && (rec.flags & CREA_FLAG.Flies) === 0) return",
+  "new": "    if (false) return",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-K5-build-forgets-flies",
+  "file": "src/combat/fpArm.js",
+  "old": "  if (creature) return buildCreatureBody({ creature, flies, deps });",
+  "new": "  if (creature) return buildCreatureBody({ creature, deps });",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-K5-opts-drop-flies",
+  "file": "src/net/peerBodies.js",
+  "old": ", ...(look.flies ? { flies: true } : {}) };",
+  "new": " };",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-K5-key-one-body",
+  "file": "src/net/peerBodies.js",
+  "old": "`crea|${look.creature}${look.flies ? '|flies' : ''}`",
+  "new": "`crea|${look.creature}`",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-K5-look-no-flies",
+  "file": "src/characters/creatureBodies.js",
+  "old": ", ...(m.flies ? { flies: true } : {}) })]));",
+  "new": " })]));",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-G1-blended-not-collapsed",
+  "file": "src/formats/mwGpuSkin.js",
+  "old": "        if (fill[v] === 0 || !(wsum[v] > 0)) {",
+  "new": "        if (fill[v] === 0) {",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-G1-weights-kept",
+  "file": "src/formats/mwGpuSkin.js",
+  "old": "          for (let s = 0; s < fill[v]; s++) infW[v * SKIN_MAX_INFLUENCES + s] = 0;\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-G2-masters-by-prefix",
+  "file": "src/combat/fpArm.js",
+  "old": "const i = ESM_MASTERS.indexOf(String(n).split(/[\\\\/]/).pop().toLowerCase()); return i < 0 ? ESM_MASTERS.length : i;",
+  "new": "const l = String(n).toLowerCase(); const i = ESM_MASTERS.findIndex((x) => l.startsWith(x.slice(0, -4))); return i < 0 ? ESM_MASTERS.length : i;",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-H2-lanes-under-overworld",
+  "file": "src/characters/npcBodies.js",
+  "old": "      if (!actor?.look || !actor.feet || npcBodiesHeld()) return;",
+  "new": "      if (!actor?.look || !actor.feet) return;",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-H2-hold-never-lapses",
+  "file": "src/characters/npcBodies.js",
+  "old": "export const npcBodiesHeld = (now = performance.now()) => now < _heldUntil;",
+  "new": "export const npcBodiesHeld = (now = performance.now()) => _heldUntil > -Infinity;",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-H2-world-never-holds",
+  "file": "src/scenes/world.js",
+  "old": "    holdNpcBodies(!!tvf);",
+  "new": "    holdNpcBodies(false);",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-H3-corpse-minted-drawn",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "    batch.castOnly = !!_npcLane?.has('foe', foeId(f));",
+  "new": "",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-H3-gone-body-unseen",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "    if (_corpseLate.length) renderer.drawBillboards(_corpseLate,",
+  "new": "    if (false) renderer.drawBillboards(_corpseLate,",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-H4-falling-unnumbered",
+  "file": "src/scenes/gateHost.js",
+  "old": "?? { i: g.i, look: hostLookOf(g.k, P.aspect.id),",
+  "new": "?? { look: hostLookOf(g.k, P.aspect.id),",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-H5-host-unflashed",
+  "file": "src/scenes/gateHost.js",
+  "old": "        null, b.batch.hitFlash || 0);",
+  "new": "        null, 0);",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-H5-boss-unflashed",
+  "file": "src/scenes/gateCourt.js",
+  "old": "}), shown, null, shown.hitFlash || 0);",
+  "new": "}), shown, null, 0);",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-L1-one-line",
+  "file": "src/net/peerBodies.js",
+  "old": "    (low ? gate.low : gate.high).push(",
+  "new": "    gate.low.push(",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-L1-low-first",
+  "file": "src/net/peerBodies.js",
+  "old": "  const next = gate.high.shift() ?? gate.low.shift();",
+  "new": "  const next = gate.low.shift() ?? gate.high.shift();",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-L1-wedged-holds-all",
+  "file": "src/net/peerBodies.js",
+  "old": "  const stall = setTimeout(release, BODY_GATE_STALL_MS);",
+  "new": "  const stall = setTimeout(() => {}, BODY_GATE_STALL_MS);",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-L1-npc-builds-high",
+  "file": "src/net/peerBodies.js",
+  "old": "gateBuild(this._gate, build, this._buildInRange);",
+  "new": "gateBuild(this._gate, build, false);",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-L2-frozen-forgets",
+  "file": "src/net/peerBodies.js",
+  "old": "        if (b.far || dt > 0 || !this._buildInRange) { b.posed = false;",
+  "new": "        if (true) { b.posed = false;",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-L3-corpse-before-far",
+  "file": "src/net/peerBodies.js",
+  "old": "    if (pri && stranger && !unseen) {",
+  "new": "    if (pri && stranger && victim.goneAt == null) {",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-BATCH-inner-drops-outer",
+  "file": "src/render/renderer.js",
+  "old": "    if (b.open) { b.depth++; return; }\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-BATCH-inner-flushes",
+  "file": "src/render/renderer.js",
+  "old": "    if (b.depth > 0) { b.depth--; return 0; }",
+  "new": "",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-P2-weights-misplaced",
+  "file": "src/render/renderer.js",
+  "old": "gl.vertexAttribPointer(6, 4, gl.FLOAT, false, stride, 72);",
+  "new": "gl.vertexAttribPointer(6, 4, gl.FLOAT, false, stride, 76);",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-P2-pose-unsent",
+  "file": "src/render/renderer.js",
+  "old": "    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, skin.width, skin.height, gl.RGBA, gl.FLOAT, data);\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-P2-stream-offset-floats",
+  "file": "src/render/renderer.js",
+  "old": "    gl.bufferSubData(gl.ARRAY_BUFFER, offset * 4, data);",
+  "new": "    gl.bufferSubData(gl.ARRAY_BUFFER, offset, data);",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-P2-palette-deleted-bound",
+  "file": "src/render/renderer.js",
+  "old": "    if (this._skinUnitHolds === skin.tex) {",
+  "new": "    if (false) {",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ },
+ {
+  "name": "AUDITMWNPC2-P2-second-pair-lost",
+  "file": "src/render/renderer.js",
+  "old": "      gl.enableVertexAttribArray(7); gl.vertexAttribPointer(7, 4, gl.FLOAT, false, stride, 88);\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc_audit2.test.js"
+  ]
+ }
+]

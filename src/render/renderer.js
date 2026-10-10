@@ -1616,7 +1616,7 @@ export class Renderer {
     this._pointColorDec = new Float32Array(CLASSIC_MAX_LIGHTS * 3);
     this.stats = { draws: 0, programBinds: 0, vaoBinds: 0, texBinds: 0, bbCulled: 0, spriteBinds: 0 };   // PERF-CROWD2: bbCulled, the billboards this frame did NOT submit; MWNPC2: spriteBinds, the body batch's binds of the sprite target; MWNPC1: made before the first world set is built - its character program is bound through _use there
     this._skinNrm = new Float32Array(9);   // MWNPC1: drawCharacter's normal-matrix scratch (skinNormalMatrix)
-    this._spriteBatch = { items: [], open: false };   // MWNPC2: the body pass's pictures, queued for one bind (beginCharacterSpriteBatch)
+    this._spriteBatch = { items: [], open: false, depth: 0 };   // MWNPC2: the body pass's pictures, queued for one bind (beginCharacterSpriteBatch)
     /** @type {WebGLTexture|null} */ this._skinIdentity = null;    // MWNPC1: the identity palette (_skinIdentityTex) - before the first set is built, which makes it
     /** @type {WebGLTexture|null} */ this._skinUnitHolds = null;   // MWNPC1: what SKIN_PALETTE_UNIT holds, by our own binds
     this._classicSet = this._buildWorldSet({ key: 'classic', meshFs: FS, bbFs: BB_FS, terrainFs: TERRAIN_FS, charFs: CHAR_FS, decalFs: DECAL_FS });   // MAC-BUG W6: and the decal pass, its fifth
@@ -3779,8 +3779,13 @@ export class Renderer {
    * draw. Answers the binds it took.
    */
   beginCharacterSpriteBatch() {
-    this._spriteBatch.items.length = 0;
-    this._spriteBatch.open = true;
+    const b = this._spriteBatch;
+    // AUDIT MW-NPC II: A BATCH OPENED INSIDE AN OPEN ONE JOINS IT - opened again, the outer pass's queue was dropped
+    // unseen (its bodies' quads never drawn); the inner flush is the outer's to make
+    if (b.open) { b.depth++; return; }
+    b.items.length = 0;
+    b.open = true;
+    b.depth = 0;
   }
 
   /** MWNPC2: true between begin and flush - drawRigSpriteBox's question. */
@@ -3793,6 +3798,7 @@ export class Renderer {
   flushCharacterSpriteBatch() {
     const b = this._spriteBatch;
     if (!b.open) return 0;
+    if (b.depth > 0) { b.depth--; return 0; }   // a nested batch's flush: the outer one draws them all
     b.open = false;
     const items = b.items;
     let at = 0, binds = 0;

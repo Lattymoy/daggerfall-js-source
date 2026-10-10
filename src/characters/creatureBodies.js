@@ -12,7 +12,8 @@ import { BaseImageFile } from '../formats/baseImageFile.js';   // MWNPC13: the s
 
 /** The match: mobile type -> `{ creature: [CREA ids, first carried wins] }` or `{ miss: reason }`. Every creature
  *  mobile is named - the table is the census. MWNPC13: `veil` a spectral's - its body drawn translucent (SPECTRAL_VEIL).
- *  @type {Readonly<Record<number, { creature?: string[], miss?: string, veil?: boolean }>>} */
+ *  AUDIT MW-NPC II K5: `flies` a flyer's - stood only in a record that flies.
+ *  @type {Readonly<Record<number, { creature?: string[], miss?: string, veil?: boolean, flies?: boolean }>>} */
 export const CREATURE_MATCH = Object.freeze({
   [M.Rat]: { creature: ['rat'] },
   // AUDIT MW-NPC D4: Daggerfall's imp FLIES (its behaviour, its hover at the gate) and Morrowind's scamp walks - stood,
@@ -45,7 +46,10 @@ export const CREATURE_MATCH = Object.freeze({
   [M.FireDaedra]: { creature: ['atronach_flame'] },
   [M.Daedroth]: { creature: ['daedroth'] },
   [M.Vampire]: { miss: 'a vampire is a person - its race\'s vampire head (MWNPC14, foeBodies.js isPersonFoe), never a creature' },
-  [M.DaedraSeducer]: { creature: ['winged twilight'] },
+  // AUDIT MW-NPC II K5: transformed she FLIES (mobileUnit.js setSpecialTransformationCompleted: 'Flying'), so her body
+  // must be a creature that flies - the build asks the record's own Flies flag (fpArm.js buildCreatureBody) and a
+  // winged twilight that walks keeps her sprite
+  [M.DaedraSeducer]: { creature: ['winged twilight'], flies: true },
   [M.VampireAncient]: { miss: 'a vampire is a person' },
   [M.DaedraLord]: { creature: ['dremora_lord'] },
   [M.Lich]: { creature: ['lich'] },                        // Tribunal's
@@ -69,7 +73,7 @@ export const SPECTRAL_VEIL = Object.freeze({ mode: 3, alpha: BaseImageFile.SPECT
 
 /** The looks, one frozen object a mobile type (a look is a body key - PeerBodies keys it `crea|<ids>`). */
 const LOOKS = new Map(Object.entries(CREATURE_MATCH).filter(([, m]) => m.creature)
-  .map(([t, m]) => [Number(t), Object.freeze({ creature: Object.freeze([...m.creature]), ...(m.veil ? { veil: SPECTRAL_VEIL } : {}) })]));
+  .map(([t, m]) => [Number(t), Object.freeze({ creature: Object.freeze([...m.creature]), ...(m.veil ? { veil: SPECTRAL_VEIL } : {}), ...(m.flies ? { flies: true } : {}) })]));
 
 /** The creature foe's look - `{ creature: [ids] }` - or null: a person (a class mobile, 128 and up, is in no row), or a
  *  creature Morrowind has no match for.

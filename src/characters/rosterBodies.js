@@ -39,22 +39,26 @@ export function rosterActor(rec, { id, look, feet, yaw, moving = false, running 
 }
 
 /** MWNPC10c: what a still picture's kind wears (LW-LOOKS - systems/livingWorld/looks.js: a courtier at home in the
- *  palace, a priest at the temple's door, a stall-keeper at their stall); a beggar and the rest the street's outfit. */
+ *  palace, a priest at the temple's door, a stall-keeper at their stall); a beggar and the rest the street's outfit.
+ *  Keyed by the resident's job - a street's still picture is their job's kind (looks.js stillRoleOf: a priest's, a
+ *  stall's merchant's), a room's flat their job's too (world/travellerSprites.js). */
 const STILL_WARDROBE = Object.freeze({ courtier: 'noble', priest: 'priest', keeper: 'merchant', merchant: 'merchant' });
 
 /**
  * MWNPC10c (bible/04-Characters/Morrowind-NPCs.md section 15c): ONE OF THE LIVING WORLD'S PEOPLE AS THEIR SPRITE SHOWS
  * THEM (systems/livingWorld/census.js's resident, or a road's foe - world/travellerSprites.js draws both): in a class's
- * sprite (`res.cls` - an armed traveller, a guild's member, a foe) that class's look (foeBodies.js rosterLook) in their
+ * sprite (`cls` - an armed traveller, a guild's member, a foe) that class's look (foeBodies.js rosterLook) in their
  * own race and sex, a foe in the Bay's; a STILL picture their kind's garments (a courtier a noble's, in their dyes);
  * everyone else the street's outfit their own sprite wears (folkBodies.js folkLookOf: their archive and face - the
  * watch's plate on duty, his own clothes off it) - each off their own id's seed, so they are one person wherever they
  * are drawn (never a walker's per-spawn roll). `rec` keeps what it reads - the sprites ask once a body.
- * @param {any} rec @param {any} res @param {{ still?: boolean }} [o]
+ * AUDIT MW-NPC II K1: what the sprite wears NOW is the caller's - `cls` the class it is armed in (default the
+ * resident's own), `guard` the watch's uniform on (his own clothes off it), `still` a still picture.
+ * @param {any} rec @param {any} res @param {{ still?: boolean, cls?: number|null, guard?: boolean }} [o]
  */
-export function residentLook(rec, res, { still = false } = {}) {
+export function residentLook(rec, res, { still = false, cls = res.cls, guard = false } = {}) {
   const seed = textSeed(String(res.id));
-  if (res.cls != null) return rosterLook(rec, { mobileType: res.cls, gender: res.sex === 'female' ? 'female' : 'male', seed, race: res.race });
+  if (cls != null) return rosterLook(rec, { mobileType: cls, gender: res.sex === 'female' ? 'female' : 'male', seed, race: res.race });
   const kind = still ? STILL_WARDROBE[res.job] : undefined;
   if (kind) {
     const female = res.sex === 'female', gender = female ? 'female' : 'male', group = female ? 'WomensClothing' : 'MensClothing';
@@ -64,7 +68,7 @@ export function residentLook(rec, res, { still = false } = {}) {
     items.push({ templateIndex: outfit[2], group, equipSlot: EQUIP_SLOTS.Feet, dye: dye(0xd3) });
     return { race: res.race ?? 'Breton', gender, faceIndex: seed % 10, items };
   }
-  return folkLookOf({ archive: res.civvies ?? res.archive, personFaceRecordId: res.face ?? 0, gender: res.gender ?? 0, guard: false }, res.race ?? 'Breton', seed);   // WATCH-DAY: off duty in his own clothes, as his sprite is
+  return folkLookOf({ archive: guard ? res.archive : (res.civvies ?? res.archive), personFaceRecordId: res.face ?? 0, gender: res.gender ?? 0, guard }, res.race ?? 'Breton', seed);   // WATCH-DAY: on duty in the uniform, off it in his own clothes, as his sprite is
 }
 
 /**
@@ -72,16 +76,27 @@ export function residentLook(rec, res, { still = false } = {}) {
  * (systems/livingWorld/livingTown.js _dress: `person.living.res`) - stands as that resident: their own id and
  * residentLook's look off it, never the pool row's spawn. folkActor seeded the look off the row (folkBodies.js
  * spawnOf's shell), so one resident wore other dyes on another row, another face indoors or on the road, and another
- * on another machine. Read once a resident (`person._mwRes`, until the row is dressed as someone else); walking as the
- * walker walks, facing its way, carrying what their sprite carries.
- * @param {any} person @param {number[]} feet
+ * on another machine. Walking as the walker walks, facing its way, carrying what their sprite carries.
+ *
+ * AUDIT MW-NPC II K1: IN WHAT THE ROW WEARS NOW. The town dresses the row as the day goes (livingTown.js): the watch's
+ * uniform on duty and his own clothes off it (`guard`), a guild's member or a priest in their class's gear (`cls`, the
+ * one it is armed in - looks.js townClassOf), a still picture where they keep their place (`stillLook`, its kind
+ * `stillRole`). The look was read once off the resident alone, so an on-duty watchman stood in his own clothes, a
+ * knight of an order and a priest in a shirt, and a priest at the temple's door in no robes. Read again whenever the
+ * dress changes. A BEGGAR's picture sits or lies at their pitch, and no body does: null - their picture stands.
+ * @param {any} person @param {number[]} feet @returns {any} the actor, or null (the picture stands)
  */
 export function residentWalkerActor(person, feet) {
   const res = person.living.res;
+  const role = person.stillLook ? (person.stillRole ?? null) : null;
+  if (role === 'beggar') return null;
+  const cls = person.stillLook ? null : (person.cls ?? null);
+  const guard = !!person.guard;
+  const still = !!person.stillLook;
   let k = person._mwRes;
-  if (!k || k.res !== res) k = person._mwRes = { res, look: null };
-  k.look ??= residentLook(k, res);
+  if (!k || k.res !== res || k.cls !== cls || k.guard !== guard || k.still !== still) k = person._mwRes = { res, look: null, cls, guard, still };   // a compare a frame, no allocation
+  k.look ??= residentLook(k, res, { still, cls, guard });
   return rosterActor(k, { id: `res:${res.id}`, look: k.look, feet, yaw: Number.isFinite(person.yaw) ? person.yaw : (person.facingYaw ?? 0),
-    moving: person.state === 'move', drawn: res.cls != null });
+    moving: person.state === 'move', drawn: cls != null });
 }
 

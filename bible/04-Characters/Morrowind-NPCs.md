@@ -98,7 +98,10 @@ Each line is a slice's acceptance, not an aspiration:
    own point, inside that host's zone (the meter's zones tile the frame,
    so a lane's time is never counted twice) - the probe is the measure.
 6. A SWITCH. The pause card carries the lane (Off / Near / All) on the port's
-   prefs shelf, so a machine that cannot hold it gives it back.
+   prefs shelf, so a machine that cannot hold it gives it back. (AMENDED BY
+   AUDIT MW-NPC II P6: no pause card carries it - a Settings row does,
+   Combat > With Morrowind data, ORG2's tab: `mwNpcBodies`, Near the
+   default, read every frame - section 22.)
 
 ## 4. Slices
 
@@ -754,7 +757,11 @@ their own to give).
   (MWNPC7's FOLK_OUTFITS) - each kind in its own dyes, off the person's
   name seed. A CHILD (by texture or the children's faction) and a VAMPIRE
   (a vampire clan, the vampires' guild group, the supernatural social
-  group) keep their sprites, and so does a race the data cannot name. The
+  group) keep their sprites, and so does a race the data cannot name
+  (AUDIT MW-NPC II K6: the vampire's reason was "no Morrowind body of their
+  own here", untrue since MWNPC14's head - the reason now, section 23: a
+  standing person's faction row is all that says "vampire", and the
+  supernatural group is wider than the vampires). The
   look is read once - a standing person is one build - and never before
   the faction table has loaded (the host asks again).
 - THE TURN. Daggerfall's billboard always faced the player; the body
@@ -983,7 +990,7 @@ interiors'), and exterior.js's pool.
   warrior (skeleton warrior, else skeleton), giant (bm_frost_giant),
   zombie (bonewalker), mummy (draugr), frost and ice daedra/atronach
   (atronach_frost), fire daedra and atronach (atronach_flame), iron
-  atronach (atronach_storm), daedroth, daedra seducer (winged twilight),
+  atronach (atronach_storm), daedroth, daedra seducer (winged twilight - a record that flies, AUDIT MW-NPC II K5),
   daedra lord (dremora_lord), lich and ancient lich (lich). Declared
   misses: the imp and the dreugh (AUDIT MW-NPC D4/D5, section 21: the imp
   FLIES and Morrowind's scamp walks, the dreugh SWIMS - matched, they walked
@@ -1061,8 +1068,8 @@ the time a blow met them; a NaN or a held value counts nothing).
   `grow` - and heads it that much higher). Fallen, dead, on his corpse's
   flat. His host (`scenes/gateHost.js` offerBodies): each shown body its
   creature off its mobile, standing or falling (dead), on its own
-  billboard; one its mobile has no match for (the Flesh Atronach) keeps
-  its sprite. The dungeon pass (worldModes.js) draws them before the
+  billboard; one its mobile has no match for (the Flesh Atronach - and,
+  since AUDIT MW-NPC D4, the Imp) keeps its sprite. The dungeon pass (worldModes.js) draws them before the
   billboards their batches ride (`extraBillboards`); the court's leave
   lets the lane go. Him: the Daedra Lord's match, dremora_lord.
 - THE BROKER (`scenes/sigilBrokerPool.js`) keeps her sprite: she is the
@@ -1072,8 +1079,10 @@ the time a blow met them; a NaN or a held value counts nothing).
 PROVEN. `test/mwnpc10_gate.test.js` (4): rosterActor's counts (a held
 key one swing, NaN none, a recoil each new blow), its dead, scale and run;
 a real court over a recording lane - him and the Imp offered their
-creatures, him at his sprite's scale, the Flesh Atronach not offered, his
-billboard cast-only under his body, the Imp's swing and recoil, the
+creatures (PIN MOVED, AUDIT MW-NPC D4: the Imp a declared miss - the host
+offered is a bearer's Daedroth, the test's `imp` its name still), him at
+his sprite's scale, the Flesh Atronach not offered, his
+billboard cast-only under his body, the host's swing and recoil, the
 fallen offered dead and then not, the lane let go at leaving; the scale
 reaching drawThird on a lane of stub rigs; and by source the dungeon
 pass's order and the broker's guise. `tools/mutants/mwnpc10a.json`: 18
@@ -1215,6 +1224,12 @@ skins a frame on that street at Near, 91 and 37 at All.
   moves as the crowd does, and each fall and stand was a skin. The lane
   ranks a body it holds (PeerBodies `holds`) by that hysteresis in its
   report, so the cut counts the held among the k: the bound stays exact.
+  (AMENDED BY AUDIT MW-NPC II L4: exact for a still street. Each lane cuts
+  against the others' reports of the frame before, so while the crowd
+  moves an actor crossing the cut between two lanes' syncs is counted in
+  both or in neither: measured on a walking street, 25 standing against
+  24 on up to 1 frame in 100, and 26 on 1 to 5 in 100 at 10-20 m/s - never
+  more than two over, and never held.)
   The range is set a hair past the cut, so the body AT it is never lost to
   the root's rounding and back the next frame.
 - THE SKINS SHARED. Each lane with a body in the cut takes one skin a frame
@@ -1497,7 +1512,9 @@ Mac: "Do a deep audit and ensure perfection."
   - C5. A watchman's look was memoised off his local id before he first
     rode the wire, and every peer drew another man. His seed follows his
     number once he has one (MWNPC6a's pin moved: he changes once, the
-    moment he first rides). NOT HERE: an encounter foe restored from a save
+    moment he first rides). (AMENDED BY AUDIT MW-NPC II K3/K4, section 23:
+    the seed is minted ONCE at the owner's own foe and rides the wire - his
+    number arriving no longer moves him at all.) NOT HERE: an encounter foe restored from a save
     is numbered anew, so it comes back another person - a stable seed would
     need a field of the save's own.
   - C6. With a window open both dungeon hosts draw the flats and return
@@ -1646,13 +1663,162 @@ author normals (one zero, and one file whose normals do not match its
 vertices), every vertex's and every corner's normal by the shader's law is
 the one the CPU skin and the pack light it by - or zero where the pack
 lit the corner by its face, both halves seen - and the GLSL's lines.
-`tools/mutants/mwnpcmerge.json`: 25 mutants, 24 dead and one equivalent
-as recorded (posedNormals mints a piece's normals exactly when its batch's
-match, so the guard's two halves are one fact); four records re-aimed by
-content (MWNPC1's post and UV lanes, AUDIT MW-CLOAK's stale follow and
-its hook), and MW-BOW1's, MW-SMOOTH's, MW-CLOAK's and AUDIT MW-CLOAK's
-lists judged again on the merged tree: 59 dead. And in a real browser:
+`tools/mutants/mwnpcmerge.json`: 25 mutants, 24 dead and one recorded
+equivalent (posedNormals mints a piece's normals exactly when its batch's
+match, so the guard's two halves are one fact) - AMENDED BY AUDIT MW-NPC
+II P5: not so for a FITTED cloak (the fit rebuilds its batch's normals
+full length where its own were short), and the record is killed now
+(section 23); four records re-aimed by content (MWNPC1's post and UV
+lanes, AUDIT MW-CLOAK's stale follow and its hook), and MW-BOW1's,
+MW-SMOOTH's, MW-CLOAK's and AUDIT MW-CLOAK's lists judged again on the
+merged tree: 97 records, 96 dead and AUDIT MW-CLOAK's one equivalent as
+recorded (AUDIT MW-NPC II P6: this said "59 dead", the four lists less
+AUDIT MW-CLOAK's). And in a real browser:
 `tools/mwGpuSkinProbe.mjs` gives both rigs the same authored normals and
 renders three more shots - 32 to 77 shades, 0 texels apart; with the
 fragment's skinned normal taken out by hand it fails all three (max 125
 apart).
+
+## 23. THE SECOND AUDIT (2026-10-10)
+
+Mac, of the PR: "Please audit and ensure perfection." Five cold lenses over
+the arc at 154d59fd80 - the GPU skin and the renderer, the lanes and the
+budget, the hosts, the looks, and the proof (the tests, the records, this
+page and the patch notes) - each finding refuted by its finder before it
+was reported, and verified again here. Main moved meanwhile (#748: WAGONS3,
+MERCHANT-YARDS), and the merge is part of the round.
+
+THE MERGE (P1). MERCHANT-YARDS draws each yard's keeper - a person in the
+town's race, its idle record (`scenes/merchantYardsHost.js`) - which the
+census (section 21) failed on the merged tree: a new host drawing a living
+actor with neither a body nor a reason. The keeper stands in a body now
+(`offerBodies`): the street's outfit their picture wears (folkBodies.js
+folkLookOf, its archive and the town's race), off the yard's own key so
+every client stands the same keeper, turned to the eye as a standing
+person is (peopleBodies.js personActor), offered on the street's people
+lane (world.js `offerStreetPerson`) before it draws. WAGONS3's driver on
+the bench is a player - the peers' bodies, not the arc's.
+
+THE LOOKS (K).
+- K1. A living resident walking the street read their look once, off the
+  resident alone - so an on-duty watchman stood in his own clothes (census
+  mints every watchman `civvies`), a guild hall's member and a priest in a
+  shirt where their sprite walks in their class, and a priest at the
+  temple's door in no robes. `rosterBodies.js` residentWalkerActor reads
+  what the row wears NOW - `guard` (the uniform), `cls` (the class it is
+  armed in), `stillLook` and its kind `stillRole` (the town hands it -
+  livingTown.js `p.still(look, role)`, the walker keeps it) - and reads the
+  look again when that changes. A BEGGAR's picture sits or lies at their
+  pitch and no body does: none is offered, the picture stands.
+- K2. Online, a peer's foe wore nothing: a puppet is built with an empty
+  table (its loot is the owner's grant) and the streamed weapon went to its
+  hand alone. The owner now streams the look it stands its foe in - `ls`
+  the seed, `lw` a person's worn kit (net/wire.js validFoeRecord; on the
+  first word and every full frame, and again when either changes) - and a
+  puppet (`_mwWire = 'kit'`) stands in its sprite until it has them, then
+  is the owner's man in the owner's armour and blade. A record still
+  building keeps the look the first word carried. THE DUNGEON'S LAW, said:
+  every machine's copy of a dungeon's foe carries its own roll, and that
+  copy is what its player loots - so a dungeon's body wears its own copy's
+  kit; its race, face and death are the room's (the layout point's, or the
+  owner's seed).
+- K3. A dungeon's puppet - a room's encounter, a member's own foe - was
+  stood at its first streamed feet, its `marker`, and seeded off that: its
+  owner's spawn spot to the owner, another man to everyone else. The room's
+  and the own lane's records carry the owner's seed (`ls` - roomRecord's
+  `seeded`; never the layout's records, which every machine seeds off the
+  layout point, and whose full frame is at the wire's cap), and their
+  puppets (`_mwWire = 'seed'`) wait for it.
+- K4. The seed was the wire number alone: two owners' number 1s of one
+  species were twins (the watch, all 146), and an heir's renumbering made
+  a foe another person mid-fight on every screen. `foeBodies.js` foeSeed
+  is minted ONCE - its number and where it stood - and an heir keeps it
+  (and the kit it wears) and streams it on.
+- K5. The transformed Daedra Seducer FLIES (mobileUnit.js), and her body
+  was the winged twilight whether or not Morrowind's record flies - D4's
+  law asked of the data: her row says `flies`, and the build
+  (fpArm.js buildCreatureBody) refuses a record without CREA's Flies flag
+  at the record - her sprite stands.
+- K6. Vampire people keep their sprites, the reason restated (section 13a).
+  NOT HERE: a vampire clan's standing person in a body with the vampire's
+  head - the look would rest on a faction row's word alone.
+
+THE GPU SKIN (G).
+- G1. A vertex whose live weights summed to none or less was collapsed by
+  the CPU skin and blended by the GPU's; the layout zeroes its influences,
+  so the shader lands it on the post's translation as the CPU does.
+- G2. The masters' load order ranked by PREFIX - "Morrowind Patch.esm" as
+  Morrowind's own, stored before it, losing every record it patched. By
+  whole name now (`ESM_MASTERS`).
+- A sprite batch opened inside an open one dropped the outer's queue
+  (latent - drawVeiled alone guarded it). The batch is nest-safe: the inner
+  joins, the outer flushes all.
+
+THE HOSTS (H).
+- H2. Under the Overworld every lane but the roads stood bodies at the foot
+  of the picture, upright under the flats' lean, a few pixels tall. The
+  Overworld's hold (npcBodies.js holdNpcBodies, asked by world.js every
+  frame the travel view is up, lapsing NPC_HOLD_MS after the last frame
+  that asked) stands nobody: C3's law for every lane.
+- H3. The dungeon's hosts draw the corpse flats before drawFoes marks them,
+  so the flat minted under a body standing from the kill drew a frame, and
+  one whose body left the cut was a frame unseen. The flat is minted
+  cast-only where the body stands, and one whose body went this frame is
+  drawn on the foes' pass after the sync. (A body ENTERING the cut over its
+  corpse is drawn over its flat for that frame - NOT HERE.)
+- H4. Two of the gate's host first seen falling were one body
+  (`host:undefined`) - the placeholder carries its number.
+- H5. The gate's boss and host bodies carry WB13d's hit flash, as foes do.
+
+THE LANES (L).
+- L1. MWNPC4's one build queue put a peer's body behind the street's whole
+  cut - 24 builds at Near, 48 at All, 5 to 48 seconds for a body that took
+  a build's time before. The gate keeps two lines (peerBodies.js
+  createBuildGate / gateBuild): one build at a time, a player's (a peer's,
+  the family's, the card table's) ahead of every NPC build still waiting;
+  and a build that holds it past BODY_GATE_STALL_MS lets the next go.
+- L2. A frozen frame (a talk window holds the street: its hosts pass dt 0)
+  forgot every body's skin, so the frame it shut posed every body at once
+  - 20 skins against Near's 8, 37 against All's 16. An NPC lane keeps the
+  skin through it.
+- L3. A living newcomer took a standing corpse's slot before a far body's
+  (the party-mate branch tested `goneAt` alone) - B3's law, kept.
+- L4. Section 16's exactness, amended there. L5: the probe's churn - its
+  crowd only circled the eye in one look, so "24/48 rigs built" was its
+  caps by construction. Its second table walks each actor in and out across
+  the cut in a look of its own: rigs built a minute, each lane alone
+  against the one budget - Near 48 against 46, All 26 against 62 (a budget
+  smaller than the crowd sets its cut inside it, and the crowd crosses it;
+  each built rig waits its turn on the low line, L1).
+
+THE PROOF (P). P2: the GPU skin's GL had no test on a real Renderer - the
+stream's attributes, the palette's texture and unit, a pose's upload, a
+moved part's re-stream and the release are recorded now. P4: section 21's
+D3 pinned a living elite alone, whose sprite size and giant's are one
+number - the wild giant and the dead, each pinned. P5: section 22's
+"equivalent" record was not (a fitted cloak). P6: stale numbers and claims
+corrected - Testing.md's MWNPC4 count (39), the merge row's duplicate,
+section 22's "59 dead", section 15a's Imp, law 6's pause card, the
+setting's note ("foes first", "the closest dozen"). P7: two assertions
+that compared a value with itself, and a `every` over a list that could be
+empty. P8: the patch notes say what is so - the third-person bodies are
+GPU-skinned (the first-person arm and the inventory portrait are not, and
+a body past eight influences a vertex falls back), and the steel is the
+street guards' and the rosters' watch (the city watch wears what it
+rolled).
+
+THE WIRE. `ls` and `lw` change wire.js, so the relay's bundle: RELAY_VERSION
+world188 (past main's WAGONS1 world187, which may deploy first). The relay
+forwards foe frames unread; no frame changes shape.
+
+PROVEN. `test/mwnpc_audit2.test.js` (17) - each finding executed where it
+can be (the encounter pool's own puppet path for K2 and K4, a recording
+GL on a real Renderer for P2, Chromium-free), by source where only a host
+holds it. `tools/mutants/auditmwnpc2.json`: 53 mutants, 52 dead and one
+equivalent as recorded (K1's uniform flag: census dresses every watchman on
+duty in the guard's texture, which folkLookOf reads as the uniform). Pins
+moved where a law moved: MWNPC6a and section 21's C5 (the seed minted
+once), D2 (the Seducer's look flies), MWNPC7d (a beggar's flat), WORLD6b's
+first record (`ls`), WORLD2's room record and PSCALE-OWN's own lane
+(`seeded`), PEER-CADENCE C7 (the frozen frame), and the dungeon harnesses'
+scopes; twenty-eight older records re-aimed by content.

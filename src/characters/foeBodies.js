@@ -8,6 +8,7 @@
 // are the foe's own stable draw (Daggerfall's class foes have neither; one Breton for every bandit is the plan's own
 // complaint), and the tells are the batch's as the host set them.
 import { composeLook } from '../net/remotePlayers.js';
+import { LOOK_GROUPS } from '../net/wire.js';   // AUDIT MW-NPC II K2: a worn piece's group, by its index on the wire
 import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';
 import { creatureLook } from './creatureBodies.js';   // MWNPC9: a creature foe's look, its Morrowind creature
 import { ARMOR_ENUM, WEAPONS_ENUM, equipmentVariantFor } from '../combat/enemyEquipment.js'; import { ARMOR_MATERIAL } from '../systems/armorMaterials.js'; import { MOBILE_TYPES } from './mobileTypes.js';   // MWNPC10: a roster's people, armoured and armed by their class
@@ -36,19 +37,26 @@ function mix(h) {
   h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
   return (h ^ (h >>> 16)) >>> 0;
 }
-/** The foe's seed: its species and where its layout stood it (`marker`, the dungeon's), else its number on the wire
- *  (`seq` - the encounter pool's, its owner's and every puppet's of it alike) - facts every machine in the room shares,
- *  so a foe is the same person on each; a foe with neither takes its own id. AUDIT MW-NPC C5: a watchman is numbered
- *  the first time he rides (exteriorFoes.js, WATCH1) - his seed follows the number once he has one, so the man his
- *  owner draws is the man his puppet is (it was memoised off his local id first, and every peer drew another). */
+/** The foe's seed: its species and where its layout stood it (`marker`, the dungeon's - every machine builds the layout
+ *  alike), else its number and where it stood when its seed was first asked. AUDIT MW-NPC II K3/K4: A SEED IS MINTED
+ *  ONCE AND RIDES THE WIRE. Off the wire number alone, two owners' number 3s of one species were one man (the watch, all
+ *  146, most of all), an heir's renumbering (exteriorFoes.js adopt) made another person mid-fight on every screen, and a
+ *  dungeon puppet - stood at its first streamed feet, its `marker` - was another person than its owner's (AUDIT MW-NPC
+ *  C5 had a watchman's look follow his late number for the same reason). Now the owner mints it once, at its own foe,
+ *  and streams it (the record's `ls`); a copy stood off a record takes the owner's (`_mwSeedWire`) and keeps it when it
+ *  is adopted, so an heir streams the very seed on.
+ *  @param {any} f */
 export function foeSeed(f) {
-  const n = f.marker ? null : (f.seq ?? null);
-  if (f._mwSeed != null && f._mwSeedOf === n) return f._mwSeed;
+  if (f._mwSeedWire != null) return f._mwSeedWire;
+  if (f._mwSeed != null) return f._mwSeed;
   const at = f.marker ?? null;
   let h = mix((f.mobileType | 0) + 0x9e3779b9);
   if (at) for (const v of [at[0], at[2]]) h = mix(h ^ (Math.round((v || 0) * 10) | 0));
-  else h = mix(h ^ ((n ?? f.id ?? 0) | 0));   // MWNPC6: a watchman has no layout point and rides the wire late - his number
-  f._mwSeedOf = n;
+  else {
+    h = mix(h ^ ((f.seq ?? f.id ?? 0) | 0));   // MWNPC6: a watchman has no layout point - his number, where he has one
+    const p = f.ai?.feet;
+    if (p) for (const v of [p[0], p[2]]) h = mix(h ^ (Math.round((v || 0) * 10) | 0));   // AUDIT MW-NPC II K4: and where he stood - two owners' number 3s are two men
+  }
   return (f._mwSeed = h);
 }
 const pick = (list, h) => list[h % list.length];
@@ -100,9 +108,15 @@ export const isBodyFoe = (f) => isPersonFoe(f) || !!creatureLook(f);
  *  one), so a foe that picks up nothing is one build for its life. */
 export function foeLook(f) {
   const e = f.entity;
+  // AUDIT MW-NPC II K2/K3: a copy stood off another machine's record (`_mwWire` - exteriorFoes.js, dungeonContext.js)
+  // is its OWNER's man: no body until the owner's seed is here, and in the street's pool none until the owner's kit is
+  // (`kit` - a puppet's own table is empty: exteriorFoes spawnFoe, its loot the owner's grant), then the kit worn. A
+  // dungeon's copy wears its own table - every machine's copy of a dungeon's foe carries its own roll, the one its
+  // player loots (section 23).
+  if (f._mwWire && (f._mwSeedWire == null || (f._mwWire === 'kit' && f._mwWornWire == null))) return null;
   // MWNPC5c: asked every frame, so the common answer is a compare - the same pieces in the same slots (by reference,
   // no allocation) is the same look; only a change composes it again
-  const slots = equipTableOf(e);
+  const slots = f._mwWire === 'kit' ? f._mwWornWireSlots : equipTableOf(e);
   const held = f._mwLookSlots;
   const h = foeSeed(f);   // AUDIT MW-NPC C5: a seed that moved (a watchman's first number) is another look
   if (f._mwLook && held && held.length === slots.length && f._mwLookSeed === h) {
@@ -111,7 +125,7 @@ export function foeLook(f) {
     if (same) return f._mwLook;
   }
   f._mwLookSlots = slots.slice();
-  const worn = composeLook(e, { eotbSet: null }).items;
+  const worn = f._mwWire === 'kit' ? f._mwWornWire : composeLook(e, { eotbSet: null }).items;
   const wornKey = worn.map((it) => `${it.equipSlot}:${it.templateIndex}:${it.material ?? ''}:${it.dye ?? ''}`).join('|');
   if (f._mwLook && f._mwLookKey === wornKey && f._mwLookSeed === h) return f._mwLook;
   f._mwLookSeed = h;
@@ -120,6 +134,65 @@ export function foeLook(f) {
   const gender = f.gender === 'female' ? 'female' : 'male';
   f._mwLookKey = wornKey;
   return (f._mwLook = { race, gender, faceIndex, items: clothesUnder([...worn], FOE_WARDROBE[gender], h), ...(VAMPIRE_MOBILES.has(f.mobileType) ? { vampire: true } : {}), ...(f.mobileType === WOLF_MOBILE ? { wolf: true } : {}) });   // MWNPC14: a vampire's face; MWNPC15: a werewolf's beast
+}
+
+/** AUDIT MW-NPC II K2: a worn piece on the wire - [equipSlot, group (LOOK_GROUPS' index), templateIndex, material, dye,
+ *  variant], -1 where the piece has none (net/wire.js validFoeRecord `lw`). */
+const WORN_FIELDS = Object.freeze(['material', 'dye', 'variant']);
+/** @param {any[]} items @returns {number[][]} */
+function encodeWorn(items) {
+  const out = [];
+  for (const it of items) {
+    const g = LOOK_GROUPS.indexOf(it.group);
+    if (g < 0 || !Number.isInteger(it.templateIndex) || !Number.isInteger(it.equipSlot)) continue;
+    out.push([it.equipSlot, g, it.templateIndex, ...WORN_FIELDS.map((k) => (Number.isInteger(it[k]) ? it[k] : -1))]);
+  }
+  return out;
+}
+/** The pieces a record's `lw` names, as a look's items. @param {number[][]} lw */
+export function decodeWorn(lw) {
+  return lw.map(([equipSlot, g, templateIndex, ...rest]) => {
+    const it = /** @type {any} */ ({ templateIndex, group: LOOK_GROUPS[g], equipSlot });
+    WORN_FIELDS.forEach((k, i) => { if (rest[i] >= 0) it[k] = rest[i]; });
+    return it;
+  });
+}
+/**
+ * AUDIT MW-NPC II K2-K4: WHAT THE OWNER STREAMS OF ITS FOE'S LOOK - its seed (`ls`, foeSeed) and, a person's, the kit it
+ * wears (`lw`: the owner's equip table - or, a copy it adopted, the kit its first owner streamed, which it still wears).
+ * `key` changes only when either does; kept on the foe, so a frame that changes nothing composes nothing.
+ * @param {any} f @returns {{ seed: number, worn: number[][]|null, key: string }}
+ */
+export function foeWireLook(f) {
+  const seed = foeSeed(f);
+  let worn = null;
+  if (isPersonFoe(f)) {
+    if (f._mwWornWireRaw) worn = f._mwWornWireRaw;
+    else {
+      const slots = equipTableOf(f.entity), held = f._mwWireSlots;
+      let same = !!held && held.length === slots.length;
+      if (same) for (let i = 0; i < slots.length; i++) if (slots[i] !== held[i]) { same = false; break; }
+      if (!same) { f._mwWireSlots = slots.slice(); f._mwWireWorn = encodeWorn(composeLook(f.entity, { eotbSet: null }).items); f._mwWireKey = null; }
+      worn = f._mwWireWorn;
+    }
+  }
+  if (f._mwWireKey == null || f._mwWireKeySeed !== seed || f._mwWireKeyWorn !== worn) {
+    f._mwWireKeySeed = seed; f._mwWireKeyWorn = worn;
+    f._mwWireKey = `${seed}|${worn ? worn.map((w) => w.join(',')).join(';') : ''}`;
+  }
+  return { seed, worn, key: f._mwWireKey };
+}
+/**
+ * AUDIT MW-NPC II K2-K4: a record's look onto the copy it drives - the owner's seed (`ls`) and kit (`lw`), each kept
+ * until the owner says another (a record that carries neither changes nothing).
+ * @param {any} f @param {{ ls?: number, lw?: number[][] }} r
+ */
+export function applyWireLook(f, r) {
+  if (Number.isInteger(r.ls)) f._mwSeedWire = r.ls;
+  if (Array.isArray(r.lw)) {
+    const k = r.lw.map((w) => w.join(',')).join(';');
+    if (k !== f._mwWornWireKey) { f._mwWornWireKey = k; f._mwWornWireRaw = r.lw; f._mwWornWire = decodeWorn(r.lw); f._mwWornWireSlots = [f._mwWornWire]; }   // the slots foeLook compares: the kit, as one piece
+  }
 }
 
 /** The foe's id among the lane's: its host's sequence number where it keeps one (exteriorFoes' `seq`), else one minted
