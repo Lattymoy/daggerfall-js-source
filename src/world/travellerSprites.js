@@ -200,6 +200,8 @@ export function createTravellerSprites({ renderer, getTexture, uploadRecordFrame
     drawBodies,   // MWNPC10c
     /** MWNPC10c: the floating origin moved - the bodies' feet follow it. @param {number[]} o */
     offsetBodies(o) { bodiesLane.offsetAll(o); },
+    /** MWNPC13: the veiled bodies (a road's ghost), translucent - after the host's opaque world. */
+    drawVeiledBodies() { bodiesLane.drawVeiled(); },
     /** This frame's drawn bodies, for the exterior's billboard pass. */
     batches: () => drawn,
     /** This frame's talk targets on the ground ({ person, pos } - the street's activation shape). */

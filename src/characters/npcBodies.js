@@ -234,6 +234,7 @@ export function createNpcBodies({ renderer, enabled = () => true, generation = (
      */
     stand(laneName, actor, conceal = null, flash = 0, fx = null) {
       if (!actor?.look || !actor.feet) return;
+      conceal ??= actor.look.veil ?? null;   // MWNPC13: a spectral's standing veil - the host's concealment first
       const id = npcPeerId(laneName, actor.id);
       peers.push({ id, name: '', told: true, look: actor.look, shown: npcShown(actor) });
       let r = info.get(id);

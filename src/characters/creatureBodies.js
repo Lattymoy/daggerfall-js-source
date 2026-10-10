@@ -7,10 +7,12 @@
 // (lich) and Bloodmoon's (BM_spriggan, BM_bear_black, bm_frost_giant, draugr); a master that lacks one refuses the
 // build and the sprite stands, as for any refused body.
 import { MOBILE_TYPES as M } from './mobileTypes.js';
+import { ENEMY_BASICS } from './enemyBasics.js';   // MWNPC13: a spectral's own archive (a named one keeps its sprite)
+import { BaseImageFile } from '../formats/baseImageFile.js';   // MWNPC13: the spectral sprite's opacity
 
 /** The match: mobile type -> `{ creature: [CREA ids, first carried wins] }` or `{ miss: reason }`. Every creature
- *  mobile is named - the table is the census.
- *  @type {Readonly<Record<number, { creature?: string[], miss?: string }>>} */
+ *  mobile is named - the table is the census. MWNPC13: `veil` a spectral's - its body drawn translucent (SPECTRAL_VEIL).
+ *  @type {Readonly<Record<number, { creature?: string[], miss?: string, veil?: boolean }>>} */
 export const CREATURE_MATCH = Object.freeze({
   [M.Rat]: { creature: ['rat'] },
   [M.Imp]: { creature: ['scamp'] },                       // the small winged daedra of the Bay is Morrowind's scamp
@@ -30,12 +32,12 @@ export const CREATURE_MATCH = Object.freeze({
   [M.SkeletalWarrior]: { creature: ['skeleton warrior', 'skeleton'] },
   [M.Giant]: { creature: ['bm_frost_giant'] },             // Bloodmoon's frost giant
   [M.Zombie]: { creature: ['bonewalker'] },
-  [M.Ghost]: { miss: 'a ghost is translucent - a body\'s textures are alpha-tested, never blended' },
+  [M.Ghost]: { creature: ['ancestor_ghost'], veil: true },   // MWNPC13: Morrowind's ancestor ghost, seen through as Daggerfall's is
   [M.Mummy]: { creature: ['draugr'] },                     // Bloodmoon's draugr, the barrows' wrapped dead
   [M.GiantScorpion]: { miss: 'no giant scorpion' },
   [M.OrcShaman]: { miss: 'an orc is a person' },
   [M.Gargoyle]: { miss: 'no gargoyle' },
-  [M.Wraith]: { miss: 'a wraith is translucent, as a ghost is' },
+  [M.Wraith]: { creature: ['ancestor_ghost'], veil: true },   // MWNPC13: Morrowind has no wraith - its ghost, the same veil
   [M.OrcWarlord]: { miss: 'an orc is a person' },
   [M.FrostDaedra]: { creature: ['atronach_frost'] },
   [M.FireDaedra]: { creature: ['atronach_flame'] },
@@ -57,12 +59,26 @@ export const CREATURE_MATCH = Object.freeze({
   [M.Lamia]: { miss: 'no lamia' },
 });
 
+/** MWNPC13 (bible/04-Characters/Morrowind-NPCs.md section 18): A SPECTRAL'S VEIL - its body drawn translucent through
+ *  the lanes' veiled pass (INVIS-LOOK: blended after the opaque world, ECV1's record) at the opacity Daggerfall's own
+ *  spectral sprite is drawn (BaseImageFile.SPECTRAL_ALPHA of 255 - dataPipeline.js's spectral arm): mode 3, no tint, no
+ *  clock. A look carries it, so every lane standing the look veils it (characters/npcBodies.js `stand`). */
+export const SPECTRAL_VEIL = Object.freeze({ mode: 3, alpha: BaseImageFile.SPECTRAL_ALPHA / 255, t: 0, phase: 0 });
+
 /** The looks, one frozen object a mobile type (a look is a body key - PeerBodies keys it `crea|<ids>`). */
-const LOOKS = new Map(Object.entries(CREATURE_MATCH).filter(([, m]) => m.creature).map(([t, m]) => [Number(t), Object.freeze({ creature: Object.freeze([...m.creature]) })]));
+const LOOKS = new Map(Object.entries(CREATURE_MATCH).filter(([, m]) => m.creature)
+  .map(([t, m]) => [Number(t), Object.freeze({ creature: Object.freeze([...m.creature]), ...(m.veil ? { veil: SPECTRAL_VEIL } : {}) })]));
 
 /** The creature foe's look - `{ creature: [ids] }` - or null: a person (a class mobile, 128 and up, is in no row), or a
  *  creature Morrowind has no match for.
  *  @param {any} f a foe record (its `mobileType`) */
 export function creatureLook(f) {
-  return (f && LOOKS.get(f.mobileType)) ?? null;
+  const look = (f && LOOKS.get(f.mobileType)) ?? null;
+  if (look?.veil) {
+    // MWNPC13: a NAMED spectral - Lysandus, placed by his quest in his own archive (473) - keeps his own sprite: the
+    // body is the stock ghost's, and he is no stock ghost
+    const a = f.mobileArchive ?? f.archive, b = ENEMY_BASICS[f.mobileType];
+    if (a != null && b && a !== b.maleTexture && a !== b.femaleTexture) return null;
+  }
+  return look;
 }

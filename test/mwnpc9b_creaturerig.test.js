@@ -148,7 +148,8 @@ test('MWNPC9b-8 THE MATCH, a census: every creature mobile named - a Morrowind c
   assert.deepEqual(CREATURE_MATCH[MOBILE_TYPES.Mummy].creature, ['draugr']);
   assert.deepEqual(CREATURE_MATCH[MOBILE_TYPES.Spriggan].creature, ['bm_spriggan']);
   assert.deepEqual(CREATURE_MATCH[MOBILE_TYPES.SkeletalWarrior].creature, ['skeleton warrior', 'skeleton']);
-  assert.ok(CREATURE_MATCH[MOBILE_TYPES.Ghost].miss && CREATURE_MATCH[MOBILE_TYPES.Wraith].miss, 'the translucent dead keep their sprites');
+  // PIN MOVED (MWNPC13, Morrowind-NPCs.md section 18): the translucent dead stand as Morrowind's ancestor ghost, veiled
+  assert.ok(CREATURE_MATCH[MOBILE_TYPES.Ghost].veil && CREATURE_MATCH[MOBILE_TYPES.Wraith].veil, 'the translucent dead seen through');
   for (const t of [MOBILE_TYPES.Orc, MOBILE_TYPES.OrcSergeant, MOBILE_TYPES.OrcShaman, MOBILE_TYPES.OrcWarlord, MOBILE_TYPES.Vampire, MOBILE_TYPES.VampireAncient]) assert.ok(CREATURE_MATCH[t].miss, `${t}: a person, not a creature`);
   // the look: one frozen object a kind (a body key), none for a person or a miss
   const rat = { mobileType: MOBILE_TYPES.Rat, entity: { isClass: false } };

@@ -32667,6 +32667,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     exteriorFoes.drawVeiledBodies();   // MWNPC5c: the concealed foes' bodies, beside the peers'
     cityGuards.drawVeiledBodies();   // MWNPC6: and the watch's
     navalCrew.drawVeiledBodies();   // MWNPC10: and a concealed owner's crew
+    livingRoads?.drawVeiledBodies();   // MWNPC13: and a road's ghosts
     folkStreet.drawVeiled();   // MWNPC7: and the walkers'
     drawVeiledPeerBodies();   // INVIS-LOOK: the concealed peers' bodies, translucent - after the opaque world, the flats and the grass
     // DUEL1: THE RINGS' WALLS - my own duel's, rising in and dying away, and every duel the cells around me say stands

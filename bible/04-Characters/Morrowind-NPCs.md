@@ -113,6 +113,7 @@ Each line is a slice's acceptance, not an aspiration:
 | MWNPC7 TOWNSFOLK | walkers and living residents, a wardrobe by FACTION sgroup that actually varies (distinct records and dyes per persona) (the WALKERS SHIPPED, section 12: a wardrobe per outfit variant, dyed per spawn - the living residents indoors are MWNPC8's standing people) | world.js, exterior.js, worldModes.js (living residents indoors) |
 | MWNPC8 STANDING PEOPLE | street, interior, dungeon and quest StaticNPCs; children and vampires keep their sprite; `drawnFlat`'s nudity law honoured (8a SHIPPED, section 13a: the buildings' people; 8b SHIPPED, section 13b: the dungeons' and the street's; 8c SHIPPED, section 13c: exterior.js's and the quests' stands) | all four |
 | MWNPC9 CREATURES | CREA records, creature skeletons and their own .kf, the match table with its declared misses (9a SHIPPED, section 14a: the body; 9b SHIPPED, section 14b: the rig, the match, the hosts) | dungeonContext.js, world.js, worldModes.js, exterior.js |
+| MWNPC13 THE SPECTRAL DEAD | the ghost and the wraith as Morrowind's ancestor ghost under a standing veil at the spectral sprite's opacity (SHIPPED, section 18) | every foe host (each draws its veiled bodies), the roads |
 | MWNPC12 STEEL AND ORCS | the steel no look ever wore (material 1 named none) worn; the four orcs as people in Morrowind's Orc body (SHIPPED, section 17) | foeBodies.js, folkBodies.js, peopleBodies.js - every foe host and roster through them |
 | MWNPC11 ONE FRAME | every NPC lane on one frame budget - the nearest bodies across all of them, the skins shared out - and the lanes probe (SHIPPED, section 16) | every lane (createHostNpcBodies) |
 | MWNPC10 THE REST | crews, road parties, siege, gate court, the broker (10a SHIPPED, section 15a: the gate court; the broker keeps her guise. 10b SHIPPED, section 15b: the siege and the crews. 10c SHIPPED, section 15c: the roads' parties and the living residents indoors) | their hosts |
@@ -976,7 +977,9 @@ interiors'), and exterior.js's pool.
   atronach (atronach_storm), daedroth, daedra seducer (winged twilight),
   daedra lord (dremora_lord), lich and ancient lich (lich), dreugh. Declared
   misses: the ghost and the wraith (a body's textures are alpha-tested,
-  never blended - a translucent dead would be cut, not seen through);
+  never blended - a translucent dead would be cut, not seen through;
+  AMENDED BY MWNPC13, section 18: they stand as the ancestor ghost, the
+  whole body veiled through the lanes' veiled pass);
   the orcs and the vampires (people, not creatures - an orc's race is no
   Daggerfall race a look can name yet; AMENDED BY MWNPC12, section 17: the
   orcs stand as people in Morrowind's Orc body - still never creatures); the werewolf (the player's wolf,
@@ -1281,8 +1284,8 @@ crowd's six nearest, and a lane past its range taking no skin.
   the sprite, as every lane's does.
 
 NOT HERE: the vampires (a vampire's face is Morrowind's vampire head, a
-part the walk does not choose yet), the werewolf foe, the ghost and the
-wraith keep their sprites (section 14b).
+part the walk does not choose yet) and the werewolf foe keep their
+sprites (section 14b); the ghost and the wraith are section 18's.
 
 PROVEN. `test/mwnpc12_steelorcs.test.js` (3): the guard's, the knight's,
 the warrior's and the watch's every armour piece resolved to steel by
@@ -1297,4 +1300,40 @@ MWNPC8a-1 and MWNPC10b-1's `material === 1` (each now ARMOR_MATERIAL.Steel);
 mutant records re-aimed by content: MWNPC7-guard-iron, MWNPC9b's actor
 and body-foe records (isPersonFoe), MWNPC10b's creature and all-men,
 MWNPC10c's unarmed, one-hander and race records.
+
+## 18. MWNPC13 - THE SPECTRAL DEAD (SHIPPED 2026-10-10)
+
+- WHY THEY WERE MISSES, AND WHY NO LONGER. A body's textures are alpha-
+  tested, so a ghost's body would be cut, not seen through - but every foe
+  host already draws a CONCEALED body translucent after its opaque world
+  (INVIS-LOOK, PeerBodies drawVeiled: ECV1's record on the body's quad).
+  The whole body veiled is what Daggerfall's spectral sprite is: drawn at
+  SPECTRAL_ALPHA (180 of 255, dataPipeline.js's spectral arm).
+- THE MATCH. The ghost and the wraith stand as Morrowind's ancestor ghost
+  (`ancestor_ghost`, UESP's undead table, read 2026-10-10 - Morrowind has
+  no generic greater ghost or wraith; its others are named uniques), the
+  look carrying `veil: SPECTRAL_VEIL` (`characters/creatureBodies.js`:
+  mode 3, plain - no tint, no clock - at SPECTRAL_ALPHA / 255).
+- THE LANE VEILS WHAT ITS LOOK VEILS (`characters/npcBodies.js` stand):
+  a host's own concealment first (a ghost turned invisible is ECV1's
+  shimmer), else the look's veil - so every lane standing the look veils
+  it, whoever's adapter offered it. Every foe host draws its veiled
+  bodies already (the dungeon's, the exterior's, exterior.js's, the
+  interiors'); the roads' sprites now do too (a ghost besetting a party at
+  night), beside the foes' in world.js's veiled block.
+- A NAMED SPECTRAL KEEPS HIS SPRITE. Lysandus is placed by his quest in an
+  archive of his own (473); the body is the stock ghost's and he is no
+  stock ghost. A spectral whose sprite archive is not its mobile's own
+  (`mobileArchive` in the dungeon, `archive` in the encounter pool) has no
+  look.
+
+PROVEN. `test/mwnpc13_spectral.test.js` (3): the veil at 180 of 255 in
+mode 3; both mobiles the ancestor ghost, veiled, in their stock archives
+by either host's field and none in 473; the living unveiled; a ghost foe
+a body foe in the veiled look; a lane of stub rigs drawing the ghost only
+in the veiled pass, the rat only in the open one, and a host's own
+concealment over the look's; the roads' sprites and the world's veiled
+block by call and by source. `tools/mutants/mwnpc13.json`: 12 mutants, 12
+dead. Pin moved: MWNPC9b-8's census (the translucent dead now veiled, not
+missed).
 
