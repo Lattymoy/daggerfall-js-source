@@ -165,8 +165,8 @@
   {
     "name": "AUDIT-SHIPS-A1-relay-ts-dropped",
     "file": "server/src/index.js",
-    "old": "...(Number.isFinite(b.pose.ts) ? { ts: b.pose.ts } : {}) });",
-    "new": "});",
+    "old": "...(Number.isFinite(b.pose.ts) ? { ts: b.pose.ts } : {}), ...(trailed ? { tr:",
+    "new": "...(trailed ? { tr:",
     "tests": [
       "test/auditships.test.js"
     ]

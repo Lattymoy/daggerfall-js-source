@@ -436,8 +436,8 @@
   {
     "name": "WB3-no-gate-meter",
     "file": "server/src/index.js",
-    "old": "      if (!this._spend(ws, now, gateGate, 'gateBucket', 'gateDrops', 'too many gate frames')) return;",
-    "new": "      void gateGate;",
+    "old": ": !this._spend(ws, now, gateGate, 'gateBucket', 'gateDrops', 'too many gate frames')) return;",
+    "new": ": (void gateGate, false)) return;",
     "tests": [
       "test/wb3_gate_room.test.js"
     ]

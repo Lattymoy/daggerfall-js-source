@@ -197,7 +197,7 @@ test('SD20a A FROZEN PAGE IS ABSENT (F3): a fighter\'s pose in the Hour is stamp
     assert.equal(cell.room._all().get(mara).pAt, undefined, 'a cell\'s pose: no stamp');
   });
   // PIN MOVED (INT12): the census as the relay's count has it (net/bossBody.js bodyCensus) - read at the beat's own instant still
-  assert.match(RELAY, /census = \(\) => bodyCensus\(f, this\._sdFightBodies\(f, now\), now, line\.body, line\.enforce, \{ lives: false \}\);/);
+  assert.match(RELAY, /bodies = this\._sdFightBodies\(f, now\), census = \(\) => bodyCensus\(f, bodies, now, line\.body, line\.enforce, \{ lives: false \}\);/);   // PIN MOVED (AUDIT INT11): the bodies read once a beat, at its own instant still
   assert.match(RELAY, /this\._sdFightFan\(stepRemnant\(f, now, this\._bodiesBare\(census\(\)\), rand01\)\);/);
 });
 

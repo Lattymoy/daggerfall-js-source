@@ -555,8 +555,8 @@
   {
     "name": "SD11c-G13-the-oldest-socket",
     "file": "server/src/index.js",
-    "old": "      if (!had || (b.since ?? 0) >= (had.since ?? 0)) newest.set(b.sub, b);\n    }\n    return [...newest.values()].map((b) => { const c = this._arenaPoseOf(b.pose);",
-    "new": "      if (!had) newest.set(b.sub, b);\n    }\n    return [...newest.values()].map((b) => { const c = this._arenaPoseOf(b.pose);",
+    "old": "      if (!had || (b.since ?? 0) >= (had[1].since ?? 0)) newest.set(b.sub, [ws, b]);\n    }\n    return [...newest.values()].map(([ws, b]) => { const c = this._arenaPoseOf(b.pose);",
+    "new": "      if (!had) newest.set(b.sub, [ws, b]);\n    }\n    return [...newest.values()].map(([ws, b]) => { const c = this._arenaPoseOf(b.pose);",
     "tests": [
       "test/sd11b_relay.test.js"
     ]

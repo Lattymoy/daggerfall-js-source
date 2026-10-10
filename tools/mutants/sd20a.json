@@ -137,8 +137,8 @@
   {
     "name": "SD20A-F3-the-census-at-another-instant",
     "file": "server/src/index.js",
-    "old": "census = () => bodyCensus(f, this._sdFightBodies(f, now), now,",
-    "new": "census = () => bodyCensus(f, this._sdFightBodies(f), now,",
+    "old": "bodies = this._sdFightBodies(f, now), census",
+    "new": "bodies = this._sdFightBodies(f), census",
     "tests": [
       "test/sd20a_fight.test.js"
     ],

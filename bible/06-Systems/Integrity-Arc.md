@@ -7,7 +7,7 @@ you want". Read against the code, then: "I want to do everything and do it prope
 
 **Status: lane 1 (the economy, INT1-INT6) BUILT and AUDITED (2026-10-09, section 4b: five reviews, every fix pinned) and
 merged (#730); lane 2 (PvP refereed everywhere, INT7-INT10) BUILT and AUDITED the same day (section 5, 5b) and merged
-(#737); lane 3 (boss fights, INT11-INT15) BUILT 2026-10-10 on its branch (section 6), measuring first.** Lane 4 is the
+(#737); lane 3 (boss fights, INT11-INT15) BUILT and AUDITED 2026-10-10 on its branch (section 6, 6b), measuring first.** Lane 4 is the
 plan below, its own pull request (Mac: "A PR per lane").
 
 ## 1. What the report found, read against the code
@@ -482,6 +482,11 @@ cannot see first, to cap healing in boss fights as a new rule, or to enforce a g
   claims nothing and lowers nothing: a blow the client took and said before the relay judged it would otherwise be taken
   twice, and a hurt the relay never counted (an element's, a pool's, a fall's) is the client's to heal. A tab that never
   says its body measures nothing (`sd` - its count would read falls that never were).
+- **An ally's heal is the count's** (6b): what the gate believed of a mate's heal (GATE-HEAL's `heal`, through its own
+  heal bucket - `applyHeal`), at the brain's reference health (`healRef`, generous, so the share is the least), is no
+  mend of the body's own (bodyHealed). The body's word of it comes first, so the heal pays back what that word claimed:
+  what was left unmet is believed and no longer past the line, what the budget paid is given back; a heal heard before
+  the word stands the count up itself.
 - **What is counted:** the blows no saving throw answers - a plain blow (the Cleave, the Slam, the Charge, the Leap, the
   Bound Across the Fire, a Harrier's Bite), and Dagon's Wrath and Reckoning, whole. An element's blow is the client's
   (`blowOf`'s `saved`): a lawful character can be immune, so the count takes it as the immune would - nothing. A share
@@ -489,8 +494,11 @@ cannot see first, to cap healing in boss fights as a new rule, or to enforce a g
   counted.
 - **In the struck player's favour, always.** A landing is judged BODY_AFTER_MS (400) after it, so the first pose after it
   has come; a body is struck only standing BODY_MARGIN (1.5 m) deep in the shape both where its last pose before the
-  landing put it and where its first after does (the relay's trail of each body's poses, BODY_TRAIL_MS) - a body that
-  stepped out as it landed, or in after, is not struck. The charge is judged down its lane each beat of its run, where
+  landing put it and where its first after does (the relay's trail of the poses of the SOCKET that speaks for the body,
+  BODY_TRAIL_MS - a fighter's socket alone, while its fight lives, put on it where it stands at its `in` and its hello)
+  - a body that stepped out as it landed, or in after, is not struck. 6b: a trail whose every pose came after the
+  landing says nothing of where it stood (posAt null), nor does a room woken within a trail's span of the landing
+  (`_trailOf`'s `[]`): not known, not struck. The charge is judged down its lane each beat of its run, where
   the body stood at the beat's two ends. Each blow is judged once (its record marked, `bj`; a run's struck, `bh`), so a
   fight woken from its checkpoint judges nothing twice.
 - **The census as the count has it** (bodyCensus): a death the fight saw (`dd`) is noted; alive again is a new life -
@@ -513,7 +521,9 @@ word; the ring is the relay's) - and its crush as it lets her go crushed, and th
 ship of her own, afloat (a hand on another's deck is no hull here, a wreck is struck no more). Her place is her
 captain's pose: the relay holds no footprint, so her bow and stern are never struck by it - the favour again. Her mend
 line is the sea's own repairs under fire beside the free mending, twice over (BODY_DEFAULT's `hull`), and a wreck by the
-count floats again past HULL_REFLOAT, the sea's FIELD_REFLOAT (pinned equal).
+count floats again past HULL_REFLOAT, the sea's FIELD_REFLOAT (pinned equal). 6b: a ship back at the fight after
+SERPENT_ABSENT_RETIRE_MS (45 s) away is a NEW HULL - she sailed for her yard or came on another (bodyLife, her measure
+kept); and a volley lands only from the socket that speaks for her body (her newest in the cell - the census's).
 
 ### INT14 - the measure kept and read
 
@@ -538,15 +548,42 @@ court or the Hour's dies by the zone referee's door (`forcePlayerDeath`: no deat
 mends no more; a new life comes only BODY_RISE_MS (15 s) after a death the fight saw. In the Hour the count's fall takes
 its one life (the realm's dead, as a `dd` does). At sea the count's wreck is a wreck (serpentWreck: her share out, her
 coil let go), `bd` wrecks her own ship on her machine (her whole hull, as a blow), her own `wr 0` is not heard and her
-volleys land nothing until the count floats her again.
+volleys land nothing until the count floats her again. 6b: then she floats by the relay's word - her `wr 0` said while
+the count held her kept for it (`wf`: her game says it ONCE, as it floats her), or the count's float alone while her game
+never said a wreck of its own (`cw`). The fall is told again every BODY_TELL_MS (3 s) while its game has not taken it -
+no death seen since (`dd`), at sea no `wr 1` of hers (bodyTellOwed): a fighter mid-reconnect as it fell heard nothing
+and fought on a ghost.
 
 ### INT15 - the clients
 
 Each fight's client says its body at most every BODY_SAY_MS (250), at once when it moves a thousandth, every
 BODY_SAY_KEEP_MS (3 s) however still (bodySayer): the court's (`scenes/gateCourt.js` sendBody) while it stands alive in
 a fight that lives, the Hour's through its realm's socket while the fight answered it, the serpent's host her hull
-through her cell. Only to a relay that counts (`BOSS_REF_RELAY_MIN` 188 - an older one's words know no `vt`). No
-brain's version moved: a tab from before it says no body, is refused nothing, and measures nothing.
+through her cell. Only to a relay that counts (`BOSS_REF_RELAY_MIN` 188 - an older one's words know no `vt`) - 6b: the
+relay of the socket the word leaves on (`net/online.js` _bodySend; her cell may be a halo's, its relay its own), on a
+bucket of its own (`net/wire.js` BODY_WORD_HZ_MAX, bodySayer's pace, pinned equal; the relay's bodyWordRelayGate holds
+a burst), never the fight's blows'. No brain's version moved: a tab from before it says no body, is refused nothing, and
+measures nothing.
+
+### 6b. The audit (2026-10-10, the owner: "Fix everything in the branch")
+
+A review of lane 3 as first built found fifteen things, each fixed and pinned where it was found
+(`test/int_lane3_audit.test.js`, mutants `tools/mutants/int_lane3_audit.json`). Live at the deploy, enforced or not: the
+body's word spent the fight's own blows' bucket - four of the gate's sixteen a second, four of the serpent's ten while
+her carpenters worked, so a swing's frames and a coil's `held`/`esc` (never said again) were refused; and the serpent's
+host asked the PRIMARY socket's relay whether to say it, down a halo whose relay could be older (the junk that closes a
+socket - AUDIT RAID R8b's class). The measure staff set the line from: the pose trail kept by account, so a second socket
+of a ship's in her cell posed decoys the judge read; a trail whose every pose came after the landing read its first as
+where the body stood (in after, counted); a hull's count kept through a yard's whole repair (claimed past the line, and
+under enforce a wreck at seven tenths); an ally's heal charged to the healed body's own budget. Enforced: a ship the
+count wrecked never floated again (her once-said `wr 0` dropped while the count held her - the INT13 pin had said it
+twice); the fall said once, to the sockets of that beat; a hull's word waking a sleeping fight and returning before its
+beat was armed. And the census built twice a beat, every pose of a cell whose serpent fell hours ago trailed,
+review.js's quantile loop copied, a constant's doc comment orphaned, a test's clock left frozen by a throw in its setup.
+Pins moved, each marked PIN MOVED: posAt's "all after" (`test/int11_body.test.js`), the serpent host's version check
+and the INT13 pin's second `wr 0` (`test/int12_body_relay.test.js`), the gate's heal read by source
+(`test/gateheal.test.js`), the Hour's word routing and its census read once (`test/sd8b_fight.test.js`,
+`test/sd20a_fight.test.js`), and world188's hash, re-recorded in place (undeployed).
 
 ### Decisions (2026-10-10)
 
@@ -568,6 +605,12 @@ brain's version moved: a tab from before it says no body, is refused nothing, an
   set past what honest play claims.
 - **A death save** (a set's turned killing blow) is a mend to the count, out of the budget like any other.
 - **The serpent's venom on a body** is not counted: a body's death at sea stays its own `dd`.
+- **Where a body stands is its client's word** (6b). The relay judges a landing on the poses it was sent, and in a gate's
+  court, an Abyss Dungeon's realm and a serpent's waters no step is judged (a battle room's referee alone does): a
+  modified client that steps its pose out of each telegraphed shape at the landing and back is never counted. The
+  relay would need the fights' movement refereed as PVP-REF's is.
+- **An ally's heal is the healed client's word** (6b), believed within GATE-HEAL's own heal bucket and now the count's:
+  a modified client in company can claim heals its mates never cast, up to that bucket.
 
 ## 7. Lane 4 - progression claims (planned)
 
@@ -611,3 +654,6 @@ the clock, and the legacy record held to its own law.
   first relay that counts); the nineteen older records the lane moved re-aimed by content, all dead. Pins moved (each marked PIN MOVED
   where it stands): the gate's, the Abyss Dungeon's and the serpent's word kinds (`vt` in, `bd` out), the Hour's census
   and its receipts' and the gate's receipts' mint by source, the version pins at acct105 and world188.
+  AUDITED (6b, 2026-10-10): `test/int_lane3_audit.test.js` (16); mutants `tools/mutants/int_lane3_audit.json`: 46, all dead
+  (two first survived and are pinned since); fourteen older records re-aimed by content, all dead; world188 re-hashed in
+  place (undeployed); pins moved in `int11_body`, `int12_body_relay`, `gateheal`, `sd8b_fight` and `sd20a_fight`.
