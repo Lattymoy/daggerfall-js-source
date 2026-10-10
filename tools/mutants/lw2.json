@@ -268,7 +268,7 @@
   {
     "name": "LW2-regards-unsaved",
     "file": "src/scenes/world.js",
-    "old": "    getSaveData: () => livingRelations.snapshot(),",
+    "old": "    getSaveData: () => { _caravanHost?.flush(); return livingRelations.snapshot(); },",
     "new": "    getSaveData: () => null,",
     "tests": [
       "test/lw2_livingTown.test.js"

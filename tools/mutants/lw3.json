@@ -499,7 +499,7 @@
   {
     "name": "LW3-road-watch",
     "file": "src/scenes/townTalk.js",
-    "old": "      if (!r.success) { livingTalk?.caught?.(target.person); if (!target.person?.living?.town?.roadside) onCrime?.(); }",
+    "old": "      if (!r.success) { livingTalk?.caught?.(target.person); if (!target.person?.living?.town?.roadside) onCrime?.(); else playerEntity.crimeCommitted = crimeWas; }",
     "new": "      if (!r.success) onCrime?.();",
     "tests": [
       "test/lw3_roads.test.js"

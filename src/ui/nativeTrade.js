@@ -811,7 +811,7 @@ export class NativeTradeWindow {
     const proceeds = selling
       ? sellProceeds(price, this.hooks.weight?.() ?? {})
       : null;
-    this.hooks.commit?.(this.mode, [...this.stagedForCost], price, proceeds);
+    const refused = this.hooks.commit?.(this.mode, [...this.stagedForCost], price, proceeds) === false;
     // D7 - ConfirmTrade clears PER MODE, and two of the four clear
     // nothing at all (:1027-1090). Buy does `PlayerEntity.Items
     // .TransferAll(basketItems)`, Sell/SellMagic `remoteItems.Clear()`;
@@ -822,6 +822,9 @@ export class NativeTradeWindow {
     // the moment the goods stopped being a selection over the pack.
     if (this.mode === 'Buy') this.basket.length = 0;
     else if (selling) this.staged.length = 0;
+    // AUDIT LW-II-2 C10: a deal the counter REFUSED (LW11's road counter, its purse spent - the host put the goods back in
+    // the pack) is none: the staging cleared, and no coin clinks nor letter of credit is told for it
+    if (refused) return;
     this.lastPrice = price;
     // "a concluded deal clinks" - and a LETTER OF CREDIT scratches
     // instead (:1084-1087), which is the one place that sound is used.
