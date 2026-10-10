@@ -16,7 +16,7 @@ export function fakeDom({ w = 1280, h = 800 } = {}) {
   const listeners = new Map();
   const mk = (tag) => {
     const n = {
-      tagName: tag.toUpperCase(), children: [], parent: null, style: Object.defineProperty({}, 'setProperty', { value(k, v) { this[k] = String(v); } }), dataset: {}, attrs: {},   // AUDIT BAL: a custom property set as the death face sets its fade (unenumerable: a style compared whole stays its own)
+      tagName: tag.toUpperCase(), children: [], parent: null, style: Object.defineProperty({}, 'setProperty', { value(k, v) { this[k] = String(v); }, writable: true, configurable: true }), dataset: {}, attrs: {},   // AUDIT BAL: a custom property set as the death face sets its fade (unenumerable: a style compared whole stays its own)
       className: '', textContent: '', title: '', type: '', disabled: false,
       onclick: null, onpointerdown: null, onpointermove: null, onpointerup: null, onpointercancel: null,
       scrollTop: 0, scrollHeight: 0, clientHeight: 0,
