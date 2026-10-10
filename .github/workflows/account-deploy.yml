@@ -462,11 +462,35 @@ jobs:
           echo "before the migrations: $b"
           { echo "The database before this deploy's migrations, should it need putting back:"; echo ""; echo "    npx wrangler d1 time-travel restore $DB_NAME --bookmark $b"; echo ""; } >> "$GITHUB_STEP_SUMMARY"
 
+      # SCALE4e (2026-10-10, PR #755's own deploy): AN OVERLOADED DATABASE
+      # IS WAITED OUT, NOTHING ELSE IS. A merge that touches the relay and
+      # this service deploys both at once; the relay's deploy drops every
+      # player, their reconnect wave mints a token each against the one D1
+      # primary, and this step's first query landed 23 s into that wave:
+      # "D1 DB is overloaded. Requests queued for too long. [code: 7429]".
+      # The deploy stopped there, so acct106 never shipped. An overload is
+      # D1 refusing to queue the query (it never ran), so asking again is
+      # safe; it is asked again on that answer alone, after 20, 40, 60, 90
+      # and 120 s (5.5 minutes, the 2026-10-06 storm's worst five). Any
+      # other failure - a migration that does not apply - stops the deploy
+      # at once, as it always has.
       - name: Apply migrations
         working-directory: server-account
         run: |
-          set -euo pipefail
-          $WRANGLER d1 migrations apply "$DB_NAME" --remote
+          set -uo pipefail
+          log="${RUNNER_TEMP:-/tmp}/migrations.log"
+          for wait in 20 40 60 90 120 0; do
+            if $WRANGLER d1 migrations apply "$DB_NAME" --remote 2>&1 | tee "$log"; then exit 0; fi
+            if ! grep -qiE 'overloaded|code: 7429' "$log"; then
+              echo "::error::the migrations failed, and not on an overloaded database - not retried"
+              exit 1
+            fi
+            if [ "$wait" = 0 ]; then break; fi
+            echo "::warning::the database is overloaded - asking again in ${wait}s"
+            sleep "$wait"
+          done
+          echo "::error::the database stayed overloaded for 5.5 minutes - re-run this job once it settles"
+          exit 1
 
       # ── 2b. THE READ REPLICAS (SCALE4d) ──────────────────────────
       #
