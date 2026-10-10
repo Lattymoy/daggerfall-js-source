@@ -12,7 +12,8 @@ each re-rolled into a stranger at every spawn, wandering the navgrid by tile wei
 (`systems/townPopulation.js`, verbatim). Nothing in Daggerfall travels, sleeps, works or remembers.
 
 LW9-LW16 (the road's traffic, the wagon train, the caravan's door, the outlaws, the companies, the deep's own, the
-patrons, the word travels) are designed on `06-Systems/Living-World-II.md` (2026-10-09).
+patrons, the word travels) are designed and built on `06-Systems/Living-World-II.md` (2026-10-09; audited 2026-10-10,
+`01-Overview/Audit-LivingWorld-II.md`).
 
 ## LW0 - the decisions
 

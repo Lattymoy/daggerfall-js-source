@@ -584,29 +584,47 @@ below is `src/scenes/dungeonDivers.js`.
   `livingDeepCleared`): every dive into the dungeon whose hours touch the last DIVE_CLEAR_MIN (a day: `trips.js
   divesIn`) is routed over the dungeon's stops, and every stop one LEFT before the build's minute is CLEARED
   (`clearedOf`): its random foe BUILT DEAD - its corpse where it stood, its pack emptied (`setFoeDead`) - and its random
-  treasure pile built EMPTY. A stop a company is at now is being fought, not cleared; after a day the dungeon is as
-  Daggerfall builds it.
-- **ONLINE** every reader builds the same set (it is pure). Built differently from the design: the room's host
-  applies no `died` stamps at the minute each stop was passed - the set is built dead at the build, each foe's stamp
-  the build's, and the room's respawn law (DUNGEON_RESPAWN_MS) follows from there.
+  treasure pile built EMPTY (its flat gone, as one the player emptied). A stop a company is at now is being fought,
+  not cleared; after a day the dungeon is as Daggerfall builds it. AUDIT LW-II D1: the clear stands at the build's
+  END, after every binding a corpse reads (it stood where the foes are stood, before the relay's clock and the batches
+  were declared: every corpse's mint threw, and each cleared foe went dead with no body). D3: a foe is matched by its
+  PLACED block and its LoadID (a LoadID is its RDB block's, so a block a dungeon lays twice shares every one).
+- **ONLINE NONE** (AUDIT LW-II D5 - the design's "every reader builds the same set" was false): the set is a read at
+  each reader's own build minute over its own book, cold with its ways still to ask, so readers differed, and the
+  room's stream then stood up a joiner's dead with their packs emptied and handed the authority's dead to peers as
+  kit-rolled corpses. A room's dungeon is the room's (its stream says which foe is dead and what a pile holds).
+  Offline, a book still asking its ways reads fewer dives - fewer stops cleared, never a wrong one.
 
 ### 7.3 Found where they are, and live (`dungeonDivers.js`)
 
 - **MET WHERE THE ROUTE HAS THEM**: a company is stood about its place (`pointAt` on its floor) once the player is
   within DEEP_NEAR_M (15 m) of it, or DEEP_SEE_M (35 m) with a clear line (the pool's `clearLine`), and HOLDS there
-  (no follow). Where no route is known, met behind the player and following, as LW6 had it.
+  (no follow) - on the player's floor alone (AUDIT LW-II D7: within DEEP_FLOOR_DY, 3 m; one a floor above or below is
+  heard, never met). Where no route is known, met behind the player and following, as LW6 had it. D9: the floor's five
+  rays only for a company within hearing.
 - **THE SOUND**: not met yet, a company fighting within DEEP_HEAR_M (60 m) rings the game's own steel at its stop every
   DEEP_RING_S (2.5 s), with "You hear fighting ahead." said once.
 - **THE DOOR** (`offers`; underground the activation's `openLiving`, `mobileEnemyActivate.js`): pressing one of them in
   any mode but Steal asks - JOIN US (they follow the player along the player's TRAIL, crewAshore.js's law: a crumb each
   DIVER_TRAIL_STEP_M, DIVER_TRAIL_MAX kept), LEAD ON (each walks to their next stop's floor by the motor's own walk,
-  then on to the one after), PART WAYS (they keep to their own, asked no more), talk. Stood and not asked, they hold.
-- **HURT**: a member under RETREAT_HP (0.3) of their health falls back RETREAT_BACK_M (4 m); the company under half the
-  strength it was met with makes for the way out (its survivors' regard, the fated spared). THE END IS WHAT HAPPENS.
-- **LET GO** past DEEP_KEEP_M (70 m), not joined - met again further on its way.
+  then on to the one after - AUDIT LW-II D4: arrived when each stands within its own follow stop and
+  DIVER_ARRIVE_SLACK_M, 2 m; a fixed 3 m held a company of three at its first stop for good), PART WAYS (they keep to
+  their own, asked no more), talk. Stood and not asked, they hold. D11: at the treasure's reach (the HUD's one refusal
+  past it), and never in Info ("You see"). D6: on the way out there is no stop ahead (the first stop, passed hours
+  before, was taken as theirs).
+- **HURT**: a member under RETREAT_HP (0.3) of their health falls back RETREAT_BACK_M (4 m) (a new walk - join, lead on -
+  a new chance to); the company under half the strength it STOOD with makes for the way out (its survivors' regard, the
+  fated spared). AUDIT LW-II D2: the strength is counted as each body arrives, read once none is still coming - the
+  armed counted before any arrived, the first body in made the company "had enough" with nobody hurt (and paid its
+  regard and spared its fated for nothing). THE END IS WHAT HAPPENS.
+- **LET GO** past DEEP_KEEP_M (70 m), not joined - met again further on its way, AS IT WAS LEFT (AUDIT LW-II D8:
+  parted or not, each member's share of health); one drawing on the player is never let go (outrun, it stood again
+  whole).
 - **RIVALS**: a company not joined whose head is no friend minds its finds: the player taking from the treasure pile at
   the stop it makes for (within 4 m of it) costs each member `poached` (EVENTS, -4, once a day as a tone, kept in the
-  save), with the head's word "That was ours to find."
+  save), with the head's word "That was ours to find." - once a pile (AUDIT LW-II D12: it was said once an item).
+- **REMAINS** (AUDIT LW-II D13): a dungeon with no resting place (treasure stops alone) still lays its fallen where the
+  route has them; the places kept by the remains' key (D9).
 - Not built: the navmesh walk's own pathing for LEAD ON (the motor's follow walks to the stop as it walks to the player)
   and DEEP_SEE_M's line from every member (the place's own).
 
@@ -622,9 +640,11 @@ Measure: the build's read of a dungeon's day of dives costs at most about 95 ms 
 read back a day), paid once, inside the dungeon's load; a route is kept by trip for the dungeon.
 
 Moved pins: `lw1_livingWorld` (EVENTS' `poached`), `lw7b_beyond` (the divers' deps), `lw2_livingTown` and
-`lw11_caravan` (the talk's door asks a company below too).
+`lw11_caravan` (the talk's door asks a company below too). AUDIT LW-II: re-aimed by content `lw6b.json` LW6b-places
+(the remains' guard), and the door's reach line written apart from the companion's (`auditwatchkit_ui.json`'s
+WK-P6 records name one site).
 
-Pins: `test/lw14_deep.test.js` (10). Mutants: `tools/mutants/lw14.json` (46).
+Pins: `test/lw14_deep.test.js` (12). Mutants: `tools/mutants/lw14.json` (64).
 
 ## 8. LW15 - the patrons (BUILT 2026-10-09)
 
@@ -678,22 +698,33 @@ errand in `dayPlan.js`.
 
 - **THE TOWN'S TRADERS** (`world.js livingPatronsStep`): online, while a living town stands outside, the region's
   traders (`/v1/market/vendors`) read once each PATRON_READ_S (600 s) of real time: each town's public traders' houses
-  and the sales told, their minutes as sky minutes (`skyClassicMinutes`). Each town's LivingTown asks its own
+  and the sales told, their minutes as sky minutes (`skyClassicMinutes` of the service's own instant - AUDIT LW-II B5:
+  never this machine's offset to the relay, which moved a sale's day on a clock some minutes off). Each town's word is
+  in one order for every reader (the traders by key, the sales by minute), its version moved only when its word did,
+  and a town of the region read with nothing now forgets what it had (B6/B7: the rows' order moved browsers' errands,
+  every read made every town's day again, and a shut trader kept its browsers). Each town's LivingTown asks its own
   (`patronsOf`) and plans its day again when the word changes. Offline, nothing: no service, no sale.
 - **THE BUYER DEALT** (`patrons.js patronOf`): the seed goes to one of the town's households (the census's `h` roll,
-  never the watch, a visitor or a guardsman), in the order of their ids - every reader deals the same one.
-- **THE ERRAND** (`patronVisits`, `dayPlan.js patronErrand`): to the trader's house's door at the sale's minute, in
-  for PATRON_STAY_MIN (25), and out again - laid in its minute's place among the day's intents, the stay it falls in
-  cut for it and taken up again after (a keeper slips out to the trader's and back to the counter). A sale's minute
-  outside PATRON_OPEN_H (08:00-20:00) - a third of a real hour's minutes are a sky night - comes at its place in the
-  open hours' fold. Built differently from the design: the buyer is any household, not one FREE at the minute; the
-  errand makes the time.
+  never the watch, a visitor or a guardsman), in the order of their ids - every reader deals the same one - over the
+  people HOLDING the town's places that day (AUDIT LW-II B12: `peopleOf` - a newcomer where the census's own is gone;
+  over the census, the dead were dealt and named).
+- **THE ERRAND** (`patronVisits`, `dayPlan.js patronErrand`): to the trader's house's door, in for PATRON_STAY_MIN
+  (25), and out again, PATRON_DELAY_DAYS (2) living days after the sale's own (AUDIT LW-II B1: online a living day is a
+  real hour, the service reckons whole PAST hours and a reader asks each 600 s - the sale's own day was over before any
+  reader knew of it, and no patron was ever seen walking in). An APPOINTMENT (B2): laid before every stay that begins at
+  its minute or after, the stay it falls in (or ends within a walk of) cut for it and taken up again after (a keeper
+  slips out to the trader's and back to the counter), and it may come PATRON_LATE_MIN (45) late and still go in. A
+  sale's minute outside PATRON_OPEN_H (09:00-17:00 - an evening's errand ran into a farmer's bedtime) comes at its place
+  in the open hours' fold. Measured on the synthetic town (thirty a resident a day, every household, four days): 0.3%
+  of errands dropped at the calendar's pace, 3.5% at the online pace (a long day's walks) - a tenth and a quarter
+  before. Built differently from the design: the buyer is any household, not one FREE at the minute; the errand makes
+  the time.
 - **BROWSERS** (`dayPlan.js` `browse`): PATRON_BROWSE_SHARE (0.1) of a household's errands go to one of the town's
   public traders' houses instead, on a draw of their own - they look and never buy. A town with no trader plans as it
   did (pinned by a digest of LW14's plans). Built differently: any errand, not by the trader's stock's kind.
 - **THE OWNER IS TOLD** (`vendorPage.js`): its sales to patrons beside its sales to players, "Sold to Ada Lark of
-  Wayrest - ..." - the host's `patronName` (`livingPatronName`: the town's LivingTown's dealt resident where it
-  stands, else "a townsperson of" it).
+  Wayrest - ..." - the host's `patronName` (`livingPatronName`: the town's LivingTown's `patronOfSale`, the one who
+  walks in, where it stands, else "a townsperson of" it).
 - Not built: INSIDE (8.2 of the design) - a patron or a browser goes in at the house's door and comes out; the town is
   still never inside a player's home. The town's talk of a good find at the player's house is LW16's.
 
@@ -727,20 +758,26 @@ the host's is `scenes/world.js` (the visits, worked a slice a frame).
   a keepsake carried home, a band of its region routed, a party of its region robbed) - each as it stood at the
   minute the party set out (`outT0`): a deed known after they left stays behind.
 - **KNOWN HERE FROM ITS COMING IN** (the trip's `outT1`) for NEWS_DAYS (3), from the visits of the last NEWS_DAYS days.
-  Never the town's own news as carried (a region's tale it knows already is its own); an item two carried, from the
-  first in.
+  Never the town's own news as carried; an item two carried, from the first in. AUDIT LW-II B8: never its own region's
+  tales (a band of it routed, a party of it robbed) carried in from a town of the region - they are its own word, and
+  carried in again they outlived its own days.
 - **A COURIER, ONE HOP FURTHER**: a party with a courier carries too what its own town had heard from ITS visitors by
-  the time it set out - each item from the town it was first told in. Never two hops.
+  the time it set out - each item from the town it was first told in. Never two hops, and never the town's OWN word
+  come back (B8: a courier's town had a visit from this one - told here as "word from" itself, its deeds' repute
+  counted again).
 - **TOLD** (`lines.js newsScript`): CARRIED_SHARE (0.3) of the news a meeting tells, on a draw of its own - a town with
-  none tells its own as ever (the old law replayed, pinned) - its script opened by one of CARRIED_OPENERS ("There's
-  word from {from}."), the town it came from (`meetups.js circleLine`'s `{from}`; TOKEN_FALLBACK "the next town").
+  none tells its own as ever (the old law replayed, pinned); a town with ONLY the word carried tells it as often as
+  another its own (B10: it told a third as often) - its script opened by one of CARRIED_OPENERS ("There's word from
+  {from}."), the town it came from (`meetups.js circleLine`'s `{from}`; TOKEN_FALLBACK "the next town"). B14: a band is
+  named whole in the talk ("Mac routed the Red Hand", never "routed the").
 
 ### 9.2 The character's repute (`reputeOf`)
 
 - Each deed of the character known in a town, its own or carried in, has its REPUTE: a keepsake carried home
   (`saved`) +4, a fight turned on the road (`helped`) +2, a band routed +5, one of a town struck down where it was SEEN
   (`slain`) -8, a party robbed (`robbed`) -5. One struck down unseen, one who died at the character's side, another
-  hand's killing and Project Legacy's house's news carry none.
+  hand's killing and Project Legacy's house's news carry none. AUDIT LW-II B9: the road's news counts once the town
+  knows it (the day's word is read at its noon - a fight turned, its party home at eleven, counted at five).
 - **A STRANGER'S REGARD** (`regardOf`; the talk's rows, `world.js livingRegardOf`): one with no regard of their own
   takes the town's repute, the sum held between REPUTE_MIN and REPUTE_MAX (ENEMY_AT + 1, FRIEND_AT - 1): read, never
   stored - a name heard makes nobody a friend or an enemy. A known face keeps their own.
@@ -751,7 +788,8 @@ the host's is `scenes/world.js` (the visits, worked a slice a frame).
   reported (LW11 - a hand in a caravan's goods, its hold-up, a purse picked) is, once a witness carries it in and it
   is charged, a tale of its region's towns (relations.js TALE_KINDS `held`, `R<region>.<minute>~<crime>`, the name of
   the one robbed - the report now names them), in its own words (HELD_NEWS). A murder charged never one: it is the
-  hand's. Void, none.
+  hand's. Void, none. (AUDIT LW-II: the road's reports were void in the host until LW11's audit, C1 - a place held by a
+  newcomer could not be found, so no witness was ever living; see `01-Overview/Audit-LivingWorld-II.md`.)
 
 ### 9.3 The host, and the measure
 
@@ -759,12 +797,16 @@ the host's is `scenes/world.js` (the visits, worked a slice a frame).
   `livingVisitsGen`): a generator over the visits of the last NEWS_DAYS days - each town about's trips a slice, its
   visitors, each visit's town's news a day a slice, a courier's town's visits - worked LIVING_CARRIED_SLICE_MS (3 ms)
   a frame (`livingCarriedStep`); the LivingTown asks it by its day (`carriedOf`) and tells it once done. A word worked
-  while a way was still being asked is worked again after LIVING_CARRIED_RETRY_MS (5 s). The towns'
-  visitors and told trips are kept while the roads' memo stands, made again with a new network or a turn of fate
-  (`livingWordFresh`).
+  while a way was still being asked is worked again after LIVING_CARRIED_RETRY_MS (5 s) - AUDIT LW-II B4: including a
+  visit whose town's news had a day still asked (it was kept partial for good). While the word is worked again the town
+  tells the one it had (B11: the strangers' regard and words blinked out for the frames the working took); a working
+  that throws ends partial, never wedging the slice (B13). The towns' visitors and told trips are kept while the roads'
+  memo stands, made again with a new network or a turn of fate (`livingWordFresh`).
 - Measure (`tools/livingPerfProbe.mjs` "THE WORD CARRIED", the 81-town synthetic map, each town cold): the whole word
   70-85 ms - in one frame that was a hitch, the base day read itself 45-50 ms cold - now in at most 1,352 slices, the
-  worst 3-6 ms (a collection lifts one to 15 now and then); the word told, a minute's read, 0.05 ms.
+  worst 3-6 ms (a collection lifts one to 15 now and then); the word told, a minute's read, 0.05 ms - AUDIT LW-II B3:
+  a visit's deeds read once and kept with the turns (each minute's read ran every visit's and relay's turns again:
+  18-80 ms a frame once a sky minute for a character of many deeds; the 0.05 ms was measured with none).
 
 ### 9.4 The four hosts, the pins
 
@@ -778,12 +820,15 @@ news at any minute), `lw8b_talk` (a stranger's word of a deed heard), `lw11_cara
 robbed). Re-aimed by content: `lw6d.json` LW6d-early and its TALE_KINDS record, `lw8b.json` LW8b-greet-seen,
 `lw7.json` LW7-host-helped.
 
-Pins: `test/lw16_word.test.js` (5) - the word carried (the window, the set-out, the own, the first in, the deeds, the
+Moved pins (AUDIT LW-II): `lwfix4_turns` (the readers of `livingMemoFresh`, five to six); re-aimed `lw4.json`
+LW4-news-nameless (a band named whole beside it).
+
+Pins: `test/lw16_word.test.js` (8) - the word carried (the window, the set-out, the own, the first in, the deeds, the
 courier's one hop); the repute (each kind, the bounds, the order, the stranger, the share); told (the share on its own
 draw, the old law replayed, the opener, a robbery's words); the living town (any town's deeds, a robbery told in its
 region, the word in its talk, the repute, a stranger's regard and word, the host's word once worked); the host's
 seams. `test/lw11_caravan.test.js` (the tale on the charge, void none, a murder none). Mutants:
-`tools/mutants/lw16.json` (64).
+`tools/mutants/lw16.json` (73).
 
 ## 10. Found on the way (not changed by this design)
 
@@ -807,13 +852,13 @@ seams. `test/lw11_caravan.test.js` (the tale on the charge, void none, a murder 
 2. The patrons' numbers (8.1): PATRON_PAY_SHARE, the town's hourly share and each seller's ceilings. And whether a
    private home's trader sells to the street (8.2).
 3. A band on the bounty board (5.4): the board is shared, a rout the character's own. Still open after LW12.
-4. The repute's numbers (9.2): REPUTE, HEARD_SHARE and CARRIED_SHARE, and whether a heard name should ever carry a
-   stranger past a friend's or an enemy's regard (built: never).
 4. The escort's pay: gold (the client's word, as a counter's gold is) is proposed. Marks (the service's) is the
    alternative.
 5. Couriers on horseback (3.1), if the rider art serves.
 6. LW9: an arrest on the road - a patrol that halts a wanted player taking them to the nearest town's court, rather
    than drawing on them (2.4).
+7. The repute's numbers (9.2): REPUTE, HEARD_SHARE and CARRIED_SHARE, and whether a heard name should ever carry a
+   stranger past a friend's or an enemy's regard (built: never).
 7. LW11: the plaque rows (Trade, Talk, Steal, Hire on on the World Tooltips plaque) and stealing from the wagon (its
    cargo a loot list on `shopliftAttempt`, NIGHT_STEAL by night) were designed and not built: the ChoiceWindow and
    the counter's own steal stand in (4.1, 4.3). Build them, or keep the door as it is?
