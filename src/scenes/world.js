@@ -23589,7 +23589,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** SD2b: the Hollow stood or taken down, its find, its lines. SD2d: called from the online frame, above the modal
    *  return, in every mode - a Hollow's end reaches a player standing inside it. It stood in the exterior's half of the
    *  frame, which the dungeon's frame never reaches: underground nothing moved the Hollow on. */
-  const sdFrame = () => { try { sdHost?.frame(); } catch (e) { console.warn('[sd] host', e?.message ?? e); } sdRealmFrame(); sdAloneFrame(); sdFightFrame(); sdVoiceFrame(); };
+  const sdFrame = () => { try { sdHost?.frame(); } catch (e) { console.warn('[sd] host', e?.message ?? e); } sdRealmFrame(); sdAloneFrame(); sdFightFrame(); sdBodyFrame(); sdVoiceFrame(); };   // INT15: and my body, said
   /** SD5a: OUT OF AN HOUR THAT WILL NOT HAVE ME - its room's hello refused for good (the Rift's own words, SD3's
    *  _sdAdmit: the Hour full, or closed) or its socket replaced: cast out before the Hollow's door (the mode machine's own
    *  exit - the realm's way out lands there) with the relay's words, once, as the court casts out (ejectFromCourt) -
@@ -23928,6 +23928,12 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  the screen while I stand near the arena and its fight is one to fight, put away otherwise. */
   let _sdPassesWarm = false;
   const _sdSayBody = bodySayer((v) => !!online?.sendSdBlow?.('vt', { v }));   // INT15: my body, said to the realm
+  /** INT15: MY BODY, in my own word, while I fight alive in the Hour's fight that answered me - to a relay that counts it
+   *  (net/bossBody.js bodySayer's pace). A frame step of its own beside the fight's. */
+  const sdBodyFrame = () => {
+    if (!sdFightLink || modes?.sdRealmSlot?.() == null || !online?.bossOk) return;
+    if (playerEntity.health > 0 && playerEntity.maxHealth > 0 && sdFightLink.joined()) _sdSayBody(playerEntity.health / playerEntity.maxHealth, performance.now());
+  };
   const sdFightFrame = () => {
     if (!sdFightLink) return;
     const inRealm = modes?.sdRealmSlot?.() != null;
@@ -23942,8 +23948,6 @@ export async function bootWorld(canvas, renderer, params, status) {
     // telegraph each compiled on its first use, a stall in the frame its first blow landed in
     if (inRealm && !_sdPassesWarm) { _sdPassesWarm = true; sdBeamPassOf(); sdFx?.warm?.(renderer.gl); sdBlows?.warm?.(); }
     if (inRealm) { try { sdBlows?.frame(); } catch (e) { console.warn('[sd] blows', e?.message ?? e); } }   // SD8d: its blows on me
-    // INT15: MY BODY, in my own word, while I fight alive in a fight that answered me (net/bossBody.js bodySayer's pace)
-    if (inRealm && online?.bossOk && playerEntity.health > 0 && playerEntity.maxHealth > 0 && sdFightLink.joined()) _sdSayBody(playerEntity.health / playerEntity.maxHealth, performance.now());
     if (inRealm && playerEntity.health > 0) { try { sdRemVoice?.frame(); } catch (e) { console.warn('[sd] voice', e?.message ?? e); } }   // SD14a: its body heard; AUDIT SD III (A5): never by the dead
     if (inRealm) { try { sdFx?.frame(); } catch (e) { console.warn('[sd] fx', e?.message ?? e); } }   // SD16: its blows seen
     if (inRealm) { try { sdSpoilsBurst?.frame(); } catch (e) { console.warn('[sd] spoils', e?.message ?? e); } }   // SD9e: its spoils, thrown and flying

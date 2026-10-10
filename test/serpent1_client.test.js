@@ -598,7 +598,7 @@ test('SERPENT1 hosts: THE WORLD HOST wires it whole - the naval host\'s seam rea
   for (const pin of [
     'get serpent() { return serpentHost; }',
     'drift: (boat) => naval?.drift?.(boat) ?? null',
-    'online.onSerpent = (w) => serpentLink?.word(w);',
+    "online.onSerpent = (w) => { if (w?.k === 'bd') serpentHost?.wrecked?.(w); else serpentLink?.word(w); };",   // PIN MOVED (INT13): the count's wreck heard beside the link
     'link.onSerpent = (w) => serpentLink?.word(w);',
     'serpentFrame();   // SERPENT1',
     'serpentAway(!onlineOn);',

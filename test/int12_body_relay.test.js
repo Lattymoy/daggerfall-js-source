@@ -337,7 +337,8 @@ test('INT15 THE CLIENT: a session notes a relay that counts (`bossOk`, off its w
   assert.match(online, /if \(primary\) this\.bossOk = relaySupportsBossRef\(relayV\);/);
   assert.match(world, /sendBody: \(v\) => !!online\?\.bossOk && !!online\?\.sendGate\?\.\(\{ k: 'vt', v \}\)/);
   assert.match(court, /if \(alive && healLive\(s\) && e\?\.maxHealth > 0\) sayBody\(e\.health \/ e\.maxHealth, t\);/);
-  assert.match(world, /if \(inRealm && online\?\.bossOk && playerEntity\.health > 0 && playerEntity\.maxHealth > 0 && sdFightLink\.joined\(\)\) _sdSayBody\(/);
+  assert.match(world, /if \(!sdFightLink \|\| modes\?\.sdRealmSlot\?\.\(\) == null \|\| !online\?\.bossOk\) return;\n    if \(playerEntity\.health > 0 && playerEntity\.maxHealth > 0 && sdFightLink\.joined\(\)\) _sdSayBody\(/);
+  assert.match(world, /sdFightFrame\(\); sdBodyFrame\(\); sdVoiceFrame\(\);/, 'each frame of the Hour');
   assert.match(host, /const sayHull = bodySayer\(\(v\) => !!live && !!deps\.online\?\.bossOk\?\.\(\) && !!deps\.online\?\.send\?\.\(\{ k: 'vt', v \}/);
   assert.match(world, /online\.onGate = \(g\) => \{ if \(g\?\.k === 'bd'\) bossCountFell\(modes\?\.gateArenaDay\?\.\(\) != null\); else gateLink\?\.word\(g\); \};/);
   assert.match(world, /if \(w\?\.k === 'bd'\) \{ bossCountFell\(slot != null\); return; \}/);

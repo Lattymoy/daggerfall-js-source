@@ -293,5 +293,5 @@ test('SD9a the relay by source: the receipts minted before the fall is said, by 
   assert.match(w, /if \(isSocialRoom\(a\.key\) && who\.subject\) \{ try \{ await this\._sdReceiptTo\(ws, who\.subject, now\); \}/);
   assert.match(w, /'sweep:sdrc'/);
   assert.match(w, /import \{ mintSdReceipt, readSdReceipt, SD_RECEIPT_TTL_S \} from '\.\.\/\.\.\/src\/net\/sdReceipt\.js';/);
-  assert.match(read('test/relayversion.test.js'), /'src\/net\/sdRemnant\.js', 'src\/net\/sdReceipt\.js'\]/, 'net/sdReceipt.js in the bundle');
+  assert.match(read('test/relayversion.test.js'), /'src\/net\/sdReceipt\.js'\]/, 'net/sdReceipt.js in the bundle');   // PIN MOVED (INT12): last still - net/sdRemnant.js walks earlier now, under net/bossRef.js
 });
