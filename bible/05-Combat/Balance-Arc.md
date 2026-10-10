@@ -276,7 +276,11 @@ arm without the module (`crit / 3` for `+crit / 3`). Pinned by execution: a clas
 evenly spaced rolls on a bare player (Long Blade 20: 62; ten more skill, fifteen more to hit; the 97 clamp), its crit
 doubling a blow (10 -> 20) at the player's quarter (0.24 crits, 0.25 does not), and a crit's +25 to hit on a player
 who dodges at 100 (the 3% floor -> 25). PIN MOVED in `test/pcaao.test.js`: a monster's classic crit roll (crit/3 for
-+crit/3) and its divisor (90 / (4 - 2) = 45%).
++crit/3) and its divisor (90 / (4 - 2) = 45%). PIN MOVED by the full suite: two overhaul blows whose first roll is a
+monster's crit (`audit39_combat`, `diseases`: 2 x 1.2 = 2.4 -> 2 is now 2 x 1.4 = 2.8 -> 3), and CI's
+`wear_vanilla` - an armed Knight's 300 blows on iron plate fall under 5 damage 29 or 52 times by the spawn's own
+`Math.random` draw (it was 80 or 105), so its "both kinds of blow land" floor is 20 where it was 30 (a 50% red on CI;
+the test's 21 mutants still die).
 
 **BAL3** - `systems/skillSoftcap.js` PLACE_THREAT, placeVeteran, wildernessThreat and progressionScaling's `place`;
 `characters/enemyEntity.js` records `progression.place`; the two seams gated on `lootRarityOn`. Pinned: the numbers
