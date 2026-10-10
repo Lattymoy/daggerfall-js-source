@@ -467,6 +467,16 @@
     ]
   },
   {
+    "name": "AUDIT-BAL-the-room-hears-the-save",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      for (const f of w.foes) delete f.eliteFoe;   // AUDIT BAL",
+    "new": "      // AUDIT BAL",
+    "tests": [
+      "test/respawn1.test.js",
+      "test/world1.test.js"
+    ]
+  },
+  {
     "name": "AUDIT-BAL-a-class-elite-at-level-one",
     "file": "src/systems/eliteFoes.js",
     "old": "const kindLevel = (t) => (t >= 128 ? classLevel : (ENEMY_BASICS[t]?.level ?? 0));",

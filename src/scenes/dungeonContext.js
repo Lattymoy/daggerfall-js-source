@@ -6274,8 +6274,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // foe whole and left it kneeling, or burning (its pile dropped after the load)
     for (const f of foes) { if (!f) continue; f.yielded = null; f.executing = null; f.sparing = null; f.trophy = null; f.yieldEvent = null; }
     if (truncate) clearOwnPuppets();   // QUEST-PARTY phase 3c: the save holds none (collectWorld), so its indices are this pool's without them - they stand again from their owners' next frames
-    const _now = _wallNow();
-    const settling = [];   // AUDIT OH-F B1: the restore's rebuilds - RestoreEnemyData is whole before the mod loop runs
     // AUDIT BAL (bible/05-Combat/Balance-Arc.md section 10): THE SAVE'S WORD ON AN ELITE, NOT THIS BUILD'S PICK. The pick
     // follows the loot ladder's switch offline (BAL4), so a save made with the ladder set the other way - or before
     // offline elites, when no offline foe was one - met a pick that crowned a foe the save held plain, or the reverse:
@@ -6285,6 +6283,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // species arm's, the hour's, the elite arm's) stands it as the save has it.
     const eliteWordOf = (sf) => (sf?.eliteFoe != null ? !!sf.eliteFoe : (!wire && !_eliteOnline ? false : null));
     w.foes?.forEach((sf, i) => { const f = foes[i], word = eliteWordOf(sf); if (f?.src && word != null && word !== !!f.src.eliteFoe) f.src = { ...f.src, eliteFoe: word }; });
+    const _now = _wallNow();
+    const settling = [];   // AUDIT OH-F B1: the restore's rebuilds - RestoreEnemyData is whole before the mod loop runs
     w.foes?.forEach((sf, i) => {
       const f = foes[i];
       if (!f || !sf) return;   // CORPSE-GOLD: a record the restore refused is a hole at its own index

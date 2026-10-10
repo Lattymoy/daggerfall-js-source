@@ -325,6 +325,11 @@ was checked against the code before it was fixed:
   the glow, the title and x3 blows on the save's plain health, its elite drop overwritten. `collectWorld` writes each
   foe's `eliteFoe`; `applyWorld` rebuilds a foe whose pick disagrees as the record has it (the species arm's path); a
   save without the field is plain offline, and online and on the wire the pick stands (`validSharedFoe` carries none).
+  The word is the save's alone: `sharedWorld` strips it from the room's memory, as it strips `noBody` (RESPAWN1's door
+  admits the record the dungeon really publishes). The word is laid on each record's source in a pre-pass after the
+  load takes its puppets down and ahead of the restore's clock, so WORLD8's memory arm reads as it did. PIN MOVED:
+  WORLD1's `sharedWorld` names the strip and AUDIT WORLD34 C2's admits it; RESPAWN1 publishes a real elite; OH-F B1
+  reads the whole restore.
 - **ELITE-FLOOR missed class foes offline** - a class foe counted as Infinity, so a level-1 character's Human Stronghold
   could hold a level-1 x5 Knight. `pickDungeonElites` takes `classLevel`: offline the level class foes are built at;
   online Infinity, the pick every client's.
