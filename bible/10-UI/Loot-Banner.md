@@ -34,7 +34,7 @@ Materials Bag tells the listeners as if it were new. So the pack is watched, not
   the house's chests: a piece taken back out of the player's own storage, or picked back up off the ground, is not new.
 - **The receiver's mark.** Like `equipSlot` and `questItem`, the mark is stripped off the wire
   (`systems/loot.js:"for (const k of RECEIVER_MARKS) delete out[k];"`) and off the zone's death record
-  (`wildDeath.js:"for (const k of RECEIVER_MARKS) delete copy[k];"`). A piece another player hands over - a trade, the
+  (`wildDropLaw.js:"for (const k of RECEIVER_MARKS) delete copy[k];"`). A piece another player hands over - a trade, the
   zone's remains, the market, a room's chest - is new to its taker.
 - **And the realm's trade law reads the same list (MARK-WIRE, FIELD BUGS 2026-10-09b).** The three receiver's marks are
   ONE list, `realmTradeLaw.js:"export const RECEIVER_MARKS = Object.freeze(['equipSlot', 'questItem', 'acquired']);"`,

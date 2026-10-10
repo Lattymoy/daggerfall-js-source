@@ -3194,8 +3194,9 @@ Mac: "Add a dueling K/D to the profile menu and player inspect profile", kept pe
   all measured inside the statement, so two tabs cannot both slip under a bound. A refused report is `recorded: false`,
   not an error (the duel was fought; it does not count again). A self-duel is `self` (400), a winner who is no account
   `no-player` (404).
-- **The routes.** `POST /v1/duel/loss { winner }` (the session is the loser, whatever the body says) and `POST
-  /v1/duel/record { id }` (any account's two counts, the id in the body), both behind a session; `GET /v1/account`
+- **The routes.** `POST /v1/duel/loss { winner }` (the session is the loser, whatever the body says - INT8, 2026-10-09:
+  RETIRED, answered 410 `retired`; a duel's result is the relay's signed `d1` receipt at `POST /v1/duel/claim`,
+  `06-Systems/Integrity-Arc.md` 5) and `POST /v1/duel/record { id }` (any account's two counts, the id in the body), both behind a session; `GET /v1/account`
   carries the caller's own as `account.duels`. The service is `acct8`.
 - **The client** (`src/net/accountClient.js accountDuels`): the loss and the ask go only with a stored session, the
   bearer in the header. `src/net/duelRecord.js` says a record ("3 won, 1 lost (K/D 3.00)"; no losses reads the wins)
@@ -3228,7 +3229,8 @@ five guests gave one account fifty wins in a quarter of an hour, with no duel.
   only ever remove a win of its own.
 - A refused report says which bound: `why` is 'guest', 'draw', 'gap', 'pair' or 'winner', and the client's line says
   it (`net/duelRecord.js duelUncountedText`; a draw says nothing more, the duel said it).
-- Pinned in `test/duel_record.test.js` over the real migrations; `tools/mutants/auditduel1.json` A1/B5.
+- Pinned in `test/duel_record.test.js` over the real migrations; `tools/mutants/auditduel1.json` A1 (B5 retired with the
+  report itself at INT8: a duel's result is the relay's receipt, `06-Systems/Integrity-Arc.md` section 5).
 
 ## PROFILE1 — the profile mark is a portrait (2026-09-25)
 

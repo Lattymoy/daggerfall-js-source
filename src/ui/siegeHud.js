@@ -89,7 +89,7 @@ export function createSiegeHud(doc, { onClaim = null, onLeave = null } = {}) {
       put('works', m.works ?? ''); parts.works.style.display = m.works ? '' : 'none';   // SEAT2b part two (b)
       paintSwatch(parts['arm-defend'], m.arms?.defend); paintSwatch(parts['arm-attack'], m.arms?.attack);   // HERALDRY-SHOWN: painted when it changes
       parts.card.style.display = m.card ? '' : 'none';
-      parts.leave.style.display = m.card ? 'none' : '';   // AUDIT-SEATS C1: the card's Close stands for it once the battle has ended
+      parts.leave.style.display = m.card || !onLeave ? 'none' : '';   // AUDIT-SEATS C1: the card's Close stands for it once the battle has ended; INT9: a readout with nothing to leave (the open zone's) has none
       if (m.card) {
         put('cardTitle', m.card.title); put('cardLine', m.card.line); put('cardHonour', m.card.honour);
         parts.claim.style.display = m.card.claim ? '' : 'none';

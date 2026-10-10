@@ -1,0 +1,133 @@
+[
+  {
+    "name": "MWFIT1-the-steel-left-pauldron-bare",
+    "file": "src/characters/ownArmorModels.js",
+    "old": "      parts: [part('left pauldron', 'steel_plate_pauldron_left.nif', ['left upper arm'])],",
+    "new": "      parts: [part('left pauldron', 'steel_plate_pauldron_left.nif')],",
+    "tests": [
+      "test/mwfit1.test.js"
+    ],
+    "note": "The player's report: the upper arm's skin up through the steel pauldron."
+  },
+  {
+    "name": "MWFIT1-the-ebony-right-pauldron-bare",
+    "file": "src/characters/ownArmorModels.js",
+    "old": "      parts: [part('right pauldron', 'ebony_plate_pauldron_right.nif', ['right upper arm'])],",
+    "new": "      parts: [part('right pauldron', 'ebony_plate_pauldron_right.nif')],",
+    "tests": [
+      "test/mwfit1.test.js"
+    ],
+    "note": "\"the ebony armor gets the same issue\""
+  },
+  {
+    "name": "MWFIT1-the-pauldron-hides-the-other-arm",
+    "file": "src/characters/ownArmorModels.js",
+    "old": "      parts: [part('right pauldron', 'steel_plate_pauldron_right.nif', ['right upper arm'])],",
+    "new": "      parts: [part('right pauldron', 'steel_plate_pauldron_right.nif', ['left upper arm'])],",
+    "tests": [
+      "test/mwfit1.test.js"
+    ]
+  },
+  {
+    "name": "MWFIT1-the-closed-steel-helm-shows-the-head",
+    "file": "src/characters/ownArmorModels.js",
+    "old": "  const helmClosed = Object.freeze([part('hair', 'steel_plate_helm_closed.nif', ['head'])]);",
+    "new": "  const helmClosed = Object.freeze([part('hair', 'steel_plate_helm_closed.nif')]);",
+    "tests": [
+      "test/mwfit1.test.js",
+      "test/mwsteel1.test.js"
+    ],
+    "note": "Unlifted, the closed helm's crown is no hat for the game's head - Mac's MW-STEEL5 screenshot, the scalp through it."
+  },
+  {
+    "name": "MWFIT1-the-ebony-helm-shows-the-head",
+    "file": "src/characters/ownArmorModels.js",
+    "old": "{ parts: [part('hair', 'ebony_plate_helm.nif', ['head'])] }),",
+    "new": "{ parts: [part('hair', 'ebony_plate_helm.nif')] }),",
+    "tests": [
+      "test/mwfit1.test.js",
+      "test/mwebony1.test.js"
+    ]
+  },
+  {
+    "name": "MWFIT1-the-open-helm-hides-the-face",
+    "file": "src/characters/ownArmorModels.js",
+    "old": "  const helmOpen = Object.freeze([part('hair', 'steel_plate_helm_open.nif')]);",
+    "new": "  const helmOpen = Object.freeze([part('hair', 'steel_plate_helm_open.nif', ['head'])]);",
+    "tests": [
+      "test/mwfit1.test.js",
+      "test/mwsteel1.test.js"
+    ],
+    "note": "The open helm is open: its face is the head's."
+  },
+  {
+    "name": "MWFIT1-the-first-person-loses-the-upper-arm",
+    "file": "src/formats/mwItemMap.js",
+    "old": "    if (key && !(slots[i2].under && !fpWornAdds([slots[i2].under]).length)) fpShadows.add(key);",
+    "new": "    if (key) fpShadows.add(key);",
+    "tests": [
+      "test/mwfit1.test.js",
+      "test/mwebony1.test.js"
+    ],
+    "note": "A pauldron the first person never draws hides the upper arm there anyway: a hole between the shoulder and the gauntlet."
+  },
+  {
+    "name": "MWFIT1-the-first-person-keeps-every-hidden-skin",
+    "file": "src/formats/mwItemMap.js",
+    "old": "    if (key && !(slots[i2].under && !fpWornAdds([slots[i2].under]).length)) fpShadows.add(key);",
+    "new": "    if (key && !slots[i2].under) fpShadows.add(key);",
+    "tests": [
+      "test/mwfit1.test.js"
+    ],
+    "note": "Every hide treated as a pauldron's: the forearm drawn inside the first person's gauntlet."
+  },
+  {
+    "name": "MWFIT1-the-hide-under-nothing",
+    "file": "src/formats/mwItemMap.js",
+    "old": "        for (const h of p.hides ?? []) claim(ARMO_PART.findIndex((r) => r.name === h), prio, null, add);",
+    "new": "        for (const h of p.hides ?? []) claim(ARMO_PART.findIndex((r) => r.name === h), prio, null);",
+    "tests": [
+      "test/mwfit1.test.js",
+      "test/mwebony1.test.js"
+    ]
+  },
+  {
+    "name": "MWFIT1-the-slot-forgets-what-it-lies-under",
+    "file": "src/formats/mwItemMap.js",
+    "old": "    slot.prio = prio; slot.add = add; slot.shadow = true; slot.under = under;",
+    "new": "    slot.prio = prio; slot.add = add; slot.shadow = true;",
+    "tests": [
+      "test/mwfit1.test.js"
+    ]
+  },
+  {
+    "name": "MWFIT1-a-robe-over-the-pauldron-keeps-its-exemption",
+    "file": "src/formats/mwItemMap.js",
+    "old": "    slot.prio = prio; slot.add = add; slot.shadow = true; slot.under = under;",
+    "new": "    slot.prio = prio; slot.add = add; slot.shadow = true; slot.under = under ?? slot.under;",
+    "tests": [
+      "test/mwfit1.test.js"
+    ],
+    "equivalent": true,
+    "why": "Unreachable through the walk: the pieces are claimed in the reference's slotlist order (wornOrder - the robe and the skirt first), every own model claims at an armour's priority, and a later claim at that priority loses the strictly-greater gate - so nothing ever claims over a pauldron's hide. Clearing `under` on every claim is kept so a slot owns no stale exemption if that order ever changes."
+  },
+  {
+    "name": "MWFIT1-the-fp-skin-reads-the-third-person",
+    "file": "src/combat/fpArm.js",
+    "old": "      worn.fpShadows ?? worn.shadows);",
+    "new": "      worn.shadows);",
+    "tests": [
+      "test/mwfit1.test.js"
+    ]
+  },
+  {
+    "name": "MWFIT1-overFit-forgets-the-export",
+    "file": "tools/helmLiftProbe.mjs",
+    "old": "  return +((helm.lift ?? 0) + helm.shapes[0].box[0][2] - fit).toFixed(6);",
+    "new": "  return helm.lift ?? 0;",
+    "tests": [
+      "test/mwsteel5.test.js"
+    ],
+    "note": "The closed helm read as standing at MW-STEEL1's fit: Mac's export stands it a unit higher, so the screenshot's reading moves a unit."
+  }
+]

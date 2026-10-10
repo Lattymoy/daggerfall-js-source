@@ -2,8 +2,8 @@
   {
     "name": "WILDSEEN-room-late",
     "file": "src/scenes/world.js",
-    "old": "      wildRemains.setRoom(room);\n      wildRemains.onWord(w);",
-    "new": "      wildRemains.onWord(w);",
+    "old": "      wildRemains.setRooms(online.heldRooms());\n      wildRemains.onWord(w, room);",
+    "new": "      wildRemains.onWord(w, room);",
     "tests": ["test/waypoints.test.js"]
   },
   {

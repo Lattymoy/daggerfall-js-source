@@ -324,7 +324,7 @@
  {
   "name": "PVPREF-unnamed-template",
   "file": "src/net/siegeRef.js",
-  "old": "  if (!top) return 0;\n",
+  "old": "  if (!top) return null;\n",
   "new": "",
   "tests": [
    "test/pvpref_law.test.js"
@@ -333,8 +333,8 @@
  {
   "name": "PVPREF-material-ignored",
   "file": "src/net/siegeRef.js",
-  "old": "  return Math.max(0, top + mat + SIEGE_BONUS_MAX) * SIEGE_CRIT_MAX;",
-  "new": "  return Math.max(0, top + SIEGE_BONUS_MAX) * SIEGE_CRIT_MAX;",
+  "old": "  return top + (Number.isInteger(m) && m >= 0 && m < SIEGE_MATERIAL_MOD.length ? SIEGE_MATERIAL_MOD[m] : 0);",
+  "new": "  return top;",
   "tests": [
    "test/pvpref_law.test.js"
   ]
@@ -342,8 +342,8 @@
  {
   "name": "PVPREF-material-past-table",
   "file": "src/net/siegeRef.js",
-  "old": "  const mat = Number.isInteger(m) && m >= 0 && m < SIEGE_MATERIAL_MOD.length ? SIEGE_MATERIAL_MOD[m] : 0;",
-  "new": "  const mat = Number.isInteger(m) && m >= 0 ? SIEGE_MATERIAL_MOD[m] : 0;",
+  "old": "  return top + (Number.isInteger(m) && m >= 0 && m < SIEGE_MATERIAL_MOD.length ? SIEGE_MATERIAL_MOD[m] : 0);",
+  "new": "  return top + (Number.isInteger(m) && m >= 0 ? SIEGE_MATERIAL_MOD[m] : 0);",
   "tests": [
    "test/pvpref_law.test.js"
   ]
@@ -453,8 +453,8 @@
  {
   "name": "PVPREF-blow-kind-one-way",
   "file": "src/net/siegeRef.js",
-  "old": "  if (shaft !== siegeIsBow(held.w)) return",
-  "new": "  if (shaft && !siegeIsBow(held.w)) return",
+  "old": "  if (shaft !== siegeIsBow(held.w) ||",
+  "new": "  if (shaft && !siegeIsBow(held.w) ||",
   "tests": [
    "test/pvpref_law.test.js"
   ]
@@ -482,7 +482,7 @@
  {
   "name": "PVPREF-blow-unclipped",
   "file": "src/net/siegeRef.js",
-  "old": "  const got = Math.min(want, siegeBlowMax(held.w, held.m), to.hp);",
+  "old": "  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa), to.hp);",
   "new": "  const got = Math.min(want, to.hp);",
   "tests": [
    "test/pvpref_law.test.js",
@@ -492,8 +492,8 @@
  {
   "name": "PVPREF-blow-past-left",
   "file": "src/net/siegeRef.js",
-  "old": "  const got = Math.min(want, siegeBlowMax(held.w, held.m), to.hp);",
-  "new": "  const got = Math.min(want, siegeBlowMax(held.w, held.m));",
+  "old": "  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa), to.hp);",
+  "new": "  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa));",
   "tests": [
    "test/pvpref_law.test.js"
   ]
@@ -501,8 +501,8 @@
  {
   "name": "PVPREF-blow-fractional",
   "file": "src/net/siegeRef.js",
-  "old": "  const want = Math.max(0, Math.trunc(Number(d) || 0));\n  const got = Math.min(want, siegeBlowMax(held.w, held.m), to.hp);",
-  "new": "  const want = Math.max(0, Number(d) || 0);\n  const got = Math.min(want, siegeBlowMax(held.w, held.m), to.hp);",
+  "old": "  const want = Math.max(0, Math.trunc(Number(d) || 0));\n  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa), to.hp);",
+  "new": "  const want = Math.max(0, Number(d) || 0);\n  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa), to.hp);",
   "tests": [
    "test/pvpref_law.test.js"
   ]
@@ -510,8 +510,8 @@
  {
   "name": "PVPREF-blow-below-nought",
   "file": "src/net/siegeRef.js",
-  "old": "  const want = Math.max(0, Math.trunc(Number(d) || 0));\n  const got = Math.min(want, siegeBlowMax(held.w, held.m), to.hp);",
-  "new": "  const want = Math.trunc(Number(d) || 0);\n  const got = Math.min(want, siegeBlowMax(held.w, held.m), to.hp);",
+  "old": "  const want = Math.max(0, Math.trunc(Number(d) || 0));\n  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa), to.hp);",
+  "new": "  const want = Math.trunc(Number(d) || 0);\n  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa), to.hp);",
   "tests": [
    "test/pvpref_law.test.js"
   ]

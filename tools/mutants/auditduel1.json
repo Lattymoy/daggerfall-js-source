@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-DUEL1-A1-guests-counted",
     "file": "server-account/src/accounts.js",
-    "old": "  if (!loser.handle) {\n",
-    "new": "  if (false) {\n",
+    "old": "WHERE EXISTS (SELECT 1 FROM players WHERE id = ?1 AND handle IS NOT NULL)",
+    "new": "WHERE EXISTS (SELECT 1 FROM players WHERE id = ?1)",
     "tests": [
       "test/duel_record.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-DUEL1-A1-a-guest-winner-counted",
     "file": "server-account/src/accounts.js",
-    "old": "WHERE EXISTS (SELECT 1 FROM players WHERE id = ?2 AND handle IS NOT NULL)",
-    "new": "WHERE EXISTS (SELECT 1 FROM players WHERE id = ?2)",
+    "old": "       AND EXISTS (SELECT 1 FROM players WHERE id = ?2 AND handle IS NOT NULL)",
+    "new": "       AND EXISTS (SELECT 1 FROM players WHERE id = ?2)",
     "tests": [
       "test/duel_record.test.js"
     ]
@@ -22,24 +22,6 @@
     "file": "server-account/src/accounts.js",
     "old": "AND at > ?3 - ?5) < ?7`,",
     "new": "AND at > ?3 - ?5) < ?7 + 1000`,",
-    "tests": [
-      "test/duel_record.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-DUEL1-B5-the-draw-unread",
-    "file": "server-account/src/accounts.js",
-    "old": "  if (Number(mutual?.meta?.changes ?? 0) > 0) return { recorded: false, why: 'draw'",
-    "new": "  if (false) return { recorded: false, why: 'draw'",
-    "tests": [
-      "test/duel_record.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-DUEL1-B5-the-draw-takes-a-strangers-row",
-    "file": "server-account/src/accounts.js",
-    "old": "'DELETE FROM duel_results WHERE loser = ?1 AND winner = ?2 AND at >= ?3 - ?4'",
-    "new": "'DELETE FROM duel_results WHERE loser = ?1 AND at >= ?3 - ?4'",
     "tests": [
       "test/duel_record.test.js"
     ]
@@ -85,15 +67,6 @@
     "file": "src/net/duelSession.js",
     "old": "incoming.delete(from); quiet.set(from, now()); if (d.why",
     "new": "incoming.delete(from); if (d.why",
-    "tests": [
-      "test/auditduel1.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-DUEL1-B5-the-draw-unsaid",
-    "file": "src/net/duelSession.js",
-    "old": "          if (!dl && duel && duel.phase === 'over' && duel.peer === from",
-    "new": "          if (false && !dl && duel && duel.phase === 'over' && duel.peer === from",
     "tests": [
       "test/auditduel1.test.js"
     ]
@@ -153,15 +126,6 @@
     ]
   },
   {
-    "name": "AUDIT-DUEL1-B3-the-world-sink-unfloored",
-    "file": "src/scenes/world.js",
-    "old": "drainExteriorFatigue(_duelScope || a?.bundleDuel ? Math.min(n, Math.max(0, (playerEntity.fatigue ?? 0) - 1)) : n)",
-    "new": "drainExteriorFatigue(n)",
-    "tests": [
-      "test/auditduel1.test.js"
-    ]
-  },
-  {
     "name": "AUDIT-DUEL1-B6-the-trail-unread",
     "file": "src/combat/duelCombat.js",
     "old": "  if (melee) return mines.some((m) => {",
@@ -215,24 +179,6 @@
     "tests": [
       "test/auditduel1.test.js",
       "test/duel_wall.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-DUEL1-D2-the-heal-without-its-strip",
-    "file": "src/scenes/world.js",
-    "old": "    if (Array.isArray(playerEntity.activeEffects)) playerEntity.activeEffects = playerEntity.activeEffects.filter((a) => !a?.bundleDuel);\n",
-    "new": "",
-    "tests": [
-      "test/auditduel1.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-DUEL1-D2-the-heal-without-health",
-    "file": "src/scenes/world.js",
-    "old": "    if (playerEntity.health > 0 && !modes?.deathUp?.()) {\n      playerEntity.health = playerEntity.maxHealth;\n",
-    "new": "    if (playerEntity.health > 0 && !modes?.deathUp?.()) {\n",
-    "tests": [
-      "test/auditduel1.test.js"
     ]
   },
   {
