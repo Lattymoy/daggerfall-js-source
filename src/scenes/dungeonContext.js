@@ -6137,8 +6137,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // on playerLevel), so a record that reaches another client patches only its own kind at that index.
         mobileType: f.mobileType,
         gender: f.gender,   // WORLD3: and the gender, so a rebuilt roster wears the right sheet
-        eliteFoe: !!f.entity.eliteFoe,   // AUDIT BAL: the save's word on an elite - the build's pick follows the ladder's switch offline (applyWorld)
         maxHealth: f.entity.maxHealth,
+        eliteFoe: !!f.entity.eliteFoe,   // AUDIT BAL: the save's word on an elite - the build's pick follows the ladder's switch offline (applyWorld)
         fatigue: f.entity.fatigue ?? 0,
         activeEffects: (f.entity.activeEffects ?? []).map(copyEffectEntry),
         // AUDIT 63 F26: the TEAM pair - SerializableEnemy.cs:125
@@ -6276,6 +6276,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (truncate) clearOwnPuppets();   // QUEST-PARTY phase 3c: the save holds none (collectWorld), so its indices are this pool's without them - they stand again from their owners' next frames
     const _now = _wallNow();
     const settling = [];   // AUDIT OH-F B1: the restore's rebuilds - RestoreEnemyData is whole before the mod loop runs
+    // AUDIT BAL (bible/05-Combat/Balance-Arc.md section 10): THE SAVE'S WORD ON AN ELITE, NOT THIS BUILD'S PICK. The pick
+    // follows the loot ladder's switch offline (BAL4), so a save made with the ladder set the other way - or before
+    // offline elites, when no offline foe was one - met a pick that crowned a foe the save held plain, or the reverse:
+    // its glow, title and x3 blows on the save's plain health. A save without the field is from before them: offline
+    // its foes were plain; online, and on the wire (validSharedFoe carries no such field - every client's pick is the
+    // same), the build's pick stands. The word is laid on each record's source first, so any rebuild below (the
+    // species arm's, the hour's, the elite arm's) stands it as the save has it.
+    const eliteWordOf = (sf) => (sf?.eliteFoe != null ? !!sf.eliteFoe : (!wire && !_eliteOnline ? false : null));
+    w.foes?.forEach((sf, i) => { const f = foes[i], word = eliteWordOf(sf); if (f?.src && word != null && word !== !!f.src.eliteFoe) f.src = { ...f.src, eliteFoe: word }; });
     w.foes?.forEach((sf, i) => {
       const f = foes[i];
       if (!f || !sf) return;   // CORPSE-GOLD: a record the restore refused is a hole at its own index
@@ -6287,19 +6296,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (wire && sf.dead && respawnDue(sf.died, _now)) {   // AUDIT WORLD7/8 B8: the ROOM's species first (WORLD3's roster law) - a fresh rebuild as the record's kind, alive
         if (sf.mobileType != null && sf.mobileType !== f.mobileType) settling.push(retypeFoe(i, sf.mobileType, sf.gender ?? null));   // AUDIT 68 S19-retype-orphans-corpse: the corpse leaves in stand(), on success - freed first, a refused rebuild left a bodiless dead foe
         else if (f.dead) respawnFoe(i);
-        return;
-      }
-      // AUDIT BAL (bible/05-Combat/Balance-Arc.md section 10): THE SAVE'S WORD ON AN ELITE, NOT THIS BUILD'S PICK. The pick
-      // follows the loot ladder's switch offline (BAL4), so a save made with the ladder set the other way - or before
-      // offline elites, when no offline foe was one - met a pick that crowned a foe the save held plain, or the reverse:
-      // its glow, title and x3 blows on the save's plain health. A save without the field is from before them: offline
-      // its foes were plain; online, and on the wire (validSharedFoe carries no such field - every client's pick is the
-      // same), the build's pick stands. A disagreeing foe is rebuilt as the record has it, the record landing on it - the
-      // species arm's own path (an elite's drop and scale are the build's, then the save's list and health overlay).
-      const eliteWord = sf.eliteFoe != null ? !!sf.eliteFoe : (!wire && !_eliteOnline ? false : null);
-      if (eliteWord != null && f.src && eliteWord !== !!f.src.eliteFoe) f.src = { ...f.src, eliteFoe: eliteWord };
-      if (eliteWord != null && f.entity && eliteWord !== !!f.entity.eliteFoe && i < _layoutFoes && (sf.mobileType == null || sf.mobileType === f.mobileType)) {
-        settling.push(retypeFoe(i, f.mobileType, f.gender ?? null).then((ok) => { if (ok && foes[i]) patchFoe(foes[i], sf, wire); }).catch((e) => console.error('[load] the rebuilt foe could not take the record', e)));
         return;
       }
       if (sf.mobileType != null && sf.mobileType !== f.mobileType) {   // AUDIT WORLD B4: another species at this index (a save from before the field patches blind)
@@ -6318,6 +6314,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // body the room had emptied full again, on every entry. The body's own record, once it stands dead (a save has
         // no loot list - its bodies carry their own items - so nothing lands there).
         settling.push(retypeFoe(i, sf.mobileType, sf.gender ?? null).then((ok) => { if (ok && foes[i]) { patchFoe(foes[i], sf, wire); applyLoot(bodyRecords(w.loot, i)); } }).catch((e) => console.error('[online] the rebuilt foe could not take the record - the foe stands as it is:', e)));   // AUDIT ONCRASH1 A1: the async tail has its own catch - `_deliver` cannot see past the promise it is handed
+        return;
+      }
+      // AUDIT BAL: a foe whose elite the save words otherwise than this build's pick (eliteWordOf, the pre-pass above) is
+      // rebuilt as the record has it, the record landing on it - the species arm's own path (an elite's drop and scale
+      // the build's, then the save's list and health overlay)
+      const eliteWord = eliteWordOf(sf);
+      if (eliteWord != null && f.entity && eliteWord !== !!f.entity.eliteFoe && i < _layoutFoes) {
+        settling.push(retypeFoe(i, f.mobileType, f.gender ?? null).then((ok) => { if (ok && foes[i]) patchFoe(foes[i], sf, wire); }).catch((e) => console.error('[load] the rebuilt foe could not take the record', e)));
         return;
       }
       // REVENANT-FATE (the 2026-10-02 audit): one gone with no body (fled, burnt away, sworn) - out again with none: a save

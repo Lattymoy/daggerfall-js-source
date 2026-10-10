@@ -424,8 +424,8 @@
   {
     "name": "AUDIT-BAL-an-old-save-keeps-the-pick",
     "file": "src/scenes/dungeonContext.js",
-    "old": "const eliteWord = sf.eliteFoe != null ? !!sf.eliteFoe : (!wire && !_eliteOnline ? false : null);",
-    "new": "const eliteWord = sf.eliteFoe != null ? !!sf.eliteFoe : null;",
+    "old": "const eliteWordOf = (sf) => (sf?.eliteFoe != null ? !!sf.eliteFoe : (!wire && !_eliteOnline ? false : null));",
+    "new": "const eliteWordOf = (sf) => (sf?.eliteFoe != null ? !!sf.eliteFoe : null);",
     "tests": [
       "test/bal_arc.test.js"
     ]
@@ -433,8 +433,8 @@
   {
     "name": "AUDIT-BAL-the-wire-rebuilds",
     "file": "src/scenes/dungeonContext.js",
-    "old": "const eliteWord = sf.eliteFoe != null ? !!sf.eliteFoe : (!wire && !_eliteOnline ? false : null);",
-    "new": "const eliteWord = sf.eliteFoe != null ? !!sf.eliteFoe : (!_eliteOnline ? false : null);",
+    "old": "const eliteWordOf = (sf) => (sf?.eliteFoe != null ? !!sf.eliteFoe : (!wire && !_eliteOnline ? false : null));",
+    "new": "const eliteWordOf = (sf) => (sf?.eliteFoe != null ? !!sf.eliteFoe : (!_eliteOnline ? false : null));",
     "tests": [
       "test/bal_arc.test.js"
     ]
@@ -442,8 +442,8 @@
   {
     "name": "AUDIT-BAL-online-old-saves-plain",
     "file": "src/scenes/dungeonContext.js",
-    "old": "const eliteWord = sf.eliteFoe != null ? !!sf.eliteFoe : (!wire && !_eliteOnline ? false : null);",
-    "new": "const eliteWord = sf.eliteFoe != null ? !!sf.eliteFoe : (!wire ? false : null);",
+    "old": "const eliteWordOf = (sf) => (sf?.eliteFoe != null ? !!sf.eliteFoe : (!wire && !_eliteOnline ? false : null));",
+    "new": "const eliteWordOf = (sf) => (sf?.eliteFoe != null ? !!sf.eliteFoe : (!wire ? false : null));",
     "tests": [
       "test/bal_arc.test.js"
     ]
@@ -451,8 +451,8 @@
   {
     "name": "AUDIT-BAL-a-disagreeing-foe-patched-in-place",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      if (eliteWord != null && f.entity && eliteWord !== !!f.entity.eliteFoe && i < _layoutFoes",
-    "new": "      if (false && eliteWord != null && f.entity && eliteWord !== !!f.entity.eliteFoe && i < _layoutFoes",
+    "old": "      if (eliteWord != null && f.entity && eliteWord !== !!f.entity.eliteFoe && i < _layoutFoes) {",
+    "new": "      if (false && eliteWord != null && f.entity && eliteWord !== !!f.entity.eliteFoe && i < _layoutFoes) {",
     "tests": [
       "test/bal_arc.test.js"
     ]
@@ -460,7 +460,7 @@
   {
     "name": "AUDIT-BAL-the-rebuild-forgets-the-word",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      if (eliteWord != null && f.src && eliteWord !== !!f.src.eliteFoe) f.src = { ...f.src, eliteFoe: eliteWord };",
+    "old": "if (f?.src && word != null && word !== !!f.src.eliteFoe) f.src = { ...f.src, eliteFoe: word };",
     "new": "",
     "tests": [
       "test/bal_arc.test.js"

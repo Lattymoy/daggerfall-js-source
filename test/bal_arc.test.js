@@ -488,6 +488,9 @@ test('AUDIT BAL the saved dungeon\'s elites: the save writes each foe\'s word, a
   // agreeing: patched in place, nothing rebuilt
   r = await run([rec({ eliteFoe: true }), rec({ eliteFoe: false })]);
   assert.deepEqual(r.retyped, []);
+  // another species at an index (the species arm's rebuild) stands the save's elite too - the word laid on the source first
+  r = await run([rec({ eliteFoe: true }), rec({ mobileType: 25, eliteFoe: true })]);
+  assert.deepEqual(r.retyped, [{ i: 1, elite: true }]);
   // online, a save without the field: the pick stands; the wire (validSharedFoe carries no such field) never rebuilds
   assert.deepEqual((await run([rec(), rec()], { online: true })).retyped, []);
   assert.deepEqual((await run([rec(), rec()], { wire: true })).retyped, []);
