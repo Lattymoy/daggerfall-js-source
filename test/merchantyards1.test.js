@@ -426,7 +426,7 @@ test('MERCHANT-YARDS THE FOUR HOSTS - world.js places, stands, draws and names t
   assert.match(world, /merchantYards: yardSites,/);
   assert.match(world, /merchantYards = createMerchantYards\(\{/);
   assert.match(world, /merchantYards\?\.frame\(\)/);
-  assert.match(world, /merchantYards\?\.draw\(renderer\)/);
+  assert.match(world, /merchantYards\?\.draw\(renderer, yardCull\)/);   // PERF-YARD (AUDIT 15): with the street's view test (test/perfyard.test.js)
   assert.match(world, /livePersonBatches\.push\(\.\.\.merchantYards\.batches\(\)\)/);
   assert.equal((world.match(/merchantYards\?\.destroyAll\(\);/g) ?? []).length, 2, 'a re-anchor and a load');
   assert.match(world, /\(key\) => merchantYards\?\.hoverName\(key\) \?\? null,/);

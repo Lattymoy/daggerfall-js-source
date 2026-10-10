@@ -262,8 +262,13 @@ The fix (player/collider.js), every answer bit for bit the old walk's:
   box covers (`_near`). Movers, and buckets over 64 cells (the dungeon's own, a
   massif) or not finite, are asked by every query. Candidates are sorted back
   into the Map's order, so ties and the order the sphere's pushes land in are
-  the old walk's. The filing is a cache: `addMesh` and `removeBucket` drop it.
-  A query box over 256 cells walks everything, as before.
+  the old walk's. The filing is a cache: `removeBucket` drops it. A query box
+  over 256 cells walks everything, as before. (PERF-COL2, 2026-10-10,
+  `Performance-Priority.md`: a mover riding a floating frame - a streamed
+  pixel's bucket - is filed while its frame stands, a bucket too wide for these
+  cells is filed on 256-unit ones, and `addMesh` files its bucket into a
+  standing filing; a mover that turns or rides nothing, and a bucket too wide
+  for both, are asked by every query.)
 - **The sphere resolve's centre moves while it walks** - a push lands and the
   next bucket's box test reads the centre as it stands. Its candidates are
   gathered with the box grown by `BROAD_PAD` (1 unit) and gathered again,

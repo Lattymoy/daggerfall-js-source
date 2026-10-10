@@ -36,7 +36,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { trs } from '../world/mat4.js';
-import { localAabb, transformedAabb } from '../render/frustum.js';
+import { localAabb, transformedAabb, aabbOutside } from '../render/frustum.js';   // PERF-YARD: and the view's box test
 import { RAY_DISTANCE, DEFAULT_ACTIVATION_DISTANCE } from '../player/activate.js';
 import { billboardSize } from '../world/rmbFlats.js';
 import { armFlatAnim } from '../render/flatAnimation.js';
@@ -56,6 +56,15 @@ export const DECOR_REACH = DEFAULT_ACTIVATION_DISTANCE;
 export const DECOR_MODEL_RETRY_MS = 2000;
 export const decorKeyOf = (id) => `decor:${id}`;
 export const decorIdOfKey = (key) => (typeof key === 'string' && key.startsWith('decor:') ? key.slice(6) : null);
+/** PERF-YARD (2026-10-10, the owner: "prob caused by placed objects by players"): a host's verdict on a placed model's box
+ *  in the world (`draw`'s `cull`) - drawn, cast into the shadow maps alone, or neither. */
+export const DECOR_DRAW = 0, DECOR_SHADOW = 1, DECOR_SKIP = 2;
+/** PERF-YARD: the pixel walk's law over one box (scenes/world.js - EV3 and SHADOW-REACH): inside the view's `planes`,
+ *  drawn; outside them, cast into the maps alone where `reaches(box)` says a shadow reaches it, else neither. */
+export function decorCullVerdict(planes, box, reaches) {
+  if (!aabbOutside(planes, box)) return DECOR_DRAW;
+  return reaches(box) ? DECOR_SHADOW : DECOR_SKIP;
+}
 
 /** Where a lit piece's light hangs above its base: a TEXTURE.210 light where the room's own light of that record hangs
  *  (interiorLights.js - the flame, not the foot), any other flat at its middle, a model at its origin. */
@@ -181,7 +190,7 @@ export function createDecorRoom({
   meshes, renderer, getTexture, uploadRecord, uploadRecordFrame, flatAnims = () => null, collider, origin, roomLights = () => null,
   mwPicture = null, later = setTimeout, doors = null, prepareModel = null, standFlat = null, lampOf = null,
 }) {
-  /** @type {Map<string, {piece: any, o: number[], gpu: any, box: any, cpu: any, matrix: Float32Array, batch: any, anims: any, size: any, light: any, mount: any, door: any, release?: any}>} */
+  /** @type {Map<string, {piece: any, o: number[], gpu: any, box: any, wbox?: number[] | null, cpu: any, matrix: Float32Array, batch: any, anims: any, size: any, light: any, mount: any, door: any, release?: any}>} */
   const standing = new Map();
   const models = new Map();   // model id -> Promise<{gpu, cpu, box}>
   const flats = new Map();    // "a.r" -> Promise<{t, w, h} | null>
@@ -392,6 +401,7 @@ export function createDecorRoom({
       if (e.mount || e.door || decorIsMount(e.piece)) { put(e.piece); continue; }
       e.o = [o[0], o[1], o[2]];
       e.matrix = decorMatrix(e.piece, o);
+      e.wbox = null;   // PERF-YARD: its box in the world, made again where it stands now
       if (e.batch) { const b = e.batch.origin ?? [0, 0, 0]; e.batch.origin = [b[0] + d[0], b[1] + d[1], b[2] + d[2]]; }
       if (e.light) { e.light.x += d[0]; e.light.y += d[1]; e.light.z += d[2]; }
       if (e.cpu) {
@@ -414,10 +424,21 @@ export function createDecorRoom({
   function destroyAll() { set([]); held = new Map(); own = new Map(); kept = []; }
 
   /** The models, in the host's interior world pass - the room's texture remap, so a piece wears the climate the
-   *  room's own furniture wears. */
-  function draw(r = renderer, texRemap = null) {
+   *  room's own furniture wears. Answers how many were drawn.
+   *  PERF-YARD (2026-10-10): `cull`, where a host gives one, is its view test of a piece's box in the world - the town's
+   *  yards are culled as the town's own models are (scenes/world.js, the pixel walk: off screen and out of every
+   *  shadow's reach, nothing; off screen in a shadow's reach, the maps alone). Every piece of every yard within reach
+   *  was a draw a frame, behind the eye or not, and a recorded caster for every shadow walk. A piece whose model has no
+   *  box (no triangles to measure) is drawn, as before; a room's host gives none - a building is drawn whole. */
+  function draw(r = renderer, texRemap = null, cull = null) {
     let n = 0;
-    for (const e of standing.values()) if (e.gpu) { r?.drawMesh?.(e.gpu, e.matrix, texRemap); n++; }
+    for (const e of standing.values()) {
+      if (!e.gpu) continue;
+      const seen = cull && e.box ? cull(e.wbox ??= transformedAabb(e.box, e.matrix)) : DECOR_DRAW;
+      if (seen === DECOR_SKIP) continue;
+      if (seen === DECOR_SHADOW) { r?.recordShadowMesh?.(e.gpu, e.matrix, texRemap); continue; }
+      r?.drawMesh?.(e.gpu, e.matrix, texRemap); n++;
+    }
     return n;
   }
   /** The flats' batches, for the host's billboard pass. */

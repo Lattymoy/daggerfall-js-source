@@ -26,6 +26,7 @@
 // Not a DFU member. Ledger A (BOUNTY-FARM).
 import { bountyHash } from '../systems/bountyBoard.js';
 import { trs, multiply } from '../world/mat4.js';
+import { onFloatingFrame } from '../player/collider.js';   // PERF-COL2 (AUDIT): a farm's bucket rides the floating origin
 
 /** How far from a farm whose bounty is over the player must be before it comes down, metres. */
 export const FARM_LINGER_M = 200;
@@ -90,6 +91,7 @@ export function farmSpotLocal(id, k = 0) {
  * @param {{
  *   collider: () => any,                                   // the exterior collider (addMesh / removeBucket / heightAt)
  *   pixelTranslation: (px:number, py:number) => number[],  // the pixel's scene translation, live under the floating origin
+ *   floatingFrame?: () => any,                             // PERF-COL2 (AUDIT): the frame it rides (player/collider.js onFloatingFrame)
  *   pixelBuilt: (px:number, py:number) => any,             // the built pixel's record (texRemap, season), or null
  *   farmBlockNear: (px:number, py:number, key:string) => ({ models: Array<{modelIdNum:number, matrix:any, enhancedOnly?:boolean}>, side:number } | null),
  *   getGpuMesh: (id:number) => Promise<any>,
@@ -174,7 +176,8 @@ export function createBountyFarms(deps) {
     if (!models.length) { f.failed = true; return; }
     const live = deps.collider();
     if (live?.addMesh) {
-      const tr = () => deps.pixelTranslation(f.px, f.py);   // the pixel's own buckets' law: the translation rides the ray
+      const tr0 = () => deps.pixelTranslation(f.px, f.py);   // the pixel's own buckets' law: the translation rides the ray
+      const tr = deps.floatingFrame ? onFloatingFrame(deps.floatingFrame(), tr0) : tr0;   // PERF-COL2 (AUDIT): filed by place, as the pixel's own
       for (const m of models) {
         const cpu = deps.cpuModel(m.id);
         if (cpu?.positions && cpu.indices) live.addMesh(f.bucket, cpu.positions, cpu.indices, m.local, tr);

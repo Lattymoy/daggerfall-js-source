@@ -1,0 +1,135 @@
+[
+  {
+    "name": "PERF-COL2-a-the-sentinel-unasked",
+    "file": "src/player/collider.js",
+    "old": "    if (broad !== null && framesMoved(broad)) broad = null;",
+    "new": "    if (false) broad = null;",
+    "tests": ["test/perfcol2.test.js"]
+  },
+  {
+    "name": "PERF-COL2-b-the-coarse-cells-unasked",
+    "file": "src/player/collider.js",
+    "old": "    if (broad.coarseCells.size) {   // PERF-COL2: the wide buckets, by the coarse cells the query's box covers",
+    "new": "    if (false) {   // PERF-COL2: the wide buckets, by the coarse cells the query's box covers",
+    "tests": ["test/perfcol2.test.js"]
+  },
+  {
+    "name": "PERF-COL2-c-a-turned-rider-filed",
+    "file": "src/player/collider.js",
+    "old": "    if (bucket.frame === null || bucket.r) { fileAlways(broad, bucket); return; }",
+    "new": "    if (bucket.frame === null) { fileAlways(broad, bucket); return; }",
+    "tests": ["test/perfcol2.test.js"]
+  },
+  {
+    "name": "PERF-COL2-d-the-mark-unread",
+    "file": "src/player/collider.js",
+    "old": "frame: FRAME_OF.get(translation) ?? null, ord: -1,",
+    "new": "frame: null, ord: -1,",
+    "tests": ["test/perfcol2.test.js"]
+  },
+  {
+    "name": "PERF-COL2-e-filed-where-it-stood-before-the-frame",
+    "file": "src/player/collider.js",
+    "old": "    ox = t[0]; oz = t[2];\n",
+    "new": "",
+    "tests": ["test/perfcol2.test.js"]
+  },
+  {
+    "name": "PERF-COL2-f-a-pixel-bucket-unmarked",
+    "file": "src/scenes/world.js",
+    "old": "      const wodBucket = onFloatingFrame(state, ((o) => () => state.pixelTranslation(px, py, o))([0, 0, 0]));",
+    "new": "      const wodBucket = ((o) => () => state.pixelTranslation(px, py, o))([0, 0, 0]);",
+    "tests": ["test/perfcol2.test.js"]
+  },
+  {
+    "name": "PERF-COL2-g-the-sentinel-blind-to-a-move-north",
+    "file": "src/player/collider.js",
+    "old": "    if (t[0] !== f.x || t[2] !== f.z) return true;",
+    "new": "    if (t[0] !== f.x) return true;",
+    "tests": ["test/perfcol2.test.js"]
+  },
+  {
+    "name": "PERF-COL2-h-the-coarse-query-one-cell-wide-in-x",
+    "file": "src/player/collider.js",
+    "old": "      for (let i = 0, nx = kx1 - kx0; i <= nx; i++) {   // AUDIT: by offset, as the filing",
+    "new": "      for (let i = 0, nx = 0; i <= nx; i++) {   // AUDIT: by offset, as the filing",
+    "tests": ["test/perfcol2.test.js"]
+  },
+  {
+    "name": "PERF-COL2-i-the-coarse-query-one-cell-wide-in-z",
+    "file": "src/player/collider.js",
+    "old": "        for (let j = 0, nz = kz1 - kz0; j <= nz; j++) {\n          const list = broad.coarseCells.get(cellKey(kx0 + i, kz0 + j));",
+    "new": "        for (let j = 0, nz = 0; j <= nz; j++) {\n          const list = broad.coarseCells.get(cellKey(kx0 + i, kz0 + j));",
+    "tests": ["test/perfcol2.test.js"]
+  },
+  {
+    "name": "PERF-COL2-j-an-always-bucket-handed-twice",
+    "file": "src/player/collider.js",
+    "old": "for (const b of broad.always) if (b.ord > afterOrd) { b._broadStamp = stamp; out.push(b); }",
+    "new": "for (const b of broad.always) if (b.ord > afterOrd) out.push(b);",
+    "tests": ["test/perfcol2.test.js"]
+  },
+  {
+    "name": "PERF-COL2-k-always-out-of-the-walk-order",
+    "file": "src/player/collider.js",
+    "old": "  while (at > 0 && a[at - 1].ord > bucket.ord) at--;\n  a.splice(at, 0, bucket);",
+    "new": "  a.splice(at, 0, bucket);",
+    "tests": ["test/perfcol2.test.js"]
+  },
+  {
+    "name": "PERF-COL2-l-the-filing-dropped-at-every-mesh",
+    "file": "src/player/collider.js",
+    "old": "      if (framesMoved(broad)) this._broad = null;\n      else {",
+    "new": "      if (true) this._broad = null;\n      else {",
+    "tests": ["test/perfcol2.test.js"]
+  },
+  {
+    "name": "PERF-COL2-m-the-frame-move-unread-at-the-mesh",
+    "file": "src/player/collider.js",
+    "old": "      if (framesMoved(broad)) this._broad = null;\n      else {",
+    "new": "      if (false) this._broad = null;\n      else {",
+    "tests": ["test/perfcol2.test.js"]
+  },
+  {
+    "name": "PERF-COL2-n-a-new-bucket-left-off-the-walk",
+    "file": "src/player/collider.js",
+    "old": "        if (fresh) { bucket.ord = broad.all.length; broad.all.push(bucket); }",
+    "new": "        if (fresh) { bucket.ord = broad.all.length; }",
+    "tests": ["test/perfcol2.test.js"]
+  },
+  {
+    "name": "PERF-COL2-o-a-grown-box-not-filed",
+    "file": "src/player/collider.js",
+    "old": "        fileBucket(broad, bucket);\n      }\n    }\n  }",
+    "new": "        if (fresh) fileBucket(broad, bucket);\n      }\n    }\n  }",
+    "tests": ["test/perfcol2.test.js"]
+  },
+  {
+    "name": "PERF-COL2-p-the-cells-it-had-filed-again",
+    "file": "src/player/collider.js",
+    "old": "      if (was && gx >= bucket.bx0 && gx <= bucket.bx1 && gz >= bucket.bz0 && gz <= bucket.bz1) continue;   // filed there already\n",
+    "new": "",
+    "tests": ["test/perfcol2.test.js"]
+  },
+  {
+    "name": "PERF-COL2-q-the-walls-unmarked",
+    "file": "src/scenes/deepWatersHost.js",
+    "old": "floatingFrame ? onFloatingFrame(floatingFrame(), t) : t);",
+    "new": "t);",
+    "tests": ["test/perfcol2.test.js"]
+  },
+  {
+    "name": "PERF-COL2-r-a-farm-unmarked",
+    "file": "src/scenes/bountyFarms.js",
+    "old": "const tr = deps.floatingFrame ? onFloatingFrame(deps.floatingFrame(), tr0) : tr0;",
+    "new": "const tr = tr0;",
+    "tests": ["test/perfcol2.test.js"]
+  },
+  {
+    "name": "PERF-COL2-s-deep-waters-not-handed-the-frame",
+    "file": "src/scenes/world.js",
+    "old": "    collider, pixelTranslation: (px, py, o) => state.pixelTranslation(px, py, o), floatingFrame: () => state,",
+    "new": "    collider, pixelTranslation: (px, py, o) => state.pixelTranslation(px, py, o),",
+    "tests": ["test/perfcol2.test.js"]
+  }
+]

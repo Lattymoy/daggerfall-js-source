@@ -2189,7 +2189,11 @@ COST, through `Performance.getMetrics` - and **refuted the fix**:
 | `transform`, font-size fixed | **0.000** | **0** |
 
 Moving to `transform` alone buys nothing, because the per-frame
-`font-size` dirties layout by itself. Only moving BOTH takes the layer
+`font-size` dirties layout by itself. (PERF-NAMES, 2026-10-10,
+`Performance-Priority.md`: in the layout's column. The main thread's
+whole task - the paint and the commit with it - is ten times the
+layout, and `transform` alone takes a quarter of it off while the names
+stand and the eye turns, the same pixels; taken.) Only moving BOTH takes the layer
 off the layout path entirely - and the prize is 0.12 ms a frame at 72
 names, which is under one per cent of a frame. **Recorded, not taken:
 the win is real, small, and costs a visual change to how a name is

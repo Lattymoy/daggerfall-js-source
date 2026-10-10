@@ -304,8 +304,37 @@ export const SHADOW_RECORD_MAX = 6000;
 export const SHADOW_DYNAMIC_HOLD = 60;
 /** AUDIT SC1: how many placements of ONE mesh the pass remembers (a dungeon's doors share a model), and how far a
  *  draw may sit from a remembered placement and still be that placement's (a door swings a hand's breadth a frame). */
-export const SHADOW_INSTANCE_MAX = 128;   // AUDIT REACH: and a placement not drawn for a hold is evicted for a new one (a mesh cache is never destroyed - the doors of every dungeon of a session would fill it)
+export const SHADOW_INSTANCE_MAX = 1024;   // AUDIT REACH: and a placement not drawn for a hold is evicted for a new one (a mesh cache is never destroyed - the doors of every dungeon of a session would fill it); PERF-INST: 128 before the placements were filed by place (AUDIT PERF-INST: 1024, not 4096 - ~0.6 KB a placement, a full mesh's memory kept for the session)
 export const SHADOW_INSTANCE_REACH = 2;
+/** PERF-INST (2026-10-10, the owner: "prob caused by placed objects by players"): A MESH'S PLACEMENTS ARE FILED BY PLACE
+ *  past this many. Each draw scanned every placement its mesh had - a frame of N copies of one model was N x N
+ *  distances - and past SHADOW_INSTANCE_MAX (128 then) every further copy read as moved, for ever: a town of yards
+ *  furnished with the same chair, a room of two hundred placed pieces or a long view of a model too odd to batch had
+ *  every copy past the 128th replayed as a dynamic caster into every lantern near it, every frame. Past this count a
+ *  placement is filed on a grid of SHADOW_INSTANCE_REACH cubes, and the answer - the exact placement first (the
+ *  earliest remembered), then the nearest unclaimed one within the reach (the earliest on a tie) - is the scan's.
+ *  AUDIT PERF-INST (the redesign, every answer still the scan's):
+ *  - the cells are CUBES, not columns - a stack of copies one above another spread over their own cells, where a
+ *    column held them all and every draw measured every one;
+ *  - a cell keeps its placements in the order they were remembered, and a draw that stands more than the stillness
+ *    epsilon inside its own cell asks that cell first: the first placement there within the epsilon IS the scan's
+ *    exact one (none outside the cell can be within it), the common answer for every still copy, from one cell;
+ *    else the 3x3x3 round it, as the scan's answer is found there;
+ *  - a cell is found by OFFSET from the draw's own (a coordinate past 2^53 cells adds nothing to it - the first cut's
+ *    `gx <= cx + 1` loop never ended there);
+ *  - the cells are in the ORIGIN'S FRAME - a place less the pass's cumulative shift - so a floating-origin shift
+ *    moves no placement's cell (the first cut filed every placement again at every crossing, tens of ms with a few
+ *    full meshes); only one a float32 rounding carries over a cell's edge is filed again;
+ *  - a full memory's stalest placements are queued once a frame, ordered as the scan finds them (by when last seen,
+ *    then remembered), where the first cut walked every placement for every miss. */
+export const SHADOW_INSTANCE_LINEAR = 64;
+/** A cube's key from its three cell coordinates: ten bits each, a small integer (no number boxed a lookup); cubes
+ *  2,048 units apart on an axis share a key, which only hands a walk more placements to measure. */
+const instKey = (gx, gy, gz) => ((gx & 0x3ff) << 20) | ((gy & 0x3ff) << 10) | (gz & 0x3ff);
+/** The cubes stand off the round numbers by this share of one (the golden section's): a mesh placed on a whole grid, or
+ *  everything on a floor at y = 0, would otherwise stand on the cubes' faces, where a draw must ask a cube's
+ *  neighbours too. Where a cube's face stands decides no answer, only how many cubes are asked. */
+export const SHADOW_INSTANCE_PHASE = 0.3819660112501051;
 /** AUDIT REACH (the sway): a flora batch leaning less than this at its crown is still - half a cube texel at a lantern's
  *  typical reach - and a batch leaning more is a dynamic on ITS OWN cadence, SHADOW_SWAY_EVERY frames: the sway is slow,
  *  and every frame for every flora batch of a pixel handed SC1's whole saving back in a town with trees. */
@@ -896,6 +925,18 @@ void main() {
 const DYN_NONE = 0, DYN_SWAY = 1, DYN_MOVER = 2;
 const REC_MESH = 0, REC_TERRAIN = 1, REC_BB = 2, REC_CHAR = 3;   // EL7: the character rigs cast
 const REPLAY_ALL = 0, REPLAY_STATIC = 1, REPLAY_DYNAMIC = 2, REPLAY_LO = 3;   // SC1: what a replay draws; DISC29-E: the lo tier's - the still, and a flat that only animates where it stands
+/**
+ * PERF-FACE (2026-10-10, the owner: "prob caused by ... crowded places"): A LIVE FACE THAT HOLDS THE CACHE IS LEFT.
+ * SC1 keeps a lantern's statics in a cache and draws its movers over a copy of it - and the copy was of all six faces
+ * whenever anything moved in the lantern's reach: a walker by a lamp, a peer, a townsman, a swaying tree under Steady
+ * shadows, every frame, six full 512^2 depth copies (CACHE-COPY's draw) for a mover that stands in front of one or two
+ * of them. Each live face now knows whether it holds the cache and nothing else (`_faceDyn` 0 - a dynamic replay drew
+ * nothing into it, or a copy made it so); such a face is not copied before the movers are drawn over it, since what
+ * the copy would write is what it holds. A face a dynamic drew into (or one not known: a fresh slot, the uncached path)
+ * is copied as before, and a fresh cache copies all six. Every live face ends the frame as the cache plus this frame's
+ * movers in it - the picture the six copies made.
+ */
+const FACES_ALL = 0x3f;
 /** PERF-SHADOW1 (2026-10-06): how far past a lantern's shadow `far` the centre of a sphere of radius r may stand, on any
  *  axis, and still be taken by one of its cube's six faces - in units of r. Each face is a 90-degree perspective
  *  (pointFaceMatrices): its far plane takes a centre to far + r along the face's axis, and its four sides - planes
@@ -939,6 +980,34 @@ export const cubeKeeps = (lim, k, x, y, z, r) => {
  * `opts.build(vs, fs)` compiles a program (the renderer's _buildProgram);
  * `opts.vs` is { mesh, bb, terrain } - the renderer's own vertex shaders.
  */
+/** PERF-INST: the cube of placement `s` of `o` - its place in the origin's frame (`shift` the pass's cumulative one). */
+function _instKeyOf(s, shift) {
+  const R = SHADOW_INSTANCE_REACH;
+  return instKey(Math.floor((s.m[12] - shift[0]) / R + SHADOW_INSTANCE_PHASE), Math.floor((s.m[13] - shift[1]) / R + SHADOW_INSTANCE_PHASE), Math.floor((s.m[14] - shift[2]) / R + SHADOW_INSTANCE_PHASE));
+}
+/** PERF-INST: file placement `s` of `o` under its cube (out of the one it stood in), in its cell's remembered order. */
+function _file(o, s, shift) {
+  const k = _instKeyOf(s, shift);
+  if (s.filed && k === s.key) return;
+  const grid = o._shInstGrid;
+  if (s.filed) {
+    const was = grid.get(s.key);
+    if (was) { const i = was.indexOf(s); if (i >= 0) was.splice(i, 1); if (!was.length) grid.delete(s.key); }
+  }
+  let cell = grid.get(k);
+  if (!cell) { cell = []; grid.set(k, cell); }
+  let at = cell.length;   // AUDIT PERF-INST: in the order remembered - the first within the epsilon is the scan's exact one
+  while (at > 0 && cell[at - 1].ord > s.ord) at--;
+  cell.splice(at, 0, s);
+  s.key = k; s.filed = true;
+}
+/** PERF-INST: every placement of `o` filed (the first time past SHADOW_INSTANCE_LINEAR). */
+function _fileAll(o, shift) {
+  o._shInstGrid = new Map();
+  for (const s of o._shInst) { s.filed = false; s.key = NaN; _file(o, s, shift); }
+  return o._shInstGrid;
+}
+
 export class ShadowPass {
   constructor(gl, opts) {
     this.gl = gl;
@@ -981,6 +1050,7 @@ export class ShadowPass {
     this._slotSig = new Int32Array(2 * SHADOW_POINT_CASTERS);     // SC1: per slot, the static signature's (hash, count) the cache was drawn from
     this._slotCached = new Uint8Array(SHADOW_POINT_CASTERS);      // SC1: the cache holds this slot's light's statics
     this._slotLiveDyn = new Uint8Array(SHADOW_POINT_CASTERS);     // SC1: the live layers carry dynamics over the cache
+    this._faceDyn = new Uint8Array(6 * SHADOW_POINT_CASTERS).fill(1);   // PERF-FACE: per live face, 0 = it holds the cache and nothing else
     this._slotSelf = new Uint8Array(SHADOW_POINT_CASTERS);        // DISC24-C: the live layers carry the player's own card
     // DISC15: THE LO TIER - allocated on the first room that asks (_ensureLo), grown by SHADOW_LO_STEP. Until then a
     // one-texel array stands on SHADOW_LO_UNIT: every lane program declares the sampler, and a shadow sampler must
@@ -1305,7 +1375,11 @@ export class ShadowPass {
       const d = this._shiftDelta(o);
       for (const s of inst) { s.m[12] += d[0]; s.m[13] += d[1]; s.m[14] += d[2]; }
       this._shiftSeen(o);
+      // PERF-INST (AUDIT): the cubes are in the origin's frame, so the shift moved no placement's - but float32 rounds
+      // a moved place, and one that rounding carried over a cube's edge is filed again
+      if (o._shInstGrid) for (const p of inst) if (_instKeyOf(p, this._shiftNow) !== p.key) _file(o, p, this._shiftNow);
     }
+    if (inst.length > SHADOW_INSTANCE_LINEAR) return this._movedFiled(o, inst, matrix);   // PERF-INST
     const x = matrix[12], y = matrix[13], z = matrix[14];
     // AUDIT REACH: THE PLACEMENT ITSELF FIRST. The first cut matched the NEAREST remembered placement within the reach,
     // so two still placements of one mesh closer than that (double doors, an arrow in the wall beside another)
@@ -1313,22 +1387,19 @@ export class ShadowPass {
     // epsilon) is that placement, still; only a draw at none is matched to the nearest within reach - a mover's own
     // last placement, a step behind it - and a draw past every reach is a new placement. A placement not drawn for
     // a hold is the one a new placement evicts when the memory is full.
-    let exact = null, best = null, bestD = SHADOW_INSTANCE_REACH * SHADOW_INSTANCE_REACH, oldest = null;
+    let exact = null, best = null, bestD = SHADOW_INSTANCE_REACH * SHADOW_INSTANCE_REACH;
     const eps2 = SHADOW_STILL_EPS * SHADOW_STILL_EPS;
     for (let i = 0; i < inst.length; i++) {
       const s = inst[i], m = s.m, d = (m[12] - x) * (m[12] - x) + (m[13] - y) * (m[13] - y) + (m[14] - z) * (m[14] - z);
       if (d <= eps2) { exact = s; break; }
       if (d < bestD && s.seen !== this.frameNo) { bestD = d; best = s; }   // a placement already claimed by a draw this frame is another instance's, not this draw's last step
-      if (oldest === null || s.seen < oldest.seen) oldest = s;
     }
     let s = exact ?? best;
+    // AUDIT PERF-INST: a full memory is the filed path's - this scan runs at SHADOW_INSTANCE_LINEAR placements or fewer,
+    // under the cap (test/perfinst.test.js holds the two apart), so a draw it finds nothing for is a new placement
     if (!s) {
-      if (inst.length >= SHADOW_INSTANCE_MAX) {
-        if (!oldest || this.frameNo - oldest.seen < SHADOW_DYNAMIC_HOLD) return true;   // every placement live: dynamic, never wrong
-        s = oldest; s.m.set(matrix); s.at = null; s.seen = this.frameNo;   // a placement not drawn for a hold: this one's now
-        return false;
-      }
-      inst.push({ m: new Float32Array(matrix), at: null, seen: this.frameNo });
+      inst.push({ m: new Float32Array(matrix), at: null, seen: this.frameNo, ord: inst.length, key: NaN, filed: false });
+      if (inst.length > SHADOW_INSTANCE_LINEAR) _fileAll(o, this._shiftNow);   // PERF-INST: past the scan's count - filed from here on
       return false;
     }
     s.seen = this.frameNo;
@@ -1337,6 +1408,99 @@ export class ShadowPass {
     for (let i = 0; i < 16; i++) if (Math.abs(m[i] - matrix[i]) > SHADOW_STILL_EPS) { same = false; break; }
     if (!same) { m.set(matrix); s.at = this.frameNo; }
     return s.at != null && this.frameNo - s.at < SHADOW_DYNAMIC_HOLD;   // moved now, or within the hold
+  }
+  /** PERF-INST: _moved's answer for a mesh with more placements than SHADOW_INSTANCE_LINEAR - the scan's placement
+   *  (the exact one, earliest remembered; else the nearest within the reach not claimed this frame, earliest on a tie),
+   *  found in the draw's own cube when it stands inside it, else in the 3x3x3 round it; the same memory kept - a
+   *  placement whose cube changes is filed again, a full memory evicts the stalest or answers dynamic. */
+  _movedFiled(o, inst, matrix) {
+    const shift = this._shiftNow, R = SHADOW_INSTANCE_REACH;
+    const grid = o._shInstGrid ?? _fileAll(o, shift);
+    const x = matrix[12], y = matrix[13], z = matrix[14];
+    const eps2 = SHADOW_STILL_EPS * SHADOW_STILL_EPS;
+    let exact = null, best = null, bestD = R * R;
+    const fx = (x - shift[0]) / R + SHADOW_INSTANCE_PHASE, fy = (y - shift[1]) / R + SHADOW_INSTANCE_PHASE, fz = (z - shift[2]) / R + SHADOW_INSTANCE_PHASE;   // the draw in the origin's frame, in cubes
+    if (Number.isFinite(fx) && Number.isFinite(fy) && Number.isFinite(fz)) {   // a translation that is not finite matches nothing (the scan's NaN compares)
+      const cx = Math.floor(fx), cy = Math.floor(fy), cz = Math.floor(fz);
+      // THE EXACT ONE FIRST: every placement within the epsilon stands in the draw's own cube, or in the neighbour past a
+      // face it stands within twice the epsilon of - and in each cube the first of them, in the order remembered, is that
+      // cube's earliest; the earliest of those is the scan's exact one. The common answer, a still copy, from one cube.
+      const m0 = 2 * SHADOW_STILL_EPS / R;
+      const x0 = fx - cx <= m0 ? -1 : 0, x1 = cx + 1 - fx <= m0 ? 1 : 0;
+      const y0 = fy - cy <= m0 ? -1 : 0, y1 = cy + 1 - fy <= m0 ? 1 : 0;
+      const z0 = fz - cz <= m0 ? -1 : 0, z1 = cz + 1 - fz <= m0 ? 1 : 0;
+      for (let dx = x0; dx <= x1; dx++) {
+        for (let dy = y0; dy <= y1; dy++) {
+          for (let dz = z0; dz <= z1; dz++) {
+            const cell = grid.get(instKey(cx + dx, cy + dy, cz + dz));
+            if (!cell) continue;
+            for (let i = 0; i < cell.length; i++) {
+              const p = cell[i], m = p.m;
+              if (exact !== null && p.ord > exact.ord) break;   // past the earliest found: nothing earlier in this cube
+              if ((m[12] - x) * (m[12] - x) + (m[13] - y) * (m[13] - y) + (m[14] - z) * (m[14] - z) <= eps2) { exact = p; break; }
+            }
+          }
+        }
+      }
+      // ELSE THE NEAREST UNCLAIMED within the reach, from the 3x3x3 round the draw. No placement within the epsilon
+      // stands there (every one would stand in a cube just asked), so one claimed this frame is no answer and is not
+      // measured: a pile of copies past the cap, every one claimed, costs a look at each, not a distance.
+      if (exact === null) {
+        for (let dx = -1; dx <= 1; dx++) {   // AUDIT PERF-INST: by offset - `gx <= cx + 1` never ended past 2^53 cells
+          for (let dy = -1; dy <= 1; dy++) {
+            for (let dz = -1; dz <= 1; dz++) {
+              const cell = grid.get(instKey(cx + dx, cy + dy, cz + dz));
+              if (!cell) continue;
+              for (let i = 0; i < cell.length; i++) {
+                const p = cell[i];
+                if (p.seen === this.frameNo) continue;
+                const m = p.m, d = (m[12] - x) * (m[12] - x) + (m[13] - y) * (m[13] - y) + (m[14] - z) * (m[14] - z);
+                if (d < bestD || (d === bestD && best !== null && p.ord < best.ord)) { bestD = d; best = p; }
+              }
+            }
+          }
+        }
+      }
+    }
+    let s = exact ?? best;
+    if (!s) {
+      if (inst.length >= SHADOW_INSTANCE_MAX) {
+        s = this._stalest(o, inst);
+        if (s === null) return true;   // every placement live: dynamic, never wrong
+        s.m.set(matrix); s.at = null; s.seen = this.frameNo;   // a placement not drawn for a hold: this one's now
+        _file(o, s, shift);
+        return false;
+      }
+      s = { m: new Float32Array(matrix), at: null, seen: this.frameNo, ord: inst.length, key: NaN, filed: false };
+      inst.push(s);
+      _file(o, s, shift);
+      return false;
+    }
+    s.seen = this.frameNo;
+    const m = s.m;
+    let same = true;
+    for (let i = 0; i < 16; i++) if (Math.abs(m[i] - matrix[i]) > SHADOW_STILL_EPS) { same = false; break; }
+    if (!same) { m.set(matrix); s.at = this.frameNo; _file(o, s, shift); }
+    return s.at != null && this.frameNo - s.at < SHADOW_DYNAMIC_HOLD;   // moved now, or within the hold
+  }
+  /** PERF-INST (AUDIT): a full memory's next placement to give up - the scan's `oldest` (the least recently seen, the
+   *  earliest remembered of those), when that is not drawn for a hold; null when every placement is live. The stalest
+   *  are queued once a frame, by (seen, remembered); a draw this frame can only make a placement fresher, so the first
+   *  queued one still as it was queued is the least seen of all - and when none is left, every placement is live. */
+  _stalest(o, inst) {
+    let q = o._shInstStale;
+    if (!q || q.frame !== this.frameNo) {
+      const list = [], seen = [];
+      for (let i = 0; i < inst.length; i++) if (this.frameNo - inst[i].seen >= SHADOW_DYNAMIC_HOLD) list.push(inst[i]);
+      list.sort((a, b) => a.seen - b.seen || a.ord - b.ord);
+      for (let i = 0; i < list.length; i++) seen.push(list[i].seen);
+      q = o._shInstStale = { frame: this.frameNo, list, seen, at: 0 };
+    }
+    while (q.at < q.list.length) {
+      const i = q.at++;
+      if (q.list[i].seen === q.seen[i]) return q.list[i];   // drawn since it was queued: live now, passed over
+    }
+    return null;
   }
   /** AUDIT PRE-MERGE 0928 R1: its vertex generation (updateMeshVertices, a sail's bake; 0 before one) changed since the
    *  pass last saw it, now or within the hold - _moved's law for the mesh's own geometry; a first sight is still. */
@@ -1617,7 +1781,7 @@ export class ShadowPass {
           this.stats.facesDrawn += 6;
           this._slotSelf[k] = selfWant;
         }
-        this._slotCached[k] = 0; this._slotLiveDyn[k] = 0;
+        this._slotCached[k] = 0; this._slotLiveDyn[k] = 0; this._faceDyn.fill(1, k * 6, k * 6 + 6);   // PERF-FACE: no cache to be equal to
       } else {
         // SC1: the static cache, drawn only when the light or the static set in its reach changed
         const sigHash = this._sigOut[rank * 2], sigCount = this._sigOut[rank * 2 + 1];   // PERF-EXT3: folded above
@@ -1642,18 +1806,21 @@ export class ShadowPass {
         if (dynNear && (dueDyn || staticStale || !this._slotLiveDyn[k] || selfMoved)) {
           const cand = this._candFor(rank, L, casters, farOf);
           if (cand) this._candidateQuads(rank);   // PERF-SHADOW1 (a no-op when the static faces asked it above)
-          this._blitSlot(k, f.bindVao);   // CACHE-COPY: by a draw
+          this._blitSlot(k, f.bindVao, staticStale ? FACES_ALL : this._dirtyFaces(k));   // CACHE-COPY: by a draw; PERF-FACE: only the faces that hold more than the cache
           if (!matrices) pointFaceMatrices(pos, far, this.faceVP);
           for (let face = 0; face < 6; face++) {
             gl.bindFramebuffer(gl.FRAMEBUFFER, this.pointFbos[k * 6 + face]);
             gl.viewport(0, 0, SHADOW_POINT_SIZE, SHADOW_POINT_SIZE);
-            this.stats.pointDraws += this.replay(f, this.faceVP[face], pos, false, 0, 0, REPLAY_DYNAMIC, selfNear, cand);
+            const drew = this.replay(f, this.faceVP[face], pos, false, 0, 0, REPLAY_DYNAMIC, selfNear, cand);
+            this.stats.pointDraws += drew;
+            this._faceDyn[k * 6 + face] = drew > 0 ? 1 : 0;   // PERF-FACE: a face no dynamic drew into is the cache again
           }
           this.stats.facesDrawn += 6; this.stats.dynFaces += 6;
           this._slotLiveDyn[k] = 1; this._slotSelf[k] = selfWant;
         } else if (staticStale || (!dynNear && this._slotLiveDyn[k])) {
           // a fresh cache, or the last walker gone: the live layers are the cache again
-          this._blitSlot(k, f.bindVao);
+          this._blitSlot(k, f.bindVao, staticStale ? FACES_ALL : this._dirtyFaces(k));   // PERF-FACE: a face that holds the cache already is left
+          this._faceDyn.fill(0, k * 6, k * 6 + 6);
           this._slotLiveDyn[k] = 0; this._slotSelf[k] = 0;
         }
       }
@@ -1662,7 +1829,7 @@ export class ShadowPass {
       this.shadowIndex[k] = i;
       if (i < SHADOW_CASTER_TABLE) this.casterOf[i] = k;
     }
-    for (let k = 0; k < SHADOW_POINT_CASTERS; k++) if (!taken[k]) { this._slotLight[k * 4] = NaN; this._slotCached[k] = 0; this._slotLiveDyn[k] = 0; this._slotSelf[k] = 0; }   // an emptied slot is drawn afresh when it is filled
+    for (let k = 0; k < SHADOW_POINT_CASTERS; k++) if (!taken[k]) { this._slotLight[k * 4] = NaN; this._slotCached[k] = 0; this._slotLiveDyn[k] = 0; this._slotSelf[k] = 0; this._faceDyn.fill(1, k * 6, k * 6 + 6); }   // an emptied slot is drawn afresh when it is filled
     this._selfHeld.set(this._selfNext); this._selfHeldN = selfN;   // AUDIT FLICKER P2
     this.stats.selfLamps = selfN;   // STEADY-BALANCE: how many lamps the card cast into, for the debug log
     if (f.everyLight) this._renderLo(f, L);   // DISC15: a room drawn whole - every other light reads its lo map
@@ -1979,7 +2146,8 @@ export class ShadowPass {
    * fragments the blit wrote, and on Direct3D the same kind of quad. `bindVao` is the renderer's tracked binder, so the
    * replays after it rebind their own arrays.
    */
-  _blitSlot(k, bindVao = null) {
+  _blitSlot(k, bindVao = null, faces = FACES_ALL) {
+    if (!faces) return;   // PERF-FACE: every live face holds the cache already
     const gl = this.gl, S = SHADOW_POINT_SIZE, C = this.programs.copy;
     gl.useProgram(C.p);
     gl.activeTexture(gl.TEXTURE0);
@@ -1988,14 +2156,23 @@ export class ShadowPass {
     if (bindVao) bindVao(this._copyVao); else gl.bindVertexArray(this._copyVao);
     gl.depthFunc(gl.ALWAYS);
     for (let face = 0; face < 6; face++) {
+      if (!(faces & (1 << face))) continue;   // PERF-FACE
       gl.bindFramebuffer(gl.FRAMEBUFFER, this.pointFbos[k * 6 + face]);
       gl.viewport(0, 0, S, S);
       gl.uniform1i(C.layer, k * 6 + face);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
+      this.stats.blits++;
     }
     gl.depthFunc(gl.LESS);
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);   // no cache left on a unit while a rebuild draws into it
-    this.stats.blits += 6;
+  }
+  /** PERF-FACE: slot k's live faces that may hold more than its cache (a dynamic drawn into them, or not known), as a
+   *  mask of bits by face. */
+  _dirtyFaces(k) {
+    const fd = this._faceDyn;
+    let m = 0;
+    for (let face = 0; face < 6; face++) if (fd[k * 6 + face]) m |= 1 << face;
+    return m;
   }
 
   /**
