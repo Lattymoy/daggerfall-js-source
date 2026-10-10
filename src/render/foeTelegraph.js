@@ -26,6 +26,17 @@ const REACH = Object.freeze({ lunge: BLOW.lunge.len, sweep: BLOW.sweep.r, slam: 
 export const quadHalf = (kind, ahead = null) => (Number.isFinite(ahead) && (kind === 'leap' || kind === 'aimed' || kind === 'pyre') ? ahead + (kind === 'leap' ? BLOW.leap.r : kind === 'pyre' ? BLOW.pyre.r : 0) : REACH[kind] ?? BLOW_QUAD_HALF) + 0.6;   // the aimed line: its own length; RVN5: a pyre's by its point
 /** The quad's half-extent about the foe's feet - every shape fits (TELL6: the charge's lane is the longest). */
 export const BLOW_QUAD_HALF = Math.max(...Object.values(REACH)) + 0.3;
+
+/** TECH1 (bible/05-Combat/Weapon-Techniques.md): THE PLAYER'S OWN MARK (combat/techniques.js techniqueMarks - `technique`
+ *  on the record): drawn by this pass in the player's colour, each at ITS OWN size - a Volley's disc, a leap's landing, a
+ *  shot's lane, a dash's - where a foe's blow reads its kind's fixed numbers (BLOW). The shader's `uP` for it (the lane's
+ *  length and half-width; the disc's radius and its point along the yaw), and its quad's half-extent. */
+export function techniqueUniform(b) {
+  if (b.kind === 'lunge' || b.kind === 'charge') return [b.len ?? 0, b.halfW ?? 0, 0, 0];
+  if (b.kind === 'aimed') return [b.ahead ?? 0, b.halfW ?? 0, 0, 0];
+  return [b.r ?? 0, b.ahead ?? 0, 0, 0];
+}
+export const techniqueQuadHalf = (b) => (b.kind === 'lunge' || b.kind === 'charge' ? (b.len ?? 0) + (b.halfW ?? 0) : b.kind === 'aimed' ? (b.ahead ?? 0) + (b.halfW ?? 0) : (b.ahead ?? 0) + (b.r ?? 0)) + 0.6;
 export const BLOW_LIFT = 0.06;
 const OUTLINE = 0.12;   // metres of rim
 
@@ -212,6 +223,10 @@ export class FoeTelegraphPass {
       else if (b.kind === 'leap' || b.kind === 'pyre') gl.uniform4f(U.uP, P.r, b.ahead ?? 0, 0, 0);   // RVN5: the pyre's disc at its point
       else if (b.kind === 'aimed') gl.uniform4f(U.uP, b.ahead ?? 0, P.halfW, 0, 0);
       else gl.uniform4f(U.uP, P.r, P.ahead, 0, 0);
+      if (b.technique) {   // TECH1: the player's own mark - its quad and its numbers its own, over its kind's fixed ones
+        gl.uniform1f(U.uHalf, techniqueQuadHalf(b));
+        gl.uniform4f(U.uP, ...techniqueUniform(b));
+      }
       gl.uniform1f(U.uT, phase.t);
       gl.uniform1f(U.uFlash, phase.flash);
       gl.uniform1f(U.uNow, phase.flash > 0 ? 0 : nowShare(b, phase));   // TELL2

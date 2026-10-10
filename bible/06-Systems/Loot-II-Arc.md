@@ -464,7 +464,8 @@ taking nothing, the drawback gone and the line, the price and the flavour kept, 
 temple's row (its click and its key, no hook no row, the Reforge's row its own, DFU's L first), the Plus face, the
 host's hook and the page (the known cursed alone, the drawback and the price, a worn piece's refusal, a short purse's,
 the press, nothing to lift said). `tools/mutants/loot16.json` (71; AUDIT FB1010 found LOOT16-a-row-of-nothing surviving on main - Bad Reactions From
-fits every piece, so the row filter is never empty - and left it as it stands; all dead at the time - the first run's survivor was the pass's own
+fits every piece, so the row filter is never empty - and left it as it stands; TECH1's follow-up recorded it `equivalent`
+with that reason (Bad Reactions From, Item Deteriorates and User Takes Damage fit every piece and every line); all dead at the time - the first run's survivor was the pass's own
 guard, which `cursePiece` repeats: what it adds is that a Magic costs a seeded stream no draw, now pinned).
 
 ### LOOT17 - the hone (2026-10-07)

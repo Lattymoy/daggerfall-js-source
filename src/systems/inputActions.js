@@ -168,6 +168,12 @@ export const ACTIONS = Object.freeze([
   // rows and their positions - they only give up their F1-F4 DEFAULTS, so a player who wants them binds them back.
   // Appended, like every port action before it.
   'ModeWheel',
+  // TECH1 (bible/05-Combat/Weapon-Techniques.md; the owner: "This would have its own keybinding"): THE WEAPON'S
+  // TECHNIQUE - the line a weapon (or the Gauntlets, bare-handed) carries, done: a technique that aims is HELD to aim and
+  // let go to loose it, a tap looses it at the look; one that does not goes on the press (combat/techniques.js). Every
+  // host's weapon rig reads it through the one door the torches' keys take (actionDown). Appended, like every port
+  // action before it.
+  'WeaponTechnique',
 ]);
 
 /** AUDIT SOC D3: THE PORT'S OWN ROWS, NAMED SO THE CLASSIC WINDOWS CAN YIELD THEM.
@@ -185,7 +191,7 @@ export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'Quick
   'TorchToggleLight', 'TorchDrop', 'TorchThrow', 'ShoulderSwitch', 'AutoPerspective', 'FollowPaths', 'HorseMount', 'HorseSummon', 'DebugOverlay',
   'BoatDisembark', 'BoatToggleLight', 'BoatToggleSail', 'BoatTrimRight', 'BoatTrimLeft', 'BoatTrimModifier',
   'BoatTimeScaleUp', 'BoatTimeScaleDown', 'BoatTimeScaleReset', 'TravelView', 'WalkMode', 'TogglePerspective', 'ActChoice', 'BoatSailUp', 'BoatSailDown', 'Professions',
-  'LegacyFamily', 'ModeWheel']);   // LEGACY1: Project Legacy's family tree; MODE-WHEEL: the mode wheel   // KB1; TV1; PADWALK; VIEW-TOGGLE; PROF1   // QUICK-LOOT B4: the plaque's two, drawn in the enhanced pane under their own heading - the classic windows cannot draw them at all
+  'LegacyFamily', 'ModeWheel', 'WeaponTechnique']);   // TECH1: the weapon's technique   // LEGACY1: Project Legacy's family tree; MODE-WHEEL: the mode wheel   // KB1; TV1; PADWALK; VIEW-TOGGLE; PROF1   // QUICK-LOOT B4: the plaque's two, drawn in the enhanced pane under their own heading - the classic windows cannot draw them at all
 
 const ACTION_SET = new Set(ACTIONS);
 
@@ -368,6 +374,12 @@ export const DEFAULT_BINDINGS = Object.freeze([
   // MODE-WHEEL: Left Alt, Sneak's old key - CROUCH-SNEAK made Crouch the sneak, and the hosts already stop the
   // browser's own Alt (its menu bar) on both edges
   ['AltLeft', 'ModeWheel'],
+  // TECH1: THE MOUSE'S BACK SIDE BUTTON - every letter and digit is spent (FREEMOUSE's sweep, run again: Q is DFU's
+  // RecastSpell, F the social door, R Rest, G and X the torches', E Interact), and the free keys by the movement hand are
+  // worse than none: Caps Lock toggles on a Mac (a hold to aim is two presses there) and a held Left Ctrl makes W the
+  // browser's close-tab. Mouse4 is TogglePerspective's, and the world host already stops the browser's Back on this
+  // one. A keyboard player moves it in the Controls pane (F2 and F4 ship unbound).
+  ['Mouse3', 'WeaponTechnique'],
 ]);
 
 /**
@@ -485,6 +497,7 @@ export const ACTION_GROUPS = Object.freeze([
   ]),
   g('Combat', [
     ['ReadyWeapon', 'Ready or sheathe weapon'], ['SwingWeapon', 'Swing weapon'], ['SwitchHand', 'Switch hand'],
+    ['WeaponTechnique', 'Weapon technique (hold to aim)'],   // TECH1
   ]),
   g('Magic', [
     ['CastSpell', 'Spellbook'], ['RecastSpell', 'Ready the last spell'], ['AbortSpell', 'Drop the readied spell'],

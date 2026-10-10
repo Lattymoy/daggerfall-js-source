@@ -422,14 +422,29 @@ export function held(keys, action) {
 
 /** UXB1-S: is a key `action` holds down - as the key's owner or beside it, the primary dict and then the secondary
  *  (GetKey's dual-dict fallthrough, :1084)? `ring` is the edge ring for pressed/released; held reads the held Set.
- *  AUDIT UXB1 F5: the frame's polls ask this per action per frame, so it walks the maps as they stand - the
- *  dictEntries generator it replaced built a pair per key per call - and a dict's sharers only where it has any. */
+ *  AUDIT UXB1 F5: the frame's polls ask this per action per frame. AUDIT TECH-FX: so the codes an action holds are
+ *  read off an index built once a binding change (`actionCodes`) - walking the maps still made an entry pair a key a
+ *  call (7.5 KB and 8 us for an action bound late in the dict, as the technique key is, every frame). */
 function actionDown(b, keys, action, ring) {
-  for (const [code, a] of b.primary) if (a === action && codeDown(b, keys, code, ring)) return true;
-  if (b.sharedPrimary?.size) for (const [code, list] of b.sharedPrimary) if (list.includes(action) && codeDown(b, keys, code, ring)) return true;
-  for (const [code, a] of b.secondary) if (a === action && codeDown(b, keys, code, ring)) return true;
-  if (b.sharedSecondary?.size) for (const [code, list] of b.sharedSecondary) if (list.includes(action) && codeDown(b, keys, code, ring)) return true;
+  const codes = actionCodes(b, action);
+  for (let i = 0; i < codes.length; i++) if (codeDown(b, keys, codes[i], ring)) return true;
   return false;
+}
+/** AUDIT TECH-FX: the codes `action` holds, in actionDown's own order - the primary dict, its sharers, the secondary,
+ *  its sharers - kept on the store and rebuilt on its `rev` (systems/inputActions.js `touched`: every binding change
+ *  moves it; comboModifiers', pairedCodes' and modifierHeldFirstDict's caches ride the same law). */
+function actionCodes(b, action) {
+  const rev = b.rev ?? 0;
+  if (b._codesRev !== rev || !b._codes) { b._codes = new Map(); b._codesRev = rev; }
+  let codes = b._codes.get(action);
+  if (codes) return codes;
+  codes = [];
+  for (const [code, a] of b.primary) if (a === action) codes.push(code);
+  if (b.sharedPrimary?.size) for (const [code, list] of b.sharedPrimary) if (list.includes(action)) codes.push(code);
+  for (const [code, a] of b.secondary) if (a === action) codes.push(code);
+  if (b.sharedSecondary?.size) for (const [code, list] of b.sharedSecondary) if (list.includes(action)) codes.push(code);
+  b._codes.set(action, codes);
+  return codes;
 }
 
 /**

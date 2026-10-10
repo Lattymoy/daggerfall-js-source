@@ -3025,6 +3025,22 @@ holds the filter to it, instead of naming one file. The walk moved from
 `relayversion.test.js` into `test/importGraph.mjs` so both Workers are
 read by the same law; the relay's hash is unchanged.
 
+**IMPORT-GRAPH1 (2026-10-10, found by AUDIT TECH1).** The walk itself had
+the same hole, one level down. It stripped comments with two regexes,
+block comments first, so a line comment carrying a stray `/*` opened a
+"block" that ran to the next `*/` and swallowed every import between.
+The account Worker bundled nine files the walk never saw -
+`systems/partyScale.js`, `books.js`, `booksData.js`, `portBooks.js`,
+`potions.js`, `lootThemes.js`, `formats/bookFile.js`, `textRsc.js`,
+`rscTable.js` - and a change to any of them deployed nothing. The walk
+now parses each file (acorn, a devDependency) and reads its imports,
+re-exports and literal `import()`s in the order they are written; a JSON
+table is a leaf, as before. The nine are in the filter, and
+`test/accountdeploy.test.js` IMPORT-GRAPH1 holds each Worker's graph to
+the files esbuild itself bundles from its entry - wrangler's bundler - so
+the walk cannot drift from the Worker again. The relay's graph is the
+same sixty files in the same order, so its hash did not move.
+
 - `server-account/migrations/0005_played.sql` — `played_s`, `played_at`.
 - `server-account/src/accounts.js` — `creditPlay`; `accountView` gains
   `registeredAt` and `playedS`.

@@ -255,7 +255,9 @@ test('LOOT14: the doors - the host door rolls its garments after every draw it m
   // PIN MOVED (LOOT16, bible/06-Systems/Loot-II-Arc.md section 8): a curse is the door's pass after the garments' (law 9),
   // so WHICH piece a curse lands on is the stream's after them; a piece's own draws - its tier, its name, the lines it was
   // minted with - are its seed's, and that is what is compared (a curse's line, its last, set aside)
-  const ownLines = (it) => JSON.stringify(it.cursed ? it.affixes.slice(0, -1) : it.affixes ?? null);
+  // PIN MOVED (TECH1, bible/05-Combat/Weapon-Techniques.md): and a weapon's technique, the door's very last draw - set aside
+  // first, so a curse's line is the last line before it
+  const ownLines = (it) => { const own = it.affixes?.filter((a) => !LR.isTechniqueAffix(a)); return JSON.stringify(it.cursed ? own.slice(0, -1) : own ?? null); };
   // PIN MOVED (LOOT21, section 13): a late find - an Ayleid stone - may follow the garments, the door's very last draw
   // (law 9), so the pieces are the list's first two and the garments its next two, by place, and what follows is a stone
   // PIN MOVED (GEM2, bible/06-Systems/Gem-Sockets.md): and a graded gem, the door's very last draw since

@@ -38,6 +38,11 @@ import { mountEnhancedInventory } from '../src/ui/enhancedInventory.js';
 import { UNSET_ASK } from '../src/ui/reforgeWindow.js';
 import { withDom } from './invdrag.mjs';
 
+// PIN MOVED (TECH1, bible/05-Combat/Weapon-Techniques.md): a weapon's technique is the door's very last draw, after the gem
+// arc's - where a socket drew, the two runs' techniques differ, so a piece's technique line and its worth are set aside on
+// both sides
+const noTech = (x) => { const t = LR.techniqueLineOf(x); return t ? { ...x, affixes: x.affixes.filter((a) => a !== t), value: x.value - LR.affixesWorth([t], x) } : x; };
+
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const on = () => { _resetForTests(); setPref('lootRarity', true); LR._setSocketForTests(null); LR._setWeaponSocketsForTests(null); LR._setCurseForTests(Infinity); };   // the gem find as gems.js registered it at import - a test that holds it off puts it back
 const off = () => { _resetForTests(); setPref('lootRarity', false); LR._setSocketForTests(null); LR._setWeaponSocketsForTests(null); LR._setCurseForTests(null); };
@@ -195,7 +200,7 @@ test('GEM1 the weapons\' own pass: a Magic weapon a socket 120 in a thousand and
       const none = list(); LR.rollLootRarity(none, src, { rolls: lcg(seed) });
       assert.equal(all.length, none.length, `seed ${seed}: the late finds the seed's own`);
       all.forEach((it, i) => {
-        const strip = (x) => { const { sockets, ...rest } = x; return rest; };
+        const strip = (x) => { const { sockets, ...rest } = noTech(x); return rest; };   // PIN MOVED (TECH1): and its technique
         assert.deepEqual(strip(it), strip(none[i]), `seed ${seed}: piece ${i} the same but its sockets`);
         if (it.group === 'Weapons' && LR.socketCap(it)) { assert.equal(LR.socketsOf(it).length, LR.socketCap(it), 'every chance: its whole size'); if (LR.socketsOf(none[i]).length !== LR.socketCap(it)) differed++; }
       });
@@ -301,6 +306,7 @@ test('GEM2 the world\'s gem find: 30 in a thousand and 5 a tier to 150, a pile 1
     // at the door: the find its very last draw - nothing after it - and the weapons' pass before it: at every chance, each
     // socket the pass gives is one draw more before the find
     const src = { kind: 'pile', tier: 18, boss: false, family: null };
+    LR._setTechniqueForTests({});   // PIN MOVED (TECH1, bible/05-Combat/Weapon-Techniques.md): a weapon's technique is the door's draw after the find - off here (no chance, no draw), so the find is this door's last; test/tech1_roster.test.js holds the technique pass after it
     const door = (seed, t) => {
       const base = lcg(seed);
       let n = 0, at = -1;
@@ -331,7 +337,7 @@ test('GEM2 the world\'s gem find: 30 in a thousand and 5 a tier to 150, a pile 1
     const offList = [createWeapon(122, 1)];
     LR.rollLootRarity(offList, src, { rolls: () => 0 });
     assert.equal(offList.length, 1, 'off: DFU\'s list');
-  } finally { LR._setWeaponSocketsForTests(null); LR.registerGemFind(G.rollGemFind); off(); }   // AUDIT GEM: the hooks back whatever failed
+  } finally { LR._setWeaponSocketsForTests(null); LR.registerGemFind(G.rollGemFind); LR._setTechniqueForTests(null); off(); }   // AUDIT GEM: the hooks back whatever failed; TECH1: and the technique's chances
 });
 
 test('GEM2 the world bosses: the Warden one gem, the Old Coil one to a ship that dealt, the Brass Remnant two - each Flawless or Perfect, known; their pieces socketed by both passes; every spoils before them the seed\'s own; the same seed the same spoils', () => {
@@ -365,10 +371,10 @@ test('GEM2 the world bosses: the Warden one gem, the Old Coil one to a ship that
     const bare = rollSpoils(k, 9);
     LR._setSocketForTests(null); LR._setWeaponSocketsForTests(null);
     const full = rollSpoils(k, 9);
-    const strip = (h) => JSON.parse(JSON.stringify({ gold: h.gold, card: h.card, pieces: h.pieces.map((p) => { const { sockets, ...rest } = p.item; return { ...p, item: rest }; }) }));
+    const strip = (h) => JSON.parse(JSON.stringify({ gold: h.gold, card: h.card, pieces: h.pieces.map((p) => { const { sockets, ...rest } = noTech(p.item); return { ...p, item: rest }; }) }));   // PIN MOVED (TECH1): and its technique
     assert.deepEqual(strip(full), strip(bare), `seed ${k}`);
   }
-  assert.match(read('src/systems/gateSpoils.js'), /const card = bossCardRoll\('gate', rolls\);\s*(\/\/[^\n]*\n\s*)*socketPass\(pieces\.map\(\(p\) => p\.item\), rolls\);\s*weaponSocketPass\(pieces\.map\(\(p\) => p\.item\), rolls\);\s*const gems = bossGems\('gate', rolls\);\s*return \{ gold, pieces, sigil: sigilStone\(\), card, gems \};/);
+  assert.match(read('src/systems/gateSpoils.js'), /const card = bossCardRoll\('gate', rolls\);\s*(\/\/[^\n]*\n\s*)*socketPass\(pieces\.map\(\(p\) => p\.item\), rolls\);\s*weaponSocketPass\(pieces\.map\(\(p\) => p\.item\), rolls\);\s*const gems = bossGems\('gate', rolls\);\s*(\/\/[^\n]*\n\s*)*techniquePass\(pieces\.map\(\(p\) => p\.item\), rolls\);\s*return \{ gold, pieces, sigil: sigilStone\(\), card, gems \};/);   // PIN MOVED (TECH1): and a weapon's technique after the gems, the door's last draw
   assert.match(read('src/systems/serpentSpoils.js'), /const card = dealt \? bossCardRoll\('serpent', rolls\) : null;\s*(\/\/[^\n]*\n\s*)*socketPass\(pieces\.map\(\(p\) => p\.item\), rolls\);\s*weaponSocketPass\(pieces\.map\(\(p\) => p\.item\), rolls\);\s*const gems = dealt \? bossGems\('serpent', rolls\) : \[\];/);
   assert.match(read('src/systems/sdSpoils.js'), /const card = bossCardRoll\('abyss', rolls\);\s*(\/\/[^\n]*\n\s*)*socketPass\(pieces\.map\(\(p\) => p\.item\), rolls\);\s*weaponSocketPass\(pieces\.map\(\(p\) => p\.item\), rolls\);\s*const gems = bossGems\('abyss', rolls\);/);
   // the hosts carry the rows: the world tick, every host's shared module and the headless law import them

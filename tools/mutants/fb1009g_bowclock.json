@@ -2,8 +2,8 @@
   {
     "name": "BOWCLOCK-a-shot-starts-the-arm-cannot-draw",
     "file": "src/combat/weaponRig.js",
-    "old": "const strike = !paralyzed && c && canAttack && !armLoosing\n",
-    "new": "const strike = !paralyzed && c && canAttack\n",
+    "old": "const strike = !paralyzed && c && canAttack && !armLoosing && !techniqueFlying()\n",
+    "new": "const strike = !paralyzed && c && canAttack && !techniqueFlying()\n",
     "tests": [
       "test/fb1009g_bowclock.test.js"
     ]

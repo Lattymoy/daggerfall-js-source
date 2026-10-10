@@ -32,6 +32,7 @@ async function load(path) {
 
 const LOOT = await load('../src/systems/loot.js');
 const LR = await load('../src/systems/lootRarity.js');
+const TECH_ROSTER = await load('../src/combat/techniqueRoster.js');   // TECH1: a piece's technique family
 const PREFS = await load('../src/systems/uiPrefs.js');
 const SIGIL = await load('../src/systems/sigil.js');
 const MODS = await load('../src/systems/modSettings.js');
@@ -164,11 +165,13 @@ function withForcedMarks(fn) {
   LR._setSocketForTests(1000);   // every tier the pass takes (a Rare, a Legendary), per mille
   LR._setExaltedForTests(1000);
   LR._setProcForTests({ magic: 1000, rare: 1000 });
+  LR._setTechniqueForTests({ magic: 1000, rare: 1000, legendary: 1000 });   // TECH1: every weapon and gauntlet a door ladders takes a technique
   try { return fn(); } finally {
     LR._setCurseForTests(null);
     LR._setSocketForTests(null);
     LR._setExaltedForTests(null);
     LR._setProcForTests(null);
+    LR._setTechniqueForTests(null);
   }
 }
 /** Every vendored mod on (`true`, the shipped default) or off (`false`, DFU's own game) for `fn`, each put back. */
@@ -543,6 +546,31 @@ function runReforge(run, minted, seedsOf) {
       const item = copyItem(base);
       if (item.rarity === 'legendary' && !item.exalted) { LR.exaltLegendary(item, seeded(n)); one(item); }
       if ((item.rarity === 'rare' || item.rarity === 'legendary') && !LR.isCursed(item)) { const c = copyItem(base); if (LR.cursePiece(c, seeded(n ^ 5))) one(c); }
+    }
+  });
+  // TECH1 (bible/05-Combat/Weapon-Techniques.md): a technique line added to every weapon and gauntlet the ladder minted that
+  // carries none - each of its family's techniques in turn - then the passes that may follow a find on such a piece in
+  // any order the game's doors or the Test Room take them: an Exalted's line, a curse's, a hone of the technique's own
+  // line, a reforge of it - each lands BEFORE the technique (lootRarity.js withLine) and the law takes every one
+  run('lootRarity.addTechniqueLine (and an Exalted, a curse, a hone, a reforge after it)', (one) => {
+    let n = 0;
+    for (const base of tiered(800)) {
+      const ids = TECH_ROSTER.techniquesFor(base);
+      if (!ids.length || LR.techniqueLineOf(base)) continue;
+      n++;
+      const item = copyItem(base);
+      item.isIdentified = true;
+      if (!LR.addTechniqueLine(item, seeded(n), { id: ids[n % ids.length] })) continue;
+      one(item);
+      const ex = copyItem(item);
+      if (ex.rarity === 'legendary' && !ex.exalted && !LR.isCursed(ex) && LR.exaltLegendary(ex, seeded(n ^ 3))) one(ex);
+      const cu = copyItem(item);
+      if ((cu.rarity === 'rare' || cu.rarity === 'legendary') && !cu.exalted && !LR.isCursed(cu) && LR.cursePiece(cu, seeded(n ^ 5))) one(cu);
+      const t = item.affixes.findIndex((a) => LR.isTechniqueAffix(a));
+      const ho = copyItem(item);
+      if (LR.honeableLines(ho).includes(t) && LR.honeAffix(ho, t, seeded(n ^ 7))) one(ho);
+      const re = copyItem(item);
+      if (LR.reforgeableLines(re).includes(t) && LR.reforgeAffix(re, t, seeded(n ^ 9))) one(re);
     }
   });
   run('lootCodex.imprintPiece', (one) => {

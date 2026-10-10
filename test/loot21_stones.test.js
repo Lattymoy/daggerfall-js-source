@@ -82,6 +82,10 @@ test('LOOT21: the finds - late, from tier 6 and tier 10, never in rollUniqueFind
   LR._setWeaponSocketsForTests({ first: 0, more: 0 });
   LR.registerGemFind(null);
   const src = { kind: 'corpse', tier: 21, boss: true, family: null };
+  // PIN MOVED (TECH1, bible/05-Combat/Weapon-Techniques.md): a weapon's technique is the door's draw after the stones' and
+  // the gem arc's - off here (a tier with no chance takes no draw), so the stones are this replay's last two draws;
+  // test/tech1_roster holds the technique pass the door's very last
+  LR._setTechniqueForTests({});
   try {
     for (let seed = 1; seed < 30; seed++) {
       const base = lcg(seed);
@@ -100,6 +104,7 @@ test('LOOT21: the finds - late, from tier 6 and tier 10, never in rollUniqueFind
   } finally {
     LR._setWeaponSocketsForTests(null);
     LR.registerGemFind(rollGemFind);
+    LR._setTechniqueForTests(null);
   }
   // off: nothing
   _resetForTests();

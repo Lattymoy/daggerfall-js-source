@@ -31,6 +31,7 @@ import { closeOnOutsideTap } from './enhancedOverlays.js';
 import { overlayAction } from './input.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { brokerSkinCss, BROKER_SKIN_STYLE_ID } from './brokerWindow.js';
+import { techniqueDetail } from '../systems/lootRarity.js';   // AUDIT TECH1: a technique line's "what a press does", as the card says it
 import { REFORGE_CSS } from './enhancedPlusStyle.js';   // AUDIT LOOT F6: the window's own rules, beside the Broker's sheet
 import { isEnhancedPlus } from '../systems/uiSkin.js';
 
@@ -339,6 +340,8 @@ export function mountReforgeWindow(host, deps) {
     (it.affixes ?? []).forEach((_, i) => {
       const li = el('li', 'reforge-line', affixLine(it, i));
       li.dataset.line = String(i);
+      const told = techniqueDetail(it.affixes[i]);   // AUDIT TECH1: a technique's line says what a press does - read before it is reforged or honed, as the card says it
+      if (told) li.append(el('span', 'reforge-detail', told));
       if (may.includes(i)) {
         const why = reforgeRefusal(it, i, payer);
         const btn = el('button', 'act broker-buy reforge-press', reforgeLabel(why, price, have));

@@ -27,6 +27,7 @@
 
 import { PARKOUR_GRIP_LOW, PARKOUR_HAND_SPAN } from './parkour.js';
 import { ClimbSounds } from './climbSounds.js';   // the ear's half, framed with the eye's
+import { stepTechniqueFx, techniqueView, resetTechniqueFx } from '../combat/techniqueFx.js';   // TECH-FX: a technique's camera rides the climb's view step
 
 /** The constants of the feel. Angles in degrees where named _DEG, distances in metres, rates per second. */
 export const FEEL = Object.freeze({
@@ -265,7 +266,7 @@ const S = new Float32Array(16);
 export function applyClimbView(view, fx) {
   if (!fx || (!fx.pitch && !fx.roll && !fx.eye[0] && !fx.eye[1] && !fx.eye[2])) return view;
   // view * T(-eye): the translation column moves by -(R e)
-  const [ex, ey, ez] = fx.eye;
+  const e = fx.eye, ex = e[0], ey = e[1], ez = e[2];   // TECH-FX: read by index - a destructure made an iterator a frame (16 B, test/techfx1.test.js)
   view[12] -= view[0] * ex + view[4] * ey + view[8] * ez;
   view[13] -= view[1] * ex + view[5] * ey + view[9] * ez;
   view[14] -= view[2] * ex + view[6] * ey + view[10] * ez;
@@ -300,9 +301,13 @@ export function createClimbFeelHost(player, cam, lookFilter, { audio = null, str
     sounds,
     fx: null,
     applied: null,
+    tech: null,   // TECH-FX: the technique's channel the view took (first person only)
     /** AUDIT CLIMB-ARC F2/F4: `held` - the host holds the motor this frame (a window, the death screen, the season):
      *  the feel stands as it was - no event re-read, no clock, no sound - as a paused game runs no Update. */
     frame(dt, held = false) {
+      // TECH-FX: a technique's springs settle on every frame - under a held one too (AUDIT TECH-FX: held with the body, a
+      // window or the death screen opened in a blow's first moment kept its tilt and its dip as long as it stood)
+      stepTechniqueFx(dt);
       const m = player();
       if (!m || held) return;
       this.fx = law.update(dt, m, cam.yaw);
@@ -312,10 +317,14 @@ export function createClimbFeelHost(player, cam, lookFilter, { audio = null, str
     view(view, firstPerson) {
       this.applied = firstPerson && this.fx ? this.fx : null;
       if (this.applied) applyClimbView(view, this.applied);
+      // TECH-FX (bible/05-Combat/Weapon-Techniques.md THE FEEL): a technique's pitch, roll and eye dip, first person only,
+      // folded after the climb's - at rest every term is 0 and applyClimbView returns the view untouched
+      this.tech = firstPerson ? techniqueView() : null;
+      if (this.tech) applyClimbView(view, this.tech);
       return view;
     },
-    fovRad() { return ((this.fx?.fov ?? 0) * Math.PI) / 180; },
-    pitch() { return this.applied?.pitch ?? 0; },
-    reset() { law.reset(); sounds?.reset(); this.fx = null; this.applied = null; },
+    fovRad() { return (((this.fx?.fov ?? 0) + techniqueView().fov) * Math.PI) / 180; },   // TECH-FX: and a technique's kick, every lens, as the climb's
+    pitch() { return (this.applied?.pitch ?? 0) + (this.tech?.pitch ?? 0); },   // TECH-FX: the sky takes the technique's pitch too
+    reset() { law.reset(); sounds?.reset(); resetTechniqueFx(); this.fx = null; this.applied = null; this.tech = null; },   // TECH-FX: a load's or a teleport's frame shows no blow of the moment before (AUDIT TECH-FX: the runner's own reset waited for its next step)
   };
 }

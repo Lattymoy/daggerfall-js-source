@@ -23,7 +23,7 @@
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
 import { seededRng } from './wind.js';
 import { spoilsBase } from './gateSpoils.js';
-import { applyRarity, rarityChances, lastPass, socketPass, weaponSocketPass } from './lootRarity.js';   // GEM1: the sockets' passes
+import { applyRarity, rarityChances, lastPass, socketPass, weaponSocketPass, techniquePass } from './lootRarity.js';   // GEM1: the sockets' passes; TECH1: the technique pass, a door's last draw
 import { bossGems } from './gems.js';   // GEM2: the Brass Remnant's gems
 import { rollNumidiumPiece } from './aetheric.js';   // SD9d: the Brass Remnant's own set
 import { rollHourlock } from './gilded.js';   // GILDED1: the Hourlock - the spoils' last roll
@@ -100,6 +100,7 @@ export function rollSdSpoils(seed, level) {
   socketPass(pieces.map((p) => p.item), rolls);
   weaponSocketPass(pieces.map((p) => p.item), rolls);
   const gems = bossGems('abyss', rolls);
+  techniquePass(pieces.map((p) => p.item), rolls);   // TECH1: a weapon's technique - after even the Remnant's gems (law 9); a fixed record (the Brass, the Hourlock) takes none
   return { gold, pieces, card, gems };
 }
 

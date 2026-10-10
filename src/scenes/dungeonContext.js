@@ -119,6 +119,7 @@ import { createWeapon, bowDamageArrow } from '../combat/enemyEquipment.js';   //
 import { setDefaultEnchantCtx } from '../systems/enchantments.js';   // FS1 (wave D): this host mounts the enchant ctx too
 import { createEnchantCtx, standLooseFoe } from './hostEnchant.js';   // FS1 (wave D): the ONE ctx body + SD1's loose-foe placement
 import { playerArrowHitFoe } from '../combat/arrowFlight.js';   // AUDIT 39 (#64) wave D: the FOURTH host calls the shared player-arrow law rather than carrying a fourth body of it
+import { techniquePierces, shaftSequence } from '../combat/arrowFlight.js';   // TECH1: a piercing technique shaft flies on (bible/05-Combat/Weapon-Techniques.md)
 import {
   hasBowAttack, isBowWeapon, backstabChanceOf,
   tallySwingSkills, zeroDamageHitSound, SWING_FATIGUE_COST,
@@ -4062,6 +4063,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     say: (l) => hudText.add(l),
     spellArmed: () => magic.spellArmed(), abortSpell: () => magic.abortReadySpell(),   // MAC-O1: WeaponManager.Update:251 - the ReadyWeapon key puts a readied spell away and draws
     actTool: () => opts.actTool?.() ?? null,   // PROF2: the Pick-Axe in the hand at a dungeon vein (the outer host's act)
+    // TECH1 (bible/05-Combat/Weapon-Techniques.md): the weapon technique's door underground - the OUTER host's motor and view
+    // (opts.technique: dungeon.js's own, or the street's through worldModes.js), this context's own missile lane for the
+    // technique's shafts (the boss, the crystals, the host and the foes meet them as any shaft) and its own fatigue door
+    technique: {
+      motor: () => opts.technique?.motor?.() ?? null,
+      face: (p, from) => opts.technique?.face?.(p, from),   // AUDIT TECH1: from where the body lands
+      fireArrow: (from, dir, o) => fireArrow(from, dir, o?.weapon ?? playerWeapon.weapon, true, null, null, o?.sky ? { world: [...from] } : weaponRig.thunderlockMuzzle(fieldOfView()), { technique: o?.technique ?? null, ...(o?.speedScale ? { speedScale: o.speedScale } : {}) }),
+      drainFatigue: (n) => drainFatigue(n),
+      fx: (recipe, at, o) => magic.techniqueFx?.(recipe, at, o),   // TECH-FX: a technique's burst, in this dungeon's cast engine's impact pass
+      shake: (k) => opts.shakeCamera?.(k),   // TECH-FX: the outer host's shaker, as a stagger's and an execution's kick
+      sound: (clip, volume, pitch) => audio.playOneShot(clip, volume, pitch),   // TECH-FX: the technique's layer over the swing's own
+    },
   });
   const playerWeapon = weaponRig.playerWeapon;   // the dungeon-side combat consumers read it
   if (opts.playerWeapon === 'bow') {
@@ -4649,15 +4662,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (m.fromPlayer) {
           // WB4b: the court's boss meets a shaft with the whole of his body (his own radius) - the one player-arrow law
           // against his stand-in, the number to the relay; the ward turns it
-          const boss = gateBossBody();
+          // TECH1 (bible/05-Combat/Weapon-Techniques.md): a technique's shaft - a Volley's, a Piercing Shot's - strikes each body
+          // once (`struck`), a piercing one flying on through (combat/arrowFlight.js techniquePierces, the street's own law)
+          const struckBy = (b) => !!m.technique?.struck?.includes(b);
+          const boss = struckBy(gateBossBody()) ? null : gateBossBody();
           if (boss && missileHitsCapsule(m.pos, boss.ai.feet, boss.ai.height, boss.ai.radius)) {
             if (boss.warded) wardTurns(boss);
             else playerArrowHitFoe(m, boss, { playerEntity, playerWeapon, playerFeet, audio, hitEffects, say: (l) => hudText.add(l), dealDamage: (t, d) => landOnBoss(boss, d, HIT_KINDS.Shaft) });
+            if (!boss.warded && techniquePierces(m, boss)) continue;
             retireMissile(m);
             continue;
           }
           // ARENA4: a shaft meets my opponent on a relay's sand by their whole body - the number to the referee
-          const rv = arenaRivalBody();
+          const rv = m.technique ? null : arenaRivalBody();   // TECH1: a technique's shaft passes a player's body by (TECH law 3)
           if (rv && missileHitsCapsule(m.pos, rv.ai.feet, rv.ai.height, rv.ai.radius)) {
             nextArenaQ();   // ARENA4b: each shaft its own blow
             playerArrowHitFoe(m, rv, { playerEntity, playerWeapon, playerFeet, audio, hitEffects, say: (l) => hudText.add(l), dealDamage: (t, d) => landOnRival(rv, d, 'arrow') });
@@ -4665,26 +4682,30 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             continue;
           }
           // WB9c: a shaft meets a crystal by its whole body - the one player-arrow law against its stand-in (no blood)
-          const cr = gateCrystalBodies().find((q) => missileHitsCapsule(m.pos, q.ai.feet, q.ai.height, q.ai.radius));
+          const cr = gateCrystalBodies().find((q) => !struckBy(q) && missileHitsCapsule(m.pos, q.ai.feet, q.ai.height, q.ai.radius));   // TECH1: a piercing shot flies on through a crystal it has struck (AUDIT TECH1: and meets the next one under it, overlapping)
           if (cr) {
             // AUDIT WB11 W2: no backstab - a crystal faces nowhere (its `yaw` 0 made every shaft from its -z side one)
             playerArrowHitFoe(m, cr, { playerEntity, playerWeapon, playerFeet: null, audio, hitEffects: null, say: (l) => hudText.add(l), dealDamage: (t, d) => landOnCrystal(cr, d, HIT_KINDS.Shaft) });
+            if (techniquePierces(m, cr)) continue;
             retireMissile(m);
             continue;
           }
           // WB11c: a shaft meets one of his host by its whole body - the one player-arrow law against its stand-in
-          const hb = gateHostBodies().find((q) => missileHitsCapsule(m.pos, q.ai.feet, q.ai.height, q.ai.radius));
+          const hb = gateHostBodies().find((q) => !struckBy(q) && missileHitsCapsule(m.pos, q.ai.feet, q.ai.height, q.ai.radius));   // TECH1: and one of his host it has struck (AUDIT TECH1: the next one under it met)
           if (hb) {
             // AUDIT WB11 W2: no backstab, as no swing on one has (its `yaw` 0 is no facing - every shaft from its -z side was
             // a backstab, x3 and a Backstabbing use); W5: its blood laddered against its own whole (`bloodOf`)
             playerArrowHitFoe(m, hb, { playerEntity, playerWeapon, playerFeet: null, audio, hitEffects, say: (l) => hudText.add(l), dealDamage: (t, d) => landOnHost(hb, d, HIT_KINDS.Shaft) });
+            if (techniquePierces(m, hb)) continue;
             retireMissile(m);
             continue;
           }
           for (const f of foes) {
             if (f.dead || f.companion != null) continue;   // AUDIT CC-B1: the player's shaft flies past a companion (the street's and a building's spare him already)
+            if (struckBy(f)) continue;   // TECH1: a piercing shot flies past a foe it has struck
             if (missileHitsFoe(m.pos, f)) {   // ROAD-H tail: DaggerfallMissile.cs:339's SphereCast meets the foe's CAPSULE (REVIEW 2026-09-05 had its centre as a point)
               nextArenaQ();   // ARENA4b: each shaft its own blow to the referee (a relay's fighter's puppet - damageFoe's lane)
+              _arenaQ = shaftSequence(m, _arenaQ);   // AUDIT TECH1: a piercing shaft's later bodies ride its first one's sequence while it is the newest - one shaft, one blow
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
@@ -4719,6 +4740,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
                 // CONNECTED, damage or none.
                 onAttackFromPlayer: (t, landed) => attackFromPlayer(t, lastPlayerFeet, 'arrow', landed),   // AUDIT WORLD6b-iii(e) C2: the one door, the shaft's kind on the zero blow (its Arrow lands in the host's copy)
               });
+              if (techniquePierces(m, f)) continue;   // TECH1: a piercing shot flies on
               retireMissile(m);
               break;
             }

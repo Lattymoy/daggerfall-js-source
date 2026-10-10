@@ -31,7 +31,7 @@
 // Not a DFU member. Ledger A (SERPENT1).
 import { seededRng } from './wind.js';
 import { spoilsBase, magicOrBetter, sigilStone } from './gateSpoils.js';
-import { applyRarity, lastPass, socketPass, weaponSocketPass } from './lootRarity.js';   // GEM1: the sockets' passes
+import { applyRarity, lastPass, socketPass, weaponSocketPass, techniquePass } from './lootRarity.js';   // GEM1: the sockets' passes; TECH1: the technique pass, a door's last draw
 import { bossGems } from './gems.js';   // GEM2: the Old Coil's gem
 import { rollSerpentSetPiece } from './aetheric.js';   // SERPENT-SET: the Old Coil's own
 import { SERPENT_EMBERS } from '../net/serpentHoardLaw.js';   // SERPENT-SET: the gate's currency
@@ -99,6 +99,7 @@ export function rollSerpentSpoils(seed, level, earned = 'dealt') {
   socketPass(pieces.map((p) => p.item), rolls);
   weaponSocketPass(pieces.map((p) => p.item), rolls);
   const gems = dealt ? bossGems('serpent', rolls) : [];
+  techniquePass(pieces.map((p) => p.item), rolls);   // TECH1: a weapon's technique - after even the Old Coil's gem (law 9); a set piece takes none
   return { gold, pieces, embers: serpentEmbers(), card, gems };
 }
 

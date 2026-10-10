@@ -85,8 +85,10 @@ import './legacy/heirloom.js';
 import './comeSailAwayItems.js';
 import './naval/navalStores.js';
 
-/** The law's version - a finding names the law that found it, so a law loosened later can be asked again. */
-export const ITEM_LAW_VERSION = 1;
+/** The law's version - a finding names the law that found it, so a law loosened later can be asked again. TECH1 moved it
+ *  to 2: a weapon's technique line (systems/lootRarity.js AFFIX_KINDS.technique) is lawful from it on, so a finding a law
+ *  of 1 made against one is a finding to ask again. */
+export const ITEM_LAW_VERSION = 2;
 
 const T = ENCHANTMENT_TYPES;
 const TYPE_KEY = Object.freeze(Object.fromEntries(Object.entries(T).map(([k, v]) => [v, k])));
@@ -283,12 +285,19 @@ function tierFindings(/** @type {any} */ item) {
   // no kind repeated (a kind with params: no param repeated)
   const seen = new Set(own.map((a) => (AFFIX_KINDS[a?.id]?.params ? `${a.id}:${a.param}` : a?.id)));
   if (seen.size !== own.length) out.push('affixes');
+  // TECH1 (bible/05-Combat/Weapon-Techniques.md): A TECHNIQUE LINE - one at most, of the piece's own family (kindParams,
+  // above, already refused another family's), and the piece's LAST own line: the door's technique pass is its last draw,
+  // so the Exalted's line and a curse's stand before it, and only a set gem's comes after. It is no number and no proc:
+  // the counts below are the other lines'.
+  const techs = own.filter((a) => AFFIX_KINDS[a?.id]?.technique);
+  if (techs.length > 1 || (techs.length === 1 && own[own.length - 1] !== techs[0])) out.push('affixes');
+  const body = own.filter((a) => !AFFIX_KINDS[a?.id]?.technique);
   if (!validCurse(item)) out.push('curse');
   if (!validSocket(item)) out.push('socket');
   if (!validImprint(item)) out.push('imprint');
   if ((has(item, 'socket') || has(item, 'sockets')) && (has(item, 'provenance') || item.bound === true)) out.push('socket');   // GEM1: the list as the string
-  const procs = own.filter((a) => AFFIX_KINDS[a?.id]?.proc);
-  const numbers = own.filter((a) => !AFFIX_KINDS[a?.id]?.proc);
+  const procs = body.filter((a) => AFFIX_KINDS[a?.id]?.proc);
+  const numbers = body.filter((a) => !AFFIX_KINDS[a?.id]?.proc);
   if (tier === 'magic' || tier === 'rare') {
     const [lo, hi] = AFFIX_COUNTS[tier];
     // a curse's line is one more - and stays when the temple lifts the curse (lootCurse.js liftCurse keeps it, by design;
@@ -312,13 +321,17 @@ function tierFindings(/** @type {any} */ item) {
   const rec = legendaryById(item.legendary);
   if (!rec || !legendariesFor(item).some((l) => l.id === rec.id)) return [...out, 'legendary'];
   const sig = rec.affixes;
-  if (own.length < sig.length) return [...out, 'legendary'];
+  if (body.length < sig.length) return [...out, 'legendary'];
+  for (const a of techs) {   // TECH1: a Legendary's technique line, rolled in the Legendary band
+    const band = AFFIX_RANGES.technique.legendary;
+    if (!(a.value >= band[0] && a.value <= band[1])) out.push('affixes');
+  }
   for (let i = 0; i < sig.length; i++) {
-    const a = own[i], w = sig[i];
+    const a = body[i], w = sig[i];
     // a record's line is its record's kind and param, never past its value - a signature is never reforged or honed
     if (a?.id !== w.id || (a.param ?? null) !== (w.param ?? null) || !(a.value >= 1 && a.value <= w.value)) out.push('legendary');
   }
-  const extra = own.slice(sig.length);
+  const extra = body.slice(sig.length);
   if (extra.length > 1) out.push('affixes');
   if (extra.length === 1) {
     const a = extra[0];

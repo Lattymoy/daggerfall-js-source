@@ -470,8 +470,8 @@
   {
     "name": "DISC10-E-L2-the-claws-strike-as-a-weapon",
     "file": "src/combat/playerWeapon.js",
-    "old": "...playerAttackOptions(this.strikingWeapon, this.machine.state",
-    "new": "...playerAttackOptions(this.weapon, this.machine.state",
+    "old": "const opts = playerAttackOptions(this.strikingWeapon, this.machine.state",
+    "new": "const opts = playerAttackOptions(this.weapon, this.machine.state",
     "tests": [
       "test/disc10_lycan.test.js"
     ]

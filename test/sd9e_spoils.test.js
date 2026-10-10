@@ -16,7 +16,7 @@ import { createSpoilsPool, spoilsList, SPOILS_KEYS, SPOILS_TEXT } from '../src/s
 import { RAID_SPOILS_KEYS } from '../src/systems/raidSpoils.js';
 import { SERPENT_SPOILS_KEYS } from '../src/systems/serpentSpoils.js';
 import { spoilsBase } from '../src/systems/gateSpoils.js';
-import { applyRarity, rarityChances, lastPass, socketPass, weaponSocketPass } from '../src/systems/lootRarity.js';
+import { applyRarity, rarityChances, lastPass, socketPass, weaponSocketPass, techniquePass } from '../src/systems/lootRarity.js';
 import { bossGems } from '../src/systems/gems.js';   // GEM2: the Remnant's gems
 import { rollNumidiumPiece, NUMIDIUM_SET_CHANCE, AETHERIC } from '../src/systems/aetheric.js';
 import { rollHourlock, GILDED_CHANCE, GILDED } from '../src/systems/gilded.js';
@@ -90,6 +90,7 @@ test('SD9e THE ORDER: the roll is its law\'s stream, read in order - the gold, t
     socketPass(pieces.map((p) => p.item), rolls);
     weaponSocketPass(pieces.map((p) => p.item), rolls);
     const gems = bossGems('abyss', rolls);
+    techniquePass(pieces.map((p) => p.item), rolls);   // PIN MOVED (TECH1): a weapon's technique, the door's draw after the gems' (Loot-II law 9)
     return { gold, pieces, card, gems };
   };
   for (let seed = 1; seed <= 300; seed++) {

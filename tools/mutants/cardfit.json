@@ -83,8 +83,8 @@
   {
     "name": "CARDFIT-the-lore-back-on-the-card",
     "file": "src/ui/enhancedInventory.js",
-    "old": "itemPowerLines(picked, deps, { set: false, lore: false })",
-    "new": "itemPowerLines(picked, deps, { set: false, lore: true })",
+    "old": "itemPowerLines(picked, deps, { set: false, lore: false, technique: false })",
+    "new": "itemPowerLines(picked, deps, { set: false, lore: true, technique: false })",
     "tests": [
       "test/cardfit.test.js",
       "test/lr1_lootrarity.test.js"
@@ -111,8 +111,8 @@
   {
     "name": "CARDFIT-a-line-said-twice",
     "file": "src/ui/enhancedInventory.js",
-    "old": "    const tier = rarityLines(item, { sigil: false, set: false }).filter((t) => t && !said.has(t));",
-    "new": "    const tier = rarityLines(item, { sigil: false, set: false }).filter((t) => t);",
+    "old": "    const tier = rarityLines(item, { sigil: false, set: false, technique: false }).filter((t) => t && !said.has(t));",
+    "new": "    const tier = rarityLines(item, { sigil: false, set: false, technique: false }).filter((t) => t);",
     "tests": [
       "test/cardfit.test.js"
     ]

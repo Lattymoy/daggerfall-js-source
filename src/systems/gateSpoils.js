@@ -31,7 +31,7 @@
 import { seededRng } from './wind.js';
 import { createRandomWeapon, createRandomArmor, ITEM_GROUPS } from './loot.js';
 import { setItemFields, isAmmunition, mintCondition, registerCustomTemplates, templateByIndex } from './itemTemplates.js';
-import { applyRarity, rarityChances, lastPass, socketPass, weaponSocketPass } from './lootRarity.js';   // GEM1: the sockets' passes, the spoils' last but the gems
+import { applyRarity, rarityChances, lastPass, socketPass, weaponSocketPass, techniquePass } from './lootRarity.js';   // GEM1: the sockets' passes, the spoils' last but the gems; TECH1: the technique pass, a door's last draw
 import { bossGems } from './gems.js';   // GEM2: the Warden's gem
 import { rollRegalia } from './aetheric.js';   // SET6: Ruhn's Regalia - the spoils' last roll
 import { stacksWith, addItem } from './inventory.js';   // SS1: the fold of a pack saved before the stone stacked; PORTAL-GIFT: the gift joins the pack's stack
@@ -243,6 +243,9 @@ export function rollSpoils(seed, level) {
   socketPass(pieces.map((p) => p.item), rolls);
   weaponSocketPass(pieces.map((p) => p.item), rolls);
   const gems = bossGems('gate', rolls);
+  // TECH1 (bible/05-Combat/Weapon-Techniques.md): a weapon's technique - after even the Warden's gem, so every spoils
+  // before it is what it was for its seed (a piece with no technique family takes no draw)
+  techniquePass(pieces.map((p) => p.item), rolls);
   return { gold, pieces, sigil: sigilStone(), card, gems };
 }
 

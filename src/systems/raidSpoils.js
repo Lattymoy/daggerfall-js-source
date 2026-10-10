@@ -24,7 +24,7 @@
 // Not a DFU member. Ledger A (RAID1's row).
 import { seededRng } from './wind.js';
 import { spoilsBase, magicOrBetter } from './gateSpoils.js';
-import { applyRarity, lastPass } from './lootRarity.js';
+import { applyRarity, lastPass, techniquePass } from './lootRarity.js';   // TECH1: the technique pass, a door's last draw
 import { rollRaidSetPiece } from './aetheric.js';
 
 /** Gold a level of the player's, before the seed's variation (0.8 to 1.2 of it) - a third of a boss's. */
@@ -62,6 +62,7 @@ export function rollRaidSpoils(seed, level, party) {
   const set = rollRaidSetPiece(party, rolls);   // LAST: every thanks before it stays what it was for its seed
   if (set) pieces.push({ item: set, tier: set.rarity });
   lastPass([item], rolls);   // LOOT2: the ladder's last pass, after the set piece - its earlier draws stay its seed's
+  techniquePass([item], rolls);   // TECH1: a weapon's technique - LAST of all (law 9)
   return { gold, pieces };
 }
 

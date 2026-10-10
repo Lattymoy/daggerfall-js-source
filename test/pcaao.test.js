@@ -494,7 +494,7 @@ test('PCO1: the seams - the Mods pane entry, the credit, the vendor folder, worl
   const pw = rd('src/combat/playerWeapon.js');
   // AUDIT 68 S08-bow-draw-time-wallclock: the draw is the machine's held ticks (GetAnimTime), written at every
   // release - the behaviour is pinned in audit68_combat_bf.test.js; here only that the three bow doors read it
-  assert.equal((pw.match(/this\.lastDrawMs = this\._bowAnimTimeMs\(\);/g) || []).length, 3, 'the drawn release, the instant shot and the touch button');
+  assert.equal((pw.match(/this\.lastDrawMs = this\._bowAnimTimeMs\(\);/g) || []).length, 4, 'the drawn release, the instant shot, the touch button and a technique\'s loose');   // PIN MOVED (TECH1): techniqueStrike, a Volley's or a Piercing Shot's StrikeDown, writes it as the instant shot does
   assert.match(rd('src/combat/arrowFlight.js'), /weaponAnimTime: playerWeapon\?\.lastDrawMs \?\? 0,/, 'the arrow hands it to the formula');
   assert.match(rd('src/combat/formulas.js'), /const core = _overrides\.get\('calculateAttackDamage'\);/, 'the core is the registry\'s');
   assert.match(rd('src/systems/equip.js'), /if \(removeFrom\) \{ const i = removeFrom\.indexOf\(item\); if \(i >= 0\) removeFrom\.splice\(i, 1\); \}/, 'LowerCondition\'s removeFromCollectionWhenBreaks');

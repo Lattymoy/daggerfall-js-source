@@ -83,10 +83,10 @@ test('TRUE-CURSE: one cursed Legendary weapon in four, over the pass\'s own draw
 test('TRUE-CURSE (AUDIT FB1010 E3): the damning is each door\'s LAST draw (law 9) - after the curse\'s, the socket\'s and the late finds\' - so every other draw a door makes is the one it made before', () => {
   const lr = read('src/systems/lootRarity.js');
   const door = lr.slice(lr.indexOf('export function rollLootRarity'), lr.indexOf('\n}\n', lr.indexOf('export function rollLootRarity')));
-  assert.match(door, /items\.push\(\.\.\.\(_gemFind\?\.\(\{ \.\.\.source, luck \}, rolls\) \?\? \[\]\)\);[^\n]*\n  damnPass\(minted, rolls\);[^\n]*\n  return items;$/, 'the loot door: last of all, after GEM2\'s gem find');
+  assert.match(door, /items\.push\(\.\.\.\(_gemFind\?\.\(\{ \.\.\.source, luck \}, rolls\) \?\? \[\]\)\);[^\n]*\n  damnPass\(minted, rolls\);[^\n]*\n  techniquePass\(minted, rolls\);[^\n]*\n  return items;$/, 'the loot door: last of all, after GEM2\'s gem find');   // PIN MOVED (TECH1, bible/05-Combat/Weapon-Techniques.md): a weapon's technique the one draw after it - every draw the damning shipped with is the one it made
   assert.ok(door.indexOf('rollLateFinds(') < door.indexOf('weaponSocketPass(') && door.indexOf('weaponSocketPass(') < door.indexOf('damnPass('), '...after the late finds and GEM1\'s weapon sockets');
   const kit = read('src/systems/foeLootCap.js');
-  assert.match(kit, /weaponSocketPass\(kit, opts\.rolls \?\? Math\.random\);[^\n]*\n  damnPass\(kit, opts\.rolls \?\? Math\.random\);[^\n]*\n  return kit;/, 'a body\'s kit: last of all, after GEM1\'s weapon sockets');
+  assert.match(kit, /weaponSocketPass\(kit, opts\.rolls \?\? Math\.random\);[^\n]*\n  damnPass\(kit, opts\.rolls \?\? Math\.random\);[^\n]*\n  techniquePass\(kit, opts\.rolls \?\? Math\.random\);[^\n]*\n  return kit;/, 'a body\'s kit: last of all, after GEM1\'s weapon sockets');   // PIN MOVED (TECH1): and the kit's technique after it
   assert.doesNotMatch(lr.slice(lr.indexOf('export function cursePiece'), lr.indexOf('export function damnPiece')), /DAMNED_IN/, 'the curse draws nothing for the damning');
 });
 
@@ -139,7 +139,7 @@ test('TRUE-CURSE: the Test Room lays a damned Legendary weapon, known, after eve
   assert.equal(damned.length, 1);
   assert.equal(damned[0].group, 'Weapons');
   assert.equal(LR.tierLabel(damned[0]), 'Damned Legendary', 'known');
-  assert.equal(entity.items.at(-1), damned[0], 'last');
+  assert.equal(entity.items.filter((it) => !LR.techniqueLineOf(it)).at(-1), damned[0], 'last');   // PIN MOVED (TECH1, bible/05-Combat/Weapon-Techniques.md): the room's twelve technique pieces are laid after it
   assert.ok(entity.items.some((it) => LR.isCursed(it) && it.rarity === 'legendary' && !LR.isDamned(it)), 'the cursed Legendary beside it');
 });
 

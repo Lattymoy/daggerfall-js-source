@@ -196,7 +196,9 @@
     "new": "  const rows = CURSE_DRAWBACKS;",
     "tests": [
       "test/loot16_curses.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "Recorded by TECH1's follow-up (2026-10-10; AUDIT FB1010 met it first and left it standing): `rows` is read only by `!rows.length`, and three drawback rows fit every piece and every line - Bad Reactions From, Item Deteriorates and User Takes Damage (no group, and curseParams cancels only Bad Rep With and Low Damage Vs) - so the filtered list is never empty and the unfiltered one is never empty either; the row the curse draws is chosen by its own filter over the lined piece, below. No input tells the two apart."
   },
   {
     "name": "LOOT16-the-whole-band",

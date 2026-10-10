@@ -44,6 +44,7 @@ import '../src/world/outdoors.js';
 import '../src/systems/featureLanes.js';   // FT18: the wind, the quick slots and the blood lanes register themselves too
 import * as LR from '../src/systems/lootRarity.js';
 import { AETHERIC_RECORDS } from '../src/systems/aetheric.js';   // SET6: the test room shows the Aetheric rung too (RAID4b: the raids' sets with it)
+import { TECHNIQUE_IDS } from '../src/combat/techniqueRoster.js';   // TECH1: the Test Room lays one Rare a technique
 import { createRandomWeapon, createRandomArmor, LOOT_ARRAY_FIELDS, validLootItem, validLootList } from '../src/systems/loot.js';   // AUDIT-LR: a container's whole list, the shape both online doors send
 import { createWeapon } from '../src/combat/enemyEquipment.js';
 import { mintCondition, itemBaseValue } from '../src/systems/itemTemplates.js';
@@ -166,6 +167,9 @@ test('LR2: the affix kinds - six, each banded per tier, each with a word for the
   // LOOT4 (bible/06-Systems/Loot-Arc.md section 6): the six numbers LR1 shipped, and five that DO something after them
   // LOOT14 (bible/06-Systems/Loot-II-Arc.md section 6): and the wardrobe's own three, after every kind before them
   assert.deepEqual(LR.AFFIX_IDS.filter((id) => !LR.AFFIX_KINDS[id].proc), ['damage', 'armor', 'weight', 'stat', 'resist', 'skill', 'standing', 'warmth', 'dry']);
+  // TECH1 (bible/05-Combat/Weapon-Techniques.md): a weapon's technique is a kind after every kind, and in no pool - never
+  // drawn by the numbers' pass, the proc line, the Exalted, a curse or the Reforge (its door's own pass)
+  assert.deepEqual(Object.keys(LR.AFFIX_KINDS).filter((id) => !LR.AFFIX_IDS.includes(id)), ['technique']);
   assert.deepEqual(LR.AFFIX_IDS.filter((id) => LR.AFFIX_KINDS[id].proc), ['elemental', 'leech', 'thorns', 'focus', 'slayer', 'castSpeed']);   // CAST-SPEED: after every kind before it
   for (const id of LR.AFFIX_IDS) {
     const k = LR.AFFIX_KINDS[id];
@@ -472,8 +476,8 @@ test('LR1: the skins - the native cell tints and the tooltip lists, the enhanced
   // the card's list leaves the sigil to its own block under it (SIGIL-UI)
   assert.match(inv, /markItemFrame\(row, item\);   \/\/ LR1/, 'a row wears its tier');
   assert.match(inv, /export function markItemFrame\(node, item\) \{\n\s+const r = rarityAttr\(item\);\n\s+if \(r\) node\.dataset\.rarity = r;/, 'through the marker');
-  assert.match(inv, /const lines = itemPowerLines\(picked, deps, \{ set: false, lore: false \}\); if \(lines\.length\)/, 'the card lists the lines (SET5: the sigil and the set draw their own blocks; CARD-FIT: the lore is the Info box\'s)');   // TRADE-INFO: rarityLines, and a DFU magic item's powers
-  assert.match(inv, /export function itemPowerLines\(item, d = deps, \{ set = true, lore = true \} = \{\}\) \{\n  const lines = rarityLines\(item, \{ sigil: false, set, lore \}\);/, 'the tier\'s lines first');
+  assert.match(inv, /const lines = itemPowerLines\(picked, deps, \{ set: false, lore: false, technique: false \}\); if \(lines\.length\)/, 'the card lists the lines (SET5: the sigil and the set draw their own blocks; CARD-FIT: the lore is the Info box\'s)');   // TRADE-INFO: rarityLines, and a DFU magic item's powers   // PIN MOVED (TECH-CARD): the card leaves a technique's line to its block (technique: false)
+  assert.match(inv, /export function itemPowerLines\(item, d = deps, \{ set = true, lore = true, technique = true \} = \{\}\) \{\n  const lines = rarityLines\(item, \{ sigil: false, set, lore, technique \}\);/, 'the tier\'s lines first');   // PIN MOVED (TECH-CARD): a technique's line kept unless a card draws its block
   assert.match(read('src/ui/worldPlaque.js'), /if \(r\.rarity\) row\.dataset\.rarity = r\.rarity;/);
   assert.match(read('src/ui/nativeInventory.js'), /armorLabelValue\(av\[i\] \?\? 100, entityArmorDisplayMod\(this\.hooks\.entity, i\)\)/, 'the doll\'s numbers, per part (RF1)');
   assert.match(read('src/ui/enhancedInventory.js'), /material: parts\.material \|\| null,/, 'LR4: the enhanced row names no material until identified - RF6: the long name\'s own prefix, which an unidentified item has none of');
@@ -507,11 +511,11 @@ test('LR3: the Test Room\'s loot ladder - one door, thirty items (a Magic and a 
   assert.equal(LR.lootRarityOn(), true, 'the door turns the ladder on');
   // LR6: the ladder, plus the unidentified pair - one Rare and one
   // Legendary left on the floor's own reading.
-  assert.equal(added.length, 20 + LR.LEGENDARIES.length + 2 + AETHERIC_RECORDS.length + 1 + 4 + LR.WARDROBE_LEGENDARIES.length + 2 + 2 + 2 + 2 + 1 + 4 + 1);   // LOOT2: and one Exalted; LOOT14/LOOT15: the wardrobe's two bases at two tiers and its six; LOOT16: a cursed Rare and a cursed Legendary; LOOT20: a socketed Rare and a Ruby; LOOT21: the two Ayleid stones; GILDED1: the Hourlock and its shot; GEM1/GEM2: a three-socket Rare bow and four graded gems; TRUE-CURSE (PIN MOVED): a damned Legendary weapon
+  assert.equal(added.length, 20 + LR.LEGENDARIES.length + 2 + AETHERIC_RECORDS.length + 1 + 4 + LR.WARDROBE_LEGENDARIES.length + 2 + 2 + 2 + 2 + 1 + 4 + 1 + TECHNIQUE_IDS.length);   // LOOT2: and one Exalted; LOOT14/LOOT15: the wardrobe's two bases at two tiers and its six; LOOT16: a cursed Rare and a cursed Legendary; LOOT20: a socketed Rare and a Ruby; LOOT21: the two Ayleid stones; GILDED1: the Hourlock and its shot; GEM1/GEM2: a three-socket Rare bow and four graded gems; TRUE-CURSE (PIN MOVED): a damned Legendary weapon   // PIN MOVED (TECH1): and one Rare a weapon technique
   assert.deepEqual(added.filter((i) => i.rarity === 'gilded').map((i) => i.gilded), ['the-hourlock'], 'GILDED1: the top rung\'s one record, whole');
   assert.deepEqual(added.filter((i) => i.rarity === 'aetheric').map((i) => i.aetheric), AETHERIC_RECORDS.map((r) => r.id), 'SET6: the nine Regalia pieces, once each; RAID4b: then the raids\' twenty-seven');
   assert.equal(added.filter((i) => i.rarity === 'magic').length, 12);   // LOOT14: and the wardrobe's two
-  assert.equal(added.filter((i) => i.rarity === 'rare').length, 16);   // LOOT16: and the cursed one; LOOT20: and the socketed one; GEM1: and the three-socket bow
+  assert.equal(added.filter((i) => i.rarity === 'rare').length, 16 + TECHNIQUE_IDS.length);   // LOOT16: and the cursed one; LOOT20: and the socketed one; GEM1: and the three-socket bow; PIN MOVED (TECH1): and one a weapon technique
   const legs = added.filter((i) => i.rarity === 'legendary' && i.isIdentified && !i.exalted && !i.cursed);   // LOOT2: the Exalted is the room's one extra; LOOT16: and the cursed one
   assert.deepEqual(legs.map((i) => i.legendary).sort(), [...LR.LEGENDARIES, ...LR.WARDROBE_LEGENDARIES].map((l) => l.id).sort(), 'every record once - LOOT15: the wardrobe\'s six too');
   for (const it of legs) { const rec = LR.legendaryById(it.legendary); assert.ok(!rec.templates || rec.templates.includes(it.templateIndex), `${rec.id} on a fitting base`); }

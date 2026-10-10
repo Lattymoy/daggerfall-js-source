@@ -173,9 +173,13 @@ test('LOOT20: the door\'s pass - a Rare 150 in a thousand, a Legendary 300, neve
       const all = list(); LR.rollLootRarity(all, src, { rolls: lcg(seed) });
       LR._setSocketForTests(0);
       const none = list(); LR.rollLootRarity(none, src, { rolls: lcg(seed) });
+      // PIN MOVED (TECH1, bible/05-Combat/Weapon-Techniques.md): a weapon's technique is the door's very last draw, after the
+      // socket's (which costs no draw at no chance) - where a socket drew, the two runs' techniques differ, so a piece's
+      // technique line and its worth are set aside on both sides
+      const noTech = (x) => { const t = LR.techniqueLineOf(x); return t ? { ...x, affixes: x.affixes.filter((a) => a !== t), value: x.value - LR.affixesWorth([t], x) } : x; };
       all.forEach((it, i) => {
-        const { sockets, ...rest } = it;
-        assert.deepEqual(rest, none[i], `seed ${seed}: piece ${i} the same but its socket`);
+        const { sockets, ...rest } = noTech(it);
+        assert.deepEqual(rest, noTech(none[i]), `seed ${seed}: piece ${i} the same but its socket`);
         if (it.rarity === 'rare' || it.rarity === 'legendary') { assert.deepEqual(sockets, [LR.SOCKET_EMPTY]); compared++; } else assert.equal(sockets, undefined);
       });
     }

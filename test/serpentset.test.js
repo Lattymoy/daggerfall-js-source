@@ -43,7 +43,7 @@ import { ARMOR_MATERIAL } from '../src/systems/armorMaterials.js';
 import { WEAPON_MATERIALS } from '../src/characters/weapons.js';
 import { WEAPON_HANDS } from '../src/characters/equipRules.js';
 import { SKILLS } from '../src/systems/skills.js';
-import { AFFIX_RANGES } from '../src/systems/lootRarity.js';
+import { AFFIX_RANGES, isTechniqueAffix } from '../src/systems/lootRarity.js';   // TECH1: a technique's line, the door's very last draw
 import { validLootItem } from '../src/systems/loot.js';
 import { isBound } from '../src/systems/itemBound.js';
 
@@ -206,7 +206,10 @@ test('SERPENT-SET the hoard: every hoard - a ship that dealt and one that stood 
   assert.deepEqual([h.gold, h.pieces.map((p) => [p.item.name, p.tier])], [2100, [
     ["Warrior's Broadsword of Skill", 'rare'], ["Porter's Amulet", 'magic'],
   ]]);
-  assert.deepEqual(h.pieces[0].item.affixes.at(-1), { id: 'castSpeed', value: 8 }, 'the last pass\'s line, the kind that moved the roll');
+  // PIN MOVED (TECH1, bible/05-Combat/Weapon-Techniques.md): a weapon's technique is the hoard's very last draw, after the
+  // gem arc's - this seed's broadsword rolls Leap Strike there, its line after the last pass's
+  assert.deepEqual(h.pieces[0].item.affixes.filter((a) => !isTechniqueAffix(a)).at(-1), { id: 'castSpeed', value: 8 }, 'the last pass\'s line, the kind that moved the roll');
+  assert.deepEqual(h.pieces[0].item.affixes.at(-1), { id: 'technique', param: 'leap', value: 30 }, 'TECH1: and the technique\'s, last');
   assert.deepEqual(rollSerpentSpoils(2, 12, 'dealt'), h, 'the same seed, the same hoard');
   const grip = rollSerpentSpoils(12345, 20, 'dealt').pieces[2];
   assert.equal(grip.tier, AETHERIC, 'a dealer\'s set piece, last');

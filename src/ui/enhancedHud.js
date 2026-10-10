@@ -71,6 +71,7 @@ import { hudRenown } from './hudRenown.js';   // RENOWN4: my own Renown, under t
 import { survivalHudChips } from '../systems/survival/status.js';   // SURV5: the needs (UI3: tiles in the status widget)
 import { statusTiles, afflictionRows, statusGlyphSrc, statRoom, statSide, statPlace, statOverflow, STAT_TILE, STAT_GAP, STAT_METRICS, STAT_SHORT_QUERY, STAT_MIDDLE_CLEAR } from './hudStatus.js';   // UI3: the status widget
 import { sigilRuneTileSrc } from './sigilRune.js';   // UI3: a set power's tile is its set's rune
+import { techniqueGlyphTileSrc } from './techniqueGlyph.js';   // TECH-CARD: a technique's tile is its own glyph, the card block's
 import { liveVampirism } from '../systems/racialLive.js';   // AUDIT SURV C: no hunger or sleep chip on a vampire
 import { survivalOn } from '../systems/survival/switch.js';
 import { ownMinutes, sharedClockOn } from '../systems/worldTick.js';   // LIVED1: the needs' strip reads the character's own clock   // REST1: and the Rested tile is online's
@@ -93,6 +94,7 @@ import { inventoryItemImage } from '../systems/itemTemplates.js';
 import { quickslotTag, quickslotOffTag, quickslotSpellTag, tagKey, CELL_ACTIONS } from './quickslotTags.js';   // QS6: the caption's spell chip names its own action
 import { glyphSvg, padFamily } from './padGlyphs.js';
 import { hdGlyphSvg } from './padGlyphsHD.js';   // PADPLUS1: Plus draws the pad's buttons as vectors
+import { TECH_CHIP_COLOUR } from '../combat/techniqueRoster.js';   // TECH1: a technique's chip wears its marks' blue (the roster is a leaf)
 import { rarityAttr, RARITIES } from '../systems/lootRarity.js';   // RARITY-UI: a quickslot cell's frame wears its item's tier; LOOT5: a power chip the Legendary's colour
 import { validSigil } from '../systems/sigil.js';   // SIGIL-UI: and a sigil weapon's rune
 import { markSetFrame, setShades } from './setCard.js';   // SET5: a set piece's rune in its set's colour; a set power's chip in it
@@ -1246,6 +1248,7 @@ function drawStatus(vitals, opts) {
   if (last.statEnding !== ending) { last.statEnding = ending; parts.stat.classList.toggle('ending', ending); }
   const spells = effectRows(vitals);
   const powers = setPowerChips(vitals);   // SET5: the set powers (the host's - setHudSetChips)
+  powers.push(...techniqueChips(vitals));   // TECH1: and the weapon's technique beside them (the host's - setHudTechniqueChips)
   // SURV5: the needs - one a felt need (survival/status.js), none while every need is met, and none with the switch off
   const needs = survivalOn() ? survivalHudChips(vitals, Math.floor(ownMinutes()), { vampire: !!liveVampirism(vitals), endurance: liveStat(vitals, 'endurance') }) : [];   // AUDIT SURV C: the vampire's strip, the page's drunk bands
   const rested = sharedClockOn() ? { minutes: nightRealMinutesLeft(vitals, ownMinutes()) } : null;   // REST1: the night interval, online
@@ -1342,9 +1345,10 @@ function statTile(t, dpr, box) {
   } else if (t.set) {
     const set = setById(t.set);
     const colour = set?.colour ?? (t.set === 'legendary' ? RARITIES.legendary.colour : undefined);   // LOOT5: a Legendary power's chip wears the tier's own orange
+    const shade = t.set === 'technique' ? TECH_CHIP_COLOUR : colour;   // TECH1: a weapon's technique, its marks' own blue
     cell.dataset.set = t.set;
-    for (const [k, v] of Object.entries(setShades(colour))) cell.style.setProperty(k, v);
-    pic.src = sigilRuneTileSrc(colour);
+    for (const [k, v] of Object.entries(setShades(shade))) cell.style.setProperty(k, v);
+    pic.src = t.set === 'technique' ? techniqueGlyphTileSrc(shade) : sigilRuneTileSrc(shade);   // TECH-CARD: the technique's own glyph, as its block on the card wears it
   } else if (t.glyph) {
     cell.dataset.glyph = t.glyph;
     pic.src = statusGlyphSrc(t.glyph) ?? '';
@@ -1544,6 +1548,11 @@ let _zone = null;
 export function setHudZone(fn) { _zone = typeof fn === 'function' ? fn : null; }
 const zoneTile = () => { try { return _zone?.() ?? null; } catch { return null; } };
 const setPowerChips = (vitals) => { try { return _setChips?.(vitals) ?? []; } catch { return []; } };
+/** TECH1 (bible/05-Combat/Weapon-Techniques.md): the host's word on the weapon's technique - its chip, after the set powers'
+ *  (combat/techniques.js techniqueHudChips, read off the rig that owns the frame). */
+let _techChips = null;
+export function setHudTechniqueChips(fn) { _techChips = typeof fn === 'function' ? fn : null; }
+const techniqueChips = (vitals) => { try { return _techChips?.(vitals) ?? []; } catch { return []; } };
 
 function quickCell(part, slot, s) {
   const cls = part.cell.classList;

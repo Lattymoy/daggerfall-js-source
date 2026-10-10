@@ -38,6 +38,7 @@ import { STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE } from '../world/terrain
 import { climbRigInput } from '../player/climbPose.js';   // CLIMB6: the body's limbs on the climb
 import { spaceAcross, clearDoorways, doorSpotsNear, actionDoorSpots, spacingSkips } from '../characters/foeSpacing.js';   // TACT3: the crowd and the door
 import { drawableBlows } from '../ai/foeBlows.js';   // TACT4
+import { techniqueMarksNow } from '../combat/techniques.js';   // TECH1: the player's own marks on the ground, after the foes'
 import { tacticsNow } from '../ai/tactics.js';   // TACT4: the brain's clock
 import { startRestGroundedCheck, TELEPORT_FREEZE_S, motionBagOf, afloatMessageStep, CANNOT_FLOAT_HUD_SECONDS, CAPSULE_HEIGHT } from '../player/motor.js';   // S40: the rest gate's grounded input; A6: DaggerfallAction.Teleport's physics settle; WW2: the one motion bag; DW-D: the dungeon arm's afloat line
 import { signalAutomapReset } from '../ui/automapWindow.js';   // ROAD-C c2/S9: the M window inside a building
@@ -1707,6 +1708,17 @@ export function createWorldModes(host) {
       move: motionBagOf(player),   // MW-D26: the movement-settings vector, the reference's own selection source; MW-D39 added the jump-state inputs; WW2: the one bag (a partial copy left the bob's idle gate unsent)
       climb: climbRigInput(player, cam.yaw) }),   // CLIMB6: the climb's snapshot - the body's limbs on the stone (player/climbPose.js)
     say,
+    // TECH1 (bible/05-Combat/Weapon-Techniques.md): the weapon technique's door into a building - the street's motor (one
+    // body, every mode), this arm's own arrow lane, its fatigue door (its collapse law), the view turned on a foe
+    technique: {
+      motor: () => player,
+      fireArrow: (from, dir, o) => interiorArrows.fire(from, dir, { fromPlayer: true, weapon: o?.weapon ?? interiorWeapon.playerWeapon.weapon, muzzle: o?.sky ? { world: [...from] } : interiorWeapon.thunderlockMuzzle(fieldOfView()), technique: o?.technique ?? null, ...(o?.speedScale ? { speedScale: o.speedScale } : {}) }),
+      drainFatigue: (n) => drainInteriorFatigue(n),
+      face: (p, from) => { if (!Array.isArray(p)) return; const o = Array.isArray(from) ? from : player.pos; cam.yaw = Math.atan2(p[0] - o[0], p[2] - o[2]); },   // AUDIT TECH1: from where the body lands
+      fx: (recipe, at, o) => magic?.techniqueFx?.(recipe, at, o),   // TECH-FX: a technique's burst, in the world's cast engine's impact pass (an interior's is the world's)
+      shake: (k) => betterAmbience.weaponKick(k),   // TECH-FX: the one shaker, under Better Ambience's own switch and cap
+      sound: (clip, volume, pitch) => audio.playOneShot(clip, volume, pitch),   // TECH-FX: the technique's layer over the swing's own
+    },
   });
   // C13: the interior arrow flights (collider late-resolved - each
   // building brings its own).
@@ -9265,6 +9277,9 @@ export function createWorldModes(host) {
           // has always passed this; without it the world-hosted dungeon
           // death fell to the standing defaults.
           motorState: () => ({ eyeLevel: player.eye[1] - player.pos[1], capsule: player.height, fallFrom: player.falling ? player.fallStart : null }),   // AUDIT SD III (D1): and the fall under way - where it began - for the walked trail
+          // TECH1 (bible/05-Combat/Weapon-Techniques.md): the weapon technique's door underground - the street's motor (the
+          // dungeon's rig lands its own shafts and drains its own fatigue - dungeonContext.js) and the view turned on a foe
+          technique: { motor: () => player, face: (p, from) => { if (!Array.isArray(p)) return; const o = Array.isArray(from) ? from : player.pos; cam.yaw = Math.atan2(p[0] - o[0], p[2] - o[2]); } },   // AUDIT TECH1: from where the body lands
           playerSpare: () => host.arenaPlayerSpare?.() ?? null,   // ARENA2: a blow taken in my bout on the sand leaves me at 1 (the duel's spare)
           makeArenaWindow: (page) => host.makeArenaWindow?.(page) ?? null, arenaJoined: () => !!host.arenaJoined?.(),   // ARENA3: the pause window's Arena door underground (the undercroft too)
           // AUDIT 26 F222/F223/F101: the host's half of the pose -
@@ -10358,6 +10373,7 @@ export function createWorldModes(host) {
       if (isSdRealm(dungeonLoc)) host.drawSdSky?.({ proj, view, eye: mwv.eye });   // SD5b: the Hour's sky - after its islands, before its flats (PERF2's law)
       dungeonCtx.flatAnims.tick(dt);   // FA1
       renderer.drawFoeTelegraphs?.(drawableBlows(tacticsNow(), player.pos));   // TACT4: a foe's wind-up on the ground
+      renderer.drawFoeTelegraphs?.(techniqueMarksNow());   // TECH1: and the player's own marks, after the foes' (bible/05-Combat/Weapon-Techniques.md)
       dungeonCtx.bloodMarks?.draw?.(camRight, UP_Y);   // BLOOD1a: the dungeon's own marks, on this host's pass   // BLOOD1b: and its chunks, on this host's own basis
       renderer.drawBillboards([...dungeonCtx.billboardBatches, ...dungeonCtx.campBatches(), ...dungeonCtx.torchBatches(), ...(host.extraBillboards?.() ?? [])], camRight, UP_Y);   // ONLINE1: the peers on the dungeon's own pass; HT1 the dropped torches; SURV3 the campfires
       host.drawLootLines?.({ proj, view, eye: mwv.eye, finds: () => dungeonCtx.lootFinds?.() ?? [] });   // LOOT11: the lines of light over the dungeon's finds
@@ -10586,6 +10602,7 @@ export function createWorldModes(host) {
     // the same reason the exterior hosts put it above their own draw:
     // a body standing in its own blood is over it, not under it.
     renderer.drawFoeTelegraphs?.(drawableBlows(tacticsNow(), player.pos));   // TACT4: a foe's wind-up on the ground
+    renderer.drawFoeTelegraphs?.(techniqueMarksNow());   // TECH1: and the player's own marks, after the foes' (bible/05-Combat/Weapon-Techniques.md)
     interiorBloodMarks.draw(camRight, UP_Y);
     renderer.drawBillboards([...interiorCtx.billboardBatches, ...(host.extraBillboards?.() ?? [])], camRight, UP_Y);   // ONLINE1: the peers on the interior's own pass
     const livingInside = host.livingBillboards?.() ?? [];   // LW8: the residents the day has in this building
@@ -10727,6 +10744,8 @@ export function createWorldModes(host) {
       const swing = {};   // AUDIT DISC19: one swing, one attack grunt - the two pools rolled one each
       if (interiorGuards?.resolvePlayerHit(interiorWeapon.playerWeapon, cam.pos, eyeDir(), player.pos,
         makeInView(proj, view, multiply), interiorHitSound, { swing })) {
+        // TECH1 (AUDIT): a technique's blow strikes all it reaches - the building's foes in its ring are offered it too
+        if (interiorWeapon.playerWeapon.techniqueBlow) interiorFoes?.resolvePlayerHit(interiorWeapon.playerWeapon, cam.pos, eyeDir(), player.pos, makeInView(proj, view, multiply), interiorHitSound, { swing });
         continue;   // resolvePlayerHit runs DFU's tally arm itself (AUDIT 23 combat-4)
       }
       if (interiorFoes?.resolvePlayerHit(interiorWeapon.playerWeapon, cam.pos, eyeDir(), player.pos,

@@ -592,7 +592,7 @@ test('MAP-WEAPON: the sprite lane stands down while a map holds the screen, belo
 
   // the dep, defaulted FALSE - a host that never heard of it draws
   // exactly what it drew before
-  assert.match(rig, /sheetWindowUp = \(\) => false(?:, dropRefusal = \(\) => null)?(?:, actTool = \(\) => null)? \}\) \{/, 'the dep defaults to "no map"');   // PROF1: the act's tool after it
+  assert.match(rig, /sheetWindowUp = \(\) => false(?:, dropRefusal = \(\) => null)?(?:, actTool = \(\) => null)?(?:, technique = null)? \}\) \{/, 'the dep defaults to "no map"');   // PROF1: the act's tool after it; PIN MOVED (TECH1): and the weapon technique's door after that
 
   const i = rig.indexOf('if (fpArm.active()) { fpArm.draw(c); return; }');
   assert.ok(i > 0, 'the arm branch');

@@ -113,6 +113,14 @@ moved (CAST-SPEED-PINS, 2026-10-08): a jewel's proc pool was empty before this k
 draws where it drew nothing, and a weapon's pick lands in a pool one wider - a seeded hoard holding such a piece rolls
 on from a moved stream. The serpent hoard pins found it on main after the merge and were re-aimed.
 
+TECH1 (2026-10-10, the owner: "detailed weapon skill affixes for each weapon type") appended a seventh, after
+`castSpeed`: `technique`, weapons and the Gauntlets, no slot (it names no piece), 5-15 / 15-30 / 30-50, "<name> +N%" -
+ONE line naming one of twelve techniques the piece's family knows, which a key does (`05-Combat/Weapon-Techniques.md`).
+It is never rolled with the other lines: it is not among `AFFIX_IDS`, the kinds every pool draws from, so the numbers'
+pass, the proc line, the Exalted's, the curse's and the Reforge's pools are the pools they were; every door rolls it in
+its own pass, LAST (Magic 12%, Rare 30%, Legendary 45%; law 9 of the second arc), so no stream above moved. The Reforge
+turns it only into another of its family's, and a line added after the mint is set before it.
+
 A weapon's three are the weapon IN HAND's alone; a wearer's armour and jewellery sum, under the caps. Each answers MY
 entity alone, offline and online, and never a player (law 5). Names: `Burning Longsword of the Leech`, `Barbed
 Cuirass of the Bear`, `Adept's Ring of the Owl`, `Shortsword of the Gravewatch`.

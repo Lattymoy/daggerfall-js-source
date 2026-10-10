@@ -599,6 +599,7 @@ export class PlayerMotor {
     // PlayerMotor.freezeMotor (:64) - the physics-settle countdown a
     // Teleport action arms; FixedUpdate's block below spends it.
     this.freezeMotor = 0;
+    this.techFlight = false;   // TECH1: a technique's leap or dash in the air (techniqueLaunch) - the Jump spell's air control does not steer it
     // TELL6e (bible/12-Enhanced-AI/Feud-Arc.md 8.2): what a telegraphed blow's landing does to the body - the port's own,
     // set only by systems/blowEffects.js (the Enhanced AI switch's): a push (m/s, decaying), a rattle (a share of the
     // walk for a while), a knockdown (no move, the eye down and up again)
@@ -682,6 +683,31 @@ export class PlayerMotor {
   }
   /** TELL6e: is the body down (a knockdown)? */
   isDown() { return this._downLeft > 0; }
+  /**
+   * TECH1 (bible/05-Combat/Weapon-Techniques.md): A TECHNIQUE'S FLIGHT - a leap or a dash a weapon's technique makes
+   * (combat/techniques.js): `dir` the horizontal unit it flies along, `along` metres a second along it, `up` metres a
+   * second up. The body flies as a jump flies - the airborne arm keeps the momentum, the collider stops it on what it
+   * meets, gravity brings it down, the fall counts from the launch - and the Jump spell's air control does not steer it
+   * (`techFlight`, cleared on the ground: a leap's flight keeps its launch, as a parkour leap's does). Refused (false) to a
+   * body the hands hold (a climb, a hold, a mantle), the water or the air (a swim, a levitation, a slow fall), the saddle,
+   * a knockdown and a held motor - nothing there leaps.
+   */
+  techniqueLaunch(dir, along, up) {
+    if (this.swimming || this.levitating || this.slowFalling || this.climb?.isClimbing || this._wall || this._pkMove) return false;   // not from a climb, a wall, a vault, the water or the air's own spells
+    if (this.riding || this.isDown() || this.freezeMotor > 0 || this.paralyzed) return false;
+    if (!Array.isArray(dir) || !(Number.isFinite(along) && Number.isFinite(up))) return false;
+    this.velY = up;
+    this._airVelX = dir[0] * along;
+    this._airVelZ = dir[2] * along;
+    this.grounded = false;
+    this.groundedTime = 0;
+    this.groundKey = null;
+    this.jumping = true;
+    this.falling = false;
+    this.fallStart = this.pos[1];
+    this.techFlight = true;
+    return true;
+  }
   /** TELL6e: the eye's drop under a knockdown now - down over its first 0.15 s, up over its last 0.3 s. */
   _downEye() {
     if (!(this._downLeft > 0)) return 0;
@@ -3174,6 +3200,7 @@ export class PlayerMotor {
     // liftoff momentum verbatim (airControl false - see constructor).
     let vx, vz;
     if (this.grounded) {
+      this.techFlight = false;   // TECH1: a technique's flight ends on the ground
       vx = (sin * input.forward + cos * input.strafe) * factor * speed;
       vz = (cos * input.forward - sin * input.strafe) * factor * speed;
       // A6 - THE DOORWAY HEAD DIP. GroundedMovement's recompute arm
@@ -3182,7 +3209,7 @@ export class PlayerMotor {
       // above it needs slideWhenOverSlopeLimit or slideOnTaggedObjects
       // and BOTH ship false (:15-18).
       if (!this.paralyzed) this._headDipHandling(sin, cos);
-    } else if (this.enhancedJumping?.() && !this._pkLeap) {   // AUDIT CLIMB-ARC L3: a leap's flight keeps its launch
+    } else if (this.enhancedJumping?.() && !this._pkLeap && !this.techFlight) {   // AUDIT CLIMB-ARC L3: a leap's flight keeps its launch; TECH1: and a technique's
       // AUDIT 64 F2 - AcrobatMotor.CheckAirControl (:130-151), the
       // IsEnhancedJumping disjunct of :145. Its one caller is
       // PlayerMotor.cs:349-353, the airborne arm, with the `speed`

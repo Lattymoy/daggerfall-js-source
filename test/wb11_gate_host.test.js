@@ -662,7 +662,7 @@ test('WB11 the plumbing, read: the world host sends a blow on one of his host as
   assert.match(m, /onHostHit: \(hit\) => !!host\.onHostHit\?\.\(hit\),/);
   assert.match(d, /for \(const hb of gateHostBodies\(\)\) \{ hb\._backFacing = false; live\.push\(hb\); \}/, 'the swing meets them');
   assert.match(d, /if \(foe\.host != null\) \{ hitEnemy = true; swingOnHost\(foe, damage, lookDir\); continue; \}/);
-  assert.match(d, /const hb = gateHostBodies\(\)\.find\(\(q\) => missileHitsCapsule\(m\.pos, q\.ai\.feet, q\.ai\.height, q\.ai\.radius\)\);/, 'the shaft');
+  assert.match(d, /const hb = gateHostBodies\(\)\.find\(\(q\) => !struckBy\(q\) && missileHitsCapsule\(m\.pos, q\.ai\.feet, q\.ai\.height, q\.ai\.radius\)\);/, 'the shaft');   // PIN MOVED (TECH1's follow-up, bible/05-Combat/Weapon-Techniques.md): a body a piercing shaft has struck is passed, so one overlapping it under the shaft is met
   assert.match(d, /castAtHost: opts\.gateHost \? \(sp, i\) => spellOnHost\(sp, i\) : null,/, 'the spell');
   assert.match(d, /const landOnHost = \(hb, damage, r\) => \(sdRemnant \? sdRemnant\.echoHit\(\{ i: hb\.host, d: damage, r \}\) : !!opts\.onHostHit\?\.\(\{ i: hb\.host, d: damage, r \}\)\);/);   // PIN MOVED (SD8c): an Echo's in the Hour
   assert.match(g, /const crystals = \[\.\.\.crystalMarksFor\(sp\), \.\.\.hostMarksFor\(sp\)\];/);

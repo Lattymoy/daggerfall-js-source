@@ -31,7 +31,8 @@ The Loot arcs' ten stand (`Loot-II-Arc.md` section 1). The ones this arc leans o
    reads no gem's line.
 4. **A seed's draws stay its seed's** (law 9). Every draw this arc adds is taken AFTER every draw a door already makes:
    at the host door after the late finds (LOOT21), in a boss's spoils after its card (CARDS9). A seeded mint mints
-   what it did, and then a socket or a gem more.
+   what it did, and then a socket or a gem more. TECH1's technique pass (`05-Combat/Weapon-Techniques.md`) is the one
+   draw after this arc's, by the same law: a door's last.
 
 And two of its own:
 

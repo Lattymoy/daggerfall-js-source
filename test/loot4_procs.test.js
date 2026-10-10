@@ -150,7 +150,11 @@ test('LOOT4: the roll - a door\'s last pass, a Magic one in five, a Rare a bit o
 
 test('LOOT4: the seeded doors keep their earlier draws - the gate\'s and a town\'s pieces their seed\'s, the lines that do something appended', () => {
   on();
-  const strip2 = (it) => (it.affixes ?? []).filter((a) => !LR.isProcAffix(a) && !(it.exalted && it.affixes.indexOf(a) === it.affixes.length - 1));
+  // PIN MOVED (TECH1, bible/05-Combat/Weapon-Techniques.md): a weapon's technique is the door's very last draw - where a
+  // proc or an Exalted drew before it the two runs' techniques differ, so it is set aside on both sides (an Exalted's line
+  // is the last line before it)
+  const noTech = (it) => (it.affixes ?? []).filter((a) => !LR.isTechniqueAffix(a));
+  const strip2 = (it) => { const own = noTech(it); return own.filter((a) => !LR.isProcAffix(a) && !(it.exalted && own.indexOf(a) === own.length - 1)); };
   let procs = 0;
   for (let seed = 1; seed <= 1500; seed++) {
     const s = rollSpoils(seed, 12);
@@ -161,7 +165,7 @@ test('LOOT4: the seeded doors keep their earlier draws - the gate\'s and a town\
     assert.equal(s.pieces.length, p.pieces.length, `seed ${seed}: the Regalia's roll is before the last pass`);
     s.pieces.forEach((x, i) => {
       assert.equal(x.item.name, p.pieces[i].item.name);
-      assert.deepEqual(strip2(x.item), p.pieces[i].item.affixes ?? [], `seed ${seed}: piece ${i}'s numbers`);
+      assert.deepEqual(strip2(x.item), noTech(p.pieces[i].item), `seed ${seed}: piece ${i}'s numbers`);
       if ((x.item.affixes ?? []).some(LR.isProcAffix)) procs++;
     });
   }

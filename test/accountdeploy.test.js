@@ -414,6 +414,28 @@ test('ACC1-CI: the deploy is verified BY CONTENT, and reads the host and version
   }
 });
 
+test('IMPORT-GRAPH1: the walk is what the bundler bundles - each Worker\'s graph is exactly the files esbuild bundles from its entry, a JSON table a leaf; the relay\'s order is the hash\'s (mutants: a re-export unread; a named re-export unread; a dynamic import unread; a table parsed; a package walked)', async () => {
+  // test/importGraph.mjs parses each file - the regex it replaced stripped block comments before line comments, so a stray
+  // `/*` in a line comment swallowed the account Worker's imports of nine files, and the filter above never asked for
+  // them. Held here to the bundler itself: wrangler bundles with esbuild, so its inputs ARE the Worker.
+  const { build } = await import('esbuild');
+  for (const entry of ['server/src/index.js', 'server-account/src/index.js']) {
+    const r = await build({ entryPoints: [entry], bundle: true, write: false, metafile: true, format: 'esm', platform: 'neutral', logLevel: 'silent', external: ['cloudflare:*', 'node:*'], loader: { '.json': 'json' } });
+    const bundled = Object.keys(r.metafile.inputs).filter((f) => !f.includes('node_modules')).sort();
+    assert.deepEqual([...graph(entry)].sort(), bundled, `${entry}: the walk and the bundle`);
+  }
+  const account = graph('server-account/src/index.js');
+  for (const f of ['src/systems/partyScale.js', 'src/systems/books.js', 'src/formats/rscTable.js', 'src/systems/lootThemes.js']) assert.ok(account.includes(f), `${f}: one of the nine the comment hid`);
+  assert.ok(account.some((f) => f.endsWith('.json')), 'a JSON table the Worker imports is in the graph, a leaf');
+  // every shape the walk reads, in one fixture: the stray `/*`, an import, a re-export, a literal dynamic import(), a
+  // double-quoted specifier, a JSON leaf, a named re-export and a
+  // built-in the bundler leaves outside (never walked) - in the order they are written; a block comment's text never walked
+  const dir = 'test/fixtures/importgraph/';
+  assert.deepEqual(graph(dir + 'entry.js'), ['entry.js', 'a.js', 'b.js', 'c.js', 'e.js', 'd.json', 'f.js'].map((f) => dir + f));
+  const fx = await build({ entryPoints: [dir + 'entry.js'], bundle: true, write: false, metafile: true, format: 'esm', platform: 'neutral', logLevel: 'silent', external: ['node:*'], loader: { '.json': 'json' } });
+  assert.deepEqual([...graph(dir + 'entry.js')].sort(), Object.keys(fx.metafile.inputs).sort(), 'the fixture: the walk and the bundle');
+});
+
 test('ACC1-CI: nothing in the service still claims a person has to do this by hand', () => {
   // TWO-DIRECTIONAL, the shape DEPLOY-PROSE settled on the same day.
   // While the workflow exists, no file may say the work is manual;

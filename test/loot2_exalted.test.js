@@ -161,7 +161,11 @@ test('LOOT2: last - the gate\'s and a town\'s Legendaries Exalted one in ten, ev
     s.pieces.forEach((p, i) => {
       const q = plain.pieces[i].item;
       assert.equal(p.item.name, q.name, `seed ${seed}: piece ${i}`);
-      assert.deepEqual(p.item.exalted ? p.item.affixes.slice(0, -1) : p.item.affixes, q.affixes, `seed ${seed}: its record's lines`);
+      // PIN MOVED (TECH1, bible/05-Combat/Weapon-Techniques.md): a weapon's technique is the door's very last draw, so where
+      // an Exalted drew before it the two runs' techniques differ - set aside on both sides; the Exalted's line is the last
+      // line before it
+      const own = (it) => (it.affixes ?? []).filter((a) => !LR.isTechniqueAffix(a));
+      assert.deepEqual(p.item.exalted ? own(p.item).slice(0, -1) : own(p.item), own(q), `seed ${seed}: its record's lines`);
       if (p.item.rarity === 'legendary') { gate++; if (p.item.exalted) gateEx++; }
     });
   }
