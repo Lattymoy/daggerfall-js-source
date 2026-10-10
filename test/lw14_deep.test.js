@@ -143,7 +143,10 @@ test('LW14 the dives a build reads: every party of the towns within reach whose 
   }
   assert.equal(new Set(got.dives.map((x) => x.id)).size, got.dives.length);
   assert.ok(got.dives.every((x, i) => i === 0 || got.dives[i - 1].dive.t0 <= x.dive.t0));
-  assert.deepEqual(divesIn(d, t + 100 * DAY_MIN, t + 100 * DAY_MIN + 1, synthMap({ dives: true }).world, o).dives.filter((x) => got.dives.some((y) => y.id === x.id)), []);
+  // AUDIT LW-II F9: a window a hundred days on holds its own dives - each touching it, none of the first window's
+  const later = divesIn(d, t + 100 * DAY_MIN, t + 100 * DAY_MIN + 600, synthMap({ dives: true }).world, o).dives;
+  assert.ok(later.every((x) => x.dive.t0 < t + 100 * DAY_MIN + 600 && x.dive.t1 > t + 100 * DAY_MIN), 'each touches its window');
+  assert.ok(later.every((x) => !(x.dive.t0 < t && x.dive.t1 > t - DIVE_CLEAR_MIN)), 'none of the first');
 });
 
 /** A divers host over one company with a route, its deps recorded. */

@@ -25,7 +25,7 @@ import {
 import { HOUR_JOBS, runCron, CRON_HOUR } from '../server-account/src/cron.js';
 import { reckonPatrons } from '../server-account/src/market.js';
 import { FAUCET_KINDS } from '../server-account/src/budget.js';
-import { patronOf, patronVisits, patronWords, PATRON_STAY_MIN, PATRON_BROWSE_SHARE, PATRON_OPEN_H } from '../src/systems/livingWorld/patrons.js';
+import { patronOf, patronVisits, patronWords, PATRON_STAY_MIN, PATRON_BROWSE_SHARE, PATRON_OPEN_H, PATRON_DELAY_DAYS } from '../src/systems/livingWorld/patrons.js';
 import { dayPlan, DAY_MIN } from '../src/systems/livingWorld/dayPlan.js';
 import { townPlaces } from '../src/systems/livingWorld/places.js';
 import { townCensus } from '../src/systems/livingWorld/census.js';
@@ -268,13 +268,17 @@ test('LW15 drawn: the seed dealt to one of the town\'s households alike by every
   assert.equal(patronOf(1, residents).id, 'L1.3');
   assert.equal(patronOf(2, [...residents].reverse()).id, 'L1.1', 'every reader alike');
   assert.equal(patronOf(5, residents.slice(2)), null, 'never the watch, a visitor or a guardsman');
-  const day = 100, D0 = day * DAY_MIN + 240;
-  const v = patronVisits([{ door: 7, t: D0 + 600, seed: 1 }, { door: 7, t: D0 - 5, seed: 1 }, { door: 7, t: D0 + DAY_MIN, seed: 1 }], day, residents);
-  assert.deepEqual(v, [{ resId: 'L1.3', door: 7, from: D0 + 600, dur: PATRON_STAY_MIN }], 'the day\'s own');
-  // a sale in the night: its patron comes in the open hours, at its place in their fold
-  assert.deepEqual(PATRON_OPEN_H, [8, 20]);
-  const night = patronVisits([{ door: 7, t: day * DAY_MIN + 25 * 60, seed: 0 }, { door: 7, t: day * DAY_MIN + 6 * 60, seed: 0 }, { door: 7, t: day * DAY_MIN + 20 * 60, seed: 0 }], day, residents);
-  assert.deepEqual(night.map((x) => x.from - day * DAY_MIN), [13 * 60, 18 * 60, 8 * 60], 'one in the morning comes at one in the afternoon');
+  // PIN MOVED (AUDIT LW-II B1): a sale is walked PATRON_DELAY_DAYS living days after its own - online a living day is a
+  // real hour, and a reader learns of a sale only after its whole hour (its own day) is gone
+  assert.equal(PATRON_DELAY_DAYS, 2);
+  const day = 100, D0 = day * DAY_MIN + 240, S = PATRON_DELAY_DAYS * DAY_MIN;
+  const v = patronVisits([{ door: 7, t: D0 - S + 600, seed: 1 }, { door: 7, t: D0 - S - 5, seed: 1 }, { door: 7, t: D0 - S + DAY_MIN, seed: 1 }], day, residents);
+  assert.deepEqual(v, [{ resId: 'L1.3', door: 7, from: D0 + 600, dur: PATRON_STAY_MIN }], 'a sale two days before, walked today');
+  assert.deepEqual(patronVisits([{ door: 7, t: D0 + 600, seed: 1 }], day, residents), [], 'today\'s own sale: walked two days on');
+  // a sale outside the open hours: its patron comes in them, at its place in their fold - PIN MOVED (AUDIT LW-II B2): nine to five
+  assert.deepEqual(PATRON_OPEN_H, [9, 17]);
+  const night = patronVisits([{ door: 7, t: day * DAY_MIN - S + 25 * 60, seed: 0 }, { door: 7, t: day * DAY_MIN - S + 6 * 60, seed: 0 }, { door: 7, t: day * DAY_MIN - S + 20 * 60, seed: 0 }], day, residents);
+  assert.deepEqual(night.map((x) => x.from - day * DAY_MIN), [9 * 60, 14 * 60, 12 * 60], 'one in the morning comes at nine');
   assert.equal(patronWords({ name: 'Ada Lark' }, 'Wayrest'), 'Ada Lark of Wayrest');
   assert.equal(patronWords(null, 'Wayrest'), 'a townsperson of Wayrest');
   // the errand and the browse in a day's plan
@@ -322,7 +326,12 @@ test('LW15 the host\'s seams: the region\'s patrons read online alone, now and t
   assert.match(w, /if \(!params\.has\('online'\) \|\| !marketBook \|\| _livingPatronsBusy \|\| nowS - _livingPatronsAt < PATRON_READ_S\) return;/);
   assert.match(w, /if \(row\.home\?\.entry !== 'public'\) continue;/);
   assert.match(w, /const door = p\.buildingKey;\n\s+if \(!Number\.isSafeInteger\(door\)\) continue;/);
-  assert.match(w, /byMap\.get\(p\.map\)\.told\.push\(\{ door, t: skyClassicMinutes\(\(p\.hour \* 3600 \+ p\.minute \* 60\) \* 1000 \+ _sharedOffsetMs\), seed: p\.seed \}\);/);
+  assert.match(w, /byMap\.get\(p\.map\)\.told\.push\(\{ door, t: skyClassicMinutes\(\(p\.hour \* 3600 \+ p\.minute \* 60\) \* 1000\), seed: p\.seed \}\);/);   // PIN MOVED (AUDIT LW-II B5): the service's instant, no machine offset
+  // AUDIT LW-II B6/B7: one order for every reader, a version moved only by a change, a town with nothing now forgotten
+  assert.match(w, /const told = e\.told\.sort\(\(a, b\) => a\.t - b\.t \|\| a\.seed - b\.seed \|\| a\.door - b\.door\);\n\s+const traders = \[\.\.\.e\.traders\]\.sort\(\(a, b\) => a - b\);/);
+  assert.match(w, /if \(_livingPatrons\.get\(map\)\?\.sig === sig\) continue;/);
+  assert.match(w, /for \(const \[map, e\] of _livingPatrons\) if \(e\.region === region && !byMap\.has\(map\)\) _livingPatrons\.delete\(map\);/);
+  assert.match(w, /return patronWords\(lt \? lt\.patronOfSale\(pt\.seed, t\) : null,/);   // AUDIT LW-II B12
   assert.match(w, /patronsOf: \(\) => _livingPatrons\.get\(livingTown\.mapId >>> 0\) \?\? null,/);
   assert.match(w, /patronName: \(pt\) => livingPatronName\(pt\),/);
   const lt = readFileSync(new URL('../src/systems/livingWorld/livingTown.js', import.meta.url), 'utf8');

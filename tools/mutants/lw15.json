@@ -434,11 +434,12 @@
   {
     "name": "LW15-errand-cut",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "      prev.until = Math.min(prev.until ?? Infinity, e.from - walkMinutes(prev.at, e.at, mpm));\n",
-    "new": "",
+    "old": "      prev.until = Math.min(prev.until ?? Infinity, leave);   // none of it left before",
+    "new": "      void leave;   // none of it left before",
     "tests": [
       "test/lw15_patrons.test.js"
-    ]
+    ],
+    "note": "AUDIT LW-II (re-aimed by content)."
   },
   {
     "name": "LW15-errand-resume",
@@ -452,11 +453,12 @@
   {
     "name": "LW15-errand-order",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "  let k = intents.findIndex((it) => it.from > e.from);\n  if (k < 0) k = intents.length;",
+    "old": "  let k = intents.findIndex((it) => it.from >= e.from);\n  if (k < 0) k = intents.length;",
     "new": "  let k = intents.length;",
     "tests": [
       "test/lw15_patrons.test.js"
-    ]
+    ],
+    "note": "AUDIT LW-II (re-aimed by content)."
   },
   {
     "name": "LW15-browse",
@@ -565,6 +567,126 @@
     "new": "patronOdds(l.price / Math.max(1, patronCap(l.worth)))",
     "tests": [
       "test/lw15_patrons.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-B1-delay",
+    "file": "src/systems/livingWorld/patrons.js",
+    "old": "export const PATRON_DELAY_DAYS = 2;",
+    "new": "export const PATRON_DELAY_DAYS = 0;",
+    "tests": [
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-B1-shift",
+    "file": "src/systems/livingWorld/patrons.js",
+    "old": "const D0 = day * DAY_MIN + 4 * 60 - shift, D1 = D0 + DAY_MIN;",
+    "new": "const D0 = day * DAY_MIN + 4 * 60, D1 = D0 + DAY_MIN;",
+    "tests": [
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-B2-hours",
+    "file": "src/systems/livingWorld/patrons.js",
+    "old": "export const PATRON_OPEN_H = Object.freeze([9, 17]);",
+    "new": "export const PATRON_OPEN_H = Object.freeze([8, 20]);",
+    "tests": [
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-B2-at-its-minute",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "  let k = intents.findIndex((it) => it.from >= e.from);",
+    "new": "  let k = intents.findIndex((it) => it.from > e.from);",
+    "tests": [
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-B2-late",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "until: e.from + e.dur + PATRON_LATE_MIN }];",
+    "new": "until: e.from + e.dur }];",
+    "tests": [
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-B2-within-a-walk",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "    if (end > leave) {",
+    "new": "    if (end > e.from) {",
+    "tests": [
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-B12-holders",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "for (const v of patronVisits(p.told ?? [], day, this.peopleOf(day))) {",
+    "new": "for (const v of patronVisits(p.told ?? [], day, this.residents)) {",
+    "tests": [
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-B12-named",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    return patronOf(seed, this.peopleOf(this.dayOf(t) + PATRON_DELAY_DAYS));",
+    "new": "    return patronOf(seed, this.residents);",
+    "tests": [
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-B5-offset",
+    "file": "src/scenes/world.js",
+    "old": "t: skyClassicMinutes((p.hour * 3600 + p.minute * 60) * 1000), seed: p.seed });",
+    "new": "t: skyClassicMinutes((p.hour * 3600 + p.minute * 60) * 1000 + _sharedOffsetMs), seed: p.seed });",
+    "tests": [
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-B6-order",
+    "file": "src/scenes/world.js",
+    "old": "        const traders = [...e.traders].sort((a, b) => a - b);",
+    "new": "        const traders = [...e.traders];",
+    "tests": [
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-B6-changed",
+    "file": "src/scenes/world.js",
+    "old": "        if (_livingPatrons.get(map)?.sig === sig) continue;\n",
+    "new": "",
+    "tests": [
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW15-AUDIT-B7-forgotten",
+    "file": "src/scenes/world.js",
+    "old": "      for (const [map, e] of _livingPatrons) if (e.region === region && !byMap.has(map)) _livingPatrons.delete(map);\n",
+    "new": "",
+    "tests": [
+      "test/lw15_patrons.test.js",
+      "test/lw16_word.test.js"
     ]
   }
 ]

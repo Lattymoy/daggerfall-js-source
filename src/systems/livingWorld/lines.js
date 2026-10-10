@@ -613,7 +613,9 @@ export function newsScript(seed, news) {
   // with none tells its own as ever
   const carried = news.filter((n) => n.carried);
   const own = carried.length ? news.filter((n) => !n.carried) : news;
-  const list = carried.length && seededRng((seed ^ 0x43415252) >>> 0)() < CARRIED_SHARE ? carried : own;   // 'CARR'
+  // AUDIT LW-II B10: a town with only the word carried tells it as often as another its own (on the draw it fell to its
+  // own, found none and told nothing: a third as often)
+  const list = carried.length && (!own.length || seededRng((seed ^ 0x43415252) >>> 0)() < CARRIED_SHARE) ? carried : own;   // 'CARR'
   if (!list.length) return null;
   const item = list[Math.floor(rng() * list.length)];
   const pool = newsPool(item);

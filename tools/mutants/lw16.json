@@ -227,11 +227,12 @@
   {
     "name": "LW16-none-carried",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "const list = carried.length && seededRng(",
-    "new": "const list = seededRng(",
+    "old": "const list = carried.length && (!own.length || seededRng(",
+    "new": "const list = (!own.length || seededRng(",
     "tests": [
       "test/lw16_word.test.js"
-    ]
+    ],
+    "note": "AUDIT LW-II (re-aimed by content)."
   },
   {
     "name": "LW16-own-alone",
@@ -345,20 +346,24 @@
   {
     "name": "LW16-carried-own",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "const out = carriedNews(visits, t, { own, deedsAt:",
-    "new": "const out = carriedNews(visits, t, { deedsAt:",
+    "old": "const out = carriedNews(visits, t, { own, deedsAt, here: this.o.town.mapId });",
+    "new": "const out = carriedNews(visits, t, { deedsAt, here: this.o.town.mapId });",
     "tests": [
       "test/lw16_word.test.js"
-    ]
+    ],
+    "note": "AUDIT LW-II (re-aimed by content).",
+    "equivalent": true,
+    "why": "AUDIT LW-II B8 made it belt-and-braces: a visit's deeds are its own town's (L<town>. prefix) with its own region's tales filtered out, and a courier's relay of this town's own word is skipped by `here` - nothing a visit carries can be this town's own any more; the own-keys check stays as the law's guard"
   },
   {
     "name": "LW16-carried-deeds",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "{ own, deedsAt: (town, minute) => this.deedNews(minute, town) });",
-    "new": "{ own });",
+    "old": "const out = carriedNews(visits, t, { own, deedsAt, here: this.o.town.mapId });",
+    "new": "const out = carriedNews(visits, t, { own, here: this.o.town.mapId });",
     "tests": [
       "test/lw16_word.test.js"
-    ]
+    ],
+    "note": "AUDIT LW-II (re-aimed by content)."
   },
   {
     "name": "LW16-kept",
@@ -372,20 +377,22 @@
   {
     "name": "LW16-repute-carried",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "return reputeOf([...(this._roads?.news ?? []), ...this.deedNews(t), ...this.carriedAt(t)]);",
-    "new": "return reputeOf([...(this._roads?.news ?? []), ...this.deedNews(t)]);",
+    "old": "return reputeOf([...this._roadNewsAt(t), ...this.deedNews(t), ...this.carriedAt(t)]);",
+    "new": "return reputeOf([...this._roadNewsAt(t), ...this.deedNews(t)]);",
     "tests": [
       "test/lw16_word.test.js"
-    ]
+    ],
+    "note": "AUDIT LW-II (re-aimed by content)."
   },
   {
     "name": "LW16-repute-road",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "return reputeOf([...(this._roads?.news ?? []), ...this.deedNews(t), ...this.carriedAt(t)]);",
+    "old": "return reputeOf([...this._roadNewsAt(t), ...this.deedNews(t), ...this.carriedAt(t)]);",
     "new": "return reputeOf([...this.deedNews(t), ...this.carriedAt(t)]);",
     "tests": [
       "test/lw16_word.test.js"
-    ]
+    ],
+    "note": "AUDIT LW-II (re-aimed by content)."
   },
   {
     "name": "LW16-regard-known",
@@ -572,6 +579,87 @@
     "file": "src/scenes/world.js",
     "old": "    if (e?.visits?.partial && performance.now() - e.at > LIVING_CARRIED_RETRY_MS) e = null;",
     "new": "",
+    "tests": [
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-AUDIT-B3-kept",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      let d = kept.get(k);",
+    "new": "      let d = null;",
+    "tests": [
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-AUDIT-B8-own-region",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "        d = this.deedNews(minute, town).filter((x) => !((x.kind === 'routed' || x.kind === 'held') && region != null && town.region === region));",
+    "new": "        d = this.deedNews(minute, town);",
+    "tests": [
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-AUDIT-B8-come-back",
+    "file": "src/systems/livingWorld/carried.js",
+    "old": "        if (here != null && (r.from?.mapId ?? null) === here) continue;   // AUDIT LW-II B8: its own word come back\n",
+    "new": "",
+    "tests": [
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-AUDIT-B9-known",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    return news.every((n) => n.t <= t) ? news : news.filter((n) => n.t <= t);",
+    "new": "    return news;",
+    "tests": [
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-AUDIT-B10-carried-only",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "const list = carried.length && (!own.length || seededRng(",
+    "new": "const list = carried.length && (seededRng(",
+    "tests": [
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-AUDIT-B14-band-whole",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "who: told ? (told.item.kind === 'routed' ? told.item.who : firstNameOf(told.item.who)) : null,",
+    "new": "who: told ? firstNameOf(told.item.who) : null,",
+    "tests": [
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-AUDIT-B4-partial",
+    "file": "src/scenes/world.js",
+    "old": "        if (!said.whole) out.partial = true;   // AUDIT LW-II B4: a day of its town's news still asked - the word worked again\n",
+    "new": "",
+    "tests": [
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-AUDIT-B11-last",
+    "file": "src/scenes/world.js",
+    "old": "    return e.visits ?? _livingCarriedLast.get(town.mapId >>> 0) ?? null;",
+    "new": "    return e.visits;",
+    "tests": [
+      "test/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-AUDIT-B13-guard",
+    "file": "src/scenes/world.js",
+    "old": "try { r = e.gen.next(); } catch (err) {",
+    "new": "try { r = e.gen.next(); } finally {",
     "tests": [
       "test/lw16_word.test.js"
     ]

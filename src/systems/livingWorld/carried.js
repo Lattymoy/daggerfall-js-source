@@ -38,10 +38,12 @@ export const carriedKey = (item) => item.key ?? (item.id ? `trip:${item.id}` : `
  * NEWS_DAYS. A courier's tells too what its town had heard by then from its own visitors (`relay`, visits as these but
  * none of their own: one hop) - each from the town it was first told in. The town's own news (`own`) is never told as
  * carried; an item carried by two, from the first in. Newest first, each `{ ...item, key, carried: true, from, t: inT }`.
+ * AUDIT LW-II B8: `here` the town's own map id - a courier's relay of a visit FROM it is its own word come back (told as
+ * "word from" itself, its deeds' repute counted again once its own days had passed): never told.
  * @param {readonly any[]} visits @param {number} t
- * @param {{ own?: readonly any[], deedsAt?: (town: any, minute: number) => readonly any[] }} [o]
+ * @param {{ own?: readonly any[], deedsAt?: (town: any, minute: number) => readonly any[], here?: number | null }} [o]
  */
-export function carriedNews(visits, t, { own = [], deedsAt = () => [] } = {}) {
+export function carriedNews(visits, t, { own = [], deedsAt = () => [], here = null } = {}) {
   const ownKeys = new Set(own.map(carriedKey));
   /** What a visit's town knew when it set out. @param {any} w */
   const toldAt = (w) => [...(w.news ?? []), ...deedsAt(w.from, w.outT0)].filter((it) => it.t <= w.outT0);
@@ -53,6 +55,7 @@ export function carriedNews(visits, t, { own = [], deedsAt = () => [] } = {}) {
     if (v.courier) {
       for (const r of v.relay ?? []) {
         if (!(r.inT <= v.outT0 && v.outT0 - r.inT < NEWS_DAYS * DAY_MIN)) continue;   // heard at home before the courier set out
+        if (here != null && (r.from?.mapId ?? null) === here) continue;   // AUDIT LW-II B8: its own word come back
         for (const it of toldAt(r)) items.push({ ...it, key: carriedKey(it), from: it.from || (r.from?.name ?? ''), t: r.inT });
       }
     }

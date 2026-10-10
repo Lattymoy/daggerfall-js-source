@@ -1046,9 +1046,15 @@
   },
   {
    "file": "src/scenes/world.js",
-   "has": "t: skyClassicMinutes((p.hour * 3600 + p.minute * 60) * 1000 + _sharedOffsetMs)",
+   "has": "t: skyClassicMinutes((p.hour * 3600 + p.minute * 60) * 1000), seed: p.seed",
    "clock": "sky",
-   "why": "LW15: a patron's sale, told by its real hour and minute, read as the shared sky's minute the town's patron comes at (an online sky day is a real hour)"
+   "why": "LW15: a patron's sale, told by its real hour and minute (the service's own UTC instant - AUDIT LW-II B5: no machine offset), read as the shared sky's minute of the sale (an online sky day is a real hour)"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "const t = skyClassicMinutes((pt.hour * 3600 + pt.minute * 60) * 1000);",
+   "clock": "sky",
+   "why": "LW15 / AUDIT LW-II B12: the Vendor page's buyer - the sale's sky minute, so the town names the one holding the place the day the patron comes"
   },
   {
    "file": "src/scenes/world.js",

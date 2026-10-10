@@ -383,6 +383,8 @@ export const LODGE_UP_MIN = Object.freeze([20, 60]);
 export const MARKET_STALL_H = Object.freeze([8, 13.5]);
 /** LW15: of a town's errands to a shop, the share that go to a public trader's house instead, to look (patrons.js). */
 export const PATRON_BROWSE_SHARE = 0.1;
+/** AUDIT LW-II B2: how late a patron may come to the trader's and still go in (minutes). */
+export const PATRON_LATE_MIN = 45;
 /** LW13: a visiting pilgrim's hours at the temple - the morning's, the evening's. */
 export const PILGRIM_TEMPLE_H = Object.freeze([8.5, 15.5]);
 export const MINSTREL_PLAY_H = Object.freeze([18.5, 23]);
@@ -690,17 +692,22 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
  * @param {{ at: Spot, from: number, dur: number }} e @param {number} mpm
  */
 function patronErrand(intents, e, mpm) {
-  let k = intents.findIndex((it) => it.from > e.from);
+  // AUDIT LW-II B2: an appointment - before every stay that begins at its minute or after (one begun at its very minute
+  // came first, was cut to nothing, and the errand behind it came most of an hour late); the stay it falls in, or ends
+  // within a walk of it, cut to leave in time; and it may come PATRON_LATE_MIN late and still go in (a hard end at its own
+  // dropped a tenth of the errands, a quarter at the online pace)
+  let k = intents.findIndex((it) => it.from >= e.from);
   if (k < 0) k = intents.length;
   /** @type {typeof intents} */
-  const add = [{ kind: 'shop', at: e.at, from: e.from, dur: e.dur, until: e.from + e.dur }];
+  const add = [{ kind: 'shop', at: e.at, from: e.from, dur: e.dur, until: e.from + e.dur + PATRON_LATE_MIN }];
   const prev = intents[k - 1];
   if (prev?.at && !prev.mark?.duty) {
     const end = Math.min(prev.from + prev.dur, prev.until ?? Infinity);
-    if (end > e.from) {
+    const leave = e.from - walkMinutes(prev.at, e.at, mpm);
+    if (end > leave) {
       const back = e.from + e.dur + walkMinutes(e.at, prev.at, mpm);
       if (end - back >= MIN_STAY) add.push({ ...prev, from: back, dur: end - back });
-      prev.until = Math.min(prev.until ?? Infinity, e.from - walkMinutes(prev.at, e.at, mpm));
+      prev.until = Math.min(prev.until ?? Infinity, leave);   // none of it left before: the day skips it (taken up after)
     }
   }
   intents.splice(k, 0, ...add);

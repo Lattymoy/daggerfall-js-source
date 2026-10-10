@@ -133,7 +133,7 @@ import { createLivingRoads } from './livingRoads.js';   // LW3: the parties on t
 import { createRoadTeams } from '../world/roadTeams.js';   // LW10: their horses and wagons
 import { createCaravanHost } from './caravanHost.js';   // LW11: the caravan's door
 import { createHideouts, BAND_LIVE_M } from './hideouts.js';   // LW12: a band's hideout, stood
-import { patronOf, patronWords } from '../systems/livingWorld/patrons.js';   // LW15: a patron dealt, named
+import { patronWords } from '../systems/livingWorld/patrons.js';   // LW15: a patron named (the town deals them - LivingTown patronOfSale)
 import { routeOf as deepRouteOf, clearedOf as deepClearedOf, stopOfMinute, DIVE_CLEAR_MIN } from '../systems/livingWorld/deepRoute.js';   // LW14: a company's way through the deep
 import { hideoutsOf, outlawBandAt, bandTrouble, takeOf as outlawTakeOf, TAKE_DAYS as OUTLAW_TAKE_DAYS } from '../systems/livingWorld/outlaws.js';   // LW12: the outlaws
 import { stockShopShelf } from '../systems/shopStock.js';   // LW11: a caravan's counter, the shops' own roll
@@ -3016,7 +3016,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (whole) { if (_livingToldKept.size > 2000) _livingToldKept.clear(); _livingToldKept.set(k, told); }   // LW16: kept while the roads' memo stands
     }
     const won = livingRelations.turns().won;
-    return { told, news: newsOf(told, t).map((n) => ({ ...n, foe: n.band ?? (n.foe != null ? livingFoeWord(n.foe, 2) : ''), helped: won.has(n.enc) })) };
+    return { told, whole: _livingToldKept.get(k) === told, news: newsOf(told, t).map((n) => ({ ...n, foe: n.band ?? (n.foe != null ? livingFoeWord(n.foe, 2) : ''), helped: won.has(n.enc) })) };   // AUDIT LW-II B4: whether every day of it was read
   };
   /**
    * LW16: THE WORD CARRIED - THE VISITS a town has had these NEWS_DAYS days (carried.js carriedNews' `visits`): each
@@ -3032,7 +3032,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (let d = 0; d <= NEWS_DAYS; d++) {
       // the towns about read a town a slice (townTrips keeps each day's: the visitors' read after them is the book's)
       const noon = (day - d) * 1440 + 240 + 720;
-      for (const near of livingTripWorld.townsNear(town.px ?? 0, town.py ?? 0, TRIP_REACH_PX)) { townTrips(near, noon, livingTripWorld, o); yield; }
+      for (const near of livingTripWorld.townsNear(town.px ?? 0, town.py ?? 0, TRIP_REACH_PX)) { if (townTrips(near, noon, livingTripWorld, o) === undefined) out.partial = true; yield; }
       const vs = livingVisitorsCached(town, day - d, o);
       if (vs === undefined) out.partial = true;   // a way still asked: the word worked again later
       yield;
@@ -3046,7 +3046,9 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (heard.partial) out.partial = true;
         const fromNoon = Math.floor((tr.outT0 - 240) / 1440) * 1440 + 240 + 720;
         for (let b = 0; b <= NEWS_DAYS; b++) { townTrips(tr.from, fromNoon - b * 1440, livingTripWorld, o); yield; }   // its town's news, a day a slice
-        out.push({ id: tr.id, from, inT: tr.outT1, outT0: tr.outT0, courier, news: livingRoadNewsAt(tr.from, tr.outT0, o).news, ...(heard.length ? { relay: heard } : {}) });
+        const said = livingRoadNewsAt(tr.from, tr.outT0, o);
+        if (!said.whole) out.partial = true;   // AUDIT LW-II B4: a day of its town's news still asked - the word worked again
+        out.push({ id: tr.id, from, inT: tr.outT1, outT0: tr.outT0, courier, news: said.news, ...(heard.length ? { relay: heard } : {}) });
         yield;
       }
     }
@@ -3071,12 +3073,18 @@ export async function bootWorld(canvas, renderer, params, status) {
     let e = _livingCarried.get(k);
     if (e?.visits?.partial && performance.now() - e.at > LIVING_CARRIED_RETRY_MS) e = null;   // a way asked then: again, now
     if (!e) {
-      if (_livingCarried.size > 16) _livingCarried.clear();
-      e = { gen: livingVisitsGen(town, day, { mpm: PERSON_MOVE_SPEED / livingBaseRate(), memo: _livingTripMemo }, true), visits: null, at: 0 };
+      if (_livingCarried.size > 16) { for (const x of _livingCarried.values()) if (x.visits) _livingCarriedLast.set(x.map, x.visits); _livingCarried.clear(); }
+      const was = _livingCarried.get(k)?.visits;
+      if (was) _livingCarriedLast.set(town.mapId >>> 0, was);
+      e = { gen: livingVisitsGen(town, day, { mpm: PERSON_MOVE_SPEED / livingBaseRate(), memo: _livingTripMemo }, true), visits: null, at: 0, map: town.mapId >>> 0 };
       _livingCarried.set(k, e);
     }
-    return e.visits;
+    // AUDIT LW-II B11: while it is worked again (a way asked then, a turn of fate, a new day) the town tells the word it
+    // had - its strangers' regard and words never blink out for the frames the working takes
+    return e.visits ?? _livingCarriedLast.get(town.mapId >>> 0) ?? null;
   };
+  /** AUDIT LW-II B11: each town's last worked word, by its map id - this character's (made again with the record). */
+  const _livingCarriedLast = new Map();
   /** LW16: how long a word worked while a way was still asked stands before it is worked again (real ms). */
   const LIVING_CARRIED_RETRY_MS = 5000;
   /** LW16: the kept word made again with the roads (a new network, a turn of fate, another character's record). */
@@ -3086,6 +3094,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     livingTurnsFresh();
     const v = `${livingWays.generation}|${livingRelations.turnsVersion()}`;
     if (_livingWordV === v && _livingWordRel === livingRelations) return;
+    if (_livingWordRel !== livingRelations) _livingCarriedLast.clear();   // another character's record: nothing of the last's
+    else for (const x of _livingCarried.values()) if (x.visits) _livingCarriedLast.set(x.map, x.visits);
     _livingWordV = v; _livingWordRel = livingRelations;
     _livingCarried.clear(); _livingVisitorsKept.clear(); _livingToldKept.clear();
   };
@@ -3098,8 +3108,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (const e of _livingCarried.values()) {
       while (!e.visits) {
         if (performance.now() - t0 >= budgetMs) return;
-        const r = e.gen.next();
-        if (r.done) { e.visits = r.value; e.at = performance.now(); }
+        let r;
+        try { r = e.gen.next(); } catch (err) { console.warn('[living] the carried word', /** @type {any} */ (err)?.message ?? err); r = { done: true, value: null }; }   // AUDIT LW-II B13: a throw wedged the slice for good
+        if (r.done) { e.visits = r.value ?? Object.assign([], { partial: true }); e.at = performance.now(); }
       }
     }
   };
@@ -3466,17 +3477,31 @@ export async function bootWorld(canvas, renderer, params, status) {
         const door = p.buildingKey;
         if (!Number.isSafeInteger(door)) continue;
         if (!byMap.has(p.map)) byMap.set(p.map, { told: [], traders: new Set() });
-        byMap.get(p.map).told.push({ door, t: skyClassicMinutes((p.hour * 3600 + p.minute * 60) * 1000 + _sharedOffsetMs), seed: p.seed });
+        // AUDIT LW-II B5: the sale's instant is the service's own (its UTC hour and minute) - this machine's offset to the
+        // relay is for this machine's clock (Date.now) alone: added, a clock some minutes off moved the sale's day
+        byMap.get(p.map).told.push({ door, t: skyClassicMinutes((p.hour * 3600 + p.minute * 60) * 1000), seed: p.seed });
       }
-      _livingPatronsV++;
-      for (const [map, e] of byMap) _livingPatrons.set(map, { v: _livingPatronsV, told: e.told, traders: [...e.traders] });
+      // AUDIT LW-II B6/B7: each town's word in one order for every reader (the traders by their key - the rows came newest
+      // listing first, and a new listing at another trader moved a browser's errand - the sales by their minute), its
+      // version moved only when its word did (every read made every town's whole day again); a town of the region read
+      // with nothing now (its trader shut, private, sold out) forgets what it had
+      for (const [map, e] of byMap) {
+        const told = e.told.sort((a, b) => a.t - b.t || a.seed - b.seed || a.door - b.door);
+        const traders = [...e.traders].sort((a, b) => a - b);
+        const sig = JSON.stringify([told, traders]);
+        if (_livingPatrons.get(map)?.sig === sig) continue;
+        _livingPatrons.set(map, { v: ++_livingPatronsV, told, traders, region, sig });
+      }
+      for (const [map, e] of _livingPatrons) if (e.region === region && !byMap.has(map)) _livingPatrons.delete(map);
     }).catch(() => {}).finally(() => { _livingPatronsBusy = false; });
   };
   /** LW15: who of a town a patron's sale names, for the Vendor page - its LivingTown's dealt resident where the town
-   *  stands, else a townsperson of it. @param {{ map: number, seed: number }} pt */
+   *  stands (AUDIT LW-II B12: the one holding the place the day they come), else a townsperson of it.
+   *  @param {{ map: number, seed: number, hour: number, minute: number }} pt */
   const livingPatronName = (pt) => {
     const lt = livingTownOfMap(pt.map);
-    return patronWords(lt ? patronOf(pt.seed, lt.residents) : null, livingTownOfId(pt.map >>> 0)?.name ?? '');
+    const t = skyClassicMinutes((pt.hour * 3600 + pt.minute * 60) * 1000);
+    return patronWords(lt ? lt.patronOfSale(pt.seed, t) : null, livingTownOfId(pt.map >>> 0)?.name ?? '');
   };
   /** LW7/LW11: a traveller struck down - the hand's turn, and the road's report of it. */
   const livingRoadSlay = (res, t, seen) => { livingSlay(res, t, seen); caravanHostOf().slain(res, t); };

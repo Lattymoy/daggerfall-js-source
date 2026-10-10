@@ -163,7 +163,7 @@ export function circleLine(circle, t, lineMin, ctx = {}, memo = null) {
   const text = fillLine(script[index], {
     town: ctx.town, region: ctx.region, place: told ? told.item.place : placeOf(circle, at.k, ctx),
     a: firstNameOf(circle.members[at.k % n].name), b: firstNameOf(circle.members[(at.k + 1) % n].name),
-    who: told ? firstNameOf(told.item.who) : null, foe: told ? told.item.foe : null, player: ctx.player,   // LW7: a deed's, a fight's turner
+    who: told ? (told.item.kind === 'routed' ? told.item.who : firstNameOf(told.item.who)) : null, foe: told ? told.item.foe : null, player: ctx.player,   // LW7: a deed's, a fight's turner; AUDIT LW-II B14: a band's whole name ("the Red Hand", never "the")
     house: told?.item.house ?? null,   // LEGACY6: the house a kinsman's news is of
     guild: told?.item.guild ?? null,   // CHAP5b: the guild a chapter's news is of
     from: told?.item.from ?? null,   // LW16: the town the word was carried from

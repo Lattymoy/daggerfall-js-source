@@ -58,7 +58,7 @@ import { keepsakeFor } from './keepsake.js';
 import { lwSeed, textSeed } from './seed.js';
 import { placeKeyOf } from './lives.js';
 import { NEWS_DAYS } from './trips.js';
-import { patronVisits } from './patrons.js';   // LW15: a patron's errand to a player's trader
+import { patronVisits, patronOf, PATRON_DELAY_DAYS } from './patrons.js';   // LW15: a patron's errand to a player's trader
 import { carriedNews, reputeOf, reputeKind, regardWithRepute, heardOf } from './carried.js';   // LW16: the word carried, the character's repute
 
 /** AUDIT LEGACY II B2: whose household a resident is of - their own `household` when they live here beyond the census
@@ -368,6 +368,8 @@ export class LivingTown {
     this._greetings = [];
     /** @type {{ visits: any, m: number, v: number, out: any[] } | null} LW16: the word carried in, kept by the minute */
     this._carriedMemo = null;
+    /** @type {{ v: number, map: Map<string, any[]> } | null} AUDIT LW-II B3: each visit's town's deeds, kept with the turns */
+    this._deedsKept = null;
     this._now = 0;
     this._realNow = 0;
     /** @type {number|null} the clock at the last frame (an arrival is a jump from it) */
@@ -517,7 +519,7 @@ export class LivingTown {
     if (!p) return {};
     if (this._patronDay?.day !== day || this._patronDay?.v !== p.v) {
       const byRes = new Map();
-      for (const v of patronVisits(p.told ?? [], day, this.residents)) {
+      for (const v of patronVisits(p.told ?? [], day, this.peopleOf(day))) {   // AUDIT LW-II B12: the day's holders - a newcomer where the census's own is gone
         if (!byRes.has(v.resId)) byRes.set(v.resId, []);
         byRes.get(v.resId).push({ at: this.places.doors.get(v.door) ?? null, from: v.from, dur: v.dur });
       }
@@ -1474,16 +1476,47 @@ export class LivingTown {
     const v = this.o.relations?.()?.turnsVersion?.() ?? 0, m = Math.floor(t);
     const c = this._carriedMemo;
     if (c && c.visits === visits && c.m === m && c.v === v) return c.out;
-    const own = [...(this._roads?.news ?? []), ...this.deedNews(t)];
-    const out = carriedNews(visits, t, { own, deedsAt: (town, minute) => this.deedNews(minute, town) });
+    const own = [...this._roadNewsAt(t), ...this.deedNews(t)];
+    // AUDIT LW-II B3: a visit's deeds are its town's at the minute it set out - read once (a minute's read ran every
+    // visit's and every relay's turns again: 18-80 ms a frame once a sky minute for a character of many deeds), kept with
+    // the turns they were read over
+    if (this._deedsKept?.v !== v) this._deedsKept = { v, map: new Map() };
+    const kept = this._deedsKept.map, region = this.o.town.region ?? null;
+    const deedsAt = (/** @type {any} */ town, /** @type {number} */ minute) => {
+      const k = `${town.mapId >>> 0}:${minute}`;
+      let d = kept.get(k);
+      if (!d) {
+        // AUDIT LW-II B8: a tale of this town's own region (a band routed, a party robbed) is its own word - carried in
+        // again, it outlived its own days
+        d = this.deedNews(minute, town).filter((x) => !((x.kind === 'routed' || x.kind === 'held') && region != null && town.region === region));
+        if (kept.size > 4096) kept.clear();
+        kept.set(k, d);
+      }
+      return d;
+    };
+    const out = carriedNews(visits, t, { own, deedsAt, here: this.o.town.mapId });
     this._carriedMemo = { visits, m, v, out };
     return out;
+  }
+
+  /** AUDIT LW-II B9: the road's news the town knows by minute `t` (the day's word is read at its noon - a fight the
+   *  character turned, its party home at eleven, was known at five). @param {number} t */
+  _roadNewsAt(t) {
+    const news = this._roads?.news ?? [];
+    return news.every((n) => n.t <= t) ? news : news.filter((n) => n.t <= t);
   }
 
   /** LW16: THE TOWN'S REPUTE of the character at minute `t` - its strangers' regard and the deeds it knows of (carried.js
    *  reputeOf over the road's news, its deeds and the word carried in). @param {number} [t] */
   reputeAt(t = this._now) {
-    return reputeOf([...(this._roads?.news ?? []), ...this.deedNews(t), ...this.carriedAt(t)]);
+    return reputeOf([...this._roadNewsAt(t), ...this.deedNews(t), ...this.carriedAt(t)]);
+  }
+
+  /** LW15 / AUDIT LW-II B12: the buyer a sale names (the Vendor page's) - one of the town's households holding their
+   *  place on the day the patron comes (patrons.js patronOf over peopleOf: the one who walks in). @param {number} seed
+   *  @param {number} t - the sale's sky minute */
+  patronOfSale(seed, t) {
+    return patronOf(seed, this.peopleOf(this.dayOf(t) + PATRON_DELAY_DAYS));
   }
 
   /** LW16: a resident's regard of the character - their own where they have one, else the town's repute (read, never

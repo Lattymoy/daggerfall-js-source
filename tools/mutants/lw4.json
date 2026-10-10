@@ -381,11 +381,12 @@
   {
     "name": "LW4-news-nameless",
     "file": "src/systems/livingWorld/meetups.js",
-    "old": "    who: told ? firstNameOf(told.item.who) : null,",
+    "old": "    who: told ? (told.item.kind === 'routed' ? told.item.who : firstNameOf(told.item.who)) : null,",
     "new": "    who: null,",
     "tests": [
       "test/lw4_trouble.test.js"
-    ]
+    ],
+    "note": "AUDIT LW-II (re-aimed by content): a band named whole beside it."
   },
   {
     "name": "LW4-plural-y",
