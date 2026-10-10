@@ -10,6 +10,7 @@
 import { TextureFile } from '../formats/textureFile.js'; import { changeMask } from '../formats/baseImageFile.js';   // HM1: the item icons' removeMask (one line: the cites below stand)
 import { FlatsFile } from '../formats/flatsFile.js';   // NPC1: captions + portrait indices
 import { isExteriorWindow } from '../world/climateSwaps.js';
+import { isInteriorGlassArchive, interiorGlassMask } from '../world/interiorGlass.js';   // RW1: an interior's own glass
 import { isEmissive, FIRE_WALLS_ARCHIVE } from '../world/emissiveTextures.js';   // TextureReader's auto-emissive table (lit lanterns, fireplaces, fire daedra)
 import { dfMeshToModel } from '../world/meshReader.js'; import { patchSeams } from '../world/arch3dSeams.js';   // DUNGEON-SEAMS (one line: the cites below stand)
 import { fetchBytes, texName } from './shared.js';
@@ -232,7 +233,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     // record 3 as a window. A mod picture's billboard material carries no
     // window emission in DFU (GetStaticBillboardMaterial), so it gets none.
     if (isExteriorWindow(archive, record) && !t.vendor) {
-      renderer.uploadEmissionTexture(archive, record, t.getWindowColors32(bitmap), { replacement });
+      renderer.uploadEmissionTexture(archive, record, t.getWindowColors32(bitmap), { replacement, window: true });   // RW1: DFU's window mask - the rooms' glass from the street, the street's from inside (render/realWindows.js)
     } else if (isEmissive(archive, record) && archive !== FIRE_WALLS_ARCHIVE) {
       // AUDIT 39 F49: THE AUTO-EMISSIVE ARM (MaterialReader.cs:419-423
       // -> TextureReader.cs:301-308 "Just reuse albedo map for basic
@@ -241,6 +242,12 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
       // style off it, so a lit lantern draws its own texels instead of
       // sitting at scene ambient beside the light it casts.
       renderer.uploadEmissionTexture(archive, record, color32, { white: true, replacement });
+    } else if (!t.vendor && !swap && isInteriorGlassArchive(archive) && renderer.uploadGlassMask) {
+      // RW1: A BUILDING INTERIOR'S OWN GLASS (render/realWindows.js interiorGlassMask - the rule's one home): a record of
+      // an interior set whose bitmap carries the glass index, its mask cut by the exterior arm's own reader. Never a
+      // mod's picture: its texels are not the classic bitmap's, and its glass is its own to declare.
+      const glass = interiorGlassMask(archive, bitmap, (b) => t.getWindowColors32(b));
+      if (glass) renderer.uploadGlassMask(archive, record, glass, { replacement });
     }
     return variant;   // DW3: the icon drawers read the GL texture by `${archive}_${record}${variant}`
   };

@@ -438,6 +438,8 @@ export class PlayerMotor {
   constructor(collider, stats = { speed: 50, running: 30, swimming: 30 }, { jumpBoost = null, enhancedJumping = null, climbing = null, carriedWeight = null, parkour = null, travelling = null } = {}) {
     this.collider = collider;
     this.stats = stats;
+    /** @type {number[]|null} WAGONS2: where the body is DRAWN instead of its capsule (bodyFeetAt) - a seat of a wagon drawn grown under the Overworld (scenes/wagonRiders.js drawAt); null, the capsule's own */
+    this.drawFeet = null;
     this.jumpBoost = jumpBoost;    // () => AcrobatMotor jumpSpeedMultiplier (systems/skills owns the formula)
     // AUDIT 64 F2: () => PlayerEntity.IsEnhancedJumping (DaggerfallEntity
     // .cs:85, raised/cleared by Jumping.cs:84/:94 - the plain Jump
@@ -837,6 +839,7 @@ export class PlayerMotor {
    *  floated as far over it going down. The body stands where the capsule stands; the camera keeps its smoothing,
    *  and the filter is left alone here. The same snap guard as feetAt. */
   bodyFeetAt(alpha = this._alpha) {
+    if (this.drawFeet) return [this.drawFeet[0], this.drawFeet[1], this.drawFeet[2]];   // WAGONS2: seated in a wagon drawn grown under the Overworld, the body is drawn on its seat there (scenes/world.js)
     const p = this.pos, q = this._prevPos;
     const dx = p[0] - q[0], dy = p[1] - q[1], dz = p[2] - q[2];
     if (dx * dx + dy * dy + dz * dz > PlayerMotor.SNAP_SPAN * PlayerMotor.SNAP_SPAN) return [p[0], p[1], p[2]];

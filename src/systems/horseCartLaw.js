@@ -271,9 +271,11 @@ export const isHitchedTeamFollowing = (wagonMode, horseMode) => wagonMode === WA
 export const isAutonomousHorseFollowing = (s) => s.HorseMode === HORSE_MODE.FollowingPlayer || isHitchedTeamFollowing(s.Mode, s.HorseMode);
 /** IsDirectHitchedTeamMount [IL_9033]: the cart is owned and the horse stands hitched to a deployed or following wagon. */
 export const isDirectHitchedTeamMount = (wagonMode, horseMode, ownsCart) => ownsCart && (wagonMode === WAGON_MODE.Deployed || wagonMode === WAGON_MODE.FollowingPlayer) && horseMode === HORSE_MODE.HitchedToWagon;
-/** IsPhysicalTeamWithinMountDistances [IL_7100]: 5 m to the wagon, 3.5 m to the horse, the horse 3.5 m from the wagon. */
-export const isPhysicalTeamWithinMountDistances = (player, wagon, horse) =>
-  isWithinHorizontalDistance(player, wagon, WAGON_INVENTORY_DISTANCE) && isWithinHorizontalDistance(player, horse, HORSE_MENU_MOUNT_DISTANCE) && isWithinHorizontalDistance(horse, wagon, HORSE_WAGON_HITCH_DISTANCE);
+/** IsPhysicalTeamWithinMountDistances [IL_7100]: 5 m to the wagon, 3.5 m to the horse, the horse 3.5 m from the wagon.
+ *  WAGONS2 (AUDIT): `nearest(to)` - the wagon's point nearest `to` (systems/horseCart.js nearestOnWagon: a wagon longer
+ *  than the mod's measured along its run); absent, the wagon's one point, the mod's. */
+export const isPhysicalTeamWithinMountDistances = (player, wagon, horse, nearest = null) =>
+  isWithinHorizontalDistance(player, nearest ? nearest(player) : wagon, WAGON_INVENTORY_DISTANCE) && isWithinHorizontalDistance(player, horse, HORSE_MENU_MOUNT_DISTANCE) && isWithinHorizontalDistance(horse, nearest ? nearest(horse) : wagon, HORSE_WAGON_HITCH_DISTANCE);
 /** IsPhysicalTransportStateValid [IL_76d0]. */
 export function isPhysicalTransportStateValid(hasCart, hasHorse, wm, hm, tmode) {
   if (wm === WAGON_MODE.FollowingPlayer) return hasCart && hasHorse && hm === HORSE_MODE.HitchedToWagon && tmode === TRANSPORT.Foot;   // [IL_76d2-IL_76e3]

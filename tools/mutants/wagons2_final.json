@@ -1,0 +1,462 @@
+[
+  {
+    "name": "WAGONS2-FINAL-the-heading-unread",
+    "file": "src/scenes/caravanRoom.js",
+    "old": "[st.WorldX, st.WorldZ, parkedTurnOf(st)]",
+    "new": "[st.WorldX, st.WorldZ]",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-any-turn-the-same",
+    "file": "src/scenes/caravanRoom.js",
+    "old": "  && (!Number.isFinite(at[2]) || turnGap(room.turn, at[2]) <= CARAVAN_STANDS_TURN);",
+    "new": "  && (!Number.isFinite(at[2]) || turnGap(room.turn, at[2]) <= 360);",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-turn-not-round-the-circle",
+    "file": "src/systems/caravanRoom.js",
+    "old": "export const turnGap = (a, b) => Math.abs(((((a - b) % 360) + 540) % 360) - 180);",
+    "new": "export const turnGap = (a, b) => Math.abs(a - b);",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-load-at-the-pixels-centre",
+    "file": "src/scenes/world.js",
+    "old": "          const out = caravanDoorLanding(extras.interior);",
+    "new": "          const out = null;",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-recall-in-the-wagons-body",
+    "file": "src/scenes/world.js",
+    "old": "        const [lx, ly, lz] = outOfCaravan?.position ?? anchorLanding(a);",
+    "new": "        const [lx, ly, lz] = anchorLanding(a);",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-landing-read-off-the-save-not-its-room",
+    "file": "src/scenes/world.js",
+    "old": "  const caravanDoorLanding = (interior) => (interior?.caravanRoom ? caravanRooms.returnToWagon(interior.caravanRoom) : null);",
+    "new": "  const caravanDoorLanding = (interior) => (interior?.caravanRoom ? caravanRooms.returnToWagon(interior) : null);",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-a-trader-offered-in-a-caravan",
+    "file": "src/ui/decorPanel.js",
+    "old": "(k === VENDOR_STATION ? trader && forgeOffered() : ",
+    "new": "(k === VENDOR_STATION ? forgeOffered() : ",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-a-trader-sold-in-a-caravan",
+    "file": "src/scenes/decorTool.js",
+    "old": "(want === VENDOR_STATION && (r?.kind !== 'home' || !forgeOffered()))",
+    "new": "(want === VENDOR_STATION && (!forgeOffered()))",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-views-trader-word",
+    "file": "src/scenes/decorTool.js",
+    "old": "      trader: r?.kind === 'home',",
+    "new": "      trader: true,",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-fixed-citys-street-wagonless",
+    "file": "src/scenes/exterior.js",
+    "old": "  renderer.outsideViewDraws?.add(({ renderer: r }) => { if (hccOn()) hcc.drawOutside(r, null); });",
+    "new": "",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-staff-told-no-instance",
+    "file": "src/scenes/world.js",
+    "old": "    const caravanOut = caravanRoom ? caravanDoorLanding({ caravanRoom }) : null;",
+    "new": "    const caravanOut = null;",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-vaults-pack-list-by-the-record",
+    "file": "src/ui/socialPanel.js",
+    "old": "const vaultPieceName = (it) => String(wagonItemName(it) ?? it?.name ?? 'an item');",
+    "new": "const vaultPieceName = (it) => String(it?.name ?? 'an item');",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-vaults-rows-by-the-record",
+    "file": "src/ui/socialPanel.js",
+    "old": "      const it = { ...row, name: wagonItemName(row.rec) ?? row.name };",
+    "new": "      const it = row;",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-services-row-by-the-record",
+    "file": "server-account/src/guildVault.js",
+    "old": "const pieceName = (rec) => String(wagonItemName(rec) ?? rec?.name ?? 'an item').slice(0, 64);",
+    "new": "const pieceName = (rec) => String(rec?.name ?? 'an item').slice(0, 64);",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-shelf-by-the-record",
+    "file": "src/scenes/worldModes.js",
+    "old": "    ?? wagonItemName(it) ?? it.name ?? templateByIndex(it.templateIndex)?.name ?? it.group;",
+    "new": "    ?? it.name ?? templateByIndex(it.templateIndex)?.name ?? it.group;",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-floor-are",
+    "file": "src/systems/wagonLooks.js",
+    "old": "`The ${part} ${part === 'walls' ? 'are' : 'is'} now ${name.toLowerCase()}.`",
+    "new": "`The ${part} are now ${name.toLowerCase()}.`",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-out-of-reach-no-room",
+    "file": "src/scenes/wagonRiders.js",
+    "old": "    if (!(distance <= RIDE_ASK_REACH)) { deps.say(RIDE_TEXT.tooFar); return true; }",
+    "new": "    if (!(distance <= RIDE_ASK_REACH)) { deps.say(RIDE_TEXT.noSeats); return true; }",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-a-lapsed-ask-no-seat",
+    "file": "src/scenes/wagonRiders.js",
+    "old": "    if (!book.asks().some((a) => a.rider === rider)) { deps.say(RIDE_TEXT.lapsed(name(rider))); return; }",
+    "new": "",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-ride-strip-over-the-duels",
+    "file": "src/scenes/world.js",
+    "old": "ttlMs: RIDE_ASK_TTL_MS, second: true,",
+    "new": "ttlMs: RIDE_ASK_TTL_MS,",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-second-strip-unmarked",
+    "file": "src/ui/duelPrompt.js",
+    "old": "${second ? ' second' : ''}",
+    "new": "",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-first-wagon-in-the-pack",
+    "file": "src/systems/tradeModes.js",
+    "old": "  usedWagon: activeWagonItem(entity?.items ?? []),\n",
+    "new": "  usedWagon: (entity?.items ?? []).find((it) => it?.group === 'Transportation' && it.templateIndex === 93) ?? null,\n",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-a-windows-own-copy",
+    "file": "src/ui/nativeTrade.js",
+    "old": "      ...sellGuardOf(this.hooks.entity),",
+    "new": "      wagonLoaded: false,",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-shelfs-own-law",
+    "file": "src/scenes/worldModes.js",
+    "old": "  const loadedWagonHeld = (it) => wagonLoadedHeld(it, playerEntity);",
+    "new": "  const loadedWagonHeld = (it) => it === playerEntity.items?.[0] && (playerEntity.wagonItems?.length ?? 0) < 0;",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-a-plan-without-the-driven-wagon",
+    "file": "src/ui/nativeInventory.js",
+    "old": "        wagonKg: wagonKgFor(this.hooks.entity),   // WAGONS1: the driven wagon's capacity\n        bagLoaded: !bagMayLeave(this.hooks.entity),",
+    "new": "        bagLoaded: !bagMayLeave(this.hooks.entity),",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-services-loaded-wagon-sold",
+    "file": "src/net/realmTradeLaw.js",
+    "old": "  if (loaded) left[items.indexOf(loaded)] = 0;\n",
+    "new": "\n",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-untouched-wagon-dropped",
+    "file": "src/net/realmTradeLaw.js",
+    "old": "    if (left[i] === had[i]) return [rec];   // untouched",
+    "new": "    if (left[i] === (tradeableRecord(rec) ? recordCount(rec) : 0)) return [rec];   // untouched",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-consent-unread",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "      if (!riders?.sitsIn?.(d.id, at[0], at[1])) {",
+    "new": "      if (true) {",
+    "tests": [
+      "test/wagons2.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-companions-record-unread",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    const raw = n && wire && p.toScene ? p.toScene(wire) : null;",
+    "new": "    const raw = null;",
+    "tests": [
+      "test/wagons2.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-seat-words-kept-for-the-gone",
+    "file": "src/scenes/wagonRiders.js",
+    "old": "    for (const peer of [...seatWords.keys()]) if (!alive?.has?.(peer)) seatWords.delete(peer);\n",
+    "new": "",
+    "tests": [
+      "test/wagons2.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-pin-unwatched",
+    "file": "src/scenes/wagonRiders.js",
+    "old": "    if (here && ride.pinned && Math.hypot(here[0] - ride.pinned[0], here[2] - ride.pinned[2]) > GET_DOWN_REACH) { leave(); return; }",
+    "new": "",
+    "tests": [
+      "test/wagons2.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-wait-on-any-journey",
+    "file": "src/scenes/wagonRiders.js",
+    "old": "    if (ride.following) { if (deps.traveling?.()) {",
+    "new": "    if (ride.go != null) { if (deps.traveling?.()) {",
+    "tests": [
+      "test/wagons2.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-classic-journey-from-a-seat",
+    "file": "src/scenes/world.js",
+    "old": "    if (wagonRiders?.seated()) { tvSay(TRAVEL_VIEW_TEXT.rider); return true; }\n    if (coords)",
+    "new": "    if (coords)",
+    "tests": [
+      "test/wagons2.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-a-fast-travel-from-a-seat",
+    "file": "src/scenes/world.js",
+    "old": "    if (typeof pick.besideAt !== 'function' && wagonRiders?.seated()) { tvSay(TRAVEL_VIEW_TEXT.rider); hudFade.clearFade(); return false; }\n",
+    "new": "",
+    "tests": [
+      "test/wagons2.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-riders-sent-after-a-wagon-that-stayed",
+    "file": "src/scenes/world.js",
+    "old": "    if (!partyArrival && !hccRuntimeOn()?.wagonGoesOnJourney?.() && wagonRiders?.release()) _hccDirty = true;\n",
+    "new": "",
+    "tests": [
+      "test/wagons2.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-release-releases-nobody",
+    "file": "src/scenes/wagonRiders.js",
+    "old": "    book.fit(0);\n    return true;",
+    "new": "    return true;",
+    "tests": [
+      "test/wagons2.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-a-following-team-always-goes",
+    "file": "src/systems/horseCart.js",
+    "old": "    return physicalPersistenceEnabled && (followingTransportFastTravels || forceNextJourney) && isTeamFollowing();",
+    "new": "    return isTeamFollowing();",
+    "tests": [
+      "test/wagons2.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-book-kept-offline",
+    "file": "src/scenes/world.js",
+    "old": "    wagonRiders?.clear();   // WAGONS2 (FINAL AUDIT): offline,",
+    "new": "    void 0;   // WAGONS2 (FINAL AUDIT): offline,",
+    "tests": [
+      "test/wagons2.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-view-out-clear-skied",
+    "file": "src/world/worldClock.js",
+    "old": "  return { ambient: exteriorAmbient(minute, nightScale, w), sun: sunScale(minute) * w * c };",
+    "new": "  return { ambient: exteriorAmbient(minute, nightScale, 1), sun: sunScale(minute) * c };",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-cloud-unread",
+    "file": "src/world/worldClock.js",
+    "old": "sun: sunScale(minute) * w * c };",
+    "new": "sun: sunScale(minute) * w };",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-fixed-citys-view-clear-skied",
+    "file": "src/scenes/exterior.js",
+    "old": "getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), weatherTerms().sun, sky.sunFactor());",
+    "new": "getFloat('Enhancements', 'NightAmbientLightScale', 0, 1));",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-ocean-pixel-dropped",
+    "file": "src/scenes/world.js",
+    "old": "      ground.push(p);   // FINAL AUDIT",
+    "new": "      if (!p.deepWaters?.hide) ground.push(p);   // FINAL AUDIT",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-seas-top-left-out",
+    "file": "src/scenes/world.js",
+    "old": "    if (deepWaters) drawDeepWatersSurfaces(performance.now(), ground);\n",
+    "new": "",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-streets-visibility-read",
+    "file": "src/scenes/world.js",
+    "old": "      if ((cells || p._visible) && h?.surface)",
+    "new": "      if (p._visible && h?.surface)",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-floors-untold",
+    "file": "src/scenes/world.js",
+    "old": "    if (deepWaters) { drawDeepWatersFloors(ground); r.markForeignPass(); }",
+    "new": "    if (deepWaters) { drawDeepWatersFloors(ground); }",
+    "tests": [
+      "test/wagons2_final.test.js",
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-a-dark-room-blooms",
+    "file": "src/render/airPass.js",
+    "old": "  if (uRoomsLit > 0.5 && rwLitSeed(normalize(vNormal), vWorldPos, uModel[3].xyz, vUV) > RW_LIT_SHARE) discard;",
+    "new": "",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-replays-uniform-unset",
+    "file": "src/render/airPass.js",
+    "old": "          gl.uniform1f(P.emitMesh.uRoomsLit, f.windowRooms && sm._evWin === GLASS_EXTERIOR ? 1 : 0);",
+    "new": "",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-renderers-word-unsaid",
+    "file": "src/render/renderer.js",
+    "old": "        windowRooms: !!this._rw?.rooms,",
+    "new": "",
+    "tests": [
+      "test/wagons2_final.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-target-remade-at-every-turn",
+    "file": "src/render/renderer.js",
+    "old": "    if (t) { w = Math.max(w, t.allocW); h = Math.max(h, t.allocH); this.releaseOutsideView(); }",
+    "new": "    if (t) this.releaseOutsideView();",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-target-held-with-the-street-off",
+    "file": "src/render/realWindows.js",
+    "old": "  if (!street) { if (state.drawn) { renderer.releaseOutsideView?.(); state.drawn = false; } return { rect, view: false }; }",
+    "new": "  if (!street) return { rect, view: false };",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-canvas-sizes-the-view",
+    "file": "src/render/renderer.js",
+    "old": "    const size = viewTargetSize(rect, iw, ih);",
+    "new": "    const size = viewTargetSize(rect, this.canvas.width, this.canvas.height);",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-FINAL-the-frame-target-always-null",
+    "file": "src/render/renderer.js",
+    "old": "      gl.bindFramebuffer(gl.FRAMEBUFFER, was.frameTarget ?? null);",
+    "new": "      gl.bindFramebuffer(gl.FRAMEBUFFER, null);",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  }
+]

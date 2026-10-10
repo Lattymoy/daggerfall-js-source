@@ -198,7 +198,7 @@ test('TAVERN-TABLES the relay by source: the index\'s law before the table\'s ch
   const src = read('server/src/index.js');
   const law = src.indexOf("      if (!back && !!stake !== holdemGoldTable(m.table)) { await no(stake ? 'friendly table' : 'gold table'); return; }");
   assert.ok(law > 0 && law > src.indexOf('      const no = async (why) => {') && law < src.indexOf("await no('table differs')"), 'after the stake is spent (its refusal hands it back), before the chairs');
-  assert.ok(read('src/net/wire.js').includes("// world180:   TAVERN-TABLES (2026-10-09"), 'TAVERN-TABLES bumped it (world180) - PIN MOVED: TV-BEYOND renumbered past it to world181 at its merge, and TAVERN-TABLES\' line is the history beneath');
+  assert.ok(read('src/net/wire.js').includes("// world180:   TAVERN-TABLES (2026-10-09"), 'TAVERN-TABLES bumped it (world180) - PIN MOVED: TV-BEYOND renumbered past it to world182 at its merge, and TAVERN-TABLES\' line is the history beneath');
 });
 
 // THE HOST (scenes/worldModes.js's card block, sliced and run as test/auditcards2_host.test.js runs it): the two tables

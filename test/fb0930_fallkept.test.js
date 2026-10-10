@@ -117,7 +117,7 @@ const LANDING = between(LOAD, '        if (inside) {', '        // P2-slice (ite
 /** the world load's arms over `m` (the teleport's placements already made) */
 function loadWorld(m, extras, { inside = false } = {}) {
   const said = [];
-  const env = { inside, extras, walkMode: true, player: m, lx: 0, ly: extras.world.y, lz: 0, cam: {}, townTalk: { say: (t) => said.push(t) } };
+  const env = { inside, extras, walkMode: true, player: m, lx: 0, ly: extras.world.y, lz: 0, cam: {}, townTalk: { say: (t) => said.push(t) }, caravanDoorLanding: () => null };   // WAGONS2 (FINAL AUDIT): a building's door, no caravan's
   exec(LANDING, env);
   return said;
 }

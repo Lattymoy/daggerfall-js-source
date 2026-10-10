@@ -100,6 +100,7 @@ import { spherePlanes, recordVisible, subMeshVisible, batchVisible, ZERO_ORIGIN 
 import { billboardKey } from './billboardKey.js';   // AUDIT 68 S16-bbkey-stale-shadow-reach: re-keyed here, however the batch reached the records
 import { windfallLawOn, swayShare } from './windfallSway.js';   // WINDFALL1: a flat's lean under Windfall's law, as the main pass drew it
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
+import { GLASS_INTERIOR, GLASS_EXTERIOR, RW_SEED_GLSL } from './realWindows.js';   // RW1: an interior's declared glass, which the emission replay never blooms - FINAL AUDIT: nor a dark room's
 
 /** The kill door: `?air=off` keeps EL1 and EL2 and drops the three effects. */
 export function airOn(search = globalThis.location?.search ?? '') {
@@ -1146,14 +1147,20 @@ bool occluded() {
 export const EMIT_MESH_FS = `#version 300 es
 precision highp float;
 in vec2 vUV;
+in vec3 vNormal;
+in vec3 vWorldPos;
 uniform sampler2D uEmissionTex;
 uniform vec3 uEmissionColor;
+uniform mat4 uModel;
+uniform float uRoomsLit;   // WAGONS2 (FINAL AUDIT): exterior glass with a room behind it - only a lit room's blooms
 ${CODEC_GLSL}
 ${DEPTH_GLSL}
 ${EMIT_OCCLUSION_GLSL}
+${RW_SEED_GLSL}
 out vec4 outColor;
 void main() {
   if (occluded()) discard;   // EL6
+  if (uRoomsLit > 0.5 && rwLitSeed(normalize(vNormal), vWorldPos, uModel[3].xyz, vUV) > RW_LIT_SHARE) discard;   // the room drawn dark (render/realWindows.js): no amber halo round it
   outColor = vec4(airDecode(texture(uEmissionTex, vUV).rgb * uEmissionColor), 1.0);   // AUDIT-EL F20: linear, like the glares and the bright pass beside it
 }`;
 export const EMIT_BB_FS = `#version 300 es
@@ -1283,7 +1290,7 @@ export class AirPass {
       box: P(QUAD_VS, BOX_FS, ['uSrc', 'uTexel', 'uBlurRange', 'uStrength', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas']),
       gauss: P(QUAD_VS, GAUSS_FS, ['uSrc', 'uDir']),
       shaft: P(QUAD_VS, SHAFT_FS, ['uDepth', 'uSun', 'uShaftParams', 'uSunColor', 'uProjInfo', 'uRect', 'uCanvas', 'uEye', 'uCloudShadowMap', 'uCloudShadowRect', 'uSunOn', 'uViewRot', 'uCloudSky', 'uCloudSkyOn', 'uLightDir', 'uHaze']),   // VC6c: the cloud in front of the sun; VC7b: the sky map's gaps and the haze
-      emitMesh: P(opts.vs.mesh, EMIT_MESH_FS, ['uProj', 'uView', 'uModel', 'uEmissionTex', 'uEmissionColor', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas', 'uBloomSize']),
+      emitMesh: P(opts.vs.mesh, EMIT_MESH_FS, ['uProj', 'uView', 'uModel', 'uEmissionTex', 'uEmissionColor', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas', 'uBloomSize', 'uRoomsLit']),
       emitBb: P(opts.vs.bb, EMIT_BB_FS, ['uProj', 'uView', 'uRight', 'uUp', 'uOrigin', 'uSize', 'uTex', 'uEmissionTex', 'uFlatWind', 'uSway', 'uWindfallSway', 'uWindfallAxis', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas', 'uBloomSize']),   // WINDFALL1: and the mod's law
       glare: P(GLARE_VS, GLARE_FS, ['uProj', 'uView', 'uCenter', 'uSize', 'uDepth', 'uColor', 'uProjInfo', 'uRect', 'uCanvas']),
       // EL4
@@ -1864,6 +1871,7 @@ export class AirPass {
 
   _replayEmission(f, sp, vp, depthOn) {
     const gl = this.gl, P = this.programs, T = this.targets;
+    f.bindVao?.(null);   // RW1 (AUDIT): the images' quads bind their own VAO behind the renderer's back - its shadow still named a mesh's, so the first replay's bind of that mesh was skipped and drew from the quad (GL 1282, "no element array buffer bound")
     const planes = spherePlanes(vp, this._planes);   // EL5: the eye's frustum - what it cannot see cannot bloom
     let bound = null;
     for (let i = 0; i < sp.count; i++) {
@@ -1877,10 +1885,12 @@ export class AirPass {
           const sm = mesh.subMeshes[k];
           const emis = sm._evEmis;
           if (!emis || emis === f.blackTex) continue;   // nothing to bloom: the main pass resolved no mask, or the black one
+          if (sm._evWin === GLASS_INTERIOR) continue;   // RW1: an interior's declared glass rides the emission unit and is never an emission - it glows nowhere (render/realWindows.js)
           if (!subMeshVisible(planes, r, k)) continue;   // EL5
           if (bound !== P.emitMesh) { bound = P.emitMesh; gl.useProgram(bound.p); gl.uniformMatrix4fv(bound.uProj, false, vp); gl.uniformMatrix4fv(bound.uView, false, this._identityView); gl.uniform1i(bound.uEmissionTex, 1); this._emitDepth(bound, depthOn, T); }
           if (!vaoBound) { gl.uniformMatrix4fv(P.emitMesh.uModel, false, r.matrix); f.bindVao(mesh.vao); vaoBound = true; }
           gl.uniform3fv(P.emitMesh.uEmissionColor, sm._evEmisWhite ? this._white : f.windowEmission);
+          gl.uniform1f(P.emitMesh.uRoomsLit, f.windowRooms && sm._evWin === GLASS_EXTERIOR ? 1 : 0);   // WAGONS2 (FINAL AUDIT): a room behind it - its own lit test
           gl.activeTexture(gl.TEXTURE1);
           gl.bindTexture(gl.TEXTURE_2D, emis);
           gl.drawElements(gl.TRIANGLES, sm.primitiveCount * 3, gl.UNSIGNED_INT, sm.startIndex * 4);

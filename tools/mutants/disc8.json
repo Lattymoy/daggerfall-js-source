@@ -11,7 +11,7 @@
   {
     "name": "DISC8G-world-never-holds",
     "file": "src/scenes/world.js",
-    "old": "        if (_overlayHeld || _seasonHeld) player.holdFrame();",
+    "old": "        if (_overlayHeld || _seasonHeld || _rideHeld) player.holdFrame();",
     "new": "",
     "tests": [
       "test/disc8.test.js"
