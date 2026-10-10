@@ -36,7 +36,7 @@ test('TRADE-INFO itemPowerLines: a DFU magic item names its powers in DFU\'s own
 
 test('TRADE-INFO the surfaces: the Enhanced card, the trade row\'s hover and the trade detail read the one list (mutants: a surface on rarityLines alone)', () => {
   const inv = src('src/ui/enhancedInventory.js');
-  assert.match(inv, /\{ const lines = itemPowerLines\(picked, deps, \{ set: false, lore: false \}\); if \(lines\.length\) \{ const ul = el\('ul', 'rarity'\);/);   // CARD-FIT: the lore is the Info box's
+  assert.match(inv, /\{ const lines = itemPowerLines\(picked, deps, \{ set: false, lore: false, technique: false \}\); if \(lines\.length\) \{ const ul = el\('ul', 'rarity'\);/);   // CARD-FIT: the lore is the Info box's; PIN MOVED (TECH-CARD): less a technique's line, its block's
   const t = src('src/ui/enhancedPlayerTrade.js');
   // CARD-FIT U4: both in brief (itemBriefLines: the tier, its affixes, the sigil's line, the set's name and what I wear of it)
   assert.match(t, /b\.title = \[line\.name, \.\.\.itemBriefLines\(item, deps, \{ worn: true \}\), \.\.\.setLines\(item\)\.slice\(1\)\]\.join\('\\n'\);/, 'the row\'s hover - mine and theirs alike');

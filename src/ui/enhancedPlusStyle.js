@@ -846,6 +846,50 @@ export const SET_BLOCK_CSS = `.setbox { position: relative; margin: 8px 0 10px; 
 /* a power's recovery, on its name's line, in the dashed frame the HUD's recovering chip wears */
 .setbox.compact .set-tier-every { flex: 0 0 auto; margin-left: auto; padding: 0 3px; font-size: 11px;
   line-height: 13px; color: var(--set-hi); border: 1px dashed var(--set-lo); font-variant-numeric: tabular-nums; }`;
+/** TECH-CARD: a technique's block on a card (ui/techniqueCard.js) - the sigil's and the set's kind, in the blue the
+ *  technique's marks wear on the ground (combat/techniqueRoster.js TECH_CHIP_COLOUR, which `--tech` is - pinned), every
+ *  colour the block's own custom property so nothing outside it is dressed. */
+export const TECH_BLOCK_CSS = `.techbox { --tech: #59c7ff; --tech-hi: #c4ecff; --tech-mid: #2f8fc8; --tech-lo: #12405e; --tech-rgb: 89,199,255;
+  position: relative; margin: 8px 0 10px; padding: 8px 10px 7px; text-align: left; border: 2px solid;
+  border-color: #4fb0e6 var(--tech-lo) var(--tech-lo) #4fb0e6;
+  background: radial-gradient(ellipse at 12% 0%, rgba(var(--tech-rgb),0.2), transparent 60%), rgba(6,14,22,0.84);
+  box-shadow: 0 0 0 1px #050608, inset 0 0 14px rgba(var(--tech-rgb),0.14), 0 0 10px rgba(var(--tech-rgb),0.16); }
+.techbox[data-state="asleep"] { filter: saturate(0.35); }
+/* the head: the glyph beside two rows - the word and the roll, then the name the whole width */
+.tech-head { display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: "glyph word roll" "glyph name name";
+  align-items: center; column-gap: 8px; row-gap: 1px; margin-bottom: 5px; }
+.tech-glyph { grid-area: glyph; display: inline-flex; width: 20px; height: 20px; color: var(--tech);
+  filter: drop-shadow(0 0 4px rgba(var(--tech-rgb),0.8)) drop-shadow(1px 1px 0 #050608); }
+.tech-glyph svg { width: 100%; height: 100%; image-rendering: pixelated; }
+.tech-word { grid-area: word; font-size: 10px; line-height: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: #9fd3f0; }
+.tech-name { grid-area: name; min-width: 0; font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tech);
+  text-shadow: 1px 1px 0 #050608, 0 0 8px rgba(var(--tech-rgb),0.55); }
+.tech-roll { grid-area: roll; white-space: nowrap; font-size: 11px; color: var(--tech-hi); font-variant-numeric: tabular-nums;
+  text-shadow: 1px 1px 0 #050608; }
+.tech-band { color: #7fa9c2; }
+.tech-effect { margin: 0 0 6px; font-size: 13px; line-height: 1.35; color: #e6f6ff; text-shadow: 1px 1px 0 #050608; }
+/* the foot: the key as a keycap and how it is pressed, then the fatigue and the recovery - in the dashed frame the
+   HUD's recovering chip wears (the set block's .set-tier-every) - at the right */
+.tech-foot { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; font-size: 11px; color: #9fc4da;
+  font-variant-numeric: tabular-nums; }
+.tech-key { padding: 0 4px; line-height: 14px; letter-spacing: 0.04em; color: #050608; background: var(--tech); border: 1px solid;
+  border-color: var(--tech-hi) var(--tech-lo) var(--tech-lo) var(--tech-hi); box-shadow: 0 0 0 1px #050608; }
+.tech-key.unbound { color: #9fc4da; background: rgba(0,0,0,0.5); border-color: #3c5566 #121c22 #121c22 #3c5566; box-shadow: none; }
+.tech-cost { margin-left: auto; color: #cfe6f3; }
+.tech-every { padding: 0 3px; line-height: 13px; color: var(--tech-hi); border: 1px dashed var(--tech-mid); }
+.tech-power, .tech-press { margin: 5px 0 0; font-size: 12px; line-height: 1.35; color: #cfe6f3; }
+.tech-note { margin: 4px 0 0; font-size: 11px; color: #85a3b5; font-style: italic; }
+/* AUDIT SET U9's law: the pack card's own paragraph rule (.pack-shell .card p: centred, 14px, its parchment colour)
+   outranks a bare class - the block's lines say whose they are */
+.pack-shell .card .techbox p.tech-effect { font-size: 13px; color: #e6f6ff; text-align: left; text-shadow: 1px 1px 0 #050608; }
+.pack-shell .card .techbox p.tech-power, .pack-shell .card .techbox p.tech-press { font-size: 12px; color: #cfe6f3; text-align: left; text-shadow: none; }
+.pack-shell .card .techbox p.tech-note { font-size: 11px; color: #85a3b5; text-align: left; text-shadow: none; }
+.inv-info .techbox { margin: 8px 0 10px; }
+/* CARD-FIT: THE CARD'S DRESS (ui/techniqueCard.js, the default) - the smaller glyph and name; the Info box wears the whole */
+.techbox.compact { margin: 6px 0 8px; padding: 6px 9px 7px; }
+.techbox.compact .tech-head { gap: 7px; margin-bottom: 4px; }
+.techbox.compact .tech-name { font-size: 13px; }
+.pack-shell .card .techbox.compact p.tech-effect, .techbox.compact p.tech-effect { margin: 0 0 5px; font-size: 12px; }`;
 /** SET7: the Sigil Broker's window (ui/brokerWindow.js) - every rule the window's own class; the window lays it itself on the classic skin (AUDIT SET U1), with the kit made for its roles alone. */
 export const BROKER_CSS = `/* ── SET7: THE SIGIL BROKER'S WINDOW (ui/brokerWindow.js) - the Info box's kind: a stone window over the world, the
    day's six offers in a list, the one pressed shown whole beside it (under it on a phone). The kit dresses the window,
@@ -1920,6 +1964,7 @@ ${SIGIL_BLOCK_CSS}
 .pack-shell .loot-win .itemrow[data-set] .tile::after, .trade-shell .itemrow[data-set] .tile::after,
 .ptrade-shell .itemrow[data-set] .tile::after, .dragghost[data-set] .tile::after { background-image: var(--set-rune); }
 ${SET_BLOCK_CSS}
+${TECH_BLOCK_CSS}
 .setstrip { display: flex; flex-direction: column; gap: 4px; margin: 8px 0 0; flex: 0 0 auto;
   max-height: 136px; overflow-y: auto; overscroll-behavior: contain; }   /* CARD-FIT U16: five lines, then it scrolls - eight sets can be worn at once, and the column clips */
 .setline { display: flex; align-items: center; gap: 8px; min-height: 24px; padding: 2px 8px; cursor: pointer; text-align: left;

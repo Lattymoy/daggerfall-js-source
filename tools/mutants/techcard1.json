@@ -1,0 +1,237 @@
+[
+  {
+    "name": "TECHCARD-every-technique-aims",
+    "file": "src/combat/techniqueRoster.js",
+    "old": "  return { what, mult: m, fatigue: t.fatigue, cooldown: t.cooldown, aims: t.aim != null };",
+    "new": "  return { what, mult: m, fatigue: t.fatigue, cooldown: t.cooldown, aims: true };",
+    "tests": [
+      "test/techcard1.test.js"
+    ]
+  },
+  {
+    "name": "TECHCARD-the-line-off-its-parts",
+    "file": "src/combat/techniqueRoster.js",
+    "old": "  return p ? `${p.what}. ${p.fatigue} fatigue, ${p.cooldown}s` : '';",
+    "new": "  return p ? `${p.what}. ${p.cooldown}s` : '';",
+    "tests": [
+      "test/techcard1.test.js",
+      "test/tech1_roster.test.js"
+    ]
+  },
+  {
+    "name": "TECHCARD-the-unknown-told",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (!lootRarityOn() || !item || rarityOf(item) === 'common' || !identified(item)) return null;",
+    "new": "  if (!lootRarityOn() || !item || rarityOf(item) === 'common') return null;",
+    "tests": [
+      "test/techcard1.test.js"
+    ]
+  },
+  {
+    "name": "TECHCARD-the-ladder-off-told",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (!lootRarityOn() || !item || rarityOf(item) === 'common' || !identified(item)) return null;",
+    "new": "  if (!item || rarityOf(item) === 'common' || !identified(item)) return null;",
+    "tests": [
+      "test/techcard1.test.js"
+    ]
+  },
+  {
+    "name": "TECHCARD-a-common-told",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (!lootRarityOn() || !item || rarityOf(item) === 'common' || !identified(item)) return null;",
+    "new": "  if (!lootRarityOn() || !item || !identified(item)) return null;",
+    "tests": [
+      "test/techcard1.test.js"
+    ]
+  },
+  {
+    "name": "TECHCARD-the-band-off-another-line",
+    "file": "src/systems/lootRarity.js",
+    "old": "band: affixBand(item, item.affixes.indexOf(line)),",
+    "new": "band: affixBand(item, 0),",
+    "tests": [
+      "test/techcard1.test.js"
+    ]
+  },
+  {
+    "name": "TECHCARD-the-tier-list-never-asked",
+    "file": "src/systems/lootRarity.js",
+    "old": "  const blocked = technique ? null : techniqueLineOf(item);",
+    "new": "  const blocked = null;",
+    "tests": [
+      "test/techcard1.test.js"
+    ]
+  },
+  {
+    "name": "TECHCARD-every-affix-dropped",
+    "file": "src/systems/lootRarity.js",
+    "old": "    if (blocked && a === blocked) return;",
+    "new": "    if (!technique) return;",
+    "tests": [
+      "test/techcard1.test.js"
+    ]
+  },
+  {
+    "name": "TECHCARD-a-held-line-dropped",
+    "file": "src/systems/lootRarity.js",
+    "old": "    if (blocked && a === blocked) return;",
+    "new": "    if (a === blocked) return;",
+    "tests": [
+      "test/techcard1.test.js"
+    ]
+  },
+  {
+    "name": "TECHCARD-the-key-named-when-unbound",
+    "file": "src/ui/techniqueCard.js",
+    "old": "  const key = el('span', keyWord ? 'tech-key' : 'tech-key unbound', keyWord || TECH_UNBOUND);",
+    "new": "  const key = el('span', 'tech-key', keyWord);",
+    "tests": [
+      "test/techcard1.test.js"
+    ]
+  },
+  {
+    "name": "TECHCARD-the-hold-for-a-press",
+    "file": "src/ui/techniqueCard.js",
+    "old": "  const how = el('span', 'tech-how', v.aims ? TECH_HOW.aims : TECH_HOW.press);",
+    "new": "  const how = el('span', 'tech-how', TECH_HOW.aims);",
+    "tests": [
+      "test/techcard1.test.js"
+    ]
+  },
+  {
+    "name": "TECHCARD-the-press-said-for-a-hold",
+    "file": "src/ui/techniqueCard.js",
+    "old": "      : v.aims ? `Hold ${keyWord}",
+    "new": "      : !v.aims ? `Hold ${keyWord}",
+    "tests": [
+      "test/techcard1.test.js"
+    ]
+  },
+  {
+    "name": "TECHCARD-no-key-said-as-bound",
+    "file": "src/ui/techniqueCard.js",
+    "old": "    box.append(el('p', 'tech-press', !keyWord",
+    "new": "    box.append(el('p', 'tech-press', false",
+    "tests": [
+      "test/techcard1.test.js"
+    ]
+  },
+  {
+    "name": "TECHCARD-the-power-off-its-base",
+    "file": "src/ui/techniqueCard.js",
+    "old": "on its ${pct(v.base)} blow",
+    "new": "on its ${pct(v.mult)} blow",
+    "tests": [
+      "test/techcard1.test.js"
+    ]
+  },
+  {
+    "name": "TECHCARD-the-band-unsaid",
+    "file": "src/ui/techniqueCard.js",
+    "old": "  if (v.band) { roll.append(",
+    "new": "  if (false) { roll.append(",
+    "tests": [
+      "test/techcard1.test.js"
+    ]
+  },
+  {
+    "name": "TECHCARD-the-glance-says-it-all",
+    "file": "src/ui/techniqueCard.js",
+    "old": "  if (full) {",
+    "new": "  if (true) {",
+    "tests": [
+      "test/techcard1.test.js"
+    ]
+  },
+  {
+    "name": "TECHCARD-the-duel-ignored",
+    "file": "src/ui/techniqueCard.js",
+    "old": "  const asleep = sigilDueling();",
+    "new": "  const asleep = false;",
+    "tests": [
+      "test/techcard1.test.js"
+    ]
+  },
+  {
+    "name": "TECHCARD-a-bad-colour-taken",
+    "file": "src/ui/techniqueGlyph.js",
+    "old": "  const c = /^#[0-9a-f]{6}$/i.test(String(colour ?? '')) ? String(colour).toLowerCase() : TECHNIQUE_GLYPH_BLUE;",
+    "new": "  const c = String(colour ?? TECHNIQUE_GLYPH_BLUE).toLowerCase();",
+    "tests": [
+      "test/techcard1.test.js"
+    ]
+  },
+  {
+    "name": "TECHCARD-a-pixel-lost",
+    "file": "src/ui/techniqueGlyph.js",
+    "old": "      while (x < row.length && row[x] === '#') x++;",
+    "new": "      while (x < row.length && row[x] === '#') x += 2;",
+    "tests": [
+      "test/techcard1.test.js"
+    ]
+  },
+  {
+    "name": "TECHCARD-the-block-sheet-never-laid",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": "${SET_BLOCK_CSS}\n${TECH_BLOCK_CSS}\n.setstrip {",
+    "new": "${SET_BLOCK_CSS}\n.setstrip {",
+    "tests": [
+      "test/techcard1.test.js"
+    ]
+  },
+  {
+    "name": "TECHCARD-the-lines-left-on-the-card",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "itemPowerLines(picked, deps, { set: false, lore: false, technique: false })",
+    "new": "itemPowerLines(picked, deps, { set: false, lore: false, technique: true })",
+    "tests": [
+      "test/techcard1.test.js"
+    ]
+  },
+  {
+    "name": "TECHCARD-the-block-never-drawn",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  { const tb = techniqueCard(picked, { keyWord: techniqueKeyWord() }); if (tb) into.append(tb); }",
+    "new": "  { const tb = techniqueCard(picked, { keyWord: techniqueKeyWord() }); void tb; }",
+    "tests": [
+      "test/techcard1.test.js"
+    ]
+  },
+  {
+    "name": "TECHCARD-the-info-box-without-it",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  { const tb = techniqueCard(item, { full: true, keyWord: techniqueKeyWord() }); if (tb) body.append(tb); }",
+    "new": "  { const tb = techniqueCard(item, { full: true, keyWord: techniqueKeyWord() }); void tb; }",
+    "tests": [
+      "test/techcard1.test.js"
+    ]
+  },
+  {
+    "name": "TECHCARD-the-info-box-said-twice",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "rarityLines(item, { sigil: false, set: false, technique: false })",
+    "new": "rarityLines(item, { sigil: false, set: false, technique: true })",
+    "tests": [
+      "test/techcard1.test.js"
+    ]
+  },
+  {
+    "name": "TECHCARD-the-key-never-read",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  try { const code = getBinding(bindings(), TECHNIQUE_ACTION); return code ? tagText(code) : ''; } catch { return ''; }",
+    "new": "  return '';",
+    "tests": [
+      "test/techcard1.test.js"
+    ]
+  },
+  {
+    "name": "TECHCARD-the-chip-in-the-sigil-rune",
+    "file": "src/ui/enhancedHud.js",
+    "old": "t.set === 'technique' ? techniqueGlyphTileSrc(shade) : sigilRuneTileSrc(shade)",
+    "new": "sigilRuneTileSrc(shade)",
+    "tests": [
+      "test/techcard1.test.js"
+    ]
+  }
+]

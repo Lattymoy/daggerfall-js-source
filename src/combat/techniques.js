@@ -30,7 +30,7 @@
 // pass, shake(k) - the one shaker, sound(clip, volume, pitch) - the audio bus }.
 // A host that hands none still swings its techniques; it cannot leap, dash or shoot one (said so).
 
-import { techniqueById, techniqueMult, TECHNIQUE_MAX_SPEED, TECHNIQUES } from './techniqueRoster.js';
+import { techniqueById, techniqueMult, TECHNIQUE_MAX_SPEED, TECHNIQUES, TECHNIQUE_ACTION } from './techniqueRoster.js';
 import { techniqueLineOf, lootRarityOn, rarityKnown } from '../systems/lootRarity.js';
 import { EQUIP_SLOTS } from '../systems/equip.js';
 import { sigilDueling } from '../systems/sigil.js';
@@ -46,8 +46,8 @@ import { WEAPON_REACH, friendlyProtected } from './playerWeapon.js';
 import { playerBody, bodyRadius } from './techniqueBlow.js';
 import { techniqueCue, resetTechniqueFx, TECH_FX } from './techniqueFx.js';   // TECH-FX: what each moment looks, moves and sounds like (bible/05-Combat/Weapon-Techniques.md THE FEEL)
 
-/** The registry action (systems/inputActions.js). */
-export const TECHNIQUE_ACTION = 'WeaponTechnique';
+/** The registry action (systems/inputActions.js) - the roster's (TECH-CARD: the leaf, so the card names the key). */
+export { TECHNIQUE_ACTION };
 /** The player's own marks on the ground - a cool blue, never a foe's orange - and a mark that cannot be reached. */
 export const TECH_COLOR = Object.freeze([0.35, 0.78, 1]);   // the HUD chip's is its twin (techniqueRoster.js TECH_CHIP_COLOUR - the leaf the HUD may import)
 export const TECH_BAD_COLOR = Object.freeze([0.95, 0.32, 0.3]);

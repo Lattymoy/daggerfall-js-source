@@ -118,8 +118,8 @@ test('SIGIL-UI the card carries the BLOCK, not three more lines: the tier list l
   assert.ok(all.some((l) => /Kindled/.test(l)));
   assert.ok(!bare.some((l) => /Kindled|[Ss]igil/.test(l)), 'the card\'s own list does not');
   const inv = read('src/ui/enhancedInventory.js');
-  assert.match(inv, /itemPowerLines\(picked, deps, \{ set: false, lore: false \}\)[^\n]*\n[^\n]*\n[^\n]*\n\s+\{ const sb = sigilCard\(picked\); if \(sb\) into\.append\(sb\); \}/, 'the hover card: the list, then the block');   // TRADE-INFO: the list is itemPowerLines now (SET5: set: false; CARD-FIT: lore: false, and the card's words go into its body)
-  assert.match(inv, /export function itemPowerLines\(item, d = deps, \{ set = true, lore = true \} = \{\}\) \{\n  const lines = rarityLines\(item, \{ sigil: false, set, lore \}\);/, 'and it leaves the sigil to the block');
+  assert.match(inv, /itemPowerLines\(picked, deps, \{ set: false, lore: false, technique: false \}\)[^\n]*\n\s+\{ const tb = techniqueCard\(picked, \{ keyWord: techniqueKeyWord\(\) \}\); if \(tb\) into\.append\(tb\); \}[^\n]*\n[^\n]*\n[^\n]*\n\s+\{ const sb = sigilCard\(picked\); if \(sb\) into\.append\(sb\); \}/, 'the hover card: the list, then the block');   // TRADE-INFO: the list is itemPowerLines now (SET5: set: false; CARD-FIT: lore: false, and the card's words go into its body); PIN MOVED (TECH-CARD): a technique's block between them
+  assert.match(inv, /export function itemPowerLines\(item, d = deps, \{ set = true, lore = true, technique = true \} = \{\}\) \{\n  const lines = rarityLines\(item, \{ sigil: false, set, lore, technique \}\);/, 'and it leaves the sigil to the block');   // PIN MOVED (TECH-CARD): and a technique to its, when asked
   assert.match(inv, /\{ const sb = sigilCard\(item, \{ full: true \}\); if \(sb\) body\.append\(sb\); \}/, 'the Info box - whole');
   _resetSigilForTests();
 });

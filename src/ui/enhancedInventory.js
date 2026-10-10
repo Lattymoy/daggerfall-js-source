@@ -137,6 +137,10 @@ import { rarityAttr, rarityLines, lootRarityOn, techniqueDetail, techniqueLineOf
 import { pieceLines } from '../net/recipeLaw.js';   // PROF3: a crafted piece's quality and maker, above its powers
 import { craftedJewelPoints } from '../systems/enchanting.js';   // AUDIT PROF-541 R2-C4: a jewel's points as the item maker reads them
 import { sigilCard } from './sigilCard.js';   // SIGIL-UI: the sigil's own block on the card
+import { techniqueCard } from './techniqueCard.js';   // TECH-CARD: a technique's own block on the card
+import { TECHNIQUE_ACTION } from '../combat/techniqueRoster.js';   // TECH-CARD: the key its block names (the leaf, never the runner)
+import { getBinding } from '../systems/inputActions.js';
+import { tagText } from './quickslotTags.js';
 import { validSigil } from '../systems/sigil.js';   // SIGIL-UI: the tile's corner rune
 import { setCard, setStrip, markSetFrame } from './setCard.js';   // SET5: a set piece's set on its card, the worn sets on the doll's column, a set piece's rune
 import { setIdOf, setById, setLines, setSigilLines } from '../systems/sigilSets.js';   // CARD-FIT U4/U10: a set piece and its sigil in a line each
@@ -146,7 +150,7 @@ import { isBound, BOUND_LINE, boundRefusesPut, boundText, isPackOnly, packOnlyTe
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
 import { repaintKeepingScroll } from './domRepaint.js';
-import { overlayAction, eventActions } from './input.js';   // MAC-C: and the REGISTRY's answer for the two window keys
+import { overlayAction, eventActions, bindings } from './input.js';   // MAC-C: and the REGISTRY's answer for the two window keys; TECH-CARD: the live store, for the technique's key
 import { audio } from '../systems/audio.js';   // MAC-O6: the pack's own transfer cue - this window carried none at all
 import { dismantleStones, dismantleRefusal, dismantleWare, dismantleAsk, DISMANTLED, DISMANTLE_WORN } from '../systems/sigilBroker.js';   // SS5: a Broker ware back into stones
 import { salvageShards, salvageRefusal, salvagePiece, shardsText } from '../systems/reforge.js';   // LOOT9: a laddered piece broken into Welkynd Shards
@@ -2967,8 +2971,8 @@ function quickslotActs(item) {
  *  rarityLines, which names a rolled item's), and for an enchanted item the tier list does not name - DFU's own magic
  *  items and the item maker's carry no `rarity`, and with the tiers off it names none - DFU's Info box powers (itemPowers magicPowersLines, the classic
  *  popup's own words; "powers unknown" until it is identified). The card and the trade window read this one list. */
-export function itemPowerLines(item, d = deps, { set = true, lore = true } = {}) {
-  const lines = rarityLines(item, { sigil: false, set, lore });   // SET5: the card draws the set in its own block (set: false); CARD-FIT: and leaves the lore to the Info box (lore: false)
+export function itemPowerLines(item, d = deps, { set = true, lore = true, technique = true } = {}) {
+  const lines = rarityLines(item, { sigil: false, set, lore, technique });   // TECH-CARD: the card draws a technique's block (technique: false)   // SET5: the card draws the set in its own block (set: false); CARD-FIT: and leaves the lore to the Info box (lore: false)
   lines.unshift(...pieceLines(item, craftedJewelPoints(item)));   // PROF3: a crafted piece's quality and maker above them
   { const h = heirloomLine(item); if (h) lines.unshift(h); }   // LEGACY4: an heirloom's house and its generations, first
   if (item && !(item.rarity && lootRarityOn()) && isEnchanted(item)) {
@@ -3070,6 +3074,11 @@ const gemHomes = () => (deps.items?.() ?? []).filter((it) => emptySockets(it) > 
 
 /** PLUS7: the item's card WITHOUT its buttons - the detail column's, the hover card's. CARD-FIT: `body` puts its words
  *  in a body of their own (`.card-body`), so the detail column can hang its buttons under it, never inside it. */
+/** TECH-CARD: the technique key's name off the live bindings, as the HUD's chip names it (scenes/world.js
+ *  techniqueKeyWord - `tagText`, the chip's law); '' when nothing is bound, and the block's foot says so. */
+function techniqueKeyWord() {
+  try { const code = getBinding(bindings(), TECHNIQUE_ACTION); return code ? tagText(code) : ''; } catch { return ''; }
+}
 function infoCard(picked, side, ready = render, { body = false } = {}) {
   // AUDIT GEM: a well's open chooser, its asked Shatter and a gem's "Set in..." list are the SELECTION's - another piece
   // picked and this one picked again starts clean, never a stale question answered by one press
@@ -3096,7 +3105,8 @@ function infoCard(picked, side, ready = render, { body = false } = {}) {
   if (meta) into.append(el('p', 'meta', meta));
   // LR1: the tier, then each affix as a line, then the enchantment - or
   // "Unidentified" until the Identify spell or the guild reads it.
-  { const lines = itemPowerLines(picked, deps, { set: false, lore: false }); if (lines.length) { const ul = el('ul', 'rarity'); for (const l of lines) ul.append(el('li', null, l)); into.append(ul); } }   // TRADE-INFO: and a DFU magic item's powers; SET5: the set draws its own block below; CARD-FIT: the lore is the Info box's
+  { const lines = itemPowerLines(picked, deps, { set: false, lore: false, technique: false }); if (lines.length) { const ul = el('ul', 'rarity'); for (const l of lines) ul.append(el('li', null, l)); into.append(ul); } }   // TRADE-INFO: and a DFU magic item's powers; SET5: the set draws its own block below; CARD-FIT: the lore is the Info box's
+  { const tb = techniqueCard(picked, { keyWord: techniqueKeyWord() }); if (tb) into.append(tb); }   // TECH-CARD: a technique's own block - the piece's own line, so first of the blocks
   // SIGIL-UI: the sigil as its own block - the rune, the stage it wakes to in my hand, its five stages and the bar of
   // what it has drunk toward the next (ui/sigilCard.js); the tier list above no longer carries it as three more lines
   { const sb = sigilCard(picked); if (sb) into.append(sb); }
@@ -3494,7 +3504,7 @@ function openInfo(item) {
   // CARD-FIT: THE INFO BOX IS THE WHOLE READ - the card keeps what a glance needs, so the tier, its affixes and the
   // lore are said here too (a line the powers box already says is not said twice), then the sigil and the set whole
   { const said = new Set(boxes.flat().map((r) => String(r?.text ?? r ?? '').trim()));
-    const tier = rarityLines(item, { sigil: false, set: false }).filter((t) => t && !said.has(t));
+    const tier = rarityLines(item, { sigil: false, set: false, technique: false }).filter((t) => t && !said.has(t));
     if (tier.length) boxes.splice(1, 0, tier.map((text) => ({ text, center: true }))); }
   infoEl = el('div', 'inv-info');
   infoEl.setAttribute('role', 'dialog');
@@ -3512,6 +3522,7 @@ function openInfo(item) {
     }
     body.append(sec);
   });
+  { const tb = techniqueCard(item, { full: true, keyWord: techniqueKeyWord() }); if (tb) body.append(tb); }   // TECH-CARD: a technique's block, whole
   { const sb = sigilCard(item, { full: true }); if (sb) body.append(sb); }   // SIGIL-UI: the Info box's last word on a sigil weapon is its sigil (CARD-FIT: whole)
   { const set = setCard(item, deps.entity, itemLongName, { full: true }); if (set) body.append(set); }   // SET5: ...and a set piece's, its set (CARD-FIT: whole)
   markItemFrame(card, item);   // RARITY-UI: the box's heading line wears the tier

@@ -62,6 +62,9 @@ export const TECHNIQUE_PER_MILLE = Object.freeze({ magic: 120, rare: 300, legend
  *  marks on the ground wear (combat/techniques.js TECH_COLOR, [0.35, 0.78, 1]). Here, in the leaf, because the HUD never
  *  imports a runtime that reaches half the game. */
 export const TECH_CHIP_COLOUR = '#59c7ff';
+/** The registry action (systems/inputActions.js) - here, in the leaf, so the card (ui/techniqueCard.js) names the key
+ *  without importing the runner; combat/techniques.js answers it and exports it on. */
+export const TECHNIQUE_ACTION = 'WeaponTechnique';
 
 /** What a line's `value` makes of the technique's own multiplier: `base * (1 + value/100)`. */
 export const techniqueMult = (base, value) => base * (1 + Math.max(0, value | 0) / 100);
@@ -128,11 +131,13 @@ export const techniqueFits = (id, item) => techniquesFor(item).includes(id);
 
 /** A percentage as the card prints it. */
 const pct = (x) => `${Math.round(x * 100)}%`;
-/** THE CARD'S SECOND LINE for a technique line of `value`: what a press does, with its numbers, and its price. Kept
- *  short - the card wraps it, the classic tooltip prints it whole. */
-export function techniqueBrief(id, value) {
+/** TECH-CARD: WHAT A PRESS DOES, in its parts - `what` it does with the line's own numbers, the blow's multiplier
+ *  `mult` (the technique's `base` with the line's +%), its `fatigue` and its `cooldown` in seconds, and whether it
+ *  `aims` (held to aim, gone on the release). The card's block lays them out (ui/techniqueCard.js); techniqueBrief is
+ *  them as one line. Null for a technique the roster does not hold. */
+export function techniqueParts(id, value) {
   const t = techniqueById(id);
-  if (!t) return '';
+  if (!t) return null;
   const m = techniqueMult(t.base, value);
   const what = (() => {
     switch (id) {
@@ -150,5 +155,12 @@ export function techniqueBrief(id, value) {
       default: return `${pct(m)}`;
     }
   })();
-  return `${what}. ${t.fatigue} fatigue, ${t.cooldown}s`;
+  return { what, mult: m, fatigue: t.fatigue, cooldown: t.cooldown, aims: t.aim != null };
+}
+/** THE CARD'S SECOND LINE for a technique line of `value`: what a press does, with its numbers, and its price. Kept
+ *  short - the classic tooltip, the Reforge and the trade window's strip print it whole; the Enhanced card's block
+ *  lays the same parts out (TECH-CARD). */
+export function techniqueBrief(id, value) {
+  const p = techniqueParts(id, value);
+  return p ? `${p.what}. ${p.fatigue} fatigue, ${p.cooldown}s` : '';
 }

@@ -71,6 +71,7 @@ import { hudRenown } from './hudRenown.js';   // RENOWN4: my own Renown, under t
 import { survivalHudChips } from '../systems/survival/status.js';   // SURV5: the needs (UI3: tiles in the status widget)
 import { statusTiles, afflictionRows, statusGlyphSrc, statRoom, statSide, statPlace, statOverflow, STAT_TILE, STAT_GAP, STAT_METRICS, STAT_SHORT_QUERY, STAT_MIDDLE_CLEAR } from './hudStatus.js';   // UI3: the status widget
 import { sigilRuneTileSrc } from './sigilRune.js';   // UI3: a set power's tile is its set's rune
+import { techniqueGlyphTileSrc } from './techniqueGlyph.js';   // TECH-CARD: a technique's tile is its own glyph, the card block's
 import { liveVampirism } from '../systems/racialLive.js';   // AUDIT SURV C: no hunger or sleep chip on a vampire
 import { survivalOn } from '../systems/survival/switch.js';
 import { ownMinutes, sharedClockOn } from '../systems/worldTick.js';   // LIVED1: the needs' strip reads the character's own clock   // REST1: and the Rested tile is online's
@@ -1347,7 +1348,7 @@ function statTile(t, dpr, box) {
     const shade = t.set === 'technique' ? TECH_CHIP_COLOUR : colour;   // TECH1: a weapon's technique, its marks' own blue
     cell.dataset.set = t.set;
     for (const [k, v] of Object.entries(setShades(shade))) cell.style.setProperty(k, v);
-    pic.src = sigilRuneTileSrc(shade);
+    pic.src = t.set === 'technique' ? techniqueGlyphTileSrc(shade) : sigilRuneTileSrc(shade);   // TECH-CARD: the technique's own glyph, as its block on the card wears it
   } else if (t.glyph) {
     cell.dataset.glyph = t.glyph;
     pic.src = statusGlyphSrc(t.glyph) ?? '';

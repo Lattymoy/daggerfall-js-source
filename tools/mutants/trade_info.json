@@ -29,8 +29,8 @@
   {
     "name": "TRADE-INFO-card-on-the-tiers-alone",
     "file": "src/ui/enhancedInventory.js",
-    "old": "  { const lines = itemPowerLines(picked, deps, { set: false, lore: false }); if (lines.length) {",
-    "new": "  { const lines = rarityLines(picked, { sigil: false, set: false, lore: false }); if (lines.length) {",
+    "old": "  { const lines = itemPowerLines(picked, deps, { set: false, lore: false, technique: false }); if (lines.length) {",
+    "new": "  { const lines = rarityLines(picked, { sigil: false, set: false, lore: false, technique: false }); if (lines.length) {",
     "tests": [
       "test/tradeinfo.test.js"
     ]

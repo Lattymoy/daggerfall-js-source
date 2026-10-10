@@ -88,7 +88,7 @@ import { survivalOn } from './survival/switch.js';   // LOOT14: the warmth and w
 import { hoodCapable } from './survival/temperature.js';   // LOOT15: Unseen answers a hood (HOOD-SAID's one law)
 import { ROLLED_TIERS } from './rarityTier.js';   // RARE-BREAK1: the rolled tiers' one home
 import { setPieceKind, rollSetSigil, rollSetJoin, setLines, setSigilLines } from './sigilSets.js';   // SET4: a won piece of armour or a shield may carry a set's sigil; a weapon's may join one; SET5: the set in words
-import { TECHNIQUE_IDS, TECHNIQUE_BANDS, TECHNIQUE_PER_MILLE, techniqueById, techniquesFor, techniqueBrief } from '../combat/techniqueRoster.js';   // TECH1: a weapon's technique - the roster's one table (a leaf)
+import { TECHNIQUE_IDS, TECHNIQUE_BANDS, TECHNIQUE_PER_MILLE, techniqueById, techniquesFor, techniqueBrief, techniqueParts } from '../combat/techniqueRoster.js';   // TECH1: a weapon's technique - the roster's one table (a leaf)
 
 export const LOOT_RARITY_KEY = 'lootRarity';
 /** The switch. Read at every seam, so a press takes effect on the next
@@ -2145,24 +2145,40 @@ registerWeaponDamageMod(LOOT_RARITY_FOLD, affixWeaponDamage);
 const identified = (item) => !enchanted(item) || item?.isIdentified === true;
 /** TECH1 (AUDIT): whether a piece is known as its card reads it - the technique key says no more than the card. */
 export const rarityKnown = (item) => identified(item);
+/** TECH-CARD: A PIECE'S TECHNIQUE AS ITS BLOCK READS IT (ui/techniqueCard.js) - the line techniqueLineOf answers, its
+ *  roll and the band it was rolled in, and what a press does (techniqueParts): `{ id, name, value, band, base, what,
+ *  mult, fatigue, cooldown, aims }`. Null wherever the tier list says nothing of it - the ladder off, a Common, a piece
+ *  not yet identified (its "Unidentified" hides the technique as it hides every line) - and for a piece with none. */
+export function techniqueView(item) {
+  if (!lootRarityOn() || !item || rarityOf(item) === 'common' || !identified(item)) return null;
+  const line = techniqueLineOf(item);
+  const parts = line ? techniqueParts(line.param, line.value) : null;
+  if (!parts) return null;
+  return { id: line.param, name: techniqueById(line.param).name, value: line.value, band: affixBand(item, item.affixes.indexOf(line)),
+    base: techniqueById(line.param).base, ...parts };
+}
 
 /** The tier line and the affix lines a tooltip or a card shows, in
  *  order: "Rare", then each affix, then the DFU enchantment's name.
  *  Empty with the switch off, for a Common item, or while the item is
  *  unidentified (then one line: the tier, and "Unidentified").
  *  SIGIL-UI: `sigil: false` leaves the sigil's lines out, for a card
- *  that draws the sigil as its own block (ui/sigilCard.js). */
+ *  that draws the sigil as its own block (ui/sigilCard.js). TECH-CARD:
+ *  `technique: false` leaves the technique's line and what a press does
+ *  out, for a card that draws its block (ui/techniqueCard.js). */
 /** SET6: the lore of a fixed record the ladder does not hold - an Aetheric piece's (systems/aetheric.js registers the
  *  Regalia's; it imports this file, so this one cannot import it). `fn(item) -> string | null`. */
 let _aethericLore = null;
 export function registerAethericLore(fn) { _aethericLore = typeof fn === 'function' ? fn : null; }
-export function rarityLines(item, { sigil = true, set = true, lore = true } = {}) {
+export function rarityLines(item, { sigil = true, set = true, lore = true, technique = true } = {}) {
   if (!lootRarityOn() || !item) return [];
   const tier = rarityOf(item);
   if (tier === 'common') return [];
   const out = [tierLabel(item)];   // LOOT2: "Exalted Legendary", "Perfect Rare"
   if (!identified(item)) { out.push('Unidentified'); return [...out, ...(sigil ? setSigilLines(item) : []), ...(set ? setLines(item) : [])]; }   // SIGIL1: a sigil is the port's own mark, seen at once - AUDIT SET U5: and so is its set (the card draws it; the classic tooltip said nothing)
+  const blocked = technique ? null : techniqueLineOf(item);   // TECH-CARD: the line its block draws, and only that one
   (item.affixes ?? []).forEach((a, i) => {
+    if (blocked && a === blocked) return;
     out.push(affixLine(item, i) + asleepNote(a));   // LOOT2: a rolled line with its band; LOOT14: a reader switched off says so
     const d = techniqueDetail(a);   // TECH1: under a technique's line, what a press of the key does with it
     if (d) out.push(d);

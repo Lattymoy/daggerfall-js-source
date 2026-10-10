@@ -476,8 +476,8 @@ test('LR1: the skins - the native cell tints and the tooltip lists, the enhanced
   // the card's list leaves the sigil to its own block under it (SIGIL-UI)
   assert.match(inv, /markItemFrame\(row, item\);   \/\/ LR1/, 'a row wears its tier');
   assert.match(inv, /export function markItemFrame\(node, item\) \{\n\s+const r = rarityAttr\(item\);\n\s+if \(r\) node\.dataset\.rarity = r;/, 'through the marker');
-  assert.match(inv, /const lines = itemPowerLines\(picked, deps, \{ set: false, lore: false \}\); if \(lines\.length\)/, 'the card lists the lines (SET5: the sigil and the set draw their own blocks; CARD-FIT: the lore is the Info box\'s)');   // TRADE-INFO: rarityLines, and a DFU magic item's powers
-  assert.match(inv, /export function itemPowerLines\(item, d = deps, \{ set = true, lore = true \} = \{\}\) \{\n  const lines = rarityLines\(item, \{ sigil: false, set, lore \}\);/, 'the tier\'s lines first');
+  assert.match(inv, /const lines = itemPowerLines\(picked, deps, \{ set: false, lore: false, technique: false \}\); if \(lines\.length\)/, 'the card lists the lines (SET5: the sigil and the set draw their own blocks; CARD-FIT: the lore is the Info box\'s)');   // TRADE-INFO: rarityLines, and a DFU magic item's powers   // PIN MOVED (TECH-CARD): the card leaves a technique's line to its block (technique: false)
+  assert.match(inv, /export function itemPowerLines\(item, d = deps, \{ set = true, lore = true, technique = true \} = \{\}\) \{\n  const lines = rarityLines\(item, \{ sigil: false, set, lore, technique \}\);/, 'the tier\'s lines first');   // PIN MOVED (TECH-CARD): a technique's line kept unless a card draws its block
   assert.match(read('src/ui/worldPlaque.js'), /if \(r\.rarity\) row\.dataset\.rarity = r\.rarity;/);
   assert.match(read('src/ui/nativeInventory.js'), /armorLabelValue\(av\[i\] \?\? 100, entityArmorDisplayMod\(this\.hooks\.entity, i\)\)/, 'the doll\'s numbers, per part (RF1)');
   assert.match(read('src/ui/enhancedInventory.js'), /material: parts\.material \|\| null,/, 'LR4: the enhanced row names no material until identified - RF6: the long name\'s own prefix, which an unidentified item has none of');
