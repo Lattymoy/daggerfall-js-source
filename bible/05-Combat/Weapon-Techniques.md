@@ -297,6 +297,9 @@ item law's version and its producers' count (`int1_itemlaw`), the input registry
 re-aimed by content at the lines they guard, their laws unchanged: `disc10.json` DISC10-E-L2 (the swing's options are
 read into `opts` before the technique's to-hit joins them) and `auditclimbarc.json` L3 (the air arm's guard now names the
 technique's flight beside the parkour leap's).
+The ledger row, set at the foot of section A, moved sections B, C and D down one line: their line cites were
+re-resolved by `tools/citeShift.mjs` (and the numbered and inline `:NNN` identifiers of Port-Status section 2 by hand,
+with section A's tally, now 300 rows) - `test/citedrift.test.js` CD1, CD3 and CD5.
 
 **Kept as they were.** Every other arc's pinned line stands byte for byte: the foes' telegraph call in each host, the
 quad's uniforms, the dungeon lane's boss, rival, crystal, host and companion lines, the HUD's set-power chips and their
