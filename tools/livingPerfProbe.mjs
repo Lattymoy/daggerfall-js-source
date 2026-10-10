@@ -23,7 +23,10 @@
 // Usage: node tools/livingPerfProbe.mjs        (prints the table; exits 1 on a blown budget)
 import { readFileSync } from 'node:fs';
 import { synthTown } from '../test/lwTown.mjs';
-import { hideoutsOf, bandTrouble } from '../src/systems/livingWorld/outlaws.js';   // LW12
+import { hideoutsOf, bandTrouble, outlawBandAt } from '../src/systems/livingWorld/outlaws.js';   // LW12
+import { createHideouts, bandChest } from '../src/scenes/hideouts.js';   // AUDIT LW-II-2 C5: a hideout stood, its chest a slice a frame
+import { stockShopShelf } from '../src/systems/shopStock.js';
+import { goldStack } from '../src/systems/inventory.js';
 import { livingMap, partiesOver } from '../test/lwRoads.mjs';
 import { LivingTown, ARRIVAL_SHOW_S } from '../src/systems/livingWorld/livingTown.js';
 import { travellerCounts } from '../src/systems/livingWorld/census.js';
@@ -249,6 +252,31 @@ console.log('THE OUTLAWS (LW12: the bands of the map\'s region, their hideouts, 
     const f = stats(frames.slice(1));
     console.log(`  the roads' layer at a hideout (${layer.parties().length} parties): the way in ${ms(frames[0])}, then mean ${ms(f.mean)} p99 ${ms(f.p99)} max ${ms(f.max)}`);
     check(f.max <= 6, `the roads' layer at a hideout, any frame <= 6 ms (${ms(f.max)})`);
+  }
+  // AUDIT LW-II-2 C5: A HIDEOUT STOOD - its camp, its people and its chest (hideouts.js bandChest: its take, a fortnight
+  // of its leg's two towns' trips, cold but today's, as the roads' layer leaves them; the shops' roll warm, as the game's
+  // is) - every frame from the one that stood it, THAT ONE COUNTED: the chest read in it cost it 25-110 ms, and the
+  // measure above dropped its first frame and stood no camp
+  stockShopShelf({ buildingType: BUILDING_TYPES.GeneralStore, quality: 10 }, { level: 10 }, { shelfIndex: 1 });
+  for (const hh of hs) {
+    const t = 300 * DAY_MIN + 600, band = outlawBandAt(hh, t);
+    if (!band) continue;
+    const ho = { mpm: CALENDAR_MPM, memo: new Map() };
+    for (const id of [hh.a, hh.b]) for (let d = -1; d <= 1; d++) townTrips(map.byId.get(id), t + d * DAY_MIN, map.world, ho);   // the roads' warm days
+    let reads = 0;
+    const rel = createRelations();
+    const host = createHideouts({
+      hideoutsNear: () => [hh], bandAt: (x, at) => outlawBandAt(x, at), clock: () => t, here: () => ({ x: hh.x, z: hh.z }), ready: () => true, owner: () => true,
+      sceneOf: (x, z) => [x / NATIVE_PER_M, 0, z / NATIVE_PER_M], spawn: () => Promise.resolve({ dead: false, entity: {} }), remove() {}, inPool: () => true,
+      relations: () => rel, say() {}, dropPile: (items) => ({ items }), removePile() {},
+      chest: (b, at) => bandChest(b, at, { townOf: (id) => map.byId.get(id), tripsOf: (town, at2) => { reads++; return townTrips(town, at2, map.world, ho); }, shelf: (q) => stockShopShelf({ buildingType: BUILDING_TYPES.GeneralStore, quality: 10 }, { level: 10 }, q), gold: (n) => goldStack(n) }),
+    });
+    const frames = [];
+    let first = -1, last = -1;
+    for (let i = 0; i < 300; i++) { const r0 = reads, b = now(); host.frame(1 / 30); frames.push(now() - b); if (reads > r0) { if (first < 0) first = i; last = i; } }
+    const f = stats(frames);
+    console.log(`  a hideout stood (${hh.key}, ${band.people.length} of ${band.name}): the stand frame ${ms(frames[0])} (${first > 0 ? 'no trip read' : 'TRIPS READ'}), its chest's ${reads} town-days read over frames ${first}-${last} (pile: ${host.shown()?.pile}), any frame mean ${ms(f.mean)} max ${ms(f.max)}`);
+    check(first > 0 && frames[0] <= 6 && f.max <= 6, `a hideout stood: its stand frame reads no trip (${ms(frames[0])}), every frame after <= 6 ms (${ms(f.max)})`);
   }
 }
 
