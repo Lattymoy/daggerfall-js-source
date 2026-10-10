@@ -53,7 +53,7 @@ test('LW14 the timeline: each stop its minutes (a foe\'s DEEP_FOE_MIN by its see
   assert.deepEqual([...DEEP_FOE_MIN], [25, 40]);
   assert.deepEqual([DEEP_TREASURE_MIN, DEEP_DETOUR, DEEP_WALK_M], [10, 1.6, 30]);
   const stops = stopsOf(dungeon(), SIDE, ENTRY);
-  const trip = { id: 'L1.t1:9', enc: { id: 'x' }, dive: { t0: 1000, t1: 1000 + 400 } };   // a fated trouble: no deep fight of its own
+  const trip = { id: 'L1.t1:9', enc: { id: 'x', inside: true }, dive: { t0: 1000, t1: 1000 + 400 } };   // a fated trouble: no deep fight of its own   // PIN MOVED (AUDIT LW-II-2 D8): a fated trouble is one met INSIDE (trouble.js diveTrouble mints `inside: true`) - a road's takes nothing from the deep
   const r = routeOf(stops, ENTRY, trip);
   assert.ok(r.legs.length >= 2);
   let t = 1000, at = ENTRY;
@@ -87,12 +87,12 @@ test('LW14 the deep\'s own fight: DEEP_RISK of the dives with no fated trouble m
   let n = 0;
   for (let i = 0; i < 2000; i++) if (deepFightOf({ id: `L1.t${i}:3` }) != null) n++;
   assert.ok(Math.abs(n / 2000 - DEEP_RISK) < 0.04);
-  assert.equal(deepFightOf({ id: 'L1.t0:3', enc: { id: 'e' } }), null);
+  assert.equal(deepFightOf({ id: 'L1.t0:3', enc: { id: 'e', inside: true } }), null);   // PIN MOVED (AUDIT LW-II-2 D8): the fated trouble met inside, as diveTrouble mints it
   const stops = stopsOf(dungeon(), SIDE, ENTRY);
   for (let i = 0; i < 60; i++) {
     const id = `L1.t${i}:5`;
     if (deepFightOf({ id }) == null) continue;
-    const plain = routeOf(stops, ENTRY, { id, enc: { id: 'e' }, dive: { t0: 0, t1: 600 } });
+    const plain = routeOf(stops, ENTRY, { id, enc: { id: 'e', inside: true }, dive: { t0: 0, t1: 600 } });   // PIN MOVED (AUDIT LW-II-2 D8): a fated trouble is one met inside
     const fought = routeOf(stops, ENTRY, { id, dive: { t0: 0, t1: 600 } });
     const longer = fought.legs.findIndex((l, j) => plain.legs[j] && l.tOut - l.tIn > plain.legs[j].tOut - plain.legs[j].tIn);
     if (longer < 0) continue;
@@ -106,14 +106,14 @@ test('LW14 the deep\'s own fight: DEEP_RISK of the dives with no fated trouble m
 test('LW14 what they leave: the stops a dive left within DIVE_CLEAR_MIN before the build - none it is at, none after a day - the same for two readers; the dice\'s end at the stop its minute reaches (mutants: the window, the left, the stop)', () => {
   assert.equal(DIVE_CLEAR_MIN, DAY_MIN);
   const stops = stopsOf(dungeon(), SIDE, ENTRY);
-  const r = routeOf(stops, ENTRY, { id: 'L1.t1:9', enc: { id: 'x' }, dive: { t0: 1000, t1: 1400 } });
+  const r = routeOf(stops, ENTRY, { id: 'L1.t1:9', enc: { id: 'x', inside: true }, dive: { t0: 1000, t1: 1400 } });   // PIN MOVED (AUDIT LW-II-2 D8): a fated trouble is one met inside
   const [a, b] = r.legs;
   const mid = (b.tIn + b.tOut) / 2;
   assert.deepEqual([...clearedOf([r], mid)], [a.stop.key], 'the one left, not the one at');
   assert.deepEqual([...clearedOf([r], b.tOut)].sort(), [a.stop.key, b.stop.key].sort());
   assert.deepEqual([...clearedOf([r], a.tOut + DIVE_CLEAR_MIN - 1)].includes(a.stop.key), true);
   assert.equal(clearedOf([r], a.tOut + DIVE_CLEAR_MIN).has(a.stop.key), false, 'a day on, as Daggerfall built it');
-  const r2 = routeOf(stopsOf(dungeon(), SIDE, ENTRY), ENTRY, { id: 'L1.t1:9', enc: { id: 'x' }, dive: { t0: 1000, t1: 1400 } });
+  const r2 = routeOf(stopsOf(dungeon(), SIDE, ENTRY), ENTRY, { id: 'L1.t1:9', enc: { id: 'x', inside: true }, dive: { t0: 1000, t1: 1400 } });   // PIN MOVED (AUDIT LW-II-2 D8): a fated trouble is one met inside
   assert.deepEqual([...clearedOf([r2], b.tOut)], [...clearedOf([r], b.tOut)], 'two readers alike');
   assert.equal(stopOfMinute(r, a.tIn + 1), a.stop);
   assert.equal(stopOfMinute(r, b.tIn - 0.001), b.stop, 'the nearer of the two walked between');
@@ -161,7 +161,7 @@ function diversOver({ player = [0, 0, 0], clear = false, rel = createRelations()
     leader: () => ({ feet: st.feet, yaw: 0 }), spot: (from, dx, dz) => [from[0] + dx, from[1], from[2] + dz], owner: () => true,
     relations: () => rel, turnKeyOf: (res) => res.id, dies: () => false, day: () => 0, say: (s) => st.said.push(s),
     route: () => route, floor: (x, y, z) => [x, 0, z], clearLine: () => clear, ring: (f) => st.rung.push(f),
-    choose: (lines, options) => { st.chose = { lines, options }; }, stopPile: (key) => st.piles?.[key] ?? null, realNow: () => st.now,
+    choose: (lines, options) => { st.chose = { lines, options }; return true; }, stopPile: (key) => st.piles?.[key] ?? null, realNow: () => st.now,   // PIN MOVED (AUDIT LW-II-2 D4): the window mounted, as the dungeon's showOverlay answers (offers answers whether it did)
   };
   return { host: createDungeonDivers({ ...deps, ...extra }), st, trip, members, rel };
 }

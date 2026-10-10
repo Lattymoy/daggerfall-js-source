@@ -529,7 +529,7 @@ test('PORTAL1 the hosts: every shop\'s keeper sells it (a teller and a mod\'s se
   assert.match(w, /portalGates\.tick\(_mode\(\) === 'exterior' && walkMode && playerSpawned \? player\.feetAt\(\) : null, \{ hold: portalHoldNow \}\);/);
   assert.match(w, /if \(_mode\(\) === 'exterior'\) livePersonBatches\.push\(\.\.\.portalGates\.batches\(\)\);/);
   assert.match(w, /if \(_mode\(\) !== _torchesMode\) \{ droppedTorches\.destroyAll\(\);[^\n]* portalGates\.forgetSteps\(\); _torchesMode = _mode\(\); \}/, 'the step forgotten at every change of place');
-  assert.match(w, /if \(restoresSoFar\(\) !== _portalRestores\) \{ _portalRestores = restoresSoFar\(\); portalGates\.clear\(\); \}[^\n]*\n\s+if \(_bootLoaded\)[^\n]*\n\s+if \(_mode\(\) !== _torchesMode\)/, 'AUDIT PORTAL1 U9: a load ends every portal - asked at the one door every load passes, before the frame turns indoors');
+  assert.match(w, /if \(restoresSoFar\(\) !== _portalRestores\) \{ _portalRestores = restoresSoFar\(\); portalGates\.clear\(\);[^\n]*\n\s+if \(_bootLoaded\)[^\n]*\n\s+if \(_mode\(\) !== _torchesMode\)/, 'AUDIT PORTAL1 U9: a load ends every portal - asked at the one door every load passes, before the frame turns indoors');   // PIN MOVED (AUDIT LW-II-2 D2): the one door lets the deep's layers go too, after the portals
   assert.ok(w.indexOf('if (restoresSoFar() !== _portalRestores)') < w.indexOf('if (modes.frame(dt, now)) {'), '...above the indoor return');
   const save = read('src/systems/save.js');
   assert.match(save, /return null;\n\s+\}\n\s+_restores\+\+;/, 'the count moves for a load that lands, never for a refused one');

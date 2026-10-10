@@ -276,8 +276,8 @@
   {
     "name": "LW6-host-divers-unmet",
     "file": "src/scenes/world.js",
-    "old": "      livingDiversStep(now);   // LW6: underground, the companies diving here met",
-    "new": "      // LW6: underground, the companies diving here met",
+    "old": "      try { livingDiversStep(now); }",
+    "new": "      try { /* LW6: underground, the companies diving here met */ }",
     "tests": [
       "test/lw6_deep.test.js"
     ]

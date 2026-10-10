@@ -89,7 +89,7 @@ export const POACHED_LINE = (name) => `${name}: "That was ours to find."`;
  *   floor?: (x: number, y: number, z: number) => number[],
  *   clearLine?: (a: number[], b: number[]) => boolean,
  *   ring?: (feet: number[]) => void,
- *   choose?: (lines: string[], options: { code: string, label: string, action: () => void }[]) => void,
+ *   choose?: (lines: string[], options: { code: string, label: string, action: () => void }[]) => any,
  *   stopPile?: (key: string) => any,
  *   realNow?: () => number,
  * }} deps - `spot(from, dx, dz)` a place walked out from the player's feet (never inside a wall); `owner()` whether
@@ -97,7 +97,7 @@ export const POACHED_LINE = (name) => `${name}: "That was ours to find."`;
  *   dungeon's loose stand for one who draws on the player, `slay(res, t, seen)` the host's hand turn; LW14 `route(trip)`
  *   the dive's route over this dungeon's stops (none: met behind the player, as before), `floor` a point's floor,
  *   `clearLine` whether nothing stands between two feet, `ring(feet)` steel at a place, `choose` the talk's choice
- *   window, `stopPile(key)` a stop's treasure pile, `realNow()` real seconds
+ *   window (AUDIT LW-II-2 D4: answering whether it mounted), `stopPile(key)` a stop's treasure pile, `realNow()` real seconds
  */
 export function createDungeonDivers(deps) {
   /** @type {Map<string, any>} */
@@ -293,6 +293,11 @@ export function createDungeonDivers(deps) {
         }
       }
       for (const [id, c] of [...companies]) {
+        // AUDIT LW-II-2 D2: a body dead and GONE from the pool was cut, not cut down - a load's rewind (dungeonContext.js
+        // applyWorld cuts the pool's tail past the save's count, and marks each dead) - forgotten, no turn written: a death,
+        // a slaying, a "had enough" paid into the game the load stood, of a company met after its save
+        for (const [mid, rec] of [...c.foes]) if (rec.dead && !c.fell.has(mid) && !deps.inPool(rec)) c.foes.delete(mid);
+        for (const [mid, rec] of [...c.allies]) if (rec.dead && !c.fell.has(mid) && !deps.inPool(rec)) { c.allies.delete(mid); c.size--; }
         for (const [mid, rec] of c.foes) if (rec.dead && !c.fell.has(mid)) slain(c, mid, rec, t);   // LW7b
         for (const [mid, rec] of c.allies) {
           if (!rec.dead || c.fell.has(mid)) continue;
@@ -321,23 +326,32 @@ export function createDungeonDivers(deps) {
         if (c.mode !== 'join' && deps.stopPile && L) {
           const s = nextStop(c, t);
           const pile = s?.kind === 'treasure' ? deps.stopPile(s.key) : null;
-          if (pile !== c.pile?.pile) c.pile = pile ? { pile, n: pile.items?.length ?? 0, at: s } : null;
+          // AUDIT LW-II-2 D5: the pile's OWN pieces, as first seen - a piece the player put in and took back is no find of
+          // theirs - and seen again whenever the room's word lands in it (dungeonContext.js applyLoot's `roomWords`): a
+          // peer's take is the room's, never this player's (the count alone charged both)
+          if (pile !== c.pile?.pile || pile?.roomWords !== c.pile?.words) c.pile = pile ? { pile, own: new Set(pile.items ?? []), words: pile.roomWords, at: s } : null;
           const head = headOf(standing.map((rec) => rec.living?.res).filter(Boolean));
           const rel = deps.relations?.();
           if (c.pile && head && rel?.standing(head.id, deps.day()) !== 'friend') {
-            const n = c.pile.pile.items?.length ?? 0;
+            const items = c.pile.pile.items ?? [];
+            const taken = [...c.pile.own].filter((it) => !items.includes(it));
             const near = Math.hypot(c.pile.at.x - L.feet[0], c.pile.at.z - L.feet[2]) < 4;
-            if (n < c.pile.n && near) {
+            if (taken.length && near) {
               for (const rec of standing) rel?.note(rec.living.res.id, 'poached', deps.day());
               if (!c.said.has(c.pile.at.key)) { c.said.add(c.pile.at.key); deps.say?.(POACHED_LINE(firstNameOf(head.name))); }   // AUDIT LW-II D12: said once a pile, not once an item
             }
-            c.pile.n = n;
+            for (const it of taken) c.pile.own.delete(it);
           }
         }
         // LW14: left behind - let go, to be met again further on its way
         if (c.at && L && c.mode !== 'join' && ![...c.foes.values()].some((rec) => !rec.dead)) {   // AUDIT LW-II D8: one drawing on the player is never let go (outrun, it stood again whole)
+          // AUDIT LW-II-2 D1: left behind is measured from the COMPANY - its nearest standing member - never from where it
+          // goes (LEAD ON to a stop past DEEP_KEEP_M let a company beside the player go the very next frame); none stood
+          // yet, its place
+          const feet = standing.map((rec) => rec.ai?.feet).filter(Boolean);
           const ref = c.going?.feet ?? c.at;
-          if (Math.hypot(ref[0] - L.feet[0], ref[2] - L.feet[2]) > DEEP_KEEP_M) letGo(id);
+          const away = feet.length ? Math.min(...feet.map((f) => Math.hypot(f[0] - L.feet[0], f[2] - L.feet[2]))) : Math.hypot(ref[0] - L.feet[0], ref[2] - L.feet[2]);
+          if (away > DEEP_KEEP_M) letGo(id);
         }
       }
     },
@@ -351,14 +365,16 @@ export function createDungeonDivers(deps) {
       for (const c of companies.values()) {
         if (!c.allies.has(id) || c.parted || c.mode === 'join') continue;
         const name = firstNameOf(person.living.res?.name ?? '');
-        deps.choose([`${name}: "Well met, down here. What'll it be?"`], [
+        // AUDIT LW-II-2 D4: answers whether the choice MOUNTED - a window that stood nowhere (no dungeon to mount it: the
+        // street's talk door asking a company left below) opened nothing, and the talk behind it is the person's
+        const shown = deps.choose([`${name}: "Well met, down here. What'll it be?"`], [
           { code: 'KeyJ', label: 'J - join us', action: () => join(c) },
           { code: 'KeyL', label: 'L - lead on', action: () => { if (!leadOn(c, lastT)) deps.say?.(`${name}: "We're done here - nowhere left to lead."`); } },
           { code: 'KeyP', label: 'P - part ways', action: () => { c.parted = true; c.mode = 'hold'; } },
           { code: 'KeyA', label: 'A - talk', action: () => talk() },
           { code: 'Escape', label: 'Esc - goodbye', action: () => {} },
         ]);
-        return true;
+        return !!shown;
       }
       return false;
     },

@@ -448,7 +448,7 @@ test('LW11 the host\'s wiring: the road\'s trade window (its counter\'s discount
   const world = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
   assert.match(world, /if \(livingWorldOn\(\) && \(_caravanT -= dt\) <= 0\) \{ _caravanT = 1; caravanHostOf\(\)\.step\(\); \}/);
   assert.match(world, /\n {4}caravanStep\(dt\);   \/\/ LW11: the hold-ups/, 'the open world\'s');   // PIN MOVED (AUDIT LW-II C5b): one step, two frames
-  assert.match(world, /offers: \(person, talk\) => \(livingWorldOn\(\) \? caravanHostOf\(\)\.offers\(person, talk\) \|\| !!livingDivers\?\.offers\(person, talk\) : false\)/);   // PIN MOVED (LW14): and a company below
+  assert.match(world, /offers: \(person, talk\) => \(livingWorldOn\(\) \? caravanHostOf\(\)\.offers\(person, talk\) \|\| \(_mode\(\) === 'dungeon' && !!livingDivers\?\.offers\(person, talk\)\) : false\)/);   // PIN MOVED (LW14): and a company below   // PIN MOVED (AUDIT LW-II-2 D4): below alone
   assert.match(world, /robbed: \(tripId\) => caravanHostOf\(\)\.robbed\(tripId\),/);
   assert.match(world, /if \(p\?\.living\?\.res\) \{ caravanHostOf\(\)\.caught\(p\.living\.res, skyMinutes\(\)\); setCrimeCommitted\(playerEntity, CRIMES\.None\); \}/);
   assert.match(world, /const livingRoadSlay = \(res, t, seen\) => \{ livingSlay\(res, t, seen\); caravanHostOf\(\)\.slain\(res, t\); \};/);

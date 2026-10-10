@@ -328,8 +328,8 @@
   {
     "name": "LW6b-host-step",
     "file": "src/scenes/world.js",
-    "old": "      livingRemainsStep(now);   // LW6b",
-    "new": "      void 0;   // LW6b",
+    "old": "      try { livingRemainsStep(now); }",
+    "new": "      try { void 0; }",
     "tests": [
       "test/lw6b_remains.test.js"
     ]
