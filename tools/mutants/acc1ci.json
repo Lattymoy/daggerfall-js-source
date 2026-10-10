@@ -33,12 +33,12 @@
   {
     "name": "ACC1CI-4-the-migrations-go-back-to-being-listed",
     "file": ".github/workflows/account-deploy.yml",
-    "old": "          $WRANGLER d1 migrations apply \"$DB_NAME\" --remote",
-    "new": "          $WRANGLER d1 execute \"$DB_NAME\" --remote --file=migrations/0001_accounts.sql\n          $WRANGLER d1 execute \"$DB_NAME\" --remote --file=migrations/0002_passwords.sql",
+    "old": "            if $WRANGLER d1 migrations apply \"$DB_NAME\" --remote 2>&1 | tee \"$log\"; then exit 0; fi",
+    "new": "            if $WRANGLER d1 execute \"$DB_NAME\" --remote --file=migrations/0001_accounts.sql && $WRANGLER d1 execute \"$DB_NAME\" --remote --file=migrations/0002_passwords.sql 2>&1 | tee \"$log\"; then exit 0; fi",
     "tests": [
       "test/accountdeploy.test.js"
     ],
-    "note": "The exact spelling ACC1b shipped, and the reason the ledger replaced it: 0002 has no IF NOT EXISTS, so the second run of this job errors on `duplicate column` - and a THIRD migration would never run at all until somebody edited the list."
+    "note": "The exact spelling ACC1b shipped, and the reason the ledger replaced it: 0002 has no IF NOT EXISTS, so the second run of this job errors on `duplicate column` - and a THIRD migration would never run at all until somebody edited the list. SCALE4e (2026-10-10) re-aimed it by content: the apply line now sits inside the step's overload retry."
   },
   {
     "name": "ACC1CI-5-the-binding-is-commented-out-again",

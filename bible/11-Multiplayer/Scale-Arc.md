@@ -57,9 +57,17 @@ Four read-only audits covered the relay (`server/src/index.js`), the account ser
 | SCALE2b | The relay's own, ONE announced relay deploy: the O(1) socket index, the hello path in memory, bounded caches, cross-room timeouts, relay metrics, idle rooms allowed to sleep (foes and memory only when someone else is there) | Yes, once | **Shipped** (2026-10-04, in world162 beside PRIMARCH; one deploy) |
 | SCALE3 | The load harness: a Node bot fleet (guest → token → hello → poses, chat and checkpoints at real rates) against local workerd, then a staging pair; the deploy-storm scenario | No | **Local half built** (2026-10-08, this branch); the staging pair left |
 | SCALE4 | D1 discipline: sweeps moved to a `scheduled()` cron, retention for the tables that only grow, the witness tables redesigned, reads made write-free and served from read replicas (Sessions API), one heartbeat replacing the mail, beat and board polls, 304s | No | **4a-4c built** (2026-10-08, this branch): the joined session read, the cron and retention, reads write-free, the heartbeat. Left: the witness redesign, 304s (the replicas: SCALE4d, below) |
-| SCALE4d | The token's mint on a D1 session - its first statement the primary's, its reads after it a read replica's - and the deploy turns the database's read replication on | No | **Built** (2026-10-10, this branch; acct106) |
-| SCALE5a | At 500 online: the hub's hello and leave without a walk of every socket, a busy refusal that mints nothing, the World tab's count past the roster's cut | Yes, once | **Built** (2026-10-10, this branch; world189 - NOT YET DEPLOYED) |
-| SCALE5 | Past about 1-2k players: the hub split (presence and social state per account, world chat over shard rooms), slimmer or binary poses, pose-only halo frames | Yes | When the metrics say - SCALE5a measured where the hub's wall is |
+| SCALE4d | The token's mint on a D1 session - its first statement the primary's, its reads after it a read replica's - and the deploy turns the database's read replication on | No | **Merged** (2026-10-10, #755); its deploy stopped on an overloaded database - SCALE4e |
+| SCALE4e | The account deploy outlasts an overloaded database: `migrations apply` asked again on D1's overload alone, for 5.5 minutes | No | **Built** (2026-10-10, this branch) |
+| SCALE5a | At 500 online: the hub's hello and leave without a walk of every socket, a busy refusal that mints nothing, the World tab's count past the roster's cut | Yes, once | **Deployed** (2026-10-10, #755; world189) |
+| SCALE5 | Past about 1-2k players: the hub split (presence and social state per account, world chat over shard rooms), slimmer or binary poses, pose-only halo frames | Yes | **Planned** as the slices below (THE PLAN PAST 2,000) |
+| SCALE2c | The reconnect wave spread by the room's own count, the empty foes frame and the halo's full-rate poses dropped - client only | No | Planned, first |
+| SCALE4f | The mint folded to a handful of statements; the account metrics that say how busy the primary is; the writes a player makes an hour coalesced | No | Planned |
+| SCALE4g | The read routes on read replicas, the client carrying D1's bookmark between its requests | No | Planned |
+| SCALE5b | The relay's hygiene and metrics, and the wire's second form (quantised, batched poses; channel rosters as deltas), capability-gated | Yes, once | Planned |
+| SCALE5c | The hub split: sixteen hubs by account, `chat:world` the world's bus; then the region channels on the same machinery | Yes, once | Planned |
+| SCALE5d | Event rooms (the gate's court, the Abyss realm, the arena) as copies around one fight; crowded cells | Yes | Planned, by the metrics |
+| SCALE4h | 10k writes: a player's hot state off the one primary (per-account objects or shards) | No | Planned, by the metrics |
 | SCALE6 | Abuse and backups: Turnstile on guest creation, /64 IPv6 rate keys, bans, report and ignore, `ALLOWED_ORIGIN`, R2 snapshots, a hub export | Some | Alongside |
 
 **Relay deploy policy (SCALE):** relay changes are batched into as few deploys as possible, each in a window announced beforehand. A deploy drops every player, and until SCALE2 every reconnect is a D1 write storm.
@@ -539,7 +547,7 @@ five alternating runs: 38.6 -> 27.4 us at 50, 57.1 -> 31.7 at 100, 87.4 -> 38.9 
 | L5 | PERF-NEXT 15's note and `_poseFrame`'s doc said the arm's every line was its own (two changed); the Testing row's "an eighth" (under one); the bench's crowds and the base's copy unsaid | FIXED: the doc (re-hashed in place, undeployed), the note, the row, the parameters |
 
 
-## SCALE4d and SCALE5a: built (2026-10-10, this branch - acct106 and world189, NOT YET DEPLOYED)
+## SCALE4d and SCALE5a: merged (2026-10-10, #755 - world189 deployed; acct106's deploy stopped, SCALE4e)
 
 Mac, 2026-10-10: "So we just hit 500 online people. I think its time to scale up our server and improve performance for
 more people". That was the arc's target. There is no bigger server to move to. Every room is its own Durable Object,
@@ -822,3 +830,124 @@ Considered, not reproduced, each with its reason:
   allow none.
 
 Re-measured after the fixes: the table under "Measured", above. Pins, below.
+
+## SCALE4e: built (2026-10-10, this branch - the account deploy outlasts an overloaded database)
+
+PR #755's merge deployed the relay (world189) and the account service (acct106) at once. The relay's deploy dropped
+every player at about 20:23 UTC, their reconnect wave minted a token each against the one D1 primary, and the account
+deploy's `migrations apply` - its first query, with no migration pending - landed 23 s into the wave:
+`D1 DB is overloaded. Requests queued for too long. [code: 7429]`. The step failed, so nothing after it ran: no
+replication switch, no Worker. world189 asks nothing new of the service, so nothing broke, but SCALE4d did not ship.
+It is the arc's thesis measured once more, in production: at about 500 online, one relay deploy still overloads the
+primary within half a minute.
+
+- **The fix.** `Apply migrations` asks again on D1's overload alone - D1 refusing to queue a query that never ran, so
+  asking again is safe - after 20, 40, 60, 90 and 120 s (5.5 minutes, the 2026-10-06 storm's worst five), and stops at
+  once on any other failure, as before. It names what it saw: a warning per wait, an error that says to re-run once
+  the database settles.
+- **What it does not fix.** The wave itself. That is SCALE2c and SCALE4f, below.
+- **Merging it deploys acct106.** The workflow deploys on a change to itself (`account-deploy.yml` lists its own path),
+  so this merge re-runs the deploy that stopped - with SCALE4d in it, since main already carries it.
+
+**Pins.** `test/scale4e.test.js` (4) runs the step's own script under bash, as the runner does, over a fake wrangler
+that answers as D1 did and a fake `sleep`: an overload asked again after each wait and the deploy going on once the
+database answers; a migration that fails for any other reason stopping it at once; a database overloaded past the
+last wait stopping it with the error; the one apply line and the step's place. `tools/mutants/scale4e.json`: 5
+mutants, 5 dead. Re-aimed by content, still dead: ACC1CI-4 (the migrations listed again), whose apply line now
+sits inside the retry.
+
+## THE PLAN PAST 2,000 (2026-10-10)
+
+Mac, after #755's merge: "Alright lets now tackle the bigger work. I want to go deep and really future proof our
+archetecture while also increasing performance". **Design target: 10,000 concurrent, each limit grown by adding
+objects, never by a rewrite.** Four read-only surveys measured the tree first: the hub's every duty, every other room
+kind, the account service's load, and what one client costs. Their scratch benches and models are not committed; each
+slice below measures again with a tool of its own in the tree.
+
+### What breaks, and when
+
+| | 2,000 | 5,000 | 10,000 |
+|---|---|---|---|
+| **A relay deploy** | 2,000 mints of 13 statements in seconds - the primary overloads (it did at 500, above) | | 10k mints, about 40k socket hellos |
+| **The account primary**, steady (a model: 197 requests, 1,073 reads and 264 writes a player-hour) | 743 statements/s | 1,857 statements/s - past what one primary answers at 1 ms a query | 3,714 statements/s, 733 writes/s |
+| **The hub** (`chat:world`) | full: 2,048 sockets, a tab connecting counts | | |
+| **A region channel** (one per region, 2,048) | the start region's wave: 2,332 busy refusals, 500k frames at 1,000 | the start region full | |
+| **A crowded cell** (256 sockets, everyone's halo socket counts) | a capital full; about 90k pose sends/s and 20 MB/s out of one object; 87-99% of foes frames dropped by the room's budget | | |
+| **Event rooms** (the gate's court, the Abyss realm, the arena's hall and exhibition: one object each, 256) | a popular court full | | |
+
+### The principles
+
+1. **Nothing every player touches is one object.** A singleton keeps world state that changes rarely (a kill, a
+   herald, the day's roll); a player's connection lands on an object chosen by their account or their place.
+2. **A relay deploy does not storm the database.** The reconnect is spread by the room's own count, and a mint is
+   cheap. Past that, a reconnect needs no mint at all (Mac's decision 1, below).
+3. **The wire fans less.** Poses are quantised and batched per listener, channel rosters move as deltas, and a halo
+   hears a player's pose at a walking rate, not its full one.
+4. **Measured before and after.** Every slice adds the metric that says when its limit is near, so the next slice is
+   chosen by the field, not by a model.
+5. **Fewer drops.** Relay changes ride as few announced deploys as possible. A setting is not a deploy.
+
+### The slices, in order
+
+1. **SCALE4e** (built, above): the deploy outlasts an overloaded database.
+2. **SCALE2c - the client's half, no relay deploy.**
+   - The reconnect after an unexpected close is jittered over a window that grows with the online count the hub
+     already says (`n`), so the mints arrive at a rate the primary can take, not all in two seconds.
+   - The full foes frame is not sent while it carries nothing new: in a crowd it is 128 frames a second per client
+     that the room's budget then drops.
+   - A halo hears a player's pose at the keepalive's rate; only the player's own cell hears every pose. Every peer in
+     range holds the sender's cell, so nobody hears less.
+3. **SCALE4f - the account's half, no drop.**
+   - The mint folded from 13 statements to about 4: the character's four realm rows, its Renown and its guild in one
+     keyed read; the week's seat titles kept.
+   - The metrics the primary's ceiling needs: SQL time per request (how busy the primary is), rows read and written,
+     whether a replica served it, and D1's overload as its own refusal, not `server`.
+   - The writes coalesced: the session touch one statement, Renown reported less often or at a level, the
+     checkpoint's judge folded into its UPDATE.
+4. **SCALE4g - replicas for the read routes, no drop.** The heartbeat, motherlodes, the seats list, professions and
+   the account view on a D1 session that starts from the bookmark the client carries back from its last request, so a
+   player always reads their own writes. About 55-62% of reads leave the primary.
+5. **SCALE5b - the relay's hygiene and the wire's second form, ONE announced drop.**
+   - The foes arm out of `_message` (it runs interpreted) and its budget asked before its walk; directed frames by an
+     id map; the host kept, not walked for; an empty room's sweep not paid on every entry; a boss's beat one frame.
+   - Metrics: `room full` (the Worker refuses it before any metric today), budget drops, peak sockets, frames by type.
+   - The wire's second form, offered by the hello and gated on the welcome's version, so an old tab keeps the first:
+     quantised poses without default fields, batched per listener a tick (88 sends a pose become about one a
+     listener a tick), channel joins and leaves as one roster delta a tick (the N^2/2 wave gone), looks by hash.
+   - `BOSS_BODY` and the Discord settings read at run time, so changing one no longer drops every player.
+6. **SCALE5c - the hub split, ONE announced drop.**
+   - **Sixteen hubs, chosen by the account** (`chat:world.<k>`, k from the account's subject). An account's every tab
+     lands on the same hub, so ONE-SEAT, the account's record, its receipts and its tabs stay on one object. At 10k
+     that is about 625 sockets a hub, room for 32k.
+   - **`chat:world` becomes the world's bus**, holding no sockets: it keeps the world's state it already has in its
+     storage (the gate's and serpent's kills, the rite, the raids, the Abyss record and director, the heralds, the
+     wild halls), takes the other rooms' calls as it does today, and fans each word, line and broadcast to the
+     sixteen hubs, batched a tick. Each hub fetches an account's record from the bus the first time it sees it, so
+     nothing is migrated in bulk.
+   - **Across hubs**: a friend's presence, a party's poses, quests and maps, and a social act go hub to hub by
+     internal call - the target's hub is computed, not looked up. Staff lookups by name ask the sixteen.
+   - **The World tab** says the true count (summed by the bus) and lists the people on its hub, friends and guild
+     (Mac's decision 2).
+   - Then **the region channels** on the same machinery: a region's channel split by account, its lines and marks
+     through a region bus.
+7. **SCALE5d - event rooms and crowds, by the metrics.** The gate's court, the Abyss realm and the arena as copies
+   around one fight object that takes their blows batched and fans the boss's state back. Crowded cells: SOCKETS_MAX
+   raised as far as SCALE5b's batching measures room for, then layering (Mac's decision 3).
+8. **SCALE4h - 10k writes, by the metrics.** A player's hot rows (the session, the play clock, the Renown tally, the
+   rate windows) off the one primary: per-account objects or account shards, chosen once SCALE4f's metrics say how
+   busy the primary really is.
+
+**Deploys:** SCALE2c, 4f, 4g and 4h drop nobody. SCALE5b and 5c are one announced relay deploy each, and the
+account service ships before either (SCALE4e makes it survive the wave either way).
+
+### Mac's decisions
+
+1. **A reconnect's token.** Today a token is spent once (Mac, 2026-09-21: replay closed), so every reconnect after a
+   deploy is a mint. SCALE2c and SCALE4f make that affordable to about 5,000. Past it, either the mint stays
+   (spread over longer and longer waits) or the token is bound to a key the client holds, so presenting it proves
+   possession and it can be presented again until it expires. A reconnect then mints nothing, and replay stays
+   closed. Recommended at 5,000, not before.
+2. **The World tab past one hub.** The count stays true. The list shows the people on the player's own hub (about 625
+   of 10,000), their friends and their guild, with a search by name. Today it already names only the oldest 512.
+3. **A full city.** Past what one object can fan, either a city's crowd is split into layers (copies of the same
+   place whose players do not see each other, as many MMOs do) or the city refuses `room full` as it does today.
