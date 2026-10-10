@@ -335,8 +335,8 @@
   {
     "name": "LW12-robbed-trip",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": "  if (!turned && enc.kind === 'robbed') return { ...trip, enc, halt, fallen, turned: false, robbed: { t: enc.t0, by: enc.band } };   // LW12: on without its goods\n",
-    "new": "",
+    "old": "  const robbed = enc.kind === 'robbed' ? { robbed: { t: enc.t0, by: enc.band } } : {};\n",
+    "new": "  const robbed = {};\n",
     "tests": [
       "test/lw12_outlaws.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "LW12-host-owner",
     "file": "src/scenes/hideouts.js",
-    "old": "      if (!near || !deps.owner(deps.sceneOf(near.h.x, near.h.z))) return;",
-    "new": "      if (!near) return;",
+    "old": "stand(near.h, t, deps.owner(deps.sceneOf(near.h.x, near.h.z)));",
+    "new": "stand(near.h, t, true);",
     "tests": [
       "test/lw12_outlaws.test.js"
     ]
@@ -416,7 +416,7 @@
   {
     "name": "LW12-host-name",
     "file": "src/scenes/hideouts.js",
-    "old": "          if (rec.entity) rec.entity.name = p.name;\n",
+    "old": "        if (rec.entity) rec.entity.name = p.name;\n",
     "new": "",
     "tests": [
       "test/lw12_outlaws.test.js"
@@ -425,8 +425,8 @@
   {
     "name": "LW12-host-looted-read",
     "file": "src/scenes/hideouts.js",
-    "old": "      if (!looted) {",
-    "new": "      if (true) {",
+    "old": "if (!rel()?.turns?.()?.looted?.has(band.key) && c.items.length) {",
+    "new": "if (c.items.length) {",
     "tests": [
       "test/lw12_outlaws.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "LW12-host-looted-write",
     "file": "src/scenes/hideouts.js",
-    "old": "      if (s.band && (s.pile.items?.length ?? 0) < s.items0) rel()?.turn?.('looted', s.band.key);",
-    "new": "      if (s.band) rel()?.turn?.('looted', s.band.key);",
+    "old": "    if (!s.pile || s.looted || asMinted(s.pile, s.minted)) return;",
+    "new": "    if (!s.pile || s.looted) return;",
     "tests": [
       "test/lw12_outlaws.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "LW12-host-rout-all",
     "file": "src/scenes/hideouts.js",
-    "old": "stood.foes.every((rec) => rec.dead || !deps.inPool(rec))) rout(stood, t);",
-    "new": "stood.foes.some((rec) => rec.dead || !deps.inPool(rec))) rout(stood, t);",
+    "old": "if (stood.foes.every((/** @type {any} */ rec) => stood.killed.has(rec))) rout(stood, t);",
+    "new": "if (stood.foes.some((/** @type {any} */ rec) => stood.killed.has(rec))) rout(stood, t);",
     "tests": [
       "test/lw12_outlaws.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "LW12-host-rout-once",
     "file": "src/scenes/hideouts.js",
-    "old": "if (stood.band && !stood.routed && !stood.spawning",
-    "new": "if (stood.band && !stood.spawning",
+    "old": "if (stood.band && stood.owned && !stood.routed && !stood.spawning",
+    "new": "if (stood.band && stood.owned && !stood.spawning",
     "tests": [
       "test/lw12_outlaws.test.js"
     ]
@@ -551,8 +551,8 @@
   {
     "name": "LW12-counter-theirs",
     "file": "src/scenes/caravanHost.js",
-    "old": "        const gone = sh.all.filter((it) => !sh.items.includes(it) && !sh.lost.has(it[WARE_KEY])).map((it) => it[WARE_KEY]);",
-    "new": "        const gone = sh.all.filter((it) => !sh.items.includes(it)).map((it) => it[WARE_KEY]);",
+    "old": "const goneOf = (s) => s.all.filter((/** @type {any} */ it) => !s.items.includes(it) && !s.lost.has(it[WARE_KEY]))",
+    "new": "const goneOf = (s) => s.all.filter((/** @type {any} */ it) => !s.items.includes(it))",
     "tests": [
       "test/lw12_outlaws.test.js"
     ]
@@ -631,9 +631,9 @@
   },
   {
     "name": "LW12-wire-gen",
-    "file": "src/scenes/world.js",
-    "old": "if (livingWays.generation !== _livingHideoutsGen) { _livingHideouts.clear(); _livingHideoutsGen = livingWays.generation; }",
-    "new": "if (livingWays.generation !== _livingHideoutsGen) { _livingHideoutsGen = livingWays.generation; }",
+    "file": "src/scenes/hideouts.js",
+    "old": "    if (deps.generation() !== gen) { kept.clear(); waiting.clear(); gen = deps.generation(); }",
+    "new": "    if (deps.generation() !== gen) { gen = deps.generation(); }",
     "tests": [
       "test/lw12_outlaws.test.js"
     ]
@@ -670,6 +670,168 @@
     "file": "src/scenes/world.js",
     "old": "    _livingHideoutsHost?.draw(renderer);   // LW12: a band's tents\n",
     "new": "",
+    "tests": [
+      "test/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C2-frame",
+    "file": "src/scenes/hideouts.js",
+    "old": "      if (stood) lootedYet(stood);\n",
+    "new": "",
+    "tests": [
+      "test/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C2-pieces",
+    "file": "src/scenes/hideouts.js",
+    "old": "minted.every(([it, n]) => items.includes(it) && it?.stackCount === n)",
+    "new": "minted.every(() => true)",
+    "tests": [
+      "test/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C2-counts",
+    "file": "src/scenes/hideouts.js",
+    "old": "items.includes(it) && it?.stackCount === n",
+    "new": "items.includes(it)",
+    "tests": [
+      "test/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C11c-load",
+    "file": "src/scenes/hideouts.js",
+    "old": "    if (rel() === s.rel) rel()?.turn?.('looted', s.band.key);",
+    "new": "    rel()?.turn?.('looted', s.band.key);",
+    "tests": [
+      "test/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C11c-identity",
+    "file": "src/scenes/hideouts.js",
+    "old": "      if (stood && rel() !== stood.rel) letGo();\n",
+    "new": "",
+    "tests": [
+      "test/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C3-kill",
+    "file": "src/scenes/hideouts.js",
+    "old": "export const killed = (rec) => !!rec?.dead && (!!rec.corpse || !!rec.executed);",
+    "new": "export const killed = (rec) => !!rec?.dead;",
+    "tests": [
+      "test/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C3-latch",
+    "file": "src/scenes/hideouts.js",
+    "old": "if (stood.foes.every((/** @type {any} */ rec) => stood.killed.has(rec))) rout(stood, t);",
+    "new": "if (stood.foes.every((/** @type {any} */ rec) => killed(rec))) rout(stood, t);",
+    "tests": [
+      "test/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C3-managed",
+    "file": "src/scenes/world.js",
+    "old": "level: o.level, allied: false, loose: true, transient: true, managed: true }),",
+    "new": "level: o.level, allied: false, loose: true, transient: true }),",
+    "tests": [
+      "test/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C3-thanks",
+    "file": "src/scenes/hideouts.js",
+    "old": "stood.robbed = c.robbed;   // its robbed parties, looted or not",
+    "new": "stood.robbed = rel()?.turns?.()?.looted?.has(band.key) ? [] : c.robbed;   // its robbed parties, looted or not",
+    "tests": [
+      "test/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C8-ask",
+    "file": "src/scenes/hideouts.js",
+    "old": "    if (at != null && ms - at < HIDEOUTS_ASK_MS) return [];\n",
+    "new": "",
+    "tests": [
+      "test/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C8-told",
+    "file": "src/scenes/hideouts.js",
+    "old": "    if (waiting.delete(region) && h.length) deps.resolved?.(region);\n",
+    "new": "",
+    "tests": [
+      "test/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C8-told-once",
+    "file": "src/scenes/hideouts.js",
+    "old": "if (waiting.delete(region) && h.length) deps.resolved?.(region);",
+    "new": "if (h.length) deps.resolved?.(region);",
+    "tests": [
+      "test/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C8-wire",
+    "file": "src/scenes/world.js",
+    "old": "    resolved: () => { _livingFates.clear(); _livingTripMemo.clear(); },\n",
+    "new": "",
+    "tests": [
+      "test/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C9-out",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "outT1: Math.min(enc.t1, trip.backT0), ...robbed };",
+    "new": "outT1: Math.min(enc.t1, trip.backT0) };",
+    "tests": [
+      "test/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C9-back",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "backT1: enc.t1, ...robbed };",
+    "new": "backT1: enc.t1 };",
+    "tests": [
+      "test/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C11b-camp",
+    "file": "src/scenes/hideouts.js",
+    "old": "      if (!near) return;\n",
+    "new": "      if (!near || !deps.owner(deps.sceneOf(near.h.x, near.h.z))) return;\n",
+    "tests": [
+      "test/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C11b-takeup",
+    "file": "src/scenes/hideouts.js",
+    "old": "        if (stood.band && !stood.owned && !stood.routed && deps.owner(deps.sceneOf(stood.h.x, stood.h.z))) standPeople(stood, t);\n",
+    "new": "",
+    "tests": [
+      "test/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C11b-once",
+    "file": "src/scenes/hideouts.js",
+    "old": "if (stood.band && !stood.owned && !stood.routed && deps.owner(",
+    "new": "if (stood.band && !stood.routed && deps.owner(",
     "tests": [
       "test/lw12_outlaws.test.js"
     ]

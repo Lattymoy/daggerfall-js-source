@@ -23,7 +23,7 @@
 // ESCORT_FIGHT a foe of each fight won, at the town it was bound for; broken by falling ESCORT_KEEP_M behind for
 // ESCORT_LOST_MIN of the clock.
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
-import { WALK_FROM_H, WALK_TO_H, partyAt, membersAt } from './trips.js';
+import { WALK_FROM_H, WALK_TO_H, NATIVE_PER_M, partyAt, membersAt } from './trips.js';
 
 /** The kinds of trip that keep a counter on the road, and its kind of shop. */
 export const COUNTERS = Object.freeze({ merchant: BUILDING_TYPES.GeneralStore, carter: BUILDING_TYPES.GeneralStore, pedlar: BUILDING_TYPES.PawnShop });
@@ -42,6 +42,10 @@ export const ESCORT_FIGHT = 100;
 /** The escort broken: this far behind the party (m) this long (minutes of the clock). */
 export const ESCORT_KEEP_M = 300;
 export const ESCORT_LOST_MIN = 60;
+/** AUDIT LW-II C5b: the clock passed in one step (a rest, a wait) is read back this often (minutes) for the party near -
+ *  where the player stood still the while: within ESCORT_STILL_M (m) of where the step before saw them. */
+export const ESCORT_SAMPLE_MIN = 5;
+export const ESCORT_STILL_M = 5;
 
 /**
  * THE COUNTER a trip keeps on the road - its shop's kind, quality, name and purse - or null (a trip that keeps none).
@@ -74,14 +78,17 @@ export function keepsCounter(trip, res, t) {
 export const reportAt = (trip, t) => (t < trip.outT1 && !trip.turned ? trip.outT1 : trip.backT1);
 
 /**
- * THE HOLD-UP: the party had armed, none of them stands at `t`, and its leader does - it yields.
- * @param {any} trip @param {number} t @param {(res: any) => boolean} [down] - beside the trip's own fallen, one down by the
- *   host's word (a hand's death the trip has not read yet)
+ * THE HOLD-UP: the party's armed the road left standing at `t` are all down by the host's word, and its leader stands -
+ * it yields.
+ * AUDIT LW-II C4: the armed BEATEN - those the road left it (its own fallen are the road's: a party that lost its guards
+ * to the dice had nobody for the player to beat, and yielded to whoever passed); `down` the host's word, the player's own
+ * hand (a sellsword who died fighting beside the player, or one another hand took, was never beaten by them).
+ * @param {any} trip @param {number} t @param {(res: any) => boolean} [down] - one down by the host's word (the player's hand)
  */
 export function yields(trip, t, down = () => false) {
-  const armed = trip.party.filter((m) => m.cls != null);
-  if (!armed.length) return false;
-  const standing = membersAt(trip, t).filter((m) => !down(m));
+  const left = membersAt(trip, t);
+  if (!left.some((m) => m.cls != null)) return false;
+  const standing = left.filter((m) => !down(m));
   return !standing.some((m) => m.cls != null) && standing.some((m) => m.id === trip.leader?.id);
 }
 
@@ -95,11 +102,34 @@ export function escortOffer(trip, t) {
 }
 
 /** THE ESCORT'S PAY at the town: the days of the walk out (each from WALK_FROM_H to WALK_TO_H, a part a whole) at the
- *  day's rate for the player's level, and each foe of the fights won. @param {any} trip @param {number} level @param {number} foes */
-export function escortPay(trip, level, foes = 0) {
-  const walk = Math.max(0, trip.way.len - trip.trim0 - trip.trim1) / Math.max(1e-9, trip.pace);
+ *  day's rate for the player's level, and each foe of the fights won. AUDIT LW-II C5a: hired on the way (`from`, the
+ *  minute of the hire), the share of the walk still ahead of the party then - hired a minute short of the town, it paid
+ *  the whole walk. @param {any} trip @param {number} level @param {number} foes @param {number} [from] */
+export function escortPay(trip, level, foes = 0, from = -Infinity) {
+  const len = Math.max(0, trip.way.len - trip.trim0 - trip.trim1);
+  const walk = len / Math.max(1e-9, trip.pace);
   const days = Math.max(1, Math.ceil(walk / ((WALK_TO_H - WALK_FROM_H) * 60)));
-  return days * (ESCORT_GOLD_DAY + ESCORT_GOLD_LEVEL * Math.max(1, level | 0)) + ESCORT_FIGHT * Math.max(0, foes | 0);
+  const at = from > trip.outT0 ? partyAt(trip, from) : null;
+  const ahead = at?.s != null ? Math.min(1, Math.max(0, trip.way.len - trip.trim1 - at.s) / Math.max(1e-9, len)) : 1;
+  return Math.round(days * (ESCORT_GOLD_DAY + ESCORT_GOLD_LEVEL * Math.max(1, level | 0)) * ahead) + ESCORT_FIGHT * Math.max(0, foes | 0);
+}
+
+/**
+ * AUDIT LW-II C5b: THE LAST MINUTE THE ESCORT WAS WITH THE PARTY, to minute `t` - `since` the last the contract knew: `t`
+ * if the party stands within ESCORT_KEEP_M of `here` then, else `since`. A player who stood `still` across the step (the
+ * clock moved by a rest or a wait, not their feet) is read back too - the latest minute (each ESCORT_SAMPLE_MIN, to
+ * ESCORT_LOST_MIN behind `t`: enough to say whether it stands) the party stood that near: a party camped beside a sleeper
+ * kept them, one that walked off from a sleeper did not, and a journey that set the player down where the party had
+ * passed kept nobody.
+ * @param {any} trip @param {{ x: number, z: number } | null} here @param {number} since @param {number} t @param {boolean} [still]
+ */
+export function escortNear(trip, here, since, t, still = false) {
+  if (!here) return since;
+  for (let m = t; m >= since && m >= (still ? t - ESCORT_LOST_MIN - ESCORT_SAMPLE_MIN : t); m -= ESCORT_SAMPLE_MIN) {
+    const at = partyAt(trip, m);
+    if (at.x != null && Math.hypot(here.x - /** @type {number} */ (at.x), here.z - /** @type {number} */ (at.z)) / NATIVE_PER_M <= ESCORT_KEEP_M) return Math.max(since, m);
+  }
+  return since;
 }
 
 /** A ware's place on its counter's first roll, carried on the item (the record's `gone` names these). */

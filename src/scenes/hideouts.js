@@ -4,16 +4,18 @@
 // (systems/livingWorld/outlaws.js: where, who, which generation) stood live for a player on foot within BAND_LIVE_M of
 // it, and the one standing it (the camps' own election online - the road fights' `owner`; offline always):
 //  - ITS TENTS (survival/camp.js TENT_MODEL, the camps' own, through the host's meshes) about a FIRE (FIRE_FLAT);
-//  - ITS PEOPLE as the encounter pool's foes (exteriorFoes.js spawnFoe - loose, transient: never a save's), each in their
-//    class at their level and name, about the fire facing out: all of them by day; by night half, the rest out on the
-//    road;
+//  - ITS PEOPLE as the encounter pool's foes (exteriorFoes.js spawnFoe - loose, transient: never a save's; managed: this
+//    host owns their lives, AUDIT LW-II C3), each in their class at their level and name, about the fire facing out: all
+//    of them by day; by night half, the rest out on the road;
 //  - ITS CHEST, a ground pile (droppedLoot.js seedPile, unsaved) minted from the band's take (outlaws.js takeOf: the
 //    parties it robbed of late, their goods and their share of a purse) - unless the character took from it before
 //    (`looted`: it stands empty for them).
-// ROUTED: every one of its people stood down - the character's tale (`routed`, by the hideout and the generation: the
-// hideout stands empty for them BAND_VACANT_DAYS, then the next band forms), the towns of its region tell it, and each
-// of the parties it robbed of late regards the player as having `helped`. A hideout left (the player past BAND_KEEP_M,
-// or a mode's change) is let go: its living bodies taken out, its chest's state kept (taken from: `looted`).
+// ROUTED: every one of its people stood killed (AUDIT LW-II C3: by blows, never the cull) - the character's tale
+// (`routed`, by the hideout and the generation: the hideout stands empty for them BAND_VACANT_DAYS, then the next band
+// forms), the towns of its region tell it, and each of the parties it robbed of late regards the player as having
+// `helped`. A hideout left (the player past BAND_KEEP_M, or a mode's change) is let go: its living bodies taken out. A
+// chest taken from is `looted` the frame it shows (AUDIT LW-II C2). AUDIT LW-II C11b: online the camp - tents, fire,
+// chest - is every reader's own; its people the one standing it's.
 // AN EMPTY HIDEOUT (the dice's or the character's vacancy) stands its tents and a cold camp: nobody, no chest.
 //
 // HEARD OF: a traveller passing close warns the player of a band whose hideout lies within HEARD_PX of where they
@@ -49,6 +51,47 @@ export function standingAt(band, t) {
   const h = (((t % DAY_MIN) + DAY_MIN) % DAY_MIN) / 60;
   const night = h < HIDEOUT_DAY_H[0] || h >= HIDEOUT_DAY_H[1];
   return night ? band.people.slice(0, Math.ceil(band.people.length / 2)) : band.people;
+}
+
+/** AUDIT LW-II C8: a region whose hideouts wait on their legs' roads is asked again no sooner than this (real ms). */
+export const HIDEOUTS_ASK_MS = 100;
+
+/** AUDIT LW-II C3: a body down by a blow - dead with its body (or executed). One the relevance cull took, one escaped,
+ *  one taken out lies nowhere and beat nobody. @param {any} rec */
+export const killed = (rec) => !!rec?.dead && (!!rec.corpse || !!rec.executed);
+
+/** AUDIT LW-II C2: a chest as it was minted - each piece there at its count, and nothing put in. @param {any} pile @param {[any, any][]} minted */
+const asMinted = (pile, minted) => { const items = pile?.items ?? []; return items.length === minted.length && minted.every(([it, n]) => items.includes(it) && it?.stackCount === n); };
+
+/**
+ * AUDIT LW-II C8: THE HIDEOUTS KEPT - each region's (outlaws.js hideoutsOf, the host's `of`), kept for the network's
+ * generation once its legs' roads are planned. While one is not, the region answers none, asked again no sooner than
+ * HIDEOUTS_ASK_MS (a trouble read meanwhile pays a look-up, never its legs again); and its first bands after waiting are
+ * told (`resolved`) - the host's books of troubles made band-less meanwhile are made again. Kept for the session, they
+ * left one reader's caravan held up by the Black Hand where another's, its roads planned a few frames later, fought orcs.
+ * @param {{ of: (region: number) => (any[] | undefined), generation: () => number, resolved?: (region: number) => void, now?: () => number }} deps
+ * @returns {(region: number) => any[]}
+ */
+export function createHideoutBook(deps) {
+  /** @type {Map<number, any[]>} */
+  const kept = new Map();
+  /** @type {Map<number, number>} the regions waiting, by when (real ms) each was last asked */
+  const waiting = new Map();
+  let gen = /** @type {number | null} */ (null);
+  const now = deps.now ?? (() => performance.now());
+  return (region) => {
+    if (region == null || !Number.isFinite(region)) return [];
+    if (deps.generation() !== gen) { kept.clear(); waiting.clear(); gen = deps.generation(); }
+    const got = kept.get(region);
+    if (got) return got;
+    const at = waiting.get(region), ms = now();
+    if (at != null && ms - at < HIDEOUTS_ASK_MS) return [];
+    const h = deps.of(region);
+    if (h === undefined) { waiting.set(region, ms); return []; }
+    kept.set(region, h);
+    if (waiting.delete(region) && h.length) deps.resolved?.(region);
+    return h;
+  };
 }
 
 /** The rumoured ring's point: the hideout's, moved by the band's seed up to RUMOUR_OFF_N. @param {any} h @param {string} bandKey */
@@ -96,12 +139,15 @@ export function createHideouts(deps) {
 
   const takeOut = (rec) => { try { if (deps.inPool(rec)) deps.remove(rec); } catch (e) { console.warn('[hideouts] a body would not leave', /** @type {any} */ (e)?.message ?? e); } };
 
-  /** Stand a hideout: its tents, its fire, its people (a band), its chest. */
-  function stand(h, t) {
+  /** The camp's turn about its fire (its seed's). @param {any} h */
+  const turnOf = (h) => (lwSeed(textSeed(h.key), 0x74656e74) % 628) / 100;   // 'tent'
+
+  /** Stand a hideout: its tents, its fire, its chest (every reader's own), and its people where this player stands them
+   *  (`owned`: the election's - AUDIT LW-II C11b). */
+  function stand(h, t, owned) {
     const band = deps.bandAt(h, t);
-    const people = band ? standingAt(band, t) : [];
     const n = band ? band.people.length : 4;
-    const turn = (lwSeed(textSeed(h.key), 0x74656e74) % 628) / 100;   // 'tent'
+    const turn = turnOf(h);
     const tents = [];
     for (let i = 0; i < tentsFor(n); i++) {
       const a = turn + (i / tentsFor(n)) * Math.PI * 2;
@@ -110,30 +156,46 @@ export function createHideouts(deps) {
       tents.push({ feet, yaw: a + Math.PI });   // facing the fire
     }
     const centre = deps.sceneOf(h.x, h.z);
-    stood = { h, band, tents, centre, foes: [], spawning: 0, pile: null, items0: 0, robbed: [], routed: false, batch: null };
+    // `rel` the character it stood for (AUDIT LW-II C11c); `minted` its chest's pieces and counts (C2); `killed` its
+    // people struck down (C3)
+    stood = { h, band, tents, centre, foes: [], spawning: 0, pile: null, minted: /** @type {[any, any][]} */ ([]), robbed: [], routed: false, batch: null,
+      rel: rel(), owned: false, looted: false, killed: new Set() };
     if (band) {
-      people.forEach((p, i) => {
-        const a = turn + 0.5 + (i / Math.max(1, people.length)) * Math.PI * 2;
-        const r = BAND_RING_M[0] + (BAND_RING_M[1] - BAND_RING_M[0]) * ((lwSeed(textSeed(p.id)) % 100) / 100);
-        const feet = deps.sceneOf(h.x + Math.sin(a) * r * NATIVE_PER_M, h.z + Math.cos(a) * r * NATIVE_PER_M);
-        const mine = stood;
-        mine.spawning++;
-        deps.spawn(p.cls, feet, { yaw: a, level: p.level, gender: p.sex, allied: false }).then((rec) => {
-          mine.spawning--;
-          if (!rec) return;
-          if (stood !== mine) { takeOut(rec); return; }   // let go while it came
-          if (rec.entity) rec.entity.name = p.name;
-          rec.living = { outlaw: p.id };
-          mine.foes.push(rec);
-        }).catch(() => { mine.spawning--; });
-      });
-      const looted = rel()?.turns?.()?.looted?.has(band.key);
-      if (!looted) {
-        const c = deps.chest(band, t);
-        stood.robbed = c.robbed;
-        if (c.items.length) { stood.pile = deps.dropPile(c.items, centre); stood.items0 = c.items.length; }
+      if (owned) standPeople(stood, t);
+      const c = deps.chest(band, t);
+      stood.robbed = c.robbed;   // its robbed parties, looted or not: the rout's thanks
+      if (!rel()?.turns?.()?.looted?.has(band.key) && c.items.length) {
+        stood.pile = deps.dropPile(c.items, centre);
+        stood.minted = c.items.map((it) => [it, it?.stackCount]);
       }
     }
+  }
+
+  /** Its people stood, as the pool's foes about the fire: those standing at minute `t`. @param {any} s @param {number} t */
+  function standPeople(s, t) {
+    s.owned = true;
+    const people = standingAt(s.band, t), turn = turnOf(s.h);
+    people.forEach((p, i) => {
+      const a = turn + 0.5 + (i / Math.max(1, people.length)) * Math.PI * 2;
+      const r = BAND_RING_M[0] + (BAND_RING_M[1] - BAND_RING_M[0]) * ((lwSeed(textSeed(p.id)) % 100) / 100);
+      const feet = deps.sceneOf(s.h.x + Math.sin(a) * r * NATIVE_PER_M, s.h.z + Math.cos(a) * r * NATIVE_PER_M);
+      s.spawning++;
+      deps.spawn(p.cls, feet, { yaw: a, level: p.level, gender: p.sex, allied: false }).then((rec) => {
+        s.spawning--;
+        if (!rec) return;
+        if (stood !== s) { takeOut(rec); return; }   // let go while it came
+        if (rec.entity) rec.entity.name = p.name;
+        rec.living = { outlaw: p.id };
+        s.foes.push(rec);
+      }).catch(() => { s.spawning--; });
+    });
+  }
+
+  /** A hand in the chest: `looted` for the character it stood for. @param {any} s */
+  function lootedYet(s) {
+    if (!s.pile || s.looted || asMinted(s.pile, s.minted)) return;
+    s.looted = true;
+    if (rel() === s.rel) rel()?.turn?.('looted', s.band.key);
   }
 
   /** Let the hideout go: its living taken out, its chest's state kept. */
@@ -143,7 +205,7 @@ export function createHideouts(deps) {
     stood = null;
     for (const rec of s.foes) if (!rec.dead) takeOut(rec);
     if (s.pile) {
-      if (s.band && (s.pile.items?.length ?? 0) < s.items0) rel()?.turn?.('looted', s.band.key);
+      lootedYet(s);   // a hand in it this very frame - the character's who stood it, never a loaded one's (C11c)
       deps.removePile(s.pile);
     }
     if (s.batch) deps.renderer?.destroyBillboardBatch?.(s.batch);
@@ -162,11 +224,18 @@ export function createHideouts(deps) {
 
   return {
     /**
-     * One frame: once a second the nearest hideout within BAND_LIVE_M stood (or the one stood let go past BAND_KEEP_M),
-     * and a band stood whose people are all down routed.
+     * One frame: a hand in the chest kept; once a second the nearest hideout within BAND_LIVE_M stood (or the one stood
+     * let go past BAND_KEEP_M), its people stood by the one it falls to, and a band stood whose people are all killed
+     * routed.
      * @param {number} dt
      */
     frame(dt) {
+      // AUDIT LW-II C11c: another character's records (a load, a new game) - the hideout stood for the last let go, and
+      // nothing of it theirs (a let-go after the load wrote the last session's chest into the loaded character)
+      if (stood && rel() !== stood.rel) letGo();
+      // AUDIT LW-II C2: a hand in the chest is `looted` the frame it shows - a piece taken, one put in, a stack split. Kept
+      // at the let-go alone, and by its count, a piece swapped in (or a save made while it stood) refilled it without end
+      if (stood) lootedYet(stood);
       if ((timer -= dt) > 0) return;
       timer = 1;
       const here = deps.here();
@@ -175,15 +244,22 @@ export function createHideouts(deps) {
       if (stood) {
         const d = Math.hypot(here.x - stood.h.x, here.z - stood.h.z) / NATIVE_PER_M;
         if (d > BAND_KEEP_M) { letGo(); return; }
-        if (stood.band && !stood.routed && !stood.spawning && stood.foes.length && stood.foes.every((rec) => rec.dead || !deps.inPool(rec))) rout(stood, t);
+        // AUDIT LW-II C11b: the camp stood by every reader; its people by the one it falls to (taken up when it does)
+        if (stood.band && !stood.owned && !stood.routed && deps.owner(deps.sceneOf(stood.h.x, stood.h.z))) standPeople(stood, t);
+        // AUDIT LW-II C3: ROUTED by blows - every one stood, killed. The cull took them as dead the frame after a player
+        // walked up (a camp's 200 m against the pool's 120), and one gone from the pool counted as one down
+        if (stood.band && stood.owned && !stood.routed && !stood.spawning && stood.foes.length) {
+          for (const rec of stood.foes) if (killed(rec)) stood.killed.add(rec);
+          if (stood.foes.every((/** @type {any} */ rec) => stood.killed.has(rec))) rout(stood, t);
+        }
         return;
       }
       const near = deps.hideoutsNear(here.x, here.z)
         .map((h) => ({ h, d: Math.hypot(here.x - h.x, here.z - h.z) / NATIVE_PER_M }))
         .filter((q) => q.d <= BAND_LIVE_M).sort((a, b) => a.d - b.d)[0];
-      if (!near || !deps.owner(deps.sceneOf(near.h.x, near.h.z))) return;
+      if (!near) return;
       ensureArt();
-      stand(near.h, t);
+      stand(near.h, t, deps.owner(deps.sceneOf(near.h.x, near.h.z)));
     },
     /** The fire's batch (the exterior's billboard pass): a band's camp burns, an empty one is cold. */
     batches() {

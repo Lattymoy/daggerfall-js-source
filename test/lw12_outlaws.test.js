@@ -17,7 +17,7 @@ import { travellerRoster } from '../src/systems/livingWorld/census.js';
 import { cargoOf, CARGO_ROBBED } from '../src/systems/livingWorld/wagons.js';
 import { createRelations, MARK_KINDS, TALE_KINDS } from '../src/systems/livingWorld/relations.js';
 import { ROAD_NEWS, ROUTED_NEWS, BAND_WARNINGS, newsScript, fillLine } from '../src/systems/livingWorld/lines.js';
-import { createHideouts, standingAt, rumourAt, tentsFor, BAND_LIVE_M, BAND_KEEP_M, HIDEOUT_DAY_H, HEARD_PX, RUMOUR_OFF_N } from '../src/scenes/hideouts.js';
+import { createHideouts, createHideoutBook, standingAt, rumourAt, tentsFor, killed, BAND_LIVE_M, BAND_KEEP_M, HIDEOUT_DAY_H, HEARD_PX, RUMOUR_OFF_N, HIDEOUTS_ASK_MS } from '../src/scenes/hideouts.js';
 import { createCaravanHost, bandTook } from '../src/scenes/caravanHost.js';
 import { purseOf, CARAVAN_QUALITY } from '../src/systems/livingWorld/caravanDoor.js';
 import { DAY_MIN } from '../src/systems/livingWorld/dayPlan.js';
@@ -217,13 +217,17 @@ test('LW12 the hold-up on the dice: a trouble within OUTLAW_REACH_PX of a hideou
   const ids = [...Array(50)].map((_, i) => `L903.t${i}:2`);
   const got2 = ids.map((id) => bandTrouble({ id }, hs[0].px, hs[0].py, tw2, [hs[0], far2])).filter(Boolean);
   assert.ok(got2.length > 0 && got2.every((g) => g.band.hideout.key === 'O17.9'), 'the next band in reach');
-  // with no band about, the trouble is the land's as it was - the dice's stream untouched
-  const { trips: plain } = legTrips(40, { bandAt: () => null });
-  const { trips: none } = legTrips(40, { bandAt: undefined });
+  // with no band about, the trouble is the land's as it was - the dice's stream untouched. AUDIT LW-II (the tests): over
+  // the same 120 days as the bands' (40 against 120 compared three trips)
+  const { trips: plain } = legTrips(120, { bandAt: () => null });
+  const { trips: none } = legTrips(120, { bandAt: undefined });
   assert.deepEqual(plain.map((tr) => tr.enc ?? null), none.map((tr) => tr.enc ?? null));
-  const other = trips.filter((tr) => tr.enc && !tr.enc.band).map((tr) => tr.id);
   const sameNone = new Map(none.map((tr) => [tr.id, tr]));
-  for (const id of other) if (sameNone.has(id)) assert.deepEqual(trips.find((tr) => tr.id === id).enc, sameNone.get(id).enc);
+  const other = trips.filter((tr) => tr.enc && !tr.enc.band);
+  assert.ok(other.length >= 10 && other.every((tr) => sameNone.has(tr.id)), `${other.length} of the land's troubles, each compared`);
+  for (const tr of other) assert.deepEqual(tr.enc, sameNone.get(tr.id).enc);
+  // ... and a band's falls where and when the land's did: its own draw, never the stream's
+  for (const tr of band) assert.deepEqual([tr.enc.id, tr.enc.leg, tr.enc.t0, tr.enc.s], [sameNone.get(tr.id)?.enc?.id, sameNone.get(tr.id)?.enc?.leg, sameNone.get(tr.id)?.enc?.t0, sameNone.get(tr.id)?.enc?.s]);
   // the player's fight for a robbed party: won
   const r0 = robbed[0];
   const { trips: turned } = legTrips(120, { turnOf: (id) => (id === r0.enc.id ? 'won' : null) });
@@ -277,7 +281,7 @@ test('LW12 heard of and told: the road\'s news of a hold-up names the band; a to
 });
 
 /** A hideouts host over one hideout and its band, its deps recorded. */
-function hostOver({ band = null, here = null, t = 12 * 60, owner = true, looted = false, robbed = [] } = {}) {
+function hostOver({ band = null, here = null, t = 12 * 60, owner = true, looted = false, robbed = [], items = () => [{ name: 'Rope' }, { name: 'Gold' }] } = {}) {
   const h = { key: 'O17.0', x: 0, z: 0, region: 17 };
   const rel = createRelations();
   if (looted && band) rel.turn('looted', band.key);
@@ -289,11 +293,11 @@ function hostOver({ band = null, here = null, t = 12 * 60, owner = true, looted 
     spawn: (type, feet, o) => { const rec = { type, feet, o, dead: false, entity: {} }; log.spawned.push(rec); return Promise.resolve(rec); },
     remove: (rec) => log.removed.push(rec), inPool: (rec) => log.spawned.includes(rec) && !log.removed.includes(rec),
     relations: () => rel, say: (s) => log.said.push(s),
-    chest: () => ({ items: [{ name: 'Rope' }, { name: 'Gold' }], robbed }),
+    chest: () => ({ items: items(), robbed }),
     dropPile: (items) => { const pile = { items: [...items] }; log.piles.push(pile); return pile; },
     removePile: (p) => log.removedPiles.push(p),
   };
-  return { host: createHideouts(deps), log, clock, rel, h };
+  return { host: createHideouts(deps), log, clock, rel, h, deps };
 }
 const tick = async (host, n = 1) => { for (let i = 0; i < n; i++) { host.frame(1.01); await new Promise((r) => setImmediate(r)); } };
 const someBand = () => ({ key: 'O17.0~3', gen: 3, heir: 0, name: 'the Black Hand', people: [0, 1, 2, 3, 4].map((i) => ({ id: `O17.0~3.${i}`, name: `Out ${i}`, cls: 138, level: 5 + i, sex: 'male' })) });
@@ -311,7 +315,9 @@ test('LW12 the hideout stood: on foot within BAND_LIVE_M, the one standing it - 
   assert.equal(far.host.shown(), null, 'beyond its reach');
   const no = hostOver({ band, owner: false });
   await tick(no.host);
-  assert.equal(no.host.shown(), null, 'another player stands it');
+  // PIN MOVED (AUDIT LW-II C11b): another player stands its people - its camp and its chest every reader's own
+  assert.deepEqual(no.host.shown(), { key: 'O17.0', band: band.key, foes: 0, tents: 2, pile: true, routed: false }, 'another player stands its people');
+  assert.equal(no.log.spawned.length, 0);
   const { host, log, clock, rel } = hostOver({ band });
   await tick(host);
   assert.deepEqual(host.shown(), { key: 'O17.0', band: band.key, foes: 5, tents: 2, pile: true, routed: false });
@@ -351,10 +357,10 @@ test('LW12 routed: every one of its people down - the character\'s tale (`routed
   const robbed = [{ party: [{ id: 'L903.t1' }, { id: 'L903.t2' }] }];
   const { host, log, rel } = hostOver({ band, robbed });
   await tick(host);
-  log.spawned.slice(0, 4).forEach((r) => { r.dead = true; });
+  log.spawned.slice(0, 4).forEach((r) => { r.dead = true; r.corpse = true; });   // PIN MOVED (AUDIT LW-II C3): killed as the pool kills - a body
   await tick(host);
   assert.equal(host.shown().routed, false, 'one stands');
-  log.spawned[4].dead = true;
+  log.spawned[4].dead = true; log.spawned[4].corpse = true;
   await tick(host, 2);
   assert.equal(host.shown().routed, true);
   assert.equal(rel.turns().routed.get('O17.0@3.1')?.who, 'the Black Hand', 'by its hideout, generation and heir');
@@ -410,6 +416,9 @@ test('LW12 a caravan the outlaws held up: its purse theirs (a sale refused), hal
   assert.deepEqual(host.shelfOf(trip).items.map((it) => it.name), ['W0', 'W2', 'W4']);
   host.step();
   assert.equal(rel.wares(trip.id), null, 'the band\'s take is never the character\'s gone');
+  host.shelfOf(trip).items.splice(0, 1);
+  host.step();
+  assert.deepEqual([...rel.wares(trip.id).gone], [0], 'what the character took, and only that');
   const before = { ...trip, robbed: undefined, id: 'L903.t1:5' };
   assert.equal(host.shelfOf(before).items.length, 6);
   // the counter opened on a caravan the band held up, on the road after: a sale refused, a purchase the player's
@@ -440,15 +449,179 @@ test('LW12 the host\'s wiring: the trouble world\'s bands over the trip\'s two r
   const w = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
   assert.match(w, /bandAt: \(trip, px, py, t\) => bandTrouble\(trip, px, py, t, \[\.\.\.livingHideoutsOf\(trip\.from\?\.region\), \.\.\.\(trip\.to\?\.region != null && trip\.to\.region !== trip\.from\?\.region \? livingHideoutsOf\(trip\.to\.region\) : \[\]\)\], livingRouts\(\)\),/);
   assert.match(w, /townsIn: \(region\) => livingTownsOfRegion\(region\),/);
-  assert.match(w, /if \(livingWays\.generation !== _livingHideoutsGen\) \{ _livingHideouts\.clear\(\); _livingHideoutsGen = livingWays\.generation; \}/);
-  assert.match(w, /if \(got === undefined\) \{ got = hideoutsOf\(region, livingTripWorld\); if \(got !== undefined\) _livingHideouts\.set\(region, got\); \}/);
+  // PIN MOVED (AUDIT LW-II C8): the hideouts kept by hideouts.js createHideoutBook - by the network's generation, a
+  // region waiting asked again now and then, the troubles read band-less made again once its bands are found
+  assert.match(w, /const livingHideoutsOf = createHideoutBook\(\{\n\s*of: \(region\) => hideoutsOf\(region, livingTripWorld\),\n\s*generation: \(\) => livingWays\.generation,\n\s*resolved: \(\) => \{ _livingFates\.clear\(\); _livingTripMemo\.clear\(\); \},\n\s*\}\);/);
   assert.match(w, /const livingRouts = \(\) => livingRelations\.turns\(\)\.routed;/);
   assert.match(w, /if \(livingWorldOn\(\) && _mode\(\) === 'exterior' && !tvf\) \{ livingHideoutsHostOf\(\)\.frame\(dt\); livePersonBatches\.push\(\.\.\.livingHideoutsHostOf\(\)\.batches\(\)\); \}/);
   assert.match(w, /\n\s*else _livingHideoutsHost\?\.clear\(\);/);
   assert.match(w, /_livingHideoutsHost\?\.draw\(renderer\);   \/\/ LW12/);
   assert.match(w, /for \(const m of livingHideoutsHostOf\(\)\.marks\(hereN\.x, hereN\.z, skyMinutes\(\)\)\) if \(markShown\(\{ kind: m\.kind \}\)\) marks\.push\(/);
   assert.match(w, /foe: n\.band \?\? \(n\.foe != null \? livingFoeWord\(n\.foe, 2\) : ''\)/);
-  assert.match(w, /spawn: \(type, feet, o\) => exteriorFoes\.spawnFoe\(type, feet, \{ yaw: o\.yaw, gender: o\.gender, level: o\.level, allied: false, loose: true, transient: true \}\),/);
+  assert.match(w, /spawn: \(type, feet, o\) => exteriorFoes\.spawnFoe\(type, feet, \{ yaw: o\.yaw, gender: o\.gender, level: o\.level, allied: false, loose: true, transient: true, managed: true \}\),/);   // PIN MOVED (AUDIT LW-II C3): managed - the host owns their lives
+  // AUDIT LW-II C3: the pool's relevance cull passes a managed foe by (DW-E4's own law), and marks a kill with its body
+  const foes = readFileSync(new URL('../src/scenes/exteriorFoes.js', import.meta.url), 'utf8');
+  assert.match(foes, /if \(!f\.placed && !f\.managed && _playerDist > _cullAt/);
+  assert.match(foes, /f\.dead = true;\n[^\n]*\n[^\n]*\n\s*f\.corpse = true;/);
   assert.match(w, /dropPile: \(items, feet\) => droppedLoot\.seedPile\(items, feet, \{ archive: TREASURE_PILE_ARCHIVE, record: 0 \}, null, null, \{ unsaved: true, owner: 'lw-hideout' \}\),/);
   assert.match(w, /unheard: \(t\) => \{ const h = livingHideoutsHostOf\(\), here = playerSpawned \? state\.worldCoords\(player\.pos\) : null; return here \? h\.unheardNear\(here\.x, here\.z, t\) : null; \},/);
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// AUDIT LW-II (2026-10-10): THE OUTLAWS, AUDITED - each finding reproduced, fixed, and pinned below.
+
+test('AUDIT LW-II C2: a hand in the chest is `looted` the frame it shows - a piece taken and another put in its place, before any let-go; a save made while it stands carries it, and the chest stands empty from that save (mutants: the frame, the pieces, the counts)', async () => {
+  const band = someBand();
+  // a piece swapped: the count the same
+  const { host, log, rel } = hostOver({ band });
+  await tick(host);
+  const pile = log.piles[0];
+  assert.equal(rel.turns().looted.has(band.key), false, 'untouched');
+  host.frame(0.01);
+  assert.equal(rel.turns().looted.has(band.key), false, 'a frame untouched keeps nothing');
+  const gold = pile.items.findIndex((it) => it.name === 'Gold');
+  pile.items.splice(gold, 1, { name: 'Rag' });
+  host.frame(0.01);   // the next frame - within the second, no let-go
+  assert.ok(host.shown(), 'still stood');
+  assert.ok(rel.turns().looted.has(band.key), 'looted the frame it showed');
+  // saved while it stood, loaded: no chest
+  const save = JSON.parse(JSON.stringify(rel.snapshot()));
+  assert.ok(save.turns.looted.includes(band.key));
+  const back = hostOver({ band });
+  const loaded = createRelations(save);
+  const h2 = createHideouts({ ...back.deps, relations: () => loaded });
+  await tick(h2);
+  assert.equal(h2.shown().pile, false, 'the loaded character took from it');
+  // a stack split: the pieces the same, a count less
+  const split = hostOver({ band, items: () => [{ name: 'Rope' }, { name: 'Gold', stackCount: 900 }] });
+  await tick(split.host);
+  split.log.piles[0].items[1].stackCount = 400;
+  split.host.frame(0.01);
+  assert.ok(split.rel.turns().looted.has(band.key), 'a handful of its gold taken');
+});
+
+test('AUDIT LW-II C3: a band routed by blows alone - every one stood killed (dead with a body, or executed); one the cull took, one escaped, one taken out beat nobody (mutants: the kill, the cull, the latch)', async () => {
+  assert.equal(killed({ dead: true, corpse: true }), true);
+  assert.equal(killed({ dead: true, executed: true }), true, 'executed');
+  assert.equal(killed({ dead: true }), false, 'the cull\'s: no body');
+  assert.equal(killed({ dead: true, escaped: true }), false, 'escaped');
+  assert.equal(killed({ dead: false, corpse: true }), false);
+  const band = someBand();
+  // walked up to: the cull took them all, a frame after they stood
+  const culled = hostOver({ band });
+  await tick(culled.host);
+  culled.log.spawned.forEach((r) => { r.dead = true; });
+  await tick(culled.host, 2);
+  assert.deepEqual([culled.host.shown().routed, culled.rel.turns().routed.size], [false, 0], 'never routed by walking up');
+  // gone from the pool (taken out by another layer): none
+  const out = hostOver({ band });
+  await tick(out.host);
+  out.log.removed.push(...out.log.spawned);
+  await tick(out.host, 2);
+  assert.equal(out.host.shown().routed, false, 'gone from the pool beat nobody');
+  // killed, each latched as it fell (its body later collected), the last executed: routed
+  const won = hostOver({ band });
+  await tick(won.host);
+  won.log.spawned.slice(0, 4).forEach((r) => { r.dead = true; r.corpse = true; });
+  await tick(won.host);
+  won.log.spawned.slice(0, 4).forEach((r) => { r.corpse = false; });
+  won.log.spawned[4].dead = true; won.log.spawned[4].executed = true;
+  await tick(won.host);
+  assert.equal(won.host.shown().routed, true);
+  // a band whose chest the character emptied before: its robbed thank the player all the same
+  const robbed = [{ party: [{ id: 'L903.t7' }] }];
+  const emptied = hostOver({ band, robbed, looted: true });
+  await tick(emptied.host);
+  assert.equal(emptied.host.shown().pile, false);
+  emptied.log.spawned.forEach((r) => { r.dead = true; r.corpse = true; });
+  await tick(emptied.host);
+  assert.ok(emptied.rel.regard('L903.t7', 0) > 0, 'looted or not, its robbed are the rout\'s');
+});
+
+test('AUDIT LW-II C8: the hideouts kept - a region waiting on its roads answers none and is asked again no sooner than HIDEOUTS_ASK_MS; its bands found are told once (only when it waited); a new network asks again; and two readers whose roads were planned apart read every trouble the same (mutants: the ask, the told, the generation, the books made again)', () => {
+  assert.equal(HIDEOUTS_ASK_MS, 100);
+  let ms = 0, gen = 0, planned = false, asks = 0;
+  const told = [];
+  const h = { key: 'O17.0' };
+  const book = createHideoutBook({ of: (r) => { asks++; return planned ? (r === 17 ? [h] : []) : undefined; }, generation: () => gen, now: () => ms, resolved: (r) => told.push(r) });
+  assert.deepEqual(book(17), []);
+  assert.deepEqual([book(17), book(17), asks], [[], [], 1], 'waiting: a look-up, never its legs again');
+  ms += HIDEOUTS_ASK_MS - 1;
+  book(17);
+  assert.equal(asks, 1);
+  ms += 1;
+  book(17);
+  assert.equal(asks, 2, 'asked again');
+  planned = true;
+  ms += HIDEOUTS_ASK_MS;
+  assert.deepEqual(book(17), [h]);
+  assert.deepEqual(book(17), [h]);
+  assert.deepEqual([told, asks], [[17], 3], 'told once, kept');
+  assert.deepEqual(book(18), []);
+  assert.deepEqual(told, [17], 'found at its first asking (and none): nothing to make again');
+  assert.deepEqual([book(null), book(NaN)], [[], []]);
+  gen++;
+  assert.deepEqual(book(17), [h]);
+  assert.equal(asks, 5, 'a new network: asked again');
+  assert.deepEqual(told, [17], 'found at once there: nothing to make again');
+  // two readers, the second's band legs planned ten askings later (r10): every trip's trouble the same
+  const client = (plannedAfter, resolved = true) => {
+    const towns = leg();
+    const world = miniWorld(towns);
+    let n = 0, now = 0;
+    const legWorld = { ...world, routeOf: (a, b) => (n < plannedAfter ? undefined : straightRoute(a, b)) };
+    const fates = new Map(), memo = new Map();
+    const hideouts = createHideoutBook({ of: (r) => { n++; return hideoutsOf(r, legWorld); }, generation: () => 0, now: () => (now += HIDEOUTS_ASK_MS), resolved: resolved ? () => { fates.clear(); memo.clear(); } : undefined });
+    const tw = { climateAt: () => 0, foesOf: ({ size }) => Array(size).fill(10), bandAt: (trip, px, py, t) => bandTrouble(trip, px, py, t, hideouts(17)) };
+    world.fate = (trip) => { let f = fates.get(trip.id); if (!f) { f = troubledTrip(trip, troubleOf(trip, tw)); fates.set(trip.id, f); } return f; };
+    const got = new Map();
+    for (let pass = 0; pass < 2; pass++) for (let day = 0; day < 120; day++) for (const town of [towns[2], towns[3]]) for (const tr of townTrips(town, T0 + day * DAY_MIN + 720, world, { mpm: CALENDAR_MPM, memo }) ?? []) got.set(tr.id, tr);
+    return got;
+  };
+  const kindOf = (tr) => (tr.enc ? `${tr.enc.kind}${tr.enc.band ? '@band' : ''}` : 'none');
+  const differ = (A, B) => [...A].filter(([id, a]) => B.has(id) && kindOf(a) !== kindOf(B.get(id))).length;
+  const A = client(0);
+  assert.ok([...A.values()].some((tr) => tr.enc?.band), 'the band holds the road up');
+  assert.equal(differ(A, client(10)), 0, 'the late reader\'s troubles the same');
+  assert.ok(differ(A, client(10, false)) > 0, 'kept band-less, they were not');
+});
+
+test('AUDIT LW-II C9: a hold-up near the leg\'s end - its halt past the arrival - still leaves the party robbed, out or home (mutants: the halt past the end)', () => {
+  const lead = { id: 'L1.t1', cls: null };
+  const trip = { id: 'L1.t1:3', kind: 'merchant', from: { blocks: 24 }, party: [lead], leader: lead, outT0: 1000, outT1: 1100, backT0: 3000, backT1: 3100, trim0: 0, trim1: 0, pace: 1, way: { len: 100 } };
+  const enc = (t0, leg = 'out') => ({ id: `${trip.id}:e`, leg, camp: false, t0, t1: t0 + HALT_MIN.robbed, fightEnd: t0 + FIGHT_MIN.robbed, s: 50, x: 0, z: 0, px: 0, py: 0, foes: [1], level: 5, kind: 'robbed', shape: 'robbed', dead: [], band: 'O17.0~0', bandName: 'the Black Hand' });
+  assert.deepEqual(troubledTrip(trip, enc(1050)).robbed, { t: 1050, by: 'O17.0~0' }, 'well short of the town');
+  const late = troubledTrip(trip, enc(1085));
+  assert.deepEqual([late.robbed, late.outT1], [{ t: 1085, by: 'O17.0~0' }, 1115], 'its halt past the arrival: robbed, and in late');
+  const home = troubledTrip(trip, enc(3085, 'back'));
+  assert.deepEqual([home.robbed, home.backT1], [{ t: 3085, by: 'O17.0~0' }, 3115], 'on the way home too');
+  assert.equal(troubledTrip(trip, { ...enc(1085), kind: 'won' }).robbed, undefined, 'a fight won: nothing taken');
+});
+
+test('AUDIT LW-II C11b/C11c: online the camp is every reader\'s and its people the one standing it\'s - taken up when it falls to this player; another character\'s records (a load) let the hideout go with nothing of it written into theirs (mutants: the camp, the take-up, the load)', async () => {
+  const band = someBand();
+  let mine = false;
+  const { log, deps } = hostOver({ band });
+  const h = createHideouts({ ...deps, owner: () => mine });
+  await tick(h);
+  assert.deepEqual([h.shown().foes, h.shown().tents, h.shown().pile, log.spawned.length], [0, 2, true, 0], 'the camp, not its people');
+  mine = true;
+  await tick(h);
+  assert.equal(h.shown().foes, 5, 'fallen to this player: its people stood');
+  await tick(h, 2);
+  assert.equal(log.spawned.length, 5, 'once');
+  // a load while it stood: the chest touched in the same frame - let go, the loaded character untouched
+  const l = hostOver({ band });
+  let now = l.rel;
+  const lh = createHideouts({ ...l.deps, relations: () => now });
+  await tick(lh);
+  l.log.piles[0].items.pop();
+  now = createRelations();
+  lh.frame(0.01);
+  assert.equal(lh.shown(), null, 'let go');
+  assert.equal(now.turns().looted.has(band.key), false, 'nothing of it the loaded character\'s');
+  assert.equal(l.log.removedPiles.length, 1, 'its chest taken up');
+  assert.ok(l.log.removed.length === 5, 'its people taken out');
+  await tick(lh);
+  assert.equal(lh.shown()?.pile, true, 'stood again for the loaded character, its chest theirs');
 });
