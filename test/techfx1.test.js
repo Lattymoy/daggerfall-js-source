@@ -579,7 +579,7 @@ test('TECHFX1 THE SETTING: "Technique camera motion" is a port row under Game (F
 
 // ── the frame's allocation ────────────────────────────────────────
 
-test('TECHFX1 THE FRAME MAKES NOTHING (L2 F9\'s measure, in a child with a 64 MB young space, the least of six windows): at rest - the springs\' step, the view fold, the lens, the sky\'s pitch, the hands, the marks (the hosts\' own call), the chip with no technique, the runner\'s step with a technique in hand and with its cooldown running, the chip ready and recovering, the technique key\'s held poll - and with all five springs in flight the step, the fold and the hands, none past 2 bytes a frame, against a control of three numbers into a fresh list a frame, which must show (mutants: the marks\' fresh empty list; the hosts\' clock read at rest; the chip\'s fresh list; an output copied a frame; the view fold\'s eye destructured; the cooldowns a Map; the poll walking the dicts)', () => {
+test('TECHFX1 THE FRAME MAKES NOTHING (L2 F9\'s measure, in a child with a 64 MB young space, the least of six windows): at rest - the springs\' step, the view fold, the lens, the sky\'s pitch, the hands, the marks (the hosts\' own call, and the exported one), the chip with no technique, the runner\'s step with a technique in hand and with its cooldown running, the chip ready and recovering, the technique key\'s held poll - and with all five springs in flight the step, the fold and the hands, none past 2 bytes a frame, against a control of three numbers into a fresh list a frame, which must show (mutants: the marks\' fresh empty list; the hosts\' clock read at rest; the chip\'s fresh list; an output copied a frame; the view fold\'s eye destructured; the cooldowns a Map; the poll walking the dicts)', () => {
   const url = (p) => JSON.stringify(pathToFileURL(join(ROOT, p)).href);
   const script = `
     await import(${url('test/modsOff.js')});
@@ -614,7 +614,7 @@ test('TECHFX1 THE FRAME MAKES NOTHING (L2 F9\'s measure, in a child with a 64 MB
     FX.resetTechniqueFx();
     out.rest = bytes(() => {
       FX.stepTechniqueFx(1 / 60); V.set(I); host.view(V, true); lens[0] = host.fovRad(); lens[1] = host.pitch(); lens[2] = FX.techniqueHands().y;
-      sink[1] = T.techniqueMarksNow(); sink[2] = T.techniqueHudChips(ent, null);
+      sink[1] = T.techniqueMarksNow(); sink[2] = T.techniqueHudChips(ent, null); sink[5] = T.techniqueMarks(0);
     });
     // a technique in hand: the runner's frame at rest, the chip ready (its key a word the host caches), and recovering
     const it = LR.applyRarity(createWeapon(120, 1), 'rare', () => 0.3); it.isIdentified = true;
