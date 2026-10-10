@@ -680,6 +680,7 @@ import { weaponTypeForItem } from '../combat/fpsWeapon.js';
 import { getStaticDoors } from '../world/staticDoors.js';
 import { spaceAcross, clearDoorways, doorSpotsNear, spacingSkips } from '../characters/foeSpacing.js';   // TACT3: the crowd and the door
 import { Collider } from '../player/collider.js';
+import { onFloatingFrame } from '../player/collider.js';   // PERF-COL2: a streamed pixel's buckets ride the floating origin
 import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
 import { setAmbientTextHost, tickAmbientText } from '../systems/ambientText.js';   // AT2: Ambient Text's one component - this host claims it and feeds it the frame
@@ -3899,7 +3900,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       x - bx, y - by, z + bz, x + bx, y - by, z + bz, x + bx, y + by, z + bz, x - bx, y + by, z + bz];
     const idx = [0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 3, 7, 6, 3, 6, 2, 0, 4, 7, 0, 7, 3, 1, 2, 6, 1, 6, 5];
     const o = [0, 0, 0];
-    collider.addMesh(h.bucket, pos, idx, _ohIdentity, () => state.pixelTranslation(entry.px, entry.py, o));
+    collider.addMesh(h.bucket, pos, idx, _ohIdentity, onFloatingFrame(state, () => state.pixelTranslation(entry.px, entry.py, o)));   // PERF-COL2: riding the floating origin
     // AUDIT OH-F A2: Unity culls the plume by its particles' own bounds; here the pixel's box is the draw's verdict
     // (drawOceanHolesTransparent), so the box reaches the plume - the rise, the drift, the largest puff. It only grows.
     const b = entry._box, reach = miasmaReach(pit.miasma), c = [x, pit.miasma.y, z];
@@ -5182,7 +5183,7 @@ export async function bootWorld(canvas, renderer, params, status) {
             unionBox(box);
             models.push({ gpu: parts.body, local, _box: box, _order: -1 });   // EV6: the mills group together
             collider.addMesh(key, BODY.positions, BODY.indices, local,
-              ((o) => () => state.pixelTranslation(px, py, o))([0, 0, 0]));   // BLOOD1 AUDIT 3: one array a bucket, not one a call - every ray asks every bucket
+              onFloatingFrame(state, ((o) => () => state.pixelTranslation(px, py, o))([0, 0, 0])));   // BLOOD1 AUDIT 3: one array a bucket, not one a call - every ray asks every bucket; PERF-COL2: riding the floating origin, filed by place
             windmills.push({ local, state: { angle: rotorPhase(px + local[12], py + local[14]) } });
           }
         }
@@ -5244,7 +5245,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           }
           const gateKey = isCityGate(placed.modelIdNum) ? `${key}:gate:${pixelGates.length}` : key;
           collider.addMesh(gateKey, cpu.positions, cpu.indices, local,
-            ((o) => () => state.pixelTranslation(px, py, o))([0, 0, 0]));   // BLOOD1 AUDIT 3: the same
+            onFloatingFrame(state, ((o) => () => state.pixelTranslation(px, py, o))([0, 0, 0])));   // BLOOD1 AUDIT 3: the same; PERF-COL2: riding the floating origin
           // THE BULLETIN BOARDS. RMBLayout stands model 41739
           // STANDALONE rather than combining it (:857, :935) for the
           // sole purpose of hanging DaggerfallBulletinBoard off it
@@ -5283,7 +5284,7 @@ export async function bootWorld(canvas, renderer, params, status) {
                 [placed.modelIdNum, { gpu, cpu }],
                 [otherId, otherGpu && otherCpu ? { gpu: otherGpu, cpu: otherCpu } : null],
               ]),
-              translation: ((o) => () => state.pixelTranslation(px, py, o))([0, 0, 0]),   // BLOOD1 AUDIT 3: the same
+              translation: onFloatingFrame(state, ((o) => () => state.pixelTranslation(px, py, o))([0, 0, 0])),   // BLOOD1 AUDIT 3: the same; PERF-COL2: riding the floating origin
             });
           }
           // Building models expose their static doors for E-transitions.
@@ -5415,7 +5416,7 @@ export async function bootWorld(canvas, renderer, params, status) {
             const entry = { gpu: gpuB, local, _box: box, _order: BULLETIN_BOARD_MODEL_ID };
             models.push(entry);
             if (cpuB.normals && cpuB.uvs) { staticBuilder.add(cpuB, local, resolveTexKey); entry._batched = true; }
-            collider.addMesh(key, cpuB.positions, cpuB.indices, local, ((o) => () => state.pixelTranslation(px, py, o))([0, 0, 0]));
+            collider.addMesh(key, cpuB.positions, cpuB.indices, local, onFloatingFrame(state, ((o) => () => state.pixelTranslation(px, py, o))([0, 0, 0])));   // PERF-COL2: riding the floating origin
             pixelBoards.push({ box, local, extra: true });
           }
         }
@@ -5565,7 +5566,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const _roadsNow = terrainGen.roads();   // ROADS-CLEAR: null until the network lands - the roads sweep rebuilds this pixel then
       let _wodOffRoad = 0, _wodOffGate = 0;
       if (place.stopped) console.warn(`[wod] pixel ${key}: a negative model name stopped the loader here, as uint.Parse throws in the C#`);
-      const wodBucket = ((o) => () => state.pixelTranslation(px, py, o))([0, 0, 0]);   // BLOOD1 AUDIT 3: one array a bucket
+      const wodBucket = onFloatingFrame(state, ((o) => () => state.pixelTranslation(px, py, o))([0, 0, 0]));   // BLOOD1 AUDIT 3: one array a bucket; PERF-COL2: riding the floating origin
       for (const m of place.models) {
         const gpu = await getGpuMesh(m.modelId);
         if (!gpu) continue;   // a model ARCH3D does not carry stands empty in DFU (no mesh, no collider)
@@ -5685,7 +5686,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // stands in, as Start runs (standHold).
     let privateersHold = null;
     if (holdBlocks.length) {
-      const holdBucket = ((o) => () => state.pixelTranslation(px, py, o))([0, 0, 0]);   // BLOOD1 AUDIT 3: one array a bucket
+      const holdBucket = onFloatingFrame(state, ((o) => () => state.pixelTranslation(px, py, o))([0, 0, 0]));   // BLOOD1 AUDIT 3: one array a bucket; PERF-COL2: riding the floating origin
       for (const origin of holdBlocks) {
         for (const hm of HOLD_MODELS) {
           const gpu = await getGpuMesh(hm.modelId);
@@ -31316,7 +31317,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // the movement half of the same law, not this one.
     player.paralyzed = paralyzed;
 
-    const motorStep = () => {   // PERF-V8
+    const motorStep = () => {   // PERF-V8: each `// PERF-V8` statement runs as a closure of its own, so the frame stays under V8's optimizing ceiling (bible/07-Rendering/Performance-Priority.md)
     if (walkMode) {
       // ROAD-Ar (R0): the season re-skin's hold, released the moment
       // the player's own pixel is BUILT again - the same shape as the

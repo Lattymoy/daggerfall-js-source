@@ -2046,7 +2046,8 @@ same DEPTH_COMPONENT24, the same size, NEAREST) - unconfirmed, and not changed o
 confirmed in ANGLE's source and replaced by a draw). What this section fixed
 indoors is frame-rate dependent (P1, P2, R1, R4), and frame rate is what differs between two machines.
 
-Recorded, not changed: a batch past 128 placements is treated as dynamic (raising the cap costs a pairwise walk); the
+Recorded, not changed: a batch past 128 placements is treated as dynamic (raising the cap costs a pairwise walk - PERF-INST,
+2026-10-10, filed the placements by place and raised it to 4096: `Performance-Priority.md`); the
 record pool stops at 6000; a boat's lantern follows the boat a frame behind; the player's own card, the corpses and the
 flyers are not moved at a crossing (one frame); a cut from room to room inside one interior replays the last room's
 casters for a frame; a peer's WB9h body out of view does not cast.

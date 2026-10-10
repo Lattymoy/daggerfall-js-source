@@ -2,7 +2,7 @@
   {
     "name": "PERF-V8-a-the-motor-folded-back",
     "file": "src/scenes/world.js",
-    "old": "    const motorStep = () => {   // PERF-V8\n    if (walkMode) {",
+    "old": "    const motorStep = () => {   // PERF-V8: each `// PERF-V8` statement runs as a closure of its own, so the frame stays under V8's optimizing ceiling (bible/07-Rendering/Performance-Priority.md)\n    if (walkMode) {",
     "new": "    {\n    if (walkMode) {",
     "tests": ["test/perfv8.test.js"]
   },

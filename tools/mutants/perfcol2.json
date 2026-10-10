@@ -1,0 +1,44 @@
+[
+  {
+    "name": "PERF-COL2-a-the-sentinel-unasked",
+    "file": "src/player/collider.js",
+    "old": "    if (broad !== null) {   // PERF-COL2: a floating frame that moved since the filing",
+    "new": "    if (false) {   // PERF-COL2: a floating frame that moved since the filing",
+    "tests": ["test/perfcol2.test.js"]
+  },
+  {
+    "name": "PERF-COL2-b-the-coarse-cells-unasked",
+    "file": "src/player/collider.js",
+    "old": "    if (broad.coarse.size) {   // PERF-COL2: the wide buckets, by the coarse cells the query's box covers",
+    "new": "    if (false) {   // PERF-COL2: the wide buckets, by the coarse cells the query's box covers",
+    "tests": ["test/perfcol2.test.js"]
+  },
+  {
+    "name": "PERF-COL2-c-a-turned-rider-filed",
+    "file": "src/player/collider.js",
+    "old": "      if (bucket.frame === null || bucket.r) { always.push(bucket); continue; }",
+    "new": "      if (bucket.frame === null) { always.push(bucket); continue; }",
+    "tests": ["test/perfcol2.test.js"]
+  },
+  {
+    "name": "PERF-COL2-d-the-mark-unread",
+    "file": "src/player/collider.js",
+    "old": "frame: FRAME_OF.get(translation) ?? null, ord: -1,",
+    "new": "frame: null, ord: -1,",
+    "tests": ["test/perfcol2.test.js"]
+  },
+  {
+    "name": "PERF-COL2-e-filed-where-it-stood-before-the-frame",
+    "file": "src/player/collider.js",
+    "old": "      ox = t[0]; oz = t[2];\n",
+    "new": "",
+    "tests": ["test/perfcol2.test.js"]
+  },
+  {
+    "name": "PERF-COL2-f-a-pixel-bucket-unmarked",
+    "file": "src/scenes/world.js",
+    "old": "      const wodBucket = onFloatingFrame(state, ((o) => () => state.pixelTranslation(px, py, o))([0, 0, 0]));",
+    "new": "      const wodBucket = ((o) => () => state.pixelTranslation(px, py, o))([0, 0, 0]);",
+    "tests": ["test/perfcol2.test.js"]
+  }
+]

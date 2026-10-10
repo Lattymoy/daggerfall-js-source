@@ -1,5 +1,5 @@
 // PERF-V8 (2026-10-10, the owner: "performance must be highest priority now, it even runs shoppy on my nasa pc"):
-// THE WORLD HOST'S FRAME IS A FUNCTION V8 WILL OPTIMIZE (bible/07-Rendering/Performance-V8.md; PERF-NEXT item 22).
+// THE WORLD HOST'S FRAME IS A FUNCTION V8 WILL OPTIMIZE (bible/07-Rendering/Performance-Priority.md; PERF-NEXT item 22).
 //
 // V8 never optimizes a function whose bytecode is over --max-optimized-bytecode-size (61,440 bytes): it runs in the
 // interpreter and the baseline compiler for the page's whole life - its arithmetic boxed, its for-of loops allocating an
@@ -41,7 +41,7 @@ test('PERF-V8: each closure moved out of the world host\'s frame is made in the 
   const end = src.indexOf('\n  }\n', at);
   assert.ok(at > 0 && end > at, 'the frame found');
   const body = src.slice(at, end);
-  const made = [...body.matchAll(/\n {4}const (\w+) = \(\) => \{ {3}\/\/ PERF-V8\n/g)];
+  const made = [...body.matchAll(/\n {4}const (\w+) = \(\) => \{ {3}\/\/ PERF-V8[^\n]*\n/g)];
   assert.ok(made.length >= 20, `the moved statements (${made.length})`);
   let prev = -1;
   for (const m of made) {

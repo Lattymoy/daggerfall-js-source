@@ -1,5 +1,5 @@
 // PERF-YARD (2026-10-10, the owner: "performance must be highest priority now ... prob caused by placed objects by
-// players"): A YARD'S PIECES ARE CULLED AS THE TOWN'S OWN MODELS ARE (bible/07-Rendering/Performance-V8.md PERF-YARD).
+// players"): A YARD'S PIECES ARE CULLED AS THE TOWN'S OWN MODELS ARE (bible/07-Rendering/Performance-Priority.md PERF-YARD).
 //
 // Every model piece of every yard within YARD_DRAW_M was a draw a frame, behind the eye or not, and a caster recorded
 // for every shadow walk. The pixel walk's law (scenes/world.js - EV3 and SHADOW-REACH) now holds for them: inside the

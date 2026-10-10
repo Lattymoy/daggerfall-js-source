@@ -161,32 +161,72 @@ const BROAD_QUERY_MAX = 256;
  *  gathered before they are gathered again - the box test is asked at each bucket's turn with the centre as it
  *  stands, so the gathered box is grown by this much and re-asked past it. */
 const BROAD_PAD = 1;
+/** PERF-COL2 (2026-10-10, the owner: "prob caused by ... render range"): A BUCKET TOO WIDE FOR THE FINE CELLS is filed
+ *  on cells of this size instead of being asked by every query - a streamed pixel's bucket (its town's models, its World
+ *  of Daggerfall rocks) spans the pixel, 819 units, a hundred fine cells a side; on these, four or five. */
+const BROAD_COARSE_CELL = 256;
+/** A bucket over more coarse cells than this is asked by every query (a massif scaled by thousands). */
+const BROAD_COARSE_SPAN_MAX = 64;
 let BROAD_STAMP = 0;
+/** PERF-COL2: translation providers that RIDE A FLOATING FRAME - the frame they ride, by provider (onFloatingFrame). */
+const FRAME_OF = new WeakMap();
+/**
+ * PERF-COL2: mark `translation` (a bucket's provider, as addMesh takes it) as riding the floating frame `frame` - any
+ * value naming it (the streaming world's state). Every provider marked with one frame answers a translation that moves
+ * only when that frame moves, and then by the same offset as every other: a streamed pixel's place under the floating
+ * origin (StreamingWorldState pixelTranslation) is one. A bucket so marked, and not turned, is filed by its box in the
+ * world where it stood when filed - and the filing is made again the first query after its frame moved (one bucket of
+ * the frame is asked where it stands, each query: the frame's sentinel). Without it, every streamed pixel's bucket was
+ * asked by every ray and every sphere - a capsule's move ~0.03 ms with one pixel streamed, ~0.14 at the default view
+ * (121 pixels) and ~0.2 at the widest (169), for the player and every foe, every step. Answers `translation`.
+ */
+export function onFloatingFrame(frame, translation) {
+  if (typeof translation === 'function') FRAME_OF.set(translation, frame);
+  return translation;
+}
 const RAY_NEAR = [];      // raycastHit's candidates
 const SPHERE_NEAR = [];   // the sphere walks' (never nested in a ray's walk, nor a ray in theirs)
+/** File `bucket` under every cell of `size` its XZ box (moved by ox, oz) covers, in `into` - or answer false when that is
+ *  over `spanMax` cells (or not finite) and nothing was filed. */
+function fileBox(bucket, ox, oz, size, spanMax, into) {
+  const mn = bucket.min, mx = bucket.max;
+  const x0 = Math.floor((mn[0] + ox - BOX_SKIN) / size), x1 = Math.floor((mx[0] + ox + BOX_SKIN) / size);
+  const z0 = Math.floor((mn[2] + oz - BOX_SKIN) / size), z1 = Math.floor((mx[2] + oz + BOX_SKIN) / size);
+  if (!((x1 - x0 + 1) * (z1 - z0 + 1) <= spanMax)) return false;   // too big - or not finite
+  for (let gx = x0; gx <= x1; gx++) {
+    for (let gz = z0; gz <= z1; gz++) {
+      const k = cellKey(gx, gz);
+      let list = into.get(k);
+      if (!list) { list = []; into.set(k, list); }
+      list.push(bucket);
+    }
+  }
+  return true;
+}
 /** File the collider's buckets: `all` in Map order (each bucket's `ord` its place in it), `always` the buckets every
- *  query asks, `cells` the standing ones by broad cell. */
+ *  query asks, `cells` the standing ones by broad cell, `coarse` (PERF-COL2) the ones too wide for those by coarse cell,
+ *  and `frames` (PERF-COL2) one sentinel a floating frame - a bucket riding it, and where it stood when filed. */
 function buildBroad(buckets) {
-  const all = [], always = [], cells = new Map();
+  const all = [], always = [], cells = new Map(), coarse = new Map(), frames = [];
   for (const bucket of buckets.values()) {
     bucket.ord = all.length;
     all.push(bucket);
-    if (bucket.moves) { always.push(bucket); continue; }
+    let ox = 0, oz = 0;
+    if (bucket.moves) {
+      if (bucket.frame === null || bucket.r) { always.push(bucket); continue; }
+      // PERF-COL2: riding a floating frame, unturned - filed where it stands now, while its frame stands
+      const t = bucket.t();
+      if (!(Number.isFinite(t[0]) && Number.isFinite(t[1]) && Number.isFinite(t[2]))) { always.push(bucket); continue; }
+      ox = t[0]; oz = t[2];
+      if (!frames.some((f) => f.frame === bucket.frame)) frames.push({ frame: bucket.frame, bucket, x: t[0], y: t[1], z: t[2] });
+    }
     const mn = bucket.min, mx = bucket.max;
     if (!(mn[0] <= mx[0] && mn[1] <= mx[1] && mn[2] <= mx[2])) continue;   // no triangle (an inverted box): every box test answers no
-    const x0 = Math.floor((mn[0] - BOX_SKIN) / BROAD_CELL), x1 = Math.floor((mx[0] + BOX_SKIN) / BROAD_CELL);
-    const z0 = Math.floor((mn[2] - BOX_SKIN) / BROAD_CELL), z1 = Math.floor((mx[2] + BOX_SKIN) / BROAD_CELL);
-    if (!((x1 - x0 + 1) * (z1 - z0 + 1) <= BROAD_SPAN_MAX)) { always.push(bucket); continue; }   // too big - or not finite
-    for (let gx = x0; gx <= x1; gx++) {
-      for (let gz = z0; gz <= z1; gz++) {
-        const k = cellKey(gx, gz);
-        let list = cells.get(k);
-        if (!list) { list = []; cells.set(k, list); }
-        list.push(bucket);
-      }
-    }
+    if (fileBox(bucket, ox, oz, BROAD_CELL, BROAD_SPAN_MAX, cells)) continue;
+    if (fileBox(bucket, ox, oz, BROAD_COARSE_CELL, BROAD_COARSE_SPAN_MAX, coarse)) continue;   // PERF-COL2
+    always.push(bucket);
   }
-  return { all, always, cells };
+  return { all, always, cells, coarse, frames };
 }
 
 /** OW-WOD-LAG (2026-09-29, Mac: "When near mountains from WOD, the game lags insane"): THE WIDE TRIANGLES IN A TREE.
@@ -533,9 +573,21 @@ export class Collider {
   /** FB0930-FRAME: the buckets a query whose WORLD box is [x0, x1] x [z0, z1] (y unbounded) can reach, in the walk's
    *  order, into `out` - those after `afterOrd` alone (_resolveSphere's re-gather). Every bucket that moves and every
    *  one too big to file is among them; a standing bucket is among them when its box's cells meet the query's. A box
-   *  too wide (or not finite) answers every bucket after `afterOrd`, the walk as it was. */
+   *  too wide (or not finite) answers every bucket after `afterOrd`, the walk as it was.
+   *  PERF-COL2: a bucket riding a floating frame (onFloatingFrame) is a standing one while its frame stands - filed
+   *  where it stood at the filing, which is made again the first query after its frame moved - and a bucket too wide
+   *  for the fine cells is filed on the coarse ones; only a mover's that turns or rides nothing, and one too wide for
+   *  either, are asked by every query. */
   _near(x0, x1, z0, z1, out, afterOrd = -1) {
-    const broad = this._broad ??= buildBroad(this._buckets);
+    let broad = this._broad;
+    if (broad !== null) {   // PERF-COL2: a floating frame that moved since the filing - its buckets filed again where they stand
+      const fr = broad.frames;
+      for (let i = 0; i < fr.length; i++) {
+        const f = fr[i], t = f.bucket.t();
+        if (t[0] !== f.x || t[1] !== f.y || t[2] !== f.z) { broad = null; break; }
+      }
+    }
+    if (broad === null) broad = this._broad = buildBroad(this._buckets);
     out.length = 0;
     const cx0 = Math.floor(x0 / BROAD_CELL), cx1 = Math.floor(x1 / BROAD_CELL);
     const cz0 = Math.floor(z0 / BROAD_CELL), cz1 = Math.floor(z1 / BROAD_CELL);
@@ -557,6 +609,23 @@ export class Collider {
           b._broadStamp = stamp;
           if (out.length && out[out.length - 1].ord > b.ord) sorted = false;
           out.push(b);
+        }
+      }
+    }
+    if (broad.coarse.size) {   // PERF-COL2: the wide buckets, by the coarse cells the query's box covers
+      const kx0 = Math.floor(x0 / BROAD_COARSE_CELL), kx1 = Math.floor(x1 / BROAD_COARSE_CELL);
+      const kz0 = Math.floor(z0 / BROAD_COARSE_CELL), kz1 = Math.floor(z1 / BROAD_COARSE_CELL);
+      for (let gx = kx0; gx <= kx1; gx++) {
+        for (let gz = kz0; gz <= kz1; gz++) {
+          const list = broad.coarse.get(cellKey(gx, gz));
+          if (!list) continue;
+          for (let i = 0; i < list.length; i++) {
+            const b = list[i];
+            if (b.ord <= afterOrd || b._broadStamp === stamp) continue;
+            b._broadStamp = stamp;
+            if (out.length && out[out.length - 1].ord > b.ord) sorted = false;
+            out.push(b);
+          }
         }
       }
     }
@@ -629,7 +698,7 @@ export class Collider {
       // OWN space (the translation is applied to the RAY, as the DDA
       // already does), kept as the triangles go in - one compare per
       // vertex, paid once at load, against a walk paid per ray.
-      bucket = { key: bucketKey, moves: !!(translation || rotation), ord: -1, _broadStamp: 0, tris: [], yLo: [], yHi: [], part: [], parts: 0, rayMark: null, grid: new Map(), wide: [], wideTree: null, t: translation || (() => ZERO3), r: rotation, min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] };   // AUDIT BRANCH (WoD) B1; OW-WOD-LAG: the wide triangles, and their tree (built when first asked); FB0930-FRAME: its key, whether it moves, its place in the walk
+      bucket = { key: bucketKey, moves: !!(translation || rotation), frame: FRAME_OF.get(translation) ?? null, ord: -1, _broadStamp: 0, tris: [], yLo: [], yHi: [], part: [], parts: 0, rayMark: null, grid: new Map(), wide: [], wideTree: null, t: translation || (() => ZERO3), r: rotation, min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] };   // AUDIT BRANCH (WoD) B1; OW-WOD-LAG: the wide triangles, and their tree (built when first asked); FB0930-FRAME: its key, whether it moves, its place in the walk
       this._buckets.set(bucketKey, bucket);
     }
     this._broad = null;   // FB0930-FRAME: a new bucket, or a box that grows - filed again at the next query

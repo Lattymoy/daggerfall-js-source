@@ -65,8 +65,8 @@
   {
     "name": "FB0930-FRAME-a-bucket-is-filed-short-of-its-box",
     "file": "src/player/collider.js",
-    "old": "const x0 = Math.floor((mn[0] - BOX_SKIN) / BROAD_CELL), x1 = Math.floor((mx[0] + BOX_SKIN) / BROAD_CELL);",
-    "new": "const x0 = Math.floor(mn[0] / BROAD_CELL) + 1, x1 = Math.floor(mx[0] / BROAD_CELL);",
+    "old": "const x0 = Math.floor((mn[0] + ox - BOX_SKIN) / size), x1 = Math.floor((mx[0] + ox + BOX_SKIN) / size);",
+    "new": "const x0 = Math.floor((mn[0] + ox) / size) + 1, x1 = Math.floor((mx[0] + ox) / size);",
     "tests": ["test/fb0930_frame.test.js"]
   }
 ]

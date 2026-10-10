@@ -1,6 +1,6 @@
 // PERF-INST (2026-10-10, the owner: "performance must be highest priority now ... prob caused by placed objects by
 // players"): A MESH'S PLACEMENTS ARE FILED BY PLACE (render/shadowPass.js SHADOW_INSTANCE_LINEAR; bible/07-Rendering/
-// Performance-V8.md PERF-INST).
+// Performance-Priority.md PERF-INST).
 //
 // The shadow pass remembers every placement of a mesh (AUDIT SC1, AUDIT REACH) to tell a still copy from a moved one.
 // Each draw scanned every placement its mesh had - N copies of one model, N x N distances a frame - and past 128 every
