@@ -57,7 +57,9 @@ Four read-only audits covered the relay (`server/src/index.js`), the account ser
 | SCALE2b | The relay's own, ONE announced relay deploy: the O(1) socket index, the hello path in memory, bounded caches, cross-room timeouts, relay metrics, idle rooms allowed to sleep (foes and memory only when someone else is there) | Yes, once | **Shipped** (2026-10-04, in world162 beside PRIMARCH; one deploy) |
 | SCALE3 | The load harness: a Node bot fleet (guest → token → hello → poses, chat and checkpoints at real rates) against local workerd, then a staging pair; the deploy-storm scenario | No | **Local half built** (2026-10-08, this branch); the staging pair left |
 | SCALE4 | D1 discipline: sweeps moved to a `scheduled()` cron, retention for the tables that only grow, the witness tables redesigned, reads made write-free and served from read replicas (Sessions API), one heartbeat replacing the mail, beat and board polls, 304s | No | **4a-4c built** (2026-10-08, this branch): the joined session read, the cron and retention, reads write-free, the heartbeat. Left: the witness redesign, the replicas, 304s |
-| SCALE5 | Past about 1-2k players: the hub split (presence and social state per account, world chat over shard rooms), slimmer or binary poses, pose-only halo frames | Yes | When the metrics say |
+| SCALE4d | The token's mint on a D1 session - its first statement the primary's, its reads after it a read replica's - and the deploy turns the database's read replication on | No | **Built** (2026-10-10, this branch; acct106) |
+| SCALE5a | At 500 online: the hub's hello and leave without a walk of every socket, a busy refusal that mints nothing, the World tab's count past the roster's cut | Yes, once | **Built** (2026-10-10, this branch; world189 - NOT YET DEPLOYED) |
+| SCALE5 | Past about 1-2k players: the hub split (presence and social state per account, world chat over shard rooms), slimmer or binary poses, pose-only halo frames | Yes | When the metrics say - SCALE5a measured where the hub's wall is |
 | SCALE6 | Abuse and backups: Turnstile on guest creation, /64 IPv6 rate keys, bans, report and ignore, `ALLOWED_ORIGIN`, R2 snapshots, a hub export | Some | Alongside |
 
 **Relay deploy policy (SCALE):** relay changes are batched into as few deploys as possible, each in a window announced beforehand. A deploy drops every player, and until SCALE2 every reconnect is a D1 write storm.
@@ -536,3 +538,185 @@ five alternating runs: 38.6 -> 27.4 us at 50, 57.1 -> 31.7 at 100, 87.4 -> 38.9 
 | L4 | The record credited the saving to the walk's two lines; the method of its own carries most of it | FIXED: above, with the audit's halves |
 | L5 | PERF-NEXT 15's note and `_poseFrame`'s doc said the arm's every line was its own (two changed); the Testing row's "an eighth" (under one); the bench's crowds and the base's copy unsaid | FIXED: the doc (re-hashed in place, undeployed), the note, the row, the parameters |
 
+
+## SCALE4d and SCALE5a: built (2026-10-10, this branch - acct106 and world189, NOT YET DEPLOYED)
+
+Mac, 2026-10-10: "So we just hit 500 online people. I think its time to scale up our server and improve performance for
+more people". That was the arc's target. There is no bigger server to move to. Every room is its own Durable Object,
+and both Workers scale by request, so the limits are the two places where ONE thing serves everyone: the hub
+(`chat:world`, where every player online holds a socket) and the account service's one D1 primary. Both were measured
+before anything changed. The merge deploys the relay (world189, which drops every player once) and the account service
+(acct106, no migration). Deploy the account service first, or in the same merge: it asks nothing of the relay, and the
+relay asks nothing new of it.
+
+### What 500 costs, measured
+
+**The account database is the ceiling the field has already hit.** It overloaded twice on 2026-10-06 (YARD-SHED,
+STORM-SHED). The worst wave was the 3,658 token mints in the five minutes after a relay deploy.
+- **One mint, counted on the real Worker over node:sqlite.** Every statement is a read. A registered player's realm
+  character runs 9 statements with the seats closed: the session, the Grand Champion's row, Renown, the guild, three
+  reads of the character's realm row, the rating and the house. With the seats open it is 12, and 17 in a cold isolate.
+  A guest naming no character runs 3.
+- **The busy refusal's second mint** (SCALE3's "Left", above). A storm minted once per player, plus once more for every
+  busy refusal. The hub's hello gate is asked BEFORE the token is read (a refused hello costs no signature check), so
+  every one of those tokens was unspent, and the client minted afresh anyway.
+- **How many that is.** A model of the client's own retry ladder (BACKOFF_MIN_MS, BACKOFF_MAX_MS, the busy floor and
+  its jitter) against the hub's gate (CHAT_HELLO_HZ_MAX 50, burst 50) estimates the hub's busy refusals in one deploy's
+  wave. It is a Monte Carlo, not a measurement: about 400-600 for 500 players, and 6,500-8,600 for 2,000. Each is one
+  more mint's dozen reads, all landing in the minute the database is busiest.
+
+**The hub** (`tools/relayHubBench.mjs`: the real Room over the pins' fake object, every hello a signed token with an
+account and a claim, as a hub hello is). Before this slice, each hub hello did six things that grew with the room:
+- walked every socket for ONE-SEAT's other tabs (`_otherTabsOf`);
+- walked every socket for a host, which a channel never reads (`_hostOf`);
+- walked every socket for its id's old socket;
+- walked every socket to list everyone else;
+- copied the whole index to fan its join;
+- dropped the account index whole, so `_helloAccount`'s first ask rebuilt it with another walk.
+
+Each leave did three more passes and a rebuild. So a relay deploy's reconnect wave was O(N^2) in CPU on top of its
+N^2/2 join frames. `_message` is past V8's optimizing ceiling (PERF-RELAY1), so its own loops ran interpreted.
+
+### SCALE4d - the token's reads off the one primary
+
+- **On one D1 session.** The mint (`/v1/auth/token`, `server-account/src/service.js` REPLICA_ROUTES) runs on one
+  session (`replicaDb`, D1's Sessions API).
+- **Opened `first-primary`** (REPLICA_CONSTRAINT). Its first statement, the session lookup, is the primary's. Every read
+  after it may be served by a read replica at least as new as that answer: one session is sequentially consistent. So a
+  mint reads exactly what the primary held when it began.
+- **Why not `first-unconstrained`.** A guest made a moment ago would be refused `auth` by a replica that has not yet
+  seen its session, and the client takes `auth` as final. A realm character created a moment ago would mint `rc` 0,
+  which the relay refuses at its door.
+- **Writes.** A write in a session (a stale session's touch, the arena's kept #1 counted again) goes to the primary.
+  Replicas take no writes.
+- **Everything else is unchanged.** Every other route stays on the binding, the primary, as before. Nothing else was
+  reasoned about for a replica.
+- **Counted the same.** `metrics.js` countedDb opens the session through itself, so a mint's statements still count on
+  its metrics point.
+- **One store per isolate.** The session answers DB_ROOT with the binding it came from, so what an isolate keeps beside
+  its database (the seats' rows, the towns' layouts) stays one store.
+- **No sessions, no change.** A binding without sessions (a harness, an older runtime) is answered as it stands.
+- **The switch.** `account-deploy.yml` turns the database's read replication on at every deploy, after the migrations:
+  `PUT /accounts/{account}/d1/database/{id}` with `{"read_replication":{"mode":"auto"}}`, the same token that creates
+  the database. A PUT of the mode it already has changes nothing. A refusal is a warning, never a stop: without
+  replicas, every statement of a session is the primary's, which is exactly today.
+- **Unmeasured.** The account Worker runs under Smart Placement, beside its primary (SCALE1). Whether a replica takes
+  the mint's reads from there, or the nearest instance is the primary itself, is Cloudflare's to say. The service's
+  metrics will show whether a deploy's wave still overloads the primary. Correctness does not depend on it: a
+  `first-primary` session reads what the primary would.
+
+### SCALE5a - the hub without a walk of every socket, and a busy refusal that mints nothing
+
+**The relay** (world189):
+- **The account index is kept, not rebuilt.** The doors that move a socket's account move that one socket: `_setAttach`
+  and `_forget` call `_reindex`, through the module's `keyMove`. A subject index sits beside it (`_bySub`), so
+  ONE-SEAT's other tabs are read off it with no walk.
+- **Same order as a walk.** Each account's sockets are a set, read back in the index's own order. That order is the
+  order a walk gave: each socket is stamped as it enters the index (`_enter`), and goes last when deleted and set again,
+  as a Map does.
+- **Rebuilt only when the index is re-walked**, and never staler than the socket index: `_byAcct` and `_bySub` ask
+  `_all()` first. The pins' oracle found the kept index answering past IDX_TRUST_MS. The old one had the same shortcut,
+  but rebuilt so often that it rarely showed.
+- **A channel's hello asks no host.** `before` is a place room's question.
+- **The hello's walks are methods of their own**: `_withId`, `_othersOf` and `_fanBut`. This is PERF-RELAY1's remedy:
+  small enough to optimize, each reading exactly what its loop read.
+- **The fans walk the index in place.** This covers the join's and the leave's (`_fanBut`) and a channel's line and a
+  guild's. A failed send forgets its socket mid-walk, which a Map's iteration takes.
+- **A drain without a copy.** The leave tells "the room drained" from the runtime's list without a filtered copy of
+  every socket.
+- **A hub hello reads its serpent receipt once.** `_noSerpentRcpt` works as the gate's, the Abyss's and the raid's
+  receipt sets do, dropped whole when a kill writes receipts. It was the one storage read every hub hello still made.
+
+**The busy refusal mints nothing:**
+- The room's hello gate, asked before the token, closes 1013 with the reason `BUSY_TOKEN_UNREAD` (`net/wire.js`).
+- The session remembers which token each socket's hello carried. On that close it hands the token back to the minter
+  (`OnlineSession._tokenUnread`, `accountTokenMinter` `unopened`), and the room's retry carries it again within
+  TOKEN_REUSE_MS instead of minting.
+- A gate asked after the token (a battle's, a floor's, an Abyss realm's) still closes 'busy' alone: its token is spent,
+  and handing it back would be refused as a replay.
+- Only the reason is new, never the code, so a client from before reads 1013 and mints as it did.
+- This covers every cell, halo, hub and region channel: every room whose gate comes first.
+
+**The World tab's count past the cut** (the client audit, 2026-10-10). The hub's welcome names the first CHAT_ROSTER_MAX
+(512) sockets and counts the rest (`n`). At 500 online the hub is at the cut. Past it, the header only climbed, for two
+reasons:
+- **Leaves were not counted.** An unnamed player's leave never came off the count. The relay says a leave only for a
+  socket that said hello there, so an id this list never held is one the welcome cut, counted in its `n`, and its leave
+  now counts.
+- **Reconnects were counted as joins.** An unnamed player's reconnect (a join, with no leave for the socket it
+  replaced) counted as a new player. A channel's join now says `re` when it replaced the id's own socket, and that
+  counts nothing.
+
+**And the frame.** The client's `tick()` walks its peers in place. The hub link's peers are everyone online, and the
+copy was an array of all of them a frame, per link, with the chat closed too.
+
+### Measured
+
+`tools/relayHubBench.mjs` over the base (`68ba8b63`, a worktree) and this tree, one after the other, three alternating
+runs each. These are Node's CPU on this container's four cores, relative only. The frames sent are identical in both
+arms; this slice moves the CPU, not the sends.
+
+| hub | the wave, ms (all N hellos) | a hello, median us | the drain, ms (all N leaves) | a channel line, us | frames the wave sent (both arms) |
+|---|---|---|---|---|---|
+| 500 | 497 -> 384 | 963 -> 723 | 64 -> 17 | 137 -> 100 | 125,750 (15.0 MB) |
+| 1,000 | 1,317 -> 882 | 1,222 -> 824 | 188 -> 38 | 237 -> 127 | 501,500 (53.6 MB) |
+| 2,000 | 3,616 -> 1,949 | 1,811 -> 911 | 782 -> 180 | 491 -> 345 | 2,003,000 (180.7 MB) |
+
+Medians of the three; the runs, base then this, in the order made - the wave at 2,000: 3,484 / 1,949, 3,616 / 2,040,
+4,146 / 1,881 ms; a hello's median at 2,000: 1,683 / 911, 1,811 / 982, 2,014 / 853 us; the drain at 2,000: 782 / 180,
+753 / 224, 966 / 167 ms. A hello's cost no longer climbs with the room: 723, 824 and 911 us at 500, 1,000 and 2,000,
+where it was 963, 1,222 and 1,811. The welcome's largest frame is the cut roster's, 28-29 KB in both.
+
+A hello's floor is its token's Ed25519 verify, the same in both arms. What is left of the curve is the join's N sends.
+
+### Left, each with its reason
+
+- **The join's N sends.** Each hello still sends one join to every socket, so a wave is N^2/2 frames: 125,750 at 500
+  (15 MB from one object) and 2,003,000 at 2,000 (181 MB). Coalescing the joins into one frame a moment is a wire change
+  every client must learn (an old tab would miss the roster until it reloads), and it is the hub split's to do.
+- **CHAT_SOCKETS_MAX (2,048).** Every tab online holds a hub socket, and one connecting counts too, so past about 2,000
+  online the hub refuses 'room full' during a wave. The hub split (SCALE5) is the answer. It is four times today's
+  count away, and the relay's metrics (`daggerfall_relay`, the hub's `chat` kind) will say when.
+- **CHAT_HELLO_HZ_MAX, unchanged (50).** A busy refusal now costs no mint, so the gate's price is a player's wait for
+  the hub, not the database's load: the model's median is about 5-6 s at 500. Raising it moves the same sends into
+  fewer seconds.
+- **The World tab** shows 200 rows (ROSTER_ROWS_MAX) and has no search, and past 512 sockets the welcome names the
+  oldest 512 only. Its count now holds; who it lists is a UI slice.
+- **A `wdun` word** ('die', and the crows' and the giants' lapses) fans to every hub socket with no room budget: one
+  client can make two sends a second per socket. It is a referee's arm (PVPDUNGEONS), left for a slice with its law in
+  hand.
+- **The traveller fan and a place room's look-change join** still copy the index. Neither is the hub's.
+- **Whether a replica serves the mint** under Smart Placement: unmeasured, above.
+
+### Pins
+
+- **`test/scale4d.test.js` (5).** The mint runs on one session opened `first-primary`, the session lookup first, every
+  statement through it and none on the binding. No other route opens one. The claims are byte for byte the binding's,
+  the same token. The metrics point counts the session's statements. DB_ROOT is the binding, through the counter too,
+  and a binding with no sessions is answered as it stands.
+- **`test/scale5a.test.js` (10).**
+  - The kept account and subject indexes answer EXACTLY what the old walks answered: over six seeded stories of the
+    hub's own doors (hellos, reconnects, claims, drops) and four at the index's own doors. The latter adopt, set,
+    clear, forget and set again, let a socket go unannounced past IDX_TRUST_MS, and run an account past
+    ACCOUNT_TABS_MAX. The old walks are the oracle.
+  - A hub hello and leave keep the index object, and a channel walks for no host.
+  - The join and the leave reach every hello'd socket but the one they name, including through a send that fails
+    mid-walk.
+  - `re` is said on a reconnect's join alone.
+  - A hello the gate refuses carries an unspent token: the same token opens the room once the gate refills, where a
+    spent one is refused. Only that one door says so.
+  - The minter's `unopened`, and the session's hand-back on that reason alone.
+  - The serpent receipt is asked once, and handed over once one is written.
+  - The drain is told while the runtime still lists the last socket.
+- **`tools/mutants/scale4d.json`**: 7 mutants, 7 dead. **`tools/mutants/scale5a.json`**: 26 mutants, 26 dead.
+- **PIN MOVED:**
+  - ACCOUNT_VERSION's pins (acct106), 18 files and KNIGHT-HOUSE-version-unmoved.
+  - RELAY_VERSION's pins (world189), 39 files, `disc7`'s list, `soc1.json`'s version record, and `relayversion`'s row.
+  - `accountdeploy`'s verifier pin reads a step's live lines (the replicas' PUT is no `v1/` of the service's).
+  - ROSTER-G's count pin: a leave for an id the cut list never held now counts.
+  - SOC1's and AUDIT DEEP2 C's source pins (`_fanBut`, `_othersOf`).
+- **Re-aimed by content, every one still dead:** A10-bound-keeps-the-stalest-tabs, A10-bound-off,
+  FA-F4-the-fan-bound-one-socket, FA-F4-the-bound-three-short, GATEKEYS-the-empty-var-back,
+  GUILD1c-guild-line-to-everyone, ONESEAT-own-socket-counted, G2-channel-join-not-said, G4-channel-join-carries-the-look,
+  G13-count-not-moved-by-leave, G14-count-moved-by-a-repeat-join, AUDIT-DEEP2-C-welcome-ghosts,
+  SCALE2b-socket-not-adopted, S37-picture-before-the-welcome, STORM-SHED-hello-unsaid.

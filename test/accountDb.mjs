@@ -45,6 +45,19 @@ export function d1() {
       db.exec('BEGIN');
       try { const out = list.map((st) => st._result()); db.exec('COMMIT'); return out; } catch (e) { db.exec('ROLLBACK'); throw e; }
     },
+    /** SCALE4d: D1's Sessions API - a session over the same database. A fake has no replica, so every statement is the
+     *  primary's, as on a database whose read replication is off. Each session opened is recorded - its constraint and
+     *  the statements prepared through it - so a pin can say which statements a route ran on one. */
+    _sessions: [],
+    withSession(constraint) {
+      const self = this, rec = { constraint, statements: [] };
+      self._sessions.push(rec);
+      return {
+        prepare(sql) { rec.statements.push(sql); return self.prepare(sql); },
+        batch(list) { return self.batch(list); },
+        getBookmark() { return null; },
+      };
+    },
   };
 }
 

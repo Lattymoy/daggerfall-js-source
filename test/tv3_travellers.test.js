@@ -492,7 +492,9 @@ test('AUDIT DEEP2 C4/C5 by source: a Region link that moves empties the book (th
 
 test('AUDIT DEEP2 C by source: a welcome never hands a joiner a socket already closing (ONE-SEAT R4\'s rule, as the other tabs are counted)', () => {
   const srv = readFileSync(new URL('../server/src/index.js', import.meta.url), 'utf8');
-  assert.match(srv, /for \(const \[other, b\] of this\._all\(\)\) if \(other !== ws && b\.id && !this\._dead\.has\(other\) && !this\._gone\.has\(other\)\) others\.push\(b\);/);
+  // PIN MOVED (SCALE5a): the hello's others are listed by a method of its own (`_othersOf` - `_message` runs interpreted), and the rule is its
+  assert.match(srv, /for \(const \[other, b\] of this\._all\(\)\) if \(other !== ws && b\.id && !this\._dead\.has\(other\) && !this\._gone\.has\(other\)\) out\.push\(b\);/);
+  assert.match(srv, /const others = this\._othersOf\(ws\);/);
 });
 
 test('OVERWORLD NAMES wire, book and host: a traveller frame keeps the Renown and the guild\'s tag the relay stamps (a bad one refused as nothing); the book keeps the whole badge; every player drawn here is marked with it, the veiled never, and the names over the heads stand down under the view', () => {

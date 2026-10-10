@@ -79,9 +79,16 @@ test('ROSTER-G: a channel link (presence: false) HOLDS the roster it is told - t
   rr = rosterRows(s); assert.equal(rr.total, 600, 'the count is the room\'s'); assert.ok(rr.rows.length <= ROSTER_ROWS_MAX);
   assert.equal(rosterTitle(rr.total), 'Online — 600');
   ws.receive({ t: 'leave', id: 'aaaa-0001' }); assert.equal(rosterRows(s).total, 599, 'a leave the channel says takes one off the count');
-  ws.receive({ t: 'leave', id: 'nobody-known' }); assert.equal(rosterRows(s).total, 599, 'a leave for someone this list never held moves nothing');
-  ws.receive({ t: 'join', id: 'dddd-0004', name: 'Delta' }); assert.equal(rosterRows(s).total, 600, 'a join adds one');
-  ws.receive({ t: 'join', id: 'dddd-0004', name: 'Delta' }); assert.equal(rosterRows(s).total, 600, 'the same join again adds nothing');
+  // PIN MOVED (SCALE5a): this said a leave for an id the list never held moves nothing - but the relay says a leave only for
+  // a socket that said hello in the room, so an id this list never held is one the welcome CUT, counted in its 600; its
+  // leave never came off, and past CHAT_ROSTER_MAX the header only climbed (the client audit of 2026-10-10)
+  ws.receive({ t: 'leave', id: 'past-the-cut' }); assert.equal(rosterRows(s).total, 598, 'a leave for one past the cut takes one off too');
+  ws.receive({ t: 'join', id: 'dddd-0004', name: 'Delta' }); assert.equal(rosterRows(s).total, 599, 'a join adds one');
+  ws.receive({ t: 'join', id: 'dddd-0004', name: 'Delta' }); assert.equal(rosterRows(s).total, 599, 'the same join again adds nothing');
+  // SCALE5a: a reconnect's join (`re` - its old socket replaced, no leave said) by one past the cut is no new player
+  ws.receive({ t: 'join', id: 'eeee-0005', name: 'Echo', re: 1 }); assert.equal(rosterRows(s).total, 599, 'a reconnect past the cut adds nothing');
+  ws.receive({ t: 'join', id: 'ffff-0006', name: 'Foxtrot' }); assert.equal(rosterRows(s).total, 600, 'a new one past it does');
+  ws.receive({ t: 'leave', id: 'mac-0001' }); assert.equal(rosterRows(s).total, 600, 'never my own id');
   assert.equal(s.drawable().length, 0, 'nothing is drawn from a channel: no pose, nothing shown');
 }));
 

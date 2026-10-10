@@ -110,11 +110,12 @@
   {
     "name": "FA-F4-the-fan-bound-one-socket",
     "file": "server/src/index.js",
-    "old": "m.set(acct, s.slice(0, ACCOUNT_TABS_MAX)); }",
-    "new": "m.set(acct, s.slice(0, 1)); }",
+    "old": "list = list.slice(0, ACCOUNT_TABS_MAX); }",
+    "new": "list = list.slice(0, 1); }",
     "tests": [
       "test/auditsoc.test.js"
-    ]
+    ],
+    "note": "SCALE5a (re-aimed by content): the account index kept as sets, its bound read off them (`_socketsOf`)."
   },
   {
     "name": "FA-F4-the-row-names-one-peer",
@@ -128,10 +129,11 @@
   {
     "name": "FA-F4-the-bound-three-short",
     "file": "server/src/index.js",
-    "old": "for (const [acct, s] of m) if (s.length > ACCOUNT_TABS_MAX) { s.sort((x, y) => (idx.get(y)?.since ?? 0) - (idx.get(x)?.since ?? 0)); m.set(acct, s.slice(0, ACCOUNT_TABS_MAX)); }",
-    "new": "for (const [acct, s] of m) if (s.length > ACCOUNT_TABS_MAX - 3) { s.sort((x, y) => (idx.get(y)?.since ?? 0) - (idx.get(x)?.since ?? 0)); m.set(acct, s.slice(0, ACCOUNT_TABS_MAX - 3)); }",
+    "old": "if (list.length > ACCOUNT_TABS_MAX) { const idx = this._all(); list.sort((x, y) => (idx.get(y)?.since ?? 0) - (idx.get(x)?.since ?? 0)); list = list.slice(0, ACCOUNT_TABS_MAX); }",
+    "new": "if (list.length > ACCOUNT_TABS_MAX - 3) { const idx = this._all(); list.sort((x, y) => (idx.get(y)?.since ?? 0) - (idx.get(x)?.since ?? 0)); list = list.slice(0, ACCOUNT_TABS_MAX - 3); }",
     "tests": [
       "test/auditsoc.test.js"
-    ]
+    ],
+    "note": "SCALE5a (re-aimed by content): the account index kept as sets, its bound read off them (`_socketsOf`)."
   }
 ]

@@ -179,7 +179,7 @@ import {
   ACCOUNT_MAX, ACCOUNT_WINDOW_S,
 } from './accounts.js';
 import { mintToken, mintOrder, mintRenownOrder, mintGuildOrder, mintGuildOutOrder, MAX_TTL_S, TOKEN_V, ID_RE, SEAT_TITLES, CHAPTER_TITLES, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, tokenBodyOf } from '../../src/net/identityToken.js';
-import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, PATREON_OPEN_ROUTES, savePathOf, realmPathOf, SAVE_MAX_BYTES, SHOT_MAX_BYTES, maintaining } from './service.js';
+import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, PATREON_OPEN_ROUTES, savePathOf, realmPathOf, SAVE_MAX_BYTES, SHOT_MAX_BYTES, maintaining, REPLICA_ROUTES, replicaDb } from './service.js';   // SCALE4d: the routes a read replica may serve, and the session they are served on
 import { listSaves, putCard, putBlob, getBlob, deleteSave, saveCardOf } from './saves.js';
 import { signingKey, gatePublicKey } from './signing.js';
 import { stakeCards, cashoutCards } from './cards.js';   // CARDS6: a card table's stakes, escrowed
@@ -605,8 +605,11 @@ const service = {
     const realmSlot = realmPathOf(path);   // REALM P1: a realm character's save, matched as a save slot is
     if (!ROUTES.has(path) && !slot && !realmSlot) return no('not-found', 404, origin);
 
-    const db = env.DB;
-    if (!db) return no('no-database', 503, origin);
+    if (!env.DB) return no('no-database', 503, origin);
+    // SCALE4d: the token's mint on one D1 session whose first statement (the session lookup) is the primary's and whose
+    // reads after it a replica may serve - the reconnect wave's dozen reads a player off the one primary (service.js
+    // REPLICA_ROUTES); every other route on the binding as before
+    const db = REPLICA_ROUTES.has(path) && request.method === 'POST' ? replicaDb(env.DB) : env.DB;
     const ctx = { db, subtle, rand, nowS };
 
     try {

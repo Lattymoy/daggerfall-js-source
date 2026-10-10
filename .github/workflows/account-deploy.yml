@@ -468,6 +468,29 @@ jobs:
           set -euo pipefail
           $WRANGLER d1 migrations apply "$DB_NAME" --remote
 
+      # ── 2b. THE READ REPLICAS (SCALE4d) ──────────────────────────
+      #
+      # The token's mint reads through D1's Sessions API
+      # (server-account/src/service.js replicaDb), and a replica serves
+      # a session only once the database replicates. Turned on here, on
+      # every deploy: a PUT of the mode it already has changes nothing.
+      # A refusal is a WARNING and never a stop - without replicas every
+      # statement is the primary's, exactly as before. The token needs
+      # D1:Edit, which `d1 create` and the migrations above need too.
+      - name: Turn on the database's read replicas
+        run: |
+          set -uo pipefail
+          acct=$(grep -oP '^account_id\s*=\s*"\K[^"]+' server-account/wrangler.toml)
+          code=$(curl -sS --max-time 20 -o /tmp/replicas.json -w '%{http_code}' -X PUT \
+            "https://api.cloudflare.com/client/v4/accounts/$acct/d1/database/${{ steps.d1.outputs.id }}" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H 'content-type: application/json' \
+            -d '{"read_replication":{"mode":"auto"}}' || echo 000)
+          if [ "$code" = "200" ] && jq -e '.success == true' /tmp/replicas.json >/dev/null 2>&1; then
+            echo "read replication: $(jq -r '.result.read_replication.mode // "auto"' /tmp/replicas.json)"
+          else
+            echo "::warning::could not turn on the database's read replicas (HTTP $code) - every statement stays on the primary"
+          fi
+
       # ── 3. DEPLOY, AND IT COMES BEFORE THE KEY ───────────────────
       #
       # AUDIT-ACC F15: THE ORDER USED TO BE THE OTHER WAY AND THE FIRST

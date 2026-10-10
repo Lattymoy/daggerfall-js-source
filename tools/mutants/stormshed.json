@@ -92,12 +92,12 @@
   {
     "name": "STORM-SHED-hello-unsaid",
     "file": "src/net/online.js",
-    "old": "      if (frame.tok) this.mintToken?.opened?.(room, frame.tok);\n",
-    "new": "",
+    "old": "this.mintToken?.opened?.(room, frame.tok); this._helloTok",
+    "new": "this._helloTok",
     "tests": [
       "test/stormshed.test.js"
     ],
-    "note": "the session never says which room a token opened"
+    "note": "SCALE5a (re-aimed by content): the hello remembers its token by its socket beside it (`_helloTok`). the session never says which room a token opened"
   },
   {
     "name": "STORM-SHED-primary-unheld",
