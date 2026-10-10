@@ -351,7 +351,7 @@ Mac: "caravans ... that can be assaulted, protected or traded with". The law is 
   - `R - travel on with them`: the escort's own caravan, offline only (4.5).
   - `A - talk` (the conversation, behind the choice) and `Esc - goodbye`.
 - **NOT BUILT: THE PLAQUE ROWS.** The design gave the enhanced World Tooltips plaque Trade/Talk/Steal rows, and the
-  wagon a plaque of its own. The ChoiceWindow decides on every skin instead (section 11, call 7).
+  wagon a plaque of its own. The ChoiceWindow decides on every skin instead (section 11, call 8).
 
 ### 4.2 The counter
 
@@ -399,7 +399,7 @@ Mac: "caravans ... that can be assaulted, protected or traded with". The law is 
     its region one of the map's (`reportOk`, on load and on writing - any integer was charged, legalRep[-7] = NaN).
 - **NOT BUILT: STEALING FROM THE WAGON** (its cargo as a loot list, each piece on `shopliftAttempt`, NIGHT_STEAL at
   night) and the Assault report. The counter's own steal stands for the first (the shops' shoplift law). The road has
-  no blow short of a striking down (LW7), so there is no assault to report. The wagon's steal is section 11, call 7.
+  no blow short of a striking down (LW7), so there is no assault to report. The wagon's steal is section 11, call 8.
 
 ### 4.4 The hold-up (`yields`)
 
@@ -983,6 +983,6 @@ seams. `test/lw11_caravan.test.js` (the tale on the charge, void none, a murder 
    than drawing on them (2.4).
 7. The repute's numbers (9.2): REPUTE, HEARD_SHARE and CARRIED_SHARE, and whether a heard name should ever carry a
    stranger past a friend's or an enemy's regard (built: never).
-7. LW11: the plaque rows (Trade, Talk, Steal, Hire on on the World Tooltips plaque) and stealing from the wagon (its
+8. LW11: the plaque rows (Trade, Talk, Steal, Hire on on the World Tooltips plaque) and stealing from the wagon (its
    cargo a loot list on `shopliftAttempt`, NIGHT_STEAL by night) were designed and not built: the ChoiceWindow and
    the counter's own steal stand in (4.1, 4.3). Build them, or keep the door as it is?
