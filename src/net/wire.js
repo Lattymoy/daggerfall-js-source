@@ -3913,6 +3913,14 @@ export const GATE_HZ_MAX = 16;
 /** INT11: a body's (or a hull's) share in its own word (`vt` - the gate's, the Abyss Dungeon's, the serpent's), in
  *  thousandths of the whole (net/bossBody.js bodySaid reads v / 1000). */
 export const BODY_WORD_MAX = 1000;
+/** AUDIT INT15 (2026-10-10): A BODY'S WORD ON A BUCKET OF ITS OWN, never a fight's blows' - at bodySayer's pace (a
+ *  quarter second, net/bossBody.js BODY_SAY_MS, pinned equal) it took four of the gate's sixteen a second (a swing's
+ *  frames through a pack of his host refused for it) and, a hull under her carpenters, four of the serpent's ten (a
+ *  coil's `held` and `esc`, never said again, refused). The client's at the pace; the relay's holds a burst the way
+ *  bunched. */
+export const BODY_WORD_HZ_MAX = 4;
+export const bodyWordGate = (bucket, nowMs) => tokenGate(bucket, nowMs, BODY_WORD_HZ_MAX);
+export const bodyWordRelayGate = (bucket, nowMs) => tokenGate(bucket, nowMs, BODY_WORD_HZ_MAX, BODY_WORD_HZ_MAX + 4);
 export const gateGate = (bucket, nowMs) => tokenGate(bucket, nowMs, GATE_HZ_MAX);
 /** The first relay that runs a gate's boss room. An older one CLOSES the socket on the frame (the cast arm's law), and
  *  holds no fight - so the gate's door answers "not yet" at it (scenes/gatePool.js ready). */

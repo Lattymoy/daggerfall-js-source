@@ -36,9 +36,9 @@ import { cellRoomOfWire } from '../net/wire.js';
 import { bodySayer } from '../net/bossBody.js';   // INT15: my hull, said to the cell
 import { shapeMeets, shipHurt, crushHurt, gripHurt, grindHurt, venomBite, venomHurt, shoveOf, shoveLeft, maelPull, globAt, poolOf, poolBites, fleetShare, SHOVE_S } from '../systems/serpentStrike.js';
 
-/** How often an `in` is said again while I am within its waters' sight (a reconnect, a halo come up, a share back). */
 /** INT13: the line as the relay's count wrecks her (`bd`). */
 export const COUNT_WRECK_LINE = 'She is holed past saving - the fight counts her wrecked.';
+/** How often an `in` is said again while I am within its waters' sight (a reconnect, a halo come up, a share back). */
 export const IN_RESEND_MS = 20_000;
 /** How soon an `in` unanswered is said again. */
 export const IN_RETRY_MS = 3000;
@@ -160,8 +160,10 @@ export function createSerpentHost(deps) {
     pendingAt = t;
   }
   /** INT15: MY SHIP'S HULL, in my own word - her share of her whole, to the cell at bodySayer's pace (the relay's count
-   *  believes a patch by it - net/bossBody.js); to a relay that counts it alone. */
-  const sayHull = bodySayer((v) => !!live && !!deps.online?.bossOk?.() && !!deps.online?.send?.({ k: 'vt', v }, cellRoomOfWire(live.sw.site.sx, live.sw.site.sz)));
+   *  believes a patch by it - net/bossBody.js); to a relay that counts it alone - AUDIT INT15: the relay of the socket the
+   *  word leaves on, which the session asks (net/online.js sendSerpent): her cell's may be a halo's, and the primary's
+   *  version said nothing of it. */
+  const sayHull = bodySayer((v) => !!live && !!deps.online?.send?.({ k: 'vt', v }, cellRoomOfWire(live.sw.site.sx, live.sw.site.sz)));
   function hullWord(t) {
     const b = deps.boat?.();
     if (b && b.maxHull > 0 && Number.isFinite(b.hullNow)) sayHull(b.hullNow / b.maxHull, t);

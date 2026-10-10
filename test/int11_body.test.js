@@ -217,7 +217,7 @@ test('INT11 THE GATE JUDGED: his plain blow at its landing on each living body d
   ];
   assert.deepEqual(posAt(moving[0], t1), [0, 0]); assert.deepEqual(posAfter(moving[0], t1), [20, 0]);
   assert.deepEqual(posAt(bd('q', 5, 6), t1), [5, 6], 'no trail: where it stands');
-  assert.deepEqual(posAt(bd('q', 5, 6, { tr: [[t1 + 1, 1, 1]] }), t1), [1, 1], 'all after: its first');
+  assert.equal(posAt(bd('q', 5, 6, { tr: [[t1 + 1, 1, 1]] }), t1), null, 'all after: not known');   // PIN MOVED (AUDIT INT11): it read its first pose after - a body that stepped in after the landing, counted (test/int_lane3_audit.test.js)
   assert.deepEqual(judgeGate(f, moving, t1 + BODY_AFTER_MS).map((h) => h.sub), ['s3'], 'only the one in it before and after');
   // an element's blow is the client's
   f.atk = { i: 3, a: ATTACKS.nova.id, at: at0 + 9000, x: 0, z: 0, yw: 0, tg: [], until: at0 + 12000 };

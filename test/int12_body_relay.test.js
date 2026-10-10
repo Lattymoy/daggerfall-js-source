@@ -182,10 +182,10 @@ const sds = (ws, k) => ws.sent.filter((m) => m.t === 'sd' && (!k || m.k === k));
 async function withRealm(fn, env = {}) {
   const realNow = Date.now;
   let clock = 1_800_000_000_000;
-  Date.now = () => clock;
-  const world = fakeRooms({ now: () => clock });
-  const hub = world.room(SOCIAL_ROOM);
-  try {
+  try {   // AUDIT INT12: the clock given back whatever throws - the rooms' setup within it
+    Date.now = () => clock;
+    const world = fakeRooms({ now: () => clock });
+    const hub = world.room(SOCIAL_ROOM);
     await quiet(async () => {
       const hws = hub.connect(); await hub.hello(hws, 'peer-h1', null, { name: 'H1', acct: 'acct-h1', asecret: 'secret-of-acct-h1' });
       const fire = async (room) => { if (room.alarm.at != null && Date.now() >= room.alarm.at) await room.fire(); };
@@ -286,8 +286,7 @@ test('INT13 THE SERPENT\'S COUNT, ON HER HULL: its lash on the cell\'s count of 
     assert.ok(p.bd.v > 0 && p.bd.v <= BODY_DEFAULT.hull.depth + 1e-9, 'a patch believed out of the budget');
     for (let i = 0; i < 60; i++) { await tick(4); await say(a, { k: 'vt', v: 300 }); }
     assert.ok(p.bd.v > HULL_REFLOAT); assert.equal(p.bd.dn, false, 'afloat by the count');
-    await say(a, { k: 'wr', w: 0 });
-    assert.equal(p.wreck, false, 'and so by her word');
+    assert.equal(p.wreck, false, 'and so her held word - said once, as her game said it');   // PIN MOVED (AUDIT INT13): it said `wr 0` a second time, which her game never does (test/int_lane3_audit.test.js)
   }, { BOSS_BODY: ENFORCE });
 });
 
@@ -361,7 +360,8 @@ test('INT15 THE CLIENT: a session notes a relay that counts (`bossOk`, off its w
   assert.match(court, /if \(alive && healLive\(s\) && e\?\.maxHealth > 0\) sayBody\(e\.health \/ e\.maxHealth, t\);/);
   assert.match(world, /if \(!sdFightLink \|\| modes\?\.sdRealmSlot\?\.\(\) == null \|\| !online\?\.bossOk\) return;\n    if \(playerEntity\.health > 0 && playerEntity\.maxHealth > 0 && sdFightLink\.joined\(\)\) _sdSayBody\(/);
   assert.match(world, /sdFightFrame\(\); sdBodyFrame\(\); sdVoiceFrame\(\);/, 'each frame of the Hour');
-  assert.match(host, /const sayHull = bodySayer\(\(v\) => !!live && !!deps\.online\?\.bossOk\?\.\(\) && !!deps\.online\?\.send\?\.\(\{ k: 'vt', v \}/);
+  assert.match(host, /const sayHull = bodySayer\(\(v\) => !!live && !!deps\.online\?\.send\?\.\(\{ k: 'vt', v \}/);   // PIN MOVED (AUDIT INT15): the primary's version asked no more - the session asks the socket's own (sendSerpent; test/int_lane3_audit.test.js)
+  assert.match(online, /if \(w\.k === 'vt'\) return this\._bodySend\('serpent', w, ws, cell === this\.room \? this\.bossOk : !!halo\?\.bossOk\);/);
   assert.match(world, /online\.onGate = \(g\) => \{ if \(g\?\.k === 'bd'\) bossCountFell\(modes\?\.gateArenaDay\?\.\(\) != null\); else gateLink\?\.word\(g\); \};/);
   assert.match(world, /if \(w\?\.k === 'bd'\) \{ bossCountFell\(slot != null\); return; \}/);
   assert.match(world, /function bossCountFell\(inFight\) \{\n    if \(!inFight \|\| !\(playerEntity\.health > 0\)\) return;\n    setMidScreenText\(BOSS_COUNT_FELL_TEXT\);\n    forcePlayerDeath\(playerEntity\);/);

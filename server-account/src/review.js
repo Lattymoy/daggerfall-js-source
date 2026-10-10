@@ -135,6 +135,15 @@ export async function reviewAct({ db, bucket, nowS }, player, env, act, body = {
   return { error: 'body' };
 }
 
+/** AUDIT INT14: THE RANKS OF `n` ROWS - each of MEASURE_QUANTILES and the most, every one read by its rank in order (`at`,
+ *  one row a rank, asked of the database). The wealth's measure and the boss fights' read their rates by it alike (the
+ *  second had copied the first's loop, rank rounding and all). @param {number} n @param {(rank: number) => Promise<any>} at */
+async function ranked(n, at) {
+  const quantiles = [];
+  for (const q of MEASURE_QUANTILES) quantiles.push([q, n ? await at(Math.min(n - 1, Math.ceil(q * n) - 1)) : null]);
+  return { quantiles, most: n ? await at(n - 1) : null };
+}
+
 /**
  * THE MEASURE over the last `days`: every character-hour that played MEASURE_PLAYED_MIN or more, as gold an hour of play,
  * by the budget's own bands - each band's count, quantiles and most - and the `measure` findings in the window by band
@@ -154,11 +163,10 @@ export async function measure(db, nowS, days) {
     const n = Number((await db.prepare(`SELECT COUNT(*) AS n FROM realm_wealth_hours WHERE ${where}`).bind(since, MEASURE_PLAYED_MIN, lo, b.upTo).first())?.n ?? 0);
     const at = async (/** @type {number} */ rank) => (await db.prepare(`SELECT ${rate} AS r FROM realm_wealth_hours WHERE ${where} ORDER BY r LIMIT 1 OFFSET ?5`)
       .bind(since, MEASURE_PLAYED_MIN, lo, b.upTo, rank).first())?.r ?? null;
-    const quantiles = [];
-    for (const q of MEASURE_QUANTILES) quantiles.push([q, n ? await at(Math.min(n - 1, Math.ceil(q * n) - 1)) : null]);
+    const { quantiles, most } = await ranked(n, at);
     const overs = Number((await db.prepare("SELECT COUNT(*) AS n FROM realm_findings WHERE at >= ?1 AND kind IN ('measure', 'budget') AND json_extract(detail, '$.level') > ?2 AND json_extract(detail, '$.level') <= ?3")
       .bind(since, lo, b.upTo).first())?.n ?? 0);
-    bands.push({ from: lo + 1, upTo: b.upTo, rate: b.rate, cap: b.cap, hours: n, quantiles, most: n ? await at(n - 1) : null, overs });
+    bands.push({ from: lo + 1, upTo: b.upTo, rate: b.rate, cap: b.cap, hours: n, quantiles, most, overs });
     lo = b.upTo;
   }
   return { days, config, isDefault: config === BUDGET_DEFAULT, bands };
@@ -186,10 +194,9 @@ export async function bodiesMeasure(db, nowS, days) {
     const count = async (/** @type {string} */ more) => Number((await db.prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE ${where}${more}`).bind(since).first())?.n ?? 0);
     const n = await count('');
     const at = async (/** @type {number} */ rank) => (await db.prepare(`SELECT ${rate} AS r FROM ${table} WHERE ${where} ORDER BY r LIMIT 1 OFFSET ?2`).bind(since, rank).first())?.r ?? null;
-    const quantiles = [];
-    for (const q of MEASURE_QUANTILES) quantiles.push([q, n ? await at(Math.min(n - 1, Math.ceil(q * n) - 1)) : null]);
+    const { quantiles, most } = await ranked(n, at);
     fights.push({
-      fight, receipts: n, quantiles, most: n ? await at(n - 1) : null,
+      fight, receipts: n, quantiles, most,
       over: await count(" AND json_extract(body, '$[2]') > 0"),
       fell: await count(" AND json_extract(body, '$[3]') > 0"),
       lost: await count(" AND json_extract(body, '$[4]') = 0"),

@@ -14,7 +14,9 @@
 // IN THE STRUCK PLAYER'S FAVOUR, ALWAYS: a body is struck only standing BODY_MARGIN deep in a shape (bossBody.js
 // deepIn) both where its last pose before the landing put it and where its first after does (`tr`, the relay's trail of
 // its poses - its standing pose when it sent none: it has not moved), so a body that stepped out as it landed, or in
-// after, is never counted; a blow over a span, the same at the beat's two ends. The Stomp's rolling ring (a jump lets
+// after, is never counted; a blow over a span, the same at the beat's two ends. AUDIT INT11: a trail whose every pose
+// came after the landing does not say where it stood at it - never counted (an empty one, `[]`, is the relay's word that
+// it does not know). The Stomp's rolling ring (a jump lets
 // it pass, and a pose says no ground) and any burning ground are never counted; a pillar's shade is taken at any
 // height. The relay's count is what the body took at the least; the client's own is what it says.
 //
@@ -36,14 +38,16 @@ import { deepIn, BODY_AFTER_MS } from './bossBody.js';
 const dist = (ax, az, bx, bz) => Math.hypot(ax - bx, az - bz);
 /** The living bodies a fight counts (a fighter of its own, not dead by its census). */
 const living = (f, bodies) => bodies.filter((b) => !b.dead && f.players?.[b.sub]);
-/** Where body `b` stood at `t` by its trail: its last pose at or before `t` (its first, when all came after), else where
- *  it stands. Pure. @param {{x: number, z: number, tr?: number[][]}} b @param {number} t */
+/** Where body `b` stood at `t` by its trail: its last pose at or before `t`; no trail, where it stands (it sent no pose
+ *  since the relay began keeping them - it has not moved). AUDIT INT11: a trail with none at or before `t` - its first
+ *  pose came after (a socket new to the fight, a trail pruned past it, an instance's trails lost to its sleep: `[]`) - is
+ *  null, NOT KNOWN: its first pose after `t` read as where it stood counted a body that stepped in after the landing.
+ *  Pure. @param {{x: number, z: number, tr?: number[][]}} b @param {number} t @returns {number[] | null} */
 export function posAt(b, t) {
-  const tr = b.tr ?? [];
+  if (!b.tr) return [b.x, b.z];
   let q = null;
-  for (const p of tr) { if (p[0] <= t) q = p; else break; }
-  q ??= tr[0] ?? null;
-  return q ? [q[1], q[2]] : [b.x, b.z];
+  for (const p of b.tr) { if (p[0] <= t) q = p; else break; }
+  return q ? [q[1], q[2]] : null;
 }
 /** Where body `b` stood next after `t`: its first pose after it, else where it stands (it sent none since - it has not
  *  moved). Pure. @param {{x: number, z: number, tr?: number[][]}} b @param {number} t */
@@ -51,8 +55,8 @@ export function posAfter(b, t) {
   for (const p of b.tr ?? []) if (p[0] > t) return [p[1], p[2]];
   return [b.x, b.z];
 }
-/** Is body `b` deep in `test` at `t` - before it and after it both? */
-const deepAt = (test, b, t) => { const [x0, z0] = posAt(b, t), [x1, z1] = posAfter(b, t); return deepIn(test, x0, z0) && deepIn(test, x1, z1); };
+/** Is body `b` deep in `test` at `t` - before it and after it both (where it stood before not known: no)? */
+const deepAt = (test, b, t) => { const p0 = posAt(b, t), [x1, z1] = posAfter(b, t); return !!p0 && deepIn(test, p0[0], p0[1]) && deepIn(test, x1, z1); };
 
 /**
  * A blow that runs over a span, judged this beat: each living body not yet struck that `hits` over `t0`..`t1` - where it
@@ -64,8 +68,8 @@ function sweep(a, bodies, t0, t1, end, share, hits, out) {
   const test = (x, z) => hits(x, z, t0, t1);
   for (const b of bodies) {
     if (a.bh.includes(b.sub)) continue;
-    const [x0, z0] = posAt(b, t0), [x1, z1] = posAt(b, t1);
-    if (!deepIn(test, x0, z0) || !deepIn(test, x1, z1)) continue;
+    const p0 = posAt(b, t0), p1 = posAt(b, t1);
+    if (!p0 || !p1 || !deepIn(test, p0[0], p0[1]) || !deepIn(test, p1[0], p1[1])) continue;
     a.bh.push(b.sub);
     out.push({ sub: b.sub, share });
   }

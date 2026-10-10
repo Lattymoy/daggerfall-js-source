@@ -96,6 +96,22 @@ export const bodyDown = (p) => !!p?.bd?.dn;
 /** Is the fighter OUT of the fight by the count - fallen by it, or dead and not yet risen - while `enforce` holds? Its
  *  blows land nothing (the dead strike nothing, by the relay's word now as by the pose's). */
 export const bodyOut = (p, enforce) => !!enforce && !!p?.bd && (p.bd.dn || p.bd.dd != null);
+/** AUDIT INT11: the count's fall is told again this often while its game has not taken it (bodyTellOwed). */
+export const BODY_TELL_MS = 3000;
+/**
+ * AUDIT INT11: IS THE COUNT'S FALL OWED ITS GAME AGAIN? It was said once, to the sockets the fighter held at that beat -
+ * one mid-reconnect heard nothing, lived on in its own game, and fought on a ghost: its blows landing nothing, its time
+ * standing none, no word of why. Once `enforce` holds: fallen by the count, no death seen since (`dd` - its game took the
+ * fall), and BODY_TELL_MS since it was last told (`ta`, stamped here when it answers true; the first telling stamps it
+ * too). The caller adds its own acknowledgement where a death is no word (a ship's: her own `wr 1`).
+ * @param {any} p @param {number} now @param {boolean} enforce
+ */
+export function bodyTellOwed(p, now, enforce) {
+  const b = p?.bd;
+  if (!enforce || !b?.dn || b.dd != null || now - (b.ta ?? -Infinity) < BODY_TELL_MS) return false;
+  b.ta = now;
+  return true;
+}
 /** The relay's trail of a body's poses: this long, this many at most (net/bossRef.js posAt reads it). */
 export const BODY_TRAIL_MS = 2000;
 export const BODY_TRAIL_MAX = 24;
@@ -142,6 +158,32 @@ export function bodySaid(p, c, now, line, { enforce = false, up = 0, hull = fals
   b.u = u;
   if (b.dn && b.v > up) b.dn = false;
   return g > 0;
+}
+
+/**
+ * AUDIT INT11: AN ALLY'S HEAL the relay believed (the gate's `heal` word, through its own heal bucket - gateBrain.js
+ * applyHeal), `share` of the whole: no mend of the body's own, so never its budget's. It was charged to it: a tank three
+ * healers held up claimed every point of theirs out of its own budget, past the line (`o`), and under `enforce` fell by
+ * the count while every screen had it standing. The heal's word comes after the body's (a second's batch against a
+ * quarter's), so it pays back what the body's word claimed of it, in order: what the count left unmet - believed now, and
+ * no longer past the line; then what the budget paid - given back, and no longer the body's own believing (`h`); the rest,
+ * a heal whose body's word is still to come, stands the count up itself. Fallen by the count while `enforce` holds, a
+ * heal stands it up no more than its own word would. Answers the share it took. Pure.
+ * @param {any} p @param {number} share @param {number} now @param {{depth: number, perS: number}} line
+ * @param {{enforce?: boolean, up?: number}} [o]
+ */
+export function bodyHealed(p, share, now, line, { enforce = false, up = 0 } = {}) {
+  if (!p || !(share > 0) || !Number.isFinite(share)) return 0;
+  const b = bodyOf(p, now, line);
+  fill(b, now, line);
+  if (b.dn && enforce) return 0;
+  const k = Math.min(share, b.u);
+  b.u -= k; b.o = Math.max(0, b.o - k); b.v = Math.min(1, b.v + k);
+  const back = Math.min(share - k, Math.max(0, line.depth - b.m), b.h);
+  b.m += back; b.h -= back;
+  b.v = Math.min(1, b.v + (share - k - back));
+  if (b.dn && b.v > up) b.dn = false;
+  return share;
 }
 
 /** A NEW LIFE in the fight (a death it saw, then the fighter alive in it again): whole, its budget full, standing - its

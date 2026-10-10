@@ -23470,7 +23470,6 @@ export async function bootWorld(canvas, renderer, params, status) {
       ready: (cell) => navalOn() && !!online?.serpentReady?.(cell),   // AUDIT SERPENT M4: no sea fight, no ship to bring - no `in`, no share
       send: (w, cell) => !!online?.sendSerpent?.(w, cell),
       acct: () => _accountSerpents.me(),   // the relay's fighter key - the identity's sub, the account's id
-      bossOk: () => !!online?.bossOk,   // INT15: a relay that counts her hull
     },
     toScene: (sx, sz, x, z) => state.localFromWorld(sx + x * SERPENT_NATIVE_PER_M, sz + z * SERPENT_NATIVE_PER_M),
     toSite: (sx, sz, x, z) => { const w = state.worldCoords([x, 0, z]); return [(w.x - sx) / SERPENT_NATIVE_PER_M, (w.z - sz) / SERPENT_NATIVE_PER_M]; },
