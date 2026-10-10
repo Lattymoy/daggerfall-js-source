@@ -1,0 +1,72 @@
+[
+  {
+    "name": "PERF-INST-a-the-nearest-tie-to-the-latest",
+    "file": "src/render/shadowPass.js",
+    "old": "(d < bestD || (d === bestD && best !== null && s.ord < best.ord))",
+    "new": "(d < bestD || (d === bestD && best !== null))",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-b-a-claimed-placement-taken",
+    "file": "src/render/shadowPass.js",
+    "old": "            if (s.seen !== this.frameNo && (d < bestD",
+    "new": "            if ((d < bestD",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-c-a-moved-placement-left-where-it-stood",
+    "file": "src/render/shadowPass.js",
+    "old": "    if (!same) { m.set(matrix); s.at = this.frameNo; _file(o, s); }",
+    "new": "    if (!same) { m.set(matrix); s.at = this.frameNo; }",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-d-the-shift-not-refiled",
+    "file": "src/render/shadowPass.js",
+    "old": "      if (o._shGrid) _fileAll(o);   // PERF-INST: every placement moved - filed again where it stands now\n",
+    "new": "",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-e-the-3x3-a-cross",
+    "file": "src/render/shadowPass.js",
+    "old": "          const cell = grid.get(instKey(gx, gz));\n          if (!cell) continue;",
+    "new": "          const cell = gx !== cx && gz !== cz ? null : grid.get(instKey(gx, gz));\n          if (!cell) continue;",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-f-a-live-placement-evicted",
+    "file": "src/render/shadowPass.js",
+    "old": "        if (!oldest || this.frameNo - oldest.seen < SHADOW_DYNAMIC_HOLD) { o._shLiveAt = this.frameNo; return true; }",
+    "new": "        if (!oldest) { o._shLiveAt = this.frameNo; return true; }",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-g-no-eviction",
+    "file": "src/render/shadowPass.js",
+    "old": "        s = oldest; s.m.set(matrix); s.at = null; s.seen = this.frameNo;   // a placement not drawn for a hold: this one's now\n        _file(o, s);\n        return false;",
+    "new": "        return true;",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-h-all-live-kept-past-its-frame",
+    "file": "src/render/shadowPass.js",
+    "old": "        if (o._shLiveAt === this.frameNo) return true;",
+    "new": "        if (o._shLiveAt != null) return true;",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-i-the-grid-unasked",
+    "file": "src/render/shadowPass.js",
+    "old": "    if (inst.length > SHADOW_INSTANCE_LINEAR) return this._movedFiled(o, inst, matrix);   // PERF-INST",
+    "new": "    if (inst.length > Infinity) return this._movedFiled(o, inst, matrix);   // PERF-INST",
+    "tests": ["test/perfinst.test.js"]
+  },
+  {
+    "name": "PERF-INST-j-the-cap-back-to-128",
+    "file": "src/render/shadowPass.js",
+    "old": "export const SHADOW_INSTANCE_MAX = 4096;",
+    "new": "export const SHADOW_INSTANCE_MAX = 128;",
+    "tests": ["test/perfinst.test.js"]
+  }
+]

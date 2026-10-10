@@ -897,6 +897,7 @@ import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor, MILL_SOUND, millSoundP
 import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
 import { homeLookRemap, HOME_LOOK_BUILD_WAIT_MS } from '../world/homeLook.js';   // HOME-LOOK: a painted house's own table
+import { DECOR_DRAW, decorCullVerdict } from './decorRoom.js';   // PERF-YARD: a placed piece's verdict, from the host's view test
 import { createHomeYards, yardLampRows } from './homeYards.js';   // HOME-YARD: the town's yards, and the owner's decorator outside; YARD-LIGHT: a yard's lamps as the night's scene lights
 import { modelFootRects, footRectsAt } from './homeYards.js';   // FB1009 HOME-FOOT: a building's ground, its models' faces seen from above
 import { loadIcon } from '../ui/textureCanvas.js';   // HOME-YARD: the decorator's pictures
@@ -12022,6 +12023,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     feet: () => (walkMode && playerSpawned ? player.feetAt() : null),
     outside: () => _mode() === 'exterior' && playerSpawned && !player.riding,
     eye: () => cam.pos,
+    cull: (box) => yardCull(box),   // PERF-YARD: the pieces culled as the town's own models are
     collider: () => collider, meshes: { getGpuMesh, cpuModels }, renderer, getTexture, uploadRecord, uploadRecordFrame,
     iconUrl: (a, r) => loadIcon(a, r, { scale: 1 }),
     scanDeps: () => decorScanDeps({ blocks, arch, getTexture }),   // DECOR-DUNGEON: the interior host's own constructor
@@ -28874,6 +28876,20 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   const _planes = new Float32Array(24);
   const snowOutside = (box, x, y, z) => aabbOutside(_planes, box, x, y, z);   // SNOWFALL1 (AUDIT ENVIRONS G6): a blanket tile's bounds against the frame's frustum
   const _pv = new Float32Array(16);
+  // PERF-YARD (2026-10-10, the owner: "prob caused by placed objects by players"): A YARD'S PIECE IS CULLED AS THE
+  // TOWN'S OWN MODELS ARE - the pixel walk's law (EV3 and SHADOW-REACH): off screen and out of every shadow's reach,
+  // nothing; off screen in a shadow's reach, the maps alone. Every piece of every yard within YARD_DRAW_M was a draw a
+  // frame, behind the eye or not, and a caster every shadow walk asked - sixty a home, and a town of furnished yards.
+  // The yards draw before the walk makes `_planes`, so their test makes its own planes from the frame's matrices (kept
+  // for the tap ray before the draw), once a frame: the same `spherePlanes` over the same product.
+  const _yardPlanes = new Float32Array(24), _yardPv = new Float32Array(16);
+  let _yardPlanesAt = null;
+  function yardCull(box) {
+    if (!cullOn || !_lastProj || !_lastView) return DECOR_DRAW;
+    if (_yardPlanesAt !== last) { spherePlanes(multiply(_lastProj, _lastView, _yardPv), _yardPlanes); _yardPlanesAt = last; }
+    return decorCullVerdict(_yardPlanes, box, _yardReach);
+  }
+  const _yardReach = (box) => renderer.shadowReach(box);
   /** PERF-LIGHTS: the night's lantern pool and the one translation triple
    *  it reads through - refilled every frame, never re-minted. */
   const _sceneLights = [];

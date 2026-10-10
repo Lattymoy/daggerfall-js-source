@@ -304,8 +304,18 @@ export const SHADOW_RECORD_MAX = 6000;
 export const SHADOW_DYNAMIC_HOLD = 60;
 /** AUDIT SC1: how many placements of ONE mesh the pass remembers (a dungeon's doors share a model), and how far a
  *  draw may sit from a remembered placement and still be that placement's (a door swings a hand's breadth a frame). */
-export const SHADOW_INSTANCE_MAX = 128;   // AUDIT REACH: and a placement not drawn for a hold is evicted for a new one (a mesh cache is never destroyed - the doors of every dungeon of a session would fill it)
+export const SHADOW_INSTANCE_MAX = 4096;   // AUDIT REACH: and a placement not drawn for a hold is evicted for a new one (a mesh cache is never destroyed - the doors of every dungeon of a session would fill it); PERF-INST: 128 before the placements were filed by place
 export const SHADOW_INSTANCE_REACH = 2;
+/** PERF-INST (2026-10-10, the owner: "prob caused by placed objects by players"): A MESH'S PLACEMENTS ARE FILED BY PLACE
+ *  past this many. Each draw scanned every placement its mesh had - a frame of N copies of one model was N x N
+ *  distances - and past SHADOW_INSTANCE_MAX (128 then) every further copy read as moved, for ever: a town of yards
+ *  furnished with the same chair, a room of two hundred placed pieces or a long view of a model too odd to batch had
+ *  every copy past the 128th replayed as a dynamic caster into every lantern near it, every frame. Past this count a
+ *  placement is filed on an XZ grid of SHADOW_INSTANCE_REACH cells and a draw asks the 3x3 cells round its own: every
+ *  placement within the reach stands in them, and the answer - the exact one first, then the nearest unclaimed one,
+ *  ties to the earliest remembered - is the scan's. At or under it, the scan as it was. */
+export const SHADOW_INSTANCE_LINEAR = 64;
+const instKey = (gx, gz) => ((gx & 0x7fff) << 15) | (gz & 0x7fff);   // a small integer (no number boxed a lookup); cells 65 km apart share a key, which only hands the walk more to measure
 /** AUDIT REACH (the sway): a flora batch leaning less than this at its crown is still - half a cube texel at a lantern's
  *  typical reach - and a batch leaning more is a dynamic on ITS OWN cadence, SHADOW_SWAY_EVERY frames: the sway is slow,
  *  and every frame for every flora batch of a pixel handed SC1's whole saving back in a town with trees. */
@@ -939,6 +949,27 @@ export const cubeKeeps = (lim, k, x, y, z, r) => {
  * `opts.build(vs, fs)` compiles a program (the renderer's _buildProgram);
  * `opts.vs` is { mesh, bb, terrain } - the renderer's own vertex shaders.
  */
+/** PERF-INST: file placement `s` of `o` under the grid cell its translation stands in (out of the one it stood in). */
+function _file(o, s) {
+  const k = instKey(Math.floor(s.m[12] / SHADOW_INSTANCE_REACH), Math.floor(s.m[14] / SHADOW_INSTANCE_REACH));
+  if (s.filed && k === s.key) return;
+  const grid = o._shGrid;
+  if (s.filed) {
+    const was = grid.get(s.key);
+    if (was) { const i = was.indexOf(s); if (i >= 0) { was[i] = was[was.length - 1]; was.pop(); } if (!was.length) grid.delete(s.key); }
+  }
+  let cell = grid.get(k);
+  if (!cell) { cell = []; grid.set(k, cell); }
+  cell.push(s);
+  s.key = k; s.filed = true;
+}
+/** PERF-INST: every placement of `o` filed afresh (the first time past SHADOW_INSTANCE_LINEAR, and after an origin shift). */
+function _fileAll(o) {
+  o._shGrid = new Map();
+  for (const s of o._shInst) { s.filed = false; s.key = NaN; _file(o, s); }
+  return o._shGrid;
+}
+
 export class ShadowPass {
   constructor(gl, opts) {
     this.gl = gl;
@@ -1305,7 +1336,9 @@ export class ShadowPass {
       const d = this._shiftDelta(o);
       for (const s of inst) { s.m[12] += d[0]; s.m[13] += d[1]; s.m[14] += d[2]; }
       this._shiftSeen(o);
+      if (o._shGrid) _fileAll(o);   // PERF-INST: every placement moved - filed again where it stands now
     }
+    if (inst.length > SHADOW_INSTANCE_LINEAR) return this._movedFiled(o, inst, matrix);   // PERF-INST
     const x = matrix[12], y = matrix[13], z = matrix[14];
     // AUDIT REACH: THE PLACEMENT ITSELF FIRST. The first cut matched the NEAREST remembered placement within the reach,
     // so two still placements of one mesh closer than that (double doors, an arrow in the wall beside another)
@@ -1328,7 +1361,8 @@ export class ShadowPass {
         s = oldest; s.m.set(matrix); s.at = null; s.seen = this.frameNo;   // a placement not drawn for a hold: this one's now
         return false;
       }
-      inst.push({ m: new Float32Array(matrix), at: null, seen: this.frameNo });
+      inst.push({ m: new Float32Array(matrix), at: null, seen: this.frameNo, ord: inst.length, key: NaN });
+      if (inst.length > SHADOW_INSTANCE_LINEAR) _fileAll(o);   // PERF-INST: past the scan's count - filed from here on
       return false;
     }
     s.seen = this.frameNo;
@@ -1336,6 +1370,55 @@ export class ShadowPass {
     let same = true;
     for (let i = 0; i < 16; i++) if (Math.abs(m[i] - matrix[i]) > SHADOW_STILL_EPS) { same = false; break; }
     if (!same) { m.set(matrix); s.at = this.frameNo; }
+    return s.at != null && this.frameNo - s.at < SHADOW_DYNAMIC_HOLD;   // moved now, or within the hold
+  }
+  /** PERF-INST: _moved's answer for a mesh with more placements than SHADOW_INSTANCE_LINEAR - the same placement found
+   *  (the exact one, earliest remembered; else the nearest within the reach not claimed this frame, earliest on a
+   *  tie), asked of the 3x3 grid cells round the draw rather than of every placement, and the same memory kept: a
+   *  placement whose translation changes is filed again, a full memory evicts the stalest or answers dynamic. The
+   *  stalest is the one walk of every placement left, made only when a draw finds none and the memory is full - and
+   *  once a frame finds every placement live, the rest of that frame's misses are dynamic without it (a draw only
+   *  makes a placement fresher). */
+  _movedFiled(o, inst, matrix) {
+    const grid = o._shGrid ?? _fileAll(o);
+    const x = matrix[12], y = matrix[13], z = matrix[14];
+    let exact = null, best = null, bestD = SHADOW_INSTANCE_REACH * SHADOW_INSTANCE_REACH;
+    const eps2 = SHADOW_STILL_EPS * SHADOW_STILL_EPS;
+    const cx = Math.floor(x / SHADOW_INSTANCE_REACH), cz = Math.floor(z / SHADOW_INSTANCE_REACH);
+    if (Number.isFinite(cx) && Number.isFinite(cz)) {   // a translation that is not finite matches nothing (the scan's NaN compares)
+      for (let gx = cx - 1; gx <= cx + 1; gx++) {
+        for (let gz = cz - 1; gz <= cz + 1; gz++) {
+          const cell = grid.get(instKey(gx, gz));
+          if (!cell) continue;
+          for (let i = 0; i < cell.length; i++) {
+            const s = cell[i], m = s.m, d = (m[12] - x) * (m[12] - x) + (m[13] - y) * (m[13] - y) + (m[14] - z) * (m[14] - z);
+            if (d <= eps2) { if (exact === null || s.ord < exact.ord) exact = s; continue; }
+            if (s.seen !== this.frameNo && (d < bestD || (d === bestD && best !== null && s.ord < best.ord))) { bestD = d; best = s; }
+          }
+        }
+      }
+    }
+    let s = exact ?? best;
+    if (!s) {
+      if (inst.length >= SHADOW_INSTANCE_MAX) {
+        if (o._shLiveAt === this.frameNo) return true;   // every placement live this frame, already found
+        let oldest = null;
+        for (let i = 0; i < inst.length; i++) if (oldest === null || inst[i].seen < oldest.seen) oldest = inst[i];
+        if (!oldest || this.frameNo - oldest.seen < SHADOW_DYNAMIC_HOLD) { o._shLiveAt = this.frameNo; return true; }   // every placement live: dynamic, never wrong
+        s = oldest; s.m.set(matrix); s.at = null; s.seen = this.frameNo;   // a placement not drawn for a hold: this one's now
+        _file(o, s);
+        return false;
+      }
+      s = { m: new Float32Array(matrix), at: null, seen: this.frameNo, ord: inst.length, key: NaN };
+      inst.push(s);
+      _file(o, s);
+      return false;
+    }
+    s.seen = this.frameNo;
+    const m = s.m;
+    let same = true;
+    for (let i = 0; i < 16; i++) if (Math.abs(m[i] - matrix[i]) > SHADOW_STILL_EPS) { same = false; break; }
+    if (!same) { m.set(matrix); s.at = this.frameNo; _file(o, s); }
     return s.at != null && this.frameNo - s.at < SHADOW_DYNAMIC_HOLD;   // moved now, or within the hold
   }
   /** AUDIT PRE-MERGE 0928 R1: its vertex generation (updateMeshVertices, a sail's bake; 0 before one) changed since the
