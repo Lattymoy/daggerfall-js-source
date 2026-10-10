@@ -139,9 +139,10 @@ test('AUDIT 28 B5: the respawn takes what the death screen said, capped at the p
   assert.match(rez, /stateDeathLoss\(null\);/, 'a rescue withdraws the loss');
   assert.match(rez, /if \(spared > 0\) townTalk\.say\(RESURRECT_TEXT\.spared\(spared\)\);/);
   assert.match(src('src/ui/deathScreen.js'), /this\.online = online \?\? isOnlinePage\(\);/);
-  assert.match(src('src/ui/deathScreen.js'), /if \(this\.online\) stateDeathLoss\(this\.goldLoss\);/);
+  // PIN MOVED (BAL4, bible/05-Combat/Balance-Arc.md section 6): a death that respawns states it - online, or a Legacy rise offline
+  assert.match(src('src/ui/deathScreen.js'), /if \(respawns\) stateDeathLoss\(this\.goldLoss\);/);
   assert.match(src('src/scenes/exterior.js'), /hint: 'ENTER end', online: false \}/, 'the fixed city');
-  assert.match(src('src/scenes/dungeonContext.js'), /\.\.\.\(opts\.onlineRespawn \? \{\} : \{ online: false \}\)/, 'the standalone dungeon');
+  assert.match(src('src/scenes/dungeonContext.js'), /\.\.\.\(opts\.onlineRespawn \? \{ rises: opts\.legacyWillRise \} : \{ online: false \}\)/, 'the standalone dungeon (and no rise there)');
 });
 
 test('AUDIT 28 B6/B9: a load that still holds a bounty keeps its standing pack, and the ways named are named again', async () => {

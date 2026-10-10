@@ -48,7 +48,8 @@ export class TownPopulation {
     this.race = race;
     // AUDIT 23 (characters-5) - MobilePersonNPC.cs:214-215: the NAME
     // bank is the REGION's (MapsFile.RegionRaces), independent of the
-    // climate-driven billboard race; null falls back to the race bank.
+    // billboard race (the climate's, or REGIONAL-FOLK's Redguard region's -
+    // characters/mobilePerson.js walkerRace); null falls back to the race bank.
     this.nameBank = nameBank;
     this.makePerson = makePerson;
     this.rand = rand;

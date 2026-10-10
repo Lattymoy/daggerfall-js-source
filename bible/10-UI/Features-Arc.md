@@ -313,7 +313,8 @@ DIFFERENT feature the port does not run (Ledger A). A player reading
 "Enhanced AI" beside an unavailable "Smarter Enemies" could take them
 for one thing.
 
-**The row.** Enhanced alone, over the pref, off by default. The note
+**The row.** Enhanced alone, over the pref, off by default (ON since
+BAL4, 2026-10-10 - `05-Combat/Balance-Arc.md` section 6). The note
 keeps its claims and gains one sentence: this is the port's own, not
 DFU's Smarter Enemies, which the port does not run. The claims are
 PINNED AGAINST THE ARC, not remembered: the test reads the arc's

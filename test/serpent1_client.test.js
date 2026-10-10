@@ -565,7 +565,8 @@ test('SERPENT1 hoard: the seed\'s own - the same seed, level and earning the sam
   assert.equal(s.pieces.length, 1);
   assert.ok(Math.abs(s.gold - a.gold * STOOD_GOLD) <= 1, 'the same seed\'s gold, its share');
   const list = serpentSpoilsList(12345, 20, 'dealt');
-  assert.deepEqual(list.map((p) => p.kind), ['item', 'item', 'item', 'item', 'gold']);   // PIN MOVED (SERPENT-SET): the gate's embers between the pieces and the gold; PIN MOVED (CAST-SPEED): three pieces before them
+  assert.deepEqual(list.map((p) => p.kind), ['item', 'item', 'item', 'item', 'item', 'gold']);   // PIN MOVED (SERPENT-SET): the gate's embers between the pieces and the gold; PIN MOVED (CAST-SPEED): three pieces before them; PIN MOVED (GEM2): the Old Coil's gem after the pieces, a dealer's
+  assert.equal(a.gems.length, 1); assert.equal(s.gems.length, 0, 'a ship that stood: no gem');
   assert.equal(serpentSpoilsDay(DAY), `serpent:${DAY}`);
   assert.notEqual(SERPENT_SPOILS_KEYS.store, RAID_SPOILS_KEYS.store);
   assert.notEqual(SERPENT_SPOILS_KEYS.day, RAID_SPOILS_KEYS.day);
