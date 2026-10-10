@@ -28,7 +28,8 @@
 // THE FOUR HOSTS (bible/Home.md): scenes/world.js - WIRED (each town pixel's build places its yards and carves the
 // people's navgrid round them; the pool is made beside the monument, framed, drawn - in the street and in the view out
 // of a window (AUDIT MERCHANT-YARDS G5) - its flats on the live axis, taken down at a re-anchor and a load; through a
-// door it stands as it stood, for the street a window shows). scenes/worldModes.js - WIRED for the press both exterior hosts
+// door it stands as it stood, for the street a window shows; YARDS-FOUND: each yard standing marked on the Overworld,
+// `overworldMarks`). scenes/worldModes.js - WIRED for the press both exterior hosts
 // share (`yardTargets` in the street's one ray, the `yard:` arm with the too-far refusal and the plaque's lit row) and
 // for the trade window (`openYardTrade`); its interiors stand no yard.
 // scenes/exterior.js - FLAGGED: the single-town bench stands no yard; the streaming host is where its towns are played.
@@ -47,6 +48,8 @@ import { trs } from '../world/mat4.js';
 import { quatAngleAxis } from '../world/quat.js';
 import { calculateHorseOrientation, horseViewFor, HORSE_BOX_CENTER, HORSE_BOX_SIZE } from '../systems/horseCartLaw.js';
 import { HORSE_ARCHIVE, horseStillRecord, HORSE_BILLBOARD_WIDTH, HORSE_BILLBOARD_HEIGHT, boxTriangles } from './horseCartPool.js';
+import { localAabb, transformedAabb } from '../render/frustum.js';   // PERF-YARD (AUDIT): a yard's box for the street's view test
+import { DECOR_DRAW, DECOR_SHADOW, DECOR_SKIP } from './decorRoom.js';
 
 /** The ground under a yard is read again every this many frames (a pixel built finer moves it). */
 export const YARD_GROUND_EVERY = 30;
@@ -56,6 +59,8 @@ export const YARD_REACH = STATIC_NPC_ACTIVATION_DISTANCE;
 /** A keeper's body, metres: half its side and its height (the collider's box, the eye's). */
 export const KEEPER_HALF = 0.3;
 export const KEEPER_HEIGHT = 1.85;
+/** YARDS-FOUND: how far over a yard's ground its Overworld mark stands - over its sheds' roofs and its gate's beam. */
+export const YARD_MARK_LIFT = 4;
 /** What a wagon on show says it carries (its hover's line). */
 export const WAGON_SHOW_LINE = Object.freeze({
   cart: 'Carries 750 kg',
@@ -140,6 +145,23 @@ export function createMerchantYards({
   const _batches = [], _targets = [];
 
   const modelOf = (kind) => { let m = models.get(kind); if (!m) { m = buildYardModel(kind); models.set(kind, m); } return m; };
+  /** PERF-YARD (AUDIT 15): a yard's box in the scene - its timber's and its wagons' on show, under its matrix; made again
+   *  when it moves or a wagon comes in. */
+  const timberBox = new Map();
+  function yardBox(y) {
+    let b = timberBox.get(y.site.kind);
+    if (!b) { b = localAabb(modelOf(y.site.kind).positions); timberBox.set(y.site.kind, b); }
+    const l = [...b];
+    for (const w of y.wagons) if (w.box) for (let i = 0; i < 3; i++) { l[i] = Math.min(l[i], w.box[i]); l[i + 3] = Math.max(l[i + 3], w.box[i + 3]); }
+    return transformedAabb(l, y.matrix);
+  }
+  /** PERF-YARD (AUDIT 15): `r` as the shadow maps alone take it - every draw a caster's record, none on screen (a draw
+   *  that casts nothing casts nothing here either). */
+  let castOf = null, cast = null;
+  const castOnly = (r) => {
+    if (castOf !== r) { castOf = r; cast = { drawMesh: (mesh, m, remap, o) => { if (!o?.noShadow) r.recordShadowMesh?.(mesh, m, remap); } }; }
+    return cast;
+  };
   function meshOf(kind) {
     if (meshes.has(kind)) return meshes.get(kind);
     if (!renderer?.createMesh) return null;
@@ -223,7 +245,7 @@ export function createMerchantYards({
     const P = yardPoints(site.kind);
     const y = {
       site, key: site.key, bucket: `yard:${site.key}`, at: null, matrix: null, colAt: null, colWagons: 0, wagonsIn: 0,
-      groundY: NaN, groundAt: [NaN, NaN, -Infinity, NaN], targets: null,
+      groundY: NaN, groundAt: [NaN, NaN, -Infinity, NaN], targets: null, box: null,   // PERF-YARD (AUDIT 15): `box` its box for the view test
       name: yardName(site.kind, site.keeper?.name), keeperBatch: null,
       horses: P.horses.map((h) => ({ x: h[0], z: h[1], forward: [h[2], h[3]], batch: null, pos: [0, 0, 0], fwd: [0, 0, 0] })),
       wagons: P.wagons.map(([kind, x, z]) => ({ kind, x, z, box: null, origin: null })),
@@ -289,9 +311,9 @@ export function createMerchantYards({
         if (!y.at || y.at[0] !== site.x || y.at[1] !== y.groundY || y.at[2] !== site.z) {
           y.at = [site.x, y.groundY, site.z];
           y.matrix = trs(y.at[0], y.at[1], y.at[2], 0, site.yaw, 0);
-          y.targets = null;
+          y.targets = null; y.box = null;
         }
-        if (tendWagons(y)) { y.wagonsIn = y.wagons.filter((w) => w.box).length; y.targets = null; }
+        if (tendWagons(y)) { y.wagonsIn = y.wagons.filter((w) => w.box).length; y.targets = null; y.box = null; }
         meshOf(site.kind);
         standCollider(y);
         poseKeeper(y, t);
@@ -300,18 +322,25 @@ export function createMerchantYards({
       for (const key of [...yards.keys()]) if (!live.has(key)) takeDown(key);
       return yards.size;
     },
-    /** Every yard's timber, and its wagons on show, in the host's world pass. Answers how many it drew. */
-    draw(r = renderer) {
+    /** Every yard's timber, and its wagons on show, in the host's world pass. Answers how many it drew.
+     *  PERF-YARD (AUDIT 15, 2026-10-10): `cull` - the street's view test (scenes/world.js yardCull; none through a
+     *  window, whose eye is another) - is asked of each yard's box, its timber and its wagons in one: in view, drawn; off
+     *  screen within a shadow's reach, cast into the maps alone; else neither. Every yard of every town streamed was
+     *  drawn every frame, its three wagons' parts with it, behind the eye and kilometres off. */
+    draw(r = renderer, cull = null) {
       if (!r?.drawMesh) return 0;
       let n = 0;
       for (const y of yards.values()) {
         if (!y.at || !y.matrix) continue;
+        const v = cull ? cull(y.box ??= yardBox(y)) : DECOR_DRAW;
+        if (v === DECOR_SKIP) continue;
+        const to = v === DECOR_SHADOW ? castOnly(r) : r;
         const mesh = meshes.get(y.site.kind);
-        if (mesh) { r.drawMesh(mesh, y.matrix, null); n++; }
+        if (mesh) { to.drawMesh(mesh, y.matrix, null); if (v === DECOR_DRAW) n++; }
         for (const w of y.wagons) {
           if (!w.origin || !showWagon) continue;
           const pos = yardToScene(y.at, y.site.yaw, w.origin[0], w.origin[1], w.origin[2]);
-          if (showWagon(r, null, pos, quatAngleAxis(y.site.yaw, [0, 1, 0]), w.kind)) n++;
+          if (showWagon(to, null, pos, quatAngleAxis(y.site.yaw, [0, 1, 0]), w.kind) && v === DECOR_DRAW) n++;
         }
       }
       return n;
@@ -373,6 +402,21 @@ export function createMerchantYards({
       const trade = verb === 'sell' && (p.what === 'keeper' || p.what === 'sign') ? 'Sell' : 'Buy';
       if (!open(p.y.site, trade, p.y.name)) midText(YARD_TEXT.shut);   // AUDIT MERCHANT-YARDS Y5: the counter named for its keeper
       return true;
+    },
+    /**
+     * YARDS-FOUND (2026-10-10, from play: "The new stable and transport merchant shops dont show on town
+     * maps/overworld"): EACH YARD STANDING, AS AN OVERWORLD MARK - its name over its ground (YARD_MARK_LIFT up), its kind
+     * the look's (`yard stable`, `yard transport` - ui/travelViewHud.js yardGlyph: its signboard's emblem) and the
+     * Towns switch's (systems/travelViewFilters.js markGroup). The yards of every town built about the player, as the
+     * pool stands them - a town out of the build stands none, and is marked by its own plate.
+     */
+    overworldMarks() {
+      const out = [];
+      for (const y of yards.values()) {
+        if (!y.at) continue;
+        out.push({ key: `yard:${y.key}`, at: [y.at[0], y.at[1] + YARD_MARK_LIFT, y.at[2]], label: y.name, kind: `yard ${y.site.kind}` });
+      }
+      return out;
     },
     /** For the tests and the probes. */
     state: () => [...yards.values()].map((y) => ({ key: y.key, kind: y.site.kind, at: y.at, collider: y.colAt !== null, name: y.name, wagons: y.wagonsIn, horses: y.horses.filter((h) => h.batch).length, keeper: !!y.keeperBatch })),

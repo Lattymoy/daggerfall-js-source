@@ -1,0 +1,143 @@
+[
+  {
+    "name": "PERF-YARD-a-the-shadow-arm-dropped",
+    "file": "src/scenes/decorRoom.js",
+    "old": "  return reaches(box) ? DECOR_SHADOW : DECOR_SKIP;",
+    "new": "  return DECOR_SKIP;",
+    "tests": [
+      "test/perfyard.test.js"
+    ]
+  },
+  {
+    "name": "PERF-YARD-b-every-box-drawn",
+    "file": "src/scenes/decorRoom.js",
+    "old": "  if (!aabbOutside(planes, box)) return DECOR_DRAW;",
+    "new": "  if (planes) return DECOR_DRAW;",
+    "tests": [
+      "test/perfyard.test.js"
+    ]
+  },
+  {
+    "name": "PERF-YARD-c-the-verdict-unread",
+    "file": "src/scenes/decorRoom.js",
+    "old": "      const seen = cull && e.box ? cull(e.wbox ??= transformedAabb(e.box, e.matrix)) : DECOR_DRAW;",
+    "new": "      const seen = DECOR_DRAW;",
+    "tests": [
+      "test/perfyard.test.js"
+    ]
+  },
+  {
+    "name": "PERF-YARD-d-the-cast-arm-drawn",
+    "file": "src/scenes/decorRoom.js",
+    "old": "      if (seen === DECOR_SHADOW) { r?.recordShadowMesh?.(e.gpu, e.matrix, texRemap); continue; }",
+    "new": "",
+    "tests": [
+      "test/perfyard.test.js"
+    ]
+  },
+  {
+    "name": "PERF-YARD-e-the-world-box-kept-from-where-it-stood",
+    "file": "src/scenes/decorRoom.js",
+    "old": "      e.wbox = null;   // PERF-YARD: its box in the world, made again where it stands now\n",
+    "new": "",
+    "tests": [
+      "test/perfyard.test.js"
+    ]
+  },
+  {
+    "name": "PERF-YARD-f-the-host-test-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    cull: (box) => yardCull(box),   // PERF-YARD: the pieces culled as the town's own models are\n",
+    "new": "",
+    "tests": [
+      "test/perfyard.test.js"
+    ]
+  },
+  {
+    "name": "PERF-YARD-g-the-planes-kept-from-an-old-frame",
+    "file": "src/scenes/world.js",
+    "old": "    if (_yardPlanesOf !== _lastView) { spherePlanes(",
+    "new": "    if (_yardPlanesOf === null) { spherePlanes(",
+    "tests": [
+      "test/perfyard.test.js"
+    ]
+  },
+  {
+    "name": "PERF-YARD-h-a-yard-handed-no-test",
+    "file": "src/scenes/homeYards.js",
+    "old": "        n += y.pool.draw(r, remapOf(y), cull);",
+    "new": "        n += y.pool.draw(r, remapOf(y));",
+    "tests": [
+      "test/perfyard.test.js"
+    ]
+  },
+  {
+    "name": "PERF-YARD-i-the-host-test-dropped-at-the-yards",
+    "file": "src/scenes/homeYards.js",
+    "old": "      const cull = deps.cull ?? null;",
+    "new": "      const cull = null;",
+    "tests": [
+      "test/perfyard.test.js"
+    ],
+    "note": "AUDIT PERF-YARD 1: survived every yard suite before the pin read where the cull comes from."
+  },
+  {
+    "name": "PERF-YARD-j-the-box-guard-dropped",
+    "file": "src/scenes/decorRoom.js",
+    "old": "const seen = cull && e.box ? cull(",
+    "new": "const seen = cull ? cull(",
+    "tests": [
+      "test/perfyard.test.js"
+    ],
+    "note": "AUDIT PERF-YARD 2."
+  },
+  {
+    "name": "PERF-YARD-k-the-matrices-kept-after-the-draw",
+    "file": "src/scenes/world.js",
+    "old": "    _lastProj = proj; _lastView = view;   // TI1",
+    "new": "    void 0;   // TI1",
+    "tests": ["test/perfyard.test.js"]
+  },
+  {
+    "name": "PERF-YARD-l-the-merchant-yards-untested",
+    "file": "src/scenes/merchantYardsHost.js",
+    "old": "        const v = cull ? cull(y.box ??= yardBox(y)) : DECOR_DRAW;",
+    "new": "        const v = DECOR_DRAW;",
+    "tests": ["test/perfyard.test.js"]
+  },
+  {
+    "name": "PERF-YARD-m-a-merchant-yard-cast-arm-drawn",
+    "file": "src/scenes/merchantYardsHost.js",
+    "old": "        const to = v === DECOR_SHADOW ? castOnly(r) : r;",
+    "new": "        const to = r;",
+    "tests": ["test/perfyard.test.js"]
+  },
+  {
+    "name": "PERF-YARD-n-a-no-shadow-part-cast",
+    "file": "src/scenes/merchantYardsHost.js",
+    "old": "{ if (!o?.noShadow) r.recordShadowMesh?.(mesh, m, remap); }",
+    "new": "{ r.recordShadowMesh?.(mesh, m, remap); }",
+    "tests": ["test/perfyard.test.js"]
+  },
+  {
+    "name": "PERF-YARD-o-a-merchant-yard-box-kept-where-it-stood",
+    "file": "src/scenes/merchantYardsHost.js",
+    "old": "          y.targets = null; y.box = null;\n",
+    "new": "          y.targets = null;\n",
+    "tests": ["test/perfyard.test.js"]
+  },
+  {
+    "name": "PERF-YARD-p-the-street-test-unwired-at-the-merchant-yards",
+    "file": "src/scenes/world.js",
+    "old": "    merchantYards?.draw(renderer, yardCull);",
+    "new": "    merchantYards?.draw(renderer);",
+    "tests": ["test/perfyard.test.js"]
+  },
+  {
+    "name": "PERF-YARD-q-a-window-view-culled-by-the-street-eye",
+    "file": "src/scenes/world.js",
+    "old": "{ merchantYards?.draw(r); });   // AUDIT MERCHANT-YARDS G5",
+    "new": "{ merchantYards?.draw(r, yardCull); });   // AUDIT MERCHANT-YARDS G5",
+    "tests": ["test/perfyard.test.js"]
+  }
+]
