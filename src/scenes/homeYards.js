@@ -399,6 +399,8 @@ export function yardLotQuads(lot, origin, high = YARD_MARK_HIGH, roads = []) {
  *   feet()       - where the player stands (scene); outside() - whether the player walks the street (no building,
  *                  no dungeon, no saddle)
  *   collider()   - the world's collider (addMesh, removeBucket, surfaceHit)
+ *   cull(box)    - PERF-YARD: the host's view test of a piece's box in the scene (decorRoom.js DECOR_DRAW / DECOR_SHADOW /
+ *                  DECOR_SKIP), or none - every piece within YARD_DRAW_M drawn
  *   meshes, renderer, getTexture, uploadRecord, uploadRecordFrame, iconUrl - the pipeline's, as a room's pool takes them
  *   character(), realm(), wallet(region) - who writes, their record's act, the purse and the home's region's account
  *   doc, win, canvas, touch, actionOf(e), locked(), cursorOff(), stick(), say(line), refusal(word), openSlot(o), now()
@@ -750,10 +752,11 @@ export function createHomeYards(deps) {
     draw(r = deps.renderer) {
       let n = 0;
       const eye = deps.eye?.() ?? null;
+      const cull = deps.cull ?? null;   // PERF-YARD: the host's view test, a piece's box at a time (decorRoom.js draw)
       for (const y of yards.values()) {
         const o = originOf(y);
         if (eye && y !== cur?.yard && Math.hypot(o[0] - eye[0], o[2] - eye[2]) > YARD_DRAW_M) continue;
-        n += y.pool.draw(r, remapOf(y));
+        n += y.pool.draw(r, remapOf(y), cull);
       }
       tool.draw(r, cur ? remapOf(cur.yard) : null);
       return n;

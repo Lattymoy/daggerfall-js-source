@@ -9,8 +9,8 @@
   {
     "name": "FB0930-FRAME-addMesh-keeps-the-stale-filing",
     "file": "src/player/collider.js",
-    "old": "    this._broad = null;   // FB0930-FRAME: a new bucket, or a box that grows",
-    "new": "    // mut",
+    "old": "    // FB0930-FRAME: a new bucket, or a box that grows, is filed again before the next query. PERF-COL2 (AUDIT): into the\n    // standing filing, where its frames stand where they were filed - a new bucket at the walk's end, a grown one under\n    // the cells it gained; else the whole filing is made again at the next query, as it was for every mesh.\n    const broad = this._broad;\n    if (broad !== null) {",
+    "new": "    const broad = this._broad;\n    if (false) {",
     "tests": ["test/fb0930_frame.test.js"]
   },
   {
@@ -65,8 +65,8 @@
   {
     "name": "FB0930-FRAME-a-bucket-is-filed-short-of-its-box",
     "file": "src/player/collider.js",
-    "old": "const x0 = Math.floor((mn[0] - BOX_SKIN) / BROAD_CELL), x1 = Math.floor((mx[0] + BOX_SKIN) / BROAD_CELL);",
-    "new": "const x0 = Math.floor(mn[0] / BROAD_CELL) + 1, x1 = Math.floor(mx[0] / BROAD_CELL);",
+    "old": "const x0 = Math.floor((mn[0] + ox - BOX_SKIN) / size), x1 = Math.floor((mx[0] + ox + BOX_SKIN) / size);",
+    "new": "const x0 = Math.floor((mn[0] + ox) / size) + 1, x1 = Math.floor((mx[0] + ox) / size);",
     "tests": ["test/fb0930_frame.test.js"]
   }
 ]

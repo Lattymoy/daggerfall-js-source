@@ -114,11 +114,14 @@ test('SC1: a mesh that MOVES is a dynamic - drawn alone over the blitted cache e
   st = frame(walking);
   assert.equal(st.staticFaces, 0, 'the cache stands');
   assert.equal(st.dynFaces, 6); assert.ok(st.pointDraws >= 1 && st.pointDraws <= 6, `the crate alone, in the faces that see it (${st.pointDraws})`);
-  assert.equal(st.blit, 6, 'over a fresh blit of the cache');
+  // PERF-FACE (PIN MOVED): over a fresh copy of the cache in the faces that held it last frame - standing where it stood,
+  // the faces it is drawn into now - and no other
+  assert.equal(st.blit, st.pointDraws, 'over a fresh copy of the cache, in the faces that held it');
+  const slot = r.shadows.casterOf[0], held = [...r.shadows._faceDyn.slice(slot * 6, slot * 6 + 6)].filter(Boolean).length;   // the lamp's faces that hold the crate
   // the walker leaves the room's draws (culled by the host): one blit, then nothing
   frame(still);
   st = frame(still);
-  assert.equal(st.pointDraws, 0); assert.equal(st.blit, 6, 'the cache back into the live layers');
+  assert.equal(st.pointDraws, 0); assert.equal(st.blit, held, 'the cache back into the live layers - every face that held the crate');
   st = frame(still);
   assert.equal(st.pointDraws, 0); assert.equal(st.blit, 0, 'and then nothing at all');
 });
