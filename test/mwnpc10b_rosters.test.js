@@ -37,8 +37,10 @@ test('MWNPC10b-1 rosterLook: a class one dressed by its class off its seed - ste
   const rogue = rosterLook({}, { mobileType: M.Rogue, gender: 'female', seed: 9 });
   assert.equal(plate(rogue).length, 0, 'a rogue in her clothes');
   assert.equal(rogue.gender, 'female');
-  assert.deepEqual(rogue.items.map((it) => it.equipSlot), [EQUIP_SLOTS.ChestClothes, EQUIP_SLOTS.LegsClothes, EQUIP_SLOTS.Feet]);
-  assert.ok(rogue.items.every((it) => it.group === 'WomensClothing'));
+  // PIN MOVED (MWNPC10c, section 15c): a roster's class one carries its class's blade now - the rest of her is her clothes
+  const clothes = rogue.items.filter((it) => it.group !== 'Weapons');
+  assert.deepEqual(clothes.map((it) => it.equipSlot), [EQUIP_SLOTS.ChestClothes, EQUIP_SLOTS.LegsClothes, EQUIP_SLOTS.Feet]);
+  assert.ok(clothes.every((it) => it.group === 'WomensClothing'));
   const races = new Set(Array.from({ length: 40 }, (_, s) => rosterLook({}, { mobileType: M.Thief, seed: s }).race));
   assert.ok(races.size >= 4, `the Bay's mix off the seed (${[...races]})`);
   assert.deepEqual(rosterLook({}, { mobileType: M.Thief, seed: 7 }), rosterLook({}, { mobileType: M.Thief, seed: 7 }), 'the same one the same look on every machine');

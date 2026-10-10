@@ -10338,6 +10338,7 @@ export function createWorldModes(host) {
     }
     offerQuestStands(questFlats, peopleBodies, _peopleOn, interiorBuilding?.buildingKey ?? 0, mwv.eye, dt);   // MWNPC8c: and the quest's
     peopleBodies.draw(canvas, proj, view, mwv.eye, dt);
+    host.drawLivingBodies?.(canvas, proj, view, mwv.eye, dt);   // MWNPC10c: the residents the day has in here, in their bodies (their batches ride livingBillboards)
     // BLOOD1 AUDIT (2026-09-20): THE INTERIOR'S OWN MARKS, and they
     // were missing. This host builds a pool like the other three,
     // feeds it, ticks it and clears it on the way out - and never drew

@@ -10,7 +10,7 @@
 import { composeLook } from '../net/remotePlayers.js';
 import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';
 import { creatureLook } from './creatureBodies.js';   // MWNPC9: a creature foe's look, its Morrowind creature
-import { ARMOR_ENUM } from '../combat/enemyEquipment.js'; import { MOBILE_TYPES } from './mobileTypes.js';   // MWNPC10: a roster's people, armoured by their class
+import { ARMOR_ENUM, WEAPONS_ENUM } from '../combat/enemyEquipment.js'; import { MOBILE_TYPES } from './mobileTypes.js';   // MWNPC10: a roster's people, armoured and armed by their class
 
 /** The Iliac Bay's people, weighted - the races a class foe is drawn as (Daggerfall's own spelling, the look's). The
  *  Bay is Breton and Redguard country; the rest are travellers, the beast folk fewest. */
@@ -143,27 +143,37 @@ export function foeActor(f, id = foeId(f)) {   // MWNPC6: `id` a population's ow
 const STEEL_CLASSES = new Set([MOBILE_TYPES.Knight, MOBILE_TYPES.Warrior, MOBILE_TYPES.Spellsword, MOBILE_TYPES.Knight_CityWatch]);
 const STEEL_PLATE = Object.freeze([['ChestArmor', 'Cuirass'], ['LegsArmor', 'Greaves'], ['Feet', 'Boots'], ['LeftArm', 'Left_Pauldron'], ['RightArm', 'Right_Pauldron'], ['Gloves', 'Gauntlets']]);
 
+/** MWNPC10c: a roster's blade, by DFU's own roll for a class foe (combat/enemyEquipment.js rollEnemyEquipment): one of
+ *  its two variants - a broadsword, a saber or a longsword; or a two-hander, a claymore to a battle axe - iron or
+ *  steel, off the seed. */
+function rosterBlade(h) {
+  const two = mix(h ^ 0xb1) & 1;
+  const lo = two ? WEAPONS_ENUM.Claymore : WEAPONS_ENUM.Broadsword, hi = two ? WEAPONS_ENUM['Battle Axe'] : WEAPONS_ENUM.Longsword;
+  return { templateIndex: lo + (mix(h ^ 0xb2) % (hi + 1 - lo)), group: 'Weapons', equipSlot: EQUIP_SLOTS.RightHand, material: mix(h ^ 0xb3) & 1 };
+}
+
 /**
  * MWNPC10 (bible/04-Characters/Morrowind-NPCs.md section 15b): THE LOOK OF ONE A ROSTER DRIVES - a siege's fighter, a
  * ship's hand - with no entity to read. A creature mobile is its creature (creatureBodies.js; null where there is no
  * match); a class mobile a person: a race of the Bay's and a face off `seed`, its gender, the clothes a foe wears under
- * its armour in their dyes, and steel for the classes that go in it (the watch helmed). Kept on `rec` while the mobile,
- * gender and seed hold - one build for its life.
- * @param {any} rec @param {{ mobileType: number, gender?: string, seed?: number }} o
+ * its armour in their dyes, and steel for the classes that go in it (the watch helmed) - MWNPC10c: and its class's
+ * blade in its hand (`rosterBlade`), and `race` its own where the caller knows it (a living world's resident). Kept on
+ * `rec` while the mobile, gender, seed and race hold - one build for its life.
+ * @param {any} rec @param {{ mobileType: number, gender?: string, seed?: number, race?: string }} o
  */
-export function rosterLook(rec, { mobileType, gender = 'male', seed = 0 }) {
-  if (rec._mwRosterMob === mobileType && rec._mwRosterG === gender && rec._mwRosterSeed === seed) return rec._mwRosterLook;   // no key built a frame
-  rec._mwRosterMob = mobileType; rec._mwRosterG = gender; rec._mwRosterSeed = seed;
+export function rosterLook(rec, { mobileType, gender = 'male', seed = 0, race = undefined }) {
+  if (rec._mwRosterMob === mobileType && rec._mwRosterG === gender && rec._mwRosterSeed === seed && rec._mwRosterRace === race) return rec._mwRosterLook;   // no key built a frame
+  rec._mwRosterMob = mobileType; rec._mwRosterG = gender; rec._mwRosterSeed = seed; rec._mwRosterRace = race;
   if (!(mobileType >= 128)) return (rec._mwRosterLook = creatureLook({ mobileType }));
   const h = mix((seed >>> 0) ^ mix((mobileType | 0) + 0x9e3779b9));
-  const { race, faceIndex } = bayPerson(h);
+  const bay = bayPerson(h);
   const g = gender === 'female' ? 'female' : 'male';
-  const items = [];
+  const items = /** @type {any[]} */ ([rosterBlade(h)]);
   if (STEEL_CLASSES.has(mobileType)) {
     for (const [slot, piece] of STEEL_PLATE) items.push({ templateIndex: ARMOR_ENUM[piece], group: 'Armor', equipSlot: EQUIP_SLOTS[slot], material: 1 });   // steel
     if (mobileType === MOBILE_TYPES.Knight_CityWatch) items.push({ templateIndex: ARMOR_ENUM.Helm, group: 'Armor', equipSlot: EQUIP_SLOTS.Head, material: 1 });
   }
-  return (rec._mwRosterLook = { race, gender: g, faceIndex, items: clothesUnder(items, FOE_WARDROBE[g], h) });
+  return (rec._mwRosterLook = { race: race ?? bay.race, gender: g, faceIndex: bay.faceIndex, items: clothesUnder(items, FOE_WARDROBE[g], h) });
 }
 
 /** The tells the host has dressed the foe's billboard in this frame, for its body's quad (renderer.js

@@ -63,8 +63,9 @@ function spawnOf(person, race) {
 }
 
 /** The look for a walker's roll: their race and gender, a face, the outfit's clothes in their dyes - or the guard's
- *  plate (texture 399's watchman). */
-function folkLookOf(person, race, seed) {
+ *  plate (texture 399's watchman). MWNPC10c: and a living world's resident's, on their own id's seed (rosterBodies.js
+ *  residentLook) - one look for them wherever they are drawn. */
+export function folkLookOf(person, race, seed) {
   const female = person.gender === GENDERS.Female;
   const gender = female ? 'female' : 'male';
   const items = [];

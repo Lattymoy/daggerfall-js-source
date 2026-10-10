@@ -175,7 +175,8 @@ test('LEGACY7 part four the world host\'s wiring: the street stands the line in 
   assert.match(w, /familyStreet\?\.begin\(\);/);
   // PIN MOVED (AUDIT LEGACY III W4): held under a talk window, as the street is
   assert.match(w, /if \(familyStreet\) \{ familyStreet\.end\(townTalk\.overlayActive \? 0 : dt, cam\.pos\); livePersonBatches\.push\(\.\.\.familyStreet\.batches\(\)\); \}/);
-  assert.match(w, /sprites: familyRoomSprites\(createTravellerSprites\(\{ renderer, getTexture, uploadRecordFrame, living: _livingIndoorsDoor \}\), \(familyRoom \?\?= makeFamilyBodies\(\)\), _livingIndoorsDoor\),/);
+  // PIN MOVED (MWNPC10c, bible/04-Characters/Morrowind-NPCs.md section 15c): the room's sprites a body lane of their own, 'room'
+  assert.match(w, /sprites: familyRoomSprites\(createTravellerSprites\(\{ renderer, getTexture, uploadRecordFrame, living: _livingIndoorsDoor, laneName: 'room' \}\), \(familyRoom \?\?= makeFamilyBodies\(\)\), _livingIndoorsDoor\),/);
   assert.match(w, /\(_mode\(\) === 'interior' \? familyRoom : _mode\(\) === 'exterior' \? familyStreet : null\)\?\.draw\(canvas, \{ proj, view, eye \}\);/);
   assert.match(w, /familyStreet\?\.offsetAll\(r\.offset\);/);
   assert.match(w, /look: \(\) => composeLook\(playerEntity\),/);

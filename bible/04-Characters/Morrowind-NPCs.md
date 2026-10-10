@@ -104,7 +104,7 @@ Each line is a slice's acceptance, not an aspiration:
 | MWNPC7 TOWNSFOLK | walkers and living residents, a wardrobe by FACTION sgroup that actually varies (distinct records and dyes per persona) (the WALKERS SHIPPED, section 12: a wardrobe per outfit variant, dyed per spawn - the living residents indoors are MWNPC8's standing people) | world.js, exterior.js, worldModes.js (living residents indoors) |
 | MWNPC8 STANDING PEOPLE | street, interior, dungeon and quest StaticNPCs; children and vampires keep their sprite; `drawnFlat`'s nudity law honoured (8a SHIPPED, section 13a: the buildings' people; 8b SHIPPED, section 13b: the dungeons' and the street's; 8c SHIPPED, section 13c: exterior.js's and the quests' stands) | all four |
 | MWNPC9 CREATURES | CREA records, creature skeletons and their own .kf, the match table with its declared misses (9a SHIPPED, section 14a: the body; 9b SHIPPED, section 14b: the rig, the match, the hosts) | dungeonContext.js, world.js, worldModes.js, exterior.js |
-| MWNPC10 THE REST | crews, road parties, siege, gate court, the broker (10a SHIPPED, section 15a: the gate court; the broker keeps her guise. 10b SHIPPED, section 15b: the siege and the crews) | their hosts |
+| MWNPC10 THE REST | crews, road parties, siege, gate court, the broker (10a SHIPPED, section 15a: the gate court; the broker keeps her guise. 10b SHIPPED, section 15b: the siege and the crews. 10c SHIPPED, section 15c: the roads' parties and the living residents indoors) | their hosts |
 
 Click and talk boxes keep the billboard's size (they are the classic
 game's); the arena crowd stays flats.
@@ -1085,3 +1085,67 @@ conceal and blows, the hand below not offered, clear; the world's draw
 points by source. `tools/mutants/mwnpc10b.json`: 25 mutants, 25 dead. One
 MWNPC5b record re-aimed by content (foeLook's worn items now pass
 through `clothesUnder`), one rewritten (MWNPC5b-face-one).
+
+### 15c. The living world's people - the roads' parties and the residents indoors (SHIPPED 2026-10-10)
+
+Both draw through one host, `world/travellerSprites.js` (the roads'
+parties, their foes and their fallen - scenes/livingRoads.js; the
+residents the day has inside a building - scenes/livingIndoors.js, the
+line's own members already the family's bodies, LEGACY7), so its lane
+stands them all - a lane of each instance's own: 'roads', 'room'. This
+also takes the living residents indoors that MWNPC7's row handed to
+MWNPC8: 8a stood the building's StaticNPCs; the living world's are here.
+
+- THE LOOK AS THE SPRITE SHOWS IT (`characters/rosterBodies.js`
+  residentLook, read once a body). One in a class's sprite (`res.cls`: an
+  armed traveller, a guild's member, a foe) is that class's look
+  (rosterLook) in their own race and sex - a foe the Bay's, a creature foe
+  its creature, none where there is no match (it keeps its sprite). A
+  STILL picture (LW-LOOKS) wears its kind's garments in their dyes - a
+  courtier at home a noble's, a priest at the door his robes, a
+  stall-keeper a merchant's; a beggar and everyone else the street's
+  outfit their own sprite wears (folkBodies.js `folkLookOf`, now
+  exported), the watch's plate on duty and his own clothes off it
+  (WATCH-DAY). Each off their OWN ID's seed - one person wherever they are
+  drawn, never a walker's per-spawn roll.
+- THE BLADE. A roster's class one (this, the siege's, a crew's) now holds
+  its class's blade by DFU's own roll for a class foe
+  (enemyEquipment.js rollEnemyEquipment): a broadsword, a saber or a
+  longsword, or a two-hander from the claymore to the battle axe, iron or
+  steel, in the right hand, off the seed - 15b's stood bare-handed.
+- THE ACTOR (rosterActor, now with `drawn`): walking as the body walks,
+  facing its way; each strike begun one blow (the roads hand the edge);
+  the fallen (a flat no one talks to) dead on the death's roll off the
+  id; a class's sprite its blade out, the rest nothing drawn; a new person
+  at a key a new id (a new body, never the last one re-dressed).
+- THE DRAW. `drawBodies` offers the last sync's bodies ON THE GROUND ONLY
+  - under the Overworld the bands' grown, fading sprites are the far
+  view's - before the host's billboard pass draws the sprites, cast-only
+  where a body stands: the roads' in world.js after their batches join
+  the person billboards (moved with the origin), the room's through the
+  host's `drawLivingBodies` after the building's people and before the
+  room's billboards (worldModes.js). `clear()` lets the lane go (the
+  open world left, the building left).
+- COST. A body's look is read once; a frame's offer is a compare and a
+  write (rosterActor), the bodies under the lane's caps and its tier like
+  every other lane's.
+
+PROVEN. `test/mwnpc10c_roads.test.js` (4): the blade's two ranges to
+their ends, iron and steel, the right hand, and a given race kept;
+`drawn`; residentLook's every branch (the class in their own race and
+sex, a creature, none, the courtier's and the priest's garments and dyes,
+the beggar's and a walker's outfit off their variant, one look an id, the
+watch on and off duty); the real sprites over a recording lane - the
+walker, the armed, the foe, the bat not offered, the fallen dead, the
+courtier a noble and alive, feet, facing, the strike edge, cast-only, none
+under the Overworld, a new id a new person, the origin, clear; the room's
+wrapper handing them on, and the draw points by source.
+`tools/mutants/mwnpc10c.json`: 37 mutants, 37 dead. Pins moved: LEGACY7's
+room sprites (a 'room' lane), LW3's roads block (the draw after the push),
+MWNPC10b-1's rogue (her blade beside her clothes); two MWNPC10b records
+re-aimed by content (the keep's compare takes the race, the items begin
+with the blade).
+
+THE HOSTS for MWNPC10: the gate court (15a), the siege and the crews
+(15b), the roads and the rooms (15c) WIRED; the broker keeps her guise
+(15a).

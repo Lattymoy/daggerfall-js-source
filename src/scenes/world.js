@@ -3093,7 +3093,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const livingIndoorsStep = (dt) => {
     if (!livingWorldOn() || _mode() !== 'interior') { if (livingIndoors?.size || livingIndoors?.spots().length) livingIndoors.clear(); return; }   // LW-FIX1: a room with nobody in it let go too (a house asleep) - the next way in sounds it again
     livingIndoors ??= createLivingIndoors({
-      sprites: familyRoomSprites(createTravellerSprites({ renderer, getTexture, uploadRecordFrame, living: _livingIndoorsDoor }), (familyRoom ??= makeFamilyBodies()), _livingIndoorsDoor),   // LEGACY7 part four: the line in its own body, the rest as before
+      sprites: familyRoomSprites(createTravellerSprites({ renderer, getTexture, uploadRecordFrame, living: _livingIndoorsDoor, laneName: 'room' }), (familyRoom ??= makeFamilyBodies()), _livingIndoorsDoor),   // LEGACY7 part four: the line in its own body, the rest as before
       building: () => {
         const b = modes?.interiorBuilding;
         const town = b ? livingTownOfMap(b.townMapId ?? 0) : null;
@@ -27069,6 +27069,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     csaActivationPick: (eye, dir) => csaActivationPick(eye, dir),   // CSA-D: ...and the one ray on it, in the building's or the dungeon's ladder
     csaActivate: (pick) => csaActivate(pick),
     livingBillboards: () => (livingIndoors?.batches() ?? []),   // LW8: the residents inside, on the building's own pass
+    drawLivingBodies: (canvas, proj, view, eye, dt) => { livingIndoors?.drawBodies(canvas, proj, view, eye, dt); },   // MWNPC10c: and their Morrowind bodies, before it
     cardRegularBillboards: () => cardRegularBodies?.batches() ?? [],   // CARDS4b: the card table's regulars, on the building's pass beside them
     drawCardRegulars: ({ proj, view, eye }) => cardRegularBodies?.draw(canvas, { proj, view, eye }),   // CARDS4b: their bodies, after the peers'
     cardRegulars: (list, dt, eye) => {
@@ -31361,6 +31362,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       familyStreet?.offsetAll(r.offset);   // LEGACY7 part four: and the line's in the street
       folkStreet.offsetAll(r.offset);   // MWNPC7: and the walkers'
       streetPeople.offsetAll(r.offset);   // MWNPC8b: and the standing people's
+      livingRoads?.offsetBodies(r.offset);   // MWNPC10c: and the road's people's
       navalCrew.offsetBodies(r.offset); siegeNpcs?.offsetBodies(r.offset);   // MWNPC10: and the crews' and the siege's
     }
     if (r.pixelChanged) {
@@ -32305,6 +32307,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (livingWorldOn() && _mode() === 'exterior') {
       livingRoadsOf().frame(townTalk.overlayActive ? 0 : dt, cam.pos, { overworld: tvf ? { grow: tvf.grow, blend: tvf.blend } : null });
       livePersonBatches.push(...livingRoads.batches());
+      livingRoads.drawBodies(canvas, proj, view, mwv.eye, townTalk.overlayActive ? 0 : dt);   // MWNPC10c: the road's people in their bodies - before the person billboards draw
     } else if (livingRoads) livingRoads.clear();
     if (livingWorldOn()) { livingWatchStep(); livingPeerWatchStep(); }   // LW7 / WATCH-FIX: the turned watch followed, mine and a peer's
     if (livingIndoors?.size || livingIndoors?.spots().length) livingIndoors.clear();   // LW8: the street again - the room's residents freed (LW-FIX1: and an empty room's sounding)

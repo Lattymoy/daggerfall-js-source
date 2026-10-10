@@ -38,7 +38,7 @@
  {
   "name": "MWNPC10b-roster-unkept",
   "file": "src/characters/foeBodies.js",
-  "old": "  if (rec._mwRosterMob === mobileType && rec._mwRosterG === gender && rec._mwRosterSeed === seed) return rec._mwRosterLook;",
+  "old": "  if (rec._mwRosterMob === mobileType && rec._mwRosterG === gender && rec._mwRosterSeed === seed && rec._mwRosterRace === race) return rec._mwRosterLook;",
   "new": "  if (false) return rec._mwRosterLook;",
   "tests": [
    "test/mwnpc10b_rosters.test.js"
@@ -56,8 +56,8 @@
  {
   "name": "MWNPC10b-roster-all-men",
   "file": "src/characters/foeBodies.js",
-  "old": "  const g = gender === 'female' ? 'female' : 'male';\n  const items = [];",
-  "new": "  const g = 'male';\n  const items = [];",
+  "old": "  const g = gender === 'female' ? 'female' : 'male';\n  const items = /** @type {any[]} */ ([rosterBlade(h)]);",
+  "new": "  const g = 'male';\n  const items = /** @type {any[]} */ ([rosterBlade(h)]);",
   "tests": [
    "test/mwnpc10b_rosters.test.js"
   ]
