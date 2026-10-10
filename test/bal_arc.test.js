@@ -43,6 +43,15 @@ import { coverSwitchOn } from '../src/ai/cover.js';
 import { DeathScreen, riseHint } from '../src/ui/deathScreen.js';
 import { deathKeys } from '../src/ui/enhancedDeath.js';
 import { stateDeathLoss, statedDeathLoss, applyDeathPenalty } from '../src/systems/deathPenalty.js';
+import { drawEnhancedDeath, removeEnhancedDeath } from '../src/ui/enhancedDeath.js';
+import { pickDungeonElites, ELITE_FOE_MIN_LEVEL } from '../src/systems/eliteFoes.js';
+import { rollSearchElite } from '../src/systems/searchables.js';
+import { combatStanding, foeShare } from '../src/systems/skillSoftcap.js';
+import { lootRarityOn } from '../src/systems/lootRarity.js';
+import { isGateArena, GATE_ARENA_LOCATION_ID } from '../src/world/gateArena.js';
+import { isArenaFloor, ARENA_FLOOR_LOCATION_ID } from '../src/world/arenaFloor.js';
+import { withDom } from './invdrag.mjs';
+import * as acorn from 'acorn';
 
 _wearScaleForTests(1);   // the mod's wear verbatim (BALANCE1's scale is test/balance1.test.js's)
 
@@ -280,13 +289,14 @@ test('BAL3 the wilds by execution: a full-share foe spawned in the open at night
 
 test('BAL3 the dungeon\'s seam by source: the dungeon\'s ladder tier read once at the build, the ladder\'s switch at every spawn, the place handed to the one scaling; the four hosts', () => {
   const dc = rd('src/scenes/dungeonContext.js');
-  const build = dc.indexOf('const _placeVeteran = placeVeteran(dungeonRarityTier(dfLocation.mapTableData?.dungeonType));');
-  const fn = dc.indexOf('function applyProgressionScalingTo(entity, basics) {');
+  // PIN MOVED (AUDIT BAL): the tier skips the port's own stages, and the seam takes a puppet - executed in the AUDIT BAL pins below
+  const build = dc.indexOf('const _placeVeteran = isGateArena(dfLocation) || isArenaFloor(dfLocation) || _sdRealm ? 0 : placeVeteran(dungeonRarityTier(dfLocation.mapTableData?.dungeonType));');
+  const fn = dc.indexOf('function applyProgressionScalingTo(entity, basics, { puppet = false } = {}) {');
   assert.ok(build > 0 && fn > build, 'the tier at the build, before the seam');
   const body = dc.slice(fn, dc.indexOf('\n  }\n', fn));
   assert.match(body, /const place = lootRarityOn\(\) \? _placeVeteran : 0;/, 'the ladder\'s switch at each spawn');
-  assert.match(body, /if \(!\(_dungeonShare > 0\) && !\(place > 0\)\) return;/, 'no share and no place: nothing');
-  assert.match(body, /progressionScaling\(combatStanding\(foeDeps\.playerEntity\), _dungeonShare, foeShare\(basics\?\.level \?\? entity\.level, entity\.isClass\), place\);/);
+  assert.match(body, /const share = puppet \? 0 : _dungeonShare;\n\s*if \(!\(share > 0\) && !\(place > 0\)\) return;/, 'no share and no place: nothing');
+  assert.match(body, /progressionScaling\(puppet \? null : combatStanding\(foeDeps\.playerEntity\), share, foeShare\(basics\?\.level \?\? entity\.level, entity\.isClass\), place\);/);
   assert.match(dc, /import \{ combatStanding, dungeonShare, foeShare, progressionScaling, placeVeteran \} from '\.\.\/systems\/skillSoftcap\.js';/);
   assert.match(dc, /dungeonRarityTier, dungeonFamily, stampWonWeapons, lootRarityOn \} from '\.\.\/systems\/lootRarity\.js';/);
   // the wilds' seam (executed above) - one call, the ladder's gate in it
@@ -378,4 +388,150 @@ test('BAL4 a real cost for dying offline: a death Project Legacy will raise stat
   assert.doesNotMatch(reset, /stateDeathLoss\(0\)/, 'no word of "none" over the screen\'s');
   // the dungeon the mode machine builds is handed the same word its screen reads (dungeonContext's `rises: opts.legacyWillRise`)
   assert.match(rd('src/scenes/worldModes.js'), /legacyWillRise: \(\) => host\.legacyWillRise\?\.\(\) \?\? false,/);
+});
+
+// ── AUDIT BAL (2026-10-10, Mac: "We need to audit this and ensure perfection"; Balance-Arc.md section 10) ──────────────
+// the dungeon context's own functions, mounted over a scope of their free names (test/fb1004d_cratefree.test.js's harness)
+function sliced(path) {
+  const S = rd(path);
+  const AST = acorn.parse(S, { ecmaVersion: 'latest', sourceType: 'module' });
+  const find = (pred) => {
+    let hit = null;
+    (function walk(n) {
+      if (!n || typeof n.type !== 'string' || hit) return;
+      if (pred(n)) { hit = n; return; }
+      for (const k of Object.keys(n)) { const v = n[k]; if (Array.isArray(v)) v.forEach(walk); else if (v && typeof v.type === 'string') walk(v); }
+    })(AST);
+    return hit;
+  };
+  return {
+    fnSrc: (name) => { const n = find((x) => x.type === 'FunctionDeclaration' && x.id?.name === name); assert.ok(n, `${path} has function ${name}`); return S.slice(n.start, n.end); },
+    declSrc: (name) => { const n = find((x) => x.type === 'VariableDeclaration' && x.declarations.some((d) => d.id?.name === name)); assert.ok(n, `${path} declares ${name}`); return S.slice(n.start, n.end); },
+  };
+}
+const DC = sliced('src/scenes/dungeonContext.js');
+const mount = (body, state) => new Function('__s', `with (__s) { ${body} }`)(new Proxy(state, {
+  has: (t, k) => k !== '__s',
+  get: (t, k) => (k === Symbol.unscopables ? undefined : (k in t ? t[k] : globalThis[k])),
+  set: (t, k, v) => { t[k] = v; return true; },
+}));
+
+test('AUDIT BAL the dungeon\'s seam by execution: a Dragon\'s Den scales a full-share foe x2 while the ladder stands and not at all without it; a puppet takes the place and none of its owner\'s standing; the arena\'s floor, the gate\'s court and the Shattered Hour (a Crypt\'s type for want of one) never scale', () => {
+  const seam = ({ dungeonType = 14, share = 0, sd = false, location = {} } = {}) => {
+    const applied = [];
+    const st = {
+      dfLocation: { mapTableData: { dungeonType }, ...location }, _sdRealm: sd, isGateArena, isArenaFloor, placeVeteran, dungeonRarityTier,
+      _dungeonShare: share, lootRarityOn, progressionScaling, combatStanding, foeShare,
+      foeDeps: { playerEntity: { skills: new Array(35).fill(100) }, applyProgressionScaling: (e, sc) => { applied.push(sc); applyProgressionScaling(e, sc); } },
+    };
+    const api = mount(`${DC.declSrc('_placeVeteran')}\n${DC.fnSrc('applyProgressionScalingTo')}\nreturn { applyProgressionScalingTo, place: _placeVeteran };`, st);
+    return { ...api, applied };
+  };
+  ladder(true);
+  const den = seam();
+  assert.equal(den.place, 1, 'a Dragon\'s Den: the whole row');
+  const e = monster(24); const hp = e.maxHealth;
+  den.applyProgressionScalingTo(e, ENEMY_BASICS[24]);
+  assert.equal(e.maxHealth, Math.round(hp * 2));
+  // a puppet: the place, no share (its owner's Master Skills are its owner's), its health the owner's record's afterwards
+  const pup = monster(24); const php = pup.maxHealth;
+  den.applyProgressionScalingTo(pup, ENEMY_BASICS[24], { puppet: true });
+  assert.equal(pup.maxHealth, Math.round(php * 2), 'a puppet stands at the place too');
+  const withShare = seam({ dungeonType: 0, share: 0.88 });
+  const p2 = monster(24); withShare.applyProgressionScalingTo(p2, ENEMY_BASICS[24], { puppet: true });
+  assert.equal(withShare.applied.at(-1).share, 0, 'never the dungeon\'s Master Skills share on a puppet');
+  // the ladder off: nothing at a share-0 dungeon, read at each spawn
+  ladder(false);
+  const off = monster(24); const ohp = off.maxHealth;
+  den.applyProgressionScalingTo(off, ENEMY_BASICS[24]);
+  assert.equal(off.maxHealth, ohp, 'the ladder off: DFU\'s foe');
+  ladder(true);
+  // the port's stages wearing type 0 (a Crypt's 9): none
+  assert.equal(seam({ dungeonType: 0 }).place, placeVeteran(9), 'a real Crypt');
+  assert.equal(seam({ dungeonType: 0, sd: true }).place, 0, 'the Shattered Hour');
+  const at = (id) => ({ dungeon: { recordElement: { header: { locationId: id } } } });
+  for (const [label, loc] of [['the gate\'s court', { gate: 1, ...at(GATE_ARENA_LOCATION_ID) }], ['the arena\'s floor', { arenaFloor: 'bout', ...at(ARENA_FLOOR_LOCATION_ID) }]]) {
+    const probe = { mapTableData: { dungeonType: 0 }, ...loc };
+    assert.ok(isGateArena(probe) || isArenaFloor(probe), `${label}: the stage's own test`);
+    assert.equal(seam({ dungeonType: 0, location: loc }).place, 0, label);
+  }
+  assert.match(rd('src/scenes/dungeonContext.js'), /const _placeVeteran = isGateArena\(dfLocation\) \|\| isArenaFloor\(dfLocation\) \|\| _sdRealm \? 0 : placeVeteran\(/);
+  assert.equal((rd('src/scenes/dungeonContext.js').match(/else if \(puppet && e\.level == null\) applyProgressionScalingTo\(entity, basics, \{ puppet: true \}\);/g) ?? []).length, 2, 'both build arms hand a puppet its place');
+});
+
+test('AUDIT BAL the saved dungeon\'s elites: the save writes each foe\'s word, and a load whose pick disagrees rebuilds that foe as the record has it - a save from before offline elites is plain offline; online, and on the wire, the build\'s pick stands', async () => {
+  const run = async (sfoes, { wire = false, online = false } = {}) => {
+    const retyped = [], patched = [];
+    const mk = (i, elite) => ({ mobileType: 24, gender: 'male', entity: { eliteFoe: elite, health: 50 }, ai: { feet: [0, 0, 0] }, src: { mobileType: 24, ...(elite ? { eliteFoe: true } : {}) }, i });
+    const foes = [mk(0, true), mk(1, false)];
+    const st = {
+      foes, _layoutFoes: 2, _eliteOnline: online, renderer: { destroyBillboardBatch() {} }, freeCorpse() {}, dropCandidate() {}, _sharedById: new Map(),
+      lootPiles: [], settleLootFlat() {}, droppedLoot: { restorePiles() {} }, droppedTorches: { restore() {} }, camps: { dropOwn() {}, restore() {} },
+      actions: { restoreSaveData() {} }, playerEntity: {}, clearOwnPuppets() {}, questPoolOps: { removeFoe() {} }, respawnDue: () => false, _wallNow: () => null,
+      applyLoot() {}, bodyRecords: () => [], respawnFoe() {},
+      retypeFoe: async (i) => { retyped.push({ i, elite: !!foes[i].src.eliteFoe }); return true; },
+      patchFoe: (f, sf) => { patched.push(f.i); },
+      console: { error: (...a) => assert.fail(a.join(' ')), warn() {}, log() {} },
+    };
+    const { applyWorld } = mount(`${DC.fnSrc('applyWorld')}\nreturn { applyWorld };`, st);
+    await applyWorld({ foes: sfoes }, { wire, truncate: !wire });
+    return { retyped, patched };
+  };
+  const rec = (o = {}) => ({ health: 50, items: [], feet: [0, 0, 0], yaw: 0, mobileType: 24, gender: 'male', ...o });
+  // a save from before offline elites (no field), loaded offline: the build crowned foe 0 - rebuilt plain, the record on it
+  let r = await run([rec(), rec()]);
+  assert.deepEqual(r.retyped, [{ i: 0, elite: false }]);
+  assert.deepEqual(r.patched.sort(), [0, 1]);
+  // a save that held foe 1 an elite and foe 0 plain (the ladder set the other way at the build)
+  r = await run([rec({ eliteFoe: false }), rec({ eliteFoe: true })]);
+  assert.deepEqual(r.retyped, [{ i: 0, elite: false }, { i: 1, elite: true }]);
+  // agreeing: patched in place, nothing rebuilt
+  r = await run([rec({ eliteFoe: true }), rec({ eliteFoe: false })]);
+  assert.deepEqual(r.retyped, []);
+  // online, a save without the field: the pick stands; the wire (validSharedFoe carries no such field) never rebuilds
+  assert.deepEqual((await run([rec(), rec()], { online: true })).retyped, []);
+  assert.deepEqual((await run([rec(), rec()], { wire: true })).retyped, []);
+  assert.match(rd('src/scenes/dungeonContext.js'), /eliteFoe: !!f\.entity\.eliteFoe,   \/\/ AUDIT BAL: the save's word on an elite/, 'collectWorld writes the word');
+});
+
+test('AUDIT BAL elites at their floor and their doors: offline a class foe stands as one only at the floor\'s level (online the pick stays every client\'s); a search wakes one only where elites stand, its roll drawn either way; and never on a location\'s ground', async () => {
+  // the dungeon's pick: a list of class foes alone, keyed so the one-in-five lands
+  let key = 0; while (pickDungeonElites([{ mobileType: 128 + 9 }], `k${key}`, { elite: false }) === 0) key++;
+  const list = () => [{ mobileType: 128 + 9 }, { mobileType: 128 + 2 }];
+  assert.equal(pickDungeonElites(list(), `k${key}`, { elite: false }), 1, 'online (Infinity): the class foe may stand');
+  assert.equal(pickDungeonElites(list(), `k${key}`, { elite: false, classLevel: ELITE_FOE_MIN_LEVEL - 1 }), 0, 'offline, a level-2 party: no class elite');
+  assert.equal(pickDungeonElites(list(), `k${key}`, { elite: false, classLevel: ELITE_FOE_MIN_LEVEL }), 1, 'at the floor: one');
+  assert.match(rd('src/scenes/dungeonContext.js'), /classLevel: _eliteOnline \? Infinity : \(_superTier \? superFoeLevel\(effectiveLevel\(playerEntity\)\) : effectiveLevel\(playerEntity\)\)/);
+  assert.match(rd('src/scenes/dungeonContext.js'), /if \(elitesAllowed\(\{ onlinePage: isOnlinePage\(\), inRoom: opts\.selfId\?\.\(\) != null \}\)\) pickDungeonElites\(/, 'the pick asks where elites stand');
+  // a search's elite: its roll first, then where elites stand
+  let draws = 0; const roll0 = () => { draws++; return 0; };
+  ladder(true); assert.equal(rollSearchElite(roll0), true);
+  ladder(false); assert.equal(rollSearchElite(roll0), false, 'the ladder off: no elite from a search');
+  assert.equal(draws, 2, 'the roll drawn both times - a search\'s dice the same either way');
+  ladder(true);
+  // the open world: never on a location's ground, whatever the roll
+  const town = (await withRandom(0.01, () => wildsPool(() => true).spawnFoe(24, [10, 0, 10], { feetGiven: true, champion: null }))).entity;
+  assert.equal(isEliteFoe(town), false, 'a town\'s ground: no elite at 0.01');
+});
+
+test('AUDIT BAL the enhanced death screen, drawn: a rise offline wears Rise and the rise\'s line, the loss in its place; a death with no rise the tale\'s end', () => {
+  const textOf = (n) => `${n.textContent ?? ''}${(n.children ?? []).map(textOf).join('')}`;
+  const kids = (n, cls) => (n?.children ?? []).flatMap((c) => [...(c.classList?.contains(cls) || String(c.className ?? '').split(/\s+/).includes(cls) ? [c] : []), ...kids(c, cls)]);
+  const face = (rises, gold) => withDom(() => {
+    stateDeathLoss(null);
+    const screen = new DeathScreen({ eyeHeight: 1.6, capsuleHeight: 1.8, entity: { goldPieces: gold, raceId: 1, gender: 0 }, online: false, rises: () => rises });
+    drawEnhancedDeath(screen, 1);
+    const root = globalThis.document.body;
+    const out = { words: kids(root, 'dth-word').map(textOf), line: kids(root, 'dth-line').map(textOf)[0] ?? '' };
+    removeEnhancedDeath(); stateDeathLoss(null);
+    return out;
+  });
+  const rising = face(true, 5);
+  assert.deepEqual(rising.words, ['Rise', 'Load last save']);
+  assert.equal(rising.line, 'Your body falls. The Bay is not done with you yet.', 'a purse under ten coins loses nothing: the rise\'s own line');
+  const paying = face(true, 345);
+  assert.match(paying.line, /34/, 'the loss in the line\'s place');
+  const ends = face(false, 345);
+  assert.deepEqual(ends.words, ['End the journey', 'Load last save']);
+  assert.equal(ends.line, 'Your tale in the Iliac Bay ends here.');
 });

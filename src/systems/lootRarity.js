@@ -1661,6 +1661,11 @@ function layGemLines(item) {
 /** SET A GEM IN A PIECE'S EMPTY SOCKET, in place - socket `at`, or the first empty one: its line after the piece's own,
  *  the socket named, the price by the line's worth. Answers the line, or null (no such empty socket, no such gem;
  *  nothing changed). */
+/** AUDIT GEM (bible/06-Systems/Gem-Sockets.md section 9): A SET GEM IS WORTH ITS OWN PRICE ON ITS PIECE - what the stone
+ *  sold for loose, never its line's worth. LOOT20 priced the line (`affixesWorth`), which was a 100-gold setting's
+ *  business; free setting, three sockets and law 6 made it a faucet - a 10-gold Jade lifted its piece by its +360 of
+ *  Willpower, three Jades by 1,080 though they read one Rare line. */
+const gemWorth = (gem) => itemBaseValue({ group: 'Gems', templateIndex: gemTemplateOf(gem) });
 export function setGem(item, gem, at = null) {
   const list = socketsOf(item);
   const i = at == null ? list.indexOf(SOCKET_EMPTY) : at;
@@ -1668,7 +1673,7 @@ export function setGem(item, gem, at = null) {
   const line = /** @type {any} */ (gemLine(item, gem));
   writeSockets(item, list.map((v, j) => (j === i ? gem : v)));
   layGemLines(item);
-  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + affixesWorth([line], item);
+  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + gemWorth(gem);
   return line;
 }
 /** UNSET IT, in place - socket `at`, or the first set one: the gem's line gone and the socket empty again (the gem
@@ -1679,9 +1684,10 @@ export function unsetGem(item, at = null) {
   const gem = isGemId(list[i]) ? list[i] : null;
   if (!gem) return null;
   const line = gemLine(item, gem);
+  const legacy = item.sockets == null && item.socket != null;   // AUDIT GEM: LOOT20's string - its gem was priced by its line, and comes off so
   writeSockets(item, list.map((v, j) => (j === i ? SOCKET_EMPTY : v)));
   layGemLines(item);
-  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) - affixesWorth([line], item);
+  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) - (legacy ? affixesWorth([line], item) : gemWorth(gem));
   return gem;
 }
 /** LOOT20, GEM1: a socket only as the passes and the presses make one (loot.js validLootItem) - none and no gem's line;
@@ -1774,7 +1780,7 @@ export function reforgeAffix(item, index, rolls = Math.random) {
   const line = k.params ? { id, param: leaned ? leaned(item, freeParams(id), rolls) : pick(freeParams(id), rolls), value } : { id, value };
   item.affixes = item.affixes.map((a, i) => (i === index ? line : a));
   item.reforged = index;
-  if (tier !== 'legendary') item.name = rarityName(item, tier, item.affixes);
+  if (tier !== 'legendary') item.name = rarityName(item, tier, item.affixes.filter((a) => a?.gem == null));   // AUDIT GEM: named by the piece's own lines - never a set gem's word ("Soldier's" off a Diamond), which outlived the gem's unsetting
   item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) - affixesWorth([old], item) + affixesWorth([line], item);
   return line;
 }

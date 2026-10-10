@@ -80,6 +80,9 @@ export function fallCurve(elapsed) {
   if (after > 0 && after < 0.35) look += 0.06 * Math.sin((after / 0.35) * Math.PI);
   return { drop, look };
 }
+/** BAL4: the classic face's hint over a death Project Legacy will raise - its Enter raises the player (F11 still loads). */
+export const riseHint = (hint) => String(hint ?? '').replace(/ENTER end/, 'ENTER rise');
+
 /** D1: the death screen DRIVES PlayerDeath's sequence - the camera
  *  sinks, the HUD fades to black over two seconds, the classic death
  *  sound plays once, and three seconds in the host's onReset runs
@@ -89,9 +92,6 @@ export function fallCurve(elapsed) {
  *  death lands you; F11 still quickloads, the port's own affordance
  *  and the reason the hint is drawn. `drop` is read by each host's
  *  frame to sink its camera - one player, one death, one law. */
-/** BAL4: the classic face's hint over a death Project Legacy will raise - its Enter raises the player (F11 still loads). */
-export const riseHint = (hint) => String(hint ?? '').replace(/ENTER end/, 'ENTER rise');
-
 export class DeathScreen {
   constructor({ eyeHeight, capsuleHeight, onReset = null, entity = playerEntity, hint = 'ENTER end   F11 load', online = undefined, rises = null } = {}) {
     this.done = false;

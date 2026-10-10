@@ -47,7 +47,7 @@ its `modsettings.json`:
 | `CalculateSwingModifiers` | DFU's own table | the callers' `damageMod`/`toHitMod` (playerAttackOptions, SWING_MODS) - the same numbers |
 | `CalculateProficiencyModifiers` / `CalculateRacialModifiers` | stat-driven per weapon skill and race, on the C#'s else-if ladders | `pcaaoProficiencyModifiers`, `pcaaoRacialModifiers` |
 | `CalculateWeaponToHit` | material x2 + 2 ("+14, not +60") | `pcaaoWeaponToHit` |
-| `CalculateArmorToHit` / `AdrenalineRush` / `StatDiffs` / `Skills` / `Adjustments` / `SuccessfulHit` | the player 100 less the enchantment channels, a class enemy 60, a monster its part; a sixth of health and +8/+12; luck/10, agility/4, speed/8 less the target's luck rounded; dodging halved; +50 for a monster target, -50 always; the sum, its 3..97 clamp (DISCARDED by the C#, APPLIED here - the one departure, below), Dice100 | `pcaaoArmorToHit` ... `pcaaoSuccessfulHit` |
+| `CalculateArmorToHit` / `AdrenalineRush` / `StatDiffs` / `Skills` / `Adjustments` / `SuccessfulHit` | the player 100 less the enchantment channels, a class enemy 60, a monster its part; a sixth of health and +8/+12; luck/10, agility/4, speed/8 less the target's luck rounded; dodging halved; +50 for a monster target, -50 always; the sum, its 3..97 clamp (DISCARDED by the C#, APPLIED here - the first departure, below), Dice100 | `pcaaoArmorToHit` ... `pcaaoSuccessfulHit` |
 | `CalculateStruckBodyPart` | twenty slots, feet likelier than the head | `PCAAO_BODY_PARTS`, `pcaaoStruckBodyPart` |
 | `CriticalStrikeHandler` | luck's `Mathf.Floor((luck-50)/25f)` term (clamp discarded) bending the divisor | `pcaaoCriticalStrike` |
 | `GetBonusOrPenaltyByEnemyType` | willpower's `Random.Range(0, n)` bonus and the level penalty on the career's Bonus/Phobia bits, the Humanoid arm on GetEnemyGroup | `pcaaoBonusOrPenaltyByEnemyType` |
@@ -192,7 +192,8 @@ strikes with a blade at x1.3 at 92% condition and over and x1.1 at 76-91%
 (a blunt weapon x1.1 at 92%), and lets a piece of armour over 92% reduce
 at 0.85 (0.95 at 76-91%). The mod pays that for keeping gear sharp against
 its own fast wear. With the second departure (above) the wear is DFU's,
-every weapon sits on one 1,600-point pool (WEAPON-POOL), and a monster's
+every weapon sits on one pool (WEAPON-POOL - the Warhammer's 1,600 through
+the material ladder), and a monster's
 claws wear no armour at all - so a fresh steel longsword took 128 landed
 hits on an Orc Warlord to fall under 92%, and the edge was every fight's.
 `pcaaoAlterDamageBasedOnWepCondition` and
@@ -208,9 +209,9 @@ whatever the wear. Turning the module on puts the mod back whole.
 The mod gave the player's weapon skill x1.5 to hit and a foe's x1; rolled
 the player's crit at `crit / (4 - luck)` and a foe's at `crit / (5 -
 luck)`; and multiplied the player's landed crit by `1 + floor(crit / 5) *
-0.05` (+`crit / 4` to hit) and a foe's by half that (+`crit / 10`).
-Without the crit module, the player rolled `crit / 3` for `+crit / 3` and
-a monster every blow at `crit` for `+crit / 10`. A foe's Long Blade and
+0.05` (+`crit / 4` to hit) and a foe's by `1 + floor(crit / 5) * 0.025`
+(+`crit / 10`). Without the crit module, the player rolled `crit / 3` for
+`+crit / 3` and a monster rolled `crit`% for `+crit / 10`. A foe's Long Blade and
 Critical Strike are the same skills as the player's, so they are read
 the same way now: every striker takes the player's rule
 (`Balance-Arc.md` section 4). The armour term is NOT made one rule. The
@@ -291,7 +292,7 @@ about 14% more), and against a lower foe through the to-hit.
   the switch** - DFU rewrites the table at Awake; the port overlays the
   row at mint.
 
-## Pinned (`test/pcaao.test.js`, 24)
+## Pinned (`test/pcaao.test.js`, 26)
 
 The ladder; the half-to-even round through a float32 half; DamageModifier
 and the material hit bonus; every hit helper against a hand-worked cell;

@@ -229,11 +229,12 @@
   {
     "name": "BAL3-the-dungeon-needs-a-share",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    if (!(_dungeonShare > 0) && !(place > 0)) return;",
-    "new": "    if (!(_dungeonShare > 0)) return;",
+    "old": "    if (!(share > 0) && !(place > 0)) return;",
+    "new": "    if (!(share > 0)) return;",
     "tests": [
       "test/bal_arc.test.js"
-    ]
+    ],
+    "note": "AUDIT BAL/GEM (PIN MOVED, 2026-10-10): its line changed with the audit's fix; re-aimed by content."
   },
   {
     "name": "BAL3-the-dungeon-drops-the-place",
@@ -409,6 +410,150 @@
     "tests": [
       "test/deathpenalty.test.js",
       "test/auditlegacy.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAL-the-save-forgets-the-elite",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "        eliteFoe: !!f.entity.eliteFoe,   // AUDIT BAL: the save's word on an elite",
+    "new": "        // AUDIT BAL: the save's word on an elite",
+    "tests": [
+      "test/bal_arc.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAL-an-old-save-keeps-the-pick",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "const eliteWord = sf.eliteFoe != null ? !!sf.eliteFoe : (!wire && !_eliteOnline ? false : null);",
+    "new": "const eliteWord = sf.eliteFoe != null ? !!sf.eliteFoe : null;",
+    "tests": [
+      "test/bal_arc.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAL-the-wire-rebuilds",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "const eliteWord = sf.eliteFoe != null ? !!sf.eliteFoe : (!wire && !_eliteOnline ? false : null);",
+    "new": "const eliteWord = sf.eliteFoe != null ? !!sf.eliteFoe : (!_eliteOnline ? false : null);",
+    "tests": [
+      "test/bal_arc.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAL-online-old-saves-plain",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "const eliteWord = sf.eliteFoe != null ? !!sf.eliteFoe : (!wire && !_eliteOnline ? false : null);",
+    "new": "const eliteWord = sf.eliteFoe != null ? !!sf.eliteFoe : (!wire ? false : null);",
+    "tests": [
+      "test/bal_arc.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAL-a-disagreeing-foe-patched-in-place",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (eliteWord != null && f.entity && eliteWord !== !!f.entity.eliteFoe && i < _layoutFoes",
+    "new": "      if (false && eliteWord != null && f.entity && eliteWord !== !!f.entity.eliteFoe && i < _layoutFoes",
+    "tests": [
+      "test/bal_arc.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAL-the-rebuild-forgets-the-word",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (eliteWord != null && f.src && eliteWord !== !!f.src.eliteFoe) f.src = { ...f.src, eliteFoe: eliteWord };",
+    "new": "",
+    "tests": [
+      "test/bal_arc.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAL-a-class-elite-at-level-one",
+    "file": "src/systems/eliteFoes.js",
+    "old": "const kindLevel = (t) => (t >= 128 ? classLevel : (ENEMY_BASICS[t]?.level ?? 0));",
+    "new": "const kindLevel = (t) => (t >= 128 ? Infinity : (ENEMY_BASICS[t]?.level ?? 0));",
+    "tests": [
+      "test/bal_arc.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAL-the-host-hands-no-class-level",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "classLevel: _eliteOnline ? Infinity : (_superTier ? superFoeLevel(effectiveLevel(playerEntity)) : effectiveLevel(playerEntity)) });",
+    "new": "classLevel: Infinity });",
+    "tests": [
+      "test/bal_arc.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAL-a-search-elite-anywhere",
+    "file": "src/systems/searchables.js",
+    "old": "rolls() < SEARCH_ELITE_CHANCE && elitesAllowed();",
+    "new": "rolls() < SEARCH_ELITE_CHANCE;",
+    "tests": [
+      "test/bal_arc.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAL-the-search-roll-skipped",
+    "file": "src/systems/searchables.js",
+    "old": "rolls() < SEARCH_ELITE_CHANCE && elitesAllowed();",
+    "new": "elitesAllowed() && rolls() < SEARCH_ELITE_CHANCE;",
+    "tests": [
+      "test/bal_arc.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAL-all-off-forgotten",
+    "file": "src/systems/uiPrefs.js",
+    "old": "        if (p.featuresRestore && typeof p.featuresRestore === 'object' && p.enhancedAI === undefined) _prefs.enhancedAI = false;",
+    "new": "",
+    "tests": [
+      "test/pref1_shelf.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAL-all-off-over-a-word",
+    "file": "src/systems/uiPrefs.js",
+    "old": "if (p.featuresRestore && typeof p.featuresRestore === 'object' && p.enhancedAI === undefined) _prefs.enhancedAI = false;",
+    "new": "if (p.featuresRestore && typeof p.featuresRestore === 'object') _prefs.enhancedAI = false;",
+    "tests": [
+      "test/pref1_shelf.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAL-a-puppet-takes-the-share",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    const share = puppet ? 0 : _dungeonShare;",
+    "new": "    const share = _dungeonShare;",
+    "tests": [
+      "test/bal_arc.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAL-the-stages-scale",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "const _placeVeteran = isGateArena(dfLocation) || isArenaFloor(dfLocation) || _sdRealm ? 0 :",
+    "new": "const _placeVeteran = _sdRealm ? 0 :",
+    "tests": [
+      "test/bal_arc.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAL-the-hour-scales",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "const _placeVeteran = isGateArena(dfLocation) || isArenaFloor(dfLocation) || _sdRealm ? 0 :",
+    "new": "const _placeVeteran = isGateArena(dfLocation) || isArenaFloor(dfLocation) ? 0 :",
+    "tests": [
+      "test/bal_arc.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAL-the-enhanced-face-hears-no-rise",
+    "file": "src/ui/enhancedDeath.js",
+    "old": "for (const k of deathKeys(screen.hint, online, !!screen.rises)) {",
+    "new": "for (const k of deathKeys(screen.hint, online)) {",
+    "tests": [
+      "test/bal_arc.test.js"
     ]
   }
 ]

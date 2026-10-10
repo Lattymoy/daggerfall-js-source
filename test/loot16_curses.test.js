@@ -136,26 +136,29 @@ test('LOOT16: the doors - one Rare or Legendary in twelve a body or a pile mints
   const list = () => [createWeapon(120, 1), cuirass(), amulet(), garment(155), garment(195)];
   let both = 0;
   LR.registerGemFind(null);   // PIN MOVED (GEM2, bible/06-Systems/Gem-Sockets.md): the gem find is the door's last draw since - a curse's draw moves it, and its gem is no piece of the list
-  for (let seed = 1; seed < 80; seed++) {
-    LR._setCurseForTests(1);
-    const all = list(); LR.rollLootRarity(all, src, { rolls: lcg(seed) });
-    LR._setCurseForTests(Infinity);
-    const none = list(); LR.rollLootRarity(none, src, { rolls: lcg(seed) });
-    LR._setCurseForTests(null);
-    all.forEach((it, i) => {
-      const twin = none[i];
-      assert.deepEqual([it.rarity, it.name, it.legendary], [twin.rarity, twin.name, twin.legendary], `seed ${seed}: piece ${i}'s tier and name`);
-      assert.ok(!LR.isCursed(twin));
-      if (it.rarity === 'rare' || it.rarity === 'legendary') {
-        if (it.exalted) { assert.ok(!LR.isCursed(it)); return; }
-        both++;
-        assert.ok(LR.isCursed(it), `seed ${seed}: piece ${i} cursed`);
-        assert.deepEqual(it.affixes.slice(0, -1), twin.affixes, 'its own lines its seed\'s');
-      } else assert.deepEqual(it.affixes, twin.affixes);
-    });
+  try {
+    for (let seed = 1; seed < 80; seed++) {
+      LR._setCurseForTests(1);
+      const all = list(); LR.rollLootRarity(all, src, { rolls: lcg(seed) });
+      LR._setCurseForTests(Infinity);
+      const none = list(); LR.rollLootRarity(none, src, { rolls: lcg(seed) });
+      LR._setCurseForTests(null);
+      all.forEach((it, i) => {
+        const twin = none[i];
+        assert.deepEqual([it.rarity, it.name, it.legendary], [twin.rarity, twin.name, twin.legendary], `seed ${seed}: piece ${i}'s tier and name`);
+        assert.ok(!LR.isCursed(twin));
+        if (it.rarity === 'rare' || it.rarity === 'legendary') {
+          if (it.exalted) { assert.ok(!LR.isCursed(it)); return; }
+          both++;
+          assert.ok(LR.isCursed(it), `seed ${seed}: piece ${i} cursed`);
+          assert.deepEqual(it.affixes.slice(0, -1), twin.affixes, 'its own lines its seed\'s');
+        } else assert.deepEqual(it.affixes, twin.affixes);
+      });
+    }
+    assert.ok(both > 20, `${both} Rares and Legendaries compared`);
+  } finally {
+    LR.registerGemFind(rollGemFind);
   }
-  assert.ok(both > 20, `${both} Rares and Legendaries compared`);
-  LR.registerGemFind(rollGemFind);
   // never an Exalted: every Legendary exalted in the last pass, every one passed by
   LR._setExaltedForTests(1000);
   LR._setCurseForTests(1);

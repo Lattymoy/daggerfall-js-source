@@ -110,47 +110,52 @@
   {
     "name": "LOOT20-the-line-unset-on-set",
     "file": "src/systems/lootRarity.js",
-    "old": "  writeSockets(item, list.map((v, j) => (j === i ? gem : v)));\n  layGemLines(item);\n  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + affixesWorth([line], item);",
-    "new": "  writeSockets(item, list.map((v, j) => (j === i ? gem : v)));\n  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + affixesWorth([line], item);",
+    "old": "  writeSockets(item, list.map((v, j) => (j === i ? gem : v)));\n  layGemLines(item);\n  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + gemWorth(gem);",
+    "new": "  writeSockets(item, list.map((v, j) => (j === i ? gem : v)));\n  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + gemWorth(gem);",
     "tests": [
       "test/loot20_sockets.test.js"
-    ]
+    ],
+    "note": "AUDIT BAL/GEM (PIN MOVED, 2026-10-10): its line changed with the audit's fix; re-aimed by content."
   },
   {
     "name": "LOOT20-the-socket-unnamed",
     "file": "src/systems/lootRarity.js",
-    "old": "  writeSockets(item, list.map((v, j) => (j === i ? gem : v)));\n  layGemLines(item);\n  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + affixesWorth([line], item);",
-    "new": "  item.affixes = [...(Array.isArray(item.affixes) ? item.affixes : []), line];\n  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + affixesWorth([line], item);",
+    "old": "  writeSockets(item, list.map((v, j) => (j === i ? gem : v)));\n  layGemLines(item);\n  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + gemWorth(gem);",
+    "new": "  item.affixes = [...(Array.isArray(item.affixes) ? item.affixes : []), line];\n  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + gemWorth(gem);",
     "tests": [
       "test/loot20_sockets.test.js"
-    ]
+    ],
+    "note": "AUDIT BAL/GEM (PIN MOVED, 2026-10-10): its line changed with the audit's fix; re-aimed by content."
   },
   {
     "name": "LOOT20-the-gem-worthless",
     "file": "src/systems/lootRarity.js",
-    "old": "  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + affixesWorth([line], item);\n  return line;",
+    "old": "  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + gemWorth(gem);\n  return line;",
     "new": "  return line;",
     "tests": [
       "test/loot20_sockets.test.js"
-    ]
+    ],
+    "note": "AUDIT BAL/GEM (PIN MOVED, 2026-10-10): its line changed with the audit's fix; re-aimed by content."
   },
   {
     "name": "LOOT20-the-line-left-on-unset",
     "file": "src/systems/lootRarity.js",
-    "old": "  writeSockets(item, list.map((v, j) => (j === i ? SOCKET_EMPTY : v)));\n  layGemLines(item);\n  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) - affixesWorth([line], item);",
-    "new": "  writeSockets(item, list.map((v, j) => (j === i ? SOCKET_EMPTY : v)));\n  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) - affixesWorth([line], item);",
+    "old": "  writeSockets(item, list.map((v, j) => (j === i ? SOCKET_EMPTY : v)));\n  layGemLines(item);\n  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) - (legacy ? affixesWorth([line], item) : gemWorth(gem));",
+    "new": "  writeSockets(item, list.map((v, j) => (j === i ? SOCKET_EMPTY : v)));\n  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) - (legacy ? affixesWorth([line], item) : gemWorth(gem));",
     "tests": [
       "test/loot20_sockets.test.js"
-    ]
+    ],
+    "note": "AUDIT BAL/GEM (PIN MOVED, 2026-10-10): its line changed with the audit's fix; re-aimed by content."
   },
   {
     "name": "LOOT20-unset-keeps-the-gem",
     "file": "src/systems/lootRarity.js",
-    "old": "  writeSockets(item, list.map((v, j) => (j === i ? SOCKET_EMPTY : v)));\n  layGemLines(item);\n  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) - affixesWorth([line], item);",
-    "new": "  layGemLines(item);\n  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) - affixesWorth([line], item);",
+    "old": "  writeSockets(item, list.map((v, j) => (j === i ? SOCKET_EMPTY : v)));\n  layGemLines(item);\n  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) - (legacy ? affixesWorth([line], item) : gemWorth(gem));",
+    "new": "  layGemLines(item);\n  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) - (legacy ? affixesWorth([line], item) : gemWorth(gem));",
     "tests": [
       "test/loot20_sockets.test.js"
-    ]
+    ],
+    "note": "AUDIT BAL/GEM (PIN MOVED, 2026-10-10): its line changed with the audit's fix; re-aimed by content."
   },
   {
     "name": "LOOT20-wire-gem-without-socket",
@@ -290,12 +295,12 @@
   {
     "name": "LOOT20-a-locked-gem-spent",
     "file": "src/systems/reforge.js",
-    "old": "!it.questItem && !isLocked(it) && !isEquipped(it);",
-    "new": "!it.questItem && !isEquipped(it);",
+    "old": "!it.questItem && !isLocked(it) && !isEquipped(it) && !isEnchanted(it);",
+    "new": "!it.questItem && !isEquipped(it) && !isEnchanted(it);",
     "tests": [
       "test/loot20_sockets.test.js"
     ],
-    "note": "Re-aimed by content (AUDIT LOOT II B1): a quest's gem is no loose gem either."
+    "note": "Re-aimed by content (AUDIT LOOT II B1): a quest's gem is no loose gem either. AUDIT BAL/GEM (PIN MOVED, 2026-10-10): its line changed with the audit's fix; re-aimed by content."
   },
   {
     "name": "LOOT20-a-stack-taken-whole",
@@ -345,11 +350,12 @@
   {
     "name": "LOOT20-the-gem-kept",
     "file": "src/systems/reforge.js",
-    "old": "  takeGem(player.items, gem);\n  const line = setGem(item, gem, at);",
+    "old": "  takeGem(player.items, gem, from);   // AUDIT GEM: the pressed stone first\n  const line = setGem(item, gem, at);",
     "new": "  const line = setGem(item, gem, at);",
     "tests": [
       "test/loot20_sockets.test.js"
-    ]
+    ],
+    "note": "AUDIT BAL/GEM (PIN MOVED, 2026-10-10): its line changed with the audit's fix; re-aimed by content."
   },
   {
     "name": "LOOT20-unset-an-empty-socket",

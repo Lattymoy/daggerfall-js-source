@@ -224,6 +224,12 @@ export function loadPrefs() {
         // diamond's style, and so stays Off. Diamond was the old default and left no trace: it moves to the hotbar
         // with everyone who never chose.
         if ((p[SHELF_STAMP] ?? 0) < 2 && p.quickbarStyle === undefined && p.quickslots === false) _prefs.quickbarStyle = 'quickbar';
+        // AUDIT BAL (bible/05-Combat/Balance-Arc.md section 10): ALL OFF STAYS ALL OFF. The Enhanced AI's default turned
+        // On (BAL4), and a shelf that pressed the Features page's All off while it shipped Off stored nothing for it - Off
+        // was its default, and this shelf writes no default - so the flip would stand the AI up over "everything off".
+        // While the All-off keep stands (`featuresRestore`, spent by Restore) and the shelf holds no word of its own on
+        // the AI, it stays Off; Off differs from the default now, so the next save writes it as the choice it is.
+        if (p.featuresRestore && typeof p.featuresRestore === 'object' && p.enhancedAI === undefined) _prefs.enhancedAI = false;
         // GRASS-ON (2026-10-07, Mac: "Can you please turn grass on by default"): THE GRASS IS FULL BY DEFAULT AGAIN
         // (features.js 'grass', grassDensity 0 to 1), and AUDIT MEADOW1's adoption that stood here - an unstamped
         // shelf's `grassDensity: 1` moved to its Off - went with the Off: that Full is the default again. Nothing stored

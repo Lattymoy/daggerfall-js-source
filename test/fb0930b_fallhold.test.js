@@ -31,9 +31,12 @@ import { createCityGuards } from '../src/scenes/cityGuards.js';
 import { areEnemiesNearby } from '../src/systems/encounters.js';
 import { TERRAIN_SIZE } from '../src/world/terrainSampler.js';
 import { setPref } from '../src/systems/uiPrefs.js';   // BAL4: the switch this file's pins assumed
+import { tickTactics, resetTactics } from '../src/ai/tactics.js';   // AUDIT BAL: the brain's clock, ticked as the hosts tick it
 
-// BAL4 (bible/05-Combat/Balance-Arc.md section 6): the Enhanced AI ships On now; this file pins the classic motor's hold and swing (the tactics brain's tokens and recovery are TACT's own pins),
-// so it says Off outright where it used to read the default (LR5's trap: a pin that leaned on a default moves with it)
+// BAL4 (bible/05-Combat/Balance-Arc.md section 6): the Enhanced AI ships On now; this file's pins are the classic motor's
+// hold and swing, so it says Off outright where it used to read the default (LR5's trap: a pin that leaned on a default
+// moves with it) - and AUDIT BAL's last pin runs the mid-fight hold again with the brain ON, its clock (ai/tacticsClock.js,
+// the foes' own time) ticked with the foes' step as every host ticks it
 setPref('enhancedAI', false);
 
 const rd = (p) => readFileSync(join(import.meta.dirname, '..', p), 'utf8');
@@ -184,6 +187,28 @@ test('FALL-HOLD: a foe whose ground goes down under it mid-fight (a re-skin\'s t
   w.built.add('1,0');
   run(4, me);
   assert.ok(f.ai.detected && f.attack.swingSeq > swings, 'on its ground, it sees and swings again');
+});
+
+test('FALL-HOLD (AUDIT BAL, the Enhanced AI on - its default since BAL4): the mid-fight hold under the tactics brain - held, no swing, no refused rest, and on its ground it sees and swings again, the brain\'s clock ticked with the foes\' step', async () => {
+  setPref('enhancedAI', true); resetTactics();
+  try {
+    const w = streamedWorld(['0,0', '1,0']);
+    const { pool, run } = worldPool(w, playerEntity(), { onPlayerHurt: () => {} });
+    const brain = (s, me) => { for (let i = 0; i < Math.round(s * 60); i++) { tickTactics(1 / 60); run(1 / 60, me); } };   // a host's frame: the clock, then the foes
+    const me = [E - 0.6, 0, 400];
+    const f = await pool.spawnFoe(0, [E + 0.6, 0, 400], { feetGiven: true });
+    brain(4, me);
+    assert.ok(f.ai.detected && f.ai.inSight && f.attack.swingSeq > 0, 'it has seen the player and swung');
+    w.built.delete('1,0');
+    const swings = f.attack.swingSeq;
+    brain(4, me);
+    assert.ok(Math.abs(f.ai.feet[1]) < 0.05 && !f.dead, 'held - neither fallen nor culled');
+    assert.equal(f.attack.swingSeq, swings, 'no swing decided on a sight latched before the hold');
+    assert.equal(areEnemiesNearby(pool.foes, { resting: true }), false, 'and no rest refused on one');
+    w.built.add('1,0');
+    brain(4, me);
+    assert.ok(f.ai.detected && f.attack.swingSeq > swings, 'on its ground, it sees and swings again');
+  } finally { setPref('enhancedAI', false); resetTactics(); }
 });
 
 test('FALL-HOLD: the watch - a watchman a load restores over a pixel not built (a crime standing) is held, and stands when it builds', async () => {

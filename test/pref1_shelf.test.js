@@ -98,6 +98,21 @@ test('PREF1: an UNSTAMPED shelf adopts the new default once - and never again', 
   assert.equal(P.getPref('lootRarity'), false, 'the adoption does not run a second time over a real choice');
 });
 
+test('AUDIT BAL: ALL OFF STAYS ALL OFF - a shelf in the Features page\'s All off when the Enhanced AI\'s default turned On keeps it Off (and writes it on the next save); a shelf with its own word, or none in All off, takes the default', () => {
+  withShelf({ _rev: 2, featuresRestore: { blood: 'Heavy' } });
+  assert.equal(P.getPref('enhancedAI'), false, 'All off: the AI stays off');
+  P.setPref('showFps', true);   // any save
+  assert.equal(shelf().enhancedAI, false, 'written as the choice it is now');
+  reload();
+  assert.equal(P.getPref('enhancedAI'), false, 'and stays across loads');
+  withShelf({ _rev: 2, featuresRestore: { blood: 'Heavy' }, enhancedAI: true });
+  assert.equal(P.getPref('enhancedAI'), true, 'pressed On since All off: its own');
+  withShelf({ _rev: 2, featuresRestore: null });
+  assert.equal(P.getPref('enhancedAI'), true, 'the keep spent (Restore): the default');
+  withShelf({ _rev: 2 });
+  assert.equal(P.getPref('enhancedAI'), true, 'never in All off: the default');
+});
+
 test('PREF1: a shelf that predates the key entirely, and one already stamped, are both left to the defaults', () => {
   withShelf({ skin: 'enhanced', textScale: 1 });
   assert.equal(P.getPref('lootRarity'), true, 'no stored answer: the default');

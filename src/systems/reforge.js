@@ -37,13 +37,13 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { lootRarityOn, reforgeableLines, reforgeAffix, honeableLines, honeAffix, affixBand } from './lootRarity.js';   // LOOT17: and the hone
-import { ALL_GEM_IDS, SOCKET_EMPTY, gemKindOf, gemGrade, hasSocket, socketsOf, socketGem, setGem, unsetGem } from './lootRarity.js';   // LOOT20: the sockets; GEM1: a list of them, every grade of gem
+import { ALL_GEM_IDS, SOCKET_EMPTY, gemKindOf, gemGrade, hasSocket, socketsOf, socketGem, socketGems, setGem, unsetGem } from './lootRarity.js';   // LOOT20: the sockets; GEM1: a list of them, every grade of gem
 import { mintGem } from './gems.js';   // GEM1: an extracted gem, whole again
 import { welkyndShards, isWelkyndShard, WELKYND_SHARD } from './gateSpoils.js';
 import { isBound } from './itemBound.js';
 import { isLocked } from './itemLock.js';
 import { isEquipped, notifyEquipChange } from './equip.js';   // GEM1: a worn piece's wearer folded again
-import { addItem } from './inventory.js';
+import { addItem, isEnchanted } from './inventory.js';   // AUDIT GEM: an enchanted gem is no loose stone
 import { totalGoldAmount, deductGold } from './court.js';
 import { itemIsIdentified } from './tradeModes.js';
 
@@ -68,6 +68,7 @@ export function salvageRefusal(item) {
   if (item.rarity === 'gilded') return 'gilded';   // GILDED1: a static roll is never broken down
   if (item.artifact || item.rarity === 'artifact') return 'artifact';
   if (item.questItem) return 'quest';
+  if (socketGems(item).length) return 'gems';   // AUDIT GEM: a set gem is never broken with its piece - extracted or unset first (a Magic weapon holds one since GEM1, and the bulk salvage swept it)
   if (!salvageShards(item)) return 'not';
   if (isBound(item)) return 'bound';
   if (isEquipped(item)) return 'worn';
@@ -192,11 +193,14 @@ export const EXTRACT_PRICE = Object.freeze({ chipped: 50, flawed: 100, plain: 20
 /** A gem item the setting may take: of its kind, unlocked and not worn - the shards' own law (a gem is a jewel a slot
  *  takes too) - and never a quest's (AUDIT LOOT II B1: a quest's ruby is the one its giver waits for, `toting _item_`;
  *  set in a socket it was gone and the quest could never close, where the Salvage page refuses a quest's piece). */
-const looseGem = (it, gem) => gemKindOf(it) === gem && !it.questItem && !isLocked(it) && !isEquipped(it);
+const looseGem = (it, gem) => gemKindOf(it) === gem && !it.questItem && !isLocked(it) && !isEquipped(it) && !isEnchanted(it);   // AUDIT GEM: never one the item maker enchanted (its powers would go into the socket and be lost)
 /** The pack's loose gems, by id: `{ ruby: 2, 'flawless-ruby': 1, ... }` - every gem, DFU's and the graded (GEM2). */
 export const gemsHeld = (items) => Object.fromEntries(ALL_GEM_IDS.map((g) => [g, (Array.isArray(items) ? items : []).reduce((n, it) => n + (looseGem(it, g) ? (it.stackCount ?? 1) : 0), 0)]));
-/** Take one loose gem of a kind out of a pack (a stack shrinks, a last one goes). Answers whether it could. */
-export function takeGem(items, gem) {
+/** Take one loose gem of a kind out of a pack (a stack shrinks, a last one goes). Answers whether it could. AUDIT GEM:
+ *  `prefer` - the record the player pressed (a gem card's "Set in..."), taken first when it is a loose one of the kind. */
+export function takeGem(items, gem, prefer = null) {
+  const at = prefer && looseGem(prefer, gem) ? items.indexOf(prefer) : -1;
+  if (at >= 0) { if ((prefer.stackCount ?? 1) > 1) prefer.stackCount -= 1; else items.splice(at, 1); return true; }
   for (let i = items.length - 1; i >= 0; i--) {
     const it = items[i];
     if (!looseGem(it, gem)) continue;
@@ -226,11 +230,11 @@ export function setGemRefusal(item, gem, player, at = null) {
 }
 /** THE SETTING, MADE: the gem out of the pack, its line on the piece (a worn one's wearer folded again). Answers
  *  `{ ok: true, line }` or `{ ok: false, reason }` with nothing taken. */
-export function setGemPiece(item, gem, player, at = null) {
+export function setGemPiece(item, gem, player, at = null, { from = null } = {}) {
   if (!player || !Array.isArray(player.items) || !player.items.includes(item)) return { ok: false, reason: 'gone' };
   const why = setGemRefusal(item, gem, player, at);
   if (why) return { ok: false, reason: why };
-  takeGem(player.items, gem);
+  takeGem(player.items, gem, from);   // AUDIT GEM: the pressed stone first
   const line = setGem(item, gem, at);
   refold(item, player);
   return { ok: true, line };

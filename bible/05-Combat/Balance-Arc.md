@@ -21,10 +21,11 @@ the one place it did not reach.
 Two lanes, both read-only, both through the real code: an analysis of every difficulty lever (who is on by default,
 what each multiplies), and a deep read of the Physical Combat And Armor Overhaul (`combat/pcaao.js`, PCO1 - on by
 default since MO1) with simulations through its own `pcaaoAttackDamage`, 40,000-60,000 swings a cell. The builds
-were stated, not taken from a save: a level-12 player (STR 70, AGI 65, END 65, Long Blade 60, Critical Strike 40,
-Dodging 45) and a level-20 one (STR 80, AGI 75, END 75, Long Blade 85, Critical Strike 65, Dodging 65), each in a
-full set of steel or ebony and a fresh longsword; a monster's attributes at 50 (MONSTER.BSA's own values are not in
-the tree). The causes, ranked by what they move:
+were stated, not taken from a save: a level-12 player (STR 70, AGI 65, END 65, SPD 60, LUC 55, WIL 50, health 130;
+Long Blade 60, Critical Strike 40, Dodging 45, every other skill 40) and a level-20 one (STR 80, AGI 75, END 75, SPD 70,
+LUC 60, WIL 55, health 210; Long Blade 85, Critical Strike 65, Dodging 65, every other skill 50), each in seven pieces
+of steel or ebony (no shield) and a fresh longsword; a monster's attributes at 50 (MONSTER.BSA's own values are not in
+the tree). Melee alone - a Lich's spells are not in any table here. The causes, ranked by what they move:
 
 1. **The overhaul's hit and crit rules favour the player.** `pcaaoAttackDamage` gave the player half his skill again
    to hit (`skill * 1.5`) and a foe its skill alone; `pcaaoCriticalStrike` rolled the player's crit at
@@ -35,7 +36,8 @@ the tree). The causes, ranked by what they move:
 2. **A reward with no upkeep.** `pcaaoAlterDamageBasedOnWepCondition` strikes with a blade at x1.3 at 92% condition
    and over, x1.1 at 76-91%; `pcaaoAlterArmorReducBasedOnItemCondition` lets a piece over 92% reduce to 0.85. The mod
    pays that for keeping gear sharp against its own fast wear (`equipmentDamageEnhanced`). The port ships that wear
-   OFF (WEAR-VANILLA) and holds every weapon on one 1,600-point pool (WEAPON-POOL): a fresh steel longsword took 128
+   OFF (WEAR-VANILLA) and holds every weapon on one pool (WEAPON-POOL: the Warhammer's 1,600 through the material
+   ladder - a steel longsword's 2,400): a fresh steel longsword took 128
    landed hits on an Orc Warlord to fall under 92% and 417 to fall under 76% (the mod's wear: 57 and 186), and a
    monster's natural blow wears no armour at all with the module off - so the edge was every fight's. AUDIT
    WEAPON-POOL recorded it and left it ("an iron dagger strikes at x1.3 for 65 blows of 20 damage (it was 3)").
@@ -77,7 +79,8 @@ Why not switch the condition module off with the wear (the other way the measure
 worn gear its cost too. The edge is a reward for upkeep; the cost is the world's, and DFU's own (a broken blade is
 worse than a whole one).
 
-What moves with it: a fresh blade's swing about 23% less, a fresh piece's reduction about 15% less. KIT-CEILING's
+What moves with it: a fresh blade's swing about 23% less, and about 18% more gets through a fresh piece (1 / 0.85;
+measured, a foe's blow 19-22% more). KIT-CEILING's
 reading ("the sharp edge above is a smith's") holds while the mod's wear is on; off, there is no edge above a kit's
 three quarters for a smith to restore - a smith's repair is the condition back, as DFU's is.
 
@@ -99,7 +102,8 @@ armour reducing), and it is the foe's, not the player's.
 
 What moves: against a foe already at the 97% clamp (an Orc Warlord, a Lich at skill 100), nothing from the to-hit -
 the crit carries it (damage taken about 14% more); against a lower foe the to-hit carries it (a level-20 player with
-Dodging 65: a rat's landing 43% -> 61%, an Orc's 69% -> 97%).
+Dodging 65: a rat's hit roll 43% -> 62%, an Orc's 69% -> 97% - the roll alone; a monster's reflex gate still lets
+half its attacks through to it, so a rat's blow lands 21% -> 31% of its tries).
 
 ## 5. BAL3 - the place sets the threat
 
@@ -113,7 +117,10 @@ pile's odds are that place's. The veteran layer now reads the same grade: the pl
 from 4 to 12, so a rat stays a rat; a class foe in full). The wilderness stands as the dungeons it reads like -
 SOFTCAP5's own equivalence, "by day like a cemetery or a ruined castle, at night like a prison or a harpy nest" - at
 tier 5 by day and 7 at night (`wildernessThreat`). Towns, interiors and `exterior.js`'s fixed city never scale (the
-two seams never run there). Offline, with Master Skills off, at any level, mentoring or not.
+two seams never run there), nor the port's own stages that wear a Crypt's type for want of one - the arena's floor,
+the gate's court, the Shattered Hour (AUDIT BAL). A dungeon's puppets (another client's foes) take the place too - it is
+every client's - and none of the owner's standing; their health is the owner's record's (AUDIT BAL). Offline, with
+Master Skills off, at any level, mentoring or not.
 
 THE GATE IS THE LADDER'S. The grading is the loot ladder's, so the layer stands while the ladder does (`lootRarityOn`,
 on by default, forced on online - LR5): the ladder off, the place hands 0 and a dungeon's foes are DFU's again, as
@@ -159,11 +166,15 @@ the loot ladder stands. An elite's drop is the ladder's (eliteLoot's tiers) and 
 (`systems/champions.js`), so with the ladder off no foe is ever one - DFU's lane. Nothing else about them moves:
 ELITE-RATES' one foe in twenty in the open world (off `Math.random`, never the encounter's dice), at most one in a
 plain dungeon one time in five and three or four in an Elite Dungeon (a pure pick by the dungeon's id), never under
-level 3 (ELITE-FLOOR), never the watch, an ally, a quest's foe or a retype. They compound with the place: the hosts
+level 3 (ELITE-FLOOR - offline a class foe by the level it is built at, AUDIT BAL; online the pick stays every client's,
+a class foe's level each client's own), never the watch, an ally, a quest's foe or a retype; a search's waking dead
+stand as one only where elites do (AUDIT BAL). They compound with the place: the hosts
 promote first (x5 health, x3 damage), then the place scales the elite (an elite in a Dragon's Den stands at x10
-health, x3.75 damage) - as an elite and the Master Skills veteran always compounded online. Offline, Mac's
-2026-10-01 "elite enemies are online mode only" stood until this arc measured that offline fielded nothing past
-DFU's own foes; Mac's 2026-10-10 "Do everything" (of "smarter AI and elites offline") is the word that turns it.
+health, x3.75 damage) - as an elite and the Master Skills veteran always compounded online. Offline, the rule the
+code carried in Mac's words ("elite enemies are online mode only") stood until this arc measured that offline fielded
+nothing past DFU's own foes; Mac's 2026-10-10 "Do everything" (of "smarter AI and elites offline") is the word that
+turns it. A save keeps its own: a dungeon's elites are the save's word on a load (AUDIT BAL), as the open world's
+always were.
 
 **THE ENHANCED AI.** `features.js` 'enhanced-ai': `initial: true` (it was false - "DFU's classic motor is the 1:1
 law"); `online: true` stands, so every room still forces it on. What it brings (`12-Enhanced-AI/`): attack tokens
@@ -180,9 +191,11 @@ default as if chosen; the row shipped Off on 2026-09-14, one day before the stam
 writing and not an answer. `enhancedAI` joins `PREF1_ADOPT_NEW_DEFAULT` beside `lootRarity`: adopted once, never
 again over a real choice. No `SHELF_REV` bump (the adoption reads the stamp's absence).
 
-Pins that leaned on the old default without saying so (LR5's trap): `enemymotor` P17 (fixed stepping - the tactics
-brain is a real-time layer on TACT2's wall clock and `Math.random`, so a 10 fps and a 60 fps foe do not take the
-same path under it; P17's law is the classic motor's), FALL-HOLD and CRATE-FREE now set the switch Off outright.
+Pins that leaned on the old default without saying so (LR5's trap): `enemymotor` P17, FALL-HOLD and CRATE-FREE now
+set the switch Off outright, their laws the classic motor's - and each has a brain-On twin (AUDIT BAL) that ticks the
+tactics brain's clock as every host does. That clock is the foes' own time (`ai/tacticsClock.js`, AUDIT TACT A3/D1),
+never the wall: a test that never ticks it holds the brain's timers and tokens still, which is what failed those three
+with the switch On - not a defect players meet.
 
 **A REAL COST FOR DYING OFFLINE.** Measured: an offline death cost nothing a save did not already hold. With Project
 Legacy on (its default) an Enduring member rises (LEGACY2, 2026-10-05: the online respawn's own `respawnOnlinePlayer`
@@ -228,7 +241,7 @@ attacks it takes to kill the player):
 
 A weak foe in a weak place stays weak (the Orc); the deepest places are where the fight changed most - an Ancient Lich
 in a Dragon's Den took eight swings and could not kill a level-20 player in twenty; it takes twenty-three and kills in
-thirteen. The simulation leaves out the formulas' tail (an elite, the mentor, a stagger) and BAL4.
+thirteen. The simulation leaves out the formulas' tail (an elite, the mentor, a stagger), a foe's spells and BAL4.
 
 ## 8. What is recorded, not built
 
@@ -242,10 +255,13 @@ thirteen. The simulation leaves out the formulas' tail (an elite, the mentor, a 
 - **The Elite and Super dungeons compound.** Their own scale (an Elite dungeon's x2, a Super dungeon's x4 health)
   is applied before the place's, as it was before Master Skills' layer online; a Super dungeon in a Dragon's Den's
   grade stands at x8 health. Online, a player with veteran skills already met that; now every player does.
-- **The tactics brain is not fixed-step.** It runs on its own wall clock (`tactics.js` tacticsNow) and rolls
-  `Math.random` for its slots, beats and blows (TACT2), so two foes at 10 and 60 frames a second part ways under it
-  where the classic motor's P17 keeps them on one path. By design, and online's since TACT2; recorded because BAL4
-  turns it on offline.
+- **The tactics brain's clock is the hosts' to tick.** It reads the foes' own time (`ai/tacticsClock.js`), ticked
+  with each frame's foe step by the hosts, and rolls `Math.random` for its slots, beats and blows (TACT2). Ticked so,
+  a 10 fps and a 60 fps foe pursue to the same spot under it too (AUDIT BAL's P17 twin); a harness that never ticks it
+  is the only place its timers stand still.
+- **The open world's puppets take no place.** A dungeon's do (its tier is every client's, AUDIT BAL); a wilds puppet
+  cannot - whether its owner stood on a location's ground is the owner's, and the pool's `inLocation` is the viewer's.
+  At the wilds' 5 and 7 that is at most +2.1 skill and x1.05 damage between an owner's copy and a peer's.
 - **An offline crime chase still ends at a rise** (`respawnOnlinePlayer` clears the crime and abandons the arrest,
   in both lanes). A death is not a free escape any more - it costs the tenth - but the chase is not carried over.
 

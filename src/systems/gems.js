@@ -70,7 +70,8 @@ export function mintGem(/** @type {string} */ id) {
 
 // ── where they are found ──────────────────────────────────────────────
 /** THE WORLD'S CHANCE AT A GEM, per mille: `base` and `perTier` a tier of the source to `cap`, a pile 1.3 times and a
- *  boss 2.5 (the ladder's SOURCE_MULT), luck the ladder's own multiplier (luckMult) - the source's, never the player's. */
+ *  boss 2.5 (the ladder's SOURCE_MULT), and the player's live Luck through the ladder's own multiplier (luckMult) - the
+ *  odds are the source's, the Luck the finder's, as every ladder roll reads it. */
 export const GEM_FIND = Object.freeze({ base: 30, perTier: 5, cap: 150 });
 /** THE GRADE A SOURCE'S TIER GIVES: from `tier` on, each grade's weight (GEM_GRADES' order - chipped, flawed, plain,
  *  flawless, perfect). A boss reads GEM_BOSS_TIERS deeper. */
@@ -120,6 +121,7 @@ export const BOSS_GEMS = Object.freeze({ gate: 1, serpent: 1, abyss: 2 });
 export const BOSS_GEM_SOURCE = Object.freeze({ tier: 21, boss: true });
 /** A boss's gems, each known (a gem is always known - it carries no enchantment) - two draws a gem. */
 export function bossGems(/** @type {string} */ boss, rolls = Math.random) {
+  if (!lootRarityOn()) return [];   // AUDIT GEM (law 3): with the ladder off no graded gem is found - a boss's last draws, so nothing before them moves
   const out = [];
   for (let i = 0; i < (BOSS_GEMS[boss] ?? 0); i++) { const g = rollGem(BOSS_GEM_SOURCE, rolls); if (g) out.push(g); }
   return out;

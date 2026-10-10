@@ -268,6 +268,10 @@ export function movementTallyWeight(entity, skillId, amount, skill) {
 // decimate those ... we need to double those minimum"). Both need Master
 // Skills in force (always online; offline the player's switch) and neither
 // runs while mentoring. Every number lives in ENEMY_SCALING below.
+// BAL3 (the place's threat, below progressionScaling's header): the VETERAN
+// row also stands by the PLACE alone - without Master Skills, while
+// mentoring, offline, in a dungeon by its ladder tier and in the wilds -
+// and these player-read layers sit beside it, the more of the two.
 //
 //  1. VETERAN - the answer to Daggerfall's own endgame, where a foe's skills
 //     stop at 100 by level 14 and a monster's health never grows. It ramps in

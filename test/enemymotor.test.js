@@ -13,9 +13,12 @@ import { Collider } from '../src/player/collider.js';
 import { MISSILE_SPEED, MISSILE_COLLIDER_RADIUS } from '../src/systems/spellcast.js';
 import { ARROW_ARM_LENGTH } from '../src/characters/weaponStates.js';
 import { setPref } from '../src/systems/uiPrefs.js';   // BAL4: the switch this file's pins assumed
+import { tickTactics, resetTactics } from '../src/ai/tactics.js';   // AUDIT BAL: the brain's clock, ticked as the hosts tick it
 
-// BAL4 (bible/05-Combat/Balance-Arc.md section 6): the Enhanced AI ships On now; this file pins the classic motor's own laws (P17's fixed stepping among them - the tactics brain is a real-time layer on the wall clock, TACT2),
-// so it says Off outright where it used to read the default (LR5's trap: a pin that leaned on a default moves with it)
+// BAL4 (bible/05-Combat/Balance-Arc.md section 6): the Enhanced AI ships On now; this file's pins are the classic motor's
+// own laws, so it says Off outright where it used to read the default (LR5's trap: a pin that leaned on a default moves
+// with it) - and AUDIT BAL's P17 pin runs the fixed stepping again with the brain ON, its clock (ai/tacticsClock.js, the
+// foes' own time, never the wall) ticked with each frame's step as every host ticks it
 setPref('enhancedAI', false);
 
 const approx = (a, b, eps = 1e-4) => assert.ok(Math.abs(a - b) < eps, `${a} !~ ${b}`);
@@ -101,6 +104,28 @@ test('P17: fixed stepping - a 10fps foe pursues to the SAME spot as a 60fps foe'
   const ref = new EnemyAI(mkC(), [0, 0, 0], 0, { liveSpeed: 50 });
   for (let i = 0; i < 15; i++) ref.update(1 / 60, player);   // 0.25 = 15 steps
   assert.equal(hitch.feet[2], ref.feet[2]);
+});
+
+test('P17 (AUDIT BAL, the Enhanced AI on - its default since BAL4): fixed stepping holds under the tactics brain too - a 10fps foe and a 60fps foe, the brain\'s clock ticked with each frame\'s step, pursue to the SAME spot', () => {
+  setPref('enhancedAI', true);
+  try {
+    const mkC = () => {
+      const c = new Collider(() => -100);
+      c.addMesh('floor', new Float32Array([-40, 0, -40, 40, 0, -40, 40, 0, 40, -40, 0, 40]), quadIdx, I);
+      return c;
+    };
+    const player = [0, 0, 12];
+    const drive = (fps) => {
+      resetTactics();
+      const ai = new EnemyAI(mkC(), [0, 0, 0], 0, { liveSpeed: 50 });
+      for (let i = 0; i < fps * 4; i++) { tickTactics(1 / fps); ai.update(1 / fps, player); }   // a host's frame: the clock, then the foes
+      return ai;
+    };
+    const ai60 = drive(60), ai10 = drive(10);
+    assert.equal(ai10.feet[0], ai60.feet[0]);
+    assert.equal(ai10.feet[2], ai60.feet[2]);
+    assert.equal(ai10.yaw, ai60.yaw);
+  } finally { setPref('enhancedAI', false); resetTactics(); }
 });
 
 test('C12 flying: 3D pursuit at the face, hover with NO gravity when idle', () => {

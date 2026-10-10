@@ -94,7 +94,7 @@ alone, worn as a crystal - and its line is its grade's:
 | Malachite | +1 / 2 / 4 / 6 / 8 Strength | +1 / 2 / 4 / 6 / 8 Endurance |
 
 The plain column is LOOT20's table, unchanged. A Perfect weapon line never stands past the top of its kind's Rare band
-(fire's, frost's and the leech's stand at it), so one Perfect Ruby is the most fire a piece can read (law 6), and a
+(fire's, frost's and the leech's stand at it), so one Perfect Ruby is the most fire a piece's gems can add (law 6), and a
 three-socket blade wants three kinds.
 
 **In the world** (`rollGemFind`): every door the ladder rolls at (a corpse, a dungeon's pile, a tavern's or a guild's
@@ -123,18 +123,19 @@ with the rest of the spoils.
   sunk and dark, a set one holding its gem's own picture with a ring in its grade's colour. Pressed (the pack's own
   piece), a well opens its chooser; hovered, it says its line.
 - **The tile's pips.** A socketed piece's tile in the pack, the loot list and the worn panels carries one pip a socket
-  in its corner, filled for a set gem.
+  along its top edge, filled for a set gem.
 - **The lines.** The card's tier list keeps a line a gem ("Flawless Ruby: +4 Fire damage") and one line for the empty
-  ones ("Sockets: 2 empty"); when law 6's cap bites, one line says so ("Gems: Fire damage held at +6"). The classic
+  ones ("Sockets: 2 empty"); when law 6's cap bites, one line says so ("Gems: +6 Fire damage at most"). The classic
   scroller's tooltip reads the same lines.
 - **The Reforge's Sockets page** rows every socket of every socketed piece, sets in an empty one, and extracts from a
   set one.
 
 ## 6. The wire and the save
 
-`sockets` is a declared item field (an array of at most three `SOCKET_VALUES`); `socket` stays declared, so a peer on
-the build before this one is still read. `validSocket` is the one law both lanes read: a socket list only on a piece
-whose group and tier may hold one, never longer than its `socketMax`, never both fields; and the gem lines after the
+`sockets` is a declared item field (an array of `SOCKET_VALUES` - the field sets no length; `validSocket` caps it);
+`socket` stays declared, so a peer on the build before this one is still read. `validSocket` is the one law both lanes
+read: a socket list only on a piece whose group and tier may hold one, never longer than its `socketCap`, never both
+fields; and the gem lines after the
 piece's own, one a set socket, in the sockets' order, each exactly its gem's line for this piece. The gem lines stay in
 `affixes`, marked with their gem (LOOT20's shape), so every reader that already read one gem reads three.
 
@@ -145,6 +146,16 @@ piece's own, one a set socket, in the sockets' order, each exactly its gem's lin
 - **Gem kinds of the bosses' own** (a Coil Pearl, an ember of Ruhn) want lines the port does not read yet; law 8 of the
   Loot arc II (no dead lines) holds them back until they have readers.
 - **A socket on the 3D weapon.** The wells are the card's and the tile's; the Morrowind models carry no socket mesh.
+- **The street's and the watch's body doors draw the weapons' pass inside the kit** (AUDIT GEM B6): `foeLootCap.js`
+  rollCorpseKit runs it before `exteriorFoes.js`'s won-weapon stamp, `raiseEnemyDeath` and `cityGuards.js`'s stamp - the
+  kit is its own door, as LOOT16's and LOOT20's passes there already were; the hosts hand it no seeded stream
+  (`Math.random`), so no seed a player meets moves.
+- **A graded gem is an ingredient** (AUDIT GEM B9), as DFU's own gems are, so the potion maker lists it; no recipe
+  takes 1900-1931, and a failed mix spends it as it spends a Ruby.
+- **A set gem changes a quickslot weapon's key** (its lines are part of it), so a hotbar or swap slot holding it goes
+  to a ghost - as a reforge or a hone already does.
+- **An empty `sockets: []`** reads as no socket to `validSocket` and is refused on a common piece by the realm's law
+  (`itemLaw.js` TIER_MARKS) - stricter, and no producer writes one.
 
 ## 8. The slices
 
@@ -222,8 +233,40 @@ dealer's) and the Remnant's floors (`wb5_gate_spoils`, `wb9f_gate_spoils`, `audi
 `serpent1_client`, `sd9e_spoils`, `cards9_sources`, `auditcards6_a` - the card the last draw BEFORE the gem arc's), the
 Test Room's count (`lr1_lootrarity`), the array fields (`auditworld4`, `rf5_itemfields`), and the seed comparisons
 that a socket's or a curse's draw now moves the gem find past (`loot16_curses`, `loot20_sockets`, `loot21_stones` -
-the stones the last draws before the arc's, its draws held off there). LOOT20's own pins moved with the list, the free
+the stones the last draws before the arc's, its draws held off there); the realm sweep's registrars (`auditrealm`,
+gems.js the sixteenth); the door's gem as its last draw in LOOT14's late finds and LOOT8's untaken mark
+(`loot14_wardrobe`, `loot8_drought`); GILDED1's source pin of the Remnant's spoils (`gilded1_gilded`); WBX3's floor of
+five pictures (`wbx_gate_fixes`). LOOT20's own pins moved with the list, the free
 setting, the worn piece and the extraction; its mutants were re-aimed by content (46 - the price and the worn refusal
 retired, the extraction's added in `gem1.json`).
 
-Pinned: `test/gem1_sockets.test.js` (8). `tools/mutants/gem1.json` (65, all dead).
+THE FOUR HOSTS. The rows register in every host through `scenes/shared.js` and `systems/worldTick.js`; the door's
+passes and the gem find run inside the shared rolls every host already calls (`rollLootRarity`, `rollCorpseKit`); the
+wells are the shared pack's (`ui/enhancedInventory.js`); the Reforge's extraction is `worldModes.js`'s (the Mages Guild
+stands in a building). `exterior.js`, `world.js` and `dungeonContext.js` are FLAGGED for the extraction: no guild
+counter there.
+
+### AUDIT GEM (2026-10-10, Mac: "We need to audit this and ensure perfection")
+
+Four independent lanes read both arcs; the gem lane's findings, each fixed and pinned (`test/gem1_sockets.test.js`'s
+AUDIT GEM pin and its tightened rates, the GEM3 pin's new steps):
+
+- **Salvage broke set gems** - a Magic weapon holds one since GEM1, and "Salvage every Magic" swept a Perfect Diamond
+  away for a shard. `salvageRefusal` answers `'gems'` for a piece holding one (the sweep skips it, the pack says to
+  extract or unset it first).
+- **A set gem priced its line, not itself** - LOOT20's `affixesWorth`, a 100-gold setting's business; free setting,
+  three sockets and law 6 made it a faucet (a 10-gold Jade lifted its piece by +360, three Jades by 1,080 though they
+  read one Rare line). `setGem` and `unsetGem` move the piece by the stone's own worth; LOOT20's string comes off at its
+  line's, as it was priced.
+- **Bosses dropped graded gems with the ladder off** (law 3) - `bossGems` answers none then, with no draw.
+- **"Set in..." showed with the ladder off and listed unknown pieces** - gated on the ladder, homes known pieces only.
+- **A stale Shatter question survived a change of selection** - a well's chooser, its question and a gem's list are the
+  selection's; another piece picked clears them.
+- **A reforged Magic piece took a set gem's word in its name** - named by its own lines.
+- **The setting could spend an enchanted stone, and not the one pressed** - an enchanted gem is no loose stone; "Set
+  in..." takes the pressed stack first.
+- **Pins**: the extraction's price and refold per socket; later wells set and shattered; armour's socket odds LOOT20's;
+  the next socket's odds per tier and its stop at the first miss; a boss's find four tiers deeper; the test hooks put
+  back in `finally` (gem1, loot16, loot20, loot21).
+
+Pinned: `test/gem1_sockets.test.js` (9). `tools/mutants/gem1.json`.

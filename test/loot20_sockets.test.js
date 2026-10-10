@@ -25,7 +25,7 @@ import * as LR from '../src/systems/lootRarity.js';
 import { linesOf } from '../src/systems/lootPowers.js';
 import * as RF from '../src/systems/reforge.js';
 import { createWeapon } from '../src/combat/enemyEquipment.js';
-import { mintCondition, setItemFields, templateByIndex } from '../src/systems/itemTemplates.js';
+import { mintCondition, setItemFields, templateByIndex, itemBaseValue } from '../src/systems/itemTemplates.js';
 import { equipItem } from '../src/systems/equip.js';
 import { computeEntityMods } from '../src/systems/entityMods.js';
 import { validLootItem } from '../src/systems/loot.js';
@@ -78,7 +78,10 @@ test('LOOT20: DFU\'s eight gems and their lines - a weapon\'s blow, every other 
   assert.deepEqual(it.affixes.at(-1), line);
   assert.equal(it.affixes.length, before.lines + 1);
   assert.deepEqual([it.sockets, LR.socketGem(it), LR.hasSocket(it)], [['ruby'], 'ruby', true]);
-  assert.equal(it.value, before.value + LR.affixesWorth([line], it));
+  // PIN MOVED (AUDIT GEM, bible/06-Systems/Gem-Sockets.md section 9): the price by the GEM's own worth - what it sold for
+  // loose - never its line's (free setting and law 6 made the line's worth a faucet)
+  assert.equal(it.value, before.value + itemBaseValue({ group: 'Gems', templateIndex: LR.gemTemplateOf('ruby') }));
+  assert.notEqual(itemBaseValue({ group: 'Gems', templateIndex: LR.gemTemplateOf('ruby') }), LR.affixesWorth([line], it), 'and the two differ, so the pin can tell');
   assert.equal(it.name, before.name, 'never names the piece');
   assert.equal(LR.setGem(it, 'jade'), null, 'one gem at a time');
   assert.equal(LR.unsetGem(it), 'ruby');
@@ -146,58 +149,61 @@ test('LOOT20: the door\'s pass - a Rare 150 in a thousand, a Legendary 300, neve
   on();
   LR._setWeaponSocketsForTests({ first: 0, more: 0 });   // GEM1: the weapons' own pass held off - LOOT20's alone is measured here
   LR.registerGemFind(null);   // GEM2: and the gem find, the door's last draw since, which a socket's draw moves
-  const n = { rare: 0, legendary: 0 }, s = { rare: 0, legendary: 0 };
-  let garments = 0, others = 0;
-  const rolls = mulberry(20);
-  for (let i = 0; i < 40000; i++) {
-    const items = [createWeapon(113 + (i % 18), i % 6, rolls), mintCondition({ group: 'MensClothing', templateIndex: 155, name: 'c', flags: 0, variant: 0 })];
-    LR.rollLootRarity(items, { kind: 'corpse', tier: 18, boss: true, family: null }, { rolls, luck: 50 });
-    for (const it of items) {
-      if (LR.isGarment(it)) { if (LR.hasSocket(it)) garments++; continue; }
-      if (n[it.rarity] != null) { n[it.rarity]++; if (LR.socketsOf(it).join() === LR.SOCKET_EMPTY) s[it.rarity]++; } else if (LR.hasSocket(it)) others++;
+  try {
+    const n = { rare: 0, legendary: 0 }, s = { rare: 0, legendary: 0 };
+    let garments = 0, others = 0;
+    const rolls = mulberry(20);
+    for (let i = 0; i < 40000; i++) {
+      const items = [createWeapon(113 + (i % 18), i % 6, rolls), mintCondition({ group: 'MensClothing', templateIndex: 155, name: 'c', flags: 0, variant: 0 })];
+      LR.rollLootRarity(items, { kind: 'corpse', tier: 18, boss: true, family: null }, { rolls, luck: 50 });
+      for (const it of items) {
+        if (LR.isGarment(it)) { if (LR.hasSocket(it)) garments++; continue; }
+        if (n[it.rarity] != null) { n[it.rarity]++; if (LR.socketsOf(it).join() === LR.SOCKET_EMPTY) s[it.rarity]++; } else if (LR.hasSocket(it)) others++;
+      }
     }
-  }
-  assert.ok(Math.abs(s.rare / n.rare - 0.15) < 0.015, `Rare: ${s.rare} of ${n.rare}`);
-  assert.ok(Math.abs(s.legendary / n.legendary - 0.3) < 0.04, `Legendary: ${s.legendary} of ${n.legendary}`);
-  assert.deepEqual([garments, others], [0, 0], 'never a garment, a Magic or a plain piece');
-  // after every draw: the same seed with a socket on every piece and on none - the rest the same
-  const src = { kind: 'pile', tier: 14, boss: false, family: null };
-  const list = () => [sword(), mintCondition({ group: 'Armor', templateIndex: 102, material: 0x0201, name: 'c', flags: 0 }), ring()];
-  let compared = 0;
-  for (let seed = 1; seed < 60; seed++) {
+    assert.ok(Math.abs(s.rare / n.rare - 0.15) < 0.015, `Rare: ${s.rare} of ${n.rare}`);
+    assert.ok(Math.abs(s.legendary / n.legendary - 0.3) < 0.04, `Legendary: ${s.legendary} of ${n.legendary}`);
+    assert.deepEqual([garments, others], [0, 0], 'never a garment, a Magic or a plain piece');
+    // after every draw: the same seed with a socket on every piece and on none - the rest the same
+    const src = { kind: 'pile', tier: 14, boss: false, family: null };
+    const list = () => [sword(), mintCondition({ group: 'Armor', templateIndex: 102, material: 0x0201, name: 'c', flags: 0 }), ring()];
+    let compared = 0;
+    for (let seed = 1; seed < 60; seed++) {
+      LR._setSocketForTests(1000);
+      const all = list(); LR.rollLootRarity(all, src, { rolls: lcg(seed) });
+      LR._setSocketForTests(0);
+      const none = list(); LR.rollLootRarity(none, src, { rolls: lcg(seed) });
+      all.forEach((it, i) => {
+        const { sockets, ...rest } = it;
+        assert.deepEqual(rest, none[i], `seed ${seed}: piece ${i} the same but its socket`);
+        if (it.rarity === 'rare' || it.rarity === 'legendary') { assert.deepEqual(sockets, [LR.SOCKET_EMPTY]); compared++; } else assert.equal(sockets, undefined);
+      });
+    }
+    assert.ok(compared > 10);
+    // a body's kit
     LR._setSocketForTests(1000);
-    const all = list(); LR.rollLootRarity(all, src, { rolls: lcg(seed) });
-    LR._setSocketForTests(0);
-    const none = list(); LR.rollLootRarity(none, src, { rolls: lcg(seed) });
-    all.forEach((it, i) => {
-      const { sockets, ...rest } = it;
-      assert.deepEqual(rest, none[i], `seed ${seed}: piece ${i} the same but its socket`);
-      if (it.rarity === 'rare' || it.rarity === 'legendary') { assert.deepEqual(sockets, [LR.SOCKET_EMPTY]); compared++; } else assert.equal(sockets, undefined);
-    });
-  }
-  assert.ok(compared > 10);
-  // a body's kit
-  LR._setSocketForTests(1000);
-  let kit = 0;
-  let kitGarments = 0;
-  for (let seed = 1; seed < 300 && !(kit && kitGarments); seed++) {
-    const body = { mobileType: 141, level: 16, equip: null, items: [sword(), mintCondition({ group: 'MensClothing', templateIndex: 165, name: 'Shirt', flags: 0, variant: 0 })] };
-    for (const it of rollCorpseKit(body, { rolls: lcg(seed) })) {
-      if (LR.isGarment(it)) { assert.equal(LR.hasSocket(it), false, 'a kit\'s garment: never'); kitGarments++; continue; }
-      if (it.rarity === 'rare' || it.rarity === 'legendary') { assert.deepEqual(it.sockets, [LR.SOCKET_EMPTY]); kit++; }
+    let kit = 0;
+    let kitGarments = 0;
+    for (let seed = 1; seed < 300 && !(kit && kitGarments); seed++) {
+      const body = { mobileType: 141, level: 16, equip: null, items: [sword(), mintCondition({ group: 'MensClothing', templateIndex: 165, name: 'Shirt', flags: 0, variant: 0 })] };
+      for (const it of rollCorpseKit(body, { rolls: lcg(seed) })) {
+        if (LR.isGarment(it)) { assert.equal(LR.hasSocket(it), false, 'a kit\'s garment: never'); kitGarments++; continue; }
+        if (it.rarity === 'rare' || it.rarity === 'legendary') { assert.deepEqual(it.sockets, [LR.SOCKET_EMPTY]); kit++; }
+      }
     }
+    assert.ok(kit, 'a body\'s own piece');
+    assert.ok(kitGarments, 'and its garments laddered beside it, none socketed');
+    assert.deepEqual(LR.socketPass([known(LR.applyRarity(mintCondition({ group: 'WomensClothing', templateIndex: 195, name: 'Gown', flags: 0, variant: 0 }), 'rare', lcg(2)))], () => 0), [], 'nor any garment the pass is handed');
+    LR._setSocketForTests(null);
+    assert.deepEqual(LR.socketPass([known(LR.applyRarity(sword(), 'rare', lcg(2)))], () => 0.999).length, 0, 'over the chance: none');
+    off();
+    LR._setSocketForTests(1000);
+    assert.deepEqual(LR.socketPass([known(LR.applyRarity(sword(), 'rare', lcg(2)))], () => 0), [], 'off: nothing');
+    LR._setSocketForTests(null);
+  } finally {
+    LR._setWeaponSocketsForTests(null);
+    LR.registerGemFind(rollGemFind);
   }
-  assert.ok(kit, 'a body\'s own piece');
-  assert.ok(kitGarments, 'and its garments laddered beside it, none socketed');
-  assert.deepEqual(LR.socketPass([known(LR.applyRarity(mintCondition({ group: 'WomensClothing', templateIndex: 195, name: 'Gown', flags: 0, variant: 0 }), 'rare', lcg(2)))], () => 0), [], 'nor any garment the pass is handed');
-  LR._setSocketForTests(null);
-  assert.deepEqual(LR.socketPass([known(LR.applyRarity(sword(), 'rare', lcg(2)))], () => 0.999).length, 0, 'over the chance: none');
-  off();
-  LR._setSocketForTests(1000);
-  assert.deepEqual(LR.socketPass([known(LR.applyRarity(sword(), 'rare', lcg(2)))], () => 0), [], 'off: nothing');
-  LR._setSocketForTests(null);
-  LR._setWeaponSocketsForTests(null);
-  LR.registerGemFind(rollGemFind);
 });
 
 test('LOOT20: the Reforge\'s presses - a gem from the pack, every refusal taking nothing; unset free and the gem shattered; GEM1: setting free, a worn piece filled where it is worn, the extraction paid by the grade; the wire takes a socket only as made', () => {

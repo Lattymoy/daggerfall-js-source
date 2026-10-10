@@ -637,7 +637,7 @@ let notice = null;
 /** GEM3 (bible/06-Systems/Gem-Sockets.md section 5): the pack's own piece's wells - the empty well whose chooser is open
  *  and the set well whose Shatter waits (`{ item, at }`), and the gem whose "Set in..." targets are shown. Each is the
  *  one piece's: a pick of another piece reads none of them. */
-let wellOpen = null, wellAsk = null, gemTargets = null;
+let wellOpen = null, wellAsk = null, gemTargets = null, wellPick = null;   // AUDIT GEM: `wellPick` the selection these belong to
 let walletAsked = false;   // WALLET1: the account's silver asked afresh once a mount, as the wallet's sheet first shows
 /** CHAT-POST: what the card says after a post. */
 export const POSTED_TEXT = 'Posted in chat.';
@@ -3062,11 +3062,14 @@ function socketBlock(item, live, ready) {
 }
 /** GEM3: a gem's own card - every piece in the pack with an empty socket it may go in (known, of course: an unknown piece
  *  is refused its setting), for "Set in...". */
-const gemHomes = () => (deps.items?.() ?? []).filter((it) => emptySockets(it) > 0);
+const gemHomes = () => (deps.items?.() ?? []).filter((it) => emptySockets(it) > 0 && itemIsIdentified(it));   // AUDIT GEM: never a piece the setting refuses (an unknown one)
 
 /** PLUS7: the item's card WITHOUT its buttons - the detail column's, the hover card's. CARD-FIT: `body` puts its words
  *  in a body of their own (`.card-body`), so the detail column can hang its buttons under it, never inside it. */
 function infoCard(picked, side, ready = render, { body = false } = {}) {
+  // AUDIT GEM: a well's open chooser, its asked Shatter and a gem's "Set in..." list are the SELECTION's - another piece
+  // picked and this one picked again starts clean, never a stale question answered by one press
+  if (body && picked !== wellPick) { wellOpen = null; wellAsk = null; gemTargets = null; wellPick = picked; }
   const line = itemLine(picked, deps.entity);
   const c = el('div', 'card');
   const into = body ? el('div', 'card-body') : c;
@@ -3238,7 +3241,7 @@ function itemActs(picked, side, { qty = true } = {}) {
   if (side === 'local') for (const b of quickslotActs(picked)) acts.append(b);
   // GEM3 (bible/06-Systems/Gem-Sockets.md section 3): A LOOSE GEM'S "SET IN..." - pressed, the pieces with an empty socket,
   // a press each that sets the gem in the first empty one (systems/reforge.js setGemPiece); the card stays up
-  if (side === 'local' && gemKindOf(picked) && !picked.questItem && gemHomes().length) {
+  if (side === 'local' && lootRarityOn() && gemKindOf(picked) && !picked.questItem && gemHomes().length) {   // AUDIT GEM: law 3 - with the ladder off there is no setting to offer
     const open = gemTargets === picked;
     const g = el('button', `act${open ? ' on' : ''}`, 'Set in...');
     g.onclick = () => { gemTargets = open ? null : picked; render(); };
@@ -3248,7 +3251,7 @@ function itemActs(picked, side, { qty = true } = {}) {
         const t = el('button', 'act gem-home', `Set in ${itemLongName(home, { getQuest: deps.getQuest ?? null })}`);
         t.onclick = () => {
           const gem = gemKindOf(picked);
-          const r = setGemPiece(home, /** @type {string} */ (gem), gemWho());
+          const r = setGemPiece(home, /** @type {string} */ (gem), gemWho(), null, { from: picked });   // AUDIT GEM: this card's stone, not another stack's
           gemTargets = null;
           notice = r.ok ? GEM_SET(itemLongName(home, { getQuest: deps.getQuest ?? null }), /** @type {string} */ (gem)) : (REFORGE_REFUSALS[r.reason ?? ''] ?? 'That will not set.');
           if (r.ok && !(deps.items?.() ?? []).includes(picked)) picked = null;   // the last of the stack went into the socket
@@ -3386,10 +3389,12 @@ function askDismantle(item) {
  *  or a press outside keep it. A locked piece is refused in words before any question is asked. */
 export const SALVAGE_ASK = (name, n) => [`Salvage ${name}?`, `It is gone for good, and you get ${shardsText(n)}.`];
 export const SALVAGED_LINE = (name, n) => `Salvaged: ${name}, for ${shardsText(n)}.`;
+/** AUDIT GEM: a piece holding a set gem is never salvaged with it (systems/reforge.js salvageRefusal 'gems'). */
+export const SALVAGE_GEMS = (name) => `${name} holds a gem - extract it at the Reforge, or unset it, first.`;
 function askSalvage(item) {
   hideTip(); closeMenu(); closeInfo(); closeDismantle();
   const name = itemLongName(item, { getQuest: deps.getQuest ?? null });
-  const refusedFor = (why) => { notice = why === 'locked' ? lockedText(name) : null; refresh(); render(); };
+  const refusedFor = (why) => { notice = why === 'locked' ? lockedText(name) : why === 'gems' ? SALVAGE_GEMS(name) : null; refresh(); render(); };   // AUDIT GEM: the gems, said
   const why = salvageRefusal(item);
   if (why) { refusedFor(why); return; }
   const n = salvageShards(item);
@@ -4068,7 +4073,7 @@ export function mountEnhancedInventory(hostEl, d = {}) {
   onExit = d.onExit ?? (() => {});
   tab = PAGE_IDS[0];
   picked = null;
-  wellOpen = null; wellAsk = null; gemTargets = null;   // GEM3: no well open, no Shatter waiting, from a fresh mount
+  wellOpen = null; wellAsk = null; gemTargets = null; wellPick = null;   // GEM3: no well open, no Shatter waiting, from a fresh mount
   walletAsked = false;   // WALLET1
   storeFilter = freshStoreFilter();   // WAGON-FILTER
   // PX20b: a LOOT target opens its own frame alone; every other way in

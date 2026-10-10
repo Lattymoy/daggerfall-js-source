@@ -96,6 +96,7 @@ export const REFORGE_REFUSALS = Object.freeze({
   set: 'A gem is set in it - unset it first', nogem: 'None of that gem in your pack', empty: 'No gem in it',   // LOOT20
   gone: 'No longer in your pack', aetheric: 'An Aetheric piece is the Broker\'s to dismantle', gilded: 'A Gilded piece will not break', artifact: 'An artifact will not break',
   quest: 'A quest\'s item will not break', bound: 'Bound - it will not break', locked: 'Locked - unlock it first',
+  gems: 'A gem is set in it - extract or unset it first',   // AUDIT GEM: salvage never breaks a set gem
 });
 /** A line's press word - "Reforge" (the imprint's "Imprint" - AUDIT LOOT F6: its presses said Reforge), or why not in a
  *  word or two that fits the button. */
@@ -291,7 +292,7 @@ export function mountReforgeWindow(host, deps) {
       } else {
         const n = salvageShards(it);
         const why = salvageRefusal(it);
-        const btn = el('button', 'act broker-buy', why ? (why === 'worn' ? 'Worn' : why === 'locked' ? 'Locked' : 'Cannot') : asking === it ? 'Break it' : 'Salvage');
+        const btn = el('button', 'act broker-buy', why ? (why === 'worn' ? 'Worn' : why === 'locked' ? 'Locked' : why === 'gems' ? 'Gem set' : 'Cannot') : asking === it ? 'Break it' : 'Salvage');
         btn.setAttribute('type', 'button');
         btn.setAttribute('aria-label', why ? `${nameOf(it)}: ${REFORGE_REFUSALS[why] ?? ''}` : asking === it ? BREAK_ASK(nameOf(it), n) : `Salvage ${nameOf(it)} for ${shardsText(n)}`);
         if (why) { btn.setAttribute('disabled', ''); btn.setAttribute('title', REFORGE_REFUSALS[why] ?? ''); }

@@ -22,7 +22,8 @@ import * as G from '../src/systems/gems.js';
 import * as RF from '../src/systems/reforge.js';
 import { linesOf } from '../src/systems/lootPowers.js';
 import { createWeapon } from '../src/combat/enemyEquipment.js';
-import { mintCondition, setItemFields, templateByIndex } from '../src/systems/itemTemplates.js';
+import { mintCondition, setItemFields, templateByIndex, itemBaseValue } from '../src/systems/itemTemplates.js';
+import { computeEntityMods } from '../src/systems/entityMods.js';   // AUDIT GEM: a worn piece's wearer, folded
 import { stacksWith, isStackable } from '../src/systems/inventory.js';
 import { validLootItem } from '../src/systems/loot.js';
 import { itemFindings } from '../src/systems/itemLaw.js';
@@ -148,67 +149,78 @@ test('GEM1 law 6: a piece\'s gems of one kind read at most one Rare line - the f
 });
 test('GEM1 the weapons\' own pass: a Magic weapon a socket 120 in a thousand and never two, a Rare\'s first 250 and each more 300, a Legendary\'s 400 and 450, never past its size; after every draw the door made (the late finds\' too), a body\'s kit too; off nothing', () => {
   on();
-  assert.deepEqual(LR.WEAPON_SOCKET_PER_MILLE, { magic: 120, rare: 250, legendary: 400 });
-  assert.deepEqual(LR.MORE_SOCKET_PER_MILLE, { rare: 300, legendary: 450 });
-  LR.registerGemFind(null);
-  const n = { magic: 0, rare: 0, legendary: 0 }, any = { magic: 0, rare: 0, legendary: 0 }, three = { full: 0, of: 0 };
-  let over = 0, armourMore = 0, shortMore = 0;
-  const rolls = mulberry(9);
-  for (let i = 0; i < 30000; i++) {
-    const items = [createWeapon(113 + (i % 18), i % 6, rolls), mintCondition({ group: 'Armor', templateIndex: 102, material: 0x0201, name: 'c', flags: 0 })];
-    LR.rollLootRarity(items, { kind: 'corpse', tier: 18, boss: true, family: null }, { rolls, luck: 50 });
-    for (const it of items) {
-      const k = LR.socketsOf(it).length;
-      if (k > LR.socketCap(it)) over++;
-      if (it.group === 'Armor') { if (k > 1) armourMore++; continue; }
-      if (LR.socketMax(it) === 1 && k > 1) shortMore++;
-      if (n[it.rarity] == null) continue;
-      n[it.rarity]++;
-      if (k) any[it.rarity]++;
-      if (it.rarity === 'legendary' && LR.socketMax(it) === 3) { three.of++; if (k === 3) three.full++; }
+  try {
+    assert.deepEqual(LR.WEAPON_SOCKET_PER_MILLE, { magic: 120, rare: 250, legendary: 400 });
+    assert.deepEqual(LR.MORE_SOCKET_PER_MILLE, { rare: 300, legendary: 450 });
+    LR.registerGemFind(null);
+    const n = { magic: 0, rare: 0, legendary: 0 }, any = { magic: 0, rare: 0, legendary: 0 }, three = { full: 0, of: 0 };
+    const arm = { rare: [0, 0], legendary: [0, 0] }, more = { rare: [0, 0], legendary: [0, 0] }, more3 = { rare: [0, 0], legendary: [0, 0] };   // AUDIT GEM: [hits, of]
+    let over = 0, armourMore = 0, shortMore = 0;
+    const rolls = mulberry(9);
+    for (let i = 0; i < 30000; i++) {
+      const items = [createWeapon(113 + (i % 18), i % 6, rolls), mintCondition({ group: 'Armor', templateIndex: 102, material: 0x0201, name: 'c', flags: 0 })];
+      LR.rollLootRarity(items, { kind: 'corpse', tier: 18, boss: true, family: null }, { rolls, luck: 50 });
+      for (const it of items) {
+        const k = LR.socketsOf(it).length;
+        if (k > LR.socketCap(it)) over++;
+        if (it.group === 'Armor') { if (k > 1) armourMore++; if (arm[it.rarity]) { arm[it.rarity][1]++; if (k) arm[it.rarity][0]++; } continue; }
+        if (more[it.rarity] && k && LR.socketMax(it) >= 2) { more[it.rarity][1]++; if (k >= 2) more[it.rarity][0]++; if (LR.socketMax(it) === 3) { more3[it.rarity][1]++; if (k >= 2) more3[it.rarity][0]++; } }
+        if (LR.socketMax(it) === 1 && k > 1) shortMore++;
+        if (n[it.rarity] == null) continue;
+        n[it.rarity]++;
+        if (k) any[it.rarity]++;
+        if (it.rarity === 'legendary' && LR.socketMax(it) === 3) { three.of++; if (k === 3) three.full++; }
+      }
     }
-  }
-  assert.deepEqual([over, armourMore, shortMore], [0, 0, 0], 'never past a piece\'s size or tier');
-  assert.ok(Math.abs(any.magic / n.magic - 0.12) < 0.012, `Magic: ${any.magic} of ${n.magic}`);
-  assert.ok(Math.abs(any.rare / n.rare - (0.15 + 0.85 * 0.25)) < 0.02, `Rare: ${any.rare} of ${n.rare}`);
-  assert.ok(Math.abs(any.legendary / n.legendary - (0.3 + 0.7 * 0.4)) < 0.05, `Legendary: ${any.legendary} of ${n.legendary}`);
-  assert.ok(three.full > 0 && Math.abs(three.full / three.of - 0.58 * 0.45 * 0.45) < 0.06, `a two-handed Legendary's three: ${three.full} of ${three.of}`);
-  // after every draw: the same seed with the pass at every chance and at none - every piece the same but its sockets
-  const src = { kind: 'corpse', tier: 21, boss: true, family: null };
-  const list = () => [createWeapon(122, 1), createWeapon(118, 1), createWeapon(113, 1), mintCondition({ group: 'Armor', templateIndex: 102, material: 0x0201, name: 'c', flags: 0 })];
-  let differed = 0;
-  for (let seed = 1; seed < 80; seed++) {
+    assert.deepEqual([over, armourMore, shortMore], [0, 0, 0], 'never past a piece\'s size or tier');
+    assert.ok(Math.abs(any.magic / n.magic - 0.12) < 0.012, `Magic: ${any.magic} of ${n.magic}`);
+    assert.ok(Math.abs(any.rare / n.rare - (0.15 + 0.85 * 0.25)) < 0.02, `Rare: ${any.rare} of ${n.rare}`);
+    assert.ok(Math.abs(any.legendary / n.legendary - (0.3 + 0.7 * 0.4)) < 0.05, `Legendary: ${any.legendary} of ${n.legendary}`);
+    assert.ok(three.full > 0 && Math.abs(three.full / three.of - 0.58 * 0.45 * 0.45) < 0.06, `a two-handed Legendary's three: ${three.full} of ${three.of}`);
+    // AUDIT GEM (seeded, so exact each run): armour keeps LOOT20's one socket at its own odds - never the weapons' pass;
+    // and a socketed weapon's next socket is its tier's MORE (Rare 300, Legendary 450), drawn once a socket, stopping at the
+    // first miss (a three-socket piece's second as often as a two-socket one's)
+    const rate = ([a, b]) => a / b;
+    assert.ok(Math.abs(rate(arm.rare) - 0.15) < 0.02 && Math.abs(rate(arm.legendary) - 0.3) < 0.04, `armour LOOT20's: ${JSON.stringify(arm)}`);
+    assert.ok(Math.abs(rate(more.rare) - 0.3) < 0.035 && Math.abs(rate(more.legendary) - 0.45) < 0.06, `the next socket: ${JSON.stringify(more)}`);
+    assert.ok(Math.abs(rate(more3.rare) - 0.3) < 0.08 && Math.abs(rate(more3.legendary) - 0.45) < 0.1, `a three-socket piece's second: ${JSON.stringify(more3)}`);
+    // after every draw: the same seed with the pass at every chance and at none - every piece the same but its sockets
+    const src = { kind: 'corpse', tier: 21, boss: true, family: null };
+    const list = () => [createWeapon(122, 1), createWeapon(118, 1), createWeapon(113, 1), mintCondition({ group: 'Armor', templateIndex: 102, material: 0x0201, name: 'c', flags: 0 })];
+    let differed = 0;
+    for (let seed = 1; seed < 80; seed++) {
+      LR._setWeaponSocketsForTests({ first: 1000, more: 1000 });
+      const all = list(); LR.rollLootRarity(all, src, { rolls: lcg(seed) });
+      LR._setWeaponSocketsForTests({ first: 0, more: 0 });
+      const none = list(); LR.rollLootRarity(none, src, { rolls: lcg(seed) });
+      assert.equal(all.length, none.length, `seed ${seed}: the late finds the seed's own`);
+      all.forEach((it, i) => {
+        const strip = (x) => { const { sockets, ...rest } = x; return rest; };
+        assert.deepEqual(strip(it), strip(none[i]), `seed ${seed}: piece ${i} the same but its sockets`);
+        if (it.group === 'Weapons' && LR.socketCap(it)) { assert.equal(LR.socketsOf(it).length, LR.socketCap(it), 'every chance: its whole size'); if (LR.socketsOf(none[i]).length !== LR.socketCap(it)) differed++; }
+      });
+    }
+    assert.ok(differed > 20, `${differed} weapons told apart`);
+    // a body's kit
     LR._setWeaponSocketsForTests({ first: 1000, more: 1000 });
-    const all = list(); LR.rollLootRarity(all, src, { rolls: lcg(seed) });
+    let kit = 0;
+    for (let seed = 1; seed < 300 && !kit; seed++) {
+      const body = { mobileType: 141, level: 16, equip: null, items: [createWeapon(122, 1)] };
+      for (const it of rollCorpseKit(body, { rolls: lcg(seed) })) if (it.group === 'Weapons' && LR.socketCap(it)) { assert.equal(LR.socketsOf(it).length, LR.socketCap(it)); kit++; }
+    }
+    assert.ok(kit, 'a body\'s own blade');
+    LR._setWeaponSocketsForTests(null);
+    assert.deepEqual(LR.weaponSocketPass([weapon(122)], () => 0.999), [], 'over the chance: none');
+    let drawn = 0;
     LR._setWeaponSocketsForTests({ first: 0, more: 0 });
-    const none = list(); LR.rollLootRarity(none, src, { rolls: lcg(seed) });
-    assert.equal(all.length, none.length, `seed ${seed}: the late finds the seed's own`);
-    all.forEach((it, i) => {
-      const strip = (x) => { const { sockets, ...rest } = x; return rest; };
-      assert.deepEqual(strip(it), strip(none[i]), `seed ${seed}: piece ${i} the same but its sockets`);
-      if (it.group === 'Weapons' && LR.socketCap(it)) { assert.equal(LR.socketsOf(it).length, LR.socketCap(it), 'every chance: its whole size'); if (LR.socketsOf(none[i]).length !== LR.socketCap(it)) differed++; }
-    });
-  }
-  assert.ok(differed > 20, `${differed} weapons told apart`);
-  // a body's kit
-  LR._setWeaponSocketsForTests({ first: 1000, more: 1000 });
-  let kit = 0;
-  for (let seed = 1; seed < 300 && !kit; seed++) {
-    const body = { mobileType: 141, level: 16, equip: null, items: [createWeapon(122, 1)] };
-    for (const it of rollCorpseKit(body, { rolls: lcg(seed) })) if (it.group === 'Weapons' && LR.socketCap(it)) { assert.equal(LR.socketsOf(it).length, LR.socketCap(it)); kit++; }
-  }
-  assert.ok(kit, 'a body\'s own blade');
-  LR._setWeaponSocketsForTests(null);
-  assert.deepEqual(LR.weaponSocketPass([weapon(122)], () => 0.999), [], 'over the chance: none');
-  let drawn = 0;
-  LR._setWeaponSocketsForTests({ first: 0, more: 0 });
-  LR.weaponSocketPass([weapon(122)], () => { drawn++; return 0; });
-  assert.equal(drawn, 0, 'a chance of none costs a seed no draw');
-  off();
-  LR._setWeaponSocketsForTests({ first: 1000, more: 1000 });
-  assert.deepEqual(LR.weaponSocketPass([weapon(122)], () => 0), [], 'off: nothing');
-  LR._setWeaponSocketsForTests(null);
-  LR.registerGemFind(G.rollGemFind);
+    LR.weaponSocketPass([weapon(122)], () => { drawn++; return 0; });
+    assert.equal(drawn, 0, 'a chance of none costs a seed no draw');
+    off();
+    LR._setWeaponSocketsForTests({ first: 1000, more: 1000 });
+    assert.deepEqual(LR.weaponSocketPass([weapon(122)], () => 0), [], 'off: nothing');
+    LR._setWeaponSocketsForTests(null);
+    LR.registerGemFind(G.rollGemFind);
+  } finally { LR._setWeaponSocketsForTests(null); LR.registerGemFind(G.rollGemFind); off(); }   // AUDIT GEM: the hooks back whatever failed
 });
 
 test('GEM2 the graded gems: thirty-two rows of the port\'s own at 1900-1931, each on its kind\'s DFU art, the grade in its name, an ingredient stacking with its own row alone, lawful and on the wire, on no shelf; every gem\'s line at every grade, the plain column LOOT20\'s', () => {
@@ -261,63 +273,65 @@ test('GEM2 the graded gems: thirty-two rows of the port\'s own at 1900-1931, eac
 
 test('GEM2 the world\'s gem find: 30 in a thousand and 5 a tier to 150, a pile 1.3 times and a boss 2.5, luck the ladder\'s own; the grade the source\'s band, a boss four tiers deeper; at every door, its very last draw; off nothing', () => {
   on();
-  assert.deepEqual(G.GEM_FIND, { base: 30, perTier: 5, cap: 150 });
-  assert.deepEqual([0, 10, 19, 30].map((tier) => G.gemFindChance({ tier })), [30, 80, 125, 150]);
-  assert.deepEqual([G.gemFindChance({ tier: 10, kind: 'pile' }), G.gemFindChance({ tier: 4, boss: true }), G.gemFindChance({ tier: 10, luck: 100 }), G.gemFindChance({ tier: 10, luck: 0 })], [104, 125, 120, 40]);
-  assert.deepEqual(JSON.parse(JSON.stringify(G.GEM_GRADE_BANDS)), [
-    { tier: 0, weights: [70, 30, 0, 0, 0] }, { tier: 5, weights: [30, 50, 20, 0, 0] }, { tier: 10, weights: [0, 30, 45, 25, 0] },
-    { tier: 15, weights: [0, 0, 35, 50, 15] }, { tier: 20, weights: [0, 0, 0, 60, 40] },
-  ]);
-  assert.equal(G.GEM_BOSS_TIERS, 4);
-  assert.deepEqual([0, 4, 5, 14, 15, 20].map((tier) => G.gemGradeBand({ tier }).tier), [0, 0, 5, 10, 15, 20]);
-  assert.equal(G.gemGradeBand({ tier: 11, boss: true }).tier, 15, 'a boss four tiers deeper');
-  // the grades by band, over 4,000 gems each
-  const count = (source) => {
-    const c = Object.fromEntries(LR.GEM_GRADES.map((g) => [g, 0])), kinds = new Set();
-    const rolls = mulberry(5);
-    for (let i = 0; i < 4000; i++) { const g = G.rollGem(source, rolls); c[LR.gemGrade(LR.gemKindOf(g))]++; kinds.add(LR.gemKind(LR.gemKindOf(g))); }
-    return { c, kinds: kinds.size };
-  };
-  const low = count({ tier: 2 }), mid = count({ tier: 12 }), top = count({ tier: 21, boss: true });
-  assert.deepEqual([low.c.plain, low.c.flawless, low.c.perfect], [0, 0, 0], 'a shallow source: chipped and flawed alone');
-  assert.ok(Math.abs(low.c.chipped / 4000 - 0.7) < 0.03);
-  assert.deepEqual([mid.c.chipped, mid.c.perfect], [0, 0]);
-  assert.deepEqual([top.c.chipped, top.c.flawed, top.c.plain], [0, 0, 0], 'the deepest: flawless and perfect');
-  assert.ok(Math.abs(top.c.perfect / 4000 - 0.4) < 0.03, `${top.c.perfect}`);
-  assert.deepEqual([low.kinds, top.kinds], [8, 8], 'every kind');
-  // at the door: the find its very last draw - nothing after it - and the weapons' pass before it: at every chance, each
-  // socket the pass gives is one draw more before the find
-  const src = { kind: 'pile', tier: 18, boss: false, family: null };
-  const door = (seed, t) => {
-    const base = lcg(seed);
-    let n = 0, at = -1;
-    LR._setWeaponSocketsForTests(t);
-    LR.registerGemFind((s, rolls) => { at = n; return G.rollGemFind(s, rolls); });
-    const items = [createWeapon(122, 1)];
-    LR.rollLootRarity(items, src, { rolls: () => { n++; return base(); } });
-    LR._setWeaponSocketsForTests(null);
-    return { n, at, items };
-  };
-  let found = 0, passed = 0;
-  for (let seed = 1; seed < 200; seed++) {
-    const { n, at, items } = door(seed, null);
-    assert.ok(n - at === 1 || n - at === 3, `seed ${seed}: the find's own one draw, or three when it lands - nothing after (${n - at})`);
-    if (items.some((it) => LR.gemKindOf(it))) { found++; assert.ok(LR.gemKindOf(items.at(-1)), 'and its gem last on the list'); }
-    const hi = door(seed, { first: 1000, more: 1000 }), lo = door(seed, { first: 0, more: 0 });
-    const holesIn = (list) => list.reduce((k, it) => k + LR.socketsOf(it).length, 0);   // a unique find laddered beside the blade takes its own
-    const gave = holesIn(hi.items) - holesIn(lo.items);
-    assert.equal(hi.at - lo.at, gave, `seed ${seed}: the pass's draws before the find`);
-    if (gave) passed++;
-  }
-  assert.ok(passed > 20, `${passed} weapons socketed before the find`);
-  assert.ok(found > 10, `${found} gems found over 199 piles`);
-  LR.registerGemFind(G.rollGemFind);
-  assert.deepEqual(G.rollGemFind({ tier: 10 }, () => 0.999), [], 'over the chance: none, and one draw');
-  off();
-  assert.equal(G.gemFindChance({ tier: 21, boss: true }), 0);
-  const offList = [createWeapon(122, 1)];
-  LR.rollLootRarity(offList, src, { rolls: () => 0 });
-  assert.equal(offList.length, 1, 'off: DFU\'s list');
+  try {
+    assert.deepEqual(G.GEM_FIND, { base: 30, perTier: 5, cap: 150 });
+    assert.deepEqual([0, 10, 19, 30].map((tier) => G.gemFindChance({ tier })), [30, 80, 125, 150]);
+    assert.deepEqual([G.gemFindChance({ tier: 10, kind: 'pile' }), G.gemFindChance({ tier: 4, boss: true }), G.gemFindChance({ tier: 10, luck: 100 }), G.gemFindChance({ tier: 10, luck: 0 })], [104, 125, 120, 40]);
+    assert.deepEqual(JSON.parse(JSON.stringify(G.GEM_GRADE_BANDS)), [
+      { tier: 0, weights: [70, 30, 0, 0, 0] }, { tier: 5, weights: [30, 50, 20, 0, 0] }, { tier: 10, weights: [0, 30, 45, 25, 0] },
+      { tier: 15, weights: [0, 0, 35, 50, 15] }, { tier: 20, weights: [0, 0, 0, 60, 40] },
+    ]);
+    assert.equal(G.GEM_BOSS_TIERS, 4);
+    assert.deepEqual([0, 4, 5, 14, 15, 20].map((tier) => G.gemGradeBand({ tier }).tier), [0, 0, 5, 10, 15, 20]);
+    assert.equal(G.gemGradeBand({ tier: 11, boss: true }).tier, 15, 'a boss four tiers deeper');
+    // the grades by band, over 4,000 gems each
+    const count = (source) => {
+      const c = Object.fromEntries(LR.GEM_GRADES.map((g) => [g, 0])), kinds = new Set();
+      const rolls = mulberry(5);
+      for (let i = 0; i < 4000; i++) { const g = G.rollGem(source, rolls); c[LR.gemGrade(LR.gemKindOf(g))]++; kinds.add(LR.gemKind(LR.gemKindOf(g))); }
+      return { c, kinds: kinds.size };
+    };
+    const low = count({ tier: 2 }), mid = count({ tier: 12 }), top = count({ tier: 21, boss: true });
+    assert.deepEqual([low.c.plain, low.c.flawless, low.c.perfect], [0, 0, 0], 'a shallow source: chipped and flawed alone');
+    assert.ok(Math.abs(low.c.chipped / 4000 - 0.7) < 0.03);
+    assert.deepEqual([mid.c.chipped, mid.c.perfect], [0, 0]);
+    assert.deepEqual([top.c.chipped, top.c.flawed, top.c.plain], [0, 0, 0], 'the deepest: flawless and perfect');
+    assert.ok(Math.abs(top.c.perfect / 4000 - 0.4) < 0.03, `${top.c.perfect}`);
+    assert.deepEqual([low.kinds, top.kinds], [8, 8], 'every kind');
+    // at the door: the find its very last draw - nothing after it - and the weapons' pass before it: at every chance, each
+    // socket the pass gives is one draw more before the find
+    const src = { kind: 'pile', tier: 18, boss: false, family: null };
+    const door = (seed, t) => {
+      const base = lcg(seed);
+      let n = 0, at = -1;
+      LR._setWeaponSocketsForTests(t);
+      LR.registerGemFind((s, rolls) => { at = n; return G.rollGemFind(s, rolls); });
+      const items = [createWeapon(122, 1)];
+      LR.rollLootRarity(items, src, { rolls: () => { n++; return base(); } });
+      LR._setWeaponSocketsForTests(null);
+      return { n, at, items };
+    };
+    let found = 0, passed = 0;
+    for (let seed = 1; seed < 200; seed++) {
+      const { n, at, items } = door(seed, null);
+      assert.ok(n - at === 1 || n - at === 3, `seed ${seed}: the find's own one draw, or three when it lands - nothing after (${n - at})`);
+      if (items.some((it) => LR.gemKindOf(it))) { found++; assert.ok(LR.gemKindOf(items.at(-1)), 'and its gem last on the list'); }
+      const hi = door(seed, { first: 1000, more: 1000 }), lo = door(seed, { first: 0, more: 0 });
+      const holesIn = (list) => list.reduce((k, it) => k + LR.socketsOf(it).length, 0);   // a unique find laddered beside the blade takes its own
+      const gave = holesIn(hi.items) - holesIn(lo.items);
+      assert.equal(hi.at - lo.at, gave, `seed ${seed}: the pass's draws before the find`);
+      if (gave) passed++;
+    }
+    assert.ok(passed > 20, `${passed} weapons socketed before the find`);
+    assert.ok(found > 10, `${found} gems found over 199 piles`);
+    LR.registerGemFind(G.rollGemFind);
+    assert.deepEqual(G.rollGemFind({ tier: 10 }, () => 0.999), [], 'over the chance: none, and one draw');
+    off();
+    assert.equal(G.gemFindChance({ tier: 21, boss: true }), 0);
+    const offList = [createWeapon(122, 1)];
+    LR.rollLootRarity(offList, src, { rolls: () => 0 });
+    assert.equal(offList.length, 1, 'off: DFU\'s list');
+  } finally { LR._setWeaponSocketsForTests(null); LR.registerGemFind(G.rollGemFind); off(); }   // AUDIT GEM: the hooks back whatever failed
 });
 
 test('GEM2 the world bosses: the Warden one gem, the Old Coil one to a ship that dealt, the Brass Remnant two - each Flawless or Perfect, known; their pieces socketed by both passes; every spoils before them the seed\'s own; the same seed the same spoils', () => {
@@ -397,50 +411,167 @@ test('GEM3 the wells, the chooser and the pips - and in the pack: an empty well 
   });
   // the pack: the bow's card, its wells pressed
   globalThis.location = { search: '?skin=enhanced' };
-  withDom((dom) => {
-    const host = dom.mk('div'); dom.body.append(host);
-    const bow = holes(weapon(130));
-    bow.name = 'Socket Bow';
-    const ruby = Object.assign(G.mintGem('flawless-ruby'), { stackCount: 2 });
-    const e = { ...player([bow, ruby]), name: 'Aelwyn', career: { name: 'Spellsword' } };
-    const view = mountEnhancedInventory(host, { entity: e, items: () => e.items, onExit: () => {} });
-    try {
-      const rowOf = (name) => host.querySelectorAll('.itemrow').find((r) => !r.closest('.loot-win') && textOf(r).includes(name)) ?? null;
-      const page = (word) => host.querySelectorAll('.packtab').find((t) => textOf(t).toLowerCase().includes(word)).onclick();
-      page('magic');   // a Rare's flavour enchantment puts it on the Magic page
-      const wellsNow = () => host.querySelectorAll('.sock-well').filter((w) => w.closest('.packdetail') && w.onclick);
-      assert.ok(rowOf('Socket Bow').querySelectorAll('.sock-pips').length === 1, 'the tile\'s pips');
-      rowOf('Socket Bow').onclick({ timeStamp: 1e9, detail: 1 });
-      assert.equal(wellsNow().length, 3, 'the card\'s three wells, pressable');
-      wellsNow()[0].onclick({ stopPropagation() {} });
-      const pick = host.querySelectorAll('.sock-pick');
-      assert.deepEqual(pick.map((b) => b.dataset.gem), ['flawless-ruby'], 'the gems the pack holds');
-      pick[0].onclick({ stopPropagation() {} });
-      assert.deepEqual(bow.sockets, ['flawless-ruby', LR.SOCKET_EMPTY, LR.SOCKET_EMPTY]);
-      assert.equal(ruby.stackCount, 1, 'one from the stack');
-      const said = () => JSON.parse(globalThis.__pack()).notice;
-      assert.ok(said().startsWith('Set: the Flawless Ruby in'), said());
-      wellsNow()[0].onclick({ stopPropagation() {} });
-      assert.deepEqual([bow.sockets[0], said()], ['flawless-ruby', UNSET_ASK('flawless-ruby')], 'asked first');
-      wellsNow()[0].onclick({ stopPropagation() {} });
-      assert.deepEqual(bow.sockets, Array(3).fill(LR.SOCKET_EMPTY), 'shattered');
-      assert.ok(said().startsWith('The Flawless Ruby in') && said().endsWith('shatters; the socket is empty.'), said());
-      assert.equal(ruby.stackCount, 1, 'the gem gone, not back');
-      // a loose gem's "Set in..."
-      page('valuables');
-      rowOf('Flawless Ruby').onclick({ timeStamp: 2e9, detail: 1 });
-      const act = (label) => host.querySelectorAll('.act').find((b) => b.closest('.acts') && b.textContent === label) ?? null;
-      act('Set in...').onclick();
-      const home = host.querySelectorAll('.act').find((b) => b.closest('.acts') && b.className.includes('gem-home'));
-      assert.ok(home && home.textContent.startsWith('Set in ') && home.textContent.includes('Socket Bow'), home?.textContent);
-      home.onclick();
-      assert.deepEqual(bow.sockets, ['flawless-ruby', LR.SOCKET_EMPTY, LR.SOCKET_EMPTY]);
-      assert.ok(!e.items.includes(ruby), 'the last of the stack went in');
-    } finally { view.unmount(); }
-  });
-  delete globalThis.location;
+  try {
+    withDom((dom) => {
+      const host = dom.mk('div'); dom.body.append(host);
+      const bow = holes(weapon(130));
+      bow.name = 'Socket Bow';
+      const ruby = Object.assign(G.mintGem('flawless-ruby'), { stackCount: 2 });
+      const e = { ...player([bow, ruby]), name: 'Aelwyn', career: { name: 'Spellsword' } };
+      const view = mountEnhancedInventory(host, { entity: e, items: () => e.items, onExit: () => {} });
+      try {
+        const rowOf = (name) => host.querySelectorAll('.itemrow').find((r) => !r.closest('.loot-win') && textOf(r).includes(name)) ?? null;
+        const page = (word) => host.querySelectorAll('.packtab').find((t) => textOf(t).toLowerCase().includes(word)).onclick();
+        page('magic');   // a Rare's flavour enchantment puts it on the Magic page
+        const wellsNow = () => host.querySelectorAll('.sock-well').filter((w) => w.closest('.packdetail') && w.onclick);
+        assert.ok(rowOf('Socket Bow').querySelectorAll('.sock-pips').length === 1, 'the tile\'s pips');
+        rowOf('Socket Bow').onclick({ timeStamp: 1e9, detail: 1 });
+        assert.equal(wellsNow().length, 3, 'the card\'s three wells, pressable');
+        wellsNow()[0].onclick({ stopPropagation() {} });
+        const pick = host.querySelectorAll('.sock-pick');
+        assert.deepEqual(pick.map((b) => b.dataset.gem), ['flawless-ruby'], 'the gems the pack holds');
+        pick[0].onclick({ stopPropagation() {} });
+        assert.deepEqual(bow.sockets, ['flawless-ruby', LR.SOCKET_EMPTY, LR.SOCKET_EMPTY]);
+        assert.equal(ruby.stackCount, 1, 'one from the stack');
+        const said = () => JSON.parse(globalThis.__pack()).notice;
+        assert.ok(said().startsWith('Set: the Flawless Ruby in'), said());
+        wellsNow()[0].onclick({ stopPropagation() {} });
+        assert.deepEqual([bow.sockets[0], said()], ['flawless-ruby', UNSET_ASK('flawless-ruby')], 'asked first');
+        wellsNow()[0].onclick({ stopPropagation() {} });
+        assert.deepEqual(bow.sockets, Array(3).fill(LR.SOCKET_EMPTY), 'shattered');
+        assert.ok(said().startsWith('The Flawless Ruby in') && said().endsWith('shatters; the socket is empty.'), said());
+        assert.equal(ruby.stackCount, 1, 'the gem gone, not back');
+        // a loose gem's "Set in..."
+        page('valuables');
+        rowOf('Flawless Ruby').onclick({ timeStamp: 2e9, detail: 1 });
+        const act = (label) => host.querySelectorAll('.act').find((b) => b.closest('.acts') && b.textContent === label) ?? null;
+        act('Set in...').onclick();
+        const home = host.querySelectorAll('.act').find((b) => b.closest('.acts') && b.className.includes('gem-home'));
+        assert.ok(home && home.textContent.startsWith('Set in ') && home.textContent.includes('Socket Bow'), home?.textContent);
+        home.onclick();
+        assert.deepEqual(bow.sockets, ['flawless-ruby', LR.SOCKET_EMPTY, LR.SOCKET_EMPTY]);
+        assert.ok(!e.items.includes(ruby), 'the last of the stack went in');
+        // AUDIT GEM: a later well is its own - set at 2, then the second of two set gems asked and shattered at 2
+        const plain = Object.assign(G.mintGem('ruby'), { stackCount: 2 });
+        e.items.push(plain);
+        page('magic');
+        rowOf('Socket Bow').onclick({ timeStamp: 3e9, detail: 1 });
+        wellsNow()[2].onclick({ stopPropagation() {} });
+        host.querySelectorAll('.sock-pick').find((b) => b.dataset.gem === 'ruby').onclick({ stopPropagation() {} });
+        assert.deepEqual(bow.sockets, ['flawless-ruby', LR.SOCKET_EMPTY, 'ruby'], 'set in the well pressed');
+        wellsNow()[2].onclick({ stopPropagation() {} });
+        assert.equal(said(), UNSET_ASK('ruby'), 'asked');
+        // AUDIT GEM: another piece picked and this one picked again - the question is gone, one press only asks again
+        page('valuables');
+        rowOf('Ruby').onclick({ timeStamp: 4e9, detail: 1 });
+        page('magic');
+        rowOf('Socket Bow').onclick({ timeStamp: 5e9, detail: 1 });
+        wellsNow()[2].onclick({ stopPropagation() {} });
+        assert.deepEqual([bow.sockets[2], said()], ['ruby', UNSET_ASK('ruby')], 'asked afresh - never a stale question answered');
+        wellsNow()[2].onclick({ stopPropagation() {} });
+        assert.deepEqual(bow.sockets, ['flawless-ruby', LR.SOCKET_EMPTY, LR.SOCKET_EMPTY], 'the second set gem shattered, the first kept');
+      } finally { view.unmount(); }
+    });
+    // AUDIT GEM: a loose gem offers no "Set in..." with the ladder off, nor for a piece the setting would refuse (unknown)
+    const setIn = (prep) => withDom((dom) => {
+      const host = dom.mk('div'); dom.body.append(host);
+      const bow = holes(weapon(130));
+      bow.name = 'Socket Bow';
+      prep(bow);
+      const gemItem = Object.assign(G.mintGem('ruby'), { stackCount: 1 });
+      const e = { ...player([bow, gemItem]), name: 'Aelwyn', career: { name: 'Spellsword' } };
+      const view = mountEnhancedInventory(host, { entity: e, items: () => e.items, onExit: () => {} });
+      try {
+        host.querySelectorAll('.packtab').find((t) => textOf(t).toLowerCase().includes('valuables')).onclick();
+        host.querySelectorAll('.itemrow').find((r) => !r.closest('.loot-win') && textOf(r).includes('Ruby')).onclick({ timeStamp: 6e9, detail: 1 });
+        return !!host.querySelectorAll('.act').find((b) => b.closest('.acts') && b.textContent === 'Set in...');
+      } finally { view.unmount(); }
+    });
+    assert.equal(setIn(() => {}), true, 'a known socketed piece: offered');
+    assert.equal(setIn((bow) => { bow.isIdentified = false; }), false, 'an unknown one: not offered');
+    off();
+    assert.equal(setIn(() => {}), false, 'the ladder off: never');
+    on();
+  } finally { delete globalThis.location; }   // AUDIT GEM: the page's word back whatever failed
   assert.match(read('src/ui/enhancedInventory.js'), /markSocketFrame\(node, item\);/);
   assert.match(read('src/ui/enhancedInventory.js'), /const w = socketBlock\(picked, side === 'local' && body, ready\);/);
   off();
   withDom(() => assert.equal(socketWells(holes(weapon(130))), null, 'off: nothing drawn'));
+});
+
+test('AUDIT GEM (2026-10-10, Mac: "We need to audit this and ensure perfection"): salvage never breaks a set gem; a set gem is worth its own price on its piece (LOOT20\'s string comes off at its line\'s); no boss gem with the ladder off; a reforged Magic piece named by its own lines; never an enchanted stone, the pressed one first; the extraction priced by its own socket, its wearer folded again; a boss\'s find four tiers deeper', () => {
+  on();
+  try {
+    // salvage: refused, and so skipped by the bulk sweep (reforgeWindow.js's every-Magic filter asks salvageRefusal)
+    const magic = holes(weapon(120, 'magic'), 1);
+    LR.setGem(magic, 'perfect-diamond', 0);
+    assert.equal(RF.salvageRefusal(magic), 'gems');
+    const pack = [magic];
+    assert.deepEqual(RF.salvagePiece(magic, { items: pack }), { ok: false, reason: 'gems' });
+    assert.deepEqual(pack, [magic], 'the piece and its gem kept');
+    assert.match(read('src/ui/reforgeWindow.js'), /const magics = rows\.filter\(\(it\) => it\.rarity === 'magic' && !salvageRefusal\(it\)\);/, 'the sweep skips it');
+    LR.unsetGem(magic, 0);
+    assert.equal(RF.salvageRefusal(magic), null, 'the gem out: salvage as ever');
+    // the price: three Jades read one Rare line, and lift the piece by three stones - never by three lines' worth
+    const jadeWorth = itemBaseValue({ group: 'Gems', templateIndex: LR.gemTemplateOf('jade') });
+    const big = holes(weapon(122));
+    big.affixes = [];
+    const v0 = big.value;
+    for (let i = 0; i < 3; i++) LR.setGem(big, 'jade', i);
+    assert.equal(big.value, v0 + 3 * jadeWorth);
+    assert.ok(LR.affixesWorth([LR.gemLine(big, 'jade')], big) > 10 * jadeWorth, 'a Jade\'s line is worth far more than the stone');
+    for (let i = 0; i < 3; i++) LR.unsetGem(big, i);
+    assert.equal(big.value, v0, 'unset: as it was');
+    // LOOT20's string: its gem was priced by its line, and comes off so
+    const legacy = known(LR.applyRarity(mintCondition({ group: 'Jewellery', templateIndex: 135, name: 'Ring', flags: 0 }), 'rare', lcg(5)));
+    const base = legacy.value;
+    const line = LR.gemLine(legacy, 'ruby');
+    Object.assign(legacy, { socket: 'ruby', affixes: [...legacy.affixes, line], value: base + LR.affixesWorth([line], legacy) });
+    assert.equal(LR.unsetGem(legacy), 'ruby');
+    assert.equal(legacy.value, base, 'the old piece back to its own price');
+    // the bosses: law 3
+    off();
+    let drawn = 0;
+    assert.deepEqual(G.bossGems('abyss', () => { drawn++; return 0; }), [], 'the ladder off: no graded gem');
+    assert.equal(drawn, 0, 'and no draw');
+    on();
+    // the reforge's name: the piece's own lines, never a set gem's word
+    let named = 0;
+    for (let seed = 1; seed < 400; seed++) {
+      const w = holes(weapon(120, 'magic', seed), 1);
+      if (!w.affixes?.length) continue;
+      LR.setGem(w, 'perfect-diamond', 0);
+      LR.reforgeAffix(w, 0, lcg(seed + 1));
+      assert.equal(w.name, LR.rarityName(w, 'magic', w.affixes.filter((a) => a.gem == null)), `seed ${seed}`);
+      named++;
+    }
+    assert.ok(named > 100, `${named} reforged`);
+    // the stone: never one the item maker enchanted; the pressed one first
+    const holder = holes(weapon(122));
+    const enchanted = Object.assign(G.mintGem('ruby'), { enchantments: [{ type: 1, param: 0 }] });
+    const me = player([holder, enchanted]);
+    assert.equal(RF.setGemRefusal(holder, 'ruby', me), 'nogem', 'an enchanted Ruby is no loose stone');
+    const a = Object.assign(G.mintGem('ruby'), { stackCount: 2, name: 'Ruby A' });
+    const b = Object.assign(G.mintGem('ruby'), { stackCount: 2, name: 'Ruby B', isIdentified: true });
+    me.items.push(a, b);
+    assert.equal(RF.setGemPiece(holder, 'ruby', me, 0, { from: a }).ok, true);
+    assert.deepEqual([a.stackCount, b.stackCount, enchanted.enchantments.length], [1, 2, 1], 'the pressed stack gave its stone; the enchanted one untouched');
+    // the extraction: each socket's own grade, and a worn piece's wearer folded again
+    const two = holes(weapon(122));
+    LR.setGem(two, 'chipped-ruby', 0); LR.setGem(two, 'perfect-ruby', 1);
+    assert.deepEqual([RF.extractPrice(two, 0), RF.extractPrice(two, 1)], [RF.EXTRACT_PRICE.chipped, RF.EXTRACT_PRICE.perfect]);
+    const wearer = player();
+    const worn = holes(weapon(122));
+    worn.affixes = [];
+    LR.setGem(worn, 'perfect-jade', 0);
+    wearer.items.push(worn); wearer.goldPieces = 5000;
+    equipItem(wearer, worn); computeEntityMods(wearer);
+    assert.ok((wearer._mods.stats.willpower ?? 0) > 0);
+    assert.equal(RF.extractGemPiece(worn, wearer, 0).ok, true);
+    assert.equal(wearer._mods.stats.willpower ?? 0, 0, 'the jade off its wearer with no fold of the test\'s own');
+    // a boss's find reads four tiers deeper: one draw for the chance, then the grade - a plain stone where a body's is flawed
+    const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
+    assert.equal(LR.gemGrade(LR.gemKindOf(G.rollGemFind({ kind: 'corpse', tier: 1, boss: false }, seq(0, 0.95, 0))[0])), 'flawed');
+    assert.equal(LR.gemGrade(LR.gemKindOf(G.rollGemFind({ kind: 'corpse', tier: 1, boss: true }, seq(0, 0.95, 0))[0])), 'plain');
+  } finally { off(); }
 });

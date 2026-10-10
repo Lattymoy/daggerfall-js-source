@@ -1129,7 +1129,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // ...and a normal dungeon at most one, one time in five
   // BAL4: online always, and offline wherever the loot ladder stands - elitesAllowed (the room's id is read straight off opts - onlineRoom() is declared below)
   // (ARENA-FIX 4: the undercroft's chained beasts stand passive, which the pick never takes)
-  if (elitesAllowed({ onlinePage: isOnlinePage(), inRoom: opts.selfId?.() != null })) pickDungeonElites(enemies, dfLocation?.dungeon?.recordElement?.header?.locationId ?? dfLocation?.name ?? '', { elite: !!dfLocation?.elite, count: _superTier ? SUPER_ELITE_FOES : null });   // SD4a: a Super dungeon's six
+  // AUDIT BAL (Balance-Arc.md section 10): offline, ELITE-FLOOR reads the level this dungeon's class foes are built at
+  const _eliteOnline = isOnlinePage() || opts.selfId?.() != null;
+  if (elitesAllowed({ onlinePage: isOnlinePage(), inRoom: opts.selfId?.() != null })) pickDungeonElites(enemies, dfLocation?.dungeon?.recordElement?.header?.locationId ?? dfLocation?.name ?? '', { elite: !!dfLocation?.elite, count: _superTier ? SUPER_ELITE_FOES : null, classLevel: _eliteOnline ? Infinity : (_superTier ? superFoeLevel(effectiveLevel(playerEntity)) : effectiveLevel(playerEntity)) });   // SD4a: a Super dungeon's six
   // C8 E1 (?foes): CLASS enemies (mobileType > 43, human morphology)
   // spawn as canonical rigs instead of their C3 billboards - one rig
   // per enemy (individual animation state), floor-snapped through the
@@ -1363,11 +1365,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // BAL3 (bible/05-Combat/Balance-Arc.md section 5): THE PLACE SETS THE THREAT - this dungeon's own tier (the loot
   // ladder's grading of its kind, lootRarity.js DUNGEON_RARITY_TIER), read once at the build, every client alike; it
   // stands while the ladder does (read at each spawn) - the ladder off, DFU's own foes, as its champions and elites go
-  const _placeVeteran = placeVeteran(dungeonRarityTier(dfLocation.mapTableData?.dungeonType));
-  function applyProgressionScalingTo(entity, basics) {
+  // AUDIT BAL: never the port's own stages that wear a Crypt's type for want of one (the arena's floor, the gate's court,
+  // the Shattered Hour - world/arenaFloor.js, gateArena.js, sdRealm.js) - their fights are tuned, and their health the relay's
+  const _placeVeteran = isGateArena(dfLocation) || isArenaFloor(dfLocation) || _sdRealm ? 0 : placeVeteran(dungeonRarityTier(dfLocation.mapTableData?.dungeonType));
+  /** `puppet`: AUDIT BAL - another client's foe stands at this place too. The place is every client's (its tier, the
+   *  ladder forced on online), so a puppet takes it - its blows on me as hard as on its owner; the owner's own standing
+   *  (Master Skills) is the owner's, and the puppet's health the owner's record's (`k`, `h`). */
+  function applyProgressionScalingTo(entity, basics, { puppet = false } = {}) {
     const place = lootRarityOn() ? _placeVeteran : 0;
-    if (!(_dungeonShare > 0) && !(place > 0)) return;
-    const scaling = progressionScaling(combatStanding(foeDeps.playerEntity), _dungeonShare, foeShare(basics?.level ?? entity.level, entity.isClass), place);
+    const share = puppet ? 0 : _dungeonShare;
+    if (!(share > 0) && !(place > 0)) return;
+    const scaling = progressionScaling(puppet ? null : combatStanding(foeDeps.playerEntity), share, foeShare(basics?.level ?? entity.level, entity.isClass), place);
     foeDeps.applyProgressionScaling?.(entity, scaling);   // lazily loaded beside makeEnemyEntity; the dungeon's own deps (the import used `D`, which only the spawn builders below bind)
   }
   function applyEliteScaling(entity, e) {
@@ -1436,6 +1444,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const entity = D.makeEnemyEntity(e.mobileType, basics, cf.career, e.level ?? (_superTier ? superFoeLevel(effectiveLevel(D.playerEntity)) : effectiveLevel(D.playerEntity)));   // SOFTCAP1: a mentor's dungeon is built at the group's level; ARENA2: a bout fighter at its tier's; SD4a: a Super dungeon's class foe at its band
       applyEliteScaling(entity, e);   // ELITE: double health, double damage
       if (!puppet && e.level == null) applyProgressionScalingTo(entity, basics);   // SOFTCAP1: tougher high-tier foes against skills past 100 (a puppet is its owner's build); ARENA2: never a bout fighter (the ladder is a fixed mountain)
+      else if (puppet && e.level == null) applyProgressionScalingTo(entity, basics, { puppet: true });   // AUDIT BAL: a puppet stands at this place too - its blows on me as on its owner (BAL3)
       if (_wildDungeon && !e.allied) applyWildFoe(entity, { ring: _wildRing });   // WILD1: a dungeon of the open zone - four times its health and its blows, over an elite's (every client builds the room's foes alike, so the maximum agrees)
       applySpawnAlliance(entity, e);   // MT-ii / AUDIT OH-F C4
       entity._feudPlace = 'dungeon';   // RVN1 (Feud-Arc.md 12): where a fight with it is fought, for its ledger
@@ -1527,6 +1536,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const entity = D.makeEnemyEntity(e.mobileType, basics, career, e.level ?? effectiveLevel(D.playerEntity));   // SOFTCAP1: a mentor's dungeon is built at the group's level; ARENA2: a bout fighter at its tier's
       applyEliteScaling(entity, e);   // ELITE: double health, double damage
       if (!puppet && e.level == null) applyProgressionScalingTo(entity, basics);   // SOFTCAP1: tougher high-tier foes against skills past 100 (a puppet is its owner's build); ARENA2: never a bout fighter
+      else if (puppet && e.level == null) applyProgressionScalingTo(entity, basics, { puppet: true });   // AUDIT BAL: a puppet stands at this place too - its blows on me as on its owner (BAL3)
       if (_wildDungeon && !e.allied) applyWildFoe(entity, { ring: _wildRing });   // WILD1: a dungeon of the open zone - four times its health and its blows, over an elite's (every client builds the room's foes alike, so the maximum agrees)
       applySpawnAlliance(entity, e);   // MT-ii / AUDIT OH-F C4
       entity._feudPlace = 'dungeon';   // RVN1 (Feud-Arc.md 12): where a fight with it is fought, for its ledger
@@ -6127,6 +6137,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // on playerLevel), so a record that reaches another client patches only its own kind at that index.
         mobileType: f.mobileType,
         gender: f.gender,   // WORLD3: and the gender, so a rebuilt roster wears the right sheet
+        eliteFoe: !!f.entity.eliteFoe,   // AUDIT BAL: the save's word on an elite - the build's pick follows the ladder's switch offline (applyWorld)
         maxHealth: f.entity.maxHealth,
         fatigue: f.entity.fatigue ?? 0,
         activeEffects: (f.entity.activeEffects ?? []).map(copyEffectEntry),
@@ -6276,6 +6287,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (wire && sf.dead && respawnDue(sf.died, _now)) {   // AUDIT WORLD7/8 B8: the ROOM's species first (WORLD3's roster law) - a fresh rebuild as the record's kind, alive
         if (sf.mobileType != null && sf.mobileType !== f.mobileType) settling.push(retypeFoe(i, sf.mobileType, sf.gender ?? null));   // AUDIT 68 S19-retype-orphans-corpse: the corpse leaves in stand(), on success - freed first, a refused rebuild left a bodiless dead foe
         else if (f.dead) respawnFoe(i);
+        return;
+      }
+      // AUDIT BAL (bible/05-Combat/Balance-Arc.md section 10): THE SAVE'S WORD ON AN ELITE, NOT THIS BUILD'S PICK. The pick
+      // follows the loot ladder's switch offline (BAL4), so a save made with the ladder set the other way - or before
+      // offline elites, when no offline foe was one - met a pick that crowned a foe the save held plain, or the reverse:
+      // its glow, title and x3 blows on the save's plain health. A save without the field is from before them: offline
+      // its foes were plain; online, and on the wire (validSharedFoe carries no such field - every client's pick is the
+      // same), the build's pick stands. A disagreeing foe is rebuilt as the record has it, the record landing on it - the
+      // species arm's own path (an elite's drop and scale are the build's, then the save's list and health overlay).
+      const eliteWord = sf.eliteFoe != null ? !!sf.eliteFoe : (!wire && !_eliteOnline ? false : null);
+      if (eliteWord != null && f.src && eliteWord !== !!f.src.eliteFoe) f.src = { ...f.src, eliteFoe: eliteWord };
+      if (eliteWord != null && f.entity && eliteWord !== !!f.entity.eliteFoe && i < _layoutFoes && (sf.mobileType == null || sf.mobileType === f.mobileType)) {
+        settling.push(retypeFoe(i, f.mobileType, f.gender ?? null).then((ok) => { if (ok && foes[i]) patchFoe(foes[i], sf, wire); }).catch((e) => console.error('[load] the rebuilt foe could not take the record', e)));
         return;
       }
       if (sf.mobileType != null && sf.mobileType !== f.mobileType) {   // AUDIT WORLD B4: another species at this index (a save from before the field patches blind)

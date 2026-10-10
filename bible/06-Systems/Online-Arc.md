@@ -13474,7 +13474,7 @@ stands owns it, else the lowest living, online holder on its pixel; the hunt's k
 pays every holder of that hunt who held it before the clear - a peer's word paying gold into the save, FLAGGED there by
 name. Until the branch reaches main (and with it the relay's deploy) a bounty is hunted alone.
 
-## DEATH-PENALTY (2026-09-24, Mac: "add deathpenalty 25% of the gold you have with you"; "online mode only ofc"; "and it should be shown in the death screen") - an online death costs a tenth of the purse
+## DEATH-PENALTY (2026-09-24, Mac: "add deathpenalty 25% of the gold you have with you"; "online mode only ofc"; "and it should be shown in the death screen") - an online death costs a tenth of the purse (and, since BAL4, an offline Project Legacy rise)
 
 THE HOLDINGS ARC above left "the gold lost on death (the original pillars 5 and 6)" out with respawning at a hub
 ("That'll be a seperate idea"). This is Mac's later word on the gold, and it stands; the hub respawn stays out. A Ledger A departure (AN ONLINE DEATH COSTS A TENTH OF THE PURSE).

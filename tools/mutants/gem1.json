@@ -580,8 +580,110 @@
   {
     "name": "GEM3-the-gem-goes-nowhere",
     "file": "src/ui/enhancedInventory.js",
-    "old": "          const r = setGemPiece(home, /** @type {string} */ (gem), gemWho());",
+    "old": "          const r = setGemPiece(home, /** @type {string} */ (gem), gemWho(), null, { from: picked });",
     "new": "          const r = { ok: false, reason: 'not' };",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ],
+    "note": "AUDIT BAL/GEM (PIN MOVED, 2026-10-10): its line changed with the audit's fix; re-aimed by content."
+  },
+  {
+    "name": "AUDIT-GEM-salvage-breaks-the-gem",
+    "file": "src/systems/reforge.js",
+    "old": "  if (socketGems(item).length) return 'gems';",
+    "new": "  if (false) return 'gems';",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GEM-the-line-priced",
+    "file": "src/systems/lootRarity.js",
+    "old": "itemBaseValue(item)) + gemWorth(gem);",
+    "new": "itemBaseValue(item)) + affixesWorth([line], item);",
+    "tests": [
+      "test/gem1_sockets.test.js",
+      "test/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GEM-the-legacy-unset-at-the-stone",
+    "file": "src/systems/lootRarity.js",
+    "old": "(legacy ? affixesWorth([line], item) : gemWorth(gem))",
+    "new": "gemWorth(gem)",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GEM-unset-at-the-line",
+    "file": "src/systems/lootRarity.js",
+    "old": "(legacy ? affixesWorth([line], item) : gemWorth(gem))",
+    "new": "affixesWorth([line], item)",
+    "tests": [
+      "test/gem1_sockets.test.js",
+      "test/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GEM-boss-gems-off",
+    "file": "src/systems/gems.js",
+    "old": "  if (!lootRarityOn()) return [];   // AUDIT GEM (law 3)",
+    "new": "  // AUDIT GEM (law 3)",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GEM-set-in-off",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "side === 'local' && lootRarityOn() && gemKindOf(picked)",
+    "new": "side === 'local' && gemKindOf(picked)",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GEM-unknown-homes",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "emptySockets(it) > 0 && itemIsIdentified(it));",
+    "new": "emptySockets(it) > 0);",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GEM-a-stale-question",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  if (body && picked !== wellPick) { wellOpen = null; wellAsk = null; gemTargets = null; wellPick = picked; }",
+    "new": "",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GEM-named-by-the-gem",
+    "file": "src/systems/lootRarity.js",
+    "old": "rarityName(item, tier, item.affixes.filter((a) => a?.gem == null));",
+    "new": "rarityName(item, tier, item.affixes);",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GEM-an-enchanted-stone",
+    "file": "src/systems/reforge.js",
+    "old": " && !isEquipped(it) && !isEnchanted(it);",
+    "new": " && !isEquipped(it);",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GEM-the-pressed-stone-last",
+    "file": "src/systems/reforge.js",
+    "old": "  const at = prefer && looseGem(prefer, gem) ? items.indexOf(prefer) : -1;",
+    "new": "  const at = -1;",
     "tests": [
       "test/gem1_sockets.test.js"
     ]

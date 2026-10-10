@@ -76,7 +76,7 @@ function build(screen) {
   rule.append(el('i'), el('span', 'dth-gem'), el('i'));
   // DEATH-PENALTY (Mac: "remove the tale line and use the same fonts for the gold loss message in online
   // mode"): a death that costs gold says so IN the line's place, in the line's own italic serif, rather than
-  // under it in a second face. A death that costs nothing (offline, or a purse under ten coins) keeps its words.
+  // under it in a second face. A death that costs nothing (no respawn - BAL4: an offline Legacy rise pays - or a purse under ten coins) keeps its words.
   const lossLine = screen.goldLoss > 0 ? (screen.goldLossLine || deathPenaltyLine(screen.goldLoss)) : '';
   const line = el('p', `dth-line${lossLine ? ' dth-lossline' : ''}`, lossLine || (online || screen.rises
     ? 'Your body falls. The Bay is not done with you yet.'

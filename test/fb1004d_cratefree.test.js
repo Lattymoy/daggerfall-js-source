@@ -44,10 +44,8 @@ import { ClassFile } from '../src/formats/classFile.js';
 import { collectDungeonEnemies } from '../src/characters/dungeonEnemies.js';
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
 import { setPref } from '../src/systems/uiPrefs.js';   // BAL4: the switch this file's pins assumed
+import { tickTactics, resetTactics } from '../src/ai/tactics.js';   // AUDIT BAL: the brain's clock, ticked as the hosts tick it
 
-// BAL4 (bible/05-Combat/Balance-Arc.md section 6): the Enhanced AI ships On now; this file pins the classic motor's restore and walk (the navmesh motor's are NAV's own pins),
-// so it says Off outright where it used to read the default (LR5's trap: a pin that leaned on a default moves with it)
-setPref('enhancedAI', false);
 import { EnemyAI } from '../src/characters/enemyMotor.js';
 import { enemyControllerHeight, flyerStandFeet, keepRebuiltSpawn } from '../src/characters/enemyAnchor.js';
 import { lodgedIn, freeLodgedFeet, clearPast, bodyFits, FREE_RINGS } from '../src/characters/foeSpacing.js';
@@ -160,6 +158,12 @@ function levelCollider(extra = []) {
 const crateMatrix = ([x, z]) => trs(x, CRATE_H / 2, z, 0, 0, 0);
 const inCrate = (feet, [x, z]) => Math.abs(feet[0] - x) < CRATE_HALF && Math.abs(feet[2] - z) < CRATE_HALF && feet[1] < CRATE_H;
 const inAnyCrate = (feet) => Object.values(AT).some((at) => inCrate(feet, at));
+
+// BAL4 (bible/05-Combat/Balance-Arc.md section 6): the Enhanced AI ships On now; this file's pins are the classic motor's
+// restore and walk, so it says Off outright where it used to read the default (LR5's trap: a pin that leaned on a default
+// moves with it) - and AUDIT BAL's restore pin walks the freed giant again with the brain ON, its clock
+// (ai/tacticsClock.js, the foes' own time) ticked with the foes' step as every host ticks it
+setPref('enhancedAI', false);
 
 // ── the dungeon context's own doors, mounted (test/disc28_flyer.test.js's harness) ──────────────────────────────────
 function sliced(path) {
@@ -398,6 +402,20 @@ test('CRATE-FREE dungeon restore: a save that kept a giant inside a crate stands
   const bat = await ctx.buildFoeAt({ mobileType: GIANT_BAT, gender: 'male', x: 22.3, y: 1, z: 22.7, spawnDistanceType: 0 });
   ctx.patchFoe(bat, { ...saved, feet: [25.62, 0.5, 26.79] });
   assert.ok(!inAnyCrate(bat.ai.feet) && Math.abs(bat.ai.feet[1] - 0.5) < 1e-6, `the bat out of the crate, still on the wing: ${bat.ai.feet.map((v) => v.toFixed(2))}`);
+});
+
+test('CRATE-FREE dungeon restore (AUDIT BAL, the Enhanced AI on - its default since BAL4): the giant a save kept in a crate is freed on the load and walks under the tactics brain, the brain\'s clock ticked with the foes\' step', async () => {
+  setPref('enhancedAI', true); resetTactics();
+  try {
+    const c = levelCollider();
+    const ctx = context(c);
+    const giant = await ctx.buildFoeAt({ mobileType: GIANT, gender: 'male', x: 22.3, y: 0.6, z: 22.7, spawnDistanceType: 0 });
+    ctx.patchFoe(giant, { health: 9, items: [], feet: [25.6, 0, 25.6], yaw: 1, dead: false, anchor: 1 });
+    assert.ok(!inAnyCrate(giant.ai.feet), `the load freed it: ${giant.ai.feet.map((v) => v.toFixed(2))}`);
+    const from = [...giant.ai.feet];
+    for (let k = 0; k < 6 * 60; k++) { tickTactics(1 / 60); giant.ai.update(1 / 60, [22, 0, 22]); }   // a host's frame: the clock, then the foes
+    assert.ok(Math.hypot(giant.ai.feet[0] - from[0], giant.ai.feet[2] - from[2]) > 2, 'and it walks');
+  } finally { setPref('enhancedAI', false); resetTactics(); }
 });
 
 // ── the interior host: a house's crates are models too ─────────────────────────────────────────────────────────────

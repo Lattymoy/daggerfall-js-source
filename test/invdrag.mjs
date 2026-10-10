@@ -16,7 +16,7 @@ export function fakeDom({ w = 1280, h = 800 } = {}) {
   const listeners = new Map();
   const mk = (tag) => {
     const n = {
-      tagName: tag.toUpperCase(), children: [], parent: null, style: {}, dataset: {}, attrs: {},
+      tagName: tag.toUpperCase(), children: [], parent: null, style: Object.defineProperty({}, 'setProperty', { value(k, v) { this[k] = String(v); } }), dataset: {}, attrs: {},   // AUDIT BAL: a custom property set as the death face sets its fade (unenumerable: a style compared whole stays its own)
       className: '', textContent: '', title: '', type: '', disabled: false,
       onclick: null, onpointerdown: null, onpointermove: null, onpointerup: null, onpointercancel: null,
       scrollTop: 0, scrollHeight: 0, clientHeight: 0,
@@ -30,6 +30,8 @@ export function fakeDom({ w = 1280, h = 800 } = {}) {
       },
       append(...cs) { for (const c of cs) { if (c == null) continue; c.parent = n; n.children.push(c); } },
       appendChild(c) { n.append(c); return c; },
+      replaceChildren(...cs) { for (const c of n.children) c.parent = null; n.children.length = 0; n.append(...cs); },
+      after(...cs) { const p = n.parent; if (!p) return; let i = p.children.indexOf(n); for (const c of cs) { if (c == null) continue; c.parent = p; p.children.splice(++i, 0, c); } },   // AUDIT BAL: the enhanced death face hangs its zone block after its line
       remove() { const i = n.parent?.children.indexOf(n) ?? -1; if (i >= 0) n.parent.children.splice(i, 1); n.parent = null; },
       setAttribute(k, v) { n.attrs[k] = String(v); },
       getAttribute(k) { return n.attrs[k] ?? null; },
