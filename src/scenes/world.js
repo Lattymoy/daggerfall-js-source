@@ -3495,7 +3495,9 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  reader who stood there longer had them), and a region asked while a read was out was dropped (ASYNC NEVER DROPS: it
    *  is remembered, `_livingPatronsWant`, and read once the one out settles). @type {Map<number, { at: number, failed: boolean }>} */
   const _livingPatronsRead = new Map();
-  let _livingPatronsV = 0, _livingPatronsBusy = false, /** @type {number|null} */ _livingPatronsWant = null, _livingPatronsNow = 0;
+  let _livingPatronsV = 0, _livingPatronsBusy = false, _livingPatronsNow = 0;
+  /** AUDIT LW-II-2 W3: the region asked while a read was out - read once it settles. @type {number|null} */
+  let _livingPatronsWant = null;
   /** AUDIT LW-II-2 W3: a region never read, or read PATRON_READ_S ago (a failed read PATRON_RETRY_S), is read now. */
   const livingPatronsDue = (region, nowS) => { const r = _livingPatronsRead.get(region); return !r || nowS - r.at >= (r.failed ? PATRON_RETRY_S : PATRON_READ_S); };
   /** AUDIT LW-II-2 W11: the region whose traders are read - the one the player stands in, while a living town stands (a

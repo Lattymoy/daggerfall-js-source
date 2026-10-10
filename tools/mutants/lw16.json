@@ -424,8 +424,8 @@
   {
     "name": "LW16-host-word",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "?? (this._roads ? this.o.carriedOf?.(this._roads.day) : null);",
-    "new": "?? null;",
+    "old": "const visits = this._roads ? this.o.carriedOf?.(this._roads.day) : null;",
+    "new": "const visits = null;",
     "tests": [
       "test/lw16_word.test.js"
     ]

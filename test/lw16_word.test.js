@@ -208,7 +208,7 @@ test('LW16 the host\'s seams: a town\'s carried word worked a slice a frame (a g
   assert.match(w, /e = \{ gen: livingVisitsGen\(town, day, \{ mpm: PERSON_MOVE_SPEED \/ livingBaseRate\(\), memo: _livingTripMemo \}, true\), visits: null, at: 0, map: town\.mapId >>> 0 \};/);
   assert.match(w, /return e\.visits \?\? _livingCarriedLast\.get\(town\.mapId >>> 0\) \?\? null;/);   // AUDIT LW-II B11: the last word while the next is worked
   assert.match(w, /if \(_livingWordRel !== livingRelations\) _livingCarriedLast\.clear\(\);/);
-  assert.match(w, /if \(livingWorldOn\(\)\) livingCarriedStep\(LIVING_CARRIED_SLICE_MS\);/);
+  assert.match(w, /if \(livingWorldOn\(\)\) livingCarriedStep\(LIVING_CARRIED_SLICE_MS\);   \/\/ LW16: the word carried, worked a slice a frame/);   // PIN MOVED (AUDIT LW-II-2 H7): the open world's step by its own line - the modal frame's beside it (auditlwii2_town)
   assert.match(w, /const LIVING_CARRIED_SLICE_MS = 3;/);
   assert.match(w, /try \{ r = e\.gen\.next\(\); \} catch \(err\) \{[^\n]*r = \{ done: true, value: null \}; \}/);   // PIN MOVED (AUDIT LW-II B13): a throw never wedges the slice
   assert.match(w, /if \(r\.done\) \{ e\.visits = r\.value \?\? Object\.assign\(\[\], \{ partial: true \}\); e\.at = performance\.now\(\); _livingCarriedLast\.set\(e\.map, e\.visits\); \}/);   // PIN MOVED (AUDIT LW-II-2 W7): the town's last word kept as its day's is done

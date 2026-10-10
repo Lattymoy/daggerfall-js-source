@@ -388,7 +388,7 @@ test('LW12 heard of: a band near the player not yet heard of is warned of in a t
   const p = rumourAt(h, band.key);
   assert.ok(Math.hypot(p.x - h.x, p.z - h.z) <= RUMOUR_OFF_N + 1e-6);
   assert.deepEqual(m[0].at, [p.x / NATIVE_PER_M, 0, p.z / NATIVE_PER_M]);
-  assert.ok(BAND_WARNINGS.every((w) => fillLine(w, { band: 'the Black Hand' }).includes('the Black Hand')));
+  assert.ok(BAND_WARNINGS.every((w) => /\b[Tt]he Black Hand\b/.test(fillLine(w, { band: 'the Black Hand' }))));   // PIN MOVED (AUDIT LW-II-2 W8): a band's "the" opening a sentence is a capital
   const roads = readFileSync(new URL('../src/scenes/livingRoads.js', import.meta.url), 'utf8');
   assert.match(roads, /const band = standing === 'enemy' \|\| standing === 'hostile' \? null : deps\.unheard\?\.\(t\) \?\? null;/);
   assert.match(roads, /if \(band\) \{ text = `\$\{text\} \$\{fillLine\(BAND_WARNINGS\[[^\]]+\], \{ band: band\.name \}\)\}`; deps\.heard\?\.\(band\); \}/);
