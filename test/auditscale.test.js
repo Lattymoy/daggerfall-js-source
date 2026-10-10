@@ -174,7 +174,7 @@ test('AUDIT SCALE A3 A5: the clock\'s reads by an index - the contracts past the
   assert.doesNotMatch(contracts, /SCAN guild_contracts/, contracts);
   assert.match(contracts, /idx_guild_contracts_open_due|idx_guild_contracts_unreturned/, contracts);
   const prune = await sqlOf((db) => pruneMarketHistory(db, T0, 1000));
-  assert.equal(prune.length, 9, 'nine tables');
+  assert.equal(prune.length, 10, 'ten tables');   // PIN MOVED (AUDIT LW-II P6): and a patron's sales (LW15's market_patron_sales), kept as its listing is
   for (const sql of prune) assert.match(sql, /^DELETE FROM (\w+) WHERE rowid IN \(SELECT rowid FROM \1 WHERE [\s\S]+ LIMIT \?2\)$/, sql);
   const auctions = prune.find((sql) => sql.startsWith('DELETE FROM market_auctions'));
   const plan = planOf(auctions);
@@ -223,8 +223,10 @@ test('AUDIT SCALE D7: on a quiet world the clock is six statements a minute and 
   // PIN MOVED (INT2/INT5, 2026-10-09): the hour sweeps the judge's findings and the wealth-hours past their keep - one
   // statement each, its page short; seventeen became nineteen. PIN MOVED (INT9): and a death in the zone's drop past its
   // keep (server-account/src/wild.js WILD_FALLS_KEEP_S) - twenty. PIN MOVED (LW15): the patrons' towns waiting asked
-  // once - none, so no town read; twenty-one
-  assert.deepEqual(hour.map((j) => [j.name, j.statements]), [['board', 2], ['guild-board', 1], ['harvests', 2], ['market-history', 9], ['rate-limits', 1], ['sessions', 1], ['guild-invites', 1], ['realm-findings', 1], ['realm-wealth-hours', 1], ['wild-falls', 1], ['patrons', 1]]);
+  // once - none, so no town read; twenty-one. PIN MOVED (AUDIT LW-II P6, P8): the market's history prunes a patron's
+  // sales too (ten), and the patrons are asked nothing while the market is not open to everyone (this world's Marks and
+  // board switches are off) - twenty-one still
+  assert.deepEqual(hour.map((j) => [j.name, j.statements]), [['board', 2], ['guild-board', 1], ['harvests', 2], ['market-history', 10], ['rate-limits', 1], ['sessions', 1], ['guild-invites', 1], ['realm-findings', 1], ['realm-wealth-hours', 1], ['wild-falls', 1], ['patrons', 0]]);
   assert.equal(minute.reduce((n, j) => n + j.statements, 0) + hour.reduce((n, j) => n + j.statements, 0), 6 + 21);
   // behind `dev` the Motherlodes are a developer's: never picked by the clock
   const dev = await standService({ PROFESSIONS_OPEN: 'dev' });

@@ -8,13 +8,13 @@
 // ARENA2 - it cannot know a town's people - so it decides WHICH PIECE SELLS IN WHICH HOUR, and names a SEED and a
 // MINUTE, never a person; the client deals the seed to one of the town's residents (systems/livingWorld's own law,
 // `patronOf`). Both ends read this file: the sales a client reads are the sales the service made, and reckoned late
-// they are the same sales (the dice are the listing's and the hour's alone).
+// they are the same sales (the dice are the listing's, the hour's and the service's own secret's alone).
 //
 //  - THE HOUR IS THE WINDOW. Each open trader listing in a home the town may enter is offered to the town's patrons once
 //    for each real hour it stands (an online sky day is a real hour - TIME1).
-//  - THE PRICE DECIDES. Its CAP is PATRON_PAY_SHARE of the piece's worth as the service judges it (itemLaw.js itemWorth -
-//    a crafted piece's no higher than the piece it was made as, `patronWorth`); above it no patron buys; at or under it,
-//    the hour's chance by how far under (`patronOdds`).
+//  - THE PRICE DECIDES. Its CAP is PATRON_PAY_SHARE of the piece's worth as the service judges it (itemLaw.js itemWorth's
+//    floor - never the record's own price, the client's to write - and a crafted piece's no higher than the piece it was
+//    made as, `patronWorth`); above it no patron buys; at or under it, the hour's chance by how far under (`patronOdds`).
 //  - THE TOWN'S DEMAND IS SHARED: its traders together sell at most PATRON_TOWN_HOUR an hour, the hour's lowest draws.
 //  - THE CEILINGS: a seller PATRON_SELLER_HOUR pieces an hour, PATRON_SELLER_DAY_GOLD gold a real day; never a quest's
 //    piece or a keepsake (`patronTakes`).
@@ -49,8 +49,13 @@ function fnv(s) {
   h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16;
   return h >>> 0;
 }
-/** The hour's draw for a listing, in [0, 1). @param {string} listing @param {number} hour */
-export const patronDraw = (listing, hour) => fnv(`${listing}:${hour}:draw`) / 4294967296;
+/** The hour's draw for a listing, in [0, 1) - with the service's SECRET (`salt`, market.js patronSalt). AUDIT LW-II P10:
+ *  on the listing and the hour alone the dice were public - a seller computed the hour every piece of theirs would sell
+ *  in, and listed again until an id sold at once. The salt both before and after: before alone, the whole secret is one
+ *  32-bit state a seller's own sales give away; after, each of its characters stirs the hash again. The seed and the
+ *  minute a client is told stay the listing's and the hour's. Fixed, so reckoned late is still reckoned on time.
+ *  @param {string} listing @param {number} hour @param {string} [salt] */
+export const patronDraw = (listing, hour, salt = '') => fnv(`${salt}${listing}:${hour}:draw${salt}`) / 4294967296;
 /** The seed a sale names (the client deals it to a resident). @param {string} listing @param {number} hour */
 export const patronSeed = (listing, hour) => fnv(`${listing}:${hour}:seed`);
 /** The minute of the hour the patron comes. @param {string} listing @param {number} hour */
@@ -70,13 +75,15 @@ export const patronTakes = (item) => !!item && typeof item === 'object' && !item
 /** The marks of a crafted piece (itemLaw.js's own `crafted` findings read these). */
 const CRAFT_MARKS = Object.freeze(['provenance', 'quality', 'hand', 'kitMetal', 'fieldKit', 'potent']);
 /**
- * A PIECE'S WORTH TO A PATRON: the service's judge's (`worthOf` - itemLaw.js itemWorth), a crafted piece's no higher
- * than the piece it was made as (its marks off, its price nothing: the judge's floor) - "shops are the floor, crafting
- * the ceiling": a patron never pays a crafter more than a found piece fetches.
+ * A PIECE'S WORTH TO A PATRON: the service's judge's FLOOR (`worthOf` - itemLaw.js itemWorth - of the piece priced at
+ * nothing: what the piece IS, its base and its lines), a crafted piece's no higher than the piece it was made as (its
+ * marks off) - "shops are the floor, crafting the ceiling": a patron never pays a crafter more than a found piece fetches.
+ * AUDIT LW-II P2: NEVER THE RECORD'S OWN PRICE - `value` is the client's to write, and the judge reads it up to a
+ * generous ceiling (itemLaw.js worthCeiling: a found Broadsword written at 1e9 was worth 11,840 - a patron's 7,104, not 36).
  * @param {any} item @param {(item: any) => number} worthOf
  */
 export function patronWorth(item, worthOf) {
-  const worth = worthOf(item);
+  const worth = worthOf({ ...item, value: 0 });
   if (!item || !CRAFT_MARKS.some((k) => Object.prototype.hasOwnProperty.call(item, k))) return worth;
   const plain = { ...item, value: 0 };
   for (const k of CRAFT_MARKS) delete plain[k];
@@ -84,27 +91,39 @@ export function patronWorth(item, worthOf) {
 }
 
 /**
- * ONE TOWN'S HOUR: which of its traders' listings its patrons buy in `hour`. `listings` each `{ id, seller, price, worth,
- * takes? }` open through the hour; `sold` the town's patron sales already made in the hour (a reckoning again: they
- * stand), `sellerHour` each seller's sales this hour elsewhere, `sellerDay` each seller's patron gold this real day.
- * Answers the sales, each `{ id, seller, price, hour, minute, seed }` - the lowest draws under their odds, to the
- * town's and the sellers' ceilings.
- * @param {{ id: string, seller: string, price: number, worth: number, takes?: boolean }[]} listings @param {number} hour
- * @param {{ sold?: number, sellerHour?: Map<string, number>, sellerDay?: Map<string, number> }} [o]
+ * THE HOUR'S CANDIDATES: the listings a patron would buy in `hour` were there no ceiling - each `{ l, draw }`, the lowest
+ * draw first. AUDIT LW-II P5: asked FIRST, by the service too - an hour none of a town's listings draws under its odds
+ * asks the database nothing (one read of a region two days behind ran 5,826 statements; D1 answers an invocation a
+ * thousand).
+ * @template {{ id: string, price: number, worth: number, takes?: boolean }} L
+ * @param {L[]} listings @param {number} hour @param {string} [salt] @returns {{ l: L, draw: number }[]}
  */
-export function patronHour(listings, hour, { sold = 0, sellerHour = new Map(), sellerDay = new Map() } = {}) {
+export function patronCands(listings, hour, salt = '') {
   const cands = [];
   for (const l of listings) {
     if (l.takes === false || !(l.price >= 1)) continue;
-    const draw = patronDraw(l.id, hour);
+    const draw = patronDraw(l.id, hour, salt);
     if (draw >= patronOdds(l.price / patronCap(l.worth))) continue;   // over the cap (or no cap at all) the odds are none
     cands.push({ l, draw });
   }
   cands.sort((a, b) => a.draw - b.draw || (a.l.id < b.l.id ? -1 : 1));
+  return cands;
+}
+
+/**
+ * ONE TOWN'S HOUR: which of its traders' listings its patrons buy in `hour`. `listings` each `{ id, seller, price, worth,
+ * takes? }` open through the hour; `sold` the town's patron sales already made in the hour (a reckoning again: they
+ * stand), `sellerHour` each seller's sales this hour elsewhere, `sellerDay` each seller's patron gold this real day,
+ * `salt` the service's secret (`patronDraw`). Answers the sales, each `{ id, seller, price, hour, minute, seed }` - the
+ * lowest draws under their odds, to the town's and the sellers' ceilings.
+ * @param {{ id: string, seller: string, price: number, worth: number, takes?: boolean }[]} listings @param {number} hour
+ * @param {{ sold?: number, sellerHour?: Map<string, number>, sellerDay?: Map<string, number>, salt?: string }} [o]
+ */
+export function patronHour(listings, hour, { sold = 0, sellerHour = new Map(), sellerDay = new Map(), salt = '' } = {}) {
   const out = [];
   const hourN = new Map(sellerHour), dayG = new Map(sellerDay);
   let n = sold;
-  for (const { l } of cands) {
+  for (const { l } of patronCands(listings, hour, salt)) {
     if (n >= PATRON_TOWN_HOUR) break;
     if ((hourN.get(l.seller) ?? 0) >= PATRON_SELLER_HOUR) continue;
     if ((dayG.get(l.seller) ?? 0) + l.price > PATRON_SELLER_DAY_GOLD) continue;
