@@ -852,7 +852,8 @@ wagon.
 
 Pins: `test/benchcam1.test.js`; `test/wagons3.test.js`'s camera wall (PIN
 MOVED: the open wagon's tilt is a wall, its camera free from the pivot over
-it). Mutants: `tools/mutants/benchcam1.json`. Record retired:
+it); `test/maca_camera_sphere.test.js`'s mwView pin (PIN MOVED: the call
+carries `pivotFloor` after its two seams). Mutants: `tools/mutants/benchcam1.json`. Record retired:
 `AUDIT-WAGONS3-B1-every-body-a-cabin` (its law - the caravan's body alone a
 wall - is the one this slice reverses; BENCH-CAM-the-tilt-no-shell holds the
 new one).
