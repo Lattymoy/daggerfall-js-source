@@ -652,9 +652,14 @@ export function foeWord(name, n) {
   return `${w}s`;
 }
 
-/** A line with its tokens filled. @param {string} text @param {Record<string, string|undefined|null>} ctx */
+/** A line with its tokens filled. AUDIT LW-II-2 W8: a token that opens a sentence - the line's first, or after a stop and a
+ *  space - opens it with a capital ("The Red Hand are finished", where a band's minted name is "the Red Hand"); mid-
+ *  sentence it keeps its case. @param {string} text @param {Record<string, string|undefined|null>} ctx */
 export function fillLine(text, ctx = {}) {
-  return text.replace(/\{(\w+)\}/g, (_, k) => (ctx[k] ? String(ctx[k]) : TOKEN_FALLBACK[/** @type {keyof typeof TOKEN_FALLBACK} */ (k)] ?? ''));
+  return text.replace(/\{(\w+)\}/g, (_, k, at) => {
+    const s = ctx[k] ? String(ctx[k]) : TOKEN_FALLBACK[/** @type {keyof typeof TOKEN_FALLBACK} */ (k)] ?? '';
+    return at === 0 || /[.?!]\s$/.test(text.slice(0, at)) ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+  });
 }
 
 /**
