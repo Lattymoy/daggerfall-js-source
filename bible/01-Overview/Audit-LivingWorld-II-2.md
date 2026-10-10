@@ -70,6 +70,36 @@ All FIXED:
 Seen and left for Mac: the hold-up stands on the player's deeds alone - a caravan whose only guard the character
 struck down before hiring on yields as they walk beside it, and C2 then ends the contract unpaid.
 
+## D (with H5, P10) - the deep's own (`test/auditlwii2_deep.test.js`, 15; `auditlwii2_deep.json`, 34)
+
+All FIXED:
+
+- **D1 (HIGH) - LEAD ON to a stop past DEEP_KEEP_M made the company vanish the next frame.** The let-go measured from
+  where it was going: with the stops breadth first by block, one leg in six runs past 70 m. FIXED: from its nearest
+  standing member.
+- **D2 (HIGH; its root LW6's and LW6b's) - a load in the same dungeon wrote deaths and spent remains into the loaded
+  game.** A quick load patches the dungeon in place, its pool the same: the divers and the remains layers stood over a
+  pool the save had cut, and the next frame read the company stood after the save as fallen beside the player (`died`
+  written, a courtship ended; a hostile member `slain` by the player's hand), and a pile laid after the save as taken
+  (`laid`). FIXED: the load door (world.js, where every load passes) lets both layers go; a body dead and gone from the
+  pool is forgotten with no turn.
+- **D4 / H5 - a company held below swallowed its members' talk above.** The open world never let the divers go, and the
+  divers' door answered true over a window that could not mount outside. FIXED: let go with the remains; asked only
+  below; `offers` answers whether its window mounted.
+- **D5 - a peer's take, or a piece put in and taken back, was charged as `poached`.** FIXED: the pile's own pieces as
+  first seen, read again when the room's word lands in it.
+- **D6 - the fallen of one dive were laid on top of one another** (one death minute, one stop). FIXED: a pace apart.
+- **D7 - an Ocean Holes abyss was cleared by its template's dives.** FIXED: no cleared set while the abyss builds.
+- **D8 - any road trouble took the deep's own fight away** (0.42 for DEEP_RISK's 0.5). FIXED: only a trouble inside.
+- **D9** a death on the way out laid at the deepest stop, not the nearest; **D10** with no start marker the order began
+  at the layout's first block, not the starting block; **D11** the stops' records two literals beside their homes (ONE
+  DFU MEMBER, ONE EXPORT); **D13** a trim after the deep's fight that could never fire. FIXED.
+- **P10 - PINNED**: the fight's pick and shift, the way out's rest, the build's cleared set routed from the ENTRY as the
+  divers' own route is, DIVER_ARRIVE_SLACK_M - the P lane's five records carried, all dead.
+- And the host's divers' and remains' steps wrapped as their neighbours are: a throw there ended the frame loop.
+
+D3 (the road fixer's): see R.
+
 ## The records (no code)
 
 - **R10** - the first audit's E9 understated what LW13's re-key moves (every turn keyed by place and cycle, the road's

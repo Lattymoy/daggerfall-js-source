@@ -685,10 +685,12 @@ below is `src/scenes/dungeonDivers.js`.
 ### 7.1 The dive's route (`deepRoute.js`)
 
 - **THE STOPS** (`stopsOf`): the dungeon's random foe markers (editor record 15, STOP_FOE) and random treasure markers
-  (19, STOP_TREASURE), off the placed blocks' layouts - never a fixed foe (16), a quest's marker (11, 18) or fixed
-  treasure (archive 216). Keyed `<block>:<marker position>`, a foe's by its marker's LoadID too. Read at the dungeon's
+  (19, STOP_TREASURE - each its one home's: `characters/dungeonEnemies.js RANDOM_RECORD`, `systems/loot.js
+  RANDOM_TREASURE_MARKER_RECORD`; AUDIT LW-II-2 D11: they were two literals beside them), off the placed blocks'
+  layouts - never a fixed foe (16), a quest's marker (11, 18) or fixed treasure (archive 216). Keyed `<block>:<marker position>`, a foe's by its marker's LoadID too. Read at the dungeon's
   build only; the trips need none of it.
-- **THE ORDER**: from the start marker's block, the blocks breadth first by their grid (a block's neighbours east,
+- **THE ORDER**: from the start marker's block (none: the starting block's middle - AUDIT LW-II-2 D10, it was the
+  layout's first block), the blocks breadth first by their grid (a block's neighbours east,
   west, south, north; a block the grid does not join, last), and within each block nearest first from where the
   company came in. No room graph: the block grid is the plan.
 - **THE TIMELINE** (`routeOf`): from the dive's in (`trip.dive.t0`), each stop its minutes - a foe's DEEP_FOE_MIN
@@ -698,10 +700,14 @@ below is `src/scenes/dungeonDivers.js`.
 - **WHERE THEY ARE** (`stopAt`, `pointAt`): at a stop (fighting at a foe's), between two, resting at the last, on the
   way out, or not inside.
 - **THE DICE'S END, WHERE IT FELL** (`stopOfMinute`): a dive's fated trouble falls at the stop its minute reaches (the
-  nearer of two walked between); LW6b's remains are laid THERE (`deepRemains.js placeOf`), the hashed resting place
-  only where no route is known.
-- **MORE TROUBLE IN THE DEEP** (`deepFightOf`): DEEP_RISK (0.5) of the dives with no fated trouble meet a fight of the
-  deep's at a foe stop of the seed's - DEEP_FIGHT_MIN (20) more there, the rest of the reach after it. Always won (only
+  nearer of two walked between; on the way out, the reach's stop nearest where they walk - AUDIT LW-II-2 D9: it was the
+  deepest); LW6b's remains are laid THERE (`deepRemains.js placeOf`), a pace apart by their order (DEEP_APART_M, 1.5 m,
+  the road's own spacing, each walked out from the stop's floor - AUDIT LW-II-2 D6: one dive's fallen lay on top of
+  one another), the hashed resting place only where no route is known.
+- **MORE TROUBLE IN THE DEEP** (`deepFightOf`): DEEP_RISK (0.5) of the dives with no trouble met inside (AUDIT LW-II-2
+  D8: any trouble, the road's too, took it away - 0.42 measured) meet a fight of the deep's at a foe stop of the seed's
+  - DEEP_FIGHT_MIN (20) more there, the rest of the reach after it (AUDIT LW-II-2 D13: a trim after it that could
+  never fire is gone). Always won (only
   the fated die, by the lives' law); it is the route's own, so no trip changes for it.
 
 ### 7.2 What they leave behind (decision 3)
@@ -719,7 +725,10 @@ below is `src/scenes/dungeonDivers.js`.
   each reader's own build minute over its own book, cold with its ways still to ask, so readers differed, and the
   room's stream then stood up a joiner's dead with their packs emptied and handed the authority's dead to peers as
   kit-rolled corpses. A room's dungeon is the room's (its stream says which foe is dead and what a pile holds).
-  Offline, a book still asking its ways reads fewer dives - fewer stops cleared, never a wrong one.
+  Offline, a book still asking its ways reads fewer dives - fewer stops cleared, never a wrong one. AUDIT LW-II-2 D7:
+  an Ocean Holes abyss is cleared by nobody's dive - it is built off a land dungeon's template, whose id it bears until
+  the build is done, so that dungeon's dives cleared it (`livingDeepCleared` answers null while the abyss builds,
+  `ohAbyss.shouldUpgradeLoot`, the predicate its loot reads there).
 
 ### 7.3 Found where they are, and live (`dungeonDivers.js`)
 
@@ -743,12 +752,24 @@ below is `src/scenes/dungeonDivers.js`.
   fated spared). AUDIT LW-II D2: the strength is counted as each body arrives, read once none is still coming - the
   armed counted before any arrived, the first body in made the company "had enough" with nobody hurt (and paid its
   regard and spared its fated for nothing). THE END IS WHAT HAPPENS.
-- **LET GO** past DEEP_KEEP_M (70 m), not joined - met again further on its way, AS IT WAS LEFT (AUDIT LW-II D8:
-  parted or not, each member's share of health); one drawing on the player is never let go (outrun, it stood again
-  whole).
+- **LET GO** past DEEP_KEEP_M (70 m) from its nearest standing member, not joined - met again further on its way, AS
+  IT WAS LEFT (AUDIT LW-II D8: parted or not, each member's share of health); one drawing on the player is never let go
+  (outrun, it stood again whole). AUDIT LW-II-2 D1: it was measured from where a company LEADING ON was going, so a
+  company asked to lead to a stop past 70 m vanished from beside the player the next frame (one leg in six).
+- **A LOAD LETS THEM GO** (AUDIT LW-II-2 D2): world.js's load door clears the divers and the remains with the portals,
+  and a body that is dead and no longer in the pool is forgotten with no turn written. A load in the same dungeon kept
+  both layers over a pool the save had cut: the company stood after the save was the tail it cut, read the next frame
+  as fallen beside the player - `died` written into the loaded game, a courtship ended - and a pile laid after the save
+  was read as taken. Met again after the load, a company stands fresh from its route.
+- **THE DOOR ABOVE** (AUDIT LW-II-2 D4): the open world lets the divers go with the remains, and the talk asks the
+  divers' door only below; `offers` answers whether a window mounted. A company held below and met above on the road
+  or in its town took every talk with its people and opened nothing.
 - **RIVALS**: a company not joined whose head is no friend minds its finds: the player taking from the treasure pile at
   the stop it makes for (within 4 m of it) costs each member `poached` (EVENTS, -4, once a day as a tone, kept in the
   save), with the head's word "That was ours to find." - once a pile (AUDIT LW-II D12: it was said once an item).
+  AUDIT LW-II-2 D5: only the player's own take - the pile's own pieces as first seen, read again when the room's word
+  lands in it (`dungeonContext.js applyLoot` counts it); a peer's take arriving from the room, or a piece put in and
+  taken back, was charged to whoever stood by.
 - **REMAINS** (AUDIT LW-II D13): a dungeon with no resting place (treasure stops alone) still lays its fallen where the
   route has them; the places kept by the remains' key (D9).
 - Not built: the navmesh walk's own pathing for LEAD ON (the motor's follow walks to the stop as it walks to the player)
@@ -771,6 +792,13 @@ Moved pins: `lw1_livingWorld` (EVENTS' `poached`), `lw7b_beyond` (the divers' de
 WK-P6 records name one site).
 
 Pins: `test/lw14_deep.test.js` (12). Mutants: `tools/mutants/lw14.json` (64).
+
+AUDIT LW-II-2: `test/auditlwii2_deep.test.js` (15), `tools/mutants/auditlwii2_deep.json` (34); the host's divers' and
+remains' steps wrapped as their neighbours are (a throw there no longer ends the frame loop). Moved: `lw14_deep` (a fated
+trouble is `inside`; the harness's `choose` answers it mounted), `lw6_deep`, `lw6b_remains` and `lwfix6_rooms` (the
+wrapped steps), `lw11_caravan` and `lw2_livingTown` (the talk's door asks the divers below only), `portal1_stone` (the
+load door); re-aimed by content: `lw14.json` LW14-fight-fated, LW14-keep, LW14-rival-near, `lw6.json`
+LW6-host-divers-unmet, `lw6b.json` LW6b-host-step, `portal1.json` PORTAL1-a-load-keeps-portals.
 
 ## 8. LW15 - the patrons (BUILT 2026-10-09)
 
