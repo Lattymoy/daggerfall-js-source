@@ -1,0 +1,173 @@
+[
+ {
+  "name": "MWNPC14-flag-unread",
+  "file": "src/formats/mwFirstPerson.js",
+  "old": "      e.vampire = bytes[sub.start + 1] !== 0;",
+  "new": "      e.vampire = false;",
+  "tests": [
+   "test/mwnpc14_vampires.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC14-version-left",
+  "file": "src/formats/mwFirstPerson.js",
+  "old": "export const ARM_RECORDS_VERSION = 6;",
+  "new": "export const ARM_RECORDS_VERSION = 5;",
+  "tests": [
+   "test/mwnpc14_vampires.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC14-head-any-head",
+  "file": "src/formats/mwFirstPerson.js",
+  "old": "if (p.vampire && p.skin && p.slot === 'head'",
+  "new": "if (p.skin && p.slot === 'head'",
+  "tests": [
+   "test/mwnpc14_vampires.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC14-head-any-sex",
+  "file": "src/formats/mwFirstPerson.js",
+  "old": " && p.female === !!female && p.race === want && !p.firstPerson) out = p;",
+  "new": " && p.race === want && !p.firstPerson) out = p;",
+  "tests": [
+   "test/mwnpc14_vampires.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC14-head-any-race",
+  "file": "src/formats/mwFirstPerson.js",
+  "old": " && p.female === !!female && p.race === want && !p.firstPerson) out = p;",
+  "new": " && p.female === !!female && !p.firstPerson) out = p;",
+  "tests": [
+   "test/mwnpc14_vampires.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC14-head-first-wins",
+  "file": "src/formats/mwFirstPerson.js",
+  "old": "&& p.race === want && !p.firstPerson) out = p;",
+  "new": "&& p.race === want && !p.firstPerson) out ??= p;",
+  "tests": [
+   "test/mwnpc14_vampires.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC14-rows-ignore",
+  "file": "src/formats/mwFirstPerson.js",
+  "old": "  const vamp = vampire ? vampireHeadRecord(parts, race, female) : null;",
+  "new": "  const vamp = null;",
+  "tests": [
+   "test/mwnpc14_vampires.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC14-rows-always",
+  "file": "src/formats/mwFirstPerson.js",
+  "old": "  const vamp = vampire ? vampireHeadRecord(parts, race, female) : null;",
+  "new": "  const vamp = vampireHeadRecord(parts, race, female);",
+  "tests": [
+   "test/mwnpc14_vampires.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC14-rows-hair-too",
+  "file": "src/formats/mwFirstPerson.js",
+  "old": "    const row = rows.find((r) => r.slot === 'head');\n    if (row) { row.record = vamp;",
+  "new": "    const row = rows.find((r) => r.slot === 'hair');\n    if (row) { row.record = vamp;",
+  "tests": [
+   "test/mwnpc14_vampires.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC14-build-unforwarded",
+  "file": "src/combat/fpArm.js",
+  "old": "playerBodyRows(parts, race, female, { beast, faceIndex, faceMatch, vampire });",
+  "new": "playerBodyRows(parts, race, female, { beast, faceIndex, faceMatch });",
+  "tests": [
+   "test/mwnpc14_vampires.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC14-build-dropped",
+  "file": "src/combat/fpArm.js",
+  "old": "skin: werewolf ? skin : null, vampire: !!vampire })",
+  "new": "skin: werewolf ? skin : null })",
+  "tests": [
+   "test/mwnpc14_vampires.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC14-peer-key-shared",
+  "file": "src/net/peerBodies.js",
+  "old": "  if (look?.vampire && !peerIsWolf(shown)) return `vamp|${bodyLookKey(look)}`;",
+  "new": "  void 0;",
+  "tests": [
+   "test/mwnpc14_vampires.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC14-peer-opts-dropped",
+  "file": "src/net/peerBodies.js",
+  "old": "    ...(look?.vampire && !wolf ? { vampire: true } : {}),",
+  "new": "    ...({}),",
+  "tests": [
+   "test/mwnpc14_vampires.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC14-peer-wolf-vampire",
+  "file": "src/net/peerBodies.js",
+  "old": "    ...(look?.vampire && !wolf ? { vampire: true } : {}),",
+  "new": "    ...(look?.vampire ? { vampire: true } : {}),",
+  "tests": [
+   "test/mwnpc14_vampires.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC14-foes-not-people",
+  "file": "src/characters/foeBodies.js",
+  "old": " || VAMPIRE_MOBILES.has(f?.mobileType);",
+  "new": ";",
+  "tests": [
+   "test/mwnpc14_vampires.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC14-foe-living-face",
+  "file": "src/characters/foeBodies.js",
+  "old": ", ...(VAMPIRE_MOBILES.has(f.mobileType) ? { vampire: true } : {}) });   // MWNPC14",
+  "new": " });   // MWNPC14",
+  "tests": [
+   "test/mwnpc14_vampires.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC14-roster-vampire-creature",
+  "file": "src/characters/foeBodies.js",
+  "old": "  if (!orc && !vampire && !(mobileType >= 128))",
+  "new": "  if (!orc && !(mobileType >= 128))",
+  "tests": [
+   "test/mwnpc14_vampires.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC14-roster-vampire-armed",
+  "file": "src/characters/foeBodies.js",
+  "old": ": vampire ? [] : [rosterBlade(h)]);",
+  "new": ": [rosterBlade(h)]);",
+  "tests": [
+   "test/mwnpc14_vampires.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC14-roster-living-face",
+  "file": "src/characters/foeBodies.js",
+  "old": ", ...(vampire ? { vampire: true } : {}) });",
+  "new": " });",
+  "tests": [
+   "test/mwnpc14_vampires.test.js"
+  ]
+ }
+]

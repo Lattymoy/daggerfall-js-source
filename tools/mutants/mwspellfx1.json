@@ -336,7 +336,7 @@
   {
     "name": "MWSPELLFX1-the-records-version-left",
     "file": "src/formats/mwFirstPerson.js",
-    "old": "export const ARM_RECORDS_VERSION = 5;",
+    "old": "export const ARM_RECORDS_VERSION = 6;",
     "new": "export const ARM_RECORDS_VERSION = 3;",
     "tests": [
       "test/mwload_records.test.js"

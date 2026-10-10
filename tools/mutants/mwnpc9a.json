@@ -137,7 +137,7 @@
  {
   "name": "MWNPC9a-version-unbumped",
   "file": "src/formats/mwFirstPerson.js",
-  "old": "export const ARM_RECORDS_VERSION = 5;",
+  "old": "export const ARM_RECORDS_VERSION = 6;",
   "new": "export const ARM_RECORDS_VERSION = 4;",
   "tests": [
    "test/mwload_records.test.js"

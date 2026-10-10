@@ -200,6 +200,7 @@ function wolfLookKey(look) {
  *  was refused). */
 export function peerBodyKey(look, shown = null, glyphs = null) {
   if (look?.creature) return `crea|${look.creature}`;   // MWNPC9: a creature is its record - every one of a kind one body, never a person's
+  if (look?.vampire && !peerIsWolf(shown)) return `vamp|${bodyLookKey(look)}`;   // MWNPC14: a vampire's face is its own body - never a living look's spare
   return peerIsWolf(shown) ? `wolf|${wolfLookKey(look)}|${werewolfSkinOf(glyphs) ?? ''}` : bodyLookKey(look);   // SHADOW-FANG: and the wolf's skin
 }
 
@@ -234,6 +235,7 @@ export function peerBuildOpts(look, shown = null, glyphs = null) {
     hasAmmo: false,
     reachSweep: false,   // MWNPC3: a peer is never looked out of - no first-person reach sweep in its build
     ...(wolf ? { werewolf: true, ...(skin ? { skin } : {}) } : {}),   // WEREWOLF1: Bloodmoon's wolf - its skeleton, head, hair and robe; SHADOW-FANG: its skin
+    ...(look?.vampire && !wolf ? { vampire: true } : {}),   // MWNPC14: a vampire foe's face (an NPC's look - the wire's never carries it)
   };
 }
 

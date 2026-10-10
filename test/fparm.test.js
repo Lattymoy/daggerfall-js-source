@@ -1430,7 +1430,8 @@ test('MW-D27: the faceIndex THREAD is unbroken, swept at the source', () => {
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
   assert.match(arm, /buildTpBody\(\{ race, female, beast, faceIndex, faceMatch,/,
     'buildFpArm no longer hands the face to the body build');
-  assert.match(arm, /playerBodyRows\(parts, race, female, \{ beast, faceIndex, faceMatch \}\)/,
+  // PIN MOVED (MWNPC14, Morrowind-NPCs.md section 19): the picker takes a vampire's face beside the rest
+  assert.match(arm, /playerBodyRows\(parts, race, female, \{ beast, faceIndex, faceMatch(, vampire)? \}\)/,
     'the body build no longer hands the face to the picker');
   // TR2: the menu's inline opts moved into weaponRig's ONE HOME - the
   // sweep follows the thread there (menu -> buildArmsFor ->

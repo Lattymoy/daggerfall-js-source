@@ -76,8 +76,12 @@ export const isClassFoe = (f) => !!f?.entity?.isClass;
  *  never a creature (creatureBodies.js declares them misses). */
 /** @type {Set<number>} */
 export const ORC_MOBILES = new Set([MOBILE_TYPES.Orc, MOBILE_TYPES.OrcSergeant, MOBILE_TYPES.OrcShaman, MOBILE_TYPES.OrcWarlord]);
-/** MWNPC12: a foe that stands as a person - a class foe, or an orc. */
-export const isPersonFoe = (f) => isClassFoe(f) || ORC_MOBILES.has(f?.mobileType);
+/** MWNPC14 (section 19): THE VAMPIRES - people, as Morrowind's are: a vampire foe stands as a person of the Bay in its
+ *  clothes, wearing its race's vampire head (formats/mwFirstPerson.js vampireHeadRecord, the look's `vampire`). */
+/** @type {Set<number>} */
+export const VAMPIRE_MOBILES = new Set([MOBILE_TYPES.Vampire, MOBILE_TYPES.VampireAncient]);
+/** MWNPC12: a foe that stands as a person - a class foe, or an orc; MWNPC14: or a vampire. */
+export const isPersonFoe = (f) => isClassFoe(f) || ORC_MOBILES.has(f?.mobileType) || VAMPIRE_MOBILES.has(f?.mobileType);
 /** MWNPC9: a foe that stands in a body - a person (MWNPC12: an orc too), or a creature Morrowind has a match for
  *  (creatureBodies.js). */
 export const isBodyFoe = (f) => isPersonFoe(f) || !!creatureLook(f);
@@ -106,7 +110,7 @@ export function foeLook(f) {
   const race = ORC_MOBILES.has(f.mobileType) ? 'Orc' : bay.race;   // MWNPC12: an orc in Morrowind's Orc body
   const gender = f.gender === 'female' ? 'female' : 'male';
   f._mwLookKey = wornKey;
-  return (f._mwLook = { race, gender, faceIndex, items: clothesUnder([...worn], FOE_WARDROBE[gender], h) });
+  return (f._mwLook = { race, gender, faceIndex, items: clothesUnder([...worn], FOE_WARDROBE[gender], h), ...(VAMPIRE_MOBILES.has(f.mobileType) ? { vampire: true } : {}) });   // MWNPC14: a vampire's face
 }
 
 /** The foe's id among the lane's: its host's sequence number where it keeps one (exteriorFoes' `seq`), else one minted
@@ -195,16 +199,17 @@ export function rosterLook(rec, { mobileType, gender = 'male', seed = 0, race = 
   if (rec._mwRosterMob === mobileType && rec._mwRosterG === gender && rec._mwRosterSeed === seed && rec._mwRosterRace === race) return rec._mwRosterLook;   // no key built a frame
   rec._mwRosterMob = mobileType; rec._mwRosterG = gender; rec._mwRosterSeed = seed; rec._mwRosterRace = race;
   const orc = ORC_MOBILES.has(mobileType);   // MWNPC12: a person, never a creature
-  if (!orc && !(mobileType >= 128)) return (rec._mwRosterLook = creatureLook({ mobileType }));
+  const vampire = VAMPIRE_MOBILES.has(mobileType);   // MWNPC14: and a vampire
+  if (!orc && !vampire && !(mobileType >= 128)) return (rec._mwRosterLook = creatureLook({ mobileType }));
   const h = mix((seed >>> 0) ^ mix((mobileType | 0) + 0x9e3779b9));
   const bay = bayPerson(h);
   const g = gender === 'female' ? 'female' : 'male';
-  const items = /** @type {any[]} */ (orc ? orcKit(mobileType, h) : [rosterBlade(h)]);
+  const items = /** @type {any[]} */ (orc ? orcKit(mobileType, h) : vampire ? [] : [rosterBlade(h)]);   // MWNPC14: a vampire's claws are its own
   if (STEEL_CLASSES.has(mobileType)) {
     for (const [slot, piece] of STEEL_PLATE) items.push({ templateIndex: ARMOR_ENUM[piece], group: 'Armor', equipSlot: EQUIP_SLOTS[slot], material: ARMOR_MATERIAL.Steel });   // steel (MWNPC12: by mwArmorRecords' own table)
     if (mobileType === MOBILE_TYPES.Knight_CityWatch) items.push({ templateIndex: ARMOR_ENUM.Helm, group: 'Armor', equipSlot: EQUIP_SLOTS.Head, material: ARMOR_MATERIAL.Steel });
   }
-  return (rec._mwRosterLook = { race: orc ? 'Orc' : race ?? bay.race, gender: g, faceIndex: bay.faceIndex, items: clothesUnder(items, FOE_WARDROBE[g], h) });
+  return (rec._mwRosterLook = { race: orc ? 'Orc' : race ?? bay.race, gender: g, faceIndex: bay.faceIndex, items: clothesUnder(items, FOE_WARDROBE[g], h), ...(vampire ? { vampire: true } : {}) });
 }
 
 /** The tells the host has dressed the foe's billboard in this frame, for its body's quad (renderer.js

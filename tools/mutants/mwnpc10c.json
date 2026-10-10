@@ -2,8 +2,8 @@
  {
   "name": "MWNPC10c-unarmed",
   "file": "src/characters/foeBodies.js",
-  "old": "  const items = /** @type {any[]} */ (orc ? orcKit(mobileType, h) : [rosterBlade(h)]);",
-  "new": "  const items = /** @type {any[]} */ (orc ? orcKit(mobileType, h) : []);",
+  "old": ": vampire ? [] : [rosterBlade(h)]);",
+  "new": ": vampire ? [] : []);",
   "tests": [
    "test/mwnpc10c_roads.test.js"
   ]

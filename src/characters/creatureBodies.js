@@ -42,7 +42,7 @@ export const CREATURE_MATCH = Object.freeze({
   [M.FrostDaedra]: { creature: ['atronach_frost'] },
   [M.FireDaedra]: { creature: ['atronach_flame'] },
   [M.Daedroth]: { creature: ['daedroth'] },
-  [M.Vampire]: { miss: 'a vampire is a person (Morrowind\'s are NPCs)' },
+  [M.Vampire]: { miss: 'a vampire is a person - its race\'s vampire head (MWNPC14, foeBodies.js isPersonFoe), never a creature' },
   [M.DaedraSeducer]: { creature: ['winged twilight'] },
   [M.VampireAncient]: { miss: 'a vampire is a person' },
   [M.DaedraLord]: { creature: ['dremora_lord'] },

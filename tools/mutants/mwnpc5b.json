@@ -74,8 +74,8 @@
  {
   "name": "MWNPC5b-worn-dropped",
   "file": "src/characters/foeBodies.js",
-  "old": "items: clothesUnder([...worn], FOE_WARDROBE[gender], h) });",
-  "new": "items: clothesUnder([], FOE_WARDROBE[gender], h) });",
+  "old": "items: clothesUnder([...worn], FOE_WARDROBE[gender], h),",
+  "new": "items: clothesUnder([], FOE_WARDROBE[gender], h),",
   "tests": [
    "test/mwnpc5_foes.test.js"
   ]

@@ -38,8 +38,8 @@
  {
   "name": "MWNPC12-orcs-not-people",
   "file": "src/characters/foeBodies.js",
-  "old": "export const isPersonFoe = (f) => isClassFoe(f) || ORC_MOBILES.has(f?.mobileType);",
-  "new": "export const isPersonFoe = (f) => isClassFoe(f);",
+  "old": "export const isPersonFoe = (f) => isClassFoe(f) || ORC_MOBILES.has(f?.mobileType) ||",
+  "new": "export const isPersonFoe = (f) => isClassFoe(f) ||",
   "tests": [
    "test/mwnpc12_steelorcs.test.js"
   ]
@@ -74,8 +74,8 @@
  {
   "name": "MWNPC12-roster-orc-class-kit",
   "file": "src/characters/foeBodies.js",
-  "old": "(orc ? orcKit(mobileType, h) : [rosterBlade(h)]);",
-  "new": "([rosterBlade(h)]);",
+  "old": "(orc ? orcKit(mobileType, h) : vampire",
+  "new": "(false ? orcKit(mobileType, h) : vampire",
   "tests": [
    "test/mwnpc12_steelorcs.test.js"
   ]

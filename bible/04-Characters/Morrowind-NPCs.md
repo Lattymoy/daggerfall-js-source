@@ -113,6 +113,7 @@ Each line is a slice's acceptance, not an aspiration:
 | MWNPC7 TOWNSFOLK | walkers and living residents, a wardrobe by FACTION sgroup that actually varies (distinct records and dyes per persona) (the WALKERS SHIPPED, section 12: a wardrobe per outfit variant, dyed per spawn - the living residents indoors are MWNPC8's standing people) | world.js, exterior.js, worldModes.js (living residents indoors) |
 | MWNPC8 STANDING PEOPLE | street, interior, dungeon and quest StaticNPCs; children and vampires keep their sprite; `drawnFlat`'s nudity law honoured (8a SHIPPED, section 13a: the buildings' people; 8b SHIPPED, section 13b: the dungeons' and the street's; 8c SHIPPED, section 13c: exterior.js's and the quests' stands) | all four |
 | MWNPC9 CREATURES | CREA records, creature skeletons and their own .kf, the match table with its declared misses (9a SHIPPED, section 14a: the body; 9b SHIPPED, section 14b: the rig, the match, the hosts) | dungeonContext.js, world.js, worldModes.js, exterior.js |
+| MWNPC14 THE VAMPIRES | the vampire foes as people with their race's vampire head - the BODY record's vampire flag read, getVampireHead's choice built (SHIPPED, section 19) | the format layer, the rig, the peer layer; every foe host through foeBodies.js |
 | MWNPC13 THE SPECTRAL DEAD | the ghost and the wraith as Morrowind's ancestor ghost under a standing veil at the spectral sprite's opacity (SHIPPED, section 18) | every foe host (each draws its veiled bodies), the roads |
 | MWNPC12 STEEL AND ORCS | the steel no look ever wore (material 1 named none) worn; the four orcs as people in Morrowind's Orc body (SHIPPED, section 17) | foeBodies.js, folkBodies.js, peopleBodies.js - every foe host and roster through them |
 | MWNPC11 ONE FRAME | every NPC lane on one frame budget - the nearest bodies across all of them, the skins shared out - and the lanes probe (SHIPPED, section 16) | every lane (createHostNpcBodies) |
@@ -1283,9 +1284,8 @@ crowd's six nearest, and a lane past its range taking no skin.
   match - matchFaceFor stands the walk). A body that fails to build keeps
   the sprite, as every lane's does.
 
-NOT HERE: the vampires (a vampire's face is Morrowind's vampire head, a
-part the walk does not choose yet) and the werewolf foe keep their
-sprites (section 14b); the ghost and the wraith are section 18's.
+NOT HERE: the werewolf foe keeps its sprite (section 14b); the ghost and
+the wraith are section 18's, the vampires section 19's.
 
 PROVEN. `test/mwnpc12_steelorcs.test.js` (3): the guard's, the knight's,
 the warrior's and the watch's every armour piece resolved to steel by
@@ -1336,4 +1336,45 @@ concealment over the look's; the roads' sprites and the world's veiled
 block by call and by source. `tools/mutants/mwnpc13.json`: 12 mutants, 12
 dead. Pin moved: MWNPC9b-8's census (the translucent dead now veiled, not
 missed).
+
+## 19. MWNPC14 - THE VAMPIRES (SHIPPED 2026-10-10)
+
+- THE FLAG. A BODY record's BYDT is [part, vampire, flags, type]; the
+  reader took three of the four. `formats/mwFirstPerson.js` readBodyPart
+  now keeps the second (`vampire`), and ARM_RECORDS_VERSION moves to 6 so
+  a stored record set from before it is re-extracted, never read without
+  it.
+- THE FACE (`vampireHeadRecord`, OpenMW 0.48.0 npcanimation.cpp
+  getVampireHead): the BODY record that is a vampire's, a skin, a head, of
+  the sex and the race (any case) - the LAST in load order, as the
+  reference's mapping overwrites - NotPlayable no bar (Morrowind's vampire
+  heads are never offered at chargen: race.cpp's getBodyParts filters
+  NotPlayable alone, so the living walk never meets one). `playerBodyRows`
+  with `vampire` puts it in the head row, the hair the actor's own
+  (updateNpcBase); a race with none keeps the face it had. The build
+  (`buildFpArm`, `buildTpBody`) carries `vampire` to it.
+- THE PEER LAYER. A look's `vampire` reaches the build (`peerBuildOpts`;
+  never for a werewolf) and keys a body of its own (`vamp|` - never a
+  living look's spare, which wears the other face). The wire's looks
+  never carry it: this is the NPCs'.
+- THE FOES (`characters/foeBodies.js` VAMPIRE_MOBILES, isPersonFoe: the
+  vampire and the ancient vampire). People, as Morrowind's are: a person
+  of the Bay in its clothes (DFU gives a vampire no equipment), with the
+  vampire's face; bare-handed - its claws are its own. A roster's or a
+  road's the same (`rosterLook`). Never creatures (creatureBodies.js keeps
+  the misses).
+
+PROVEN. `test/mwnpc14_vampires.test.js` (4): parsed records (the flag
+read; the last head of the race and sex, any case, NotPlayable or not;
+none for another race; the living walk never a vampire's even with a
+living NotPlayable head after them; the rows swapping the head and
+keeping the hair; a race with none unchanged; a stored set carrying the
+flag and a v5 set refused); a real fixture build reaching for the
+vampire's head through the record walk where the living build has none;
+the peer layer's option and key; the vampire foes, rosters and road.
+`tools/mutants/mwnpc14.json`: 19 mutants, 19 dead. Pin moved: MW-D27's
+face thread (the picker's options take `vampire`); mutant records
+re-aimed by content: the three ARM_RECORDS_VERSION records (MWNPC9a,
+MW-SPELLFX1, WW-AUDIT C2) and the foe and roster records MWNPC14's lines
+touched (MWNPC5b, MWNPC10b, MWNPC10c, MWNPC12).
 

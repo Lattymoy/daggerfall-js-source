@@ -29,7 +29,7 @@
  {
   "name": "MWNPC10b-creature-a-person",
   "file": "src/characters/foeBodies.js",
-  "old": "  if (!orc && !(mobileType >= 128)) return (rec._mwRosterLook = creatureLook({ mobileType }));\n",
+  "old": "  if (!orc && !vampire && !(mobileType >= 128)) return (rec._mwRosterLook = creatureLook({ mobileType }));\n",
   "new": "",
   "tests": [
    "test/mwnpc10b_rosters.test.js"
@@ -56,8 +56,8 @@
  {
   "name": "MWNPC10b-roster-all-men",
   "file": "src/characters/foeBodies.js",
-  "old": "  const g = gender === 'female' ? 'female' : 'male';\n  const items = /** @type {any[]} */ (orc ? orcKit(mobileType, h) : [rosterBlade(h)]);",
-  "new": "  const g = 'male';\n  const items = /** @type {any[]} */ (orc ? orcKit(mobileType, h) : [rosterBlade(h)]);",
+  "old": "  const g = gender === 'female' ? 'female' : 'male';\n  const items",
+  "new": "  const g = 'male';\n  const items",
   "tests": [
    "test/mwnpc10b_rosters.test.js"
   ]

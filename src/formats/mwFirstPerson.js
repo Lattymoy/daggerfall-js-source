@@ -182,13 +182,14 @@ export const ARM_PARTS = Object.freeze(['hand', 'wrist', 'forearm', 'upperarm'])
 // per-kind extractors and extractArmRecords (one pass, every kind)
 // cannot disagree - they call the same function on the same bytes.
 function readBodyPart(bytes, rec) {
-  const e = { id: '', model: '', race: '', part: -1, female: false, playable: true, skin: false };
+  const e = { id: '', model: '', race: '', part: -1, female: false, playable: true, skin: false, vampire: false };
   for (const sub of subrecords(bytes, rec)) {
     if (sub.name === 'NAME') e.id = zstr(bytes, sub.start, sub.len);
     else if (sub.name === 'MODL') e.model = zstr(bytes, sub.start, sub.len).replace(/\\/g, '/').toLowerCase();
     else if (sub.name === 'FNAM') e.race = zstr(bytes, sub.start, sub.len).toLowerCase();
     else if (sub.name === 'BYDT' && sub.len >= 4) {
       e.part = bytes[sub.start];
+      e.vampire = bytes[sub.start + 1] !== 0;   // MWNPC14: BYDT's second byte, the vampire flag (getVampireHead reads it)
       const flags = bytes[sub.start + 2];
       e.female = (flags & 1) !== 0;            // BPF_Female = 1
       e.playable = (flags & 2) === 0;          // BPF_NotPlayable = 2
@@ -1313,7 +1314,7 @@ export const ARM_GMST_IDS = Object.freeze([GMST_SNEAK_DELTA]);
 /** MW-LOAD: the SHAPE of extractArmRecords' answer. Bumped whenever a
  *  reader above changes what it returns, so a derived set written by
  *  an older build is refused and re-extracted rather than read wrong. */
-export const ARM_RECORDS_VERSION = 5;   // MW-D51: + the LIGH records (a set without them is re-extracted); WEREWOLF1 (AUDIT C2): a CLOT with parts and no MODL is kept; MW-SPELLFX1: + the MGEF records and the VFX statics; MWNPC9: + the CREA records
+export const ARM_RECORDS_VERSION = 6;   // MWNPC14: + the BODY vampire flag (a set without it is re-extracted); MW-D51: + the LIGH records (a set without them is re-extracted); WEREWOLF1 (AUDIT C2): a CLOT with parts and no MODL is kept; MW-SPELLFX1: + the MGEF records and the VFX statics; MWNPC9: + the CREA records
 
 /**
  * MW-LOAD: EVERY record the arm build reads, in ONE pass of the master.
@@ -1683,7 +1684,7 @@ export function werewolfHeadRows(parts) {
   ];
 }
 
-export function playerBodyRows(parts, race, female, { beast = false, faceIndex = 0, faceTable = FACE_TABLE, faceMatch = null } = {}) {
+export function playerBodyRows(parts, race, female, { beast = false, faceIndex = 0, faceTable = FACE_TABLE, faceMatch = null, vampire = false } = {}) {   // MWNPC14: `vampire` the race's vampire head
   const want = String(race || '').toLowerCase();
   // MW-D32: the sweep slots resolve through getBodyParts-whole
   // (npcanimation.cpp:1167-1297 - LAST proper match wins, male-for-
@@ -1761,7 +1762,24 @@ export function playerBodyRows(parts, race, female, { beast = false, faceIndex =
       counts: { all: forSlot.length },
     });
   }
+  // MWNPC14: A VAMPIRE'S FACE - the race's vampire head over the one walked (npcanimation.cpp updateNpcBase: the head
+  // model is getVampireHead's when there is one, the hair the actor's own); none for the race and the face stands
+  const vamp = vampire ? vampireHeadRecord(parts, race, female) : null;
+  if (vamp) {
+    const row = rows.find((r) => r.slot === 'head');
+    if (row) { row.record = vamp; row.verdict = 'third-person record found, a vampire\'s (getVampireHead)'; }
+  }
   return rows;
+}
+
+/** MWNPC14: getVampireHead (npcanimation.cpp, 0.48.0): the BODY record that is a vampire's, a skin, a head, of the sex
+ *  and the race (ignoring case) - the LAST in load order of those, as the reference's mapping overwrites; NotPlayable
+ *  is no bar (Morrowind's vampire heads are never offered at chargen). Null when the race has none. */
+export function vampireHeadRecord(parts, race, female) {
+  const want = String(race || '').toLowerCase();
+  let out = null;
+  for (const p of parts ?? []) if (p.vampire && p.skin && p.slot === 'head' && p.female === !!female && p.race === want && !p.firstPerson) out = p;
+  return out;
 }
 
 /** MW-D2: IS THIS MESH SKINNED, OR RIGID?
