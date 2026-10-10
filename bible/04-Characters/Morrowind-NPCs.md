@@ -113,12 +113,12 @@ Each line is a slice's acceptance, not an aspiration:
 | MWNPC7 TOWNSFOLK | walkers and living residents, a wardrobe by FACTION sgroup that actually varies (distinct records and dyes per persona) (the WALKERS SHIPPED, section 12: a wardrobe per outfit variant, dyed per spawn - the living residents indoors are MWNPC8's standing people) | world.js, exterior.js, worldModes.js (living residents indoors) |
 | MWNPC8 STANDING PEOPLE | street, interior, dungeon and quest StaticNPCs; children and vampires keep their sprite; `drawnFlat`'s nudity law honoured (8a SHIPPED, section 13a: the buildings' people; 8b SHIPPED, section 13b: the dungeons' and the street's; 8c SHIPPED, section 13c: exterior.js's and the quests' stands) | all four |
 | MWNPC9 CREATURES | CREA records, creature skeletons and their own .kf, the match table with its declared misses (9a SHIPPED, section 14a: the body; 9b SHIPPED, section 14b: the rig, the match, the hosts) | dungeonContext.js, world.js, worldModes.js, exterior.js |
-| MWNPC15 THE WEREWOLF | the werewolf foe in Bloodmoon's wolf - its look marked wolf, the pose the wire's own wolf bit (SHIPPED, section 20) | the lanes (npcShown); every foe host through foeBodies.js |
-| MWNPC14 THE VAMPIRES | the vampire foes as people with their race's vampire head - the BODY record's vampire flag read, getVampireHead's choice built (SHIPPED, section 19) | the format layer, the rig, the peer layer; every foe host through foeBodies.js |
-| MWNPC13 THE SPECTRAL DEAD | the ghost and the wraith as Morrowind's ancestor ghost under a standing veil at the spectral sprite's opacity (SHIPPED, section 18) | every foe host (each draws its veiled bodies), the roads |
-| MWNPC12 STEEL AND ORCS | the steel no look ever wore (material 1 named none) worn; the four orcs as people in Morrowind's Orc body (SHIPPED, section 17) | foeBodies.js, folkBodies.js, peopleBodies.js - every foe host and roster through them |
-| MWNPC11 ONE FRAME | every NPC lane on one frame budget - the nearest bodies across all of them, the skins shared out - and the lanes probe (SHIPPED, section 16) | every lane (createHostNpcBodies) |
 | MWNPC10 THE REST | crews, road parties, siege, gate court, the broker (10a SHIPPED, section 15a: the gate court; the broker keeps her guise. 10b SHIPPED, section 15b: the siege and the crews. 10c SHIPPED, section 15c: the roads' parties and the living residents indoors) | their hosts |
+| MWNPC11 ONE FRAME | every NPC lane on one frame budget - the nearest bodies across all of them, the skins shared out - and the lanes probe (SHIPPED, section 16) | every lane (createHostNpcBodies) |
+| MWNPC12 STEEL AND ORCS | the steel no look ever wore (material 1 named none) worn; the four orcs as people in Morrowind's Orc body (SHIPPED, section 17) | foeBodies.js, folkBodies.js, peopleBodies.js - every foe host and roster through them |
+| MWNPC13 THE SPECTRAL DEAD | the ghost and the wraith as Morrowind's ancestor ghost under a standing veil at the spectral sprite's opacity (SHIPPED, section 18) | every foe host (each draws its veiled bodies), the roads |
+| MWNPC14 THE VAMPIRES | the vampire foes as people with their race's vampire head - the BODY record's vampire flag read, getVampireHead's choice built (SHIPPED, section 19) | the format layer, the rig, the peer layer; every foe host through foeBodies.js |
+| MWNPC15 THE WEREWOLF | the werewolf foe in Bloodmoon's wolf - its look marked wolf, the pose the wire's own wolf bit (SHIPPED, section 20) | the lanes (npcShown); every foe host through foeBodies.js |
 
 Click and talk boxes keep the billboard's size (they are the classic
 game's); the arena crowd stays flats.
@@ -1401,4 +1401,18 @@ werewolf and standing it, and - where the wolf is refused at its skeleton
 `tools/mutants/mwnpc15.json`: 7 mutants, 7 dead. Pin moved: MWNPC4d's
 pose (`wb` 0 for a person); mutant records re-aimed by content: MWNPC10b's
 creature, MWNPC10c's unarmed and five of MWNPC14's.
+
+## 21. THE AUDIT (2026-10-10)
+
+Mac: "Do a deep audit and ensure perfection."
+
+- THE CENSUS (`test/mwnpc_census.test.js`, the old arc's lesson NPC4b,
+  section 5). Every source that draws a living actor's sprite - a mobile's
+  unit, a walker, a mobile billboard sized off its record - either names
+  one of the arc's adapters (it stands its actors in bodies: the watch, the
+  dungeon, exterior.js, the encounter pool, the gate's boss and host, the
+  crews, the siege, the street's walkers, the roads and the rooms) or is
+  declared with the reason it keeps its sprite (the peers' own fallback
+  picture, the broker's guise, the Overworld's far bands, and three that
+  draw nothing). A new population drawn without either fails the suite.
 
