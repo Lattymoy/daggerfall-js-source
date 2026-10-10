@@ -23924,9 +23924,6 @@ export async function bootWorld(canvas, renderer, params, status) {
     _sdFightHeld = true;
     sdFightLink.word(w);
   }
-  /** One online frame of the fight: forgotten out of the realm; its bar (ui/sdRemnantBar.js - the gate's, in brass) over
-   *  the screen while I stand near the arena and its fight is one to fight, put away otherwise. */
-  let _sdPassesWarm = false;
   const _sdSayBody = bodySayer((v) => !!online?.sendSdBlow?.('vt', { v }));   // INT15: my body, said to the realm
   /** INT15: MY BODY, in my own word, while I fight alive in the Hour's fight that answered me - to a relay that counts it
    *  (net/bossBody.js bodySayer's pace). A frame step of its own beside the fight's. */
@@ -23934,6 +23931,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!sdFightLink || modes?.sdRealmSlot?.() == null || !online?.bossOk) return;
     if (playerEntity.health > 0 && playerEntity.maxHealth > 0 && sdFightLink.joined()) _sdSayBody(playerEntity.health / playerEntity.maxHealth, performance.now());
   };
+  /** One online frame of the fight: forgotten out of the realm; its bar (ui/sdRemnantBar.js - the gate's, in brass) over
+   *  the screen while I stand near the arena and its fight is one to fight, put away otherwise. */
+  let _sdPassesWarm = false;
   const sdFightFrame = () => {
     if (!sdFightLink) return;
     const inRealm = modes?.sdRealmSlot?.() != null;

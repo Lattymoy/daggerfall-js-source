@@ -56,6 +56,8 @@ test('INT11 THE WIRE: a body\'s word (`vt`, thousandths of its whole) a new kind
   assert.equal(relaySupportsBossRef(`world${BOSS_REF_RELAY_MIN}`), true);
   assert.equal(relaySupportsBossRef('nonsense'), false);
   assert.ok(relayVersionAtLeast(BOSS_REF_RELAY_MIN), 'the relay this tree builds counts');
+  assert.equal(BOSS_REF_RELAY_MIN, 186, 'world186 the first that counts');
+  assert.equal(relaySupportsBossRef('world185'), false, 'lane 2\'s relay counts nothing - its gate words know no `vt`');
   assert.equal(RELAY_VERSION, 'world186');
 });
 
@@ -74,7 +76,7 @@ async function withGate(fn, { env = {} } = {}) {
     Object.assign(r.env, env);
     const tick = async (n = 1) => { for (let i = 0; i < n; i++) { clock += BRAIN_TICK_MS; if (r.alarm.at != null && clock >= r.alarm.at) await r.fire(); } };
     const say = (ws, o) => r.raw(ws, JSON.stringify({ t: 'gate', ...o }));
-    await quiet(() => fn({ world, r, tick, say, now: () => clock }));
+    await quiet(() => fn({ world, r, tick, say, now: () => clock, set: (t) => { clock = t; } }));
   } finally { Date.now = realNow; }
 }
 /** His blow laid in flight by hand - a plain one (the slam) or Dagon's - landing `inMs` on. */
@@ -83,7 +85,7 @@ const lay = (f, now, a, inMs = 100) => { f.atk = { i: (f.seq = (f.seq ?? 0) + 1)
 test('INT11 THE GATE\'S COUNT, MEASURED: a fighter in the court struck by his plain blow on the relay\'s count, its word a mend out of its budget, a word from one no fight counts never junk; the default line ENFORCES NOTHING - a fall by the count leaves the fighter fighting, its blows landing, no `bd`; and the kill\'s receipt carries the measure, a silent fighter\'s none (mutants: the beat judging nothing; the word junk; the default enforcing; the measure dropped from the receipt)', async () => {
   const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   const pkcs8 = Buffer.from(await subtle.exportKey('pkcs8', kp.privateKey)).toString('base64');
-  await withGate(async ({ r, tick, say, now }) => {
+  await withGate(async ({ r, tick, say, now, set }) => {
     r.env.GATE_SIGNING_KEY = pkcs8;
     const a = r.connect(), b = r.connect(), stranger = r.connect();
     await r.hello(a, 'peer-0001', at(0, 0)); await r.hello(b, 'peer-0002', at(30, 0)); await r.hello(stranger, 'peer-0003', at(0, 0));
@@ -99,6 +101,17 @@ test('INT11 THE GATE\'S COUNT, MEASURED: a fighter in the court struck by his pl
     assert.equal(f.players[B].bd?.t ?? 0, 0, 'thirty metres off, untouched');
     await say(a, { k: 'vt', v: 1000 });
     assert.ok(Math.abs(f.players[A].bd.h - slam) < 1e-9, 'its word a mend, believed');
+    // THE TRAIL: struck where it stood as he landed, and away before the beat that judged it - the relay's poses as they came
+    const T1 = now() + 600;
+    lay(f, now(), ATTACKS.slam, 600);
+    set(T1 - 50); await r.pose(a, at(0, 0.2));
+    set(T1 + 50); await r.pose(a, at(0, 0.4));
+    set(T1 + 300); await r.pose(a, at(25, 0));
+    const before = f.players[A].bd.t;
+    await tick(1);
+    assert.ok(Math.abs(f.players[A].bd.t - before - slam) < 1e-9, 'struck by its trail, though it stands clear now');
+    await r.pose(a, at(0, 0));
+    await say(a, { k: 'vt', v: 1000 });
     // the count felled - and nothing enforced
     lay(f, now(), ATTACKS.reckon);
     await tick(2);
@@ -244,22 +257,30 @@ async function withSea(fn, env = {}) {
 
 test('INT13 THE SERPENT\'S COUNT, ON HER HULL: its lash on the cell\'s count of her hull; her word a patch out of the hull\'s budget; ENFORCED, the count\'s wreck is a wreck - her share out, `bd` to her with its site, her `wr 0` unheard and her blows landing nothing until the count floats her again past HULL_REFLOAT (mutants: the hull never judged; her own word refloating her; her blows landing wrecked)', async () => {
   await withSea(async ({ r, tick, say, now }) => {
-    const a = r.connect(); await r.hello(a, 'peer-0001', sat(0, 40));
-    await say(a, IN());
+    const a = r.connect(); await r.hello(a, 'peer-0001', sat(150, 0));
+    const b = r.connect(); await r.hello(b, 'peer-0002', sat(-150, 300));   // a second ship: the serpent keeps her share's health when the first's is wrecked out
+    await say(a, IN()); await say(b, IN());
     const f = r.room._serpents.get(serpentFightId(SDAY, serpentSiteKey(SX, SZ))), A = 'acct-peer-0001', p = f.players[A];
+    await tick(2);
+    // the serpent cruising round its waters' heart (SERPENT1 relay's own): a blow from 150 m lands
+    const cruise = () => { f.legs = [{ k: 1, at: now() - 30_000, x: -60, z: 0, yw: 0, v: 11, r: 60, sd: 1, j: 1 }]; f.modes = [{ at: now() - 30_000, m: 1 }]; };
+    cruise();
+    await say(a, { k: 'hit', d: 50, z: 0 });
+    assert.equal(p.dealt, 50, 'afloat, her volley lands');
     await say(a, { k: 'vt', v: 1000 });
     bodyStruck(p, 0.97, now(), BODY_DEFAULT.hull);
     const L = SERPENT_ATTACK_TABLE.lash;
-    f.atk = { i: 77, a: L.id, at: now() + 100, x: 0, z: 0, yw: 0, tg: [[0, 0]], until: now() + 3000 };
+    f.atk = { i: 77, a: L.id, at: now() + 100, x: 100, z: 0, yw: Math.PI / 2, tg: [[100, 0]], until: now() + 3000 };
     await tick(Math.ceil((100 + BODY_AFTER_MS) / SERPENT_TICK_MS) + 1);
     assert.equal(p.bd.dn, true, 'the count wrecked her');
     assert.equal(p.wreck, true, 'wrecked by the relay\'s word');
     assert.deepEqual(words(a, 'bd'), [{ t: 'serpent', k: 'bd', sx: f.sx, sz: f.sz }]);
     await say(a, { k: 'wr', w: 0 });
     assert.equal(p.wreck, true, 'her own word floats her not');
-    const hp = f.hp;
-    await say(a, { k: 'hit', d: 50, z: 0 });
-    assert.equal(f.hp, hp, 'a wreck fires nothing');
+    assert.ok(f.hp > 0, 'the other ship\'s share stands');
+    f.atk = null;
+    for (let i = 0; i < 4; i++) { cruise(); await say(a, { k: 'hit', d: 50, z: 0 }); await tick(1); }
+    assert.equal(p.dealt, 50, 'a wreck fires nothing');
     // her carpenters' patches, out of the budget, past the line
     await say(a, { k: 'vt', v: 300 });
     assert.ok(p.bd.v > 0 && p.bd.v <= BODY_DEFAULT.hull.depth + 1e-9, 'a patch believed out of the budget');
@@ -293,13 +314,14 @@ test('INT14 THE SERVICE KEEPS IT, STAFF READ IT: each claim keeps its receipt\'s
   const s = await standService({ DEVELOPER_HANDLES: 'mac' });
   const raw = s.env.DB._raw;
   const nowS = Math.floor(Date.now() / 1000);
-  const ann = await s.registered('annika'), bo = await s.registered('boris'), mac = await s.registered('mac');
+  const ann = await s.registered('annika'), bo = await s.registered('boris'), carla = await s.registered('carla'), mac = await s.registered('mac');
   const claim = async (who, d, m) => s.call('/v1/gate/claim', { receipt: await mintReceipt({ d, b: 'ruhn', s: who.id, c: 7, x: 'dealt', l: 10, ...(m ? { m } : {}) }, s.gatePriv, { subtle, nowS }) }, who.secret);
   assert.equal((await claim(ann, 5, [600, 1200, 300, 1, 0, 120])).body.recorded, true);
   assert.equal((await claim(bo, 5, [100, 0, 0, 0, 1, 600])).body.recorded, true);
   assert.equal((await claim(ann, 6, null)).body.recorded, true);
+  assert.equal((await claim(carla, 5, [0, 0, 0, 0, 1, 60])).body.recorded, true);
   const rows = raw.prepare('SELECT account, day, body FROM gate_kills ORDER BY day, account').all();
-  assert.deepEqual(rows.map((x) => [x.day, x.body && JSON.parse(x.body)]).sort(), [[5, [100, 0, 0, 0, 1, 600]], [5, [600, 1200, 300, 1, 0, 120]], [6, null]].sort());
+  assert.deepEqual(rows.map((x) => [x.day, x.body && JSON.parse(x.body)]).sort(), [[5, [0, 0, 0, 0, 1, 60]], [5, [100, 0, 0, 0, 1, 600]], [5, [600, 1200, 300, 1, 0, 120]], [6, null]].sort());
   for (const [, table] of BODY_TABLES) assert.ok(raw.prepare(`SELECT body FROM ${table} LIMIT 1`), `${table} keeps one`);
   // the Hour's and the serpent's claims keep theirs too
   const hRec = await mintSdReceipt({ d: 3, s: ann.id, c: 1, x: 'stood', l: 10, m: [1, 2, 3, 0, 1, 60] }, s.gatePriv, { subtle, nowS });
@@ -314,12 +336,12 @@ test('INT14 THE SERVICE KEEPS IT, STAFF READ IT: each claim keeps its receipt\'s
   assert.equal(got.status, 200);
   const gate = got.body.fights.find((x) => x.fight === 'gate');
   assert.deepEqual(got.body.fights.map((x) => x.fight), BODY_TABLES.map(([fight]) => fight), 'every fight');
-  assert.deepEqual([gate.receipts, gate.over, gate.fell, gate.lost], [2, 1, 1, 1]);
-  // ann's: 1500 thousandths claimed over 120 s - 750 a minute; bo's: none over 600 s
+  assert.deepEqual([gate.receipts, gate.over, gate.fell, gate.lost], [3, 1, 1, 1], 'one of three would have lost its receipt');
+  // ann's: 1500 thousandths claimed over 120 s - 750 a minute; bo's and carla's: none
   assert.deepEqual(gate.quantiles.map(([, r]) => r), [0, 750, 750, 750]);
   assert.equal(gate.most, 750);
   const direct = await bodiesMeasure(s.env.DB, nowS + 60, 7);
-  assert.deepEqual(direct.fights.map((x) => x.receipts), [2, 1, 1]);
+  assert.deepEqual(direct.fights.map((x) => x.receipts), [3, 1, 1]);
   assert.deepEqual(await reviewAct({ db: s.env.DB, nowS }, { id: ann.id, handle: 'annika' }, s.env, 'bodies', {}), { error: 'not-developer' });
   // the tool
   assert.deepEqual(reviewRequest(['bodies']), { path: '/v1/mod/realm-bodies', body: { days: 7 } });

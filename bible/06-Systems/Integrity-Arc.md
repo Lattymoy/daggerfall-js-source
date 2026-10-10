@@ -604,6 +604,9 @@ the clock, and the legacy record held to its own law.
   `net/bossRef.js`, `net/gateStrike.js` with `world/segment.js`, and `systems/serpentStrike.js` join the relay's bundle;
   `net/bossBody.js` the account Worker's, through the receipts). Pins: `test/int11_body.test.js` (the law and the three
   judges), `test/int12_body_relay.test.js` (the relay over the real Room, measured and enforced; the receipts; the
-  service and the review; the client's glue). Mutants `tools/mutants/int_lane3.json`. Pins moved (each marked PIN MOVED
+  service and the review; the client's glue). Mutants `tools/mutants/int_lane3.json`: 92, all dead - the run's five
+  survivors each pinned since (a sweep read at one end; the relay's pose trail; a wreck's volleys, which a lone ship's
+  wreck had hidden by taking the serpent's last health out with her share; the review's lost receipts; world186 the
+  first relay that counts); the nineteen older records the lane moved re-aimed by content, all dead. Pins moved (each marked PIN MOVED
   where it stands): the gate's, the Abyss Dungeon's and the serpent's word kinds (`vt` in, `bd` out), the Hour's census
   and its receipts' and the gate's receipts' mint by source, the version pins at acct105 and world186.

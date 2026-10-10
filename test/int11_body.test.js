@@ -229,7 +229,8 @@ test('INT11 THE GATE JUDGED: his plain blow at its landing on each living body d
   // the charge, down its lane each beat of its run
   const C = ATTACKS.charge, c0 = at0 + 30_000;
   f.atk = { i: 5, a: C.id, at: c0, x: 0, z: 0, yw: 0, tg: [[0, 22]], until: c0 + C.active + C.recover };
-  const lane = [bd('s1', 0, 11), bd('s2', 0, 30), bd('s3', 9, 11)];
+  // s3 off the lane as the beat began and on it as it ended - stepped in as the head passed: not struck (both ends)
+  const lane = [bd('s1', 0, 11), bd('s2', 0, 30), bd('s3', 0, 11, { tr: [[c0 + 250, 9, 11], [c0 + 500, 0, 11]] })];
   assert.deepEqual(judgeGate(f, lane, c0 + 250), [], 'the head not yet at it');
   assert.deepEqual(judgeGate(f, lane, c0 + 500), [{ sub: 's1', share: Math.min(1, C.pct * P.dmgX) }], 'its run passed over it');
   assert.deepEqual(judgeGate(f, lane, c0 + 750), [], 'once');
