@@ -58,7 +58,7 @@ test('INT11 THE WIRE: a body\'s word (`vt`, thousandths of its whole) a new kind
   assert.ok(relayVersionAtLeast(BOSS_REF_RELAY_MIN), 'the relay this tree builds counts');
   assert.equal(BOSS_REF_RELAY_MIN, 188, 'world188 the first that counts (world186 on its branch, renumbered at the merge of main)');
   assert.equal(relaySupportsBossRef('world187'), false, 'the relay before it counts nothing - its gate words know no `vt`');
-  assert.equal(RELAY_VERSION, 'world188');
+  assert.equal(RELAY_VERSION, 'world189');
 });
 
 // ═══ THE GATE ═══════════════════════════════════════════════════════════════════

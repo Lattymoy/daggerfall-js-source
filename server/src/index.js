@@ -278,7 +278,7 @@ import { mintArenaReceipt } from '../../src/net/arenaReceipt.js';
 import { owIdInCell, owRowInCell, owRowSane, owFoldSpent, owFoldRows, owRowsBehind, owPrune, owLedgerOf, owLedgerEmpty, toWelcome } from '../../src/net/overworldLaw.js';
 
 import { serpentGate, validSerpentOut, SERPENT_INTERNAL_FELL, SERPENT_TELL_RETRY_MS, SERPENT_FIGHT_KEY, SERPENT_FIGHTS_KEY, SERPENT_SITES_MAX, serpentFightId, SERPENT_FELLS_KEY, SERPENT_FELLS_MAX, SERPENT_RC_PREFIX } from './relay.js';   // SERPENT1: the serpent's frame and its doors (the wire's, through relay.js - walked last, as ever)
-import { roomOf, parseClient, inRange, inRangeOf, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, OWN_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, amapShareGate, AMAP_ROOM_HZ_MAX, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, CARAVAN_DECOR_KEY, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, CARAVAN_DOC_MIN_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, wedGate, WED_HZ_MAX, renownGate, renownRoomGate, lookGate, eventGate, EVENT_KEY, validLiveEvent, gateGate, siegeGate, SIEGE_IN_MS, GATE_INTERNAL_FELL, SOCIAL_ROOM, validGateOut, HELLO_WAIT_MS, GATE_TELL_RETRY_MS, gateReceiptKey, GATE_BRAIN_MIN, GATE_HERE_HOLD_MS, guildGate, guildRoomGate, GUILD_CHAT_ROOM_HZ_MAX, SEAT_ELSEWHERE, raidGate, RAID_INTERNAL_CLEAN, RAID_INTERNAL_DAY, RAID_DAY_ASK_MS, raidTownsGate, RAID_TELL_RETRY_MS, RAID_CLEANS_MAX, RAID_LEDGER_PREFIX, raidLedgerKey, RAID_RC_PREFIX, raidReceiptKeyOf, RAID_RC_KEEP, RAID_RC_KEEP_MS, mapPixelOfWire, validRaidOut, worldRoom, sharedClassicMinutes, wallMsForClassicMinutes, isRegionRoom, travHubGate, travRoomGate, TRAV_STALE_MS, TRAV_WELCOME_MAX, owGate, owRoomGate, OW_LEDGER_KEY, REALM_DOOR_WORD, riteRelayGate, validRiteOut, sanitizeName, RITE_INTERNAL_BROKEN, RITE_INTERNAL_DAY, RITE_TELL_RETRY_MS, RITE_KEY, RITE_BY_MAX, RITE_CIRCLES_MAX, RITE_HUB_CIRCLES_MAX, RITE_ASK_EVERY_MS, RITE_ASK_TIMEOUT_MS, arenaGate, bodyWordRelayGate } from './relay.js';   // AUDIT INT15: bodyWordRelayGate - a body's word on a bucket of its own
+import { roomOf, parseClient, inRange, inRangeOf, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, OWN_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, amapShareGate, AMAP_ROOM_HZ_MAX, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, CARAVAN_DECOR_KEY, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, wardenVerdicts, wardenDue, parkSameSpot, parkSpotOf, CARAVAN_DOC_MIN_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, wedGate, WED_HZ_MAX, renownGate, renownRoomGate, lookGate, eventGate, EVENT_KEY, validLiveEvent, gateGate, siegeGate, SIEGE_IN_MS, GATE_INTERNAL_FELL, SOCIAL_ROOM, validGateOut, HELLO_WAIT_MS, GATE_TELL_RETRY_MS, gateReceiptKey, GATE_BRAIN_MIN, GATE_HERE_HOLD_MS, guildGate, guildRoomGate, GUILD_CHAT_ROOM_HZ_MAX, SEAT_ELSEWHERE, raidGate, RAID_INTERNAL_CLEAN, RAID_INTERNAL_DAY, RAID_DAY_ASK_MS, raidTownsGate, RAID_TELL_RETRY_MS, RAID_CLEANS_MAX, RAID_LEDGER_PREFIX, raidLedgerKey, RAID_RC_PREFIX, raidReceiptKeyOf, RAID_RC_KEEP, RAID_RC_KEEP_MS, mapPixelOfWire, validRaidOut, worldRoom, sharedClassicMinutes, wallMsForClassicMinutes, isRegionRoom, travHubGate, travRoomGate, TRAV_STALE_MS, TRAV_WELCOME_MAX, owGate, owRoomGate, OW_LEDGER_KEY, REALM_DOOR_WORD, riteRelayGate, validRiteOut, sanitizeName, RITE_INTERNAL_BROKEN, RITE_INTERNAL_DAY, RITE_TELL_RETRY_MS, RITE_KEY, RITE_BY_MAX, RITE_CIRCLES_MAX, RITE_HUB_CIRCLES_MAX, RITE_ASK_EVERY_MS, RITE_ASK_TIMEOUT_MS, arenaGate, bodyWordRelayGate } from './relay.js';   // AUDIT INT15: bodyWordRelayGate - a body's word on a bucket of its own
 import { holdemGate, holdemSitRoomGate } from './relay.js';   // CARDS5: the card table's gate; AUDIT CARDS-3 A4: the room's sits
 import { newTable, topUp as holdemTopUp, sit as holdemSit, sitRefusal as holdemSitRefusal, stand as holdemStand, actAt as holdemAct, tick as holdemTick, nextAt as holdemNextAt, emptyTable as holdemEmpty, tableLook as holdemLook, stateDelta as holdemDelta, holdemGoldTable } from '../../src/net/holdemTable.js';   // CARDS5: THE RELAY DEALS - the room's card tables (holdemTable.js imports only cardLaw.js, which imports only dice.js)
 // WILD1 (2026-10-07, the owner: "Wrothgarian mountains need to be turned into a open pvp zone"): ONE FILE JOINS THE
@@ -545,6 +545,7 @@ export class Room {
     this._noRaidRcpt = new Bounded(HUB_KEEP_MAX); // SCALE2b: and no raid receipts
     this._worldMemo = undefined;   // SCALE2b: the stored world, raw, as `_worldRaw` read it (undefined: not read this wake)
     this._parks = null;            // SCALE2b: a cell's parked teams, key -> record - a promise of the one list a wake
+    this._wardenAt = undefined;    // WARDEN1: when the cell's next road team falls due (null: none waits; undefined: its teams not read this wake)
     this._attachedAt = new WeakMap();   // SCALE2b: ws -> when its attachment was last written to the runtime
     this._roomChat = null;   // AUDIT CHAT A2: the room's own chat budget - on the instance, since a sleeping room fans nothing
     this._travFan = null;   // TV3: a region room's fan budget for traveller marks (TRAV_ROOM_HZ_MAX)
@@ -1034,31 +1035,75 @@ export class Room {
     for (const [, v] of dead) if (v && typeof v.k === 'string') this._parkFan({ t: 'park', k: v.k, id: v.id, data: null }, v.sub);
     return out;
   }
-  /** What a reader is told of a record: never the account (a place room names none - MOD1). */
-  _parkPublic(v) { return { k: v.k, id: v.id, name: v.name ?? '', r: v.r, at: v.at }; }
+  /** What a reader is told of a record: never the account (a place room names none - MOD1). WARDEN1: and when the town
+   *  watch threw it (`y`, this cell's clock), so a joiner draws it where it landed. */
+  _parkPublic(v) { return { k: v.k, id: v.id, name: v.name ?? '', r: v.r, at: v.at, ...(Number.isFinite(v.y) ? { y: v.y } : {}) }; }
   /** Fan a park word to every hello'd socket but the OWNER's account's own (its client draws its team off its save;
    *  its other tabs and characters are the same player - AUDIT HCC-PARK D2). */
   _parkFan(o, ownerSub) { const s = JSON.stringify(o); for (const [other, b] of [...this._all()]) if (b.id && b.sub !== ownerSub) this._send(other, s); }
   /** HCC-PARK: the owner's record stands in THIS cell. PARK_ACCOUNT_MAX of one account's (its own stalest goes
    *  first), PARK_CELL_MAX in all (the stalest goes). The same word again is no news: only its time is refreshed,
-   *  and nobody is told (a socket repeating itself buys no fan). */
+   *  and nobody is told (a socket repeating itself buys no fan).
+   *  WARDEN1 (net/wire.js): a word that moves none of the team's parts keeps when it came to stand there (`since`); a
+   *  team the town watch threw keeps its mark (`y`) while its owner re-says the spot it was thrown from - they were
+   *  away when it happened - and the record is answered (the caller tells the owner); a word that moved it clears the
+   *  mark. Then the watch's round (a fifth team in a town throws the longest parked). Answers the thrown record the
+   *  owner re-said, or null. */
   async _parkStore(k, sub, id, name, r, now) {
     const list = await this._parkList(now);
     const had = list.find((e) => e.k === k) ?? null;
     if (had && had.id === id && had.name === name && JSON.stringify(had.r) === JSON.stringify(r)) {
       if (now - (had.at ?? 0) > PARK_REFRESH_MS) { const fresh = { ...had, at: now }; (await this._parks)?.set(parkKey(k), fresh); await this.state.storage.put(parkKey(k), fresh); }
-      return;
+      return Number.isFinite(had.y) ? had : null;
     }
+    const same = !!had && parkSameSpot(had.r, r), thrown = same && Number.isFinite(had.y);
     const byAge = (x, y) => (x.at ?? 0) - (y.at ?? 0);
     const mine = list.filter((e) => e.k !== k && e.sub === sub).sort(byAge);
     const gone = new Set();
     for (const e of mine.slice(0, Math.max(0, mine.length - PARK_ACCOUNT_MAX + 1))) { gone.add(e.k); await this._parkDrop(e.k); }
     const others = list.filter((e) => e.k !== k && !gone.has(e.k)).sort(byAge);
     for (const e of others.slice(0, Math.max(0, others.length - PARK_CELL_MAX + 1))) await this._parkDrop(e.k);
-    const rec = { k, sub, id, name, r, at: now };
+    const rec = { k, sub, id, name, r, at: now, since: same && !thrown ? (had.since ?? had.at ?? now) : now, ...(thrown ? { y: had.y } : {}) };
     (await this._parks)?.set(parkKey(k), rec);   // SCALE2b: the kept copy
     await this.state.storage.put(parkKey(k), rec);
-    this._parkFan({ t: 'park', k, id, name, at: now, data: r }, sub);
+    this._parkFan({ t: 'park', k, id, name, at: now, data: r, ...(thrown ? { y: had.y } : {}) }, sub);
+    await this._parkWarden(now);
+    return thrown ? rec : null;
+  }
+  /**
+   * WARDEN1 (net/wire.js wardenVerdicts): THE TOWN WATCH'S ROUND over this cell's parked teams - each it throws marked
+   * (`y`, this cell's clock), fanned to everyone but its owner's account (as every park word is), and told its owner's
+   * sockets here (`parkYeet`); the next road team's time kept (`_wardenAt`, null: none waits). Run at every store, every
+   * hello's list, and at the first frame past that time - NEVER ON THE ALARM: a cell's alarm is its other duties' (a
+   * drained room's firing is its world's forgetting), and a throw nobody is in the room to see is made before the next
+   * joiner reads the cell. Answers how many it threw.
+   */
+  async _parkWarden(now) {
+    const list = await this._parkList(now);   // the cell's live teams (a team past its life swept, as a list sweeps it)
+    const m = await this._parks;
+    const { due, next } = wardenVerdicts(list, now);
+    let n = 0;
+    for (const k of due) {
+      const had = m.get(parkKey(k));
+      if (!had || Number.isFinite(had.y)) continue;
+      const rec = { ...had, y: now };
+      m.set(parkKey(k), rec);
+      await this.state.storage.put(parkKey(k), rec);
+      this._parkFan({ t: 'park', k, id: rec.id, name: rec.name ?? '', at: rec.at, data: rec.r, y: now }, rec.sub);
+      this._parkTellOwner(rec);
+      n++;
+    }
+    this._wardenAt = next;
+    return n;
+  }
+  /** WARDEN1: the town watch threw this record's team - its owner's sockets here that spoke for it (`pk`, the park key
+   *  their last park frame named) are told where it stood and where it landed (wire.js validParkYeet); `only` one of
+   *  them (the owner re-saying the spot). */
+  _parkTellOwner(rec, only = null) {
+    const from = parkSpotOf(rec.r), to = rec.r?.ly;
+    if (!from || !Array.isArray(to) || !Number.isFinite(rec.y)) return;
+    const s = JSON.stringify({ t: 'parkYeet', at: rec.y, from, to });
+    for (const [ws, b] of [...this._all()]) if ((only === null || ws === only) && b.id && b.sub === rec.sub && b.pk === rec.k) this._send(ws, s);
   }
   /** HCC-PARK: the owner's record in THIS cell goes (a no-op when there is none), and everyone here is told. `before`:
    *  the registry's word is about a record said no later than it (AUDIT HCC-PARK D4 - a drop that crossed a newer
@@ -1607,6 +1652,9 @@ export class Room {
   async _message(ws, message) {
     let a = this._attach(ws);
     this._kind ??= a.key ? roomKindOf(a.key) : null;   // SCALE2b: a metric names the room's kind, never the room
+    // WARDEN1: a cell's road team whose time has come is thrown at the first frame of anyone in the room (a woken
+    // object reads its teams once); every socket here keeps alive, so everyone in sight sees it on time
+    if (a.id && isCellRoom(a.key) && wardenDue(this._wardenAt, Date.now())) await this._parkWarden(Date.now());
     // AUDIT WORLD A1: a large frame - or any frame shaped as a world frame - is the host's memory or nothing, and is
     // answered BEFORE any parse: a socket with no hello is refused, the frame is metered on the pose bucket, and
     // anyone but a world room's host is ignored unparsed (a handover races; parsing 512 KiB for a stranger was the
@@ -1901,6 +1949,7 @@ export class Room {
       // team taken up while this socket was away must go; never the joiner's own account's records (D2)
       if (isCellRoom(a.key)) {
         const now = Date.now(), sub = this._attach(ws)?.sub;
+        await this._parkWarden(now);   // WARDEN1: a throw an alarm missed is made before the joiner reads the cell
         const parks = (await this._parkList(now)).filter((e) => e.sub !== sub).map((e) => this._parkPublic(e));
         if (!this._send(ws, JSON.stringify({ t: 'parks', now, data: parks }))) return;
         // AUDIT SHIPS B1: a serpent fight this socket hears is beaten again at once - the beat is armed by a serpent word
@@ -2278,10 +2327,13 @@ export class Room {
       a = this._meterPark(ws, a, now); if (!a) return;
       if (isChatRoom(a.key) || isSocialRoom(a.key) || typeof a.sub !== 'string' || !a.sub) return;
       const k = await parkKeyOf(a.sub, m.data.c);
+      if (a.pk !== k) { a = { ...a, pk: k }; this._setAttach(ws, a); }   // WARDEN1: whose team this socket speaks for - the watch tells it of a throw
       const here = isCellRoom(a.key) ? a.key : null;
       const cell = m.data.a ? cellRoomOfWire(m.data.a[0], m.data.a[1]) : null;
-      if (m.data.r && cell === here) await this._parkStore(k, a.sub, a.id, a.name ?? '', m.data.r, now);
-      else if (here && cell !== here) await this._parkDrop(k);   // mine here is superseded: nothing parked, or it stands elsewhere
+      if (m.data.r && cell === here) {
+        const thrown = await this._parkStore(k, a.sub, a.id, a.name ?? '', m.data.r, now);
+        if (thrown) this._parkTellOwner(thrown, ws);   // WARDEN1: away when the watch threw it - told now, as they re-say where it stood
+      } else if (here && cell !== here) await this._parkDrop(k);   // mine here is superseded: nothing parked, or it stands elsewhere
       await this._parkRegister(k, cell, now);
       return;
     }
