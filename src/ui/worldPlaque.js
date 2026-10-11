@@ -205,6 +205,8 @@ export function reticleAnchor(canvas, fovRad) {
   };
 }
 
+import { t } from '../systems/i18n.js';
+
 function paint(n, f, sel = -1, stats = []) {
   n.textContent = '';
   n.classList.toggle('has-list', f.kind === 'items' || f.kind === 'actions');
@@ -221,22 +223,23 @@ function paint(n, f, sel = -1, stats = []) {
   for (let i = 0; i < lines.length; i++) {
     const l = document.createElement('div');
     l.className = 'wplaque-titleline';
+    const translatedLine = t(lines[i]);
     if (i === 0 && f.renown) {
       // RENOWN1: a player's Renown, the number in its box left of the name - the box the name over their head wears
       const r = document.createElement('span');
       r.className = 'wplaque-renown';
       r.textContent = String(f.renown);
-      const t = document.createElement('span');
-      t.textContent = lines[i];
-      l.append(r, t);
-    } else l.textContent = lines[i];
+      const tSpan = document.createElement('span');
+      tSpan.textContent = translatedLine;
+      l.append(r, tSpan);
+    } else l.textContent = translatedLine;
     title.append(l);
   }
   n.append(title);
   for (const s of f.subs) {
     const sub = document.createElement('div');
     sub.className = 'wplaque-sub';
-    sub.textContent = s;
+    sub.textContent = t(s);
     n.append(sub);
   }
   if (f.kind === 'actions') {
@@ -249,7 +252,7 @@ function paint(n, f, sel = -1, stats = []) {
       row.className = 'wplaque-row wplaque-act';
       if (i === sel) row.classList.add('sel');
       if (f.rows[i].disabled) row.classList.add('off');   // AUDIT DISC7 A4: a refused verb, its reason in its name
-      row.textContent = f.rows[i].name;
+      row.textContent = t(f.rows[i].name);
       list.append(row);
     }
     return;
@@ -261,7 +264,7 @@ function paint(n, f, sel = -1, stats = []) {
   if (f.empty) {
     const p = document.createElement('div');
     p.className = 'wplaque-row wplaque-empty';
-    p.textContent = 'Empty';
+    p.textContent = t('Empty');
     list.append(p);
   }
   for (let i = 0; i < f.rows.length; i++) {

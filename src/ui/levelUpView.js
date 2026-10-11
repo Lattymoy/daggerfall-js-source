@@ -100,7 +100,9 @@ export function levelUpLane(screen) {
  *  three-letter heads because a 320x200 panel has no room; this window
  *  has the room for the whole word, the same call ui/virtueLevelUp.js
  *  made. */
-export const attributeLabel = (k) => (k ? k.charAt(0).toUpperCase() + k.slice(1) : '');
+import { t } from '../systems/i18n.js';
+
+export const attributeLabel = (k) => (k ? t(k.charAt(0).toUpperCase() + k.slice(1)) : '');
 
 /**
  * WHAT EACH ATTRIBUTE DOES, in one line, and every line names a

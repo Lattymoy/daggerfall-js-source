@@ -124,9 +124,13 @@ export function daylightScale(minuteOfDay) {
  * Unit vector TOWARD the sun (shader light dir). Sun euler (180t, -90, 0)
  * points its forward at (-cos, -sin, 0); toward-sun is the negation.
  */
-export function sunDirection(minuteOfDay) {
+export function sunDirection(minuteOfDay, out = null) {
   const x = Math.PI * Math.max(0, Math.min(1, dayFraction(minuteOfDay)));
-  return new Float32Array([Math.cos(x), Math.sin(x), 0]);
+  const target = out || new Float32Array(3);
+  target[0] = Math.cos(x);
+  target[1] = Math.sin(x);
+  target[2] = 0;
+  return target;
 }
 
 /** Exterior ambient color for the time of day (nightAmbientScale
@@ -143,14 +147,14 @@ export function sunDirection(minuteOfDay) {
  *  scaled once (sunScale x weatherScale at the hosts) and stays so.
  *  The night arm needs no branch: the curve is 0 outside dawn-dusk in
  *  both, and DFU skips the *= only where it would multiply zero. */
-export function exteriorAmbient(minuteOfDay, nightAmbientScale = 1, weatherScale = 1) {
+export function exteriorAmbient(minuteOfDay, nightAmbientScale = 1, weatherScale = 1, out = null) {
   const s = daylightScale(minuteOfDay) * weatherScale * weatherScale;
-  const out = new Float32Array(3);
+  const target = out || new Float32Array(3);
   for (let i = 0; i < 3; i++) {
     const night = EXTERIOR_NIGHT_AMBIENT[i] * nightAmbientScale;
-    out[i] = night + (EXTERIOR_NOON_AMBIENT[i] - night) * s;
+    target[i] = night + (EXTERIOR_NOON_AMBIENT[i] - night) * s;
   }
-  return out;
+  return target;
 }
 
 /** Sun contribution scale: rig intensity * daylight curve, 0 at night. */

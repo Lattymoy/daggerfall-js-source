@@ -35,6 +35,7 @@ import { marksText } from '../net/marksLaw.js';   // MARKS1: and its Marks row
 import { raidRecordText } from '../net/raidClaims.js';   // RAID4: and its towns-defended row
 import { serpentRecordText } from '../net/serpentClaims.js';   // AUDIT SERPENT D4: and its serpents-slain row
 import { sdRecordText } from '../net/sdClaims.js';   // SD9b: and its Hours-broken row
+import { t } from '../systems/i18n.js';
 
 /** RENOWN-CHAR (Mac: "Can we make renown per character again"): the card's Renown tracks as the service sends them -
  *  its characters', the most recently played first - or none: none earned yet, or a service from RENOWN-ACCOUNT's day
@@ -227,7 +228,7 @@ export function accountCard(doc, flow, { onClose = null, face = null, character 
   function field(key) {
     const spec = FIELD_SPEC[key];
     const wrap = el('label', 'field');
-    wrap.append(el('span', 'fieldlabel', spec.label));
+    wrap.append(el('span', 'fieldlabel', t(spec.label)));
     const input = keyedAs(el('input'), `field:${key}`);
     input.type = spec.secret ? 'password' : 'text';
     input.maxLength = spec.max;
@@ -286,7 +287,7 @@ export function accountCard(doc, flow, { onClose = null, face = null, character 
   }
 
   function act(label, onclick, { primary = false, disabled = false, key = label } = {}) {
-    const b = keyedAs(el('button', `act${primary ? ' primary' : ''}`, label), `act:${key}`);
+    const b = keyedAs(el('button', `act${primary ? ' primary' : ''}`, t(label)), `act:${key}`);
     b.type = 'button';
     if (disabled) b.disabled = true;
     b.onclick = onclick;
@@ -484,14 +485,14 @@ export function accountCard(doc, flow, { onClose = null, face = null, character 
     // heading below it: "Write this down" over "Your recovery code" is
     // a different sentence; "Account" over "Your account" is the same
     // one twice.
-    if (copy.tag !== 'Account') root.append(el('span', 'tag', copy.tag));
+    if (copy.tag !== 'Account') root.append(el('span', 'tag', t(copy.tag)));
     // RENOWN1 (Mac: "having their level appear on the left side of character name and profile main menu"): the
     // Renown of the character most recently played online, left of the name - the service's tracks come most
     // recently played first (AUDIT RENOWN1 UI-10: "earned" was never what it measured - a report the hour had spent
     // still marks its character played). None for an account that has not earned any yet, or a service before it.
     // RENOWN-CHAR: a character's again (RENOWN-ACCOUNT drew the account's one here).
     const tracks = stage === 'in' ? renownTracksOfCard(flow.account?.renown) : [];
-    const heading = stage === 'in' ? (flow.account?.name ?? copy.title) : copy.title;
+    const heading = stage === 'in' ? (flow.account?.name ?? t(copy.title)) : t(copy.title);
     const lvText = renownText(tracks[0]?.level);
     if (lvText) {
       const h = el('h3', null, null);

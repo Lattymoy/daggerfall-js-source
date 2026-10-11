@@ -105,7 +105,7 @@ export function normaliseName(name) {
   let out = '';
   for (const ch of flat) {
     const mapped = LEET.get(ch) ?? ch;
-    if (mapped >= 'a' && mapped <= 'z') out += mapped;
+    if ((mapped >= 'a' && mapped <= 'z') || (mapped >= '\u0430' && mapped <= '\u044f') || mapped === '\u0451') out += mapped;
   }
   return out;
 }

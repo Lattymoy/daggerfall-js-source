@@ -78,7 +78,16 @@ export async function loadBiogs(fetchBytes) {
 export async function loadBiog(fetchBytes, classIndex) {
   try {
     const bytes = await fetchBytes(biogFileName(classIndex));
-    const text = new TextDecoder('latin1').decode(bytes);
+    let text;
+    try {
+      text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    } catch {
+      try {
+        text = new TextDecoder('windows-1251').decode(bytes);
+      } catch {
+        text = new TextDecoder('latin1').decode(bytes);
+      }
+    }
     return parseBiog(text, classIndex);
   } catch (e) {
     console.warn(`[chargen] ${biogFileName(classIndex)} unavailable; the biography questions are skipped`, e);

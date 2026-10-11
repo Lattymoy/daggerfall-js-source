@@ -27790,6 +27790,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     _litRanges = pool.ranges;
     return nearestLights(_sceneLights, cam.pos, r.maxPointLights, _litRanges, null, 0, pool.n);
   };
+  const _outsideFlatRight = new Float32Array(3);
   const drawOutsideStreet = (r, planes) => {
     const ground = [], flats = [];
     for (const p of built.values()) {
@@ -27831,7 +27832,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       r.drawWaterSurfaces(_waterRows, n, 6.4, _waterU);
       for (let i = 0; i < n; i++) _waterRows[i].fill(null);
     }
-    if (flats.length) r.drawBillboards(flats, new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]), UP_Y);
+    if (flats.length) {
+      _outsideFlatRight[0] = Math.cos(cam.yaw); _outsideFlatRight[1] = 0; _outsideFlatRight[2] = -Math.sin(cam.yaw);
+      r.drawBillboards(flats, _outsideFlatRight, UP_Y);
+    }
     // FINAL AUDIT: and the carved sea's top - Deep Waters' (on by default), the street frame's transparent queue after
     // every cut-out flat: the view out drew the bed under it dry
     if (deepWaters) drawDeepWatersSurfaces(performance.now(), ground);
@@ -28983,6 +28987,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   const _sceneLights = [];
   const _lightT = [0, 0, 0];
   const _yardRows = [];   // AUDIT YARD-LIGHT (L4): the yards' lamps' scene-light rows, refilled in place (homeYards.js yardLampRows)
+  const _indirectColorScratch = new Float32Array(3);
+  const _emptyF32 = new Float32Array(0);
   // WOD2: the frame's World of Daggerfall lights ride the same pool,
   // after the lanterns, with a range array of their own beside the
   // animator's (theirs never flicker - the interior light prefab is not
@@ -32628,9 +32634,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     {
       // DW-D: UnderwaterPresentationEffects.SuppressPlayerIndirectLight - its intensity 0 under the fog, back after
       const iScale = _dwFogP?.under ? 0 : indirectLightScale(minute) * wxNow.sun;   // WX2: the front's scale
-      renderer.setIndirectLight(cam.pos, INDIRECT_LIGHT_RANGE, new Float32Array([
-        INDIRECT_LIGHT_COLOR[0] * iScale, INDIRECT_LIGHT_COLOR[1] * iScale, INDIRECT_LIGHT_COLOR[2] * iScale,
-      ]));
+      _indirectColorScratch[0] = INDIRECT_LIGHT_COLOR[0] * iScale;
+      _indirectColorScratch[1] = INDIRECT_LIGHT_COLOR[1] * iScale;
+      _indirectColorScratch[2] = INDIRECT_LIGHT_COLOR[2] * iScale;
+      renderer.setIndirectLight(cam.pos, INDIRECT_LIGHT_RANGE, _indirectColorScratch);
     }
     // AUDIT 64 F9 - DaggerfallLocation.cs:141-145 is the only window-style
     // rule a town runs (its WindowTextureStyle feeds SetClimate at :218/:221)
@@ -32729,7 +32736,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // daylight Light cast would have lit nothing at all.
       // WOD2: ...and the mod's lights, which burn at every hour.
       const wodSel = wodLit || csaLit.length ? _wodSelect(0, _csaFill(wodLit ? _wodFill(0) : 0, csaLit)) : null;   // AUDIT PRE-MERGE 0928 R2: the boats' lanterns by day too (DungeonLightHandler lights them near)
-      const lit = withPlayerLights(wodSel ? wodSel.data : new Float32Array(0),
+      const lit = withPlayerLights(wodSel ? wodSel.data : _emptyF32,
         magic?.candleLight(), _dwFogP?.under ? null : playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...(naval?.enabled ? naval.lights() : []), ...peerTorchLights(), ...(gatePool?.lights() ?? []), ...(riteHost?.lights() ?? []), ...camps.lights(), ...droppedTorches.lights());   // PEERLIGHT1: the others' torches, right after my own hand lights   // HT1; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does; NAV-B the flashes by day too
       if (wodSel) _wodSetLights(lit, wodSel);
       else renderer.setPointLights(lit, CITY_LIGHT_COLOR_F32);

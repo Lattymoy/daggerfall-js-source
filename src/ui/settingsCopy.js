@@ -15,6 +15,7 @@
 // the first letter (SoundVolume -> soundVolume); the ones that do not
 // are listed explicitly.
 import { SETTINGS_INFO } from '../systems/settingsText.js';
+import { t } from '../systems/i18n.js';
 
 export const LABELS = Object.freeze({
   "Audio/AlternateMusic": "Alternate Music",
@@ -232,9 +233,12 @@ export function dfuTextKey(key) {
  *  only so a key added by a future DFU re-bake still reads as words
  *  rather than as code. */
 export function labelOf(key) {
-  if (LABELS[key]) return LABELS[key];
-  const bare = key.slice(key.indexOf('/') + 1).replace(/^LypyL_/, '').replace(/^Enable/, '');
-  return bare.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/_/g, ' ').trim();
+  let text = LABELS[key];
+  if (!text) {
+    const bare = key.slice(key.indexOf('/') + 1).replace(/^LypyL_/, '').replace(/^Enable/, '');
+    text = bare.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/_/g, ' ').trim();
+  }
+  return t(text);
 }
 
 /** AUDIT RETRO1 C7: DFU's words that live outside GameSettings.txt -

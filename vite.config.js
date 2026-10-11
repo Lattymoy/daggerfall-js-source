@@ -6,7 +6,7 @@ import { landingHtml, readBuildSha } from './scripts/landingHtml.mjs';
 // Dev-only: serve ARENA2 game data at /arena2/*. The data is freeware but
 // never committed or bundled (Port-Doctrine); builds contain no game files.
 function arena2DevServer() {
-  const root = process.env.ARENA2_PATH || '/home/claude/dfdata/arena2';
+  const root = process.env.ARENA2_PATH || join(process.cwd(), 'public', 'arena2');
   // ARENA2 FOLDERS IN THE WILD ARE MIXED CASE. The retail data was
   // written on a filesystem that did not care, and real installs prove
   // it: the DaggerfallSetup build carries INVE00I0.img beside
@@ -68,6 +68,31 @@ function arena2DevServer() {
         res.setHeader('Content-Type', 'application/octet-stream');
         // AUDIT 68 X2: a read failure ends THIS response, not the server;
         // a client gone mid-file closes the descriptor.
+        const file = createReadStream(path);
+        file.on('error', () => {
+          if (!res.headersSent) res.statusCode = 500;
+          res.end();
+        });
+        res.on('close', () => file.destroy());
+      });
+    },
+    configurePreviewServer(server) {
+      for (const mount of ['/arena2', '/play/arena2']) server.middlewares.use(mount, (req, res, next) => {
+        const name = decodeURIComponent(req.url.slice(1).split('?')[0]);
+        if (!/^[A-Za-z0-9._-]+$/.test(name)) return next();
+        let path = join(root, onDisk(name));
+        if (!isFile(path) && /^BOK\d+\.TXT$/i.test(name)) {
+          const books = join(root, onDisk('BOOKS'));
+          let file = name;
+          try { file = readdirSync(books).find((f) => f.toUpperCase() === name.toUpperCase()) ?? name; } catch {}
+          path = join(books, file);
+        }
+        if (!isFile(path)) {
+          res.statusCode = 404;
+          return res.end('not found');
+        }
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Content-Type', 'application/octet-stream');
         const file = createReadStream(path);
         file.on('error', () => {
           if (!res.headersSent) res.statusCode = 500;

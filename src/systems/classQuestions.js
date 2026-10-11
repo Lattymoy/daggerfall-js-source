@@ -96,9 +96,10 @@ export function displayQuestion(questionText) {
   const lines = questionText.split('\n').filter((x) => x !== '');
   let aIndex = 0, bIndex = 0, cIndex = 0;
   for (let i = 0; i < lines.length; i++) {
-    if (lines[i].includes('a)')) aIndex = i;
-    else if (lines[i].includes('b)')) bIndex = i;
-    else if (lines[i].includes('c)')) cIndex = i;
+    const l = lines[i].toLowerCase();
+    if (l.includes('a)') || l.includes('а)')) aIndex = i;
+    else if (l.includes('b)') || l.includes('б)')) bIndex = i;
+    else if (l.includes('c)') || l.includes('в)')) cIndex = i;
   }
   return { lines, aIndex, bIndex, cIndex };
 }

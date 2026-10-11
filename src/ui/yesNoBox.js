@@ -26,6 +26,7 @@ import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { armDrawWatchdog, disarmDraw } from './drawWatchdog.js';   // DISC29-D: the watchdog counts frames, not milliseconds
+import { t } from '../systems/i18n.js';
 
 export const YES_NO_BOX_ID = 'enhanced-yesno';
 /** The card leaves when its draws stop - a host gone without closing it - as the input box's does (400 ms). */
@@ -60,19 +61,19 @@ function buildFace(doc, owner) {
   acts.className = 'yesnobox-acts';
   const press = (yes) => () => { audio.playOneShot(SOUND.ButtonClick, 1); owner.answer(yes); };   // ButtonClickHandler (:487)
   const yes = doc.createElement('button');
-  yes.type = 'button'; yes.className = owner.okOnly ? 'act primary yesnobox-ok' : 'act yesnobox-yes'; yes.textContent = owner.okOnly ? OK_LABEL : YES_NO_LABELS.yes;
+  yes.type = 'button'; yes.className = owner.okOnly ? 'act primary yesnobox-ok' : 'act yesnobox-yes'; yes.textContent = owner.okOnly ? t(OK_LABEL) : t(YES_NO_LABELS.yes);
   yes.onclick = press(true);
   acts.append(yes);
   let no = null;
   if (!owner.okOnly) {   // SOFTCAP3: the OK box has its one button, and it is the default
     no = doc.createElement('button');
-    no.type = 'button'; no.className = 'act primary yesnobox-no'; no.textContent = YES_NO_LABELS.no;   // the default button, marked as such
+    no.type = 'button'; no.className = 'act primary yesnobox-no'; no.textContent = t(YES_NO_LABELS.no);   // the default button, marked as such
     no.onclick = press(false);
     acts.append(no);
   }
   const hint = doc.createElement('div');
   hint.className = 'notice-hint';
-  hint.textContent = owner.okOnly ? OK_HINT : YES_NO_HINT;
+  hint.textContent = owner.okOnly ? t(OK_HINT) : t(YES_NO_HINT);
   root.append(rows, acts, hint);
   doc.body.append(root);
   return { owner, root, rows, yes, no, rowsKey: null };

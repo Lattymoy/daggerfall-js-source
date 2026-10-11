@@ -57,8 +57,22 @@ import { traceProvinces, MAP_W, MAP_H, PROVINCE_NAMES } from './provinceMap.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { repaintKeepingScroll } from './domRepaint.js';
 // PX13: the wizard stands on the same living sky as every other
-// enhanced face - drawn by the one module, clocked by this mount.
 import { drawPixelGround } from './pixelGround.js';
+import { t } from '../systems/i18n.js';
+
+function translateRepText(str) {
+  if (!str) return str;
+  return str
+    .replace(/Your reputation have changed as follows:/i, 'Ваша репутация изменилась следующим образом:')
+    .replace(/Commoners:/i, 'Простолюдины:')
+    .replace(/Merchants:/i, 'Купцы:')
+    .replace(/Scholars:/i, 'Ученые:')
+    .replace(/Nobility:/i, 'Знать:')
+    .replace(/Underworld:/i, 'Преступный мир:')
+    .replace(/Unchanged/i, 'Без изменений')
+    .replace(/Higher/i, 'Повысилась')
+    .replace(/Lower/i, 'Понизилась');
+}
 
 /** DFU's WizardStages, in the order the flow walks them, with the
  *  words a player reads. The flow's own state names are the keys.
@@ -116,7 +130,7 @@ function mapPane() {
     // picture, never the character.
     const list = el('div', 'racegrid');
     for (const race of RACE_TEMPLATES) {
-      const b = el('button', `racecell${race.key === flow.race.key ? ' on' : ''}`, race.name);
+      const b = el('button', `racecell${race.key === flow.race.key ? ' on' : ''}`, t(race.name));
       b.onclick = () => pick(race.key);
       list.append(b);
     }
@@ -166,14 +180,14 @@ function mapPane() {
   // Labels last so no coastline crosses a word, and sized in map units
   // so they scale with the picture rather than pinning it to one size.
   for (const p of provinces) {
-    const t = svg('text', {
+    const tEl = svg('text', {
       x: p.label[0], y: p.label[1],
       class: `provlabel${p.inert ? ' inert' : ''}${p.key === sel ? ' on' : ''}`,
       'text-anchor': 'middle', 'dominant-baseline': 'middle',
     });
-    t.textContent = p.name;
-    if (!p.inert) t.addEventListener('click', () => pick(p.key));
-    frame.append(t);
+    tEl.textContent = t(p.name);
+    if (!p.inert) tEl.addEventListener('click', () => pick(p.key));
+    frame.append(tEl);
   }
   wrap.append(frame);
   return wrap;
@@ -188,10 +202,10 @@ let hoverBody = null;
 function refreshHover() {
   if (!hoverTitle || !hoverBody) return;
   const who = hover ? RACE_TEMPLATES.find((r) => r.key === hover) : null;
-  hoverTitle.textContent = who ? (PROVINCE_NAMES[who.key] ?? who.name) : 'Where are you from?';
+  hoverTitle.textContent = who ? `${t(PROVINCE_NAMES[who.key] ?? who.name)} \u00b7 ${t(who.name)}` : t('Where are you from?');
   hoverBody.textContent = who
-    ? `Home of the ${who.name}. Press to read what it means to be born here.`
-    : 'Your homeland sets your face, your name and how much of Tamriel greets you kindly.';
+    ? `${t('Home of the')} ${t(who.name)}.`
+    : t('Your homeland sets your face, your name and how much of Tamriel greets you kindly.');
 }
 
 /** A province press. The flow owns what happens next: setRace records
@@ -228,7 +242,7 @@ function raceStage() {
 
   if (flow.raceConfirm) {
     const d = el('div', 'dcard');
-    d.append(el('h3', null, `${PROVINCE_NAMES[flow.race.key] ?? flow.race.name} \u00b7 ${flow.race.name}`));
+    d.append(el('h3', null, `${t(PROVINCE_NAMES[flow.race.key] ?? flow.race.name)} \u00b7 ${t(flow.race.name)}`));
     // PX17a (Mac: the right-hand text smooshed): TEXT.RSC hands lines
     // HARD-WRAPPED for the classic 320px screen; rendering each as
     // its own paragraph fights every other viewport - ragged on a
@@ -244,12 +258,12 @@ function raceStage() {
     }
     flush();
     const a = el('div', 'acts');
-    const yes = el('button', 'act primary', `Play as ${flow.race.name}`);
+    const yes = el('button', 'act primary', `${t('Play as ')}${t(flow.race.name)}`);
     // AUDIT 64 F32: the box's own hit, not the shared 'confirm' - on
     // which Return is inert here (no default button,
     // CreateCharRaceSelect.cs:107-108).
     yes.onclick = () => { flow.applyHit({ confirmRace: true }); paint(); };
-    const no = el('button', 'act', 'Choose again');
+    const no = el('button', 'act', t('Choose again'));
     no.onclick = () => { flow.applyHit({ cancelRace: true }); paint(); };
     a.append(yes, no);
     d.append(a);
@@ -277,9 +291,9 @@ function raceStage() {
 function genderStage() {
   const pane = el('div', 'stagebody solo');
   const wrap = el('div', 'choose');
-  wrap.append(el('h2', null, 'Are you a man or a woman?'));
+  wrap.append(el('h2', null, t('Are you a man or a woman?')));
   const row = el('div', 'bigchoice');
-  for (const [key, label] of [['male', 'Man'], ['female', 'Woman']]) {
+  for (const [key, label] of [['male', t('Man')], ['female', t('Woman')]]) {
     const b = el('button', `bigbtn${flow.gender === key ? ' on' : ''}`, label);
     b.onclick = () => { flow.applyHit({ setGender: key }); paint(); };
     row.append(b);
@@ -297,15 +311,15 @@ function genderStage() {
 function classMethodStage() {
   const pane = el('div', 'stagebody solo');
   const wrap = el('div', 'choose');
-  wrap.append(el('h2', null, 'How do you want to choose?'));
+  wrap.append(el('h2', null, t('How do you want to choose?')));
   const row = el('div', 'bigchoice tall');
   const list = el('button', 'bigbtn');
-  list.append(el('span', 'bigk', 'Choose from a list'));
-  list.append(el('span', 'bign', 'The eighteen classic classes, or build your own.'));
+  list.append(el('span', 'bigk', t('Choose from a list')));
+  list.append(el('span', 'bign', t('The eighteen classic classes, or build your own.')));
   list.onclick = () => { flow.applyHit({ classMethod: 'list' }); paint(); };
   const quiz = el('button', 'bigbtn');
-  quiz.append(el('span', 'bigk', 'Answer ten questions'));
-  quiz.append(el('span', 'bign', 'The game picks a class from your answers.'));
+  quiz.append(el('span', 'bigk', t('Answer ten questions')));
+  quiz.append(el('span', 'bign', t('The game picks a class from your answers.')));
   quiz.onclick = () => { flow.applyHit({ classMethod: 'questions' }); paint(); };
   row.append(list, quiz);
   wrap.append(row);
@@ -935,16 +949,16 @@ function biographyStage() {
 function repBoxPane() {
   const pane = el('div', 'stagebody solo');
   const wrap = el('div', 'choose');
-  wrap.append(el('h2', null, 'Word gets around'));
+  wrap.append(el('h2', null, t('Word gets around')));
   const card = el('div', 'card repbox');
   for (const row of flow.biogRepBox) {
     const text = typeof row === 'string' ? row : row.text;
-    if (text?.trim()) card.append(el('p', null, text));
+    if (text?.trim()) card.append(el('p', null, translateRepText(text)));
   }
   wrap.append(card);
   pane.append(wrap);
   // CHARGEN-REFLEX: declared, not drawn - see reflexStage.
-  stagePrimary = { label: 'Go on', act: () => { flow.input('confirm'); paint(); } };
+  stagePrimary = { label: t('Go on'), act: () => { flow.input('confirm'); paint(); } };
   return pane;
 }
 
@@ -961,7 +975,7 @@ function repBoxPane() {
 function nameStage() {
   const pane = el('div', 'stagebody solo');
   const wrap = el('div', 'choose');
-  wrap.append(el('h2', null, 'What are you called?'));
+  wrap.append(el('h2', null, t('What are you called?')));
 
   const box = el('input', 'namebox');
   box.type = 'text';
@@ -987,7 +1001,7 @@ function nameStage() {
   // 'Suggest one' is not the stage's PRIMARY and stays on the stage;
   // Continue is declared, so the action bar carries it (CHARGEN-REFLEX).
   const a = el('div', 'acts');
-  const dice = el('button', 'act', 'Suggest one');
+  const dice = el('button', 'act', t('Suggest one'));
   dice.onclick = () => { flow.applyHit({ randomName: true }); paint(); };
   a.append(dice);
   wrap.append(a);
@@ -997,7 +1011,7 @@ function nameStage() {
   // a disabled primary instead, so the button has to follow the box as
   // it is typed into - `bind` hands the stage the button the bar drew.
   stagePrimary = {
-    label: 'Continue',
+    label: t('Continue'),
     disabled: !flow.name.length,
     act: () => { flow.input('confirm'); paint(); },
     bind: (btn) => { nameOk = btn; },
@@ -1094,15 +1108,15 @@ function statsStage() {
   // are zero-sum, ChargenFlow.statTotalFinal) and is what the
   // character walks out with; once the pool is spent they are the same
   // number and only one is shown.
-  list.append(poolBar('points to spend', flow.statPool, {
-    label: 'attribute total',
+  list.append(poolBar(t('points to spend'), flow.statPool, {
+    label: t('attribute total'),
     value: flow.statPool > 0 ? `${flow.statTotalNow} \u2192 ${flow.statTotalFinal}` : flow.statTotalNow,
   }));
   STAT_KEYS_ORDER.forEach((key, i) => {
     const row = el('div', `row${i === flow.statCursor ? ' on' : ''}`);
     const main = el('button', 'row-main');
     main.append(el('div', 'row-name', attrName(key)));
-    main.title = ATTRIBUTE_BLURB[key];   // UXB1-G: on hover
+    main.title = t(ATTRIBUTE_BLURB[key] ?? ATTRIBUTE_BLURB[key]);   // UXB1-G: on hover
     main.onclick = () => { flow.applyHit({ setStatCursor: i }); paint(); };
     row.append(main);
     row.append(stepper(flow.stats?.[key] ?? 0, (dir) => {
@@ -1117,21 +1131,21 @@ function statsStage() {
   const detail = el('div', 'detail');
   const d = el('div', 'dcard');
   d.append(attrHelp(STAT_KEYS_ORDER[flow.statCursor]));   // UXB1-G: and for the one selected - the pointer-less way in
-  d.append(el('h3', null, 'What these buy you'));
+  d.append(el('h3', null, t('What these buy you')));
   const dl = el('dl', 'stats');
   const derived = flow.derived() ?? {};
   for (const [k, label] of [['damage', 'Damage'], ['encumbrance', 'Carry weight'],
     ['spellPoints', 'Spell points'], ['magicResist', 'Magic resistance'],
     ['toHit', 'To hit'], ['hitPoints', 'Hit points'], ['healingRate', 'Healing rate']]) {
     if (derived[k] == null) continue;
-    dl.append(el('dt', null, label), el('dd', null, derived[k]));
+    dl.append(el('dt', null, t(label)), el('dd', null, derived[k]));
   }
   d.append(dl);
   const a = el('div', 'acts');
-  const ok = el('button', 'act primary', flow.statPool > 0 ? `${flow.statPool} left to spend` : 'Continue');
+  const ok = el('button', 'act primary', flow.statPool > 0 ? `${flow.statPool} ${t('left to spend')}` : t('Continue'));
   ok.disabled = flow.statPool > 0;
   ok.onclick = () => { flow.input('confirm'); paint(); };
-  const again = el('button', 'act', 'Roll again');
+  const again = el('button', 'act', t('Roll again'));
   again.onclick = () => { flow.reroll(); paint(); };
   a.append(ok, again);
   d.append(a);
@@ -1153,14 +1167,14 @@ function skillsStage() {
   for (const [group, ids] of flow.skillRows()) {
     const sec = el('div', 'skillgroup');
     const head = el('div', 'skillhead');
-    head.append(el('span', 'skillk', group[0].toUpperCase() + group.slice(1)));
-    head.append(el('span', 'skillpool', `${flow.pools?.[group] ?? 0} to spend`));
+    head.append(el('span', 'skillk', t(group[0].toUpperCase() + group.slice(1))));
+    head.append(el('span', 'skillpool', `${flow.pools?.[group] ?? 0} ${t('to spend')}`));
     sec.append(head);
     for (const id of ids) {
       const at = cursor++;
       const row = el('div', `row${at === flow.skillCursor ? ' on' : ''}`);
       const main = el('button', 'row-main');
-      main.append(el('div', 'row-name', SKILL_NAMES[id] ?? `Skill ${id}`));
+      main.append(el('div', 'row-name', t(SKILL_NAMES[id] ?? `Skill ${id}`)));
       main.onclick = () => { flow.applyHit({ setSkillCursor: at }); paint(); };
       row.append(main);
       row.append(stepper(flow.skills?.[id] ?? 0, (dir) => {
@@ -1174,7 +1188,7 @@ function skillsStage() {
   }
   const left = Object.values(flow.pools ?? {}).reduce((n, v) => n + v, 0);
   const a = el('div', 'acts');
-  const ok = el('button', 'act primary', left > 0 ? `${left} left to spend` : 'Continue');
+  const ok = el('button', 'act primary', left > 0 ? `${left} ${t('left to spend')}` : t('Continue'));
   ok.disabled = left > 0;
   ok.onclick = () => { flow.input('confirm'); paint(); };
   a.append(ok);
@@ -1232,31 +1246,19 @@ const REFLEX_ROWS = Object.freeze([
 function reflexStage() {
   const pane = el('div', 'stagebody solo');
   const wrap = el('div', 'choose');
-  wrap.append(el('h2', null, 'How quick are you?'));
+  wrap.append(el('h2', null, t('How quick are you?')));
   const col = el('div', 'bigchoice tall');
   for (const [key, label, note] of REFLEX_ROWS) {
     const v = PLAYER_REFLEXES[key];
     const b = el('button', `bigbtn${flow.reflexes === v ? ' on' : ''}`);
-    b.append(el('span', 'bigk', label));
-    b.append(el('span', 'bign', note));
+    b.append(el('span', 'bigk', t(label)));
+    b.append(el('span', 'bign', t(note)));
     b.onclick = () => { flow.applyHit({ setReflexes: v }); paint(); };
     col.append(b);
   }
   wrap.append(col);
   pane.append(wrap);
-  // CHARGEN-REFLEX: this stage's Continue is DECLARED, not drawn here.
-  // It used to live in a `.acts` row at the bottom of `.choose`, and
-  // `.choose` is centred and full-height: on any window shorter than
-  // the five answers need, the row overflowed past the bottom of
-  // `.stagebody` and the opaque `.actionbar` painted straight over it.
-  // The button was visible and un-clickable - `elementFromPoint` at
-  // its centre answered `.actionbar` - which is what a player reported
-  // as a wizard that could not be finished. Every OTHER `.choose`
-  // stage advances on the ANSWER itself and so has no such row; this
-  // one needs a separate confirm because the band is pre-selected.
-  // So the confirm goes where Back already lives: the action bar is
-  // outside the scrolling stage and is always on screen.
-  stagePrimary = { label: 'Continue', act: () => { flow.input('confirm'); paint(); } };
+  stagePrimary = { label: t('Continue'), act: () => { flow.input('confirm'); paint(); } };
   return pane;
 }
 
@@ -1327,24 +1329,24 @@ function summaryStage() {
   // AUDIT 64 F33: the SUMMARY's own rollout pool. CHAR1: and its own
   // total, because this screen edits the same eight values and asks the
   // same question - statTotalFinal reads whichever pool is on screen.
-  cols[0].append(sectionHead('Attributes', flow.sumStatPool ?? 0, flow.statTotalFinal));
+  cols[0].append(sectionHead(t('Attributes'), flow.sumStatPool ?? 0, flow.statTotalFinal));
   STAT_KEYS_ORDER.forEach((key, i) => {
     const row = reviewRow(attrName(key), flow.stats?.[key] ?? 0, (dir) => {
       flow.applyHit({ setStatCursor: i });
       flow.applyHit({ statStep: dir });
       paint();
     });
-    row.title = ATTRIBUTE_BLURB[key];   // UXB1-G
+    row.title = t(ATTRIBUTE_BLURB[key] ?? ATTRIBUTE_BLURB[key]);   // UXB1-G
     cols[0].append(row);
   });
 
   let cursor = 0;
   flow.skillRows().forEach(([group, ids], g) => {
     const col = cols[g < 2 ? 1 : 2];   // primary and major share the middle column, minor the last
-    col.append(sectionHead(group[0].toUpperCase() + group.slice(1), flow.pools?.[group] ?? 0));
+    col.append(sectionHead(t(group[0].toUpperCase() + group.slice(1)), flow.pools?.[group] ?? 0));
     for (const id of ids) {
       const at = cursor++;
-      col.append(reviewRow(SKILL_NAMES[id] ?? `Skill ${id}`, flow.skills?.[id] ?? 0, (dir) => {
+      col.append(reviewRow(t(SKILL_NAMES[id] ?? `Skill ${id}`), flow.skills?.[id] ?? 0, (dir) => {
         flow.applyHit({ setSkillCursor: at });
         flow.applyHit({ skillStep: dir, group });
         paint();
@@ -1357,20 +1359,20 @@ function summaryStage() {
 
   const detail = el('div', 'detail');
   const d = el('div', 'dcard');
-  d.append(el('h3', null, 'Reflexes'));
+  d.append(el('h3', null, t('Reflexes')));
   const rf = el('div', 'reflexpick');
   for (const [key, label] of REFLEX_ROWS) {
     const v = PLAYER_REFLEXES[key];
-    const b = el('button', `reflexbtn${flow.sumReflexes === v ? ' on' : ''}`, label);
+    const b = el('button', `reflexbtn${flow.sumReflexes === v ? ' on' : ''}`, t(label));
     b.onclick = () => { flow.applyHit({ setReflexes: v }); paint(); };
     rf.append(b);
   }
   d.append(rf);
 
-  d.append(el('h3', null, 'Face'));
+  d.append(el('h3', null, t('Face')));
   const fa = el('div', 'acts');
   for (const [dir, label] of [[-1, 'Previous'], [1, 'Next']]) {
-    const b = el('button', 'act', label);
+    const b = el('button', 'act', t(label));
     b.onclick = () => { flow.applyHit({ faceStep: dir }); paint(); };
     fa.append(b);
   }
@@ -1378,9 +1380,9 @@ function summaryStage() {
 
   const left = (flow.sumStatPool ?? 0) + Object.values(flow.pools ?? {}).reduce((n, v) => n + v, 0);   // AUDIT 64 F33
   const a = el('div', 'acts');
-  const ok = el('button', 'act primary', left > 0 ? `${left} left to spend` : 'Begin your life');
+  const ok = el('button', 'act primary', left > 0 ? `${left} ${t('left to spend')}` : t('Begin your life'));
   ok.onclick = () => { flow.confirmSummary(); if (flow.done) onExit('done'); else paint(); };
-  const restart = el('button', 'act', 'Start over');
+  const restart = el('button', 'act', t('Start over'));
   restart.onclick = () => { flow.applyHit({ restart: true }); paint(); };
   a.append(ok, restart);
   d.append(a);
@@ -1393,7 +1395,7 @@ function summaryStage() {
 function sectionHead(label, pool, total = null) {
   const h = el('div', 'skillhead review');
   h.append(el('span', 'skillk', label));
-  const note = [total == null ? null : `total ${total}`, pool > 0 ? `${pool} to spend` : null].filter(Boolean);
+  const note = [total == null ? null : `${t('total')} ${total}`, pool > 0 ? `${pool} ${t('to spend')}` : null].filter(Boolean);
   h.append(el('span', 'skillpool', note.join('  \u00b7  ')));
   return h;
 }
@@ -1458,7 +1460,7 @@ function paintInto() {
     const still = typeof globalThis.matchMedia === 'function' && globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (!still) {
       const t0 = Date.now();
-      groundTimer = setInterval(() => drawPixelGround(ground, vw(), vh(), (Date.now() - t0) / 1000), 125);
+      groundTimer = setInterval(() => drawPixelGround(ground, vw(), vh(), (Date.now() - t0) / 1000), 1000);
     }
     const vig = el('div', 'px-vignette');
     host.append(ground, vig);
@@ -1467,7 +1469,7 @@ function paintInto() {
 
   const side = el('aside', 'side');
   const brand = el('div', 'brand');
-  brand.append(el('h1', null, 'New Character'));
+  brand.append(el('h1', null, t('New Character')));
   brand.append(el('div', 'sub', 'Daggerfall'));
   side.append(brand);
 
@@ -1476,7 +1478,7 @@ function paintInto() {
   STAGE_RAIL.forEach((stage, i) => {
     const state = i === here ? ' on' : (i < here ? ' done' : ' todo');
     const b = el('button', `railbtn${state}`);
-    b.append(el('span', 'rk', stage.label));
+    b.append(el('span', 'rk', t(stage.label)));
     // the wizard is a walk, not a menu: nothing here is pressed (DISC10-B - the finished steps were left enabled and
     // styled as the menu's pressable rail, so a player clicked back through them and nothing happened; Back is the way)
     b.disabled = i > here;
@@ -1498,11 +1500,11 @@ function paintInto() {
   STAGE_RAIL.forEach((_, i) => segs.append(el('i', i <= here ? 'seg on' : 'seg')));
   strip.append(segs);
   strip.append(el('div', 'steptext',
-    `${Math.max(here, 0) + 1} of ${STAGE_RAIL.length} \u00b7 ${STAGE_RAIL[here]?.label ?? ''}`));
+    `${Math.max(here, 0) + 1} ${t('of')} ${STAGE_RAIL.length} \u00b7 ${t(STAGE_RAIL[here]?.label) ?? ''}`));
   side.append(strip);
 
   const foot = el('div', 'foot');
-  foot.append(document.createTextNode(`step ${Math.max(here, 0) + 1} of ${STAGE_RAIL.length}`));
+  foot.append(document.createTextNode(`${t('step')} ${Math.max(here, 0) + 1} ${t('of')} ${STAGE_RAIL.length}`));
   side.append(foot);
 
   const pane = el('main', 'pane');
@@ -1532,7 +1534,7 @@ function paintInto() {
   // stage cancels the wizard, which is DFU's own arm
   // (RaceSelectWindow_OnClose's Cancelled) and U27's unwind.
   const bar = el('div', 'actionbar');
-  const back = el('button', 'act', here <= 0 ? 'Cancel' : 'Back');
+  const back = el('button', 'act', t(here <= 0 ? 'Cancel' : 'Back'));
   back.onclick = () => {
     if (here <= 0 && !flow.raceConfirm) { onExit('cancel'); return; }
     flow.input('back');
@@ -1540,7 +1542,7 @@ function paintInto() {
   };
   bar.append(back);
   if (stagePrimary) {
-    const go = el('button', 'act primary', stagePrimary.label);
+    const go = el('button', 'act primary', t(stagePrimary.label));
     go.disabled = !!stagePrimary.disabled;
     go.onclick = stagePrimary.act;
     bar.append(go);

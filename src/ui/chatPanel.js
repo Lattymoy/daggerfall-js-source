@@ -162,6 +162,7 @@ import { PARTY_GREEN_CSS } from '../net/social.js';   // CHAT-CHAN: the Party ta
 import { SHORTCODE_LIST } from '../net/chatCommands.js';   // EMOTE1: the picker offers the shortcodes' own emoji, in their order, so a pick and a :code: say the same thing
 import { getPref, setPref } from '../systems/uiPrefs.js';   // CHAT-R2: the hidden state outlives the session
 import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS, PIXEL_TEXT_SHADOW } from './pixelifyFive.js';   // FONT1: the enhanced skin's own face, unsmoothed, with Silkscreen's five
+import { t } from '../systems/i18n.js';
 
 /** The action whose key opens the chat: DFU's own cursor key (Enter by default), since opening frees the cursor. */
 export const CHAT_OPEN_ACTION = 'ActivateCursor';
@@ -512,11 +513,11 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   jump.type = 'button';
   const form = el('form', 'dfchat-form');
   const input = el('input', 'dfchat-input');
-  input.type = 'text'; input.maxLength = CHAT_MAX; input.placeholder = 'Say something'; input.autocomplete = 'off'; input.spellcheck = false;
-  input.setAttribute('aria-label', 'Chat');
-  const send = el('button', 'dfchat-send', 'Send'); send.type = 'submit';
+  input.type = 'text'; input.maxLength = CHAT_MAX; input.placeholder = t('Say something'); input.autocomplete = 'off'; input.spellcheck = false;
+  input.setAttribute('aria-label', t('Chat'));
+  const send = el('button', 'dfchat-send', t('Send')); send.type = 'submit';
   const close = el('button', 'dfchat-close', '✕'); close.type = 'button';
-  close.setAttribute('aria-label', 'Close chat');
+  close.setAttribute('aria-label', t('Close chat'));
   // CHAT-SIZE: the corner the box is dragged from - the last thing in the form's row, so it stands at the box's corner
   const grip = el('div', 'dfchat-grip');
   grip.tabIndex = 0;
@@ -959,7 +960,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     }
     // CHAT-CHAN: the field says where a line typed into it goes
     const on = log.tab(log.active);
-    const ph = on ? `Say something - ${on.place ?? on.label}` : 'Say something';
+    const ph = on ? `${t('Say something')} - ${on.place ?? on.label}` : t('Say something');
     if (input.placeholder !== ph) input.placeholder = ph;
     const unread = log.unreadTotal();
     badgeOut.textContent = unread ? String(unread) : '';

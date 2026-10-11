@@ -33,8 +33,12 @@ export const SDF_SHADOW_SCALE = 0.4;    // sdfShadowPositionScale (:42)
 const SDF_RASTER = 90;                  // the atlas's em in texels - twice the point size, for a crisp 4x-6x screen
 const SDF_PAD = 3;
 /** The codes the face is asked for: DFU seeds the replacement with the source font's character table (:707-716) -
- *  printable ASCII and Latin-1's printable half here. */
-export const SDF_CODES = Object.freeze([...Array.from({ length: 95 }, (_, i) => 32 + i), ...Array.from({ length: 96 }, (_, i) => 160 + i)]);
+ *  printable ASCII, Latin-1's printable half, and Cyrillic block (0x0400-0x045F: Russian and Slavic alphabets). */
+export const SDF_CODES = Object.freeze([
+  ...Array.from({ length: 95 }, (_, i) => 32 + i),
+  ...Array.from({ length: 96 }, (_, i) => 160 + i),
+  ...Array.from({ length: 96 }, (_, i) => 1024 + i),
+]);
 
 /** The face's layout, or null on the classic arm. Rides the FNT itself, so every measure of the font - measureText is
  *  handed `font.fnt` at a hundred call sites - takes the same arm the draw does. */
@@ -48,14 +52,15 @@ export const sdfGlyphWidth = (fnt, code) => fnt.sdf.glyphs.get(sdfCode(fnt.sdf, 
  *  Glyph metrics are in POINT-SIZE units, as TMP's are. */
 export function buildSdfFace(family, { canvas = null } = {}) {
   const k = SDF_RASTER / SDF_POINT_SIZE;
-  const c = canvas ?? new OffscreenCanvas(1, 1);
+  const c = canvas ?? (typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(1, 1) : globalThis.document?.createElement?.('canvas'));
   let ctx = c.getContext('2d', { willReadFrequently: true });   // FIELD 2026-09-27: the atlas is read back (textureReplacement.decodePng's note)
-  ctx.font = `${SDF_RASTER}px "${family}"`;
+  const fontDecl = `${SDF_RASTER}px "${family}", "Georgia", "Times New Roman", "DejaVu Sans", serif`;
+  ctx.font = fontDecl;
   const cell = SDF_RASTER * 2 + SDF_PAD * 2;
   const cols = 16, rows = Math.ceil(SDF_CODES.length / cols);
   c.width = cols * cell; c.height = rows * cell;
   ctx = c.getContext('2d', { willReadFrequently: true });
-  ctx.font = `${SDF_RASTER}px "${family}"`;
+  ctx.font = fontDecl;
   ctx.fillStyle = '#fff'; ctx.textBaseline = 'alphabetic';
   const glyphs = new Map();
   SDF_CODES.forEach((code, i) => {
@@ -79,10 +84,12 @@ export function buildSdfFace(family, { canvas = null } = {}) {
 /** Load a pack's SDF face for `fnt` and put it on the FNT once it is ready - until then the classic arm draws. */
 async function loadSdfFace(renderer, fnt, name, url) {
   try {
-    const family = `dfu-sdf-${name}`;
-    const face = new globalThis.FontFace(family, await packBytes(url));
-    await face.load();
-    globalThis.document?.fonts?.add?.(face);
+    const family = url ? `dfu-sdf-${name}` : `dfu-default-${name}`;
+    if (url) {
+      const face = new globalThis.FontFace(family, await packBytes(url));
+      await face.load();
+      globalThis.document?.fonts?.add?.(face);
+    }
     const { glyphs, atlas } = buildSdfFace(family);
     for (let i = 0; i < atlas.colors.length; i += 4) { atlas.colors[i] = atlas.colors[i + 1] = atlas.colors[i + 2] = 255; }   // white, tinted per call
     const tex = renderer.uploadTexture('fnt', `${name}#sdf`, atlas, { smooth: true, alpha: true });
@@ -137,7 +144,10 @@ export const FNT_ERROR_CODE = 63;   // '?'
  *  fallback turns every code above 127 into '?', so an accent a player
  *  types on a non-US keyboard reaches the font as a question mark and
  *  never as a raw FNT glyph index. */
-export const asciiFold = (code) => (code > 127 ? FNT_ERROR_CODE : code);
+export const asciiFold = (code) => {
+  if (code >= 1024 && code <= 1279) return code;
+  return code > 127 ? FNT_ERROR_CODE : code;
+};
 
 /** HasGlyph (:419-422) over the dictionary LoadFont builds (:602-608):
  *  SpaceCode plus the 240 glyphs from asciiStart. */
@@ -172,7 +182,9 @@ export function makeFont(renderer, fnt, name) {
   const font = { fnt, tex: renderer.uploadTexture('fnt', name, buildFontAtlas(fnt)) };
   // OVH2: a worn UI pack's face for this font, when DFU would draw one (IsSDFCapable: the setting AND a face)
   const url = packFontUrl(name);
-  if (url && typeof globalThis.FontFace === 'function' && getBool('GUI', 'SDFFontRendering')) loadSdfFace(renderer, fnt, name, url);
+  if (typeof globalThis.FontFace === 'function' && getBool('GUI', 'SDFFontRendering')) {
+    loadSdfFace(renderer, fnt, name, url);
+  }
   return font;
 }
 

@@ -786,7 +786,10 @@ export const FALLBACK_NAME = 'Traveller';
  */
 export function sanitizeName(name) {
   let s = '';
-  for (const ch of String(name ?? '')) { const c = ch.charCodeAt(0); if (c >= 32 && c <= 126) s += ch; }
+  for (const ch of String(name ?? '')) {
+    const c = ch.charCodeAt(0);
+    if ((c >= 32 && c <= 126) || (c >= 0x0400 && c <= 0x04ff)) s += ch;
+  }
   s = s.trim().slice(0, NAME_MAX);
   if (!s) return FALLBACK_NAME;
   return nameAllowed(s) ? s : FALLBACK_NAME;
@@ -1621,7 +1624,7 @@ export function roomOf(pathname) {
 export function relayUrl(url) {
   const s = String(url ?? '').trim().replace(/\/+$/, '');
   if (/^wss:\/\/[A-Za-z0-9.-]+(:\d+)?(\/[A-Za-z0-9._~/-]*)?$/.test(s)) return s;
-  if (/^ws:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/[A-Za-z0-9._~/-]*)?$/.test(s)) return s;
+  if (/^ws:\/\/[A-Za-z0-9.-]+(:\d+)?(\/[A-Za-z0-9._~/-]*)?$/.test(s)) return s;
   return null;
 }
 

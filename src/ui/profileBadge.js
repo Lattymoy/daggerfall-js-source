@@ -23,6 +23,8 @@
 // that would not draw (loadFace answers null for all three).
 // ═══════════════════════════════════════════════════════════════════
 
+import { t } from '../systems/i18n.js';
+
 /**
  * The character the portrait shows: the most recent save whose
  * character is FINISHED and carries its identity. A save written in
@@ -50,8 +52,8 @@ export function liveCharacter(entity) {
 
 /** The caption's second line: whose face this is. */
 export function characterLine(save) {
-  if (!save) return 'No character yet';
-  return [save.name || 'Unnamed', Number.isFinite(save.level) ? `level ${save.level}` : null].filter(Boolean).join(' \u00b7 ');
+  if (!save) return t('No character yet');
+  return [save.name || t('Unnamed'), Number.isFinite(save.level) ? `${t('level')} ${save.level}` : null].filter(Boolean).join(' \u00b7 ');
 }
 
 /**
@@ -61,8 +63,8 @@ export function characterLine(save) {
  *          face?: HTMLCanvasElement|Promise<HTMLCanvasElement|null>|null, onOpen?: () => void}} [opts]
  */
 export function profileBadge(doc, { session = null, save = null, face = null, onOpen = () => {} } = {}) {
-  const el = (t, cls, txt) => {
-    const n = doc.createElement(t);
+  const el = (tNode, cls, txt) => {
+    const n = doc.createElement(tNode);
     if (cls) n.className = cls;
     if (txt != null) n.textContent = txt;
     return n;
@@ -92,7 +94,7 @@ export function profileBadge(doc, { session = null, save = null, face = null, on
 
   // ── THE CAPTION ─────────────────────────────────────────────────
   const words = el('span', 'px-profiletext');
-  words.append(el('span', 'px-profilename', session?.name ?? 'Sign in'));
+  words.append(el('span', 'px-profilename', session?.name ?? t('Sign in')));
   words.append(el('span', 'px-profilesub', characterLine(save)));
   b.append(words);
 

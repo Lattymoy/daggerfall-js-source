@@ -145,6 +145,7 @@ import { BUILD_TAG, UPDATE } from '../buildTag.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { repaintKeepingScroll } from './domRepaint.js';
 import { drawPixelGround } from './pixelGround.js';
+import { t } from '../systems/i18n.js';
 // PX3: the pause window's Stats tab reads the shared player entity
 // through the char sheet's own model - one law, not a restatement.
 // Both are plain modules with no game data; the boot door never
@@ -3894,7 +3895,7 @@ function renderHome() {
     // AUDIT PLUS-MENU M2: the diamonds stand at rest under Plus (MENU_CSS), so they are drawing, not words - hidden from
     // a reader, or every door was named "◆ Continue ◆"
     const dia = () => { const d = el('span', 'px-c', '\u25c6'); d.setAttribute('aria-hidden', 'true'); return d; };
-    b.append(dia(), document.createTextNode(label), dia());
+    b.append(dia(), document.createTextNode(t(label)), dia());
     b.onclick = RAIL_ACTS[id] ? () => onAction(RAIL_ACTS[id]) : () => go(id);
     menu.append(b);
   }
@@ -3933,14 +3934,14 @@ function appendPxFoot(home) {
   const foot = el('div', 'px-foot');
   const build = el('span', 'px-build');
   build.append(document.createTextNode('build '), el('span', null, BUILD_TAG));
-  const about = el('button', 'px-about', 'About');
+  const about = el('button', 'px-about', t('About'));
   about.onclick = () => go('about');
   foot.append(build, about);   // MENU-TOGGLE: the skin pair that stood between them is retired
   // LOAD1: the gallery's plaque stands beside About, in About's own box, so the foot keeps one shape - the centre
   // runs under the menu's last rows on a 720-pixel screen. The door's face only: the pause window's System rail carries
   // it as a row (SYSTEM_PANES).
   if (mode !== 'pause' && sections.includes('Screenshots')) {
-    const shots = el('button', 'px-about px-shots', 'Screenshots');
+    const shots = el('button', 'px-about px-shots', t('Screenshots'));
     shots.onclick = () => go('screenshots');
     const right = el('div', 'px-footright');
     about.remove();
@@ -3971,7 +3972,7 @@ function pauseWindow() {
   if (!pauseTabShown(pauseTab)) pauseTab = 'system';
   for (const [id, label] of PAUSE_TABS.filter(([id]) => pauseTabShown(id))) {
     const b = el('button', id === pauseTab ? 'on' : null);
-    b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label), el('span', 'px-c', '\u25c6'));
+    b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(t(label)), el('span', 'px-c', '\u25c6'));
     b.onclick = () => { if (id !== 'system') discardControlsStaging(); disarmFamilyPages(); disarmCollectionsPage(); pauseTab = id; render(); };   // AUDIT CARDS-5 D5: and the Collections page's
     tabs.append(b);
   }
@@ -3997,7 +3998,7 @@ function pauseHoldings(body) {
   if (!secs.some(([id]) => id === holdSec)) holdSec = secs[0]?.[0] ?? 'stable';
   for (const [id, label] of secs) {
     const b = el('button', `px-qrow${id === holdSec ? ' on' : ''}`);
-    b.append(el('span', 'px-c', '◆'), document.createTextNode(label));
+    b.append(el('span', 'px-c', '◆'), document.createTextNode(t(label)));
     b.onclick = () => { holdSec = id; disarmCollectionsPage(); render(); };   // AUDIT CARDS-5 D5: an armed act never waits for the way back
     rail.append(b);
   }
@@ -4036,7 +4037,7 @@ function pauseFamily(body) {
   if (!FAMILY_PAGE_SECTIONS.some(([id]) => id === famSec)) famSec = 'tree';
   for (const [id, label] of FAMILY_PAGE_SECTIONS) {
     const b = el('button', `px-qrow${id === famSec ? ' on' : ''}`);
-    b.append(el('span', 'px-c', '◆'), document.createTextNode(label));
+    b.append(el('span', 'px-c', '◆'), document.createTextNode(t(label)));
     b.onclick = () => { famSec = id; disarmFamilyPages(); render(); };   // AUDIT LEGACY U8: an armed act never waits for the way back
     rail.append(b);
   }
@@ -4085,7 +4086,7 @@ function pauseSystem(body) {
   const rail = el('div', 'px-qrail');
   for (const [id, label] of SYSTEM_PANES) {
     const b = el('button', `px-qrow${id === sysSec && !RAIL_ACTS[id] ? ' on' : ''}`);
-    b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label));
+    b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(t(label)));
     b.onclick = RAIL_ACTS[id] ? () => onAction(RAIL_ACTS[id])
       : () => {
         // FIX-F: leaving the Controls pane without CONTINUE DISCARDS -
@@ -4189,7 +4190,7 @@ function pauseStats(body) {
   if (!offRail && !statsSections().some(([id]) => id === statsSec)) statsSec = 'character';
   for (const [id, label] of statsSections()) {
     const b = el('button', `px-qrow${id === statsSec ? ' on' : ''}`);
-    b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label));
+    b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(t(label)));
     b.onclick = () => { statsSec = id; render(); };
     rail.append(b);
   }
@@ -5058,7 +5059,7 @@ function renderInto() {
   for (const label of sections) {
     const id = idOf(label);
     const b = el('button', `railbtn${id === section ? ' on' : ''}`);
-    b.append(el('span', 'rk', label));
+    b.append(el('span', 'rk', t(label)));
     // RAIL_ACTS: Resume resolves on the rail rather than opening a
     // pane. Every other entry is a destination.
     b.onclick = RAIL_ACTS[id] ? () => onAction(RAIL_ACTS[id]) : () => go(id);
@@ -5079,7 +5080,7 @@ function renderInto() {
     pane.style.overflow = 'hidden';
     paneSettings(pane);
   } else {
-    pane.append(head(sections.find((l) => idOf(l) === section)));
+    pane.append(head(t(sections.find((l) => idOf(l) === section))));
     const body = el('div', 'body');
     if (confirming) body.append(confirmCard());
     else {

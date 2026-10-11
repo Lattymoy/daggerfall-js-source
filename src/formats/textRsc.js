@@ -69,7 +69,18 @@ export function encodeRscRecord(variants) {
     for (const ch of String(v ?? '')) {
       if (ch === '\n') { out.push(RSC.NewLine); continue; }
       const c = ch.charCodeAt(0);
-      out.push(c >= RSC.FirstCharacter && c <= RSC.LastCharacter ? c : 0x3f);
+      if (c >= RSC.FirstCharacter && c <= RSC.LastCharacter) {
+        out.push(c);
+      } else if (c >= 0x0400 && c <= 0x04ff) {
+        let cp = 0x3f;
+        if (c >= 0x0410 && c <= 0x043f) cp = c - 0x0410 + 0x80;
+        else if (c >= 0x0440 && c <= 0x044f) cp = c - 0x0440 + 0xe0;
+        else if (c === 0x0401) cp = 0xf0;
+        else if (c === 0x0451) cp = 0xf1;
+        out.push(cp);
+      } else {
+        out.push(0x3f);
+      }
     }
   });
   out.push(RSC.EndOfRecord);
@@ -82,6 +93,45 @@ export function rscTableBytes(table = INTERNAL_RSC) {
   if (!table) return m;
   for (const [id, variants] of Object.entries(table)) m.set(Number(id), encodeRscRecord(variants));
   return m;
+}
+
+export const isTextByte = (b) => (b >= RSC.FirstCharacter && b !== RSC.EndOfPage && b !== RSC.InputCursorPositioner && b !== RSC.FontPrefix && b !== RSC.PositionPrefix && b !== RSC.JustifyLeft && b !== RSC.JustifyCenter && b !== RSC.EndOfRecord && b !== RSC.SubrecordSeparator);
+
+const latin1 = (buf, start, count) => {
+  let s = '';
+  for (let i = 0; i < count; i++) s += String.fromCharCode(buf[start + i]);
+  return s;
+};
+
+export function decodeRscBytes(buf, start, count) {
+  let hasHigh = false;
+  for (let i = 0; i < count; i++) {
+    if (buf[start + i] >= 0x80) { hasHigh = true; break; }
+  }
+  if (!hasHigh) return latin1(buf, start, count);
+  const slice = buf.subarray(start, start + count);
+  try {
+    const utf8Decoder = new TextDecoder('utf-8', { fatal: true });
+    return utf8Decoder.decode(slice);
+  } catch {
+    let cp866Count = 0;
+    let cp1251Count = 0;
+    for (let i = 0; i < count; i++) {
+      const b = buf[start + i];
+      if ((b >= 0x80 && b <= 0xaf) || (b >= 0xe0 && b <= 0xef)) cp866Count++;
+      if (b >= 0xc0 && b <= 0xff) cp1251Count++;
+    }
+    const encoding = cp866Count > cp1251Count ? 'ibm866' : 'windows-1251';
+    try {
+      return new TextDecoder(encoding).decode(slice);
+    } catch {
+      try {
+        return new TextDecoder('windows-1251').decode(slice);
+      } catch {
+        return latin1(buf, start, count);
+      }
+    }
+  }
 }
 
 /** TextFile.ReadTokens (TextFile.cs:421-441), the byte-token stream
@@ -98,16 +148,16 @@ export function readTokens(buffer, position, endToken) {
   while (position < buffer.length) {
     const nextByte = buffer[position];
     if (nextByte === endToken) break;
-    if (nextByte >= RSC.FirstCharacter && nextByte <= RSC.LastCharacter) {
+    if (nextByte >= RSC.FirstCharacter && isTextByte(nextByte)) {
       // ReadTextToken: gather printable run
       const start = position;
       let count = 0;
       while (position < buffer.length) {
         const b = buffer[position++];
-        if (b >= RSC.FirstCharacter && b <= RSC.LastCharacter) count++;
+        if (b >= RSC.FirstCharacter && isTextByte(b)) count++;
         else break;
       }
-      tokens.push({ formatting: TOKEN_TEXT, text: latin1(buffer, start, count), x: 0, y: 0 });
+      tokens.push({ formatting: TOKEN_TEXT, text: decodeRscBytes(buffer, start, count), x: 0, y: 0 });
       position = start + count;
     } else {
       // ReadFormattingToken
@@ -123,12 +173,6 @@ export function readTokens(buffer, position, endToken) {
   }
   return tokens;
 }
-
-const latin1 = (buf, start, count) => {
-  let s = '';
-  for (let i = 0; i < count; i++) s += String.fromCharCode(buf[start + i]);
-  return s;
-};
 
 /** A record's variant byte ranges, operand bytes skipped so a 0xFF
  *  payload cannot masquerade as a separator (AUDIT 39). These are
@@ -208,7 +252,12 @@ export class TextRsc {
         // line with words fused across the break: "Hammerfell.You are".
         if (b === RSC.NewLine || b === RSC.JustifyLeft || b === RSC.JustifyCenter) { cur += '\n'; continue; }
         if (b === RSC.FontPrefix || b === RSC.PositionPrefix) { i++; continue; }   // one operand each, never leaks
-        if (b >= RSC.FirstCharacter && b <= RSC.LastCharacter) { cur += String.fromCharCode(b); continue; }
+        if (b >= RSC.FirstCharacter && isTextByte(b)) {
+          let s = i;
+          while (i + 1 < end && raw[i + 1] >= RSC.FirstCharacter && isTextByte(raw[i + 1])) i++;
+          cur += decodeRscBytes(raw, s, i - s + 1);
+          continue;
+        }
         // every remaining control byte (page, cursor) drops here
       }
       return cur;
@@ -336,7 +385,12 @@ export class TextRsc {
         continue;
       }
       if (b === RSC.FontPrefix || b === RSC.PositionPrefix) { i++; continue; }
-      if (b >= RSC.FirstCharacter && b <= RSC.LastCharacter) cur += String.fromCharCode(b);
+      if (b >= RSC.FirstCharacter && isTextByte(b)) {
+        let s = i;
+        while (i + 1 < r[1] && raw[i + 1] >= RSC.FirstCharacter && isTextByte(raw[i + 1])) i++;
+        cur += decodeRscBytes(raw, s, i - s + 1);
+        continue;
+      }
     }
     if (cur) rows.push({ text: cur, center: false });
     while (rows.length && rows[rows.length - 1].text === '') rows.pop();

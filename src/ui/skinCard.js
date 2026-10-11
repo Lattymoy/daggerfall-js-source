@@ -45,6 +45,7 @@
 import { MOD_SETTINGS, modSetting, setModSetting, storedModSetting } from '../systems/modSettings.js';
 import { spriteFor, eotbSpriteUrl } from '../player/eotbSprite.js';
 import { EOTB_FOOT_SET_COUNT } from '../player/classSkins.js';
+import { t } from '../systems/i18n.js';
 
 const VENDOR = 'eye-of-the-beholder';
 const FOOT = 'Graphics.OnFoot';
@@ -137,11 +138,11 @@ export function skinCard(doc, { sets: offer = skinSets } = {}) {
     head.type = 'button';
     head.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
     const wearing = sets.find((s) => s.index === worn) ?? null;
-    head.title = isOpen ? `Close ${label.toLowerCase()} skins` : `Choose ${label.toLowerCase()} skin`;
+    head.title = isOpen ? t(`Close ${label.toLowerCase()} skins`) : t(`Choose ${label.toLowerCase()} skin`);
     if (wearing?.url) head.append(art(wearing));
     const words = el('span', 'skinheadtext');
-    words.append(el('span', 'fieldlabel', label));
-    words.append(el('span', 'skinname', wearing?.name ?? ''));
+    words.append(el('span', 'fieldlabel', t(label)));
+    words.append(el('span', 'skinname', t(wearing?.name) ?? ''));
     head.append(words);
     head.append(el('span', 'skinchev', isOpen ? '\u25b4' : '\u25be'));
     head.onclick = () => { open = isOpen ? null : key; paint(); };
@@ -151,7 +152,7 @@ export function skinCard(doc, { sets: offer = skinSets } = {}) {
       for (const g of groups) {
         const mine = sets.filter((s) => s.index >= g.from && s.index < g.to);
         if (!mine.length) continue;
-        if (g.label) body.append(el('span', 'skingroup', g.label));
+        if (g.label) body.append(el('span', 'skingroup', t(g.label)));
         body.append(grid(g.label || label, mine, key, worn));
       }
       p.append(body);
@@ -161,22 +162,22 @@ export function skinCard(doc, { sets: offer = skinSets } = {}) {
 
   function paint() {
     root.textContent = '';
-    root.append(el('h3', null, 'Skin'));
+    root.append(el('h3', null, t('Skin')));
     const w = wornSkin();
     const sets = offer();
     if (!w.on) {
-      root.append(el('p', 'meta', 'Your third-person look is Eye of the Beholder\u2019s. It is off, so you have no sprite body to dress.'));
+      root.append(el('p', 'meta', t('Your third-person look is Eye of the Beholder\u2019s. It is off, so you have no sprite body to dress.')));
       const acts = el('div', 'acts');
-      const b = el('button', 'act primary', 'Turn it on');
+      const b = el('button', 'act primary', t('Turn it on'));
       b.type = 'button';
       b.onclick = () => { setModSetting(VENDOR, 'Enabled', true); paint(); };
       acts.append(b);
       root.append(acts);
       return;
     }
-    root.append(el('p', 'meta', 'How you look in third person, and to other players online who do not see you in a Morrowind body.'));
+    root.append(el('p', 'meta', t('How you look in third person, and to other players online who do not see you in a Morrowind body.')));
     // the look sends only a CHOSEN set, so until one is pressed the others see this player's class
-    if (!w.chosen) root.append(el('p', 'meta skinhint', 'Until you choose one, other players see you as your class.'));
+    if (!w.chosen) root.append(el('p', 'meta skinhint', t('Until you choose one, other players see you as your class.')));
     panel('On foot', FOOT, sets.foot, w.foot, FOOT_GROUPS);
     panel('Mounted', HORSE, sets.horse, w.horse, [{ label: '', from: 0, to: Infinity }]);
   }

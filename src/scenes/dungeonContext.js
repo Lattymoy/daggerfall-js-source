@@ -237,6 +237,8 @@ import {
 import { unbound } from '../systems/itemBound.js';   // SS3: a bound piece in the room's containers, or on a body, never lands
 import { floorLanding, closestDoorTo } from '../player/enterExit.js';   // DE1: TransitionDungeonInterior orients away from the door it came through
 import { trs, multiply, identity, UP_Y } from '../world/mat4.js';
+const _dungeonViewDir = new Float32Array(3);
+const _dungeonPassBatches = [];
 import { StaticBatchBuilder, keyResolver, SHADOW_CELL_SIZE } from '../render/staticBatch.js';   // PERF5: the level's static models as one mesh; LA-AUDIT A1: with its shadow cells
 import { Collider } from '../player/collider.js';
 import { ActionSystem } from '../world/actionSystem.js';
@@ -7831,8 +7833,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // while a foe, a drop or a spell was alive: clear the level and the
     // floor went clean. The host owns the pass, as the other three do.
     if (_mobileBatches.length || _dropBatches.length || _spellBatches.length) {
-      renderer.drawBillboards([..._mobileBatches, ..._dropBatches, ..._spellBatches],
-        new Float32Array([-view[0], -view[4], -view[8]]), UP_Y);
+      _dungeonPassBatches.length = 0;
+      if (_mobileBatches.length) _dungeonPassBatches.push(..._mobileBatches);
+      if (_dropBatches.length) _dungeonPassBatches.push(..._dropBatches);
+      if (_spellBatches.length) _dungeonPassBatches.push(..._spellBatches);
+      _dungeonViewDir[0] = -view[0];
+      _dungeonViewDir[1] = -view[4];
+      _dungeonViewDir[2] = -view[8];
+      renderer.drawBillboards(_dungeonPassBatches, _dungeonViewDir, UP_Y);
     }
     magic.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes
     // INVIS-LOOK (2026-09-27): the host's concealed peers' bodies, translucent - after the last opaque flat (the foes),
