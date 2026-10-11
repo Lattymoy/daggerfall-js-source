@@ -10,7 +10,8 @@ import { createExteriorFoes } from '../src/scenes/exteriorFoes.js';
 import { foeLook, foeSeed, foeWireLook, applyWireLook } from '../src/characters/foeBodies.js';
 import { validFoeRecord, LOOK_GROUPS } from '../src/net/wire.js';
 import { residentWalkerActor, residentLook } from '../src/characters/rosterBodies.js';
-import { PEOPLE_WARDROBE } from '../src/characters/peopleBodies.js';
+import { wornByRole } from '../src/characters/wardrobe.js';   // PIN MOVED (MWNPC17, section 25): a look is its role's, dressed off the seed
+import { EQUIP_SLOTS } from '../src/systems/equip.js';
 import { createMerchantYards } from '../src/scenes/merchantYardsHost.js';
 import { PERSON_TEXTURES, GUARD_TEXTURE } from '../src/characters/mobilePerson.js';
 import { createNpcBodies, createFrameBudget, holdNpcBodies, npcBodiesHeld, NPC_HOLD_MS, NPC_FRAME_TIERS } from '../src/characters/npcBodies.js';
@@ -174,7 +175,7 @@ test('AUDIT MW-NPC II K1: a living resident walking the street stands in what th
   const priest = { id: 'L7.2c', job: 'priest', cls: null, race: 'Breton', sex: 'male', gender: 0, archive: PERSON_TEXTURES.Breton.male[0], face: 0 };
   const row3 = { living: { res: priest }, guard: false, cls: M.Healer, stillLook: { archive: 183, record: 12, frameCount: 1 }, stillRole: 'priest', yaw: 0, state: 'idle' };
   const still = residentWalkerActor(row3, [0, 0, 0]);
-  assert.equal(still.look.items[0].templateIndex, PEOPLE_WARDROBE.priest.male[0], 'his robes, the picture\'s kind');
+  assert.ok(wornByRole(still.look, 'priest') && !still.look.items.some((it) => it.equipSlot === EQUIP_SLOTS.LegsClothes), 'his robes, the picture\'s kind');
   row3.stillRole = 'beggar';
   assert.equal(residentWalkerActor(row3, [0, 0, 0]), null, 'a beggar sits or lies at their pitch - no body does');
   const town = rd('src/systems/livingWorld/livingTown.js');

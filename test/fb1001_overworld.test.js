@@ -188,5 +188,5 @@ test('OW-PEERS: a doll and a Morrowind body grown too - the doll\'s size, reach 
   assert.match(w, /const tvGrow = travelView\?\.active \? peerGrow : null;/);
   for (const re of [/peerRiders\.sync\(seen, [^\n]*, grow: tvGrow \}\);/, /peerWalkers\.sync\(seen, [^\n]*, grow: tvGrow \}\);/, /remotePlayers\.sync\(visiblePeers, [^\n]*, grow: tvGrow(?:, room: drawable)? \}\);/]) assert.match(w, re);   // PIN MOVED (AUDIT PEER-RANGE + HALO-THIN A L1/L6): the room's whole list handed after the grow
   assert.match(w, /drawPeerBodies\(proj, view, mwv\.eye, tvf \? tvFace : null\);/, 'the bodies take the view\'s face (its lean)');
-  assert.match(rd('src/net/peerBodies.js'), /if \(this\._planesOk\) \{ if \(!this\._sees\(b, 0, g\)\) continue; \}/, 'and are culled by their grown reach');
+  assert.match(rd('src/net/peerBodies.js'), /if \(this\._planesOk\) \{\n {8}if \(!this\._sees\(b, 0, g\)\) \{[\s\S]{0,800}?\n {10}continue;\n {8}\}/, 'and are culled by their grown reach');   // PIN MOVED (AUDIT MWNPC16-18 B F2, Morrowind-NPCs.md section 27): the unseen branch casts only a body posed for its actor, and says why   // PIN MOVED (MWNPC16): an NPC lane's body out of the view casts before it is passed over
 });

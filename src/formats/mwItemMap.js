@@ -211,20 +211,50 @@ const matName = (table, v) => Object.entries(table).find(([, x]) => x === v)?.[0
 /** MW-STEEL1: every mesh an own model can wear, every style's, in its table's order. */
 const ownModelsOf = (own) => [...new Set([own.parts, ...Object.values(own.styles ?? {})].flat().map((p) => p.model))];
 
+/** MWNPC17: a CLOT record's rung on Morrowind's own clothing ladder, by its id's prefix (common_, expensive_,
+ *  extravagant_, exquisite_ - characters/wardrobe.js CLOTHING_TIERS), or -1 for an id that names none (a mod's own). */
+export function clothingTierOf(id) {
+  const m = /^(common|expensive|extravagant|exquisite)_/i.exec(String(id ?? ''));
+  return m ? ['common', 'expensive', 'extravagant', 'exquisite'].indexOf(m[1].toLowerCase()) : -1;
+}
+/** MWNPC17: how many of a dye's nearest garments a person's `pick` chooses among - near enough that a red shirt is
+ *  still red, wide enough that two red shirts are two shirts. */
+export const CLOTH_PICK_NEAREST = 3;
+/** AUDIT MWNPC16-18 C F2: and only those whose colour is within this of the nearest's - its distance times
+ *  CLOTH_PICK_BAND[0] plus CLOTH_PICK_BAND[1] (RGB units): on a thin rung (retail's extravagant and exquisite hold one
+ *  to three of a type) the three nearest were the whole rung, so a red dye drew a blue shirt as often as a red one. */
+export const CLOTH_PICK_BAND = Object.freeze([1.5, 32]);
+
 /** Resolve one DF garment against the CLOT records: BY TYPE, id-sorted,
  *  enchanted excluded - and on retail the id sort puts common_ ahead of
  *  expensive_ and its betters, so the street clothes win, which is the
- *  right wardrobe for a derived outfit. Null-honest. */
-export function mwClothingRecord(clothes, name, { dye = null, colourOf = null } = {}) {
+ *  right wardrobe for a derived outfit. Null-honest.
+ *  MWNPC17: `tier` (0..3) a person's rung - the pool narrowed to its records (the nearest rung that has any, the lower
+ *  first; a pool with no rung at all - a mod's ids - kept whole); `pick` (a uint) a person's choice - among the
+ *  CLOTH_PICK_NEAREST nearest the dye that lie within CLOTH_PICK_BAND of the nearest, where colours are measured, else
+ *  among the pool. Neither, the resolution it
+ *  always was: a player's garment, every peer's. */
+export function mwClothingRecord(clothes, name, { dye = null, colourOf = null, tier = null, pick = null } = {}) {
   const row = DF_CLOTHING_ROWS[name];
   if (!row) return { record: null, row: null, note: `"${name}" is not a garment row` };
   // WEREWOLF1: never the werewolf's robe - its parts are the wolf's body, not a garment (OpenMW hides it from the
   // inventory, class.cpp), and a dark Daggerfall robe measured nearest its fur would have dressed a person in it.
   // AUDIT C2: and never a record with no ground mesh - the reader keeps one for its parts (the robe may carry no MODL),
   // and a garment the item icon cannot draw is none of a Daggerfall item's
-  const pool = (clothes ?? []).filter((c) => c.type === row.type && !c.enchanted && c.id !== WEREWOLF_ROBE_ID && c.model)
+  let pool = (clothes ?? []).filter((c) => c.type === row.type && !c.enchanted && c.id !== WEREWOLF_ROBE_ID && c.model)
     .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   if (!pool.length) return { record: null, row, note: `no MW clothing of type ${row.type} in these archives - the classic sprite stands` };
+  const picking = Number.isInteger(pick) && pick >= 0;
+  if (Number.isInteger(tier) && tier >= 0 && tier <= 3) {
+    // MWNPC17: the person's rung, else the nearest that has a record - one down before one up (a noble in fine
+    // clothes rather than a beggar in silk)
+    for (const d of [0, -1, 1, -2, 2, -3, 3]) {
+      const t = tier + d;
+      if (t < 0 || t > 3) continue;
+      const rung = pool.filter((c) => clothingTierOf(c.id) === t);
+      if (rung.length) { pool = rung; break; }
+    }
+  }
   // MW-D37: THE DYE PICKS THE GARMENT. Daggerfall dyes a shirt one of
   // ten colours; Morrowind ships several shirts of one type in
   // different colours. When a colour sampler is on hand (the build's,
@@ -235,14 +265,27 @@ export function mwClothingRecord(clothes, name, { dye = null, colourOf = null } 
   const want = dye != null ? DF_CLOTHING_DYE_RGB[dye | 0] : null;
   if (want && typeof colourOf === 'function') {
     let best = null; let bestD = Infinity;
+    /** @type {{ c: any, d: number }[]} */
+    const near = [];
     for (const c of pool) {
       const rgb = colourOf(c);
       if (!rgb) continue;
       const d = Math.hypot(rgb[0] - want[0], rgb[1] - want[1], rgb[2] - want[2]);
+      if (picking) near.push({ c, d });
       if (d < bestD) { bestD = d; best = c; }
+    }
+    if (picking && near.length) {
+      // MWNPC17: the nearest few by colour, then the pool's own order for a tie - one of them the person's
+      near.sort((a, b) => a.d - b.d || (a.c.id < b.c.id ? -1 : a.c.id > b.c.id ? 1 : 0));
+      const band = near[0].d * CLOTH_PICK_BAND[0] + CLOTH_PICK_BAND[1];
+      let k = Math.min(CLOTH_PICK_NEAREST, near.length);
+      while (k > 1 && near[k - 1].d > band) k--;   // AUDIT MWNPC16-18 C F2: the dye's colour, not merely the nearest few
+      const chosen = near[pick % k];
+      return { record: chosen.c, row, note: `picked by dye (distance ${Math.round(chosen.d)}, ${pick % k + 1} of the ${k} nearest)` };
     }
     if (best) return { record: best, row, note: `resolved by dye (distance ${Math.round(bestD)})` };
   }
+  if (picking) return { record: pool[pick % pool.length], row, note: `picked (${pick % pool.length + 1} of ${pool.length})` };   // MWNPC17
   return { record: pool[0], row, note: 'resolved' };
 }
 
@@ -617,7 +660,7 @@ export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = f
         cloakName = name;
         continue;
       }
-      const res = mwClothingRecord(clothes, name, { dye: piece.dye ?? null, colourOf });
+      const res = mwClothingRecord(clothes, name, { dye: piece.dye ?? null, colourOf, tier: piece.tier ?? null, pick: piece.pick ?? null });   // MWNPC17: a person's rung and pick (characters/wardrobe.js)
       if (!res.record) { notes.push(`${name ?? piece.templateIndex}: ${res.note}`); continue; }
       const base = res.row.reserve === 'robe' ? 11 : res.row.reserve === 'skirt' ? 3 : 0;
       const prio = ((base + 1) << 1) + 0;

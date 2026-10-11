@@ -200,7 +200,10 @@ own (`_uploadEl`), the maps bound on units 13 and 14 (the cloud shadow's
 **Known limits, recorded:** a caster the frame did not draw casts nothing
 - the hosts' frustum culling (EV3) means a tower behind the camera throws
 no shadow into the view; the character rigs (the Morrowind body, the
-peers, the first-person arm) cast none; the water surface receives none;
+peers, the first-person arm) cast none (AMENDED BY MWNPC16, 2026-10-11 -
+`04-Characters/Morrowind-NPCs.md` section 24: an NPC's Morrowind body casts
+its own shape; the player's and the peers' bodies and the arm still cast
+none, as shadowPass.js's header says); the water surface receives none;
 the moon casts none (the map is the sun's, and at night the lanterns are
 the light). EL3 or a later pass owns those.
 

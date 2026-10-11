@@ -83,8 +83,8 @@
   {
     "name": "OW-PEERS-a-body-never-grown",
     "file": "src/net/peerBodies.js",
-    "old": "      const g = (this._cam?.grow ? Math.max(1, this._cam.grow(b.feet)) : 1) * this._scaleOf(b);   // OW-PEERS; MWNPC10: and its own scale",
-    "new": "      const g = this._scaleOf(b);   // OW-PEERS; MWNPC10: and its own scale",
+    "old": "      const ow = this._cam?.grow ? Math.max(1, this._cam.grow(b.feet)) : 1;   // OW-PEERS",
+    "new": "      const ow = 1;   // OW-PEERS",
     "tests": [
       "test/fb1001_overworld.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "OW-PEERS-a-body-unleaned",
     "file": "src/net/peerBodies.js",
-    "old": "grow: g, up: this._cam?.up ?? null, fx:",
-    "new": "grow: g, up: null, fx:",
+    "old": "grow: g, up: this._cam?.up ?? null, fx, cast",
+    "new": "grow: g, up: null, fx, cast",
     "tests": [
       "test/fb1001_overworld.test.js"
     ]

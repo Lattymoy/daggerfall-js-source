@@ -9,8 +9,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ARMOR_MATERIAL } from '../src/systems/armorMaterials.js';
 import { readFileSync } from 'node:fs';
-import { wardrobeOf, personLook, personActor, PEOPLE_WARDROBE, PERSON_TURN_RATE } from '../src/characters/peopleBodies.js';
-import { FOLK_OUTFITS } from '../src/characters/folkBodies.js';
+import { wardrobeOf, personLook, personActor, KIND_ROLE, PERSON_TURN_RATE } from '../src/characters/peopleBodies.js';
+import { wornByRole, ARMOR_KITS, WARDROBE_ROLES } from '../src/characters/wardrobe.js';   // PIN MOVED (MWNPC17, section 25): a look is its role's, dressed off the seed - no one outfit to compare
 import { SOCIAL_GROUPS, GUILD_GROUPS, FACTION_TYPES } from '../src/formats/factionFile.js';
 import { RACES } from '../src/systems/races.js';
 import { GENDERS } from '../src/characters/nameHelper.js';
@@ -21,15 +21,21 @@ const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const fac = (o) => ({ type: FACTION_TYPES.Generic, sgroup: SOCIAL_GROUPS.Commoners, ggroup: GUILD_GROUPS.None, ...o });
 const data = (o = {}) => ({ race: RACES.Breton, gender: GENDERS.Male, nameSeed: 77, hash: 5, factionID: 0, billboardArchiveIndex: 182, billboardRecordIndex: 1, ...o });
 
-test('MWNPC8a-1 the wardrobe a faction gives: a temple\'s priest, a mage, a knight or fighter in steel, a noble, a merchant, the underworld, a scholar - everyone else the street\'s; a vampire none', () => {
+test('MWNPC8a-1 the wardrobe a faction gives: a temple\'s priest, a mage, a knight in plate, a fighter in what came to hand, a noble, a merchant, the underworld, a scholar - everyone else the street\'s; a vampire none', () => {
   assert.equal(wardrobeOf(null), 'common');
   assert.equal(wardrobeOf(fac({ type: FACTION_TYPES.Temple })), 'priest');
   assert.equal(wardrobeOf(fac({ ggroup: GUILD_GROUPS.HolyOrder })), 'priest');
   assert.equal(wardrobeOf(fac({ ggroup: GUILD_GROUPS.MagesGuild })), 'mage');
   assert.equal(wardrobeOf(fac({ type: FACTION_TYPES.MagicUser })), 'mage');
-  assert.equal(wardrobeOf(fac({ ggroup: GUILD_GROUPS.KnightlyOrder })), 'steel');
-  assert.equal(wardrobeOf(fac({ ggroup: GUILD_GROUPS.FightersGuild })), 'steel');
-  assert.equal(wardrobeOf(fac({ type: FACTION_TYPES.KnightlyGuard })), 'steel');
+  // PIN MOVED (MWNPC17): the one 'steel' split - a knightly order's and a court's guard a knight's plate, a fighters'
+  // guild's a fighter's armour; a coven's and a necromancer a mage's, the Brotherhood the underworld's
+  assert.equal(wardrobeOf(fac({ ggroup: GUILD_GROUPS.KnightlyOrder })), 'knight');
+  assert.equal(wardrobeOf(fac({ ggroup: GUILD_GROUPS.FightersGuild })), 'fighter');
+  assert.equal(wardrobeOf(fac({ type: FACTION_TYPES.KnightlyGuard })), 'knight');
+  assert.equal(wardrobeOf(fac({ type: FACTION_TYPES.WitchesCoven })), 'mage');
+  assert.equal(wardrobeOf(fac({ ggroup: GUILD_GROUPS.Necromancers })), 'mage');
+  assert.equal(wardrobeOf(fac({ ggroup: GUILD_GROUPS.DarkBrotherHood })), 'underworld');
+  for (const k of ['priest', 'mage', 'knight', 'fighter', 'noble', 'merchant', 'underworld', 'scholar', 'common']) assert.ok(WARDROBE_ROLES[KIND_ROLE[k]], `${k} dresses by a role`);
   assert.equal(wardrobeOf(fac({ sgroup: SOCIAL_GROUPS.Nobility })), 'noble');
   assert.equal(wardrobeOf(fac({ type: FACTION_TYPES.Courts })), 'noble');
   assert.equal(wardrobeOf(fac({ sgroup: SOCIAL_GROUPS.Merchants })), 'merchant');
@@ -43,23 +49,26 @@ test('MWNPC8a-1 the wardrobe a faction gives: a temple\'s priest, a mage, a knig
   assert.equal(wardrobeOf(fac({ type: FACTION_TYPES.Temple, ggroup: GUILD_GROUPS.Vampires })), 'none', 'a vampire first, whatever else');
 });
 
-test('MWNPC8a-2 the look: their race and gender, the faction\'s garments in its dyes, a knight\'s steel, the street\'s outfits for the rest; a child, a vampire, a race the data cannot name keep their sprite; read once', () => {
+test('MWNPC8a-2 the look: their race and gender, the faction\'s garments in its dyes, a knight\'s plate, the street\'s outfits for the rest; a child, a vampire, a race the data cannot name keep their sprite; read once', () => {
+  // PIN MOVED (MWNPC17, section 25): each look is its role's, dressed off the seed - the role's garments in its dyes,
+  // the hint the build reads beside them
   const priest = personLook({}, data({ gender: GENDERS.Female, race: RACES.DarkElf }), fac({ type: FACTION_TYPES.Temple }));
   assert.equal(priest.race, 'DarkElf');
   assert.equal(priest.gender, 'female');
-  assert.deepEqual(priest.items.map((it) => [it.equipSlot, it.templateIndex]), [[EQUIP_SLOTS.ChestClothes, 201], [EQUIP_SLOTS.Feet, 186]], 'priestess\'s robes and shoes');
-  assert.ok(priest.items.every((it) => PEOPLE_WARDROBE.priest.dyes.includes(it.dye)));
+  assert.ok(wornByRole(priest, 'priest'), 'a priestess\'s garments in the temple\'s dyes');
+  assert.ok(priest.npc && Number.isInteger(priest.npc.seed), 'and her own picks, head and hair');
   const noble = personLook({}, data(), fac({ sgroup: SOCIAL_GROUPS.Nobility }));
-  assert.deepEqual(noble.items.map((it) => it.templateIndex), [...PEOPLE_WARDROBE.noble.male]);
+  assert.ok(wornByRole(noble, 'noble') && !wornByRole(noble, 'commoner'), 'a noble\'s, never the street\'s');
+  assert.ok(noble.npc.tier >= 1, 'and never on the ladder\'s common rung');
   const knight = personLook({}, data({ race: RACES.Nord }), fac({ ggroup: GUILD_GROUPS.KnightlyOrder }));
   const plate = knight.items.filter((it) => it.group === 'Armor');
-  assert.deepEqual(plate.map((it) => it.templateIndex).sort(), [ARMOR_ENUM.Cuirass, ARMOR_ENUM.Greaves, ARMOR_ENUM.Boots, ARMOR_ENUM.Left_Pauldron, ARMOR_ENUM.Right_Pauldron, ARMOR_ENUM.Gauntlets].sort(), 'steel');
-  assert.ok(plate.every((it) => it.material === ARMOR_MATERIAL.Steel));   // PIN MOVED (MWNPC12, section 17): steel is ARMOR_MATERIAL.Steel - 1 named no material
+  for (const t of [ARMOR_ENUM.Cuirass, ARMOR_ENUM.Greaves, ARMOR_ENUM.Boots, ARMOR_ENUM.Left_Pauldron, ARMOR_ENUM.Right_Pauldron]) assert.ok(plate.some((it) => it.templateIndex === t), `the knight's whole plate: ${t}`);
+  assert.equal(new Set(plate.map((it) => it.material)).size, 1, 'of one metal');
+  assert.ok(ARMOR_KITS.knight.metals[knight.npc.tier].some(([m]) => m === plate[0].material), 'his rank\'s');
   assert.equal(knight.items.filter((it) => it.equipSlot === EQUIP_SLOTS.Feet).length, 1, 'his boots, no shoes beside');
   const commons = new Set();
-  for (let s = 0; s < 40; s++) commons.add(personLook({}, data({ nameSeed: s }), null).items[0].templateIndex);
-  assert.ok(commons.size >= 3, 'the rest in the street\'s outfits, not one');
-  assert.ok([...commons].every((t) => FOLK_OUTFITS.male.some((o) => o[0] === t)));
+  for (let s = 0; s < 40; s++) { const l = personLook({}, data({ nameSeed: s }), null); assert.ok(wornByRole(l, 'commoner')); commons.add(l.items.map((it) => `${it.templateIndex}.${it.dye}`).join()); }
+  assert.ok(commons.size >= 38, `the rest in the street's clothes, hardly two alike (${commons.size} of 40)`);
   assert.equal(personLook({}, data({ billboardArchiveIndex: 182, billboardRecordIndex: 4 }), null), null, 'a child keeps their sprite');
   assert.equal(personLook({}, data({ factionID: 514 }), null), null, 'and a child by the children\'s faction');
   assert.equal(personLook({}, data(), fac({ type: FACTION_TYPES.VampireClan })), null, 'a vampire too');

@@ -230,9 +230,10 @@ void main() {
 }`;
 
 // MWNPC1 (2026-10-09, Mac: "I wanna do everything and ensure that performance isnt affected"): THE WORLD'S
-// CHARACTER VERTEX SHADER, AND THE SKIN IN IT. CHAR_VS above stays what it was and is the shadow pass's alone (its
-// depth program reads none of what this one adds, and a skinned body never casts - drawCharacter records none
-// under the sprite target). This is CHAR_VS line for line, plus:
+// CHARACTER VERTEX SHADER, AND THE SKIN IN IT. CHAR_VS above stays what it was and is the shadow pass's for every
+// unskinned rig (its depth program reads none of what this one adds; drawCharacter records none under the sprite
+// target) - MWNPC16: a skinned body casts through THIS shader's depth program, recorded by its draw (recordShadowBody).
+// This is CHAR_VS line for line, plus:
 //   - the OPTIONAL skin channels 5-9, additive as aUV and aEmissive are: a VAO that never enables them reads
 //     constants, and `uSkin` 0 never looks at them - every voxel rig and every CPU-skinned mesh draws exactly what
 //     it drew;
@@ -1954,6 +1955,7 @@ export class Renderer {
     // once, V8 deoptimized the shadow replay on it: "wrong call target" - PERF-NEXT 6; no gain measured). The same call,
     // one identity
     this._bindVaoFn = (/** @type {WebGLVertexArrayObject|null} */ vao) => this._bindVao(vao);
+    this._holdSkinFn = (/** @type {WebGLTexture|null} */ tex) => this._holdSkin(tex);   // MWNPC16: the shadow pass's door to the palette unit
     // ROAD-E E5: the WORLD PASS's viewport (ViewportChanger.cs:52-67).
     // `_worldViewportPending` is the normalized rect the NEXT
     // beginFrame will take, `_worldViewportPx` the pixel rect it
@@ -2479,7 +2481,7 @@ export class Renderer {
     this._lane = lane;
     // EL2: the shadow pass rides a lane that asks for it; built once, kept
     if (lane?.shadows) {
-      this._shadows = this._shadowPass ??= new ShadowPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs), vs: { mesh: VS, bb: BB_VS, terrain: TERRAIN_VS, char: CHAR_VS } });
+      this._shadows = this._shadowPass ??= new ShadowPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs), vs: { mesh: VS, bb: BB_VS, terrain: TERRAIN_VS, char: CHAR_VS, charSkin: CHAR_SKIN_VS } });   // MWNPC16: and a Morrowind body's skin
       this._shadows.cacheOn = this._shadowCacheWanted !== false;   // SC1   // EL7: the rigs cast
       // EL7: the water surface receives the lane's sun shadow - its own program with the receiver block, built once
       if (lane.shadows && !this.waterSurfaceProgramLane) {
@@ -2565,11 +2567,30 @@ export class Renderer {
     const c = batchSphere(b, this._reachSphere);   // AUDIT 68 S16-batch-sphere-dup: the lift's one home
     return !c || this._shadows.reachesSphere(c[0], c[1], c[2], c[3]);
   }
+  /** MWNPC16: the same for a sphere [x, y, z, r] - a Morrowind body out of the view (fpArm.js castThird). */
+  shadowReachSphere(x, y, z, r) { return this._casting && this._shadows.reachesSphere(x, y, z, r); }
   /** SHADOW-REACH: record a caster for the maps WITHOUT drawing it - the seams drawMesh, drawTerrain and drawBillboards
    *  record through, with none of their draw. The billboards take the frame's wind as drawBillboards does. */
   recordShadowMesh(mesh, modelMatrix, texRemap = null) { if (this._casting && mesh?.vao) this._shadows.recordMesh(mesh, modelMatrix, texRemap, 1 - (this._dissolve ?? 1)); }   // AUDIT BAY A12: a fading ship's share
   recordShadowTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize) { if (this._casting && surface?.vao) this._shadows.recordTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize); }
   recordShadowBillboards(batches, camRight, camUp) { if (this._casting && batches?.length) this._shadows.recordBillboards(batches, this._flatWind, camRight, camUp, this._windfall); }
+  /** MWNPC16: A MORROWIND BODY'S OWN SHADOW - its mesh (GPU-skinned or packed), its world model matrix and a world
+   *  sphere [x, y, z, r] about its posed box, for the maps alone: the body is drawn only through the sprite target,
+   *  which records nothing (drawCharacter's `_spriteDepth`), so its draw (combat/fpArm.js drawThird) records it here. */
+  recordShadowBody(mesh, modelMatrix, sphere, anchored = false) { if (this._casting && mesh?.vao) this._shadows.recordCharacter(mesh, modelMatrix, sphere, true, anchored); }   // AUDIT MWNPC16-18: a body's record (A2), and whether it never walks (A3)
+  /** MWNPC16: the shadow pass's palette on SKIN_PALETTE_UNIT - `tex` a body's, null the identity - with the unit's word
+   *  kept (`_skinUnitHolds`), so the lit draws after it bind what they need and a palette let go is never left on the
+   *  unit. The pass selects its units raw, so the selector's shadow is forgotten before this one selects. */
+  _holdSkin(tex) {
+    const want = tex ?? this._skinIdentityTex();
+    if (this._skinUnitHolds === want) return;
+    const gl = this.gl;
+    this._activeUnit = null;
+    this._activeTexture(gl.TEXTURE0 + SKIN_PALETTE_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, want);
+    this._skinUnitHolds = want;
+    this._activeTexture(gl.TEXTURE0);
+  }
   /** LC1: the grid's two integer textures - the GRID (RG16UI: offset, count per cell) and the LIST (R8UI: light
    *  indices) - NEAREST, unfiltered, made once with the lane. Uploaded by texSubImage2D per world frame. */
   _ensureClusters() {
@@ -2972,6 +2993,7 @@ export class Renderer {
       eye: this._shadowEye(), lightDir, sunScale: this._sunScale, pointLights: this._pointLights, carried: this._pointCarried,   // MAC-T1; TV1: the cascades about the focus
       cascadeScale: this._focus[3] > 0.5 && this._focusWide ? SHADOW_VIEW_SCALE : 1,   // AUDIT DEEP R-3: and grown to the travel view's picture - AUDIT DEEP2 D7: once it is half risen (at the head the near cascade went from 1.2 cm texels to 4.7 in one frame, and back at the fall's end)
       textures: this.textures, isSpectral: isSpectralArchive, bindVao, everyLight, cut,
+      holdSkin: this._holdSkinFn,   // MWNPC16: a body's palette for its replay (the unit's word kept - releaseCharacterSkin puts the identity back over one let go)
     });
     if (this._air) {
       const count = this._pointLights.length / 4;
@@ -3281,7 +3303,8 @@ export class Renderer {
    * MWNPC1: A GPU-SKINNED CHARACTER MESH - formats/mwGpuSkin.js packSkinStream's static stream, uploaded ONCE, and
    * its palette texture (RGBA32F, `width` x `height`, three texels an entry). A pose re-uploads the palette alone
    * (updateSkinPalette); drawCharacter blends the stream in CHAR_SKIN_VS. `pairs` is the influence pairs a corner
-   * carries (1 or 2). No sphere: the body is drawn only through the sprite target, which never casts (MW-CROWD).
+   * carries (1 or 2). No sphere: the body is drawn only through the sprite target, which never casts (MW-CROWD) - an NPC's
+   * body casts through recordShadowBody, under the sphere of its posed box (MWNPC16).
    */
   createSkinnedCharacterMesh(stream, { floats, pairs, width, height }) {
     const gl = this.gl;
@@ -3334,6 +3357,7 @@ export class Renderer {
     if (!mesh || !mesh.skin || !mesh.vbo) return;
     gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vbo);
     gl.bufferSubData(gl.ARRAY_BUFFER, offset * 4, data);
+    mesh._poseGen = (mesh._poseGen ?? 0) + 1;   // AUDIT MWNPC16-18 A2: a new shape - the shadow pass's body look (shadowPass.js recordCharacter)
   }
 
   /** MWNPC1: a pose - the palette re-uploaded, and nothing else (`data` is the layout's palette, width x height
@@ -3347,6 +3371,7 @@ export class Renderer {
     gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, skin.width, skin.height, gl.RGBA, gl.FLOAT, data);
     this._skinUnitHolds = skin.tex;
     this._activeTexture(gl.TEXTURE0);
+    mesh._poseGen = (mesh._poseGen ?? 0) + 1;   // AUDIT MWNPC16-18 A2: a new pose - the shadow pass's body look (shadowPass.js recordCharacter)
   }
 
   /** MWNPC1: the palette's owner lets it go - with the identity put back on the unit first, so no draw after it
@@ -3547,6 +3572,7 @@ export class Renderer {
     const gl = this.gl;
     gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vbo);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, packed);
+    mesh._poseGen = (mesh._poseGen ?? 0) + 1;   // AUDIT MWNPC16-18 A2: a new pose - the shadow pass's body look (shadowPass.js recordCharacter)
     if (mesh.bounds) boundsOf(packed, null, 0, -1, mesh.floats).forEach((v, i) => { mesh.bounds[i] = v; });   // EL7: an animated rig's sphere follows it
   }
 
@@ -6408,7 +6434,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // DISC29-E: the shadow record's `_shAnim` (a flat animating in place, which the lo tier keeps) - a boolean, born
     // undefined as `_shMovedAt` (AUDIT PRE-MERGE 0929 E1: `_shPlacedAt`, the stillness it was once judged by, is gone).
     // IDLER-STICKY: `_shIdler`, a flat whose look changed where it stands - a mover for good (shadowPass.js), born undefined.
-    // MWNPC5b: `castOnly` - a foe standing in its Morrowind body: the billboard casts its shadow and draws nothing, born undefined.
+    // MWNPC5b: `castOnly` - a foe standing in its Morrowind body: the billboard draws nothing, born undefined (MWNPC16: and
+    // casts nothing - the body casts its own shape, shadowPass.js recordCharacter).
     return {
       vao, indexCount: count * 6, archive, record, size, buffers, origin: null, frame: null, bounds, _quads: count, _dyn: !!dynamic,
       _arena: arena, _q0: q0, _ibOff: q0 * BB_QUAD_INDEX_BYTES,
@@ -7760,7 +7787,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // SHADOW-REACH records without drawing (recordShadowBillboards) - the
     // one this pass never saw, and so never keyed.
     for (const b of batches) {
-      if (b.castOnly) continue;   // MWNPC5b: a foe stood in its Morrowind body - its billboard casts the shadow (recorded above) and draws nothing
+      if (b.castOnly) continue;   // MWNPC5b: a foe stood in its Morrowind body - its billboard draws nothing (recorded above, the shadow pass passes it over - MWNPC16: the body casts)
       if (isSpectralArchive(b.archive) || b.conceal) continue;
       if (bbCull && !this._bbVisible(b)) { this.stats.bbCulled++; continue; }   // PERF-CROWD2
       billboardKey(b);

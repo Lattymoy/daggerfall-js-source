@@ -331,7 +331,7 @@ test('EL2: the renderer\'s wiring - the three draw paths record behind one gate,
   assert.match(r, /const sp = this\._shadows;   \/\/ AUDIT-EL F8: a panel frame never reaches here/, 'a panel frame keeps the records');
   assert.match(r, /    sp\.discard\(\);\n    this\._restoreWorldViewport\(\);/, 'the records are dropped after both passes and the world viewport comes back');
   assert.equal((r.match(/_dead = true;   \/\/ EL2/g) || []).length, 3, 'destroyMesh, destroyBillboardBatch, destroyBatch');
-  assert.match(r, /this\._shadows = this\._shadowPass \?\?= new ShadowPass\(this\.gl, \{ build: \(vs, fs\) => this\._buildProgram\(vs, fs\), vs: \{ mesh: VS, bb: BB_VS, terrain: TERRAIN_VS, char: CHAR_VS \} \}\);/);
+  assert.match(r, /this\._shadows = this\._shadowPass \?\?= new ShadowPass\(this\.gl, \{ build: \(vs, fs\) => this\._buildProgram\(vs, fs\), vs: \{ mesh: VS, bb: BB_VS, terrain: TERRAIN_VS, char: CHAR_VS, charSkin: CHAR_SKIN_VS \} \}\);/);   // PIN MOVED (MWNPC16): and the skinned body's vertex shader, for a Morrowind body's own shadow
   assert.match(r, /if \(this\._shadows\) this\._shadows\.upload\(this\._el\[key\]\.shadow\);/);
   const sp = read('src/render/shadowPass.js');
   assert.ok(!/from '\.\/renderer\.js'/.test(sp), 'the pass imports nothing of the renderer');

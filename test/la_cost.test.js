@@ -544,7 +544,7 @@ test('LA-COST3: THE FLAT\'S SUN IS READ ONCE A QUAD - the lane\'s billboard vert
   assert.ok(sources.filter((s) => s === classic).length >= 3, 'BB_VS for the classic set, the shadow pass\'s flats and the air pass\'s emitters');
   const src = read('src/render/renderer.js');
   assert.match(src, /bb: this\._buildProgram\(bbVertexShader\(src\.bbVs\), src\.bbFs\),/);
-  assert.match(src, /vs: \{ mesh: VS, bb: BB_VS, terrain: TERRAIN_VS, char: CHAR_VS \}/, 'the shadow pass: BB_VS');
+  assert.match(src, /vs: \{ mesh: VS, bb: BB_VS, terrain: TERRAIN_VS, char: CHAR_VS, charSkin: CHAR_SKIN_VS \}/, 'the shadow pass: BB_VS');   // PIN MOVED (MWNPC16): the skinned body's VS beside it
   assert.match(src, /vs: \{ mesh: VS, bb: BB_VS \}, glsl:/, 'the air pass: BB_VS');
   assert.equal(EL_LANE.bbVs, EL_BB_VS_EXT);
 });

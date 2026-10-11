@@ -10,7 +10,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ARMOR_MATERIAL } from '../src/systems/armorMaterials.js';
 import { readFileSync, readdirSync } from 'node:fs';
-import { folkLook, folkActor, folkVariant, FOLK_OUTFITS, FOLK_DYES } from '../src/characters/folkBodies.js';
+import { folkLook, folkActor, folkVariant, FOLK_DRESS } from '../src/characters/folkBodies.js';
+import { wornByRole } from '../src/characters/wardrobe.js';   // PIN MOVED (MWNPC17, section 25): a walker is their variant's role and cut, dressed off their spawn
 import { createPopulationLane } from '../src/characters/npcBodies.js';
 import { PERSON_TEXTURES, GUARD_TEXTURE } from '../src/characters/mobilePerson.js';
 import { GENDERS } from '../src/characters/nameHelper.js';
@@ -29,15 +30,20 @@ test('MWNPC7a a walker\'s look is their roll - the race and gender, the outfit t
         assert.equal(l.race, race);
         assert.equal(l.gender, gender);
         assert.ok(l.faceIndex >= 0 && l.faceIndex <= 9);
-        const outfit = FOLK_OUTFITS[gender][v];
-        assert.deepEqual(l.items.map((it) => it.templateIndex), outfit.filter((t) => t != null), `${race} ${gender} variant ${v}: its outfit`);
-        assert.ok(l.items.every((it) => it.group === (gender === 'female' ? 'WomensClothing' : 'MensClothing') && FOLK_DYES.includes(it.dye)), 'dyed in the street\'s colours');
-        assert.deepEqual(l.items.map((it) => it.equipSlot), outfit[1] == null ? [EQUIP_SLOTS.ChestClothes, EQUIP_SLOTS.Feet] : [EQUIP_SLOTS.ChestClothes, EQUIP_SLOTS.LegsClothes, EQUIP_SLOTS.Feet]);
+        const { role, cut } = FOLK_DRESS[gender][v];
+        assert.ok(wornByRole(l, role), `${race} ${gender} variant ${v}: its role's garments in its dyes (${role})`);
+        assert.ok(l.items.every((it) => it.group === (gender === 'female' ? 'WomensClothing' : 'MensClothing')), 'their own sex\'s garments');
+        const slots = l.items.map((it) => it.equipSlot);
+        assert.equal(slots.includes(EQUIP_SLOTS.LegsClothes), cut !== 'robe', `the cut their sprite shows (${cut})`);
+        assert.ok(slots.includes(EQUIP_SLOTS.ChestClothes) && slots.includes(EQUIP_SLOTS.Feet), 'a top or a robe, and shoes');
+        assert.ok(l.npc && Number.isInteger(l.npc.seed), 'and their own picks, head and hair');
       });
     }
   }
   const dyes = new Set();
-  for (let i = 0; i < 40; i++) dyes.add(folkLook(walker(PERSON_TEXTURES.Breton.male[0], GENDERS.Male, { nameNPC: `n${i}` }), 'Breton').items[0].dye);
+  const outfits = new Set();
+  for (let i = 0; i < 40; i++) { const l = folkLook(walker(PERSON_TEXTURES.Breton.male[0], GENDERS.Male, { nameNPC: `n${i}` }), 'Breton'); dyes.add(l.items[0].dye); outfits.add(l.items.map((it) => `${it.templateIndex}.${it.dye}`).join()); }
+  assert.ok(outfits.size >= 36, `one sprite's walkers, hardly two dressed alike (${outfits.size} of 40)`);
   assert.ok(dyes.size >= 5, `a street is not one colour (${[...dyes]})`);
   const guard = folkLook(walker(GUARD_TEXTURE, GENDERS.Male), 'Breton');
   assert.equal(guard.gender, 'male');

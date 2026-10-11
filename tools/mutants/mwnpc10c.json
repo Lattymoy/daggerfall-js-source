@@ -128,8 +128,8 @@
  {
   "name": "MWNPC10c-still-undyed",
   "file": "src/characters/rosterBodies.js",
-  "old": "dye = (k) => W.dyes[((seed ^ k) >>> 0) % W.dyes.length];",
-  "new": "dye = () => W.dyes[0];",
+  "old": "const d = dressPerson({ role: kind, gender, seed, cut:",
+  "new": "const d = dressPerson({ role: kind, gender, seed: 0, cut:",
   "tests": [
    "test/mwnpc10c_roads.test.js"
   ]

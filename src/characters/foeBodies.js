@@ -12,6 +12,7 @@ import { LOOK_GROUPS } from '../net/wire.js';   // AUDIT MW-NPC II K2: a worn pi
 import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';
 import { creatureLook } from './creatureBodies.js';   // MWNPC9: a creature foe's look, its Morrowind creature
 import { ARMOR_ENUM, WEAPONS_ENUM, equipmentVariantFor } from '../combat/enemyEquipment.js'; import { ARMOR_MATERIAL } from '../systems/armorMaterials.js'; import { MOBILE_TYPES } from './mobileTypes.js';   // MWNPC10: a roster's people, armoured and armed by their class
+import { npcHint } from './wardrobe.js';   // MWNPC17: the man under the kit his own - his head, his hair, the clothes' records
 
 /** The Iliac Bay's people, weighted - the races a class foe is drawn as (Daggerfall's own spelling, the look's). The
  *  Bay is Breton and Redguard country; the rest are travellers, the beast folk fewest. */
@@ -133,7 +134,7 @@ export function foeLook(f) {
   const race = ORC_MOBILES.has(f.mobileType) ? 'Orc' : bay.race;   // MWNPC12: an orc in Morrowind's Orc body
   const gender = f.gender === 'female' ? 'female' : 'male';
   f._mwLookKey = wornKey;
-  return (f._mwLook = { race, gender, faceIndex, items: clothesUnder([...worn], FOE_WARDROBE[gender], h), ...(VAMPIRE_MOBILES.has(f.mobileType) ? { vampire: true } : {}), ...(f.mobileType === WOLF_MOBILE ? { wolf: true } : {}) });   // MWNPC14: a vampire's face; MWNPC15: a werewolf's beast
+  return (f._mwLook = { race, gender, faceIndex, items: clothesUnder([...worn], FOE_WARDROBE[gender], h), npc: npcHint(h, 0), ...(VAMPIRE_MOBILES.has(f.mobileType) ? { vampire: true } : {}), ...(f.mobileType === WOLF_MOBILE ? { wolf: true } : {}) });   // MWNPC14: a vampire's face; MWNPC15: a werewolf's beast; MWNPC17: the seed every machine shares, so the copy is the same man
 }
 
 /** AUDIT MW-NPC II K2: a worn piece on the wire - [equipSlot, group (LOOK_GROUPS' index), templateIndex, material, dye,
@@ -295,7 +296,7 @@ export function rosterLook(rec, { mobileType, gender = 'male', seed = 0, race = 
     for (const [slot, piece] of STEEL_PLATE) items.push({ templateIndex: ARMOR_ENUM[piece], group: 'Armor', equipSlot: EQUIP_SLOTS[slot], material: ARMOR_MATERIAL.Steel });   // steel (MWNPC12: by mwArmorRecords' own table)
     if (mobileType === MOBILE_TYPES.Knight_CityWatch) items.push({ templateIndex: ARMOR_ENUM.Helm, group: 'Armor', equipSlot: EQUIP_SLOTS.Head, material: ARMOR_MATERIAL.Steel });
   }
-  return (rec._mwRosterLook = { race: orc ? 'Orc' : race ?? bay.race, gender: g, faceIndex: bay.faceIndex, items: clothesUnder(items, FOE_WARDROBE[g], h), ...(vampire ? { vampire: true } : {}), ...(wolf ? { wolf: true } : {}) });
+  return (rec._mwRosterLook = { race: orc ? 'Orc' : race ?? bay.race, gender: g, faceIndex: bay.faceIndex, items: clothesUnder(items, FOE_WARDROBE[g], h), npc: npcHint(h, 0), ...(vampire ? { vampire: true } : {}), ...(wolf ? { wolf: true } : {}) });   // MWNPC17
 }
 
 /** The tells the host has dressed the foe's billboard in this frame, for its body's quad (renderer.js

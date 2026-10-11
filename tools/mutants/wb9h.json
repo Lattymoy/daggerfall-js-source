@@ -29,8 +29,8 @@
   {
     "name": "WB9h-the-culled-drawn",
     "file": "src/net/peerBodies.js",
-    "old": "      if (this._planesOk) { if (!this._sees(b, 0, g)) continue; }",
-    "new": "      if (this._planesOk) { /* drawn */ }",
+    "old": "        if (!this._sees(b, 0, g)) {",
+    "new": "        if (false) {",
     "tests": [
       "test/wb9h_crowd_bodies.test.js"
     ]

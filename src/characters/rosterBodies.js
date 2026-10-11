@@ -8,8 +8,7 @@
 // characters/creatureBodies.js; a person's).
 import { rosterLook } from './foeBodies.js';
 import { folkLookOf } from './folkBodies.js';
-import { PEOPLE_WARDROBE } from './peopleBodies.js';
-import { EQUIP_SLOTS } from '../systems/equip.js';
+import { dressPerson } from './wardrobe.js';   // MWNPC17: a still picture's kind, dressed by its role
 import { textSeed } from '../systems/livingWorld/seed.js';
 
 /** A key a host changed: a finite number or a string is one; null, undefined and NaN are none. */
@@ -41,8 +40,9 @@ export function rosterActor(rec, { id, look, feet, yaw, moving = false, running 
 /** MWNPC10c: what a still picture's kind wears (LW-LOOKS - systems/livingWorld/looks.js: a courtier at home in the
  *  palace, a priest at the temple's door, a stall-keeper at their stall); a beggar and the rest the street's outfit.
  *  Keyed by the resident's job - a street's still picture is their job's kind (looks.js stillRoleOf: a priest's, a
- *  stall's merchant's), a room's flat their job's too (world/travellerSprites.js). */
-const STILL_WARDROBE = Object.freeze({ courtier: 'noble', priest: 'priest', keeper: 'merchant', merchant: 'merchant' });
+ *  stall's merchant's), a room's flat their job's too (world/travellerSprites.js). MWNPC17: the wardrobe's role
+ *  (characters/wardrobe.js WARDROBE_ROLES) each is dressed by. */
+export const STILL_WARDROBE = Object.freeze({ courtier: 'noble', priest: 'priest', keeper: 'merchant', merchant: 'merchant' });
 
 /**
  * MWNPC10c (bible/04-Characters/Morrowind-NPCs.md section 15c): ONE OF THE LIVING WORLD'S PEOPLE AS THEIR SPRITE SHOWS
@@ -61,12 +61,9 @@ export function residentLook(rec, res, { still = false, cls = res.cls, guard = f
   if (cls != null) return rosterLook(rec, { mobileType: cls, gender: res.sex === 'female' ? 'female' : 'male', seed, race: res.race });
   const kind = still ? STILL_WARDROBE[res.job] : undefined;
   if (kind) {
-    const female = res.sex === 'female', gender = female ? 'female' : 'male', group = female ? 'WomensClothing' : 'MensClothing';
-    const W = PEOPLE_WARDROBE[kind], outfit = W[gender], dye = (k) => W.dyes[((seed ^ k) >>> 0) % W.dyes.length];
-    const items = /** @type {any[]} */ ([{ templateIndex: outfit[0], group, equipSlot: EQUIP_SLOTS.ChestClothes, dye: dye(0xd1) }]);
-    if (outfit[1] != null) items.push({ templateIndex: outfit[1], group, equipSlot: EQUIP_SLOTS.LegsClothes, dye: dye(0xd2) });
-    items.push({ templateIndex: outfit[2], group, equipSlot: EQUIP_SLOTS.Feet, dye: dye(0xd3) });
-    return { race: res.race ?? 'Breton', gender, faceIndex: seed % 10, items };
+    const gender = res.sex === 'female' ? 'female' : 'male';
+    const d = dressPerson({ role: kind, gender, seed, cut: kind === 'priest' ? 'robe' : null });   // MWNPC17: their kind's role, off their own id's seed - a priest at the door in the robes his picture wears
+    return { race: res.race ?? 'Breton', gender, faceIndex: (seed >>> 0) % 10, items: d.items, npc: d.npc };
   }
   return folkLookOf({ archive: guard ? res.archive : (res.civvies ?? res.archive), personFaceRecordId: res.face ?? 0, gender: res.gender ?? 0, guard }, res.race ?? 'Breton', seed);   // WATCH-DAY: on duty in the uniform, off it in his own clothes, as his sprite is
 }

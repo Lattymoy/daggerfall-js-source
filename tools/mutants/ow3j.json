@@ -203,8 +203,8 @@
   {
     "name": "OW3-J6-grow-ignored",
     "file": "src/combat/fpArm.js",
-    "old": "const u = (grow > 1 ? grow : 1) / MW_UNITS_PER_METER;",
-    "new": "const u = 1 / MW_UNITS_PER_METER;",
+    "old": "const thirdUnit = (grow) => (grow > 1 ? grow : 1) / MW_UNITS_PER_METER;",
+    "new": "const thirdUnit = (grow) => 1 / MW_UNITS_PER_METER;",
     "tests": [
       "test/prbow1_bow.test.js"
     ],

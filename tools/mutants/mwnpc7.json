@@ -2,8 +2,8 @@
  {
   "name": "MWNPC7-variant-ignored",
   "file": "src/characters/folkBodies.js",
-  "old": "  const outfit = FOLK_OUTFITS[gender][folkVariant(person.archive, race)];",
-  "new": "  const outfit = FOLK_OUTFITS[gender][0];",
+  "old": "  const { role, cut } = FOLK_DRESS[gender][folkVariant(person.archive, race)];",
+  "new": "  const { role, cut } = FOLK_DRESS[gender][0];",
   "tests": [
    "test/mwnpc7_folk.test.js"
   ]
@@ -28,18 +28,18 @@
  },
  {
   "name": "MWNPC7-legs-dropped",
-  "file": "src/characters/folkBodies.js",
-  "old": "  if (outfit[1] != null) items.push(",
-  "new": "  if (false) items.push(",
+  "file": "src/characters/wardrobe.js",
+  "old": "    items.push({ templateIndex: pickOf(/** @type {number[]} */ (S.legs), wmix(s ^ 0xc2)), group, equipSlot: EQUIP_SLOTS.LegsClothes, dye: lowDye });",
+  "new": "",
   "tests": [
    "test/mwnpc7_folk.test.js"
   ]
  },
  {
   "name": "MWNPC7-one-dye",
-  "file": "src/characters/folkBodies.js",
-  "old": "  const dye = (k) => FOLK_DYES[mix(seed ^ k) % FOLK_DYES.length];",
-  "new": "  const dye = (k) => FOLK_DYES[0];",
+  "file": "src/characters/wardrobe.js",
+  "old": "  const dye = (salt) => pickOf(R.dyes, wmix(s ^ salt));",
+  "new": "  const dye = (salt) => R.dyes[0];",
   "tests": [
    "test/mwnpc7_folk.test.js"
   ]

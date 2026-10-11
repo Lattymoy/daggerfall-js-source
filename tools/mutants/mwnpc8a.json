@@ -29,7 +29,7 @@
  {
   "name": "MWNPC8a-knight-unarmoured",
   "file": "src/characters/peopleBodies.js",
-  "old": "  if (f.ggroup === GUILD_GROUPS.KnightlyOrder || f.ggroup === GUILD_GROUPS.FightersGuild || f.type === FACTION_TYPES.KnightlyGuard) return 'steel';\n",
+  "old": "  if (f.ggroup === GUILD_GROUPS.KnightlyOrder || f.type === FACTION_TYPES.KnightlyGuard) return 'knight';   // MWNPC17: was 'steel'\n",
   "new": "",
   "tests": [
    "test/mwnpc8_people.test.js"
@@ -56,7 +56,7 @@
  {
   "name": "MWNPC8a-thief-common",
   "file": "src/characters/peopleBodies.js",
-  "old": "  if (f.sgroup === SOCIAL_GROUPS.Underworld || f.type === FACTION_TYPES.Thieves) return 'underworld';\n",
+  "old": "  if (f.sgroup === SOCIAL_GROUPS.Underworld || f.type === FACTION_TYPES.Thieves || f.ggroup === GUILD_GROUPS.DarkBrotherHood) return 'underworld';   // MWNPC17: and the Brotherhood\n",
   "new": "",
   "tests": [
    "test/mwnpc8_people.test.js"
@@ -92,8 +92,8 @@
  {
   "name": "MWNPC8a-gender-ignored",
   "file": "src/characters/peopleBodies.js",
-  "old": "  const female = data.gender === GENDERS.Female;",
-  "new": "  const female = false;",
+  "old": "  const gender = data.gender === GENDERS.Female ? 'female' : 'male';",
+  "new": "  const gender = 'male';",
   "tests": [
    "test/mwnpc8_people.test.js"
   ]
@@ -109,18 +109,18 @@
  },
  {
   "name": "MWNPC8a-steel-unworn",
-  "file": "src/characters/peopleBodies.js",
-  "old": "    for (const [slot, piece] of STEEL) items.push(",
-  "new": "    for (const [slot, piece] of []) items.push(",
+  "file": "src/characters/wardrobe.js",
+  "old": "  const armor = R.armor ? armorKit(R.armor, tier, wmix(s ^ 0xa4)) : [];",
+  "new": "  const armor = [];",
   "tests": [
    "test/mwnpc8_people.test.js"
   ]
  },
  {
   "name": "MWNPC8a-shoes-over-boots",
-  "file": "src/characters/peopleBodies.js",
-  "old": "  if (kind !== 'steel') items.push({ templateIndex: outfit[2]",
-  "new": "  if (true) items.push({ templateIndex: outfit[2]",
+  "file": "src/characters/wardrobe.js",
+  "old": "  if (!armor.some((it) => it.equipSlot === EQUIP_SLOTS.Feet)) items.push(",
+  "new": "  if (true) items.push(",
   "tests": [
    "test/mwnpc8_people.test.js"
   ]
@@ -128,17 +128,17 @@
  {
   "name": "MWNPC8a-common-one-outfit",
   "file": "src/characters/peopleBodies.js",
-  "old": "  } else if (kind === 'common') outfit = FOLK_OUTFITS[gender][mix(seed ^ 0x0f) % 4];",
-  "new": "  } else if (kind === 'common') outfit = FOLK_OUTFITS[gender][0];",
+  "old": "  const seed = mix((data.nameSeed | 0) ^ mix(data.hash | 0));",
+  "new": "  const seed = 0;",
   "tests": [
    "test/mwnpc8_people.test.js"
   ]
  },
  {
   "name": "MWNPC8a-dyes-ignore-kind",
-  "file": "src/characters/peopleBodies.js",
-  "old": "  const dyes = kind === 'common' || kind === 'steel' ? COMMON_DYES : PEOPLE_WARDROBE[kind].dyes;",
-  "new": "  const dyes = COMMON_DYES;",
+  "file": "src/characters/wardrobe.js",
+  "old": "  const dye = (salt) => pickOf(R.dyes, wmix(s ^ salt));",
+  "new": "  const dye = (salt) => pickOf(WARDROBE_DYES.street, wmix(s ^ salt));",
   "tests": [
    "test/mwnpc8_people.test.js"
   ]

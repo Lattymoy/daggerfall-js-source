@@ -146,8 +146,8 @@
  {
   "name": "MWNPC10a-draw-unscaled",
   "file": "src/net/peerBodies.js",
-  "old": "(this._cam?.grow ? Math.max(1, this._cam.grow(b.feet)) : 1) * this._scaleOf(b);",
-  "new": "(this._cam?.grow ? Math.max(1, this._cam.grow(b.feet)) : 1);",
+  "old": "      const g = ow * this._scaleOf(b);",
+  "new": "      const g = ow;",
   "tests": [
    "test/mwnpc10_gate.test.js"
   ]

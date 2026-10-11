@@ -226,9 +226,9 @@
  },
  {
   "name": "MWNPC1-shadow-records-skin",
-  "file": "src/render/shadowPass.js",
-  "old": "    if (mesh && mesh.skin) return;\n",
-  "new": "\n",
+  "file": "src/render/renderer.js",
+  "old": "if (this._casting && this._spriteDepth === 0 && this._studioDepth === 0) this._shadows.recordCharacter(mesh, modelMatrix);",
+  "new": "if (this._casting && this._studioDepth === 0) this._shadows.recordCharacter(mesh, modelMatrix);",
   "tests": [
    "test/mwnpc1_gpuskin.test.js"
   ]

@@ -1873,6 +1873,7 @@ async function buildTpBody({
   werewolf = false,   // WEREWOLF1: the transformed werewolf - the wolf's skeleton, head, hair and robe, and its own .kf
   skin = null,   // SHADOW-FANG (AUDIT D2): the wolf's skin, painted here
   vampire = false,   // MWNPC14: a vampire - the race's vampire head (getVampireHead)
+  walk = null,   // MWNPC17: an NPC's own head and hair, walked off its seed ({ head, hair } - playerBodyRows)
 }) {
   const exists = (p) => archives.some((a) => a.has(p));
   const settingsSkeleton = tpSkeletonPath({ female, beast, werewolf });
@@ -1885,7 +1886,7 @@ async function buildTpBody({
     const skeletonBytes = nifBytes(skelArc, skeletonPath);
 
     // WEREWOLF1: the wolf's head and hair, by id - every other skin slot is empty, the robe is the body
-    const rows = werewolf ? werewolfHeadRows(parts) : playerBodyRows(parts, race, female, { beast, faceIndex, faceMatch, vampire });   // MWNPC14: a vampire's head
+    const rows = werewolf ? werewolfHeadRows(parts) : playerBodyRows(parts, race, female, { beast, faceIndex, faceMatch, vampire, walk });   // MWNPC14: a vampire's head; MWNPC17: an NPC's own
     const missing = [];
     // MW-D29/D31: the worn verdicts arrive COMPOSED - one arbitration
     // in buildFpArm serves both rigs. shadowSkinRows applies the
@@ -2148,6 +2149,7 @@ export async function buildFpArm({
   creature = null,   // MWNPC9: a CREA id, or the match's candidates in order - a creature's body instead (buildCreatureBody)
   vampire = false,   // MWNPC14: a vampire's face - the race's vampire head
   flies = false,   // AUDIT MW-NPC II K5: a creature body that must fly (its CREA record's Flies flag)
+  npcFace = null,   // MWNPC17: an NPC's head and hair, each walked off its seed ({ head, hair } - characters/wardrobe.js npcFaceOf): no portrait to match
 } = {}) {
   if (creature) return buildCreatureBody({ creature, flies, deps });   // MWNPC9
   const d = deps || await import('../scenes/dataSource.js');
@@ -2367,6 +2369,8 @@ export async function buildFpArm({
     let faceMatch;
     if (werewolf) {
       faceMatch = { head: null, hair: null, reasons: ['werewolf: the head is WerewolfHead'] };   // WEREWOLF1: no face to match
+    } else if (npcFace) {
+      faceMatch = { head: null, hair: null, reasons: ['an NPC: its head and hair walked off its seed'] };   // MWNPC17: no portrait is its own - nothing measured
     } else if (!d.fetchArena2Bytes) {
       faceMatch = { head: null, hair: null, reasons: ['no Daggerfall data door - the walk stands'] };
     } else {
@@ -2522,7 +2526,7 @@ export async function buildFpArm({
     // MW-D24: the THIRD-PERSON BODY, while the same archives are open.
     // Its refusal is a note on the card, never the arm's refusal.
     const third = arm.ok
-      ? await buildTpBody({ race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn, archives, parts, allWeapons, find, gen, torch, allLights, sheathing, ammoCount, hipLight, werewolf, skin: werewolf ? skin : null, vampire: !!vampire })   // (the wolf's rows read no face)   // MW-D51; WS1; HT-WAIST; WEREWOLF1; SHADOW-FANG; MWNPC14
+      ? await buildTpBody({ race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn, archives, parts, allWeapons, find, gen, torch, allLights, sheathing, ammoCount, hipLight, werewolf, skin: werewolf ? skin : null, vampire: !!vampire, walk: npcFace })   // (the wolf's rows read no face)   // MW-D51; WS1; HT-WAIST; WEREWOLF1; SHADOW-FANG; MWNPC14; MWNPC17
       : null;
     stage('meshes');
     // IG2: the mapped archives are NO LONGER truncated here - they are
@@ -3372,6 +3376,7 @@ export function createFpArm() {
       for (const e of m.effects || []) renderer.releaseParticleEffect(e);   // MAC-Q: the flame's buffer and texture go with the mesh
       m.effects = null;
       if (m.skin) renderer.releaseCharacterSkin(m);   // MWNPC1: and a skinned body's palette
+      m._dead = true;   // MWNPC16: a shadow record made before the release (replayed at the next frame's head) casts nothing
     }
   }
   function releaseMesh() { releaseGpu(mesh); mesh = null; }
@@ -3576,6 +3581,33 @@ export function createFpArm() {
   }
 
   function releaseThirdMesh() { releaseGpu(thirdMesh); thirdMesh = null; thirdSkin = null; }   // MWNPC1: a rebuilt mesh lays its pieces out again
+  /** AUDIT OW3 J6 / MWNPC16: metres a Morrowind unit, `grow` times (the travel view's OW-BIG, MWNPC10's larger body). */
+  const thirdUnit = (grow) => (grow > 1 ? grow : 1) / MW_UNITS_PER_METER;
+  /** MW-D24 / MWNPC16: the third body's world model matrix at `feet` facing `yaw`, `grow` times its size about its feet
+   *  (drawThird's own placement, one home for the draw and the cast). */
+  function thirdModel(feet, yaw, grow = 1) {
+    const u = thirdUnit(grow);
+    const yawDeg = (yaw * 180 / Math.PI) + 180;
+    const rs = (built && built.raceScale) || { weight: 1, height: 1 };
+    return multiply(trs(feet[0], feet[1], feet[2], 0, yawDeg, 0, -u * rs.weight, u * rs.height, u * rs.weight), NIF_TO_PASS);
+  }
+  /** PR-BOW1 / MWNPC16: the posed box drawThird folds over what it draws (the shown ranges'), else the assembly's. */
+  function thirdBox() {
+    let box = visibleRangeBounds(thirdMesh.ranges, thirdDrawBox);
+    if (!(box && box.maxX > box.minX)) box = thirdBuilt.arm.bounds;
+    if (!(box && box.maxX > box.minX)) box = meshBounds(thirdBuilt.arm.pieces);
+    return box && box.maxX > box.minX ? box : null;
+  }
+  const castSphere = new Float32Array(4);   // MWNPC16: the body's world sphere, one a rig, rewritten per cast
+  /** MWNPC16: THE BODY CASTS ITS OWN SHAPE - its mesh, posed as last drawn or skinned, recorded for the shadow maps alone
+   *  (renderer.recordShadowBody) under a sphere about its box, `center` that box's middle in the world and `half` the
+   *  box's half-width and half-height. AUDIT MWNPC16-18 A3: `anchored` - a body that never walks (the lane's word), which
+   *  the lo tier's lamps take. */
+  function castBody(model, center, halfW, halfH, anchored = false) {
+    castSphere[0] = center[0]; castSphere[1] = center[1]; castSphere[2] = center[2];
+    castSphere[3] = Math.hypot(halfW, halfH);
+    renderer.recordShadowBody(thirdMesh, model, castSphere, anchored);
+  }
   /** Pack the posed third-person pieces and put them on the GPU - the
    *  ONE upload both the wheel (update) and the inventory figure use.
    *  AUDIT 33 F1: the figure used to gate on thirdActive(), which
@@ -5825,22 +5857,18 @@ export function createFpArm() {
      * (chirality-true by MW-D23's measurement) already shows it.
      * Winding is safe: drawCharacter disables CULL_FACE.
      */
-    drawThird(canvas, { proj, view, eye, feet, yaw, hitFlash = 0, conceal = null, grow = 1, up = null, fx = null, horse = null }) {   // MWNPC5: `fx` a foe's tells (renderer.js drawCharacterSpriteQuad); COATS3D: `horse` the one under the body
+    drawThird(canvas, { proj, view, eye, feet, yaw, hitFlash = 0, conceal = null, grow = 1, up = null, fx = null, cast = false, anchored = false, horse = null }) {   // MWNPC5: `fx` a foe's tells (renderer.js drawCharacterSpriteQuad); MWNPC16: `cast` - the body's own shadow (AUDIT MWNPC16-18 A3: `anchored` one that never walks); COATS3D: `horse` the one under the body
       if (!thirdActive() || !canvas || !feet) return false;
       const t = thirdBuilt;
       // AUDIT OW3 J6: `grow` - the travel view's OW-BIG, the body drawn that many times its size ABOUT ITS FEET (the root
       // trs stands MW 0,0,0 on them at any scale), its box and so its picture with it; 1 everywhere else
-      const u = (grow > 1 ? grow : 1) / MW_UNITS_PER_METER;
-      const yawDeg = (yaw * 180 / Math.PI) + 180;
+      const u = thirdUnit(grow);
       // MW-D34: adjustScale on the rendered body (npc.cpp:1124-1135):
       // x,y take the race's WEIGHT, z its HEIGHT. In this frame the
       // local x/z pair is the MW horizontal (side/forward through
       // Rx(-90)) and local y is the MW vertical.
       const rs = (built && built.raceScale) || { weight: 1, height: 1 };
-      const model = multiply(
-        trs(feet[0], feet[1], feet[2], 0, yawDeg, 0, -u * rs.weight, u * rs.height, u * rs.weight),
-        NIF_TO_PASS,
-      );
+      const model = thirdModel(feet, yaw, grow);   // MWNPC16: one home with castThird's
       lastThirdModel = model;   // AUDIT FIELD-GUN-MW F2: the body's frame, for the muzzle behind the camera
       drawnArm = t.arm; drawnMats = t.arm.mats;   // SHADOW-CLOAK (AUDIT): the pose this body was drawn in
       // The box the sprite law needs, measured off the POSED pieces in
@@ -5857,14 +5885,16 @@ export function createFpArm() {
       // arrow off the string and an unlit torch are hidden, not removed,
       // and the assembly's fold still counted them. The assembly's fold
       // stands in when nothing drawn has a box.
-      let box = visibleRangeBounds(thirdMesh.ranges, thirdDrawBox);
-      if (!(box && box.maxX > box.minX)) box = t.arm.bounds;
-      if (!(box && box.maxX > box.minX)) box = meshBounds(t.arm.pieces);   // AUDIT 68: poseAssembly's own fold, over the pieces
-      if (!(box && box.maxX > box.minX)) return false;
+      const box = thirdBox();   // AUDIT 68: poseAssembly's own fold, over the pieces, when nothing drawn has a box
+      if (!box) return false;
       const { minX, minY, minZ, maxX, maxY, maxZ } = box;
       const halfH = ((maxZ - minZ) * u * rs.height) / 2;
       const halfW = (Math.hypot(maxX - minX, maxY - minY) * u * rs.weight) / 2;
       const center = transformPoint(model, (minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
+      // MWNPC16: the shape it casts, where it is asked (an NPC's lane - net/peerBodies.js `casts`, which never asks it of a
+      // body the travel view grows: OW-BIG's law, no giant's shadow), at its size (MWNPC10's boss stands larger, and casts
+      // so); never a veiled body's - a concealed foe and a ghost cast nothing, as their flats never did
+      if (cast && !conceal && renderer.recordShadowBody) castBody(model, center, halfW, halfH, anchored);
       // PR-BOW1: THE PICTURE IS OF THE BODY. The sprite is true world
       // size, so its size on screen is set by where its quad stands -
       // and that was the box centre, which is not the body: a longsword
@@ -5896,6 +5926,33 @@ export function createFpArm() {
         return true;
       }
       drawRigSpriteBox(renderer, canvas, thirdMesh, model, { center, halfW, halfH, anchor, hitFlash, conceal, up, fx }, proj, view, eye, MW_ARM_PIXEL);   // HITFLASH1: a struck peer's body flashes
+      return true;
+    },
+
+    /** MWNPC16: A BODY OUT OF THE VIEW STILL CASTS INTO IT - SHADOW-REACH's law for the flats (an NPC's billboard the view
+     *  cull rejected was recorded for the maps alone), kept for the body that stands where it stood: at `feet` facing
+     *  `yaw`, in the pose its skin last took (a body out of the view skins nothing - WB9h), recorded only where its
+     *  sphere reaches a map this frame draws (renderer.shadowReachSphere), `grow` times its size as drawThird's. Answers
+     *  whether it was recorded. AUDIT MWNPC16-18 N3: asked first of a sphere about its FEET that holds the box's own
+     *  wherever the yaw turns it (the box's reach plus its middle's distance from the feet) - the matrix and the middle
+     *  are made only for a body that may reach, never a frame's garbage for each body standing out of every map.
+     *  `anchored` drawThird's. */
+    castThird({ feet, yaw, grow = 1, anchored = false }) {
+      if (!thirdActive() || !feet || !renderer || !renderer.recordShadowBody) return false;
+      const box = thirdBox();
+      if (!box) return false;
+      const rs = (built && built.raceScale) || { weight: 1, height: 1 };
+      const u = thirdUnit(grow);
+      const { minX, minY, minZ, maxX, maxY, maxZ } = box;
+      const halfH = ((maxZ - minZ) * u * rs.height) / 2;
+      const halfW = (Math.hypot(maxX - minX, maxY - minY) * u * rs.weight) / 2;
+      const reach = renderer.shadowReachSphere;
+      const mid = Math.hypot(((minX + maxX) / 2) * u * rs.weight, ((minY + maxY) / 2) * u * rs.weight, ((minZ + maxZ) / 2) * u * rs.height);
+      if (reach && !renderer.shadowReachSphere(feet[0], feet[1], feet[2], Math.hypot(halfW, halfH) + mid)) return false;
+      const model = thirdModel(feet, yaw, grow);
+      const center = transformPoint(model, (minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
+      if (reach && !renderer.shadowReachSphere(center[0], center[1], center[2], Math.hypot(halfW, halfH))) return false;
+      castBody(model, center, halfW, halfH, anchored);
       return true;
     },
 

@@ -1685,7 +1685,7 @@ export function werewolfHeadRows(parts) {
   ];
 }
 
-export function playerBodyRows(parts, race, female, { beast = false, faceIndex = 0, faceTable = FACE_TABLE, faceMatch = null, vampire = false } = {}) {   // MWNPC14: `vampire` the race's vampire head
+export function playerBodyRows(parts, race, female, { beast = false, faceIndex = 0, faceTable = FACE_TABLE, faceMatch = null, vampire = false, walk = null } = {}) {   // MWNPC14: `vampire` the race's vampire head; MWNPC17: `walk` an NPC's { head, hair }
   const want = String(race || '').toLowerCase();
   // MW-D32: the sweep slots resolve through getBodyParts-whole
   // (npcanimation.cpp:1167-1297 - LAST proper match wins, male-for-
@@ -1740,7 +1740,14 @@ export function playerBodyRows(parts, race, female, { beast = false, faceIndex =
     const sorted = slot === 'head' ? pools.heads : pools.hairs;
     let chosen = null;
     let how = null;
-    if (sorted.length) {
+    // MWNPC17: AN NPC'S OWN - its head and its hair walked each on its own off its seed (characters/wardrobe.js
+    // npcFaceOf), over the same pools in the same order: no portrait is theirs to match, and the face index named one
+    // pair of ten where a race carries its heads times its hairs
+    const step = walk ? walk[slot] : null;
+    if (sorted.length && Number.isInteger(step) && step >= 0) {
+      chosen = sorted[step % sorted.length];
+      how = 'walked for an NPC';
+    } else if (sorted.length) {
       const wantId = curated ? String(curated[slot] || '').toLowerCase() : '';
       chosen = byId(sorted, wantId);
       how = chosen ? 'curated' : null;

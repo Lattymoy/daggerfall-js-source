@@ -177,7 +177,7 @@ export function createNpcBodies({ renderer, enabled = () => true, generation = (
   // MWNPC5b: what a host knows of an actor beyond its pose, by its lane id - the concealment its billboard would have
   // drawn (ECV1), its hit flash, its tells (characters/foeBodies.js foeFx) and whether it is dead (the living stand
   // first: PeerBodies' priority) - one record an actor, rewritten each frame
-  /** @type {Map<string, { conceal: any, flash: number, fx: any, dead: boolean, scale: number, frame: number }>} */
+  /** @type {Map<string, { conceal: any, flash: number, fx: any, dead: boolean, scale: number, frame: number, anchored: boolean }>} */
   const info = new Map();
   let frame = 0;
   const seen = (id) => info.get(id);   // read for the actors offered this frame (the sync's) and the bodies standing (the draw's) - a lingering body is not drawn
@@ -185,14 +185,15 @@ export function createNpcBodies({ renderer, enabled = () => true, generation = (
   const flashOf = (id) => seen(id)?.flash ?? 0;
   const fxOf = (id) => seen(id)?.fx ?? null;
   const scaleOf = (id) => seen(id)?.scale ?? 1;   // MWNPC10: an actor drawn larger than itself (the gate's boss)
-  const drawOpts = { proj: null, view: null, eye: null, flashOf, fxOf, scaleOf };
+  const anchoredOf = (id) => !!seen(id)?.anchored;   // AUDIT MWNPC16-18 A3: one that never walks - its shadow in the lo tier's lamps
+  const drawOpts = { proj: null, view: null, eye: null, flashOf, fxOf, scaleOf, anchoredOf };
   const lane = () => {
     const t = tier();
     const want = Object.prototype.hasOwnProperty.call(tiers, t) ? t : NPC_BODIES_DEFAULT;   // an unknown tier stands under the default
     if (want !== standing) {
       bodies?.destroy();
       const limits = tiers[want] ?? null;
-      bodies = limits ? new PeerBodies({ renderer, enabled, generation, limits: budget ? { ...limits, buildInRange: true, hysteresis: NPC_BUDGET_HYSTERESIS } : limits, gate: BODY_BUILD_GATE, ...(createRig ? { createRig } : {}), ...(now ? { now } : {}), ...(warn ? { warn } : {}), ...(collider ? { collider } : {}) }) : null;
+      bodies = limits ? new PeerBodies({ renderer, enabled, generation, limits: budget ? { ...limits, buildInRange: true, hysteresis: NPC_BUDGET_HYSTERESIS } : limits, gate: BODY_BUILD_GATE, casts: true, ...(createRig ? { createRig } : {}), ...(now ? { now } : {}), ...(warn ? { warn } : {}), ...(collider ? { collider } : {}) }) : null;   // MWNPC16: an NPC's body casts its own shadow (its flat casts none)
       standing = want;
     }
     return bodies;
@@ -238,17 +239,18 @@ export function createNpcBodies({ renderer, enabled = () => true, generation = (
      * running, drawn, swings, strike, casts, castRange, hits, dead } - and MWNPC10 `scale`, drawn that many times its
      * size about its feet (1 when absent). An actor with no look or no feet is not offered.
      * MWNPC5b: `conceal` the ECV1 visual its billboard would draw concealed (null: plain), `flash` its hit flash, `fx`
-     * its tells (the quad's).
-     * @param {string} laneName @param {any} actor @param {any} [conceal] @param {number} [flash] @param {any} [fx]
+     * its tells (the quad's). AUDIT MWNPC16-18 A3: `anchored` - it never walks (createPopulationLane reads it off its flat),
+     * so its shadow is the lo tier's lamps' too.
+     * @param {string} laneName @param {any} actor @param {any} [conceal] @param {number} [flash] @param {any} [fx] @param {boolean} [anchored]
      */
-    stand(laneName, actor, conceal = null, flash = 0, fx = null) {
+    stand(laneName, actor, conceal = null, flash = 0, fx = null, anchored = false) {
       if (!actor?.look || !actor.feet || npcBodiesHeld()) return;   // AUDIT MW-NPC II H2: none under the Overworld
       conceal ??= actor.look.veil ?? null;   // MWNPC13: a spectral's standing veil - the host's concealment first
       const id = npcPeerId(laneName, actor.id);
       peers.push({ id, name: '', told: true, look: actor.look, shown: npcShown(actor) });
       let r = info.get(id);
-      if (!r) info.set(id, (r = { conceal: null, flash: 0, fx: null, dead: false, scale: 1, frame: 0 }));
-      r.conceal = conceal; r.flash = flash > 0 ? flash : 0; r.fx = fx; r.dead = !!actor.dead; r.frame = frame;
+      if (!r) info.set(id, (r = { conceal: null, flash: 0, fx: null, dead: false, scale: 1, frame: 0, anchored: false }));
+      r.conceal = conceal; r.flash = flash > 0 ? flash : 0; r.fx = fx; r.dead = !!actor.dead; r.frame = frame; r.anchored = !!anchored;
       r.scale = actor.scale > 0 ? actor.scale : 1;   // MWNPC10
     },
     /** The frame's actors to their bodies - MWNPC11: under the frame's budget, shared with every other lane.
@@ -313,8 +315,8 @@ export function createHostNpcBodies({ renderer, collider = () => null, tiers = N
  * MWNPC7: A POPULATION'S LANE AT ITS HOST - the shape the foe pools grew (dungeonContext.js, exteriorFoes.js,
  * cityGuards.js) for a host that walks its population inline: the lane made the first frame it is wanted and let go the
  * frame it is not; each actor `offer`ed with the billboard its host would draw for it, that billboard's `castOnly`
- * reset at the offer; `draw` syncs the lane, marks each offered billboard cast-only where its body stands (it casts the
- * shadow the body does not) and draws the bodies in one bind - after the sync, so a body arriving or leaving is never a
+ * reset at the offer; `draw` syncs the lane, marks each offered billboard cast-only where its body stands (MWNPC16: it
+ * draws nothing and casts nothing - the body casts its own shape) and draws the bodies in one bind - after the sync, so a body arriving or leaving is never a
  * frame drawn twice or not at all, and nothing if nothing was offered since the last draw.
  * @param {{ laneName: string, renderer: any, collider?: () => any, tiers?: any, want?: () => boolean, make?: (() => any) | null }} p
  */
@@ -340,7 +342,9 @@ export function createPopulationLane({ laneName, renderer, collider = () => null
     offer(actor, batch, conceal = null, flash = 0, fx = null) {
       if (batch) batch.castOnly = false;
       if (!lane || !offered) return;
-      lane.stand(laneName, actor, conceal, flash, fx);
+      // AUDIT MWNPC16-18 A3: one whose flat cannot walk - its centre in its vertices, no origin, never moved by its
+      // vertices (shadowPass.js recordBillboards' DISC29-E test) - is a body that never walks
+      lane.stand(laneName, actor, conceal, flash, fx, !!batch && batch.origin == null && batch._dyn !== true);
       ids.push(actor.id); batches.push(batch);
     },
     /** Synced, marked, drawn - before the host draws the billboards it offered.

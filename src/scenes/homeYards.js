@@ -454,6 +454,7 @@ export function createHomeYards(deps) {
   const failed = new Map();
   /** @type {Map<string, {pool: any, px: number, py: number, mapId: number, bk: number, t: number[], sig: string, src: any[] | null, srcSig: string, kept: boolean, lot: any, frame: any, entry: any, trees: Map<string, any>, treeSet: any}>} */
   const yards = new Map();
+  const yardFigs = [];   // MWNPC18 (AUDIT MWNPC16-18 D4): figures()'s one list
   let syncIn = 0;
   /** @type {any} the owner's own yard the decorator stands in, or null */
   let cur = null;
@@ -813,6 +814,15 @@ export function createHomeYards(deps) {
       for (const y of yards.values()) if (nearEye(y, eye)) y.pool.batchesSeen(_batches, y === cur?.yard ? null : eye, YARD_MIN_ANGLE);
       for (const b of tool.batches()) _batches.push(b);
       return _batches;
+    },
+    /** MWNPC18: the yards' figures (one of Daggerfall's people set down outside), for the street's people lane - into one
+     *  list kept (AUDIT MWNPC16-18 D4: a frame's new arrays, two a yard). YARD-RANGE: only a yard within its reach, as
+     *  its flats are (batches) - a body never stands where its picture would not be drawn. */
+    figures: () => {
+      yardFigs.length = 0;
+      const eye = deps.eye?.() ?? null;
+      for (const y of yards.values()) if (nearEye(y, eye)) for (const e of y.pool.figures()) yardFigs.push(e);
+      return yardFigs;
     },
     /** DECOR-LPT: the yards' 3D trees, for the world's near set (scenes/world.js lowPolyTreesFrame). */
     treeSets,

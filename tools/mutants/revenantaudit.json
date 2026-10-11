@@ -146,7 +146,7 @@
   {
     "name": "AUDIT-E5-a-burnt-body-s-shadow",
     "file": "src/systems/dissolve.js",
-    "old": "  if (s > 0.5) { if (!batch.noShadow)",
+    "old": "  if (s > DISSOLVE_SHADOWLESS) { if (!batch.noShadow)",
     "new": "  if (s > 2) { if (!batch.noShadow)",
     "tests": [
       "test/revenant_companions.test.js"

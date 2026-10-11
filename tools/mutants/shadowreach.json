@@ -119,8 +119,8 @@
   {
     "name": "sway-on-the-movers-cadence",
     "file": "src/render/shadowPass.js",
-    "old": "        const dueDyn = dynNear === DYN_SWAY ? (SHADOW_TUNING.steady || (this.frameNo + k) % SHADOW_SWAY_EVERY === 0) : due;",
-    "new": "        const dueDyn = due;",
+    "old": "        const dueDyn = dynNear === DYN_SWAY ? (SHADOW_TUNING.steady || (this.frameNo + k) % SHADOW_SWAY_EVERY === 0) : dynNear === DYN_BODY ? !bodiesHeld : due;",
+    "new": "        const dueDyn = dynNear === DYN_BODY ? !bodiesHeld : due;",
     "tests": [
       "test/shadowreach.test.js"
     ]

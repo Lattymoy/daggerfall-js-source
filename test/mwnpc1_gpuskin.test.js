@@ -346,7 +346,7 @@ test('MWNPC1g the GLSL says what its JS law says: the blend, the post composed o
     'return normalize(uSkinFlip * (uSkinNrm * nw));',
   ]) assert.ok(src.includes(line), `the face normal: ${line}`);
   assert.ok(src.includes('char: this._charSkinProgram(src.charFs),') && src.includes('const program = this._buildProgram(CHAR_SKIN_VS, skinFaceFs(fs));'), 'the world set builds its character program from the skin VS and the edited lane shader');
-  assert.ok(src.includes("vs: { mesh: VS, bb: BB_VS, terrain: TERRAIN_VS, char: CHAR_VS }"), 'the shadow pass keeps the unskinned CHAR_VS');
+  assert.ok(src.includes("vs: { mesh: VS, bb: BB_VS, terrain: TERRAIN_VS, char: CHAR_VS, charSkin: CHAR_SKIN_VS }"), 'the shadow pass keeps the unskinned CHAR_VS');   // PIN MOVED (MWNPC16): and takes the skinned one for a body's own shadow
   const classic = src.match(/const CHAR_FS = `([\s\S]*?)`;/)[1];
   for (const [name, fs] of [['classic', classic], ['lane', EL_CHAR_FS], ['classic-shadow lane', classicLook(EL_CHAR_FS)]]) {
     const out = skinFaceFs(fs);
@@ -357,10 +357,13 @@ test('MWNPC1g the GLSL says what its JS law says: the blend, the post composed o
   assert.equal(SKIN_PALETTE_UNIT, 21);
 });
 
-test('MWNPC1h drawCharacter: the palette sampler always reads a complete texture, the body\'s for its draw and the identity after; a skinned body never records a shadow', () => {
+test('MWNPC1h drawCharacter: the palette sampler always reads a complete texture, the body\'s for its draw and the identity after; drawCharacter records no shadow under the sprite target - a body casts through recordShadowBody (MWNPC16, section 24)', () => {
   const src = rd('src/render/renderer.js');
   const draw = src.slice(src.indexOf('  drawCharacter(mesh, modelMatrix) {'), src.indexOf('  _charSpriteRT() {'));
-  assert.ok(rd('src/render/shadowPass.js').includes('  recordCharacter(mesh, matrix) {') && /recordCharacter\(mesh, matrix\) \{[\s\S]{0,400}if \(mesh && mesh\.skin\) return;/.test(rd('src/render/shadowPass.js')), 'the shadow door turns a skinned body away');
+  // PIN MOVED (MWNPC16): the shadow door no longer turns a skinned body away - it casts through its own skinned depth
+  // program (test/mwnpc16_bodyshadow.test.js) - but drawCharacter still records nothing under the sprite target, the one
+  // place a skinned body is drawn: its shadow is recordShadowBody's, from drawThird
+  assert.ok(draw.includes('if (this._casting && this._spriteDepth === 0 && this._studioDepth === 0) this._shadows.recordCharacter(mesh, modelMatrix);'), 'the sprite target records no shadow');
   assert.ok(draw.includes('    if (skin) {\n      gl.uniform1f(c.skin, skin.pairs);'), 'uSkin set only by a skinned draw (LA-COST1: an unskinned call sends nothing new)');
   assert.ok(draw.includes('gl.bindTexture(gl.TEXTURE_2D, skin.tex);'));
   const once = src.slice(src.indexOf('  _charSkinProgram(fs) {'), src.indexOf('  /** LA-COST7 (2026-09-27, Mac: "performance improvements"): THE SET\'S LOCATIONS'));

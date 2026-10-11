@@ -83,8 +83,8 @@
  {
   "name": "MWNPC14-build-unforwarded",
   "file": "src/combat/fpArm.js",
-  "old": "playerBodyRows(parts, race, female, { beast, faceIndex, faceMatch, vampire });",
-  "new": "playerBodyRows(parts, race, female, { beast, faceIndex, faceMatch });",
+  "old": "playerBodyRows(parts, race, female, { beast, faceIndex, faceMatch, vampire, walk });",
+  "new": "playerBodyRows(parts, race, female, { beast, faceIndex, faceMatch, walk });",
   "tests": [
    "test/mwnpc14_vampires.test.js"
   ]
@@ -92,8 +92,8 @@
  {
   "name": "MWNPC14-build-dropped",
   "file": "src/combat/fpArm.js",
-  "old": "skin: werewolf ? skin : null, vampire: !!vampire })",
-  "new": "skin: werewolf ? skin : null })",
+  "old": "skin: werewolf ? skin : null, vampire: !!vampire, walk: npcFace })",
+  "new": "skin: werewolf ? skin : null, walk: npcFace })",
   "tests": [
    "test/mwnpc14_vampires.test.js"
   ]

@@ -11,7 +11,7 @@
  {
   "name": "F2-no-cast-rule-dropped",
   "file": "src/render/shadowPass.js",
-  "old": "          if (b.noShadow || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < minFlatH)) { this.stats.culled++; continue; }",
+  "old": "          if (b.noShadow || b.castOnly || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < minFlatH)) { this.stats.culled++; continue; }",
   "new": "",
   "tests": [
    "test/bugs5_field.test.js"
@@ -20,8 +20,8 @@
  {
   "name": "F2-noShadow-ignored",
   "file": "src/render/shadowPass.js",
-  "old": "          if (b.noShadow || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < minFlatH)) { this.stats.culled++; continue; }",
-  "new": "          if (SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < minFlatH)) { this.stats.culled++; continue; }",
+  "old": "          if (b.noShadow || b.castOnly || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < minFlatH)) { this.stats.culled++; continue; }",
+  "new": "          if (b.castOnly || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < minFlatH)) { this.stats.culled++; continue; }",
   "tests": [
    "test/bugs5_field.test.js"
   ]
@@ -29,8 +29,8 @@
  {
   "name": "F2-archive-ignored",
   "file": "src/render/shadowPass.js",
-  "old": "          if (b.noShadow || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < minFlatH)) { this.stats.culled++; continue; }",
-  "new": "          if (b.noShadow || (b.size && b.size.h < minFlatH)) { this.stats.culled++; continue; }",
+  "old": "          if (b.noShadow || b.castOnly || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < minFlatH)) { this.stats.culled++; continue; }",
+  "new": "          if (b.noShadow || b.castOnly || (b.size && b.size.h < minFlatH)) { this.stats.culled++; continue; }",
   "tests": [
    "test/bugs5_field.test.js"
   ]
@@ -38,8 +38,8 @@
  {
   "name": "F2-height-ignored",
   "file": "src/render/shadowPass.js",
-  "old": "          if (b.noShadow || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < minFlatH)) { this.stats.culled++; continue; }",
-  "new": "          if (b.noShadow || SHADOW_NO_CAST_ARCHIVES.has(b.archive)) { this.stats.culled++; continue; }",
+  "old": "          if (b.noShadow || b.castOnly || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < minFlatH)) { this.stats.culled++; continue; }",
+  "new": "          if (b.noShadow || b.castOnly || SHADOW_NO_CAST_ARCHIVES.has(b.archive)) { this.stats.culled++; continue; }",
   "tests": [
    "test/bugs5_field.test.js"
   ]

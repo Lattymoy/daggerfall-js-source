@@ -67,10 +67,12 @@
 import { createFpArm } from '../combat/fpArm.js';
 import { dfWornEquipment } from '../formats/mwItemMap.js';
 import { werewolfSkinOf } from '../characters/werewolfSkin.js';   // SHADOW-FANG: a peer's wolf in the skin their signed glyphs name
+import { npcHintOf, npcKeyOf, withNpcPicks, npcFaceOf, beastWorn } from '../characters/wardrobe.js';   // MWNPC17: an NPC's own garments, head and hair
 import { ARMOR_ENUM } from '../combat/enemyEquipment.js';
 import { EQUIP_SLOTS } from '../systems/equip.js';
 import { mwRaceId } from '../formats/mwNpc.js';
 import { CAPSULE_HEIGHT } from '../player/motor.js';
+import { dissolveShadowless } from '../systems/dissolve.js';   // AUDIT MWNPC16-18 R1: a body burnt more than half away casts none
 import { peerStubEntity, lookKey } from './remotePlayers.js';
 import { POSE_STRIKES } from './wire.js';   // MAC7 #1: the swing's kind, by the wire's index
 import { HIT_FRAME_MELEE, MELEE_NUM_FRAMES } from '../characters/weaponStates.js';   // MW-PACE1: where in a blow its hit lands
@@ -240,20 +242,22 @@ function wolfLookKey(look) {
 export function peerBodyKey(look, shown = null, glyphs = null) {
   if (look?.creature) return `crea|${look.creature}${look.flies ? '|flies' : ''}`;   // MWNPC9: a creature is its record - every one of a kind one body, never a person's; AUDIT MW-NPC II K5: one asked to fly another
   if (look?.vampire && !peerIsWolf(shown)) return `vamp|${bodyLookKey(look)}`;   // MWNPC14: a vampire's face is its own body - never a living look's spare
-  return peerIsWolf(shown) ? `wolf|${wolfLookKey(look)}|${werewolfSkinOf(glyphs) ?? ''}` : bodyLookKey(look);   // SHADOW-FANG: and the wolf's skin
+  return peerIsWolf(shown) ? `wolf|${wolfLookKey(look)}|${werewolfSkinOf(glyphs) ?? ''}` : bodyLookKey(look);   // SHADOW-FANG: and the wolf's skin; MWNPC17: and an NPC's own picks (bodyLookKey) - two people in one outfit are two bodies
 }
 
 /** MW-CROWD (FIELD BUGS 2026-10-01 #8): A PERSON'S BODY IS ITS LOOK LESS ITS WEAPONS. The weapon in hand is the arm's
  *  live door (`_arm` -> setWeapon, DISC12's hand swap), so a peer who drew another sword tore down a built body after
  *  BODY_REBUILD_MS and queued a whole build for it - the doll standing meanwhile - to hold what setWeapon had already put
- *  in the hand. The body key reads every other item as lookKey does; memoised by the look, as lookKey is. */
+ *  in the hand. The body key reads every other item as lookKey does; memoised by the look, as lookKey is.
+ *  MWNPC17: and an NPC's hint (wardrobe.js npcKeyOf) - in the memo (AUDIT MWNPC16-18 C F4: added after it, the key was
+ *  a new string per body per wanting peer every frame). */
 const _bodyLookKeys = new WeakMap();
 function bodyLookKey(look) {
   if (!look || typeof look !== 'object') return lookKey(look);
   let k = _bodyLookKeys.get(look);
   if (k === undefined) {
     const items = Array.isArray(look.items) ? look.items : [];
-    k = items.some((it) => it?.group === 'Weapons') ? lookKey({ ...look, items: items.filter((it) => it?.group !== 'Weapons') }) : lookKey(look);
+    k = (items.some((it) => it?.group === 'Weapons') ? lookKey({ ...look, items: items.filter((it) => it?.group !== 'Weapons') }) : lookKey(look)) + npcKeyOf(look);
     _bodyLookKeys.set(look, k);
   }
   return k;
@@ -264,17 +268,20 @@ export function peerBuildOpts(look, shown = null, glyphs = null) {
   const stub = peerStubEntity(look);
   const wolf = peerIsWolf(shown);
   const skin = wolf ? werewolfSkinOf(glyphs) : null;   // SHADOW-FANG: the glyphs the relay read off the peer's own token
+  const npc = wolf ? null : npcHintOf(look);   // MWNPC17: a dressed NPC's seed and rung (characters/wardrobe.js) - a player's look carries none
+  const worn = dfWornEquipment(stub.equip.slots, EQUIP_SLOTS, ARMOR_ENUM);
   return {
     race: mwRaceId(stub.race),
     female: stub.gender === 'female',
     faceIndex: stub.faceIndex | 0,
-    armor: dfWornEquipment(stub.equip.slots, EQUIP_SLOTS, ARMOR_ENUM),
+    armor: npc ? withNpcPicks(beastWorn(worn, stub.race), npc) : worn,   // MWNPC17: each garment its rung and its pick; AUDIT MWNPC16-18: a beast NPC's feet and head bare
     // DISC12: the hand in use; WEREWOLF1: a wolf holds nothing (the build refuses the hand anyway)
     weapon: wolf ? null : stub.equip.slots[shown?.lh ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand] ?? null,
     hasAmmo: false,
     reachSweep: false,   // MWNPC3: a peer is never looked out of - no first-person reach sweep in its build
     ...(wolf ? { werewolf: true, ...(skin ? { skin } : {}) } : {}),   // WEREWOLF1: Bloodmoon's wolf - its skeleton, head, hair and robe; SHADOW-FANG: its skin
     ...(look?.vampire && !wolf ? { vampire: true } : {}),   // MWNPC14: a vampire foe's face (an NPC's look - the wire's never carries it)
+    ...(npc ? { npcFace: npcFaceOf(npc) } : {}),   // MWNPC17: its head and hair walked off its seed
   };
 }
 
@@ -372,10 +379,13 @@ export class PeerBodies {
    * @param {ReturnType<typeof createBuildGate>|null} [p.gate] MWNPC4: the build queue, SHARED - BODY_BUILD_GATE, which every
    *   body lane the hosts stand passes, so one body builds at a time on the page however many lanes ask; none, the
    *   instance's own. AUDIT MW-NPC II L1: an NPC lane's (`buildInRange`) waits behind every peer's and family's.
+   * @param {boolean} [p.casts] MWNPC16: the bodies cast their own shadows (fpArm.js drawThird's `cast`, castThird) - an NPC
+   *   lane's, whose billboard cast for them until then; the peers', the family's and the card table's cast none, as before.
    * @param {() => any} [p.horses] COATS3D: the 3D horse rig (world/horseRig.js) a peer on a horse sits - null, none
    */
-  constructor({ renderer, enabled = () => true, createRig = createFpArm, buildOpts = peerBuildOpts, now = () => Date.now(), generation = () => 0, warn = (m) => console.warn(m), collider = () => null, limits = null, gate = null, horses = () => null }) {
+  constructor({ renderer, enabled = () => true, createRig = createFpArm, buildOpts = peerBuildOpts, now = () => Date.now(), generation = () => 0, warn = (m) => console.warn(m), collider = () => null, limits = null, gate = null, casts = false, horses = () => null }) {
     this.renderer = renderer;
+    this._casts = !!casts;   // MWNPC16
     this._horses = horses;   // COATS3D: the 3D horse rig (world/horseRig.js) a peer on a horse rides, or null - none, and no peer rides here
     this._max = limits?.max ?? BODIES_MAX;   // MWNPC3: the instance's caps (limits)
     this._range = limits?.range ?? BODY_RANGE;
@@ -799,7 +809,7 @@ export class PeerBodies {
   _react(b, shown) {
     const ht = shown.ht | 0, dd = shown.dd | 0;
     if (b.dead == null) { b.dead = dd; if (dd) b.rig.die?.(dd - 1, { startPoint: 1 }); else b.rig.revive?.(); }
-    else if (dd !== b.dead) { b.dead = dd; if (dd) b.rig.die?.(dd - 1); else b.rig.revive?.(); }
+    else if (dd !== b.dead) { b.dead = dd; b.posedAt = 0; if (dd) b.rig.die?.(dd - 1); else b.rig.revive?.(); }   // AUDIT MWNPC16-18 B F2: its pose no longer the one it stands in - no cast until posed again
     if (b.hit == null || dd) b.hit = ht;
     else if (ht !== b.hit) { b.hit = ht; b.rig.hurt?.(ht); }
     return dd > 0;
@@ -832,9 +842,10 @@ export class PeerBodies {
 
   /** The bodies, after the local one (the same pass, MW-D24) - the standing ones. INVIS-LOOK: not a CONCEALED peer's -
    *  that one is drawn translucent after the world's opaque draws (drawVeiled), with the camera kept here. */
-  draw(canvas, { proj, view, eye, flashOf = null, grow = null, up = null, fxOf = null, scaleOf = null }) {
-    const c = this._cam ?? (this._cam = { canvas: null, proj: null, view: null, eye: null, flashOf: null, grow: null, up: null, fxOf: null, scaleOf: null });
+  draw(canvas, { proj, view, eye, flashOf = null, grow = null, up = null, fxOf = null, scaleOf = null, anchoredOf = null }) {
+    const c = this._cam ?? (this._cam = { canvas: null, proj: null, view: null, eye: null, flashOf: null, grow: null, up: null, fxOf: null, scaleOf: null, anchoredOf: null });
     c.scaleOf = scaleOf;   // MWNPC10: a body drawn larger than itself, by its id (the lane's actor `scale`)
+    c.anchoredOf = anchoredOf;   // AUDIT MWNPC16-18 A3: a body that never walks, by its id (the lane's) - the lo tier's lamps take its shadow
     c.canvas = canvas; c.proj = proj; c.view = view; c.eye = eye; c.flashOf = flashOf;
     c.fxOf = fxOf;   // MWNPC5: a body's tells by its id (a foe's glint, elite glow, dissolve - characters/npcBodies.js)
     c.grow = grow; c.up = up;   // OW-PEERS (FIELD BUGS 2026-10-01 #11): under the Overworld each body drawn its grow times about its feet, leaned as the traveller's own is (drawThird's OW-BIG and AUDIT OW3 J6)
@@ -872,9 +883,24 @@ export class PeerBodies {
       if (!this._standing(b) || !b.veil !== !veiled) continue;
       // WB9h: out of the view (the frustum's sides and near, the body's own reach): nothing to draw - the sprite pass
       // has no such test. A view that is no lens (a stub's) keeps the old test alone: behind the eye.
-      const g = (this._cam?.grow ? Math.max(1, this._cam.grow(b.feet)) : 1) * this._scaleOf(b);   // OW-PEERS; MWNPC10: and its own scale
-      if (this._planesOk) { if (!this._sees(b, 0, g)) continue; }
-      else if (view && view.length === 16) {
+      const ow = this._cam?.grow ? Math.max(1, this._cam.grow(b.feet)) : 1;   // OW-PEERS
+      const g = ow * this._scaleOf(b);   // MWNPC10: and its own scale
+      // MWNPC16: the body casts its own shape where this lane's do - an open body (a veiled one casts nothing), never one
+      // the travel view grows (OW-BIG: no giant's shadow), never one more burnt away than whole (AUDIT MWNPC16-18 R1: the
+      // dissolve's own law, as its flat keeps it - systems/dissolve.js dissolveShadowless)
+      const fx = this._cam?.fxOf ? this._cam.fxOf(b.id) : null;
+      const cast = this._casts && !veiled && !(ow > 1) && !dissolveShadowless(fx?.dissolve);
+      const anchored = cast && !!this._cam?.anchoredOf?.(b.id);   // AUDIT MWNPC16-18 A3
+      if (this._planesOk) {
+        if (!this._sees(b, 0, g)) {
+          // MWNPC16: out of the view it still casts into it (SHADOW-REACH, as its flat did), in the pose it last took -
+          // AUDIT MWNPC16-18 B F2: for ITS actor. A spare taken out of the view wears the last wearer's skin (a corpse's,
+          // a standing man's) until it is seen, and a life that flipped out of it is not yet posed: neither casts until
+          // posed for who it stands for now (posedAt, 0 until then)
+          if (cast && b.posedAt > 0) { try { b.rig.castThird?.({ feet: b.feet, yaw: b.yaw, grow: g, anchored }); } catch (e) { this._fail(b, `cast threw: ${e?.message ?? e}`); } }
+          continue;
+        }
+      } else if (view && view.length === 16) {
         const f = b.feet, vz = view[2] * f[0] + view[6] * f[1] + view[10] * f[2] + view[14];
         if (vz > CAPSULE_HEIGHT) continue;
       }
@@ -884,7 +910,7 @@ export class PeerBodies {
         try { b.rig.update(0, { pose: true, effectsDt: b.bank }); b.bank = 0; b.stale = false; b.owed = false; b.posedAt = this._frame; } catch (e) { this._fail(b, `update threw: ${e?.message ?? e}`); continue; }
       }
       const horse = b.horse && b.cam?.saddle ? this._horses()?.picture(b.horse, horseFeetUnder(b.feet, b.yaw, g), b.yaw, g) ?? null : null;   // COATS3D: astride, the horse in the body's picture
-      try { if (b.rig.drawThird(canvas, { proj, view, eye, feet: b.feet, yaw: b.yaw, hitFlash: flashOf ? flashOf(b.id) : 0, conceal: b.veil ?? null, grow: g, up: this._cam?.up ?? null, fx: this._cam?.fxOf ? this._cam.fxOf(b.id) : null, horse })) drawn++; } catch (e) { this._fail(b, `draw threw: ${e?.message ?? e}`); }   // AUDIT MWBODY A1; HITFLASH1: a struck body flashes red; INVIS-LOOK: a concealed one blends; OW-PEERS: grown and leaned under the Overworld
+      try { if (b.rig.drawThird(canvas, { proj, view, eye, feet: b.feet, yaw: b.yaw, hitFlash: flashOf ? flashOf(b.id) : 0, conceal: b.veil ?? null, grow: g, up: this._cam?.up ?? null, fx, cast, anchored, horse })) drawn++; } catch (e) { this._fail(b, `draw threw: ${e?.message ?? e}`); }   // AUDIT MWBODY A1; HITFLASH1: a struck body flashes red; INVIS-LOOK: a concealed one blends; OW-PEERS: grown and leaned under the Overworld; MWNPC16: its own shadow; COATS3D: astride, its horse
     }
     return drawn;
   }

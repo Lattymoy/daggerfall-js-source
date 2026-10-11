@@ -14,6 +14,15 @@
 export const DISSOLVE_EMBER = Object.freeze([1.0, 0.42, 0.1]);
 export const DISSOLVE_ARCANE = Object.freeze([0.62, 0.4, 1.0]);
 
+/** MWNPC16 (AUDIT MWNPC16-18 R1): MORE GONE THAN WHOLE, NO SHADOW - the share past which a dissolving thing casts none:
+ *  a flat (setBatchDissolve's noShadow) and the Morrowind body standing in its place (net/peerBodies.js `cast`), one
+ *  threshold. The body is drawn dissolving off its flat's dissolve and cast its whole shape: a foe burnt nine parts away
+ *  (REVENANT-FATE) or a companion not yet through its portal threw a whole man's shadow, where the flat it replaced cast
+ *  none. */
+export const DISSOLVE_SHADOWLESS = 0.5;
+/** Whether a dissolve ([share gone, r, g, b, ...], or none) casts no shadow. @param {ArrayLike<number> | null | undefined} d */
+export const dissolveShadowless = (d) => !!d && d[0] > DISSOLVE_SHADOWLESS;
+
 /** Put a dissolve on a batch (null: whole). Written only when it changes, as the hit flash's. */
 export function setBatchDissolve(batch, share, colour = DISSOLVE_EMBER) {
   if (!batch) return;
@@ -25,7 +34,7 @@ export function setBatchDissolve(batch, share, colour = DISSOLVE_EMBER) {
   const d = batch.dissolve ?? (batch.dissolve = [0, 0, 0, 0, 0]);
   // AUDIT (2026-10-02): more gone than whole, it casts no shadow - the shadow replays cut by the texture's alpha alone,
   // so a body burnt away (or not yet through its portal) kept its whole shadow. [4] says the dissolve took it.
-  if (s > 0.5) { if (!batch.noShadow) { batch.noShadow = true; d[4] = 1; } } else if (d[4]) { batch.noShadow = undefined; d[4] = 0; }
+  if (s > DISSOLVE_SHADOWLESS) { if (!batch.noShadow) { batch.noShadow = true; d[4] = 1; } } else if (d[4]) { batch.noShadow = undefined; d[4] = 0; }
   d[0] = s; d[1] = colour[0]; d[2] = colour[1]; d[3] = colour[2];   // in place: a frame's burn allocates nothing
 }
 

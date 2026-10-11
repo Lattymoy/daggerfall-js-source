@@ -10,9 +10,9 @@
  },
  {
   "name": "MWNPC12-knight-steel-nothing",
-  "file": "src/characters/peopleBodies.js",
-  "old": "equipSlot: EQUIP_SLOTS[slot], material: ARMOR_MATERIAL.Steel });   // MWNPC12",
-  "new": "equipSlot: EQUIP_SLOTS[slot], material: 1 });   // MWNPC12",
+  "file": "src/characters/wardrobe.js",
+  "old": "    let material = one ?? metalOf(metals, wmix(seed ^ (0xa2e0 + k)));",
+  "new": "    let material = 1;",
   "tests": [
    "test/mwnpc12_steelorcs.test.js"
   ]

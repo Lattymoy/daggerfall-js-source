@@ -209,8 +209,8 @@
  {
   "name": "MWNPC4-peer-death-roll-unshifted",
   "file": "src/net/peerBodies.js",
-  "old": "    else if (dd !== b.dead) { b.dead = dd; if (dd) b.rig.die?.(dd - 1); else b.rig.revive?.(); }",
-  "new": "    else if (dd !== b.dead) { b.dead = dd; if (dd) b.rig.die?.(dd); else b.rig.revive?.(); }",
+  "old": "    else if (dd !== b.dead) { b.dead = dd; b.posedAt = 0; if (dd) b.rig.die?.(dd - 1); else b.rig.revive?.(); }",
+  "new": "    else if (dd !== b.dead) { b.dead = dd; b.posedAt = 0; if (dd) b.rig.die?.(dd); else b.rig.revive?.(); }",
   "tests": [
    "test/mwnpc4_npclane.test.js"
   ]
@@ -218,8 +218,8 @@
  {
   "name": "MWNPC4-peer-never-revived",
   "file": "src/net/peerBodies.js",
-  "old": "    else if (dd !== b.dead) { b.dead = dd; if (dd) b.rig.die?.(dd - 1); else b.rig.revive?.(); }",
-  "new": "    else if (dd !== b.dead) { b.dead = dd; if (dd) b.rig.die?.(dd - 1); }",
+  "old": "    else if (dd !== b.dead) { b.dead = dd; b.posedAt = 0; if (dd) b.rig.die?.(dd - 1); else b.rig.revive?.(); }",
+  "new": "    else if (dd !== b.dead) { b.dead = dd; b.posedAt = 0; if (dd) b.rig.die?.(dd - 1); }",
   "tests": [
    "test/mwnpc4_npclane.test.js"
   ]

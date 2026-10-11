@@ -85,5 +85,5 @@ test('MWNPC8b-d a flat with a faction is not always a person drawn: an editor ma
     assert.equal(wardrobeOf(fac({ sgroup: SOCIAL_GROUPS.Nobility, ...o })), 'none', `${what} keeps their sprite, whatever else`);
     assert.equal(personLook({}, data({}), fac(o)), null, what);
   }
-  assert.equal(wardrobeOf(fac({ type: FACTION_TYPES.WitchesCoven })), 'common', 'a coven\'s witch is mortal');
+  assert.equal(wardrobeOf(fac({ type: FACTION_TYPES.WitchesCoven })), 'mage', 'a coven\'s witch is mortal');   // PIN MOVED (MWNPC17, section 25): and in a mage's robes, not the street's
 });

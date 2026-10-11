@@ -66,8 +66,8 @@
  {
   "name": "WEEDS1-the-sprite-test-is-deleted-and-nothing-is-left-to-decide-it",
   "file": "src/render/shadowPass.js",
-  "old": "          if (b.noShadow || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < minFlatH)) { this.stats.culled++; continue; }",
-  "new": "          if (b.noShadow || SHADOW_NO_CAST_ARCHIVES.has(b.archive)) { this.stats.culled++; continue; }",
+  "old": "          if (b.noShadow || b.castOnly || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < minFlatH)) { this.stats.culled++; continue; }",
+  "new": "          if (b.noShadow || b.castOnly || SHADOW_NO_CAST_ARCHIVES.has(b.archive)) { this.stats.culled++; continue; }",
   "tests": [
    "test/weeds1_flatcasters.test.js",
    "test/bugs5_field.test.js"

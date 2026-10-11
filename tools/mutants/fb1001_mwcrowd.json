@@ -56,8 +56,8 @@
   {
     "name": "MW-CROWD-weapons-back-in-the-key",
     "file": "src/net/peerBodies.js",
-    "old": ": bodyLookKey(look);   // SHADOW-FANG",
-    "new": ": lookKey(look);   // SHADOW-FANG",
+    "old": "    k = (items.some((it) => it?.group === 'Weapons') ? lookKey({ ...look, items: items.filter((it) => it?.group !== 'Weapons') }) : lookKey(look)) + npcKeyOf(look);",
+    "new": "    k = lookKey(look) + npcKeyOf(look);",
     "tests": [
       "test/fb1001_mwcrowd.test.js"
     ]

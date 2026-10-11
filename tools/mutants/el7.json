@@ -128,8 +128,8 @@
   {
     "name": "char-hidden-range-drawn",
     "file": "src/render/shadowPass.js",
-    "old": "          for (const rg of mesh.ranges) { if (rg.hidden) continue; gl.drawArrays(gl.TRIANGLES, rg.first, rg.count); draws++; }",
-    "new": "          for (const rg of mesh.ranges) { gl.drawArrays(gl.TRIANGLES, rg.first, rg.count); draws++; }",
+    "old": "            if (rg.hidden || !(rg.count > 0)) continue;",
+    "new": "            if (!(rg.count > 0)) continue;",
     "tests": [
       "test/el7_polish.test.js"
     ]

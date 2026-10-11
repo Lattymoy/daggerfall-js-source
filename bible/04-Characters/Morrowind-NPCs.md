@@ -111,7 +111,7 @@ Each line is a slice's acceptance, not an aspiration:
 | MWNPC2 ONE PASS | every seen body into one bind of the sprite target, quads after | the body pass in world.js / worldModes.js; exterior.js has none |
 | MWNPC3 THE BODY SERVICE | one parse a mesh and one GL texture a picture across every body, no reach sweep for a body never looked out of, an instance's own limits (SHIPPED, section 8); third-only builds and a build gate across lanes moved to MWNPC4 | all |
 | MWNPC4 THE NPC LANE | the lane (`characters/npcBodies.js`: the NPCs as synthetic peers under a tier's caps, `has()` for the host's billboard), the hit recoil and the death on the rig and off the pose, one build queue across every lane (SHIPPED, section 9); an actor's machine read into the pose is each population's adapter, MWNPC5 onward | the rig and the lanes; the four hosts flagged, wired with the first population |
-| MWNPC5 FOES | class foes in their rolled equipment, a stable race and face per foe (not one Breton), the effects parity: hit flash, glint, elite glow, dissolve, concealment (5a SHIPPED, section 10: the glint, the elite's glow, outline and embers and the dissolve on the body's quad - the hit flash and the concealment it already drew); 5b SHIPPED (section 10b): the dungeon's foes, the cast-only billboard, the Features row; 5c SHIPPED (section 10c): the encounter pool - the exterior, the interiors, exterior.js; shadows kept (the billboard casts) | dungeonContext.js, world.js (exteriorFoes), worldModes.js (interior foes), exterior.js |
+| MWNPC5 FOES | class foes in their rolled equipment, a stable race and face per foe (not one Breton), the effects parity: hit flash, glint, elite glow, dissolve, concealment (5a SHIPPED, section 10: the glint, the elite's glow, outline and embers and the dissolve on the body's quad - the hit flash and the concealment it already drew); 5b SHIPPED (section 10b): the dungeon's foes, the cast-only billboard, the Features row; 5c SHIPPED (section 10c): the encounter pool - the exterior, the interiors, exterior.js; shadows kept (the billboard casts - AMENDED BY MWNPC16, section 24: the body casts its own shape, the billboard none) | dungeonContext.js, world.js (exteriorFoes), worldModes.js (interior foes), exterior.js |
 | MWNPC6 THE WATCH | cityGuards' two instances (SHIPPED, section 11: a lane of its own under WATCH_BODY_TIERS) | world.js, worldModes.js, exterior.js; dungeonContext.js stands none (named) |
 | MWNPC7 TOWNSFOLK | walkers and living residents, a wardrobe by FACTION sgroup that actually varies (distinct records and dyes per persona) (the WALKERS SHIPPED, section 12: a wardrobe per outfit variant, dyed per spawn - the living residents indoors are MWNPC8's standing people) | world.js, exterior.js, worldModes.js (living residents indoors) |
 | MWNPC8 STANDING PEOPLE | street, interior, dungeon and quest StaticNPCs; children and vampires keep their sprite; `drawnFlat`'s nudity law honoured (8a SHIPPED, section 13a: the buildings' people; 8b SHIPPED, section 13b: the dungeons' and the street's; 8c SHIPPED, section 13c: exterior.js's and the quests' stands) | all four |
@@ -122,6 +122,9 @@ Each line is a slice's acceptance, not an aspiration:
 | MWNPC13 THE SPECTRAL DEAD | the ghost and the wraith as Morrowind's ancestor ghost under a standing veil at the spectral sprite's opacity (SHIPPED, section 18) | every foe host (each draws its veiled bodies), the roads |
 | MWNPC14 THE VAMPIRES | the vampire foes as people with their race's vampire head - the BODY record's vampire flag read, getVampireHead's choice built (SHIPPED, section 19) | the format layer, the rig, the peer layer; every foe host through foeBodies.js |
 | MWNPC15 THE WEREWOLF | the werewolf foe in Bloodmoon's wolf - its look marked wolf, the pose the wire's own wolf bit (SHIPPED, section 20) | the lanes (npcShown); every foe host through foeBodies.js |
+| MWNPC16 THE BODY'S OWN SHADOW | an NPC's body casts its own shape - the skinned depth program off its palette, a run of ranges one draw, unseen bodies cast where they stand; the flat under it casts nothing (SHIPPED, section 24) | the shadow pass, the rig, every NPC lane |
+| MWNPC17 THE WARDROBE | who wears what by role, dressed off the seed - silhouettes, garments, dyes, cloaks, armour kits, Morrowind's clothing ladder; each garment's record picked and the head and hair walked off the look's `npc` hint (SHIPPED, section 25) | wardrobe.js; the item map, the build; every look producer |
+| MWNPC18 THE PLACED FIGURES | a figure a player set down in a home or a yard stands in a body - its sex and role off FLATS.CFG (SHIPPED, section 26) | worldModes.js (rooms), world.js (yards) |
 
 Click and talk boxes keep the billboard's size (they are the classic
 game's); the arena crowd stays flats.
@@ -177,6 +180,9 @@ WHAT IT IS NOW.
   every character - `uSkin` 0 never looks at the skin channels, so the
   voxel rigs and the CPU-skinned arm draw exactly what they drew; the
   shadow pass keeps CHAR_VS and its door turns a skinned body away.
+  (AMENDED BY MWNPC16, section 24: the pass takes this shader's own depth
+  program for a skinned body, recorded by its draw - drawCharacter still
+  records nothing under the sprite target.)
 - THE FACE NORMAL. packFpArm lights each triangle by the cross product of
   its POSED corners, which a vertex cannot know. `skinFaceFs` teaches every
   lane's character fragment shader to take it off `vRel`'s derivatives -
@@ -542,7 +548,8 @@ INVISLOOK's late-pass mutants re-aimed by content.
 - THE CAST-ONLY BILLBOARD (renderer.js `drawBillboards`, airPass.js). A
   foe in its body keeps its billboard in the pass with `castOnly`: it
   records its shadow (a skinned body casts none - MWNPC1) and draws
-  nothing, in neither phase, and blooms nothing. The host sets it AFTER
+  nothing, in neither phase, and blooms nothing. (AMENDED BY MWNPC16,
+  section 24: it casts nothing either - the body casts its own shape.) The host sets it AFTER
   the lane has synced each frame, so a body arriving or leaving is never a
   frame drawn twice or not at all.
 - THE DUNGEON CONTEXT (`dungeonContext.js` drawFoes - both dungeon hosts'
@@ -695,7 +702,9 @@ pool's behavioural proof of the same lines.
   breeches, a long shirt and tall boots, plain robes; the women's blouse
   and skirt, shirt and pants, robes, shirt and skirt with tall boots), each
   garment dyed off the spawn (`FOLK_DYES`) so a street is not one colour;
-  the guard in the watch's whole steel plate. A RE-ROLL IS A NEW PERSON:
+  the guard in the watch's whole steel plate. (AMENDED BY MWNPC17, section
+  25: the variant is the walker's role and cut - FOLK_DRESS - and the
+  wardrobe dresses the rest off the spawn.) A RE-ROLL IS A NEW PERSON:
   the pool's shells come back as someone else, so another archive, face,
   name or gender is a new id (`<shell>.<spawn>`) and a new look - a body
   built for them, never the last one's re-dressed (PeerBodies holds a
@@ -755,7 +764,9 @@ their own to give).
   breeches; the underworld and the thieves in dark plain clothes; a
   scholar in plain robes; everyone else in the street's own outfits
   (MWNPC7's FOLK_OUTFITS) - each kind in its own dyes, off the person's
-  name seed. A CHILD (by texture or the children's faction) and a VAMPIRE
+  name seed. (AMENDED BY MWNPC17, section 25: each kind is a wardrobe role
+  dressed off the name seed; the knightly kinds split - a knight's plate, a
+  fighter's armour.) A CHILD (by texture or the children's faction) and a VAMPIRE
   (a vampire clan, the vampires' guild group, the supernatural social
   group) keep their sprites, and so does a race the data cannot name
   (AUDIT MW-NPC II K6: the vampire's reason was "no Morrowind body of their
@@ -1297,7 +1308,9 @@ crowd's six nearest, and a lane past its range taking no skin.
   Their pins checked the number, not the piece worn. Each now wears
   ARMOR_MATERIAL.Steel, and the pin is mwArmorRecords itself over
   Morrowind's own ids: every piece of every steel look resolves to steel.
-  (Sections 11, 12, 13a and 15b's "steel" was this until now.) A weapon's
+  (Sections 11, 12, 13a and 15b's "steel" was this until now. AMENDED BY
+  MWNPC17, section 25: a knightly order's person wears a knight's plate of
+  one metal by rank, a fighters' guild's a fighter's armour.) A weapon's
   material is Daggerfall's weapon table, where 1 is steel - those were
   right.
 - THE ORCS (foeBodies.js ORC_MOBILES, isPersonFoe: the orc, its sergeant,
@@ -1825,3 +1838,533 @@ once), D2 (the Seducer's look flies), MWNPC7d (a beggar's flat), WORLD6b's
 first record (`ls`), WORLD2's room record and PSCALE-OWN's own lane
 (`seeded`), PEER-CADENCE C7 (the frozen frame), and the dungeon harnesses'
 scopes; twenty-eight older records re-aimed by content.
+
+## 24. MWNPC16 - THE BODY'S OWN SHADOW (SHIPPED 2026-10-11)
+
+Mac, of a player's screenshot (Perryick Copperston in Morrowind's steel, in a
+house, the classic sprite's silhouette thrown on the wall behind him): "With
+morrowind assets attached. Old sprite shadows still show."
+
+THE CAUSE. Two laws written to keep the frame cheap met in the shadow maps.
+MWNPC1 turned a GPU-skinned body away at the shadow pass's door
+(`render/shadowPass.js` recordCharacter): the pass drew a rig through
+CHAR_VS, which has no skin, so a body would have cast its bind pose. And
+MWNPC5b kept each NPC's classic billboard in the pass with `castOnly` to cast
+for it - drawn nowhere, its shadow everywhere. So every NPC in a body cast the
+Daggerfall picture's outline, turned to the lamp, in the wrong clothes and the
+wrong pose. (The player's and the peers' bodies cast nothing at all, and
+still do - below.)
+
+- THE SKINNED DEPTH PROGRAM. The pass takes the world's own skinned vertex
+  shader (`opts.vs.charSkin`, renderer.js CHAR_SKIN_VS) over its plain depth
+  shader, and over the flats' half-alpha cut for a cut-out range; built the
+  first frame a body casts, in the pass's own GL time (`_ensureBodyPrograms`,
+  before any replay binds its own program - never at a record, inside the
+  world pass, where a useProgram would go behind the renderer's back). A
+  skinned record replays off its own palette on SKIN_PALETTE_UNIT, bound
+  through the renderer's door (`holdSkin` -> renderer.js `_holdSkin`, which
+  keeps `_skinUnitHolds` true and forgets the unit selector first: the pass
+  selects its units raw). A body let go since its record casts nothing: its
+  palette deleted (`skin.tex` null), or its mesh marked `_dead` by the rig's
+  release (fpArm.js releaseGpu).
+- THE POSE IS THE ONE IT WAS DRAWN IN. The replay is the next frame's first
+  work (EL2), before any lane poses again, so the palette on the texture is
+  the pose its record was drawn in. (Its picture this frame is the next pose:
+  a limb moving away from the light by more than the bias in one frame
+  darkens its trailing edge for that frame - NOT HERE, the same frame-old
+  caster list EL2 states for everything.)
+- A RUN OF RANGES IS ONE DEPTH DRAW. A body is a range a piece - head, hair,
+  cuirass, gauntlets, boots - laid end to end, and a depth draw binds nothing
+  between two of them (PERF-EXT2's law for a static batch): a hidden range (a
+  sheathed blade, an unlit torch, rule 57) breaks the run; a range with a
+  cut-out picture (`alphaCut`, hair) is its own draw through its picture's
+  cut. A body is one depth draw a run between its hidden and cut-out ranges
+  (a sheathed blade and a head of hair: four), not one a piece. (AMENDED BY
+  THE AUDIT, section 27 E6: this said "one to three".)
+- THE BODY ASKS IT (`combat/fpArm.js`). `drawThird`'s `cast` records the body
+  for the maps alone (`renderer.recordShadowBody`: its mesh, its world model -
+  `thirdModel`, the draw's own - and a sphere about its posed box, `thirdBox`,
+  which the replays cull by), never a veiled body's (a concealed foe and a
+  ghost cast nothing, as their flats never did). `castThird` records a body
+  OUT OF THE VIEW where it stands, in the pose its skin last took, where its
+  sphere reaches a map this frame draws (`renderer.shadowReachSphere`) -
+  SHADOW-REACH's law, which an NPC's flat had (world.js's castBatches).
+  (AMENDED BY THE AUDIT, section 27: only a body posed for who it stands for
+  now - B F2; asked first about its feet - N3; a body that never walks says
+  so, for the lo tier's lamps - A3; a lamp whose movers are bodies that did
+  not change keeps its faces - A2.)
+- THE LANE ASKS IT OF AN NPC'S BODY (`net/peerBodies.js` `casts`, set by
+  `characters/npcBodies.js` for every NPC lane): seen, drawn casting; unseen,
+  cast where it stands; veiled, neither; grown by the travel view (OW-BIG),
+  neither - but MWNPC10's larger body (the gate's boss) casts at its size.
+  The peers', the family's and the card table's lanes cast none, as before:
+  their dolls never cast either.
+- THE FLAT UNDER A BODY CASTS NOTHING. `castOnly` is no longer "cast only":
+  the replay, the movers' test (`_dynamicNear`) and both cache signatures
+  pass a cast-only flat over as they pass a `noShadow` one - so a lamp is not
+  redrawn for a picture nobody sees, and its static cache never counts one.
+  (A flat whose body has not stood - out of the cap, past the range, still
+  building, refused - is no cast-only flat: it draws and casts as ever.)
+
+THE FOUR HOSTS (rule 17e). The seam is the lanes', so every host's NPC lanes
+cast: scenes/world.js, scenes/worldModes.js, scenes/dungeonContext.js and
+scenes/exterior.js WIRED, through their createPopulationLane /
+createHostNpcBodies lanes (every NPC lane is a casting one).
+
+NOT HERE. The player's own Morrowind body and the peers' cast no shadow - a
+self body's lamps have DISC24-C's cadence law to meet first (a frame-late
+silhouette trails the player), and this report is the NPCs'. Nor do the
+household family's and the card table's bodies (their lanes are PeerBodies
+without `casts`, as their dolls cast nothing). The first-person arm casts
+none.
+
+PROVEN. `test/mwnpc16_bodyshadow.test.js` (6): the pass on a recording GL - a
+skinned body recorded, under its sphere, through the skinned depth program off
+its palette, the runs one draw, a hidden range a break, the hair its own cut,
+the programs built once and their samplers on their units; a body let go
+casting nothing, one off the cascade culled, a packed rig through CHAR_VS; a
+cast-only flat neither drawn into a map nor a mover; the rig on the fixture
+body (`test/fixtures/mw/bodyRig.mjs`) recording its mesh, model and sphere only
+when asked, never veiled, castThird the same place and only in reach; PeerBodies
+asking the cast of a casting lane's seen, unseen, veiled and grown bodies and
+never of the peers', every NPC lane casting; the renderer's door by source.
+`tools/mutants/mwnpc16.json`: 18 mutants, 18 dead (51 after the audit,
+section 27). Pins moved: EL2's and
+LA-COST3's shadow-pass construction, MWNPC1g's and MWNPC1h's door (the sprite
+target still records nothing - drawCharacter's gate, now the law MWNPC1's
+record aims at), EOTB-BODY's noShadow line, OW-PEERS' cull, PR-BOW1 and
+PR-BOW1b's drawThird; mutant records re-aimed by content (bugs5's four, WEEDS1,
+EL3, EL7, MWNPC1, MWNPC5, MWNPC10a, OW-PEERS, OW3-J6, WB9h, PERF-EXT11).
+
+## 25. MWNPC17 - THE WARDROBE (SHIPPED 2026-10-11)
+
+Mac: "We also need to hone in on what NPCs get what type of clothing/armor.
+General NPCs should have a procedural system where barely any 2 NPCs look
+alike."
+
+WHAT IT WAS. A walker wore one of four outfits per sprite (FOLK_OUTFITS), a
+standing person one per faction (PEOPLE_WARDROBE), a knightly order's and a
+fighters' guild's people the same steel - and the item map resolved a
+garment by its Morrowind TYPE and its dye alone (`formats/mwItemMap.js`
+mwClothingRecord: a Short Shirt, a Long Shirt and a Tunic are one Morrowind
+shirt), the head and hair by the face index's ten. A street was ten shirts in
+ten colours over ten faces.
+
+- WHO WEARS WHAT (`characters/wardrobe.js` WARDROBE_ROLES). A person is dressed from a
+  ROLE - the street's commoner, a tradesman, a traveller, a scholar, a
+  merchant, a noble, a priest, a mage, the underworld (`rogue`), a fighter, a
+  knight - each holding weighted SILHOUETTES (a top over breeches, a top over
+  a skirt, a robe or a dress or a gown), each with its own Daggerfall garments
+  (itemTemplates.json, the men's and the women's), its dyes, how often the
+  lower half takes the top's dye, its odds of a cloak and of the formal one
+  (the port's own cloak, MW-CLOAK1), and the martial roles their ARMOUR
+  (ARMOR_KITS): a knight's whole plate of ONE metal by rank (iron or steel to
+  dwemer, ebony and orcish), the helm now and then so his face shows; a
+  fighter's pieces from more than one smith, a cuirass nearly always and the
+  rest at their odds, the pauldrons a pair; a rogue's leathers. Imperial chain
+  is a cuirass and greaves alone in Morrowind (mwItemMap.js's judgement rows),
+  so a chain helm is never asked for - iron stands in. The kit's boots are the
+  feet (one Daggerfall slot); a robe hides the legs (nothing is put under it).
+- WHO IS WHICH ROLE. A standing person by their faction (`peopleBodies.js`
+  wardrobeOf, KIND_ROLE): the old `steel` split - a knightly order's and a
+  court's guard `knight`, a fighters' guild's `fighter`; a coven's witch and a
+  necromancer `mage` (where FACTION.TXT does not count their faction
+  supernatural - wardrobeOf turns those away first; section 27's NOT HERE);
+  the Dark Brotherhood the underworld's. A walker by the
+  outfit their sprite shows (`folkBodies.js` FOLK_DRESS: the commoner, the
+  tradesman, the traveller and the robed scholar - and the CUT their picture
+  shows, a robe, a skirt or breeches, so the body that replaces a picture at
+  its range wears what the picture wore). A still picture by its kind
+  (`rosterBodies.js` STILL_WARDROBE - a priest at the door in robes). The
+  street's guard keeps the watch's uniform; foes and rosters keep their kit.
+- HOW WELL. A wealth TIER per role, on Morrowind's own clothing ladder - the
+  CLOT ids' prefixes, common_, expensive_, extravagant_, exquisite_
+  (`mwItemMap.js` clothingTierOf): a noble from expensive up, a commoner
+  common and one in twelve expensive - and every garment within its role's
+  rungs (AMENDED BY THE AUDIT, section 27 C F1: a garment's stray could pass
+  them).
+- WHICH ONE. The look carries `npc` - its seed, its tier and its role's
+  rungs `lo`..`hi` (`npcHint`; the rungs since the audit, section 27); a
+  player's carries none, so the player and every peer resolve exactly as
+  before. The build reads it (`net/peerBodies.js` peerBuildOpts): each
+  garment its rung (the person's, one down for a garment in four and up for
+  one in eight, never past the role's rungs - `npcGarmentPick`) and its
+  PICK, which mwClothingRecord takes among the CLOTH_PICK_NEAREST (3) nearest
+  the dye's colour on that rung that lie within CLOTH_PICK_BAND of the
+  nearest (the band since the audit, section 27 C F2) where colours are
+  measured, else among the rung (a rung the data lacks: the
+  nearest that has records, the lower first; a pool with no rung at all - a
+  mod's ids - whole); and the HEAD and the HAIR walked each on its own off the
+  seed (`npcFaceOf` -> fpArm.js buildFpArm `npcFace` -> formats/mwFirstPerson.js
+  playerBodyRows `walk`), so a race's heads times its hairs are reached where
+  the face index named one pair of ten - and no portrait is measured for a
+  person who has none (the build's face match is skipped). Two people in one
+  outfit are two bodies (`npcKeyOf` in peerBodyKey).
+- FOES AND ROSTERS keep what they wear (their equip tables, DFU's rolls) and
+  gain the hint (`npcHint(seed, 0)`), so the man under the kit is his own -
+  head, hair, the records of the clothes under it - off the seed every
+  machine shares (K3/K4's), so a copy is the same man.
+
+MEASURED: one race, one sex, one role, resolved as the build resolves them
+over a retail-shaped clothing set (each type on every rung, measured
+colours) and a race's 8 heads and 6 hairs - commoners 987 distinct of 1,000,
+merchants 997, nobles 999, priests 966 (the robed cut is one garment);
+without the hint, 692, 577, 818 and 294. (AMENDED BY THE AUDIT, section 27
+E5: those baselines were taken with unsalted seeds and no cut, not 17e's
+harness as this said; measured again on the audited tree by the method
+stated there.)
+
+THE FOUR HOSTS (rule 17e). The looks are the populations' adapters, read by
+every host: scenes/world.js, scenes/worldModes.js, scenes/dungeonContext.js
+and scenes/exterior.js WIRED through folkBodies, peopleBodies, rosterBodies
+and foeBodies as before.
+
+NOT HERE. A noble's sprite shows one cut and their body may wear another
+where the role has both (a gown and a blouse and skirt): only the walkers'
+and the priests' pictures name their cut. Faces beyond a race's own BODY
+records (Morrowind's NPC heads are what the data carries).
+
+PROVEN. `test/mwnpc17_wardrobe.test.js` (5): every role and sex dressed by its
+own table over hundreds of seeds - pure, its garments and dyes, one top or
+robe, legs exactly when not robed, one pair on the feet, a rung its own, the
+cut a sprite shows honoured or the nearest; who wears what - nobles never
+common, commoners hardly past expensive, priests mostly robed, no armour off
+the martial roles, a knight's whole plate of one metal of his rank's and four
+or more metals across an order, a fighter's mismatched and no chain Morrowind
+cannot draw, the pauldrons a pair, a rogue's leathers; the item map's rung,
+fallback order, nearest-few pick, blind pick and a mod's ids, and the composer
+handing both through; the build's hint - each garment's picks, the walk, a
+player's and a wolf's none, the key, the hint read as data, a race's 48 pairs
+reached; and the 200-person street (196 or more distinct). Pins moved: MWNPC7a,
+MWNPC8a-1/-2, MWNPC8b-d (a coven's witch now a mage), MWNPC10c-2, MWNPC12-1 (a
+knightly person's plate one metal of his rank), AUDIT MW-NPC II K1's priest,
+MW-D27's thread (and `walk`). `tools/mutants/mwnpc17.json`: 16 mutants, 16
+dead (39 after the audit, section 27); mutant records re-aimed by content: MWNPC7's three, MWNPC8a's seven,
+MWNPC10c's, MWNPC12's, MWNPC14's three and MW-CROWD's.
+
+## 26. MWNPC18 - THE FIGURES A PLAYER PLACED (SHIPPED 2026-10-11)
+
+Mac, of the same report: "Player decorations are not affected."
+
+DECOR-FIGURE lets a home's owner set one of Daggerfall's people down in a
+room or a yard (`net/decorLaw.js` decorIsFigure - a flat in a person's
+archive). Every room's own people stood in bodies; the placed ones kept their
+pictures, because the census (section 21) looks for mobiles and a decor
+figure is a flat - nothing named a decor room.
+
+- A FIGURE, READ (`characters/peopleBodies.js` figureLook). It has no
+  StaticNPC record - no faction, no flags - so what it is is read off its
+  picture: its sex FLATS.CFG's gender column (formats/flatsFile.js
+  flatGender, the censor mark read through), its role FLATS.CFG's caption
+  (`figureRole` over FIGURE_ROLE_WORDS - a judgement, the first match in
+  order: a "noble knight" is a knight; words it does not know the street's),
+  its race the region's, its seed its piece's id - every visitor sees the
+  same person, and a second copy of one picture is a second person. A child
+  (StaticNPC's child pairs), the Daedra Princes' archive (TEXTURE.175 - Azura
+  is no person in clothes) and a figure no row sexes keep their pictures.
+  FLATS.CFG not read yet is asked again, never cached as a picture.
+- OFFERED (`scenes/decorRoom.js` figures, offerDecorFigures) on the host's
+  people lane before its bodies draw, at its piece's base (the room's origin
+  and its place in it - AMENDED BY THE AUDIT, section 27 D1: this read the
+  batch's origin, which a room's batch never has), turned to the eye at a
+  person's pace (personActor) - cast-only where a body stands, and since
+  MWNPC16 casting nothing. The ROOMS': worldModes.js on the building's
+  people lane (`figureCtx`: FLATS.CFG and the race of the building's region,
+  REGION_RACES - section 27 D2: the quest context it asked names none - read
+  only when a figure is first looked at). The YARDS': world.js on the
+  street's people lane, through homeYards.js `figures` (`yardFigureCtx`).
+  The piece being placed is the decorator's preview and stays a picture.
+- THE CENSUS'S BLIND SPOT, CLOSED: every source that stands a decor room is
+  enumerated (`test/mwnpc18_decorfigures.test.js` 18d) - homeYards.js and
+  worldModes.js - and each must offer its figures before its people draw.
+  (AMENDED BY THE AUDIT, section 27 D5: for the decor rooms; Come Sail Away's
+  crews were a second blind spot, now declared, and 18e sweeps every host
+  that draws one of Daggerfall's people.)
+
+THE FOUR HOSTS (rule 17e). scenes/worldModes.js WIRED (the rooms) and
+scenes/world.js WIRED (the yards); scenes/exterior.js FLAGGED by name - the
+single-town bench stands no home and no yard; scenes/dungeonContext.js
+FLAGGED by name - a dungeon has no decor room.
+
+PROVEN. `test/mwnpc18_decorfigures.test.js` (4): figureLook's sex, role, race
+(by name and by id), seed, its pictures kept and its file asked again; the
+caption's roles in order; the offer and the drawn picture where no look
+stands; the decor rooms' hosts enumerated and wired before their draws, by
+source. `tools/mutants/mwnpc18.json`: 10 mutants, 10 dead (29 after the
+audit, section 27). The yards'
+figures are offered before the yards' keepers, so AUDIT MW-NPC II P1's pin
+(the keepers' offer just before the street's draw) stands as it was.
+
+THE RECORDS, RE-JUDGED (the three slices together). Every older mutant record
+re-aimed by content (30) and every record an edited test file is a killer of
+(412 in all) was judged again on the slices' tree (`tools/mutate.mjs --jobs
+4`): 408 dead, 3 equivalent as recorded (AUDIT MW-NPC II K1's uniform flag,
+PERF-EXT11's belt and braces, PR-BOW1b's portrait depth), and one survivor -
+MWNPC10c's still picture on the roads (`{ still: false }`), which this
+slice's own rewrite of its pin let through (a walker's outfit can be one a
+noble's garments and dyes allow): the pin now holds the courtier at home to
+the still look exactly, never the street outfit, and the record dies.
+
+## 27. THE AUDIT OF MWNPC16-18 (2026-10-11)
+
+Mac, of the pull request: "Audit this". Five cold lenses over the three
+slices at 6e1091be - the shadow pass and the GL (A), the rig and the lanes
+(B), the wardrobe (C), the placed figures (D) and the proof (E: the tests,
+the records, this page and the patch notes) - each finding refuted by its
+finder before it was reported, reproduced here before it was fixed, and
+pinned by a record that dies.
+
+THE FIGURES (D).
+- D1, THE BLOCKER. offerDecorFigures stood a figure's body at its batch's
+  origin, and a room's batch is minted with none (createBillboardBatch: its
+  base in its vertices). With bodies on, every frame a placed figure stood
+  threw a TypeError out of the host's frame (personActor reading null); and
+  a yard's restand() writes only the recentre's step into an origin, so its
+  body stood a whole recentre off. 18c's fixture had handed the batch an
+  origin no room mints. The body stands at its piece's base now - the
+  room's origin and its place in it (`e.o` plus `piece.pos`, put's own sum),
+  made again every frame as the street's people's are. 18c runs through a
+  real createDecorRoom whose batches have no origin, across a restand and a
+  lane that moved the feet it holds.
+- D2. A room's figure was always a Breton: `figureCtx` asked the quest
+  scene's context for its region's race, and that context is { mapId,
+  locationIndex }. It reads the building's region now (REGION_RACES, as the
+  yards' read does).
+- D3. The caption's words matched inside other words: "good-looking" and
+  "walking" held a king, "country" a count, "overseer" a seer, "image" a
+  mage, "relaxed" an axe, "monkey" a monk. Each word is read from its start
+  and a short one whole; a guard and a smith are still read inside a word (a
+  bodyguard, a blacksmith).
+- D4. figures() walked every piece of every yard, every frame, into new
+  arrays, to find the few that are people. A room keeps its figures as they
+  are put and taken down, into one list; the yards into one.
+- D5. Come Sail Away's crews (her prefabs' BillboardHelper people, drawn by
+  `scenes/comeSailAwayPool.js`) stood in no body and nothing said so, under
+  section 26's "blind spot, closed". They keep their pictures (NOT HERE,
+  below), and 18e sweeps every host that draws one of Daggerfall's people:
+  each offers them to a people lane, or is named with the reason it keeps
+  the picture.
+
+THE SHADOW (A, B).
+- A1 / B F3. A CPU-skinned body's hair (`?gpuskin=off`, or a layout the
+  shader refused) cast as solid cards: the cut program was built only once
+  a skinned body cast. A cut-out range asks for it too.
+- A2. Every body record is a mover, so a lamp in reach of one redrew its six
+  dynamic faces every frame - for a body out of the view, never posed, ten
+  face operations a frame where its flat had cost none. Each body's record
+  now carries its LOOK: its mesh, its pose's generation (`_poseGen`, bumped
+  by the renderer at every pose upload - updateSkinPalette, updateSkinStream,
+  updateCharacterMesh), its matrix and its hidden ranges. A lamp whose only
+  movers are bodies (`DYN_BODY`) keeps its live faces while their looks are
+  the ones it drew, and draws again when one is posed, turned, hides a
+  range, comes or goes, or a mover stands beside them (a swaying wood
+  beside a body makes it a mover's cadence, as a body always had). A body
+  in the view
+  idles, so it is posed and redrawn every frame, as the idling flat it
+  replaces was (IDLER-STICKY). It is never baked into a static cache: a body
+  comes into the view and leaves it as the camera turns, and IDLER-STICKY's
+  churn is the reason. A voxel rig (EL7) is the mover it always was.
+- A3 / B F1. Past the twelve full maps, a room drawn whole casts from its lo
+  maps (DISC15), which take the still and a flat animating in place
+  (DISC29-E). A body is a mover and its flat now casts nothing, so a
+  standing person cast into none of them (DISC29-E's Mages Guild: nine
+  people in a hall of lamps past the twelve). A body that NEVER WALKS is now taken by the lo replay and
+  folded into the lo signature by its id and its place: a new pose is no
+  rebuild (the lo map holds the pose it was drawn in, as it holds an idler's
+  frame), while its coming, its going and a move are. "Never walks" is
+  DISC29-E's own test - its flat has no origin and is not moved by its
+  vertices - read by the population lane at its offer (createPopulationLane,
+  `anchored`).
+- B F2. An unseen body cast whatever its skin last held. A spare taken out
+  of the view wears the last wearer's skin (a corpse's for a living skeleton
+  - every creature of a kind shares a key), and a death out of the view is
+  not posed. An unseen body now casts only once posed for who it stands for
+  (`posedAt`: 0 for a spare until it is posed, and again when a life flips).
+- N2. A body program that would not link threw out of render(), skipping the
+  frame's discard and its viewport. It is null now, and the replay's null
+  tests cast nothing for it.
+- N3. castThird made a matrix and a middle for every body out of the view
+  before asking whether it reached a map. It asks first of a sphere about
+  its feet that holds the box's own wherever it turns.
+- B N1. thirdModel's doc comment sat over thirdUnit.
+- NOT TAKEN.
+  - N1: the cut programs use the flats' half-alpha, where the lit draw cuts
+    at the range's own threshold. DEPTH_BB_FS is the flats' shader, and a
+    uniform there is every flat's; the difference is the shadow of hair
+    whose threshold is far from a half.
+  - N3's other two: a cut range's extra program binds, and the caster
+    pre-passes walking cast-only flats that every replay then drops. Left.
+
+THE WARDROBE (C).
+- F1. A garment strayed a rung from its wearer's, past the role's own. A
+  noble's top fell to the common rung about one time in eleven (one
+  nobleman in five wore a common garment), and a commoner's rose to
+  extravagant about one time in a hundred - under the header's "never". The
+  hint carries the role's rungs (`lo`, `hi`: the tiers its table ever
+  draws), and the stray stops at them; npcKeyOf and npcHintOf read them.
+- F2. On a thin rung the dye was ignored. Retail's extravagant and exquisite
+  rungs hold one to three records of a type, so "the three nearest" were the
+  whole rung, and a red dye drew a blue shirt as often as a red one. The
+  pick is now among the three nearest that lie within CLOTH_PICK_BAND of the
+  nearest (1.5 times its distance, plus 32).
+- F3. The comment's template ranges were wrong; they are now the men's
+  141-181 and the women's 182-216.
+- F4. The body key added the hint after the memo: a new string per body per
+  wanting peer every frame. The hint is in the memo now.
+- THE BEASTS (older than these slices; exposure up with the knights' and
+  fighters' helms). No Khajiit or Argonian NPC wears shoes, boots or a helm
+  now. wardrobe.js beastWorn drops them from an NPC's worn list in the build
+  (peerBuildOpts), which covers every producer's look: the wardrobe's, the
+  watch's plate and a foe's own table. A player's look is never asked.
+
+THE PROOF (E).
+- E1 was D1.
+- E2: the body programs were built by hand in the tests; 16a and 16b now run
+  render().
+- E3: the hint on foes, rosters, the watch and residents is pinned (17f).
+- E4: the patch note said everyone in a body casts; it now names who does.
+- E5: section 25's baselines came from another harness than it said.
+- E6: "one to three depth draws" was wrong (16a's own fixture is four).
+- E7:
+  - Titles brought into step (MWNPC1h, MWNPC12-1, 17e).
+  - 17d pins exactly 48 pairs.
+  - MWNPC17-boots-and-shoes (MWNPC8a-shoes-over-boots a second time) is
+    gone.
+  - The rig's `_dead` mark and the palette door's selector reset are driven,
+    not read.
+
+MEASURED AGAIN with 17e's harness at 1,000: its clothing set and colours, a
+Breton man's 8 heads and 6 hairs, `seeds(1000, 77)`, and each role's own
+weighted cut.
+
+| | commoners | merchants | nobles | priests |
+|---|---|---|---|---|
+| distinct | 988 | 993 | 996 | 960 |
+| without the hint | 679 | 583 | 796 | 298 |
+
+Section 25's 987/997/999/966 were measured before F1 and F2.
+
+THE FOUR HOSTS (rule 17e).
+- The figures' fix and the race read are worldModes.js's and world.js's
+  (WIRED; the yards' race read unchanged).
+- The anchored word and the body's look ride every host's NPC lanes:
+  scenes/world.js, scenes/worldModes.js, scenes/dungeonContext.js and
+  scenes/exterior.js are WIRED through createPopulationLane.
+- The lanes that call `stand` themselves (the dungeon's and the encounter
+  pool's foes, the watch) pass no word: their people walk, and their bodies
+  are the twelve's alone, as a flat an origin places is (E1's law,
+  DISC29-E).
+
+NOT HERE.
+- Come Sail Away's crews keep their pictures: the vendored prefabs' people,
+  drawn by the pool as the mod lays them, with no look a lane could read.
+- Witches and necromancers dress as mages only where FACTION.TXT does not
+  count their faction supernatural (wardrobeOf turns those away first).
+  There is no FACTION.TXT here to say which.
+- A body that walks casts into no lo map.
+
+PROVEN.
+- `test/mwnpc16_bodyshadow.test.js` (9):
+  - 16a and 16b through render(), the CPU-skinned hair, a link that throws.
+  - 16d the anchored word and the reach asked first.
+  - 16f the door and the release driven.
+  - 16g the held faces.
+  - 16h the lo tier and the lane's word.
+  - 16i the unseen pose.
+- `test/mwnpc17_wardrobe.test.js` (6): 17b every garment's rung, 17c the
+  band, 17d the beasts and the memo, 17f every producer's hint.
+- `test/mwnpc18_decorfigures.test.js` (5): 18c through a real room and its
+  kept list, 18b the words read whole, 18d the race read, 18e the sweep.
+- Pins moved: OW-PEERS' cull (the unseen branch says why it casts), PR-BOW1's
+  and PR-BOW1b's drawThird (its `anchored`), MWNPC1h's and MWNPC12-1's
+  titles; every record those files kill judged again (43: 42 dead, one
+  equivalent as recorded).
+- Mutant records: `tools/mutants/mwnpc16.json` 51 and `mwnpc17.json` 39,
+  all dead; `mwnpc18.json` 29, 28 dead and one equivalent as recorded (the
+  figures' set let go at a take-down: memory, which no pin sees) - the
+  second look's (below) among them.
+
+THE SECOND LOOK (R). Mac, of the same pull request: "Audit this. Ensure its
+perfect". Four more cold lenses ran beside the five above, on the tree before
+them (8fe9df7f): the shadow, the wardrobe, the figures and the proof. Every
+finding was read against this audit's head (04cc40f7). Those already closed
+here were dropped: D1-D4, A1-A3, C F1, E2 and E6, found again from cold. What
+was left was reproduced, fixed and pinned.
+- R1. A BODY BURNT AWAY CAST A WHOLE MAN'S SHADOW. The dissolve's law
+  (systems/dissolve.js, AUDIT 2026-10-02): more gone than whole, a flat casts
+  nothing (`noShadow`). A flat whose body stands is cast-only and casts
+  nothing whatever its dissolve. The body is drawn dissolving off the flat's
+  dissolve (foeBodies.js foeFx), and drawThird and castThird recorded its
+  whole shape. So a foe burnt nine parts away (REVENANT-FATE), or a companion
+  not yet through its portal (COMPANION-PORTAL), threw its whole silhouette
+  where its picture cast none. The lane asks the dissolve now (net/peerBodies.js
+  `cast`), seen or not, under the flat's own threshold: one home,
+  `DISSOLVE_SHADOWLESS` and `dissolveShadowless`, which setBatchDissolve
+  reads too.
+- R2. PINS THAT COULD NOT FAIL. Each mutation below survived every test
+  that claims its law. Each is a record now, and dead:
+  - the cut program's matrix unset (a body's hair cast under the last
+    body's matrix);
+  - the body programs built every frame (three programs a frame, never
+    freed);
+  - the cut program's palette sampler unset (the hair skinned off unit 0,
+    its own picture);
+  - a rogue unarmoured (the leather law held for a rogue in none);
+  - the temple door's priest unrobed (a priest's table draws a robe about six
+    times in seven, and the one seed asked drew one anyway);
+  - any two neighbouring rows of the caption's roles turned (only a knight
+    before a noble was asked);
+  - a row read in one case;
+  - either host's figure context reading no FLATS.CFG (every figure its
+    picture for good).
+- R3. THE CLAIMS READ BACK AGAINST THEMSELVES. The proof lens's own campaign
+  (26 one-line mutations over the slices) found more that survived, and 15
+  of them survived this audit's head too:
+  - STATIC-WHO's log's cast-only door, and beside it, found in following it,
+    the static signature's own. With the signature's door gone, a person's
+    still flat stays in a lamp's static set when their body stands, so the
+    cache keeps the sprite's shadow baked in: the very report this arc began
+    from. 16c only counted the doors in the source; 16k asks the signature
+    and the log.
+  - A body larger by its own scale (MWNPC10's boss): the cast was keyed to
+    the wrong grow, the unseen cast was at a man's size, and castThird was
+    ungrown.
+  - Eleven of the wardrobe's judgements, each of which the pins read back
+    from the same table: the underworld a rogue, a scholar a scholar, a
+    tradesman's sprite a tradesman's, the dark dyes, the knights' top rank
+    in dwarven, orcish and ebony, a merchant's station, the formal cloak,
+    the helm's odds, the lower half's match, a garment's stray, and the
+    record's pick.
+  17g pins them against literals: the role maps as judged, the four dark
+  dyes, the metals by rank, and the shares within bands about the tables'
+  own odds over 3,000 seeds. Each is a record now, and dead.
+- NOT TAKEN. A knight's Silver and Elven plate are drawn as Morrowind's steel
+  (mwItemMap.js's map, older than these slices). As drawn, the knights wear
+  five metals, not seven (steel about seven in ten), which the patch note's
+  "iron and steel up to dwarven, orcish and ebony" still describes. The
+  weights stand: they are Daggerfall's materials, and a body draws the map's
+  answer for them.
+- THE MERGE OF MAIN (#796, YARD-RANGE). A yard's flats are now drawn only
+  within the yard's reach, the distance the player sets (homeYards.js
+  `nearEye`). Its figures are offered only there too: a body never stands
+  where its picture would not be drawn. 18d pins it, by source, and a record
+  dies on it.
+- THE FOUR HOSTS (rule 17e). The lane's dissolve read is net/peerBodies.js's,
+  under every host's NPC lanes. scenes/world.js, scenes/worldModes.js,
+  scenes/dungeonContext.js and scenes/exterior.js are WIRED through
+  createPopulationLane and createHostNpcBodies.
+- PROVEN. `test/mwnpc16_bodyshadow.test.js` 16j (the dissolve, seen and
+  unseen, off setBatchDissolve's own field), 16a (the cut's palette, built
+  once, each hair under its own matrix), 16k (the signature) and 16d/16e
+  (the boss's size); `test/mwnpc17_wardrobe.test.js` 17b (the rogue, and 400
+  priests at the door) and 17g (the claims against literals); and
+  `test/mwnpc18_decorfigures.test.js` 18b (the rows' order and case) and 18d
+  (both contexts' FLATS.CFG). Records: 10 in `mwnpc16.json`, 13 in
+  `mwnpc17.json`, 13 in `mwnpc18.json`. Five older records were re-aimed by
+  content to the same laws (MWNPC16-grown-cast, MWNPC16-veiled-cast,
+  OW-PEERS-a-body-unleaned, MWNPC5-lane-drops-fxof and
+  AUDIT-E5-a-burnt-body-s-shadow). Pins moved: PR-BOW1's and PR-BOW1b's
+  drawThird call (its tells read once a body, a line above). Every record a
+  changed test file or a re-aimed site names was judged again: 136, 134 dead
+  and two equivalent as recorded; after R3, the 90 that the shadow's and the
+  wardrobe's test files name, all dead.

@@ -953,7 +953,7 @@ import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor, MILL_SOUND, millSoundP
 import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
 import { homeLookRemap, HOME_LOOK_BUILD_WAIT_MS } from '../world/homeLook.js';   // HOME-LOOK: a painted house's own table
-import { DECOR_DRAW, decorCullVerdict } from './decorRoom.js';   // PERF-YARD: a placed piece's verdict, from the host's view test
+import { DECOR_DRAW, decorCullVerdict, offerDecorFigures } from './decorRoom.js';   // PERF-YARD: a placed piece's verdict, from the host's view test; MWNPC18: a yard's figures in their bodies
 import { createHomeYards, yardLampRows } from './homeYards.js';   // HOME-YARD: the town's yards, and the owner's decorator outside; YARD-LIGHT: a yard's lamps as the night's scene lights
 import { modelFootRects, footRectsAt } from './homeYards.js';   // FB1009 HOME-FOOT: a building's ground, its models' faces seen from above
 import { loadIcon } from '../ui/textureCanvas.js';   // HOME-YARD: the decorator's pictures
@@ -3493,6 +3493,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   // from the near rings as the pixels are walked, read as the buildings' are (their data, their faction's row)
   const streetPeople = createPopulationLane({ laneName: 'people', renderer, collider: () => collider });
   const offerStreetPerson = (a, b) => streetPeople.offer(a, b);   // AUDIT MW-NPC II P1: the yards' keepers offered on it
+  // MWNPC18: what a yard's figure is read by - FLATS.CFG and the region's race, asked only when a figure is first looked at
+  const yardFigureCtx = { get flats() { return pipeline.flatsFile?.() ?? null; }, get race() { return REGION_RACES[_questRegionIndex()] + 1; } };
   const streetLook = (pn) => {
     if (pn._mwLook !== undefined) return pn._mwLook;
     const dict = _questStore()?.dict ?? null;
@@ -34748,6 +34750,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     }
     };
     framePixelWalk();
+    if (yards && _mode() === 'exterior') offerDecorFigures(yards.figures(), streetPeople, _peopleOn, yardFigureCtx, mwv.eye, townTalk.overlayActive ? 0 : dt);   // MWNPC18: the figures an owner set down in a yard, standing people too (their flats ride the yards' batches)
     portBodies(mwv.eye, dt);   // SHIPYARDS: the shipmasters, crewmasters, sailors, shipwrights and lightkeepers, standing people as the yards' keepers are
     if (merchantYards && _mode() === 'exterior') merchantYards.offerBodies(offerStreetPerson, mwv.eye, townTalk.overlayActive ? 0 : dt);   // AUDIT MW-NPC II P1: the Stables' and the Wagon Yards' keepers, standing people (their flats ride livePersonBatches)
     streetPeople.draw(canvas, proj, view, mwv.eye, townTalk.overlayActive ? 0 : dt);   // MWNPC8b: the standing people's bodies - before the flats draw

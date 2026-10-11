@@ -25,8 +25,9 @@
 //
 // KNOWN LIMITS, recorded: a caster the frame did not draw casts nothing -
 // the hosts' frustum culling (EV3) means a tower behind the camera throws
-// no shadow into the view; the character rigs (the Morrowind body, the
-// peers, the first-person arm) cast none; the water surface receives none.
+// no shadow into the view; the player's and the peers' Morrowind bodies and
+// the first-person arm cast none (MWNPC16: an NPC's body casts its own
+// shape - recordCharacter's skinned arm); the water surface receives none.
 // Later tiers own those.
 //
 // The depth programs are the renderer's OWN vertex shaders (handed over
@@ -64,6 +65,7 @@ import { AIR_TUNING } from './airPass.js';   // FLICKER-FIX: the calmer eye
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 import { BAYER_GLSL, DISSOLVE_GLSL } from './orderedDither.js';   // AUDIT BAY A12: a fading ship's shadow dissolves with her
 import { windfallLawOn, swayShare, windfallLeanMax, windfallAnchorAfterShift } from './windfallSway.js';   // WINDFALL1: the flora's lean while Windfall's law stands
+import { SKIN_PALETTE_UNIT } from './skinPalette.js';   // MWNPC16: a skinned body's palette, read where the lit draw reads it
 
 /** The sun map: two cascades of this size, as a depth texture array. */
 export const SHADOW_SUN_SIZE = 2048;
@@ -958,8 +960,11 @@ void main() {
   gl_FragDepth = texelFetch(uCache, ivec3(gl_FragCoord.xy, uLayer), 0).r;
 }`;
 
-/** AUDIT REACH: what _dynamicNear answers - nothing near, a swaying flat alone (the slow cadence), a mover. */
-const DYN_NONE = 0, DYN_SWAY = 1, DYN_MOVER = 2;
+/** AUDIT REACH: what _dynamicNear answers - nothing near, a swaying flat alone (the slow cadence), a mover.
+ *  AUDIT MWNPC16-18 A2: or Morrowind bodies alone (DYN_BODY) - redrawn only when one of them changed (_dynamicNear's
+ *  `_bodySig`, against the slot's own): a body stood out of the view is never posed, and it held its lamps' six dynamic
+ *  faces redrawn every frame to draw it as it was. */
+const DYN_NONE = 0, DYN_SWAY = 1, DYN_MOVER = 2, DYN_BODY = 3;
 const REC_MESH = 0, REC_TERRAIN = 1, REC_BB = 2, REC_CHAR = 3;   // EL7: the character rigs cast
 const REPLAY_ALL = 0, REPLAY_STATIC = 1, REPLAY_DYNAMIC = 2, REPLAY_LO = 3;   // SC1: what a replay draws; DISC29-E: the lo tier's - the still, and a flat that only animates where it stands
 /**
@@ -1053,6 +1058,11 @@ export class ShadowPass {
     const terrain = opts.build(opts.vs.terrain, DEPTH_FS);
     const bb = opts.build(opts.vs.bb, DEPTH_BB_FS);
     const char = opts.vs.char ? opts.build(opts.vs.char, DEPTH_FS) : null;   // EL7: the rigs' own vertex layout
+    // MWNPC16: a GPU-skinned body's depth - the world's skinned vertex shader, built the first time a body casts
+    // (_bodyPrograms): a page whose NPCs never stand in a body never compiles it
+    this._buildBody = opts.vs.charSkin ? () => opts.build(opts.vs.charSkin, DEPTH_FS) : null;
+    this._buildBodyCut = opts.vs.charSkin ? () => opts.build(opts.vs.charSkin, DEPTH_BB_FS) : null;
+    this._buildCharCut = opts.vs.char ? () => opts.build(opts.vs.char, DEPTH_BB_FS) : null;
     const meshCut = opts.build(opts.vs.mesh, DEPTH_CUT_FS);   // AUDIT BAY A12
     const meshCutout = opts.build(opts.vs.mesh, DEPTH_BB_FS);   // RW1: a cutout picture's sub-mesh - its holes cast no shadow (the flats' own half-alpha cut)
     const copy = opts.build(DEPTH_COPY_VS, DEPTH_COPY_FS);   // CACHE-COPY: the cache into the live layers (_blitSlot)
@@ -1087,6 +1097,8 @@ export class ShadowPass {
     this._slotSig = new Int32Array(2 * SHADOW_POINT_CASTERS);     // SC1: per slot, the static signature's (hash, count) the cache was drawn from
     this._slotCached = new Uint8Array(SHADOW_POINT_CASTERS);      // SC1: the cache holds this slot's light's statics
     this._slotLiveDyn = new Uint8Array(SHADOW_POINT_CASTERS);     // SC1: the live layers carry dynamics over the cache
+    this._slotBodySig = new Int32Array(2 * SHADOW_POINT_CASTERS);  // AUDIT MWNPC16-18 A2: per slot, the bodies its live layers hold - (hash, count); count -1 when anything else was drawn
+    this._bodySig = new Int32Array(2);                            // AUDIT MWNPC16-18 A2: _dynamicNear's answer for the bodies in a slot's reach
     this._faceDyn = new Uint8Array(6 * SHADOW_POINT_CASTERS).fill(1);   // PERF-FACE: per live face, 0 = it holds the cache and nothing else
     this._slotSelf = new Uint8Array(SHADOW_POINT_CASTERS);        // DISC24-C: the live layers carry the player's own card
     // DISC15: THE LO TIER - allocated on the first room that asks (_ensureLo), grown by SHADOW_LO_STEP. Until then a
@@ -1103,7 +1115,7 @@ export class ShadowPass {
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);
     // the pool: records are minted once and reused by index
-    /** @type {Array<{kind:number, mesh:any, matrix:Float32Array, texRemap:any, surface:any, arrayTex:any, tilemapTex:any, tileSize:number, batches:any, flatWind:Float32Array, windfall:Float32Array, wfSway:Float32Array|null, wfAxis:Float32Array|null, right:Float32Array, up:Float32Array, bounded:boolean, sphere:Float32Array, subSpheres:Float32Array, cellSpheres:Float32Array, dynamic:boolean, cut:number}>} */
+    /** @type {Array<{kind:number, mesh:any, matrix:Float32Array, texRemap:any, surface:any, arrayTex:any, tilemapTex:any, tileSize:number, batches:any, flatWind:Float32Array, windfall:Float32Array, wfSway:Float32Array|null, wfAxis:Float32Array|null, right:Float32Array, up:Float32Array, bounded:boolean, sphere:Float32Array, subSpheres:Float32Array, cellSpheres:Float32Array, dynamic:boolean, cut:number, body:boolean, anchored:boolean, look:number, matrixBits:Int32Array|null}>} */
     this.records = [];
     this.count = 0;
     this.recording = true;
@@ -1300,7 +1312,9 @@ export class ShadowPass {
     let r = this.records[this.count];
     if (!r) {
       r = { kind: 0, mesh: null, matrix: new Float32Array(16), texRemap: null, surface: null, arrayTex: null, tilemapTex: null, tileSize: 0, batches: null, flatWind: new Float32Array(4), windfall: new Float32Array(8), wfSway: null, wfAxis: null, right: new Float32Array(3), up: new Float32Array(3),
-        bounded: false, sphere: new Float32Array(4), subSpheres: new Float32Array(0), cellSpheres: new Float32Array(0), dynamic: false, cut: 0 };   // EL5: the world-space spheres, the record's and its sub-meshes'; LA-AUDIT A1: and its shadow cells'; SC1: moved since last frame
+        bounded: false, sphere: new Float32Array(4), subSpheres: new Float32Array(0), cellSpheres: new Float32Array(0), dynamic: false, cut: 0,   // EL5: the world-space spheres, the record's and its sub-meshes'; LA-AUDIT A1: and its shadow cells'; SC1: moved since last frame
+        body: false, anchored: false, look: 0, matrixBits: null };   // AUDIT MWNPC16-18: a Morrowind body's record (recordShadowBody's) - it never walks (A3, the lo tier); its look this frame (A2)
+      r.matrixBits = new Int32Array(r.matrix.buffer);
       r.wfSway = r.windfall.subarray(0, 4); r.wfAxis = r.windfall.subarray(4, 8);   // WINDFALL1: the law's two vec4s, viewed once
       this.records[this.count] = r;
     }
@@ -1581,17 +1595,65 @@ export class ShadowPass {
     r.bounded = !!surface.bounds;
     if (r.bounded) transformSphere(matrix, surface.bounds, r.sphere);
   }
-  /** EL7: a character rig (createCharacterMesh's bundle: vao, count, ranges) casts too. */
-  recordCharacter(mesh, matrix) {
-    // MWNPC1: a GPU-skinned body never casts from here - this pass draws it through CHAR_VS, which has no skin, so
-    // it would cast its bind pose. It is drawn only through the sprite target (which records nothing) today; this is
-    // the door's own answer should a skinned body ever be drawn in the world pass.
-    if (mesh && mesh.skin) return;
+  /** EL7: a character rig (createCharacterMesh's bundle: vao, count, ranges) casts too.
+   *  MWNPC16 (2026-10-11, a player's screenshot via Mac: "Old sprite shadows still show"): AND A MORROWIND BODY, in its
+   *  own shape. MWNPC1 turned a GPU-skinned body away here - CHAR_VS has no skin, so it would have cast its bind pose -
+   *  and MWNPC5b kept each NPC's classic billboard in the pass to cast for it (`castOnly`): a Daggerfall sprite's
+   *  silhouette thrown on the wall behind a man in Morrowind's steel. A skinned body now replays through the world's
+   *  own skinned vertex shader (opts.vs.charSkin) off its own palette, as posed when it was drawn - the replay is the
+   *  next frame's first work, before any body poses again - and a cast-only flat casts nothing. `sphere` [x, y, z, r]
+   *  in the world, for a mesh with no bounds of its own (a body's is its posed box, drawThird's); else the mesh's.
+   *  AUDIT MWNPC16-18: `body` - a Morrowind body's record (renderer.js recordShadowBody), and `anchored` - one that never walks (its flat has no origin: DISC29-E's own test of a flat that
+   *  cannot walk), which the lo tier's lamps take (A3: past the twelve, a standing person cast nothing - the body is
+   *  a mover, and its flat now casts none); and every body's LOOK this frame (A2) - its mesh, its pose's generation
+   *  (renderer.js `_poseGen`, bumped at every upload of a pose), its matrix and its hidden ranges - so a lamp whose
+   *  movers are bodies that did not change keeps the faces it drew. */
+  recordCharacter(mesh, matrix, sphere = null, body = false, anchored = false) {
+    if (!mesh) return;
     const r = this._rec(); if (!r) return;
     r.kind = REC_CHAR; r.mesh = mesh; r.matrix.set(matrix);
     r.dynamic = true;   // SC1: a rig is never still
-    r.bounded = !!mesh.bounds;
-    if (r.bounded) transformSphere(matrix, mesh.bounds, r.sphere);
+    r.body = !!body; r.anchored = r.body && !!anchored;
+    if (sphere) { r.bounded = true; r.sphere[0] = sphere[0]; r.sphere[1] = sphere[1]; r.sphere[2] = sphere[2]; r.sphere[3] = sphere[3]; }
+    else {
+      r.bounded = !!mesh.bounds;
+      if (r.bounded) transformSphere(matrix, mesh.bounds, r.sphere);
+    }
+    let h = Math.imul(shId(mesh) ^ 0x2f0b3e5d, 0x9e3779b1) ^ (mesh._poseGen | 0);
+    const mb = r.matrixBits;
+    for (let i = 0; i < 16; i++) h = (Math.imul(h ^ mb[i], 0x85ebca6b) + i) | 0;
+    const ranges = mesh.ranges;
+    if (ranges) for (let i = 0; i < ranges.length; i++) if (ranges[i].hidden) h = Math.imul(h ^ (i + 1), 0xc2b2ae35);
+    r.look = h | 0;
+    // MWNPC16: the skinned programs, built before the replay that needs them - AUDIT MWNPC16-18 A1 (B F3): and the cut
+    // one a CPU-skinned body's hair needs (?gpuskin=off, a layout the shader refused): it cast as solid cards
+    if (mesh.skin || (!this._bodyBuilt && ranges && ranges.some((rg) => rg.alphaCut > 0 && rg.tex))) this._bodyWanted = true;
+  }
+  /** MWNPC16: the body programs, built once, the first frame a skinned body or a cut-out range casts - here, in the
+   *  pass's own GL time (render: before any replay, which binds its own program first), never at a record inside the
+   *  world pass, where a useProgram would go behind the renderer's back. Each sampler on its unit: the palette on the
+   *  lit draw's (SKIN_PALETTE_UNIT), the picture on 0.
+   *  AUDIT MWNPC16-18 N2: a build that throws leaves the programs it did not make null - a body then casts as the
+   *  replay's null tests say (a skinned one nothing, a cut range in its run) - and never escapes render(), which would
+   *  skip the frame's discard and its viewport and pass words. */
+  _ensureBodyPrograms() {
+    if (this._bodyBuilt) return;
+    this._bodyBuilt = true;
+    const gl = this.gl, P = this.programs;
+    const u = (p, n) => gl.getUniformLocation(p, n);
+    const mint = (build, cut, skinned) => {
+      if (!build) return null;
+      let p = null;
+      try { p = build(); } catch (e) { console.warn(`[shadow] a body's depth program would not build - ${e?.message ?? e}`); return null; }
+      if (!p) return null;
+      gl.useProgram(p);
+      if (skinned) gl.uniform1i(u(p, 'uSkinPalette'), SKIN_PALETTE_UNIT);
+      if (cut) gl.uniform1i(u(p, 'uTex'), 0);
+      return { p, proj: u(p, 'uProj'), view: u(p, 'uView'), model: u(p, 'uModel'), skin: skinned ? u(p, 'uSkin') : null, tex: cut ? u(p, 'uTex') : null };
+    };
+    P.body = mint(this._buildBody, false, true);
+    P.bodyCut = mint(this._buildBodyCut, true, true);
+    P.charCut = mint(this._buildCharCut, true, false);
   }
   recordBillboards(batches, flatWind, camRight, camUp, windfall = null) {
     const r = this._rec(); if (!r) return;
@@ -1694,6 +1756,7 @@ export class ShadowPass {
       this.kind = null; this._hadMaps = false; this._slotLight.fill(NaN); this._sunDrawn.fill(0); return;   // AUDIT 68 S17-far-cascade-shift: no sun map is held past a run that drew none
     }
     this._emptyRun = 0; this._hadMaps = true;
+    if (this._bodyWanted) this._ensureBodyPrograms();   // MWNPC16: before the first replay binds its own
     this.sunParams[3] = 0; this.pointParams.fill(0); this.shadowIndex.fill(-1); this.casterOf.fill(-1); this.casters = 0;
     gl.disable(gl.CULL_FACE);   // the light's projection is not the mirrored one: winding is not the world's, and both faces of an open model must cast
     gl.enable(gl.DEPTH_TEST);
@@ -1843,8 +1906,10 @@ export class ShadowPass {
           this._slotCached[k] = 1; this._slotSig[k * 2] = sigHash; this._slotSig[k * 2 + 1] = sigCount;
         } else this.stats.cachedSlots++;
         // the dynamics on top: the cache copied into the live layers (CACHE-COPY: a draw), then the moving casters alone, at the cadence
-        const dynNear = anyDyn ? this._dynamicNear(pos, far, f.isSpectral, selfNear, this._candFor(rank, L, casters, farOf)) : DYN_NONE;   // 0 none, 1 sway alone, 2 a mover
-        const dueDyn = dynNear === DYN_SWAY ? (SHADOW_TUNING.steady || (this.frameNo + k) % SHADOW_SWAY_EVERY === 0) : due;   // AUDIT REACH: a swaying wood redraws on the sway's own cadence
+        const dynNear = anyDyn ? this._dynamicNear(pos, far, f.isSpectral, selfNear, this._candFor(rank, L, casters, farOf)) : DYN_NONE;   // 0 none, 1 sway alone, 2 a mover, 3 bodies alone
+        // AUDIT MWNPC16-18 A2: bodies alone redraw only when one changed - the live layers hold them as they stand
+        const bodiesHeld = dynNear === DYN_BODY && this._slotBodySig[k * 2] === this._bodySig[0] && this._slotBodySig[k * 2 + 1] === this._bodySig[1];
+        const dueDyn = dynNear === DYN_SWAY ? (SHADOW_TUNING.steady || (this.frameNo + k) % SHADOW_SWAY_EVERY === 0) : dynNear === DYN_BODY ? !bodiesHeld : due;   // AUDIT REACH: a swaying wood redraws on the sway's own cadence
         if (dynNear && (dueDyn || staticStale || !this._slotLiveDyn[k] || selfMoved)) {
           const cand = this._candFor(rank, L, casters, farOf);
           if (cand) this._candidateQuads(rank);   // PERF-SHADOW1 (a no-op when the static faces asked it above)
@@ -1859,6 +1924,7 @@ export class ShadowPass {
           }
           this.stats.facesDrawn += 6; this.stats.dynFaces += 6;
           this._slotLiveDyn[k] = 1; this._slotSelf[k] = selfWant;
+          this._slotBodySig[k * 2] = this._bodySig[0]; this._slotBodySig[k * 2 + 1] = dynNear === DYN_BODY ? this._bodySig[1] : -1;   // AUDIT MWNPC16-18 A2: what the live layers hold - a mover's never held
         } else if (staticStale || (!dynNear && this._slotLiveDyn[k])) {
           // a fresh cache, or the last walker gone: the live layers are the cache again
           this._blitSlot(k, f.bindVao, staticStale ? FACES_ALL : this._dirtyFaces(k));   // PERF-FACE: a face that holds the cache already is left
@@ -1912,7 +1978,7 @@ export class ShadowPass {
       const r = this.records[i];
       if (r.kind === REC_BB) {
         for (const b of r.batches) {
-          if (!b?.vao || b._dead || b._shDyn || b.noShadow || b.conceal || b.archive === SHADOW_LIGHT_FLATS || SHADOW_NO_CAST_ARCHIVES.has(b.archive)) continue;
+          if (!b?.vao || b._dead || b._shDyn || b.noShadow || b.castOnly || b.conceal || b.archive === SHADOW_LIGHT_FLATS || SHADOW_NO_CAST_ARCHIVES.has(b.archive)) continue;   // MWNPC16: a flat whose body stands casts nothing
           const at = `${Math.round((b._shOx ?? 0) * 64)},${Math.round((b._shOz ?? 0) * 64)}`;
           now.set(`bb${shId(b)}@${at}`, `flat ${b.archive ?? '?'}-${b.record ?? '?'} n=${b.count ?? b.instances ?? '?'} at ${at} rec#${i}${r.dynamic ? ' (dyn record)' : ''}`);
         }
@@ -1963,7 +2029,7 @@ export class ShadowPass {
       if (r.kind === REC_BB) {
         const wl = Math.hypot(r.flatWind[0], r.flatWind[1]), law = windfallLawOn(r.windfall);
         for (const b of r.batches) {
-          if (!b?.vao || b._dead || (b._shDyn && !(anim && b._shAnim)) || b.noShadow || b.conceal || b.archive === SHADOW_LIGHT_FLATS || SHADOW_NO_CAST_ARCHIVES.has(b.archive)) continue;   // DISC29-E: `anim` - the lo tier's walk folds a flat animating in place too, by its id and place (a new frame is no rebuild)
+          if (!b?.vao || b._dead || (b._shDyn && !(anim && b._shAnim)) || b.noShadow || b.castOnly || b.conceal || b.archive === SHADOW_LIGHT_FLATS || SHADOW_NO_CAST_ARCHIVES.has(b.archive)) continue;   // DISC29-E: `anim` - the lo tier's walk folds a flat animating in place too, by its id and place (a new frame is no rebuild)
           const c = batchSphere(b, this._bSphere);   // AUDIT 68 S16-batch-sphere-dup: the replays' own sphere
           let id = 0, at = 0, rad = -1;
           for (let k = 0; k < nC; k++) {
@@ -1978,7 +2044,7 @@ export class ShadowPass {
         }
         continue;
       }
-      if (r.dynamic) continue;
+      if (r.dynamic && !(anim && r.kind === REC_CHAR && r.anchored)) continue;   // AUDIT MWNPC16-18 A3: the lo tier's walk folds a body that never walks too, by its id and place (a new pose is no rebuild)
       const m = r.kind === REC_TERRAIN ? r.surface : r.mesh;
       if (!m?.vao || m._dead) continue;
       let id = 0, at = 0;
@@ -2134,6 +2200,9 @@ export class ShadowPass {
    *  faces at the cadence to draw nothing; the skips are the replay's own (its point-light arm, texel 0). */
   _dynamicNear(pos, far, isSpectral, self = true, cand = null) {
     let near = DYN_NONE;   // AUDIT REACH: a swaying flat alone is DYN_SWAY - the slow cadence; any mover is DYN_MOVER
+    const bs = this._bodySig;   // AUDIT MWNPC16-18 A2: the bodies in reach, (hash, count)
+    let bodies = 0;
+    bs[0] = 0; bs[1] = 0;
     // PERF-SHADOW1: the lantern's candidates when it has them - a superset of every item this scan takes (a sphere
     // touching the far sphere is inside the grown cube, a quad in placementsInCube's cube is in the grown one), and
     // the answer is the set's (a mover anywhere in it, else a sway), whatever order it is met in
@@ -2144,7 +2213,7 @@ export class ShadowPass {
         if (!r.dynamic) continue;
         const wl = Math.hypot(r.flatWind[0], r.flatWind[1]), law = windfallLawOn(r.windfall);
         for (const b of (cand ? cand.bb[j] : r.batches)) {
-          if (!b?._shDyn || !b.vao || b._dead || b.noShadow || b.conceal) continue;
+          if (!b?._shDyn || !b.vao || b._dead || b.noShadow || b.castOnly || b.conceal) continue;   // MWNPC16: its body is the mover, its own record
           if (b.selfCard && !self) continue;   // DISC24-C: the player's own card is no reason to redraw a map it will not be drawn into
           if (b.archive === SHADOW_LIGHT_FLATS || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < SHADOW_FLAT_MIN_HEIGHT) || isSpectral(b.archive)) continue;
           if (b._shSway && near === DYN_SWAY) continue;
@@ -2163,9 +2232,14 @@ export class ShadowPass {
       if (!r.dynamic) continue;
       const m = r.kind === REC_TERRAIN ? r.surface : r.mesh;
       if (!m?.vao || m._dead) continue;
-      if (!r.bounded || spheresTouch(r.sphere[0], r.sphere[1], r.sphere[2], r.sphere[3], pos[0], pos[1], pos[2], far)) return DYN_MOVER;
+      if (r.bounded && !spheresTouch(r.sphere[0], r.sphere[1], r.sphere[2], r.sphere[3], pos[0], pos[1], pos[2], far)) continue;
+      if (r.kind !== REC_CHAR || !r.body) return DYN_MOVER;   // a mesh, a voxel rig (EL7) - movers as ever
+      // AUDIT MWNPC16-18 A2: a Morrowind body - folded by its look, the answer DYN_BODY while nothing else moves
+      bs[0] = foldSignature(bs[0], r.look); bodies++;
     }
-    return near;
+    bs[1] = bodies;
+    if (bodies === 0) return near;
+    return near === DYN_SWAY ? DYN_MOVER : DYN_BODY;   // a body beside a swaying wood: a mover's cadence, as it always had
   }
   /**
    * SC1: the cache's six layers into the live ones.
@@ -2318,7 +2392,7 @@ export class ShadowPass {
     const nRec = cand ? cand.n : this.count;
     for (let j = 0; j < nRec; j++) {
       const r = this.records[cand ? cand.rec[j] : j];
-      if (filter !== REPLAY_ALL && r.kind !== REC_BB && (filter === REPLAY_STATIC || filter === REPLAY_LO) === r.dynamic) continue;   // SC1: the static replay skips the movers, the dynamic one the still (DISC29-E: the lo tier's is a static one)
+      if (filter !== REPLAY_ALL && r.kind !== REC_BB && (filter === REPLAY_STATIC || filter === REPLAY_LO) === r.dynamic && !(filter === REPLAY_LO && r.kind === REC_CHAR && r.anchored)) continue;   // SC1: the static replay skips the movers, the dynamic one the still (DISC29-E: the lo tier's is a static one; AUDIT MWNPC16-18 A3: and a body that never walks, as a flat animating in place)
       if (r.kind !== REC_BB && !recordVisible(planes, r)) { this.stats.culled++; continue; }
       if (minRadius > 0 && r.kind !== REC_BB && r.kind !== REC_CHAR && r.bounded && r.sphere && r.sphere[3] < minRadius) { this.stats.culled++; continue; }   // F5: a small solid or terrain piece; a rig is a person
       if (r.kind === REC_MESH) {
@@ -2368,12 +2442,42 @@ export class ShadowPass {
         if (runAt >= 0) { gl.drawElements(gl.TRIANGLES, runEnd - runAt, gl.UNSIGNED_INT, runAt * 4); draws++; }
       } else if (r.kind === REC_CHAR) {
         const mesh = r.mesh;
-        if (!P.char || !mesh?.vao || mesh._dead) continue;
-        use(P.char);
-        gl.uniformMatrix4fv(P.char.model, false, r.matrix);
+        if (!mesh?.vao || mesh._dead) continue;
+        // MWNPC16: a GPU-skinned body through its skinned depth program, its palette on the lit draw's unit (handed to
+        // the renderer, which keeps the unit's word - f.holdSkin); one let go since its record (its palette deleted)
+        // casts nothing
+        const skin = mesh.skin || null;
+        if (skin && !skin.tex) continue;
+        const prog = skin ? P.body : P.char;
+        if (!prog) continue;
+        use(prog);
+        gl.uniformMatrix4fv(prog.model, false, r.matrix);
+        if (skin) { gl.uniform1f(prog.skin, skin.pairs); f.holdSkin?.(skin.tex); }
         f.bindVao(mesh.vao);
         if (mesh.ranges && mesh.ranges.length) {
-          for (const rg of mesh.ranges) { if (rg.hidden) continue; gl.drawArrays(gl.TRIANGLES, rg.first, rg.count); draws++; }
+          // MWNPC16: A RUN OF RANGES IS ONE DEPTH DRAW (PERF-EXT2's law for a rig): a body is a range a piece - a head,
+          // hair, a cuirass, two gauntlets, boots - laid end to end, and a depth draw binds nothing between two of them.
+          // A hidden range (a sheathed blade, an unlit torch - rule 57) breaks the run; a range with a cut-out picture
+          // (hair, a fringe) is its own draw through its picture's half-alpha cut, as a flat casts.
+          const cutP = skin ? P.bodyCut : P.charCut;
+          let runAt = -1, runEnd = -1;
+          for (const rg of mesh.ranges) {
+            if (rg.hidden || !(rg.count > 0)) continue;
+            if (rg.alphaCut > 0 && rg.tex && cutP) {
+              if (runAt >= 0) { gl.drawArrays(gl.TRIANGLES, runAt, runEnd - runAt); draws++; runAt = -1; runEnd = -1; }
+              use(cutP);
+              gl.uniformMatrix4fv(cutP.model, false, r.matrix);
+              if (skin) gl.uniform1f(cutP.skin, skin.pairs);
+              gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, rg.tex);
+              gl.drawArrays(gl.TRIANGLES, rg.first, rg.count); draws++;
+              use(prog);   // the record's own program again for the next run (its model and skin are the program's)
+              continue;
+            }
+            if (rg.first === runEnd) { runEnd += rg.count; continue; }
+            if (runAt >= 0) { gl.drawArrays(gl.TRIANGLES, runAt, runEnd - runAt); draws++; }
+            runAt = rg.first; runEnd = rg.first + rg.count;
+          }
+          if (runAt >= 0) { gl.drawArrays(gl.TRIANGLES, runAt, runEnd - runAt); draws++; }
         } else { gl.drawArrays(gl.TRIANGLES, 0, mesh.count); draws++; }
       } else if (r.kind === REC_TERRAIN) {
         const s = r.surface;
@@ -2424,7 +2528,7 @@ export class ShadowPass {
           if (filter === REPLAY_LO ? (b._shDyn && !b._shAnim) : (filter !== REPLAY_ALL && (filter === REPLAY_STATIC) === !!b._shDyn)) continue;   // SC1: by the batch's own word; DISC29-E: the lo tier takes a flat that animates in place
           if (lightPos && b.archive === SHADOW_LIGHT_FLATS) continue;   // EL6: a flame is the lantern, not its occluder
           if (lightPos && b.selfCard && !self) continue;   // DISC24-C: the player's own card, only where it is redrawn every frame
-          if (b.noShadow || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < minFlatH)) { this.stats.culled++; continue; }   // F2: a thing on the ground is no standing card   // WEEDS1: ...and nothing under four texels of THIS cascade
+          if (b.noShadow || b.castOnly || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < minFlatH)) { this.stats.culled++; continue; }   // MWNPC16: a flat whose Morrowind body stands - the body casts its own shape (recordCharacter)   // F2: a thing on the ground is no standing card   // WEEDS1: ...and nothing under four texels of THIS cascade
           if (!batchVisible(planes, b)) { this.stats.culled++; continue; }   // EL5
           // PERF-EXT1: a pixel-wide batch passes the sphere test in every cascade and face of its pixel; asked of its
           // quads it is drawn only where one of them stands (the census's noon city: cascade 0 drew 123 flat batches a

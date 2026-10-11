@@ -4,33 +4,35 @@
 // what Daggerfall rolled for them at each spawn: the climate's race, a gender, one of four outfit variants (the sprite
 // archive, PERSON_TEXTURES), a face record, a name - or the guard's arm (texture 399, a male in the watch's colours).
 // This reads that roll for a Morrowind body: the race and gender as rolled, a face off the face record, and a wardrobe
-// per outfit variant (a commoner's shirt and pants, a tunic and breeches, a long shirt and tall boots, a robe - and the
-// women's four), dyed off the walker's own spawn so a street is not one colour. A walker re-rolled at a respawn is a
-// new person: a new id (a body built for them, never the last one re-dressed) and a new look.
+// per outfit variant. MWNPC17 (section 25): the variant is the walker's ROLE and CUT - the commoner, the tradesman,
+// the traveller and the robed scholar, a woman's skirt or breeches or robe, as their sprite shows them - and the rest
+// is rolled off their own spawn by the wardrobe (characters/wardrobe.js dressPerson): the garments, the dyes, the cloak,
+// the rung of Morrowind's ladder, and through the look's `npc` hint the records, the head and the hair - so no two on a
+// street are one person twice. A walker re-rolled at a respawn is a new person: a new id (a body built for them, never
+// the last one re-dressed) and a new look.
 import { GENDERS } from './nameHelper.js';
 import { PERSON_TEXTURES, GUARD_TEXTURE } from './mobilePerson.js';
 import { EQUIP_SLOTS } from '../systems/equip.js';
 import { ARMOR_ENUM } from '../combat/enemyEquipment.js';
 import { ARMOR_MATERIAL } from '../systems/armorMaterials.js';   // MWNPC12: steel is ARMOR_MATERIAL.Steel - a look's armour is resolved by it (mwItemMap.js mwArmorRecords)
+import { dressPerson, npcHint } from './wardrobe.js';   // MWNPC17
 
-/** What each outfit variant wears (its Daggerfall clothing templates - mwItemMap.js dresses each in a Morrowind CLOT),
- *  by gender, in PERSON_TEXTURES' variant order. [shirt-or-robe, legs or null, feet]. */
-export const FOLK_OUTFITS = Object.freeze({
+/** MWNPC17: what each outfit variant is, by gender, in PERSON_TEXTURES' variant order - the wardrobe's role and the cut
+ *  their sprite shows (characters/wardrobe.js WARDROBE_ROLES, SILHOUETTES). */
+export const FOLK_DRESS = Object.freeze({
   male: Object.freeze([
-    Object.freeze([165, 151, 147]),    // a short shirt, casual pants, shoes - the commoner
-    Object.freeze([158, 152, 149]),    // a short tunic, breeches, boots - the tradesman
-    Object.freeze([167, 151, 148]),    // a long shirt, casual pants, tall boots - the traveller
-    Object.freeze([163, null, 147]),   // plain robes and shoes - the scholar
+    Object.freeze({ role: 'commoner', cut: 'pants' }),    // a short shirt and casual pants - the commoner
+    Object.freeze({ role: 'tradesman', cut: 'pants' }),   // a tunic and breeches - the tradesman
+    Object.freeze({ role: 'traveller', cut: 'pants' }),   // a long shirt and tall boots - the traveller
+    Object.freeze({ role: 'scholar', cut: 'robe' }),      // plain robes - the scholar
   ]),
   female: Object.freeze([
-    Object.freeze([184, 212, 186]),    // a peasant blouse, a long skirt, shoes
-    Object.freeze([204, 190, 188]),    // a long shirt, casual pants, boots
-    Object.freeze([200, null, 186]),   // plain robes and shoes
-    Object.freeze([202, 212, 187]),    // a short shirt, a long skirt, tall boots
+    Object.freeze({ role: 'commoner', cut: 'skirt' }),    // a peasant blouse and a long skirt
+    Object.freeze({ role: 'tradesman', cut: 'pants' }),   // a long shirt and casual pants
+    Object.freeze({ role: 'scholar', cut: 'robe' }),      // plain robes
+    Object.freeze({ role: 'commoner', cut: 'skirt' }),    // a short shirt and a long skirt
   ]),
 });
-/** The street's dyes - the common garment's colours (characters/dyes.js DYE_COLORS). */
-export const FOLK_DYES = Object.freeze([1, 3, 5, 0, 2, 9, 4, 6, 7, 8]);
 
 function mix(h) {
   h = Math.imul(h ^ (h >>> 16), 0x85ebca6b);
@@ -78,15 +80,12 @@ export function folkLookOf(person, race, seed) {
     }
     items.push({ templateIndex: 165, group: 'MensClothing', equipSlot: EQUIP_SLOTS.ChestClothes, dye: 1 });
     items.push({ templateIndex: 151, group: 'MensClothing', equipSlot: EQUIP_SLOTS.LegsClothes, dye: 1 });
-    return { race, gender: 'male', faceIndex: mix(seed ^ 0xfa) % 10, items };
+    // MWNPC17: the uniform is the watch's; the man in it his own - his head, his hair and the shirt under the plate
+    return { race, gender: 'male', faceIndex: mix(seed ^ 0xfa) % 10, items, npc: npcHint(seed, 0) };
   }
-  const outfit = FOLK_OUTFITS[gender][folkVariant(person.archive, race)];
-  const group = female ? 'WomensClothing' : 'MensClothing';
-  const dye = (k) => FOLK_DYES[mix(seed ^ k) % FOLK_DYES.length];
-  items.push({ templateIndex: outfit[0], group, equipSlot: EQUIP_SLOTS.ChestClothes, dye: dye(0xd1) });
-  if (outfit[1] != null) items.push({ templateIndex: outfit[1], group, equipSlot: EQUIP_SLOTS.LegsClothes, dye: dye(0xd2) });
-  items.push({ templateIndex: outfit[2], group, equipSlot: EQUIP_SLOTS.Feet, dye: dye(0xd3) });
-  return { race, gender, faceIndex: ((person.personFaceRecordId ?? 0) + mix(seed ^ 0xfa)) % 10, items };
+  const { role, cut } = FOLK_DRESS[gender][folkVariant(person.archive, race)];
+  const d = dressPerson({ role, gender, seed, cut });   // MWNPC17: the role and cut their sprite shows, the rest their own
+  return { race, gender, faceIndex: ((person.personFaceRecordId ?? 0) + mix(seed ^ 0xfa)) % 10, items: d.items, npc: d.npc };
 }
 
 /** The look a walker stands in (their spawn's). @param {any} person @param {string} race */
