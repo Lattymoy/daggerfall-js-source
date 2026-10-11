@@ -56,7 +56,7 @@
 // inventory slice's first job.
 // ═══════════════════════════════════════════════════════════════════
 
-import { t } from '../systems/i18n.js';
+import { t, t as tr } from '../systems/i18n.js';
 import { isRestItem } from '../systems/restItems.js';   // REST6: the seven's card lines
 import { getPref, setPref } from '../systems/uiPrefs.js';   // PLUS7: getPref, the hover card's switch; PACK-PHONE: setPref, the phone's Body
 import { USE_PENDING, powersRows, INFO_TEXT_POWERS } from './nativeInventory.js';   // PLUS10: the Info box's powers record
@@ -2108,13 +2108,15 @@ function wornPanel(fam, byLabel, area) {
   // one.
   b.title = filled.map((r) => {
     const l = itemLine(r.item, deps.entity);
-    return `${t(r.label)}: ${l.name}${itemStatSuffix(l)}`;
+    return `${t(r.label)}: ${t(l.name)}${itemStatSuffix(l)}`;
   }).join('\n');
   if (area) b.style.gridArea = area;
   // Keep equipment pictures at their slot's size across display zoom; integer snapping could shrink a 48px helm to 40px.
   b.append(tileWithWear(line, b, wornBox(area == null), false));   // WEAR-UI: what you wear, worn down, without a hover; UI1: a half's box, or a panel's
   const txt = el('span', 'worntext');
-  txt.append(el('span', 'wornslot', t(fam.label)), el('span', 'wornname', line.name));
+  txt.append(el('span', 'wornslot', fam.label), el('span', 'wornname', line.name));
+  if (txt.children?.[0]) txt.children[0].textContent = t(fam.label);
+  if (txt.children?.[1]) txt.children[1].textContent = t(line.name);
   b.append(txt);
   if (filled.length > 1) b.append(el('span', 'worncount', String(filled.length)));
   if (part >= 0) b.append(armourBadge(deps.entity, part));   // AC-COMPARE: the part's armour, as on the empty panel
@@ -2195,12 +2197,12 @@ function transportHalves() {
     const line = owned ? itemLine(owned, deps.entity) : null;
     node.append(line ? itemTile(line, wornBox(true), render, false) : el('span', 'worntile', '\u25c7'));   // UI1: a half panel's box
     const txt = el('span', 'worntext');
-    txt.append(el('span', 'wornslot', t.label), el('span', `wornname${owned ? '' : ' wornempty'}`, line ? line.name : t.empty));
+    txt.append(el('span', 'wornslot', tr(t.label)), el('span', `wornname${owned ? '' : ' wornempty'}`, line ? tr(line.name) : tr(t.empty)));
     node.append(txt);
-    node.title = line ? `${t.label}: ${line.name}` : `${t.label}: ${t.empty}`;
+    node.title = line ? `${tr(t.label)}: ${tr(line.name)}` : `${tr(t.label)}: ${tr(t.empty)}`;
     if (isCart && owned) {
       node.onclick = toggleWagon;
-      node.title = session.usingWagon ? 'Leave the wagon' : 'Open the wagon';
+      node.title = session.usingWagon ? tr('Leave the wagon') : tr('Open the wagon');
     }
     return node;
   });
@@ -2241,7 +2243,7 @@ function shelfSocket(r, g) {
   const line = itemLine(item, deps.entity);
   const b = el('button', `wornsock${item === picked ? ' on' : ''}`);
   markItemFrame(b, item);   // RARITY-UI / SIGIL-UI: a socket is the icon's frame
-  b.title = `${t(r.label)}: ${line.name}${itemStatSuffix(line)}`;
+  b.title = `${t(r.label)}: ${t(line.name)}${itemStatSuffix(line)}`;
   b.append(tileWithWear(line, b, SLOT_BOX.socket, false));   // WEAR-UI
   dragFrom(b, item, 'worn');   // MAC-M2's hold: off the body and into the pack
   b.onclick = (e) => {
@@ -2457,7 +2459,7 @@ function openMenu(item, from, x, y) {
   if (!buttons.length) return;
   menuEl = el('div', 'inv-menu');
   menuEl.setAttribute('role', 'menu');
-  menuEl.append(el('p', 'inv-menu-head', itemLine(item, deps.entity).name));
+  menuEl.append(el('p', 'inv-menu-head', t(itemLine(item, deps.entity).name)));
   for (const b of buttons) {
     b.className = 'inv-menu-item';
     b.setAttribute('role', 'menuitem');
@@ -2538,11 +2540,11 @@ function itemRow(item, from = 'local') {
   // this corner that nothing ever filled. The loot window's row says it in its name, which it shows.
   if (line.stack && from === 'local') row.append(el('span', 'count', String(line.stack)));
   const mid = el('span', 'itemname');
-  mid.append(el('span', null, line.name + (line.stack ? ` ×${line.stack}` : '')));
-  const sub = [line.material, line.word, line.lit ? 'lit' : null].filter(Boolean).join(' · ');   // HT2: the classic list paints the lit row gold; this one says the word
+  mid.append(el('span', null, t(line.name) + (line.stack ? ` ×${line.stack}` : '')));
+  const sub = [line.material ? t(line.material) : null, line.word ? t(line.word) : null, line.lit ? t('lit') : null].filter(Boolean).join(' · ');   // HT2: the classic list paints the lit row gold; this one says the word
   if (sub) mid.append(el('small', null, sub));
   row.append(mid);
-  row.append(el('span', 'itemwt', `${line.weight.toFixed(2)} kg`));
+  row.append(el('span', 'itemwt', `${line.weight.toFixed(2)} ${t('kg')}`));
   // QS2: THE CHIP. A slot holds a KIND, so the row that answers to it is the
   // row that says so - otherwise the only way to learn what is in slot 1 is to
   // open every tooltip in the pack. LOCAL rows only: a slot resolves against
@@ -3084,23 +3086,23 @@ function infoCard(picked, side, ready = render, { body = false } = {}) {
   }
   // GEM3: the piece's sockets as wells under its picture - pressable on the pack's own piece's detail card
   { const w = socketBlock(picked, side === 'local' && body, ready); if (w) into.append(...w); }
-  into.append(el('h3', null, line.name));
+  into.append(el('h3', null, t(line.name)));
   { const r = rarityAttr(picked); if (r) c.dataset.rarity = r; }   // LR1: the card's heading wears the tier too
-  const meta = [line.material, line.stack ? `${line.stack} of them` : null].filter(Boolean).join(' · ');
+  const meta = [line.material ? t(line.material) : null, line.stack ? t(`${line.stack} of them`) : null].filter(Boolean).join(' · ');
   if (meta) into.append(el('p', 'meta', meta));
   // LR1: the tier, then each affix as a line, then the enchantment - or
   // "Unidentified" until the Identify spell or the guild reads it.
-  { const lines = itemPowerLines(picked, deps, { set: false, lore: false }); if (lines.length) { const ul = el('ul', 'rarity'); for (const l of lines) ul.append(el('li', null, l)); into.append(ul); } }   // TRADE-INFO: and a DFU magic item's powers; SET5: the set draws its own block below; CARD-FIT: the lore is the Info box's
+  { const lines = itemPowerLines(picked, deps, { set: false, lore: false }); if (lines.length) { const ul = el('ul', 'rarity'); for (const l of lines) ul.append(el('li', null, t(l))); into.append(ul); } }   // TRADE-INFO: and a DFU magic item's powers; SET5: the set draws its own block below; CARD-FIT: the lore is the Info box's
   // SIGIL-UI: the sigil as its own block - the rune, the stage it wakes to in my hand, its five stages and the bar of
   // what it has drunk toward the next (ui/sigilCard.js); the tier list above no longer carries it as three more lines
   { const sb = sigilCard(picked); if (sb) into.append(sb); }
   { const set = setCard(picked, deps.entity, itemLongName); if (set) into.append(set); }   // SET5: its set - the places worn, the stage, its tiers (ui/setCard.js)
-  if (isLocked(picked)) into.append(el('p', 'lockline', LOCKED_LINE));   // LOCK1
-  if (isJunk(picked)) into.append(el('p', 'boundline junkline', JUNK_LINE));   // LOOT18: the lock's line style, without its padlock
-  if (isBound(picked)) into.append(el('p', 'boundline', BOUND_LINE));   // SS1: the lock's line style, without its padlock
+  if (isLocked(picked)) into.append(el('p', 'lockline', t(LOCKED_LINE)));   // LOCK1
+  if (isJunk(picked)) into.append(el('p', 'boundline junkline', t(JUNK_LINE)));   // LOOT18: the lock's line style, without its padlock
+  if (isBound(picked)) into.append(el('p', 'boundline', t(BOUND_LINE)));   // SS1: the lock's line style, without its padlock
   const dl = el('dl', 'stats');
   // CARD-FIT: each pair in its own group, so a narrow card flows them two a line and never breaks a pair across two
-  const pair = (k, v) => { if (v != null) { const g = el('div', 'pair'); g.append(el('dt', null, k), el('dd', null, String(v))); dl.append(g); } };
+  const pair = (k, v) => { if (v != null) { const g = el('div', 'pair'); g.append(el('dt', null, t(k)), el('dd', null, typeof v === 'string' ? t(v) : String(v))); dl.append(g); } };
   // MAC-M1: the headline stat FIRST - a player reading this card is
   // deciding whether to swing the thing, and weight is not that
   // question. Only one of the two ever draws: an item is a weapon or it
@@ -3111,17 +3113,17 @@ function infoCard(picked, side, ready = render, { body = false } = {}) {
   // thing is swung - and above the weight, which is not. Null for
   // everything that is not a weapon, so no book grows an empty row.
   pair('Hands', line.hands);
-  for (const t of line.survival ?? []) {   // AUDIT SURV C: the classic popup's tokens, each under a word of its own
-    const i = t.indexOf(': ');
-    if (i > 0) pair(t.slice(0, i), t.slice(i + 2));
-    else pair(/^Nourishes/.test(t) ? 'Food' : /^Raw/.test(t) ? 'Raw' : /uses left/.test(t) ? 'Uses' : /of fuel$/.test(t) ? 'Fuel' : /skillet/i.test(t) ? 'Cooking' : 'Note', t);
+  for (const s of line.survival ?? []) {   // AUDIT SURV C: the classic popup's tokens, each under a word of its own
+    const i = s.indexOf(': ');
+    if (i > 0) pair(t(s.slice(0, i)), t(s.slice(i + 2)));
+    else pair(t(/^Nourishes/.test(s) ? 'Food' : /^Raw/.test(s) ? 'Raw' : /uses left/.test(s) ? 'Uses' : /of fuel$/.test(s) ? 'Fuel' : /skillet/i.test(s) ? 'Cooking' : 'Note'), t(s));
   }
   if (line.recipe) {   // MAPLOOT1: the recipe's own two boxes, as rows
-    pair('Recipe for', line.recipe.potion);
-    pair('Ingredients', line.recipe.ingredients.join(', ') || '(none)');
+    pair('Recipe for', t(line.recipe.potion));
+    pair('Ingredients', line.recipe.ingredients.map((ing) => t(ing)).join(', ') || t('(none)'));
   }
-  pair('Weight', `${line.weight.toFixed(2)} kg`);
-  pair('Condition', line.condition != null ? `${line.word} · ${line.condition}%` : null);
+  pair('Weight', `${line.weight.toFixed(2)} ${t('kg')}`);
+  pair('Condition', line.condition != null ? `${t(line.word)} · ${line.condition}%` : null);
   // HT2: a light source is never WORN - the honest line for one is
   // whether it is the lit one, which is the same fact the classic
   // list's gold row carries.
@@ -3130,7 +3132,7 @@ function infoCard(picked, side, ready = render, { body = false } = {}) {
     else pair('Worn', line.equipped ? 'yes' : 'no');
     if (line.equipped && hoodCapable(picked)) pair('Hood', hoodUp(picked) ? 'up' : 'down');   // HOOD-SAID: the hood a worn cloak or robe is drawn with, as a light says Lit
   }
-  else if (side !== 'shop') pair('Where', remote?.title ?? '');   // SHOP-HOVER: a shelf's piece says no Where (the counter is the where)
+  else if (side !== 'shop') pair('Where', remote?.title ? t(remote.title) : '');   // SHOP-HOVER: a shelf's piece says no Where (the counter is the where)
   into.append(dl);
   // AC-COMPARE: WHAT WEARING IT WOULD CHANGE, under its own stats - the card is the hover's and the pick's alike (the
   // pack's one way of showing an item), so the comparison needs no key: what it would replace, then its damage and the
@@ -3219,7 +3221,8 @@ function itemActs(picked, side, { qty = true } = {}) {
     d.onclick = () => drape(picked);
     acts.append(d);
   }
-  const u = el('button', 'act', t('Use'));
+  const u = el('button', 'act', 'Use');
+  u.textContent = t('Use');
   // THE COLLECTION IS THE LIVE LIST, not the model's. `useItem`
   // CONSUMES out of what it is handed (:2048-2051 - a potion drunk
   // from a corpse must leave the corpse), and `remoteModel.items` is a
@@ -3246,7 +3249,7 @@ function itemActs(picked, side, { qty = true } = {}) {
     acts.append(g);
     if (open) {
       for (const home of gemHomes()) {
-        const tBtn = el('button', 'act gem-home', `${t('Set in')} ${itemLongName(home, { getQuest: deps.getQuest ?? null })}`);
+        const tBtn = el('button', 'act gem-home', `${t('Set in')} ${t(itemLongName(home, { getQuest: deps.getQuest ?? null }))}`);
         tBtn.onclick = () => {
           const gem = gemKindOf(picked);
           const r = setGemPiece(home, /** @type {string} */ (gem), gemWho(), null, { from: picked });   // AUDIT GEM: this card's stone, not another stack's
@@ -3294,8 +3297,9 @@ function itemActs(picked, side, { qty = true } = {}) {
   // a book each read differently) and, for an enchanted item, chains the "Item powers" box. The enhanced card is a
   // summary of numbers; this button shows the classic text itself - the card's detail column and the right-click
   // menu both carry it, because both are built from this row.
-  const info = el('button', 'act', t('Info'));
+  const info = el('button', 'act', 'Info');
   info.onclick = () => openInfo(picked);
+  info.textContent = t('Info');
   acts.append(info);
   // CHAT-POST: the item on the chat's open tab - online, where the host hands the door (deps.postItem)
   if (deps.canPostItem?.()) {
@@ -3342,7 +3346,7 @@ function askDismantle(item) {
   dismantleEl.setAttribute('aria-label', t('Dismantle'));
   const card = el('div', 'card');
   const sec = el('div', 'inv-info-box');
-  for (const tMsg of dismantleAsk(name, n)) sec.append(el('p', 'center', tMsg));
+  for (const tMsg of dismantleAsk(name, n)) sec.append(el('p', 'center', t(tMsg)));
   card.append(sec);
   const acts = el('div', 'acts');
   const yes = el('button', 'act primary', t('Dismantle'));
@@ -3401,7 +3405,7 @@ function askSalvage(item) {
   dismantleEl.setAttribute('aria-label', t('Salvage')); dismantleEl.setAttribute('aria-modal', 'true');
   const card = el('div', 'card');
   const sec = el('div', 'inv-info-box');
-  for (const tMsg of SALVAGE_ASK(name, n)) sec.append(el('p', 'center', tMsg));
+  for (const tMsg of SALVAGE_ASK(name, n)) sec.append(el('p', 'center', t(tMsg)));
   card.append(sec);
   const row = el('div', 'acts');
   const ok = el('button', 'act primary', t('Salvage'));
@@ -3443,16 +3447,16 @@ function askTarget(act, collection) {
   hideTip(); closeMenu(); closeInfo(); closeDismantle(); closeTarget();
   targetEl = el('div', 'inv-info inv-target');
   targetEl.setAttribute('role', 'dialog');
-  targetEl.setAttribute('aria-label', act.title);
+  targetEl.setAttribute('aria-label', t(act.title));
   targetEl.setAttribute('aria-modal', 'true');
   const card = el('div', 'card');
   const head = el('div', 'inv-info-box');
-  head.append(el('p', 'center', act.title));
+  head.append(el('p', 'center', t(act.title)));
   card.append(head);
   const body = el('div', 'inv-info-body');
   body.setAttribute('role', 'listbox');
   const rows = act.targets.map((piece, i) => {
-    const b = el('button', 'inv-menu-item', act.labels[i]);
+    const b = el('button', 'inv-menu-item', t(act.labels[i]));
     b.setAttribute('role', 'option');
     b.onclick = (e) => { e?.stopPropagation?.(); closeTarget(); use(act.item, collection, piece); };
     body.append(pairGuard(b));   // the second tap of the Use that opened it never mends
@@ -3731,7 +3735,7 @@ function render() {
     const who = el('div');
     // PX20c: PACK, and whose. The name rides the title bar rather than
     // standing on the composition it describes.
-    const title = el('h2', null, 'Pack');
+    const title = el('h2', null, t('Pack'));
     const name = deps.entity?.name;
     if (name) title.append(el('span', 'pack-who', name));
     who.append(title);
@@ -3742,19 +3746,19 @@ function render() {
     // LOOT10 (the Loot arc): THE CODEX, from the pack - every Legendary and Aetheric piece found, and where the rest are
     // said to be (the Reforge's window, its Codex page alone); before the Body switch, which stands beside Close
     if (lootRarityOn()) {
-      const codex = el('button', 'act codexbtn', 'Codex');
+      const codex = el('button', 'act codexbtn', t('Codex'));
       codex.type = 'button';
       codex.onclick = () => { createReforgeOverlay({ pages: ['codex'], page: 'codex', items: () => deps.items?.() ?? [], payer: () => deps.entity ?? {}, gold: () => 0, reforge: () => ({ ok: false }), salvage: () => ({ ok: false }), nameOf: (it) => itemLongName(it) }); };
       head.append(codex);
     }
     const showDoll = getPref('packPhoneDoll') === true;
     if (showDoll) shell.classList.add('showdoll');
-    const dollBtn = el('button', 'act dolltoggle', showDoll ? 'Hide body' : 'Body');
+    const dollBtn = el('button', 'act dolltoggle', showDoll ? t('Hide body') : t('Body'));
     dollBtn.type = 'button';
     dollBtn.setAttribute('aria-pressed', String(showDoll));
     dollBtn.onclick = () => { setPref('packPhoneDoll', !showDoll); render(); };
     head.append(dollBtn);
-    const close = el('button', 'act', 'Close');
+    const close = el('button', 'act', t('Close'));
     close.onclick = () => onExit();
     head.append(close);
     win.append(head);

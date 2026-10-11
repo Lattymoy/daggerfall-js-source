@@ -23,6 +23,7 @@
 import {
   WILD_RINGS, WILD_NAME, wildRingAt, wildRingChains, wildRingAnchors, wildRingName, wildRingBonus, wildEdgeChains,
 } from '../systems/wildZone.js';
+import { t } from '../systems/i18n.js';
 
 /** Canvas pixels a map pixel in the rings' own canvas (the fog's own resolution). */
 export const RING_RES = 6;
@@ -406,9 +407,9 @@ export function buildZoneLegend(doc, { ring = 0, onBack = null, names = true, on
   root.addEventListener?.('pointerdown', (e) => e.stopPropagation?.());
   root.addEventListener?.('wheel', (e) => e.stopPropagation?.());
   const head = el('div', 'hmwild-head');
-  head.append(el('div', 'hmwild-kicker', 'Open PvP zone'), el('div', 'hmwild-title', WILD_NAME));
+  head.append(el('div', 'hmwild-kicker', t('Open PvP zone')), el('div', 'hmwild-title', t(WILD_NAME)));
   root.append(head);
-  const where = el('div', `hmwild-where${ring ? ' in' : ''}`, ring ? `You stand in ${RING_NUMERALS[ring - 1]} · ${wildRingName(ring)} - ${wildRingBonus(ring)}` : 'You stand outside the zone');
+  const where = el('div', `hmwild-where${ring ? ' in' : ''}`, ring ? `${t('You stand in')} ${RING_NUMERALS[ring - 1]} · ${t(wildRingName(ring))} - ${wildRingBonus(ring)}` : t('You stand outside the zone'));
   root.append(where);
   const list = el('ol', 'hmwild-rings');
   for (let r = 1; r <= WILD_RINGS; r++) {
@@ -420,8 +421,8 @@ export function buildZoneLegend(doc, { ring = 0, onBack = null, names = true, on
     sw.style.background = sw2.fill;
     sw.style.borderColor = sw2.edge;
     const name = el('span', 'hmwild-rname');
-    name.append(el('b', null, RING_NUMERALS[r - 1]), doc.createTextNode(` ${wildRingName(r)}`));
-    const depth = el('span', 'hmwild-depth', r === 1 ? 'the outer quarter' : r === WILD_RINGS ? 'the heart' : `${r === 2 ? 'second' : 'third'} quarter in`);
+    name.append(el('b', null, RING_NUMERALS[r - 1]), doc.createTextNode(` ${t(wildRingName(r))}`));
+    const depth = el('span', 'hmwild-depth', r === 1 ? t('the outer quarter') : r === WILD_RINGS ? t('the heart') : t(`${r === 2 ? 'second' : 'third'} quarter in`));
     li.append(sw, name, el('span', 'hmwild-bonus', wildRingBonus(r)), depth);
     list.append(li);
   }
@@ -429,24 +430,24 @@ export function buildZoneLegend(doc, { ring = 0, onBack = null, names = true, on
   // LEGEND-FIT (the owner: "now i have to scroll down in the legend for begin journy make it so that i dont have to do
   // that"): the laws scroll in their own box, the buttons stand in a foot that is always in view - Begin journey first
   const rules = el('ul', `hmwild-rules${canBegin ? ' trip' : ''}`);
-  for (const t of ZONE_RULES) rules.append(el('li', null, t));
+  for (const tRule of ZONE_RULES) rules.append(el('li', null, t(tRule)));
   root.append(rules);
   const foot = el('div', 'hmwild-foot');
   root.append(foot);
   // PVPJOURNEY: a press on the zone's ground gives the Begin journey button - at the top of the foot, always in view
   if (canBegin) {
-    const go = el('button', 'act hmwild-back hmwild-go', 'Begin journey');
+    const go = el('button', 'act hmwild-back hmwild-go', t('Begin journey'));
     go.type = 'button'; go.tabIndex = -1;
     go.onpointerdown = (e) => e.preventDefault?.();
     go.onclick = () => onBegin?.();
     foot.append(go);
   }
-  const nm = el('button', 'act hmwild-back', names ? 'Hide place names' : 'Show place names');
+  const nm = el('button', 'act hmwild-back', names ? t('Hide place names') : t('Show place names'));
   nm.type = 'button'; nm.tabIndex = -1;
   nm.onpointerdown = (e) => e.preventDefault?.();
   nm.onclick = () => onNames?.();
   foot.append(nm);
-  const back = el('button', 'act hmwild-back', 'World map');
+  const back = el('button', 'act hmwild-back', t('World map'));
   back.type = 'button'; back.tabIndex = -1;
   back.onpointerdown = (e) => e.preventDefault?.();
   back.onclick = () => onBack?.();

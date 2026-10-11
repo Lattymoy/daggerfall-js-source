@@ -74,4 +74,66 @@ test('Russian: i18n translation system translates UI and settings', () => {
   assert.equal(t('Continue'), 'Continue');
   assert.equal(t('Rat (dead)'), 'Rat (dead)');
   assert.equal(labelOf('Controls/MouseLookSensitivity'), 'Mouse Sensitivity');
+  setLanguage(null);
+});
+
+test('Russian: items, held map, and inventory localization', () => {
+  setLanguage('ru');
+  try {
+    // Items and gender grammar
+    assert.equal(t('Broadsword'), 'Палаш');
+    assert.equal(t('Claymore'), 'Клеймор');
+    assert.equal(t('Cuirass'), 'Кираса');
+    assert.equal(t('Greaves'), 'Поножи');
+    assert.equal(t('Gauntlets'), 'Латные перчатки');
+    assert.equal(t('Iron Broadsword'), 'Железный палаш');
+    assert.equal(t('Leather Cuirass'), 'Кожаная кираса');
+    assert.equal(t('Orcish Battle Axe'), 'Орочья секира');
+    assert.equal(t('Steel Longsword'), 'Стальной длинный меч');
+    assert.equal(t('Daedric Greaves'), 'Даэдрические поножи');
+    assert.equal(t('3 of them'), '3 шт.');
+    assert.equal(t('50 gold'), '50 золота');
+    assert.equal(t('Pay 200 gold'), 'Заплатить 200 золота');
+    assert.equal(t('3 days'), '3 дн.');
+    assert.equal(t('5 days of your time'), '5 дн. вашего времени');
+
+    // Held Map
+    assert.equal(t('The Bay'), 'Залив');
+    assert.equal(t('Town'), 'Город');
+    assert.equal(t('Interior'), 'Интерьер');
+    assert.equal(t('Dungeon'), 'Подземелье');
+    assert.equal(t('Ports'), 'Порты');
+    assert.equal(t('Ports only'), 'Только порты');
+    assert.equal(t('Find a place…'), 'Поиск места…');
+    assert.equal(t('Write a note…'), 'Написать заметку…');
+    assert.equal(t('Begin journey'), 'Отправиться');
+    assert.equal(t('Travel here'), 'Отправиться сюда');
+    assert.equal(t('Teleport here'), 'Телепортироваться сюда');
+    assert.equal(t('Teleport to Wayrest?'), 'Телепортироваться в Вэйрест?');
+    assert.equal(t('Town under attack'), 'Нападение на город');
+    assert.equal(t('Revenant lair'), 'Логово выходца');
+    assert.equal(t('Dagon\'s Breach'), 'Прорыв Дагона');
+    assert.equal(t('Waypoints'), 'Путевые точки');
+    assert.equal(t('Personal (2)'), 'Личные (2)');
+
+    // Enhanced Inventory
+    assert.equal(t('Pack'), 'Сумка');
+    assert.equal(t('Damage'), 'Урон');
+    assert.equal(t('Armour'), 'Броня');
+    assert.equal(t('Hands'), 'Хват');
+    assert.equal(t('Weight'), 'Вес');
+    assert.equal(t('Condition'), 'Состояние');
+    assert.equal(t('Mount'), 'Скакун');
+    assert.equal(t('Cart'), 'Телега');
+    assert.equal(t('On foot'), 'Пешком');
+    assert.equal(t('Open the wagon'), 'Открыть телегу');
+    assert.equal(t('Leave the wagon'), 'Закрыть телегу');
+    assert.equal(t('Dismantle'), 'Разобрать');
+    assert.equal(t('Salvage'), 'Утилизировать');
+    assert.equal(t('Keep'), 'Оставить');
+    assert.equal(t('Dismantle Ebony Cuirass?'), 'Разобрать Эбонитовая кираса?');
+    assert.equal(t('Salvage Steel Longsword?'), 'Утилизировать Стальной длинный меч?');
+  } finally {
+    setLanguage(null);
+  }
 });

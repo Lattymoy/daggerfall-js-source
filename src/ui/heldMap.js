@@ -190,6 +190,7 @@ import { paintWaypointFlag, flagBox } from './waypointFlags.js';   // WAYPOINTS:
 import { mapUiScale } from './mapScale.js';   // FIELD BUGS 2026-10-09e MAP-SCALE: the map's interface at the screen's size
 import { getPref } from '../systems/uiPrefs.js';
 import { retroScreenRect } from '../systems/retroMode.js';   // DISC25-B: DFU's CustomScreenRect, the pillarbox's screen
+import { t } from '../systems/i18n.js';
 
 export const HELD_MAP_URL = new URL('art/held-map.png', APP_ROOT ?? globalThis.document?.baseURI ?? 'https://invalid.invalid/').href;
 /** Its own pixels, and the stage's aspect. */
@@ -1856,7 +1857,7 @@ export class HeldMapWindow {
   _paintStrip(ctx, dpr, paperW) {
     if (!ctx?.setTransform) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    paintStrip(ctx, this._strip, { font: stripFont(paperW) });
+    paintStrip(ctx, this._strip, { font: stripFont(paperW), translate: t });
     ctx.setTransform(1, 0, 0, 1, 0, 0);
   }
 
@@ -2056,50 +2057,50 @@ export class HeldMapWindow {
     if (this._party.length) {
       const dot = el('span', 'hmlegdot');
       dot.style.background = this._party.some((m) => m.online) ? PARTY_MARK_CSS : PARTY_OFFLINE_CSS;
-      leg.append(dot, el('span', 'hmlegtext', PARTY_LEGEND_TEXT));
+      leg.append(dot, el('span', 'hmlegtext', t(PARTY_LEGEND_TEXT)));
     }
     if (trav.length) {   // TV3: and the region's travellers, while any is drawn
       const dot = el('span', 'hmlegdot');
       dot.style.background = TRAVELLER_MARK_CSS;
-      leg.append(dot, el('span', 'hmlegtext', TRAVELLER_LEGEND_TEXT));
+      leg.append(dot, el('span', 'hmlegtext', t(TRAVELLER_LEGEND_TEXT)));
       for (const [kin, word] of Object.entries(TV_KIN_LEGEND)) {   // OW-KIN: and a friend's, a guild-mate's, while any is drawn
         if (!trav.some((t) => t.kin === kin)) continue;
         const k = el('span', 'hmlegdot');
         k.style.background = TV_KIN_COLORS[kin];
-        leg.append(k, el('span', 'hmlegtext', word));
+        leg.append(k, el('span', 'hmlegtext', t(word)));
       }
     }
     if (this._gate) {   // WB1: the ring explains itself too, while there is one
       const dot = el('span', 'hmlegdot');
       dot.style.background = GATE_RING_CSS;
-      leg.append(dot, el('span', 'hmlegtext', GATE_LEGEND_TEXT));
+      leg.append(dot, el('span', 'hmlegtext', t(GATE_LEGEND_TEXT)));
     }
     if (this._serpent) {   // SERPENT1: and the sea serpent's
       const dot = el('span', 'hmlegdot');
       dot.style.background = SERPENT_RING_MAP_CSS;
-      leg.append(dot, el('span', 'hmlegtext', SERPENT_LEGEND_TEXT));
+      leg.append(dot, el('span', 'hmlegtext', t(SERPENT_LEGEND_TEXT)));
     }
     if (this._sd) {   // SD2c: and the Super dungeon's
       const dot = el('span', 'hmlegdot');
       dot.style.background = SD_RING_MAP_CSS;
-      leg.append(dot, el('span', 'hmlegtext', SD_LEGEND_TEXT));
+      leg.append(dot, el('span', 'hmlegtext', t(SD_LEGEND_TEXT)));
     }
     if (this._bounties.length) {   // BOUNTY1: the black circle explains itself
       const dot = el('span', 'hmlegdot');
       dot.style.background = BOUNTY_RING_CSS;
       dot.style.boxShadow = `0 0 0 1px ${BOUNTY_LEGEND_RIM_CSS}`;   // a black dot needs a pale rim on the dark legend
-      leg.append(dot, el('span', 'hmlegtext', BOUNTY_LEGEND_TEXT));
+      leg.append(dot, el('span', 'hmlegtext', t(BOUNTY_LEGEND_TEXT)));
     }
     if (this._revenants.length) {   // RVN7c: and a lair's blood-red circle
       const dot = el('span', 'hmlegdot');
       dot.style.background = REVENANT_RING_CSS;
       dot.style.boxShadow = `0 0 0 1px ${BOUNTY_LEGEND_RIM_CSS}`;
-      leg.append(dot, el('span', 'hmlegtext', REVENANT_LEGEND_TEXT));
+      leg.append(dot, el('span', 'hmlegtext', t(REVENANT_LEGEND_TEXT)));
     }
     if (this._raids.length) {   // EVENT-TIP: and a raided town
       const dot = el('span', 'hmlegdot');
       dot.style.background = RAID_MARK_CSS;
-      leg.append(dot, el('span', 'hmlegtext', RAID_LEGEND_TEXT));
+      leg.append(dot, el('span', 'hmlegtext', t(RAID_LEGEND_TEXT)));
     }
     // GUIDE5: and a quest's place - the legend's dot turned to the mark's own diamond. AUDIT GUIDE U16: both kinds, as
     // the sheet draws them - the followed quest's filled with the pen's ink, the rest hollow, each edged in gold
@@ -2110,7 +2111,7 @@ export class HeldMapWindow {
       dot.style.boxSizing = 'border-box';
       dot.style.borderRadius = '0';
       dot.style.transform = 'rotate(45deg) scale(0.85)';
-      leg.append(dot, el('span', 'hmlegtext', text));
+      leg.append(dot, el('span', 'hmlegtext', t(text)));
     };
     if (this._quests.some((q) => q.tracked)) diamond(true, QUEST_FOLLOWED_TEXT);
     if (this._quests.some((q) => !q.tracked)) diamond(false, QUEST_LEGEND_TEXT);
@@ -2118,7 +2119,7 @@ export class HeldMapWindow {
       const dot = el('span', 'hmlegdot');
       dot.style.background = VENDOR_MARK_CSS;
       dot.style.boxShadow = `0 0 0 2px ${VENDOR_RIM_CSS}`;
-      leg.append(dot, el('span', 'hmlegtext', VENDOR_LEGEND_TEXT));
+      leg.append(dot, el('span', 'hmlegtext', t(VENDOR_LEGEND_TEXT)));
     }
     leg.classList.toggle('open', true);
     leg.style.display = 'flex';
@@ -2165,7 +2166,7 @@ export class HeldMapWindow {
     for (const g of groups) {
       const on = !this.filters[g.filter];
       const row = el('div', `hmkeyrow${on ? '' : ' off'}`);
-      const b = el('button', `act hmkeyflt${on ? ' on' : ''}`, g.label);
+      const b = el('button', `act hmkeyflt${on ? ' on' : ''}`, t(g.label));
       b.type = 'button';
       // NEVER THE FOCUS - out of the tab order, and a press takes none (the pointer's own default, which the click
       // outlives): a focused button is pressed again by Space or Enter, and every key under the sheet is the map's
@@ -2180,13 +2181,13 @@ export class HeldMapWindow {
       for (const kind of g.kinds) {
         const inked = g.buckets.some((i) => markKind(i) === kind && shown.has(i));
         const item = el('span', `hmkeykind${inked ? '' : ' dim'}`);
-        item.title = inked ? KIND_WORD[kind] : `${KIND_WORD[kind]} - zoom in to see`;
+        item.title = inked ? t(KIND_WORD[kind]) : `${t(KIND_WORD[kind])} - zoom in to see`;
         item.dataset.kind = kind;
         const chip = el('canvas', 'hmkeychip');
         chip.width = chip.height = Math.round(KEY_CHIP_PX * dpr);
         chip.style.width = chip.style.height = `${KEY_CHIP_PX}px`;
         paintKeyChip(chip.getContext?.('2d'), kind, inks?.[kind], { dpr });
-        item.append(chip, el('span', 'hmkeyname', KIND_WORD[kind]));
+        item.append(chip, el('span', 'hmkeyname', t(KIND_WORD[kind])));
         kinds.append(item);
       }
       row.append(b, kinds);
@@ -2197,7 +2198,7 @@ export class HeldMapWindow {
     // Overworld's own switches (systems/travelViewFilters.js - one store, so both maps answer alike)
     if (this._trav.length) {
       const row = el('div', 'hmkeyrow');
-      row.append(el('span', 'hmkeywho', TV_WHO_TEXT.title));   // never .hmkeyname: a phone hides those, and the grid would shift
+      row.append(el('span', 'hmkeywho', t(TV_WHO_TEXT.title)));   // never .hmkeyname: a phone hides those, and the grid would shift
       const btns = el('div', 'hmkeykinds');
       const btn = (label, on, title, act) => {
         const b = el('button', `act hmkeyflt${on ? ' on' : ''}`, label);
@@ -2208,8 +2209,8 @@ export class HeldMapWindow {
         b.onclick = () => this._toggleWho(act);
         return b;
       };
-      for (const g of TV_WHO_GROUPS) btns.append(btn(TV_WHO_TEXT[g], who[g] !== false, TV_WHO_TEXT.tip(TV_WHO_TEXT[g], who[g] !== false), g));
-      btns.append(btn(TV_WHO_TEXT.renown(who.renown), true, TV_WHO_TEXT.renownTip, 'renown'));
+      for (const g of TV_WHO_GROUPS) btns.append(btn(t(TV_WHO_TEXT[g]), who[g] !== false, TV_WHO_TEXT.tip(TV_WHO_TEXT[g], who[g] !== false), g));
+      btns.append(btn(t(TV_WHO_TEXT.renown(who.renown)), true, TV_WHO_TEXT.renownTip, 'renown'));
       row.append(btns);
       box.append(row);
     }
@@ -2217,13 +2218,13 @@ export class HeldMapWindow {
     // kind, the Overworld's own (systems/mapWaypoints.js - one store, so both maps answer alike), each with how many
     {
       const row = el('div', 'hmkeyrow');
-      const head = el('span', 'hmkeywho', WAYPOINT_TEXT.title);
+      const head = el('span', 'hmkeywho', t(WAYPOINT_TEXT.title));
       head.title = 'Right-click the map to add a waypoint, or a flag to rename it';
       row.append(head);
       const btns = el('div', 'hmkeykinds');
       for (const k of WAYPOINT_KINDS) {
         const on = wpShown[k] !== false, n = wpAll.filter((w) => w.kind === k).length;
-        const b = el('button', `act hmkeyflt${on ? ' on' : ''}`, `${WAYPOINT_TEXT[k]} (${n})`);
+        const b = el('button', `act hmkeyflt${on ? ' on' : ''}`, `${t(WAYPOINT_TEXT[k])} (${n})`);
         b.type = 'button'; b.tabIndex = -1;
         b.onpointerdown = (ev) => ev.preventDefault?.();   // never the focus (the key's own law)
         b.dataset.wpkind = k;
@@ -2239,7 +2240,7 @@ export class HeldMapWindow {
     // the zone is inked (online); nothing to switch: a danger is never hidden
     if (this._wildInk()) {
       const row = el('div', 'hmkeyrow hmkeywild');
-      row.append(el('span', 'hmkeywho', 'Danger'));
+      row.append(el('span', 'hmkeywho', t('Danger')));
       const kinds = el('div', 'hmkeykinds');
       const item = el('span', 'hmkeykind');
       item.title = WILD_TEXT.chipTip;
@@ -2247,10 +2248,10 @@ export class HeldMapWindow {
       chip.width = chip.height = Math.round(KEY_CHIP_PX * dpr);
       chip.style.width = chip.style.height = `${KEY_CHIP_PX}px`;
       paintWildKeyChip(chip.getContext?.('2d'), { dpr, size: KEY_CHIP_PX });
-      item.append(chip, el('span', 'hmkeyname', WILD_TEXT.mapKey));
+      item.append(chip, el('span', 'hmkeyname', t(WILD_TEXT.mapKey)));
       kinds.append(item);
       // WILD2: the door to the zone's own map (a press on the zone does the same)
-      const open = el('button', 'act hmkeyflt on hmkeyzone', 'Zone map');
+      const open = el('button', 'act hmkeyflt on hmkeyzone', t('Zone map'));
       open.type = 'button'; open.tabIndex = -1;
       open.onpointerdown = (ev) => ev.preventDefault?.();   // never the focus (the key's own law)
       open.title = 'Open the Wrothgarian Mountains: its four rings and their loot';
@@ -2578,7 +2579,7 @@ export class HeldMapWindow {
     const shown = this._portsShown();
     b.style.display = shown ? 'inline-block' : 'none';
     b.classList.toggle('on', this.portsFilter);
-    b.textContent = this.portsFilter ? 'Ports only' : 'Ports';
+    b.textContent = this.portsFilter ? t('Ports only') : t('Ports');
   }
 
   /** TO1 (:532-550), MarkLocationHandler - the MIDDLE click marks the
@@ -2695,16 +2696,16 @@ export class HeldMapWindow {
         for (const c of this._info.cells) grid.append(el('span', 'hmbox-cell', c));
         box.append(grid);
       }
-      box.append(el('p', 'hmbox-hint', 'any key or click to close'));
+      box.append(el('p', 'hmbox-hint', t('any key or click to close')));
       return;
     }
     box.append(el('p', 'hmbox-row hmbox-prompt', resumePrompt(this._to?.destinationName ?? '')));
     const row = el('div', 'hmacts');
-    const yes = el('button', 'act', 'Resume');
+    const yes = el('button', 'act', t('Resume'));
     yes.onclick = () => this.input('KeyY');
-    const no = el('button', 'act hmghost', 'Not now');
+    const no = el('button', 'act hmghost', t('Not now'));
     no.onclick = () => this.input('KeyN');
-    const forget = el('button', 'act hmghost', 'Forget it');   // RESUME-OUT: the journey ended - never asked again
+    const forget = el('button', 'act hmghost', t('Forget it'));   // RESUME-OUT: the journey ended - never asked again
     forget.onclick = () => this.input('KeyF');
     row.append(yes, no, forget);
     box.append(row);
@@ -3195,20 +3196,20 @@ export class HeldMapWindow {
     const search = el('div', 'hmsearch');
     const searchInput = el('input');
     searchInput.type = 'text';
-    searchInput.placeholder = 'Find a place…';
+    searchInput.placeholder = t('Find a place…');
     searchInput.maxLength = 32;   // FIND_MAX_CHARACTERS, the find box's own cap
     const results = el('ul', 'hmresults');
     search.append(searchInput, results);
-    const close = el('button', 'act hmclose', 'Close');
+    const close = el('button', 'act hmclose', t('Close'));
     close.onclick = () => { if (this._phase === 'map') this._beginClose(null); };
     // FINDME: a button left of Close - the view glides to me and a red cross blinks over me for three seconds
-    const findMe = el('button', 'act hmfindme', 'Find me');
+    const findMe = el('button', 'act hmfindme', t('Find me'));
     findMe.onclick = () => { if (this._phase === 'map') this._findMe(); };
     // DISC22-G: the box a dungeon note's words are written in - hidden until the middle button asks (_askText)
     const note = el('div', 'hmsearch hmnote');
     const noteInput = el('input');
     noteInput.type = 'text';
-    noteInput.placeholder = 'Write a note…';
+    noteInput.placeholder = t('Write a note…');
     noteInput.maxLength = NOTE_MAX_CHARACTERS;
     note.append(noteInput);
     note.style.display = 'none';
@@ -3216,16 +3217,25 @@ export class HeldMapWindow {
 
     const card = el('div', 'hmcard');
     const foot = el('div', 'hmfoot');
-    const hint = el('div', 'hmhint', MAP_HINT);
+    const hint = el('div', 'hmhint', t(MAP_HINT));
+    let _hintVal = MAP_HINT;
+    Object.defineProperty(hint, 'textContent', {
+      get: () => _hintVal,
+      set: (v) => {
+        _hintVal = v;
+        hint.innerText = t(v);
+      },
+      configurable: true,
+    });
     const band = el('div', 'hmband', '');
     // TV1: the door up to the travel view (_openTravelView)
-    const over = el('button', 'act hmover', TRAVEL_VIEW_BUTTON);
+    const over = el('button', 'act hmover', t(TRAVEL_VIEW_BUTTON));
     over.onclick = () => { if (this._phase === 'map') this._openTravelView(); };
     // SOC6: the legend, beside the hint, only while there is a mark to explain
     const legend = el('div', 'hmlegend');
     // MAP2: the ports button (the classic page's TO1 button, :191-197),
     // shown only while the mod restricts ship travel to ports
-    const ports = el('button', 'act hmports', 'Ports');
+    const ports = el('button', 'act hmports', t('Ports'));
     ports.onclick = () => { if (this._phase === 'map') this._togglePorts(); };
     // MAP-KEY: the key, a child of the foot standing on the row's own top edge - it rises with the row when the row
     // wraps and never floats at a guessed height (AUDIT SOC C10/D5); drawn by _renderKey
@@ -3476,7 +3486,7 @@ export class HeldMapWindow {
         // strip; anywhere else the live sheet ANSWERS and the window
         // writes, so no sheet has to reach into this window's chrome.
         const hit = tab
-          ? { label: this._strip.tabs.find((t) => t.sheet === tab)?.title ?? '', cursor: 'pointer' }
+          ? { label: t(this._strip.tabs.find((t) => t.sheet === tab)?.title ?? ''), cursor: 'pointer' }
           : (this._sheet?.hoverLabel?.(hx, hy) ?? null);
         // NOTE-PIN: a label that changes is the pointer onto or off a mark - repaint, so a waypoint lights and dims
         if (this._chrome.label.textContent !== (hit?.label ?? '')) this._dirty = true;
@@ -3807,10 +3817,10 @@ export class HeldMapWindow {
     const onPanel = noticeHold(this, cardNotice ? [{ text: cardNotice, center: true }] : null, { hint: false });
     if (!this._selected || this._phase !== 'map') return;
     const { summary } = this._selected;
-    card.append(el('h3', 'hmname', this._selected.name || 'Unknown place'));
+    card.append(el('h3', 'hmname', t(this._selected.name) || t('Unknown place')));
     card.append(el('p', 'hmmeta', this._selected.coords
       ? this._regionNameAt(Math.floor(this._selected.x), Math.floor(this._selected.y))
-      : (REGION_NAMES[summary.regionIndex] ?? '')));
+      : (REGION_NAMES[summary.regionIndex] ? t(REGION_NAMES[summary.regionIndex]) : '')));
     // AUDIT GUIDE K8/U15: the quests that point here, named on the card - the hover's card is the pointer's; this is
     // where a keyboard (the search, then the pick) and a finger learn them
     if (!this._selected.coords) {
@@ -3819,25 +3829,25 @@ export class HeldMapWindow {
     }
 
     // IT1: the mod's refusal, in the card where the panel cannot carry it (the classic-skin fork, as the fee's below)
-    if (this._itRefusal && !onPanel) card.append(el('p', 'hmnotice', this._itRefusal));
+    if (this._itRefusal && !onPanel) card.append(el('p', 'hmnotice', t(this._itRefusal)));
     if (this._panel === 'teleport') {
       // AUDIT-TO1 C3: the fee first. No purse for it: the mod's
       // notEnoughGold box, and the map closes (:497-500). ENH-NOTICE3:
       // the words are the panel's above; the card keeps the Close.
       if (feeRefused) {
-        if (!onPanel) card.append(el('p', 'hmprompt', 'You do not have enough gold.'));
+        if (!onPanel) card.append(el('p', 'hmprompt', t('You do not have enough gold.')));
         const row = el('div', 'hmacts');
-        const ok = el('button', 'act hmghost', 'Close');
+        const ok = el('button', 'act hmghost', t('Close'));
         ok.onclick = () => this._confirmTeleport(false);
         row.append(ok);
         card.append(row);
         return;
       }
-      card.append(el('p', 'hmprompt', fee ? teleportCostPrompt(fee.cost) : `Teleport to ${this._selected.name}?`));
+      card.append(el('p', 'hmprompt', fee ? teleportCostPrompt(fee.cost) : t(`Teleport to ${this._selected.name}?`)));
       const row = el('div', 'hmacts');
-      const yes = el('button', 'act', fee ? `Pay ${fee.cost} gold` : 'Teleport');
+      const yes = el('button', 'act', fee ? t(`Pay ${fee.cost} gold`) : t('Teleport'));
       yes.onclick = () => this._confirmTeleport(true);
-      const no = el('button', 'act hmghost', 'Not there');
+      const no = el('button', 'act hmghost', t('Not there'));
       no.onclick = () => this._confirmTeleport(false);
       row.append(yes, no);
       card.append(row);
@@ -3849,11 +3859,11 @@ export class HeldMapWindow {
       if (st.confirm) {
         // the diseased box, BEFORE the gold check - the literal body
         // stands in for TEXT.RSC 1010 (recorded)
-        card.append(el('p', 'hmprompt', 'You are ill. Are you sure you wish to travel?'));
+        card.append(el('p', 'hmprompt', t('You are ill. Are you sure you wish to travel?')));
         const row = el('div', 'hmacts');
-        const yes = el('button', 'act', 'Travel anyway');
+        const yes = el('button', 'act', t('Travel anyway'));
         yes.onclick = () => this._confirmDiseased(true);
-        const no = el('button', 'act hmghost', 'Stay');
+        const no = el('button', 'act hmghost', t('Stay'));
         no.onclick = () => this._confirmDiseased(false);
         row.append(yes, no);
         card.append(row);
@@ -3861,7 +3871,7 @@ export class HeldMapWindow {
       }
       // IT1: whose ride this is - a driver's or a captain's (the classic popup is DFU's art and says nothing; this card
       // is the port's own, and a player at a driver's map should know the fare is his)
-      if (st.it) card.append(el('p', 'hmmeta', st.it === IT_POPUP.seafarer ? 'A ship captain\u2019s passage' : 'A carriage ride'));
+      if (st.it) card.append(el('p', 'hmmeta', t(st.it === IT_POPUP.seafarer ? 'A ship captain\u2019s passage' : 'A carriage ride')));
       const pairs = [
         ['Speed', 'speedCautious', 'Cautiously', 'Recklessly'],
         ['Passage', 'travelShip', 'By ship', 'By land'],
@@ -3869,9 +3879,9 @@ export class HeldMapWindow {
       ];
       for (const [name, key, onLabel, offLabel] of pairs) {
         const row = el('div', 'hmpair');
-        row.append(el('span', 'hmpair-k', name));
+        row.append(el('span', 'hmpair-k', t(name)));
         for (const [label, value] of [[onLabel, true], [offLabel, false]]) {
-          const b = el('button', `hmpick${st.opts[key] === value ? ' on' : ''}`, label);
+          const b = el('button', `hmpick${st.opts[key] === value ? ' on' : ''}`, t(label));
           // a click ASSIGNS its member; the hotkeys toggle - the
           // popup's own asymmetry
           b.onclick = () => {
@@ -3884,27 +3894,27 @@ export class HeldMapWindow {
         }
         card.append(row);
       }
-      const t = st.trip;
-      if (t) {
+      const tInfo = st.trip;
+      if (tInfo) {
         const dl = el('dl', 'stats hmtrip');
         const add = (k, v) => { dl.append(el('dt', null, k), el('dd', null, v)); };
-        if (t.walked) {
+        if (tInfo.walked) {
           // MAP2: the popup's own two labels for a walked trip - hours and
           // minutes, and the mod's words in the cost row
-          const hours = Math.trunc(t.walkedMinutes / 60), mins = t.walkedMinutes % 60;
-          add('Journey', toFormat(TO_TEXT.MsgTimeFormat, hours, mins).trim());
-          add('Cost', TO_TEXT.MsgPlayerControlled);
-          add('Purse', `${this.deps.goldPieces?.() ?? 0} gold`);   // AUDIT-MAP U5: the popup still shows the coins
+          const hours = Math.trunc(tInfo.walkedMinutes / 60), mins = tInfo.walkedMinutes % 60;
+          add(t('Journey'), toFormat(TO_TEXT.MsgTimeFormat, hours, mins).trim());
+          add(t('Cost'), t(TO_TEXT.MsgPlayerControlled));
+          add(t('Purse'), t(`${this.deps.goldPieces?.() ?? 0} gold`));   // AUDIT-MAP U5: the popup still shows the coins
         } else {
-          add('Journey', `${t.days} ${t.days === 1 ? 'day' : 'days'}${t.online ? ' of your time' : ''}`);   // LIVED1: online the days are the traveller's own (OL2 said "now")
-          add('Cost', `${t.totalCost} gold`);
+          add(t('Journey'), t(`${tInfo.days} ${tInfo.days === 1 ? 'day' : 'days'}${tInfo.online ? ' of your time' : ''}`));   // LIVED1: online the days are the traveller's own (OL2 said "now")
+          add(t('Cost'), t(`${tInfo.totalCost} gold`));
           // the label shows COINS, never the letters-of-credit total -
           // the popup's own reading
-          add('Purse', `${this.deps.goldPieces?.() ?? 0} gold`);
+          add(t('Purse'), t(`${this.deps.goldPieces?.() ?? 0} gold`));
         }
         card.append(dl);
       }
-      if (t?.online && !t.walked) card.append(el('p', 'hmmeta', ONLINE_TRAVEL_LINE));   // OL2: the popup's own line   // TO-ONLINE: and not over a walked trip, which online is a real ride now and not an arrival at once
+      if (tInfo?.online && !tInfo.walked) card.append(el('p', 'hmmeta', t(ONLINE_TRAVEL_LINE)));   // OL2: the popup's own line   // TO-ONLINE: and not over a walked trip, which online is a real ride now and not an arrival at once
       // TO-FIELD (2026-09-18, Mac: "it... doesn't travel on the road"):
       // THE FOLLOW KEY, SAID WHERE THE TRIP IS BOUGHT. Travel Options
       // does not route along roads to a destination - it beelines, and
@@ -3919,11 +3929,11 @@ export class HeldMapWindow {
       if (_fk && this._to?.settings?.roadsIntegration) {
         card.append(el('p', 'hmmeta', `On the road, press ${_fk} to follow it.`));
       }
-      if (st.notice && !onPanel) card.append(el('p', 'hmnotice', st.notice));
+      if (st.notice && !onPanel) card.append(el('p', 'hmnotice', t(st.notice)));
       const row = el('div', 'hmacts');
-      const go = el('button', 'act', 'Begin journey');
+      const go = el('button', 'act', t('Begin journey'));
       go.onclick = () => this._begin();
-      const cancel = el('button', 'act hmghost', 'Cancel');
+      const cancel = el('button', 'act hmghost', t('Cancel'));
       cancel.onclick = () => this._closePanel();
       row.append(go, cancel);
       card.append(row);
@@ -3932,7 +3942,7 @@ export class HeldMapWindow {
 
     const row = el('div', 'hmacts');
     const armed = this.teleportationTravel;   // AUDIT-MAP2: the armed map's only offer is the teleport
-    const travel = el('button', 'act', armed ? 'Teleport here' : 'Travel here');
+    const travel = el('button', 'act', armed ? t('Teleport here') : t('Travel here'));
     travel.onclick = () => this._openPanel(armed ? 'teleport' : 'travel');
     row.append(travel);
     card.append(row);

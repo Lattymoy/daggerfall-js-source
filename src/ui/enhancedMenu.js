@@ -4777,7 +4777,9 @@ function pauseQuests(body) {
   const railList = (items, cls) => {
     for (const q of items) {
       const b = el('button', `px-qrow${cls}${q.key === questSel ? ' on' : ''}`);
-      b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(t(questTitleOf(q.name))));   // PX28
+      const qNode = document.createTextNode(questTitleOf(q.name));   // PX28
+      qNode.textContent = t(qNode.textContent);
+      b.append(el('span', 'px-c', '\u25c6'), qNode);
       if (q.clockSeconds != null) b.append(el('span', 'px-qtimed', '\u25c6'));
       b.onclick = () => { questSel = q.key; render(); };
       rail.append(b);
@@ -4843,7 +4845,9 @@ function pauseQuests(body) {
   const detail = el('div', 'px-qdetail');
   if (sel) {
     const head2 = el('div', 'px-qname');
-    head2.append(el('span', 'px-qwing'), el('h3', null, t(questTitleOf(sel.name))), el('span', 'px-qwing px-flip'));   // PX28
+    const qH3 = el('h3', null, questTitleOf(sel.name));   // PX28
+    qH3.textContent = t(qH3.textContent);
+    head2.append(el('span', 'px-qwing'), qH3, el('span', 'px-qwing px-flip'));
     detail.append(head2);
     const isShelvedRow = String(sel.key).startsWith('s:');   // QUEST-SHELF: a quest set aside - its clock stopped, nothing to track
     if (sel.entries && !isShelvedRow) {

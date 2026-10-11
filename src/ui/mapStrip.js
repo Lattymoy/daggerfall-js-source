@@ -172,7 +172,7 @@ export function stripHit(layout, px, py) {
  * space (the DPR transform), and nothing here consults the view - the
  * strip does not pan or zoom with the map under it.
  */
-export function paintStrip(ctx, layout, { font = null } = {}) {
+export function paintStrip(ctx, layout, { font = null, translate = null } = {}) {
   if (!ctx || !layout?.tabs?.length) return;
   // one offered sheet is a TITLE, not a toggle, and it is still drawn:
   // a hand-drawn plan has its name at its head.
@@ -181,12 +181,13 @@ export function paintStrip(ctx, layout, { font = null } = {}) {
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
   for (const t of layout.tabs) {
+    const title = translate ? translate(t.title) : t.title;
     ctx.lineWidth = 2 * HALO_PEN;
     ctx.strokeStyle = PEN.halo;
     ctx.lineJoin = 'round';
-    ctx.strokeText(t.title, t.x, t.y);
+    ctx.strokeText(title, t.x, t.y);
     ctx.fillStyle = t.live ? PEN.name : PEN.soft;
-    ctx.fillText(t.title, t.x, t.y);
+    ctx.fillText(title, t.x, t.y);
     if (t.live) {
       const y = t.y + t.h;
       ctx.lineWidth = STRIP.rule * layout.scale;
