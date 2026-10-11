@@ -119,48 +119,14 @@ export const attributeLabel = (k) => (k ? t(k.charAt(0).toUpperCase() + k.slice(
  * own words - as ui/settingsCopy.js's are.
  */
 export const ATTRIBUTE_BLURB = Object.freeze({
-  // combat/formulas.js:"export function damageModifier" damageModifier = floor((strength - 50) / 5),
-  // which calculateAttackDamage adds to every landed blow;
-  // entityMaxEncumbrance over liveStat strength is the pack's ceiling.
-  //
-  // LV1's AUDIT CORRECTED THE SECOND CLAUSE. It read "what you can
-  // carry before you stagger", and nothing in this port charges for
-  // encumbrance - MAC-E established that DFU does not either ("neither
-  // PlayerSpeedChanger.cs nor PlayerEntity.cs mentions encumbrance at
-  // all; DFU draws the figure and never charges for it"). A window
-  // that promises a penalty the game does not apply is teaching a
-  // player to spend a point on nothing.
-  strength: 'Adds to every blow you land, and to the weight your pack will hold.',
-  // systems/chargen.js:"skillUses: new Array" - spellPoints(intelligence, multiplier) is the whole magicka pool.
-  intelligence: 'Sets your pool of spell points, by your class\'s own multiplier.',
-  // systems/spellcast.js:"saving += magicResist(liveStat(target, 'willpower'))" - `saving += magicResist(liveStat(target,
-  // 'willpower'))`, the CONSUMER of DFU's MagicResist. The first cut
-  // cited systems/quest/questMacros.js:"return 'BLANK';", which only PRINTS the same
-  // figure for %mr, and a display is not evidence that a number does
-  // anything (LV1's audit).
-  willpower: 'Hardens you against magic: a tenth of it goes into every saving throw.',
-  // combat/formulas.js:"export const statsToHit" statsToHit = floor((your luck - theirs) / 10)
-  // + floor((your agility - theirs) / 10), read INSIDE the hit roll.
-  //
-  // LV1's AUDIT CORRECTED THIS ONE TOO. It described `toHitModifier`
-  // (:118, floor(agility/10) - 5), which is the CHARACTER SHEET's
-  // display modifier - ui/chargen.js:"toHit: sign(toHitModifier(st.agility))" and the quest macros are its
-  // only readers - so "a tenth of it, less five, rides on every swing"
-  // named a number that rides nothing.
-  agility: 'Rides every swing: a tenth of the gap between your agility and your foe\'s.',
-  // systems/chargen.js hitPointsPerLevelUp reads hitPointsModifier = floor(endurance / 10) - 5.
-  endurance: 'Rolls into the health you gain at every level from here on.',
-  // combat/formulas.js:"(:377-380), and this" - merchant reaction takes personality / 5; systems/court.js:"let chance = legalRep" takes it again.
-  personality: 'Warms merchants, judges and anyone else weighing what you are worth.',
-  // player/motor.js:"this.speed = walkSpeed" walkSpeed(stats.speed) is how fast you move;
-  // combat/weaponRig.js:"HT1: HANDHELD TORCHES." reads liveStat speed for the swing.
-  speed: 'Quickens your weapon and closes the ground between you and a fight.',
-  // combat/formulas.js:"export const statsToHit" again - the same term agility rides -
-  // and systems/unleveledLoot.js:"const playerLuck", where the vendored ladder rolls
-  // rarity against the player's luck, which is where a player actually
-  // notices it. (AUDIT 28e: a line shorter - at 360 to 375 wide it was the one blurb that ran to a third line, and
-  // the tallest sets the Ascension's band.)
-  luck: 'Rides every swing with agility, and tilts what the dead and dungeons hold.',
+  strength: t('Adds to every blow you land, and to the weight your pack will hold.'),
+  intelligence: t('Sets your pool of spell points, by your class\'s own multiplier.'),
+  willpower: t('Hardens you against magic: a tenth of it goes into every saving throw.'),
+  agility: t('Rides every swing: a tenth of the gap between your agility and your foe\'s.'),
+  endurance: t('Rolls into the health you gain at every level from here on.'),
+  personality: t('Warms merchants, judges and anyone else weighing what you are worth.'),
+  speed: t('Quickens your weapon and closes the ground between you and a fight.'),
+  luck: t('Rides every swing with agility, and tilts what the dead and dungeons hold.'),
 });
 
 /**
@@ -388,7 +354,7 @@ export const rolloutPool = (screen) =>
  *  for Daggerfall's - "bonus points" is what CheckIfDoneLeveling's own
  *  refusal calls them (Internal_Strings.csv:110). */
 export const poolLabel = (screen) =>
-  (levelUpLane(screen) === LANE_VIRTUE ? REMAINING_POINTS_LABEL : 'Bonus points left');
+  (levelUpLane(screen) === LANE_VIRTUE ? t(REMAINING_POINTS_LABEL) : t('Bonus points left'));
 
 /**
  * THE OK BUTTON'S GATE - and BOTH of CheckIfDoneLeveling's terms.
@@ -430,7 +396,7 @@ export const ALL_MAX_LINE = 'Every attribute is at its maximum. What is left has
 /** The refusal each lane already ships, so the window quotes rather
  *  than invents. */
 export const refusalText = (screen) =>
-  (levelUpLane(screen) === LANE_VIRTUE ? REMAINING_POINTS_ERROR : MUST_DISTRIBUTE_BONUS_POINTS);
+  (levelUpLane(screen) === LANE_VIRTUE ? t(REMAINING_POINTS_ERROR) : t(MUST_DISTRIBUTE_BONUS_POINTS));
 
 /** IN A CORNER: points left and no star will take another. Only the
  *  mod's priced purse can reach that state (ui/virtueLevelUp.js's
@@ -443,7 +409,7 @@ export function corneredHint(screen) {
   // instruction with no elsewhere in it, on a window that would not
   // have let them out either way. There the truth is the other line
   // and the button is open (LV1's audit).
-  return allMaxed(screen) ? ALL_MAX_LINE : TAKE_ONE_BACK_HINT;
+  return allMaxed(screen) ? t(ALL_MAX_LINE) : t(TAKE_ONE_BACK_HINT);
 }
 
 /**

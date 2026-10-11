@@ -58,6 +58,7 @@ import { VAULT_RANK_DEFAULTS, VAULT_LIMIT_CHOICES, GUILD_VAULT_SLOTS, vaultStand
 import { tradeRefusal } from '../systems/tradePack.js';   // GUILD2b: what may leave a pack, for the vault as for a trade
 import { isLocked } from '../systems/itemLock.js';   // AUDIT2 GUILD2 U4: a locked piece stays in the pack
 import { GUILD_DEPOSIT_UNSURE } from '../net/guildBook.js';
+import { t } from '../systems/i18n.js';
 import { LETTER_OF_CREDIT_TEXT } from '../systems/tradeModes.js';   // GUILD-LETTER: the trade window's own line for a letter of credit
 import { writMay, guildMoveOk, writBudgetOk, GUILD_STORES_MAX, WRIT_BUDGET_MAX } from '../net/writLaw.js';   // PROF6: the guild Stores' and the writ budget's ranks and bounds
 import { STORES_MAX } from '../net/professionLaw.js';   // AUDIT 31 U8: a character's Stores' most of a material
@@ -421,7 +422,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
   // MAIL1: the third tab, where the host has a letterbox to hand (net/mail.js) - a panel without one is the two it was
   // GUILD1b: and the fourth, where the host has a guild book (net/guildBook.js)
   for (const [id, label] of [['friends', 'Friends'], ['party', 'Party'], ...(mail ? [['letters', 'Letters']] : []), ...(guild ? [['guild', 'Guild']] : [])]) {
-    const b = el('button', 'dfsocial-tab', label);
+    const b = el('button', 'dfsocial-tab', t(label));
     b.type = 'button'; b.dataset.tab = id;
     b.setAttribute('role', 'tab');                    // AUDIT SOC C21: a tab that says it is one...
     b.setAttribute('aria-selected', id === 'friends' ? 'true' : 'false');   // ...and which one is up (Friends opens)
@@ -440,8 +441,8 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
   const toastName = el('div', 'dfsocial-name');
   const toastSub = el('div', 'dfsocial-sub');
   toastWho.append(toastName, toastSub);
-  const toastYes = el('button', 'dfsocial-btn', 'Accept'); toastYes.type = 'button';
-  const toastNo = el('button', 'dfsocial-btn', 'Decline'); toastNo.type = 'button';
+  const toastYes = el('button', 'dfsocial-btn', t('Accept')); toastYes.type = 'button';
+  const toastNo = el('button', 'dfsocial-btn', t('Decline')); toastNo.type = 'button';
   toast.append(toastWho, toastYes, toastNo);
   doc.body.append(toast);
 
@@ -496,14 +497,14 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
   };
 
   const btn = (label, { enabled = true, why = null, warn = false, run = null } = {}) => {
-    const b = el('button', `dfsocial-btn${warn ? ' warn' : ''}`, label);
+    const b = el('button', `dfsocial-btn${warn ? ' warn' : ''}`, t(label));
     b.type = 'button';
     if (!enabled) {
       b.disabled = true;
       // AUDIT SOC C11: the reason is DRAWN as well as titled. A `title` is a desktop hover and nothing at all on a
       // phone, so "offline" and "the party is full" were invisible on exactly the machines where a player cannot
       // hover to find out. The title stays for the mouse; the span is for everyone else (the F-menu's own shape).
-      if (why) { b.setAttribute('title', String(why)); b.append(b.whyEl = el('span', 'dfsocial-why', String(why))); }
+      if (why) { b.setAttribute('title', t(String(why))); b.append(b.whyEl = el('span', 'dfsocial-why', t(String(why)))); }
     }
     // GUILD-LIVE: the press asks the button as it stands at the press - a live one (liveBtn) comes alive under a caret,
     // never rebuilt, so its listener is there from the build and a dead one does nothing
@@ -525,7 +526,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
   const paintLiveBtns = () => {
     for (const { b, of } of liveBtns) {
       const { enabled = true, why = null } = of();
-      const w = !enabled && why ? String(why) : '';
+      const w = !enabled && why ? t(String(why)) : '';
       if (b.disabled !== !enabled) b.disabled = !enabled;
       if ((b.attrs?.title ?? b.getAttribute?.('title') ?? '') !== w) b.setAttribute('title', w);
       if (w && !b.whyEl) b.append(b.whyEl = el('span', 'dfsocial-why', w));
@@ -543,9 +544,9 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
     const nameEl = el('div', 'dfsocial-name', String(name ?? ''));
     if (colour) nameEl.style.color = colour;
     who.append(nameEl);
-    if (sub) { const s = el('div', 'dfsocial-sub', String(sub)); who.append(s); r.subNode = s; }
+    if (sub) { const s = el('div', 'dfsocial-sub', t(String(sub))); who.append(s); r.subNode = s; }
     r.append(who);
-    if (lead) r.append(el('span', 'dfsocial-lead', 'Leader'));
+    if (lead) r.append(el('span', 'dfsocial-lead', t('Leader')));
     return r;
   };
 

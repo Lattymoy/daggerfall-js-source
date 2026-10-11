@@ -10,6 +10,7 @@
 // The card stays turned across repaints of the pack (equipping something repaints it; the back then recomputes at
 // once, so you can watch a new sword change the numbers), and a repaint while turned builds the back already facing
 // you - the flip animation plays only on the press.
+import { t } from '../systems/i18n.js';
 import { computeCombatStats, signed } from '../combat/combatStats.js';
 import { dollArmour, overallArmour, tenth, PART_NAMES } from './armourCard.js';
 import { SKILL_NAMES } from '../systems/skills.js';
@@ -88,19 +89,19 @@ export function buildStatsPage(entity, repaint, opts = {}) {
   // header: what is in the hand
   const hd = el('header', 'sf-head sf-rise');
   hd.style.setProperty('--i', '0');
-  hd.append(el('h3', null, 'Combat Stats'));
-  const weaponLine = s.weapon ? (safeName(s.weapon) || 'Weapon') : 'Bare hands';
-  hd.append(el('p', null, `${weaponLine} \u00b7 ${skillName} ${s.skill}% \u00b7 Level ${s.level}`));
+  hd.append(el('h3', null, t('Combat Stats')));
+  const weaponLine = s.weapon ? (safeName(s.weapon) || t('Weapon')) : t('Bare hands');
+  hd.append(el('p', null, `${weaponLine} \u00b7 ${t(skillName)} ${s.skill}% \u00b7 ${t('Level')} ${s.level}`));
   page.append(hd);
 
   // the foe chips
   const chips = el('div', 'sf-chips sf-rise');
   chips.style.setProperty('--i', '1');
-  chips.append(el('span', 'sf-chips-k', 'Against a level-' + s.level + ':'));
+  chips.append(el('span', 'sf-chips-k', t('Against a level-') + s.level + ':'));
   s.foes.forEach((f, i) => {
-    const b = el('button', `sf-chip${i === foeIdx ? ' on' : ''}`, f.label);
+    const b = el('button', `sf-chip${i === foeIdx ? ' on' : ''}`, t(f.label));
     b.type = 'button';
-    b.title = f.tip;
+    b.title = t(f.tip);
     b.onclick = (e) => { e.stopPropagation(); foeIdx = i; repaint(); };
     chips.append(b);
   });
@@ -108,61 +109,61 @@ export function buildStatsPage(entity, repaint, opts = {}) {
 
   // the five headline tiles
   const tiles = el('div', 'sf-tiles');
-  const dmgSub = s.crit.kind === 'damage' ? `avg ${one(d.avg)} \u00b7 crit ${d.critMin}\u2013${d.critMax}` : `average ${one(d.avg)}`;
+  const dmgSub = s.crit.kind === 'damage' ? `${t('avg')} ${one(d.avg)} \u00b7 ${t('crit')} ${d.critMin}\u2013${d.critMax}` : `${t('average')} ${one(d.avg)}`;
   tiles.append(
-    tile('Damage', d.min === d.max ? String(d.min) : `${d.min}\u2013${d.max}`, dmgSub,
-      'Per hit, before the foe\u2019s armour takes its share. Sideways swing; the table below has the others.', 2),
-    tile('Hit chance', pct(head.hit), `vs ${foe.label.toLowerCase()}`,
-      'The chance a swing lands, averaged over where it strikes the foe and over your critical roll.', 3),
-    tile('Critical', pct(s.crit.chance), s.crit.kind === 'damage'
+    tile(t('Damage'), d.min === d.max ? String(d.min) : `${d.min}\u2013${d.max}`, dmgSub,
+      t('Per hit, before the foe’s armour takes its share. Sideways swing; the table below has the others.'), 2),
+    tile(t('Hit chance'), pct(head.hit), `${t('vs')} ${t(foe.label).toLowerCase()}`,
+      t('The chance a swing lands, averaged over where it strikes the foe and over your critical roll.'), 3),
+    tile(t('Critical'), pct(s.crit.chance), s.crit.kind === 'damage'
       ? `+${s.crit.hitBonus} hit \u00b7 \u00d7${s.crit.damageMult.toFixed(2)} dmg` : `+${s.crit.hitBonus} to hit`,
     s.crit.kind === 'damage'
-      ? 'Critical Strike roll: a success adds to your chance to hit and multiplies the blow.'
-      : 'Critical Strike roll: a success adds to your chance to hit (Daggerfall\u2019s own critical).', 4),
-    tile('Backstab', pct(s.backstab.chance), s.backstab.chance ? `\u00d7${s.backstab.multiplier} from behind` : 'needs skill 2+',
-      'When the foe faces away: your Backstabbing skill is the chance the blow does triple damage, and it adds to your chance to hit.', 5),
-    tile('Per swing', one(head.perSwing), 'expected damage',
-      'Hit chance times damage, criticals included: what an average swing is worth.', 6),
+      ? t('Critical Strike roll: a success adds to your chance to hit and multiplies the blow.')
+      : t('Critical Strike roll: a success adds to your chance to hit (Daggerfall’s own critical).'), 4),
+    tile(t('Backstab'), pct(s.backstab.chance), s.backstab.chance ? `\u00d7${s.backstab.multiplier} from behind` : t('needs skill 2+'),
+      t('When the foe faces away: your Backstabbing skill is the chance the blow does triple damage, and it adds to your chance to hit.'), 5),
+    tile(t('Per swing'), one(head.perSwing), t('expected damage'),
+      t('Hit chance times damage, criticals included: what an average swing is worth.'), 6),
   );
   page.append(tiles);
 
   // swings
-  const sw = section(s.isBow ? 'The shot' : 'Swing directions', 7);
+  const sw = section(s.isBow ? t('The shot') : t('Swing directions'), 7);
   const tbl = el('div', 'sf-tbl');
   const th = el('div', 'sf-tr sf-th');
-  ['', 'Damage', 'Hit', 'Per swing'].forEach((t) => th.append(el('span', null, t)));
+  ['', t('Damage'), t('Hit'), t('Per swing')].forEach((tx) => th.append(el('span', null, tx)));
   tbl.append(th);
   s.swings.forEach((w) => {
     const m = w.byFoe[foeIdx];
     const tr = el('div', `sf-tr${w.key === s.headlineKey ? ' on' : ''}`);
     const mods = `${signed(w.mods.damage)} dmg, ${signed(w.mods.toHit)}% hit`;
-    tr.title = `${w.label}: ${mods}`;
-    tr.append(el('span', 'sf-name', w.label), el('span', null, `${m.dmg.min}\u2013${m.dmg.max}`), el('span', null, pct(m.hit)), el('span', null, one(m.perSwing)));
+    tr.title = `${t(w.label)}: ${mods}`;
+    tr.append(el('span', 'sf-name', t(w.label)), el('span', null, `${m.dmg.min}\u2013${m.dmg.max}`), el('span', null, pct(m.hit)), el('span', null, one(m.perSwing)));
     tbl.append(tr);
   });
   sw.append(tbl);
   page.append(sw);
 
   // how the damage and the hit are built
-  const build = section('Breakdown', 8);
+  const build = section(t('Breakdown'), 8);
   const p = d.parts;
-  build.append(row(s.weapon ? 'Weapon roll' : 'Fists', `${p.roll[0]}\u2013${p.roll[1]}`, 'The span the weapon (or your Hand-to-Hand) rolls in, with its own modifiers.'));
-  if (p.matMod) build.append(row('Material', signed(p.matMod)));
-  build.append(row('Strength', signed(p.strMod) + (p.twoHanded && s.core === 'overhaul' ? ' (two-handed)' : ''), 'Your Strength\u2019s damage modifier.'));
-  if (p.prof) build.append(row('Proficiency', signed(p.prof), 'Your career\u2019s expertise with this weapon.'));
-  if (p.racial) build.append(row('Race', signed(p.racial), 'Your race\u2019s bonus with this kind of attack.'));
-  const t = head.terms;
-  build.append(row('Attack (skill, gear, swing)', signedPct(t.base), 'Your weapon skill and everything that adds to the chance before the foe is counted.'));
-  build.append(row('Foe\u2019s armour', signedPct(Math.round(t.armour)), 'Its armour value on the part you strike, averaged over where blows land.'));
-  build.append(row('Foe\u2019s dodging', signedPct(-t.dodge)));
-  build.append(row('Attributes & adjustments', signedPct(t.other + t.dodge), 'Agility, luck (and speed) against the foe\u2019s, enchantments, adrenaline, and the flat adjustments the core applies.'));
-  build.append(row('= Hit chance', pct(head.hit), 'The four lines above added together, then kept between 3% and 97%.'));
+  build.append(row(s.weapon ? t('Weapon roll') : t('Fists'), `${p.roll[0]}\u2013${p.roll[1]}`, t('The span the weapon (or your Hand-to-Hand) rolls in, with its own modifiers.')));
+  if (p.matMod) build.append(row(t('Material'), signed(p.matMod)));
+  build.append(row(t('Strength'), signed(p.strMod) + (p.twoHanded && s.core === 'overhaul' ? ` (${t('two-handed')})` : ''), t('Your Strength’s damage modifier.')));
+  if (p.prof) build.append(row(t('Proficiency'), signed(p.prof), t('Your career’s expertise with this weapon.')));
+  if (p.racial) build.append(row(t('Race'), signed(p.racial), t('Your race’s bonus with this kind of attack.')));
+  const tTerms = head.terms;
+  build.append(row(t('Attack (skill, gear, swing)'), signedPct(tTerms.base), t('Your weapon skill and everything that adds to the chance before the foe is counted.')));
+  build.append(row(t('Foe’s armour'), signedPct(Math.round(tTerms.armour)), t('Its armour value on the part you strike, averaged over where blows land.')));
+  build.append(row(t('Foe’s dodging'), signedPct(-tTerms.dodge)));
+  build.append(row(t('Attributes & adjustments'), signedPct(tTerms.other + tTerms.dodge), t('Agility, luck (and speed) against the foe’s, enchantments, adrenaline, and the flat adjustments the core applies.')));
+  build.append(row(t('= Hit chance'), pct(head.hit), t('The four lines above added together, then kept between 3% and 97%.')));
   page.append(build);
 
   // defence
-  const def = section('Defence', 9);
+  const def = section(t('Defence'), 9);
   const parts = dollArmour(entity);
-  def.append(row('Armour', one(tenth(overallArmour(parts))), 'The armour a blow meets on average (the plaque on the doll).'));
+  def.append(row(t('Armour'), one(tenth(overallArmour(parts))), t('The armour a blow meets on average (the plaque on the doll).')));
   const pills = el('div', 'sf-pills');
   parts.forEach((v, i) => {
     const pl = el('span', `sf-pill${v ? '' : ' nil'}`);
@@ -262,8 +263,8 @@ export function statFlip(front, entity, usingRightHand = () => true) {
     const setFaces = () => {
       fFace.inert = flipped; bFace.inert = !flipped;
       fFace.setAttribute('aria-hidden', String(flipped)); bFace.setAttribute('aria-hidden', String(!flipped));
-      btn.textContent = flipped ? 'Paperdoll' : 'Stats';
-      btn.setAttribute('aria-label', flipped ? 'Turn the card back to the paperdoll' : 'Turn the card over to show your combat stats');
+      btn.textContent = flipped ? t('Paperdoll') : t('Stats');
+      btn.setAttribute('aria-label', flipped ? t('Turn the card back to the paperdoll') : t('Turn the card over to show your combat stats'));
       btn.setAttribute('aria-pressed', String(flipped));
     };
     if (flipped) paintBack();

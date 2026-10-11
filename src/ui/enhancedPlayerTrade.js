@@ -21,6 +21,7 @@ import { overlayAction, isTextEntryTarget } from './input.js';
 import { TABS, tabAccepts } from './nativeInventory.js';
 import { TRADE_ITEMS_MAX } from '../net/wire.js';
 import { TRADE_RANGE_M } from '../net/tradeSession.js';
+import { t } from '../systems/i18n.js';
 
 const TAB_LABEL = Object.freeze({ weapons: 'Weapons & Armor', magic: 'Magic Items', clothing: 'Clothing & Misc', ingredients: 'Ingredients' });
 const STYLE_ID = 'dagger-ptrade-style';
@@ -130,18 +131,18 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
     return b;
   };
 
-  const lockMark = (on, label) => el('span', `lockmark${on ? ' on' : ''}`, `${label}${on ? ' - locked' : ''}`);
+  const lockMark = (on, label) => el('span', `lockmark${on ? ' on' : ''}`, `${label}${on ? ` - ${t('locked')}` : ''}`);
 
   const packCol = () => {
     const col = el('section', 'packcol');
     const tabs = el('div', 'packtabs');
-    for (const t of TABS) { const b = el('button', `packtab${t === tab ? ' on' : ''}`, TAB_LABEL[t]); b.onclick = () => { tab = t; render(); }; tabs.append(b); }
+    for (const tKey of TABS) { const b = el('button', `packtab${tKey === tab ? ' on' : ''}`, t(TAB_LABEL[tKey])); b.onclick = () => { tab = tKey; render(); }; tabs.append(b); }
     col.append(tabs);
     const list = el('div', 'remotelist');
     const staged = stagedSet();
     const worn = (it) => it.equipSlot != null;
     const items = (deps.items() ?? []).filter((it) => !worn(it) && !staged.has(it) && tabAccepts(it, tab));
-    if (!items.length) list.append(el('p', 'packempty', 'Nothing here answers to that page.'));
+    if (!items.length) list.append(el('p', 'packempty', t('Nothing here answers to that page.')));
     for (const it of items) list.append(row(it, 'pack'));
     col.append(list);
     return col;
@@ -150,11 +151,11 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
   const offerCol = () => {
     const col = el('section', 'packcol packremote');
     const head = el('div', 'remotehead'); const who = el('div', 'remotewho');
-    who.append(el('h3', null, 'Your offer'), el('p', 'meta', `${entries().length} item${entries().length === 1 ? '' : 's'}`));
-    head.append(who, lockMark(session.myLock, 'You'));
+    who.append(el('h3', null, t('Your offer')), el('p', 'meta', `${entries().length} ${entries().length === 1 ? t('item') : t('items')}`));
+    head.append(who, lockMark(session.myLock, t('You')));
     col.append(head);
     const list = el('div', 'remotelist');
-    if (!entries().length) list.append(el('p', 'packempty', 'Double-click an item to offer it.'));
+    if (!entries().length) list.append(el('p', 'packempty', t('Double-click an item to offer it.')));
     for (const e of entries()) list.append(row(e.item, 'offer', e.count));
     col.append(list);
     const gold = el('div', 'goldbox');
@@ -163,7 +164,7 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
     const commit = () => { input.blur(); const v = Math.max(0, Math.floor(Number(input.value) || 0)); if (v !== session.mine.gold) applyOffer(entries(), v); };
     input.onchange = commit;
     input.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); commit(); } };
-    gold.append(el('span', 'meta', 'Gold'), input, el('span', 'meta', `of ${deps.gold()}`));
+    gold.append(el('span', 'meta', t('Gold')), input, el('span', 'meta', `${t('of')} ${deps.gold()}`));
     col.append(gold);
     return col;
   };
@@ -172,14 +173,14 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
     const col = el('section', 'packcol packremote');
     const head = el('div', 'remotehead'); const who = el('div', 'remotewho');
     const n = session.theirs.items.length;
-    who.append(el('h3', null, `${session.peerName}'s offer`), el('p', 'meta', `${n} item${n === 1 ? '' : 's'}`));
+    who.append(el('h3', null, `${session.peerName}: ${t('offer')}`), el('p', 'meta', `${n} ${n === 1 ? t('item') : t('items')}`));
     head.append(who, lockMark(session.theirLock, session.peerName));
     col.append(head);
     const list = el('div', 'remotelist');
-    if (!n) list.append(el('p', 'packempty', 'Nothing offered yet.'));
+    if (!n) list.append(el('p', 'packempty', t('Nothing offered yet.')));
     for (const it of session.theirs.items) list.append(row(it, 'theirs'));
     col.append(list);
-    col.append(el('div', 'goldbox', `Gold: ${session.theirs.gold}`));
+    col.append(el('div', 'goldbox', `${t('Gold')}: ${session.theirs.gold}`));
     return col;
   };
 
@@ -188,18 +189,18 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
     const line = itemLine(selected.item, deps.entity);
     const bar = el('div', 'trade-detail'); bar.append(itemTile(line));
     const info = el('div', 'trade-detail-info');
-    info.append(el('h4', null, line.name + (line.stack ? ` ×${line.stack}` : '')));
-    const bits = [line.material, line.word, `${line.weight.toFixed(2)} kg`];
-    if (line.damage != null) bits.push(`Damage ${line.damage}`);
-    if (line.armour != null) bits.push(`Armour ${line.armour}`);
-    for (const t of line.survival ?? []) bits.push(t);
+    info.append(el('h4', null, t(line.name) + (line.stack ? ` ×${line.stack}` : '')));
+    const bits = [t(line.material), t(line.word), `${line.weight.toFixed(2)} kg`];
+    if (line.damage != null) bits.push(`${t('Damage')} ${line.damage}`);
+    if (line.armour != null) bits.push(`${t('Armour')} ${line.armour}`);
+    for (const tStr of line.survival ?? []) bits.push(t(tStr));
     info.append(el('p', 'meta', bits.filter(Boolean).join(' · ')));
     // TRADE-INFO: and the item's magic, a line each - CARD-FIT U4: in brief (the tier, its affixes, the sigil, the set's
     // name and what I wear of it; its tiers under the pointer), in a box that scrolls rather than grows
     const powers = itemBriefLines(selected.item, deps, { worn: true });
     if (powers.length) {
       const ul = el('ul', 'rarity');
-      for (const p of powers) ul.append(el('li', null, p));
+      for (const p of powers) ul.append(el('li', null, t(p)));
       const tiers = setLines(selected.item).slice(1);
       if (tiers.length) ul.title = tiers.join('\n');
       info.append(ul);
@@ -209,32 +210,32 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
     if (selected.side === 'pack' && session.phase === 'open' && !session.myConfirm) {
       let qty = null;
       if (stack > 1) { qty = el('input'); qty.type = 'number'; qty.min = '1'; qty.max = String(stack); qty.value = String(stack); qty.style.width = '64px'; bar.append(qty); }
-      const b = el('button', 'act primary', 'Offer'); b.onclick = () => { const it = selected.item; selected = null; stage(it, qty ? Math.min(stack, Math.max(1, Math.floor(Number(qty.value) || 1))) : null); }; bar.append(b);
+      const b = el('button', 'act primary', t('Offer')); b.onclick = () => { const it = selected.item; selected = null; stage(it, qty ? Math.min(stack, Math.max(1, Math.floor(Number(qty.value) || 1))) : null); }; bar.append(b);
     } else if (selected.side === 'offer' && session.phase === 'open' && !session.myConfirm) {
-      const b = el('button', 'act', 'Remove'); b.onclick = () => { const it = selected.item; selected = null; unstage(it); }; bar.append(b);
+      const b = el('button', 'act', t('Remove')); b.onclick = () => { const it = selected.item; selected = null; unstage(it); }; bar.append(b);
     }
-    const c = el('button', 'act', 'Close'); c.onclick = () => { selected = null; render(); }; bar.append(c);
+    const c = el('button', 'act', t('Close')); c.onclick = () => { selected = null; render(); }; bar.append(c);
     return bar;
   };
 
   const footer = () => {
     const bar = el('div', 'remoteacts trade-footer');
-    const status = session.phase === 'committing' ? 'Exchanging goods...'
-      : session.phase === 'done' || session.phase === 'cancelled' ? (session.lastMessage || '')
-        : session.withdrawing ? `Cancelling - waiting for ${session.peerName} to answer...`   // AUDIT 68: a confirm that left binds until the peer answers
-        : session.bothLocked ? 'Both locked - press Confirm to finish, or change your offer to reopen.'
-          : session.myLock ? `Locked. Waiting for ${session.peerName} to lock...`
-            : `Any change to either offer unlocks both sides. Stay within ${TRADE_RANGE_M} m of ${session.peerName}.`;
-    bar.append(el('p', 'ptrade-note', note || status));
+    const status = session.phase === 'committing' ? t('Exchanging goods...')
+      : session.phase === 'done' || session.phase === 'cancelled' ? t(session.lastMessage || '')
+        : session.withdrawing ? `${t('Cancelling')} — ${t('waiting for')} ${session.peerName}...`   // AUDIT 68: a confirm that left binds until the peer answers
+        : session.bothLocked ? t('Both locked - press Confirm to finish, or change your offer to reopen.')
+          : session.myLock ? `${t('Locked')}. ${t('Waiting for')} ${session.peerName}...`
+            : `${t('Any change to either offer unlocks both sides.')} ${t('Stay within')} ${TRADE_RANGE_M} ${t('m of')} ${session.peerName}.`;
+    bar.append(el('p', 'ptrade-note', t(note) || status));
     const open = session.phase === 'open';
-    const cancel = el('button', 'act', open ? 'Cancel trade' : 'Close');
+    const cancel = el('button', 'act', open ? t('Cancel trade') : t('Close'));
     cancel.disabled = session.phase === 'committing' || session.withdrawing;
     cancel.onclick = () => (open ? session.cancel() : deps.onExit());
     bar.append(cancel);
-    const lock = el('button', 'act', session.myLock ? 'Unlock' : 'Lock');
+    const lock = el('button', 'act', session.myLock ? t('Unlock') : t('Lock'));
     lock.disabled = !open || session.myConfirm || (!session.myLock && !session.hasContent);
     lock.onclick = () => { const r = session.myLock ? session.unlock() : session.lock(); say(r.ok ? '' : (r.why ?? '')); render(); };
-    const confirm = el('button', 'act primary', session.myConfirm ? 'Confirmed' : 'Confirm');
+    const confirm = el('button', 'act primary', session.myConfirm ? t('Confirmed') : t('Confirm'));
     confirm.disabled = !open || !session.bothLocked || session.myConfirm;
     confirm.onclick = () => { const r = session.confirm(); say(r.ok ? '' : (r.why ?? '')); render(); };
     bar.append(lock, confirm);

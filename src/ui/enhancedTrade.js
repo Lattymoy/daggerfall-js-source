@@ -36,6 +36,7 @@
 // the item's texture record, or the cart's model), falling back to two
 // letters when that picture is unavailable, and never blocks on it.
 
+import { t } from '../systems/i18n.js';
 import { BAG_WORDS } from '../net/bagLaw.js';   // BAG1
 import { itemLine, linePicture, markItemFrame, wearBar, showItemHover, hideItemHover } from './enhancedInventory.js';   // RF6/MW-D38: one item model, read by both packs; RARITY-UI: one frame marker; WEAR-UI: one wear bar
 import { SLOT_BOX } from './iconFit.js';   // UI1: the row's picture box
@@ -86,12 +87,18 @@ const el = (tag, cls, text) => {
 /** The mode label a player reads as this window's title, and the verb
  *  its mode-action button carries - MODE_ACTION_BUTTON's letters
  *  (nativeTrade.js) are a classic hotkey name; this is the plain word. */
-const MODE_LABEL = Object.freeze({
-  Buy: 'Buy', Sell: 'Sell', SellMagic: 'Sell', Repair: 'Repair', Identify: 'Identify',
-});
-const TAB_LABEL = Object.freeze({
-  weapons: 'Weapons & Armor', magic: 'Magic Items', clothing: 'Clothing & Misc', ingredients: 'Ingredients',
-});
+const modeLabel = (m) => {
+  const labels = {
+    Buy: t('Buy'), Sell: t('Sell'), SellMagic: t('Sell'), Repair: t('Repair'), Identify: t('Identify'),
+  };
+  return labels[m] ?? t(m);
+};
+const tabLabel = (tb) => {
+  const labels = {
+    weapons: t('Weapons & Armor'), magic: t('Magic Items'), clothing: t('Clothing & Misc'), ingredients: t('Ingredients'),
+  };
+  return labels[tb] ?? t(tb);
+};
 
 let host = null;
 let deps = {};      // the hooks bag, nativeTrade.js's own shape
@@ -185,7 +192,7 @@ function quotePriceFor(item, side) {
   if (side === 'remote') {
     // Buying: the shelf. Every other mode's remote pane is the STAGED
     // lot already, not something new to quote.
-    if (inBuy()) return { label: 'Buy for', price: priced('Buy') };
+    if (inBuy()) return { label: t('Buy for'), price: priced('Buy') };
     return null;
   }
   // side === 'local': your own item, whatever this window's mode is.
@@ -193,7 +200,7 @@ function quotePriceFor(item, side) {
     // Nothing to BUY from your own pack - the quick-sell shortcut
     // (footer button relabelled 'Sell') is the only thing a click here
     // can do, so that is the price worth quoting.
-    return isQuickSellCandidate() ? { label: 'Sell for', price: priced('Sell') } : null;
+    return isQuickSellCandidate() ? { label: t('Sell for'), price: priced('Sell') } : null;
   }
   // Sell/SellMagic/Repair/Identify: the SAME decision a click would
   // make (localClickDecision) - a quote for an item this mode would
@@ -206,8 +213,8 @@ function quotePriceFor(item, side) {
     ...sellGuardOf(deps.entity),   // WAGONS1/BAG1: the wagon driven and loaded, the bag loaded (WAGONS2 FINAL AUDIT: one home)
   });
   if (d.kind !== 'stage') return null;
-  if (mode === 'Identify' && deps.usingIdentifySpell) return { label: 'Identify for', price: 0 };
-  return { label: `${MODE_LABEL[mode] ?? 'Trade'} for`, price: priced(mode) };
+  if (mode === 'Identify' && deps.usingIdentifySpell) return { label: t('Identify for'), price: 0 };
+  return { label: `${modeLabel(mode)} ${t('for')}`, price: priced(mode) };
 }
 
 function rowsFor(id, amount = null) {
@@ -526,7 +533,7 @@ function doSteal() {
   const refused = deps.stealRefusal?.() ?? null;   // AUDIT MERCHANT-YARDS Y1: a yard's keeper never looks away
   if (refused) { deps.say?.(refused, 2); return; }
   box = {
-    rows: [{ text: 'Steal these goods rather than pay for them?', center: true }],
+    rows: [{ text: t('Steal these goods rather than pay for them?'), center: true }],
     buttons: 'YesNo',
     onYes: runSteal,
   };
@@ -551,13 +558,13 @@ function runSteal() {
   const out = shopliftAttempt({ basket: items, pickpocketSkill: deps.pickpocketSkill?.() ?? 0, shopQuality: ctx.quality ?? 0 });
   deps.tallyPickpocket?.(1);
   if (!out.caught) {
-    deps.say?.(STEAL_SUCCESS_TEXT, 2);
+    deps.say?.(t(STEAL_SUCCESS_TEXT), 2);
     if (basket.length) { deliverFurniture(basket); transferAll(basket, deps.packItems()); }
     else if (!deliverFurniture(deps.shelfItems(), items[0])) move(items[0], deps.shelfItems(), deps.packItems());
     selected = null;
     deps.tallyCrimeGuild?.(true, 1);
   } else {
-    deps.say?.(STEAL_FAILURE_TEXT, 2);
+    deps.say?.(t(STEAL_FAILURE_TEXT), 2);
     deps.crimeTheft?.();
     deps.spawnCityGuards?.(true);
   }
@@ -578,7 +585,7 @@ function confirmTrade(price) {
   else if (isSelling) staged.length = 0;
   audio.playOneShot(proceeds?.kind === 'letterOfCredit' ? SOUND.ParchmentScratching : SOUND.GoldPieces, 1);
   if (proceeds?.kind === 'letterOfCredit') {
-    box = { rows: [{ text: 'You are paid with a letter of credit.', center: true }], buttons: null };
+    box = { rows: [{ text: t('You are paid with a letter of credit.'), center: true }], buttons: null };
   }
   render();
 }
@@ -611,7 +618,7 @@ function quickSellSelected() {
       selected = null;
       audio.playOneShot(proceeds?.kind === 'letterOfCredit' ? SOUND.ParchmentScratching : SOUND.GoldPieces, 1);
       if (proceeds?.kind === 'letterOfCredit') {
-        box = { rows: [{ text: 'You are paid with a letter of credit.', center: true }], buttons: null };
+        box = { rows: [{ text: t('You are paid with a letter of credit.'), center: true }], buttons: null };
       }
       render();
     },
@@ -733,8 +740,8 @@ function repairWhen(item, now) {
  *  UXB1-K's, DFU's unit and ceiling. */
 export function repairRowText(c) {
   const own = !c.done ? ownTimeLeftShort(c.doneAt) : null;
-  if (!own || own === 'now') return repairCountdownText(c);
-  return c.estimate ? `About ${own}` : `Ready in ${own}`;
+  if (!own || own === 'now') return t(repairCountdownText(c));
+  return c.estimate ? `${t('About')} ${own}` : `${t('Ready in')} ${own}`;
 }
 const pad2 = (n) => String(n).padStart(2, '0');
 /** The detail strip's line: the hour and the day it is ready. LIVED1: online the job runs on the character's own
@@ -743,11 +750,11 @@ const pad2 = (n) => String(n).padStart(2, '0');
  *  world's. */
 export function repairReadyLine(c) {
   if (!c) return null;
-  if (c.done) return 'Ready to collect.';
+  if (c.done) return t('Ready to collect.');
   const own = ownTimeLeftText(c.doneAt);
-  if (own) return `${c.estimate ? 'Ready in about' : 'Ready in'} ${own}.`;
+  if (own) return `${c.estimate ? t('Ready in about') : t('Ready in')} ${own}.`;
   const d = dateFromClassicMinutes(c.doneAt);
-  return `${c.estimate ? 'Ready about' : 'Ready by'} ${pad2(d.hour)}:${pad2(d.minute)}, ${dateString(d)}.`;
+  return `${c.estimate ? t('Ready about') : t('Ready by')} ${pad2(d.hour)}:${pad2(d.minute)}, ${dateString(d)}.`;
 }
 
 // ── ROWS ──────────────────────────────────────────────────────────
@@ -774,10 +781,10 @@ function itemRow(item, from) {
   row.append(tile);
   const mid = el('span', 'itemname');
   mid.append(el('span', null, line.name + (line.stack ? ` ×${line.stack}` : '')));
-  const sub = [line.material, line.word].filter(Boolean).join(' · ');
+  const sub = [t(line.material), t(line.word)].filter(Boolean).join(' · ');
   if (sub) mid.append(el('small', null, sub));
   row.append(mid);
-  row.append(el('span', 'itemwt', `${line.weight.toFixed(2)} kg`));
+  row.append(el('span', 'itemwt', `${line.weight.toFixed(2)} ${t('kg')}`));
   if (mode === 'Repair' && from === 'remote') {
     const now = deps.nowMinutes?.() ?? 0;
     const done = itemIsBeingRepaired(item) ? isRepairFinished(item, now) : true;
@@ -792,19 +799,6 @@ function itemRow(item, from) {
   row.onmouseenter = () => { tile.removeAttribute?.('title'); showItemHover(item, { entity: deps.entity, getQuest: deps.getQuest ?? null }, row, from === 'local' ? 'local' : 'shop'); };
   row.onmouseleave = () => hideItemHover();
   if (selected?.item === item) row.classList.add('picked');
-  // A single click reads the item (the tooltip strip below the lists);
-  // a double click - or the footer's primary button, reaching for
-  // this same pending selection - is what actually moves it.
-  // A single click reads the item (the tooltip strip below the lists);
-  // a double click - or the footer's primary button, reaching for
-  // this same pending selection - is what actually moves it.
-  //
-  // Wired as a manually-timed "second click on the same item" check
-  // (see lastRowClick's own comment above) rather than the native
-  // `dblclick` event: render() rebuilds this row into a fresh DOM node
-  // on the first click alone, which breaks the browser's own
-  // same-node double-click detection before a native `dblclick` would
-  // ever get a chance to fire.
   row.onclick = (e) => {
     const now = e.timeStamp;
     if (lastRowClick.item === item && now - lastRowClick.time <= DOUBLE_CLICK_MS) {
@@ -823,24 +817,24 @@ function localCol() {
   const col = el('section', 'packcol');
   const tabsEl = el('div', 'packtabs');
   for (const t of TABS) {
-    const b = el('button', `packtab${t === tab ? ' on' : ''}`, TAB_LABEL[t]);
+    const b = el('button', `packtab${t === tab ? ' on' : ''}`, tabLabel(t));
     b.onclick = () => setTab(t);
     tabsEl.append(b);
   }
   col.append(tabsEl);
   const list = el('div', 'remotelist');
   const items = localList();
-  if (!items.length) list.append(el('p', 'packempty', 'Nothing here answers to that page.'));
+  if (!items.length) list.append(el('p', 'packempty', t('Nothing here answers to that page.')));
   for (const it of items) list.append(itemRow(it, 'local'));
   col.append(list);
   return col;
 }
 
 function remoteHeading() {
-  if (inBuy()) return 'On the shelf';
-  if (mode === 'Repair') return 'At the counter';
-  if (mode === 'Identify') return 'Staged';
-  return 'Staged to sell';
+  if (inBuy()) return t('On the shelf');
+  if (mode === 'Repair') return t('At the counter');
+  if (mode === 'Identify') return t('Staged');
+  return t('Staged to sell');
 }
 
 function remoteCol() {
@@ -849,11 +843,11 @@ function remoteCol() {
   const who = el('div', 'remotewho');
   who.append(el('h3', null, remoteHeading()));
   const items = remoteList();
-  who.append(el('p', 'meta', `${items.length} item${items.length === 1 ? '' : 's'}`));
+  who.append(el('p', 'meta', `${items.length} ${items.length === 1 ? t('item') : t('items')}`));
   head.append(who);
   col.append(head);
   const list = el('div', 'remotelist');
-  if (!items.length) list.append(el('p', 'packempty', 'Nothing staged yet.'));
+  if (!items.length) list.append(el('p', 'packempty', t('Nothing staged yet.')));
   for (const it of items) list.append(itemRow(it, 'remote'));
   col.append(list);
   return col;
@@ -871,20 +865,20 @@ function detailStrip() {
   bar.append(itemTile(line));
   const info = el('div', 'trade-detail-info');
   info.append(el('h4', null, line.name + (line.stack ? ` ×${line.stack}` : '')));
-  const bits = [line.material, line.word, `${line.weight.toFixed(2)} kg`];
-  if (line.damage != null) bits.push(`Damage ${line.damage}`);
-  if (line.armour != null) bits.push(`Armour ${line.armour}`);
-  if (line.hands != null) bits.push(line.hands);
-  for (const t of line.survival ?? []) bits.push(t);
+  const bits = [t(line.material), t(line.word), `${line.weight.toFixed(2)} ${t('kg')}`];
+  if (line.damage != null) bits.push(`${t('Damage')} ${line.damage}`);
+  if (line.armour != null) bits.push(`${t('Armour')} ${line.armour}`);
+  if (line.hands != null) bits.push(t(line.hands));
+  for (const tItem of line.survival ?? []) bits.push(t(tItem));
   info.append(el('p', 'meta', bits.filter(Boolean).join(' · ')));
   const quote = quotePriceFor(selected.item, selected.side);
-  if (quote) info.append(el('p', 'trade-quote', `${quote.label} ${quote.price} gold`));
+  if (quote) info.append(el('p', 'trade-quote', `${quote.label} ${quote.price} ${t('gold')}`));
   // DISC25-F: a stack more than one of which would move asks how many, here where the move is made
   const item = selected.item;
   const max = stackOf(item) > 1 ? splitMaxOf(item, selected.side) : 0;
   if (max > 1) {
     if (qty.item !== item) qty = { item, text: String(max) };
-    info.append(howManyField({ max, text: qty.text, onInput: (t) => { qty.text = t; } }));
+    info.append(howManyField({ max, text: qty.text, onInput: (textVal) => { qty.text = textVal; } }));
   }
   // UXB1-K: at the repair counter, when it is ready
   if (mode === 'Repair' && selected.side === 'remote') {
@@ -892,7 +886,7 @@ function detailStrip() {
     if (line) info.append(el('p', 'trade-quote trade-ready', line));
   }
   bar.append(info);
-  const closeBtn = el('button', 'act', 'Close');
+  const closeBtn = el('button', 'act', t('Close'));
   closeBtn.onclick = () => { selected = null; render(); };
   bar.append(closeBtn);
   return bar;
@@ -901,23 +895,23 @@ function detailStrip() {
 function footer() {
   const bar = el('div', 'remoteacts trade-footer');
   const { cost: c, modeActionEnabled } = cost();
-  bar.append(el('span', 'meta trade-cost', `Cost: ${c}   Gold: ${deps.gold?.() ?? 0}`));
+  bar.append(el('span', 'meta trade-cost', `${t('Cost')}: ${c}   ${t('Gold')}: ${deps.gold?.() ?? 0}`));
   if (inBuy() && !deps.stealRefusal?.()) {   // AUDIT MERCHANT-YARDS Y1: no Steal at a counter whose keeper never looks away
-    const steal = el('button', 'act', 'Steal');
+    const steal = el('button', 'act', t('Steal'));
     steal.disabled = !(stealCost() > 0);
     steal.onclick = doSteal;
     bar.append(steal);
   }
   const junk = junkForCounter();   // LOOT18: the pack's junk, onto the counter in one press
   if (junk.length) {
-    const j = el('button', 'act sell-junk', `Sell junk (${junk.length})`);
+    const j = el('button', 'act sell-junk', `${t('Sell junk')} (${junk.length})`);
     j.onclick = sellJunk;
     bar.append(j);
   }
-  const clearBtn = el('button', 'act', 'Clear');
+  const clearBtn = el('button', 'act', t('Clear'));
   clearBtn.onclick = () => { clear(); render(); };
   bar.append(clearBtn);
-  const action = el('button', 'act primary', isQuickSellCandidate() ? 'Sell' : (MODE_LABEL[mode] ?? 'Trade'));
+  const action = el('button', 'act primary', isQuickSellCandidate() ? t('Sell') : modeLabel(mode));
   // A pending selection (a single click's tooltip) makes this button
   // reach for THAT item instead of the ordinary confirm - but only
   // when the item is one this button could actually do something with
@@ -934,16 +928,16 @@ function footer() {
 function boxScrim() {
   const scrim = el('div', 'sb-ask');
   const ask = el('div', 'card');
-  for (const r of box.rows) ask.append(el('p', 'px-note', r.text));
+  for (const r of box.rows) ask.append(el('p', 'px-note', t(r.text)));
   const acts = el('div', 'sb-acts');
   if (box.buttons === 'YesNo') {
-    const yes = el('button', 'act primary', 'Yes');
+    const yes = el('button', 'act primary', t('Yes'));
     yes.onclick = () => dismissBox(true);
-    const no = el('button', 'act', 'No');
+    const no = el('button', 'act', t('No'));
     no.onclick = () => dismissBox(false);
     acts.append(yes, no);
   } else {
-    const ok = el('button', 'act primary', 'OK');
+    const ok = el('button', 'act primary', t('OK'));
     ok.onclick = () => dismissBox(false);
     acts.append(ok);
   }
@@ -969,9 +963,9 @@ function render() {
 
   const head = el('header', 'sb-top');
   const who = el('div', 'sb-who');
-  who.append(el('h2', null, `${deps.shopName ?? 'Shop'} — ${MODE_LABEL[mode] ?? mode}`));
+  who.append(el('h2', null, `${t(deps.shopName ?? 'Shop')} — ${modeLabel(mode)}`));
   head.append(el('span', 'sb-spacer'), who);
-  const closeBtn = el('button', 'act', 'Close');
+  const closeBtn = el('button', 'act', t('Close'));
   closeBtn.onclick = close;
   head.append(closeBtn);
   win.append(head);
@@ -984,7 +978,7 @@ function render() {
   // try to sell the buttom items cause clicking them causes the bar to appear over them"): the strip's room is ALWAYS
   // kept under the lists - empty until a click, filled after - so a click never shrinks the lists and moves the row
   // under the pointer away (the double click that sells it then landed on another row, or on nothing)
-  const detail = detailStrip() ?? (() => { const b = el('div', 'trade-detail trade-detail-empty'); b.append(el('p', 'meta', 'Click an item to see it and its price here - double-click to move it.')); return b; })();
+  const detail = detailStrip() ?? (() => { const b = el('div', 'trade-detail trade-detail-empty'); b.append(el('p', 'meta', t('Click an item to see it and its price here - double-click to move it.'))); return b; })();
   body.append(detail);
   win.append(body);
   win.append(footer());

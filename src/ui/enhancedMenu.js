@@ -4223,7 +4223,7 @@ function pauseStats(body) {
   if (doors.length) {
     const row = el('div', 'px-sheetdoors');
     for (const [label, fn] of doors) {
-      const b = el('button', 'act', label);
+      const b = el('button', 'act', t(label));
       // The pause window goes down first: two overlays at once is the
       // stacking bug U55 found the other way round on this very seam.
       // ESC-BOOK: as a HANDOFF, not a resume - the door's window takes
@@ -4252,14 +4252,14 @@ function pauseStats(body) {
   // resumes nor hands off; the page's own button comes back to Skills. A count on the button when a choice is waiting.
   const masterDoor = m.master ? (() => {
     const n = m.master.candidates?.length ?? 0;
-    const b = el('button', n ? 'act primary' : 'act', n ? `Master Skills (${n})` : 'Master Skills');
+    const b = el('button', n ? 'act primary' : 'act', n ? `${t('Master Skills')} (${n})` : t('Master Skills'));
     b.onclick = () => { statsSec = 'master'; _masterNote = null; render(); };
     return b;
   })() : null;
   if (statsSec !== 'master' && (typeof hooks.openAscend === 'function' || masterDoor)) {
     const row = el('div', 'px-sheetdoors');
     if (typeof hooks.openAscend === 'function') {
-      const b = el('button', 'act', 'Ascend');
+      const b = el('button', 'act', t('Ascend'));
       b.onclick = () => hooks.openAscend();
       row.append(b);
     }
@@ -4274,19 +4274,19 @@ function pauseStats(body) {
  *  in the skin's blood, fatigue in bone, magicka in verdigris. */
 function statsCharacter(detail, m) {
   const head2 = el('div', 'px-qname');
-  head2.append(el('span', 'px-qwing'), el('h3', null, m.name || 'Adventurer'), el('span', 'px-qwing px-flip'));
+  head2.append(el('span', 'px-qwing'), el('h3', null, m.name || t('Adventurer')), el('span', 'px-qwing px-flip'));
   detail.append(head2);
   const meta = el('div', 'px-qmeta');
-  meta.append(el('span', 'px-qkind', `${m.race}${m.career ? ` ${m.career}` : ''} \u00b7 Level ${m.level}`));
+  meta.append(el('span', 'px-qkind', `${m.race}${m.career ? ` ${m.career}` : ''} \u00b7 ${t('Level')} ${m.level}`));
   detail.append(meta);
-  detail.append(meterRow('Health', m.health.now, m.health.max, 'blood'));
-  detail.append(meterRow('Fatigue', m.fatigue.now, m.fatigue.max, ''));
-  detail.append(meterRow('Magicka', m.magicka.now, m.magicka.max, 'verdigris'));
-  detail.append(pxDivider('Burden'));
+  detail.append(meterRow(t('Health'), m.health.now, m.health.max, 'blood'));
+  detail.append(meterRow(t('Fatigue'), m.fatigue.now, m.fatigue.max, ''));
+  detail.append(meterRow(t('Magicka'), m.magicka.now, m.magicka.max, 'verdigris'));
+  detail.append(pxDivider(t('Burden')));
   const g = el('div', 'px-statgrid');
   for (const [label, v] of [['Gold', String(m.gold)], ['Encumbrance', `${m.encumbrance.now} / ${m.encumbrance.max}`]]) {
     const r = el('div', 'px-stat');
-    r.append(el('span', 'k', label), el('span', 'v', v));
+    r.append(el('span', 'k', t(label)), el('span', 'v', v));
     g.append(r);
   }
   detail.append(g);
@@ -4296,18 +4296,18 @@ function statsCharacter(detail, m) {
   if (house) {
     detail.append(pxDivider(house.title));
     const h = el('div', 'px-statgrid');
-    for (const [label, v] of house.rows) { const r = el('div', 'px-stat'); r.append(el('span', 'k', label), el('span', 'v', v)); h.append(r); }
+    for (const [label, v] of house.rows) { const r = el('div', 'px-stat'); r.append(el('span', 'k', t(label)), el('span', 'v', v)); h.append(r); }
     detail.append(h);
     if (house.word) detail.append(el('p', 'px-note', house.word));
   }
   // ARENA2: THE ARENA'S NAME FOR YOU (offline - systems/arenaLadder.js): the title of the highest tier whose champion you
   // beat, Grand Champion over all, and your record on its sand; said only once you have fought there
   if (m.arena) {
-    detail.append(pxDivider('The Arena'));
+    detail.append(pxDivider(t('The Arena')));
     const a = el('div', 'px-statgrid');
     for (const [label, v] of [['Title', m.arena.title ?? 'None yet'], ['Record', m.arena.record], ...(m.arena.banner ? [['Banner', m.arena.banner]] : [])]) {   // ARENA3: the banner worn
       const r = el('div', 'px-stat');
-      r.append(el('span', 'k', label), el('span', 'v', v));
+      r.append(el('span', 'k', t(label)), el('span', 'v', v));
       a.append(r);
     }
     detail.append(a);
@@ -4319,22 +4319,22 @@ function statsCharacter(detail, m) {
  *  kinds that only help - never a held item's, a duel's or anything harmful). The door that needs no freed mouse: a
  *  pad, a finger, a player who never presses Enter. The HUD's right-click is its twin (ui/enhancedHud.js). */
 function statsEffects(detail) {
-  detail.append(pxDivider('Active spells'));
+  detail.append(pxDivider(t('Active spells')));
   const bundles = liveBundles(playerEntity).filter((b) => b.showIcon);
   if (!bundles.length) {
-    detail.append(el('p', 'px-note', 'No spells are on you.'));
+    detail.append(el('p', 'px-note', t('No spells are on you.')));
     return;
   }
   for (const b of bundles) {
     const r = el('div', 'px-stat px-effect');
     const held = b.bundleType === 'HeldMagicItem';
     const rounds = maxRoundsRemaining(b);
-    r.append(el('span', 'k', String(b.name ?? '').replace(/^!+/, '') || 'A spell'),
-      el('span', 'v px-src', held ? 'While held' : `${rounds} round${rounds === 1 ? '' : 's'}`));
+    r.append(el('span', 'k', String(b.name ?? '').replace(/^!+/, '') || t('A spell')),
+      el('span', 'v px-src', held ? t('While held') : `${rounds} ${rounds === 1 ? t('round') : t('rounds')}`));
     if (canEndBundle(b)) {
-      const end = el('button', 'act', 'End');
+      const end = el('button', 'act', t('End'));
       end.type = 'button';
-      end.title = 'End this spell now';
+      end.title = t('End this spell now');
       end.onclick = () => { endBundle(playerEntity, b.bundleId); render(); };
       r.append(end);
     }
@@ -4344,9 +4344,10 @@ function statsEffects(detail) {
 
 /** ATTRIBUTES: the eight, each with a meter on the classic 100. */
 function statsAttributes(detail, m) {
-  detail.append(pxDivider('Attributes'));
+  detail.append(pxDivider(t('Attributes')));
   for (const a of m.attributes) {
-    detail.append(meterRow(a.key[0].toUpperCase() + a.key.slice(1), a.value, 100, ''));
+    const rawKey = a.key[0].toUpperCase() + a.key.slice(1);
+    detail.append(meterRow(t(rawKey), a.value, 100, ''));
   }
 }
 
@@ -4365,12 +4366,12 @@ function statsMaster(detail, m) {
   // of the sheet's doors on it). One short line of what it is; then the three career groups, each with its slots as
   // pips and every one of its skills as a row: mastered (gold, its climb on the gold bar), ready (a Master button that
   // asks first), or not yet (why, in a word). Offline the switch stands at the foot.
-  const back = acts([{ label: '\u2039 Skills', onClick: () => { statsSec = 'skills'; _masterNote = null; render(); } }]);
+  const back = acts([{ label: `\u2039 ${t('Skills')}`, onClick: () => { statsSec = 'skills'; _masterNote = null; render(); } }]);
   back.classList.add('px-master-back');
-  detail.append(back, pxDivider('Master Skills'));
+  detail.append(back, pxDivider(t('Master Skills')));
   const lead = !ms.on
-    ? (ms.switchable ? 'Off \u2013 your skills stop at 100, as in Daggerfall.' : 'Off.')
-    : 'Choose the skills that may climb past 100, up to 200. A choice is permanent.';
+    ? (ms.switchable ? t('Off \u2013 your skills stop at 100, as in Daggerfall.') : t('Off.'))
+    : t('Choose the skills that may climb past 100, up to 200. A choice is permanent.');
   detail.append(el('div', 'px-master-lead', lead));
   if (_masterNote) detail.append(el('div', 'px-master-note', _masterNote));
   for (const g of ms.groups) {
@@ -4378,19 +4379,19 @@ function statsMaster(detail, m) {
     const head = el('div', 'px-mhead');
     const pips = el('span', 'px-pips');
     for (let k = 0; k < g.max; k++) pips.append(el('span', k < g.used ? 'px-pip on' : 'px-pip', k < g.used ? '\u25c6' : '\u25c7'));
-    head.append(el('span', 'px-mname', g.label), pips, el('span', 'px-mcount', `${g.used} of ${g.max} chosen`));
+    head.append(el('span', 'px-mname', t(g.label)), pips, el('span', 'px-mcount', `${g.used} ${t('of')} ${g.max} ${t('chosen')}`));
     card.append(head);
     for (const sk of g.skills) {
       const row = el('div', sk.mastered ? 'px-mrow2 is-mastered' : sk.candidate ? 'px-mrow2 is-ready' : 'px-mrow2');
       const top = el('div', 'px-mtop');
-      top.append(el('span', 'k', `${sk.mastered ? '\u25c6 ' : ''}${sk.name}`), el('span', 'v', String(sk.value)));
+      top.append(el('span', 'k', `${sk.mastered ? '\u25c6 ' : ''}${t(sk.name)}`), el('span', 'v', String(sk.value)));
       const side = el('div', 'px-mside');
-      if (sk.mastered) side.append(el('span', 'px-mtag gold', sk.value >= 200 ? 'Mastered \u00b7 200' : 'Mastered'));
+      if (sk.mastered) side.append(el('span', 'px-mtag gold', sk.value >= 200 ? `${t('Mastered')} \u00b7 200` : t('Mastered')));
       else if (sk.candidate) {
-        const b = el('button', 'act primary px-mbtn', 'Master');
+        const b = el('button', 'act primary px-mbtn', t('Master'));
         b.onclick = () => askCard(sk.rows, () => { _masterNote = ms.master(sk.id).text; render(); });
         side.append(b);
-      } else side.append(el('span', 'px-mtag', sk.why));
+      } else side.append(el('span', 'px-mtag', t(sk.why)));
       const body = el('div', 'px-mbody');
       body.append(top, skillMeter(sk.value, sk.mastered));
       row.append(body, side);
@@ -4401,11 +4402,11 @@ function statsMaster(detail, m) {
   if (ms.switchable) {   // offline only - online it is always on
     const flip = () => { _masterNote = ms.toggle().text; render(); };
     const foot = acts([{
-      label: ms.on ? 'Turn off Master Skills' : 'Activate Master Skills', primary: !ms.on,
+      label: ms.on ? t('Turn off Master Skills') : t('Activate Master Skills'), primary: !ms.on,
       onClick: () => {
         if (ms.blocked) { _masterNote = ms.blocked; render(); return; }
         if (ms.on) { flip(); return; }
-        askCard(['Activate Master Skills?', '', 'Dangerous dungeons will send stronger enemies,', 'and points past 100 are slow to earn.', 'You can turn it off here at any time.'], flip);
+        askCard([t('Activate Master Skills?'), '', t('Dangerous dungeons will send stronger enemies,'), t('and points past 100 are slow to earn.'), t('You can turn it off here at any time.')], flip);
       },
     }]);
     foot.classList.add('px-master-foot');
@@ -4432,11 +4433,11 @@ function askCard(lines, onYes) {
   const close = () => { removeEventListener('keydown', onKey, true); back.remove(); };
   addEventListener('keydown', onKey, true);
   const bar = acts([
-    { label: 'Yes', onClick: () => { close(); onYes(); } },
-    { label: 'No', primary: true, onClick: close },
+    { label: t('Yes'), onClick: () => { close(); onYes(); } },
+    { label: t('No'), primary: true, onClick: close },
   ]);
   bar.classList.add('yesnobox-acts');
-  const hint = el('div', 'notice-hint', 'Y yes · N or Enter no');
+  const hint = el('div', 'notice-hint', t('Y yes · N or Enter no'));
   card.append(rows, bar, hint);
   back.append(card);
   document.body.append(back);
@@ -4447,13 +4448,14 @@ function statsSkills(detail, m) {
   for (const group of m.groups) {
     if (!group.career && !statsAllSkills) continue;
     if (!group.ids.length) continue;
-    detail.append(pxDivider(group.name));
+    detail.append(pxDivider(t(group.name)));
     const grid = el('div', 'px-skillgrid');
     for (const id of group.ids) {
       const r = el('div', 'px-skill');
       const top = el('div', 'px-mtop');
       const mastered = !!m.master?.isMastered?.(id);   // SOFTCAP4: a mastered skill wears the diamond, in gold
-      top.append(el('span', mastered ? 'k px-mastered' : 'k', `${mastered ? '\u25c6 ' : ''}${SKILL_NAMES[id] ?? `Skill ${id}`}`), el('span', 'v', m.skillText ? m.skillText(id) : String(m.skill(id))));
+      const skillName = SKILL_NAMES[id] ? t(SKILL_NAMES[id]) : `${t('Skill')} ${id}`;
+      top.append(el('span', mastered ? 'k px-mastered' : 'k', `${mastered ? '\u25c6 ' : ''}${skillName}`), el('span', 'v', m.skillText ? m.skillText(id) : String(m.skill(id))));
       // SOFTCAP1/6: 0..100 as ever, and under a MASTERED skill the gold 100..200 bar (its track shows from the moment
       // of mastery, empty at 100) - the one mark this pane carries of it
       r.append(top, skillMeter(m.skillBase ? m.skillBase(id) : m.skill(id), mastered));   // SOFTCAP7: the bars climb the TRAINED value
@@ -4467,14 +4469,14 @@ function statsSkills(detail, m) {
     if (group.ids.includes(SKILLS.HandToHand)) {
       const hth = el('div', 'px-qrow');
       hth.append(document.createTextNode(
-        `${SKILL_NAMES[SKILLS.HandToHand]} dmg: ${m.handToHandDamage.min}-${m.handToHandDamage.max}`));
+        `${t(SKILL_NAMES[SKILLS.HandToHand])} ${t('dmg')}: ${m.handToHandDamage.min}-${m.handToHandDamage.max}`));
       detail.append(hth);
     }
   }
   const more = el('button', 'px-qrow px-disclose');
   const miscCount = m.groups[3]?.ids.length ?? 0;
   more.append(el('span', 'px-c', '\u25c6'),
-    document.createTextNode(statsAllSkills ? 'Hide miscellaneous' : `Show ${miscCount} miscellaneous skills`));
+    document.createTextNode(statsAllSkills ? t('Hide miscellaneous') : `${t('Show')} ${miscCount} ${t('miscellaneous skills')}`));
   more.onclick = () => { statsAllSkills = !statsAllSkills; render(); };
   detail.append(more);
 }
@@ -4496,18 +4498,18 @@ function statsSkills(detail, m) {
 function statsSpecials(detail, m) {
   const rows = m.specials ?? [];
   if (!rows.length) {
-    detail.append(pxDivider('Advantages'));
-    detail.append(el('p', 'px-note', 'No special advantages or disadvantages.'));
+    detail.append(pxDivider(t('Advantages')));
+    detail.append(el('p', 'px-note', t('No special advantages or disadvantages.')));
     return;
   }
   for (const [kind, title] of [['advantage', 'Advantages'], ['disadvantage', 'Disadvantages']]) {
     const list = rows.filter((r) => r.kind === kind);
     if (!list.length) continue;
-    detail.append(pxDivider(title));
+    detail.append(pxDivider(t(title)));
     for (const r of list) {
       const row = el('div', 'px-stat');
-      row.append(el('span', 'k', r.label));
-      row.append(el('span', 'v px-src', r.source === 'race' ? (m.race || 'Race') : (m.career || 'Class')));
+      row.append(el('span', 'k', t(r.label)));
+      row.append(el('span', 'v px-src', r.source === 'race' ? t(m.race || 'Race') : t(m.career || 'Class')));
       detail.append(row);
     }
   }
@@ -4521,11 +4523,11 @@ function statsSpecials(detail, m) {
 const signedRep = (v) => el('span', `v${v > 0 ? ' won' : v < 0 ? ' bad' : ''}`, v > 0 ? `+${v}` : String(v));
 
 function statsStanding(detail) {
-  detail.append(pxDivider('Reputation'));
+  detail.append(pxDivider(t('Reputation')));
   const reps = playerEntity.sGroupReputations ?? [];
   for (let i = 0; i < SOCIAL_GROUP_NAMES.length; i++) {
     const r = el('div', 'px-stat');
-    r.append(el('span', 'k', SOCIAL_GROUP_NAMES[i]), signedRep(reps[i] ?? 0));
+    r.append(el('span', 'k', t(SOCIAL_GROUP_NAMES[i])), signedRep(reps[i] ?? 0));
     detail.append(r);
   }
   statsDress(detail, playerEntity);
@@ -4540,10 +4542,10 @@ function statsStanding(detail) {
  *  the knightly orders, the kingdoms, the covens, the clans, the Daedra (systems/factionStanding.js). */
 export function statsEveryStanding(detail, entity) {
   for (const g of standingGroups(entity)) {
-    detail.append(pxDivider(g.title));
+    detail.append(pxDivider(t(g.title)));
     for (const r of g.rows) {
       const row = el('div', 'px-stat px-org');
-      row.append(el('span', 'k', r.name), signedRep(r.rep));
+      row.append(el('span', 'k', t(r.name)), signedRep(r.rep));
       detail.append(row);
     }
   }
@@ -4555,15 +4557,15 @@ export function statsEveryStanding(detail, entity) {
 export function dressLine(entity) {
   const d = dressStanding(entity);
   const parts = [];
-  for (let i = 0; i < SOCIAL_GROUP_NAMES.length; i++) if (d.groups[i]) parts.push(`${SOCIAL_GROUP_NAMES[i]} ${d.groups[i] > 0 ? '+' : ''}${d.groups[i]}`);
-  if (d.temple) parts.push(`Temples ${d.temple > 0 ? '+' : ''}${d.temple}`);
+  for (let i = 0; i < SOCIAL_GROUP_NAMES.length; i++) if (d.groups[i]) parts.push(`${t(SOCIAL_GROUP_NAMES[i])} ${d.groups[i] > 0 ? '+' : ''}${d.groups[i]}`);
+  if (d.temple) parts.push(`${t('Temples')} ${d.temple > 0 ? '+' : ''}${d.temple}`);
   return parts.join(', ');
 }
 export function statsDress(detail, entity) {
   const line = dressLine(entity);
   if (!line) return;
   const r = el('div', 'px-stat px-dress');
-  r.append(el('span', 'k', 'Dress'), el('span', 'v', line));
+  r.append(el('span', 'k', t('Dress')), el('span', 'v', line));
   detail.append(r);
 }
 
@@ -4571,7 +4573,7 @@ export function statsDress(detail, entity) {
 export function statsLaw(detail, entity, { worldNow = trustedWorldMinutes() } = {}) {   // AUDIT REP F2
   const rows = lawRows(entity, worldNow);
   if (!rows.length) return;
-  detail.append(pxDivider('The law'));
+  detail.append(pxDivider(t('The law')));
   for (const w of rows) {
     const r = el('div', 'px-stat px-law');
     r.append(el('span', 'k', w.region), el('span', 'v px-rank', w.note ? `${w.word} - ${w.note}` : w.word), signedRep(w.rep));
@@ -4591,11 +4593,11 @@ export function lawRows(entity, worldNow) {
     if (rep === 0 && left === 0) continue;
     const days = banishmentDaysLeft(entity, i, worldNow);   // BANISH-SKY: the days of the calendar the player sees
     const real = Number.isFinite(left) ? worldSpanRealWords(left) : null;   // ...and online what they are on the wall
-    const term = Number.isFinite(left) ? `, ${days} day${days === 1 ? '' : 's'} left${real ? `, ${real}` : ''}` : '';
+    const term = Number.isFinite(left) ? `, ${days} ${days === 1 ? t('day') : t('days')} ${t('left')}${real ? `, ${real}` : ''}` : '';
     // the price of each: a pardon at the region's temple, a stop's fine on the street
-    const note = left !== 0 ? `banished${term} (a pardon: ${pardonPrice(entity, i)} gold)`
-      : rep < KNOWN_CRIMINAL_BELOW ? `known to the watch (a stop: ${challengeFine(entity, i, { worldNow })} gold)` : '';
-    out.push({ region: REGION_NAMES[i] ?? `Region ${i}`, rep, word: legalStandingWord(rep), note });
+    const note = left !== 0 ? `${t('banished')}${term} (${t('a pardon')}: ${pardonPrice(entity, i)} ${t('gold')})`
+      : rep < KNOWN_CRIMINAL_BELOW ? `${t('known to the watch')} (${t('a stop')}: ${challengeFine(entity, i, { worldNow })} ${t('gold')})` : '';
+    out.push({ region: t(REGION_NAMES[i] ?? `Region ${i}`), rep, word: t(legalStandingWord(rep)), note });
   }
   return out.sort((a, b) => a.rep - b.rep);
 }
@@ -4608,15 +4610,15 @@ export function lawRows(entity, worldNow) {
  *  skins cannot disagree about a guild. An empty book says what record
  *  19 says rather than drawing an empty section. */
 export function statsGuilds(detail, entity) {
-  detail.append(pxDivider('Guilds'));
+  detail.append(pxDivider(t('Guilds')));
   const book = affiliations(entity);
   if (!book.length) {
-    detail.append(el('p', 'px-note', 'You have no affiliations.'));
+    detail.append(el('p', 'px-note', t('You have no affiliations.')));
     return;
   }
   for (const a of book) {
     const r = el('div', 'px-stat px-guild');
-    r.append(el('span', 'k', a.affiliation), el('span', 'v px-rank', a.probation ? `${a.title} - on probation` : a.title), signedRep(a.rep));   // REP6
+    r.append(el('span', 'k', t(a.affiliation)), el('span', 'v px-rank', a.probation ? `${t(a.title)} - ${t('on probation')}` : t(a.title)), signedRep(a.rep));   // REP6
     detail.append(r);
   }
 }
@@ -4661,7 +4663,7 @@ export function questTimerWords(log, key) {
   const r = questRail(log ?? { active: [], finished: [] });
   const q = [...r.active, ...r.hidden].find((row) => row.key === key);   // JOURNAL-CLEAN: a hidden quest shown is still timed
   if (!q || q.clockSeconds == null) return null;
-  return { text: `Time remains: ${remainWords(q.clockSeconds)}`, urgent: q.clockSeconds < QUEST_URGENT_SECONDS };
+  return { text: `${t('Time remains')}: ${remainWords(q.clockSeconds)}`, urgent: q.clockSeconds < QUEST_URGENT_SECONDS };
 }
 
 /** The journal rendered once when it opened and again on a click, so
@@ -4714,7 +4716,7 @@ function questWhere(message, cls, { wayOnly = false, skip = null } = {}) {
   const box = el('div', cls);
   box.append(el('span', `${cls}-place`, said.where));
   if (said.find && door) {
-    const go = el('button', 'act', WHERE_TEXT.show);
+    const go = el('button', 'act', t(WHERE_TEXT.show));
     go.type = 'button';
     go.title = WHERE_TEXT.showLabel(said.where);
     go.setAttribute('aria-label', WHERE_TEXT.showLabel(said.where));
@@ -4722,7 +4724,7 @@ function questWhere(message, cls, { wayOnly = false, skip = null } = {}) {
     go.onclick = () => { onAction('handoff'); if (door(find) === false) onAction('resume'); };
     box.append(go);
   }
-  if (said.note) box.append(el('span', `${cls}-note`, said.note));
+  if (said.note) box.append(el('span', `${cls}-note`, t(said.note)));
   return box;
 }
 /** GUIDE2: the place the quest's latest entry offers a way to (its find payload: region and name), or null. */
@@ -4742,7 +4744,7 @@ function latestPlace(sel) {
  *  F5 logbook's flat seam); a host without the hook says so. */
 function pauseQuests(body) {
   if (!hooks.questLog) {
-    body.append(el('p', 'px-note', 'The journal is not wired into this place yet.'));
+    body.append(el('p', 'px-note', t('The journal is not wired into this place yet.')));
     return;
   }
   // MAC-K2: THE WALK IS ui/questRail.js's now, because the chronicle
@@ -4757,7 +4759,7 @@ function pauseQuests(body) {
   // nothing.
   const clean = hooks.journalClean?.() ?? null;
   if (!active.length && !finished.length && !hidden.length && !shelved.length) {
-    body.append(el('p', 'px-note', 'No active quests.'));
+    body.append(el('p', 'px-note', t('No active quests.')));
     return;
   }
   const shown = questShowHidden ? hidden : [];
@@ -4775,7 +4777,7 @@ function pauseQuests(body) {
   const railList = (items, cls) => {
     for (const q of items) {
       const b = el('button', `px-qrow${cls}${q.key === questSel ? ' on' : ''}`);
-      b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(questTitleOf(q.name)));   // PX28
+      b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(t(questTitleOf(q.name))));   // PX28
       if (q.clockSeconds != null) b.append(el('span', 'px-qtimed', '\u25c6'));
       b.onclick = () => { questSel = q.key; render(); };
       rail.append(b);
@@ -4800,7 +4802,7 @@ function pauseQuests(body) {
   const mains = active.filter((q) => q.main);
   const sides = active.filter((q) => !q.main);
   const section = (label, items, cls, first = false) => {
-    rail.append(el('div', `px-qarch${first ? ' px-qfirst' : ''}`, label));
+    rail.append(el('div', `px-qarch${first ? ' px-qfirst' : ''}`, t(label)));
     if (items.length) railList(items, cls);
     else rail.append(el('div', 'px-qnone', '\u2014'));
   };
@@ -4821,7 +4823,7 @@ function pauseQuests(body) {
   };
   if (clean && finished.length) {
     const armed = journalCleanArmed === 'clear';
-    railAct(armed ? 'Click again to clear archive' : `Clear archive (${finished.length})`, () => {
+    railAct(armed ? t('Click again to clear archive') : `${t('Clear archive')} (${finished.length})`, () => {
       if (journalCleanArmed !== 'clear') { journalCleanArmed = 'clear'; render(); return; }
       journalCleanArmed = null;
       clean.clearFinished?.();
@@ -4830,7 +4832,7 @@ function pauseQuests(body) {
     });
   }
   if (hidden.length) {
-    railAct(questShowHidden ? `Hide hidden (${hidden.length})` : `Show hidden (${hidden.length})`, () => {
+    railAct(questShowHidden ? `${t('Hide hidden')} (${hidden.length})` : `${t('Show hidden')} (${hidden.length})`, () => {
       questShowHidden = !questShowHidden;
       if (!questShowHidden && hidden.some((q) => q.key === questSel)) questSel = null;
       render();
@@ -4841,7 +4843,7 @@ function pauseQuests(body) {
   const detail = el('div', 'px-qdetail');
   if (sel) {
     const head2 = el('div', 'px-qname');
-    head2.append(el('span', 'px-qwing'), el('h3', null, questTitleOf(sel.name)), el('span', 'px-qwing px-flip'));   // PX28
+    head2.append(el('span', 'px-qwing'), el('h3', null, t(questTitleOf(sel.name))), el('span', 'px-qwing px-flip'));   // PX28
     detail.append(head2);
     const isShelvedRow = String(sel.key).startsWith('s:');   // QUEST-SHELF: a quest set aside - its clock stopped, nothing to track
     if (sel.entries && !isShelvedRow) {
@@ -4855,7 +4857,7 @@ function pauseQuests(body) {
       if (sel.clockSeconds != null) {
         // Under a game day the words go URGENT gold.
         const urgent = sel.clockSeconds < QUEST_URGENT_SECONDS;
-        const timer = el('span', `px-qtimer${urgent ? ' urgent' : ''}`, `Time remains: ${remainWords(sel.clockSeconds)}`);
+        const timer = el('span', `px-qtimer${urgent ? ' urgent' : ''}`, `${t('Time remains')}: ${remainWords(sel.clockSeconds)}`);
         meta.append(timer);
         armQuestTimer(timer, sel.key);
       }
@@ -4874,12 +4876,12 @@ function pauseQuests(body) {
       const acts = el('div', 'px-qacts');
       acts.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;margin:6px 0 8px';
       if (bountyQuestShareable(sel.id)) {
-        const sh = el('button', 'act', 'Share with party');
+        const sh = el('button', 'act', t('Share with party'));
         sh.onclick = () => { shareBountyQuest(sel.id); render(); };
         acts.append(sh);
       }
       const armed = bountyAbandonArmed === sel.id;
-      const ab = el('button', 'act', armed ? 'Click again to abandon' : 'Abandon bounty');
+      const ab = el('button', 'act', armed ? t('Click again to abandon') : t('Abandon bounty'));
       ab.onclick = () => {
         if (bountyAbandonArmed !== sel.id) { bountyAbandonArmed = sel.id; render(); return; }
         bountyAbandonArmed = null;
@@ -4895,7 +4897,7 @@ function pauseQuests(body) {
       const acts = el('div', 'px-qacts');
       acts.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;margin:6px 0 8px';
       const armed = bountyAbandonArmed === sel.id;
-      const ab = el('button', 'act', armed ? 'Click again to abandon' : 'Abandon hunt');
+      const ab = el('button', 'act', armed ? t('Click again to abandon') : t('Abandon hunt'));
       ab.onclick = () => {
         if (bountyAbandonArmed !== sel.id) { bountyAbandonArmed = sel.id; render(); return; }
         bountyAbandonArmed = null;
@@ -4915,13 +4917,13 @@ function pauseQuests(body) {
       // QUEST-SHELF: a running quest ABANDONS - twice, BOUNTY1's arming (its clocks stop and its questor is free the moment
       // it goes) - where the quest may be set aside (scenes/questBridge.js canAbandon); one set aside RECLAIMS in one press
       if (isShelvedRow && sel.id != null && clean.reclaim) {
-        const rc = el('button', 'act', 'Reclaim quest');
+        const rc = el('button', 'act', t('Reclaim quest'));
         // its audit: the selection follows the quest only where it went - a refusal is said under the quest it refused
         rc.onclick = () => { const out = clean.reclaim(sel.id); questShelfSaid = out?.text ?? null; if (out?.ok) questSel = `a:${sel.id}`; render(); };
         acts.append(rc);
       } else if (sel.entries && sel.id != null && clean.abandon && clean.canAbandon?.(sel.id)) {
         const armed = journalCleanArmed === `ab:${sel.id}`;
-        const ab = el('button', 'act', armed ? 'Click again to abandon' : 'Abandon quest');
+        const ab = el('button', 'act', armed ? t('Click again to abandon') : t('Abandon quest'));
         ab.onclick = () => {
           if (journalCleanArmed !== `ab:${sel.id}`) { journalCleanArmed = `ab:${sel.id}`; render(); return; }
           journalCleanArmed = null;
@@ -4934,7 +4936,7 @@ function pauseQuests(body) {
       }
       if (sel.entries && sel.id != null && !isShelvedRow) {
         const isHidden = hidden.some((q) => q.key === sel.key);
-        const hb = el('button', 'act', isHidden ? 'Unhide' : 'Hide from journal');
+        const hb = el('button', 'act', isHidden ? t('Unhide') : t('Hide from journal'));
         hb.onclick = () => {
           if (isHidden) clean.unhide?.(sel.id);
           else { clean.hide?.(sel.id); questSel = null; }
@@ -4944,7 +4946,7 @@ function pauseQuests(body) {
       } else if (!sel.entries) {
         const index = Number(String(sel.key).slice(2));
         const armed = journalCleanArmed === sel.key;
-        const rb = el('button', 'act', armed ? 'Click again to remove' : 'Remove');
+        const rb = el('button', 'act', armed ? t('Click again to remove') : t('Remove'));
         rb.onclick = () => {
           if (journalCleanArmed !== sel.key) { journalCleanArmed = sel.key; render(); return; }
           journalCleanArmed = null;
@@ -4965,7 +4967,7 @@ function pauseQuests(body) {
       for (const line of latest) desc.append(el('p', null, line));
       detail.append(desc);
       if (sel.entries.length > 1) {
-        detail.append(pxDivider('Journal'));
+        detail.append(pxDivider(t('Journal')));
         const offered = latestPlace(sel);   // GUIDE2: the place the where line above already offers
         for (let i = sel.entries.length - 2; i >= 0; i--) {
           const e = el('div', 'px-qentry');
@@ -4984,7 +4986,7 @@ function pauseQuests(body) {
     } else {
       // Archived: the verdict line, then the filed record.
       const verdict = sel.success == null ? null
-        : `${sel.success ? 'Completed' : 'Ended'}${sel.when ? ` at ${sel.when}` : ''}`;
+        : `${sel.success ? t('Completed') : t('Ended')}${sel.when ? ` ${t('at')} ${sel.when}` : ''}`;
       if (verdict) detail.append(el('p', `px-qverdict${sel.success ? ' won' : ''}`, verdict));
       const desc = el('div', 'px-qdesc');
       for (const line of sel.lines) {

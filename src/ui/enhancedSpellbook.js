@@ -28,6 +28,7 @@
 // a rail you can read top to bottom does not need one and a button
 // that reorders a list you are looking at is a worse answer than the
 // order being right.
+import { t } from '../systems/i18n.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
 import { overlayAction, eventMeans } from './input.js';   // KB1: and the registry's answer for the book's own key
@@ -158,11 +159,11 @@ function render() {
   // which is the shape every framed window in this UI already wears.
   const head = el('header', 'sb-top');
   const who = el('div', 'sb-who');
-  who.append(el('h2', null, 'Spellbook'));
+  who.append(el('h2', null, t('Spellbook')));
   const magicka = deps.entity?.magicka;
-  if (Number.isFinite(magicka)) who.append(el('p', 'sb-magicka', `${magicka} magicka`));
+  if (Number.isFinite(magicka)) who.append(el('p', 'sb-magicka', `${magicka} ${t('magicka')}`));
   head.append(el('span', 'sb-spacer'), who);
-  const close = el('button', 'act', 'Close');
+  const close = el('button', 'act', t('Close'));
   close.onclick = () => onExit();
   head.append(close);
   win.append(head);
@@ -170,7 +171,7 @@ function render() {
   const body = el('div', 'px-body');
   const rows = bookModel(deps.spells?.() ?? [], deps.castCost);
   if (!rows.length) {
-    body.append(el('p', 'px-note', 'No spells yet.'));
+    body.append(el('p', 'px-note', t('No spells yet.')));
     win.append(body);
     shell.append(win);
     host.append(shell);
@@ -183,7 +184,7 @@ function render() {
   for (const r of rows) {
     if (hotbarAcceptsDrops()) spellIconPicture(r.spell?.icon, { box: SPELL_DRAG_BOX });   // UI2: warmed, so a drag starts with it
     const b = el('button', `px-qrow sb-row${r.i === picked ? ' on' : ''}`);
-    b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(r.name));
+    b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(t(r.name)));
     b.append(el('span', 'sb-cost', String(r.cost)));
     // HB1: a rail row DRAGS onto the hotbar under the window. A mouse
     // crosses at 4px, a finger on a hold, so a click is still a pick.
@@ -204,34 +205,34 @@ function render() {
   const sel = rows[picked];
   const detail = el('div', 'px-qdetail');
   const name = el('div', 'px-qname');
-  name.append(el('span', 'px-qwing'), el('h3', null, sel.name), el('span', 'px-qwing px-flip'));
+  name.append(el('span', 'px-qwing'), el('h3', null, t(sel.name)), el('span', 'px-qwing px-flip'));
   detail.append(name);
   const meta = el('div', 'px-qmeta');
   // AFFORDABLE OR NOT, which is the question a player opens this book
   // with. The classic answers it only by failing at the cast.
   const short = Number.isFinite(magicka) && sel.cost > magicka;
   meta.append(el('span', `px-qtimer${short ? ' urgent' : ''}`,
-    short ? `${sel.cost} spell points - not enough magicka` : `${sel.cost} spell points`));
+    short ? `${sel.cost} ${t('spell points - not enough magicka')}` : `${sel.cost} ${t('spell points')}`));
   detail.append(meta);
   // THE TWO ICONS THE CLASSIC DRAWS, as the words they mean. This
   // window reads no ARENA2, and the classic only tells you these on
   // hover - so printing them is strictly more than it says.
   if (sel.frame.target || sel.frame.element) {
     const frame = el('div', 'sb-frame');
-    if (sel.frame.target) frame.append(el('span', 'sb-chip', sel.frame.target));
-    if (sel.frame.element) frame.append(el('span', 'sb-chip', sel.frame.element));
+    if (sel.frame.target) frame.append(el('span', 'sb-chip', t(sel.frame.target)));
+    if (sel.frame.element) frame.append(el('span', 'sb-chip', t(sel.frame.element)));
     detail.append(frame);
   }
-  detail.append(pxDivider('Effects'));
+  detail.append(pxDivider(t('Effects')));
   if (!sel.effects.length) {
-    detail.append(el('p', 'px-note', 'No effects.'));
+    detail.append(el('p', 'px-note', t('No effects.')));
   } else {
     const list = el('div', 'sb-effects');
     for (const e of sel.effects) {
       const row = el('div', 'sb-effect');
       const line = el('div', 'sb-effline');
-      line.append(el('span', 'px-c', '\u25c6'), el('span', 'sb-group', e.group));
-      if (e.subgroup) line.append(el('span', 'sb-sub', e.subgroup));
+      line.append(el('span', 'px-c', '\u25c6'), el('span', 'sb-group', t(e.group)));
+      if (e.subgroup) line.append(el('span', 'sb-sub', t(e.subgroup)));
       row.append(line);
       // The numbers the effect record already held.
       if (e.parts.length) {
@@ -244,7 +245,7 @@ function render() {
     detail.append(list);
   }
   const acts = el('div', 'sb-acts');
-  const ready = el('button', 'act primary', 'Ready');
+  const ready = el('button', 'act primary', t('Ready'));
   ready.onclick = () => {
     // The classic's own arm: ready, then leave - a spellbook is a
     // choice, and the choice made ends the window.
@@ -263,15 +264,15 @@ function render() {
     // HB1: the hotbar's button in the diamond's place - on the bar comes
     // off, else it goes on the first free slot. Dragging picks the slot.
     const at = hotbarSlotOf(sel.spell, { spell: true });
-    const hb = el('button', `act sb-slot${at >= 0 ? ' on' : ''}`, at >= 0 ? `Off hotbar ${at + 1}` : 'Add to hotbar');
+    const hb = el('button', `act sb-slot${at >= 0 ? ' on' : ''}`, at >= 0 ? `${t('Off hotbar')} ${at + 1}` : t('Add to hotbar'));
     hb.onclick = () => { notice = toggleHotbarSpell(sel.spell); render(); };
     acts.append(hb);
   } else {
     const inSlot = Number.isFinite(sel.spell?.index) && spellQuickslot()?.index === sel.spell.index;
-    const slot = el('button', `act sb-slot${inSlot ? ' on' : ''}`, inSlot ? 'Unslot' : 'Quickslot');
+    const slot = el('button', `act sb-slot${inSlot ? ' on' : ''}`, inSlot ? t('Unslot') : t('Quickslot'));
     slot.onclick = () => {
       if (inSlot) clearSpellQuickslot(); else setSpellQuickslot(sel.spell);
-      notice = inSlot ? 'Taken out of the quickslot.' : 'In the quickslot - press its key to ready it, hold to cycle the book.';
+      notice = inSlot ? t('Taken out of the quickslot.') : t('In the quickslot - press its key to ready it, hold to cycle the book.');
       render();
     };
     acts.append(slot);
@@ -279,19 +280,19 @@ function render() {
   // RENAME. The classic asks "Enter spell name : " (ENTER_SPELL_NAME,
   // :934) and the first draft dropped it - a prettier window that can
   // do less, which is the chronicle's lesson one window over.
-  const rename = el('button', 'act', 'Rename');
+  const rename = el('button', 'act', t('Rename'));
   rename.onclick = () => { renaming = renaming === null ? sel.name : null; notice = null; render(); };
   acts.append(rename);
   // SB-ICON: change the spell's icon freely, as the spell maker's picker does - the whole classic set, any icon, any spell.
   // The write is the classic book's own (editBookSpell on a copy, kept as custom), so both skins agree on it.
-  const iconBtn = el('button', `act sb-iconbtn${choosingIcon ? ' on' : ''}`, 'Icon');
+  const iconBtn = el('button', `act sb-iconbtn${choosingIcon ? ' on' : ''}`, t('Icon'));
   iconBtn.onclick = () => { choosingIcon = !choosingIcon; renaming = null; notice = null; render(); };
   acts.append(iconBtn);
   // NO-ICON: the spell shows the first letter of its first two words instead of a picture; the chosen icon is kept, so it can come back
   const noIcon = !!sel.spell?.noIcon;
-  const noBtn = el('button', `act sb-iconbtn${noIcon ? ' on' : ''}`, noIcon ? 'Use icon' : 'No icon');
-  noBtn.title = noIcon ? 'Show the spell\u2019s icon again' : `Show ${spellInitials(sel.name)} instead of an icon`;
-  noBtn.onclick = () => { editBookSpell(deps.spells?.(), sel.i, { noIcon: !noIcon }); choosingIcon = false; notice = noIcon ? 'Icon restored.' : `Now shown as ${spellInitials(sel.name)}.`; render(); };
+  const noBtn = el('button', `act sb-iconbtn${noIcon ? ' on' : ''}`, noIcon ? t('Use icon') : t('No icon'));
+  noBtn.title = noIcon ? t('Show the spell\u2019s icon again') : `${t('Show')} ${spellInitials(sel.name)} ${t('instead of an icon')}`;
+  noBtn.onclick = () => { editBookSpell(deps.spells?.(), sel.i, { noIcon: !noIcon }); choosingIcon = false; notice = noIcon ? t('Icon restored.') : `${t('Now shown as')} ${spellInitials(sel.name)}.`; render(); };
   acts.append(noBtn);
   // DELETE IS TWO PRESSES, and the second one is the classic's.
   // DeleteButton_OnMouseClick (:811-838) ends by parking the row in
@@ -302,7 +303,7 @@ function render() {
   // so the two skins disagreed about a destructive, unrecoverable act
   // while the port's classic window (spellbookWindow.deleteButton /
   // confirmDelete) carried the whole law.
-  const del = el('button', 'act', 'Delete');
+  const del = el('button', 'act', t('Delete'));
   del.onclick = () => {
     if (sel.undeletable) { notice = sel.undeletable; render(); return; }
     deleting = sel.i;
@@ -315,18 +316,18 @@ function render() {
   if (choosingIcon) {
     const grid = el('div', 'sb-icons');
     grid.setAttribute('role', 'listbox');
-    grid.setAttribute('aria-label', 'Choose an icon');
+    grid.setAttribute('aria-label', t('Choose an icon'));
     for (let n = 0; n < SPELL_ICON_COUNT; n++) {
       const c = el('button', `sb-icon${!sel.spell?.noIcon && n === (sel.spell?.icon ?? 0) ? ' on' : ''}`);
       c.type = 'button';
-      c.title = `Icon ${n + 1}`;
-      c.setAttribute('aria-label', `Icon ${n + 1}`);
+      c.title = `${t('Icon')} ${n + 1}`;
+      c.setAttribute('aria-label', `${t('Icon')} ${n + 1}`);
       const url = spellIconUrl(n);
       if (url) { const img = el('img'); img.src = url; img.alt = ''; c.append(img); }
       else c.append(el('span', 'sb-iconnum', String(n + 1)));
       c.onclick = () => {
         choosingIcon = false;
-        notice = editBookSpell(deps.spells?.(), sel.i, { icon: n, noIcon: false }) ? 'Icon changed.' : null;
+        notice = editBookSpell(deps.spells?.(), sel.i, { icon: n, noIcon: false }) ? t('Icon changed.') : null;
         render();
       };
       grid.append(c);
@@ -343,9 +344,9 @@ function render() {
     input.type = 'text';
     input.value = renaming;
     input.maxLength = 30;
-    input.setAttribute('aria-label', ENTER_SPELL_NAME.trim());
+    input.setAttribute('aria-label', t(ENTER_SPELL_NAME.trim()));
     input.oninput = () => { renaming = input.value; };
-    const ok = el('button', 'act primary', 'Save');
+    const ok = el('button', 'act primary', t('Save'));
     ok.type = 'submit';
     form.onsubmit = (e) => {
       e.preventDefault();
@@ -354,64 +355,40 @@ function render() {
       renaming = null;
       render();
     };
-    form.append(el('span', 'sb-renamelabel', ENTER_SPELL_NAME.trim()), input, ok);
+    form.append(el('span', 'sb-renamelabel', t(ENTER_SPELL_NAME.trim())), input, ok);
     detail.append(form);
   }
-  if (notice) detail.append(el('p', 'sheet-notice', notice));
+  if (notice) detail.append(el('p', 'sheet-notice', t(notice)));
   wrap.append(detail);
   body.append(wrap);
   win.append(body);
-  // AUDIT-39r R22: AND THE PROMPT IS A PUSHED WINDOW, not a card
-  // parked beside live buttons. DaggerfallMessageBox.Show() pushes
-  // itself onto the UI stack (:303), so in DFU every control of the
-  // spellbook beneath it is inert to pointer AND key until an answer
-  // comes. The first draft guarded only `onKey`, leaving the rail,
-  // Ready, Rename, Delete and Close clickable - a rail click silently
-  // dropped the pending question, and Ready readied a spell and left
-  // with it unanswered. Disabling the window under the scrim is what
-  // makes the box modal in a DOM; the scrim's own buttons are added
-  // after, so they stay live.
   if (deleting !== null) {
     for (const b of win.querySelectorAll('button, input')) b.disabled = true;
     win.append(deleteScrim());
   }
   shell.append(win);
   host.append(shell);
-  closeOnOutsideTap(shell, '.px-win', () => onExit());   // OT1 (Mac: a tap outside the window closes it); the YesNo stands inside the window
+  closeOnOutsideTap(shell, '.px-win', () => onExit());
 }
 
-/** DeleteSpellConfirm_OnButtonClick (:840-852).
- *
- *  AUDIT-39r R21: the trailing `CloseWindow()` (:851) does NOT close
- *  the spellbook. It is UserInterfaceWindow.CloseWindow (:127-132) ->
- *  UserInterfaceManager.PopWindow -> RemoveWindow (:190-199), which
- *  pops TopWindow - and TopWindow at that instant is the message box
- *  itself, since ActivateButton (DaggerfallMessageBox.cs:479-484)
- *  only raises the event and never pops. The book stays open, which
- *  is the only reading under which the Yes arm's own
- *  `RefreshSpellsList(true); UpdateSelection();` mean anything. The
- *  same law is written out one file over, in nativeTrade's _confirm.
- *  So: either answer dismisses the CARD, and only Yes splices. */
 function confirmDelete(yes) {
   if (yes && deleting !== null) {
     const list = deps.spells?.() ?? [];
     list.splice(deleting, 1);
-    picked = Math.max(0, Math.min(picked, list.length - 1));   // UpdateSelection, with the row gone
+    picked = Math.max(0, Math.min(picked, list.length - 1));
   }
   deleting = null;
   render();
 }
 
-/** The YesNo box DeleteButton_OnMouseClick raises (:836-838), drawn
- *  over the window it covers rather than inside its detail column. */
 function deleteScrim() {
   const scrim = el('div', 'sb-ask');
   const ask = el('div', 'card');
-  ask.append(el('p', 'px-note', DELETE_SPELL_PROMPT));
+  ask.append(el('p', 'px-note', t(DELETE_SPELL_PROMPT)));
   const a = el('div', 'sb-acts');
-  const yes = el('button', 'act primary', 'Yes');
+  const yes = el('button', 'act primary', t('Yes'));
   yes.onclick = () => confirmDelete(true);
-  const no = el('button', 'act', 'No');
+  const no = el('button', 'act', t('No'));
   no.onclick = () => confirmDelete(false);
   a.append(yes, no);
   ask.append(a);

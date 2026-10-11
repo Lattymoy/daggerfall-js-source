@@ -28,6 +28,7 @@
 // Not a DFU member: Daggerfall Unity has no other players, no friends and no parties. Ledger A row (ONLINE).
 import { isTextEntryTarget } from './input.js';
 import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS } from './pixelifyFive.js';   // FONT1: the enhanced skin's own face, unsmoothed, with Silkscreen's five
+import { t } from '../systems/i18n.js';
 
 export const SOCIAL_MENU_STYLE_ID = 'dagger-peermenu-style';
 
@@ -138,7 +139,7 @@ export function socialMenuRows({ peerId, canFriend = false, canInvite = false, w
 export function socialPlaqueRows(peerId, acts) {
   if (!peerId || !acts) return [];
   return socialMenuRows({ peerId, ...acts }).filter((r) => r.act)
-    .map((r) => (r.enabled ? { id: r.key, label: r.label } : { id: r.key, label: r.label, disabled: true, why: r.why ?? null }));
+    .map((r) => (r.enabled ? { id: r.key, label: t(r.label) } : { id: r.key, label: t(r.label), disabled: true, why: r.why ? t(r.why) : null }));
 }
 
 /**
@@ -178,17 +179,17 @@ export function createSocialMenu({ onAct = null, canOpen = () => true, onOpen = 
   /** The card's rows, rebuilt per show: the picture can change between two presses, and a stale 'Add friend' on
    *  someone already befriended is exactly the button this menu exists to not have. */
   const paint = (name, rows) => {
-    nameNode.textContent = name || 'Someone';
+    nameNode.textContent = name || t('Someone');
     card.replaceChildren(nameNode);
     for (const row of rows) {
       const b = el('button', `dfpeer-btn${row.key === 'cancel' ? ' cancel' : ''}`);
       b.type = 'button';
       b.dataset.row = row.key;
       b.setAttribute('role', 'menuitem');   // AUDIT SOC C21: a menu whose rows are menu items, not loose buttons
-      b.append(el('span', 'dfpeer-label', row.label));
-      if (!row.enabled && row.why) b.append(el('span', 'dfpeer-why', row.why));
+      b.append(el('span', 'dfpeer-label', t(row.label)));
+      if (!row.enabled && row.why) b.append(el('span', 'dfpeer-why', t(row.why)));
       if (!row.enabled) { b.disabled = true; b.setAttribute('disabled', ''); }
-      if (row.why) b.title = row.why;
+      if (row.why) b.title = t(row.why);
       b.addEventListener('click', () => {
         if (!open || b.disabled) return;   // a disabled button's click is nothing, however it arrived
         const act = row.act;

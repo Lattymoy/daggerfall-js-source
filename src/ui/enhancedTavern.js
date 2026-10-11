@@ -25,6 +25,7 @@
 // mode-action button and nothing staged, exactly as DFU's own
 // FoodAndDrink_OnItemPicked never stages either.
 
+import { t } from '../systems/i18n.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { noticeHold, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE3: this window's own click-anywhere box, as the enhanced panel
 import { closeOnOutsideTap } from './enhancedOverlays.js';
@@ -97,7 +98,7 @@ function buyPack() {
   audio.playOneShot(SOUND.ButtonClick, 1);
   const r = buyCardPack(deps.entity, { quality: deps.quality?.() ?? 10, skills: deps.skills?.() ?? {} });
   if (!r.ok) { say(rows(NOT_ENOUGH_GOLD_ID, { amount: r.price })); return; }
-  say(line(`You buy a pack of Iliac Hand cards for ${r.price} gold. Use it from your pack to open it.`));
+  say(line(`${t('You buy a pack of Iliac Hand cards for')} ${r.price} ${t('gold')}. ${t('Use it from your pack to open it.')}`));
 }
 
 function say(rowList, opts = {}) {
@@ -157,7 +158,7 @@ function submitRoom() {
   if (d.kind === 'tooMany') { say(rows(TOO_MANY_DAYS_ID, { room, roomHours: room ? roomRemainingHours(room, now) : null })); return; }
   if (d.kind === 'free') {
     rent(room, d.days);
-    say(line(ROOM_FREE_FOR_KNIGHT));
+    say(line(t(ROOM_FREE_FOR_KNIGHT)));
     return;
   }
   const offerRows = [
@@ -165,15 +166,15 @@ function submitRoom() {
     ...ownTimeRows(room, d.days, now),
   ];
   const raise = () => ask(offerRows, () => confirmRoom(room, d));
-  if (d.heartsDay) { say(line(ROOM_FREE_HEARTS_DAY), { onDismiss: raise }); return; }
+  if (d.heartsDay) { say(line(t(ROOM_FREE_HEARTS_DAY)), { onDismiss: raise }); return; }
   raise();
 }
 
 /** OL3's row, the classic window's own words (ui/tavernWindow.js OWN_TIME_ROOM) - LIVED1: in the character's own time. */
 function ownTimeRows(room, days, now) {
   const expiry = (room ? room.expiryMinutes : now) + 24 * 60 * days;
-  const t = deps.ownTimeOf?.(expiry);
-  return t ? [{ text: `${OWN_TIME_ROOM} ${t}${OWN_TIME_ROOM_NOTE}`, center: true }] : [];
+  const tTime = deps.ownTimeOf?.(expiry);
+  return tTime ? [{ text: `${t(OWN_TIME_ROOM)} ${tTime}${t(OWN_TIME_ROOM_NOTE)}`, center: true }] : [];
 }
 
 function confirmRoom(room, d) {
@@ -202,9 +203,9 @@ function openFood() {
   const h = deps;
   if (survivalOn() && typeof h.climateIndex === 'function') { openSurvivalMenu(); return; }
   const now = h.now();
-  if (!canEat(h.entity.lastTimePlayerAteOrDrankAtTavern, now)) { say(line(YOU_ARE_NOT_HUNGRY)); return; }
+  if (!canEat(h.entity.lastTimePlayerAteOrDrankAtTavern, now)) { say(line(t(YOU_ARE_NOT_HUNGRY))); return; }
   menu = {
-    rows: TAVERN_MENU.map((text, i) => ({ name: text.replace(/\s*\([^)]*\)\s*$/, ''), price: tavernMenuPrice(i) })),   // ESSENTIALS-HALF: online, the half it costs
+    rows: TAVERN_MENU.map((text, i) => ({ name: t(text.replace(/\s*\([^)]*\)\s*$/, '')), price: tavernMenuPrice(i) })),   // ESSENTIALS-HALF: online, the half it costs
     pick: (i) => pickClassic(i, now),
   };
   render();
@@ -266,18 +267,18 @@ function pickSurvival(row, now) {
 function mainButtons() {
   const wrap = el('div', 'tavern-menu-acts');
   wrap.append(el('p', 'px-note tavern-greeting', greeting()));
-  const room = el('button', 'act tavern-act', 'Rent a room');
+  const room = el('button', 'act tavern-act', t('Rent a room'));
   room.onclick = openRoom;
-  const talkBtn = el('button', 'act tavern-act', 'Talk');
+  const talkBtn = el('button', 'act tavern-act', t('Talk'));
   talkBtn.onclick = talk;
-  const food = el('button', 'act tavern-act', 'Food & drink');
+  const food = el('button', 'act tavern-act', t('Food & drink'));
   food.onclick = openFood;
   // CARDS9 (bible/11-Multiplayer/Tavern-Cards.md section 32; 6.3: "Tavern keepers sell packs"): the keeper's packs of
   // Iliac Hand cards at this counter's price - the port's own row (DFU's tavern sells no cards), on this skin's panel;
   // the classic window keeps DFU's four, and its players buy at the card table's panel (scenes/worldModes.js)
-  const pack = el('button', 'act tavern-act', `Card pack (${packPrice()} gold)`);
+  const pack = el('button', 'act tavern-act', `${t('Card pack')} (${packPrice()} ${t('gold')})`);
   pack.onclick = buyPack;
-  const exit = el('button', 'act tavern-act', 'Leave');
+  const exit = el('button', 'act tavern-act', t('Leave'));
   exit.onclick = close;
   wrap.append(room, talkBtn, food, pack, exit);
   return wrap;
@@ -291,33 +292,33 @@ function mainButtons() {
  *  whichever room the player is already standing in, the one thing
  *  about this tavern that is actually true of it. */
 function greeting() {
-  const name = deps.buildingName?.() || 'the tavern';
+  const name = deps.buildingName?.() || t('the tavern');
   const { room } = currentRoom();
   return room
-    ? `Welcome back to ${name}. Your room is still yours.`
-    : `Welcome to ${name}. What can I get you?`;
+    ? `${t('Welcome back to')} ${name}. ${t('Your room is still yours.')}`
+    : `${t('Welcome to')} ${name}. ${t('What can I get you?')}`;
 }
 
 function roomForm() {
   const wrap = el('div', 'tavern-room');
   const { room, now } = currentRoom();
   wrap.append(el('p', 'px-note', (rows(room ? HOW_MANY_ADDITIONAL_DAYS_ID : HOW_MANY_DAYS_ID,
-    { roomHours: room ? roomRemainingHours(room, now) : null })[0]?.text) ?? 'How many days?'));
+    { roomHours: room ? roomRemainingHours(room, now) : null })[0]?.text) ?? t('How many days?')));
   const form = el('form', 'goldfield');
   const input = el('input');
   input.type = 'text';
   input.inputMode = 'numeric';
   input.maxLength = 3;
   input.value = roomDraft;
-  input.setAttribute('aria-label', 'How many days');
+  input.setAttribute('aria-label', t('How many days'));
   input.oninput = () => { roomDraft = input.value; };
   form.append(input);
-  const go = el('button', 'act primary', 'Rent');
+  const go = el('button', 'act primary', t('Rent'));
   go.type = 'submit';
   form.onsubmit = (e) => { e.preventDefault(); submitRoom(); };
   form.append(go);
   wrap.append(form);
-  const back = el('button', 'act', 'Back');
+  const back = el('button', 'act', t('Back'));
   back.onclick = () => { screen = 'main'; render(); };
   wrap.append(back);
   return wrap;
@@ -329,13 +330,13 @@ function foodMenu() {
   menu.rows.forEach((r, i) => {
     if (r.kind === 'header') { list.append(el('p', 'tavern-menu-header', String(r.text).replace(/^[\s-]+|[\s-]+$/g, ''))); return; }   // PLUS6: the sheet draws the rules itself
     const row = el('button', 'itemrow tavern-row');
-    row.append(el('span', 'itemname', r.name));
+    row.append(el('span', 'itemname', t(r.name)));
     row.append(el('span', 'itemwt tavern-price', `${r.price} gp`));
     row.onclick = () => menu.pick(i);
     list.append(row);
   });
   wrap.append(list);
-  const back = el('button', 'act', 'Back');
+  const back = el('button', 'act', t('Back'));
   back.onclick = () => { menu = null; render(); };
   wrap.append(back);
   return wrap;

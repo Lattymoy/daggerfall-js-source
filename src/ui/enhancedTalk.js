@@ -61,6 +61,7 @@
 // scroll fields go unread here and the digit accelerators count from
 // the top of the list.
 
+import { t } from '../systems/i18n.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
 import { npcPortraitPixels, npcPortraitKey } from './nativeTalk.js';
@@ -106,11 +107,11 @@ export function talkPanelModel(model) {
     mode: model.topicMode,
     question: model.question ?? '',
     entries,
-    topics: model.topics.map((t, i) => ({ i, label: t.label ?? t.name ?? '', selected: i === model.selected, group: model.topicMode === 'categories' })),
+    topics: model.topics.map((tItem, i) => ({ i, label: tItem.label ?? tItem.name ?? '', selected: i === model.selected, group: model.topicMode === 'categories' })),
     // a category page (buildings) carries a way back - the list it
     // descended from is one press of Location away
     back: model.topicMode === 'buildings',
-    categories: CATEGORY_BUTTONS.map(([id, button, label]) => ({ id, button, label, on: whereIs && model._lastCategory === id, enabled: whereIs })),
+    categories: CATEGORY_BUTTONS.map(([id, button, label]) => ({ id, button, label: t(label), on: whereIs && model._lastCategory === id, enabled: whereIs })),
     // ASK has something to ask: the Work page's question, or a selected
     // row that is not a group (a group descends instead - DFU's OKAY
     // takes SelectTopicFromTopicList either way, so ASK on a group
@@ -174,13 +175,13 @@ function render() {
   head.append(who);
   const tones = el('div', 'talk-tone');
   TONE_LABELS.forEach((label, i) => {
-    const b = el('button', null, label);
+    const b = el('button', null, t(label));
     b.setAttribute('aria-pressed', String(m.tone === i));
     b.onclick = () => act(() => model.press(['tonePolite', 'toneNormal', 'toneBlunt'][i]));
     tones.append(b);
   });
   head.append(tones);
-  const bye = el('button', 'act door-goodbye', 'Goodbye');
+  const bye = el('button', 'act door-goodbye', t('Goodbye'));
   bye.onclick = () => act(() => model.press('goodbye'));
   head.append(bye);
   panel.append(head);
@@ -191,7 +192,7 @@ function render() {
   for (const e of m.entries) {
     const row = el('div', `talk-entry ${e.kind === 'question' ? 'q' : 'a'}${e.selected ? ' on' : ''}`);
     row.append(document.createTextNode(e.text));
-    if (e.copied) row.append(el('span', 'talk-copied', '✎ noted'));
+    if (e.copied) row.append(el('span', 'talk-copied', `✎ ${t('noted')}`));
     row.onclick = () => act(() => model.selectConversation(e.i));
     logEl.append(row);
   }
@@ -200,7 +201,7 @@ function render() {
   const topics = el('aside', 'talk-topics');
   const modes = el('div', 'talk-modes');
   for (const [button, label] of [['tellMeAbout', 'Tell me about'], ['whereIs', 'Where is']]) {
-    const b = el('button', `talk-mode${m.option === button ? ' on' : ''}`, label);
+    const b = el('button', `talk-mode${m.option === button ? ' on' : ''}`, t(label));
     b.onclick = () => act(() => model.press(button));
     modes.append(b);
   }
@@ -215,21 +216,21 @@ function render() {
   topics.append(cats);
   listEl = el('div', 'talk-list');
   if (m.back) {
-    const b = el('button', 'talk-back', '‹ Categories');
+    const b = el('button', 'talk-back', `‹ ${t('Categories')}`);
     b.onclick = () => act(() => model.press('categoryLocation'));
     listEl.append(b);
   }
-  if (m.mode === 'none') listEl.append(el('p', 'talk-hint', 'Choose Tell me about, or Where is.'));
-  else if (m.mode === 'work') listEl.append(el('p', 'talk-hint', 'Ask about work.'));
-  else if (!m.topics.length) listEl.append(el('p', 'talk-hint', 'Nothing to ask here.'));
-  for (const t of m.topics) {
-    const b = el('button', `talk-row${t.selected ? ' on' : ''}${t.group ? ' group' : ''}`);
-    b.append(el('span', 'px-c', '◆'), document.createTextNode(t.label));
+  if (m.mode === 'none') listEl.append(el('p', 'talk-hint', t('Choose Tell me about, or Where is.')));
+  else if (m.mode === 'work') listEl.append(el('p', 'talk-hint', t('Ask about work.')));
+  else if (!m.topics.length) listEl.append(el('p', 'talk-hint', t('Nothing to ask here.')));
+  for (const tItem of m.topics) {
+    const b = el('button', `talk-row${tItem.selected ? ' on' : ''}${tItem.group ? ' group' : ''}`);
+    b.append(el('span', 'px-c', '◆'), document.createTextNode(t(tItem.label)));
     // a press SELECTS (ListBox.MouseClick) and a second press on the
     // selected row USES it (MouseDoubleClick) - the classic's clock
     // test, read off the selection instead: on a phone a double tap is
     // a zoom gesture, and a row that is already lit is unambiguous
-    b.onclick = () => act(() => (t.selected ? model.useTopic(t.i) : model.selectTopic(t.i)));
+    b.onclick = () => act(() => (tItem.selected ? model.useTopic(tItem.i) : model.selectTopic(tItem.i)));
     listEl.append(b);
   }
   topics.append(listEl);
@@ -238,13 +239,13 @@ function render() {
 
   // ── foot: the player-says line, ASK, the logbook
   const foot = el('footer', 'talk-say');
-  foot.append(el('div', `talk-q${m.question ? '' : ' none'}`, m.question || (m.mode === 'none' ? '' : 'Pick a topic.')));
-  const note = el('button', 'act', 'Note');
-  note.title = 'Copy the selected line to your logbook; right-click copies the whole conversation';
+  foot.append(el('div', `talk-q${m.question ? '' : ' none'}`, m.question || (m.mode === 'none' ? '' : t('Pick a topic.'))));
+  const note = el('button', 'act', t('Note'));
+  note.title = t('Copy the selected line to your logbook; right-click copies the whole conversation');
   note.onclick = () => act(() => model.press('logbook'));
   note.oncontextmenu = (e) => { e.preventDefault(); act(() => model.press('logbook', true)); };
   foot.append(note);
-  const ask = el('button', 'act primary door-ask', 'Ask');
+  const ask = el('button', 'act primary door-ask', t('Ask'));
   if (!m.canAsk) ask.disabled = true;
   ask.onclick = () => act(() => model.press('okay'));
   foot.append(ask);

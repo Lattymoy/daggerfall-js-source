@@ -44,6 +44,7 @@
 // was not received (ui/enhancedChunk.js's whole header).
 // ═══════════════════════════════════════════════════════════════════
 
+import { t } from '../systems/i18n.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { drawPixelGround } from './pixelGround.js';
 import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab, which this screen refuses while a point is unspent
@@ -73,12 +74,12 @@ const svg = (tag, cls) => {
  *  no health roll (AUDIT 39), so it must not be announced as one -
  *  the book gets its own sentence instead. */
 export function crownTitle(crown) {
-  if (crown.lane === LANE_OGHMA) return 'The Oghma Infinium';
+  if (crown.lane === LANE_OGHMA) return t('The Oghma Infinium');
   // ASCEND-ANYTIME: no arrow where nothing moves. The Oghma arm above
   // is the same sentence about a different cause, and a view asked for
   // by a player who owes nothing is the second.
-  if (crown.to === crown.from) return `Level ${crown.from}`;
-  return `Level ${crown.from} → ${crown.to}`;
+  if (crown.to === crown.from) return `${t('Level')} ${crown.from}`;
+  return `${t('Level')} ${crown.from} → ${crown.to}`;
 }
 
 /** What the window ASKS, which is the sentence Skyrim puts in the
@@ -164,7 +165,7 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
   // ── THE CROWN ────────────────────────────────────────────────
   const crown = el('header', 'lv-crown');
   const whoCell = el('div', 'lv-who');
-  whoCell.append(el('span', 'k', 'Name'));
+  whoCell.append(el('span', 'k', t('Name')));
   const whoName = el('span', 'v');
   whoCell.append(whoName);
   const levelCell = el('div', 'lv-level');
@@ -175,7 +176,7 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
   const levelNote = el('div', 'lv-barnote');
   levelCell.append(levelJump, levelMeter, levelNote);
   const raceCell = el('div', 'lv-race');
-  raceCell.append(el('span', 'k', 'Race'));
+  raceCell.append(el('span', 'k', t('Race')));
   const raceName = el('span', 'v');
   raceCell.append(raceName);
   crown.append(whoCell, levelCell, raceCell);
@@ -203,7 +204,7 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
   plate.append(plateCount, plateKey, plateRefuse, plateHint);
   // LV2: how the stars take a click - said once, beside the pool, where it
   // takes no room from the figure (positioned out of the band's flow)
-  if (!screen?.viewOnly) plate.append(el('p', 'lv-howto', STAR_HOWTO));   // PLUS1
+  if (!screen?.viewOnly) plate.append(el('p', 'lv-howto', t(STAR_HOWTO)));   // PLUS1
   root.append(plate);
 
   // ── THE FIGURE ───────────────────────────────────────────────
@@ -248,7 +249,7 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
     // PLUS1: the select-then-spend stars (plain Enhanced's click-raises-at-once went with it, PLUS-DEAD)
     b.onclick = () => starPress(key, 1);
     b.oncontextmenu = (e) => { e.preventDefault(); starPress(key, -1); };
-    b.title = 'Click to choose - click again to add a point - right-click to take one back';
+    b.title = t('Click to choose - click again to add a point - right-click to take one back');
     figure.append(b);
     return { key, node: b, val, delta, gem };
   });
@@ -291,37 +292,30 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
 
   // ── THE CHOICE ───────────────────────────────────────────────
   const choice = el('div', 'lv-choice');
-  const ask = el('div', 'lv-ask', ASK_ONE);
+  const ask = el('div', 'lv-ask', t(ASK_ONE));
   const pick = el('div', 'lv-pick');
   const prev = el('button', 'lv-arrow', '◃');
   prev.type = 'button';
-  prev.title = 'Previous attribute';
-  prev.setAttribute('aria-label', 'Previous attribute');
+  prev.title = t('Previous attribute');
+  prev.setAttribute('aria-label', t('Previous attribute'));
   const next = el('button', 'lv-arrow', '▹');
   next.type = 'button';
-  next.title = 'Next attribute';
-  next.setAttribute('aria-label', 'Next attribute');
+  next.title = t('Next attribute');
+  next.setAttribute('aria-label', t('Next attribute'));
   const minus = el('button', 'lv-press', '−');
   minus.type = 'button';
-  minus.title = 'Take this point back';
-  minus.setAttribute('aria-label', 'Take this point back');
+  minus.title = t('Take this point back');
+  minus.setAttribute('aria-label', t('Take this point back'));
   const plus = el('button', 'lv-press', '+');
   plus.type = 'button';
-  plus.title = 'Put a point here';
-  plus.setAttribute('aria-label', 'Put a point here');
+  plus.title = t('Put a point here');
+  plus.setAttribute('aria-label', t('Put a point here'));
   const pickName = el('div', 'lv-pickname');
   const pickN = el('span', 'n');
   const pickF = el('span', 'f');
   const pickC = el('span', 'c');
   pickName.append(pickN, pickF, pickC);
   pick.append(prev, minus, pickName, plus, next);
-  // THE ABOUT KEEPS ITS ROOM. Each attribute's words - ASCEND-LIVE's line (what it IS, when that is not what the
-  // presses move) over its blurb - lie in ONE cell with the other seven's, and only the chosen one is seen: the band is
-  // as tall as the tallest, so choosing a star never moves the figure above it, and a line rides in the room a
-  // shorter blurb leaves. AUDIT 28e: the line sat in the pick name, wrapped to four lines on a phone and came and
-  // went with the choice - the figure jumped and a tap landed on the wrong star; on a desktop it widened the pick under
-  // the pointer; and Luck's second blurb line at 800x600 lifted its own star from under the pointer between the tap
-  // that chose it and the tap that spent on it.
   const blurb = el('div', 'lv-blurb');
   const about = new Map(STAT_KEYS_ORDER.map((k) => {
     const item = el('div', 'lv-about');
@@ -337,12 +331,6 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
     const i = STAT_KEYS_ORDER.indexOf(focusedKey(screen));
     focusAt(screen, STAT_KEYS_ORDER[(i + by + STAT_KEYS_ORDER.length) % STAT_KEYS_ORDER.length]);
     paint();
-    // THE DOM FOCUS FOLLOWS THE SELECTION. Without this the ring stays
-    // on whichever star was last clicked while the highlight walks
-    // away from it, so a keyboard user and a screen reader are told
-    // two different things about which attribute is live (LV1's
-    // audit). `focusStar` is a no-op when nothing was focused inside
-    // the window, so an arrow press cannot steal focus from the page.
     focusStar();
   };
   const focusStar = () => {
@@ -362,7 +350,7 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
   const ribbonNodes = ribbonRows.map((row, i) => {
     const b = el('button', 'lv-sk');
     b.type = 'button';
-    const n = el('span', 'n', row.name);
+    const n = el('span', 'n', t(row.name));
     const v = el('span', 'v', String(row.value));
     b.append(n, v);
     if (row.risen) b.append(el('span', 'lv-up', '▲'));
@@ -377,9 +365,9 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
   // ── THE FOOT ─────────────────────────────────────────────────
   const foot = el('div', 'lv-foot');
   const vitals = el('div', 'lv-vitals');
-  for (const m of levelUpVitals(entity)) vitals.append(meterRow(m.label, m.now, m.max, m.fill));
+  for (const m of levelUpVitals(entity)) vitals.append(meterRow(t(m.label), m.now, m.max, m.fill));
   const acts = el('div', 'lv-acts');
-  const ok = el('button', 'lv-ok', 'Ascend');
+  const ok = el('button', 'lv-ok', t('Ascend'));
   ok.type = 'button';
   ok.onclick = () => confirm();
   acts.append(ok);
@@ -411,24 +399,19 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
 
   function paint() {
     if (dead) return;
-    // THE FRAME, not the whole model: the ribbon and the vitals are
-    // built once at mount and nothing a press does moves them, and
-    // rebuilding them here put `sheetModel` - gold, encumbrance, all
-    // thirty-five skills, the class specials - on every keystroke
-    // (LV1's audit).
     const m = levelUpFrame(entity, screen, refused);
     whoName.textContent = m.crown.name;
-    raceName.textContent = [m.crown.race, m.crown.career].filter(Boolean).join(' ');
+    raceName.textContent = [m.crown.race ? t(m.crown.race) : '', m.crown.career ? t(m.crown.career) : ''].filter(Boolean).join(' ');
     levelJump.textContent = crownTitle(m.crown);
     levelFill.style.width = `${m.progress.max > 0 ? Math.max(0, Math.min(100, (m.progress.now / m.progress.max) * 100)) : 0}%`;
-    levelNote.textContent = `${m.progress.label} ${m.progress.now}/${m.progress.max}`
-      + (m.progress.carried > 0 ? ` · ${m.progress.carried} carried` : '');
+    levelNote.textContent = `${t(m.progress.label)} ${m.progress.now}/${m.progress.max}`
+      + (m.progress.carried > 0 ? ` · ${m.progress.carried} ${t('carried')}` : '');
 
     plateCount.textContent = String(m.pool);
-    plateKey.textContent = m.poolLabel;
+    plateKey.textContent = t(m.poolLabel);
     plate.classList.toggle('spent', m.pool === 0);
-    plateRefuse.textContent = m.refusal ?? '';
-    plateHint.textContent = m.cornered ?? '';
+    plateRefuse.textContent = m.refusal ? t(m.refusal) : '';
+    plateHint.textContent = m.cornered ? t(m.cornered) : '';
 
     const rows = new Map(m.rows.map((r) => [r.key, r]));
     for (const s of stars) {
@@ -436,46 +419,24 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
       s.node.classList.toggle('on', s.key === m.focus);
       s.node.classList.toggle('raised', r.delta > 0);
       s.node.classList.toggle('full', !r.canRaise && r.delta === 0 && m.pool > 0);
-      // ASCEND-LIVE: the figure is the LIVE value - a werewolf's 100, not
-      // the 63 under its curse - tinted as the classic sheet tints a live
-      // value above or below its permanent one; the presses still move the
-      // permanent value, and the pick line below says both.
       const tint = liveTint(r);
       s.node.classList.toggle('boosted', tint === 'boosted');
       s.node.classList.toggle('lowered', tint === 'lowered');
       s.val.textContent = String(r.live);
       s.delta.textContent = r.delta > 0 ? `+${r.delta}` : '';
-      // The star's own brightness is its VALUE - the figure is the
-      // character, not the spend.
       s.gem.style.opacity = String(0.45 + 0.55 * starBrightness(r.live));
-      // NOT `aria-pressed`: a star is not a toggle, and a control that
-      // announces itself pressed when a point happens to sit in it
-      // tells a screen reader the wrong kind of thing. The label
-      // carries the same fact in words (LV1's audit).
       s.node.setAttribute('aria-label', starLabel(r));
     }
-    // A LINE LIGHTS WHEN BOTH ITS STARS HAVE RISEN. It is the one
-    // thing on this screen that is pure celebration and it is also
-    // honest: two points into one arm of the figure is a shape the
-    // player made.
     for (const e of edgeNodes) {
       const lit = (rows.get(e.a)?.delta ?? 0) > 0 && (rows.get(e.b)?.delta ?? 0) > 0;
       e.node.classList.toggle('lit', lit);
     }
 
     const row = rows.get(m.focus);
-    // ASCEND-ANYTIME: a VIEW asks nothing. "The stars are set" is what
-    // a finished LEVEL-UP says, and saying it to a player who never had
-    // points to set would be the window congratulating them for
-    // nothing.
-    ask.textContent = m.crown.viewOnly ? ASK_VIEW : (m.pool > 0 ? ASK_ONE : ASK_DONE);
+    ask.textContent = m.crown.viewOnly ? t(ASK_VIEW) : (m.pool > 0 ? t(ASK_ONE) : t(ASK_DONE));
     pickN.textContent = row.label;
     pickF.textContent = row.delta > 0 ? `${row.base} → ${row.value}` : String(row.value);
-    // THE PRICE, only where there is one. Daggerfall's pool is a point
-    // a point; the mod prices Luck differently from the rest
-    // (attributeOffset), and a window that hid that would be lying
-    // about what the next press costs.
-    pickC.textContent = row.cost > 1 ? `${row.cost} per point` : '';
+    pickC.textContent = row.cost > 1 ? `${row.cost} ${t('per point')}` : '';
     for (const [k, a] of about) {
       const r = rows.get(k);
       a.item.classList.toggle('on', k === m.focus);
@@ -485,34 +446,17 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
     plus.disabled = !row.canRaise;
     minus.disabled = !row.canLower;
 
-    // NOT `disabled`, AND THE PROBE IS WHY. The first build disabled
-    // this button while the pool was unspent, which made the refusal
-    // unreachable by pointer: the one control on the screen could not
-    // be pressed and never said why - a silent decline, which is the
-    // defect ui/enhancedChunk.js's header is entirely about, and not
-    // what DFU does either (CheckIfDoneLeveling puts a message box up,
-    // it does not grey the exit). So it stays pressable, wears the
-    // not-yet paint, and tells the truth when it is asked.
     ok.classList.toggle('notyet', !m.canAscend);
-    // AND NOT `aria-disabled` EITHER, which the probe caught being the
-    // same mistake in a second spelling: a button that announces itself
-    // as disabled is one Playwright - and a screen reader, and a
-    // keyboard user taking it at its word - will not press, so the
-    // refusal behind it is unreachable again. It carries the REASON
-    // instead, where a pointer and an assistive tech both find it.
-    ok.title = m.canAscend ? '' : refusalText(screen);
-    // ...and the button CLOSES rather than ascends, so it says so. The
-    // Oghma arm beside it is the same rule for the same reason: the
-    // word on the button is what the press does.
-    ok.textContent = m.crown.viewOnly ? 'Close' : (m.lane === LANE_OGHMA ? 'Read on' : 'Ascend');
+    ok.title = m.canAscend ? '' : t(refusalText(screen));
+    ok.textContent = m.crown.viewOnly ? t('Close') : (m.lane === LANE_OGHMA ? t('Read on') : t('Ascend'));
 
     if (ribbonNodes.length) {
       ribbonAt = Math.max(0, Math.min(ribbonRows.length - 1, ribbonAt));
       ribbonNodes.forEach((n, i) => n.classList.toggle('on', i === ribbonAt));
       const sk = ribbonRows[ribbonAt];
-      const g = el('span', 'g', sk.group);
+      const g = el('span', 'g', t(sk.group));
       skRole.textContent = '';
-      skRole.append(g, document.createTextNode(` · ${sk.note}`));
+      skRole.append(g, document.createTextNode(` · ${t(sk.note)}`));
     } else {
       skRole.textContent = '';
     }

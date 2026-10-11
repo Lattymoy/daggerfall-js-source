@@ -56,6 +56,7 @@
 // inventory slice's first job.
 // ═══════════════════════════════════════════════════════════════════
 
+import { t } from '../systems/i18n.js';
 import { isRestItem } from '../systems/restItems.js';   // REST6: the seven's card lines
 import { getPref, setPref } from '../systems/uiPrefs.js';   // PLUS7: getPref, the hover card's switch; PACK-PHONE: setPref, the phone's Body
 import { USE_PENDING, powersRows, INFO_TEXT_POWERS } from './nativeInventory.js';   // PLUS10: the Info box's powers record
@@ -2086,10 +2087,10 @@ function wornPanel(fam, byLabel, area) {
   if (!filled.length) {
     const d = el('div', 'wornrow wornempty');
     d.dataset.fam = fam.id;   // HAND-DRAG: which panel a release lands on
-    d.title = fam.slots.join(' \u00b7 ');
+    d.title = fam.slots.map(t).join(' \u00b7 ');
     if (area) d.style.gridArea = area;
     const txt = el('span', 'worntext');
-    txt.append(el('span', 'wornslot', fam.label), el('span', 'wornname wornempty', '\u2014'));
+    txt.append(el('span', 'wornslot', t(fam.label)), el('span', 'wornname wornempty', '\u2014'));
     d.append(el('span', 'worntile', '\u25c7'), txt);
     if (part >= 0) d.append(armourBadge(deps.entity, part));   // AC-COMPARE
     return d;
@@ -2107,20 +2108,17 @@ function wornPanel(fam, byLabel, area) {
   // one.
   b.title = filled.map((r) => {
     const l = itemLine(r.item, deps.entity);
-    return `${r.label}: ${l.name}${itemStatSuffix(l)}`;
+    return `${t(r.label)}: ${l.name}${itemStatSuffix(l)}`;
   }).join('\n');
   if (area) b.style.gridArea = area;
   // Keep equipment pictures at their slot's size across display zoom; integer snapping could shrink a 48px helm to 40px.
   b.append(tileWithWear(line, b, wornBox(area == null), false));   // WEAR-UI: what you wear, worn down, without a hover; UI1: a half's box, or a panel's
   const txt = el('span', 'worntext');
-  txt.append(el('span', 'wornslot', fam.label), el('span', 'wornname', line.name));
+  txt.append(el('span', 'wornslot', t(fam.label)), el('span', 'wornname', line.name));
   b.append(txt);
   if (filled.length > 1) b.append(el('span', 'worncount', String(filled.length)));
   if (part >= 0) b.append(armourBadge(deps.entity, part));   // AC-COMPARE: the part's armour, as on the empty panel
-  // HOOD-SAID: A RAISED HOOD WEARS A CHIP, in the corner no part's number takes (a cloak's slot and a shirt's stand for
-  // none); a bare panel is a hood down. "Cloaks · hood up" beside the family word was wider than a panel's text line
-  // (72px on the desk), and a "Hood down" plate covered the word on a 360px phone.
-  if (hoodUp(top.item)) b.append(el('span', 'wornhood', 'Hood'));
+  if (hoodUp(top.item)) b.append(el('span', 'wornhood', t('Hood')));
   // MAC-M2 (Mac: "hold to drag ... doesn't work when trying to take
   // items off your character"): A FILLED PANEL DRAGS, on the same hold
   // and the same threshold a pack row takes. INV1 attached `dragFrom`
@@ -2227,7 +2225,7 @@ function accessoryShelf() {
     for (const r of rows.length ? rows : [{ label: g.slot, item: null }, { label: g.slot, item: null }]) {
       pair.append(shelfSocket(r, g));
     }
-    grp.append(pair, el('span', 'shelflabel', g.label));
+    grp.append(pair, el('span', 'shelflabel', t(g.label)));
     shelf.append(grp);
   }
   return shelf;
@@ -2235,7 +2233,7 @@ function accessoryShelf() {
 function shelfSocket(r, g) {
   if (!r.item) {
     const d = el('div', 'wornsock wornempty');
-    d.title = g.label;
+    d.title = t(g.label);
     d.append(el('span', 'worntile', '\u25c7'));
     return d;
   }
@@ -2243,7 +2241,7 @@ function shelfSocket(r, g) {
   const line = itemLine(item, deps.entity);
   const b = el('button', `wornsock${item === picked ? ' on' : ''}`);
   markItemFrame(b, item);   // RARITY-UI / SIGIL-UI: a socket is the icon's frame
-  b.title = `${r.label}: ${line.name}${itemStatSuffix(line)}`;
+  b.title = `${t(r.label)}: ${line.name}${itemStatSuffix(line)}`;
   b.append(tileWithWear(line, b, SLOT_BOX.socket, false));   // WEAR-UI
   dragFrom(b, item, 'worn');   // MAC-M2's hold: off the body and into the pack
   b.onclick = (e) => {
@@ -2874,13 +2872,13 @@ function catsCol() {
   const tabs = el('div', 'packtabs');
   // PX31: the nine pages, each with its count; an empty page stays in
   // its place, dimmed, so the spine never shuffles under the hand.
-  for (const { tab: t, label, items: rows } of model.tabs) {
+  for (const { tab: tTab, label, items: rows } of model.tabs) {
     const n = rows.length;
     // PLUS1: an empty page dims under its own class - the sheet's .empty (a dashed box with 26px of padding) landed on
     // the zero tabs and pushed them out of the three-by-three grid.
-    const b = el('button', `packtab${t === tab ? ' on' : ''}${n ? '' : ' tabempty'}`, label);
+    const b = el('button', `packtab${tTab === tab ? ' on' : ''}${n ? '' : ' tabempty'}`, t(label));
     b.append(el('span', 'count', String(n)));
-    b.onclick = () => { tab = t; picked = null; render(); };
+    b.onclick = () => { tab = tTab; picked = null; render(); };
     tabs.append(b);
   }
   col.append(tabs);
@@ -2891,7 +2889,7 @@ function listCol() {
   const col = el('section', 'packcol');
   const rows = model.tabs.find((x) => x.tab === tab)?.items ?? [];
   if (!rows.length) {
-    col.append(el('p', 'packempty', 'Nothing in this pack answers to that page.'));
+    col.append(el('p', 'packempty', t('Nothing in this pack answers to that page.')));
   }
   for (const it of rows) col.append(itemRow(it));
   return col;
@@ -2942,7 +2940,7 @@ function quickslotActs(item) {
   if (hotbarMode()) {
     if (!hotbarTakesItem(item)) return [];
     const at = hotbarSlotOf(item);
-    const b = el('button', `act qs-act${at >= 0 ? ' on' : ''}`, at >= 0 ? `Off hotbar ${at + 1}` : 'Add to hotbar');
+    const b = el('button', `act qs-act${at >= 0 ? ' on' : ''}`, at >= 0 ? `${t('Off hotbar')} ${at + 1}` : t('Add to hotbar'));
     b.onclick = () => { notice = toggleHotbarItem(item); refresh(); render(); };
     return [b];
   }
@@ -2957,8 +2955,8 @@ function quickslotActs(item) {
     };
     return b;
   };
-  if (isQuickConsumable(item)) return [button('c1', 'Slot 1', 'Unslot 1'), button('c2', 'Slot 2', 'Unslot 2')];
-  if (canSwapTo(item)) return [button('swap', 'Swap to', 'Unset swap')];
+  if (isQuickConsumable(item)) return [button('c1', t('Slot 1'), t('Unslot 1')), button('c2', t('Slot 2'), t('Unslot 2'))];
+  if (canSwapTo(item)) return [button('swap', t('Swap to'), t('Unset swap'))];
   return [];
 }
 
@@ -3161,7 +3159,7 @@ function itemActs(picked, side, { qty = true } = {}) {
     // take one. The button says which it is doing.
     const act = localPrimaryAct(picked, deps.entity);
     if (act) {   // null: nothing would wear it (Mac: no WEAR on a waterskin)
-      const b = el('button', 'act primary', act.label);
+      const b = el('button', 'act primary', t(act.label));
       b.onclick = act.kind === 'takeOff' ? () => takeOff(picked.equipSlot)
         : act.kind === 'wear' ? () => wear(picked)
         // AUDIT 22 F6: DFU's equip click hands UseItem NO collection
@@ -3177,9 +3175,9 @@ function itemActs(picked, side, { qty = true } = {}) {
     // the classic window cannot transfer one and neither can this. The
     // way out is Take off, which is the button beside it.
     if (!line.equipped && canStow(picked)) {
-      const t = el('button', 'act', STOW_LABEL[remote.kind]);
-      t.onclick = () => stow(picked);
-      acts.append(t);
+      const tBtn = el('button', 'act', t(STOW_LABEL[remote.kind]));
+      tBtn.onclick = () => stow(picked);
+      acts.append(tBtn);
       const max = (picked.stackCount ?? 1) > 1 ? splitMax(picked, 'store') : 0;
       if (qty && max > 1) acts.append(qtyField(picked, max));   // DISC25-F
     }
@@ -3188,7 +3186,7 @@ function itemActs(picked, side, { qty = true } = {}) {
     // goes with it. The label says so rather than letting a player
     // discover it by pressing.
     const b = el('button', 'act primary',
-      remote.kind === 'reward' ? 'Take this one' : 'Take');
+      remote.kind === 'reward' ? t('Take this one') : t('Take'));
     b.onclick = () => take(picked);
     acts.append(b);
     const max = (picked.stackCount ?? 1) > 1 ? splitMax(picked, 'take') : 0;
@@ -3208,7 +3206,7 @@ function itemActs(picked, side, { qty = true } = {}) {
   // beside it only for an enchanted one, whose Used payload is Use's to fire. A cloak in the pack keeps DFU's Use.
   const hooded = side === 'local' && line.equipped && hoodCapable(picked);
   if (hooded) {
-    const h = el('button', 'act', hoodUp(picked) ? 'Lower hood' : 'Raise hood');
+    const h = el('button', 'act', hoodUp(picked) ? t('Lower hood') : t('Raise hood'));
     h.onclick = () => hood(picked);
     acts.append(h);
   }
@@ -3217,11 +3215,11 @@ function itemActs(picked, side, { qty = true } = {}) {
   // other two drapes were out of reach - Change drape steps them, the hood as it was (useItem.js nextDrape). A garment
   // of one drape (a formal cloak, plain robes) has none to change.
   if (hooded && drapeCount(picked) > 1) {
-    const d = el('button', 'act', 'Change drape');
+    const d = el('button', 'act', t('Change drape'));
     d.onclick = () => drape(picked);
     acts.append(d);
   }
-  const u = el('button', 'act', 'Use');
+  const u = el('button', 'act', t('Use'));
   // THE COLLECTION IS THE LIVE LIST, not the model's. `useItem`
   // CONSUMES out of what it is handed (:2048-2051 - a potion drunk
   // from a corpse must leave the corpse), and `remoteModel.items` is a
@@ -3243,13 +3241,13 @@ function itemActs(picked, side, { qty = true } = {}) {
   // a press each that sets the gem in the first empty one (systems/reforge.js setGemPiece); the card stays up
   if (side === 'local' && lootRarityOn() && gemKindOf(picked) && !picked.questItem && gemHomes().length) {   // AUDIT GEM: law 3 - with the ladder off there is no setting to offer
     const open = gemTargets === picked;
-    const g = el('button', `act${open ? ' on' : ''}`, 'Set in...');
+    const g = el('button', `act${open ? ' on' : ''}`, t('Set in...'));
     g.onclick = () => { gemTargets = open ? null : picked; render(); };
     acts.append(g);
     if (open) {
       for (const home of gemHomes()) {
-        const t = el('button', 'act gem-home', `Set in ${itemLongName(home, { getQuest: deps.getQuest ?? null })}`);
-        t.onclick = () => {
+        const tBtn = el('button', 'act gem-home', `${t('Set in')} ${itemLongName(home, { getQuest: deps.getQuest ?? null })}`);
+        tBtn.onclick = () => {
           const gem = gemKindOf(picked);
           const r = setGemPiece(home, /** @type {string} */ (gem), gemWho(), null, { from: picked });   // AUDIT GEM: this card's stone, not another stack's
           gemTargets = null;
@@ -3258,21 +3256,21 @@ function itemActs(picked, side, { qty = true } = {}) {
           refresh();
           render();
         };
-        acts.append(t);
+        acts.append(tBtn);
       }
     }
   }
   // LOCK1: the lock, on the card and in the right-click menu alike (both are built from this row); the card stays up
   // so the padlock is seen to close
   if (side === 'local') {
-    const k = el('button', 'act', isLocked(picked) ? 'Unlock' : 'Lock');
+    const k = el('button', 'act', isLocked(picked) ? t('Unlock') : t('Lock'));
     k.onclick = () => { toggleLocked(picked); lockLiftsJunk(picked); notice = null; render(); };   // LOOT18: locked, its junk mark lifted
     acts.append(k);
   }
   // LOOT18 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 10): JUNK, beside the lock - gear in the pack, not
   // worn; a shop's Sell junk puts every such piece on its counter, and quick loot's take-all leaves one where it lies
   if (side === 'local' && !line.equipped && junkable(picked)) {
-    const j = el('button', 'act', isJunk(picked) ? 'Not junk' : 'Junk');
+    const j = el('button', 'act', isJunk(picked) ? t('Not junk') : t('Junk'));
     j.onclick = () => { toggleJunk(picked); notice = null; render(); };
     acts.append(j);
   }
@@ -3280,14 +3278,14 @@ function itemActs(picked, side, { qty = true } = {}) {
   // ware in the pack is DISMANTLED for a share of its price (systems/sigilBroker.js), asked first - it is gone for good.
   // A worn one is taken off first (its primary act, beside this); a locked one says why when pressed, as its Drop does.
   if (side === 'local' && !line.equipped && dismantleStones(picked) > 0) {
-    const d = el('button', 'act', 'Dismantle');
+    const d = el('button', 'act', t('Dismantle'));
     d.onclick = () => askDismantle(picked);
     acts.append(d);
   }
   // LOOT9 (the Loot arc): a laddered piece SALVAGED into Welkynd Shards (systems/reforge.js) - the Reforge's coin - asked
   // first, as the dismantle is; never a worn one (taken off first), and a piece that will never break shows no button
   if (side === 'local' && !line.equipped && salvageShards(picked) > 0 && !['off', 'aetheric', 'gilded', 'artifact', 'quest', 'bound'].includes(salvageRefusal(picked) ?? '')) {
-    const v = el('button', 'act', 'Salvage');
+    const v = el('button', 'act', t('Salvage'));
     v.onclick = () => askSalvage(picked);
     acts.append(v);
   }
@@ -3296,12 +3294,12 @@ function itemActs(picked, side, { qty = true } = {}) {
   // a book each read differently) and, for an enchanted item, chains the "Item powers" box. The enhanced card is a
   // summary of numbers; this button shows the classic text itself - the card's detail column and the right-click
   // menu both carry it, because both are built from this row.
-  const info = el('button', 'act', 'Info');
+  const info = el('button', 'act', t('Info'));
   info.onclick = () => openInfo(picked);
   acts.append(info);
   // CHAT-POST: the item on the chat's open tab - online, where the host hands the door (deps.postItem)
   if (deps.canPostItem?.()) {
-    const post = el('button', 'act', 'Post in chat');
+    const post = el('button', 'act', t('Post in chat'));
     post.onclick = () => { notice = deps.postItem?.(itemChatText(picked)) ? POSTED_TEXT : NOT_POSTED_TEXT; render(); };
     acts.append(post);
   }
@@ -3341,13 +3339,13 @@ function askDismantle(item) {
   const n = dismantleStones(item);
   dismantleEl = el('div', 'inv-info inv-dismantle');
   dismantleEl.setAttribute('role', 'alertdialog');
-  dismantleEl.setAttribute('aria-label', 'Dismantle');
+  dismantleEl.setAttribute('aria-label', t('Dismantle'));
   const card = el('div', 'card');
   const sec = el('div', 'inv-info-box');
-  for (const t of dismantleAsk(name, n)) sec.append(el('p', 'center', t));
+  for (const tMsg of dismantleAsk(name, n)) sec.append(el('p', 'center', tMsg));
   card.append(sec);
   const acts = el('div', 'acts');
-  const yes = el('button', 'act primary', 'Dismantle');
+  const yes = el('button', 'act primary', t('Dismantle'));
   yes.onclick = (e) => {
     e?.stopPropagation?.();
     closeDismantle();
@@ -3358,7 +3356,7 @@ function askDismantle(item) {
     refresh();   // the pages are rebuilt from the pack, as every act here rebuilds them - the ware off its page
     render();
   };
-  const keep = el('button', 'act', 'Keep');
+  const keep = el('button', 'act', t('Keep'));
   keep.onclick = (e) => { e?.stopPropagation?.(); closeDismantle(); };
   acts.append(pairGuard(yes), keep);
   card.append(acts);
@@ -3400,13 +3398,13 @@ function askSalvage(item) {
   const n = salvageShards(item);
   dismantleEl = el('div', 'inv-info inv-dismantle inv-salvage');
   dismantleEl.setAttribute('role', 'alertdialog');
-  dismantleEl.setAttribute('aria-label', 'Salvage'); dismantleEl.setAttribute('aria-modal', 'true');
+  dismantleEl.setAttribute('aria-label', t('Salvage')); dismantleEl.setAttribute('aria-modal', 'true');
   const card = el('div', 'card');
   const sec = el('div', 'inv-info-box');
-  for (const t of SALVAGE_ASK(name, n)) sec.append(el('p', 'center', t));
+  for (const tMsg of SALVAGE_ASK(name, n)) sec.append(el('p', 'center', tMsg));
   card.append(sec);
   const row = el('div', 'acts');
-  const ok = el('button', 'act primary', 'Salvage');
+  const ok = el('button', 'act primary', t('Salvage'));
   ok.onclick = (e) => {
     e?.stopPropagation?.();
     closeDismantle();
@@ -3417,7 +3415,7 @@ function askSalvage(item) {
     refresh();
     render();
   };
-  const no = el('button', 'act', 'Keep');
+  const no = el('button', 'act', t('Keep'));
   no.onclick = (e) => { e?.stopPropagation?.(); closeDismantle(); };   // the piece kept
   row.append(pairGuard(ok), no);
   card.append(row);

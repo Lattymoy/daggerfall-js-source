@@ -15,6 +15,7 @@
 // {label, onClick} and this draws them, exactly the shape
 // enhancedTavern.js's own four-button screen already established.
 
+import { t } from '../systems/i18n.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';
 import { overlayAction } from './input.js';
@@ -42,14 +43,14 @@ function render() {
 
   const head = el('header', 'sb-top');
   const who = el('div', 'sb-who');
-  who.append(el('h2', null, title));
+  who.append(el('h2', null, t(title)));
   head.append(el('span', 'sb-spacer'), who);
   win.append(head);
 
   const body = el('div', 'px-body');
   const wrap = el('div', 'tavern-menu-acts');
   for (const b of buttons) {
-    const btn = el('button', 'act tavern-act', b.label);
+    const btn = el('button', 'act tavern-act', t(b.label));
     btn.onclick = b.onClick;
     wrap.append(btn);
   }

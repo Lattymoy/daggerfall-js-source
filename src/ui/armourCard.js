@@ -16,6 +16,7 @@
 //   - the overall figure weighs the seven by the struck-part table of the combat core in force (formulas.js).
 // What this file adds is the reading: which numbers stand where, and the one figure made of them (overallArmour, and
 // why it is that figure).
+import { t } from '../systems/i18n.js';
 import { BODY_PARTS, NUMBER_BODY_PARTS } from '../systems/armorMaterials.js';
 import {
   getEquipSlot, wearLeavers, equipTableOf, armorValuesOf, updateEquippedArmorValues, armorBodyParts,
@@ -175,11 +176,11 @@ export function armourPlaque(entity) {
   const table = struckBodyPartTable();
   const fig = tenth(overallArmour(dollArmour(entity), table)).toFixed(1);
   const n = el('div', 'wornac-total');
-  n.append(el('span', 'k', 'Armour'), el('span', 'v', fig));
+  n.append(el('span', 'k', t('Armour')), el('span', 'v', fig));
   const counts = struckCounts(table);
-  const weights = PART_NAMES.map((name, p) => `${name.toLowerCase()} ${counts[p]}`).join(', ');
-  n.title = `Armour ${fig}: the armour a blow meets on average - each part's number weighed by how often a blow lands there (${weights} in ${table.length})`;
-  n.setAttribute('aria-label', `Armour ${fig}`);
+  const weights = PART_NAMES.map((name, p) => `${t(name).toLowerCase()} ${counts[p]}`).join(', ');
+  n.title = `${t('Armour')} ${fig}: ${weights}`;
+  n.setAttribute('aria-label', `${t('Armour')} ${fig}`);
   return n;
 }
 
@@ -205,18 +206,18 @@ export function lineCompareBlock(entity, item, wear = undefined) {
   const lines = lineComparison(entity, item, cmp.replaces);
   if (!lines || (!lines.rows.length && !lines.lost.length)) return null;
   const box = el('div', 'cmp cmp-lines');
-  box.append(el('p', 'cmp-head', LINES_HEAD));
+  box.append(el('p', 'cmp-head', t(LINES_HEAD)));
   const ul = el('ul', 'cmp-linelist');
   for (const r of lines.rows) {
     const li = el('li', 'cmp-line');
     li.append(el('span', 'cmp-v', r.text));
-    li.append(r.delta == null ? el('span', 'cmp-d new', 'new') : el('span', `cmp-d ${r.delta > 0 ? 'up' : r.delta < 0 ? 'down' : 'same'}`, r.delta > 0 ? `▲${r.delta}` : r.delta < 0 ? `▼${-r.delta}` : '='));
+    li.append(r.delta == null ? el('span', 'cmp-d new', t('new')) : el('span', `cmp-d ${r.delta > 0 ? 'up' : r.delta < 0 ? 'down' : 'same'}`, r.delta > 0 ? `▲${r.delta}` : r.delta < 0 ? `▼${-r.delta}` : '='));
     if (r.resist) li.append(el('span', 'cmp-note', `${r.resist.now}% → ${r.resist.then}% counts`));
     ul.append(li);
   }
-  for (const t of lines.lost) {
+  for (const tc of lines.lost) {
     const li = el('li', 'cmp-line lost');
-    li.append(el('span', 'cmp-v', t), el('span', 'cmp-d down', 'lost'));
+    li.append(el('span', 'cmp-v', tc), el('span', 'cmp-d down', t('lost')));
     ul.append(li);
   }
   box.append(ul);
@@ -228,7 +229,7 @@ export function compareBlock(entity, item, nameOf = (it) => String(it?.name ?? '
   if (!cmp) return null;
   if (!cmp.parts.length && !cmp.damage && item.group !== 'Armor' && itemDamageLine(item) == null) return null;
   const box = el('div', 'cmp');
-  box.append(el('p', 'cmp-head', cmp.replaces.length ? `Replaces ${cmp.replaces.map(nameOf).join(', ')}` : 'Replaces nothing'));
+  box.append(el('p', 'cmp-head', cmp.replaces.length ? `${t('Replaces')} ${cmp.replaces.map(nameOf).join(', ')}` : t('Replaces nothing')));
   const dl = el('dl', 'stats cmp-rows');
   const row = (key, text, ...deltas) => {
     const dd = el('dd');
