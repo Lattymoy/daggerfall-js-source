@@ -17,6 +17,10 @@
 // and transport.js's gallop gate asks `gallopGate`; the HUD asks `bar()`; the Stable card `model()` and `act()`; the
 // Enhanced Plus saddle panel (ui/enhancedSaddle.js) `saddle(mode)` and `act()`.
 //
+// BARD1 (bible/06-Systems/Horse-Barding.md): what the ridden horse wears costs its pace here (rideScale - bardingPace,
+// its Strength's to carry, horse care on or off) and its breath at the gallop (stepBreath's burden), and arms its
+// rider while astride (`rider()` the host's player entity - the fold below, its points re-summed when they move).
+//
 // A horse's breath is kept here, by its seed (no field: a gallop's breath is not a thing to save), and comes back whole
 // over any span of the clock skipped (steedCare.js SKIP_MINUTES - a rest, a wait, a journey, a load).
 
@@ -34,6 +38,23 @@ import {
 import { isWagonKitItem, UPKEEP_ITEM } from './upkeepItemRows.js';
 import { registerItemUseHandler } from './itemTemplates.js';
 import { HORSE_MODE, WAGON_MODE, TRANSPORT } from './horseCartLaw.js';
+import { horseBardingOf, bardingPace, bardingBreath, riderArmor } from './horseBarding.js';   // BARD1
+import { registerEntityFold, computeEntityMods, NUMBER_BODY_PARTS } from './entityMods.js';
+
+/** BARD1: the rider astride a barded horse, and the points it arms them with (each part - entityMods.js armorParts). */
+const astride = new WeakMap();
+export const BARDING_FOLD = 'horse-barding';
+registerEntityFold(BARDING_FOLD, (e) => { const k = astride.get(e) ?? 0; return k ? { armorParts: new Array(NUMBER_BODY_PARTS).fill(k) } : null; });
+/** The rider `entity` astride with `points` (0 afoot, or on a bare horse): their armour re-summed when it moves. */
+export function setAstride(entity, points) {
+  if (!entity || typeof entity !== 'object') return;
+  const k = Number.isFinite(points) && points > 0 ? points | 0 : 0;
+  if ((astride.get(entity) ?? 0) === k) return;
+  if (k) astride.set(entity, k); else astride.delete(entity);
+  computeEntityMods(entity);
+}
+/** The points the rider is armoured with astride (0 afoot) - the pins' read. */
+export const astridePoints = (entity) => astride.get(entity) ?? 0;
 
 /** A breath under this share shows short on the HUD. */
 export const BREATH_LOW = 0.25;
@@ -46,9 +67,9 @@ export function bondWay(bond) {
 
 /**
  * @param {{ items: () => any[], now: () => number, horseCare?: () => boolean, wagonUpkeep?: () => boolean,
- *   where?: () => string, stores?: () => any[], say?: (text: string) => void }} deps
+ *   where?: () => string, stores?: () => any[], say?: (text: string) => void, rider?: () => any }} deps
  */
-export function createUpkeep({ items, now, horseCare = () => false, wagonUpkeep = () => false, where = () => 'with', stores = () => [], say = () => {} }) {
+export function createUpkeep({ items, now, horseCare = () => false, wagonUpkeep = () => false, where = () => 'with', stores = () => [], say = () => {}, rider = () => null }) {
   /** @type {Map<number, { spent: number, winded: boolean }>} */
   const breaths = new Map();
   let lastNow = /** @type {number|null} */ (null);
@@ -80,6 +101,7 @@ export function createUpkeep({ items, now, horseCare = () => false, wagonUpkeep 
    */
   function tick(dt, { mode = 'Foot', galloping = false, moving = false, metres = 0, road = true, load = 0, wagonGoes = false } = {}) {
     const its = pack(), t = now();
+    setAstride(rider(), mode === 'Horse' ? riderArmor(horseBardingOf(activeHorseItem(its))) : 0);   // BARD1: astride, the barding arms the rider
     if (!Number.isFinite(t)) return;
     const skipped = lastNow != null && t - lastNow >= SKIP_MINUTES;
     if (horseCare()) {
@@ -95,7 +117,7 @@ export function createUpkeep({ items, now, horseCare = () => false, wagonUpkeep 
       if (horse) {
         const st = steedStats(horse, t);
         if (st) {
-          const b = stepBreath(breathOf(horse), { stats: st.stats, hunger: st.hunger, galloping: riding && galloping, ridden: riding && moving, dt });
+          const b = stepBreath(breathOf(horse), { stats: st.stats, hunger: st.hunger, galloping: riding && galloping, ridden: riding && moving, dt, burden: bardingBreath(horseBardingOf(horse)) });   // BARD1: its barding's weight
           breaths.set(horse.horseSeed | 0, b);
           if (b.winded && !wasWinded && riding) say(STEED_TEXT.winded);
           else if (!b.winded && wasWinded && riding) say(STEED_TEXT.rested);
@@ -122,9 +144,10 @@ export function createUpkeep({ items, now, horseCare = () => false, wagonUpkeep 
   function rideScale(mode, load = 0) {
     const its = pack(), t = now();
     if (mode === 'Horse') {
-      if (!horseCare()) return 1;
-      const st = steedStats(activeHorseItem(its), t);
-      return st ? steedSpeedScale(st.stats.speed) : 1;
+      const horse = activeHorseItem(its), worn = horseBardingOf(horse);   // BARD1: what it wears, carried on its Strength
+      if (!horseCare()) return bardingPace(worn);
+      const st = steedStats(horse, t);
+      return st ? steedSpeedScale(st.stats.speed) * bardingPace(worn, st.stats.strength) : bardingPace(worn);
     }
     if (mode === 'Cart') {
       let k = 1;

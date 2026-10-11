@@ -391,7 +391,9 @@ test('STEED1 THE ITEM: `horseBond` (tenths, 1..1000) and `horseFed` (a minute, 1
     [['Speed', String(born.speed)], ['Stamina', String(born.stamina)], ['Endurance', String(born.endurance)], ['Strength', String(born.strength)], ['Bond', 'Familiar (42)']]);
   assert.match(itemStatRows(oats()).map((r) => r.text).join(' '), /A day’s food for a horse/);
   assert.deepEqual(UPKEEP_ITEM, { Oats: 1710, WagonKit: 1711 });
-  assert.deepEqual(UPKEEP_ITEM_ROWS.map((r) => [r.index, r.name, r.rarity, r.stackable]), [[1710, 'Sack of Oats', 20, true], [1711, 'Wagon Repair Kit', 20, true]]);
+  // PIN MOVED (BARD1): the block's next four rows the barding's (test/bard1_barding.test.js)
+  assert.deepEqual(UPKEEP_ITEM_ROWS.map((r) => [r.index, r.name, r.rarity, r.stackable]), [[1710, 'Sack of Oats', 20, true], [1711, 'Wagon Repair Kit', 20, true],
+    [1712, 'Leather Barding', 20, false], [1713, 'Chain Barding', 20, false], [1714, 'Plate Barding', 20, false], [1715, 'Caparison', 20, false]]);
   assert.equal(UPKEEP_ITEMS_ONLINE, false, 'REST6\'s law: the release that ships the templates puts none on an online shelf');
   assert.deepEqual([upkeepItemsAvailable(false), upkeepItemsAvailable(true)], [true, false]);
   assert.deepEqual(itemFindings({ ...oats(5), value: 4 }), []);

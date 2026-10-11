@@ -173,7 +173,9 @@ not.
 ## The wire
 
 A look is one number, `horseLookCode` - `coat + 7 (pattern + 5 (legs + 3
-seed))`, at most `HORSE_LOOK_CODE_MAX` (6,881,279); 0 the bay as drawn.
+seed))`, the hide's 6,881,280 codes (`HORSE_HIDE_CODES`); 0 the bay as drawn. BARD1 puts what the horse wears over them -
+its barding and caparison, `06-Systems/Horse-Barding.md` - so `HORSE_LOOK_CODE_MAX` is 247,726,079 (world196), and a bare
+horse's code is this one.
 
 - **The pool's word** (`systems/horseCartWire.js`, the foes frame's `hv`): `hc`,
   the look, at the record's top beside `n`, for the standing horse and the

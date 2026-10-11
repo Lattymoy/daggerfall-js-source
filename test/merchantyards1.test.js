@@ -57,7 +57,9 @@ test('MERCHANT-YARDS THE STOCK: the Stable sells a Horse, the Wagon Yard the Sma
   // and sells a sack of oats; the Wagon Yard a Wagon Repair Kit beside its three - the upkeep's items offline (and online
   // once their switch is on - systems/upkeepItemRows.js)
   const s = yardStock('stable');
-  assert.deepEqual(s.map((it) => [it.group, it.templateIndex, it.name]), [...Array(3).fill(['Transportation', TRANSPORT_HORSE, 'Horse']), ['UselessItems2', 1710, 'Sack of Oats']]);
+  // PIN MOVED (BARD1): and its barding - leather, chain, plate and a caparison, offline (online once their own switch is on)
+  assert.deepEqual(s.map((it) => [it.group, it.templateIndex, it.name]), [...Array(3).fill(['Transportation', TRANSPORT_HORSE, 'Horse']), ['UselessItems2', 1710, 'Sack of Oats'],
+    ['UselessItems2', 1712, 'Leather Barding'], ['UselessItems2', 1713, 'Chain Barding'], ['UselessItems2', 1714, 'Plate Barding'], ['UselessItems2', 1715, 'Caparison']]);
   assert.ok(s[0].value > 0 && s[0].maxCondition > 0 && s[0].currentCondition === s[0].maxCondition, 'named, valued and whole, as a shelf\'s row');
   const t = yardStock('transport');
   assert.deepEqual(t.map((it) => [it.templateIndex, it.wagonKind ?? null, it.value]), [[TRANSPORT_SMALL_CART, null, 150], [TRANSPORT_SMALL_CART, 'openWagon', WAGON_KINDS.openWagon.value], [TRANSPORT_SMALL_CART, 'caravan', WAGON_KINDS.caravan.value], [1711, null, 60]]);

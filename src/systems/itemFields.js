@@ -196,6 +196,10 @@ export const ITEM_FIELDS = Object.freeze({
   // owner's clock its food runs out (absent, never seen fed - it comes fed)
   horseBond: int({ min: 1, max: 1000 }),
   horseFed: int({ min: 1 }),
+  // BARD1 (bible/06-Systems/Horse-Barding.md): what a horse wears (systems/horseBarding.js - absent, none): its barding
+  // (1 leather, 2 chain, 3 plate) and its caparison's colour (CAPARISON_COLOURS) - the horse's gear, carried to the next
+  horseBarding: int({ min: 1, max: 3 }),
+  horseCaparison: int({ min: 1, max: 8 }),
 });
 
 /** The declared names, and those of one kind. */

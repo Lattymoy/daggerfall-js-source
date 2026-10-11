@@ -36,7 +36,7 @@ test('COATS1 the law: seven coats, five patterns, three legs and a seed, one num
   assert.deepEqual([...HORSE_PATTERNS], ['solid', 'pinto', 'appaloosa', 'dapples', 'roan']);
   assert.deepEqual([...HORSE_LEGS], ['plain', 'socks', 'stockings']);
   assert.deepEqual([HORSE_COAT_MAX, HORSE_PATTERN_MAX, HORSE_LEGS_MAX, HORSE_SEED_MAX], [6, 4, 2, 65535]);
-  assert.equal(HORSE_LOOK_CODE_MAX, 7 * 5 * 3 * 65536 - 1);
+  assert.equal(HORSE_LOOK_CODE_MAX, 7 * 5 * 3 * 65536 * 4 * 9 - 1);   // PIN MOVED (BARD1): the hide's codes, then four bardings and nine caparisons over them (test/bard1_barding.test.js)
   assert.equal(HORSE_LOOK_MAX, HORSE_LOOK_CODE_MAX, 'the relay keeps exactly the looks the law makes (wire.js imports none of the game)');
   for (const [field, max] of [['horseCoat', 6], ['horsePattern', 4], ['horseLegs', 2], ['horseSeed', 65535]]) {
     assert.equal(validItemField(field, max), max, field); assert.equal(validItemField(field, max + 1), undefined, field);
@@ -45,7 +45,8 @@ test('COATS1 the law: seven coats, five patterns, three legs and a seed, one num
   const l = { coat: 4, pattern: 2, legs: 1, seed: 40000 };
   assert.equal(horseLookCode(l), 4 + 7 * (2 + 5 * (1 + 3 * 40000)));
   assert.deepEqual(horseLookOfCode(horseLookCode(l)), l);
-  assert.deepEqual(horseLookOfCode(HORSE_LOOK_CODE_MAX), { coat: 6, pattern: 4, legs: 2, seed: 65535 });
+  assert.deepEqual(horseLookOfCode(7 * 5 * 3 * 65536 - 1), { coat: 6, pattern: 4, legs: 2, seed: 65535 });   // PIN MOVED (BARD1): the hide's last code; the law's last is plate under an orange caparison
+  assert.deepEqual(horseLookOfCode(HORSE_LOOK_CODE_MAX), { coat: 6, pattern: 4, legs: 2, seed: 65535, barding: 3, caparison: 8 });
   assert.deepEqual(horseLookOfCode(HORSE_LOOK_CODE_MAX + 1), { coat: 0, pattern: 0, legs: 0, seed: 0 }, 'past the law: the bay as drawn');
   assert.deepEqual(readHorseLook({ coat: 9, pattern: -1, legs: 2.5, seed: 70000 }), { coat: 0, pattern: 0, legs: 0, seed: 0 });
   assert.equal(lookSuffix(0), ''); assert.equal(lookSuffix(code(2)), '~2'); assert.equal(lookSuffix(l), `~${horseLookCode(l)}`);

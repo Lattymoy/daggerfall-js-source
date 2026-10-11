@@ -9,13 +9,18 @@
 import { registerCustomTemplates } from './itemTemplates.js';
 import { ICON_STAFF } from '../net/professionLaw.js';
 
-/** The block (1710-1719: the two, the rest spare). */
+/** The block (1710-1719: the two, BARD1's four, the rest spare). */
 export const UPKEEP_ITEM = Object.freeze({ Oats: 1710, WagonKit: 1711 });
+/** BARD1 (bible/06-Systems/Horse-Barding.md): a horse's armour and its cloth - fitted at the Stable (systems/horseBarding.js). */
+export const BARDING_ITEM = Object.freeze({ Leather: 1712, Chain: 1713, Plate: 1714, Caparison: 1715 });
 export const UPKEEP_ITEM_GROUP = 'UselessItems2';
 /** The online sources' switch - false for the release the templates ship in (REST6's law). Offline they sell at once. */
 export const UPKEEP_ITEMS_ONLINE = false;
 /** Whether a yard may sell one here: offline always; online once the switch is on. */
 export const upkeepItemsAvailable = (online) => !online || UPKEEP_ITEMS_ONLINE;
+/** BARD1's own switch - its four rows ship a release after the upkeep's, so they wait on their own (REST6's law). */
+export const BARDING_ITEMS_ONLINE = false;
+export const bardingItemsAvailable = (online) => !online || BARDING_ITEMS_ONLINE;
 
 const row = (index, name, baseWeight, basePrice, icon, stackable) => Object.freeze({
   index, name, baseWeight, hitPoints: 1, capacityOrTarget: 0, basePrice, enchantmentPoints: 0, rarity: 20, variants: 0,
@@ -29,6 +34,12 @@ const row = (index, name, baseWeight, basePrice, icon, stackable) => Object.free
 export const UPKEEP_ITEM_ROWS = Object.freeze([
   row(UPKEEP_ITEM.Oats, 'Sack of Oats', 1.0, 4, [205, 17], true),
   row(UPKEEP_ITEM.WagonKit, 'Wagon Repair Kit', 4.0, 60, ICON_STAFF, true),
+  // BARD1: the barding a horse wears and its caparison - heavy in a pack, the horse's weight once fitted; the
+  // pictures DFU's cuirass's and its cloak's
+  row(BARDING_ITEM.Leather, 'Leather Barding', 15, 400, [207, 11], false),
+  row(BARDING_ITEM.Chain, 'Chain Barding', 40, 1200, [207, 11], false),
+  row(BARDING_ITEM.Plate, 'Plate Barding', 60, 3000, [207, 11], false),
+  row(BARDING_ITEM.Caparison, 'Caparison', 6, 250, [204, 0], false),
 ]);
 registerCustomTemplates(UPKEEP_ITEM_ROWS);
 
@@ -36,3 +47,6 @@ registerCustomTemplates(UPKEEP_ITEM_ROWS);
 export const newUpkeepItem = (templateIndex, stackCount = 1) => ({ group: UPKEEP_ITEM_GROUP, templateIndex, ...(stackCount > 1 ? { stackCount } : {}) });
 export const isOatsItem = (item) => item?.templateIndex === UPKEEP_ITEM.Oats;
 export const isWagonKitItem = (item) => item?.templateIndex === UPKEEP_ITEM.WagonKit;
+/** BARD1: one of the four, as a yard mints it; which it is. */
+export const newBardingItem = (templateIndex) => ({ group: UPKEEP_ITEM_GROUP, templateIndex });
+export const isBardingItem = (item) => item?.group === UPKEEP_ITEM_GROUP && Object.values(BARDING_ITEM).includes(item?.templateIndex);

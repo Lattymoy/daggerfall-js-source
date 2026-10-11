@@ -19,11 +19,13 @@
 
 import { stableWagonName, WAGON_KINDS } from '../systems/wagonKinds.js';   // WAGONS1: the Stable's card names the wagon driven
 import { paintDrivenWagon, outsidePaintRow, LOOK_TEXT } from '../systems/wagonLooks.js';   // WAGONS2: and paints it
-import { restyleRiddenHorse, horseLookRows, birthHorses, HORSE_LOOK_PARTS } from '../systems/horseCoats.js';   // COATS1: and the horse's look
+import { restyleRiddenHorse, horseLookRows, birthHorses, HORSE_LOOK_PARTS, activeHorseItem } from '../systems/horseCoats.js';   // COATS1: and the horse's look
 import { requestFittedIcon, fittedImg } from './textureCanvas.js';
 import { WAGON_MODE, HORSE_MODE, TRANSPORT, HORSE_NAME_MAX } from '../systems/horseCartLaw.js';
 import { optionPath } from './settingsMap.js';   // ORG2: a switch named in a window says where it lives
 import { upkeepReach } from '../systems/upkeepRuntime.js';   // STEED1/WAGONS4: a horse fed by hand only beside it, a kit spent only at the wagon
+import { bardingRows, fitBarding, fitCaparison } from '../systems/horseBarding.js';   // BARD1: what the horse wears, its cost on its Strength
+import { horseBornStats } from '../systems/steedCare.js';
 
 export const STABLE_PAGE_SECTIONS = Object.freeze([Object.freeze(['stable', 'Stable'])]);
 export const HOLDINGS_STYLE_ID = 'holdings-pages-css';
@@ -43,11 +45,12 @@ export function _setHoldingsIconForTests(fn) { _icon = fn ?? ((p, box, onReady) 
  * @property {string|null} [kind]   WAGONS1: the wagon driven ('cart', 'openWagon', 'caravan' - systems/wagonKinds.js)
  * @property {{ choices: string[], current: number }|null} [paint]   WAGONS2: its outside's paints, and its paint now
  * @property {{ desc: string, rows: Array<{ part: string, name: string, choices: string[], current: number }> }|null} [look]   COATS1: the ridden horse's look - in words, and a row of choices a part (coat, pattern, legs)
+ * @property {{ desc: string, effects: string, rows: Array<{ part: string, name: string, choices: string[], current: number, open: boolean[] }> }|null} [barding]   BARD1: the ridden horse's barding and caparison - a row each, the choices the pack can fit open
  * @property {any} [care]   STEED1/WAGONS4: the upkeep's model (systems/upkeepRuntime.js model) - each horse's stats, bond, hunger and breath; the wagon's soundness; the oats, apples and kits carried
  *
  * @typedef {Object} HoldingsProvider
  * @property {() => StableModel} [stable]   the horse and the wagon
- * @property {(verb: 'summon'|'away'|'rename'|'paint'|'coat'|'pattern'|'legs'|'feed'|'treat'|'ride'|'kit', arg?: any) => { ok: boolean, text: string }} [stableAct]
+ * @property {(verb: 'summon'|'away'|'rename'|'paint'|'coat'|'pattern'|'legs'|'feed'|'treat'|'ride'|'kit'|'barding'|'caparison', arg?: any) => { ok: boolean, text: string }} [stableAct]
  * @property {any} [fleet]   the fleet's model and acts (ui/fleetPage.js)
  * @property {{ model: () => any }} [captain]   CAPT-LOG: the captain's standing, letter, contracts and log (ui/captainPage.js)
  */
@@ -69,7 +72,7 @@ export const holdingsProvider = () => _provider;
 export function stableProviderFor({ runtime, on, hasHorse, hasCart, wagonKind = () => null, items = () => [], onPainted = () => {}, upkeep = null, pass = () => {} }) {
   const view = () => (on() ? runtime.stableView() : null);
   return {
-    stable: () => { birthHorses(items()); const v = view(); return { hcc: !!on(), hasHorse: !!hasHorse(), hasCart: !!hasCart(), view: v, kind: wagonKind() ?? null, paint: outsidePaintRow(items()), look: horseLookRows(items()), care: upkeep?.model({ near: upkeepReach(runtime, on()).near, name: v?.horseName ?? '' }) ?? null }; },   // WAGONS1: which wagon; WAGONS2: its paint; COATS1: the horse's look; STEED1/WAGONS4: their upkeep
+    stable: () => { birthHorses(items()); const v = view(); return { hcc: !!on(), hasHorse: !!hasHorse(), hasCart: !!hasCart(), view: v, kind: wagonKind() ?? null, paint: outsidePaintRow(items()), look: horseLookRows(items()), barding: bardingRows(items(), horseBornStats(activeHorseItem(items()))?.strength ?? 50), care: upkeep?.model({ near: upkeepReach(runtime, on()).near, name: v?.horseName ?? '' }) ?? null }; },   // WAGONS1: which wagon; WAGONS2: its paint; COATS1: the horse's look; STEED1/WAGONS4: their upkeep
     stableAct: (verb, arg) => {
       if (upkeep && (verb === 'feed' || verb === 'treat' || verb === 'ride' || verb === 'kit')) {   // STEED1/WAGONS4: the upkeep's own acts, the mod on or off
         const r = upkeep.act(verb, arg, { ...upkeepReach(runtime, on()), pass });
@@ -78,6 +81,7 @@ export function stableProviderFor({ runtime, on, hasHorse, hasCart, wagonKind = 
       }
       if (verb === 'paint') { const r = paintDrivenWagon(items(), 'outside', Number(arg) | 0); if (r.ok) onPainted(); return r; }   // WAGONS2: free, any time, the mod on or off - the paint is the wagon's
       if (HORSE_LOOK_PARTS.some((p) => p.part === verb)) { const r = restyleRiddenHorse(items(), verb, Number(arg) | 0); if (r.ok) onPainted(); return r; }   // COATS1: the same - the look is the horse's
+      if (verb === 'barding' || verb === 'caparison') { const r = (verb === 'barding' ? fitBarding : fitCaparison)(items(), Number(arg) | 0); if (r.ok) onPainted(); return r; }   // BARD1: fitted from the pack, the old piece back into it
       if (!on()) return { ok: false, text: `Turn on Horse Cart and Cargo (${optionPath('feat:mod-horse-cart-and-cargo')}) to call your horse and wagon.` };   // ORG2: where it lives, from the map
       if (verb === 'summon') return runtime.summonTransport();
       if (verb === 'away') return runtime.sendTransportAway();
@@ -287,12 +291,13 @@ let _renaming = false;   // the horse's name field open
 let _draft = '';
 
 /** WAGONS2/COATS1: a card's row of choices - its word, then a button a choice, the one worn pressed. */
-function choiceRow(el, word, { choices, current }, choose) {
+function choiceRow(el, word, { choices, current }, choose, open = null) {
   const row = el('div', 'hld-acts');
   row.append(el('span', 'hld-sub', `${word}:`));
   choices.forEach((name, i) => {
     const b = el('button', i === current ? 'act primary' : 'act', name);
     b.setAttribute('aria-pressed', i === current ? 'true' : 'false');
+    if (open && !open[i]) { b.setAttribute('aria-disabled', 'true'); b.title = 'Not in your pack - the Stable sells it.'; }   // BARD1: pressed, it says so
     b.onclick = () => choose(i);
     row.append(b);
   });
@@ -355,6 +360,10 @@ export function drawStablePage(detail, rerender, { el, divider, meter = null } =
     if (m.look) {   // COATS1: its look in words, then its coats, patterns and legs, a button each - pressed, worn
       extra.push(el('span', 'hld-sub', `${m.look.desc[0].toUpperCase()}${m.look.desc.slice(1)}.`));
       for (const row of m.look.rows) extra.push(choiceRow(el, row.name, row, (i) => act(/** @type {any} */ (row.part), i)));
+    }
+    if (m.barding) {   // BARD1: its barding and its caparison - what the pack does not carry shown, not offered - and their cost
+      for (const row of m.barding.rows) extra.push(choiceRow(el, row.name, row, (i) => act(/** @type {any} */ (row.part), i), row.open));
+      extra.push(el('span', 'hld-sub', m.barding.effects));
     }
     const ridden = care?.horseCare ? care.horses.find((h) => h.ridden) : null;
     if (ridden) extra.push(...steedLines(el, meter, ridden, care, act));   // STEED1: its care

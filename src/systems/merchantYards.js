@@ -35,7 +35,7 @@ import { setItemFields, mintCondition, TRANSPORT_HORSE } from './itemTemplates.j
 import { WAGON_KIND_ORDER, newWagonItem, isWagonItem } from './wagonKinds.js';
 import { birthHorses } from './horseCoats.js';   // STEED1: the stable's horses born at the yard
 import { horseBornStats, steedValue } from './steedCare.js';   // STEED1: and priced by what they are
-import { UPKEEP_ITEM, newUpkeepItem, upkeepItemsAvailable } from './upkeepItemRows.js';   // STEED1/WAGONS4: the oats, the kits
+import { UPKEEP_ITEM, newUpkeepItem, upkeepItemsAvailable, BARDING_ITEM, newBardingItem, bardingItemsAvailable } from './upkeepItemRows.js';   // STEED1/WAGONS4: the oats, the kits; BARD1: the barding
 
 /** The two yards, in the order a town stands them. */
 export const YARD_KIND_ORDER = Object.freeze(['stable', 'transport']);
@@ -70,6 +70,8 @@ export const STABLE_HORSES_OFFERED = 3;
 /** STEED1 / WAGONS4: the stack a yard sells its upkeep in - the Stable's oats, the Wagon Yard's kits. */
 export const YARD_OATS_STACK = 20;
 export const YARD_KITS_STACK = 5;
+/** BARD1: the Stable's barding, as it shelves it (systems/horseBarding.js - fitted on the Stable page). */
+export const BARDING_ORDER = Object.freeze([BARDING_ITEM.Leather, BARDING_ITEM.Chain, BARDING_ITEM.Plate, BARDING_ITEM.Caparison]);
 /** A 32-bit mix of three integers (a stable's town, its day, its stall). */
 const mix3 = (a, b, c) => {
   let h = Math.imul((a >>> 0) ^ 0x9e3779b9, 0x85ebca6b) ^ Math.imul((b >>> 0) + 0x632be5ab, 0xc2b2ae35) ^ Math.imul((c >>> 0) + 0x27d4eb2f, 0x165667b1);
@@ -99,14 +101,16 @@ export function stableHorses(mapId, day, { owned = [], priced = false } = {}) {
   return out;
 }
 /** What a yard sells - its whole stock, minted as a shelf mints a row (setItemFields, mintCondition): the Stable a
- *  Horse (STEED1: three of them, on the town's day - stableHorses) and a sack of oats; the Wagon Yard the Small Cart, the
+ *  Horse (STEED1: three of them, on the town's day - stableHorses), a sack of oats and (BARD1) its barding - leather,
+ *  chain, plate and a caparison, online once BARDING_ITEMS_ONLINE is on; the Wagon Yard the Small Cart, the
  *  Open Wagon and the Caravan, in WAGON_KIND_ORDER, and a Wagon Repair Kit. The oats and the kits only where they may be
  *  sold (online once UPKEEP_ITEMS_ONLINE is on - systems/upkeepItemRows.js). A fresh list each call.
  *  @param {string} kind @param {{ mapId?: number, day?: number, online?: boolean, owned?: Set<number>|number[], priced?: boolean }} [o] */
 export function yardStock(kind, { mapId = 0, day = 0, online = false, owned = [], priced = false } = {}) {
   const mint = (it) => mintCondition(setItemFields(it));
   const upkeep = upkeepItemsAvailable(online);
-  if (validYardKind(kind) === 'stable') return [...stableHorses(mapId, day, { owned, priced }), ...(upkeep ? [mint(newUpkeepItem(UPKEEP_ITEM.Oats, YARD_OATS_STACK))] : [])];
+  const barding = bardingItemsAvailable(online) ? BARDING_ORDER.map((t) => mint(newBardingItem(t))) : [];   // BARD1: the three bardings and the caparison
+  if (validYardKind(kind) === 'stable') return [...stableHorses(mapId, day, { owned, priced }), ...(upkeep ? [mint(newUpkeepItem(UPKEEP_ITEM.Oats, YARD_OATS_STACK))] : []), ...barding];
   if (validYardKind(kind) === 'transport') return [...WAGON_KIND_ORDER.map((k) => mint(newWagonItem(k))), ...(upkeep ? [mint(newUpkeepItem(UPKEEP_ITEM.WagonKit, YARD_KITS_STACK))] : [])];
   return [];
 }

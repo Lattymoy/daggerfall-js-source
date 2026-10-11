@@ -285,15 +285,16 @@ export const breathMax = (stats) => STAMINA_BASE + STAMINA_PER_POINT * (stats?.s
 export const freshBreath = () => ({ spent: 0, winded: false });
 /**
  * A step of a horse's breath, `dt` seconds: galloping it spends, else it comes back (`ridden` at the ride's pace, half;
- * hungry slower). At nought it is winded, until WINDED_UNTIL is back. Answers a new `{ spent, winded }`.
+ * hungry slower; BARD1: `burden` the gallop's spend times its barding's weight). At nought it is winded, until
+ * WINDED_UNTIL is back. Answers a new `{ spent, winded }`.
  * @param {{ spent: number, winded: boolean }} b
- * @param {{ stats: any, hunger?: string, galloping?: boolean, ridden?: boolean, dt: number }} o
+ * @param {{ stats: any, hunger?: string, galloping?: boolean, ridden?: boolean, dt: number, burden?: number }} o
  */
-export function stepBreath(b, { stats, hunger = 'fed', galloping = false, ridden = false, dt }) {
+export function stepBreath(b, { stats, hunger = 'fed', galloping = false, ridden = false, dt, burden = 1 }) {
   const max = breathMax(stats), end = stats?.endurance ?? 50;
   let spent = Math.max(0, Math.min(max, b?.spent ?? 0)), winded = !!b?.winded;
   const t = Number.isFinite(dt) && dt > 0 ? dt : 0;
-  if (galloping && !winded) spent += GALLOP_SPEND * (1.25 - end / 200) * t;
+  if (galloping && !winded) spent += GALLOP_SPEND * (1.25 - end / 200) * (Number.isFinite(burden) && burden > 1 ? burden : 1) * t;   // BARD1: a barded horse's burden (systems/horseBarding.js bardingBreath)
   else spent -= BREATH_BACK * (0.75 + end / 200) * (HUNGER[hunger]?.breath ?? 1) * (ridden ? RIDDEN_BACK : 1) * t;
   spent = Math.max(0, Math.min(max, spent));
   if (spent >= max) winded = true;

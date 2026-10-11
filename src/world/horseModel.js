@@ -21,6 +21,7 @@
 //
 // Pure: no DOM, no GL, no clock. Not a DFU member: Daggerfall's horse is a sprite. Ledger A (COATS3D).
 import { texelPlanes } from '../systems/horseCoats.js';
+import { BARDING_TILE } from '../systems/horseBarding.js';
 import { SKIN_STATIC_FLOATS, skinStreamFloats } from '../formats/mwGpuSkin.js';
 import { SKIN_PAL_ROW } from '../render/skinPalette.js';
 
@@ -236,7 +237,86 @@ export function horseSkinStream(bake) {
     }
     ranges.push({ part: m.part, texture: m.texture, alpha: !!m.alpha, first, count: c - first });
   }
-  return { stream, floats, pairs: 1, ranges };
+  // BARD1: the barding's shells after the cards - a range each, every horse showing the one it wears
+  const shells = bardingShells(bake);
+  const all = new Float32Array(stream.length + shells.reduce((n, sh) => n + sh.corners.length / SHELL_FLOATS, 0) * floats);
+  all.set(stream);
+  for (const sh of shells) {
+    const first = c;
+    for (let k = 0; k < sh.corners.length; k += SHELL_FLOATS) {
+      const o = c * floats, q = sh.corners;
+      all[o] = q[k]; all[o + 1] = q[k + 1]; all[o + 2] = q[k + 2];
+      all[o + 3] = 1; all[o + 4] = 1; all[o + 5] = 1;
+      all[o + 6] = q[k + 3]; all[o + 7] = q[k + 4]; all[o + 8] = q[k + 5];
+      all[o + 9] = q[k + 6]; all[o + 10] = q[k + 7];
+      for (let j = 0; j < 4; j++) { all[o + SKIN_STATIC_FLOATS + j] = 1 + q[k + 8 + j]; all[o + SKIN_STATIC_FLOATS + 4 + j] = q[k + 12 + j]; }
+      all[o + floats - 1] = 0;
+      c++;
+    }
+    ranges.push({ part: sh.part, texture: 'barding', alpha: false, first, count: c - first });
+  }
+  return { stream: all, floats, pairs: 1, ranges };
+}
+
+/**
+ * BARD1 (systems/horseBarding.js): THE BARDING'S SHELLS - the body's own triangles where each piece covers it, pushed
+ * out along their normals by its thickness, skinned as the hide under them is (the same bones, the same weights), so
+ * the armour moves with the horse as its hide does. Where a piece lies is read off the bind pose (metres, Z up, +Y
+ * forward): the barrel above the knees (BARREL_FROM up, the chest's front with it); the neck (forward of NECK_FROM and
+ * above NECK_LOW); the head (the head's and the jaw's skin over CHANFRON_FROM, the ears bare). Leather the barrel and the chest (the neck under LEATHER_NECK_TOP),
+ * chain the barrel and the neck, plate the head too; the caparison hangs lower, over the armour. Each corner its UV in
+ * BARDING_TILE metres (along the horse, and up), the caparison's v its skirt's top (0) to its hem (1).
+ */
+export const BARREL_FROM = 0.98;
+export const NECK_FROM = 0.45;
+export const NECK_LOW = 1.1;
+export const LEATHER_NECK_TO = 0.92;
+export const LEATHER_NECK_TOP = 1.42;
+export const LEATHER_WITHERS = 0.72;
+export const CAPARISON_FROM = 0.8;
+export const CAPARISON_NECK_TO = 0.62;
+/** The chanfron's lowest: the head's skin and the jaw's over this height (the muzzle's top - the lips, the chin and
+ *  the ears bare). */
+export const CHANFRON_FROM = 1.45;
+export const SHELL_PIECES = Object.freeze({
+  leather: Object.freeze({ thick: 0.018, barrel: true, neck: LEATHER_NECK_TO, neckTop: LEATHER_NECK_TOP, head: false }),
+  chain: Object.freeze({ thick: 0.024, barrel: true, neck: Infinity, head: false }),
+  plate: Object.freeze({ thick: 0.032, barrel: true, neck: Infinity, head: true }),
+  caparison: Object.freeze({ thick: 0.046, barrel: true, neck: CAPARISON_NECK_TO, head: false, from: CAPARISON_FROM }),
+});
+/** A shell corner's floats: position, normal, UV, the four joints, the four weights. */
+const SHELL_FLOATS = 16;
+export function bardingShells(bake) {
+  const body = bake.meshes.find((m) => m.part === 'body');
+  if (!body) return [];
+  const P = body.positions, N = body.normals, J = body.joints, W = body.weights, I = body.indices;
+  const nv = P.length / 3;
+  const headBone = bake.bones.findIndex((b) => b.name === 'Head'), jawBone = bake.bones.findIndex((b) => b.name === 'Jaw');
+  const dominant = new Int32Array(nv);
+  for (let v = 0; v < nv; v++) { let best = 0; for (let j = 1; j < 4; j++) if (W[v * 4 + j] > W[v * 4 + best]) best = j; dominant[v] = J[v * 4 + best]; }
+  const covers = (piece, v) => {
+    const y = P[v * 3 + 1], z = P[v * 3 + 2], face = dominant[v] === headBone || dominant[v] === jawBone;
+    if (piece.head && face && z >= CHANFRON_FROM) return true;
+    if (y > 1.02 || face) return false;   // the head is the chanfron's alone
+    if (y >= NECK_FROM && z >= NECK_LOW) return y <= piece.neck && (y <= LEATHER_WITHERS || z <= (piece.neckTop ?? Infinity));   // the neck: its base to its throat (leather's the withers, then the peytral's height)
+    return piece.barrel && z >= (piece.from ?? BARREL_FROM);   // the barrel, the chest's front with it
+  };
+  return Object.entries(SHELL_PIECES).map(([kind, piece]) => {
+    const tris = [];
+    for (let t = 0; t < I.length; t += 3) if (covers(piece, I[t]) && covers(piece, I[t + 1]) && covers(piece, I[t + 2])) tris.push(I[t], I[t + 1], I[t + 2]);
+    let zLo = Infinity, zHi = -Infinity;
+    for (const v of tris) { const z = P[v * 3 + 2]; if (z < zLo) zLo = z; if (z > zHi) zHi = z; }
+    const corners = new Float32Array(tris.length * SHELL_FLOATS);
+    tris.forEach((v, i) => {
+      const o = i * SHELL_FLOATS;
+      for (let a = 0; a < 3; a++) { corners[o + a] = P[v * 3 + a] + N[v * 3 + a] * piece.thick; corners[o + 3 + a] = N[v * 3 + a]; }
+      const y = P[v * 3 + 1], z = P[v * 3 + 2], x = P[v * 3];
+      corners[o + 6] = -y / BARDING_TILE;
+      corners[o + 7] = kind === 'caparison' ? (zHi - z) / Math.max(1e-6, zHi - zLo) : (-z - Math.abs(x) * 0.5) / BARDING_TILE;
+      for (let j = 0; j < 4; j++) { corners[o + 8 + j] = J[v * 4 + j]; corners[o + 12 + j] = W[v * 4 + j]; }
+    });
+    return { part: `barding:${kind}`, kind, corners };
+  });
 }
 
 /**

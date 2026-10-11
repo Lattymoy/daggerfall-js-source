@@ -23,8 +23,9 @@
 // bottle) before falling back to the misc record.
 import { wagonItemName } from './wagonKinds.js';   // WAGONS1: the Open Wagon's and the Caravan's names
 import { horseBornStats, bondTier, STEED_STATS, STEED_STAT_TEXT } from './steedCare.js';   // STEED1: a horse's nature on its card
-import { isOatsItem, isWagonKitItem } from './upkeepItemRows.js';   // STEED1/WAGONS4: what the two are for
+import { isOatsItem, isWagonKitItem, isBardingItem, BARDING_ITEM } from './upkeepItemRows.js';   // STEED1/WAGONS4: what the two are for; BARD1: and the barding
 import { KIT_MEND, WAGON_KIT_CEILING } from './wagonUpkeep.js';
+import { BARDING_ARMOR } from './horseBarding.js';
 import { unitWeightInKg } from './inventory.js';   // AUDIT 23 (items-8)
 import { enemyDisplayName } from '../characters/enemyBasics.js';   // X5: %hs, the trapped soul's name
 import { itemIsIdentified } from './tradeModes.js';   // X7: the DERIVED identified state
@@ -737,7 +738,15 @@ export function survivalInfoTokens(item) {
   else if (isCardPack(item)) for (const text of CARD_PACK_LINES) out.push({ text, center: true });   // CARDS9: the sealed pack
   else if (isOatsItem(item)) out.push({ text: 'A day\u2019s food for a horse. Use it to feed the horse you ride.', center: true });   // STEED1
   else if (isWagonKitItem(item)) out.push({ text: `Mends ${Math.round(KIT_MEND * 100)}% of a wagon, to ${Math.round(WAGON_KIT_CEILING * 100)}% at most - an hour's work.`, center: true });   // WAGONS4
+  else if (isBardingItem(item)) out.push({ text: bardingInfo(item.templateIndex), center: true });   // BARD1
   return out;
+}
+
+/** BARD1: what a piece of barding is for (systems/horseBarding.js). */
+function bardingInfo(templateIndex) {
+  if (templateIndex === BARDING_ITEM.Caparison) return 'A cloth for a horse, in any colour. Fit it on the Stable page.';
+  const kind = templateIndex === BARDING_ITEM.Plate ? 'plate' : templateIndex === BARDING_ITEM.Chain ? 'chain' : 'leather';
+  return `Armour for a horse: its rider +${BARDING_ARMOR[kind]} armour astride, at a cost to its pace. Fit it on the Stable page.`;
 }
 
 export function itemInfoRows(item, rows, macros = {}) {
@@ -880,7 +889,7 @@ export function itemStatRows(item) {
   // arrow, a helm or shield under HelmAndShieldMaterialDisplay - so the
   // panel never names a metal the pack withholds; push drops an empty.
   push('Material', itemNameParts(item).material);
-  const survival = isSurvivalItem(item) || isRestItem(item) || isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item) || isCardPack(item) || isOatsItem(item) || isWagonKitItem(item);   // STEED1/WAGONS4: the oats' and the kit's lines   // AUDIT CARDS-6 A5: and the pack's; CARDS8   // REST6: the seven's lines too; PORTAL1: and the Portal Stone's; WALLET1: and the wallet's
+  const survival = isSurvivalItem(item) || isRestItem(item) || isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item) || isCardPack(item) || isOatsItem(item) || isWagonKitItem(item) || isBardingItem(item);   // STEED1/WAGONS4: the oats' and the kit's lines   // AUDIT CARDS-6 A5: and the pack's; CARDS8   // REST6: the seven's lines too; PORTAL1: and the Portal Stone's; WALLET1: and the wallet's
   if (survival) for (const t of survivalInfoTokens(item).slice(2)) push('', t.text);
   else if ((item.maxCondition ?? 0) > 0) push('Condition', `${conditionWord(item)} (${conditionPercentage(item)}%)`);
   // STEED1: a horse's nature - its four stats as it was born (a Stable's horses say theirs before they are bought), and

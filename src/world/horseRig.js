@@ -13,6 +13,9 @@
 //    HORSE3D_LOOKS_KEPT looks, the one longest undrawn is let go - never one drawn this frame or the last, so a crowd of
 //    more looks than that keeps them all rather than thrash; a look asked for and then not again for LOOK_ASK_STALE
 //    frames (its horse gone, the lane left) leaves the queue undyed. The mane and tail's picture is the art's on every look.
+//  - BARD1: WHAT IT WEARS. The barding and the caparison are shells in the same stream (world/horseModel.js
+//    bardingShells), every horse's range of each hidden but the ones its look wears, in pictures made here once
+//    (systems/horseBarding.js bardingTexels, caparisonTexels); the hide's picture is dyed by the hide's code alone.
 //  - THE DRAWS. A horse alone is a Morrowind mesh in the world, so it draws as the Morrowind body does - a picture
 //    through the sprite pass at the arm's dial (render/characterSprite.js drawRigSpriteBox, MW_ARM_PIXEL); a horse under
 //    a rider is in the RIDER's picture (`also`, fpArm.js drawThird); in first person the rider's eye is on its back, so
@@ -21,7 +24,8 @@
 //
 // Not a DFU member: Daggerfall's horse is a sprite. Ledger A (COATS3D).
 import { HORSE_MODEL_URL, HORSE_PICTURE_URLS, horseSkinStream, horsePaletteShape, horsePoseScratch, horseGait, stepHorseGait, writeHorsePalette, startTexelMap, rgbaMips, horseHide } from './horseModel.js';
-import { dyeHorseTexelRows, horseLookCode, horseLookOfCode } from '../systems/horseCoats.js';
+import { dyeHorseTexelRows, horseLookCode, horseLookOfCode, horseHideCode } from '../systems/horseCoats.js';
+import { BARDING_KINDS, bardingTexels, caparisonTexels, BARDING_TEXELS } from '../systems/horseBarding.js';   // BARD1: what a horse wears
 import { drawRigSpriteBox } from '../render/characterSprite.js';
 import { MW_ARM_PIXEL, CHAR_SPRITE_RT_SIZE } from '../render/renderer.js';
 import { decodePng } from '../systems/textureReplacement.js';
@@ -71,6 +75,7 @@ export function createHorseRig({ renderer, fetchJson = (u) => fetch(u).then((r) 
   let base = null, shape = null, stream = null, hide = null, seatBone = -1, seatLocal = null;
   /** @type {{ width: number, height: number, data: Uint8Array } | null} */ let body = null;
   let hairTex = null, map = null, mapJob = null, failed = null;
+  const bardingTex = new Map();   // BARD1: 'leather' | 'chain' | 'plate' | 'caparison:<colour>' -> its picture, made on first wear
   /** @type {Promise<void> | null} */ let loading = null;
   const looks = new Map();   // code -> { tex, last }
   const asked = new Map();   // code -> the frame it was last asked for: the codes waiting for their dye, oldest first
@@ -148,8 +153,20 @@ export function createHorseRig({ renderer, fetchJson = (u) => fetch(u).then((r) 
     const pal = new Float32Array(shape.width * shape.height * 4);
     const mesh = { vao: base.vao, count: base.count, buffers: [], vbo: base.vbo, floats: base.floats, bounds: null,
       skin: renderer.createSkinPalette({ pairs: stream.pairs, width: shape.width, height: shape.height }),
-      ranges: stream.ranges.map((r) => ({ first: r.first, count: r.count, tex: r.texture === 'hair' ? hairTex : null, alphaCut: r.alpha ? 0.5 : 0, hidden: false, part: r.part })) };
+      ranges: stream.ranges.map((r) => ({ first: r.first, count: r.count, tex: r.texture === 'hair' ? hairTex : null, alphaCut: r.alpha ? 0.5 : 0, hidden: r.texture === 'barding', part: r.part })) };   // BARD1: a shell shown by the step, as the horse wears it
     return { seed, gait: horseGait(), scratch: horsePoseScratch(bake), pal, mesh, model: null, feet: [0, 0, 0], yaw: 0, scale: 1, look: 0 };
+  }
+
+  /** BARD1: a piece's picture (systems/horseBarding.js - made once, kept: three kinds and eight cloths, 64 texels a side). */
+  function bardingPicture(kind, colour = 0) {
+    const key = kind === 'caparison' ? `caparison:${colour}` : kind;
+    let t = bardingTex.get(key);
+    if (!t) {
+      const rgba = kind === 'caparison' ? caparisonTexels(colour) : bardingTexels(kind);
+      t = renderer.createCharacterTexture(rgbaMips(BARDING_TEXELS, BARDING_TEXELS, rgba), { wrapS: 0x2901, wrapT: kind === 'caparison' ? 0x812f : 0x2901 });   // REPEAT; the skirt's height clamped
+      bardingTex.set(key, t);
+    }
+    return t;
   }
 
   /** A horse let go: its palette (the stream is the rig's). */
@@ -164,8 +181,16 @@ export function createHorseRig({ renderer, fetchJson = (u) => fetch(u).then((r) 
     stepHorseGait(h.gait, bake, speed, dt, h.seed);
     writeHorsePalette(bake, h.gait, h.pal, h.scratch);
     renderer.updateSkinPalette(h.mesh, h.pal);
-    h.look = horseLookCode(horseLookOfCode(look | 0));
-    h.mesh.ranges[0].tex = lookTex(h.look);
+    const l = horseLookOfCode(look | 0);
+    h.look = horseLookCode(l);
+    h.mesh.ranges[0].tex = lookTex(horseHideCode(l));   // BARD1: the hide's picture is the hide's alone - the barding is its shells
+    const kind = BARDING_KINDS[l.barding ?? 0];
+    for (const r of h.mesh.ranges) {
+      if (!r.part?.startsWith('barding:')) continue;
+      const piece = r.part.slice(8);
+      r.hidden = piece === 'caparison' ? !l.caparison : piece !== kind;
+      if (!r.hidden) r.tex = bardingPicture(piece, l.caparison ?? 0);
+    }
     return place(h, feet, yaw);
   }
 

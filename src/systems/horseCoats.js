@@ -47,6 +47,7 @@
 //
 // Pure: no DOM, no renderer, no clock. Not a DFU member: Daggerfall has one horse. Ledger A (COATS1).
 import { TRANSPORT_HORSE } from './itemTemplates.js';
+import { BARDING_MAX, CAPARISON_MAX, horseBardingOf, describeBarding, bardingPixel } from './horseBarding.js';   // BARD1: what a horse wears rides its look
 
 /** The coats, in the order the Stable lists them and the item keeps them (`horseCoat`); the first the bay as drawn. */
 export const HORSE_COATS = Object.freeze(['bay', 'chestnut', 'black', 'grey', 'dun', 'buckskin', 'palomino']);
@@ -127,21 +128,32 @@ const pick = (weights, r) => {
   return 0;
 };
 
-/** A look, checked: `{ coat, pattern, legs, seed }`, each a value the law knows, else 0. */
+/** A look, checked: `{ coat, pattern, legs, seed }`, each a value the law knows, else 0 - and BARD1's `barding` and
+ *  `caparison` (systems/horseBarding.js) where it wears them, absent where not (a bare horse's look is COATS1's). */
 export function readHorseLook(v) {
   const o = v && typeof v === 'object' ? v : {};
-  return { coat: index(o.coat, HORSE_COAT_MAX), pattern: index(o.pattern, HORSE_PATTERN_MAX), legs: index(o.legs, HORSE_LEGS_MAX), seed: index(o.seed, HORSE_SEED_MAX) };
+  const barding = index(o.barding, BARDING_MAX), caparison = index(o.caparison, CAPARISON_MAX);
+  return { coat: index(o.coat, HORSE_COAT_MAX), pattern: index(o.pattern, HORSE_PATTERN_MAX), legs: index(o.legs, HORSE_LEGS_MAX), seed: index(o.seed, HORSE_SEED_MAX),
+    ...(barding ? { barding } : {}), ...(caparison ? { caparison } : {}) };
 }
 const C = HORSE_COATS.length, P = HORSE_PATTERNS.length, L = HORSE_LEGS.length;
-/** The look as the wire says it: one number, 0 the bay as drawn. */
-export const horseLookCode = (look) => { const l = readHorseLook(look); return l.coat + C * (l.pattern + P * (l.legs + L * l.seed)); };
+/** The hide's codes - COATS1's whole look, the coat, pattern, legs and seed: what BARD1's digits stand over. */
+export const HORSE_HIDE_CODES = C * P * L * (HORSE_SEED_MAX + 1);
+const B = BARDING_MAX + 1, K = CAPARISON_MAX + 1;
+/** The look as the wire says it: one number, 0 the bay as drawn - the hide's digits, then (BARD1) what it wears over
+ *  them (an older client reads a code past its own law's as the bay, so a barded horse is a bay to it, never a wrong one). */
+export const horseLookCode = (look) => { const l = readHorseLook(look); return l.coat + C * (l.pattern + P * (l.legs + L * l.seed)) + HORSE_HIDE_CODES * ((l.barding ?? 0) + B * (l.caparison ?? 0)); };
 /** The highest code a look can be. */
-export const HORSE_LOOK_CODE_MAX = C * P * L * (HORSE_SEED_MAX + 1) - 1;
+export const HORSE_LOOK_CODE_MAX = HORSE_HIDE_CODES * B * K - 1;
 /** The look a code names - the bay as drawn for anything the law does not know. */
 export function horseLookOfCode(code) {
   if (!Number.isInteger(code) || code < 0 || code > HORSE_LOOK_CODE_MAX) return readHorseLook(null);
-  return readHorseLook({ coat: code % C, pattern: Math.floor(code / C) % P, legs: Math.floor(code / (C * P)) % L, seed: Math.floor(code / (C * P * L)) });
+  const hide = code % HORSE_HIDE_CODES, worn = Math.floor(code / HORSE_HIDE_CODES);
+  return readHorseLook({ coat: hide % C, pattern: Math.floor(hide / C) % P, legs: Math.floor(hide / (C * P)) % L, seed: Math.floor(hide / (C * P * L)), barding: worn % B, caparison: Math.floor(worn / B) });
 }
+/** BARD1: a look's (or a code's) hide alone, as its code - the 3D horse's picture is the hide's; what it wears is its
+ *  own shells. */
+export const horseHideCode = (look) => horseLookCode(typeof look === 'number' ? horseLookOfCode(look) : readHorseLook(look)) % HORSE_HIDE_CODES;
 /** A look or its code, as a look. */
 const lookOf = (v) => (typeof v === 'number' ? horseLookOfCode(v) : readHorseLook(v));
 /** A look in words: "chestnut", "black pinto with socks", "dapple grey with stockings". */
@@ -150,7 +162,9 @@ export function describeHorseLook(v) {
   const coat = HORSE_LOOK_NAMES[HORSE_COATS[l.coat]].toLowerCase();
   const pattern = HORSE_PATTERNS[l.pattern];
   const body = pattern === 'solid' ? coat : pattern === 'dapples' ? `dapple ${coat}` : `${coat} ${pattern}`;
-  return l.legs ? `${body} with ${HORSE_LEGS[l.legs]}` : body;
+  const bare = l.legs ? `${body} with ${HORSE_LEGS[l.legs]}` : body;
+  const worn = describeBarding(l);   // BARD1: and what it wears
+  return worn ? `${bare}, in ${worn}` : bare;
 }
 
 /** Whether an item is a horse (DFU's one Transportation.Horse template). */
@@ -158,7 +172,7 @@ export const isHorseItem = (item) => item?.templateIndex === TRANSPORT_HORSE;
 /** The horse a player rides: the first in the pack (inventorySession.js hasHorse's own find). */
 export const activeHorseItem = (items) => (Array.isArray(items) ? items.find(isHorseItem) ?? null : null);
 /** A horse item's look (its four fields, checked) - the bay as drawn for anything else. */
-export const horseLookOf = (item) => readHorseLook(isHorseItem(item) ? { coat: item.horseCoat, pattern: item.horsePattern, legs: item.horseLegs, seed: item.horseSeed } : null);
+export const horseLookOf = (item) => readHorseLook(isHorseItem(item) ? { coat: item.horseCoat, pattern: item.horsePattern, legs: item.horseLegs, seed: item.horseSeed, ...horseBardingOf(item) } : null);   // BARD1: and what it wears
 /** The look of the horse a player rides, as its code (0, the bay as drawn, with none). */
 export const riddenHorseLook = (items) => horseLookCode(horseLookOf(activeHorseItem(items)));
 
@@ -410,7 +424,8 @@ export function isCoatPixel(r, g, b, tack = true) {
  */
 export function recolorHorse(image, look, { bottomFirst = true, legs = true, tack = true } = {}) {
   const l = lookOf(look);
-  if (!horseLookCode(l) || !image?.colors) return image;
+  const dyes = horseHideCode(l) > 0, worn = !!(l.barding || l.caparison);   // BARD1: a bay as drawn in barding is painted, not dyed
+  if ((!dyes && !worn) || !image?.colors) return image;
   const dye = COAT_DYES[HORSE_COATS[l.coat]];
   const { width: w, height: h } = image;
   const src = new Uint8Array(image.colors.buffer, image.colors.byteOffset, image.colors.byteLength);
@@ -477,7 +492,11 @@ export function recolorHorse(image, look, { bottomFirst = true, legs = true, tac
       const down = bottomFirst ? r1 - r : r - r0, up = bottomFirst ? r - r0 : r1 - r;
       let [white, dark] = l.pattern ? markingAt(l.pattern, l.seed, (x - x0) / unit, down / unit, x - x0, down) : [0, 0];
       if (band > 0 && up < band * (0.8 + 0.4 * hash3(x - x0, 0, l.seed + 13))) white = 1;   // the legs' white, its top ragged
-      dyeInto(out, src, i * 4, dye, hueJ, valJ, white, dark);
+      if (dyes) dyeInto(out, src, i * 4, dye, hueJ, valJ, white, dark);
+      if (worn) {   // BARD1: what it wears over the hide (systems/horseBarding.js bardingPixel), shaded by the hide's own light
+        const o = i * 4, c = bardingPixel(l, { shade: Math.max(src[o], src[o + 1], src[o + 2]) / 255 / (light[id] || 1), fy: up / hideH, px: x - x0, py: up, legs });
+        if (c) { out[o] = c[0]; out[o + 1] = c[1]; out[o + 2] = c[2]; }
+      }
     }
   }
   const Ctor = /** @type {any} */ (image.colors).constructor;

@@ -92,10 +92,11 @@ test('COATS3D each flank its own texels: the mirrored islands\' left triangles r
 test('COATS3D the stream: the character pass\'s GPU-skin corner - one pair, the post the identity, the hide first and the cards alpha-cut after it; the picture\'s v turned over', () => {
   const s = horseSkinStream(BAKE);
   assert.equal(s.floats, skinStreamFloats(1)); assert.equal(s.floats, SKIN_STATIC_FLOATS + 9); assert.equal(s.pairs, 1);
-  assert.deepEqual(s.ranges.map((r) => [r.part, r.alpha]), [['body', false], ['hair', true]]);
+  // PIN MOVED (BARD1): the barding's four shells after the cards (test/bard1_barding.test.js)
+  assert.deepEqual(s.ranges.map((r) => [r.part, r.alpha]), [['body', false], ['hair', true], ['barding:leather', false], ['barding:chain', false], ['barding:plate', false], ['barding:caparison', false]]);
   const body = BAKE.meshes.find((m) => m.part === 'body'), hair = BAKE.meshes.find((m) => m.part === 'hair');
-  assert.deepEqual(s.ranges.map((r) => r.count), [body.indices.length, hair.indices.length]);
-  assert.equal(s.stream.length, (body.indices.length + hair.indices.length) * s.floats);
+  assert.deepEqual(s.ranges.slice(0, 2).map((r) => r.count), [body.indices.length, hair.indices.length]);
+  assert.equal(s.stream.length, s.ranges.reduce((n, r) => n + r.count, 0) * s.floats);
   const v = body.indices[0], o = 0;
   assert.deepEqual([...s.stream.slice(o, o + 3)].map(r3), body.positions.slice(v * 3, v * 3 + 3).map(r3));
   assert.deepEqual([...s.stream.slice(o + 3, o + 6)], [1, 1, 1], 'white: the picture is the colour');
@@ -285,7 +286,8 @@ test('COATS3D the GL half: one stream, a palette a horse; a look dyed DYE_ROWS a
   assert.deepEqual([r.made.meshes, r.made.textures, r.released.palettes], [1, 2, 1], 'the stream once, the bay\'s and the cards\' pictures; the shared mesh poses nothing');
   const a = rig.horse(1), b = rig.horse(2);
   assert.equal(a.mesh.vao, b.mesh.vao, 'one stream'); assert.notEqual(a.mesh.skin.tex, b.mesh.skin.tex, 'a palette each');
-  assert.deepEqual(a.mesh.ranges.map((x) => [x.part, x.alphaCut]), [['body', 0], ['hair', 0.5]]);
+  assert.deepEqual(a.mesh.ranges.slice(0, 2).map((x) => [x.part, x.alphaCut]), [['body', 0], ['hair', 0.5]]);   // PIN MOVED (BARD1): the shells after them, hidden till worn
+  assert.ok(a.mesh.ranges.slice(2).every((x) => x.hidden && x.part.startsWith('barding:')));
   const pinto = code(1, 1, 1, 321);
   rig.step(a, { feet: [0, 0, 0], yaw: 0, speed: 0, dt: 0.016, look: pinto });
   const bay = rig.lookTex(0);
