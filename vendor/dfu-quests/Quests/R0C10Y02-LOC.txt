@@ -1,0 +1,184 @@
+-- Quest: C:\QUESTS\WORKING\R0C10Y02.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 10
+-- QuestId: 2
+Messages: 31
+Quest: R0C10Y02
+DisplayName: Контрабанда золота
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Мне нужен некто, кто может отнести специальный
+<ce> предмет моему знакомому в ___contact_.
+<ce> Взамен на него вы получите другой предмет. Если вы
+<ce> принесете этот предмет мне обратно, я буду счастлив
+<ce> вознаградить вас _reward_ золотыми монетами.
+<ce> Согласны?
+
+RefuseQuest:  [1001]
+<ce> Нет? Как жалко! А я готовился вас
+<ce> щедро отблагодарить.
+
+AcceptQuest:  [1002]
+<ce> Очень хорошо! Возьмите этот слиток золота и
+<ce> отнесите его =contact_,
+<ce> прозванному _contact_ в место, называемое
+<ce> __contact_ в ___contact_.
+<ce> Поторопитесь. Если вы не доберетесь
+<ce> в __contact_ за =1stparton_ дней,
+<ce> _contact_ уедет, и
+<ce> никому из нас не посчастливится, особенно вам
+<ce> Удачи вам.
+
+QuestFail:  [1003]
+<ce> Либо вы еще не начинали, либо пришли
+<ce> извиниться за провал. Это так, %pcf?
+<ce> Да, я очень сильно разочарован.
+<ce> Ваша неспособность сильно осложнила мою жизнь
+<ce> Полагаю, что в следующий раз я буду
+<ce> осмотрительнее. Вон отсюда, %pcf. Сейчас же.
+
+QuestComplete:  [1004]
+<ce> Отлично, %pcf, вы вернулись
+<ce> с моим _item2_, как и обещали. Ваша
+<ce> доблесть и храбрость и вправду велики! Я уверен
+<ce> мы оценим вашу дальнейшую службу по достоинству
+<ce> в ближайшем будущем. Благодарю.
+
+RumorsDuringQuest:  [1005]
+<ce> Здесь был этот =contact_, выспрашивая, не видел ли я %ra.
+   <--->
+<ce> Некий =contact_ разыскивал %ra с _item1_ недавно.
+
+RumorsPostfailure:  [1006]
+<ce> Да, _questgiver_, я слышал, взбешен
+<ce> неким %ra наемником.
+   <--->
+<ce> _questgiver_ все еще полагается на наемников и
+<ce> я слышал, что %g кипел от гнева.
+
+RumorsPostsuccess:  [1007]
+<ce> Я слышал, что _questgiver_ наконец-таки получил некий
+<ce> _item2_, который %g был нужен.
+   <--->
+<ce> _questgiver_ воспевает дифирамбы этому
+<ce> %ra наемнику.
+
+QuestorPostsuccess:  [1008]
+Ну здравствуй снова, мой юный друг. Я не забыл о твоих услугах.
+   <--->
+А, %pcf. Рад видеть вас снова.
+
+QuestorPostfailure:  [1009]
+<ce> Что, это никчемный %ra.
+<ce> У тебя будут большие проблемы.
+   <--->
+<ce> Да, неужели это никчемный
+<ce> курьер. И почему бы тебе не уползти отсюда
+<ce> прочь сию же секунду, а?
+
+
+QuestLogEntry:  [1010]
+%qdt:
+ _questgiver_
+ из ___questgiver_ послал меня
+ к контактному лицу _contact_ в ___contact_,
+ чтобы доставить слиток золота этому
+ =contact_ в __contact_.
+ Золото должно быть в %g4 руках не позднее
+ =1stparton_ дней, чтобы я получил
+ причитающуюся мне награду.
+
+Message:  1011
+%qdt:
+ Я доставил золото
+ _contact_, который дал мне _item2_,
+ чтобы я отнес его _questgiver_.
+
+Message:  1020
+<ce> Этот золотой слиток, должно быть, довольно
+<ce> тяжел. Как насчет того, что я освобожу тебя
+<ce> от него? Давай его сюда,
+<ce> и я позволю тебе уйти по добру, по здорову.
+
+Message:  1021
+<ce> Какой храбрый малый!
+<ce> Уверен, что расскажу всем моим друзьям,
+<ce> насколько вы можете быть для них полезны.
+
+Message:  1030
+<ce> А, так вы и есть тот курьер.
+<ce> Отлично, отлично. Сейчас, отнесите
+<ce> этот _item2_ немедленно назад к
+<ce> _questgiver_, и %g вознаградит вас, как и
+<ce> обещал. С вами приятно иметь дело,
+<ce> %pcf!
+
+
+
+QBN:
+Item _reward_ gold
+Item _item1_ gold_bar
+Item _item2_ magic_item
+
+Person _questgiver_ face 76 group Questor
+Person _contact_ face 80 group Local_3.0 remote
+
+
+Clock _1stparton_ 00:00 0 flag 1 range 1 4
+Clock _2ndparton_ 00:00 0 flag 1 range 1 4
+
+Foe _thief_ is Spellsword
+
+--	Quest start-up:
+	start timer _1stparton_
+	log 1010 step 0
+	get item _item1_
+	create npc _contact_
+
+_pcgetsgold_ task:
+	toting _item2_ and _questgiver_ clicked
+	give pc _reward_
+	end quest
+
+_queston_ task:
+	when _1stparton_ and not _npcclicked_
+	when _2ndparton_
+	change repute with _questgiver_ by -20
+	end quest
+
+variable _qgclicked_
+_npcclicked_ task:
+	toting _item1_ and _contact_ clicked
+	start timer _2ndparton_
+	log 1011 step 1
+	get item _item2_ saying 1030
+
+until _npcclicked_ performed:
+	create foe _thief_ every 5 minutes 5 times with 25% success
+
+variable _1stparton_
+variable _pchasitem1_
+variable _pchasitem2_
+yes task:
+	have _item1_ set _S.09_
+
+variable _no_
+_S.09_ task:
+	give item _item1_ to _thief_
+	say 1021
+--moved "saying 1021" to new line. bad argument
+	restrain foe _thief_
+
+_S.10_ task:
+	injured _thief_
+	prompt 1020 yes yes no _no_
+
+variable _2ndparton_
+_S.12_ task:
+	when _queston_ or _pcgetsgold_
+	make _item2_ permanent
+	make _item1_ permanent

@@ -1,0 +1,271 @@
+-- Quest: C:\QUESTS\WORKING\A0C00Y14.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: peasant
+-- Repute: 0
+-- QuestId: 14
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 21
+Quest: A0C00Y14
+DisplayName: Мальчик-доставщик
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Меня зовут _questgiver_.
+<ce> Задание мое простое. Если вам
+<ce> по пути, то может быть вы не против
+<ce> увезти посылку для моего друга.
+<ce> Буду очень благодарен и заплачу
+<ce> _gold_ золотых. Что скажете,
+<ce> %pcf?
+   <--->
+<ce> Привет, я _questgiver_.
+<ce> Мне нужен кто-то, кто сможет донести
+<ce> посылку для меня. Это просто небольшое
+<ce> путешествие до другого города, но
+<ce> мне самому сейчас некогда этим заняться.
+<ce> Я заплачу _gold_ золотых за доставку.
+
+RefuseQuest:  [1001]
+<ce> Очень плохо.
+   <--->
+<ce> Лучше забудьте, о чем я просил!
+   <--->
+<ce> Поищу кого-нибудь другого, который
+<ce> возьмет работу, чтобы прожить.
+
+AcceptQuest:  [1002]
+<ce> Отлично! Вот пакет. Отвезите это
+<ce> к _pickuplocal_ здесь в городе
+<ce> %g заплатит. Посылку необходимо
+<ce> доставить до завтра.
+   <--->
+<ce> Наконец-то! Кто-то согласился на
+<ce> эту работу. Просто отнесите это
+<ce> к _pickuplocal_ здесь в городе.
+<ce> %g заплатит вам _gold_ золотых.
+<ce> Доставить необходимо до завтра.
+
+QuestComplete:  [1004]
+<ce> Я так надеялся, что _questgiver_
+<ce> сможет доставить мне это вовремя.
+<ce> %g был очень занят в последнее время.
+<ce> Вот обещанная плата: _gold_ золотых.
+
+RumorsDuringQuest:  [1005]
+<ce> Что-то погода совсем испортилась.
+<ce> Обычно в это время года не так.
+
+RumorsPostfailure:  [1006]
+<ce> Я слышал, что у королевы есть дело!
+
+RumorsPostsuccess:  [1007]
+<ce> Все %ra такие любопытные?
+
+QuestorPostsuccess:  [1008]
+<ce> Благодарю за доставку пакета,
+<ce> %pcf.
+
+QuestorPostfailure:  [1009]
+<ce> Вор! Вы взяли мою посылку, но
+<ce> _pickuplocal_ так и не получил ее.
+<ce> Я не собираюсь помогать вам.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _questgiver_ из
+ ___questgiver_ нанял меня
+ довезти посылку к _pickuplocal_,
+ тоже из ___pickuplocal_
+ Времени у меня ровно до завтра.
+
+Message:  1011
+<ce> Эта книга не имеет цены.
+<ce> _pickuplocal_ не видел эту
+<ce> копию _book_
+<ce> уже много лет.
+
+Message:  1012
+<ce> _pickuplocal_ нуждается в этом
+<ce> _ingredient_ для особого сорта
+<ce> пива, которое %g варит.
+
+Message:  1013
+<ce> Эта _jewelry_ - дар
+<ce> к _pickuplocal_, с которым заключена
+<ce> договоренность.
+
+Message:  1014
+<ce> Это особый _mensclothing_,
+<ce> который моя мать сделала для
+<ce> _pickuplocal_ к празднику.
+
+Message:  1015
+<ce> _pickuplocal_ заказал эту
+<ce> картину _painting_.
+<ce> Необходимо доставить до завтра.
+
+Message:  1016
+<ce> _pickuplocal_ нуждается в этом
+<ce> _potion_ как можно скорее.
+
+Message:  1017
+<ce> _pickuplocal_ грозит опасность
+<ce> Это - _weapon_ - должно
+<ce> придать ему уверенности.
+
+Message:  1018
+<ce> Я приобрел это прекрасное _womensclothing_
+<ce> для жены _pickuplocal_.
+<ce> Будет очень некрасиво, если посылка не
+<ce> будет доставлена в срок.
+
+Message:  1019
+<ce> Что вы хотите? _questgiver_?
+<ce> Да, %g обещал прислать некоторое
+<ce> время назад посылку. Если вы
+<ce> найдете %g4, %g заплатит за
+<ce> доставку.
+
+Message:  1020
+<ce> Я слышал, _questgiver_
+<ce> говорил, что готов заплатить
+<ce> за доставку. Просто отдайте это
+<ce> мне и я вас не обижу.
+
+
+
+QBN:
+Item _book_ book0
+Item _womensclothing_ womens_clothing
+Item _potion_ misc
+Item _mensclothing_ mens_clothing
+Item _painting_ portrait
+Item _weapon_ weapon
+Item _ingredient_ large_plant
+Item _jewelry_ trinket
+Item _gold_ gold range 30 to 75
+
+Person _questgiver_ face 137 group Questor
+Person _pickuplocal_ face 232 group Local_3.0 local
+
+Clock _oneday_ 1.00:00
+--added precise timers due to short time limit
+
+Foe _thief_ is Burglar
+
+--	Quest start-up:
+	start timer _oneday_
+	log 1010 step 0
+	pick one of _S.01_ _S.10_
+	pick one of _S.14_ _S.15_ _S.15_ _S.15_
+	create npc _pickuplocal_
+
+_oneday_ task:
+	end quest
+
+_S.01_ task:
+	pick one of _S.02_ _snitch0_ _S.04_ _S.05_
+--added underscores to snitch0
+
+_S.02_ task:
+	get item _book_ saying 1011
+
+_snitch0_ task:
+	get item _ingredient_ saying 1012
+
+_S.04_ task:
+	get item _jewelry_ saying 1013
+
+_S.05_ task:
+	get item _mensclothing_ saying 1014
+
+_S.06_ task:
+	get item _painting_ saying 1015
+
+_S.07_ task:
+	get item _potion_ saying 1016
+
+_S.08_ task:
+	get item _weapon_ saying 1017
+
+_S.09_ task:
+	get item _womensclothing_ saying 1018
+
+_S.10_ task:
+	pick one of _S.06_ _S.07_ _S.08_ _S.09_
+
+_S.11_ task:
+	toting _jewelry_ and _pickuplocal_ clicked
+	toting _mensclothing_ and _pickuplocal_ clicked
+	toting _painting_ and _pickuplocal_ clicked
+	toting _potion_ and _pickuplocal_ clicked
+	toting _weapon_ and _pickuplocal_ clicked
+	toting _book_ and _pickuplocal_ clicked
+	toting _ingredient_ and _pickuplocal_ clicked
+	toting _womensclothing_ and _pickuplocal_ clicked
+	give pc _gold_
+	end quest
+--removed unnecessary delay
+
+_S.12_ task:
+	clicked npc _pickuplocal_
+
+_S.13_ task:
+	when _S.12_ and not _S.11_
+	say 1019
+	clear _S.12_ _S.13_
+
+_S.14_ task:
+	create foe _thief_ every 20 minutes 3 times with 25% success
+
+variable _S.15_
+_S.16_ task:
+	injured _thief_
+	prompt 1020 yes _yes_ no _no_
+
+_yes_ task:
+	restrain foe _thief_
+
+variable _no_
+_yes1_ task:
+	when _yes_ and _S.02_
+	take _book_ from pc
+	give item _book_ to _thief_
+--added "take X from pc" for all yes# tasks.
+
+_yes2_ task:
+	when _yes_ and _snitch0_
+	take _ingredient_ from pc
+	give item _ingredient_ to _thief_
+
+_yes3_ task:
+	when _yes_ and _S.04_
+	take _jewelry_ from pc
+	give item _jewelry_ to _thief_
+
+_yes4_ task:
+	when _yes_ and _S.05_
+	take _mensclothing_ from pc
+	give item _mensclothing_ to _thief_
+
+_ring_ task:
+	when _yes_ and _S.06_
+	take _painting_ from pc
+	give item _painting_ to _thief_
+
+_yes6_ task:
+	when _yes_ and _S.07_
+	take _potion_ from pc
+	give item _potion_ to _thief_
+
+_note_ task:
+	when _yes_ and _S.08_
+	take _weapon_ from pc
+	give item _weapon_ to _thief_
+
+_poet_ task:
+	when _yes_ and _S.09_
+	take _womensclothing_ from pc
+	give item _womensclothing_ to _thief_

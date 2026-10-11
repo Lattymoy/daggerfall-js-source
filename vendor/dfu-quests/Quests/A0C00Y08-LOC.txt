@@ -1,0 +1,192 @@
+-- Quest: C:\QUESTS\WORKING\A0C00Y08.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: peasant
+-- Repute: 0
+-- QuestId: 8
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 34
+Quest: A0C00Y08
+DisplayName: Наемный убийца
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Мое имя неважно. Все что вам нужно знать, что мне
+<ce> нужен кто-то, кто не боится пролить чужую кровь,
+<ce> скажем, за _gold_ золотых. Только скажите мне,
+<ce> если заинтересовались. Не возьмете ли вы эту
+<ce> работу?
+   <--->
+<ce> Шшшш! На полтона ниже. Прежде чем я скажу
+<ce> что-либо, вы случайно не из тех %ra, которые
+<ce> убивают ради золота? Как насчет _gold_ золотых?
+   <--->
+<ce> Я ищу кого-то, кто не падает в обморок при виде
+<ce> крови. Человеческой крови. Вы убьете человека
+<ce> за, скажем, _gold_ золотых?
+
+RefuseQuest:  [1001]
+<ce> Вы никогда меня не видели.
+   <--->
+<ce> Проваливай. Я не хочу, чтобы нас увидели вместе.
+   <--->
+<ce> Прекрасно. Выход вон там.
+
+AcceptQuest:  [1002]
+<ce> Я хочу смерти _darkb_. Проблема в то, что
+<ce> Темное Братство не хочет браться за эту работу.
+<ce> Не хочу быть обязанным им. Мне нужен независимый
+<ce> одиночка. Сделайте работу и возвращайтесь до исхода
+<ce> недели и я заплачу вам _gold_ золотых. Просто
+<ce> спросите о _questgiver_, я буду ждать неподалеку.
+
+QuestComplete:  [1004]
+<ce> Возмездие свершилось! В любом случае вам лучше
+<ce> убраться из города. Я слышал, что Братство ищет
+<ce> виновника. Вот ваши деньги %pcf.
+
+RumorsDuringQuest:  [1005]
+<ce> Я слышал, что _questgiver_ ненавидит _darkb_.
+   <--->
+<ce> _darkb_ как-то связан с Темным Братством.
+
+RumorsPostsuccess:  [1007]
+<ce> Кто-то убил _darkb_, а народ молчит!
+   <--->
+<ce> Слыхали про убийство? _darkb_ был убит
+<ce> наемным убийцей.
+   <--->
+<ce> Мне никогда не нравился _darkb_. Я рад,
+<ce> что кто-то наконец-то разобрался с ним.
+<ce> Я слышал, что в этом замешано Темное
+<ce> Братство.
+
+QuestorPostsuccess:  [1008]
+<ce> Потише пожалуйста. Вы убили _darkb_ для
+<ce> меня и конечно же я не останусь в долгу, ибо
+<ce> я не хочу, чтобы люди думали про меня, что я
+<ce> не держу слово.
+
+QuestorPostfailure:  [1009]
+<ce> Я дал вам работу, а вы ее не выполнили.
+<ce> Все что нужно было сделать - это убить
+<ce> _darkb_. А сейчас уже слишком поздно, а
+<ce> Братство гонится за мной. Оставьте меня
+<ce> в покое.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Принят контракт на убийство _darkb_.
+ У меня ровно неделя, чтобы вернуться к
+ _questgiver_ из ___questgiver_ с
+ известием о выполненной работе.
+
+Message:  1015
+<ce> _darkb_ не мертв! Вы что, совсем
+<ce> меня за дурака держите, %pcf?
+
+Message:  1021
+<ce> Помогите! Убивают! Помогите!
+
+Message:  1022
+<ce> Ха! Да какой из тебя ассассин? К оружию! К оружию!
+
+Message:  1023
+<ce> Я ранен! %oth!
+
+Message:  1024
+<ce> Трус! Ты напал на меня безо всякой причины.
+
+Message:  1030
+<ce> _questgiver_?  Мне немного известно о нем.
+<ce> Боится за себя.
+
+Message:  1031
+<ce> Я слышал, что у _questgiver_ есть странные друзья.
+<ce> Но я вам ничего не говорил.
+
+Message:  1032
+<ce> Хороший высокопоставленный гражданин.
+<ce> Спросите кого-нибудь еще.
+
+Message:  1033
+<ce> _darkb_ обычно обретается в _place_,
+<ce> но я не хочу вмешиваться в %g4 дела.
+<ce> Это просто дружеский совет.
+
+
+
+QBN:
+Item _gold_ gold
+
+Person _questgiver_ group Questor anyInfo 1030 rumors 1031
+Person _darkb_ face 1 faction The_Dark_Brotherhood remote anyInfo 1032 rumors 1033
+
+Place _place_ local random
+
+Clock _S.00_ 7.00:00 0 flag 1 range 0 1
+
+Foe _bard_ is Bard
+Foe _rogue_ is Rogue
+Foe _archer_ is Archer
+Foe _spellsword_ is Spellsword
+
+--	Quest start-up:
+	start timer _S.00_
+	log 1010 step 0
+	pc at _place_ set _S.11_
+	place npc _darkb_ at _place_
+
+_S.00_ task:
+	end quest
+
+_S.01_ task:
+	restrain foe _archer_
+	place foe _archer_ at _place_
+
+_S.02_ task:
+	restrain foe _bard_
+	place foe _bard_ at _place_
+
+_S.03_ task:
+	restrain foe _rogue_
+	place foe _rogue_ at _place_
+
+_S.04_ task:
+	restrain foe _spellsword_
+	place foe _spellsword_ at _place_
+
+variable _S.05_
+_S.06_ task:
+	injured _rogue_ saying 1023
+	injured _archer_ saying 1021
+	injured _bard_ saying 1022
+	injured _spellsword_ saying 1024
+
+_S.07_ task:
+	killed 1 _archer_
+	killed 1 _bard_
+	killed 1 _rogue_
+	killed 1 _spellsword_
+	change repute with _darkb_ by -20
+	legal repute -20
+--nerfed legal repute, not fair for normal gameplay
+
+_S.08_ task:
+	clicked npc _questgiver_
+
+_clearclick_ task:
+	when _S.08_ and not _S.07_
+	say 1015
+	clear _S.08_ _clearclick_
+--added an additional clear clearclick here. Otherwise this clearing function would stop working after the first click.
+
+_S.10_ task:
+	when _S.08_ and _S.07_
+	give pc _gold_
+	end quest
+
+_S.11_ task:
+	pick one of _S.01_ _S.02_ _S.03_ _S.04_
+	hide npc _darkb_

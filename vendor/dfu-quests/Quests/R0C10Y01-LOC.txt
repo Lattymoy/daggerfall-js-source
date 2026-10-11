@@ -1,0 +1,134 @@
+-- Quest: C:\QUESTS\WORKING\R0C10Y01.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 10
+-- QuestId: 1
+Messages: 22
+Quest: R0C10Y01
+DisplayName: Контрабандная торговля
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Если вы хотите поработать, то я ищу человека,
+<ce> который может отнести особую вещь - _item_ моему знакомому.
+<ce> Вознаграждение будет крайне щедрым. Заинтересованы?
+
+RefuseQuest:  [1001]
+<ce> Правда? Вероятно, слишком заняты. Жаль!
+
+AcceptQuest:  [1002]
+<ce> Отлично! Вот _item_
+
+QuestFail:  [1003]
+<ce> %pcf, лучше бы вы занялись нашим маленьким
+<ce> соглашением.
+
+QuestComplete:  [1004]
+<ce> Рад видеть вас %pcf. А вот и
+<ce> _item_. Отлично! А это маленькая
+<ce> безделушка за ваши хлопоты. Я надеюсь,
+<ce> вам нравится красное. Берегите себя.
+
+RumorsDuringQuest:  [1005]
+_questgiver_, я слышал, все еще промышляет контрабандой.
+   <--->
+За последнее время произошел поразительный рост контрабанды.
+
+RumorsPostfailure:  [1006]
+Кто-то нашел очень прелестный _item_ поблизости недавно.
+   <--->
+Я слышал, _questgiver_ свиреп как ад к некоему %ra авантюристу.
+
+RumorsPostsuccess:  [1007]
+Некий =contact_ был прямо здесь, околачиваясь вокруг _item_.
+   <--->
+Я слышал, что какой-то ювелирный магазин сообщил о воре, укравшем большой рубин.
+
+QuestorPostsuccess:  [1008]
+А, %pcf. Я надеюсь, что рубин в целости и сохранности, мой друг.
+   <--->
+Ну здравствуй снова, мой юный друг.
+
+QuestorPostfailure:  [1009]
+<ce> Я догадываюсь, что вы пришли извиниться
+<ce> за проваленное дело с контрабандой.
+<ce> Извинения не принимаются.
+   <--->
+<ce> Так это ты %ra кто не мог
+<ce> даже осуществить простейшую доставку?
+<ce> И почему же я буду попусту тратить слова на тебя?
+
+QuestLogEntry:  [1010]
+%qdt:
+ _questgiver_
+ попросил меня доставить _item_ контактному лицу
+ в ___contact_, называемое _contact_.
+ _item_ нужно доставить %g2 в
+ __contact_ за =queston_
+ дней, иначе я лишусь награды.
+
+Message:  1020
+<ce> Давай сюда камешек! Я знаю,
+<ce> что он у тебя. В гильдии так сказали.
+<ce> Если нет, то я замочу тебя одной левой.
+
+Message:  1021
+<ce> Прискорбно, да? Проваливай отсюда,
+<ce> пока я не изменил свое мнение.
+
+
+
+QBN:
+Item _reward_ ruby
+Item _item_ ruby
+
+Person _questgiver_ group Questor
+Person _contact_ group Local_3.0 remote
+
+
+Clock _queston_ 00:00 0 flag 1 range 1 4
+Clock _delay_ 00:30
+--removed flags from _delay_
+
+Foe _thief_ is Nightblade
+
+--	Quest start-up:
+	create foe _thief_ every 5 minutes 5 times with 25% success
+	start timer _queston_
+	log 1010 step 0
+	get item _item_
+	create npc _contact_
+
+variable _pcgetsgold_
+variable _pchasitem_
+_queston_ task:
+	change repute with _questgiver_ by -20
+	end quest
+
+_npcclicked_ task:
+	toting _item_ and _contact_ clicked
+	give pc _reward_
+	start timer _delay_
+
+yes task:
+	have _item_ set _S.07_
+
+variable _no_
+_S.06_ task:
+	injured _thief_
+	prompt 1020 yes yes no _no_
+
+_S.07_ task:
+	give item _item_ to _thief_
+	say 1021
+--moved "saying 1021" to new line. bad argument
+	restrain foe _thief_
+
+_delay_ task:
+	end quest
+
+_S.09_ task:
+	when _queston_ or _delay_
+	make _item_ permanent

@@ -1,0 +1,163 @@
+-- Quest: C:\QUESTS\WORKING\R0C11Y19.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 11
+-- QuestId: 19
+Messages: 22
+Quest: R0C11Y19
+DisplayName: Подарок императора
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> У меня сложилась весьма деликатная ситуация,
+<ce> %pcf. Если бы я мог рассчитывать на
+<ce> ваше усердие и молчание, то вы получили бы
+<ce> хорошее вознаграждение, скажем, _reward_ золотых
+<ce> за избавление меня от страданий.
+<ce> Что скажете?
+
+RefuseQuest:  [1001]
+<ce> %oth, пропади все пропадом, %oth!
+<ce> Меня окружают апатичные лентяи!
+<ce> Ничего личного, %pcf.
+
+AcceptQuest:  [1002]
+<ce> Что ж, это очень хорошо. Не так давно,
+<ce> во время финансового упадка, мне пришлось
+<ce> заложить кольцо, подаренное мне лично
+<ce> императором. Мне думалось, что Уриэлю
+<ce> Септиму никогда не придет в голову посетить
+<ce> этот уголок империи, но недавно прошли слухи,
+<ce> что здесь появились его люди и мне очень
+<ce> захотелось вернуть колечко себе обратно.
+<ce> _contact_ из __contact_
+<ce> в ___contact_, будет держать его у себя не
+<ce> более =1stparton_ дней. Вот золото для выкупа
+<ce> кольца. Удачи и пусть %god ускорит ваше
+<ce> путешествие.
+
+QuestFail:  [1003]
+<ce> Мое кольцо, %pcf! %god, где
+<ce> потерянное кольцо, за которым я тебя посылал?
+<ce> Где оно? Если ты потерял его,
+<ce> я сдеру с тебя шкуру!
+
+QuestComplete:  [1004]
+<ce> О, это просто великолепно, кольцо! Благодарю
+<ce> вас, очень благодарю, %pcf.
+<ce> Вот _reward_ золотых, как и было обещано.
+<ce> Дорогая вещица, но она стоит того.
+
+RumorsDuringQuest:  [1005]
+Люди императора стараются не привлекать к себе внимания, когда появляются в городе.
+   <--->
+Они стараются не светиться; люди императора могут быть везде, как говорят.
+
+RumorsPostfailure:  [1006]
+Мне говорили, что _questgiver_ не в восторге от встречи с имперцамиу.
+   <--->
+По какой-то причине, _questgiver_ больше не в фаворе у императора.
+
+RumorsPostsuccess:  [1007]
+_questgiver_ устроил имперским служащим пышный прием, я могу его понять.
+   <--->
+Имперские служащие оказались довольны оказанным приемом.
+
+QuestorPostsuccess:  [1008]
+А, привет, спаситель кольца. Что я могу сделать для вас?
+   <--->
+Вы помогли мне остаться на хорошем счету у императора. Что я могу сделать для вас?
+
+QuestorPostfailure:  [1009]
+<ce> Имперские эмиссары не заметили пропажи
+<ce> кольца, благодарение %god.
+<ce> Несмотря на это мне неприятно
+<ce> видеть вас здесь, %pcf.
+
+QuestLogEntry:  [1010]
+<ce> Должно быть вы %pcf. Вам повезло,
+<ce> вы как раз вовремя. Я уже собирался
+<ce> продать кольцо в третьи руки. Насколько
+<ce> я понимаю, _questgiver_ хочет кольцо обратно
+<ce> прежде, чем прибудут государственные мужи
+<ce> империи. Вам следует поторопиться, времени
+<ce> совсем мало.
+
+Message:  1015
+%qdt:
+ _questgiver_ из
+ ___questgiver_ послал меня
+ ___contact_ в __contact_,
+ где находится _contact_ с кольцом,
+ которое _questgiver_ заложил.
+ Мне нужно заплатить за кольцо золотом,
+ которе мне дал _questgiver_,
+ а потом вернуться обратно в __questgiver_.
+ На все про все у меня примерно =1stparton_ дней.
+
+Message:  1020
+<ce> Отдай кольцо. Это можно сделать
+<ce> по-хорошему или по-плохому.
+<ce> Тебе решать. В любом случае
+<ce> кольцо будет у нас.
+
+Message:  1021
+<ce> Дурачина. Сейчас ты умрешь. Неужели
+<ce> ты действительно думаешь, что
+<ce> мы оставляем свидетелей в живых?
+
+
+
+QBN:
+Item _reward_ gold
+Item _item1_ gold_bar
+Item _item2_ ring
+
+Person _questgiver_ face 72 group Questor
+Person _contact_ face 80 group Pawnbroker remote
+
+
+Clock _1stparton_ 00:00 0 flag 17 range 1 4
+
+Foe _F.00_ is 2 Knight
+
+--	Quest start-up:
+	start timer _1stparton_
+	log 1015 step 0
+	get item _item1_
+
+_pcgetsgold_ task:
+	toting _item2_ and _questgiver_ clicked
+	give pc _reward_
+	end quest
+
+variable _queston_
+variable _qgclicked_
+variable _npcclicked_
+_1stparton_ task:
+	make _item2_ permanent
+	make _item1_ permanent
+	change repute with _questgiver_ by -50
+	end quest
+
+variable _pchasitem1_
+_pchasitem2_ task:
+	toting _item1_ and _contact_ clicked
+	create foe _F.00_ every 5 minutes 3 times with 35% success
+	get item _item2_
+	say 1010
+
+yes task:
+	have _item2_ set _S.09_
+
+variable _no_
+_S.09_ task:
+	give item _item2_ to _F.00_
+	say 1021
+--moved "saying 1021" to its own line, wouldn't work otherwise
+
+_S.10_ task:
+	injured _F.00_
+	prompt 1020 yes yes no _no_

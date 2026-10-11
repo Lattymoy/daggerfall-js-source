@@ -1,0 +1,170 @@
+-- Quest: C:\QUESTS\WORKING\60C00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: Sheogorath
+-- Repute: 0
+-- QuestId: 0
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 31
+Quest: 60C00Y00
+DisplayName: Задание Шеогората
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Ага! Бьюсь об заклад, ты ждешь не меня!
+<ce> Мои как-бы-братья и не-сестры иногда
+<ce> весьма медлительны, вот я и подсуетился
+<ce> немного. Им же хуже. Ты наверное еще
+<ce> пожалеешь, что заключил со мной сделку.
+<ce> Но поторопись! У меня не так уж много
+<ce> времени, меня ждет много других дел.
+<ce> Итак, приступим! Сила, которой %ra
+<ce> жаждет окутать тело и с легкостью
+<ce> избежать четыре десятка смертельных
+<ce> для смертных болезней? Да, у Шигората
+<ce> есть такая сила, достаточно силы, чтобы
+<ce> раздвинуть ветви на пути глаз луны и
+<ce> кровавого дождя, прошедших через
+<ce> Тамриэль. Не согласишься лы ты в обмен
+<ce> на эту силу отправить ко мне на чашечку
+<ce> чая кое-кого?
+
+RefuseQuest:  [1001]
+<ce> Оп-ля, отвержен... и кем - грязным
+<ce> %ra с завшивленными волосами. Как
+<ce> далеко зашел Шигорат! Наверное в
+<ce> следующий раз запрошу побольше за
+<ce> вызов. Тайрра, %pct.
+
+AcceptQuest:  [1002]
+<ce> К делу, сейчас мы выпьем чаю! Иди-ка
+<ce> в местечко под названием ___mondung_,
+<ce> где находится объект, раздражающий меня и
+<ce> причиняющий массу неудобств, а так же
+<ce> желающий примерить корону из ежевики.
+<ce> Погоди ... только не приглашай этого
+<ce> боевого мага ко мне на чай. Теперь я
+<ce> вспомнил. Имя этого субъекта =monster_
+<ce> Доведи %g4 до смерти, уничтожь %g4
+<ce> полностью, вот что я хочу. После же
+<ce> иди из ___mondung_ в один сумасшедший
+<ce> дом, называемый ___contactdung_,
+<ce> и повидай моего друга =qgfriend_,
+<ce> _qgfriend_. Получишь в награду _artifact_.
+<ce> На все про все у тебя =1stparton_ дней,
+<ce> иначе %g поедет женить своего наследника
+<ce> из Рованды. Я рассказал все что нужно.
+<ce> Хватит тявкать и прыгать как газель.
+
+QuestFail:  [1003]
+<ce> Извините, вы наверное не в курсе,
+<ce> но я законченый псих. И если вы не
+<ce> отойдете подальше, я вас обблюю.
+
+QuestComplete:  [1004]
+<ce> Ах, как это необычно для вас, мадам
+<ce> тюремщица, выпустить меня из клетки.
+<ce> Шигорат переменил свое желание, он
+<ce> он хотел пригласить =monster_ на чай,
+<ce> но когда нашел только труп, решил,
+<ce> что так будет лучше. =monster_
+<ce> не достанется пирожок. Пока не забыл,
+<ce> вот _artifact_. Только не наводи это
+<ce> на меня.
+
+RumorsDuringQuest:  [1005]
+Сумасшедший боевой маг терроризирует окрестности вокруг ___mondung_.
+
+RumorsPostfailure:  [1006]
+<ce> Теперь в ___mondung_ тихо и спокойно, поскольку =monster_ ушел, но боюсь как бы он не вернулся.
+
+RumorsPostsuccess:  [1007]
+Ну и скатертью дорожка этому боевому магу =monster_ из ___mondung_. Я слышал %g обезумел, когда стал магистром.
+   <--->
+Ну наконец-то, кто-то убил этого полудурка боевого мага из ___mondung_. Благодарение богу %god.
+
+Message:  1011
+_qgfriend_ - это безумный олух =qgfriend_, живущий в ___contactdung_.
+   <--->
+<ce> _qgfriend_ - это сумасшедший =qgfriend_, пришедший некоторое время назад в город.
+ Говорят в действительности %g живет в ___contactdung_.
+
+Message:  1012
+Шигорат - принц даэдра и повелитель Безумия. Не самый лучший выбор, на кого можно положиться.
+   <--->
+Шигорат - безумный даэдра, который упивается хаосом и безумием.
+
+Message:  1013
+_artifact_ - древний артефакт с буйным нравом и случайным магическим эффектом.
+   <--->
+_artifact_ может трансформировать цель в другое создание.
+
+Message:  1014
+_qgfriend_ один из самых преданных последователей принца даэдра Шигората.
+   <--->
+_qgfriend_ - это имя =qgfriend_, который прислуживает Шигорату.
+
+Message:  1020
+%qdt:
+ Принц даэдра Шигорат пообещал мне
+ артефакт, называющийся _artifact_
+ в обмен за смерть боевого мага по имени
+ =monster_. Если этот маг, который
+ обитает в местечке под названием ___mondung_,
+ умрет и я повстречаюсь со знакомым Шигората
+ в ___contactdung_, _qgfriend_
+ даст мне _artifact_. Но на все про все у меня
+ ровно =1stparton_ дней.
+
+Message:  1030
+<ce> Вы изгнали =monster_
+<ce> из смертной реальности. Теперь
+<ce> пора бы получить свое вознаграждение,
+<ce> если только Шигорат не забыл своих обещаний.
+
+
+
+QBN:
+Item _artifact_ artifact Wabbajack anyInfo 1013
+
+Person _questgiver_ face 112 named Sheogorath anyInfo 1012
+Person _qgfriend_ face 1 group Innkeeper remote anyInfo 1011 rumors 1014
+
+Place _mondung_ remote dungeon
+Place _contactdung_ remote dungeon3
+
+Clock _1stparton_ 00:00 0 flag 1 range 2 5
+
+Foe _monster_ is Battle_mage
+
+--	Quest start-up:
+	start timer _1stparton_
+	reveal _contactdung_
+	reveal _mondung_
+	log 1020 step 0
+	place foe _monster_ at _mondung_
+	place npc _qgfriend_ at _contactdung_
+
+_1stparton_ task:
+	end quest
+
+variable _2ndparton_
+_pcgetsgold_ task:
+	when _npcclicked_ and _mondead_
+	give pc _artifact_
+	end quest
+--removed unnecessary delay
+
+_mondead_ task:
+	killed 1 _monster_
+	say 1030
+
+_npcclicked_ task:
+	clicked npc _qgfriend_
+
+--defining clearclick to prevent out-of-place victory condition
+_clearclick_ task:
+	when _npcclicked_ and not _mondead_
+	say 1003
+	clear _npcclicked_ _clearclick_

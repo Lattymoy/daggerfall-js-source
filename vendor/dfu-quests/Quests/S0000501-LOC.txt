@@ -1,0 +1,247 @@
+-- Quest: C:\QUESTS\WORKING\S0000501.Qbn.
+-- Main story quest.
+-- QuestId: 501
+Messages: 62
+Quest: S0000501
+DisplayName: "Лорд К'авара" Часть III
+-- Message panels
+QRC:
+
+QuestComplete:  [1004]
+<ce> %pcn, знаю, что могу рассчитывать на вас.
+<ce> Дружба королевы Сентинела весьма щедрая
+<ce> награда, но у меня приготовлены подарки
+<ce> ничуть не хуже этого.
+
+RumorsDuringQuest:  [1005]
+<ce> _traitor_ бежал из подземелий замка Сентинел.
+<ce> Говорят, его должны были казнить за измену.
+
+RumorsPostsuccess:  [1007]
+<ce> _traitor_ пытался заручиться поддержкой Вэйреста в
+<ce> притязаниях на трон Сентинела, но королевские ищейки
+<ce> добрались до него. Никто не знает, что случилось, но
+<ce> полагаю, что он мертв.
+
+Message:  1020
+%qdt:
+ Мне пришло письмо от _queen_
+ из Сентинела. Она говорит, что _traitor_
+ бежал, а королева хотела бы увидеться со
+ мной по поводу выслеживания бежавшего.
+
+Message:  1021
+%qdt:
+ Шпионы королевы докладывают, что
+ _traitor_ сейчас в Вэйресте, настраивая
+ всех против Сентинела. Он прячется где-то
+ в подземельях королевского замка.
+ Мне нужно найти его и привести обратно
+ в Сентинел для проведения казни.
+
+Message:  1022
+%qdt:
+ _traitor_ пойман.  Я возвращаюсь
+ обратно в Сентинел, чтобы предстать
+ пред очи королевы _queen_.
+
+Message:  1030
+Дорогой друг %pcn,
+<ce>
+  С сожалением информирую вас, что ваш
+священный долг перед Сентинелом еще не выполнен.
+Похоже у _traitor_ все еще остались друзья.
+%g бежал из темницы, буквально за день до того,
+как должен был быть повешен.
+  Была бы очень признательна, если бы вы
+посодействовали в этом нелегком деле и разобрались
+во всем.
+<ce>
+Ваш друг,
+<ce>
+_queen_ из Сентинела
+<ce> ----
+
+Message:  1031
+<ce> Коренастый рыцарь в ливрее Сентинела
+<ce> остановился перед вами и отсалютовал.
+<ce>
+<ce> "%pcn?  Письмо для вас. Личное
+<ce> сообщение вам шлет _queen_".
+
+Message:  1040
+<ce> Ах, %pcn, я знала, что вы придете.
+<ce> Мои шпионы нашли этого неуловимого беглеца.
+<ce> Он прибился к королевскому двору Вэйреста,
+<ce> и пытается всем правдами и неправдами получить
+<ce> поддержку в своих притязаниях на мой трон.
+<ce> Вэйрест не настолько опрометчив, чтобы оказать
+<ce> открытую поддержку этому наглецу, беглому
+<ce> каторжнику из Сентинела, но прячется он
+<ce> в подземельях королевского замка, это факт.
+<ce> Я хочу, чтобы вы нашли его и привели обратно.
+<ce> По возможности живым, но в случае необходимости
+<ce> можете убить его. Не допустите, чтобы он
+<ce> опять сбежал.
+
+Message:  1041
+<ce> Опять вы! %oth, вы оставите меня
+<ce> в покое? Сейчас я с вами расчитаюсь!
+
+Message:  1042
+<ce> "Стойте!  Не убивайте меня!  Я сдаюсь!"
+<ce>
+<ce> _traitor_ сдается. Вы принимаете капитуляцию?
+
+Message:  1043
+<ce> Предатель _traitor_ мертв.
+
+Message:  1044
+<ce> _traitor_ бросает свое оружие
+<ce> и вы быстро связываете ему руки,
+<ce> прилаживаете повязку на глаза, чтобы
+<ce> избежать каких-либо трюков с его стороны.
+<ce> Самое время уходить из Вэйреста...
+
+QuestTimeLapse:  [1045]
+<ce> %god! Тогда мы умрем вместе!
+
+Message:  1050
+<ce> Ну ка, ну ка, ну ка, разве это не мой верный
+<ce> _traitor_ вернулся ко мне. Неужели ты
+<ce> действительно думал, что тебе удастся избежать
+<ce> моего гнева? Стража, отведите его вниз и
+<ce> казните немедленно.
+
+Message:  1051
+<ce> _traitor_ заслуживает смерти.  Думаю,
+<ce> надо казнить его публично, чтобы другим
+<ce> неповадно было, но я рада, что это
+<ce> гнусное дело наконец-то улажено.
+
+Message:  1060
+<ce> Вы же не думали, что сможете легко
+<ce> избавиться от _traitor_? Лорд Сентинела
+<ce> не из тех, кого легко убрать!
+
+Message:  1061
+<ce> Перед вами появился рыцарь в ливрее Сентинела.
+<ce> "Я заберу эту грязную свинью с собой".
+
+
+
+QBN:
+Item _letter_ letter used 1030
+Item _reward1_ item class 4 subclass 26
+Item _reward2_ gold
+
+Person _queen_ face 224 named Queen_Akorithi atHome
+Person _traitor_ face 217 named Lord_K'avar
+
+Place _wayrest_ permanent WayrestCastle2
+Place aide remote dungeon
+
+Clock _S.00_ 12.06:00 23.18:00
+--shortened timer drastically. getting attacked by Kavar minions for months is annoying
+Clock _patsy_ 30.00:00 0 flag 1 range 0 1
+Clock _time2_ 00:00 0 flag 17 range 0 2
+
+Foe _F.00_ is 3 Archer
+Foe _mtraitor_ is Ranger
+
+--	Quest start-up:
+	create foe _F.00_ every 2000 minutes 5 times with 100% success
+	start timer _S.00_
+	have _letter_ set _startpatsy_
+-- reduced spawning trio from 20 to 5 times
+
+_startpatsy_ task:
+	start timer _patsy_
+
+_S.00_ task:
+	_letter_ used do _readletter_
+	give pc _letter_ notify 1031
+	place npc _traitor_ at _wayrest_ marker 3
+
+variable _patsy_
+_time2_ task:
+	end quest
+
+_readletter_ task:
+	log 1020 step 0
+
+_S.04_ task:
+	clicked npc _queen_
+
+_S.05_ task:
+	clicked npc _traitor_
+	hide npc _traitor_
+	say 1041
+	place foe _mtraitor_ at _wayrest_ marker 3
+
+_hittraitor_ task:
+	injured _mtraitor_
+
+_S.07_ task:
+	killed 1 _mtraitor_
+	say 1043
+
+_S.08_ task:
+	when _hittraitor_ and not _S.07_
+	prompt 1042 yes _yes_ no _no_
+
+_S.09_ task:
+	when _S.04_ and _S.00_
+	stop timer _patsy_
+	start timer _time2_
+	log 1021 step 1
+	say 1040
+	remove log step 0
+	start task _stagger_
+
+_notyet_ task:
+	when _S.04_ and not _S.00_
+	clear _S.04_ _notyet_
+
+variable _stagger_
+_clearclick_ task:
+	when _stagger_ and _S.04_ and not _hittraitor_
+	clear _S.04_ _clearclick_
+
+_S.10_ task:
+	when _yes_ and _S.04_
+	say 1050
+	drop _traitor_ face
+
+_traitordead_ task:
+	when _S.07_ and _S.04_
+	say 1051
+	unset _S.04_
+
+_yes_ task:
+	log 1022 step 2
+	say 1044
+	add _traitor_ face
+	place foe _mtraitor_ at aide
+
+_no_ task:
+	say 1045
+
+_S.14_ task:
+	when _S.10_ or _traitordead_
+	give pc _reward1_
+	give pc _reward2_
+	end quest
+
+_S.15_ task:
+	when _patsy_ and not _S.09_
+	end quest
+
+_S.16_ task:
+	when _yes_ and _time2_
+	say 1061
+	end quest
+
+_S.17_ task:
+	injured _F.00_
+	say 1060

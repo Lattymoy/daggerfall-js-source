@@ -52,6 +52,18 @@ test('Russian: i18n translation system translates UI and settings', () => {
   assert.equal(t('Online'), 'Сетевая игра');
   assert.equal(t('Yes'), 'Да');
   assert.equal(t('No'), 'Нет');
+  assert.equal(t('Health'), 'Здоровье');
+  assert.equal(t('Magicka'), 'Магия');
+  assert.equal(t('Fatigue'), 'Усталость');
+  assert.equal(t('Enduring'), 'Стойкий род');
+  assert.equal(t('Bloodline'), 'Чистая кровь');
+  assert.equal(t('No lineage'), 'Без династии');
+  assert.equal(t('Rat'), 'Крыса');
+  assert.equal(t('Rat (dead)'), 'Крыса (труп)');
+  assert.equal(t('Lock Level: 15'), 'Уровень замка: 15');
+  assert.equal(t('and 4 more'), 'и ещё 4');
+  assert.equal(t('Arkay takes 6% of a lifespan for every road back,'), 'Аркей забирает 6% срока жизни за каждое возвращение,');
+  assert.equal(t('every 15 points of it is a level.'), 'каждые 15 очков дают новый уровень.');
   assert.equal(labelOf('Controls/MouseLookSensitivity'), 'Чувствительность мыши');
   assert.equal(labelOf('Controls/SoundVolume'), 'Громкость звуков');
   assert.equal(labelOf('GUI/SDFFontRendering'), 'Сглаженные шрифты (SDF)');
@@ -60,5 +72,6 @@ test('Russian: i18n translation system translates UI and settings', () => {
   setLanguage('en');
   assert.equal(getLanguage(), 'en');
   assert.equal(t('Continue'), 'Continue');
+  assert.equal(t('Rat (dead)'), 'Rat (dead)');
   assert.equal(labelOf('Controls/MouseLookSensitivity'), 'Mouse Sensitivity');
 });

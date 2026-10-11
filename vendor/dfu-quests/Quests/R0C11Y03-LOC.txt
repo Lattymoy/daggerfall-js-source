@@ -1,0 +1,181 @@
+-- Quest: C:\QUESTS\WORKING\R0C11Y03.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 11
+-- QuestId: 3
+Messages: 21
+Quest: R0C11Y03
+DisplayName: Бессердечная даэдра
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> У меня есть знакомый, очень умелый алхимик
+<ce> по имени _chemist_.
+<ce> Для завершения одного из моих проектов,
+<ce> ему нужен один редкий реагент -- сердце
+<ce> даэдра. Не буду лгать вам; даэдра хочет
+<ce> получить его обратно, так что вам могут
+<ce> повстречаться по пути нежеланные гости.
+<ce> Согласны рискнуть, за большое вознаграждение?
+
+RefuseQuest:  [1001]
+<ce> Вы меня разочаровываете, но могу сказать,
+<ce> что понимаю вас. Вмешательство в дела,
+<ce> связанные с даэдра требуют много храбрости
+<ce> и доблести, которые нечасто встречаются
+<ce> среди искателей приключений %ra.
+
+AcceptQuest:  [1002]
+<ce> Согласны? Ну что ж, удачи вам. Вот сердце
+<ce> даэдра. Если это не будет в руках моего
+<ce> друга _chemist_ в течение =1stparton_ дней,
+<ce> то будет слишком поздно. После доставки
+<ce> возвращайтесь за наградой. Удачи и
+<ce> поторопитесь в ___chemist_.
+
+--in 1002, added the name of the city you need to go to at the end.
+
+QuestFail:  [1003]
+<ce> Вы думали, что я не узнаю, что вы не доставили
+<ce> сердце даэдра моему алхимику? Вы не забыли,
+<ce> что вас ждет вознаграждение? Без свежего
+<ce> сердца даэдра проект опять придется отложить.
+<ce> Взорвите Обливион!
+
+QuestComplete:  [1004]
+<ce> Выдающаяся работа, %pcf. Знаю,
+<ce> даэдришки не смогли остановить вас. Ваши
+<ce> выдающиеся снова показали себя. Спасибо
+<ce> вам, вот =reward_ золотых.
+
+--in 1004, changed _reward_ to =reward_ to ensure specific gold amount.
+
+RumorsDuringQuest:  [1005]
+Жуткие предзнаменования я прочитал в небе. Звезда даэдра светила особенно ярко.
+   <--->
+Кабал из Гильдии Магов сказал, что сегодня ночью звезда даэдра светила особенно ярко.
+
+RumorsPostfailure:  [1006]
+По всем астрологическим признакам, даэдра пресытились.
+   <--->
+Я буквально чувствую запах серы в воздухе, правда он пропадает.
+
+RumorsPostsuccess:  [1007]
+Особая активность в магазине у _chemist_. Видать большой эксперимент в действии.
+   <--->
+_questgiver_ очень рад надежностью наемника %ra.
+
+QuestorPostsuccess:  [1008]
+Что я могу сделать для вас, %ra?
+   <--->
+Приветствую, герой. Надеюсь даэдра не причинили вас особых неприятностей.
+
+QuestorPostfailure:  [1009]
+<ce> Я разочарован вашей некомпетентностью
+<ce> в доставке сердца даэдра. Вы же не
+<ce> думали, что я забуду такое? Зря вы
+<ce> решили прибиться к королевскому двору.
+
+QuestLogEntry:  [1010]
+<ce> О, это замечательно. Какая великолепная "аортас
+<ce> даэдрэ", да еще с минимальными повреждениями.
+<ce> Поспешите к _questgiver_, %pcf.
+<ce> Если вы не орбернетесь за =2ndparton_ дней,
+<ce> %g может и забыть про вас.
+
+Message:  1011
+_chemist_? Похоже на =chemist_? Думаю на %di отсюда.
+   <--->
+Есть тут алхимик по имени _chemist_ на %di отсюда, который работает на _questgiver_.
+
+Message:  1012
+_questgiver_? Благородный. Ввязан в какие-то дела с даэдра.
+   <--->
+_questgiver_ - дворянин, %di отсюда.
+   <--->
+Как и многие из знатных людей, _questgiver_ занят целой кучей прожектов.
+   <--->
+_questgiver_ покровительствует многим алхимикам, не то что некоторые дворяне.
+
+Message:  1013
+Сердце даэдра. Оно никогда не портится, хотя некоторые рецепты требуют его в свежем виде.
+   <--->
+Сердце из груди даэдра. Не из тех даэдрических штук, что просто так попадают в руки смертных.
+
+Message:  1015
+%qdt:
+ _questgiver_
+ из ___questgiver_ просит меня
+ принести сердце даэдра алхимику
+ в __chemist_ из ___chemist_.
+ Алхимик - это =chemist_ по имени
+ _chemist_ и если я справлюсь с
+ попавшимися мне по пути даэдра и
+ обернусь до исхода =1stparton_ дней,
+ _questgiver_ даст мне причитающееся
+ вознаграждение по возвращениии в
+ __questgiver_.
+
+Message:  1020
+<ce> Даэдра шипит: "%pcn,
+<ce> ты вмешиваешься в дела за пределами
+<ce> твоего разумения. Да, нам известно
+<ce> твое имя. И не будет нам покоя,
+<ce> пока сердце нашего брата не будет
+<ce> в наших руках. Приготовься
+<ce> принять свою судьбу, смертный..."
+
+
+
+QBN:
+Item _reward_ gold
+Item _item_ daedra_heart anyInfo 1013
+
+Person _questgiver_ face 112 group Questor anyInfo 1012
+Person _chemist_ group Chemist remote anyInfo 1011
+Person _dummydaedra_ face 102 factiontype Daedra female remote
+
+Clock _1stparton_ 00:00 0 flag 1 range 2 5
+Clock _2ndparton_ 00:00 0 flag 1 range 2 5
+--reverted timer names and removed chaining. works this way, and better.
+
+Foe _daedra_ is Daedroth
+
+--	Quest start-up:
+	start timer _1stparton_
+	log 1015 step 0
+	get item _item_
+
+variable _1stparton_
+_2ndparton_ task:
+	change repute with _questgiver_ by -30
+	end quest
+
+_pcgetsgold_ task:
+	when _S.06_ and _npcclicked_
+	give pc _reward_
+	end quest
+
+_npcclicked_ task:
+	toting _item_ and _chemist_ clicked
+	start timer _2ndparton_
+	say 1010
+	change repute with _dummydaedra_ by -20
+
+until _npcclicked_ performed:
+	create foe _daedra_ every 5 minutes 10 times with 33% success
+
+variable _qgclicked_
+_queston_ task:
+	when _1stparton_ and not _npcclicked_
+	make _item_ permanent
+	change repute with _questgiver_ by -30
+	end quest
+
+_S.06_ task:
+	clicked npc _questgiver_
+
+_S.07_ task:
+	injured _daedra_ saying 1020

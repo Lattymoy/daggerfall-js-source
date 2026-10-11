@@ -1,0 +1,152 @@
+-- Quest: C:\QUESTS\WORKING\M0B30Y04.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: fighter
+-- Repute: 30
+-- QuestId: 4
+Messages: 81
+Quest: M0B30Y04
+DisplayName: Боевой лич
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Послушай, %pcf, если бы на твоем
+<ce> счету не было всех этих дел, которые Гильдия
+<ce> уже поручала тебе, я бы даже не стал и
+<ce> упоминать об этом. Но даже и сейчас я не
+<ce> хотел говорить тебе об этом деле. Это как
+<ce> достать луну с неба, только опаснее. Нужно
+<ce> убить лича в его логове: ___mondung_.
+<ce> И награда за это всего _reward_ золотых.
+<ce> Думаю, что твой ответ "нет",
+<ce> или...?
+
+RefuseQuest:  [1001]
+<ce> Славься %god! - в твоей голове еще
+<ce> осталось немного здравого смысла.
+<ce> Оставим этого лича, пусть, черт побери,
+<ce> делает, что ему вздумается. По мне,
+<ce> так это отлично.
+
+AcceptQuest:  [1002]
+<ce> Ох, не стоило мне говорить об этом. Слушай,
+<ce> если ты действительно собираешься за это
+<ce> взяться, возьми лучшее снаряжение, какое
+<ce> только можно: магические амулеты, эбонитовые
+<ce> клинки, все что у тебя есть. Этот лич должен
+<ce> быть отправлен на Обливион за =1stparton_ дней,
+<ce> и тебе уже надо вернуться в Гильдию в течение
+<ce> этого срока. Удачи! Тебе она понадобится...
+
+QuestFail:  [1003]
+<ce> Что, %pcf, небольшой отдых не
+<ce> повредит перед охотой на лича?
+<ce> Только не медли слишком долго.
+
+QuestComplete:  [1004]
+<ce> Не надеялся снова увидеть тебя, %pcf.
+<ce> Я не шучу, должно быть %god
+<ce> покровительствует тебе. Вот твои
+<ce> золотые, _reward_. Это заслуженная
+<ce> награда.
+
+RumorsDuringQuest:  [1005]
+Я слышал какой-то глупец-%ra собирается потягаться с личем. ___mondung_ может стать его могилой...
+   <--->
+___mondung_ и лич - герой-%ra! Все вокруг делают ставки! На героя, конечно.
+
+RumorsPostfailure:  [1006]
+Я знаю, лич где-то здесь, в округе. И ему не нравится, что мы тоже здесь, в округе...
+   <--->
+Лучше бы они оставили этого лича в покое. Они только разозлят его.
+
+RumorsPostsuccess:  [1007]
+Кто-то действительно убил этого лича! А мы-то думали личи бессмертны.
+   <--->
+Я поставил на лича, а этот %ra убил его. Теперь я в проигрыше.
+
+QuestorPostsuccess:  [1008]
+<ce> Вот и наш герой - гроза личей!
+<ce> Что теперь? Даэдра? Драконы?
+
+QuestorPostfailure:  [1009]
+<ce> Я бы никогда не взялся за такое дело -
+<ce> противостоять личу, и не понимал твоего
+<ce> решения. Ты же теперь смотришься, мягко
+<ce> говоря, глупо, взявшись за это и не сумев
+<ce> выполнить задания.
+
+Message:  1020
+<ce> Жалкий смертный! Тебе не
+<ce> следовало даже пытаться
+<ce> вмешиваться в дела неумерших!
+<ce> Теперь в моей коллеции будет
+<ce> новое пополнение: наемник-%ra.
+
+Message:  1030
+%qdt:
+ Гильдия Бойцов из ___questgiver_ поручила
+ мне уничтожить лича, чье жилище - ___mondung_.
+ Работу нужно выполнить не позднее чем за
+ =1stparton_ дней.
+
+Message:  1080
+<ce> Вот, возьми эту карту. ___newdung_ -
+<ce> просто небольшая разминка перед завтраком
+<ce> для человека, победившего лича.
+
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ group Questor
+
+Place _mondung_ remote dungeon
+Place _newdung_ remote dungeon14
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _monster_ is Lich
+
+--	Quest start-up:
+	start timer _1stparton_
+	reveal _mondung_
+	log 1030 step 0
+	pick one of _map_ _nomap_ _nomap_ _map_
+	place foe _monster_ at _mondung_
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _mondead_
+	give pc _reward_
+
+_S.01_ task:
+	injured _monster_
+	say 1020
+
+_mondead_ task:
+	killed 1 _monster_
+
+_qgclicked_ task:
+	clicked npc _questgiver_
+
+_1stparton_ task:
+	end quest
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_
+	say 1003
+	clear _qgclicked_ _clearclick_
+
+variable _map_
+variable _nomap_
+_S.07_ task:
+	when _map_ and _pcgetsgold_
+	reveal _newdung_ readmap
+    say 1080
+	end quest
+
+_S.08_ task:
+	when _nomap_ and _pcgetsgold_
+	end quest

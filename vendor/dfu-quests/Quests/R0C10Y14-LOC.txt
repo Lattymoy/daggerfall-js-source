@@ -1,0 +1,122 @@
+-- Quest: C:\QUESTS\WORKING\R0C10Y14.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 10
+-- QuestId: 14
+Messages: 11
+Quest: R0C10Y14
+DisplayName: Забытое оборудование
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Есть ли хоть какой-нибудь шанс занять
+<ce> вас небольшой работой, которая почти
+<ce> не займет у вас времени и при этом
+<ce> вы станете богаче на _reward_ золотых?
+
+RefuseQuest:  [1001]
+<ce> Нет? Жаль.
+
+AcceptQuest:  [1002]
+<ce> %oth, это великолепно. У меня
+<ce> есть один знакомый, который без ума
+<ce> от одной вещицы _item_.
+<ce> Мне нужно, чтобы вы отнесли ее в
+<ce> ___contact_ немедленно. Там есть
+<ce> небольшое местечко __contact_,
+<ce> где вас будет ждать =contact_
+<ce> по имени _contact_.
+<ce> Отдайте _item_
+<ce> и %g заплатит _reward_ золотых.
+<ce> Последнее указание, %g уйдет из
+<ce> __contact_ через =queston_ дней с
+<ce> _item_ или без, так что вам
+<ce> следует поторопиться.
+
+QuestFail:  [1003]
+<ce> Вам дали _item_ и сказали, что это
+<ce> надо доставить по месту назначения.
+<ce> Чего вы ждете?
+
+QuestComplete:  [1004]
+<ce> Вы от _questgiver_?  %oth,
+<ce> _item_!  Наконец то!  Я уж думал,
+<ce> что мне придется уйти отсюда несолоно
+<ce> хлебавши. Но почему вы так долго?
+<ce> Что,я должен заплатить вам за мою
+<ce> вещь? А, понимаю, это вам _questgiver_
+<ce> сказал. Вот у него и забирайте деньги.
+<ce> У меня немного времени, мне пора
+<ce> отправляться.
+
+RumorsDuringQuest:  [1005]
+Есди бы у меня было это - _item_, я бы продал это =contact_ в __contact_. Довольно отчаянный поступок.
+   <--->
+Этот =contact_ уже несколько дней бродит в окрестностях __contact_.
+
+RumorsPostfailure:  [1006]
+Бедняга _contact_ -- %g4 посылка никогда не попадет по месту назначения.
+   <--->
+Удивляюсь, чего еще ждет _contact_. Какого-нибудь чуда?
+
+RumorsPostsuccess:  [1007]
+_contact_ ушел из __contact_ счастливый как обожравшаяся гарпия. Полагаю он получил, что искал.
+   <--->
+_questgiver_ возносит молитвы какому-то %ra-наемнику.
+
+QuestorPostsuccess:  [1008]
+А, мой дорогой друг. Как хорошо, что вы вернулись. Как поживаете?
+   <--->
+Меня проинформировали, что ваше задание выполнено. Все что угодно для вас.
+
+QuestorPostfailure:  [1009]
+<ce> Мало того, что вы провалили задание,
+<ce> так еще и вернулись ко мне?
+<ce> Неслыханная наглость!
+
+QuestLogEntry:  [1010]
+%qdt:
+ _questgiver_ посылает меня
+ в ___contact_,
+ где =contact_ по имени _contact_
+ ждет одну вещицу - _item_.
+ Местечко называется __contact_.
+ _contact_ планирует уйти из
+ ___contact_ через =queston_ дней
+ с _item_ или без,
+ так что мне следует поторопиться.
+
+
+
+QBN:
+Item _reward_ gold
+Item _item_ magic_item
+
+Person _questgiver_ group Questor
+Person _contact_ group Local_3.0 remote
+--removed "female" parameter. UESP says it could be either.
+
+
+Clock _queston_ 00:00 0 flag 1 range 1 4
+
+
+--	Quest start-up:
+	start timer _queston_
+	log 1010 step 0
+	get item _item_
+	create npc _contact_
+
+_pcgetsgold_ task:
+	toting _item_ and _contact_ clicked
+	give pc _reward_
+	end quest
+
+variable _pchasitem_
+_queston_ task:
+	make _item_ permanent
+	change repute with _questgiver_ by -20
+	end quest
+
+variable _npcclicked_

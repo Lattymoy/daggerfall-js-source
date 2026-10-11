@@ -1,0 +1,254 @@
+-- Quest: C:\QUESTS\WORKING\K0C01Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: merchant
+-- Repute: 01
+-- QuestId: 0
+Messages: 21
+Quest: K0C01Y00
+DisplayName: Помочь судьбе
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Представьте мой искренний восторг, когда
+<ce> моя вечно хнычущая и лживая женщина, бывшая
+<ce> моей любовницей в течение последних двух лет,
+<ce> была похищена и убита. Только представьте
+<ce> мое горе, когда я узнал, что =victim_
+<ce> все еще жива. А теперь представьте мое
+<ce> удовольствие, когда похитители затребовали
+<ce> выкуп. И наконец представьте мою злобу, когда
+<ce> я узнал, что ее кузен согласился на выкуп.
+<ce> Этого не должно свершиться. Мне нужен кто-то,
+<ce> могущий поспособствовать разрушению сделки
+<ce> о выкупе. Вы поможете мне?
+
+
+RefuseQuest:  [1001]
+<ce> %oth, что за отношение.
+<ce> Ваша собственная мораль не
+<ce> доведет вас до добра.
+
+AcceptQuest:  [1002]
+<ce> %oth, %oth,
+<ce> и %oth.
+<ce> Есть три пути решения этой проблемы с выкупом.
+<ce> Первый: сделать так, чтобы _victim_
+<ce> умерла до наступления дня выкупа через =queston1_
+<ce> дней. Конечно же я не знаю, где ее держат, так что
+<ce> это довольно таки сложно. Второй путь: привести к
+<ce> смерти ее кузена в такой же временной промежуток.
+<ce> =cousin_, это кузен, живет в ___mondung2_,
+<ce> отлично охранаемой крепости. Ну и третий путь:
+<ce> украсть _gem_ из ___mondung2_, который
+<ce> =cousin_ планирует использовать в качестве
+<ce> выкупа. Какой бы путь вы ни выбрали, возвращайтесь
+<ce> с новостями в течение =queston1_ дней и
+<ce> вы станете богаче на _gold_ золотых.
+<ce> Удачи, старина %ra.
+
+QuestComplete:  [1004]
+<ce> Итак, бедная _victim_ не
+<ce> вернется домой? Отлично, мой друг. Вот
+<ce> обещанное золото. Лучшие деньги, которые
+<ce> я когда-либо предлагал.
+
+RumorsDuringQuest:  [1005]
+Бедный _qgiver_. Его горе ужасно. Знаете, он постарел на добрый десяток лет.
+   <--->
+=cousin_ подозревает, что в действительности _qgiver_ не желает возвращения _victim_.
+
+RumorsPostfailure:  [1006]
+_qgiver_ по какой-то причине разгневан неким %ra по имени %pcn.
+
+RumorsPostsuccess:  [1007]
+Похоже, что _victim_ никогда не вернется в ___qgiver_.
+   <--->
+_qgiver_ в величайшем горе, оплакивает _victim_. Как это печально.
+
+QuestorPostsuccess:  [1008]
+Вы спасли меня от это мерзкой жабы _victim_, %pcf. Не думайте, что я забыл ваши услуги.
+
+QuestorPostfailure:  [1009]
+<ce> Я просил вас сделать одну простую вещь и
+<ce> даже намекнул на три способа решения данной
+<ce> проблемы. А вы умудрились потерпеть неудачу.
+<ce> С чего вы взяли, что мне есть о чем с вами
+<ce> говорить, вы, олух с банкой маринованных огурцов
+<ce> на плечах вместо головы!
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ из
+ __qgiver_ в ___qgiver_ послал
+ меня воспрепятствовать выкупу его нелюбимой
+ женщины. У могу убить _victim_, но мне
+ не известно, где ее держат. Так же я могу
+ пойти в ___mondung2_ к ее кузену =cousin_
+ и либо убить его, либо похитить _gem_,
+ предназначенный для выкупа. В любом случае
+ мне нужно вернуться к старине _qgiver_
+ в течение =queston1_ дней, когда
+ подойдет срок выплаты выкупа.
+
+Message:  1011
+<ce> У _victim_ сердце готово
+<ce> выскочить из груди при виде
+<ce> %ra-наемника.
+   <--->
+<ce> "Подойди, смерть моя".
+<ce> говорит _victim_, откупоривая
+<ce> и выпивая яд. "Наконец я воссоединюсь
+<ce> с моей истинной любовью
+<ce> _qgiver_ после пережитого".
+   <--->
+<ce> "Убийца! Убийца!"
+<ce> _victim_ впадает
+<ce> в истерику.
+
+
+Message:  1013
+%pcf,
+<ce>
+_victim_ содержится
+в ___mondung_.
+Поступай по своему разумению.
+<ce>
+Мы не против. Похитители - вольные разбойники.
+<ce>
+-- Гильдия Воров
+
+Message:  1015
+<ce> Серый, невзрачный парень вручает вам
+<ce> конверт, подмигивает и уходит
+<ce> не проронив ни слова.
+
+Message:  1017
+%qdt:
+ Я получил письмо
+ от Гильдии Воров. Похоже, что
+ похитители не являются ее членами,
+ так что гильдия не видит препятствий,
+ чтобу указать мне местонахождение:
+ ___mondung_.
+ Если я хочу покончить с жизнью _victim_,
+ то можно отправляться туда.
+
+Message:  1018
+<ce> Зачем, ты мерзкий, отвратительный
+<ce> %ra, как мне больно!
+   <--->
+<ce> Вероятно вы полагаете,
+<ce> что это не больно, да?
+
+Message:  1019
+<ce> Кузен _victim_, ее единственная
+<ce> надежда, ушел в вечность.
+   <--->
+<ce> Теперь то =cousin_ точно
+<ce> не сможет заплатить выкуп.
+
+Message:  1020
+<ce> Вы нашли _gem_, который =cousin_
+<ce> предназначил в качестве выкупа
+<ce> для _victim_.
+
+
+
+QBN:
+Item _letter15_ letter used 1013
+Item _gold_ gold
+Item _gem_ gem
+
+Person _qgiver_ group Questor
+Person _victim_ face 1 group Group_7.0
+Person _tg_ faction The_Thieves_Guild local
+
+Place _mondung_ remote dungeon
+Place _mondung2_ remote dungeon2
+
+Clock _queston1_ 00:00 0 flag 17 range 0 2
+Clock _S.05_ 08:20 3.11:20
+
+Foe _cousin_ is Knight
+
+--	Quest start-up:
+	place item _gem_ at _mondung2_
+	dialog link for location _mondung_ person _victim_
+	dialog link for person _tg_
+	start timer _queston1_
+	reveal _mondung2_
+	log 1010 step 0
+	repute with _tg_ exceeds 10 do _S.03_
+	place foe _cousin_ at _mondung2_
+	place npc _victim_ at _mondung_
+
+_queston1_ task:
+	have _gem_ set _S.15_
+	end quest
+
+variable _queston2_
+variable _S.02_
+_S.03_ task:
+	start timer _S.05_
+
+variable _S.04_
+_S.05_ task:
+	_letter15_ used do _S.06_
+	get item _letter15_
+	say 1015
+
+_S.06_ task:
+	reveal _mondung_ readmap
+	log 1017 step 2
+
+variable _S.07_
+_S.08_ task:
+	clicked npc _victim_
+	hide npc _victim_
+	say 1011
+
+_S.09_ task:
+	injured _cousin_
+	say 1018
+
+_S.10_ task:
+	killed 1 _cousin_
+	say 1019
+	start task _victory_
+
+variable _victory_
+_S.11_ task:
+	clicked item _gem_
+	say 1020
+
+_qgclicked_ task:
+	clicked npc _qgiver_
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _victory_
+	give pc _gold_
+	end quest
+
+_clearclick_ task:
+	when _qgclicked_ and not _victory_
+	clear _clearclick_ _qgclicked_
+
+_S.13_ task:
+	toting _gem_ and _qgiver_ clicked
+	give pc _gold_
+	end quest
+--added victory condition here, per message block 1002
+
+_S.14_ task:
+	when _S.10_ or _S.08_
+-or _S.13_
+-
+-until _S.14_ performed:
+-	clear _qgclicked_
+
+_S.15_ task:
+	make _gem_ permanent
+
+variable _S.16_

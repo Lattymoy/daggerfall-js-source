@@ -1,0 +1,205 @@
+-- Quest: C:\QUESTS\WORKING\N0B40Y07.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: mage
+-- Repute: 40
+-- QuestId: 7
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 61
+Quest: N0B40Y07
+DisplayName: Изгнание даэдра
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Не знаю, сможете ли вы помочь мне в
+<ce> одном деле, %pcf. Я ищу
+<ce> могущественного мага способного
+<ce> вызвать заклятие изгнания даэдра с
+<ce> минимальным шансом на неудачу.
+<ce> Быть может это вы?
+   <--->
+<ce> Изгнание даэдра - одно из самых
+<ce> сложных стандартных заклинаний.
+<ce> Такие заклятия требуют много магии
+<ce> и умения. Вы не похожи на способного
+<ce> использовать это заклятие. Или
+<ce> это не так?
+   <--->
+<ce> Насмешка судьбы состоит в том, что
+<ce> даэдра вызвать намного проще, чем
+<ce> изгнать обратно, вот так. Вы не похожи
+<ce> на способного использовать стандартное
+<ce> заклятие изгнания даэдра.
+<ce> Хотите попробовать?
+
+RefuseQuest:  [1001]
+<ce> А, ну ладно, буду продолжать поиски.
+
+AcceptQuest:  [1002]
+<ce> Я очень надеюсь, что вы мне не лжете.
+<ce> Я не хочу, чтобы даэдра была убита,
+<ce> потому что она может понадобиться мне
+<ce> позднее, но ее присутствие в этом мире
+<ce> сейчас очень нежелательно. И не
+<ce> пытайтесь сделать заклятие подобное
+<ce> стандартному у конструктора заклятий.
+<ce> Необходимо использовать именно стандартное.
+<ce> А теперь, поскольку я был причастен к
+<ce> вызову этой даэдра, попытаюсь облегчить
+<ce> вашу работу. Возьмите этот свиток,
+<ce> содержащий заклятие, которое мгновенно
+<ce> запретит даэдра воспользоваться своим
+<ce> истинным именем. Перед использованием
+<ce> свитка убедитесь, что пустили кровь
+<ce> существу, иначе последствия могут быть
+<ce> непредсказуемыми. Как только даэдра
+<ce> будет заключена в "клетку", нужно
+<ce> использовать "Изгнание даэдра" с
+<ce> минимальным шансом на неудачу.
+<ce> Искомое создание обитает в ___mondung_.
+<ce> Буду ждать вашего возвращения в течение
+<ce> =queston_ дней.
+<ce> Удачи вам, %pct.
+
+QuestComplete:  [1004]
+<ce> Прекрасно, %pct. Сейчас у меня
+<ce> не так много денег, но вот книга,
+<ce> которая несомненно вам пригодится.
+
+RumorsDuringQuest:  [1005]
+Похоже на то, что даэдра привязана к ___mondung_. Быть может это что-то на духовном плане.
+   <--->
+<ce> Старый _qgiver_ всегда вызывает такое, что создает только проблемы.
+
+RumorsPostfailure:  [1006]
+Даэдрические звезды прошлой ночью светились необычно ярко.
+
+RumorsPostsuccess:  [1007]
+С даэдра покончено. Но у них есть привычка возвращаться, когда их не ждут.
+   <--->
+___mondung_ почти очищено от присутствия даэдра, вроде бы как.
+
+QuestorPostsuccess:  [1008]
+Ну как, хорошая книга, %pcf? Для меня она стала просто таки откровением.
+
+QuestorPostfailure:  [1009]
+<ce> Если у вас нет заклинания
+<ce> "Изгнание даэдра", то не сможете
+<ce> выполнить задание. А сейчас
+<ce> оставьте меня.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ из Гильдии Магов
+ в ___qgiver_
+ послал меня в ___mondung_,
+ где мне нужно использовать "Изгнание даэдра"
+ против даэдра. _qgiver_
+ дал мне свиток с заклятием, позволяющим
+ облегчить этот процесс, но заклятие это
+ работает только, если даэдра пустить кровь.
+ Миссия будет считаться выполненной, если
+ я вернусь до исхода =queston_ дней.
+
+Message:  1030
+Занот на' =daedra_.
+Занот на' ==dummydaedra_.
+Сенет сенет мор.
+
+Message:  1040
+<ce> Ты безмозглая тупица! Я ведь нарочно
+<ce> проинструктировал тебя ИЗГНАТЬ даэдра
+<ce> =daedra_, а не убивать ее. Теперь мне
+<ce> нужно опять погрузиться в процесс познания
+<ce> истинного имени другой даэдра.
+<ce> Твое присутствие гнетет меня, %pcf.
+<ce> Уйди с глаз долой.
+
+Message:  1050
+<ce> Языки пламени пожрали свиток, как
+<ce> только вы прочли последние слова.
+
+Message:  1051
+<ce> Я =firedaedra_.
+<ce> Кто призвал меня из
+<ce> моего дома в Обливионе?
+
+Message:  1060
+<ce> Даэдра =daedra_ окончательно
+<ce> изгнана обратно в план Обливиона.
+
+
+--in msg 1015, shifted text downward to avoid exposed hyphen
+
+QBN:
+Item _book_ book
+Item _spellScroll_ letter used 1030
+--added underscores to spellScroll
+
+Person _qgiver_ group Questor
+Person _dummydaedra_ face 249 factiontype Daedra remote
+
+Place _mondung_ remote dungeon9
+Place aide remote dungeon
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+Foe _daedra_ is Frost_daedra
+Foe _firedaedra_ is Fire_daedra
+
+--	Quest start-up:
+	start timer _queston_
+	reveal _mondung_
+	log 1010 step 0
+	get item _spellScroll_
+	place foe _daedra_ at _mondung_
+
+_queston_ task:
+	end quest
+
+_reward_ task:
+	when _qgclicked_ and _S.10_ and not _S.06_
+	give pc _book_
+	unset _qgclicked_
+	end quest
+
+_out_ task:
+	remove foe _daedra_
+	--changed faulty "place enemy at other dungeon" task with simple "remove" for reliability
+
+variable _S.03_
+_qgclicked_ task:
+	clicked npc _qgiver_
+
+_S.05_ task:
+	take _spellScroll_ from pc
+	--changed "place item spellScroll at aide" to this "take from pc" action.
+	say 1050
+	--"say 1050" transferred from middle of "until _S.07_ performed," had faulty placing and this is a better ordering
+	create foe _firedaedra_ every 1 minutes 1 times with 100% success
+	say 1051
+	--transferred "msg 1051" from previous line to this one, not known to be a valid argument
+
+_S.06_ task:
+	killed 1 _daedra_
+
+_S.07_ task:
+	injured _daedra_
+	_spellScroll_ used do _S.08_
+
+until _S.07_ performed:
+	_spellScroll_ used do _S.05_
+
+_S.08_ task:
+	cast Banish_Daedra spell do _out_
+	restrain foe _daedra_
+
+_S.09_ task:
+	when _qgclicked_ and _S.06_
+	say 1040
+	end quest
+
+_S.10_ task:
+	when _out_ and not _S.06_
+	say 1060

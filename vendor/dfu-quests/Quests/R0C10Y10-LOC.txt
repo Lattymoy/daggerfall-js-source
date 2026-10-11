@@ -1,0 +1,116 @@
+-- Quest: C:\QUESTS\WORKING\R0C10Y10.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 10
+-- QuestId: 10
+Messages: 11
+Quest: R0C10Y10
+DisplayName: Поставка вооружения
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Скажите, вы не хотите заработать _reward_
+<ce> золотых только за то, что
+<ce> доставите маленькую посылку
+<ce> моему агенту?
+   <--->
+<ce> Мне нужна услуга человека средних
+<ce> способностей,с благоразумием выше среднего
+<ce> и готового на непрестижную работу
+<ce> курьера за _reward_ золотых.
+<ce> Вы такой человек?
+
+RefuseQuest:  [1001]
+<ce> В самом деле? Вероятно, слишком заняты? Много теряете.
+
+AcceptQuest:  [1002]
+<ce> Отлично! Вот _weapon_.
+<ce> _contact_ в ___contact_
+<ce> должен иметь его не позднее =queston_
+<ce> дней. Надеюсь, этого времени достаточно.
+<ce> Вы узнаете _contact_ --
+<ce> ищите =contact_.
+<ce> Удачи. Благодарю вас.
+
+QuestFail:  [1003]
+<ce> Не смогли выполнить простую доставку,
+<ce> %pcf? Я надеюсь, вы не ожидаете
+<ce> награды за это.
+
+QuestComplete:  [1004]
+<ce> Рад видеть вас, %pcf. А также
+<ce> _weapon_. Отлично! Вот те
+<ce> _reward_ золотых, которые
+<ce> пообещал вам _questgiver_.
+
+RumorsDuringQuest:  [1005]
+_questgiver_, я слышал, все еще промышляет контрабандой.
+   <--->
+За последнее время произошел поразительный рост контрабанды.
+
+RumorsPostfailure:  [1006]
+Некто нашел очень прелестный _weapon_ недавно где-то неподалеку.
+   <--->
+Я слышал, _questgiver_ свиреп как ад к некоему %ra авантюристу.
+
+RumorsPostsuccess:  [1007]
+Некий _contact_ все крутился около _weapon_.
+   <--->
+Контрабанда религиозными артефактами - несомненно, новое большое преступление.
+
+QuestorPostsuccess:  [1008]
+А, мой курьер. Прелестно! Чем могу вам помочь?
+   <--->
+Да, похож. Так это вы делали маленькую доставку для меня недавно, а?
+
+QuestorPostfailure:  [1009]
+<ce> Вы выглядите в точности, как
+<ce> %ra, кто провалил мое поручение
+<ce> о доставке. Забавно. Убирайтесь прочь.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _questgiver_ из
+ __questgiver_, ___questgiver_
+ послал меня доставить _weapon_
+ союзнику, по имени _contact_.
+ Я должен передать _weapon_
+ в руки _contact_ не позднее =queston_
+ дней. =contact_
+ точно должен находится в месте, названном
+ __contact_ в ___contact_.
+
+
+
+QBN:
+Item _weapon_ weapon
+Item _reward_ gold
+
+Person _questgiver_ face 112 group Questor
+Person _contact_ group Local_3.0 remote
+
+
+Clock _queston_ 00:00 0 flag 1 range 1 2
+
+
+--	Quest start-up:
+	start timer _queston_
+	log 1010 step 0
+	get item _weapon_
+	create npc _contact_
+
+_pcgetsgold_ task:
+	toting _weapon_ and _contact_ clicked
+	give pc _reward_
+	end quest
+
+variable _pchasitem_
+variable _npcclicked_
+_queston_ task:
+	make _weapon_ permanent
+	change repute with _questgiver_ by -20
+	end quest
+
+variable _1stparton_

@@ -1,0 +1,113 @@
+---- Пользовательский квест по уничтожению зомби и скелетов
+---- до тех пор, пока некромант не выйдет из укрытия.
+
+Quest: CUSTOM01
+DisplayName: От заката до самой Смерти
+
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Я надеюсь, ты не боишься темноты, %pcn...
+<ce> Какой-то некромант поднимает орды зомби и
+<ce> скелетов в ___graveyard_. У нас есть контракт
+<ce> на то, чтобы покончить с жизнью этого негодяя
+<ce> и положить конец их злодеяниям. За это ты
+<ce> получишь _reward_ золотых.
+
+RefuseQuest:  [1001]
+<ce> Некроманты - хитрое дело, %pcn.
+<ce> Я не виню вас за то, что вы пропустили это мимо ушей.
+
+AcceptQuest:  [1002]
+<ce> Здорово. Отправляйтесь в ___graveyard_ после
+<ce> наступления темноты и убивайте зомби и скелетов на
+<ce> кладбище снаружи, пока некромант не разозлится
+<ce> настолько, что выйдет из укрытия и встретится с
+<ce> вами лицом к лицу. У вас будет =timeLimit_ дней,
+<ce> чтобы вернуться ко мне, когда закончите. У меня
+<ce> будут ждать вас ваши _reward_ золотых.
+
+QuestFail:  [1003]
+<ce> Я разочарован в вас, %pcn.
+<ce> Теперь я должен передать контракт кому-то более надежному.
+
+QuestComplete:  [1004]
+<ce> Хорошая работа, герой. Вы спасли много невинных жизней.
+
+Message:  1020
+<ce> Когда эта нежить падает, вы чувствуете,
+<ce> как земля вибрирует под ногами. Некромант здесь!
+
+Message:  1030
+<ce> "Ты заплатишь... своей... душой!"
+<ce> Некромант падает на землю. Армия
+<ce> нежити рассеется и больше не будет
+<ce> угрожать близлежащим деревням.
+
+Message:  1040
+%qdt:
+ Гильдия Бойцов ___questgiver_ наняла
+ меня, чтобы я убил беспокойного
+ некроманта прямо в логове,
+ ___graveyard_. Я должен убивать
+ скелетов и зомби на кладбище снаружи
+ ночью, пока дьявол не выйдет из
+ укрытия. У меня есть =timeLimit_
+ дней, чтобы убить некроманта и
+ вернуться за своей оплатой.
+
+
+QBN:
+
+Item _reward_ gold
+
+Person _questgiver_ group Questor male
+
+Place _graveyard_ remote graveyard
+
+Clock _timeLimit_ 00:00 0 flag 17 range 0 2
+
+Foe _zombie_ is Zombie
+Foe _skeleton_ is Skeletal_warrior
+Foe _necromancer_ is Battle_mage
+
+--	Quest start-up:
+	start timer _timeLimit_
+	reveal _graveyard_
+	pc at _graveyard_ set _onsite_
+	log 1040 step 0
+
+_timeLimit_ task:
+	end quest
+
+variable _onsite_
+_daytime_ task:
+	daily from 05:00 to 18:00
+
+_attackPlayer_ task:
+	when _onsite_ and not _daytime_ and not _necromancerDead_
+	create foe _zombie_ every 5 minutes indefinitely with 60% success
+	create foe _skeleton_ every 5 minutes indefinitely with 60% success
+
+_summonNecromancer_ task:
+	killed 4 _zombie_
+	killed 4 _skeleton_
+	say 1020
+	create foe _necromancer_ every 1 minutes 1 times with 100% success
+
+_necromancerDead_ task:
+	killed _necromancer_
+	say 1030
+
+_questorClicked_ task:
+	clicked npc _questgiver_
+
+_clearclick_ task:
+	when _questorClicked_ and not _necromancerDead_
+	say 1003
+	clear _questorClicked_ _clearclick_
+
+_rewardPlayer_ task:
+	when _questorClicked_ and _necromancerDead_
+	give pc _reward_
+	end quest

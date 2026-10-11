@@ -1,0 +1,109 @@
+-- Quest: C:\QUESTS\WORKING\C0B20Y08.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: temple
+-- Repute: 20
+-- QuestId: 8
+Messages: 12
+Quest: C0B20Y08
+DisplayName: Обряд искупления
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Говорят, вы один из самых верных служителей
+<ce> храма. Я хочу, чтобы вы выполнили одну
+<ce> жизненно важную задачу для нас. %god
+<ce> недоволен нами. Не задавайтесь вопросом,
+<ce> почему. Наша единственная надежда -
+<ce> - обряд искупления. Для церемонии нам
+<ce> нужен один реагент: _ingredient_.
+<ce> Мои источники говорят, что кое-что можно
+<ce> найти в ___dungeon_.
+<ce> Вы согласны выполнить эту работу?
+
+RefuseQuest:  [1001]
+<ce> А ваша преданность храму не
+<ce> так уж и велика, как я
+<ce> полагал, %pcn.
+
+AcceptQuest:  [1002]
+<ce> Церемонию необходимо провести в
+<ce> течение =traveltime_ дней. Храм
+<ce> заплатит вам _gold_ золотых.
+<ce> Нам нужен только незагрязненный
+<ce> образец _ingredient_.
+<ce> Да будет с вами благословение
+<ce> %god, чтобы вы поняли, когда
+<ce> найдете то, что нужно.
+
+QuestComplete:  [1004]
+<ce> Вы нашли? _ingredient_!
+<ce> Божество будет умиротворено.
+<ce> Вы отлично поработали. Вот
+<ce> ваша награда.
+
+RumorsDuringQuest:  [1005]
+Странные слухи ... ходят про __qgiver_.
+   <--->
+Похоже в __qgiver_ была проведена неразрешенная оргия.
+   <--->
+Кто-то назвал имя %god задом наперед во время церемонии в __qgiver_.
+
+RumorsPostfailure:  [1006]
+__qgiver_ все еще не в ладах со своим божеством.
+
+RumorsPostsuccess:  [1007]
+__qgiver_ вернул расположение своего божества.
+
+QuestorPostsuccess:  [1008]
+Вы умиротворили %god, %pct. Чем я могу быть полезен?
+
+QuestorPostfailure:  [1009]
+Пока %god ненавидит __qgiver_, я буду ненавидеть вас, %pct.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ из __qgiver_,
+ в ___qgiver_, рассказал мне, что их божество
+ разгневано. Необходим незагрязненный
+ образец _ingredient_ из ___dungeon_
+ для проведения обряда очищения.
+ Это должно быть в руках _qgiver_
+ в __qgiver_ в течение =traveltime_ дней.
+
+Message:  1011
+<ce> Это то самое! Я чувствую чистоту
+<ce> этого реагента _ingredient_.
+<ce> Теперь немедленно возвращайтесь
+<ce> к _qgiver_.
+
+
+
+QBN:
+Item _ingredient_ organs
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+
+Place _dungeon_ remote dungeon
+
+Clock _traveltime_ 00:00 0 flag 17 range 0 2
+
+
+--	Quest start-up:
+	place item _ingredient_ at _dungeon_
+	start timer _traveltime_
+	reveal _dungeon_
+	log 1010 step 0
+
+_traveltime_ task:
+	end quest
+
+_questdone_ task:
+	toting _ingredient_ and _qgiver_ clicked
+	give pc _gold_
+	end quest
+
+_S.02_ task:
+	clicked item _ingredient_ say 1011

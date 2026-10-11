@@ -1,0 +1,168 @@
+-- Quest: C:\QUESTS\WORKING\A0C00Y07.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: peasant
+-- Repute: 0
+-- QuestId: 7
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 11
+Quest: A0C00Y07
+DisplayName: Уничтожитель
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Мне нужна помощь. _qgiver_ к вашим услугам,
+<ce> надеюсь что и вы не против помочь мне.
+<ce> _house_ заражен какими-то монстрами.
+<ce> Не могли бы вы убить их для меня? Я могу
+<ce> заплатить _gold_ золотых.
+
+RefuseQuest:  [1001]
+<ce> Мне нужна помощь! Неужели никто не способен помочь мне?
+
+AcceptQuest:  [1002]
+<ce> Благодарю, благодарю, благодарю! Если они не
+<ce> исчезнут к завтрему, я буду разорен.
+
+QuestComplete:  [1004]
+<ce> Какое облегчение. Как же я их ненавижу. Вы
+<ce> Вы мне очень помогли, %pcn.
+<ce> Вот обещанные _gold_ золотых.
+
+RumorsDuringQuest:  [1005]
+<ce> Думаю это очень смешно! _house_,
+<ce> принадлежащий _qgiver_ заполонили
+<ce> гигантские жуки!
+   <--->
+<ce> Мне очень неудобно перед _qgiver_. %g4
+<ce> _house_ фактически забит гигантскими
+<ce> крысами длинною в 12 футов с ядовитыми
+<ce> зубами. Я слышал они могут превратить
+<ce> человека в камень одним взглядом!
+
+RumorsPostfailure:  [1006]
+<ce> _qgiver_ вынужден продать _house_.
+   <--->
+<ce> Я слышал, что кто-то из Гильдии Бойцов
+<ce> взялся за зачистку _house_, принадлежащего
+<ce> _qgiver_.
+
+RumorsPostsuccess:  [1007]
+<ce> Вы случайно не тот %ra, который
+<ce> помог _qgiver_ вычистить %g4
+<ce> _house_ от заполонивших его тварей?
+   <--->
+<ce> Я слышал, что _qgiver_ щедро заплатил
+<ce> кому-то, кто убил всех тварей,
+<ce> заполонивших %g4 _house_.
+
+QuestorPostsuccess:  [1008]
+<ce> %pcf, я очень признателен вам за проведенную
+<ce> зачистку моего _house_ от монстров.
+   <--->
+<ce> Внимание, слушайте все! Хочу познакомить вас
+<ce> с моим другом, %pcn, выдающимся уничтожителем.
+<ce> %g вычистил _house_ от трех дюжин монстров!
+
+QuestorPostfailure:  [1009]
+<ce> Вы! Вы разорили меня! Я потерял _house_,
+<ce> потому что вы оказались неспособны убить
+<ce> горсточку тварей.
+   <--->
+<ce> Уж не тот ли это %ra, который подвел
+<ce> меня? Я нанял вас убить нескольких
+<ce> тварей, заполонивших мой _house_, а
+<ce> вы не смогли сделать этого. Уходите
+<ce> прочь!
+
+QuestLogEntry:  [1010]
+%qdt:
+ Задание от _qgiver_ в ___qgiver_.
+ %g просит меня зачистить _house_ в
+ __house_ от монстров. %g хочет, чтобы
+ работа была выполнена в течение дня.
+
+Message:  1011
+<ce> Достаточно.
+
+Message:  1012
+<ce> От стен доносится скребущий звук.
+<ce> Живущие здесь существа наверняка плохо
+<ce> отреагируют на ваше вторжение на их
+<ce> территорию.
+
+
+QBN:
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+
+Place _house_ local random
+
+--time set to 24 strict hours. if it carries flags in DFU, time becomes variable
+Clock _oneday_ 1.00:00
+
+Foe _spiders_ is Spider
+Foe _rats_ is Giant_rat
+Foe _scorpions_ is Giant_scorpion
+Foe _bats_ is Giant_bat
+
+--	Quest start-up:
+	start timer _oneday_
+	log 1010 step 0
+	pc at _house_ set _S.01_
+	create npc at _house_
+
+_oneday_ task:
+	end quest
+
+--instant reward glitch fixed.
+_questdone_ task:
+	clicked npc _qgiver_
+
+_S.01_ task:
+	say 1012
+	start task _pickspawn_
+--preventing multiple spawns by using static pick
+
+_pickspawn_ task:
+	pick one of _S.04_ _S.05_ _S.06_ _S.07_
+
+--this quest had a rare case of no victory message
+_S.03_ task:
+	killed 6 _bats_
+	killed 3 _spiders_
+	killed 7 _rats_
+	killed 3 _scorpions_
+	say 1011
+
+variable _S.04_
+_spawn1_ task:
+	when _S.01_ and _S.04_ and not _S.03_
+	create foe _bats_ every 2 minutes indefinitely with 100% success
+
+variable _S.05_
+_spawn2_ task:
+	when _S.01_ and _S.05_ and not _S.03_
+	create foe _rats_ every 2 minutes indefinitely with 100% success
+
+variable _S.06_
+_spawn3_ task:
+	when _S.01_ and _S.06_ and not _S.03_
+	create foe _scorpions_ every 3 minutes indefinitely with 100% success
+
+variable _S.07_
+_spawn4_ task:
+	when _S.01_ and _S.07_ and not _S.03_
+	create foe _spiders_ every 3 minutes indefinitely with 100% success
+
+_clearclick_ task:
+	when not _S.03_ and _questdone_
+	clear _questdone_ _clearclick_
+
+
+_pcgetsgold_ task:
+	when _questdone_ and _S.03_
+	give pc _gold_
+	end quest

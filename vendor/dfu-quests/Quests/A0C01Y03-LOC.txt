@@ -1,0 +1,191 @@
+-- Quest: C:\QUESTS\WORKING\A0C01Y03.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: peasant
+-- Repute: 01
+-- QuestId: 3
+Messages: 18
+Quest: A0C01Y03
+DisplayName: Загадка
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Я _qgiver_, и мне нужны услуги
+<ce> мужественного охотника. Я люблю
+<ce> _spouse_. Увы, %g отказала мне,
+<ce> пока я не докажу свою осведомленность, найдя
+<ce> ответ на загадку %g4 наставника _hermit_,
+<ce> пропавшего при загадочных обстоятельствах.
+<ce> Вы должны найти его и узнать ответ на
+<ce> эту загадку. По успешном окончании я
+<ce> заплачу _gold_ золотых.
+
+RefuseQuest:  [1001]
+<ce> Лучше я продолжу поиски более сговорчивого
+<ce> авантюриста. Если вам повстречается кто-то
+<ce> заинтересовавшийся этой работой, направьте
+<ce> его к _qgiver_.
+
+AcceptQuest:  [1002]
+<ce> Единственный человек, который может помочь вам
+<ce> найти _hermit_ - это _spouse_.
+<ce> %g может быть в ___spouse_.
+<ce> Возьмите эти цветы. Это ее любимые.
+<ce> Они могут помочь найти ее расположение
+<ce> к вам. Вот бумага с текстом загадки.
+<ce> Если вы не вернетесь в течение трех месяцев,
+<ce> я буду считать что вас постигла неудача.
+
+QuestComplete:  [1004]
+<ce> _qgiver_ вскрывает письмо от _hermit_.
+<ce> "Доброта! Ну конечно же! Теперь мне
+<ce> понятно, почему _spouse_ дала мне это
+<ce> задание. Недостаточно просто любить ее,
+<ce> надо показать ей всю свою доброту и
+<ce> великодушие. Вы мне очень помогли, %pcf.
+<ce> Вот обещанное золото".
+
+RumorsDuringQuest:  [1005]
+<ce> _qgiver_ без ума от любви.
+<ce> %g пытается уговорить _spouse_
+<ce> принять предложение руки и сердца.
+
+RumorsPostfailure:  [1006]
+<ce> Я слышал, что _spouse_ вышла замуж
+<ce> в ___spouse_. _qgiver_ будет очень
+<ce> разочарован, когда обнаружит это.
+
+RumorsPostsuccess:  [1007]
+<ce> Отличные новости! _spouse_ и
+<ce> _qgiver_ наконец-то поженились.
+
+QuestorPostsuccess:  [1008]
+<ce> Все что угодня для %ra, который нашел
+<ce> ответ на мою загадку. _spouse_
+<ce> и я поженились как вы уже знаете.
+
+QuestorPostfailure:  [1009]
+<ce> Вы тот самый %ra, который не смог найти
+<ce> ответ на загадку отшельника. Мне не о чем
+<ce> говорить с героями-неудачниками.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ из ___qgiver_
+ попросил меня найти _hermit_.
+ Возможно _hermit_ знает ответ
+ на загадку. Все что мне известно,
+ когда-то %g общался с _spouse_
+ в ___spouse_.
+
+Message:  1011
+<ce> Не стоило приносить _flowers_.
+<ce> _hermit_ уехал обучаться у известного
+<ce> ученого _teacher_ в __school_.
+<ce> Если вы дадите ему вот эту книгу,
+<ce> может быть он будет к вам более
+<ce> благосклонен.
+
+Message:  1012
+<ce> _hermit_ просил меня не раскрывать свое
+<ce> местонахождение незнакомцам. Но вы принесли
+<ce> мне книгу _book_ от _spouse_, а
+<ce> значит вы не незнакомец. _hermit_
+<ce> уединился в одном подземелье, чтобы
+<ce> изучать древние предания. Я помечу
+<ce> это место на вашей карте.
+<ce> Удачи, %pcn.
+
+Message:  1013
+<ce> Ненавижу, когда меня отвлекают! Если
+<ce> все что вам надо - это ответ на тупую
+<ce> загадку, то вот, держите! А теперь
+<ce> проваливайте отсюда, пока я не призвал
+<ce> огненную даэдра, чтобы показать выход.
+
+Message:  1014
+  Не будем говорить ни о любви ни ненависти.
+Просто скажи мне вот что, какой из даров,
+что можешь дать мне, я не могу купить?
+
+Message:  1015
+%qdt:
+ Нашлась _spouse_.
+ %g сказала мне, что
+ _hermit_ ушел обучаться под
+ руководством _teacher_
+ в __school_.
+
+Message:  1016
+%qdt:
+ Встречались с учителем
+ _hermit_,
+ _teacher_ из
+ __school_. %g сказал, что
+ _hermit_ уединился в
+ ___dungeon_.
+
+Message:  1017
+  Не будем говорить ни о любви ни ненависти.
+Просто скажи мне вот что, какой из даров,
+что можешь дать мне, я не могу купить?
+<ce>
+-- Это ДОБРОТА, дурачина!
+
+
+
+QBN:
+Item _book_ book
+Item _letter_ letter used 1014
+Item _flowers_ yellow_flowers
+Item _answer_ letter used 1017
+Item _gold_ gold
+
+Person _hermit_ face 1 group Group_7.2 remote
+Person _qgiver_ group Questor
+Person _spouse_ group Group_7.1 remote
+Person _teacher_ face 1 faction The_Academics remote
+
+Place _dungeon_ remote dungeon
+Place _school_ remote library
+
+Clock _S.01_ 90.00:00
+--removed flags to make timer exactly 90 days
+
+
+--	Quest start-up:
+	dialog link for location _school_ person _teacher_
+	dialog link for location _dungeon_ person _hermit_
+	start timer _S.01_
+	log 1010 step 0
+	get item _flowers_
+	get item _letter_
+	create npc _spouse_
+	place npc _hermit_ at _dungeon_
+	place npc _teacher_ at _school_
+
+variable _questdone_
+_S.01_ task:
+	end quest
+
+_S.02_ task:
+	toting _flowers_ and _spouse_ clicked saying 1011
+	add dialog for location _school_ person _teacher_
+	log 1015 step 1
+	get item _book_
+
+_S.03_ task:
+	toting _book_ and _teacher_ clicked saying 1012
+	add dialog for person _hermit_
+	reveal _dungeon_
+	log 1016 step 2
+
+_S.04_ task:
+	toting _letter_ and _hermit_ clicked saying 1013
+	get item _answer_
+
+_S.05_ task:
+	toting _answer_ and _qgiver_ clicked
+	give pc _gold_
+	end quest

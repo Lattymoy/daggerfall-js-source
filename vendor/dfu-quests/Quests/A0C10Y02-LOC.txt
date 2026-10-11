@@ -1,0 +1,149 @@
+-- Quest: C:\QUESTS\WORKING\A0C10Y02.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: peasant
+-- Repute: 10
+-- QuestId: 2
+Quest: A0C10Y02
+DisplayName: Похищенное дитя
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> У меня горе. Темное Братство похитило
+<ce> моего ребенка _child_ и грозит убить
+<ce> его, если я не заплачу выкуп. У меня нет
+<ce> столько денег, чтобы купить его свободу,
+<ce> но я в состоянии заплатить вам _money_
+<ce> золотых, если вы найдете и освободите его.
+   <--->
+<ce> Мое дитя, мое бедное дитя _child_
+<ce> пропало, похищено Темным Братством,
+<ce> даже не знаю за какие прегрешения перед
+<ce> %god. Вы должны помочь мне, %pcf.
+<ce> Я дам вам все что у меня есть, _money_
+<ce> золотых, если вы вернете мне моего ребенка.
+
+RefuseQuest:  [1001]
+<ce> Какой черный день для меня.
+<ce> Темное Братство убьет _child_.
+<ce> Пусть %g4 призрак будет преследовать
+<ce> вас до скончания ваших дней!
+
+AcceptQuest:  [1002]
+<ce> Вы мой спаситель! Меня зовут _qgiver_.
+<ce> Быстрее, у вас есть только =timeforq_ дней,
+<ce> пока они не убили _child_. Моего ребенка
+<ce> держат в _dbguild_ в __dbguild_.
+
+QuestFail:  [1003]
+<ce> _child_? Где %g? Почему вы все еще
+<ce> здесь? Если вы хотите спасти его жизнь,
+<ce> то действуйте немедленно!
+
+QuestComplete:  [1004]
+<ce> _child_! Ты в порядке!
+<ce> %pcf, я в неоплатном долгу перед вами.
+<ce> Это вознаграждение - минимум того, что
+<ce> я могу для вас сделать.
+
+RumorsDuringQuest:  [1005]
+<ce> Темное Братство зашло слишком далеко на
+<ce> этот раз. Похищение ребенка _qgiver_
+<ce> не пройдет им даром!
+
+RumorsPostfailure:  [1006]
+<ce> Не думаю, что _qgiver_ переживет это.
+<ce> Возможно дело дойдет до суицида. Вы слыхали,
+<ce> что Темное Братство похитило и убило его
+<ce> ребенка _child_?
+
+
+RumorsPostsuccess:  [1007]
+<ce> Вы тот %ra, который нашел дитя
+<ce> _child_! Что за герой.
+
+QuestorPostsuccess:  [1008]
+<ce> Спаситель моего ребенка! Я и _child_
+<ce> благодарим вам за %g4 спасение.
+<ce> Благословляю вас, %pcf.
+
+QuestorPostfailure:  [1009]
+<ce> Мое дитя _child_ мертво по вашей
+<ce> вине! Никогда не приходите больше ко мне.
+
+QuestLogEntry:  [1010]
+<ce> Вы здесь, чтобы спасти меня? Меня зовут
+<ce> _child_. Мне не нравятся
+<ce> эти люди. Пожалуйста, верните меня
+<ce> домой к семье.
+
+Message:  1011
+<ce> _dbguild_ темны и зловещи.
+<ce> Уверен, враги рыщут повсюду.
+
+Message:  1012
+%qdt:
+ _qgiver_ рассказал мне
+ душераздирающую историю похищения его
+ ребенка _child_ Темным Братством.
+ Я немедленно соглашаюсь разыскать и
+ забрать %g4 из _dbguild_ в
+ __dbguild_.  %g4 семья будет ждать
+ =timeforq_ дней моего возвращения в
+ __qgiver_ в ___qgiver_.
+
+Message:  1020
+<ce> Никто не связывается с Темным Братством и
+<ce> смеет оставаться в живых!
+
+
+
+QBN:
+Item _money_ gold
+
+Person _child_ face 1 faction Children remote
+Person _qgiver_ face 121 group Questor
+Person _dummydarkb_ face 169 faction The_Dark_Brotherhood remote
+
+Place _dbguild_ remote house1
+
+Clock _timeforq_ 00:00 0 flag 17 range 1 4
+
+Foe _darkb_ is Assassin
+
+--	Quest start-up:
+	dialog link for person _child_
+	start timer _timeforq_
+	log 1012 step 0
+	pc at _dbguild_ set _S.01_ saying 1011
+	place npc _child_ at _dbguild_
+
+_timeforq_ task:
+	end quest
+
+_S.01_ task:
+	create foe _darkb_ every 2 minutes 4 times with 30% success
+
+_S.02_ task:
+	clicked npc _child_ say 1010
+	hide npc _child_
+	add _child_ face
+
+_qgclicked_ task:
+	clicked npc _qgiver_
+
+_vamp1_ task:
+	when _qgclicked_ and _S.02_
+	give pc _money_
+	change repute with _dummydarkb_ by -15
+	end quest
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.02_
+	say 1003
+	clear _qgclicked_ _clearclick_
+
+_S.06_ task:
+	injured _darkb_
+	say 1020

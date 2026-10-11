@@ -1,0 +1,276 @@
+-- Quest: C:\QUESTS\WORKING\M0B00Y17.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: fighter
+-- Repute: 0
+-- QuestId: 17
+Messages: 62
+Quest: M0B00Y17
+DisplayName: Беглый питомец
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pcn, не так ли?
+<ce> Как раз тот, кто мне нужен.
+<ce> У нас есть для тебя довольно интересная
+<ce> работа, требующая наличия мозгов
+<ce> кроме мускулов. Тебе интересно?
+
+RefuseQuest:  [1001]
+<ce> Да, верно, я же сказал, что
+<ce> тут требуются мозги, не так ли?
+
+AcceptQuest:  [1002]
+<ce> Вот какая ситуация. У _dummy_
+<ce> был ручной саблезубый тигр - не спрашивай,
+<ce> откуда он у него - так вот, тигр сбежал
+<ce> на днях. Его отследили до ___mondung_,
+<ce> но нам нужен кто-то, кто пойдет туда и
+<ce> приведет тигра обратно. Живым! Загвоздка
+<ce> вот в чем. Тигр натренирован отзываться
+<ce> на звук колокольчика. Тигр станет очень
+<ce> кротким, если ты позвонишь в колокольчик
+<ce> прямо перед его мордой. Естественно,
+<ce> _dummy_ говорит, что этот трюк не
+<ce> всегда проходит - тебя это не удивляет? -
+<ce> так что возможно тебе придется "чмокнуть"
+<ce> тигра в морду один или два раза, чтобы
+<ce> привлечь внимание. Только умоляю тебя,
+<ce> не убей его, хорошо? Верни его к _dummy_
+<ce> в __dummy_ в целости и сохранности
+<ce> в течение =qtime_ дней, он заплатит
+<ce> тебе _gold_ золотых. Удачи.
+
+QuestFail:  [1003]
+<ce> Что ты смотришь на меня, как бабуин?
+<ce> Тигр в ___mondung_. Бери
+<ce> колокольчик и вперед с песней.
+
+QuestComplete:  [1004]
+<ce> О, =tiger_, дорогой, ты в порядке!
+<ce> Большое вам спасибо, что привели
+<ce> моего малыша обратно. Уверен, он
+<ce> не причинил вам неприятностей, ведь
+<ce> так? Это же всего лишь большая кошка,
+<ce> не способная обидеть даже мухи.
+<ce> Вот ваши _gold_ золотых, как и было
+<ce> уговорено с Гильдией Бойцов.
+
+RumorsDuringQuest:  [1005]
+<ce> Вы слыхали, у _dummy_ опять сбежал ручной тигр? Убивший
+<ce> и съевший уже трех человек.
+
+RumorsPostfailure:  [1006]
+<ce> Похоже этот тигр пропал насовсем. Спасибо %god!
+
+RumorsPostsuccess:  [1007]
+<ce> _dummy_ нанял кого-то из Гильдии Бойцов привести
+<ce> своего ручного "кота" домой. Интересно, какой дурак согласился на эту работу?
+
+QuestorPostsuccess:  [1008]
+<ce> Привет, %pcf, любитель тигров!
+
+QuestorPostfailure:  [1009]
+<ce> Я знаю, что это не такая уж легкая
+<ce> работа, разыскать тигра, но тебе
+<ce> удалось справиться с ней. Что
+<ce> ты хочешь на этот раз?
+
+Message:  1020
+%qdt:
+ Меня наняла Гильдия Бойцов из
+ ___dummy_ найти саблезубого тигра,
+ который сбежал в ___mondung_.
+ Предполагается, что тигр реагирует
+ на звон колокольчика, но _questgiver_
+ предупредил меня, что натренирован тигр
+ не так уж и хорошо. Мне нужно вернуть
+ тигра владельцу, _dummy_, в __dummy_
+ в ___dummy_ в течение =qtime_ дней.
+ %g заплатит мне _gold_ золотых.
+
+Message:  1021
+%qdt:
+ ___mondung_. Тигр найден и похоже
+ я ему нравлюсь. Он следует за мной
+ по пятам. Теперь мне надо отвести
+ его к _dummy_ в ___dummy_.
+
+ Message:  1022
+%qdt:
+ ___mondung_. Тигр найден, но мне
+ пришлось убить его. Теперь мне
+ надо прийти к _dummy_ в ___dummy_
+ и извиниться за проваленную
+ работу.
+
+Message:  1030
+<ce> Опаньки. Вы убили тигра.
+<ce> Интересно, что скажет по этому поводу _dummy_?
+
+Message:  1040
+<ce> Звонок прозвенел достаточно
+<ce> громко, но тигру похоже
+<ce> на все эти звонки до лампочки.
+
+Message:  1041
+<ce> Тигр навострил уши как только
+<ce> звонок зазвенел. Его голова
+<ce> начала раскачиваться из стороны в
+<ce> сторону и он начал издавать низкий
+<ce> горловой звук. Это что, урчание?
+<ce> Тигр бесшумно подошел к вам
+<ce> и начал тереться о ноги, едва
+<ce> не уронив вас.
+<ce>
+<ce> Тигр последует за вами куда угодно.
+
+Message:  1050
+<ce> Ты, ужасный и мерзкий %ra!
+<ce> Я не могу поверить, что мой
+<ce> бедный =tiger_. Ведь это же всего
+<ce> лишь потерявшийся котенок, а ты
+<ce> убил его! Убирайся прочь отсюда,
+<ce> пок а я не позвал стражу
+<ce> арестовать тебя за убийство.
+<ce> Прочь отсюда!
+
+Message:  1060
+<ce> Дорогая _love_,
+<ce>
+  Мне очень жаль, что я не могу быть сегодня
+с тобой в __lovehouse_, но мне хотелось
+улучить момент, чтобы ты знала, что
+ты всегда в моих мыслях, дорогая.
+Я сижу здесь под деревом и любуюсь
+прекрасным полднем, который напоминает мне
+о тебе. Все напоминает мне о тебе, моя
+дорогая, солнце в небесах, пение лесных
+птиц, и даже ручной тигр, идущий за своим
+владельцем. Ха ха! Тигр выглядит потерянным,
+безобразник. Он встал у меня на пути.
+Только посмотри как блестит и переливается
+его шерсть на солнце, прямо как твои огненные
+волосы. Его владелец что-то выкрикивает и
+звенит в колокольчик, но тигр его не слушает.
+Какая энергичная зверюга! Он выглядит вполне
+дружелюбно, как будто хочет сказать мне "привет"...
+
+Message:  1061
+<ce> Да, что вы хотите? О...письмо от
+<ce> _victim_, большое вам спасибо!
+<ce> Но почему оно заляпано кровью?
+<ce> Боже мой. Он всегда был мил мне,
+<ce> но боюсь он заблуждался, что мы
+<ce> будем счастливы. Бедный, какой
+<ce> трагический конец. Я очень благодарна
+<ce> вам за рассказа о том, что произошло.
+<ce> Расскажу его родственникам об этом.
+<ce> Вот, возьмите _magic_. Это дал
+<ce> мне он. Я даже не знаю как
+<ce> пользоваться этим.
+
+
+
+QBN:
+Item _I.00_ bell
+Item _I.01_ dead_body
+Item _gold_ gold
+Item _letter_ letter used 1060
+Item _magic_ magic_item
+
+Person _questgiver_ group Questor
+Person _victim_ face 1 group Group_6.0 remote
+Person _love_ face 1 group Group_7.0 remote
+Person _dummy_ group Noble local
+
+Place _mondung_ remote dungeon6
+Place _newdung_ remote dungeon
+--unneeded dungeon variable
+Place _lovehouse_ local house2
+
+Clock _qtime_ 00:00 0 flag 17 range 0 2
+
+Foe _tiger_ is Sabretooth_tiger
+
+--	Quest start-up:
+	place item _I.01_ at _mondung_
+	dialog link for location _lovehouse_ person _love_
+	start timer _qtime_
+	reveal _mondung_
+	log 1020 step 0
+	get item _I.00_
+	pick one of _S.10_ _S.10_ _S.11_ _S.11_
+	place foe _tiger_ at _mondung_
+	create npc _dummy_
+	have _I.01_ set _deadbody_
+
+_deadbody_ task:
+	take _I.01_ from pc
+--added deadbody task. otherwise body would clog inventory
+
+_qtime_ task:
+	end quest
+
+_S.01_ task:
+	say 1040
+
+_S.02_ task:
+	injured _tiger_
+	_I.00_ used do _S.04_
+
+until _S.02_ performed:
+	_I.00_ used do _S.01_
+
+_S.03_ task:
+	killed 1 _tiger_
+	say 1030
+	log 1022 step 1
+--adds log in case user missed kill message
+
+variable _S.04_
+_S.05_ task:
+	when _S.04_ and not _S.03_
+	log 1021 step 1
+	say 1041
+	--remove foe action used here instead of attempting to transfer it to another dungeon
+	remove foe _tiger_
+-	unset _S.01_ _S.04_
+--prevented quest from giving reward. don't know the purpose of this unset.
+
+_S.06_ task:
+	clicked npc _dummy_
+
+_pcgetsgold_ task:
+	when _S.06_ and _S.05_
+	give pc _gold_
+	take _I.00_ from pc
+	end quest
+--removed unnecessary delay
+
+_S.08_ task:
+	when _S.06_ and _S.03_
+	say 1050
+	unset _S.06_
+
+variable _duelist_
+-unused variable
+_S.10_ task:
+	_letter_ used do _readletter_
+	place item _letter_ at _mondung_
+	place npc _love_ at _lovehouse_
+
+variable _S.11_
+_S.12_ task:
+	toting _letter_ and _love_ clicked
+	get item _magic_
+	say 1061
+	make _magic_ permanent
+
+_readletter_ task:
+	add dialog for location _lovehouse_ person _love_
+
+_qgclicked_ task:
+	clicked npc _questgiver_
+	say 1003

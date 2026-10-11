@@ -1,0 +1,121 @@
+-- Quest: C:\QUESTS\WORKING\R0C10Y13.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 10
+-- QuestId: 13
+Messages: 21
+Quest: R0C10Y13
+DisplayName: Мирное предложение
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> У меня задание дипломатической важности.
+<ce> Дары мира, которыми надо обменяться.
+<ce> Не окажете ли мне услугу и не передадите
+<ce> ли вы подарок моему другу, _contact_?
+
+RefuseQuest:  [1001]
+<ce> Что отталкивает вас от этого задания,
+<ce> цена, неудобства или это задание ниже
+<ce> вашего достоинства, %pcf?
+<ce> Ну ладно, я легко найду другого %ra,
+<ce> заинтересованного в продвижении
+<ce> по государственной лестнице.
+
+AcceptQuest:  [1002]
+<ce> Очень хорошо, %pcf.
+<ce> Слушайте внимательно: доставьте это - _item_
+<ce> во дворец в __palace_ и найдите там =contact_.
+<ce> Это и будет _contact_. %g ждет вас
+<ce> и заплатит за ваши труды. Отправляйтесь
+<ce> в путь. Не подведите меня, %pcf.
+
+QuestFail:  [1003]
+<ce> Быстрее отправляйтесь! Нет времени
+<ce> на пустые разговоры! У вас уже
+<ce> есть работа.
+
+QuestComplete:  [1004]
+<ce> О, какая великолепная вещица.
+<ce> Это _questgiver_ прислал?
+<ce> Что ж, между нами было простое
+<ce> недоразумение. Вот _reward_ золотых
+<ce> за ваши услуги, %pcf.
+
+RumorsDuringQuest:  [1005]
+Говорят _contact_ подумывает о прекращении отношений с _questgiver_.
+   <--->
+_questgiver_ следовало бы укрепить отношения с _contact_.
+
+RumorsPostfailure:  [1006]
+_questgiver_ и _contact_ стали еще дальше друг от друга, чем когда-либо раньше.
+   <--->
+Меня не удивит, если _contact_ и _questgiver_ окончательно разругаются.
+
+RumorsPostsuccess:  [1007]
+Похоже _contact_ и окружающие приятно удивлены подарком от _questgiver_.
+   <--->
+%god! _questgiver_ подарил _item_  _contact_. Разве ж это не хорошо?
+
+QuestorPostsuccess:  [1008]
+А, это мой посланник мира. Как идут ваши дела, друг мой?
+   <--->
+%oth, это же наш уважаемый курьер. Как поживаете?
+
+QuestorPostfailure:  [1009]
+<ce> Своей неудачей с доставкой _item_
+<ce> в руки _contact_ вы почти разрушили
+<ce> мои планы по установлению мирных
+<ce> отношений, %pcf.
+<ce> Прочь с глаз моих!
+
+QuestLogEntry:  [1010]
+%qdt:
+ _questgiver_ пообещал
+ мне _reward_ золотых, если
+ я схожу во дворец в __palace_
+ и отнесу туда дары мира, _item_.
+ Подарок предназначен для личности по имени
+ _contact_. Мну нужно управиться
+ в течение =queston_ дней.
+
+Message:  1020
+<ce> Разве _questgiver_
+<ce> ничего не передавал для меня?
+<ce> Проклятие, опять эти глупые шутки ...
+
+
+
+QBN:
+Item _reward_ gold
+Item _item_ trinket
+
+Person _questgiver_ group Questor
+Person _contact_ face 1 group Local_3.0 remote
+
+Place _palace_ remote palace
+
+Clock _queston_ 00:00 0 flag 1 range 0 2
+
+--	Quest start-up:
+	start timer _queston_
+	log 1010 step 0
+	get item _item_
+	place npc _contact_ at _palace_
+
+_pcgetsgold_ task:
+	toting _item_ and _contact_ clicked
+	give pc _reward_
+	change repute with _questgiver_ by +20
+	end quest
+--removed unnecessary delay
+
+_queston_ task:
+	make _item_ permanent
+	change repute with _questgiver_ by -20
+	end quest
+
+_npcclicked_ task:
+	clicked npc _contact_ say 1020

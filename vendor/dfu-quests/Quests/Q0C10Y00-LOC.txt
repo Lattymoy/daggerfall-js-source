@@ -1,0 +1,213 @@
+-- Quest: C:\QUESTS\WORKING\Q0C10Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: witch
+-- Repute: 10
+-- QuestId: 0
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 24
+Quest: Q0C10Y00
+DisplayName: Большое поручение
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Если ты хочешь получить помощь от
+<ce> ==qgiver_, сначала тебе надо
+<ce> помочь нам. Согласишься ли ты
+<ce> принести три реагента, которые
+<ce> нужны для нашего зелья.
+
+RefuseQuest:  [1001]
+<ce> Тогда избавь нас от твоего присутствия
+<ce> и пусть дурная слава преследует того,
+<ce> кто отказался нам помочь.
+
+AcceptQuest:  [1002]
+<ce> Нам ведьмам нужны три реагента,
+<ce> которые мы не можем найти из-за
+<ce> капризов погоды. Первый - _item1_
+<ce> в отличном состоянии из ___dungeon1_.
+<ce> Второй ищи в ___dungeon2_ - это
+<ce> _item2_, который источает клубы дыма.
+<ce> Последний реагент, эффективный
+<ce> предмет _item3_, который тебе надо
+<ce> принести из ___dungeon3_.
+<ce> Принеси нам все эти вещи в течение
+<ce> =queston_ дней, пока наш котел
+<ce> не остыл.
+
+QuestFail:  [1003]
+<ce> Нам нужны _item1_, _item2_
+<ce> и _item3_, %pcn.
+<ce> Сейчас не время для болтовни.
+
+QuestComplete:  [1004]
+<ce> Быстрей сестра, возьми багаж этого
+<ce> %ra. Размельчи _item1_,
+<ce> почисти _item2_ и
+<ce> размели _item3_ на кусочки.
+<ce> Вот, у нас есть три сверкающих
+<ce> безделушки, которым мы не никак не
+<ce> найдем применения. Возьми их,
+<ce> %pcn, как знак нашей
+<ce> благодарности.
+
+RumorsDuringQuest:  [1005]
+Погда была предсказуемой. Ведьмы могут спать спокойно.
+   <--->
+Одна из этих ведьм пыталась заняться делом в нашем городе, но мы прогнали ее с позором.
+
+RumorsPostfailure:  [1006]
+Вспомните, что было, когда ведьмы прокляли %t. Полагаю запал у ведь прошел.
+   <--->
+Говорят, что ==qgiver_ растеряли всю свою квалификацию.
+
+RumorsPostsuccess:  [1007]
+Ты почти можешь чувствовать энергию. Это как воздух, готовый взорваться.
+   <--->
+Тот кто сказал, что ==qgiver_ растеряли свои умения, обреченный дурак.
+
+QuestorPostsuccess:  [1008]
+За _item1_, _item2_ и _item3_ я к твоим услугам, %pcf.
+
+QuestorPostfailure:  [1009]
+<ce> Мы просили тебя принести три
+<ce> реагента, но тебе это не удалось.
+<ce> Прочь с глаз моих.
+
+Message:  1011
+Она одна из ==qgiver_. Кому-то надо быть повежливей.
+   <--->
+Она сильная пророчица, связанная с ==qgiver_.
+
+Message:  1015
+%qdt:
+ Если я хочу заслужить уважение _qgiver_,
+ мне надо найти три вещи и принести
+ их к ==qgiver_ в течение =queston_ дней.
+ Три вещи -- _item1_, _item2_ и
+ _item3_ -- должны быть доставлены
+ из ___dungeon1_, ___dungeon2_
+ и ___dungeon3_ соответственно.
+ Моя работа будет хорошо оплачена.
+
+Message:  1021
+<ce> Вы нашли _item1_,
+<ce> что ищет _qgiver_.
+
+Message:  1022
+<ce> Вы нашли _item2_,
+<ce> что ищет _qgiver_.
+
+Message:  1023
+<ce> Вы нашли _item3_,
+<ce> что ищет _qgiver_.
+
+Message:  1024
+<ce> Вы отдали _item1_.
+
+Message:  1025
+<ce> Вы отдали _item2_.
+
+Message:  1026
+<ce> Вы отдали _item3_.
+
+
+QBN:
+Item _item1_ mythic
+Item _item2_ mineral
+Item _item3_ organs
+Item _reward1_ malachite
+Item _reward2_ turquoise
+Item _reward3_ jade
+--added messages 1024, 1025 and 1026 and their handling in the quest. previously you had to click the witch 3 times and turn in the items with no confirmation.
+
+Person _qgiver_ group Questor anyInfo 1011
+
+Place _dungeon1_ remote dungeon6
+Place _dungeon2_ remote dungeon12
+Place _dungeon3_ remote dungeon10
+
+Clock _queston_ 6.22:40 10.10:00 flag 17 range 0 5
+
+Foe _F.00_ is Gargoyle
+Foe _wereboar_ is Wereboar
+Foe _spriggan_ is Spriggan
+Foe _mummy_ is Mummy
+Foe _zombie_ is Zombie
+Foe _skeleton_ is Skeletal_warrior
+
+--	Quest start-up:
+	place item _item3_ at _dungeon3_
+	place item _item2_ at _dungeon2_
+	place item _item1_ at _dungeon1_
+	start timer _queston_
+	reveal _dungeon3_
+	reveal _dungeon2_
+	reveal _dungeon1_
+	log 1015 step 0
+	pc at _dungeon1_ set _S.10_
+	pc at _dungeon2_ set _S.14_
+
+_pchasitem1_ task:
+	toting _item1_ and _qgiver_ clicked
+	say 1024
+
+_pchasitem2_ task:
+	toting _item2_ and _qgiver_ clicked
+	say 1025
+
+_pchasitem3_ task:
+	toting _item3_ and _qgiver_ clicked
+	say 1026
+
+_queston_ task:
+	end quest
+
+_a1_ task:
+	create foe _zombie_ every 15 minutes 5 times with 5% success
+	place foe _zombie_ at _dungeon1_
+
+_a2_ task:
+	create foe _mummy_ every 10 minutes 5 times with 5% success
+	place foe _mummy_ at _dungeon1_
+
+_a3_ task:
+	create foe _skeleton_ every 12 minutes 5 times with 5% success
+	place foe _skeleton_ at _dungeon1_
+
+_a4_ task:
+	create foe _F.00_ every 10 minutes 5 times with 5% success
+	place foe _F.00_ at _dungeon2_
+
+_a5_ task:
+	create foe _spriggan_ every 15 minutes 5 times with 5% success
+	place foe _spriggan_ at _dungeon2_
+
+_a6_ task:
+	create foe _wereboar_ every 12 minutes 5 times with 5% success
+	place foe _wereboar_ at _dungeon2_
+
+_S.10_ task:
+	pick one of _a1_ _a2_ _a3_ _a1_
+
+_batty_ task:
+	clicked item _item1_ say 1021
+
+_S.12_ task:
+	clicked item _item2_ say 1022
+
+_S.13_ task:
+	clicked item _item3_ say 1023
+
+_S.14_ task:
+	pick one of _a4_ _a5_ _a6_ _a4_
+
+_S.15_ task:
+	when _pchasitem1_ and _pchasitem2_ and _pchasitem3_
+	give pc _reward1_
+	give pc _reward2_
+	give pc _reward3_
+	end quest
+--changed to multi-line give pc reward, as I know this implementation works fine. --JayH

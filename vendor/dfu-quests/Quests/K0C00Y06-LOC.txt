@@ -1,0 +1,1162 @@
+-- Quest: C:\QUESTS\WORKING\K0C00Y06.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: merchant
+-- Repute: 0
+-- QuestId: 6
+Messages: 101
+Quest: K0C00Y06
+DisplayName: Путаница
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %oth, вы выглядите как
+<ce> один %ra, %pcn.
+<ce> Это не вы, %pcf?
+   <--->
+<ce> Вы случайно не %pcn,
+<ce> не так ли?
+   <--->
+<ce> Погодите-ка. Вы случайно
+<ce> не %pcn?
+
+RefuseQuest:  [1001]
+<ce> О, все в порядке. Я ошибся.
+   <--->
+<ce> Хорошо. Все в порядке.
+
+AcceptQuest:  [1002]
+<ce> "Вор! Вы один из тех, кто похитил мой _gem_!
+<ce> _guard_! Убить!"
+<ce>
+<ce> Как только вы услышали обвинение, вы
+<ce> поняли, что это ложь. Может вы и похищали
+<ce> камушки время от времени, но сейчас нет
+<ce> никаких причин в таком обвинении.
+   <--->
+<ce> "А у вас крепкие нервы, раз вы вернулись
+<ce> сюда после того, как украли мой _gem_!
+<ce> Моя охрана =guard_ позаботится
+<ce> о вас".
+<ce>
+<ce> Что-то не так. У этого человека нет
+<ce> никаких причин, чтобы обвинять вас.
+
+QuestComplete:  [1004]
+<ce> "Хм, похоже, что это не вы похитили мой
+<ce> _gem_. %oth, какой позор,
+<ce> я обвинил невиновного. Пожалуйста
+<ce> примите этот дар _reward_ в качестве
+<ce> извинения. Я предупрежу местную стражу
+<ce> из %cn, что вы невиновны".
+<ce>
+<ce> В душе вы знаете, что бы _qgiver_ не
+<ce> говорил про вас, ваша репутация не
+<ce> пострадает ни в коем случае.
+
+RumorsDuringQuest:  [1005]
+Самая подробная информация всегда имеется в _inn_, __inn_.
+   <--->
+_inn_, __inn_ - единственное место, где можно найти исчерпывающую информацию.
+   <--->
+Когда нашли этого вора-%ra, произошли массовые аресты.
+   <--->
+Бедный _qgiver_, но этот %ra дорого заплатит за этот _gem_.
+
+RumorsPostfailure:  [1006]
+Все доказательства указывают на то, что %pcn вор из ___qgiver_.
+   <--->
+_qgiver_ одержимо продолжает поиски этого %ra.
+
+RumorsPostsuccess:  [1007]
+Обернулось так, что %pcn невиновен в преступлении в ___qgiver_.
+   <--->
+Этот наемник-%ra доказал свою невиновность в преступлении в ___qgiver_.
+
+QuestorPostsuccess:  [1008]
+Я все еще чувствую себя ужасно, после того, как ложно обвинил вас, %pcf.
+
+QuestorPostfailure:  [1009]
+<ce> Вор! Вор! Убирайся вон
+<ce> или я позову стражу!
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_,
+ =qgiver_ в __qgiver_ из
+ ___qgiver_ внезапно обвинил меня
+ в краже, вроде как я имею причастность к краже
+ его _gem_.
+ На самом деле я здесь ни при чем, но похоже это
+ еще придется доказать, если я захочу
+ появиться в %reg снова.
+
+Message:  1011
+Бедный _qgiver_ потерял свой _gem_. Свидетели видели %ra, похожего на вас, в __qgiver_.
+   <--->
+_qgiver_ все еще пытается выследить авантюриста-%ra, похитившего камень.
+
+Message:  1012
+_merchant_ работяга, очень уважаемый купец в __merchanthome_.
+   <--->
+Этот _merchant_ не обсчитывает своих покупателей. Даже если так, то совсем немного.
+   <--->
+_merchant_, да? Вы найдете его в  _merchanthome_, __merchanthome_ в это время суток.
+   <--->
+Если прислушаться к _priest_, _merchant_ погибель для всего региона %reg.
+   <--->
+_merchant_ дерет втридорога почти с каждого, но это не зачит, что он _thief_.
+
+Message:  1013
+_noble_ из королевской семьи __noblehome_. %oth, его семья будет править вечно.
+   <--->
+_noble_ типичный член своего класса -- отсталый, беспощадный, высокомерный.
+   <--->
+_noble_ проводит свое время в _noblehome_, __noblehome_ в это время дня.
+   <--->
+_thief_ не ласков к _noble_, но никто в этом не сомневается.
+   <--->
+_noble_ презирает ==priest_ и особенно _priest_.
+
+Message:  1014
+_priest_ священник из ==priest_, ну и конечно же фанатик порядочный.
+   <--->
+_priest_ чувствует себя как рыба в воде в поднятых на днях скандалах в ==priest_.
+   <--->
+_priest_ обычно медитирует в _priesthome_, __priesthome_.
+   <--->
+Практически все в __priesthome_, кроме _noble_, очень уважают _priest_.
+   <--->
+Очевидно один только _priest_ не любит этого =merchant_, _merchant_.
+
+Message:  1015
+_thief_, что ж, %g вор, ушедший на покой. Ну или почти ушедший на покой, насколько я понимаю.
+   <--->
+Когда-то _thief_ был известен как лучший вор драгоценностей в __thiefhome_.
+   <--->
+Кто-то рассказывал мне, что _thief_ каждый день шныряет в окрестностях _thiefhome_.
+   <--->
+_merchant_ не верит, что _thief_ переменил свои повадки и жизнь.
+   <--->
+_thief_ не уважает _noble_, презирая аристократическую кровь =noble_.
+
+Message:  1016
+_witness_ - это имя =witness_, видевшего преступление в __qgiver_.
+   <--->
+_witness_ это просто =witness_. Вы найдете его в __witness_, ___witness_.
+
+Message:  1017
+<ce> Нищий оборванец чуть ли не силой впихнул вам
+<ce> в руки конверт и пропал преже, чем вы
+<ce> успели задать вопрос.
+<ce> A ragged beggar boy suddenly thrusts a letter
+<ce> in your hands and disappears before you have a
+<ce> second to question him.
+
+Message:  1018
+Мой дорогой, дорогой друг %pcn,
+<ce>
+  Прошу прощения за столь неэлегантный, но весьма
+эффективный способ общения. Наши враги превратили в
+балаган вашу, ну, скажем, не очень то порядочную и
+белоснежно чистую жизнь. Так как мы уважаем и
+восхищаемся искусством воровства, а вы не заслужили
+этих особых почестей, мы полагаем, что лучше всего
+для вас будет раскрыть истинного виновника глазам,
+носам и ушам этой восхитительной публике.
+  Человек, с которым вам стоило бы поговорить,
+_witness_, =witness_, которого можно найти
+в _inn_. Скорее всего вы обнаружите, что
+он не самая уважаемая личность. Он свидетель,
+видевший вас в __qgiver_, как вы воровали _gem_.
+Тем не менее, вы можете почерпнуть кое-какую инфор-
+мацию из этой встречи.
+  Удачи, уважаемый друг. Нет ничего страшного в том,
+чтобы быть обвиненным в акте распутности, дьявольской
+алчности, если вы действительно невиновны.
+<ce>
+-- Некроманты
+
+Message:  1019
+Уважаемый друг %pcf,
+<ce>
+  Мы все знаем про ложное обвинение в преступлениях,
+но мы занимаем позицию борьбы с обвинениями. В вашем
+случае мы откроем вам имя одного из ваших обвинителей --
+_witness_. Не знаю, работает ли он на ваших
+или наших врагов или он вообще невинная овечка, но он
+якобы видел вас, совершающих кражу из __qgiver_.
+  Будьте осторожны разговаривая с _witness_ --
+у него могут быть могущественные друзья. Лучше всего,
+если вы поговорите с ним на публике. Нам известно, что
+он часто появляется в _inn_ в __inn_.
+<ce>
+Агенты
+
+Message:  1020
+%pcf,
+<ce>
+  Может быть все это выглядит сумбурно, но наши парни
+из Гильдии Воров хотят помочь тебе выбраться из
+этого дерьма. Итак, в действительности мы не знаем,
+кто похитил _gem_ у __qgiver_, Но нам
+известно, что это не ты. Посмотрим на это вот с
+какой стороны -- если бы ты действительно украл
+_gem_, то у тебя не было бы столько проблем. У тебя
+достаточно ума, чтобы избежать этого. Но кто-то
+очень не любит тебя.
+  Личность, которую определили как %ra,
+выглядевшую как ты, укравшую _gem_ видел
+один =witness_ по имени _witness_.
+  Не могу сказать, правду он говорит или врет, что
+видел там тебя, но полагаю, ты найдешь способ
+узнать это. Ты найдешь этого _witness_ в
+таверне под названием _inn_ в __inn_.
+Будь осторожнее. Это не игра.
+<ce>
+Гильдия Воров
+
+Message:  1021
+Дорогой Друг,
+<ce>
+  Я знаю, что вы не делали этого. Вы не
+воровали этот _gem_ у __qgiver_, что бы
+там ни говорили. Кого я подозреваю? Что ж,
+есть =priest_ в __priesthome_, который
+рад воровать камушки и подставлять других так же
+легко, как и я могу выпить пинту ледяного эля в
+жаркий летний день.
+  У меня нет доказательств, но вы можете сходить
+и проверить сами. Имя этого священника _priest_.
+Удачи.
+<ce>
+Друг
+
+Message:  1022
+%pcn,
+<ce>
+  Вы меня не знаете, но я не хочу быть вам
+должным, впрочем как и вы мне, понимаете? Я
+работаю на =merchant_ по имени _merchant_.
+Он похоже совсем сошел с ума. Всегда ищет
+способ разбогатеть любым путем. И он всегда
+рад обвинить кого-нибудь в воровстве, даже
+если застанет того с банкой печенья в руках.
+Вот почему я ушел от него.
+  Буду рад, если моя информация поможет вам
+разобраться, что делать с этим делом в воростве
+в __qgiver_.
+<ce>
+Друг
+
+Message:  1023
+Дорогой друг %pcn,
+<ce>
+  Пожалуйста простите за вторжение. Я знаю,
+что вам сейчас не до светских разговоров,
+так что начну с места в карьер. Я не верю,
+что вы действительно виновны в краже в
+в __qgiver_, но если вы не докажете
+своей невиновности, то будете наказаны
+по всей строгости закона.
+  Есть =noble_, который, я думаю,
+знает намного больше, чем кажется. Не исключено,
+что он может каким-то образом завязан в этом
+преступлении. Не могу сказать больше за
+исключением того, что его имя _noble_ и
+он живет в __noblehome_.
+  И последняя вещь: у него очень влиятельные
+друзья. Не ставьте себя перед ним в невыгодное
+положение.
+<ce>
+Друг
+
+Message:  1024
+Уважаемый друг %pcn,
+<ce>
+  Быть может вам будет интересно узнать,
+что есть люди, которые не думают, что вы
+виновны в этом преступлении. Или, если быть
+точным, есть два человека в __thiefhome_,
+которые не думают, что это сделали вы.
+Я и еще один товарищ -- =thief_, который
+совершил эту кражу.
+  Правда у меня нет доказательств, но
+_thief_, этот =thief_, когда-то занимался
+кражей побрякушек.
+%oth, %g почти все время
+провел в тюрьме.
+  Итак, может быть _thief_ и не делал
+этого. Может быть. Но если это не он, то
+могу сказать вот что -- он знает намного
+больше, чем это может показаться. Так что,
+если вы хотите найти того, кто это сделал и
+подставил вас, найдите _thief_ и
+<ce>
+Друг
+
+Message:  1025
+<ce> Это ты! Ты тот самый, кто ограбил
+<ce> __qgiver_! Стража!
+<ce> Стража!
+<ce>
+<ce> _witness_ бросает вам записку,
+<ce> а затем убегает.
+   <--->
+<ce> Это тот %ra, который ограбил
+<ce> __qgiver_! Кто-нибудь, помогите мне!
+<ce>
+<ce> _witness_ бросает вам записку,
+<ce> после чего убегает.
+
+Message:  1026
+%qdt:
+ Мне пришло письмо от Некромантов, в
+ котором говорилось про =witness_,
+ который утверждал, что видел меня
+ в __qgiver_, и что мной украден
+ - _gem_. Имя этого человека
+ _witness_ и он часто бывает в
+ _inn_.
+
+Message:  1027
+%qdt:
+ Агенты Подземного Короля прислали мне
+ письмо, в котором говорится, что
+ =witness_ видел, как некий %ra,
+ похожий на меня украл _gem_ из
+ __qgiver_.
+ _witness_ может быть невинной овечкой,
+ а может быть и агентом одного из моих
+ врагов. Мне ничего не остается, как
+ поговорить с ним в _inn_ в
+ __inn_.
+
+Message:  1028
+%qdt:
+ Гильдия Воров прислала мне письмо,
+ в котором они уверяют, что верят, что
+ я не имею причастности к воровству.
+ Они так же назвали имя свидетеля этой
+ "кражи" - =witness_, который рассказывал,
+ что видел, как я краду этот _gem_.
+ _witness_ часто бывает в таверне,
+ называемой _inn_.
+ Я всегда отдаю долги.
+
+Message:  1029
+%qdt:
+ Мне пришло письмо от неизвестного друга,
+ в котором говорится про =priest_ по имени
+ _priest_, как возможного агента, связанного
+ с кражей _gem_ и тем, кто меня подставил.
+
+Message:  1030
+%qdt:
+ Кто-то прислал мне письмо,
+ в котором утверждается, что
+ =merchant_ по имени _merchant_ может
+ быть тем типом, кто украл _gem_,
+ а потом подставил меня, чтобы избежать
+ наказания.
+
+Message:  1031
+%qdt:
+ Если верить полученному мной письму
+ от незнакомца, есть такой аристократ по
+ имени _noble_ в __noblehome_,
+ который может знать, что на самом деле
+ случилось в __qgiver_.
+
+Message:  1032
+%qdt:
+ Мне пришло письмо от неизвестного
+ доброжелателя, рассказывающего, что некто
+ по имени _thief_, бывший вор,
+ специализировавшийся на краже
+ драгоценностей, живущий в данное время
+ в __thiefhome_. Если он к этому и не
+ причастен, беседа с ним поможет выяснить,
+ кто ограбил __qgiver_.
+
+Message:  1033
+%pcn,
+<ce>
+Встретимся в _withouse_,
+	   __withouse_.
+<ce>
+<ce> _witness_
+<ce> ----
+
+Message:  1034
+%qdt:
+ _witness_
+ вручил мне записку, когда я говорил
+ с ним и позвал стражу. В записке он
+ попросил встретиться с ним в местечке
+ под названием _withouse_.
+
+Message:  1035
+<ce> Благодарение %god вы получили мою записку.
+<ce> Мне очень жаль, что пришлось вызвать стражу,
+<ce> но я не видел другого способа вызвать вас
+<ce> на откровенный разговор. Послушайте, у меня
+<ce> немного времени, но теперь я знаю, что
+<ce> вы не совершали этого преступления. Я
+<ce> говорил правду, когда видел %ra, похожего
+<ce> на вас, ворующего _gem_ в __qgiver_,
+<ce> но потом я увидел еще кое-что. Это был
+<ce> =merchant_ по имени _merchant_,
+<ce> который, как я полагаю, узнал, что вы в
+<ce> городе и нанял кого-то, похожего на вас
+<ce> украсть _gem_ и свалить все на вас.
+<ce> Если вы хотитет обелить свое имя, поищите
+<ce> камень в ___mondung_,
+<ce> где _merchant_ и схоронил его
+<ce> или поищите любое другое доказательство в
+<ce> _thiefhouse_, где был _merchant_.
+<ce> Мне нужно идти, Удачи.
+
+Message:  1036
+<ce> Слушайте, вы должны поверить мне. Я действительно
+<ce> видел %ra, похожего на вас, укравшего _gem_,
+<ce> вот мне и показалось, что это были вы. Но перед
+<ce> этим я видел кузена _noble_'а в
+<ce> __noblehome_. Он очень похож на вас, а потом
+<ce> мне стало известно, что _noble_
+<ce> послал его в ___mondung_.
+<ce> Великолепное место, чтобы спрятать _gem_.
+<ce> Другой путь - _thiefhouse_,
+<ce> где _noble_ останавливается на ночь.
+<ce> Как только я увидел этого кузена, я понял,
+<ce> вы невиновны. Но вам нужно найти доказатель-
+<ce> ства своей невиновности. Мне пора идти,
+<ce> Удачи, друг!
+
+Message:  1037
+<ce> Я не лгал, когда говорил, что видел кого-то
+<ce> похожего на вас, укравшего _gem_ у
+<ce> __qgiver_. Потом я снова видел этого %ra
+<ce> в _priesthome_, разговаривающего с _priest_,
+<ce> одним из священнослужителей. Краем уха я
+<ce> услышал, как они говорили о каком-то
+<ce> месте под названием ___mondung_,
+<ce> потом я проследил этого %ra до
+<ce> _thiefhouse_. Оттуда
+<ce> %ra отправился в ___mondung_.
+<ce> Несколько минут назад вы вошли в мою
+<ce> таверну. Никто не поверит вашим и моим
+<ce> словам про _priest_.
+<ce> Вам нужно идти и найти доказательства,
+<ce> либо в ___mondung_, либо
+<ce> в _thiefhouse_, чтобы обелить
+<ce> ваше имя. А сейчас мне нужно идти. Удачи!
+
+Message:  1038
+<ce> Полагаю вы получили мою записку. Мне очень
+<ce> жаль, что все так случилось, %pcf,
+<ce> но я действительно видел, как кто-то похожий
+<ce> на вас похитил _gem_ у __qgiver_. Тот,
+<ce> кто это сделал, мастер по маскировке --
+<ce> профессиональный вор по имени _thief_.
+<ce> Через некоторое время после кражи я проходил
+<ce> мимо _thiefhouse_, когда услышал голос,
+<ce> принадлежавший ему, он говорил что-то про
+<ce> тайник в ___mondung_.
+<ce> Когда я увидел говорившего, то узнал в нем
+<ce> известную личность - _thief_.
+<ce> На сегодняшний день он уважаемый член общества
+<ce> надо найти достойное доказательство, чтобы
+<ce> обвинить его. Я не могу помочь вам, но думаю,
+<ce> что вам следует поывать в _thiefhouse_
+<ce> и ___mondung_. Удачи!
+
+Message:  1039
+<ce> Вижу вы получили мою записку. Послушайте,
+<ce> %pcf, я знаю. что это не вы обокрали
+<ce> __qgiver_, но поймите меня, моя жизнь не
+<ce> будет стоить и ломаного гроша, если нас увидят
+<ce> вместе. Я работаю у _merchant_, имя
+<ce> вам ни о чем не скажет, но поверьте мне,
+<ce> он смылся в __merchanthome_. Если вы
+<ce> хотите обелить свое имя и привлечь к суду
+<ce> моего босса, вам нужно найти подходящие
+<ce> доказательства. Мне в любом случае нужно
+<ce> уходить из этой провинции, а вам нужно поискать
+<ce> либо в его городском доме, _thiefhouse_,
+<ce> либо в его тайной сокровищнице, ___mondung_.
+<ce> Мне пора идти. И вы никогда меня не
+<ce> видели, %pcf.
+
+Message:  1040
+<ce> Слушайте меня внимательно, %pcf.
+<ce> Вот что случилось на самом деле. Я видел кражу
+<ce> в __qgiver_, но я знал, что если я скажу,
+<ce> кто на самом деле совершил преступление, никто
+<ce> не поверит, что я к этому не причастен. Итак,
+<ce> я говорил всем, что это был незнакомец и,
+<ce> определенно, это были вы. Настоящий взломщик,
+<ce> которого я подозреваю -- _noble_
+<ce> из королевской семьи в %reg. Вам
+<ce> нужно найти существенные доказательства, чтобы
+<ce> доказать его причастность, а я не хочу, чтобы
+<ce> мое тело нашли в подворотне с перерезанным
+<ce> горлом. Все что я могу сказать, _noble_
+<ce> проводит свое время в ___mondung_, а по
+<ce> ночам он бывает в _thiefhouse_.
+<ce> Надеюсь вы найдете доказательства его виновности
+<ce> в одном из этих мест. Удачи и...простите меня.
+
+Message:  1041
+<ce> Привет, %pcf. Я не мог говорить с вами
+<ce> в таверне -- там слишком много народу. Я
+<ce> действительно видел эту кражу в __qgiver_.
+<ce> Я ее и совершил. Но тот, кто меня нанял, сказал,
+<ce> чтобы я указал на вас, как виновника этого
+<ce> преступления. Это был _priest_,
+<ce> священник из ==priest_. Конечно же никто
+<ce> не повредит вам, если вы просто пойдете туда и скажете
+<ce> об этом. Вам нужны доказательства. Я спрятал
+<ce> _gem_ в местечке под названием ___mondung_,
+<ce> но возвращение камня обратно не решит проблему.
+<ce> Проверьте _thiefhouse_ -- там _priest_
+<ce> проводит свободное время по ночам. Может вам
+<ce> стоит поискать кое-что там. Мне пора идти.
+<ce> Я буду отрицать все, о чем мы говорили, но мне
+<ce> хотелось бы, чтобы вам сопутствовала удача.
+
+Message:  1042
+<ce> Нет, я знаю, что вы не делали этого, %pcf.
+<ce> Это был =thief_ по имени _thief_.
+<ce> Многие в __thiefhouse_ знают, что когда-то он
+<ce> был вором, но они полагают, что он отошел от дел
+<ce> и вернулся к обычной жизни. Скажу прямо, что
+<ce> это не так. Как вы видите, он подставил первого
+<ce> попавшегося незнакомца под угрозу смертной
+<ce> казни, а сам вышел чистеньким из воды. Я был
+<ce> бы только рад, если бы его зацапали на месте,
+<ce> но вам нужны доказательства его виновности.
+<ce> Иногда по ночам он останавливается в месте
+<ce> под названием _thiefhouse_,
+<ce> так что я бы начал поиски с его старого
+<ce> убежища, ___mondung_. Берегите себя,
+<ce> %pcf, и удачи вам.
+
+Message:  1043
+%qdt:
+ _witness_
+ рассказывает мне, что _merchant_
+ действительно причастен к краже,
+ но мне нужны серьезные доказательства.
+ Мне стоит поискать их как в _thiefhouse_,
+ так и в ___mondung_, чтобы
+ найти все, что мне нужно.
+
+Message:  1044
+%qdt:
+ _witness_
+ рассказал мне, что дворянин, _noble_,
+ спланировал это преступление, но это
+ только подозрение, так что мне нужны
+ доказательства. Надо поискать в двух местах,
+ в _thiefhouse_, где _noble_ часто бывает
+ по ночам, и в ___mondung_.
+
+QuestTimeLapse:  [1045]
+%qdt:
+ _witness_
+ признался, что он знает, кто причастен
+ к этой краже и что это не я. Настоящий
+ преступник - это _priest_, он стоит
+ за всем этим, но это сложно доказать.
+ Нужно поискать доказательства в двух
+ местах: в _thiefhouse_ и
+ в ___mondung_.
+
+Message:  1046
+%qdt:
+ _thief_,
+ известный, но предположительно ушедший
+ на покой вор драгоценностей, замешан в
+ этой краже. если верить словам
+ _witness_. Более того, он сказал, что
+ _thief_ сейчас уважаемый гражданин,
+ так что мне понадобятся серьезные
+ доказательства его вины. Мне стоит
+ поискать их в _thiefhouse_
+ или в ___mondung_, а может и там и там.
+
+Message:  1047
+<ce> Вы нашли _gem_, который
+<ce> был похищен у __qgiver_.
+
+Message:  1048
+_merchant_
+ __merchanthome_
+<ce>
+Дорогой _merchant_,
+<ce>
+  Надеюсь в __merchanthome_ все в порядке,
+а ваши родственник в полном здравии. Погода на
+удивление хорошая, так что должен похвалить вас,
+что это случилось в день моего визита.
+Теперь к делу. В последнем письме вы упо-
+мянули, что хотите сбросить цену за мои услуги,
+потому что _gem_ оказался невысокого качества
+и что вы уже нашли козла отпущения. Я согласен
+с вашими условиями и надеюсь, что это наемник
+%ra действительно так глуп, как вы полагаете.
+Если червяк дернется, вы знаете, как я поступлю.
+Если этот =priest_ _priest_
+окажется замешан в этом, он уничтожит все дело.
+Увидимся позже, мой друг.
+-- %n
+<ce> ----
+
+Message:  1049
+_noble_
+ __noblehome_
+<ce>
+Мой дорогой _noble_,
+<ce>
+А ты оказывается жутко лукавый человек.
+Даже на минуту не задумался о том, что я могу
+подозревать, кто стоит за всеми невзгодами,
+свалившимися на плечи бедного _qgiver_.
+Тебе повезло, что ты прихватил _gem_,
+который я хотела, но я задумалась, а как
+ты за него заплатил.
+Не хочу показаться неблагодарной, любимый мой,
+родной, но если _gem_
+пропадет из ___mondung_
+и его следы приведут ко мне, ты не представляешь,
+прелесть моя, сколько пальцев укажет на тебя.
+Я буду внимательно следить за этим грязным
+воришкой _thief_. Да, это шантаж,
+и мне это нравится.
+Но как бы то ни было, _gem_ очень красив,
+полагаю, стоит сказать за это спасибо.
+<ce>
+С любовью,
+%n
+<ce> ----
+
+Message:  1050
+_priest_
+ __priesthome_
+<ce>
+Уважаемый _priest_,
+<ce>
+  Выбросьте мое последнее письмо, в котором
+я хвалил вас за невероятное пожертвование
+==priest_. Этот _gem_, который вы преподнесли в
+качестве пожертвования, был украден у _qgiver_.
+Если выяснится, как этот камень был похищен из
+храма, наш престиж в %reg значительно
+упадет. _noble_ уже ненавидит нас,
+а он один из самых влиятельных людей в коро-
+левской семье, ==priest_ слишком
+дорожит своей репутацией.
+  На последнем собрании мы долго спорили,
+как поступить в сложившейся ситуации. Мы не
+хотим проблем.
+<ce>
+С сожалением ваш,
+%n
+==priest_
+<ce> ----
+
+Message:  1051
+_thief_
+ __thiefhome_
+<ce>
+Мой дорогой _thief_,
+<ce>
+  Значит ты снова в деле, а? Когда я узнал, что
+произошло в __qgiver_, я испытал
+приступ ностальгии. Разве могу я забыть те добрые
+старые деньки, когда мы были партнерами? И конечно
+же я не забыл, как ты подставил меня точно так же,
+как подставил сейчас этого наемника %ra.
+Это дела _merchant_, не так ли?
+  Не беспокойся, это не шантаж. Я не скажу ни слова
+кому бы то ни было ... если, конечно же, меня не
+спросят об этом. Естественно я могу и забыть обо
+всем этом, если ты расскажешь мне, где именно
+в ___mondung_ ты спрятал _gem_.
+  Пожалуйста, упомяни в ответе о своих воспоминаниях.
+<ce>
+%n
+<ce> ----
+
+Message:  1052
+<ce> Похоже это вполне весомое доказательство.
+<ce> теперь вам стоит выяснить, кто вам дал
+<ce> это письмо. Друг - _qgiver_ поможет.
+
+Message:  1053
+<ce> За этим преступлением стоит _noble_?
+<ce> Ну и ну. Вот как мы поступим. Я поговорю
+<ce> с его семьей -- они будут заинтересованы,
+<ce> чтобы замять эту ситуацию по тихому.
+<ce> Вы же отвезите _gem_ к
+<ce> _qgiver_ в __qgiver_, он
+<ce> будет рад. Какой же простофиля этот
+<ce> _noble_.
+
+Message:  1054
+<ce> Ага, _thief_ стоял за этим
+<ce> преступлением, порушившим мое дело, да?
+<ce> А теперь он пытается свалить все на вас.
+<ce> Что ж, я поговорю с кое-какими уважаемыми
+<ce> людьми и его друзьями. Все что мне нужно
+<ce> от вас, это _gem_. Отнесите это к
+<ce> _qgiver_ в __qgiver_, так вы если
+<ce> и не обелите себя, то хоть подниметесь в его
+<ce> глазах.
+
+Message:  1055
+<ce> Святый боже %god, это не подделка!
+<ce> Писавший был прав. У _merchant_
+<ce> есть причины бояться меня. ==priest_
+<ce> проверит, что этот _merchant_
+<ce> преподнес нашим иерархам, но мы должны быть
+<ce> уверены, что вы не являетесь его сообщником.
+<ce> Если вы увезете _gem_
+<ce> и отдадите его _qgiver_, мы сможем
+<ce> удостовериться в его доброй воле, в которой
+<ce> мы нуждаемся. Поспешите в
+<ce> __qgiver_ с этим _gem_, %pcf.
+
+Message:  1056
+<ce> Вы нашли это в письменном столе
+<ce> _priest_ в _thiefhouse_? %oth,
+<ce> это бесподобно! Быстрее, %pcf,
+<ce> доставьте этот _gem_ к _qgiver_,
+<ce> а я тем временем распущу слух о том,
+<ce> истинный виновник кражи в __qgiver_
+<ce> это священник из ==priest_!
+
+Message:  1057
+<ce> Ты тот самый вор, о котором
+<ce> говорил _witness_! Стража!
+   <--->
+<ce> Стража! Это тот самый %ra,
+<ce> в котором _witness_ опознал
+<ce> вора!
+   <--->
+<ce> Мне нечего сказать обычному
+<ce> вору побрякушек. _witness_
+<ce> уже рассказал мне все о тебе.
+<ce> Стража! Стража!
+
+Message:  1058
+<ce> Ты безмозглый %ra! Тебе показалось
+<ce> мало быть козлом отпущения?
+<ce> _guard4_!
+   <--->
+<ce> Почему бы тебе просто не убраться из
+<ce> %reg и забыть об этом, %ra?
+<ce> %oth, ты заплатишь за это!
+
+Message:  1059
+%qdt:
+ Настоящий вор пойман и наказан,
+ но сначала мне нужно отвезти _gem_
+ обратно к _qgiver_ в __qgiver_.
+
+Message:  1060
+<ce> После всего того, что произошло, больше
+<ce> нет причин считать вас нежелательным гостем
+<ce> в ___qgiver_. Вы всегда
+<ce> сможете найти здесь комнату и койку.
+
+Message:  1061
+%qdt:
+ Мне сообщили, что некто по имени
+ _witness_ обвиняет меня
+ в краже _gem_.
+ Необходимо найти этого человека.
+
+Message:  1091
+%qdt:
+ _witness_ рассказал мне, кто
+ стоит за этой кражей камня. Конечно
+ же это _merchant_. Ночью %g обычно
+ дома, в _thiefhouse_,
+ ___thiefhouse_
+ и у него есть тайник в ___mondung_.
+ Наконец-то я могу покончить с этой
+ неразберихой.
+
+Message:  1092
+%qdt:
+ _witness_ рассказал мне, кто
+ стоит за этой кражей камня. Конечно
+ же это _noble_. Ночью %g обычно
+ дома, в _thiefhouse_,
+ ___thiefhouse_
+ и у него есть тайник в ___mondung_.
+ Наконец-то я могу покончить с этой
+ неразберихой.
+
+Message:  1093
+%qdt:
+ _witness_ рассказал мне, кто
+ стоит за этой кражей камня. Конечно
+ же это _priest_. Ночью %g обычно
+ дома, в _thiefhouse_,
+ ___thiefhouse_
+ и у него есть тайник в ___mondung_.
+ Наконец-то я могу покончить с этой
+ неразберихой.
+
+Message:  1094
+%qdt:
+ _witness_ рассказал мне, кто
+ стоит за этой кражей камня. Конечно
+ же это _thief_. Ночью %g обычно
+ дома, в _thiefhouse_,
+ ___thiefhouse_
+ и у него есть тайник в ___mondung_.
+ Наконец-то я могу покончить с этой
+ неразберихой.
+
+Message:  1100
+<ce> Вы замечаете, как _qgiver_ выскальзывает в дверь.
+
+QBN:
+Item _necromancerletter_ letter used 1018
+Item _underkingletter_ letter used 1019
+Item _thievesguildletter_ letter used 1020
+Item _antipriestletter_ letter used 1021
+Item _antimerchantletter_ letter used 1022
+Item _antinobleletter_ letter used 1023
+Item _antithiefletter_ letter used 1024
+Item _gem_ gem
+Item _almightyletter_ letter used 1033
+Item _thiefevidenceletter_ letter used 1051
+Item _merchantevidenceletter_ letter used 1048
+Item _priestevidenceletter_ letter used 1050
+Item _nobleevidenceletter_ letter used 1049
+Item _reward_ trinket
+
+Person _qgiver_ group Questor anyInfo 1011
+Person _priest_ factiontype Temple local anyInfo 1014
+Person _noble_ face 174 factiontype Knightly_Guard female local anyInfo 1013
+Person _merchant_ face 86 faction The_Merchants female local anyInfo 1012
+Person _thief_ face 190 faction The_Thieves_Guild female local anyInfo 1015
+Person _witness_ face 1 group Innkeeper local anyInfo 1016
+Person necromancer faction The_Necromancers remote
+Person underking faction Agents_of_The_Underking remote
+Person _tg_ faction The_Thieves_Guild remote
+
+Place _mondung_ remote dungeon
+Place _thiefhouse_ local house2
+Place _withouse_ local generalstore
+Place _inn_ local tavern
+Place _merchanthome_ remote generalstore
+Place _noblehome_ remote house1
+Place _priesthome_ remote temple
+Place _thiefhome_ remote tavern
+
+Clock _letterarrivaltime_ 00:25 00:50
+Clock _questtimelimit_ 00:00 0 flag 17 range 0 5
+Clock _delay_ 00:01 0 flag 1 range 0 1
+
+Foe _guard_ is Warrior
+Foe _guard2_ is Knight
+Foe _guard3_ is Rogue
+Foe _guard4_ is Spellsword
+
+--	Quest start-up:
+	place item _gem_ at _mondung_
+	create foe _guard_ every 1 minutes 1 times with 100% success
+	dialog link for person necromancer
+	dialog link for person _tg_
+	dialog link for person _thief_
+	dialog link for location _withouse_ person _witness_
+	dialog link for person underking
+	dialog link for location _thiefhouse_ person _merchant_
+	dialog link for person _priest_
+	dialog link for person _noble_
+	start timer _questtimelimit_
+	start timer _delay_
+	start timer _letterarrivaltime_
+	log 1010 step 0
+	pick one of _merchantguilty_ _nobleguilty_ _priestguilty_ _thiefguilty_
+	_almightyletter_ used do _havereadwitnessletter_
+	legal repute -15
+	place npc _noble_ at _noblehome_
+	place npc _merchant_ at _merchanthome_
+	place npc _witness_ at _inn_
+	place npc _priest_ at _priesthome_
+	place npc _thief_ at _thiefhome_
+
+variable _priestguilty_
+variable _merchantguilty_
+variable _nobleguilty_
+variable _thiefguilty_
+
+_delay_ task:
+	hide npc _qgiver_
+	say 1100
+
+_latenight_ task:
+	daily from 00:00 to 02:00
+
+_priestnight_ task:
+	when _priestguilty_ and _latenight_ and _secondwitnessdiscussion_
+	place npc _priest_ at _thiefhouse_
+	restore _priest_
+
+_priestdayletter_ task:
+	when _priestguilty_ and not _latenight_ and _secondwitnessdiscussion_
+	place item _priestevidenceletter_ at _thiefhouse_
+	hide npc _priest_
+
+_merchantnight_ task:
+	when _merchantguilty_ and _latenight_ and _secondwitnessdiscussion_
+	place npc _merchant_ at _thiefhouse_
+	restore _merchant_
+
+_merchantdayletter_ task:
+	when _merchantguilty_ and not _latenight_ and _secondwitnessdiscussion_
+	place item _merchantevidenceletter_ at _thiefhouse_
+	hide npc _merchant_
+
+_noblenight_ task:
+	when _nobleguilty_ and _latenight_ and _secondwitnessdiscussion_
+	place npc _noble_ at _thiefhouse_
+	restore _noble_
+
+_nobledayletter_ task:
+	when _nobleguilty_ and not _latenight_ and _secondwitnessdiscussion_
+	place item _nobleevidenceletter_ at _thiefhouse_
+	hide npc _noble_
+
+_thiefdayletter_ task:
+	when _thiefguilty_ and not _latenight_ and _secondwitnessdiscussion_
+	place item _thiefevidenceletter_ at _thiefhouse_
+	hide npc _thief_
+
+_thiefnight_ task:
+	when _thiefguilty_ and _latenight_ and _secondwitnessdiscussion_
+	place npc _thief_ at _thiefhouse_
+	restore _thief_
+
+_letterarrivaltime_ task:
+	repute with _tg_ exceeds 10 do _friendofthievesguild_
+	repute with necromancer exceeds 10 do _friendofnecros_
+	repute with underking exceeds 10 do _friendofunderking_
+
+_friendofthievesguild_ task:
+	_thievesguildletter_ used do _havereadthievesguildletter_
+	give pc _thievesguildletter_ notify 1017
+	clear _friendofnecros_ _friendofunderking_
+
+_havereadthievesguildletter_ task:
+	log 1028 step 1
+
+_friendofnecros_ task:
+	_necromancerletter_ used do _havereadnecromancerletter_
+	give pc _necromancerletter_ notify 1017
+	clear _friendofunderking_
+
+_havereadnecromancerletter_ task:
+	log 1026 step 1
+
+_friendofunderking_ task:
+	_underkingletter_ used do _havereadunderkingletter_
+	give pc _underkingletter_ notify 1017
+
+_havereadunderkingletter_ task:
+	log 1027 step 1
+
+_nobodyismyfriend_ task:
+	when not _friendofnecros_ and not _friendofunderking_ and not _friendofthievesguild_
+
+_makehelpfulletterarrive_ task:
+	when _nobodyismyfriend_ and _letterarrivaltime_
+
+_clickonwitness_ task:
+	clicked npc _witness_
+
+_firstwitnessdiscussion_ task:
+	when _clickonwitness_ and not _havereadwitnessletter_
+	create foe _guard2_ every 1 minutes 1 times with 100% success
+	get item _almightyletter_
+	say 1025
+	place npc _witness_ at _withouse_
+	clear _clickonwitness_
+
+_havereadwitnessletter_ task:
+	log 1034 step 3
+
+_secondwitnessdiscussion_ task:
+	when _clickonwitness_ and _havereadwitnessletter_
+	reveal _mondung_
+	pick one of _honestmistake_ _annoyingwitness_
+	hide npc _witness_
+
+_giveantipriestletter_ task:
+	when _priestguilty_ and _makehelpfulletterarrive_
+	_antipriestletter_ used do _antipriestlog_
+	give pc _antipriestletter_ notify 1017
+
+_antipriestlog_ task:
+	log 1029 step 2
+
+_giveantimerchantletter_ task:
+	when _merchantguilty_ and _makehelpfulletterarrive_
+	_antimerchantletter_ used do _antimerchantlog_
+	give pc _antimerchantletter_ notify 1017
+
+_antimerchantlog_ task:
+	log 1030 step 2
+
+_giveantinobleletter_ task:
+	when _nobleguilty_ and _makehelpfulletterarrive_
+	_antinobleletter_ used do _antinoblelog_
+	give pc _antinobleletter_ notify 1017
+
+_antinoblelog_ task:
+	log 1031 step 2
+
+_giveantithiefletter_ task:
+	when _thiefguilty_ and _makehelpfulletterarrive_
+	_antithiefletter_ used do _antithieflog_
+	give pc _antithiefletter_ notify 1017
+
+_antithieflog_ task:
+	log 1032 step 2
+
+variable _annoyingwitness_
+variable _honestmistake_
+_revealthiefhonestmistake_ task:
+	when _honestmistake_ and _thiefguilty_
+	log 1046 step 4
+	say 1038
+
+_revealnoblehonestmistake_ task:
+	when _honestmistake_ and _nobleguilty_
+	log 1044 step 4
+	say 1036
+
+_revealmerchanthonestmistake_ task:
+	when _honestmistake_ and _merchantguilty_
+	log 1043 step 4
+	say 1035
+
+_revealpriesthonestmistake_ task:
+	when _honestmistake_ and _priestguilty_
+	log 1045 step 4
+	say 1037
+
+_revealthiefannoyingwitness_ task:
+	when _thiefguilty_ and _annoyingwitness_
+	log 1094 step 4
+	say 1042
+
+_revealpriestannoyingwitness_ task:
+	when _priestguilty_ and _annoyingwitness_
+	log 1093 step 4
+	say 1041
+
+_revealmerchantannoyingwitness_ task:
+	when _merchantguilty_ and _annoyingwitness_
+	log 1091 step 4
+	say 1039
+
+_revealnobleannoyingwitness_ task:
+	when _nobleguilty_ and _annoyingwitness_
+	log 1092 step 4
+	say 1040
+
+_retrievegem_ task:
+	clicked item _gem_
+	say 1047
+
+_readincriminatingletter_ task:
+	clicked item _priestevidenceletter_
+	clicked item _thiefevidenceletter_
+	clicked item _merchantevidenceletter_
+	clicked item _nobleevidenceletter_
+	say 1052
+
+_makevictimreturn_ task:
+	when _deliverlettertomerchant_ or _deliverlettertonoble_ or _deliverlettertopriest_ or _deliverlettertothief_
+	log 1059 step 5
+	restore _qgiver_
+
+_deliverlettertothief_ task:
+	toting _nobleevidenceletter_ and _thief_ clicked
+	say 1053
+
+_deliverlettertomerchant_ task:
+	toting _thiefevidenceletter_ and _merchant_ clicked
+	say 1054
+
+_deliverlettertopriest_ task:
+	toting _merchantevidenceletter_ and _priest_ clicked
+	say 1055
+
+_deliverlettertonoble_ task:
+	toting _priestevidenceletter_ and _noble_ clicked
+	say 1056
+
+_noevidenceconfrontation_ task:
+	when _clickanyone_ and not _makevictimreturn_
+	create foe _guard3_ every 1 minutes 1 times with 100% success
+	say 1057
+	clear _clickmerchant_ _clicknoble_ _clickpriest_ _clickthief_
+	start task _reminderwitness_
+
+_reminderwitness_ task:
+	log 1061 step 2
+
+_victory_ task:
+	toting _gem_ and _qgiver_ clicked
+	legal repute -200
+	give pc _reward_
+	change repute with _qgiver_ by +10
+	legal repute +105
+	end quest
+--changing to -200/+105 again. Criminal conspiracy charges during the quest
+--can lower the player's legal rep more than intended.
+
+_clickmerchant_ task:
+	clicked npc _merchant_
+
+_clicknoble_ task:
+	clicked npc _noble_
+
+_clickpriest_ task:
+	clicked npc _priest_
+
+_clickthief_ task:
+	clicked npc _thief_
+
+_clickanyone_ task:
+	when _clickmerchant_ or _clicknoble_ or _clickpriest_ or _clickthief_
+
+_revenge_ task:
+	when _clicknoble_ and _deliverlettertothief_
+	when _clickpriest_ and _deliverlettertonoble_
+	when _clickmerchant_ and _deliverlettertopriest_
+	when _clickthief_ and _deliverlettertomerchant_
+	create foe _guard4_ every 1 minutes 1 times with 100% success
+	say 1058
+
+_questtimelimit_ task:
+	have _gem_ set _illkeepthatgem_
+
+_illkeepthatgem_ task:
+	make _gem_ permanent
+
+_youhavefailed_ task:
+	when _questtimelimit_ and not _victory_
+	say 1060
+	restore _qgiver_
+	end quest

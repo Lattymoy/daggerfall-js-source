@@ -1,0 +1,164 @@
+-- Quest: C:\QUESTS\WORKING\C0B3XY09.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: temple
+-- Repute: 3X
+-- QuestId: 9
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 13
+Quest: C0B3XY09
+DisplayName: Великое зло
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pcn, меня зовут
+<ce> _qgiver_. %god предсказал,
+<ce> что в глубинах одного подземелья
+<ce> зреет сердце великого зла.
+<ce> Вы нужны нам, чтобы уничтожить
+<ce> это сущность. Сделаете?
+
+RefuseQuest:  [1001]
+<ce> У меня нет времени на уговоры.
+<ce> Пойду поищу кого посговорчивее.
+
+AcceptQuest:  [1002]
+<ce> Нет времени на пустую болтовню.
+<ce> Идите в ___dungeon_.
+<ce> Там вы найдете _evilfocus_.
+<ce> Уничтожьте это в течение =traveltime_
+<ce> дней и все будет хорошо.
+<ce> Храм пошлет знак свыше, когда
+<ce> все будет закончено.
+<ce> Потом возвращайтесь ко мне,
+<ce> я щедро заплачу вам.
+
+QuestComplete:  [1004]
+<ce> %pcn, вам объявляется
+<ce> благодарность от всего нашего
+<ce> духовенства. Зло было уничтожено.
+<ce> Как я и обещал, вот плата:
+<ce> _gold_ золотых.
+
+RumorsDuringQuest:  [1005]
+__qgiver_ очень заинтересован в происходящих событиях вокруг ___dungeon_.
+
+RumorsPostfailure:  [1006]
+Зло все еще остается внутри ___dungeon_, но оно изменило форму.
+
+RumorsPostsuccess:  [1007]
+__qgiver_ уничтожил Зло внутри ___dungeon_, о существовании которого мало кто подозревал.
+
+QuestorPostsuccess:  [1008]
+Конечно же вы тот самый уничтожитель _evilfocus_, я хорошо вас помню.
+
+QuestorPostfailure:  [1009]
+_evilfocus_ все еще разрастается. У меня нет ничего для вас кроме презрения.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Член __qgiver_
+ в ___qgiver_ по имени
+ _qgiver_ дал мне работу,
+ заключающуюся в уничтожении злобной
+ сущности _evilfocus_
+ в ___dungeon_. Работу
+ необходимо закончить в течение
+ =traveltime_ дней или зло накроет
+ своими крыльями этот безвинный мир.
+ Ну или почти безвинный мир.
+
+Message:  1011
+<ce> Как только вы приблизились к
+<ce> _evilfocus_, это превратилось
+<ce> в прекрасную женщину.
+<ce>
+<ce> Что за прекрасный юный смертный!
+<ce> Я вижу, ты здесь, чтобы уничтожить
+<ce> _evilfocus_. У меня есть идея
+<ce> получше. Что если я дам тебе
+<ce> _magicitem_, а ты вернешься
+<ce> в храм и скажешь, что тебе не
+<ce> удалось обнаружить _evilfocus_?
+<ce> Они могут очень рассердиться на
+<ce> тебя, но зато у тебя будет
+<ce> _magicitem_.
+
+Message:  1012
+<ce> Так умри же,
+<ce> набожный смертный!
+
+Message:  1013
+<ce> Проклятие снято. Вам следует доложить _qgiver_.
+
+Message:  1014
+<ce> __qgiver_ будет нелегко успокоить
+<ce> за такое предательство.
+
+
+QBN:
+Item _evilfocus_ religious
+Item _gold_ gold
+Item _magicitem_ magic_item
+
+Person _qgiver_ group Questor
+
+Place _dungeon_ remote dungeon
+
+Clock _traveltime_ 00:00 0 flag 17 range 0 2
+
+Foe _guardian_ is Daedra_seducer
+Foe _spiders_ is 6 Spider
+Foe _F.02_ is Gargoyle
+Foe _F.03_ is Harpy
+Foe _lesserdaedra_ is Daedroth
+
+--	Quest start-up:
+	place item _evilfocus_ at _dungeon_
+	start timer _traveltime_
+	reveal _dungeon_
+	log 1010 step 0
+
+_traveltime_ task:
+	end quest
+
+_S.01_ task:
+	clicked item _evilfocus_
+	place foe _guardian_ at _dungeon_
+	prompt 1011 yes _yes_ no _no_
+	take _evilfocus_ from pc
+
+_yes_ task:
+	remove foe _guardian_
+--better to just remove the daedra and avoid confusion
+	get item _magicitem_
+	make _magicitem_ permanent
+	change repute with _qgiver_ by -10
+	say 1014
+	end quest
+
+_no_ task:
+	create foe _F.02_ every 5 minutes 1 times with 100% success
+	create foe _spiders_ every 9 minutes 1 times with 100% success
+	create foe _lesserdaedra_ every 7 minutes 1 times with 100% success
+	create foe _F.03_ every 3 minutes 1 times with 100% success
+	say 1012
+
+_S.04_ task:
+	killed 1 _guardian_
+	say 1013
+--added a victory message. original quest was confusing up to this point.
+
+_questdone_ task:
+	clicked npc _qgiver_
+
+_success_ task:
+	when _questdone_ and _S.04_
+	give pc _gold_
+	end quest
+
+_clearclick_ task:
+	when _questdone_ and not _S.04_
+	clear _questdone_ _clearclick_
+--permits repeated clearclick

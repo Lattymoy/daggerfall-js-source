@@ -1,0 +1,234 @@
+-- Quest: C:\QUESTS\WORKING\K0C00Y04.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: merchant
+-- Repute: 0
+-- QuestId: 4
+Messages: 17
+Quest: K0C00Y04
+DisplayName: Два труса
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> У меня большие затруднения, я боюсь.
+<ce> _lover_ и я ... отлично понимали
+<ce> друг друга, но %g4 возлюбленный
+<ce> человек старых принципов. Меня вызвали
+<ce> на дуэль. К счастью _competitor_,
+<ce> мой соперник не знает, как я выгляжу.
+<ce> Вы могли бы выйти вместо меня. Согласны
+<ce> сделать это за _gold_ золотых?
+<ce> Буду очень благодарен.
+   <--->
+<ce> =competitor_ здесь в %cn,
+<ce> чтобы бросить мне вызов. Полагаю это
+<ce> вызвано слухами, что я обесчестил имя
+<ce> %g4 любимой _lover_. Не так уж
+<ce> много людей старой закалки в %reg.
+<ce> Мне нужен кто-то, кто выступит вместо
+<ce> меня на дуэли. Вы не согласились бы
+<ce> сделать это за _gold_ золотых?
+
+RefuseQuest:  [1001]
+<ce> Нет? Это очень плохо. Что ж,
+<ce> попробую поискать кого-то еще,
+<ce> кто захочет помочь мне.
+
+AcceptQuest:  [1002]
+<ce> Очень хорошо, %pcf. Пусть _competitor_
+<ce> получит этот ответ. Вы найдете его
+<ce> в __competitor_.
+<ce> Рассчитываю на ваше возвращение через
+<ce> =queston_ дней, с победой, за
+<ce> наградой. Удачи, друг мой!
+
+QuestComplete:  [1004]
+<ce> Честь восстановлена, да, мой лучший
+<ce> друг, %ra? Вот _gold_ золотых.
+<ce> А сейчас мне нужно нанести визит
+<ce> моей дорогой _lover_ и сказать
+<ce> ей об исходе испытания ... укрыв
+<ce> кое-какие факты конечно.
+
+RumorsDuringQuest:  [1005]
+_lover_, говорят, причина смертей больше, чем чума.
+   <--->
+Последний любовник _lover_ умер у нее на руках пытаясь удовлетворить ... ее желания.
+   <--->
+Если _lover_ захочет, чтобы из-за нее разыгралась дуэль ... %oth, так и будет.
+
+RumorsPostfailure:  [1006]
+_lover_ бросила _competitor_ и _qgiver_ тоже.
+   <--->
+Между _lover_, _competitor_ и _qgiver_ все кончено.
+
+RumorsPostsuccess:  [1007]
+_lover_ и _qgiver_ снова вместе. Это так романтично.
+   <--->
+_qgiver_ убил =competitor_ и все из-за любви к _lover_.
+
+QuestorPostsuccess:  [1008]
+Это честь для меня помочь вам, %pcf. Ведь мы знаем, что такое честь, не так ли?
+
+QuestorPostfailure:  [1009]
+Вас попросили подменить меня, идиот! Или вы уже забыли?
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_
+ из __qgiver_, ___qgiver_
+ был вызван на дуэль и послал меня подменить его.
+ _competitor_, с кем мне надо драться,
+ должен получить ответ на вызов. Найти его можно
+ в __competitor_ в ___competitor_. После
+ дуэли мне нужно вернуться к _qgiver_
+ за оплатой в __qgiver_. Все ради любви
+ к _lover_.
+
+
+Message:  1011
+  Я, _qgiver_ из ___qgiver_,
+подтверждаю ответ на вызов.
+<ce>
+  За мной остается право выбора места,
+где мы встретимся. Это место здесь
+и сейчас.
+<ce>
+  Этот контракт официально разрешен.
+Отказ от поединка без видимых на
+то причин влечет потерю вашей
+чести в полном объеме.
+<ce>
+_qgiver_ из ___qgiver_
+<ce> ----
+
+Message:  1012
+<ce> Вы, эээ, _qgiver_? Должно быть
+<ce> вам нужен другой человек по имени
+<ce> _competitor_, самый настоящий
+<ce> и сильный, хм, _duelist_.
+<ce> Вы найдете его в _arena_.
+<ce> Удачи, _qgiver_. Надеюсь
+<ce> на вашу победу!
+   <--->
+<ce> Вы _qgiver_ ...
+<ce> %oth, я встречусь с вами
+<ce> в _arena_. Позвольте только мне
+<ce> переодеться в одежды _duelist_.
+<ce> Прощайте!
+
+Message:  1013
+<ce> Вы в _arena_,
+<ce> где _competitor_ собирался
+<ce> встретиться с вами.
+
+Message:  1014
+<ce> По желанию _qgiver_,
+<ce> вы убили _duelist_ в
+<ce> честь _competitor_.
+<ce> Нужно возвращаться к нанимателю.
+<ce> И почести и слава восстановлены.
+
+Message:  1015
+<ce> Какая дикость! С одной стороны
+<ce> _competitor_, неотесанный болван,
+<ce> вызвавший на поединок _qgiver_.
+<ce> С другой стороны трусливый _qgiver_,
+<ce> пославший вас вместо себя. Спасибо,
+<ce> что донесли это до моего внимания!
+<ce> У меня не так уж много денег, но могу
+<ce> предложить вам _lovgold_ золотых
+<ce> вместо того, что вам пообещал этот дурень.
+   <--->
+<ce> Как это романтично! Только представьте --
+<ce> _competitor_ и _qgiver_
+<ce> готовы изрубить друг друга на кусочки
+<ce> ради меня. %oth, как бы захватывающе
+<ce> это ни было, я не могу допустить этого.
+<ce> Я уеду из ___lover_ навсегда, но
+<ce> вначале примите эти _lovgold_ золотых,
+<ce> которые вам пообещал _qgiver_.
+<ce> Я не могу повзолить вам остаться без денег,
+<ce> потому что вы предотвратили дуэль.
+<ce> Удачи вам, %pcf.
+   <--->
+<ce> Давайте-ка разберемся во всем. Этот идиот
+<ce> _competitor_ ревнует меня к
+<ce> _qgiver_ и вызвал его на дуэль.
+<ce> А это трусливое чудовище _qgiver_
+<ce> послало вас вместо себя на эту дуэль?
+<ce> Почему же я должна любить их после этого?
+<ce> Возьму это на заметку. Вот _lovgold_ золотых
+<ce> вместо того, что вам пообещал _qgiver_.
+<ce> Не будет никакой дуэли.
+
+Message:  1016
+%qdt:
+ _competitor_ убежал, когда я принес
+ ответ на его вызов на дуэль.
+ Дуэли все еще предстоит состояться, но
+ происходить она будет в _arena_ в
+ __arena_.
+
+
+
+QBN:
+Item _gold_ gold
+Item _dueler_ letter used 1011
+--added underscores to dueler
+Item _lovgold_ gold
+
+Person _qgiver_ group Questor
+Person _lover_ group Group_7.0 local
+Person _competitor_ group Group_7.1 local
+--UESP suggests any gender is possible
+
+Place _arena_ local house2
+Place _loverhome_ local house
+--lover wouldn't appear in any local place
+
+Clock _queston_ 3.01:20 5.23:20
+
+Foe _duelist_ is Spellsword
+
+--	Quest start-up:
+	start timer _queston_
+	log 1010 step 0
+	get item _dueler_
+	place npc _lover_ at _loverhome_
+
+_queston_ task:
+	end quest
+
+_S.01_ task:
+	killed 1 _duelist_
+	say 1014
+
+_S.02_ task:
+	toting _dueler_ and _competitor_ clicked
+	pc at _arena_ set _S.04_
+	log 1016 step 1
+	say 1012
+	place foe _duelist_ at _arena_
+
+_S.03_ task:
+	toting _dueler_ and _lover_ clicked
+	get item _lovgold_
+	say 1015
+	make _lovgold_ permanent
+	end quest
+
+_S.04_ task:
+	say 1013
+
+_qgclicked_ task:
+	clicked npc _qgiver_
+
+_reward_ task:
+	when _qgclicked_ and _S.01_
+	give pc _gold_
+	end quest
+
+until _reward_ performed:
+	clear _qgclicked_

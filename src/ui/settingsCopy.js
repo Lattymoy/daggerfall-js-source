@@ -252,7 +252,8 @@ const PAGE_TIPS = Object.freeze({
  *  string when it did not - the screen then shows the status line
  *  alone rather than inventing a sentence. */
 export function helpOf(key) {
-  return SETTINGS_INFO[dfuTextKey(key)] ?? PAGE_TIPS[key] ?? '';
+  const val = SETTINGS_INFO[dfuTextKey(key)] ?? PAGE_TIPS[key] ?? '';
+  return t(val);
 }
 
 /** MENU: what a NOT-AVAILABLE row prints where its control would be.

@@ -1,0 +1,87 @@
+-- Quest: C:\QUESTS\WORKING\S0000022.Qbn.
+-- Main story quest.
+-- QuestId: 22
+Messages: 12
+Quest: S0000022
+DisplayName: Откровение Лизандуса
+-- Message panels
+QRC:
+
+RefuseQuest:  [1001]
+<ce> Я же сказала тебе прийти через
+<ce> месяц. Порошок еще не готов.
+<ce> Возвращайся позже.
+
+AcceptQuest:  [1002]
+<ce> Порошок готов. Все что тебе нужно,
+<ce> это распылить это над его истинным
+<ce> телом. Должна предупредить тебя,
+<ce> это не упокоит его дух, но даст тебе
+<ce> шанс поговорить с ним. Полное
+<ce> упокоение зависит только от самого
+<ce> Лизандуса.
+<ce>
+<ce> Я не знаю, где погребено его тело,
+<ce> но знаю точно, что это не на поле битвы
+<ce> при Крингаине, где ему был вознесен
+<ce> монумент. Если тебе удастся поговорить
+<ce> с ним...скажи ему, что я все еще люблю
+<ce> его. Смерть ненадолго разлучила нас.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Медора сказала мне, что ей потребуется
+ месяц, чтобы приготовить порошок.
+ После мне следует посетить ее в башне Диренни.
+
+Message:  1011
+%qdt:
+ Медора дала мне порошок, который должен
+ успокоить разгневанный дух Лизандуса. В
+ любом случае это не позволит упокоить его
+ тень, а всего лишь умиротворит. Теперь
+ мне осталось только найти его усыпальницу
+ и использовать снадобье.
+
+
+
+QBN:
+Item _spider_ lich_dust
+
+Person _medora_ named Medora atHome
+
+
+Clock _S.00_ 30.00:00 0 flag 1 range 0 1
+
+
+--	Quest start-up:
+	start timer _S.00_
+	log 1010 step 0
+
+variable _S.00_
+_S.01_ task:
+	clicked npc _medora_
+
+_S.02_ task:
+	when _S.01_ and _S.00_
+	log 1011 step 1
+	get item _spider_
+	say AcceptQuest
+
+_S.03_ task:
+	when not _S.00_ and _S.01_
+	say RefuseQuest
+	clear _S.01_ _S.03_
+
+LysandusSatisfied _S.04_
+	have _spider_ set _S.05_
+
+_S.05_ task:
+	start quest 15 15
+	take _spider_ from pc
+	play video 5
+	end quest
+
+_S.06_ task:
+	when _S.04_ and not _S.05_
+	clear _S.04_ _S.06_

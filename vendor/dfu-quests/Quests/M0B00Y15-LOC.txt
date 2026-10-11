@@ -1,0 +1,142 @@
+-- Quest: C:\QUESTS\WORKING\M0B00Y15.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: fighter
+-- Repute: 0
+-- QuestId: 15
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 21
+Quest: M0B00Y15
+DisplayName: Охота на гигантских грызунов
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Я - _qgiver_.
+<ce> У меня есть одна работенка. Не слишком-то
+<ce> романтичная, однако некоторые члены Гильдии
+<ce> предпочли бы именно такую, поскольку она
+<ce> оплачивается ничуть не хуже, чем более сложные.
+<ce> В одном из домов в городе завелись гигантские
+<ce> грызуны. Жена утверждает, что это крысы,
+<ce> муж говорит - летучие мыши, в любом случае они
+<ce> хотят от них избавиться.
+<ce> Возьмешься за это?
+
+RefuseQuest:  [1001]
+<ce> Видно ты не очень-то любишь Гильдию.
+<ce> Я позабочусь о том, чтобы остальные узнали,
+<ce> каково твое отношение на самом деле...
+
+AcceptQuest:  [1002]
+<ce> Дом _house_ захвачен летучими мышами.
+<ce> Отправляйся туда, прикончи их всех и получишь
+<ce> свою награду. На это у тебя есть только один
+<ce> день.
+
+QuestComplete:  [1004]
+<ce> Война с летучими мышами, пусть даже и с
+<ce> гигантскими, не требует особого умения.
+<ce> Но оплачивается не хуже, а?
+
+RumorsDuringQuest:  [1005]
+<ce> Одна дурочка не чинила крышу несколько
+<ce> месяцев. Теперь у нее полный дом
+<ce> гигантских нетопырей.
+
+RumorsPostfailure:  [1006]
+<ce> Представляете, одной женщине, пришлось
+<ce> бросить свой дом! У нее завелись
+<ce> гигантские нетопыри, а денег, чтобы
+<ce> заплатить Гильдии Бойцов, у нее не было.
+
+RumorsPostsuccess:  [1007]
+<ce> Я слышал один %ra был послан Гильдией Бойцов
+<ce> чтобы перебить гигантских нетопырей в доме
+<ce> той женщины. Пришлось ей раскошелиться, но
+<ce> это лучше чем бросать дом.
+
+QuestorPostsuccess:  [1008]
+<ce> Итак, мы прикончили гигантских нетопырей? Не
+<ce> стоит почивать на лаврах, это всего лишь
+<ce> большие летучие мыши.
+
+QuestorPostfailure:  [1009]
+<ce> Ты не можешь справиться даже с летучими
+<ce> мышами! У тебя нет будущего, %pcn.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Гильдия Бойцов из ___qgiver_
+ поручила мне избавиться от гигантских
+ нетопырей (или крыс?), наводнивших один
+ из домов в городе: _house_. На это
+ у меня есть один день.
+
+Message:  1011
+<ce> До вас доносится звук крысиных когтей.
+<ce> Похоже, они сближаются.
+
+Message:  1012
+<ce> Слышен легкий стрекот летучих мышей.
+<ce> Похоже, они сближаются.
+
+Message:  1020
+<ce> По большому счету, это все. Думаю, Гильдия не
+<ce> будет возражать против небольшого отдыха.
+
+
+
+QBN:
+Item _reward_ gold
+
+Person _qgiver_ group Questor
+
+Place _house_ local random
+
+Clock _2dung_ 1.00:00 0 flag 1 range 0 1
+
+Foe _monster_ is Giant_bat
+Foe _rats_ is Giant_rat
+
+--	Quest start-up:
+	start timer _2dung_
+	reveal _house_
+	log 1010 step 0
+	pick one of _monster1_ _monster2_
+	create npc at _house_
+
+_2dung_ task:
+	end quest
+
+_mondead_ task:
+	killed 4 _rats_
+	killed 4 _monster_
+	say 1020
+
+_S.02_ task:
+	when _qgclicked_ and _mondead_
+	give pc _reward_
+	end quest
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_
+	clear _qgclicked_ _clearclick_
+
+_qgclicked_ task:
+	clicked npc _qgiver_
+
+_S.04_ task:
+	say 1011
+	create foe _rats_ every 2 minutes 7 times with 100% success
+
+_monster1_ task:
+	pc at _house_ set _S.04_
+
+_monster2_ task:
+	pc at _house_ set _S.07_
+
+_S.07_ task:
+	say 1012
+	create foe _monster_ every 2 minutes 7 times with 100% success
+--slowed enemy spawn due to feedback

@@ -1,0 +1,138 @@
+-- Quest: C:\QUESTS\WORKING\R0C20Y07.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 20
+-- QuestId: 7
+Messages: 12
+Quest: R0C20Y07
+DisplayName: Потерянный сапфир
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> У меня есть друг, потенциальный союзник, который
+<ce> нуждается в небольшой помощи. Это довольно
+<ce> таки простая операция по спасению, но за нее
+<ce> мой друг готов оказать большую признательность
+<ce> и отсыпать круглую сумму. Это поручение необходимо
+<ce> завершить в сжатые сроки, в пределах =1stparton_
+<ce> дней. О деталях поговорим, если вы согласны.
+
+RefuseQuest:  [1001]
+<ce> Что ж, сказать "нет" с самого начала лучше,
+<ce> чем сказать "да" и потерпеть неудачу. Вы меня
+<ce> немного разочаровали, ну да ладно.
+
+AcceptQuest:  [1002]
+<ce> Великолепно, мне сразу подумалось, что вы не
+<ce> откажетесь. Итак, мой друг _qgfriend_ из
+<ce> ___qgfriend_ потерял самоцвет, сапфир.
+<ce> Мои шпионы оттследили путь камня до подземелья
+<ce> ___itemdung_. _qgfriend_ хочет вернуть
+<ce> этот камень, пока он не попал в третьи руки.
+<ce> Если камень не попадет к моему другу в течение
+<ce> =1stparton_ дней, то возникнут определенные
+<ce> неприятности. Более того, личности, которые сейчас
+<ce> владеют этим камушком, согласно информации моих
+<ce> шпионов, на днях собираются наведаться в
+<ce> ___itemdung_. Как вы понимаете, отправляться
+<ce> нужно немедленно, чтобы прибыть в ___qgfriend_
+<ce> в течение =1stparton_ дней с сапфиром.
+<ce> Удачи, %pcf. Не подведите меня.
+
+QuestFail:  [1003]
+<ce> Сапфир, %pcf! Вы что,
+<ce> уже забыли? %oth!
+
+QuestComplete:  [1004]
+<ce> О, %pcf, вы не представляете, как
+<ce> мне радостно, что вы нашли этот треклятый
+<ce> сапфир. Не хочу даже думать, что было бы, если
+<ce> бы вы не нашли его. Вот достойное вознаграждение,
+<ce> которое я только могу вам предложить - _reward_.
+<ce> Примите это пожалуйста в знак мой нижайшей
+<ce> благодарности.
+
+RumorsDuringQuest:  [1005]
+У этих воришек из ___itemdung_ весьма и весьма сильная охрана.
+   <--->
+_qgfriend_ в последнее время в ужасном расстройстве.
+
+RumorsPostfailure:  [1006]
+По всей видимости на стороне _qgfriend_ выступил могущественный волшебник.
+   <--->
+_questgiver_ выплатил приличную сумму группе %ra-наемников.
+
+RumorsPostsuccess:  [1007]
+Оказалось, что _qgfriend_ не крал самоцвет. Этот камешек нашелся.
+   <--->
+_qgfriend_ называли вором, но камень нашелся, его украл кто-то другой.
+
+QuestorPostsuccess:  [1008]
+Мой друг рассказывал мне, что вы нашли его самоцвет. Что я могу для вас делать?
+   <--->
+Мне очень приятно видеть вас снова. Мой друг очень признателен за подарок небесного цвета.
+
+QuestorPostfailure:  [1009]
+<ce> Меня поражают ваши выдержка и
+<ce> наглость, %pcn.
+<ce> Вы провалили задание и отважились
+<ce> вернуться без сапфира.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _questgiver_
+ из ___questgiver_ посылает меня
+ с заданием найти сапфир, украденный у
+ друга, _qgfriend_ из
+ __qgfriend_ в ___qgfriend_.
+ У меня =1stparton_ дней, чтбы найти сапфир
+ в ___itemdung_ и вернуть его в __qgfriend_,
+ чтобы получить вознаграждение.
+
+Message:  1011
+Вы нашли сапфир.
+
+
+
+QBN:
+Item _reward_ magic_item
+Item _item_ sapphire
+
+Person _questgiver_ face 112 group Questor
+Person _qgfriend_ group Local_3.0 remote
+
+Place _itemdung_ remote dungeon13
+
+Clock _1stparton_ 00:00 0 flag 1 range 2 5
+--changed flags on timer, was giving very short time limits before
+Clock _2ndparton_ 00:00 0 flag 3 range 1 2
+
+Foe _giant_ is Giant
+
+--	Quest start-up:
+	start timer _1stparton_
+	reveal _itemdung_
+	log 1010 step 0
+	give item _item_ to _giant_
+	place foe _giant_ at _itemdung_
+
+_pcgetsgold_ task:
+	toting _item_ and _qgfriend_ clicked
+	give pc _reward_
+	end quest
+--removed unnecessary delay
+
+variable _queston_
+_pchasitem_ task:
+	clicked item _item_
+	say 1011
+	create npc _qgfriend_
+
+_1stparton_ task:
+	make _item_ permanent
+	change repute with _qgfriend_ by -10
+	end quest
+
+variable _2ndparton_

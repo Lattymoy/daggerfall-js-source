@@ -1,0 +1,279 @@
+-- Quest: C:\QUESTS\WORKING\K0C00Y05.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: merchant
+-- Repute: 0
+-- QuestId: 5
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 20
+Quest: K0C00Y05
+DisplayName: Потерянное дитя
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Я обращался к Гильдии Бойцов, но у них
+<ce> полно дел по розыску высокорожденных
+<ce> отпрысков, для них это важнее розыска
+<ce> детей, родившихся у обычных людей. Мое
+<ce> дитя _child_ это все, что у меня есть.
+<ce> Пожалуйста, не могли бы поискать ее,
+<ce> мой друг?
+   <--->
+<ce> Эти ужасные орки похитили мою маленькую
+<ce> кузину, а наш так называемый "защитник",
+<ce> Гильдия Бойцов отказалась помочь.
+<ce> _child_ это =child_, недостойная
+<ce> их внимания, но она, это все что у меня
+<ce> есть. Пожалуйста, добрый %ra,
+<ce> помогите мне.
+
+RefuseQuest:  [1001]
+<ce> Ваше сердце из камня, прямо как
+<ce> у членов Гильдии Бойцов. В чем
+<ce> провинилось это невинное дитя?
+
+AcceptQuest:  [1002]
+<ce> Спасибо, спасибо вам. Я дам вам
+<ce> _gold_ золотых, если вы найдете
+<ce> _child_ -- она это все, что у
+<ce> меня есть. Орки, похитившие ее,
+<ce> остановились в дурнопахнущем местечке,
+<ce> ___mondung_. Мне нужно узнать
+<ce> о судьбе _child_ в течение
+<ce> =queston_ дней или я пошлю кого еще.
+<ce> Пожалуйста, не доводите меня до безумия.
+<ce> %god пребудет с вами, добрый герой
+<ce> %pcn.
+
+QuestComplete:  [1004]
+<ce> _child_, о, благодарение %god!
+<ce> %oth, мой добрый, добрый друг %pcn,
+<ce> вы мой спаситель. Вот, вот
+<ce> ваши _gold_ золотых.
+
+RumorsDuringQuest:  [1005]
+_qgiver_ в полном расстройстве от пропажи _child_.
+
+RumorsPostfailure:  [1006]
+_qgiver_ уже отчаялся найти _child_.
+
+RumorsPostsuccess:  [1007]
+_qgiver_ и _child_ снова воссоединились, спасибо наемнику-%ra.
+
+QuestorPostsuccess:  [1008]
+Вы вернули мне _child_, %pcf. Что я могу сделать для вас?
+
+QuestorPostfailure:  [1009]
+<ce> Вы не помните меня, %pcf?
+<ce> _qgiver_? Вы сказали,
+<ce> что вернете мне _child_,
+<ce> но потерпели неудачу. Мне
+<ce> нечего сказать вам.
+<ce> Проваливайте в Обливион.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_
+ из __qgiver_, ___qgiver_
+ послал меня найти его маленькую кузину,
+ _child_. Вероятнее всего
+ она находится у группы орков в
+ ___mondung_. У меня =queston_ дней
+ на спасение ребенка.
+
+Message:  1011
+      __knight_
+       ___knight_
+<ce>
+Дорогой друг %pcn,
+<ce>
+_child_ не была похищена ни орками,
+ни кем либо еще. В действительности она
+находится у нас, для защиты от _qgiver_,
+который является страшным пьяницей. Если
+вы хотите увидеть ее собственными глазами,
+приходите в __knight_.
+<ce>
+Ваш почтенный,
+<ce> _knight_
+<ce> ----
+
+
+Message:  1012
+<ce> Посыльный, носящий геральдические знаки
+<ce> Гильдии Бойцов появляется прямо перед вами.
+<ce> Он вручает вам запечатанный конверт
+<ce> и быстро смывается вон.
+
+Message:  1013
+%qdt:
+ Мне пришло письмо от
+ _knight_, рыцаря из
+ Гильдии Бойцов, написавшего, что разыскиваемое
+ в ___mondung_ дитя находится у него.
+ _knight_ забрал _child_ у
+ _qgiver_, потому что =qgiver_ конченый
+ пьяница. Если я хочу убедиться собственными
+ глазами, _knight_ находится в
+ __knight_ в ___knight_.
+
+Message:  1014
+<ce> Полагаю, вы получили мое письмо, %pcf.
+<ce> Это хорошо. Мне очень неприятно, что вы
+<ce> оказались вовлечены в эту неприятную ситуацию.
+<ce> _child_ - кузина _qgiver_, но,
+<ce> что более важно, =child_ унаследовала
+<ce> удачу своих предков. Ради ее безопасности
+<ce> мы перевезли ее в __childlocale_.
+<ce> Полагаю, я могу сказать вам где это --
+<ce> _childlocale_.
+<ce> Ваша репутация в Гильдии Бойцов будет
+<ce> намного выше, если вы оставите
+<ce> _child_ в покое.
+
+Message:  1015
+<ce> Привет, я _child_.
+<ce> Мне семь лет.
+   <--->
+<ce> Привет. Меня зовут _child_.
+<ce> Хотите шутку? Хорошо, вот она.
+<ce> %jok.
+   <--->
+<ce> Мой дедушка побогаче вас.
+   <--->
+<ce> Привет, мне нельзя говорить с
+<ce> незнакомцами. Но если я не буду
+<ce> говорить с незнакомцами, то мне
+<ce> не с кем будет говорить. Меня
+<ce> зовут _child_.
+   <--->
+<ce> Привет, вы %ra? Я тоже.
+<ce> И меня зовут _child_.
+
+Message:  1016
+<ce> _child_ убегает прочь, как
+<ce> только вы отворачиваетесь от нее.
+
+Message:  1017
+<ce> Вы забираете _child_?
+
+Message:  1018
+<ce> Воитель носит геральдические нашивки
+<ce> Гильдии Бойцов.
+
+Message:  1019
+%qdt:
+ Состоялась встреча с _knight_ из
+ Гильдии Бойцов. %g говорит, что
+ _child_ в полной безопасности в
+ _childlocale_ в __childlocale_.
+
+
+
+QBN:
+Item _letter11_ letter used 1011
+-added underscores to letter11
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+Person _knight_ face 216 faction The_Fighters_Guild remote
+Person _child_ faction Children female
+
+Place _mondung_ remote dungeon1
+Place _childlocale_ local house2
+
+Clock _queston_ 00:00 0 flag 17 range 0 5
+Clock _S.04_ 01:40 06:40
+
+Foe _warrior_ is Knight
+
+--	Quest start-up:
+	dialog link for location _childlocale_ person _child_
+	start timer _queston_
+	reveal _mondung_
+	--moved injured warrior say 1018 to new task S.10
+	log 1010 step 0
+	pick one of _metal_ _S.01_
+
+_queston_ task:
+	end quest
+--removed unnecessary delay
+
+_S.01_ task:
+	place npc _child_ at _mondung_
+
+_metal_ task:
+	repute with _knight_ exceeds 10 do _S.03_
+	place npc _child_ at _childlocale_
+
+_S.03_ task:
+	start timer _S.04_
+
+_altsafe_ task:
+	when _metal_ and not _S.03_
+	start task _S.01_
+--if FG rep not met, reverts to normal path
+
+_S.04_ task:
+	_letter11_ used do _S.05_
+	--removed say nothing
+	give pc _letter11_ notify 1012
+
+_S.05_ task:
+	log 1013 step 1
+
+_S.06_ task:
+	clicked npc _knight_
+	add dialog for location _childlocale_
+	log 1019 step 2
+	say 1014
+
+_S.07_ task:
+	clicked npc _child_
+	prompt 1017 yes _S.09_ no _no_
+
+_S.08_ task:
+	when _S.09_ and _S.04_
+	create foe _warrior_ every 21 minutes 10 times with 20% success
+	change repute with _knight_ by -15
+--changed _metal_ here to _s.04_ to prevent false knight spawning
+
+_S.09_ task:
+	hide npc _child_
+	say 1015
+	add _child_ face
+
+_S.10_ task:
+	injured _warrior_
+	say 1018
+
+_qgclicked_ task:
+	clicked npc _qgiver_
+
+_reward_ task:
+	when _qgclicked_ and _S.09_
+	give pc _gold_
+	drop _child_ face
+	end quest
+--removed unnecessary delay
+-added drop child face. child would remain on HUD until delay finished.
+
+_S.13_ task:
+	when _S.01_ and _reward_
+	change repute with _knight_ by +5
+	change repute with _qgiver_ by +15
+
+_S.14_ task:
+	when _queston_ and _S.06_ and not _S.08_
+	change repute with _knight_ by +20
+
+_S.15_ task:
+	when _queston_ and _S.09_
+	say 1016
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.09_
+	clear _qgclicked_ _clearclick_
+
+variable _no_

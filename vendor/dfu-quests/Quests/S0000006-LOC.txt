@@ -1,0 +1,247 @@
+-- Quest: C:\QUESTS\WORKING\S0000006.Qbn.
+-- Main story quest.
+-- QuestId: 6
+Messages: 31
+Quest: S0000006
+DisplayName: Одеяние Элизейн
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Приветствую, %pcf.. Я Элизейн,
+<ce> дочь короля Эадвира и его прямая наследница.
+<ce> Возможно вы согласитесь помочь мне в одном
+<ce> деликатном деле. Уважаемый член совета
+<ce> старейшин, лучший друг моего отца, лорд
+<ce> Кастеллиан оставил наш двор на днях, а я
+<ce> забыла вернуть ему накидку, взятую у него.
+<ce> Если вам будет несложно, не могли бы вы
+<ce> отнести ему ее в ___casfort_? Я отплачу вам
+<ce> ценной безделушкой: _jewelry_.
+
+RefuseQuest:  [1001]
+<ce> Нет? %oth.
+
+AcceptQuest:  [1002]
+<ce> Как мило с вашей стороны согласиться
+<ce> помочь взбалмошной девчонке вроде меня. Вот
+<ce> накидка. Очень важно, чтобы лорд Кастеллиан
+<ce> получил это как можно быстрее. Он будет
+<ce> в одном из своих домов _casfort_ в
+<ce> ___casfort_. Найти лорда Кастеллиана
+<ce> будет несложно, просто спросите местных о
+<ce> нем или о _casfort_ и отдайте ему плащ.
+<ce> Я буду очень признательна, %pcf.
+<ce> Не стоит тянуть больше чем =queston_ дней.
+<ce> Этого должно хватить на путешествие туда
+<ce> и обратно. Так что увидимся.
+
+QuestFail:  [1003]
+<ce> Я знаю, что лорд Кастеллиан все еще не
+<ce> получил свою накидку, а он не из терпеливых.
+
+QuestComplete:  [1004]
+<ce> О. вы были просто восхитительны. Вот, позвольте
+<ce> я дам вам _jewelry_ как и было обещано. Надеюсь
+<ce> лорд Кастеллиан остался доволен вышивкой, которой
+<ce> я дополнила плащ. Ему требуется особое внимание.
+<ce> Я дам кое-что получше, чем _jewelry_, %pcf.
+<ce> Моего отца очень интересует древний артефакт
+<ce> под названием Тотем Тайбера Септима. У него
+<ce> есть шпионы, которые ищут его повсюду. Когда
+<ce> они найдут его, то ему потребуется кто-то,
+<ce> кто будет охранять это. Разумеется, кто-бы
+<ce> ни был выбран, он будет щедро вознагражден.
+<ce> Я скажу ему про вас. Это все что я могу
+<ce> сделать.
+
+RumorsDuringQuest:  [1005]
+Лорд Кастеллиан продвигает закон, который сделает Хелсета законным наследником.
+   <--->
+Принцесса Элизейн больше не в чести у главного в совете старейшин.
+
+RumorsPostfailure:  [1006]
+Лорд Кастеллиан вернулся в замок Вэйрест из _casfort_. Праздники закончились.
+   <--->
+Принцесса Элизейн не выглядела радостной, увидев вернувшегося лорда Кастеллиана.
+
+RumorsPostsuccess:  [1007]
+Лорд Кастеллиан исчез из _casfort_, где он проводил праздники.
+   <--->
+Король Эадвир подозревает нечестную игру в исчезновении лорда Кастеллиана.
+
+QuestorPostsuccess:  [1008]
+Отличная накидка. Без особых излишеств.
+   <--->
+Отличная выделка. Кто-то вложил душу в эту вышивку.
+
+QuestorPostfailure:  [1009]
+В плащ вшиты несколько слов, вызывающих даэдра.
+   <--->
+В эту робу вшит ритуал вызывания даэдра.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Принцесса Элизейн попросила меня отнести
+ накидку главному члену Вэйрестского совета
+ старейшин, лорду Кастеллиану в его поместье
+ _casfort_ в ___casfort_. Мне нужно
+ вернуться в замок Вэйрест до исхода
+ =queston_ дней.
+
+Message:  1020
+<ce> Дурачина! Какая-то предприимчивая
+<ce> душа дала тебе плащ, который
+<ce> призвал меня убить тебя.
+<ce> Как это восхитительно!
+
+Message:  1021
+<ce> Смерть предателю, убившему
+<ce> лорда Кастеллиана!
+   <--->
+<ce> Ты заплатишь за смерть моего
+<ce> обожаемого повелителя.
+   <--->
+<ce> Убийца! Лорд Кастеллиан был одним
+<ce> из лучших. Ты умрешь за то, что
+<ce> сделано!
+
+Message:  1022
+<ce> "Подарок от леди Элизейн. Спасибо,
+<ce> %pcn. Это подходит мне,
+<ce> как перчатка".
+<ce>
+<ce> Вы чувствуете свистящий звук, как
+<ce> будто была разрублена ткань реальности.
+
+Message:  1023
+<ce> Покинь это место, юный %ra.
+<ce> Мы пришли забрать душу лорда
+<ce> Кастеллиана. Твоя часть работы
+<ce> выполнена, этот погребальный
+<ce> саван, призывающий нас, на месте.
+
+Message:  1030
+Лорд Кастеллиан - один из могущественных членов совета старейшин.
+   <--->
+Говорят, что принцесса Элизейн была влюблена в лорда Кастеллиана.
+   <--->
+Лорд Кастеллиан не делал секрета из того, что собирался обвенчаться с принцессой Элизейн.
+
+
+
+QBN:
+Item _I.00_ Formal_cloak anyInfo QuestorPostsuccess used QuestorPostfailure
+Item _jewelry_ trinket
+Item _I.04_ dead_body
+
+Person _elysana_ named Princess_Elysana atHome
+Person Castellian face 1 named Lord_Castellian anyInfo 1030
+
+Place _casfort_ remote house1
+
+Clock _S.04_ 04:00 01:40
+Clock _queston_ 00:00 0 flag 17 range 0 2
+Clock _S.16_ 1.00:00 0 flag 1 range 0 1
+
+Foe _F.00_ is Daedra_seducer
+Foe _F.01_ is 2 Knight
+Foe _F.02_ is 2 Spellsword
+Foe _F.03_ is Daedra_seducer
+Foe _F.04_ is Daedroth
+Foe _F.05_ is Daedroth
+
+--	Quest start-up:
+	prompt QuestorOffer yes yes no _no_
+	have _I.04_ set _deadbody_
+
+_pcgetsgold_ task:
+	when _S.01_ and _S.03_
+	give pc _jewelry_
+	start task _S.07_
+	change repute with _elysana_ by +10
+	drop _elysana_ as questor
+
+_S.01_ task:
+	clicked npc _elysana_
+
+variable _S.02_
+_S.03_ task:
+	toting _I.00_ and Castellian clicked saying 1022
+	pc at _casfort_ set _S.12_
+	place item _I.04_ at _casfort_
+	start timer _S.04_
+	hide npc Castellian
+
+_S.04_ task:
+	create foe _F.02_ every 53 minutes 20 times with 15% success
+
+_queston_ task:
+	when _S.15_ and _S.02_
+	drop _elysana_ as questor
+	end quest
+
+_deadbody_ task:
+	take _I.04_ from pc
+--added deadbody task. otherwise body would clog inventory
+
+UnknownElysanna _S.06_
+ElysannaSatisfied _S.07_
+	end quest
+
+yes task:
+	_I.00_ used do _S.02_
+	start timer _queston_
+	log 1010 step 0
+	get item _I.00_
+	say AcceptQuest
+	add _elysana_ as questor
+	create npc at _casfort_
+	place npc Castellian at _casfort_
+
+_no_ task:
+	say RefuseQuest
+	end quest
+
+_S.10_ task:
+	injured _F.03_ saying 1020
+	injured _F.04_
+	say 1020
+
+_clearclick_ task:
+	when _S.01_ and not _S.03_
+	clear _S.01_ _clearclick_
+
+_S.12_ task:
+	create foe _F.01_ every 2 minutes 4 times with 50% success
+
+_S.13_ task:
+	injured _F.00_
+	injured _F.05_
+	say 1023
+	restrain foe _F.00_
+
+_greklith_ task:
+	injured _F.01_ saying 1021
+	injured _F.02_ saying 1021
+
+_S.15_ task:
+	killed 3 _F.03_
+
+variable _S.16_
+UnknownHelseth _S.17_
+_S.18_ task:
+	when not _S.17_ and _S.02_
+	create foe _F.03_ every 1 minutes 3 times with 20% success
+
+_S.19_ task:
+	when _S.17_ and _S.02_
+	create foe _F.04_ every 1 minutes 3 times with 20% success
+
+_S.20_ task:
+	when not _S.17_ and _S.12_
+	create foe _F.00_ every 1 minutes 3 times with 50% success
+
+_S.21_ task:
+	when _S.17_ and _S.12_
+	create foe _F.05_ every 1 minutes 32768 times with 100% success

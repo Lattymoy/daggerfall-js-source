@@ -1,0 +1,148 @@
+-- Quest: C:\QUESTS\WORKING\N0B30Y15.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: mage
+-- Repute: 30
+-- QuestId: 15
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 11
+Quest: N0B30Y15
+DisplayName: Бесноватый
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Меня зовут _questgiver_.
+<ce> Нам нужно убить одного хулиганистого
+<ce> беса. Заинтересованы? Эта работа
+<ce> будет хорошо оплачена - _gold_ золотых.
+
+RefuseQuest:  [1001]
+<ce> Плохо.
+   <--->
+<ce> Какая жалость.
+   <--->
+<ce> Прекрасно. Ковыляйте-ка отсюда,
+<ce> пока я не разозлился, %pcn.
+
+AcceptQuest:  [1002]
+<ce> Хорошее отношение к делу, %pcn.
+<ce> Есть одна вещь, котору я еще не сказал
+<ce> вам. Этот бес знаком с одним магом
+<ce> очень высокого ранга. Похоже этот бес
+<ce> подвергся действию экспериментального
+<ce> заклятия и получил неограниченные
+<ce> магические возможности . Вы найдете
+<ce> существо в _palace_ в __palace_.
+<ce> По всей видимости оно полагает, что
+<ce> имеет право на власть. Будьте осторожны,
+<ce> %pcn. Если вы не вернетесь
+<ce> через =traveltime_ дней, мы будем считать,
+<ce> что вы погибли.
+
+QuestComplete:  [1004]
+<ce> Чертовски сильная маленькая бестия, да?
+<ce> Итак, несомненно вы заслужили награду.
+
+RumorsDuringQuest:  [1005]
+Что-то творится в _palace_ в __palace_. Что-то очень странное.
+   <--->
+Все в __palace_ удивляются тому. что происходит в _palace_.
+
+RumorsPostfailure:  [1006]
+Некое существо вылетело из _palace_ в __palace_ и пропало в южном направлении.
+
+RumorsPostsuccess:  [1007]
+Благодарение богу %god, что этот наемник-%ra приехал в __palace_ убить этого беса.
+   <--->
+Этот бес нанесет большие разрушения в __palace_ если этот %ra не сможет помочь.
+
+QuestorPostsuccess:  [1008]
+Я не забыл про вас, %pcf. Вы тот самый %ra, убивший этого мерзкого беса.
+
+QuestorPostfailure:  [1009]
+<ce> __palace_ был практически уничтожен
+<ce> бесом, а вы ничего так и не предприняли,
+<ce> чтобы помочь. Да я бы умер от позора на
+<ce> вашем месте, %pcf.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _questgiver_ из Гильдии Магов
+ в ___questgiver_ обязал меня долгом
+ уничтожить одного хулиганистого беса.
+ Это создание притаилось в _palace_ в __palace_.
+ У меня =traveltime_, чтобы сделать работу.
+
+
+
+QBN:
+Item _gold_ gold
+
+Person _questgiver_ face 8 group Questor
+
+Place _palace_ remote palace
+
+Clock _traveltime_ 00:00 0 flag 17 range 0 2
+Clock _S.02_ 00:04 00:20
+Clock _Gothryd_ 00:04
+--timer Gothryd given underscores
+Clock _S.08_ 00:04
+Clock _S.09_ 00:04
+--flags removed to make timers precise
+
+Foe _imp_ is Imp
+
+--	Quest start-up:
+	start timer _traveltime_
+	log 1010 step 0
+	pc at _palace_ set _S.01_
+	place foe _imp_ at _palace_
+	create npc at _palace_
+
+_traveltime_ task:
+	end quest
+
+_S.01_ task:
+	start timer _S.02_
+	cast Spell_Shield spell on _imp_
+	cast Troll's_Blood spell on _imp_
+	cast Shield spell on _imp_
+	cast Shield spell on _imp_
+	cast Invisibility spell on _imp_
+
+_S.02_ task:
+	start timer _Gothryd_
+	cast Shield spell on _imp_
+	cast Troll's_Blood spell on _imp_
+	cast Spell_Shield spell on _imp_
+	cast Invisibility spell on _imp_
+
+_S.03_ task:
+	killed 1 _imp_
+
+_S.04_ task:
+	clicked npc _questgiver_
+
+_clearclick_ task:
+	when _S.04_ and not _S.03_
+	clear _S.04_ _clearclick_
+
+_S.06_ task:
+	when _S.04_ and _S.03_
+	give pc _gold_
+	end quest
+
+_Gothryd_ task:
+	start timer _S.08_
+	cast Invisibility spell on _imp_
+	cast Spell_Shield spell on _imp_
+	cast Troll's_Blood spell on _imp_
+
+_S.08_ task:
+	cast Spell_Shield spell on _imp_
+	cast Troll's_Blood spell on _imp_
+	cast Shield spell on _imp_
+	cast Invisibility spell on _imp_
+
+variable _S.09_

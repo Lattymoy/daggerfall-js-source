@@ -1,0 +1,206 @@
+-- Quest: C:\QUESTS\WORKING\S0000500.Qbn.
+-- Main story quest.
+-- QuestId: 500
+Messages: 71
+Quest: S0000500
+DisplayName: "Лорд К'авара" Часть II
+-- Message panels
+QRC:
+
+QuestComplete:  [1004]
+<ce> %pcf, ты спас мне жизнь, когда все друзья
+<ce> бросили меня. Я в неоплатном долгу перед тобой.
+<ce> У меня не так уж много осталось, но вот возьми
+<ce> _gold_ золотых в знак моей признательности.
+
+RumorsDuringQuest:  [1005]
+<ce> Один из приближенных к _queen_
+<ce> высших лордов был арестован за измену. Его друзья
+<ce> просили помилования для него, но королева уже
+<ce> назначила дату казни.
+
+RumorsPostsuccess:  [1007]
+<ce> Говорят, что _traitor_ сбежал из подземелий
+<ce> замка Сентинел прямо из под носа королевской
+<ce> гвардии. Должно быть _queen_ весьма разгневана!
+
+Message:  1020
+%qdt:
+ Мне пришло письмо от некто по имени
+ _contact1_ с просьбой встретиться
+ в таверне _tavern_ в __tavern_,
+ чтобы обсудить дела, связанные с
+ _traitor_ из Сентинела.
+
+Message:  1021
+%qdt:
+ _contact1_ встретился со мной и рассказал,
+ что _traitor_ томится в подземельях
+ Сентинела, ожидая дня казни назначенного
+ через =executiondelay_ дней. _contact1_ упросил
+ меня найти _traitor_, пока еще не поздно.
+
+Message:  1022
+%qdt:
+ Мне удалось разыскать _traitor_
+ в темнице замка Сентинел и я
+ сопровождаю %g4 в _safehouse_ в
+ __safehouse_, где мы встретим
+ друзей _traitor_.
+
+Message:  1030
+Уважаемый друг %pcn:
+<ce>
+  Если вы считаете себя другом _traitor_,
+пожалуйста, давайте встретимся в _tavern_
+в __tavern_ и чем скорее, тем лучше.
+Это вопрос жизни и смерти!
+<ce>
+_contact1_
+<ce> ----
+
+Message:  1040
+<ce> %pcn? Вы моя последняя надежда!
+<ce> Друзья _traitor_ показали свою
+<ce> беспомощность после его ареста
+<ce> деспотичной _queen_
+<ce> по обвинению в государственной
+<ce> измене. Теперь он заключен в
+<ce> темнице замка Сентинел, ожидая
+<ce> казни. Пожалуйста, если у вас есть
+<ce> хоть капля уважения к этому человеку,
+<ce> спасите его от неминуемой смерти.
+<ce> Он очень часто хорошо отзывался о
+<ce> вашем мастерстве и храбрости. Я знаю,
+<ce> вы не откажетесь помочь нам.
+
+Message:  1041
+<ce> %oth, как я рад видеть вас!  Нам
+<ce> нужно как можно быстрее выбраться отсюда,
+<ce> пока не поднялась тревога. Я как раз
+<ce> думал о возможности побега, как тут
+<ce> появились вы. "Моя правая рука", вот
+<ce> как я отзывался всегда о вас. Обещаю,
+<ce> что когда стану королем Сентинела, вы
+<ce> станете богатейшим лордом этого королевства!
+<ce> Неплохо звучит, да? После того как мы уйдем
+<ce> от погони, доставьте меня в __safehouse_.
+<ce> Там у меня есть друг в _safehouse_,
+<ce> который поможет мне осуществить
+<ce> завоевание Сентинела. А теперь добрый друг,
+<ce> %pcn, пора делать отсюда ноги!
+
+Message:  1050
+<ce> Тревога! _traitor_ сбегает!
+<ce> Охрана! Быстро ко мне!
+
+Message:  1051
+<ce> _traitor_ пожимает вам руку
+<ce> и срывающимся голосом говорит:
+<ce>
+<ce> "Благодарю вас за мое спасение из
+<ce> черного колодца отчаяния, но отсюда
+<ce> наши с вами пути расходятся".
+
+Message:  1060
+<ce> Слышали ли вы, что _traitor_ из Сентинела был казнен за измену?
+<ce> Хорошее наверное было зрелище -- его повесили при всем честном народе
+<ce> на передней стене королевского замка.
+   <--->
+<ce> _traitor_ из Сентинела был повешен за измену. Говорят, перед смертью
+<ce> он умолял сохранить ему жизнь.
+
+Message:  1070
+<ce> Курьер нарушил вашу сосредоточенность
+<ce> выкриком: "%pcn, не так ли? Для вас письмо".
+
+
+
+QBN:
+Item _letter_ letter used 1030
+Item _gold_ gold
+
+Person _traitor_ face 1 named Lord_K'avar
+Person _contact1_ face 15 group Banker female remote
+Person _queen_ named Queen_Akorithi atHome
+Person _contact2_ face 1 group Local_3.0 remote
+
+Place _tavern_ remote tavern
+Place _sentinel_ permanent SentinelCastle4
+Place _safehouse_ remote house4
+
+Clock _S.00_ 31.06:00 93.18:00
+Clock _firsttimer_ 7.00:00 14.00:00
+--varied timer, to prevent same number on all timers
+Clock _executiondelay_ 00:00 0 flag 17 range 0 2
+Clock _escapetime_ 00:00 0 flag 17 range 0 2
+
+Foe _guards_ is Spellsword
+Foe _F.01_ is Spellsword
+
+--	Quest start-up:
+	start timer _S.00_
+	have _letter_ set _goclock_
+
+_goclock_ task:
+	start timer _firsttimer_
+
+_S.00_ task:
+	_letter_ used do _readletter_
+	give pc _letter_ notify 1070
+	place foe _guards_ at _sentinel_
+	place npc _contact1_ at _tavern_
+	place npc _traitor_ at _sentinel_
+
+variable _executiondelay_
+variable _firsttimer_
+_S.02_ task:
+	clicked npc _contact1_
+	log 1021 step 1
+	say 1040
+	start timer _executiondelay_
+	stop timer _firsttimer_
+
+_S.03_ task:
+	clicked npc _traitor_
+	start timer _escapetime_
+	log 1022 step 2
+	hide npc _traitor_
+	hide npc _contact1_
+	say 1041
+	add _traitor_ face
+	change repute with _queen_ by -20
+	place npc _contact2_ at _safehouse_
+	stop timer _executiondelay_
+
+_greklith_ task:
+	injured _guards_
+	create foe _F.01_ every 2 minutes 5 times with 50% success
+	say 1050
+
+_S.05_ task:
+	clicked npc _contact2_
+
+_S.06_ task:
+	when _S.03_ and _S.05_
+	give pc _gold_
+	drop _traitor_ face
+	end quest
+--removed unnecessary delay
+
+_S.08_ task:
+	when _executiondelay_ and not _S.03_
+	rumor mill 1060
+	end quest
+
+_S.08a_ task:
+	when _firsttimer_ and not _S.03_
+	rumor mill 1060
+	end quest
+
+_escapetime_ task:
+	say 1051
+	end quest
+
+_readletter_ task:
+	log 1020 step 0

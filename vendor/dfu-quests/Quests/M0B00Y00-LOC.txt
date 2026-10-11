@@ -1,0 +1,149 @@
+-- Quest: C:\QUESTS\WORKING\M0B00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: fighter
+-- Repute: 0
+-- QuestId: 0
+Messages: 81
+Quest: M0B00Y00
+DisplayName: Охота на оборотня
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> У нас есть работенка, что могла бы заинтересовать тебя.
+<ce> Судя по всему, мы имеем дело с тем, что обычно называют
+<ce> волколаком, свинолаком, или попросту ликантропом,
+<ce> "беспокоящим" тамошних  фермеров.
+<ce> Нам нужен человек, готовый убить эту тварь.
+<ce> Что это означает? Звон _reward_ золота в твоем кармане!
+<ce> Этот звон тебе по душе?
+
+RefuseQuest:  [1001]
+<ce> Прекрасно. Найдем еще кого-нибудь на эту работу.
+
+AcceptQuest:  [1002]
+<ce> Великолепно! Ты найдешь логово в
+<ce> ___mondung_. Нам нужно, чтобы жалкая
+<ce> тварь была мертва через =1stparton_ суток,
+<ce> так что пошевеливайся!
+
+QuestFail:  [1003]
+<ce> Что, зверушек слишком много для тебя, или ты даже
+<ce> не пытаешься с ними справиться? Ну да ладно, забудем
+<ce> об этом пока. Не слишком хорошо...
+
+QuestComplete:  [1004]
+<ce> Хорошая работа, истребитель оборотней!
+<ce> Наслаждайся своим золотом.
+
+RumorsDuringQuest:  [1005]
+Я слыхал, что какой-то оборотень разгуливает на воле.
+   <--->
+Так же есть сведения о логовище оборотня в месте, называемом ___mondung_.
+   <--->
+Разве вы не слышали этого воя вчера вечером? Волчьего воя?
+
+RumorsPostfailure:  [1006]
+Эти ликантропы - настоящие бродяги! Я слышал, что наши зверушки уже где-то к югу!
+   <--->
+Мой кузен сообщает мне, что наш ликантроп был замечен направляющимся на юг.
+
+RumorsPostsuccess:  [1007]
+Представляешь, выяснилось, что один из  оборотней днем был священником!
+   <--->
+Люди чувствуют себя лучше, зная, что оборотень мертв.
+   <--->
+Слыхал об оборотне, которого выследили в %ra?
+
+QuestorPostsuccess:  [1008]
+<ce> Благодарю за "заботу" об этом "перевертыше", %pcf.
+
+QuestorPostfailure:  [1009]
+<ce> О, какие мы жалкие! Вали отсюда!
+<ce> Даже с оборотнем справиться не можем!
+
+Message:  1020
+<ce> Угрозы со стороны ликантропов больше нет.
+
+Message:  1021
+<ce> Должно быть это "чудовище",
+<ce> которого все так боялись, всего лишь
+<ce> обычный медведь гризли.
+
+Message:  1030
+%qdt:
+ Гильдия Бойцов из
+ ___questgiver_ дала заказ
+ на убийство омерзительного ликантропа
+ или чего-то в этом роде, в его логовище,
+ в ___mondung_. Эта зверюга должна
+ Быть мертва через =1stparton_ суток
+ Время заработать деньжат!
+
+Message:  1080
+<ce> Вот - карта к месту, называемому
+<ce> ___newdung_. Все сокровища,
+<ce> что ты выбьешь из тамошних
+<ce> обитателей - твои!
+
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ group Questor
+
+Place _mondung_ remote dungeon
+Place _newdung_ remote dungeon
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _werewolf_ is Werewolf
+Foe _wereboar_ is Wereboar
+Foe _bear_ is Grizzley_bear
+
+--	Quest start-up:
+	start timer _1stparton_
+	reveal _mondung_
+	log 1030 step 0
+	pick one of _map_ _nomap_ _nomap_ _nomap_
+	pick one of _S.06_ _S.07_ _S.08_
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _mondead_
+	give pc _reward_
+	end quest
+
+_mondead_ task:
+	killed 1 _werewolf_ saying 1020
+	killed 1 _wereboar_ saying 1020
+	killed 1 _bear_ saying 1021
+
+_qgclicked_ task:
+	clicked npc _questgiver_
+
+_1stparton_ task:
+	end quest
+
+variable _2ndparton_
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_
+	say 1003
+	clear _qgclicked_ _clearclick_
+
+_S.06_ task:
+	place foe _bear_ at _mondung_
+
+_S.07_ task:
+	place foe _wereboar_ at _mondung_
+
+_S.08_ task:
+	place foe _werewolf_ at _mondung_
+
+variable _map_
+variable _nomap_
+_S.11_ task:
+	when _map_ and _pcgetsgold_
+	reveal _newdung_ readmap
+    say 1080

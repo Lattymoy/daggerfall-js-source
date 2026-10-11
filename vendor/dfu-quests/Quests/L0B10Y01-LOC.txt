@@ -1,0 +1,133 @@
+-- Quest: C:\QUESTS\WORKING\L0B10Y01.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Brotherhood
+-- Repute: 10
+-- QuestId: 1
+Messages: 21
+Quest: L0B10Y01
+DisplayName: Роковая песня
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Этот контракт весьма забавный и он
+<ce> может вам понравиться. С вашим нездоровым
+<ce> чувством юмора выполнить его будет легко.
+<ce> Мы имеем барда с "непризнанным" талантом
+<ce> и тягой к пошлым шуткам над "признанными"
+<ce> главами семейств. Как оказалось,
+<ce> %g4 знания генеалогии недостаточны,
+<ce> и %g распевает песни о кровосмесительных
+<ce> делах герцога со своей новой покровительницей,
+<ce> дочерью герцога. Интересно ли вам заняться
+<ce> этим странным артистом за _reward_ золотых?
+
+RefuseQuest:  [1001]
+<ce> Или я вас не понимаю, или вы действительно
+<ce> сказали "Нет"? И как же вы ожидаете
+<ce> почета или уважения, если у вас даже
+<ce> нет времени, чтобы заняться вшивым
+<ce> музыкантишкой?
+
+AcceptQuest:  [1002]
+<ce> Я думаю, вам понравится. Похоже,
+<ce> бард знает о вашем заказе и прячется
+<ce> в мрачной дыре под названием
+<ce> ___mondung_.
+<ce> Похоже, что будет не просто небольшая
+<ce> стычка, так что будьте начеку.
+<ce> Доведенный до отчаяния бард -
+<ce> непредсказуемый противник. Вернитесь
+<ce> в течение =1stparton_ дней за наградой.
+<ce> Удачи.
+
+QuestFail:  [1003]
+<ce> Держу пари, что бард еще не
+<ce> отправлен в Обливион.
+<ce> Но вы то здесь. Весьма странно.
+<ce> Действительно ли это вы, %pct?
+
+QuestComplete:  [1004]
+<ce> А вы прослушали последнюю ноту
+<ce> этого невоспитанного музыканта?
+<ce> Здесь ваша доля за то, что вы были
+<ce> последним инструментом для прощального
+<ce> реквиема: _reward_ золотых. Владейте.
+
+RumorsDuringQuest:  [1005]
+Я удивляюсь, действительно ли герцог соблазнил свою дочь.
+   <--->
+Бедолага _monster_ вряд ли успеет настроить свой инструмент.
+
+RumorsPostfailure:  [1006]
+Замечательно, =monster_ может уйти, но мы то запомним %g4 песни.
+   <--->
+Герцогиня сойдет с ума узнав, что магистр музыки исчез.
+
+RumorsPostsuccess:  [1007]
+Говорят, что =monster_... %g4 пасквили доносятся с ночным ветром.
+   <--->
+Мне, к примеру, приятно слышать, что =monster_ в Обливионе; %g4 песенки были скучны.
+
+QuestorPostsuccess:  [1008]
+Здравствуйте, %pcf. Видеть вас снова - это музыка для моих глаз.
+
+QuestorPostfailure:  [1009]
+<ce> Как мне вас приветствовать, %pcf?
+<ce> Вам не удалось убить барда. Очень
+<ce> грустная нота в вашей музыке, не так ли?
+
+QuestLogEntry:  [1010]
+<ce> =monster_ испускает последний аккорд.
+
+Message:  1020
+%qdt:
+ Темное Братство отправляет меня на убийство
+ барда по имени =monster_. Мне надо
+ вернуться к нанимателю, - _questgiver_,
+ ___questgiver_ в течение =1stparton_ дней.
+ Этот бард сейчас прячется в подземелье
+ под названием ___mondung_.
+
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ face 112 group Questor
+
+Place _mondung_ remote dungeon
+
+Clock _1stparton_ 00:00 0 flag 18 range 0 2
+Clock _2ndparton_ 2.18:40 4.04:00 flag 2 range 0 0
+
+Foe _monster_ is Bard
+
+--	Quest start-up:
+	start timer _1stparton_
+	reveal _mondung_
+	log 1020 step 0
+	place foe _monster_ at _mondung_
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _S.02_
+	give pc _reward_
+	end quest
+
+_qgclicked_ task:
+	clicked npc _questgiver_
+
+_S.02_ task:
+	killed 1 _monster_
+	say 1010
+
+variable _queston_
+_1stparton_ task:
+	end quest
+
+variable _2ndparton_
+_clearclick_ task:
+	when _qgclicked_ and not _S.02_
+	say 1003
+	clear _qgclicked_ _clearclick_

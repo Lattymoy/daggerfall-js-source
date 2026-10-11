@@ -1,0 +1,150 @@
+-- Quest: C:\QUESTS\WORKING\L0B20Y02.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Brotherhood
+-- Repute: 20
+-- QuestId: 2
+Messages: 22
+Quest: L0B20Y02
+DisplayName: Рыцарь без чести
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Этот контракт пробудит в вас романтические
+<ce> настроения, %pcf: некий рыцарь своим
+<ce> хамским поведением опозорил честь
+<ce> известной девицы и отказывается удовлетворить
+<ce> любого, кто защищает ее честь. Бедная
+<ce> девушка сделала только то, что возможно,
+<ce> и у нас есть заказ.
+<ce> Я смотрю, вы заинтересованы?
+
+RefuseQuest:  [1001]
+<ce> Нет? Мне казалось, что вы воспользуетесь
+<ce> удобным случаем поднять настроение. Что ж,
+<ce> У нас есть множество других исполнителей
+<ce> с другим отношением с поруганным девицам.
+
+AcceptQuest:  [1002]
+<ce> И мне не показалось. Мы думаем, что рыцарь,
+<ce> укрепившись в своей крепости под названием
+<ce> ___mondung_, еще не знает о контракте.
+<ce> Тем лучше для нас. Понятно, что этот
+<ce> грубый вояка никак не собирается облегчать
+<ce> нам задачу. В контракте есть пункт о том, что
+<ce> окончится он через =1stparton_ дней, и
+<ce> вам нужно вернуться в течение этого
+<ce> времени. Идите, %pcf.
+<ce> Защитите эту испачканную девушку.
+
+QuestFail:  [1003]
+<ce> Мне не доложили о благодарностях
+<ce> от заказчика, и я полагаю, что рыцарь
+<ce> еще жив. Возвращайтесь и исправьте эту
+<ce> оплошность, %pcf. У вас еще есть время.
+
+QuestComplete:  [1004]
+<ce> Итак, рыцарь отправился в загробный
+<ce> мир, так? Возможно, в следующей жизни
+<ce> он будет знать, что нужно держать меч
+<ce> в ножнах. Как обычно великолепно,
+<ce> %pcf.
+
+RumorsDuringQuest:  [1005]
+Этот вояка всего лишь паршивый болван, скажу я вам. Никаких понятий о чести.
+   <--->
+Мне известно, что эта девица пыталась соблазнить рыцаря, но неудачно. Странно.
+
+RumorsPostfailure:  [1006]
+Тот вояка ушел в другие земли позорить других знатных женщин.
+   <--->
+Тот солдат ушел на %cn, оставив позади разбитые сердца.
+
+RumorsPostsuccess:  [1007]
+Вояка узнал, что кто-то придет к н%g2. Но очень поздно
+   <--->
+Хорошо, что кто-то не побоялся защитить честь дамы.
+
+QuestorPostsuccess:  [1008]
+Меня воодушевляет сама возможность помогать убийце рыцарей всем, чем смогу.
+
+QuestorPostfailure:  [1009]
+<ce> Что заставило вас думать, что мне
+<ce> будет интересно говорить с тем,
+<ce> кто не может убить вшивого рыцаришку.
+<ce> Прочь с моих глаз.
+
+Message:  1020
+%qdt:
+ _questgiver_ из Темного Братства в городе
+ ___questgiver_, отправляет меня в замок
+ ___mondung_ найти и уничтожить рыцаря.
+ Дело должно быть сделано в течение =1stparton_ дней.
+
+Message:  1021
+<ce> "_damsel_...Скажи ей, что она
+<ce> может поделиться своей ... грязной честью
+<ce> с любым скотником...в провинции %reg,"
+<ce> шепчет рыцарь после того, как вы воткнули в
+<ce> него свое оружие.
+<ce> Контракт выполнен.
+
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ face 112 group Questor
+Person _damsel_ face 2 group Group_6.0 female local
+
+Place _mondung_ remote dungeon2
+
+Clock _1stparton_ 00:00 0 flag 18 range 0 2
+
+Foe _monster1_ is Knight
+Foe _monster2_ is Warrior
+Foe _monster3_ is Spellsword
+Foe _monster4_ is Nightblade
+
+--	Quest start-up:
+	start timer _1stparton_
+	reveal _mondung_
+	log 1020 step 0
+	pick one of _S.06_ _S.07_ _S.08_ _S.09_
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _S.02_
+	give pc _reward_
+	end quest
+
+_qgclicked_ task:
+	clicked npc _questgiver_
+
+_S.02_ task:
+	killed 1 _monster4_ saying 1021
+	killed 1 _monster3_ saying 1021
+	killed 1 _monster2_ saying 1021
+	killed 1 _monster1_ saying 1021
+
+variable _queston_
+_1stparton_ task:
+	end quest
+
+variable _2ndparton_
+_S.06_ task:
+	place foe _monster1_ at _mondung_
+
+_S.07_ task:
+	place foe _monster2_ at _mondung_
+
+_S.08_ task:
+	place foe _monster3_ at _mondung_
+
+_S.09_ task:
+	place foe _monster4_ at _mondung_
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.02_
+	say 1003
+	clear _qgclicked_ _clearclick_

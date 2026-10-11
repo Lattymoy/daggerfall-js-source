@@ -1,0 +1,138 @@
+-- Quest: C:\QUESTS\WORKING\C0B00Y03.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: temple
+-- Repute: 0
+-- QuestId: 3
+Messages: 13
+Quest: C0B00Y03
+DisplayName: Пропавший ученый
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pct, один из наших служителей,
+<ce> =cleric_ по имени
+<ce> _cleric_ пропал во время
+<ce> археологических раскопок. Может
+<ce> поможете нам найти %g4?
+   <--->
+<ce> Боюсь, что один из наших лучших
+<ce> ученых, _cleric_
+<ce> пропал во время исследования одного
+<ce> разрушенного храма. Не поможете
+<ce> нам найти %g4?
+
+RefuseQuest:  [1001]
+<ce> Очень правильная точка зрения:
+<ce> быть откровенным во всем,
+<ce> %pcf.
+
+AcceptQuest:  [1002]
+<ce> Это хорошо, хорошо. Итак,
+<ce> _cleric_ уехал в
+<ce> ___mondung_ две недели
+<ce> назад, чтобы проверить, как идут
+<ce> раскопки. Возможно, что все в порядке,
+<ce> но ... Я даю вам =queston_ дней
+<ce> съездить туда, найти _cleric_
+<ce> и вернуться обратно. Да пребудет с
+<ce> вами %god, %pct.
+<ce> Удачи.
+
+QuestComplete:  [1004]
+<ce> Ага, %pct и добрый
+<ce> _cleric_, это хорошо снова
+<ce> видеть вас живыми и невредимыми в
+<ce> __qgiver_. Я опасался худшего,
+<ce> если честно.
+
+RumorsDuringQuest:  [1005]
+_cleric_ был глупцом, чтобы пойти без оружия в ___mondung_.
+   <--->
+___mondung_ - не место для ученых =cleric_ навроде _cleric_.
+
+RumorsPostfailure:  [1006]
+Все уже потеряли надежду, что когда-нибудь увидят _cleric_ снова.
+   <--->
+__qgiver_ огорчен пропажей _cleric_.
+
+RumorsPostsuccess:  [1007]
+Все благодарности этому %ra, что _cleric_ начал работы по написанию истории происхождения ___mondung_.
+   <--->
+Успех в розыске _cleric_ значительно поднял вас в глазах __qgiver_.
+
+QuestorPostsuccess:  [1008]
+За то что вы сделали для _cleric_, я помогу вас в чем угодно, %pcf.
+
+QuestorPostfailure:  [1009]
+Я все еще помню дело с _cleric_, %pcf. Оставьте меня.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ из __qgiver_
+ послал меня в ___mondung_
+ разыскать священника по имени _cleric_,
+ пропавшего где-то там. У меня =queston_
+ дней, чтобы найти =cleric_ и
+ вернуться в ___qgiver_
+ в __qgiver_.
+
+Message:  1011
+<ce> Боже, ведь я только начал свои исследования,
+<ce> юный %ra. Неужели прошло так много времени?
+<ce> Как быстро летит время. Ну ладно, будьте
+<ce> так любезны сопроводить меня по пути
+<ce> в храм, мой добрый друг %pcf ...
+   <--->
+<ce> Благодарение %god, вы пришли.
+<ce> Я бродил здесь в поисках выхода
+<ce> около недели. Я сейчас же пойду с
+<ce> вами в храм.
+
+Message:  1012
+<ce> "Эээ, я знаю путь отсюда,", -
+<ce> - отмахнулся от вас _cleric_.
+
+
+
+QBN:
+
+Person _qgiver_ group Questor
+Person _cleric_ face 105 factiontype Temple
+
+Place _mondung_ remote dungeon4
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+
+--	Quest start-up:
+	start timer _queston_
+	reveal _mondung_
+	log 1010 step 0
+	place npc _cleric_ at _mondung_
+
+_queston_ task:
+	end quest
+
+_S.01_ task:
+	clicked npc _cleric_
+	hide npc _cleric_
+	say 1011
+	add _cleric_ face
+
+_reward_ task:
+	when _qgclicked_ and _S.01_
+	give pc nothing
+	end quest
+
+_qgclicked_ task:
+	clicked npc _qgiver_
+
+_S.04_ task:
+	when _qgclicked_ and not _S.01_
+	clear _qgclicked_ _S.04_
+
+_cick_ task:
+	when _S.01_ and _queston_
+	say 1012

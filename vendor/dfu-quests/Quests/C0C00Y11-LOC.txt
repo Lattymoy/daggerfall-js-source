@@ -1,0 +1,163 @@
+-- Quest: C:\QUESTS\WORKING\C0C00Y11.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: temple
+-- Repute: 0
+-- QuestId: 11
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 81
+Quest: C0C00Y11
+DisplayName: Жулик
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Вы не член __qgiver_,
+<ce> %pcn. Но выглядите
+<ce> внушающими доверие.
+<ce> Вот что я вам скажу. Дом в
+<ce> __house_ заполонила нежить.
+<ce> Нам нужен кто-то, кто сможет
+<ce> изгнать ее прочь. Сделайте
+<ce> это, и это изменит наше
+<ce> отношение к вам.
+
+RefuseQuest:  [1001]
+<ce> Это не есть хорошо
+<ce> в глазах __qgiver_.
+
+AcceptQuest:  [1002]
+<ce> Если нечисть слишкмо сильна для вас,
+<ce> не делайте глупых поступков. Идите
+<ce> в _house_ в __house_.
+<ce> У вас =traveltime_ дней или
+<ce> мы вызовем кого-то другого.
+
+QuestComplete:  [1004]
+<ce> Значит вы очистили это место, да?
+<ce> Это очень хорошо, я замолвлю за
+<ce> вас словечко перед иерархами.
+
+RumorsDuringQuest:  [1005]
+_house_ заполонило много могущественных, злых духов, так говорят.
+
+RumorsPostfailure:  [1006]
+_house_ все еще во власти призраков, несмотря на попытки ==qgiver_.
+
+RumorsPostsuccess:  [1007]
+Наконец то, в _house_ остались только добрые, хранящие дом духи.
+
+QuestorPostsuccess:  [1008]
+О, привет, мой друг, экзорцист. Чем я могу помочь?
+
+QuestorPostfailure:  [1009]
+Я дал вам шанс отличиться, но зря потратил время.
+   <--->
+Вы действительно думаете, что я уже забыл про _house_, %pct?
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ из __qgiver_,
+ в ___qgiver_ дал мне
+ шанс очистить _house_
+ в __house_ от поселившейся
+ там нежити. У меня =traveltime_
+ дней на всю работу.
+
+Message:  1011
+<ce> В прежней жизни я построил этот дом.
+<ce> По какому праву смертные вторглись
+<ce> в мои посмертные сны?
+
+Message:  1012
+<ce> Что ж, вы хотя бы попытались. Я
+<ce> не буду говорить о вас плохо, но
+<ce> большего не обещаю, %pcn.
+
+Message:  1080
+<ce> Вдобавок, вот карта
+<ce> к ___newdung_,
+<ce> нечестивая дыра, там даже никого
+<ce> в живых то не осталось. Сделайте
+<ce> милость для %reg и уничтожьте
+<ce> всех поселившихся там тварей.
+
+
+
+QBN:
+Item boobyprize gold range 2 to 2
+
+Person _qgiver_ group Questor
+
+Place _house_ remote house2
+Place _newdung_ remote dungeon
+
+Clock _traveltime_ 00:00 0 flag 17 range 0 2
+
+Foe _ghost_ is Ghost
+Foe _skeleton_ is Skeletal_warrior
+Foe _wraith_ is Wraith
+Foe _zombie_ is Zombie
+
+--	Quest start-up:
+	start timer _traveltime_
+	log 1010 step 0
+	pick one of _map_ _nomap_ _nomap_
+	pick one of _S.02_ _S.03_ _S.04_ _S.05_
+	pc at _house_ set _S.08_
+	create npc at _house_
+
+_traveltime_ task:
+	end quest
+
+_questdone_ task:
+	clicked npc _qgiver_
+
+_success_ task:
+	when _questdone_ and _S.06_
+	give pc nothing
+	end quest
+
+_S.02_ task:
+	place foe _ghost_ at _house_
+
+_S.03_ task:
+	place foe _skeleton_ at _house_
+
+_S.04_ task:
+	place foe _wraith_ at _house_
+
+_S.05_ task:
+	place foe _zombie_ at _house_
+
+_S.06_ task:
+	killed 1 _ghost_
+	killed 1 _skeleton_
+	killed 1 _wraith_
+	killed 1 _zombie_
+
+_S.07_ task:
+	injured _wraith_ saying 1011
+	injured _zombie_ saying 1011
+	injured _ghost_ saying 1011
+	injured _skeleton_ saying 1011
+
+_S.08_ task:
+               start task _try_
+
+variable _try_
+_S.09_ task:
+	when _try_ and _questdone_ and not _S.06_
+	say 1012
+	end quest
+
+_clearclick_ task:
+	when _questdone_ and not _S.06_
+	clear _questdone_ _clearclick_
+
+variable _map_
+variable _nomap_
+_S.13_ task:
+	when _map_ and _questdone_
+    say 1080
+	reveal _newdung_ readmap

@@ -1,0 +1,206 @@
+-- Quest: C:\QUESTS\WORKING\A0C10Y05.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: peasant
+-- Repute: 10
+-- QuestId: 5
+-- Edited for Daggerfall Unity by Jay_H
+Quest: A0C10Y05
+DisplayName: Сватовство
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Я обручен с _betrothed_. Моя проблема
+<ce> заключается в том, что у _ruler_
+<ce> свои планы на _betrothed_.
+<ce> Единственная моя надежда - отвести ее в храм
+<ce> и завершить церемонию обручения прежде,
+<ce> чем _ruler_ поймает нас. Не согласитесь
+<ce> ли вы защищать меня, пока в храме будет
+<ce> идти церемония обручения? Я заплачу вам
+<ce> _gold_ золотых.
+   <--->
+<ce> В __betrothedhome_ меня ждет моя
+<ce> возлюбленная _betrothed_, мучимая
+<ce> тиранией жестокого _ruler_.
+<ce> Я не смогу спокойно спать, пока _betrothed_
+<ce> находится взаперти, но я опасаюсь агентов
+<ce> _ruler_, который прикладывает все силы,
+<ce> чтобы держать нас в разлуке. Не согласитесь
+<ce> ли вы отправиться со мной в __betrothedhome_
+<ce> и обеспечить мне защиту?
+
+RefuseQuest:  [1001]
+<ce> Увы, попробую поискать другого охранника,
+<ce> могущего защитить меня и мою возлюбленную
+<ce> _betrothed_ от _ruler_.
+
+AcceptQuest:  [1002]
+<ce> Моя благодарность будет безгранична, %pcn.
+<ce> Быстрее, нам надо отправляться
+<ce> выручать _betrothed_. Мы найдем ее
+<ce> в _betrothedhome_
+<ce> в __betrothedhome_.
+
+QuestComplete:  [1004]
+<ce> %pcf, мы в неоплатном долгу перед вами.
+<ce> Сейчас _ruler_ не может помешать нашему
+<ce> бракосочетанию. Вот _gold_ золотых.
+
+RumorsDuringQuest:  [1005]
+<ce> _ruler_ должно быть пытается создать гарем.
+<ce> Я слышал, как он послал своих гвардейцев
+<ce> забрать _betrothed_.
+
+RumorsPostfailure:  [1006]
+<ce> Я слышал, что _betrothed_ забрали в
+<ce> гарем _ruler_. Не вижу большой разницы
+<ce> между этим и похищением.
+
+RumorsPostsuccess:  [1007]
+<ce> _qgiver_ и _betrothed_ наконец-то
+<ce> поженились. Ну разве не чудесное известие?
+
+QuestorPostsuccess:  [1008]
+<ce> _betrothed_ и я благодарим вас. Без
+<ce> вашей помощи ее заставили бы выйти замуж
+<ce> за _ruler_.
+
+QuestorPostfailure:  [1009]
+<ce> Я потерял мою _betrothed_ навеки!
+<ce> Ее силой заставили выйти за _ruler_.
+<ce> И вы еще хотите, чотбы я помог вам?
+<ce> Убирайтесь!
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ из ___qgiver_
+ попросил меня сопроводить его в
+ __betrothedhome_ найти
+ _betrothed_. _qgiver_
+ помолвлен с _betrothed_,
+ но _ruler_ хочет убить
+ _qgiver_, чобы помешать женитьбе
+ Они собираются пожениться
+ в _temple_
+ в __temple_.
+
+Message:  1011
+<ce> Ах, моя любимая _betrothed_!
+<ce> %pcn согласился
+<ce> защищать нас от _ruler_.
+<ce> Быстрее, %pcn, проводи
+<ce> нас в _temple_
+<ce> в __temple_.
+
+Message:  1012
+<ce> У нас прямой приказ от
+<ce> _ruler_ воспрепятствовать
+<ce> этой свадьбе. Если _betrothed_
+<ce> пойдет с нами, никто
+<ce> не пострадает.
+
+Message:  1013
+<ce> Итак, _qgiver_, ты
+<ce> нанял какого-то недомерка
+<ce> сморчка, чтобы он защищал тебя.
+<ce> _ruler_ не обрадуется тому,
+<ce> что ты противишься ему.
+<ce> Уйди в сторону, мы заберем
+<ce> _betrothed_ с собой.
+<ce> Это плачевно закончится
+<ce> для тебя.
+
+Message:  1014
+<ce> _qgiver_ возбужденно
+<ce> прошептал: "Да!  Это то
+<ce> место, где бандиты _ruler_'а
+<ce> держат мою любимую.
+<ce> Мы должны поторопиться!"
+
+Message:  1015
+<ce> "%oth," всхлипнул
+<ce> _qgiver_, " - вот
+<ce> _temple_!  Теперь нам нужно
+<ce> найти _priest_, чтобы он обвенчал
+<ce> нас и _betrothed_ будет вне
+<ce> воздействия _ruler_.
+
+Message:  1020
+<ce> _qgiver_ с отвращением трясет своей
+<ce> головой.  "Быть может _betrothed_
+<ce> найдет способ спастись.
+<ce> Вы подставили меня, %pcf".
+
+
+
+QBN:
+Item _gold_ gold
+
+Person _betrothed_ face 1 group Group_7.0 remote
+Person _qgiver_ group Questor
+Person _priest_ face 201 factiontype Temple remote
+Person _ruler_ factiontype Province remote
+
+Place _betrothedhome_ remote house2
+Place _temple_ remote temple
+
+Clock _traveltime_ 00:00 0 flag 1 range 0 5
+
+Foe _F.00_ is 3 Burglar
+Foe _F.01_ is 2 Warrior
+
+--	Quest start-up:
+	start timer _traveltime_
+	--this odd location marker has no use
+	log 1010 step 0
+	pc at _temple_ set _S.03_ saying 1015
+	pc at _betrothedhome_ set _S.02_ saying 1014
+	hide npc _qgiver_
+	add _qgiver_ face
+	place npc _betrothed_ at _betrothedhome_
+	place npc _priest_ at _temple_
+
+_traveltime_ task:
+	restore _qgiver_
+	say 1020
+	drop _betrothed_ face
+	drop _qgiver_ face
+	end quest
+
+_S.01_ task:
+	clicked npc _betrothed_ say 1011
+	hide npc _betrothed_
+	add _betrothed_ face
+
+_S.02_ task:
+	create foe _F.00_ every 1 minutes 1 times with 15% success
+
+_S.03_ task:
+	create foe _F.01_ every 2 minutes 1 times with 50% success
+
+_dummy_ task:
+	injured _F.01_ saying 1012
+	injured _F.00_ saying 1013
+
+_S.05_ task:
+	clicked npc _priest_
+
+_success_ task:
+    when _S.01_ and _S.05_
+	give pc _gold_
+	drop _qgiver_ face
+	drop _betrothed_ face
+	change repute with _ruler_ by -20
+	place npc _qgiver_ at _temple_
+	place npc _betrothed_ at _temple_
+
+_clearclick_ task:
+	when not _S.01_ and _S.05_
+	clear _S.05_ _clearclick_
+
+_questdone_ task:
+	when _success_ and not _S.03_
+	restore _qgiver_
+	end quest

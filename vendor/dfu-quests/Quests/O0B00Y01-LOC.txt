@@ -1,0 +1,201 @@
+-- Quest: C:\QUESTS\WORKING\O0B00Y01.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: thief
+-- Repute: 0
+-- QuestId: 1
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 31
+Quest: O0B00Y01
+DisplayName: Поставка вооружений
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Слушай, %pcf. Это будет просто
+<ce> что-то вроде командировки. Проблем
+<ce> с этим нет только у тебя.
+<ce> Все, что нужно - принести кое-что
+<ce> нашему представителю в городе
+<ce> ___contact_, взять у н%g4 плату
+<ce> и вернуться назад. "Кое-что" -
+<ce> это  _weapons_. Справишься?
+
+RefuseQuest:  [1001]
+<ce> Нет?!? Что же еще проще тебе
+<ce> поручить? Стоять и хлопать
+<ce> ушами, пока я тебе что-то говорю?
+<ce> Хотя, может быть, только это тебе и
+<ce> подходит. %oth, что за дрянь!
+
+AcceptQuest:  [1002]
+<ce> Отлично, твой агент, -
+<ce> =contact_. А ты думаешь, это должен
+<ce> быть кто-то другой?! Эта
+<ce> личность, кстати зовут %g4 _contact_?
+<ce> бродит где-то около дома __contact_
+<ce> в городе ___contact_ и носит с собой
+<ce> добычу, награбленную в этом же городе.
+<ce> %g ждет, что ты придешь и заберешь ее,
+<ce> чтобы принести сюда. Короче говоря
+<ce> тебе надо принести все, что %g даст.
+<ce> Я жду тебя через =1stparton_ дней или раньше.
+<ce> И чтоб без приключений. Все. Вперед.
+
+QuestFail:  [1003]
+<ce> Ага, ты уже здесь. Но здесь еще
+<ce> должна быть добыча вора _contact_.
+<ce> Что-то я ее не вижу. Ты, наверно,
+<ce> не думаешь о последствиях, %pcf?
+<ce> Ну тогда иди и поразмышляй на досуге.
+
+QuestComplete:  [1004]
+<ce> О, какой красивый камешек. Это
+<ce> _gems_... _contact_, как всегда,
+<ce> поставляет нам отличные вещи.
+<ce> %oth, похоже, у н%g4 дела идут отлично
+<ce> Хорошая работа, %pcf. Держи свою
+<ce> награду.  Здесь _reward_ золотых.
+<ce> Иди и выпей за здоровье нашего друга.
+
+RumorsDuringQuest:  [1005]
+Стража зорко наблюдает за каждым, у кого есть оружие. Как ястребы.
+   <--->
+%t боится покушения. Стража находится в боевой готовности.
+
+RumorsPostfailure:  [1006]
+Некий =contact_ был недавно арестован. Вероятно, %g торговец оружием.
+   <--->
+Гильдия Воров не так уж и сильна. Кто-то из них был арестован в городе __contact_.
+
+RumorsPostsuccess:  [1007]
+Ходят слухи, что кто-то тайно пронес в город оружие, - _weapons_. Это беспокоит.
+   <--->
+%t панически боится того, что Гильдия Воров занимается контрабандой.
+
+QuestorPostsuccess:  [1008]
+Здорово, %pcf, что надо? Наверное, отдать тебе этот камешек, _gems_?
+
+QuestorPostfailure:  [1009]
+<ce> Если у тебя ничего нет от вора _contact_,
+<ce> то мне не о чем с тобой разговаривать.
+
+QuestLogEntry:  [1010]
+<ce> Отлично, %pcf. Гораздо легче пронести
+<ce> сюда оружие, чем искать его тут.
+<ce> Держи. Это _gems_, образец того, что
+<ce> мне удалось тут недавно спереть.
+<ce> Тащи его назад и скажи что я в порядке.
+<ce> _questgiver_ явно обрадуется этому.
+<ce> Еще раз спасибо, %pcf. Увидимся.
+
+Message:  1020
+<ce> Именем %nrn! Стойте!
+<ce> Я знаю, вы незаконно везете
+<ce> оружие. Сдавайтесь или умрите!
+
+Message:  1021
+<ce> Мне известно, что вы незаконно
+<ce> пронесли оружие, - _weapons_, для
+<ce> Гильдии Воров. Отдайте его мне,
+<ce> и я сохраню вам жизнь.
+
+Message:  1022
+<ce> Все, что нам нужно, это _weapons_.
+<ce> Отдайте эту игрушку нам,
+<ce> и мы не будем вас сильно бить.
+
+Message:  1023
+<ce> А теперь ноги в руки и беги
+<ce> отсюда, пока есть здоровье.
+
+Message:  1030
+%qdt:
+ _questgiver_ из Гильдии Воров города
+ ___questgiver_ просит меня доставить
+ оружие, - _weapons_ к агенту _contact_
+ в здании __contact_ в городе ___contact_,
+ %g передаст мне свою добычу.
+ У меня есть =1stparton_ дней чтобы закончить это дело.
+
+
+
+QBN:
+Item _reward_ gold range 25 to 75
+Item _weapons_ weapon
+Item _gems_ gem
+
+Person _questgiver_ face 72 group Questor
+Person _contact_ face 80 group Group_5.0 remote
+
+
+Clock _1stparton_ 00:00 0 flag 18 range 1 4
+
+Foe _guards_ is Warrior
+Foe _F.01_ is 2 Thief
+Foe _F.02_ is Spellsword
+
+--	Quest start-up:
+	start timer _1stparton_
+	log 1030 step 0
+	get item _weapons_
+
+variable _pcgetsgold_
+_qgclicked_ task:
+	toting _gems_ and _questgiver_ clicked
+	give pc _reward_
+	end quest
+
+_npcclicked_ task:
+	toting _weapons_ and _contact_ clicked
+	get item _gems_
+	say 1010
+
+until _npcclicked_ performed:
+	create foe _guards_ every 150 minutes 4 times with 5% success
+	create foe _F.02_ every 179 minutes 4 times with 5% success
+	create foe _F.01_ every 163 minutes 4 times with 5% success
+
+_qgtalk_ task:
+	clicked npc _questgiver_
+
+_clearclick_ task:
+	when _qgtalk_ and not _qgclicked_
+	say 1003
+	clear _clearclick_ _qgtalk_
+--added _qgtalk_ and _clearclick_
+
+_1stparton_ task:
+	make _weapons_ permanent
+	make _gems_ permanent
+	have _weapons_ set _S.11_
+	have _gems_ set _keptgems_
+	end quest
+
+variable _pchasitem1_
+variable _pchasitem2_
+_S.06_ task:
+	injured _F.01_
+	prompt 1022 yes _yes_ no _no_
+
+_yes_ task:
+	take _weapons_ from pc saying 1023
+	change repute with _questgiver_ by -20
+	restrain foe _guards_
+	restrain foe _F.02_
+	restrain foe _F.01_
+
+variable _no_
+_S.09_ task:
+	injured _F.02_
+	prompt 1021 yes _yes_ no _no_
+
+_greklith_ task:
+	injured _guards_
+	prompt 1020 yes _yes_ no _no_
+
+_S.11_ task:
+	change repute with _questgiver_ by -10
+
+_keptgems_ task:
+	change repute with _questgiver_ by -20

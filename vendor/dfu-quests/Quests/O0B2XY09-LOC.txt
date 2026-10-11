@@ -1,0 +1,124 @@
+-- Quest: C:\QUESTS\WORKING\O0B2XY09.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: thief
+-- Repute: 2X
+-- QuestId: 9
+Messages: 11
+Quest: O0B2XY09
+DisplayName: Богатый купец
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Ты можешь называть меня _qgiver_.
+<ce> Мне удалось пронюхать о партии товара
+<ce> _coastal_, который недавно приобрел
+<ce> один торговец. Тебе нужно пощипать
+<ce> его немного и принести товар сюда.
+<ce> Я заплачу тебе _gold_ золотых.
+<ce> Есть желание?
+
+RefuseQuest:  [1001]
+<ce> Иди отсюда, %pcn.
+<ce> Мне нужен вор, который
+<ce> ценит свое имя.
+
+AcceptQuest:  [1002]
+<ce> В городе __mansion_ найди
+<ce> дом _mansion_. _coastal_
+<ce> нетрудно быдет отыскать
+<ce> Принеси краденое мне.
+<ce> Если ты успеешь за =traveltime_ дней,
+<ce> я вознагражу тебя. Вопросы
+<ce> есть? Отлично, приступай.
+
+QuestComplete:  [1004]
+<ce> Оххо! Товар даже лучше, чем
+<ce> мне представлялось.
+<ce> Держи свои деньги. _gold_ золотых.
+<ce> Только не трать их все на выпивку
+<ce> или проституток.
+
+RumorsDuringQuest:  [1005]
+Вчера в город __mansion_ привезли новый товар,- _coastal_. Но никто не знает куда.
+
+RumorsPostfailure:  [1006]
+У кого-то должно было получиться найти _coastal_ в городке __mansion_. Владельцы увозят товар.
+
+RumorsPostsuccess:  [1007]
+Интересно, то место, где держали товар _coastal_, недавно ограбили.
+
+QuestorPostsuccess:  [1008]
+Надеюсь, ты не потратишь все деньги на выпивку и проституток, %pcf?
+
+QuestorPostfailure:  [1009]
+<ce> Что тебе надо? Тебе объяснили, где
+<ce> найти товар _coastal_, Но ты слоняешься
+<ce> вокруг до тех пор, пока все не пропадет.
+<ce> Просто вали отсюда, %pcf. Ты
+<ce> моя самая большая головная боль.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ из Гильдии
+ Воров нанимает меня украсть
+ немного дорогого товара _coastal_
+ из дома _mansion_ в городе
+ __mansion_. Потом мне нужно будет
+ вернуться в город ___qgiver_
+ в убежище воров __qgiver_ в течение
+ =traveltime_ дней за оплатой.
+
+
+
+QBN:
+Item _coastal_ mineral
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+
+Place _mansion_ remote generalstore
+
+Clock _traveltime_ 00:00 0 flag 17 range 0 2
+
+Foe _F.00_ is Battle_mage
+Foe _F.01_ is Iron_atronach
+Foe _F.02_ is Daedra_seducer
+Foe _F.03_ is Werewolf
+
+--	Quest start-up:
+	place item _coastal_ at _mansion_
+	start timer _traveltime_
+	log 1010 step 0
+	pc at _mansion_ set _S.01_
+
+_traveltime_ task:
+	end quest
+
+_S.01_ task:
+	pick one of _guard1_ _guard2_ _guard3_ _guard4_
+
+_questdone_ task:
+	toting _coastal_ and _qgiver_ clicked
+	give pc _gold_
+	end quest
+
+_guard1_ task:
+	create foe _F.00_ every 2 minutes 1 times with 10% success
+
+_guard2_ task:
+	create foe _F.01_ every 2 minutes 1 times with 10% success
+
+_guard3_ task:
+	create foe _F.02_ every 2 minutes 1 times with 10% success
+
+_guard4_ task:
+	create foe _F.03_ every 2 minutes 1 times with 10% success
+
+_S.07_ task:
+	clicked item _coastal_
+
+_S.08_ task:
+	when _S.07_ and _traveltime_
+	make _coastal_ permanent

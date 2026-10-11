@@ -281,7 +281,7 @@ function paint(n, f, sel = -1, stats = []) {
     if (i === sel) row.classList.add('sel');
     if (r.rarity) row.dataset.rarity = r.rarity;   // LR1
     const nm = document.createElement('span');
-    nm.textContent = r.name;
+    nm.textContent = t(r.name);
     row.append(nm);
     if (r.stack) {
       const c = document.createElement('span');
@@ -294,7 +294,7 @@ function paint(n, f, sel = -1, stats = []) {
   if (f.rest > 0) {
     const more = document.createElement('div');
     more.className = 'wplaque-row wplaque-more';
-    more.textContent = `and ${f.rest} more`;
+    more.textContent = t(`and ${f.rest} more`);
     list.append(more);
   }
   // QUICK-LOOT-STATS: the lit row's own numbers, BESIDE the list.
@@ -317,12 +317,12 @@ function paint(n, f, sel = -1, stats = []) {
     if (r.label) {
       const k = document.createElement('span');
       k.className = 'wplaque-statkey';
-      k.textContent = r.label;
+      k.textContent = t(r.label);
       line.append(k);
     } else line.classList.add('wplaque-statnote');
     const v = document.createElement('span');
     v.className = 'wplaque-statval';
-    v.textContent = r.text;
+    v.textContent = t(r.text);
     line.append(v);
     panel.append(line);
   }

@@ -74,7 +74,9 @@ function buildFace(doc, owner) {
     const head = el(doc, 'div', 'lvl-opt-head');
     head.append(el(doc, 'span', 'lvl-key', String(i + 1)), el(doc, 'span', 'lvl-opt-title', t(opt.title)),
       el(doc, 'span', 'lvl-tag', t(tags[opt.id] ?? '')));
-    const lines = el(doc, 'p', 'lvl-opt-body', opt.lines.map((l) => t(l)).join(' '));
+    const fullText = opt.lines.join(' ');
+    const translatedBody = t(fullText) !== fullText ? t(fullText) : opt.lines.map((l) => t(l)).join(' ');
+    const lines = el(doc, 'p', 'lvl-opt-body', translatedBody);
     const foot = el(doc, 'div', 'lvl-opt-foot');
     foot.append(opt.locked ? el(doc, 'span', 'lvl-lock', t(opt.lockNote)) : el(doc, 'span', 'lvl-pick', t(words.pick)));
     node.append(head, lines, foot);

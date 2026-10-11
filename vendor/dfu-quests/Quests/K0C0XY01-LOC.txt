@@ -1,0 +1,254 @@
+-- Quest: C:\QUESTS\WORKING\K0C0XY01.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: merchant
+-- Repute: 0X
+-- QuestId: 1
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 100
+Quest: K0C0XY01
+DisplayName: Гнездо гарпий
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> У нас сложилась несколько необычная ситуация. Гарпии
+<ce> организовали гнездовье в одном из объектов моей старой
+<ce> недвижимости, и пока я лично не вмешивался, наш
+<ce> умнейший и благожелательный %rt постановил, что
+<ce> любой владелец какой-либо зараженной собственности
+<ce> лично несет отвественность за истребление и зачистку.
+<ce> Здесь по всей видимости прекрасный экземпляр работы
+<ce> без согласования с кем-либо. Откровенно говоря у меня
+<ce> просто нет времени на это, но если ты не против
+<ce> немного омочить свой меч в крови, то я хочу попросить
+<ce> тебя о помощи. Последний наемник, которого я нанимал,
+<ce> не справился с работой, так что я пойму, если ты
+<ce> проявишь нерешительность и откажешься. Буду рад
+<ce> заплатить тебе, скажем, _reward_ золотых за неудобства.
+
+RefuseQuest:  [1001]
+<ce> %oth. Что ж, я не могу тебя винить.
+<ce> Я тоже никогда не выносил вони гарпий.
+
+AcceptQuest:  [1002]
+<ce> Ты за? Отлично. Приступим; дело в том, что мне
+<ce> нужны серьезные доказательства выполненной
+<ce> работы по зачистке ___mondung_ в течение =2mondung_
+<ce> дней. Разумеется не стоит тянуть с этим. Я
+<ce> рассчитывал, что _contact_, наемник из
+<ce> Гильдии Бойцов, которого я нанимал, окажется
+<ce> более способным. И послушай, %pcf, тебе
+<ce> не обязательно вычищать все подземелье
+<ce> ___mondung_. Достаточно убить четыре
+<ce> или пять существ и вернуться обратно. И главное!
+<ce> Я знаю, что лидеры клана носят специально
+<ce> окрашенные грифоньи перья. Принеси мне хотя бы
+<ce> одно из них и у меня будет нужное доказательство.
+<ce> Удостоверься, что не потерпишь неудачи и
+<ce> справишься в течение =2mondung_ дней,
+<ce> %pcf.
+
+QuestFail:  [1003]
+<ce> %oth. Здесь практически не
+<ce> нужно прикладывать усилий.
+
+QuestComplete:  [1004]
+<ce> Отлично, %pcf. Теперь я могу доказать
+<ce> %rt, что выполнил свой гражданский долг, ну или
+<ce> по крайней мере попытался его выполнить.
+<ce> Вот обещанная награда _reward_ золотых.
+<ce> Благодарю тебя.
+
+RumorsDuringQuest:  [1005]
+%rt требует физическое доказательство того, что гарпии изгнаны.
+   <--->
+_qgiver_ действительно запустил ___mondung_. Вряд ли теперь это напоминает хранилище.
+   <--->
+_qgiver_ следовало бы разрушить___mondung_, если его нельзя уже использовать.
+
+RumorsPostfailure:  [1006]
+%rt назначил _qgiver_ столько штрафов, что я удивлюсь, если %g сможет их заплатить.
+   <--->
+У _qgiver_ есть некоторые проблемы с истребителями гарпий, насколько я понимаю.
+
+RumorsPostsuccess:  [1007]
+%rt весьма рад тому, что _qgiver_ предоставил доказательства того, что ___mondung_ зачищено.
+   <--->
+_qgiver_ предпринял свою первую попытку зачистить ___mondung_.
+
+QuestorPostsuccess:  [1008]
+Ты очень помог мне с гарпиями, %pcf. Чем я могу тебе помочь?
+
+QuestorPostfailure:  [1009]
+Мне нечего сказать тому, кто неспособен принести хотя бы парочку перьев.
+
+Message:  1030
+Большое, белое перо, раскрашенное в отвратительные оттенки красного.
+
+Message:  1031
+Серое перо, окрашенное тошнотворными оттенками зеленого.
+
+Message:  1032
+Большое, белое перо, окрашенное в чистый черный цвет.
+
+Message:  1033
+Серое перо, окрашенное в тусклый синий цвет.
+
+Message:  1011
+<ce> Благодарю, %pcf. Я знаю как
+<ce> добраться до своего дома.
+
+Message:  1012
+__qgiver_, ___qgiver_
+Уважаемый друг %pcn,
+<ce>
+  Прошу прощения за беспокойство, уверен вы
+очень заняты, но на днях ко мне пришел человечек из
+Гильдии Бойцов по поводу _contact_,
+наемника, которого я нанимал ранее для зачистки
+подземелья ___mondung_.
+  Чтобы не грузить вас деталями беседы, скажу,
+что я пообещал мастеру гильдии обратиться к вам,
+чтобы вы поискали _contact_, пока будете в
+___mondung_. _contact_ выглядит как
+=contact_, похоже он застрял в ___mondung_.
+  Что ж, я сдержал обещание, данное мастеру гильдии.
+По секрету, мне плевать, если вы просто бросите это
+письмо и оставите _contact_ гнить в ___mondung_.
+<ce>
+С воодушевлением буду ждать вашего возвращения.
+<ce>
+Истинно ваш,
+_qgiver_
+<ce> ----
+
+Message:  1013
+<ce> Вас послал _qgiver_?
+<ce> Благодарение богу %god,
+<ce> что вы прибыли, %pcf.
+<ce> Вы будете не против, если
+<ce> я присоединюсь к вам?
+<ce> Возьмите вот это: _jewelry_
+<ce> в знак моей признательности.
+
+Message:  1014
+<ce> Перед вами появился молодой курьер, вложивший в
+<ce> вашу руку письмо и растворившийся в толпе не
+<ce> сказав ни слова.
+
+Message:  1020
+%qdt:
+ _qgiver_,
+ торговец из ___qgiver_ нанял меня
+ зачистить свою заброшенную собственность,
+ ___mondung_, которую заселили гарпии.
+ По всей видимости это место не было зачищено,
+ так что стоит приложить некоторые усилия,
+ чтобы получить хоть какой-то эффект. Мне
+ нужно вернуться с клановыми перьями хотя бы
+ одного из лидеров стаи в течение =2mondung_ дней,
+ чтобы получить награду _reward_ золотых.
+
+Message:  1050
+<ce> 1 гарпия мертва
+
+Message:  1051
+<ce> 2 гарпии мертвы
+
+Message:  1052
+<ce> 3 гарпии мертвы
+
+Message:  1053
+<ce> 4 гарпии мертвы
+
+--changed these msgs from 103X to 105X since those numbers were already taken above
+
+Message:  1040
+<ce> Мне нужны какие-нибудь доказательства, прежде чем я заплачу.
+
+Message:  1099
+<ce> Вы нашли клановое перо.
+
+
+
+QBN:
+Item _item_ book2
+Item _reward_ gold
+Item _clanfeather1_ harpy_feather
+-- feather "dialogue" was weird and out of place. Removed from quest since they contribute nothing
+Item _letter26_ letter used 1012
+Item _jewelry_ trinket
+
+Person _qgiver_ group Questor
+Person _contact_ face 1 faction The_Fighters_Guild remote
+
+Place _mondung_ remote dungeon10
+
+Clock _2mondung_ 00:00 0 flag 17 range 0 2
+Clock _S.05_ 16:40 1.09:20
+Clock _S.06_ 05:00 10:00
+
+Foe _F.00_ is Harpy
+Foe _F.01_ is Harpy
+
+--	Quest start-up:
+	start timer _2mondung_
+	start timer _S.05_
+	reveal _mondung_
+	log 1020 step 0
+	give item _clanfeather1_ to _F.01_
+	pc at _mondung_ set _S.08_
+	_letter26_ used do _S.15_
+	place foe _F.01_ at _mondung_
+	have _clanfeather1_ set _S.14_
+
+_2mondung_ task:
+	end quest
+
+variable _pcgetsgold_
+_S.02_ task:
+	toting _clanfeather1_ and _qgiver_ clicked
+	give pc _reward_
+	end quest
+
+_S.03_ task:
+	clicked npc _contact_
+	start timer _S.06_
+	get item _jewelry_
+	hide npc _contact_
+	say 1013
+	make _jewelry_ permanent
+	add _contact_ face
+	change repute with _contact_ by +10
+
+_S.04_ task:
+	clicked npc _qgiver_
+
+_S.05_ task:
+	give pc _letter26_ notify 1014
+
+_S.06_ task:
+	say 1011
+	drop _contact_ face
+
+variable _S.07_
+_S.08_ task:
+	create foe _F.00_ every 21 minutes 15 times with 25% success
+
+_clearclick_ task:
+	when _S.04_ and not _S.02_
+	clear _S.04_ _clearclick_
+	say 1003
+	say 1040
+
+variable _S.10_
+variable _S.11_
+variable _S.12_
+variable _S.13_
+_S.14_ task:
+	say 1099
+--changed "clicked item clanfeather1 say 1099" to "have item do this" since feather is on enemy body
+
+_S.15_ task:
+	place npc _contact_ at _mondung_

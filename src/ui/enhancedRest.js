@@ -20,6 +20,7 @@ import { getBinding } from '../systems/inputActions.js';
 import { bindings } from './input.js';   // B5: the live InputManager registry, as restWindow.js reads it
 import { restClockLine } from './restWindow.js';   // AUDIT LIVED1 O (U3): the classic window's clock line, one home for its words
 import { REST_ACT_TEXT, ambushNight, actAtChannelEnd, channelBroken, channelHealTick, campNightStep } from '../systems/restAct.js';   // REST1: the act's words   // AUDIT REST-PARTY A2: and the night it runs
+import { t } from '../systems/i18n.js';
 
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
@@ -429,7 +430,7 @@ export function mountEnhancedRest(hostEl, deps, ignoreAllocatedBed = false) {
 
   /** PLUS6: the resting line's three numbers, one readout each. */
   function plusVitals(vit) {
-    return [['Health', `${vit.health}/${vit.maxHealth}`], ['Fatigue', vit.fatigue], ['Magicka', vit.magicka]].map(([k, v]) => {
+    return [[t('Health'), `${vit.health}/${vit.maxHealth}`], [t('Fatigue'), vit.fatigue], [t('Magicka'), vit.magicka]].map(([k, v]) => {
       const b = el('span', 'rv');
       b.append(el('span', 'rv-k', k), el('span', 'rv-v', String(v)));
       return b;
@@ -438,14 +439,9 @@ export function mountEnhancedRest(hostEl, deps, ignoreAllocatedBed = false) {
 
   function endedCard() {
     const c = el('div', 'card wake');   // ONE PANE: the wake-up, centred, in the window's own frame
-    for (const line of overlay._endLines ?? []) c.append(el('p', null, line));
+    for (const line of overlay._endLines ?? []) c.append(el('p', null, t(line)));
     const acts = el('div', 'acts');
-    const ok = el('button', 'act', 'OK');
-    // restWindow.js's own input() on state === 'ended', verbatim law: "closing the finished popup is THE
-    // advancement moment (RaiseSkills)." The died/no-lines path in overlay._end already calls both together;
-    // this is the OTHER of the two places classic calls onRestFinished, and the one this skin was missing -
-    // dismissing "You wake up"/"You are healed" without it silently dropped every skill-use raise a session of
-    // successful sleep earned.
+    const ok = el('button', 'act', t('OK'));
     ok.onclick = () => stopOrClose();
     acts.append(ok);
     c.append(acts);

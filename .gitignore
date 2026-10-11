@@ -98,3 +98,5 @@ tools/shots/
 *.mutbak
 # TAMRIEL1: the fit probe's render of the player's own picture (tools/tamrielFitProbe.mjs default --out).
 tamriel-shots/
+ИНСТРУКЦИЯ.md
+start-*.bat

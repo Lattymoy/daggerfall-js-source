@@ -1,0 +1,177 @@
+-- Quest: C:\QUESTS\WORKING\R0C10Y08.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 10
+-- QuestId: 8
+Messages: 21
+Quest: R0C10Y08
+DisplayName: Кража из храма
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Если вы сможете, %pcf, то мне
+<ce> нужна помощь того, о ком я знаю, что он
+<ce> не законченный шут. Я послал одного наемника
+<ce> доставить небольшую посылку в храм,
+<ce> ничего особо ценного, но, проклятье,
+<ce> она было украдена. Но, по крайней мере, этот
+<ce> идиот заметил, куда направились бандиты
+<ce> Как вы думаете, вы сможете выручить
+<ce> меня и вернуть пакет назад?
+
+RefuseQuest:  [1001]
+<ce> %oth, я боялся, что вы откажетесь.
+<ce> Ладно, полагаю, все-таки это лучше,
+<ce> чем сказать "да" и не выполнить.
+
+AcceptQuest:  [1002]
+<ce> Благодарю заранее, %pcf.
+<ce> Теперь подробности. Бандиты продали
+<ce> _item_ в храм, _itemplace_
+<ce> в __itemplace_. Он очевидно
+<ce> имеет какое-то религиозное значение для них.
+<ce> Во избежание затруднений, мне нужно,
+<ce> чтобы вы украли _item_ из
+<ce> храма и доставили его к _transporter_.
+<ce> Вы найдете %g4 в _inn_ в __inn_.
+<ce> _item_ должен быть в руках идиотского _transporter_
+<ce> не позднее =1stparton_ дней; и вы должны вернуться
+<ce> сюда из __inn_ не позднее =2ndparton_ дней после этого,
+<ce> понятно?  Времени немного. Полагаюсь на вас,
+<ce> %pcf. Удачи. Прощайте.
+
+QuestFail:  [1003]
+<ce> Да? Вы же не ожидаете награды,
+<ce> пока вы еще ничего не сделали, %pcf?
+
+QuestComplete:  [1004]
+<ce> %oth, добро пожаловать, %pcf. Я не знаю,
+<ce> почему я нанял этого умственно отсталого
+<ce> в первый раз. Хорошо, вот ваши _reward_ золотых
+<ce> монет. Вы несомненно заслуживаете их.
+
+RumorsDuringQuest:  [1005]
+_itemplace_ ужесточает свою охрану по некоторым причинам.
+   <--->
+По некоторым причинам, _itemplace_ больше беспокоится о ворах, чем обычно.
+
+RumorsPostfailure:  [1006]
+_itemplace_ вернуло некий _item_, украденный ранее.
+   <--->
+_itemplace_ вернуло их украденный _item_ и переместило его в более безопасное место.
+
+RumorsPostsuccess:  [1007]
+Некая разновидность ценного _item_ была украдена из _itemplace_.
+   <--->
+Похоже на то, что даже храмы имеют бреши. Это ужасно!
+
+QuestorPostsuccess:  [1008]
+Ужасно рад снова видеть вас. Как могу вам помочь?
+   <--->
+Это вы тот %ra, кто помог мне разрешить проблему с храмом, да?
+
+QuestorPostfailure:  [1009]
+<ce> %oth, это вы. Пришли
+<ce> извиниться за проваленное поручение,
+<ce> полагаю. Да, можете не беспокоиться.
+<ce> У меня нет на вас времени.
+
+QuestLogEntry:  [1010]
+<ce> Благодарение %god, вы прибыли, %pcf.
+<ce> Слушайте, торопитесь назад к _questgiver_
+<ce> -- %g он притворится, что никогда не
+<ce> знал вас и вы не получите награду, если
+<ce> не прибудете раньше, чем за =2ndparton_ дней.
+<ce> Верьте мне, я хорошо знаю %g4 привычки.
+
+Message:  1011
+<ce> _transporter_ - нервно выглядящий =transporter_,
+<ce> связанный с _questgiver_.
+   <--->
+<ce> =transporter_ -- %g на %di в его __transporter_.
+
+Message:  1012
+<ce> Вы подобрали _item_.
+<ce> Теперь доставьте его к _transporter_.
+
+Message:  1015
+%qdt:
+ _questgiver_
+ послал меня в _itemplace_
+ в __itemplace_, чтобы украсть
+ некий _item_ и затем доставить его
+ _transporter_ в __inn_
+ в месте, названном _inn_.
+ У меня =1stparton_ дней для доставки.
+ В конце концов, я должен вернуться за наградой.
+ У меня =2ndparton_ дней на путешествие от
+ __inn_ к __questgiver_,
+ в дом _questgiver_ в ___questgiver_.
+
+Message:  1020
+<ce> Держи вора! Гадкий осквернитель
+<ce> нашей святыни _item_!
+
+
+QBN:
+Item _reward_ gold
+Item _item_ religious
+
+Person _questgiver_ face 112 group Questor
+Person _transporter_ face 1 group Local_3.0 remote anyInfo 1011
+Person _dummypriest_ factiontype Temple remote
+
+Place _itemplace_ remote temple
+Place _inn_ remote tavern
+
+Clock _1stparton_ 00:00 0 flag 1 range 0 5
+Clock _2ndparton_ 00:00 0 flag 1 range 2 3
+
+Foe _F.00_ is Monk
+
+--	Quest start-up:
+	place item _item_ at _itemplace_
+	start timer _1stparton_
+	reveal _inn_
+	log 1015 step 0
+	place npc _transporter_ at _inn_
+
+_pcgetsgold_ task:
+	when _S.05_ and _qgclicked_
+	give pc _reward_
+	end quest
+
+_pchasitem_ task:
+	clicked item _item_
+	pc at _itemplace_ set _S.09_
+	say 1012
+	change repute with _dummypriest_ by -10
+
+_queston_ task:
+	when _2ndparton_
+	when _1stparton_ and not _S.05_
+	make _item_ permanent
+	end quest
+
+variable _npcclicked_
+_qgclicked_ task:
+	clicked npc _questgiver_
+
+_S.05_ task:
+	toting _item_ and _transporter_ clicked
+	start timer _2ndparton_
+	say 1010
+
+variable _1stparton_
+variable _2ndparton_
+_clearclick_ task:
+	when _qgclicked_ and not _S.05_
+	clear _qgclicked_ _clearclick_
+
+_S.09_ task:
+	create foe _F.00_ every 3 minutes 4 times with 50% success
+
+totemLetter5 task:
+	injured _F.00_ saying 1020

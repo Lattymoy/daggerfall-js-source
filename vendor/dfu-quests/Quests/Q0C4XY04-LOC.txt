@@ -1,0 +1,167 @@
+-- Quest: C:\QUESTS\WORKING\Q0C4XY04.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: witch
+-- Repute: 4X
+-- QuestId: 4
+Messages: 41
+Quest: Q0C4XY04
+DisplayName: Сердце даэдра
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> ==questgiver_ снова взывает к твоей
+<ce> доброте и силе. Нам нужно сердце
+<ce> даэдра для нашего колдовства. Но сердце
+<ce> должно быть вырвано силой и только
+<ce> тобой. Найдешь ли ты и убьешь даэдра
+<ce> для твоих дорогих тетушек?
+
+RefuseQuest:  [1001]
+<ce> Нет? О, какая печальная ночь.
+
+AcceptQuest:  [1002]
+<ce> Богиня улыбнулась нам, %pcn,
+<ce> неподалеку есть подземелье, где
+<ce> обитает даэдра. Подойдет сердце
+<ce> любого даэдра. Отправляйся в
+<ce> ___mondung_, %pcn,
+<ce> убей для нас даэдра и принеси
+<ce> сердце, пока не прошло =1stparton_ дней.
+
+QuestFail:  [1003]
+<ce> Сердце, %pcn,
+<ce> оно в ___mondung_,
+<ce> бьется в груди даэдра.
+<ce> Ищи там.
+
+QuestComplete:  [1004]
+<ce> Посмотрите, оно все еще теплое и
+<ce> бьется как живое в окровавленных
+<ce> руках %pcn! Быстрее в варево его,
+<ce> пока оно не остыло. Ах, %pcn,
+<ce> возьми _reward_ в награду за труды.
+<ce> Сделано доброе дело для ведьм.
+
+RumorsDuringQuest:  [1005]
+Даэдра из ___mondung_ должно быть что-то натворили. Бедные прихожане!
+   <--->
+%god проклял нас. Иначе чем можно объяснить нашествие даэдра в ___mondung_?
+
+RumorsPostfailure:  [1006]
+Да святится %god, даэдра ушли из ___mondung_. Я не мог спать ночами!
+   <--->
+Даэдра ушли из ___mondung_ так жу таинственно, как и появились. И скатертью им дорога!
+
+RumorsPostsuccess:  [1007]
+Когда звезды темны по ночам, это признак смерти даэдра.
+   <--->
+Вы слышали музыку в лесу этой ночью? У ведьм празднество.
+
+QuestorPostsuccess:  [1008]
+Приветствую, друг ==questgiver_, как ты себя чувствуешь, как твоя награда _reward_?
+
+QuestorPostfailure:  [1009]
+<ce> Мы так ждали это сердце для нашего
+<ce> варева, %pcf. Если тебе было некогда,
+<ce> надо было сразу сказать об этом.
+<ce> Все наши планы разрушены.
+<ce> Ты все еще наш друг, но ... мы
+<ce> очень огорчены.
+
+Message:  1011
+_questgiver_ - =questgiver_ и одна из ==questgiver_.
+   <--->
+Она одна из ведьм, которые обосновались в %reg.
+
+Message:  1012
+Я слышал, что ___mondung_ - обитель вампиров.
+   <--->
+В ___mondung_ обитает ночной народ. Они никогда не появляются днем.
+   <--->
+___mondung_? Это случайно не оркское укрепление?
+   <--->
+Нежить шастает в коридорах ___mondung_. Я буду держаться подальше от этого места.
+
+Message:  1015
+%qdt:
+ _questgiver_ из
+ ==questgiver_ послала меня в
+ ___mondung_ достать сердце даэдра,
+ неважно из кого: из соблазнительницы даэдра,
+ даэдрота, огненного или ледяного даэдра,
+ из любого даэдра, который попадется мне
+ на пути. Сердце нужно принести в
+ ___questgiver_ в течение =1stparton_
+ дней или раньше.
+
+Message:  1040
+<ce> Вы вырываете отличное сердце из
+<ce> все еще бьщегося в судорогах тела.
+
+
+
+QBN:
+Item _reward_ malachite
+Item _heart_ daedra_heart
+
+Person _questgiver_ group Questor anyInfo 1011
+
+Place _mondung_ remote dungeon8 anyInfo 1012
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _seducer_ is Daedra_seducer
+Foe _daedroth_ is Daedroth
+Foe _firedaedra_ is Fire_daedra
+Foe _F.03_ is Frost_daedra
+
+--	Quest start-up:
+	start timer _1stparton_
+	reveal _mondung_
+	log 1015 step 0
+	pc at _mondung_ set _exitstarter_
+
+_pcgetsgold_ task:
+	toting _heart_ and _questgiver_ clicked
+	give pc _reward_
+	end quest
+
+_S.01_ task:
+	clicked item _heart_ say 1040
+
+variable _S.02_
+variable _qgclicked_
+variable _queston_
+_1stparton_ task:
+	end quest
+
+_S.06_ task:
+	injured _firedaedra_
+	give item _heart_ to _firedaedra_
+
+_S.07_ task:
+	injured _F.03_
+	give item _heart_ to _F.03_
+
+_S.08_ task:
+	injured _seducer_
+	give item _heart_ to _seducer_
+
+_S.09_ task:
+	injured _daedroth_
+	give item _heart_ to _daedroth_
+
+_S.10_ task:
+	when not _S.11_ and _exitstarter_
+	create foe _seducer_ every 15 minutes 7 times with 10% success
+	create foe _F.03_ every 20 minutes 6 times with 30% success
+	create foe _firedaedra_ every 18 minutes 5 times with 25% success
+	create foe _daedroth_ every 12 minutes 5 times with 20% success
+
+_S.11_ task:
+	when _S.06_ or _S.07_ or _S.09_ or _S.08_
+	clear _S.10_
+
+variable _exitstarter_

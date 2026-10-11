@@ -1,0 +1,109 @@
+-- Quest: C:\QUESTS\WORKING\M0C00Y13.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: fighter
+-- Repute: 0
+-- QuestId: 13
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 12
+Quest: M0C00Y13
+DisplayName: Охота на варваров
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Я _qgiver_.
+<ce> Гильдия Бойцов не дает работу кому
+<ce> попало. Если бы у меня не была такая
+<ce> напряженная ситуация со свободными мечами,
+<ce> как сейчас, я бы послал тебя прочь,
+<ce> %pcn. Мне нужен воин, который не
+<ce> побоится бросить вызов нескольким
+<ce> варварам, которые сущие дикари.
+<ce> Сделай эту работу и я замолвлю за
+<ce> тебя словечко в гильдии. Договорились?
+
+RefuseQuest:  [1001]
+<ce> Ты делаешь большую ошибку,
+<ce> %pcn. Больше не пытайся
+<ce> искать здесь работу.
+
+AcceptQuest:  [1002]
+<ce> Веди свою бренную тушку в
+<ce> _house_. Выгони оттуда
+<ce> варваров до наступления утра и
+<ce> работа будет выполнена.
+
+QuestComplete:  [1004]
+<ce> Чего ты ждешь? Порезаться боишься?
+<ce> Где еще найти такую работу, которая
+<ce> может послужить тебе пропуском
+<ce> в Гильдию Бойцов.
+
+RumorsDuringQuest:  [1005]
+<ce> Опять варвары совершили набег на фермы.
+
+RumorsPostfailure:  [1006]
+<ce> Варвары успели ограбить четыре хутора,
+<ce> пока в это дело не ввязалась Гильдия Бойцов.
+
+RumorsPostsuccess:  [1007]
+<ce> Вы случайно не тот %ra, который
+<ce> прогнал прочь варваров?
+
+QuestorPostsuccess:  [1008]
+<ce> Вы отлично справились с этими варварами,
+<ce> %pcf. Все не так уж и плохо.
+
+QuestorPostfailure:  [1009]
+<ce> Я доверил тебе разобраться с варварами.
+<ce> После твоего провала я пошлю туда
+<ce> кого-нибудь другого.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Гильдия Бойцов из ___qgiver_
+ наняла меня разобраться с проблемой
+ в виде варваров, разграбляющих
+ _house_.
+ На выполнение у меня ровно сутки.
+
+Message:  1011
+<ce> _monster_ мертв.
+
+
+
+QBN:
+
+Person _qgiver_ group Questor
+
+Place _house_ local random
+
+Clock _2dung_ 1.00:00 0 flag 1 range 0 1
+
+Foe _monster_ is Barbarian
+
+--	Quest start-up:
+	start timer _2dung_
+	reveal _house_
+	log 1010 step 0
+	place foe _monster_ at _house_
+	create npc at _house_
+
+_2dung_ task:
+	end quest
+
+_S.01_ task:
+	killed 1 _monster_ saying 1011
+
+_S.02_ task:
+	when _qgclicked_ and _S.01_
+	give pc nothing
+	end quest
+
+_qgclicked_ task:
+               clicked npc _qgiver_
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.01_
+	clear _qgclicked_ _clearclick_

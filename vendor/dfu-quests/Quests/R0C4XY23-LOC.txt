@@ -1,0 +1,217 @@
+-- Quest: C:\QUESTS\WORKING\R0C4XY23.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 4X
+-- QuestId: 23
+Messages: 31
+Quest: R0C4XY23
+DisplayName: Даэдрическая книга
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pcf, старый друг, хорошо, что вы здесь.
+<ce> У меня проблемы с группой даэдра и я ищу
+<ce> кого-нибудь, кто найдет мне один редкий
+<ce> манускрипт. Вознаграждение не очень высоко,
+<ce> но зато очень высока вероятность вторжения
+<ce> армии даэдра. Заинтересованы?
+
+RefuseQuest:  [1001]
+<ce> Понимаю, %pcf. Вы очень
+<ce> занятой %ra.
+
+AcceptQuest:  [1002]
+<ce> Отлично. Вот книга, _item_.
+<ce> _contact_ ждет это в
+<ce> __contact_ в течение =queston_ дней.
+<ce> Вы сможете сделать это, я не сомневаюсь.
+<ce> Главное позаботьтесь о защите от
+<ce> даэдра. Удачи!.
+
+QuestFail:  [1003]
+<ce> Как, вы все еще не отнесли книгу?
+<ce> Нам не о чем пока даже разговаривать.
+
+QuestComplete:  [1004]
+<ce> А, хорошо, что вы здесь, %pcf. Ну и
+<ce> _item_ тоже. Отлично. Надеюсь даэдра
+<ce> не сильно помешали вам. Ха! Если бы
+<ce> они только знали, зачем мне эта книга,
+<ce> они послали бы вдвое больше, чтобы
+<ce> остановить вас! Вот ваша награда за
+<ce> прекрасно выполненную работу.
+
+RumorsDuringQuest:  [1005]
+Даэдра очень взволнованы этой ночью. Это волнение прямо таки витает в воздухе.
+   <--->
+Что же такое готовит _questgiver_, что так взволновало даэдра?
+
+RumorsPostfailure:  [1006]
+Недавно кто-то нашел очень очень редкую книгу.
+   <--->
+Мне говорили, что _questgiver_ очень разозлен на какого-то %ra-авантюриста.
+
+RumorsPostsuccess:  [1007]
+<ce> Некий =contact_ был здесь, расспрашивая о ком-то со старой книгой и очень сильно ругался.
+   <--->
+Один ювелир сообщил о краже большого рубина.
+
+QuestorPostsuccess:  [1008]
+Я всегда говорил моим знакомым, что вы сильнее любого даэдра. Вы это доказали.
+   <--->
+Приветствую вас, изгонятель даэдра! Что я и мои друзья могут сделать для вас?
+
+QuestorPostfailure:  [1009]
+<ce> Даэдра оказались слишком сильны, да,
+<ce> %pcf? Вы меня очень огорчили.
+<ce> Я был о вас лучшего мнения.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _questgiver_
+ посылает меня в ___contact_ доставить одну
+ книгу, _item_, ее ждет _contact_ в
+ ___contact_. У меня =queston_ дней,
+ чтобы доставить книгу и получить награду.
+ Кроме всего прочего мне может попытаться помешать
+ группа даэдра.
+
+Message:  1011
+<ce> Приветствую, %pcn. Жду вас с нетерпением.
+<ce> Я _oblivion_, к вашим услугам.  Мои друзья
+<ce> в Обливионе рассказали мне, что вы позволили втянуть
+<ce> себя в это дело. Я все еще в силах умиротворить их,
+<ce> но мне нужна книга, которую вы везете. Должен
+<ce> предупредить, у даэдра хорошая память. А сейчас
+<ce> отдайте книгу мне пока не стало слишком поздно!
+
+Message:  1012
+<ce> Как только вы убрали ладонь с обложки книги,
+<ce> перед вами материализовалась темная фигура:
+<ce>
+<ce> "Обливион благодарит вас за содействие, %pcf.
+<ce> Мы давно уже присматривались к вам. Похоже,
+<ce> что наши надежды в отношении вас оправдались."
+<ce>
+<ce> Вы почувствовали, как книга исчезла из
+<ce> ваших рук вместе с растворившейся в воздухе
+<ce> фигурой.
+
+Message:  1013
+_oblivion_ - могущественный маг, живущий в ___oblivion_.
+   <--->
+_oblivion_ из ___oblivion_?  %g состоит в лиге даэдра.
+
+Message:  1014
+_oblivion_ один из волшебников, полагаю. Поищите в __oblivion_ в ___oblivion_.
+   <--->
+<ce> Опасно вмешиваться в дела даэдра. Вы найдете _oblivion_ в
+<ce> ___oblivion_ в __oblivion_.
+
+Message:  1020
+<ce> Вы нанесли даэдра ужасающий по силе удар,
+<ce> на какой-то момент ваш взгляд пересекся с его.
+<ce> Из его разорванного горла раздался суровый
+<ce> голос:
+<ce>
+<ce> "Ты можешь уничтожить мою смертную оболочку,
+<ce> %pcn, но мой дух будет преследовать
+<ce> тебя до тех пор, пока твои безжизненные руки
+<ce> не выпустят книгу. Если ты хочешь избежать
+<ce> такой участи, повидайся с _oblivion_
+<ce> и отдай книгу ему.  Он посредник между
+<ce> твоим и моим мирами и он один может
+<ce> убедить моего повелителя прекратить охоту".
+
+Message:  1025
+<ce> Наглый щенок! Ты приходишь сюда в поисках помощи
+<ce> и при этом отказываешься от моих условий?
+<ce> да поглотит тебя Обливион!
+
+Message:  1030
+Это свиток раскрывает местонахождение
+Шабаша Скэффингтон во Фригии,
+что бы это ни было.
+
+
+QBN:
+Item _reward_ ruby
+Item _item_ book2
+Item _map_ letter used 1030
+
+Person _questgiver_ group Questor
+Person _contact_ faction Dancers remote
+-- Person:    1 0 -1 0 13278 0 0.
+
+Person _oblivion_ factiontype Daedra remote anyInfo 1013 rumors 1014
+
+Place _skeffingcoven_ permanent SkeffingtonCoven
+
+Clock _queston_ 00:00 0 flag 1 range 3 5
+
+Foe _firedaedra_ is Fire_daedra
+Foe _frostdaedra_ is Frost_daedra
+Foe _seducer_ is Daedra_seducer
+Foe _lesserdaedra_ is Daedroth
+
+--	Quest start-up:
+	dialog link for person _oblivion_
+	start timer _queston_
+	log 1010 step 0
+	get item _item_
+	pick one of _yesmap_ _nomap_ _nomap_ _nomap_
+	_map_ used do _readmap_
+	create npc _oblivion_
+	create npc _contact_
+
+variable _pcgetsgold_
+variable _pchasitem_
+_queston_ task:
+	make _item_ permanent
+	change repute with _questgiver_ by -20
+	end quest
+
+_npcclicked_ task:
+	toting _item_ and _contact_ clicked
+	give pc _reward_
+	end quest
+
+_thankyou_ task:
+	say 1012
+	change repute with _oblivion_ by +20
+	end quest
+--eliminates long wait for quest to end. quest is impossible with this choice
+
+until _thankyou_ performed:
+	create foe _firedaedra_ every 6 minutes 7 times with 25% success
+	create foe _seducer_ every 12 minutes 7 times with 50% success
+	create foe _lesserdaedra_ every 3 minutes 7 times with 12% success
+	create foe _frostdaedra_ every 4 minutes 7 times with 17% success
+
+_clickoblivion_ task:
+	toting _item_ and _oblivion_ clicked
+	prompt 1011 yes _thankyou_ no _gimmegimme_
+
+_gimmegimme_ task:
+	get item _item_
+	say 1025
+	change repute with _oblivion_ by -10
+
+_killmon_ task:
+	killed 1 _seducer_
+	add dialog for person _oblivion_
+	say 1020
+
+_hitseducer_ task:
+	injured _seducer_
+
+_readmap_ task:
+	reveal _skeffingcoven_ in province 38 at 5531
+
+variable _yesmap_
+variable _nomap_
+_placemap_ task:
+	when _yesmap_ and _hitseducer_
+	give item _map_ to _seducer_

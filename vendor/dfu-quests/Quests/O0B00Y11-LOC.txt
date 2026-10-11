@@ -1,0 +1,254 @@
+-- Quest: C:\QUESTS\WORKING\O0B00Y11.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: thief
+-- Repute: 0
+-- QuestId: 11
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 64
+Quest: O0B00Y11
+DisplayName: Античная слоновая кость
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pcf, есть дело. Есть одна
+<ce> вещичка, которую необходимо "переместить"
+<ce> Ты в деле?
+
+RefuseQuest:  [1001]
+<ce> Далеко пойдешь в Гильдии Воров
+<ce> с таким отношением. Уверен, тебе
+<ce> понятно о чем я.
+
+AcceptQuest:  [1002]
+<ce> Вот и отлично. Как я уже сказал,
+<ce> в этой работе ничего сложного.
+<ce> Клиент хочет получить определенный
+<ce> кусок старой слоновой кости,
+<ce> который находится в _target_
+<ce> здесь в __target_.
+<ce> У тебя два дня на получение
+<ce> этого. Получишь _reward_ золотых.
+
+QuestFail:  [1003]
+<ce> _heist_?  Где это?
+
+QuestComplete:  [1004]
+<ce> Отличная работа, %pcf. Как раз так,
+<ce> как и должно быть, без шума, без пыли.
+<ce> Вот _reward_ золотых, прими мои
+<ce> поздравления за успешно выполненную работу.
+
+RumorsDuringQuest:  [1005]
+_dummy_ нанимает отряд стражников в _target_ по неизвестной причине.
+
+RumorsPostfailure:  [1006]
+Слыхали про эту наглую кражу в _target_?
+
+RumorsPostsuccess:  [1007]
+<ce> Кто-то вломился в _target_ и ушел с ценной поделкой из слоновой кости
+<ce> прямо из под носа стражи!
+
+QuestorPostsuccess:  [1008]
+Что я могу сделать, мой друг-взломщик?
+
+QuestorPostfailure:  [1009]
+Как же я могу забыть, что тебе не удалось провести обычный грабеж.
+
+Message:  1011
+<ce> _target_ буквально роится от большого количества стражи. Даже не знаю, почему.
+
+Message:  1020
+%qdt:
+ У меня два дня на кражу старинной
+ безделушки из слоновой кости из
+ _target_ здесь в __target_.
+ искомое надо доставить к _questgiver_
+ в __questgiver_ за _reward_ золотых.
+
+
+Message:  1021
+%qdt:
+ Кража по-тихому не удалась.
+ _questgiver_ сказал мне убираться из
+ города с безделушкой.  Мне нужно
+ доставить ее к _contact_, кто
+ встретит меня в _safehouse_
+ в __safehouse_.
+
+Message:  1040
+<ce> Похоже это та самая костяная безделушка,
+<ce> за которой вас посылал _questgiver_.
+
+Message:  1050
+<ce> %pcf, ты что здесь делаешь?
+<ce> Я не знаю, почему тебе не удалось
+<ce> обтяпать такое простое дело, но если
+<ce> ты не уйдешь из города с этой паленой
+<ce> безделушкой, мы все закончим в
+<ce> кутузке, если не хуже. Я не допущу
+<ce> ругать тебя, но репутацию гильдии
+<ce> нужно поддержать, мы же обещали клиенту
+<ce> эту шмотку. Короче так. Отправляйся в
+<ce> __safehouse_. _contact_ встретит
+<ce> тебя в _safehouse_.
+<ce> Не проколись опять.
+
+Message:  1051
+<ce> Вы посмотрите кто здесь. Взломщик-
+<ce> Неумеха? Наконец-то тебе удалось
+<ce> избавиться от этой шмотки. Головой
+<ce> нужно думать, а не мускулами. Ты же
+<ce> не думаешь, что получишь за эту
+<ce> "работу" плату?
+
+Message:  1052
+<ce> А ты умнее, чем кажешься. Теперь
+<ce> проваливай, пока мы тебя не
+<ce> сдали местной страже из __target_.
+
+Message:  1053
+<ce> Похоже дело идет к тому, что мы
+<ce> скоро будем смотреть на твой труп.
+
+Message:  1060
+<ce> %oth, что ты здесь мешаешься?
+<ce> Лучше бы тебе сгинуть отсюда, пока
+<ce> я тебе не сделал больно.
+
+Message:  1061
+<ce> Этот %ra подонок убил =guard_!
+
+Message:  1062
+<ce> Не шевелись или я прирежу тебя
+<ce> где стоишь! Отдай нам побрякушку,
+<ce> украденную из _target_,
+<ce> и мы позволим тебе уйти.
+
+Message:  1063
+<ce> Мы знаем как устроить убийство такого
+<ce> подонка, как ты. =posse_, будь
+<ce> осторожнее, не пролей кровь на
+<ce> ковер, когда перережешь этому %ra горло.
+
+
+
+QBN:
+Item _heist_ ivory
+Item _reward_ gold
+
+Person _questgiver_ face 44 group Questor
+Person _contact_ face 1 group Local_3.0 remote
+Person _dummy_ face 209 group Resident1 local
+
+Place _target_ local house1 anyInfo 1011 rumors 1011
+Place _safehouse_ remote house3
+
+Clock _time_ 00:00 0 flag 1 range 0 2
+Clock _S.01_ 2.00:00 0 flag 1 range 0 1
+--removed unnecessary delay timer
+
+Foe _guard_ is Rogue
+Foe _posse_ is 3 Archer
+
+--	Quest start-up:
+	place item _heist_ at _target_
+	dialog link for location _safehouse_ person _contact_
+	start timer _S.01_
+	start timer _time_
+	log 1020 step 0
+	pc at _target_ set _S.02_
+	place npc _contact_ at _safehouse_
+
+_time_ task:
+	end quest
+
+variable _S.01_
+variable _S.02_
+until _S.02_ performed:
+	clear _S.06_ _S.05_
+
+_greklith_ task:
+	injured _guard_
+	say 1060
+
+_S.04_ task:
+	daily from 05:30 to 19:00
+
+_S.05_ task:
+	when _S.04_ and _S.02_
+	create foe _guard_ every 2 minutes 6 times with 50% success
+
+_S.06_ task:
+	when not _S.04_ and _S.02_
+	create foe _guard_ every 10 minutes 3 times with 50% success
+
+_S.07_ task:
+	toting _heist_ and _questgiver_ clicked
+
+_S.08_ task:
+	killed 1 _guard_
+	killed 1 _posse_
+	say 1061
+
+_S.09_ task:
+	when not _greklith_ and _S.07_ and not _S.01_
+	give pc _reward_
+	end quest
+--removed unnecessary delay ending
+
+_qgtalk_ task:
+	clicked npc _questgiver_
+
+_clearclick_ task:
+	when _qgtalk_ and not _S.07_
+	say 1003
+	clear _clearclick_ _qgtalk_
+--added _qgtalk_ and _clearclick_
+
+_S.10_ task:
+	when _greklith_ and _S.07_
+	create foe _posse_ every 60 minutes 20 times with 50% success
+	log 1021 step 1
+	get item _heist_
+	say 1050
+
+_S.10a_ task:
+	when _S.07_ and _S.01_
+	create foe _posse_ every 60 minutes 20 times with 50% success
+	log 1021 step 1
+	get item _heist_
+	say 1050
+--recent troubles with multiple conditions on a single task, this is better layout
+
+_S.12_ task:
+	toting _heist_ and _contact_ clicked
+	say 1051
+	change repute with _questgiver_ by +2
+	end quest
+
+_S.13_ task:
+	injured _posse_
+	have _heist_ set _S.18_
+
+_yes_ task:
+	give item _heist_ to _posse_
+	say 1052
+	restrain foe _posse_
+	clear _S.10_ _S.07_
+
+_no_ task:
+	say 1053
+
+_S.16_ task:
+	when _S.13_ and _S.08_
+	say 1063
+
+_S.17_ task:
+	when _S.13_ and not _S.08_ and _S.18_
+	prompt 1062 yes _yes_ no _no_
+
+variable _S.18_
+_S.19_ task:
+	clicked item _heist_ say 1040

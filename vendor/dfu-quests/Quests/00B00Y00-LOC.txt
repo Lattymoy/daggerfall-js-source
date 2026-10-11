@@ -1,0 +1,115 @@
+-- Quest: C:\QUESTS\WORKING\00B00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Julianos
+-- Repute: 0
+-- QuestId: 0
+Messages: 32
+Quest: 00B00Y00
+DisplayName: Цена знаний
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> В Школе Джулианоса существует единственное правило --
+<ce> -- знание принадлежит всем. К несчастью в нашем ордене
+<ce> были один товарищ, который забыл это правило. Его надо
+<ce> наказать. Если мы заплатим вам _reward_ золотых,
+<ce> согласитесь ли вы выследить и убить бывшего члена
+<ce> нашей школы?
+
+RefuseQuest:  [1001]
+<ce> Какое разочарование. Ладно, найдем кого-нибудь посговорчивее.
+
+AcceptQuest:  [1002]
+<ce> Хорошо. Это блудное дитя -
+<ce> - найтблейд по имени =monster_,
+<ce> нашедший убежище в своей лаборатории,
+<ce> в ___mondung_. Если вы не вернетесь
+<ce> до исхода =1stparton_ дней с кровью изгнанника
+<ce> на своих руках, мы будем считать, что вы потерпели
+<ce> неудачу или сговорились с =monster_, а ваше
+<ce> вознаграждение будет отдано более удачливому.
+<ce> Я все сказал, мои руки чисты. Удачи и прощайте.
+
+QuestFail:  [1003]
+Пока найтблейд жив, я не желаю общаться с вами, %pcf.
+
+QuestComplete:  [1004]
+<ce> Очень хорошая работа. Вот ваше вознаграждение
+<ce> _reward_ золотых. Мы очень благодарны вам.
+
+
+RumorsDuringQuest:  [1005]
+Я слышал где-то в ___mondung_ обитает найтблейд, продающий заклинания за деньги.
+   <--->
+Ренегаты заклинатели очень опасны. Надеюсь этот _monster_ получит свое.
+
+RumorsPostfailure:  [1006]
+Похоже что =monster_ сбежал и все еще продает свои заклинания.
+   <--->
+Я слышал, что Школа Джулианоса озвучила волю Рыцарского Наставника кому-то.
+
+RumorsPostsuccess:  [1007]
+Наконец-то этого ренегата достали. Нельзя допускать, чтобы недисциплинированные маги распускались.
+   <--->
+Очень жаль, что этот _monster_ пойман. Я слышал у него была плодородная почва.
+
+QuestorPostsuccess:  [1008]
+<ce> Вы %pcn. Как ваша работа насчет =monster_,
+<ce> ренегата-заклинателя, если помните?
+
+QuestorPostfailure:  [1009]
+<ce> Хммм. Вы что, совсем забросили работу по уничтожению
+<ce> ренегата-заклинателя =monster_, а?
+
+Message:  1030
+%qdt:
+ Школа Джулианоса в ___questgiver_
+ наняла меня убить одного беглеца
+ _monster_ из их храма,
+ =monster_. У меня =1stparton_ дней на
+ выполнение задания.
+ Искать надо в ___mondung_.
+
+Message:  1031
+<ce> =monster_ убит.
+<ce> Школа будет довольна.
+
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ group Questor
+
+Place _mondung_ remote dungeon9
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _monster_ is Nightblade
+
+--	Quest start-up:
+	start timer _1stparton_
+	reveal _mondung_
+	log 1030 step 0
+	place foe _monster_ at _mondung_
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _mondead_
+	give pc _reward_
+	end quest
+
+_mondead_ task:
+	killed 1 _monster_ saying 1031
+
+_qgclicked_ task:
+	clicked npc _questgiver_
+
+_1stparton_ task:
+	end quest
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_
+	say 1003
+	clear _qgclicked_ _clearclick_

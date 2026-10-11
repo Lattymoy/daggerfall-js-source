@@ -1,0 +1,237 @@
+-- Quest: C:\QUESTS\WORKING\A0C41Y18.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: peasant
+-- Repute: 41
+-- QuestId: 18
+Quest: A0C41Y18
+DisplayName: Палец мумии
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Мне нужен кто-то, кто доставит кое-что для
+<ce> меня, за что я готов щедро заплатить.
+<ce> _gold1_ вначале и _gold2_ золотых после
+<ce> окончания работы.
+<ce> Вы поможете мне?
+
+RefuseQuest:  [1001]
+<ce> %oth, неужели я никогда не получу эту вещь!
+<ce> Ну почему никто не хочет помочь мне?
+
+AcceptQuest:  [1002]
+<ce> Благодарение %god!  Вы не представляете как
+<ce> много это для меня значит. Вот ваши деньги.
+<ce> Вот, возьмите это к _dummy_ в ___dummy_,
+<ce> %g заплатит вам за беспокойство. А сейчас мне
+<ce> нужно идти. Премного благодарен!
+
+QuestComplete:   [1004]
+<ce> _giver_ вручил вам сверток с завернутым в него
+<ce> каким-то маленьким объектом и растворился в толпе.
+
+RumorsDuringQuest:  [1005]
+<ce> Пираты весьма активны в этом году.
+
+RumorsPostfailure:  [1006]
+<ce> Слыхали историю о проклятии пальца мумии?
+<ce> О. Извините. Я думал...
+
+RumorsPostsuccess:  [1007]
+<ce> Какой-то храбрый %ra ушел в ___dungeon_.
+<ce> Бедный глупец.
+
+QuestorPostsuccess:  [1008]
+<ce> Психи в этом году буйнее обычного.
+
+QuestorPostfailure:  [1009]
+<ce> Вы полагаете я толст? Все говорят
+<ce> так, но я так не думаю.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Меня наняли для передачи посылки к
+ _dummy_ из ___dummy_.
+ Мой таинственный наниматель заплатил мне
+ _gold1_ золотых и пообещал _gold2_ золотых
+ после выполнения поручения. Нет причин
+ спешить, но мой наниматель выглядел весьма
+ обеспокоенным.
+
+Message:  1011
+%qdt:
+ Меня разыграли. Так называемая посылка
+ к _dummy_ оказалась проклятым
+ пальцем мумии.
+
+Message:  1012
+%qdt:
+ Оказывается, мумия, чье проклятие довлеет
+ надо мной, похоронена в ___dungeon_.
+ Надо уничтожить ее истинное обличье
+ или ее дух будет преследовать меня
+ 1001 ночь.
+
+Message:  1013
+<ce> Пакет? От _giver_? Нет, %g1 сказал бы мне
+<ce> об этом заранее. Ты, наверное, ошибся.
+<ce> Почему бы тебе не прочитать содержимое,
+<ce> чтобы понять, для кого это?
+
+Message:  1015
+<ce> Мне ничего неизвестно об этом. Попробуйте спросить в храме.
+   <--->
+<ce> _sage_ знает об этом кое-что. Спросите его.
+   <--->
+<ce> А вы не пробовали искать в __sage_ в ___sage_?
+   <--->
+<ce> Я слышал, что кто-то в ___sage_ может знать многие вещи.
+   <--->
+<ce> Говорят, что _sage_ один из лучших экспертов в этих вещах.
+   <--->
+<ce> Может быть мудрец в __sage_ знает что-то.
+
+Message:  1016
+<ce> Тот кто похитил мой _finger_, должен умереть!
+   <--->
+<ce> Я пришел за своим _finger_.
+   <--->
+<ce> Прими свою судьбу. Опусти оружие.
+   <--->
+<ce> Мой _finger_, мой _finger_.
+   <--->
+<ce> У тебя мой _finger_. Без него я не могу обрести покой.
+   <--->
+<ce> Ты уничтожишь меня сейчас, но я все равно вернусь.
+   <--->
+<ce> Я восстану снова, чтобы вернуться за _finger_.
+
+Message:  1020
+<ce> Любой, нарушивший мой покой, будет уничтожен!
+
+Message:  1025
+<ce> Дайте-ка я посмотрю на _finger_. Ага...
+<ce> Да, на нем лежит проклятие =realmummy_.
+<ce> Каждую ночь, в течение 1001 ночей, с
+<ce> наступлением полуночи дух =realmummy_ будет
+<ce> посещать владельца этого _finger_.
+<ce> Единственный путь разбить проклятие, это
+<ce> уничтожить настоящую мумию =realmummy_
+<ce> в ее усыпальнице в ___dungeon_.
+
+Message:  1026
+<ce> По описанию похоже на классическое проклятие
+<ce> мумии, но без _finger_ я не могу
+<ce> сказать больше. Принесите это ко мне и
+<ce> может быть тогда я смогу точнее определить,
+<ce> откуда оно (проклятие) пришло.
+
+Message:  1030
+<ce> Со смертью =realmummy_ вы почуствовали, как
+<ce> проклятие мумии оставило вас навсегда.
+
+Message:  1040
+Уважаемый незнакомец,
+<ce>
+  Надеюсь, вы простите меня за то, что я сотворил,
+но у меня не было выбора. Мумия приходила ко
+мне каждую ночь с тех пор, как я нашел этот
+проклятый палец. Я пытался избавиться от него,
+ни ни к чему хорошему это не привело. Ученый
+мудрец рассказал мне, что только находка
+усыпальницы мумии или дарение пальца кому-либо
+поможет снять проклятие. Я не воитель, но кто
+мог знать, что на меня свалится такая ноша?
+Вы выглядели смелыми, способными понять проклятие
+и возможно развеять его. Пожалуйста, поймите меня,
+я не хотел причинить вам вреда, но иначе я был
+бы убит или сошел бы с ума!
+
+Message:  1050
+<ce> _sage_ - известный мудрец из ___sage_.
+   <--->
+<ce> Вы найдете _sage_ в __sage_
+<ce> в ___sage_.
+
+
+
+QBN:
+Item _finger_ finger anyInfo 1015
+Item _letter_ letter used 1040
+Item _gold1_ gold
+Item _gold2_ gold
+--changed msg 1030 %g2 to %g4
+
+Person _sage_ group Cleric remote anyInfo 1050 rumors 1050
+Person _giver_ group Questor
+Person _dummy_ group Innkeeper remote
+
+Place _dungeon_ remote dungeon0
+
+Clock _S.10_ 1001.00:00 0 flag 1 range 0 1
+
+Foe _F.00_ is Mummy
+Foe _realmummy_ is Mummy
+
+--	Quest start-up:
+	dialog link for person _sage_ item _finger_
+	start timer _S.10_
+	log 1010 step 0
+	get item _letter_
+	get item _finger_
+	get item _gold1_
+	start task _S.03_
+	give pc nothing
+--changed "say 1045" to "give pc nothing." This ensures faction increase for completing this quest.
+	_letter_ used do _readletter_
+	place foe _realmummy_ at _dungeon_
+	destroy _giver_
+
+variable _S.00_
+_S.01_ task:
+	daily from 00:00 to 01:00
+	create foe _F.00_ every 35 minutes 1001 times with 100% success
+
+_S.02_ task:
+	injured _F.00_ saying 1016
+	unset _S.02_
+
+_dummytalk_ task:
+	clicked npc _dummy_
+	say 1013
+
+variable _S.03_
+_S.04_ task:
+	clicked npc _sage_
+	have _finger_ set _S.07_
+
+_S.05_ task:
+	killed 1 _realmummy_
+	say 1030
+	make _gold1_ permanent
+	end quest
+
+_S.06_ task:
+	when _S.04_ and _S.07_
+	reveal _dungeon_
+	log 1012 step 2
+	say 1025
+	unset _S.06_ _S.08_ _S.04_ _S.07_
+
+variable _S.07_
+_S.08_ task:
+	when _S.04_ and not _S.07_
+	say 1026
+
+_S.09_ task:
+	injured _realmummy_
+	say 1020
+
+_S.10_ task:
+	make _gold1_ permanent
+	end quest
+
+_readletter_ task:
+	add dialog for item _finger_
+	log 1011 step 1

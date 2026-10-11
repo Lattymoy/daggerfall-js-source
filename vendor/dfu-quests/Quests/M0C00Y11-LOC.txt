@@ -1,0 +1,110 @@
+-- Quest: C:\QUESTS\WORKING\M0C00Y11.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: fighter
+-- Repute: 0
+-- QuestId: 11
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 12
+Quest: M0C00Y11
+DisplayName: Охота на гигантского скорпиона
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Можешь называть меня _qgiver_.
+<ce> Обычно мы даем работу только членам гильдии.
+<ce> Но что-то есть в тебе такое, что внушает
+<ce> доверие, %pcn. Вот что я скажу.
+<ce> Пришел запрос на уничтожение гигантского
+<ce> скорпиона. Сделай это и гильдия пересмотрит
+<ce> свое отношение к тебе. Договорились?
+
+RefuseQuest:  [1001]
+<ce> Я пытался быть хорошим, но
+<ce> с тобой это трудно делать.
+<ce> Убирайся отсюда.
+
+AcceptQuest:  [1002]
+<ce> В тебе есть напористость, %pcf, мне это
+<ce> нравится. Похоже это скорпион сбежал из чьей-то
+<ce> частной коллекции. Обосновался он в _house_.
+<ce> Убей это создание сегодня и потом
+<ce> поговорим.
+
+QuestComplete:  [1004]
+<ce> Надеюсь ты не из мягкотелых, как говорят
+<ce> все вокруг. Надеюсь эти люди переменят
+<ce> свое мнение.
+
+RumorsDuringQuest:  [1005]
+<ce> Слыхали про бедного глупца, который
+<ce> нашел скорпиона в своем доме? Он
+<ce> напился до чертиков.
+
+RumorsPostfailure:  [1006]
+<ce> Какой-то пьяный дурень вломился в свой
+<ce> дом и был убить гигантским скорпионом.
+<ce> Похоже, что Гильдия Бойцов не стала
+<ce> выполнять свою работу.
+
+RumorsPostsuccess:  [1007]
+<ce> В Гильдии Бойцов отличные ребята.
+<ce> Они убили большого скорпиона, которого
+<ce> нашли в чьем-то доме.
+
+QuestorPostsuccess:  [1008]
+<ce> Хорошая работа с этим скорпионом.
+<ce> С такими успехами тебя скоро можно
+<ce> будет принять в гильдию.
+
+QuestorPostfailure:  [1009]
+<ce> Все, что я просил - убить большого
+<ce> скорпиона. Ты безнадежен, %ra.
+
+QuestLogEntry:  [1010]
+%qdt:
+<ce> Гильдия Бойцов из ___qgiver_
+<ce> попросила меня убить гигантского
+<ce> скорпиона, который обосновался в
+<ce> _house_. Работу нужно выполнить сегодня.
+
+Message:  1011
+<ce> _monster_ мертв.
+
+
+
+QBN:
+
+Person _qgiver_ group Questor
+
+Place _house_ local random
+
+Clock _2dung_ 1.00:00 0 flag 1 range 0 1
+
+Foe _monster_ is Giant_scorpion
+
+--	Quest start-up:
+	start timer _2dung_
+	reveal _house_
+	log 1010 step 0
+	place foe _monster_ at _house_
+	create npc at _house_
+
+_2dung_ task:
+	end quest
+
+_S.01_ task:
+	killed 1 _monster_ saying 1011
+
+_S.02_ task:
+	when _qgclicked_ and _S.01_
+	give pc nothing
+	end quest
+
+_qgclicked_ task:
+               clicked npc _qgiver_
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.01_
+	clear _qgclicked_ _clearclick_

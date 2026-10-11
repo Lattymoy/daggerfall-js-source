@@ -1,0 +1,239 @@
+-- Quest: C:\QUESTS\WORKING\S0000012.Qbn.
+-- Main story quest.
+-- QuestId: 12
+Messages: 22
+Quest: S0000012
+DisplayName: Курьер императора
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Приветствую, %pcn. Я много
+<ce> слышала о вас. А сейчас вы пришли ко мне
+<ce> с очень интересной историей одного обмана.
+<ce> Горничная Киндасса сказала, что Аубк-и
+<ce> вскрыла письмо императора, предназначенное
+<ce> для меня. Могу предположить, %pcf,
+<ce> что это письмо никогда не попадет ко мне.
+<ce>
+<ce> Я хотела бы, чтобы вы узнали об этом
+<ce> побольше, %pcn. Это может быть опасно.
+<ce> Вмешательство в дела Аубк-и может взбесить
+<ce> Готрида, мне ли не знать своего сына.
+<ce> Согласны ли вы на это?
+
+RefuseQuest:  [1001]
+<ce> Аубк-и должно быть круто обвела вас вокруг
+<ce> своего пальчика, %pcn. Надеюсь,
+<ce> вы выживете только благодаря ее патронажу.
+
+AcceptQuest:  [1002]
+<ce> Хорошо. У меня уже давно зародились подозрения
+<ce> о нелояльности Аубк-и к императору. Она дочь
+<ce> покойного короля Камерона, правившего всем
+<ce> Хаммерфелом из своей цитадели в Сентинеле.
+<ce>
+<ce> Мой муж, король Лизандус, да хранит его душу
+<ce> %god, умер в Крингаине, как и король Камерон.
+<ce> Тело Лизандуса не было найдено, поэтому ему
+<ce> возвели монумент в том месте, где вполне могла
+<ce> бы быть его настоящая усыпальница. Ох...я
+<ce> отошла от темы.
+<ce>
+<ce> _messenger_ используется императором в роли
+<ce> посыльного в Даггерфолле. %g бывает в разных
+<ce> местах региона, разнося послания. Кстати,
+<ce> _messenger_ член Рыцарей Дракона.
+<ce> Идите в __dispatcher_ в ___dispatcher_
+<ce> и спросите некто по имени _dispatcher_.
+<ce> %g может знать, где находится _messenger_.
+<ce> Попробуйте разобраться, почему письмо,
+<ce> адресованное мне, попало в руки Аубк-и.
+
+QuestComplete:  [1004]
+<ce> Ага! Теперь понятно. Уриэль Септим посылал
+<ce> сообщение королеве Даггерфолла. В то время королевой
+<ce> была я. Но прошло время и мой дорогой Лизандус
+<ce> умер, а Аубк-и стала королевой. Мы должны узнать,
+<ce> что было в этом письме. Я никогда не доверяла
+<ce> Аубк-и.
+<ce>
+<ce> Вчера я получила письмо от принцессы Моргайи
+<ce> из Вэйреста, в котором она сообщила, что кое-что
+<ce> знает о том, что было в письме императора.
+<ce> Сейчас там правит семья, которой не нравится
+<ce> правление императора. Вернитесь ко мне, если
+<ce> найдете, к кому попало это письмо.
+<ce>
+<ce> Отлично, вы показали свою компетентность,
+<ce> %pcn. Примите _jewelry_ в знак моей
+<ce> благодарности. У меня нет никакого желания
+<ce> оставлять еще что-нибудь Аубк-и.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Минисера, мать-королева Готрида, попросила
+ меня расследовать, почему письмо ей от
+ императора попало в руки королевы Аубк-и.
+ Я могу узнать об этом из уст императорского
+ посланника _messenger_, о местонахождении
+ которого я могу спросить _dispatcher_ из
+ ___dispatcher_. Они оба являются членами
+ ордена Рыцари Дракона. Минисера также дала
+ мне кольцо с печаткой, которое заставить их
+ мне доверять.
+
+Message:  1011
+%qdt:
+ Кольцо Минисеры развязало язык доверенному
+ лицу. %g рассказал мне, что _messenger_
+ будет в __palace_ в _palace_
+ в течение =2palace_ дней.
+
+Message:  1015
+<ce> Письмо императора? Мне стыдно вспоминать об
+<ce> этом, %pcf. Письмо было похищено у меня
+<ce> на следующий же день, как я его получил. Я
+<ce> никогда не читал его. Я надеялся, что письмо
+<ce> еще вернется или император пошлет другое.
+<ce> Если ты найдешь это письмо, буду очень
+<ce> признателен, если ты позволишь мне лично
+<ce> вручить его Минисере.
+
+Message:  1016
+<ce> Тебе даже не стоило пытаться найти письмо
+<ce> императора, %pcn. А сейчас
+<ce> ты заплатишь за это своей жизнью.
+
+Message:  1017
+  Этот %ra должен быть убит. Засада на
+его пути в ___dispatcher_, что может
+быть лучше. Глупец намеревается задать
+пару вопросов находящемуся там _dispatcher_.
+<ce>
+--- А.
+
+Message:  1019
+Кольцо с печаткой украшено гербом Даггерфолла и личным гербом Лизандуса.
+
+Message:  1020
+<ce> Я _dispatcher_.
+<ce> В обычном случае я не стал бы рассказывать
+<ce> Не-Члену Рыцарей Дракона, как найти _messenger_.
+<ce> И все же я предан королеве Минисере. А еще я
+<ce> знаю, что _messenger_ обезглавил последнего
+<ce> пытавшегося устроить ему ловушку.
+<ce> %g будет в _palace_ в __palace_ в течение
+<ce> =2palace_. Попробуй поищи %g4 там.
+
+Message:  1021
+<ce> Хо! Тебя должно быть предупреждали, что я
+<ce> рыцарь Дракона на службе у императора. Если
+<ce> это попытка поймать меня в ловушку, то ты
+<ce> можешь пожалеть об этом.
+<ce>
+<ce> Хммм. Да, я _dispatcher_. Это кольцо убедило
+<ce> меня, что ты действительно на службе у Минисеры.
+<ce> Некоторое время назад я доставил письмо
+<ce> императора, адресованное королеве Даггерфолла.
+<ce> А если я не ошибаюсь, Аубк-и, а не Минисера,
+<ce> является королевой Даггерфолла. Скажи Минисере,
+<ce> что я очень серьезно отношусь к своим обязанностям.
+<ce> Я еще ни разу не доставил письмо не по тому
+<ce> адресу. Королева Аубк-и дала мне _jewelry_
+<ce> в знак благодарности. Покажи это Минисере,
+<ce> пусть она поймет, что я преданный слуга и
+<ce> верен своему Ордену.
+
+
+
+QBN:
+Item signetRing ring anyInfo 1019
+Item letter47 letter used 1017
+Item _jewelry_ trinket
+
+Person _Mynisera_ face 96 named Mynisera atHome
+Person _messenger_ face 1 faction The_Knights_of_the_Dragon remote
+Person _dispatcher_ faction The_Knights_of_the_Dragon remote
+Person _aubki_ named Queen_Aubk-i atHome
+
+Place _location_ remote random
+Place _palace_ remote palace
+
+Clock _2palace_ 00:00 0 flag 1 range 0 2
+Clock _S.07_ 2.00:00 0 flag 1 range 0 1
+
+Foe _F.00_ is Nightblade
+
+--	Quest start-up:
+	dialog link for item signetRing
+	add _Mynisera_ as questor
+
+_S.00_ task:
+	clicked npc _Mynisera_
+	prompt QuestorOffer yes _yes_ no _no_
+	add _aubki_ as questor
+
+_yes_ task:
+	add dialog for item signetRing
+	log 1010 step 0
+	get item signetRing
+	say AcceptQuest
+	create npc at _location_
+	place npc _dispatcher_ at _location_
+
+_no_ task:
+	say RefuseQuest
+	end quest
+
+_S.03_ task:
+	clicked npc _dispatcher_
+	start timer _2palace_
+	log 1011 step 1
+	say 1020
+
+_2palace_ task:
+	start timer _S.07_
+	place npc _messenger_ at _palace_
+
+_S.05_ task:
+	toting signetRing and _messenger_ clicked
+	stop timer _S.07_
+	get item _jewelry_
+	get item signetRing
+	say 1021
+
+variable _S.06_
+_S.07_ task:
+	drop _aubki_ as questor
+	drop _Mynisera_ as questor
+	end quest
+	destroy _messenger_
+
+_S.08_ task:
+	clicked npc _aubki_
+
+_preventspawn_ task:
+	when _S.08_ and not _yes_
+	clear _S.08_ _preventspawn_
+
+_S.09_ task:
+	injured _F.00_ saying 1016
+	give item letter47 to _F.00_
+
+_S.10_ task:
+	toting _jewelry_ and _Mynisera_ clicked
+	give pc _jewelry_
+	start quest 20 20
+	take signetRing from pc
+	change repute with _aubki_ by -10
+	change repute with _Mynisera_ by +20
+	drop _Mynisera_ as questor
+	drop _aubki_ as questor
+	end quest
+
+_S.11_ task:
+	when _yes_ and _S.08_
+	say 1015
+	change repute with _aubki_ by -10
+	send _F.00_ every 500 minutes 10 times with 50% success

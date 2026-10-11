@@ -1,0 +1,140 @@
+-- Quest: C:\QUESTS\WORKING\Q0C20Y02.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: witch
+-- Repute: 20
+-- QuestId: 2
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 26
+Quest: Q0C20Y02
+DisplayName: Дорогая покупка
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Мы знаем, ты предлагаешь дружбу
+<ce> ==questgiver_. Но чтобы помочь тебе,
+<ce> должно быть сплетено заклятие,
+<ce> заклятие, которое разрушает перед
+<ce> тем как создать. Принесешь ли ты
+<ce> нам _magicitem_ для нашего зелья?
+<ce> Оно прибавит тебе сил для уничтожения.
+
+RefuseQuest:  [1001]
+<ce> Говоришь, что тебе некогда, даже зная
+<ce> о важности задачи? Печально для
+<ce> ==questgiver_ и ... печально
+<ce> для тебя, %pcn.
+
+AcceptQuest:  [1002]
+<ce> _magicitem_, что нам надо
+<ce> спрятано у ==other_. Нам нужно это
+<ce> пока не прошло =1stparton_ дней.
+<ce> ==other_ можно найти в ___other_.
+<ce> Спроси _other_.
+<ce> Да благословят боги и духи твои
+<ce> ступни, %pcf.
+
+QuestFail:  [1003]
+<ce> _magicitem_, %pcf.
+<ce> Как можно забыть об этом?
+
+QuestComplete:  [1004]
+<ce> Ага, вот _magicitem_, то что нам
+<ce> надо для нашего заклятия. Быстрее,
+<ce> сестры, разрежьте это и бросьте в
+<ce> варево в закрытом котле. Вот, тут у
+<ce> нас есть для тебя _reward_,
+<ce> %pcn, в благодарность
+<ce> за исполнительность и доблесть.
+
+RumorsDuringQuest:  [1005]
+Помните время, когда ведьмы превратили нашего старого правителя %t в улитку?
+   <--->
+Хуже встречи с ==questgiver_ может быть только ввязывание в их дела.
+
+RumorsPostfailure:  [1006]
+Последней ночью я слышал вой, доносящийся из леса. Говорю вам, эти ведьмы разгневаны.
+   <--->
+Чувствуете, какую вонь несет с собой ветер? Это значит, что ==questgiver_ в гневе.
+
+RumorsPostsuccess:  [1007]
+Говорят ==questgiver_ празднуют завершение своих делишек.
+   <--->
+Эту вонь в воздухе можно резать ножом. Благословение от счастливых ведьм.
+
+QuestorPostsuccess:  [1008]
+Тебе нравится _reward_, %pcf? Думаю это тебе подходит.
+
+QuestorPostfailure:  [1009]
+<ce> Как можно было забыть про _magicitem_?
+<ce> %oth, уже слишком поздно. А
+<ce> ==questgiver_ еще и разочарованы,
+<ce> %pcf. Все мы разочарованы.
+
+QuestLogEntry:  [1010]
+<ce> Ты хочешь _magicitem_?
+<ce> Это твое за тысячу.
+<ce> Очень хорошо, забирай.
+
+Message:  1011
+Она очень умная женщина из ==questgiver_.
+   <--->
+Она женщина, которая связана с ==questgiver_.
+
+Message:  1020
+<ce> Я не собираюсь отдавать
+<ce> _magicitem_ за сумму
+<ce> меньшую 1000 золотых.
+<ce> Я так хочу только потому, что
+<ce> это сделано для ==questgiver_.
+
+Message:  1025
+%qdt:
+ _questgiver_ из
+ ==questgiver_ послала меня
+ забрать _magicitem_,
+ спрятанную в ==other_,
+ =other_ по имени _other_
+ в ___other_. У меня
+ =1stparton_ дней, чтобы найти
+ _magicitem_ и вернуться в
+ ___questgiver_.
+
+
+
+QBN:
+Item _reward_ gem
+Item _magicitem_ magic_item
+
+Person _questgiver_ face 112 group Questor anyInfo 1011
+Person _other_ factiontype Knightly_Guard remote
+
+Clock _1stparton_ 00:00 0 flag 17 range 1 4
+
+
+--	Quest start-up:
+	start timer _1stparton_
+	log 1025 step 0
+	create npc _other_
+
+_pcgetsgold_ task:
+	toting _magicitem_ and _questgiver_ clicked
+	give pc _reward_
+	end quest
+
+_pchasitem_ task:
+	clicked _other_ and at least 1000 gold otherwise do _S.07_
+	get item _magicitem_
+	say 1010
+
+variable _npcclicked_
+variable _qgclicked_
+_1stparton_ task:
+	make _magicitem_ permanent
+	end quest
+
+variable _2ndparton_
+variable _queston_
+_S.07_ task:
+	say 1020

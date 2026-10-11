@@ -1,0 +1,248 @@
+-- Quest: C:\QUESTS\WORKING\S0000009.Qbn.
+-- Main story quest.
+-- QuestId: 9
+Messages: 22
+Quest: S0000009
+DisplayName: Предательство Элизейн
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Вы выглядите даже более шикарно, чем
+<ce> отзывался о Вас лорд Вудборн. Люблю
+<ce> поговорить с человеком действия!
+<ce> Я знаю, что вы ищете некий предмет,
+<ce> %pcf. Тотемный столб или что-то вроде
+<ce> того? Есть у меня один знакомый,
+<ce> весьма интересная личность - =contact_.
+<ce> У него есть кое-что, что может Вам
+<ce> помочь. Если Вы сопроводите мою
+<ce> кузину _foil_ к _contact_, то
+<ce> получите это. Согласитесь ли Вы
+<ce> оказать мне эту небольшую услугу?
+
+RefuseQuest:  [1001]
+<ce> Нет? Как это ужасно! Моя бедная кузина
+<ce> будет очень огорчена. Вы не так уж
+<ce> и отзывчивы, как говорил лорд Вудборн.
+
+AcceptQuest:  [1002]
+<ce> Восхитительно! Это будет отличное
+<ce> приключение. _foil_ просто обожает
+<ce> путешествовать и едет провести какое-
+<ce> -то время с _contact_. Отправляйтесь
+<ce> в ___contact_, ____contact_,
+<ce> в местечко с названием __contact_.
+<ce> %g заплатит вам =reward_ золотых за
+<ce> сопровождение %g4 _foil_. Вы наверное
+<ce> тоже обожаете опасные миссии?
+
+QuestFail:  [1003]
+<ce> Мне не о чем с вами разговаривать.
+
+QuestComplete:  [1004]
+<ce> %pcf! Каким образом...я хочу сказать,
+<ce> что рада видеть вас. _foil_ тоже.
+<ce> Вот возьмите ваше золото. Было очень
+<ce> интересно поговрить с вами. Нам пора!
+
+RumorsDuringQuest:  [1005]
+Некоторое время назад тут была группа темных личностей, интересовавшихся наемником-%ra.
+   <--->
+Принцесса Элизейн провела некоторе время в Вэйрестских пустошах. Так говорят.
+
+RumorsPostfailure:  [1006]
+Слыхали про бандитов, устроивших засаду этому %ra? Чудной бизнес, я думаю.
+   <--->
+Те парни, устроившие засаду этому %ra не из здешних мест. Наемные убийцы.
+
+RumorsPostsuccess:  [1007]
+Слыхал, что один незнакомец нанял ассассинов убить одного наемника-%ra.
+   <--->
+_contact_ был очень безумен, насколько это может быть. Наверное он будет рад увидеть %g4 кузину.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Принцесса Элизейн попросила меня сопроводить
+ ее кузину _foil_ в ___contact_, ____contact_
+ к _contact_. %g заплатит =reward_ и даст
+ информацию относительно Тотема.
+
+Message:  1011
+<ce> Внезапно _foil_ убегает прочь, %g4
+<ce> бесшумные шаги беззвучно растворяются
+<ce> в тенях.
+
+Message:  1012
+<ce> %pcf, это не моя вина!
+<ce> Меня наняли подставить вас! Вот, возьмите
+<ce> _reward_ золотых. Один парень в сером плаще
+<ce> хорошо заплатил мне, чтобы я пошла с вами.
+<ce> Знаете, я только сейчас вспомнила. У меня
+<ce> совершенно случайно есть лишние деньги:
+<ce> _bribe_ золотых. Почему бы вам не взять их,
+<ce> а я просто уйду.
+
+Message:  1013
+Убей %pcn прежде, чем он узнает.
+Используй любой предлог.
+<ce>
+-- В.
+
+Message:  1015
+<ce> Уличный оборванец подбежал с
+<ce> воплями: "Сообщение для %pcn от
+<ce> человека в сером". Парнишка убежал
+<ce> прежде, чем чем вы успели его поймать,
+<ce> умудрившись оставить вам записку.
+
+Message:  1016
+%pcn,
+<ce>
+  Мой добрый друг лорд Вудборн сказал,
+что вы герой, которому можно доверять.
+Буду очень признательна, если вы найдете
+время для разговора. Может быть вы
+выполните для меня кое-что. Я щедро
+отблагодарю.
+<ce>
+Принцесса Элизейн
+замок Вэйрест
+
+Message:  1018
+%pcf,
+<ce>
+  Если не хочешь умереть как Лизандус,
+прекрати свое расследование немедленно.
+Ты действительно хочешь рисковать
+своей жизнью ради мертвеца?
+За тобой следят.
+
+Message:  1019
+%pcn нужно уничтожить. Без вариантов.
+<ce>
+-- В.
+
+Message:  1020
+<ce> _foil_ говорит: "Кто были эти
+<ce> варвары? Они почти достали вас!
+<ce> Может быть вам вообще стоит забыть
+<ce> про призрак Лизандуса?"
+
+Message:  1021
+<ce> _foil_ говорит: "Вы очень сильны.
+<ce> Сильнее, чем Элизейн про вас
+<ce> говорила".
+
+
+
+QBN:
+Item _note_ letter used 1013
+Item _reward_ gold
+Item _letter45_ letter used 1018
+Item _letter46_ letter used 1016
+Item _bribe_ gold
+
+Person _elysana_ named Princess_Elysana atHome
+Person _foil_ face 115 faction The_Prostitutes female remote
+Person _contact_ group Local_3.3 remote
+Person Woodborne face 1 named Lord_Woodborne
+
+Clock _giveLetter_ 7.00:00 14.00:00
+Clock _S.14_ 2.00:00 0 flag 1 range 0 1
+
+Foe _barbarians_ is Barbarian
+Foe _knights_ is Knight
+
+--	Quest start-up:
+	start timer _giveLetter_
+	give pc _letter45_ notify 1015
+	add _elysana_ as questor
+	start task _spawnBarbarians_
+	start task _spawnKnights_
+
+_npcclicked_ task:
+	clicked npc _contact_
+	start timer _S.14_
+	hide npc _contact_
+
+_S.01_ task:
+	when not _foilGone_ and _npcclicked_
+	give pc _reward_
+	drop _foil_ face
+
+_S.02_ task:
+	when _foilGone_ and _npcclicked_
+	get item _reward_
+	get item _bribe_
+	say 1012
+	drop _foil_ face
+
+_yes_ task:
+	log 1010 step 0
+	say AcceptQuest
+	add _foil_ face
+	change repute with _elysana_ by -25
+	unset _clickedElysana_
+
+_no_ task:
+	say RefuseQuest
+	end quest
+
+_S.05_ task:
+	injured _barbarians_
+	give item _note_ to _barbarians_
+
+_S.06_ task:
+	injured _knights_
+	give item _letter45_ to _knights_
+
+_S.07_ task:
+	killed 3 _barbarians_
+	unset _spawnBarbarians_
+
+_slainBarbarians_ task:
+	when _S.07_ and _yes_
+	say 1020
+
+_spawnBarbarians_ task:
+	send _barbarians_ every 70 minutes 10 times with 10% success
+
+_S.08_ task:
+	killed 2 _knights_
+	unset _spawnKnights_
+
+_slainKnights_ task:
+	when _S.08_ and _yes_
+	say 1021
+
+_spawnKnights_ task:
+	send _knights_ every 91 minutes 10 times with 10% success
+
+_foilGone_ task:
+	when _slainKnights_ and _slainBarbarians_ and not _daytime_
+	say 1011
+	drop _foil_ face
+
+_daytime_ task:
+	daily from 06:00 to 18:00
+
+_giveLetter_ task:
+	give pc _letter46_ silently
+
+_clickedElysana_ task:
+	clicked npc _elysana_
+
+_S.13_ task:
+	when _clickedElysana_ and _giveLetter_
+	prompt QuestorOffer yes _yes_ no _no_
+
+_clearclick_ task:
+	when _clickedElysana_ and not _giveLetter_
+	clear _clickedElysana_ _clearclick_
+
+_S.14_ task:
+	end quest
+
+FinishedMantellanCrux _S.15_
+	end quest

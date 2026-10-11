@@ -1,0 +1,227 @@
+-- Edited for Daggerfall Unity by Jay_H
+Quest: K0C00Y03
+DisplayName: Контрабанда
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> У вас не будет проблем, если немного
+<ce> поработаете контрабандистом на меня,
+<ce> %pcf? Риск не исключен,
+<ce> но и награда стоит того. Что скажете
+<ce> насчет платы в _gold_ золотых?
+   <--->
+<ce> Контрабанда - отвратительное слово, не
+<ce> так ли? Должен сказать, что мне нужно
+<ce> доставить небольшую партию легального
+<ce> товара в место, где часть этой партии
+<ce> разрешена, а часть не совсем законна.
+<ce> Вам интересно?
+
+RefuseQuest:  [1001]
+<ce> Мы никогда не виделись. Помните
+<ce> это, %pcf.
+   <--->
+<ce> Раз вы отказываетесь, я больше
+<ce> не хочу видеть вас.
+
+AcceptQuest:  [1002]
+<ce> Великолепно. Вот план, %pcf.
+<ce> У меня есть небольше дело по вывозу
+<ce> _item_ в __conhouse_,
+<ce> но мои обычные агенты были пойманы стражей
+<ce> %t'а. Если вы сможете доставить
+<ce> _item_ в __conhouse_
+<ce> в место под названием _conhouse_,
+<ce> мой клиент _contact_ даст вам
+<ce> _gold_ золотых, как я и обещал.
+<ce> Не заговаривайте с законниками, пока не
+<ce> избавитесь от _item_ и не опоздайте
+<ce> в _conhouse_, у вас =queston_ дней,
+<ce> иначе я положу всю свою жизнь, чтобы
+<ce> разрушить вашу репутацию в лице
+<ce> правительства, преступного мира и еще
+<ce> кое-кого. Но я уверен, что вы меня не
+<ce> подведете. Успехов, дитя мое.
+<ce> Доставьте _qgiver_ радость.
+
+QuestComplete:  [1004]
+<ce> Я чувствовал себя, как на иголках,
+<ce> ожидая вас, %pcf. Ага,
+<ce> _item_. Хорошее качество.
+<ce> Вот возьмите _gold_ золотых.
+<ce> Приятно иметь дело с вами и
+<ce> с _qgiver_.
+
+RumorsDuringQuest:  [1005]
+Контрабанда _item_ между ___qgiver_ и __conhouse_ позорит весь регион %reg.
+   <--->
+%t принял меры к прекращению контрабанды _item_.
+
+RumorsPostsuccess:  [1007]
+Похоже контрабанда _item_ никогда не прекратится в %reg. Очень плохо.
+   <--->
+%rt %rn назначил _qgiver_ специальным наблюдателем в войне против контрабанды.
+
+QuestorPostsuccess:  [1008]
+_contact_ сказал мне, что вы справились вовремя. Благодарю вас.
+
+QuestorPostfailure:  [1009]
+<ce> Может вы и предали меня, а может быть
+<ce> просто плохой контрабандист. В любом
+<ce> случае нам не о чем больше говорить.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ из
+ ___qgiver_ дал мне партию
+ _item_. чтобы тайно провезти в __conhouse_.
+ Имя связного _contact_ и %g будет
+ ждать в _conhouse_.
+ Естественно мне надо избегать контактов
+ с городской стражей в этом путешествии.
+ У меня =queston_ дней,
+ чтобы добраться до места.
+
+Message:  1011
+Дорогой друг %pcf,
+<ce>
+  Вас подставили. _contact_
+не в _conhouse_. Там вас ожидает
+засада в лице рыцаря по имени =guard_.
+Если вы хотите доставить _item_,
+несите это ко мне в __contact2_ в
+___contact2_.
+<ce>
+_contact2_
+<ce> ----
+
+Message:  1012
+<ce> Конверт лег вам в руки
+<ce> как-будто из ниоткуда.
+
+Message:  1013
+%qdt:
+ Мне пришло письмо от кого-то по имени
+ _contact2_, сказавшего, что
+ _conhouse_ это ловушка. Мне было
+ предложено отдать _item_ в руки
+ этого _contact2_ в таверне, что в
+ ___contact2_, __contact2_.
+
+Message:  1014
+<ce> А, вы получили мое письмо. Хорошие
+<ce> новости для вас. Сложилась весьма
+<ce> неприятная ситуация, а я не хочу,
+<ce> чтобы вы были вовлечены в эти дела.
+<ce> Я заберу _item_ в
+<ce> обмен на мои услуги по очищению
+<ce> вашей репутации после вмешательства
+<ce> вас в контрабандистские дела.
+<ce> Не стоит благодарностей.
+
+Message:  1015
+<ce> Погоди-ка минутку. Нам нужен не ты.
+<ce> Только _qgiver_ и _item_.
+<ce> Оставь это и сможешь уйти
+<ce> отсюда на своих двух, хорошо?
+   <--->
+<ce> Послушай, ничего личного. Просто отдай
+<ce> мне _item_ и я скажу моему
+<ce> боссу, что не видел тебя.
+<ce> Договорились?
+
+Message:  1016
+<ce> Сообразительный парниша.
+<ce> А теперь убирайся отсюда.
+
+Message:  1017
+<ce> _qgiver_ не обрадуется,
+<ce> если ты оставишь _item_ у себя,
+<ce> но срок доставки давно прошел.
+<ce> Попробуй теперь продай это
+<ce> кому-нибудь другому...
+
+
+
+QBN:
+Item _gold_ gold
+Item _item_ drug
+Item _letter_ letter used 1011
+
+Person _qgiver_ group Questor
+Person _contact_ face 1 group Innkeeper remote
+Person _contact2_ group Innkeeper remote
+
+Place _conhouse_ remote house2
+
+Clock _2letter_ 03:20 06:40
+Clock _queston_ 00:00 0 flag 1 range 2 5
+
+Foe _guard_ is Knight
+
+--	Quest start-up:
+	dialog link for person _contact_
+	start timer _queston_
+	log 1010 step 0
+	get item _item_
+	pick one of _whip_ _S.02_
+	legal repute -10
+	place npc _contact_ at _conhouse_
+--legal repute set to - and + 10 only. 100 for mere smuggling is ridiculous.
+
+variable _traveltime_
+_whip_ task:
+	pc at _conhouse_ set _S.04_
+	start timer _2letter_
+
+variable _S.02_
+variable _S.03_
+_S.04_ task:
+	hide npc _contact_
+	place foe _guard_ at _conhouse_
+
+_S.05_ task:
+	injured _guard_
+	prompt 1015 yes _deed_ no _no_
+
+_deed_ task:
+	take _item_ from pc
+	--classic would transfer the item from pc to guard. DFU requires a take item action.
+	give item _item_ to _guard_
+	say 1016
+	restrain foe _guard_
+
+_2letter_ task:
+	_letter_ used do _S.08_
+	give pc _letter_ notify 1012
+
+_S.08_ task:
+	log 1013 step 1
+
+_reward_ task:
+	toting _item_ and _contact_ clicked
+	give pc _gold_
+	legal repute +10
+	end quest
+
+_S.10_ task:
+	toting _item_ and _contact2_ clicked
+
+_S.11_ task:
+	when _S.10_ and _whip_
+	say 1014
+	legal repute +10
+	end quest
+
+_S.12_ task:
+	when _queston_ and _S.14_
+	say 1017
+	make _item_ permanent
+
+_queston_ task:
+	have _item_ set _S.14_
+	end quest
+
+variable _S.14_
+variable _no_

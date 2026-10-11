@@ -1,0 +1,129 @@
+-- Quest: C:\QUESTS\WORKING\R0C10Y06.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 10
+-- QuestId: 6
+Messages: 12
+Quest: R0C10Y06
+DisplayName: Реликвия
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> У меня есть предмет, который драгоценен для
+<ce> меня. Он передавался из поколения в поколение
+<ce> в моей семье. Зная это, небольшая орочья
+<ce> банда украла его и требует за него выкуп.
+<ce> Я не намерен вознаграждать их за этот
+<ce> произвол. С другой стороны, я заплачу
+<ce> весь выкуп,  _reward_
+<ce> золотых вам, если вы пойдете в их
+<ce> убежище и выкрадете _item_ обратно.
+<ce> По рукам?
+
+RefuseQuest:  [1001]
+<ce> %oth! Вы не будете делать этого
+<ce> для меня? Тогда я должен буду
+<ce> заплатить выкуп. Вы разочаровали меня,
+<ce> %pcf.
+
+AcceptQuest:  [1002]
+<ce> Хорошо. Мне дали понять, что
+<ce> убежище орков находится в старом
+<ce> ___itemdung_. Там же,
+<ce> я полагаю, они и хранят мой _item_
+<ce> Если вы не вернетесь через =1stparton_
+<ce> дней, я буду полагать, что вы не нашли
+<ce> _item_, и отдам вашу награду
+<ce> оркам в качестве выкупа. Не подведите
+<ce> меня в этом, %pcf. Удачи.
+
+QuestFail:  [1003]
+<ce> Не хочу разговаривать, %pcf.
+<ce> Я хочу мой _item_. Идите и достаньте его.
+
+QuestComplete:  [1004]
+<ce> Однако я знал, что вы найдете мой _item_,
+<ce> %pcf. Я с радостью дам вам
+<ce> золото, которое приготовил для выкупа за
+<ce> _item_. Я ничем не смогу вас
+<ce> по-настоящему отблагодарить.
+
+RumorsDuringQuest:  [1005]
+Банда орков поселилась в ___itemdung_.
+   <--->
+Эти орки в ___itemdung_ считают, что разбогатеют за счет  _questgiver_.
+
+RumorsPostfailure:  [1006]
+Орки из ___itemdung_ убрались оттуда после того, как _questgiver_ расплатился с ними.
+   <--->
+_questgiver_, очевидно, в бешенстве к некоему %ra авантюристу.
+
+RumorsPostsuccess:  [1007]
+<ce> Банда орков жалуется, что
+<ce> _questgiver_ украл их реликвию.
+   <--->
+<ce> ___itemdung_ - очевидно, не такое уж безопасное
+<ce> место для укрытия, как они, возможно, думали.
+
+QuestorPostsuccess:  [1008]
+<ce> Ну здравствуй снова, мой юный друг. Я не забыл
+<ce> о деле с орками, как ты знаешь.
+   <--->
+Надеюсь, вы еще не потратили все мое вознаграждение, мой юный друг.
+
+QuestorPostfailure:  [1009]
+<ce> Вали в Обливион, %pcf.
+<ce> Я не забыл о твоем провале
+<ce> того моего поручения.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _questgiver_ из
+ __questgiver_ в ___questgiver_
+ послал меня в ___itemdung_, чтобы
+ я нашел старое фамильное сокровище _item_,
+ украденный бандой орков. Если я не верну
+ его обратно в руки _questgiver_
+ до истечения =1stparton_ дней, %g заплатит
+ выкуп, и я лишусь моей награды.
+
+Message:  1011
+Вы нашли _item_.
+
+
+
+QBN:
+Item _item_ trinket
+Item _reward_ gold
+
+Person _questgiver_ face 112 group Questor
+
+Place _itemdung_ remote dungeon1
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+
+--	Quest start-up:
+	place item _item_ at _itemdung_
+	start timer _1stparton_
+	reveal _itemdung_
+	log 1010 step 0
+
+_pcgetsgold_ task:
+	toting _item_ and _questgiver_ clicked
+	give pc _reward_
+	end quest
+
+variable _queston_
+_pchasitem_ task:
+	clicked item _item_ say 1011
+
+_1stparton_ task:
+	make _item_ permanent
+	change repute with _questgiver_ by -5
+	end quest
+
+variable _qgclicked_
+variable _clearclick_

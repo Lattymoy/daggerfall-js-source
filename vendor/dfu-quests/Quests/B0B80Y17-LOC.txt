@@ -1,0 +1,122 @@
+-- Quest: C:\QUESTS\WORKING\B0B80Y17.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: knight
+-- Repute: 80
+-- QuestId: 17
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 12
+Quest: B0B80Y17
+DisplayName: Армия нежити
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Я _qgiver_ из ==qgiver_.
+<ce> У меня есть для вас весьма опасное
+<ce> поручение, %pcn. Вы один
+<ce> из тех немногих, которые могут
+<ce> выполнить это задание. Один лич
+<ce> поднимает армию мертвецов. Нам
+<ce> нужен кто-то, кто сможет
+<ce> остановить его.
+
+RefuseQuest:  [1001]
+<ce> Понимаю, %pcn.
+<ce> Это может быть очень опасным для
+<ce> вас. Думаю, найдется еще один или
+<ce> два героя, которые смогут взяться
+<ce> за это дело. Пойду, спрошу их.
+
+AcceptQuest:  [1002]
+<ce> Вы очень храбры. Лич сделал
+<ce> ___dungeon_ своим гнездилищем.
+<ce> Идите туда и уничтожьте противо-
+<ce> естественное создание. Через
+<ce> =2dung_ дней мы пошлем кого-нибудь
+<ce> еще, если вы не вернетесь.
+
+QuestComplete:  [1004]
+<ce> Да здравствует герой, %pcn!
+<ce> Отлично! Ваше имя будет
+<ce> записано в скрижалях.
+
+RumorsDuringQuest:  [1005]
+Великий лич из ___dungeon_ опять проснулся.
+
+RumorsPostfailure:  [1006]
+Я слышал, лич из ___dungeon_ пересек весь залив.
+   <--->
+Лич собирает силы по всему региону %reg.
+
+RumorsPostsuccess:  [1007]
+Благодарение %god ордену ==qgiver_. Они спасли всех нас.
+   <--->
+%ra из ==qgiver_ уничтожил лича из ___dungeon_.
+
+QuestorPostsuccess:  [1008]
+Буду рад оказать вам посильную помощь, герой.
+
+QuestorPostfailure:  [1009]
+После неудачи с ___dungeon_ вы посмели явиться сюда?
+   <--->
+Я верил вам, что вы убили лича. Как вы думаете, какое сейчас у меня настроение?!
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ из
+ ==qgiver_ в ___qgiver_
+ обязал меня долгом уничтожить
+ лича из ___dungeon_. У меня
+ =2dung_ дней, чтобы завершить работу.
+
+Message:  1011
+<ce> Лич мертв. Без его магической
+<ce> поддержки армия мертвецов
+<ce> вернется в свои могилы.
+
+
+
+QBN:
+
+Person _qgiver_ group Questor
+Person _local_ face 1 group Resident2 local
+
+Place _dungeon_ remote dungeon0
+
+Clock _2dung_ 00:00 0 flag 17 range 0 2
+
+Foe _F.00_ is Ancient_lich
+Foe _F.01_ is Lich
+
+--	Quest start-up:
+	start timer _2dung_
+	reveal _dungeon_
+	log 1010 step 0
+	pick one of _old_ _S.04_ _S.04_
+
+_2dung_ task:
+	end quest
+
+_S.01_ task:
+	killed 1 _F.00_ saying 1011
+	killed 1 _F.01_ saying 1011
+
+_S.02_ task:
+	clicked npc _qgiver_
+
+_success_ task:
+	when _S.02_ and _S.01_
+	give pc nothing
+	change repute with _local_ by +4
+	end quest
+
+_clearclick_ task:
+	when _S.02_ and not _S.01_
+	clear _S.02_ _clearclick_
+
+_S.04_ task:
+	place foe _F.01_ at _dungeon_
+
+_old_ task:
+	place foe _F.00_ at _dungeon_

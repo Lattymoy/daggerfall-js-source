@@ -1,0 +1,209 @@
+-- Quest: C:\QUESTS\WORKING\U0C00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: Boethiah
+-- Repute: 0
+-- QuestId: 0
+Messages: 43
+Quest: U0C00Y00
+DisplayName: Задание Боэтии
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Сила, ха! Что может презренный пресмыкающийся %ra
+<ce> знать про настоящую силу? Ты имеешь ввиду,
+<ce> что хочешь иметь возможность надрать задницу
+<ce> окружающим тебя смертным, не так ли? Ну что ж,
+<ce> это можно устроить. Хочу демонстрации твоего
+<ce> характера, достаточного, чтобы использовать то, что
+<ce> я тебе дам. Убьешь ли ты кое-кого за это?
+
+RefuseQuest:  [1001]
+<ce> Ффуу, меня тошнит от тебя. Не смей
+<ce> больше призывать меня, %pcf,
+<ce> пока не подрастешь или не научишься
+<ce> драться.
+
+AcceptQuest:  [1002]
+<ce> Итак, в любом случае мы движемся в верном
+<ce> направлении. Спеллсворд, которого надо убить,
+<ce> =monster_, безупречно очаровательная и
+<ce> милосердная задница, которая чертовски мне
+<ce> надоела за прошедшие годы. Ты найдешь %g4
+<ce> в %g4 крепости в местечке под названием
+<ce> ___mondung_. Только не думай, что =monster_ -
+<ce> неженка и совсем не знает с какой стороны брать
+<ce> меч. Хочу, чтобы твоя работа удалась, а я
+<ce> тебе дам за это неплохой подарок. После убийства
+<ce> встреться с _qgfriend_, мои агентом в
+<ce> ___qgfriend_. Просто поищи =qgfriend_,
+<ce> околачивающегося в окрестностях __qgfriend_.
+<ce> И не заставляй %g4 ждать. Я скажу, чтобы тебя
+<ce> ждали в течение =1stparton_ дней. Это более чем
+<ce> достаточно. Я буду наблюдать за всем этим.
+
+QuestFail:  [1003]
+<ce> Двигай дальше, %ra. Нам
+<ce> не о чем говорить.
+
+QuestComplete:  [1004]
+<ce> Так, ты %pcn. Хмм, а ты
+<ce> не так хил, как говорила Боэтия. Прими
+<ce> это как комплимент. Вот, возьми это.
+<ce> Боэтия передала для тебя _artifact_.
+<ce> Она думает, что это поможет тебе в поисках
+<ce> силы и власти. Она заинтересована в тебе,
+<ce> это без сомнения. Я видел ее улыбку, когда
+<ce> она произносила слово "хилый".
+
+RumorsDuringQuest:  [1005]
+В следующий раз, когда будут выборы мэра, буду голосовать за =monster_.
+   <--->
+Что за чудесный, добрый и великодушный человек этот =monster_. К чести региона %reg.
+
+RumorsPostfailure:  [1006]
+Кто во всем Тамриэле отважился покуситься на жизнь =monster_? Благодарение богу %god, %g в порядке.
+   <--->
+=monster_ подвергся нападению ассассина. Счастье, что убийца был неопытен.
+
+RumorsPostsuccess:  [1007]
+Какая трагедия для всего региона %reg. Что за монстр убил =monster_?
+   <--->
+%oth, не могу поверить, что =monster_ мертв. Какая трагедия, ужасная ошибка.
+
+Message:  1011
+_qgfriend_, так зовут одного неразговорчивого типа =qgfriend_ в __qgfriend_.
+   <--->
+это имя того одного задиры в __qgfriend_, в направлении на %di.
+
+Message:  1012
+_qgfriend_, один из агентов Боэтии в Тамриэле.
+   <--->
+_qgfriend_, душевный душегуб, работающий на Боэтию.
+
+Message:  1013
+Боэтия, даэдра, принцесса жестокости и пыток. Непростая леди.
+   <--->
+Она принцесса Обливиона, одна из принцев даэдра и самая настоящая убийца.
+
+Message:  1014
+<ce> _artifact_ защищает владельца от различных повреждений.
+Огонь и Высасывание Жизни, две важных вещи.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Боэтия заключила со мной контракт. Нужно убить
+ спеллсворда по имени =monster_, который живет
+ в своей крепости в местечке под названием ___mondung_,
+ в обмен на артефакт _artifact_. После убийства
+ надо встретиться с агентом Боэтии _qgfriend_ в
+ __qgfriend_ из ___qgfriend_ в течение =1stparton_ дней.
+
+Message:  1030
+<ce> Вы закончили свою часть сделки с
+<ce> Боэтией -- =monster_ мертв.
+
+Message:  1040
+=monster_:
+<ce>
+  Убирайся немедленно из ___mondung_!
+Боэтия сказала мне, что тебе нужно
+выполнить свою часть контракта. Мы можем
+подискутировать о твоем неблагоразумии
+в другое время, но сейчас тебе надо идти
+в место назначенной встречи. Когда я
+закончу с договоренностью по выдворению тебя
+из региона %reg, то сам встречусь с тобой.
+<ce>
+Береги себя.
+<ce>
+    _mfriend_
+    ___mfriend_
+<ce> ----
+
+Message:  1041
+<ce> Откуда ты здесь ... %oth!
+<ce> Я знаю, что =monster_ скоро меня
+<ce> убьет. Слушай, после моего письма
+<ce> моя жизнь теперь ничего не стоит
+<ce> и я лишился поддержки и защиты.
+<ce> Ты найдешь %g4 в ___hideout_.
+<ce> Я умываю руки...
+
+Message:  1042
+%qdt:
+ =monster_ ускользнул от меня
+ в ___mondung_, но мне стало известно,
+ что %g теперь прячется в
+ ___hideout_.
+ Второй раз %g не уйдет от меня.
+
+
+
+QBN:
+Item _artifact_ artifact Ebony_Mail anyInfo 1014
+Item _letter_ letter used 1040
+
+Person _questgiver_ face 112 named Boethiah anyInfo 1013
+Person _qgfriend_ group Librarian anyInfo 1011 rumors 1012
+Person _mfriend_ group Local_4.0 remote
+
+Place _mondung_ remote dungeon2
+Place _hideout_ remote dungeon6
+
+Clock _1stparton_ 00:00 0 flag 1 range 2 5
+Clock _escapetime_ 00:00 0 flag 1 range 2 3
+
+Foe _monster_ is Spellsword
+Foe _monster1_ is Spellsword
+
+--	Quest start-up:
+	dialog link for person _mfriend_
+	start timer _escapetime_
+	reveal _mondung_
+	log 1010 step 0
+	_letter_ used do _readletter_
+	place foe _monster_ at _mondung_
+
+_1stparton_ task:
+	end quest
+
+variable _2ndparton_
+_pcgetsgold_ task:
+	when _npcclicked_ and _mondead_
+	give pc _artifact_
+	end quest
+--removed unnecessary delay
+
+_mondead_ task:
+	killed 1 _monster_
+	killed 1 _monster1_
+	say 1030
+
+_npcclicked_ task:
+	clicked npc _qgfriend_
+
+_clearclick_ task:
+	when _npcclicked_ and not _mondead_
+	say 1003
+	clear _npcclicked_ _clearclick_
+
+_escapetime_ task:
+	start timer _1stparton_
+
+_S.08_ task:
+	when _escapetime_ and not _mondead_
+	place item _letter_ at _mondung_
+	remove foe _monster_
+	place foe _monster1_ at _hideout_
+--added monster1 due to duplicate monster issue
+
+_S.09_ task:
+	clicked npc _mfriend_
+	reveal _hideout_
+	log 1042 step 1
+	say 1041
+
+_readletter_ task:
+	add dialog for person _mfriend_

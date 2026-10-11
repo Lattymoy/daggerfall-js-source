@@ -1,0 +1,143 @@
+-- Quest: C:\QUESTS\WORKING\Q0C00Y07.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: witch
+-- Repute: 0
+-- QuestId: 7
+Messages: 14
+Quest: Q0C00Y07
+DisplayName: Ведьма в заточении
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Наша сестра _witch_
+<ce> была заключена в клетку. Нам нужен
+<ce> кто-то, кто разыщет ее.
+<ce> Ты хочешь помочь?
+
+RefuseQuest:  [1001]
+<ce> Твое сердце - кусок льда,
+<ce> %pcf. Это очень печально.
+
+AcceptQuest:  [1002]
+<ce> Если ты сделаешь это для нас, мы будем
+<ce> очень благодарны. Дай ей вот этот плащ
+<ce> для маскировки, когда найдешь ее
+<ce> в ___mondung_.
+<ce> Мы будем ждать вас обоих здесь в
+<ce> течение =queston_ дней, если не раньше.
+
+QuestComplete:  [1004]
+<ce> _witch_, мне очень видеть
+<ce> тебя в полном здравии.
+<ce> %pcf, сегодня ты заслужил
+<ce> уважение всех нас из ==qgiver_.
+
+RumorsDuringQuest:  [1005]
+После окончания допроса ведьмы _witch_ ее сожгут.
+   <--->
+Скоро, очень скоро ведьму сожгут или запытают до смерти.
+
+RumorsPostfailure:  [1006]
+Казнь _witch_ была непередаваемым зрелищем. Какая радость для некоторых семейств.
+   <--->
+_witch_ теперь просто пепел. Все ее заклятия не помогли ей.
+
+RumorsPostsuccess:  [1007]
+_witch_ сбежала. Говорят ==qgiver_ стоят за этим.
+   <--->
+_witch_ не приведут к правосудию. Если только не заключат по настоящему.
+
+QuestorPostsuccess:  [1008]
+_witch_ отлично себя чувствует, %pcf, если ты хочешь знать.
+
+QuestorPostfailure:  [1009]
+<ce> Наша сестра _witch_
+<ce> мертва, сожжена заживо. Быть может
+<ce> тебе и удалось бы спасти ее, а
+<ce> может быть и нет. Но здесь тебе пока
+<ce> не следует находиться. И может быть
+<ce> это надолго.
+
+QuestLogEntry:  [1010]
+%qdt:
+ ==qgiver_ послали
+ меня в ___mondung_, где
+ находится _witch_,
+ заключенная сестра ведьм.
+ Я дам ей _clothes_, чтобы
+ замаскировать ее и мы вернемся
+ к ==qgiver_ до исхода
+ =queston_ дней.
+
+Message:  1011
+<ce> ==qgiver_ послали тебя?
+<ce> Славься ==daedra_! Я
+<ce> одену _clothes_
+<ce> и мы выскользнем отсюда.
+
+Message:  1012
+<ce> "Это _witch_,
+<ce> заключенная! Стой! Ведьма!"
+   <--->
+<ce> "Никакой тюрьмы для тебя,
+<ce> _witch_! Приготовься
+<ce> к немедленной казни!"
+   <--->
+<ce> "Стоять! Ты
+<ce> _witch_!"
+
+Message:  1013
+<ce> "Думаю отсюда я сама доберусь
+<ce> до ==qgiver_" - _witch_
+<ce> благодарит тебя и уходит прочь.
+
+
+
+QBN:
+Item _clothes_ womens_robe
+
+Person _qgiver_ group Questor
+Person _witch_ face 1 faction The_Prostitutes female remote
+Person _daedra_ face 105 factiontype Daedra
+
+Place _mondung_ remote dungeon3
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+Foe _guard_ is Warrior
+
+--	Quest start-up:
+	dialog link for person _daedra_
+	start timer _queston_
+	reveal _mondung_
+	log 1010 step 0
+	get item _clothes_
+	place npc _witch_ at _mondung_
+
+_queston_ task:
+	end quest
+
+_S.01_ task:
+	toting _clothes_ and _witch_ clicked
+	create foe _guard_ every 2 minutes 30 times with 50% success msg 1012
+	hide npc _witch_
+	say 1011
+	add _witch_ face
+
+_qgclicked_ task:
+	clicked npc _qgiver_
+
+_S.03_ task:
+	when _qgclicked_ and not _S.01_
+	clear _qgclicked_ _S.03_
+
+_reward_ task:
+	when _qgclicked_ and _S.01_
+	give pc nothing
+	end quest
+
+_S.05_ task:
+	when _queston_ and _S.01_
+	say 1013

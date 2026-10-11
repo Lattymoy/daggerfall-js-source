@@ -1,0 +1,222 @@
+-- Quest: C:\QUESTS\WORKING\R0C30Y25.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 30
+-- QuestId: 25
+Messages: 36
+Quest: R0C30Y25
+DisplayName: Банда воров
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Мне нужен кто-то, кто сможет доставить одну
+<ce> вещицу моему знакомому в ___contact_.
+<ce> В обмен вы получите другую вещицу. Если вы
+<ce> принесете ее мне, буду рад заплатить вам
+<ce> _reward_ золотых.
+<ce> Согласны?
+
+RefuseQuest:  [1001]
+<ce> Нет? Очень жаль. Я ждал
+<ce> другого ответа.
+
+AcceptQuest:  [1002]
+<ce> Очень хорошо. Возьмите этот слиток золота
+<ce> и отнесите его одному =contact_
+<ce> по имени _contact_ в местечке под названием
+<ce> __contact_ в ___contact_.
+<ce> Вам нужно поторапливаться.
+<ce> _contact_ не из того сорта людей, что
+<ce> будут ждать ленивых посыльных.
+<ce> Очень хорошо, удачи вам, %pcf.
+<ce> Буду ждать вашего возвращения через =1stparton_ дней.
+
+QuestFail:  [1003]
+<ce> Пожалуйста, не беспокойте меня, пока
+<ce> не принесете мне то, что я жду.
+
+QuestComplete:  [1004]
+<ce> Великолепно, %pcf, вы вернулись с моей
+<ce> зачарованной вещицей _item2_ как и обещали.
+<ce> Я слыхал, что у вас были небольшие трудности
+<ce> по пути и уже начал беспокоиться, что вы
+<ce> потерялись. В знак моей признательности за
+<ce> отлично выполненную работу я добавлю
+<ce> магический предмет _item3_
+<ce> к обещанной сумме _reward_ золотых.
+<ce> Уверен, это вам пригодится в ближайшем будущем.
+<ce> Еще раз благодарю вас.
+
+RumorsDuringQuest:  [1005]
+Здесь был =contact_, спрашивавший, не видели ли мы здесь %ra.
+   <--->
+Некий =contact_ искал %ra с _item1_ некторое время назад.
+
+RumorsPostfailure:  [1006]
+Хмм, _questgiver_, говорят, очень недоволен каким-то %ra-наемником.
+   <--->
+_questgiver_ все еще сторонится наемников после того, как один из них подвел его.
+
+RumorsPostsuccess:  [1007]
+Говорят, _questgiver_ наконец-то получил то, что искал - _item2_.
+   <--->
+_questgiver_ воздавал молитвы какому-то %ra-наемнику.
+
+QuestorPostsuccess:  [1008]
+Что я могу сделать для вас, мой храбрый юный посыльный?
+   <--->
+Буду рад помочь чем угодно моему любимому посыльному.
+
+QuestorPostfailure:  [1009]
+<ce> Доставка посылки оказалась слишком ... сложной,
+<ce> да? А, непроходимая тупость всех молодых %ra.
+<ce> Уходите сейчас же, %pcf.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _questgiver_ из
+ ___questgiver_ посылает меня
+ к _contact_ из __contact_ в ___contact_,
+ со слитком золота. Золото нужно доставить
+ и вренуться в __questgiver_ в течение
+ =1stparton_ дней, чтобы получить _reward_
+ заолотых, которые обещал _questgiver_.
+
+Message:  1011
+<ce> Изумительно, %pcf. Я просто таки обожаю
+<ce> золото, а вы? Что ж, возьмите
+<ce> _item2_ и отнесите это к _questgiver_.
+<ce> Надеюсь вы помните дорогу в ___questgiver_.
+
+Message:  1015
+_qgenemy_ ... Думаю %g из __thievesguild_.
+   <--->
+_qgenemy_?  Поищите в окрестностях __thievesguild_. Может быть кто что и знает.
+
+Message:  1016
+<ce> _qgenemy_ втянут в незаконные сделки с __thievesguild_.
+<ce> Поищите _thievesguild_ -- там %g может проводить свое время.
+
+Message:  1020
+<ce> Как только вы перевернули нападавшего, то
+<ce> почувствовали, какое-то шевеление сзади.
+<ce> Краешком глаза вы заметили фигуру, стремящуюся
+<ce> уюежать как можно дальше, пока к вам не
+<ce> вернулась способность соображать.
+
+Message:  1021
+=thief_,
+<ce>
+  Цель - %ra по имени %pcn,
+который несет _item2_ от
+__contact_.  Принеси _item2_
+ко мне.  Жить или умереть курьеру,
+на твоей совести.
+<ce>
+<ce> _qgenemy_
+<ce> ----
+
+Message:  1030
+<ce> %oth, ты кто и каким макаром здесь?!
+<ce> Должно быть ты тот самый курьер от
+<ce> _questgiver_! Значит =thief_ все же не убил
+<ce> тебя. Мое доброе сердце, всегда оно ввязывает
+<ce> меня в неприятности ... Стража!
+<ce> Убейте этого нарушителя!!
+
+Message:  1035
+Пергамент раскрывает местонахождение
+Шабаша Волны в Мирквосе, что бы это
+ни значило.
+
+
+QBN:
+Item _reward_ gold
+Item _item1_ gold_bar
+Item _item2_ magic_item
+Item _letter_ letter used 1021
+Item _item3_ magic_item
+Item _map_ letter used 1035
+
+Person _questgiver_ face 72 group Questor
+Person _contact_ faction Dancers remote
+-- Person:    1 80 -1 0 13278 0 0.
+
+Person _qgenemy_ face 1 faction The_Thieves_Guild remote anyInfo 1015 rumors 1016
+
+Place _thievesguild_ remote house1
+Place totambuCoven permanent MyrkwasaCoven
+
+Clock _1stparton_ 00:00 0 flag 17 range 1 4
+Clock _2ndparton_ 00:00 0 flag 1 range 2 5
+
+Foe _thief_ is 2 Nightblade
+Foe _F.01_ is Thief
+Foe _guards_ is Rogue
+
+--	Quest start-up:
+	dialog link for location _thievesguild_ person _qgenemy_
+	start timer _1stparton_
+	log 1010 step 0
+	get item _item1_
+	pick one of _yesmap_ _nomap_ _nomap_ _nomap_
+	_map_ used do _readmap_
+	create npc _contact_
+
+_pcgetsgold_ task:
+	toting _item2_ and _questgiver_ clicked
+	give pc _reward_
+	give pc _item3_
+	end quest
+
+_queston_ task:
+	when _2ndparton_
+	when _1stparton_ and not _pchasitem2_
+	make _item1_ permanent
+	make _item2_ permanent
+	change repute with _questgiver_ by -20
+	end quest
+
+variable _qgclicked_
+_npcclicked_ task:
+	toting _item1_ and _contact_ clicked
+	create foe _thief_ every 10 minutes 3 times with 100% success
+	get item _item2_
+	say 1011
+
+variable _1stparton_
+variable _pchasitem1_
+_pchasitem2_ task:
+	pc at _thievesguild_ set _S.10_
+-	place item _item2_ at _thievesguild_
+- this duplicate was placed on the floor for some reason, should not be
+	start timer _2ndparton_
+
+variable yes
+_S.08_ task:
+	injured _thief_
+	give item _letter_ to _thief_
+	say 1020
+	have _item2_ set _pchasitem2_
+
+variable _no_
+_S.10_ task:
+	give item _item2_ to _F.01_
+	restrain foe _F.01_
+	place foe _F.01_ at _thievesguild_
+
+_S.11_ task:
+	injured _F.01_
+	create foe _guards_ every 2 minutes 6 times with 50% success
+	say 1030
+	change repute with _qgenemy_ by -20
+
+variable _2ndparton_
+_yesmap_ task:
+	give item _map_ to _F.01_
+
+variable _nomap_
+_readmap_ task:
+	reveal totambuCoven in province 46 at 423290

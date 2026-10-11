@@ -1,0 +1,208 @@
+-- Quest: C:\QUESTS\WORKING\A0C00Y12.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: peasant
+-- Repute: 0
+-- QuestId: 12
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 36
+Quest: A0C00Y12
+DisplayName: Первое издание
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Простите великодушно. Не читали ли вы одной книги:
+<ce> _book_? Она великолепна, а у меня есть
+<ce> самый первый ее печатный экземпляр. Или, поправлюсь,
+<ce> был. Кто-то украл у меня эту книгу. Буду рад
+<ce> заплатить _gold_ золотых тому, кто найдет вора
+<ce> и вернет мне книгу. Как думаете, смогли бы вы
+<ce> найти эту книгу?
+
+RefuseQuest:  [1001]
+<ce> Очень плохо. Мне очень нужна эта книга.
+
+AcceptQuest:  [1002]
+<ce> Великолепно! Она очень важна для меня, поскольку
+<ce> это первый печатный экземпляр. Печально, но у меня
+<ce> нет никаких мыслей по поводу личности укравшего ее.
+<ce> Вы можете поспрашивать об этом в округе.
+
+QuestComplete:  [1004]
+<ce> Великолепно! Моя копия _book_! Хорошая
+<ce> работа, %pcn. Вот ваша награда
+<ce> _gold_ золотых, как и было обещано.
+
+RumorsDuringQuest:  [1005]
+<ce> _giver_ отчаянно пытается найти одну из
+<ce> своих старых книг. Кто мог украсть ее?
+
+RumorsPostfailure:  [1006]
+<ce> Я слышал, что _giver_ окончательно
+<ce> сдался и приобрел другую копию своей
+<ce> драгоценной книги. Известно ли вам, что %g
+<ce> нанял кого-то для ее поисков? Что за глупец!
+
+RumorsPostsuccess:  [1007]
+<ce> вы должно быть тот самый %ra, который
+<ce> нашел книгу, принадлежащую _giver_.
+<ce> %g успел всем рассказать об этом.
+<ce> Можно подумать, что вы спасли короля.
+
+QuestorPostsuccess:  [1008]
+<ce> Все что угодно для моего друга %pcf.
+<ce> Вы нашли мою драгоценную книгу и
+<ce> я очень признателен вам.
+
+QuestorPostfailure:  [1009]
+<ce> Хмммф. Я нанял вас найти мою книгу.
+<ce> Когда вы потерпели неудачу, мне пришлось
+<ce> купить другую копию книги. Мне не о чем
+<ce> больше с вами разговаривать.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _giver_ из ___giver_ пообещал мне _gold_
+ золотых за поиски %g4 книги, _book_.
+
+Message:  1014
+<ce> Попробуйте спросить _informant_. %g
+<ce> похож на человека, знающего все, что
+<ce> происходит в ___informant_.
+   <--->
+<ce> Вам стоит посправшивать в местных тавернах.
+<ce> Они как всегда полны слыхов.
+   <--->
+<ce> Вы следует посмотреть в __informant_.
+<ce> Там всегда можно найти что-нибудь.
+   <--->
+<ce> Это похищено у _giver_.
+   <--->
+<ce> _giver_ спрашивал всех в округе.
+   <--->
+<ce> Мне очень понравилась книга, когда я прочел ее.
+   <--->
+<ce> Может вам стоит посетить библиотеку?
+
+Message:  1015
+<ce> Должно быть, именно эту книгу украли у _giver_.
+
+Message:  1025
+<ce> Привет, %pcn. до меня дошли слухи, что
+<ce> вы интересуетесь моей персоной. Да, я знаю
+<ce> практически все, что происходит в
+<ce> ___informant_, все слухи и новости,
+<ce> которые доходят до этих ушей.
+<ce> Достаточно обо мне. Я слышал что-то про
+<ce> неприятности у _giver_. Вы хотите найти
+<ce> _thief_, %g искал первое печатное
+<ce> издание этой книги недавно. Кроме того
+<ce> %g из тех типов, что могут взять вещь
+<ce> без спроса, если вы понимаете о чем я.
+
+Message:  1035
+%qdt:
+ _informant_ дал мне ценную информацию
+ по поводу пропавшей книги _book_.
+ %g думает, что в это дело может быть
+ замешан _thief_. Теперь неплохо бы
+ найти %g4.
+
+Message:  1027
+_thief_ живет в _house_ в __house_.
+   <--->
+_thief_ жил в __house_.
+   <--->
+_thief_ проводит свои ночи в _house_.
+   <--->
+Вам следует поискать _thief_ дома, %g жил некогда в __house_.
+   <--->
+_thief_ делал покупки в _store_.
+   <--->
+Вым следовало бы начать с _store_, который посещал _thief_.
+   <--->
+_store_ - известное место, где сбывается краденное, которое часто посещает _thief_.
+   <--->
+_thief_ недавно был в _store_.
+   <--->
+_inn_ - убежище для многих воров.
+   <--->
+_thief_ люит выпить в _inn_.
+   <--->
+_inn_ - излюбленное место для _thief_.
+   <--->
+В _inn_ готовят блюда, коорые обожает _thief_.
+
+Message:  1030
+<ce> Ты хочешь книгу? А ты, %ra, не так крепок, как
+<ce> кажешься. Попробуй отбери это у меня!
+
+
+
+QBN:
+Item _book_ book2 anyInfo 1014 used 1015
+Item _gold_ gold
+
+Person _informant_ face 241 group Cleric local
+Person _giver_ group Questor
+Person _thief_ face 97 faction The_Thieves_Guild local anyInfo 1027 rumors 1027
+
+Place _inn_ local tavern
+Place _store_ local generalstore
+Place _house_ local house2
+Place _informant1_ local tavern
+
+Clock _S.01_ 10.00:00 0 flag 9 range 0 1
+
+Foe _thiefFoe_ is Thief
+
+--	Quest start-up:
+	dialog link for location _house_ person _informant_
+	dialog link for location _inn_
+	dialog link for location _store_ person _thief_
+	start timer _S.01_
+	log 1010 step 0
+	place npc _informant_ at _informant1_
+
+variable _S.00_
+_S.01_ task:
+	end quest
+
+_S.02_ task:
+	daily from 00:00 to 08:00
+	pc at _house_ set _S.09_
+
+_S.03_ task:
+	daily from 16:02 to 23:59
+	pc at _inn_ set _S.10_
+
+_S.04_ task:
+	daily from 08:01 to 16:01
+	pc at _store_ set _S.11_
+--unneeded underscore removed
+
+_S.05_ task:
+	clicked npc _informant_ say 1025
+	add dialog for person _thief_
+	log 1035 step 1
+
+_S.06_ task:
+	toting _book_ and _giver_ clicked
+	give pc _gold_
+	end quest
+
+variable _S.07_
+_S.08_ task:
+	injured _thiefFoe_
+	give item _book_ to _thiefFoe_
+	say 1030
+
+_S.09_ task:
+	place foe _thiefFoe_ at _house_
+
+_S.10_ task:
+	place foe _thiefFoe_ at _inn_
+
+_S.11_ task:
+	place foe _thiefFoe_ at _store_

@@ -1,0 +1,203 @@
+-- Quest: C:\QUESTS\WORKING\K0C00Y09.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: merchant
+-- Repute: 0
+-- QuestId: 9
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 15
+Quest: K0C00Y09
+DisplayName: Возмещение
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Мой бывший партнер в __qgiver_,
+<ce> _enemy_, взял долю наших доходов, большую,
+<ce> чем ему полагается, и смылся из ___qgiver_.
+<ce> Пусть я и не из мстительных людей, но был бы
+<ce> признателен, если бы вы привели _enemy_
+<ce> обратно ко мне, чтобы найти объяснение
+<ce> случившемуся. Я заплачу вам _gold_ золотых,
+<ce> если вы приведете его живым и _lessgold_
+<ce> золотых, если вы случайно убьете его.
+   <--->
+<ce> Этот проклятый _enemy_ заставил меня
+<ce> поверить ему, втерся в мое доверие, а потом
+<ce> смылся со значительной частью моих сбережений.
+<ce> Сейчас мне нужны не столько деньги, сколько
+<ce> справедливое возмездие. Я хочу, чтобы вы
+<ce> выследили его и привели ко мне. Я заплачу вам
+<ce> _gold_ золотых. Вы согласны?
+   <--->
+<ce> Я ищу охотника на людей, или если быть
+<ce> точным, охотника на _enemy_.
+<ce> Как вы можете увидеть, он смылся из города,
+<ce> не заплатив по своим счетам. Найти его -
+<ce> - дело принципа. Не могу обещать больше, чем
+<ce> _gold_ золотых за успешные поиски, но моя
+<ce> репутация будет порушена, если я позволю своим
+<ce> должникам уехать из ___qgiver_
+<ce> с моим золотом. Вы согласны найти этого
+<ce> ублюдка?
+
+RefuseQuest:  [1001]
+<ce> Нет? Что ж, пойду обращусь в Гильдю
+<ce> Бойцов и найму еще кого-нибудь.
+   <--->
+<ce> Очень плохо. Дайте знать, если
+<ce> перемените свое решение.
+
+AcceptQuest:  [1002]
+<ce> Хорошо. _enemy_ зовут =enemy_,
+<ce> и по слухам %g скрывается в ___mondung_.
+<ce> У вас примерно =queston_ дней. После этого срока
+<ce> я откажусь платить, даже если услышу о вас.
+<ce> Помните -- =enemy_
+<ce> весьма силен, так что если будет драка,
+<ce> постарайтесь не убить его.
+<ce> Удачи, %pcf.
+   <--->
+<ce> Тогда приступим к делу. Мои источники сказали,
+<ce> что _enemy_ укрылся в ___mondung_
+<ce> и пробудет там примерно =queston_ дней. Я
+<ce> с нетерпением буду ждать =enemy_, это имя
+<ce> _enemy_. Постарайтесь не убивать его.
+<ce> Удачи.
+   <--->
+<ce> Вы добрый до ужаса, %pcf.
+<ce> До меня дошли слухаи, что _enemy_ скрывается
+<ce> где-то в районе ___mondung_, без охраны,
+<ce> один в суровых условиях своей резиденции.
+<ce> Его имя =enemy_ и я надеюсь, что вы приведете
+<ce> его ко мне в течение =queston_ дней,
+<ce> по возможности живым. Не разочаруйте меня.
+
+QuestComplete:  [1004]
+<ce> А, день добрый, =enemy_.
+<ce> Похоже, что нам есть о чем поговорить...
+<ce> например о нашем деле, не так ли?
+<ce> %pcf, я благодарю вас, что вы сделали
+<ce> путешествие _enemy_ как можно более
+<ce> комфортным. Вот обещанное золото.
+
+RumorsDuringQuest:  [1005]
+_qgiver_ идиот, раз завел дело с кем-то навроде =enemy_.
+   <--->
+_qgiver_ не должен больше доверять =enemy_ -- %g самый настоящий вор.
+
+RumorsPostfailure:  [1006]
+Похоже =enemy_ смылся, прихватив с собой кое-что. А _qgiver_ так же безумен, как и обитатели Обливиона.
+
+RumorsPostsuccess:  [1007]
+_qgiver_ практикует древнюю технику пыток %ra на =enemy_.
+   <--->
+Мне даже немного жаль _enemy_ -- ведь он теперь в руках _qgiver_.
+
+QuestorPostsuccess:  [1008]
+О, привет, %pcf. =enemy_ тоже сказал бы привет ... если бы у него был язык. Ха-ха-ха.
+
+QuestorPostfailure:  [1009]
+<ce> Вы же не думаете, что мне действительно есть о чем с вам говорить, %pcf?
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ из
+ __qgiver_ в ___qgiver_
+ посылает меня в ___mondung_
+ найти сумасброда _enemy_ по имени
+ =enemy_ и привести его
+ обратно в __qgiver_. У меня
+ =queston_ дней, чтобы сделать все
+ как полагается и желательно, чтобы
+ =enemy_ попал в руки _qgiver_
+ живым и невредимым.
+
+Message:  1011
+<ce> _qgiver_ желал получить
+<ce> =enemy_ живым, но вы
+<ce> похоже убили его.
+
+Message:  1012
+<ce> Ай! %oth,
+<ce> Я сдаюсь!
+   <--->
+<ce> Сдаюсь! Сдаюсь!
+   <--->
+<ce> Не убивайте меня!
+<ce> Я сдаюсь!
+
+Message:  1013
+<ce> =enemy_ убегает прочь, когда
+<ce> вы посмотрели в другую сторону. Вы
+<ce> упустили свой шанс. Теперь поздно идти
+<ce> за наградой.
+
+Message:  1014
+<ce> Что ж, я желал получить =enemy_
+<ce> живым, но полагаю, что вы убили его несмотря
+<ce> на мое пожелание. Вот _lessgold_ золотых
+<ce> не так много, как вы могли бы получить, но
+<ce> все же я вам признателен.
+
+--removed erroneous blank msg inside 1014
+
+
+QBN:
+Item _gold_ gold range 50 to 150
+Item _lessgold_ gold range 10 to 45
+
+Person _qgiver_ group Questor
+
+Place _mondung_ remote dungeon
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+Foe _enemy_ is Ranger
+
+--	Quest start-up:
+	start timer _queston_
+	reveal _mondung_
+	log 1010 step 0
+	place foe _enemy_ at _mondung_
+
+_queston_ task:
+	end quest
+
+_S.01_ task:
+	injured _enemy_
+	say 1012
+
+_killmon_ task:
+	killed 1 _enemy_
+	say 1011
+
+_S.03_ task:
+	when _S.01_ and not _killmon_
+	add foe _enemy_ face
+	remove foe _enemy_
+
+_qgclicked_ task:
+	clicked npc _qgiver_
+
+variable _S.05_
+_S.06_ task:
+	when _qgclicked_ and _killmon_
+	get item _lessgold_
+	say 1014
+	make _lessgold_ permanent
+	end quest
+
+_reward_ task:
+	when _S.03_ and _qgclicked_
+	give pc _gold_
+	end quest
+
+_S.08_ task:
+	when _queston_ and _S.03_
+	say 1013
+	drop foe _enemy_ face
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.01_
+	clear _qgclicked_ _clearclick_

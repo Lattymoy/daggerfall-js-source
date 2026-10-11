@@ -1,0 +1,138 @@
+-- Quest: C:\QUESTS\WORKING\Q0C00Y06.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: witch
+-- Repute: 0
+-- QuestId: 6
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 21
+Quest: Q0C00Y06
+DisplayName: Проблемы с вампирами
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Боюсь нам грозят неприятности. Древний
+<ce> вампир, ненавидящий ведьм, поселился
+<ce> в заброшенном замке на нашей
+<ce> территории. Разумеется эту ситуацию
+<ce> необходимо разрешить...с твоей помощью,
+<ce> как ты думаешь, %pcf?
+
+RefuseQuest:  [1001]
+<ce> Могу понять твой страх. Только очень
+<ce> способный или полный дурак способен
+<ce> уничтожить древнее зло в лице
+<ce> вампира.
+
+AcceptQuest:  [1002]
+<ce> Берешься? Древний вампир весьма
+<ce> опасный противник. Не ввязывайся
+<ce> в схватку без предварительной
+<ce> подготовки. Это создание называется
+<ce> =vamprival_ и его новое
+<ce> убежище называется ___mondung_.
+<ce> Ты найдешь это в ____mondung_.
+<ce> Я буду ждать твоего возвращения
+<ce> в течение =1stparton_ ночей. Не
+<ce> дай убить себя, %pcf.
+
+QuestFail:  [1003]
+<ce> Что ты ждешь? Надеешься, что
+<ce> =vamprival_ покончит
+<ce> самоубийством? Невероятно.
+<ce> Ты должен быть проводником
+<ce> его смерти.
+
+QuestComplete:  [1004]
+<ce> Вопли умирающего зла было слышно даже
+<ce> отсюда, %pcf.
+<ce> Уважение ведьм тебе гарантировано.
+
+RumorsDuringQuest:  [1005]
+Странная возня творится в окрестностях ___mondung_, но это место было заброшено годами.
+   <--->
+Этот =vamprival_ аристократ. Говорят, %g зачистил ___mondung_ в %reg.
+
+RumorsPostfailure:  [1006]
+Я слышал, =vamprival_ окончательно ушел из ___mondung_. Это не место для аристократа.
+   <--->
+Сейчас этот =vamprival_ ушел из ___mondung_, места, бывшего некогда дворцом.
+
+RumorsPostsuccess:  [1007]
+Оказалось, что этот великолепный =vamprival_ вампир! Мне нечего сказать!
+   <--->
+Благодарение %god, что этот замечательный наемник %ra убил вампира из ___mondung_.
+
+QuestorPostsuccess:  [1008]
+Мы не забыли про =vamprival_, %pcf. Что я могу сделать для тебя?
+
+QuestorPostfailure:  [1009]
+<ce> =vamprival_ все еще путешествует
+<ce> по ночам, питаясь нашими сестрами.
+<ce> Тебе следовало сразу сказать, что ты
+<ce> не сможешь побить его. Уходи прочь.
+<ce> Нам не о чем больше говорить.
+
+Message:  1011
+_witch_ - хорошенькая и умная =witch_ в __witch_.
+   <--->
+_witch_ - это хорошенькая =witch_, которую ты найдешь в __witch_, %di отсюда.
+
+Message:  1012
+_witch_ это ведьма из ___witch_.
+   <--->
+_witch_ это ведьма из ___witch_, =witch_.
+
+Message:  1015
+%qdt:
+ _witch_ из
+ ___witch_ послала меня убить вампира,
+ терроризирующего ведьм провинции %reg.
+ Мною было обещано, что это неживое создание
+ будет мертво в течение =1stparton_ дней
+ и я вернусь в ___witch_.
+
+Message:  1020
+<ce> Вами уничтожен =vamprival_.
+
+
+
+QBN:
+Item _reward_ magic_item
+
+Person _witch_ face 44 group Questor anyInfo 1011 rumors 1012
+
+Place _mondung_ remote dungeon8
+--removed extraneous underscore from __mondung_.
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _vamprival_ is Ancient_vampire
+
+--	Quest start-up:
+	start timer _1stparton_
+	reveal _mondung_
+	log 1015 step 0
+	place foe _vamprival_ at _mondung_
+
+falseAide0 task:
+	when _vampclicked_ and _S.01_
+	give pc _reward_
+	end quest
+
+_S.01_ task:
+	killed 1 _vamprival_
+	say 1020
+
+_vampclicked_ task:
+	clicked npc _witch_
+
+_clearclick_ task:
+	when _vampclicked_ and not _S.01_
+	say 1003
+	clear _vampclicked_ _clearclick_
+	--replaced "until _vampclicked_ performed" action with _clearclick_. this is more flexible, allowing 1003 message.
+
+_1stparton_ task:
+	end quest

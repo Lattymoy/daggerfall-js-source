@@ -1,0 +1,197 @@
+-- Quest: C:\QUESTS\WORKING\N0C00Y10.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: mage
+-- Repute: 0
+-- QuestId: 10
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 41
+Quest: N0C00Y10
+DisplayName: Пропавшая книга
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Меня зовут _giver_. Вы ищете
+<ce> работу, хотя и не являетесь членом гильдии?
+<ce> Уверен, вы понимаете что достойную работу
+<ce> мы предлагаем только нашим членам. Но для
+<ce> вас у меня тоже найдется кое-что. Пропала
+<ce> одна из наших книг. Если вы найдете и вернете
+<ce> ее, я выкажу вам особое расположение, которое
+<ce> может благоприятно сказаться на вашей
+<ce> репутации в гильдии.
+
+RefuseQuest:  [1001]
+<ce> Скорее всего вам просто неохота идти
+<ce> на поводу правил Гильдии Магов.
+
+AcceptQuest:  [1002]
+<ce> У нас нет никаких улик. Книга называется
+<ce> "_book_". Вам не мешало бы
+<ce> поспрашивать окружающих, может они что
+<ce> и слышали. Принесите книгу мне, если
+<ce> найдете ее.
+
+QuestFail:  [1003]
+%qdt:
+ Заключено соглашение найти книгу
+ "_book_" для Гильдии Магов из ___giver_.
+ Если я найду ее, мне нужно вернуть ее
+ владельцу - _giver_ - и %g замолвит
+ за меня словечко перед старейшинами
+ гильдии.
+
+QuestComplete:  [1004]
+<ce> Ааа, "_book_".
+<ce> Отлично, %pcf.
+<ce> Гильдия очень обязана вашему
+<ce> благородству и учтет ваши заслуги
+<ce> перед ней.
+
+RumorsDuringQuest:  [1005]
+В Гильдии Магов есть очень редкий экземпляр книги "_book_". Или точнее, был.
+   <--->
+"_book_" - очень редкая книга, но экземпляр книги из Гильдии Магов еще более редкий и ценный.
+
+RumorsPostfailure:  [1006]
+Это очень большая потеря для Гильдии Магов -- ведь это специальная редакция рукописи "_book_".
+   <--->
+Библиотека Гильдии Магов плохо оганизована, вот книга и пропала.
+
+RumorsPostsuccess:  [1007]
+Гильдия Магов снова обрела свое богатство. "_book_" снова заняла свое место на полке.
+
+QuestorPostsuccess:  [1008]
+Вы прочли эту книгу, когда нашли ее? Не правда ли потрясающе?
+
+QuestorPostfailure:  [1009]
+<ce> Я дал вам шанс, %pcf.
+<ce> Помните? Если вы найдете "_book_",
+<ce> я буду более чем рад потолковать с вами.
+<ce> Ну а сейчас вам лучше продолжить свои
+<ce> поиски.
+
+QuestLogEntry:  [1010]
+<ce> Попробуйте спросить у _informant_. Похоже %g знает
+<ce> многое из того, что происходит в
+<ce> ___informant_.
+   <--->
+<ce> Может вам поспрашивать в местных
+<ce> забегаловках? Они просто таки
+<ce> лопаются от всяческих слухов.
+   <--->
+<ce> Попробуйте поискать в
+<ce> __informant_. Там всегда что-нибудь
+<ce> да можно узнать.
+   <--->
+<ce> Это было похищено у _giver_.
+   <--->
+<ce> _giver_ уже расспрашивал всех в округе.
+   <--->
+<ce> Я был просто поражен, когда прочел ее.
+   <--->
+<ce> Попробуйте поискать в библиотеке.
+
+Message:  1011
+<ce> Видимо, это та самая книга, которую украли у __giver_.
+
+Message:  1025
+<ce> Приветствую, %pcn. Говорят вы меня искали.
+<ce> Я знаю практически все, что происходит в
+<ce> ___informant_, у меня там много
+<ce> ушей. Впрочем достаточно обо мне.
+<ce> Я слышал что-то о несчастье, приключившемся
+<ce> с _giver_. Вам нужно поискать _thief_.
+<ce> Некоторое время назад %g очень интересовался
+<ce> первой редакцией интересующей вас книги.
+<ce> Кроме того %g из тех типов, что берут вещи
+<ce> без спроса, если вы понимаете о чем я.
+
+Message:  1027
+_thief_ живет в _house_ в __house_.
+   <--->
+_thief_ жил в __house_.
+   <--->
+_thief_ проводит свои ночи в _house_.
+   <--->
+Попробуйте поискать _thief_ в одном доме, %g живет в __house_.
+   <--->
+_thief_ часто появляется в _store_.
+   <--->
+Думаю вам стоит посмотреть в _store_, где обретается _thief_.
+   <--->
+_store_ известное место по скупке краденного, в котором часто появляется _thief_.
+   <--->
+_thief_ был замечен в _store_.
+   <--->
+_inn_ прикрывает многих воров.
+   <--->
+_thief_ любит выпить в _inn_.
+   <--->
+_inn_ - любимая забегаловка у _thief_.
+   <--->
+_thief_ любит блюда, которые готовят в _inn_.
+
+Message:  1040
+<ce> Я слышал вы ищете кое-кого - _thief_.
+<ce> Что ж, вы нашли %g4. А теперь проваливайте,
+<ce> пока я не сделал вам больно.
+
+
+
+QBN:
+Item _book_ book1 anyInfo 1010 used 1011
+
+Person _informant_ face 245 group Group_6.0 male local
+Person _giver_ group Questor
+Person _thief_ face 99 group Chemist female local anyInfo 1027 rumors 1027
+
+Place _inn_ local tavern
+Place _store_ local weaponstore
+Place _house_ local house2
+Place _informant1_ local tavern
+
+Clock _S.00_ 00:00 0 flag 9 range 0 0
+Clock _S.01_ 10.00:00 0 flag 9 range 0 1
+
+Foe _thiefFoe_ is Thief
+-added underscores to thiefFoe
+
+--	Quest start-up:
+	dialog link for person _thief_
+	dialog link for location _house_ person _informant_
+	start timer _S.01_
+	log 1003 step 0
+	give item _book_ to _thiefFoe_
+	place npc _informant_ at _informant1_
+
+variable _S.00_
+_S.01_ task:
+	end quest
+
+_S.02_ task:
+	daily from 00:00 to 08:00
+	place foe _thiefFoe_ at _house_
+
+_S.03_ task:
+	daily from 16:02 to 23:59
+--changed 24:00 to 23:59, 24:00 is not a valid time
+	place foe _thiefFoe_ at _inn_
+
+_S.04_ task:
+	daily from 08:01 to 16:01
+	place foe _thiefFoe_ at _store_
+
+_S.05_ task:
+	clicked npc _informant_ say 1025
+	add dialog for person _thief_
+
+_S.06_ task:
+	toting _book_ and _giver_ clicked
+	give pc nothing
+	end quest
+
+variable _S.07_
+_S.08_ task:
+	injured _thiefFoe_ saying 1040

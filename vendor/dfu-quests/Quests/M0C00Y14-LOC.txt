@@ -1,0 +1,124 @@
+-- Quest: C:\QUESTS\WORKING\M0C00Y14.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: fighter
+-- Repute: 0
+-- QuestId: 14
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 21
+Quest: M0C00Y14
+DisplayName: Крысиное нашествие
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Меня зовут _qgiver_.
+<ce> Мы даем работу только членам гильдии. Хотя
+<ce> время от времени у нас появляется работенка,
+<ce> которой не хотят марать руки наши бойцы.
+<ce> Как раз сейчас у меня есть подобная работа.
+<ce> Если вы согласитесь, это покажет нам насколько
+<ce> вы действительно хотите оказывать помощь.
+<ce> Что скажете?
+
+RefuseQuest:  [1001]
+<ce> Похоже что все таки вы не испытываете
+<ce> любви к Гильдии Бойцов. Я скажу
+<ce> им, что вы такое в действительности.
+
+AcceptQuest:  [1002]
+<ce> Гигантские крысы заполонили _house_.
+<ce> Полагаю, что их там не меньше дюжины.
+<ce> Идите и убейте их всех, а потом я
+<ce> использую свои связи для помощи вам.
+<ce> На выполнение даю ровно один день.
+
+QuestComplete:  [1004]
+<ce> Убийство крыс, пусть и больших,
+<ce> не такой уж и большой подвиг.
+<ce> Но зато вы заслужили наше уважение.
+<ce> Хорошая работа.
+
+RumorsDuringQuest:  [1005]
+<ce> Какой-то идиот рассыпал четыре ящика
+<ce> с сыром. Теперь его дом заполонили
+<ce> большущие крысы.
+
+RumorsPostfailure:  [1006]
+<ce> Одна женщина купила заброшенный дом,
+<ce> а он кишмя кишит большими крысами.
+<ce> Денег на оплату услуг гильдии у нее
+<ce> естественно тоже нет.
+
+RumorsPostsuccess:  [1007]
+<ce> Я слышал, что бойцовская гильдия послала
+<ce> кого-то из %ra убить всех крыс в доме
+<ce> одной женщины. И плату с нее не взяли.
+
+QuestorPostsuccess:  [1008]
+<ce> Итак, вы убили всех крыс. Только не
+<ce> сильно зазнавайтесь. Это были всего
+<ce> лишь крысы.
+
+QuestorPostfailure:  [1009]
+<ce> Вы не смогли даже подкрасться к этим
+<ce> крысам. Вы безнадежны, %pcn.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Гильдия Бойцов из
+ ___qgiver_ направила меня убить
+ гигантских крыс, поселившихся в
+ _house_. У меня один день на
+ выполнение этой работы.
+
+Message:  1011
+<ce> В здании жутко воняет крысами.
+<ce> Ваш вход, вероятно, потревожил их жизнь.
+
+Message:  1020
+<ce> Это практически все. Гильдия
+<ce> Бойцов не будет возражать.
+
+
+
+QBN:
+
+Person _qgiver_ group Questor
+
+Place _house_ local random
+
+Clock _2dung_ 1.00:00 0 flag 1 range 0 1
+
+Foe _monster_ is Giant_rat
+
+--	Quest start-up:
+	start timer _2dung_
+	reveal _house_
+	log 1010 step 0
+	pc at _house_ set _S.04_
+	create npc at _house_
+
+_2dung_ task:
+	end quest
+
+_S.01_ task:
+	killed 4 _monster_
+	say 1020
+
+_S.02_ task:
+	when _qgclicked_ and _S.01_
+	give pc nothing
+	end quest
+
+_qgclicked_ task:
+    clicked npc _qgiver_
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.01_
+	clear _qgclicked_ _clearclick_
+
+_S.04_ task:
+	say 1011
+	create foe _monster_ every 2 minutes 7 times with 100% success
+--slowed enemy spawn due to feedback

@@ -1,0 +1,302 @@
+-- Quest: C:\QUESTS\WORKING\A0C00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: peasant
+-- Repute: 0
+-- QuestId: 0
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 32
+Quest: A0C00Y00
+DisplayName: Почтальон
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Я _qgiver_. У меня есть задание,
+<ce> предусматривающее высокий уровень тайны и секретности.
+<ce> Риск минимален, а я заплачу вам _gold_ золотых. Это
+<ce> займет всего лишь =traveltime_ дней вашего времени.
+<ce> Не могу сказать больше, пока не услышу согласие.
+   <--->
+<ce> Здравствуйте, юный %ra. Как вы смотрите на то, чтобы
+<ce> получить _gold_ золотых всего лишь за выполнение того,
+<ce> что в кругах наемников называется "раз плюнуть"?
+
+RefuseQuest:  [1001]
+<ce> Понимаю. Рад, что не успел рассказать вам все
+<ce> детали. Вы не сможете предать меня.
+   <--->
+<ce> Хорошо, но нехватка амбиций может привести к
+<ce> гибели, мой юный друг.
+
+
+AcceptQuest:  [1002]
+<ce> Иди в _inn_ в __inn_.
+<ce> Найдите там курьера, хранящего письмо, возьмите письмо
+<ce> и подложите поддельное без лишнего шума. И смотрите,
+<ce> чтобы ни одна вещь не сдвинулась со своего места.
+<ce> Если он найдет, что письмо подменили, все мои планы
+<ce> рухнут. Если вас засекут, то не пытайтесь найти
+<ce> меня.
+
+QuestFail:  [1003]
+<ce> Нет ли у вас ... "посылки" для меня?
+   <--->
+<ce> Возвращайтесь, когда закончите задание, %pcf.
+
+QuestComplete:  [1004]
+<ce> Ага! Отлично, %pcf. Вот ваша награда.
+<ce> И никому ничего не рассказывайте. Я буду
+<ce> все отрицать.
+
+RumorsDuringQuest:  [1005]
+<ce> Похоже в этом году выдался хороший урожай.
+
+RumorsPostfailure:  [1006]
+<ce> _qgiver_ изрядно потратился в трудные времена.
+
+RumorsPostsuccess:  [1007]
+<ce> _qgiver_ попал в целую цепь удачных событий.
+
+QuestorPostsuccess:  [1008]
+<ce> Шшшш. Несомненно я помню это задание по подмене
+<ce> письма, которое вы делали для меня, но надеюсь,
+<ce> что об этом больше никто не знает.
+
+QuestorPostfailure:  [1009]
+<ce> Это вы! Все что мне нужно было, чтобы вы просто
+<ce> подменили письмо, а вы не смогли это сделать!
+<ce> Оставьте меня в покое.
+
+QuestLogEntry:  [1010]
+%qdt:
+ У меня была тайная встреча с _qgiver_
+ в ___qgiver_, который дал мне подложное
+ письмо. Мне нужно проникнуть в
+ _inn_ в __inn_ и подменить настоящее
+ письмо. У меня =traveltime_ дней, чтобы
+ завершить это задание. Если меня поймают,
+ то я отвечаю только за себя.
+
+Message:  1011
+_npc1_,
+  Ты один из самых злобных людей. Сколько помню,
+я всегда думала, что люблю тебя. С тех пор, когда
+ты застал меня на балконе в обьятиях _npc2_,
+я наконец то могу признать, что мы действительно
+любовники. %g в силах дать мне все то, что ты не
+в силах мне дать. Я чувствовала себя грязной, при-
+нимая твои отвратительные золотые подарки.
+Никогда больше не появляйся.
+<ce>
+<ce> _npc3_
+<ce> ----
+
+Message:  1012
+  Мой дорогой _npc1_,
+Я знаю, что ты зол и сердит. Я сделаю все,
+что смогу, чтобы вернуть твою любовь. То что ты
+видел на балконе, не моя вина. Я слишком напилась
+той ночью и _npc2_ воспользовался моментом,
+чтобы поцеловать меня. %g был высечен и теперь
+не работает у меня. Прости меня пожалуйста.
+Я люблю только тебя.
+<ce>
+<ce> _npc3_
+<ce> ----
+
+Message:  1013
+<ce> Эта таверна нчем не отличается от других. Но для
+<ce> вас это место, где скрытность ценится больше чем
+<ce> сила. Теперь неплохо бы найти, где этот курьер
+<ce> хранит письмо.
+
+Message:  1014
+<ce> Вор! Сейчас я проучу тебя, как воровать у наших
+<ce> самых из честнейших посыльных!
+
+Message:  1015
+<ce> Как только письмо, полное лжи выскользнуло из
+<ce> ваших пальцев, вы поняли, что задание наполовину
+<ce> выполнено.
+
+Message:  1016
+  Барон _npc1_,
+Граф _npc2_ приказал своим людям
+устроить вам ловушку. Не попадитесь в нее.
+<ce> _npc3_
+<ce> ----
+
+Message:  1017
+_npc1_,
+  Выше предложение смехотворно!
+Я могу купить это за половину цены у любого
+другого купца в ___npc1_, и я так и сделаю.
+<ce> _npc2_
+<ce> ----
+
+Message:  1018
+  Уважаемый _npc1_,
+Я решил отдать мой голос за
+вас, когда гильдия выбирала
+казначея. Естественно, что я
+ожидаю благодарности в скором
+будущем.
+<ce> _npc2_
+<ce> ----
+
+Message:  1019
+  Барон _npc1_,
+Граф _npc2_ будет ждать
+вас. %g хочет предложить
+перемирие. Это честно и благородно.
+<ce> _npc3_
+<ce> ----
+
+Message:  1020
+  _npc1_,
+Ваша цена вполне приемлема.
+Это письмо - мое обязательство
+оплаты за удобства. Дайте это
+моему агенту, когда увидите.
+<ce> _npc2_
+<ce> ----
+
+Message:  1021
+  Уважаемый _npc1_,
+Я решил отдать мой голос
+за _npc3_ на следующем засе-
+дании гильдии. %g неоднократно
+доказывал свою преданность делу
+гильдии.
+<ce> _npc2_
+<ce> ----
+
+Message:  1022
+<ce> Тебя поймали, и ты это знаешь.
+<ce> Убирайся с глаз моих, %ra.
+
+Message:  1030
+<ce> _qgiver_ самый натуральный хорек.
+
+Message:  1031
+<ce> _qgiver_ выглядит достаточно внушительно,
+<ce> но в карты я бы с ним играть не стал.
+
+
+
+QBN:
+Item _letter3a_ letter used 1012
+Item _falseletter1_ letter used 1011
+Item _gold_ gold
+Item _treasure_ trinket
+Item _falseletter2_ letter used 1016
+Item _falseletter3_ letter used 1017
+Item _falseletter4_ letter used 1018
+Item _letter4a_ letter used 1019
+Item _letter5_ letter used 1020
+Item _letter6_ letter used 1021
+
+Person _qgiver_ face 1 group Questor anyInfo 1030 rumors 1031
+Person _npc1_ face 4 group Local_4.0 male remote
+Person _npc2_ face 4 group Local_3.0 male remote
+Person _npc3_ face 2 group Group_6.0 female remote
+
+Place _inn_ remote tavern
+
+Clock _traveltime_ 00:00 0 flag 17 range 0 2
+
+Foe _ranger_ is Ranger
+Foe _spellsword_ is Spellsword
+Foe _knight_ is Knight
+Foe _monk_ is Monk
+
+--	Quest start-up:
+	place item _treasure_ at _inn_
+	start timer _traveltime_
+	log 1010 step 0
+	pick one of _letter1_ _letter2_ _letter3_ _letter4_
+	pc at _inn_ set _S.00_ saying 1013
+
+variable _S.00_
+_questdone_ task:
+	when _S.02_ and _S.03_ and not _traveltime_ and not _S.04_
+	give pc _gold_
+	end quest
+
+_badend_ task:
+	when _S.02_ and _S.04_
+	say 1022
+	end quest
+--added badend task and msg 1022. Previously if the PC grabbed the treasure and completed the quest, the questgiver would ignore entirely.
+
+_S.02_ task:
+	toting _letter6_ and _qgiver_ clicked
+	toting _letter4a_ and _qgiver_ clicked
+	toting _letter3a_ and _qgiver_ clicked
+	toting _letter5_ and _qgiver_ clicked
+
+_S.03_ task:
+	dropped _falseletter3_ at _inn_ saying 1015
+	dropped _falseletter1_ at _inn_ saying 1015
+	dropped _falseletter4_ at _inn_ saying 1015
+	dropped _falseletter2_ at _inn_ saying 1015
+    clear _S.15_
+
+_S.04_ task:
+	clicked item _treasure_
+	pick one of _S.11_ _S.12_ _S.13_ _S.14_
+
+_traveltime_ task:
+	end quest
+
+_S.06_ task:
+	injured _spellsword_
+	injured _knight_
+	injured _monk_
+	injured _ranger_
+	say 1014
+
+_letter1_ task:
+	place item _letter3a_ at _inn_
+	get item _falseletter1_
+
+_letter2_ task:
+	place item _letter4a_ at _inn_
+	get item _falseletter2_
+
+_letter3_ task:
+	place item _letter5_ at _inn_
+	get item _falseletter3_
+
+_letter4_ task:
+	place item _letter6_ at _inn_
+	get item _falseletter4_
+
+_S.11_ task:
+	create foe _knight_ every 1 minutes 1 times with 100% success
+
+_S.12_ task:
+	create foe _monk_ every 1 minutes 1 times with 100% success
+
+_S.13_ task:
+	create foe _spellsword_ every 1 minutes 1 times with 100% success
+
+_S.14_ task:
+	create foe _ranger_ every 1 minutes 1 times with 100% success
+--increased spawn rate to 100% in S13 and S14. Doesn't seem to make much sense for the enemy to follow you off to another town and spawn there.
+
+_S.15_ task:
+	clicked item _falseletter4_
+	clicked item _falseletter1_
+	clicked item _falseletter2_
+	clicked item _falseletter3_
+	clear _S.03_
+
+_qgclicked_ task:
+	clicked npc _qgiver_
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.02_
+	say 1003
+	clear _clearclick_ _qgclicked_

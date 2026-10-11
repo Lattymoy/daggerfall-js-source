@@ -93,7 +93,7 @@ function drawFace(owner, rows, doc = (typeof document === 'undefined' ? null : d
     for (const r of rows) {
       const n = doc.createElement('div');
       n.className = `notice-row${typeof r === 'object' && r?.center === false ? '' : ' center'}`;
-      n.textContent = rowText(r);
+      n.textContent = t(rowText(r));
       face.rows.append(n);
     }
   }

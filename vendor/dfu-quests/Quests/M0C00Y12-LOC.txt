@@ -1,0 +1,110 @@
+-- Quest: C:\QUESTS\WORKING\M0C00Y12.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: fighter
+-- Repute: 0
+-- QuestId: 12
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 12
+Quest: M0C00Y12
+DisplayName: Охота на гигантского паука
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Меня зовут _qgiver_.
+<ce> Мне не очень хотелось бы давать работу
+<ce> не члену гильдии. Но ты внушаешь доверие.
+<ce> Какая то бедная душа принесла домой паучье
+<ce> яйцо, из которого конечно же вылупился паук.
+<ce> Похоже его спутали с яйцом шелкопряда. Этот
+<ce> олух даже не может заплатить нам за изгнание
+<ce> твари. Быть может если ты согласишься сделать
+<ce> это бесплатно, то мы будем относиться к тебе
+<ce> более благосклонно. Договорились?
+
+RefuseQuest:  [1001]
+<ce> Я так и думал, что ты не
+<ce> работу ищешь.
+
+AcceptQuest:  [1002]
+<ce> Самое время показать себя.
+<ce> Паук в _house_. Убей его
+<ce> сегодня и я замолвлю за тебя словечко.
+
+QuestComplete:  [1004]
+<ce> Тебя ждет паутина, %pcf.
+<ce> Сделай доброе дело и будешь
+<ce> представлять для Гильдии Бойцов
+<ce> определенный интерес.
+
+RumorsDuringQuest:  [1005]
+<ce> Слыхали про идиота, который припер домой
+<ce> паучье яйцо? Теперь у него дома сидит
+<ce> восьминогий друг, который пытается
+<ce> слопать его на завтрак!
+
+RumorsPostfailure:  [1006]
+<ce> Этот глупец был парализован и убит гигантским
+<ce> пауком. В своем собственном доме!
+
+RumorsPostsuccess:  [1007]
+<ce> Вы тот, кто убил большого паука.
+<ce> Вам следует войти в ряды Гильдии Бойцов
+<ce> или что-то в этом роде.
+
+QuestorPostsuccess:  [1008]
+<ce> Отличная работа с этим гигантским пауком.
+
+QuestorPostfailure:  [1009]
+<ce> Если ты не выносишь пауков, зачем берешься
+<ce> за работу, которую заведомо выполнить
+<ce> не сможешь?
+
+QuestLogEntry:  [1010]
+%qdt:
+ Гильдия Бойцов из ___qgiver_
+ наняла меня убить гигантского паука,
+ который угнездился в _house_.
+ Работу нужно выполнить сегодня.
+
+Message:  1011
+<ce> _monster_ мертв.
+
+
+
+QBN:
+
+Person _qgiver_ group Questor
+
+Place _house_ local random
+
+Clock _2dung_ 1.00:00 0 flag 1 range 0 1
+
+Foe _monster_ is Spider
+
+--	Quest start-up:
+	start timer _2dung_
+	reveal _house_
+	log 1010 step 0
+	create npc at _house_
+	place foe _monster_ at _house_
+
+_2dung_ task:
+	end quest
+
+_S.01_ task:
+	killed 1 _monster_ saying 1011
+
+_S.02_ task:
+	when _qgclicked_ and _S.01_
+	give pc nothing
+	end quest
+
+_qgclicked_ task:
+    clicked npc _qgiver_
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.01_
+	clear _qgclicked_ _clearclick_
+	--removed duplicate clearclick

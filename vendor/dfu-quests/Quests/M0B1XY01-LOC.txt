@@ -1,0 +1,142 @@
+-- Quest: C:\QUESTS\WORKING\M0B1XY01.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: fighter
+-- Repute: 1X
+-- QuestId: 1
+Messages: 81
+Quest: M0B1XY01
+DisplayName: Охота на гарпий
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Слушай, ты мне нравишься, - я не дал бы это
+<ce> задание кому попало. Присутствие стаи крылатых
+<ce> плотоядных - конечно же я имею в виду гарпий -
+<ce> заставляет нервничать торговые караваны.
+<ce> Как насчет того, чтобы за _reward_ золотых,
+<ce> прогуляться в ___mondung_ и учинить там
+<ce> погромчик и небольшую резню?
+
+RefuseQuest:  [1001]
+<ce> Жаль. Мне казалось, что это чертовски
+<ce> щедрое предложение.
+
+AcceptQuest:  [1002]
+<ce> Хорошо. Там пять гарпий, и всех их нужно
+<ce> прикончить за =1stparton_ дней. В противном
+<ce> случае - никакой награды. И еще небольшой совет:
+<ce> сюда нужно вернуться за =1stparton_ дней, но в их
+<ce> логово отправляйся как можно скорее. Иначе
+<ce> эти гарпии могут куда-нибудь мигрировать, и ты
+<ce> останешься не у дел. Ну что ж, удачи!
+<ce> Отправляйся.
+
+QuestFail:  [1003]
+<ce> Слушай, я понимаю, что перед моим
+<ce> обаянием трудно устоять, но твои
+<ce> гарпии ждут тебя, и позаботься о том,
+<ce> чтобы обслужить всех пятерых, понятно?
+
+QuestComplete:  [1004]
+<ce> Отлично, дружище, хорошо сработано.
+<ce> Вот твои золотые, _reward_.
+<ce> Солидный куш.
+
+RumorsDuringQuest:  [1005]
+Какой-то несчастный решил прогуляться в ___mondung_ недавно и был разорван в клочья.
+   <--->
+Надесь эти гарпии направляются дальше не юг.
+
+RumorsPostfailure:  [1006]
+Кажется эти гарпии загадили свое гнездо - ___mondung_, и им пришлось отправлятся дальше.
+   <--->
+Эти гарпии следуют за торговым караваном как за ходячим обедом.
+
+RumorsPostsuccess:  [1007]
+Гарпии создавали серьезные экономические проблемы. Теперь дела должны пойти лучше.
+   <--->
+Говорят, в этом гнезде гарпий были тысячи яиц.
+
+QuestorPostsuccess:  [1008]
+<ce> Эй! Герой-%ra - победитель
+<ce> гарпий вернулся!
+
+QuestorPostfailure:  [1009]
+<ce> А, это тот несчастный %ra, который
+<ce> не справился с кучкой гарпий.
+<ce> Жалкое зрелище...
+
+Message:  1020
+<ce> Это пятая. Должно быть достаточно, чтобы
+<ce> _questgiver_ был доволен.
+
+Message:  1030
+%qdt:
+ Гильдия Бойцов города ___questgiver_
+ наняла меня для уничтожения гнезда гарпий,
+ которые окупировали ___mondung_.
+ Чтобы получить награду нужно прикончить
+ по крайней мере пятерых и вернуться в
+ Гильдию в течение =1stparton_ дней.
+
+
+--separated qdt line, added s to Fighter
+
+
+Message:  1080
+<ce> Ну, раз уж твоя помощь была так кстати,
+<ce> вот тебе карта к ___newdung_.
+<ce> Убивай, мародерствуй - все что захочешь.
+<ce> Я угощаю.
+
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ group Questor
+
+Place _mondung_ remote dungeon10
+Place _newdung_ remote dungeon
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _monster_ is Harpy
+
+--	Quest start-up:
+	start timer _1stparton_
+	reveal _mondung_
+	log 1030 step 0
+	pick one of _map_ _nomap_ _nomap_
+	pc at _mondung_ set _S.04_
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _mondead_
+	give pc _reward_
+	end quest
+
+_mondead_ task:
+	killed 5 _monster_ saying 1020
+
+_qgclicked_ task:
+	clicked npc _questgiver_
+
+_1stparton_ task:
+	end quest
+
+_S.04_ task:
+	create foe _monster_ every 15 minutes 20 times with 50% success
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_
+	say 1003
+	clear _qgclicked_ _clearclick_
+
+variable _map_
+variable _nomap_
+_S.08_ task:
+	when _map_ and _pcgetsgold_
+	reveal _newdung_ readmap
+    say 1080

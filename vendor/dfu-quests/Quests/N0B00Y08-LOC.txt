@@ -1,0 +1,140 @@
+-- Quest: C:\QUESTS\WORKING\N0B00Y08.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: mage
+-- Repute: 0
+-- QuestId: 8
+Messages: 12
+Quest: N0B00Y08
+DisplayName: Наложить заклинание сна
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Благородный _warrior_ помогал
+<ce> нашей гильдии во многих предприятиях.
+<ce> Любой наш враг был и %g4 врагом. Мы
+<ce> получили весть, что ведьма прокляла
+<ce> %g4 бессонницей.
+<ce> Простое заклинание сна поможет %g2.
+<ce> Быть может вы сможете помочь?
+<ce> Я заплачу _gold_ золотых.
+   <--->
+<ce> Если вы способны вызывать простейшее
+<ce> заклятие сна, то ваши способности
+<ce> понадобятся одному нашему хорошему
+<ce> другу. _warrior_ прокляли
+<ce> бессонницей, а простое заклинание
+<ce> может снять его. Могу предложить
+<ce> _gold_ золотых в обмен на эту простую
+<ce> услугу.
+
+RefuseQuest:  [1001]
+<ce> Жаль. %oth, ведь Сон это одно
+<ce> из простейших заклинаний. Думаю,
+<ce> вам не мешало бы изучить его хорошенько.
+
+AcceptQuest:  [1002]
+<ce> Прекрасно. Сейчас я скажу посыльному,
+<ce> что мы не будем использовать других
+<ce> заклятий кроме Сна.
+<ce> Возможно, учитывая %g4 предыдущий
+<ce> опыт с заклятиями проклятия, преодолеть
+<ce> %g2 свой страх будет нелегко. _warrior_
+<ce> живет в _castle_ в __castle_.
+<ce> У _warrior_ будет отличная защита и вооружение.
+<ce> Возвращайтесь до истечения =queston_ дней
+<ce> с хорошими известиями.
+
+QuestComplete:  [1004]
+<ce> Я слышал, что наш пациент
+<ce> буквально провалился в глубокий сон,
+<ce> не успев сделать и двух шагов. Надеюсь
+<ce> %g проспит до следующего праздника
+<ce> Новой Жизни. Что же для вас, уважаемый %ra,
+<ce> вы только что заработали _gold_ золотых.
+
+RumorsDuringQuest:  [1005]
+Бедный _warrior_ не спит уже несколько дней. Думаю, скоро это сведет %g4 с ума.
+   <--->
+Похоже, что ведьма, проклявшая _warrior_ бессонницей работала на н%g4.
+
+RumorsPostfailure:  [1006]
+_warrior_ и Гильдия Магов отлично ладят друг с другом. Почему бы им и не помочь %g2.
+   <--->
+У _warrior_ заключен мир с ведьмами, но не получено прощение Гильдии Магов.
+
+RumorsPostsuccess:  [1007]
+_warrior_ до сих пор дрыхнет, насколько мне известно. Теперь уже опасаются, что %g вообще не проснется.
+   <--->
+Ведьма, наславшая проклятие, поклялась отомстить исцелившему %g4.
+
+QuestorPostsuccess:  [1008]
+Вы помогли нам наладить хорошие отношения с _warrior_. Что я могу сделать для вас?
+
+QuestorPostfailure:  [1009]
+<ce> Вы потерпели неудачу, когда не смогли
+<ce> помочь _warrior_. Уйдите с моих глаз.
+<ce> Быть может со временем я и забуду ваш
+<ce> прокол, %pcn.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Гильдия Магов договорилась со мной
+ наслать Сон на покровителя гильдии
+ магов по имени _warrior_.
+ У меня =queston_ дней, чтобы добраться
+ до места назначения: _castle_ в __castle_,
+ где живет _warrior_, успешно наложить на
+ н%g4 заклинание и вернуться с докладом
+ в гильдию, в ___qgiver_.
+
+Message:  1011
+<ce> _warrior_ не сходя с места
+<ce> погружается в глубокий
+<ce> целительный сон.
+
+
+
+QBN:
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+Person _warrior_ face 219 group Group_5.0 female remote
+Person _witch_ face 218 factiontype Witches_Coven female remote
+
+Place _castle_ remote house1
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+Foe _F.00_ is Warrior
+
+--	Quest start-up:
+	start timer _queston_
+	log 1010 step 0
+	pc at _castle_ set _S.05_
+	restrain foe _F.00_
+	create npc at _castle_
+	place foe _F.00_ at _castle_
+
+_queston_ task:
+	end quest
+
+_reward_ task:
+	when _qgclicked_ and _out_
+	give pc _gold_
+	change repute with _witch_ by -5
+	end quest
+
+_S.02_ task:
+	when _qgclicked_ and not _out_
+	clear _qgclicked_ _S.02_
+
+_out_ task:
+	say 1011
+
+_qgclicked_ task:
+	clicked npc _qgiver_
+
+_S.05_ task:
+	cast Sleep spell do _out_

@@ -1,0 +1,120 @@
+-- Quest: C:\QUESTS\WORKING\O0B10Y06.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: thief
+-- Repute: 10
+-- QuestId: 6
+Messages: 11
+Quest: O0B10Y06
+DisplayName: Похищение драгоценностей
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Вот то, что тебе подойдет.
+<ce> Надо украсть драгоценности
+<ce> у ювелира. Хочешь попробовать?
+<ce> Цена обычная -
+<ce> _gold_ золотых.
+
+RefuseQuest:  [1001]
+<ce> Ну и %god с тобой. Попробуй найди
+<ce> сейчас вора, который взялся бы за это дело.
+
+AcceptQuest:  [1002]
+<ce> %oth, мой кровожадный бриллиант.
+<ce> Тебе надо прийти в город __mansion_
+<ce> и найти дом __mansion_.
+<ce> Там очень плохо лежит _jewelry_.
+<ce> Но держи ухо востро. Возможно
+<ce> там будет дрыхнуть несколько
+<ce> охранников.
+
+QuestComplete:  [1004]
+<ce> Классная работа, %pcn.
+<ce> Вот твое золото.
+
+RumorsDuringQuest:  [1005]
+Говорят, что дом _mansion_ неприступен.
+
+RumorsPostfailure:  [1006]
+Кто-то попытался проникнуть в особняк _mansion_, но у него ничего не получилось.
+
+RumorsPostsuccess:  [1007]
+Дом _mansion_ ограбили. Хотя это вряд ли вообще возможно.
+   <--->
+Если особняк _mansion_ ограбят, то тогда в Тамриэле вообще не останется безопасных мест.
+
+QuestorPostsuccess:  [1008]
+И что ты делаешь сейчас, %pcf? Уже представляешь, что все _gold_ золотых потрачены?
+
+QuestorPostfailure:  [1009]
+<ce> %oth, это ты. Тот малый, владелец
+<ce> особняка _mansion_, убрал свою
+<ce> радость - _jewelry_ с глаз подальше.
+<ce> Так что все усилия пошли прахом. И благодарить
+<ce> за все это мы будем тебя... благодарить будем
+<ce> больно, но аккуратно... Спасибо
+<ce> тебе за всю твою слегка тяжелую работу.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ из города ___qgiver_
+ отправляет меня утащить некую драгоценность,-
+ _jewelry_ из дома _mansion_, что
+ в местечке ___mansion_. Мне дают
+ =traveltime_ дней.
+
+
+
+QBN:
+Item _jewelry_ trinket
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+
+Place _mansion_ remote house1
+
+Clock _traveltime_ 00:00 0 flag 17 range 0 2
+
+Foe _F.00_ is Grizzley_bear
+Foe _F.01_ is Giant_scorpion
+Foe _F.02_ is Ranger
+Foe _F.03_ is Thief
+
+--	Quest start-up:
+	place item _jewelry_ at _mansion_
+	start timer _traveltime_
+	log 1010 step 0
+	pc at _mansion_ set _S.01_
+
+_traveltime_ task:
+	end quest
+
+_S.01_ task:
+	pick one of _guard1_ _guard2_ _guard3_ _guard4_
+
+_questdone_ task:
+	toting _jewelry_ and _qgiver_ clicked
+	give pc _gold_
+	end quest
+
+_guard1_ task:
+	create foe _F.00_ every 4 minutes 1 times with 10% success
+
+_guard2_ task:
+	create foe _F.01_ every 4 minutes 1 times with 10% success
+
+_guard3_ task:
+	create foe _F.02_ every 4 minutes 1 times with 10% success
+
+_guard4_ task:
+	create foe _F.03_ every 4 minutes 1 times with 10% success
+
+wizard0 task:
+	clicked item _jewelry_
+
+_S.08_ task:
+	when wizard0 and _traveltime_
+	make _jewelry_ permanent
+	change repute with _qgiver_ by -20

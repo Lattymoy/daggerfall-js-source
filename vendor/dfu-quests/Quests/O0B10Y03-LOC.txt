@@ -1,0 +1,152 @@
+-- Quest: C:\QUESTS\WORKING\O0B10Y03.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: thief
+-- Repute: 10
+-- QuestId: 3
+Messages: 11
+Quest: O0B10Y03
+DisplayName: Посещение храма
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Привет, у меня есть работенка,
+<ce> если, конечно, надо. Меня зовут
+<ce> _qgiver_. Один малый хочет
+<ce> священную ерунду из храма
+<ce> _temple_, -_religiousitem_.
+<ce> Займешься?
+
+RefuseQuest:  [1001]
+<ce> Я буду иметь тебя в виду, %pcn
+<ce> если подвернется более интересная
+<ce> работа.
+
+AcceptQuest:  [1002]
+<ce> Хорошо. Тогда слушай.
+<ce> Иди в храм _temple_
+<ce> что в районе города __temple_.
+<ce> Забери _religiousitem_ и принеси
+<ce> мне. Получишь за это обычный
+<ce> гонорар. _gold_ золотых.
+<ce> Я даю тебе =traveltime_ дней, и хочу,
+<ce> чтобы эта штучка была у меня.
+
+QuestComplete:  [1004]
+<ce> Привет. Представляешь, эти придурки
+<ce> не хотят платить... Они, наверное,
+<ce> не представляют себе, как было
+<ce> сложно достать эту хрень. Надеюсь
+<ce> они не совсем еще чокнулись, чтобы
+<ce> обманывать меня. Это плохая идея.
+<ce> Ну ничего. Моя славная братва притащит
+<ce> их за уши.
+<ce> А вообще-то, %pcf, хорошая работа. И,
+<ce> главное, вовремя. Держи. Это за твои
+<ce> услуги.
+
+RumorsDuringQuest:  [1005]
+У меня был жар ... но все прошло.
+   <--->
+Я три часа разговаривал о погоде.
+   <--->
+Отличная погода для этого времени года.
+   <--->
+Довольно таки прохладно в %cn для этого времени года.
+   <--->
+Уверен, сегодня значительно теплее, чем было в прошлом году.
+   <--->
+Моя замечательная тетя искала специалиста по всему Тамриэлю.
+   <--->
+Весьма забавно, когда в это время на улице уже темно.
+   <--->
+Мы должны воздвигнуть памятник войне.
+   <--->
+Детишки в эти дни балуются со своей магией. %oth, не знаю что и сказать.
+   <--->
+Прошлой ночью мне приснился удивительный сон.
+   <--->
+Мне рассказали отличную шутку. %jok
+   <--->
+%jok Конечно же это всего лишь шутка.
+   <--->
+%jok Не могли бы вы объяснить, что все это значит?
+   <--->
+У свода законов в %reg много хороших сторон и одна плохая.
+
+RumorsPostfailure:  [1006]
+_temple_, похоже, очень хорошо охраняется.
+
+RumorsPostsuccess:  [1007]
+Какой-то парень, аколит храма _temple_, заплатил ворам, чтобы они проникли в его же храм.
+
+QuestorPostsuccess:  [1008]
+Как дела, %pcf? Я все еще жду известий от парня, который нас нанял.
+
+QuestorPostfailure:  [1009]
+<ce> Мне неважно, охранялся ли
+<ce> этот храм Лордом всего
+<ce> Обливиона, %pcf!
+<ce> Не хочу даже слышать никаких
+<ce> оправданий. Доверие гильдии
+<ce> к тебе подорвано.
+<ce> Иди погуляй.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ из Гильдии Воров
+ города  ___qgiver_ дает мне задание
+ украсть _religiousitem_
+ из храма _temple_ города
+ __temple_. На все у меня есть
+ =traveltime_ дней. Вещицу нужно принести
+ обратно.
+
+
+
+QBN:
+Item _religiousitem_ religious
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+
+Place _temple_ remote temple
+
+Clock _traveltime_ 00:00 0 flag 17 range 0 2
+
+Foe _F.00_ is 2 Knight
+Foe _F.01_ is Giant_scorpion
+Foe _F.02_ is Monk
+Foe _F.03_ is Zombie
+
+--	Quest start-up:
+	place item _religiousitem_ at _temple_
+	start timer _traveltime_
+	log 1010 step 0
+	pc at _temple_ set _S.01_
+
+_traveltime_ task:
+	make _religiousitem_ permanent
+	change repute with _qgiver_ by -5
+	end quest
+
+_S.01_ task:
+	pick one of _guard1_ _guard2_ _guard3_ _guard4_
+
+_questdone_ task:
+	toting _religiousitem_ and _qgiver_ clicked
+	give pc _gold_
+	end quest
+
+_guard1_ task:
+	create foe _F.00_ every 4 minutes 1 times with 10% success
+
+_guard2_ task:
+	create foe _F.01_ every 4 minutes 1 times with 10% success
+
+_guard3_ task:
+	create foe _F.02_ every 4 minutes 1 times with 10% success
+
+_guard4_ task:
+	create foe _F.03_ every 4 minutes 1 times with 10% success

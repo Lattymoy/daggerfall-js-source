@@ -1,0 +1,187 @@
+-- Quest: C:\QUESTS\WORKING\Q0C0XY02.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: witch
+-- Repute: 0X
+-- QuestId: 2
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 21
+Quest: Q0C0XY02
+DisplayName: Коварный подарок
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Ты хочешь помочь ==qgiver_,
+<ce> %pcf? Многие приходили к нам для
+<ce> исцеления, а затем отворачивались от
+<ce> нас и их рты открывались лишь для того,
+<ce> чтобы проклинать нас, а их обещания
+<ce> становились угрозами. За благодарность
+<ce> ==qgiver_ не согласишься
+<ce> ли ты наказать одного отступника
+<ce> для сестринства?
+
+RefuseQuest:  [1001]
+<ce> Ничего лучше нельзя было сказать?
+<ce> %oth, именем ==daedra_,
+<ce> полагаю лучше не надо было обещать
+<ce> того, что не можешь выполнить, я
+<ce> очень огорчена.
+
+AcceptQuest:  [1002]
+<ce> Воистину так? Если сделаешь, тогда у
+<ce> нас для тебя есть _mitem_, которую
+<ce> мы сделаем для тебя. Отправляйся в
+<ce> __tavern_ и поищи там того, кто нас
+<ce> предал, злодей =man_, называющий
+<ce> себя _man_.
+<ce> Дай ему вот эту вещицу _jewelry_
+<ce> и скажи, что это подарок от его прежней
+<ce> возлюбленной, а потом возвращайся. Тебе
+<ce> надо поторопиться, _jewelry_ не оставит
+<ce> от его былой красоты и следа.
+<ce> ==qgiver_ будет ждать тебя в течение
+<ce> =queston_ дней. Да улыбнется
+<ce> тебе удача ==daedra_ в твоем
+<ce> священном задании.
+
+--needed to change %g on line 36 due to gender mismatches
+
+QuestComplete:  [1004]
+<ce> Добрый друг %pcf, твое обещание
+<ce> ==qgiver_ выполнено.
+<ce> Вот _mitem_, как и было обещано.
+<ce> Беднага _man_.
+<ce> Надеюсь его упрячут глубоко со своими
+<ce> страданиями, прежде чем он наложит на
+<ce> себя руки.
+
+RumorsDuringQuest:  [1005]
+_man_ - настоящий пример человека, сделавшего карьеру своими руками. Пример для подражания.
+   <--->
+==qgiver_ очень мстительны.
+
+RumorsPostfailure:  [1006]
+_man_ смеется над мыслью, что он что-то должен ==qgiver_.
+   <--->
+_man_ ушел из __tavern_. И он был очень расстроен.
+
+RumorsPostsuccess:  [1007]
+_man_ превратился в ужасное страшилище прямо на глазах у посетителей таверны _tavern_.
+   <--->
+_man_ должно быть сторговался с даэдра. %oth, какая ужасная судьба.
+
+QuestorPostsuccess:  [1008]
+Воистину так, я надеюсь что тебе пригодилась наша вещица _mitem_, %pcf.
+
+QuestorPostfailure:  [1009]
+<ce> Наше возмездие для _man_
+<ce> не завершено! Убирайся прочь отсюда
+<ce> или его трагическая судьба постигнет
+<ce> тебя, %pcf.
+
+Message:  1011
+<ce> _man_ благодарит вас за
+<ce> _jewelry_. Он примеряет это на себя,
+<ce> когда вы говорите, кто послал ему это.
+<ce> В его глазах мелькает страх при упоминании
+<ce> имени ==qgiver_, а потом страх
+<ce> превращается в боль.
+
+Message:  1012
+<ce> Тебя послали не убивать, а просто
+<ce> отдать ему _jewelry_!
+<ce> Проклятье! Убийца! _man_
+<ce> должен был погрузиться в пучину страданий
+<ce> за свою наглость, а не умереть без боли.
+<ce> ==daedra_ проклинает
+<ce> тебя, %pcf.
+
+Message:  1020
+%qdt:
+ ==qgiver_ из
+ %reg послали меня отдать
+ _jewelry_ мужчине по имени
+ _man_ в __tavern_.
+ Мне посоветовали избавиться от
+ _jewelry_ как можно быстрее, потому
+ что это "не оставит от его былой
+ красоты и следа". Мне нужно
+ вручить _jewelry_ в его руки
+ и вернуться к ==qgiver_ в
+ течение =queston_ дней.
+
+
+
+QBN:
+Item _jewelry_ trinket
+Item _mitem_ magic_item
+
+Person _qgiver_ group Questor
+Person _daedra_ face 1 factiontype Daedra remote
+Person _man_ faction Dancers male remote
+--Group 7.0 wouldn't work, needed a local site. Dancers is sufficient for the quest
+
+Place _tavern_ remote tavern
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+Foe _zombie_ is Zombie
+Foe _harpy_ is Harpy
+Foe _daedroth_ is Daedroth
+Foe _giant_ is Giant
+
+--	Quest start-up:
+	dialog link for person _daedra_
+	start timer _queston_
+	log 1020 step 0
+	get item _jewelry_
+	place npc _man_ at _tavern_
+
+_queston_ task:
+	end quest
+
+_S.01_ task:
+	toting _jewelry_ and _man_ clicked
+	pick one of _S.04_ _S.02_ _S.03_ _S.05_
+	hide npc _man_
+	say 1011
+
+_S.02_ task:
+	place foe _giant_ at _tavern_
+
+_S.03_ task:
+	place foe _harpy_ at _tavern_
+
+_S.04_ task:
+	place foe _daedroth_ at _tavern_
+
+_S.05_ task:
+	place foe _zombie_ at _tavern_
+
+_S.06_ task:
+	killed 1 _giant_
+	killed 1 _harpy_
+	killed 1 _zombie_
+	killed 1 _daedroth_
+
+_qgclicked_ task:
+	clicked npc _qgiver_
+
+_S.08_ task:
+	when _qgclicked_ and _S.06_
+	say 1012
+	--this was 1020, could not be correct. changed to 1012.
+	change repute with _man_ by -15
+	make pc ill with Witches'_Pox
+	end quest
+
+_reward_ task:
+	when _qgclicked_ and _S.01_ and not _S.06_
+	give pc _mitem_
+	end quest
+
+_S.10_ task:
+	when _qgclicked_ and not _S.01_
+	clear _qgclicked_ _S.10_

@@ -1,0 +1,143 @@
+-- Quest: C:\QUESTS\WORKING\M0B30Y03.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: fighter
+-- Repute: 30
+-- QuestId: 3
+Messages: 81
+Quest: M0B30Y03
+DisplayName: Охота на даэдрота
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Да, дела... Не знаю, кто кроме тебя
+<ce> справится с этим делом, %pcf.
+<ce> ___mondung_!
+<ce> Там теперь эта злобная тварь, даэдрот!
+<ce> Это правда; никто не знает, почему он там,
+<ce> но все хотят, чтобы его там не было.
+<ce> Возьмешься за это, %pcf, За _reward_
+<ce> золотых?
+
+RefuseQuest:  [1001]
+<ce> Я не осуждаю тебя, %pcf.
+<ce> Я бы тоже не стал связываться с
+<ce> даэдротом.
+
+AcceptQuest:  [1002]
+<ce> Что ж, отлично, теперь это твоя забота,
+<ce> %pcf. Чтобы спровадить этого
+<ce> даэдрота и вернуться сюда даю тебе
+<ce> =1stparton_ дней. Трудно предсказать как
+<ce> пойдут у тебя там дела, так
+<ce> что лучше поторапливайся. И еще,
+<ce> %pcf, приготовься к чертовски
+<ce> жаркой схватке!
+
+QuestFail:  [1003]
+<ce> Ты ждешь, пока даэдрот умрет от
+<ce> старости, %pcf?
+
+QuestComplete:  [1004]
+<ce> %ra, твой народ может гордиться тобой,
+<ce> победитель даэдротов.
+<ce> Возьми свое золото, %pcf.
+
+RumorsDuringQuest:  [1005]
+Хм-м, ___mondung_, - не знаю что там за гигантская ящерица, но мне это все не нравится.
+   <--->
+Все вокруг говорят, что ___mondung_ теперь жилище какой-то большой гадкой твари.
+
+RumorsPostfailure:  [1006]
+Не знаю, что случилось с этим даэдротом. Он по-прежнему где-то здесь.
+   <--->
+Хотелось бы знать где этот чертов даэдрот. Кто предупрежден, - тот вооружен.
+
+RumorsPostsuccess:  [1007]
+Да святится имя %god, - у нас есть Гильдия Бойцов, чтобы позаботиться о даэдротах.
+   <--->
+Интересно, кем же конце концов оказалась та большая гадкая тварь.
+
+QuestorPostsuccess:  [1008]
+<ce> О, %ra, избавивший ___mondung_
+<ce> от присутствия страшного даэдрота.
+<ce> Позволь пожать твою руку.
+
+QuestorPostfailure:  [1009]
+<ce> Провал - это не то, что легко принимается
+<ce> Гильдией. Если даэдрот тебе не по зубам, не
+<ce> надо было браться за эту работу. У меня есть
+<ce> более важные занятия, чем тратить время на
+<ce> разговоры с тобой.
+
+Message:  1020
+<ce> Даэдрот мертв.
+
+Message:  1030
+%qdt:
+ Гильдия Бойцов из ___questgiver_
+ заплатит мне _reward_ золотых, если я
+ уничтожу даэдрота в его логове
+ ___mondung_ и вернусь
+ обратно не позднее чем через =1stparton_ дней.
+
+-lowered first line of 1030 from %qdt line
+
+Message:  1080
+<ce> Раз уж тебя не испугал даэдрот, возьми
+<ce> эту карту к ___newdung_. %pct с твоими
+<ce> способностями неплохо проведет там время.
+
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ group Questor
+
+Place _mondung_ remote dungeon
+Place _newdung_ remote dungeon
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _monster_ is Daedroth
+
+--	Quest start-up:
+	start timer _1stparton_
+	reveal _mondung_
+	log 1030 step 0
+	pick one of _map_ _nomap_ _nomap_ _map_
+	place foe _monster_ at _mondung_
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _mondead_
+	give pc _reward_
+
+_mondead_ task:
+	killed 1 _monster_ saying 1020
+
+_qgclicked_ task:
+	clicked npc _questgiver_
+
+_1stparton_ task:
+	end quest
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_
+	say 1003
+	clear _qgclicked_ _clearclick_
+
+variable _map_
+variable _nomap_
+_S.07_ task:
+	when _map_ and _pcgetsgold_
+	reveal _newdung_ readmap
+    say 1080
+
+_S.08_ task:
+	when _nomap_ and _pcgetsgold_
+
+_S.09_ task:
+	when _S.07_ or _S.08_
+	end quest

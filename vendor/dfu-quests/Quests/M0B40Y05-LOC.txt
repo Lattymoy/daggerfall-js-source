@@ -1,0 +1,228 @@
+-- Quest: C:\QUESTS\WORKING\M0B40Y05.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: fighter
+-- Repute: 40
+-- QuestId: 5
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 81
+Quest: M0B40Y05
+DisplayName: Охота на сприггана
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Несколько дровосеков наняли Гильдию
+<ce> убить сприггана.
+<ce> Судя по всему монстр напал на них,
+<ce> когда они занимались заготовкой
+<ce> дров в лесу. Хочешь взяться за
+<ce> эту работу, %pcn?
+
+RefuseQuest:  [1001]
+<ce> Довольно честно. Свободен.
+<ce> Я поищу кого-то менее занятого.
+
+AcceptQuest:  [1002]
+<ce> Две попытки устроить засаду не
+<ce> увенчались успехом. Спригган весьма
+<ce> умен оказался. Тебе надо пойти в его
+<ce> логово в ___dungeon_.
+<ce> Возвращайся в течение =2dung_ дней
+<ce> и получишь в награду _gold_ золотых.
+
+QuestFail:  [1003]
+<ce> Спригган порублен в щепки?
+<ce> Твоя удаль делает тебе честь,
+<ce> %pct.
+
+QuestComplete:  [1004]
+<ce> Вот твое золото: _gold_.
+<ce> Все как и было обещано.
+
+RumorsDuringQuest:  [1005]
+<ce> Я слыхал, _woodsman_ подбивает
+<ce> дровосеков на борьбу со спригганами.
+<ce> Это же просто смешно. Никогда не слыхал,
+<ce> чтобы спригганы представляли для нас
+<ce> угрозу.
+
+RumorsPostfailure:  [1006]
+<ce> Еще один дровосек мертв. Я слышал,
+<ce> это был _woodsman_. Похоже им стоит
+<ce> поискать другое место для рубки леса.
+
+RumorsPostsuccess:  [1007]
+<ce> Я давно уже не слышал про спригганов.
+<ce> Должно быть они ушли отсюда.
+
+QuestorPostsuccess:  [1008]
+<ce> Отличная работа с этими спригганами.
+
+QuestorPostfailure:  [1009]
+<ce> Спригганы слишком круты для тебя?
+<ce> Что случилось? Ты, %ra, испугался и
+<ce> спрятался?
+
+QuestLogEntry:  [1010]
+%qdt:
+ Гильдия Бойцов из ___qgiver_
+ наняла меня убить сприггана,
+ терроризирующего местных дровосеков.
+ Он прячется в ___dungeon_.
+ Мне дали =2dung_ дня на
+ выполнение работы.
+
+Message:  1011
+<ce> Спригган мертв.
+<ce> Наконец-то дровосеки могут
+<ce> спокойно вздохнуть.
+
+Message:  1020
+<ce> Ты нападаешь на меня без причины,
+<ce> %ra. Да, я нападал на губителей
+<ce> леса. Если бы ты знал, сколько моих
+<ce> сородичей они убили. Смог бы ты
+<ce> удержать свои корни в земле и не
+<ce> наказывать убийц твоих детей? Я
+<ce> не имею против тебя ничего плохого.
+<ce> Убеди дровосеков обращаться с
+<ce> лесом бережнее и я оставлю их в покое.
+<ce> Ты сделаешь это для меня?
+
+Message:  1021
+<ce> Главный виновник - _woodsman_,
+<ce> он рубит деревья без разбору.
+<ce> Иди в ___woodsman_ и возьми с него
+<ce> обещание вести себя аккуратнее. Больше
+<ce> не ищи меня. Я буду знать, выполнено ли
+<ce> мое задание или нет по тому, как будут
+<ce> работать дровосеки.
+
+Message:  1022
+<ce> Теперь я буду знать, каково доверять
+<ce> существу из плоти. Сейчас я воздам
+<ce> тебе за труды твои.
+
+Message:  1023
+<ce> Ха, эти деревяшки хотят заключить
+<ce> сделку, да? Что ж, полагаю я смогу
+<ce> убедить своих ребят рубить только
+<ce> взрослые деревья. Но если эти...
+<ce> эти...еще раз нападут на нас, мы
+<ce> сожжем все, вплоть до побегов, которые
+<ce> нам попадутся! Можешь считать, что
+<ce> мы договорились, %pcn.
+
+Message:  1025
+<ce> Тебе удалось сделать так, что дровосеки
+<ce> и спригганы поладили без драки?
+<ce> Изумительно, %pcn! Далеко пойдешь,
+<ce> с таким острым умом, как у тебя.
+
+Message:  1030
+%qdt:
+ Спригган убедил меня, что к насилию
+ его вынудили. Похоже что дровосек
+ по имени _woodsman_
+ из ___woodsman_ увлекся рубкой леса.
+ Если мне удастся уговорить _woodsman_
+ рубить лес аккуратнее, это существо
+ прекратит проливать чужую кровь.
+
+Message:  1080
+<ce> Эх, что-то сегодня я добрый. Вот карта к
+<ce> местечку под названием ___newdung_.
+<ce> Оно полно монстров, которых надо убить,
+<ce> сокровищ, которые надо разграбить, в общем
+<ce> много чего там есть. Веселись на полную
+<ce> катушку.
+
+
+
+QBN:
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+Person _woodsman_ face 168 group Resident2 remote
+
+Place _dungeon_ remote dungeon
+Place _newdung_ remote dungeon
+
+Clock _2dung_ 00:00 0 flag 17 range 0 2
+Clock _end_ 00:00
+
+Foe _monster_ is Spriggan
+
+--	Quest start-up:
+	start timer _2dung_
+	reveal _dungeon_
+	log 1010 step 0
+	pick one of _map_ _nomap_
+	place foe _monster_ at _dungeon_
+
+_2dung_ task:
+	end quest
+
+_S.01_ task:
+	killed 1 _monster_ saying 1011
+	hide npc _woodsman_
+	remove log step 1
+
+_qgclicked_ task:
+	clicked npc _qgiver_
+
+_normalvict_ task:
+    when _qgclicked_ and _S.01_
+	say 1003
+    start task _victory_
+--1003 appears to be a victory statement for kill path
+
+_victory_ task:
+	give pc _gold_
+    start timer _end_
+--	end quest
+--this would cause double quest ending, for double reputation gain
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.01_ and not _S.07_
+	clear _qgclicked_ _clearclick_
+
+_S.04_ task:
+	injured _monster_
+
+_injtalk_ task:
+    when _S.04_ and not _S.01_
+	prompt 1020 yes _yes_ no _no_
+
+_yes_ task:
+	add dialog for person _woodsman_
+	log 1030 step 1
+	say 1021
+	restrain foe _monster_
+
+_no_ task:
+	say 1022
+
+_S.07_ task:
+	clicked npc _woodsman_
+
+_notkill_ task:
+	when _S.07_ and _injtalk_ and not _S.01_
+    say 1023
+	change repute with _woodsman_ by +10
+
+_S.08_ task:
+	when _qgclicked_ and _notkill_
+	say 1025
+	start task _victory_
+
+variable _map_
+variable _nomap_
+_S.11_ task:
+	when _map_ and _victory_
+	reveal _newdung_ readmap
+    say 1080
+
+_end_ task:
+    end quest

@@ -1,0 +1,209 @@
+-- Quest: C:\QUESTS\WORKING\A0C01Y09.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: peasant
+-- Repute: 01
+-- QuestId: 9
+Messages: 62
+Quest: A0C01Y09
+DisplayName: Подарок на день рождения
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Простите? _questg_ мое имя.
+<ce> Неважно, что я чувствую насчет вас, но мне
+<ce> нужна услуга. У моей сестры, _sister_,
+<ce> день рождения через месяц и я хотел бы
+<ce> купить одну вещь к празднику _item_.
+<ce> Это будет стоить _gold_ золотых.
+<ce> Что скажете?
+
+RefuseQuest:  [1001]
+<ce> Ну что ж, ладно. Доброго дня.
+   <--->
+<ce> Прошу прощения за беспокойство.
+   <--->
+<ce> Я вам ничего не говорил. Ненавижу себя
+<ce> за то, что раскрыл секрет.
+   <--->
+<ce> Зря, это же легкие деньги.
+   <--->
+<ce> Оставьте меня, у меня есть планы на праздник.
+
+AcceptQuest:  [1002]
+<ce> Отлично! Вы весьма благожелательны.
+<ce> Это легкие деньги. Идите в _store_
+<ce> и найдите _merchant_, у него есть
+<ce> один предмет _item_, который мне нужен.
+<ce> Помните, до праздника остался всего
+<ce> один месяц.
+   <--->
+<ce> Очень хорошо. Легкие деньги. Вам нужно сходить
+<ce> в _store_, там есть то, что мне нужно.
+<ce> Поговорите с _merchant_, обретающимся там.
+
+
+QuestComplete:  [1004]
+<ce> Очень хорошо, %pcn. Вот обещанная плата.
+
+RumorsDuringQuest:  [1005]
+<ce> Я слышал, что _questg_ на самом деле
+<ce> недолюбливает свою сестру _sister_.
+<ce> Имеется ввиду ее свадьба.
+
+RumorsPostfailure:  [1006]
+<ce> Вы слыхали, что _sister_ пытались
+<ce> отравить?
+
+RumorsPostsuccess:  [1007]
+<ce> _sister_ была найдена мертвой! И
+<ce> это за день до женитьбы.
+
+QuestorPostsuccess:  [1008]
+<ce> Эхем. Ну, да. Полагаю, что с тех пор,
+<ce> как вы достали эту...вещь для моей сестры,
+<ce> выходящей замуж, я у вас в долгу.
+
+QuestorPostfailure:  [1009]
+<ce> Предатель! Я послал вас с простейшим заданием,
+<ce> а вы рассказали обо всем _sister_.
+<ce> Вы оказали мне медвежью услугу!.
+
+
+Message:  1011
+<ce> У вас есть _item_.
+<ce> Вы дадите это _sister_?
+
+Message:  1013
+<ce> У вас есть _item_.
+<ce> Дадите это в руки _questg_?
+
+Message:  1025
+%qdt:
+ _questg_ из ___questg_ просил
+ принести одну вещь _item_ от _merchant_ в _store_
+ в обмен на _gold_ золотых. Надо вернуться с
+ _item_ до наступления дня рождения сестры
+ _questg_, _sister_,
+ который наступит через месяц.
+
+Message:  1040
+<ce> Привет. Да, я _merchant_.
+<ce> _item_? Да это есть у меня. Я продам вам это
+<ce> за 20 золотых и можете забрать это.
+<ce> Спасибо.
+
+Message:  1041
+<ce> Привет. Да, я _merchant_.
+<ce> _item_? Да это есть у меня. Я продам вам это
+<ce> за 20 золотых и можете забрать это.
+<ce> О, простите. Похоже у вас нет необходимой
+<ce> суммы.
+
+Message:  1050
+<ce> Привет? Какого черта вы здесь? Вы говорите,
+<ce> _questg_ хочет одну вещь: _item_
+<ce> для дня рождения? О, что за чудесная идея!
+<ce> Обещаю не портить сюрприз.
+
+Message:  1051
+<ce> Привет? Как вы сюда попали? Что?
+<ce> _questg_ попросил вас принести ему
+<ce> _item_? Ох ... у вас есть какие-то идеи,
+<ce> что он затеял? Я думаю, что _item_
+<ce> одна из составных частей напитка, нравящегося
+<ce> моему возлюбленному брату. Этот напиток
+<ce> убивает. Не давайте ему этого! Пожалуйста!
+<ce> Принесите мне _item_. Сделайте
+<ce> это или меня убьют!
+
+Message:  1060
+<ce> Полагаю, я могу забрать это.
+<ce> Вы же не раскрыли сюрприз?
+<ce> Вы очень странный человек, %pcn.
+
+Message:  1061
+<ce> Благодарю, мой брат не должен был
+<ce> этого делать. Вы хорошо поработали.
+<ce> Благодарю.
+
+
+
+QBN:
+Item _item_ large_plant
+Item _gold_ gold
+
+Person _questg_ face 4 group Questor
+Person _sister_ face 2 group Resident2 female local
+Person _merchant_ face 1 faction The_Merchants local
+
+Place _item0_ local house2
+-added underscores to item0
+Place _store_ local generalstore
+
+Clock _questtime_ 31.00:00 0 flag 1 range 0 1
+Clock _shortdelay_ 01:00 0 flag 1 range 0 1
+
+
+--	Quest start-up:
+	start timer _questtime_
+	log 1025 step 0
+	pick one of _S.01_ _S.02_ _S.01_ _S.02_
+	create npc _sister_
+	place npc _merchant_ at _store_
+
+_questtime_ task:
+	end quest
+
+variable _S.01_
+variable _S.02_
+variable _S.03_
+_S.04_ task:
+	clicked _merchant_ and at least 20 gold otherwise do _S.05_
+	get item _item_
+	say 1040
+
+_S.05_ task:
+	say 1041
+
+_S.06_ task:
+	toting _item_ and _questg_ clicked
+	prompt 1013 yes _S.13_ no _S.11_
+
+_S.07_ task:
+	clicked npc _sister_
+
+_S.08_ task:
+	when _S.07_ and _S.01_
+	say 1050
+
+_S.09_ task:
+	when _S.07_ and _S.02_
+	say 1051
+
+_S.10_ task:
+	toting _item_ and _sister_ clicked
+	prompt 1011 yes _S.12_ no _S.11_
+
+_S.11_ task:
+	get item _item_
+
+variable _S.12_
+_S.13_ task:
+	give pc _gold_
+
+_S.14_ task:
+	when _S.01_ and _S.12_
+	say 1060
+
+_S.15_ task:
+	when _S.02_ and _S.12_
+	say 1061
+
+_shortdelay_ task:
+	end quest
+
+_S.17_ task:
+	when _S.06_ or _S.10_
+	start timer _shortdelay_

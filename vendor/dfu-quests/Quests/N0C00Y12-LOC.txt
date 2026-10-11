@@ -1,0 +1,132 @@
+-- Quest: C:\QUESTS\WORKING\N0C00Y12.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: mage
+-- Repute: 0
+-- QuestId: 12
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 21
+Quest: N0C00Y12
+DisplayName: Бес в бегах
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Можете называть меня _qgiver_.
+<ce> Обычно я даю работу только членам гильдии.
+<ce> Но как бы то ни было, у одного из наших
+<ce> студентов возникли небольшие проблемы,
+<ce> которые нежелательно придавать огласке.
+<ce> Я не могу заплатить вам, но если вы согласитесь
+<ce> разобраться с результатами неудавшегося
+<ce> эксперимента, с минимальным риском для вас,
+<ce> буду рад замолвить за вас словечко перед
+<ce> членами гильдии.
+
+RefuseQuest:  [1001]
+<ce> Так какого черта вы спрашиваете меня про
+<ce> работу? Иногда я просто не понимаю этих
+<ce> авантюристов.
+
+AcceptQuest:  [1002]
+<ce> Хорошо. Мой ученик держал у себя прирученного
+<ce> беса. Эти магические создания не очень опасны,
+<ce> но пакостить любят. Наши искатели обнаружили,
+<ce> что бес этот сбежал в ___mondung_.
+<ce> Убейте бестию и доложитесь мне до исхода
+<ce> =1stparton_ дней.
+
+QuestFail:  [1003]
+<ce> Я все знаю, бес все еще жив.
+<ce> Вы все еще здесь?
+
+QuestComplete:  [1004]
+<ce> Какое облегчение. Я у вас в долгу, %pcn.
+<ce> Вы немного поднялись в глазах гильдии.
+
+RumorsDuringQuest:  [1005]
+Я слышал, что что-то сбежало из лаборатории Гильдии Магов прошлой ночью.
+   <--->
+%oth, я видел как маленькая тень скрылась в темноте прошлой ночью.
+
+RumorsPostfailure:  [1006]
+Хм, случился тут маленький скандал, касающийся лабораторной охраны Гильдии Магов.
+   <--->
+Опять Гильдия Магов чего-то напартачила.
+
+RumorsPostsuccess:  [1007]
+Слышал, что в лабораториях Гильдии Магов пытают бесов!
+   <--->
+<ce> Я слышал они издевались над бесами в
+<ce> гильдейской лаборатории! Понятно, что
+<ce> они смылись. Дом %nam подвергся набегу
+<ce> мышей, за ними долго гонялись с метлой.
+   <--->
+<ce> Я слышал, что один дружественный бес
+<ce> сбежал из лаборатории Гильдии Магов. Говорят,
+<ce> волшебник, потерявший расположение бесов,
+<ce> становится уязвимым перед вражескими
+<ce> заклинаниями.
+
+QuestorPostsuccess:  [1008]
+Как вы, %pcf? Надеюсь нет больше никакой проблемы с бесами?
+
+QuestorPostfailure:  [1009]
+<ce> Я посылал вас убить беса, если вы помните.
+<ce> Не вижу ни одной причины, по которой я
+<ce> должен с вами общаться.
+
+QuestLogEntry:  [1010]
+<ce> "Я лучше умру, чем вернусь
+<ce> в лабораторию гильдии".
+
+Message:  1020
+%qdt:
+ Гильдия Магов из ___qgiver_
+ наняла меня найти беглого беса,
+ убежавшего из их лаборатории.
+ Скорей всего он прячется в ___mondung_.
+ Мне нужно убить существо и вернуться в
+ ___qgiver_ до исхода =1stparton_ дней.
+
+
+
+QBN:
+
+Person _qgiver_ group Questor
+
+Place _mondung_ remote dungeon
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _imp_ is Imp
+
+--	Quest start-up:
+	start timer _1stparton_
+	reveal _mondung_
+	log 1020 step 0
+	place foe _imp_ at _mondung_
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _mondead_
+	give pc nothing
+	end quest
+
+variable _queston_
+_mondead_ task:
+	killed 1 _imp_
+
+_qgclicked_ task:
+	clicked npc _qgiver_
+
+_clearclick_ task:
+    when _qgclicked_ and not _mondead_
+	say 1003
+    clear _qgclicked_ _clearclick_
+--merged unused _clearclick_ variable into this _reset_ task and renamed it.
+
+_1stparton_ task:
+	end quest
+
+_S.06_ task:
+	injured _imp_ saying 1010

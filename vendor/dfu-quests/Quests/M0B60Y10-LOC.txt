@@ -1,0 +1,152 @@
+-- Quest: C:\QUESTS\WORKING\M0B60Y10.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: fighter
+-- Repute: 60
+-- QuestId: 10
+Messages: 81
+Quest: M0B60Y10
+DisplayName: Охота на атронаха
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Наш новый клиент хочет чтобы кто-нибудь
+<ce> выследил для него атронаха - простейший
+<ce> тип голема. Оплата - _gold_ золотых.
+<ce> Интересное предложение?
+
+RefuseQuest:  [1001]
+<ce> Ты наверное предпочитаешь безопасные
+<ce> дела. Охоту на крыс например...
+
+AcceptQuest:  [1002]
+<ce> Молодой франт, я обещал не открывать его
+<ce> имени, пробовал баловаться с магией.
+<ce> Незаконно. Дуракам везет, - ему удалось
+<ce> создать атронаха. Теперь это создание нужно
+<ce> уничтожить, пока ребята из Гильдии Магов не
+<ce> прознали об этом. Существо нашло убежище в
+<ce> глубинах подземелья ___dungeon_. Если
+<ce> разберешься с этим в течение =2dung_ дней,
+<ce> получишь свою награду.
+
+QuestComplete:  [1004]
+<ce> Превосходно, %pct.
+<ce> Эти олухи из Гильдии Магов не просекли
+<ce> фокус нашего клиента. Он с радостью
+<ce> заплатит обещанные _gold_ золотых.
+
+RumorsDuringQuest:  [1005]
+<ce> Сын виконта в последнее время сам не свой.
+<ce> Вот что бывает, если совать нос во всякую
+<ce> магию. Следует заниматься тем, в чем
+<ce> понимаешь толк.
+
+RumorsPostfailure:  [1006]
+<ce> Гильдия Магов обратилась с запросом, чтобы
+<ce> власти - %t %rn - дали им право
+<ce> наказать сына виконта. Похоже, он призвал
+<ce> атронаха, но не смог его контролировать.
+
+RumorsPostsuccess:  [1007]
+<ce> Сын виконта недавно вступил в Гильдию
+<ce> Магов. Интересно, с чего это он изменил
+<ce> свое мнение о них.
+
+QuestorPostsuccess:  [1008]
+<ce> Атронах - %pcf: ноль - один.
+<ce> Далеко пойдешь такими темпами.
+
+QuestorPostfailure:  [1009]
+<ce> Не следовало принимать задание, если ты не
+<ce> в состоянии справиться с ним. Теперь сына
+<ce> виконта ждет наказание за нелегальное
+<ce> чародейство.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Гильдия Бойцов из ___qgiver_
+ поручила мне не поднимая шума, уничтожить
+ атронаха, призванного одним магом-самоучкой.
+ У меня есть =2dung_ дней на выполнение задания.
+
+Message:  1011
+<ce> Атронах мертв.
+<ce> Будем надеяться, Гильдия Магов не
+<ce> прознает об этом.
+
+Message:  1080
+<ce> И, раз уж тебе так нравится этим
+<ce> заниматься, вот тебе карта - местечко
+<ce> под названием ___newdung_,
+<ce> под завязку набитое барахлом.
+<ce> Прогуляйся на досуге,
+<ce> %pcf.
+
+
+
+QBN:
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+
+Place _dungeon_ remote dungeon
+Place _newdung_ remote dungeon
+
+Clock _2dung_ 00:00 0 flag 17 range 0 2
+
+Foe _fire_ is Fire_atronach
+Foe _flesh_ is Flesh_atronach
+Foe _iron_ is Iron_atronach
+Foe _ice_ is Ice_atronach
+
+--	Quest start-up:
+	start timer _2dung_
+	reveal _dungeon_
+	log 1010 step 0
+	pick one of _map_ _nomap_ _nomap_ _nomap_
+	pick one of _S.04_ _S.05_ _S.06_ _S.07_
+
+_2dung_ task:
+	end quest
+
+_S.01_ task:
+	killed 1 _ice_ saying 1011
+	killed 1 _fire_ saying 1011
+	killed 1 _flesh_ saying 1011
+	killed 1 _iron_ saying 1011
+
+_S.02_ task:
+	clicked npc _qgiver_
+
+_clearclick_ task:
+	when _S.02_ and not _S.01_
+	clear _S.02_ _clearclick_
+
+_S.04_ task:
+	place foe _iron_ at _dungeon_
+
+_S.05_ task:
+	place foe _ice_ at _dungeon_
+
+_S.06_ task:
+	place foe _flesh_ at _dungeon_
+
+_S.07_ task:
+	place foe _fire_ at _dungeon_
+
+variable _map_
+variable _nomap_
+_S.10_ task:
+	when _map_ and _S.02_
+	reveal _newdung_ readmap
+    say 1080
+
+_S.11_ task:
+	when _nomap_ and _S.02_
+
+_S.12_ task:
+	when _S.10_ or _S.11_
+	give pc _gold_
+	end quest

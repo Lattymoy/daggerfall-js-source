@@ -1,0 +1,234 @@
+-- Quest: C:\QUESTS\WORKING\R0C60Y24.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 60
+-- QuestId: 24
+Messages: 41
+Quest: R0C60Y24
+DisplayName: Бизнес с вампирами
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pcf, всегда рад вас видеть, мой
+<ce> дорогой друг, особенно когда мне нужна помощь.
+<ce> Мне необходимо доставить _item_
+<ce> моему человеку, который ждет в ___contact_,
+<ce> однако я получил известие о том, что некий клан
+<ce> вампиров не хочет, чтобы мой человек получил
+<ce> эту посылку. Я думаю вы единственный,
+<ce> кто может это сделать. Вы попытаетесь?
+
+RefuseQuest:  [1001]
+<ce> Правда? Слишком заняты, я полагаю. Очень жаль.
+
+AcceptQuest:  [1002]
+<ce> Ах, замечательно. Вот _item_. Теперь,
+<ce> _contact_ должен получить это в месте
+<ce> под названием __contact_ втечение =queston_ дней.
+<ce> Ищите =contact_. %g4 трудно не заметить.
+<ce> И не допустите, чтобы вас убили во время
+<ce> задания. Удачи, и спасибо вам.
+
+QuestFail:  [1003]
+<ce> %pcf, вы тратите драгоценное время.
+<ce> немедленно отправляйтесь в ___contact_.
+
+QuestComplete:  [1004]
+<ce> А, рад вас видеть, %pcf. И _item_
+<ce> тоже. Превосходно! Эти ночные хищники
+<ce> поступали мудро, пытаясь перехватить
+<ce> посылку. Вот немного золота за беспокойство.
+<ce> Берегите себя.
+
+RumorsDuringQuest:  [1005]
+Я слышал, что они проводят некие исследования в некоторых вампирских вопросах в
+   <--->
+__contact_. _contact_, один из величайших охотников на вампиров, присоединился к __contact_.
+
+RumorsPostfailure:  [1006]
+Недавно в округе кто-то нашел замечательный предмет - _item_.
+   <--->
+Я слышал, что _questgiver_ зол как черт на какого-то %ra путешественника.
+
+RumorsPostsuccess:  [1007]
+Я заметил, что гулять по улицам региона %reg стало безопаснее.
+   <--->
+Нападения вампиров происходят все реже. Но еще не время становиться беспечным.
+
+QuestorPostsuccess:  [1008]
+Я полагаю, кровососы получили хороший урок, а, %pcf? Что я могу для вас сделать?
+   <--->
+Я так понял, что доставка прошла успешно. Меня это нисколько не удивляет.
+
+QuestorPostfailure:  [1009]
+<ce> Вампиры доказали многое, не так ли, %pcf?
+<ce> Не расстраивайтесь -- они могущественные
+<ce> создания. Извините, но сейчас не лучшее
+<ce> время для разговоров.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _questgiver_ хочет,
+ чтобы я доставил _item_ %g4 человеку в
+ место под названием ___contact_. Колдуна,
+ расположившегося в __contact_, зовут _contact_.
+ Очевидно местные вампиры не хотят, чтобы
+ я доставил посылку, но я должен доставить
+ _item_ в ___contact_ втечение =queston_
+ дней, или я лишусь награды.
+
+Message:  1011
+<ce> Так, вы должно быть %pcn.
+<ce> Добро пожаловать в мое скромное жилище.
+<ce> Когда я услышал, что нападение вампира
+<ce> =vampleader_ на вас провалилось, я полагал,
+<ce> что возможно вы меня ищете. Позвольте мне
+<ce> представиться -- я _vampire_ из клана
+<ce> ==vampire_, самого древнего и уважаемого клана
+<ce> вампиров. Как я понял, вы согласились доставить
+<ce> _item_ этому известному палачу _contact_.
+<ce> ==vampire_ предпочтут, чтобы вы вместо
+<ce> этого отдали бы посылку мне. Согласитесь,
+<ce> различие чисто символическое! Особенно если
+<ce> учесть то, что мы предлагаем вам плату
+<ce> в размере _vampreward_ золотых плюс
+<ce> магический предмет - _vampitem_ в подарок.
+<ce> Что скажете на это несомненно щедрое
+<ce> предложение?
+
+Message:  1012
+<ce> Замечательно. Преуспевающий %ra путешественник
+<ce> мудро выбирает союзников. _questgiver_
+<ce> будет недоволен, но %g получил хороший урок
+<ce> любить неудачи. Было очень приятно иметь
+<ce> с вами дело. Возможно мы с вами еще
+<ce> встретимся в более...интимном...месте.
+
+Message:  1013
+<ce> Ваша верность этому _questgiver_ трогательна,
+<ce> но весьма невыгодна для нас обоих. Вы
+<ce> можете быть свободны, %pcf.  Ах, да,
+<ce> кстати, советую быть повнимательнее ночью.
+<ce> ==vampire_ всегда платят по счетам.
+
+Message:  1015
+_contact_ возглавляет крестовый поход на вампиров региона %reg.
+   <--->
+<ce> Иногда я сомневаюсь, что все люди, которых сжег _contact_, действительно
+<ce> были вампирами. Трудно поверить, что среди нас их так много.
+
+Message:  1030
+Пергамент указывает расположение
+места Шабаш Кайкос в регионе Дак'фрон.
+Вы быстро отмечаете его на своей карте.
+
+Message:  1040
+=vampleader_,
+<ce>
+  Этот треклятый _questgiver_ окончательно
+заполучил _item_, который %g искал,
+и отправил своему человеку по имени
+_contact_. Ты прекрасно знаешь, что
+==vampire_ не могут допустить, чтобы посылка
+достигла назначения. _questgiver_ знает,
+что мы попытаемся %g4 остановить, поэтому %g нашел
+%ra по имени %pcn на роль курьера.
+Не стоит его недооценивать -- %pcf обладает
+настораживающей репутацией. Доставь мне _item_
+как можно скорее -- Я буду ждать в _vamphouse_,
+что находится в __vamphouse_.
+<ce>
+Ваш в смерти,
+<ce>
+    _vampire_
+<ce> ----
+
+
+
+QBN:
+Item _reward_ gold
+Item _item_ Holy_relic
+Item _map_ letter used 1030
+Item _note_ letter used 1040
+Item _vampreward_ gold
+Item _vampitem_ magic_item
+
+Person _questgiver_ group Questor
+Person _contact_ group Cleric remote anyInfo 1015 rumors 1015
+Person _vampire_ face 1 factiontype Vampire_Clan remote
+
+Place kykosCoven permanent KykosCoven
+Place _vamphouse_ remote house1
+
+Clock _queston_ 00:00 0 flag 1 range 1 4
+
+Foe _vampires_ is Vampire
+Foe _vampleader_ is Ancient_vampire
+
+--	Quest start-up:
+	dialog link for location _vamphouse_ person _vampire_
+	start timer _queston_
+	log 1010 step 0
+	get item _item_
+	pick one of _yesmap_ _nomap_ _nomap_ _nomap_
+
+_queston_ task:
+	change repute with _questgiver_ by -20
+	end quest
+
+_npcclicked_ task:
+	toting _item_ and _contact_ clicked
+	give pc _reward_
+	end quest
+
+_vampclicked_ task:
+	toting _item_ and _vampire_ clicked
+	prompt 1011 yes _thankyou_ no _gimme_
+
+_thankyou_ task:
+	get item _vampreward_
+	get item _vampitem_
+	say 1012
+	make _vampitem_ permanent
+	make _vampreward_ permanent
+	change repute with _vampire_ by +10
+	end quest
+--eliminates long wait for quest to end. quest is impossible with this choice
+
+_gimme_ task:
+	get item _item_
+	say 1013
+	change repute with _vampire_ by -5
+
+_S.07_ task:
+	daily from 05:50 to 17:30
+
+_S.08_ task:
+	injured _vampires_
+
+_readmap_ task:
+	reveal kykosCoven in province 11 at 484567
+
+variable _yesmap_
+variable _nomap_
+_placemap_ task:
+	when _yesmap_ and _S.08_
+	_map_ used do _readmap_
+	give item _map_ to _vampires_
+
+_S.13_ task:
+	injured _vampleader_
+	_note_ used do _readnote_
+	give item _note_ to _vampleader_
+
+_readnote_ task:
+	add dialog for location _vamphouse_
+	create npc at _vamphouse_
+	place npc _vampire_ at _vamphouse_
+
+_conhouse_ task:
+	when not _S.07_ and not _thankyou_
+	create foe _vampires_ every 10 minutes 8 times with 25% success
+	create foe _vampleader_ every 20 minutes 1 times with 100% success

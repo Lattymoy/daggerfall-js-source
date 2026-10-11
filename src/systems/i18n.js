@@ -402,6 +402,12 @@ export const RU = Object.freeze({
   'A new house': 'Новая династия',
   'How will your line endure?': 'Как продолжится ваш род?',
   'Will your line endure?': 'Продолжится ли ваш род?',
+  'HOW WILL YOUR LINE ENDURE?': 'КАК ПРОДОЛЖИТСЯ ВАШ РОД?',
+  'Choose your family’s way with death.': 'Выберите правило смерти для вашей семьи.',
+  'It cannot be changed later.': 'Этот выбор нельзя будет изменить позже.',
+  'WILL YOUR LINE ENDURE?': 'ПРОДОЛЖИТСЯ ЛИ ВАШ РОД?',
+  'Found a house and choose its way with death,': 'Основать род с правилом смерти,',
+  'or play without one. It cannot be changed later.': 'или играть без династии. Этот выбор окончателен.',
   'Your character founds a family. Choose its way with death. It cannot be changed later.': 'Ваш персонаж основывает династию. Выберите правило смерти. Его нельзя будет изменить.',
   'Found a house and choose its way with death - or play without one. It cannot be changed later.': 'Основать род с правилом смерти — или играть без династий. Выбор окончателен.',
   'Not permadeath': 'Без перманентной смерти',
@@ -410,11 +416,137 @@ export const RU = Object.freeze({
   'Bloodline': 'Чистая кровь',
   'No lineage': 'Без династии',
   'A death is not the end - but it costs years.': 'Смерть — это не конец, но она отнимает годы жизни.',
+  'and when the span is spent the mantle passes on': 'а когда срок жизни исчерпан, бремя переходит',
+  'to an heir. Elders may pass it on at any time.': 'к наследнику. Старейшины могут передать его в любой момент.',
   'A death is final. Your heir takes your place -': 'Смерть окончательна. Ваше место займет наследник —',
   'a sibling, a child, or a newborn of your blood -': 'брат, сестра, ребенок или новорожденный вашей крови —',
   'and may recover what you lost from your remains.': 'который сможет забрать ваши вещи с места гибели.',
   'With no one left, the line ends.': 'Если наследников не останется, род угаснет навсегда.',
+  'Online, the realm holds the line: on every device.': 'В сети мир сохраняет род: на всех устройствах.',
   'No house, no heirs: death works as it always has.': 'Без династии и наследников: обычные сохранения и загрузки.',
+  'Offline characters only': 'Только для одиночной игры',
+  '1 virtue': '1 очко характеристик',
+  'over. You have set the purse to nothing,': 'дальше. Количество очков установлено на ноль,',
+  'so levelling raises only your health.': 'поэтому повышение уровня увеличивает только здоровье.',
+  'Y yes · N or Enter no': 'Y — да · N или Enter — нет',
+  'Enter or O to close': 'Enter или O — закрыть',
+
+  // Bestiary (Creatures & NPCs)
+  'Rat': 'Крыса',
+  'Imp': 'Бес',
+  'Spriggan': 'Спригган',
+  'Giant Bat': 'Гигантская летучая мышь',
+  'Grizzly Bear': 'Гризли',
+  'Sabretooth Tiger': 'Саблезубый тигр',
+  'Spider': 'Паук',
+  'Orc': 'Орк',
+  'Centaur': 'Кентавр',
+  'Werewolf': 'Оборотень',
+  'Nymph': 'Нимфа',
+  'Slaughterfish': 'Рыба-убийца',
+  'Orc Sergeant': 'Орк-сержант',
+  'Harpy': 'Гарпия',
+  'Wereboar': 'Вепрь-оборотень',
+  'Skeletal Warrior': 'Скелет-воин',
+  'Giant': 'Великан',
+  'Zombie': 'Зомби',
+  'Ghost': 'Призрак',
+  'Mummy': 'Мумия',
+  'Giant Scorpion': 'Гигантский скорпион',
+  'Orc Shaman': 'Орк-шаман',
+  'Gargoyle': 'Горгулья',
+  'Wraith': 'Привидение',
+  'Orc Warlord': 'Вождь орков',
+  'Frost Daedra': 'Морозный даэдра',
+  'Fire Daedra': 'Огненный даэдра',
+  'Daedroth': 'Даэдрот',
+  'Vampire': 'Вампир',
+  'Daedra Seducer': 'Соблазнительница',
+  'Ancient Vampire': 'Древний вампир',
+  'Daedra Lord': 'Лорд даэдра',
+  'Lich': 'Лич',
+  'Ancient Lich': 'Древний лич',
+  'Dragonling': 'Дракончик',
+  'Fire Atronach': 'Огненный атронах',
+  'Iron Atronach': 'Железный атронах',
+  'Flesh Atronach': 'Атронах из плоти',
+  'Ice Atronach': 'Ледяной атронах',
+  'Horse': 'Лошадь',
+  'Dreugh': 'Дреуг',
+  'Lamia': 'Ламия',
+  'Spellsword': 'Боевой маг',
+  'Battlemage': 'Боевой маг',
+  'Sorcerer': 'Чародей',
+  'Healer': 'Целитель',
+  'Nightblade': 'Клинок ночи',
+  'Bard': 'Бард',
+  'Burglar': 'Взломщик',
+  'Rogue': 'Разбойник',
+  'Acrobat': 'Акробат',
+  'Assassin': 'Ассасин',
+  'Monk': 'Монах',
+  'Archer': 'Лучник',
+  'Ranger': 'Рейнджер',
+  'Barbarian': 'Варвар',
+  'Warrior': 'Воин',
+  'Knight': 'Рыцарь',
+  'City Watch': 'Городская стража',
+
+  // Items & Equipment
+  'Gold pieces': 'Золотые монеты',
+  'Gold': 'Золото',
+  'Torch': 'Факел',
+  'Lantern': 'Фонарь',
+  'Oil': 'Масло',
+  'Bandage': 'Бинт',
+  'Dagger': 'Кинжал',
+  'Tanto': 'Танто',
+  'Shortsword': 'Короткий меч',
+  'Wakazashi': 'Вакидзаси',
+  'Broadsword': 'Палаш',
+  'Saber': 'Сабля',
+  'Longsword': 'Длинный меч',
+  'Katana': 'Катана',
+  'Claymore': 'Двуручный меч',
+  'Dai-katana': 'Дайкатана',
+  'Mace': 'Булава',
+  'Flail': 'Цеп',
+  'Warhammer': 'Боевой молот',
+  'War Axe': 'Боевой топор',
+  'Battle Axe': 'Секира',
+  'Short Bow': 'Короткий лук',
+  'Long Bow': 'Длинный лук',
+  'Arrow': 'Стрела',
+  'Arrows': 'Стрелы',
+  'Leather Helm': 'Кожаный шлем',
+  'Leather Cuirass': 'Кожаная кираса',
+  'Leather Gauntlets': 'Кожаные перчатки',
+  'Leather Greaves': 'Кожаные поножи',
+  'Leather Boots': 'Кожаные сапоги',
+  'Chain Helm': 'Кольчужный шлем',
+  'Chain Cuirass': 'Кольчужная кираса',
+  'Chain Gauntlets': 'Кольчужные перчатки',
+  'Chain Greaves': 'Кольчужные поножи',
+  'Chain Boots': 'Кольчужные сапоги',
+  'Iron Cuirass': 'Железная кираса',
+  'Iron Helm': 'Железный шлем',
+  'Iron Boots': 'Железные сапоги',
+  'Iron Gauntlets': 'Железные перчатки',
+  'Iron Greaves': 'Железные поножи',
+  'Iron Pauldrons': 'Железные наплечники',
+  'Steel Cuirass': 'Стальная кираса',
+  'Steel Helm': 'Стальной шлем',
+  'Steel Boots': 'Стальные сапоги',
+  'Steel Gauntlets': 'Стальные перчатки',
+  'Steel Greaves': 'Стальные поножи',
+  'Steel Pauldrons': 'Стальные наплечники',
+  'Potion': 'Зелье',
+  'Parchment': 'Пергамент',
+  'Ruby': 'Рубин',
+  'Emerald': 'Изумруд',
+  'Sapphire': 'Сапфир',
+  'Diamond': 'Алмаз',
+  'Pearl': 'Жемчуг',
 
   // World Tooltips & Plaque Interactions
   '<Interact>': '<Действие>',
@@ -444,6 +576,83 @@ export const RU = Object.freeze({
   'Exit': 'Выход',
   'Enter': 'Войти',
   'To': 'В',
+
+  // Chargen & Races & Provinces
+  'High Rock': 'Хай Рок',
+  'Hammerfell': 'Хаммерфелл',
+  'Skyrim': 'Скайрим',
+  'Morrowind': 'Морровинд',
+  'Sumurset Isle': 'Остров Саммерсет',
+  'Valenwood': 'Валенвуд',
+  'Elsweyr': 'Эльсвейр',
+  'Black Marsh': 'Чернотопье',
+  'Cyrodiil': 'Сиродил',
+  'Breton': 'Бретон',
+  'Redguard': 'Редгард',
+  'Nord': 'Норд',
+  'Dark Elf': 'Темный эльф',
+  'High Elf': 'Высокий эльф',
+  'Wood Elf': 'Лесной эльф',
+  'Khajiit': 'Каджит',
+  'Argonian': 'Аргонианин',
+  'Mage': 'Маг',
+  'Spellsword': 'Боевой маг',
+  'Battlemage': 'Воин слова',
+  'Sorcerer': 'Чародей',
+  'Healer': 'Целитель',
+  'Nightblade': 'Клинок ночи',
+  'Bard': 'Бард',
+  'Burglar': 'Взломщик',
+  'Rogue': 'Разбойник',
+  'Acrobat': 'Акробат',
+  'Thief': 'Вор',
+  'Assassin': 'Ассасин',
+  'Archer': 'Лучник',
+  'Ranger': 'Следопыт',
+  'Barbarian': 'Варвар',
+  'Warrior': 'Воин',
+  'Knight': 'Рыцарь',
+  'Paladin': 'Паладин',
+  'Custom': 'Свой класс',
+  'Answer twelve questions': 'Ответить на 12 вопросов',
+  'Your answers move skills, gold, gear and how people take to you.': 'Ваши ответы повлияют на навыки, золото, экипировку и репутацию.',
+  'Let it be written for you': 'Случайная биография',
+  'Answered at random, and every answer still counts.': 'Случайные ответы, каждый из которых тоже дает свои бонусы.',
+  'Which face is yours?': 'Какое лицо ваше?',
+  'The portraits need this race\u2019s FACE CIF. Any of the ten will do.': 'Портреты требуют файлов расы. Подойдет любой из десяти.',
+  'This one': 'Выбрать это',
+
+  // Attribute Descriptions (ATTRIBUTE_BLURB)
+  'Adds to every blow you land, and to the weight your pack will hold.': 'Увеличивает урон каждым ударом и вес, который вы можете нести.',
+  'Sets your pool of spell points, by your class\'s own multiplier.': 'Определяет запас очков магии согласно множителю вашего класса.',
+  'Hardens you against magic: a tenth of it goes into every saving throw.': 'Защищает от магии: десятая часть идет в каждый спасбросок.',
+  'Rides every swing: a tenth of the gap between your agility and your foe\'s.': 'Влияет на каждый взмах: десятая часть разницы между вашей ловкостью и ловкостью врага.',
+  'Rolls into the health you gain at every level from here on.': 'Увеличивает количество здоровья, получаемого за каждый новый уровень.',
+  'Warms merchants, judges and anyone else weighing what you are worth.': 'Располагает к вам торговцев, судей и всех, кто оценивает вашу значимость.',
+  'Quickens your weapon and closes the ground between you and a fight.': 'Ускоряет удары оружием и позволяет быстрее сближаться с противником.',
+  'Rides every swing with agility, and tilts what the dead and dungeons hold.': 'Вместе с ловкостью помогает в бою и улучшает добычу в подземельях.',
+
+  // Controls & HUD
+  'Arrows choose \u00b7 Enter opens \u00b7 Tab closes': 'Стрелки — выбор · Enter — открыть · Tab — закрыть',
+  'Skills': 'Навыки',
+  'Items': 'Предметы',
+  'Magic': 'Магия',
+  'Where you wake up': 'Место пробуждения',
+  'Start In The Dungeon': 'Начать в подземелье',
+  'Start new game inside the first dungeon': 'Начинать новую игру внутри первого подземелья',
+  'Start Map Square X': 'Координата X стартовой клетки',
+  'Start Map Square Y': 'Координата Y стартовой клетки',
+  'Race, class, biography, face, skills.': 'Раса, класс, биография, внешность, навыки.',
+  'Begin': 'Начать',
+  'Stop': 'Остановить',
+  'Cancel': 'Отмена',
+  'Start': 'Начать',
+  'Back': 'Назад',
+  'Loiter Instead': 'Скоротать время вместо сна',
+  'Rest for a While': 'Отдохнуть некоторое время',
+  'Rest Until Healed': 'Отдыхать до полного исцеления',
+  'Loiter how many hours?': 'Сколько часов скоротать?',
+  'Rest how many hours?': 'Сколько часов отдыхать?',
 });
 
 let _currentLang = null;
@@ -471,5 +680,47 @@ export function setLanguage(lang) {
 /** Translate a text string if language is Russian, otherwise return text. */
 export function t(text) {
   if (getLanguage() !== 'ru' || !text) return text;
-  return RU[text] ?? text;
+  if (typeof text !== 'string') return text;
+  const direct = RU[text];
+  if (direct !== undefined) return direct;
+
+  // Dynamic patterns
+  if (text.endsWith(' (dead)')) {
+    const base = text.slice(0, -7);
+    return `${t(base)} (труп)`;
+  }
+  if (/^Lock Level:\s*\d+$/.test(text)) {
+    return text.replace(/^Lock Level:\s*(\d+)$/, 'Уровень замка: $1');
+  }
+  if (/^and \d+ more$/.test(text)) {
+    return text.replace(/^and (\d+) more$/, 'и ещё $1');
+  }
+  if (/^Arkay takes \d+% of a lifespan for every road back,$/.test(text)) {
+    return text.replace(/^Arkay takes (\d+)% of a lifespan for every road back,$/, 'Аркей забирает $1% срока жизни за каждое возвращение,');
+  }
+  if (/^every \d+ points of it is a level\.$/.test(text)) {
+    return text.replace(/^every (\d+) points of it is a level\.$/, 'каждые $1 очков дают новый уровень.');
+  }
+  if (/^Each level rolls \d+ to \d+ attribute points\.$/.test(text)) {
+    return text.replace(/^Each level rolls (\d+) to (\d+) attribute points\.$/, 'За каждый уровень даётся от $1 до $2 очков характеристик.');
+  }
+  if (/^fastest\. At \d+ you level; the rest rolls$/.test(text)) {
+    return text.replace(/^fastest\. At (\d+) you level; the rest rolls$/, 'быстрее всего. Накопив $1 очков, вы получаете уровень; остаток переходит');
+  }
+  if (/^over\. Each level hands you .+,$/.test(text)) {
+    return text.replace(/^over\. Each level hands you (.+),$/, (m, v) => `дальше. Каждый уровень даёт вам ${t(v)},`);
+  }
+  if (/^to spend on at most \d+ attributes\.$/.test(text)) {
+    return text.replace(/^to spend on at most (\d+) attributes\.$/, 'для распределения максимум по $1 характеристикам.');
+  }
+  if (/^\d+ virtues$/.test(text)) {
+    return text.replace(/^(\d+) virtues$/, '$1 очков характеристик');
+  }
+  if (/^To\n/.test(text)) {
+    return text.replace(/^To\n(.+)$/, (m, dest) => `В\n${t(dest)}`);
+  }
+  if (/^To /.test(text)) {
+    return text.replace(/^To (.+)$/, (m, dest) => `В ${t(dest)}`);
+  }
+  return text;
 }

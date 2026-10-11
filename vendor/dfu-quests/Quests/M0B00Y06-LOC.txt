@@ -1,0 +1,167 @@
+-- Quest: C:\QUESTS\WORKING\M0B00Y06.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: fighter
+-- Repute: 0
+-- QuestId: 6
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 81
+Quest: M0B00Y06
+DisplayName: Дикое животное
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Меня зовут _qgiver_.
+<ce> У нас есть заказ от местного жителя.
+<ce> Какой-то дикий зверь пробрался к нему в дом.
+<ce> Кто-то должен отправиться и убить эту тварь.
+<ce> Гильдия готова заплатить за это _gold_ монет.
+<ce> Идет, %pcn?
+
+RefuseQuest:  [1001]
+<ce> Уверен, кто-нибудь захочет заняться
+<ce> этим надоедливым зверем.
+
+AcceptQuest:  [1002]
+<ce> "Отлично, %pcf. Твоя цель -- _house_,
+<ce> это здесь, в городе. Покончи с этим за день.
+<ce> Никто не хочет, чтобы дикие твари разгуливали
+<ce> у него в доме. Возвращайся, когда зверь будет
+<ce> мертв, и твоя награда будет ждать тебя".
+<ce> _qgiver_ окликнул кого-то: "Эй, что
+<ce> там за зверь в _house_?"
+
+QuestComplete:  [1004]
+<ce> Отлично, %pcf.
+<ce> Вот твои золотые, _gold_.
+
+RumorsDuringQuest:  [1005]
+<ce> Ты в курсе? Дикий зверь проник в один из
+<ce> городских домов. Надеюсь его скоро прикончат.
+
+RumorsPostfailure:  [1006]
+<ce> Гильдия Бойцов прикончила этого
+<ce> зверя в _house_. Все-таки
+<ce> здорово, что она есть у нас.
+
+RumorsPostsuccess:  [1007]
+<ce> Эта зверюга покалечила женщину, прежде
+<ce> чем ее выгнали из города. Какая жалость!
+
+QuestorPostsuccess:  [1008]
+<ce> Хорошо сработано - чудовище мертво!
+<ce> Чем могу служить?
+
+QuestorPostfailure:  [1009]
+<ce> Говорят, эта тварь сожрала хозяина дома.
+<ce> Удар по нашей репутации! В следующий раз
+<ce> постарайся получше.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Гильдия Бойцов из ___qgiver_ поручила мне
+ уничтожить дикого зверя, проникшего в жилище:
+ _house_. Нужно сделать это за день.
+
+Message:  1011
+<ce> Медведь мертв.
+
+Message:  1012
+<ce> Гарпия мертва.
+
+Message:  1013
+<ce> Паук мертв.
+
+Message:  1014
+<ce> Тигр мертв.
+
+Message:  1021
+<ce> С верхнего этажа послышался голос:
+<ce> "Это медведь".
+
+Message:  1022
+<ce> С верхнего этажа послышался голос:
+<ce> "Это гарпия".
+
+Message:  1023
+<ce> С верхнего этажа послышался голос:
+<ce> "Это паук".
+
+Message:  1024
+<ce> С верхнего этажа послышался голос:
+<ce> "Это тигр".
+
+Message:  1080
+<ce> Кстати, если тебя так забавляют эти звери,
+<ce> вот тебе карта к ___newdung_. Прогуляйся
+<ce> при случае.
+
+
+
+QBN:
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+
+Place _house_ local random
+Place _newdung_ remote dungeon
+
+Clock _2dung_ 1.00:00 0 flag 1 range 0 1
+
+Foe _bear_ is Grizzley_bear
+Foe _tiger_ is Sabretooth_tiger
+Foe _harpy_ is Harpy
+Foe _spider_ is Spider
+
+--	Quest start-up:
+	start timer _2dung_
+	reveal _house_
+	log 1010 step 0
+	pick one of _map_ _nomap_ _nomap_ _nomap_
+	pick one of _monster1_ _monster2_ _monster3_ _monster4_
+	create npc at _house_
+
+_2dung_ task:
+	end quest
+
+_mondead_ task:
+	killed 1 _spider_ saying 1013
+	killed 1 _tiger_ saying 1014
+	killed 1 _harpy_ saying 1012
+	killed 1 _bear_ saying 1011
+
+_S.02_ task:
+	when _qgclicked_ and _mondead_
+	give pc _gold_
+	end quest
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_
+	clear _qgclicked_ _clearclick_
+
+_qgclicked_ task:
+	clicked npc _qgiver_
+
+variable _map_
+variable _nomap_
+_S.06_ task:
+	when _map_ and _S.02_
+	reveal _newdung_ readmap
+    say 1080
+
+_monster1_ task:
+	say 1021
+	place foe _bear_ at _house_
+
+_monster2_ task:
+	say 1022
+	place foe _harpy_ at _house_
+
+_monster3_ task:
+	say 1023
+	place foe _spider_ at _house_
+
+_monster4_ task:
+	say 1024
+	place foe _tiger_ at _house_

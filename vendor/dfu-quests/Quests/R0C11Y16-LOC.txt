@@ -1,0 +1,160 @@
+-- Quest: C:\QUESTS\WORKING\R0C11Y16.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 11
+-- QuestId: 16
+Messages: 17
+Quest: R0C11Y16
+DisplayName: Шпионское оборудование
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Если вы не против потратить несколько дней
+<ce> и стать на _reward_ золотых богаче,
+<ce> у меня есть одно задание, требующее
+<ce> скорости, исполнительности и деликатности.
+
+RefuseQuest:  [1001]
+<ce> Нет? Я рассчитывал расплатиться с вами
+<ce> спустя несколько дней. Многие ли из
+<ce> крестьян согласятся убить любого за
+<ce> деньги? А, ну что ж. Это ваша жизнь,
+<ce> не буду мешать.
+
+AcceptQuest:  [1002]
+<ce> Великолепно, %pcf. Итак, у мен есть
+<ce> осведомитель, _npc1_ в ___npc1_,
+<ce> которому нужна подзорная труба, чтобы
+<ce> продолжать наблюдения. Я так понимаю,
+<ce> что он нашел что-то очень интересное
+<ce> для наших общих друзей. И это что-то
+<ce> надо доставить аккуратно. Вот труба.
+<ce> Унесите это в местечко под названием
+<ce> __npc1_ в ___npc1_, там
+<ce> получите дальнейшие указания. Удачи
+<ce> вам, %pcf.
+
+QuestFail:  [1003]
+<ce> Шныряние туда сюда не сделает
+<ce> вас богаче, %pcf.
+
+QuestComplete:  [1004]
+<ce> Должно быть вы %pcn.
+<ce> _npc1_ рассказывал мне о вас.
+<ce> Я _npc2_. Позвольте мне
+<ce> глянуть на эту реликвию. Очень
+<ce> интересная штука. Ну что ж, вот
+<ce> ваши _reward_ золотых. И вы никогда
+<ce> не видели меня, договорились?
+
+RumorsDuringQuest:  [1005]
+Если _questgiver_ владеет разветвленной сетью осведомителей, то сеть эта очень хорошо замаскирована.
+   <--->
+Говорят, что _npc1_ - шпион, но %g никогда не покидает __npc1_.
+
+RumorsPostfailure:  [1006]
+Обернулось так, что _npc1_ поймали и конфисковали все награбленное имущество.
+   <--->
+Говорят _npc1_ - шпион на побегушках у _questgiver_.
+
+RumorsPostsuccess:  [1007]
+У меня такое чувство, что за мной ___npc1_ все следят.
+   <--->
+Не удивлюсь, если окажется, что эта реликвия уже покинула дворец.
+
+QuestorPostsuccess:  [1008]
+Хммм, это случайно не наш уважаемый шпион? Как поживаете, юный друг %pcf?
+   <--->
+Как я понимаю наше дело прошло без сучка без задоринки. Отлично, %pcf.
+
+QuestorPostfailure:  [1009]
+<ce> Вы провалили ответственное задание, с
+<ce> которым я вас отправлял, так ведь?
+<ce> Найдите хотя бы одну причину, по которой
+<ce> мне нужно общаться с вами?
+
+QuestLogEntry:  [1010]
+<ce> Отличный выбор, %pcf. Позвольте
+<ce> представиться. Меня зовут _npc1_
+<ce> и я знаю, что вы несете для меня
+<ce> подзорную трубу. _questgiver_, как
+<ce> я знаю, говорил, что у меня для
+<ce> вас есть работенка. Возьмите вот эту
+<ce> штуковину и отнесите к =npc2_ в
+<ce> ___npc2_. Имя - _npc2_. Искать
+<ce> в __npc2_.
+<ce> Ваше золото будет ждать вас там.
+<ce> Постарайтесь не опоздать; вас будут
+<ce> ждать =2ndparton_ дней.
+
+Message:  1015
+%qdt:
+ Шпиону на службе у _questgiver_
+ из ___questgiver_ нужна
+ подзорная труба и меня попросили принести
+ ее туда. У меня =1stparton_ дней,
+ чтобы добраться до _npc1_ в
+ ___npc1_ в месте под названием
+ __npc1_. Попав туда, я получу
+ дальнейшие указания.
+
+Message:  1016
+%qdt:
+ _npc1_ получил свою подзорную трубу
+ и отправил меня к кому-то по имени _npc2_
+ из ___npc2_ с одной драгоценностью.
+ У меня =2ndparton_ дней, что бы добраться до
+ _npc2_ в ___npc2_ в __npc2_.
+
+
+
+QBN:
+Item _reward_ gold
+Item _item1_ telescope
+Item _item2_ Holy_relic
+
+Person _questgiver_ face 140 group Questor
+Person _npc1_ group Local_3.0 remote
+Person _npc2_ face 248 group Local_3.1 remote
+
+
+Clock _1stparton_ 00:00 0 flag 1 range 1 4
+Clock _2ndparton_ 00:00 0 flag 1 range 1 4
+
+
+--	Quest start-up:
+	start timer _1stparton_
+	log 1015 step 0
+	get item _item1_
+	create npc _npc1_
+
+_pcgetsgold_ task:
+	toting _item2_ and _npc2_ clicked
+	give pc _reward_
+	end quest
+
+variable _pchasitem1_
+variable _pchasitem2_
+_S.03_ task:
+	toting _item1_ and _npc1_ clicked
+	start timer _2ndparton_
+	log 1016 step 1
+	get item _item2_
+	say 1010
+	create npc _npc2_
+
+variable _S.04_
+_queston_ task:
+	when _1stparton_ and not _S.03_
+	change repute with _questgiver_ by -20
+	end quest
+
+_1stparton_ task:
+	make _item1_ permanent
+
+_2ndparton_ task:
+	make _item2_ permanent
+	change repute with _questgiver_ by -20
+	end quest

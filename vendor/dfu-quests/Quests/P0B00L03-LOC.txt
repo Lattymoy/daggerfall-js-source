@@ -1,0 +1,224 @@
+-- Quest: C:\QUESTS\WORKING\P0B00L03.Qbn.
+-- StartsBy: letter
+-- Questee: member
+-- Questor: vampire
+-- Repute: 0
+-- QuestId: 3
+Messages: 27
+Quest: P0B00L03
+DisplayName: Бои за территории
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pcn, вам выпала
+<ce> великая честь отправиться
+<ce> за великой славой в семье %vam.
+<ce> Дадите ли вы свое согласие?
+
+RefuseQuest:  [1001]
+<ce> Вы оставите это задание для других
+<ce> и упустите возможность прославиться?
+<ce> Что ж, дело ваше, но, признаться, я
+<ce> в разочаровании.
+
+AcceptQuest:  [1002]
+<ce> Хорошо, %pcf, тогда слушайте.
+<ce> Вампир из соперничающей семьи
+<ce> перешел нашу границу. Такие нахалы
+<ce> заслуживают смерти. Но будьте
+<ce> осторожны, %pcf.  Древний вампир,
+<ce> старейшина семьи, пусть даже более низкого
+<ce> ранга, чем семья %vam, отнюдь не слабый
+<ce> противник. Прежде чем лезть в драку,
+<ce> основательно подготовьтесь.
+<ce> Зовут этого вампира - _vampname_.
+<ce> Древний храм, где %g сейчас находится,
+<ce> называется ___mondung_. У н%g4 есть одна
+<ce> слабость. %g очень сильно гордится своей
+<ce> лучшей вещью, - _vampproof_
+<ce> сделанной из кожи его жертв.
+<ce> Если вы принесете мне эту прелесть, не только
+<ce> возрастет ваша слава, но и семья того вампира
+<ce> узнает, как посягать на то, что ей не принадлежит
+<ce> Очень надеюсь увидеть вас здесь через
+<ce> =1stparton_ ночей. Не дайте себя убить,
+<ce> %pcf.
+
+QuestFail:  [1003]
+<ce> Похоже, вы надеетесь, что
+<ce> _vampname_ покончит с собой?
+<ce> Это вряд ли.
+<ce> Вампирам чужды чувства, но трусость
+<ce> порицается всегда.
+
+QuestComplete:  [1004]
+<ce> Добро пожаловать домой, %pcf, дитя мое.
+<ce> Странно, но мне было неспокойно на душе,
+<ce> когда вы искали вашу жертву.
+<ce> Нелепо, конечно - у меня же нет души.
+<ce> Да и семья %vam не терпит сентиментальности.
+<ce> Передаю вам поздравления от главы
+<ce> семьи %vam. Мне поручили мне передать вам
+<ce> вот это, - _reward_. Нет, не думайте,
+<ce> что это вульгарная плата за труд. Примите
+<ce> это как подарок от нашего семейства.
+
+RumorsDuringQuest:  [1005]
+Храм ___mondung_ когда-то был цветущим, но его уже давно забросили.
+   <--->
+_vampname_ - аристократ. Говорят, %g находится где-то в храме ___mondung_.
+
+RumorsPostfailure:  [1006]
+_vampname_... %g4 больше не видно в храме ___mondung_. Для аристократа это место явно не подходит.
+   <--->
+Сейчас, когда _vampname_ в подземелье ___mondung_, в %g опять достаточно места.
+
+RumorsPostsuccess:  [1007]
+Нет, это невозможно,... _vampname_ - вампир! У меня нет слов!
+   <--->
+%god, слава тебе. %ra убил вампира из храма ___mondung_.
+
+QuestorPostsuccess:  [1008]
+Приветствую, %pcf. Надеюсь, вам нравится ваша новая игрушка, - _reward_.
+
+QuestorPostfailure:  [1009]
+<ce> _vampname_ все еще ходит
+<ce> по ночам по нашим территориям.
+<ce> Нам пришлось отправить за ним другого,
+<ce> более сильного вампира. Что касается вас
+<ce> Если вы знали, что не справитесь с
+<ce> заданием, зачем же тогда брались за
+<ce> него. Семья %vam разочарована
+<ce> в вас. Мягко говоря.
+
+Message:  1020
+Дорогой друг, %pcn.
+<ce>
+  Кажется, у семьи %vam появилась
+серьезная проблема. Жду вас
+с нетерпением в городе ___vampire_.
+Умоляю, поскорее.
+Ваш друг в смерти,
+_vampire_
+<ce> ----
+
+Message:  1011
+=vampire_ из дома __vampire_? %g всегда говорит очень вежливо и приятно.
+   <--->
+_vampire_, это =vampire_, ищите в доме __vampire_, на %di отсюда.
+
+Message:  1012
+_vampire_ - вампир из семьи %vam.
+   <--->
+_vampire_ - молодой член семьи %vam. Обучает еще более молодых вампиров.
+
+Message:  1013
+_vampproof_ сделали из странной бледной кожи. Надпись снизу гласит, - "автор -  _vampname_".
+
+Message:  1015
+Error -- 1015 is being displayed
+
+Message:  1021
+<ce> "Помогите мне, они убьют меня...",- молоденькая
+<ce> девушка, еще почти ребенок, кинулась к вам
+<ce> ища защиты. Чуть вдали быстро приближались
+<ce> два темных силуэта.
+<ce> "Ага, похоже это именно то, что мы ищем",-
+<ce> прошипел один из них,-"девчонка, убирайся
+<ce> отсюда, то, что тут сейчас произойдет, не
+<ce> для твоих глаз",- с этими словами он вытащил
+<ce> меч. Другой тоже не заставил себя ждать.
+<ce> ...
+<ce> Бой был долгим и тяжелым, но вы справились.
+<ce> Похоже, что боги незримо вмешались в вашу схватку.
+<ce> Осматривая трупы вампиров,- это были именно
+<ce> вампиры, только из другой семьи, вы нашли клочок
+<ce> бумаги, на котором что-то было написано.
+<ce> Осталось непонятным только то, что здесь
+<ce> делали члены другой семьи вампиров...
+
+Message:  1022
+<ce> Мне удалось однажды восстать из мертвых.
+<ce> И это произойдет снова и снова.
+<ce> и когда я восстану, я выкопаю вас и
+<ce> вашего хозяина, - _vampire_ как
+<ce> червей! Я снова обману смерть.
+
+Message:  1025
+%qdt:
+ _vampire_ из
+ города ___vampire_ вызывает
+ меня в дом __vampire_.
+ Семья %vam не любит ждать.
+
+Message:  1026
+%qdt:
+ _vampire_ отправляет
+ меня в древний храм ___mondung_.
+ Мне нужно отыскать там и убить
+ древнего вампира по имени
+ _vampname_.
+ В качестве доказательства меня просят
+ принести необычную вещь, - _vampproof_
+ Вернуться в дом __vampire_ мне надо
+ не позднее чем через =1stparton_ ночей.
+
+
+
+QBN:
+Item _reward_ magic_item
+Item _vampproof_ boots anyInfo 1013
+Item _letter_ letter used 1020
+
+Person _vampire_ face 40 factiontype Vampire_Clan local anyInfo 1011 rumors 1012
+Person _vampname_ face 4 factiontype Vampire_Clan male remote
+
+Place _mondung_ remote dungeon8
+
+Clock _1stparton_ 00:00 0 flag 1 range 2 5
+
+Foe _vamprival_ is Ancient_vampire
+
+--	Quest start-up:
+	dialog link for person _vampire_ item _vampproof_
+	pc at _mondung_ set _S.10_
+	_letter_ used do _readletter_
+	have _letter_ set _S.12_
+	give pc _letter_ notify 1021
+	create npc _vampire_
+
+_falseAide0_ task:
+-added underscores to falseaide0
+	toting _vampproof_ and _vampire_ clicked
+	give pc _reward_
+	end quest
+
+variable _queston_
+_S.02_ task:
+	killed 1 _vamprival_ saying 1022
+
+_vampclicked_ task:
+	clicked npc _vampire_ say AcceptQuest
+	reveal _mondung_
+	log 1026 step 1
+
+_1stparton_ task:
+	make _vampproof_ permanent
+	end quest
+
+_S.06_ task:
+	when _S.07_ and not _vampclicked_
+
+variable _S.07_
+_readletter_ task:
+	add dialog for person _vampire_
+	log 1025 step 0
+
+variable _S.09_
+_S.10_ task:
+	give item _vampproof_ to _vamprival_
+	place foe _vamprival_ at _mondung_
+
+_S.12_ task:
+	start timer _1stparton_

@@ -1,0 +1,129 @@
+-- Quest: C:\QUESTS\WORKING\R0C10Y12.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 10
+-- QuestId: 12
+Messages: 24
+Quest: R0C10Y12
+DisplayName: Контрабандные товары
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Ммм, есть небольшая проблема, в которую
+<ce> меня втянуло. Сложилась неловкая ситуация.
+<ce> У меня есть одна ... вещица, которая
+<ce> стала моей, не совсем, скажем так, легально.
+<ce> Если бы вы отвезли ее одному моему
+<ce> знакомому в ___contact_, то
+<ce> были бы щедро вознаграждены. Сумма
+<ce> в _reward_ золотых вас устроит?
+
+RefuseQuest:  [1001]
+<ce> Вы бросаете меня в час нужды,
+<ce> юный %ra. Мне очень грустно.
+
+AcceptQuest:  [1002]
+<ce> Вы согласны? Благослови вас %god!
+<ce> Поторопитесь, вот _item_
+<ce> и отправляйтесь в __contact_
+<ce> в ___contact_. Там должен быть
+<ce> =contact_ по имени _contact_.
+<ce> Не пытайтесь отнести _item_
+<ce> куда еще либо. Если вы не приедете
+<ce> в __contact_ в течение =queston_
+<ce> дней, _contact_ начнет искать вас.
+<ce> Поторопитесь, времени мало.
+
+QuestFail:  [1003]
+<ce> Почему вы все еще здесь?
+<ce> Мои инструкции были предельно
+<ce> ясны, давайте отправляйтесь.
+
+QuestComplete:  [1004]
+<ce> День добрый, %pcf. Я
+<ce> _contact_. Благодарю вас
+<ce> за помощь в этом деле.
+<ce> Ваша исполнительность будет хорошо
+<ce> оплачена. Вот. Прощайте.
+
+RumorsDuringQuest:  [1005]
+Стражники обыскивают дом _questgiver_'а в поисках _item_.
+   <--->
+Очень странно, что пропала эта вещица _item_. Все вокруг удивлены.
+
+RumorsPostfailure:  [1006]
+Какая затруднительная ситуация для _questgiver_. Следы похищенной вещи _item_ привели к нему.
+   <--->
+Мне говорили, что _questgiver_ пытается сбагрить _item_ в ___contact_.
+
+RumorsPostsuccess:  [1007]
+Стражники уже устали искать эту похищенную безделушку _item_.
+   <--->
+Похоже подозрения, что _questgiver_ как-то связан с похищением _item_, не оправдались.
+
+QuestorPostsuccess:  [1008]
+Приятно видеть вас снова, %pcf. Я так понимаю, что ваше задание выполнено.
+   <--->
+Мы рады вашему возвращению, %pcf. Вы помогли избавиться мне от неприятных вопросов.
+
+QuestorPostfailure:  [1009]
+<ce> Мой знакомый заявляет, что вы так
+<ce> и не появились. Это непрофессионально
+<ce> с вашей стороны, %pcf.
+<ce> Оставьте меня. У меня много работы.
+
+Message:  1011
+_questgiver_ малую часть времени - правитель, но большую часть времени контрабандист вещиц, таких как _item_.
+   <--->
+_questgiver_ только и думает, как о контрабанде запретных вещиц, таких как _item_.
+
+Message:  1012
+Полагают, что _contact_ вплотную вовлечен в скупку и продажу краденого.
+   <--->
+_contact_, да? Странный =contact_, который работает в __contact_, %di отсюда.
+
+Message:  1015
+%qdt:
+ Меня уговорили на задание
+ от _questgiver_ из
+ ___questgiver_ отнести похищенную вещицу
+ _item_ к _contact_,
+ в __contact_ в ___contact_.
+ У меня =queston_ дней на доставку.
+
+Message:  1023
+ОШИБКА R0C10Y12 1023!
+
+
+
+QBN:
+Item _reward_ gold
+Item _item_ drug
+
+Person _questgiver_ group Questor anyInfo 1011
+Person _contact_ group Local_3.0 remote anyInfo 1012
+
+
+Clock _queston_ 00:00 0 flag 1 range 1 4
+
+
+--	Quest start-up:
+	start timer _queston_
+	log 1015 step 0
+	get item _item_
+	create npc _contact_
+
+_pcgetsgold_ task:
+	toting _item_ and _contact_ clicked
+	give pc _reward_
+	end quest
+
+variable _pchasitem_
+_queston_ task:
+	make _item_ permanent
+	change repute with _questgiver_ by -20
+	end quest
+
+variable _npcclicked_

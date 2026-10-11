@@ -1,0 +1,177 @@
+-- Quest: C:\QUESTS\WORKING\P0B20L09.Qbn.
+-- StartsBy: letter
+-- Questee: member
+-- Questor: vampire
+-- Repute: 20
+-- QuestId: 9
+Messages: 22
+Quest: P0B20L09
+DisplayName: Авангард
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+Error: Questtext 1000 Called
+
+RefuseQuest:  [1001]
+Error: Questtext 1001 Called
+
+AcceptQuest:  [1002]
+Error: Questtext 1002 Called
+
+QuestFail:  [1003]
+Error: Questtext 1003 Called
+
+QuestComplete:  [1004]
+<ce> Приветствую вас, истребитель оборотней!
+<ce> Ваш кровный отец был очень рад услышать,
+<ce> что ваша вылазка закончилась успешно.
+<ce> Храните клык вашей жертвы, как символ
+<ce> славы в семье %vam.
+
+RumorsDuringQuest:  [1005]
+___mondung_ - одно из подземелий, в которое никто никогда не войдет. Никогда.
+
+RumorsPostfailure:  [1006]
+Недавно из подземелья ___mondung_ слышали победный вой.
+
+RumorsPostsuccess:  [1007]
+В катакомбах ___mondung_ все тихо и приветливо. Как в могиле...
+
+QuestorPostsuccess:  [1008]
+Error: Questtext 1008 Called
+
+QuestorPostfailure:  [1009]
+Error: Questtext 1009 Called
+
+QuestLogEntry:  [1010]
+      __vamp_
+       ___vamp_
+<ce>
+ %pcn,
+<ce>
+Вы нужны роду %vam.
+Срочно появляйтесь.
+<ce>
+<ce> Ваш друг в Смерти,
+<ce>
+    _vamp_
+<ce> ----
+
+Message:  1011
+<ce> Ваша слава идет впереди вас, %pcn.
+<ce> Доброго вам вечера. Старейшины семьи
+<ce> %vam скоро собираются провести обряд
+<ce> в провинции %reg, но, как будто бы в
+<ce> насмешку, в древнем храме ___mondung_,
+<ce> где они хотели собраться, обосновалась семья
+<ce> оборотней. Умоляю, покажите этим паразитам
+<ce> и всем, кто с ними заодно, что ___mondung_
+<ce> принадлежит роду %vam, и мы не терпим
+<ce> незваных гостей. Убейте всех, кого сможете,
+<ce> включая их главу - кабана-оборотня. Если вы
+<ce> вернетесь в течение =queston_ ночей с одним
+<ce> из его клыков, клан %vam будет более чем
+<ce> благодарен. Удачи.
+
+Message:  1012
+%qdt:
+ Мне принесли письмо из
+ города ___vamp_ от семьи
+ %vam. _vamp_ ожидает
+ моего срочного прибытия в
+ место __vamp_.
+
+Message:  1013
+%qdt:
+ _vamp_ отправляет меня
+ в разрушенный храм ___mondung_,
+ где кучка оборотней имела смелость
+ вторгнуться в владения клана %vam. Мне
+ нужно объяснить этим несчастным тварям,
+ что они на неверном пути, и вернуться
+ и вернуться назад в течение =queston_ ночей
+ с клыком их вожака.
+
+Message:  1017
+<ce> Бледный мальчик с дикими глазами
+<ce> отдал вам записку и исчез
+<ce> во тьме.
+
+Message:  1020
+<ce> =wereboar_, вожак оборотней,
+<ce> умирает. Теперь они будут знать,
+<ce> как вторгаться во владения
+<ce> клана %vam.
+
+Message:  1021
+<ce> Пожалуй я не буду убивать вас,
+<ce> кровосос. Возвращайтесь и сообщите
+<ce> семье %vam, что =wereboar_
+<ce> отправил вас назад, потому как
+<ce> вы не можете играть честно.
+
+
+
+QBN:
+Item _letter_ letter used 1010
+Item _I.01_ tusk
+
+Person _vamp_ factiontype Vampire_Clan local
+
+Place _mondung_ remote dungeon
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+Foe _F.00_ is Werewolf
+Foe _wereboar_ is Wereboar
+
+--	Quest start-up:
+	dialog link for person _vamp_
+	pc at _mondung_ set _S.07_
+	_letter_ used do _readletter_
+	have _letter_ set _S.09_
+	give pc _letter_ notify 1017
+	place foe _wereboar_ at _mondung_
+
+_queston_ task:
+	change repute with _vamp_ by -5
+	end quest
+
+_vampclicked_ task:
+	clicked npc _vamp_
+
+_S.06_ task:
+	when _vampclicked_
+	reveal _mondung_
+	log 1013 step 1
+	say 1011
+
+_nononono_ task:
+	when _vampclicked_ and not _S.04_
+	clear _vampclicked_ _nononono_
+
+_reward_ task:
+	toting _I.01_ and _vamp_ clicked
+	give pc _I.01_
+	end quest
+
+_S.04_ task:
+	killed 1 _wereboar_
+	say 1020
+
+_readletter_ task:
+	add dialog for person _vamp_
+	log 1012 step 0
+	create npc _vamp_
+
+_S.07_ task:
+	create foe _F.00_ every 12 minutes 30 times with 50% success
+
+_S.08_ task:
+	injured _wereboar_
+	give item _I.01_ to _wereboar_
+	say 1021
+
+_S.09_ task:
+	start timer _queston_

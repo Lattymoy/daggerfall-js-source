@@ -1,0 +1,146 @@
+-- Quest: C:\QUESTS\WORKING\D0B00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Akatosh
+-- Repute: 0
+-- QuestId: 0
+Messages: 31
+Quest: D0B00Y00
+DisplayName: Месть и драконы
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Если вы совершенно случайно ищете
+<ce> работу, могу предложить легкий
+<ce> заработок: _reward_ золотых. Это все,
+<ce> что я могу предложить. Работа включает
+<ce> в себя возможность драки, но вы не
+<ce> похожи на тех, кто избегает ее.
+<ce> Вы согласны?
+
+RefuseQuest:  [1001]
+<ce> Вижу. Что ж, вы меня разочаровали.
+
+AcceptQuest:  [1002]
+<ce> Очень хорошо. Как вы знаете, Акатош -
+<ce> - бог времени, но он так же и драконий
+<ce> бог, а драконы для нас священны. Один
+<ce> из наших членов, служащий в Ордене
+<ce> Часа, впал в безумие и отправился
+<ce> убивать драконов в нашу священную рощу.
+<ce> Естественно убийцу надо остановить.
+<ce> Вы найдете драконоубийцу в местечке под
+<ce> названием ___mondung_.
+<ce> Если вы не управитесь в течение =1stparton_
+<ce> дней, мы пошлем на дело Орден Часа,
+<ce> и можете забыть про награду. Да хранит
+<ce> вас Акатош в вашем путешествии.
+
+QuestFail:  [1003]
+<ce> Лучше бы вам пошевелиться, %pcf.
+<ce> У вас ведь не так много времени, чтобы
+<ce> убить Драконоборца.
+
+QuestComplete:  [1004]
+<ce> Рад видеть вас снова, %pcf.
+<ce> Ваша миссия завершена. Как и обещано
+<ce> вот ваша награда - _reward_ золотых.
+<ce> Благодарю вас за службу.
+
+RumorsDuringQuest:  [1005]
+Часовня Акатоша в гневе от того, что их член стал драконоубийцей.
+   <--->
+Я всегда говорил, что этот скользкий тип прав, убивая драконов. Это отвратительные ужасные создания.
+
+RumorsPostfailure:  [1006]
+Хорошая новость: драконоубийцы больше нет.
+   <--->
+Теперь многие драконы будут убиты.
+   <--->
+Я слышал, что Орден Часа изгнал драконоубийцу из %reg.
+
+RumorsPostsuccess:  [1007]
+Не удивительно, что Часовня Акатоша попытается остановить любого, кто убивает драконов.
+   <--->
+Ага, вы не можете убить дракона, чтобы не навлечь на себя неприятности.
+
+QuestorPostsuccess:  [1008]
+Что я могу сделать для великого защитника драконов, %pcf?
+
+QuestorPostfailure:  [1009]
+Я доверил вам убить драконоубийцу, %pcf. Даже не думайте, что я доверюсь вам еще раз.
+
+Message:  1020
+<ce> "Часовня Акатоша...победила. Все, что
+<ce> я...хотел...это быть свободным
+<ce> от...драконов".
+<ce> Драконоубийца умер.
+
+Message:  1030
+%qdt:
+ Часовня Акатоша попросила меня убить
+ одного человека, убивающего драконов
+ в священной роще. Мне нужно отправиться
+ в ___mondung_, убить
+ драконоборца и вернуться обратно в
+ ___questgiver_ в течение
+ =1stparton_ дней.
+
+
+-corrected %qdat to %qdt
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ group Questor
+
+Place _mondung_ remote dungeon
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _archer_ is Archer
+Foe _spellsword_ is Spellsword
+Foe _knight_ is Knight
+Foe _ranger_ is Ranger
+
+--	Quest start-up:
+	start timer _1stparton_
+	reveal _mondung_
+	log 1030 step 0
+	pick one of _S.05_ _S.06_ _S.07_ _S.08_
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _mondead_
+	give pc _reward_
+	end quest
+
+_mondead_ task:
+	killed 1 _spellsword_ saying 1020
+	killed 1 _ranger_ saying 1020
+	killed 1 _knight_ saying 1020
+	killed 1 _archer_ saying 1020
+
+_qgclicked_ task:
+	clicked npc _questgiver_
+
+_1stparton_ task:
+	end quest
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_
+	say 1003
+	clear _qgclicked_ _clearclick_
+
+_S.05_ task:
+	place foe _spellsword_ at _mondung_
+
+_S.06_ task:
+	place foe _ranger_ at _mondung_
+
+_S.07_ task:
+	place foe _knight_ at _mondung_
+
+_S.08_ task:
+	place foe _archer_ at _mondung_

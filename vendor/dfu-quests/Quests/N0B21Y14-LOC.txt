@@ -1,0 +1,322 @@
+-- Quest: C:\QUESTS\WORKING\N0B21Y14.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: mage
+-- Repute: 21
+-- QuestId: 14
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 25
+Quest: N0B21Y14
+DisplayName: Оракул
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Вы %pcn?  %pct?
+
+RefuseQuest:  [1001]
+<ce> Прошу прощения, похоже я ошибся.
+
+AcceptQuest:  [1002]
+<ce> А, хорошо. У меня письмо для вас.
+<ce> Должно быть нечто большее чем случай
+<ce> привело вас сюда.
+
+QuestComplete:  [1004]
+<ce> Вы в чести у гильдии, %pcf.
+
+RumorsDuringQuest:  [1005]
+_noble_ один из величайших высокородных в %reg.
+   <--->
+Если что-то случится с _noble_, боюсь думать, что начнется.
+
+RumorsPostfailure:  [1006]
+Прошлой ночью звезды предсказали бедствие и смерть.
+
+RumorsPostsuccess:  [1007]
+Прошлой ночью звезды предсказали, что несчастье пройдет стороной.
+   <--->
+Недавно в городе появлялся один аколит. Я все думаю, что ему было нужно.
+
+Message:  1011
+      _temple_
+       __temple_
+<ce>
+Дорогой друг %pcn,
+<ce>
+  Давно шел к тому, чтобы переговорить
+с вами в интересах Оракула, мудрейшей
+женщины во всем Хаммерфеле. Архмагистр
+Гильдии Магов очень хорошо отзывался
+о вас как о достойном и талантливом маге.
+  Пожалуйста, нам нужно встретиться, и чем
+раньше, тем лучше; время очень ограничено.
+Без вашей помощи через =queston1_ дней темное
+пророчество Оракула может сбыться и весь
+регион %reg пострадает от этого.
+  Я должен увидеть вас как можно скорее.
+<ce>
+Сердечно ваш,
+<ce>
+Аколит
+
+Message:  1012
+Аколит сказал высокородному то, что хотела сказать Оракул.
+   <--->
+Аколит делает за Оракула всю ножную работу. В ее возрасте это и неудивительно.
+   <--->
+Аколит выглядит ка кблагородный, но он служит только Оракулу.
+   <--->
+Аколит это =acolyte_ в глубине храма _temple_.
+   <--->
+Аколит с молодых лет многие годы был прислужником Оракула.
+   <--->
+Когда Оракул дала Аколиту свое пророчество, он тут же побежал куда-то сломя голову.
+
+Message:  1013
+У Оракула нет глаз, но говорят, что она мудрейшая женщина во всем Тамриэле.
+   <--->
+Оракул издревле была советником правителей Сентинела.
+   <--->
+Оракул советовала королю Камерону не развязывать войну с Даггерфоллом.
+   <--->
+Король Камерон не послушался совета Оракула не развязывать войну с Даггерфоллом.
+   <--->
+Оракул знала, что Сентинел проиграет войну с Даггерфоллом.
+   <--->
+Если бы Камерон прислушивался к Оракулу, то был бы до сих пор жив.
+
+Message:  1014
+%qdt:
+ Мне пришло письмо
+ от Аколита, просящего о встрече.
+ Он остановился в храме _temple_
+ в __temple_.
+
+Message:  1015
+<ce> Спасибо, что пришли, %pcf.
+<ce> Оракул увидела смерть одного из известных
+<ce> дворян из __temple_, благородного _noble_.
+<ce> И подобно катящемуся камешку, увлекающему
+<ce> за собой камнепад, его смерть может повлечь
+<ce> страшные бедствия для региона %reg.
+<ce> Я пытался поговорить с ним, но даже не был
+<ce> допущен до его компании в _noblehouse_.
+<ce> Моя повелительница, Оракул, намеревается
+<ce> прийти в __temple_ поговорить с ним.
+<ce> Последнее, что я слышал, то что Оракул была в
+<ce> __oracletemple_. Я не знаком с этими штучками
+<ce> и не знаю как далеко это может зайти. Прошу
+<ce> вас, чтобы вы нашли способ поговорить с _noble_
+<ce> и убедили его позаботиться о своей защите или
+<ce> нашли Оракула где-то в районе __oracletemple_ и
+<ce> сопроводили ее увидеться с этим благородным.
+<ce> У нас очень мало времени. Поторопитесь, умоляю
+<ce> вас.
+
+Message:  1016
+%qdt:
+ Аколит рассказал мне, что он пытался убедить
+ _noble_ уехать из _noblehouse_, пока
+ с ним не случилось несчастье, могущее привести
+ к бедствиям во всем регионе %reg. Он попросил меня
+ либо лично поговорить с этим дворянином или
+ направиться в __oracletemple_, чтобы сопроводить
+ Оракула, повелительницу Аколита, сюда.
+ Быть может ей удастся убедить дворянина, если
+ не получится у меня.
+
+-changed 1016 to shorter lines, was running offscreen in journal
+
+Message:  1017
+<ce> Вы %pcn, %ra, которого
+<ce> мой Аколит послал сопроводить меня
+<ce> к _noble_. Я отдала свое зрение богам,
+<ce> и увидела ваше прибытие их глазами.
+<ce> А теперь поторопимся в _noblehouse_ в
+<ce> __noblehouse_ прежде чем сбудется
+<ce> судьба этого благородного.
+
+Message:  1018
+<ce> Оракул переговорила с _noble_,
+<ce> и в голосе ее, как ни странно, прорезались
+<ce> убедительные нотки, снабженные доброй толикой
+<ce> магии. Благородному не понадобилось много
+<ce> времени, чтобы сообразить кто перед ним и
+<ce> он согласился для блага региона укрыться
+<ce> где-нибудь на несколько дней. Оракул
+<ce> поблагодарила вас за сопровождение и
+<ce> сообщила, что отрекомендует при дворе
+<ce> Сентинела вашу храбрость и изобретательность.
+
+Message:  1019
+<ce> _noble_ и _love_ обнялись,
+<ce> и %g ссылаясь на необходимость и
+<ce> благополучие региона сказал, что должен
+<ce> укрыться с несколькими его лучшими
+<ce> охранниками. Прежде чем уйти, _noble_
+<ce> дал вам _gold_ золотых в благодарность за
+<ce> розыск его возлюбленной.
+
+Message:  1020
+<ce> Как я уже говорил это порывистому Аколиту,
+<ce> я не собираюсь прятаться от кого бы то ни
+<ce> было только потому, что какой-то старой карге
+<ce> приснился кошмар обо мне. Я жду известий
+<ce> насчет моей возлюбленной, _love_,
+<ce> которая была похищена. Я прислушаюсь к ее
+<ce> советам насчет этого дела, но не собираюсь
+<ce> прятаться, пока моя возлюбленная в опасности.
+<ce> Мне не стоило отпускать ее ее в ___mondung_
+<ce> без соответствующего эскорта, но я не брошу
+<ce> сейчас свою любовь. Вот мой ответ, %pct.
+
+Message:  1021
+%qdt:
+ _noble_ отказался отправиться
+ в укрытие, пока не узнает, что
+ его любовь, _love_,
+ освобождена из рук похититителей.
+ Если я разыщу ее в ___mondung_,
+ тогда _noble_ прислушается к увещеваниям.
+
+Message:  1022
+<ce> Вы пришли от _noble_,
+<ce> чтобы спасти меня? %oth, поспешим отсюда
+<ce> У меня был ужасный и, боюсь, пророческий
+<ce> сон насчет него.
+
+Message:  1023
+<ce> Слишком поздно. Пришел час, когда
+<ce> судьба выиграла войну у человеческой
+<ce> воли. Ветер провыл, что _noble_
+<ce> мертв. %reg содрогнется.
+
+Message:  1024
+      _temple_
+       __temple_
+<ce>
+Дорогой друг, %pcn,
+<ce>
+  Очень важно пересечься с вам так скоро,
+как это возможно. Я представитель Оракула
+Хаммерфела. Следующие несколько дней я
+буду в _temple_.
+  Есть еще =queston2_ дней прежде чем будущее
+станет невозможным предотвратить, поэтому мне
+необходимо увидеться с вами как можно раньше.
+Это дело не требует отлагательства. Прошу
+вас, не совершайте ошибки, отказываясь от
+встречи.
+<ce>
+<ce> Аколит
+
+
+
+QBN:
+Item _oracleNote_ letter used 1011
+Item _oracleMsg_ letter used 1024
+--added underscores to oracleNote and oracleMsg because they are variables
+Item _gold_ gold
+
+Person _oracle_ face 251 named The_Oracle anyInfo 1013
+Person _acolyte_ face 5 named The_Acolyte anyInfo 1012
+-changed oracle and acolyte to Named instead of Faction to prevent dialogue beginning
+Person _noble_ face 25 factiontype Province local
+Person _thd_ named Queen_Akorithi
+--%thd corrected to _thd_
+Person _love_ face 1 group Group_7.0
+Person _giver_ group Questor
+
+Place _mondung_ remote dungeon
+Place _temple_ local temple
+Place _noblehouse_ local house2
+Place _oracletemple_ remote temple
+
+Clock _queston1_ 00:00 0 flag 17 range 0 2
+Clock _queston2_ 00:00 0 flag 17 range 0 2
+
+
+--	Quest start-up:
+	dialog link for location _temple_ person _acolyte_
+	dialog link for location _mondung_ person _thd_
+	dialog link for location _noblehouse_ person _love_
+	dialog link for person _noble_
+	pick one of _S.02_ _S.01_
+	_oracleNote_ used do _readletter_
+	_oracleMsg_ used do _readletter_
+	create npc at _noblehouse_
+	place npc _oracle_ at _oracletemple_
+	place npc _acolyte_ at _temple_
+	place npc _noble_ at _noblehouse_
+
+_S.00_ task:
+	clicked npc _acolyte_
+	add dialog for person _oracle_
+	add dialog for location _noblehouse_ person _noble_
+	log 1016 step 1
+	say 1015
+
+_S.01_ task:
+	start timer _queston1_
+	get item _oracleNote_
+
+_S.02_ task:
+	start timer _queston2_
+	get item _oracleMsg_
+
+_S.03_ task:
+	clicked npc _oracle_
+	hide npc _oracle_
+	say 1017
+	add _oracle_ face
+
+_S.04_ task:
+	clicked npc _noble_
+
+_S.05_ task:
+	when _S.04_ and _S.03_
+	say 1018
+	give pc nothing
+	change repute with _thd_ by +10
+	end quest
+--victory message changed to after 1018, more logical dialogue
+
+_S.06_ task:
+	when _S.04_ and _S.07_
+	get item _gold_
+	say 1019
+	give pc _gold_
+	end quest
+-victory message changed to after 1019, more logical dialogue
+
+_S.07_ task:
+	clicked npc _love_
+	hide npc _love_
+	say 1022
+	add _love_ face
+
+_S.08_ task:
+	when _S.04_ and not _S.03_ and not _S.07_
+	reveal _mondung_
+	log 1021 step 2
+	say 1020
+	place npc _love_ at _mondung_
+	clear _S.04_
+
+_npc1_ task:
+	when _S.10_ and not _S.05_ and not _S.06_
+	say 1023
+
+_S.10_ task:
+	when _queston1_ or _queston2_
+
+_readletter_ task:
+	add dialog for person _acolyte_
+	log 1014 step 0
+
+_queston1_ task:
+	end quest
+
+_queston2_ task:
+	end quest

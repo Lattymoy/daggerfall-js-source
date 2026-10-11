@@ -1,0 +1,128 @@
+-- Quest: C:\QUESTS\WORKING\R0C10Y11.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 10
+-- QuestId: 11
+Messages: 16
+Quest: R0C10Y11
+DisplayName: Контрабандные товары
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> У вас нет, случайно, немного времени
+<ce> на выполнение маленького моего задания?
+<ce> Это очень просто, я бы и сам это сделал
+<ce> или отправил бы одного из моих посыльных,
+<ce> но мы все так заняты. Это подразумевает
+<ce> _reward_ золотых в награду.
+<ce> Достаточно неплохо.
+<ce> На вас можно рассчитывать?
+
+RefuseQuest:  [1001]
+<ce> Нет? %god, храни меня от
+<ce> %ra бездельника!
+
+AcceptQuest:  [1002]
+<ce> Какая удача! А сейчас берите этот _item_
+<ce> и идите в ___qgfriend_
+<ce> в место, называемое __qgfriend_.
+<ce> Там будет странный =qgfriend_,
+<ce> по имени _qgfriend_.
+<ce> Дайте %g2 _item_ и %g
+<ce> даст вам _reward_ золотых.
+<ce> Да, кстати, вам нужно быть там не позднее
+<ce> =queston_ дней, но это не станет
+<ce> проблемой. Ведь у вас крепкие молодые
+<ce> ноги. Ни пуха, ни пера.
+
+QuestFail:  [1003]
+<ce> Вы похожи на %pcf,
+<ce> но этого не может быть.  %pcn
+<ce> уже на пути к ___qgfriend_.
+
+QuestComplete:  [1004]
+<ce> _questgiver_ нанял вас в качестве посыльного?
+<ce> А вот и _item_, который я ожидал.
+<ce> Очень хорошо. Вот ваше золото. Благодарю.
+
+RumorsDuringQuest:  [1005]
+_questgiver_, я слышал, все еще промышляет контрабандой.
+   <--->
+ За последнее время произошел поразительный рост контрабанды.
+
+RumorsPostfailure:  [1006]
+Я слышал, кто-то натолкнулся на _item_ на краю земли.
+   <--->
+ _questgiver_ свиреп как ад к некоему %ra авантюристу.
+
+RumorsPostsuccess:  [1007]
+Некий =qgfriend_ был прямо здесь, околачиваясь вокруг _item_.
+   <--->
+<ce> Полагаю, _questgiver_ все-таки не украл этот _item_,
+<ce> иначе %g съел бы его.
+
+QuestorPostsuccess:  [1008]
+Узнаю эти крепкие молодые ноги. Как вы, мой курьер?
+   <--->
+Пришли навестить вашего нанимателя, %pcf?
+
+QuestorPostfailure:  [1009]
+<ce> Я тебя помню. Ты тот
+<ce> %ra, кто провалил это простое
+<ce> поручение по доставке.  %oth,
+<ce> у меня нет времени для тебя.
+
+Message:  1011
+%g довольно почтенный господин, с воровскими наклонностями.
+   <--->
+Матерый контрабандист, вот что я слышал.
+
+Message:  1012
+Один из скупщиков краденого _questgiver_. _qgfriend_ практически живет в __qgfriend_.
+   <--->
+Этот =qgfriend_? _qgfriend_ - один из скупщиков краденого для логова контрабандистов в __qgfriend_.
+
+Message:  1015
+%qdt:
+ _questgiver_ из
+ __questgiver_ попросил меня
+ доставить некий _item_
+ своему коллеге по имени _qgfriend_.
+ Место пребывания _qgfriend_ -
+ __qgfriend_ в ___qgfriend_,
+ путешествие на =queston_ дней.
+ Столько времени у меня есть.
+
+
+
+QBN:
+Item _reward_ gold
+Item _item_ ring
+
+Person _questgiver_ group Questor anyInfo 1011
+Person _qgfriend_ group Local_3.0 remote anyInfo 1012
+
+
+Clock _queston_ 00:00 0 flag 1 range 1 4
+
+
+--	Quest start-up:
+	start timer _queston_
+	log 1015 step 0
+	get item _item_
+	create npc _qgfriend_
+
+_pcgetsgold_ task:
+	toting _item_ and _qgfriend_ clicked
+	give pc _reward_
+	end quest
+
+variable _pchasitem_
+_queston_ task:
+	make _item_ permanent
+	change repute with _questgiver_ by -30
+	end quest
+
+variable _npcclicked_

@@ -1,0 +1,334 @@
+-- Quest: C:\QUESTS\WORKING\K0C00Y07.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: merchant
+-- Repute: 0
+-- QuestId: 7
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 100
+Quest: K0C00Y07
+DisplayName: Выкуп
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Моя бедная любовь _victim_
+<ce> была похищена Гильдией Воров.
+<ce> Вы поможете мне?
+   <--->
+<ce> Гильдия Воров забрала мою любовь
+<ce> _victim_ у меня и теперь
+<ce> требует выкуп. Мне нужен кто-то,
+<ce> могущий вернуть мне мою любовь,
+<ce> любым путем. Пожалуйста,
+<ce> помогите мне?
+
+RefuseQuest:  [1001]
+<ce> У вас ледяное сердце,
+<ce> %pcf. Полагаю мне лично
+<ce> придется встретиться с этими
+<ce> похитителями.
+   <--->
+<ce> Тогда поищу кого
+<ce> другого, %pcn.
+
+AcceptQuest:  [1002]
+<ce> Я не могу заплатить много, %pcf.
+<ce> Почти все мое золото потрачено на покупку
+<ce> камня для выкупа, но вы сможете получить
+<ce> часть моих сбережений, _gold_ золотых,
+<ce> когда моя дражайшая любовь _victim_
+<ce> вернется обратно.
+<ce> Похитители хотят, чтобы _gem_ был
+<ce> доставлен в __kidnapper_ в
+<ce> ___kidnapper_ и у меня есть не больше,
+<ce> чем =2ransom_ дней. В __kidnapper_,
+<ce> надо найти =kidnapper_,
+<ce> которого зовут _kidnapper_.
+<ce> Нет ничего важнее безопасности _victim_,
+<ce> но если вы умудритесь сохранить выкуп, то
+<ce> моя благодарность будет безгранична.
+<ce> Как уже сказано, это все, что у меня есть.
+<ce> Удачи и благословит вас %god.
+   <--->
+<ce> Святый %god. Вот _gem_, который
+<ce> требуют похитители для выкупа. Если вы сможете
+<ce> найти способ спасти _victim_
+<ce> без уплаты выкупа, моя благодарность будет
+<ce> безмерна. После покупки, мои сбережения почти
+<ce> кончились. Конечно же вы можете получить в
+<ce> оплату _gold_ золотых, как только _victim_
+<ce> вернется -- пусть мои сбережения истощатся,
+<ce> но это стоит того. Будьте уверены, что
+<ce> выкуп выплачен не раньше, чем через
+<ce> =2ransom_ дней. У похитителей есть связной
+<ce> в __kidnapper_ в ___kidnapper_,
+<ce> =kidnapper_ по имени _kidnapper_. Как
+<ce> только пройдет =2ransom_ дней, %g пошлет
+<ce> знак своим друзьям, где бы они не были и
+<ce> они убьют жертву. Не допустите беды.
+<ce> Удачи, друг.
+
+Message:  1099
+<ce> _victim_! О, благодарение
+<ce> %god, вы живы. И, добрый герой %pcf,
+<ce> вы не использовали выкуп _gem_.
+<ce> Не знаю, как вас благодарить. Вот _gold_
+<ce> золотых, как и было обещано, но этого
+<ce> недостаточно. Моя глубочайшая
+<ce> благодарность, мой друг.
+
+QuestComplete:  [1004]
+<ce> Возьмите это. Это ваше, друг мой.
+
+RumorsDuringQuest:  [1005]
+Едва ли _qgiver_ сможет выплатить выкуп за _victim_.
+   <--->
+Похищение _victim_ напугало всех в ___qgiver_.
+
+RumorsPostfailure:  [1006]
+Воры, похитившие _victim_, никогда не будут осуждены.
+
+RumorsPostsuccess:  [1007]
+_victim_ разыскал у воров удивительный наемник %ra.
+
+QuestorPostsuccess:  [1008]
+Вы разыскали _victim_, %pcf. Конечно же я помогу вам чем смогу.
+
+QuestorPostfailure:  [1009]
+<ce> Послушай, я не хочу болтать ни с
+<ce> тобой ни с кем либо еще. Почему бы
+<ce> тебе не заткнуться?
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ из
+ __qgiver_, ___qgiver_
+ посылает меня с _gem_ для
+ выкупа своей любви, _victim_
+ у Гильдии Воров. Выкуп должен быть
+ выплачен в течение =2ransom_ дней, иначе
+ они убьют _victim_.
+ _kidnapper_ - связной похитителей,
+ ожидающих меня в __kidnapper_ в
+ ___kidnapper_.
+ Конечно же _qgiver_ хочет, если
+ это возможно, разыскать _victim_
+ без уплаты выкупа.
+
+Message:  1011
+<ce> Отдать _gem_
+<ce> в руки _kidnapper_?
+
+Message:  1012
+<ce> Ты %pcf, э? Гильдия Воров нашла тебя,
+<ce> парниша. О, %oth, я вижу.
+<ce> Ты работаешь на _qgiver_, мы
+<ce> должны быть уверены, что %g заплатит
+<ce> без балды.
+
+Message:  1013
+<ce> _victim_ заплатит за твою
+<ce> глупость! %oth, %g
+<ce> умрет раньше, чем пройдет =queston_
+<ce> дней! =thug_!
+<ce> Закопайте этого %ra
+<ce> на заднем дворике!
+   <--->
+<ce> =thug_! Убить этого тупого
+<ce> %ra, а потом сделайте то же
+<ce> самое с _victim_.
+
+Message:  1014
+<ce> Вы от _qgiver_?
+<ce> %oth, благодарение %god! Быстрее,
+<ce> убираемся отсюда!
+
+Message:  1015
+=thug_,
+<ce>
+  Гильдия хочет использовать твои мускулы
+для обычного похищения. Имя жертвы _victim_.
+После похищения жертвы из своего дома в
+__qgiver_ в ___qgiver_,
+иди в ___mondung_.
+  Путь к ___mondung_ указан
+ниже. Надеюсь это не слишком трудный план
+для тебя.
+<ce>
+_kidnapper_
+<ce> ----
+
+Message:  1016
+<ce> %pcf, конечно же я знаю,
+<ce> что вы делаете. Мне приятно получить
+<ce> обратно _gem_, а не оставить его
+<ce> в обмен на _victim_.
+<ce> Если %g умрет, я не обрадуюсь.
+
+Message:  1017
+<ce> _victim_! Святый %god,
+<ce> вы в порядке! Благодарю вас, мой
+<ce> друг. Полагаю вы не заплатили
+<ce> выкуп, %pcf,
+<ce> но нет ничего важнее, чем жизнь
+<ce> _victim_.
+<ce> Вот _gold_ золотых, как
+<ce> и обещано.
+
+Message:  1018
+<ce> Не удивительно, что гильдии ты
+<ce> нравишься. Уверен, они уже услышали
+<ce> об этом, %pcf. Теперь иди
+<ce> обратно к _qgiver_ и
+<ce> скажи ему, чтобы отпустили
+<ce> _victim_. Приятно иметь
+<ce> с вами дело.
+
+Message:  1019
+<ce> А, хорошо. Пусть _qgiver_
+<ce> знает, что _victim_
+<ce> в безопасности в ___qgiver_.
+<ce> До встречи.
+
+Message:  1020
+<ce> Да, _victim_ доставили прежде,
+<ce> чем вы прибыли, %pcf.
+<ce> Благодарю вас за то, что вы
+<ce> предстали перед ужасным _kidnapper_
+<ce> вместо меня. Вот _gold_ золотых,
+<ce> как и было обещано.
+
+Message:  1021
+<ce> _victim_ говорит вам, что
+<ce> %g может самостоятельно найти путь к
+<ce> своей любви _qgiver_ отсюда,
+<ce> благодарит вас и убегает прочь.
+
+Message:  1022
+<ce> Теперь, _victim_
+<ce> точно труп.
+
+
+
+QBN:
+Item _gem_ gem
+Item _gold_ gold range 5 to 25
+Item _map_ letter used 1015
+
+Person _qgiver_ group Questor
+Person _victim_ face 1 group Group_7.0 local
+Person _kidnapper_ face 36 faction The_Thieves_Guild male remote
+
+Place _mondung_ remote dungeon
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+Clock _2ransom_ 00:00 0 flag 17 range 1 2
+
+Foe _thug_ is Rogue
+
+--	Quest start-up:
+	start timer _2ransom_
+	start timer _queston_
+	log 1010 step 0
+	get item _gem_
+	_map_ used do _S.08_
+	place npc _victim_ at _mondung_
+
+_queston_ task:
+	have _gem_ set _S.20_
+	end quest
+
+variable _2ransom_
+_S.02_ task:
+	toting _gem_ and _kidnapper_ clicked
+	repute with _kidnapper_ exceeds 10 do _S.05_
+
+_S.03_ task:
+	say 1019
+
+_S.04_ task:
+	create foe _thug_ every 1 minutes 1 times with 100% success
+	get item _gem_
+	give item _map_ to _thug_
+	hide npc _kidnapper_
+	say 1013
+
+_S.05_ task:
+	prompt 1012 yes _S.07_ no _S.04_
+
+_S.06_ task:
+	when _S.02_ and not _S.05_
+	prompt 1011 yes _S.03_ no _S.04_
+
+_S.07_ task:
+	get item _gem_
+	say 1018
+
+_S.08_ task:
+	reveal _mondung_
+
+_S.09_ task:
+	clicked npc _victim_
+	hide npc _victim_
+	say 1014
+	add _victim_ face
+
+_reward_ task:
+	when _S.11_ and _S.09_
+	say 1099
+	change repute with _qgiver_ by +15
+	change repute with _kidnapper_ by -10
+
+_S.11_ task:
+	toting _gem_ and _qgiver_ clicked
+	clear _qgclicked_
+
+_S.12_ task:
+	when _S.11_ and not _S.09_ and not _S.04_
+	get item _gem_
+
+_S.13_ task:
+	when _S.11_ and not _S.09_ and _S.04_
+	say 1016
+
+_qgclicked_ task:
+	clicked npc _qgiver_
+	have _gem_ set _S.15_
+
+variable _S.15_
+_S.16_ task:
+	when _qgclicked_ and not _S.15_ and _S.09_
+	say 1017
+	change repute with _qgiver_ by +8
+
+_S.17_ task:
+	when _qgclicked_ and _S.07_
+	when _qgclicked_ and _S.03_
+	say 1020
+
+_S.18_ task:
+	when not _S.15_ or not _S.09_ or not _S.03_ or not _S.07_
+	clear _qgclicked_
+
+_S.19_ task:
+	when _queston_ and _S.09_ and not _qgclicked_
+	say 1021
+
+_S.20_ task:
+	make _gem_ permanent
+
+_S.21_ task:
+	when _queston_ and not _S.09_ and not _S.07_ and not _S.17_
+	say 1022
+	change repute with _qgiver_ by -5
+
+_S.22_ task:
+	when not _S.09_ and _S.11_
+	get item _gem_
+	clear _S.11_
+
+_givereward_ task:
+	when _reward_ or _S.16_ or _S.17_
+	give pc _gold_
+	end quest

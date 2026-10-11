@@ -1,0 +1,301 @@
+-- Quest: C:\QUESTS\WORKING\M0B21Y19.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: fighter
+-- Repute: 21
+-- QuestId: 19
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 72
+Quest: M0B21Y19
+DisplayName: Стандартная защита
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Как поживаешь, %pcf?  Если тебе нужна
+<ce> работа, то я могу предложить тебе кое-что.
+<ce> Хочешь немного поработать охранником?
+
+RefuseQuest:  [1001]
+<ce> А, понял. Ты ищешь работу, более
+<ce> соответствующую твоему положению, верно?
+
+AcceptQuest:  [1002]
+<ce> Отлично. Клиента зовут _victim_,
+<ce> ищи его в _victimhouse_,
+<ce> это вверх по улице отсюда. %g хочет,
+<ce> чтобы ты сразу приступил к выполнению
+<ce> своих обязанностей. Очень нервный тип,
+<ce> ты наверное таких знаешь. %g даст
+<ce> тебе необходимые инструкции по
+<ce> прибытии.
+
+QuestFail:  [1003]
+<ce> Это все, что я знаю. Давай двигайся.
+
+QuestComplete:  [1004]
+<ce> Не знаю как и благодарить вас за
+<ce> мое спасение и отмщение за смерть
+<ce> моего отца. Примите пожалуйста в дар
+<ce> вот это: _reward_. Это принадлежало
+<ce> моему отцу и, думаю, вам это пригодится.
+
+QuestorPostsuccess:  [1008]
+<ce> Совсем дела плохи у _victim_, да?
+<ce> Похоже он в еще большей опасности,
+<ce> чем предполагает.
+
+QuestorPostfailure:  [1009]
+<ce> Знаю, это не ваша ошибка, но это дело
+<ce> с _victim_ все еще заставляет меня
+<ce> дрожать от страха. Мне нужно было
+<ce> самому заняться этим бедным парнем.
+
+Message:  1015
+<ce> _darkb_ живет в ___darkb_, полагаю.  %g всегда водится
+<ce> со странными типами, так что не советую искать его
+<ce> если не хотите неприятностей.
+   <--->
+<ce> _darkb_ слоняется в окрестностях ___darkb_, почти всегда.
+
+Message:  1016
+<ce> _darkb_ - один из лидеров местного отделения Темного Братства.
+<ce> Его штаб-квартира в __darkb_ в ___darkb_.
+
+Message:  1020
+%qdt:
+ Гильдия Бойцов из ___questgiver_
+ посылает меня в _victimhouse_
+ встретиться с клиентом, _victim_,
+ который нуждается в защите.
+ _victim_ даст мне дальнейшие
+ инструкции по прибытии.
+
+Message:  1021
+%qdt:
+ Слишком поздно. Мне удалось застичь
+ врасплох ассассинов в _victimhouse_,
+ но _victim_ уже был мертв.
+
+Message:  1022
+%qdt:
+ Мне пришла записка от _daughter_,
+ в которой написано, что _victim_
+ ее отец. Она попросила меня посетить
+ ее в _daughterhouse_ в __daughterhouse_,
+ при первой возможности.
+
+Message:  1023
+%qdt:
+ По пути к _daughter_ меня поджидала
+ засада. С трудом удалось отбиться.
+ Сейчас я с _daughter_ на пути в
+ _safehouse_ в __safehouse_.
+
+Message:  1024
+%qdt:
+ Очередная жертва Темного Братства. _victim_.
+ Пока нет никаких дальнейших зацепок.
+
+Message:  1030
+  Вот что происходит с
+людьми, не желающими
+прислушиваться к моим
+предупреждениям.
+<ce>
+<ce> _darkb_
+<ce> ----
+
+Message:  1031
+Уважаемый герой %pcn:
+<ce>
+  Меня зовут _daughter_, а _victim_
+мой отец. Когда я услышала о вашем
+героическом поступке - мести за смерть
+моего отца, то захотела поблагодарить
+вас лично. Буду признательна, если вы
+повидаете меня при случае.
+<ce>
+  _daughter_
+  _daughterhouse_,
+  __daughterhouse_
+<ce> ----
+
+Message:  1035
+<ce> Отвали, дружище, или мы сделаем с тобой
+<ce> то же самое, что сделали с _victim_.
+
+Message:  1036
+<ce> Тебе следовало бы тратить времени
+<ce> на оттачивание своего ума столько
+<ce> же, сколько ты уделяешь заточке
+<ce> своего клинка, %pcn.
+<ce> Нет ничего проще, чем предугадать
+<ce> засаду для тебя, воспитанника
+<ce> Гильдии Бойцов.
+
+Message:  1040
+<ce> Вы слыхали про _victim_?  Убит среди белого дня
+<ce> в своем собственном доме.
+   <--->
+<ce> Все знают, что это Темное Братство причастно к смерти
+<ce> _victim_, но никто не хочет что-то с этим делать.
+
+Message:  1041
+<ce> Темное Братство вне себя от ярости, что какой-то
+<ce> выскочка %ra посмел убить их лучших бойцов.
+   <--->
+<ce> Темное Братство единогласно решило выследить вторгшегося
+<ce> в их штаб-квартиру в ___darkb_.
+<ce> Как же я рад, что это был не я.
+
+Message:  1050
+<ce> Да...?  Постойте, вы тот самый
+<ce> безмозглый силач, которого
+<ce> Гильдия Бойцов послала охранять
+<ce> бедного старика _victim_?
+<ce> Кто пустил этого %ra сюда?!
+
+Message:  1051
+<ce> %pcn, оглянись!
+<ce> Это ловушка!
+
+Message:  1052
+<ce> Спасибо, что спасли меня от этих
+<ce> убийц. Если вы проводите меня
+<ce> до _safehouse_ в
+<ce> __safehouse_, я смогу безопасно
+<ce> покинуть %reg самостоятельно.
+
+Message:  1070
+<ce> Вас остановил посыльный в запыленной
+<ce> одежде: "%pcn? %god,
+<ce> я вас нашел!
+<ce> У меня письмо для вас".
+
+Message:  1071
+<ce> Спасибо за помощь,
+<ce> дальше я сама управлюсь.
+
+
+
+QBN:
+Item _note_ letter used 1030
+Item _reward_ magic_item
+Item _I.02_ dead_body
+Item _letter_ letter used 1031
+
+Person _victim_ face 5 faction People_of_Sentinel male remote
+Person _questgiver_ group Questor
+Person _daughter_ face 3 faction People_of_Sentinel female remote
+Person _darkb_ faction The_Dark_Brotherhood remote anyInfo 1015 rumors 1016
+
+Place _victimhouse_ local house4
+Place _daughterhouse_ remote house4
+Place _safehouse_ remote house3
+Place aide remote dungeon
+
+Clock _qtime_ 00:00 0 flag 1 range 2 5
+Clock _S.03_ 10.00:00 20.20:00
+Clock _S.04_ 00:00 0 flag 1 range 0 5
+
+Foe _enemy_ is Assassin
+Foe _F.01_ is Nightblade
+Foe _F.02_ is 4 Assassin
+
+--	Quest start-up:
+	dialog link for location _daughterhouse_ person _daughter_
+	dialog link for person _darkb_
+	start timer _qtime_
+	log 1020 step 0
+	place npc _victim_ at _victimhouse_
+	hide npc _victim_
+	pc at _victimhouse_ set _S.05_
+	_note_ used do _readnote_
+	have _I.02_ set _deadbody_
+
+variable _qtime_
+_readnote_ task:
+	add dialog for person _darkb_
+
+_S.02_ task:
+	injured _enemy_
+	say 1035
+
+_S.03_ task:
+	_letter_ used do _readletter_
+	start timer _S.04_
+	give pc _letter_ notify 1070
+	place npc _daughter_ at _daughterhouse_
+
+_S.04_ task:
+	end quest
+
+_S.05_ task:
+	start task _insidespawn_
+--more repairs to prevent duplicate effects. now only one time per quest
+
+_insidespawn_ task:
+	create foe _enemy_ every 0 minutes 4 times with 100% success
+	place item _I.02_ at _victimhouse_
+	place item _note_ at _victimhouse_
+	--sped up spawn rate. very slow for an ambush
+	log 1021 step 1
+	rumor mill 1040
+	hide npc _victim_
+--user reports repeated spawns upon entering house, should not be so
+
+_deadbody_ task:
+	take _I.02_ from pc
+--added deadbody task. otherwise body would clog inventory
+
+_S.06_ task:
+	clicked npc _darkb_
+	create foe _enemy_ every 3 minutes 5 times with 100% success
+	create foe _F.01_ every 0 minutes 1 times with 100% success
+	--reduced spawn time to instant
+	hide npc _darkb_
+	say 1050
+
+_S.07_ task:
+	killed 1 _F.01_
+	start timer _S.03_
+	rumor mill 1041
+	change repute with _daughter_ by +10
+	change repute with _darkb_ by -15
+
+_S.08_ task:
+	clicked npc _daughter_
+	pc at _daughterhouse_ set _S.12_
+	create foe _F.02_ every 0 minutes 1 times with 100% success
+	--reduced spawn time to instant
+	say 1051
+	add _daughter_ face
+	hide npc _daughter_
+	--using hide NPC rather than transfer
+
+_readletter_ task:
+	log 1022 step 2
+
+_S.10_ task:
+	when _qtime_ and not _S.07_
+	end quest
+
+_S.11_ task:
+	injured _F.02_
+	say 1036
+
+variable _S.12_
+_S.13_ task:
+	pc at _safehouse_ set _S.14_
+	when _S.08_ and not _S.12_
+	log 1023 step 3
+	say 1052
+
+_S.14_ task:
+	give pc _reward_
+	end quest
+
+_S.15_ task:
+	when _S.04_ and not _S.14_
+	say 1071

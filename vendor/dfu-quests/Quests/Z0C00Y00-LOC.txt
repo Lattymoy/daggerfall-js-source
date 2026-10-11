@@ -1,0 +1,184 @@
+-- Quest: C:\QUESTS\WORKING\Z0C00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: Mephala
+-- Repute: 0
+-- QuestId: 0
+Messages: 42
+Quest: Z0C00Y00
+DisplayName: Задание Мефалы
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> И почему я не удивлена увидев тебя. Не следовало
+<ce> мне отвечать на этот призыв. Ну что ж поделаешь,
+<ce> видать для червя нет ничего приятнее, чем совать
+<ce> свой любопытный нос в осиное гнездо. %pcf,
+<ce> я дам тебе силу, но сначала мне нужна от тебя
+<ce> кое какая услуга. Мне нужно убить одного дворянчика,
+<ce> от которого я испытываю одни непритности. Могу ли
+<ce> я рассчитывать на тебя?
+
+RefuseQuest:  [1001]
+<ce> Что ж. Я найду своему времени лучшее применение,
+<ce> чем построение основы мощи для неблагодарного,
+<ce> ленивого отброса как ты.
+
+AcceptQuest:  [1002]
+<ce> Итак, это несложно. Этот надоедливый типчик
+<ce> _enemy_ работает должностным лицом
+<ce> во дворце __palace_ и чувствует себя
+<ce> в полной безопасности, так %g1 думает... Не
+<ce> знаю, как ты найдешь проход, но возможно тебе
+<ce> и придет в голову какая идея. Возможно. Если
+<ce> ты не собираешся покончить с собой, то потом
+<ce> тебе стоит обратиться к одному человечку в
+<ce> местечке под названием ___qgfriend_.
+<ce> Через него я устрою передачу тебе источника
+<ce> силы и власти - артефакта _artifact_.
+<ce> Я прикажу своему слуге _qgfriend_
+<ce> ждать тебя в течение =1stparton_ дней.
+<ce> Для тебя же лучше будет вернуться в срок.
+<ce> На этом все. Действуй.
+
+QuestFail:  [1003]
+<ce> Нет, нет, нет, нет! Сначала убей
+<ce> рыцаря во дворце __palace_,
+<ce> а потом приходи сюда!
+<ce> %oth, как же Мефала была права.
+
+QuestComplete:  [1004]
+<ce> День добрый, %pcf. Я _qgfriend_.
+   <--->
+<ce> Мефала мне говорила, что ты можешь прийти. У нее
+<ce> были основания полагать, что твои шансы на
+<ce> выживание после столкновения с _enemy_
+<ce> практически равны нулю. В любом случае я рад
+<ce> повстречаться с Клинком, не так ли? Прошу
+<ce> прощения, если твой разговор с Мефалой был
+<ce> грубым. Теперь, когда _enemy_ мертв,
+<ce> быть может это поднимет ей настроение.
+<ce> Ну ладно, оставлю тебя в одиночестве.
+<ce> Благодарю тебя.
+
+--removed odd   <---> in 1004.
+
+RumorsDuringQuest:  [1005]
+_enemy_ говорил, что нашел путь в штаб-квартиру Темного Братства.
+   <--->
+Темное Братство будет очень недовольно, узнав, что _enemy_ работал против него.
+
+RumorsPostfailure:  [1006]
+Темное Братство уже посылало кое-кого достать _enemy_, но почему то они не смогли убить %g4!
+   <--->
+После неудачной попытки покушения на н%g4, _enemy_ переехал в дворец __palace_.
+
+RumorsPostsuccess:  [1007]
+_enemy_ должно быть подобрался вплотную к разгадке местонахождения Убежища Полуночи.
+   <--->
+Думаю, что Темное Братство уже слышало про _enemy_ и %g4 амбиции.
+
+Message:  1011
+_qgfriend_ это заносчивый =qgfriend_, живущий в трущобах местечка __qgfriend_, на %di отсюда.
+   <--->
+_qgfriend_ это прозвище одного человека по имени =qgfriend_ на %di отсюда в __qgfriend_.
+
+Message:  1012
+_qgfriend_ один из шпионов Мефалы в %reg, управляющий событиями из местечка __qgfriend_.
+   <--->
+_qgfriend_ правая рука Мефалы; на самом деле это =qgfriend_ из местечка __qgfriend_.
+
+Message:  1013
+Мефала - принцесса даэдра по части убийств и покровительница Темного Братства.
+   <--->
+Мефала - принцесса Обливиона, чьей сферой влияния являются убийства.
+
+Message:  1014
+<ce> _artifact_ - артефакт вампирической силы, выпивающий из своей жертвы
+ жизненные силы и отдающий их своему владельцу.
+
+Message:  1020
+%qdt:
+ Со мною заключила контракт принцесса даэдра,
+ Мефала -- мне надо убить должностное лицо по
+ имени _enemy_, после чего я получу
+ от нее артефакт, называемый _artifact_.
+ Ее представитель, _qgfriend_, будет
+ ждать меня в течение =1stparton_ дней
+ в __qgfriend_ местечка ___qgfriend_.
+ Возможные проблемы: Мефала рассказала, что
+ _enemy_ живет во дворце __palace_.
+ Возможно достать %g4 будет сложнее,
+ чем предполагалось.
+
+Message:  1030
+<ce> Мефала будет вами гордиться,
+<ce> _enemy_ мертв. Самое
+<ce> время делать ноги.
+
+Message:  1040
+<ce> Кто вы и какого черта вы здесь делате?
+
+Message:  1041
+<ce> Все вы ассассины одинаковые. Вот почему я окружил
+<ce> себя настоящей охраной. =bodyguard_!
+<ce> Вставай ты, неотесанная дубина. Убей!
+
+
+
+QBN:
+Item _artifact_ artifact Ebony_Blade anyInfo 1014
+
+Person _questgiver_ face 112 named Mephala remote anyInfo 1013
+Person _qgfriend_ group Librarian remote anyInfo 1011
+Person _enemy_ face 1 factiontype Knightly_Guard remote
+
+Place _palace_ remote palace
+
+Clock _1stparton_ 00:00 0 flag 1 range 2 5
+
+Foe _monster_ is Knight
+Foe _guards_ is Warrior
+Foe _bodyguard_ is Giant
+
+--	Quest start-up:
+	start timer _1stparton_
+	log 1020 step 0
+	pc at _palace_ set _S.06_
+	place npc _enemy_ at _palace_
+
+_1stparton_ task:
+	end quest
+
+variable _2ndparton_
+_pcgetsgold_ task:
+	when _npcclicked_ and _mondead_
+	give pc _artifact_
+	end quest
+--removed unnecessary delay
+
+_mondead_ task:
+	killed 1 _monster_
+	say 1030
+
+_npcclicked_ task:
+	clicked npc _qgfriend_
+
+_clearclick_ task:
+	when _npcclicked_ and not _mondead_
+	say 1003
+	clear _npcclicked_ _clearclick_
+
+_S.06_ task:
+	create foe _guards_ every 2 minutes 10 times with 25% success
+	hide npc _enemy_
+	place foe _monster_ at _palace_
+
+_S.07_ task:
+	injured _monster_
+	create foe _bodyguard_ every 1 minutes 1 times with 100% success
+	say 1041
+
+_greklith_ task:
+	injured _guards_ saying 1040

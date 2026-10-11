@@ -1,0 +1,232 @@
+-- Quest: C:\QUESTS\WORKING\L0A01L00.Qbn.
+-- StartsBy: letter
+-- Questee: initiate
+-- Questor: Brotherhood
+-- Repute: 01
+-- QuestId: 0
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 21
+Quest: L0A01L00
+DisplayName: Вступительные испытания
+-- Message panels
+QRC:
+
+QuestComplete:  [1004]
+<ce> Отличная работа, %pcn.
+<ce> У вашей жертвы обнаружилась острая
+<ce> сердечная недостаточность. Бедняга.
+<ce> А вы доказали, что можете убивать
+<ce> аккуратно и без использования обнаженных
+<ce> клинков. Вы теперь полноправный член Темного
+<ce> Братства. С этих пор, в каком бы городе вы
+<ce> ни находились, вам скажут, где находится
+<ce> наш оплот. По нашим правилам все новички
+<ce> за свой первый заказ получают вознаграждение
+<ce> в виде одного золотого. Возьмите.
+
+RumorsDuringQuest:  [1005]
+_npc_ следит за каждым своим шагом. Еще бы, у н%g4 столько врагов...
+
+RumorsPostfailure:  [1006]
+Неразумно пренебрегать Темным Братством. Неразумно и смертельно опасно.
+
+RumorsPostsuccess:  [1007]
+Бедняга _npc_. Мне кажется у н%g4 очень много врагов. слишком много.
+   <--->
+Бедолага _npc_. Вино в %g4 бокале, похоже, испортилось. Бывает.
+
+QuestLogEntry:  [1010]
+%qdt:
+ У меня была секретная встреча с агентом
+ Темного Братства, гильдии наемных
+ убийц, в городе ___apothecary_.
+ Мне передали яд _poison_
+ чтобы незаметно подложить "клиенту"
+ _npc_ в доме _mansion_,
+ что в городе __mansion_. Согласно
+ наставлениям агента _apothecary_
+ потом мне нужно добраться до
+ брата _darkbmember_ в городе ___darkbmember_,
+ и я стану членом Темного Братства.
+ Мне дали =traveltime_ дней, чтобы
+ закончить с этим, или Братство посчитает,
+ что мне не удалось выполнить свое задание.
+
+Message:  1011
+<ce> С неба, кружась в воздухе, плавно опускался
+<ce> какой-то лист бумаги. Ему оставалось
+<ce> всего каких-то полметра до земли, как
+<ce> стрела, выпущенная из лука большой силы,
+<ce> пригвоздила его к ближайшему дереву. Удар
+<ce> был таким мощным, что с дерева полетели
+<ce> листья. Но самое главное то, что вместе с
+<ce> листком к дереву был прибит и локон ваших
+<ce> волос, срезанных с поразительной меткостью.
+<ce> Тот, кто так стрелял, наверняка знал свое
+<ce> дело. Поскольку никого вокруг больше не было,
+<ce> то, по всей видимости, это послание
+<ce> предназначалось вам. Все еще пребывая в
+<ce> шоковом состоянии вы подошли к дереву и сняли
+<ce> бумагу.
+   <--->
+<ce> Вы шли по улице, ни о чем не заботясь, спокойно,
+<ce> как будто у вас нет никаких дел. Ничто не
+<ce> предвещало опасности, все вокруг тихо и мирно.
+<ce> Поэтому и удивление от того, что в ваших руках
+<ce> неожиданным образом оказался какой-то сверток,
+<ce> было очень большим. Все, что вам удалось
+<ce> заметить, - быстро удаляющееся шлепанье
+<ce> босых ног. Курьер - призрак? Вздохнув,
+<ce> вы развернули пакет.
+
+Message:  1012
+%qdt:
+ Мистический посланник передал мне
+ письмо. Я не рискну переписать его
+ содержание в свой дневник.
+
+Message:  1014
+<ce> Вам не повезло, %pcn.
+<ce> _npc_ до сих пор в живых.
+<ce> Первое правило Братства гласит,
+<ce> что если договор заключен, то
+<ce> кто-то обязательно должен умереть.
+<ce> И вы займете место вашей
+<ce> жертвы.
+
+Message:  1015
+<ce> Вы, должно быть, %pcn.
+<ce> Темное Братство долго наблюдало за вами.
+<ce> Вы доказали, что можете хладнокровно убивать оружием.
+<ce> Только вот Братство очень плохо относится к
+<ce> разбойникам. И мы предлагаем вам выбор:
+<ce> быть с нами или навсегда отметить себя печатью
+<ce> смерти. Если вы решите присоединиться,
+<ce> то для того, чтобы рассчитывать на полноценное
+<ce> партнерство, вам придется доказать вашу
+<ce> преданность. Возьмите яд, -  _poison_ и приготовьте
+<ce> последнее питье в жизни вашего клиента, - _npc_.
+<ce> Вам нужен дом _mansion_ в городе __mansion_.
+<ce> У вас есть =traveltime_ дней на доказательство
+<ce> вашей преданности Братству. Когда все будет закончено,
+<ce> сообщите об этом агенту _darkbmember_ в городе
+<ce> ___darkbmember_. Да благословит вас Мефала.
+
+Message:  1019
+<ce> Яд _poison_ поднялся в виде
+<ce> облака над бокалом вина. Но
+<ce> через несколько секунд реакция
+<ce> закончилась, и напиток стал
+<ce> выглядеть как и раньше. Может
+<ce> даже и лучше. Все, что вам надо
+<ce> сделать теперь, это поставить его
+<ce> обратно и убраться отсюда.
+
+Message:  1020
+%pcn
+  Темное Братство давно наблюдает за вами
+Вы спокойно убивали без надлежащего на то разрешения
+много раз. Присоединяйтесь к нам... или мы будем считать
+вас врагом. Идите в город ___apo_
+в провинции ____apo_ и найдите там агента _apothecary_.
+Мы даем вам =S.01_ дней.
+Дальнейшие инструкции получите от агента.
+<ce>
+Брат...
+
+--changed %reg to ____apo_ here to ensure region consistency
+
+
+QBN:
+Item _letter_ letter used 1020
+Item _decanter_ decanter
+Item _poison_ snake_venom
+Item _gold_ gold range 1 to 1
+
+Person _darkbmember_ faction The_Dark_Brotherhood remote
+Person _apothecary_ face 144 group Chemist remote
+Person _npc_ face 1 group Resident1 remote
+
+Place _mansion_ remote house1
+Place _apo_ remote apothecary
+--added _apo_ place due to spawning problem for chemist
+
+Clock _traveltime_ 0:00 0 flag 1 range 2 5
+--changed 14.00:00 to 0:00. specified time limit was too short for some cases.
+Clock _S.01_ 30.00:00 0 flag 1 range 1 4
+
+Foe _F.00_ is 2 Assassin
+Foe _guards_ is Spellsword
+Foe _F.02_ is 2 Nightblade
+
+--	Quest start-up:
+	start timer _S.01_
+	log 1012 step 0
+	get item _letter_
+	say 1011
+	place npc _apothecary_ at _apo_
+--added place npc command
+
+_traveltime_ task:
+	change repute with _darkbmember_ by -35
+	end quest
+
+variable _S.01_
+_S.02_ task:
+	clicked npc _apothecary_
+	pc at _mansion_ set _S.08_
+	place item _decanter_ at _mansion_
+	add dialog for location _mansion_ person _darkbmember_
+	start timer _traveltime_
+    stop timer _S.01_
+	log 1010 step 1
+	get item _poison_
+	say 1015
+
+_S.03_ task:
+    when _hasDecanter_ and _hasPoison_
+	give item _poison_ to _F.00_
+	say 1019
+	take _poison_ from pc
+    --added take item action. poison would linger in inventory.
+
+variable _hasDecanter_
+variable _hasPoison_
+
+_S.04_ task:
+	clicked item _decanter_
+--	have decanter and _poison_ do _S.03_
+    have _decanter_ set _hasDecanter_
+    have _poison_ set _hasPoison_
+	clear _S.11_
+
+_S.05_ task:
+	clicked npc _darkbmember_
+
+_S.06_ task:
+	when _S.11_ and _S.05_
+--removed " and _S.03_." superfluous when decanter has been dropped
+	give pc _gold_
+	end quest
+--removed unnecessary delay
+
+_S.07_ task:
+	when _S.01_ and not _S.02_
+	change repute with _darkbmember_ by -25
+	end quest
+
+_S.08_ task:
+	create foe _guards_ every 3 minutes 3 times with 25% success
+
+_S.09_ task:
+	when not _S.11_ and not _S.03_ and _S.05_
+	create foe _F.00_ every 1 minutes 1 times with 100% success
+	create foe _F.02_ every 1 minutes 1 times with 100% success
+	say 1014
+	change repute with _darkbmember_ by -50
+	change repute with _darkbmember_ by -100
+
+variable _S.10_
+_S.11_ task:
+	dropped _decanter_ at _mansion_
+	clear _S.04_

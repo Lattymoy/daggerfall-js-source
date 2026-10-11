@@ -1,0 +1,136 @@
+-- Quest: C:\QUESTS\WORKING\N0B20Y05.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: mage
+-- Repute: 20
+-- QuestId: 5
+Messages: 41
+Quest: N0B20Y05
+DisplayName: Опасный волшебник
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Несомненно вы уже слышали про сумасшедшего
+<ce> колдуна. _wizard_. Обладание огромной силой
+<ce> свело его с ума. %rt %rn решил начать
+<ce> боевые действия против него, но это тупиковая
+<ce> стратегия. %t попросил нас послать
+<ce> кого-нибудь уничтожить этого мага-психопата.
+<ce> Наградой выполнившему будет магич. _reward_.
+<ce> Сделаете ли вы это для нас?
+   <--->
+<ce> Народ региона %reg умоляет гильдию
+<ce> встать грудью на защиту против сумасшедшего
+<ce> мага, который некоторое время назад ввергнул
+<ce> страну в пучину страха и ужаса. Архмагистр
+<ce> собственноручно подписал приказ, благодаря
+<ce> которому мы обязаны сделать так. Знаю, что
+<ce> ученое заведение не выдает легких поручений,
+<ce> но быть может вы окажетесь способны бросить
+<ce> вызов безумцу и расчленить его на кусочки?
+
+RefuseQuest:  [1001]
+<ce> Проклятие! Я так рассчитывал на вас
+<ce> в этом предприятии.
+
+AcceptQuest:  [1002]
+<ce> Прекрасно, я знал, что вы не оставите нас
+<ce> в беде, %pcf. Итак, _wizard_ будет
+<ce> в своей лаборатории, ___mondung_, в течение
+<ce> примерно =1stparton_ дней прежде чем двинется в
+<ce> новое место. %t хочет, чтобы маг умер до исхода
+<ce> =1stparton_ дней, тогда он не успеет произвести
+<ce> больших разрушений. Увидимся через =1stparton_ дней.
+<ce> Благодарю от всего сердца и ... удачи, %pcf!
+
+QuestFail:  [1003]
+<ce> Думаю вам следует заняться делом, о
+<ce> котором мы с вами договаривались,
+<ce> не так ли?
+
+QuestComplete:  [1004]
+<ce> И снова вы поразили меня своим умением
+<ce> и эффективностью действий, %pcf.
+<ce> Отличная работа -- %t будет доволен.
+<ce> Вот ваше вознаграждение как и было
+<ce> обещано -- _reward_. Владейте.
+
+RumorsDuringQuest:  [1005]
+Гильдия Магов послал кого-то разобраться с магом безумцем в ___mondung_.
+   <--->
+Все затаив дыхание ждут, какой же следующий шаг сделает безумец.
+
+RumorsPostfailure:  [1006]
+Даже Гильдия Магов ничего не может поделать с этим психом.
+   <--->
+Никто не знает, где этот _wizard_ сейчас, но пока он не умрет, небезопасно сейчас везде.
+
+RumorsPostsuccess:  [1007]
+Надеюсь мы последние, кто слышал об этом безумце из ___mondung_.
+   <--->
+Наконец-то воцарилась тишина и мы можем вдохнуть спокойно.
+
+QuestorPostsuccess:  [1008]
+Приветствую, %pcf. Надеюсь этот псих не причинил вам вреда.
+
+QuestorPostfailure:  [1009]
+<ce> Так...вы вернулись, но ведь маг-безумец
+<ce> из ___mondung_ все еще жив, так?
+<ce> Вы безнадежны, %pcf.
+
+Message:  1030
+%qdt:
+ Гильдия Магов из ___questgiver_ попросила
+ меня убить колдуна из ___mondung_.
+ Мне нужно закончить с этим до исхода =1stparton_ дней
+ и вернуться за вознаграждением.
+
+Message:  1040
+<ce> _wizard_ убит. Вы убили мага
+<ce> безумца из ___mondung_.
+
+
+
+QBN:
+Item _reward_ magic_item
+
+Person _questgiver_ group Questor
+Person _wizard_ face 249 faction The_Mages_Guild remote
+
+Place _mondung_ remote dungeon9
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _monster_ is Mage
+
+--	Quest start-up:
+	start timer _1stparton_
+	reveal _mondung_
+	log 1030 step 0
+	place foe _monster_ at _mondung_
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _mondead_
+	give pc _reward_
+	unset _qgclicked_
+	end quest
+
+variable _queston_
+_mondead_ task:
+	killed 1 _monster_
+	say 1040
+
+_qgclicked_ task:
+	clicked npc _questgiver_
+
+_1stparton_ task:
+	end quest
+
+variable _2ndparton_
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_
+	say 1003
+	clear _qgclicked_ _clearclick_
+--added full clearclick action. was mere variable previously.

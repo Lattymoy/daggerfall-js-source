@@ -1,0 +1,130 @@
+-- Quest: C:\QUESTS\WORKING\L0B00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Brotherhood
+-- Repute: 0
+-- QuestId: 0
+Messages: 22
+Quest: L0B00Y00
+DisplayName: Ренегат
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Плохие новости, %pcn. В Братстве обнаружен
+<ce> предатель. Все выводы из этого вы
+<ce> можете сделать сами, не так ли?
+   <--->
+<ce> Время от времени Братство проводит проверку
+<ce> в своих собственных рядах. И мы нашли предателя,
+<ce> личность которого уже установлена. Вам выпала
+<ce> честь покарать отступника.
+
+RefuseQuest:  [1001]
+<ce> Позорный ответ. Мне казалось, что вы выше этого.
+
+AcceptQuest:  [1002]
+<ce> Очень хорошо. Предатель нашел убежище
+<ce> в ___mondun_, что на
+<ce> %di. Если вы не вернетесь через
+<ce> =queston_ дней, вы лишитесь славы,
+<ce> и ваше место займет другой.
+<ce> Не подведите нас, %pcf.
+
+QuestFail:  [1003]
+<ce> Предатель все еще жив, я знаю точно.
+<ce> Даже не пытайтесь убедить меня в обратном.
+
+QuestComplete:  [1004]
+<ce> Отлично. Вы оправдали наши надежды.
+
+RumorsDuringQuest:  [1005]
+Этот убийца скрылся в подземелье ___mondun_, как будто гончие преисподней гнались за ним.
+   <--->
+_qgiver_ теперь просто так не отпустит предателя, после того, что тот сделал в Братстве.
+
+RumorsPostfailure:  [1006]
+Предатель, похоже, более скользкий, чем _qgiver_ думает. %g умеет исчезать.
+   <--->
+<ce> Мне известно, что некий найтблейд уходил на север, но
+ в Братстве все надо быстро забывать.
+
+RumorsPostsuccess:  [1007]
+История изменника только подтверждает правило. Не стоит играть с Братством.
+   <--->
+У меня не было сомнений, что Братство не проявит милосердия к дуракам.
+
+QuestorPostsuccess:  [1008]
+Что вы хотите, о палач изменников?
+
+QuestorPostfailure:  [1009]
+<ce> Мне как-то не по себе говорить с вами.
+<ce> Как-никак вам доверили наказать
+<ce> предателя, так?
+
+QuestLogEntry:  [1010]
+%qdt:
+ Темное Братство отправило меня на поиски и уничтожение
+ изменника братства. Убийца, вышедший из под контроля
+ прячется в подземелье ___mondun_. У меня есть
+ =queston_ дней на все.
+
+Message:  1021
+<ce> "Я не... предатель...
+<ce> Поверьте мне... Настоящий... предатель
+<ce> это..." Контракт выполнен.
+
+
+
+QBN:
+
+Person _qgiver_ group Questor
+
+Place _mondun_ remote dungeon
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+Foe _assassin_ is Assassin
+Foe _nightblade_ is Nightblade
+Foe _acrobat_ is Acrobat
+Foe _battlemage_ is Battle_mage
+
+--	Quest start-up:
+	start timer _queston_
+	reveal _mondun_
+	log 1010 step 0
+	pick one of _S.05_ _S.06_ _S.07_ _S.08_
+
+_queston_ task:
+	end quest
+
+_pcgetsgold_ task:
+	when _mondead_ and _qgclicked_
+	give pc nothing
+	end quest
+
+_mondead_ task:
+	killed 1 _nightblade_ saying 1021
+	killed 1 _battlemage_ saying 1021
+	killed 1 _acrobat_ saying 1021
+	killed 1 _assassin_ saying 1021
+
+_qgclicked_ task:
+	clicked npc _qgiver_
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_
+	say 1003
+	clear _qgclicked_ _clearclick_
+
+_S.05_ task:
+	place foe _nightblade_ at _mondun_
+
+_S.06_ task:
+	place foe _battlemage_ at _mondun_
+
+_S.07_ task:
+	place foe _acrobat_ at _mondun_
+
+_S.08_ task:
+	place foe _assassin_ at _mondun_

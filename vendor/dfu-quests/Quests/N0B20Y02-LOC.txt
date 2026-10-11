@@ -1,0 +1,210 @@
+-- Quest: C:\QUESTS\WORKING\N0B20Y02.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: mage
+-- Repute: 20
+-- QuestId: 2
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 31
+Quest: N0B20Y02
+DisplayName: Защитить заслуженного мага
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Я _qgiver_, служитель
+<ce> могущественного мага _sleepingmage_.
+<ce> Меня проинструктировали найти
+<ce> члена гильдии для защиты его
+<ce> светлости, пока он погружен
+<ce> в магический транс. _sleepingmage_
+<ce> подозревает, что конкуренты могут
+<ce> послать ассассинов, чтобы убить
+<ce> его, пока он беспомощен.
+<ce> %g даст вам очень полезную
+<ce> магическую вещь: _magicitem_,
+<ce> если вы остановите убийц.
+<ce> Возьметесь за это задание?
+   <--->
+<ce> Очень большая честь, мой дорогой
+<ce> друг %pcf, быть выбранным
+<ce> помочь известному магу _sleepingmage_,
+<ce> о котором я уверен вы уже слышали.
+<ce> Да, он специально попросил, чтобы
+<ce> именно вы охраняли его бренное
+<ce> тело, пока он медитирует.
+<ce> Разумеется маг его ранга имеет
+<ce> врагов, завидующих его громадной
+<ce> силе. Я верю вам, но согласитесь
+<ce> ли вы на эту работу?
+
+RefuseQuest:  [1001]
+<ce> Хммм. Обычно члены гильдии
+<ce> более отзывчивы. Уверен,
+<ce> _sleepingmage_ запомнит
+<ce> ваш отказ.
+
+AcceptQuest:  [1002]
+<ce> Как я и ожидал.  _sleepingmage_
+<ce> начинает свой трехчасовой транс, так что
+<ce> вы просто должны охранять помещение
+<ce> гильдии от вторжения в течение этого времени,
+<ce> пока маг уязвим. По окончании транса он
+<ce> будет перенесен в Этериус. Как только он
+<ce> будет в безопасности, гильдия пошлет
+<ce> кого-нибудь к вам с наградой.
+
+QuestComplete:  [1004]
+<ce> Молодая женщина в темно-синей мантии
+<ce> низко кланяется вам и говорит:
+<ce>
+<ce> "Гильдия посылает свои поздравления за
+<ce> отлично проделанную работу. _sleepingmage_
+<ce> доволен. Вот _magicitem_, как и
+<ce> было обещано".
+
+RumorsDuringQuest:  [1005]
+_sleepingmage_ - легенда в ___sleepingmage_.
+   <--->
+_sleepingmage_ нуждается в отдыхе после использования могущественного заклятия.
+
+RumorsPostfailure:  [1006]
+Что-то случилось с _sleepingmage_ пока он спал. Думаю, он мертв.
+   <--->
+_sleepingmage_ исчез. Никто не знает, жив он или мертв.
+
+RumorsPostsuccess:  [1007]
+_sleepingmage_ проснулся после долгого сна, это хорошая новость.
+   <--->
+_sleepingmage_ был атакован во время сна, но на его защиту встал охранник.
+
+QuestorPostsuccess:  [1008]
+За то, что вы сделали для _sleepingmage_, конечно же я буду рад помочь вам.
+
+QuestorPostfailure:  [1009]
+<ce> _sleepingmage_ исчез, и дежурили
+<ce> в это время вы, %pcf.
+<ce> Мне нечего больше вам сказать.
+<ce> Ничего хорошего в этом не вижу.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Меня уговорили
+ защищать мага _sleepingmage_ в
+ _magesguild_, пока он
+ погружен в транс и беспомощен.
+ Мне нужно охранять его в течение
+ трех часов, начиная с этого момента.
+
+-moved line down from %qdt line.
+
+Message:  1011
+<ce> Отойди в сторонку, новичок!
+<ce> Мы пришли убить _sleepingmage_
+<ce> прежде чем он проснется. Брысь
+<ce> отсюда, или мы убьем и тебя.
+
+Message:  1012
+<ce> Дубина! Ничего лучше в голову не
+<ce> пришло, чем беспокоить мага
+<ce> в состоянии транса?! Ты
+<ce> заплатишь за это! Оставь
+<ce> гильдию сейчас же. Я обязательно
+<ce> доложу об этом на Совете.
+
+Message:  1013
+<ce> Убьешь меня и тебя выкинут
+<ce> из Гильдии Магов! Уходи или
+<ce> я не ручаюсь за себя!
+
+Message:  1014
+<ce> Я получу награду за этого
+<ce> клятвопреступника из Гильдии
+<ce> Магов, виновного в смерти мага
+<ce> _sleepingmage_.
+
+Message:  1030
+<ce> Позовите Архмагистра! Этот %ra-наемник
+<ce> только что убил мага _sleepingmage_!
+<ce> Заприте двери! К бою, к бою!
+
+
+
+QBN:
+Item _magicitem_ magic_item
+
+Person _sleepingmage_ face 5 faction The_Mages_Guild male local
+Person _qgiver_ group Questor
+
+Place _magesguild_ local magery
+
+Clock _oneday_ 1.03:00
+Clock _S.09_ 7.00:00
+Clock _S.12_ 03:00
+--precise timers set due to quest time constraints
+
+Foe _F.00_ is 3 Nightblade
+Foe _mage_ is Mage
+Foe _F.02_ is 2 Assassin
+Foe _F.03_ is Knight
+Foe _F.04_ is Battle_mage
+
+--	Quest start-up:
+	start timer _oneday_
+	start timer _S.12_
+	log 1010 step 0
+	create npc at _magesguild_
+	place npc _sleepingmage_ at _magesguild_
+
+variable _oneday_
+_S.01_ task:
+	create foe _F.00_ every 55 minutes 1 times with 100% success
+
+_S.02_ task:
+	injured _F.00_ saying 1011
+
+_S.03_ task:
+	killed 3 _F.00_
+
+_S.04_ task:
+	clicked npc _sleepingmage_ say 1012
+	hide npc _sleepingmage_
+	change repute with _sleepingmage_ by -10
+	cast Spell_Shield spell on _mage_
+	cast Spell_Absorption spell on _mage_
+	place foe _mage_ at _magesguild_
+
+_S.05_ task:
+	when not _S.12_ and not _S.04_
+
+_questdone_ task:
+	when _S.03_ and _S.12_ and not _S.04_
+	give pc _magicitem_
+	end quest
+
+_S.07_ task:
+	killed 1 _mage_
+	create foe _F.03_ every 30 minutes 10 times with 10% success
+	create foe _F.04_ every 2 minutes 5 times with 50% success
+	create foe _F.02_ every 25 minutes 10 times with 10% success
+	start timer _S.09_
+	change repute with _sleepingmage_ by -50
+
+_S.08_ task:
+	injured _mage_ saying 1013
+
+variable _S.09_
+_S.10_ task:
+	injured _F.02_ saying 1014
+	injured _F.03_ saying 1014
+	injured _F.04_ saying 1030
+
+_talisman_ task:
+	when _S.07_ and _S.09_
+	end quest
+
+_S.12_ task:
+	hide npc _sleepingmage_
+
+until _S.12_ performed:
+	pc at _magesguild_ set _S.01_

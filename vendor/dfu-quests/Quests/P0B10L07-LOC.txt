@@ -1,0 +1,212 @@
+-- Quest: C:\QUESTS\WORKING\P0B10L07.Qbn.
+-- StartsBy: letter
+-- Questee: member
+-- Questor: vampire
+-- Repute: 10
+-- QuestId: 7
+Messages: 18
+Quest: P0B10L07
+DisplayName: Запугивание
+-- Message panels
+QRC:
+
+RefuseQuest:  [1001]
+Error: Questtext 1001 Called.
+
+AcceptQuest:  [1002]
+Error: Questtext 1002 Called.
+
+QuestComplete:  [1004]
+<ce> Этот рыцарь просто тихо и мирно
+<ce> сошел с ума. %pcn, что же
+<ce> вы с ним такое ужасное сделали?
+<ce> _knight_ теперь не скоро
+<ce> оправится. Да... не хочется мне
+<ce> быть на %g4 месте. %vam считает,
+<ce> что вы заслужили этот подарок - _jewelry_
+<ce> в знак своего признания и великолепной
+<ce> работы... Продолжайте в том же духе.
+
+RumorsDuringQuest:  [1005]
+Если _knight_ не будет начеку, те самые вампиры придут переубеждать %g4.
+   <--->
+_knight_ думает, будто %g о вампирах знает все. Но, право, это глупо.
+
+RumorsPostfailure:  [1006]
+_knight_ пересекает Залив держа наготове свой клинок против вампиров.
+   <--->
+_knight_ не боится никого из них. Ходят слухи, что уже уничтожено несколько тысяч вампиров.
+
+RumorsPostsuccess:  [1007]
+_knight_ усвоит уроки жизни. Не стоит платить за уничтожение вампиров.
+   <--->
+_knight_ всего лишь тупой благодетель. Надо всего лишь оставить вампиров в покое.
+
+QuestorPostsuccess:  [1008]
+Error: Questtext 1008 Called.
+
+QuestorPostfailure:  [1009]
+Error: Questtext 1009 Called.
+
+QuestLogEntry:  [1010]
+      __vamp_
+       ___vamp_
+<ce>
+Дорогой друг, %pcn.
+<ce>
+  %vam нуждается в вашей помощи
+Приезжайте немедленно.
+<ce>
+<ce> Всегда ваш друг в Смерти,
+<ce>
+    _vamp_
+<ce> ----
+
+Message:  1011
+<ce> Добрый вечер, мой сородич. У нас
+<ce> возникли сложности с одним местным
+<ce> военачальником, который, несмотря на
+<ce> множество наших вежливых письменных
+<ce> угроз, продолжает вести войну против
+<ce> семьи %vam. Обычно такие надоедливые
+<ce> рыцари оказались бы в загробной жизни
+<ce> уже несколько недель назад. Такое наше
+<ce> милосердие отнюдь не проявление
+<ce> сентиментальности. Нам нужен сильный
+<ce> союзник в провинции %reg, но
+<ce> _knight_ не понимает всей ценности
+<ce> нашего предложения. Придется преподать
+<ce> небольшой урок. Нам бы хотелось, чтобы
+<ce> вы встретили %g4 в крепости ___mondung_,
+<ce> где %g чувствует себя очень даже спокойно.
+<ce> Не убивайте %g4, всего лишь поговорите.
+<ce> Грубость приветствуется. Я жду вас через
+<ce> =queston_ ночей. Надеюсь, _knight_
+<ce> станет вести себя более покладисто.
+
+Message:  1012
+%qdt:
+ В своем письме _vamp_
+ рода %vam сообщает,
+ что семья нуждается во мне.
+ Мне нужно прибыть в город
+ ___vamp_ в место __vamp_
+ так быстро, как только можно.
+
+Message:  1013
+%qdt:
+ _vamp_
+ отправляет меня в крепость ___mondung_
+ чтобы слегка придушить рыцаря
+ по имени _knight_. Этот рыцарь
+ отказывается подчиниться воле семьи
+ %vam. Мне приказано не убивать %g4,
+ а всего лишь припугнуть и вернуться
+ назад в город ___vamp_ в течение
+ =queston_ дней.
+
+Message:  1014
+<ce> О %god, скажи семье %vam,
+<ce> что я сделаю все что угодно!
+<ce> Только не убивайте меня!
+   <--->
+<ce> %oth, я сдаюсь!
+<ce> Я сделаю все, что они захотят.
+<ce> Только пожалуйста, не убивайте
+<ce> меня!
+
+Message:  1015
+<ce> _knight_ умирает.
+<ce> _vamp_ не одобрит
+<ce> такой способ вести дела.
+
+Message:  1016
+<ce> Мне уже все рассказали, %pcf.
+<ce> _knight_ уже на том свете,
+<ce> хотя мои просьбы были всего
+<ce> лишь запугать %g4. %oth, вы
+<ce> не более чем убийца, не так ли?
+<ce> %vam и я очень разочарованы,
+<ce> %pcf.
+
+Message:  1017
+<ce> Вы шли по улице, весело насвистывая какую-то
+<ce> песенку и наслаждаясь погодой, как вдруг вас
+<ce> схватили за руку и резко дернули в сторону.
+<ce> И в тот же момент в дерево, перед которым вы
+<ce> только что были, вонзилась стрела. "Что же вы
+<ce> так неосторожно", - сказал стоявший перед
+<ce> вами молодой вампир. Он был из тех, кто уже
+<ce> осознал свою истинную силу, но еще не научился
+<ce> распоряжаться ей правильно.
+<ce> "Нельзя давать волю беспечности",- вывел вас
+<ce> из оцепенения его голос, - "Вы нам еще пригодитесь.
+<ce> Возьмите письмо, оно адресовано вам, а об этом
+<ce> охотнике не беспокойтесь, я о нем позабочусь..."
+
+
+
+QBN:
+Item _letter_ letter used 1010
+Item _jewelry_ trinket
+
+Person _vamp_ factiontype Vampire_Clan local
+Person _knight_ face 69 factiontype Knightly_Guard male remote
+
+Place _mondung_ remote dungeon2
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+Foe _F.00_ is Knight
+
+--	Quest start-up:
+	dialog link for person _vamp_
+	_letter_ used do _readletter_
+	have _letter_ set _S.09_
+	give pc _letter_ notify 1017
+	place foe _F.00_ at _mondung_
+
+variable _S.00_
+_queston_ task:
+	change repute with _vamp_ by -5
+	end quest
+
+_vampclicked_ task:
+	clicked npc _vamp_
+	reveal _mondung_
+	log 1013 step 1
+	say 1011
+
+_S.03_ task:
+	when _vampclicked_ and not _S.05_ and not _S.04_
+	clear _vampclicked_ _S.03_
+
+_S.04_ task:
+	injured _F.00_
+	say 1014
+	restrain foe _F.00_
+--task _S.04_
+--This was appended to the restrain foe action, not sure why
+
+_S.05_ task:
+	killed 1 _F.00_
+	say 1015
+
+_reward_ task:
+	when _vampclicked_ and _S.04_ and not _S.05_
+	give pc _jewelry_
+	end quest
+
+_S.07_ task:
+	when _vampclicked_ and _S.05_
+	say 1016
+	change repute with _vamp_ by -5
+	end quest
+
+_readletter_ task:
+	add dialog for location _mondung_ person _vamp_
+	log 1012 step 0
+	create npc _vamp_
+
+_S.09_ task:
+	start timer _queston_

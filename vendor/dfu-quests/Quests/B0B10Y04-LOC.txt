@@ -1,0 +1,177 @@
+-- Quest: C:\QUESTS\WORKING\B0B10Y04.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: knight
+-- Repute: 10
+-- QuestId: 4
+Messages: 18
+Quest: B0B10Y04
+DisplayName: Безумный наемник
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Добро пожаловать, %pcn. Меня
+<ce> зовут _qgiver_. Орден полнится
+<ce> слухами о безрассудном оркском наемнике,
+<ce> которого следует остановить. Не хотите
+<ce> ли вы взяться за это дело?
+
+RefuseQuest:  [1001]
+<ce> Ваша скромность делает вам честь,
+<ce> %pcf. Возвращайтесь,
+<ce> когда будете не так мягкосердечны.
+
+AcceptQuest:  [1002]
+<ce> Прекрасно. В темной дыре неподалеку отсюда,
+<ce> проклятом месте, называемом ___mondung_,
+<ce> есть _soldier_ по имени =soldier_,
+<ce> который договорился с группой магов-отступников,
+<ce> больше известных как некроманты, уничтожить
+<ce> %reg. Быть может он чувствует, что ошибся
+<ce> с %t, а может быть это всего лишь необъяснимая
+<ce> ярость, которую орки испытывают ко всем людям.
+<ce> Очень важно остановить его прежде, чем его слепая
+<ce> ярость и магия отступников возымеют катастрофические
+<ce> результаты. Остановите его, %pcf
+<ce> любым способом. Если в течение =2mondung_ дней вы не
+<ce> вернетесь с вестью, что ситуация разрешена,
+<ce> наши рыцари сами займутся этой работой, если будет
+<ce> не слишком поздно. Молитесь, чтобы этого не
+<ce> случилось.
+
+QuestFail:  [1003]
+<ce> Разве вы не должны сейчас быть в
+<ce> ___mondung_, %pcf?
+
+QuestComplete:  [1004]
+<ce> Хорошо, %pcf. Орки убрались из
+<ce> ___mondung_, так что вашу миссию
+<ce> можно считать завершенной. Вы воистину
+<ce> достойный член нашего ордена.
+
+RumorsDuringQuest:  [1005]
+___mondung_ идеальное место для укрытия орков -- оно удалено от всех дорог.
+   <--->
+Орки и маги-отступники затевают что-то ужасное в %reg.
+
+RumorsPostfailure:  [1006]
+Эта местность проклята магами. Это могла быть война, чума, голод, а может и все вместе.
+   <--->
+Никто не знает как остановить нечестивый альянс орков и магов.
+
+RumorsPostsuccess:  [1007]
+Внезапно орки ушли из ___mondung_. Их лидер то ли болен, то ли мертв.
+   <--->
+%reg спасен самопожертвованием храброго и изобретательного наемника-%ra.
+
+QuestorPostsuccess:  [1008]
+Приветствую, %pct. Как идут дела у Убийцы Орков?
+
+QuestorPostfailure:  [1009]
+Орки и маги были безжалостно прогнаны отсюда. Что ж, это должно было случиться.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ из __qgiver_
+ в ___qgiver_ хочет остановить
+ _soldier_, настроенного уничтожить
+ %reg. Орк обитает в какой-то дыре,
+ называемой ___mondung_, со
+ своими войсками. У меня =2mondung_ дня, чтобы
+ разобраться с этой угрозой и вернуться
+ к __qgiver_.
+
+Message:  1013
+<ce> Вас схватил за руку какой-то чумазый парнишка,
+<ce> всучивший вам в руку грязный конверт. Конечно
+<ce> же он не походил на профессионального курьера,
+<ce> двигался он весьма быстро, вы даже не успели
+<ce> схватить его за шкирку.
+
+Message:  1014
+<ce> Вы убили _soldier_.
+
+Message:  1015
+<ce> Ага, эти волосы. Итак, она все еще жива... Я
+<ce> должен доложить об этом Раскалывателю-Черепов,
+<ce> что его возлюбленная леди не уехала из %reg.
+<ce> Спасибо, что предупредили меня, %pcf.
+<ce> Если мой хозяин принесет смерть и разруху
+<ce> в %reg при поддержке его магов-союзников,
+<ce> он может убить женщину, которая значит для
+<ce> него больше, чем жажда кровавого возмездия,
+<ce> которое он носит в себе с %t.
+<ce> Еще раз благодарю вас, друг мой.
+
+Message:  1017
+<ce> Я слышал вы принесли благие известия, %pct.
+<ce> Пусть %god благословит и хранит вас. Я
+<ce> думаю, у меня есть чем отблагодарить вас и
+<ce> выразить свою призательность. Вот, я взял это
+<ce> у одной госпожи, пожалевшей меня. Это такое
+<ce> красивое, что я ни за что не продал бы это,
+<ce> даже в голодную пору. Возьмите это в знак
+<ce> моей благодарности.
+
+
+
+QBN:
+
+Person _qgiver_ group Questor
+
+Place _mondung_ remote dungeon1
+Place tavern local tavern
+
+Clock _2mondung_ 00:00 0 flag 17 range 0 2
+Clock _2letter_ 00:50 2.18:40
+
+Foe _soldier_ is Orc_warlord
+Foe _note_ is 2 Orc
+Foe _F.02_ is Orc_sergeant
+Foe _hunter_ is Orc_shaman
+
+--	Quest start-up:
+	start timer _2mondung_
+	reveal _mondung_
+	log 1010 step 0
+
+_2mondung_ task:
+	end quest
+
+variable _2letter_
+_S.02_ task:
+	when _qgclicked_ and _questdone_
+	give pc nothing
+	change repute with _qgiver_ by +10
+	end quest
+
+variable _S.03_
+variable _S.04_
+until _S.04_ performed:
+	pc at _mondung_ set _S.07_
+
+_S.05_ task:
+	killed 1 _soldier_
+	say 1014
+
+_qgclicked_ task:
+	clicked npc _qgiver_
+
+_S.07_ task:
+	create foe _note_ every 100 minutes 100 times with 12% success
+	create foe _F.02_ every 107 minutes 50 times with 10% success
+	create foe _hunter_ every 113 minutes 20 times with 8% success
+	place foe _soldier_ at _mondung_
+
+_questdone_ task:
+	when _S.05_ or _S.04_
+
+_S.09_ task:
+	when _2mondung_ and not _questdone_
+
+variable _S.10_
+_clearclick_ task:
+	when _qgclicked_ and not _questdone_
+	say 1003
+	clear _qgclicked_ _clearclick_

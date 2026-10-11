@@ -1,0 +1,167 @@
+-- Quest: C:\QUESTS\WORKING\R0C10Y04.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 10
+-- QuestId: 4
+Messages: 21
+Quest: R0C10Y04
+DisplayName: Злой волшебник
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Вечно ноющие крестьяне, работающие на моей земле
+<ce> рядом с ___mondung_, давно жалуются
+<ce> на злого колдуна, проводящего свои опыты
+<ce> в этом подземелье. Похоже, на этот раз
+<ce> они правы. Мне нужен киллер,
+<ce> у которого достаточно времени, чтобы поехать в
+<ce> ___mondung_ и убить
+<ce> колдуна-чернокнижника там. Я готов заплатить
+<ce> _reward_ золотых монет за эту услугу.
+<ce> Интересно?
+
+RefuseQuest:  [1001]
+<ce> Правда? Мне-то казалось, что это задание
+<ce> как раз для вас. Жаль!
+
+AcceptQuest:  [1002]
+<ce> %oth, это важно. Этого колдуна нужно
+<ce> замочить не позднее =1stparton_ дней, так что,
+<ce> возможно, вам стоит выходить в путь немедленно.
+<ce> Удачи, %pcf. Никакой ему пощады!
+
+QuestFail:  [1003]
+<ce> Не хочу вас видеть до тех пор, пока этот колдун
+<ce> не мертв.
+
+QuestComplete:  [1004]
+<ce> Могущественный герой вернулся! Фермеры вне себя
+<ce> от радости, что их земля свободна от черной магии,
+<ce> и я разделяю их радость. Примите _reward_ золотых монет,
+<ce> %pcf, в благодарность от меня.
+
+RumorsDuringQuest:  [1005]
+Вы почти чувствуете недоброжелательное магическое здание.
+   <--->
+Некий колдун поклялся превратить землю _questgiver_ в развалины.
+
+RumorsPostfailure:  [1006]
+Этот колдун из ___mondung_, очевидно, проходил здесь.
+   <--->
+Очевидно, некий авантюрист лишил покоя колдуна из ___mondung_.
+
+RumorsPostsuccess:  [1007]
+Безумный колдун из ___mondung_ был убит, очевидно, храбрым %ra.
+   <--->
+Если бы колдун выжил, _questgiver_ имел бы большие проблемы.
+
+QuestorPostsuccess:  [1008]
+А, вот и убийца безумного колдуна вернулся. Как вы, мой друг?
+   <--->
+Рад снова видеть вас, убийца безумных колдунов.
+
+QuestorPostfailure:  [1009]
+<ce> Надеюсь, вы не ожидали награды за
+<ce> провал в убийстве колдуна.
+<ce> Вам повезло, что я вас
+<ce> не выпорол.
+   <--->
+<ce> Итак, %ra возвращается.
+<ce> Как я понимаю, вам не удалось
+<ce> убить колдуна. Убирайся отсюда.
+
+Message:  1011
+<ce> _questgiver_, дворянин, по-настоящему ненавидит
+<ce> колдуна, прозванного _fakename_.
+   <--->
+<ce> _questgiver_, дворянин, которому причинил беспокойство
+<ce> колдун, прозванный _fakename_.
+
+Message:  1012
+_fakename_ колдун мертв.
+
+Message:  1015
+%qdt:
+ _questgiver_
+ из __questgiver_ в ___questgiver_
+ послал меня в ___mondung_,
+ где я должен убить безумного колдуна.
+ Если я выполню дело и вернусь
+ к н%g2 не позднее =1stparton_ дней,
+ я заработаю мое золото.
+
+Message:  1020
+<ce> Должно быть, ты и есть тот бедный глупец, которого
+<ce> _questgiver_ нанял попытаться убить меня.
+<ce> Твои кости скоро присоединятся к костям
+<ce> твоих соотечественников, разбросанных
+<ce> по моему подземелью!
+
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ face 112 group Questor anyInfo 1011 rumors 1011
+Person _fakename_ group Local_4.0 female remote
+
+Place _mondung_ remote dungeon
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _F.00_ is Sorceror
+Foe _battlemage_ is Battle_mage
+Foe _F.02_ is Orc_shaman
+Foe _mage_ is Mage
+
+--	Quest start-up:
+	start timer _1stparton_
+	reveal _mondung_
+	log 1015 step 0
+	pick one of _week_ _plot_ _time_ _vend_
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _S.02_
+	give pc _reward_
+	end quest
+
+_qgclicked_ task:
+	clicked npc _questgiver_
+
+_S.02_ task:
+	killed 1 _battlemage_
+	killed 1 _F.02_
+	killed 1 _F.00_
+	killed 1 _mage_
+	say 1012
+	change repute with _fakename_ by -20
+
+variable _queston_
+_1stparton_ task:
+	change repute with _questgiver_ by -15
+	end quest
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.02_
+	clear _qgclicked_ _clearclick_
+
+_week_ task:
+	place foe _battlemage_ at _mondung_
+
+_plot_ task:
+	place foe _mage_ at _mondung_
+
+_time_ task:
+	place foe _F.02_ at _mondung_
+
+_vend_ task:
+	place foe _F.00_ at _mondung_
+
+_dummy_ task:
+	injured _mage_
+	injured _battlemage_
+	injured _F.00_
+	injured _F.02_
+	say 1020

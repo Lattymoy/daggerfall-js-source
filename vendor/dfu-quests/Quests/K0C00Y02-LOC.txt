@@ -1,0 +1,213 @@
+-- Quest: C:\QUESTS\WORKING\K0C00Y02.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: merchant
+-- Repute: 0
+-- QuestId: 2
+Messages: 16
+Quest: K0C00Y02
+DisplayName: Фальшивое золото
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pcf, у меня могут возникнуть очень большие
+<ce> неприятности. Так получилось, что один из моих
+<ce> бывших коллег пытаясь сделать мою жизнь невы-
+<ce> носимой прислал мне несколько поддельных
+<ce> золотых слитков. Не зная того, я разослал их
+<ce> четырем моим самым лучшим союзникам в обмен
+<ce> на полученные от них услуги. Разумеется мне
+<ce> необходимо вернуть эти слитки, пока не было
+<ce> обнаружено, что это поддельное золото, а это
+<ce> может произойти через =2mondung_ дней или
+<ce> раньше.Я заплачу _reward1_ золотых за каждый
+<ce> слиток фальшивого золота, которое вы сможете
+<ce> вернуть. Согласны?
+
+RefuseQuest:  [1001]
+<ce> Нет? В самом деле? Ну ладно. Кто-то будет
+<ce> посговорчивее, я очень надеюсь на это.
+
+AcceptQuest:  [1002]
+<ce> %oth, это отлично. Итак, один из слитков
+<ce> сейчас в банке с названием _depository_ в
+<ce> __depository_; второй слиток в замке,
+<ce> называемом ___mondung_;
+<ce> третий в __palace_ во дворце;
+<ce> ну а последний слиток находится в
+<ce> _mansion_ в __mansion_.
+<ce> Помните, что у вас всего лишь =2mondung_ дней
+<ce> на все про все, и мне нужны все четыре слитка.
+<ce> Удачи, %pcf.
+<ce> %god благословит вашу дорогу.
+
+QuestFail:  [1003]
+<ce> %god, не могли бы вы поторопиться?
+
+QuestComplete:  [1004]
+<ce> Кажется, что вы уже позаботились
+<ce> о проблемах  _qgiver_.
+
+RumorsDuringQuest:  [1005]
+Какой-то парень выспрашивал дорогу к _depository_. Он не выглядел как банкир.
+   <--->
+<ce> Все собираются в районе ___mondung_.
+<ce> В последнее время там какая-то нездоровая
+ активность.
+   <--->
+В _palace_ усилили охрану, опасаясь воров, слоняющихся в округе.
+   <--->
+Служанка из _mansion_ говорила, как видела нежелательных людей в округе.
+
+RumorsPostfailure:  [1006]
+%t %rn похоже полагает, что во главе всех этих нелегальных операций находится _qgiver_.
+   <--->
+_qgiver_ по всей видимости занимается контрабандой, золотом в частности.
+   <--->
+_palace_ полностью прекратил все отношения с _qgiver_, вот что говорят.
+   <--->
+___mondung_ усердно блокирует все попытки наладить контакт с _qgiver_.
+
+RumorsPostsuccess:  [1007]
+_qgiver_ полностью возместил украденное у его партнеров золото.
+   <--->
+Популярность _qgiver_  в высших кругах %reg продолжает расти.
+
+QuestorPostsuccess:  [1008]
+Здравствуйте, избавитель от фальшивого золота.
+
+QuestorPostfailure:  [1009]
+Один раз я уже доверил вам свои финансовые секреты, помните, %pcf?
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ из ___qgiver_ попросил
+ меня вернуть хотя бы один их четырех слитков
+ из отправленных деловым партнерам пока не
+ выяснилось, что золото поддельное.
+ На все дела у меня =2mondung_ дней.
+ Слитки находятся в следующих местах:
+ _palace_ в __palace_,
+ ___mondung_,
+ _mansion_ в __mansion_,
+ и _depository_ в __depository_.
+ Я получу _reward1_ золотых за каждый
+ возвращенный слиток золота.
+
+Message:  1015
+<ce> %oth, прекрасно, %pcf. Я уже
+<ce> начал опасаться, что вам не хватит времени
+<ce> Вот вам настоящее золото в обмен на
+<ce> эту подделку.
+
+
+
+QBN:
+Item _goldBrick1_ gold_bar
+Item _goldBrick2_ gold_bar
+Item _goldBrick3_ gold_bar
+Item _goldBrick4_ gold_bar
+Item _reward1_ gold
+Item _reward2_ gold
+Item _reward3_ gold
+Item _I.07_ gold
+
+Person _qgiver_ group Questor
+
+Place _depository_ remote bank
+Place _mondung_ remote dungeon2
+Place _palace_ remote palace
+Place _mansion_ remote house1
+
+Clock _2mondung_ 00:00 0 flag 17 range 0 2
+
+Foe _F.00_ is 2 Knight
+Foe _F.01_ is 2 Battle_mage
+Foe _F.02_ is 2 Spellsword
+
+--	Quest start-up:
+	place item _goldBrick1_ at _depository_
+	place item _goldBrick2_ at _mansion_
+	place item _goldBrick3_ at _mondung_
+	place item _goldBrick4_ at _palace_
+	start timer _2mondung_
+	reveal _mondung_
+	log 1010 step 0
+	pc at _depository_ set _letter2_
+	pc at _mansion_ set _S.10_
+	pc at _palace_ set _S.08_
+
+variable _S.00_
+variable _S.01_
+variable _2mondung_
+variable _2palace_
+_S.04_ task:
+	toting _goldBrick1_ and _qgiver_ clicked
+	get item _reward1_
+	say 1015
+	make _reward1_ permanent
+
+_S.05_ task:
+	toting _goldBrick2_ and _qgiver_ clicked
+	get item _reward2_
+	say 1015
+	make _reward2_ permanent
+
+_S.06_ task:
+	toting _goldBrick3_ and _qgiver_ clicked
+	get item _reward3_
+	say 1015
+	make _reward3_ permanent
+
+_S.07_ task:
+	toting _goldBrick4_ and _qgiver_ clicked
+	get item _I.07_
+	say 1015
+	make _I.07_ permanent
+
+_qgclick2_ task:
+	clicked npc _qgiver_
+
+_clearclick_ task:
+	when _qgclick2_ and not _S.04_ and not _S.05_ and not _S.06_ and not _S.07_
+	say 1003
+	clear _clearclick_ _qgclick2_
+
+_S.08_ task:
+	create foe _F.00_ every 10 minutes 10 times with 20% success
+
+_letter2_ task:
+	create foe _F.01_ every 10 minutes 10 times with 20% success
+
+_S.10_ task:
+	create foe _F.02_ every 10 minutes 10 times with 20% success
+
+variable _S.11_
+_mggold_ task:
+	when _S.04_ or _S.05_ or _S.06_ or _S.07_
+
+_lesser_ task:
+	when _S.04_ and _S.05_ and _S.06_ and _S.07_
+
+_S.14_ task:
+	when _lesser_
+	give pc nothing
+	end quest
+
+_success_ task:
+	when _2mondung_ and _mggold_
+	give pc nothing
+	make _goldBrick1_ permanent
+	make _goldBrick2_ permanent
+	make _goldBrick3_ permanent
+	make _goldBrick4_ permanent
+	end quest
+
+_S.16_ task:
+	when _2mondung_ and not _mggold_
+	make _goldBrick1_ permanent
+	make _goldBrick2_ permanent
+	make _goldBrick3_ permanent
+	make _goldBrick4_ permanent
+	end quest

@@ -1,0 +1,179 @@
+-- Quest: C:\QUESTS\WORKING\L0B00Y02.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Brotherhood
+-- Repute: 0
+-- QuestId: 2
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 16
+Quest: L0B00Y02
+DisplayName: Неприятная конкуренция
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Нам стало известно, что в провинции
+<ce> %reg действует банда наемных убийц.
+<ce> Ее надо уничтожить до того, как она расцветет.
+<ce> Я хочу, чтобы вы выполнили заказ на убийцу и
+<ce> на того мужчину или женщину, кто заказал
+<ce> убийство. У вас же хватит времени,
+<ce> чтобы постараться выполнить это, правда?
+   <--->
+<ce> Темное Братство было единственной гильдией наемных
+<ce> убийц в Тамриэле с конца Второй Эры.
+<ce> Мы намеревались сохранить эту монополию.
+<ce> Но некая банда наемников, действующая на свой
+<ce> страх и риск, буквально плюет на Темное Братство.
+<ce> Но удача их главы, - это =assassin_, закончилась.
+<ce> Я хочу, чтобы вы преподали %g2 пожизненный урок
+<ce> и проучили %g4 глупых нанимателей
+
+RefuseQuest:  [1001]
+<ce> Нет? Как странно и безрассудно.
+
+AcceptQuest:  [1002]
+<ce> Хорошо. Итак, мы знаем, что
+<ce> убийца, =assassin_,
+<ce> преследует свою жертву в подземелье,
+<ce> именуемом ___mondung_. Если вам
+<ce> не удастся найти нить, ведущую к заказчику,
+<ce> возвращайтесь сюда.
+<ce> Конечно же я предпочту, чтобы был выполнен
+<ce> заказ на убийцу, и на %g4
+<ce> нанимателя, но будет достаточно смерти
+<ce> только наемника.
+<ce> У вас есть не больше =queston_ дней,
+<ce> чтобы выполнить оба контракта.
+
+QuestComplete:  [1004]
+<ce> Великолепно, %pct. Нам было бы достаточно
+<ce> устранения только лишь убийцы
+<ce> Но теперь и заказчик познакомился
+<ce> с Темным Братством, и знакомство
+<ce> было не из приятных.
+<ce> Прощай, =boss_, удачи в Обливионе, =assassin_.
+
+RumorsDuringQuest:  [1005]
+=assassin_ - это наемный убийца из провинции %reg.
+   <--->
+=assassin_ - не лучший наемник, но у н%g4 много энтузиазма.
+
+RumorsPostfailure:  [1006]
+=assassin_ только лишь доказывает, что можно работать и вне Братства.
+   <--->
+Похоже, что Братство не может остановить всех вольных наемников в Тамриэле.
+
+RumorsPostsuccess:  [1007]
+=boss_ думает, что %g может сэкономить несколько золотых, нанимая вольника, ... идиоты.
+   <--->
+Похоже что можно заплатить не только убийцам из Братства. И =boss_ знает, как.
+
+QuestorPostsuccess:  [1008]
+Приветствую, убийца разбойников.
+
+QuestorPostfailure:  [1009]
+<ce> You're that worthless thug who can't account
+<ce> a bumbling freelancer like =assassin_.
+<ce> Why should I waste my breath on you?
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ из Темного Братства:
+ __qgiver_, ___qgiver_
+ направляет меня нанести визит некоему дельцу,-
+ =assassin_. Это убийца-конкурент, %g выполняет
+ контракт в подземелье ___mondung_.
+ Если мне удастся найти нить, которая ведет
+ к заказчику, то на этот случай мне был
+ предложен контракт и на него или нее.
+ Короче говоря, весь контракт должен быть исполнен
+ в течение =queston_ дней.
+
+Message:  1011
+  После убийства клиента %n,
+приходите в крепость ___stronghold_ в
+запущенной части провинции %reg
+за наградой.
+<ce>
+<ce>
+-- =boss_
+<ce> ----
+
+Message:  1012
+%qdt:
+ Мне удалось найти на теле незадачливого
+ убийцы, - =assassin_, записку от нанимателя.
+ %g4 заказчик - =boss_ и %g4
+ крепость - ___stronghold_.
+
+Message:  1013
+<ce> Вы убили неудачника, - =assassin_.
+<ce> Братство будет удовлетворено.
+
+Message:  1014
+<ce> =boss_ присоединится к своему наемнику.
+<ce> Братство будет удовлетворено.
+
+Message:  1015
+<ce> Мы бы предпочли, чтобы вы исполнили
+<ce> контракт на заказчика.
+<ce> Но нам достаточно знать, что
+<ce> =assassin_ больше не будет принимать
+<ce> участие в "соревновании"
+
+
+
+QBN:
+Item _letter_ letter used 1011
+
+Person _qgiver_ face 110 group Questor
+
+Place _mondung_ remote dungeon
+Place _stronghold_ remote dungeon2
+
+Clock _queston_ 00:00 0 flag 17 range 0 5
+
+Foe _assassin_ is Assassin
+Foe _boss_ is Knight
+
+--	Quest start-up:
+	start timer _queston_
+	reveal _mondung_
+	log 1010 step 0
+	give item _letter_ to _assassin_
+	_letter_ used do _S.05_
+	place foe _boss_ at _stronghold_
+	place foe _assassin_ at _mondung_
+
+_queston_ task:
+	end quest
+
+_qgclicked_ task:
+	clicked npc _qgiver_
+
+variable _reward_
+_S.03_ task:
+	killed 1 _assassin_
+	say 1013
+
+_S.04_ task:
+	killed 1 _boss_
+	say 1014
+
+_S.05_ task:
+	reveal _stronghold_ readmap
+	log 1012 step 1
+
+_S.06_ task:
+	when _S.03_ and not _S.04_ and _qgclicked_
+	say 1015
+
+_S.07_ task:
+	when _S.03_ and _S.04_ and _qgclicked_
+	give pc nothing
+	end quest
+
+_S.08_ task:
+	when not _S.03_ and not _S.04_ and _qgclicked_
+	clear _qgclicked_ _S.08_

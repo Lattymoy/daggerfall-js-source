@@ -1,0 +1,237 @@
+-- Quest: C:\QUESTS\WORKING\A0C0XY04.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: peasant
+-- Repute: 0X
+-- QuestId: 4
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 36
+Quest: A0C0XY04
+DisplayName: Самозванец
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Меня зовут _agent_. Я
+<ce> представляю кое-кого, кто хочет ...
+<ce> приобрести кое-что. Доставивший это
+<ce> получит вознаграждение: _artifact_.
+<ce> Не знаю, что это такое, но думаю
+<ce> в этой вещичке много силы.
+<ce> Вы согласны?
+
+RefuseQuest:  [1001]
+<ce> Забудьте, что вы видели меня когда-либо.
+<ce> У меня влиятельные друзья. Если вы
+<ce> причините мне неудобства, они
+<ce> прикончат вас как мошенника.
+
+AcceptQuest:  [1002]
+<ce> Вам нужно достать даэдрич.
+<ce> _ingredient_ из ___dungeon_.
+<ce> Не знаю, где это находится, но
+<ce> уверен, вы сможете найти, где это
+<ce> находится. Когда получите _ingredient_,
+<ce> принесите это в _meetingplace_ здесь
+<ce> в городе. Там вас встретит _qgiver_,
+<ce> %g даст вам _artifact_.
+
+RumorsDuringQuest:  [1005]
+<ce> Я слышал, что король сделает важное
+<ce> заявление на следующей неделе.
+
+RumorsPostfailure:  [1006]
+<ce> Один бедный идиот поперся в ___dungeon_.
+<ce> Я слышал, что это место кишит демонами.
+
+RumorsPostsuccess:  [1007]
+<ce> Держись подальше от _qgiver_.
+<ce> Я слышал %g лжец и обманщик.
+
+QuestorPostsuccess:  [1008]
+<ce> Извини за инцидент с _qgiver_.
+<ce> Полагаю мне следовало бы помочь тебе
+<ce> покончить с этим.
+
+QuestorPostfailure:  [1009]
+<ce> Это дело с _qgiver_ не моя ошибка.
+<ce> Я не хочу тебя запутать, так что просто
+<ce> оставь меня.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Меня встретил _agent_ из ___agent_.
+ %g рассказал мне, что некий таинственный
+ клиент в %g4 лице ищет даэдрич. _ingredient_.
+ Если я смогу найти это, то получу _artifact_.
+ Даэдрич. _ingredient_ находится где-то в
+ ___dungeon_. Когда я найду это, мне нужно
+ встретиться с _qgiver_ в
+ _meetingplace_ здесь в __meetingplace_.
+
+Message:  1011
+%qdt:
+ Страж, охраняющий даэдрич. _ingredient_,
+ сказал мне, что у таинственного клиента моего
+ заказчика _agent_ на самом деле нет
+ _artifact_. Если я принесу даэдрич.
+ _ingredient_, смерть будет моей единственной
+ наградой. Страж дал мне магический знак,
+ который сделает заказчика беспомощным.
+
+Message:  1012
+<ce> Я буду сражаться с тобой насмерть, чтобы
+<ce> защитить даэдрич. _ingredient_. Тебе нужно
+<ce> знать, что _qgiver_ совсем не такой, каким
+<ce> кажется. _artifact_ - давно утерянный
+<ce> предмет огромной силы, которым _qgiver_
+<ce> никогда не владел. Это значит, что тебя
+<ce> убьют, когда %g получит даэдрич.
+<ce> _ingredient_. Прекрати свои бесплодные
+<ce> попытки атаковать меня и я дам тебе
+<ce> магический знак, который может сделать
+<ce> так, что _qgiver_ станет беспомощным.
+<ce> Если ты убьешь %g4, то я могу похлопотать
+<ce> за тебя в Гильдии Магов. Ты
+<ce> принимаешь мое предложение?
+
+Message:  1013
+<ce> Глупо! Неужели ты действительно
+<ce> полагаешь, что я дам тебе
+<ce> _artifact_ взамен даэдрич.
+<ce> _ingredient_? Единственная
+<ce> награда, коорую я могу тебе
+<ce> предложить - смерть! Посмотри,
+<ce> каков я на самом деле и дрожи
+<ce> в страхе! Я =monster_.
+<ce> Убить его!
+
+Message:  1014
+<ce> Чт... меня предали!
+<ce> Моя иллюзия разрушена  и на меня
+<ce> свалилось заклятие тишины!
+<ce> Это чертов _guardian_
+<ce> =guardian_ дал тебе это, я прав?
+<ce> К оружию! Помогите! К оружию!
+
+Message:  1015
+<ce> В вашей голове раздался
+<ce> незнакомый мягкий шепот:
+<ce> "Отлично, %pcn. За
+<ce> уничтожение _qgiver_, или
+<ce> =monster_, как %g4 называет
+<ce> свой народ, ты получишь
+<ce> награду. Теперь члены
+<ce> Гильдии Магов будут
+<ce> доверять вам больше".
+
+Message:  1020
+<ce> У тебя действительно изворот-
+<ce> ливый ум. Я восхищен. Но
+<ce> Но знай, я здесь не для
+<ce> шуток. Я забираю мой знак
+<ce> и проклинаю тебя недоверием
+<ce> моих ближайших соратников.
+
+Message:  1025
+Хризамер - древний артефакт великой силы.
+   <--->
+Это легендарный магический артефакт.
+
+Message:  1030
+Тогда возьми этот знак.
+
+Message:  1035
+Приготовься к смерти!
+
+
+
+QBN:
+Item _artifact_ artifact Chrysamere anyInfo 1025
+Item _ingredient_ lodestone
+Item _token_ pearl
+
+Person _qgiver_ face 1 group Chemist local
+Person _agent_ group Questor
+Person _dummymage_ face 1 faction The_Mages_Guild remote
+Person _dummyorc_ face 1 named Gortwog
+Person _dummydarkb_ face 49 faction The_Dark_Brotherhood remote
+
+Place _dungeon_ remote dungeon7
+Place _meetingplace_ local apothecary
+
+Clock _extratime_ 00:30 0 flag 1 range 0 1
+Clock _totaltime_ 90.00:00 0 flag 17 range 0 2
+
+Foe _guardian_ is Daedra_seducer
+Foe _monster_ is Orc_shaman
+Foe _orc_ is Orc_warlord
+Foe _daedras_ is Daedroth
+
+--	Quest start-up:
+	start timer _totaltime_
+	reveal _dungeon_
+	log 1010 step 0
+	give item _ingredient_ to _guardian_
+	place foe _guardian_ at _dungeon_
+	place npc _qgiver_ at _meetingplace_
+
+_giveingredient_ task:
+	toting _ingredient_ and _qgiver_ clicked saying 1013
+	give item _ingredient_ to _monster_
+	cast Shield spell on _monster_
+	cast Spell_Reflection spell on _monster_
+
+_hitguardian_ task:
+	injured _guardian_
+	prompt 1012 yes _yes_ no _no_
+--a task yes without underscores is a prima facie danger, though it hasn't caused any problems yet. tasks, items, and so forth should have underscores for style and execution
+
+_yes_ task:
+	log 1011 step 1
+	get item _token_
+	say 1030
+	restrain foe _guardian_
+
+_no_ task:
+	say 1035
+
+--unused variable _clickonqgiver_
+variable _clickonqgiver_
+_givetoken_ task:
+	toting _token_ and _qgiver_ clicked saying 1014
+	cast Silence spell on _monster_
+
+_shamandead_ task:
+	killed 1 _monster_
+	start timer _extratime_
+
+_givereward_ task:
+	when _givetoken_ and _shamandead_
+	change repute with _dummymage_ by +25
+	change repute with _dummyorc_ by -10
+	say 1015
+	--"saying ###" as an argument here is unsupported, I gave it its own line
+
+_extratime_ task:
+	make _ingredient_ permanent
+	end quest
+
+_totaltime_ task:
+	make _ingredient_ permanent
+	end quest
+
+_revealmonsters_ task:
+	when _giveingredient_ or _givetoken_
+	create foe _orc_ every 1 minutes 1 times with 100% success
+	hide npc _qgiver_
+	place foe _monster_ at _meetingplace_
+
+_S.11_ task:
+	killed 1 _guardian_
+
+_betrayguardian_ task:
+	when _yes_ and _S.11_
+	create foe _daedras_ every 1 minutes 3 times with 100% success
+	take _token_ from pc saying 1020
+	change repute with _dummydarkb_ by -75

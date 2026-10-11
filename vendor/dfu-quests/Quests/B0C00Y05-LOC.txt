@@ -1,0 +1,140 @@
+-- Quest: C:\QUESTS\WORKING\B0C00Y05.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: knight
+-- Repute: 0
+-- QuestId: 5
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 81
+Quest: B0C00Y05
+DisplayName: Предатель
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Вы все еще не доверенный член нашего
+<ce> рыцарского ордена, %pcn.
+<ce> Однако, полагаю, что знаю путь
+<ce> заслужить наше доверие. В ордене есть
+<ce> предатель в ___qgiver_,
+<ce> мерзкий _monster_, который выдал
+<ce> нас нашим врагам. Смерть - этого
+<ce> недостаточно для наказания предателя,
+<ce> вы не думаете, %pcn? Вы согласны
+<ce> выполнить эту работу для ордена?
+
+RefuseQuest:  [1001]
+<ce> Даже не рассчитывайте на благосклонность
+<ce> нашего ордена в дальнейшем!
+
+AcceptQuest:  [1002]
+<ce> Предатель - _monster_
+<ce> по имени =monster_, прячущийся
+<ce> подобно трусливому слизню в
+<ce> ___mondun_.
+<ce> Если вы не вернетесь в течение
+<ce> =queston_ дней, наши надежды не
+<ce> будут оправданы и кто-то другой
+<ce> займет ваше место.
+
+QuestFail:  [1003]
+<ce> _monster_ не мертв. И не пытайтесь
+<ce> убедить меня в обратном.
+
+QuestComplete:  [1004]
+<ce> Наверное вы не так уж и плохи, как
+<ce> мне казалось. %pcn, вы
+<ce> заслужили небольшую толику
+<ce> уважения в нашем рыцарском ордене.
+
+RumorsDuringQuest:  [1005]
+Этот _monster_ скрылся в ___mondun_ подобно исчадиям ада, стоящими за ним.
+   <--->
+_qgiver_ не может позволить, чтобы =monster_ смылся после всего того, что он сотворил для ордена.
+
+RumorsPostfailure:  [1006]
+=monster_ намного сильнее, чем думал _qgiver_. Он бежал.
+   <--->
+=monster_ переместился на север, как я слышал, но память о нем все еще накладывает тень на наш орден.
+
+RumorsPostsuccess:  [1007]
+История =monster_ только доказывает это. Не стоит заигрывать с ==qgiver_.
+   <--->
+Я всегда полагал, что орден будет милосерден к слизню навроде =monster_.
+
+QuestorPostsuccess:  [1008]
+Буду счастлив помочь вам как только смогу, убийца.
+
+QuestorPostfailure:  [1009]
+Ваше так мягкосердечны, %pcf. Не тратьте мое время.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ из ___qgiver_
+ послал меня найти и уничтожить _monster_
+ прозываемого =monster_, который
+ прячется где-то в окрестностях ___mondun_. У меня
+ =queston_ дней, чтобы закончить дело.
+
+Message:  1011
+<ce> =monster_, _monster_ убит.
+<ce> Рыцарский орден будет доволен.
+
+Message:  1080
+<ce> В знак нашей признательности, возьмите
+<ce> пожалуйста эту карту к ___newdung_,
+<ce> отвратительная, кишащая паразитами
+<ce> дыра со всеми вытекающими из этого
+<ce> последствиями. Это всего лишь
+<ce> местечко, которое любой подающий
+<ce> надежды рыцарь будет рад обчистить.
+
+
+
+QBN:
+
+Person _qgiver_ group Questor
+
+Place _mondun_ remote dungeon
+Place _newdung_ remote dungeon
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+Foe _monster_ is Nightblade
+
+--	Quest start-up:
+	start timer _queston_
+	reveal _mondun_
+	log 1010 step 0
+	pick one of _map_ _nomap_ _nomap_
+	place foe _monster_ at _mondun_
+
+_queston_ task:
+	end quest
+
+_pcgetsgold_ task:
+	when _mondead_ and _qgclicked_
+	give pc nothing
+
+_mondead_ task:
+	killed 1 _monster_ saying 1011
+
+_qgclicked_ task:
+	clicked npc _qgiver_
+
+_clearclick_ task:
+	when not _mondead_ and _qgclicked_
+	say 1003
+	clear _qgclicked_ _clearclick_
+
+variable _map_
+variable _nomap_
+_S.07_ task:
+	when _map_ and _pcgetsgold_
+    say 1080
+	reveal _newdung_
+	end quest
+
+_S.08_ task:
+    when not _map_ and _pcgetsgold_
+    end quest

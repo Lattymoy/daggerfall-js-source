@@ -1,0 +1,366 @@
+-- Quest: C:\QUESTS\WORKING\B0B81Y02.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: knight
+-- Repute: 81
+-- QuestId: 2
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 43
+Quest: B0B81Y02
+DisplayName: Потерянный артефакт
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Я _qgiver_ из благородного
+<ce> ордена рыцарей. У меня есть
+<ce> очень опасное задание, %pcf. И вы
+<ce> из тех немногих, которым оно по плечу.
+<ce> Мерзкий лич собирает армию нежити для
+<ce> нападения на провинцию. Нам нужно
+<ce> что-то сделать, чтобы остановить это.
+<ce> Я на вас надеюсь...
+
+RefuseQuest:  [1001]
+<ce> Понимаю, %pcn.
+<ce> Это действительно очень опасно для
+<ce> вас. Есть еще один или два героя,
+<ce> которые могут остановить злодея.
+<ce> Я попробую попросить их помощи.
+
+AcceptQuest:  [1002]
+<ce> Ваша храбрость меня восхищает. К делу!
+<ce> Лич укрылся в мрачном подземелье, -
+<ce> ___dungeon_. Проникните в его логово
+<ce> и уничтожьте всю мерзость, которую
+<ce> встретите. Но не забывайте, лич - ваша
+<ce> главная цель. Если через =2dung_ дней вы не
+<ce> вернетесь, нам придется послать других.
+<ce> Надеюсь, вы вернетесь в добром здравии...
+
+QuestComplete:  [1004]
+<ce> Приветствую героя, %pcn!
+<ce> Великолепно! Ваше имя будет
+<ce> записано в летописях.
+
+RumorsDuringQuest:  [1005]
+%reg укрепляется перед нападением армии нежити.
+   <--->
+Вся провинция %reg надеется что ==qgiver_ уничтожит лича.
+
+RumorsPostfailure:  [1006]
+Лич на время покинул свое логово ___dungeon_. Но только на время.
+   <--->
+Лич вернулся в свой склеп ___dungeon_. Это точно.
+
+RumorsPostsuccess:  [1007]
+Провинцию %reg спасли, и ==qgiver_ получит нашу благодарность на всю жизнь.
+   <--->
+Рыцарь-%ra уничтожил лича.
+
+QuestorPostsuccess:  [1008]
+Было бы грубостью с моей стороны не помочь спасителю целой провинции %reg.
+
+QuestorPostfailure:  [1009]
+Ваша удача в том, что лич не смог уничтожить всю провинцию %reg.
+   <--->
+Провинция %reg в серьезной опасности, и вы тоже.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_,
+ ==qgiver_ из города ___qgiver_
+ отправляет меня с заданием
+ уничтожить лича в своем логове
+ ___dungeon_. У меня =2dung_
+ дней чтобы закончить это задание.
+
+Message:  1011
+<ce> Лич погиб. Его армия без
+<ce> магической поддержки
+<ce> вернется снова в могилу.
+
+Message:  1020
+...мне удалось найти нечто!
+Я даже не осмелюсь назвать имя
+потерянного артефакта мощнейшей
+силы, которая просто бьет ключом
+из него. Мое время подходит к
+концу. Я умру здесь, в древнем
+склепе ___dungeon2_,
+заблудившись в темных коридорах.
+Но сначала мне надо спрятать находку.
+Если мне не удастся, то...
+
+Message:  1028
+<ce> Сожалею, %pcn. Вы не возвращались
+<ce> так долго, что мы решили, что
+<ce> вы погибли. И на задание отправился
+<ce> другой рыцарь.
+
+Message:  1030
+<ce> Вы проделали весь этот путь для
+<ce> того, чтобы поговорить со мной
+<ce> и теперь вы отказываетесь? Невероятно!
+<ce> Прочь с глаз моих!
+
+Message:  1031
+<ce> Чума на ваш дом, ибо вы осмелились
+<ce> беспокоить меня, %pcn. %oth, конечно
+<ce> я знаю ваше имя и вовсе не собираюсь
+<ce> рассказывать вам о себе. Что толку
+<ce> в волшебстве, если вы не можете
+<ce> знать даже тех вещей, которые знают
+<ce> все нормальные люди. Я также знаю,
+<ce> почему вы здесь. Вы хотите заполучить
+<ce> Хризамер, но вы ничего даже не
+<ce> можете сказать об этом имени.
+<ce> Единственный путь к тому,
+<ce> чтобы заполучить его, - сначала заслужить
+<ce> мое одобрение.
+
+Message:  1032
+<ce> Чума на ваш дом, ибо вы осмелились
+<ce> беспокоить меня, %pcn. %oth, конечно
+<ce> я знаю ваше имя и вовсе не собираюсь
+<ce> рассказывать вам о себе. Что толку
+<ce> в волшебстве, если вы не можете
+<ce> знать даже тех вещей, которые знают
+<ce> все нормальые люди. Я также знаю,
+<ce> почему вы здесь. Вы хотите заполучить
+<ce> Амулет Некроманта, и, кроме имени,
+<ce> вы ничего даже не можете сказать о
+<ce> нем. Единственный путь к тому,
+<ce> чтобы заполучить его, - сначала заслужить
+<ce> мое одобрение.
+
+Message:  1033
+<ce> Чума на ваш дом, ибо вы осмелились
+<ce> беспокоить меня, %pcn. %oth, конечно
+<ce> я знаю ваше имя и вовсе не собираюсь
+<ce> рассказывать вам о себе. Что толку
+<ce> в волшебстве, если вы не можете
+<ce> знать даже тех вещей, которые знают
+<ce> все нормальые люди. Я также знаю,
+<ce> почему вы здесь. Вы хотите заполучить
+<ce> Посох Магнуса, и, кроме имени,
+<ce> вы ничего даже не можете сказать о
+<ce> нем. Единственный путь к тому,
+<ce> чтобы заполучить его, - сначала заслужить
+<ce> мое одобрение.
+
+Message:  1034
+<ce> Чума на ваш дом, ибо вы осмелились
+<ce> беспокоить меня, %pcn. %oth, конечно
+<ce> я знаю ваше имя и вовсе не собираюсь
+<ce> рассказывать вам о себе. Что толку
+<ce> в волшебстве, если вы не можете
+<ce> знать даже тех вещей, которые знают
+<ce> все нормальые люди. Я также знаю,
+<ce> почему вы здесь. Вы хотите заполучить
+<ce> Кольцо Мага, и, кроме имени,
+<ce> вы ничего даже не можете сказать о
+<ce> нем. Единственный путь к тому,
+<ce> чтобы заполучить его, - сначала заслужить
+<ce> мое одобрение.
+
+Message:  1035
+<ce> Понимаете, я точно не знаю, где сейчас
+<ce> находится ваш артефакт. Мой дед только
+<ce> однажды видел его. Как известно из
+<ce> семейной истории, сразу, как только
+<ce> он нашел его, Гильдия Магов тут же
+<ce> забрала его и где-то спрятала.
+<ce> Дух деда до сих пор не упокоен.
+<ce> Возьмите эту прядь волос
+<ce> и, в обмен на упокоение его души,
+<ce> он может рассказать вам, где найти
+<ce> то, что вы ищете.
+<ce> Призрак обитает в могиле ___dungeon3_.
+
+Message:  1040
+<ce> У вас знак моего рода, прядь волос
+<ce> одного из моих предков. Я скитался
+<ce> здесь очень долго, ожидая этот знак.
+<ce> Ваш путь - это _mageguild_,
+<ce> __mageguild_. Там вы найдете
+<ce> то, что я однажды потерял.
+
+Message:  1041
+%qdt:
+ Мне удалось найти мага, _wizard_, в
+ подземелье ___dungeon2_. Теперь мне
+ нужно найти дух %g4 великого предка в
+ склепе ___dungeon3_.
+ Он может рассказать мне, где находится
+ потерянный артефакт великой силы.
+ _wizard_ также говорит, что локон,
+ переданный им, может упокоить скитающуюся
+ душу.
+
+Message:  1042
+%qdt:
+ _wizard_-дух сказал мне, что артефакт я смогу найти
+ в храме _mageguild_,
+ __mageguild_.
+
+
+
+QBN:
+Item _I.01_ artifact Warlocks_Ring
+Item _I.02_ artifact Necromancers_Amulet
+Item _I.03_ artifact Chrysamere
+Item _I.04_ artifact Staff_of_Magnus
+Item _map_ letter used 1020
+Item _I.06_ item class 17 subclass 13
+
+Person _qgiver_ group Questor
+Person _wizard_ face 1 group Spellcaster remote
+
+Place _dungeon_ remote dungeon
+Place _dungeon2_ remote dungeon
+Place _mageguild_ remote magery
+Place _dungeon3_ remote dungeon0
+
+Clock _2dung_ 00:00 0 flag 17 range 0 2
+Clock _S.30_ 180.13:20 0 flag 1 range 0 1
+
+Foe _F.00_ is Ancient_lich
+Foe _F.01_ is Lich
+Foe _ghost_ is Wraith
+Foe _battlemage_ is Battle_mage
+
+--	Quest start-up:
+	start timer _2dung_
+	reveal _dungeon_
+	log 1010 step 0
+	pick one of _ancientlich_ _lich_ _lich_
+	pick one of _artifact1_ _artifact2_ _artifact3_ _artifact4_
+
+variable _2dung_
+_S.01_ task:
+	killed 1 _F.01_ saying 1011
+	killed 1 _F.00_ saying 1011
+	_map_ used do _readmap_
+
+_S.02_ task:
+	clicked npc _qgiver_
+
+_success_ task:
+	when _S.02_ and _S.01_
+	give pc nothing
+	remove log step 0
+
+_clearclick_ task:
+	when _S.02_ and not _S.01_
+	clear _S.02_ _clearclick_
+
+variable _S.04_
+variable _S.05_
+_ancientlich_ task:
+	give item _map_ to _F.00_
+	place foe _F.00_ at _dungeon_
+
+_lich_ task:
+	give item _map_ to _F.01_
+	place foe _F.01_ at _dungeon_
+
+_artifact1_ task:
+	place item _I.03_ at _mageguild_
+
+_artifact2_ task:
+	place item _I.02_ at _mageguild_
+
+_artifact3_ task:
+	place item _I.04_ at _mageguild_
+
+_artifact4_ task:
+	place item _I.01_ at _mageguild_
+
+_readmap_ task:
+	start timer _S.30_
+	reveal _dungeon2_ readmap
+	place npc _wizard_ at _dungeon2_
+
+_S.13_ task:
+	clicked npc _wizard_
+
+_S.14_ task:
+	when _artifact1_ and _S.13_
+	prompt 1031 yes yes no _no_
+
+_S.15_ task:
+	when _artifact2_ and _S.13_
+	prompt 1032 yes yes no _no_
+
+_S.16_ task:
+	when _artifact3_ and _S.13_
+	prompt 1033 yes yes no _no_
+
+_potion_ task:
+	when _artifact4_ and _S.13_
+	prompt 1034 yes yes no _no_
+
+_S.18_ task:
+	clicked item _I.02_
+	clicked item _I.03_
+	clicked item _I.01_
+	clicked item _I.04_
+
+_S.19_ task:
+	when _S.13_ and _S.20_
+	clear _S.13_ _S.19_
+
+variable _S.20_
+yes task:
+	pc at _mageguild_ set _S.25_
+	reveal _dungeon3_
+	say 1035
+	log 1041 step 1
+	get item _I.06_
+	place foe _ghost_ at _dungeon3_
+
+_no_ task:
+	say 1030
+
+totemReward2 task:
+	killed 1 _ghost_
+	have _I.06_ set _S.24_
+
+_S.24_ task:
+	log 1042 step 2
+	say 1040
+
+_S.25_ task:
+	create foe _battlemage_ every 5 minutes 5 times with 50% success
+
+_S.26_ task:
+	when _artifact1_ and _S.18_
+	make _I.03_ permanent
+
+_S.27_ task:
+	when _artifact2_ and _S.18_
+	make _I.02_ permanent
+
+_S.28_ task:
+	when _artifact3_ and _S.18_
+	make _I.04_ permanent
+
+_S.29_ task:
+	when _artifact4_ and _S.18_
+	make _I.01_ permanent
+
+_S.30_ task:
+	end quest
+
+_questdone_ task:
+	when _2dung_ and not _readmap_
+	end quest
+
+_S.32_ task:
+	when _clearclick_ and _2dung_
+	say 1028
+
+_S.33_ task:
+	when _S.26_ or _S.27_ or _S.28_ or _S.29_
+	end quest

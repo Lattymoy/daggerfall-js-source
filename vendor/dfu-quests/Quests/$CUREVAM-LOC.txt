@@ -1,0 +1,329 @@
+-- Quest: C:\QUESTS\WORKING\$CUREVAM.Qbn.
+-- StartsBy: letter
+-- Questee: anyone
+-- Questor: hunter
+-- QuestId: 0
+Messages: 53
+Quest: $CUREVAM
+DisplayName: Лекарство от вампиризма
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+Error -- 1000 called
+
+RefuseQuest:  [1001]
+Error -- 1001 called
+
+AcceptQuest:  [1002]
+Error -- 1002 called
+
+QuestFail:  [1003]
+<ce> Error -- 1003 called
+
+QuestComplete:  [1004]
+<ce> Как только =bloodfather_ умер, вы почувствовали, как
+<ce> проклятие вампиризма оставило в покое вашу душу.
+<ce> Вы больше не вампир.
+
+RumorsDuringQuest:  [1005]
+<ce> Скоро _hunter_ начнет новый поход против вампиров в %reg.
+<ce> Быть может тогда мы сможем без страха ходить по ночным улицам.
+
+RumorsPostfailure:  [1006]
+<ce> _hunter_ и %g4 люди положили предостаточно вампиров в %reg, но я надеюсь
+<ce> они убили их всех.
+   <--->
+<ce> _hunter_ сейчас в полной силе.   %g4 походы просто заставят
+<ce> вампиров спрятаться и переждать. А когда %g уйдет отсюда, они станут еще
+<ce> более сильными, чем прежде.
+
+RumorsPostsuccess:  [1007]
+<ce> _hunter_ и %g4 люди положили предостаточно вампиров в %reg, но я надеюсь
+<ce> они убили их всех.
+   <--->
+<ce> _hunter_ сейчас в полной силе.   %g4 походы просто заставят
+<ce> вампиров спрятаться и переждать. А когда %g уйдет отсюда, они станут еще
+<ce> более сильными, чем прежде.
+
+QuestorPostsuccess:  [1008]
+Error -- 1008 called
+
+QuestorPostfailure:  [1009]
+Error -- 1009 called
+
+Message:  1011
+_hunter_ выискивает и уничтожает вампиров по всему Тамриэлю.
+   <--->
+_hunter_ посвятил свою жизнь охоте на вампиров.
+
+Message:  1012
+<ce> Говорят, что родной отец охотника был убит вампирами. Вот почему он
+<ce> так фанатично преследует их.
+   <--->
+<ce> _hunter_ убил своего собственного отца, когда тот стал вампиром.  Вот почему
+<ce> я называю его фанатиком!
+
+Message:  1020
+<ce> %qdt
+<ce>
+  Уважаемый друг %pcn из клана %vam,
+<ce>
+  Позвольте представиться. Меня зовут _hunter_.
+Быть может вы уже слышали обо мне -- известном
+охотнике на вампиров? Не спешите плохо судить обо
+мне. Я вам не враг, пока не враг. Я всей душой
+ненавижу вампиризм, поэтому и посвятил всю
+жизнь изгнанию этой заразы из Тамриэля. Я знаю
+сколько здесь живет таких же невинных жертв как
+и вы. Воля к жизни это совсем не зло и я всегда
+пытаюсь предоставить моему противнику шанс доказать,
+что его кровавые дела вызваны необходимостью, а
+не из любви к убийству.
+  Я уверен, что ваши «близкие» не говорили вам,
+но вампиризм можно исцелить. Для этого вам надо
+всего лишь убить своего «отца по крови», древнее
+зло, которое создало вокруг себя целое поколение
+вампиров и управляющее вами. Сделав это, вы не
+только освободите себя, но и излечите %reg
+от этой зловонной накипи в сердце.
+<ce>
+<ce> (продолжается дальше)
+<ce>
+  Лично я не знаю, где можно найти вашего «кровника»,
+но мои источники узнали имя одного из высших вампиров,
+который обладает этой информацией, _vamp1_ из
+___vamp1_. Я подожду =huntstart_ дней, прежде чем
+начну рейд против местных вампиров, и дам вам шанс
+спастись.
+  Примите мое предложение, %pcn. У вас
+ровно =huntstart_ дней, а потом вы и ваш род из
+%vam будут уничтожены как паразиты.
+<ce>
+<ce> _hunter_
+<ce> ----
+
+Message:  1021
+<ce> Хотите показать вампиру _vamp1_
+<ce> письмо от охотника _hunter_?
+
+Message:  1022
+<ce> Правильно сделали, что принесли это мне,
+<ce> %pcn. _hunter_ многие годы был несчастьем для
+<ce> %vam. Благодаря этому изысканному предупреждению
+<ce> мы можем спасти жизни многих наших родичей.
+<ce> Не недооценивайте опасность, грозящую вам,
+<ce> %pcf. _hunter_ беспощаден и опытен в этих
+<ce> делах, а его шпионы буквально повсюду. %g
+<ce> был бы отличным пополнением для нашего клана --
+<ce> -- если бы хотел этого. Примите к сведению,
+<ce> что %g знает ваше имя и не думайте, что %g
+<ce> поступает исключительно из добрых побуждений.
+<ce> Да хранит вас ночь.
+
+Message:  1023
+<ce> %pcn, не так ли?  Я слышал хорошие
+<ce> вести, что вы из клана %vam.
+<ce> Итак, вы хотите найти своего отца по крови.
+<ce> Непонятная потребность, поскольку эта привилегия
+<ce> дается не каждому вашего возраста. Разве что
+<ce> вы уже продвинулись достаточно далеко в %vam,
+<ce> тогда я мог бы сделать для вас исключение.
+<ce> Тааак...посмотрим... это может быть =bloodfather_
+<ce> или =elder_. Вы можете поискать их в ___wrongdung_
+<ce> и ___fatherdung_ соответственно.
+<ce> Я бы не советовал вам нарушать уединения
+<ce> старейших. Лучше всего будет, если вы поищете
+<ce> _vamp2_ из ___vamp2_. %g Хранитель Поколения
+<ce> и способен рассказать вам, кто же из старейших
+<ce> являается вашим отцом по крови. Возьмите этот
+<ce> браслет, по нему %g поймет, что я послал вас.
+
+Message:  1024
+<ce> Хммм. Вы слишком юны, чтобы быть облеченными
+<ce> достаточным доверием для получения этой
+<ce> информации. Но поскольку у вас при себе знак
+<ce> _vamp1_, я расскажу, где находится ваш отец
+<ce> по крови, =bloodfather_.
+<ce> Вы найдете его в своем жилище в ___fatherdung_.
+<ce> Будьте осторожны, в это время года старейшины
+<ce> не любят, когда их беспокоят. Нарушить покой и
+<ce> уединение =bloodfather_, это все на ваш страх
+<ce> и риск.
+
+Message:  1025
+<ce> Предатель крови!  Мы знаем о твоей измене.
+<ce> Ты никогда не найдешь =bloodfather_. Твои
+<ce> дни пребывания одним из %vam пришли к концу,
+<ce> не волнуйся. Охотнику даже не потребуется
+<ce> убивать тебя.
+
+Message:  1030
+<ce> Юнец, ты прерываешь мою медитацию!
+<ce> Пошел прочь, или мой голод заставит
+<ce> убить тебя!
+
+Message:  1031
+<ce> =elder_ убит. Убит вами.
+<ce> Старейший из рода %vam.
+
+Message:  1032
+<ce> %pcn, твоя кровь взывает ко мне.
+<ce> Зачем ты ударил своего родного отца?
+<ce> %vam наказывает отцеубийство смертью.
+<ce> Не заставляй меня прибегать к крайним
+<ce> мерам. Беги, дитя мое!
+
+Message:  1040
+<ce> _hunter_ сказал мне, что я найду тебя здесь.
+<ce> Умри, Крадущийся-В-Ночи!
+
+QuestTimeLapse:  [1045]
+<ce> Ваше внимание привлек незнакомый
+<ce> объект в вашем багаже. Это письмо,
+<ce> адресованное вам и написанное
+<ce> изысканным почерком. Откуда оно
+<ce> взялось здесь?
+
+Message:  1050
+%qdt:
+ Охотник на вампиров _hunter_
+ прислал письмо с угрозой убить
+ меня, если я не излечусь от вампиризма
+ убив своего «отца по крови».
+ _hunter_ не знает кто он и где обитает,
+ но уверен, что _vamp1_ из ___vamp1_
+ может знать об этом.
+ У меня =huntstart_ дней, прежде чем
+ начнется охота.
+
+-moved vamp1 line down, was running outside journal boundaries
+
+Message:  1051
+%qdt:
+ _vamp1_ уверил меня, что мой «отец
+ по крови» живет или в ___wrongdung_
+ или в ___fatherdung_, но предоставил
+ этот браслет, чтобы показать его _vamp2_
+ в __vamp2_ в ___vamp2_, кто может
+ сказать мне точное местонахождение.
+
+Message:  1052
+%qdt:
+ _vamp2_ сказал мне, что моего «отца по крови»
+ зовут =bloodfather_ и что он живет
+ в ___fatherdung_.
+
+
+
+QBN:
+Item _letter_ letter used 1020
+Item _token_ bracelet
+
+Person _vamp1_ face 40 factiontype Vampire_Clan remote
+Person _vamp2_ face 4 factiontype Vampire_Clan male remote
+Person _hunter_ face 1 factiontype Knightly_Guard remote anyInfo 1011 rumors 1012
+
+Place _fatherdung_ remote dungeon8
+Place _wrongdung_ remote dungeon5
+
+Clock _S.10_ 1.00:00 2.22:00
+Clock _S.13_ 7.00:00 27.23:40
+Clock _huntstart_ 00:00 0 flag 1 range 3 5
+
+Foe _bloodfather_ is Ancient_vampire
+Foe _vampire_ is Vampire
+Foe _F.02_ is Knight
+Foe _elder_ is Ancient_vampire
+
+--	Quest start-up:
+	dialog link for person _vamp2_
+	dialog link for location _fatherdung_ person _vamp1_
+	dialog link for person _hunter_
+	_letter_ used do _readletter_
+	have _letter_ set _S.19_
+	give pc _letter_ notify 1045
+	place foe _bloodfather_ at _fatherdung_
+	create npc _vamp1_
+	place foe _elder_ at _wrongdung_
+
+_S.00_ task:
+	killed 1 _bloodfather_
+	give pc nothing
+	cure vampirism
+	change repute with _vamp1_ by -20
+	end quest
+
+_S.01_ task:
+	clicked npc _vamp1_
+	have _letter_ set _S.06_
+
+variable _S.02_
+_readletter_ task:
+	add dialog for person _hunter_
+	add dialog for person _vamp1_
+	log 1050 step 0
+
+_S.04_ task:
+	daily from 06:00 to 18:00
+	clear _S.17_
+
+variable _S.05_
+variable _S.06_
+_S.07_ task:
+	when _S.06_ and _S.01_
+	prompt 1021 yes _S.08_ no _S.09_
+
+_S.08_ task:
+	hide npc _vamp2_
+	hide npc _vamp1_
+	say 1022
+
+_S.09_ task:
+	add dialog for person _vamp2_
+	start timer _S.10_
+	reveal _fatherdung_
+	reveal _wrongdung_
+	log 1051 step 1
+	get item _token_
+	say 1023
+
+_S.10_ task:
+	hide npc _vamp1_
+	hide npc _vamp2_
+	change repute with _vamp1_ by -15
+
+_S.11_ task:
+	injured _bloodfather_ saying 1032
+	injured _elder_ saying 1030
+
+_S.12_ task:
+	killed 1 _elder_ saying 1031
+	change repute with _vamp1_ by -20
+
+_S.13_ task:
+	end quest
+
+_huntstart_ task:
+	create foe _F.02_ every 60 minutes 30 times with 20% success
+	start timer _S.13_
+	hide npc _vamp2_
+	hide npc _vamp1_
+
+_S.15_ task:
+	injured _F.02_ saying 1040
+
+_givetoken_ task:
+	toting _token_ and _vamp2_ clicked
+	log 1052 step 2
+	say 1024
+
+_S.17_ task:
+	when _S.10_ and not _S.04_ and not _givetoken_
+	create foe _vampire_ every 60 minutes 10 times with 25% success
+
+_S.18_ task:
+	injured _vampire_ saying 1025
+
+_S.19_ task:
+	start timer _huntstart_

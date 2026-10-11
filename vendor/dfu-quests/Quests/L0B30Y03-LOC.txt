@@ -1,0 +1,154 @@
+-- Quest: C:\QUESTS\WORKING\L0B30Y03.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Brotherhood
+-- Repute: 30
+-- QuestId: 3
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 21
+Quest: L0B30Y03
+DisplayName: Контракт на мага
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Я вижу, вы заболели, %pcf.
+<ce> У вас растущее самомнение, эгоизм
+<ce> и тщеславие. И мне это нравится. Тем не менее,
+<ce> вам нужно испытать свою скромность и
+<ce> принять задание с опасным политическим
+<ce> подтекстом. У нас есть контракт на
+<ce> личность очень большого ранга в Гильдии
+<ce> Магов. Как вам это?
+
+RefuseQuest:  [1001]
+<ce> Тогда спрячьте эту глупую ухмылку
+<ce> со своего лица, пока не наберетесь
+<ce> побольше смелости.
+
+AcceptQuest:  [1002]
+<ce> Вы не разочаровали меня, %pcf.
+<ce> Да, нам предложили контракт на
+<ce> этого волшебника, который, между
+<ce> прочим, не просто искрометатель.
+<ce> Чтобы сделать ваше дело более интересным,
+<ce> скажу, что маг никогда не покидает Гильдию.
+<ce> Так что у вас есть риск потревожить несколько
+<ce> дюжин лучших магов в мире.
+<ce> Вы найдете волшебника в Гильдии Магов в
+<ce> здании __mondung_.
+<ce> Контракт действителен в течение
+<ce> =1stparton_ дней, и вам нужно вернуться
+<ce> за это время с кровью мага на руках.
+<ce> Великой удачи вам, и пусть ее дьявольское
+<ce> высочество Мефала направит ваши руки и ноги.
+
+QuestFail:  [1003]
+<ce> Волшебник еще жив,
+<ce> %pcf. Не испытывайте
+<ce> терпение.
+
+QuestComplete:  [1004]
+<ce> Гордый наемник вернулся, руки
+<ce> влажные от крови ненавистного
+<ce> мага. Вы теперь кое-чего добились,
+<ce> %pcf. У вас есть повод к
+<ce> гордости. Вот ваша награда,
+<ce> _reward_ золотых.
+<ce> И можете оставить ухмылку,
+<ce> она вам идет.
+
+RumorsDuringQuest:  [1005]
+В Гильдии Магов очень тихо. Кажется, там поселился спящий дракон.
+   <--->
+Кто-то когда-то что-то собирался сделать с этим нечистым на руку магом.
+
+RumorsPostfailure:  [1006]
+<ce> Отлично, маг ушел из Гильдии Магов,
+<ce> Но у меня есть уверенность, что этот мерзавец снова появится.
+   <--->
+<ce> С исчезновением этого мага в Гильдии
+<ce> царит большее, чем обычно, сумасшествие.
+
+RumorsPostsuccess:  [1007]
+Я думаю, со смертью этого мага Гильдия облегченно вздохнула.
+   <--->
+Если хотите знать, этот волшебник был язвой на теле Гильдии Магов.
+
+QuestorPostsuccess:  [1008]
+__mondung_ может оказаться жалким местом, %pcf. Как здорово...
+
+QuestorPostfailure:  [1009]
+<ce> Вы оставили магу жизнь и думаете
+<ce> что все еще можете тратить мое время?
+<ce> вы действительно ли так эгоистичны, %pcf?
+
+Message:  1020
+%qdt:
+ Моей последней жертвой стал маг из Гильдии
+ Магов в храме __mondung_.
+ Маг должен умереть, а мне нужно вернуться
+ в Братство в городе ___questgiver_ в
+ течение =1stparton_ дней.
+
+Message:  1011
+<ce> Вы убили мага.
+<ce> Братство будет довольно.
+
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ face 112 group Questor
+
+Place _mondung_ remote magery
+
+Clock _1stparton_ 00:00 0 flag 18 range 0 2
+
+Foe _monster1_ is Sorceror
+Foe _monster2_ is Battle_mage
+Foe _monster3_ is Mage
+Foe _monster4_ is Spellsword
+
+--	Quest start-up:
+	start timer _1stparton_
+	log 1020 step 0
+	pick one of _week_ _plot_ _time_ _vend_
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _S.02_
+	give pc _reward_
+	end quest
+
+_qgclicked_ task:
+	clicked npc _questgiver_
+
+_S.02_ task:
+	killed 1 _monster1_
+	killed 1 _monster3_
+	killed 1 _monster2_
+	killed 1 _monster4_
+	say 1011
+
+variable _queston_
+_1stparton_ task:
+	end quest
+
+variable _2ndparton_
+_week_ task:
+	place foe _monster4_ at _mondung_
+
+_plot_ task:
+	place foe _monster3_ at _mondung_
+
+_time_ task:
+	place foe _monster2_ at _mondung_
+
+_vend_ task:
+	place foe _monster1_ at _mondung_
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.02_
+	say 1003
+	clear _qgclicked_ _clearclick_

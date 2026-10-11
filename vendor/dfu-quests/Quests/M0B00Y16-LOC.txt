@@ -1,0 +1,238 @@
+-- Quest: C:\QUESTS\WORKING\M0B00Y16.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: fighter
+-- Repute: 0
+-- QuestId: 16
+Messages: 81
+Quest: M0B00Y16
+DisplayName: Убийство гиганта
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Здоров живешь, %pcf. Если у тебя есть свободного время,
+<ce> тут тут пришел заказ на работу, нужно убить гиганта.
+<ce> Почему то я сразу подумал про тебя. Интересно?
+
+RefuseQuest:  [1001]
+<ce> В делах, аки пчелка, да? В твоем возрасте
+<ce> один или два гиганта не представляли
+<ce> для меня проблемы. Ну и дети пошли,
+<ce> скажу тебе.
+
+AcceptQuest:  [1002]
+<ce> Хорошо. В ___mondung_ поселился гигант,
+<ce> который любит полакомиться баранам старика
+<ce> _dummy_. Человечинкой он тоже не брезгует,
+<ce> съел нескольких местных жителей. _dummy_
+<ce> хочет, что о гиганте позаботились в течение
+<ce> =qtime_ дней и %g заплатит _gold_ золотых.
+<ce> Увидимся.
+
+QuestFail:  [1003]
+<ce> Что, гигант умер от обжорства?
+<ce> Иди делай свою работу, %pcf.
+<ce> У тебя ведь есть работа.
+
+QuestComplete:  [1004]
+<ce> Да здравствует убийца гигантов! Я
+<ce> знал, кого выбираю для этой работы.
+<ce> Вот _gold_ золотых.
+
+RumorsDuringQuest:  [1005]
+<ce> Гигант из ___mondung_ уже затерроризировал всех вокруг, но _dummy_ и в ус
+<ce> не дует.
+   <--->
+<ce> Этот гигант из ___mondung_ опять украл человека на днях.
+
+RumorsPostfailure:  [1006]
+<ce> Как же хорошо, что этот гигант наконец-то убрался из ___mondung_. Полагаю
+<ce> ему не понравился житель деревни, украденный прошлой ночью.
+
+RumorsPostsuccess:  [1007]
+<ce> Да святится %god! _dummy_ наконец-то послал кого-то убить этого гиганта
+<ce> из ___mondung_. Должно быть он убил одну из лучших овец стада.
+
+QuestorPostsuccess:  [1008]
+<ce> Ба, да это ж мой друг Гигантоубийца %pcf!
+
+QuestorPostfailure:  [1009]
+<ce> В дни моей молодости тебя бы просто выпнули
+<ce> из гильдии за то, что тебе не удалось справиться
+<ce> с каким-то гигантишкой. Но времена меняются.
+
+Message:  1020
+%qdt:
+ _questgiver_ из Гильдии Бойцов
+ в ___questgiver_ нанял меня убить
+ великана в ___mondung_.
+ Мне нужно доложиться о выполнении в
+ течение =qtime_ дней, чтобы
+ получить _gold_ золотых.
+
+Message:  1021
+%qdt:
+ Во время поисков удалось спасти
+ купца, которого чуть не съел гигант.
+ _villager_ попросил меня проводить его
+ к _store_ в __store_.
+
+Message:  1030
+<ce> Гигант заревел от боли. Вы услышали
+<ce> гулкие звуки шагов у себя за спиной.
+<ce> Похоже он пригласил парочку
+<ce> друзей на ужин...
+
+Message:  1031
+<ce> Вы убили гиганта, за которым пришли.
+
+Message:  1040
+<ce> %god! Как же хорошо, что вы здесь!
+<ce> Вчера я направлялся в свой магазин, когда
+<ce> меня и четырех других купцов, путешествоваших
+<ce> со мной, поймал гигант. Он уже съел их,
+<ce> оставив меня напоследок. Помогите мне
+<ce> выбраться отсюда. Я не останусь в долгу.
+
+Message:  1041
+<ce> Вы истинный герой. Позвольте представиться:
+<ce> _villager_ из ___villager_.
+<ce> Мой путь лежал в _store_ в
+<ce> __store_. Если вы проводите меня до туда,
+<ce> буду очень благодарен.
+
+Message:  1042
+<ce> Благодарю вас за помощь, но думаю,
+<ce> что я и сам найду дорогу отсюда.
+
+Message:  1043
+<ce> Вы бессердечны и черствы.
+
+Message:  1044
+<ce> Я запомню вас, %pcf.
+<ce> Вы спасли мне жизнь, я не забуду этого.
+
+Message:  1080
+<ce> Вот держите. Это карта к одному месту
+<ce> под названием ___newdung_.
+<ce> Один из тех парней нашел это несколько
+<ce> дней назад. Если бы был хоть чуточку
+<ce> моложе, то отправился бы вместе с вами.
+
+
+
+QBN:
+Item _gold_ gold
+Item _magic_ magic_item
+
+Person _questgiver_ group Questor
+Person _dummy_ face 9 group Noble remote
+Person _villager_ face 8 group Shopkeeper remote
+
+Place _mondung_ remote dungeon
+Place _newdung_ remote dungeon
+Place _store_ remote generalstore
+
+Clock _qtime_ 00:00 0 flag 17 range 0 2
+
+Foe _giant_ is Giant
+Foe _giantFriends_ is Giant
+
+--	Quest start-up:
+	start timer _qtime_
+	reveal _mondung_
+	log 1020 step 0
+	pick one of _victim_ _S.09_ _S.09_
+	pick one of _map_ _nomap_ _nomap_
+	pick one of _magicItem_ _noMagicItem_ _noMagicItem_ _noMagicItem_
+	place foe _giant_ at _mondung_
+
+variable _map_
+variable _nomap_
+_S.02_ task:
+	injured _giant_
+	start task _giantWaveWhileInDungeon_
+	say 1030
+
+_S.03_ task:
+	killed 1 _giant_
+	say 1031
+
+_clickqgiver_ task:
+	clicked npc _questgiver_
+
+_clearclick_ task:
+	when _clickqgiver_ and not _S.03_
+	say 1003
+	clear _clickqgiver_ _clearclick_
+
+_success_ task:
+	when _clickqgiver_ and _S.03_
+	give pc _gold_
+
+variable _qtime_
+_duelist_ task:
+	when _success_ and _map_
+	reveal _newdung_ readmap
+	say 1080
+
+_victim_ task:
+	place npc _villager_ at _mondung_
+
+variable _noMagicItem_
+_magicItem_ task:
+	give item _magic_ to _giant_
+	make _magic_ permanent
+
+_S.09_ task:
+	hide npc _villager_
+
+_S.10_ task:
+	clicked npc _villager_
+	prompt 1040 yes _yes_ no _no_
+
+_yes_ task:
+	pc at _store_ set _S.13_
+	log 1021 step 1
+	hide npc _villager_
+	say 1041
+	add _villager_ face
+
+_no_ task:
+	say 1043
+	change repute with _villager_ by -10
+
+variable _escortComplete_
+_S.13_ task:
+	say 1044
+	drop _villager_ face
+	change repute with _villager_ by +15
+	place npc _villager_ at _store_
+	start task _escortComplete_
+
+_S.14_ task:
+	when _yes_ and not _escortComplete_ and _qtime_
+	say 1042
+
+_S.15_ task:
+	when _success_ and _no_
+
+_S.16_ task:
+	when _success_ and _S.09_
+
+_S.17_ task:
+	when _success_ and _escortComplete_
+
+_S.18_ task:
+	when _qtime_ or _S.15_ or _S.16_ or _S.17_ or _S.19_
+	end quest
+
+_S.19_ task:
+	when _success_ and _victim_ and not _S.10_
+
+_giantWaveWhileInDungeon_ task:
+	pc at _mondung_ set _spawnGiants_
+
+_spawnGiants_ task:
+	create foe _giantFriends_ every 3 minutes 6 times with 50% success

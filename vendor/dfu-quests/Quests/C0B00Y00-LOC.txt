@@ -1,0 +1,139 @@
+-- Quest: C:\QUESTS\WORKING\C0B00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: temple
+-- Repute: 0
+-- QuestId: 0
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 13
+Quest: C0B00Y00
+DisplayName: Дом с привидениями
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Дом в __house_
+<ce> был заселен какой-то нежитью. Нам нужен кто-то,
+<ce> кто сможет прогнать нечисть. Вы в деле?
+<ce> Плата за работу _gold_ золотых.
+
+RefuseQuest:  [1001]
+<ce> Ничего страшного. Поищу кого-то, кому
+<ce> нравится подобная работа.
+
+AcceptQuest:  [1002]
+<ce> Помните, если нечисть окажется слишком сильной
+<ce> для вас, убирайтесь оттуда побыстрее. Никто не
+<ce> будет винить вас в том, что вы спасаете свою шкуру.
+<ce> Место называется - _house_ и находится оно в
+<ce> __house_.
+<ce> У вас =traveltime_ дней или мы пошлем кого-то
+<ce> другого на эту работу.
+
+QuestComplete:  [1004]
+<ce> Наконец-то с призраками покончено. Я зажгу ладанку
+<ce> на алтаре для этих духов. Вот ваше храмовое пособие
+
+RumorsDuringQuest:  [1005]
+Говорят, что привидение из _house_ невозможно убить.
+
+RumorsPostfailure:  [1006]
+Призраки из _house_ постоянно будут возвращаться.
+   <--->
+Духи в _house_ все еще не упокоены.
+
+RumorsPostsuccess:  [1007]
+Наконец-то _house_ вычищен.
+   <--->
+Духи из _house_ наконец-то упокоены.
+
+QuestorPostsuccess:  [1008]
+Чем я могу помочь вам, Изгоняющий Духов?
+
+QuestorPostfailure:  [1009]
+_house_ все еще заражен, и вы хотите, чтобы я заплатил вам?
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ из __qgiver_
+ в ___qgiver_
+ послал меня с поручением изгнать
+ беспокойных духов в _house_ в
+ __house_. У меня =traveltime_ дней
+ на всю работу.
+
+Message:  1011
+<ce> Я предок основателя этого дома. Теперь он
+<ce> принадлежит мертвым. Пусть все живые создания
+<ce> оставят это место.
+
+Message:  1012
+<ce> Понимаю, почему вы не расправились сами с этим
+<ce> кошмаром, %pcn. Хорошо, что хоть
+<ce> обнаружили сам факт наличия призраков. Храм
+<ce> благодарит вас. Вот пара золотых.
+
+
+
+QBN:
+Item _gold_ gold
+Item boobyprize gold range 2 to 2
+
+Person _qgiver_ face 1 group Questor
+
+Place _house_ remote house2
+
+Clock _traveltime_ 00:00 0 flag 17 range 0 2
+
+Foe _ghost_ is Ghost
+Foe _skeleton_ is Skeletal_warrior
+Foe _wraith_ is Wraith
+Foe _zombie_ is Zombie
+
+--	Quest start-up:
+	start timer _traveltime_
+	log 1010 step 0
+	pick one of _S.02_ _S.03_ _S.04_ _S.05_
+	pc at _house_ set _S.08_
+	create npc at _house_
+
+_traveltime_ task:
+	end quest
+
+_questdone_ task:
+	clicked npc _qgiver_
+
+_success_ task:
+	when _questdone_ and _S.06_
+	give pc _gold_
+	end quest
+
+_S.02_ task:
+	place foe _ghost_ at _house_
+
+_S.03_ task:
+	place foe _skeleton_ at _house_
+
+_S.04_ task:
+	place foe _wraith_ at _house_
+
+_S.05_ task:
+	place foe _zombie_ at _house_
+
+_S.06_ task:
+	killed 1 _zombie_
+	killed 1 _skeleton_
+	killed 1 _wraith_
+	killed 1 _ghost_
+
+_S.07_ task:
+	injured _zombie_ saying 1011
+	injured _wraith_ saying 1011
+	injured _skeleton_ saying 1011
+	injured _ghost_ saying 1011
+
+variable _S.08_
+variable _S.09_
+_clearclick_ task:
+	when _questdone_ and not _S.06_
+	clear _questdone_ _clearclick_

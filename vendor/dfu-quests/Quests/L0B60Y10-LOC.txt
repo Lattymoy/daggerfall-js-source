@@ -1,0 +1,146 @@
+-- Quest: C:\QUESTS\WORKING\L0B60Y10.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Brotherhood
+-- Repute: 60
+-- QuestId: 10
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 24
+Quest: L0B60Y10
+DisplayName: Ветеран
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Это может быть сложным, даже для
+<ce> вас, %pcf. Цель - один из лучших
+<ce> бойцов во всем %reg.
+<ce> Уверены, что хотите эту работу?
+
+RefuseQuest:  [1001]
+<ce> Не вините себя. Это дело могло
+<ce> быть слишком опасным.
+
+AcceptQuest:  [1002]
+<ce> Во всяком случае, вы можете попытаться.
+<ce> Работа ваша, могильщик. На этот раз цель - отнюдь
+<ce> не гладиатор с арены. Мы говорим о ветеране
+<ce> Бетонской войны, убившем девятерых, если
+<ce> слухи верны. Направляйтесь в _mondung_
+<ce> в ___mondung_. Вы легко узнаешь его
+<ce> по хромоте. Он был ранен копьем в колено
+<ce> на войне в сражении. Возвращайтесь
+<ce> через =1stparton_ суток.
+
+QuestFail:  [1003]
+<ce> Не знаю, кого это вы там убили,
+<ce> но это не наша цель.
+<ce> Возвращайтесь в ___mondung_ и
+<ce> закончите то, ради чего вас наняли!
+
+QuestComplete:  [1004]
+<ce> Какое сражение! Я уже слышал об этом!
+<ce> Вы же знаете, что сплетни здесь опережают
+<ce> лошадь, мчащуюся галопом. Вот - _reward_ золотых
+<ce> за работу, %pcf.
+
+RumorsDuringQuest:  [1005]
+Очень жаль ... что же это творится в Даггерфолле?
+
+RumorsPostfailure:  [1006]
+Я слышал, что королева беременна. По крайней мере это то, что у всех на устах!
+
+RumorsPostsuccess:  [1007]
+Вы слышали о том герое войны? Убит в поединке. Как жаль.
+
+QuestorPostsuccess:  [1008]
+Ваша схватка с тем героем войны до сих пор у всех на устах, %pcn.
+
+QuestorPostfailure:  [1009]
+Вы не сумели убить этого героя войны. Братство никогда не прощает провалов!
+
+Message:  1020
+%qdt:
+ У меня заказ Темного Братства
+ на героя войны в _mondung_,
+ в ___mondung_. Дело должно быть
+ завершено в течение =1stparton_ суток.
+
+Message:  1021
+<ce> "Вы преуспели...там, где все...
+<ce> солдаты...Бетонской войны потерпели неудачу".
+<ce>
+<ce> Контракт выполнен.
+
+Message:  1022
+<ce> "Не считай меня калекой лишь из-за того,
+<ce> что я хромой. Я все еще в состоянии
+<ce> разорвать тебя на части!"
+
+Message:  1023
+<ce> Это не человек! Это вампир!
+
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ face 112 group Questor
+
+Place _mondung_ remote weaponstore
+
+Clock _1stparton_ 00:00 0 flag 18 range 0 2
+
+Foe _F.00_ is Ancient_vampire
+Foe _F.01_ is Ranger
+Foe _F.02_ is Monk
+Foe _F.03_ is Barbarian
+
+--	Quest start-up:
+	start timer _1stparton_
+	log 1020 step 0
+	pick one of _S.06_ _S.07_ _S.08_ _onehour_
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _S.02_
+	give pc _reward_
+	end quest
+
+_qgclicked_ task:
+	clicked npc _questgiver_
+
+--removed duplicate clearclick here
+
+_S.02_ task:
+	killed 1 _F.00_ saying 1021
+	killed 1 _F.03_ saying 1021
+	killed 1 _F.02_ saying 1021
+	killed 1 _F.01_ saying 1021
+
+variable _queston_
+_1stparton_ task:
+	end quest
+
+variable _2ndparton_
+_S.06_ task:
+	place foe _F.00_ at _mondung_
+
+_S.07_ task:
+	place foe _F.01_ at _mondung_
+
+_S.08_ task:
+	place foe _F.02_ at _mondung_
+
+_onehour_ task:
+	place foe _F.03_ at _mondung_
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.02_
+	say 1003
+	clear _qgclicked_ _clearclick_
+
+_S.11_ task:
+	injured _F.03_ saying 1022
+	injured _F.02_ saying 1022
+	injured _F.01_ saying 1022
+	injured _F.00_ saying 1023

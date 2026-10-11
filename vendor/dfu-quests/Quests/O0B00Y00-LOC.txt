@@ -1,0 +1,185 @@
+-- Quest: C:\QUESTS\WORKING\O0B00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: thief
+-- Repute: 0
+-- QuestId: 0
+Messages: 21
+Quest: O0B00Y00
+DisplayName: Горячий камень
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Слушай, %pcf, у одного нашего
+<ce> друга проблемы.
+<ce> У тебя есть несколько дней,
+<ce> чтобы ему помочь?
+
+RefuseQuest:  [1001]
+<ce> Ну ладно. Думаю, тебе
+<ce> надо отдохнуть в ближайшее
+<ce> время.
+
+AcceptQuest:  [1002]
+<ce> Тогда слушай, %ra? Времени нет,
+<ce> поэтому объясняю быстро. Один из наших
+<ce> лучших домушников из города ___contact_
+<ce> попался в ловушку и заперт в доме
+<ce> __contact_. В %g4 кармане находится
+<ce> драгоценный камень, который совсем
+<ce> недавно радовал глаз правителя %t.
+<ce> Кто-то заметил %g4 за делом, и рассказал страже.
+<ce> Дом теперь окружен. Владелец особняка
+<ce> __contact_ куда-то уехал, и только из
+<ce> уважения к нему стража подождет его
+<ce> возвращения =1stparton_ дней, прежде, чем
+<ce> взломать двери. Твоя задача состоит в том,
+<ce> чтобы аккуратно проникнуть в эту несчастную
+<ce> хибару и обменять камень _gems_, который
+<ce> даст тебе _contact_, на
+<ce> этот красивейший _metal_ обломок.
+<ce> Камень принесешь мне. Все понятно?
+<ce> Отлично. Тогда не будем терять время.
+
+QuestFail:  [1003]
+<ce> О, %pcf, здравствуй. Но
+<ce> Тебя, кажется, отправляли за
+<ce> кое-каким камешком. _gems_, помнишь?
+<ce> И где же? Плохо. Очень плохо.
+
+QuestComplete:  [1004]
+<ce> Отлично, %pcf. Мне уже все рассказали.
+<ce> Стража нашла в карманах нашего
+<ce> друга _metal_ кусок. Странно, правда?
+<ce> А они думали, что там _gems_.
+<ce> Короче, им пришлось угостить %g4 выпивкой.
+<ce> Знаешь, нет лучшей жизни, чем
+<ce> жизнь отъявленного негодяя... Вот твоя доля
+<ce> за _gems_ -- _reward_ золотых. "Честно"
+<ce> заработанных!
+
+RumorsDuringQuest:  [1005]
+Все знают, что _contact_ вор, и камень у н%g4 в кармане. Почему %g4 никто не трогает?
+   <--->
+В особняке __contact_ много ценного. И стражников там не ждут.
+
+RumorsPostfailure:  [1006]
+Стража взяла особняк и _contact_ у них в руках. %g теперь никогда не выйдет из тюрьмы.
+   <--->
+_gems_ нашли, и суд будет скорый, но справедливый.
+
+RumorsPostsuccess:  [1007]
+Стража отпустила, наконец, %g4. Наш друг _contact_ невиновен.
+   <--->
+Но как можно спутать _metal_ кусок и _gems_? Конечно, это камни, но все-таки...
+
+QuestorPostsuccess:  [1008]
+Кто здесь? %pcf? Хочешь забрать _gems_? Слава богам!
+
+QuestorPostfailure:  [1009]
+<ce> Ты помнишь, за чем тебя послали?
+<ce> Забрать _gems_ у вора
+<ce> _contact_ и отдать %g2 этот
+<ce> _metal_ огрызок, который тебе дали.
+<ce> %oth! Это так тяжело запомнить?
+
+QuestLogEntry:  [1010]
+<ce> %oth, %pcf, ты спаситель.
+<ce> Оказывается, кто-то видел меня с этим
+<ce> камнем - _gems_ и подумал, что камень
+<ce> украден. Этот _metal_ камешек - мой
+<ce> пропуск на волю. Напомни мне как-нибудь
+<ce> поставить тебе выпивку. Теперь беги
+<ce> бегом назад к тому, кто послал тебя,
+<ce> - _questgiver_, а то вся Гильдия
+<ce> будет подозрительно смотреть на тебя,
+<ce> если ты не вернешься в течение
+<ce> =1stparton_ дней. Удачи!
+
+Message:  1015
+%qdt:
+ _questgiver_ из
+ Гильдии Воров, что в городе ___questgiver_
+ посылает меня в город ___contact_
+ в хибару, называемую __contact_.
+ Мне дали _metal_ осколок, который
+ мне надо отдать вору по имени
+ _contact_ в обмен на украденный
+ драгоценный камень, с которым %g4
+ заметили. У меня есть =1stparton_ дней,
+ чтобы закончить это дело.
+
+Message:  1020
+<ce> Я знаю от надежного источника
+<ce> Что у тебя _gems_. Камень,
+<ce> который был украден вором по
+<ce> имени _contact_. Отдай
+<ce> его и уйдешь без вреда.
+
+
+
+QBN:
+Item _reward_ gold
+Item _metal_ element
+Item _gems_ gem
+
+Person _questgiver_ face 72 group Questor
+Person _contact_ face 80 group Innkeeper remote
+
+Clock _1stparton_ 00:00 0 flag 18 range 1 4
+
+Foe _guards_ is Knight
+
+--	Quest start-up:
+	start timer _1stparton_
+	log 1015 step 0
+	get item _metal_
+
+_qgclicked_ task:
+	toting _gems_ and _questgiver_ clicked
+	give pc _reward_
+	end quest
+
+_npcclicked_ task:
+	toting _metal_ and _contact_ clicked
+	create foe _guards_ every 173 minutes 3 times with 25% success
+	get item _gems_
+	say 1010
+
+_qgtalk_ task:
+	clicked npc _questgiver_
+
+_clearclick_ task:
+	when _qgtalk_ and not _qgclicked_
+	say 1003
+	clear _clearclick_ _qgtalk_
+--added _qgtalk_ and _clearclick_
+
+_1stparton_ task:
+	have _metal_ set _keptmetal_
+	have _gems_ set _keptgems_
+	end quest
+--removed unnecessary delay
+
+_greklith_ task:
+	injured _guards_
+	prompt 1020 yes _S.05_ no _S.06_
+
+_S.05_ task:
+	take _gems_ from pc
+	change repute with _questgiver_ by -40
+	restrain foe _guards_
+	end quest
+--removed unnecessary delay
+
+variable _S.06_
+_keptmetal_ task:
+	make _metal_ permanent
+
+_keptgems_ task:
+	make _gems_ permanent
+
+_S.09_ task:
+	when _npcclicked_ and _1stparton_
+	change repute with _questgiver_ by -20

@@ -1,0 +1,150 @@
+-- Quest: C:\QUESTS\WORKING\C0B00Y04.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: temple
+-- Repute: 0
+-- QuestId: 4
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 13
+Quest: C0B00Y04
+DisplayName: Безумный священник
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> __qgiver_ часто углубляется
+<ce> в вопрос о тайне размеров вселенной,
+<ce> ну и конечно же мы неверно оценили мнение
+<ce> одного из наших храмовников, обвинив его
+<ce> в безумии перед лицом вечности. Другими
+<ce> словами один из наших священников двинулся
+<ce> умом. Не могли бы вы помочь нам вернуть
+<ce> этого безумца обратно в __qgiver_?
+   <--->
+<ce> Старый =priest_ снова в припадке
+<ce> безумия. Похоже, что он снова поперся в
+<ce> винный погребок __qgiver_.
+<ce> Быть может вы найдете время, чтобы
+<ce> помочь вернуть этого чокнутого старца?
+
+RefuseQuest:  [1001]
+<ce> %oth, надеюсь, что когда вы потеряете
+<ce> свой разум, никого не будет рядом,
+<ce> чтобы прийти вам на помощь, %pct.
+
+AcceptQuest:  [1002]
+<ce> Вы так добры, %pct. А теперь,
+<ce> =priest_ убежал в местечко
+<ce> под названием ___mondung_. Постарайтесь
+<ce> не причинять много вреда бедному дураку.
+<ce> =priest_ просто не понимает, что творит.
+<ce> Просто дайте ему хорошенько по голове и
+<ce> приведите сюда. Я буду ждать =queston_
+<ce> дней. Будьте осторожны и аккуратны.
+
+QuestComplete:  [1004]
+<ce> Рад снова видеть вас, %pct.
+<ce> не беспокойтесь насчет =priest_.
+<ce> Мы позаботимся о нем.
+
+RumorsDuringQuest:  [1005]
+Безумец =priest_ спрятался в ___mondung_. Только полный идиот попрется туда.
+   <--->
+___mondung_ - опасное место для безумцев. =priest_ один из них.
+
+RumorsPostfailure:  [1006]
+Судя по всему, =priest_ уже никогда не вернется домой.
+   <--->
+=priest_ все еще безумен, бормоча про ___mondung_.
+
+RumorsPostsuccess:  [1007]
+%ra, разыскавший этого безумца =priest_. В порядке ли его разум, вот вопрос.
+   <--->
+=priest_ очень глуп, пьян или безумен. Не исключено что все одновременно.
+
+QuestorPostsuccess:  [1008]
+Вы добросердечно спасли =priest_, я помню. Что я могу сделать для вас?
+
+QuestorPostfailure:  [1009]
+Мне нечего сказать вам. Как видите, я все еще помню =priest_.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ из
+ __qgiver_, ___qgiver_
+ послал меня найти священника по имени
+ =priest_, который впав в безумие,
+ отправился в место, называемое
+ ___mondung_. У меня
+ =queston_ дней, чтобы добраться до туда,
+ найти безумца и вернуть его обратно к
+ _qgiver_.
+
+Message:  1011
+<ce> "%oth, это же моя голова!"
+<ce> =priest_ падает навзничь
+<ce> без сознания и вы, кряхтя, поднимаете
+<ce> его себе на закорки.
+   <--->
+<ce> =priest_ в безумии от боли
+<ce> закатывает свои глаза. Без
+<ce> единого звука он падает в
+<ce> заботливо подставленные вами руки.
+
+Message:  1012
+<ce> Вы слышите легкий, безумный
+<ce> смех и =priest_ пропадает,
+<ce> растворяясь в воздухе подобно
+<ce> клочку тумана.
+   <--->
+<ce> "У меня есть королевство, которым я
+<ce> должен править, и у меня нет времени
+<ce> на эти проклятые уловки!" - =priest_
+<ce> с необъяснимой ловкостью выскальзывает
+<ce> из вашего захвата и убегает прочь.
+
+
+
+QBN:
+
+Person _qgiver_ group Questor
+
+Place _mondung_ remote dungeon
+--removed fake dungeon
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+Foe _priest_ is Monk
+
+--	Quest start-up:
+	start timer _queston_
+	reveal _mondung_
+	log 1010 step 0
+	place foe _priest_ at _mondung_
+
+variable _reward_
+_bonk_ task:
+	injured _priest_
+	say 1011
+	add foe _priest_ face
+	remove foe _priest_
+	--changed "place foe in fake dungeon" to remove foe action.
+
+_queston_ task:
+	end quest
+
+_cick_ task:
+	when _bonk_ and _queston_
+	say 1012
+
+_S.04_ task:
+	clicked npc _qgiver_
+
+_success_ task:
+	when _S.04_ and _bonk_
+	give pc nothing
+	end quest
+
+_nope_ task:
+	when _S.04_ and not _bonk_
+	clear _S.04_ _nope_

@@ -1,0 +1,384 @@
+-- Quest: C:\QUESTS\WORKING\R0C11Y26.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 11
+-- QuestId: 26
+Messages: 51
+Quest: R0C11Y26
+DisplayName: Безумный потрошитель
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pcn, сумасшедший, которого они называют
+<ce> Потрошитель из ____qgiver_, терроризирует город
+<ce> ___qgiver_, и мои охранники и полиция бессильны
+<ce> против него. У них нет никаких зацепок, позволяющих
+<ce> установить его личность. Я знаю, что у вас есть
+<ce> кое-какие ресурсы и довольно нетрадиционные
+<ce> контакты. Не могли бы вы попытаться помочь мне в
+<ce> этом вопросе, ради блага всех в ____qgiver_ - и
+<ce> значительной суммы золота?
+
+RefuseQuest:  [1001]
+<ce> Не такая уж необычная реакция. Тогда у меня нет
+<ce> другого выбора, кроме как обратиться за помощью к
+<ce> кому-нибудь из моих менее приятных знакомых -
+<ce> вариант, которого я надеялся избежать.
+
+AcceptQuest:  [1002]
+<ce> Ты настоящий друг, %pcf. Жители в ____qgiver_
+<ce> начинают беспокоиться по поводу отсутствия
+<ce> прогресса в официальных расследованиях. Ситуация
+<ce> становится взрывоопасной, люди боятся, что за
+<ce> каждым из них придет Потрошитель. Я боюсь, что
+<ce> скоро толпа выйдет из под контроля, возможно, в
+<ce> течение =total_ дней или меньше. Единственный
+<ce> человек, которого я неофициально нанял для
+<ce> этого, - это _contact_, местный ученый, который
+<ce> анализировал некоторые из отправленных мне
+<ce> писем. Зайдите в _bookstore_, чтобы сначала
+<ce> поговорить с _contact_ и проверить %g4 прогресс.
+<ce> Если вы не сможете разгадать эту тайну, то да
+<ce> поможет нам всем бог.
+
+QuestFail:  [1003]
+<ce> Потрошитель из ____qgiver_ все еще на
+<ce> свободе. У меня нет времени на болтовню,
+<ce> да и у тебя не должно быть.
+
+QuestComplete:  [1004]
+<ce> Благодаря тебе, ___qgiver_ снова обрел
+<ce> покой, %pcf. Вот _reward_ золотых, что я
+<ce> обещал в награду - я с радостью отдам их
+<ce> за то, что с этим маньяком покончено.
+<ce> %god действительно благословил нас, когда
+<ce> вы пришли в ____qgiver_.
+
+RumorsDuringQuest:  [1005]
+Ходить по улицам ___qgiver_ больше небезопасно. Только не с Потрошителем из ____qgiver_.
+<--->
+Я слышал, что Потрошитель из ____qgiver_ вообще не человек, а даэдра, пришедший наказать нас всех.
+<--->
+Последняя жертва Потрошителя из ____qgiver_ была найдена разбросанной по ___qgiver_.
+<--->
+Некоторые люди задаются вопросом, может ли Потрошитель из ____qgiver_ быть вампиром или оборотнем.
+
+RumorsPostfailure:  [1006]
+Убийства прекратились, и нам не понадобилась толпа. Полагаю, Потрошитель двинулся дальше.
+<--->
+_qgiver_ просто повезло, что Потрошитель из ____qgiver_ решил двигаться дальше. Начиналась паника.
+
+RumorsPostsuccess:  [1007]
+Я не могу поверить, что _rippername_ был Потрошителем из ____qgiver_ - %g был таким милым и тихим.
+<--->
+%oth, они говорят, что нашли гору черепов, зарытых под домом _rippername_.
+<--->
+Говорят, что _rippername_ был одиночкой, который ни с кем не общался. Типично.
+
+QuestorPostsuccess:  [1008]
+У меня всегда найдется время для %ra, который раскрыл тайну Потрошителя из ____qgiver_, %pcf.
+<--->
+Если бы не ты, Потрошитель из ____qgiver_ все еще терроризировал бы нас. Что я могу сделать?
+
+QuestorPostfailure:  [1009]
+<ce> К счастью для вас, Потрошитель из
+<ce> ____qgiver_ двинулся дальше. Иначе я бы
+<ce> очень рассердился на тебя. На самом
+<ce> деле, я злюсь на тебя. Отвали, %pcf.
+
+QuestLogEntry:  [1010]
+<ce> Очень вовремя, %pcf. Я собирался пойти
+<ce> на встречу кое с кем в _hookerhouse_,
+<ce> кто, возможно, смог бы пролить
+<ce> некоторый свет на эту ситуацию.
+<ce> =hooker_ по имени _hooker_. Откровенно
+<ce> говоря, проститутка, но та, чье имя
+<ce> было нацарапано вверху письма,
+<ce> полученного _qgiver_. Возможно,
+<ce> Потрошитель писал письмо к _hooker_, а
+<ce> потом передумал. Если это так, то %g
+<ce> может иметь некоторое представление о
+<ce> личности Потрошителя. Стоит
+<ce> попробовать. Почему бы тебе не пойти в
+<ce> _hookerhouse_ с письмом и не
+<ce> посмотреть?
+
+Message:  1011
+<ce> _qgiver_, последняя жертва
+ была такой вкусной, что я дажЭ откусиЛ кусочек.
+ ВсЯ ваша семья тоже выглядит аппетитно - возможно,
+<ce> Потрошитель навестит
+ вас в следующий раз. Рвать и метать,
+<ce> а затем еЩе немного РВАТЬ, чтобы свсти щщоты.
+<ce> С уважэнием,
+ Птрштль из ____qgiver_
+<ce> ----
+
+Message:  1012
+_qgiver_,
+  паймай меня, если СМОЖЕШЬ
+может быть, теперь тебе небезразлично,
+что твой ____qgiver_
+теперь весь в КРОВИ
+ Твой друг,
+<ce> Птрштль из ____qgiver_
+<ce> ----
+
+Message:  1013
+_contact_,
+<ce>
+  Я была бы рада встретиться с вами
+либо у вас дома, либо у себя по поводу моего
+сумасшедшего поклонника. У меня есть
+отправленное мне письмо, которое может оказаться
+полезным.
+<ce>
+Искренне ваша, _hooker_
+<ce> ----
+
+Message:  1014
+_hooker_,
+<ce>
+ Ты сказала, что будешь моим другом, но
+ когда я увидел тебя на улице, ты
+ притворилась, что не видишь меня.
+<ce>
+ Ты же не хочешь снова разозлить
+ меня, правда
+<ce>
+ _rippername_
+<ce> ----
+
+Message:  1015
+<ce> Вы работаете с _contact_, не так ли, %pcf? Ну,
+<ce> %g заинтересовался этим письмом, которое мне
+<ce> прислали прошлой ночью. _rippername_ был моим
+<ce> клиентом, у которого было несколько
+<ce> по-настоящему дурацких идей о том, как хорошо
+<ce> провести время. В целом, несколько действительно
+<ce> заумных идей. Мне было немного жаль %g4, в
+<ce> основном я боялась %g4, так что, думаю, я
+<ce> позволил %g2 думать, что %g1 мне нравится.
+<ce> Конечно, теперь я получаю подобные письма. Я
+<ce> думаю, что %g1 очень может быть Потрошителем из
+<ce> ____qgiver_. Он живет в _ripperhouse_, если вы
+<ce> хотите увидеть %g4 сами.
+
+Message:  1016
+_hooker_ - это обычная проститутка. На %di отсюда, если тебе интересно.
+<--->
+_hooker_ - не что иное, как дешевая проститутка. На %di, если ты ищешь.
+
+Message:  1017
+_hooker_ раньше общалась с персонажем по имени _rippername_. Жуткий тип.
+<--->
+_hooker_ знает все о Потрошителе. Спроси %g4 о _rippername_ - мерзкий урод.
+
+Message:  1020
+%qdat:
+ Я прибыл в ___qgiver_ и встретился с
+ _qgiver_ по поводу тайны Потрошителя
+ из ____qgiver_. %g хочет, чтобы
+ Потрошителя поймали за =total_ дней до
+ того, как все в ___qgiver_ превратятся
+ в разъяренную толпу. Моя единственная
+ зацепка - ученый по имени _contact_, у
+ которого есть письма, отправленные
+ Потрошителем к _qgiver_. _contact_
+ работает в _bookstore_.
+
+Message:  1021
+%qdat:
+ _contact_ отправил меня
+ в _hookerhouse_ на встречу с
+ проституткой по имени _hooker_,
+ у которой может быть какая-то информация о Потрошителе.
+
+Message:  1022
+%qdat:
+ У Потрошителя из ____qgiver_ была встреча
+ с _contact_ до того, как я туда добрался.
+ Одно из писем, которое я нашел
+ в __contact_, было от человека
+ по имени _hooker_, который хотел
+ встретиться с _contact_ по поводу
+ "сумасшедшего поклонника". Вот кого мне нужно найти следующим.
+ И на этот раз мне нужно будет прийти туда раньше.
+
+Message:  1023
+%qdat:
+ _hooker_ рассказала мне о
+ клиенте, который был у н%g4, достаточно
+ сумасшедшем, чтобы быть Потрошителем.
+ Некто по имени _rippername_, который живет
+ в _ripperhouse_. Я надеюсь, что это будет не
+ последняя запись в журнал, что я когда-либо напишу.
+
+Message:  1024
+%qdat:
+ Поклонник _hooker_, очевидно,
+ пришел раньше меня. В
+ доме я действительно нашел письмо от кого-то по имени
+ _rippername_. Звучало
+ достаточно норовисто, чтобы быть нашим Потрошителем.
+ В любом случае, стоит провести расследование.
+
+Message:  1025
+_contact_ - довольно образованный ученый из _bookstore_, на %di отсюда.
+<--->
+_contact_ иногда является наставником _qgiver_ по некоторым вопросам человеческого разума.
+
+Message:  1026
+_contact_ - это старый дурак, который однажды попадет в беду, преследуя Потрошителя.
+<--->
+_contact_ - мудрец из _bookstore_, опасно замешанный в деле Потрошителя.
+
+Message:  1040
+_rippername_?  Вы, вероятно, найдете %g4 в _ripperhouse_.
+   <--->
+Я мало что знаю о _rippername_. В основном держится особняком.
+   <--->
+_rippername_ - это тот приятный молодой человек, который живет в _ripperhouse_.
+
+Message:  1041
+<ce> Что ж, он кажется достаточно нормальным, но я слышал о нем
+<ce> несколько историй, которые могут заставить вас думать иначе.
+   <--->
+<ce> Он милый, но немного странный, понимаешь? Иногда начинаешь
+<ce> задумываться, а все ли у него дома.
+
+Message:  1050
+<ce> Я видел тебя с моей девушкой! Теперь я
+<ce> порву вас с ней вместе, потому что вы
+<ce> так сильно нравитесь друг другу!
+
+
+
+QBN:
+Item _I.00_ letter used 1011
+Item _I.01_ letter used 1012
+Item _I.02_ letter used 1013
+Item _I.03_ letter used 1014
+Item _I.04_ dead_body
+Item _I.05_ dead_body
+Item _reward_ gold
+
+Person _qgiver_ group Questor
+Person _contact_ face 1 group Librarian local anyInfo 1025 rumors 1026
+Person _hooker_ face 1 faction The_Prostitutes local
+Person _rippername_ face 101 group Group_6.0 male local anyInfo 1040 rumors 1041
+
+Place _bookstore_ local house2
+Place _hookerhouse_ local house4
+Place _ripperhouse_ local house1
+
+Clock _1stparton_ 00:05 02:00
+Clock _2ndparton_ 00:20 12:00
+Clock _S.03_ 01:40 1.00:00
+Clock _total_ 2.00:00 0 flag 1 range 0 1
+
+Foe _murder_ is Nightblade
+
+--	Quest start-up:
+	add dialog for location _bookstore_ person _contact_
+	dialog link for location _ripperhouse_ person _rippername_
+	dialog link for location _hookerhouse_ person _hooker_
+	start timer _total_
+	start timer _1stparton_
+	log 1020 step 0
+	say AcceptQuest
+	place npc _contact_ at _bookstore_
+	place npc _rippername_ at _ripperhouse_
+	place npc _hooker_ at _hookerhouse_
+	have _I.04_ set _deadbody_
+	have _I.05_ set _deadbody2_
+
+_S.00_ task:
+	killed 1 _murder_
+
+_1stparton_ task:
+	start timer _2ndparton_
+
+_2ndparton_ task:
+	start timer _S.03_
+	start task _S.06_
+
+_S.03_ task:
+	start task _S.07_
+
+variable _S.04_
+variable _S.05_
+_S.06_ task:
+	_I.02_ used do _S.14_
+	place item _I.04_ at _bookstore_
+	place item _I.02_ at _bookstore_
+	place item _I.01_ at _bookstore_
+	place item _I.00_ at _bookstore_
+	hide npc _contact_
+
+_S.07_ task:
+	_I.03_ used do _S.11_
+	place item _I.05_ at _hookerhouse_
+	place item _I.03_ at _hookerhouse_
+	hide npc _hooker_
+
+_deadbody_ task:
+	take _I.04_ from pc
+--added deadbody task. otherwise body would clog inventory
+
+_deadbody2_ task:
+	take _I.05_ from pc
+--added deadbody task. otherwise body would clog inventory
+
+_qgclicked_ task:
+	clicked npc _qgiver_
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.00_
+	clear _qgclicked_ _clearclick_
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _S.00_
+	give pc _reward_
+	unset _qgclicked_
+	end quest
+
+variable _S.10_
+_S.11_ task:
+	add dialog for person _rippername_
+	log 1024 step 2
+
+_S.12_ task:
+	clicked npc _hooker_
+	add dialog for location _ripperhouse_
+	log 1023 step 2
+	get item _I.03_
+	say 1015
+
+_S.13_ task:
+	clicked npc _contact_
+	add dialog for location _hookerhouse_ person _hooker_
+	log 1021 step 1
+	get item _I.02_
+	say 1010
+
+_S.14_ task:
+	add dialog for person _hooker_
+	log 1022 step 1
+
+variable _S.15_
+_S.16_ task:
+	hide npc _rippername_
+	place foe _murder_ at _ripperhouse_
+
+_S.17_ task:
+	pc at _ripperhouse_ set _S.16_
+	when _S.12_ or _S.11_
+
+_S.18_ task:
+	injured _murder_ saying 1050
+
+_total_ task:
+	end quest

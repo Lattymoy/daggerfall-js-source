@@ -1,0 +1,149 @@
+-- Quest: C:\QUESTS\WORKING\O0B10Y05.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: thief
+-- Repute: 10
+-- QuestId: 5
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 11
+Quest: O0B10Y05
+DisplayName: Ценные произведения искусства
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Здоров, %pcf!
+<ce> Помнишь меня? я - _qgiver_.
+<ce> Не хочешь поработать немного?
+<ce> Есть у меня работенка, могущая
+<ce> заставить тебя попотеть.
+
+RefuseQuest:  [1001]
+<ce> Может быть в следующий раз.
+
+AcceptQuest:  [1002]
+<ce> Один богатенький товарищ
+<ce> только что получил в наследство
+<ce> картину, которую можно продать
+<ce> за большие деньги, и спрятал ее
+<ce> особняке  _townhouse_ в городе
+<ce> __townhouse_. Притащи ее сюда
+<ce> и вознаграждение не заставит
+<ce> себя ждать. Получишь за это _gold_
+<ce> золотых. Ну, и чтобы жизнь медом не
+<ce> казалась, у тебя есть на все
+<ce> =traveltime_ дней. Нравится мне
+<ce> ставить немыслимые сроки...
+
+QuestComplete:  [1004]
+<ce> Ни царапинки. Отлично. Прости,
+<ce> мы не знали, что там будет
+<ce> охрана. Возьми свое золото.
+
+RumorsDuringQuest:  [1005]
+_townhouse_ воистину как картинная галерея.
+
+RumorsPostfailure:  [1006]
+У меня был жар ... но все прошло.
+   <--->
+Я три часа разговаривал о погоде.
+   <--->
+Отличная погода для этого времени года.
+   <--->
+Довольно таки прохладно в %cn для этого времени года.
+   <--->
+Уверен, сегодня значительно теплее, чем было в прошлом году.
+   <--->
+Моя замечательная тетя искала специалиста по всему Тамриэлю.
+   <--->
+Весьма забавно, когда в это время на улице уже темно.
+   <--->
+Мы должны воздвигнуть памятник войне.
+   <--->
+Детишки в эти дни балуются со своей магией. %oth, не знаю что и сказать.
+   <--->
+Прошлой ночью мне приснился удивительный сон.
+   <--->
+Мне рассказали отличную шутку. %jok
+   <--->
+%jok Конечно же это всего лишь шутка.
+   <--->
+%jok Не могли бы вы объяснить, что все это значит?
+   <--->
+У свода законов в %reg много хороших сторон и одна плохая.
+
+RumorsPostsuccess:  [1007]
+Галерея _townhouse_ ограблена. Даже несмотря на то, что там была сильная стража.
+   <--->
+Тот, кто ограбил особняк _townhouse_, определенно знал на что идет.
+
+QuestorPostsuccess:  [1008]
+На черном рынке эта картина потянет на кругленькую сумму, %pcf.
+
+QuestorPostfailure:  [1009]
+<ce> Кого я вижу!!! Какое счастье!!!
+<ce> Для полного счастья не хватает
+<ce> только картины, за которой тебя
+<ce> послали. И почему мне нужно тратить
+<ce> свое время на всяких черепах?
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ посылает меня
+ украсть картину из особняка _townhouse_
+ в городе __townhouse_.
+ У меня есть =traveltime_ дней, чтобы
+ отдать ее нанимателю _qgiver_
+ в доме __qgiver_, что в городе
+ ___qgiver_.
+
+
+
+QBN:
+Item _painting_ painting
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+
+Place _townhouse_ remote house4
+--reverted to house4 as original
+
+Clock _traveltime_ 00:00 0 flag 17 range 0 2
+
+Foe _F.00_ is Barbarian
+Foe _F.01_ is Giant_bat
+Foe _F.02_ is Spider
+Foe _F.03_ is Sabretooth_tiger
+
+--	Quest start-up:
+	place item _painting_ at _townhouse_
+	start timer _traveltime_
+	log 1010 step 0
+	pc at _townhouse_ set _S.01_
+
+_traveltime_ task:
+	end quest
+
+_S.01_ task:
+	start task _S.01a_
+
+_S.01a_ task:
+	pick one of _guard1_ _guard2_ _guard3_ _guard4_
+--set this apart to a permanent task, previous setup would randomly pick again upon re-entering the house
+
+_questdone_ task:
+	toting _painting_ and _qgiver_ clicked
+	give pc _gold_
+	end quest
+
+_guard1_ task:
+	create foe _F.00_ every 4 minutes 1 times with 10% success
+
+_guard2_ task:
+	create foe _F.01_ every 4 minutes 1 times with 10% success
+
+_guard3_ task:
+	create foe _F.02_ every 4 minutes 1 times with 10% success
+
+_guard4_ task:
+	create foe _F.03_ every 4 minutes 1 times with 10% success

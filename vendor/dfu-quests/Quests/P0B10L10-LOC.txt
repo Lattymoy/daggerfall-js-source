@@ -1,0 +1,190 @@
+-- Quest: C:\QUESTS\WORKING\P0B10L10.Qbn.
+-- StartsBy: letter
+-- Questee: member
+-- Questor: vampire
+-- Repute: 10
+-- QuestId: 10
+Messages: 18
+Quest: P0B10L10
+DisplayName: Сопровождающий
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+Error: Questtext 1000 Called.
+
+RefuseQuest:  [1001]
+Error: Questtext 1001 Called.
+
+AcceptQuest:  [1002]
+Error: Questtext 1002 Called.
+
+QuestComplete:  [1004]
+<ce> Вам было очень непросто пройти
+<ce> через испытание такого типа.
+<ce> Да еще и с немалой нагрузкой в
+<ce> виде вампира  _vamp_.
+<ce> Я могу лишь только представить
+<ce> себе ваши беды. Добавьте к этому
+<ce> еще третирования со стороны
+<ce> злобного мага, - =mage_
+<ce> Я понимаю, почему %vam
+<ce> та кого высокого мнения о вас,
+<ce> %pcf.
+
+RumorsDuringQuest:  [1005]
+=mage_ - всего лишь обычный охотник за вампирами, недавно покинул провинцию %reg.
+   <--->
+=mage_ Может втянуть очень многих вампиров в неравный бой.
+
+RumorsPostfailure:  [1006]
+Некто =vamp2_ из места __vamp2_ искал кого-то. %ra по имени %pcn, кажется.
+
+RumorsPostsuccess:  [1007]
+=mage_, очевидно, вовсе не охотник за вампирами, как %g говорит о себе.
+   <--->
+=mage_, возможно, величайший истребитель вампиров. И %g даже не думает об этом.
+
+QuestorPostsuccess:  [1008]
+Error: Questtext 1008 Called.
+
+QuestorPostfailure:  [1009]
+Error: Questtext 1009 Called.
+
+QuestLogEntry:  [1010]
+      __vamp_
+       ___vamp_
+<ce>
+%pcn,
+<ce>
+  %vam нуждается в вас.
+Срочно.
+<ce>
+<ce>
+Всегда ваш друг в смерти,
+<ce>
+    _vamp_
+<ce> ----
+
+Message:  1011
+%qdt:
+ Мне передали письмо от
+ вампира из рода %vam
+ по имени _vamp_. Семья
+ требует моего присутствия
+ в городе ___vamp_ в
+ месте под названием
+ __vamp_.
+
+Message:  1012
+<ce> Благодарю вас за скорое прибытие.
+<ce> У нас в провинции %reg появился
+<ce> могущественный враг, маг, называемый
+<ce> =mage_. Мы встречались когда-то,
+<ce> и нельзя сказать, что встреча была
+<ce> из приятных. Мне было приказано
+<ce> поговорить с вампиром по имени
+<ce> _vamp2_ в городе ___vamp2_
+<ce> об этом деле, но я знаю, что
+<ce> =mage_ ищет меня. У меня нет сил
+<ce> путешествовать самостоятельно. Поэтому
+<ce> прошу вас, %pcn, проводите меня.
+<ce> Нам нужно прибыть в город ___vamp2_
+<ce> в место, именуемое __vamp2_, прежде,
+<ce> чем этот маг соберет больше союзников.
+<ce> У нас есть всего =queston_ ночей, %pcf.
+<ce> Это совсем немного, но надо постараться.
+
+Message:  1013
+<ce> Кровосос исчез. Дело становится
+<ce> более интересным.
+
+Message:  1014
+%qdt:
+ Я сопровождаю вампира по имени
+ _vamp_ к другому вампиру,
+ которого зовут _vamp2_.
+ Мне нужно прибыть в город ___vamp2_.
+ __vamp2_, там нас будут ждать.
+ Надо добраться туда прежде, чем некий маг
+ увеличит свои силы.
+
+Message:  1015
+<ce> "%pcf!", говорит _vamp_,
+<ce> "Вы убили =mage_, этот
+<ce> бич рода %vam, больше не
+<ce> существует!"
+
+Message:  1016
+<ce> "Слишком долго",-
+<ce> говорит _vamp_,
+<ce> исчезая во тьме.
+
+Message:  1017
+<ce> Бледный мальчик с жуткими
+<ce> глазами дал вам сверток и
+<ce> исчез во тьме.
+
+
+
+QBN:
+Item _letter_ letter used 1010
+
+Person _vamp_ factiontype Vampire_Clan local
+Person _vamp2_ factiontype Vampire_Clan remote
+
+
+Clock _queston_ 00:00 0 flag 1 range 1 2
+
+Foe _mage_ is Mage
+
+--	Quest start-up:
+	dialog link for person _vamp2_
+	dialog link for person _vamp_
+	_letter_ used do _readletter_
+	have _letter_ set _S.10_
+	give pc _letter_ notify 1017
+
+_queston_ task:
+	end quest
+
+_vampclicked_ task:
+	clicked npc _vamp_
+	log 1014 step 1
+	hide npc _vamp_
+	say 1012
+	add _vamp_ face
+	create npc _vamp2_
+
+variable _S.02_
+_S.03_ task:
+	when _vampclicked_ and not _S.04_
+	create foe _mage_ every 15 minutes 5 times with 50% success
+
+_S.04_ task:
+	injured _mage_
+	say 1013
+
+variable _reward_
+_S.06_ task:
+	killed 1 _mage_
+	say 1015
+
+_S.07_ task:
+	clicked npc _vamp2_
+	give pc nothing
+	change repute with _vamp_ by +5
+	end quest
+
+_S.08_ task:
+	when _queston_ and not _S.07_
+	say 1016
+	change repute with _vamp_ by -10
+
+_readletter_ task:
+	add dialog for person _vamp_
+	log 1011 step 0
+	create npc _vamp_
+
+_S.10_ task:
+	start timer _queston_

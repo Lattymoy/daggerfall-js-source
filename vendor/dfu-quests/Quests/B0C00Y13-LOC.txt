@@ -1,0 +1,142 @@
+-- Quest: C:\QUESTS\WORKING\B0C00Y13.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: knight
+-- Repute: 0
+-- QuestId: 13
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 12
+Quest: B0C00Y13
+DisplayName: Зараженный дом
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Почему я должен доверять тебе
+<ce> %pcn? Полагаю, тебе предстоит
+<ce> небольшое испытание в
+<ce> ордене. Несомненно я не
+<ce> дам тебе ничего важного,
+<ce> поскольку ты не член этого
+<ce> рыцарского ордена.
+<ce> Есть здание которое кишит
+<ce> кое-какими существами.
+<ce> Убей их для меня и, может быть,
+<ce> я замолвлю за тебя словечко.
+
+RefuseQuest:  [1001]
+<ce> Я полагаю мне придется сделать
+<ce> все самому. Ты еще более
+<ce> жалкий %ra, чем я думал.
+
+AcceptQuest:  [1002]
+<ce> Даю тебе один день, чтобы
+<ce> вычистить _house_. После
+<ce> этого, я сделаю это сам
+<ce> и скажу всем, каким трусом
+<ce> ты, %ra, являешься на самом деле.
+
+QuestComplete:  [1004]
+<ce> Вполне приемлемо %pcn.
+<ce> Я замолвлю за тебя словечко
+<ce> в моем рыцарском ордене.
+
+RumorsDuringQuest:  [1005]
+Очень странные звуки идут из этого _house_.
+   <--->
+Дом, принадлежащий _qgiver_, действительно попал в Обливион.
+
+RumorsPostfailure:  [1006]
+Бедному _qgiver_ нужно нанять уничтожителя.
+   <--->
+_qgiver_ отдаст круглую сумму за очистку этого дома.
+
+RumorsPostsuccess:  [1007]
+_house_ окончательно вычищен.
+   <--->
+Этих существ в _house_ больше нет.
+
+QuestorPostsuccess:  [1008]
+Вы вычистили мой дом. Что вы хотите?
+
+QuestorPostfailure:  [1009]
+Ты не можешь убить даже пару существ. Не трать мое время.
+   <--->
+Я не хочу даже воздухом одним дышать с таким лизоблюдом.
+
+
+QuestLogEntry:  [1010]
+%qdt:
+ В ___qgiver_ со мной
+ встретился _qgiver_ из рыцарского ордена.
+ Я могу завоевать расположение рыцарей
+ если я освобожу от существ _house_
+ в __house_ для н%g4.
+
+Message:  1011
+<ce> Вы вычистили дом _qgiver_.
+
+Message:  1012
+<ce> От стен доносится скребущий звук.
+<ce> Живущие здесь существа наверняка плохо
+<ce> отреагируют на ваше вторжение на их
+<ce> территорию.
+
+
+QBN:
+
+Person _qgiver_ group Questor
+
+Place _house_ local house
+
+Clock _oneday_ 1.00:00 0 flag 1 range 0 1
+
+Foe _spiders_ is Spider
+Foe _rats_ is Giant_rat
+Foe _scorpions_ is Giant_scorpion
+Foe _bats_ is Giant_bat
+
+--	Quest start-up:
+	start timer _oneday_
+	log 1010 step 0
+	--location action removed. not defined and not needed.
+	pc at _house_ set _S.01_
+
+_oneday_ task:
+	end quest
+
+_S.01_ task:
+	say 1012
+	pick one of _S.04_ _S.05_ _S.06_ _S.07_
+
+_questdone_ task:
+	clicked npc _qgiver_
+
+_success_ task:
+	when _S.03_ and _questdone_
+	give pc nothing
+	end quest
+
+_S.03_ task:
+	killed 6 _bats_
+	killed 7 _rats_
+	killed 3 _scorpions_
+	killed 3 _spiders_
+	say 1011
+
+_S.04_ task:
+	create foe _bats_ every 2 minutes 8 times with 100% success
+
+_S.05_ task:
+	create foe _rats_ every 2 minutes 10 times with 100% success
+
+_S.06_ task:
+	create foe _scorpions_ every 3 minutes 4 times with 100% success
+
+_S.07_ task:
+	create foe _spiders_ every 3 minutes 4 times with 100% success
+--slowed enemy spawn due to feedback
+
+_clearclick_ task:
+	when not _S.03_ and _questdone_
+	clear _questdone_ _clearclick_

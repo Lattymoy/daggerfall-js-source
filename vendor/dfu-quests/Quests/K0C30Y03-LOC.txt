@@ -1,0 +1,626 @@
+-- Quest: C:\QUESTS\WORKING\K0C30Y03.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: merchant
+-- Repute: 30
+-- QuestId: 3
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 56
+Quest: K0C30Y03
+DisplayName: Долги знатного человека
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Ах, друг мой. К сожалению вынужден признать, что
+<ce> я принял неверное направление в своем деле, но
+<ce> против фактов не пойдешь. Я ссудил некоторую
+<ce> сумму одному дворянину по имени _patsy_,
+<ce> о котором вы могли и не слышать. Гарантией займа
+<ce> был документ на владение весьма ценной частью
+<ce> недвижимости. Теперь и _patsy_ и документ
+<ce> пропали. По слухам у него возникли небольшие
+<ce> финансовые трудности, но сумму, которую я
+<ce> ссудил, невозможно было промотать так быстро.
+<ce> Если речь идет о человеке, похожем на
+<ce> _patsy_, это может быть опасным совпадением,
+<ce> так что мне нужен настоящий рыцарь-воитель.
+<ce> Вы поможете мне, мой друг, в обмен на большой,
+<ce> неограненый алмаз?
+
+RefuseQuest:  [1001]
+<ce> Мне жаль слышать это. Конечно я вас,
+<ce> но это очень огорчительно.
+
+AcceptQuest:  [1002]
+<ce> Хорошо слышать это. Приступим к делу. У меня
+<ce> тридцать дней перед тем, как меня принудят
+<ce> объявить себя банкротом. Закладная была
+<ce> похищена из местного учреждения - _bank_ -
+<ce> в __bank_ вместе с другими ценностями, но мне
+<ce> не нравится то, что _patsy_ исчез в то
+<ce> же самое время, когда по закладной решили
+<ce> провести небольшое расследование. Старая
+<ce> резиденция _patsy_ - _house2_ в
+<ce> __house2_, которая, как я понимаю, сейчас
+<ce> пустует. В любом случае у меня нет других
+<ce> зацепок. Мне устроит что угодно: золото,
+<ce> которое зажилил _patsy_, закладную
+<ce> на дом или голову этого аристократа на блюде,
+<ce> причем в течение тридцати дней.
+<ce> Не подведите меня, %pcf.
+
+QuestFail:  [1003]
+<ce> Вам следовало бы попробовать
+<ce> сдержать свое слово.
+
+QuestComplete:  [1004]
+<ce> Уловки _patsy_ не сработали, да,
+<ce> %pcf? Вот обещанный алмаз.
+<ce> Прекрасная работа, мой друг.
+
+RumorsDuringQuest:  [1005]
+_qgiver_ не единственный простофиля, которого обманул _patsy_. Многие люди ссужали ему деньги.
+   <--->
+_patsy_ внезапно уехал из __house2_, оставив после себя кучу долгов и разитых сердец.
+
+RumorsPostfailure:  [1006]
+Похожу _patsy_ все таки смылся. Я слышал, что он подался на север в поисках удачи.
+   <--->
+Похоже, что _patsy_ мертв. Я не поверю в это дважды.
+
+RumorsPostsuccess:  [1007]
+Никто не пытается давить на _qgiver_, только не после случая с _patsy_.
+   <--->
+Все на что способен _patsy_, это неумная попытка надуть кого-то навроде _qgiver_.
+
+QuestLogEntry:  [1010]
+%qdt:
+ У меня тридцать дней на то, чтобы
+ найти закладную, которую дали _qgiver_
+ из __qgiver_ в ___qgiver_, как гарант
+ на возврат ссуды, даденной одному дворянину
+ по имени _patsy_, или найти золото, которое
+ _qgiver_ дал _patsy_,
+ или, если все вышеуказанное не поможет, найти
+ _patsy_, Которого-Не-Известно-Где-Искать.
+ Гарант был в _bank_ в
+ __bank_, пока банк не был ограблен.
+ Единственное другое место, связанное с этим
+ делом - _house2_, старая резиденция
+ _patsy_ в __house2_.
+ Если я достигну хотя бы одной из этих
+ целей в тридцать дней, _qgiver_
+ даст мне большой, неограненый алмаз.
+
+Message:  1011
+Отдадите золото в руки _hooker_?
+
+Message:  1012
+<ce> Спасибо тебе, душка. Я слышала, что ты порядочный
+<ce> человек, и решила дать тебе передышку. Я была нанята
+<ce> _patsy_ несколько недель назад - не по той причине, о
+<ce> которой вы подумали. Все, что мне нужно было сделать,
+<ce> это пофлиртовать с каким-нибудь старикашкой и
+<ce> заставить его пригласить меня на ужин в определенный
+<ce> день. Я думаю, чтобы вытащить его из дома, потому что
+<ce> позже я узнала, что дом этого парня был ограблен,
+<ce> пока нас не было. Я слышала, много чего забрали.
+<ce> Старик был симпатичным и милым, и мне было неловко
+<ce> из-за этого. Возможно, вы захотите поговорить с ним.
+<ce> Его зовут _gaffer_. Или ты мог бы пойти в то место,
+<ce> где я встретил этого _patsy_, _house2_ в __house2_ и
+<ce> посмотреть, знает ли кто-нибудь там что-нибудь.
+<ce> Надеюсь, все это поможет, %pcf. Я бы сама хотел
+<ce> посмотреть, как упрячут старого _patsy_.
+
+Message:  1013
+%pcn,
+<ce>
+  Если вы предвкушаете долгую и счастливую жизнь
+в районе залива, должен разрушить ваши бессмысленные
+и обреченные на провал метания. Несчастный случай -
+- единственный возможный исход, и это случай может
+произойти только с вами.
+Меня не поймать, %pcf. У меня слишком
+много денег, чтобы быть пойманным.
+<ce>
+Воистину Ваш,
+<ce>
+_patsy_
+<ce> ----
+
+Message:  1014
+  Твоя цель - %pcn, %ra авантюрист
+и наемник. Соблюдай крайнюю осторожность и
+будь готов к кровопролитной схватке.
+<ce>
+Это далеко не водянистая медуза.
+<ce>
+-- _patsy_
+<ce> ----
+
+--eliminating unmarked white spaces. this problem was patched out in previous versions but i still prefer to have lines with blank spaces filled just in case.
+
+Message:  1015
+_banker_ работает в _bank_ в __bank_. очень уважаемый человек.
+   <--->
+Типичный зануда банкир. _banker_ работает в _bank_ в __bank_.
+
+Message:  1016
+<ce> Хочу рассказать вам, что я говорил
+<ce> _patsy_. __banker_ обязан возместить все золото,
+<ce> которое было похищено, до единого пенни.
+<ce> Мы всего лишь хотим получить ответы на
+<ce> некоторые вопросы про ограбление. Это
+<ce> такие вещи, которые не следует обсуждать
+<ce> с незнакомцами, ну вы понимаете, о чем я.
+
+Message:  1017
+<ce> А, приятно видеть вас, %pcf. У нас
+<ce> тут некоторое возбуждение после последнего
+<ce> ограбления. Были затронуты только
+<ce> определенные счета и депозиты, поэтому
+<ce> _guard_, наш секретный агент,
+<ce> занимается держателями этих счетов.
+<ce> Быть может он сможет дать вам кое-какую
+<ce> информацию, %pcf.
+<ce> _guard_ находится в __guard_
+<ce> в ___guard_.
+
+Message:  1018
+<ce> Боюсь, я не могу обсуждать эти дела с вами,
+<ce> %pcn. Это дело касается только _patsy_,
+<ce> меня и больше никого. Если вы действительно
+<ce> хотите помочь, идите пообщайтесь с _hooker_,
+<ce> проституткой, у которой были кое-какие связи
+<ce> с нашим общим другом _patsy_. Она потребует
+<ce> десять золотых за общение, вы найдете ее в
+<ce> ___hooker_ в местечке под названием
+<ce> __hooker_. Удачи, %pcf.
+<ce> Меня может не оказаться здесь, когда вы
+<ce> вернетесь, но вы способны взвалить расследование
+<ce> на свои могучие плечи.
+
+Message:  1019
+<ce> Ах, %pcn, мой друг. думаю, мы можем
+<ce> взаимно помочь друг другу в этом деле. Я знаю,
+<ce> где находится _patsy_, но его
+<ce> союзники могут создать проблемы при попытке
+<ce> достать его. Миллионы золотых монет могут
+<ce> купить очень влиятельных друзей. Мне нужно,
+<ce> чтобы вы порвали эту связь, и тогда мы сможем
+<ce> вместе прекратить существование _patsy_
+<ce> к взаимному удовлетворению. Отвезите это
+<ce> письмо в крепость его союзников ___mondung_
+<ce> и потом идите в ___mondung2_. Если
+<ce> повезет, письмо заставит отвлечь его солдат,
+<ce> так что _patsy_ останется практически
+<ce> без защиты, за исключением его личных
+<ce> охранников конечно. Очень хорошо, %pcf,
+<ce> увидимся позже.
+
+Message:  1020
+_guard_ ушел из __guard_. Похоже %g знает, куда ушел _patsy_.
+   <--->
+_guard_ не покинет __guard_ пока не будет знать, где прячется _patsy_.
+   <--->
+Все пытаются понять, почему _guard_ так внезапно ушел из __guard_.
+
+Message:  1021
+  Народ, приказы изменились. Вы нужны мне в
+___qgiver_ немедленно. Давайте быстро туда и
+ждите моих распоряжений. Это не займет
+больше нескольких дней.
+<ce>
+-- _patsy_
+<ce> ----
+
+Message:  1023
+<ce> Вы мгновенно понимаете, что
+<ce> это должно быть _patsy_.
+
+Message:  1024
+<ce> Несомненно вы убили _patsy_.
+
+Message:  1025
+  Мне нужно подкрепление, если эти слухи о %ra
+верны. Спрячьте закладную в ___mondung_,
+но золото и ваши люди должны прибыть в
+___mondung2_. Мы поговорим, что делать
+дальше, когда вы прибудете.
+<ce>
+-- _patsy_
+<ce> ----
+
+Message:  1026
+<ce> На куске _rock_ виднеется слепок,
+<ce> который можно прочитать как ___mondung_.
+
+Message:  1027
+Просто кусок _rock_. Только хлам в ___house2_.
+   <--->
+_rock_ содержит какой-то слепок или гравировку.
+   <--->
+Такое ощущение, что здесь хранилась руда из ___mondung_.
+
+Message:  1028
+_rock_ был добыт в ___mondung_; это заброшенная шахта на %di отсюда.
+   <--->
+Этот _rock_ должно быть добыли много лет назад, когда в ___mondung_ была шахта.
+
+Message:  1029
+<ce> Похоже это закладная, которую
+<ce> _patsy_ дал в качестве гаранта
+<ce> _qgiver_.
+
+Message:  1030
+<ce> Это то самое золото, которое
+<ce> _qgiver_ ссудил _patsy_.
+
+Message:  1031
+Дом Ночных Страхов
+<ce>
+Дорогой друг %pcf,
+<ce>
+  Мы в курсе, что вы ищете _patsy_.
+Мы уважаем вашу работу, поэтому хотим помочь в этом
+деле. Несколько недель назад _patsy_
+воспользовался нашими услугами, а недавно мы получили
+плату через руки его маленькой, но жуткой банды,
+устроившейся в месте под названием ___mondung_.
+Если вы действительно хотите найти _patsy_,
+то будет разумно начать поиски оттуда.
+Удачи и пусть Мефала поможет вам в этом деле.
+<ce>
+<ce> -- Братство
+
+Message:  1032
+<ce> Вы даже не почувствовали, как юноша, следовавший
+<ce> за вами, всучил конверт вам в руки. Пока вы
+<ce> оборачивались, он убежал, быстро растворившись
+<ce> в толпе, не оставив вам ни единого шанса.
+
+Message:  1033
+%pcn,
+<ce>
+  _patsy_ вор, но он не из наших. Мы хотели
+бы, чтобы его поймали. Прими пожалуйста наш
+скромный вклад в это дело: _patsy_ работает
+не один. Есть шайка наемников под его управлением
+в месте под названием ___mondung_. Некоторые
+из его сокровищ могут храниться там, но не думаю,
+что и сам _patsy_ может быть там.
+Удачи, %pcf, иди в мире с Баан Даром.
+<ce>
+-- Гильдия
+
+Message:  1034
+<ce> А, %pcf, мой друг. И опять меня соблазнили
+<ce> и предали. Похже мне стоит уйти в монастырь.
+<ce> Моя жизнь будет много проще без женщин, %oth.
+<ce> Вот, возьмите это золото, как признание ваших
+<ce> заслуг в поиске и поимке этого злодея _patsy_.
+<ce> Если бы мог, то дал бы больше, но в свете
+<ce> последних событий, я практически разорен. Для
+<ce> информации, у _patsy_ было два укрытия в %reg,
+<ce> одно в ___mondung_ и другое в ___mondung2_.
+<ce> Не знаю, какое из них активно использовалось,
+<ce> но хочу предупредить, чтобы вы держали наготове
+<ce> свой клинок. Удачи и да пребудет с вами %god.
+
+Message:  1035
+<ce> Почему это я должен рассказывать тебе что-то?
+<ce> Ты просто ублюдок от _qgiver_, который
+<ce> надул меня так же как и _patsy_ или как
+<ce> эта проклятая %god _hooker_ обманула меня.
+<ce> Да что б ты заблудилось в дыре навроде
+<ce> ___mondung_, засохло и сдохло там,
+<ce> ты дитя сифилитической %ra шлюхи.
+
+Message:  1036
+Дорогой друг %pcn,
+<ce>
+  У меня есть кое-какая информация, которая
+может помочь вашим поискам этой крысы _patsy_.
+Если вам интересно, поищите меня в ___hooker_
+в дыре, называемой __hooker_.
+И прихватите с собой десять золотых.
+Эта информация не бесплатна.
+<ce>
+_hooker_
+<ce> ----
+
+Message:  1037
+<ce> "Это от _hooker_," раздался голос
+<ce> и юный посыльный вручил вам записку.
+<ce> Прежде чем вы отреагировали, он убежал
+<ce> прочь.
+
+Message:  1055
+<ce> Прости, дорогая, у моих знаний есть цена.
+
+Message:  1038
+%qdt:
+ _banker_ сказал мне поискать
+ _guard_ в __guard_ в
+ ___guard_, который занят расследованием
+ кражи в банке и ищущего _patsy_
+ для _bank_.
+
+Message:  1039
+%qdt:
+ Была встреча с _guard_. %g узнал местонахождение
+ _patsy_ - место под названием ___mondung2_.
+ Чтобы отвлечь его солдат, мне надо доставить в
+ письмо в крепость, ___mondung_, а затем
+ втретиться с _guard_ в ___mondung2_, чтобы
+ достать _patsy_.
+
+Message:  1040
+%qdt:
+ Состоялась встреча с _guard_. %g сказал мне,
+ что у _patsy_ были какие-то дела с
+ _hooker_, проституткой из __house1_.
+ Я могу найти ее в _house1_.
+
+Message:  1041
+%qdt:
+ _hooker_ сказала мне, что _patsy_ нанимал
+ ее, чтобы отвлечь одного человека по имени
+ _gaffer_ на одну ночь. Я могу найти
+ его в _tavern_ в __tavern_.
+
+Message:  1042
+%qdt:
+ _gaffer_ сказал мне, что у _patsy_
+ было два укрытия, одно - ___mondung_,
+ а второе - ___mondung2_.
+
+Message:  1050
+Этот документ является свидетельством на
+владение _house3_ из __house3_ в %reg.
+Любой прочитавший это узнает, что
+_patsy_ единственный и полноправный
+владелец вышупомянутой собственности.
+
+
+
+QBN:
+Item _deed_ letter used 1050
+Item _reward_ diamond
+Item _letter27_ letter used 1036
+Item _bribe4_ gold range 10 to 10
+Item _letter28_ letter used 1013
+Item _bribe2_ letter used 1014
+Item _deed3_ gold_bar
+Item _letter29_ letter used 1021
+Item _letter30_ letter used 1025
+Item _rock_ element anyInfo 1027
+Item _letter32_ letter used 1031
+Item _letter15_ letter used 1033
+Item _bothdorjii_ gold range 15 to 50
+Item _letter33_ gold range 20 to 40
+
+Person _qgiver_ group Questor
+Person _patsy_ face 1 factiontype Province
+Person _hooker_ face 187 faction The_Prostitutes female
+Person _gaffer_ face 73 named Chulmore_Quill
+Person _banker_ face 1 group Banker local anyInfo 1015
+Person _guard_ face 80 factiontype Knightly_Guard
+Person _darkb_ face 81 faction The_Dark_Brotherhood
+Person _tguild_ face 81 faction The_Thieves_Guild local
+
+Place _bank_ remote bank
+Place _house1_ remote house2
+Place _house2_ remote house1
+Place _mondung_ remote dungeon
+--changed from dungeon2 which is very restricted; in DF region it's only Privateer's Hold
+Place _mondung2_ remote dungeon
+Place _tavern_ remote tavern
+Place _house3_ local house2
+
+Clock _queston_ 30.00:00 0 flag 1 range 0 1
+Clock _S.03_ 1.09:20 2.03:40
+Clock _S.13_ 1.01:00 2.13:40
+Clock _S.26_ 1.09:20 2.02:00
+Clock _S.27_ 16:40 2.02:00 flag 9 range 0 0
+Clock _2letter_ 00:25 00:50
+
+Foe _warrior_ is Warrior
+Foe _F.01_ is Knight
+Foe _F.02_ is Barbarian
+Foe _F.03_ is Spellsword
+Foe _F.04_ is Rogue
+
+--	Quest start-up:
+	place item _deed_ at _mondung_
+	place item _rock_ at _house2_
+	place item _letter30_ at _mondung_
+	dialog link for location _house3_ person _gaffer_ item _rock_
+	dialog link for person _guard_
+	dialog link for location _house1_ person _hooker_
+	start timer _queston_
+	start timer _2letter_
+	log 1010 step 0
+	repute with _hooker_ exceeds 10 do _S.02_
+	repute with _darkb_ exceeds 15 do _S.25_
+	repute with _tguild_ exceeds 15 do _S.28_
+	pc at _mondung2_ set _S.16_
+	_letter30_ used do _S.35_
+	_rock_ used do _S.19_
+	place npc _hooker_ at _house1_
+	place npc _gaffer_ at _tavern_
+	place npc _banker_ at _bank_
+
+_pcgetsgold1_ task:
+	toting _deed3_ and _qgiver_ clicked
+	give pc _reward_
+	end quest
+
+_pcgetsgold2_ task:
+	toting _deed_ and _qgiver_ clicked
+	give pc _reward_
+	end quest
+
+_pcgetsgold3_ task:
+	when _qgclicked_ and _S.18_
+	give pc _reward_
+	end quest
+
+_queston_ task:
+	end quest
+
+_S.02_ task:
+	start timer _S.03_
+
+_S.03_ task:
+	add dialog for person _hooker_
+	add dialog for location _house1_
+	get item _letter27_
+	say 1037
+
+_S.04_ task:
+	clicked _hooker_ and at least 10 gold otherwise do _S.34_
+	prompt 1011 yes _thankyou_ no _gimme_
+
+_thankyou_ task:
+	add dialog for person _gaffer_
+	log 1041 step 4
+	give item _bribe2_ to _F.01_
+	say 1012
+	change repute with _hooker_ by +5
+	send _F.01_ every 80 minutes 30 times with 15% success
+	--data taken from UESP
+
+_gimme_ task:
+	get item _bribe4_
+	make _bribe4_ permanent
+
+_S.07_ task:
+	clicked npc _banker_
+	start timer _S.13_
+	repute with _banker_ exceeds 10 do _S.08_
+
+_S.08_ task:
+	log 1038 step 1
+	say 1017
+
+_S.09_ task:
+	when _S.07_ and not _S.08_
+	say 1016
+
+_S.10_ task:
+	clicked npc _guard_
+	repute with _guard_ exceeds 10 do _S.11_
+
+_S.11_ task:
+	reveal _mondung_
+	reveal _mondung2_
+	log 1039 step 2
+	get item _letter29_
+	say 1019
+
+_S.12_ task:
+	when not _S.11_ and _S.10_
+	add dialog for location _house1_
+	add dialog for person _hooker_
+	log 1040 step 3
+	say 1018
+
+_S.13_ task:
+	rumor mill 1020
+	hide npc _guard_
+
+_S.14_ task:
+	dropped _letter29_ at _mondung2_
+
+_S.15_ task:
+	when _S.16_ and not _S.14_
+	create foe _F.02_ every 221 minutes 200 times with 10% success
+
+_S.16_ task:
+	place item _deed3_ at _mondung2_
+	create foe _F.04_ every 111 minutes 200 times with 5% success
+	create foe _F.03_ every 100 minutes 200 times with 5% success
+	place foe _warrior_ at _mondung2_
+
+_S.17_ task:
+	injured _warrior_
+	say 1023
+
+_S.18_ task:
+	killed 1 _warrior_
+	say 1024
+
+_S.19_ task:
+	say 1026
+
+_qgclicked_ task:
+	clicked npc _qgiver_
+
+variable _S.21_
+variable _S.22_
+_S.23_ task:
+	clicked item _deed_
+	say 1029
+
+_S.24_ task:
+	clicked item _deed3_
+	say 1030
+
+_S.25_ task:
+	start timer _S.26_
+
+_S.26_ task:
+	reveal _mondung_ readmap
+	get item _letter32_
+	say 1032
+
+_S.27_ task:
+	reveal _mondung_ readmap
+	get item _letter15_
+	get item _bothdorjii_
+	say 1032
+	make _bothdorjii_ permanent
+
+_S.28_ task:
+	start timer _S.27_
+
+_S.29_ task:
+	clicked npc _gaffer_
+	repute with _gaffer_ exceeds 10 do _S.30_
+
+_S.30_ task:
+	reveal _mondung_ readmap
+	reveal _mondung2_ readmap
+	log 1042 step 4
+	get item _letter33_
+	say 1034
+	make _letter33_ permanent
+
+_S.31_ task:
+	when _S.29_ and not _S.30_
+	reveal _mondung_
+	say 1035
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.18_
+	say 1003
+	clear _qgclicked_ _clearclick_
+
+_S.33_ task:
+	clicked item _rock_
+	say 1026
+	add dialog for item _rock_
+	reveal _mondung_
+
+_S.34_ task:
+	say 1055
+
+_S.35_ task:
+	reveal _mondung2_ readmap
+
+_2letter_ task:
+	get item _letter28_
+	say 1032

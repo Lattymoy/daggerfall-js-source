@@ -1,0 +1,146 @@
+-- Quest: C:\QUESTS\WORKING\Q0C00Y08.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: witch
+-- Repute: 0
+-- QuestId: 8
+Messages: 14
+Quest: Q0C00Y08
+DisplayName: Редкая книга
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Да, нам действительно нужна твоя помощь,
+<ce> %pcf. Наш шабаш изолирован, мы уже
+<ce> натерпелись страху и неблагодарности
+<ce> внешнего мира. Если ты приобретешь для
+<ce> нас одну очень редкую книгу, прибереженную
+<ce> для нас в ___contact_,
+<ce> мы будем рады особую вещь _mitem_,
+<ce> созданную специально для тебя.
+
+RefuseQuest:  [1001]
+<ce> Что ж, тогда мы подождем следующего
+<ce> путника. Наша нужда не так уж велика.
+
+AcceptQuest:  [1002]
+<ce> Сделаешь? Книга называется '_book_' -- это
+<ce> очень редкая книга. Даже если найдется
+<ce> и копия, то цена все равно будет
+<ce> поднебесной. Нам повезло, потому что
+<ce> у нас есть друг в ___contact_,
+<ce> =contact_ по имени _contact_,
+<ce> укравший копию книги. Если ты встретишься
+<ce> с ним в __contact_,
+<ce> %g даст тебе книгу. Мы будем ждать
+<ce> твоего возвращения в течение =queston_ дней.
+<ce> По исходе этого времени книга не
+<ce> будет представлять для нас никакого
+<ce> интереса. Да поможет тебе ==daedra_.
+
+QuestComplete:  [1004]
+<ce> Ага, вот оно. Надеюсь тебе удалось
+<ce> удержаться от того, чтобы пролистать
+<ce> ее страницы, добрый друг %pcf.
+<ce> Это невероятно, что тебе удалось
+<ce> совершить это в такие сроки.
+<ce> Что ж, вот _mitem_.
+
+RumorsDuringQuest:  [1005]
+_contact_ под подозрением. Говорят, что %g якшается с ведьмами.
+   <--->
+Говорят, что _contact_ - тайный агент ведьм.
+
+RumorsPostfailure:  [1006]
+_contact_ арестовали и поджарили как стейк. Все как и должно.
+   <--->
+Бедняга _contact_ больше никогда не откроет свой рот. Теперь он закрылся навеки.
+
+RumorsPostsuccess:  [1007]
+_contact_ арестовали, но книга '_book_' так и не найдена.
+   <--->
+Они поймали _contact_, но это оказался не тот =contact_, который похитил '_book_'.
+
+QuestorPostsuccess:  [1008]
+О, привет, %pcf. Я как раз читаю '_book_' -- самое то для нас.
+
+QuestorPostfailure:  [1009]
+<ce> '_book_' потеряна,
+<ce> кажется навсегда. Сейчас не время
+<ce> для разговоров. Уходи, оставь
+<ce> ==qgiver_. Мы не хотим
+<ce> видеть тебя.
+
+QuestLogEntry:  [1010]
+%qdt:
+ ==qgiver_ послали меня
+ в ___contact_,
+ повстречаться с =contact_
+ по имени _contact_ в
+ __contact_ по поводу
+ очень редкой книги. Мне нужно вернуть
+ книгу в руки ==qgiver_
+ в течение =queston_ дней или раньше.
+
+Message:  1011
+<ce> Прекрасно, %pcf, вот книга.
+<ce> Береги себя. Стража
+<ce> наводнила улицы ___contact_
+<ce> в поисках этой вещицы.
+
+Message:  1012
+<ce> Стоять! Вор!
+
+Message:  1013
+<ce> До вас неожиданно дошло,
+<ce> что ведьмам эта книга нужна
+<ce> именно сейчас.
+
+
+
+QBN:
+Item _mitem_ magic_item
+Item _book_ book2
+
+Person _qgiver_ group Questor
+Person _daedra_ face 1 factiontype Daedra remote
+Person _contact_ face 68 group Innkeeper male remote
+
+
+Clock _queston_ 00:00 0 flag 17 range 1 2
+
+Foe _guard_ is Knight
+
+--	Quest start-up:
+	hide npc _daedra_
+	start timer _queston_
+	log 1010 step 0
+-- hide NPC added to ensure this dummy character won't appear in the wild somewhere.
+-- this NPC is never used in the game world, only as a name drop.
+
+variable _queston_
+_S.01_ task:
+	when _queston_ and _S.05_
+	say 1013
+	make _book_ permanent
+	end quest
+
+_S.02_ task:
+	when _queston_ and not _S.05_
+	end quest
+
+_qgclicked_ task:
+	toting _book_ and _qgiver_ clicked
+	give pc _mitem_
+	end quest
+
+_S.04_ task:
+	clicked npc _contact_
+	get item _book_
+	say 1011
+	have _book_ set _S.05_
+
+_S.05_ task:
+	create foe _guard_ every 20 minutes 20 times with 50% success msg 1012
+	legal repute -30

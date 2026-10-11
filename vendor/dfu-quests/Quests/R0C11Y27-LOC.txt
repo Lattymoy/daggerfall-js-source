@@ -1,0 +1,158 @@
+-- Quest: C:\QUESTS\WORKING\R0C11Y27.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 11
+-- QuestId: 27
+Messages: 13
+Quest: R0C11Y27
+DisplayName: Особое вещество
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Я удивлюсь, если вы не откажетесь оказать
+<ce> мне маленькую услугу. Видите ли, у меня
+<ce> есть друг, которому нужна определенная
+<ce> партия определенного вещества, доставленная
+<ce> в определенное время. Я хочу остаться с чистыми
+<ce> руками. Вы свободны для найма, с оплатой,
+<ce> скажем, _reward_ золотыми?
+
+RefuseQuest:  [1001]
+<ce> Ммм, вы меня очень разочаровали.
+<ce> Я ожидал большего энтузиазма. Ну ладно,
+<ce> сейчас времена такие, когда лень и
+<ce> ленность правят миром, полагаю.
+
+AcceptQuest:  [1002]
+<ce> Так, значит вы согласны. Надо сказать,
+<ce> это великолепно. Вот то, что надо,
+<ce> _item1_. Это необходимо доставить
+<ce> алхимику, известному под именем _npc1_.
+<ce> Вы найдете его в __npc1_
+<ce> в ___npc1_. Если повезет, у него
+<ce> будет что-то, что вам нужно отнести
+<ce> моему другу, _npc2_. Что ж,
+<ce> вам пора отправляться. _npc1_
+<ce> сказал мне, что _item1_
+<ce> ему нужен до исхода =1stparton_ дней.
+<ce> Благодарю вас и хорошего путешествия.
+
+QuestFail:  [1003]
+<ce> Мы пообщаемся еще, когда вы
+<ce> выполните поручение.
+
+QuestComplete:  [1004]
+<ce> %oth, вы меня напугали.
+<ce> Вы %pcf?
+<ce> Я _npc2_, а это, я полагаю,
+<ce> моя вещица - _item2_.
+<ce> Если вы не видели ее в действии,
+<ce> то сейчас узнаете. Эффект райский.
+<ce> В любом случае, вот ваша награда в
+<ce> _reward_ золотых.
+<ce> Еще раз спасибо, %pcf.
+<ce> Вы мой спаситель.
+
+RumorsDuringQuest:  [1005]
+Мне рассказывали, что _npc2_ привязан к _item2_, но нет никаких доказательств этому.
+   <--->
+Говорят, чтобы изготовить хорошую порцию _item2_, требуются годы изысканий.
+
+RumorsPostfailure:  [1006]
+Оказалось, что _npc2_ пристрастился к _item2_. Его поймали за покупкой этого.
+   <--->
+Я вот все думаю, кто снабжает _npc1_ этими ингридиентами.
+
+RumorsPostsuccess:  [1007]
+_npc2_ наконец получил партию того, что ждал. Он рад, как гарпия.
+   <--->
+_questgiver_ удовлетворен работой %ra-наемника, но не могу сказать почему.
+
+QuestorPostsuccess:  [1008]
+Вы отлично поработали с этой доставкой, мой друг. Что я могу сделать для вас?
+   <--->
+%oth, рад видеть вас снова, %pcf. Вы сделали хорошую работу ... маленькую работу.
+
+QuestorPostfailure:  [1009]
+<ce> Как я уже говорил, вы потерпели
+<ce> неудачу с поручением, которое
+<ce> я давал вам. Не вижу особых
+<ce> причин разговаривать с вами.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Мне нужно принести
+ _npc1_ из __npc1_ в
+ ___npc1_ одну вещичку - _item1_ в
+ обмен на другую вещь, которая, как
+ _questgiver_ хочет, чтобы попала к нему
+ через третьи руки. У меня =1stparton_ дней,
+ чтобы завершить первую часть сделки.
+
+Message:  1011
+%qdt:
+ _npc1_ послал
+ меня к _npc2_, третьи руки
+ в ___npc2_, с одной вещицей
+ _item2_. Я узнаю
+ _npc2_, как =npc2_
+ в __npc2_, которому я должен доставить
+ в течение =2ndparton_ дней.
+
+Message:  1012
+<ce> Отлично, %pcf, отлично. Вот
+<ce> _item2_, которую нужно отдать
+<ce> в руки _npc2_ из __npc2_
+<ce> в ___npc2_.
+<ce> И не копошись, %pct.
+<ce> _npc2_ хочет получить это в течение
+<ce> =2ndparton_ дней или раньше.
+
+
+
+QBN:
+Item _reward_ gold
+Item _item1_ misc
+Item _item2_ drug
+
+Person _questgiver_ face 136 group Questor
+Person _npc1_ group Chemist female
+Person _npc2_ face 248 group Local_3.0
+
+Clock _1stparton_ 00:00 0 flag 1 range 1 4
+Clock _2ndparton_ 00:00 0 flag 1 range 1 4
+
+--	Quest start-up:
+	start timer _1stparton_
+	log 1010 step 0
+	get item _item1_
+
+_pcgetsgold_ task:
+	toting _item2_ and _npc2_ clicked
+	give pc _reward_
+	end quest
+--removed unnecessary delay
+
+variable _pchasitem1_
+variable _pchasitem2_
+_S.03_ task:
+	toting _item1_ and _npc1_ clicked
+	start timer _2ndparton_
+	log 1011 step 1
+	get item _item2_
+	say 1012
+
+variable _S.04_
+_queston_ task:
+	when _1stparton_ and not _S.03_
+	make _item1_ permanent
+	change repute with _questgiver_ by -20
+	end quest
+
+variable _1stparton_
+_2ndparton_ task:
+	make _item2_ permanent
+	change repute with _questgiver_ by -2
+	end quest

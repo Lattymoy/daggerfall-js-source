@@ -1,0 +1,181 @@
+-- Quest: C:\QUESTS\WORKING\C0B10Y15.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: temple
+-- Repute: 10
+-- QuestId: 15
+Messages: 41
+Quest: C0B10Y15
+DisplayName: Реликвия
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pct, __questgiver_ нуждается в
+<ce> вашей помощи в сложном деле возвращения
+<ce> одного из признаков %god, - _item_.
+<ce> Вам нужно будет бросить вызов силе
+<ce> могущественного врага, - =lich_,
+<ce> это вызыватель, который предал храм
+<ce> и обратился ко злу. Теперь он лич и
+<ce> _item_ под охраной.  Возьметесь?
+
+RefuseQuest:  [1001]
+<ce> Я понимаю.  Лич слишком опасный противник
+<ce> для вашей молодости и неопытности.
+<ce> Возможно, когда вы станете сильнее,
+<ce> приходите и попробуйте еще раз
+<ce> %god будет с вами.
+
+AcceptQuest:  [1002]
+<ce> Я восхищаюсь вашей смелостью, но меня
+<ce> пробирает дрожь только при мысли об
+<ce> опасности, с которой вы столкнетесь.
+<ce> =lich_ охраняет _item_,
+<ce> внутри ___mondung_. Запомните,
+<ce> нет необходимости уничтожать лича,
+<ce> нужно только найти _item_ и
+<ce> вернуть в храм __questgiver_ здесь.
+<ce> Если мы не получим весточки от вас через
+<ce> =qtime_ дней, то споем заупокойную по вам.
+<ce> Да благословит вас %god, %pcn.
+
+QuestFail:  [1003]
+<ce> Я понимаю ваше нежелание умирать,
+<ce> %pcf, но ожидание не сделает
+<ce> опасность меньше.
+
+QuestComplete:  [1004]
+<ce> %god, хвала тебе! У меня даже
+<ce> не было надежды на то, что у вас
+<ce> все получится.
+<ce> %god благословит все ваши дела.
+<ce> В знак благодарности храма
+<ce> прими этот благословленный
+<ce> подарок, _reward_
+
+RumorsDuringQuest:  [1005]
+<ce> __questgiver_ надеется найти давно потерянную вещь, _item_,
+<ce> но кто пожелает поискать ее на виду у лича =lich_?
+
+RumorsPostfailure:  [1006]
+<ce> Мне известно, что __questgiver_ верит в то, что
+<ce> _item_ никогда не найдется в склепе ___mondung_ после всего.
+
+RumorsPostsuccess:  [1007]
+<ce> Вы слышали, что некий %ra вошел в склеп ___mondung_
+<ce> и вернулся с вещью, принадлежащей храму __questgiver_?
+
+QuestorPostsuccess:  [1008]
+<ce> %pcf, мы всегда рады вас приветствовать после того,
+<ce> как вы мужественно сражались с личем!
+
+QuestorPostfailure:  [1009]
+<ce> Я не виню вас в том, что вы не смогли
+<ce> вернуть нашу реликвию _item_ из склепа
+<ce> ___mondung_, но мне очень не нравится
+<ce> то, что вы взялись за задание, с
+<ce> которым заведомо не смогли бы справиться.
+
+Message:  1015
+<ce> Зловещий голос шепчет из ниоткуда,
+<ce>
+<ce> "_item_ не может принадлежать вам
+<ce> или этим сентиментальным дуракам из
+<ce> храма __questgiver_.
+<ce> Поэтому я возвращаю себе то, что всегда.
+<ce> мне принадлежало"
+<ce>
+<ce> _item_ исчезает.
+
+Message:  1020
+%qdt:
+ __questgiver_ из храма ___questgiver_
+ отправляет меня вернуть священный
+ предмет, _item_, из склепа ___mondung_.
+ Эту реликвию охраняет лич, =lich_.
+ Мне не обязательно уничтожать лича,
+ но нужно найти реликвию и вернуть ее в
+ течение =qtime_ дней.
+
+Message:  1030
+<ce> Это действительно _item_ из храма
+<ce> __questgiver_.
+
+Message:  1035
+<ce> Что? Вы не только нашли священный
+<ce> знак, _item_, но также уничтожили
+<ce> злобного лича? %god действительно
+<ce> благоволит к вам. В нашем храме
+<ce> вас ждет великое будущее.
+
+Message:  1040
+<ce> =lich_ шипит в ярости:
+<ce>
+<ce> "Ты, храмовая собака из __questgiver_,
+<ce> никогда не получишь мой амулет,
+<ce> _item_! Я это сделал и я владею
+<ce> этим. И никто меня не остановит,
+<ce> даже смерть"
+
+
+
+QBN:
+Item _item_ talisman
+Item _reward_ magic_item
+
+Person _questgiver_ group Questor
+
+Place _mondung_ remote dungeon
+
+Clock _qtime_ 00:00 0 flag 17 range 0 2
+Clock _shortdelay_ 00:02 0 flag 1 range 0 1
+
+Foe _lich_ is Lich
+
+--	Quest start-up:
+	place item _item_ at _mondung_
+	start timer _qtime_
+	reveal _mondung_
+	log 1020 step 0
+	place foe _lich_ at _mondung_
+
+_qtime_ task:
+	have _item_ set _S.07_
+
+_S.01_ task:
+	toting _item_ and _questgiver_ clicked
+	give pc _reward_
+
+_qgclicked_ task:
+	clicked npc _questgiver_
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.01_
+	say 1003
+	clear _qgclicked_ _clearclick_
+
+_S.02_ task:
+	killed 1 _lich_
+
+_S.03_ task:
+	when _S.01_ and _S.02_
+	say 1035
+	change repute with _questgiver_ by +7
+
+_pickupitem_ task:
+	clicked item _item_
+	start timer _shortdelay_
+	say 1030
+
+variable _shortdelay_
+_S.06_ task:
+	when _shortdelay_ and not _S.02_
+	say 1040
+
+_S.07_ task:
+	say 1015
+
+_S.08_ task:
+    when _S.01_ or _qtime_
+    end quest

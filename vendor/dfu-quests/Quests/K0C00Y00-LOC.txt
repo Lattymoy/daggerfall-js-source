@@ -1,0 +1,206 @@
+-- Quest: C:\QUESTS\WORKING\K0C00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: merchant
+-- Repute: 0
+-- QuestId: 0
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 17
+Quest: K0C00Y00
+DisplayName: Урок на тему
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Возможно вы будете подходящей кандидатурой для выполнения
+<ce> одного поручения. Конкурент отобрал у меня контракт и
+<ce> ввязался в незаконную и аморальную сделку. Хочу
+<ce> исправить эту ситуацию и послать сообщение, чтобы
+<ce> отбить желание у _competitor_ вмешиваться в мои
+<ce> дела. Это означает, что кому-то придется раздавить
+<ce> пару черепов. Плата в _reward_ золотых изменит
+<ce> ваше мнение?
+
+RefuseQuest:  [1001]
+<ce> %oth, терзания заставляют
+<ce> меня поступать опрометчиво.
+
+AcceptQuest:  [1002]
+<ce> Отлично. _competitor_ имеет магазин в
+<ce> __storehouse_, называемый _storehouse_ и
+<ce> там есть _mitem_, который мне нужен.
+<ce> Все что вам нужно сделать, оставить эту записку
+<ce> где-нибудь в здании магазина. Я не могу поддаться.
+<ce> _competitor_ хочет сопроводить
+<ce> _mitem_ куда-то в безопасное место через
+<ce> =2storehouse_ дней, так что вам надо поторо-
+<ce> питься. Если вы не вернетесь в срок, можете
+<ce> забыть про деньги. Я не говорил, что
+<ce> _storehouse_ хорошо охраняется? Теперь сказал.
+<ce> Удачи!
+
+QuestFail:  [1003]
+<ce> Это не шутки, %pcf.
+<ce> делайте свою работу.
+
+QuestComplete:  [1004]
+<ce> Прекрасная работа, %pcf. Ах да,
+<ce> обожаемый, обожаемый _mitem_. Без сомнений
+<ce> это тот самый _mitem_, который партнер
+<ce> _competitor_'а дал для обеспечения
+<ce> безопасности. Вы заслужили свою награду.
+<ce> Вот _reward_ золотых.
+
+RumorsDuringQuest:  [1005]
+Наступают дни, когда деловая конкуренция перерастает в кровавую баню.
+   <--->
+_qgiver_ и _competitor_ более ожесточенные соперники, чем Готрид и Акорити.
+
+RumorsPostfailure:  [1006]
+_competitor_ дейсвтительно позорит _qgiver_ своей новой сделкой.
+   <--->
+Обернулось так, что _competitor_ оказался сильнее, чем полагал _qgiver_.
+
+RumorsPostsuccess:  [1007]
+_competitor_ потерял контракт, который изо всех сил старался вырвать из рук _qgiver_.
+   <--->
+_qgiver_ восстановил свой старый контракт и счастлив, как отожравшаяся гарпия.
+
+QuestorPostsuccess:  [1008]
+Что ж, вы заполучили _mitem_, что я могу сделать для вас?
+
+QuestorPostfailure:  [1009]
+Мне нечего сказать прихвостню _competitor_.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ из ___qgiver_ послал меня в
+ _storehouse_ в __storehouse_
+ "освободить" _mitem_, хранящийся там и
+ оставил записку. Если я управлюсь и
+ вернусь в __qgiver_ в течение =2storehouse_
+ дней, я получу _reward_ золотых.
+
+Message:  1011
+ _competitor_,
+<ce>
+Отличная охрана для вашей безопасности.
+<ce>
+<ce> Ваш Дорогой Друг
+
+Message:  1012
+      __competitor_
+       ___competitor_
+<ce>
+Уважаемый друг %pcn,
+<ce>
+  Я получил вашу записку. Очень смешно.
+А теперь я сделаю вам предложение. Верните мне
+похищенную вещицу _mitem_ и я полностью
+компенсирую это - _gem_. Если вы отдадите
+_mitem_ вашему нанимателю, то наживете себе
+врага.
+<ce>
+<ce> _competitor_
+<ce> ----
+
+Message:  1013
+<ce> Юный парнишка вручил вам конверт и убежал прочь
+<ce> прежде, чем вы попытались задать ему вопрос.
+
+Message:  1014
+<ce> Вы согласны отдать _mitem_
+<ce> в обмен на _gem_?
+
+Message:  1015
+<ce> Разумное решение, %pcf. Это может быть
+<ce> началом выгодных отношений. Дни, когда
+<ce> _qgiver_ получал прибыль, прошли, теперь дело
+<ce> в других руках.
+
+Message:  1016
+<ce> Не знаю, зачем вы вернулись. Оставьте
+<ce> это место сейчас же, %pcf.
+
+
+
+QBN:
+Item _letter_ letter used 1011
+Item _mitem_ magic_item
+Item _reward_ gold
+Item _letter10_ letter used 1012
+Item _gem_ gem
+
+Person _qgiver_ group Questor
+Person _competitor_ group Group_5.0 remote
+
+Place _storehouse_ remote generalstore
+
+Clock _2storehouse_ 00:00 0 flag 17 range 0 2
+Clock _S.05_ 16:40 1.09:20
+
+Foe _F.00_ is 2 Warrior
+Foe _knight_ is Knight
+Foe _battlemage_ is Battle_mage
+Foe _F.03_ is 2 Rogue
+
+--	Quest start-up:
+	place item _mitem_ at _storehouse_
+	log 1010 step 0
+	get item _letter_
+	pc at _storehouse_ set _S.04_
+	start timer _2storehouse_
+	--added timer start 2storehouse
+
+_pcgetsgold_ task:
+	toting _mitem_ and _qgiver_ clicked
+	give pc _reward_
+	change repute with _qgiver_ by +10
+	change repute with _competitor_ by -10
+	end quest
+
+variable _qgclicked_
+_S.02_ task:
+	dropped _letter_ at _storehouse_
+	start timer _S.05_
+	stop timer _2storehouse_
+	--added timer stop 2storehouse
+
+_2storehouse_ task:
+	make _mitem_ permanent
+	end quest
+
+_S.04_ task:
+	create foe _knight_ every 8 minutes 2 times with 10% success
+	create foe _battlemage_ every 7 minutes 2 times with 10% success
+	create foe _F.00_ every 10 minutes 1 times with 10% success
+	create foe _F.03_ every 9 minutes 1 times with 10% success
+
+_S.05_ task:
+	--removed unnecessary "say nothing"
+	give pc _letter10_ notify 1013
+
+variable _S.06_
+_S.07_ task:
+	toting _mitem_ and _competitor_ clicked
+	prompt 1014 yes _S.09_ no _gimme_
+
+_gimme_ task:
+	get item _mitem_
+	say 1016
+
+_S.09_ task:
+	get item _gem_
+	say 1015
+	make _gem_ permanent
+	change repute with _competitor_ by +5
+	change repute with _qgiver_ by -5
+	end quest
+
+_qgclick2_ task:
+	clicked npc _qgiver_
+
+_clearclick_ task:
+	when _qgclick2_ and not _pcgetsgold_
+	say 1003
+	clear _clearclick_ _qgclick2_

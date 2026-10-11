@@ -1,0 +1,139 @@
+-- Quest: C:\QUESTS\WORKING\H0B00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Mara
+-- Repute: 0
+-- QuestId: 0
+Messages: 21
+Quest: H0B00Y00
+DisplayName: Могучий дух
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Единая философия Благоволения Мары запрещает
+<ce> нам причинять вред любому живому существу.
+<ce> Но сложилась ситуация, требующая использование
+<ce> насилия. Если мы предложим вам _reward_
+<ce> золотых, согласитесь ли вы уничтожить одного
+<ce> нечистого духа, появившегося в одной из
+<ce> наших святынь?
+
+RefuseQuest:  [1001]
+<ce> Это поручение может быть опасным для
+<ce> жизни, но я разочарован вашим отказом.
+
+AcceptQuest:  [1002]
+<ce> Есть один забытый храм, не так далеко отсюда,
+<ce> называется ___mondung_.
+<ce> Веками он был святыней Благоволения Мары.
+<ce> Мы больше не молимся там, но хотим предпринять
+<ce> попытку оставить его свободным от влияния
+<ce> зла. К несчастью дух, поселившийся там,
+<ce> слишком силен для нас. Если вы не вернетесь
+<ce> в течение =1stparton_ дней, мы будем
+<ce> считать, что вы потерпели неудачу и пошлем
+<ce> на задание кого-то из рыцарей Мары. Ну и
+<ce> конечно же можете забыть про награду.
+<ce> Идите с благословением нашей богини.
+
+QuestFail:  [1003]
+<ce> Почему вы еще здесь, %pcf?
+<ce> Дух все еще оскверняет наш храм.
+
+QuestComplete:  [1004]
+<ce> Вы сделали великое дело для
+<ce> Благоволения Мары, %pcf.
+<ce> Ваши заслуги не будут забыты.
+<ce> Вот награда _reward_ золотых
+<ce> -- вы заслужили ее.
+
+RumorsDuringQuest:  [1005]
+Это местечко ___mondung_ всегда было таким тихим. Теперь здесь поселилась нечисть.
+   <--->
+Все относительно, оставьте привидение в покое. Никто не подойдет туда и близко.
+
+RumorsPostfailure:  [1006]
+Полагаю ___mondung_ оставили в покое. Теперь гнев выльется наружу.
+   <--->
+Как типично. Они изгнали призрак туда, где можно причинить ему настоящий вред.
+
+RumorsPostsuccess:  [1007]
+Вы знаете, теперь в ___mondung_ нет призраков, но я все равно не пойду туда.
+   <--->
+Благоволение Мары радо, что их храм в ___mondung_ очищен от скверны.
+
+QuestorPostsuccess:  [1008]
+После того, что вы сделали для нас в ___mondung_, самое меньшее, что я могу сделать для вас, это сказать "привет".
+
+QuestorPostfailure:  [1009]
+___mondung_ все еще осквернено присутствием духов, что б вас даэдра побрали, %pcf!
+
+QuestLogEntry:  [1010]
+%qdt:
+ _questgiver_ из
+ ___questgiver_ попросил меня
+ очистить ___mondung_, место поклонения
+ Благоволения Мары, от появившихся там
+ призраков. У меня =1stparton_ дней,
+ чтобы вычистить ___mondung_.
+
+Message:  1020
+<ce> "Мой дух теперь упокоится с миром".
+<ce> ___mondung_ очищено.
+
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ group Questor
+
+Place _mondung_ remote dungeon4
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _wraith_ is Wraith
+Foe _ghost_ is Ghost
+Foe _zombie_ is Zombie
+Foe _mummy_ is Mummy
+
+--	Quest start-up:
+	start timer _1stparton_
+	reveal _mondung_
+	log 1010 step 0
+	pick one of _S.05_ _S.06_ _S.07_ _S.08_
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _mondead_
+	give pc _reward_
+	end quest
+
+_mondead_ task:
+	killed 1 _mummy_ saying 1020
+	killed 1 _ghost_ saying 1020
+	killed 1 _wraith_ saying 1020
+	killed 1 _zombie_ saying 1020
+
+_qgclicked_ task:
+	clicked npc _questgiver_
+
+_1stparton_ task:
+	end quest
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_
+	say 1003
+	clear _qgclicked_ _clearclick_
+
+_S.05_ task:
+	place foe _ghost_ at _mondung_
+
+_S.06_ task:
+	place foe _mummy_ at _mondung_
+
+_S.07_ task:
+	place foe _zombie_ at _mondung_
+
+_S.08_ task:
+	place foe _wraith_ at _mondung_

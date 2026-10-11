@@ -1,0 +1,206 @@
+-- Quest: C:\QUESTS\WORKING\R0C20Y22.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 20
+-- QuestId: 22
+Messages: 31
+Quest: R0C20Y22
+DisplayName: Бизнес с орками
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> А, %pcf, рады видеть вас здесь.
+<ce> Если вы свободны, то я как раз ищу кого-то,
+<ce> кто доставит _item_ моему знакомому.
+<ce> Награда, я думаю, будет достойна вашей персоны
+<ce> и будет достаточной, чтобы возместить риск,
+<ce> проявленный в этом задании.
+<ce> Заинтересовались?
+
+RefuseQuest:  [1001]
+<ce> Точно? Наверное слишком заняты. Как это печально.
+
+AcceptQuest:  [1002]
+<ce> Великолепно. Вот _item_.
+<ce> _contact_ будет ждать эту вещицу
+<ce> в ___contact_ в течение =queston_ дней.
+<ce> Думаю, этого времени будет достаточно.
+<ce> _contact_ -- это =contact_ в __contact_.
+<ce> По пути вам могут повстречаться орки, которые
+<ce> не желают, чтобы передача совершилась, Не
+<ce> сомневаюсь, вы знаете как с ними поступить.
+<ce> Удачи!
+
+QuestFail:  [1003]
+<ce> Поторопитесь, %pcf. Ночью были замечены орки,
+<ce> шатающиеся в окрестностях ___questgiver_.
+<ce> Лучше бы вам побыстрее отправляться в путь,
+<ce> пока они совсем не обнаглели.
+
+QuestComplete:  [1004]
+<ce> А, рады видеть вас %pcf. Ну и
+<ce> _item_ тоже. Отлично. Вот небольшая безделушка
+<ce> за беспокойства. Надеюсь вам понравится.
+<ce> Берегите себя.
+
+RumorsDuringQuest:  [1005]
+Говорят, _questgiver_ все еще в контрабандном бизнесе.
+   <--->
+<ce> Говорят, стража разогнала банду орков последней ночью.
+<ce> Удивительно, как они умудрились пробраться в город?
+
+RumorsPostfailure:  [1006]
+Недавно кто-то нашел здесь замечательную вещицу - _item_.
+   <--->
+По слухам _questgiver_ очень недоволен проделками какого-то %ra-авантюриста.
+
+RumorsPostsuccess:  [1007]
+Какой-то =contact_ был здесь недавно, болтая про _item_.
+   <--->
+Какой-то ювелир сообщил о краже большого рубина.
+
+QuestorPostsuccess:  [1008]
+Говорят ваше задание успешно выполнено, %pcf. Это хорошо. Очень хорошо.
+   <--->
+Радостно слышать, что посылка доставлена. Что я могу сделать для вас?
+
+QuestorPostfailure:  [1009]
+<ce> Вы тот самый посыльный, который так
+<ce> и не доставил посылку, да? Вы же
+<ce> не тупица, должны понимать, что мне
+<ce> неприятно даже просто находиться
+<ce> рядом с вами. Все это риторика.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _questgiver_
+ отправляет меня передать _item_ кому-то
+ по имени _contact_ в ___contact_.
+ %g ждет меня в __contact_
+ в течение =queston_ дней, чтобы заплатить за
+ работу. Кроме того, мне могут помешать
+ орки, которые тоже разыскивают _item_.
+
+Message:  1012
+Вам не следует иметь никаких дел с этим любителем орков из ___orsinium_.
+   <--->
+_orsinium_ из ___orsinium_?  Говорят, %g якшается с орками.
+
+Message:  1013
+_orsinium_ хорошо известен в ___orsinium_ как лицо, симпатизирующее оркам.
+   <--->
+<ce> Я знаю, и это факт, что _orsinium_ - мерзкий любитель орков. Мне
+<ce> доводилось видеть его общающимся с этими грубиянами из ___orsinium_.
+<ce> %g должен уйти из города, вот мое мнение.
+
+Message:  1015
+_questgiver_ отрицает это, но все знают, что он повязан в контрабандистских делах.
+   <--->
+<ce> _questgiver_ говорил, что втянут в незаконную перевозку кольца, похищенного
+<ce> и вывезенного из старого Орсиниума.
+
+Message:  1016
+<ce> _questgiver_ навлечет на нас всех гнев орков, если окажется, что совершил продажу
+<ce> кольца, украденного в Орсиниуме. _orsinium_ публично обвинил _questgiver_,
+<ce> но это конечно же не еще не конец истории.
+   <--->
+<ce> Не знаю, откуда _questgiver_ взял это, но я видел, как он перекладывал
+<ce> какую-то изысканную ювелирную безделушку. Если не ошибаюсь, производства мастеров
+<ce> Древнего Орсиниума.
+
+Message:  1020
+<ce> Рады видеть вас, %pcn.
+<ce> Вы должно быть уже знаете, что вещица _item_,
+<ce> которую вы везете, была украдена из Орсиниума,
+<ce> древней столицы оркского государства.
+<ce> _questgiver_, как и многие люди,
+<ce> считает орков скрытой угрозой обществу
+<ce> и поэтому не гнушается набегов, сопровождаемых
+<ce> насилием, в поисках, чего бы украсть для себя.
+<ce> Как бы то ни было, я очень надеюсь, что намного
+<ce> умнее, чем ваш наниматель. Если вы отдадите
+<ce> мне _item_, я постараюсь вернуть это
+<ce> настоящим хозяевам.
+
+Message:  1021
+<ce> Вы отдадите _item_?
+
+Message:  1022
+<ce> Рад, что мы смогли поладить. Благодарю,
+<ce> %pcf. Мы не забудем этой услуги.
+
+Message:  1023
+<ce> Очень жаль. Что ж, у всех нас есть
+<ce> свои причины. Надеюсь вы сможете
+<ce> жить после отказа.
+
+Message:  1030
+<ce> Орк рухнул на землю и, испуская дух, произнес
+<ce> с едва различимым акцентом:
+<ce> "_orsinium_ ... иди ... _orsinium_ ..."
+
+
+
+QBN:
+Item _reward_ ruby
+Item _item_ trinket
+
+Person _questgiver_ group Questor anyInfo 1015 rumors 1016
+Person _contact_ group Local_3.0 remote
+Person _orsinium_ face 184 faction Orsinium remote anyInfo 1012 rumors 1013
+
+Place orcCastle permanent OrsiniumCastle3
+
+--changed flags on timer, was giving very short time limits before
+Clock _queston_ 00:00 0 flag 3 range 3 5
+
+Foe _note_ is 3 Orc
+Foe _F.01_ is Orc_sergeant
+
+--	Quest start-up:
+	dialog link for location orcCastle person _orsinium_
+	start timer _queston_
+	log 1010 step 0
+	get item _item_
+	create npc _orsinium_
+	create npc _contact_
+
+variable _pcgetsgold_
+variable _pchasitem_
+_queston_ task:
+	make _item_ permanent
+	change repute with _questgiver_ by -20
+	end quest
+
+_npcclicked_ task:
+	toting _item_ and _contact_ clicked
+	give pc _reward_
+	end quest
+
+_S.04_ task:
+	clicked npc _orsinium_
+	say 1020
+
+_S.05_ task:
+	say 1022
+	change repute with _orsinium_ by +30
+
+until _S.05_ performed:
+	create foe _note_ every 5 minutes 12 times with 35% success
+	create foe _F.01_ every 10 minutes 12 times with 35% success
+
+_bookstore_ task:
+	get item _item_
+	say 1023
+	change repute with _orsinium_ by -10
+
+_S.07_ task:
+	killed 1 _F.01_
+	add dialog for person _orsinium_
+	say 1030
+
+_S.08_ task:
+	toting _item_ and _orsinium_ clicked
+	prompt 1021 yes _S.05_ no _bookstore_

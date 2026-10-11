@@ -1,0 +1,185 @@
+-- Quest: C:\QUESTS\WORKING\N0B10Y03.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: mage
+-- Repute: 10
+-- QuestId: 3
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 14
+Quest: N0B10Y03
+DisplayName: Охранять гильдию
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Гильдии нужен охранник на ночь,
+<ce> постеречь магический предмет:
+<ce> _treasure_. Не согласитесь ли
+<ce> вы сделать эту работу для нас?
+<ce> В награду получите _potion_.
+   <--->
+<ce> Зал Гильдии -- и кто только придумал
+<ce> такое название? В жизни, я думаю
+<ce> вы со мной согласитесь, есть такие
+<ce> люди, которые ... ну, рано или поздно
+<ce> у гильдии появляются проблемы с ...
+<ce> Послушайте, %pct, нам нужна охрана.
+<ce> Согласны?
+
+RefuseQuest:  [1001]
+<ce> Нет проблем. Всегда найдутся более
+<ce> ответственные члены гильдии.
+
+AcceptQuest:  [1002]
+<ce> Будьте в Гильдии Магов
+<ce> ровно в полночь. Время вашей
+<ce> стражи - до 3:00 утра.
+
+QuestComplete:  [1004]
+<ce> Отлично, %pcf. У этих
+<ce> воров не было никаких шансов
+<ce> против вас. Вот, возьмите этот
+<ce> камень: _potion_. Это
+<ce> самое малое, что мы можем сделать.
+
+RumorsDuringQuest:  [1005]
+Воришки должно быть думают, что _treasure_ в Гильдии Магов весьма и весьма ценная вещичка.
+   <--->
+Воры уже угрожали похитить _treasure_ из Гильдии Магов.
+
+RumorsPostfailure:  [1006]
+Воры успешно похитили _treasure_.
+   <--->
+Что за жалкая охрана у Гильдии Магов. Вот почему была похищена эта вещь.
+
+RumorsPostsuccess:  [1007]
+Думаю, эти воры теперь подумают сто раз, прежде чем попытаются украсть _treasure_ еще раз.
+   <--->
+Воры, пытавшиеся взять _treasure_, даже и не подозревали о профессиональном охраннике.
+
+QuestorPostsuccess:  [1008]
+Как вы, %pcf? Нашли какое-нибудь применение тому камню? _potion_?
+
+QuestorPostfailure:  [1009]
+<ce> Предмет _treasure_ исчез,
+<ce> а где были вы? Какой позор!
+<ce> Оставьте меня, %pcn.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Меня уговорили
+ посторожить магический предмет:
+ _treasure_ в Гильдии Магов.
+ Мне нужно прибыть туда в полночь
+ и пробыть до трех часов утра.
+
+-moved line down from %qdt line.
+
+Message:  1011
+%qdt:
+ Соблазн был очень велик. Я похитил
+ _treasure_, которое меня поставили
+ охранять. Меня будут
+ допрашивать... возможно.
+
+Message:  1012
+<ce> Парни, поглядите ка! Охрана!
+<ce> Гы, я прям весь дрожу от
+<ce> страха. Давайте-ка отрежем
+<ce> ему язык и повесим на двери,
+<ce> как предупреждение, чтобы
+<ce> не связывались с Гильдией
+<ce> Воров. Взять его!
+
+Message:  1013
+<ce> Я получу награду за голову
+<ce> вора и предателя гильдии
+<ce> магов.
+
+
+
+QBN:
+Item _treasure_ magic_item
+Item _potion_ gem
+
+Person _qgiver_ group Questor
+
+Place _magesguild_ local magery
+
+Clock _oneday_ 1.03:00
+Clock _S.10_ 3.00:00
+
+Foe _F.00_ is Thief
+Foe _F.01_ is 4 Knight
+
+--	Quest start-up:
+	place item _treasure_ at _magesguild_
+	start timer _oneday_
+	log 1010 step 0
+	create npc at _magesguild_
+
+variable _oneday_
+
+_timeout_ task:
+	when _oneday_ and not _S.07_
+	end quest
+
+_clickonqgiver_ task:
+	clicked npc _qgiver_
+
+_S.02_ task:
+	daily from 00:00 to 03:00
+	pc at _magesguild_ set _S.03_
+
+_S.03_ task:
+	create foe _F.00_ every 3 minutes 1 times with 100% success
+	create foe _F.00_ every 3 minutes 1 times with 100% success
+	create foe _F.00_ every 3 minutes 1 times with 100% success
+	create foe _F.00_ every 3 minutes 1 times with 100% success
+	--spawn times reduced. leaving them at classic values would be very disjointed; one thief would arrive nearly half an hour later. classic tended to spawn all at once
+
+_S.04_ task:
+	injured _F.00_ saying 1012
+
+_S.05_ task:
+	killed 2 _F.00_
+
+_S.06_ task:
+	clicked item _treasure_
+	clear _dropped_
+
+_dropped_ task:
+	dropped _treasure_ at _magesguild_
+	clear _S.06_
+
+_S.07_ task:
+	when _S.06_ and not _S.02_
+	create foe _F.01_ every 60 minutes 5 times with 10% success
+	start timer _S.10_
+	log 1011 step 1
+	change repute with _qgiver_ by -30
+
+_S.08_ task:
+	injured _F.01_ saying 1013
+
+_questdone_ task:
+	when _S.10_ and _S.07_
+	make _treasure_ permanent
+	end quest
+
+variable _S.10_
+
+_pcgetsgold_ task:
+	when _clickonqgiver_ and _S.05_ and not _S.07_ and not _S.02_
+	give pc _potion_
+	end quest
+
+_clearclick_ task:
+               when _clickonqgiver_ and not _S.05_
+               clear _clearclick_ _clickonqgiver_
+
+_clearclick2_ task:
+               when _clickonqgiver_ and _S.02_
+               clear _clearclick2_ _clickonqgiver_
+
+variable _S.13_

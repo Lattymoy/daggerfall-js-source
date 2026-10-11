@@ -1,0 +1,151 @@
+-- Quest: C:\QUESTS\WORKING\R0C10Y15.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 10
+-- QuestId: 15
+Messages: 17
+Quest: R0C10Y15
+DisplayName: Четвертый человек
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> У меня есть довольно сложное задание, которое
+<ce> требует вмешательства четырех человек.
+<ce> Это может занять несколько дней, но зато
+<ce> плата за работу будет _reward_ золотых,
+<ce> звенящих в вашем кармане.
+<ce> Звучит интригующе?
+
+RefuseQuest:  [1001]
+<ce> Очень очень жаль.
+<ce> А и ладно.
+
+AcceptQuest:  [1002]
+<ce> У меня есть знакомый в ___npc1_, у
+<ce> которого есть одна вещь, которая нужна
+<ce> другому моему знакомому в ___npc2_.
+<ce> Естественно, что _npc1_, мой знакомый в
+<ce> ___npc1_ хочет деньги за свою вещь.
+<ce> Вот почему в ынужны мне, чтобы отнести
+<ce> вот этот алмаз в качестве платы ему.
+<ce> Алмаз необходимо доставтиь в течение
+<ce> =1stparton_ дней. Как сделаете это
+<ce> _npc1_ даст вам дальнейшие инструкции.
+<ce> Благодарю, %pcf, и пусть %god
+<ce> благословит ваше путешествие.
+
+QuestFail:  [1003]
+<ce> Знаю, это сложно, %pcf,
+<ce> но я не предполагал, что у вас совсем
+<ce> нет мозгов в таком большом черепе.
+<ce> Вы уже получили указания, так что
+<ce> нечего воду в ступе толочь.
+
+QuestComplete:  [1004]
+<ce> А, _item2_.
+<ce> Мне уже начало казаться, что вы не придете.
+<ce> Что ж, вот _reward_ золотых.
+<ce> Скажите _npc2_, что я в долгу перед ним.
+<ce> Еще раз благодарю вас.
+
+RumorsDuringQuest:  [1005]
+_npc2_ в __npc2_ все еще визжит по поводу своей вещи _item2_.
+   <--->
+%oth, _npc1_ вне себя от злости, что не может помочь деньгами своей матери.
+
+RumorsPostfailure:  [1006]
+Говорят _questgiver_ разозлен как черт на одного %ra-авантюриста.
+   <--->
+_npc2_ ушел из __npc2_ вне себя от злости от потери своей волшебной вещицы.
+
+RumorsPostsuccess:  [1007]
+Странно, что за отношения между _questgiver_ и _npc2_.
+   <--->
+_npc1_ продает свою вещь _item2_. Все в Тамриэле имеет свою цену.
+
+QuestorPostsuccess:  [1008]
+Ну-ка ну-ка, это не %pcn, расторопный курьер? Как поживаете, друг мой?
+   <--->
+Вы помогли мне в час нужды, %pcf. Что я могу сделать для вас?
+
+QuestorPostfailure:  [1009]
+<ce> Я так понимаю, что вы пришли
+<ce> извиниться за недоставленную
+<ce> вовремя посылку, %pcf?
+<ce> Извинения не принимаются.
+<ce> Уходите.
+
+QuestLogEntry:  [1010]
+<ce> %god! Вы прибыли, %pcf.
+<ce> Быстрее, давайте мне алмаз. Забирайте
+<ce> _item2_ и несите это к
+<ce> _npc2_ в __npc2_ --
+<ce> это в ___npc2_. Когда
+<ce> будете там, %g вам заплатит.
+
+Message:  1015
+%qdt:
+ _questgiver_ из ___questgiver_
+ посылает меня к знакомому
+ в ___npc1_,
+ =npc1_ по имени _npc1_,
+ в __npc1_. Мне нужно доставить
+ _item1_ и получить дальнейшие инструкции.
+ У меня =1stparton_ дней, чтобы достичь ___npc1_.
+
+Message:  1016
+%qdt:
+ _npc1_ посылает меня к
+ _npc2_ в __npc2_
+ из ___npc2_. Нужно доставить
+ _item2_ в течение =2ndparton_ дней.
+
+
+
+QBN:
+Item _reward_ gold
+Item _item1_ diamond
+Item _item2_ magic_item
+
+Person _questgiver_ face 136 group Questor
+Person _npc1_ group Local_3.0 remote
+Person _npc2_ face 248 group Local_3.1 remote
+
+
+Clock _1stparton_ 00:00 0 flag 1 range 1 4
+Clock _2ndparton_ 00:00 0 flag 1 range 1 4
+
+--	Quest start-up:
+	start timer _1stparton_
+	log 1015 step 0
+	get item _item1_
+
+_pcgetsgold_ task:
+	toting _item2_ and _npc2_ clicked
+	give pc _reward_
+	end quest
+--removed unnecessary delay
+
+variable _pchasitem1_
+variable _pchasitem2_
+_S.03_ task:
+	toting _item1_ and _npc1_ clicked
+	start timer _2ndparton_
+	log 1016 step 1
+	get item _item2_
+	say 1010
+
+variable _S.04_
+_queston_ task:
+	when _1stparton_ and not _S.03_
+	make _item1_ permanent
+	change repute with _questgiver_ by -20
+	end quest
+
+variable _1stparton_
+_2ndparton_ task:
+	make _item2_ permanent
+	change repute with _questgiver_ by -20
+	end quest

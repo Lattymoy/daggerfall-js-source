@@ -1,0 +1,147 @@
+-- Quest: C:\QUESTS\WORKING\L0B00Y01.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Brotherhood
+-- Repute: 0
+-- QuestId: 1
+Messages: 14
+Quest: L0B00Y01
+DisplayName: Выхода нет
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Как вам известно, %pct, В Темном
+<ce> Братстве нет места неудачам.
+<ce> Братья, которые допускают провалы
+<ce> становятся целью контракта.
+<ce> Вам надо найти и исправить
+<ce> одного из таких неправильных
+<ce> бывших братьев.
+   <--->
+<ce> Святая и совсем не неприятная обязанность
+<ce> каждого члена Братства преследовать
+<ce> тех агентов Братства, которые не оправдали
+<ce> нашего доверия. Я могу доверить вам эту
+<ce> задачу?
+
+RefuseQuest:  [1001]
+<ce> Мне не послышалось?
+<ce> %pct, вы меня огорчили
+<ce> вашим отношением к другим
+<ce> братьям.
+
+AcceptQuest:  [1002]
+<ce> Хорошо, %pct.
+<ce> =target_, %g4 чему-то научили
+<ce> за время пребывания в братстве.
+<ce> Короче, %g благоразумно скрывается где-то
+<ce> далеко, но у нас в городе __snitch_
+<ce> обнаружился осведомитель, -  жалкий =snitch_
+<ce> по имени _snitch_.
+<ce> Поговорите с ним и узнайте местонахождение
+<ce> вашей цели, - =target_.
+<ce> Я думаю, что ваш контракт будет
+<ce> благополучно исполнен, и вы вернетесь
+<ce> сюда в течение =queston_ дней.
+
+QuestComplete:  [1004]
+<ce> Отлично, %pct.
+<ce> Это хороший урок для тех, кто
+<ce> пожелает подвести Братство.
+
+RumorsDuringQuest:  [1005]
+Держу пари, =target_ находится в провинции %reg, трясясь, как осина.
+   <--->
+=target_, я его знаю, как приличного убийцу. Кажется, что-то пошло не так.
+
+RumorsPostfailure:  [1006]
+Кажется, вы можете надуть Братство. Свидетель - =target_, к примеру.
+   <--->
+=target_ действительно сунет свой нос в Темное Братство.
+
+RumorsPostsuccess:  [1007]
+=target_, говорят, что %g4 задание однажды было провалено. И %g4 ждет награда за это.
+   <--->
+Темное Братство не терпит неудач. Посмотрите, что случилось с неудачником, - =target_.
+
+QuestorPostsuccess:  [1008]
+Здравствуйте, %pcn. Чем могу помочь вам, убийце блудных братьев?
+
+QuestorPostfailure:  [1009]
+<ce> Дайте мне понять. Мы дали вам
+<ce> контракт, - _target_, чье задание
+<ce> было неудачным ... и вы тоже потерпели неудачу?
+<ce> И теперь вы хотите разговора? Невероятно.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Темное Братство отправило меня убить брата,
+ который не оправдал доверия.
+ Мне нужно поговорить с доносчиком
+ по имени _snitch_ в доме __snitch_
+ в городе ___snitch_, чтобы узнать,
+ куда исчез тот самый брат, - =target_.
+
+Message:  1011
+<ce> %pcn? Я _snitch_.
+<ce> Рыба, которая недавно соскользнула
+<ce> с крючка живет сейчас отличной жизнью
+<ce> в своей норе, - ___mondung_. Только
+<ce> берегите себя, %ra.
+<ce> =target_ знает, как сражаться
+<ce> и %g боится.
+
+Message:  1012
+%qdt:
+ Мне стало известно, что =target_
+ находится в подземелье ___mondung_.
+
+Message:  1013
+<ce> Вы уничтожили цель, - =target_.
+<ce> Братство будет удовлетворено.
+
+
+
+QBN:
+
+Person _qgiver_ group Questor
+Person _snitch_ factiontype Temple local
+
+Place _mondung_ remote dungeon
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+Foe _target_ is Assassin
+
+--	Quest start-up:
+	dialog link for location _mondung_
+	start timer _queston_
+	log 1010 step 0
+	place foe _target_ at _mondung_
+
+_queston_ task:
+	end quest
+
+_reward_ task:
+	when _qgclicked_ and _S.02_
+	give pc nothing
+	end quest
+
+_S.02_ task:
+	killed 1 _target_
+	say 1013
+
+_S.03_ task:
+	clicked npc _snitch_
+	add dialog for location _mondung_
+	reveal _mondung_
+	log 1012 step 1
+	say 1011
+
+_qgclicked_ task:
+	clicked npc _qgiver_
+
+_S.05_ task:
+	when _qgclicked_ and not _S.02_
+	clear _qgclicked_ _S.05_

@@ -1,0 +1,131 @@
+-- Quest: C:\QUESTS\WORKING\M0B00Y07.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: fighter
+-- Repute: 0
+-- QuestId: 7
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 81
+Quest: M0B00Y07
+DisplayName: Нежеланный гость
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Время от времени попадаются такие идиоты,
+<ce> как этот клиент. Этот придурок оставил
+<ce> открытой заднюю дверь, и в нее залез
+<ce> какой-то дикий зверь. Он точно не знает,
+<ce> тигр это, или медведь, но в любом случае
+<ce> ЭТО хочет его съесть. Нам нужно отправить
+<ce> кого-то туда и прикончить животное.
+<ce> Стандартная такса - _gold_ монет.
+<ce> Займешся этим, %pcn?
+
+RefuseQuest:  [1001]
+<ce> Понятно. Пусть тигр съест его. Дурак сам
+<ce> же и виноват - пустил зверя в дом, да?
+
+AcceptQuest:  [1002]
+<ce> Отлично. Твоя цель - _house_ в __house_.
+<ce> Чтобы убить монстра и вернуться дней дается
+<ce> тебе: =2dung_.
+
+QuestComplete:  [1004]
+<ce> Не шибко трудно было? Думаю, нет.
+<ce> Вот твои золотые, _gold_.
+
+RumorsDuringQuest:  [1005]
+<ce> Тигр забрался в _house_. Хозяину
+<ce> придется раскошелиться, чтобы его
+<ce> прикончили.
+
+RumorsPostfailure:  [1006]
+<ce> Тигр растерзал бедного малого в его
+<ce> собственном доме. Ужасная трагедия!
+
+RumorsPostsuccess:  [1007]
+<ce> Не ты ли причина смерти того бешеного
+<ce> тигра, что забрался в _house_?
+
+QuestorPostsuccess:  [1008]
+<ce> Отлично сработано с этим тигром.
+
+QuestorPostfailure:  [1009]
+<ce> Тигры - это слишком круто. Можем надо
+<ce> было начать с бурундучков? Что за олух...
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ в ___qgiver_, поручил
+ мне убить тигра или медведя, который
+ проник в один дом _house_ в
+ городе __house_. Если я выполню
+ задание и вернусь к нему за =2dung_ дня,
+ то получу _gold_ золотых.
+
+Message:  1011
+<ce> _monster_ мертв.
+
+Message:  1012
+<ce> _bear_ мертв.
+
+Message:  1080
+<ce> Эй, держи, - один из наших воинов недавно
+<ce> нашел эту карту, где указано подземелье
+<ce> "___newdung_". Не убивай всех в
+<ce> первый же день.
+
+
+
+QBN:
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+
+Place _house_ remote random
+Place _newdung_ remote dungeon
+
+Clock _2dung_ 1.00:00 0 flag 17 range 0 2
+
+Foe _monster_ is Sabretooth_tiger
+Foe _bear_ is Grizzley_bear
+
+--	Quest start-up:
+	start timer _2dung_
+	log 1010 step 0
+	pick one of _map_ _nomap_ _nomap_
+	pick one of _monster1_ _monster2_
+	create npc at _house_
+
+_2dung_ task:
+	end quest
+
+_mondead_ task:
+	killed 1 _monster_ saying 1011
+	killed 1 _bear_ saying 1012
+
+_S.02_ task:
+	when _qgclicked_ and _mondead_
+	give pc _gold_
+	end quest
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_
+	clear _qgclicked_ _clearclick_
+
+_qgclicked_ task:
+	clicked npc _qgiver_
+
+variable _map_
+variable _nomap_
+_S.06_ task:
+	when _map_ and _S.02_
+	reveal _newdung_ readmap
+    say 1080
+
+_monster1_ task:
+	place foe _bear_ at _house_
+
+_monster2_ task:
+	place foe _monster_ at _house_

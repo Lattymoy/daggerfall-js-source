@@ -1,0 +1,116 @@
+-- Quest: C:\QUESTS\WORKING\B0C00Y10.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: knight
+-- Repute: 0
+-- QuestId: 10
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 12
+Quest: B0C00Y10
+DisplayName: Проблемы с орками
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Я _qgiver_. Ты не
+<ce> член этого рыцарского ордена.
+<ce> Мы не уверены можно ли тебе доверять
+<ce> до сих пор. Если ты убьешь лидера
+<ce> банды орков беспокоящих нашу
+<ce> территорию, мы вполне можем передумать.
+<ce> Хватит силенок для такой работы?
+
+RefuseQuest:  [1001]
+<ce> Почему я не удивлен?
+<ce> Возвращайся, когда будешь готов
+<ce> заслужить наше уважение.
+
+AcceptQuest:  [1002]
+<ce> Убей столько орков сколько сможешь,
+<ce> но удостоверься в смерти их
+<ce> лидера по имени =monster_.
+<ce> Мерзкая банда прячется в подземелье
+<ce> ___dungeon_. Если ты
+<ce> не вернешься через  =2dung_ дней, я
+<ce> буду знать, что ты действительно трус
+<ce> как все и говорят.
+
+QuestComplete:  [1004]
+<ce> Хмм. Может мы должны обсудить
+<ce> твое вступление. Неплохая
+<ce> работа, %pcn.
+
+RumorsDuringQuest:  [1005]
+Это племя орков тщательно избегает рыцарей.
+   <--->
+Племя перестанет существовать без их лидера.
+
+RumorsPostfailure:  [1006]
+Орки вернутся. Их лидер все еще жив.
+
+RumorsPostsuccess:  [1007]
+Некоторые %ra приходят из ниоткуда, убей лидера орков и уходи.
+
+QuestorPostsuccess:  [1008]
+Что я могу сделать для тебя, убийца орков?
+
+QuestorPostfailure:  [1009]
+Ты не ценишь мое время, любитель орков.
+   <--->
+Почему я должен разговаривать с неудачливым любителем орков?
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ из
+ рыцарского ордена в ___qgiver_
+ дал мне задание зачистить
+ банду орков сделавшую
+ ___dungeon_ родным домом.
+ В особенности я должен достать
+ лидера, определенного монстра =monster_
+ Я должен вернуться к н%g2
+ через =2dung_ дней или %g
+ будет считать, что меня убили.
+
+Message:  1011
+<ce> =monster_ мертв.
+<ce> Без лидера, эти орки
+<ce> никогда более не будут представлять угрозы.
+
+
+
+QBN:
+
+Person _qgiver_ group Questor
+Person _local_ face 1 group Resident2 local
+
+Place _dungeon_ remote dungeon1
+
+Clock _2dung_ 00:00 0 flag 17 range 0 2
+
+Foe _monster_ is Orc_sergeant
+
+--	Quest start-up:
+	start timer _2dung_
+	reveal _dungeon_
+	log 1010 step 0
+	place foe _monster_ at _dungeon_
+
+_2dung_ task:
+	end quest
+
+_S.01_ task:
+	killed 1 _monster_ saying 1011
+
+_S.02_ task:
+	clicked npc _qgiver_
+
+_success_ task:
+	when _S.02_ and _S.01_
+	give pc nothing
+	change repute with _local_ by +4
+	end quest
+
+_clearclick_ task:
+	when _S.02_ and not _S.01_
+	clear _S.02_ _clearclick_

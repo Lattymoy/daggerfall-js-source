@@ -13,6 +13,7 @@
 
 import { loadQuestTables } from '../systems/quest/tables.js';
 import { applyForageFix } from '../systems/foragingLaw.js';   // FORAGE-FIX: Foraging's quest and list patches, applied as they are read
+import { getLanguage } from '../systems/i18n.js';
 
 const tableFiles = import.meta.glob('../../vendor/dfu-quests/Tables/*.txt', { query: '?raw', import: 'default' });
 const questFiles = import.meta.glob('../../vendor/dfu-quests/Quests/*.txt', { query: '?raw', import: 'default' });
@@ -65,7 +66,13 @@ export async function loadQuestPack() {
       /** QuestList-<name>.txt (the QuestListsManager's dep). */
       readListTable: (name) => tables.get(`QuestList-${name}`) ?? null,
       /** Quest source lines by name (the machine + lists dep). */
-      getQuestSourceLines: (name) => quests.get(name) ?? null,
+      getQuestSourceLines: (name) => {
+        if (getLanguage() === 'ru') {
+          const loc = quests.get(`${name}-LOC`);
+          if (loc) return loc;
+        }
+        return quests.get(name) ?? null;
+      },
       questCount: quests.size,
     };
   })();

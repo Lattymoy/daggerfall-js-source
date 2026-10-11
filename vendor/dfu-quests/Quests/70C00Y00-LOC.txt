@@ -1,0 +1,146 @@
+-- Quest: C:\QUESTS\WORKING\70C00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: Sanguine
+-- Repute: 0
+-- QuestId: 0
+Messages: 21
+Quest: 70C00Y00
+DisplayName: Задание Сангвина
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Сила и власть. Какие красивые слова, не так ли?
+<ce> Они буквально истекают медом с губ. Если
+<ce> сила тебя влечет и возбуждает, я буду просто
+<ce> в восторге от того, что могу предложить тебе
+<ce> _artifact_. Все что тебе нужно
+<ce> сделать взамен, наказать совершенно ужасного
+<ce> священника, который бросил мне вызов.
+<ce> Звучит неплохо?
+
+RefuseQuest:  [1001]
+<ce> Чума на тебя, %pcn!
+<ce> Да как ты смеешь призвать меня и отказаться от
+<ce> моего щедрого предложения? Молись, чтобы я
+<ce> простил тебя, %pcf.
+<ce> Не надо настраивать против себя Сангвина.
+
+AcceptQuest:  [1002]
+<ce> Ты не пожалеешь, %pcf,
+<ce> в конце тебя ждет достойная награда.
+<ce> Этот благочинный монах не так уж и
+<ce> безобиден; имя его =monster_ и %g
+<ce> спалил много моих последователей. Иди
+<ce> в заброшенный храм, где %g обитает,
+<ce> ___mondung_, и вырви %g4 сердце из
+<ce> груди. Мой агент, _contact_ будет
+<ce> ожидать тебя в ___contact_.
+<ce> _contact_ будет ждать тебя не более
+<ce> чем =1stparton_ дней. У меня такое чувство,
+<ce> что мы увидимся еще, %pcf.
+<ce> Надеюсь на это.
+
+QuestFail:  [1003]
+<ce> Этот набожный реакционер все еще жив и
+<ce> ты это знаешь, %pcf.
+<ce> Не играй в игры с Сангвином, %pct.
+<ce> Тебе не понравятся правила этой игры.
+
+QuestComplete:  [1004]
+<ce> Приятно повстречаться с вами, %pcn.
+<ce> Я _contact_. Сангвин должно
+<ce> быть просто в восторге от тебя. Для
+<ce> своих лучших учеников у него есть _artifact_.
+<ce> Теперь это твое. Надеюсь тебе этого хватит
+<ce> надолго.
+
+RumorsDuringQuest:  [1005]
+Все случившиеся беспорядки произошли по вине =monster_.
+   <--->
+Не так уж много произошло с тех пор, как здесь =monster_ подразгулялся.
+
+RumorsPostfailure:  [1006]
+=monster_ ушел -- %g ищет притоны декаденства на севере.
+   <--->
+Все вокруг боятся сделать что-либо не так в присутствии людей навроде =monster_.
+
+RumorsPostsuccess:  [1007]
+Многие из людей счастливы слышать о смерти =monster_. Какой сюрприз для его окружения.
+   <--->
+Опять начались беспорядки, как только пропали изображения =monster_.
+
+Message:  1011
+Сангвин - принц даэдра, повелитель Похоти и Страсти. "Всего в избытке" - вот его девиз.
+   <--->
+Принц даэдра Вредности и Противоестественных сексуальных отношений, конечно же.
+
+Message:  1012
+Похотливый =contact_ на %di отсюда в __contact_.
+   <--->
+_contact_ это имя озорного =contact_ в __contact_.
+
+Message:  1014
+<ce> Роза Сангвина призывает даэдра для боя на вашей стороне. Рискованный поступок.
+   <--->
+<ce> Владелец Розы Сангвина обладает властью призывать помощь
+<ce> из реальности Обливиона.
+
+Message:  1015
+<ce> =monster_ мертв.
+<ce> Вы думаете, что Сангвин
+<ce> будет в восторге.
+
+Message:  1020
+%qdt:
+ Сангвин хочет смерти монаха по
+ имени =monster_ в обмен на _artifact_.
+ Монах обитает в ___mondung_ и
+ должен умереть до исхода =1stparton_ дней
+ или раньше, после чего мне нужно прибыть в
+ ___contact_ в течение
+ =1stparton_ дней постречаться с _contact_
+ в месте под названеим __contact_.
+
+
+
+QBN:
+Item _artifact_ artifact Sanguine_Rose anyInfo 1014
+
+Person _questgiver_ face 112 named Sanguine anyInfo 1011
+Person _contact_ face 232 faction The_Cabal remote anyInfo 1012
+
+Place _mondung_ remote dungeon4
+
+Clock _1stparton_ 00:00 0 flag 1 range 2 5
+
+Foe _monster_ is Monk
+
+--	Quest start-up:
+	start timer _1stparton_
+	reveal _mondung_
+	log 1020 step 0
+	place foe _monster_ at _mondung_
+	create npc _contact_
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _mondead_
+	give pc _artifact_
+	end quest
+--removed unnecessary delay
+
+_mondead_ task:
+	killed 1 _monster_
+	say 1015
+
+_qgclicked_ task:
+	clicked npc _contact_
+
+_1stparton_ task:
+	end quest
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_
+	say 1003
+	clear _qgclicked_

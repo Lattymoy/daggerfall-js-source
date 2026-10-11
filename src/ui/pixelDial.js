@@ -49,6 +49,7 @@ import { closeTopOverlay, registerOverlay } from './enhancedOverlays.js';   // P
 import { isEnhanced } from '../systems/uiSkin.js';
 import { requestLook } from '../player/pointerLock.js';   // PL3: the dial gives the pointer back when it goes
 import { eventMeans } from './input.js';   // KB1: the key that opened it is the registry's QuickDial
+import { t } from '../systems/i18n.js';
 
 const el = (t, cls, txt) => {
   const n = document.createElement(t);
@@ -100,14 +101,14 @@ export function mountPixelDial(hostEl, { entries = [], onClose = () => {} } = {}
     byDir[entry.dir] = entry;
     const arm = el('button', `px-arm px-${entry.dir}`);
     arm.append(el('span', 'px-term', '\u25c7'));   // the terminal at the rule's far end
-    arm.append(el('span', 'px-c', '\u25c6'), document.createTextNode(entry.label));
+    arm.append(el('span', 'px-c', '\u25c6'), document.createTextNode(t(entry.label)));
     arm.onmouseenter = () => select(entry.dir);
     arm.onclick = () => commit(entry.dir);
     rose.append(arm);
   }
   root.append(rose);
   // The keys, taught where they are used - small, dim, one line.
-  root.append(el('p', 'px-dialhint', 'Arrows choose \u00b7 Enter opens \u00b7 Tab closes'));
+  root.append(el('p', 'px-dialhint', t('Arrows choose \u00b7 Enter opens \u00b7 Tab closes')));
   // PX17d: FADE INTO VIEW - one frame after mount the .on class lands
   // and the stepped fade + the depth-of-field blur run together
   // (steps(), the pixel cadence; reduced-motion gets the end state

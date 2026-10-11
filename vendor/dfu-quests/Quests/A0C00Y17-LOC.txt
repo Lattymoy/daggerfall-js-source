@@ -1,0 +1,248 @@
+-- Quest: C:\QUESTS\WORKING\A0C00Y17.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: peasant
+-- Repute: 0
+-- QuestId: 17
+Messages: 51
+Quest: A0C00Y17
+DisplayName: Эскорт
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Меня зовут _questgiver_.
+<ce> Мне нужно сопровождение. Не согласитесь ли вы
+<ce> защищать меня в моем путешествии в __destination_?
+<ce> Это примерно в =traveltime_ днях отсюда.
+   <--->
+<ce> Меня зовут _questgiver_.
+<ce> Мне нужно уехать из ___questgiver_.
+<ce> Я хочу, чтобы вы охраняли меня, пока я не
+<ce> доберусь до __destination_.
+<ce> Я заплачу вам _gold_ золотых.
+   <--->
+<ce> Вы должны помочь мне! Меня зовут _questgiver_.
+<ce> Мне нужно добраться до __destination_ в
+<ce> течение =traveltime_ дней и мне нужна охрана.
+
+RefuseQuest:  [1001]
+<ce> Очень надеюсь, что найду кого-то
+<ce> посговорчивее.
+   <--->
+<ce> Бесердечный болван!
+
+AcceptQuest:  [1002]
+<ce> Да падет на вас благословение, %pcn.
+<ce> Я путешествую налегке, так что я всегда
+<ce> готов в путь. Знаю, что вы работаете не
+<ce> бесплатно. Сопроводите меня до _destination_
+<ce> в __destination_ и я заплачу вам
+<ce> _gold_ золотых, когда доберемся.
+
+QuestComplete:  [1004]
+<ce> Ага! _destination_! Вы
+<ce> полностью выполнили свою часть
+<ce> договора. Вот ваше золото, как
+<ce> и договаривались.
+
+RumorsDuringQuest:  [1005]
+<ce> Я слышал, что стражники ищут кое-кого:
+<ce> _questgiver_. %g хочет бежать из города.
+   <--->
+<ce> Разве вы не знаете? Гильдия Воров
+<ce> охотится за _questgiver_. Или Темное
+<ce> Братство. Не знаю точно.
+   <--->
+<ce> Я слышал, что _questgiver_ принудили к женитьбе.
+<ce> %g собирается смыться в __destination_ прежде, чем
+<ce> беременность станет очевидна.
+
+RumorsPostfailure:  [1006]
+<ce> Они поймали _questgiver_.
+<ce> На следующей неделе %g предстанет
+<ce> перед судом.
+
+RumorsPostsuccess:  [1007]
+<ce> Вы слыхали? Какой-то %ra помог тайно
+<ce> _questgiver_ скрыться из города.
+<ce> Надеюсь оба будут обезглавлены.
+
+QuestorPostsuccess:  [1008]
+<ce> Спасибо за безопасное путешествие,
+<ce> %pcf. Я обязательно буду
+<ce> рекомендовать вас моим друзьям.
+
+QuestorPostfailure:  [1009]
+<ce> Вы! Только потому, что вы не помогли мне,
+<ce> Гильдия Воров обокрала мой магазин!
+<ce> Уходите прочь!
+
+QuestLogEntry:  [1010]
+%qdt:
+ Встречались с _questgiver_
+ в ___questgiver_. %g
+ согласился заплатить мне за его охрану
+ во время путешествия в _destination_, что
+ находится в __destination_.
+ В частности необходимо успеть до исхода
+ =traveltime_ дней.
+
+Message:  1019
+<ce> _questgiver_ сказал: "Ха!
+<ce> И я нанял этого %ra защищать меня.
+<ce> %pcn, вы что, против меня?"
+
+Message:  1020
+<ce> Стоять! У меня ордер на арест
+<ce> _questgiver_ от имени закона %reg.
+<ce> Вы нам не нужны, только %g.
+<ce> Отдайте %g4 нам и вы свободны.
+
+Message:  1021
+<ce> Нет необходимости в драке. Наша
+<ce> цель - _questgiver_. Гильдия
+<ce> Магов не потерпит предательства.
+<ce> Отдайте его нам и можете идти на
+<ce> все четыре стороны.
+
+Message:  1022
+<ce> Прочь с дороги, %ra! Нам нужен
+<ce> _questgiver_, и ты не сможешь
+<ce> остановить нас. Отдай его нам.
+<ce> Эй, _questgiver_. Ты жы не думаешь,
+<ce> что можешь безнаказанно обманывать
+<ce> Гильдию Воров?
+
+Message:  1023
+<ce> В сторону, %ra.
+<ce> _questgiver_ разыскивается
+<ce> Темным Братством. Вы же не дурак,
+<ce> чтобы становиться между молотом и наковальней?
+
+Message:  1030
+<ce> _questgiver_ убит
+<ce> прямо на ваших глазах.
+
+Message:  1040
+<ce> Вы выбрали свой путь. Убить их обоих!
+
+Message:  1050
+<ce> Вы с луны свалились, %pcn?
+<ce> Надеюсь, я сам доберусь до
+<ce> __destination_.
+<ce> Спасибо на за что, никчемный
+<ce> негодник!
+
+
+
+QBN:
+Item _gold_ gold
+
+Person _questgiver_ group Questor
+Person _mage_ faction The_Mages_Guild remote
+Person _thief_ faction The_Thieves_Guild remote
+Person _darkb_ faction The_Dark_Brotherhood remote
+
+Place _destination_ remote random
+
+Clock _traveltime_ 00:00 0 flag 1 range 0 2
+Clock _extratime_ 03:00 0 flag 1 range 0 1
+
+Foe _mages_ is 2 Mage
+Foe _F.01_ is 2 Thief
+Foe _guards_ is 2 Warrior
+Foe _F.03_ is 2 Assassin
+
+--	Quest start-up:
+	start timer _traveltime_
+	log 1010 step 0
+	pick one of _S.01_ _S.02_ _S.14_ _S.03_
+	hide npc _questgiver_
+	add _questgiver_ face
+	create npc at _destination_
+
+variable _traveltime_
+_S.01_ task:
+	create foe _guards_ every 5 minutes 5 times with 20% success
+
+_S.02_ task:
+	create foe _mages_ every 5 minutes 3 times with 25% success
+
+_S.03_ task:
+	create foe _F.01_ every 5 minutes 3 times with 25% success
+
+variable _S.04_
+_S.05_ task:
+	injured _mages_ saying 1021
+	injured _guards_ saying 1020
+	injured _F.03_ saying 1023
+	injured _F.01_ saying 1022
+	prompt 1019 yes _yes_ no _no_
+--added underscores to yes
+
+_S.06_ task:
+	give pc _gold_
+	drop _questgiver_ face
+	place npc _questgiver_ at _destination_
+	end quest
+
+_extratime_ task:
+	end quest
+
+_yes_ task:
+	start timer _extratime_
+	say 1030
+	drop _questgiver_ face
+
+until _yes_ performed:
+	pc at _destination_ set _S.06_
+
+_no_ task:
+	say 1040
+
+variable _S.10_
+_S.11_ task:
+	when _yes_ and _S.01_
+	legal repute +10
+	restrain foe _guards_
+
+_S.12_ task:
+	when _yes_ and _S.02_
+	change repute with _mage_ by +10
+	restrain foe _mages_
+
+_S.13_ task:
+	when _yes_ and _S.03_
+	change repute with _thief_ by +10
+	restrain foe _F.01_
+
+_S.14_ task:
+	create foe _F.03_ every 5 minutes 3 times with 25% success
+
+_S.15_ task:
+	when _yes_ and _S.14_
+	change repute with _darkb_ by +10
+	restrain foe _F.03_
+
+_S.16_ task:
+	when _no_ and _S.03_
+	change repute with _thief_ by -20
+
+_S.17_ task:
+	when _no_ and _S.01_
+	legal repute -20
+
+_S.18_ task:
+	when _no_ and _S.02_
+	change repute with _mage_ by -20
+
+_S.19_ task:
+	when _no_ and _S.14_
+	change repute with _darkb_ by -20
+
+_S.20_ task:
+	when _traveltime_ and not _S.06_
+	say 1050
+	drop _questgiver_ face
+	end quest

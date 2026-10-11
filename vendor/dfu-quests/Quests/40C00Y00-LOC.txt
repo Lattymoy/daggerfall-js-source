@@ -1,0 +1,476 @@
+-- Quest: C:\QUESTS\WORKING\40C00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: Nocturnal
+-- Repute: 0
+-- QuestId: 0
+Messages: 51
+Quest: 40C00Y00
+DisplayName: Задание Ноктюрнал
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Желаешь могущества, %pcn?
+<ce> С ним ты сможешь прорвать тени и получить
+<ce> надежду. Если я дам тебе эту надежду, что
+<ce> дашь ты мне? В состоянии ли ли ты уничтожить того,
+<ce> кто причинил мне боль?
+
+RefuseQuest:  [1001]
+<ce> Как я и полагала, в этом вся суть. Нам не
+<ce> о чем договариваться и я очень, очень
+<ce> разочарована, будучи вынужденной возвращаться
+<ce> в мой холодный дворец. Духи внутри не так
+<ce> добры, как здесь, но здесь они послушны.
+
+AcceptQuest:  [1002]
+<ce> Ты берешься? Ты хочешь быть моим обезбо-
+<ce> ливающим? Ты хочешь идти в гнездо _monster_
+<ce> =monster_ в ___mondung_ и убить %g4?
+<ce> Ах, %pcf, за это я дам тебе
+<ce> мой артефакт: _artifact_, который я
+<ce> доверила моему слуге _qgfriend_.
+<ce> После того как =monster_ умрет, иди в
+<ce> ___qgfriend_ и повстречайся с моим рабом в
+<ce> __qgfriend_. Узнать %g4 легко - =qgfriend_.
+<ce> Там ты получишь _artifact_.
+<ce> А теперь, я должна вернуться в свой замок
+<ce> на Обливионе. Буду ждать новостей.
+
+QuestFail:  [1003]
+<ce> Нет. Должно быть ты ищешь не
+<ce> того =qgfriend_.
+<ce> Меня зовут не _qgfriend_.
+
+QuestComplete:  [1004]
+<ce> Итак, ты %pcn, верно?
+<ce> Я _qgfriend_.
+<ce> Должен сказать, удивлен, что нашелся %ra,
+<ce> осмелившийся проскользнуть в замок
+<ce> _monster_, убить владельца и добраться
+<ce> до сюда. Впечатляет. Ноктюрнал тоже весьма
+<ce> заинтригована тобой, вручая этот дар:
+<ce> _artifact_.
+<ce> Осторожнее с этим, %pcf.
+
+RumorsDuringQuest:  [1005]
+=monster_ та еще хитрюга -- %g подвел всю Гильдию Магов под подозрение.
+   <--->
+Я не доверяю никому из Гильдии Магов, зная, что =monster_ является их членом.
+   <--->
+Маги говорят, что =monster_ прячется от гнева Обливиона в ___fakedung_.
+   <--->
+Маги собираются прочесать ___fakedung_ в поисках негодяя =monster_.
+   <--->
+Я видел группу магов, направляющихся в ___fakedung_.
+   <--->
+Я слышал, что предатель =monster_ сейчас прячется в ___fakedung_.
+
+RumorsPostfailure:  [1006]
+Я знаю, что у =monster_ были некоторые неприятности, вот почему %g так быстро смылся?
+   <--->
+Гильдия Магов должно быть понимает, что =monster_ бросает тень на их репутацию.
+
+RumorsPostsuccess:  [1007]
+Итак, не могу сказать что поражен этим =monster_.
+   <--->
+Не думаю, что архмагистр будет опечален, услышав о смерти =monster_.
+
+Message:  1011
+_qgfriend_ один из завсегдатаев в __qgfriend_, прост на %di отсюда.
+   <--->
+_qgfriend_ это =qgfriend_, посещающий __qgfriend_. Это на %di отсюда.
+
+Message:  1012
+_qgfriend_ агент Ноктюрнал, происходящий из __qgfriend_ на %di отсюда.
+   <--->
+_qgfriend_ один из рабов Ноктюрнал, леди даэдра, повелительницы Ночи.
+
+Message:  1013
+Ноктюрнал - таинственная Повелительница Ночи, одна из принцев даэдра.
+   <--->
+Ноктюрнал - принцесса Обливиона, чьей сферой влияния являются тьма и тайны.
+
+Message:  1014
+_artifact_ может открыть любой замок.
+
+Message:  1015
+Маги говорят, что =monster_ прячется от гнева Обливиона в ___fakedung_.
+   <--->
+Маги собираются прочесать ___fakedung_ в поисках негодяя =monster_.
+   <--->
+Я видел группу магов, направляющихся в ___fakedung_.
+   <--->
+Я слышал, что предатель =monster_ сейчас прячется в ___fakedung_.
+
+Message:  1016
+%oth!  =monster_,
+агент Обливиона настиг нас! Я перенес
+самые ценные реагенты в ___fakedung_.
+Приходи, когда назойливый %ra будет мертв.
+<ce>
+Н.
+
+
+Message:  1017
+<ce> Раздался голос в голове:
+<ce> =monster_ ... правда...
+<ce> особое место...
+<ce> новости...
+
+Message:  1018
+%qdt:
+ По прибытию к ___mondung_
+ эхо стало зазывать меня в
+ "особое место".
+
+Message:  1019
+%qdt:
+ Я нашел заметку от =monster_, в которой говорится, что
+ %g ждет меня в ___fakedung_ после попытки
+ подкупить меня
+
+Message:  1020
+%qdt:
+ У меня контракт с Ноктюрнал, одной из принцесс даэдра
+ из Обливиона. Нужно убить _monster_ =monster_ в %g4
+ крепости в ___mondung_ в обмен за артефакт
+ Ноктюрнал, _artifact_. Дело это должно быть
+ закончено и мне нужно повстречаться с ее агентом
+ _qgfriend_ в __qgfriend_ из ___qgfriend_
+ в течение =1stparton_ дней или я не соблюду
+ условия контракта.
+ Возможно меня могут ожидать намного худшие последствия,
+ чем не получение _artifact_.
+
+Message:  1021
+%qdt:
+ =monster_ предложил мне _bow_ в обмен
+ на %g4 жизнь, я не в состоянии удержаться.
+ %g сказал, что искомое находится где-то
+ в ___bowdung_.  Ну а поскольку
+ Ноктюрнал предана, так что можно идти
+ и поискать это.
+
+Message:  1022
+%qdt:
+ =monster_ предложил мне _ring_ в обмен
+ на %g4 жизнь, я не в состоянии удержаться.
+ %g сказал, что искомое находится где-то
+ в ___ringdung_.  Ну а поскольку
+ Ноктюрнал уже предана, так что можно идти
+ и поискать это.
+
+Message:  1023
+%qdt:
+ =monster_ предложил мне _staff_ в обмен
+ на %g4 жизнь, я не в состоянии удержаться.
+ %g сказал, что искомое находится где-то
+ в ___staffdung_.  Ну а поскольку
+ Ноктюрнал уже предана, так что можно идти
+ и поискать это.
+
+Message:  1030
+<ce> Постой!  Я знаю, что тебя послала Ноктюрнал
+<ce> и что она пообещала тебе _artifact_. Но
+<ce> если ты ищешь истинное могущество, то я могу
+<ce> предложить намного большее -- если ты
+<ce> прекратишь бой, я скажу тебе, где можно найти
+<ce> _bow_.
+<ce> Приемлемо ли мое предложение?
+
+Message:  1031
+<ce> Постой!  Я знаю, что тебя послала Ноктюрнал
+<ce> и что она пообещала тебе _artifact_. Но
+<ce> если ты ищешь истинное могущество, то я могу
+<ce> предложить намного большее -- если ты
+<ce> прекратишь бой, я скажу тебе, где можно найти
+<ce> _ring_.
+<ce> Приемлемо ли мое предложение?
+
+Message:  1032
+<ce> Постой!  Я знаю, что тебя послала Ноктюрнал
+<ce> и что она пообещала тебе _artifact_. Но
+<ce> если ты ищешь истинное могущество, то я могу
+<ce> предложить намного большее -- если ты
+<ce> прекратишь бой, я скажу тебе, где можно найти
+<ce> _staff_.
+<ce> Приемлемо ли мое предложение?
+
+Message:  1035
+<ce> Вы убили =monster_.
+<ce> Теперь принцесса Ноктюрнал
+<ce> может спать спокойно.
+
+Message:  1040
+<ce> Великолепно.  Я знал, что у тебя
+<ce> сердце истинного наемника. _bow_
+<ce> Хранится в ___bowdung_.
+<ce> Тебе нужно всего лишь найти это и
+<ce> ты получишь могущество, которое
+<ce> желаешь. А сейчас я пожелаю тебе
+<ce> хорошего дня, чтобы ты смог претендовать
+<ce> и на _bow_ и на _artifact_ за убийство
+<ce> меня. Сердцу наемника вроде тебя
+<ce> не стоит слишком доверять!
+
+Message:  1041
+<ce> Великолепно.  Я знал, что у тебя
+<ce> сердце истинного наемника. _ring_
+<ce> Хранится в ___ringdung_.
+<ce> Тебе нужно всего лишь найти это и
+<ce> ты получишь могущество, которое
+<ce> желал. А сейчас я пожелаю тебе
+<ce> хорошего дня, чтобы ты смог претендовать
+<ce> и на _ring_ и на _artifact_ за убийство
+<ce> меня. Сердцу наемника вроде тебя
+<ce> не стоит слишком доверять!
+
+Message:  1042
+<ce> Великолепно.  Я знал, что у тебя
+<ce> сердце истинного наемника. _staff_
+<ce> Хранится в ___staffdung_.
+<ce> Тебе нужно всего лишь найти это и
+<ce> ты получишь могущество, которое
+<ce> желаешь. А сейчас я пожелаю тебе
+<ce> хорошего дня, чтобы ты смог претендовать
+<ce> и на _staff_ и на _artifact_ за убийство
+<ce> меня. Сердцу наемника вроде тебя
+<ce> не стоит слишком доверять!
+
+QuestTimeLapse:  [1045]
+<ce> Издевательский смешок раздался в
+<ce> вашей голове:
+<ce>
+<ce> "Тебе необходимо знать, что лучше мне
+<ce> верить, %pcn. Возможно эта тень
+<ce> могущества и удовлетворит на время
+<ce> твою жажду, пока твой тщетный гнев
+<ce> не обратится против того, кто истинно
+<ce> владеет этим. Например меня.
+<ce> Надеюсь милая Ноктюрнал не будет
+<ce> слишком разочарована твоим
+<ce> предательством".
+<ce>
+<ce> _bow_ рассыпался в прах в ваших руках.
+
+Message:  1046
+<ce> Издевательский смешок раздался в
+<ce> вашей голове:
+<ce>
+<ce> "Ты необходимо знать, что лучше мне
+<ce> верить, %pcn. Возможно эта тень
+<ce> могущества и удовлетворит на время
+<ce> твою жажду, пока твой тщетный гнев
+<ce> не обратится против того, кто истинно
+<ce> владеет этим. Например меня.
+<ce> Надеюсь милая Ноктюрнал не будет
+<ce> слишком разочарована твоим
+<ce> предательством".
+<ce>
+<ce> _ring_ рассыпалось в прах в ваших руках.
+
+Message:  1047
+<ce> Издевательский смешок раздался в
+<ce> вашей голове:
+<ce>
+<ce> "Тебе необходимо знать, что лучше мне
+<ce> верить, %pcn. Возможно эта тень
+<ce> могущества и удовлетворит на время
+<ce> твою жажду, пока твой тщетный гнев
+<ce> не обратится против того, кто истинно
+<ce> владеет этим. Например меня.
+<ce> Надеюсь милая Ноктюрнал не будет
+<ce> слишком разочарована твоим
+<ce> предательством".
+<ce>
+<ce> _staff_ рассыпался в прах в ваших руках.
+
+Message:  1050
+<ce> Ноктюрнал впечатлена твоей дерзостью,
+<ce> %pcn. Она просила меня убить тебя
+<ce> быстро, в награду за такое дерзкое
+<ce> предательство.
+
+
+
+QBN:
+Item _artifact_ artifact Skeletons_Key anyInfo 1014
+Item _bow_ artifact Auriels_Bow
+Item _ring_ artifact Warlocks_Ring
+Item _staff_ artifact Staff_of_Magnus
+Item _letter_ letter used 1016
+
+Person _questgiver_ face 112 named Nocturnal anyInfo 1013
+Person _qgfriend_ group Librarian anyInfo 1011 rumors 1012
+
+Place _mondung_ remote dungeon
+Place _bowdung_ remote dungeon
+Place _ringdung_ remote dungeon
+Place _staffdung_ remote dungeon
+Place _fakedung_ remote dungeon
+
+Clock _1stparton_ 00:00 0 flag 1 range 2 5
+Clock _bonk_ 01:00 0 flag 1 range 0 1
+Clock _S.22_ 1.00:00 2.18:40
+Clock _betrayQuestor_ 00:02 00:30
+
+Foe _monster_ is Mage
+Foe _monster1_ is Mage
+Foe _daedra_ is Frost_daedra
+
+--	Quest start-up:
+	start timer _1stparton_
+	reveal _mondung_
+	log 1020 step 0
+	pick one of _S.08_ _S.09_ _S.33_
+	pc at _mondung_ set _S.00_
+	_letter_ used do _S.02_
+	place foe _monster_ at _mondung_
+
+variable _S.00_
+_S.01_ task:
+	when _S.00_ and not _S.05_ and not _S.17_
+	log 1018 step 1
+	say 1017
+
+_S.02_ task:
+	reveal _fakedung_
+	log 1019 step 1
+
+_1stparton_ task:
+	end quest
+
+_S.04_ task:
+	clicked npc _qgfriend_
+
+_S.05_ task:
+	killed 1 _monster_
+	killed 1 _monster1_
+	say 1035
+
+_S.06_ task:
+	when _S.04_ and _S.05_
+	give pc _artifact_
+	start timer _bonk_
+	unset _S.04_
+
+_clearclick_ task:
+	when _S.04_ and not _S.05_
+	say 1003
+	clear _S.04_ _clearclick_
+
+_S.07_ task:
+	injured _monster_
+	place item _letter_ at _mondung_
+
+variable _S.08_
+variable _S.09_
+variable _betrayQuestor_
+_S.11_ task:
+	clicked item _bow_
+	clear _S.08_
+
+_S.12_ task:
+	clicked item _ring_
+	clear _S.09_
+
+_S.13_ task:
+	clicked item _staff_
+	clear _S.33_
+
+_S.14_ task:
+	when _S.17_ and _S.19_
+	place item _bow_ at _bowdung_
+	reveal _bowdung_
+	log 1021 step 2
+	say 1040
+
+_S.15_ task:
+	when _S.17_ and _S.20_
+	place item _ring_ at _ringdung_
+	reveal _ringdung_
+	log 1022 step 2
+	say 1041
+
+_S.16_ task:
+	when _S.17_ and _S.21_
+	place item _staff_ at _staffdung_
+	reveal _staffdung_
+	log 1023 step 2
+	say 1042
+
+_S.17_ task:
+	place item _letter_ at _mondung_
+	dialog link for location _fakedung_
+	start timer _S.22_
+	rumor mill 1015
+	change repute with _questgiver_ by -20
+	remove foe _monster_
+	place foe _monster1_ at _fakedung_
+--replaced faulty action "place foe _monster_ at _fakedung_" with remove foe, otherwise foe would not disappear. added new monster1 variable
+
+
+variable _S.18_
+_S.19_ task:
+	when _S.07_ and _S.08_
+	prompt 1030 yes _S.17_ no _S.18_
+
+_S.20_ task:
+	when _S.07_ and _S.09_
+	prompt 1031 yes _S.17_ no _S.18_
+
+_S.21_ task:
+	when _S.07_ and _S.33_
+	prompt 1032 yes _S.17_ no _S.18_
+
+_S.22_ task:
+	create foe _daedra_ every 3 minutes 4 times with 100% success
+
+_S.23_ task:
+	injured _daedra_
+	say 1050
+
+_S.24_ task:
+	when _betrayQuestor_ and _S.14_
+	place item _bow_ at _fakedung_
+	say 1045
+
+_S.25_ task:
+	when _betrayQuestor_ and _S.15_
+	place item _ring_ at _fakedung_
+	say 1046
+
+_S.26_ task:
+	when _betrayQuestor_ and _S.16_
+	place item _staff_ at _fakedung_
+	say 1047
+
+_S.27_ task:
+	when _S.11_ and not _S.05_
+	start timer _betrayQuestor_
+
+_S.28_ task:
+	when _S.12_ and not _S.05_
+	start timer _betrayQuestor_
+
+_S.29_ task:
+	when _S.13_ and not _S.05_
+	start timer _betrayQuestor_
+
+_S.30_ task:
+	when _S.11_ and _S.05_
+	make _bow_ permanent
+
+_S.31_ task:
+	when _S.12_ and _S.05_
+	make _ring_ permanent
+
+_S.32_ task:
+	when _S.13_ and _S.05_
+	make _staff_ permanent
+
+variable _S.33_
+_bonk_ task:
+	end quest

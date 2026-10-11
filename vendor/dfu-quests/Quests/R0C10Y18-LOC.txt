@@ -1,0 +1,186 @@
+-- Quest: C:\QUESTS\WORKING\R0C10Y18.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 10
+-- QuestId: 18
+Messages: 22
+Quest: R0C10Y18
+DisplayName: Вещь на прокат
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Не могли бы выделить для меня несколько
+<ce> дней для оказания небольшой услуги,
+<ce> %pcf? Я всего лишь хочу вернуть кое-что,
+<ce> что брал в долг, своему владельцу. Работа
+<ce> неутомительна, а вы получите за нее
+<ce> _reward_ золотых. Заманчивое
+<ce> предложение?
+
+RefuseQuest:  [1001]
+<ce> Очень плохо. Что же, поищу
+<ce> другого кого.
+
+AcceptQuest:  [1002]
+<ce> %oth, святые духи! У меня есть вот это:
+<ce> _item1_. Я брал это на время у моего
+<ce> хорошего друга _npc1_,
+<ce> священника в __npc1_
+<ce> из ___npc1_. Есть причины
+<ce> поспешить вернуть это ему. У нас
+<ce> всего =1stparton_ дней. Поторопитесь
+<ce> пожалуйста. Благодарю за согласие помочь,
+<ce> %pcf.
+
+QuestFail:  [1003]
+<ce> Разве я не просил поторопиться, %pcf?
+
+QuestComplete:  [1004]
+<ce> А, хорошо. _item2_ как раз то,
+<ce> о чем и шла речь. Отличная
+<ce> работа, %pcf. Вот ваша награда _reward_
+<ce> золотых за скорость и молчание.
+
+RumorsDuringQuest:  [1005]
+В последнее время вокруг __npc1_ какое-то странное оживление. Интересно, в чем причина?.
+   <--->
+_npc1_ ищет _item1_, но я не знаю, зачем ему это.
+
+RumorsPostfailure:  [1006]
+Удивительно, как долго __npc1_ был перевалочной базой контрабандистов. Какой скандал.
+   <--->
+Драгоценные камни перевозили в других предметах: _item1_. теперь то это очевидно, не так ли?
+
+RumorsPostsuccess:  [1007]
+Забавно. Я знаю, что здесь в __npc1_ происходила продажа _item1_, но никто так не думает.
+   <--->
+Говорят ___npc2_ - рассадник контрабанды _item2_. Как это мерзко.
+
+QuestorPostsuccess:  [1008]
+Посмотрите-ка кто вернулся. Вы же понимаете, что я ничего не скажу вам про камень?
+   <--->
+Ну-ку ну-ка, разве это не %pcf. Великолепная работа с этим камнем. Контрабанда - это мой бизнес, друг мой.
+
+QuestorPostfailure:  [1009]
+<ce> Вы потерпели неудачу даже
+<ce> в таком несложном задании,
+<ce> %pcf. Может быть
+<ce> я и прощу вас когда-нибудь.
+<ce> Может быть.
+
+QuestLogEntry:  [1010]
+<ce> О боже, мне вернули _item1_. Благодарю,
+<ce> %pcf. Но что это, здесь что-то застряло.
+<ce> Ого, я вижу ... что это за камень?
+<ce> Не могли бы вы передать этот кусок гальки
+<ce> обратно моему другу, _npc2_, в
+<ce> __npc2_ в ___npc2_?
+<ce> У него найдется для вас пригоршня другая
+<ce> золота, но поторопитесь. _npc2_
+<ce> будет волноваться, если не получит это
+<ce> через =2ndparton_ дней.
+
+Message:  1015
+%qdt:
+ _questgiver_
+ из ___questgiver_ посылает меня
+ отнести _item1_ священнику в
+ ___npc1_, он выглядит как
+ =npc1_ по имени _npc1_
+ Я найду его в __npc1_, если
+ доберусь туда в течение =1stparton_ дней.
+
+Message:  1016
+%qdt:
+ В _item1_ мы нашли _item2_.
+ За _reward_ золотых мне нужно доставить
+ _item2_ другому человеку в
+ ___npc2_, _npc2_ из
+ __npc2_. У меня =2ndparton_ дней
+ на все про все.
+
+Message:  1020
+<ce> Здесь в %reg, только
+<ce> Гильдии Воров дозволено заниматься
+<ce> контрабандой. Полагаю, что
+<ce> _questgiver_ считает, что его
+<ce> эти правила не касаются. Так вот,
+<ce> он ошибается. Отдай мне _item2_,
+<ce> чтобы _questgiver_ знал, как
+<ce> перебегать дорогу Гильдии Воров.
+<ce> Давай, давай его сюда. Или ты
+<ce> желаешь умереть?
+
+Message:  1021
+<ce> Вот так. Расскажи всем, что
+<ce> не следует мешать Гильдии Воров.
+<ce> А теперь проваливай отсюда.
+
+
+
+QBN:
+Item _reward_ gold
+Item _item1_ religious
+Item _item2_ gem
+
+Person _questgiver_ face 140 group Questor
+Person _npc1_ group Cleric remote
+Person _npc2_ face 254 group Local_3.0 female remote
+Person _dummythief_ faction The_Thieves_Guild remote
+
+
+Clock _1stparton_ 00:00 0 flag 1 range 1 4
+Clock _2ndparton_ 00:00 0 flag 1 range 1 4
+
+Foe _thief_ is Rogue
+
+--	Quest start-up:
+	start timer _1stparton_
+	log 1015 step 0
+	get item _item1_
+
+_pcgetsgold_ task:
+	toting _item2_ and _npc2_ clicked
+	give pc _reward_
+	change repute with _dummythief_ by -20
+	end quest
+
+variable _pchasitem1_
+variable _pchasitem2_
+_S.03_ task:
+	toting _item1_ and _npc1_ clicked
+	create foe _thief_ every 1 minutes 5 times with 20% success
+	start timer _2ndparton_
+	log 1016 step 1
+	get item _item2_
+	say 1010
+	create npc _npc2_
+
+variable _S.04_
+_queston_ task:
+	when _1stparton_ and not _S.03_
+	make _item1_ permanent
+	change repute with _questgiver_ by -20
+	end quest
+
+variable _1stparton_
+_2ndparton_ task:
+	make _item2_ permanent
+	change repute with _questgiver_ by -20
+	end quest
+
+yes task:
+	have _item2_ set _S.10_
+
+variable _no_
+_S.10_ task:
+	give item _item2_ to _thief_
+	say 1021
+	restrain foe _thief_
+--moved "saying 1021" to its own line, wouldn't work as was
+
+_S.11_ task:
+	injured _thief_
+	prompt 1020 yes yes no _no_

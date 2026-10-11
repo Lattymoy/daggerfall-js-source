@@ -1,0 +1,149 @@
+-- Quest: C:\QUESTS\WORKING\30C00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: Namira
+-- Repute: 0
+-- QuestId: 0
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 31
+Quest: 30C00Y00
+DisplayName: Задание Намиры
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Вожделение могущества грызет нутро, не так ли,
+<ce> %pcf? Вижу что так. Прошу прощения за мою непринуж-
+<ce> денность, но я чувствую это, потому что знаю тебя;
+<ce> я чувствую твою жажду так же как если бы она была
+<ce> моей. Ты жаждешь власти и это заставляет тебя
+<ce> пускать слюни как у голодного волка. Могу утолить
+<ce> твой голод, но вначале мне нужно от тебя кое-что.
+<ce> Убьешь ли ты для меня, чтобы начать заполнять пустоту
+<ce> внутри себя?
+
+RefuseQuest:  [1001]
+<ce> Нет?! Ты издеваешься надо мной, %pcf. Ты вызываешь меня
+<ce> на свет из моего темного дворца, а теперь избегаешь
+<ce> моего присутствия. Если бы я полагала, что ты посту-
+<ce> паешь так из простой жестокости, то снесла бы это.
+<ce> Но подозреваю, что ты просто глупее и тупее чем пробка,
+<ce> а дураков я не выношу. А теперь, скажу тебе только
+<ce> одно - я не прощаюсь.
+
+AcceptQuest:  [1002]
+<ce> Великолепно. Видеть бы тебе свой взгляд, %pcf.
+<ce> Ты хочешь могущества, я прекрасно вижу это в
+<ce> твоих глазах. Итак, тебе предстоит вступить в
+<ce> противоборство с древним могущественным вампиром,
+<ce> который очень разочаровал меня, =monster_.
+<ce> Знай, что %g могущественный противник, а %g4
+<ce> убежище, ___mondung_, прекрасно
+<ce> защищено. Но ты можешь и ты убьешь %g4. После
+<ce> иди к моему дорогому другу _qgfriend_
+<ce> из __qgfriend_ в ___qgfriend_. _qgfriend_
+<ce> очень занятая персона, так что не заставляй %g4
+<ce> ждать более чем =1stparton_ дней. У _qgfriend_
+<ce> припасен для тебя подарок, который ты, думаю,
+<ce> примешь с удовольствием и радостью. Ну а сейчас
+<ce> прощай, %pcf. Мы встретимся снова,
+<ce> не сомневаюсь.
+
+QuestFail:  [1003]
+<ce> Пока древний вампир жив (если это можно назвать
+<ce> жизнью), нам не о чем говорить, %pcf.
+
+QuestComplete:  [1004]
+<ce> Приветствую, %pcn. Я _qgfriend_.
+<ce> Ты выглядишь ... уставшим. Надеюсь, этот убийца
+<ce> был упокоен как и предполагалось. Думаю, к нему
+<ce> сторицей вернулись все его деяния. Намира сказала
+<ce> мне отдать ее кольцо. Испытай его и познаешь значение
+<ce> голода и удовлетворения. Как только познаешь это,
+<ce> то познаешь могущество. Доброго дня, %pcf.
+
+RumorsDuringQuest:  [1005]
+Этот вампир в ___mondung_ так стар, что никто уже не помнит его имени.
+   <--->
+Говорят, что вапмир из ___mondung_ научился контролировать свой голод.
+
+RumorsPostfailure:  [1006]
+Вампир из ___mondung_ похоже решил, что пора сваливать оттуда.
+   <--->
+Надеюсь этому вампиру больше не нужна кровь. По некоторым соображениям это лучше.
+
+RumorsPostsuccess:  [1007]
+Меня не волнует, что этот вампир победил свою жажду: мне радостно, что он мертв.
+   <--->
+Звезда Намиры горела очень ярко прошлой ночью. Всегда голодная и неудовлетворенная.
+
+Message:  1011
+_qgfriend_ это =qgfriend_ в __qgfriend_, кажется. Да, на %di отсюда.
+   <--->
+_qgfriend_ это имя =qgfriend_ в __qgfriend_. Поищи на %di.
+
+Message:  1012
+_qgfriend_ избранный прислужник Намиры, принцессы даэдра, повелительницы Голода.
+   <--->
+_qgfriend_ имя одного из приближенных к Намире.
+
+Message:  1013
+Боль, причиненная владельцу кольца, полностью отражается на атакующего.
+
+Message:  1020
+%qdt:
+ Принцесса даэдра Намира пообещала мне
+ _artifact_, если я убью вампира
+ =monster_ для нее в течение =1stparton_ дней.
+ Ее знакомый _qgfriend_ не будет ждать
+ долго. __qgfriend_ в ___qgfriend_,
+ если я не хочу опаздывать. Вампир скорее
+ всего обитает в ___mondung_.
+
+Message:  1030
+<ce> =monster_ мертв.  Голод Намиры заполнен --
+<ce> -- теперь самое время удовлетворить свои
+<ce> желания, доложившись _qgfriend_.
+
+
+
+QBN:
+Item _artifact_ artifact Ring_of_Namira anyInfo 1013
+
+Person _questgiver_ face 112 named Namira
+Person _qgfriend_ group Librarian anyInfo 1011 rumors 1012
+
+Place _mondung_ remote dungeon
+
+Clock _1stparton_ 00:00 0 flag 1 range 2 5
+
+Foe _monster_ is Ancient_vampire
+
+--	Quest start-up:
+	start timer _1stparton_
+	reveal _mondung_
+	log 1020 step 0
+	place foe _monster_ at _mondung_
+
+_1stparton_ task:
+	end quest
+
+-- _2ndparton_ removed as nonexistent task
+_pcgetsgold_ task:
+	when _npcclicked_ and _mondead_
+	give pc _artifact_
+	end quest
+--removed unnecessary delay
+
+_mondead_ task:
+	killed 1 _monster_
+	say 1030
+
+_npcclicked_ task:
+	clicked npc _qgfriend_
+
+--defining clearclick to prevent out-of-place victory condition
+_clearclick_ task:
+	when _npcclicked_ and not _mondead_
+	say 1003
+	clear _npcclicked_ _clearclick_

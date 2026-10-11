@@ -1,0 +1,121 @@
+-- Quest: C:\QUESTS\WORKING\B0B20Y07.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: knight
+-- Repute: 20
+-- QuestId: 7
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 12
+Quest: B0B20Y07
+DisplayName: Новые проблемы с орками
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Позвольте представиться. Я
+<ce> _qgiver_ из ==qgiver_.
+<ce> Похоже у нас завелась банда
+<ce> орков, окопавшаяся поблизости.
+<ce> Во славу %reg необходимо
+<ce> выбить их оттуда. Могу ли я
+<ce> рассчитывать на вас, %pcf?
+   <--->
+<ce> Орки вторглись в безобидный регион
+<ce> %reg, неся прогресс, как они его
+<ce> понимают. Поможете ли вы нам в
+<ce> операции по зачистке от них?
+
+RefuseQuest:  [1001]
+<ce> Вы уже четвертый, кто отказал мне
+<ce> сегодня. Похоже никто не хочет
+<ce> связываться этими орками.
+
+AcceptQuest:  [1002]
+<ce> Вам не нужно убивать всех орков до
+<ce> единого. Достаточно убить какое-то
+<ce> количество, но главное убедитесь,
+<ce> что вы убили их предводителя,
+<ce> =monster_.
+<ce> Все что удалось узнать, что
+<ce> банда эта нашла себе прибежище
+<ce> в ___dungeon_. Если вы
+<ce> не вернетесь до исхода =2dung_ дней,
+<ce> я оплачу вас на погребальной церемонии.
+
+QuestComplete:  [1004]
+<ce> Отлично сделано! Купцы уже рассказали,
+<ce> как они рады тому, что орки ушли.
+<ce> Орден у вас в долгу.
+
+RumorsDuringQuest:  [1005]
+Орки из ___dungeon_ перекрыли все обычные караванные пути.
+   <--->
+____dungeon_ - отличное укрытие для орков. Они уверены в своей безопасности.
+
+RumorsPostfailure:  [1006]
+Орки ушли, все до единого. Но почему-то мне кажется, что они еще вернутся.
+
+RumorsPostsuccess:  [1007]
+%kno спас %reg от орков из ___dungeon_. А главный герой дня - рыцарь %ra.
+
+QuestorPostsuccess:  [1008]
+Буду рад услужить, о Уничтожитель Орков.
+
+QuestorPostfailure:  [1009]
+О, привет, %pct. Рад видеть, что ваши дела с орками успешно завершены.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ из
+ ==qgiver_ в ___qgiver_
+ дал мне задание прогнать вон
+ оркскую банду, которая обосновалась
+ в ___dungeon_.
+ В частности мне нужно убить их
+ предводителя, выглядящего как _monster_.
+ Мне нужно вернуться в течение =2dung_ дней
+ или орден будет считать, что меня убили.
+
+Message:  1011
+<ce> Вы убили =monster_.
+<ce> Оставшись без лидера, эти орки
+<ce> не будут доставлять особого вреда.
+
+
+
+QBN:
+
+Person _qgiver_ group Questor
+Person _local_ face 1 group Resident2 local
+
+Place _dungeon_ remote dungeon1
+
+Clock _2dung_ 00:00 0 flag 17 range 0 2
+
+Foe _monster_ is Orc_sergeant
+
+--	Quest start-up:
+	start timer _2dung_
+	reveal _dungeon_
+	log 1010 step 0
+	place foe _monster_ at _dungeon_
+
+_2dung_ task:
+	end quest
+
+_S.01_ task:
+	killed 1 _monster_ saying 1011
+
+_S.02_ task:
+	clicked npc _qgiver_
+
+_success_ task:
+	when _S.02_ and _S.01_
+	give pc nothing
+	change repute with _local_ by +4
+	end quest
+
+_clearclick_ task:
+	when _S.02_ and not _S.01_
+	clear _S.02_ _clearclick_
+	--ensures repeated clearclick

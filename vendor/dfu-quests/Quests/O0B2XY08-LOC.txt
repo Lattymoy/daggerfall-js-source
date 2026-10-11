@@ -1,0 +1,123 @@
+-- Quest: C:\QUESTS\WORKING\O0B2XY08.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: thief
+-- Repute: 2X
+-- QuestId: 8
+Messages: 11
+Quest: O0B2XY08
+DisplayName: Ценное растение
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Здравствуй, %pcf. Меня зовут
+<ce> _qgiver_. Дело очень щекотливое,
+<ce> ты можешь заработать _gold_
+<ce> золотых, если принесешь
+<ce> мне наркотик, _drugs_. Я
+<ce> думаю, ты знаешь, что это такое.
+<ce> Это растение, вызывающее сильную
+<ce> зависимость. Возьмешься?
+
+RefuseQuest:  [1001]
+<ce> Если кто-то узнает, о чем
+<ce> мы с тобой сейчас говорили,
+<ce> %pcn, я найду тебя под землей,
+<ce> под водой и в самом Обливионе.
+
+AcceptQuest:  [1002]
+<ce> Иди в город __mansion_.
+<ce> Там найдешь притон _mansion_.
+<ce> Утащи оттуда растеньице _drugs_.
+<ce> Вернись с ним до исхода =traveltime_ дней,
+<ce> и тебя вознаградят.
+
+QuestComplete:  [1004]
+<ce> Просто положи это в мой карман.
+<ce> Хорошо. Надеюсь, никто не видел,
+<ce> как тебе это удалось сделать. _gold_
+<ce> золотых твои, %pcn.
+
+RumorsDuringQuest:  [1005]
+Все удивляются тому, откуда травка _drugs_ появляется в городе __mansion_.
+
+RumorsPostfailure:  [1006]
+В притоне _mansion_ в городе __mansion_ когда-то продавали наркотик _drugs_. Допродавались.
+
+RumorsPostsuccess:  [1007]
+_mansion_ в городе __mansion_ ограбили, но владелец не обратился к страже.
+
+QuestorPostsuccess:  [1008]
+Отнеситесь к этому с юмором, %pcf. Дело с травкой _drugs_ до сих пор не утихло.
+
+QuestorPostfailure:  [1009]
+<ce> %oth, %pcf. Нельзя было
+<ce> доверять тебе такое дело.
+<ce> Если ты захочешь закончить его,
+<ce> тогда прибей первого, кто будет %ra
+<ce> и кого зовут %pcn. Обливион
+<ce> тебя побери.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ из Гильдии Воров
+ города ___qgiver_ заплатит
+ мне, если я принесу немного
+ травки _drugs_ из притона _mansion_
+ в городе __mansion_.
+ Мне нужно вернуться в течение
+ =traveltime_ дней за деньгами.
+
+
+
+QBN:
+Item _drugs_ drug
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+
+Place _mansion_ remote house1
+
+Clock _traveltime_ 00:00 0 flag 17 range 0 2
+
+Foe _F.00_ is Battle_mage
+Foe _F.01_ is Iron_atronach
+Foe _F.02_ is Daedra_seducer
+Foe _F.03_ is Werewolf
+
+--	Quest start-up:
+	place item _drugs_ at _mansion_
+	start timer _traveltime_
+	log 1010 step 0
+	pc at _mansion_ set _S.01_
+
+_traveltime_ task:
+	end quest
+
+_S.01_ task:
+	pick one of _guard1_ _guard2_ _guard3_ _guard4_
+
+_questdone_ task:
+	toting _drugs_ and _qgiver_ clicked
+	give pc _gold_
+	end quest
+
+_guard1_ task:
+	create foe _F.00_ every 4 minutes 1 times with 10% success
+
+_guard2_ task:
+	create foe _F.01_ every 4 minutes 1 times with 10% success
+
+_guard3_ task:
+	create foe _F.02_ every 4 minutes 1 times with 10% success
+
+_guard4_ task:
+	create foe _F.03_ every 4 minutes 1 times with 10% success
+
+_S.07_ task:
+	clicked item _drugs_
+
+_S.08_ task:
+	when _S.07_ and _traveltime_
+	make _drugs_ permanent

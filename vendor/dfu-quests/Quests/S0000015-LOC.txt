@@ -1,0 +1,261 @@
+-- Quest: C:\QUESTS\WORKING\S0000015.Qbn.
+-- Main story quest.
+-- QuestId: 15
+Messages: 46
+Quest: S0000015
+DisplayName: Месть Лизандуса
+-- Message panels
+QRC:
+
+RumorsDuringQuest:  [1005]
+Здесь были несколько странных людей спрашивавших про %ra по имени %pcn.
+   <--->
+Не нравится мне вид этих головорезов. Благодарение богу %god, что они ушли.
+
+RumorsPostfailure:  [1006]
+Звезды предсказывают события, которые никогда не произойдут.
+   <--->
+Опасные предзнаменования для региона %reg увидены оракулом.
+
+RumorsPostsuccess:  [1007]
+Я слышал вещи, что доброта в Вэйресте высечена из камня.
+   <--->
+Я слышал, что найдено тело короля Лизандуса!
+
+QuestLogEntry:  [1010]
+Похоже это личный дневник лорда Вудборна.
+   <--->
+Личный дневник лорда Вудборна.
+
+Message:  1011
+<ce> Страница 7
+<ce>
+с детства. Я знаю, что Готрид не отвергнет его помощь,
+но я обязан дождаться своего часа. В конце концов
+Элизейн все еще наследница Вэйреста, а я ее любовник.
+Это значит, что когда Эадвир умрет (а это с ним
+произойдет обязательно, рано или поздно), я стану
+королем.
+Эх, если бы не эта сука королева и ее отродье, но
+я должен и обязан быть терпеливым. "Никогда не верь
+темному эльфу", - говаривал мне один старик - "потому
+что ты не можешь прочесть истину в его глазах". Если
+Барензия пойдет по своему пути, то Хелсет будет
+наследовать ей, а Элизейн будет обвенчана с кем-нибудь
+из далекого далекого королевства. Моргайе было обещано
+наследование в первую очередь, но ее держат только
+для того, чтобы распространять гадости об Элизейн,
+ну и конечно же обо мне.
+Барензия не доверяет мне, что я могу сказать.
+Я выполнил ее часть сделки, поступив с Лизандусом,
+как и было договорено. Какой же я был дурак, что
+согласился на это. Гортвог и его орки почти успели
+спасти его. Мне нужно договориться с этими полулюдьми
+как только я займу трон Вэйреста.
+Вначале самое важное консолидировать основу моей
+силы и власти. Я могу (почти не сомневаюсь) положиться
+на Готрида для поддержки моей попытки захватить трон,
+если Хелсет станет наследником трона. У меня есть
+сеть шпионов, ничем не уступающая сети Эадвира, Готрида,
+Акорити или самого императора. Возможно только сеть
+шпионов некромантов и Подземного Короля более обширна,
+но в этом я очень сильно сомневаюсь. Проблема - найти
+свежие физические силы. У меня нет постоянной армии.
+Мне нужно золото, чтобы поднять
+
+Message:  1018
+%qdt:
+ Я нашел несколько изобличительных страниц
+ в поместье Вудборна. Уверен, лорд Вудборн
+ будет очень разьярен если они попадут не
+ в те руки.
+
+Message:  1019
+%qdt:
+ Призрак Лизандуса явился передо мной и
+ рассказал, что только смерть или унижение
+ его убийцы, лорда Вудборна, может успокоить
+ его душу. Лорд Вудборн, дворянин из Вэйреста
+ и любовник принцессы Элизейн. У него есть
+ замок где-то в глубине Вэйреста.
+
+Message:  1021
+Я слышал, что лорд Вудборн был обезглавлен за измену.
+   <--->
+Лорд Вудборн пойман и казнен за измену.
+
+Message:  1022
+Говорят, стая даэдра снизошла до лорда Вудборна и забрала его с собой.
+   <--->
+Слухи со стороны говорят, что черная роза выросла в поместье Вудборна!
+   <--->
+Я слышал, что лорд Вудборн обманул Гильдию Магов. Они послали демонов убить его.
+
+Message:  1024
+Я слышал, что лорд Вудборн собирается жениться на принцессе Элизейн.
+   <--->
+Лорд Вудборн в высокой фаворе в эти дни в замке Вэйрест.
+
+Message:  1030
+<ce> Это мало что значит для меня. Это мусор, который
+<ce> можно просто сжечь. Готрид и Вудборн спланировали
+<ce> убийство Лизандуса. Это правда! Уходи.
+
+Message:  1031
+<ce> Это ужасно! И это после всего того оказанного
+<ce> дверия оказанному этому глупцу Вудборну! Мы были
+<ce> готовы выдать Элизейн за эту злобную свинью --
+<ce> -- практически усадить на трон Вэйреста в порядке
+<ce> первой очереди! Друг мой, %pcf, вы правильно сделали,
+<ce> что сначала рассказали все нам. Уверяю вас, что
+<ce> лорд Вудборн будет арестован и казнен за измену,
+<ce> а его имя будет вычеркнуто из всех книг чести,
+<ce> его знакомые допрошены по полной форме, а его
+<ce> имущество конфисковано. В качестве благодарности
+<ce> возьмите от меня вот эти _reward_ золотых монет,
+<ce> как долю конфискованного имущества Вудборна.
+
+Message:  1032
+<ce> Лорд Вудборн - убийца моего дорогого Лизандуса.
+<ce> Его настигнет правосудие и придет оно от моей
+<ce> руки! Для вас, %pcn, будет лучше держаться
+<ce> какое то время подальше от поместья Вудборна и
+<ce> Вэйреста.
+
+Message:  1033
+<ce> Это очень ценная информация, %pcf. Позвольте
+<ce> мне отблагодарить вас суммой _gold_ золотых.
+<ce> То что вы принесли, очень пригодится мне в
+<ce> грядущем конфликте.
+
+Message:  1034
+<ce> Вы правильно поступили, принеся это ко мне.
+<ce> Иначе это могло бы попасть туда, где принесло
+<ce> бы вред лорду Вудборну.
+<ce> Стража! Убейте этого %ra!
+
+Message:  1040
+<ce> Ты! Так ты тот самый %ra %pcn.
+<ce> Ты очень долго был моей больной занозой.
+<ce> Мудрый %ra, заставляющий говорить покоящихся
+<ce> королей. Само собой тех, до которых я смог
+<ce> дотянуться. Да, %pcf, это я убил
+<ce> короля Лизандуса. А теперь я с удовольствием
+<ce> убью тебя. Защищайся!
+
+QuestTimeLapse:  [1045]
+<ce> "Со мной...все кончено. Это все...
+<ce> ...Готрид. Гори...в аду, %pcn.
+<ce> Я практически...все сделал сам".
+<ce>
+<ce> Лорд Вудборн мертв.
+
+
+
+QBN:
+Item WoodborneDiary letter anyInfo 1010 used 1011
+Item _reward_ gold range 10000 to 20000
+Item _gold_ gold
+
+Person Barenziah face 8 named Queen_Barenziah atHome
+Person Eadwyre named King_Eadwyre atHome
+Person _medora_ named Medora atHome
+Person _helseth_ named Prince_Helseth atHome
+Person Gothryd face 152 named King_Gothryd atHome
+Person _aubki_ named Queen_Aubk-i atHome
+Person _akorithi_ named Queen_Akorithi atHome
+Person KingOfWorms0 named King_of_Worms atHome
+Person _gortwog_ named Gortwog atHome
+Person _mynisera_ named Mynisera atHome
+Person _nulfaga_ named Nulfaga atHome
+
+Place WoodbourneHall2 permanent WoodbourneHall4
+Place WoodbourneHall1 permanent WoodbourneHall5
+
+
+Foe Woodborne is Knight
+Foe _F.01_ is Spellsword
+
+--	Quest start-up:
+	place item WoodborneDiary at WoodbourneHall2 marker 1
+	log 1019 step 2
+	reveal WoodbourneHall1 in province 23 at 194859
+	WoodborneDiary used do _S.01_
+	place foe Woodborne at WoodbourneHall1 marker 2
+
+_S.00_ task:
+	killed 1 Woodborne
+	say 1045
+
+_S.01_ task:
+	log 1018 step 3
+
+_S.02_ task:
+	injured Woodborne
+	say 1040
+	cast Spell_Reflection spell on Woodborne
+	cast Heal spell on Woodborne
+	cast Shield spell on Woodborne
+
+_S.03_ task:
+	toting WoodborneDiary and Eadwyre clicked
+	toting WoodborneDiary and _helseth_ clicked
+	toting WoodborneDiary and Barenziah clicked
+	get item _reward_
+	rumor mill 1021
+	say 1031
+	make _reward_ permanent
+	change repute with Eadwyre by +50
+
+_S.04_ task:
+	toting WoodborneDiary and _nulfaga_ clicked
+	toting WoodborneDiary and _medora_ clicked
+	toting WoodborneDiary and _mynisera_ clicked
+	rumor mill 1022
+	say 1032
+	change repute with _nulfaga_ by +25
+	change repute with _medora_ by +25
+
+_S.05_ task:
+	toting WoodborneDiary and _akorithi_ clicked
+	say 1030
+
+_S.06_ task:
+	toting WoodborneDiary and _aubki_ clicked
+	toting WoodborneDiary and Gothryd clicked
+	create foe _F.01_ every 1 minutes 5 times with 100% success
+	say 1034
+	change repute with Gothryd by -40
+	change repute with Eadwyre by -40
+	legal repute -50
+
+_S.07_ task:
+	toting WoodborneDiary and _gortwog_ clicked
+	toting WoodborneDiary and KingOfWorms0 clicked
+	get item _gold_
+	say 1033
+	make _gold_ permanent
+	change repute with _gortwog_ by +20
+	change repute with KingOfWorms0 by +20
+
+LiftedCurse _S.08_
+	when _S.03_ or _S.04_ or _S.00_
+	play video 13
+	remove log step 2
+	remove log step 3
+--added these remove log actions.
+--these logs would stay in the journal after catching Woodborne, which is confusing.
+
+_S.09_ task:
+	when _S.05_ or _S.07_ or _S.06_
+	end quest
+
+MyniseraSatisfied _S.10_
+GothrydGotTotem _S.11_
+
+_S.13_ task:
+	when _S.08_ and _S.10_ and _S.12_
+	start quest 8 8
+	end quest
+
+KingOfWormsSatisfied _S.12_

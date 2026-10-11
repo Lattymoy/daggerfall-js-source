@@ -1,0 +1,345 @@
+-- Quest: C:\QUESTS\WORKING\S0000503.Qbn.
+-- Main story quest.
+-- QuestId: 503
+Messages: 72
+Quest: S0000503
+DisplayName: Бывший студент Часть III
+-- Message panels
+QRC:
+
+Message:  1020
+%qdt:
+ Мне пришло таинственное приглашение
+ в _tavern_ в __tavern_,
+ Думаю, это мой друг Балтам Грейман.
+
+Message:  1021
+%qdt:
+ Балтам Грейман уговорил меня "достать" карту
+ к локации ___itemdung_, находящуюся
+ в Гильдии Магов из __magesguild_.
+
+Message:  1022
+%qdt:
+ Мы нашли карту. Балтам Грейман
+ хочет разобраться еще с одним делом,
+ так что я встречусь с ним в _tavern_
+ в течение =keytime_ дней.
+
+Message:  1023
+%qdt:
+ Мы нашли карту. Мне нужно сходить
+ в ___keydung_, найти там особый _key_,
+ который нужен, чтобы попасть в
+ ___itemdung_. Балтам Грейман будет ждать моего
+ возвращения в _tavern_
+ в течение =keytime_ дней.
+
+Message:  1030
+Изрядно потрепанная карта к ___itemdung_.
+<ce> ----
+
+Message:  1040
+<ce> Хорошо, что вы пришли. У меня есть новый план,
+<ce> который может заинтересовать вас. Я хочу
+<ce> совершить небольшой набег к нашим друзьям
+<ce> из Гильдии Магов. Что скажете?
+
+Message:  1041
+<ce> Понимаю, у вас свой путь. Пусть мы
+<ce> расстанемся друзьями.
+
+Message:  1042
+<ce> Я знал, что вы не сможете отказаться! Вот план.
+<ce> Уже некоторое время я ищу местонахождение
+<ce> одного подземелья - ___itemdung_, обретшего
+<ce> славу хранилища груды магических артефактов,
+<ce> среди которых есть _item_, то что мне
+<ce> нужно для моих изысканий -- но об этом как-нибудь
+<ce> в другой раз. В одном послании, которое попало мне
+<ce> в руки, я узнал, что Гильдия Магов из
+<ce> __magesguild_ завладела картой к
+<ce> ___itemdung_.
+<ce> В гильдии у меня еще есть несколько друзей,
+<ce> несмотря на официальный запрет общения со мной...
+<ce> Гильдия не имеет понятия, что к ней попало, так
+<ce> что мы спокойно можем присвоить себе карту,
+<ce> чтобы использовать ее по назначению.
+
+Message:  1043
+<ce> Да, вот эта карта!
+
+Message:  1044
+<ce> Балтам Грейман воздел свой посох.
+<ce> "Леди и джентльмены, мы отправляемся!"
+<ce> Сфера на конце посоха, истекающая потоками
+<ce> света, ослепила вас на какое-то время.
+
+QuestTimeLapse:  [1045]
+<ce> Думаю, нам нужно разделиться на время, чтобы
+<ce> не разворошить это осиное гнездо. У меня есть
+<ce> одно неулаженное дело, с которым мне нужно
+<ce> разделаться прежде, чем мы отправимся в
+<ce> ___itemdung_ ... если вы все еще
+<ce> согласны помогать мне. Не так ли?
+
+Message:  1046
+<ce> Прекрасно. В ___itemdung_ невозможно попасть
+<ce> без ключа, _key_, который, как мне стало известно,
+<ce> находится где-то в ___keydung_. Как получите _key_,
+<ce> встретьте меня в _tavern_ в __tavern_,
+<ce> скажем, через =keytime_ дней.
+
+Message:  1047
+<ce> Не вопрос. Мне нужно, скажем, =keytime_ дней,
+<ce> чтобы разобраться со своими делами. Я встречу
+<ce> вас в __tavern_ в _tavern_,
+<ce> когда заполучу ключ к дверям
+<ce> ___itemdung_.  Удачи!
+
+Message:  1050
+<ce> Должно быть это _key_, ключ к секретам ___itemdung_.
+
+Message:  1051
+<ce> Теперь мы готовы посетить ___itemdung_.
+<ce> Идемте за мной, мой друг!
+
+Message:  1052
+<ce> Гулкий голос раскатился по коридорам:
+<ce> "Незваные гости здесь не нужны!"
+
+Message:  1053
+<ce> Ты опоздал, Балтам Грейман!  Это было так легко,
+<ce> проследить за тобой до ___itemdung_, когда
+<ce> ты нашел _key_ для меня.  _item_
+<ce> теперь принадлежит мне и только мне одному!
+
+Message:  1054
+<ce> "Что ж, друг %pcf, отличная вылазка получилась,
+<ce> не так ли?  _item_ я забираю и мы в расчете".
+<ce>
+<ce> Балтам Грейман хочет забрать _item_. Отдадите требуемое?
+
+Message:  1055
+<ce> До скорой встречи!
+
+Message:  1056
+<ce> Вот вы и показали свое истинное лицо.
+<ce> Я всего лишь просил маленькую вещицу,
+<ce> но ваша жадность не знает границ.
+
+Message:  1070
+<ce> Чья-то тень накрыла вашу голову.
+<ce> Ворон покружил над вами, прокаркав
+<ce> несколько слов, прежде чем исчезнуть
+<ce> на западе:
+<ce>
+<ce> "Нет времени!  Нет времени!
+<ce> _tavern_,
+<ce> __tavern_!"
+
+Message:  1071
+<ce> %pcf, вы что, потерялись?
+<ce> Я начал опасаться, что
+<ce> придется начинать без вас.
+
+
+
+QBN:
+Item _letter_ letter
+Item _item_ magic_item
+Item _map_ letter used 1030
+Item _I.03_ magic_item
+Item _I.04_ magic_item
+Item _I.05_ gold
+Item _key_ item class 10 subclass 11
+
+Person _rebel_ face 1 named Baltham_Greyman
+Person _dummy_ face 249 group Spellcaster remote
+
+Place _tavern_ remote tavern
+--Place aide remote dungeon
+Place _magesguild_ remote magery
+Place _itemdung_ remote dungeon
+Place _keydung_ remote dungeon
+Place _L.05_ remote dungeon
+
+Clock _S.00_ 1.00:00
+Clock _S.02_ 30.00:00 0 flag 1 range 0 1
+Clock _S.10_ 00:00 0 flag 1 range 0 2
+Clock _S.11_ 00:01
+Clock _keytime_ 00:00 0 flag 1 range 0 5
+Clock _S.21_ 6.22:40 0 flag 1 range 0 1
+Clock _S.31_ 00:00 0 flag 17 range 0 2
+
+Foe _guards_ is 3 Mage
+Foe _guardian_ is Battle_mage
+Foe _F.03_ is Mage
+
+--	Quest start-up:
+	start timer _S.00_
+	give item _I.05_ to _guardian_
+	give item _I.04_ to _guardian_
+	give item _I.03_ to _guardian_
+	give item _item_ to _guardian_
+	pc at _magesguild_ set _S.04_
+	pc at _itemdung_ set _S.16_
+	_map_ used do _readmap_
+	place foe _guardian_ at _itemdung_
+
+_S.00_ task:
+	place item _map_ at _magesguild_
+	start timer _S.02_
+	have _letter_ set _S.01_
+	give pc _letter_ notify 1070
+
+_S.01_ task:
+	take _letter_ from pc
+	log 1020 step 0
+	place npc _rebel_ at _tavern_
+	restore _rebel_
+
+variable _S.02_
+_S.03_ task:
+	clicked npc _rebel_
+	start task _S.18_
+
+variable _S.04_
+_S.05_ task:
+	clicked item _item_
+
+_S.06_ task:
+	when _S.21_ and not _S.19_
+	when _S.02_ and not _S.08_
+
+variable _S.07_
+_S.08_ task:
+	start timer _S.10_
+	log 1021 step 1
+	say 1042
+	add _rebel_ face
+	hide npc _rebel_
+	stop timer _S.02_
+
+_target_ task:
+	say 1041
+	remove log step 0
+--log message would stay in journal without this
+
+variable _S.10_
+_S.11_ task:
+	say 1044
+	restrain foe _guards_
+
+_S.12_ task:
+	when _S.32_ and not _S.04_
+	start timer _keytime_
+	prompt 1045 yes _spouse_ no _S.14_
+	drop _rebel_ face
+	change repute with _dummy_ by -15
+	stop timer _S.10_
+
+_spouse_ task:
+	place item _key_ at _keydung_
+	reveal _keydung_
+	log 1023 step 2
+	say 1046
+	restore _rebel_
+
+_S.14_ task:
+	log 1022 step 2
+	say 1047
+	clear _S.03_
+
+_house1_ task:
+	clicked item _key_
+	say 1050
+	clear _S.03_
+
+_S.16_ task:
+	have _key_ set _S.25_
+
+_keytime_ task:
+	start timer _S.21_
+	place npc _rebel_ at _tavern_
+	restore _rebel_
+
+_S.18_ task:
+	prompt 1040 yes _S.08_ no _target_
+
+_S.19_ task:
+	when _S.03_ and _house1_ and _spouse_
+	when _S.14_ and _S.03_
+	start timer _S.31_
+	stop timer _keytime_
+	say 1051
+	hide npc _rebel_
+	add _rebel_ face
+--there's still a lingering bug here that I can't figure out. If you do the S.14 route, Baltham's sprite will remain visible at this point. I don't know why.
+
+
+variable _S.20_
+variable _S.21_
+_S.22_ task:
+	when _S.31_ and not _S.30_
+	when _S.10_ and not _S.12_
+	say 1071
+
+_readmap_ task:
+	reveal _itemdung_
+
+_S.24_ task:
+	when _S.16_ and not _S.25_
+	reveal _L.05_
+	say 1052
+	teleport pc to _L.05_
+	unset _S.24_
+
+variable _S.25_
+_hitguardian_ task:
+	injured _guardian_
+	say 1053
+
+_S.27_ task:
+	killed 1 _guardian_
+
+_S.28_ task:
+	take _item_ from pc
+	say 1055
+
+_S.29_ task:
+	create foe _F.03_ every 0 minutes 1 times with 100% success
+	say 1056
+	make _item_ permanent
+
+_S.30_ task:
+	when _S.05_ and not _S.16_
+	prompt 1054 yes _S.28_ no _S.29_
+	drop _rebel_ face
+
+variable _S.31_
+_S.32_ task:
+	clicked item _map_
+	create foe _guards_ every 0 minutes 1 times with 100% success
+--sometimes this would delay much, and spawn after fast travel + pacify message
+	start timer _S.11_
+	say 1043
+
+_S.33_ task:
+	when _S.06_ or _S.22_ or _S.31_ or _S.28_
+	make _I.05_ permanent
+	make _I.04_ permanent
+	make _I.03_ permanent
+	end quest
+
+_S.34_ task:
+	when _S.19_ and _S.14_
+	get item _key_
+
+_S.35_ task:
+	killed _F.03_
+	make _I.05_ permanent
+	make _I.04_ permanent
+	make _I.03_ permanent
+	end quest
+--otherwise quest would hang on until end of final timer

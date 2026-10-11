@@ -1,0 +1,401 @@
+-- Quest: C:\QUESTS\WORKING\C0B00Y02.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: temple
+-- Repute: 0
+-- QuestId: 2
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 27
+Quest: C0B00Y02
+DisplayName: Одержимое дитя
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Не хотите ли вы оказать содействие в
+<ce> экзорцизме, %pct?
+   <--->
+<ce> _guardian_, местный рыцарь,
+<ce> умоляет нас помочь своему ребенку, пока-
+<ce> зывающему все признаки одержимости
+<ce> даэдра. Не хотите ли вы оказать содействие
+<ce> в экзорцизме, если этого потребует
+<ce> ситуация?
+
+RefuseQuest:  [1001]
+<ce> Как печально. Надеюсь мы найдем
+<ce> кого посговорчивее.
+
+AcceptQuest:  [1002]
+<ce> Согласны? %oth, у вас большое сердце,
+<ce> размером с %reg, %pct.
+<ce> Ребенка зовут _child_,
+<ce> %g - =child_ из
+<ce> _house_ здесь в __house_,
+<ce> но человек, с которым вам надо поговорить,
+<ce> %g4 опекун, _guardian_
+<ce> в _tavern_. Если исходить
+<ce> из того, что %g говорит и вы решите,
+<ce> что без экзорцизма не обойтись,
+<ce> обратитесь к _priest_ в
+<ce> __priest_ из ___priest_.
+<ce> Я рассчитываю, что это непривлекательное
+<ce> дело будет разрешено в течение =queston_
+<ce> дней и я увижу вас снова. Удачи и
+<ce> да пребудет с вами %god.
+
+QuestComplete:  [1004]
+<ce> Благодарение %god, что эта ситуация
+<ce> разрешилась. Никогда нельзя предсказать,
+<ce> чем закончится экзорцизм. У вас все
+<ce> получилось, %pcf. Возьмите свою награду
+<ce> _reward_ золотых в знак признательности
+<ce> ваших заслуг.
+
+RumorsDuringQuest:  [1005]
+Бедное дитя _child_. И бедный _guardian_ вынужден видеть мучения своего ребенка.
+   <--->
+Сердце %cn действительно зависит от _child_ и %g4 страшного кризиса.
+
+RumorsPostfailure:  [1006]
+_child_ и _guardian_ ушли из ___guardian_.
+   <--->
+Мы никогда не узнаем, действительно ли _child_ была одержимой.
+
+RumorsPostsuccess:  [1007]
+Все благодарят %god за %ra, спасшего жизнь маленькой _child_.
+   <--->
+Все закончилось благополучно для маленькой _child_, может это забота %god.
+
+QuestorPostsuccess:  [1008]
+Вы помогли __qgiver_ этим экзорцизмом. Что я могу сделать для вас?
+
+QuestorPostfailure:  [1009]
+Вы бросили это дитя в беде. Мне нечего более сказать вам.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ из ___qgiver_
+ хочет проверить, является ли
+ =child_ по имени _child_
+ жертвой одержимости и если это верно,
+ попытаться исцелить ее.
+ Вначале мне нужно поговорить с ее
+ опекуном _guardian_ в _tavern_.
+
+Message:  1011
+<ce> Вы из __qgiver_? Пожалуйста,
+<ce> скажите мне, что вы можете помочь малышке
+<ce> _child_. Я не могу уже смотреть на
+<ce> ее страдания. Не знаю, что с этим можно
+<ce> поделать. Пожалуйста, осмотрите ее, а
+<ce> потом, если вы сможете убедить оказать
+<ce> помощь священника _priest_.
+<ce> _child_ всегда была счастливым =child_,
+<ce> но теперь ... Если вы хотите посмотреть на
+<ce> нее, она в _house_. Больше не знаю,
+<ce> что еще сказать.
+
+Message:  1012
+<ce> Вы из __qgiver_? Благодарение
+<ce> %god, что вы здесь. Говорят вы можете
+<ce> найти _priest_,
+<ce> экзорцисту из __priest_,
+<ce> у него есть одна вещь: _item_,
+<ce> как раз для такого рода одержимостей.
+<ce> Я не могу убедить _priest_ дать
+<ce> _item_ мне, но кто-то навроде вас
+<ce> с авторитетом __qgiver_ за спиной
+<ce> может заставить переменить его мнение.
+<ce> Идите в ___priest_ и поговорите
+<ce> с ним. Нет сомнений, вам удастся убедить его.
+
+Message:  1013
+%qdt:
+ _guardian_,
+ опекун _child_,
+ просит меня осмотреть ребенка, а потом
+ повидаться с _priest_
+ из __priest_, ___priest_
+ нуждается в проведении экзорцизма.
+ _child_ находится в _house_.
+
+Message:  1014
+%qdt:
+ _guardian_,
+ опекун _child_
+ просит меня сходить в __priest_
+ в ___priest_, чтобы попросить у
+ _priest_ одну вещицу: _item_,
+ могущую помочь изгнать духа даэдра
+ из тела ребенка.
+
+Message:  1015
+<ce> "=daedra_ ... о, %oth ...
+<ce> =daedra_ уходит из меня ...
+<ce> но ... оно все еще здесь".
+<ce> _child_ убегает.
+<ce> Вы чувствуете присутствие чего-то
+<ce> чужеродного в _house_.
+
+Message:  1016
+<ce> О, %oth, %oth ...
+<ce> Я чувствую себя ... много лучше.
+<ce> _guardian_ сказал мне, что
+<ce> _item_ может помочь нам
+<ce> и он был прав. Ох, благодарю вас
+<ce> добрый герой. Я буду хранить
+<ce> _item_ для своей защиты.
+<ce> Прощайте!
+
+Message:  1017
+<ce> Грррааааххх, ты, собакоглазый смертный ублюдок.
+<ce> Я вскрою все твои вены и искупаюсь
+<ce> в потоках твоей крови. Меня зовут
+<ce> =daedra_, слизыватель
+<ce> кошачьих какашек!
+   <--->
+<ce> Бедная маленькая _child_,
+<ce> %g гниет в Обливионе  и никто не может
+<ce> помочь ей, кроме доброго, доброго,
+<ce> доброго, доброго, доброго, доброго,
+<ce> доброго, доброго, доброго, доброго,
+<ce> доброго, доброго, доброго =daedra_.
+   <--->
+<ce> Когда то это была девочка по имени Вивиан,
+<ce> которая встретила =daedra_ из
+<ce> Обливиона, захотев стать взрослой,
+<ce> скоре они съедят _child_,
+<ce> их дитя, ням, ням.
+
+Message:  1018
+<ce> Мне очень жаль, %pcf, но я не могу
+<ce> дать _item_ любому, думающему, что он
+<ce> знает все о жертве одержимости. Эта
+<ce> вещица попала сюда издалека и она очень
+<ce> ценная. Вам стоит сначала повидать дитя,
+<ce> прежде чем я соглашусь отдать _item_.
+
+Message:  1019
+<ce> =daedra_? _child_ упоминала
+<ce> имя =daedra_?
+<ce> Что ж, если эта одержимость - притворство,
+<ce> то отлично сыгранное притворство.
+<ce> Вот, возьмите _item_.
+<ce> Просто держите это при себе, когда в
+<ce> следующий раз заговорите с девочкой. Но
+<ce> берегитесь, даэдра, захвативший разум
+<ce> _child_, это даэдрот большой силы.
+<ce> Когда экзорцизм завершится, он оставит
+<ce> ее и проявится где-то в _house_.
+<ce> Будьте готовы к схватке, когда это
+<ce> произойдет. Удачи, %pcf.
+<ce> %god пребудет с вами.
+
+Message:  1020
+%qdt:
+ Не знаю, что это за =daedra_, но кажется это
+ было имя, которое упомянула _child_,
+ когда я общался с ней.
+ Эта =child_ одержима, безумна или
+ величайший актер в %cn. Самое время
+ повидать экзорциста в ___priest_,
+ _priest_ в __priest_.
+
+Message:  1021
+<ce> Добрый %pcf, не знаю как отблагодарить
+<ce> вас за то, что вы сделали для _child_.
+<ce> Сейчас она в полном порядке, она снова
+<ce> обычный ребенок. Я рассказал все _qgiver_
+<ce> в вашем храме __qgiver_ и он с
+<ce> нетерпением ждет вас, чтобы поздравить.
+<ce> Еще раз, большое спасибо!
+
+Message:  1022
+<ce> Я могу сказать, где этот
+<ce> =guardian_, _guardian_
+<ce> проводит время. Но пока я не увижу в
+<ce> вашей руке пятьдесят золотых,
+<ce> вы не узнаете эту информацию.
+
+Message:  1023
+<ce> День добрый вам, %pct.
+<ce> Похоже вы ищете кого-то,
+<ce> =guardian_, _guardian_,
+<ce> который уехал отсюда после того,
+<ce> как хвастался про украденную у
+<ce> __qgiver_ вещицу - _item_.
+<ce> Если у вас найдется пятьдесят золотых
+<ce> монет для друга, то я расскажу, куда
+<ce> уехал _guardian_.
+<ce> Что скажете?
+
+Message:  1024
+<ce> Приятно иметь с вами дело,
+<ce> %pcf. Поищите этого
+<ce> =guardian_ в _house2_.
+
+Message:  1025
+<ce> "Не убивайте меня!" _guardian_
+<ce> отдает вам _item_
+<ce> и убегает с поля боя.
+
+Message:  1026
+%qdt:
+ _hooker_, =hooker_ из
+ _tavern_ рассказал мне (за пятьдесят золотых),
+ что этот _guardian_ сбежал в
+ _house2_ после того, как _child_
+ украла _item_ у меня. Одержимость разумеется была
+ притворством, а вот _priest_ и
+ _qgiver_ хотят получить _item_ обратно.
+
+
+
+QBN:
+Item _item_ religious
+Item _reward_ religious
+Item _gold_ gold range 50 to 50
+
+Person _qgiver_ group Questor
+Person _child_ face 1 faction Children local
+Person _guardian_ face 1 factiontype Knightly_Guard local
+Person _priest_ face 104 factiontype Temple remote
+Person _hooker_ face 1 faction The_Prostitutes local
+
+Place _house_ local house2
+Place _house2_ local house2
+Place _house3_ remote random
+Place _tavern_ local tavern
+
+Clock _queston_ 5.00:00 10.00:00 flag 17 range 1 4
+
+Foe _daedra_ is Daedroth
+
+--	Quest start-up:
+	dialog link for location _house2_ person _hooker_
+	start timer _queston_
+	log 1010 step 0
+	pick one of _sham_ _real_
+	place npc _child_ at _house_
+	place npc _guardian_ at _tavern_
+	place npc _priest_ at _house3_
+	have _item_ set _haverelic_
+
+_queston_ task:
+	end quest
+
+_talkguardian_ task:
+	clicked npc _guardian_
+
+variable _real_
+variable _sham_
+_realtalk_ task:
+	when _talkguardian_ and _real_
+	log 1013 step 1
+	say 1011
+
+_shamtalk_ task:
+	when _talkguardian_ and _sham_ and not _revealsham_
+	log 1014 step 2
+	say 1012
+
+_clickchild_ task:
+	clicked npc _child_
+
+_exorcise_ task:
+	when _haverelic_ and _real_ and _clickchild_
+	take _item_ from pc
+	hide npc _child_
+	say 1015
+	place foe _daedra_ at _house_
+	clear _talkguardian_
+
+-until _exorcise_ performed:
+-	clear _clickpriest_ _qgclicked_
+
+_revealsham_ task:
+	when _haverelic_ and _sham_ and _clickchild_
+	take _item_ from pc
+	hide npc _child_
+	say 1016
+	place npc _guardian_ at _house2_
+	place npc _hooker_ at _tavern_
+	clear _talkguardian_
+
+variable _haverelic_
+_firstclickchild_ task:
+	when _clickchild_ and not _haverelic_
+	log 1020 step 3
+	say 1017
+-	clear _clickchild_
+
+_clickpriest_ task:
+	clicked npc _priest_
+
+_rebuff_ task:
+	when _clickpriest_ and not _firstclickchild_ and not _rescueitem_ and not _exorcise_ and not _givenitem_
+	say 1018
+	clear _clickpriest_
+
+_priestgivesitem_ task:
+	when _clickpriest_ and _firstclickchild_ and not _exorcise_ and not _rescueitem_
+	say 1019
+	start task _givenitem_
+-	start task _giverelictask_
+-
+-_giverelictask_ task:
+	get item _item_
+	clear _clickpriest_
+	clear _clickchild_
+
+variable _givenitem_
+_thanks_ task:
+	when _talkguardian_ and _exorcise_
+	say 1021
+
+_hookerconfess_ task:
+	add dialog for location _house2_
+	log 1026 step 6
+	say 1024
+
+_toopoor_ task:
+	say 1022
+
+_bribe_ task:
+	clicked _hooker_ and at least 50 gold otherwise do _toopoor_
+	prompt 1023 yes _hookerconfess_ no _refuseconfess_
+
+_refuseconfess_ task:
+	get item _gold_
+	make _gold_ permanent
+
+_rescueitem_ task:
+	when _talkguardian_ and _revealsham_
+	get item _item_
+	hide npc _guardian_
+	say 1025
+
+-until _rescueitem_ performed:
+-	clear _itemtopriest_ _itemtoqg_ _talkguardian_
+
+-_itemtoqg_ task:
+-	toting _item_ and _qgiver_ clicked
+
+-_itemtopriest_ task:
+-	toting _item_ and _priest_ clicked
+
+_victory_ task:
+	when _qgclicked_ and _rescueitem_
+	when _qgclicked_ and _exorcise_
+	when _clickpriest_ and _rescueitem_
+	when _clickpriest_ and _exorcise_
+	give pc _reward_
+	end quest
+
+_qgclicked_ task:
+	clicked npc _qgiver_
+
+_clearclick_ task:
+	when _qgclicked_ and not _rescueitem_ and not _exorcise_
+	clear _qgclicked_ _clearclick_

@@ -1,0 +1,167 @@
+-- Quest: C:\QUESTS\WORKING\R0C10Y09.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 10
+-- QuestId: 9
+Messages: 21
+Quest: R0C10Y09
+DisplayName: Закупщик
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Да, у меня есть одно дело для такого трудолюбивого
+<ce> молодого %ra. Ничего особенного -- только
+<ce> маленькое задание, но это будет значить _reward_
+<ce> золотых для вас. Интересно?
+
+RefuseQuest:  [1001]
+<ce> %oth, полагаю, вы бы хотели, чтобы
+<ce> я дал вам _reward_ золотых ни за что. Или, вероятно,
+<ce> надеялись на что-то более
+<ce> интересное? В таком случае, придется
+<ce> вам подождать, %pcf.
+
+AcceptQuest:  [1002]
+<ce> Хорошо. У меня есть ... поставщик.
+<ce> Необычно выглядящий, =spy_, умеющий
+<ce> передвигаться незамеченным по имени _spy_.
+<ce> Итак, _spy_ нашел особый
+<ce> _item_, интересующий меня,
+<ce> но прежние владельцы заманили %g4 в ловушку
+<ce> где-то в __hidingplace_. Мои руки
+<ce> связаны рамками закона, но вы могли бы
+<ce> пойти в __hidingplace_, найти _spy_,
+<ce> и принести мне мой _item_. И, конечно,
+<ce> если вы не вернетесь через =1stparton_
+<ce> дней, вы лишитесь награды в _reward_ золотых.
+<ce> Думаю, это понятно. Итак,
+<ce> пора бы вам уже в путь. До свиданья.
+
+QuestFail:  [1003]
+<ce> %pcf, вы снова здесь, что радует,
+<ce> но без моего _item_,
+<ce> что не радует. Я что
+<ce> неясно выразился?
+<ce> Идите и добудьте мой
+<ce> _item_ и
+<ce> приносите его сюда.
+
+QuestComplete:  [1004]
+<ce> Чудно! Моя вещица - _item_
+<ce> вернулась ко мне быстро с минимумом
+<ce> неприятностей. Очень хорошо. Вот ваши
+<ce> _reward_ золотых.
+
+RumorsDuringQuest:  [1005]
+Они прочищают __hidingplace_, в поисках редкого украденного _item_.
+   <--->
+Там был редкий _item_, недавно украденный из частной коллекции.
+
+RumorsPostfailure:  [1006]
+Вернули эту драгоценность, а виновники были наказаны.
+   <--->
+Драгоценность, которую они искали, внезапно обнаружилась.
+
+RumorsPostsuccess:  [1007]
+Они никогда не найдут драгоценность. Охранники отказались от поисков.
+   <--->
+<ce> Полагают, что в украденной драгоценности
+ был спрятан какой-то редкий камень.
+
+QuestorPostsuccess:  [1008]
+А, мой юный победитель! Я вижу, все еще в наемниках. Хорошо.
+   <--->
+Что я могу для вас сделать, %pcf? Я не забыл о том, что вы сделали для меня.
+
+QuestorPostfailure:  [1009]
+<ce> Не вижу причин, почему я должен
+<ce> делать что-то для того, кто
+<ce> обманул мои ожидания, но ведет
+ себя, как ни в чем не бывало.
+   <--->
+<ce> Как вы осмелились явиться сюда,
+<ce> провалив мое поручение!
+<ce> Ненавижу неудачников!
+
+QuestLogEntry:  [1010]
+<ce> _questgiver_ послал вас?  %oth, когда я услышал,
+<ce> как вы приближаетесь, я боялся, что они, в конце концов,
+<ce> выследили меня.  Я рад, что вы нашли меня первым, %pcf!
+<ce> Вот _item_. Отнесите его
+<ce> назад к _questgiver_
+<ce> тотчас же -- %g понадобится ему через
+<ce> несколько дней.  И осторожнее -- агенты
+<ce> прежних владельцев перевернули __hidingplace_
+<ce> вверх дном, ища это маленькое сокровище.
+
+Message:  1011
+Я слышал, что =spy_ на %di отсюда -- около _hidingplace_.
+   <--->
+Нервный =spy_? Я видел %g4 рядом с _hidingplace_.
+
+Message:  1015
+%qdt:
+ _questgiver_ из
+ __questgiver_, ___questgiver_,
+ послал меня достать некий
+ _item_ от кого-то по имени
+ _spy_, который прячется где-то в
+ __hidingplace_.  Настоящие владельцы _item_
+ могут попытаться остановить меня, но я должен
+ доставить _item_ в руки _questgiver_
+ не позднее =1stparton_ дней, или я не получу мои
+ _reward_ золотых в награду.
+
+
+Message:  1020
+<ce> Благодарим за помощь, %ra.  Мы знали, что ты
+<ce> приведешь нас прямо к _item_.
+<ce> Теперь твоя награда -- смерть!
+
+
+
+QBN:
+Item _reward_ gold
+Item _item_ trinket
+
+Person _questgiver_ face 112 group Questor
+Person _spy_ face 1 group Local_3.0 remote anyInfo 1011
+
+Place _hidingplace_ remote random
+
+Clock _1stparton_ 00:00 0 flag 1 range 2 5
+
+Foe _F.00_ is Assassin
+
+--	Quest start-up:
+	start timer _1stparton_
+	log 1015 step 0
+	pc at _hidingplace_ set _S.06_
+	create npc at _hidingplace_
+	place npc _spy_ at _hidingplace_
+
+_pcgetsgold_ task:
+	toting _item_ and _questgiver_ clicked
+	give pc _reward_
+	end quest
+
+variable _queston_
+_pchasitem_ task:
+	clicked npc _spy_
+	get item _item_
+	say 1010
+
+variable _npcclicked_
+variable _qgclicked_
+_1stparton_ task:
+	make _item_ permanent
+	change repute with _questgiver_ by -10
+	end quest
+
+_S.06_ task:
+	create foe _F.00_ every 2 minutes 4 times with 30% success
+
+_S.07_ task:
+	injured _F.00_ saying 1020

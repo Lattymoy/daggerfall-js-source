@@ -24,6 +24,7 @@
 // screen, pointer-events none. It exists only while the key is held.
 
 import { getInteractionMode } from '../player/interactionMode.js';
+import { t } from '../systems/i18n.js';
 
 /** The four spokes, clockwise from the top: [mode, label]. */
 export const MODE_WHEEL_SPOKES = Object.freeze([
@@ -77,7 +78,7 @@ export function createModeWheel(doc = globalThis.document ?? null) {
     const at = { dialogue: [50, 16], grab: [84, 50], steal: [50, 84], info: [16, 50] };
     for (const [mode, label] of MODE_WHEEL_SPOKES) {
       const c = doc.createElement('div');
-      c.textContent = label;
+      c.textContent = t(label);
       Object.assign(c.style, {
         position: 'absolute', left: `${at[mode][0]}%`, top: `${at[mode][1]}%`, transform: 'translate(-50%, -50%)',
         padding: '4px 8px', borderRadius: '3px', color: 'var(--dim, #9a9486)', whiteSpace: 'nowrap',

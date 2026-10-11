@@ -1,0 +1,266 @@
+-- Quest: C:\QUESTS\WORKING\S0000502.Qbn.
+-- Main story quest.
+-- QuestId: 502
+Messages: 71
+Quest: S0000502
+DisplayName: Бывший студент Часть II
+-- Message panels
+QRC:
+
+QuestComplete:  [1004]
+<ce> Есть тут кое-что, над чем я работал.
+<ce> Посмотрите, как это вам нравится.
+<ce> Я в восторге!
+
+Message:  1020
+%qdt:
+ Балтам Грейман, повстанец маг,
+ который однажды помогал мне,
+ попросил меня повстречаться с
+ его посыльным в _tavern_
+ в __tavern_.
+
+Message:  1021
+%qdt:
+ Атронах, которого послал Балтам Грейман,
+ проинформировал меня, что маг хотел бы
+ заручиться моей помощью в исследовании
+ башни Диренни на острове Балфиера.
+ Балтам Грейман встретит меня там,
+ неподалеку.
+
+Message:  1030
+%pcn:  Приветствую!
+<ce>
+  Я надеялся, что уведомление дошло
+до вас. Не хотели бы поучаствовать в
+небольшом приключении? Если да, то
+найдите моего посланника в _tavern_
+в __tavern_.
+<ce>
+Ваш партнер в делах Запретной Магии,
+<ce>
+Балтам Грейман
+
+Message:  1031
+<ce> Легкий запах оплавленного камня коснулся
+<ce> вашего носа, как только вы прошли в дверь.
+<ce> Вон там случайно не атронах стоит?
+<ce> С запиской, пришпиленной к его спине,
+<ce> на обратно стороне которой написано: "УДАРЬ МЕНЯ".
+
+Message:  1032
+<ce> Атронах глухо произнес:
+<ce>
+<ce> "Приветствую, %pcn. Я =atronach_,
+<ce> скромный слуга мага Балтама Греймана.
+<ce> %g хотел бы узнать, не хочешь ли ты исследовать
+<ce> башню Диренни на острове Балфиера вместе с ним.
+<ce> Это магическое место полно невообразимых чудес.
+<ce> Мой повелитель будет ждать тебя там в
+<ce> течение =towertime_ дней".
+<ce>
+<ce> С последним словами =atronach_
+<ce> растворяется в клубах черного дыма.
+
+Message:  1040
+<ce> %pcf, рад видеть вас снова!
+<ce> Похоже вы начали поиски без меня.
+<ce> Вон тот сундук, который у вас в руках,
+<ce> в нем есть то, что я ищу. Не будете
+<ce> возражать, если я заберу это?
+<ce> Большое спасибо!
+
+Message:  1041
+<ce> %pcf, я рад, что вы согласились
+<ce> составить компанию моей скромной персоне.
+<ce> Слушайте, я ищу одну особую вещицу,
+<ce> _item_, которая, как я думаю,
+<ce> хранится где-то внутри башни Диренни.
+<ce> Можете оставить себе все, что найдете,
+<ce> все что нужно мне - это вот такая
+<ce> шкатулка. Итак, приступим, да?
+
+Message:  1042
+<ce> Ага, вот _item_, то что я искал.
+<ce> Хмм, я полагал, что там будет хоть
+<ce> какая-то охрана... хе-хе...
+
+Message:  1043
+<ce> Что ж, было очень весело.
+<ce> Быть может еще как-нибудь
+<ce> пересечемся. Та-та!
+
+Message:  1050
+<ce> Вот тебе! И вот тебе! Ты,
+<ce> старая прогнившая штука!
+
+Message:  1051
+<ce> Это дух! Как насчет вот
+<ce> этого!
+
+Message:  1052
+<ce> Черт побери, уносим ноги
+<ce> отсюда! Если бы мне только
+<ce> удалось заставить работать
+<ce> это заклятие...
+
+Message:  1070
+<ce> Над вашей головой закружился ворон, потом он
+<ce> сел на ваше плечо. Странно, но в его клюве
+<ce> выгравированная табличка. Ворон скосил
+<ce> на вас глаза-бусинки, выпустил табличку
+<ce> прямо в ваш карман и улетел прочь.
+
+
+
+QBN:
+Item _letter_ letter used 1030
+Item _item_ item class 1 subclass 10
+Item _reward_ item class 4 subclass 3
+
+Person _rebel_ face 1 named Baltham_Greyman
+
+Place _tavern_ remote tavern
+Place _direni1_ permanent DirenniTower2
+Place _direni2_ permanent DirenniTower3
+--Place aide remote dungeon
+--changed _L.00_ and _L.01_. Quest system could not compile those symbols.
+--using _direni1_ and _direni2_ now.
+--"aide" concept useful in Daggerfall but obsolete for DFU.
+
+Clock _S.00_ 31.06:00 93.18:00
+Clock _S.03_ 30.00:00 0 flag 1 range 0 1
+Clock _towertime_ 31.06:00 0 flag 1 range 0 1
+Clock _S.18_ 00:01 0 flag 1 range 0 1
+Clock _outgoing_ 62.12:00 97.05:20
+--moving the delay from the start of Part 3 to the end of Part 2.
+--The engine could not find a place to put Baltham Greyman
+--in Isle of Balfiera. Hopefully in 2-3 months the player
+--moves to a region compatible with Part 3.
+
+Foe _atronach_ is Iron_atronach
+Foe _guardian_ is Fire_daedra
+Foe _monster1_ is Mummy
+Foe _monster2_ is Zombie
+
+--	Quest start-up:
+	start timer _S.00_
+	pc at _direni1_ set _S.10_
+
+_S.00_ task:
+	pc at _tavern_ set _S.05_
+	_letter_ used do _readletter_
+	place item _item_ at _direni2_
+	start timer _S.03_
+	give pc _letter_ notify 1070
+	place npc _rebel_ at _direni1_
+
+_S.01_ task:
+	injured _atronach_
+	start timer _towertime_
+	log 1021 step 1
+	reveal _direni1_ in province 9 at 204718
+	say 1032
+	remove foe _atronach_
+	--replaced "place foe at remote dungeon" with "remove foe." Always cleaner implementation.
+
+_readletter_ task:
+	log 1020 step 0
+
+variable _S.03_
+_S.04_ task:
+	clicked npc _rebel_
+
+_S.05_ task:
+	say 1031
+	restrain foe _atronach_
+	place foe _atronach_ at _tavern_
+
+_S.06_ task:
+	clicked item _item_
+	place foe _guardian_ at _direni2_
+
+_S.07_ task:
+	when _S.04_ and not _S.06_
+	hide npc _rebel_
+	say 1041
+	add _rebel_ face
+	start task _accompany_
+
+variable _accompany_
+--S.07 is a tremendously faulty task here, so I have to add "accompany"
+--as a permanent countermeasure.
+
+_S.08_ task:
+	toting _item_ and _rebel_ clicked
+	hide npc _rebel_
+	say 1040
+	give pc _reward_
+	start task _goout_
+
+_outgoing_ task:
+	start quest 503 503
+	end quest
+--moved sequel quest to here from "atronach injured" above.
+--DFU considered the Baltham Greyman from 502 to also be the
+--one from 503, mixing the quests together. 503 will now only
+--start when 502 is successfully finished.
+
+_S.09_ task:
+	when _S.06_ and _accompany_
+--	place item _item_ at aide
+	start timer _S.18_
+	say 1042
+--action to move item to hidden dungeon is obsolete in DFU.
+
+variable _S.10_
+_S.11_ task:
+	when _S.10_ and _accompany_ and not _goout_
+	create foe _monster2_ every 7 minutes 10 times with 20% success
+	create foe _monster1_ every 5 minutes 10 times with 20% success
+
+_S.12_ task:
+	injured _monster1_
+	say 1050
+	cast Gods'_Fire spell on _monster1_
+	unset _S.12_
+
+_S.13_ task:
+	injured _monster2_
+	say 1051
+	cast Lightning spell on _monster2_
+	unset _S.13_
+
+_S.14_ task:
+	when _S.03_ and not _S.01_
+	end quest
+
+variable _towertime_
+_S.16_ task:
+	when not _S.10_ and _accompany_
+	when _towertime_ and _accompany_
+	say 1043
+
+_S.17_ task:
+	when _S.16_ and _S.09_
+	give pc _reward_
+	start task _goout_
+
+_goout_ task:
+	remove log step 0
+	remove log step 1
+	drop _rebel_ face
+	take _item_ from pc
+	start timer _outgoing_
+--go out task added to ensure you can fail the quest without triggering Part 3.
+--any time you're victorious and leave the tower, Part 3 should trigger.
+
+_S.18_ task:
+	say 1052
+	cast Banish_Daedra spell on _guardian_
+
+_timeup_ task:
+	when _towertime_ and not _goout_
+	when _S.16_ and not _goout_
+	end quest

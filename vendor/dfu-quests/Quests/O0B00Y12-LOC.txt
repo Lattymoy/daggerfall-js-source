@@ -1,0 +1,151 @@
+-- Quest: C:\QUESTS\WORKING\O0B00Y12.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: thief
+-- Repute: 0
+-- QuestId: 12
+Messages: 36
+Quest: O0B00Y12
+DisplayName: Доставка препаратов
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pcf, у меня для тебя работенка.
+<ce> Интересно? Нужно доставить небольшой
+<ce> пакет в ___contact1_.
+<ce> Что скажешь?
+
+RefuseQuest:  [1001]
+<ce> Сгинь с глаз моих.
+
+AcceptQuest:  [1002]
+<ce> Отлично. Вот пакет. Это _drugs_.
+<ce> Нужно доставить в ___contact1_.
+<ce> Как можно раньше. _contact1_
+<ce> встретит тебя в __contact1_.
+<ce> Осторожнее. Если хоть словечко
+<ce> проронишь, у нас могут быть
+<ce> неприятности с контрабандистами,
+<ce> захапавшими бизнес в %reg.
+
+QuestFail:  [1003]
+<ce> Разве я не говорил "как можно раньше"?
+
+QuestComplete:  [1004]
+<ce> Рад, что тебе все удалось. Этим
+<ce> любителям ничего не светит против
+<ce> нашей организации. Вот _gold_ золотых
+<ce> за твои услуги. Хорошая работа.
+
+RumorsDuringQuest:  [1005]
+<ce> Говорят у Гильдии Воров какие-то проблемы с
+<ce> контрабандистской шайкой.
+
+RumorsPostfailure:  [1006]
+<ce> Похоже Гильдия Воров хочет наложить лапу на
+<ce> контрабандный бизнес %reg.
+
+RumorsPostsuccess:  [1007]
+<ce> Похоже Гильдия Воров собирается разобраться с конкурентами
+<ce> контрабандистами, которые причиняют им неприятности.
+
+QuestorPostsuccess:  [1008]
+<ce> Эй, старый добрый друг, %pcn, я помню тебя. Мой лучший посыльный.
+
+QuestorPostfailure:  [1009]
+<ce> Так так так...контрабандист, который не может доставить товар. Чего ты хочешь?
+
+Message:  1020
+%qdt:
+ Я на пути в ___contact1_
+ с миссией по доставке _drugs_
+ для _contact1_, кто встретит
+ меня в __contact1_.
+ Меня предупредили про бандитов
+ из конкурирующей группировки.
+
+Message:  1021
+%qdt:
+ Получено указание от _contact1_.
+ %g не может встретиться со мной в
+ ___contact1_.  %g сказал отправляться
+ в ___contact2_,
+ привезти товар к
+ =contact2_ в __contact2_.
+
+Message:  1030
+%pcn --
+<ce>
+  Прошу прощения, но я не могу встретиться
+с вами в ___contact1_, как планировалось.
+Здесь стало слишком горячо для меня. Думаю,
+надо переждать. Есть альтернативное место
+в ___contact2_. Ищите там =contact2_,
+который ждет вас в __contact2_.
+<ce>
+Будьте осторожнее,
+<ce>
+_contact1_
+<ce> ----
+
+Message:  1031
+<ce> Маленький, грязный оборванец дернул
+<ce> вас за рукав. Он вручил вам клочок
+<ce> бумаги, после чего смылся за углом.
+
+Message:  1035
+<ce> Когда же ваша гильдия поймет наконец,
+<ce> что мы контролируем _drugs_-бизнес
+<ce> в %reg?
+
+
+
+QBN:
+Item _drugs_ drug
+Item _note_ letter used 1030
+Item _gold_ gold
+
+Person _contact1_ group Group_5.1 remote
+Person _questgiver_ group Questor
+Person _contact2_ group Local_3.0 remote
+
+
+Clock _qtime_ 00:00 0 flag 1 range 3 5
+Clock _S.01_ 1.00:00 2.18:40
+
+Foe _enemy_ is Assassin
+
+--	Quest start-up:
+	start timer _S.01_
+	start timer _qtime_
+	log 1020 step 0
+	get item _drugs_
+
+_qtime_ task:
+	end quest
+
+_qgclicked_ task:
+	clicked npc _questgiver_
+	say 1003
+
+_S.01_ task:
+	_note_ used do _readnote_
+	create foe _enemy_ every 10 minutes 10 times with 10% success
+	hide npc _contact1_
+	give pc _note_ notify 1031
+
+_readnote_ task:
+	log 1021 step 1
+
+variable _S.03_
+_success_ task:
+	toting _drugs_ and _contact1_ clicked
+	toting _drugs_ and _contact2_ clicked
+	give pc _gold_
+	end quest
+--removed unnecessary delay
+
+_S.06_ task:
+	injured _enemy_
+	say 1035

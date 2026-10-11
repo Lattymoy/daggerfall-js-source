@@ -1,0 +1,185 @@
+-- Quest: C:\QUESTS\WORKING\R0C10Y05.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 10
+-- QuestId: 5
+Messages: 31
+Quest: R0C10Y05
+DisplayName: Смертельная дипломатия
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Возможно, вы в курсе, что
+<ce> я заключаю союз с
+<ce> _qgfriend_. Чтобы скрепить нашу
+<ce> дружбу, я согласился
+<ce> устроить смерть
+<ce> тому, кто постоянно угрожает
+<ce> %g2 -- некий вид
+<ce> монстра. Этот глупый паразит
+<ce> живет в дряхлом старом местечке,
+<ce> под названием ___mondung_.
+<ce> %g согласился заплатить
+<ce> убийце монстра _reward_
+<ce> золотых за услугу. В общем,
+<ce> неплохо, я уверен, вы согласитесь.
+<ce> Итак, разве это не звучит
+<ce> как дело точно для вас,
+<ce> %pcn?
+
+RefuseQuest:  [1001]
+<ce> Правда? Как опрометчиво для вас оставлять меня
+<ce> в таком неловком положении.
+
+AcceptQuest:  [1002]
+<ce> Вы осознаете, что это хорошая сделка,
+<ce> когда услышали про нее, а? Я сказал
+<ce> _qgfriend_, что монстр будет мертв
+<ce> не позднее =1stparton_ дней
+<ce> или %g пойдет и наймет
+<ce> кого-нибудь другого. Итак убейте
+<ce> монстра и идите к
+<ce> ___qgfriend_ и найдите
+<ce> %g4 прежде, чем время выйдет.
+
+QuestFail:  [1003]
+<ce> Лучше отправляйтесь в путь сейчас, %pcf.
+<ce> Времени мало.
+
+QuestComplete:  [1004]
+<ce> Да, я уже слышал, что наша
+<ce> _giant_ чума закончилась. Не знаю,
+<ce> где _questgiver_ нашел вас,
+<ce> но я рад, что %g это сделал. Вот ваши _reward_
+<ce> золотых монет в награду. Благодарю
+<ce> за услугу, %pcf.
+
+RumorsDuringQuest:  [1005]
+В ___mondung_ есть монстр, беспокоящий _qgfriend_.
+   <--->
+<ce> Вместе с этим монстром в ___mondung_ орды крыс и летучих мышей.
+
+RumorsPostfailure:  [1006]
+<ce> Теперь этот монстр =giant_ знает, что его берлога
+<ce> известна, он слинял оттуда.
+   <--->
+<ce> Монстр =giant_ слинял из ___mondung_,
+<ce> но все еще причиняет беспокойство _qgfriend_.
+
+RumorsPostsuccess:  [1007]
+Проклятие =giant_ навсегда стерто из %reg.
+   <--->
+<ce> Благочестивый %ra воин уничтожил =giant_, вредившего нашей земле.
+
+QuestorPostsuccess:  [1008]
+О, мой друг, Возмездие Великанов! Что я могу сделать для вас?
+   <--->
+<ce> Вы помогли мне в заключении союза, %pcf.
+<ce> Чем вас отблагодарить?
+
+QuestorPostfailure:  [1009]
+<ce> Ваш провал в убийстве монстра
+<ce> затруднил дело. У меня нет времени
+<ce> для таких типов, как вы.
+
+Message:  1011
+<ce> =qgfriend_, да? Возможный союзник
+<ce> _questgiver_ в борьбе
+<ce> с этой тварью в ___mondung_.
+   <--->
+_qgfriend_ - кровный враг =giant_.
+
+Message:  1012
+=giant_ умирает.
+
+Message:  1015
+%qdt:
+ _questgiver_ из
+ ___questgiver_ нанял меня
+ от имени, _qgfriend_ из
+ ___qgfriend_, чтобы убить монстра,
+ известного только, как =giant_, который
+ терроризирует землю вокруг
+ ___mondung_. Если монстр умрет и
+ я сделаю это для _qgfriend_ не позднее =1stparton_
+ дней, я получу свою награду.
+
+Message:  1021
+<ce> Да, почти забыл. Я не знаю,
+<ce> что за монстр охотится в ___mondung_,
+<ce> но имя =giant_ упоминалось
+<ce> как источник ужаса.
+
+Message:  1030
+<ce> Кто рискнул побеспокоить =giant_ в ужаснейшей из
+<ce> %g4 берлог? Твой череп скоро будет висеть на
+<ce> моей стене как трофей!
+
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ face 112 group Questor
+Person _qgfriend_ group Local_3.0 remote anyInfo 1011 rumors 1011
+
+Place _mondung_ remote dungeon
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _vampire_ is Vampire
+Foe _wereboar_ is Wereboar
+Foe _mage_ is Battle_mage
+Foe _giant_ is Giant
+
+--	Quest start-up:
+	start timer _1stparton_
+	reveal _mondung_
+	log 1015 step 0
+	pick one of _S.06_ _S.07_ _orsinium_ _S.09_
+	say 1021
+
+_1stparton_ task:
+	end quest
+
+_pcgetsgold_ task:
+	when _npcclicked_ and _mondead_
+	give pc _reward_
+	end quest
+
+variable _queston_
+_mondead_ task:
+	killed 1 _giant_
+	killed 1 _wereboar_
+	killed 1 _vampire_
+	killed 1 _mage_
+	say 1012
+	create npc _qgfriend_
+
+_npcclicked_ task:
+	clicked npc _qgfriend_
+
+_clearclick_ task:
+	when _npcclicked_ and not _mondead_
+	clear _npcclicked_ _clearclick_
+
+_S.06_ task:
+	place foe _giant_ at _mondung_
+
+_S.07_ task:
+	place foe _mage_ at _mondung_
+
+_orsinium_ task:
+	place foe _wereboar_ at _mondung_
+
+_S.09_ task:
+	place foe _vampire_ at _mondung_
+
+_S.10_ task:
+	injured _wereboar_
+	injured _vampire_
+	injured _mage_
+	injured _giant_
+	say 1030

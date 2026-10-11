@@ -1,0 +1,310 @@
+-- Quest: C:\QUESTS\WORKING\A0C00Y16.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: peasant
+-- Repute: 0
+-- QuestId: 16
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 55
+Quest: A0C00Y16
+DisplayName: Дело о пропавшем человеке
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Меня зовут _questgiver_. Не
+<ce> могли бы вы помочь найти моего друга?
+<ce> Я могу заплатить _gold_ золотых.
+   <--->
+<ce> Пожалуйста, помогите мне! Пропал мой друг
+<ce> _missingperson_. Боюсь, что %g может быть
+<ce> в беде. Я заплачу вам _gold_ золотых,
+<ce> если вы найдете %g4.
+
+RefuseQuest:  [1001]
+<ce> Доброго дня, %ra. Поищу кого-нибудь еще.
+   <--->
+<ce> Неужели никто не в состоянии помочь мне?
+   <--->
+<ce> Тысячи извинений. Мне казалось вы
+<ce> достаточно смелый авантюрист.
+
+AcceptQuest:  [1002]
+<ce> Мои молитвы услышаны. Я не видел _missingperson_
+<ce> уже 4 дня и очень беспокоюсь. Последний раз
+<ce> %g4 видели в компании _friend1_ и _friend2_.
+<ce> Думаю вам стоит начать с них. Если вы не найдете
+<ce> _missingperson_ в течение двух дней, можете
+<ce> прекратить поиски.
+
+QuestComplete:  [1004]
+<ce> Вот обещанные _gold_ золотых.
+
+RumorsDuringQuest:  [1005]
+<ce> Я слышал, что _questgiver_ отчаянно
+<ce> ищет _missingperson_.
+
+RumorsPostfailure:  [1006]
+<ce> Никто не видел _missingperson_
+<ce> уже несколько дней. Не исключено, что %g
+<ce> уже мертв. Я слышал, что _questgiver_
+<ce> был сражен этим известием.
+
+RumorsPostsuccess:  [1007]
+<ce> Скажите, вы случайно не тот самый %ra, который
+<ce> помог отыскать _missingperson_ для _questgiver_?
+
+QuestorPostsuccess:  [1008]
+<ce> Как же я могу отказать %ra, который
+<ce> нашел _missingperson_ для меня?
+
+QuestorPostfailure:  [1009]
+<ce> Понимаю, это не ваша ошибка, что вы не
+<ce> смогли найти _missingperson_
+<ce> Нашли %g4 тело с перерезанным горлом.
+<ce> Оставьте меня.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Я согласился помочь _questgiver_ найти
+ _missingperson_. %g отсутствует уже четыре
+ дня. Единственное, что известно, что %g
+ был замечен в компании _friend2_ и
+ _friend1_. Если я не управлюсь за два дня,
+ то не получу плату.
+
+Message:  1021
+<ce> Вы ищете _missingperson_?
+<ce> Хммм, %g прячется в __missingperson_,
+<ce> только не говорите это _questgiver_.
+<ce> _missingperson_ поклялся никогда
+<ce> больше не говорить с _questgiver_.
+<ce> Не спрашивайте меня, почему.
+
+Message:  1022
+<ce> Не встречался ли мне _missingperson_?
+<ce> Конечно. Стража поймала %g4 за кражу
+<ce> из храма. _questgiver_ будет в ярости,
+<ce> когда %g освободится.
+
+Message:  1023
+<ce> Случайно не _questgiver_ рассказал вам
+<ce> об этом? Не сомневаюсь в этом. %oth, %g
+<ce> провел на днях нечестный поединок с
+<ce> _missingperson_. _missingperson_
+<ce> ушел из города и с тех пор %g4 не видели.
+<ce> Нет, я не знаю, куда %g ушел.
+
+Message:  1024
+<ce> _missingperson_? Да, я
+<ce> знаю, что случилось с ним.
+<ce> Он был убит, вот что случилось.
+<ce> Мой друг Смайли очень вежливо
+<ce> попросил его золото, но он
+<ce> начал грубить в ответ. Вам стоит
+<ce> познакомиться со Смайли и другими
+<ce> моими друзьями. Взять этого %ra,
+<ce> Смайли!
+
+Message:  1031
+<ce> _missingperson_? Аа... не видел
+<ce> его уже несколько дней.
+<ce> Попробуйте спросить _friend3_, может
+<ce> он что знает.
+
+Message:  1032
+<ce> %oth. Я не видел _missingperson_
+<ce> с позавчерашнего дня. Вам стоит спросить
+<ce> у _friend4_ или _friend1_.
+<ce> Один из них может что-то знать.
+
+Message:  1033
+<ce> _friend1_ сказал вам, что я могу
+<ce> знать что-то про _missingperson_?
+<ce> Не стоило даже беспокоиться. Все, что
+<ce> я знаю, что напившись прошлой ночью
+<ce> он куда-то ушел. Надеюсь с ним не
+<ce> случилось ничего плохого.
+
+Message:  1034
+<ce> Простите, но я не видел _missingperson_
+<ce> уже давно. Не знаю, почему _friend2_
+<ce> отправил вас ко мне... А вы не обращались
+<ce> к _friend1_?
+
+Message:  1040
+<ce> Что вы здесь делаете? Я больше
+<ce> не желаю видеть _questgiver_.
+<ce> Эй! Отпустите меня! Вы не можете
+<ce> просто так протащить меня по улице
+<ce> к нему.
+
+Message:  1050
+<ce> _missingperson_! Я если честно
+<ce> уже и не надеялся, что вы найдете его,
+<ce> %pcn. _missingperson_,
+<ce> ты где пропадал? Я беспокоился о тебе.
+<ce> %pcf, я забираю его отсюда.
+
+Message:  1051
+<ce> Итак, _missingperson_ прячется,
+<ce> да? Пойду-ка заберу его из его укромного
+<ce> местечка. Вы мне очень помогли, %pcn.
+
+Message:  1052
+<ce> В тюрьме! Мне надо поспешить.
+<ce> Быть может придется дать взятку
+<ce> мировому судье.
+
+Message:  1053
+<ce> Так. _missingperson_ ушел
+<ce> из города. Не следовало ему делать
+<ce> этого. Я почти простил его.
+
+Message:  1054
+<ce> Мертв! Как этом могло произойти?
+<ce> Надеюсь вы заставили Смайли пожалеть
+<ce> об этом, %pcn! Какое горестное
+<ce> известие.
+
+
+
+QBN:
+Item _gold_ gold
+
+Person _questgiver_ group Questor
+Person _missingperson_ face 1 group Group_6.0 local
+Person _friend1_ group Local_3.1 local
+Person _friend2_ group Local_3.1 local
+Person _friend3_ group Local_3.1 local
+Person _friend4_ group Local_4.1 local
+
+Place _hidingplace_ local random
+
+Clock _S.16_ 2.00:00
+--removed flags to make exact two days
+
+Clock _delay_ 00:00
+
+Foe _F.00_ is 3 Barbarian
+
+--	Quest start-up:
+	dialog link for person _friend4_
+	dialog link for person _missingperson_
+	dialog link for location _hidingplace_ person _friend3_
+	start timer _S.16_
+	log 1010 step 0
+	pick one of _S.00_ _S.02_ _S.03_ _S.01_
+	create npc _friend4_
+	create npc _friend2_
+	create npc _friend3_
+	create npc _friend1_
+
+_S.00_ task:
+	place npc _missingperson_ at _hidingplace_
+
+variable _S.01_
+variable _S.02_
+variable _S.03_
+_S.04_ task:
+	clicked npc _friend1_
+
+_S.05_ task:
+	clicked npc _friend2_
+
+_S.06_ task:
+	clicked npc _friend3_
+
+_S.07_ task:
+	clicked npc _friend4_
+
+_S.08_ task:
+	when _S.00_ and _S.04_
+	add dialog for location _hidingplace_
+	say 1021
+
+_S.09_ task:
+	when _S.02_ and _S.05_
+	say 1022
+
+_S.10_ task:
+	when _S.03_ and _S.06_
+	say 1023
+
+_S.11_ task:
+	when _S.01_ and _S.07_
+	create foe _F.00_ every 1 minutes 1 times with 100% success
+	say 1024
+
+_S.12_ task:
+	when not _S.00_ and _S.04_
+	add dialog for person _friend3_
+	say 1031
+
+_S.13_ task:
+	when not _S.02_ and _S.05_
+	add dialog for person _friend4_
+	say 1032
+
+_S.14_ task:
+	when not _S.03_ and _S.06_
+	say 1033
+
+_S.15_ task:
+	when not _S.01_ and _S.07_
+	say 1034
+
+_S.16_ task:
+	end quest
+
+_S.17_ task:
+	killed 1 _F.00_
+	hide npc _friend4_
+
+_S.18_ task:
+	clicked npc _questgiver_
+
+_clearclick_ task:
+	when not _yes_ and _S.18_
+	clear _S.18_ _clearclick_
+
+_yes_ task:
+	when _S.08_ or _S.09_ or _S.10_ or _S.11_ or _S.22_
+
+_givereward_ task:
+	when _yes_ and _S.18_
+	start timer _delay_
+
+_delay_ task:
+	give pc _gold_
+	end quest
+
+_S.22_ task:
+	clicked npc _missingperson_
+	add _missingperson_ face saying 1040
+	hide npc _missingperson_
+
+_S.23_ task:
+	when _S.22_ and _S.18_
+	drop _missingperson_ face
+
+_S.24_ task:
+	when _S.18_ and _S.08_ and not _S.22_
+	say 1051
+
+_S.25_ task:
+	when _S.18_ and _S.09_
+	say 1052
+
+_S.26_ task:
+	when _S.18_ and _S.10_
+	say 1053
+
+_S.27_ task:
+	when _S.18_ and _S.11_
+	say 1054
+
+_S.28_ task:
+	when _S.18_ and _S.22_
+	say 1050
+--removed unnecessary check. quest can remained "unsolved" after unexpectedly finding the quarry and returning to QG.

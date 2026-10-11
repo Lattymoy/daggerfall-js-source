@@ -1,0 +1,112 @@
+-- Quest: C:\QUESTS\WORKING\B0B00Y01.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: knight
+-- Repute: 0
+-- QuestId: 1
+Messages: 12
+Quest: B0B00Y01
+DisplayName: Возмездие
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> В наших рядах в __qgiver_ предатель,
+<ce> злобный монстр _monster_, который
+<ce> пошел против своих хозяев. На кону наша
+<ce> честь, %pct. Присоединяйтесь к
+<ce> нашему праведному гневу.
+   <--->
+<ce> __qgiver_ был предан вероломным монстром
+<ce> _monster_.
+<ce> Поможете ли вы нам выследить этого трусливого
+<ce> злодея, а потом уничтожить его?
+
+RefuseQuest:  [1001]
+<ce> Это недостойный вас ответ.
+<ce> Я думал о вас много лучше.
+
+AcceptQuest:  [1002]
+<ce> Очень хорошо. Предатель - _monster_
+<ce> по имени =monster_, нашедший себе
+<ce> убежище в ___mondun_ на %di отсюда.
+<ce> Если вы не вернетесь до исхода =queston_
+<ce> дней, ваша долг и честь будут забыты и
+<ce> кто-то другой займет ваше место.
+<ce> Не подведите нас в этом деле, %pcf.
+
+QuestFail:  [1003]
+<ce> _monster_ еще не мертв. Не
+<ce> пытайтесь убедить меня в обратном.
+
+QuestComplete:  [1004]
+<ce> Отлично. Вам есть чем гордиться.
+
+RumorsDuringQuest:  [1005]
+_monster_ скрылся в ___mondun_ подобно исчадиям ада, стоящими за ним.
+   <--->
+_qgiver_ не может позволить уйти =monster_, после того, что %g сделал с %kno.
+
+RumorsPostfailure:  [1006]
+=monster_ по всей видимости сильнее, чем думал _qgiver_. Потому и совершил побег.
+   <--->
+=monster_ по слухам смылся на север, но память о нем все еще лежит черным пятном на ордене.
+
+RumorsPostsuccess:  [1007]
+История =monster_ только лишний раз доказывает это. Вам не следует шутить с %kno.
+   <--->
+Я всегда полагал, что Орден проявляет милосердие к подобным =monster_.
+
+QuestorPostsuccess:  [1008]
+Вы отлично показалия себя в деле с =monster_. Чем мы можем вам помочь?
+
+QuestorPostfailure:  [1009]
+__qgiver_ до сих пор волнуется из-за этого дела с =monster_. Что вам нужно?
+
+QuestLogEntry:  [1010]
+%qdt:
+ %kno в ___qgiver_
+ послали меня найти и убить _monster_
+ прозываемого =monster_ в его
+ убежище, ___mondun_.
+ У меня =queston_ дней на выполнение.
+
+Message:  1011
+<ce> Вы убили =monster_, _monster_.
+
+
+
+QBN:
+
+Person _qgiver_ group Questor
+
+Place _mondun_ remote dungeon
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+Foe _monster_ is Nightblade
+
+--	Quest start-up:
+	start timer _queston_
+	reveal _mondun_
+	log 1010 step 0
+	place foe _monster_ at _mondun_
+
+_queston_ task:
+	end quest
+
+_pcgetsgold_ task:
+	when _mondead_ and _qgclicked_
+	give pc nothing
+	end quest
+
+_mondead_ task:
+	killed 1 _monster_ saying 1011
+
+_qgclicked_ task:
+	clicked npc _qgiver_
+
+_clearclick_ task:
+	when not _mondead_ and _qgclicked_
+	say 1003
+	clear _qgclicked_ _clearclick_

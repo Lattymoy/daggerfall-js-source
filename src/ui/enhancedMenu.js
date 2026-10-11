@@ -898,13 +898,13 @@ function paneContinue(body) {
 // settings key's clothes (systems/settings.js:"BG1: ShopQualityPresentation.").
 function paneNew(body) {
   const c = el('div', 'card');
-  c.append(el('h3', null, 'A new character'));
-  c.append(el('p', 'meta', 'Race, class, biography, face, skills.'));
-  c.append(acts([{ label: 'Begin', primary: true, onClick: () => onAction('new') }]));
+  c.append(el('h3', null, t('A new character')));
+  c.append(el('p', 'meta', t('Race, class, biography, face, skills.')));
+  c.append(acts([{ label: t('Begin'), primary: true, onClick: () => onAction('new') }]));
   body.append(c);
 
   const opts = el('div', 'card');
-  opts.append(el('h3', null, 'Where you wake up'));
+  opts.append(el('h3', null, t('Where you wake up')));
   for (const key of ['Startup/StartInDungeon', 'Startup/StartCellX', 'Startup/StartCellY']) {
     put(opts, settingRow(key, { compact: true }));
   }

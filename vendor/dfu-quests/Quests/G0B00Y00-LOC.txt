@@ -1,0 +1,131 @@
+-- Quest: C:\QUESTS\WORKING\G0B00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Kynaran
+-- Repute: 0
+-- QuestId: 0
+Messages: 21
+Quest: G0B00Y00
+DisplayName: Рука ярости
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Наш орден требует возмездия и наказания
+<ce> бывшего члена, оказавшегося предателем.
+<ce> Достаточно ли у вас сильная рука, чтобы
+<ce> покарать нечестивца, %pcf?
+   <--->
+<ce> Богиня послала нам предзнаменование и она
+<ce> требует кровь нечестивого злодея, который
+<ce> обесчестил ее имя. Помогите нам утолить
+<ce> гнев нашей госпожи Кинарет.
+
+RefuseQuest:  [1001]
+<ce> Как это недостойно.
+<ce> Я был о вас лучшего мнения.
+
+AcceptQuest:  [1002]
+<ce> Очень хорошо. Предатель - это убийца, обосно-
+<ce> вавшийся в ___mondun_ на %di отсюда.
+<ce> Если вы не вернетесь в течение =queston_ дней,
+<ce> ваша честь будет предана забвению и другой
+<ce> займет ваше место.
+<ce> Не подведите нас, %pcf.
+
+QuestFail:  [1003]
+<ce> Предатель еще не мертв. И не пытайтесь
+<ce> убедить меня в обратном.
+
+QuestComplete:  [1004]
+<ce> Отлично. У вас есть повод гордиться.
+
+RumorsDuringQuest:  [1005]
+Эта вонючка скрылась в ___mondun_ подобно исчадиям ада, стоящими за ее спиной.
+   <--->
+<ce> _qgiver_ не может просто так унести свой зад
+<ce> после того, что сделал с Кинаранским Орденом.
+
+RumorsPostfailure:  [1006]
+Предатель оказался сильнее, чем полагал _qgiver_. Вот он и сбежал.
+   <--->
+Отступник подался куда-то на север, но память о нем еще будет долго будоражить умы.
+
+RumorsPostsuccess:  [1007]
+История предателя доказывает это. Не стоит связываться с Кинаранским Орденом.
+   <--->
+Я полагал, что Орден будет более милосердным к этому несчастному.
+
+QuestorPostsuccess:  [1008]
+Что ж, вы убили предателя ордена. Меньшее, что я могу для вас сделать, это сказать "привет".
+
+QuestorPostfailure:  [1009]
+Вы позволили уйти этому предателю. Мне нечего больше вам сказать.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Кинаранский Орден в ___qgiver_
+ послал меня найти и убить предателя
+ ордена в его укрытии, ___mondun_.
+ У меня =queston_ дней на всю работу.
+
+Message:  1020
+<ce> "Ооо...Кинаранский Орден...послал
+<ce> тебя убить...меня. Скажи им...я
+<ce> плюю им в..."
+<ce> Отступник мертв.
+
+
+
+QBN:
+
+Person _qgiver_ group Questor
+
+Place _mondun_ remote dungeon
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+Foe _nightblade_ is Nightblade
+Foe _assassin_ is Assassin
+Foe _spellsword_ is Spellsword
+Foe _knight_ is Knight
+
+--	Quest start-up:
+	start timer _queston_
+	reveal _mondun_
+	log 1010 step 0
+	pick one of _S.05_ _S.06_ _S.07_ _S.08_
+
+_queston_ task:
+	end quest
+
+_pcgetsgold_ task:
+	when _mondead_ and _qgclicked_
+	give pc nothing
+	end quest
+
+_mondead_ task:
+	killed 1 _assassin_ saying 1020
+	killed 1 _knight_ saying 1020
+	killed 1 _spellsword_ saying 1020
+	killed 1 _nightblade_ saying 1020
+
+_qgclicked_ task:
+	clicked npc _qgiver_
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_
+	say 1003
+	clear _qgclicked_ _clearclick_
+
+_S.05_ task:
+	place foe _assassin_ at _mondun_
+
+_S.06_ task:
+	place foe _knight_ at _mondun_
+
+_S.07_ task:
+	place foe _spellsword_ at _mondun_
+
+_S.08_ task:
+	place foe _nightblade_ at _mondun_

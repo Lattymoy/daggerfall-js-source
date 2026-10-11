@@ -1,0 +1,197 @@
+-- Quest: C:\QUESTS\WORKING\C0B00Y14.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: temple
+-- Repute: 0
+-- QuestId: 14
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 62
+Quest: C0B00Y14
+DisplayName: Охота на нежить
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pct, у меня есть для вас опасное задание.
+<ce> Скажу прямо, нужно уничтожить сильную
+<ce> тварь класса нежити.
+<ce> __questgiver_ просит вас сделать это.
+<ce> Возьметесь?
+
+RefuseQuest:  [1001]
+<ce> Хорошо, я не буду винить вас.
+<ce> Мне остается надеяться только на себя.
+
+AcceptQuest:  [1002]
+<ce> Ваша храбрость прославит наш орден, %pcf.
+<ce> Нам нужно очистить одно место, именуемое
+<ce> ___mondung_.  Много лет назад
+<ce> это был один из наших храмов, но теперь
+<ce> его оскверненные галереи населены нежитью.
+<ce> Вам нужно уничтожить сильнейшего призрака
+<ce> и окропить то, что от него останется
+<ce> специально приготовленной для этого святой
+<ce> водой. Если вы не вернетесь через =qtime_ дней,
+<ce> я воскурю благовония в честь вашей погибшей
+<ce> души и отправлю еще кого-нибудь отомстить
+<ce> за вас. %god будет с вами, дитя мое.
+
+QuestFail:  [1003]
+<ce> %pct, если вы не хотите помочь
+<ce> очистить храм ___mondung_, то
+<ce> вам нужно было сказать об этом раньше.
+
+QuestComplete:  [1004]
+<ce> %god, хвала тебе! Вы благополучно вернулись!
+<ce> Наши провидцы уже сообщили что зло покинуло
+<ce> храм ___mondung_.
+<ce> Вы хорошо послужили, и
+<ce> __questgiver_ радуется вам.
+
+RumorsDuringQuest:  [1005]
+__questgiver_ планирует восстановить храм ___mondung_ во имя былой славы.
+
+RumorsPostfailure:  [1006]
+<ce> Кажется, нежить в храме ___mondung_ слишком сильна.
+
+RumorsPostsuccess:  [1007]
+<ce> __questgiver_ отправил одного из своих людей на очистку храма ___mondung_.
+
+QuestorPostsuccess:  [1008]
+<ce> Низкий поклон, %pcf. Ваш рейд в храм ___mondung_ это большая помощь
+<ce> нам.
+
+QuestorPostfailure:  [1009]
+<ce> Что я могу сделать для вас? Вы не сделали того, о чем я вас прошу.
+<ce> Злой дух все еще обитает в храме ___mondung_.
+
+Message:  1020
+%qdt:
+ _questgiver_ из храма __questgiver_,
+ ___questgiver_ отправляет меня
+ уничтожить нежить, обитающую в заброшенном
+ храме ___mondung_. Мне дали
+ склянку специально приготовленной святой
+ воды чтобы мне можно было оросить ей
+ тела чудовищ и упокоить их навсегда.
+ У меня есть =qtime_ дней, чтобы вернуться
+ назад, или _questgiver_
+ отправит на задание кого-нибудь еще.
+
+Message:  1021
+%qdt:
+ _questgiver_ из храма __questgiver_
+ в городе ___questgiver_ отправляет меня
+ уничтожить нежить, обитающую в заброшенном
+ храме ___mondung_. Сначала, однако, мне надо
+ навестить священника _priest_, __priest_
+ в городе ___priest_, который благословит
+ воду, которую мне вручили, сильнейшим
+ словом. Мне надо будет оросить тела
+ чудовищ, чтобы они больше не вернулись
+ в храм ___mondung_.
+ У меня есть =qtime_ дней, чтобы вернуться
+ назад, или _questgiver_
+ отправит на задание кого-нибудь еще.
+
+Message:  1050
+<ce> О, подождите, у меня в последнее время склероз!
+<ce> Вам сначала надо найти священника
+<ce> _priest_, ищите в месте __priest_ в
+<ce> городе ___priest_.  %g освятит воду
+<ce> сильнейшим благословением.
+
+Message:  1051
+<ce> _priest_ берет склянку из ваших рук
+<ce> не говоря ни слова.  %g благословляет
+<ce> ее и отдает вам, после чего возвращается
+<ce> к медитации.
+
+Message:  1060
+<ce> "Я =monster1_!  Ты можешь
+<ce> уничтожить мою физическую форму,
+<ce> но я всегда смогу вернуться сюда,
+<ce> домой, в храм ___mondung_!"
+
+Message:  1061
+<ce> Как только вы оросили святой водой
+<ce> останки чудовища,
+<ce> крик отчаяния разнесся эхом под
+<ce> мрачными сводами храма и
+<ce> затих вдали.
+
+
+
+QBN:
+Item _I.00_ item class 10 subclass 4
+
+Person _questgiver_ group Questor
+Person _priest_ group Cleric remote
+
+Place _mondung_ remote dungeon4
+
+Clock _qtime_ 00:00 0 flag 17 range 1 5
+
+Foe _monster1_ is Zombie
+Foe _monster2_ is Mummy
+Foe _monster3_ is Ghost
+
+--	Quest start-up:
+	start timer _qtime_
+	reveal _mondung_
+	get item _I.00_
+	pick one of _S.05_ _S.05_ _S.04_
+	pick one of _S.00_ _S.01_ _S.02_
+
+_S.00_ task:
+	place foe _monster1_ at _mondung_
+
+_S.01_ task:
+	place foe _monster2_ at _mondung_
+
+_S.02_ task:
+	place foe _monster3_ at _mondung_
+
+_qtime_ task:
+	end quest
+
+_S.04_ task:
+	log 1021 step 0
+	say 1050
+
+_S.05_ task:
+	log 1020 step 0
+
+_mondead_ task:
+	killed 1 _monster1_
+	killed 1 _monster2_
+	killed 1 _monster3_
+	say 1060
+	have _I.00_ set _S.09_
+
+_S.07_ task:
+	when _mondead_ and _S.09_ and not _S.10_
+	take _I.00_ from pc
+	say 1061
+
+_S.08_ task:
+	toting _I.00_ and _priest_ clicked
+	get item _I.00_
+	say 1051
+
+variable _S.09_
+_S.10_ task:
+	when _S.09_ and not _S.08_ and _S.04_
+
+_clickqgiver_ task:
+	clicked npc _questgiver_
+
+_success_ task:
+	when _clickqgiver_ and _S.07_
+	give pc nothing
+	end quest
+
+_clearclick_ task:
+	when not _S.07_ and _clickqgiver_
+	say 1003
+	clear _clickqgiver_ _clearclick_

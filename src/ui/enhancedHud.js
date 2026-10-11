@@ -58,6 +58,7 @@
 // build() and read the live options bag from a module variable, so a
 // frame still costs no listener work.
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
+import { t } from '../systems/i18n.js';
 import { retroScreenRect } from '../systems/retroMode.js';   // RETRO-UI: the pillarbox's rect, DFU's CustomScreenRect
 import { stepGhost, chunkFrame, GHOST_HOLD } from './barLoss.js';   // VB2 / FRAME1: a bar's loss (AUDIT NAV1: shared with the sea fight's card)
 import { mountHitNumbers, healNumberFor, showNumber } from './hitNumbers.js';   // HN1; PARTY-BUFFS: the heal a frame shows
@@ -674,9 +675,9 @@ function build(doc) {
   };
   // Magicka left, health centre, fatigue right - the reference's own
   // order, and DFU's own three.
-  const magicka = vital('magicka', 'Magicka');
-  const health = vital('health', 'Health');
-  const fatigue = vital('fatigue', 'Fatigue');
+  const magicka = vital('magicka', t('Magicka'));
+  const health = vital('health', t('Health'));
+  const fatigue = vital('fatigue', t('Fatigue'));
   bottom.append(bars);
   // RENOWN4 (Mac: "why is there no way to view my renown ingame?" and "Plus XP bar"): MY RENOWN, under the vitals and
   // as wide as them - the box every name wears, the bar to the next level with what is earned and not yet answered

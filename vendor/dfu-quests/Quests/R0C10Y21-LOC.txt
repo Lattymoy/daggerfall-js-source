@@ -1,0 +1,134 @@
+-- Quest: C:\QUESTS\WORKING\R0C10Y21.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 10
+-- QuestId: 21
+Messages: 16
+Quest: R0C10Y21
+DisplayName: Храм орков
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Мой родственник, _qgfriend_,
+<ce> попросил меня посодействовать в одной
+<ce> щекотливой ситуации. Так получилось,
+<ce> что есть ... храм, освященный, как бы это
+<ce> правильно то сказать, этими отвратительными
+<ce> орками. Мы хотим разрушить это, пока
+<ce> это возможно. Я могу предложить
+<ce> _reward_ золотых. Могу ли я
+<ce> рассчитывать на вашу помощь, %pcf?
+
+
+RefuseQuest:  [1001]
+<ce> Вы что, друг орков?
+<ce> %oth, прочь с глаз моих!
+
+AcceptQuest:  [1002]
+<ce> Благодарю вас за согласие, %pcf.
+<ce> Вот как мы хотим использовать ваши способности.
+<ce> Вам нужно прокрасться в ___mondung_
+<ce> и уничтожить так называемого шамана прямо
+<ce> в храме. Если успеть сделать это перед нашим
+<ce> налетом на это гнездо, это сделает нашу
+<ce> работу легче перышка. Когда сделаете работу,
+<ce> доложитесь во дворец в ___qgfriend_.
+<ce> Там вам за все и заплатят.
+<ce> У вас есть =1stparton_ дней.
+
+QuestFail:  [1003]
+<ce> Пора отправляться к ___mondung_,
+<ce> %pcf. План уже в действии, мы
+<ce> рассчитываем на вас.
+
+QuestComplete:  [1004]
+<ce> Приветствую вас, %pcf. Первоклассная
+<ce> работа с этим вонючим и тухлым шаманом.
+<ce> Как они посмели организовать свой
+<ce> каннибальский культ на моей земле!
+<ce> В отсутствие лидера они все разбегутся
+<ce> кто куда. Вот ваши _reward_ золотых.
+<ce> Будьте счастливы.
+
+RumorsDuringQuest:  [1005]
+Здесь в ___mondung_ есть оркское сообщество, которое беспокоит _qgfriend_.
+   <--->
+___mondung_ многие годы назад был оркским храмом. Сейчас они возвращаются.
+
+RumorsPostfailure:  [1006]
+Эта гадская община орков разогнана дуновением войска _qgfriend_.
+   <--->
+Бедняга _qgfriend_ так и не сможет отомстить оркам из ___mondung_.
+
+RumorsPostsuccess:  [1007]
+Это будет хороший урок это свинорылым дегенератам-каннибалам.
+   <--->
+%god да благословит _qgfriend_ и _questgiver_ и этого неизвестного солдата %ra.
+
+QuestorPostsuccess:  [1008]
+Слыхали последнюю шутку про орков? Мой кузен рассказывал про вашу отличную работу.
+   <--->
+Мой кузен впечатлен вашей работой с шаманом, друг мой.
+
+QuestorPostfailure:  [1009]
+<ce> Мой кузен говорит, что вы так и
+<ce> не смогли убить шамана. Мне не
+<ce> о чем разговаривать с вами.
+
+Message:  1011
+=qgfriend_, да? Вероятный союзник _questgiver_ в проблеме с орками.
+   <--->
+_qgfriend_ - ярый фанатик уничтожения орков.
+
+Message:  1012
+<ce> Вы убили оркского шамана.
+
+Message:  1015
+%qdt:
+ У меня =1stparton_ дней, чтобы убить шамана орков
+ в ___mondung_, потом пойти и доложиться во
+ дворец к _qgfriend_ в ___qgfriend_.
+ Мне заплатят _reward_ золотых
+ за смерть шамана.
+
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ face 112 group Questor
+Person _qgfriend_ group Noble remote anyInfo 1011
+Person _dummyorc_ faction Orsinium remote
+
+Place _mondung_ remote dungeon4
+
+Clock _1stparton_ 00:00 0 flag 1 range 2 5
+
+Foe _monster_ is Orc_shaman
+
+--	Quest start-up:
+	start timer _1stparton_
+	reveal _mondung_
+	log 1015 step 0
+	place foe _monster_ at _mondung_
+
+_1stparton_ task:
+	end quest
+
+_pcgetsgold_ task:
+	when _mondead_ and _npcclicked_
+	give pc _reward_
+	change repute with _qgfriend_ by +20
+	end quest
+
+variable _queston_
+_mondead_ task:
+	killed 1 _monster_
+	say 1012
+	change repute with _dummyorc_ by -30
+	create npc _qgfriend_
+
+_npcclicked_ task:
+	clicked npc _qgfriend_

@@ -1,0 +1,148 @@
+-- Quest: C:\QUESTS\WORKING\M0B20Y02.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: fighter
+-- Repute: 20
+-- QuestId: 2
+Messages: 81
+Quest: M0B20Y02
+DisplayName: Группа гигантов
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Мда, есть тут небольшая работка для тебя.
+<ce> Я бы не дал ее кому попало, но я знаю, -
+<ce> ты хороший работник. Проблема - шайка
+<ce> жаждущих крови гигантов. Оплата по высшему
+<ce> разряду: _reward_ золотых.
+<ce> Идет?
+
+RefuseQuest:  [1001]
+<ce> Ну ладно, как-нибудь разберемся.
+<ce> Похоже для тебя больше ничего нет.
+
+AcceptQuest:  [1002]
+<ce> По рукам, %pcf. Заказчик указал место,
+<ce> где обосновались эти гиганты: ___mondung_.
+<ce> Он говорит, там их шестеро, и он не заплатит,
+<ce> если все шестеро не будут трупами через
+<ce> =1stparton_ дней. Понятно? Ну что ж, хорошо,
+<ce> %pcf.
+
+QuestFail:  [1003]
+<ce> Разве можем мы тратить время на болтовню
+<ce> пока эти шестеро гигантов продолжают
+<ce> дышать?
+
+QuestComplete:  [1004]
+<ce> Похоже гиганты не подозревали, что гость
+<ce> пришел по их душу, не так ли, %pcf?
+<ce> Вот твои золотые, _reward_, как было
+<ce> обещано.
+
+RumorsDuringQuest:  [1005]
+Да, ___mondung_, - там поселилась группа гигантов, но они никого не беспокоят.
+   <--->
+Говорят %t желает покончить с этими гигантами раз и навсегда.
+
+RumorsPostfailure:  [1006]
+Что-то спугнуло этих гигантов. Интересно, что бы это могло быть?
+   <--->
+Если бы я был одним из этих гигантов, я бы тоже отсюда съехал. Слишком людно.
+
+RumorsPostsuccess:  [1007]
+Интересно, долго ли будет пустовать ___mondung_, до того как заявится следующая партия гигантов...
+   <--->
+Честно говоря, немного жалко этих гигантов. Они в общем-то никого не трогали.
+
+QuestorPostsuccess:  [1008]
+<ce> Гиганты - крепкий орешек, хорошо
+<ce> сработано. Далеко пойдешь, %pcf.
+
+QuestorPostfailure:  [1009]
+<ce> Гиганты - это слишком, а? Может быть
+<ce> Гильдии следовало послать тебя на борьбу
+<ce> с пигмеями?
+
+QuestLogEntry:  [1010]
+<ce> Все гиганты мертвы.
+
+Message:  1020
+<ce> Это территория ГИГАНТОВ!
+<ce> Отправляйся в свои жалкие земли,
+<ce> назойливая муха-%ra!
+   <--->
+<ce> Вчера я съел такого же,
+<ce> %ra - было очень вкусно.
+   <--->
+<ce> Мелкую душонку вытрясу!
+<ce> В лепешку размажу!
+
+Message:  1030
+%qdt:
+ Гильдия Бойцов из ___questgiver_
+ наняла меня, чтобы уничтожить клан гигантов,
+ чье убежище - ___mondung_. Чтобы получить
+ вознаграждение необходимо выполнить
+ задание и вернуться в Гильдию не позднее
+ чем за =1stparton_ дней.
+
+Message:  1080
+<ce> Эй, %pct, если ты ищешь, кого бы
+<ce> прикончить, вот, держи карту -
+<ce> ___newdung_. Там этого добра
+<ce> предостаточно.
+
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ group Questor
+
+Place _mondung_ remote dungeon13
+Place _newdung_ remote dungeon
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _monster_ is Giant
+
+--	Quest start-up:
+	start timer _1stparton_
+	reveal _mondung_
+	log 1030 step 0
+	pick one of _map_ _nomap_ _nomap_ _nomap_
+	pc at _mondung_ set _S.01_
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _mondead_
+	give pc _reward_
+	end quest
+
+_S.01_ task:
+	create foe _monster_ every 15 minutes 15 times with 50% success
+
+_mondead_ task:
+	killed 6 _monster_
+	say 1010
+
+_qgclicked_ task:
+	clicked npc _questgiver_
+
+_1stparton_ task:
+	end quest
+
+_S.05_ task:
+	injured _monster_ saying 1020
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_
+	clear _qgclicked_ _clearclick_
+
+variable _map_
+variable _nomap_
+_S.09_ task:
+	when _map_ and _pcgetsgold_
+	reveal _newdung_ readmap
+    say 1080

@@ -1,0 +1,150 @@
+-- Quest: C:\QUESTS\WORKING\L0B40Y04.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Brotherhood
+-- Repute: 40
+-- QuestId: 4
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 22
+Quest: L0B40Y04
+DisplayName: Заботы благородного человека
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Эта маленькая экскурсия отнюдь не для всех.
+<ce> Но мне кажется, вам нравится принимать вызов
+<ce> У нас есть клиент в королевской семье в
+<ce> __mondung_. Заказчик хочет провести дело
+<ce> тихо и надежно. Как мне только сказали об
+<ce> этом, у меня сразу возникла мысль о вас.
+<ce> Желаете заняться?
+
+RefuseQuest:  [1001]
+<ce> Хорошо. Весьма мудро, но это
+<ce> немного попахивает ...
+<ce> пренебрежением, малодушием...
+
+AcceptQuest:  [1002]
+<ce> Мне только что стало понятно, что вы
+<ce> никогда не откажетесь от величия.
+<ce> Будьте очень осторожны, ваша цель - _knight_
+<ce> отнюдь не изнеженный царек. Заказчик тоже
+<ce> из королевской семьи и он озабочен тем, что
+<ce> _knight_, как червячок, подбирается к трону.
+<ce> И, как мне известно, у н%g4 есть все возможности
+<ce> для этого и не только. Наш заказчик желает
+<ce> закончить дело в течение =1stparton_ дней.
+<ce> Мы даем вам это время на убийство и возврат
+<ce> обратно.
+<ce> Мефала будет с вами, %pcf.
+
+QuestFail:  [1003]
+<ce> Вы, наверное, перебили всю королевскую
+<ce> семью и заказчика в том числе, поскольку
+<ce> я не слышу слов благодарности от него, но
+<ce> _knight_ в живых, и вам нужно вернуться и
+<ce> закончить работу.
+
+QuestComplete:  [1004]
+<ce> Великолепно, %pcf. Вы превзошли себя
+<ce> и всех, кто до этого сомневался в
+<ce> вашем предназначении.
+<ce> О вас скоро будут слагать легенды.
+<ce> Ваша награда, _reward_ золотых. Это так,
+<ce> между прочим.
+<ce> Нам очень приятно иметь дело с вами...
+
+RumorsDuringQuest:  [1005]
+Я знаю точно, _knight_ будет нашим следующим правителем.
+   <--->
+Когда-нибудь _knight_ станет нашим правителем. И тогда мы увидим настоящего тирана.
+
+RumorsPostfailure:  [1006]
+_knight_ оставит двор ненадолго. %g вернется. Это точно.
+   <--->
+Драма во дворце продолжается. Интересно, что заставило главного претендента покинуть его.
+
+RumorsPostsuccess:  [1007]
+Сегодня в провинции %reg праздник. День смерти тирана _knight_! Ура!
+   <--->
+Мне не верилось, что _knight_ так быстро умрет. Слишком подозрительно.
+
+QuestorPostsuccess:  [1008]
+Я до сих пор думаю о контракте на рыцаря. Это действительно великое дело, %pcf.
+
+QuestorPostfailure:  [1009]
+<ce> Я знаю, этот контракт очень труден.
+<ce> Почти невозможен. Но все же вы не
+<ce> справились, а у меня нет сожаления к неудачникам.
+
+Message:  1020
+%qdt:
+ Мой последний контракт в Темном Братстве
+ знатный человек из замка _mondung_,
+ __mondung_, по имени
+ _knight_. Дело должно быть сделано
+ в течение =1stparton_ дней.
+
+Message:  1021
+<ce> "Мне... было бы приятно стать...
+<ce> вашим... новым повелителем", - стонет
+<ce> _knight_... Заказ выполнен.
+
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ face 112 group Questor
+Person _knight_ face 5 faction The_Host_of_the_Horn male remote
+
+Place _mondung_ remote palace
+
+Clock _1stparton_ 00:00 0 flag 18 range 0 2
+
+Foe _F.00_ is Spellsword
+Foe _F.01_ is Knight
+Foe _F.02_ is Warrior
+Foe _F.03_ is Nightblade
+
+--	Quest start-up:
+	start timer _1stparton_
+	log 1020 step 0
+	pick one of _S.06_ _S.07_ _S.08_ _onehour_
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _S.02_
+	give pc _reward_
+	end quest
+
+_qgclicked_ task:
+	clicked npc _questgiver_
+
+_S.02_ task:
+	killed 1 _F.01_ saying 1021
+	killed 1 _F.02_ saying 1021
+	killed 1 _F.03_ saying 1021
+	killed 1 _F.00_ saying 1021
+
+variable _queston_
+_1stparton_ task:
+	end quest
+
+variable _2ndparton_
+_S.06_ task:
+	place foe _F.00_ at _mondung_
+
+_S.07_ task:
+	place foe _F.01_ at _mondung_
+
+_S.08_ task:
+	place foe _F.02_ at _mondung_
+
+_onehour_ task:
+	place foe _F.03_ at _mondung_
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.02_
+	say 1003
+	clear _qgclicked_ _clearclick_

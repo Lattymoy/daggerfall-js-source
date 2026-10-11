@@ -1,0 +1,142 @@
+-- Quest: C:\QUESTS\WORKING\M0B30Y08.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: fighter
+-- Repute: 30
+-- QuestId: 8
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 81
+Quest: M0B30Y08
+DisplayName: Домашние разборки
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Немножко сора из избы, %pcf. Довольно
+<ce> чудного, надо сказать. __house_ - одна
+<ce> женщина хочет чтобы это место, ее жилище,
+<ce> очистили от... ее мужа. Одна проблема -
+<ce> он вообще-то давно умер. Возмешься за такую
+<ce> работу?
+
+RefuseQuest:  [1001]
+<ce> Очень жаль. Обычно такую работу предлагают
+<ce> только храмам. Ты упускаешь отличную
+<ce> возможность, %pcn.
+
+AcceptQuest:  [1002]
+<ce> Ее муж - зомби. В течение дня он скрывается
+<ce> где-то. Она никогда его не видела днем. По
+<ce> ночам он бродит вокруг дома. Чтобы избавить
+<ce> его от страданий и вернуться сюда у тебя есть
+<ce> =2dung_ дней, и за это ты получишь _gold_
+<ce> золотых.
+
+QuestComplete:  [1004]
+<ce> Что, старик и правда так вонял, как говорят?
+<ce> Как грязное белье, оставленное на неделю под
+<ce> дождем? Ну, вот твоя награда, %pcn.
+
+RumorsDuringQuest:  [1005]
+<ce> Вы слышали? Одна старая склочница
+<ce> жаловалась, что ее муж вернулся из
+<ce> могилы, чтобы донимать ее.
+
+RumorsPostfailure:  [1006]
+<ce> Эту женщину нашли мертвой в ее собственном
+<ce> доме. А рядом с ней нашли истлевший труп
+<ce> ее давно умершего мужа.
+
+RumorsPostsuccess:  [1007]
+<ce> Говорят Гильдия Бойцов отрядила одного
+<ce> из своих крутых вояк чтобы разобраться
+<ce> с этим зомби. Они хорошие ребята,
+<ce> эта гильдия.
+
+QuestorPostsuccess:  [1008]
+<ce> Хорошо сработано с этим зомби, %pcn.
+
+QuestorPostfailure:  [1009]
+<ce> Зомби - это оказалось слишком? Не следует
+<ce> браться за работу, которую ты не можешь
+<ce> выполнить.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Гильдия Бойцов города ___qgiver_
+ поручила мне очистить дом _house_
+ в __house_ от зомби, который обитает
+ там. У меня есть =2dung_ дней на
+ выполнение задания.
+
+Message:  1011
+<ce> _monster_ мертв. Теперь его жена
+<ce> может спать спокойно.
+
+Message:  1080
+<ce> Эй, %pcf, если по-твоему прикончить
+<ce> зомби - это весело, возьми эту
+<ce> карту - путь к одной дыре, населенной
+<ce> монстрами, под названием ___newdung_.
+<ce> Просто небольшая прогулка для такого героя.
+
+
+
+QBN:
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+
+Place _house_ remote random
+Place _newdung_ remote dungeon
+
+Clock _2dung_ 00:00 0 flag 17 range 0 2
+
+Foe _monster_ is Zombie
+
+--	Quest start-up:
+	start timer _2dung_
+	reveal _house_
+	log 1010 step 0
+	pick one of _map_ _map_ _nomap_ _nomap_
+	pc at _house_ set _S.04_
+	create npc at _house_
+
+_2dung_ task:
+	end quest
+
+_mondead_ task:
+	killed 1 _monster_ saying 1011
+
+_S.02_ task:
+	when _qgclicked_ and _mondead_ and _nomap_
+	give pc _gold_
+	end quest
+
+_mapvict_ task:
+	when _qgclicked_ and _mondead_ and _map_
+	give pc _gold_
+	reveal _newdung_ readmap
+    say 1080
+	end quest
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_
+	clear _qgclicked_ _clearclick_
+
+_qgclicked_ task:
+	clicked npc _qgiver_
+
+variable _S.04_
+_S.05_ task:
+	daily from 05:00 to 19:00
+
+_S.06_ task:
+	when _S.04_ and not _S.05_
+	place foe _monster_ at _house_
+
+variable _map_
+variable _nomap_
+_S.09_ task:
+	when _map_ and _S.02_
+

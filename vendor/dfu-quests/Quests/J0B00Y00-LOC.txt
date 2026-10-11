@@ -1,0 +1,143 @@
+-- Quest: C:\QUESTS\WORKING\J0B00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Zenithar
+-- Repute: 0
+-- QuestId: 0
+Messages: 31
+Quest: J0B00Y00
+DisplayName: Награда
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Если вы свободны для найма, у меня есть
+<ce> работа для вас. Это маленькое грязное
+<ce> дельце, включающее в себя наказание
+<ce> одного вора. Плата за работу составит
+<ce> _reward_ золотых. Что думаете, это
+<ce> звучит для вас приемлемо?
+
+RefuseQuest:  [1001]
+<ce> Какое разочарование. Что ж, мы поищем
+<ce> кого-то посговорчивее.
+
+AcceptQuest:  [1002]
+<ce> В наших делах мы всегда стараемся быть на
+<ce> стороне закона, но в данном случае нам
+<ce> нужно оправдание. Этот вор, как видите,
+<ce> нагло грабит один из наших караванов и
+<ce> вынуждает нас приступить к решительным
+<ce> действиям. Неслыханная наглость. Вы
+<ce> найдете этого воришку в своем укрытии в
+<ce> ___mondung_.
+<ce> Возвращайтесь в течение =1stparton_ дней.
+
+QuestFail:  [1003]
+<ce> Лучше бы вам пошевелиться, %pcf.
+<ce> У вас всего лишь =1stparton_ дней,
+<ce> чтобы убить жулика.
+
+QuestComplete:  [1004]
+<ce> Очень хорошая работа, %pcf.
+<ce> Это будет хороший урок прочим
+<ce> романтикам с большой дороги. Вот
+<ce> ваша награда - _reward_ золотых.
+
+RumorsDuringQuest:  [1005]
+Этот придурок в одиночку способен повергнуть в крах экономику.
+   <--->
+<ce> Они думают, что это просто вор, но этот жулик весьма
+<ce> искусен во владении с клинком.
+
+RumorsPostfailure:  [1006]
+Этот жулик переместился в другое укрытие, а дороги все еще небезопасны.
+   <--->
+Не знаю, почему этого романтика с большой дороги еще не арестовали. Это же очень легко.
+
+RumorsPostsuccess:  [1007]
+Купцы счастливы, что их избавили от надоевшего им вора.
+   <--->
+Меня не волнует, что они связались с найтблейдом. Дороги то все еще небезопасны.
+
+QuestorPostsuccess:  [1008]
+Конечно же я пообщаюсь с вам, %pcf. Я все еще помню, что вы убили этого разбойника.
+
+QuestorPostfailure:  [1009]
+Благонамерение Зенитара продолжает терять свои деньги. Это не смешно.
+
+Message:  1020
+<ce> Должно быть ты из Благонамерения.
+<ce> Приготовься к смерти, охотник
+<ce> за головами!
+
+Message:  1030
+%qdt:
+ Благонамерение Зенитара послало меня убить
+ вора, разграбляющего ее караваны.
+ ___mondung_ - укрытие этого жулика.
+ Мне нужно убить его и вернуться в
+ ___questgiver_ в течение
+ =1stparton_ дней.
+
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ group Questor
+
+Place _mondung_ remote dungeon
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _monster1_ is Nightblade
+Foe _monster2_ is Assassin
+Foe _monster3_ is Thief
+Foe _monster4_ is Spellsword
+
+--	Quest start-up:
+	start timer _1stparton_
+	reveal _mondung_
+	log 1030 step 0
+	pick one of _S.05_ _S.06_ _S.07_ _S.08_
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _mondead_
+	give pc _reward_
+	end quest
+
+_mondead_ task:
+	killed 1 _monster4_
+	killed 1 _monster2_
+	killed 1 _monster1_
+	killed 1 _monster3_
+
+_qgclicked_ task:
+	clicked npc _questgiver_
+
+_1stparton_ task:
+	end quest
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_
+	say 1003
+	clear _qgclicked_ _clearclick_
+
+_S.05_ task:
+	place foe _monster1_ at _mondung_
+
+_S.06_ task:
+	place foe _monster2_ at _mondung_
+
+_S.07_ task:
+	place foe _monster3_ at _mondung_
+
+_S.08_ task:
+	place foe _monster4_ at _mondung_
+
+_S.09_ task:
+	injured _monster4_ saying 1020
+	injured _monster3_ saying 1020
+	injured _monster2_ saying 1020
+	injured _monster1_ saying 1020

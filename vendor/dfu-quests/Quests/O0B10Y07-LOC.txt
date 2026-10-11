@@ -1,0 +1,129 @@
+-- Quest: C:\QUESTS\WORKING\O0B10Y07.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: thief
+-- Repute: 10
+-- QuestId: 7
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 21
+Quest: O0B10Y07
+DisplayName: Дворянские украшения
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Мы положили глаз на тебя,
+<ce> %pcf. Не думай о том, кто это "мы"
+<ce> Если ты хочешь славы а не денег, то
+<ce> мы можем предложить тебе специальное
+<ce> задание. Если ты справишься с ним,
+<ce> то наше доверие к тебе очень сильно
+<ce> возрастет. Итак, что ты скажешь?
+
+RefuseQuest:  [1001]
+<ce> Поостерегся бы ты, грязный
+<ce> ублюдочный предатель!
+
+AcceptQuest:  [1002]
+<ce> Твое задание будет простым.
+<ce> %rt в замке __palace_
+<ce> недавно "прибрели" драгоценность, -
+<ce> _jewelry_ очень тонкой выделки. Мы бы
+<ce> хотели взглянуть на нее поближе. У нас
+<ce> есть четкое время, =2palace_ дней, чтобы найти
+<ce> путь во дворец, смыться оттуда с вышеупомянутой,
+<ce> безделушкой и вернуться сюда.Вот и все. Ничего
+<ce> невозможного для настоящего вора. Ну, чего ты
+<ce> ждешь, %pcf? Вперед!!!
+
+QuestFail:  [1003]
+<ce> Я говорю ВПЕРЕД!!!!
+
+QuestComplete:  [1004]
+<ce> Наши поздравления, %pcf.
+<ce> Мы тебя еще скоро
+<ce> позовем.
+
+RumorsDuringQuest:  [1005]
+%t %rn,очевидно, гордится своей новой побрякушкой,- _jewelry_. Каждому хочется взглянуть на нее.
+   <--->
+В замке _palace_ усилили стражу, наверное, они охраняют новую драгоценность,- _jewelry_.
+
+RumorsPostfailure:  [1006]
+%t заказывает восстановление драгоценности _jewelry_ после неудачной кражи.
+   <--->
+Гильдия Воров не упустит такого случая завладеть штучкой под названием _jewelry_.
+
+RumorsPostsuccess:  [1007]
+Члены Гильдии Воров, похоже, очень смелы.Они украли драгоценность из под носа правителя.
+   <--->
+Гильдии Воров удалось тщательно спрятать взломщика дворца _palace_.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Чтобы произвести впечатление на
+ Гильдию Воров, мне пришлось согласиться
+ проникнуть в дворец _palace_, резиденцию
+ правителя %t в городе __palace_ и
+ украсть оттуда новую игрушку,- _jewelry_.
+ У меня есть =2palace_ дней, чтобы принести
+ эту драгоценность в руки нанимателя _qgiver_
+ в город ___qgiver_.
+
+Message:  1015
+<ce> У вас в руках то, за чем вас и
+<ce> посылали: _jewelry_
+
+Message:  1020
+<ce> Это оказалось очень легко!
+
+
+
+QBN:
+Item _jewelry_ trinket
+
+Person _qgiver_ group Questor
+
+Place _palace_ remote palace
+
+Clock _2palace_ 00:00 0 flag 17 range 0 2
+
+Foe _F.00_ is Knight
+Foe _battlemage_ is Battle_mage
+Foe _F.02_ is 3 Archer
+Foe _F.03_ is Gargoyle
+
+--	Quest start-up:
+	place item _jewelry_ at _palace_
+	start timer _2palace_
+	log 1010 step 0
+	pc at _palace_ set _S.02_
+
+_2palace_ task:
+	end quest
+
+_S.01_ task:
+	toting _jewelry_ and _qgiver_ clicked
+	give pc nothing
+	change repute with _qgiver_ by +5
+	end quest
+
+_qgtalk_ task:
+	clicked npc _qgiver_
+
+_clearclick_ task:
+	when _qgtalk_ and not _S.01_
+	say 1003
+	clear _clearclick_ _qgtalk_
+--added _qgtalk_ and _clearclick_
+
+_S.02_ task:
+	create foe _F.03_ every 11 minutes 3 times with 15% success
+	create foe _F.00_ every 10 minutes 10 times with 15% success
+	create foe _battlemage_ every 12 minutes 5 times with 15% success
+	create foe _F.02_ every 13 minutes 20 times with 15% success
+
+_S.04_ task:
+	clicked item _jewelry_
+                say 1020
+	say 1015

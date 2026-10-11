@@ -1,0 +1,134 @@
+-- Quest: C:\QUESTS\WORKING\L0B30Y09.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Brotherhood
+-- Repute: 30
+-- QuestId: 9
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 22
+Quest: L0B30Y09
+DisplayName: Анонимная работа
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> У нас есть секретная работа для вас. Это
+<ce> случается часто и, как всегда, кто-то
+<ce> платит нам за убийство кого-то не объясняя,
+<ce> почему, хотя в каждом контракте мы сохраняем
+<ce> имя заказчика в тайне. Так или иначе, но
+<ce> эта ваша работа, если, конечно, пожелаете.
+
+RefuseQuest:  [1001]
+<ce> Не упрекайте себя за отказ
+<ce> принять участие в этом.
+
+AcceptQuest:  [1002]
+<ce> Идите в место _mondung_, __mondung_.
+<ce> У вашей жертвы есть шрам на левой
+<ce> щеке. Это все, что нам известно.
+<ce> Возвращайтесь через =1stparton_ дней за
+<ce> наградой. Пусть Мефала благословит
+<ce> ваш клинок, %pcn.
+
+QuestFail:  [1003]
+<ce> Я не знаю, кого вы там прикончили, но
+<ce> это не тот, кто вам нужен.
+<ce> Тащите свою задницу обратно и ищите
+<ce> того, на кого контракт. Напомню...
+<ce> это место -  _mondung_
+
+QuestComplete:  [1004]
+<ce> Отлично, %pcf, правда. Можете
+<ce> немного отдохнуть. Лучшее исполнение,
+<ce> которое мне удавалось видеть. Я чувствую,
+<ce> что напишу поэму про это. А теперь почему
+<ce> бы вам не забрать свои _reward_ золотых и
+<ce> уйти отсюда, поскольку я начинаю работать
+<ce> на балладой об этом. А если серьезно,
+<ce> мне очень понравилось, %pcf.
+
+RumorsDuringQuest:  [1005]
+Прекрасная погода.
+
+RumorsPostfailure:  [1006]
+Говорят, что у короля есть дело.
+
+RumorsPostsuccess:  [1007]
+Наши цены очень высоки, если хотите знать.
+
+QuestorPostsuccess:  [1008]
+Хорошая работа с безымянным контрактом.
+
+QuestorPostfailure:  [1009]
+Очень плохо, что вы не выполнили эту работу. Это пятно на вашей репутации.
+
+Message:  1020
+%qdt:
+ Мой новый контракт - это
+ полная неизвестность. _mondung_,
+ __mondung_. Мне сказали только то,
+ что у жертвы шрам на левой щеке.
+ Дело должно быть сделано в
+ течение =1stparton_ дней.
+
+Message:  1021
+<ce> Свежий шрам на щеке указывает на цель.
+
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ face 112 group Questor
+
+Place _mondung_ remote palace
+
+Clock _1stparton_ 00:00 0 flag 18 range 0 2
+
+Foe _F.00_ is Healer
+Foe _F.01_ is Rogue
+Foe _F.02_ is Burglar
+Foe _F.03_ is Daedra_seducer
+
+--	Quest start-up:
+	start timer _1stparton_
+	reveal _mondung_
+	log 1020 step 0
+	pick one of _S.06_ _S.07_ _S.08_ _onehour_
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _S.02_
+	give pc _reward_
+	end quest
+
+_qgclicked_ task:
+	clicked npc _questgiver_
+
+_S.02_ task:
+	killed 1 _F.03_ saying 1021
+	killed 1 _F.02_ saying 1021
+	killed 1 _F.01_ saying 1021
+	killed 1 _F.00_ saying 1021
+
+variable _queston_
+_1stparton_ task:
+	end quest
+
+variable _2ndparton_
+_S.06_ task:
+	place foe _F.00_ at _mondung_
+
+_S.07_ task:
+	place foe _F.01_ at _mondung_
+
+_S.08_ task:
+	place foe _F.02_ at _mondung_
+
+_onehour_ task:
+	place foe _F.03_ at _mondung_
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.02_
+	say 1003
+	clear _qgclicked_ _clearclick_

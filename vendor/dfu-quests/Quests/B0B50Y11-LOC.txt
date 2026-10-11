@@ -1,0 +1,115 @@
+-- Quest: C:\QUESTS\WORKING\B0B50Y11.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: knight
+-- Repute: 50
+-- QuestId: 11
+Messages: 12
+Quest: B0B50Y11
+DisplayName: Экзорцизм
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Я _qgiver_.
+<ce> Один из местной знати,
+<ce> _nobleman_, получил в наследство
+<ce> заброшенную недвижимость.
+<ce> Однако %g обнаружил, что она
+<ce> облюбована духами. Нужен кто-то
+<ce> способный изгнать облюбовавшего дом
+<ce> призрака. Вы согласны взяться за
+<ce> это задание?
+
+RefuseQuest:  [1001]
+<ce> Вообще-то призраки это проблема
+<ce> по части храмов.  Может мне стоит
+<ce> попробовать обратиться в один из них?
+
+AcceptQuest:  [1002]
+<ce> _nobleman_ хочет начать перестройку
+<ce> через =2dung_ дня.
+<ce> У него есть карта к ___dungeon_,
+<ce> где вы найдете призрака.
+
+QuestComplete:  [1004]
+<ce> _nobleman_ удовлетворен работой.
+<ce> Он пообещал назвать один из фонтанов
+<ce> вашим именем.
+
+RumorsDuringQuest:  [1005]
+_nobleman_ был немного не в себе, когда купил права на ___dungeon_. Спятивший или тупой.
+
+RumorsPostfailure:  [1006]
+Бедный _nobleman_ обратился к %kno с просьбой очистить ___dungeon_ от призраков, но они потерпели неудачу.
+
+RumorsPostsuccess:  [1007]
+Благодаря %kno теперь ___dungeon_ можно превратить в склад или загородное поместье.
+
+QuestorPostsuccess:  [1008]
+Приветствую, %pcf. После оказания помощи _nobleman_, что я могу сделать для вас?
+
+QuestorPostfailure:  [1009]
+Вы опозорили %kno, когда не справились с заданием _nobleman_, %pcf. Какое разочарование.
+
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ из
+ ==qgiver_ в ___qgiver_
+ попросил меня избавить ___dungeon_
+ от населяющих его привидений.
+ У меня =2dung_ дней, прежде чем
+ начнется реконструкция.
+
+Message:  1011
+<ce> Призрак наконец-то упокоился
+<ce> с миром. Теперь _nobleman_
+<ce> может спокойно начинать
+<ce> реконструкцию ___dungeon_.
+
+
+
+QBN:
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+Person _nobleman_ face 182 factiontype Province remote
+Person _local_ face 77 group Resident2 male local
+
+Place _dungeon_ remote dungeon11
+
+Clock _2dung_ 00:00 0 flag 17 range 0 2
+
+Foe _ghost_ is Ghost
+Foe _wraith_ is Wraith
+
+--	Quest start-up:
+	start timer _2dung_
+	reveal _dungeon_
+	log 1010 step 0
+	pick one of _S.04_ _S.05_
+
+_2dung_ task:
+	end quest
+
+_S.01_ task:
+	killed 1 _wraith_ saying 1011
+	killed 1 _ghost_ saying 1011
+
+_S.02_ task:
+	clicked npc _qgiver_
+	give pc nothing
+	change repute with _local_ by +4
+	change repute with _nobleman_ by +10
+	end quest
+
+_clearclick_ task:
+	when _S.02_ and not _S.01_
+	clear _S.02_ _clearclick_
+
+_S.04_ task:
+	place foe _wraith_ at _dungeon_
+
+_S.05_ task:
+	place foe _ghost_ at _dungeon_

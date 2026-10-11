@@ -1,0 +1,154 @@
+-- Quest: C:\QUESTS\WORKING\A0C01Y01.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: peasant
+-- Repute: 01
+-- QuestId: 1
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 14
+Quest: A0C01Y01
+DisplayName: Телохранитель
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pcn, я очень опасаюсь за свою жизнь.
+<ce> Защитите меня! _villains_s угрожают
+<ce> убить меня этой ночью, потому что я
+<ce> отказался продать им свои земли. Я
+<ce> заплачу вам _gold_ золотых.
+   <--->
+<ce> Я в отчаянном положении, мой дорогой %ra.
+<ce> До меня дошли слухи, что %cn бандиты
+<ce> собираются вломиться в мой дом этой ночью.
+<ce> Я был бы очень благодарен, если бы вы
+<ce> согласились провести им пластическую
+<ce> операцию на лице и других частях тела.
+
+RefuseQuest:  [1001]
+<ce> Не бойтесь за мою безопасность, %pcn.
+<ce> Я найду еще кого-нибудь...надеюсь.
+
+AcceptQuest:  [1002]
+<ce> Спасибо и да благословит вас бог! Они попробуют
+<ce> вломиться в _qgiverhome_ за три часа
+<ce> пополуночи. Будьте там и ждите меня к этому
+<ce> времени. Только когда они будут побеждены,
+<ce> только тогда я буду чувствовтаь себя в
+<ce> безопасности.
+
+QuestComplete:  [1004]
+<ce> Вы спасли мою жизнь, %pcf. Я заплачу
+<ce> за ваши услуги даже больше, чем
+<ce> договаривались.
+
+RumorsDuringQuest:  [1005]
+<ce> У _qgiver_ проблемы с Гильдией Воров.
+<ce> Я слышал, они собираются проучить его.
+
+RumorsPostfailure:  [1006]
+<ce> Я видел _qgiver_ недавно. %g был
+<ce> избит какими-то бандитами.
+
+RumorsPostsuccess:  [1007]
+<ce> Вы случайно не тот %ra, который
+<ce> гонял как щенков тех бандюков,
+<ce> попытавшихся побить _qgiver_?
+
+QuestorPostsuccess:  [1008]
+<ce> Я все еще помню, что вы сделали для
+<ce> меня, %pcf. Я бесконечно вам
+<ce> благодарен за защиту от тех бандитов.
+
+QuestorPostfailure:  [1009]
+<ce> Меня все еще трясет после встречи с теми
+<ce> бандитами. Я нанял вас защищать меня, а
+<ce> вы смылись. Уходите прочь.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ из ___qgiver_ попросил
+ меня защитить его. _villains_s угрожают
+ вломиться в его дом _qgiverhome_ где-то
+ между 9 вечера и полуночью.
+
+Message:  1011
+<ce> Это не твое дело, незнакомец. Оставь
+<ce> _qgiver_ нам или мы сметем тебя со
+<ce> своего пути!
+
+Message:  1013
+<ce> Должно быть это то самое место. По
+<ce> описанию похоже на то, о чем говорил
+<ce> _qgiver_.
+
+
+
+QBN:
+Item _gold_ gold
+
+Person _qgiver_ face 1 group Questor
+
+Place _qgiverhome_ local house2
+
+Clock _S.00_ 1.03:00
+--removed flags to make time limit exact
+
+Foe _villains_ is 2 Assassin
+
+--	Quest start-up:
+	start timer _S.00_
+	log 1010 step 0
+	pc at _qgiverhome_ set _S.05_
+	---removed "saying" as unacceptable argument. moved to S.05
+	create npc at _qgiverhome_
+
+_S.00_ task:
+	end quest
+
+_S.01_ task:
+	daily from 21:00 to 22:59
+	--changed 24:00 to 23:59. 24:00 shouldn't exist.
+	place npc _qgiver_ at _qgiverhome_
+
+_S.02_ task:
+	killed 2 _villains_
+
+_questdone_ task:
+	when _S.04_ and _S.02_
+	give pc _gold_
+
+_S.04_ task:
+	clicked npc _qgiver_
+
+_S.05_ task:
+	say 1013
+
+_S.06_ task:
+	injured _villains_ saying 1011
+
+_clearclick_ task:
+	when not _S.02_ and _S.04_
+	clear _S.04_ _clearclick_
+
+_S.08_ task:
+	when _S.05_ and _S.01_ and not _S.06_
+	create foe _villains_ every 10 minutes 1 times with 25% success
+--added "not S06" to prevent multiple spawns
+
+_mmap_ task:
+	when _questdone_ and not _S.05_
+	end quest
+
+--on rare occasions, the enemies still would not spawn with the above logic.
+--A new back-up logic starting from 11PM is given below, to force an enemy
+--spawn if none has been injured by 11PM. If there's a better way to ensure
+--the enemies haven't spawned than with "injured," it would be preferable.
+
+_latehour_ task:
+	daily from 23:00 to 23:59
+	place npc _qgiver_ at _qgiverhome_
+
+_backupspawn_ task:
+	when _S.05_ and _latehour_ and not _S.06_
+	create foe _villains_ every 0 minutes 1 times with 100% success

@@ -1,0 +1,205 @@
+-- Quest: C:\QUESTS\WORKING\C0C00Y10.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: temple
+-- Repute: 0
+-- QuestId: 10
+Messages: 26
+Quest: C0C00Y10
+DisplayName: Исцеление
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Лучший способ поднять свою репутацию
+<ce> в храме - исцелить кого-нибудь. Я
+<ce> знаю одно дело, которое может вас
+<ce> заинтересовать, %pcn.
+<ce> Возьметесь?
+   <--->
+<ce> Я _giver_. Вы
+<ce> недостаточно высоки в иерархии
+<ce> __giver_. Я замолвлю
+<ce> за вас словечко, если вы исцелите
+<ce> кого-то, кого я знаю.
+
+RefuseQuest:  [1001]
+<ce> Ну если вы действительно не в
+<ce> состоянии совершить простое
+<ce> исцеление, то естественно, что
+<ce> я не смогу замолвить за вас
+<ce> словечко.
+
+AcceptQuest:  [1002]
+<ce> _cousin_ в ___cousin_
+<ce> опасается заразиться особой болезнью.
+<ce> Я насчет того, чтобы помочь одному
+<ce> священнику. Я задержу их примерно
+<ce> на один день. Если вы можете найти
+<ce> исцеление, это поднимет вашу репутацию
+<ce> в __giver_. Могу дать вам
+<ce> только =questtime_ дней.
+
+QuestFail:  [1003]
+%qdt:
+ _giver_ из __giver_
+ в ___giver_ дал мне шанс
+ исцелить _cousin_ из
+ ___cousin_. Если у меня ничего
+ не получится в течение =questtime_ дней,
+ туда будет послан кто-то другой, чтобы
+ закончить работу.
+
+QuestComplete:  [1004]
+<ce> _cousin_ выглядит
+<ce> неплохо. Вероятно
+<ce> исцеление удалось.
+
+RumorsDuringQuest:  [1005]
+Бедный _cousin_. Как же страдает этот =cousin_!
+
+RumorsPostfailure:  [1006]
+_giver_ из __giver_ очень недоволен поведением этого %ra.
+
+RumorsPostsuccess:  [1007]
+Этот исцеленный - родственник _giver_ из __giver_.
+
+QuestorPostsuccess:  [1008]
+Я слышал, что _cousin_ исцелили. %god благословит вас, %pcf. Что вам нужно?
+
+QuestorPostfailure:  [1009]
+_cousin_ больше нет...я проклинаю вас, %pcf!
+
+Message:  1025
+<ce> Я буду следить за вами. Помните,
+<ce> имя пациента - _cousin_, и
+<ce> %g в ___cousin_. У вас
+<ce> =questtime_ дней, чтобы доказать свою
+<ce> состоятельность.
+
+--duplicate 1006 removed
+
+QuestLogEntry:  [1010]
+<ce> Мне очень плохо. Даже не знаю, что
+<ce> со мной случилось. Вы пришли помочь мне?
+<ce> Да? У вас есть лекарство? Если да,
+<ce> то используйте его на меня, поскорее.
+
+Message:  1011
+<ce> Неудача?
+
+Message:  1012
+Я слышал про %g4 болезнь. Кто-то говорил, что _healer_ из ___healer_ знает способ исцеления.
+   <--->
+Я слышал что-то об этом. Что-то насчет болезни и о ком-то по имени _healer_ в ___healer_, у которого есть лекарство.
+
+Message:  1013
+<ce> Привет. Да, я слышал про
+<ce> _cousin_ из ___cousin_ и %g4
+<ce> проблемы. Болезнь называется Лунная Лихорадка.
+<ce> Часто ее принимают за
+<ce> Серую Лихорадку. В общем у меня
+<ce> есть Инеистый Корень, который
+<ce> излечит ее. Но использовать его
+<ce> можно только один раз. Я продам
+<ce> это вам за 20 золотых.
+
+Message:  1014
+<ce> Вы собираетесь покупать Инеистый Корень?
+
+Message:  1015
+<ce> Извините, но похоже у вас недостаточно
+<ce> денег на Инеистый Корень.
+
+Message:  1016
+<ce> Спасибо, %pcn. Я использую Инеистый Корень.
+<ce> Даже не знаю, как вас отблагодарить.
+<ce> Пусть ваши путешествия будут безопасными.
+
+Message:  1017
+%qdt:
+ Куплено немного Инеистого Корня
+ у _healer_ из ___healer_,
+ который лечит Лунную Лихорадку, болезнь,
+ которой болеет _cousin_.
+
+Message:  1018
+%qdt:
+ Инеистый Корень вылечил _cousin_
+ от Лунной Лихорадки.
+ Может теперь __giver_ будет
+ обо мне более высокого мнения.
+
+Message:  1019
+<ce> Инеистый Корень буквально истаивает в
+<ce> ваших руках после использования.
+
+
+
+QBN:
+Item _talisman_ root_tendrils
+-added underscores to talisman
+
+Person _giver_ group Questor
+Person _cousin_ group Local_3.0 remote anyInfo 1012 rumors 1012
+Person _healer_ face 64 group Chemist remote
+
+
+Clock _questtime_ 00:00 0 flag 1 range 3 5
+
+--	Quest start-up:
+	start timer _questtime_
+	prompt 1011 yes _S.01_ no _S.02_
+	pick one of _S.06_ _S.07_
+	_talisman_ used do _S.08_
+
+_questtime_ task:
+	end quest
+
+_S.01_ task:
+	log 1003 step 0
+	say 1025
+
+_S.02_ task:
+	say 1005
+	end quest
+-removed illogical "saying RumorsPostfailure" from this task. replaced with 1005.
+
+_S.03_ task:
+	clicked npc _cousin_
+	say 1010
+
+_S.04_ task:
+	when _S.03_ and _S.06_
+	make pc ill with Swamp_Rot
+
+variable _S.05_
+variable _S.06_
+variable _S.07_
+_S.08_ task:
+	take _talisman_ from pc saying 1019
+	cure Swamp_Rot
+
+_S.09_ task:
+	toting _talisman_ and _cousin_ clicked
+	log 1018 step 2
+	say 1016
+	give pc nothing
+	end quest
+--removed unnecessary delay
+--moved "give pc nothing" to end of task, more sensible for dialogue
+
+_S.10_ task:
+	clicked npc _healer_ say 1013
+	prompt 1014 yes _S.11_ no _no_
+
+_no_ task:
+	clear _S.10_
+
+_S.11_ task:
+	clicked _healer_ and at least 20 gold otherwise do _S.12_
+	log 1017 step 1
+	get item _talisman_
+
+_S.12_ task:
+	say 1015

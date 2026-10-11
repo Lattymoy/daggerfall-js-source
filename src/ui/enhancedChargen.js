@@ -754,7 +754,7 @@ function customClassStage() {
 function attrHelp(key) {
   const box = el('div', 'attrhelp');
   box.append(el('h4', null, attrName(key ?? '')));
-  box.append(el('p', null, ATTRIBUTE_BLURB[key] ?? ''));
+  box.append(el('p', null, t(ATTRIBUTE_BLURB[key] ?? '')));
   return box;
 }
 
@@ -887,15 +887,15 @@ function classIoCard() {
 function bioMethodStage() {
   const pane = el('div', 'stagebody solo');
   const wrap = el('div', 'choose');
-  wrap.append(el('h2', null, 'Where have you been?'));
+  wrap.append(el('h2', null, t('Where have you been?')));
   const row = el('div', 'bigchoice tall');
   const ask = el('button', 'bigbtn');
-  ask.append(el('span', 'bigk', 'Answer twelve questions'));
-  ask.append(el('span', 'bign', 'Your answers move skills, gold, gear and how people take to you.'));
+  ask.append(el('span', 'bigk', t('Answer twelve questions')));
+  ask.append(el('span', 'bign', t('Your answers move skills, gold, gear and how people take to you.')));
   ask.onclick = () => { flow.applyHit({ bioMethod: 'questions' }); paint(); };
   const auto = el('button', 'bigbtn');
-  auto.append(el('span', 'bigk', 'Let it be written for you'));
-  auto.append(el('span', 'bign', 'Answered at random, and every answer still counts.'));
+  auto.append(el('span', 'bigk', t('Let it be written for you')));
+  auto.append(el('span', 'bign', t('Answered at random, and every answer still counts.')));
   auto.onclick = () => { flow.applyHit({ bioMethod: 'generate' }); paint(); };
   row.append(ask, auto);
   wrap.append(row);
@@ -1035,11 +1035,11 @@ function nameStage() {
 function faceStage() {
   const pane = el('div', 'stagebody solo');
   const wrap = el('div', 'choose');
-  wrap.append(el('h2', null, 'Which face is yours?'));
+  wrap.append(el('h2', null, t('Which face is yours?')));
 
   if (!faces?.canvases?.length) {
     // NEVER TRAPS: no CIF, no portraits, and the wizard still walks.
-    wrap.append(el('p', 'mapnote', 'The portraits need this race\u2019s FACE CIF. Any of the ten will do.'));
+    wrap.append(el('p', 'mapnote', t('The portraits need this race\u2019s FACE CIF. Any of the ten will do.')));
   }
   const grid = el('div', 'facegrid');
   for (let i = 0; i < FACES_PER_RACE; i++) {
@@ -1057,7 +1057,7 @@ function faceStage() {
   wrap.append(grid);
 
   const a = el('div', 'acts');
-  const ok = el('button', 'act primary', 'This one');
+  const ok = el('button', 'act primary', t('This one'));
   ok.onclick = () => { flow.input('confirm'); paint(); };
   a.append(ok);
   wrap.append(a);
@@ -1317,8 +1317,9 @@ function summaryStage() {
   };
   const idcol = el('div', 'reviewid');
   idcol.append(box);
+  const prov = PROVINCE_NAMES[flow.race.key] ?? '';
   idcol.append(el('div', 'reviewsub',
-    `${PROVINCE_NAMES[flow.race.key] ?? ''} \u00b7 ${flow.race.name} \u00b7 ${flow.classRowName(flow.classIndex)}`));
+    `${t(prov)} \u00b7 ${t(flow.race.name)} \u00b7 ${t(flow.classRowName(flow.classIndex))}`));
   who.append(idcol);
   list.append(who);
 

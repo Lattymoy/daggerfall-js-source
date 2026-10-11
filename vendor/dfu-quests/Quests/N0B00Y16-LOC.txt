@@ -1,0 +1,239 @@
+-- Quest: C:\QUESTS\WORKING\N0B00Y16.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: mage
+-- Repute: 0
+-- QuestId: 16
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 52
+Quest: N0B00Y16
+DisplayName: Открыть сундук
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pct, мне нужен кто-то, кто знает
+<ce> заклинание "Открыть".  Пожалуйста,
+<ce> скажите, что вы его выучили.
+
+RefuseQuest:  [1001]
+<ce> Вам действительно нужно посвятить
+<ce> себя изучению магии, если хотите
+<ce> добиться повышения в Гильдии.
+
+AcceptQuest:  [1002]
+<ce> Хорошо, тогда начнем.  Задание, которое
+<ce> я вам дам, будет очень простым. Настолько
+<ce> простым, что с ним сможет справиться даже
+<ce> ребенок.
+<ce> Один торговец, _merchant_, купил
+<ce> антикварный сундук, но никак не может его
+<ce> открыть. Пытался даже лучший слесарь города
+<ce> __shop_, но не смог, так что
+<ce> %g просит нас о помощи.  Сейчас у нас нет
+<ce> времени для таких пустяковых мелочей,
+<ce> но если мы ему поможем, Гильдия сможет
+<ce> заручиться своим покровительством, так что
+<ce> мне пришлось согласиться послать кого-то.
+<ce> То, о чем я говорю, - скорее всего одна из
+<ce> хитрых штучек знаменитого мага _mage_.
+<ce> Они были сделаны в огромном количестве, в
+<ce> основном как подарки своим друзьям, и до сих пор
+<ce> проявляются, ибо их создатель действительно
+<ce> знаменит... о чем это я?
+<ce> А! Да. Хорошо. Секрет этих шкатулочек в том,
+<ce> что их невозможно открыть никаким способом,
+<ce> кроме использования обычного заклинания
+<ce> "Открыть". Их специально сделали невосприимчивыми
+<ce> к другим причудливым заклинаниям, которые %g4
+<ce> друзья обычно использовали. Да, у н%g4 было
+<ce> обыкновение растрачивать свой немалый талант на
+<ce> подобные шутки. А жаль. Ну ладно, идите...
+
+QuestFail:  [1003]
+<ce> %pct, оставьте меня в покое и уйдите.
+<ce> У меня есть работа и у вас, кажется, тоже,
+<ce> если я не ошибаюсь.
+
+QuestComplete:  [1004]
+<ce> А? Что вам надо?  А, да, хитрая шкатулка.
+<ce> Я знаю, для вас это было несложно.
+<ce> Пусть это будет небольшой рекламой
+<ce> Для Гильдии Магов. Хорошо?
+
+RumorsDuringQuest:  [1005]
+<ce> Вы слышали, что _merchant_ не может открыть
+<ce> недавно приобретенный сундучок? Весело!
+
+RumorsPostfailure:  [1006]
+<ce> _merchant_ скоро забросит попытки открыть свой сундучок и продаст его еще кому-нибудь.
+
+RumorsPostsuccess:  [1007]
+<ce> Один торговец попросил Гильдию Магов открыть свою магическую шкатулку,
+<ce> и, когда ее открыли, она оказалась пуста. Это все, что мне известно.
+
+QuestorPostsuccess:  [1008]
+<ce> А, %pcn. Я помню вас. Волшебная шкатулка мага _mage_, да?
+
+QuestorPostfailure:  [1009]
+<ce> Ради всего святого, что вам нужно? Вы слабак, который
+<ce> даже не смог открыть шкатулку купца _merchant_.
+
+Message:  1020
+%qdt:
+ _questgiver_ из Гильдии Магов
+ города ___questgiver_ просит
+ меня вскрыть шкатулку местного купца
+ _merchant_. _questgiver_
+ думает, что это скорее всего веселая
+ шалость одного известного мага, которая
+ открывается простым заклинанием. Я
+ полагаю, что смогу увидеть, что там, когда
+ закончу.
+
+Message:  1030
+<ce> Вас послала Гильдия Магов? Отлично.
+<ce> Я знаю, мой старый друг _questgiver_
+<ce> не оставит меня. Вот шкатулка. Надеюсь,
+<ce> у вас есть идеи, как ее открыть.
+<ce> А то у меня они уже исчерпаны.
+
+Message:  1040
+<ce> Как только вы произнесли заклинание на
+<ce> коробочку, крышка подпрыгнула, и оттуда
+<ce> выскочил бес.
+<ce>
+<ce> "С днем рождения, =mage2_, старое пукало!"
+<ce> прокудахтал бес ненатурально глубоким,
+<ce> замогильным голосом.
+
+Message:  1041
+<ce> Как только заклинание было произнесено,
+<ce> крышка щелкнула и открылась. Внутри была
+<ce> палочка с надписью: "=mage3_, в честь
+<ce> твоего 110-го дня рождения. Используй меня,
+<ce> чтобы увидеть 120-й!"
+
+Message:  1042
+<ce> Как только вы произнесли заклинание, из
+<ce> сундучка повалил дым, крышка со щелчком
+<ce> отвалилась являя взору гравюру:
+<ce>
+"Дорогой друг =mage4_,
+<ce>
+Надеюсь, тебе нравится твое новое жилище.
+Не забудь разрушить там все, прежде,
+чем заселишься.
+<ce>
+Твой друг,
+<ce>
+ _mage_
+
+Message:  1043
+<ce> Крышка шкатулки открылась, и оттуда
+<ce> фонтаном полетело конфетти.
+<ce> Больше там ничего не было.
+
+Message:  1050
+<ce> Я высоко ценю то, что Гильдия направила
+<ce> вас помочь мне...надеюсь.
+<ce> Конечно, если бы мне было известно, что
+<ce> там внутри, у меня не было бы такого
+<ce> жгучего делания открыть ее!
+
+Message:  1051
+<ce> Если вы смогли открыть шкатулку, то
+<ce> может быть вы ее заберете? Я не знаю,
+<ce> для чего мне ее использовать.
+
+
+
+QBN:
+Item _crn_ item class 1 subclass 8
+--changed %crn to _crn_. variables should have underscores
+Item _I.01_ wand
+
+Person _questgiver_ face 86 group Questor
+Person _merchant_ face 87 group Pawnbroker female
+Person _mage_ face 1 group Spellcaster remote
+
+Place _shop_ local pawnshop
+
+Clock _qtime_ 2.00:00 0 flag 1 range 0 1
+
+Foe _mage2_ is Battle_mage
+Foe _mage3_ is Sorceror
+Foe _imp_ is Imp
+Foe _rats_ is Giant_rat
+Foe _bats_ is Giant_bat
+Foe _mage4_ is Mage
+Foe _skeleton_ is Skeletal_warrior
+
+--	Quest start-up:
+	start timer _qtime_
+	log 1020 step 0
+	place npc _merchant_ at _shop_
+
+_qtime_ task:
+	end quest
+
+_clickqgiver_ task:
+	clicked npc _questgiver_
+
+_S.10_ task:
+	toting _crn_ and _merchant_ clicked
+
+_S.02_ task:
+	clicked npc _merchant_
+	cast Open spell do _S.07_
+	get item _crn_
+	say 1030
+
+_a3_ task:
+	create foe _imp_ every 1 minutes 1 times with 100% success
+	say 1040
+
+_a4_ task:
+	_I.01_ used do _S.09_
+	get item _I.01_
+	say 1041
+
+_a5_ task:
+	create foe _rats_ every 3 minutes 3 times with 100% success
+	create foe _bats_ every 2 minutes 2 times with 100% success
+	say 1042
+
+_a6_ task:
+	say 1043
+
+_S.07_ task:
+	have _crn_ set _S.08_
+
+_S.08_ task:
+	pick one of _a3_ _a4_ _a5_ _a6_
+
+_S.09_ task:
+	create foe _skeleton_ every 1 minutes 1 times with 100% success
+	make _I.01_ permanent
+
+_S.11_ task:
+	when _S.08_ and _S.10_
+	say 1050
+
+_success_ task:
+	when _S.11_ and _clickqgiver_
+	give pc nothing
+	unset _clickqgiver_
+	end quest
+
+_clearclick_ task:
+	when _clickqgiver_ and not _S.11_
+	say 1003
+	clear _clearclick_ _clickqgiver_
+
+_S.13_ task:
+	when _S.10_ and not _S.08_
+	get item _crn_
+	say 1051
+	clear _S.10_
+	clear _S.13_
