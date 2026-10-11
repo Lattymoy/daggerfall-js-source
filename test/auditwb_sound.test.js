@@ -79,7 +79,7 @@ test('AUDIT WB D2 fadeOut is an ending, not a cut: the song fades over MUSIC_FAD
   svc.fadeOut();
   svc.playSong('NIGHT');
   flush();
-  assert.deepEqual(log.splice(0), [`fade 0 ${MUSIC_FADE_OUT_S}`, 'stop', 'play NIGHT', 'fade 0 0', `fade 1 ${MUSIC_FADE_IN_S}`]);
+  assert.deepEqual(log.splice(0), [`fade 0 ${MUSIC_FADE_OUT_S}`, 'stop', 'fade 0 0', 'play NIGHT', 'fade 0 0', `fade 1 ${MUSIC_FADE_IN_S}`]);   // AUDIT MIDI-OUT1: down before the play too
   // the same one asked back turns round where the fade stands
   svc.fadeOut();
   svc.playSong('NIGHT');

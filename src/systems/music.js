@@ -21,6 +21,7 @@ import { selectSong } from './songManager.js';
 import { SongPlayer, AudioSongPlayer, setMusicMuted, isMusicMuted } from './songPlayer.js';   // M-EXT: the replacement's player shares the volume law
 import { hasReplacement, replacementBytes } from './musicReplacement.js';   // M-EXT: SoundReplacement.TryImportSong
 import { onSettingChange } from './settings.js';   // 2026-08-27: MusicVolume applies live
+import { MidiOutSongPlayer, midiOutName, findMidiOutput, onMidiOutChange } from './midiOut.js';   // MIDI-OUT1: a device as the voice
 
 /** DISC20-B (2026-09-24, Mac: "Sometimes when music tracks switch, its very abrupt instead of seamlessly fading in
  *  between tracks"): A SWITCH FADES. DFU cuts - DaggerfallSongPlayer.Play calls Stop first, and Stop is
@@ -58,7 +59,32 @@ export class MusicService {
     this._unsubscribe = onSettingChange((section, key) => {
       if (section === 'Controls' && key === 'MusicVolume') this.resyncGain();
     });
+    this._midiOut = null;   // MIDI-OUT1: the MIDIOutput the songs play on, null for the synth
+    this._midiAsk = 0;
+    this._unsubscribeMidi = onMidiOutChange(() => this.adoptMidiOut());
   }
+
+  /** MIDI-OUT1: play on the device the player picked (systems/midiOut.js), or on the synth when none is picked or it is
+   *  not connected - asked at boot, at every pick, and when a device is plugged in or pulled out. A MIDI.BSA song
+   *  sounding moves across at once, from its top (the device holds none of the synth's state); a replacement pack is
+   *  an audio file and stays where it is. The latest ask wins (ASYNC NEVER DROPS: a pick made while the browser is
+   *  still answering an earlier one is the one that lands). */
+  async adoptMidiOut() {
+    const ask = ++this._midiAsk;
+    let output = null;
+    try { output = await findMidiOutput(midiOutName()); } catch (e) { console.warn('[music] MIDI out unavailable:', e?.message ?? e); }
+    if (ask !== this._midiAsk || output === this._midiOut) return;
+    this._midiOut = output;
+    const again = this.player?.playing && !this._switch ? this._current : null;
+    this.player?.stop();
+    this.player = null;
+    if (again) this._playBuiltIn(again);
+    // AUDIT: a song asked for before the first gesture waited for an AudioContext; a device needs none
+    else if (output && this._pending && this.playSong(this._pending)) this._pending = null;
+  }
+
+  /** MIDI-OUT1: is the music on a device? */
+  get midiOut() { return this._midiOut; }
 
   /** Re-level whatever is sounding to the MusicVolume setting. */
   resyncGain() {
@@ -117,6 +143,7 @@ export class MusicService {
       // from "music never started" during AUDIT 19.
       this.bootError = e?.message ?? String(e);
     }
+    if (midiOutName()) this.adoptMidiOut();   // MIDI-OUT1: the device picked last time - fire-and-forget, the synth plays until it answers
     if (typeof window !== 'undefined') this.attachGestureStart();
   }
 
@@ -161,6 +188,7 @@ export class MusicService {
     // AUDIT WBX W2: a song made in code needs no archive - the court's score played nothing where MIDI.BSA did not load
     if (!this.enabled && !made) return null;
     if (this.player) return this.player;
+    if (this._midiOut) return (this.player = new MidiOutSongPlayer(this._midiOut));   // MIDI-OUT1: a device needs no AudioContext
     if (!audio.ctx) return null;
     this.player = new SongPlayer(audio.ctx, audio.listenerBus?.() ?? null, audio.reverbSend?.() ?? null);   // DW-D: through the listener, so a filter on it takes the music too
     return this.player;
@@ -280,6 +308,9 @@ export class MusicService {
     }
     this._current = name;
     const fresh = !(player.playing && player.song === song);
+    // AUDIT MIDI-OUT1: down BEFORE the play as well - the MIDI player queues its first window inside play(), at the
+    // fade it holds then, so a fade still up struck the first notes at full before the rise began
+    if (fresh) player.fadeTo?.(0, 0);
     const ok = player.play(song);
     if (ok && fresh) { player.fadeTo?.(0, 0); player.fadeTo?.(1, MUSIC_FADE_IN_S); }   // DISC20-B: it rises in
     return ok;

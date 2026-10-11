@@ -242,6 +242,18 @@ export function sustainedDuration(startTick, durationTicks, intervals) {
   return durationTicks;
 }
 
+/** How long a note is held, in seconds, from the length the pump hands `_voice`.
+ *  AUDIT 39: EVERY time a voice hands the graph must be finite.
+ *  AudioParam.setValueAtTime and stop() take WebIDL restricted
+ *  doubles, so one non-finite duration throws out of the pump and
+ *  strands the cursor - a note with no usable length gets the same
+ *  0.2s a missing one gets rather than taking the scheduler down.
+ *  MIDI-OUT1: exported, because the MIDI-out player's note-off keeps the same length. */
+export function noteSeconds(durationSeconds) {
+  const rawDur = durationSeconds || 0.2;
+  return Math.max(0.05, Number.isFinite(rawDur) ? rawDur : 0.2);
+}
+
 /** A fresh 16-channel state. CC7 defaults to full: a song that never
  *  sends a volume must not be silent. */
 export function freshChannelState() {
@@ -350,7 +362,7 @@ export class SongPlayer {
     this._cursorTick = 0;
     // Everything is scheduled relative to this, so the whole song shares
     // one origin and cannot drift against the wall clock.
-    this._originTime = this.ctx.currentTime + 0.06;
+    this._originTime = this._origin(0.06);
     this._pump();
     this._timer = setInterval(() => this._pump(), TICK_INTERVAL_MS);
     return true;
@@ -387,10 +399,7 @@ export class SongPlayer {
     // is better than detonating it.
     if (nowTick - this._cursorTick > aheadTicks) {
       this._cursorTick = nowTick;
-      // Fold the skipped control events forward so the instruments and
-      // volumes on the far side of the gap are still right.
-      applyChannelEvents(this._state, eventsInWindow(events, 0, nowTick)
-        .filter((e) => e.type !== 'noteOn'));
+      this._skip(nowTick);
     }
 
     if (this._cursorTick < toTick) {
@@ -440,7 +449,7 @@ export class SongPlayer {
       this._state = freshChannelState();
       this._resyncChannelGains();   // audio-4: the seam carries no stale CC7
       this._cursorTick = 0;
-      this._originTime = this.ctx.currentTime + LOOP_LEAD_SECONDS;
+      this._originTime = this._origin(LOOP_LEAD_SECONDS);
       this._pump();          // schedule the seam NOW, not on the next tick
       return;
     }
@@ -450,17 +459,24 @@ export class SongPlayer {
     }
   }
 
+  /** MIDI-OUT1: where a song (or a loop's next pass) begins, `lead` seconds from now. Its own method so the MIDI-out
+   *  player (systems/midiOut.js) can start a song after a stopped one's last message, and reset the device there. */
+  _origin(lead) {
+    return this.ctx.currentTime + lead;
+  }
+
+  /** The stall skip (AUDIT 19 F8): fold the skipped control events forward so the instruments and volumes on the far
+   *  side of the gap are still right. MIDI-OUT1: its own method, so the MIDI-out player can tell the device too. */
+  _skip(toTick) {
+    applyChannelEvents(this._state, eventsInWindow(this.song.events, 0, toTick)
+      .filter((e) => e.type !== 'noteOn'));
+  }
+
   /** Build and schedule ONE note. The only method that touches the graph. */
   _voice(e, when, durationSeconds) {
     const ctx = this.ctx;
     const ch = this._state[e.channel] ?? { program: 0, volume: 1, pan: 0, bend: 0 };
-    // AUDIT 39: EVERY time this method hands the graph must be finite.
-    // AudioParam.setValueAtTime and stop() take WebIDL restricted
-    // doubles, so one non-finite duration throws out of the pump and
-    // strands the cursor - a note with no usable length gets the same
-    // 0.2s a missing one gets rather than taking the scheduler down.
-    const rawDur = durationSeconds || 0.2;
-    const dur = Math.max(0.05, Number.isFinite(rawDur) ? rawDur : 0.2);
+    const dur = noteSeconds(durationSeconds);
     // NOT multiplied by ch.volume any more - the channel's gain node owns
     // that, so a CC7 during a held note is audible (AUDIT 19).
     const amp = velocityGain(e.velocity);

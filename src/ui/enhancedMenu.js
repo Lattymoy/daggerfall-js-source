@@ -133,6 +133,7 @@ import { GATE_CROWD_TIERS } from '../net/gateCrowd.js';   // GATE-CROWD: how man
 import { PEER_RANGE_TIERS, peerRangeOf } from '../net/peerRange.js';
 import { YARD_RANGE_TIERS, yardRangeOf } from '../net/yardRange.js';   // YARD-RANGE: how far other players' yards are drawn   // PEER-RANGE: how far out other players are drawn, and the distance a stored value stands for
 import { replacementCount } from '../systems/musicReplacement.js';   // M-EXT: the packs card reports what the pick covers
+import { midiOutSupported, midiOutDenied, midiOutName, midiOutputs, setMidiOut, nextMidiOut, MIDI_OUT_PREF } from '../systems/midiOut.js';   // MIDI-OUT1: the Audio tab's device row
 import { brandMark } from './brandMark.js';   // INTRO2: Mac's supplied logo, shared with the final splash
 import { soundReplacementCount } from '../systems/soundReplacer.js';   // SNDREP1: the sound pack's count
 import { textureReplacementCount, bundleTextureCount } from '../systems/textureReplacement.js';   // M-TEX: and the texture half; DFMOD1: and the bundles'
@@ -1633,7 +1634,7 @@ const OPT_FILTERS = Object.freeze([['all', 'All'], ['changed', 'Changed'], ['enh
  *  total over it.) */
 export function portPool({ pause = false } = {}) {
   const pool = new Map();
-  for (const r of [...portRowsGame({ pause }), ...portRowsControls({ pause }), ...portRowsInterface({ pause })]) {
+  for (const r of [...portRowsGame({ pause }), ...portRowsAudio(), ...portRowsControls({ pause }), ...portRowsInterface({ pause })]) {
     if (r?.dataset?.opt) pool.set(r.dataset.opt, r);
   }
   return pool;
@@ -1903,7 +1904,8 @@ export function restoreTabDefaults(tab) {
   const pool = portPool();
   for (const item of items) {
     const pref = item.startsWith('port:') ? pool.get(item.slice(5))?.dataset?.pref : null;
-    if (pref && Object.hasOwn(PREF_DEFAULTS, pref) && onlineForcedPref(pref) === undefined) setPref(pref, PREF_DEFAULTS[pref]);
+    if (pref === MIDI_OUT_PREF) setMidiOut(PREF_DEFAULTS[pref]);   // AUDIT MIDI-OUT1: through the door the music hears
+    else if (pref && Object.hasOwn(PREF_DEFAULTS, pref) && onlineForcedPref(pref) === undefined) setPref(pref, PREF_DEFAULTS[pref]);
   }
 }
 
@@ -2560,6 +2562,46 @@ function outdoorsTestRow() {
   return test;
 }
 
+
+/** MIDI-OUT1 (2026-10-11, a player asking for MIDI out): THE AUDIO TAB'S PORT ROW - the music on a MIDI device
+ *  (systems/midiOut.js). The button names the device; a click steps to the next one connected, then Off. The first
+ *  click is the one that asks the browser for MIDI, so nothing is asked of a player who never touches the row. */
+export const MIDI_OUT_NAME = 'MIDI out';
+export const MIDI_OUT_NOTE = 'Play the music on a MIDI synth or device.';
+export const MIDI_OUT_NONE = 'This browser has no MIDI.';
+export const MIDI_OUT_DENIED = 'MIDI is blocked for this site.';
+export const MIDI_OUT_EMPTY = 'No MIDI device connected.';
+export const MIDI_OUT_AWAY = 'Not connected - the game\u2019s own synth plays.';
+let midiOutList = null;   // the outputs as last asked - null until the row's first click
+function portRowsAudio() {
+  const can = midiOutSupported();
+  const cur = midiOutName();
+  const note = !can ? MIDI_OUT_NONE
+    : midiOutDenied() ? MIDI_OUT_DENIED
+    : midiOutList && !midiOutList.length ? MIDI_OUT_EMPTY
+    : cur && midiOutList && !midiOutList.some((o) => o.name === cur) ? MIDI_OUT_AWAY
+    : MIDI_OUT_NOTE;
+  const row = el('div', 'row');
+  row.dataset.opt = 'midiOut'; row.dataset.pref = 'midiOut';   // ORG2
+  const main = el('button', 'row-main');
+  main.append(el('div', 'row-name', MIDI_OUT_NAME));
+  main.append(el('div', 'row-note', note));
+  const step = async () => {
+    if (!can) return;
+    midiOutList = await midiOutputs();
+    setMidiOut(nextMidiOut(midiOutName(), midiOutList));
+    render();
+  };
+  main.onclick = step;
+  row.append(main);
+  const ctl = el('div', 'ctl');
+  const b = el('button', 'act rowact', cur || 'Off');
+  b.onclick = step;
+  if (!can) b.disabled = true;
+  ctl.append(b, el('span', `tier ${can ? 'live' : 'unavailable'}`));
+  row.append(ctl);
+  return [row];
+}
 
 /** The CONTROLS category's port rows: the touch layer's knobs, only
  *  where the device reports touch (TI2). */

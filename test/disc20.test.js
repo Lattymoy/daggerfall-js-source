@@ -193,7 +193,7 @@ test('DISC20-B: a song that follows another fades the first out, then rises in -
   const { MUSIC_FADE_OUT_S, MUSIC_FADE_IN_S } = await import('../src/systems/music.js');
   const { svc, log, timers, flush } = await fadingService();
   assert.equal(svc.playSong('DAY'), true);
-  assert.deepEqual(log.splice(0), ['midi play DAY', 'midi fade 0 0', `midi fade 1 ${MUSIC_FADE_IN_S}`], 'the first song rises in, at once');
+  assert.deepEqual(log.splice(0), ['midi fade 0 0', 'midi play DAY', 'midi fade 0 0', `midi fade 1 ${MUSIC_FADE_IN_S}`], 'the first song rises in, at once');   // AUDIT MIDI-OUT1: down before the play too - the MIDI player queues its first window inside it
   assert.equal(timers.length, 0);
   assert.equal(svc.playSong('DAY'), true);
   assert.deepEqual(log.splice(0), [], 'the song already sounding is left alone');
@@ -204,12 +204,12 @@ test('DISC20-B: a song that follows another fades the first out, then rises in -
   assert.ok(svc.playing, 'the fade is still a song playing - the director does not read it as one that ended');
   assert.equal(svc.current, 'NIGHT', 'the service answers for the song it is going to');
   flush();
-  assert.deepEqual(log.splice(0), ['midi stop', 'midi play NIGHT', 'midi fade 0 0', `midi fade 1 ${MUSIC_FADE_IN_S}`], 'cut at silence, then the next rises in');
+  assert.deepEqual(log.splice(0), ['midi stop', 'midi fade 0 0', 'midi play NIGHT', 'midi fade 0 0', `midi fade 1 ${MUSIC_FADE_IN_S}`], 'cut at silence, then the next rises in');
   assert.ok(MUSIC_FADE_OUT_S >= 1 && MUSIC_FADE_OUT_S <= 3 && MUSIC_FADE_IN_S >= 0.5 && MUSIC_FADE_IN_S <= 2, 'a fade, not a pause');
   // a song that ended starts the next straight away, rising
   svc.player.playing = false; svc.player.song = null;   // a song's end: SongPlayer's own stop
   assert.equal(svc.playSong('RAIN'), true);
-  assert.deepEqual(log.splice(0), ['midi play RAIN', 'midi fade 0 0', `midi fade 1 ${MUSIC_FADE_IN_S}`]);
+  assert.deepEqual(log.splice(0), ['midi fade 0 0', 'midi play RAIN', 'midi fade 0 0', `midi fade 1 ${MUSIC_FADE_IN_S}`]);
   assert.equal(timers.length, 0);
 });
 
@@ -220,7 +220,7 @@ test('DISC20-B: during a fade the latest request is the one that plays, the song
   svc.playSong('NIGHT'); svc.playSong('RAIN');
   assert.equal(timers.length, 1, 'one fade, however many requests');
   flush();
-  assert.deepEqual(log.splice(0), [`midi fade 0 ${MUSIC_FADE_OUT_S}`, 'midi stop', 'midi play RAIN', 'midi fade 0 0', `midi fade 1 ${MUSIC_FADE_IN_S}`], 'the latest request plays, the one between never does');
+  assert.deepEqual(log.splice(0), [`midi fade 0 ${MUSIC_FADE_OUT_S}`, 'midi stop', 'midi fade 0 0', 'midi play RAIN', 'midi fade 0 0', `midi fade 1 ${MUSIC_FADE_IN_S}`], 'the latest request plays, the one between never does');
   // the flip-back: out of the town and straight back in
   svc.playSong('TAVERN');
   svc.playSong('RAIN');
@@ -265,7 +265,7 @@ test('DISC20-B: a music pack\'s track rises in the same way, and a switch fades 
     svc.playSong('DAY');
     assert.deepEqual(log.splice(0), [`pack fade 0 ${MUSIC_FADE_OUT_S}`], 'the pack\'s track is the one faded');
     flush();
-    assert.deepEqual(log.splice(0), ['pack stop', 'midi play DAY', 'midi fade 0 0', `midi fade 1 ${MUSIC_FADE_IN_S}`]);
+    assert.deepEqual(log.splice(0), ['pack stop', 'midi fade 0 0', 'midi play DAY', 'midi fade 0 0', `midi fade 1 ${MUSIC_FADE_IN_S}`]);
     assert.equal(timers.length, 0);
   } finally {
     audio.ctx = prevCtx;

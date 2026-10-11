@@ -101,8 +101,8 @@
   {
     "name": "ORG2-a-tab-restore-leaves-its-port-rows",
     "file": "src/ui/enhancedMenu.js",
-    "old": "    if (pref && Object.hasOwn(PREF_DEFAULTS, pref) && onlineForcedPref(pref) === undefined) setPref(pref, PREF_DEFAULTS[pref]);",
-    "new": "    void pref;",
+    "old": "    else if (pref && Object.hasOwn(PREF_DEFAULTS, pref) && onlineForcedPref(pref) === undefined) setPref(pref, PREF_DEFAULTS[pref]);",
+    "new": "    else void pref;",
     "tests": [
       "test/org2_options.test.js"
     ]

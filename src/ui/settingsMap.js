@@ -153,7 +153,7 @@ export const CATEGORIES = Object.freeze([
     sec("volume", "Volume", [
       "Controls/SoundVolume", "Controls/MusicVolume"]),
     sec("music", "Music", [
-      "Audio/AlternateMusic", "Audio/SoundFont"]),
+      "Audio/AlternateMusic", "Audio/SoundFont", "port:midiOut"]),
     sec("sounds", "Sounds", [
       "feat:enhanced-sounds", "feat:mod-immersive-footsteps", "feat:combat-voices", "Enhancements/CombatVoices", "card:nightSounds"]),
   ]),

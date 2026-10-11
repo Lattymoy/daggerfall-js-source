@@ -159,11 +159,11 @@ test('SO1: the settings pane is organised - the port\'s rows sit in the categori
   const menu = src('ui/enhancedMenu.js');
   assert.doesNotMatch(menu, /function paneEnhanced\(/, 'the Enhanced pane is gone');
   assert.doesNotMatch(menu, /inertRow\(/, 'and the row about a removed feature with it');
-  for (const fn of ['portRowsGame', 'portRowsControls', 'portRowsInterface', 'portPool', 'morrowindCard', 'peerSpritesCard', 'packsCard', 'itemNodes', 'tabSections', 'tabCount', 'tierGroup']) {
+  for (const fn of ['portRowsGame', 'portRowsAudio', 'portRowsControls', 'portRowsInterface', 'portPool', 'morrowindCard', 'peerSpritesCard', 'packsCard', 'itemNodes', 'tabSections', 'tabCount', 'tierGroup']) {
     assert.match(menu, new RegExp(`function ${fn}\\(`), `${fn} exists`);
   }
   // ORG2: the port's rows are built once a paint and the MAP places each by the id it carries - no category switch
-  assert.match(menu, /for \(const r of \[\.\.\.portRowsGame\(\{ pause \}\), \.\.\.portRowsControls\(\{ pause \}\), \.\.\.portRowsInterface\(\{ pause \}\)\]\) \{\s*\n\s*if \(r\?\.dataset\?\.opt\) pool\.set\(r\.dataset\.opt, r\);/);
+  assert.match(menu, /for \(const r of \[\.\.\.portRowsGame\(\{ pause \}\), \.\.\.portRowsAudio\(\), \.\.\.portRowsControls\(\{ pause \}\), \.\.\.portRowsInterface\(\{ pause \}\)\]\) \{\s*\n\s*if \(r\?\.dataset\?\.opt\) pool\.set\(r\.dataset\.opt, r\);/);
   assert.doesNotMatch(menu, /function portRows\(/, 'the per-category switch went with the categories');
   // FT12: the Enhanced category is GONE from the settings rail - every switch it held is a Features row now
   assert.ok(!/function portRowsEnhanced\(|function featuresPointerRow\(|catId === 'enhanced'/.test(menu), 'no Enhanced category, no pointer row');
