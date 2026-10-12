@@ -261,6 +261,7 @@ on:
       - "src/systems/skills.js"
       - "src/systems/soundClips.js"
       - "src/systems/specialAdvantages.js"
+      - "src/systems/spellPower.js"
       - "src/systems/spellcast.js"
       - "src/systems/spellcost.js"
       - "src/systems/statMods.js"

@@ -139,7 +139,7 @@ test('TRUE-CURSE: the Test Room lays a damned Legendary weapon, known, after eve
   assert.equal(damned.length, 1);
   assert.equal(damned[0].group, 'Weapons');
   assert.equal(LR.tierLabel(damned[0]), 'Damned Legendary', 'known');
-  assert.equal(entity.items.filter((it) => !LR.techniqueLineOf(it)).at(-1), damned[0], 'last');   // PIN MOVED (TECH1, bible/05-Combat/Weapon-Techniques.md): the room's twelve technique pieces are laid after it
+  assert.equal(entity.items.filter((it) => !LR.techniqueLineOf(it) && !LR.ARCANE_LEGENDARIES.some((r) => r.id === it.legendary)).at(-1), damned[0], 'last');   // PIN MOVED (TECH1, bible/05-Combat/Weapon-Techniques.md): the room's twelve technique pieces are laid after it; PIN MOVED (BAL9c, bible/05-Combat/Balance-Arc.md section 15): and the arcane three after them
   assert.ok(entity.items.some((it) => LR.isCursed(it) && it.rarity === 'legendary' && !LR.isDamned(it)), 'the cursed Legendary beside it');
 });
 

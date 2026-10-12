@@ -37,7 +37,7 @@ test('ELITE-SPELLS: an elite caster\'s DamageHealth lands at its damageScale, in
   assert.ok(plain > 0);
   assert.equal(hit({ entity: { level: 5, damageScale: 2 } }), plain * 2, 'an elite Fireball hurts twice as much');
   const src = rd('src/systems/effects.js');
-  assert.match(src, /const n = casterDamageScaled\(effectMagnitude\(a\.effect, a\.casterLevel, a\.saveScaled \?\? true, a\.element, a\.flag, target, rolls\), a\.caster, target\);/, 'and its damage over time');
+  assert.match(src, /const n = casterDamageScaled\(effectMagnitude\(a\.effect, a\.casterLevel, a\.saveScaled \?\? true, a\.element, a\.flag, target, rolls, a\.caster\), a\.caster, target\);/, 'and its damage over time');   // PIN MOVED (BAL9): the round's magnitude takes its caster, for a damage spell's pierce
 });
 
 test('ELITE-LEDGE: an elite copy stands on the marker\'s own floor - off a walkway it turns to the next bearing, and with none it stands on the marker', () => {

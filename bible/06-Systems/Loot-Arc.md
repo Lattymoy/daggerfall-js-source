@@ -121,6 +121,13 @@ pass, the proc line, the Exalted's, the curse's and the Reforge's pools are the 
 its own pass, LAST (Magic 12%, Rare 30%, Legendary 45%; law 9 of the second arc), so no stream above moved. The Reforge
 turns it only into another of its family's, and a line added after the mint is set before it.
 
+BAL9c (2026-10-12, the owner: "introduce some new magic/mage perks to the rarity loot pool ... still dont make it
+overpowered"; `05-Combat/Balance-Arc.md` section 15) set two more after `castSpeed` and before `technique`, so the
+numbers' pass draws as it did: `potency`, jewellery and weapons, prefix, 3-6 / 6-10 / 10-15, "+N% spell damage" - a
+damage spell's landing at a foe, all you wear at most 30% (`systems/spellPower.js`); and `wellspring`, jewellery,
+suffix, 2-4 / 4-7 / 7-10, "N% magicka on a kill" - the caster's leech, all you wear at most 10% a kill. The last pass
+moved as CAST-SPEED's did: a jewel's proc pick lands in four kinds where it landed in two, a blade's in five where four.
+
 A weapon's three are the weapon IN HAND's alone; a wearer's armour and jewellery sum, under the caps. Each answers MY
 entity alone, offline and online, and never a player (law 5). Names: `Burning Longsword of the Leech`, `Barbed
 Cuirass of the Bear`, `Adept's Ring of the Owl`, `Shortsword of the Gravewatch`.
@@ -134,7 +141,12 @@ under a line, the night, a first blow, bare hands), stacks a strike or a kill ra
 echoes, a leech, a kill's heal or magicka or gold or spell on me, a charge that turns a blow aside, a hex on the foe
 that struck me, a death cheated, a cost cut, a spell absorbed, a round's regeneration, a better find. A power counts
 ONCE however many pieces carry it (a Legendary and a Rare imprinted with it). The powers work offline and online and
-never on a player (law 5); the HUD's set chips show a power's stacks and recovery as a set's do.
+never on a player (law 5); the HUD's set chips show a power's stacks and recovery as a set's do. BAL9c (2026-10-12,
+`05-Combat/Balance-Arc.md` section 15) added three records of the casters' own, a table after the wardrobe's six
+(`ARCANE_LEGENDARIES`), the first powers to reach a spell's damage, its throw and its magicka: the Eye of Magnus
+(Magnus's Gaze, a Destruction spell's throw 15 lower after its immunity), the Ring of Artaeum (Wellspring of Artaeum, 1%
+of the magicka back a round, 2% under half) and Shalidor's Brand (Arcane Surge, +25% spell damage above three quarters
+of the magicka) - all the loot adds to a spell at most 50%.
 
 ## 8. LOOT6 - signature drops
 

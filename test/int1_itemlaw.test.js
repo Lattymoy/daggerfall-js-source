@@ -52,7 +52,7 @@ test('INT1: every item every honest producer mints carries no finding - in the s
     const bad = (wire ? honestItems({ seeds: 4, wire: true }) : SWEEP).map(({ source, item }) => ({ source, f: itemFindings(item), item })).filter((x) => x.f.length);
     assert.deepEqual(bad.slice(0, 5).map((b) => `${b.source}: ${b.f.join(',')} ${JSON.stringify(b.item).slice(0, 200)}`), [], `${wire ? 'wire' : 'save'}: ${bad.length} honest items with findings`);
   }
-  assert.equal(ITEM_LAW_VERSION, 2);   // PIN MOVED (TECH1): a weapon's technique line is lawful from law 2 on
+  assert.equal(ITEM_LAW_VERSION, 3);   // PIN MOVED (BAL9c): the caster's potency and wellspring lines and the arcane three are lawful from law 3 on; PIN MOVED (TECH1): a weapon's technique line is lawful from law 2 on
 });
 
 test('INT1: the forgeries the old wire validator took, each from an honest piece moved by one field - each named', () => {

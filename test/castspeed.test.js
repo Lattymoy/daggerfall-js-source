@@ -178,7 +178,7 @@ test('CAST-SPEED: the Morrowind arm plays its spellcast group at the cast\'s rat
 test('CAST-SPEED: the loot line - casting speed, a line that does something on jewellery and weapons; what I wear, summed under its cap, mine alone', () => {
   on();
   const k = LR.AFFIX_KINDS.castSpeed;
-  assert.equal(LR.AFFIX_IDS.at(-1), 'castSpeed', 'after every kind before it, so the numbers\' pass draws as it did (the last pass moved - CAST-SPEED-PINS)');
+  assert.deepEqual(LR.AFFIX_IDS.slice(LR.AFFIX_IDS.indexOf('castSpeed')), ['castSpeed', 'potency', 'wellspring'], 'after every kind before it, so the numbers\' pass draws as it did (the last pass moved - CAST-SPEED-PINS)');   // PIN MOVED (BAL9c): the caster's two lines after it
   assert.deepEqual(k.groups, ['Jewellery', 'Weapons']);
   assert.equal(k.proc, true);
   assert.equal(k.params, null);
@@ -188,11 +188,14 @@ test('CAST-SPEED: the loot line - casting speed, a line that does something on j
   assert.deepEqual(['magic', 'rare', 'legendary'].map((t) => LR.affixWord({ id: 'castSpeed', value: 3 }, t)), ['of Quickening', 'of Alacrity', 'of the Swift Hand']);
   assert.equal(LR.validAffix({ id: 'castSpeed', value: 16 }), false, 'past its ceiling');
   assert.equal(LR.validAffix({ id: 'castSpeed', param: 'fire', value: 5 }), false, 'it takes no param');
-  // a door's last pass may land it on a ring or a sword, never on armour
-  for (const make of [() => ring([]), () => Object.assign(createWeapon(120, 1), { rarity: 'rare', affixes: [] })]) {
+  // a door's last pass may land it on a ring or a sword, never on armour - PIN MOVED (BAL9c): it was each group's last
+  // proc kind (a roll of 0.999); potency follows it on both and wellspring on a jewel, so it is the second of a jewel's
+  // four (focus, castSpeed, potency, wellspring) and the fourth of a blade's five (elemental, leech, slayer, castSpeed,
+  // potency)
+  for (const [make, roll] of [[() => ring([]), 0.375], [() => Object.assign(createWeapon(120, 1), { rarity: 'rare', affixes: [] }), 0.7]]) {
     const it = make();
-    const line = LR.addProcLine(it, () => 0.999);
-    assert.equal(line.id, 'castSpeed', `the last proc kind of ${it.group}`);
+    const line = LR.addProcLine(it, () => roll);
+    assert.equal(line.id, 'castSpeed', `a proc kind of ${it.group}`);
     assert.ok(validLootItem(it), 'and the item it rides is a valid loot item, on the wire and in a save');
   }
   // the sum

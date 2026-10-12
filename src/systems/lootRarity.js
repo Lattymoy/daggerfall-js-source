@@ -464,6 +464,9 @@ export const AFFIX_RANGES = Object.freeze({
   dry:       Object.freeze({ magic: [10, 20], rare: [20, 35], legendary: [35, 50] }), // % less of the weather's soaking
   // CAST-SPEED: the casting hands' own
   castSpeed: Object.freeze({ magic: [3, 6], rare: [6, 10], legendary: [10, 15] }),  // % faster a cast's hands (systems/castSpeed.js)
+  // BAL9c: the caster's damage and its magicka (systems/spellPower.js, systems/lootPowers.js)
+  potency:    Object.freeze({ magic: [3, 6], rare: [6, 10], legendary: [10, 15] }),  // % more of a damage spell's landing
+  wellspring: Object.freeze({ magic: [2, 4], rare: [4, 7], legendary: [7, 10] }),    // % of my magicka back on a kill
   // TECH1: a technique's power - +% on its own multiplier (combat/techniqueRoster.js TECHNIQUE_BANDS, one band for all)
   technique: TECHNIQUE_BANDS,
 });
@@ -515,6 +518,8 @@ const STANDING_SUFFIX = Object.freeze({
 const WARMTH_PREFIX = Object.freeze(['Lined', 'Quilted', 'Fur-lined']);
 const DRY_PREFIX = Object.freeze(['Waxed', 'Oiled', 'Stormproof']);
 const CAST_SPEED_SUFFIX = Object.freeze(['of Quickening', 'of Alacrity', 'of the Swift Hand']);   // CAST-SPEED
+const POTENCY_PREFIX = Object.freeze(["Evoker's", "Battlemage's", "Warlock's"]);   // BAL9c
+const WELLSPRING_SUFFIX = Object.freeze(['of the Spring', 'of the Wellspring', 'of the Font']);   // BAL9c
 const DAMAGE_PREFIX = Object.freeze(["Soldier's", "Warrior's", "Slayer's"]);
 const ARMOR_PREFIX = Object.freeze(["Sentinel's", "Guardian's", "Bulwark"]);
 const WEIGHT_PREFIX = Object.freeze(["Porter's", "Mule's", "Giant's"]);
@@ -567,6 +572,17 @@ export const AFFIX_KINDS = Object.freeze({
   // pool one wider. A seeded hoard holding such a piece rolls on from a moved stream (the serpent hoard pins moved).
   castSpeed: Object.freeze({ slot: 'suffix', groups: Object.freeze(['Jewellery', 'Weapons']), params: null, proc: true,
     word: (band) => CAST_SPEED_SUFFIX[band], label: (a) => `+${a.value}% casting speed` }),
+  // BAL9c (2026-10-12, the owner: "introduce some new magic/mage perks to the rarity loot pool ... still dont make it
+  // overpowered"; bible/05-Combat/Balance-Arc.md section 15): THE CASTER'S TWO LINES, after every kind before them so
+  // the numbers' pass draws as it did. The ladder paid a blade in damage, procs and powers and a caster only in price
+  // and tempo (focus, castSpeed): POTENCY is a damage spell's landing, more (jewellery's and a weapon's, castSpeed's
+  // groups - systems/spellPower.js, summed and capped by systems/lootPowers.js); WELLSPRING is the caster's leech - a
+  // share of my magicka back on a kill (jewellery's, as focus is). THE LAST PASS MOVES, as CAST-SPEED's did: a jewel's
+  // proc pick lands in a pool of four (it was two), a weapon's in one of five (four).
+  potency: Object.freeze({ slot: 'prefix', groups: Object.freeze(['Jewellery', 'Weapons']), params: null, proc: true,
+    word: (band) => POTENCY_PREFIX[band], label: (a) => `+${a.value}% spell damage` }),
+  wellspring: Object.freeze({ slot: 'suffix', groups: Object.freeze(['Jewellery']), params: null, proc: true,
+    word: (band) => WELLSPRING_SUFFIX[band], label: (a) => `${a.value}% magicka on a kill` }),
   // TECH1 (2026-10-10, bible/05-Combat/Weapon-Techniques.md): A WEAPON'S TECHNIQUE - what the WeaponTechnique key does
   // with the weapon in hand (combat/techniques.js): its param the technique (combat/techniqueRoster.js, the piece's own
   // family alone - kindParams), its value the power over the technique's own multiplier. APPENDED LAST and drawn in no
@@ -585,6 +601,7 @@ export const AFFIX_WORTH = Object.freeze({ damage: 40, armor: 60, weight: 15, st
   elemental: 50, leech: 80, thorns: 40, focus: 60, slayer: 25,   // LOOT4
   standing: 60, warmth: 30, dry: 8,   // LOOT14
   castSpeed: 60,   // CAST-SPEED: focus's own worth, its fellow at the cast
+  potency: 60, wellspring: 60,   // BAL9c: focus's own worth, the cast's other two
   technique: 30 });   // TECH1: +22% is 660 gold - a Rare's flavour's worth, about
 /** LOOT14: A GARMENT'S LINES ARE WORTH HALF - its slots carry no fight, and it weighs a quarter of a kilo to two and a
  *  half: at a weapon's price a Rare pair of Tights was the best gold a kilo in the game, against the Economy Arc's own
@@ -992,6 +1009,35 @@ export const WARDROBE_LEGENDARIES = Object.freeze([
       brief: '+25 Stealth while hooded', text: 'While its hood is up you carry 25 more Stealth' }),
     lore: 'Made for a Daggerfall cutpurse who was never once seen. Nobody can say what she looked like - only that the cowl was grey.' }),
 ]);
+/** BAL9c (2026-10-12; bible/05-Combat/Balance-Arc.md section 15): THE ARCANE THREE - a caster's Legendaries, the first
+ *  whose powers reach a spell's damage, its throw and its magicka (systems/spellPower.js, systems/lootPowers.js). LOOT3's
+ *  law: three lines of the Legendary band of kinds its group carries, ONE DFU catalogue enchantment priced by DFU's table
+ *  (never a held spell's condition bill), a base it lands on, a line of lore; found among the casters (LOOT6) with its
+ *  power on the record, as the wardrobe's. A table of its own, after the wardrobe's six, so the thirty and the six (and
+ *  the Broker, which reads the thirty) stand as they were - a jewel's and a blade's pick lands in a pool one wider. */
+export const ARCANE_LEGENDARIES = Object.freeze([
+  Object.freeze({ id: 'eye-of-magnus', name: 'The Eye of Magnus', group: 'Jewellery', templates: Object.freeze([133, 139]),   // Amulet, Cloth Amulet
+    affixes: Object.freeze([{ id: 'stat', param: 'intelligence', value: 15 }, { id: 'skill', param: 22, value: 25 }, { id: 'resist', param: 'magic', value: 40 }]),
+    enchantment: Object.freeze({ type: T.ExtraSpellPts, param: 2 }),   // During Summer
+    found: 'caster',
+    power: Object.freeze({ name: "Magnus's Gaze", kind: 'pierce', points: 15,
+      brief: 'Spells pierce 15 resistance', text: 'Your Destruction spells meet a saving throw 15 lower - a foe immune to their element stays immune' }),
+    lore: 'Ground from a shard of the sun the Mages Guild swears it never kept. Look through it at noon and you will not look again.' }),
+  Object.freeze({ id: 'ring-of-artaeum', name: 'The Ring of Artaeum', group: 'Jewellery', templates: Object.freeze([135]),   // Ring
+    affixes: Object.freeze([{ id: 'stat', param: 'willpower', value: 12 }, { id: 'skill', param: 27, value: 25 }, { id: 'resist', param: 'fire', value: 40 }]),
+    enchantment: Object.freeze({ type: T.ExtraSpellPts, param: 5 }),   // During Half Moon
+    found: 'caster',
+    power: Object.freeze({ name: 'Wellspring of Artaeum', kind: 'attune', pct: 1, low: 2,
+      brief: 'Magicka back 1% a round', text: 'Each magic round 1% of your magicka returns, 2% while you are under half' }),
+    lore: 'A Psijic novice\'s ring, left behind when the isle was. The Order has not asked for it back; the Order rarely asks.' }),
+  Object.freeze({ id: 'shalidors-brand', name: "Shalidor's Brand", group: 'Weapons', templates: Object.freeze([118, 119, 120]),   // Broadsword, Saber, Longsword
+    affixes: Object.freeze([{ id: 'damage', value: 24 }, { id: 'stat', param: 'intelligence', value: 12 }, { id: 'skill', param: 22, value: 22 }]),
+    enchantment: Object.freeze({ type: T.CastWhenStrikes, param: 7 }),   // Wizard's Fire
+    found: 'caster',
+    power: Object.freeze({ name: 'Arcane Surge', kind: 'surge', pct: 25, above: 75,
+      brief: '+25% spell damage above 75% MP', text: 'While you wield it your Destruction spells strike 25% harder while your magicka is above three quarters' }),
+    lore: 'The first Archmage carried a blade, his apprentices said, so that no one would think to look at his hands.' }),
+]);
 export const legendaryById = (id) => allLegendaries().find((l) => l.id === id) ?? null;
 /** LOOT5 (the Loot arc, bible/06-Systems/Loot-Arc.md section 7): EVERY LEGENDARY A POWER. Each record names one: its
  *  name, its BRIEF (the card's row - CARD-FIT's 32 characters at most), its sentence, its `kind` (what systems/
@@ -1099,7 +1145,7 @@ export const validImprint = (item) => item?.imprint === undefined
 
 /** DFU-shaped, but not DFU's - the pool is the port's own, so it is
  *  allowed to grow (registerLegendary, below). */
-export const allLegendaries = () => [...LEGENDARIES, ...WARDROBE_LEGENDARIES, ..._customLegendaries];   // LOOT15: the wardrobe's six after the thirty
+export const allLegendaries = () => [...LEGENDARIES, ...WARDROBE_LEGENDARIES, ...ARCANE_LEGENDARIES, ..._customLegendaries];   // LOOT15: the wardrobe's six after the thirty; BAL9c: the arcane three after them
 /** The records an item may become.
  *
  *  `exclusive` SHADOWS the rest: a registered record that names its

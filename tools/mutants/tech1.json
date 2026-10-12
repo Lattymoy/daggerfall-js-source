@@ -213,7 +213,7 @@
   {
     "name": "TECH1-law-the-version",
     "file": "src/systems/itemLaw.js",
-    "old": "export const ITEM_LAW_VERSION = 2;",
+    "old": "export const ITEM_LAW_VERSION = 3;",
     "new": "export const ITEM_LAW_VERSION = 1;",
     "tests": [
       "test/tech1_roster.test.js",
@@ -675,7 +675,7 @@
   {
     "name": "TECH1-AUDIT-the-service-behind-the-law",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct120';",
+    "old": "export const ACCOUNT_VERSION = 'acct121';",
     "new": "export const ACCOUNT_VERSION = 'acct107';",
     "tests": [
       "test/tech1_roster.test.js"

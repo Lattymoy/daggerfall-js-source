@@ -36,7 +36,7 @@ import { BOOK_TEMPLATE, createBook } from './books.js';   // EB3: books in the p
 import { BOOK_ID_TITLES } from './booksData.js';
 import { setPref } from './uiPrefs.js';   // LR3: the loot door turns the ladder on for the session
 import { setModSetting } from './modSettings.js';   // FIELD BUGS 2026-09-29 (the sea) #5: the sea door turns Come Sail Away on
-import { applyRarity, LEGENDARIES, ROLLED_TIERS, exaltLegendary, WARDROBE_LEGENDARIES, cursePiece, SOCKET_EMPTY, GEM_IDS, socketMax, addTechniqueLine } from './lootRarity.js';   // LR3: one of everything the ladder can mint; LOOT2: and an Exalted; LOOT15: the wardrobe's; LOOT16: a curse; TECH1: a technique
+import { applyRarity, LEGENDARIES, ROLLED_TIERS, exaltLegendary, WARDROBE_LEGENDARIES, ARCANE_LEGENDARIES, cursePiece, SOCKET_EMPTY, GEM_IDS, socketMax, addTechniqueLine } from './lootRarity.js';   // LR3: one of everything the ladder can mint; LOOT2: and an Exalted; LOOT15: the wardrobe's; LOOT16: a curse; TECH1: a technique; BAL9c: the arcane three
 import { TECHNIQUE_IDS, TECHNIQUES, GAUNTLETS_TEMPLATE } from '../combat/techniqueRoster.js';   // TECH1: one piece a technique, to try them all
 import { AETHERIC_RECORDS, mintAetheric } from './aetheric.js';   // SET6: the Aetheric rung - Ruhn's Regalia, whole (RAID4b: and the raiding parties' three sets)
 import { mintHourlock } from './gilded.js';   // GILDED1: the top rung's one record, to be seen and fired (its shot: createPellets, below)
@@ -373,6 +373,9 @@ export function seedTestLoot(entity, rolls = Math.random) {
     const it = applyRarity(testItemOf(piece), 'rare', rolls);
     if (addTechniqueLine(it, () => 0.5, { id })) put(it);
   }
+  // BAL9c (bible/05-Combat/Balance-Arc.md section 15): THE ARCANE THREE, each on the first base its record fits (the
+  // Amulet, the Ring, the Longsword) - chosen, not rolled, after every draw the room made before
+  for (const rec of ARCANE_LEGENDARIES) put(legendaryItem(rec));
   return added;
 }
 /** LOOT14: the room's garments - a Formal Cloak and an Evening Gown, minted as a shelf mints clothing. */

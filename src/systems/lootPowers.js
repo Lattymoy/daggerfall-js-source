@@ -25,6 +25,11 @@
 //               its last point (BAL5, playerDoor.js paidBack)
 //   focus       a CAST COST modifier: that share off my spells'
 //               magicka, all I wear summed under FOCUS_CAP
+//   potency     BAL9c, a SPELL POWER modifier (systems/spellPower.js):
+//               that share more of my damage spell's landing at a foe,
+//               all I wear summed under POTENCY_CAP
+//   wellspring  BAL9c, a KILL listener: that share of my magicka back,
+//               all I wear summed under WELLSPRING_CAP
 //
 // LOOT5 (section 7): EVERY LEGENDARY A POWER - the records' own (systems/
 // lootRarity.js LEGENDARY_POWERS), done here through the same seams and a
@@ -48,6 +53,8 @@ import { hoodUp } from './survival/temperature.js';   // LOOT15: Unseen reads th
 import { registerPlayerStrikeListener, enemyEntityGroup, ENEMY_GROUPS } from '../combat/formulas.js';
 import { registerSpellCostMod } from './spellcost.js';
 import { registerCastSpeedMod } from './castSpeed.js';   // CAST-SPEED: the castSpeed lines' door onto a cast's rate
+import { registerSpellPowerMod, registerSpellPierceMod } from './spellPower.js';   // BAL9c: potency and the arcane three's doors onto a damage spell
+import { hasSpecialAbility, SPECIAL_ABILITY, restIgnoresNoRegen } from './rest.js';   // BAL9c: a career that cannot regenerate magicka, rest's own gate
 import { registerPlayerBlowLanded, pendingPlayerBlow, REACH_RISE_M } from './sigilSetPowers.js';
 import { playerDoor, paidBack } from './playerDoor.js';   // BAL5: a blow paid back never kills
 import { careerTolerance, EFFECT_FLAGS } from './spellcast.js';
@@ -83,6 +90,14 @@ export const CAST_SPEED_CAP = 30;
  *  every landed blow, and the heal grew with every point of offence: the measured kit without a guard went from 6.6
  *  Ancient Liches in a Dragon's Den before it fell to 49.7. */
 export const LEECH_CAP = 10;
+/** BAL9c (bible/05-Combat/Balance-Arc.md section 15): all the potency a wearer's pieces sum to, at most (%) - focus's and
+ *  castSpeed's own 30. */
+export const POTENCY_CAP = 30;
+/** BAL9c: all the loot adds to a damage spell's landing, potency and powers together, at most (%) - SPELL_CUT_MOST's 50. */
+export const SPELL_POWER_MOST = 50;
+/** BAL9c: all the wellspring a wearer's pieces sum to, at most (% of my magicka a kill) - LEECH_CAP's 10, the caster's
+ *  leech (Soul Siphon's 15 is the Legendary's own, beside it). */
+export const WELLSPRING_CAP = 10;
 
 const mine = (e) => !!e?.isPlayer && !e.peer;
 /** A piece's valid lines of one kind - none with the switch off (off is DFU exactly). */
@@ -396,6 +411,9 @@ export function lootKill(foe) {
   if (!foe || neverCounts(foe)) return;
   const door = playerDoor();
   const me = door?.player?.() ?? playerEntity;
+  // BAL9c: the wellspring lines I wear - that share of my magicka back, summed under the cap (Soul Siphon's own door)
+  const well = mine(me) ? Math.min(WELLSPRING_CAP, wornSum(me, 'wellspring')) : 0;
+  if (well > 0 && me.maxMagicka > 0) gainMana(me, (me.maxMagicka * well) / 100);
   const powers = wornPowers(me);
   if (!powers.length) return;
   const now = _now();
@@ -433,6 +451,19 @@ export function lootCastCost(entity, sp, spell = null) {
   return pct > 0 ? (sp * (100 - pct)) / 100 : sp;
 }
 
+/** BAL9c: MY damage spell's power at a foe (systems/spellPower.js spellPowerMult) - the potency lines I wear, summed under
+ *  POTENCY_CAP, and Arcane Surge while my magicka stands above its line; all of it under SPELL_POWER_MOST. */
+export function lootSpellPower(entity, target) {
+  if (!mine(entity) || !target || target.isPlayer) return 0;
+  let pct = Math.min(POTENCY_CAP, wornSum(entity, 'potency'));
+  const surge = powerKind(entity, 'surge');
+  if (surge && entity.maxMagicka > 0 && Number.isFinite(entity.magicka) && entity.magicka > (entity.maxMagicka * surge.above) / 100) pct += surge.pct;
+  return Math.min(SPELL_POWER_MOST, pct);
+}
+/** BAL9c: Magnus's Gaze - the points MY damage spell takes off a foe's saving throw (spellcast.js savingChance, after the
+ *  immunity). */
+export const lootSpellPierce = (entity, target) => (mine(entity) && target && !target.isPlayer ? (powerKind(entity, 'pierce')?.points ?? 0) : 0);
+
 /** CAST-SPEED: MY casting hands' speed - the castSpeed lines I wear, summed under the cap, a percent onto the cast's rate
  *  (systems/castSpeed.js castRate). */
 export function lootCastSpeed(entity) {
@@ -449,12 +480,20 @@ const READY = Object.freeze({
   grace: { at: () => _s.graceReady, line: 'Divine Grace is ready again.', kind: 'grace' },
   haste: { at: () => _s.hasteReady, line: null, kind: 'haste' },   // ten seconds: no word worth saying
 });
-/** THE MAGIC ROUND: Hist-Sap's regeneration, and "ready again" for a recovery that ran out with its power still worn. */
+/** THE MAGIC ROUND: Hist-Sap's regeneration, (BAL9c) the Wellspring of Artaeum's magicka, and "ready again" for a
+ *  recovery that ran out with its power still worn. */
 export function lootRound(entity) {
   if (!mine(entity)) return;
   const hist = powerKind(entity, 'regen');
   if (hist && entity.maxHealth > 0 && entity.health > 0 && entity.health < entity.maxHealth) {
     healMine(entity, (entity.maxHealth * (share(entity) < 0.5 ? hist.low : hist.pct)) / 100);
+  }
+  // BAL9c: the Wellspring of Artaeum - a share of my magicka, more under half; never for a career that cannot regenerate
+  // it (NoRegenSpellPoints), where rest's own gate holds it back (offline - REST-MANA1: online every career's comes back)
+  const well = powerKind(entity, 'attune');
+  if (well && entity.maxMagicka > 0 && entity.health > 0 && Number.isFinite(entity.magicka) && entity.magicka < entity.maxMagicka
+    && !(hasSpecialAbility(entity.career, SPECIAL_ABILITY.NoRegenSpellPoints) && !restIgnoresNoRegen())) {
+    gainMana(entity, (entity.maxMagicka * (entity.magicka < entity.maxMagicka / 2 ? well.low : well.pct)) / 100);
   }
   if (!_s.recovering.size) return;
   const now = _now();
@@ -502,6 +541,8 @@ registerPlayerStrikeListener(LOOT_POWERS, lootStrike);
 registerPlayerBlowLanded(LOOT_POWERS, lootLanded);
 registerSpellCostMod(LOOT_POWERS, lootCastCost);
 registerCastSpeedMod(LOOT_POWERS, lootCastSpeed);   // CAST-SPEED
+registerSpellPowerMod(LOOT_POWERS, lootSpellPower);   // BAL9c
+registerSpellPierceMod(LOOT_POWERS, lootSpellPierce);   // BAL9c
 registerPlayerDamageMod(LOOT_POWERS, lootDamageMod);   // LOOT5
 registerPlayerDeathSave(LOOT_POWERS, lootDeathSave);
 registerPlayerHurtListener(LOOT_POWERS, lootHurt);

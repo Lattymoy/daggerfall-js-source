@@ -1,4 +1,4 @@
-# The Balance arc - the place sets the threat, one rule for every striker (BAL1-BAL8)
+# The Balance arc - the place sets the threat, one rule for every striker (BAL1-BAL9)
 
 > Design page, written from the measurement before the code (2026-10-10). The slices ship in one pull request, in this
 > order, each verifiable without the next. Where this page and a shipped slice disagree, the slice's own record
@@ -284,6 +284,7 @@ thirteen. The simulation leaves out the formulas' tail (an elite, the mentor, a 
 | BAL6 | the curses (section 12, 2026-10-12) | the beast's advantages, its heal, its claws; the vampire's hood |
 | BAL7 | the loot that wins alone (section 13, 2026-10-12) | one flavour retired, one cap, two powers halved |
 | BAL8 | the PvP referee, one rule for every striker (section 14, 2026-10-12) | one ceiling at the referee, one door's facing |
+| BAL9 | Destruction's channels (section 15, 2026-10-12) | a spell's foe noted, the school's climb its potency, the ladder's arcana |
 
 ## 10. What shipped
 
@@ -595,3 +596,169 @@ window slides at 5 s to the millisecond, casts and a blow sharing it, INT10's th
 fighter without the field); one referee for the three lanes and the arena's two doors by source.
 `tools/mutants/bal8.json` (7). PIN MOVED: `tools/mutants/pvpref.json`'s five clipping records, re-aimed by content; the
 relay's version pins (`world197`).
+
+## 15. BAL9 - Destruction's channels (2026-10-12)
+
+The owner, 2026-10-12: *"I think destruction needs a buff. A lot of players saying its lack luster. I want to also
+introduce some new magic/mage perks to the rarity loot pool since weve done a lot of needing but still dont make it
+overpowered"*. BAL6 had recapped the mage work (CAST-SPEED and CAST-RECOVER, STACK-CAP, INT10, SPELL-COST-PAST) as
+answers to field reports - each a cost, a tempo or a ceiling, none a spell's damage - and left the caster unmeasured.
+
+THE MEASUREMENT (online; the real `calculateCastCost`, `applySpell` and its saving throw, 20,000 seeded casts a cell; a
+foe's attributes at 50 and its tolerances normal, as section 2's; its health the combat overhaul's row at its middle,
+BAL3's place on it). Stated builds: a level-12 Mage (INT 75, WIL 60, Destruction 60, 150 magicka at x2.0 INT) and a
+level-20 one (INT 85, WIL 65, Destruction 85, 170). Two spells off the spell maker: a Flame Bolt (Damage Health 10-20 +
+1-2 a level, single target at range) and a lean bolt (1 + 4 a level) - DFU prices a point a level at 28 gold and a base
+point at 20, so the player who reads the cost builds the second.
+
+| build, spell | magicka a cast | landed a cast (none) | Orc Warlord kills a full pool: a town / a Crypt / a Dragon's Den | Ancient Lich: a town / a Den |
+| --- | --- | --- | --- | --- |
+| L12, Destruction 60, Flame Bolt | 61 | 17.8 (36%) | 0.42 / 0.31 / 0.21 | 0.28 / 0.14 |
+| L12, Destruction 60, lean bolt | 24 | 26.7 (36%) | 1.62 / 1.19 / 0.81 | 1.08 / 0.54 |
+| L20, Destruction 85, Flame Bolt | 30 | 24.3 (36%) | 1.34 / 0.98 / 0.67 | 0.89 / 0.44 |
+| L20, Destruction 85, lean bolt | 12 | 44.2 (36%) | 6.07 / 4.47 / 3.04 | 4.04 / 2.02 |
+| L20, Destruction 100, Flame Bolt | 12 | 24.3 (36%) | 3.34 / 2.46 / 1.67 | 2.22 / 1.11 |
+
+What it found, ranked by what it moves:
+
+1. **A Destruction spell's damage has one channel: its caster's level.** DFU's GetMagnitude rolls `base + plus *
+   floor(level / per)`, and the school's skill prices the spell and moves nothing else - a level-12 Knight with
+   Destruction 20 and a level-12 Mage with 90 land the same fireball. In DFU's 0-100 that is the skill's whole reward
+   and a steep one (`(110 - skill)`: a spell at 100 costs a fifth of its price at 60). Past 100 it stops (2).
+2. **Online, the school past 100 bought its price and raised the foes.** SPELL-COST-PAST prices the points past 100 at
+   `100 / skill` - rightly: they priced spells under nothing - and the same mastery is in the foes' edge (`combatEdge`
+   reads the six schools among the fighting skills). Destruction alone mastered, the Flame Bolt, a Crypt:
+
+   | raw (effective) | 100 (100) | 125 (108) | 150 (117) | 175 (127) | 200 (140) |
+   | --- | --- | --- | --- | --- | --- |
+   | the price | x1 | x0.83 | x0.83 | x0.75 | x0.58 |
+   | a Crypt's foes' health | x1.36 | x1.44 | x1.53 | x1.63 | x1.77 |
+   | magicka a kill | x1 | x0.88 | x0.94 | x0.90 | x0.76 |
+
+   Five tiers of the softcap's cost ladder for a quarter off a kill, and a step backward at 150. A weapon's climb reads
+   in its formulas (the hit at x1.5, a crit's chance, multiplier and aim); a school's read in nothing but its price.
+3. **A spell never answered its foe.** Past 100 a mastered skill learns by the foe it fights (SOFTCAP1: a foe tough
+   for the skill counts up to x1.5), and only `calculateAttackDamage` ever noted one. A fireball at an Ancient Lich
+   counted as a light cast in an empty room (UNCHALLENGED_MAGIC_WEIGHT, a quarter) - the mastery box's "Past 100 a
+   skill only learns from tough foes" was never a spell's.
+4. **The ladder paid a blade and priced a caster.** A weapon's loot reaches its blow (damage 5-40%, a sear, slayer's
+   30%, the leech, the techniques, the Legendary powers on the blow); a caster's reaches the price (focus, the Loop, the
+   Conduit, Stendarr's Mercy - half off at most) and the tempo (castSpeed), and no line, gem, set piece or power ever
+   reached a spell's damage or its magicka between rests. BAL7's kit killed 47 Ancient Liches in a row; a caster's best
+   kit halved its price.
+5. **DFU's saving throw lands a third of casts as nothing.** At Willpower 50 a foe saves at 55; a roll more than 20
+   under it is a whole save, within 20 a share - 36% of casts land nothing, and a cast lands 54% of its roll. DFU's own
+   (FormulaHelper.SavingThrow), for every caster, and left (below).
+
+Checked and found sound, so not changed: the overhaul's health rows move monsters both ways (an Orc Warlord x1.86, a
+Lich x1.10, a Vampire x0.96 over DFU's) - the mod's tuning, for every striker; BAL3's place costs a caster magicka where
+it costs a blade swings and the blows taken during them; STACK-CAP's renewal of a damage over time is the owner's
+("Refresh, never stack").
+
+THE LAWS.
+
+- **BAL9a, A SPELL ANSWERS ITS FOE.** My spell that reaches a foe - not my ally, not a peer's strike spell on my foe -
+  notes it as the fight's (`scenes/hostMagic.js` applySpellToFoe), and a foe's spell that reaches me notes its caster
+  (applySpellToPlayer): the blow's two directions (`combat/formulas.js`). Past 100 a school's next uses for six seconds
+  learn by that foe. The quarter stays a spell's floor (`systems/skillSoftcap.js` overcapTallyWeight:
+  `max(UNCHALLENGED_MAGIC_WEIGHT, challengeQuality)`), so a cast at a weak foe never teaches less than a cast at a wall,
+  and nothing trains slower than it did.
+- **BAL9b, THE SCHOOL PAST 100 IS ITS POTENCY** (CLIMB-PAST's law, for the school whose formula stops paying at 100).
+  Online, each effective point of Destruction's CLIMB past 100 lands its damage-health effects - Damage Health and
+  Continuous Damage Health, the instant and every round - 1% harder: x1.4 at 200 (`systems/spellPower.js`
+  schoolPotency, read by `systems/effects.js` casterDamageScaled with the blow's own rounding and floor of one; a spell
+  the throw turned whole stays nothing). The climb is `skillSoftcap.js` climbedSkill - the one read the foes' edge
+  takes, so the climb that raises them is the climb that pays; a worn Destruction line already pays in price (the live
+  value SPELL-COST-PAST reads) and strikes no harder, and mentoring reads none, as the edge does. Offline DFU's price
+  term stands (to nothing at 110 - the field report's For Mac), and so does its damage. Never at a player, a peer's
+  stand-in or a foe's cast (`ownSpellAt`): a refereed fight's stand-in is a player (`combat/duelCombat.js` duelStub), so
+  the duel, the siege, the Wild Zone and the arena are BAL8's to the point.
+- **BAL9c, THE LADDER'S ARCANA.** Two lines, after `castSpeed` and before `technique`, so the numbers' pass draws as it
+  did (the last pass moved, as CAST-SPEED's did: a jewel's proc pick lands in four kinds where it landed in two, a
+  blade's in five where four) - `potency`, jewellery and weapons, prefix, 3-6 / 6-10 / 10-15, "+N% spell damage": a
+  damage spell's landing at a foe, everything I wear summed, at most `POTENCY_CAP` 30 (focus's and castSpeed's); and
+  `wellspring`, jewellery, suffix, 2-4 / 4-7 / 7-10, "N% magicka on a kill": the caster's leech, at most
+  `WELLSPRING_CAP` 10 (LEECH_CAP's; Soul Siphon's 15 the Legendary's own beside it). And three Legendaries, a table of
+  their own after the wardrobe's six (`ARCANE_LEGENDARIES` - the thirty, the six and the Broker stand), found among the
+  casters (LOOT6), each LOOT3's shape and its power on the record:
+
+  | record | on | lines | enchantment | power |
+  | --- | --- | --- | --- | --- |
+  | The Eye of Magnus | Amulet, Cloth Amulet | +15 Intelligence, +25 Destruction, +40% Magic resistance | Extra Spell Points, during summer | Magnus's Gaze: my Destruction spells meet a saving throw 15 lower - after its immunity, so a foe immune stays immune (`spellcast.js` savingChance's `pierce`) |
+  | The Ring of Artaeum | Ring | +12 Willpower, +25 Mysticism, +40% Fire resistance | Extra Spell Points, during the half moon | Wellspring of Artaeum: 1% of my magicka back each magic round, 2% under half - Hist-Sap's shape; never offline to a career that cannot regenerate it (rest's own gate, REST-MANA1) |
+  | Shalidor's Brand | Broadsword, Saber, Longsword | +24% damage, +12 Intelligence, +22 Destruction | Cast When Strikes: Wizard's Fire | Arcane Surge: while I wield it, my Destruction spells strike 25% harder while my magicka stands above three quarters |
+
+  All the loot adds to a spell's landing, lines and powers together, is at most `SPELL_POWER_MOST` 50 (SPELL_CUT_MOST's
+  50 for the price). Every one is MY entity's at a foe: never at a player (the loot arc's law 5), never a peer's, nothing
+  with the ladder off. The item law is at 3 (`systems/itemLaw.js` ITEM_LAW_VERSION) and the account service that judges
+  by it at `acct121`, so an honest piece minted after the site deploys is never read as a forgery (AUDIT TECH1's "the law
+  moves the service"); `spellPower.js` joins the account Worker's deploy filter.
+
+WHAT MOVES.
+
+The climb, Destruction alone mastered, the Flame Bolt, a Crypt (the measurement's table, with the potency):
+
+| raw (effective) | 100 (100) | 125 (108) | 150 (117) | 175 (127) | 200 (140) |
+| --- | --- | --- | --- | --- | --- |
+| a cast lands | x1 | x1.08 | x1.17 | x1.27 | x1.40 |
+| magicka a kill, before | x1 | x0.88 | x0.94 | x0.90 | x0.76 |
+| magicka a kill, BAL9b | x1 | x0.81 | x0.80 | x0.71 | x0.54 |
+
+Every point of the climb pays now, and no step goes backward; at 200 a kill costs about half its magicka at 100 where
+the foes it raised stand at x1.30 - the climb keeps pace with the threat it makes, and outruns it by a little, as a
+weapon's does. Below 100 nothing moves: DFU's price is the skill's reward there.
+
+The ladder, a level-20 Mage (Destruction 85, 170 magicka) and the Flame Bolt against an Ancient Lich in a Dragon's Den
+(310 health), through the real price, landing and throw (20,000 seeded casts a row):
+
+| what is worn | magicka a cast | landed a cast (none) | kills a full pool |
+| --- | --- | --- | --- |
+| nothing | 30 | 24.3 (36%) | 0.45 |
+| focus at its cap (30) - the most a line did before | 21 | 24.3 (36%) | 0.64 |
+| potency at its cap (30) | 30 | 31.6 (36%) | 0.58 |
+| a +25 Destruction line alone (its price, before BAL9 as now) | 10 | 24.3 (36%) | 1.33 |
+| the Eye of Magnus alone (that line and Magnus's Gaze) | 10 | 31.1 (20%) | 1.70 |
+| the best caster kit before BAL9 (a +25 Destruction line, focus 20, the Archmage's Loop) | 7 | 24.3 (36%) | 1.90 |
+| the same slots after (the Eye for the line, potency 30 for focus 10) | 8 | 40.4 (20%) | 2.77 |
+| every cap (potency 30 and Arcane Surge, the Eye, focus 10 and the Loop) | 7 | 46.8 (20%) | 3.67 |
+
+A caster's best kit lands half again its kills a pool in the same slots, and at every cap about twice its damage a
+cast: inside the ceilings every line keeps (30 a kind, 50 for the loot's spell power, the throw's own floor of 5),
+against BAL7's melee kit that stood 31 Ancient Liches in a row.
+
+Not moved: a refereed fight (the duel, the siege, the Wild Zone and the arena - INT10's 60 a cast and BAL8's 180 in 5 s
+stand, and no power or line reaches a player's stand-in); a foe's spells; every other school; DFU's saving throw.
+
+RECORDED, NOT CHANGED:
+
+- **DFU's saving throw.** The third of casts that land nothing is DFU's, for every caster - the player's spells and
+  every foe's at the player. A school's skill that pierced it would reach every foe of level 14 and over at 100
+  (`enemyEntity.js` skillsLevel: 5L + 30) and land the foes' spells at the player a third harder; a pierce for the
+  player's alone is a departure from BAL2's one rule. Magnus's Gaze is the loot's, the player's alone. The owner's call.
+- **The school below 100** is DFU's: the price is the skill's reward, and a steep one.
+- **The other schools past 100** buy their price alone, as before - a heal's potency would reach the referee's heal
+  ceiling (INT10's 40) and the measured guards; a call of its own.
+- **A Cast When Strikes spell** a weapon of mine casts on a foe is my spell: the school's potency and the loot's reach
+  it as any of mine. A peer's strike spell on my foe lands at its stand-in (STRIKE-SHARED) and takes none.
+- **The pool between rests** stays DFU's but for the loot: wellspring and Soul Siphon on a kill, the Ring's round, the
+  Welkynd Stone, a Meditation Candle.
+
+Pinned: `test/bal9_destruction.test.js` (6) by execution - through the real cast engine's two landing doors (the
+Lich's tier 135 noted, a cast at 120 weighing 1.125, a rat's never under the quarter, an ally's and a peer's strike
+spell nothing, a foe's spell on me its caster); through the real applySpell on a chargen'd mage mastered online and off
+(x1, x1.17, x1.4; a damage over time's round; nothing offline, at a player's stand-in, from a peer's or a foe's cast, on a
+spell saved whole, from a worn Destruction line, while mentoring); the lines' shape, picks and law; potency's 30 and the
+loot's 50 and Arcane Surge's line through the damage door; wellspring's 10, the Ring's 1% and 2% and its career gate
+offline and online; Magnus's Gaze 15 off the throw after its immunity, by execution at a roll of 30 (a whole save at 55,
+half a hit at 40); the arcane three lawful, found among casters, in their pools. `tools/mutants/bal9.json` (24, all
+dead). PIN MOVED, each by content: `castspeed` (castSpeed is followed by the two; its pick at a jewel's second of four
+and a blade's fourth of five), `loot4_procs`' and `lr1_lootrarity`'s proc lists, `tech1_roster`'s last pool kind and its
+law-service map (law 3, acct121), `int1_itemlaw`'s law, `lr1_lootrarity`'s and `loot3_legendaries`' Test Room (the
+arcane three, last), `fb1010_truecurse`'s room order, `thunderlock`'s longsword records (Shalidor's Brand),
+`serpentset`'s seed-2 broadsword (the same draw lands on potency, value 8), `dropsaudit`'s round line (its caster), and
+the account service's version pins (acct121). Mutants re-aimed by content: `dropsaudit.json`'s rounds-unscaled,
+`loot15.json`'s two wardrobe records, `tech1.json`'s law; the account version's five records.
+
+THE FOUR HOSTS. None is touched by name: `scenes/hostMagic.js` is the one cast engine `scenes/exterior.js`,
+`scenes/world.js`, `scenes/worldModes.js` and `scenes/dungeonContext.js` all cast and land through, and
+`systems/effects.js` the one spell door.

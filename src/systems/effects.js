@@ -30,8 +30,9 @@
 // counter did - a stale sentence propagates, because the next reader
 // finds it twice and believes it.
 
-import { savingThrow, rollMagnitude, EFFECT_FLAGS, careerTolerance } from './spellcast.js';
+import { savingThrow, rollMagnitude, EFFECT_FLAGS, careerTolerance, isDamageHealthEffect } from './spellcast.js';   // BAL9: the damage-health pair a pierce reads
 import { mentorDamageTakenMult } from './mentorMode.js';   // SOFTCAP2: a leaf
+import { spellPowerMult, spellPierce } from './spellPower.js';   // BAL9: my damage spell's power and pierce (a leaf)
 import { noteFeudHarm, elementFeudClass } from './feudLedger.js';   // RVN1: my spell's round, in its fight's ledger (a leaf)
 import { raceById, raceByKey } from './races.js';   // L2-slice (magic-10): the racial immunity arm
 import { STAT_KEYS_ORDER, FATIGUE_MULTIPLIER, maxFatigue, increaseDrainMagnitude, liveStat } from './statMods.js';
@@ -631,10 +632,12 @@ export const settingsKeyOf = (e) => [
 
 /** EntityEffect.GetMagnitude, verbatim: the magnitude roll, then
  *  ModifyEffectAmount (the saving throw) ONLY when the parent bundle
- *  is not CasterOnly (rangeType 0). C# int division truncates. */
-function effectMagnitude(e, casterLevel, saveScaled, element, flag, target, rolls) {
+ *  is not CasterOnly (rangeType 0). C# int division truncates. BAL9: a
+ *  damage-health effect's throw takes its caster's pierce (systems/
+ *  spellPower.js spellPierce - my spell alone, at no player; 0 else). */
+function effectMagnitude(e, casterLevel, saveScaled, element, flag, target, rolls, caster = null) {
   let n = rollMagnitude(e, casterLevel, rolls);
-  if (saveScaled) n = Math.trunc(n * savingThrow(element, flag, target, 0, rolls) / 100);
+  if (saveScaled) n = Math.trunc(n * savingThrow(element, flag, target, 0, rolls, isDamageHealthEffect(e) ? spellPierce(caster, target) : 0) / 100);
   return n;
 }
 
@@ -679,7 +682,8 @@ export function healAttributeDamage(entity, stat, amount) {
 
 /** DROPS-AUDIT ELITE-SPELLS: an elite foe's spells land at its `damageScale`, as its blows do (combat/formulas.js
  *  calculateAttackDamage's tail, the same rounding and floor) - so a caster in an elite dungeon is as strong with
- *  a Fireball as with its sword. The player's own casts, and every caster without a scale, are untouched. */
+ *  a Fireball as with its sword. The player's own casts, and every caster without a scale, are untouched here (BAL9's
+ *  power is the player's own, below). */
 const casterScaledOnly = (n, ent) => (n > 0 && ent && !ent.isPlayer && Number.isFinite(ent.damageScale) && ent.damageScale !== 1
   ? Math.max(1, Math.round(n * ent.damageScale)) : n);
 /** SOFTCAP2: and a MENTORED player takes a foe's spell as it takes a foe's blow - at the mentored health pool
@@ -690,6 +694,13 @@ export const casterDamageScaled = (n, ent, target = null) => {
     const m = mentorDamageTakenMult(target);
     if (m > 1) v = Math.max(1, Math.round(v * m));
   }
+  // BAL9 (bible/05-Combat/Balance-Arc.md section 15): MY spell's power - the school past 100 and the loot's potency
+  // (systems/spellPower.js spellPowerMult); 1 for a foe's, a peer's stand-in's and at any player. The same rounding and
+  // floor of one; a spell the throw turned whole stays nothing.
+  if (v > 0) {
+    const p = spellPowerMult(ent, target);
+    if (p !== 1) v = Math.max(1, Math.round(v * p));
+  }
   return v;
 };
 
@@ -699,7 +710,7 @@ export const casterDamageScaled = (n, ent, target = null) => {
  *  applies via liveStat / hasActiveEffect). */
 function runEffectRound(a, target, sinks, rolls) {
   if (a.kind === 'continuousDamage') {
-    const n = casterDamageScaled(effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls), a.caster, target);   // DROPS-AUDIT ELITE-SPELLS; SOFTCAP2: the target, for mentor mode
+    const n = casterDamageScaled(effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls, a.caster), a.caster, target);   // DROPS-AUDIT ELITE-SPELLS; SOFTCAP2: the target, for mentor mode; BAL9: its caster's pierce
     // AUDIT 68 S19-round-ticks-player-provenance: the tick is DamageHealthFromSource(caster) - the player's blow only
     // when the player cast it (no caster is the player, hostMagic's `!caster` law). A round sink bills nobody else.
     // DUEL1: and the entry's duel tag rides along - a duel's damage over time (bundleDuel) stops at the duel's floor
@@ -857,7 +868,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
   // same predicate, folding in Career.Magic tolerance and
   // BiographyResistMagicMod where DFU folds in Career.Fire.
   const saveFlag = () => flag;
-  const magnitude = (e) => effectMagnitude(e, casterLevel, saveScaled, saveElement(e), saveFlag(e), target, rolls);
+  const magnitude = (e) => effectMagnitude(e, casterLevel, saveScaled, saveElement(e), saveFlag(e), target, rolls, caster?.entity ?? null);   // BAL9: the caster, for a damage spell's pierce
   const out = { damage: 0, healed: 0, continuous: 0, skipped: 0 };
   // E2: ctx.heldItem is CastWhenHeld's InstantiateSpellBundle - the
   // whole apply is a HeldMagicItem bundle pinned to the worn item

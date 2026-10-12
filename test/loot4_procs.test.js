@@ -49,7 +49,7 @@ function door(foes = [], me = null) {
   setPlayerDoor({ foes: () => foes.filter((f) => !f.dead), feet: () => [0, 0, 0], hurtFoe: (f, n) => d.hurts.push([f.name, n]), castOnPlayer: () => {}, player: () => me });
   return d;
 }
-const PROCS = ['elemental', 'leech', 'thorns', 'focus', 'slayer', 'castSpeed'];   // CAST-SPEED: appended
+const PROCS = ['elemental', 'leech', 'thorns', 'focus', 'slayer', 'castSpeed', 'potency', 'wellspring'];   // CAST-SPEED: appended; PIN MOVED (BAL9c): the caster's two after it
 
 test('LOOT4: the kinds - five that do things, banded, worded, valid; never in the ladder\'s own draw, never a name', () => {
   on();

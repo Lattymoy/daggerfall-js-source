@@ -277,7 +277,7 @@ test('the find adds to a list rather than promoting one, and claims its own lege
   // came with it, and the classic pairings stand beside them, the gun claimed from none
   assert.deepEqual(legendariesFor({ group: 'Weapons', templateIndex: 113 }).map((l) => l.name),
     ['Wyrmbane', 'Nightwhisper', "Worm's Tooth"], 'a dagger is still both of its own, and the King of Worms\' knife beside them');
-  assert.deepEqual(legendariesFor({ group: 'Weapons', templateIndex: 120 }).map((l) => l.name), ['Wyrmbane', "Ansei's Edge"]);
+  assert.deepEqual(legendariesFor({ group: 'Weapons', templateIndex: 120 }).map((l) => l.name), ['Wyrmbane', "Ansei's Edge", "Shalidor's Brand"]);   // PIN MOVED (BAL9c, bible/05-Combat/Balance-Arc.md section 15): a longsword is Shalidor's Brand's too
 });
 
 // ── THE AUDIT'S OWN PINS (2026-09-19) ───────────────────────────────

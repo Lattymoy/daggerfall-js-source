@@ -72,6 +72,7 @@ import { sparedByPlayer, isShipmate, boutTeammates } from '../combat/friendlyFir
 import { coverDistance, coverStep } from '../ai/cover.js';   // TACT1: billboards are cover; AUDIT TACT B5: met by touch
 import { blowTaken } from '../systems/blowTaken.js';   // TELL1: what a spell's target takes (a staggered foe a quarter more)
 import { noteFeudHarm, elementFeudClass } from '../systems/feudLedger.js';   // RVN1: my spell, in its fight's ledger (a leaf)
+import { noteSkillChallenge } from '../systems/skillSoftcap.js';   // BAL9: a spell answers its foe, as a blow does
 import { sandSpellRefusal } from '../systems/arenaKit.js';   // AUDIT ARENA-LADDER: the sand's kit law
 import { createMwMagicFx } from './mwMagicFx.js';   // MW-SPELLFX1: Morrowind's spell effects, drawn by every host through this engine
 import { fpsSpellCasting } from '../combat/fpsSpellCasting.js';   // CAST-SPEED: the ONE pair of hands, whose motion gates the click
@@ -687,6 +688,11 @@ export function createPlayerMagic({
     // RVN1 (Feud-Arc.md section 12): MY spell's landing goes in the fight's ledger by its element (a later round is
     // systems/effects.js's to write - the round sink's own law); a peer's (its stand-in caster) and a foe's never
     const mine = striker === playerEntity;
+    // BAL9 (bible/05-Combat/Balance-Arc.md section 15): A SPELL ANSWERS ITS FOE. MY spell that reaches a foe - not my own
+    // ally - remembers it as the fight's (skillSoftcap.js noteSkillChallenge, formulas.js's blow's own door), so past 100
+    // a school's next uses learn by that foe, as a weapon's do; only a blow ever said so, and a fireball at an Ancient
+    // Lich counted as a light cast in an empty room (the quarter, UNCHALLENGED_MAGIC_WEIGHT)
+    if (mine && foe?.entity && foe.entity.team !== 'PlayerAlly') noteSkillChallenge(playerEntity, foe.entity);
     const landing = sinks?.hurt ? { ...sinks, hurt: (n, o) => {
       const d = o?.whole || o?.round ? n : blowTaken(n, striker, foe.entity, null, { kind: 'spell', element: spell?.element ?? null });
       if (mine && !o?.round) noteFeudHarm(foe.entity, elementFeudClass(spell?.element), d);
@@ -735,6 +741,7 @@ export function createPlayerMagic({
     // Lycanthropy cast in any host reaches the racial override.
     base.morphSelf = () => morphSelf(playerEntity, { nowMinutes: now ? Math.floor(now()) : 0, say });
     const ctx = { ...(lastCastCost > 0 ? { ...base, selfCastCost: lastCastCost } : base), ...(extraCtx ?? {}) };
+    if (caster?.entity && caster.entity !== playerEntity && !caster.entity.isPlayer) noteSkillChallenge(playerEntity, caster.entity);   // BAL9: a foe's spell on me is the fight's, as its blow is (formulas.js's both directions)
     if (caster?.entity && caster.entity !== playerEntity && !caster.entity.isPlayer) markPlayerHarm(caster.entity);   // REVENANT-HARM: before it lands - its burn may be the death
     const r = applySpell(spell, casterLevel, playerEntity, playerSinks, rolls, caster, ctx);
     if (_doorFeet && !(r.saved || r.chanceFailed || r.reflected)) mwFx.hit(spell, _doorFeet);   // MW-SPELLFX1: the hit, about me

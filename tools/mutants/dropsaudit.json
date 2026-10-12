@@ -11,8 +11,8 @@
   {
     "name": "DA-ELITE-SPELLS-rounds-unscaled",
     "file": "src/systems/effects.js",
-    "old": "    const n = casterDamageScaled(effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls), a.caster, target);",
-    "new": "    const n = effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls);",
+    "old": "    const n = casterDamageScaled(effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls, a.caster), a.caster, target);",
+    "new": "    const n = effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls, a.caster);",
     "tests": [
       "test/dropsaudit.test.js"
     ]

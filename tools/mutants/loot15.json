@@ -20,8 +20,8 @@
   {
     "name": "LOOT15-the-wardrobe-unlisted",
     "file": "src/systems/lootRarity.js",
-    "old": "export const allLegendaries = () => [...LEGENDARIES, ...WARDROBE_LEGENDARIES, ..._customLegendaries];",
-    "new": "export const allLegendaries = () => [...LEGENDARIES, ..._customLegendaries];",
+    "old": "export const allLegendaries = () => [...LEGENDARIES, ...WARDROBE_LEGENDARIES, ...ARCANE_LEGENDARIES, ..._customLegendaries];",
+    "new": "export const allLegendaries = () => [...LEGENDARIES, ...ARCANE_LEGENDARIES, ..._customLegendaries];",
     "tests": [
       "test/loot15_garments.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "LOOT15-the-wardrobe-first",
     "file": "src/systems/lootRarity.js",
-    "old": "export const allLegendaries = () => [...LEGENDARIES, ...WARDROBE_LEGENDARIES, ..._customLegendaries];",
-    "new": "export const allLegendaries = () => [...WARDROBE_LEGENDARIES, ...LEGENDARIES, ..._customLegendaries];",
+    "old": "export const allLegendaries = () => [...LEGENDARIES, ...WARDROBE_LEGENDARIES, ...ARCANE_LEGENDARIES, ..._customLegendaries];",
+    "new": "export const allLegendaries = () => [...WARDROBE_LEGENDARIES, ...LEGENDARIES, ...ARCANE_LEGENDARIES, ..._customLegendaries];",
     "tests": [
       "test/loot15_garments.test.js"
     ]

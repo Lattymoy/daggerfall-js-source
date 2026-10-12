@@ -92,7 +92,7 @@ test('TECH1 THE LINE: a kind of its own, appended last, a weapon\'s or the Gaunt
   const k = LR.AFFIX_KINDS.technique;
   assert.equal(Object.keys(LR.AFFIX_KINDS).at(-1), 'technique', 'appended after every kind');
   assert.equal(LR.AFFIX_IDS.includes('technique'), false, 'in no pool: AFFIX_IDS are the draws\' kinds');
-  assert.equal(LR.AFFIX_IDS.at(-1), 'castSpeed', 'so every pool is the pool it was');
+  assert.equal(LR.AFFIX_IDS.at(-1), 'wellspring', 'so every pool is the pool it was');   // PIN MOVED (BAL9c): the caster's two after castSpeed
   assert.equal(k.technique, true);
   assert.equal(k.slot, null, 'no slot: it never names a piece');
   assert.equal(k.proc, undefined, 'no proc - one line of its own beside the proc slot');
@@ -278,12 +278,12 @@ test('TECH1 THE CARD: the line with its band, then what a press does with its nu
 
 test('TECH1 THE LAW: a technique of the piece\'s family, one, last of its own lines, in its tier\'s band - every honest shape lawful, each forgery named; the law moved to 2 (mutants: the count; the place; the family; the band)', () => {
   on();
-  assert.equal(ITEM_LAW_VERSION, 2);
+  assert.equal(ITEM_LAW_VERSION, 3);   // PIN MOVED (BAL9c): the caster's two lines and the arcane three are lawful from law 3 on
   // AUDIT TECH1: THE LAW MOVES THE SERVICE. The account Worker's judge IS this law (judge.js JUDGE_VERSION), and a site
   // deploy waits only on ACCOUNT_VERSION (.github/workflows/deploy.yml) - a law moved without it ships the site before the
   // judge that knows it, and an honest piece reads as a forgery (a hold and a strike) in the gap. Each law version names
   // the first service that carries it; a law with no entry here, or a service older than its entry, fails.
-  const LAW_SERVICE = { 1: 0, 2: 108 };   // PIN MOVED (TECH1 at the #749 merge): law 2 is acct108's - main's acct107 is LW15's, which never carried it; PIN MOVED (TECH1 at the #755 merge): law 2 was acct107's - main's acct106 is SCALE4d's, which never carried it; PIN MOVED (TECH1 at the #745 merge): law 2 was acct106's - main's acct105 is THE INTEGRITY ARC lane 3's, which never carried it
+  const LAW_SERVICE = { 1: 0, 2: 108, 3: 121 };   // BAL9c: law 3 is acct121's   // PIN MOVED (TECH1 at the #749 merge): law 2 is acct108's - main's acct107 is LW15's, which never carried it; PIN MOVED (TECH1 at the #755 merge): law 2 was acct107's - main's acct106 is SCALE4d's, which never carried it; PIN MOVED (TECH1 at the #745 merge): law 2 was acct106's - main's acct105 is THE INTEGRITY ARC lane 3's, which never carried it
   assert.ok(Number.isInteger(LAW_SERVICE[ITEM_LAW_VERSION]), `item law ${ITEM_LAW_VERSION} names no account service - bump ACCOUNT_VERSION with it and record it here`);
   assert.ok(Number(/^acct(\d+)$/.exec(ACCOUNT_VERSION)?.[1]) >= LAW_SERVICE[ITEM_LAW_VERSION], `${ACCOUNT_VERSION} predates item law ${ITEM_LAW_VERSION}`);
   const lawful = [
