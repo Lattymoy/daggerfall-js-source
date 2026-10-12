@@ -939,6 +939,55 @@ every region; `holyDayOf` against the old law restated, over 4,000 drawn cycles 
 filter and sort, asked of the world once a town. Mutants: `tools/mutants/holydays.json`, 6, all dead; `lw13.json`'s
 LW13-holy-region re-aimed at the line that passes every region's day.
 
+## BOOT-OVERLAP — the boot's network, asked beside its work
+
+*A player (2026-10-12): "vamos checar se da para melhorar o loading, eu vou abrir o jogo e voce mede o tempo que
+demorou e por que" - the installed client (0.1.8217, an online character) captured from the process's launch into the
+world through the debugging port: browser Tracing on one connection, the page's CPU profile, network and console on
+another, the window's title (the boot's steps) read off the page.*
+
+**Found.** From the character's click to the boot's last step took 12.2 s, and the main thread stood idle, waiting on
+the account service, 7.5 s of it - every call one after the other, each answered in ~1 s or more:
+1. the join (1.5 s) and the realm save (2.0 s) - the save needs the join's lease, and nothing of the world needs either;
+2. then the realm's lines (0.8 s), then the account's roster (0.6 s) - neither needs the other, and their one reader,
+   Project Legacy's host, is made long after (LEGACY7: before any save is restored);
+3. then the data's read, and only after it WD3's ask for the homes' layouts - waited on 0.7 s at the first build;
+4. then each town the boot builds waiting on its homes (HOME-LOOK, up to `HOME_LOOK_BUILD_WAIT_MS`): the start's
+   (1.4 s idle) and, at the load's arrival, the realm save's own place (0.7 s idle).
+
+**The fix.** The calls asked beside the work, nothing asked that was not asked before:
+- the lines and the roster are asked at once at the join (`legacyRealmRead`) and read behind the boot; the boot waits
+  for them where Project Legacy's host is made - still above the load door, so a death another device wrote stands
+  before any save is restored;
+- the homes' door (`homesApi`) and WD3's layouts ask (`bootHomeLayoutsAsk`) stand above the data's read, once
+  `online` is settled (the realm's refusal and the Test Room's drop) - the first build's wait reads that ask;
+- the towns the boot builds - its start and a realm save's own place (`locationKey` 'world') - are asked at once as
+  soon as the start is known, as the save's character (`characterId`, the realm's id): `onlineHomes.ensure` takes a
+  `character` for it, so the tenancies that ride the town's answer are the ones the arrival would have asked for (the
+  start's was asked before as a character id minted on the unrestored entity, which rents nothing).
+
+**Measured.** A live A/B: two local builds of the same main (f5a7f183d), one with this change, each launched fresh
+and booted into the world with the same online character on the same machine, the same capture; times from the realm
+save's GET (the join's answer - its own 2.03 s on both runs):
+
+| | main | BOOT-OVERLAP |
+|---|---|---|
+| the lines, then the roster | 2.04 -> 3.48 s, awaited | asked at 2.04 beside the data's read, read behind it |
+| the data's read begins | 3.54 s | 2.06 s |
+| the first build begins | 5.97 s | 3.77 s |
+| the main thread idle at the start's town | ~1.4 s | ~0.5 s (its map id is only known once the data is read) |
+| the save's town at the load | ~0.7 s idle | none (heard by then) |
+| **save GET -> the boot's last step** | **10.71 s** | **7.31 s** (−3.4 s) |
+
+One run each; the account service's answers vary run to run (0.6 to 2 s a call), so the saving is read off the
+timeline - the waits that went - as much as off the total. Left: the join and the save, 3.5 s of the service's own
+(the server's ~1 s a call against a ~340 ms round trip - Server-Timing would say where), and the start's town.
+
+Pins: `test/bootoverlap.test.js` (3) - `ensure` asks as the character named, or the one playing; a town asked early is
+the build's (one ask); the boot's wiring by source. Mutants: `tools/mutants/bootoverlap.json`, 7, all dead;
+`housing.json`'s HOME-RENT-the-character-unsent re-aimed (killed by the new pins too); `home1`, `legacy7_online` and
+`wd3_online`'s source pins moved with the code.
+
 ## For the owner
 
 - **The A/B this branch owes**: on a machine with the data, `ARENA2_PATH=... node tools/frameProbe.mjs knight night`
