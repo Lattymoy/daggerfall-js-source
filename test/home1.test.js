@@ -469,7 +469,10 @@ test('HOME1 the wiring by source: the home answers at the door BEFORE Daggerfall
   assert.match(m, /displayName: home \? homeDoorTitle\(home\) : homeDoorName\(shownBuildingName\(db, bd\.name\), !!houseVerbs\),/, 'the hover names it');   // EMPIRE-BANK: a bank's name now (discovery.js shownBuildingName); FIELD BUGS 2026-09-30b HOME-PLAQUE (PIN MOVED)
   assert.match(m, /onlineHomeLines: \(\) => \(host\.onlineHomes \? HOME_BANK_LINES : null\),/);
   const w = src('src/scenes/world.js');
-  assert.match(w, /const homesApi = params\.has\('online'\) \? accountHomes\([^\n]*\n\s*const onlineHomes = homesApi \? createOnlineHomes\(/, 'online alone, and built before any quest can ask');   // HOME-RENT: the service's door kept for a home's rooms too
+  // PIN MOVED (BOOT-OVERLAP, 2026-10-12): the door stands above the data's read (WD3's ask goes out beside it), the
+  // registry where it stood - both online alone, both before any quest can ask
+  const homesAt = w.indexOf("const homesApi = params.has('online') ? accountHomes(");
+  assert.ok(homesAt > 0 && homesAt < w.indexOf("  status('loading data');") && homesAt < w.indexOf('const onlineHomes = homesApi ? createOnlineHomes('), 'online alone, and built before any quest can ask');   // HOME-RENT: the service's door kept for a home's rooms too
   assert.ok(w.indexOf('const onlineHomes = ') < w.indexOf('isPlayerHome: (mapId, buildingKey) => !!onlineHomes?.homeAt(mapId, buildingKey),'));
   assert.match(w, /townMapId: \(dfLoc\.mapTableData\?\.mapId \?\? 0\) >>> 0,/, 'the door\'s own town');
   assert.match(w, /onlineHomes\?\.ensure\(_musicLoc\?\.mapTableData\?\.mapId\);/, 'the town asked on arrival');

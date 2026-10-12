@@ -125,7 +125,9 @@ test('WD3 online, the claim\'s ONE write keeps a town in one layout (AUDIT WD3 R
 test('WD3 online, the client: the homes\' towns asked at the boot, before the first town is built (a wait of HOME_LAYOUTS_WAIT_MS, then asked again behind the play, each wait longer); online the pins are the service\'s alone - a save\'s own records would stand one player\'s town apart from the room\'s; the claim sends its town\'s layout, none for Daggerfall\'s', () => {
   assert.match(src('src/net/accountClient.js'), /layouts: \(\) => post\('\/v1\/homes\/layouts', \{\}\),/);
   const W = src('src/scenes/world.js');
-  assert.match(W, /let _homeLayoutsAsk = homesApi \? homesApi\.layouts\(\)\.catch\(\(\) => null\) : null;/);
+  // PIN MOVED (BOOT-OVERLAP, 2026-10-12): asked above the data's read, beside it - the first build's wait reads that ask
+  assert.match(W, /const bootHomeLayoutsAsk = homesApi \? homesApi\.layouts\(\)\.catch\(\(\) => null\) : null;\n\s+status\('loading data'\);/);
+  assert.match(W, /let _homeLayoutsAsk = bootHomeLayoutsAsk;/);
   assert.match(W, /const heard = await Promise\.race\(\[ask, new Promise\(\(res\) => setTimeout\(\(\) => res\(null\), HOME_LAYOUTS_WAIT_MS\)\)\]\);/);
   assert.match(W, /if \(!homesApi \|\| _serverLayoutRecords !== null\) return;/, 'asked until heard (AUDIT WD3 O2)');
   assert.match(W, /\}, HOME_LAYOUTS_WAIT_MS \* Math\.min\(attempt, HOME_LAYOUTS_RETRIES\)\);/);

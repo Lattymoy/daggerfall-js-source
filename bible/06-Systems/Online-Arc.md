@@ -10054,7 +10054,8 @@ home's alone - they are about other players.
 - **The service** (`homes.js` setHomeLook over `migrations/0038_home_look.sql` - `homes.look`; `/v1/homes/look`): the
   owner's character's alone, free, a decorator's write against the hour; the town answer carries each home's look.
 - **Drawn** (`scenes/world.js`): a town's pixel asks its homes before its buildings are merged (a moment -
-  HOME_LOOK_BUILD_WAIT_MS), and a player's home stands OUT of the pixel's static batch with its own texture table (the
+  HOME_LOOK_BUILD_WAIT_MS; the boot's own two - its start's and a realm save's place - asked at once beforehand, as the
+  save's character, BOOT-OVERLAP in `07-Rendering/Performance-Priority.md`), and a player's home stands OUT of the pixel's static batch with its own texture table (the
   pixel's climate swaps and its look over them - a new table each time, since the renderer caches a sub-mesh's texture
   against the table's identity); its shadow too. `refreshHomeLooks` repaints a home where it stands whenever the
   registry moves or the painter tries a look (the older ask never lands over a newer); a home the build merged that is

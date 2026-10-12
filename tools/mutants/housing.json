@@ -258,10 +258,11 @@
   {
     "name": "HOME-RENT-the-character-unsent",
     "file": "src/systems/onlineHomes.js",
-    "old": "      .then(() => api.town(id, character()))",
-    "new": "      .then(() => api.town(id, null))",
+    "old": "      .then(() => api.town(id, as === undefined ? character() : as))",
+    "new": "      .then(() => api.town(id, as === undefined ? null : as))",
     "tests": [
-      "test/homerent.test.js"
+      "test/homerent.test.js",
+      "test/bootoverlap.test.js"
     ]
   },
   {

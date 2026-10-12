@@ -1149,12 +1149,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     ? createRealmLine({ io: realmIoNow, storage: () => appStorage(), onRefused: (id, error) => { townTalk.say(LEGACY_TEXT.lineRefused(realmRefusalText(error))); } }) : null;
   /** @type {Set<string> | null} the living realm characters' ids - null unknown (unread: every id is taken to stand) */
   let legacyRealmRoster = null;
-  if (legacyRealmLine) {
-    status('Reading the family');
-    await legacyRealmLine.pull().catch((e) => console.warn('[legacy] the realm\'s lines were not read', e));
-    const listed = await realmList(realmIoNow()).catch(() => null);
-    if (listed?.ok) legacyRealmRoster = new Set(listed.characters.map((c) => String(c.id)));
-  }
+  // BOOT-OVERLAP (2026-10-12, a player's launch into the world captured from the live client: the lines and the roster
+  // were read one after the other, the boot waiting on each - 1.4 s of nothing but the network before the data was
+  // read): both asked at once, and read BEHIND the boot. Their one reader is Project Legacy's host (`legacyHost`, made
+  // further down), which waits for them where it is made - still before any save is restored.
+  let legacyRealmHeard = !legacyRealmLine;
+  const legacyRealmRead = legacyRealmLine ? Promise.all([
+    legacyRealmLine.pull().catch((e) => console.warn('[legacy] the realm\'s lines were not read', e)),
+    realmList(realmIoNow()).catch(() => null).then((listed) => { if (listed?.ok) legacyRealmRoster = new Set(listed.characters.map((c) => String(c.id))); }),
+  ]).then(() => { legacyRealmHeard = true; }) : null;
   // REALM P1.3: a realm checkpoint that LANDS is a save that lands - the gate's spoils it was composed holding are then
   // safe on the service, and their device record goes (scenes/spoilsPool.js saved, as onSlotSaved tells it for a slot).
   // Without it no realm save ever cleared them, and every boot handed the same spoils back. The hooks are the spoils
@@ -1283,6 +1286,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   // the session does).
   // (bootLoadPick and bootSnap stand at the top of the boot since AUDIT FINAL F9: the Test Room's check reads the same pick)
   if (bootLoadPick) prebuildArmsForSave(bootSnap);
+  // HOME-RENT: the service's homes door itself, for a home's rooms - read at its door, rented, offered, collected
+  // BOOT-OVERLAP: stood here, above the data's read, once `online` is settled (the realm's refusal and the Test Room's
+  // drop above) - so WD3's ask for the homes' layouts (below, at the first build) goes out beside the data's read
+  // instead of after it: it was waited on 0.7 s at the first build.
+  const homesApi = params.has('online') ? accountHomes({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }) : null;
+  const bootHomeLayoutsAsk = homesApi ? homesApi.layouts().catch(() => null) : null;
   status('loading data');
   const [palBytes, blocksBytes, archBytes, mapsBytes, climateBytes, politicBytes, woodsBytes] =
     await Promise.all([
@@ -1694,9 +1703,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   // HOME1 (Mac: "allowing online players to purchase housing in any location"): the online homes - the account
   // service's registry as this page knows it, one town at a time (systems/onlineHomes.js). The mode machine's doors
   // read it and the quest's residence filter asks it; offline it does not exist and every door is Daggerfall's. Read
-  // off `params`: `onlineOn` is declared far below, and a quest can be set up before it is.
-  // HOME-RENT: the service's homes door itself, for a home's rooms - read at its door, rented, offered, collected
-  const homesApi = params.has('online') ? accountHomes({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }) : null;
+  // off `params`: `onlineOn` is declared far below, and a quest can be set up before it is. (Its door, `homesApi`, stands
+  // above the data's read - BOOT-OVERLAP.)
   const onlineHomes = homesApi ? createOnlineHomes({ api: homesApi, character: () => characterIdOf(playerEntity), onWrote: () => legacyOnlineHomesRead() }) : null;   // LEGACY7 part five: a home of mine bought, sold or changed - the line's to learn again
   /** LEGACY7 part five: ONLINE, THE LINE'S HOUSES ARE ITS MEMBERS' ONLINE HOMES (Legacy-Arc 10b) - this realm character's
    *  rows of the account's homes (/v1/homes/mine; HOME1: a home is a realm character's), each named by its town. Read at
@@ -1718,16 +1726,17 @@ export async function bootWorld(canvas, renderer, params, status) {
       }));
     }).catch(() => {});
   }
-  // WD3: THE TOWNS THAT HOLD AN ONLINE HOME, AND THE LAYOUT EACH WAS BOUGHT IN (net/homeLaw.js) - asked now, beside the
-  // boot's own loading, and answered into the layout pins before the first town stands (below, at the first build), so
-  // every client of the room stands a home's town as its homes were bought in it. An answer that does not come is asked
-  // again behind the play, and the towns it names are built again when it lands.
+  // WD3: THE TOWNS THAT HOLD AN ONLINE HOME, AND THE LAYOUT EACH WAS BOUGHT IN (net/homeLaw.js) - asked beside the
+  // boot's own loading (BOOT-OVERLAP: above the data's read, `bootHomeLayoutsAsk`), and answered into the layout pins
+  // before the first town stands (below, at the first build), so every client of the room stands a home's town as its
+  // homes were bought in it. An answer that does not come is asked again behind the play, and the towns it names are
+  // built again when it lands.
   const homeLayoutsOnline = !!homesApi;
   let _serverLayoutRecords = null;   // [{ locationKey, stamp, kind }] once the service has answered
   let _homeLayoutsApplied = false;   // AUDIT WD3 R2: and once its pins stand (the packs they let in fetched, the towns rebuilt)
   let _pinsGen = 0;
   let _pinsDroppedSaid = false;   // AUDIT WD3 B6   // AUDIT WD3 R3: the latest applyLayoutPins - an older one overtaken sets nothing
-  let _homeLayoutsAsk = homesApi ? homesApi.layouts().catch(() => null) : null;
+  let _homeLayoutsAsk = bootHomeLayoutsAsk;
   let _arenaHomesAsked = false;   // ARENA4b: the online homes the arena displaced, moved once a boot (moveArenaHomesOnline) - here, above the boot's first landing
   let _deedsHeldAsked = false;   // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: the deeds the realm gave, held once a boot (holdRealmDeedsOnline) - here, beside it
   let playerSpawned = false, _bootLoaded = false;   // HOTFIX 1003: here, above the boot's first landing - moveArenaHomesOnline reads it when the homes' towns land, which can be before the boot walk reached its old line (a TDZ ReferenceError live)
@@ -2498,6 +2507,16 @@ export async function bootWorld(canvas, renderer, params, status) {
   if (!startLoc) throw new Error(`location not found: ${regionName}/${locationName}`);
   const startPixel = longitudeLatitudeToMapPixel(
     startLoc.mapTableData.longitude, startLoc.mapTableData.latitude);
+  // BOOT-OVERLAP: THE TOWNS THE BOOT WAITS ON AS IT BUILDS THEM - the start's (the first build) and a realm save's own
+  // place (the load's arrival) - each waited on up to HOME_LOOK_BUILD_WAIT_MS at its build, one after the other (1.4 s and
+  // 0.7 s of nothing but the network). Asked now, both at once, as the realm's character the save is (`characterId`, the
+  // realm's id - the one playing once it is restored): its own tenancies ride the answer, as they would at the arrival.
+  if (onlineHomes && realmBoot && bootSnapRead) {
+    const at = bootSnapRead.locationKey === 'world' ? bootSnapRead.world?.pixel : null;
+    const saved = at ? locationIndex.get(`${at.x},${at.y}`) : null;
+    const as = typeof bootSnapRead.characterId === 'string' ? bootSnapRead.characterId : null;
+    for (const loc of new Set([startLoc, saved])) if (loc?.mapTableData) onlineHomes.ensure(loc.mapTableData.mapId, { character: as }).catch(() => {});
+  }
 
   const CITY_LIGHT_COLOR_F32 = lanternColor(lightingOn, new Float32Array(CITY_LIGHT_COLOR));   // EL1: the lane's flame over the classic white
   // World clock (R5) + sky controller: panorama follows the current pixel's
@@ -27724,6 +27743,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     const at = fallen?.characterId ? newestSaveOf(enumerateSaves().info, fallen.characterId) : -1;
     return legacyInheritDeed(row, () => (at >= 0 ? loadSlot(at)?.sceneCache ?? null : null));
   };
+  // BOOT-OVERLAP: the realm's lines and roster, read behind the boot (above, at the join), are in before the host that
+  // reads them is made
+  if (legacyRealmRead) {
+    if (!legacyRealmHeard) status('Reading the family');
+    await legacyRealmRead;
+  }
   legacyHost = createLegacyHost({
     entity: playerEntity,
     residentNow: (id) => residentOfId(id, livingTownOfId),   // AUDIT FB1010 C1: the betrothed as the census mints them now, for the wedding

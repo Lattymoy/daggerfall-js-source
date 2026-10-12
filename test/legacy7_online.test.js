@@ -226,8 +226,12 @@ test('LEGACY7 the chargen\'s question and the birth\'s address: Bloodline open o
 
 test('LEGACY7 wiring: the boot reads the lines before any save; the realm\'s copy follows each write; a fall is the session\'s tombstone; a member is born and joined through the realm', () => {
   const w = rd('src/scenes/world.js');
-  const pull = w.indexOf('await legacyRealmLine.pull()');
-  assert.ok(pull > 0 && pull < w.indexOf('restoreModSaveRecords('), 'read before any save is restored');
+  // PIN MOVED (BOOT-OVERLAP, 2026-10-12): the lines and the roster read at once, behind the boot, from the join - and
+  // waited for where their reader (Project Legacy's host) is made, which stands above the boot's load door (both on the
+  // boot's own walk, so the text's order is the run's)
+  assert.match(w, /const legacyRealmRead = legacyRealmLine \? Promise\.all\(\[\n\s+legacyRealmLine\.pull\(\)/, 'the lines asked at the join');
+  const read = w.indexOf('    await legacyRealmRead;\n  }\n  legacyHost = createLegacyHost({');
+  assert.ok(read > w.indexOf('const legacyRealmRead = ') && read < w.indexOf('await worldQuickLoad({ ...bootLoadPick, snap });') && read < w.indexOf('await classicLoadBoot();'), 'read before any save is restored');
   assert.match(w, /stored: \(f\) => \{ legacyRealmLine\?\.push\(f\); \},\n\s+tombstone: \(why\) => \(realmSession \? realmSession\.die\(why\) : false\),/);
   assert.match(w, /if \(realmNew\) \{ legacyRealmBirth\(host\)\.catch\(/);
   assert.match(w, /saveNow: \(\) => \(legacyFirstSave \? legacyFirstSave\(\) : /);

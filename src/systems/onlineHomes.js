@@ -377,8 +377,11 @@ export function createOnlineHomes({ api, character = () => null, now = () => Dat
   let version = 0;
   const idOf = (mapId) => (Number.isFinite(Number(mapId)) ? Number(mapId) >>> 0 : 0);
 
-  /** Ask for a town unless its answer is fresh - one ask in flight a town. Resolves whether the town is known. */
-  function ensure(mapId, { force = false } = {}) {
+  /** Ask for a town unless its answer is fresh - one ask in flight a town. Resolves whether the town is known.
+   *  BOOT-OVERLAP: `character` asks as the one named rather than the one playing now - the boot asks its towns before the
+   *  save it restores is the one playing (a realm save's own id; undefined: the one playing).
+   *  @param {any} mapId @param {{ force?: boolean, character?: string|null }} [opts] @returns {Promise<boolean>} */
+  function ensure(mapId, { force = false, character: as = undefined } = {}) {
     const id = idOf(mapId);
     if (!homeMapIdOk(id)) return Promise.resolve(false);
     const had = towns.get(id);
@@ -391,7 +394,7 @@ export function createOnlineHomes({ api, character = () => null, now = () => Dat
     if (!force && now() - (failed.get(id) ?? -Infinity) < HOME_RETRY_MS) return Promise.resolve(!!had);
     const gen = writesTo(id);
     const p = Promise.resolve()
-      .then(() => api.town(id, character()))   // HOME-RENT: the playing character's own tenancies ride the answer
+      .then(() => api.town(id, as === undefined ? character() : as))   // HOME-RENT: the playing character's own tenancies ride the answer
       .then((r) => {
         const list = r?.ok ? r.data?.homes : null;
         // unanswered: what was known stands, nothing new is believed, and the next ask waits a little

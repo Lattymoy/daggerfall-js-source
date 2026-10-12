@@ -357,7 +357,8 @@ migration `0084_legacy.sql`, acct87; `systems/legacy/realmLine.js`; `test/legacy
   rev alone, a device that touched its copy three times wrote over a death another device had written); a stale one is
   answered with the stored record, which the client merges its facts into (`store.js mergeFacts`: a death only ever added) and writes again, one past both. Every
   online boot reads the account's lines into the device's store before any save is restored (a death another device
-  wrote stands there), and each write of the device's is followed by the realm's (`realmLine.js push`); a switch, a
+  wrote stands there) - asked at the join beside the account's roster and read behind the boot, waited for where
+  Project Legacy's host is made (BOOT-OVERLAP in `07-Rendering/Performance-Priority.md`) - and each write of the device's is followed by the realm's (`realmLine.js push`); a switch, a
   succession and a birth wait for it (`flush`) before the page goes.
 - **A Bloodline death is a tombstone** (`POST /v1/realm/die`, under the playing session's lease - `realmSaves.js` session
   `die`): the service stamps `dead_at` and drops the lease, and from then refuses the character's join (`dead`, 410),
