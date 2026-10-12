@@ -726,6 +726,13 @@ legs, each picture once per look (3150 dyes), three runs each, the outputs hashe
 (the per-pattern "before" is with the hide already kept: the first cut alone took the average to 0.61 ms.) The 3D
 horse's dye (`recolorHorseTexels`, 90 looks on a 256x256 body) is identical too, and 18% faster (5.2 s -> 4.3 s).
 
+Then the live client (the local build of main with #854 and #855, vsync on, one launch each way, the same character
+standing in the same place for four minutes after the world came up, CPU profile at 1 ms): the dye 866 -> 384 ms of
+the main thread. Over the first 7.5 s in the world, the frames over 20 ms 161 -> 116, 41 -> 55 FPS from 2.5 to 5 s
+and 76 -> 102 from 5 to 7.5 s; the rate steady from some 17.5 s instead of 20. One run each way, so the frame counts
+are a direction, not a measure; the dye's own time is. What is left of the climb is the grass laid around the player
+(about 1 s), the towns' trips (0.65 s) and the streaming ring's pixels (2.3 s, spread on purpose over twenty seconds).
+
 Pins: `test/perfhide.test.js` (5): the digest of 60 sprites (four pictures, every pattern, the pool's, the riders' and
 the riding sprite's ways) and of 15 3D dyes, each the one before PERF-HIDE; a picture's hide kept - one a `tack`, a
 copy of its pixels found again and the same, another picture's never; a dye cold or warm the same whatever came
