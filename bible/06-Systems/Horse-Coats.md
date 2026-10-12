@@ -131,6 +131,17 @@ one body's - each view is its own, and a walk frame carries its marks with the
 body (the frame is the hide's, not the picture's). A mirrored view is the
 other flank.
 
+PERF-HIDE (2026-10-12): rules 1-3 and the hide's frame are the PICTURE's -
+its pixels and `tack` - never the look's, so they are found once a picture
+(`hideOf`, kept weakly by the picture's pixels' array, one hide a `tack`) and
+every look after is the dye's own pass over the hide's pixels. The kept art is
+read and never written (the pool's, the riders'; a riding frame is a new array
+each time it is decoded), so a kept hide never goes stale. The helpers answer
+into scratch rather than a new array, and the lattice's nine points are kept
+for the last cell asked - the same arithmetic, so every picture, the 3D
+horse's too, is byte for byte what it was (`test/perfhide.test.js` pins the
+digests). `07-Rendering/Performance-Priority.md` PERF-HIDE has the measure.
+
 ## Where it is worn
 
 - **The riding sprite** (`systems/riding.js` loadRidingArt, `player/mountRig.js`):

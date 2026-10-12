@@ -42,6 +42,10 @@ YARD-MERGE (2026-10-12, a capture of the draws in Daggerfall) merges a settled y
 flats of one picture into one batch: the draws cut by 17-18% where furnished yards stand in view. Its section is after
 YARD-RANGE.
 
+PERF-HIDE (2026-10-12, a capture of a player's client standing still for four minutes after entering the world: the
+frame rate climbs for some twenty seconds) dyes a horse look's pictures in under half the CPU, byte for byte the same
+pictures. Its section is after PERF-DYE.
+
 ## How the pass was run
 
 NOT IN THE REAL GAME. The frame probe (`tools/frameProbe.mjs`, PERF-NEXT's recipe) needs the freeware ARENA2, and its
@@ -683,6 +687,50 @@ Pins: `test/perfdye.test.js` (4), over a real pool: never more than `HORSE_DYE_P
 the views before the walk frames, each once, worn in the frame of the last; before the walk art, worn once the views
 are; a look let go halfway gives back exactly what was dyed. `coats1_horsecoats.test.js`' two pool pins count frames
 by `HORSE_DYE_PICTURES` (PIN MOVED). Mutants: `tools/mutants/perfdye.json`, 7, all dead.
+
+## PERF-HIDE — a picture's hide is found once, and the dye allocates nothing a pixel
+
+*A player's live client (2026-10-12), launched and left standing for four minutes after entering the world.*
+
+**Found.** The frame rate climbed for some twenty seconds after the world came up: 37-60 FPS for the first five,
+95-100 for the next fifteen, then 115-120. The first five were the world's own catch-up - the grass laid around the
+player, the living towns' trips and walks, and 0.9 s of the main thread dyeing the wagon pool's horse looks
+(`horseCoats.js recolorHorse`, PERF-DYE's `HORSE_DYE_PICTURES` a frame). A look is 45 pictures, and each was dyed from
+nothing: the warm pixels found, gathered into regions, the horse's kept and the shadow specks beside them, the hide's
+frame measured - all of it the PICTURE's (its pixels and `tack`), none of it the look's - and only then the coat and
+the pattern laid. The pattern's own pass made a fresh array for every answer (`hsv`, `warp`, `nearest2`'s and
+`markingAt`'s, `nearest2` swapping through one nine times a pixel), and asked a lattice cell's nine points again at
+every pixel in it.
+
+**The fix.** The hide is found once a picture and kept with it (`hideOf`, a WeakMap on the picture's pixels' array,
+one hide a `tack`): the pixels the dye moves, in order, and their frame. Every look after is the dye's own pass over
+those pixels. The kept art is read and never written (the pool's views and walk frames, the riders' decoded sheets; a
+riding frame is a new array each decode), so the kept hide cannot go stale. The helpers answer into scratch
+(`Float64Array`s, so every value is the double the array held) and `nearest2` keeps the nine points of the last cell
+it was asked (`_cells`, keyed by the cell, the seed and the stretch). The arithmetic is the same, step for step: every
+sprite and every 3D horse is byte for byte the picture it was.
+
+**Measured.** Node 22, the 45 real pictures of Horse Cart and Cargo (121x95), 70 looks across every coat, pattern and
+legs, each picture once per look (3150 dyes), three runs each, the outputs hashed:
+
+| | before | after |
+|---|---|---|
+| a picture, every look | 0.83 ms | 0.375 ms (-55%) |
+| solid | 0.18 ms + finding the hide | 0.115 ms |
+| pinto | 0.43 ms + | 0.26 ms |
+| appaloosa | 0.96 ms + | 0.57 ms |
+| dapples | 2.0 ms + | 0.62 ms |
+| roan | 0.77 ms + | 0.19 ms |
+| outputs | | identical (sha256 of all 3150) |
+
+(the per-pattern "before" is with the hide already kept: the first cut alone took the average to 0.61 ms.) The 3D
+horse's dye (`recolorHorseTexels`, 90 looks on a 256x256 body) is identical too, and 18% faster (5.2 s -> 4.3 s).
+
+Pins: `test/perfhide.test.js` (5): the digest of 60 sprites (four pictures, every pattern, the pool's, the riders' and
+the riding sprite's ways) and of 15 3D dyes, each the one before PERF-HIDE; a picture's hide kept - one a `tack`, a
+copy of its pixels found again and the same, another picture's never; a dye cold or warm the same whatever came
+between; the kept lattice cells found again for another seed or stretch (`latticeNearest`, `nearest2`'s door).
+Mutants: `tools/mutants/perfhide.json`, 8, all dead.
 
 ## OWN-HULL-RANGE — my own sea's ship far off stands no hull either
 

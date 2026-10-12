@@ -243,7 +243,14 @@ export const lookSuffix = (v) => { const c = typeof v === 'number' ? horseLookCo
 
 // ── the dye ──────────────────────────────────────────────────────────────────────────────────────────────────────────
 
-/** RGB bytes -> [hue degrees, saturation, value]. */
+// PERF-HIDE: THE DYE'S HELPERS ANSWER INTO SCRATCH, NOT A NEW ARRAY. They run a pixel at a time - a dapple's pixel asks
+// `nearest2` once and `noise` some sixty times - and each answered a fresh array (and `nearest2` swapped through one,
+// nine times a pixel): a picture's dye was thousands of allocations. Each now writes its answer into its own scratch
+// (doubles, so every value is the one the array held), read back by its caller before the next call; the arithmetic
+// is the same, step for step, so a dyed picture is byte for byte the one it was.
+const _hsv = new Float64Array(3), _rgb = new Float64Array(3), _warp = new Float64Array(2), _near = new Float64Array(3), _mark = new Float64Array(2);
+
+/** RGB bytes -> [hue degrees, saturation, value], into `_hsv` (PERF-HIDE). */
 function hsv(r, g, b) {
   const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
   let h = 0;
@@ -254,7 +261,8 @@ function hsv(r, g, b) {
     h *= 60;
     if (h < 0) h += 360;
   }
-  return [h, max > 0 ? d / max : 0, max / 255];
+  _hsv[0] = h; _hsv[1] = max > 0 ? d / max : 0; _hsv[2] = max / 255;
+  return _hsv;
 }
 /** [hue degrees, saturation, value] -> RGB bytes, written into `out` at `o`. Any hue, turned into [0, 360) first
  *  (AUDIT COATS3D A9: a hue jittered under 0 - the bay's red, a seed's shade down - wrapped a channel to 255). */
@@ -262,7 +270,8 @@ function rgbInto(out, o, hue, s, v) {
   const h = ((hue % 360) + 360) % 360;
   const c = v * s, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = v - c;
   const k = Math.floor(h / 60) % 6;
-  const [r, g, b] = k === 0 ? [c, x, 0] : k === 1 ? [x, c, 0] : k === 2 ? [0, c, x] : k === 3 ? [0, x, c] : k === 4 ? [x, 0, c] : [c, 0, x];
+  let r, g, b;
+  if (k === 0) { r = c; g = x; b = 0; } else if (k === 1) { r = x; g = c; b = 0; } else if (k === 2) { r = 0; g = c; b = x; } else if (k === 3) { r = 0; g = x; b = c; } else if (k === 4) { r = x; g = 0; b = c; } else { r = c; g = 0; b = x; }
   out[o] = Math.round((r + m) * 255); out[o + 1] = Math.round((g + m) * 255); out[o + 2] = Math.round((b + m) * 255);
 }
 const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
@@ -288,24 +297,44 @@ function noise(x, y, s) {
  */
 function nearest2(x, y, s, stretch = 0) {
   const ix = Math.floor(x), iy = Math.floor(y);
+  // PERF-HIDE: the nine points about one lattice cell are the cell's, not the pixel's - a run of pixels in one cell
+  // asks the same nine, so they are kept for the last cell asked (`_cells`) and only the distances are the pixel's
+  if (ix !== _cellAt[0] || iy !== _cellAt[1] || s !== _cellAt[2] || stretch !== _cellAt[3]) {
+    _cellAt[0] = ix; _cellAt[1] = iy; _cellAt[2] = s; _cellAt[3] = stretch;
+    for (let dy = -1, j = 0; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++, j += 6) {
+      const cx = ix + dx, cy = iy + dy;
+      _cells[j] = cx + 0.1 + 0.8 * hash3(cx, cy, s); _cells[j + 1] = cy + 0.1 + 0.8 * hash3(cy, cx, s + 1);
+      if (stretch) {
+        const a = hash3(cx, cy, s + 3) * Math.PI;
+        _cells[j + 2] = Math.cos(a); _cells[j + 3] = Math.sin(a); _cells[j + 4] = 1 + stretch * hash3(cx, cy, s + 4);
+      }
+      _cells[j + 5] = hash3(cx, cy, s + 2);
+    }
+  }
   let f1 = 9, f2 = 9, bh = 0;
-  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-    const cx = ix + dx, cy = iy + dy;
-    const px = cx + 0.1 + 0.8 * hash3(cx, cy, s), py = cy + 0.1 + 0.8 * hash3(cy, cx, s + 1);
-    let ex = x - px, ey = y - py;
+  for (let j = 0; j < 54; j += 6) {
+    let ex = x - _cells[j], ey = y - _cells[j + 1];
     if (stretch) {
-      const a = hash3(cx, cy, s + 3) * Math.PI, c = Math.cos(a), sn = Math.sin(a);
-      const k = 1 + stretch * hash3(cx, cy, s + 4);
-      [ex, ey] = [(ex * c + ey * sn) / k, (ey * c - ex * sn) * k];
+      const c = _cells[j + 2], sn = _cells[j + 3], k = _cells[j + 4];
+      const tx = (ex * c + ey * sn) / k;
+      ey = (ey * c - ex * sn) * k; ex = tx;
     }
     const d = Math.hypot(ex, ey);
-    if (d < f1) { f2 = f1; f1 = d; bh = hash3(cx, cy, s + 2); } else if (d < f2) f2 = d;
+    if (d < f1) { f2 = f1; f1 = d; bh = _cells[j + 5]; } else if (d < f2) f2 = d;
   }
-  return [f1, f2, bh];
+  _near[0] = f1; _near[1] = f2; _near[2] = bh;
+  return _near;
 }
-/** (x, y) pushed about by the seed's noise, `amp` its reach - so a lattice's rows and a patch's edge wander. */
+const _cellAt = new Float64Array([NaN, NaN, NaN, NaN]), _cells = new Float64Array(54);
+/** PERF-HIDE: `nearest2`'s answer as a new array - its pins' door, so the kept cells are asked across seeds and
+ *  stretches directly (inside one dye both are fixed). */
+export const latticeNearest = (x, y, s, stretch = 0) => Array.from(nearest2(x, y, s, stretch));
+/** (x, y) pushed about by the seed's noise, `amp` its reach - so a lattice's rows and a patch's edge wander. Into
+ *  `_warp` (PERF-HIDE). */
 function warp(x, y, s, amp, freq = 1.3) {
-  return [x + amp * (noise(x * freq + 13.1, y * freq, s + 21) * 2 - 1), y + amp * (noise(x * freq, y * freq + 7.7, s + 22) * 2 - 1)];
+  _warp[0] = x + amp * (noise(x * freq + 13.1, y * freq, s + 21) * 2 - 1);
+  _warp[1] = y + amp * (noise(x * freq, y * freq + 7.7, s + 22) * 2 - 1);
+  return _warp;
 }
 const smooth = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 /** A seed's own [0, 1) for its `k`th question. */
@@ -321,7 +350,7 @@ export function shadeOf(seed) {
  *  threshold past which it is white (`pintoCut`). Apart, so the 3D dye can blend the field before it cuts it. */
 function pintoField(s, u, v) {
   const ox = seedRand(s, 3) * 61, oy = seedRand(s, 4) * 47;
-  const [wu, wv] = warp(u * 2.4 + ox, v * 2.4 + oy, s, 0.45, 1.1);
+  const W = warp(u * 2.4 + ox, v * 2.4 + oy, s, 0.45, 1.1), wu = W[0], wv = W[1];
   return 0.62 * noise(wu, wv, s) + 0.28 * noise(wu * 2.3 + oy, wv * 2.3 + ox, s + 7) + 0.1 * noise(wu * 7, wv * 7, s + 8);
 }
 const pintoCut = (s, n) => { const t = 0.5 + (seedRand(s, 5) - 0.5) * 0.16; return smooth(t - 0.012, t + 0.012, n); };
@@ -334,33 +363,35 @@ const roanFleck = (s, px, py, density) => (hash3(px, py, s + 11) < density ? 0.6
  * The marking a pattern lays at a hide pixel: `[white, dark]` - how far toward white it goes (0..1), and how far its
  * light falls (0..1, the appaloosa's spots and the dapples' rings). `u` from the hide's left and `v` down from its top,
  * in PATTERN_SCALE_PX units (so the frame is square), `px` the pixel's place in the hide's own grid (the roan's flecks).
+ * Into `_mark` (PERF-HIDE).
  */
 function markingAt(pattern, seed, u, v, px, py) {
   const s = seed | 0, ox = seedRand(s, 3) * 61, oy = seedRand(s, 4) * 47;
   switch (HORSE_PATTERNS[pattern]) {
-    case 'pinto': return [pintoCut(s, pintoField(s, u, v)), 0];   // tobiano: broad white across the back and down the flanks, its edge wandering and ragged
+    case 'pinto': return mark(pintoCut(s, pintoField(s, u, v)), 0);   // tobiano: broad white across the back and down the flanks, its edge wandering and ragged
     case 'appaloosa': {   // half are leopards (white, the coat in spots), half snowflakes (the coat, flecked in white)
       const cell = 0.075 + seedRand(s, 6) * 0.03;
-      const [wu, wv] = warp(u / cell + ox, v / cell + oy, s, 0.3);
-      const [f1, , h] = nearest2(wu, wv, s, 0.45);   // an oval of its own bearing: at the 3D horse's detail a spot stretched further read as a brush stroke
+      const W = warp(u / cell + ox, v / cell + oy, s, 0.3);
+      const N = nearest2(W[0], W[1], s, 0.45), f1 = N[0], h = N[2];   // an oval of its own bearing: at the 3D horse's detail a spot stretched further read as a brush stroke
       const r = (0.14 + 0.2 * h) * (0.75 + 0.5 * noise(u * 40 + ox, v * 40 + oy, s + 9));   // each spot its own size, its edge ragged
       const spot = smooth(r - 0.04, r + 0.04, r * 2 - f1);
-      if (seedRand(s, 7) < 0.5) return [1 - spot, spot * 0.15];   // leopard
-      return [h < 0.7 ? spot : 0, 0];   // snowflake: most cells flecked
+      if (seedRand(s, 7) < 0.5) return mark(1 - spot, spot * 0.15);   // leopard
+      return mark(h < 0.7 ? spot : 0, 0);   // snowflake: most cells flecked
     }
     case 'dapples': {   // soft lighter blots, each its own size and bearing, the coat a shade darker between them - no line drawn
       const cell = 0.08 + seedRand(s, 8) * 0.025;
-      const [wu, wv] = warp(u / cell + ox, v / cell + oy, s, 0.4);
-      const [f1, , h] = nearest2(wu, wv, s, 0.7);
+      const W = warp(u / cell + ox, v / cell + oy, s, 0.4);
+      const N = nearest2(W[0], W[1], s, 0.7), f1 = N[0], h = N[2];
       const r = 0.3 + 0.16 * h;
       const blot = 1 - smooth(r * 0.45, r, f1 * (0.85 + 0.3 * noise(u * 30 + ox, v * 30 + oy, s + 9)));
       const fade = 0.55 + 0.45 * smooth(0.25, 0.75, noise(u * 1.6 + oy, v * 1.6 + ox, s + 10));   // dapples come and go across the coat
-      return [0.34 * blot * fade, (1 - blot) * 0.16 * fade];
+      return mark(0.34 * blot * fade, (1 - blot) * 0.16 * fade);
     }
-    case 'roan': return [roanFleck(s, px, py, roanDensity(s, u, v)), 0];   // white hairs through the coat, thicker on the body in patches
-    default: return [0, 0];
+    case 'roan': return mark(roanFleck(s, px, py, roanDensity(s, u, v)), 0);   // white hairs through the coat, thicker on the body in patches
+    default: return mark(0, 0);
   }
 }
+const mark = (white, dark) => { _mark[0] = white; _mark[1] = dark; return _mark; };
 
 /**
  * ONE DYE, EVERY HORSE (COATS3D's parity): a hide pixel `o` of `src` dyed into `out` - the coat's hue (the bay keeps
@@ -370,15 +401,15 @@ function markingAt(pattern, seed, u, v, px, py) {
  * whichever horse wears it.
  */
 function dyeInto(out, src, o, dye, hueJ, valJ, white, dark, whiteFloor = 0) {
-  const [h0, s, v] = hsv(src[o], src[o + 1], src[o + 2]);
-  const [mode, k] = dye.sat, [lift, scale] = dye.val;
+  const H = hsv(src[o], src[o + 1], src[o + 2]), h0 = H[0], s = H[1], v = H[2];
+  const mode = dye.sat[0], k = dye.sat[1], lift = dye.val[0], scale = dye.val[1];
   const hue = (dye.hue ?? h0) + hueJ;
   const ns = clamp01(mode === 'mul' ? s * k : k * Math.min(1, s / 0.6 + 0.3));
   let nv = clamp01((lift + scale * v) * valJ);
   if (dark) nv *= 1 - dark;
   rgbInto(out, o, hue, ns, nv);
   if (white > 0) {   // the hide's own light, in white: a patch in shadow is a shadowed white
-    const tmp = [0, 0, 0];
+    const tmp = _rgb;
     rgbInto(tmp, 0, hue, 0.04, clamp01(0.4 + 0.85 * Math.max(v, whiteFloor)));
     out[o] = Math.round(out[o] + (tmp[0] - out[o]) * white);
     out[o + 1] = Math.round(out[o + 1] + (tmp[1] - out[o + 1]) * white);
@@ -389,7 +420,7 @@ function dyeInto(out, src, o, dye, hueJ, valJ, white, dark, whiteFloor = 0) {
 /** Whether a pixel is the hide's (THE DYE's first two rules): warm, coloured, and - where a saddle is drawn (`tack`) -
  *  not the tack's leather. */
 export function isCoatPixel(r, g, b, tack = true) {
-  const [h, s, v] = hsv(r, g, b);
+  const H = hsv(r, g, b), h = H[0], s = H[1], v = H[2];
   if (!((h <= 50 || h >= 345) && s >= 0.2)) return false;
   return !(tack && h >= 28 && h <= 48 && s >= 0.36 && s < 0.58 && v >= 0.24 && v < 0.5);
 }
@@ -416,6 +447,62 @@ export function recolorHorse(image, look, { bottomFirst = true, legs = true, tac
   const src = new Uint8Array(image.colors.buffer, image.colors.byteOffset, image.colors.byteLength);
   const n = w * h;
   if (src.length < n * 4) return image;
+  const out = new Uint8Array(src);   // a copy
+  const hide = hideOf(image.colors, src, w, h, tack);
+  if (hide.at.length) {
+    const { at, x0, r0, r1 } = hide;
+    const hideW = Math.max(1, hide.x1 - x0 + 1), hideH = Math.max(1, r1 - r0 + 1), unit = Math.max(PATTERN_SCALE_PX, hideW);
+    const [hueJ, valJ] = shadeOf(l.seed);
+    const band = legs ? LEG_BANDS[l.legs] * hideH : 0;
+    for (let j = 0; j < at.length; j++) {
+      const i = at[j];
+      const x = i % w, r = (i - x) / w;
+      const down = bottomFirst ? r1 - r : r - r0, up = bottomFirst ? r - r0 : r1 - r;
+      let white = 0, dark = 0;
+      if (l.pattern) { const M = markingAt(l.pattern, l.seed, (x - x0) / unit, down / unit, x - x0, down); white = M[0]; dark = M[1]; }
+      if (band > 0 && up < band * (0.8 + 0.4 * hash3(x - x0, 0, l.seed + 13))) white = 1;   // the legs' white, its top ragged
+      dyeInto(out, src, i * 4, dye, hueJ, valJ, white, dark);
+    }
+  }
+  const Ctor = /** @type {any} */ (image.colors).constructor;
+  const colors = Ctor === Uint8Array ? out : new Ctor(out.buffer, 0, Ctor.BYTES_PER_ELEMENT === 4 ? n : n * 4);
+  return /** @type {T} */ ({ ...image, colors });
+}
+
+/** PERF-HIDE: each picture's hide, kept by its pixels' array - one entry a `tack` (0 without, 1 with). */
+const _hides = new WeakMap();
+
+/**
+ * PERF-HIDE (2026-10-12, a profile of a player's client in its first seconds in the world: the wagon pool's looks dyed
+ * 0.9 s of the main thread, three quarters of it finding the hide again): THE HIDE IS THE PICTURE'S, NOT THE LOOK'S.
+ * Which pixels the dye moves (THE DYE's warm, coloured, not-tack pixels, gathered into regions, the horse's kept) and
+ * the frame they make (`x0`..`x1`, `r0`..`r1`) are read off the picture's own pixels and `tack` alone - so they are
+ * found once a picture and kept with it (`_hides`, weakly: a picture let go takes its hide with it), and every look
+ * after is the dye's own pass over `at`, the hide's pixels in order. A picture is never re-painted under a look (the
+ * pool's and the riders' kept art is read, never written; a riding frame is a new array each time it is decoded).
+ * @param {object} colors the picture's pixels' array (the key)
+ * @param {Uint8Array} src the same, as bytes
+ * @param {number} w
+ * @param {number} h
+ * @param {boolean} tack
+ * @returns {{ at: Int32Array, x0: number, x1: number, r0: number, r1: number }}
+ */
+function hideOf(colors, src, w, h, tack) {
+  let kept = _hides.get(colors);
+  if (!kept) { kept = [null, null]; _hides.set(colors, kept); }
+  const k = tack ? 1 : 0;
+  return kept[k] ?? (kept[k] = findHide(src, w, h, tack));
+}
+
+/** PERF-HIDE: the hide `recolorHorse` dyes `image` by - the one it keeps for the picture (`tack` as recolorHorse's).
+ *  @param {{ width: number, height: number, colors: ArrayLike<number> & { buffer: ArrayBufferLike, byteOffset: number, byteLength: number } }} image */
+export function horseHide(image, { tack = true } = {}) {
+  return hideOf(image.colors, new Uint8Array(image.colors.buffer, image.colors.byteOffset, image.colors.byteLength), image.width, image.height, tack);
+}
+
+/** THE DYE's hide of one picture - its regions, the horse's among them, and their frame (see hideOf). */
+function findHide(src, w, h, tack) {
+  const n = w * h;
   // the hide's pixels, and their 8-connected regions
   const coatMask = new Uint8Array(n);
   for (let i = 0; i < n; i++) {
@@ -448,41 +535,28 @@ export function recolorHorse(image, look, { bottomFirst = true, legs = true, tac
     }
     sizes.push(size); light.push(sum / size);
   }
-  const out = new Uint8Array(src);   // a copy
-  if (sizes.length) {
-    // the horse's regions: the large, then the small shadowed ones within COAT_SHADOW_REACH of a large one
-    const floor = Math.max(...sizes) * COAT_REGION_SHARE;
-    const dyed = sizes.map((z) => z >= floor);
-    const near = new Uint8Array(n), R = COAT_SHADOW_REACH;
-    for (let i = 0; i < n; i++) {
-      if (region[i] < 0 || !dyed[region[i]]) continue;
-      const px = i % w, py = (i - px) / w;
-      for (let y = Math.max(0, py - R); y <= Math.min(h - 1, py + R); y++) for (let x = Math.max(0, px - R); x <= Math.min(w - 1, px + R); x++) near[y * w + x] = 1;
-    }
-    for (let i = 0; i < n; i++) { const id = region[i]; if (id >= 0 && !dyed[id] && near[i] && light[id] < COAT_SHADOW_VALUE) dyed[id] = true; }
-    // the hide's frame: its width from its left, its top and its hooves
-    let x0 = w, x1 = -1, r0 = h, r1 = -1;
-    for (let i = 0; i < n; i++) {
-      if (region[i] < 0 || !dyed[region[i]]) continue;
-      const x = i % w, r = (i - x) / w;
-      if (x < x0) x0 = x; if (x > x1) x1 = x; if (r < r0) r0 = r; if (r > r1) r1 = r;
-    }
-    const hideW = Math.max(1, x1 - x0 + 1), hideH = Math.max(1, r1 - r0 + 1), unit = Math.max(PATTERN_SCALE_PX, hideW);
-    const [hueJ, valJ] = shadeOf(l.seed);
-    const band = legs ? LEG_BANDS[l.legs] * hideH : 0;
-    for (let i = 0; i < n; i++) {
-      const id = region[i];
-      if (id < 0 || !dyed[id]) continue;
-      const x = i % w, r = (i - x) / w;
-      const down = bottomFirst ? r1 - r : r - r0, up = bottomFirst ? r - r0 : r1 - r;
-      let [white, dark] = l.pattern ? markingAt(l.pattern, l.seed, (x - x0) / unit, down / unit, x - x0, down) : [0, 0];
-      if (band > 0 && up < band * (0.8 + 0.4 * hash3(x - x0, 0, l.seed + 13))) white = 1;   // the legs' white, its top ragged
-      dyeInto(out, src, i * 4, dye, hueJ, valJ, white, dark);
-    }
+  if (!sizes.length) return { at: new Int32Array(0), x0: w, x1: -1, r0: h, r1: -1 };
+  // the horse's regions: the large, then the small shadowed ones within COAT_SHADOW_REACH of a large one
+  const floor = Math.max(...sizes) * COAT_REGION_SHARE;
+  const dyed = sizes.map((z) => z >= floor);
+  const near = new Uint8Array(n), R = COAT_SHADOW_REACH;
+  for (let i = 0; i < n; i++) {
+    if (region[i] < 0 || !dyed[region[i]]) continue;
+    const px = i % w, py = (i - px) / w;
+    for (let y = Math.max(0, py - R); y <= Math.min(h - 1, py + R); y++) for (let x = Math.max(0, px - R); x <= Math.min(w - 1, px + R); x++) near[y * w + x] = 1;
   }
-  const Ctor = /** @type {any} */ (image.colors).constructor;
-  const colors = Ctor === Uint8Array ? out : new Ctor(out.buffer, 0, Ctor.BYTES_PER_ELEMENT === 4 ? n : n * 4);
-  return /** @type {T} */ ({ ...image, colors });
+  for (let i = 0; i < n; i++) { const id = region[i]; if (id >= 0 && !dyed[id] && near[i] && light[id] < COAT_SHADOW_VALUE) dyed[id] = true; }
+  // the hide's pixels in order, and its frame: its width from its left, its top and its hooves
+  let x0 = w, x1 = -1, r0 = h, r1 = -1, count = 0;
+  for (let i = 0; i < n; i++) {
+    if (region[i] < 0 || !dyed[region[i]]) continue;
+    count++;
+    const x = i % w, r = (i - x) / w;
+    if (x < x0) x0 = x; if (x > x1) x1 = x; if (r < r0) r0 = r; if (r > r1) r1 = r;
+  }
+  const at = new Int32Array(count);
+  for (let i = 0, j = 0; i < n; i++) if (region[i] >= 0 && dyed[region[i]]) at[j++] = i;
+  return { at, x0, x1, r0, r1 };
 }
 
 // ── COATS3D: the 3D horse's dye ──────────────────────────────────────────────────────────────────────────────────────
@@ -587,7 +661,7 @@ export function dyeHorseTexelRows(src, out, width, look, map, r0, r1) {
       if (band > 0) rag += pw * noise(u * 40, v * 40, s + 13);
       if (pattern === 'pinto') field += pw * pintoField(s, u, v);
       else if (pattern === 'roan') field += pw * roanDensity(s, u, v);
-      else if (l.pattern) { const [mw, md] = markingAt(l.pattern, s, u, v, x, y); white += pw * mw; dark += pw * md; }
+      else if (l.pattern) { const M = markingAt(l.pattern, s, u, v, x, y); white += pw * M[0]; dark += pw * M[1]; }
     }
     if (pattern === 'pinto') white = pintoCut(s, field);
     else if (pattern === 'roan') white = roanFleck(s, x, y, field);
