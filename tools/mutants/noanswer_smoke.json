@@ -1,0 +1,73 @@
+[
+  {
+    "name": "NO-ANSWER-a-no-answer-read-as-an-answer",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "if [ \"$got\" != \"404\" ] && [ \"${got#5}\" = \"$got\" ] && [ \"$got\" != \"000\" ]; then break; fi",
+    "new": "if [ \"$got\" != \"404\" ] && [ \"${got#5}\" = \"$got\" ]; then break; fi",
+    "tests": [
+      "test/noanswer_smoke.test.js",
+      "test/home2.test.js"
+    ],
+    "note": "a 000 ends the asking - #883's deploy, its Worker live, failed on its first ask"
+  },
+  {
+    "name": "NO-ANSWER-the-mark-never-made",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "              if [ \"$got\" = \"000\" ]; then : > \"$out.lost\"; fi\n",
+    "new": "",
+    "tests": [
+      "test/noanswer_smoke.test.js"
+    ],
+    "note": "a write that landed and lost its answer: its resend's true answer read as a failure"
+  },
+  {
+    "name": "NO-ANSWER-the-beat-mark-unread",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "beat='\"playedS\":0'; if [ -e /tmp/beat.json.lost ]; then beat='\"playedS\":[0-9]'; fi",
+    "new": "beat='\"playedS\":0'",
+    "tests": [
+      "test/noanswer_smoke.test.js"
+    ],
+    "note": "a beat sent again after one that landed answers its gap - read as a broken beat"
+  },
+  {
+    "name": "NO-ANSWER-the-beat-always-loose",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "beat='\"playedS\":0'; if [ -e /tmp/beat.json.lost ]; then beat='\"playedS\":[0-9]'; fi",
+    "new": "beat='\"playedS\":[0-9]'",
+    "tests": [
+      "test/noanswer_smoke.test.js"
+    ],
+    "note": "a first beat that answers a gap passes - the first-beat law unchecked"
+  },
+  {
+    "name": "NO-ANSWER-the-report-mark-unread",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "took='\"credited\":1'; if [ -e /tmp/renown.json.lost ]; then took='\"credited\":1|\"repeat\":true'; fi",
+    "new": "took='\"credited\":1'",
+    "tests": [
+      "test/noanswer_smoke.test.js"
+    ],
+    "note": "a report sent again after one that landed is its repeat - read as a broken report"
+  },
+  {
+    "name": "NO-ANSWER-the-report-always-loose",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "took='\"credited\":1'; if [ -e /tmp/renown.json.lost ]; then took='\"credited\":1|\"repeat\":true'; fi",
+    "new": "took='\"credited\":1|\"repeat\":true'",
+    "tests": [
+      "test/noanswer_smoke.test.js"
+    ],
+    "note": "a first report answered as a repeat passes - the credit unchecked"
+  },
+  {
+    "name": "NO-ANSWER-the-alternation-unread",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "! grep -qE \"$took\" /tmp/renown.json",
+    "new": "! grep -q \"$took\" /tmp/renown.json",
+    "tests": [
+      "test/noanswer_smoke.test.js"
+    ],
+    "note": "the loose answer read as one literal - a report sent again never passes"
+  }
+]

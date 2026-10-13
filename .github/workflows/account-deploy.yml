@@ -1033,12 +1033,20 @@ jobs:
           # above had read 500 and then 400 on its second try - the platform's first moments after a migration, not
           # the route. A 5xx comes from a batch that failed whole and wrote nothing, so the call is safe to send again.
           # One that still fails after half a minute is a route that is broken.
+          # NO-ANSWER (2026-10-13, a screenshot of #883's deploy: "renown/xp -> 000"): A CALL THAT GETS NO ANSWER IS ASKED
+          # AGAIN TOO. acct128 had taken - /v1/health named it - and renown/xp then waited on a database still overloaded
+          # from 14:11 (bible/11-Multiplayer/Scale-Arc.md HOMES-SHED) until curl gave up at fifteen seconds: `000`, which
+          # this read as an answer and failed at once, where the guest mint above, the registration below and the gate's
+          # claim (AUDIT pre-merge S3) each ask a no-answer again. A call curl gave up on may still land, so `post` marks it
+          # (`<out>.lost`) and the two writes below read the mark: a beat sent again may follow one that landed, and a
+          # report sent again may be that report's repeat.
           post() {
             local out=$1 url=$2 data=$3 got=404
             for i in $(seq 1 7); do
               got=$(curl -sS --max-time 15 -o "$out" -w '%{http_code}' -X POST "$url" -H 'content-type: application/json' -d "$data")
-              if [ "$got" != "404" ] && [ "${got#5}" = "$got" ]; then break; fi
-              echo "  $url -> $got (attempt $i, an old instance or the platform's first moments?)" >&2
+              if [ "$got" != "404" ] && [ "${got#5}" = "$got" ] && [ "$got" != "000" ]; then break; fi
+              if [ "$got" = "000" ]; then : > "$out.lost"; fi
+              echo "  $url -> $got (attempt $i, an old instance, the platform's first moments or no answer?)" >&2
               sleep 5
             done
             echo "$got"
@@ -1050,7 +1058,10 @@ jobs:
           echo "played -> $code"
           cat /tmp/beat.json || true
           echo
-          if [ "$code" != "200" ] || ! grep -q '"playedS":0' /tmp/beat.json; then
+          # NO-ANSWER: a beat sent again after one that got no answer may follow a beat that landed, and answers the gap
+          # since it (PLAY_GRACE_S at most), not 0 - the one UPDATE ran on D1 all the same.
+          beat='"playedS":0'; if [ -e /tmp/beat.json.lost ]; then beat='"playedS":[0-9]'; fi
+          if [ "$code" != "200" ] || ! grep -qE "$beat" /tmp/beat.json; then
             echo "::error::the time-played beat failed on the deployed Worker ($code) - a first beat must answer playedS 0"
             exit 1
           fi
@@ -1077,7 +1088,10 @@ jobs:
           echo "renown/xp -> $code"
           cat /tmp/renown.json || true
           echo
-          if [ "$code" != "200" ] || ! grep -q '"credited":1' /tmp/renown.json; then
+          # NO-ANSWER: a report sent again after one that got no answer may be that report's repeat - the one that landed
+          # was credited, and its id is never credited twice.
+          took='"credited":1'; if [ -e /tmp/renown.json.lost ]; then took='"credited":1|"repeat":true'; fi
+          if [ "$code" != "200" ] || ! grep -qE "$took" /tmp/renown.json; then
             echo "::error::a Renown report failed on the deployed Worker ($code) - a first report of 1 XP must be credited 1"
             exit 1
           fi

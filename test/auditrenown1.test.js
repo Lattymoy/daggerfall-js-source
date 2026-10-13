@@ -220,7 +220,9 @@ test('AUDIT RENOWN1 DATA-4 at the route: `rid` rides the body to the report, and
   assert.equal(fresh.credited, 1);
   const yml = src('.github/workflows/account-deploy.yml');
   assert.match(yml, /"\$base\/v1\/renown\/xp"/, 'the deploy reports to the real D1');
-  assert.match(yml, /grep -q '"credited":1' \/tmp\/renown\.json/);
+  // PIN MOVED (NO-ANSWER, 2026-10-13): the first report is still held to "credited":1 - its repeat is taken in its place
+  // only when `post` marked a no-answer, the report that landed being the one credited (test/noanswer_smoke.test.js)
+  assert.match(yml, /took='"credited":1'; if \[ -e \/tmp\/renown\.json\.lost \]; then took='"credited":1\|"repeat":true'; fi\n\s*if \[ "\$code" != "200" \] \|\| ! grep -qE "\$took" \/tmp\/renown\.json; then/);
   assert.match(yml, /grep -q '"repeat":true' \/tmp\/renown2\.json/);
 });
 

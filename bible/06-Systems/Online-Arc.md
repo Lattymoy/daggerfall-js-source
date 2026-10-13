@@ -9528,11 +9528,21 @@ red deploy reads as a service that is not there.
   path it does not know. Every new route's call goes through it. DEPLOY-FLAKE (2026-10-04, the owner: "A test
   failed on deploy"): a 5xx is asked again too. PR #592's run took its migration and its Worker, then read
   `renown/xp -> 500` once, seconds after the gate-key probe had read 500 and then 400. A 5xx comes from a batch that
-  failed whole and wrote nothing; one that still fails after half a minute is a broken route.
+  failed whole and wrote nothing; one that still fails after half a minute is a broken route. NO-ANSWER (2026-10-13,
+  a screenshot of #883's deploy: `renown/xp -> 000`): a call that gets no answer is asked again too. acct128 had
+  taken - `/v1/health` named it - then `renown/xp` waited on a database still overloaded from 14:11
+  (`11-Multiplayer/Scale-Arc.md` HOMES-SHED) until curl gave up at fifteen seconds, and `post` read that `000` as an
+  answer: a live Worker's deploy failed on its first ask, where the guest mint, the registration and the gate's claim
+  each ask a no-answer again. A call curl gave up on may still land, so `post` marks it (`<out>.lost`) and the two
+  writes read the mark - a beat sent again may answer the gap since one that landed, a report sent again may be that
+  report's repeat; with every answer heard, both keep their strict answer.
 
 Pinned: `test/home2.test.js` (4) - the law, the plaque's fold executed, the door by source, the deploy; re-aimed by
 content in `test/home1.test.js` (House5, the Info-only offer) and `test/worldhover.test.js` (the door cache).
-`tools/mutants/home2.json` (16, all dead); `home1.json` and `worldhover.json` records re-aimed.
+`tools/mutants/home2.json` (16, all dead); `home1.json` and `worldhover.json` records re-aimed. NO-ANSWER:
+`test/noanswer_smoke.test.js` (3) runs the step's own script over a fake curl that answers as the service does - a
+write that lands and loses its answer among its faults; `tools/mutants/noanswer_smoke.json` (7, all dead), and
+DEPLOY-FLAKE's record re-aimed at the line it moved.
 
 ## DECOR1 (2026-09-25, Mac: "building our own unique version instead of porting" Kaedius's Decorator; decor "Gold per placement"; asked, the catalogue "Everything Daggerfall furnishes", priced "By size", opened from "A UI element that can be clicked to open the decorate panel. Allows free cam mode for placement and an intuitive scrolling menu with filters", offline "kept in the save") - the decorator, from the ground up
 

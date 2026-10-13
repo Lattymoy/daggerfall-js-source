@@ -85,7 +85,9 @@ test('HOME2 the door, by source: the verbs listed in every mode but Steal and on
 
 test('HOME2 the deploy: a smoke call that 404s is asked again, seven times five seconds apart, before the deploy is failed - an old instance answering mid-rollout failed PR #387\'s deploy after it had taken; every new route\'s call goes through it (mutants: no retry; a route called around it)', () => {
   const wf = src('.github/workflows/account-deploy.yml');
-  assert.match(wf, /post\(\) \{\n\s*local out=\$1 url=\$2 data=\$3 got=404\n\s*for i in \$\(seq 1 7\); do\n\s*got=\$\(curl -sS --max-time 15 -o "\$out" -w '%\{http_code\}' -X POST "\$url" -H 'content-type: application\/json' -d "\$data"\)\n\s*if \[ "\$got" != "404" \] && \[ "\$\{got#5\}" = "\$got" \]; then break; fi\n[^\n]*\n\s*sleep 5\n\s*done\n\s*echo "\$got"\n\s*\}/, 'DEPLOY-FLAKE: a 404 and a 5xx are asked again - PR #592\'s deploy read renown/xp -> 500 in the platform\'s first moments after its migration');
+  // PIN MOVED (NO-ANSWER, 2026-10-13): and a no-answer (`000`) is asked again too, marked for the writes - acct128's
+  // deploy read renown/xp -> 000 on a database still overloaded, its Worker live (test/noanswer_smoke.test.js runs it)
+  assert.match(wf, /post\(\) \{\n\s*local out=\$1 url=\$2 data=\$3 got=404\n\s*for i in \$\(seq 1 7\); do\n\s*got=\$\(curl -sS --max-time 15 -o "\$out" -w '%\{http_code\}' -X POST "\$url" -H 'content-type: application\/json' -d "\$data"\)\n\s*if \[ "\$got" != "404" \] && \[ "\$\{got#5\}" = "\$got" \] && \[ "\$got" != "000" \]; then break; fi\n\s*if \[ "\$got" = "000" \]; then : > "\$out\.lost"; fi\n[^\n]*\n\s*sleep 5\n\s*done\n\s*echo "\$got"\n\s*\}/, 'DEPLOY-FLAKE: a 404 and a 5xx are asked again - PR #592\'s deploy read renown/xp -> 500 in the platform\'s first moments after its migration; NO-ANSWER: and a no-answer, marked');
   for (const route of ['/v1/account/played', '/v1/mod/mute', '/v1/renown/xp', '/v1/homes/town', '/v1/homes/claim', '/v1/homes/decor', '/v1/homes/decor/place']) {
     assert.match(wf, new RegExp(`code=\\$\\(post /tmp/[a-z0-9]+\\.json "\\$base${route.replace(/\//g, '\\/')}" `), route);
   }
