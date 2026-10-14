@@ -380,6 +380,8 @@ export class LivingTown {
     /** @type {{ v: number, map: Map<string, any[]> } | null} AUDIT LW-II B3: each visit's town's deeds, kept with the turns */
     this._deedsKept = null;
     this._now = 0;
+    this._ticking = false;   // ROADS-MISS
+    this._roadsMiss = null;   // ROADS-MISS: the day whose roads' word answered undefined in the _tick running now
     this._realNow = 0;
     /** @type {number|null} the clock at the last frame (an arrival is a jump from it) */
     this._lastClock = null;
@@ -618,8 +620,13 @@ export class LivingTown {
     if (this._roads?.day === day) return this._roads;
     const kept = swapDay(this._roads, day);   // LW-DAWN: the other day's word, kept - not asked of the host again
     if (kept) return (this._roads = kept);
+    // ROADS-MISS (a player's Firefox profile, 2026-10-13, walking out of a house in town): while a way the trips need is
+    // unasked, tripsOf answers undefined - and every resident's planOf in one _tick asked it again, each a whole plan of
+    // every trip of every town near and its news days: 100-300 ms tasks, ~60% of the main thread for seconds. A miss is
+    // kept for the rest of the tick (`_tick` clears it at both ends); the next tick asks again.
+    if (this._roadsMiss === day) return null;
     const got = this.o.tripsOf(day);
-    if (!got) return null;
+    if (!got) { if (this._ticking) this._roadsMiss = day; return null; }
     this._roads = { day, away: got.away, visitorOf: new Map(got.visitors.map((v) => [v.res.id, v])), visitors: got.visitors.map((v) => v.res),
       holders: got.holders ?? null, news: got.news ?? null, places: got.places ?? null,   // LW4: who holds each traveller's place today; the town's news of the road; LW-TALK: its towns
       other: besideDay(this._roads, day) };   // LW-DAWN
@@ -1013,6 +1020,11 @@ export class LivingTown {
 
   /** The census read: who is wanted on the street now, and the circles at the spots. */
   _tick(playerPos, viewYaw) {
+    this._ticking = true; this._roadsMiss = null;   // ROADS-MISS
+    try { this._tickNow(playerPos, viewYaw); } finally { this._ticking = false; this._roadsMiss = null; }
+  }
+
+  _tickNow(playerPos, viewYaw) {
     const t = this._now;
     const day = this.dayOf(t);
     // a row the street disabled itself (the watch's conversion copies the pool's free inline): that resident is taken -
@@ -1856,3 +1868,4 @@ export class LivingTown {
     return s === 'enemy' || s === 'hostile' ? fillLine(LIVING_REFUSAL, { a: firstNameOf(person.nameNPC) }) : null;
   }
 }
+
