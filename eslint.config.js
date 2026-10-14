@@ -7,7 +7,7 @@ export default [
     // ACC1b: and the ACCOUNT Worker beside it - a second Worker whose
     // globals are the same runtime's, so it shares this block rather
     // than growing a near-identical one below it.
-    files: ['server/src/**/*.js', 'server-account/src/**/*.js'],
+    files: ['server/src/**/*.js', 'server-account/src/**/*.js', 'server-voice/src/**/*.js'],   // VOICE1: and the voice service - a Worker whose globals are the same runtime's, plus node's for its node door
     languageOptions: {
       ecmaVersion: 'latest', sourceType: 'module',
       globals: { console: 'readonly', Response: 'readonly', Request: 'readonly', URL: 'readonly', WebSocketPair: 'readonly', WebSocketRequestResponsePair: 'readonly', crypto: 'readonly', TextEncoder: 'readonly', TextDecoder: 'readonly', atob: 'readonly', btoa: 'readonly', fetch: 'readonly', AbortSignal: 'readonly', URLSearchParams: 'readonly', setTimeout: 'readonly', clearTimeout: 'readonly' },   // DISCORD-GATES: the hub posts to a Discord webhook; PATREON-LINK: the account service speaks Patreon's OAuth forms; SCALE5b: a room's batch of poses is flushed on a timer (a Durable Object's own, while it is awake)
@@ -32,6 +32,9 @@ export default [
         // rather than leaking the socket. Node 17.3+ and every browser
         // this port targets; the one call site guards for its absence.
         AbortSignal: 'readonly',
+        // VOICE1: the SFU client uses AbortController for the service's fetch deadline, and MediaStream for remote tracks
+        AbortController: 'readonly',
+        MediaStream: 'readonly',
         // Node 17+ and every browser this port targets. The quest lane
         // uses it for its resource snapshots; without it declared, main
         // was lint-red on twelve call sites.
@@ -64,6 +67,11 @@ export default [
       'no-dupe-class-members': 'error',
       'no-unsafe-negation': 'error',
     },
+  },
+  {
+    // VOICE1: the voice service's NODE door needs node globals (process, Buffer) - a Worker that never runs in node does not
+    files: ['server-voice/src/node.js'],
+    languageOptions: { globals: { process: 'readonly', Buffer: 'readonly', clearTimeout: 'readonly' } },
   },
   {
     // AUDIT 68 X2: tests, tools, scripts, the desktop shell and these

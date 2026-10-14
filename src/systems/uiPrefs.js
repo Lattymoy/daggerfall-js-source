@@ -218,6 +218,9 @@ export const PREF_DEFAULTS = Object.freeze({
   // now. Adding a switch is one row; nothing here.
   ...FEATURE_PREF_DEFAULTS,
   textScale: 0,        // 0 = normal, 1 = large (buys a whole scale step)
+  // VOICE1 (2026-10-09): the player's voice choices, the WHOLE set under one key (voice/voiceSettings.js VOICE_DEFAULTS
+  // projects it) - null is every choice its default: opt-in off, push-to-talk on. The port's own: DFU has no voice.
+  voice: null,
   category: 'game',
   open: {},            // "video:stored" -> true
 });

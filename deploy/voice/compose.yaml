@@ -1,0 +1,46 @@
+# Self-hosted voice stack: LiveKit SFU + the voice service, on one host (see docs/voice-livekit-setup.md).
+#
+#   podman compose -f deploy/voice/compose.yaml up -d      (or docker compose)
+#
+# Copy voice.env.example to voice.env first and fill it in - the LiveKit key pair must match livekit.yaml's `keys:`.
+# TLS is the host's reverse proxy's job in front of 7880/7890; UDP 50000-50100 and TCP 7881 go straight to the SFU.
+services:
+  livekit:
+    image: docker.io/livekit/livekit-server:v1.13
+    restart: unless-stopped
+    command: --config /etc/livekit.yaml
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml:ro
+    ports:
+      - "7880:7880"            # signalling (WebSocket), behind the proxy's TLS
+      - "7881:7881"            # ICE over TCP, the fallback when UDP is blocked
+      - "50000-50100:50000-50100/udp"   # ICE over UDP, the common path
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:7880/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  voice:
+    image: docker.io/library/node:22-alpine
+    restart: unless-stopped
+    working_dir: /app
+    command: node server-voice/src/node.js
+    env_file: ./voice.env
+    environment:
+      PORT: "7890"
+      HOST: "0.0.0.0"
+      LIVEKIT_ADMIN_URL: http://livekit:7880
+    volumes:
+      # the service imports game code (identityToken.js, voiceWire.js) - mount the tree so it can resolve those
+      - ../../src:/app/src:ro
+      - ../../server-voice:/app/server-voice:ro
+    ports:
+      - "7890:7890"
+    depends_on:
+      - livekit
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:7890/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
