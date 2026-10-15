@@ -99,6 +99,7 @@ export const TOWN_PEN = Object.freeze({
   wash: PEN.wash,      // MAP-FIELD's own shade, still the fallback ground
   name: PEN.name,      // a discovered building's name, quarter unknown
   quest: PEN.select,   // a residence a quest has marked
+  beacon: PEN.beacon,  // QUEST-RING2: its ripple, once it has left the building
   lead: PEN.soft,      // EM8: a displaced plate's line back to its building
   caret: PEN.player,
   halo: PEN.halo,
@@ -129,6 +130,32 @@ export const TOWN_WALL_PEN_MIN = 0.8;
 export { CARET_R } from './inkMap.js';
 /** A quest mark's ring. */
 export const QUEST_R = 7;
+/** QUEST-RING (2026-10-15, from play - a player could not find the building two NPCs had marked, and asked for a mark
+ *  easier to see, animated): the ring alone, 7 px at 1.8, was missed against a town of roofs. So the mark is drawn in three parts, in
+ *  paper px: a gold GLOW under it, the ring at a heavier pen over a parchment halo (it reads on a dark roof as on the
+ *  street), and a RIPPLE that leaves the ring and fades as it widens, one every QUEST_RIPPLE_S seconds. */
+export const QUEST_GLOW_R = 16;
+export const QUEST_GLOW_A = 0.4;
+export const QUEST_PEN_W = 2.6;
+export const QUEST_RIPPLE_W = 3;
+export const QUEST_RIPPLE_R = 30;
+export const QUEST_RIPPLE_S = 1.6;
+/** How far a ripple has spread at `clock` seconds, 0 (at the ring) to 1 (at QUEST_RIPPLE_R) - null when no clock is
+ *  given, which is a sheet that does not move (prefers-reduced-motion): the glow and the ring stand, the ripple does
+ *  not. */
+export function questRipple(clock) {
+  if (!Number.isFinite(clock) || clock < 0) return null;
+  return (clock / QUEST_RIPPLE_S) % 1;
+}
+/** QUEST-RING2 (the same report - the ripple to surround the building, and to change to a colour the parchment does not
+ *  swallow once it leaves the building's walls): the ripple runs out past
+ *  the marked building's farthest corner by QUEST_RIPPLE_PAST paper px (never less far than QUEST_RIPPLE_R), gold over
+ *  the building and the beacon's ink once it is out over the street. The building is found in the town's own byte grid
+ *  (`questFootprint`): the built pixel nearest the mark within QUEST_SEED_REACH, and every pixel of the same byte joined
+ *  to it, no farther than QUEST_FOOT_MAX from it - so a terrace of one kind of house is not rung as one building. */
+export const QUEST_RIPPLE_PAST = 10;
+export const QUEST_SEED_REACH = 4;
+export const QUEST_FOOT_MAX = 24;
 /** EM8: the tick that says WHICH building a plate names, in paper px,
  *  and how far a plate must have been pushed before the tick alone
  *  stops being enough and a leader line is drawn to it. The threshold
@@ -236,6 +263,56 @@ export const isBuilt = (byte) => quarterOf(byte) !== null;
 export const isEnterable = (byte) => { const q = quarterOf(byte); return q !== null && q !== 'house'; };
 /** The reader for one quarter, by name. */
 export const isQuarter = (name) => (byte) => quarterOf(byte) === name;
+
+/** QUEST-RING2: a footprint box (field pixels) as a paper rectangle, and how far from `(x, y)` its farthest corner is. */
+export function paperBox(view, b) {
+  const [ax, ay] = toPaper(view, b.x0, b.y0);
+  const [bx, by] = toPaper(view, b.x1, b.y1);
+  return { x: Math.min(ax, bx), y: Math.min(ay, by), w: Math.abs(bx - ax), h: Math.abs(by - ay) };
+}
+export const farthestCorner = (x, y, f) => Math.hypot(Math.max(Math.abs(f.x - x), Math.abs(f.x + f.w - x)),
+  Math.max(Math.abs(f.y - y), Math.abs(f.y + f.h - y)));
+
+/**
+ * QUEST-RING2: the footprint of the building a quest's mark stands on, as a box in the field's own pixels
+ * `{ x0, y0, x1, y1 }` (x1/y1 one past the last), or null when no built pixel lies within QUEST_SEED_REACH of the mark.
+ * The mark is a nameplate anchor (`(x, y)` in sheet space, as `questMarks` hands it), which can sit on a building's
+ * edge, so the nearest built pixel seeds the fill; the fill takes the seed's own byte, four ways, inside QUEST_FOOT_MAX.
+ * @param {{w:number,h:number,bytes:Uint8Array}|null} field @param {number} x @param {number} y
+ */
+export function questFootprint(field, x, y) {
+  if (!field?.bytes || !Number.isFinite(x) || !Number.isFinite(y)) return null;
+  const { w, h, bytes } = field;
+  const cx = Math.floor(x), cy = Math.floor(y);
+  let seed = -1, best = Infinity;
+  for (let dy = -QUEST_SEED_REACH; dy <= QUEST_SEED_REACH; dy++) {
+    for (let dx = -QUEST_SEED_REACH; dx <= QUEST_SEED_REACH; dx++) {
+      const px = cx + dx, py = cy + dy, d = dx * dx + dy * dy;
+      if (px < 0 || py < 0 || px >= w || py >= h || d >= best || !isBuilt(bytes[py * w + px])) continue;
+      seed = py * w + px; best = d;
+    }
+  }
+  if (seed < 0) return null;
+  const sx = seed % w, sy = (seed - sx) / w, byte = bytes[seed];
+  const seen = new Set();   // the pixels the fill has reached - indices, not a byte set (EM7's one ladder stands)
+  seen.add(seed);
+  const stack = [seed];
+  let x0 = sx, y0 = sy, x1 = sx + 1, y1 = sy + 1;
+  while (stack.length) {
+    const i = /** @type {number} */ (stack.pop());
+    const px = i % w, py = (i - px) / w;
+    x0 = Math.min(x0, px); y0 = Math.min(y0, py); x1 = Math.max(x1, px + 1); y1 = Math.max(y1, py + 1);
+    for (const [nx, ny] of [[px + 1, py], [px - 1, py], [px, py + 1], [px, py - 1]]) {
+      if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+      if (Math.abs(nx - sx) > QUEST_FOOT_MAX || Math.abs(ny - sy) > QUEST_FOOT_MAX) continue;
+      const j = ny * w + nx;
+      if (seen.has(j) || bytes[j] !== byte) continue;
+      seen.add(j);
+      stack.push(j);
+    }
+  }
+  return { x0, y0, x1, y1 };
+}
 
 /**
  * One reader over the field, as `boundarySegments` wants it: `(x, y) =>
@@ -365,8 +442,8 @@ export function paintTownStatic(ctx, plan, view, opts) {
  */
 /**
  * @param {*} ctx @param {{ox:number,oy:number,scale:number}} view
- * @param {{paperW:number, paperH:number, dpr?:number, clear?:boolean, pulse?:number,
- *          quests?: Array<{x:number,y:number}>,
+ * @param {{paperW:number, paperH:number, dpr?:number, clear?:boolean, pulse?:number, clock?:number|null,
+ *          quests?: Array<{x:number,y:number,box?:{x0:number,y0:number,x1:number,y1:number}}>,
  *          plates?: Array<{x:number,y:number,text:string,size:number,quest?:boolean,
  *                          quarter?:string|null, anchorY?:number, marked?:boolean}>,
  *          player?: {x:number,y:number,yaw?:number}|null,
@@ -383,15 +460,52 @@ export function paintTownOverlay(ctx, view, opts) {
   const pulse = opts.pulse ?? 0;
 
   // a residence a quest has marked: a ring that breathes, in the pen
-  // the world map rings a chosen place in
+  // the world map rings a chosen place in - QUEST-RING: over a glow, on
+  // a parchment halo, with a ripple leaving it while the sheet moves
+  const ripple = questRipple(opts.clock ?? NaN);
   for (const q of opts.quests ?? []) {
     const [x, y] = toPaper(view, q.x, q.y);
-    ctx.strokeStyle = TOWN_PEN.quest;
-    ctx.lineWidth = 1.8;
+    const ring = (r, pen, width, alpha = 1) => {
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = pen;
+      ctx.lineWidth = width;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.stroke();
+    };
+    ctx.globalAlpha = QUEST_GLOW_A;
+    ctx.fillStyle = TOWN_PEN.quest;
     ctx.beginPath();
-    ctx.arc(x, y, QUEST_R + pulse * 2, 0, Math.PI * 2);
-    ctx.stroke();
+    ctx.arc(x, y, QUEST_GLOW_R, 0, Math.PI * 2);
+    ctx.fill();
+    if (ripple !== null) {
+      // QUEST-RING2: out past the building's farthest corner - gold over its roof, the beacon's ink beyond it - and
+      // faded on the square, so it is still strong as it crosses the building's edge
+      const foot = q.box ? paperBox(view, q.box) : null;
+      const reach = foot ? Math.max(QUEST_RIPPLE_R, farthestCorner(x, y, foot) + QUEST_RIPPLE_PAST) : QUEST_RIPPLE_R;
+      const r = QUEST_R + (reach - QUEST_R) * ripple;
+      const fade = 1 - ripple * ripple;
+      if (!foot) ring(r, TOWN_PEN.quest, QUEST_RIPPLE_W, fade);
+      else {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(foot.x, foot.y, foot.w, foot.h);
+        ctx.clip();
+        ring(r, TOWN_PEN.quest, QUEST_RIPPLE_W, fade);
+        ctx.restore();
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, 0, paperW, paperH);
+        ctx.rect(foot.x, foot.y, foot.w, foot.h);
+        ctx.clip('evenodd');
+        ring(r, TOWN_PEN.beacon, QUEST_RIPPLE_W, fade);
+        ctx.restore();
+      }
+    }
+    ring(QUEST_R + pulse * 2, TOWN_PEN.halo, QUEST_PEN_W + 2);
+    ring(QUEST_R + pulse * 2, TOWN_PEN.quest, QUEST_PEN_W);
   }
+  ctx.globalAlpha = 1;
 
   // TOWN-MARKS: the player's housing and the Notice Boards, on their places and UNDER the names - a building that wears
   // a glyph has its name lettered below it, and any other name that comes to cross one keeps its words whole

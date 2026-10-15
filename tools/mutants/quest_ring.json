@@ -1,0 +1,164 @@
+[
+  {
+    "name": "QUEST-RING-the-ripple-dropped",
+    "file": "src/ui/inkTown.js",
+    "old": "    if (ripple !== null) {\n",
+    "new": "    if (false) {\n",
+    "tests": [
+      "test/townsheet.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-RING-the-fade-reversed",
+    "file": "src/ui/inkTown.js",
+    "old": "const fade = 1 - ripple * ripple;",
+    "new": "const fade = ripple * ripple;",
+    "tests": [
+      "test/townsheet.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-RING-the-ripple-never-widens",
+    "file": "src/ui/inkTown.js",
+    "old": "const r = QUEST_R + (reach - QUEST_R) * ripple;",
+    "new": "const r = QUEST_R;",
+    "tests": [
+      "test/townsheet.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-RING-the-halo-left-off",
+    "file": "src/ui/inkTown.js",
+    "old": "    ring(QUEST_R + pulse * 2, TOWN_PEN.halo, QUEST_PEN_W + 2);\n",
+    "new": "",
+    "tests": [
+      "test/townsheet.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-RING-the-glow-left-off",
+    "file": "src/ui/inkTown.js",
+    "old": "    ctx.fill();\n    if (ripple",
+    "new": "    if (ripple",
+    "tests": [
+      "test/townsheet.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-RING-the-beat-left-off",
+    "file": "src/ui/townSheet.js",
+    "old": "\n        || (paintedRings > 0 && !stillNow());",
+    "new": ";",
+    "tests": [
+      "test/townsheet.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-RING-the-clock-not-handed-down",
+    "file": "src/ui/townSheet.js",
+    "old": "clock: still ? null : env.clock",
+    "new": "clock: null",
+    "tests": [
+      "test/townsheet.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-RING-the-ripple-kept-for-less-motion",
+    "file": "src/ui/townSheet.js",
+    "old": "clock: still ? null : env.clock",
+    "new": "clock: env.clock",
+    "tests": [
+      "test/townsheet.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-RING-the-breath-kept-for-less-motion",
+    "file": "src/ui/townSheet.js",
+    "old": "pulse: still ? 0 : env.pulse",
+    "new": "pulse: env.pulse",
+    "tests": [
+      "test/townsheet.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-RING-the-beat-kept-for-less-motion",
+    "file": "src/ui/townSheet.js",
+    "old": "(paintedRings > 0 && !stillNow())",
+    "new": "(paintedRings > 0)",
+    "tests": [
+      "test/townsheet.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-RING2-any-building-joined",
+    "file": "src/ui/inkTown.js",
+    "old": "if (seen.has(j) || bytes[j] !== byte) continue;",
+    "new": "if (seen.has(j) || !isBuilt(bytes[j])) continue;",
+    "tests": [
+      "test/townsheet.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-RING2-no-reach",
+    "file": "src/ui/inkTown.js",
+    "old": "      if (Math.abs(nx - sx) > QUEST_FOOT_MAX || Math.abs(ny - sy) > QUEST_FOOT_MAX) continue;\n",
+    "new": "",
+    "tests": [
+      "test/townsheet.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-RING2-the-seed-only-under-the-mark",
+    "file": "src/ui/inkTown.js",
+    "old": "    for (let dx = -QUEST_SEED_REACH; dx <= QUEST_SEED_REACH; dx++) {",
+    "new": "    for (let dx = 0; dx <= 0; dx++) {",
+    "tests": [
+      "test/townsheet.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-RING2-the-box-not-handed-down",
+    "file": "src/ui/townSheet.js",
+    "old": "out.push(box ? { x, y, box } : { x, y });",
+    "new": "out.push({ x, y });",
+    "tests": [
+      "test/townsheet.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-RING2-one-colour",
+    "file": "src/ui/inkTown.js",
+    "old": "ring(r, TOWN_PEN.beacon, QUEST_RIPPLE_W, fade);",
+    "new": "ring(r, TOWN_PEN.quest, QUEST_RIPPLE_W, fade);",
+    "tests": [
+      "test/townsheet.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-RING2-the-street-not-clipped-out",
+    "file": "src/ui/inkTown.js",
+    "old": "ctx.clip('evenodd');",
+    "new": "ctx.clip();",
+    "tests": [
+      "test/townsheet.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-RING2-never-past-the-building",
+    "file": "src/ui/inkTown.js",
+    "old": "Math.max(QUEST_RIPPLE_R, farthestCorner(x, y, foot) + QUEST_RIPPLE_PAST)",
+    "new": "QUEST_RIPPLE_R",
+    "tests": [
+      "test/townsheet.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-RING2-faded-flat",
+    "file": "src/ui/inkTown.js",
+    "old": "const fade = 1 - ripple * ripple;",
+    "new": "const fade = 1 - ripple;",
+    "tests": [
+      "test/townsheet.test.js"
+    ]
+  }
+]

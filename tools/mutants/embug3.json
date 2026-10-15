@@ -37,8 +37,8 @@
   {
     "name": "EMBUG3-a-quest-ring-never-crosses",
     "file": "src/ui/townSheet.js",
-    "old": "      out.push({ x, y: sheetY(ensureField().h, y) });   // EM-BUG3: into sheet space, as the plates are",
-    "new": "      out.push({ x, y });",
+    "old": "      const y = sheetY(ensureField().h, ay);   // EM-BUG3: into sheet space, as the plates are",
+    "new": "      const y = ay;",
     "tests": ["test/townsheet.test.js"]
   },
   {

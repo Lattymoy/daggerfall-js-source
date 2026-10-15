@@ -39,11 +39,12 @@
 import { boundarySegments, linkSegments, fitView, toPaper, NAME_FACE } from './inkMap.js';
 import {
   townBytes, townChains, quarterChains, quarterOfType, isBuilt, QUARTERS, sheetY,
-  paintTownStatic, paintTownOverlay, BLOCK_PX, TOWN_MARK_HALF,
+  paintTownStatic, paintTownOverlay, BLOCK_PX, TOWN_MARK_HALF, questFootprint,
 } from './inkTown.js';
 import { nameplateAnchor, resolveNameplates, WORLD_PER_PX } from './nameplateLayout.js';
 import { readPartyBodies, PARTY_MARK_CSS } from './partyMapMarks.js';   // DISC23-A: the party's bodies in the streets
 import { readTownBoards, readTownHomes, TOWN_MARK_REACH } from './townMapMarks.js';   // TOWN-MARKS: the Notice Boards and the player housing
+import { prefersReducedMotion } from '../systems/hitFlash.js';   // QUEST-RING: a player who asked for less motion gets a ring that stands still
 
 /** The fit at rest has ONE HOME in ui/inkMap.js - re-exported so a
  *  pin that has this sheet does not also have to reach for it. */
@@ -98,6 +99,7 @@ const EMPTY_SIZE = Object.freeze({ width: 1, height: 1 });
  *   homes?: () => Array<{buildingKey: number, own?: boolean, label: string}>,
  *   homesVersion?: () => number,
  *   questBuildings?: () => Array<{buildingKey: number, followed?: boolean}>,
+ *   reducedMotion?: () => boolean,
  *   title?: string,
  * }} deps
  */
@@ -111,6 +113,9 @@ export function createTownSheet(deps = {}) {
   let lastView = null;
   let lastPaper = 0;
   let paintedHomes = null;   // TOWN-MARKS: the homes' version the overlay last painted
+  let paintedRings = 0;      // QUEST-RING: how many quest rings the overlay last painted - the beat runs while one stands
+  /** QUEST-RING: the viewer asked for less motion - the browser's own answer (prefers-reduced-motion), or a pin's. */
+  const stillNow = () => (deps.reducedMotion ? !!deps.reducedMotion() : prefersReducedMotion());
 
   function ensureField() {
     if (field) return field;
@@ -242,10 +247,19 @@ export function createTownSheet(deps = {}) {
     const out = [];
     for (const b of deps.buildings?.() ?? []) {
       if (!named.has(b?.buildingKey) && (!(b?.questName || b?.questMarked) || !found.has(b.buildingKey))) continue;   // RES-RING
-      const [x, y] = nameplateAnchor(b.blockX ?? 0, b.blockY ?? 0, b.position ?? [0, 0, 0]);
-      out.push({ x, y: sheetY(ensureField().h, y) });   // EM-BUG3: into sheet space, as the plates are
+      const [x, ay] = nameplateAnchor(b.blockX ?? 0, b.blockY ?? 0, b.position ?? [0, 0, 0]);
+      const y = sheetY(ensureField().h, ay);   // EM-BUG3: into sheet space, as the plates are
+      const box = footprintOf(b.buildingKey, x, y);   // QUEST-RING2: the building the ripple runs out past
+      out.push(box ? { x, y, box } : { x, y });
     }
     return out;
+  }
+
+  /** QUEST-RING2: a building's footprint, found once - the field does not change under a sheet. */
+  const footprints = new Map();
+  function footprintOf(key, x, y) {
+    if (!footprints.has(key)) footprints.set(key, questFootprint(ensureField(), x, y));
+    return footprints.get(key);
   }
 
   /**
@@ -361,9 +375,13 @@ export function createTownSheet(deps = {}) {
     paintOverlay(ctx, env) {
       lastView = env.view;
       lastPaper = env.paperW;
+      const quests = questMarks();
+      paintedRings = quests.length;
+      const still = stillNow();   // QUEST-RING: no breath and no ripple - the glow and the ring stand
       paintTownOverlay(ctx, env.view, {
-        paperW: env.paperW, paperH: env.paperH, dpr: env.dpr, pulse: env.pulse,
-        quests: questMarks(),
+        paperW: env.paperW, paperH: env.paperH, dpr: env.dpr,
+        pulse: still ? 0 : env.pulse, clock: still ? null : env.clock,
+        quests,
         plates: ensurePlates(env.view, env.paperW, env.paperH,
           ctx?.measureText ? (t, s) => { ctx.font = `${Math.round(s)}px ${NAME_FACE}`; return ctx.measureText(t).width; } : null,
           env.reserveTop ?? 0, env.reserveHands ?? null),
@@ -403,9 +421,12 @@ export function createTownSheet(deps = {}) {
     },
 
     /** DISC23-A: the street plan repaints on the window's beat while a party member walks it. TOWN-MARKS: and once more
-     *  when the town's homes have changed since it was painted - the service's answer lands after the map is open. */
+     *  when the town's homes have changed since it was painted - the service's answer lands after the map is open.
+     *  QUEST-RING: and while a quest's ring stands on it - the ring was drawn to breathe and never did, because nothing
+     *  asked the window for a beat (a still ring is the reduced-motion player's, and needs none). */
     breathes() {
-      return readPartyBodies(deps.party).length > 0 || (!!deps.homesVersion && deps.homesVersion() !== paintedHomes);
+      return readPartyBodies(deps.party).length > 0 || (!!deps.homesVersion && deps.homesVersion() !== paintedHomes)
+        || (paintedRings > 0 && !stillNow());
     },
 
     mark() { /* the middle button marks a place on the BAY; a street has none */ },

@@ -20,6 +20,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   BLOCK_PX, TOWN_PEN, TOWN_WALL_PEN, TOWN_WALL_PEN_MIN, CARET_R, QUEST_R,
+  QUEST_GLOW_R, QUEST_GLOW_A, QUEST_PEN_W, QUEST_RIPPLE_W, QUEST_RIPPLE_R, QUEST_RIPPLE_S, questRipple,
+  QUEST_RIPPLE_PAST, QUEST_SEED_REACH, QUEST_FOOT_MAX, questFootprint,
   QUARTER_WASH, QUARTER_INK, ANCHOR_R, LEAD_AT,
   townBytes, townChains, quarterChains, townReader, isBuilt, isEnterable, isQuarter,
   paintTownStatic, paintTownOverlay, sheetY,
@@ -39,6 +41,7 @@ import {
   QUARTER_WASH_A, QUARTER_INK_MIX, QUARTER_WASH_DE, QUARTER_INK_DE, QUARTER_INK_PAPER_DE,
 } from '../src/ui/inkMap.js';
 import { nameplateAnchor, WORLD_PER_PX } from '../src/ui/nameplateLayout.js';
+import { PARTY_MARK_CSS } from '../src/ui/partyMapMarks.js';   // QUEST-RING2: the beacon is no other mark's ink
 import { buildExteriorLayout } from '../src/ui/exteriorAutomapWindow.js';   // EM-BUG3: the shipped map's own composition, so the two sheets are checked against each other
 import { RMB_DIMENSION } from '../src/formats/blocksFile.js';   // EM-BUG3: the anchor's own divisor, so the pin builds a z rather than copying a row number
 
@@ -52,7 +55,7 @@ function recordingCtx() {
       if (k === 'calls') return calls;
       if (k === 'measureText') return (t) => ({ width: t.length * 6 });
       if (k in state) return state[k];
-      return (...args) => { calls.push({ fn: k, args, strokeStyle: state.strokeStyle, fillStyle: state.fillStyle, lineWidth: state.lineWidth, font: state.font }); };
+      return (...args) => { calls.push({ fn: k, args, strokeStyle: state.strokeStyle, fillStyle: state.fillStyle, lineWidth: state.lineWidth, font: state.font, globalAlpha: state.globalAlpha ?? 1 }); };
     },
     set: (_, k, v) => { state[k] = v; return true; },
   });
@@ -648,10 +651,132 @@ test('EM4: a quest-marked residence gets a RING, named or not', () => {
   // and the ring is inked in the pen the world map rings a choice in
   const ctx = recordingCtx();
   s.paintOverlay(ctx, { view: VIEW, ...PAPER, pulse: 1 });
-  const ring = ctx.calls.find((c) => c.fn === 'arc');
+  const ring = ctx.calls.find((c) => c.fn === 'arc' && c.lineWidth === QUEST_PEN_W);   // QUEST-RING: the ring, past its glow and its halo
   assert.ok(ring);
   assert.equal(ring.strokeStyle, TOWN_PEN.quest);
   assert.equal(ring.args[2], QUEST_R + 2, 'and it breathes');
+});
+
+/** QUEST-RING: each circle the overlay drew, with what drew it - the call after an arc is its fill or its stroke. */
+function circles(ctx) {
+  const out = [];
+  ctx.calls.forEach((c, i) => {
+    if (c.fn !== 'arc') return;
+    const op = ctx.calls[i + 1]?.fn;
+    out.push({ op, at: [c.args[0], c.args[1]], r: c.args[2], pen: op === 'fill' ? c.fillStyle : c.strokeStyle,
+      width: op === 'stroke' ? c.lineWidth : null, alpha: c.globalAlpha });
+  });
+  return out;
+}
+const near = (a, b, what) => assert.ok(Math.abs(a - b) < 1e-9, `${what}: ${a} is not ${b}`);
+const MARKED = { buildings: () => [summary(2, { isResidence: true, questName: 'Ser Kithlan' })], discovered: () => [{ buildingKey: 2 }] };
+
+test('QUEST-RING: a quest\'s ring is a GLOW, the ring on a parchment halo, and a RIPPLE that widens and fades (mutants: the ripple dropped; its fade reversed; it never widens; the halo left off; the glow left off)', () => {
+  const quests = [{ x: 10, y: 10 }];
+  const at = toPaper(VIEW, 10, 10);
+  const draw = (clock, pulse = 0) => {
+    const ctx = recordingCtx();
+    paintTownOverlay(ctx, VIEW, { ...PAPER, quests, pulse, clock });
+    return circles(ctx);
+  };
+  const early = draw(QUEST_RIPPLE_S / 4);
+  assert.deepEqual(early.map((c) => [c.op, c.pen, c.width]), [
+    ['fill', TOWN_PEN.quest, null],                    // the glow
+    ['stroke', TOWN_PEN.quest, QUEST_RIPPLE_W],        // the ripple
+    ['stroke', TOWN_PEN.halo, QUEST_PEN_W + 2],        // the parchment under the ring
+    ['stroke', TOWN_PEN.quest, QUEST_PEN_W],           // the ring
+  ]);
+  for (const c of early) assert.deepEqual(c.at, at, 'every part on the mark');
+  assert.equal(early[0].r, QUEST_GLOW_R);
+  assert.equal(early[0].alpha, QUEST_GLOW_A);
+  near(early[1].r, QUEST_R + (QUEST_RIPPLE_R - QUEST_R) / 4, 'a quarter of the way out');
+  near(early[1].alpha, 1 - 1 / 16, 'and faded on the square - barely, yet');
+  assert.deepEqual([early[2].r, early[2].alpha, early[3].r, early[3].alpha], [QUEST_R, 1, QUEST_R, 1]);
+  // later in the same ripple it is wider and fainter; a period on, it starts over
+  const late = draw(QUEST_RIPPLE_S * 3 / 4);
+  near(late[1].r, QUEST_R + (QUEST_RIPPLE_R - QUEST_R) * 3 / 4, 'three quarters out');
+  near(late[1].alpha, 1 - 9 / 16, 'and fading fast');
+  near(draw(QUEST_RIPPLE_S * 5 / 4)[1].r, early[1].r, 'the next ripple');
+  // no clock, no ripple: the glow and the ring stand
+  assert.deepEqual(draw(null).map((c) => c.pen), [TOWN_PEN.quest, TOWN_PEN.halo, TOWN_PEN.quest]);
+  assert.equal(questRipple(null), null);
+  assert.equal(questRipple(-1), null);
+  near(questRipple(QUEST_RIPPLE_S / 2), 0.5, 'half way');
+});
+
+test('QUEST-RING: a town map with a quest\'s ring keeps the window\'s beat, so the ring breathes and ripples - it never did (mutants: the beat left off; the clock not handed down)', () => {
+  const marked = sheet(MARKED);
+  const plain = sheet();
+  const env = { view: VIEW, ...PAPER, pulse: 0.5, clock: QUEST_RIPPLE_S / 4 };
+  plain.paintOverlay(recordingCtx(), env);
+  assert.equal(plain.breathes(), false, 'no ring, no beat');
+  const ctx = recordingCtx();
+  marked.paintOverlay(ctx, env);
+  assert.equal(marked.breathes(), true, 'a ring stands: the window repaints on its beat');
+  const drawn = circles(ctx).filter((c) => c.op === 'stroke' && c.pen === TOWN_PEN.quest);
+  assert.equal(drawn.length, 2, 'the ripple and the ring');
+  near(drawn[0].r, QUEST_R + (QUEST_RIPPLE_R - QUEST_R) / 4, 'the ripple rides the window\'s clock');
+  assert.equal(drawn[1].r, QUEST_R + 1, 'the ring rides its pulse');
+});
+
+test('QUEST-RING: a player who asked for less motion gets the glow and the ring, standing still, and no beat (mutants: the ripple kept; the breath kept; the beat kept)', () => {
+  const still = sheet({ ...MARKED, reducedMotion: () => true });
+  const ctx = recordingCtx();
+  still.paintOverlay(ctx, { view: VIEW, ...PAPER, pulse: 1, clock: QUEST_RIPPLE_S / 4 });
+  assert.deepEqual(circles(ctx).filter((c) => c.r !== ANCHOR_R).map((c) => [c.op, c.pen, c.r]), [   // past the plate's anchor tick
+    ['fill', TOWN_PEN.quest, QUEST_GLOW_R],
+    ['stroke', TOWN_PEN.halo, QUEST_R],
+    ['stroke', TOWN_PEN.quest, QUEST_R],
+  ]);
+  assert.equal(still.breathes(), false);
+});
+
+/** QUEST-RING2: a house with a shop against its east wall, and a quest's mark on the house - a building stood at
+ *  (56, 44.8) is anchored inside it (MARK_AT, through the sheet's own two laws). */
+const HOUSE_BOX = { x0: 30, y0: 30, x1: 40, y1: 40 };
+const TERRACE = blockGrid([[30, 30, 40, 40, HOUSE], [40, 30, 50, 40, SHOP], [0, 50, 64, 54, HOUSE]]);
+const ON_THE_HOUSE = { isResidence: true, questName: 'Ser Kithlan', position: [56, 0, 44.8] };
+const MARK_AT = (() => { const [ax, ay] = nameplateAnchor(0, 0, ON_THE_HOUSE.position); return { x: ax, y: sheetY(BLOCK_PX, ay) }; })();
+
+test('QUEST-RING2: the marked building\'s footprint is read off the town\'s own grid - the nearest built pixel, and its own byte joined to it, no farther than QUEST_FOOT_MAX (mutants: any building joined; no reach; the seed only under the mark; the box not handed down)', () => {
+  const field = townBytes(1, 1, [{ x: 0, y: 0, autoMap: TERRACE }]);
+  assert.deepEqual(questFootprint(field, 35, 35), HOUSE_BOX, 'the house, and not the shop against it');
+  assert.deepEqual(questFootprint(field, 28.5, 35), HOUSE_BOX, 'a mark on the wall finds the house beside it');
+  assert.equal(questFootprint(field, 30 - QUEST_SEED_REACH - 1, 20), null, 'nothing built in reach: no footprint');
+  assert.deepEqual(questFootprint(field, 32, 52), { x0: 32 - QUEST_FOOT_MAX, y0: 50, x1: 32 + QUEST_FOOT_MAX + 1, y1: 54 },
+    'a terrace of one kind of house is cut at QUEST_FOOT_MAX, not rung whole');
+  assert.equal(questFootprint(null, 35, 35), null);
+  // the sheet hands it on with the mark
+  const s = sheet({ blocks: [{ x: 0, y: 0, autoMap: TERRACE }], buildings: () => [summary(2, ON_THE_HOUSE)], discovered: () => [{ buildingKey: 2 }] });
+  assert.deepEqual(s.quests(), [{ ...MARK_AT, box: HOUSE_BOX }]);
+});
+
+test('QUEST-RING2: the ripple runs out past the building\'s farthest corner, gold over its roof and the beacon\'s ink over the street (mutants: one colour; the street not clipped out; never past the building; faded flat)', () => {
+  const s = sheet({ blocks: [{ x: 0, y: 0, autoMap: TERRACE }], buildings: () => [summary(2, ON_THE_HOUSE)], discovered: () => [{ buildingKey: 2 }] });
+  const ctx = recordingCtx();
+  s.paintOverlay(ctx, { view: VIEW, ...PAPER, pulse: 0, clock: QUEST_RIPPLE_S / 4 });
+  const [x, y] = toPaper(VIEW, MARK_AT.x, MARK_AT.y);
+  const foot = [HOUSE_BOX.x0 * VIEW.scale, HOUSE_BOX.y0 * VIEW.scale, 10 * VIEW.scale, 10 * VIEW.scale];
+  const far = (lo, span, at) => Math.max(Math.abs(lo - at), Math.abs(lo + span - at));
+  const reach = Math.hypot(far(foot[0], foot[2], x), far(foot[1], foot[3], y)) + QUEST_RIPPLE_PAST;
+  assert.ok(reach > QUEST_RIPPLE_R, 'the fixture\'s house is wide enough to carry the ripple past QUEST_RIPPLE_R');
+  const r = QUEST_R + (reach - QUEST_R) / 4;
+  const seq = ctx.calls.filter((c) => ['rect', 'clip', 'arc'].includes(c.fn)).slice(1, 8)   // past the glow
+    .map((c) => (c.fn === 'arc' ? ['arc', c.strokeStyle, Math.round(c.args[2] * 1e6) / 1e6, c.globalAlpha] : [c.fn, ...c.args]));
+  assert.deepEqual(seq, [
+    ['rect', ...foot], ['clip'],
+    ['arc', TOWN_PEN.quest, Math.round(r * 1e6) / 1e6, 1 - 1 / 16],
+    ['rect', 0, 0, PAPER.paperW, PAPER.paperH], ['rect', ...foot], ['clip', 'evenodd'],
+    ['arc', TOWN_PEN.beacon, Math.round(r * 1e6) / 1e6, 1 - 1 / 16],
+  ]);
+  assert.equal(foot[0] <= x && x <= foot[0] + foot[2] && foot[1] <= y && y <= foot[1] + foot[3], true, 'the mark is on its roof');
+  // and the beacon is an ink the parchment does not swallow: inkMap's own, and no other mark's
+  assert.equal(TOWN_PEN.beacon, PEN.beacon);
+  assert.notEqual(PEN.beacon, PEN.select);
+  assert.notEqual(PEN.beacon, PEN.player);
+  assert.notEqual(PEN.beacon, PARTY_MARK_CSS);
+  const rgb = (css) => css.match(/\d+/g).slice(0, 3).map(Number);
+  assert.ok(deltaE(rgb(PEN.beacon), PARCHMENT_RGB) > deltaE(rgb(PEN.select), PARCHMENT_RGB), 'farther from the paper than the gold');
 });
 
 test('EM4: the names are haloed, in the sheet\'s own hand, and a quest\'s is in its own pen', () => {

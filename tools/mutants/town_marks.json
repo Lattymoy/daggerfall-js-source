@@ -155,8 +155,8 @@
   {
     "name": "TOWN-MARKS-never-repainted",
     "file": "src/ui/townSheet.js",
-    "old": "return readPartyBodies(deps.party).length > 0 || (!!deps.homesVersion && deps.homesVersion() !== paintedHomes);",
-    "new": "return readPartyBodies(deps.party).length > 0;",
+    "old": "return readPartyBodies(deps.party).length > 0 || (!!deps.homesVersion && deps.homesVersion() !== paintedHomes)\n",
+    "new": "return readPartyBodies(deps.party).length > 0\n",
     "tests": [
       "test/town_marks.test.js"
     ]

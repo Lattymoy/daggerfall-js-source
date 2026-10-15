@@ -77,6 +77,7 @@ export const PEN = Object.freeze({
   name: 'rgba(46, 32, 18, 0.95)',    // a place's name
   region: rgba(INK_RGB, 0.55),       // a province's name
   select: 'rgba(168, 112, 24, 0.95)', // the chosen mark's ring
+  beacon: 'rgba(0, 124, 140, 0.95)',  // QUEST-RING2: a quest ripple past its building - the parchment's opposite, no other mark's ink
   player: 'rgba(120, 28, 20, 0.95)',  // the player's own mark
   coords: 'rgba(120, 28, 20, 0.75)',  // MAP2: a bare-pixel destination's cross
   halo: rgba(PARCHMENT_RGB, 0.80),    // MAP-FIELD6: the parchment, quieted under a glyph or a name
