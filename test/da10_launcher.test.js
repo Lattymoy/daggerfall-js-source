@@ -218,7 +218,7 @@ test('DA10: the shell - Play is the only way in, the news is the check\'s own re
   assert.match(re, /await launcherDialog\(\(\) => dialog\.showMessageBox\(launcher\.win, reinstallAsk\(\)\)\);/);
   assert.match(re, /if \(goesAhead\(response\)\) shell\.openExternal\(ownDownloadUrl\(\)\);/);
   const own = main.slice(main.indexOf('function ownDownloadUrl()'), main.indexOf('/** File > Restart to Update'));
-  assert.match(own, /const file = manualDownloadFile\(\{ platform: process\.platform, portable: !!process\.env\.PORTABLE_EXECUTABLE_DIR, packaged: app\.isPackaged \}\);\s*return file \? latestDownloadUrl\(file\) : RELEASES_PAGE;/);
+  assert.match(own, /const file = manualDownloadFile\(\{ platform: process\.platform, arch: process\.arch, portable: !!process\.env\.PORTABLE_EXECUTABLE_DIR, packaged: app\.isPackaged \}\);\s*return file \? latestDownloadUrl\(file\) : RELEASES_PAGE;/);
   // the saves door is the File menu's own
   assert.match(acts, /case 'open-saves': openSavesFolder\(\); break;/);
   assert.match(main, /\{ label: 'Open Saves Folder', click: \(\) => openSavesFolder\(\) \},/);

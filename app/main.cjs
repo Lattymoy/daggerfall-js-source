@@ -666,7 +666,7 @@ let listedDownload = null;
  *  the release's own link to it first, where one was read. */
 function ownDownloadUrl() {
   if (listedDownload) return listedDownload;
-  const file = manualDownloadFile({ platform: process.platform, portable: !!process.env.PORTABLE_EXECUTABLE_DIR, packaged: app.isPackaged });
+  const file = manualDownloadFile({ platform: process.platform, arch: process.arch, portable: !!process.env.PORTABLE_EXECUTABLE_DIR, packaged: app.isPackaged });
   return file ? latestDownloadUrl(file) : RELEASES_PAGE;
 }
 
@@ -749,7 +749,7 @@ async function fetchLatestRelease() {
     const tag = typeof json?.tag_name === 'string' ? json.tag_name : null;
     const url = typeof json?.html_url === 'string' && /^https:\/\/github\.com\//.test(json.html_url)
       ? json.html_url : RELEASES_PAGE;
-    const file = manualDownloadFile({ platform: process.platform, portable: !!process.env.PORTABLE_EXECUTABLE_DIR, packaged: app.isPackaged });
+    const file = manualDownloadFile({ platform: process.platform, arch: process.arch, portable: !!process.env.PORTABLE_EXECUTABLE_DIR, packaged: app.isPackaged });
     // BR5: the file as the release itself lists it, by its name or by the way it runs - a rename of the product reaches this copy
     const listed = file ? releaseAssetUrl(json, file) : null;
     if (tag && listed) listedDownload = listed;

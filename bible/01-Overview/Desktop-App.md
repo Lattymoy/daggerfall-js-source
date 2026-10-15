@@ -148,7 +148,7 @@ until the next merge. Now a `version` job resolves REL3's one number once
 and every job reads it; the three legs only BUILD and hand their files on
 as run artifacts; and `publish` - which runs only when the whole matrix
 passed - checks the set is complete (`scripts/desktopRelease.mjs check`:
-the four downloads, the three manifests, the two blockmaps, by name),
+the five downloads, the four manifests, the two blockmaps, by name),
 writes the notes once, stages a DRAFT with every file attached, and
 publishes it in one PATCH. `latest` never names a release that is half
 there, and a hand re-cut of an old build does not take `latest` back
@@ -161,7 +161,7 @@ all dead.
 
 **REL5 (2026-09-29): THE DOWNLOADS HAVE NAMES THAT DO NOT MOVE.** The
 build number is out of every file name - `DFO-Online-win-x64-setup.exe` (BR5; `DaggerfallOnline-...` from REL5 to BR5),
-`-win-x64-portable.exe`, `-mac-arm64.dmg`, `-linux-x86_64.AppImage` - so
+`-win-x64-portable.exe`, `-mac-arm64.dmg`, `-linux-x86_64.AppImage`, `-linux-arm64.AppImage` - so
 `releases/latest/download/<name>` serves the newest copy for ever and the
 landing page (which runs no script, U60) links each platform's installer
 directly: the door's Install lands on the desktop app's entry, one click
@@ -334,7 +334,7 @@ without cutting a release. Artifact names are
 ~~`DaggerfallOnline-<os>-<arch>.<ext>`~~ `DFO-Online-<os>-<arch>.<ext>` and the two Windows names
 (BR1, 2026-09-13; BR4, 2026-09-27; REL5, 2026-09-29: no version in any; BR5, 2026-10-11 - the release that
 first carries the new names publishes about half an hour after the site that links them). AUDIT BR5: every
-release also carries its four downloads under their `DaggerfallOnline-...` names (`scripts/desktopRelease.mjs
+release also carries its four downloads from before BR5 under their `DaggerfallOnline-...` names (`scripts/desktopRelease.mjs
 alias`, before the set is checked), because a copy built before BR5 asks for its download by the name it was
 built with and can learn no other; and a copy from BR5 on reads its download off the release's own asset list
 (`releaseAssetUrl`: by its name, else by the platform part of it), so the next rename needs no alias;
@@ -350,6 +350,28 @@ at `releases/latest`~~ (REL5: each installer under
 updating the site's download"). An artifacts-only run is built with
 `publish: null` and carries no update metadata (Audit-Install L3-4): a
 "try this build" never replaces itself with the public release.
+
+**LINUX ARM64 (2026-10-12, a player on a Steam Frame): THE APPIMAGE FOR BOTH
+ARCHITECTURES.** The Steam Frame is an ARM64 Linux machine (SteamOS, an
+Adreno GPU), and so are a Raspberry Pi and the ARM laptops; there the x86_64
+AppImage runs only under emulation, and the Windows build under Proton and
+FEX crashed on the first input. The shell carries no native module (its one
+runtime dependency is `electron-updater`), so the same `app.asar` runs on
+Electron's `linux-arm64` build: on a Frame the launcher, ARENA2 and
+Privateer's Hold all worked. So `build.linux.target` is the AppImage
+for `x64` and `arm64`: the ubuntu leg packs both (electron-builder fetches
+the arm64 Electron itself; nothing is compiled), the artifactName gives
+`DFO-Online-linux-arm64.AppImage`, and electron-builder writes
+`latest-linux-arm64.yml`, the manifest an arm64 AppImage's updater reads.
+Both are in `EXPECTED_RELEASE_FILES`, `manualDownloadFile` takes
+`process.arch` so an ARM64 copy is sent its own AppImage, and the landing
+page links it beside the x86_64 one. It has no `DaggerfallOnline-...` alias:
+it came after BR5, and no copy asks for it by an older name. Not covered
+here: a game launched from Steam's own library on SteamOS gets Steam's
+`LD_PRELOAD` (its overlay library) and `LD_LIBRARY_PATH`, under which
+Electron's browser process started its zygote and waited for ever; a
+wrapper that unsets both before starting the AppImage runs it. Pinned in
+`test/rel4_release.test.js`.
 
 ## Updating (DA6)
 

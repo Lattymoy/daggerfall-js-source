@@ -60,20 +60,22 @@ const { parseReleaseTag } = require('../app/lib/updateCheck.cjs');
 /** BR5: each download and the name a copy from before the rename asks for
  *  it by (app/lib/downloads.cjs LEGACY_DOWNLOAD_FILES) - [from, to] pairs,
  *  copied in the release's folder before the set is checked. */
-export const ALIAS_COPIES = Object.freeze(Object.keys(DOWNLOAD_FILES).map((k) => Object.freeze([DOWNLOAD_FILES[k], LEGACY_DOWNLOAD_FILES[k]])));
+export const ALIAS_COPIES = Object.freeze(Object.keys(LEGACY_DOWNLOAD_FILES).map((k) => Object.freeze([DOWNLOAD_FILES[k], LEGACY_DOWNLOAD_FILES[k]])));
 
-/** Every file a published release must carry: the four downloads, the
- *  three manifests electron-updater reads (one per OS), and the two
+/** Every file a published release must carry: the five downloads, the
+ *  four manifests electron-updater reads (one per OS, and Linux's ARM64
+ *  one, latest-linux-arm64.yml, which an arm64 AppImage asks for), and the two
  *  blockmaps its differential download diffs against. The AppImage's
  *  blockmap is embedded in the AppImage; the portable exe has none. BR5:
- *  and the four downloads again under their names from before the rename
- *  (ALIAS_COPIES), which no manifest names - an updater reads the new. */
+ *  and the four downloads from before the rename again under their old
+ *  names (ALIAS_COPIES), which no manifest names - an updater reads the new. */
 export const EXPECTED_RELEASE_FILES = Object.freeze([
   DOWNLOAD_FILES.winSetup, `${DOWNLOAD_FILES.winSetup}.blockmap`,
   DOWNLOAD_FILES.winPortable,
   DOWNLOAD_FILES.mac, `${DOWNLOAD_FILES.mac}.blockmap`,
   DOWNLOAD_FILES.linux,
-  'latest.yml', 'latest-mac.yml', 'latest-linux.yml',
+  DOWNLOAD_FILES.linuxArm64,
+  'latest.yml', 'latest-mac.yml', 'latest-linux.yml', 'latest-linux-arm64.yml',
   ...ALIAS_COPIES.map(([, to]) => to),
 ]);
 

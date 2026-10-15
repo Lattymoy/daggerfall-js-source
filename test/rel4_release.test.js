@@ -60,12 +60,14 @@ test('REL5: the build config produces EXACTLY the names the downloads promise - 
   assert.equal(expand(nameOf('portable'), { arch: 'x64', ext: 'exe' }), DOWNLOAD_FILES.winPortable);
   assert.equal(expand(nameOf('dmg'), { os: 'mac', arch: 'arm64', ext: 'dmg' }), DOWNLOAD_FILES.mac);
   assert.equal(expand(nameOf('appImage'), { os: 'linux', arch: 'x86_64', ext: 'AppImage' }), DOWNLOAD_FILES.linux);
+  assert.equal(expand(nameOf('appImage'), { os: 'linux', arch: 'arm64', ext: 'AppImage' }), DOWNLOAD_FILES.linuxArm64);
   for (const t of ['nsis', 'portable', 'dmg', 'appImage']) assert.doesNotMatch(nameOf(t), /\$\{version\}/, `${t}: a versioned name is a link that dies at the next merge`);
   assert.ok(!('AppImage' in b), 'the AppImage target\'s options live under appImage - a block under any other key is read by nobody');
   assert.deepEqual(b.win.target, ['nsis', 'portable']);
   assert.deepEqual(b.mac.target, ['dmg']);
-  assert.deepEqual(b.linux.target, ['AppImage'], 'every target the release carries has a promised name');
-  assert.equal(Object.keys(DOWNLOAD_FILES).length, 4);
+  // PIN MOVED: linuxArm64 (2026-10-12) - the AppImage for both architectures, each with its promised name
+  assert.deepEqual(b.linux.target, [{ target: 'AppImage', arch: ['x64', 'arm64'] }], 'every target the release carries has a promised name');
+  assert.equal(Object.keys(DOWNLOAD_FILES).length, 5);
 });
 
 test('REL5: a download link names the file under releases/latest/download, which GitHub answers with the newest copy', () => {
@@ -76,13 +78,18 @@ test('REL5: a download link names the file under releases/latest/download, which
   assert.equal(manualDownloadFile({ platform: 'darwin', portable: false, packaged: true }), DOWNLOAD_FILES.mac);
   assert.equal(manualDownloadFile({ platform: 'win32', portable: true, packaged: true }), DOWNLOAD_FILES.winPortable);
   assert.equal(manualDownloadFile({ platform: 'win32', portable: false, packaged: true }), DOWNLOAD_FILES.winSetup);
-  assert.equal(manualDownloadFile({ platform: 'linux', portable: false, packaged: true }), DOWNLOAD_FILES.linux);
+  assert.equal(manualDownloadFile({ platform: 'linux', arch: 'x64', portable: false, packaged: true }), DOWNLOAD_FILES.linux);
+  assert.equal(manualDownloadFile({ platform: 'linux', arch: 'arm64', portable: false, packaged: true }), DOWNLOAD_FILES.linuxArm64,
+    'an ARM64 Linux copy is sent the ARM64 AppImage - the x86_64 one runs there only under emulation');
+  assert.equal(manualDownloadFile({ platform: 'linux', portable: false, packaged: true }), DOWNLOAD_FILES.linux, 'no arch given: the x86_64 one, as before');
   assert.equal(manualDownloadFile({ platform: 'win32', portable: false, packaged: false }), null, 'an unpackaged run has no file to fetch');
   assert.equal(manualDownloadFile({ platform: 'freebsd', portable: false, packaged: true }), null);
 });
 
-test('REL4: a release is the four downloads, the three manifests and two blockmaps - one short publishes nothing', () => {
+test('REL4: a release is the five downloads, the four manifests and two blockmaps - one short publishes nothing', () => {
   assert.deepEqual([...EXPECTED_RELEASE_FILES].sort(), [
+    // PIN MOVED: linuxArm64 (2026-10-12) - the ARM64 AppImage and the manifest its updater reads
+    'DFO-Online-linux-arm64.AppImage', 'latest-linux-arm64.yml',
     'DFO-Online-linux-x86_64.AppImage',
     'DFO-Online-mac-arm64.dmg', 'DFO-Online-mac-arm64.dmg.blockmap',
     'DFO-Online-win-x64-portable.exe',
@@ -186,7 +193,7 @@ test('REL5: the site links each installer by the name the release promises - the
   const entry = landing.slice(landing.indexOf('<dt id="desktop">'), landing.indexOf('</dd>', landing.indexOf('<dt id="desktop">')));
   const hrefs = [...entry.matchAll(/href="(https:\/\/github\.com\/[^"]*\/releases\/latest\/download\/[^"]*)"/g)].map((m) => m[1]);
   assert.deepEqual(hrefs.sort(), Object.values(DOWNLOAD_FILES).map(latestDownloadUrl).sort(),
-    'the four downloads, exactly - a name the release does not carry is a dead link on the front page');
+    'the five downloads, exactly - a name the release does not carry is a dead link on the front page');
   const row = entry.match(/<span class="dl">([\s\S]*?)<\/span>/)?.[1] ?? '';
   assert.deepEqual([...row.matchAll(/>([^<]+)<\/a>/g)].map((m) => m[1]), ['Windows', 'macOS', 'Linux'], 'one link per platform, in the page\'s own link style');
   assert.match(landing, /<a class="plaque" href="#desktop">Install<\/a>/, 'and the door\'s Install lands on them');
@@ -390,27 +397,29 @@ test('REL6: patch notes live on the pull request - no file in the tree is one, a
 test('BR5: a copy from before the rename still finds its download, and a copy from BR5 on finds it however the next rename names it (AUDIT BR5)', () => {
   // The old names, one per new name and for the same way to run it - a copy built before BR5 asks for exactly these
   // at releases/latest/download/<name> (REL5), so each release carries its downloads under them too.
-  assert.deepEqual(Object.keys(LEGACY_DOWNLOAD_FILES), Object.keys(DOWNLOAD_FILES));
+  // PIN MOVED: linuxArm64 (2026-10-12) - a download added after BR5 has no old name: no copy from before asks for it
+  assert.deepEqual(Object.keys(LEGACY_DOWNLOAD_FILES), Object.keys(DOWNLOAD_FILES).filter((k) => k !== 'linuxArm64'));
+  assert.ok(!('linuxArm64' in LEGACY_DOWNLOAD_FILES));
   const tail = (f) => f.slice(f.search(/-(?:win|mac|linux)-/));
-  for (const k of Object.keys(DOWNLOAD_FILES)) {
+  for (const k of Object.keys(LEGACY_DOWNLOAD_FILES)) {
     assert.equal(tail(LEGACY_DOWNLOAD_FILES[k]), tail(DOWNLOAD_FILES[k]), `${k}: the same way to run it`);
     assert.notEqual(LEGACY_DOWNLOAD_FILES[k], DOWNLOAD_FILES[k]);
   }
   assert.ok(Object.isFrozen(LEGACY_DOWNLOAD_FILES));
-  assert.deepEqual(ALIAS_COPIES.map(([from, to]) => [from, to]), Object.keys(DOWNLOAD_FILES).map((k) => [DOWNLOAD_FILES[k], LEGACY_DOWNLOAD_FILES[k]]),
+  assert.deepEqual(ALIAS_COPIES.map(([from, to]) => [from, to]), Object.keys(LEGACY_DOWNLOAD_FILES).map((k) => [DOWNLOAD_FILES[k], LEGACY_DOWNLOAD_FILES[k]]),
     'each download is copied under ITS old name, never another\'s');
   // the alias step runs on the collected files, before the set is checked - a release short of one publishes nothing
   const wf = rd('.github/workflows/release-desktop.yml');
   const collect = wf.indexOf('- name: Collect every leg\'s files'), aliasStep = wf.indexOf('run: node scripts/desktopRelease.mjs alias release'),
     check = wf.indexOf('run: node scripts/desktopRelease.mjs check release');
   assert.ok(collect > 0 && aliasStep > collect && check > aliasStep, 'collected, then copied, then checked');
-  // and it really copies: a folder of the four, aliased, is a folder of eight with the same bytes
+  // and it really copies: a folder of the five, aliased, carries the four old names too, with the same bytes
   const dir = mkdtempSync(join(tmpdir(), 'br5-alias-'));
   try {
     for (const f of Object.values(DOWNLOAD_FILES)) writeFileSync(join(dir, f), `bytes of ${f}`);
     const alias = (d) => spawnSync(process.execPath, [fileURLToPath(new URL('../scripts/desktopRelease.mjs', import.meta.url)), 'alias', d], { encoding: 'utf8' });
     assert.equal(alias(dir).status, 0);
-    for (const k of Object.keys(DOWNLOAD_FILES)) {
+    for (const k of Object.keys(LEGACY_DOWNLOAD_FILES)) {
       assert.equal(readFileSync(join(dir, LEGACY_DOWNLOAD_FILES[k]), 'utf8'), `bytes of ${DOWNLOAD_FILES[k]}`);
     }
     // a leg's file missing is no release: the step fails rather than publish a set with a hole the check would name late
