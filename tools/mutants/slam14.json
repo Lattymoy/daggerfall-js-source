@@ -51,8 +51,8 @@
   {
     "name": "Y6-member-does-not-confirm",
     "file": "src/net/online.js",
-    "old": "if (have) { if (have.unconfirmed) this._confirm(have, room); if (told) this._refresh(have, p, now, room); return; }",
-    "new": "if (have) { if (told) this._refresh(have, p, now, room); return; }",
+    "old": "if (have) { if (have.unconfirmed) this._confirm(have, room); if (told) this._refresh(have, p, now, room); if (dead?.dd) this._fell(id, this.peers.get(id), dead, room, now, true); return; }",
+    "new": "if (have) { if (told) this._refresh(have, p, now, room); if (dead?.dd) this._fell(id, this.peers.get(id), dead, room, now, true); return; }",
     "tests": [
       "test/net/slam14.test.js"
     ]

@@ -62,8 +62,8 @@
   {
     "name": "ACC1d-7-an-absent-token-is-sent-as-null",
     "file": "src/net/online.js",
-    "old": "    if (this.token) frame.tok = this.token;",
-    "new": "    frame.tok = this.token;",
+    "old": "    if (tok) frame.tok = tok;",
+    "new": "    frame.tok = tok;",
     "tests": [
       "test/net/acc1dclient.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "ACC1d-8-the-token-is-minted-once-and-reused",
     "file": "src/net/online.js",
-    "old": "        this.token = await this._mint(room);",
-    "new": "        this.token = this.token ?? await this._mint(room);",
+    "old": "        const minted = await this._mint(room);",
+    "new": "        const minted = (this._minted ??= await this._mint(room));",
     "tests": [
       "test/net/acc1dclient.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "ACC1d-10-a-late-token-is-sent-down-a-dead-socket",
     "file": "src/net/online.js",
-    "old": "        this.token = await this._mint(room);\n        // the socket may have been replaced or closed while we waited\n        if (!live()) return;",
-    "new": "        this.token = await this._mint(room);",
+    "old": "        const minted = await this._mint(room);\n        // the socket may have been replaced or closed while we waited\n        if (!live()) return;",
+    "new": "        const minted = await this._mint(room);",
     "tests": [
       "test/net/acc1dclient.test.js"
     ],
