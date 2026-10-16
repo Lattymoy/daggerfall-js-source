@@ -29,8 +29,8 @@
   {
     "name": "WAGON-FILTER-rows-unfiltered",
     "file": "src/ui/enhancedInventory.js",
-    "old": "  const shown = filtering ? filterStore(remote.items, storeFilter, storeNameOf) : remote.items;",
-    "new": "  const shown = remote.items;",
+    "old": "  const shown = filtering ? filterStore(remoteStacks.items, storeFilter, storeNameOf) : remoteStacks.items;",
+    "new": "  const shown = remoteStacks.items;",
     "tests": [
       "test/shiftstow.test.js"
     ]

@@ -669,7 +669,11 @@ function layLoot(dom, { rowH = 52, top = 100, view = 300 } = {}) {
     restore: () => { globalThis.getComputedStyle = saved.cs; globalThis.requestAnimationFrame = saved.raf; if (saved.had) globalThis.window = saved.win; else delete globalThis.window; },
   };
 }
-const longPile = (n) => Array.from({ length: n }, (_, i) => createWeapon(113 + (i % 19), i % 10));
+const longPile = (n) => Array.from({ length: n }, (_, i) => {
+  const it = createWeapon(113 + (i % 19), i % 10);
+  it.name += ` ${i + 1}`;   // distinct gameplay state keeps this a long list after identical-item grouping
+  return it;
+});
 const packHero = () => ({ isPlayer: true, name: 'Aelwyn', career: { name: 'Spellsword' }, level: 5, stats: { strength: 90, endurance: 90 }, activeEffects: [], spells: [], items: [], goldPieces: 0 });
 
 test('VIRT pack: a long loot pile in the mounted pack is drawn as a window over its scroll - and a press that takes a piece keeps the scroll, the window measured before the scroll is given back; a hover card whose row a scroll takes away goes with it; the repaint lets go of the list it replaced (mutants: the window aimed before the scroll is given back; the card left beside nothing; the old lists kept)', () => {
@@ -711,6 +715,35 @@ test('VIRT pack: a long loot pile in the mounted pack is drawn as a window over 
       assert.equal(listeners(), before, 'the host hears one list, not one a repaint');
       view.unmount();
       assert.equal(listeners(), 0, 'and none once the pack is gone');
+    } finally { lay.restore(); }
+  });
+});
+
+test('VIRT pack: grouped originals stay counted through a virtual scroll and the visible row takes its whole group', () => {
+  _resetForTests();
+  globalThis.location = { search: '?skin=enhanced' };
+  withDom((dom) => {
+    const lay = layLoot(dom);
+    try {
+      const e = packHero();
+      const store = longPile(170).flatMap(it => Array.from({ length: 3 }, () => structuredClone(it)));
+      const view = mountEnhancedInventory(lay.host, { entity: e, items: () => e.items, loot: { items: () => store, storage: true }, onExit: () => {} });
+      lay.flush();
+      lay.scroll(5000);
+      lay.flush();
+      const row = lay.inView().find(r => r._padItem.templateIndex !== 131);
+      const picked = row._padItem;
+      const group = store.filter(it => it.name === picked.name);
+      assert.equal(group.length, 3);
+      assert.match(row.querySelector('.itemname').children[0].textContent, / ×3$/);
+      assert.ok(lay.list().querySelectorAll('.itemrow').length < 170, 'the list windows groups, not all originals');
+      row.onclick({});
+      lay.flush();
+      assert.equal(e.items.length, 3);
+      assert.ok(group.every(it => e.items.includes(it) && !store.includes(it)), 'all original records move from the visible group');
+      assert.equal(store.length, 507);
+      assert.equal(lay.list().scrollTop, 5000, 'the grouped take also retains the scroll');
+      view.unmount();
     } finally { lay.restore(); }
   });
 });

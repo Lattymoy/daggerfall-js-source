@@ -172,8 +172,8 @@
   {
     "name": "AUDIT625-W3-the-sheet-buttons-again",
     "file": "src/ui/enhancedInventory.js",
-    "old": "    for (const it of w.held) rows.append(itemRow(it));",
-    "new": "    for (const it of w.held) { const b = el('button', 'act walletpiece', itemLine(it, deps.entity).name); b.onclick = () => { picked = it; side = 'local'; notice = null; render(); }; rows.append(b); }",
+    "old": "    for (const it of itemStacks(w.held, stackOptions()).items) rows.append(itemRow(it));",
+    "new": "    for (const it of itemStacks(w.held, stackOptions()).items) { const b = el('button', 'act walletpiece', itemLine(it, deps.entity).name); b.onclick = () => { picked = it; side = 'local'; notice = null; render(); }; rows.append(b); }",
     "why": "a held piece a button that only opens its card",
     "tests": [
       "test/audit625_wallet.test.js"

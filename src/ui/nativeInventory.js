@@ -87,7 +87,7 @@ import {
 // window no longer carries the settings or quest-resource imports it
 // needed to run that rung itself.
 import { wagonKgFor } from '../systems/wagonKinds.js';   // WAGONS1: the driven wagon's capacity
-import { planStore, planTake, applyTransfer, planDropGold, HOW_MANY_ITEMS, SPLIT_INPUT_MAX, parseSplitAmount, splitRequired, sendQuestItemClick } from '../systems/itemTransfer.js';
+import { planStore, planTake, planDropGold, HOW_MANY_ITEMS, SPLIT_INPUT_MAX, parseSplitAmount, splitRequired, sendQuestItemClick } from '../systems/itemTransfer.js';
 import { shiftDrop } from '../systems/physicalItems.js';   // PI1: Physical Items' shift-drop, one law for both packs
 // U57: which list is the remote one, and what opening and closing
 // this window decide.
@@ -102,6 +102,7 @@ import {
 } from '../systems/inventorySession.js';
 import { isEquipped, equipItem, unequipSlot, isForbiddenEquip, isBrokenItem, EQUIP_SLOTS, FORBIDDEN_EQUIPMENT_TEXT_ID, ITEM_BROKEN_TEXT_ID, equipDelaySnapshot, billEquipDelayOnClose } from '../systems/equip.js';   // S23; FX1 (F128): the per-visit swap-pause clock
 import { drawPaperDoll, refreshPaperDoll, slotAtPaperDoll, ARMOR_LABEL_POS } from './paperDoll.js';
+import { itemStacks, stackTransferItem, applyItemStackTransfer } from '../systems/itemStacks.js';
 import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, preloadIconRecord, drawStackLabel, safeScrollIndex, beginScrollerDrag, dragScrollerIndex,   // MAC-N2: the thumb drag
   preloadScrollerArrowArt, drawScrollerArrows, drawScrollerThumb, playScrollerArrowClick,
   makeSlotToolTip, itemBackgroundColour, drawCellBackground } from './itemScroller.js';
@@ -504,9 +505,18 @@ export class NativeInventoryWindow {
   // column otherwise - so a plain clamp would over-correct.
   _clampScroll() {
     this.scroll = safeScrollIndex(this.scroll, this._filtered().length);
-    this.remoteScroll = safeScrollIndex(this.remoteScroll, this._remote().length);
+    this.remoteScroll = safeScrollIndex(this.remoteScroll, this._remoteRows().length);
   }
-  _filtered() { return filterByTab(this.hooks.items(), this.tab); }
+  _stackOptions() { return { separate: [this.hooks.entity?.lightSource], enabled: !this.chooseOne }; }
+  _stackView(list) {
+    if (this._frameStacks?.has(list)) return this._frameStacks.get(list);
+    const view = itemStacks(list, this._stackOptions());
+    this._frameStacks?.set(list, view);
+    return view;
+  }
+  _transferItem(item, list) { return stackTransferItem(list, item, this._stackOptions()); }
+  _filtered() { return filterByTab(this._stackView(this.hooks.items()).items, this.tab); }
+  _remoteRows() { return this._stackView(this._remote()).items; }
   /** GetCarriedWeight (:852-855) - virtual, because the trade window
    *  overrides it with `CarriedWeight + basketItems.GetWeight()`
    *  (DaggerfallTradeWindow.cs:630-633). */
@@ -947,7 +957,13 @@ export class NativeInventoryWindow {
     this._clampScroll();
     const it = this._filtered()[this.scroll + slot];
     if (!it) return;
-    const r = shiftDrop(it, { items: this.hooks.items(), entity: this.hooks.entity, getQuest: this.hooks.getQuest ?? null, dropRefusal: this.hooks.dropRefusal ?? null, drop: (list) => this.hooks.physicalDrop?.(list) });
+    const items = this.hooks.items(), moved = [];
+    let r = {};
+    for (const member of this._stackView(items).members(it)) {
+      r = shiftDrop(member, { items, entity: this.hooks.entity, getQuest: this.hooks.getQuest ?? null, dropRefusal: this.hooks.dropRefusal ?? null, drop: (list) => moved.push(...list) });
+      if (r.refusal || r.map) break;
+    }
+    if (moved.length) this.hooks.physicalDrop?.(moved);
     if (r.refusal) { this._refuse(r.refusal); return; }
     if (r.map) { this._use(it, this.hooks.items()); return; }
     audio.playOneShot(r.sound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);   // DoTransferItem's own cue
@@ -1004,7 +1020,7 @@ export class NativeInventoryWindow {
           return;
         }
       }
-      const plan = planStore(it, {
+      const plan = planStore(this._transferItem(it, this.hooks.items()), {
         remote: to, usingWagon: this.usingWagon, chooseOne: this.chooseOne,
         getQuest: this.hooks.getQuest ?? null,
         groundRefusal: groundRefusalOf(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }),   // HOUSE-DROP: a floor that refuses a drop
@@ -1023,7 +1039,7 @@ export class NativeInventoryWindow {
       // the same transfer with the typed count.
       const perform = (amount) => {
         audio.playOneShot(SOUND.ButtonClick, 1);   // DoTransferItem (:1583)
-        applyTransfer(it, { ...plan, amount }, this.hooks.items(), to, { entity: this.hooks.entity, fromLocal: true });   // F157: a lit torch leaving the pack goes out
+        applyItemStackTransfer(it, { ...plan, amount }, this.hooks.items(), to, { entity: this.hooks.entity, fromLocal: true }, this._stackOptions());   // F157: a lit torch leaving the pack goes out
       };
       if (!whole && this._splitRequired(it, plan)) { this._openSplit(it, plan.amount, perform); return; }
       perform(plan.amount);
@@ -1050,7 +1066,8 @@ export class NativeInventoryWindow {
   /** TransferItem's split gate (:1515-1519): the amount is short of the
    *  stack, or Control is held - and only for a stack (item.IsAStack(), :1519). */
   _splitRequired(it, plan) {
-    return splitRequired(it, plan.amount, this._controlDown);
+    const list = this.hooks.items().includes(it) ? this.hooks.items() : this._remote();
+    return splitRequired(this._transferItem(it, list), plan.amount, this._controlDown);
   }
 
   /** The popup (:1523-1536): howManyItems with the max, numeric, 8
@@ -1097,7 +1114,7 @@ export class NativeInventoryWindow {
   _pickRemote(slot, mode = this.mode) {
     this._clampScroll();
     const remote = this._remote();
-    const it = remote[this.remoteScroll + slot];
+    const it = this._remoteRows()[this.remoteScroll + slot];
     if (!it) return;
     // "Send click to quest system" (:2027-2037) - the FIRST act of
     // RemoteItemListScroller_OnItemClick, ahead of the action-mode
@@ -1115,7 +1132,8 @@ export class NativeInventoryWindow {
       // direction - X11b's summoned guard and AUDIT 26's quest arm
       // included, which DFU has once and both callers run.
       const bag = this.hooks.items();
-      const plan = planTake(it, {
+      const plan = planTake(this._transferItem(it, remote), {
+        sourceItem: it,
         // AUDIT 64 F47: the LADDER's own mode too - itemTransfer.js's
         // `equip: mode === 'equip'` is TransferItem(..., equip:
         // actionMode == ActionModes.Equip) (:2040), so a right-click
@@ -1138,7 +1156,7 @@ export class NativeInventoryWindow {
         // (:1562-1571) exists for, so a pile taken here is spent into
         // GoldPieces and the member RETURNS. The null IS that return: no
         // equip (:1580), no choose-one close (:1585-1591).
-        const taken = applyTransfer(it, { ...plan, amount }, remote, bag, { entity: this.hooks.entity, toPlayer: true });
+        const taken = applyItemStackTransfer(it, { ...plan, amount }, remote, bag, { entity: this.hooks.entity, toPlayer: true }, this._stackOptions());
         if (taken === null) return;
         if (plan.equip && this.hooks.entity) {
           // S23: the taken item still has to pass the career gate
@@ -1237,8 +1255,8 @@ export class NativeInventoryWindow {
     if (acc != null) return { item: this.hooks.entity?.equip?.slots?.[acc] ?? null, books: false };
     const hit = scrollerHit(R.localList, vx, vy, this.scroll, this._filtered().length);
     if (hit) return { item: hit.kind === 'slot' ? (this._filtered()[this.scroll + hit.slot] ?? null) : null, books: true };
-    const rhit = scrollerHit(R.remoteList, vx, vy, this.remoteScroll, this._remote().length);
-    if (rhit) return { item: rhit.kind === 'slot' ? (this._remote()[this.remoteScroll + rhit.slot] ?? null) : null, books: true };
+    const rhit = scrollerHit(R.remoteList, vx, vy, this.remoteScroll, this._remoteRows().length);
+    if (rhit) return { item: rhit.kind === 'slot' ? (this._remoteRows()[this.remoteScroll + rhit.slot] ?? null) : null, books: true };
     return { item: null, books: true };
   }
 
@@ -1287,12 +1305,12 @@ export class NativeInventoryWindow {
       this._wheelRehover(vx, vy, hit.kind === 'slot' ? this._filtered()[this.scroll + hit.slot] : null);
       return;
     }
-    const rhit = scrollerHit(R.remoteList, vx, vy, this.remoteScroll, this._remote().length);
+    const rhit = scrollerHit(R.remoteList, vx, vy, this.remoteScroll, this._remoteRows().length);
     if (rhit && wheelable(rhit.kind)) {
-      this.remoteScroll = applyScroll(this.remoteScroll, kind, this._remote().length);
+      this.remoteScroll = applyScroll(this.remoteScroll, kind, this._remoteRows().length);
     }
     this._wheelRehover(vx, vy,
-      rhit?.kind === 'slot' ? this._remote()[this.remoteScroll + rhit.slot] : null);
+      rhit?.kind === 'slot' ? this._remoteRows()[this.remoteScroll + rhit.slot] : null);
   }
 
   /** AUDIT 64 F52 (review round): the wheel notch fires TWO more
@@ -1383,7 +1401,7 @@ export class NativeInventoryWindow {
     if (this._drag && e) {
       if (!(e.buttons & 1)) this._drag = null;
       else if (vy >= 0) {
-        const len = this._drag.which === 'scroll' ? this._filtered().length : this._remote().length;
+        const len = this._drag.which === 'scroll' ? this._filtered().length : this._remoteRows().length;
         this[this._drag.which] = dragScrollerIndex(this._drag.latch, vy, len);
       }
     }
@@ -1437,7 +1455,7 @@ export class NativeInventoryWindow {
     }
     const remote = scrollerHit(R.remoteList, vx, vy);
     if (remote?.kind === 'slot') {
-      const it = this._remote()[this.remoteScroll + remote.slot];
+      const it = this._remoteRows()[this.remoteScroll + remote.slot];
       if (it) { this.infoItem = it; this.infoGold = false; }
     }
   }
@@ -1484,11 +1502,11 @@ export class NativeInventoryWindow {
       }
       return true;
     }
-    const rhit = scrollerHit(R.remoteList, vx, vy, this.remoteScroll, this._remote().length);
+    const rhit = scrollerHit(R.remoteList, vx, vy, this.remoteScroll, this._remoteRows().length);
     if (rhit) {
       if (rhit.kind === 'slot') {
         this._clampScroll();
-        const it = this._remote()[this.remoteScroll + rhit.slot];
+        const it = this._remoteRows()[this.remoteScroll + rhit.slot];
         if (it) nextVariant(it);
       }
       return true;
@@ -1609,11 +1627,11 @@ export class NativeInventoryWindow {
       else if (!right) { playScrollerArrowClick(hit.kind); this.scroll = applyScroll(this.scroll, hit.kind, this._filtered().length); }
       return true;
     }
-    const rhit = scrollerHit(R.remoteList, vx, vy, this.remoteScroll, this._remote().length);
+    const rhit = scrollerHit(R.remoteList, vx, vy, this.remoteScroll, this._remoteRows().length);
     if (rhit) {
       if (rhit.kind === 'slot') this._pickRemote(rhit.slot, mode);
       else if (rhit.kind === 'thumb') { if (!right) this._drag = { which: 'remoteScroll', latch: beginScrollerDrag(R.remoteList, vy, this.remoteScroll) }; }
-      else if (!right) { playScrollerArrowClick(rhit.kind); this.remoteScroll = applyScroll(this.remoteScroll, rhit.kind, this._remote().length); }
+      else if (!right) { playScrollerArrowClick(rhit.kind); this.remoteScroll = applyScroll(this.remoteScroll, rhit.kind, this._remoteRows().length); }
       return true;
     }
     return false;
@@ -1632,6 +1650,7 @@ export class NativeInventoryWindow {
 
   draw(renderer, canvas, font) {
     if (!_art) { this._close(); return; }
+    this._frameStacks = new Map();   // each collection is grouped once per frame, including hit/scroll reads
     const m = nativeMetrics(canvas);
     // AUDIT 19 F2: OPAQUE BLACK, not a dim. DaggerfallBaseWindow's
     // constructor sets `parentPanel.BackgroundColor = Color.black`
@@ -1695,8 +1714,10 @@ export class NativeInventoryWindow {
     // locally, the pile (loot target or session drops) remotely
     for (const [rect, scroll, items] of [
       [INV_RECTS.localList, this.scroll, this._filtered()],
-      [INV_RECTS.remoteList, this.remoteScroll, this._remote()],
+      [INV_RECTS.remoteList, this.remoteScroll, this._remoteRows()],
     ]) {
+      const source = rect === INV_RECTS.localList ? this.hooks.items() : this._remote();
+      const stacks = this._stackView(source);
       items.slice(scroll, scroll + LIST_SLOTS).forEach((it, s) => {
         // AUDIT 64 F53: ItemBackgroundColourHandler (:401-411), which
         // BOTH scrollers carry (:372, :387) and which the cell paints
@@ -1705,7 +1726,7 @@ export class NativeInventoryWindow {
         // before the child icon panel.
         drawCellBackground(renderer, m, rect, s, itemBackgroundColour(it, this.hooks.entity));
         this._icon(renderer, m, it, rect, s);
-        drawStackLabel(renderer, _art.font4, m, it, rect, s);
+        drawStackLabel(renderer, _art.font4, m, { ...it, stackCount: stacks.count(it) }, rect, s);
       });
       // ROAD-A7: UpdateListScrollerButtons (:486-501) and
       // VerticalScrollBar.Draw - the arrows swap red/green with the
@@ -1766,6 +1787,7 @@ export class NativeInventoryWindow {
     // AUDIT 64 F48: the shared tooltip draws LAST, over the panel and
     // over the box (DaggerfallBaseWindow.cs:110-111 draws defaultToolTip
     // after every other component).
+    this._frameStacks = null;
     this._tip.draw(renderer, m, font);
   }
 }

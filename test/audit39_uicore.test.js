@@ -107,7 +107,7 @@ test('AUDIT 39 F126: the three item windows hand the rail their live scroll and 
   assert.match(read('src/ui/nativeInventory.js'),
     /scrollerHit\(R\.localList, vx, vy, this\.scroll, this\._filtered\(\)\.length\)/);
   assert.match(read('src/ui/nativeInventory.js'),
-    /scrollerHit\(R\.remoteList, vx, vy, this\.remoteScroll, this\._remote\(\)\.length\)/);
+    /scrollerHit\(R\.remoteList, vx, vy, this\.remoteScroll, this\._remoteRows\(\)\.length\)/);
   assert.match(read('src/ui/nativeTrade.js'), /scrollerHit\(rect, vx, vy, this\[which\], items\.length\)/);
   assert.match(read('src/ui/itemMakerWindow.js'),
     /scrollerHit\(ITEM_RECTS\.itemList, vx, vy, safeScrollIndex\(this\.scroll, list\.length\), list\.length\)/);

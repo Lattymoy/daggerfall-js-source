@@ -29,7 +29,10 @@ function pathOf(host, el) {
   while (n && n !== host) {
     const parent = n.parentNode;
     if (!parent) break;
-    parts.push(`${n.tagName}.${n.className || ''}:${[...parent.children].indexOf(n)}`);
+    // The entrance adds `on` after `paired`; later paints create it before `paired`. Class order is not identity.
+    const className = typeof n.className === 'string' ? n.className : n.getAttribute?.('class') ?? '';
+    const classes = className.split(/\s+/).filter(Boolean).sort().join(' ');
+    parts.push(`${n.tagName}.${classes}:${[...parent.children].indexOf(n)}`);
     n = parent;
   }
   return parts.reverse().join('>');

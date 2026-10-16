@@ -58,6 +58,31 @@ message + inventory UI pend the UI arc; interior containers pend
 S2b; the DFU icon-roll Random slot stays a uniform roll per the
 approved stance.
 
+## Identical inventory rows (2026-10-16)
+
+`systems/itemStacks.js` groups fully identical items into one row in both inventory skins, including the pack,
+wagon, loot, ground and other storage. This deliberately extends the presentation beyond DFU's
+`DaggerfallUnityItem.IsStackable` / `ItemCollection.FindExistingStack`: equipment and enchanted items can share a
+row, while their original records remain independent. Every gameplay field participates, including condition,
+material, appearance, enchantments, binding and mod state. Only the top-level `stackCount`, realm `uid` and
+pickup bookkeeping (`acquired`, `untaken`) are excluded from the row key; they stay on each original record.
+Acquisition scans and realm checkpoints must not split a row. Nested fields with those names still participate. Equipped items,
+quest items and the held light keep separate rows; reward choices keep their original entries.
+
+Transfers plan with the displayed quantity and move the original records through `itemTransfer.applyTransfer`.
+Quantity fields and the classic Control popup, weight limits, gold interception and physical drops use that same
+quantity. Wear, use and modifications still act on one original; the next refresh separates changed items.
+Existing saves benefit immediately without conversion; the serialized item representation is unchanged.
+The enhanced pane creates one DOM row per group rather than one per duplicate. This reduces interface work;
+it does not compress the save or the network payload. `test/itemstacks.test.js` drives both skins and the real
+weapon producer, including a thousand originals, partial moves, individual equipment state, acquisition/ID stamps,
+consecutive Storage takes and reopening a saved pack. Wallet and binder sheets also render grouped rows while
+their ledgers count every original. Group quantity planning retains the source identity for the Materials Bag ownership check.
+Grouped rows feed the current virtual-list window and reuse its per-pass base-line cache. The virtual-list regression
+scrolls 170 groups of three originals, takes a visible group and preserves the storage scroll. `ui/domRepaint.js`
+normalizes CSS class order in its scroll paths: the paired window's entrance adds `on` after `paired`, while later
+paints create `on` first; those are the same window, not a reason to reset its list.
+
 ## S2 correction (2026-07-07, live-console root fix)
 
 The S2 treasure loop iterated the RAW `blocks` PARAMETER - the

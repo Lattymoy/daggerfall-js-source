@@ -129,7 +129,7 @@ test('UXB1-L: a stack only partly carried asks too, seeded with what fits - and 
   assert.equal(splitRequired(oil(1), 0, true), false, 'never a single item');
   assert.equal(splitRequired(oil(12), 12, false), false);
   // one law, both windows (the pack and the counter) - systems/itemTransfer.js's, since DISC25-F gave it one home
-  assert.match(read('src/ui/nativeInventory.js'), /return splitRequired\(it, plan\.amount, this\._controlDown\);/);
+  assert.match(read('src/ui/nativeInventory.js'), /return splitRequired\(this\._transferItem\(it, list\), plan\.amount, this\._controlDown\);/);
   const trade = read('src/ui/nativeTrade.js');
   assert.match(trade, /this\._split\(item, plan\.amount, \(amount\) => applyTransfer\(item, \{ \.\.\.plan, amount \}, this\.hooks\.shelfItems\(\), this\.basket\)\);/);
 });

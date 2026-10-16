@@ -332,7 +332,7 @@ export function planStore(item, {
  */
 export function planTake(item, {
   bag = [], entity = null, mode = 'remove', chooseOne = null, usingWagon = false,
-  getQuest = null, dryRun = false,
+  getQuest = null, dryRun = false, sourceItem = item,
 } = {}) {
   if (!item) return { ok: false, refusal: REFUSAL.missing };
   // X11b: TransferItem's summoned guard, BOTH callers. The remote arm
@@ -344,8 +344,9 @@ export function planTake(item, {
   // ONE-BAG: a Materials Bag is never taken while another is held - in the pack, in a trade's basket (the trade windows'
   // `bag` is both) or in the wagon; the bag being taken is not "another", wherever it sits. AUDIT ONE-BAG 1: nor is one out of
   // the character's own wagon a bag taken - it is already theirs, and two held from before were locked in the wagon for good
-  const ownWagon = Array.isArray(entity?.wagonItems) && entity.wagonItems.includes(item);
-  if (isBagItem(item) && !ownWagon && holdsOtherBag([bag, entity?.wagonItems], item)) return { ok: false, refusal: REFUSAL.secondBag };
+  // A grouped row plans with a temporary quantity; ownership still belongs to its original record.
+  const ownWagon = Array.isArray(entity?.wagonItems) && entity.wagonItems.includes(sourceItem);
+  if (isBagItem(item) && !ownWagon && holdsOtherBag([bag, entity?.wagonItems], sourceItem)) return { ok: false, refusal: REFUSAL.secondBag };
   // AUDIT 26: the quest arm, the OTHER caller. `from` is remoteItems
   // here, so the refusal cannot fire without CanDropQuestItems, and
   // picking the item back up CLEARS PlayerDropped (:1499-1500) - which

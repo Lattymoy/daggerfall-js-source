@@ -396,8 +396,8 @@
   {
     "name": "WALLET1-piece-unreachable",
     "file": "src/ui/enhancedInventory.js",
-    "old": "    for (const it of w.held) rows.append(itemRow(it));",
-    "new": "    for (const it of w.held) rows.append(el('p', 'meta', itemLine(it, deps.entity).name));",
+    "old": "    for (const it of itemStacks(w.held, stackOptions()).items) rows.append(itemRow(it));",
+    "new": "    for (const it of itemStacks(w.held, stackOptions()).items) rows.append(el('p', 'meta', itemLine(it, deps.entity).name));",
     "why": "a held piece's row opens nothing",
     "tests": [
       "test/wallet1.test.js"

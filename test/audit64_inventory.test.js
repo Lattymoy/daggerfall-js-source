@@ -395,8 +395,9 @@ test('AUDIT 64 F52: the wheel scrolls the list under the cursor, one row a notch
   // ItemListScroller.cs:314-316 wires OnMouseScrollUp/Down on the
   // ITEMS panel and :606-616 steps ScrollIndex by one with no sound
   // (the ButtonClick is the arrow buttons', :588-604).
-  const bag = Array.from({ length: 9 }, () => dagger());
-  const pile = Array.from({ length: 9 }, () => dagger());
+  // The wheel needs nine distinct rows; identical daggers now share one counted row.
+  const bag = Array.from({ length: 9 }, (_, i) => ({ ...dagger(), currentCondition: i + 1 }));
+  const pile = Array.from({ length: 9 }, (_, i) => ({ ...dagger(), currentCondition: i + 1 }));
   const w = new NativeInventoryWindow({
     items: () => bag, icons: ICONS, entity: hero(bag), loot: { items: () => pile },
   });
@@ -427,7 +428,7 @@ test('AUDIT 64 F52: the wheel scrolls the list under the cursor, one row a notch
 });
 
 test('AUDIT 64 F52: off both scrollers nothing scrolls - there is no fallback list', () => {
-  const bag = Array.from({ length: 9 }, () => dagger());
+  const bag = Array.from({ length: 9 }, (_, i) => ({ ...dagger(), currentCondition: i + 1 }));
   const w = new NativeInventoryWindow({ items: () => bag, icons: ICONS, entity: hero(bag) });
   // AUDIT 65 UI-5: the notch carries its own point now, so "before the
   // pointer has ever moved" is no longer the inert case - the inert

@@ -1272,7 +1272,7 @@
   {
     "name": "AC5-C-M36",
     "file": "src/ui/enhancedInventory.js",
-    "old": "    for (const it of b.held) rows.append(itemRow(it));\n",
+    "old": "    for (const it of itemStacks(b.held, stackOptions()).items) rows.append(itemRow(it));\n",
     "new": "",
     "tests": [
       "test/auditcards5_items.test.js",

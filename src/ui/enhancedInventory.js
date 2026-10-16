@@ -57,6 +57,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { isRestItem } from '../systems/restItems.js';   // REST6: the seven's card lines
+import { itemStacks, stackTransferItem, applyItemStackTransfer } from '../systems/itemStacks.js';
 import { getPref, setPref } from '../systems/uiPrefs.js';   // PLUS7: getPref, the hover card's switch; PACK-PHONE: setPref, the phone's Body
 import { USE_PENDING, powersRows, INFO_TEXT_POWERS } from './nativeInventory.js';   // PLUS10: the Info box's powers record
 import { itemInfoRows, questLetterName } from '../systems/itemInfo.js';   // PLUS10: the classic Info popup's own text
@@ -112,7 +113,7 @@ import { noticeHold, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE
 // reading of them.
 import { wagonKgFor } from '../systems/wagonKinds.js';   // WAGONS1: the driven wagon's capacity
 import {
-  planStore, planTake, applyTransfer, planDropGold,
+  planStore, planTake, planDropGold,
   HOW_MANY_ITEMS, parseSplitAmount,   // DISC25-F: the split popup's law, as the card's field
   sendQuestItemClick,   // WHERE-ROBES: DFU's remote-click quest send, one home for every door onto a loot row
 } from '../systems/itemTransfer.js';
@@ -722,9 +723,24 @@ const svg = (t, attrs) => {
 };
 
 const sessionState = () => ({ ...session, dropped, wagonLocal });
+let localStacks = itemStacks([]), remoteStacks = itemStacks([]);
+const stackOptions = () => ({ separate: [deps.entity?.lightSource], enabled: !session.chooseOne });
+const transferItem = (item, dir) => stackTransferItem(dir === 'store' ? deps.items?.() ?? [] : remoteTarget(deps, sessionState()), item, stackOptions());
+const applyTransfer = (item, plan, from, to, options) => applyItemStackTransfer(item, plan, from, to, options, stackOptions());
+const displayLine = (item, line = lineOf(item)) => {
+  const view = localStacks.members(item).length ? localStacks : remoteStacks;
+  const count = view.count(item);
+  return { ...line, stack: count > 1 ? count : null, weight: line.weight * count / (item.stackCount ?? 1) };
+};
 const refresh = () => {
   model = packModel(deps);
   remote = remoteModel(deps, sessionState());
+  localStacks = itemStacks(deps.items?.() ?? [], stackOptions());
+  remoteStacks = itemStacks(remote.items, stackOptions());
+  const rows = new Set(localStacks.items);
+  model.tabs = model.tabs.map((page) => ({ ...page, items: page.items.filter((it) => rows.has(it)) }));
+  model.count = localStacks.items.length;
+  remote.count = remoteStacks.items.length;
   worn = equippedModel(deps.entity);
   // PX25 (Mac: equipping and unequipping does not update the sprite
   // until the inventory is closed and reopened): THE PACK TELLS THE
@@ -937,7 +953,7 @@ function stowIntent(item) {
   if (bagRefuses(item)) return { kind: 'stow', label: null, speaks: true };   // AUDIT BAG1: a dagger dragged to the bag read "Put in bag
   if (remote && boundRefusesPut(item, remote.kind)) return { kind: 'stow', label: null, speaks: true };   // SS3: a bound piece - released, it says why
   if (remote && letterRefuses(item)) return { kind: 'stow', label: null, speaks: true };   // HACKED-GOLD: a letter online - released, it says why
-  const plan = planStore(item, {
+  const plan = planStore(transferItem(item, 'store'), {
     remote: remote.items, usingWagon: session.usingWagon, chooseOne: session.chooseOne,
     dryRun: true,   // as canStow's own note says: the quest rung WRITES, and a label must not
     groundRefusal: groundRefusalOf(deps, session),   // HOUSE-DROP
@@ -1399,6 +1415,13 @@ function equipByDoubleClick(item) {
 function reorderPack(item, before) {
   const list = deps.entity?.items;
   if (!Array.isArray(list) || item === before) return;
+  const members = itemStacks(list, stackOptions()).members(item);
+  if (members.length > 1 && list.includes(before) && !members.includes(before)) {
+    const moving = new Set(members), rest = list.filter((it) => !moving.has(it));
+    const at = rest.indexOf(before);
+    list.splice(0, list.length, ...rest.slice(0, at), ...members, ...rest.slice(at));
+    refresh(); render(); return;
+  }
   const from = list.indexOf(item);
   const to = list.indexOf(before);
   if (from < 0 || to < 0) return;
@@ -1574,7 +1597,7 @@ function canStow(item) {
   // would mark a quest item as dropped. The dry run cannot change the
   // answer, because that rung's refusal speaks.
   if (bagRefuses(item)) return false;   // AUDIT BAG1: no "Put in bag" on a dagger's card - the bag takes materials alone
-  const plan = planStore(item, {
+  const plan = planStore(transferItem(item, 'store'), {
     remote: remote.items, usingWagon: session.usingWagon, chooseOne: session.chooseOne,
     dryRun: true,
     groundRefusal: groundRefusalOf(deps, session),   // HOUSE-DROP
@@ -1588,8 +1611,9 @@ function canStow(item) {
 function splitMax(item, dir) {
   if (dir === 'store' && bagRefuses(item)) return 0;   // AUDIT BAG1: no how-many field for what the bag refuses
   const plan = dir === 'store'
-    ? planStore(item, { remote: remote.items, usingWagon: session.usingWagon, chooseOne: session.chooseOne, dryRun: true, groundRefusal: groundRefusalOf(deps, session), capacity: storeCapacityOf(deps, session), bagLoaded: !bagMayLeave(deps.entity), wagonKg: wagonKgFor(deps.entity) })
-    : planTake(item, {
+    ? planStore(transferItem(item, dir), { remote: remote.items, usingWagon: session.usingWagon, chooseOne: session.chooseOne, dryRun: true, groundRefusal: groundRefusalOf(deps, session), capacity: storeCapacityOf(deps, session), bagLoaded: !bagMayLeave(deps.entity), wagonKg: wagonKgFor(deps.entity) })
+    : planTake(transferItem(item, dir), {
+      sourceItem: item,
       bag: deps.items?.() ?? [], entity: deps.entity, mode: 'remove',
       chooseOne: session.chooseOne, usingWagon: session.usingWagon, dryRun: true,
     });
@@ -1644,7 +1668,7 @@ function stow(item) {
   // BAG1: the bag takes materials alone - ahead of the ladder, and it speaks
   { const no = bagRefuses(item); if (no) return refuse(no); }
   const to = remoteTarget(deps, sessionState());
-  const plan = planStore(item, {
+  const plan = planStore(transferItem(item, 'store'), {
     remote: to, usingWagon: session.usingWagon, chooseOne: session.chooseOne,
     getQuest: deps.getQuest ?? null,
     groundRefusal: groundRefusalOf(deps, session),   // HOUSE-DROP: a floor that refuses a drop
@@ -1696,7 +1720,13 @@ function stow(item) {
  *  Remove's is (F156). */
 function physicalDrop(item) {
   notice = null;
-  const r = shiftDrop(item, { items: deps.items?.() ?? [], entity: deps.entity, getQuest: deps.getQuest ?? null, dropRefusal: deps.dropRefusal ?? null, drop: (list) => deps.physicalDrop?.(list) });
+  const items = deps.items?.() ?? [], moved = [];
+  let r = {};
+  for (const member of itemStacks(items, stackOptions()).members(item)) {
+    r = shiftDrop(member, { items, entity: deps.entity, getQuest: deps.getQuest ?? null, dropRefusal: deps.dropRefusal ?? null, drop: (list) => moved.push(...list) });
+    if (r.refusal || r.map) break;
+  }
+  if (moved.length) deps.physicalDrop?.(moved);
   if (r.refusal) return refuse(r.refusal);
   if (r.map) { use(item, deps.items?.() ?? []); return; }
   audio.playOneShot(r.sound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);   // DoTransferItem's own cue, as stow's
@@ -1711,7 +1741,8 @@ function take(item) {
   notice = null;
   const from = remoteTarget(deps, sessionState());
   const bag = deps.items?.() ?? [];
-  const plan = planTake(item, {
+  const plan = planTake(transferItem(item, 'take'), {
+    sourceItem: item,
     bag, entity: deps.entity, mode: 'remove',
     chooseOne: session.chooseOne, usingWagon: session.usingWagon,
     getQuest: deps.getQuest ?? null,
@@ -2637,7 +2668,7 @@ function tileWithWear(line, holder, box, snap = true) {
 }
 
 function itemRow(item, from = 'local') {
-  const line = lineOf(item);   // VIRT: once a pass
+  const line = displayLine(item);   // VIRT: base line read once a pass, then the group's quantity
   const row = el('button', `itemrow${picked === item && side === from ? ' on' : ''}`);
   markItemFrame(row, item);   // LR1: the tier colours the name (enhancedStyle's [data-rarity] rules); RARITY-UI: and the icon's frame; SIGIL-UI: the rune
   const wasPicked = picked === item && side === from;
@@ -2903,7 +2934,7 @@ function fillRemoteList(list, filtering = STORE_FILTER_KINDS.has(remote.kind) &&
   dropLists(list);   // VIRT: a refill (the filter's) lets go of the window it replaces
   const kept = list.scrollTop;   // AUDIT VIRT: and keeps its scroll, as the whole list kept it
   list.innerHTML = '';
-  const shown = filtering ? filterStore(remote.items, storeFilter, storeNameOf) : remote.items;
+  const shown = filtering ? filterStore(remoteStacks.items, storeFilter, storeNameOf) : remoteStacks.items;
   if (!remote.items.length) {
     list.append(el('p', 'packempty', remote.kind === 'ground'
       ? 'Nothing dropped here yet.'
@@ -3194,7 +3225,7 @@ function infoCard(picked, side, ready = render, { body = false } = {}) {
   // AUDIT GEM: a well's open chooser, its asked Shatter and a gem's "Set in..." list are the SELECTION's - another piece
   // picked and this one picked again starts clean, never a stale question answered by one press
   if (body && picked !== wellPick) { wellOpen = null; wellAsk = null; gemTargets = null; wellPick = picked; }
-  const line = itemLine(picked, deps.entity);
+  const line = displayLine(picked, itemLine(picked, deps.entity));
   const c = el('div', 'card');
   const into = body ? el('div', 'card-body') : c;
   if (body) c.append(into);
@@ -3275,7 +3306,7 @@ function infoCard(picked, side, ready = render, { body = false } = {}) {
 
 /** PLUS7: the item's actions as buttons - the detail column's row, the right-click menu's list. */
 function itemActs(picked, side, { qty = true } = {}) {
-  const line = itemLine(picked, deps.entity);
+  const line = displayLine(picked);
   const acts = el('div', 'acts');
   if (side === 'local') {
     // REACHABLE, unlike a badge on a row: the selection survives the
@@ -3307,7 +3338,7 @@ function itemActs(picked, side, { qty = true } = {}) {
       const t = el('button', 'act', STOW_LABEL[remote.kind]);
       t.onclick = () => stow(picked);
       acts.append(t);
-      const max = (picked.stackCount ?? 1) > 1 ? splitMax(picked, 'store') : 0;
+      const max = line.stack ? splitMax(picked, 'store') : 0;
       if (qty && max > 1) acts.append(qtyField(picked, max));   // DISC25-F
     }
   } else {
@@ -3318,7 +3349,7 @@ function itemActs(picked, side, { qty = true } = {}) {
       remote.kind === 'reward' ? 'Take this one' : 'Take');
     b.onclick = () => take(picked);
     acts.append(b);
-    const max = (picked.stackCount ?? 1) > 1 ? splitMax(picked, 'take') : 0;
+    const max = line.stack ? splitMax(picked, 'take') : 0;
     if (qty && max > 1) acts.append(qtyField(picked, max));   // DISC25-F
   }
   // USE is offered for EVERYTHING, exactly as the classic window's Use
@@ -3688,7 +3719,7 @@ function walletSheet(w) {
   }
   if (w.held.length) {
     const rows = el('div', 'walletpieces');
-    for (const it of w.held) rows.append(itemRow(it));
+    for (const it of itemStacks(w.held, stackOptions()).items) rows.append(itemRow(it));
     box.append(rows);
   }
   if (!walletAsked) {
@@ -3702,7 +3733,8 @@ function walletSheet(w) {
 function binderSheet(b) {
   const box = el('div', 'walletsheet bindersheet');
   const n = b.held.reduce((s, it) => s + Math.max(1, it.stackCount ?? 1), 0);
-  box.append(el('h4', 'wallet-head', `${n} card${n === 1 ? '' : 's'} of ${b.held.length} kind${b.held.length === 1 ? '' : 's'}`));
+  const kinds = new Set(b.held.map(it => it.card)).size;
+  box.append(el('h4', 'wallet-head', `${n} card${n === 1 ? '' : 's'} of ${kinds} kind${kinds === 1 ? '' : 's'}`));
   for (const d of binderDecks(b.item)) {   // AUDIT CARDS-5 C1: the decks a reader may trust
     const row = el('div', 'wallet-row');
     row.append(el('span', 'wallet-k', d.name), el('span', 'wallet-v', `${d.cards.length} cards`));
@@ -3711,7 +3743,7 @@ function binderSheet(b) {
   box.append(el('p', 'wallet-note', 'Your decks are built on the Holdings page, under Collections.'));
   if (b.held.length) {
     const rows = el('div', 'walletpieces');
-    for (const it of b.held) rows.append(itemRow(it));
+    for (const it of itemStacks(b.held, stackOptions()).items) rows.append(itemRow(it));
     box.append(rows);
   }
   return box;
@@ -4329,6 +4361,8 @@ export function mountEnhancedInventory(hostEl, d = {}) {
       onExit = () => {};
       picked = null;
       remote = null;
+      localStacks = itemStacks([]);
+      remoteStacks = itemStacks([]);
       _view = null;
       delete globalThis.__pack;
     },

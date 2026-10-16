@@ -569,7 +569,7 @@ test('X11b transfer: a summoned item cannot leave the pack, and it says so', () 
   // it - the point of the extraction
   const ui = src('src/ui/nativeInventory.js');
   assert.ok(!ui.includes('isSummoned('), 'the classic window kept its own summoned guard');
-  assert.ok(ui.includes('planStore(it,') && ui.includes('planTake(it,'),
+  assert.ok(ui.includes('planStore(this._transferItem(it, this.hooks.items()),') && ui.includes('planTake(this._transferItem(it, remote),'),
     'the classic window does not run the extracted ladder');
 });
 
