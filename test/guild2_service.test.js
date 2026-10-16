@@ -210,10 +210,13 @@ test('GUILD2 service: what may not leave a pack never reaches the vault; a recor
  *  standing, and its batch lands after whatever runs meanwhile. */
 function holdNextRead(s) {
   const realGet = s.env.SAVES.get.bind(s.env.SAVES);
-  let release = () => {};
+  let release = () => {}, reach = () => {};
   const gate = new Promise((r) => { release = r; });
-  const held = { armed: true, release: () => release() };
-  s.env.SAVES.get = async (k) => { if (held.armed) { held.armed = false; await gate; } return realGet(k); };
+  // AUDIT ONLINE 3 (CI): `reached` settles the moment the read is held - the callers slept 20 ms and hoped it had, and
+  // a loaded runner's read came later (verify, PR #963: "true !== false" at G4's armed check)
+  const reached = new Promise((r) => { reach = r; });
+  const held = { armed: true, release: () => release(), reached: Promise.race([reached, new Promise((r) => setTimeout(r, 5000))]) };
+  s.env.SAVES.get = async (k) => { if (held.armed) { held.armed = false; reach(); await gate; } return realGet(k); };
   held.restore = () => { s.env.SAVES.get = realGet; };
   return held;
 }
@@ -226,7 +229,7 @@ test('GUILD2 service (AUDIT G1): a take holds the very piece it read - a slot em
   const at = (await s.call('/v1/guilds/vault', { character: s.member.character }, s.member.secret)).body.vault.items[0].at;
   const hold = holdNextRead(s);
   const stale = s.call('/v1/guilds/vault/take', { character: s.member.character, realm: s.member.realm.at(), slot: 0, at }, s.member.secret);
-  await new Promise((r) => setTimeout(r, 20));
+  await hold.reached;
   assert.equal(hold.armed, false, 'the member\'s take has read the slot');
   // the same second: the guildmaster takes the sword back and puts one arrow in the slot it left
   assert.equal((await s.call('/v1/guilds/vault/take', { character: s.gm.character, realm: s.gm.realm.at(), slot: 0, at }, s.gm.secret)).status, 200);
@@ -247,7 +250,7 @@ test('GUILD2 service (AUDIT G4): a take holds the standing it read - a revoke la
   assert.equal((await s.call('/v1/guilds/vault/put', { character: s.gm.character, realm: s.gm.realm.at(), pick: 0, item: sword() }, s.gm.secret)).status, 200);
   const hold = holdNextRead(s);
   const take = s.call('/v1/guilds/vault/take', { character: s.member.character, realm: s.member.realm.at(), slot: 0 }, s.member.secret);
-  await new Promise((r) => setTimeout(r, 20));
+  await hold.reached;
   assert.equal(hold.armed, false);
   assert.equal((await s.call('/v1/guilds/vault/grant', { character: s.gm.character, member: m, level: 'none' }, s.gm.secret)).status, 200, 'the leader revokes');
   hold.release();
@@ -288,7 +291,7 @@ test('GUILD2 service (AUDIT2 S3/S4): a put holds what it read - the standing (a 
   // S4: Brenna puts in (a member's default); the guildmaster takes it away between her read and her batch
   let hold = holdNextRead(s);
   const racing = put(s.member, { pick: 0, item: sword({ name: 'Brenna\'s Blade' }) });
-  await new Promise((r) => setTimeout(r, 20));
+  await hold.reached;
   assert.equal(hold.armed, false, 'the put has read its standing');
   assert.equal((await s.call('/v1/guilds/vault/grant', { character: s.gm.character, member: m, level: 'none' }, s.gm.secret)).status, 200);
   hold.release();
