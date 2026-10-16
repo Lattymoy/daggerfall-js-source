@@ -5,6 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { WAGON_MODE, HORSE_MODE, TRANSPORT, HCC_TEXT } from '../src/systems/horseCartLaw.js';
+import { stableWords } from '../src/ui/holdingsPages.js';
 
 import { makeWorld } from './hccWorld.mjs';   // the fake host, one home
 
@@ -37,4 +38,17 @@ test('#751: summonTransport with no horse parks the cart in the world - Deployed
   step(2);
   assert.ok(rt.view().deployed, 'the parked wagon is drawn');
   assert.equal(rt.view().horse, null, 'and no horse beside it');
+});
+
+test('#751: the Stable\'s wagon line points a horseless owner at Summon while the cart is out of the world', () => {
+  const { rt, w, step } = makeWorld({ cart: false, horse: false });
+  step();
+  w.items.cart = true;
+  step();
+  const view = rt.stableView();   // what the Stable page is handed: the runtime's own read
+  assert.equal(view.persistence, true); assert.equal(view.hasCart, true); assert.equal(view.hasHorse, false);
+  assert.equal(view.wagonMode, WAGON_MODE.WithPlayer, 'out of the world - neither parked nor following');
+  const { wagon } = stableWords({ hcc: true, hasHorse: false, hasCart: true, view });
+  assert.equal(wagon.state, 'Stabled');
+  assert.match(wagon.line, /Summon/, `the line names Summon: ${wagon.line}`);
 });

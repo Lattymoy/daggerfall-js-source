@@ -324,7 +324,7 @@ export function stableWords(m) {
     if (driving) wagon = { state: 'Driving', tone: '', line: 'You are on the box.' };
     else if (teamFollowing) wagon = { state: 'Following', tone: '', line: 'Following you behind your horse.' };
     else if (v.wagonMode === WAGON_MODE.Deployed) wagon = { state: 'Parked', tone: 'is-away', line: `Parked ${farWords(v.wagonAt)}.` };
-    else wagon = { state: 'Stabled', tone: 'is-away', line: v.hasHorse ? 'Out of the world - drive it from the Transport window, or summon it.' : 'Out of the world - you need a horse to pull it.' };
+    else wagon = { state: 'Stabled', tone: 'is-away', line: v.hasHorse ? 'Out of the world - drive it from the Transport window, or summon it.' : 'Out of the world - Summon it to your side; you need a horse to pull it.' };
   }
   return { horse, wagon };
 }
