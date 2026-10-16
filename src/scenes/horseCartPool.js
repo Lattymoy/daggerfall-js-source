@@ -87,7 +87,7 @@ import { WAGON_HOVER_TEXT } from '../player/eotbWagon.js';   // the hover word f
 import { hccWireRecord, validHccRecord, hccRecordKey, easeToward, HCC_WIRE_KIND } from '../systems/horseCartWire.js';
 import { decodePng } from '../systems/textureReplacement.js';
 import { toColor32 } from '../formats/color32Order.js';
-import { wagonGeometry, buildBakedWagonParts, rendererModelOf, pitchedPoint, teamSidesOf, TEAM, rigGrowOf, driverSeatFor, SHELL_CLEAR_M } from '../world/wagonModels.js';   // WAGONS1: Mac's wagons; WAGONS3: the team, the rig's grow, the bench; BENCH-CAM: the pivot's clearance
+import { wagonGeometry, buildBakedWagonParts, rendererModelOf, pitchedPoint, teamSidesOf, TEAM, rigGrowOf, driverSeatFor, SHELL_CLEAR_M, DRIVER_FIST } from '../world/wagonModels.js';   // WAGONS1: Mac's wagons; WAGONS3: the team, the rig's grow, the bench; BENCH-CAM: the pivot's clearance
 import { seatRigInput, seatTopByte } from '../player/seatPose.js';   // WAGONS3: the driver's hands, and a seated peer's `st`
 import { newRope, stepRope, tubeModel, tubeInto, tubeVertexCount, ROPE } from '../systems/wagonRopes.js';   // WAGONS3: the harness
 import { wagonArt, WAGON_ARCHIVE, wagonLookArt, isGlassRecord, LOOK_RECORDS, LOOK_RECORD_STRIDE, lookRecord, TEX as WAGON_TEX } from '../world/wagonArt.js';
@@ -97,9 +97,27 @@ import { readWagonLook, wagonLookOfCode, WAGON_OUTSIDE_LOOKS, CARAVAN_INSIDE_LOO
 import { validWagonKind, wagonHitchOf, WAGON_KINDS, wagonHorsesOf } from '../systems/wagonKinds.js';
 import { CARAVAN_TEXT } from '../systems/caravanRoom.js';
 import { recolorHorse, horseLookCode, horseLookOfCode, lookSuffix } from '../systems/horseCoats.js';   // COATS1: the horses' looks, dyed as they upload
+import { mendHorseReins, billboardBit } from '../systems/horseReins.js';   // HORSE-REINS: the mod's rein loop mended as the art decodes; the bit each pose draws
 import { DECOR_DRAW, DECOR_SHADOW, DECOR_SKIP, castOnly } from './decorRoom.js';   // PERF-TEAMS: the host's view verdict (world.js yardCull), as the merchant yards' wagons take it; PERF-WAGON: and the one maps-alone renderer
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 
+/** HORSE-REINS: a point of a billboard horse's own frame (`h` a team entry - `{ position, forward }`; the point TEAM's:
+ *  x its right, y up, z ahead) where its picture draws it. The picture is the horse seen from its view's bearing
+ *  (calculateHorseOrientation's eight, 45 degrees apart - the one poseHorseBatch draws), stood to face `eye`: what it
+ *  shows of a point stands at that point turned about the horse's middle by the eye's bearing less the view's - never
+ *  more than half a view's step. No eye: the point as it is. Pure.
+ * @param {{ position: number[], forward: number[] }} h @param {number[]} p @param {number[] | null} eye */
+export function pictureTurn(h, p, eye) {
+  const [x, y, z] = p;
+  if (!eye) return [x, y, z];
+  const f = h.forward, dx = eye[0] - h.position[0], dz = eye[2] - h.position[2];
+  const cx = f[2] * dx - f[0] * dz, cz = f[0] * dx + f[2] * dz;   // the eye on the horse's own frame: its right, ahead
+  if (Math.hypot(cx, cz) < 1e-6) return [x, y, z];
+  let d = Math.atan2(-cx, cz) - (calculateHorseOrientation(eye, h.position, h.forward) * Math.PI) / 4;   // the eye's bearing (0 before it, a quarter round on its left) less its view's
+  d -= 2 * Math.PI * Math.round(d / (2 * Math.PI));
+  const c = Math.cos(d), s = Math.sin(d);
+  return [x * c - z * s, y, z * c + x * s];
+}
 /** The horse art's archive key and record names on the renderer's texture map: `hcc_h<view>` a standing view,
  *  `hcc_w<view>#<frame>` a walk frame (the foes' own `record#frame` folding, scenes/exteriorFoes.js). COATS1: a horse's
  *  look (systems/horseCoats.js, its code) is the same picture dyed, under the record plus `~<code>`. */
@@ -345,7 +363,7 @@ export function createHorseCartPool({
     const f = fetchFn ?? globalThis.fetch;
     const res = await f(texturePath(file));
     if (!res?.ok) throw new Error(`${file}: HTTP ${res?.status}`);
-    return toColor32(await decode(new Uint8Array(await res.arrayBuffer())));
+    return toColor32(mendHorseReins(file, await decode(new Uint8Array(await res.arrayBuffer()))));   // HORSE-REINS: the rein mended before the dye
   };
 
   // ── the wagon's meshes (DeployedWagonVisual.Initialize's CreateDaggerfallMeshGameObject(41214) + TryBuild)
@@ -701,6 +719,8 @@ export function createHorseCartPool({
   // this frame, its heading its `forward`, grown with the rig under the Overworld (`g`).
   /** @type {Map<string, { horse: any, rig: any, at: number[] | null, speed: number, frame: number, conceal: any }>} */
   const _h3d = new Map();
+  /** HORSE-REINS: this frame's team entries (teamOf's) stood as a 3D horse - its `_h3d` entry - for the harness's ends. */
+  const _h3dOf = new WeakMap();
   let _dt3d = 0;   // the frame's real seconds (frame's `dt`), the 3D horses' gait step
   /** A 3D horse's ground speed is eased toward the frame's over this many seconds (a stride does not flicker on a
    *  stutter); a step past H3D_LEAP m/s is a jump - the drawn point snapped - never a gallop. */
@@ -723,6 +743,7 @@ export function createHorseCartPool({
       rig.step(e.horse, { feet: h.position, yaw, speed: e.speed, dt, look: lookOfOwner(owner) });
       if (g !== 1) rig.place(e.horse, h.position, yaw, g);
       e.frame = _frameNo; e.conceal = owner ? conceal : null;
+      _h3dOf.set(h, e);   // HORSE-REINS: the harness meets this horse where its bones carry the tack
     }
   }
   /** The 3D horses not posed this frame let go - their team gone, a peer away, the lane left. AUDIT COATS3D A7: each
@@ -785,6 +806,8 @@ export function createHorseCartPool({
   let peerLook = null;   // AUDIT (pre-merge) I-B: setPeerLook's
   /** PERF-TEAMS: the eye the last frame() was handed (the draw measures its reach from it); null before any. */
   let _eye = null;
+  /** HORSE-REINS: the eye faceTeams last turned the pictures to - the one the drawn view was chosen for. */
+  let _faceEye = null;
   /** PERF-TEAMS: whether the reach is measured at all - not under the travel view, whose eye stands hundreds of metres
    *  back over a grown world (OW-BIG: `grows.grow`, last pass's), where a cut by the eye's distance would empty it. */
   const reachCuts = () => !!_eye && !_lastGrows?.grow;
@@ -1130,7 +1153,8 @@ export function createHorseCartPool({
     const yaw = Math.atan2(fwd[0], fwd[2]) + (seat.yaw * Math.PI) / 180;
     const hands = seatRigInput(feet, yaw, seat.top).req.hands;
     const grown = (q) => [feet[0] + (q[0] - feet[0]) * f.g, feet[1] + (q[1] - feet[1]) * f.g, feet[2] + (q[2] - feet[2]) * f.g];
-    return { feet, yaw, top: seat.top, g: f.g, hands: [grown(hands.L.at), grown(hands.R.at)] };
+    const fist = (hd) => [hd.at[0] + hd.fingers[0] * DRIVER_FIST, hd.at[1] + hd.fingers[1] * DRIVER_FIST, hd.at[2] + hd.fingers[2] * DRIVER_FIST];   // HORSE-REINS: the rein in the fist, not the wrist
+    return { feet, yaw, top: seat.top, g: f.g, hands: [grown(fist(hands.L)), grown(fist(hands.R))] };
   }
   /** WAGONS3: my seat on my driven bench wagon where it truly stands (ungrown) - the hosts stand my camera and my body
    *  on it - or null while I drive none. */
@@ -1172,7 +1196,6 @@ export function createHorseCartPool({
     const m = f.g > 1 ? mat4FromQuatPosScale(f.rotation, f.at, [f.g, f.g, f.g]) : wagonMatrix(f.at, f.rotation);
     return pitchedMatrix(m, parts, f.hitched ? parts.hitchPitch ?? 0 : 0);
   }
-  // FLAGGED: the horses are billboards, so a trace's collar and a rein's bit are measured points on the picture, not on a body - from some angles a trace meets the picture beside the horse's chest (bible/06-Systems/Wagons.md WAGONS3).
   /**
    * WAGONS3: THE HARNESS'S ENDS FOR AN OWNER THIS FRAME - `[{ kind, a, b, g }]`: each hitched horse's two traces from its
    * collar to their roots on the wagon (a pair's singletrees, turned with the pole; the Small Cart's shafts' roots,
@@ -1196,12 +1219,31 @@ export function createHorseCartPool({
     for (const [hi, side, q, onBogie] of parts.traces) {
       const h = team.find((t) => t.hitched && Math.sign(t.side) === Math.sign(teamSidesOf(w.model)[hi])) ?? null;
       if (!h) continue;
-      ends.push({ kind: 'trace', a: horsePoint(h, [side * TEAM.collar[0], TEAM.collar[1], TEAM.collar[2]]), b: transformPoint(onBogie ? bogie : body, q[0], q[1], q[2]), g: f.g });
+      ends.push({ kind: 'trace', a: tackPoint(h, 'collar', side), b: transformPoint(onBogie ? bogie : body, q[0], q[1], q[2]), g: f.g });
     }
     const drv = driverDrawn(owner);
-    if (drv) team.forEach((h) => { if (h.hitched && h.drawn) ends.push({ kind: 'rein', a: drv.hands[h.side < 0 ? 0 : 1], b: horsePoint(h, [TEAM.bit[0], TEAM.bit[1], TEAM.bit[2]]), g: f.g }); });
+    if (drv) team.forEach((h) => { if (h.hitched && h.drawn) ends.push({ kind: 'rein', a: drv.hands[h.side < 0 ? 0 : 1], b: tackPoint(h, 'bit', h.side < 0 ? -1 : 1), g: f.g }); });
     return ends;
   }
+  /**
+   * HORSE-REINS (2026-10-16, the owner: "ensure proper connection with the sprites and morrowind models"): WHERE THE
+   * HARNESS MEETS A TEAM HORSE - `part` 'collar' (a trace's tug) or 'bit' (a rein's ring) on its `side` (+1 its right):
+   *  - a 3D horse (the Morrowind lane, pose3dTeam): where its bones carry the tack this frame (world/horseRig.js tack -
+   *    the bit rides the head through every gait, the collar the neck's base);
+   *  - a billboard: the point in the POSE the picture draws (the bit read off its walk frame's side view -
+   *    systems/horseReins.js billboardBit; the collar TEAM's), turned as the picture is: the picture is the horse seen
+   *    from its view's bearing turned to face the eye (`pictureTurn`), so the rein meets the bit it draws;
+   *  - a horse no picture stands for (the Small Cart's, its driver's mount): TEAM's point on its frame, as WAGONS3 had it.
+   */
+  function tackPoint(h, part, side) {
+    const e = _h3dOf.get(h);
+    if (e && e.frame === _frameNo) { const q = e.rig.tack?.(e.horse, part, side); if (q) return q; }
+    const local = (part === 'bit' && billboardBit(_walkReady ? h.frame ?? 0 : null, side, { width: HORSE_SPRITE_WIDTH, height: _walkReady ? HORSE_WALK_SPRITE_HEIGHT : HORSE_SPRITE_HEIGHT, scale: GLOBAL_SCALE }))
+      || [side * TEAM.collar[0], TEAM.collar[1], TEAM.collar[2]];
+    const q = h.drawn ? pictureTurn(h, local, _faceEye ?? _eye) : local;
+    return horsePoint(h, [q[0], q[1], q[2]]);
+  }
+
   const _harness = new Map();   // owner -> { key, ropes, model, gpu }
   function dropHarness(owner) { const h = _harness.get(owner); if (h?.gpu) renderer?.destroyMesh?.(h.gpu); _harness.delete(owner); }
   /** WAGONS3: every owner's harness stepped on the frame's `dt` and its mesh refilled; one whose ropes changed (a horse
@@ -1230,6 +1272,7 @@ export function createHorseCartPool({
    *  its view (the bench's, the third person's, the travel view's), where frame() turned them to the eye it was handed. */
   function faceTeams(cameraPos) {
     if (!cameraPos) return;
+    _faceEye = [cameraPos[0], cameraPos[1], cameraPos[2]];   // HORSE-REINS: the eye the pictures are drawn to, for the next frame's harness
     for (const [owner, team] of _teams) {
       let i = 0;
       for (const h of team) { if (!h.drawn) continue; const b = _horseBatches.get(teamKey(owner, i++)); if (b) poseHorseBatch(b, cameraPos, h, h.g, lookOfOwner(owner)); }   // AUDIT COATS3D A1: in its owner's look, as poseTeam turned it - without it, the bay's every frame

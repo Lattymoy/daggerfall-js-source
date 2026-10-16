@@ -11,7 +11,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { makeWorld } from './hccWorld.mjs';
 import { TRANSPORT, WAGON_MODE, HORSE_MODE, HITCHED_HORSE_LOCAL_Z, DEPLOY_CLEARANCE, HORSE_BOX_SIZE, HCC_ACTION_TEXT } from '../src/systems/horseCartLaw.js';
-import { createHorseCartPool, CAPSULE_BOX_SKIN, TEAM_MAX, WAGON_BUCKET } from '../src/scenes/horseCartPool.js';
+import { createHorseCartPool, CAPSULE_BOX_SKIN, TEAM_MAX, WAGON_BUCKET, pictureTurn } from '../src/scenes/horseCartPool.js';
+import { billboardBit, REIN_RING } from '../src/systems/horseReins.js';
+import { HORSE_SPRITE_WIDTH, HORSE_SPRITE_HEIGHT } from '../src/systems/horseCartLaw.js';
+import { GLOBAL_SCALE } from '../src/player/activate.js';
 import { HCC_WIRE_KIND } from '../src/systems/horseCartWire.js';
 import {
   WAGON_KINDS, wagonHorsesOf, horseCountOf, wagonTeamShort, WAGON_TEAM_TEXT, newWagonItem,
@@ -352,17 +355,25 @@ test('WAGONS3 THE HARNESS: a driven pair\'s four traces from collar to singletre
   assert.deepEqual(ends.map((e) => e.kind), ['trace', 'trace', 'trace', 'trace', 'rein', 'rein']);
   const team = world.pool.teamOf('', world.pool.shown());
   const seat = world.pool.driverSeat();
+  // HORSE-REINS (PIN MOVED): each end where the drawn picture shows it - TEAM's collar turned as the picture is to the
+  // eye (horseCartPool.js pictureTurn), the bit the pose's own (systems/horseReins.js billboardBit, the standing view's
+  // here: no walk art in this world)
+  const EYE = [0, 2, -5];
+  const onHorse = (h, p) => { const q = pictureTurn(h, p, EYE), f = h.forward; return [h.position[0] + f[2] * q[0] + f[0] * q[2], h.position[1] + q[1], h.position[2] - f[0] * q[0] + f[2] * q[2]]; };
   ends.slice(0, 4).forEach((e, i) => {
     const h = team[i >> 1], s = i % 2 ? 1 : -1;
-    close(e.a[0], h.position[0] + s * TEAM.collar[0], 1e-6, 'from its collar');
+    const c = onHorse(h, [s * TEAM.collar[0], TEAM.collar[1], TEAM.collar[2]]);
+    close(e.a[0], c[0], 1e-6, 'from its collar'); close(e.a[2], c[2], 1e-6);
     close(e.a[1], h.position[1] + TEAM.collar[1], 1e-6, 'at its chest');
     close(e.b[0], h.side + s * TEAM.tree.half, 1e-6, 'to its own singletree');
     close(e.b[1], world.pool.shown().wagon.position[1] + TEAM.tree.y - LIFT, 1e-6, 'at the tree\'s height');
   });
   assert.deepEqual(ends[4].a, seat.hands[0], 'the left rein in the left hand');
   assert.deepEqual(ends[5].a, seat.hands[1]);
-  close(ends[4].b[0], -TEAM.side, 1e-9, 'to the left horse\'s bit');
-  close(ends[4].b[1], TEAM.bit[1], 1e-9);
+  const bit = billboardBit(null, -1, { width: HORSE_SPRITE_WIDTH, height: HORSE_SPRITE_HEIGHT, scale: GLOBAL_SCALE });
+  assert.deepEqual(ends[4].b.map((v) => +v.toFixed(9)), onHorse(team[0], bit).map((v) => +v.toFixed(9)), 'to the left horse\'s bit, its left ring');
+  assert.ok(team[0].side < 0 && Math.abs(ends[4].b[0] - (-TEAM.side - REIN_RING)) < 0.2, `on the left horse's outer side (${ends[4].b[0]})`);
+  close(ends[4].b[1], 1.3125, 1e-9, 'the standing picture\'s mouth (horse3.png row 41 of 94), not its brow');
   const h = world.pool.harness.get('');
   assert.equal(h.ropes.length, 6);
   assert.ok(h.gpu, 'its mesh');
@@ -397,6 +408,34 @@ test('WAGONS3 THE HARNESS: a driven pair\'s four traces from collar to singletre
   // the switch off: nothing of it stands
   world.pool.setEnabled(false); world.pool.frame(1 / 30, [0, 2, -5], 0);
   assert.equal(world.pool.harness.size, 0);
+});
+
+test('HORSE-REINS THE HARNESS ON THE 3D HORSES (the owner: "ensure proper connection with the sprites and morrowind models"): on the Morrowind lane each trace leaves its horse\'s collar and each rein ends at its bit where the 3D horse\'s bones carry them this frame (world/horseRig.js tack), each on its own side - the left horse\'s rein at its left ring (mutants: the billboard\'s point kept, the side unread, a stale horse read)', async () => {
+  const asked = [];
+  const rig = {
+    ready: () => true, horse: (seed) => ({ seed }), release: () => {}, draw: () => true, place: () => {},
+    step: (h, o) => { h.feet = o.feet; },
+    tack: (h, part, side) => { asked.push([part, side]); return [h.feet[0] + side, part === 'bit' ? 100 : 200, h.feet[2]]; },
+  };
+  const world = await wagonWorld('openWagon', { horses: () => 2, horses3d: () => rig });
+  drive(world);
+  world.pool.frame(1 / 30, [0, 2, -5], 0);
+  const ends = world.pool.harnessEnds('');
+  assert.deepEqual(ends.map((e) => e.kind), ['trace', 'trace', 'trace', 'trace', 'rein', 'rein']);
+  const team = world.pool.teamOf('', world.pool.shown());
+  ends.slice(0, 4).forEach((e, i) => {
+    const h = team[i >> 1], s = i % 2 ? 1 : -1;
+    assert.deepEqual(e.a, [h.position[0] + s, 200, h.position[2]], `trace ${i}: from the 3D horse's own collar, its side ${s}`);
+  });
+  assert.deepEqual(ends[4].b, [team[0].position[0] - 1, 100, team[0].position[2]], 'the left rein to the left horse\'s left ring');
+  assert.deepEqual(ends[5].b, [team[1].position[0] + 1, 100, team[1].position[2]], 'the right rein to the right horse\'s right ring');
+  assert.ok(asked.some(([p]) => p === 'bit') && asked.some(([p]) => p === 'collar'));
+  // the lane left: the billboards' points again, never last frame's 3D horse
+  const lane = { on: true };
+  const w2 = await wagonWorld('openWagon', { horses: () => 2, horses3d: () => (lane.on ? rig : null) });
+  drive(w2); w2.pool.frame(1 / 30, [0, 2, -5], 0);
+  lane.on = false; w2.pool.frame(1 / 30, [0, 2, -5], 0);
+  assert.ok(w2.pool.harnessEnds('').every((e) => e.a[1] !== 200 && e.b[1] !== 100), 'off the lane: no 3D horse\'s point');
 });
 
 test('WAGONS3 THE PARKED BOX NEVER HOLDS ME (Mac: "Spawning the wagon can trap you under the wagon"): a summoned wagon of each kind stands its hitch and DEPLOY_CLEARANCE behind me, its box clear of my capsule; a box over my capsule is not stood until I step out of it; a model that changes under a standing box stands it again (mutants: the mod\'s 2.5 m for every kind, the capsule unread, the parts\' change unread)', async () => {

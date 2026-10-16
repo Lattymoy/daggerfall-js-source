@@ -346,6 +346,34 @@ seconds, its own batches.
 
 `tools/horse3dProbe.mjs` draws the horse through the real renderer in a page - its looks, both flanks, every gait.
 
+### The saddle's view, animated (RIDE-FEEL, 2026-10-16)
+
+The owner: "The morrowind horse in first person also needs a better screen animation." In first person the 3D horse was
+drawn locked to the view: its heading the camera's every frame (the neck nailed to the screen's middle, a turn of the
+mouse turning the whole horse with it, a strafe sliding it sideways), and the eye bobbing on HeadBobber's own clock
+(`player/headBobber.js`'s Horse style - DFU's, made for a flat riding sprite) while the horse's back rose and fell on its
+gait's: two motions that never met, so the neck bounced against the eye (in a probe's gallop the eye stood 0.86 to 1.05
+m over the saddle). `player/rideFeel.js`, wired in `player/mwView.js`:
+
+- THE EYE RIDES THE BACK (`rideEye`): in first person astride, HeadBobber's offset is taken out of the host's eye (the
+  eye less the saddle's height over the feet - no host reads anything new) and the saddle's own put in: the
+  Spine-carried seat's rise and sideways sway off its rest, RIDE_BACK_FOLLOW (0.85) of it. The world rises and falls with
+  the stride the legs are seen to take and the back stays under the eye (the probe: 0.83 to 0.85 m over the saddle). An
+  eye that is not the saddle's - mounting, swimming, knocked down - is left as the host made it, blended in between
+  (RIDE_BOB_CLEAR..RIDE_BOB_REACH), so the change is never a step.
+- THE HORSE TURNS UNDER THE RIDER (`stepRide`): its heading follows the view's over RIDE_TURN_TAU (0.2 s), never more
+  than RIDE_TURN_MAX (35 degrees) behind, and at a pace bends toward the way the feet travel (a strafe walks it
+  crabwise, RIDE_CRAB_MAX 30 degrees at most; backing up turns nothing). The neck swings out on a turn and comes back
+  under the eye; the seat stays under the rider (`horseFeetUnder` backs the horse off along its own heading).
+- IT BANKS INTO A TURN: half the lean a body turning at that rate and pace takes (atan(v w / g)), RIDE_BANK_MAX (7
+  degrees) at most, eased - about the saddle (`leanModel`), so the eye stays where it sits.
+
+First person only: the third-person rider and its horse are one picture turned with the body, as before, and the
+motor's own eye (rays, activation) keeps HeadBobber's. Not a DFU member - DFU's horse is a sprite and its bob
+HeadBobber's, both kept for the sprite. Ledger A (RIDE-FEEL). The four hosts: none edited - `player/mwView.js` is the
+view seam all four hand their eye through (`mwViewFrame`), and `scenes/worldModes.js` and `scenes/dungeonContext.js`
+stand no horse indoors. Pinned: `test/ridefeel.test.js`; mutants `tools/mutants/ridefeel.json`.
+
 ### The audit (AUDIT COATS3D, 2026-10-11)
 
 Thirteen findings on the branch, each fixed and pinned (`test/coats3d_horse3d.test.js` "COATS3D AUDIT", and the

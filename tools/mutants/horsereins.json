@@ -1,0 +1,206 @@
+[
+ {
+  "name": "HORSE-REINS-a-mend-dropped",
+  "file": "src/systems/horseReins.js",
+  "old": "  'horse3.png': { throat: [[16, 43], [19, 40], [23, 37], [29, 37], [35, 39]], bit: [13, 41], sag: 1 },\n",
+  "new": "",
+  "tests": [
+   "test/horsereins.test.js"
+  ]
+ },
+ {
+  "name": "HORSE-REINS-the-loop-kept",
+  "file": "src/systems/horseReins.js",
+  "old": "!air[y * w + x]; y++) clear(x, y);",
+  "new": "!air[y * w + x]; y++) { /* kept */ }",
+  "tests": [
+   "test/horsereins.test.js"
+  ]
+ },
+ {
+  "name": "HORSE-REINS-the-gaps-left-open",
+  "file": "src/systems/horseReins.js",
+  "old": "    closeGaps(data, w, h, gaps);\n",
+  "new": "",
+  "tests": [
+   "test/horsereins.test.js"
+  ]
+ },
+ {
+  "name": "HORSE-REINS-the-rein-undrawn",
+  "file": "src/systems/horseReins.js",
+  "old": "        data[o] = c[0]; data[o + 1] = c[1]; data[o + 2] = c[2]; data[o + 3] = 255;",
+  "new": "",
+  "tests": [
+   "test/horsereins.test.js"
+  ]
+ },
+ {
+  "name": "HORSE-REINS-the-lit-leather-everywhere",
+  "file": "src/systems/horseReins.js",
+  "old": "const c = lit ? REIN_LEATHER_LIT : REIN_LEATHER;",
+  "new": "const c = REIN_LEATHER_LIT;",
+  "tests": [
+   "test/horsereins.test.js"
+  ]
+ },
+ {
+  "name": "HORSE-REINS-a-leather-outside-the-rule",
+  "file": "src/systems/horseReins.js",
+  "old": "export const REIN_LEATHER = Object.freeze([66, 54, 41]);",
+  "new": "export const REIN_LEATHER = Object.freeze([80, 40, 30]);",
+  "tests": [
+   "test/horsereins.test.js"
+  ]
+ },
+ {
+  "name": "HORSE-REINS-a-drop-missed",
+  "file": "src/systems/horseReins.js",
+  "old": "for (let x = xa; x <= xb; x++) if (inside(x, y)) clear(x, y);",
+  "new": "for (let x = xa; x <= xb; x++) if (inside(x, y) && x > xa) clear(x, y);",
+  "tests": [
+   "test/horsereins.test.js"
+  ]
+ },
+ {
+  "name": "HORSE-REINS-the-hug-dropped",
+  "file": "src/systems/horseReins.js",
+  "old": "[x, Math.min(y, lineRow(m.throat, x) + 1)]",
+  "new": "[x, y]",
+  "tests": [
+   "test/horsereins.test.js"
+  ]
+ },
+ {
+  "name": "HORSE-REINS-the-thinning-takes-the-hug",
+  "file": "src/systems/horseReins.js",
+  "old": "if (!onThroat(once[k]) && Math.abs(p[0] - q[0]) <= 1",
+  "new": "if (Math.abs(p[0] - q[0]) <= 1",
+  "tests": [
+   "test/horsereins.test.js"
+  ]
+ },
+ {
+  "name": "HORSE-REINS-the-mend-unwired",
+  "file": "src/scenes/horseCartPool.js",
+  "old": "return toColor32(mendHorseReins(file, await decode(new Uint8Array(await res.arrayBuffer()))));",
+  "new": "return toColor32(await decode(new Uint8Array(await res.arrayBuffer())));",
+  "tests": [
+   "test/horsereins.test.js"
+  ]
+ },
+ {
+  "name": "HORSE-REINS-the-height-off-the-top",
+  "file": "src/systems/horseReins.js",
+  "old": "(height - bit[1] - 0.5) * scale",
+  "new": "(bit[1] + 0.5) * scale",
+  "tests": [
+   "test/horsereins.test.js",
+   "test/wagons3.test.js"
+  ]
+ },
+ {
+  "name": "HORSE-REINS-the-ring-side-unread",
+  "file": "src/systems/horseReins.js",
+  "old": "return [(side < 0 ? -1 : 1) * REIN_RING,",
+  "new": "return [REIN_RING,",
+  "tests": [
+   "test/horsereins.test.js",
+   "test/wagons3.test.js"
+  ]
+ },
+ {
+  "name": "HORSE-REINS-the-turn-sign",
+  "file": "src/scenes/horseCartPool.js",
+  "old": "  return [x * c - z * s, y, z * c + x * s];",
+  "new": "  return [x * c + z * s, y, z * c - x * s];",
+  "tests": [
+   "test/horsereins.test.js",
+   "test/wagons3.test.js"
+  ]
+ },
+ {
+  "name": "HORSE-REINS-the-view-unread",
+  "file": "src/scenes/horseCartPool.js",
+  "old": "let d = Math.atan2(-cx, cz) - (calculateHorseOrientation(eye, h.position, h.forward) * Math.PI) / 4;",
+  "new": "let d = Math.atan2(-cx, cz);",
+  "tests": [
+   "test/horsereins.test.js",
+   "test/wagons3.test.js"
+  ]
+ },
+ {
+  "name": "HORSE-REINS-the-billboard-point-kept",
+  "file": "src/scenes/horseCartPool.js",
+  "old": "    if (e && e.frame === _frameNo) { const q = e.rig.tack?.(e.horse, part, side); if (q) return q; }\n",
+  "new": "",
+  "tests": [
+   "test/wagons3.test.js"
+  ]
+ },
+ {
+  "name": "HORSE-REINS-the-rein-side-unread",
+  "file": "src/scenes/horseCartPool.js",
+  "old": "b: tackPoint(h, 'bit', h.side < 0 ? -1 : 1)",
+  "new": "b: tackPoint(h, 'bit', 1)",
+  "tests": [
+   "test/wagons3.test.js"
+  ]
+ },
+ {
+  "name": "HORSE-REINS-the-model-unread",
+  "file": "src/world/horseRig.js",
+  "old": "    return transformPoint(h.model, q[0], q[1], q[2]);\n  }\n\n  /** A stepped horse's box",
+  "new": "    return q;\n  }\n\n  /** A stepped horse's box",
+  "tests": [
+   "test/horsereins.test.js"
+  ]
+ },
+ {
+  "name": "HORSE-REINS-the-side-unmirrored",
+  "file": "src/world/horseRig.js",
+  "old": "const p = [at[0] * side, at[1], at[2]];",
+  "new": "const p = [at[0], at[1], at[2]];",
+  "tests": [
+   "test/horsereins.test.js"
+  ]
+ },
+ {
+  "name": "HORSE-REINS-the-bones-unread",
+  "file": "src/world/horseRig.js",
+  "old": "return [i, w / sum, [0, 1, 2].map((r) => inv[r] * p[0] + inv[4 + r] * p[1] + inv[8 + r] * p[2] + inv[12 + r])];",
+  "new": "return [i, w / sum, p.slice()];",
+  "tests": [
+   "test/horsereins.test.js"
+  ]
+ },
+ {
+  "name": "HORSE-REINS-the-wrist",
+  "file": "src/scenes/horseCartPool.js",
+  "old": "hands: [grown(fist(hands.L)), grown(fist(hands.R))]",
+  "new": "hands: [grown(hands.L.at), grown(hands.R.at)]",
+  "tests": [
+   "test/horsereins.test.js"
+  ]
+ },
+ {
+  "name": "HORSE-REINS-the-collar-in-the-air",
+  "file": "src/world/wagonModels.js",
+  "old": "  collar: Object.freeze([0.24, 1.24, 0.62]),",
+  "new": "  collar: Object.freeze([0.24, 1.35, 0.75]),",
+  "tests": [
+   "test/horsereins.test.js"
+  ]
+ },
+ {
+  "name": "HORSE-REINS-a-stale-horse-read",
+  "file": "src/scenes/horseCartPool.js",
+  "old": "if (e && e.frame === _frameNo) {",
+  "new": "if (e) {",
+  "tests": [
+   "test/wagons3.test.js"
+  ],
+  "equivalent": true,
+  "why": "teamOf mints a fresh entry every frame, so the WeakMap never holds last frame's horse for this frame's entry - the frame check is belt and braces against a caller that keeps an entry"
+ }
+]

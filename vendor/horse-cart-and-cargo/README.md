@@ -66,7 +66,9 @@ here - the earlier mod records carry theirs in this line.]**
   (121x94) the five stationary directions of a saddled horse, and
   `Walk.<direction>-<frame>.png` (121x95) five directions of an
   eight-frame walk. The mod's `HorseTextureSet.LoadAll` and
-  `HorseWalkAnimationSet.LoadAll` read exactly these names.
+  `HorseWalkAnimationSet.LoadAll` read exactly these names. The files stay
+  the assembly's; the port mends the rein the render slung under the throat
+  as each picture decodes (HORSE-REINS, `src/systems/horseReins.js`).
 - This note.
 
 ## Why the textures ARE here

@@ -683,11 +683,8 @@ body), and a seated driver's two reins from the hands to the pair's bits. One
 leather tube mesh an owner, refilled each frame in place
 (`renderer.updateMeshVertices`), laid again when the harness changes, casting
 no shadow. The leather is the wagons' archive's record 20
-(`src/world/wagonArt.js` harnessArt).
-
-FLAGGED: the horses are billboards, so the collars and bits are measured
-points on the picture, not on a body - from some angles a trace meets the
-picture beside the horse's chest.
+(`src/world/wagonArt.js` harnessArt). Where a rope meets a horse: HORSE-REINS,
+below.
 
 ### The Overworld (Mac's 1)
 
@@ -953,6 +950,86 @@ room (the owner says it, the guest sets it, a document taking nothing out
 puts it back). Mutants: six in `tools/mutants/wagons2_visit.json`
 (`WAGONS2-BASE-*`), all dead. Not seen in a browser: this container has no
 ARENA2 data.
+
+## HORSE-REINS (2026-10-16, from Discord)
+
+Redclaw, reskinning the horse: "something's perplexing me..... the reins, here.
+If anyone here knows horses, are there reins that chunk out like this towards
+the back? I haven't seen any designed like this before." The owner: "You can
+fix this. Also for the animated reigns we designed, ensure proper connection
+with the sprites and morrowind models."
+
+Not a DFU member, and not Horse Cart and Cargo's: the mod draws its horse as
+it was rendered and lays no harness. Ledger A (HORSE-REINS).
+
+### The rein on the pictures (`src/systems/horseReins.js`)
+
+Horse Cart and Cargo's 45 pictures are a small render of a saddled horse
+grazing, and its rein came out of the render as a thick dark loop slung under
+the throat - from the bit back along the jaw, down under the neck and into the
+chest, the sky showing through it in steps (horse3.png's head, Redclaw's crop).
+A rein is one thin strap from the bit, resting on the neck in front of the
+pommel when no one holds it. So each picture is MENDED AS IT DECODES
+(`scenes/horseCartPool.js` fetchPng, before the dye and the upload), and the
+vendored files stay the assembly's byte for byte (`test/hcc_assets.test.js`):
+
+- THE LOOP LET GO: under each picture's throat line (`REIN_MENDS`' `throat`,
+  read by eye off every side and three-quarter picture), each column's run of
+  the loop down to the open air under it - never deeper than REIN_LOOP_DEPTH -
+  and the gaps it held against the throat closed in the throat's own shade;
+- ONE STRAP DRAWN, from the bit (`bit`: the picture's own steel ring where it
+  has one, the mouth's corner where it has none) to the pommel's front (read
+  off the saddle: its largest patch of the dye's tack leather, `pommelOf`),
+  laid along the throat's new underside where it would hang under it (no sliver
+  of sky, the loop's own fault) and one pixel wide;
+- IN THE BRIDLE'S LEATHER: its darkest step, its lit step over the throat's
+  shadow - both inside the dye's tack rule (`systems/horseCoats.js`
+  isCoatPixel), so every coat keeps a brown rein;
+- FROM THE FRONT (`drop`): the loop's strands hanging between the forelegs let
+  go. From behind no rein shows; those nine pictures are the mod's.
+
+### Where the ropes meet the horse (`src/scenes/horseCartPool.js` tackPoint)
+
+WAGONS3 measured one bit and one collar on the picture - the bit at 1.7 m, the
+standing horse's brow, and the collar 0.75 m before its middle, in the air
+before the chest - and laid them on the horse's frame for every view, every
+walk frame and the 3D horse alike: from some angles a trace met the picture
+beside the chest, the rein met the brow, and on the Morrowind lane the bit sat
+inside the 3D horse's head and never moved with it. Now:
+
+- A 3D HORSE (the Morrowind lane): where its bones carry the tack this frame
+  (`world/horseRig.js` tack, HORSE_TACK) - the bit's ring a finger outside the
+  mouth's corner, skinned as the corner is (Jaw 0.6, Head 0.4), so a rein rides
+  the head down through the gallop's dip and up; the collar's tug at the point
+  of the shoulder (the neck's base, the chest and that side's shoulder). Each
+  measured off the courser bake.
+- A BILLBOARD: the point in the POSE its picture draws - the bit read off the
+  walk frame's side view (`billboardBit`, the mend's own bit pixel: the standing
+  horse's at 1.31 m, its mouth), REIN_RING out on its side; the collar
+  re-measured on horse3.png's chest (`world/wagonModels.js` TEAM.collar,
+  0.62 m before its middle at 1.24 m) - turned as the picture is: the picture
+  is the horse seen from its view's bearing (calculateHorseOrientation's eight)
+  stood to face the eye, so a point is turned about the horse's middle by the
+  eye's bearing less the view's (`pictureTurn`, never more than half a view's
+  step) and lands across the card where the drawn view puts it. The eye is the
+  one faceTeams last turned the pictures to.
+- Each rein to the OUTER ring of its horse (the left hand's to the left horse's
+  left ring), and out of the driver's FIST, a palm along the fingers past the
+  wrist the seat is solved to (`DRIVER_FIST`) - it came out of the forearm.
+
+The FLAG WAGONS3 carried here ("the horses are billboards, so the collars and
+bits are measured points on the picture, not on a body") is retired: the
+billboard's points are the drawn pose's, turned with it, and the 3D horse's
+are its body's.
+
+THE FOUR HOSTS (HORSE-REINS): none edited. The pool mends its own pictures and
+lays its own harness for `scenes/world.js` and `scenes/exterior.js`, which
+already call faceTeams; `scenes/worldModes.js` and `scenes/dungeonContext.js`
+stand no wagon (as WAGONS3).
+
+Pins: `test/horsereins.test.js`, and `test/wagons3.test.js`'s harness on the 3D
+horses (PIN MOVED: the billboard harness's ends turned and the pose's own).
+Mutants: `tools/mutants/horsereins.json`.
 
 ## WAGONS4 - upkeep (2026-10-11)
 

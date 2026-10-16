@@ -105,7 +105,9 @@ WithPlayer, None, FollowingPlayer):
 - `src/systems/horseCartWire.js` - HCC-ONLINE's record (below).
 - `src/scenes/horseCartPool.js` - THE PRESENTATION: the part meshes and
   the cargo meshes through the host's pipeline, the horse batches off the
-  vendored PNGs (`renderer.uploadTexture('hcc', 'h<view>' | 'w<view>#<frame>')`,
+  vendored PNGs - their rein mended as they decode (HORSE-REINS,
+  `src/systems/horseReins.js`; `06-Systems/Wagons.md`) -
+  (`renderer.uploadTexture('hcc', 'h<view>' | 'w<view>#<frame>')`,
   the mirror by a negative width as the foes' sprites do), the activation
   targets (`hccWagon`, `hccFollowingWagon`, `hccHorse`, and a peer's
   `hccPeer:<id>:w|h`), the hover names, the parked wagon's collider

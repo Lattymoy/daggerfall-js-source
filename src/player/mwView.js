@@ -42,6 +42,7 @@ import { horseRigFor, HORSE_SEAT } from '../world/horseRig.js';   // COATS3D: th
 import { gaitShare } from '../world/horseModel.js';
 import { SEAT_PELVIS_HEIGHT } from './seatPose.js';
 import { RIDE_EYE_HEIGHT } from './motor.js';   // AUDIT COATS3D A8: the saddle's eye, the horse's ground under it
+import { freshRide, stepRide, rideEye, leanModel } from './rideFeel.js';   // RIDE-FEEL: the saddle's view, animated
 
 /**
  * EOTB4: is Eye Of The Beholder the lane this frame?
@@ -238,8 +239,11 @@ export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, rayca
   }
   // COATS3D: astride, the third-person camera turns about the rider's head - its feet lifted as far as the saddle lifts
   // the hips over a standing body's (player/seatPose.js SEAT_PELVIS_HEIGHT, at the race's height)
+  const ground = feet;   // RIDE-FEEL: the feet the saddle's eye stands over
   if (saddled && ownSaddle) feet = [feet[0], feet[1] + Math.max(0, ownSaddle.seat[1] - feet[1] - SEAT_PELVIS_HEIGHT * heightScale), feet[2]];
   const eye = mwCamera.eye({ fpEye, feet, yaw, pitch, heightScale, raycast, spherecast, pivotFloor });   // MAC-A: the obstacle guards are castSphere's, where the host has one; BENCH-CAM: the pivot over my wagon's roof
+  // RIDE-FEEL: in first person astride, the eye rides the horse's back - the saddle's own rise and sway for HeadBobber's
+  if (saddled && ownSaddle && !eye.thirdPerson && fpEye && ground) eye.eye = rideEye(fpEye, ground, RIDE_EYE_HEIGHT, yaw, ownSaddle.seat, HORSE_SEAT[2]);
   return eyeOverride ? { ...eye, eye: eyeOverride, ownEye: eye.eye } : eye;   // TV1: the travel view's eye, the rig's frame run all the same
 }
 
@@ -428,6 +432,8 @@ let ownSaddle = null;
 let lastFeet = null;
 let groundSpeed = 0;
 let lastCamera = null;
+/** RIDE-FEEL (player/rideFeel.js): the horse under the rider in first person - its heading lagging the view's, its lean. */
+let ride = freshRide();
 /** The body's ground speed is eased toward the frame's over this many seconds, so a gait does not flicker on a frame's
  *  stutter; a step past HORSE_TELEPORT m/s is a teleport, never a gallop. */
 const SPEED_EASE = 0.12;
@@ -450,11 +456,14 @@ function stepOwnHorse(horse, feet, yaw, dt) {
   if (!horse || !horseRig?.ready() || !feet || !fpArm.canThirdPerson()) { dropOwnHorse(); return false; }
   ownHorse ??= horseRig.horse(1);
   if (!ownHorse) return false;
+  let travel = null;   // RIDE-FEEL: the way the feet went this frame
   if (lastFeet && dt > 0) {
     const v = Math.hypot(feet[0] - lastFeet[0], feet[2] - lastFeet[2]) / dt;
     if (v < HORSE_TELEPORT) groundSpeed += (v - groundSpeed) * Math.min(1, dt / SPEED_EASE);
+    if (v > 0.05 && v < HORSE_TELEPORT) travel = Math.atan2(feet[0] - lastFeet[0], feet[2] - lastFeet[2]);
   }
   lastFeet = [feet[0], feet[1], feet[2]];
+  ride = stepRide(ride, { yaw, travel, speed: groundSpeed, dt });   // RIDE-FEEL: the horse turns under the rider
   horseRig.step(ownHorse, { feet: horseFeetUnder(feet, yaw), yaw, speed: groundSpeed, dt, look: horse.look | 0, gallops: !horse.slow });   // HORSE-WALK: the host's slow ride (motor.js slowRide) never gallops
   const seat = horseRig.seat(ownHorse);
   ownSaddle = seat ? { feet: lastFeet, seat, yaw, lean: gaitShare(ownHorse.gait, 'gallop') } : null;
@@ -464,7 +473,7 @@ function stepOwnHorse(horse, feet, yaw, dt) {
 const horseFeetUnder = (feet, yaw, grow = 1) => [feet[0] - Math.sin(yaw) * HORSE_SEAT[1] * grow, feet[1] - ownSink * grow, feet[2] - Math.cos(yaw) * HORSE_SEAT[1] * grow];
 function dropOwnHorse() {
   if (ownHorse) horseRig?.release(ownHorse);
-  ownHorse = null; ownSaddle = null; lastFeet = null; groundSpeed = 0;
+  ownHorse = null; ownSaddle = null; lastFeet = null; groundSpeed = 0; ride = freshRide();
 }
 
 /** COATS3D: the 3D horse rig while the world's horses are 3D - the Morrowind body is the one on screen (the player's
@@ -484,7 +493,12 @@ export const mwViewSaddle = () => (saddled ? ownSaddle : null);
  *  riding sprite stands down when it did. */
 export function mwViewDrawSaddle(canvas) {
   if (!saddled || !ownHorse || !lastCamera || mwCamera.thirdPerson() || eotbLane()) return false;
-  horseRig.place(ownHorse, horseFeetUnder(lastCamera.feet, lastCamera.yaw), lastCamera.yaw);
+  // RIDE-FEEL: the horse at its own heading (lagging the view's, bent toward the way it goes - its seat still under the
+  // rider: horseFeetUnder backs it off along that heading), leant into the turn about the saddle
+  const heading = ride.yaw ?? lastCamera.yaw;
+  horseRig.place(ownHorse, horseFeetUnder(lastCamera.feet, heading), heading);
+  const seat = ride.bank ? horseRig.seat(ownHorse) : null;
+  if (seat) ownHorse.model = leanModel(ownHorse.model, ride.bank, heading, seat);
   return horseRig.drawFirstPerson(ownHorse, canvas, lastCamera);
 }
 

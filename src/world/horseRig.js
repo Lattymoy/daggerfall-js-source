@@ -54,6 +54,39 @@ export function outOfView(c, r, view, proj) {
  *  rider rises and falls with the back's own stride. */
 export const HORSE_SEAT = Object.freeze([0, 0.1, 1.68]);
 export const HORSE_SEAT_BONE = 'Spine';
+/** HORSE-REINS (2026-10-16, the owner: "for the animated reigns we designed, ensure proper connection with the sprites
+ *  and morrowind models"): WHERE THE HARNESS MEETS THE 3D HORSE, on the rig's own frame at its bind (metres: x its
+ *  right, y forward, z up - the right side's; the left's is x mirrored, its bones the left's), each carried as the
+ *  mesh's own vertices there are skinned, so a rein follows the head through every gait. MEASURED off the courser bake:
+ *  the BIT's ring a finger outside the mouth's corner (the lips' last vertex, 1.426 forward, 1.409 up, 0.051 out - Jaw
+ *  0.61, Head 0.39); the COLLAR's tug at the point of the shoulder, a few centimetres before the chest (its front 0.76
+ *  forward at 0.22 out, 1.2 up - the forearm's top, the neck's base and the chest). `L`/`R` in a bone's name is the
+ *  rig's own: its +x is Fore.L's side. */
+export const HORSE_TACK = Object.freeze({
+  bit: Object.freeze({ at: Object.freeze([0.07, 1.42, 1.41]), bones: Object.freeze([['Jaw', 0.6], ['Head', 0.4]]) }),
+  collar: Object.freeze({ at: Object.freeze([0.21, 0.8, 1.22]), bones: Object.freeze([['NeckBase', 0.4], ['Chest', 0.3], ['Fore.L.Scapula', 0.3]]) }),
+});
+
+/** HORSE-REINS: HORSE_TACK on a bake - each part's point, either side, in each carrying bone's own frame (its inverse
+ *  bind, column-major), the weights summing to one; a bone the bake lacks carries nothing. Pure. */
+export function tackSkins(bake) {
+  const index = (name) => bake.bones.findIndex((x) => x.name === name);
+  /** @type {Record<string, Record<number, Array<[number, number, number[]]>>>} */
+  const out = {};
+  for (const [part, { at, bones }] of Object.entries(HORSE_TACK)) {
+    out[part] = {};
+    for (const side of [1, -1]) {
+      const p = [at[0] * side, at[1], at[2]];
+      const kept = bones.map(([name, w]) => [index(side < 0 ? String(name).replace('.L.', '.R.') : String(name)), Number(w)]).filter(([i]) => i >= 0);
+      const sum = kept.reduce((a, [, w]) => a + w, 0);
+      out[part][side] = kept.map(([i, w]) => {
+        const inv = bake.bones[i].inverseBind;
+        return [i, w / sum, [0, 1, 2].map((r) => inv[r] * p[0] + inv[4 + r] * p[1] + inv[8 + r] * p[2] + inv[12 + r])];
+      });
+    }
+  }
+  return out;
+}
 
 const rigs = new WeakMap();
 /** The renderer's one 3D horse rig (made on first ask). */
@@ -69,6 +102,9 @@ export function horseRigFor(renderer, opts = {}) {
 export function createHorseRig({ renderer, fetchJson = (u) => fetch(u).then((r) => r.json()), fetchBytes = (u) => fetch(u).then((r) => r.arrayBuffer()).then((b) => new Uint8Array(b)), decode = decodePng }) {
   /** @type {any} */ let bake = null;
   let base = null, shape = null, stream = null, hide = null, seatBone = -1, seatLocal = null;
+  /** HORSE-REINS: each tack point's skinning on this bake, by part and side (+1 the right, -1 the left) - `[[bone, w,
+   *  local]]`, the point in each bone's own frame. */
+  let tackOf = null;
   /** @type {{ width: number, height: number, data: Uint8Array } | null} */ let body = null;
   let hairTex = null, map = null, mapJob = null, failed = null;
   /** @type {Promise<void> | null} */ let loading = null;
@@ -92,6 +128,7 @@ export function createHorseRig({ renderer, fetchJson = (u) => fetch(u).then((r) 
         const inv = bake.bones[seatBone].inverseBind;   // column-major: the seat in the bone's own frame
         seatLocal = [0, 1, 2].map((r) => inv[r] * HORSE_SEAT[0] + inv[4 + r] * HORSE_SEAT[1] + inv[8 + r] * HORSE_SEAT[2] + inv[12 + r]);
       }
+      tackOf = tackSkins(bake);
       base = renderer.createSkinnedCharacterMesh(stream.stream, { floats: stream.floats, pairs: stream.pairs, width: shape.width, height: shape.height });
       renderer.releaseCharacterSkin(base);   // the shared mesh poses no horse - each horse brings its own palette
       looks.set(0, { tex: renderer.createCharacterTexture(rgbaMips(body.width, body.height, body.data)), last: Infinity });
@@ -196,6 +233,20 @@ export function createHorseRig({ renderer, fetchJson = (u) => fetch(u).then((r) 
     return transformPoint(h.model, local[0], local[1], local[2]);
   }
 
+  /** HORSE-REINS: where a stepped horse's harness meets it in the world - `part` HORSE_TACK's ('bit' | 'collar'), on
+   *  its `side` (+1 its right, -1 its left) - posed as the mesh is skinned there, at its place and size. Null before
+   *  the horse has stood. */
+  function tack(h, part, side = 1) {
+    const skin = tackOf?.[part]?.[side < 0 ? -1 : 1];
+    if (!h?.model || !skin) return null;
+    const W = h.scratch.world, q = [0, 0, 0];
+    for (const [bone, w, l] of skin) {
+      const o = bone * 12;
+      for (let r = 0; r < 3; r++) q[r] += w * (W[o + r * 4] * l[0] + W[o + r * 4 + 1] * l[1] + W[o + r * 4 + 2] * l[2] + W[o + r * 4 + 3]);
+    }
+    return transformPoint(h.model, q[0], q[1], q[2]);
+  }
+
   /** A stepped horse's box in the world - the sprite law's window (characterSprite.js) - and its anchor (its axis at
    *  its middle's height): `{ center, halfW, halfH, anchor }`. */
   function box(h) {
@@ -230,7 +281,7 @@ export function createHorseRig({ renderer, fetchJson = (u) => fetch(u).then((r) 
   }
 
   return {
-    load, tick, horse, release, step, place, picture, seat, box, draw, drawFirstPerson, lookTex,
+    load, tick, horse, release, step, place, picture, seat, tack, box, draw, drawFirstPerson, lookTex,
     /** The rig is up: the stream and the bay's pictures. */
     ready: () => !!base,
     /** Why the rig is not up, when it failed. */

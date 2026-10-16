@@ -1,0 +1,173 @@
+[
+ {
+  "name": "RIDE-FEEL-the-ease-dropped",
+  "file": "src/player/rideFeel.js",
+  "old": "const k = dt > 0 ? Math.min(1, dt / RIDE_TURN_TAU) : 0;",
+  "new": "const k = 1;",
+  "tests": [
+   "test/ridefeel.test.js"
+  ]
+ },
+ {
+  "name": "RIDE-FEEL-the-lag-uncapped",
+  "file": "src/player/rideFeel.js",
+  "old": "  if (Math.abs(behind) > RIDE_TURN_MAX) next = target - Math.sign(behind) * RIDE_TURN_MAX;\n",
+  "new": "",
+  "tests": [
+   "test/ridefeel.test.js"
+  ]
+ },
+ {
+  "name": "RIDE-FEEL-the-first-step-not-taken",
+  "file": "src/player/rideFeel.js",
+  "old": "if (r.yaw == null || !Number.isFinite(r.yaw)) return { yaw: wrapPi(yaw), bank: 0, rate: 0 };",
+  "new": "if (r.yaw == null || !Number.isFinite(r.yaw)) r = { ...r, yaw: 0 };",
+  "tests": [
+   "test/ridefeel.test.js"
+  ]
+ },
+ {
+  "name": "RIDE-FEEL-the-crab-uncapped",
+  "file": "src/player/rideFeel.js",
+  "old": "target = yaw + clamp(d, -RIDE_CRAB_MAX, RIDE_CRAB_MAX) * pace;",
+  "new": "target = yaw + d * pace;",
+  "tests": [
+   "test/ridefeel.test.js"
+  ]
+ },
+ {
+  "name": "RIDE-FEEL-the-pace-unread",
+  "file": "src/player/rideFeel.js",
+  "old": "target = yaw + clamp(d, -RIDE_CRAB_MAX, RIDE_CRAB_MAX) * pace;",
+  "new": "target = yaw + clamp(d, -RIDE_CRAB_MAX, RIDE_CRAB_MAX);",
+  "tests": [
+   "test/ridefeel.test.js"
+  ]
+ },
+ {
+  "name": "RIDE-FEEL-backing-turned",
+  "file": "src/player/rideFeel.js",
+  "old": "if (Math.abs(d) <= RIDE_CRAB_REACH) target",
+  "new": "target",
+  "tests": [
+   "test/ridefeel.test.js"
+  ]
+ },
+ {
+  "name": "RIDE-FEEL-the-bank-sign",
+  "file": "src/player/rideFeel.js",
+  "old": "Math.atan((Math.max(0, speed) * rate) / GRAVITY)",
+  "new": "Math.atan((Math.max(0, speed) * -rate) / GRAVITY)",
+  "tests": [
+   "test/ridefeel.test.js"
+  ]
+ },
+ {
+  "name": "RIDE-FEEL-the-bank-uncapped",
+  "file": "src/player/rideFeel.js",
+  "old": "const want = clamp(Math.atan((Math.max(0, speed) * rate) / GRAVITY) * RIDE_BANK_SHARE, -RIDE_BANK_MAX, RIDE_BANK_MAX);",
+  "new": "const want = Math.atan((Math.max(0, speed) * rate) / GRAVITY) * RIDE_BANK_SHARE;",
+  "tests": [
+   "test/ridefeel.test.js"
+  ]
+ },
+ {
+  "name": "RIDE-FEEL-the-bank-pace-unread",
+  "file": "src/player/rideFeel.js",
+  "old": "Math.atan((Math.max(0, speed) * rate) / GRAVITY)",
+  "new": "Math.atan((5 * rate) / GRAVITY)",
+  "tests": [
+   "test/ridefeel.test.js"
+  ]
+ },
+ {
+  "name": "RIDE-FEEL-the-lean-sign",
+  "file": "src/player/rideFeel.js",
+  "old": "quatAngleAxis((-bank * 180) / Math.PI,",
+  "new": "quatAngleAxis((bank * 180) / Math.PI,",
+  "tests": [
+   "test/ridefeel.test.js"
+  ]
+ },
+ {
+  "name": "RIDE-FEEL-the-pivot-dropped",
+  "file": "src/player/rideFeel.js",
+  "old": "mat4FromQuatPos(q, [pivot[0] - rp[0], pivot[1] - rp[1], pivot[2] - rp[2]])",
+  "new": "mat4FromQuatPos(q, [0, 0, 0])",
+  "tests": [
+   "test/ridefeel.test.js"
+  ]
+ },
+ {
+  "name": "RIDE-FEEL-the-bob-kept",
+  "file": "src/player/rideFeel.js",
+  "old": "const ride = [feet[0] + rx * sway, feet[1] + eyeHeight + rise, feet[2] + rz * sway];",
+  "new": "const ride = [fpEye[0] + rx * sway, fpEye[1] + rise, fpEye[2] + rz * sway];",
+  "tests": [
+   "test/ridefeel.test.js"
+  ]
+ },
+ {
+  "name": "RIDE-FEEL-the-follow-whole",
+  "file": "src/player/rideFeel.js",
+  "old": "export const RIDE_BACK_FOLLOW = 0.85;",
+  "new": "export const RIDE_BACK_FOLLOW = 1;",
+  "tests": [
+   "test/ridefeel.test.js"
+  ]
+ },
+ {
+  "name": "RIDE-FEEL-the-guard-dropped",
+  "file": "src/player/rideFeel.js",
+  "old": "const w = clamp(1 - (off - RIDE_BOB_CLEAR) / (RIDE_BOB_REACH - RIDE_BOB_CLEAR), 0, 1);",
+  "new": "const w = 1;",
+  "tests": [
+   "test/ridefeel.test.js"
+  ]
+ },
+ {
+  "name": "RIDE-FEEL-the-ride-unstepped",
+  "file": "src/player/mwView.js",
+  "old": "  ride = stepRide(ride, { yaw, travel, speed: groundSpeed, dt });",
+  "new": "",
+  "tests": [
+   "test/ridefeel.test.js"
+  ]
+ },
+ {
+  "name": "RIDE-FEEL-the-eye-unridden",
+  "file": "src/player/mwView.js",
+  "old": "if (saddled && ownSaddle && !eye.thirdPerson && fpEye && ground) eye.eye = rideEye(",
+  "new": "if (false) eye.eye = rideEye(",
+  "tests": [
+   "test/ridefeel.test.js"
+  ]
+ },
+ {
+  "name": "RIDE-FEEL-the-horse-unleant",
+  "file": "src/player/mwView.js",
+  "old": "  if (seat) ownHorse.model = leanModel(ownHorse.model, ride.bank, heading, seat);\n",
+  "new": "",
+  "tests": [
+   "test/ridefeel.test.js"
+  ]
+ },
+ {
+  "name": "RIDE-FEEL-the-heading-the-view",
+  "file": "src/player/mwView.js",
+  "old": "const heading = ride.yaw ?? lastCamera.yaw;",
+  "new": "const heading = lastCamera.yaw;",
+  "tests": [
+   "test/ridefeel.test.js"
+  ]
+ },
+ {
+  "name": "RIDE-FEEL-the-ride-kept-off-the-horse",
+  "file": "src/player/mwView.js",
+  "old": "groundSpeed = 0; ride = freshRide();",
+  "new": "groundSpeed = 0;",
+  "tests": [
+   "test/ridefeel.test.js"
+  ]
+ }
+]

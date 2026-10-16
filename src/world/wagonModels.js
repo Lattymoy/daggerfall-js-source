@@ -195,14 +195,16 @@ function poleGeometry(bench, kind) {
  * +x its right, +y up, +z the way it faces, the origin on the ground under its middle). A pair stands `side` either side
  * of the pole; each horse's two TRACES run from its `collar` (either side of its chest) back to the ends of its
  * singletree (`tree`: `back` behind its middle, `y` over the ground, `half` its half width - the bake's frame, before the
- * lift); the REINS from the driver's hands to its `bit`. The Small Cart's one horse pulls from its shafts' roots
+ * lift); the REINS from the driver's hands to its bit (HORSE-REINS: the pose's own, systems/horseReins.js billboardBit).
+ * HORSE-REINS: the collar measured again on horse3.png, the side the picture draws whole - its chest's front at column
+ * 36 of 121 on row 44 of 94: 0.6 m before its middle at 1.24 m, the tug a hand before it; WAGONS3's 0.75 by 1.35 stood
+ * in the air before the chest. The Small Cart's one horse pulls from its shafts' roots
  * (`cartTrace`, the bake's frame: either side of the body's front at the shafts' line). The neck yoke rides the pole's
  * tip `poleTip` past the hitch at `yokeY`.
  */
 export const TEAM = Object.freeze({
   side: 0.65,
-  collar: Object.freeze([0.24, 1.35, 0.75]),
-  bit: Object.freeze([0, 1.7, 1.3]),
+  collar: Object.freeze([0.24, 1.24, 0.62]),
   tree: Object.freeze({ back: 1.55, y: 0.92, half: 0.3 }),
   cartTrace: Object.freeze([0.57, 0.62, 2.2]),
   poleTip: 0.5, yokeY: 1.15,
@@ -225,6 +227,10 @@ export function driverSeatFor(kind) {
 /** WAGONS3: the reins' hands over the seated feet - a hand's breadth over the lap (SEATED_HIP_HEIGHT), not a card
  *  table's SEAT_TOP_DEFAULT. */
 export const DRIVER_HANDS_TOP = SEATED_HIP_HEIGHT + 0.11;
+/** HORSE-REINS: where a rein leaves the driver's hand - the fist's middle, a palm's length along the fingers past the
+ *  wrist the seated rig is solved to (player/seatPose.js seatRigInput's `at` is the wrist; its fingers point ahead).
+ *  A rein that ended at the wrist came out of the forearm. */
+export const DRIVER_FIST = 0.08;
 /** BENCH-CAM (2026-10-10, from play: "this is what i see when i use my carriage" - the camera in the driver's head):
  *  how far over a bench wagon's top (its `shell`, the body's box) the third-person camera's pivot stands while its
  *  driver sits the bench - the caravan's room and the open wagon's tilt both stand higher than the seated head, so a
