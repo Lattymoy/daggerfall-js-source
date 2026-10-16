@@ -1234,7 +1234,10 @@ function buildMenu() {
         process.platform === 'darwin'
           ? { role: 'togglefullscreen' }
           : { role: 'togglefullscreen', accelerator: 'Alt+Enter' },
-        { role: 'toggleDevTools' },
+        // ANTICHEAT: the console is the delivery method for every memory cheat
+        // (entity edits, damage/nuke hooks, gold minting). Shipped players get
+        // no DevTools; developers run unpackaged and keep it.
+        ...(!app.isPackaged ? [{ role: 'toggleDevTools' }] : []),
       ],
     },
   ];

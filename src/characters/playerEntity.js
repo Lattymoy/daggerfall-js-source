@@ -75,9 +75,17 @@ export const playerEntity = {
 };
 
 /** Debug/probe surface: one place writes window.__player (audit
- *  2026-07-06b collapsed seven scattered assignments). */
+ *  2026-07-06b collapsed seven scattered assignments).
+ *  ANTICHEAT: the live entity is the master key for every memory cheat
+ *  (stats, gold, inventory, carry, speed, remodel, flight). It is exposed
+ *  only in ?shot probe boots (browser e2e); the shipped app never carries
+ *  ?shot, so the handle stays dead there. Online boots drop ?shot too. */
 export function surfacePlayer() {
-  if (typeof window !== 'undefined') window.__playerEntity = playerEntity;
+  if (typeof window === 'undefined') return;
+  let probe = false;
+  try { probe = new URLSearchParams(window.location?.search ?? '').has('shot'); } catch { probe = false; }
+  if (probe) window.__playerEntity = playerEntity;
+  else if ('__playerEntity' in window) { try { delete window.__playerEntity; } catch { window.__playerEntity = undefined; } }
 }
 
 // ── AUDIT 21 (hosts lane, F6): THE ONE DAMAGE DOOR ───────────────────
