@@ -912,7 +912,10 @@ livery's 1.3 m tiles and nowhere else, the cloth around them being the same clot
 GuildBook the world already holds (`src/world/wagonEmblem.js` `setWagonHeraldry`, opened once beside the book in
 `src/scenes/world.js`) - no wire carries them; a guild with none wears the throne's own Crimson-and-Gold crown so that
 there is always an emblem to look at. Visual only, and the side is a livery's own: the paint of the open wagon changes
-the cloth under it and never the arms. DECIDED: no wire
+the cloth under it and never the arms. WAGON-TIMBER (2026-10-16, `06-Systems/Wagons.md`) puts a CHOICE on the same
+wagon's own wood and wheels beside it - four wooden parts and the wheels, six choices each, saved on the item's one
+`wagonLook` field and, like the arms, on no word at all until pass 2: the paint of the open wagon and the timber of its
+bed are separate selectors by the operator's own word, and the arms sit over whatever cloth the paint chose. DECIDED: no wire
 carries a guild's heraldry to these faces (a peer's token names its tag alone), so each reads it by the guild's tag
 (unique) off what the client already holds - the reader's own guild, the seats' list's holders and battles, a seat's
 standings (`net/heraldryIndex.js` heraldryByTag) - and a guild the client knows no heraldry of wears the plain tag, no

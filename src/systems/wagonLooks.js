@@ -14,6 +14,19 @@
 // same wagon from it (world/wagonArt.js wagonLookSources), and a visitor in a caravan sees its owner's inside.
 //
 // Pure: no DOM, no renderer, no clock. Not a DFU member. Ledger A (WAGONS2).
+//
+// WAGON-TIMBER (2026-10-16, Mac, of the wagon's wood and of its wheels: "Ok so there is a separation of all the wooden
+// parts which is cool. Lets make a selector for each of them and send them over the wire using the same system that
+// already exists"; "I want the wheel options to be separate from the wood options"): THE PAINT KEEPS WHAT IT DOES NOT
+// OWN. A wagon's `wagonLook` is ONE field and it now has nine - the paint's four and the timber's five
+// (systems/wagonTimber.js) - so this law, which writes that field, has to carry the other law's part through it rather
+// than rebuild it from `wagonLookOf`'s four alone. Repainting a wagon whose beams are dyed must not quietly un-dye
+// them, and a wagon painted back to as built must keep its `wagonLook` while any field in it is still chosen.
+//
+// That is `carriedLook` and `anyChosen`, and NOTHING here imports systems/wagonTimber.js to get at the timber: the two
+// laws are separate by the operator's own word ("the wheel options separate from the wood options"), and a paint that
+// had to ask the timber's module what a wagon is made of would have welded them back together. A look this law does not
+// own is kept as it stands and never read; a field it cannot see is a field it will not drop.
 import { validWagonKind, isWagonItem, activeWagonItem, wagonKindOf } from './wagonKinds.js';
 
 /** How many choices each list holds (the wire's digit). */
@@ -65,6 +78,22 @@ export const wagonLookOf = (item) => readWagonLook(isWagonItem(item) ? item.wago
 /** Whether a look is the wagon as built (no field needs keeping). */
 export const isBuiltLook = (look) => { const l = readWagonLook(look); return !l.o && !l.w && !l.f && !l.c; };
 
+/**
+ * WAGON-TIMBER: WHAT THE ITEM'S FIELD ACTUALLY CARRIES - every field of it, a copy, and none of this law's reading
+ * (not `wagonLookOf`, which would answer with four zeros for a look the paint does not own and quietly flatten it). A
+ * look that is not there, or is not a plain object, is `{}`.
+ * @param {any} item
+ */
+const carriedLook = (item) => { const l = item?.wagonLook; return l && typeof l === 'object' && !Array.isArray(l) ? { ...l } : {}; };
+/**
+ * WAGON-TIMBER: WHETHER A LOOK IS WORTH A FIELD. True when this law's own four are off as built OR when ANY field of
+ * the carried look is a choice above zero - a wagon whose beams are dyed is still a wagon as built BY THIS LAW'S
+ * measure, and dropping its field because the PAINT was put back would take the timber with it. A field is dropped only
+ * when nothing at all is chosen.
+ * @param {any} look
+ */
+const anyChosen = (look) => !isBuiltLook(look) || Object.values(look).some((v) => Number.isInteger(v) && v > 0);
+
 /** The look as the wire says it: one number, base LOOK_COUNT (`wl`). */
 export const wagonLookCode = (look) => { const l = readWagonLook(look); return l.o + LOOK_COUNT * (l.w + LOOK_COUNT * (l.f + LOOK_COUNT * l.c)); };
 /** The highest code a look can be. */
@@ -84,17 +113,21 @@ export const insideLookName = (part, i) => LOOK_NAMES[CARAVAN_INSIDE_LOOKS[part]
 
 /**
  * The item a paint makes: `item` with its look's `part` ('outside', or one of CARAVAN_INSIDE_PARTS) set to `i` - a new
- * object, the old one untouched; the field dropped when the look is the wagon as built. Null when the item is not a
+ * object, the old one untouched; the field dropped when NOTHING in the look is chosen. Null when the item is not a
  * wagon, or an inside part is asked of anything but a caravan.
+ *
+ * WAGON-TIMBER: the look is the field the item CARRIES with this law's four written over it - not `wagonLookOf` alone,
+ * which would answer with those four and nothing else and take every dyed board and every wheel off a wagon that was
+ * only being repainted.
  */
 export function paintedWagon(item, part, i) {
   if (!isWagonItem(item)) return null;
   const field = part === 'outside' ? 'o' : PART_FIELD[part];
   if (!field) return null;
   if (field !== 'o' && validWagonKind(item.wagonKind) !== 'caravan') return null;
-  const look = { ...wagonLookOf(item), [field]: index(i) };
+  const look = { ...carriedLook(item), ...wagonLookOf(item), [field]: index(i) };
   const { wagonLook: _drop, ...rest } = item;
-  return isBuiltLook(look) ? rest : { ...rest, wagonLook: look };
+  return anyChosen(look) ? { ...rest, wagonLook: look } : rest;
 }
 
 /**

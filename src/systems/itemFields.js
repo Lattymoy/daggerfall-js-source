@@ -63,6 +63,17 @@ export const validBinderDeck = (d) => !!d && typeof d === 'object' && !Array.isA
   && typeof d.name === 'string' && d.name.length <= BINDER_DECK_NAME_MAX && Array.isArray(d.cards) && d.cards.length <= 40
   && d.cards.every((c) => typeof c === 'string' && c.length > 0 && c.length <= 40);
 
+// WAGON-TIMBER (bible/06-Systems/Wagons.md): THE `wagonLook` KEY SET, HAND-LISTED AND DELIBERATELY NOT IMPORTED.
+// The paint's four (o, w, f, c - systems/wagonLooks.js) and the timber law's five (floor, inner, beam, bench, wheels -
+// systems/wagonTimber.js) are ONE field on the item, and this schema has to know all nine of them, because a declared
+// field's shape is closed (this file's header) and a key the check does not know drops the WHOLE field - a wagon saved
+// with silvered wheels comes back with nothing but its beams. So the key set is written out HERE, beside the check that
+// uses it, and systems/wagonTimber.js is NOT imported for it: that module is the wagon's graph, it imports the paint's
+// law, and this schema is under it (systems/itemTemplates.js is read by everything). A low schema that had to ask the
+// wagon's own law what a wagon may carry would put the wagon on the path of every item in the game to say what a wagon
+// may carry.
+export const WAGON_LOOK_KEYS = Object.freeze(new Set(['o', 'w', 'f', 'c', 'floor', 'inner', 'beam', 'bench', 'wheels']));
+
 /** The declared fields, by name. Frozen: a new field is a new line here, not a reader's private knowledge. */
 export const ITEM_FIELDS = Object.freeze({
   // identity (DaggerfallUnityItem's, minted by every factory)
@@ -178,10 +189,11 @@ export const ITEM_FIELDS = Object.freeze({
   // ACQUIRE1 (bible/10-UI/Loot-Banner.md): the piece has stood in the player's own keeping (systems/acquireWatch.js) - true,
   // or absent. The RECEIVER's mark, as equipSlot and questItem are: loot.js validLootItem strips it off the wire
   acquired: bool(),
-  // WAGONS1/WAGONS2 (bible/06-Systems/Wagons.md): which wagon a Small Cart item is (systems/wagonKinds.js - absent, the
-  // cart) and its paint (systems/wagonLooks.js: `{ o, w, f, c }`, each one of six - absent, as built)
+  // WAGONS1/WAGONS2/WAGON-TIMBER (bible/06-Systems/Wagons.md): which wagon a Small Cart item is (systems/wagonKinds.js -
+  // absent, the cart) and its look: the paint's four and the timber's five (WAGON_LOOK_KEYS, hand-listed above; each one
+  // of six - absent, as built)
   wagonKind: oneOf(['cart', 'openWagon', 'caravan']),
-  wagonLook: rec((l) => Object.keys(l).every((k) => ['o', 'w', 'f', 'c'].includes(k) && Number.isInteger(l[k]) && l[k] >= 0 && l[k] < 6)),
+  wagonLook: rec((l) => Object.keys(l).every((k) => WAGON_LOOK_KEYS.has(k) && Number.isInteger(l[k]) && l[k] >= 0 && l[k] < 6)),
   // WAGONS2-VISIT: who may enter a caravan (systems/caravanVisit.js - an online home's entries, net/homeLaw.js
   // HOME_ENTRIES; absent, its owner alone)
   wagonEntry: oneOf(['private', 'party', 'public', 'guild']),

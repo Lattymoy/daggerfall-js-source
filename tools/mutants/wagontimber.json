@@ -1,0 +1,114 @@
+[
+  {
+    "name": "WAGONTIMBER-1-one-texel-in-two-undyed",
+    "file": "src/systems/horseCoats.js",
+    "old": "  for (let o = 0; o + 3 < src.length; o += 4) dyeInto(",
+    "new": "  for (let o = 0; o + 3 < src.length; o += 8) dyeInto(",
+    "tests": ["test/wagontimber.test.js"],
+    "note": "dyeEveryTexel strides two texels at a time: half of every wagon record keeps Daggerfall's colour and half wears the dye, so a dyed bed is two woods in stripes - and a save's picture is no longer a function of the record and the dye alone. This is the whole difference between a dye that walks every texel and one that samples."
+  },
+  {
+    "name": "WAGONTIMBER-2-the-dyes-hue-thrown-away",
+    "file": "src/systems/horseCoats.js",
+    "old": "  const hue = (dye.hue ?? h0) + hueJ;",
+    "new": "  const hue = h0 + hueJ;",
+    "tests": ["test/wagontimber.test.js"],
+    "note": "Every dye's own hue dropped: a walnut and a mahogany come out as the same wood at two lights, and the wheel's own reason for being (Mac: \"come up with a few discrete options: couple different browns, a reddish one\") is gone with it. This also reaches the horse, whose seven coats are all hue."
+  },
+  {
+    "name": "WAGONTIMBER-3-a-dye-the-identity",
+    "file": "src/world/wagonArt.js",
+    "old": "  walnut: Object.freeze({ hue: 20, sat: Object.freeze(['abs', 0.5]), val: Object.freeze([0, 0.68]) }),",
+    "new": "  walnut: Object.freeze({ hue: null, sat: Object.freeze(['mul', 1]), val: Object.freeze([0, 1]) }),",
+    "tests": ["test/wagontimber.test.js"],
+    "note": "The walnut dye set to the identity: choosing it uploads a record that is the wagon as it was built, under a record number of its own. A player pays a selector press for nothing and the pin that every choice is a picture of its own catches it."
+  },
+  {
+    "name": "WAGONTIMBER-4-no-red-wheel",
+    "file": "src/world/wagonWheelArt.js",
+    "old": "  mahogany: Object.freeze({\n    iron: Object.freeze([44, 44, 48]), ironLit: Object.freeze([74, 74, 80]), rust: Object.freeze([110, 48, 26]),\n    oak: Object.freeze([116, 54, 34]), oakDark: Object.freeze([78, 34, 21]), oakLit: Object.freeze([146, 72, 46]),\n    tar: Object.freeze([34, 17, 11]), black: Object.freeze([24, 12, 8]),\n    hub: Object.freeze([68, 30, 18]), felloe: Object.freeze([108, 50, 32]), spoke: Object.freeze([134, 66, 42]),\n    dust: Object.freeze([128, 92, 72]),\n  }),",
+    "new": "  mahogany: WHEEL_COLOURS,",
+    "tests": ["test/wagontimber.test.js"],
+    "note": "The reddish wheel not shipped - the operator's own word for it (\"a reddish one\"). Five distinct wheel pictures become four, and the mahogany selector stands a button that repaints the wheel the wagon already had."
+  },
+  {
+    "name": "WAGONTIMBER-5-the-tread-the-faces-picture",
+    "file": "src/world/wagonArt.js",
+    "old": "  if (list === 'wheels') { const w = WHEEL_SOURCES[name] ?? WHEEL_SOURCES.oak; return { [r(TEX.tyre)]: w.tyre, [r(TEX.wheel)]: w.wheel }; }",
+    "new": "  if (list === 'wheels') { const w = WHEEL_SOURCES[name] ?? WHEEL_SOURCES.oak; return { [r(TEX.tyre)]: w.wheel, [r(TEX.wheel)]: w.wheel }; }",
+    "tests": ["test/wagontimber.test.js"],
+    "note": "The tread's record given the FACE's picture: a mahogany wheel has mahogany spokes and a round, spoked, flat tread where its iron should be. Two records, one picture - the thing the stride exists to prevent."
+  },
+  {
+    "name": "WAGONTIMBER-6-the-stride-under-the-bases",
+    "file": "src/world/wagonArt.js",
+    "old": "export const LOOK_RECORD_STRIDE = 100;",
+    "new": "export const LOOK_RECORD_STRIDE = 10;",
+    "tests": ["test/wagontimber.test.js"],
+    "note": "The stride shortened to ten, which is exactly the width the bases are (0 floor, 2 inner, 3 beam, 4 bench, 5 tyre, 6 wheel, 8 openSide, 11 caravanSide, 15 roomSide ... 19 roomFloor, all below ten apart is not true - but 0 and 10 are). Every base's second choice then lands ON another list's built record: the floor's choice 1 is record 10, which is roomFront's own picture, and a player dyeing their bed overwrites a caravan's front wall."
+  },
+  {
+    "name": "WAGONTIMBER-7-the-schema-drops-the-wheels",
+    "file": "src/systems/itemFields.js",
+    "old": "Object.freeze(new Set(['o', 'w', 'f', 'c', 'floor', 'inner', 'beam', 'bench', 'wheels']))",
+    "new": "Object.freeze(new Set(['o', 'w', 'f', 'c', 'floor', 'inner', 'beam', 'bench']))",
+    "tests": ["test/wagontimber.test.js"],
+    "note": "The save schema stops knowing the wheels: a wagon saved with mahogany wheels comes back with its beams dyed and no wheels, because the field failed its own check and was dropped whole. A declared field's shape is closed (itemFields.js's own header), which is why the schema has to be taught the whole shape and not half of it."
+  },
+  {
+    "name": "WAGONTIMBER-8-the-dye-forgets-what-the-wagon-wears",
+    "file": "src/systems/wagonTimber.js",
+    "old": "  const look = { ...wagonLookOf(item), ...timberFieldsOf(item?.wagonLook) }, v = index(i);",
+    "new": "  const look = { ...wagonLookOf(item), ...timberFieldsOf(item) }, v = index(i);",
+    "tests": ["test/wagontimber.test.js"],
+    "note": "The timber read off the ITEM instead of off its look: dyeing the bench on a wagon whose floor is already dyed writes a look with only the bench in it, and the floor's dye is gone. THE BUG THIS PASS FOUND IN ITS OWN FIRST DRAFT - the item transform has to read what the field already holds, or every choice after the first is the only choice."
+  },
+  {
+    "name": "WAGONTIMBER-9-a-repaint-un-dyes-the-wagon",
+    "file": "src/systems/wagonLooks.js",
+    "old": "  const look = { ...carriedLook(item), ...wagonLookOf(item), [field]: index(i) };",
+    "new": "  const look = { ...wagonLookOf(item), [field]: index(i) };",
+    "tests": ["test/wagontimber.test.js"],
+    "note": "The paint law rebuilt the look from its own four fields only, dropping the timber it never heard of: repainting a dyed wagon silently un-dyes it. A wagon's look is ONE field; every law that writes it must keep what it does not own."
+  },
+  {
+    "name": "WAGONTIMBER-10-the-field-dropped-under-a-dye",
+    "file": "src/systems/wagonLooks.js",
+    "old": "const anyChosen = (look) => !isBuiltLook(look) || Object.values(look).some((v) => Number.isInteger(v) && v > 0);",
+    "new": "const anyChosen = (look) => !isBuiltLook(look);",
+    "tests": ["test/wagontimber.test.js"],
+    "note": "The drop rule back to the paint's own four: painting a wagon back to as-built throws the item's wagonLook away, and with it every dyed board and the wheels, because the paint cannot see them."
+  },
+  {
+    "name": "WAGONTIMBER-11-no-wheel-records-at-all",
+    "file": "src/world/wagonArt.js",
+    "old": "  if (list === 'wheels') { const w = WHEEL_SOURCES[name] ?? WHEEL_SOURCES.oak;",
+    "new": "  if (false) { const w = WHEEL_SOURCES[name] ?? WHEEL_SOURCES.oak;",
+    "tests": ["test/wagontimber.test.js"],
+    "note": "The wheels' arm of wagonLookSources switched off, so the list falls through to the wood's arm - which finds TEX.tyre is a painted picture and not a bare record and answers with nothing. Six wheel selectors that upload nothing and draw nothing: the operator's separate wheel options, gone."
+  },
+  {
+    "name": "WAGONTIMBER-12-a-seven-long-list",
+    "file": "src/systems/wagonTimber.js",
+    "old": "export const TIMBER_CHOICES = LOOK_COUNT;",
+    "new": "export const TIMBER_CHOICES = 7;",
+    "tests": ["test/wagontimber.test.js"],
+    "note": "The width written out as seven instead of TAKEN from the paint's LOOK_COUNT. The wire's digit is one digit for every list a wagon carries; a second width here is a second ladder pass 2 has to know about, and a seventh choice is one no field can hold (itemFields.js's check is < 6)."
+  },
+  {
+    "name": "WAGONTIMBER-13-the-finish-thrown-away",
+    "file": "src/world/wagonWheelArt.js",
+    "old": "const finishOf = (f) => (f && f.felloe && f.dust ? f : WHEEL_COLOURS);",
+    "new": "const finishOf = () => WHEEL_COLOURS;",
+    "tests": ["test/wagontimber.test.js"],
+    "note": "The drawing ignoring the finish it was handed: five rows of table, five selectors, and one wheel - the built one - painted five times over. The worst shape this work could take, because nothing throws and every record is uploaded."
+  },
+  {
+    "name": "WAGONTIMBER-14-the-built-dust-on-every-tread",
+    "file": "src/world/wagonWheelArt.js",
+    "old": "put(img, x, y, mix(get(img, x, y), C.dust, 0.25 * n(x, y)));",
+    "new": "put(img, x, y, mix(get(img, x, y), WHEEL_COLOURS.dust, 0.25 * n(x, y)));",
+    "tests": ["test/wagontimber.test.js"],
+    "note": "The tyre's road dust taken from the built table instead of the finish's own: every tread is the same picture under every choice, so the wheel option changes the spokes and leaves the iron wearing the oak wheel's dust. The built wheel is unaffected, which is why this needs a pin of its own."
+  }
+]

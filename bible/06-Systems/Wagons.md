@@ -1052,6 +1052,64 @@ device there would be the same arms twice on one wagon. A paint past the first k
   the door; the no-canvas runtime; the stamp; and a livery against a guild. Mutants
   `tools/mutants/wagonheraldry.json` (9, all dead).
 
+## The timber and the wheels (WAGON-TIMBER, 2026-10-16)
+
+Mac, of the wagon's wood and of its wheels: "Ok so there is a separation of all the wooden parts which is cool. Lets
+make a selector for each of them and send them over the wire using the same system that already exists"; then "I want
+the wheel options to be separate from the wood options"; then "Add a few more options for the wheels as well which I
+know are editable via hex color codes so come up with a few discrete options: couple different browns, a reddish one and
+a grey one if possible". **Visual and saved; NOT on the wire** - the selectors, the `ww` and `wr` words and the park
+record are pass 2, and what pass 2 must pack is written down in `src/systems/wagonTimber.js`'s own header.
+
+### One field, nine keys, TWO laws
+
+The item keeps ONE `wagonLook` (`src/systems/wagonLooks.js` WAGONS2's four: `o`, `w`, `f`, `c`) and WAGON-TIMBER gives
+it five more - `floor`, `inner`, `beam`, `bench` and `wheels` (`src/systems/wagonTimber.js`, six choices each, the first
+the wagon as built). Two laws now write that field, so **the paint keeps what it does not own**: `paintedWagon` rebuilds
+the look from `carriedLook(item)` - every field the item's field carries - with its own four written over it, and drops
+the field only when NOTHING is chosen (`anyChosen`). Repainting a wagon whose beams are dyed does not un-dye them, and
+painting one back to as built does not throw its wheels away. **Nothing here imports `wagonTimber.js` to get at the
+timber**: the two laws are separate by the operator's own word, and a paint that had to ask the timber's module what a
+wagon is made of would have welded them back together.
+
+The save schema is taught the whole shape and not half of it - `WAGON_LOOK_KEYS` in `src/systems/itemFields.js`, a
+**hand list of nine** for the same reason: a declared field's shape is CLOSED, so one key the check does not know drops
+the whole field and a wagon comes back with nothing. It is written out beside the check rather than imported, because
+that schema is under the whole wagon (every item in the game reads it) and must not have to import the wagon to say
+what a wagon may carry.
+
+### TWO TABLES, AND THEY ARE NOT THE SAME KIND OF THING
+
+**The wood is DYED.** `TEX.floor`, `TEX.inner`, `TEX.beam` and `TEX.bench` are one Daggerfall wood each and nothing
+else - no inset, no composed body, no painted overlay - so every texel of one is that record's own texel to shift.
+`src/world/wagonArt.js` `WOOD_DYES` gives six dyes in the horse coat dye's own shape, and `src/systems/horseCoats.js`
+`dyeEveryTexel` walks EVERY texel through `dyeInto`, the very function the horse's hide goes through. **The same
+arithmetic, not a second dye beside it**: a hue/saturation/value SHIFT is what leaves Daggerfall's grain, its knots and
+the order of its light standing where a hex stamp would have taken them. `oak` is the identity (choice 0), and alpha is
+never written because `rgbInto` writes three channels and cannot write a fourth.
+
+**The wheels are a FINISH, and a finish is DATA.** `src/world/wagonWheelArt.js` `WHEEL_FINISHES` is six rows of the
+same twelve RGB triples, and `oak` **IS** `WHEEL_COLOURS` - the wheel that shipped is one row of the table every other
+row is measured from, not a second copy of it that could drift. The drawing is untouched: `mix`, `shade`, the noise and
+the seeds are DF-ART IV's, and the two exported functions read `finishOf(fin)` where they used to read a constant. Two
+things a finish does not carry: the **iron is the iron in all six** (a rim is iron whichever timber is turned into
+spokes) and the **dust is the road's on a wheel of that timber** - so a tread is a second picture of the finish, not
+the built tread over new spokes (pinned, because a count alone would not see it). They are the operator's own list read
+out of the table: `oak`, `walnut`, `ash` the browns, `mahogany` the reddish one, `silvered` the grey, `ebony` under it.
+
+### The records
+
+Both families take the paint's own `LOOK_RECORD_STRIDE` ladder, so a choice is remapped and uploaded by exactly the
+machinery a paint uses. All six bases - floor 0, inner 2, beam 3, bench 4, tyre 5, wheel 6 - are below the stride and
+**distinct modulo it**, so no two choices of any two parts can ever be the same record; the caravan's live inside records
+sit in their own bands above. No record is both a wheel's and a wood's, over EVERY choice of EVERY part.
+
+### Pins
+
+- `test/wagontimber.test.js` - the law and the save shape; the four bases wholly wood; every choice a picture of its own
+  at the built record's own shape; the dye a shift, every texel, alpha untouched; the wheels their own table; the wheels
+  separate from the wood; and the stride. Mutants `tools/mutants/wagontimber.json` (14, all dead).
+
 ## The relay
 
 A parked team's record (HCC-PARK) now keeps the wagon's kind and whether a
@@ -1097,6 +1155,8 @@ comes back as the Small Cart, as built.
   windows centred (its mutants `tools/mutants/wagonuv1.json`).
 - `test/wagonheraldry.test.js` - WAGON-EMBLEM: the guild arms on the open
   wagon's side.
+- `test/wagontimber.test.js` - WAGON-TIMBER: the wood's four and the wheels'
+  own finish.
 
 The mutants are in `tools/mutants/wagons1.json`, `wagons2.json`, `wagons2_wheels.json`, `wagons2_visit.json` and `wagons2_final.json`. Records re-aimed:
 `audit29.json`, `companionweight.json`, `disc8.json`, `disc24.json`,

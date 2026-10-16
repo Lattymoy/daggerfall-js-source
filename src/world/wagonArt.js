@@ -33,8 +33,30 @@
 // and the arms over it, so choosing a livery does not choose a guild. Nothing of it rides the wire - no field, no
 // PARK_WAGON_LOOK_MAX, no RELAY_VERSION, and LOOK_COUNT is six still.
 // Not a DFU member. Ledger A (WAGONS1).
+// WAGON-TIMBER (2026-10-16, Mac, of the wagon's wood and of its wheels: "Ok so there is a separation of all the wooden
+// parts which is cool. Lets make a selector for each of them and send them over the wire using the same system that
+// already exists"; "I want the wheel options to be separate from the wood options"; "Add a few more options for the
+// wheels as well which I know are editable via hex color codes so come up with a few discrete options: couple different
+// browns, a reddish one and a grey one if possible"): THE FOUR FIXED WOODEN RECORDS GET A DYE, AND THE WHEELS GET A
+// FINISH. TEX.floor, TEX.inner, TEX.beam and TEX.bench were - and still are, at choice 0 - one Daggerfall wood each and
+// nothing else: no cloth, no iron, no painted overlay, so there is no hide rule to borrow and no pixel to spare (the
+// horse's, horseCoats.js isCoatPixel, is for a picture with a rider in it). They are read through classicArt.js's `dyed`
+// source instead, which runs the horse dye's own arithmetic over every texel as the record is read - a hue/saturation/
+// value SHIFT, so Daggerfall's grain and shading ride through it where a fill would flatten them. The wheels are a
+// separate table of RGB triples (world/wagonWheelArt.js WHEEL_FINISHES) drawn by the wheel code that was already here:
+// a choice is a row, never a drawing.
+//
+// THE RECORDS. Both families take the paint's own LOOK_RECORD_STRIDE ladder (a record `r` at choice `i` is
+// `r + LOOK_RECORD_STRIDE * i`), so a choice is remapped and uploaded by exactly the machinery a paint uses and
+// nothing here had to be invented for it. All six bases - floor 0, inner 2, beam 3, bench 4, tyre 5, wheel 6 - are
+// below the stride and distinct modulo it, so no two choices of any two parts can ever be the same record (the pin in
+// test/wagontimber.test.js walks every one of them). The caravan's live inside records (CARAVAN_LIVE_CHOICE, choice 9 of
+// rooms 15-19) sit in their own bands above and share no base with these.
+//
+// VISUAL AND SAVED, NOT WIRED. No field, no RELAY_VERSION, no PARK_WAGON_LOOK_MAX, no change to `wl`; what pass 2 packs
+// is written down in systems/wagonTimber.js's header. Ledger A (WAGONS1).
 import { DF, SEE_THROUGH_WINDOW, COMPOSE } from './classicArt.js';
-import { wagonWheelArt, wagonTyreArt } from './wagonWheelArt.js';
+import { wagonWheelArt, wagonTyreArt, WHEEL_FINISHES } from './wagonWheelArt.js';
 import { paintWagonEmblem } from './wagonEmblem.js';
 
 /** The wagons' pseudo-archive: past the large boat's 38171 (38151 collided once - largeBoatArt.js). */
@@ -131,7 +153,9 @@ export function emblemmedSide(cloth) {
 /** How far a look's records stand from the built ones' (a record `r` painted with a list's `i`th choice is
  *  `r + LOOK_RECORD_STRIDE * i`; the built choice, 0, is `r` itself). */
 export const LOOK_RECORD_STRIDE = 100;
-/** Which built records each paint repaints: a kind's outside, and the caravan's inside parts. */
+/** Which built records each choice repaints: a kind's outside, the caravan's inside parts, and (WAGON-TIMBER) the four
+ *  fixed wooden records and the wheels. The list's NAME is what a caller passes to wagonLookSources - a kind, one of the
+ *  caravan's inside parts, or one of TIMBER_LISTS' five. */
 export const LOOK_RECORDS = Object.freeze({
   cart: Object.freeze([TEX.side]),
   openWagon: Object.freeze([TEX.openSide, TEX.tilt, TEX.tiltInner]),
@@ -139,6 +163,13 @@ export const LOOK_RECORDS = Object.freeze({
   walls: Object.freeze([TEX.roomSide, TEX.roomFront, TEX.roomRear]),
   floor: Object.freeze([TEX.roomFloor]),
   ceiling: Object.freeze([TEX.roomCeiling]),
+  timberFloor: Object.freeze([TEX.floor]), timberInner: Object.freeze([TEX.inner]), timberBeam: Object.freeze([TEX.beam]),
+  timberBench: Object.freeze([TEX.bench]), wheels: Object.freeze([TEX.tyre, TEX.wheel]),
+});
+/** WAGON-TIMBER: each wooden part's item field (systems/wagonTimber.js TIMBER_PARTS) against the LIST NAME that chooses
+ *  it here - `floor` the part against `floor` the caravan's paint is the collision this table steps around. */
+export const TIMBER_LISTS = Object.freeze({
+  floor: 'timberFloor', inner: 'timberInner', beam: 'timberBeam', bench: 'timberBench', wheels: 'wheels',
 });
 /** The record `rec` wears under choice `i`. */
 export const lookRecord = (rec, i) => rec + LOOK_RECORD_STRIDE * (Number.isInteger(i) && i > 0 ? i : 0);
@@ -169,11 +200,46 @@ export const LOOK_PICTURES = Object.freeze({
 });
 
 /**
+ * WAGON-TIMBER: the dyes the wagon's four wooden records may wear, by name (systems/wagonTimber.js TIMBER_LOOKS), in the
+ * horse coat dye's own shape (`hue` degrees or null for the art's own; `sat` ['mul', k] or ['abs', s]; `val`
+ * [lift, scale]) and in its own arithmetic - the same `dyeInto` does the work for both animals, which is why a wagon's
+ * boards shift hue rather than take a hex stamp. Tuned by eye against the four base records' own light: `oak` is the
+ * identity (choice 0, which the law never asks for - a built record wears its own), the rest are spaced in hue and
+ * lightness so the four parts read as four timbers rather than four tints of one: pine pale, walnut dark, mahogany red,
+ * ebony near black, ash the grey-blond of weathered boards. A dye is applied to EVERY texel of the record, so the
+ * saturation is absolute rather than relative wherever the wood is pale enough that its own is nearly nothing.
+ */
+export const WOOD_DYES = Object.freeze({
+  oak: Object.freeze({ hue: null, sat: Object.freeze(['mul', 1]), val: Object.freeze([0, 1]) }),
+  pine: Object.freeze({ hue: 40, sat: Object.freeze(['abs', 0.34]), val: Object.freeze([0.16, 1.0]) }),
+  walnut: Object.freeze({ hue: 20, sat: Object.freeze(['abs', 0.5]), val: Object.freeze([0, 0.68]) }),
+  mahogany: Object.freeze({ hue: 8, sat: Object.freeze(['abs', 0.55]), val: Object.freeze([0, 0.78]) }),
+  ebony: Object.freeze({ hue: 12, sat: Object.freeze(['abs', 0.3]), val: Object.freeze([0, 0.36]) }),
+  ash: Object.freeze({ hue: 34, sat: Object.freeze(['abs', 0.14]), val: Object.freeze([0.26, 0.95]) }),
+});
+/** WAGON-TIMBER: the wheels' finishes, by name (systems/wagonTimber.js WHEEL_LOOKS), each a `painted` source for both of
+ *  the wheel's records (the face and the tread) in ONE finish - a wheel is turned and fitted whole, so its tread belongs
+ *  to its spokes rather than being a second thing to choose. The colours themselves are world/wagonWheelArt.js
+ *  WHEEL_FINISHES'; this is the table that names them for the law. */
+export const WHEEL_SOURCES = Object.freeze(Object.fromEntries(
+  Object.keys(WHEEL_FINISHES).map((name) => [name, Object.freeze({
+    tyre: Object.freeze({ painted: () => wagonTyreArt(WHEEL_FINISHES[name]) }),
+    wheel: Object.freeze({ painted: () => wagonWheelArt(WHEEL_FINISHES[name]) }),
+  })]),
+));
+
+/**
  * WAGONS2: THE RECORDS A LOOK WEARS - `{ [record]: Daggerfall source }` for a list's `i`th choice (systems/wagonLooks.js):
  * `list` a kind (its outside) or one of the caravan's inside parts ('walls', 'floor', 'ceiling'), `name` the choice's
  * name. The built choice (0) wears the built records (WAGON_SOURCES) and names none here. A caravan's walls keep their
  * window and their door whatever the paint (`caravanWall`); the open wagon's outer side keeps its guild arms over
  * whatever cloth the paint chose (WAGON-EMBLEM, `emblemmedSide`) - a livery is not a guild.
+ *
+ * WAGON-TIMBER: the five lists of TIMBER_LISTS answer here too, and by the same two rules - choice 0 names nothing (the
+ * built record is its own), and a choice gets its records a stride apart. `timberFloor`/`timberInner`/`timberBeam`/
+ * `timberBench` each dye their ONE base record (WOOD_DYES, `from` the record WAGON_SOURCES already gives that part);
+ * `wheels` takes its TWO (the tread and the face) from WHEEL_SOURCES' one finish. Neither family touches the other's
+ * records, which is what "the wheel options separate from the wood options" means in a source table.
  */
 export function wagonLookSources(list, i, name) {
   if (!(Number.isInteger(i) && i > 0) || !LOOK_RECORDS[list]) return {};
@@ -184,5 +250,8 @@ export function wagonLookSources(list, i, name) {
   if (list === 'caravan') return { [r(TEX.caravanSide)]: caravanWall(TEX.caravanSide, paint), [r(TEX.caravanFront)]: caravanWall(TEX.caravanFront, paint), [r(TEX.caravanRear)]: caravanWall(TEX.caravanRear, paint), [r(TEX.caravanRoof)]: paint };
   if (list === 'walls') return { [r(TEX.roomSide)]: caravanWall(TEX.roomSide, paint), [r(TEX.roomFront)]: caravanWall(TEX.roomFront, paint), [r(TEX.roomRear)]: caravanWall(TEX.roomRear, paint) };
   if (list === 'floor') return { [r(TEX.roomFloor)]: LOOK_PICTURES.floor[name] ?? DF.deck };
-  return { [r(TEX.roomCeiling)]: LOOK_PICTURES.ceiling[name] ?? DF.hullPlanks };
+  if (list === 'ceiling') return { [r(TEX.roomCeiling)]: LOOK_PICTURES.ceiling[name] ?? DF.hullPlanks };
+  if (list === 'wheels') { const w = WHEEL_SOURCES[name] ?? WHEEL_SOURCES.oak; return { [r(TEX.tyre)]: w.tyre, [r(TEX.wheel)]: w.wheel }; }
+  const timber = LOOK_RECORDS[list][0], from = WAGON_SOURCES[timber];
+  return Array.isArray(from) ? { [r(timber)]: { dyed: { from, dye: WOOD_DYES[name] ?? WOOD_DYES.oak } } } : {};
 }

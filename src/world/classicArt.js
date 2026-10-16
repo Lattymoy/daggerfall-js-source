@@ -14,8 +14,17 @@
 //
 // A picture is built from its record whole (formats/derivedTexture.js buildDerivedPicture) and made OPAQUE: these are a
 // model's faces, and the handful of index-0 texels a classic wall carries would read as holes in a hull.
+//
+// WAGON-TIMBER (2026-10-16, Mac, of the wagon's wood: "Ok so there is a separation of all the wooden parts which is cool.
+// Lets make a selector for each of them and send them over the wire using the same system that already exists"): a
+// record may also be DYE'D - `{ dyed: { from, dye } }`, read and put through the horse dye's own arithmetic
+// (`dyeEveryTexel`, systems/horseCoats.js - hue, saturation and value, never a flat fill) as it is read here. It is a
+// source kind, not a step, so every reader below takes it without knowing: the pool, the caravan's room and the item's
+// icon all build through this file and none of them changed. NOT WRITTEN TO DISK - a dyed picture exists only as long
+// as the upload that asked for it (Port-Doctrine: a render of game data is game data).
 
 import { buildDerivedPicture } from '../formats/derivedTexture.js';
+import { dyeEveryTexel } from '../systems/horseCoats.js';   // WAGON-TIMBER: one dye's arithmetic, shared with the horse's coat
 
 /** The Daggerfall records the port's models wear, by material: `[TEXTURE archive, record]`. */
 export const DF = Object.freeze({
@@ -188,6 +197,22 @@ export function cutGlass(/** @type {{width:number,height:number,data:Uint8Array}
 }
 
 /**
+ * A DYE'D RECORD (WAGON-TIMBER): one Daggerfall record (`from`) read and made whole, then EVERY texel of it put through
+ * a dye (world/wagonArt.js WOOD_DYES - the arithmetic systems/horseCoats.js COAT_DYES already owns, `dyeEveryTexel`).
+ * It is its own arm rather than a `composedPicture` because the picture must keep the base record's OWN SIZE: a composed
+ * picture is laid out at COMPOSE, so a 64-texel deck resampled to 256 would come back with four times the texels of
+ * the built record standing on the same metre of floor - a resolution change between choice 0 and choice 1, which is a
+ * change of wagon rather than of colour. Read, dyed, same shape. Returns a new picture; the pixels read are untouched.
+ * @param {{ from: readonly number[], dye: { hue: number | null, sat: readonly [string, number], val: readonly [number, number] } }} spec
+ * @param {(archive: number, record: number, frame?: number) => Promise<any>} classicRgba
+ */
+export async function dyedPicture(spec, classicRgba) {
+  const base = opaque(await buildDerivedPicture({ from: [spec.from[0], spec.from[1]] }, classicRgba));
+  if (!base?.width) throw new Error(`classic art: ${spec.from[0]}_${spec.from[1]} is not in the player's data`);
+  return { width: base.width, height: base.height, data: /** @type {Uint8Array} */ (dyeEveryTexel(base.data, base.data.slice(), spec.dye)) };
+}
+
+/**
  * A PICTURE BESIDE ITS OWN COPIES - `src` laid `n` times across, as wide again: the one cell of a livery a face
  * walks over four times without the face's own u repeating (WAGON-EMBLEM, world/wagonArt.js's open wagon's side).
  * NEAREST, no seam and no blend: the copies are the same bytes, so the cloth a repeated cell wears is the cloth it
@@ -276,9 +301,11 @@ export const hasGlass = (/** @type {any} */ from) => !!from && !Array.isArray(fr
  *  (`{ body, insets }` - composedPicture); or a cut one (`{ from, ... }` - cutPicture). `classicRgba` is the pipeline's
  *  reader (systems/textureReplacement.js's `ctx.classicRgba`, or `classicRgbaOf` for a host that uploads its own).
  *  DF-ART IV: or the port's own picture Mac asked back (`{ painted }` - world/wagonWheelArt.js's wheels), its `painted()`
- *  the picture in these readers' shape, read from no data. */
+ *  the picture in these readers' shape, read from no data; WAGON-TIMBER: or one record DYE'D whole (`{ dyed }` -
+ *  `dyedPicture` - the wagon's wood put through the horse dye's own arithmetic as it is read). */
 export async function classicPicture(/** @type {any} */ from, /** @type {any} */ classicRgba) {
   if (Array.isArray(from)) return opaque(await buildDerivedPicture({ from: [from[0], from[1]] }, classicRgba));
+  if (from?.dyed) return dyedPicture(from.dyed, classicRgba);
   if (typeof from?.painted === 'function') return from.painted();
   return from.body ? composedPicture(from, classicRgba) : cutPicture(from, classicRgba);
 }

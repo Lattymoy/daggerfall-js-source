@@ -46,6 +46,16 @@
 // flank. A sprite is one picture a side, so a flank's patches and the chest's are not one body's - each side is its own.
 //
 // Pure: no DOM, no renderer, no clock. Not a DFU member: Daggerfall has one horse. Ledger A (COATS1).
+//
+// WAGON-TIMBER (2026-10-16, Mac, of the wagon's wood and of its wheels: "Ok so there is a separation of all the wooden
+// parts which is cool. Lets make a selector for each of them and send them over the wire using the same system that
+// already exists"): THE WAGON'S BOARDS GO THROUGH THIS DYE TOO. The wagon's four wooden records are Daggerfall wood and
+// nothing else - no cloth, no iron, no painted overlay, no rider's face to spare - so there is no hide rule here to
+// borrow and no pixel to leave out: `dyeEveryTexel` walks EVERY texel of the record and gives each one `dyeInto`, the
+// very function the horse's hide goes through, with no shade and no marking. That is the whole of the addition here, and
+// it is deliberate that it is small: the operator's "editable via hex color codes" is what a wood's colours ARE, and what
+// they are spent on is a shift over Daggerfall's own grain, not a stamp over it (world/wagonArt.js WOOD_DYES,
+// world/classicArt.js dyedPicture). A wagon's dye is the horse coat's dye, and the horse is untouched by it.
 import { TRANSPORT_HORSE } from './itemTemplates.js';
 
 /** The coats, in the order the Stable lists them and the item keeps them (`horseCoat`); the first the bay as drawn. */
@@ -415,6 +425,29 @@ function dyeInto(out, src, o, dye, hueJ, valJ, white, dark, whiteFloor = 0) {
     out[o + 1] = Math.round(out[o + 1] + (tmp[1] - out[o + 1]) * white);
     out[o + 2] = Math.round(out[o + 2] + (tmp[2] - out[o + 2]) * white);
   }
+}
+
+/**
+ * EVERY TEXEL, THROUGH THE ONE DYE (WAGON-TIMBER): `src`'s RGBA bytes walked four at a time and EVERY texel of them
+ * dyed into `out` - the dye's own arithmetic and nothing else (no seed's shade, no marking's white, no dark), so a
+ * record of wholly-wood that is put through it keeps its grain, its knots and its order of light. `out` is the answer
+ * and is handed back, so a caller passes its own copy and the bytes it read are left alone.
+ *
+ * THE SAME `dyeInto`, and not a second dye written beside it. The horse's hide and a wagon's boards are both hue/
+ * saturation/value shifts over Daggerfall's or the artist's own light, and one piece of arithmetic is the whole reason
+ * a wagon's wood SHIFTS where a hex stamp would have filled it (world/wagonArt.js WOOD_DYES; world/classicArt.js
+ * dyedPicture runs this over a record as it is read). A second copy of the maths would be free to drift from this one.
+ *
+ * THE ALPHA IS NEVER TOUCHED, and cannot be: `rgbInto` writes three channels and `dyeInto` reads three. A wagon's wood
+ * record is opaque to its edges anyway, so nothing here can open a hole in a bed.
+ * @param {ArrayLike<number>} src the texels read
+ * @param {ArrayLike<number>} out the texels written (the answer, handed back)
+ * @param {any} dye a COAT_DYES' row - `{ hue: number|null, sat: [mode, k], val: [lift, scale] }`
+ * @returns {ArrayLike<number>} `out`
+ */
+export function dyeEveryTexel(src, out, dye) {
+  for (let o = 0; o + 3 < src.length; o += 4) dyeInto(out, src, o, dye, 0, 1, 0, 0);
+  return out;
 }
 
 /** Whether a pixel is the hide's (THE DYE's first two rules): warm, coloured, and - where a saddle is drawn (`tack`) -
