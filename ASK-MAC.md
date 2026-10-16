@@ -123,3 +123,51 @@ The house rule, from the version comment itself:
 **Asked:** confirm the order for this bump specifically — relay, then account
 service, then clients — and whether the two new fields need the same treatment
 or ride an already-deployed path.
+---
+
+## 8. A wagon wears the READER'S arms, not the owner's. Which is right?
+
+`wagonHeraldry()` (`src/world/wagonEmblem.js`) takes **no arguments** and resolves
+from one module-global wired to `guildBook?.guild?.heraldry`. So **every open wagon
+in the game wears the arms of whoever is looking at it.** A stranger's wagon shows
+your guild's shield.
+
+This was never staleness. It was never per-wagon. The WAGON-EMBLEM commit declared
+it prototype-scope, and the code says so honestly - but the failure mode is that a
+guildmaster rides past another guild and sees *his own* shield on their cart.
+
+**What already exists, which makes this cheap:**
+
+- The roster **already carries the guild tag** - `gt`, stamped by `badged()`
+  (`net/wire.js:2539`), read as `peer.gt` (`net/online.js:3479`) and surfaced as
+  `RosterRow.gt` (`net/roster.js:163`). So a client always knows *who* a peer belongs to.
+- **No frame carries the arms themselves.** The relay has no heraldry at all.
+- But four endpoints return arbitrary guilds' arms **by tag**: `/v1/seats/list`,
+  `/v1/board/read`, `/v1/homes/town`, `/v1/writs/list`. `/v1/homes/town` is
+  **ungated** - "for everyone standing in it, guests too" - so any client can read
+  any town's guild halls.
+- `heraldryIndex` and `heraldryLookup` are ready and legal for exactly this. The
+  seats already use them (`world.js:1891`).
+
+**What is missing, in order:**
+
+1. **The texture, not the data.** `ensureWagonArt` (`scenes/horseCartPool.js`) uploads
+   `WAGON_SOURCES` once per session into fixed record names - there is no per-owner
+   variant. `lookRemap` (the timber path) is the precedent for a records-per-look
+   remap; an arms-keyed record is the same shape.
+2. **A join** from `peer.gt` to arms, off sources beyond `[ownGuild, seatList]`.
+3. **Coverage** for a guild that holds no seat, owns no hall, posted no note and has
+   no writ. Not derivable from anything that exists.
+4. **No staleness signal.** `setHeraldry` returns no `moved` word and no migration
+   has a trigger on `guilds.heraldry`, so the relay never hears an arms change.
+
+**Asked, and it is a product decision rather than a code one:**
+
+- Should a wagon wear **its owner's** arms, the **viewer's**, or the owner's when the
+  two differ? "The viewer's" is what ships today and is almost certainly not wanted.
+- When a guildmaster passes another guild, whose arms does each player see? If both
+  see the owner's, a guild's livery is legible to strangers - which is the point of a
+  livery. If it shows the viewer's, it is a mirror, not a livery.
+- Failing coverage for an unknown guild: the **throne's crown**, or nothing at all?
+- Is a **reload-until-fresh** arms change acceptable, or is a live signal required?
+
